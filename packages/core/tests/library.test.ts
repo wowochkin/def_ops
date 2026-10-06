@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { LIBRARY, CATEGORIES, PRESETS, STYLES, emptyDocument, makeProjection, createFeature, renderDocument, variantFor, searchLibrary, GLYPHS, SYMBOL_PRESETS } from '@def-ops/core';
+import { LIBRARY, CATEGORIES, PRESETS, STYLES, emptyDocument, makeProjection, createFeature, renderDocument, variantFor, searchLibrary, GLYPHS, SYMBOL_PRESETS, SOURCES, sourceText } from '@def-ops/core';
 
 describe('библиотека знаков', () => {
   it('у всех элементов есть категория, описание и существующие пресеты', () => {
@@ -53,8 +53,8 @@ describe('библиотека знаков', () => {
   });
 
   it('противник рисуется синим, свои — красным', () => {
-    const own = createFeature('symbol', 'ustav.tank', { at: [14, 52] }, 1, 'own');
-    const enemy = createFeature('symbol', 'ustav.tank', { at: [14, 52] }, 1, 'enemy');
+    const own = createFeature('symbol', 'sa.tank', { at: [14, 52] }, 1, 'own');
+    const enemy = createFeature('symbol', 'sa.tank', { at: [14, 52] }, 1, 'enemy');
     expect(own.kind === 'symbol' && own.style.color).toBe('#d43834');
     expect(enemy.kind === 'symbol' && enemy.style.color).toBe('#2f6fae');
   });
@@ -62,6 +62,35 @@ describe('библиотека знаков', () => {
   it('поиск по синонимам', () => {
     expect(searchLibrary('катюша').map((e) => e.id)).toContain('rocket');
     expect(searchLibrary('котёл').map((e) => e.id)).toContain('area.encircled');
+    expect(searchLibrary('ПТУР').map((e) => e.id)).toContain('atgm');
+  });
+});
+
+describe('первоисточники', () => {
+  it('ссылки указывают на известные источники; без источника — только с пометкой «сверить» или неуставные стили', () => {
+    const ids = new Set(SOURCES.map((s) => s.id));
+    for (const e of LIBRARY) {
+      for (const r of e.sources ?? []) expect(ids.has(r.split(':')[0]), `${e.id}: ${r}`).toBe(true);
+      const ustav = Object.values(e.variants).some((p) => /^(rkka|sa)\./.test(p!));
+      if (ustav && !e.verify) expect(e.sources?.length, e.id).toBeGreaterThan(0);
+    }
+    expect(sourceText(['tm:XII-7', 'ouo:6'])).toBe('TM 30-430, с. XII-7; ОУО, л. 6');
+  });
+
+  it('по TM 30-430: ПП мины — светлые кружки, ПТ — залитые точки', () => {
+    const ap = createFeature('area', 'rkka.minefieldAP', { points: [[14, 52], [14.1, 52], [14.1, 52.1]] });
+    const at = createFeature('area', 'rkka.minefieldAT', { points: [[14, 52], [14.1, 52], [14.1, 52.1]] });
+    expect(ap.kind === 'area' && ap.style.hatch?.pattern).toBe('circles');
+    expect(at.kind === 'area' && at.style.hatch?.pattern).toBe('dots');
+  });
+
+  it('СА: артиллерия своих — чёрным, мотострелки — красным', () => {
+    const gun = createFeature('symbol', 'sa.gun', { at: [14, 52] }, 1, 'own');
+    const bmp = createFeature('symbol', 'sa.bmp', { at: [14, 52] }, 1, 'own');
+    const gunE = createFeature('symbol', 'sa.gun', { at: [14, 52] }, 1, 'enemy');
+    expect(gun.kind === 'symbol' && gun.style.color).toBe('#1f1f1f');
+    expect(bmp.kind === 'symbol' && bmp.style.color).toBe('#d43834');
+    expect(gunE.kind === 'symbol' && gunE.style.color).toBe('#2f6fae');
   });
 });
 

@@ -4,7 +4,7 @@ export * from './geo';
 export * from './curve';
 export * from './model';
 export * from './presets';
-export { SIDE_COLORS } from './presets-ustav';
+export { SIDE_COLORS } from './presets-std';
 export * from './library';
 export { GLYPHS, GLYPH_NAMES } from './render/glyphs';
 export * from './factory';

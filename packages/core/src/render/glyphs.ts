@@ -13,6 +13,7 @@
  */
 import type { SymbolStyle, TextStyle } from '../model';
 import { f2, esc } from './context';
+import { STD_GLYPHS } from './glyphs-std';
 
 export interface GlyphCtx {
   s: number;
@@ -331,6 +332,9 @@ export const GLYPHS: Record<string, Glyph> = {
       T(0, -s * 0.58, 'С', s * 0.36, g);
   },
 };
+
+// уставные знаки по первоисточникам (РККА 1942–45 и СА 1967–83)
+Object.assign(GLYPHS, STD_GLYPHS);
 
 export function glyphCtx(st: SymbolStyle, fontAttrs: (t: TextStyle) => string): GlyphCtx {
   return {

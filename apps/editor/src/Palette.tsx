@@ -4,7 +4,7 @@
  * Каждый элемент показан в выбранном стиле (или в ближайшем доступном).
  */
 import { useMemo, useState } from 'react';
-import { CATEGORIES, STYLES, PALETTE, variantFor, searchLibrary, type StyleId, type Side, type LibraryElement } from '@def-ops/core';
+import { CATEGORIES, STYLES, PALETTE, variantFor, searchLibrary, sourceText, type StyleId, type Side, type LibraryElement } from '@def-ops/core';
 import type { Tool } from './store';
 import { presetPreview } from './previews';
 
@@ -16,7 +16,10 @@ const load = (k: string, d: string) => { try { return localStorage.getItem(k) ||
 const save = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* */ } };
 
 export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => void }) {
-  const [style, setStyle] = useState<StyleId>(() => load('palette.style', 'ustav') as StyleId);
+  const [style, setStyle] = useState<StyleId>(() => {
+    const v = load('palette.style', 'rkka');
+    return (STYLES.some((s) => s.id === v) ? v : v === 'ustav' ? 'sa' : 'rkka') as StyleId;
+  });
   const [side, setSide] = useState<Side>(() => load('palette.side', 'own') as Side);
   const [q, setQ] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>(() => JSON.parse(load('palette.open', '{"maneuver":true}')));
@@ -73,9 +76,9 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
                 const v = variantFor(e, style);
                 const on = tool.mode === 'draw' && tool.element === e.id;
                 return (
-                  <button key={e.id} className={`pitem${on ? ' on' : ''}${v.style !== style ? ' other' : ''}`} title={e.description} onClick={() => pick(e)}>
+                  <button key={e.id} className={`pitem${on ? ' on' : ''}${v.style !== style ? ' other' : ''}`} title={e.sources ? `${e.description}\nИсточник: ${sourceText(e.sources)}` : e.description} onClick={() => pick(e)}>
                     <span className="pv" dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paperFor(v.style), e.sideAware ? side : undefined) }} />
-                    <span className="pn">{e.name}{e.verify && <i className="vf" title="Начертание требует сверки с первоисточником">?</i>}</span>
+                    <span className="pn">{e.name}{e.verify && <i className="vf" title="Начертание не подтверждено первоисточниками — сверить">?</i>}</span>
                   </button>
                 );
               })}

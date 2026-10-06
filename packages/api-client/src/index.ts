@@ -103,7 +103,7 @@ export class DefOpsClient {
   };
 
   /** Библиотека знаков: стили, категории, элементы с описаниями. */
-  library = () => this.req<{ styles: unknown[]; categories: { id: string; name: string; description: string }[]; elements: unknown[] }>('GET', '/library');
+  library = () => this.req<{ styles: unknown[]; sources: { id: string; short: string; title: string }[]; categories: { id: string; name: string; description: string }[]; elements: unknown[] }>('GET', '/library');
 
   presets = () => this.req<Record<string, { id: string; name: string; group: string; style: unknown }[]>>('GET', '/presets');
 

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../demo/fonts';
 import './library.css';
-import { CATEGORIES, LIBRARY, STYLES, variantFor, searchLibrary, type StyleId } from '@def-ops/core';
+import { CATEGORIES, LIBRARY, STYLES, SOURCES, variantFor, searchLibrary, sourceText, type StyleId } from '@def-ops/core';
 import { presetPreview } from './previews';
 import { paperFor } from './Palette';
 
@@ -11,7 +11,7 @@ const PRINT = new URLSearchParams(location.search).has('print');
 if (PRINT) document.documentElement.classList.add('print');
 
 function LibraryPage() {
-  const [style, setStyle] = useState<StyleId>('ustav');
+  const [style, setStyle] = useState<StyleId>('rkka');
   const [q, setQ] = useState('');
   const found = new Set(searchLibrary(q).map((e) => e.id));
   const verifyCount = LIBRARY.filter((e) => e.verify).length;
@@ -21,12 +21,14 @@ function LibraryPage() {
         <div className="title-page">
           <div className="tp-kicker">Платформа тактических карт</div>
           <h1 className="tp-title">Библиотека условных знаков</h1>
-          <div className="tp-sub">Справочник: {LIBRARY.length} элементов, {CATEGORIES.length} категорий, {STYLES.length} стиля оформления</div>
+          <div className="tp-sub">Справочник: {LIBRARY.length} элементов, {CATEGORIES.length} категорий, {STYLES.length} стилей оформления, {LIBRARY.filter((e) => e.sources).length} знаков со ссылкой на первоисточник</div>
           <ol className="tp-toc">{CATEGORIES.map((c) => <li key={c.id}>{c.name} <span className="muted">— {LIBRARY.filter((e) => e.category === c.id).length}</span></li>)}</ol>
           <div className="tp-legend">
-            <p><b>Цвета.</b> Свои войска — красным, противник — синим, оборонительные сооружения, заграждения и топография — чёрным. Для знаков с отметкой «свои / противник» приведены оба варианта.</p>
+            <p><b>Цвета.</b> РККА: свои — красным, противник — синим, сооружения и заграждения — чёрным. СА: мотострелковые, танковые войска, ВДВ, авиация — красным; артиллерия, инженерные, химические войска и связь — чёрным; противник — синим; маршруты — коричневым. Для знаков с отметкой «свои / противник» приведены оба варианта.</p>
             <p><b>Стили.</b> {STYLES.map((s) => `${s.name} — ${s.description}`).join(' ')}</p>
-            <p><b>Пометка «сверить».</b> У {verifyCount} знаков в разные годы были варианты начертания; их нужно сверить с таблицей условных знаков, принятой для проекта.</p>
+            <p><b>Первоисточники.</b></p>
+            <ol className="tp-src">{SOURCES.map((s) => <li key={s.id}><b>{s.short}</b> — {s.title}</li>)}</ol>
+            <p><b>Пометка «сверить».</b> {verifyCount} знаков не подтверждены этими источниками (знаки исторических карт, флот, партизаны, разграничительные линии армий и фронтов) — их нужно сверить с таблицей, принятой для проекта.</p>
             <p className="muted">Сформировано {new Date().toLocaleDateString('ru-RU')} из описания библиотеки (packages/core/src/library.ts).</p>
           </div>
         </div>
@@ -34,9 +36,10 @@ function LibraryPage() {
       <header>
         <h1>Библиотека условных знаков</h1>
         <p className="lead">
-          {LIBRARY.length} элементов в {CATEGORIES.length} категориях. Цвета по уставу: свои — красным, противник — синим,
-          сооружения и заграждения — чёрным. Знаки с пометкой <span className="vf">сверить</span> ({verifyCount}) имели варианты
-          начертания в разные годы — их нужно сверить с таблицей условных знаков, принятой для проекта.
+          {LIBRARY.length} элементов в {CATEGORIES.length} категориях. Уставные знаки — в двух системах: РККА 1942–45
+          (по TM 30-430, гл. XII) и Советской Армии 1967–83 (по «Основным условным обозначениям» и таблице А. Веремеева);
+          у каждого знака указаны источник и страница. Знаки с пометкой <span className="vf">сверить</span> ({verifyCount})
+          источниками не подтверждены.
         </p>
         <div className="ctl">
           {STYLES.map((s) => (
@@ -73,8 +76,9 @@ function LibraryPage() {
                         ))}
                       </div>
                     )}
-                    <div className="nm">{e.name}{e.verify && <span className="vf" title="Начертание требует сверки с первоисточником">сверить</span>}</div>
+                    <div className="nm">{e.name}{e.verify && <span className="vf" title="Начертание не подтверждено первоисточниками">сверить</span>}</div>
                     <div className="ds">{e.description}</div>
+                    {e.sources && <div className="src">Источник: {sourceText(e.sources)}</div>}
                     <div className="vr">
                       {STYLES.filter((s) => e.variants[s.id]).map((s) => <span key={s.id} className={s.id === v.style ? 'cur' : ''}>{s.name}</span>)}
                       {e.sideAware && <span className="side">свои / противник</span>}

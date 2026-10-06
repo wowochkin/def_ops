@@ -102,10 +102,23 @@ export interface StrokeLayer {
      * Форма зубца: штрих, треугольник (надолбы, клин), крестик (проволочное заграждение),
      * кружок (мины ПТ), точка (мины ПП), полукруг (укреплённый район), «косой крест».
      */
-    shape?: 'line' | 'triangle' | 'cross' | 'x' | 'circle' | 'dot' | 'semicircle';
+    shape?: 'line' | 'triangle' | 'cross' | 'x' | 'circle' | 'dot' | 'semicircle' | 'slash' | 'chevron';
+    /** Для slash — число штрихов (число рядов проволоки). */
+    count?: number;
+    /** Подогнать шаг под длину линии (зубцы совпадают с изломами ломаной). */
+    fit?: boolean;
+    /** Рисовать каждый n-й зубец (1 — все). */
+    every?: number;
+    /** Сдвиг первого зубца, доля шага (0.5 — середины звеньев ломаной). */
+    phase?: number;
   };
-  /** Вид самой линии: прямая, ломаная «пила» (траншея), волна. */
-  pattern?: { type: 'zigzag' | 'wave' | 'square'; amplitude: number; wavelength: number };
+  /** Вид самой линии: прямая, ломаная «пила», волна, меандр, петли (спираль). */
+  pattern?: { type: 'zigzag' | 'wave' | 'square' | 'loops'; amplitude: number; wavelength: number };
+  /**
+   * Окончания линии: «крюк» (разграничительные линии), загиб к своим (линия
+   * соприкосновения), засечка «Т» поперёк (рубежи), точка, стрелка.
+   */
+  endCaps?: { type: 'hook' | 'bend' | 'bar' | 'dot' | 'arrow'; size: number; side?: 1 | -1; start?: boolean; end?: boolean };
   /** Засечки на концах линии (положение подразделения на рубеже). */
   endTicks?: { length: number; width: number; side: 1 | -1 };
 }
@@ -120,10 +133,24 @@ export interface LineLabel {
   style: TextStyle;
 }
 
+/** Знаки на линии: стрелка атаки посредине рубежа, ромбы огневого рубежа танков и т.п. */
+export interface LineMark {
+  glyph: string;
+  /** Положения вдоль линии 0..1. */
+  at: number[];
+  size: number;
+  color?: Color;
+  /** Смещение от оси (> 0 — влево по ходу линии, т.е. к противнику при движении слева направо). */
+  offset?: number;
+  /** Поворот знака: «к противнику» (по левой нормали) или вдоль линии. */
+  orient?: 'normal' | 'tangent';
+}
+
 export interface LineStyle {
   smooth: boolean;
   layers: StrokeLayer[];
   labels?: LineLabel[];
+  marks?: LineMark[];
 }
 
 export interface AreaStyle {

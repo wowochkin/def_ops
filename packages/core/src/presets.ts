@@ -9,7 +9,7 @@
 import type {
   ArrowStyle, AreaStyle, LineStyle, SymbolStyle, TextStyle, StrokeLayer, ColorStop, SymbolType, Side,
 } from './model';
-import { USTAV_ARROWS, USTAV_LINES, USTAV_AREAS, USTAV_SYMBOLS, USTAV_LABELS } from './presets-ustav';
+import { STD_ARROWS, STD_LINES, STD_AREAS, STD_SYMBOLS, STD_LABELS } from './presets-std';
 
 export const PALETTE = {
   inf: {
@@ -408,10 +408,10 @@ export function scaleStyle<T>(style: T, k: number): T {
 
 export type PresetKind = 'arrow' | 'line' | 'area' | 'symbol' | 'label';
 // пресеты уставного стиля (знаки с учётом принадлежности: свои/противник/нейтральное)
-Object.assign(ARROW_PRESETS, USTAV_ARROWS);
-Object.assign(LINE_PRESETS, USTAV_LINES);
-Object.assign(AREA_PRESETS, USTAV_AREAS);
-Object.assign(SYMBOL_PRESETS, USTAV_SYMBOLS);
-Object.assign(LABEL_PRESETS, USTAV_LABELS);
+Object.assign(ARROW_PRESETS, STD_ARROWS);
+Object.assign(LINE_PRESETS, STD_LINES);
+Object.assign(AREA_PRESETS, STD_AREAS);
+Object.assign(SYMBOL_PRESETS, STD_SYMBOLS);
+Object.assign(LABEL_PRESETS, STD_LABELS);
 
 export const PRESETS = { arrow: ARROW_PRESETS, line: LINE_PRESETS, area: AREA_PRESETS, symbol: SYMBOL_PRESETS, label: LABEL_PRESETS };

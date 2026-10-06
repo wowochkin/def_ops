@@ -3,7 +3,7 @@
  * берёт его из сервиса документов по id. Масштабируется горизонтально.
  */
 import type { MapDocument } from '@def-ops/core';
-import { migrateDocument, exportSVG, toGeoJSON, fromGeoJSON, PRESETS, LIBRARY, CATEGORIES, STYLES, type GeoJSONCollection, type ImportOptions } from '@def-ops/core';
+import { migrateDocument, exportSVG, toGeoJSON, fromGeoJSON, PRESETS, LIBRARY, CATEGORIES, STYLES, SOURCES, type GeoJSONCollection, type ImportOptions } from '@def-ops/core';
 import { Router, HttpError, reply, serviceClient, type Ctx } from '@def-ops/service-kit';
 
 export function buildRouter(documentsUrl: string): Router {
@@ -22,7 +22,7 @@ export function buildRouter(documentsUrl: string): Router {
   ])));
 
   /** Библиотека знаков: категории, стили, элементы с описаниями и вариантами. */
-  r.get('/library', () => ({ styles: STYLES, categories: CATEGORIES, elements: LIBRARY }));
+  r.get('/library', () => ({ styles: STYLES, categories: CATEGORIES, sources: SOURCES, elements: LIBRARY }));
 
   r.post('/render/svg', async (c) => {
     const b = await c.json<{ document: unknown; layers?: string[]; background?: string | null; padding?: number }>();

@@ -10,7 +10,7 @@ let presetCategory: Map<string, string> | null = null;
 const CATEGORY_ROLE: Record<string, LayerRole | 'side'> = {
   front: 'front', lines: 'front', terrain: 'base', labels: 'labels',
   fortification: 'side', obstacles: 'side', maneuver: 'side', areas: 'side', formations: 'side', command: 'side',
-  fires: 'side', armor: 'side', air: 'side', navy: 'side', crossings: 'side', logistics: 'side', special: 'side',
+  fires: 'side', armor: 'side', air: 'side', navy: 'side', crossings: 'side', logistics: 'side', recon: 'side', special: 'side',
 };
 
 /**
@@ -22,7 +22,7 @@ export function roleForPreset(kind: Feature['kind'], preset = '', side?: Side): 
     presetCategory = new Map();
     for (const e of LIBRARY) for (const p of Object.values(e.variants)) if (!presetCategory.has(p!)) presetCategory.set(p!, e.category);
   }
-  const cat = preset.startsWith('ustav.') ? presetCategory.get(preset) : undefined;
+  const cat = /^(rkka|sa|std)\./.test(preset) ? presetCategory.get(preset) : undefined;
   if (cat) {
     const r = CATEGORY_ROLE[cat] ?? 'side';
     if (r === 'labels') return side === 'enemy' ? 'enemy' : 'labels';
