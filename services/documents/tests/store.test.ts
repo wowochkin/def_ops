@@ -13,8 +13,8 @@ import { PgStore } from '../src/pg-store';
 
 const doc = (name: string): MapDocument => ({ ...emptyDocument([13.4, 52.5], 8), name });
 
-function suite(title: string, make: () => Promise<DocumentStore>, cleanup?: () => Promise<void>) {
-  describe(title, () => {
+function suite(title: string, make: () => Promise<DocumentStore>, cleanup?: () => Promise<void>, skip = false) {
+  (skip ? describe.skip : describe)(title, () => {
     let s: DocumentStore;
     beforeAll(async () => { s = await make(); });
     afterAll(async () => { await cleanup?.(); });
@@ -64,10 +64,10 @@ suite('FileStore', async () => { dir = await fs.mkdtemp(path.join(os.tmpdir(), '
 const url = process.env.DATABASE_URL;
 let pool: Pool;
 const schema = `documents_test_${Math.random().toString(36).slice(2, 8)}`;
-(url ? suite : describe.skip)('PgStore (PostgreSQL)', async () => {
+suite('PgStore (PostgreSQL, нужен DATABASE_URL)', async () => {
   pool = createPool(url);
   const s = new PgStore(pool, schema);
   await s.init();
   await s.init(); // повторный запуск миграций безопасен
   return s;
-}, async () => { await dropSchema(pool, schema); await pool.end(); });
+}, async () => { await dropSchema(pool, schema); await pool.end(); }, !url);
