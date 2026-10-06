@@ -163,6 +163,8 @@ export function MapView(props: Props) {
         const f = stamp(createFeature(tool.kind, tool.preset, { at: ll, text, layerId }, k, tool.side));
         setDoc(insertFeature(doc, f));
         setSelected(f.id);
+        // объект поставлен — к выбору и правке (серия: флажок «серия» в палитре)
+        if (!tool.keep) setTool({ mode: 'select' });
         return;
       }
       if (!draft) {
@@ -212,6 +214,7 @@ export function MapView(props: Props) {
       if (f.kind === 'arrow') f.anchor = draft.anchor;
       setDoc(insertFeature(doc, f));
       setSelected(f.id);
+      if (!tool.keep) setTool({ mode: 'select' });
     }
     setDraft(null);
     setHover(null);

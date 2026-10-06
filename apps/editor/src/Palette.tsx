@@ -27,6 +27,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
   const [q, setQ] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>(() => JSON.parse(load('palette.open', '{"maneuver":true}')));
   const [onlyStyle, setOnlyStyle] = useState(() => load('palette.onlyStyle', '0') === '1');
+  const [series, setSeries] = useState(() => load('palette.series', '0') === '1');
 
   const found = useMemo(() => searchLibrary(q), [q]);
   const groups = useMemo(() => CATEGORIES.map((c) => ({
@@ -37,7 +38,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
   const pick = (e: LibraryElement) => {
     const v = variantFor(e, style);
     const on = tool.mode === 'draw' && tool.preset === v.preset && tool.element === e.id;
-    setTool(on ? { mode: 'select' } : { mode: 'draw', kind: e.kind, preset: v.preset, element: e.id, side: e.sideAware ? side : undefined });
+    setTool(on ? { mode: 'select' } : { mode: 'draw', kind: e.kind, preset: v.preset, element: e.id, side: e.sideAware ? side : undefined, keep: series });
   };
   const searching = q.trim().length > 0;
 
@@ -63,6 +64,12 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
           <button className={`tool-select${tool.mode === 'select' ? ' on' : ''}`} title="Режим выбора и правки (Esc)" onClick={() => setTool({ mode: 'select' })}>⬚ Выбор</button>
           <label className="muted" title="Показывать только знаки, у которых есть выбранное оформление (без подстановки ближайшего)">
             <input type="checkbox" checked={onlyStyle} onChange={(e) => { setOnlyStyle(e.target.checked); save('palette.onlyStyle', e.target.checked ? '1' : '0'); }} /> без замен
+          </label>
+          <label className="muted" title="Серия: после создания объекта знак остаётся выбранным для рисования следующего. Без флажка — после создания переход к выбору и правке">
+            <input type="checkbox" checked={series} onChange={(e) => {
+              setSeries(e.target.checked); save('palette.series', e.target.checked ? '1' : '0');
+              if (tool.mode === 'draw') setTool({ ...tool, keep: e.target.checked });
+            }} /> серия
           </label>
           <a className="muted" href="library.html" target="_blank" rel="noreferrer" title="Справочник: все знаки с описаниями">справочник ↗</a>
         </div>

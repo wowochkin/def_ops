@@ -5,7 +5,7 @@ import { applyGeometryAt } from '@def-ops/core';
 
 export type Tool =
   | { mode: 'select' }
-  | { mode: 'draw'; kind: FeatureKind; preset: string; element?: string; side?: Side };
+  | { mode: 'draw'; kind: FeatureKind; preset: string; element?: string; side?: Side; /** Серия: после создания объекта инструмент не сбрасывается. */ keep?: boolean };
 
 interface History {
   past: MapDocument[];
