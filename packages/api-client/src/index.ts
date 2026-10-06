@@ -2,7 +2,7 @@
  * Клиент API платформы (через шлюз). Работает в браузере и в Node 18+.
  * Используется редактором; его же могут подключать другие модули и системы.
  */
-import type { GeoJSONCollection, Layer, MapDocument } from '@def-ops/core';
+import type { Entity, EntityState, EntityType, Fact, GeoJSONCollection, GeoJSONGeometry, Layer, MapDocument, Side, TimeInstant, TimeSpan } from '@def-ops/core';
 
 export interface DocumentMeta {
   id: string;
@@ -22,6 +22,51 @@ export interface DocumentEvent {
   layerId?: string;
   source?: string;
   at: string;
+}
+
+/** Событие реестра объектов (поток /registry/events). */
+export interface RegistryEvent {
+  type: 'entity.created' | 'entity.updated' | 'entity.deleted' | 'fact.changed';
+  tenant: string;
+  entityId: string;
+  factId?: string;
+  change?: 'created' | 'updated' | 'deleted';
+  source?: string;
+  at: string;
+}
+
+/** Поиск объектов реестра. bbox ([minLon, minLat, maxLon, maxLat]) — только вместе с at. */
+export interface EntityQuery {
+  q?: string;
+  type?: string;
+  side?: Side;
+  at?: TimeInstant;
+  bbox?: [number, number, number, number];
+  limit?: number;
+}
+
+/** Новый объект реестра. */
+export type EntityInput = Pick<Entity, 'type' | 'name'> & Partial<Pick<Entity, 'shortName' | 'side' | 'attrs' | 'existence' | 'source'>>;
+
+/** Изменение объекта: attrs сливаются (null — удалить ключ), null у полей — снять значение; updatedAt — проверка, что объект не меняли. */
+export interface EntityPatch {
+  name?: string;
+  shortName?: string | null;
+  side?: Side | null;
+  attrs?: Record<string, unknown>;
+  existence?: TimeSpan | null;
+  source?: string | null;
+  updatedAt?: string;
+}
+
+/** Факт: временные характеристики и/или положение с момента validFrom. */
+export interface FactInput {
+  validFrom: TimeInstant;
+  validTo?: TimeInstant | null;
+  attrs?: Record<string, unknown>;
+  geometry?: GeoJSONGeometry | null;
+  source?: string | null;
+  note?: string | null;
 }
 
 export class ApiError extends Error {
@@ -100,6 +145,56 @@ export class DefOpsClient {
       this.req<string>('POST', '/render/svg', { document: doc, ...opts }, {}, true),
     geojson: (doc: MapDocument, layers?: string[]) => this.req<GeoJSONCollection>('POST', '/render/geojson', { document: doc, layers }),
     documentSvgUrl: (id: string, layers?: string[]) => `${this.base}/render/documents/${enc(id)}.svg${layers ? `?layers=${layers.map(enc).join(',')}` : ''}`,
+  };
+
+  /** Реестр объектов: формирования, сооружения, населённые пункты; факты во времени. */
+  registry = {
+    types: () => this.req<EntityType[]>('GET', '/registry/types'),
+    /** Создать/изменить тип организации; к встроенному типу можно только добавить поля. */
+    putType: (type: Pick<EntityType, 'id' | 'fields'> & Partial<Pick<EntityType, 'name' | 'description' | 'elements'>>) =>
+      this.req<EntityType>('PUT', `/registry/types/${enc(type.id)}`, type),
+    entities: {
+      /** Поиск; с at — у каждого объекта состояние на момент; с bbox и at — объекты в районе на момент. */
+      list: (q: EntityQuery = {}) => {
+        const p = new URLSearchParams();
+        if (q.q) p.set('q', q.q);
+        if (q.type) p.set('type', q.type);
+        if (q.side) p.set('side', q.side);
+        if (q.at) p.set('at', q.at);
+        if (q.bbox) p.set('bbox', q.bbox.join(','));
+        if (q.limit) p.set('limit', String(q.limit));
+        return this.req<(Entity & { state?: EntityState })[]>('GET', `/registry/entities${p.size ? `?${p}` : ''}`);
+      },
+      get: (id: string, at?: TimeInstant) =>
+        this.req<{ entity: Entity; state?: EntityState }>('GET', `/registry/entities/${enc(id)}${at ? `?at=${enc(at)}` : ''}`),
+      create: (e: EntityInput) => this.req<Entity>('POST', '/registry/entities', e),
+      update: (id: string, patch: EntityPatch) => this.req<Entity>('PATCH', `/registry/entities/${enc(id)}`, patch),
+      /** Удалить объект вместе с фактами. */
+      remove: (id: string) => this.req<void>('DELETE', `/registry/entities/${enc(id)}`),
+    },
+    facts: {
+      list: (entityId: string) => this.req<Fact[]>('GET', `/registry/entities/${enc(entityId)}/facts`),
+      add: (entityId: string, f: FactInput) => this.req<Fact>('POST', `/registry/entities/${enc(entityId)}/facts`, f),
+      update: (entityId: string, factId: string, patch: Partial<FactInput>) =>
+        this.req<Fact>('PATCH', `/registry/entities/${enc(entityId)}/facts/${enc(factId)}`, patch),
+      remove: (entityId: string, factId: string) => this.req<void>('DELETE', `/registry/entities/${enc(entityId)}/facts/${enc(factId)}`),
+    },
+    /** История одной характеристики по фактам. */
+    history: (entityId: string, key: string) =>
+      this.req<{ t: TimeInstant; to?: TimeInstant | null; value: unknown; factId: string }[]>('GET', `/registry/entities/${enc(entityId)}/history?key=${enc(key)}`),
+    /** Состояния многих объектов на момент (для отрисовки знаков карты). Несуществующие id пропускаются. */
+    states: (ids: string[], at: TimeInstant) => this.req<{ states: EntityState[] }>('POST', '/registry/states', { ids, at }),
+    /** Подписка на изменения реестра (Server-Sent Events). Возвращает функцию отписки. */
+    subscribe: (onEvent: (e: RegistryEvent) => void, entityId?: string): (() => void) => {
+      const q = new URLSearchParams();
+      if (entityId) q.set('entityId', entityId);
+      if (this.o.apiKey) q.set('api_key', this.o.apiKey);
+      const es = new EventSource(`${this.base}/registry/events${q.size ? `?${q}` : ''}`);
+      const types: RegistryEvent['type'][] = ['entity.created', 'entity.updated', 'entity.deleted', 'fact.changed'];
+      const h = (m: MessageEvent) => { try { onEvent(JSON.parse(m.data)); } catch { /* */ } };
+      types.forEach((t) => es.addEventListener(t, h as EventListener));
+      return () => es.close();
+    },
   };
 
   /** Библиотека знаков: стили, категории, элементы с описаниями. */

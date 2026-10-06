@@ -13,6 +13,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/api-client/package.json packages/api-client/
 COPY services/documents/package.json services/documents/
 COPY services/render/package.json services/render/
+COPY services/registry/package.json services/registry/
 COPY services/gateway/package.json services/gateway/
 COPY apps/editor/package.json apps/editor/
 RUN npm ci --no-audit --no-fund

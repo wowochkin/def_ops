@@ -21,6 +21,11 @@ tags:
   - name: layers
   - name: render
   - name: events
+  - name: registry
+    description: |
+      Реестр объектов (формирования, сооружения, населённые пункты, операции) и факты во времени.
+      Момент — строка ISO 8601 (`1945-04-25`, `1945-04-25T06:00`), без пояса — UTC; период — [from, to).
+      Моменты в ответах приводятся к каноническому виду (UTC без пояса). Подробно — docs/data-model.md.
 paths:
   /health:
     get:
@@ -172,6 +177,142 @@ paths:
         '200':
           description: 'event: document.created | document.updated | document.deleted | layer.updated | layer.features.replaced'
           content: { text/event-stream: { schema: { $ref: '#/components/schemas/DocumentEvent' } } }
+  /registry/types:
+    get:
+      tags: [registry]
+      summary: Типы объектов (встроенные — с добавленными организацией полями — и собственные типы организации)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/EntityType' } } } } }
+  /registry/types/{typeId}:
+    parameters: [{ name: typeId, in: path, required: true, schema: { type: string, pattern: '^[a-z][a-z0-9_-]{0,63}$' } }]
+    put:
+      tags: [registry]
+      summary: Создать или изменить тип организации
+      description: |
+        Для встроенного типа (formation, structure, place, operation) можно только добавить поля:
+        встроенные поля передавать не обязательно, изменить их нельзя (422); имя и описание
+        встроенного типа не меняются. Набор добавленных полей заменяется переданным.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EntityTypeInput' } } } }
+      responses:
+        '200': { description: Тип с учётом встроенных полей, content: { application/json: { schema: { $ref: '#/components/schemas/EntityType' } } } }
+        '422': { $ref: '#/components/responses/Error' }
+  /registry/entities:
+    get:
+      tags: [registry]
+      summary: Поиск объектов; с at — с состоянием на момент; с bbox и at — объекты в районе на момент
+      parameters:
+        - { name: q, in: query, schema: { type: string }, description: Наименование, краткое обозначение или номер (без учёта регистра) }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: side, in: query, schema: { type: string, enum: [own, enemy, neutral] } }
+        - { $ref: '#/components/parameters/at' }
+        - { name: bbox, in: query, schema: { type: string }, description: 'minLon,minLat,maxLon,maxLat (WGS84); только вместе с at — иначе 400. Отбираются объекты, чьё положение на момент at (последний действующий факт с геометрией) пересекает прямоугольник' }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 500, default: 50 } }
+      responses:
+        '200':
+          description: Объекты по наименованию; с at у каждого есть state
+          content: { application/json: { schema: { type: array, items: { allOf: [{ $ref: '#/components/schemas/Entity' }, { type: object, properties: { state: { $ref: '#/components/schemas/EntityState' } } }] } } } }
+        '400': { $ref: '#/components/responses/Error' }
+    post:
+      tags: [registry]
+      summary: Создать объект (постоянные характеристики проверяются по схеме типа)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EntityInput' } } } }
+      responses:
+        '201': { description: Создан, content: { application/json: { schema: { $ref: '#/components/schemas/Entity' } } } }
+        '422': { $ref: '#/components/responses/Error' }
+  /registry/entities/{entityId}:
+    parameters: [{ $ref: '#/components/parameters/entityId' }]
+    get:
+      tags: [registry]
+      summary: Объект; с at — и его состояние на момент
+      parameters: [{ $ref: '#/components/parameters/at' }]
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { type: object, required: [entity], properties: { entity: { $ref: '#/components/schemas/Entity' }, state: { $ref: '#/components/schemas/EntityState' } } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [registry]
+      summary: Изменить постоянные характеристики
+      description: |
+        attrs сливаются с текущими (null — удалить ключ); null у shortName, side, existence, source — снять значение.
+        Тип объекта не меняется. Если передан updatedAt и он не совпадает с текущим — 409.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EntityPatch' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Entity' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [registry]
+      summary: Удалить объект вместе с фактами
+      responses: { '204': { description: Удалён }, '404': { $ref: '#/components/responses/Error' } }
+  /registry/entities/{entityId}/facts:
+    parameters: [{ $ref: '#/components/parameters/entityId' }]
+    get:
+      tags: [registry]
+      summary: Все факты объекта по времени (validFrom)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Fact' } } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    post:
+      tags: [registry]
+      summary: Добавить факт (временные характеристики и/или положение с даты)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FactInput' } } } }
+      responses:
+        '201': { description: Добавлен, content: { application/json: { schema: { $ref: '#/components/schemas/Fact' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /registry/entities/{entityId}/facts/{factId}:
+    parameters: [{ $ref: '#/components/parameters/entityId' }, { name: factId, in: path, required: true, schema: { type: string, format: uuid } }]
+    patch:
+      tags: [registry]
+      summary: Исправить факт (переданные поля заменяются целиком, null — снять)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FactPatch' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Fact' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [registry]
+      summary: Удалить факт
+      responses: { '204': { description: Удалён }, '404': { $ref: '#/components/responses/Error' } }
+  /registry/entities/{entityId}/history:
+    parameters: [{ $ref: '#/components/parameters/entityId' }]
+    get:
+      tags: [registry]
+      summary: История одной характеристики
+      parameters: [{ name: key, in: query, required: true, schema: { type: string } }]
+      responses:
+        '200':
+          description: Значения по моментам появления
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object, properties: { t: { type: string }, to: { type: [string, 'null'] }, value: {}, factId: { type: string } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /registry/states:
+    post:
+      tags: [registry]
+      summary: Состояния многих объектов на момент (для отрисовки знаков карты); несуществующие id пропускаются
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [ids, at], properties: { ids: { type: array, items: { type: string, format: uuid }, maxItems: 5000 }, at: { type: string } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { states: { type: array, items: { $ref: '#/components/schemas/EntityState' } } } } } } }
+        '400': { $ref: '#/components/responses/Error' }
+  /registry/events:
+    get:
+      tags: [registry, events]
+      summary: Поток событий реестра (Server-Sent Events)
+      parameters: [{ name: entityId, in: query, schema: { type: string } }, { name: api_key, in: query, schema: { type: string } }]
+      responses:
+        '200':
+          description: 'event: entity.created | entity.updated | entity.deleted | fact.changed'
+          content: { text/event-stream: { schema: { $ref: '#/components/schemas/RegistryEvent' } } }
 components:
   securitySchemes:
     apiKey: { type: apiKey, in: header, name: X-Api-Key }
@@ -180,6 +321,8 @@ components:
     layerId: { name: layerId, in: path, required: true, schema: { type: string } }
     ifMatch: { name: If-Match, in: header, schema: { type: string }, description: 'Ожидаемая ревизия, например "3"' }
     layers: { name: layers, in: query, schema: { type: string }, description: 'Список id слоёв через запятую' }
+    entityId: { name: entityId, in: path, required: true, schema: { type: string, format: uuid } }
+    at: { name: at, in: query, schema: { type: string }, description: 'Момент ISO 8601: 1945-04-25 или 1945-04-25T06:00 (без пояса — UTC)' }
   responses:
     Error:
       description: Ошибка
@@ -267,5 +410,136 @@ components:
         documentId: { type: string }
         revision: { type: integer }
         layerId: { type: string }
+        source: { type: string }
+        at: { type: string, format: date-time }
+    TimeSpan:
+      type: object
+      description: Период [from, to); null — без ограничения
+      properties: { from: { type: [string, 'null'] }, to: { type: [string, 'null'] } }
+    Geometry:
+      type: object
+      description: Геометрия GeoJSON в WGS84 (Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon)
+      required: [type, coordinates]
+      properties:
+        type: { type: string, enum: [Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon] }
+        coordinates: { type: array }
+    FieldDef:
+      type: object
+      required: [key, label, type]
+      properties:
+        key: { type: string, pattern: '^[A-Za-z_][A-Za-z0-9_]{0,63}$' }
+        label: { type: string }
+        type: { type: string, enum: [string, text, integer, number, boolean, date, enum, ref] }
+        temporal: { type: boolean, description: Значение меняется во времени — задаётся фактами }
+        required: { type: boolean }
+        unit: { type: string }
+        options: { type: array, items: { type: object, required: [value, label], properties: { value: { type: string }, label: { type: string } } } }
+        refType: { type: string, description: Для ref — тип объекта, на который ссылается поле }
+        description: { type: string }
+    EntityType:
+      type: object
+      required: [id, name, description, fields]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        fields: { type: array, items: { $ref: '#/components/schemas/FieldDef' } }
+        builtin: { type: boolean }
+        elements: { type: array, items: { type: string }, description: Элементы библиотеки знаков для объектов этого типа }
+    EntityTypeInput:
+      type: object
+      required: [fields]
+      properties:
+        name: { type: string, description: Обязательно для собственного типа }
+        description: { type: string }
+        fields: { type: array, items: { $ref: '#/components/schemas/FieldDef' } }
+        elements: { type: array, items: { type: string } }
+    Entity:
+      type: object
+      required: [id, type, name, attrs]
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string }
+        name: { type: string, description: 'Полное наименование: «150-я стрелковая Идрицкая дивизия»' }
+        shortName: { type: string, description: 'Краткое обозначение: «150 сд»' }
+        side: { type: string, enum: [own, enemy, neutral] }
+        attrs: { type: object, additionalProperties: true, description: Постоянные характеристики (поля без temporal) }
+        existence: { $ref: '#/components/schemas/TimeSpan' }
+        source: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    EntityInput:
+      type: object
+      required: [type, name]
+      properties:
+        type: { type: string }
+        name: { type: string }
+        shortName: { type: string }
+        side: { type: string, enum: [own, enemy, neutral] }
+        attrs: { type: object, additionalProperties: true }
+        existence: { $ref: '#/components/schemas/TimeSpan' }
+        source: { type: string }
+    EntityPatch:
+      type: object
+      properties:
+        name: { type: string }
+        shortName: { type: [string, 'null'] }
+        side: { type: [string, 'null'], enum: [own, enemy, neutral, null] }
+        attrs: { type: object, additionalProperties: true, description: Сливаются с текущими; null — удалить ключ }
+        existence: { oneOf: [{ $ref: '#/components/schemas/TimeSpan' }, { type: 'null' }] }
+        source: { type: [string, 'null'] }
+        updatedAt: { type: string, format: date-time, description: Ожидаемая отметка изменения (иначе 409) }
+    Fact:
+      type: object
+      required: [id, entityId, validFrom, validTo, attrs]
+      properties:
+        id: { type: string, format: uuid }
+        entityId: { type: string, format: uuid }
+        validFrom: { type: string }
+        validTo: { type: [string, 'null'], description: Не включительно; null — бессрочно }
+        attrs: { type: object, additionalProperties: true, description: 'Временные характеристики с validFrom; null — значение снято' }
+        geometry: { $ref: '#/components/schemas/Geometry' }
+        source: { type: string }
+        note: { type: string }
+        createdAt: { type: string, format: date-time }
+    FactInput:
+      type: object
+      required: [validFrom]
+      description: Нужны attrs и/или geometry; geometry null — то же, что без геометрии (факт не меняет положение)
+      properties:
+        validFrom: { type: string }
+        validTo: { type: [string, 'null'] }
+        attrs: { type: object, additionalProperties: true }
+        geometry: { oneOf: [{ $ref: '#/components/schemas/Geometry' }, { type: 'null' }] }
+        source: { type: [string, 'null'] }
+        note: { type: [string, 'null'] }
+    FactPatch:
+      type: object
+      description: Переданные поля заменяются целиком (attrs — тоже); после правки факт проверяется заново
+      properties:
+        validFrom: { type: string }
+        validTo: { type: [string, 'null'] }
+        attrs: { type: object, additionalProperties: true }
+        geometry: { oneOf: [{ $ref: '#/components/schemas/Geometry' }, { type: 'null' }] }
+        source: { type: [string, 'null'] }
+        note: { type: [string, 'null'] }
+    EntityState:
+      type: object
+      required: [entityId, at, exists, attrs, geometry, from]
+      properties:
+        entityId: { type: string }
+        at: { type: string }
+        exists: { type: boolean, description: Существует ли объект на момент (по existence) }
+        attrs: { type: object, additionalProperties: true, description: Постоянные и временные характеристики на момент }
+        geometry: { oneOf: [{ $ref: '#/components/schemas/Geometry' }, { type: 'null' }] }
+        from: { type: object, additionalProperties: { type: string }, description: Для временной характеристики — id факта, из которого взято значение }
+    RegistryEvent:
+      type: object
+      properties:
+        type: { type: string, enum: [entity.created, entity.updated, entity.deleted, fact.changed] }
+        tenant: { type: string }
+        entityId: { type: string }
+        factId: { type: string }
+        change: { type: string, enum: [created, updated, deleted] }
         source: { type: string }
         at: { type: string, format: date-time }

@@ -28,6 +28,12 @@ services:
     environment: { SERVICE: render, PORT: "8102", DOCUMENTS_URL: http://documents:8101 }
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8102/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
+  registry:
+    build: *build
+    environment: { SERVICE: registry, PORT: "8103", STORAGE: postgres, DATABASE_URL: *db-url }
+    depends_on: { db: { condition: service_healthy } }
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8103/ready"], interval: 10s, timeout: 3s, retries: 5 }
+
   gateway:
     build: *build
     environment:
@@ -35,6 +41,7 @@ services:
       PORT: "8080"
       DOCUMENTS_URL: http://documents:8101
       RENDER_URL: http://render:8102
+      REGISTRY_URL: http://registry:8103
       STATIC_DIR: /app/apps/editor/dist
       # AUTH=keys — обязательные API-ключи; формат API_KEYS: "ключ:организация,ключ2:организация2"
       AUTH: ${AUTH:-open}
@@ -43,6 +50,7 @@ services:
     depends_on:
       documents: { condition: service_healthy }
       render: { condition: service_healthy }
+      registry: { condition: service_healthy }
 
 volumes:
   db-data:

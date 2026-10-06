@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/registry-service",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Сервис реестра объектов: формирования, сооружения, населённые пункты; факты во времени, состояние на момент, поиск по району",
+  "scripts": { "start": "tsx src/main.ts", "dev": "tsx watch src/main.ts" },
+  "dependencies": { "@def-ops/core": "*", "@def-ops/db": "*", "@def-ops/service-kit": "*" }
+}
