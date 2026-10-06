@@ -17,6 +17,7 @@ import { type Tool, insertFeature, updateFeature, commitAt } from './store';
 import { findSnap, controlPoints, translateFeature, arrowWidthHandles, widthFromHandle } from './geometry';
 import type { BasemapSpec, MapEngine, PointerInfo } from './engine/types';
 import { ENGINES, DEFAULT_ENGINE } from './engine/registry';
+import { ScaleBar } from './ScaleBar';
 
 interface Props {
   doc: MapDocument;
@@ -423,6 +424,7 @@ export function MapView(props: Props) {
         <g ref={worldRef} transform={transform} className={drawing ? 'nohit' : 'hit'} />
       </svg>
       <svg className="handles">{handles}</svg>
+      <ScaleBar engine={mapRef.current} tick={tick} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ask, askText } from './dialogs';
-import type { MapDocument, GeoJSONCollection } from '@def-ops/core';
+import type { MapDocument, GeoJSONCollection, MapSource } from '@def-ops/core';
 import { emptyDocument, newId, migrateDocument, toGeoJSON, fromGeoJSON, zoomFactor, documentAt, type TimeInstant } from '@def-ops/core';
 import { DefOpsClient, ApiError, type DocumentMeta } from '@def-ops/api-client';
 import { useHistory, removeFeature, insertFeature, type Tool } from './store';
@@ -9,6 +9,7 @@ import { Palette } from './Palette';
 import { Inspector } from './Inspector';
 import { LayersPanel } from './LayersPanel';
 import { Timeline } from './Timeline';
+import { MapsPanel, cartography } from './MapsPanel';
 import { ZonesContext, zoneAt, type InputZone, type Zones } from './time';
 import { EntityPanel, type RegistryApi } from './EntityPanel';
 import { translateFeature } from './geometry';
@@ -80,7 +81,14 @@ export function App() {
   /** Документ в том виде, в каком он последний раз сохранён на сервере / получен с него. */
   const syncedRef = useRef<MapDocument | null>(null);
 
-  const basemaps = useMemo(() => [...BUILTIN_BASEMAPS, ...customBasemaps], [customBasemaps]);
+  /** Офлайн-режим: только локальные карты (сервис картографии), без интернет-подложек. */
+  const [offline, setOffline] = useState(() => localStorage.getItem('def_ops.offline') === '1');
+  const [localMaps, setLocalMaps] = useState<MapSource[]>([]);
+  const localBasemaps: BasemapSpec[] = useMemo(() => localMaps.map((m) => ({
+    id: `local-${m.id}`, name: `${m.name}${m.date ? ` (${m.date})` : ''}`, tiles: [cartography.tileTemplate(m)], tileSize: m.tileSize,
+    attribution: m.attribution, maxzoom: m.maxzoom,
+  })), [localMaps]);
+  const basemaps = useMemo(() => [...localBasemaps, ...(offline ? [] : [...BUILTIN_BASEMAPS, ...customBasemaps])], [localBasemaps, customBasemaps, offline]);
   const basemap = basemaps.find((b) => b.id === basemapId) ?? null;
 
   // автосохранение в браузере
@@ -266,11 +274,15 @@ export function App() {
             setBasemapId(v);
           }}>
             <option value="none">нет (бумага)</option>
-            {basemaps.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            <option value="__add">+ своя (XYZ / WMS)…</option>
+            {localBasemaps.length > 0 && <optgroup label="Локальные (офлайн)">{localBasemaps.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</optgroup>}
+            {!offline && <optgroup label="Интернет">{[...BUILTIN_BASEMAPS, ...customBasemaps].map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</optgroup>}
+            {!offline && <option value="__add">+ своя (XYZ / WMS)…</option>}
           </select>
         </label>
         {basemap && <input type="range" min={0} max={1} step={0.05} value={basemapOpacity} onChange={(e) => setBasemapOpacity(+e.target.value)} title="Прозрачность подложки" />}
+        <label className="inl" title="Офлайн: только локальные карты, без обращений в интернет">
+          <input type="checkbox" checked={offline} onChange={(e) => { setOffline(e.target.checked); try { localStorage.setItem('def_ops.offline', e.target.checked ? '1' : '0'); } catch { /* */ } if (e.target.checked && !basemapId.startsWith('local-')) setBasemapId('none'); }} /> офлайн
+        </label>
         <label className="inl">Бумага <input type="color" value={doc.paper} onChange={(e) => set({ ...doc, paper: e.target.value }, 'paper')} /></label>
         <span className="status">{status}</span>
       </header>
@@ -323,6 +335,8 @@ export function App() {
               <li>Ctrl+Z / Ctrl+Shift+Z, Ctrl+D — дублировать, Del — удалить, Ctrl+S — на сервер.</li>
             </ul>
           </div>}
+        <MapsPanel online={server.status === 'online' && server.services?.cartography === 'up'} doc={doc} selected={sel} engine={engine}
+          onShow={(m) => setBasemapId(`local-${m.id}`)} onMaps={setLocalMaps} notify={setNotice} />
         <LayersPanel doc={doc} setDoc={set} selected={selected} setSelected={setSelected}
           selectedOverlay={selectedOverlay} setSelectedOverlay={setSelectedOverlay}
           activeLayer={activeLayer} setActiveLayer={setActiveLayer} engine={engine} />

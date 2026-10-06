@@ -192,3 +192,28 @@ table.attrs .src-in { font-size: 11.5px; }
 .moment-in input { min-width: 0; }
 .zone-btn { font-size: 11px; padding: 1px 5px; border: 1px solid #ccc; border-radius: 3px; background: #f4f4f2; cursor: pointer; white-space: nowrap; }
 .zone-hint { font-size: 10.5px; white-space: nowrap; }
+
+/* масштаб */
+.scalebar { position: absolute; right: 52px; bottom: 98px; display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.88); border: 1px solid #ccc; border-radius: 4px; padding: 2px 6px; font-size: 11.5px; z-index: 4; font-variant-numeric: tabular-nums; }
+.scalebar .sb-num { font: inherit; font-weight: 700; border: none; background: none; cursor: pointer; padding: 0 2px; }
+.scalebar .sb-menu { position: absolute; bottom: 100%; right: 0; background: #fff; border: 1px solid #ccc; border-radius: 4px; display: flex; flex-direction: column; margin-bottom: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.scalebar .sb-menu button { font: inherit; border: none; background: none; padding: 3px 10px; text-align: left; cursor: pointer; }
+.scalebar .sb-menu button:hover { background: #eef4fd; }
+
+/* локальные карты */
+.maps { border-top: 1px solid var(--line); font-size: 12px; }
+.maps > .sec-h { padding: 6px 10px; }
+.maps .pad { padding: 2px 10px 6px; }
+.maps .row-btns { display: flex; gap: 4px; font-weight: 400; }
+.maps .mapitem { padding: 4px 10px; border-top: 1px solid #eee; }
+.maps .mi-h { display: flex; flex-direction: column; }
+.maps .mi-btns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; align-items: center; }
+.maps .mi-btns button, .maps .btnlink { font-size: 11.5px; padding: 1px 6px; }
+.maps .btnlink { border: 1px solid #ccc; border-radius: 3px; text-decoration: none; color: inherit; background: #fff; }
+.maps .job { display: flex; align-items: center; gap: 6px; padding: 3px 10px; }
+.maps .job progress { flex: 1; min-width: 0; }
+.maps .xyzform { padding: 6px 10px; background: #f7f9fc; border-top: 1px solid #e3e8f0; }
+.maps .xyzform input { min-width: 0; width: 100%; }
+.maps .xyzform input[type=number] { width: 56px; }
+.maps .scan2map { padding: 6px 10px; border-top: 1px dashed #ddd; }
+.maps .err { color: #b3261e; }

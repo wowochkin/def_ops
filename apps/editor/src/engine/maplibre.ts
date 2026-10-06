@@ -39,7 +39,7 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
   });
   map.touchPitch.disable();
   map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: false }), 'bottom-right');
-  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+  // масштаб (линейка и численный) рисует редактор — ScaleBar
 
   const restyle = () => {
     map.setStyle(buildStyle(paper, basemap, opacity));
