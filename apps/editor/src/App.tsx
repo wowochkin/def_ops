@@ -8,6 +8,7 @@ import { Palette } from './Palette';
 import { Inspector } from './Inspector';
 import { LayersPanel } from './LayersPanel';
 import { Timeline } from './Timeline';
+import { EntityPanel, type RegistryApi } from './EntityPanel';
 import { translateFeature } from './geometry';
 import { download, exportPNG, svgWithFonts } from './exporting';
 import type { BasemapSpec, MapEngine } from './engine/types';
@@ -28,6 +29,20 @@ function loadInitial(): MapDocument {
 function loadInitialTime(): TimeInstant | null {
   try { return localStorage.getItem(STORAGE + '.time') || null; } catch { return null; }
 }
+
+/** Реестр через клиент API (в форме, нужной панели объекта). */
+const registryApi: RegistryApi = {
+  types: () => api.registry.types(),
+  search: async (q, o = {}) => (await api.registry.entities.list({ q: q || undefined, type: o.type, at: o.at ?? undefined, limit: o.limit }))
+    .map(({ state, ...entity }) => ({ entity, state })),
+  get: (id, at) => api.registry.entities.get(id, at ?? undefined),
+  create: (e) => api.registry.entities.create(e),
+  update: (id, patch) => api.registry.entities.update(id, patch),
+  facts: (id) => api.registry.facts.list(id),
+  addFact: (id, f) => api.registry.facts.add(id, f),
+  removeFact: (id, factId) => api.registry.facts.remove(id, factId),
+  subscribe: (fn) => api.registry.subscribe(fn),
+};
 
 type ServerState = { status: 'unknown' | 'online' | 'offline'; services?: Record<string, string> };
 
@@ -281,7 +296,8 @@ export function App() {
         )}
       </main>
       <aside className="right">
-        {sel ? <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} time={time} setTime={setTime} />
+        {sel ? <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} time={time} setTime={setTime}
+          extra={<EntityPanel api={server.status === 'online' && server.services?.registry === 'up' ? registryApi : null} doc={doc} setDoc={set} feature={sel} time={time} />} />
           : <div className="help">
             <h3>Как работать</h3>
             <ul>
