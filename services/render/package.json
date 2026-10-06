@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/render-service",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Сервис рендера: SVG карты/слоёв, GeoJSON, импорт, каталог условных знаков. Без состояния.",
+  "scripts": { "start": "tsx src/main.ts", "dev": "tsx watch src/main.ts" },
+  "dependencies": { "@def-ops/core": "*", "@def-ops/service-kit": "*" }
+}

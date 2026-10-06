@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/core",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Движок тактических знаков: модель документа, слои, геопривязка, SVG-рендер, GeoJSON. Без зависимостей от окружения.",
+  "exports": { ".": "./src/index.ts" },
+  "types": "./src/index.ts"
+}

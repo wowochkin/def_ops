@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/gateway",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "API-шлюз: единая точка входа, API-ключи организаций, маршрутизация к сервисам, CORS, статика редактора",
+  "scripts": { "start": "tsx src/main.ts", "dev": "tsx watch src/main.ts" },
+  "dependencies": { "@def-ops/service-kit": "*" }
+}

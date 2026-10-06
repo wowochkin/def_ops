@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/documents-service",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Сервис документов: хранение карт, ревизии, слои, события изменений",
+  "scripts": { "start": "tsx src/main.ts", "dev": "tsx watch src/main.ts" },
+  "dependencies": { "@def-ops/core": "*", "@def-ops/service-kit": "*" }
+}

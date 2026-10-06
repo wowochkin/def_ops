@@ -1,0 +1,10 @@
+{
+  "name": "@def-ops/api-client",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Типизированный клиент API платформы (через шлюз)",
+  "exports": { ".": "./src/index.ts" },
+  "types": "./src/index.ts",
+  "dependencies": { "@def-ops/core": "*" }
+}

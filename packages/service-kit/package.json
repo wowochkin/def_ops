@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/service-kit",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Общий каркас микросервисов: HTTP-роутинг, JSON, ошибки, журналы, health, организация (tenant), межсервисные вызовы",
+  "exports": { ".": "./src/index.ts" },
+  "types": "./src/index.ts"
+}

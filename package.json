@@ -1,32 +1,27 @@
 {
   "name": "def-ops",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Тактическая карта: движок отрисовки военно-исторических знаков и редактор",
+  "description": "Тактическая карта: движок военно-исторических знаков, редактор и микросервисы",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@fontsource/pt-sans-narrow": "^5.3.0",
-    "@fontsource/pt-serif": "^5.3.0",
-    "@fontsource/roboto-condensed": "^5.3.0",
-    "maplibre-gl": "^6.12.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "dev": "npm run dev -w @def-ops/editor",
+    "dev:services": "node scripts/dev-services.mjs",
+    "build": "npm run build -w @def-ops/editor",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "start": "npm run build && STATIC_DIR=apps/editor/dist node scripts/dev-services.mjs"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
+    "@types/node": "^22.0.0",
     "playwright": "^1.63.0",
+    "tsx": "^4.20.0",
     "typescript": "^7.0.2",
-    "vite": "^8.3.3",
     "vitest": "^5.0.3"
   }
 }

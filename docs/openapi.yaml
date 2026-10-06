@@ -1,0 +1,266 @@
+openapi: 3.1.0
+info:
+  title: Платформа тактических карт — API
+  version: 0.2.0
+  description: |
+    Единая точка входа — API-шлюз. Все запросы требуют заголовок `X-Api-Key`
+    (ключ определяет организацию; данные организаций изолированы).
+    Для потока событий (EventSource) ключ можно передать параметром `api_key`.
+
+    Заголовок `X-Source-System` (необязательный) — имя внешней системы,
+    сделавшей изменение; попадает в события.
+
+    Оптимистичная блокировка: ответы с документом содержат `ETag: "<ревизия>"`;
+    при изменении передайте `If-Match: "<ревизия>"` — при расхождении вернётся 409.
+servers:
+  - url: http://localhost:8080/api
+security:
+  - apiKey: []
+tags:
+  - name: documents
+  - name: layers
+  - name: render
+  - name: events
+paths:
+  /health:
+    get:
+      summary: Состояние сервисов платформы
+      security: []
+      responses:
+        '200': { description: Все сервисы доступны }
+        '503': { description: Часть сервисов недоступна }
+  /documents:
+    get:
+      tags: [documents]
+      summary: Список карт организации
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/DocumentMeta' } } } }
+    post:
+      tags: [documents]
+      summary: Создать карту (документы версии 1 мигрируются автоматически)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MapDocument' } } } }
+      responses:
+        '201': { description: Создана, content: { application/json: { schema: { $ref: '#/components/schemas/MapDocument' } } } }
+        '422': { $ref: '#/components/responses/Error' }
+  /documents/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get:
+      tags: [documents]
+      summary: Получить карту
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MapDocument' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    put:
+      tags: [documents]
+      summary: Сохранить карту целиком
+      parameters: [{ $ref: '#/components/parameters/ifMatch' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MapDocument' } } } }
+      responses:
+        '200': { description: Сохранена (новая ревизия) }
+        '409': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [documents]
+      summary: Удалить карту
+      responses: { '204': { description: Удалена }, '404': { $ref: '#/components/responses/Error' } }
+  /documents/{id}/revisions:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get:
+      tags: [documents]
+      summary: История ревизий
+      responses: { '200': { description: OK } }
+  /documents/{id}/revisions/{rev}:
+    parameters: [{ $ref: '#/components/parameters/id' }, { name: rev, in: path, required: true, schema: { type: integer } }]
+    get:
+      tags: [documents]
+      summary: Карта в состоянии на ревизию
+      responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/Error' } }
+  /documents/{id}/layers:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get:
+      tags: [layers]
+      summary: Слои карты (снизу вверх)
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Layer' } } } } } }
+    post:
+      tags: [layers]
+      summary: Создать слой (например, слой внешней системы с source.readOnly)
+      requestBody: { content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/LayerPatch' }, { type: object, properties: { above: { type: string, description: id слоя, над которым вставить } } }] } } } }
+      responses: { '201': { description: Создан } }
+  /documents/{id}/layers/{layerId}:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layerId' }]
+    patch:
+      tags: [layers]
+      summary: Изменить слой (видимость, блокировка, прозрачность, имя, назначение)
+      parameters: [{ $ref: '#/components/parameters/ifMatch' }]
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/LayerPatch' } } } }
+      responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/Error' } }
+    delete:
+      tags: [layers]
+      summary: Удалить слой
+      parameters: [{ name: moveTo, in: query, schema: { type: string }, description: Перенести объекты в этот слой (иначе удалить) }]
+      responses: { '200': { description: OK }, '409': { $ref: '#/components/responses/Error' } }
+  /documents/{id}/layers/{layerId}/features:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layerId' }]
+    get:
+      tags: [layers]
+      summary: Объекты слоя в GeoJSON
+      responses: { '200': { description: OK, content: { application/geo+json: { schema: { $ref: '#/components/schemas/FeatureCollection' } } } } }
+    put:
+      tags: [layers]
+      summary: Заменить объекты слоя данными из GeoJSON (подача слоя внешней системой)
+      description: |
+        Геометрия без `properties.defops` превращается в знаки по умолчанию
+        (Point с name → надпись, Point → населённый пункт, LineString → рубеж,
+        Polygon → район). С `properties.defops` знак восстанавливается полностью.
+      requestBody: { required: true, content: { application/geo+json: { schema: { $ref: '#/components/schemas/FeatureCollection' } } } }
+      responses: { '200': { description: OK }, '422': { $ref: '#/components/responses/Error' } }
+  /render/svg:
+    post:
+      tags: [render]
+      summary: SVG по документу из тела запроса (слои — группами Inkscape)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document]
+              properties:
+                document: { $ref: '#/components/schemas/MapDocument' }
+                layers: { type: array, items: { type: string } }
+                background: { type: [string, 'null'] }
+                padding: { type: number }
+      responses: { '200': { description: SVG, content: { image/svg+xml: {} } } }
+  /render/geojson:
+    post:
+      tags: [render]
+      summary: GeoJSON по документу из тела запроса
+      responses: { '200': { description: OK } }
+  /render/documents/{id}.svg:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layers' }]
+    get:
+      tags: [render]
+      summary: SVG сохранённой карты (по умолчанию — видимые слои)
+      responses: { '200': { description: SVG, content: { image/svg+xml: {} } } }
+  /render/documents/{id}.geojson:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layers' }]
+    get:
+      tags: [render]
+      summary: GeoJSON сохранённой карты
+      responses: { '200': { description: OK } }
+  /import/geojson:
+    post:
+      tags: [render]
+      summary: Добавить объекты из GeoJSON в документ (без сохранения)
+      responses: { '200': { description: 'Обновлённый документ и id добавленных объектов: { doc, added }' } }
+  /presets:
+    get:
+      tags: [render]
+      summary: Каталог условных знаков (пресеты по типам и стилям)
+      responses: { '200': { description: OK } }
+  /events:
+    get:
+      tags: [events]
+      summary: Поток событий изменений (Server-Sent Events)
+      parameters: [{ name: documentId, in: query, schema: { type: string } }, { name: api_key, in: query, schema: { type: string } }]
+      responses:
+        '200':
+          description: 'event: document.created | document.updated | document.deleted | layer.updated | layer.features.replaced'
+          content: { text/event-stream: { schema: { $ref: '#/components/schemas/DocumentEvent' } } }
+components:
+  securitySchemes:
+    apiKey: { type: apiKey, in: header, name: X-Api-Key }
+  parameters:
+    id: { name: id, in: path, required: true, schema: { type: string, pattern: '^[a-zA-Z0-9_-]{1,64}$' } }
+    layerId: { name: layerId, in: path, required: true, schema: { type: string } }
+    ifMatch: { name: If-Match, in: header, schema: { type: string }, description: 'Ожидаемая ревизия, например "3"' }
+    layers: { name: layers, in: query, schema: { type: string }, description: 'Список id слоёв через запятую' }
+  responses:
+    Error:
+      description: Ошибка
+      content:
+        application/json:
+          schema: { type: object, properties: { error: { type: object, properties: { code: { type: string }, message: { type: string } } } } }
+  schemas:
+    LngLat: { type: array, items: { type: number }, minItems: 2, maxItems: 2, description: '[долгота, широта], WGS84' }
+    DocumentMeta:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        revision: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        layers: { type: integer }
+        features: { type: integer }
+    Layer:
+      type: object
+      required: [id, name, role, visible, locked, opacity]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [base, front, friendly, enemy, labels, custom] }
+        visible: { type: boolean }
+        locked: { type: boolean }
+        opacity: { type: number, minimum: 0, maximum: 1 }
+        source:
+          type: [object, 'null']
+          properties: { system: { type: string }, ref: { type: string }, readOnly: { type: boolean } }
+        meta: { type: object, additionalProperties: true }
+    LayerPatch:
+      type: object
+      properties:
+        name: { type: string }
+        role: { type: string }
+        visible: { type: boolean }
+        locked: { type: boolean }
+        opacity: { type: number }
+        source: { type: [object, 'null'] }
+        meta: { type: object }
+    Feature:
+      type: object
+      description: Знак карты. Поля зависят от kind; полное описание — packages/core/src/model.ts.
+      required: [id, kind, layerId, style]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [arrow, line, area, symbol, label] }
+        layerId: { type: string }
+        preset: { type: string }
+        name: { type: string }
+        points: { type: array, items: { $ref: '#/components/schemas/LngLat' } }
+        at: { $ref: '#/components/schemas/LngLat' }
+        anchor: { type: [object, 'null'], properties: { featureId: { type: string }, t: { type: number } } }
+        text: { type: string }
+        style: { type: object }
+    MapDocument:
+      type: object
+      required: [version, name, refZoom, origin, layers, features, overlays]
+      properties:
+        version: { type: integer, enum: [2] }
+        id: { type: string }
+        revision: { type: integer }
+        name: { type: string }
+        refZoom: { type: number, description: 'Опорный масштаб: размеры знаков — в пикселях на этом зуме' }
+        origin: { $ref: '#/components/schemas/LngLat' }
+        paper: { type: string }
+        view: { type: object }
+        layers: { type: array, items: { $ref: '#/components/schemas/Layer' } }
+        features: { type: array, items: { $ref: '#/components/schemas/Feature' } }
+        overlays: { type: array, items: { type: object } }
+    FeatureCollection:
+      type: object
+      required: [type, features]
+      properties:
+        type: { const: FeatureCollection }
+        features: { type: array, items: { type: object } }
+        layers: { type: array, items: { $ref: '#/components/schemas/Layer' } }
+    DocumentEvent:
+      type: object
+      properties:
+        type: { type: string }
+        tenant: { type: string }
+        documentId: { type: string }
+        revision: { type: integer }
+        layerId: { type: string }
+        source: { type: string }
+        at: { type: string, format: date-time }

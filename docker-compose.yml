@@ -1,0 +1,32 @@
+# Платформа целиком: docker compose up --build → http://localhost:8080
+# Наружу открыт только шлюз; сервисы общаются во внутренней сети.
+services:
+  documents:
+    build: { context: ., dockerfile: deploy/Dockerfile }
+    environment: { SERVICE: documents, PORT: "8101", DATA_DIR: /data/documents }
+    volumes: [documents-data:/data]
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8101/ready"], interval: 10s, timeout: 3s, retries: 5 }
+
+  render:
+    build: { context: ., dockerfile: deploy/Dockerfile }
+    environment: { SERVICE: render, PORT: "8102", DOCUMENTS_URL: http://documents:8101 }
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8102/ready"], interval: 10s, timeout: 3s, retries: 5 }
+
+  gateway:
+    build: { context: ., dockerfile: deploy/Dockerfile }
+    environment:
+      SERVICE: gateway
+      PORT: "8080"
+      DOCUMENTS_URL: http://documents:8101
+      RENDER_URL: http://render:8102
+      STATIC_DIR: /app/apps/editor/dist
+      # AUTH=keys — обязательные API-ключи; формат API_KEYS: "ключ:организация,ключ2:организация2"
+      AUTH: ${AUTH:-open}
+      API_KEYS: ${API_KEYS:-}
+    ports: ["8080:8080"]
+    depends_on:
+      documents: { condition: service_healthy }
+      render: { condition: service_healthy }
+
+volumes:
+  documents-data:
