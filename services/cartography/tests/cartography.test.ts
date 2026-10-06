@@ -8,6 +8,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import tar from 'tar-stream';
+import { DatabaseSync } from 'node:sqlite';
 import {
   georefFromCorners, mercator, pixelToLngLat, formatScale, scaleDenominator, tileCount, tileOf,
   type LngLat, type MapJob, type MapSource,
@@ -17,7 +18,7 @@ import { PgRepo } from '../src/pg-repo';
 import { USER_AGENT, tilesOf } from '../src/xyz';
 import { coverageKey } from '../src/coverage';
 import {
-  QUADRANTS, alphaStats, fakeTileServer, near, pixel, quadrantImage, startService, waitJob,
+  QUADRANTS, alphaStats, fakeTileServer, near, pixel, quadrantImage, startService, tilePng, waitJob,
   type FakeTileServer, type Running,
 } from './helpers';
 
@@ -491,6 +492,40 @@ function behaviour(name: string, setup: Setup, skip = false) {
       await expect(fs.stat(dir)).rejects.toThrow();
       // задание остаётся в истории
       expect(((await get(`/cartography/jobs?mapId=${scan.id}`)).body as MapJob[]).length).toBeGreaterThan(0);
+    });
+
+    /* ------------------------- архивы других программ ------------------------- */
+    it('архив MBTiles: карта с уровнями и охватом из содержимого; мусор — 422 без следов', async () => {
+      const file = path.join(run.store.root, '..', `t-${Math.random().toString(36).slice(2)}.mbtiles`);
+      const db = new DatabaseSync(file);
+      db.exec('create table metadata (name text, value text); create table tiles (zoom_level int, tile_column int, tile_row int, tile_data blob)');
+      db.prepare("insert into metadata values ('name', 'Из MBTiles')").run();
+      const at = locate([13.4, 52.5], 12);
+      db.prepare('insert into tiles values (?, ?, ?, ?)').run(12, at.x, (1 << 12) - 1 - at.y, await tilePng(12, at.x, at.y));
+      db.close();
+      const buf = await fs.readFile(file);
+      await fs.rm(file, { force: true });
+      const r = await raw('/cartography/maps/import-archive?date=1945&attribution=' + encodeURIComponent('архив'), { method: 'POST', body: bin(buf), headers: { 'Content-Type': 'application/vnd.sqlite3' } });
+      expect(r.status).toBe(201);
+      const { map } = await r.json() as { map: MapSource };
+      expect(map).toMatchObject({ kind: 'package', name: 'Из MBTiles', date: '1945', attribution: 'архив', minzoom: 12, maxzoom: 12, stats: { tiles: 1 } });
+      expect((await tileBytes(map.id, 12, at.x, at.y)).status).toBe(200);
+      const before = ((await get('/cartography/maps')).body as MapSource[]).length;
+      const bad = await raw('/cartography/maps/import-archive', { method: 'POST', body: bin(Buffer.alloc(4096, 1)) });
+      expect(bad.status).toBe(422);
+      expect(((await get('/cartography/maps')).body as MapSource[]).length).toBe(before);
+    });
+
+    it('разбор OziExplorer .map (Windows-1251)', async () => {
+      const text = 'OziExplorer Map Data File Version 2.2\r\nКарта\r\nscan.jpg\r\n1 ,Map Code,\r\nWGS 84,WGS 84,0,0,WGS 84\r\n'
+        + 'Point01,xy,0,0,in, deg,52,36,N,13,12,E, grid\r\nPoint02,xy,100,0,in, deg,52,36,N,13,36,E, grid\r\nPoint03,xy,100,80,in, deg,52,24,N,13,36,E, grid\r\n';
+      const cp1251 = Buffer.from(text.split('').map((ch) => { const c = ch.charCodeAt(0); return c >= 0x410 && c <= 0x44f ? c - 0x350 : c; }));
+      const r = await raw('/cartography/parse/ozi-map', { method: 'POST', body: bin(cp1251), headers: { 'Content-Type': 'text/plain' } });
+      expect(r.status).toBe(200);
+      const m = await r.json() as { title: string; imageFile: string; points: unknown[] };
+      expect(m).toMatchObject({ title: 'Карта', imageFile: 'scan.jpg' });
+      expect(m.points).toHaveLength(3);
+      expect((await raw('/cartography/parse/ozi-map', { method: 'POST', body: 'hello' })).status).toBe(422);
     });
   });
 }

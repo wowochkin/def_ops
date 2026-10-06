@@ -38,6 +38,7 @@ main { position: relative; min-width: 0; min-height: 0; }
 .pal-search { width: 100%; }
 .pal-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; font-size: 12px; }
 .pal-row a { text-decoration: none; }
+.pal-row { flex-wrap: wrap; row-gap: 4px; }
 .pal-row > * { white-space: nowrap; }
 .pal-row .tool-select { padding-left: 6px; padding-right: 6px; }
 .tool-select { text-align: left; }

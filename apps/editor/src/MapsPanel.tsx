@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import {
-  tileCount, validBBox, type BBox, type Feature, type ImageOverlay, type LngLat, type MapDocument, type MapJob, type MapSource,
+  parseOziMap, tileCount, validBBox, type BBox, type ControlPoint, type Feature, type ImageOverlay, type LngLat, type MapDocument, type MapJob, type MapSource,
 } from '@def-ops/core';
 import type { MapEngine } from './engine/types';
 import { ask } from './dialogs';
@@ -37,9 +37,14 @@ export const cartography = {
   cancel: (id: string) => req<MapJob>('POST', `/jobs/${id}/cancel`),
   downloadXyz: (id: string, r: { url: string; bounds: BBox; minzoom: number; maxzoom: number; rate?: number; headers?: Record<string, string> }) =>
     req<MapJob>('POST', `/maps/${id}/import/xyz`, r),
-  uploadRaster: (id: string, image: Blob, georef: { corners?: [LngLat, LngLat, LngLat, LngLat] }) =>
+  uploadRaster: (id: string, image: Blob, georef: { corners?: [LngLat, LngLat, LngLat, LngLat]; controlPoints?: ControlPoint[] }) =>
     req<MapJob>('POST', `/maps/${id}/import/raster?georef=${encodeURIComponent(JSON.stringify(georef))}`, undefined, image, image.type || 'image/png'),
   importPackage: (file: Blob) => req<{ map: MapSource; job: MapJob }>('POST', '/maps/import-package', undefined, file, 'application/x-tar'),
+  /** Тайловый архив других программ: .sqlitedb (RMaps / Locus / OsmAnd) или .mbtiles. */
+  importArchive: (file: Blob, o: { name?: string; file?: string; date?: string; attribution?: string } = {}) => {
+    const q = new URLSearchParams(Object.entries(o).filter(([, v]) => v) as [string, string][]);
+    return req<{ map: MapSource; job: MapJob }>('POST', `/maps/import-archive${q.size ? `?${q}` : ''}`, undefined, file, 'application/vnd.sqlite3');
+  },
   packageUrl: (id: string) => `${API}/maps/${id}/package`,
   tileTemplate: (m: MapSource) => `${location.origin}${API}/maps/${m.id}/tiles/{z}/{x}/{y}.${m.format}`,
   subscribe: (fn: (type: string, data: unknown) => void) => {
@@ -122,11 +127,12 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onMaps, notif
         <span>Локальные карты <span className="muted" title="Хранятся на сервере платформы, работают без интернета">(офлайн)</span></span>
         <span className="row-btns">
           <button onClick={() => setForm(form === 'xyz' ? null : 'xyz')} title="Скачать тайлы карты из интернет-источника в локальное хранилище">+ скачать</button>
-          <label className="filebtn" title="Импорт пакета карты (.tar), выгруженного на другой установке">пакет
-            <input type="file" accept=".tar,application/x-tar" onChange={async (e) => {
-              const f = e.target.files?.[0]; e.target.value = '';
-              if (!f) return;
-              try { await cartography.importPackage(f); notify('Пакет принят — идёт импорт'); reload(); } catch (x) { setErr((x as Error).message); }
+          <label className="filebtn" title="Загрузить карту из файла: пакет платформы (.tar), Locus / RMaps / OsmAnd (.sqlitedb), MBTiles (.mbtiles) или OziExplorer — файл привязки .map вместе с изображением карты (выберите оба)">из файла
+            <input type="file" multiple accept=".tar,.sqlitedb,.mbtiles,.map,.jpg,.jpeg,.png,.tif,.tiff,.webp" onChange={async (e) => {
+              const files = [...(e.target.files ?? [])]; e.target.value = '';
+              if (!files.length) return;
+              setErr(null);
+              try { notify(await importFiles(files)); reload(); } catch (x) { setErr((x as Error).message); }
             }} />
           </label>
         </span>
@@ -239,3 +245,48 @@ function ScanToMap({ overlays, onError, onDone }: { overlays: ImageOverlay[]; on
 }
 
 const bboxOf = (c: LngLat[]): BBox => [Math.min(...c.map((p) => p[0])), Math.min(...c.map((p) => p[1])), Math.max(...c.map((p) => p[0])), Math.max(...c.map((p) => p[1]))];
+
+/* ----------------------------- загрузка из файлов ----------------------------- */
+const ext = (f: File) => f.name.toLowerCase().split('.').pop() ?? '';
+const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'tif', 'tiff', 'webp'];
+const IMAGE_MIME: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', tif: 'image/tiff', tiff: 'image/tiff', webp: 'image/webp' };
+
+/** Текст .map: UTF-8, а если не читается — Windows-1251 (обычная кодировка OziExplorer). */
+async function readMapText(f: File): Promise<string> {
+  const buf = await f.arrayBuffer();
+  const utf = new TextDecoder('utf-8').decode(buf);
+  return utf.includes('\uFFFD') ? new TextDecoder('windows-1251').decode(buf) : utf;
+}
+
+/** Загрузить выбранные файлы карты; возвращает сообщение для пользователя. */
+async function importFiles(files: File[]): Promise<string> {
+  const maps = files.filter((f) => ext(f) === 'map');
+  const done: string[] = [];
+  for (const f of files) {
+    const e = ext(f);
+    if (e === 'tar') { await cartography.importPackage(f); done.push(`пакет «${f.name}»`); }
+    if (e === 'sqlitedb' || e === 'mbtiles') {
+      const r = await cartography.importArchive(f, { file: f.name.replace(/\.[^.]+$/, '') });
+      done.push(`«${r.map.name}»: ${r.map.stats?.tiles ?? 0} тайлов, уровни ${r.map.minzoom}–${r.map.maxzoom}`);
+    }
+  }
+  for (const mf of maps) {
+    const ozi = parseOziMap(await readMapText(mf));
+    const base = (n: string) => n.toLowerCase().replace(/\.[^.]+$/, '');
+    const image = files.find((f) => IMAGE_EXT.includes(ext(f)) && (f.name.toLowerCase() === ozi.imageFile.toLowerCase() || base(f.name) === base(ozi.imageFile) || base(f.name) === base(mf.name)))
+      ?? (files.filter((f) => IMAGE_EXT.includes(ext(f))).length === 1 ? files.find((f) => IMAGE_EXT.includes(ext(f))) : undefined);
+    if (!image) {
+      if (/\.ozf[234]?$/i.test(ozi.imageFile)) throw new Error(`«${mf.name}»: изображение карты в формате OziExplorer (${ozi.imageFile}) не читается — нужен тот же скан в JPG, PNG или TIFF`);
+      throw new Error(`«${mf.name}»: выберите вместе с ним изображение карты (${ozi.imageFile})`);
+    }
+    const name = ozi.title || base(mf.name);
+    const lng = ozi.points.map((p) => p.lngLat[0]), lat = ozi.points.map((p) => p.lngLat[1]);
+    const m = await cartography.create({ name, format: 'png', tileSize: 256, minzoom: 8, maxzoom: 16, bounds: [Math.min(...lng), Math.min(...lat), Math.max(...lng), Math.max(...lat)], description: `OziExplorer: ${mf.name}, датум ${ozi.datum}` });
+    const r = await cartography.uploadRaster(m.id, new Blob([image], { type: IMAGE_MIME[ext(image)] }), { controlPoints: ozi.points }) as unknown as { georef?: { rmsMeters: number } };
+    done.push(`«${name}»: привязка по ${ozi.points.length} точкам${r.georef ? `, невязка ${r.georef.rmsMeters.toFixed(1)} м` : ''} — идёт нарезка${ozi.warnings.length ? `. ${ozi.warnings.join('; ')}` : ''}`);
+  }
+  const unknown = files.filter((f) => !['tar', 'sqlitedb', 'mbtiles', 'map', ...IMAGE_EXT].includes(ext(f)));
+  if (unknown.length) done.push(`пропущено: ${unknown.map((f) => f.name).join(', ')}`);
+  if (!done.length) throw new Error('Изображение карты без файла привязки: нарезать скан можно с .map (OziExplorer) или как подложку-изображение с углами');
+  return `Загружено: ${done.join('; ')}`;
+}

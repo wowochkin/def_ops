@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 import type { MapJob, MapSource } from '@def-ops/core';
-import { formatScale, metersPerPixel, scaleBar, scaleDenominator, tileCount } from '@def-ops/core';
+import { formatScale, metersPerPixel, parseOziMap, scaleBar, scaleDenominator, tileCount } from '@def-ops/core';
 import { Router, HttpError, reply, type Ctx } from '@def-ops/service-kit';
 import type { MapRepo } from './repo';
 import type { EventBus } from './events';
@@ -13,6 +13,7 @@ import { downloadXyz, type XyzOptions } from './xyz';
 import { planRaster, tileRaster } from './raster';
 import { coverageKey, maskedTile, tileRelation, transparentPng } from './coverage';
 import { exportPackage, importPackage, mapFromPackage } from './package';
+import { importArchive, mapFromArchive } from './archive';
 import { PATCHABLE, WORLD, asObject, buildMap, intParam, isUuid, rasterRequest, xyzRequest } from './validate';
 
 export interface CartographyOptions {
@@ -137,6 +138,75 @@ export function buildRouter(d: Deps): Router {
     if (error instanceof HttpError) throw error;
     if (res.status === 'cancelled') throw new HttpError(409, 'cancelled', 'Импорт пакета отменён');
     throw new HttpError(422, 'invalid', `Пакет не загружен: ${res.message ?? 'ошибка'}`);
+  });
+
+  /**
+   * Тайловый архив SQLite из других программ: .sqlitedb (RMaps / Locus Map / OsmAnd)
+   * или .mbtiles. Тело — сам файл; ?name=&date=&attribution= — подпись карты,
+   * ?file= — имя файла (имя карты, если в архиве его нет).
+   * Уровни, охват и формат определяются по содержимому. Ответ — когда импорт закончен.
+   */
+  r.post('/cartography/maps/import-archive', async (c) => {
+    checkLength(c, o.maxPackageBytes, 'Архив');
+    const { file, stream } = await store.uploadTarget();
+    const drop = () => fs.rm(file, { force: true });
+    let size = 0;
+    const limit = new Transform({
+      transform(chunk: Buffer, _e, cb) {
+        size += chunk.length;
+        if (size > o.maxPackageBytes) cb(new HttpError(413, 'payload_too_large', `Архив больше ${Math.round(o.maxPackageBytes / 1048576)} МБ (MAX_PACKAGE_MB)`));
+        else cb(null, chunk);
+      },
+    });
+    try { await pipeline(c.req, limit, stream); } catch (e) {
+      await drop();
+      throw e instanceof HttpError ? e : new HttpError(400, 'upload_failed', `Архив не получен: ${(e as Error).message}`);
+    }
+    if (!size) { await drop(); throw new HttpError(400, 'bad_request', 'Пустое тело запроса: ожидается файл .sqlitedb или .mbtiles'); }
+
+    const id = crypto.randomUUID();
+    const now = stamp();
+    const q = (k: string) => c.query.get(k)?.trim() || undefined;
+    let created: MapSource | null = null;
+    let error: unknown;
+    const job = await jobs.create(c.tenant, id, 'package-import');
+    const res = await jobs.runNow(c.tenant, job, async (ctx) => {
+      try {
+        created = await repo.createMap(c.tenant, buildMap({ name: q('name') ?? q('file') ?? 'Импортированная карта', date: q('date') ?? null, attribution: q('attribution') }, {
+          id, kind: 'package', format: 'png', tileSize: 256, minzoom: 0, maxzoom: 18, bounds: WORLD,
+          coverage: null, opacity: 1, sourceUrl: null, controlPoints: null, stats: { tiles: 0, bytes: 0 }, createdAt: now, updatedAt: now,
+        }));
+        changed(c.tenant, created, 'map.created');
+        const r = await importArchive(ctx, store, id, file);
+        created = await refreshMap(c.tenant, id, (m) => ({
+          ...mapFromArchive(r),
+          // имя: заданное явно → записанное в архиве → имя файла
+          name: q('name') ?? r.info.name ?? m.name,
+          attribution: q('attribution') ?? r.info.attribution ?? m.attribution,
+          description: m.description ?? r.info.description ?? `Импорт ${r.info.format === 'mbtiles' ? 'MBTiles' : 'RMaps/Locus (.sqlitedb)'}`,
+        }));
+        return { message: `Загружено тайлов: ${r.tiles}${r.errors ? `, отброшено: ${r.errors}` : ''}` };
+      } catch (e) { error = e; throw e; }
+    });
+    await drop();
+    if (res.status === 'done' && created) return reply(201, { map: created, job: res });
+    await store.removeMap(c.tenant, id);
+    if (created && (await repo.deleteMap(c.tenant, id))) changed(c.tenant, created, 'map.deleted');
+    if (error instanceof HttpError) throw error;
+    if (res.status === 'cancelled') throw new HttpError(409, 'cancelled', 'Импорт архива отменён');
+    throw new HttpError(422, 'invalid', `Архив не загружен: ${res.message ?? 'ошибка'}`);
+  });
+
+  /** Разбор привязки OziExplorer (.map, текст в теле): опорные точки в WGS 84 для нарезки скана. */
+  r.post('/cartography/parse/ozi-map', async (c) => {
+    const parts: Buffer[] = [];
+    let n = 0;
+    for await (const ch of c.req) { n += (ch as Buffer).length; if (n > 1 << 20) throw new HttpError(413, 'payload_too_large', 'Файл .map больше 1 МБ'); parts.push(ch as Buffer); }
+    const buf = Buffer.concat(parts);
+    // .map обычно в Windows-1251; если UTF-8 не читается — декодируем как 1251
+    let text = buf.toString('utf8');
+    if (text.includes('\uFFFD')) text = new TextDecoder('windows-1251').decode(buf);
+    try { return parseOziMap(text); } catch (e) { throw new HttpError(422, 'invalid', (e as Error).message); }
   });
 
   r.get('/cartography/maps/:id', (c) => load(c));

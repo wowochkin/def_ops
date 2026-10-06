@@ -13,6 +13,7 @@ export * from './geojson';
 export * from './temporal';
 export * from './registry';
 export * from './cartography';
+export * from './ozi';
 export { renderDocument, renderFeature, createContext, exportSVG } from './render/index';
 export type { RenderResult, RenderedFeature, RenderedLayer, RenderOptions } from './render/index';
 export { arrowGeometry, arrowAxisPoints } from './render/arrow';

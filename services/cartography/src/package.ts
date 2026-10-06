@@ -39,12 +39,13 @@ export async function exportPackage(res: http.ServerResponse, store: TileStore, 
   res.on('close', () => { closed = true; });
   const add = (name: string, data: Buffer, mtime = new Date()) => new Promise<void>((resolve, reject) =>
     pack.entry({ name, size: data.length, mtime, mode: 0o644 }, data, (e) => (e ? reject(e) : resolve())));
-  await add('map.json', Buffer.from(JSON.stringify(packageMeta(map), null, 2)));
+  // время в заголовках — от данных, а не от момента выгрузки: пакет одной карты всегда одинаков байт в байт
+  await add('map.json', Buffer.from(JSON.stringify(packageMeta(map), null, 2)), new Date(map.updatedAt ?? 0));
   for await (const t of store.walk(tenant, map.id)) {
     if (closed) break;
     let data: Buffer;
     try { data = await fs.readFile(t.file); } catch { continue; }
-    await add(`tiles/${t.z}/${t.x}/${t.y}.${t.ext}`, data);
+    await add(`tiles/${t.z}/${t.x}/${t.y}.${t.ext}`, data, new Date(Math.floor(t.mtimeMs)));
     if (res.writableNeedDrain) await Promise.race([once(res, 'drain'), once(res, 'close')]);
   }
   pack.finalize();
