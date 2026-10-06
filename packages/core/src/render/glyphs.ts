@@ -333,7 +333,7 @@ export const GLYPHS: Record<string, Glyph> = {
   },
 };
 
-// уставные знаки по первоисточникам (РККА 1942–45 и СА 1967–83)
+// уставные знаки по первоисточникам (РККА 1942–45, TM 30-430)
 Object.assign(GLYPHS, STD_GLYPHS);
 
 export function glyphCtx(st: SymbolStyle, fontAttrs: (t: TextStyle) => string): GlyphCtx {

@@ -18,7 +18,7 @@ const save = (k: string, v: string) => { try { localStorage.setItem(k, v); } cat
 export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => void }) {
   const [style, setStyle] = useState<StyleId>(() => {
     const v = load('palette.style', 'rkka');
-    return (STYLES.some((s) => s.id === v) ? v : v === 'ustav' ? 'sa' : 'rkka') as StyleId;
+    return (STYLES.some((s) => s.id === v) ? v : 'rkka') as StyleId;
   });
   const [side, setSide] = useState<Side>(() => load('palette.side', 'own') as Side);
   const [q, setQ] = useState('');

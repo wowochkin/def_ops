@@ -1,14 +1,10 @@
 /**
  * Уставные точечные знаки, перерисованные по первоисточникам:
  *  [TM] — Handbook on USSR Military Forces, TM 30-430, ch. XII (War Department, 1946) —
- *         система тактических знаков РККА периода войны (1942–1945);
- *  [СА] — Помбрик И.Д., Шевченко Н.А. «Рабочая карта командира» (1967), БУСВ ч. II (1983)
- *         (по таблице Ю. Веремеева) и «Основные условные обозначения, применяемые
- *         в боевых документах» — послевоенная система Советской Армии.
+ *         система тактических знаков РККА периода войны (1942–1945).
  *
  * Локальные координаты: точка привязки (0, 0), размер s, «вперёд» (к противнику) — вверх (−Y).
  * Для флажков точка привязки — основание древка; для остальных — центр знака
- * (правило из [СА]: «для флажков — нижняя часть штока, для стрелок — передний конец»).
  */
 import type { GlyphCtx } from './glyphs';
 import { f2, esc } from './context';
@@ -33,15 +29,6 @@ const T = (x: number, y: number, text: string, size: number, g: GlyphCtx, anchor
 const head = (x: number, y: number, a: number, len: number, g: GlyphCtx) => {
   const dx = Math.sin(a), dy = -Math.cos(a), px = -dy, py = dx, w = len * 0.42;
   return F(`M${n(x)} ${n(y)}L${n(x - dx * len + px * w)} ${n(y - dy * len + py * w)}L${n(x - dx * len - px * w)} ${n(y - dy * len - py * w)}Z`, g);
-};
-/** Молния (радио): зигзаг со стрелкой, снизу вверх от (x, y). */
-const bolt = (x: number, y: number, h: number, g: GlyphCtx) =>
-  P(`M${n(x)} ${n(y)}L${n(x + h * 0.22)} ${n(y - h * 0.45)}L${n(x - h * 0.05)} ${n(y - h * 0.45)}L${n(x + h * 0.2)} ${n(y - h * 0.9)}`, g) + head(x + h * 0.24, y - h, 0.45, h * 0.28, g);
-/** Поперечные черточки (число = ступень: 1 — взвод, 2 — рота, 3 — батальон). */
-const bars = (x: number, y0: number, count: number, len: number, step: number, g: GlyphCtx) => {
-  let d = '';
-  for (let i = 0; i < count; i++) d += `M${n(x - len / 2)} ${n(y0 - i * step)}L${n(x + len / 2)} ${n(y0 - i * step)}`;
-  return d ? P(d, g) : '';
 };
 
 /* ---------------------------- флажки штабов ---------------------------- */
@@ -73,20 +60,6 @@ function flag(g: GlyphCtx, shape: FlagShape, opts: { half?: boolean; cpTriangle?
   return out;
 }
 
-/* ---------------------------- оружие [СА] ---------------------------- */
-/** Ствол с основанием «=» (знак орудия [СА]): тыл (0, s·0.25), дуло (0, −s·0.75). */
-function gunBase(g: GlyphCtx): { out: string; muzzle: number } {
-  const s = g.s, muzzle = -s * 0.75;
-  return {
-    out: L(0, s * 0.25, 0, muzzle, g) + L(-s * 0.12, s * 0.12, -s * 0.12, -s * 0.12, g) + L(s * 0.12, s * 0.12, s * 0.12, -s * 0.12, g),
-    muzzle,
-  };
-}
-/** Черточки калибра у дула (поперёк ствола). */
-const caliber = (y: number, count: number, g: GlyphCtx) => bars(0, y, count, g.s * 0.26, g.s * 0.11, g);
-/** «<» у дула — противотанковое средство. */
-const atMark = (y: number, g: GlyphCtx) => P(`M${n(-g.s * 0.2)} ${n(y - g.s * 0.22)}L0 ${n(y)}L${n(g.s * 0.2)} ${n(y - g.s * 0.22)}`, g);
-
 /* ------------------------ орудия, миномёты [TM] ------------------------ */
 /** Знак артиллерийского орудия РККА: вертикальная черта с боковыми черточками. */
 function tmGun(g: GlyphCtx, kind: 'gun76' | 'gunMed' | 'gunHeavy' | 'howitzer' | 'howHeavy' | 'mountain'): string {
@@ -117,24 +90,6 @@ function tmMortar(g: GlyphCtx, cal: 50 | 82 | 120): string {
 const rhomb = (g: GlyphCtx, fill = g.fill, s = g.s) => PF(`M0 ${n(-s / 2)}L${n(s * 0.3)} 0L0 ${n(s / 2)}L${n(-s * 0.3)} 0Z`, g, fill);
 
 /* ------------------------------- реестр ------------------------------- */
-const gunsSA: Record<string, Glyph> = {};
-for (let k = 0; k <= 3; k++) {
-  gunsSA[`saGun${k}`] = (g) => { const b = gunBase(g); return b.out + caliber(b.muzzle, k, g); };
-  gunsSA[`saAtGun${k}`] = (g) => { const b = gunBase(g); return b.out + caliber(b.muzzle + g.s * 0.08, k, g) + atMark(b.muzzle - (k ? 0 : 0), g); };
-  gunsSA[`saMortar${k}`] = (g) => {
-    const s = g.s, r = s * 0.17;
-    let out = C(0, 0, r, g) + L(-r * 0.7, r * 0.7, -s * 0.32, s * 0.38, g) + L(r * 0.7, r * 0.7, s * 0.32, s * 0.38, g);
-    if (k > 0) out += L(0, -r, 0, -s * 0.5, g) + caliber(-s * 0.5, k - 1 + (k > 1 ? 1 : 0), g);
-    return out;
-  };
-  gunsSA[`saMrl${k}`] = (g) => {
-    const s = g.s, a = s * 0.18;
-    let out = R(-a, -a, 2 * a, 2 * a, g, 'none') + L(-a, a, -s * 0.32, s * 0.42, g) + L(a, a, s * 0.32, s * 0.42, g);
-    if (k > 0) out += L(0, -a, 0, -s * 0.5, g) + caliber(-s * 0.5, k - 1, g);
-    return out;
-  };
-}
-
 export const STD_GLYPHS: Record<string, Glyph> = {
   /* ===================== пункты управления ===================== */
   // [TM XII-7] штабы по ступеням
@@ -148,19 +103,7 @@ export const STD_GLYPHS: Record<string, Glyph> = {
   rkkaHqRegimentCav: (g) => flag(g, 'rect', { half: true }),
   rkkaHqBattalion: (g) => flag(g, 'pennant'),
   rkkaCp: (g) => flag(g, 'rect', { cpTriangle: true }),
-  // [СА] пункт управления полка, КНП батальона (треугольный флажок)
-  saCpRegiment: (g) => flag(g, 'rect'),
-  saCpBattalion: (g) => flag(g, 'pennant', { text: '' }),
-  /** КНП роты (две черточки) / взвода (одна) [СА]: треугольник с древком. */
-  saCpCompany: (g) => {
-    const s = g.s;
-    return PF(`M0 ${n(-s * 0.45)}L${n(s * 0.3)} ${n(s * 0.08)}L${n(-s * 0.3)} ${n(s * 0.08)}Z`, g) + L(0, -s * 0.45, 0, -s * 0.95, g) + bars(0, -s * 0.72, 2, s * 0.32, s * 0.12, g);
-  },
-  saCpPlatoon: (g) => {
-    const s = g.s;
-    return PF(`M0 ${n(-s * 0.45)}L${n(s * 0.3)} ${n(s * 0.08)}L${n(-s * 0.3)} ${n(s * 0.08)}Z`, g) + L(0, -s * 0.45, 0, -s * 0.85, g) + bars(0, -s * 0.7, 1, s * 0.32, 0, g);
-  },
-  /** НП: треугольник; внутри — буква вида (А, В, И, Т, Х) [СА], номер — запасной НП [TM]. */
+  /** НП: треугольник; номер — запасной НП [TM XII-7]. */
   stdOp: (g) => {
     const s = g.s;
     return PF(`M0 ${n(-s * 0.5)}L${n(s * 0.48)} ${n(s * 0.32)}L${n(-s * 0.48)} ${n(s * 0.32)}Z`, g) + (g.text ? T(0, s * 0.22, g.text, s * 0.42, g) : '');
@@ -170,8 +113,6 @@ export const STD_GLYPHS: Record<string, Glyph> = {
     const s = g.s;
     return PF(`M0 ${n(-s * 0.5)}L${n(s * 0.48)} ${n(s * 0.32)}L${n(-s * 0.48)} ${n(s * 0.32)}Z`, g) + C(0, s * 0.05, s * 0.07, g, g.color, 0);
   },
-  /** Пост регулирования (Р), КПП, КТП, комендантский пост (К) [СА]. */
-  saTraffic: (g) => C(0, 0, g.s / 2, g, g.fill) + T(0, g.s * 0.17, g.text ?? 'Р', g.s * (g.text && g.text.length > 1 ? 0.3 : 0.48), g),
   /** Пост регулирования движения [TM XII-17]: главный — флажок над жирным кружком. */
   rkkaTrafficMain: (g) => {
     const s = g.s;
@@ -181,38 +122,11 @@ export const STD_GLYPHS: Record<string, Glyph> = {
     const s = g.s;
     return C(0, 0, s * 0.22, g, g.fill) + C(0, 0, s * 0.04, g, g.color, 0) + L(-s * 0.22, -s * 0.05, -s * 0.22, -s * 0.8, g) + P(`M${n(-s * 0.22)} ${n(-s * 0.8)}L${n(s * 0.2)} ${n(-s * 0.65)}L${n(-s * 0.22)} ${n(-s * 0.5)}`, g);
   },
-  /** Узел связи: полевой — кружок, стационарный — кружок с хордой [СА]. */
-  saCommsNode: (g) => C(0, 0, g.s / 2, g, g.fill),
-  saCommsNodeFixed: (g) => C(0, 0, g.s / 2, g, g.fill) + L(-g.s * 0.43, g.s * 0.22, g.s * 0.43, g.s * 0.22, g),
-  /** Радиостанции [СА]: подвижная — треугольник, переносная — круг, в танке — ромб; сверху молния. */
-  saRadio: (g) => PF(`M0 ${n(-g.s * 0.15)}L${n(g.s * 0.3)} ${n(g.s * 0.42)}L${n(-g.s * 0.3)} ${n(g.s * 0.42)}Z`, g) + bolt(0, -g.s * 0.15, g.s * 0.6, g),
-  saRadioPortable: (g) => C(0, g.s * 0.18, g.s * 0.25, g, g.fill) + bolt(0, -g.s * 0.07, g.s * 0.6, g),
-  saRadioTank: (g) => PF(`M${n(-g.s * 0.38)} ${n(g.s * 0.2)}L0 ${n(-g.s * 0.02)}L${n(g.s * 0.38)} ${n(g.s * 0.2)}L0 ${n(g.s * 0.42)}Z`, g) + bolt(0, -g.s * 0.02, g.s * 0.55, g),
-  saRadioReceiver: (g) => R(-g.s * 0.45, 0, g.s * 0.9, g.s * 0.36, g) + T(0, g.s * 0.28, g.text ?? '', g.s * 0.28, g) + bolt(0, 0, g.s * 0.55, g),
   /** Узел передачи донесений [TM XII-12]: кружок со стрелками в обе стороны. */
   rkkaMessageCenter: (g) => C(0, 0, g.s * 0.2, g, g.fill) + L(-g.s * 0.2, 0, -g.s * 0.5, 0, g) + L(g.s * 0.2, 0, g.s * 0.5, 0, g) + head(-g.s * 0.55, 0, -Math.PI / 2, g.s * 0.14, g) + head(g.s * 0.55, 0, Math.PI / 2, g.s * 0.14, g),
   rkkaTelegraph: (g) => C(0, 0, g.s * 0.22, g, g.color, 0),
 
   /* ===================== стрелковое оружие и артиллерия ===================== */
-  // [СА] пулемёты, гранатомёты, ПТРК, огнемёты
-  saLmg: (g) => L(0, g.s * 0.4, 0, -g.s * 0.4, g) + bars(0, -g.s * 0.4, 1, g.s * 0.3, 0, g),
-  saHmg: (g) => L(0, g.s * 0.4, 0, -g.s * 0.4, g) + bars(0, -g.s * 0.4, 2, g.s * 0.3, g.s * 0.1, g),
-  saHmgHeavy: (g) => L(0, g.s * 0.4, 0, -g.s * 0.3, g) + P(`M${n(-g.s * 0.3)} ${n(-g.s * 0.55)}A${n(g.s * 0.32)} ${n(g.s * 0.3)} 0 0 1 ${n(g.s * 0.3)} ${n(-g.s * 0.55)}`, g),
-  saRpg: (g) => L(0, g.s * 0.4, 0, -g.s * 0.4, g) + bars(0, -g.s * 0.12, 1, g.s * 0.26, 0, g) + atMark(-g.s * 0.4, g),
-  saSpg9: (g) => L(0, g.s * 0.4, 0, -g.s * 0.4, g) + bars(0, g.s * 0.12, 2, g.s * 0.26, g.s * 0.1, g) + atMark(-g.s * 0.4, g),
-  saAgs: (g) => L(0, g.s * 0.4, 0, -g.s * 0.4, g) + bars(0, -g.s * 0.08, 1, g.s * 0.26, 0, g) + atMark(-g.s * 0.4, g) + atMark(-g.s * 0.3, g),
-  saAtgm: (g) => L(0, g.s * 0.4, 0, g.s * 0.12, g) + R(-g.s * 0.13, -g.s * 0.14, g.s * 0.26, g.s * 0.26, g, 'none') + atMark(-g.s * 0.16, g),
-  saFlameLight: (g) => C(0, 0, g.s * 0.36, g, g.fill) + L(0, -g.s * 0.36, 0, g.s * 0.36, g),
-  saFlameHeavy: (g) => C(0, 0, g.s * 0.36, g, g.fill) + L(-g.s * 0.09, -g.s * 0.35, -g.s * 0.09, g.s * 0.35, g) + L(g.s * 0.09, -g.s * 0.35, g.s * 0.09, g.s * 0.35, g),
-  ...gunsSA,
-  /** Самоходное орудие [СА]: ромб со знаком орудия. */
-  saSpGun: (g) => rhomb(g) + L(0, g.s * 0.22, 0, -g.s * 0.3, g) + L(-g.s * 0.07, g.s * 0.12, -g.s * 0.07, -g.s * 0.02, g) + L(g.s * 0.07, g.s * 0.12, g.s * 0.07, -g.s * 0.02, g),
-  saSpMortar: (g) => rhomb(g) + C(0, 0, g.s * 0.08, g) + L(0, -g.s * 0.08, 0, -g.s * 0.24, g),
-  /** Зенитные орудия [СА]: стрелка вверх (всегда к верхнему обрезу карты); 1 — общее, 2 — малого, 3 — среднего калибра. */
-  saAa1: (g) => L(0, g.s * 0.45, 0, -g.s * 0.3, g) + head(0, -g.s * 0.5, 0, g.s * 0.22, g) + L(g.s * 0.1, g.s * 0.05, g.s * 0.1, -g.s * 0.2, g),
-  saAa2: (g) => L(0, g.s * 0.45, 0, -g.s * 0.3, g) + head(0, -g.s * 0.5, 0, g.s * 0.22, g) + L(g.s * 0.1, g.s * 0.05, g.s * 0.1, -g.s * 0.2, g) + L(-g.s * 0.18, g.s * 0.45, g.s * 0.18, g.s * 0.45, g),
-  saAa3: (g) => L(0, g.s * 0.38, 0, -g.s * 0.3, g) + head(0, -g.s * 0.5, 0, g.s * 0.22, g) + L(g.s * 0.1, g.s * 0.0, g.s * 0.1, -g.s * 0.25, g) + L(-g.s * 0.18, g.s * 0.38, g.s * 0.18, g.s * 0.38, g) + L(-g.s * 0.18, g.s * 0.48, g.s * 0.18, g.s * 0.48, g),
-  saAaSp: (g) => rhomb(g) + L(0, g.s * 0.25, 0, -g.s * 0.12, g) + head(0, -g.s * 0.28, 0, g.s * 0.16, g),
   // [TM XII-9, XII-10] пехотное оружие и артиллерия РККА
   rkkaLmg: (g) => L(0, g.s * 0.45, 0, -g.s * 0.2, g, g.sw * 1.6) + head(0, -g.s * 0.5, 0, g.s * 0.32, g),
   rkkaHmg: (g) => P(`M${n(-g.s * 0.38)} ${n(g.s * 0.25)}A${n(g.s * 0.38)} ${n(g.s * 0.38)} 0 0 1 ${n(g.s * 0.38)} ${n(g.s * 0.25)}`, g) + L(0, g.s * 0.35, 0, -g.s * 0.5, g),
@@ -234,11 +148,9 @@ export const STD_GLYPHS: Record<string, Glyph> = {
     const s = g.s;
     return L(-s * 0.3, s * 0.35, s * 0.3, s * 0.35, g) + L(0, s * 0.35, 0, -s * 0.45, g) + L(0, s * 0.35, -s * 0.35, -s * 0.3, g) + L(0, s * 0.35, s * 0.35, -s * 0.3, g);
   },
-  /** Батарея на огневой позиции: кружок со знаком орудия [TM XII-9], [СА]. */
+  /** Батарея на огневой позиции: кружок со знаком орудия [TM XII-9]. */
   rkkaBattery: (g) => C(0, 0, g.s / 2, g, g.fill) + tmGun({ ...g, s: g.s * 0.62 }, 'gun76'),
   rkkaBatteryPlanned: (g) => `<circle r="${n(g.s / 2)}" fill="${g.fill}" stroke="${g.color}" stroke-width="${n(g.sw)}" stroke-dasharray="${n(g.s * 0.12)} ${n(g.s * 0.08)}"/>` + tmGun({ ...g, s: g.s * 0.62 }, 'gun76'),
-  saBattery: (g) => C(0, 0, g.s / 2, g, g.fill) + gunsSA.saGun0({ ...g, s: g.s * 0.62 }),
-  saMortarBattery: (g) => C(0, 0, g.s / 2, g, g.fill) + gunsSA.saMortar0({ ...g, s: g.s * 0.7 }),
   /** Наблюдатель [TM]: кружок с треугольником. */
   rkkaObserver: (g) => C(0, 0, g.s / 2, g, g.fill) + PF(`M0 ${n(-g.s * 0.28)}L${n(g.s * 0.25)} ${n(g.s * 0.18)}L${n(-g.s * 0.25)} ${n(g.s * 0.18)}Z`, g),
   /** Пост звуковой разведки [TM]. */
@@ -254,22 +166,13 @@ export const STD_GLYPHS: Record<string, Glyph> = {
   rkkaArmoredCar: (g) => PF(`M${n(-g.s * 0.22)} ${n(g.s * 0.4)}L${n(-g.s * 0.22)} ${n(-g.s * 0.2)}A${n(g.s * 0.22)} ${n(g.s * 0.22)} 0 0 1 ${n(g.s * 0.22)} ${n(-g.s * 0.2)}L${n(g.s * 0.22)} ${n(g.s * 0.4)}Z`, g),
   rkkaArmoredCarHeavy: (g) => STD_GLYPHS.rkkaArmoredCar(g) + C(0, -g.s * 0.12, g.s * 0.07, g, g.color, 0),
   rkkaHalfTrack: (g) => STD_GLYPHS.rkkaArmoredCar(g) + L(-g.s * 0.22, g.s * 0.28, g.s * 0.22, g.s * 0.28, g),
-  // [СА] танки, боевые машины, автомобили
-  saTank: (g) => rhomb(g),
-  saTankAmph: (g) => rhomb(g) + L(0, g.s * 0.5, 0, g.s * 0.64, g) + L(-g.s * 0.16, g.s * 0.64, g.s * 0.16, g.s * 0.64, g),
-  saTankMine: (g) => rhomb(g) + P(`M${n(-g.s * 0.16)} ${n(-g.s * 0.72)}L${n(-g.s * 0.16)} ${n(-g.s * 0.6)}L${n(g.s * 0.16)} ${n(-g.s * 0.6)}L${n(g.s * 0.16)} ${n(-g.s * 0.72)}`, g) + L(0, -g.s * 0.5, 0, -g.s * 0.6, g),
-  saTankDozer: (g) => rhomb(g) + L(-g.s * 0.18, -g.s * 0.72, g.s * 0.12, -g.s * 0.52, g),
-  saBmp: (g) => PF(`M0 ${n(-g.s / 2)}L${n(g.s * 0.2)} ${n(-g.s * 0.22)}L${n(g.s * 0.2)} ${n(g.s / 2)}L${n(-g.s * 0.2)} ${n(g.s / 2)}L${n(-g.s * 0.2)} ${n(-g.s * 0.22)}Z`, g) + L(-g.s * 0.2, g.s * 0.36, g.s * 0.2, g.s * 0.36, g),
-  saBtr: (g) => PF(`M0 ${n(-g.s / 2)}L${n(g.s * 0.2)} ${n(-g.s * 0.22)}L${n(g.s * 0.2)} ${n(g.s / 2)}L${n(-g.s * 0.2)} ${n(g.s / 2)}L${n(-g.s * 0.2)} ${n(-g.s * 0.22)}Z`, g),
-  saTruck: (g) => PF(`M${n(-g.s * 0.2)} ${n(g.s * 0.45)}L${n(-g.s * 0.2)} ${n(-g.s * 0.27)}A${n(g.s * 0.2)} ${n(g.s * 0.2)} 0 0 1 ${n(g.s * 0.2)} ${n(-g.s * 0.27)}L${n(g.s * 0.2)} ${n(g.s * 0.45)}Z`, g),
-  saAmbulance: (g) => STD_GLYPHS.saTruck(g) + L(0, -g.s * 0.12, 0, g.s * 0.22, g) + L(-g.s * 0.12, g.s * 0.05, g.s * 0.12, g.s * 0.05, g),
 
   /* ===================== авиация, ПВО, десант ===================== */
   // [TM XII-11] аэродромы
   rkkaAirfield: (g) => C(0, 0, g.s / 2, g, g.fill) + T(0, g.s * 0.18, g.text ?? 'А', g.s * 0.5, g),
   rkkaAirdrome: (g) => R(-g.s / 2, -g.s / 2, g.s, g.s, g) + T(0, g.s * 0.18, 'А', g.s * 0.5, g),
   rkkaLandingField: (g) => C(0, 0, g.s / 2, g, g.fill) + L(-g.s * 0.25, -g.s * 0.2, -g.s * 0.25, g.s * 0.2, g) + L(-g.s * 0.25, 0, g.s * 0.28, 0, g),
-  /** Посадочная площадка (для тяжёлых самолётов [TM]; площадка приземления [СА]): круг с «Т». */
+  /** Посадочная площадка для тяжёлых самолётов [TM XII-11]: круг с «Т». */
   stdLandingT: (g) => C(0, 0, g.s / 2, g, g.fill) + L(-g.s * 0.24, -g.s * 0.2, g.s * 0.24, -g.s * 0.2, g, g.sw * 1.2) + L(0, -g.s * 0.2, 0, g.s * 0.26, g, g.sw * 1.2),
   /** Высадка воздушного десанта [TM XII-11]: купол и треугольник. */
   rkkaAirborne: (g) => {
@@ -291,8 +194,6 @@ export const STD_GLYPHS: Record<string, Glyph> = {
   /** Аэростат заграждения [TM]: «петля». */
   rkkaBalloon: (g) => P(`M${n(g.s * 0.1)} ${n(-g.s * 0.05)}A${n(g.s * 0.22)} ${n(g.s * 0.22)} 0 1 0 ${n(g.s * 0.28)} ${n(-g.s * 0.3)}C${n(g.s * 0.3)} ${n(0)} ${n(g.s * 0.1)} ${n(g.s * 0.3)} ${n(-g.s * 0.15)} ${n(g.s * 0.48)}`, g),
   rkkaAirWarning: (g) => C(0, 0, g.s / 2, g, g.fill) + C(0, 0, g.s * 0.07, g, g.color, 0),
-  /** Вертолёты [СА]: 1 — общее, 2 — боевой, 3 — транспортный. */
-  saHelicopter: (g) => L(0, g.s * 0.5, 0, -g.s * 0.2, g) + L(-g.s * 0.18, -g.s * 0.48, g.s * 0.18, -g.s * 0.1, g) + L(g.s * 0.18, -g.s * 0.48, -g.s * 0.18, -g.s * 0.1, g),
 
   /* ===================== фортификация ===================== */
   // [TM XII-13] окопы: дуга с зубцами наружу (к противнику)
@@ -318,29 +219,9 @@ export const STD_GLYPHS: Record<string, Glyph> = {
       L(0, -s * 0.15, 0, -s * 0.38, g) + head(0, -s * 0.45, 0, s * 0.14, g);
   },
   rkkaTurret: (g) => C(0, g.s * 0.1, g.s * 0.25, g, g.color, 0) + L(0, -g.s * 0.12, 0, -g.s * 0.35, g) + head(0, -g.s * 0.48, 0, g.s * 0.18, g),
-  /** Убежище (общее) [TM XII-14] = открытая щель [СА]: ступенчатая линия. */
+  /** Убежище (общее) [TM XII-14]: ступенчатая линия. */
   stdShelter: (g) => P(`M${n(-g.s / 2)} ${n(-g.s * 0.12)}L${n(-g.s * 0.08)} ${n(-g.s * 0.12)}L${n(g.s * 0.08)} ${n(g.s * 0.12)}L${n(g.s / 2)} ${n(g.s * 0.12)}`, g),
-  saShelterCovered: (g) => STD_GLYPHS.stdShelter(g) + L(-g.s * 0.1, g.s * 0.16, g.s * 0.06, -g.s * 0.2, g) + L(g.s * 0.02, g.s * 0.2, g.s * 0.18, -g.s * 0.16, g),
   rkkaShelterEarth: (g) => PF(`M${n(-g.s * 0.35)} ${n(g.s * 0.3)}L${n(-g.s * 0.35)} ${n(-g.s * 0.15)}Q${n(-g.s * 0.35)} ${n(-g.s * 0.3)} ${n(-g.s * 0.2)} ${n(-g.s * 0.3)}L${n(g.s * 0.2)} ${n(-g.s * 0.3)}Q${n(g.s * 0.35)} ${n(-g.s * 0.3)} ${n(g.s * 0.35)} ${n(-g.s * 0.15)}L${n(g.s * 0.35)} ${n(g.s * 0.3)}Z`, g) + L(-g.s * 0.14, -g.s * 0.12, g.s * 0.14, g.s * 0.14, g) + L(g.s * 0.14, -g.s * 0.12, -g.s * 0.14, g.s * 0.14, g),
-  /** Блиндаж [СА]: прямоугольник с диагональю и входом. */
-  saDugout: (g) => R(-g.s * 0.42, -g.s * 0.25, g.s * 0.84, g.s * 0.45, g) + L(-g.s * 0.42, g.s * 0.2, g.s * 0.42, -g.s * 0.25, g) + P(`M${n(-g.s * 0.15)} ${n(g.s * 0.2)}L${n(-g.s * 0.15)} ${n(g.s * 0.35)}L${n(-g.s * 0.25)} ${n(g.s * 0.42)}`, g),
-  /** Окоп с перекрытой щелью (блиндажом) отделения [СА]. */
-  saTrenchCovered: (g) => comb(g) + `<rect x="${n(-g.s * 0.1)}" y="${n(-g.s * 0.08)}" width="${n(g.s * 0.2)}" height="${n(g.s * 0.12)}" fill="${g.color}"/>`,
-  /** Танк в окопе [СА]: окоп с зубцами перед ромбом. */
-  saTankDug: (g) => P(`M${n(-g.s * 0.35)} ${n(-g.s * 0.25)}A${n(g.s * 0.42)} ${n(g.s * 0.3)} 0 0 1 ${n(g.s * 0.35)} ${n(-g.s * 0.25)}`, g) + ticksArcAt(g, -g.s * 0.25, 0.42, 0.3) + rhomb({ ...g, s: g.s * 0.7 }, g.fill),
-  /** Артиллерийский / пулемётный полукапонир, долговременное сооружение [СА]. */
-  saSemiCaponierArt: (g) => `<rect x="${n(-g.s * 0.22)}" y="${n(-g.s * 0.1)}" width="${n(g.s * 0.44)}" height="${n(g.s * 0.55)}" fill="${g.color}"/>` + `<g transform="translate(0 ${n(-g.s * 0.32)})">${gunsSA.saGun0({ ...g, s: g.s * 0.5 })}</g>`,
-  saSemiCaponierMg: (g) => `<rect x="${n(-g.s * 0.25)}" y="${n(-g.s * 0.15)}" width="${n(g.s * 0.5)}" height="${n(g.s * 0.5)}" fill="${g.color}"/>` +
-    L(-g.s * 0.25, -g.s * 0.15, -g.s * 0.45, -g.s * 0.42, g) + head(-g.s * 0.5, -g.s * 0.48, -0.65, g.s * 0.14, g) + L(g.s * 0.25, -g.s * 0.15, g.s * 0.45, -g.s * 0.42, g) + head(g.s * 0.5, -g.s * 0.48, 0.65, g.s * 0.14, g),
-  saLongTerm: (g) => C(0, g.s * 0.12, g.s * 0.24, g, 'none', g.s * 0.13) + L(0, -g.s * 0.18, 0, -g.s * 0.38, g) + head(0, -g.s * 0.5, 0, g.s * 0.16, g),
-  saFieldStructure: (g) => {
-    const s = g.s, cid = `fs${(++clipSeq).toString(36)}`;
-    let hatch = '';
-    for (let x = -s * 0.5; x < s * 0.5; x += s * 0.08) hatch += `M${n(x)} ${n(s * 0.3)}L${n(x + s * 0.4)} ${n(-s * 0.15)}`;
-    return `<clipPath id="${cid}"><rect x="${n(-s * 0.22)}" y="${n(-s * 0.15)}" width="${n(s * 0.44)}" height="${n(s * 0.45)}"/></clipPath>` + R(-s * 0.22, -s * 0.15, s * 0.44, s * 0.45, g) +
-      `<path d="${hatch}" ${stroke(g, g.sw * 0.6)} clip-path="url(#${cid})"/>` +
-      L(-s * 0.22, -s * 0.15, -s * 0.42, -s * 0.42, g) + head(-s * 0.47, -s * 0.48, -0.65, s * 0.14, g) + L(s * 0.22, -s * 0.15, s * 0.42, -s * 0.42, g) + head(s * 0.47, -s * 0.48, 0.65, s * 0.14, g);
-  },
   /** Противотанковый опорный пункт [TM XII-13]: звезда с ромбом. */
   rkkaAtStrongpoint: (g) => {
     const s = g.s, pts: string[] = [];
@@ -349,51 +230,22 @@ export const STD_GLYPHS: Record<string, Glyph> = {
   },
 
   /* ===================== заграждения ===================== */
-  /** Мина ПТ — залитый кружок, ПП — пустой (оба источника). */
+  /** Мина ПТ — залитый кружок, ПП — пустой [TM XII-14]. */
   stdMineAT: (g) => C(0, 0, g.s / 2, g, g.color, 0),
   stdMineAP: (g) => C(0, 0, g.s / 2, g, g.fill),
-  /** Фугас [СА]: кружок с «рожками»; радиоуправляемый — с молнией; управляемый по проводам — с хвостом. */
-  saFougasse: (g) => C(0, g.s * 0.08, g.s * 0.3, g, g.fill) + L(-g.s * 0.18, -g.s * 0.16, -g.s * 0.36, -g.s * 0.42, g) + L(g.s * 0.18, -g.s * 0.16, g.s * 0.36, -g.s * 0.42, g),
-  saFougasseRadio: (g) => STD_GLYPHS.saFougasse(g) + bolt(0, -g.s * 0.25, g.s * 0.45, g),
-  saFougasseWire: (g) => STD_GLYPHS.saFougasse(g) + P(`M${n(g.s * 0.3)} ${n(g.s * 0.08)}L${n(g.s * 0.45)} ${n(g.s * 0.08)}A${n(g.s * 0.1)} ${n(g.s * 0.1)} 0 1 1 ${n(g.s * 0.55)} ${n(-g.s * 0.02)}`, g),
+  /** Заряд ВВ (фугас) [TM XII-14]: кружок с «рожками». */
+  rkkaCharge: (g) => C(0, g.s * 0.08, g.s * 0.3, g, g.fill) + L(-g.s * 0.18, -g.s * 0.16, -g.s * 0.36, -g.s * 0.42, g) + L(g.s * 0.18, -g.s * 0.16, g.s * 0.36, -g.s * 0.42, g),
   rkkaDelayedMine: (g) => C(0, g.s * 0.08, g.s * 0.3, g, g.fill) + C(0, g.s * 0.08, g.s * 0.08, g, g.color, 0) + L(-g.s * 0.18, -g.s * 0.16, -g.s * 0.32, -g.s * 0.36, g) + L(g.s * 0.18, -g.s * 0.16, g.s * 0.32, -g.s * 0.36, g),
   rkkaBoobyTrap: (g) => P(`M${n(g.s * 0.25)} ${n(-g.s * 0.3)}A${n(g.s * 0.35)} ${n(g.s * 0.38)} 0 1 0 ${n(g.s * 0.25)} ${n(g.s * 0.3)}`, g, g.sw * 1.3),
   rkkaUnremovableMine: (g) => C(0, 0, g.s * 0.4, g, g.fill) + L(-g.s * 0.28, -g.s * 0.28, g.s * 0.28, g.s * 0.28, g) + L(g.s * 0.28, -g.s * 0.28, -g.s * 0.28, g.s * 0.28, g),
   rkkaFragMine: (g) => `<path d="M0 ${n(-g.s * 0.05)}C${n(g.s * 0.3)} ${n(g.s * 0.15)} ${n(g.s * 0.2)} ${n(g.s * 0.45)} 0 ${n(g.s * 0.45)}C${n(-g.s * 0.2)} ${n(g.s * 0.45)} ${n(-g.s * 0.3)} ${n(g.s * 0.15)} 0 ${n(-g.s * 0.05)}Z" fill="${g.color}"/>` + P(`M0 ${n(-g.s * 0.05)}L0 ${n(-g.s * 0.3)}A${n(g.s * 0.08)} ${n(g.s * 0.08)} 0 0 1 ${n(g.s * 0.14)} ${n(-g.s * 0.34)}`, g),
   rkkaTankTrap: (g) => R(-g.s * 0.4, -g.s * 0.4, g.s * 0.8, g.s * 0.8, g) + rhomb({ ...g, s: g.s * 0.6 }, g.color),
-  /** Ёж противотанковый [СА]. */
-  saHedgehog: (g) => L(-g.s * 0.3, -g.s * 0.3, g.s * 0.3, g.s * 0.3, g, g.sw * 1.4) + L(g.s * 0.3, -g.s * 0.3, -g.s * 0.3, g.s * 0.3, g, g.sw * 1.4),
 
   /* ===================== переправы ===================== */
-  /** Мост на плавучих опорах [СА]: две линии с понтонами. */
-  saPontoonBridge: (g) => {
-    const s = g.s;
-    let out = P(`M${n(-s * 0.16)} ${n(-s / 2)}L${n(-s * 0.16)} ${n(s / 2)}M${n(s * 0.16)} ${n(-s / 2)}L${n(s * 0.16)} ${n(s / 2)}`, g);
-    for (const y of [-s * 0.25, s * 0.15]) out += R(-s * 0.24, y, s * 0.48, s * 0.12, g, 'none');
-    return out;
-  },
-  /** Ледяная переправа [СА]: две линии со штриховкой. */
-  saIceCrossing: (g) => {
-    const s = g.s;
-    let d = '';
-    for (let y = -s * 0.42; y < s * 0.45; y += s * 0.1) d += `M${n(-s * 0.14)} ${n(y + s * 0.08)}L${n(s * 0.14)} ${n(y)}`;
-    return P(`M${n(-s * 0.16)} ${n(-s / 2)}L${n(-s * 0.16)} ${n(s / 2)}M${n(s * 0.16)} ${n(-s / 2)}L${n(s * 0.16)} ${n(s / 2)}`, g) + P(d, g, g.sw * 0.6);
-  },
-  /** Брод [СА]: пунктир с «усиками» на концах и подписью «бр.». */
-  saFord: (g) => {
-    const s = g.s;
-    return `<line x1="0" y1="${n(-s * 0.4)}" x2="0" y2="${n(s * 0.4)}" ${stroke(g)} stroke-dasharray="${n(s * 0.1)} ${n(s * 0.06)}"/>` +
-      P(`M${n(-s * 0.12)} ${n(-s * 0.55)}L0 ${n(-s * 0.4)}L${n(s * 0.12)} ${n(-s * 0.55)}M${n(-s * 0.12)} ${n(s * 0.55)}L0 ${n(s * 0.4)}L${n(s * 0.12)} ${n(s * 0.55)}`, g) +
-      T(s * 0.15, s * 0.06, g.text ?? 'бр.', s * 0.28, g, 'start');
-  },
-  /** Паромная переправа [СА]: паром с указанием числа и грузоподъёмности. */
-  saFerry: (g) => R(-g.s * 0.3, -g.s * 0.12, g.s * 0.6, g.s * 0.24, g) + L(-g.s * 0.4, -g.s * 0.12, g.s * 0.4, -g.s * 0.12, g),
   /** Переправа (станция снабжения) на железной дороге [TM XII-16]: кружок с буквой на линии. */
   rkkaSupplyStation: (g) => L(-g.s * 0.6, 0, g.s * 0.6, 0, g, g.sw * 2.2) + C(0, 0, g.s * 0.28, g, g.fill) + T(0, g.s * 0.1, g.text ?? 'С', g.s * 0.3, g),
 
   /* ===================== тыл ===================== */
-  /** Склад [СА]: квадрат с буквой вида (Г, П, А, ВТИ, АБТИ). */
-  saDepot: (g) => R(-g.s * 0.4, -g.s * 0.4, g.s * 0.8, g.s * 0.8, g) + T(0, g.s * 0.14, g.text ?? 'Г', g.s * (g.text && g.text.length > 1 ? 0.28 : 0.42), g),
   /** Армейский склад (снабжения) [TM]: квадрат с диагоналями. */
   rkkaArmyDepot: (g) => R(-g.s * 0.4, -g.s * 0.4, g.s * 0.8, g.s * 0.8, g) + L(-g.s * 0.4, -g.s * 0.4, g.s * 0.4, g.s * 0.4, g) + L(g.s * 0.4, -g.s * 0.4, -g.s * 0.4, g.s * 0.4, g),
   /** Дивизионный пункт снабжения [TM]: кружок с крестом. */
@@ -401,33 +253,18 @@ export const STD_GLYPHS: Record<string, Glyph> = {
   rkkaFuelPoint: (g) => C(0, 0, g.s * 0.4, g, g.fill) + C(0, 0, g.s * 0.2, g, g.color, 0),
   /** Дивизионный медицинский пункт [TM]: кружок с крестом «+». */
   rkkaMedDivision: (g) => C(0, 0, g.s * 0.4, g, g.fill) + L(-g.s * 0.22, 0, g.s * 0.22, 0, g) + L(0, -g.s * 0.22, 0, g.s * 0.22, g),
-  /** Медпункт полка [TM, СА]: квадрат с «+»; батальона: треугольник с «+»; медпост роты [СА]. */
+  /** Медпункт полка [TM XII-17]: квадрат с «+»; батальона — треугольник с «+». */
   stdMedRegiment: (g) => R(-g.s * 0.4, -g.s * 0.4, g.s * 0.8, g.s * 0.8, g) + L(-g.s * 0.22, 0, g.s * 0.22, 0, g, g.sw * 1.5) + L(0, -g.s * 0.22, 0, g.s * 0.22, g, g.sw * 1.5),
   stdMedBattalion: (g) => PF(`M0 ${n(-g.s * 0.5)}L${n(g.s * 0.48)} ${n(g.s * 0.32)}L${n(-g.s * 0.48)} ${n(g.s * 0.32)}Z`, g) + L(-g.s * 0.16, g.s * 0.08, g.s * 0.16, g.s * 0.08, g, g.sw * 1.4) + L(0, -g.s * 0.08, 0, g.s * 0.24, g, g.sw * 1.4),
-  saMedCompany: (g) => P(`M${n(-g.s * 0.3)} ${n(-g.s * 0.1)}L${n(-g.s * 0.1)} ${n(g.s * 0.35)}L${n(g.s * 0.05)} ${n(-g.s * 0.2)}L${n(g.s * 0.5)} ${n(-g.s * 0.2)}`, g) + L(-g.s * 0.3, -g.s * 0.3, -g.s * 0.06, -g.s * 0.3, g) + L(-g.s * 0.18, -g.s * 0.42, -g.s * 0.18, -g.s * 0.18, g),
   /** Госпиталь [TM XII-16]: «домик» с крестом над ним и сокращением (ВПГ, ГЛР…). */
   rkkaHospital: (g) => PF(`M${n(-g.s * 0.38)} ${n(g.s * 0.4)}L${n(-g.s * 0.38)} ${n(-g.s * 0.05)}L0 ${n(-g.s * 0.32)}L${n(g.s * 0.38)} ${n(-g.s * 0.05)}L${n(g.s * 0.38)} ${n(g.s * 0.4)}Z`, g) +
     L(-g.s * 0.1, -g.s * 0.5, g.s * 0.1, -g.s * 0.5, g) + L(0, -g.s * 0.6, 0, -g.s * 0.4, g) + (g.text ? T(0, g.s * 0.3, g.text, g.s * 0.26, g) : ''),
-  /** Пункт сбора повреждённых машин [TM, СА]: кружок с залитыми встречными треугольниками. */
+  /** Пункт сбора повреждённых машин [TM XII-16]: кружок с залитыми встречными треугольниками. */
   stdVehicleCollection: (g) => C(0, 0, g.s * 0.42, g, g.fill) + F(`M${n(-g.s * 0.3)} ${n(-g.s * 0.3)}L${n(g.s * 0.3)} ${n(g.s * 0.3)}L${n(-g.s * 0.3)} ${n(g.s * 0.3)}L${n(g.s * 0.3)} ${n(-g.s * 0.3)}Z`, g),
-  /** Заправочный пункт (Г), продовольственный (П), боепитания (Б) батальона [СА]: треугольник с буквой. */
-  saPointBattalion: (g) => PF(`M0 ${n(-g.s * 0.5)}L${n(g.s * 0.48)} ${n(g.s * 0.32)}L${n(-g.s * 0.48)} ${n(g.s * 0.32)}Z`, g) + T(0, g.s * 0.24, g.text ?? 'Г', g.s * 0.4, g),
-  /** Пункт обслуживания на маршруте [СА]: треугольник на стойке. */
-  saServicePoint: (g) => PF(`M0 ${n(-g.s * 0.6)}L${n(g.s * 0.3)} ${n(-g.s * 0.1)}L${n(-g.s * 0.3)} ${n(-g.s * 0.1)}Z`, g) + T(0, -g.s * 0.18, g.text ?? 'Г', g.s * 0.28, g) + L(0, -g.s * 0.1, 0, g.s * 0.3, g) + P(`M${n(-g.s * 0.5)} ${n(g.s * 0.35)}Q0 ${n(g.s * 0.25)} ${n(g.s * 0.5)} ${n(g.s * 0.3)}`, g),
   /** Пункт боепитания (обменный) полка/дивизии [TM XII-17]: прямоугольник с буквами на «отводе». */
   rkkaAmmoPoint: (g) => L(-g.s * 0.55, 0, -g.s * 0.35, 0, g) + R(-g.s * 0.35, -g.s * 0.2, g.s * 0.75, g.s * 0.4, g) + T(g.s * 0.02, g.s * 0.1, g.text ?? 'П АБ', g.s * 0.26, g),
 
-  /* ===================== разведка и охранение [СА] ===================== */
-  saReconPatrol: (g) => C(0, g.s * 0.12, g.s * 0.3, g, g.fill) + L(0, -g.s * 0.18, 0, -g.s * 0.45, g) + head(0, -g.s * 0.55, 0, g.s * 0.16, g),
-  saFootPatrol: (g) => C(0, g.s * 0.12, g.s * 0.3, g, g.fill) + L(0, -g.s * 0.18, 0, g.s * 0.42, g) + L(0, -g.s * 0.18, 0, -g.s * 0.45, g) + head(0, -g.s * 0.55, 0, g.s * 0.16, g),
-  saSecret: (g) => PF(`M0 ${n(-g.s * 0.5)}L${n(g.s * 0.48)} ${n(g.s * 0.32)}L${n(-g.s * 0.48)} ${n(g.s * 0.32)}Z`, g) + C(0, g.s * 0.06, g.s * 0.07, g),
-  saGuardPost: (g) => STD_GLYPHS.saSecret({ ...g, s: g.s * 0.6 }) + P(`M${n(-g.s * 0.5)} ${n(-g.s * 0.3)}A${n(g.s * 0.5)} ${n(g.s * 0.5)} 0 0 0 ${n(-g.s * 0.5)} ${n(g.s * 0.3)}`, g) + bars(-g.s * 0.6, -g.s * 0.05, 1, g.s * 0.2, 0, g),
-  /** Место захвата пленного / изъятия документов [СА]. */
-  saPrisoner: (g) => C(0, 0, g.s * 0.42, g, g.fill) + L(-g.s * 0.3, g.s * 0.3, g.s * 0.3, -g.s * 0.3, g),
-  saDocuments: (g) => C(0, 0, g.s * 0.42, g, g.fill) + L(-g.s * 0.3, g.s * 0.3, g.s * 0.3, -g.s * 0.3, g) + L(-g.s * 0.3, -g.s * 0.3, g.s * 0.3, g.s * 0.3, g),
-  /** Засада [СА]: дуга со скрещёнными стрелками. */
-  saAmbush: (g) => P(`M${n(g.s * 0.1)} ${n(-g.s * 0.45)}A${n(g.s * 0.55)} ${n(g.s * 0.55)} 0 0 0 ${n(g.s * 0.1)} ${n(g.s * 0.45)}`, g) +
-    L(-g.s * 0.05, -g.s * 0.05, -g.s * 0.45, -g.s * 0.4, g) + head(-g.s * 0.5, -g.s * 0.45, -0.85, g.s * 0.14, g) + L(-g.s * 0.05, g.s * 0.05, -g.s * 0.45, g.s * 0.4, g) + head(-g.s * 0.5, g.s * 0.45, -2.3, g.s * 0.14, g),
+  /* ===================== разведка и охранение ===================== */
   /** Разведывательный дозор [TM XII-7]: пехотный — кружок со стрелкой, кавалерийский — полузалитый, танковый — ромб. */
   rkkaReconInf: (g) => C(0, 0, g.s * 0.28, g, g.fill) + L(g.s * 0.28, 0, g.s * 0.5, 0, g) + head(g.s * 0.6, 0, Math.PI / 2, g.s * 0.14, g),
   rkkaReconCav: (g) => C(0, 0, g.s * 0.28, g, g.fill) + F(`M0 ${n(-g.s * 0.28)}A${n(g.s * 0.28)} ${n(g.s * 0.28)} 0 0 0 0 ${n(g.s * 0.28)}Z`, g) + L(g.s * 0.28, 0, g.s * 0.5, 0, g) + head(g.s * 0.6, 0, Math.PI / 2, g.s * 0.14, g),
@@ -435,22 +272,15 @@ export const STD_GLYPHS: Record<string, Glyph> = {
   /** Сборный район (К — конечный, З — запасный, П — промежуточный) [TM XII-10]. */
   rkkaAssembly: (g) => `<circle r="${n(g.s / 2)}" fill="none" stroke="${g.color}" stroke-width="${n(g.sw)}" stroke-dasharray="${n(g.s * 0.14)} ${n(g.s * 0.1)}"/>` + T(0, g.s * 0.16, g.text ?? 'К', g.s * 0.44, g),
 
-  /* ===================== отметки на линиях (используются в рубежах) ===================== */
-  markArrow: (g) => L(0, g.s * 0.1, 0, -g.s * 0.5, g) + head(0, -g.s * 0.62, 0, g.s * 0.22, g),
-  markArrow3: (g) => L(0, g.s * 0.1, 0, -g.s * 0.5, g) + head(0, -g.s * 0.62, 0, g.s * 0.22, g) + bars(0, -g.s * 0.08, 3, g.s * 0.26, g.s * 0.1, g),
-  markT: (g) => L(0, 0, 0, -g.s * 0.35, g) + L(-g.s * 0.15, -g.s * 0.35, g.s * 0.15, -g.s * 0.35, g),
-  markDiamond: (g) => rhomb({ ...g, s: g.s * 0.55 }) ,
-  markV: (g) => P(`M${n(-g.s * 0.2)} ${n(-g.s * 0.3)}L0 0L${n(g.s * 0.2)} ${n(-g.s * 0.3)}`, g),
-  markLoopStop: (g) => P(`M0 0L0 ${n(-g.s * 0.35)}A${n(g.s * 0.2)} ${n(g.s * 0.2)} 0 1 0 ${n(g.s * 0.35)} ${n(-g.s * 0.38)}`, g) + head(g.s * 0.38, -g.s * 0.2, 2.3, g.s * 0.16, g),
-  markLoopBack: (g) => P(`M0 ${n(-g.s * 0.05)}L0 ${n(-g.s * 0.4)}A${n(g.s * 0.2)} ${n(g.s * 0.2)} 0 1 1 ${n(g.s * 0.22)} ${n(-g.s * 0.1)}L${n(g.s * 0.22)} ${n(g.s * 0.25)}`, g) + head(g.s * 0.22, g.s * 0.4, Math.PI, g.s * 0.16, g),
+  /* ===================== отметки на осях стрелок (колонны) ===================== */
+  markDiamond: (g) => rhomb({ ...g, s: g.s * 0.55 }),
   ring: (g) => C(0, 0, g.s / 2, g, g.fill),
-  dotMark: (g) => C(0, 0, g.s / 2, g, g.color, 0),
   eqMark: (g) => L(-g.s * 0.12, -g.s * 0.3, -g.s * 0.12, g.s * 0.3, g) + L(g.s * 0.12, -g.s * 0.3, g.s * 0.12, g.s * 0.3, g),
   flagSquare: (g) => R(-g.s * 0.3, -g.s * 0.3, g.s * 0.6, g.s * 0.6, g),
   flagSquareHalf: (g) => R(-g.s * 0.3, -g.s * 0.3, g.s * 0.6, g.s * 0.6, g) + F(`M${n(-g.s * 0.3)} ${n(g.s * 0.3)}L${n(g.s * 0.3)} ${n(-g.s * 0.3)}L${n(g.s * 0.3)} ${n(g.s * 0.3)}Z`, g),
 };
 
-/** Дуга окопа с зубцами к противнику (вверх) [TM XII-13], [СА]. */
+/** Дуга окопа с зубцами к противнику (вверх) [TM XII-13]. */
 function comb(g: GlyphCtx): string {
   return P(`M${n(-g.s * 0.45)} ${n(g.s * 0.2)}A${n(g.s * 0.5)} ${n(g.s * 0.42)} 0 0 1 ${n(g.s * 0.45)} ${n(g.s * 0.2)}`, g) + ticksArc(g, 1);
 }

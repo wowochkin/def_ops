@@ -117,7 +117,7 @@ describe('платформа через шлюз', () => {
     expect(presets.arrow.length).toBeGreaterThan(10);
     const lib = await (await api('/api/library')).json();
     expect(lib.categories.length).toBe(18);
-    expect(lib.sources.length).toBe(3);
+    expect(lib.sources.length).toBe(1);
     expect(lib.elements.length).toBeGreaterThan(120);
   });
 });

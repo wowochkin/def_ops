@@ -22,7 +22,7 @@ export function roleForPreset(kind: Feature['kind'], preset = '', side?: Side): 
     presetCategory = new Map();
     for (const e of LIBRARY) for (const p of Object.values(e.variants)) if (!presetCategory.has(p!)) presetCategory.set(p!, e.category);
   }
-  const cat = /^(rkka|sa|std)\./.test(preset) ? presetCategory.get(preset) : undefined;
+  const cat = /^(rkka|std)\./.test(preset) ? presetCategory.get(preset) : undefined;
   if (cat) {
     const r = CATEGORY_ROLE[cat] ?? 'side';
     if (r === 'labels') return side === 'enemy' ? 'enemy' : 'labels';

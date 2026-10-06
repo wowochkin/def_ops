@@ -27,10 +27,10 @@ describe('слои', () => {
     expect(roleForPreset('label', 'atlas.enemyUnit')).toBe('enemy');
     expect(roleForPreset('arrow', 'atlas.p1')).toBe('friendly');
     // уставные знаки — по категории библиотеки и принадлежности
-    expect(roleForPreset('symbol', 'sa.tank', 'enemy')).toBe('enemy');
-    expect(roleForPreset('symbol', 'sa.tank', 'own')).toBe('friendly');
+    expect(roleForPreset('symbol', 'rkka.tankMedium', 'enemy')).toBe('enemy');
+    expect(roleForPreset('symbol', 'rkka.tankMedium', 'own')).toBe('friendly');
     expect(roleForPreset('line', 'rkka.wire1', 'neutral')).toBe('front');
-    expect(roleForPreset('line', 'sa.frontLine', 'enemy')).toBe('front');
+    expect(roleForPreset('line', 'std.frontLine', 'enemy')).toBe('front');
     expect(roleForPreset('area', 'std.forest')).toBe('base');
   });
 

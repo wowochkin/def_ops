@@ -53,8 +53,8 @@ describe('библиотека знаков', () => {
   });
 
   it('противник рисуется синим, свои — красным', () => {
-    const own = createFeature('symbol', 'sa.tank', { at: [14, 52] }, 1, 'own');
-    const enemy = createFeature('symbol', 'sa.tank', { at: [14, 52] }, 1, 'enemy');
+    const own = createFeature('symbol', 'rkka.tankMedium', { at: [14, 52] }, 1, 'own');
+    const enemy = createFeature('symbol', 'rkka.tankMedium', { at: [14, 52] }, 1, 'enemy');
     expect(own.kind === 'symbol' && own.style.color).toBe('#d43834');
     expect(enemy.kind === 'symbol' && enemy.style.color).toBe('#2f6fae');
   });
@@ -62,7 +62,7 @@ describe('библиотека знаков', () => {
   it('поиск по синонимам', () => {
     expect(searchLibrary('катюша').map((e) => e.id)).toContain('rocket');
     expect(searchLibrary('котёл').map((e) => e.id)).toContain('area.encircled');
-    expect(searchLibrary('ПТУР').map((e) => e.id)).toContain('atgm');
+    expect(searchLibrary('сорокапятка').map((e) => e.id)).toContain('atGun');
   });
 });
 
@@ -71,10 +71,10 @@ describe('первоисточники', () => {
     const ids = new Set(SOURCES.map((s) => s.id));
     for (const e of LIBRARY) {
       for (const r of e.sources ?? []) expect(ids.has(r.split(':')[0]), `${e.id}: ${r}`).toBe(true);
-      const ustav = Object.values(e.variants).some((p) => /^(rkka|sa)\./.test(p!));
+      const ustav = Object.values(e.variants).some((p) => /^rkka\./.test(p!));
       if (ustav && !e.verify) expect(e.sources?.length, e.id).toBeGreaterThan(0);
     }
-    expect(sourceText(['tm:XII-7', 'ouo:6'])).toBe('TM 30-430, с. XII-7; ОУО, л. 6');
+    expect(sourceText(['tm:XII-7'])).toBe('TM 30-430, с. XII-7');
   });
 
   it('по TM 30-430: ПП мины — светлые кружки, ПТ — залитые точки', () => {
@@ -84,13 +84,10 @@ describe('первоисточники', () => {
     expect(at.kind === 'area' && at.style.hatch?.pattern).toBe('dots');
   });
 
-  it('СА: артиллерия своих — чёрным, мотострелки — красным', () => {
-    const gun = createFeature('symbol', 'sa.gun', { at: [14, 52] }, 1, 'own');
-    const bmp = createFeature('symbol', 'sa.bmp', { at: [14, 52] }, 1, 'own');
-    const gunE = createFeature('symbol', 'sa.gun', { at: [14, 52] }, 1, 'enemy');
-    expect(gun.kind === 'symbol' && gun.style.color).toBe('#1f1f1f');
-    expect(bmp.kind === 'symbol' && bmp.style.color).toBe('#d43834');
-    expect(gunE.kind === 'symbol' && gunE.style.color).toBe('#2f6fae');
+  it('стиля СА нет: только РККА и стили исторических карт', () => {
+    expect(STYLES.map((s) => s.id)).toEqual(['rkka', 'atlas', 'inf', 'tac']);
+    expect(Object.values(PRESETS).flatMap((t) => Object.keys(t)).filter((id) => id.startsWith('sa.'))).toEqual([]);
+    expect(Object.keys(GLYPHS).filter((k) => /^sa[A-Z]/.test(k))).toEqual([]);
   });
 });
 
