@@ -65,7 +65,7 @@ export function MapView(props: Props) {
   const shown = useMemo(() => documentAt(doc, time), [doc, time]);
   /** Записать отредактированный (показанный) знак в документ с учётом времени. */
   const commit = (base: MapDocument, id: string, edited: Feature, key?: string) =>
-    setDoc(updateFeature(base, id, (orig) => commitAt(orig, edited, live.current.time)), key);
+    setDoc(updateFeature(base, id, (orig) => commitAt(orig, edited, live.current.time, base.timeline?.motion ?? 'smooth')), key);
   /** Новый знак: при включённом «новые — с этой даты» появляется с текущего момента. */
   const stamp = <F extends Feature>(f: F): F => (live.current.time && live.current.props.newFromNow ? { ...f, time: { from: live.current.time } } : f);
 

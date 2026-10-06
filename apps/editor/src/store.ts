@@ -1,6 +1,6 @@
 /** Состояние редактора: документ с историей правок (undo/redo), выделение, инструмент. */
 import { useCallback, useReducer } from 'react';
-import type { Feature, FeatureKind, MapDocument, Side, TimeInstant } from '@def-ops/core';
+import type { Feature, FeatureKind, MapDocument, Motion, Side, TimeInstant } from '@def-ops/core';
 import { applyGeometryAt } from '@def-ops/core';
 
 export type Tool =
@@ -87,10 +87,10 @@ export function useHistory(initial: MapDocument) {
  * геометрия правится в действующем на t кадре (или в основной, если кадров до t нет);
  * остальные свойства (стиль, привязка) — как в отредактированном знаке.
  */
-export function commitAt(orig: Feature, edited: Feature, t?: TimeInstant | null): Feature {
-  if (!t || !orig.keyframes?.length) return edited;
+export function commitAt(orig: Feature, edited: Feature, t?: TimeInstant | null, motion: Motion = 'smooth'): Feature {
+  if (!t || (!orig.keyframes?.length && !orig.time?.from)) return edited;
   const base = { ...edited } as Feature & Record<string, unknown>;
   const o = orig as Feature & Record<string, unknown>;
   for (const k of ['points', 'at', 'rotation', 'path']) if (k in o) base[k] = o[k];
-  return applyGeometryAt(base as Feature, t, edited);
+  return applyGeometryAt(base as Feature, t, edited, orig.motion ?? motion);
 }

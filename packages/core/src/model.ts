@@ -222,7 +222,12 @@ interface FeatureBase {
    * До первого ключевого кадра действует основная геометрия объекта.
    */
   keyframes?: Keyframe[];
+  /** Переход между положениями: плавно (по умолчанию — как задано для карты) или скачком. */
+  motion?: Motion;
 }
+
+/** smooth — положение меняется постепенно между датами; step — скачком в момент кадра. */
+export type Motion = 'smooth' | 'step';
 
 /**
  * Момент времени — строка ISO 8601: «1945-04-25» или «1945-04-25T06:00».
@@ -342,7 +347,15 @@ export interface MapDocument {
   features: Feature[];
   overlays: ImageOverlay[];
   /** Временная шкала карты: период операции и момент, на который показана обстановка. */
-  timeline?: { start: TimeInstant; end: TimeInstant; current?: TimeInstant | null } | null;
+  timeline?: {
+    start: TimeInstant;
+    end: TimeInstant;
+    current?: TimeInstant | null;
+    /** Переход между положениями знаков по умолчанию (по умолчанию — плавно). */
+    motion?: Motion;
+    /** Часовой пояс «местного» времени карты (IANA, например Europe/Berlin); нет — по месту на карте. */
+    localZone?: string | null;
+  } | null;
 }
 
 let counter = 0;
