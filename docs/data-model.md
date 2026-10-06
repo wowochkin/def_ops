@@ -49,8 +49,9 @@
 ### Схема `registry` (сервис реестра)
 
 ```sql
-entity_types(tenant text, id text, name text, description text, fields jsonb, builtin bool,
-             primary key (tenant, id))           -- встроенные типы — tenant '*'
+entity_types(tenant text, id text, name text, description text, fields jsonb, elements jsonb, builtin bool,
+             primary key (tenant, id))           -- встроенные типы — в коде (ENTITY_TYPES); здесь — типы
+                                                 -- организации и добавленные ею к встроенным поля (builtin = true)
 entities(tenant text, id uuid, type text, name text, short_name text, side text,
          attrs jsonb, existence tstzrange, source text, created_at, updated_at,
          primary key (tenant, id))

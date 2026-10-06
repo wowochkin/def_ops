@@ -7,6 +7,7 @@ const server = createGateway({
   services: {
     documents: env('DOCUMENTS_URL', 'http://localhost:8101'),
     render: env('RENDER_URL', 'http://localhost:8102'),
+    registry: env('REGISTRY_URL', 'http://localhost:8103'),
   },
   routes: [
     ['/api/documents', 'documents', '/documents'],
@@ -15,6 +16,7 @@ const server = createGateway({
     ['/api/import', 'render', '/import'],
     ['/api/presets', 'render', '/presets'],
     ['/api/library', 'render', '/library'],
+    ['/api/registry', 'registry', '/registry'],
   ],
   auth: env('AUTH', 'open') === 'keys' ? 'keys' : 'open',
   apiKeys: parseKeys(env('API_KEYS', '')),
