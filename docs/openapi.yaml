@@ -26,6 +26,11 @@ tags:
       Реестр объектов (формирования, сооружения, населённые пункты, операции) и факты во времени.
       Момент — строка ISO 8601 (`1945-04-25`, `1945-04-25T06:00`), без пояса — UTC; период — [from, to).
       Моменты в ответах приводятся к каноническому виду (UTC без пояса). Подробно — docs/data-model.md.
+  - name: cartography
+    description: |
+      Карты-подложки для закрытого контура: тайловые пирамиды XYZ на диске сервиса картографии.
+      Загрузка тайлов внешнего сервиса, нарезка привязанного скана, пакеты для переноса между
+      установками, граница карты (coverage). Подробно — docs/cartography.md.
 paths:
   /health:
     get:
@@ -314,6 +319,210 @@ paths:
         '200':
           description: 'event: entity.created | entity.updated | entity.deleted | fact.changed'
           content: { text/event-stream: { schema: { $ref: '#/components/schemas/RegistryEvent' } } }
+  /cartography/maps:
+    get:
+      tags: [cartography]
+      summary: Карты организации (по названию)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/MapSource' } } } } }
+    post:
+      tags: [cartography]
+      summary: Создать описание карты (тайлы — загрузкой, нарезкой или импортом)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MapInput' } } } }
+      responses:
+        '201': { description: Создана, content: { application/json: { schema: { $ref: '#/components/schemas/MapSource' } } } }
+        '422': { $ref: '#/components/responses/Error' }
+  /cartography/maps/import-package:
+    post:
+      tags: [cartography]
+      summary: Загрузить пакет карты (tar из другой установки) → новая карта
+      description: |
+        Тело — архив tar: map.json (MapSource) и tiles/{z}/{x}/{y}.{ext}. Читается потоком; ответ —
+        после окончания импорта. Новая карта получает новый id и kind 'package'. При неудаче частично
+        загруженная карта удаляется. Предел — MAX_PACKAGE_MB.
+      requestBody: { required: true, content: { application/x-tar: { schema: { type: string, format: binary } } } }
+      responses:
+        '201':
+          description: Загружена
+          content: { application/json: { schema: { type: object, properties: { map: { $ref: '#/components/schemas/MapSource' }, job: { $ref: '#/components/schemas/MapJob' } } } } }
+        '409': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /cartography/maps/{mapId}:
+    parameters: [{ $ref: '#/components/parameters/mapId' }]
+    get:
+      tags: [cartography]
+      summary: Карта
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MapSource' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [cartography]
+      summary: Изменить описание, границу, охват, уровни, прозрачность
+      description: Смена границы сбрасывает кэш обрезанных тайлов. Поля, которые меняют только задания (kind, format, stats…), пропускаются; неизвестные — 422.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MapPatch' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MapSource' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [cartography]
+      summary: Удалить карту вместе с тайлами (задания карты отменяются, история заданий остаётся)
+      responses: { '204': { description: Удалена }, '404': { $ref: '#/components/responses/Error' } }
+  /cartography/maps/{mapId}/tiles/{z}/{x}/{y}.{ext}:
+    parameters:
+      - { $ref: '#/components/parameters/mapId' }
+      - { name: z, in: path, required: true, schema: { type: integer, minimum: 0, maximum: 22 } }
+      - { name: x, in: path, required: true, schema: { type: integer, minimum: 0 } }
+      - { name: y, in: path, required: true, schema: { type: integer, minimum: 0 } }
+      - { name: ext, in: path, required: true, schema: { type: string, enum: [png, jpg, jpeg, webp] }, description: Не влияет на ответ — формат в Content-Type }
+      - { name: v, in: query, schema: { type: string }, description: Версия карты (из TileJSON) — с ней ответ кэшируется надолго (immutable) }
+      - { name: If-None-Match, in: header, schema: { type: string } }
+    get:
+      tags: [cartography]
+      summary: Тайл карты
+      description: |
+        Нет тайла — 204. С границей карты: тайл снаружи — прозрачный PNG, на границе — PNG,
+        обрезанный по контуру, внутри — как хранится.
+      responses:
+        '200':
+          description: Тайл (ETag, Cache-Control)
+          content: { image/png: { schema: { type: string, format: binary } }, image/jpeg: { schema: { type: string, format: binary } }, image/webp: { schema: { type: string, format: binary } } }
+        '204': { description: Тайла нет }
+        '304': { description: Не изменился }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /cartography/maps/{mapId}/tilejson:
+    parameters: [{ $ref: '#/components/parameters/mapId' }]
+    get:
+      tags: [cartography]
+      summary: TileJSON 3.0
+      description: Адрес тайлов — путь от корня сайта с префиксом шлюза (X-Forwarded-Prefix), например /api/cartography/maps/{id}/tiles/{z}/{x}/{y}.png?v=…
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/TileJSON' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /cartography/maps/{mapId}/style:
+    parameters: [{ $ref: '#/components/parameters/mapId' }]
+    get:
+      tags: [cartography]
+      summary: Минимальный стиль MapLibre (один растровый источник и слой; без шрифтов и спрайтов — офлайн)
+      responses:
+        '200': { description: 'Стиль MapLibre (version 8)', content: { application/json: { schema: { type: object } } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /cartography/maps/{mapId}/import/xyz:
+    parameters: [{ $ref: '#/components/parameters/mapId' }]
+    post:
+      tags: [cartography]
+      summary: Загрузить тайлы внешнего XYZ-сервиса в локальное хранилище (задание)
+      description: |
+        Не больше rate запросов/с (по умолчанию 4), повтор при сбоях, User-Agent def-ops-cartography/0.2.
+        Уже загруженные тайлы пропускаются (продолжение прерванной загрузки), 404 источника — skipped.
+        Больше MAX_TILES_PER_JOB тайлов — 422 too_many_tiles с полями tiles и limit.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/XyzDownloadRequest' } } } }
+      responses:
+        '202': { description: Задание поставлено, content: { application/json: { schema: { $ref: '#/components/schemas/MapJob' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/TooManyTiles' }
+  /cartography/maps/{mapId}/import/raster:
+    parameters: [{ $ref: '#/components/parameters/mapId' }]
+    post:
+      tags: [cartography]
+      summary: Загрузить скан с привязкой и нарезать на тайлы (задание)
+      description: |
+        Тело — изображение (до MAX_UPLOAD_MB), привязка — параметр georef (URL-кодированный JSON
+        RasterTileRequest: controlPoints ≥3 или corners). Ответ сразу содержит итог привязки — невязки.
+      parameters:
+        - { name: georef, in: query, required: true, schema: { type: string }, description: 'JSON RasterTileRequest, например {"corners":[[13.3,52.55],[13.5,52.55],[13.5,52.45],[13.3,52.45]]}' }
+      requestBody:
+        required: true
+        content:
+          image/png: { schema: { type: string, format: binary } }
+          image/jpeg: { schema: { type: string, format: binary } }
+          image/webp: { schema: { type: string, format: binary } }
+          image/tiff: { schema: { type: string, format: binary } }
+      responses:
+        '202':
+          description: Задание поставлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job: { $ref: '#/components/schemas/MapJob' }
+                  georef: { $ref: '#/components/schemas/GeorefSummary' }
+                  bounds: { $ref: '#/components/schemas/BBox' }
+                  minzoom: { type: integer }
+                  maxzoom: { type: integer }
+                  format: { type: string, enum: [png, webp] }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/TooManyTiles' }
+  /cartography/maps/{mapId}/package:
+    parameters: [{ $ref: '#/components/parameters/mapId' }]
+    get:
+      tags: [cartography]
+      summary: Пакет карты (tar) для переноса в закрытый контур
+      description: map.json (MapSource) первым, затем tiles/{z}/{x}/{y}.{ext} — тайлы как хранятся. Отдаётся потоком.
+      responses:
+        '200': { description: Архив, content: { application/x-tar: { schema: { type: string, format: binary } } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /cartography/jobs:
+    get:
+      tags: [cartography]
+      summary: Задания организации (новые первыми)
+      parameters: [{ name: mapId, in: query, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/MapJob' } } } } }
+  /cartography/jobs/{jobId}:
+    parameters: [{ name: jobId, in: path, required: true, schema: { type: string, format: uuid } }]
+    get:
+      tags: [cartography]
+      summary: Задание (ход выполнения)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MapJob' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /cartography/jobs/{jobId}/cancel:
+    parameters: [{ name: jobId, in: path, required: true, schema: { type: string, format: uuid } }]
+    post:
+      tags: [cartography]
+      summary: Отменить задание
+      responses:
+        '202': { description: Отмена принята, content: { application/json: { schema: { $ref: '#/components/schemas/MapJob' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /cartography/events:
+    get:
+      tags: [cartography, events]
+      summary: Поток событий картографии (Server-Sent Events)
+      parameters: [{ name: mapId, in: query, schema: { type: string } }, { name: api_key, in: query, schema: { type: string } }]
+      responses:
+        '200':
+          description: 'event: map.created | map.updated | map.deleted | job.progress | job.done | job.failed (и для отменённых)'
+          content: { text/event-stream: { schema: { $ref: '#/components/schemas/CartographyEvent' } } }
+  /cartography/scale:
+    get:
+      tags: [cartography]
+      summary: Масштаб на широте и уровне (м/пиксель, «1:25 000», линейка)
+      parameters:
+        - { name: lat, in: query, required: true, schema: { type: number, minimum: -85.06, maximum: 85.06 } }
+        - { name: zoom, in: query, required: true, schema: { type: number, minimum: 0, maximum: 24 } }
+        - { name: tileSize, in: query, schema: { type: integer, enum: [256, 512], default: 512 } }
+        - { name: maxPx, in: query, schema: { type: number, default: 120 }, description: Наибольшая длина линейки, px }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metersPerPixel: { type: number }
+                  denominator: { type: number }
+                  label: { type: string, example: '1:25 000' }
+                  bar: { type: object, properties: { meters: { type: number }, px: { type: number }, label: { type: string }, ticks: { type: array, items: { type: number } } } }
+        '400': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     apiKey: { type: apiKey, in: header, name: X-Api-Key }
@@ -323,6 +532,7 @@ components:
     ifMatch: { name: If-Match, in: header, schema: { type: string }, description: 'Ожидаемая ревизия, например "3"' }
     layers: { name: layers, in: query, schema: { type: string }, description: 'Список id слоёв через запятую' }
     entityId: { name: entityId, in: path, required: true, schema: { type: string, format: uuid } }
+    mapId: { name: mapId, in: path, required: true, schema: { type: string, format: uuid } }
     at: { name: at, in: query, schema: { type: string }, description: 'Момент ISO 8601: 1945-04-25 или 1945-04-25T06:00 (без пояса — UTC)' }
   responses:
     Error:
@@ -330,6 +540,11 @@ components:
       content:
         application/json:
           schema: { type: object, properties: { error: { type: object, properties: { code: { type: string }, message: { type: string } } } } }
+    TooManyTiles:
+      description: 'Ошибка проверки; code too_many_tiles — тайлов больше предела MAX_TILES_PER_JOB'
+      content:
+        application/json:
+          schema: { type: object, properties: { error: { type: object, properties: { code: { type: string }, message: { type: string }, tiles: { type: integer }, limit: { type: integer } } } } }
   schemas:
     LngLat: { type: array, items: { type: number }, minItems: 2, maxItems: 2, description: '[долгота, широта], WGS84' }
     DocumentMeta:
@@ -543,4 +758,129 @@ components:
         factId: { type: string }
         change: { type: string, enum: [created, updated, deleted] }
         source: { type: string }
+        at: { type: string, format: date-time }
+    BBox: { type: array, items: { type: number }, minItems: 4, maxItems: 4, description: '[запад, юг, восток, север], градусы; широта до ±85,06' }
+    ControlPoint:
+      type: object
+      required: [px, py, lngLat]
+      properties:
+        px: { type: number, description: Пиксель изображения по горизонтали (0 — левый край) }
+        py: { type: number, description: Пиксель по вертикали (0 — верхний край) }
+        lngLat: { $ref: '#/components/schemas/LngLat' }
+    GeorefSummary:
+      type: object
+      properties:
+        kind: { type: string, enum: [affine, projective] }
+        width: { type: integer }
+        height: { type: integer }
+        rmsMeters: { type: number, description: Средняя квадратическая невязка, м }
+        residuals: { type: array, items: { type: number }, description: Невязка каждой опорной точки, м }
+        nativeZoom: { type: integer, description: Уровень, на котором пиксель скана ≈ пикселю тайла }
+    MapSource:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        attribution: { type: string, description: Источник (сайт, архив, издание) — показывать на карте }
+        date: { type: [string, 'null'], description: Состояние местности (год издания / съёмки) }
+        kind: { type: string, enum: [xyz, raster, package] }
+        format: { type: string, enum: [png, jpg, webp] }
+        tileSize: { type: integer, enum: [256, 512] }
+        minzoom: { type: integer, minimum: 0, maximum: 22 }
+        maxzoom: { type: integer, minimum: 0, maximum: 22 }
+        bounds: { $ref: '#/components/schemas/BBox' }
+        coverage: { type: [array, 'null'], items: { $ref: '#/components/schemas/LngLat' }, minItems: 3, description: Граница карты (кольцо); за ней тайлы прозрачны }
+        opacity: { type: number, minimum: 0, maximum: 1 }
+        sourceUrl: { type: [string, 'null'] }
+        controlPoints: { type: [array, 'null'], items: { $ref: '#/components/schemas/ControlPoint' } }
+        georef: { oneOf: [{ $ref: '#/components/schemas/GeorefSummary' }, { type: 'null' }] }
+        stats: { type: object, properties: { tiles: { type: integer }, bytes: { type: integer } } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    MapInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 200 }
+        description: { type: string }
+        attribution: { type: string }
+        date: { type: [string, 'null'] }
+        kind: { type: string, enum: [xyz, raster], default: xyz }
+        format: { type: string, enum: [png, jpg, webp], default: png }
+        tileSize: { type: integer, enum: [256, 512], default: 256 }
+        minzoom: { type: integer, default: 0 }
+        maxzoom: { type: integer, default: 18 }
+        bounds: { $ref: '#/components/schemas/BBox' }
+        coverage: { type: [array, 'null'], items: { $ref: '#/components/schemas/LngLat' } }
+        opacity: { type: number, default: 1 }
+    MapPatch:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        attribution: { type: string }
+        date: { type: [string, 'null'] }
+        coverage: { type: [array, 'null'], items: { $ref: '#/components/schemas/LngLat' }, description: null — снять границу }
+        opacity: { type: number }
+        bounds: { $ref: '#/components/schemas/BBox' }
+        minzoom: { type: integer }
+        maxzoom: { type: integer }
+    XyzDownloadRequest:
+      type: object
+      required: [url, bounds, minzoom, maxzoom]
+      properties:
+        url: { type: string, description: 'Шаблон: {z} {x} {y} {-y} {s} {quadkey}; только http(s)', example: 'https://tiles.example.org/{z}/{x}/{y}.png' }
+        bounds: { $ref: '#/components/schemas/BBox' }
+        minzoom: { type: integer, minimum: 0, maximum: 22 }
+        maxzoom: { type: integer, minimum: 0, maximum: 22 }
+        subdomains: { type: array, items: { type: string } }
+        headers: { type: object, additionalProperties: { type: string }, description: 'Только Referer, Accept, Accept-Language, Origin' }
+        rate: { type: number, exclusiveMinimum: 0, maximum: 20, default: 4, description: Запросов в секунду }
+    RasterTileRequest:
+      type: object
+      properties:
+        controlPoints: { type: array, items: { $ref: '#/components/schemas/ControlPoint' }, minItems: 3 }
+        corners: { type: array, items: { $ref: '#/components/schemas/LngLat' }, minItems: 4, maxItems: 4, description: 'Левый верхний, правый верхний, правый нижний, левый нижний' }
+        kind: { type: string, enum: [affine, projective], description: 'По умолчанию projective при ≥4 точках' }
+        minzoom: { type: integer }
+        maxzoom: { type: integer, description: По умолчанию — nativeZoom }
+    MapJob:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        mapId: { type: string, format: uuid }
+        type: { type: string, enum: [xyz-download, raster-tile, package-import] }
+        status: { type: string, enum: [queued, running, done, failed, cancelled] }
+        done: { type: integer, description: Обработано тайлов (включая пропущенные и ошибки) }
+        total: { type: integer }
+        skipped: { type: integer, description: Уже были на диске / нет на источнике / пустые }
+        errors: { type: integer }
+        message: { type: string }
+        result: { type: object, properties: { georef: { $ref: '#/components/schemas/GeorefSummary' } }, additionalProperties: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    TileJSON:
+      type: object
+      properties:
+        tilejson: { type: string, enum: ['3.0.0'] }
+        name: { type: string }
+        description: { type: string }
+        attribution: { type: string }
+        scheme: { type: string, enum: [xyz] }
+        tiles: { type: array, items: { type: string } }
+        minzoom: { type: integer }
+        maxzoom: { type: integer }
+        bounds: { $ref: '#/components/schemas/BBox' }
+        center: { type: array, items: { type: number }, minItems: 3, maxItems: 3 }
+        format: { type: string }
+        tileSize: { type: integer }
+    CartographyEvent:
+      type: object
+      properties:
+        type: { type: string, enum: [map.created, map.updated, map.deleted, job.progress, job.done, job.failed] }
+        tenant: { type: string }
+        mapId: { type: string }
+        jobId: { type: string }
+        job: { $ref: '#/components/schemas/MapJob' }
         at: { type: string, format: date-time }

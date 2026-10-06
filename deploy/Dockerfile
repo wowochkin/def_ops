@@ -14,9 +14,15 @@ COPY packages/api-client/package.json packages/api-client/
 COPY services/documents/package.json services/documents/
 COPY services/render/package.json services/render/
 COPY services/registry/package.json services/registry/
+COPY services/cartography/package.json services/cartography/
 COPY services/gateway/package.json services/gateway/
 COPY apps/editor/package.json apps/editor/
 RUN npm ci --no-audit --no-fund
+# sharp (сервис картографии) — готовые сборки libvips под musl (Alpine) из package-lock;
+# если их нет (lock собран без необязательных пакетов) — доустанавливаем и проверяем загрузку
+RUN node -e "require('sharp')" 2>/dev/null \
+  || npm install --no-save --no-audit --no-fund --os=linux --libc=musl --cpu=x64 sharp@0.34 \
+  && node -e "const s=require('sharp'); console.log('sharp', s.versions.sharp, 'libvips', s.versions.vips)"
 
 FROM deps AS editor-build
 COPY . .
@@ -32,6 +38,6 @@ COPY services ./services
 COPY --from=editor-build /app/apps/editor/dist ./apps/editor/dist
 ENV SERVICE=gateway
 # каталог данных (том) должен принадлежать непривилегированному пользователю
-RUN mkdir -p /data && chown node:node /data
+RUN mkdir -p /data/tiles && chown -R node:node /data
 USER node
 CMD ["sh", "-c", "exec node_modules/.bin/tsx services/$SERVICE/src/main.ts"]

@@ -10,7 +10,7 @@ x-build: &build
 x-db-url: &db-url postgres://defops:${DB_PASSWORD:-defops}@db:5432/defops
 
 services:
-  # PostgreSQL + PostGIS: у каждого сервиса своя схема (documents, registry)
+  # PostgreSQL + PostGIS: у каждого сервиса своя схема (documents, registry, cartography)
   db:
     image: postgis/postgis:16-3.4-alpine
     environment: { POSTGRES_DB: defops, POSTGRES_USER: defops, POSTGRES_PASSWORD: "${DB_PASSWORD:-defops}" }
@@ -34,6 +34,23 @@ services:
     depends_on: { db: { condition: service_healthy } }
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8103/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
+  # картография: описания карт — в PostgreSQL, тайлы — в томе tiles-data
+  cartography:
+    build: *build
+    environment:
+      SERVICE: cartography
+      PORT: "8104"
+      STORAGE: postgres
+      DATABASE_URL: *db-url
+      TILES_DIR: /data/tiles
+      MAX_TILES_PER_JOB: ${MAX_TILES_PER_JOB:-50000}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
+      # пусто — загрузка XYZ с любого адреса; иначе список разрешённых хостов через запятую
+      XYZ_ALLOWED_HOSTS: ${XYZ_ALLOWED_HOSTS:-}
+    volumes: [tiles-data:/data/tiles]
+    depends_on: { db: { condition: service_healthy } }
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8104/ready"], interval: 10s, timeout: 3s, retries: 5 }
+
   gateway:
     build: *build
     environment:
@@ -42,6 +59,7 @@ services:
       DOCUMENTS_URL: http://documents:8101
       RENDER_URL: http://render:8102
       REGISTRY_URL: http://registry:8103
+      CARTOGRAPHY_URL: http://cartography:8104
       STATIC_DIR: /app/apps/editor/dist
       # AUTH=keys — обязательные API-ключи; формат API_KEYS: "ключ:организация,ключ2:организация2"
       AUTH: ${AUTH:-open}
@@ -51,6 +69,8 @@ services:
       documents: { condition: service_healthy }
       render: { condition: service_healthy }
       registry: { condition: service_healthy }
+      cartography: { condition: service_healthy }
 
 volumes:
   db-data:
+  tiles-data:
