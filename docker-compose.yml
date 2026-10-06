@@ -5,7 +5,6 @@ x-build: &build
   dockerfile: deploy/Dockerfile
   # прокси для npm при сборке (берутся из окружения, если заданы)
   args: [HTTP_PROXY, HTTPS_PROXY, NO_PROXY]
-  network: host
 
 x-db-url: &db-url postgres://defops:${DB_PASSWORD:-defops}@db:5432/defops
 
@@ -18,17 +17,20 @@ services:
     healthcheck: { test: ["CMD", "pg_isready", "-U", "defops", "-d", "defops"], interval: 5s, timeout: 3s, retries: 20 }
 
   documents:
+    image: defops/documents:${DEFOPS_TAG:-latest}
     build: *build
     environment: { SERVICE: documents, PORT: "8101", STORAGE: postgres, DATABASE_URL: *db-url }
     depends_on: { db: { condition: service_healthy } }
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8101/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
   render:
+    image: defops/render:${DEFOPS_TAG:-latest}
     build: *build
     environment: { SERVICE: render, PORT: "8102", DOCUMENTS_URL: http://documents:8101 }
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8102/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
   registry:
+    image: defops/registry:${DEFOPS_TAG:-latest}
     build: *build
     environment: { SERVICE: registry, PORT: "8103", STORAGE: postgres, DATABASE_URL: *db-url }
     depends_on: { db: { condition: service_healthy } }
@@ -36,6 +38,7 @@ services:
 
   # картография: описания карт — в PostgreSQL, тайлы — в томе tiles-data
   cartography:
+    image: defops/cartography:${DEFOPS_TAG:-latest}
     build: *build
     environment:
       SERVICE: cartography
@@ -52,6 +55,7 @@ services:
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8104/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
   gateway:
+    image: defops/gateway:${DEFOPS_TAG:-latest}
     build: *build
     environment:
       SERVICE: gateway
@@ -64,7 +68,7 @@ services:
       # AUTH=keys — обязательные API-ключи; формат API_KEYS: "ключ:организация,ключ2:организация2"
       AUTH: ${AUTH:-open}
       API_KEYS: ${API_KEYS:-}
-    ports: ["8080:8080"]
+    ports: ["${PORT:-8080}:8080"]
     depends_on:
       documents: { condition: service_healthy }
       render: { condition: service_healthy }

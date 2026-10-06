@@ -3,3 +3,5 @@ dist
 data
 .git
 **/*.log
+.claude
+defops-offline*

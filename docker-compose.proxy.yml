@@ -1,0 +1,13 @@
+# Сборка за прокси, доступным только с самой машины (корпоративная сеть, облачная
+# среда): сборочный контейнер ходит в сеть через сеть хоста.
+#   docker compose -f docker-compose.yml -f docker-compose.proxy.yml up --build
+# Сертификат прокси — в deploy/extra-ca/*.crt. На обычном компьютере не нужен.
+x-build-host: &build-host
+  network: host
+
+services:
+  documents: { build: *build-host }
+  render: { build: *build-host }
+  registry: { build: *build-host }
+  cartography: { build: *build-host }
+  gateway: { build: *build-host }
