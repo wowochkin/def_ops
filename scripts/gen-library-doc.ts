@@ -1,6 +1,6 @@
 // Генерация docs/library.md из описания библиотеки (npm run docs:library).
 import { writeFileSync } from 'node:fs';
-import { CATEGORIES, LIBRARY, STYLES, SOURCES, sourceText } from '@def-ops/core';
+import { CATEGORIES, LIBRARY, PRESETS, STYLES, SOURCES, sourceText } from '@def-ops/core';
 
 const kindName = { arrow: 'стрелка', line: 'линия', area: 'район', symbol: 'знак', label: 'надпись' } as const;
 let md = `# Библиотека условных знаков\n\n`;
@@ -15,7 +15,7 @@ for (const c of CATEGORIES) {
   md += `<a id="${c.id}"></a>\n## ${c.name}\n\n${c.description}\n\n| Элемент | Тип | Описание | Оформление | Свои/противник | Источник |\n|---|---|---|---|---|---|\n`;
   for (const e of LIBRARY.filter((x) => x.category === c.id)) {
     const st = STYLES.filter((s) => e.variants[s.id]).map((s) => s.name).join(', ');
-    md += `| **${e.name}**${e.verify ? ' ⚠ сверить' : ''} | ${kindName[e.kind]} | ${e.description.replace(/\|/g, '/')} | ${st} | ${e.sideAware ? 'да' : '—'} | ${sourceText(e.sources) || '—'} |\n`;
+    md += `| **${e.name}**${e.verify ? ' ⚠ сверить' : ''} | ${kindName[e.kind]} | ${e.description.replace(/\|/g, '/')}${e.alternates ? ` Другие начертания: ${e.alternates.map((id) => PRESETS[e.kind][id]?.name ?? id).join(', ')}.` : ''} | ${st} | ${e.sideAware ? 'да' : '—'} | ${sourceText(e.sources) || '—'} |\n`;
   }
   md += '\n';
 }

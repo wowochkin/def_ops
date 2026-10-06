@@ -135,15 +135,17 @@ export interface LibraryElement {
   keywords?: string[];
   /** Ссылки на первоисточник: «tm:XII-7». */
   sources?: string[];
+  /** Другие начертания того же знака (выбираются в инспекторе), например — из второго образца. */
+  alternates?: string[];
 }
 
-type Opts = { s?: boolean; v?: boolean; k?: string[]; src?: string[] };
+type Opts = { s?: boolean; v?: boolean; k?: string[]; src?: string[]; alt?: string[] };
 const E = (
   id: string, name: string, category: string, kind: FeatureKind, description: string,
   variants: Partial<Record<StyleId, string>>, o: Opts = {},
 ): LibraryElement => ({
   id, name, category, kind, description, variants,
-  ...(o.s ? { sideAware: true } : {}), ...(o.v ? { verify: true } : {}), ...(o.k ? { keywords: o.k } : {}), ...(o.src ? { sources: o.src } : {}),
+  ...(o.s ? { sideAware: true } : {}), ...(o.v ? { verify: true } : {}), ...(o.k ? { keywords: o.k } : {}), ...(o.src ? { sources: o.src } : {}), ...(o.alt ? { alternates: o.alt } : {}),
 });
 const S = true;
 
@@ -151,16 +153,12 @@ export const LIBRARY: LibraryElement[] = [
   /* ------------------------------ действия войск ------------------------------ */
   E('attack.main', 'Направление главного удара', 'maneuver', 'arrow',
     'Основное направление наступления. В РККА — широкая стрелка с пунктирным контуром без заливки; на исторических картах — залитые стрелки-клинья. Хвост может крепиться к линии фронта.',
-    { rkka: 'rkka.mainEffort', inf: 'inf.attack', atlas: 'atlas.p2' }, { s: S, k: ['наступление', 'удар', 'стрелка'], src: ['tm:XII-7'] }),
+    { rkka: 'rkka.mainEffort', inf: 'inf.attack', atlas: 'atlas.p2' }, { s: S, alt: ['tac.attack'], k: ['наступление', 'удар', 'стрелка'], src: ['tm:XII-7'] }),
   E('attack.planned', 'Направление наступления (атаки)', 'maneuver', 'arrow',
     'Намеченное направление атаки (контратаки) — пунктирная линия со стрелкой; часть — подписью.',
     { rkka: 'rkka.attackPlanned', atlas: 'atlas.thin' }, { s: S, k: ['атака', 'контратака', 'вспомогательный удар'], src: ['tm:XII-7'] }),
   E('attack.actual', 'Наступление (фактическое)', 'maneuver', 'arrow',
     'Совершившееся наступление — сплошная линия со стрелкой (в отличие от намеченного — пунктирного).', { rkka: 'rkka.offensive' }, { s: S, src: ['tm:XII-7'] }),
-  E('attack.volume', 'Удар — объёмная стрелка с тенью', 'maneuver', 'arrow',
-    'Атака на крупномасштабной схеме боя (образец — штурм Рейхстага): стрелка с объёмом и тенью.', { atlas: 'tac.attack' }, { k: ['атака', 'схема боя'] }),
-  E('attack.volumeThin', 'Атака подразделения — узкая объёмная стрелка', 'maneuver', 'arrow',
-    'Атака батальона/роты на схеме боя — узкая стрелка с тенью.', { atlas: 'tac.thin' }, { k: ['атака', 'схема боя'] }),
   E('attack.fade', 'Удар (развитие наступления)', 'maneuver', 'arrow',
     'Стрелка с растворяющимся хвостом — развитие наступления в глубину без привязки к исходному положению (стиль инфографики).',
     { inf: 'inf.attackFade' }),
@@ -224,8 +222,7 @@ export const LIBRARY: LibraryElement[] = [
 
   /* ---------------------- рубежи и разграничительные линии ---------------------- */
   E('line.defense', 'Оборонительный рубеж (позиция) — исторические карты', 'lines', 'line', 'Рубеж обороны; зубцы обращены в сторону противника.',
-    { atlas: 'atlas.defense', inf: 'inf.fortification' }, { k: ['оборона', 'полоса обороны'] }),
-  E('line.defenseEnemy', 'Оборона противника на схеме боя', 'lines', 'line', 'Рубеж обороны противника в городе (образец — штурм Рейхстага): синяя линия с зубцами.', { atlas: 'tac.enemyDefense' }, { k: ['оборона'] }),
+    { atlas: 'atlas.defense', inf: 'inf.fortification' }, { alt: ['tac.enemyDefense'], k: ['оборона', 'полоса обороны'] }),
   E('line.defense2', 'Оборонительная полоса (двойная)', 'lines', 'line', 'Полоса обороны из двух позиций (атлас).', { atlas: 'atlas.defenseDouble' }),
   E('boundary.front', 'Разграничительная линия фронтов', 'lines', 'line', 'Граница полос фронтов; построена по аналогии со знаками TM (штрихпунктир с двумя точками, крючки на концах).',
     { rkka: 'rkka.boundaryFront' }, { s: S, v: S }),
@@ -465,8 +462,7 @@ export const LIBRARY: LibraryElement[] = [
   /* ------------------------------------- подписи ------------------------------------- */
   E('label.unit', 'Обозначение части/соединения', 'labels', 'label',
     'Номер и сокращённое наименование: «65 А», «3 гв. тк», «756 сп». Свои — красным, противник — синим.',
-    { rkka: 'rkka.unit', atlas: 'atlas.unit' }, { s: S, src: ['tm:XII-7'] }),
-  E('label.unitBattle', 'Обозначение полка/дивизии на схеме боя', 'labels', 'label', 'Номера полков и дивизий на крупномасштабной схеме («756 сп», «150 сд»).', { atlas: 'tac.unit' }),
+    { rkka: 'rkka.unit', atlas: 'atlas.unit' }, { s: S, alt: ['tac.unit'], src: ['tm:XII-7'] }),
   E('label.unitSmall', 'Обозначение соединения (мелкое)', 'labels', 'label', 'Подпись корпусов и дивизий рядом со стрелками.', { atlas: 'atlas.unitSmall' }),
   E('label.enemyUnit', 'Обозначение соединения противника', 'labels', 'label', 'Синие подписи соединений противника («56 тк», «9 А»).', { atlas: 'atlas.enemyUnit' }),
   E('label.front', 'Название фронта', 'labels', 'label', 'Наименование фронта крупным шрифтом.', { atlas: 'atlas.front', inf: 'inf.front' }),
@@ -482,8 +478,7 @@ export const LIBRARY: LibraryElement[] = [
 
   /* ------------------------------ топографическая основа ------------------------------ */
   E('settlement', 'Населённый пункт', 'terrain', 'symbol', 'Пунсон населённого пункта.', { inf: 'inf.settlement', atlas: 'atlas.town' }),
-  E('city', 'Город (застройка)', 'terrain', 'area', 'Контур застройки города.', { atlas: 'atlas.city', inf: 'inf.cityCenter' }),
-  E('block', 'Квартал застройки', 'terrain', 'area', 'Квартал (здание) на крупномасштабной схеме боя.', { atlas: 'tac.block' }, { k: ['здание', 'город'] }),
+  E('city', 'Город (застройка)', 'terrain', 'area', 'Контур застройки города.', { atlas: 'atlas.city', inf: 'inf.cityCenter' }, { alt: ['tac.block'], k: ['квартал', 'здание'] }),
   E('river', 'Река', 'terrain', 'line', 'Река, ручей, канал (одной линией).', { atlas: 'atlas.river', inf: 'inf.river' }),
   E('lake', 'Озеро, водоём', 'terrain', 'area', 'Озеро, пруд, водохранилище.', { atlas: 'atlas.lake' }),
   E('forest', 'Лес', 'terrain', 'area', 'Лесной массив.', { rkka: 'std.forest' }),

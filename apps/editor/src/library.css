@@ -82,3 +82,4 @@ html.print .src { font-size: 10px; }
 html.print .design { page-break-after: always; }
 html.print .dcard { break-inside: avoid; }
 html.print .dcmp tr { break-inside: avoid; }
+.alt { color: #556; font-size: 11.5px; margin-top: 2px; }

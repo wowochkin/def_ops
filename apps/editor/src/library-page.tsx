@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../demo/fonts';
 import './library.css';
-import { CATEGORIES, LIBRARY, STYLES, SOURCES, variantFor, searchLibrary, sourceText, type StyleId } from '@def-ops/core';
+import { CATEGORIES, LIBRARY, PRESETS, STYLES, SOURCES, variantFor, searchLibrary, sourceText, type StyleId } from '@def-ops/core';
 import { presetPreview } from './previews';
 import { paperFor } from './Palette';
 import atlasSample from '../demo/reference/thumbs/berlin-atlas.jpg';
@@ -155,6 +155,7 @@ function LibraryPage() {
                     <div className="nm">{e.name}{e.verify && <span className="vf" title="Начертание не подтверждено первоисточниками">сверить</span>}</div>
                     <div className="ds">{e.description}</div>
                     {e.sources && <div className="src">Источник: {sourceText(e.sources)}</div>}
+                    {e.alternates && <div className="alt">Другие начертания (в инспекторе): {e.alternates.map((id) => PRESETS[e.kind][id]?.name ?? id).join(', ')}</div>}
                     <div className="vr">
                       {STYLES.filter((s) => e.variants[s.id]).map((s) => <span key={s.id} className={s.id === v.style ? 'cur' : ''}>{s.name}</span>)}
                       {e.sideAware && <span className="side">свои / противник</span>}

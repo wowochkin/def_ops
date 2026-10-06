@@ -153,10 +153,6 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
       highlight: { color: '#ffffff', opacity: 0.75, widthRatio: 0.55 },
     }),
   },
-  'tac.thin': {
-    name: 'Тонкая стрелка', group: 'Ист. карта (схема боя)',
-    style: () => baseArrow({ tailWidth: 1.8, neckWidth: 1.8, headWidth: 9, headLength: 13, barbSweep: 4, fill: stops([0, C.tac.red, 1]) }),
-  },
 };
 
 /* ---------------------------- линии ---------------------------- */

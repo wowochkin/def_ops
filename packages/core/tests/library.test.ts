@@ -11,7 +11,7 @@ describe('библиотека знаков', () => {
       expect(ids.has(e.id), `дубль ${e.id}`).toBe(false);
       ids.add(e.id);
       const table = PRESETS[e.kind] as Record<string, unknown>;
-      for (const [, p] of Object.entries(e.variants)) expect(table[p!], `${e.id} → ${p}`).toBeTruthy();
+      for (const p of [...Object.values(e.variants), ...(e.alternates ?? [])]) expect(table[p!], `${e.id} → ${p}`).toBeTruthy();
     }
     expect(LIBRARY.length).toBeGreaterThan(120);
     // каждая категория не пуста
@@ -19,7 +19,7 @@ describe('библиотека знаков', () => {
   });
 
   it('все пресеты попали в библиотеку', () => {
-    const used = new Set(LIBRARY.flatMap((e) => Object.values(e.variants)));
+    const used = new Set(LIBRARY.flatMap((e) => [...Object.values(e.variants), ...(e.alternates ?? [])]));
     const all = Object.values(PRESETS).flatMap((t) => Object.keys(t));
     const missing = all.filter((id) => !used.has(id));
     expect(missing).toEqual([]);
