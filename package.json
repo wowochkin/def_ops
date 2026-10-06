@@ -16,7 +16,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "start": "npm run build && STATIC_DIR=apps/editor/dist node scripts/dev-services.mjs",
-    "docs:library": "tsx scripts/gen-library-doc.ts"
+    "docs:library": "tsx scripts/gen-library-doc.ts",
+    "docs:pdf": "node scripts/gen-library-pdf.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

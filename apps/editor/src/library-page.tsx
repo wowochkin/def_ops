@@ -7,6 +7,9 @@ import { CATEGORIES, LIBRARY, STYLES, variantFor, searchLibrary, type StyleId } 
 import { presetPreview } from './previews';
 import { paperFor } from './Palette';
 
+const PRINT = new URLSearchParams(location.search).has('print');
+if (PRINT) document.documentElement.classList.add('print');
+
 function LibraryPage() {
   const [style, setStyle] = useState<StyleId>('ustav');
   const [q, setQ] = useState('');
@@ -14,6 +17,20 @@ function LibraryPage() {
   const verifyCount = LIBRARY.filter((e) => e.verify).length;
   return (
     <div className="lib">
+      {PRINT && (
+        <div className="title-page">
+          <div className="tp-kicker">Платформа тактических карт</div>
+          <h1 className="tp-title">Библиотека условных знаков</h1>
+          <div className="tp-sub">Справочник: {LIBRARY.length} элементов, {CATEGORIES.length} категорий, {STYLES.length} стиля оформления</div>
+          <ol className="tp-toc">{CATEGORIES.map((c) => <li key={c.id}>{c.name} <span className="muted">— {LIBRARY.filter((e) => e.category === c.id).length}</span></li>)}</ol>
+          <div className="tp-legend">
+            <p><b>Цвета.</b> Свои войска — красным, противник — синим, оборонительные сооружения, заграждения и топография — чёрным. Для знаков с отметкой «свои / противник» приведены оба варианта.</p>
+            <p><b>Стили.</b> {STYLES.map((s) => `${s.name} — ${s.description}`).join(' ')}</p>
+            <p><b>Пометка «сверить».</b> У {verifyCount} знаков в разные годы были варианты начертания; их нужно сверить с таблицей условных знаков, принятой для проекта.</p>
+            <p className="muted">Сформировано {new Date().toLocaleDateString('ru-RU')} из описания библиотеки (packages/core/src/library.ts).</p>
+          </div>
+        </div>
+      )}
       <header>
         <h1>Библиотека условных знаков</h1>
         <p className="lead">
@@ -46,12 +63,22 @@ function LibraryPage() {
                       <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paper, e.sideAware ? 'own' : undefined, true) }} />
                       {e.sideAware && <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paper, 'enemy', true) }} />}
                     </div>
+                    {PRINT && STYLES.filter((s) => e.variants[s.id] && s.id !== v.style).length > 0 && (
+                      <div className="pv-alt">
+                        {STYLES.filter((s) => e.variants[s.id] && s.id !== v.style).map((s) => (
+                          <figure key={s.id}>
+                            <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, e.variants[s.id]!, paperFor(s.id), e.sideAware ? 'own' : undefined) }} />
+                            <figcaption>{s.name}</figcaption>
+                          </figure>
+                        ))}
+                      </div>
+                    )}
                     <div className="nm">{e.name}{e.verify && <span className="vf" title="Начертание требует сверки с первоисточником">сверить</span>}</div>
                     <div className="ds">{e.description}</div>
                     <div className="vr">
                       {STYLES.filter((s) => e.variants[s.id]).map((s) => <span key={s.id} className={s.id === v.style ? 'cur' : ''}>{s.name}</span>)}
                       {e.sideAware && <span className="side">свои / противник</span>}
-                      {v.style !== style && <span className="muted">нет в стиле «{STYLES.find((s) => s.id === style)!.name}» — показан ближайший</span>}
+                      {v.style !== style && !PRINT && <span className="muted">нет в стиле «{STYLES.find((s) => s.id === style)!.name}» — показан ближайший</span>}
                     </div>
                   </div>
                 );
