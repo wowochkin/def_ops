@@ -219,3 +219,15 @@ table.attrs .src-in { font-size: 11.5px; }
 .maps .scan2map { padding: 6px 10px; border-top: 1px dashed #ddd; }
 .maps .err { color: #b3261e; }
 header .op-range { width: 70px; }
+
+/* диапазон масштабов слоя/знака */
+.scale-range { margin: 4px 0; }
+.scale-range .sr-head { color: #444; margin-bottom: 2px; }
+.scale-range .sr-ctl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.scale-range .sr-ctl select { min-width: 0; }
+.scale-range .sr-now { font-size: 11px; margin: 3px 0 6px; display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; }
+.scale-range .sr-off { color: #b42318; font-weight: 600; }
+.sr-note { font-size: 11px; margin: 0 0 6px; }
+.lhead .lscale { font-size: 11px; color: #555; cursor: default; }
+.lhead .lscale.off { color: #b42318; }
+.lhead.outscale .lname { opacity: .5; font-style: italic; }

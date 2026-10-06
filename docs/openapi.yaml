@@ -571,6 +571,11 @@ components:
           type: [object, 'null']
           properties: { system: { type: string }, ref: { type: string }, readOnly: { type: boolean } }
         meta: { type: object, additionalProperties: true }
+        scales: { $ref: '#/components/schemas/ScaleRange' }
+    ScaleRange:
+      type: [object, 'null']
+      description: Масштабы «1 : N», на которых виден слой или знак; from — самый подробный, to — самый мелкий
+      properties: { from: { type: [number, 'null'] }, to: { type: [number, 'null'] } }
     LayerPatch:
       type: object
       properties:
@@ -581,6 +586,7 @@ components:
         opacity: { type: number }
         source: { type: [object, 'null'] }
         meta: { type: object }
+        scales: { $ref: '#/components/schemas/ScaleRange' }
     Feature:
       type: object
       description: Знак карты. Поля зависят от kind; полное описание — packages/core/src/model.ts.
@@ -596,6 +602,8 @@ components:
         anchor: { type: [object, 'null'], properties: { featureId: { type: string }, t: { type: number } } }
         text: { type: string }
         style: { type: object }
+        sizeRef: { type: number, description: 'Коэффициент зума, при котором знак нарисован (2^(refZoom − z)); от него считается коридор размеров' }
+        scales: { $ref: '#/components/schemas/ScaleRange' }
     MapDocument:
       type: object
       required: [version, name, refZoom, origin, layers, features, overlays]
@@ -607,6 +615,10 @@ components:
         refZoom: { type: number, description: 'Опорный масштаб: размеры знаков — в пикселях на этом зуме' }
         origin: { $ref: '#/components/schemas/LngLat' }
         paper: { type: string }
+        sizing:
+          type: [object, 'null']
+          description: 'Размер оформления знаков при зуме — от min до max размера, с которым знак нарисован (max null — без предела). По умолчанию { min: 0.5, max: 1.5 }'
+          properties: { min: { type: number }, max: { type: [number, 'null'] } }
         view: { type: object }
         layers: { type: array, items: { $ref: '#/components/schemas/Layer' } }
         features: { type: array, items: { $ref: '#/components/schemas/Feature' } }

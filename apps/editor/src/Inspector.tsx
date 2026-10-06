@@ -3,7 +3,8 @@ import type {
   AreaFeature, ArrowFeature, ArrowStyle, ColorStop, Decoration, Feature, LabelFeature, LineFeature, MapDocument,
   StrokeLayer, SymbolFeature, TextStyle, SymbolType,
 } from '@def-ops/core';
-import { PRESETS, SYMBOL_PRESETS, scaleStyle } from '@def-ops/core';
+import { PRESETS, SYMBOL_PRESETS, scaleStyle, inScaleRange, scaleRangeLabel } from '@def-ops/core';
+import { ScaleRangeField } from './ScaleRange';
 import { restyle } from '@def-ops/core';
 import { setFeatureLayer, GLYPH_NAMES, featureAt, geometryOf, geometryAt, setKeyframe, removeKeyframe, sortedKeyframes, keyframeAt, type TimeInstant } from '@def-ops/core';
 import { fmtMoment, useZones } from './time';
@@ -21,9 +22,11 @@ interface Props {
   setTime?: (t: TimeInstant | null) => void;
   /** Дополнительные разделы (например, объект реестра). */
   extra?: React.ReactNode;
+  /** Текущий масштаб вида «1 : N». */
+  viewScale?: number | null;
 }
 
-export function Inspector({ doc, setDoc, feature: f, onDeselect, time = null, setTime, extra }: Props) {
+export function Inspector({ doc, setDoc, feature: f, onDeselect, time = null, setTime, extra, viewScale = null }: Props) {
   const k = f.scale ?? 1;
   const set = (fn: (f: Feature) => Feature, field: string) => setDoc(updateFeature(doc, f.id, fn), `insp-${f.id}-${field}`);
   const presetTable = PRESETS[f.kind] as Record<string, { name: string; group: string }>;
@@ -42,6 +45,11 @@ export function Inspector({ doc, setDoc, feature: f, onDeselect, time = null, se
         )}
         <Num label="Масштаб знака" value={k} min={0.05} max={8} step={0.05} hint="Пропорционально меняет все размеры знака"
           onChange={(v) => v > 0 && set((x) => ({ ...x, scale: v, style: scaleStyle(x.style, v / (x.scale ?? 1)) }) as Feature, 'scale')} />
+        <ScaleRangeField value={f.scales} current={viewScale} what="знак"
+          onChange={(r) => setDoc(updateFeature(doc, f.id, (x) => ({ ...x, scales: r })))} />
+        {viewScale != null && !inScaleRange(doc.layers.find((l) => l.id === f.layerId)?.scales, viewScale) && (
+          <div className="muted sr-note">Слой «{doc.layers.find((l) => l.id === f.layerId)?.name}» на этом масштабе скрыт ({scaleRangeLabel(doc.layers.find((l) => l.id === f.layerId)?.scales)}).</div>
+        )}
         <div className="btns">
           <button onClick={() => setDoc(updateFeature(doc, f.id, (x) => ({ ...x, hidden: !x.hidden })))}>{f.hidden ? 'Показать' : 'Скрыть'}</button>
           <button onClick={() => setDoc(updateFeature(doc, f.id, (x) => ({ ...x, locked: !x.locked })))}>{f.locked ? 'Разблокировать' : 'Заблокировать'}</button>

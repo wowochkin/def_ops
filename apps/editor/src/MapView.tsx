@@ -10,7 +10,7 @@ import { askText } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArrowFeature, Feature, FeatureKind, ImageOverlay, LngLat, MapDocument, PresetKind, Vec2 } from '@def-ops/core';
 import {
-  makeProjection, dist, sub, dot, createFeature, zoomFactor, pickLayer, isFeatureEditable, renderDocument, documentAt,
+  makeProjection, dist, sub, dot, createFeature, zoomFactor, viewDenominator, sizeFactor, sizingOf, inScaleRange, pickLayer, isFeatureEditable, renderDocument, documentAt,
 } from '@def-ops/core';
 import type { TimeInstant } from '@def-ops/core';
 import { type Tool, insertFeature, updateFeature, commitAt } from './store';
@@ -50,6 +50,10 @@ type Drag =
   | { type: 'overlayMove'; id: string; start: Vec2; orig: ImageOverlay; key: string };
 
 const SNAP_PX = 14;
+/** Шагов на уровень зума, с которыми перерисовывается оформление знаков (1/8 ≈ 9 %). */
+const ZOOM_STEPS = 8;
+/** Пауза после зума, после которой оформление знаков пересчитывается под новый масштаб, мс. */
+const SETTLE_MS = 150;
 
 export function MapView(props: Props) {
   const { doc, setDoc, selected, setSelected, tool, setTool } = props;
@@ -109,11 +113,34 @@ export function MapView(props: Props) {
     return f;
   }, [tool, draft, hover, doc, props.activeLayer]);
 
-  // ---------- рендер знаков (только при изменении документа)
+  // ---------- вид для рендера: зум и масштаб шагами; применяется, когда зум остановился
+  // (во время жеста знаки масштабируются вместе с картой, перерисовка — одна, в конце)
+  const view0 = mapRef.current?.getView();
+  const zNow = view0 ? Math.round(view0.zoom * ZOOM_STEPS) / ZOOM_STEPS : doc.refZoom;
+  const latNow = view0 ? Math.round(view0.center[1] * 2) / 2 : doc.origin[1];
+  const [settled, setSettled] = useState({ zq: zNow, latq: latNow });
+  useEffect(() => {
+    if (settled.zq === zNow && settled.latq === latNow) return;
+    const t = setTimeout(() => setSettled({ zq: zNow, latq: latNow }), SETTLE_MS);
+    return () => clearTimeout(t);
+  }, [zNow, latNow, settled]);
+  const { zq, latq } = settled;
+  const denom = viewDenominator(latq, zq);
+  /** Множитель размеров оформления знака на текущем шаге масштаба. */
+  const sizeAt = (f: Feature) => sizeFactor(f, doc.refZoom, zq, sizingOf(doc));
+  // Перерисовка нужна, только если на новом шаге у знаков другой размер или другая
+  // видимость: внутри коридора и без диапазонов масштабов зум ничего не меняет.
+  const sizeKey = [...new Set(shown.features.map((f) => f.sizeRef ?? f.scale ?? 1))].map((r) => sizeAt({ sizeRef: r } as Feature).toFixed(3)).join();
+  const visKey = shown.layers.map((l) => (inScaleRange(l.scales, denom) ? 1 : 0)).join('') + ':' +
+    shown.features.map((f) => (f.scales ? (inScaleRange(f.scales, denom) ? 1 : 0) : '')).join('');
+  const viewRef = useRef({ zoom: zq, denominator: denom });
+  viewRef.current = { zoom: zq, denominator: denom };
+
+  // ---------- рендер знаков (при изменении документа, размеров или видимости по масштабу)
   const rendered = useMemo(() => {
     const d = draftFeature ? { ...shown, features: [...shown.features, draftFeature] } : shown;
-    return renderDocument(d, 'm');
-  }, [shown, draftFeature]);
+    return renderDocument(d, { idPrefix: 'm', view: viewRef.current });
+  }, [shown, draftFeature, sizeKey, visKey]);
 
   useEffect(() => {
     const g = worldRef.current;
@@ -306,15 +333,17 @@ export function MapView(props: Props) {
         }
       }
     } else if (f.kind === 'arrow') {
-      const h = arrowWidthHandles(shown, f);
+      // ручки — у стрелки в показанном размере; в стиль пишется размер «как нарисовано»
+      const m = sizeAt(f);
+      const h = arrowWidthHandles(shown, f, m);
       if (!h) return;
       if (d.type === 'tailWidth') {
         const tail0 = controlPoints(shown, f)[0];
-        const tw = widthFromHandle(tail0, h.tailN, w);
+        const tw = widthFromHandle(tail0, h.tailN, w) / m;
         nf = { ...f, style: { ...f.style, tailWidth: tw } };
       } else {
-        const hw = widthFromHandle(h.neck, h.neckN, w);
-        const sweep = -dot(sub(w, h.neck), h.neckT);
+        const hw = widthFromHandle(h.neck, h.neckN, w) / m;
+        const sweep = -dot(sub(w, h.neck), h.neckT) / m;
         nf = { ...f, style: { ...f.style, headWidth: hw, barbSweep: sweep } };
       }
     }
@@ -381,7 +410,7 @@ export function MapView(props: Props) {
       );
     });
     if (sel.kind === 'arrow') {
-      const h = arrowWidthHandles(shown, sel);
+      const h = arrowWidthHandles(shown, sel, sizeAt(sel));
       if (h) {
         const t = toScreen(h.tail), b = toScreen(h.barb);
         handles.push(

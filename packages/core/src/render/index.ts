@@ -9,6 +9,8 @@ import type { Path } from '../curve';
 import { bbox } from '../curve';
 import { documentAt } from '../temporal';
 import type { Feature, MapDocument } from '../model';
+import { scaleStyle } from '../presets';
+import { sizeFactor, sizingOf, visibleAtScale } from '../scaling';
 import { type RenderContext, esc } from './context';
 import { orderedFeatures } from '../layers';
 import { renderArrow } from './arrow';
@@ -46,6 +48,12 @@ export interface RenderOptions {
   includeHidden?: boolean;
   /** Обстановка на момент времени (знаки вне периода скрыты, положение — по ключевым кадрам). */
   time?: string | null;
+  /**
+   * Вид на экране: зум (размер оформления — в коридоре doc.sizing) и масштаб
+   * «1 : N» (знаки и слои вне своих диапазонов масштабов скрыты). Без вида —
+   * всё в размере, с которым нарисовано, на любом масштабе (экспорт, печать).
+   */
+  view?: { zoom: number; denominator?: number } | null;
 }
 
 export function createContext(doc: MapDocument, proj: Projection = makeProjection(doc.origin, doc.refZoom)): RenderContext {
@@ -91,6 +99,8 @@ export function renderDocument(input: MapDocument, opts: RenderOptions | string 
     ctx.uid = (p) => o.idPrefix + base(p);
   }
   const only = o.layers ? new Set(o.layers) : null;
+  const sizing = sizingOf(input);
+  const denom = o.view?.denominator;
   const features: RenderedFeature[] = [];
   const layers: RenderedLayer[] = [];
   for (const { layer, features: list } of orderedFeatures(doc)) {
@@ -98,8 +108,11 @@ export function renderDocument(input: MapDocument, opts: RenderOptions | string 
     const out: RenderedFeature[] = [];
     for (const f of list) {
       if (f.hidden) continue;
+      if (denom != null && !visibleAtScale(f, layer, denom)) continue;
       try {
-        out.push({ id: f.id, svg: renderFeature(f, ctx) });
+        const m = o.view ? sizeFactor(f, doc.refZoom, o.view.zoom, sizing) : 1;
+        const g = Math.abs(m - 1) < 1e-3 ? f : ({ ...f, style: scaleStyle(f.style, m) } as Feature);
+        out.push({ id: f.id, svg: renderFeature(g, ctx) });
       } catch (e) {
         console.error('render failed', f.id, e);
       }

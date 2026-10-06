@@ -16,14 +16,14 @@ export function createFeature(kind: PresetKind, presetId: string, geom: { points
   const style = scaleStyle(p.style(side), k) as never;
   const id = newId(kind[0]);
   const scale = k;
-  const sideF = side ? { side } : {};
+  const extra = { ...(side ? { side } : {}), sizeRef: k };
   const layerId = geom.layerId ?? '';
   switch (kind) {
-    case 'arrow': return { id, kind, layerId, preset: presetId, points: geom.points ?? [], anchor: null, style, scale, ...sideF };
-    case 'line': return { id, kind, layerId, preset: presetId, points: geom.points ?? [], closed: !!p.closed, style, scale, ...sideF };
-    case 'area': return { id, kind, layerId, preset: presetId, points: geom.points ?? [], style, scale, ...sideF };
-    case 'symbol': return { id, kind, layerId, preset: presetId, at: geom.at ?? [0, 0], rotation: 0, style, scale, ...sideF };
-    case 'label': return { id, kind, layerId, preset: presetId, at: geom.at ?? [0, 0], text: geom.text ?? 'Надпись', rotation: 0, path: null, style, scale, ...sideF };
+    case 'arrow': return { id, kind, layerId, preset: presetId, points: geom.points ?? [], anchor: null, style, scale, ...extra };
+    case 'line': return { id, kind, layerId, preset: presetId, points: geom.points ?? [], closed: !!p.closed, style, scale, ...extra };
+    case 'area': return { id, kind, layerId, preset: presetId, points: geom.points ?? [], style, scale, ...extra };
+    case 'symbol': return { id, kind, layerId, preset: presetId, at: geom.at ?? [0, 0], rotation: 0, style, scale, ...extra };
+    case 'label': return { id, kind, layerId, preset: presetId, at: geom.at ?? [0, 0], text: geom.text ?? 'Надпись', rotation: 0, path: null, style, scale, ...extra };
   }
 }
 

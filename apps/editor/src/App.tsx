@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ask, askText } from './dialogs';
 import type { MapDocument, GeoJSONCollection, MapSource } from '@def-ops/core';
-import { emptyDocument, newId, migrateDocument, toGeoJSON, fromGeoJSON, zoomFactor, documentAt, type TimeInstant } from '@def-ops/core';
+import { emptyDocument, newId, migrateDocument, toGeoJSON, fromGeoJSON, zoomFactor, documentAt, SIZING_MODES, sizingOf, sizingModeId, type TimeInstant } from '@def-ops/core';
+import { useViewScale } from './ScaleRange';
 import { DefOpsClient, ApiError, type DocumentMeta } from '@def-ops/api-client';
 import { useHistory, removeFeature, insertFeature, type Tool } from './store';
 import { MapView } from './MapView';
@@ -62,6 +63,7 @@ export function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [mapKey, setMapKey] = useState(0);
   const [engine, setEngine] = useState<MapEngine | null>(null);
+  const viewScale = useViewScale(engine);
   const [server, setServer] = useState<ServerState>({ status: 'unknown' });
   const [serverList, setServerList] = useState<DocumentMeta[] | null>(null);
   /** Момент, на который показана обстановка (null — все знаки без учёта времени). */
@@ -284,6 +286,12 @@ export function App() {
           <input type="checkbox" checked={offline} onChange={(e) => { setOffline(e.target.checked); try { localStorage.setItem('def_ops.offline', e.target.checked ? '1' : '0'); } catch { /* */ } if (e.target.checked && !basemapId.startsWith('local-')) setBasemapId('none'); }} /> офлайн
         </label>
         <label className="inl">Бумага <input type="color" value={doc.paper} onChange={(e) => set({ ...doc, paper: e.target.value }, 'paper')} /></label>
+        <label className="inl" title="Размер знаков при приближении и отдалении карты. Положение и линии всегда на местности; экспорт и печать — в размере, с которым нарисовано.">Знаки
+          <select value={sizingModeId(sizingOf(doc))} onChange={(e) => { const m = SIZING_MODES.find((x) => x.id === e.target.value); if (m) set({ ...doc, sizing: m.sizing }); }}>
+            {SIZING_MODES.map((m) => <option key={m.id} value={m.id} title={m.title}>{m.name}</option>)}
+            {sizingModeId(sizingOf(doc)) === 'custom' && <option value="custom" disabled>свой</option>}
+          </select>
+        </label>
         <span className="status">{status}</span>
       </header>
       <aside className="left"><Palette tool={tool} setTool={(t) => { setTool(t); if (t.mode === 'draw') setSelected(null); }} /></aside>
@@ -322,7 +330,7 @@ export function App() {
         )}
       </main>
       <aside className="right">
-        {sel ? <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} time={time} setTime={setTime}
+        {sel ? <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} time={time} setTime={setTime} viewScale={viewScale}
           extra={<EntityPanel api={server.status === 'online' && server.services?.registry === 'up' ? registryApi : null} doc={doc} setDoc={set} feature={sel} time={time} />} />
           : <div className="help">
             <h3>Как работать</h3>
@@ -332,6 +340,7 @@ export function App() {
               <li><b>Стрелки</b> строятся по оси от хвоста к острию; начатая у линии фронта стрелка крепится к ней хвостом.</li>
               <li>В режиме выбора: тяните объект, его узлы, «+» на серединах — новый узел, двойной щелчок по узлу — удалить.</li>
               <li><b>Время</b>: «Обстановка на дату» под картой. Знаки появляются по своим периодам и движутся между положениями (плавно или скачком). Время — московское и местное; вводится в выбранном поясе (кнопка «мск / местн. / UTC»).</li>
+              <li><b>Масштаб</b>: при зуме знаки растут не больше чем в полтора раза («Знаки» в шапке — режим). У слоя (▸) и знака можно задать масштабы, на которых он виден: «скрыть ближе / дальше» берёт текущий масштаб.</li>
               <li>Ctrl+Z / Ctrl+Shift+Z, Ctrl+D — дублировать, Del — удалить, Ctrl+S — на сервер.</li>
             </ul>
           </div>}
@@ -339,7 +348,7 @@ export function App() {
           onShow={(m) => setBasemapId(`local-${m.id}`)} onMaps={setLocalMaps} notify={setNotice} />
         <LayersPanel doc={doc} setDoc={set} selected={selected} setSelected={setSelected}
           selectedOverlay={selectedOverlay} setSelectedOverlay={setSelectedOverlay}
-          activeLayer={activeLayer} setActiveLayer={setActiveLayer} engine={engine} />
+          activeLayer={activeLayer} setActiveLayer={setActiveLayer} engine={engine} viewScale={viewScale} />
       </aside>
     </div>
     </ZonesContext.Provider>

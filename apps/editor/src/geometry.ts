@@ -4,7 +4,7 @@ import type { Vec2 } from '@def-ops/core';
 import { add, mul, sub, dot } from '@def-ops/core';
 import type { ArrowFeature, Feature, MapDocument } from '@def-ops/core';
 import { createContext, isFeatureVisible } from '@def-ops/core';
-import { arrowAxisPoints, arrowGeometry } from '@def-ops/core';
+import { arrowAxisPoints, arrowGeometry, scaleStyle } from '@def-ops/core';
 
 export interface Snap {
   featureId: string;
@@ -38,21 +38,25 @@ export function controlPoints(doc: MapDocument, f: Feature): Vec2[] {
   return f.points.map((p) => ctx.proj.toWorld(p));
 }
 
-/** Ручки ширины стрелки: край хвоста и конец «уса» наконечника. */
-export function arrowWidthHandles(doc: MapDocument, f: ArrowFeature): { tail: Vec2; barb: Vec2; neck: Vec2; tailN: Vec2; neckN: Vec2; neckT: Vec2 } | null {
+/**
+ * Ручки ширины стрелки: край хвоста и конец «уса» наконечника.
+ * m — множитель размеров оформления на текущем масштабе (как стрелка показана).
+ */
+export function arrowWidthHandles(doc: MapDocument, f: ArrowFeature, m = 1): { tail: Vec2; barb: Vec2; neck: Vec2; tailN: Vec2; neckN: Vec2; neckT: Vec2 } | null {
   const ctx = createContext(doc);
   const { pts, anchorPath, anchorS } = arrowAxisPoints(f, ctx);
-  const g = arrowGeometry(pts, f.style, anchorPath, anchorS);
+  const st = m === 1 ? f.style : scaleStyle(f.style, m);
+  const g = arrowGeometry(pts, st, anchorPath, anchorS);
   if (!g) return null;
   const tailN = g.axis.normalAt(0, 2);
   const neckN = g.axis.normalAt(g.neckS, 2);
   const neckT = g.axis.tangentAt(g.neckS, 2);
-  const tailC = g.axis.pointAt(Math.min(g.axis.length * 0.12, f.style.tailWidth));
+  const tailS = Math.min(g.axis.length * 0.12, st.tailWidth);
   const neck = g.axis.pointAt(g.neckS);
   const barbC = g.axis.pointAt(g.barbS);
   return {
-    tail: add(tailC, mul(g.axis.normalAt(Math.min(g.axis.length * 0.12, f.style.tailWidth), 2), g.width(Math.min(g.axis.length * 0.12, f.style.tailWidth)) / 2)),
-    barb: add(barbC, mul(g.axis.normalAt(g.barbS, 2), f.style.headWidth / 2)),
+    tail: add(g.axis.pointAt(tailS), mul(g.axis.normalAt(tailS, 2), g.width(tailS) / 2)),
+    barb: add(barbC, mul(g.axis.normalAt(g.barbS, 2), st.headWidth / 2)),
     neck, tailN, neckN, neckT,
   };
 }

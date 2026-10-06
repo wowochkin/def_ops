@@ -6,7 +6,8 @@
 import { ask } from './dialogs';
 import { useState } from 'react';
 import type { ImageOverlay, LayerRole, MapDocument } from '@def-ops/core';
-import { newId, addLayer, updateLayer, removeLayer, moveLayer, setFeatureLayer, soloLayer, orderedFeatures } from '@def-ops/core';
+import { newId, addLayer, updateLayer, removeLayer, moveLayer, setFeatureLayer, soloLayer, orderedFeatures, inScaleRange, hasScaleRange, scaleRangeLabel } from '@def-ops/core';
+import { ScaleRangeField } from './ScaleRange';
 import type { MapEngine } from './engine/types';
 
 const ICON = { arrow: '➤', line: '〰', area: '⬭', symbol: '◆', label: 'T' };
@@ -24,6 +25,8 @@ interface Props {
   activeLayer: string | null;
   setActiveLayer: (id: string | null) => void;
   engine: MapEngine | null;
+  /** Текущий масштаб вида «1 : N». */
+  viewScale?: number | null;
 }
 
 export function LayersPanel(p: Props) {
@@ -76,7 +79,7 @@ export function LayersPanel(p: Props) {
               setDragOver(null);
               if (fid && !l.locked) setDoc(setFeatureLayer(doc, fid, l.id));
             }}>
-            <div className={`lhead${l.visible ? '' : ' hid'}`}>
+            <div className={`lhead${l.visible ? '' : ' hid'}${p.viewScale != null && !inScaleRange(l.scales, p.viewScale) ? ' outscale' : ''}`}>
               <button className="link tw" onClick={() => setOpen({ ...open, [l.id]: !open[l.id] })}>{open[l.id] ? '▾' : '▸'}</button>
               <button className="link" title="Показать/скрыть (Alt+щелчок — только этот слой)"
                 onClick={(e) => setDoc(e.altKey ? soloLayer(doc, l.id) : updateLayer(doc, l.id, { visible: !l.visible }))}>{l.visible ? '👁' : '◌'}</button>
@@ -90,6 +93,10 @@ export function LayersPanel(p: Props) {
                   onClick={() => setActiveLayer(activeLayer === l.id ? null : l.id)} onDoubleClick={() => setEditing(l.id)}>
                   {l.name}{l.source ? <i className="muted"> · {l.source.system}</i> : null}
                 </span>}
+              {hasScaleRange(l.scales) && (
+                <span className={`lscale${p.viewScale != null && !inScaleRange(l.scales, p.viewScale) ? ' off' : ''}`}
+                  title={`Виден на масштабах ${scaleRangeLabel(l.scales)}${p.viewScale != null && !inScaleRange(l.scales, p.viewScale) ? ' — на текущем скрыт' : ''}`}>⌕</span>
+              )}
               <span className="muted cnt">{features.length}</span>
               <button className="link" title="Выше" onClick={() => setDoc(moveLayer(doc, l.id, 1))}>↑</button>
               <button className="link" title="Ниже" onClick={() => setDoc(moveLayer(doc, l.id, -1))}>↓</button>
@@ -102,6 +109,8 @@ export function LayersPanel(p: Props) {
                     onChange={(e) => setDoc(updateLayer(doc, l.id, { opacity: +e.target.value }), `lop-${l.id}`)} />
                     <span className="muted">{Math.round(l.opacity * 100)}%</span></span>
                 </div>
+                <ScaleRangeField value={l.scales} current={p.viewScale ?? null} what="слой"
+                  onChange={(r) => setDoc(updateLayer(doc, l.id, { scales: r }))} />
                 <div className="row">
                   <span className="lbl">Назначение</span>
                   <span className="ctl"><select value={l.role} onChange={(e) => setDoc(updateLayer(doc, l.id, { role: e.target.value as LayerRole }))}>
