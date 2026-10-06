@@ -1,53 +1,90 @@
-/** Палитра знаков: пресеты по стилям оформления и типам объектов. */
+/**
+ * Палитра знаков: библиотека по логическим категориям.
+ * Сверху — стиль оформления и принадлежность (свои / противник), поиск.
+ * Каждый элемент показан в выбранном стиле (или в ближайшем доступном).
+ */
 import { useMemo, useState } from 'react';
-import { PRESETS, PALETTE, type PresetKind } from '@def-ops/core';
+import { CATEGORIES, STYLES, PALETTE, variantFor, searchLibrary, type StyleId, type Side, type LibraryElement } from '@def-ops/core';
 import type { Tool } from './store';
 import { presetPreview } from './previews';
 
-const GROUPS = [
-  { id: 'Инфографика', paper: PALETTE.inf.paper },
-  { id: 'Атлас', paper: PALETTE.atlas.paper },
-  { id: 'Тактика', paper: PALETTE.tac.paper },
-];
-const KINDS: [PresetKind, string, string][] = [
-  ['arrow', 'Стрелки', 'Клик — точки оси (первый клик у линии фронта привязывает хвост), двойной клик/Enter — готово'],
-  ['line', 'Линии и рубежи', 'Клик — точки, двойной клик/Enter — готово'],
-  ['area', 'Районы', 'Клик — точки контура, двойной клик/Enter — замкнуть'],
-  ['symbol', 'Знаки', 'Клик — поставить'],
-  ['label', 'Надписи', 'Клик — поставить и ввести текст'],
-];
+export function paperFor(style: StyleId): string {
+  return style === 'inf' ? PALETTE.inf.paper : style === 'tac' ? PALETTE.tac.paper : PALETTE.atlas.paper;
+}
+
+const load = (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } };
+const save = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* */ } };
 
 export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => void }) {
-  const [group, setGroup] = useState(() => localStorage.getItem('palette.group') || 'Атлас');
-  const g = GROUPS.find((x) => x.id === group) ?? GROUPS[0];
-  const items = useMemo(() => KINDS.map(([kind, title, hint]) => ({
-    kind, title, hint,
-    presets: Object.entries(PRESETS[kind] as Record<string, { name: string; group: string }>).filter(([, p]) => p.group === g.id),
-  })), [g.id]);
+  const [style, setStyle] = useState<StyleId>(() => load('palette.style', 'ustav') as StyleId);
+  const [side, setSide] = useState<Side>(() => load('palette.side', 'own') as Side);
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState<Record<string, boolean>>(() => JSON.parse(load('palette.open', '{"maneuver":true}')));
+  const [onlyStyle, setOnlyStyle] = useState(() => load('palette.onlyStyle', '0') === '1');
+
+  const found = useMemo(() => searchLibrary(q), [q]);
+  const groups = useMemo(() => CATEGORIES.map((c) => ({
+    c, items: found.filter((e) => e.category === c.id && (!onlyStyle || e.variants[style])),
+  })).filter((g) => g.items.length), [found, onlyStyle, style]);
+
+  const toggle = (id: string) => { const o = { ...open, [id]: !open[id] }; setOpen(o); save('palette.open', JSON.stringify(o)); };
+  const pick = (e: LibraryElement) => {
+    const v = variantFor(e, style);
+    const on = tool.mode === 'draw' && tool.preset === v.preset && tool.element === e.id;
+    setTool(on ? { mode: 'select' } : { mode: 'draw', kind: e.kind, preset: v.preset, element: e.id, side: e.sideAware ? side : undefined });
+  };
+  const searching = q.trim().length > 0;
+
   return (
     <div className="palette">
-      <div className="tabs">
-        {GROUPS.map((x) => (
-          <button key={x.id} className={x.id === g.id ? 'on' : ''} onClick={() => { setGroup(x.id); try { localStorage.setItem('palette.group', x.id); } catch { /* */ } }}>{x.id}</button>
-        ))}
+      <div className="pal-top">
+        <div className="seg" title="Стиль оформления знаков">
+          {STYLES.map((s) => (
+            <button key={s.id} className={s.id === style ? 'on' : ''} title={s.description}
+              onClick={() => { setStyle(s.id); save('palette.style', s.id); }}>{s.short}</button>
+          ))}
+        </div>
+        <div className="seg side" title="Принадлежность: свои — красным, противник — синим, нейтральное — чёрным">
+          {([['own', 'Свои'], ['enemy', 'Противник'], ['neutral', 'Нейтр.']] as [Side, string][]).map(([id, n]) => (
+            <button key={id} className={`${id}${id === side ? ' on' : ''}`} onClick={() => {
+              setSide(id); save('palette.side', id);
+              if (tool.mode === 'draw' && tool.side) setTool({ ...tool, side: id });
+            }}>{n}</button>
+          ))}
+        </div>
+        <input className="pal-search" placeholder="Поиск знака…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="pal-row">
+          <button className={`tool-select${tool.mode === 'select' ? ' on' : ''}`} onClick={() => setTool({ mode: 'select' })}>⬚ Выбор (Esc)</button>
+          <label className="muted" title="Показывать только знаки, оформленные в выбранном стиле">
+            <input type="checkbox" checked={onlyStyle} onChange={(e) => { setOnlyStyle(e.target.checked); save('palette.onlyStyle', e.target.checked ? '1' : '0'); }} /> только стиль
+          </label>
+          <a className="muted" href="/library.html" target="_blank" rel="noreferrer" title="Справочник: все знаки с описаниями">справочник ↗</a>
+        </div>
       </div>
-      <button className={`tool-select${tool.mode === 'select' ? ' on' : ''}`} onClick={() => setTool({ mode: 'select' })}>⬚ Выбор и правка (Esc)</button>
       <div className="plist">
-        {items.map((it) => it.presets.length > 0 && (
-          <div key={it.kind}>
-            <div className="pkind" title={it.hint}>{it.title}</div>
-            {it.presets.map(([id, p]) => {
-              const on = tool.mode === 'draw' && tool.preset === id && tool.kind === it.kind;
-              return (
-                <button key={id} className={`pitem${on ? ' on' : ''}`} title={it.hint} onClick={() => setTool(on ? { mode: 'select' } : { mode: 'draw', kind: it.kind, preset: id })}>
-                  <span className="pv" dangerouslySetInnerHTML={{ __html: presetPreview(it.kind, id, g.paper) }} />
-                  <span className="pn">{p.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        ))}
+        {groups.map(({ c, items }) => {
+          const isOpen = searching || open[c.id];
+          return (
+            <div key={c.id} className="pcat">
+              <button className="pcat-h" title={c.description} onClick={() => toggle(c.id)}>
+                <span>{isOpen ? '▾' : '▸'} {c.name}</span><span className="muted">{items.length}</span>
+              </button>
+              {isOpen && items.map((e) => {
+                const v = variantFor(e, style);
+                const on = tool.mode === 'draw' && tool.element === e.id;
+                return (
+                  <button key={e.id} className={`pitem${on ? ' on' : ''}${v.style !== style ? ' other' : ''}`} title={e.description} onClick={() => pick(e)}>
+                    <span className="pv" dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paperFor(v.style), e.sideAware ? side : undefined) }} />
+                    <span className="pn">{e.name}{e.verify && <i className="vf" title="Начертание требует сверки с первоисточником">?</i>}</span>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+        {!groups.length && <div className="muted" style={{ padding: 10 }}>Ничего не найдено</div>}
       </div>
     </div>
   );
 }
+

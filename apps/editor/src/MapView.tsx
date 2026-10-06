@@ -86,8 +86,8 @@ export function MapView(props: Props) {
     const map = mapRef.current;
     const k = map ? zoomFactor(doc, map.getView().zoom) : 1;
     const pts = hover ? [...draft.points, hover] : draft.points;
-    const layerId = pickLayer(doc, tool.kind, tool.preset, props.activeLayer);
-    const f = createFeature(tool.kind as PresetKind, tool.preset, { points: pts, layerId }, k);
+    const layerId = pickLayer(doc, tool.kind, tool.preset, props.activeLayer, tool.side);
+    const f = createFeature(tool.kind as PresetKind, tool.preset, { points: pts, layerId }, k, tool.side);
     if (f.kind === 'arrow') f.anchor = draft.anchor;
     f.id = '__draft__';
     return f;
@@ -143,8 +143,8 @@ export function MapView(props: Props) {
           if (!t) return;
           text = t.replace(/\\n/g, '\n');
         }
-        const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer);
-        const f = createFeature(tool.kind, tool.preset, { at: ll, text, layerId }, k);
+        const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
+        const f = createFeature(tool.kind, tool.preset, { at: ll, text, layerId }, k, tool.side);
         setDoc(insertFeature(doc, f));
         setSelected(f.id);
         return;
@@ -191,8 +191,8 @@ export function MapView(props: Props) {
     const min = tool.kind === 'area' ? 3 : 2;
     if (draft.points.length >= min) {
       const k = zoomFactor(doc, mapRef.current!.getView().zoom);
-      const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer);
-      const f = createFeature(tool.kind as PresetKind, tool.preset, { points: draft.points, layerId }, k);
+      const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
+      const f = createFeature(tool.kind as PresetKind, tool.preset, { points: draft.points, layerId }, k, tool.side);
       if (f.kind === 'arrow') f.anchor = draft.anchor;
       setDoc(insertFeature(doc, f));
       setSelected(f.id);

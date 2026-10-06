@@ -25,7 +25,7 @@ beforeAll(async () => {
     services: { documents: `http://127.0.0.1:${dPort}`, render: `http://127.0.0.1:${rPort}` },
     routes: [
       ['/api/documents', 'documents', '/documents'], ['/api/events', 'documents', '/events'],
-      ['/api/render', 'render', '/render'], ['/api/import', 'render', '/import'], ['/api/presets', 'render', '/presets'],
+      ['/api/render', 'render', '/render'], ['/api/import', 'render', '/import'], ['/api/presets', 'render', '/presets'], ['/api/library', 'render', '/library'],
     ],
     auth: 'keys',
     apiKeys: parseKeys('keyA:orgA,keyB:orgB'),
@@ -115,5 +115,8 @@ describe('платформа через шлюз', () => {
     expect(await r.text()).toMatch(/^<svg/);
     const presets = await (await api('/api/presets')).json();
     expect(presets.arrow.length).toBeGreaterThan(10);
+    const lib = await (await api('/api/library')).json();
+    expect(lib.categories.length).toBe(17);
+    expect(lib.elements.length).toBeGreaterThan(120);
   });
 });

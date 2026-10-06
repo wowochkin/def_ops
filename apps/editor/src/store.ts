@@ -1,10 +1,10 @@
 /** Состояние редактора: документ с историей правок (undo/redo), выделение, инструмент. */
 import { useCallback, useReducer } from 'react';
-import type { Feature, FeatureKind, MapDocument } from '@def-ops/core';
+import type { Feature, FeatureKind, MapDocument, Side } from '@def-ops/core';
 
 export type Tool =
   | { mode: 'select' }
-  | { mode: 'draw'; kind: FeatureKind; preset: string };
+  | { mode: 'draw'; kind: FeatureKind; preset: string; element?: string; side?: Side };
 
 interface History {
   past: MapDocument[];

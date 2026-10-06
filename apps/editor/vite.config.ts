@@ -20,6 +20,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         gallery: resolve(__dirname, 'gallery.html'),
         compare: resolve(__dirname, 'compare.html'),
+        library: resolve(__dirname, 'library.html'),
       },
     },
   },

@@ -7,8 +7,9 @@
  * при создании объекта они пересчитываются в масштаб документа (см. scaleStyle).
  */
 import type {
-  ArrowStyle, AreaStyle, LineStyle, SymbolStyle, TextStyle, StrokeLayer, ColorStop, SymbolType,
+  ArrowStyle, AreaStyle, LineStyle, SymbolStyle, TextStyle, StrokeLayer, ColorStop, SymbolType, Side,
 } from './model';
+import { USTAV_ARROWS, USTAV_LINES, USTAV_AREAS, USTAV_SYMBOLS, USTAV_LABELS } from './presets-ustav';
 
 export const PALETTE = {
   inf: {
@@ -23,7 +24,7 @@ export const PALETTE = {
 };
 
 type ArrowP = Partial<ArrowStyle>;
-const stops = (...s: [number, string, number][]): ColorStop[] => s.map(([t, color, opacity]) => ({ t, color, opacity }));
+export const stops = (...s: [number, string, number][]): ColorStop[] => s.map(([t, color, opacity]) => ({ t, color, opacity }));
 
 export function baseArrow(p: ArrowP = {}): ArrowStyle {
   return {
@@ -36,7 +37,7 @@ export function baseArrow(p: ArrowP = {}): ArrowStyle {
 const C = PALETTE;
 
 /* ---------------------------- стрелки ---------------------------- */
-export const ARROW_PRESETS: Record<string, { name: string; group: string; style: () => ArrowStyle }> = {
+export const ARROW_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => ArrowStyle }> = {
   'inf.attack': {
     name: 'Удар (сплошная)', group: 'Инфографика',
     style: () => baseArrow({ tailWidth: 24, neckWidth: 17, headWidth: 44, headLength: 32, barbSweep: 10, fill: stops([0, C.inf.red, 1]) }),
@@ -159,9 +160,10 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
 };
 
 /* ---------------------------- линии ---------------------------- */
-const L = (p: Partial<StrokeLayer> & { width: number; color: string }): StrokeLayer => ({ offset: 0, opacity: 1, ...p });
+export const layer = (p: Partial<StrokeLayer> & { width: number; color: string }): StrokeLayer => ({ offset: 0, opacity: 1, ...p });
+const L = layer;
 
-export const LINE_PRESETS: Record<string, { name: string; group: string; style: () => LineStyle; closed?: boolean }> = {
+export const LINE_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => LineStyle; closed?: boolean }> = {
   'inf.fortification': {
     name: 'Укрепления (зубцы)', group: 'Инфографика',
     style: () => ({ smooth: true, layers: [L({ width: 5, color: C.inf.blue, ticks: { spacing: 14, length: 7, width: 2.6, side: 1 } })] }),
@@ -279,7 +281,7 @@ export const LINE_PRESETS: Record<string, { name: string; group: string; style: 
 };
 
 /* ---------------------------- районы ---------------------------- */
-export const AREA_PRESETS: Record<string, { name: string; group: string; style: () => AreaStyle }> = {
+export const AREA_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => AreaStyle }> = {
   'inf.frontZone': {
     name: 'Территория наступающих', group: 'Инфографика',
     style: () => ({ smooth: true, fill: C.inf.frontFill, fillOpacity: 1, hatch: null, edge: [], cross: null }),
@@ -332,11 +334,11 @@ export const AREA_PRESETS: Record<string, { name: string; group: string; style: 
 };
 
 /* ---------------------------- знаки ---------------------------- */
-const sym = (type: SymbolType, p: Partial<SymbolStyle>): SymbolStyle => ({
+export const sym = (type: SymbolType, p: Partial<SymbolStyle>): SymbolStyle => ({
   type, size: 10, color: '#000', fill: '#fff', aspect: 0.5, strokeWidth: 1.2, ...p,
 });
 
-export const SYMBOL_PRESETS: Record<string, { name: string; group: string; style: () => SymbolStyle }> = {
+export const SYMBOL_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => SymbolStyle }> = {
   'inf.settlement': { name: 'Населённый пункт', group: 'Инфографика', style: () => sym('settlement', { size: 10, color: '#ffffff', fill: '#000000', strokeWidth: 1.2 }) },
   'atlas.town': { name: 'Населённый пункт', group: 'Атлас', style: () => sym('town', { size: 6, color: '#4a4a4a', fill: '#ffffff', strokeWidth: 1 }) },
   'atlas.tankArmy': { name: 'Танковая армия', group: 'Атлас', style: () => sym('tankArmy', { size: 48, aspect: 0.54, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.6 }) },
@@ -365,7 +367,7 @@ export function textStyle(p: Partial<TextStyle> = {}): TextStyle {
   };
 }
 
-export const LABEL_PRESETS: Record<string, { name: string; group: string; style: () => TextStyle }> = {
+export const LABEL_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => TextStyle }> = {
   'inf.city': { name: 'Город', group: 'Инфографика', style: () => textStyle({ font: 'Roboto Condensed', size: 16, weight: 500, color: C.inf.text, align: 'start', halo: { color: '#ffffff', width: 1.4 } }) },
   'inf.capital': { name: 'Столица', group: 'Инфографика', style: () => textStyle({ font: 'Roboto Condensed', size: 21, weight: 400, color: C.inf.text, uppercase: true, halo: { color: '#ffffff', width: 2 } }) },
   'inf.front': { name: 'Название фронта', group: 'Инфографика', style: () => textStyle({ font: 'Roboto Condensed', size: 30, weight: 700, color: '#111111', uppercase: true, lineHeight: 1.05 }) },
@@ -386,7 +388,7 @@ export const LABEL_PRESETS: Record<string, { name: string; group: string; style:
 /* ---------------------------- масштабирование ---------------------------- */
 const SIZE_KEYS = new Set([
   'tailWidth', 'neckWidth', 'headWidth', 'headLength', 'barbSweep', 'width', 'length', 'spacing', 'offset', 'size',
-  'strokeWidth', 'letterSpacing', 'anchorOverlap', 'dash',
+  'strokeWidth', 'letterSpacing', 'anchorOverlap', 'dash', 'amplitude', 'wavelength',
 ]);
 
 /** Масштабирует все размерные поля стиля в k раз (ширины, длины, шаги, пунктиры, кегль). */
@@ -405,4 +407,11 @@ export function scaleStyle<T>(style: T, k: number): T {
 }
 
 export type PresetKind = 'arrow' | 'line' | 'area' | 'symbol' | 'label';
+// пресеты уставного стиля (знаки с учётом принадлежности: свои/противник/нейтральное)
+Object.assign(ARROW_PRESETS, USTAV_ARROWS);
+Object.assign(LINE_PRESETS, USTAV_LINES);
+Object.assign(AREA_PRESETS, USTAV_AREAS);
+Object.assign(SYMBOL_PRESETS, USTAV_SYMBOLS);
+Object.assign(LABEL_PRESETS, USTAV_LABELS);
+
 export const PRESETS = { arrow: ARROW_PRESETS, line: LINE_PRESETS, area: AREA_PRESETS, symbol: SYMBOL_PRESETS, label: LABEL_PRESETS };

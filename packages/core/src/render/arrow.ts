@@ -13,6 +13,8 @@ import { type Vec2, add, sub, mul, dot, perp, lerp, clamp, cross } from '../vec'
 import { Path, smoothPath, polylinePath, removeLoops, pathD, bbox } from '../curve';
 import type { ArrowFeature, ArrowStyle, ColorStop, Decoration } from '../model';
 import { type RenderContext, f2, strokeAttrs, mixColor } from './context';
+import { GLYPHS, type GlyphCtx } from './glyphs';
+import { fontAttrs } from './symbol';
 
 export interface ArrowGeometry {
   axis: Path;
@@ -307,6 +309,14 @@ function renderDecoration(d: Decoration, axis: Path): string {
     } else if (d.type === 'tick') {
       const a = add(c, mul(n, d.width / 2)), b = add(c, mul(n, -d.width / 2));
       out += `<path d="${pathD([a, b])}" fill="none" stroke="${d.fill || '#000'}" stroke-width="${f2(d.length)}"/>`;
+    } else if (d.type === 'glyph' && d.glyph && GLYPHS[d.glyph]) {
+      // знак на оси (самолёт — удар авиации, якорь — морской десант), развёрнут по ходу стрелки
+      const ang = (Math.atan2(t[1], t[0]) * 180) / Math.PI + 90;
+      const g: GlyphCtx = {
+        s: d.length, color: d.fill || '#000', fill: d.stroke?.color ?? '#ffffff', sw: d.stroke?.width ?? d.length * 0.06,
+        font: (size, weight = 700, color) => fontAttrs({ font: 'PT Sans Narrow', size, weight, italic: false, color: color ?? d.fill ?? '#000', halo: null, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1 }),
+      };
+      out += `<g transform="translate(${f2(c[0])} ${f2(c[1])}) rotate(${f2(ang)})">${GLYPHS[d.glyph](g)}</g>`;
     } else if (d.type === 'chevron') {
       const back = add(c, mul(t, -d.length));
       const a = add(back, mul(n, d.width / 2)), b = add(back, mul(n, -d.width / 2));

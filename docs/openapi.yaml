@@ -158,6 +158,11 @@ paths:
       tags: [render]
       summary: Каталог условных знаков (пресеты по типам и стилям)
       responses: { '200': { description: OK } }
+  /library:
+    get:
+      tags: [render]
+      summary: Библиотека условных знаков (стили, категории, элементы с описаниями и вариантами оформления)
+      responses: { '200': { description: OK } }
   /events:
     get:
       tags: [events]

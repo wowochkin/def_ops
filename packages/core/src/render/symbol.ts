@@ -7,6 +7,7 @@ import type { Vec2 } from '../vec';
 import type { LabelFeature, SymbolFeature, TextStyle } from '../model';
 import { type RenderContext, f2, esc } from './context';
 import { pathD, smoothPath } from '../curve';
+import { GLYPHS, glyphCtx } from './glyphs';
 
 export function renderSymbol(f: SymbolFeature, ctx: RenderContext): string {
   const p = ctx.proj.toWorld(f.at);
@@ -97,6 +98,11 @@ export function renderSymbol(f: SymbolFeature, ctx: RenderContext): string {
         const ts = st.textStyle ?? defaultSymbolText(st.color, s * 0.7);
         g += `<text y="${f2(-s * 0.35)}" text-anchor="middle" ${fontAttrs(ts)}>${esc(st.text)}</text>`;
       }
+      break;
+    }
+    default: {
+      const glyph = GLYPHS[st.type];
+      if (glyph) g = glyph(glyphCtx(st, fontAttrs));
       break;
     }
   }

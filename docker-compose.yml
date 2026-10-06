@@ -1,19 +1,26 @@
 # Платформа целиком: docker compose up --build → http://localhost:8080
 # Наружу открыт только шлюз; сервисы общаются во внутренней сети.
+x-build: &build
+  context: .
+  dockerfile: deploy/Dockerfile
+  # прокси для npm при сборке (берутся из окружения, если заданы)
+  args: [HTTP_PROXY, HTTPS_PROXY, NO_PROXY]
+  network: host
+
 services:
   documents:
-    build: { context: ., dockerfile: deploy/Dockerfile }
+    build: *build
     environment: { SERVICE: documents, PORT: "8101", DATA_DIR: /data/documents }
     volumes: [documents-data:/data]
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8101/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
   render:
-    build: { context: ., dockerfile: deploy/Dockerfile }
+    build: *build
     environment: { SERVICE: render, PORT: "8102", DOCUMENTS_URL: http://documents:8101 }
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8102/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
   gateway:
-    build: { context: ., dockerfile: deploy/Dockerfile }
+    build: *build
     environment:
       SERVICE: gateway
       PORT: "8080"

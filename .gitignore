@@ -3,3 +3,6 @@ dist
 *.log
 .DS_Store
 data
+
+# корпоративные сертификаты для сборки (не коммитятся)
+deploy/extra-ca/*.crt

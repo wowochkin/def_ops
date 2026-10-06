@@ -7,6 +7,9 @@ import type { LngLat } from './geo';
 
 export type Color = string;
 
+/** Принадлежность знака — по уставу: свои — красным, противник — синим, инженерное/нейтральное — чёрным. */
+export type Side = 'own' | 'enemy' | 'neutral';
+
 /** Опорная точка градиента вдоль оси знака: t = 0 — хвост, 1 — основание наконечника. */
 export interface ColorStop {
   t: number;
@@ -23,7 +26,9 @@ export interface StrokeSpec {
 
 /** Украшения на оси стрелки: ромб (танковые соединения), полоса, засечка, «птичка». */
 export interface Decoration {
-  type: 'diamond' | 'bar' | 'tick' | 'chevron';
+  type: 'diamond' | 'bar' | 'tick' | 'chevron' | 'glyph';
+  /** Для type = 'glyph' — имя знака из реестра GLYPHS (самолёт, якорь и т.п.). */
+  glyph?: string;
   /** Положение вдоль оси, доля длины 0..1 (для bar — начало). */
   at: number;
   /** Для bar — конец отрезка (доля длины). */
@@ -93,42 +98,55 @@ export interface StrokeLayer {
     color?: Color;
     /** Наклон зубца от перпендикуляра, градусы. */
     angle?: number;
-    /** Форма: штрих или треугольник. */
-    shape?: 'line' | 'triangle';
+    /**
+     * Форма зубца: штрих, треугольник (надолбы, клин), крестик (проволочное заграждение),
+     * кружок (мины ПТ), точка (мины ПП), полукруг (укреплённый район), «косой крест».
+     */
+    shape?: 'line' | 'triangle' | 'cross' | 'x' | 'circle' | 'dot' | 'semicircle';
   };
+  /** Вид самой линии: прямая, ломаная «пила» (траншея), волна. */
+  pattern?: { type: 'zigzag' | 'wave' | 'square'; amplitude: number; wavelength: number };
   /** Засечки на концах линии (положение подразделения на рубеже). */
   endTicks?: { length: number; width: number; side: 1 | -1 };
+}
+
+/** Надпись вдоль линии (номер соединения у разграничительной линии, «ИР», «РА» на рубежах). */
+export interface LineLabel {
+  text: string;
+  /** Положение вдоль линии 0..1; несколько значений — повтор надписи. */
+  at: number[];
+  /** Смещение от оси (> 0 — влево по ходу линии). */
+  offset: number;
+  style: TextStyle;
 }
 
 export interface LineStyle {
   smooth: boolean;
   layers: StrokeLayer[];
+  labels?: LineLabel[];
 }
 
 export interface AreaStyle {
   smooth: boolean;
   fill: Color | null;
   fillOpacity: number;
-  hatch: { color: Color; width: number; spacing: number; angle: number; opacity: number } | null;
+  /**
+   * Узор заливки: штриховка (lines), сетка (cross), точки (dots — мины ПП),
+   * кружки (circles — мины ПТ), «болото» (swamp), «лес» (trees).
+   */
+  hatch: { color: Color; width: number; spacing: number; angle: number; opacity: number; pattern?: 'lines' | 'cross' | 'dots' | 'circles' | 'swamp' | 'trees' } | null;
   /** Контур — те же слои, что у линий (зубцы, двойные линии и т.д.). */
   edge: StrokeLayer[];
   /** Крест «уничтожено». */
   cross: { color: Color; width: number; opacity: number; angle: number; spread: number; extend: number } | null;
 }
 
-export type SymbolType =
-  | 'settlement'
-  | 'town'
-  | 'tankArmy'
-  | 'cavalryCorps'
-  | 'armyOval'
-  | 'reserve'
-  | 'fortifiedCity'
-  | 'aviation'
-  | 'victoryFlag'
-  | 'pennant'
-  | 'dateBox'
-  | 'meeting';
+/**
+ * Тип точечного знака. Встроенные: settlement, town, tankArmy, cavalryCorps, armyOval,
+ * reserve, fortifiedCity, aviation, victoryFlag, pennant, dateBox, meeting;
+ * остальные — из реестра GLYPHS (render/glyphs.ts).
+ */
+export type SymbolType = string;
 
 export interface SymbolStyle {
   type: SymbolType;
@@ -166,6 +184,8 @@ interface FeatureBase {
   preset?: string;
   /** Коэффициент масштаба знака относительно пресета (зависит от зума при создании). */
   scale?: number;
+  /** Принадлежность: свои (красный), противник (синий), нейтральное (чёрный). */
+  side?: Side;
 }
 
 /** Привязка хвоста стрелки к линии/контуру: t — доля длины линии. */

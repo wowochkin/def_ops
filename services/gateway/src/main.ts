@@ -14,6 +14,7 @@ const server = createGateway({
     ['/api/render', 'render', '/render'],
     ['/api/import', 'render', '/import'],
     ['/api/presets', 'render', '/presets'],
+    ['/api/library', 'render', '/library'],
   ],
   auth: env('AUTH', 'open') === 'keys' ? 'keys' : 'open',
   apiKeys: parseKeys(env('API_KEYS', '')),

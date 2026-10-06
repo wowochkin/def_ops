@@ -15,7 +15,8 @@
     "build": "npm run build -w @def-ops/editor",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "start": "npm run build && STATIC_DIR=apps/editor/dist node scripts/dev-services.mjs"
+    "start": "npm run build && STATIC_DIR=apps/editor/dist node scripts/dev-services.mjs",
+    "docs:library": "tsx scripts/gen-library-doc.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

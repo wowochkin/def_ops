@@ -26,6 +26,12 @@ describe('слои', () => {
     expect(roleForPreset('symbol', 'inf.settlement')).toBe('labels');
     expect(roleForPreset('label', 'atlas.enemyUnit')).toBe('enemy');
     expect(roleForPreset('arrow', 'atlas.p1')).toBe('friendly');
+    // уставные знаки — по категории библиотеки и принадлежности
+    expect(roleForPreset('symbol', 'ustav.tank', 'enemy')).toBe('enemy');
+    expect(roleForPreset('symbol', 'ustav.tank', 'own')).toBe('friendly');
+    expect(roleForPreset('line', 'ustav.wire', 'neutral')).toBe('front');
+    expect(roleForPreset('line', 'ustav.frontLine', 'enemy')).toBe('front');
+    expect(roleForPreset('area', 'ustav.forest')).toBe('base');
   });
 
   it('порядок отрисовки — по слоям, а не по порядку в массиве', () => {

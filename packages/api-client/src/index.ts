@@ -102,6 +102,9 @@ export class DefOpsClient {
     documentSvgUrl: (id: string, layers?: string[]) => `${this.base}/render/documents/${enc(id)}.svg${layers ? `?layers=${layers.map(enc).join(',')}` : ''}`,
   };
 
+  /** Библиотека знаков: стили, категории, элементы с описаниями. */
+  library = () => this.req<{ styles: unknown[]; categories: { id: string; name: string; description: string }[]; elements: unknown[] }>('GET', '/library');
+
   presets = () => this.req<Record<string, { id: string; name: string; group: string; style: unknown }[]>>('GET', '/presets');
 
   /** Подписка на события изменений (Server-Sent Events). Возвращает функцию отписки. */

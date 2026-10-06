@@ -5,7 +5,7 @@ import type {
 } from '@def-ops/core';
 import { PRESETS, scaleStyle } from '@def-ops/core';
 import { restyle } from '@def-ops/core';
-import { setFeatureLayer } from '@def-ops/core';
+import { setFeatureLayer, GLYPH_NAMES } from '@def-ops/core';
 import { updateFeature, removeFeature } from './store';
 import { Num, ColorF, Check, Select, Text, DashF, Section, Row } from './fields';
 
@@ -29,6 +29,10 @@ export function Inspector({ doc, setDoc, feature: f, onDeselect }: Props) {
           onChange={(v) => setDoc(setFeatureLayer(doc, f.id, v))} />
         <Select label="Пресет" value={f.preset ?? ''} options={[['', '—'], ...Object.entries(presetTable).map(([id, p]) => [id, `${p.group}: ${p.name}`] as [string, string])]}
           onChange={(v) => v && setDoc(updateFeature(doc, f.id, (x) => restyle(x, v)))} />
+        {f.side && (
+          <Select label="Принадлежность" value={f.side} options={[['own', 'свои (красный)'], ['enemy', 'противник (синий)'], ['neutral', 'нейтральное (чёрный)']]}
+            onChange={(v) => f.preset && setDoc(updateFeature(doc, f.id, (x) => restyle(x, x.preset!, v)))} />
+        )}
         <Num label="Масштаб знака" value={k} min={0.05} max={8} step={0.05} hint="Пропорционально меняет все размеры знака"
           onChange={(v) => v > 0 && set((x) => ({ ...x, scale: v, style: scaleStyle(x.style, v / (x.scale ?? 1)) }) as Feature, 'scale')} />
         <div className="btns">
@@ -177,7 +181,7 @@ function DecorationsEditor({ list, onChange, k }: { list: Decoration[]; onChange
     }>
       {list.map((d, i) => (
         <div key={i} className="sub">
-          <div className="sub-h"><b>{{ diamond: 'Ромб', bar: 'Полоса', tick: 'Засечка', chevron: '«Птички»' }[d.type]}</b>
+          <div className="sub-h"><b>{{ diamond: 'Ромб', bar: 'Полоса', tick: 'Засечка', chevron: '«Птички»', glyph: 'Знак на оси' }[d.type]}</b>
             <button className="link" onClick={() => onChange(list.filter((_, j) => j !== i))}>✕</button></div>
           <Num label="Положение" value={d.at} min={0} max={1} step={0.005} onChange={(v) => upd(i, { at: v })} />
           {(d.type === 'bar' || d.repeat) && <Num label="До" value={d.to ?? 1} min={0} max={1} step={0.005} onChange={(v) => upd(i, { to: v })} />}
@@ -280,9 +284,10 @@ function AreaInspector({ f, set, k }: { f: AreaFeature; set: SetFn; k: number })
 }
 
 const SYMBOL_TYPES: [SymbolType, string][] = [
-  ['settlement', 'Населённый пункт (точка)'], ['town', 'Населённый пункт (кружок)'], ['tankArmy', 'Танковая армия'],
-  ['cavalryCorps', 'Кавкорпус'], ['armyOval', 'Овал объединения'], ['reserve', 'Резерв (Р)'], ['fortifiedCity', 'Город-крепость'],
-  ['aviation', 'Авиация'], ['victoryFlag', 'Знамя'], ['pennant', 'Флажок'], ['dateBox', 'Дата в рамке'], ['meeting', 'Встреча войск'],
+  ['settlement', 'Населённый пункт (точка)'], ['town', 'Населённый пункт (кружок)'], ['tankArmy', 'Овал с ромбом (танковое объединение)'],
+  ['cavalryCorps', 'Овал со штриховкой (кавкорпус)'], ['armyOval', 'Овал объединения'], ['reserve', 'Резерв (Р)'], ['fortifiedCity', 'Город-крепость'],
+  ['aviation', 'Авиация (атлас)'], ['victoryFlag', 'Знамя'], ['pennant', 'Флажок'], ['dateBox', 'Дата в рамке'], ['meeting', 'Встреча войск'],
+  ...Object.entries(GLYPH_NAMES).filter(([k]) => k !== 'pennant') as [SymbolType, string][],
 ];
 
 function SymbolInspector({ f, set, k }: { f: SymbolFeature; set: SetFn; k: number }) {
@@ -297,7 +302,7 @@ function SymbolInspector({ f, set, k }: { f: SymbolFeature; set: SetFn; k: numbe
       <ColorF label="Цвет" value={s.color} onChange={(c) => up({ color: c }, 'c')} />
       <ColorF label="Заливка" value={s.fill} onChange={(c) => up({ fill: c }, 'fill')} />
       <Num label="Толщина линий" value={s.strokeWidth} max={6 * k} step={0.05} onChange={(v) => up({ strokeWidth: v }, 'sw')} />
-      {['dateBox', 'meeting', 'reserve'].includes(s.type) && <Text label="Текст" value={s.text ?? ''} onChange={(v) => up({ text: v }, 'text')} />}
+      {['dateBox', 'meeting', 'reserve', 'cp', 'hq', 'reserveCp', 'cop', 'op', 'depot', 'supply', 'repair', 'kpp', 'railStation', 'fougasse', 'ford', 'height'].includes(s.type) && <Text label="Текст" value={s.text ?? ''} onChange={(v) => up({ text: v }, 'text')} />}
     </Section>
   );
 }

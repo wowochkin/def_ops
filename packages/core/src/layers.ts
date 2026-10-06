@@ -2,11 +2,35 @@
  * Слои: подсказка слоя для пресета, упорядочивание объектов для отрисовки,
  * операции над слоями и миграция документов старых версий.
  */
-import type { Feature, Layer, LayerRole, MapDocument } from './model';
+import type { Feature, Layer, LayerRole, MapDocument, Side } from './model';
+import { LIBRARY } from './library';
 import { defaultLayers, newId } from './model';
 
-/** В какой слой по смыслу попадает знак, созданный из пресета. */
-export function roleForPreset(kind: Feature['kind'], preset = ''): LayerRole {
+let presetCategory: Map<string, string> | null = null;
+const CATEGORY_ROLE: Record<string, LayerRole | 'side'> = {
+  front: 'front', lines: 'front', terrain: 'base', labels: 'labels',
+  fortification: 'side', obstacles: 'side', maneuver: 'side', areas: 'side', formations: 'side', command: 'side',
+  fires: 'side', armor: 'side', air: 'side', navy: 'side', crossings: 'side', logistics: 'side', special: 'side',
+};
+
+/**
+ * В какой слой по смыслу попадает знак: по категории библиотеки и принадлежности
+ * (противник — в слой противника, нейтральные сооружения и заграждения — к рубежам).
+ */
+export function roleForPreset(kind: Feature['kind'], preset = '', side?: Side): LayerRole {
+  if (!presetCategory) {
+    presetCategory = new Map();
+    for (const e of LIBRARY) for (const p of Object.values(e.variants)) if (!presetCategory.has(p!)) presetCategory.set(p!, e.category);
+  }
+  const cat = preset.startsWith('ustav.') ? presetCategory.get(preset) : undefined;
+  if (cat) {
+    const r = CATEGORY_ROLE[cat] ?? 'side';
+    if (r === 'labels') return side === 'enemy' ? 'enemy' : 'labels';
+    if (r !== 'side') return r;
+    if (side === 'enemy') return 'enemy';
+    if (side === 'neutral') return cat === 'fortification' || cat === 'obstacles' ? 'front' : 'base';
+    return 'friendly';
+  }
   const p = preset.toLowerCase();
   // подписи и населённые пункты — поверх обстановки (кроме подписей противника — они в его слое)
   if (/enemy/.test(p)) return 'enemy';
@@ -18,13 +42,13 @@ export function roleForPreset(kind: Feature['kind'], preset = ''): LayerRole {
 }
 
 /** Слой для нового объекта: явно заданный, иначе первый слой подходящей роли, иначе верхний доступный. */
-export function pickLayer(doc: MapDocument, kind: Feature['kind'], preset?: string, explicit?: string | null): string {
+export function pickLayer(doc: MapDocument, kind: Feature['kind'], preset?: string, explicit?: string | null, side?: Side): string {
   const usable = (l: Layer) => !l.locked && !l.source?.readOnly;
   if (explicit) {
     const l = doc.layers.find((x) => x.id === explicit);
     if (l && usable(l)) return l.id;
   }
-  const role = roleForPreset(kind, preset);
+  const role = roleForPreset(kind, preset, side);
   const byRole = doc.layers.find((l) => l.role === role && usable(l));
   if (byRole) return byRole.id;
   const any = [...doc.layers].reverse().find(usable);
@@ -130,7 +154,7 @@ export function migrateDocument(input: unknown): MapDocument {
   const doc = d as unknown as MapDocument;
   const ids = new Set(doc.layers.map((l) => l.id));
   for (const f of doc.features) {
-    if (!f.layerId || !ids.has(f.layerId)) f.layerId = pickLayer(doc, f.kind, f.preset);
+    if (!f.layerId || !ids.has(f.layerId)) f.layerId = pickLayer(doc, f.kind, f.preset, null, f.side);
   }
   doc.version = 2;
   return doc;
