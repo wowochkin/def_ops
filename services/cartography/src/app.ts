@@ -204,8 +204,8 @@ export function buildRouter(d: Deps): Router {
     for await (const ch of c.req) { n += (ch as Buffer).length; if (n > 1 << 20) throw new HttpError(413, 'payload_too_large', 'Файл .map больше 1 МБ'); parts.push(ch as Buffer); }
     const buf = Buffer.concat(parts);
     // .map обычно в Windows-1251; если UTF-8 не читается — декодируем как 1251
-    let text = buf.toString('utf8');
-    if (text.includes('\uFFFD')) text = new TextDecoder('windows-1251').decode(buf);
+    let text: string;
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch { text = new TextDecoder('windows-1251').decode(buf); }
     try { return parseOziMap(text); } catch (e) { throw new HttpError(422, 'invalid', (e as Error).message); }
   });
 

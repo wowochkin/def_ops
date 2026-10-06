@@ -254,8 +254,7 @@ const IMAGE_MIME: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpe
 /** Текст .map: UTF-8, а если не читается — Windows-1251 (обычная кодировка OziExplorer). */
 async function readMapText(f: File): Promise<string> {
   const buf = await f.arrayBuffer();
-  const utf = new TextDecoder('utf-8').decode(buf);
-  return utf.includes('\uFFFD') ? new TextDecoder('windows-1251').decode(buf) : utf;
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch { return new TextDecoder('windows-1251').decode(buf); }
 }
 
 /** Загрузить выбранные файлы карты; возвращает сообщение для пользователя. */
