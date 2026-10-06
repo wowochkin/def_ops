@@ -96,9 +96,10 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onMaps, notif
     if (!online) return;
     return cartography.subscribe((type, data) => {
       if (type.startsWith('job.')) {
-        const j = data as MapJob;
+        const j = (data as { job?: MapJob }).job;
+        if (!j) return;
         setJobs((cur) => ({ ...cur, [j.id]: j }));
-        if (type !== 'job.progress') { reload(); notify(type === 'job.done' ? `Карта готова: ${j.done} тайлов` : `Задание не выполнено: ${j.message ?? ''}`); }
+        if (type !== 'job.progress') { reload(); notify(type === 'job.done' ? `Карта готова: ${j.done} тайлов` : j.status === 'cancelled' ? 'Задание остановлено' : `Задание не выполнено: ${j.message ?? ''}`); }
       } else reload();
     });
   }, [online]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -279,7 +279,7 @@ export function App() {
             {!offline && <option value="__add">+ своя (XYZ / WMS)…</option>}
           </select>
         </label>
-        {basemap && <input type="range" min={0} max={1} step={0.05} value={basemapOpacity} onChange={(e) => setBasemapOpacity(+e.target.value)} title="Прозрачность подложки" />}
+        {basemap && <input className="op-range" type="range" min={0} max={1} step={0.05} value={basemapOpacity} onChange={(e) => setBasemapOpacity(+e.target.value)} title="Прозрачность подложки" />}
         <label className="inl" title="Офлайн: только локальные карты, без обращений в интернет">
           <input type="checkbox" checked={offline} onChange={(e) => { setOffline(e.target.checked); try { localStorage.setItem('def_ops.offline', e.target.checked ? '1' : '0'); } catch { /* */ } if (e.target.checked && !basemapId.startsWith('local-')) setBasemapId('none'); }} /> офлайн
         </label>
