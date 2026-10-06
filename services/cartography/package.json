@@ -1,0 +1,16 @@
+{
+  "name": "@def-ops/cartography-service",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Сервис картографии: локальное (офлайн) хранилище карт-подложек — тайловые пирамиды XYZ, загрузка из внешних источников, нарезка привязанных растров, пакеты для переноса в закрытый контур",
+  "scripts": { "start": "tsx src/main.ts", "dev": "tsx watch src/main.ts" },
+  "dependencies": {
+    "@def-ops/core": "*",
+    "@def-ops/db": "*",
+    "@def-ops/service-kit": "*",
+    "sharp": "^0.34.0",
+    "tar-stream": "^3.1.7"
+  },
+  "devDependencies": { "@types/tar-stream": "^3.1.3" }
+}

@@ -286,9 +286,25 @@ export interface MapSource {
   sourceUrl?: string | null;
   /** Для растра: привязка (опорные точки) — чтобы перепривязать. */
   controlPoints?: ControlPoint[] | null;
+  /** Для растра: итог привязки — вид преобразования, размер скана, невязки (м). */
+  georef?: GeorefSummary | null;
   stats?: { tiles: number; bytes: number };
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** Итог привязки растра (хранится у карты, чтобы оценить точность и перепривязать). */
+export interface GeorefSummary {
+  kind: Georef['kind'];
+  /** Размер изображения, px. */
+  width: number;
+  height: number;
+  /** Средняя квадратическая невязка, м. */
+  rmsMeters: number;
+  /** Невязка каждой опорной точки, м (в порядке controlPoints). */
+  residuals: number[];
+  /** Уровень, на котором пиксель скана ≈ пикселю тайла. */
+  nativeZoom: number;
 }
 
 /** Задание сервиса картографии (загрузка тайлов, нарезка растра, импорт пакета). */
@@ -304,6 +320,8 @@ export interface MapJob {
   skipped: number;
   errors: number;
   message?: string;
+  /** Итог задания (для нарезки растра — невязки привязки). */
+  result?: { georef?: GeorefSummary; [k: string]: unknown };
   createdAt: string;
   updatedAt: string;
 }
