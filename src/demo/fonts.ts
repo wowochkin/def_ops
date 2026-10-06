@@ -1,0 +1,9 @@
+import '@fontsource/pt-sans-narrow/400.css';
+import '@fontsource/pt-sans-narrow/700.css';
+import '@fontsource/pt-serif/400.css';
+import '@fontsource/pt-serif/700.css';
+import '@fontsource/pt-serif/400-italic.css';
+import '@fontsource/pt-serif/700-italic.css';
+import '@fontsource/roboto-condensed/400.css';
+import '@fontsource/roboto-condensed/500.css';
+import '@fontsource/roboto-condensed/700.css';

@@ -1,0 +1,32 @@
+{
+  "name": "def-ops",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Тактическая карта: движок отрисовки военно-исторических знаков и редактор",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource/pt-sans-narrow": "^5.3.0",
+    "@fontsource/pt-serif": "^5.3.0",
+    "@fontsource/roboto-condensed": "^5.3.0",
+    "maplibre-gl": "^6.12.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}
