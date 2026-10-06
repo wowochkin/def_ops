@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MapDocument, GeoJSONCollection } from '@def-ops/core';
-import { emptyDocument, newId, migrateDocument, toGeoJSON, fromGeoJSON, zoomFactor } from '@def-ops/core';
+import { emptyDocument, newId, migrateDocument, toGeoJSON, fromGeoJSON, zoomFactor, documentAt, type TimeInstant } from '@def-ops/core';
 import { DefOpsClient, ApiError, type DocumentMeta } from '@def-ops/api-client';
 import { useHistory, removeFeature, insertFeature, type Tool } from './store';
 import { MapView } from './MapView';
 import { Palette } from './Palette';
 import { Inspector } from './Inspector';
 import { LayersPanel } from './LayersPanel';
+import { Timeline } from './Timeline';
 import { translateFeature } from './geometry';
 import { download, exportPNG, svgWithFonts } from './exporting';
 import type { BasemapSpec, MapEngine } from './engine/types';
@@ -22,6 +23,10 @@ function loadInitial(): MapDocument {
     if (s) return migrateDocument(JSON.parse(s));
   } catch { /* повреждённое автосохранение — начинаем с примера */ }
   return SCENES[0].build();
+}
+
+function loadInitialTime(): TimeInstant | null {
+  try { return localStorage.getItem(STORAGE + '.time') || null; } catch { return null; }
 }
 
 type ServerState = { status: 'unknown' | 'online' | 'offline'; services?: Record<string, string> };
@@ -41,6 +46,9 @@ export function App() {
   const [engine, setEngine] = useState<MapEngine | null>(null);
   const [server, setServer] = useState<ServerState>({ status: 'unknown' });
   const [serverList, setServerList] = useState<DocumentMeta[] | null>(null);
+  /** Момент, на который показана обстановка (null — все знаки без учёта времени). */
+  const [time, setTime] = useState<TimeInstant | null>(() => loadInitialTime());
+  const [newFromNow, setNewFromNow] = useState(true);
   /** Документ в том виде, в каком он последний раз сохранён на сервере / получен с него. */
   const syncedRef = useRef<MapDocument | null>(null);
 
@@ -49,9 +57,9 @@ export function App() {
 
   // автосохранение в браузере
   useEffect(() => {
-    const t = setTimeout(() => { try { localStorage.setItem(STORAGE, JSON.stringify(doc)); } catch { /* слишком большой документ */ } }, 400);
+    const t = setTimeout(() => { try { localStorage.setItem(STORAGE, JSON.stringify(doc)); localStorage.setItem(STORAGE + '.time', time ?? ''); } catch { /* слишком большой документ */ } }, 400);
     return () => clearTimeout(t);
-  }, [doc]);
+  }, [doc, time]);
   useEffect(() => { try { localStorage.setItem('def_ops.basemap', basemapId); } catch { /* */ } }, [basemapId]);
   useEffect(() => { if (notice) { const t = setTimeout(() => setNotice(null), 6000); return () => clearTimeout(t); } }, [notice]);
 
@@ -90,6 +98,7 @@ export function App() {
 
   const loadDoc = (d: MapDocument, synced = false) => {
     reset(d);
+    setTime(d.timeline?.current ?? null);
     syncedRef.current = synced ? d : null;
     setSelected(null);
     setSelectedOverlay(null);
@@ -97,10 +106,13 @@ export function App() {
     setMapKey((k) => k + 1); // пересоздать карту с видом документа
   };
 
+  /** Документ для сохранения: вид карты и текущий момент шкалы времени. */
   const withView = (): MapDocument => {
-    if (!engine) return doc;
-    return { ...doc, view: engine.getView() };
+    const d = doc.timeline ? { ...doc, timeline: { ...doc.timeline, current: time } } : doc;
+    return engine ? { ...d, view: engine.getView() } : d;
   };
+  /** Документ на момент шкалы — для экспорта «как на экране». */
+  const atTime = () => documentAt(doc, time);
 
   // горячие клавиши
   useEffect(() => {
@@ -185,9 +197,10 @@ export function App() {
           e.target.value = '';
           if (v === 'new') { if (confirm('Создать пустую карту? Несохранённые изменения будут потеряны.')) { const vw = engine?.getView(); loadDoc(emptyDocument(vw?.center, vw?.zoom)); } }
           if (v === 'json') download(`${doc.name || 'map'}.json`, JSON.stringify(withView(), null, 1), 'application/json');
-          if (v === 'geojson') download(`${doc.name || 'map'}.geojson`, JSON.stringify(toGeoJSON(doc)), 'application/geo+json');
-          if (v === 'svg') svgWithFonts(doc, doc.paper).then((s) => download(`${doc.name || 'map'}.svg`, s, 'image/svg+xml'));
-          if (v === 'png') exportPNG(doc, doc.paper, 2).then((b) => download(`${doc.name || 'map'}.png`, b));
+          const suffix = time ? `-${time.replace(/[:T]/g, '-')}` : '';
+          if (v === 'geojson') download(`${doc.name || 'map'}${suffix}.geojson`, JSON.stringify(toGeoJSON(doc, { time })), 'application/geo+json');
+          if (v === 'svg') svgWithFonts(atTime(), doc.paper).then((s) => download(`${doc.name || 'map'}${suffix}.svg`, s, 'image/svg+xml'));
+          if (v === 'png') exportPNG(atTime(), doc.paper, 2).then((b) => download(`${doc.name || 'map'}${suffix}.png`, b));
           const s = SCENES.find((x) => x.id === v);
           if (s && confirm(`Открыть пример «${s.name}»? Текущая карта будет заменена.`)) loadDoc(s.build());
         }}>
@@ -195,9 +208,9 @@ export function App() {
           <option value="new">Новая пустая карта</option>
           <optgroup label="Сохранить / экспорт">
             <option value="json">Документ (JSON)</option>
-            <option value="geojson">GeoJSON (видимые слои)</option>
-            <option value="svg">SVG (слои — группами)</option>
-            <option value="png">PNG</option>
+            <option value="geojson">GeoJSON (видимые слои{time ? ', на дату' : ''})</option>
+            <option value="svg">SVG (слои — группами{time ? ', на дату' : ''})</option>
+            <option value="png">PNG{time ? ' (на дату)' : ''}</option>
           </optgroup>
           <optgroup label="Примеры">
             {SCENES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -236,7 +249,9 @@ export function App() {
       <main>
         <MapView key={mapKey} doc={doc} setDoc={set} selected={selected} setSelected={setSelected} selectedOverlay={selectedOverlay}
           tool={tool} setTool={setTool} activeLayer={activeLayer} basemap={basemap} basemapOpacity={basemapOpacity}
-          onEngineReady={(m) => { setEngine(m); (window as unknown as { __engine: MapEngine }).__engine = m; }} onStatus={setStatus} />
+          onEngineReady={(m) => { setEngine(m); (window as unknown as { __engine: MapEngine }).__engine = m; }} onStatus={setStatus}
+          time={time} newFromNow={newFromNow} />
+        <Timeline doc={doc} setDoc={set} time={time} setTime={setTime} newFromNow={newFromNow} setNewFromNow={setNewFromNow} />
         {tool.mode === 'draw' && (
           <div className="hintbar">
             {tool.kind === 'arrow' ? 'Стрелка: щёлкайте точки оси от хвоста к острию. Первый щелчок у линии фронта/контура — хвост привяжется (Alt — без привязки). ' : ''}
@@ -266,7 +281,7 @@ export function App() {
         )}
       </main>
       <aside className="right">
-        {sel ? <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} />
+        {sel ? <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} time={time} setTime={setTime} />
           : <div className="help">
             <h3>Как работать</h3>
             <ul>

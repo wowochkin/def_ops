@@ -3,9 +3,10 @@ import type {
   AreaFeature, ArrowFeature, ArrowStyle, ColorStop, Decoration, Feature, LabelFeature, LineFeature, MapDocument,
   StrokeLayer, SymbolFeature, TextStyle, SymbolType,
 } from '@def-ops/core';
-import { PRESETS, scaleStyle } from '@def-ops/core';
+import { PRESETS, SYMBOL_PRESETS, scaleStyle } from '@def-ops/core';
 import { restyle } from '@def-ops/core';
-import { setFeatureLayer, GLYPH_NAMES } from '@def-ops/core';
+import { setFeatureLayer, GLYPH_NAMES, featureAt, geometryOf, setKeyframe, removeKeyframe, sortedKeyframes, keyframeAt, type TimeInstant } from '@def-ops/core';
+import { fmtMoment, fromInput, toInput } from './time';
 import { updateFeature, removeFeature } from './store';
 import { Num, ColorF, Check, Select, Text, DashF, Section, Row } from './fields';
 
@@ -14,9 +15,14 @@ interface Props {
   setDoc: (d: MapDocument, key?: string) => void;
   feature: Feature;
   onDeselect: () => void;
+  /** Момент, на который показана карта (null — время выключено). */
+  time?: TimeInstant | null;
+  setTime?: (t: TimeInstant | null) => void;
+  /** Дополнительные разделы (например, объект реестра). */
+  extra?: React.ReactNode;
 }
 
-export function Inspector({ doc, setDoc, feature: f, onDeselect }: Props) {
+export function Inspector({ doc, setDoc, feature: f, onDeselect, time = null, setTime, extra }: Props) {
   const k = f.scale ?? 1;
   const set = (fn: (f: Feature) => Feature, field: string) => setDoc(updateFeature(doc, f.id, fn), `insp-${f.id}-${field}`);
   const presetTable = PRESETS[f.kind] as Record<string, { name: string; group: string }>;
@@ -47,6 +53,8 @@ export function Inspector({ doc, setDoc, feature: f, onDeselect }: Props) {
           <button className="danger" onClick={() => { setDoc(removeFeature(doc, f.id)); onDeselect(); }}>Удалить</button>
         </div>
       </Section>
+      {extra}
+      <TimeInspector f={f} doc={doc} setDoc={setDoc} time={time} setTime={setTime} />
       {f.kind === 'arrow' && <ArrowInspector f={f} doc={doc} set={set} k={k} />}
       {f.kind === 'line' && <LineInspector f={f} set={set} k={k} />}
       {f.kind === 'area' && <AreaInspector f={f} set={set} k={k} />}
@@ -57,6 +65,55 @@ export function Inspector({ doc, setDoc, feature: f, onDeselect }: Props) {
 }
 
 type SetFn = (fn: (f: Feature) => Feature, field: string) => void;
+
+/* ---------------- время: период на карте и положение по датам ---------------- */
+function TimeInspector({ f, doc, setDoc, time, setTime }: {
+  f: Feature; doc: MapDocument; setDoc: (d: MapDocument, key?: string) => void; time: TimeInstant | null; setTime?: (t: TimeInstant | null) => void;
+}) {
+  const up = (fn: (x: Feature) => Feature, key?: string) => setDoc(updateFeature(doc, f.id, fn), key);
+  const span = f.time ?? {};
+  const setSpan = (p: { from?: TimeInstant | null; to?: TimeInstant | null }) => up((x) => {
+    const next = { ...(x.time ?? {}), ...p };
+    return { ...x, time: next.from || next.to ? next : null };
+  });
+  const kfs = sortedKeyframes(f);
+  const active = time ? keyframeAt(f, time) : null;
+  const visible = time ? featureAt(f, time) !== null : true;
+  return (
+    <Section title="Время">
+      <Row label="На карте с" hint="С какого момента знак есть на карте (пусто — всегда)">
+        <input type="datetime-local" value={toInput(span.from)} onChange={(e) => setSpan({ from: fromInput(e.target.value) })} />
+        {time && <button className="link" title="С текущей даты" onClick={() => setSpan({ from: time })}>⏱</button>}
+      </Row>
+      <Row label="по" hint="До какого момента (не включительно); пусто — без конца">
+        <input type="datetime-local" value={toInput(span.to)} onChange={(e) => setSpan({ to: fromInput(e.target.value) })} />
+        {time && <button className="link" title="По текущую дату" onClick={() => setSpan({ to: time })}>⏱</button>}
+      </Row>
+      {time && !visible && <div className="muted">На {fmtMoment(time)} знака на карте нет.</div>}
+      <div className="kf-list">
+        <div className={`kf${!active ? ' cur' : ''}`}>
+          <span>{kfs.length ? `до ${fmtMoment(kfs[0].t, true)}` : 'положение'}</span><span className="muted">основное</span>
+        </div>
+        {kfs.map((k) => (
+          <div key={k.t} className={`kf${active?.t === k.t ? ' cur' : ''}`}>
+            <button className="link" title="Показать карту на эту дату" onClick={() => setTime?.(k.t)}>с {fmtMoment(k.t, true)}</button>
+            <input className="kf-note" placeholder="пояснение" value={k.note ?? ''}
+              onChange={(e) => up((x) => ({ ...x, keyframes: (x.keyframes ?? []).map((q) => (q.t === k.t ? { ...q, note: e.target.value || undefined } : q)) }), `kfnote-${f.id}-${k.t}`)} />
+            <button className="link danger" title="Удалить это положение" onClick={() => up((x) => removeKeyframe(x, k.t))}>✕</button>
+          </div>
+        ))}
+      </div>
+      <div className="btns">
+        <button disabled={!time || !visible || active?.t === time}
+          title={time ? 'Знак получит новое положение с этого момента; тяните его на карте — изменится только оно' : 'Включите шкалу времени под картой'}
+          onClick={() => time && up((x) => setKeyframe(x, time, geometryOf(featureAt(x, time) ?? x)))}>
+          Новое положение с {time ? fmtMoment(time, true) : '…'}
+        </button>
+      </div>
+      {time && <div className="muted hint">Перетаскивание на карте меняет положение, действующее на {fmtMoment(time, true)}{active ? ` (с ${fmtMoment(active.t, true)})` : kfs.length ? ' (основное)' : ''}.</div>}
+    </Section>
+  );
+}
 
 function kindName(k: Feature['kind']) {
   return { arrow: 'Стрелка', line: 'Линия', area: 'Район', symbol: 'Знак', label: 'Надпись' }[k];
@@ -289,6 +346,11 @@ const SYMBOL_TYPES: [SymbolType, string][] = [
   ['aviation', 'Авиация (атлас)'], ['victoryFlag', 'Знамя'], ['pennant', 'Флажок'], ['dateBox', 'Дата в рамке'], ['meeting', 'Встреча войск'],
   ...Object.entries(GLYPH_NAMES).filter(([k]) => k !== 'pennant') as [SymbolType, string][],
 ];
+// уставные и прочие глифы, которых нет в списке выше, — под именами их пресетов
+for (const p of Object.values(SYMBOL_PRESETS)) {
+  const t = p.style().type;
+  if (!SYMBOL_TYPES.some(([k]) => k === t)) SYMBOL_TYPES.push([t, `${p.group}: ${p.name}`]);
+}
 
 function SymbolInspector({ f, set, k }: { f: SymbolFeature; set: SetFn; k: number }) {
   const s = f.style;

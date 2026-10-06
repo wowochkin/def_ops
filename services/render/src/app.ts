@@ -3,7 +3,7 @@
  * берёт его из сервиса документов по id. Масштабируется горизонтально.
  */
 import type { MapDocument } from '@def-ops/core';
-import { migrateDocument, exportSVG, toGeoJSON, fromGeoJSON, PRESETS, LIBRARY, CATEGORIES, STYLES, SOURCES, type GeoJSONCollection, type ImportOptions } from '@def-ops/core';
+import { migrateDocument, exportSVG, toGeoJSON, fromGeoJSON, isTime, PRESETS, LIBRARY, CATEGORIES, STYLES, SOURCES, type GeoJSONCollection, type ImportOptions } from '@def-ops/core';
 import { Router, HttpError, reply, serviceClient, type Ctx } from '@def-ops/service-kit';
 
 export function buildRouter(documentsUrl: string): Router {
@@ -12,6 +12,12 @@ export function buildRouter(documentsUrl: string): Router {
     try { return migrateDocument(d); } catch (e) { throw new HttpError(422, 'invalid_document', (e as Error).message); }
   };
   const layersParam = (c: Ctx) => c.query.get('layers')?.split(',').filter(Boolean);
+  /** Момент времени (обстановка на дату): ?at=1945-04-25 или поле time в теле. */
+  const moment = (v: unknown): string | null => {
+    if (v === undefined || v === null || v === '') return null;
+    if (!isTime(v)) throw new HttpError(400, 'invalid_time', 'Момент времени — ISO 8601: 1945-04-25 или 1945-04-25T06:00');
+    return v;
+  };
   const svg = (s: string) => reply(200, s, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
   const geo = (g: unknown) => reply(200, g, { 'Content-Type': 'application/geo+json; charset=utf-8' });
   const fetchDoc = (c: Ctx) => serviceClient(documentsUrl, c)<MapDocument>('GET', `/documents/${encodeURIComponent(c.params.id)}`).then(parse);
@@ -25,12 +31,12 @@ export function buildRouter(documentsUrl: string): Router {
   r.get('/library', () => ({ styles: STYLES, categories: CATEGORIES, sources: SOURCES, elements: LIBRARY }));
 
   r.post('/render/svg', async (c) => {
-    const b = await c.json<{ document: unknown; layers?: string[]; background?: string | null; padding?: number }>();
-    return svg(exportSVG(parse(b?.document), { layers: b.layers, background: b.background, padding: b.padding }));
+    const b = await c.json<{ document: unknown; layers?: string[]; background?: string | null; padding?: number; time?: string }>();
+    return svg(exportSVG(parse(b?.document), { layers: b.layers, background: b.background, padding: b.padding, time: moment(b.time) }));
   });
   r.post('/render/geojson', async (c) => {
-    const b = await c.json<{ document: unknown; layers?: string[] }>();
-    return geo(toGeoJSON(parse(b?.document), { layers: b.layers }));
+    const b = await c.json<{ document: unknown; layers?: string[]; time?: string }>();
+    return geo(toGeoJSON(parse(b?.document), { layers: b.layers, time: moment(b.time) }));
   });
   r.post('/import/geojson', async (c) => {
     const b = await c.json<{ document: unknown; geojson: GeoJSONCollection; options?: ImportOptions }>();
@@ -40,8 +46,8 @@ export function buildRouter(documentsUrl: string): Router {
     }
   });
 
-  // по документу из хранилища: ?layers=a,b — только эти слои
-  r.get('/render/documents/:id.svg', async (c) => svg(exportSVG(await fetchDoc(c), { layers: layersParam(c), background: c.query.get('transparent') ? null : undefined })));
-  r.get('/render/documents/:id.geojson', async (c) => geo(toGeoJSON(await fetchDoc(c), { layers: layersParam(c) })));
+  // по документу из хранилища: ?layers=a,b — только эти слои; ?at=1945-04-25 — обстановка на момент
+  r.get('/render/documents/:id.svg', async (c) => svg(exportSVG(await fetchDoc(c), { layers: layersParam(c), background: c.query.get('transparent') ? null : undefined, time: moment(c.query.get('at')) })));
+  r.get('/render/documents/:id.geojson', async (c) => geo(toGeoJSON(await fetchDoc(c), { layers: layersParam(c), time: moment(c.query.get('at')) })));
   return r;
 }

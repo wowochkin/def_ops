@@ -9,9 +9,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArrowFeature, Feature, FeatureKind, ImageOverlay, LngLat, MapDocument, PresetKind, Vec2 } from '@def-ops/core';
 import {
-  makeProjection, dist, sub, dot, createFeature, zoomFactor, pickLayer, isFeatureEditable, renderDocument,
+  makeProjection, dist, sub, dot, createFeature, zoomFactor, pickLayer, isFeatureEditable, renderDocument, documentAt,
 } from '@def-ops/core';
-import { type Tool, insertFeature, updateFeature } from './store';
+import type { TimeInstant } from '@def-ops/core';
+import { type Tool, insertFeature, updateFeature, commitAt } from './store';
 import { findSnap, controlPoints, translateFeature, arrowWidthHandles, widthFromHandle } from './geometry';
 import type { BasemapSpec, MapEngine, PointerInfo } from './engine/types';
 import { ENGINES, DEFAULT_ENGINE } from './engine/registry';
@@ -32,6 +33,10 @@ interface Props {
   engineId?: string;
   onEngineReady?: (e: MapEngine) => void;
   onStatus?: (s: string) => void;
+  /** Момент, на который показана обстановка (null — все знаки без учёта времени). */
+  time?: TimeInstant | null;
+  /** Новые знаки появляются с момента time. */
+  newFromNow?: boolean;
 }
 
 type Drag =
@@ -55,9 +60,18 @@ export function MapView(props: Props) {
   const [snapHint, setSnapHint] = useState<Vec2 | null>(null);
   const dragRef = useRef<Drag | null>(null);
 
+  const time = props.time ?? null;
+  /** Документ на выбранный момент: что видно и где. Правки пишутся в исходный doc (commitAt). */
+  const shown = useMemo(() => documentAt(doc, time), [doc, time]);
+  /** Записать отредактированный (показанный) знак в документ с учётом времени. */
+  const commit = (base: MapDocument, id: string, edited: Feature, key?: string) =>
+    setDoc(updateFeature(base, id, (orig) => commitAt(orig, edited, live.current.time)), key);
+  /** Новый знак: при включённом «новые — с этой даты» появляется с текущего момента. */
+  const stamp = <F extends Feature>(f: F): F => (live.current.time && live.current.props.newFromNow ? { ...f, time: { from: live.current.time } } : f);
+
   // актуальные значения для обработчиков, созданных один раз
-  const live = useRef({ doc, tool, draft, selected, props });
-  live.current = { doc, tool, draft, selected, props };
+  const live = useRef({ doc, shown, time, tool, draft, selected, props });
+  live.current = { doc, shown, time, tool, draft, selected, props };
 
   const proj = useMemo(() => makeProjection(doc.origin, doc.refZoom), [doc.origin, doc.refZoom]);
 
@@ -95,9 +109,9 @@ export function MapView(props: Props) {
 
   // ---------- рендер знаков (только при изменении документа)
   const rendered = useMemo(() => {
-    const d = draftFeature ? { ...doc, features: [...doc.features, draftFeature] } : doc;
+    const d = draftFeature ? { ...shown, features: [...shown.features, draftFeature] } : shown;
     return renderDocument(d, 'm');
-  }, [doc, draftFeature]);
+  }, [shown, draftFeature]);
 
   useEffect(() => {
     const g = worldRef.current;
@@ -144,7 +158,7 @@ export function MapView(props: Props) {
           text = t.replace(/\\n/g, '\n');
         }
         const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
-        const f = createFeature(tool.kind, tool.preset, { at: ll, text, layerId }, k, tool.side);
+        const f = stamp(createFeature(tool.kind, tool.preset, { at: ll, text, layerId }, k, tool.side));
         setDoc(insertFeature(doc, f));
         setSelected(f.id);
         return;
@@ -153,7 +167,7 @@ export function MapView(props: Props) {
         let anchor = null;
         let p0 = ll;
         if (tool.kind === 'arrow' && !e.altKey) {
-          const s = findSnap(doc, proj.toWorld(ll), SNAP_PX / Math.pow(2, zoom() - doc.refZoom));
+          const s = findSnap(live.current.shown, proj.toWorld(ll), SNAP_PX / Math.pow(2, zoom() - doc.refZoom));
           if (s) { anchor = { featureId: s.featureId, t: s.t }; p0 = proj.toLngLat(s.point); }
         }
         setDraft({ points: [p0], anchor });
@@ -176,7 +190,7 @@ export function MapView(props: Props) {
       if (tool.mode !== 'draw') { setSnapHint(null); return; }
       if (draft) setHover(ll);
       if (tool.kind === 'arrow' && !draft && !e.altKey) {
-        const s = findSnap(doc, proj.toWorld(ll), SNAP_PX / Math.pow(2, zoom() - doc.refZoom));
+        const s = findSnap(live.current.shown, proj.toWorld(ll), SNAP_PX / Math.pow(2, zoom() - doc.refZoom));
         setSnapHint(s ? s.point : null);
       } else setSnapHint(null);
     };
@@ -192,7 +206,7 @@ export function MapView(props: Props) {
     if (draft.points.length >= min) {
       const k = zoomFactor(doc, mapRef.current!.getView().zoom);
       const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
-      const f = createFeature(tool.kind as PresetKind, tool.preset, { points: draft.points, layerId }, k, tool.side);
+      const f = stamp(createFeature(tool.kind as PresetKind, tool.preset, { points: draft.points, layerId }, k, tool.side));
       if (f.kind === 'arrow') f.anchor = draft.anchor;
       setDoc(insertFeature(doc, f));
       setSelected(f.id);
@@ -266,17 +280,18 @@ export function MapView(props: Props) {
       return;
     }
 
-    const f = doc.features.find((q) => q.id === d.id);
+    const { shown } = live.current;
+    const f = shown.features.find((q) => q.id === d.id);
     if (!f) return;
     let nf: Feature = f;
     if (d.type === 'move') {
-      nf = translateFeature(doc, d.orig, sub(w, d.start));
+      nf = translateFeature(shown, d.orig, sub(w, d.start));
     } else if (d.type === 'point') {
       if (f.kind === 'symbol' || f.kind === 'label') nf = { ...f, at: ll };
       else {
         const pts = f.points.slice();
         if (f.kind === 'arrow' && d.index === 0) {
-          const s = ev.altKey ? null : findSnap(doc, w, SNAP_PX / sc, f.id);
+          const s = ev.altKey ? null : findSnap(shown, w, SNAP_PX / sc, f.id);
           setSnapHint(s ? s.point : null);
           pts[0] = s ? proj.toLngLat(s.point) : ll;
           nf = { ...f, points: pts, anchor: s ? { featureId: s.featureId, t: s.t } : null };
@@ -286,10 +301,10 @@ export function MapView(props: Props) {
         }
       }
     } else if (f.kind === 'arrow') {
-      const h = arrowWidthHandles(doc, f);
+      const h = arrowWidthHandles(shown, f);
       if (!h) return;
       if (d.type === 'tailWidth') {
-        const tail0 = controlPoints(doc, f)[0];
+        const tail0 = controlPoints(shown, f)[0];
         const tw = widthFromHandle(tail0, h.tailN, w);
         nf = { ...f, style: { ...f.style, tailWidth: tw } };
       } else {
@@ -298,7 +313,7 @@ export function MapView(props: Props) {
         nf = { ...f, style: { ...f.style, headWidth: hw, barbSweep: sweep } };
       }
     }
-    setDoc(updateFeature(doc, d.id, () => nf), d.key);
+    commit(doc, d.id, nf, d.key);
   };
 
   // клик по знаку в режиме выбора
@@ -307,7 +322,7 @@ export function MapView(props: Props) {
     const el = (e.target as Element).closest('[data-id]');
     const id = el?.getAttribute('data-id');
     if (!id || id === '__draft__') return;
-    const f = doc.features.find((q) => q.id === id);
+    const f = shown.features.find((q) => q.id === id);
     if (!f || !isFeatureEditable(doc, f)) return;
     setSelected(id);
     const rect = mapRef.current!.getContainer().getBoundingClientRect();
@@ -317,9 +332,9 @@ export function MapView(props: Props) {
 
   // ---------- ручки
   const handles: React.ReactNode[] = [];
-  const sel = doc.features.find((f) => f.id === selected);
+  const sel = shown.features.find((f) => f.id === selected);
   if (map && sel && tool.mode === 'select' && isFeatureEditable(doc, sel)) {
-    const pts = controlPoints(doc, sel).map(toScreen);
+    const pts = controlPoints(shown, sel).map(toScreen);
     // вставка точки на середине сегмента
     if (sel.kind === 'arrow' || sel.kind === 'line' || sel.kind === 'area') {
       const closed = sel.kind === 'area' || (sel.kind === 'line' && sel.closed);
@@ -336,7 +351,7 @@ export function MapView(props: Props) {
               const np = f.points.slice();
               np.splice(i + 1, 0, ll);
               const key = `pt-${sel.id}-${Date.now()}`;
-              setDoc(updateFeature(doc, sel.id, () => ({ ...f, points: np }) as Feature), key);
+              commit(doc, sel.id, { ...f, points: np } as Feature, key);
               beginDrag({ type: 'point', id: sel.id, index: i + 1, key }, e);
             }} />,
         );
@@ -354,14 +369,14 @@ export function MapView(props: Props) {
             const min = sel.kind === 'area' ? 3 : 2;
             if (sel.points.length <= min) return;
             const np = sel.points.filter((_, j) => j !== i);
-            setDoc(updateFeature(doc, sel.id, (f) => ({ ...f, points: np, ...(f.kind === 'arrow' && i === 0 ? { anchor: null } : {}) }) as Feature));
+            commit(doc, sel.id, { ...sel, points: np, ...(sel.kind === 'arrow' && i === 0 ? { anchor: null } : {}) } as Feature);
           }}>
           <title>{isTail ? 'Хвост: тяните к линии фронта для привязки (Alt — без привязки). Двойной клик — удалить точку.' : 'Тяните — переместить. Двойной клик — удалить точку.'}</title>
         </rect>,
       );
     });
     if (sel.kind === 'arrow') {
-      const h = arrowWidthHandles(doc, sel);
+      const h = arrowWidthHandles(shown, sel);
       if (h) {
         const t = toScreen(h.tail), b = toScreen(h.barb);
         handles.push(

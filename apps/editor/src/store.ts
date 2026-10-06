@@ -1,6 +1,7 @@
 /** Состояние редактора: документ с историей правок (undo/redo), выделение, инструмент. */
 import { useCallback, useReducer } from 'react';
-import type { Feature, FeatureKind, MapDocument, Side } from '@def-ops/core';
+import type { Feature, FeatureKind, MapDocument, Side, TimeInstant } from '@def-ops/core';
+import { applyGeometryAt } from '@def-ops/core';
 
 export type Tool =
   | { mode: 'select' }
@@ -79,4 +80,17 @@ export function useHistory(initial: MapDocument) {
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
   const reset = useCallback((doc: MapDocument) => dispatch({ type: 'reset', doc }), []);
   return { doc: h.present, set, undo, redo, reset, canUndo: h.past.length > 0, canRedo: h.future.length > 0 };
+}
+
+/**
+ * Записать правку знака, показанного на момент t. Если у знака есть ключевые кадры,
+ * геометрия правится в действующем на t кадре (или в основной, если кадров до t нет);
+ * остальные свойства (стиль, привязка) — как в отредактированном знаке.
+ */
+export function commitAt(orig: Feature, edited: Feature, t?: TimeInstant | null): Feature {
+  if (!t || !orig.keyframes?.length) return edited;
+  const base = { ...edited } as Feature & Record<string, unknown>;
+  const o = orig as Feature & Record<string, unknown>;
+  for (const k of ['points', 'at', 'rotation', 'path']) if (k in o) base[k] = o[k];
+  return applyGeometryAt(base as Feature, t, edited);
 }
