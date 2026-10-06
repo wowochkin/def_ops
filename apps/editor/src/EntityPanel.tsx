@@ -2,6 +2,7 @@
  * Раздел инспектора «Объект реестра»: какой реальный объект обозначает знак,
  * его характеристики на момент шкалы времени, запись изменений с даты, история.
  */
+import { ask } from './dialogs';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ENTITY_TYPES, LIBRARY, formatAttr, featureAt, toTime,
@@ -314,7 +315,7 @@ function History({ api, entity, type, facts, onChanged, setError }: {
           <div className="fact-h">
             <b>с {fmtMoment(x.validFrom, true)}</b>{x.validTo ? ` по ${fmtMoment(x.validTo, true)}` : ''}
             <button className="link danger" title="Удалить запись" onClick={async () => {
-              if (!confirm('Удалить запись истории?')) return;
+              if (!ask('Удалить запись истории?')) return;
               try { await api.removeFact(entity.id, x.id); onChanged(); } catch (e) { setError((e as Error).message); }
             }}>✕</button>
           </div>

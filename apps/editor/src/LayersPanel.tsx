@@ -3,6 +3,7 @@
  * для новых объектов, перенос объектов между слоями (перетаскиванием),
  * растровые подложки.
  */
+import { ask } from './dialogs';
 import { useState } from 'react';
 import type { ImageOverlay, LayerRole, MapDocument } from '@def-ops/core';
 import { newId, addLayer, updateLayer, removeLayer, moveLayer, setFeatureLayer, soloLayer, orderedFeatures } from '@def-ops/core';
@@ -111,7 +112,7 @@ export function LayersPanel(p: Props) {
                   <button className="danger" disabled={doc.layers.length < 2} onClick={() => {
                     const others = doc.layers.filter((x) => x.id !== l.id);
                     const target = others[others.length - 1];
-                    const keep = features.length > 0 && confirm(`Перенести ${features.length} объект(ов) в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
+                    const keep = features.length > 0 && ask(`Перенести ${features.length} объект(ов) в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
                     setDoc(removeLayer(doc, l.id, keep ? target.id : null));
                     if (activeLayer === l.id) setActiveLayer(null);
                   }}>Удалить слой</button>

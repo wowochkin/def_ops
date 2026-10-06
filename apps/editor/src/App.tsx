@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ask, askText } from './dialogs';
 import type { MapDocument, GeoJSONCollection } from '@def-ops/core';
 import { emptyDocument, newId, migrateDocument, toGeoJSON, fromGeoJSON, zoomFactor, documentAt, type TimeInstant } from '@def-ops/core';
 import { DefOpsClient, ApiError, type DocumentMeta } from '@def-ops/api-client';
@@ -190,7 +191,7 @@ export function App() {
       else {
         try { out = await api.documents.save(d, d.revision); } catch (e) {
           if (!(e instanceof ApiError) || !e.isConflict) throw e;
-          const overwrite = confirm(`${e.message}.\n\nОК — перезаписать своей версией.\nОтмена — загрузить версию с сервера (ваши изменения будут потеряны).`);
+          const overwrite = ask(`${e.message}.\n\nОК — перезаписать своей версией.\nОтмена — загрузить версию с сервера (ваши изменения будут потеряны).`);
           if (overwrite) out = await api.documents.save(d);
           else { const fresh = migrateDocument(await api.documents.get(d.id)); loadDoc(fresh, true); return; }
         }
@@ -223,14 +224,14 @@ export function App() {
         <select value="" onChange={(e) => {
           const v = e.target.value;
           e.target.value = '';
-          if (v === 'new') { if (confirm('Создать пустую карту? Несохранённые изменения будут потеряны.')) { const vw = engine?.getView(); loadDoc(emptyDocument(vw?.center, vw?.zoom)); } }
+          if (v === 'new') { if (ask('Создать пустую карту? Несохранённые изменения будут потеряны.')) { const vw = engine?.getView(); loadDoc(emptyDocument(vw?.center, vw?.zoom)); } }
           if (v === 'json') download(`${doc.name || 'map'}.json`, JSON.stringify(withView(), null, 1), 'application/json');
           const suffix = time ? `-${time.replace(/[:T]/g, '-')}` : '';
           if (v === 'geojson') download(`${doc.name || 'map'}${suffix}.geojson`, JSON.stringify(toGeoJSON(doc, { time })), 'application/geo+json');
           if (v === 'svg') svgWithFonts(atTime(), doc.paper).then((s) => download(`${doc.name || 'map'}${suffix}.svg`, s, 'image/svg+xml'));
           if (v === 'png') exportPNG(atTime(), doc.paper, 2).then((b) => download(`${doc.name || 'map'}${suffix}.png`, b));
           const s = SCENES.find((x) => x.id === v);
-          if (s && confirm(`Открыть пример «${s.name}»? Текущая карта будет заменена.`)) loadDoc(s.build());
+          if (s && ask(`Открыть пример «${s.name}»? Текущая карта будет заменена.`)) loadDoc(s.build());
         }}>
           <option value="">Файл…</option>
           <option value="new">Новая пустая карта</option>
@@ -253,9 +254,9 @@ export function App() {
           <select value={basemapId} onChange={(e) => {
             const v = e.target.value;
             if (v === '__add') {
-              const name = prompt('Название подложки:', 'Моя карта');
+              const name = askText('Название подложки:', 'Моя карта');
               if (!name) return;
-              const url = prompt('Шаблон адреса тайлов XYZ, например https://server/{z}/{x}/{y}.png\n(или WMS с {bbox-epsg-3857}):', '');
+              const url = askText('Шаблон адреса тайлов XYZ, например https://server/{z}/{x}/{y}.png\n(или WMS с {bbox-epsg-3857}):', '');
               if (!url || !isValidTemplate(url)) { if (url) alert('Нужен адрес с {z}/{x}/{y}, {quadkey} или {bbox-epsg-3857}'); return; }
               const spec: BasemapSpec = { id: 'custom-' + newId('b'), name, tiles: [url], tileSize: 256 };
               const list = [...customBasemaps, spec];
@@ -299,7 +300,7 @@ export function App() {
                   }}>{m.name}</span>
                   <span className="muted">рев. {m.revision} · слоёв {m.layers} · объектов {m.features} · {new Date(m.updatedAt).toLocaleString('ru-RU')}</span>
                   <button className="link danger" title="Удалить" onClick={async () => {
-                    if (!confirm(`Удалить «${m.name}» с сервера?`)) return;
+                    if (!ask(`Удалить «${m.name}» с сервера?`)) return;
                     await api.documents.remove(m.id); setServerList(serverList.filter((x) => x.id !== m.id));
                   }}>✕</button>
                 </div>

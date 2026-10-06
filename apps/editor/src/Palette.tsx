@@ -3,6 +3,7 @@
  * Сверху — оформление (уставное или по образцу карты), принадлежность, поиск.
  * Каждый элемент показан в выбранном оформлении (или в ближайшем доступном).
  */
+
 import { useMemo, useState } from 'react';
 import { CATEGORIES, STYLES, PALETTE, variantFor, searchLibrary, sourceText, type StyleId, type Side, type LibraryElement } from '@def-ops/core';
 import type { Tool } from './store';
@@ -63,7 +64,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
           <label className="muted" title="Показывать только знаки, у которых есть выбранное оформление (без подстановки ближайшего)">
             <input type="checkbox" checked={onlyStyle} onChange={(e) => { setOnlyStyle(e.target.checked); save('palette.onlyStyle', e.target.checked ? '1' : '0'); }} /> без замен
           </label>
-          <a className="muted" href="/library.html" target="_blank" rel="noreferrer" title="Справочник: все знаки с описаниями">справочник ↗</a>
+          <a className="muted" href="library.html" target="_blank" rel="noreferrer" title="Справочник: все знаки с описаниями">справочник ↗</a>
         </div>
       </div>
       <div className="plist">

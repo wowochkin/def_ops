@@ -6,6 +6,7 @@
  * карты (геометрия не пересчитывается). Ручки редактирования — отдельный
  * SVG-слой в экранных координатах (постоянный размер при любом зуме).
  */
+import { askText } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArrowFeature, Feature, FeatureKind, ImageOverlay, LngLat, MapDocument, PresetKind, Vec2 } from '@def-ops/core';
 import {
@@ -153,7 +154,7 @@ export function MapView(props: Props) {
       if (tool.kind === 'symbol' || tool.kind === 'label') {
         let text: string | undefined;
         if (tool.kind === 'label') {
-          const t = window.prompt('Текст надписи (перенос строки — \\n):', 'Надпись');
+          const t = askText('Текст надписи (перенос строки — \\n):', 'Надпись');
           if (!t) return;
           text = t.replace(/\\n/g, '\n');
         }
