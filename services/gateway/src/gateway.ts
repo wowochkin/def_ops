@@ -6,6 +6,11 @@
  *  - Маршрутизация по префиксу к внутренним сервисам (таблица ROUTES).
  *  - Входящий X-Tenant-Id от клиента НЕ доверяется — шлюз выставляет его сам.
  *  - Отдаёт собранный редактор (STATIC_DIR) — фронтенд и API на одном адресе.
+ *  - Тела запросов и ответов идут потоком, без буферизации и перекодирования:
+ *    тайлы, архивы карт, загрузка сканов в сотни мегабайт, Server-Sent Events.
+ *    Заголовки (Content-Type, Cache-Control, ETag, If-None-Match → 304) — как есть.
+ *  - Сервису передаётся X-Forwarded-Prefix — часть пути, которую шлюз снял
+ *    (/api для /api/cartography → /cartography): так сервис строит адреса для клиента.
  */
 import http from 'node:http';
 import { promises as fs } from 'node:fs';
@@ -21,6 +26,13 @@ export interface GatewayConfig {
   apiKeys: Map<string, string>;
   staticDir?: string;
   corsOrigin: string;
+  /** Предел времени на запрос целиком, мс (долгая загрузка скана; 0 — без предела). По умолчанию 1 ч. */
+  requestTimeoutMs?: number;
+}
+
+/** Снятая шлюзом часть пути: префикс API без префикса на стороне сервиса. */
+export function forwardedPrefix(prefix: string, target: string): string {
+  return target && prefix.endsWith(target) ? prefix.slice(0, -target.length) : prefix;
 }
 
 export function parseKeys(s: string): Map<string, string> {
@@ -42,15 +54,15 @@ export function createGateway(cfg: GatewayConfig) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }).end(JSON.stringify({ error: { code, message } }));
   };
 
-  return http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
     const started = Date.now();
     const url = new URL(req.url || '/', 'http://gw');
     const requestId = (req.headers['x-request-id'] as string) || crypto.randomUUID();
     res.setHeader('X-Request-Id', requestId);
     res.setHeader('Access-Control-Allow-Origin', cfg.corsOrigin);
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, If-Match, X-Api-Key, X-Request-Id, X-Source-System, X-Tenant-Id');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, If-Match, If-None-Match, X-Api-Key, X-Request-Id, X-Source-System, X-Tenant-Id');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Expose-Headers', 'ETag, X-Request-Id');
+    res.setHeader('Access-Control-Expose-Headers', 'ETag, X-Request-Id, Content-Disposition');
     if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
 
     if (!url.pathname.startsWith('/api/')) return serveStatic(cfg, url.pathname, res);
@@ -90,22 +102,28 @@ export function createGateway(cfg: GatewayConfig) {
     headers['x-tenant-id'] = tenant;
     headers['x-request-id'] = requestId;
     headers['x-forwarded-for'] = req.socket.remoteAddress;
+    headers['x-forwarded-prefix'] = forwardedPrefix(prefix, target);
 
     const up = http.request(base + upstreamPath, { method: req.method, headers }, (ur) => {
       const h = { ...ur.headers };
       delete h['access-control-allow-origin'];
       res.writeHead(ur.statusCode || 502, h);
-      ur.pipe(res); // потоково, в т.ч. Server-Sent Events
+      ur.pipe(res); // потоково, в т.ч. Server-Sent Events и двоичные тела
+      ur.on('error', () => res.destroy());
       ur.on('end', () => log('gateway', { level: 'info', requestId, tenant, method: req.method, path: url.pathname, upstream: service, status: ur.statusCode, ms: Date.now() - started }));
     });
     up.on('error', (e) => {
       log('gateway', { level: 'error', requestId, upstream: service, error: e.message });
       if (!res.headersSent) sendErr(res, 502, 'bad_gateway', `Сервис «${service}» недоступен`);
+      else res.destroy(); // ответ уже начат — оборвать, чтобы клиент не ждал и не принял обрезок за целое
     });
     // клиент ушёл раньше ответа (например, закрыл поток событий) — рвём и запрос к сервису
     res.on('close', () => { if (!res.writableEnded) up.destroy(); });
     req.pipe(up);
   });
+  // загрузка большого скана по медленной сети может идти дольше стандартных 5 минут
+  server.requestTimeout = cfg.requestTimeoutMs ?? 3_600_000;
+  return server;
 }
 
 async function serveStatic(cfg: GatewayConfig, pathname: string, res: http.ServerResponse) {

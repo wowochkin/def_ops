@@ -1,4 +1,4 @@
-/** Сквозной тест платформы: шлюз → сервис документов / сервис рендера / сервис реестра. */
+/** Сквозной тест платформы: шлюз → сервис документов / сервис рендера / сервис реестра / сервис картографии. */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { AddressInfo } from 'node:net';
 import type http from 'node:http';
@@ -11,10 +11,25 @@ import { buildRouter as renderRouter } from '../../render/src/app';
 import { MemoryRepo } from '../../registry/src/repo';
 import { EventBus as RegistryBus } from '../../registry/src/events';
 import { buildRouter as registryRouter } from '../../registry/src/app';
-import { createGateway, parseKeys } from '../src/gateway';
+import { MemoryRepo as MapMemoryRepo } from '../../cartography/src/repo';
+import { EventBus as CartographyBus } from '../../cartography/src/events';
+import { JobRunner } from '../../cartography/src/jobs';
+import { TileStore } from '../../cartography/src/tiles';
+import { buildRouter as cartographyRouter } from '../../cartography/src/app';
+import { quadrantImage, pixel, near, QUADRANTS, tempDir } from '../../cartography/tests/helpers';
+import { georefFromCorners, mercator, pixelToLngLat, tileOf, type LngLat, type MapJob } from '@def-ops/core';
+import { promises as fs } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import sharp from 'sharp';
+import tar from 'tar-stream';
+import { createGateway, forwardedPrefix, parseKeys } from '../src/gateway';
 
 let gw: http.Server;
 let base = '';
+let tilesDir = '';
+let cartoBase = '';
+let cartoJobs: JobRunner;
+let cartoStore: TileStore;
 const closers: (() => Promise<void>)[] = [];
 
 beforeAll(async () => {
@@ -24,14 +39,22 @@ beforeAll(async () => {
   const rPort = await render.listen();
   const registry = createService({ name: 'registry', port: 0, router: registryRouter(new MemoryRepo(), new RegistryBus()) });
   const gPort = await registry.listen();
-  closers.push(docs.close, render.close, registry.close);
+  tilesDir = await tempDir('carto-gw-');
+  const cBus = new CartographyBus();
+  const cRepo = new MapMemoryRepo();
+  cartoJobs = new JobRunner(cRepo, cBus, { progressMs: 50 });
+  cartoStore = new TileStore(tilesDir);
+  const carto = createService({ name: 'cartography', port: 0, router: cartographyRouter({ repo: cRepo, store: cartoStore, bus: cBus, jobs: cartoJobs }) });
+  const cPort = await carto.listen();
+  cartoBase = `http://127.0.0.1:${cPort}`;
+  closers.push(docs.close, render.close, registry.close, async () => { await cartoJobs.stop(); await carto.close(); await fs.rm(tilesDir, { recursive: true, force: true }); });
   gw = createGateway({
     port: 0,
-    services: { documents: `http://127.0.0.1:${dPort}`, render: `http://127.0.0.1:${rPort}`, registry: `http://127.0.0.1:${gPort}` },
+    services: { documents: `http://127.0.0.1:${dPort}`, render: `http://127.0.0.1:${rPort}`, registry: `http://127.0.0.1:${gPort}`, cartography: cartoBase },
     routes: [
       ['/api/documents', 'documents', '/documents'], ['/api/events', 'documents', '/events'],
       ['/api/render', 'render', '/render'], ['/api/import', 'render', '/import'], ['/api/presets', 'render', '/presets'], ['/api/library', 'render', '/library'],
-      ['/api/registry', 'registry', '/registry'],
+      ['/api/registry', 'registry', '/registry'], ['/api/cartography', 'cartography', '/cartography'],
     ],
     auth: 'keys',
     apiKeys: parseKeys('keyA:orgA,keyB:orgB'),
@@ -58,7 +81,7 @@ describe('платформа через шлюз', () => {
   it('без ключа — 401, здоровье сервисов — ok', async () => {
     expect((await fetch(base + '/api/documents')).status).toBe(401);
     const h = await (await fetch(base + '/api/health')).json();
-    expect(h.services).toEqual({ documents: 'up', render: 'up', registry: 'up' });
+    expect(h.services).toEqual({ documents: 'up', render: 'up', registry: 'up', cartography: 'up' });
   });
 
   it('создание, ревизии, конфликт, изоляция организаций', async () => {
@@ -176,5 +199,95 @@ describe('платформа через шлюз', () => {
     expect((await bad.json()).error.message).toContain('«Номер» — обязательное поле');
     const badFact = await api(`/api/registry/entities/${corps.id}/facts`, body({ validFrom: '1945-04-20', attrs: { personnel: 'много' } }));
     expect(badFact.status).toBe(422);
+  });
+
+  it('картография: скан через шлюз, задание, тайл, TileJSON, пакет', async () => {
+    const corners: [LngLat, LngLat, LngLat, LngLat] = [[13.3, 52.55], [13.5, 52.55], [13.5, 52.45], [13.3, 52.45]];
+    const map = await (await api('/api/cartography/maps', { method: 'POST', body: JSON.stringify({ name: 'План Берлина' }) })).json();
+    expect(map.kind).toBe('xyz');
+
+    // скан — двоичное тело, привязка — в параметре
+    const img = await quadrantImage(1200, 900);
+    const up = await fetch(`${base}/api/cartography/maps/${map.id}/import/raster?georef=${encodeURIComponent(JSON.stringify({ corners }))}`, {
+      method: 'POST', body: new Uint8Array(img), headers: { 'Content-Type': 'image/png', 'X-Api-Key': 'keyA' },
+    });
+    expect(up.status).toBe(202);
+    const { job } = await up.json();
+    let j: MapJob = job;
+    for (let i = 0; i < 400 && (j.status === 'queued' || j.status === 'running'); i++) {
+      await new Promise((r) => setTimeout(r, 25));
+      j = await (await api(`/api/cartography/jobs/${job.id}`)).json();
+    }
+    expect(j.status).toBe('done');
+
+    // тайл через шлюз — тот же PNG, что на диске сервиса
+    const ll = pixelToLngLat(georefFromCorners(1200, 900, corners), 250, 225);
+    const [x, y] = tileOf(ll, 13);
+    const t = await api(`/api/cartography/maps/${map.id}/tiles/13/${x}/${y}.png`);
+    expect(t.status).toBe(200);
+    expect(t.headers.get('content-type')).toBe('image/png');
+    expect(t.headers.get('cache-control')).toContain('max-age');
+    const data = Buffer.from(await t.arrayBuffer());
+    const onDisk = await cartoStore.find('orgA', map.id, 13, x, y);
+    expect(data.equals(await fs.readFile(onDisk!.file))).toBe(true);
+    const m = mercator(ll);
+    expect(near(await pixel(data, (m[0] * 8192 - x) * 256, (m[1] * 8192 - y) * 256), [...QUADRANTS.tl, 255])).toBe(true);
+    // условный запрос проходит насквозь
+    const etag = t.headers.get('etag')!;
+    expect((await api(`/api/cartography/maps/${map.id}/tiles/13/${x}/${y}.png`, { headers: { 'If-None-Match': etag } })).status).toBe(304);
+    // чужая организация не видит
+    expect((await api(`/api/cartography/maps/${map.id}/tiles/13/${x}/${y}.png`, { key: 'keyB' })).status).toBe(404);
+
+    // адреса тайлов — с префиксом шлюза
+    const tj = await (await api(`/api/cartography/maps/${map.id}/tilejson`)).json();
+    expect(tj.tiles[0].startsWith(`/api/cartography/maps/${map.id}/tiles/{z}/{x}/{y}.png?v=`)).toBe(true);
+    const viaTj = await api(tj.tiles[0].replace('{z}', '13').replace('{x}', String(x)).replace('{y}', String(y)));
+    expect(Buffer.from(await viaTj.arrayBuffer()).equals(data)).toBe(true);
+
+    // пакет: выгрузка и загрузка через шлюз — архив не портится
+    const pkg = await api(`/api/cartography/maps/${map.id}/package`);
+    expect(pkg.headers.get('content-type')).toBe('application/x-tar');
+    const tarBuf = Buffer.from(await pkg.arrayBuffer());
+    const direct = Buffer.from(await (await fetch(`${cartoBase}/cartography/maps/${map.id}/package`, { headers: { 'X-Tenant-Id': 'orgA' } })).arrayBuffer());
+    expect(tarBuf.length).toBe(direct.length);
+    const imp = await fetch(`${base}/api/cartography/maps/import-package`, { method: 'POST', body: new Uint8Array(tarBuf), headers: { 'Content-Type': 'application/x-tar', 'X-Api-Key': 'keyB' } });
+    expect(imp.status).toBe(201);
+    const copy = (await imp.json()).map;
+    expect(copy.stats).toEqual((await (await api(`/api/cartography/maps/${map.id}`)).json()).stats);
+    const t2 = await api(`/api/cartography/maps/${copy.id}/tiles/13/${x}/${y}.png`, { key: 'keyB' });
+    expect(Buffer.from(await t2.arrayBuffer()).equals(data)).toBe(true);
+
+    expect(forwardedPrefix('/api/cartography', '/cartography')).toBe('/api');
+    expect(forwardedPrefix('/api/events', '/events')).toBe('/api');
+  });
+
+  it('шлюз: большие двоичные тела (≈24 МБ) туда и обратно — потоком и без искажений', async () => {
+    // пакет из четырёх «шумовых» PNG по ~6 МБ
+    const tiles = await Promise.all([0, 1, 2, 3].map((i) =>
+      sharp(randomBytes(1400 * 1400 * 3), { raw: { width: 1400, height: 1400, channels: 3 } }).png({ compressionLevel: 0 }).toBuffer().then((b) => ({ i, b }))));
+    const pack = tar.pack();
+    pack.entry({ name: 'map.json' }, JSON.stringify({ name: 'Шум', bounds: [13, 52, 14, 53], minzoom: 1, maxzoom: 1 }));
+    for (const { i, b } of tiles) pack.entry({ name: `tiles/1/${i % 2}/${i >> 1}.png` }, b);
+    pack.finalize();
+    const parts: Buffer[] = [];
+    for await (const c of pack) parts.push(c as Buffer);
+    const body = Buffer.concat(parts);
+    expect(body.length).toBeGreaterThan(20 * 1024 * 1024);
+
+    const imp = await fetch(`${base}/api/cartography/maps/import-package`, { method: 'POST', body: new Uint8Array(body), headers: { 'Content-Type': 'application/x-tar', 'X-Api-Key': 'keyA' } });
+    expect(imp.status).toBe(201);
+    const { map } = await imp.json();
+    expect(map.stats.tiles).toBe(4);
+    for (const { i, b } of tiles) {
+      const f = await cartoStore.find('orgA', map.id, 1, i % 2, i >> 1);
+      expect((await fs.readFile(f!.file)).equals(b)).toBe(true);
+      const t = await api(`/api/cartography/maps/${map.id}/tiles/1/${i % 2}/${i >> 1}.png`);
+      expect(Buffer.from(await t.arrayBuffer()).equals(b)).toBe(true);
+    }
+    const viaGw = Buffer.from(await (await api(`/api/cartography/maps/${map.id}/package`)).arrayBuffer());
+    const direct = Buffer.from(await (await fetch(`${cartoBase}/cartography/maps/${map.id}/package`, { headers: { 'X-Tenant-Id': 'orgA' } })).arrayBuffer());
+    expect(viaGw.length).toBeGreaterThan(20 * 1024 * 1024);
+    // время изменения в заголовках tar совпадает (те же файлы) — архивы равны байт в байт
+    expect(viaGw.equals(direct)).toBe(true);
   });
 });

@@ -42,5 +42,7 @@ const svc = createService({
   bodyLimit: 5 * MB,
   ready: () => repo.ready(),
 });
+// загрузка большого скана или пакета по медленной сети может идти дольше стандартных 5 минут
+svc.server.requestTimeout = Number(env('REQUEST_TIMEOUT_MS', '3600000'));
 await svc.listen();
 onShutdown(async () => { await jobs.stop(); await svc.close(); await repo.close(); });
