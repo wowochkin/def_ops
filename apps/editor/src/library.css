@@ -65,6 +65,7 @@ html.print .src { font-size: 10px; }
 .basis.sample { background: #eef1f5; color: #556; }
 .dbody { display: flex; gap: 10px; }
 .dthumb { flex: 0 0 170px; }
+.dthumb img + img { margin-top: 4px; }
 .dthumb img { width: 170px; height: 150px; object-fit: cover; object-position: center; border-radius: 3px; border: 1px solid #ddd; display: block; }
 .dsigns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; }
 .dsigns svg { width: 100%; height: auto; display: block; border-radius: 3px; }

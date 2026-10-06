@@ -8,8 +8,10 @@ import { CATEGORIES, STYLES, PALETTE, variantFor, searchLibrary, sourceText, typ
 import type { Tool } from './store';
 import { presetPreview } from './previews';
 
-export function paperFor(style: StyleId): string {
-  return style === 'inf' ? PALETTE.inf.paper : style === 'tac' ? PALETTE.tac.paper : PALETTE.atlas.paper;
+/** Цвет «бумаги» миниатюры — по пресету (или варианту оформления): у образцов он свой. */
+export function paperFor(styleOrPreset: string): string {
+  const p = styleOrPreset.split('.')[0];
+  return p === 'inf' ? PALETTE.inf.paper : p === 'tac' ? PALETTE.tac.paper : PALETTE.atlas.paper;
 }
 
 const load = (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } };
@@ -18,7 +20,7 @@ const save = (k: string, v: string) => { try { localStorage.setItem(k, v); } cat
 export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => void }) {
   const [style, setStyle] = useState<StyleId>(() => {
     const v = load('palette.style', 'rkka');
-    return (STYLES.some((s) => s.id === v) ? v : 'rkka') as StyleId;
+    return (STYLES.some((s) => s.id === v) ? v : v === 'tac' ? 'atlas' : 'rkka') as StyleId;
   });
   const [side, setSide] = useState<Side>(() => load('palette.side', 'own') as Side);
   const [q, setQ] = useState('');
@@ -77,7 +79,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
                 const on = tool.mode === 'draw' && tool.element === e.id;
                 return (
                   <button key={e.id} className={`pitem${on ? ' on' : ''}${v.style !== style ? ' other' : ''}`} title={e.sources ? `${e.description}\nИсточник: ${sourceText(e.sources)}` : e.description} onClick={() => pick(e)}>
-                    <span className="pv" dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paperFor(v.style), e.sideAware ? side : undefined) }} />
+                    <span className="pv" dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paperFor(v.preset), e.sideAware ? side : undefined) }} />
                     <span className="pn">{e.name}{e.verify && <i className="vf" title="Начертание не подтверждено первоисточниками — сверить">?</i>}</span>
                   </button>
                 );

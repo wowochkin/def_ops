@@ -64,7 +64,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     style: () => baseArrow({ tailWidth: 3, neckWidth: 3, headWidth: 13, headLength: 13, barbSweep: 3, fill: stops([0, C.inf.navy, 1]) }),
   },
   'atlas.p1': {
-    name: 'Удар 16–19 апр. (жёлто-красная)', group: 'Атлас',
+    name: 'Удар 16–19 апр. (жёлто-красная)', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 32, neckWidth: 6, headWidth: 14, headLength: 21, barbSweep: 6, headCurve: 1, tailShape: 'notch', tailNotch: 0.28,
       fill: stops([0, '#f6dc9c', 0.45], [0.55, '#f0a874', 0.85], [1, '#d9443a', 1]), headFill: C.atlas.red,
@@ -73,7 +73,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.p2': {
-    name: 'Удар 20–25 апр. (розово-красная)', group: 'Атлас',
+    name: 'Удар 20–25 апр. (розово-красная)', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 32, neckWidth: 6, headWidth: 14, headLength: 21, barbSweep: 6, tailShape: 'notch', tailNotch: 0.28,
       fill: stops([0, '#f8dcd6', 0.45], [0.55, '#eea092', 0.85], [1, '#d6403a', 1]), headFill: C.atlas.red,
@@ -82,7 +82,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.p3': {
-    name: 'Удар 26 апр.–8 мая (бледная)', group: 'Атлас',
+    name: 'Удар 26 апр.–8 мая (бледная)', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 36, neckWidth: 6, headWidth: 14, headLength: 21, barbSweep: 6, tailShape: 'notch', tailNotch: 0.3,
       fill: stops([0, '#fbe9ea', 0.55], [0.6, '#f1b9bf', 0.85], [1, '#de5a60', 1]), headFill: C.atlas.red,
@@ -91,7 +91,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.magenta': {
-    name: 'Удар (малиновая, 2-й Бел. фр.)', group: 'Атлас',
+    name: 'Удар (малиновая, 2-й Бел. фр.)', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 32, neckWidth: 6, headWidth: 14, headLength: 21, barbSweep: 6, tailShape: 'notch', tailNotch: 0.28,
       fill: stops([0, '#f7dbe6', 0.5], [0.5, '#e597b4', 0.95], [1, '#c8285a', 1]), headFill: '#c8243f',
@@ -100,7 +100,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.polish': {
-    name: 'Войско Польское', group: 'Атлас',
+    name: 'Войско Польское', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 30, neckWidth: 6, headWidth: 14, headLength: 20, barbSweep: 6, tailShape: 'notch', tailNotch: 0.3,
       fill: stops([0, '#ecd3ea', 0.7], [1, '#a8329a', 1]), headFill: C.atlas.magenta,
@@ -109,7 +109,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.german': {
-    name: 'Контрудар немецких войск', group: 'Атлас',
+    name: 'Контрудар немецких войск', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 30, neckWidth: 5, headWidth: 13, headLength: 19, barbSweep: 5, tailShape: 'notch', tailNotch: 0.3,
       fill: stops([0, '#f1dfb0', 0.75], [0.6, '#9cbbd6', 0.95], [1, C.atlas.blue, 1]), headFill: C.atlas.blue,
@@ -117,7 +117,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.allied': {
-    name: 'Удар войск союзников', group: 'Атлас',
+    name: 'Удар войск союзников', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 30, neckWidth: 5, headWidth: 13, headLength: 19, barbSweep: 5, tailShape: 'notch', tailNotch: 0.3,
       fill: stops([0, '#f6e2b8', 0.75], [0.6, '#d9a476', 0.95], [1, C.atlas.brown, 1]), headFill: C.atlas.brown,
@@ -125,11 +125,11 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.thin': {
-    name: 'Тонкая стрелка', group: 'Атлас',
+    name: 'Тонкая стрелка', group: 'Ист. карта (атлас)',
     style: () => baseArrow({ tailWidth: 1.6, neckWidth: 1.6, headWidth: 9, headLength: 14, barbSweep: 4, fill: stops([0, C.atlas.red, 1]) }),
   },
   'atlas.tank': {
-    name: 'Танковый корпус (ромб)', group: 'Атлас',
+    name: 'Танковый корпус (ромб)', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 1.6, neckWidth: 1.6, headWidth: 9, headLength: 14, barbSweep: 4, fill: stops([0, C.atlas.red, 1]),
       decorations: [
@@ -139,14 +139,14 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'atlas.flotilla': {
-    name: 'Речная флотилия', group: 'Атлас',
+    name: 'Речная флотилия', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
       tailWidth: 1.4, neckWidth: 1.4, headWidth: 8, headLength: 12, barbSweep: 3, fill: stops([0, C.atlas.red, 1]),
       decorations: [{ type: 'chevron', at: 0.12, to: 0.8, repeat: 0.22, length: 4, width: 9, fill: C.atlas.red, stroke: { color: C.atlas.red, width: 1.3 } }],
     }),
   },
   'tac.attack': {
-    name: 'Атака полка (объёмная)', group: 'Тактика',
+    name: 'Атака полка (объёмная)', group: 'Ист. карта (схема боя)',
     style: () => baseArrow({
       tailWidth: 26, neckWidth: 5, headWidth: 12, headLength: 16, barbSweep: 3, taper: 1.3,
       fill: stops([0, '#f6c9c4', 0.5], [0.5, '#e46a62', 0.9], [1, C.tac.red, 1]), headFill: C.tac.red,
@@ -154,7 +154,7 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
     }),
   },
   'tac.thin': {
-    name: 'Тонкая стрелка', group: 'Тактика',
+    name: 'Тонкая стрелка', group: 'Ист. карта (схема боя)',
     style: () => baseArrow({ tailWidth: 1.8, neckWidth: 1.8, headWidth: 9, headLength: 13, barbSweep: 4, fill: stops([0, C.tac.red, 1]) }),
   },
 };
@@ -181,7 +181,7 @@ export const LINE_PRESETS: Record<string, { name: string; group: string; style: 
     style: () => ({ smooth: true, layers: [L({ width: 2.2, color: C.inf.river, cap: 'round' })] }),
   },
   'atlas.front15': {
-    name: 'Фронт к исходу 15 апр.', group: 'Атлас',
+    name: 'Фронт к исходу 15 апр.', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 3.4, width: 3.6, color: C.atlas.orange }),
       L({ offset: 0.6, width: 1.6, color: C.atlas.red }),
@@ -189,14 +189,14 @@ export const LINE_PRESETS: Record<string, { name: string; group: string; style: 
     ] }),
   },
   'atlas.front19': {
-    name: 'Фронт к исходу 19 апр.', group: 'Атлас',
+    name: 'Фронт к исходу 19 апр.', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 1.6, width: 1.6, color: C.atlas.red, dash: [1.4, 2.4], cap: 'butt' }),
       L({ offset: -1.4, width: 1.6, color: C.atlas.blue }),
     ] }),
   },
   'atlas.front25': {
-    name: 'Фронт к исходу 25 апр.', group: 'Атлас',
+    name: 'Фронт к исходу 25 апр.', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 3.6, width: 3.2, color: '#f1b4b6' }),
       L({ offset: 3.6, width: 1.4, color: C.atlas.red, dash: [5, 3] }),
@@ -205,7 +205,7 @@ export const LINE_PRESETS: Record<string, { name: string; group: string; style: 
     ] }),
   },
   'atlas.frontDresden': {
-    name: 'Фронт на дрезденском напр. 5 мая', group: 'Атлас',
+    name: 'Фронт на дрезденском напр. 5 мая', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 3.4, width: 3.2, color: '#f1b4b6' }),
       L({ offset: 3.4, width: 1.2, color: '#ffffff', dash: [2, 6] }),
@@ -214,7 +214,7 @@ export const LINE_PRESETS: Record<string, { name: string; group: string; style: 
     ] }),
   },
   'atlas.meetLine': {
-    name: 'Рубеж встречи с союзниками', group: 'Атлас',
+    name: 'Рубеж встречи с союзниками', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [
       L({ width: 9, color: '#f4c9c7', opacity: 0.9 }),
       L({ offset: 2, width: 1.6, color: C.atlas.red, dash: [6, 4] }),
@@ -222,58 +222,58 @@ export const LINE_PRESETS: Record<string, { name: string; group: string; style: 
     ] }),
   },
   'atlas.defense': {
-    name: 'Оборонительный рубеж', group: 'Атлас',
+    name: 'Оборонительный рубеж', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [L({ width: 1.5, color: C.atlas.blue, ticks: { spacing: 4.5, length: 3, width: 1, side: 1 } })] }),
   },
   'atlas.defenseDouble': {
-    name: 'Рубеж (двойной, с зубцами)', group: 'Атлас',
+    name: 'Рубеж (двойной, с зубцами)', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 1.5, width: 1.3, color: C.atlas.blue }),
       L({ offset: -1.5, width: 1.3, color: C.atlas.blue, ticks: { spacing: 4.5, length: 3, width: 1, side: -1 } }),
     ] }),
   },
   'atlas.river': {
-    name: 'Река', group: 'Атлас',
+    name: 'Река', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [L({ width: 1.3, color: '#5ba8dc', cap: 'round' })] }),
   },
   'atlas.rail': {
-    name: 'Железная дорога', group: 'Атлас',
+    name: 'Железная дорога', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, layers: [L({ width: 2.2, color: '#77716b' }), L({ width: 1, color: '#f8f0d0', dash: [8, 8] })] }),
   },
   'tac.pos28': {
-    name: 'Позиция к исходу 28 апр.', group: 'Тактика',
+    name: 'Позиция к исходу 28 апр.', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: true, layers: [L({ width: 2.4, color: C.tac.red, endTicks: { length: 7, width: 2.4, side: -1 } })] }),
   },
   'tac.pos29': {
-    name: 'Позиция утром 29 апр.', group: 'Тактика',
+    name: 'Позиция утром 29 апр.', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 1.9, width: 1.8, color: C.tac.red }), L({ offset: -1.9, width: 1.8, color: C.tac.red, endTicks: { length: 6, width: 1.8, side: -1 } }),
     ] }),
   },
   'tac.pos30m': {
-    name: 'Позиция утром 30 апр.', group: 'Тактика',
+    name: 'Позиция утром 30 апр.', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 1.9, width: 1.8, color: C.tac.red }), L({ offset: -1.9, width: 1.8, color: C.tac.red, dash: [8, 4] }),
     ] }),
   },
   'tac.pos30e': {
-    name: 'Позиция к исходу 30 апр.', group: 'Тактика',
+    name: 'Позиция к исходу 30 апр.', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 1.9, width: 1.8, color: C.tac.red }), L({ offset: -1.9, width: 2, color: C.tac.red, dash: [2, 2.6] }),
     ] }),
   },
   'tac.pos2may': {
-    name: 'Позиция утром 2 мая', group: 'Тактика',
+    name: 'Позиция утром 2 мая', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: true, layers: [
       L({ offset: 1.9, width: 1.8, color: C.tac.red }), L({ offset: -1.9, width: 1.8, color: C.tac.red, dash: [9, 3, 2, 3] }),
     ] }),
   },
   'tac.enemyDefense': {
-    name: 'Оборона противника', group: 'Тактика',
+    name: 'Оборона противника', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: false, layers: [L({ width: 3, color: C.tac.blue, ticks: { spacing: 13, length: 7, width: 2, side: 1 } })] }),
   },
   'tac.ditch': {
-    name: 'Противотанковый ров с водой', group: 'Тактика',
+    name: 'Противотанковый ров с водой', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: false, layers: [
       L({ width: 11, color: '#7dbbe0' }), L({ width: 8.4, color: '#b8e0f4' }), L({ width: 1.2, color: C.tac.blue, dash: [6, 4] }),
     ] }),
@@ -306,26 +306,26 @@ export const AREA_PRESETS: Record<string, { name: string; group: string; style: 
     style: () => ({ smooth: false, fill: '#a09a62', fillOpacity: 1, hatch: null, edge: [L({ width: 1, color: '#5a5530' })], cross: null }),
   },
   'atlas.encircled': {
-    name: 'Окружённая группировка', group: 'Атлас',
+    name: 'Окружённая группировка', group: 'Ист. карта (атлас)',
     style: () => ({
       smooth: true, fill: '#d6e8f2', fillOpacity: 0.85, hatch: null,
       edge: [L({ width: 1.6, color: C.atlas.blue, ticks: { spacing: 4.5, length: 3, width: 1, side: -1 } })], cross: null,
     }),
   },
   'atlas.city': {
-    name: 'Город (застройка)', group: 'Атлас',
+    name: 'Город (застройка)', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: false, fill: '#e7b98a', fillOpacity: 1, hatch: null, edge: [L({ width: 0.8, color: '#7b5a3a' })], cross: null }),
   },
   'atlas.lake': {
-    name: 'Озеро', group: 'Атлас',
+    name: 'Озеро', group: 'Ист. карта (атлас)',
     style: () => ({ smooth: true, fill: C.atlas.water, fillOpacity: 1, hatch: null, edge: [L({ width: 0.8, color: '#5ba8dc' })], cross: null }),
   },
   'tac.block': {
-    name: 'Квартал', group: 'Тактика',
+    name: 'Квартал', group: 'Ист. карта (схема боя)',
     style: () => ({ smooth: false, fill: C.tac.block, fillOpacity: 1, hatch: null, edge: [L({ width: 1, color: '#8d8790' })], cross: null }),
   },
   'tac.enemyStrongpoint': {
-    name: 'Опорный пункт противника', group: 'Тактика',
+    name: 'Опорный пункт противника', group: 'Ист. карта (схема боя)',
     style: () => ({
       smooth: false, fill: null, fillOpacity: 1, hatch: null,
       edge: [L({ width: 3, color: C.tac.blue, ticks: { spacing: 13, length: 7, width: 2, side: -1 } })], cross: null,
@@ -340,23 +340,23 @@ export const sym = (type: SymbolType, p: Partial<SymbolStyle>): SymbolStyle => (
 
 export const SYMBOL_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => SymbolStyle }> = {
   'inf.settlement': { name: 'Населённый пункт', group: 'Инфографика', style: () => sym('settlement', { size: 10, color: '#ffffff', fill: '#000000', strokeWidth: 1.2 }) },
-  'atlas.town': { name: 'Населённый пункт', group: 'Атлас', style: () => sym('town', { size: 6, color: '#4a4a4a', fill: '#ffffff', strokeWidth: 1 }) },
-  'atlas.tankArmy': { name: 'Танковая армия', group: 'Атлас', style: () => sym('tankArmy', { size: 48, aspect: 0.54, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.6 }) },
-  'atlas.cavalry': { name: 'Кавалерийский корпус', group: 'Атлас', style: () => sym('cavalryCorps', { size: 40, aspect: 0.5, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.5 }) },
-  'atlas.army': { name: 'Армия во втором эшелоне', group: 'Атлас', style: () => sym('armyOval', { size: 46, aspect: 0.5, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.5 }) },
-  'atlas.reserve': { name: 'Резерв противника (Р)', group: 'Атлас', style: () => sym('reserve', { size: 18, aspect: 1.3, color: C.atlas.blue, fill: '#c9dff0', strokeWidth: 1.4, text: 'Р' }) },
-  'atlas.fortCity': { name: 'Город-крепость', group: 'Атлас', style: () => sym('fortifiedCity', { size: 15, color: C.atlas.blue, fill: '#ffffff' }) },
-  'atlas.aviation': { name: 'Авиация', group: 'Атлас', style: () => sym('aviation', { size: 28, color: C.atlas.red }) },
+  'atlas.town': { name: 'Населённый пункт', group: 'Ист. карта (атлас)', style: () => sym('town', { size: 6, color: '#4a4a4a', fill: '#ffffff', strokeWidth: 1 }) },
+  'atlas.tankArmy': { name: 'Танковая армия', group: 'Ист. карта (атлас)', style: () => sym('tankArmy', { size: 48, aspect: 0.54, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.6 }) },
+  'atlas.cavalry': { name: 'Кавалерийский корпус', group: 'Ист. карта (атлас)', style: () => sym('cavalryCorps', { size: 40, aspect: 0.5, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.5 }) },
+  'atlas.army': { name: 'Армия во втором эшелоне', group: 'Ист. карта (атлас)', style: () => sym('armyOval', { size: 46, aspect: 0.5, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.5 }) },
+  'atlas.reserve': { name: 'Резерв противника (Р)', group: 'Ист. карта (атлас)', style: () => sym('reserve', { size: 18, aspect: 1.3, color: C.atlas.blue, fill: '#c9dff0', strokeWidth: 1.4, text: 'Р' }) },
+  'atlas.fortCity': { name: 'Город-крепость', group: 'Ист. карта (атлас)', style: () => sym('fortifiedCity', { size: 15, color: C.atlas.blue, fill: '#ffffff' }) },
+  'atlas.aviation': { name: 'Авиация', group: 'Ист. карта (атлас)', style: () => sym('aviation', { size: 28, color: C.atlas.red }) },
   'atlas.dateBox': {
-    name: 'Дата в рамке', group: 'Атлас',
+    name: 'Дата в рамке', group: 'Ист. карта (атлас)',
     style: () => sym('dateBox', { size: 11, color: C.atlas.red, fill: '#ffffff', strokeWidth: 1.2, text: '8.V.1945', textStyle: textStyle({ font: 'PT Sans Narrow', size: 11, weight: 700, color: C.atlas.blue }) }),
   },
   'atlas.meeting': {
-    name: 'Дата встречи с союзниками', group: 'Атлас',
+    name: 'Дата встречи с союзниками', group: 'Ист. карта (атлас)',
     style: () => sym('meeting', { size: 14, color: C.atlas.red, strokeWidth: 1.4, text: '25.4', textStyle: textStyle({ font: 'PT Serif', size: 10, weight: 700, color: C.atlas.red }) }),
   },
-  'tac.victoryFlag': { name: 'Знамя Победы', group: 'Тактика', style: () => sym('victoryFlag', { size: 34, color: '#b02a26', fill: '#e2302b', strokeWidth: 1.6 }) },
-  'tac.pennant': { name: 'Огневая точка противника', group: 'Тактика', style: () => sym('pennant', { size: 14, color: C.tac.blue }) },
+  'tac.victoryFlag': { name: 'Знамя Победы', group: 'Ист. карта (схема боя)', style: () => sym('victoryFlag', { size: 34, color: '#b02a26', fill: '#e2302b', strokeWidth: 1.6 }) },
+  'tac.pennant': { name: 'Огневая точка противника', group: 'Ист. карта (схема боя)', style: () => sym('pennant', { size: 14, color: C.tac.blue }) },
 };
 
 /* ---------------------------- надписи ---------------------------- */
@@ -372,17 +372,17 @@ export const LABEL_PRESETS: Record<string, { name: string; group: string; style:
   'inf.capital': { name: 'Столица', group: 'Инфографика', style: () => textStyle({ font: 'Roboto Condensed', size: 21, weight: 400, color: C.inf.text, uppercase: true, halo: { color: '#ffffff', width: 2 } }) },
   'inf.front': { name: 'Название фронта', group: 'Инфографика', style: () => textStyle({ font: 'Roboto Condensed', size: 30, weight: 700, color: '#111111', uppercase: true, lineHeight: 1.05 }) },
   'inf.frontNote': { name: 'Подпись фронта', group: 'Инфографика', style: () => textStyle({ font: 'Roboto Condensed', size: 17, weight: 400, color: '#2a2a2a', uppercase: true, lineHeight: 1.2 }) },
-  'atlas.unit': { name: 'Объединение (65 А)', group: 'Атлас', style: () => textStyle({ font: 'PT Sans Narrow', size: 13, weight: 700, color: C.atlas.red }) },
-  'atlas.unitSmall': { name: 'Соединение (3 гв.тк)', group: 'Атлас', style: () => textStyle({ font: 'PT Sans Narrow', size: 10, weight: 700, color: C.atlas.red }) },
-  'atlas.enemyUnit': { name: 'Соединение противника', group: 'Атлас', style: () => textStyle({ font: 'PT Sans Narrow', size: 11, weight: 700, color: C.atlas.blue }) },
-  'atlas.front': { name: 'Название фронта', group: 'Атлас', style: () => textStyle({ font: 'PT Sans Narrow', size: 18, weight: 700, color: C.atlas.red }) },
-  'atlas.city': { name: 'Город', group: 'Атлас', style: () => textStyle({ font: 'PT Serif', size: 12, weight: 700, color: '#222222', align: 'start' }) },
-  'atlas.town': { name: 'Малый пункт', group: 'Атлас', style: () => textStyle({ font: 'PT Serif', size: 10.5, weight: 400, italic: true, color: '#222222', align: 'start' }) },
-  'atlas.date': { name: 'Дата', group: 'Атлас', style: () => textStyle({ font: 'PT Serif', size: 9, weight: 400, color: C.atlas.red }) },
-  'atlas.water': { name: 'Гидроним', group: 'Атлас', style: () => textStyle({ font: 'PT Serif', size: 10, weight: 400, italic: true, color: '#3c8ccc', letterSpacing: 0.5 }) },
-  'atlas.region': { name: 'Регион (разрядка)', group: 'Атлас', style: () => textStyle({ font: 'PT Serif', size: 13, weight: 700, color: '#333333', letterSpacing: 14, uppercase: true }) },
-  'tac.unit': { name: 'Полк/дивизия', group: 'Тактика', style: () => textStyle({ font: 'PT Sans Narrow', size: 15, weight: 700, color: PALETTE.tac.red }) },
-  'tac.place': { name: 'Объект', group: 'Тактика', style: () => textStyle({ font: 'PT Serif', size: 15, weight: 400, italic: true, color: '#111111' }) },
+  'atlas.unit': { name: 'Объединение (65 А)', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Sans Narrow', size: 13, weight: 700, color: C.atlas.red }) },
+  'atlas.unitSmall': { name: 'Соединение (3 гв.тк)', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Sans Narrow', size: 10, weight: 700, color: C.atlas.red }) },
+  'atlas.enemyUnit': { name: 'Соединение противника', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Sans Narrow', size: 11, weight: 700, color: C.atlas.blue }) },
+  'atlas.front': { name: 'Название фронта', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Sans Narrow', size: 18, weight: 700, color: C.atlas.red }) },
+  'atlas.city': { name: 'Город', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Serif', size: 12, weight: 700, color: '#222222', align: 'start' }) },
+  'atlas.town': { name: 'Малый пункт', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Serif', size: 10.5, weight: 400, italic: true, color: '#222222', align: 'start' }) },
+  'atlas.date': { name: 'Дата', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Serif', size: 9, weight: 400, color: C.atlas.red }) },
+  'atlas.water': { name: 'Гидроним', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Serif', size: 10, weight: 400, italic: true, color: '#3c8ccc', letterSpacing: 0.5 }) },
+  'atlas.region': { name: 'Регион (разрядка)', group: 'Ист. карта (атлас)', style: () => textStyle({ font: 'PT Serif', size: 13, weight: 700, color: '#333333', letterSpacing: 14, uppercase: true }) },
+  'tac.unit': { name: 'Полк/дивизия', group: 'Ист. карта (схема боя)', style: () => textStyle({ font: 'PT Sans Narrow', size: 15, weight: 700, color: PALETTE.tac.red }) },
+  'tac.place': { name: 'Объект', group: 'Ист. карта (схема боя)', style: () => textStyle({ font: 'PT Serif', size: 15, weight: 400, italic: true, color: '#111111' }) },
 };
 
 /* ---------------------------- масштабирование ---------------------------- */

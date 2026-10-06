@@ -10,11 +10,11 @@ import atlasSample from '../demo/reference/thumbs/berlin-atlas.jpg';
 import infSample from '../demo/reference/thumbs/berlin-infographic.jpg';
 import tacSample from '../demo/reference/thumbs/reichstag-tactical.jpg';
 
-const SAMPLE_IMG: Partial<Record<StyleId, string>> = { atlas: atlasSample, inf: infSample, tac: tacSample };
+const SAMPLE_IMG: Partial<Record<StyleId, string[]>> = { atlas: [atlasSample, tacSample], inf: [infSample] };
 /** Знаки-примеры для варианта, у которого нет образца-картинки (уставной). */
 const STANDARD_EXAMPLES = ['hq.army', 'hq.division', 'tank.medium', 'dot', 'wire', 'mines.AT'];
 /** Строки сравнения: один и тот же элемент во всех вариантах оформления. */
-const COMPARE = ['attack.main', 'attack.planned', 'area.encircled', 'label.unit', 'city'];
+const COMPARE = ['attack.main', 'attack.planned', 'area.encircled', 'label.unit', 'line.defense', 'city'];
 const byId = new Map(LIBRARY.map((e) => [e.id, e]));
 
 function DesignSection() {
@@ -29,7 +29,7 @@ function DesignSection() {
       </p>
       <p className="cdesc">
         Нормативный вариант один — <b>уставные знаки РККА</b>: начертание взято из таблицы знаков и подтверждено
-        первоисточником со страницей. Остальные три — <b>не системы условных знаков</b>, а манера оформления,
+        первоисточником со страницей. Остальные два — <b>не системы условных знаков</b>, а манера оформления,
         воспроизведённая по образцам карт; их начертание определяется образцом, а не уставом.
       </p>
       <div className="dgrid">
@@ -42,7 +42,7 @@ function DesignSection() {
             <div className="dbody">
               <div className="dthumb">
                 {SAMPLE_IMG[st.id]
-                  ? <img src={SAMPLE_IMG[st.id]} alt={`Образец: ${st.name}`} />
+                  ? SAMPLE_IMG[st.id]!.map((src) => <img key={src} src={src} alt={`Образец: ${st.name}`} />)
                   : <div className="dsigns">{STANDARD_EXAMPLES.map((id) => {
                       const e = byId.get(id)!;
                       return <span key={id} title={e.name} dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, e.variants.rkka!, paperFor('rkka'), 'own', true) }} />;
@@ -70,7 +70,7 @@ function DesignSection() {
                 {STYLES.map((st) => (
                   <td key={st.id}>
                     {e.variants[st.id]
-                      ? <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, e.variants[st.id]!, paperFor(st.id), e.sideAware ? 'own' : undefined) }} />
+                      ? <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, e.variants[st.id]!, paperFor(e.variants[st.id]!), e.sideAware ? 'own' : undefined) }} />
                       : <span className="muted">—</span>}
                   </td>
                 ))}
@@ -135,7 +135,7 @@ function LibraryPage() {
             <div className="grid">
               {items.map((e) => {
                 const v = variantFor(e, style);
-                const paper = paperFor(v.style);
+                const paper = paperFor(v.preset);
                 return (
                   <div key={e.id} className={`card${v.style !== style ? ' other' : ''}`}>
                     <div className="pv">
@@ -146,7 +146,7 @@ function LibraryPage() {
                       <div className="pv-alt">
                         {STYLES.filter((s) => e.variants[s.id] && s.id !== v.style).map((s) => (
                           <figure key={s.id}>
-                            <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, e.variants[s.id]!, paperFor(s.id), e.sideAware ? 'own' : undefined) }} />
+                            <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, e.variants[s.id]!, paperFor(e.variants[s.id]!), e.sideAware ? 'own' : undefined) }} />
                             <figcaption>{s.name}</figcaption>
                           </figure>
                         ))}

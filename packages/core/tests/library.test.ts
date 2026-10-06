@@ -85,7 +85,7 @@ describe('первоисточники', () => {
   });
 
   it('стиля СА нет: только РККА и стили исторических карт', () => {
-    expect(STYLES.map((s) => s.id)).toEqual(['rkka', 'atlas', 'inf', 'tac']);
+    expect(STYLES.map((s) => s.id)).toEqual(['rkka', 'atlas', 'inf']);
     expect(Object.values(PRESETS).flatMap((t) => Object.keys(t)).filter((id) => id.startsWith('sa.'))).toEqual([]);
     expect(Object.keys(GLYPHS).filter((k) => /^sa[A-Z]/.test(k))).toEqual([]);
   });
