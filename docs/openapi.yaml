@@ -135,6 +135,7 @@ paths:
                 layers: { type: array, items: { type: string } }
                 background: { type: [string, 'null'] }
                 padding: { type: number }
+                time: { type: string, description: 'Обстановка на момент времени (ISO 8601)' }
       responses: { '200': { description: SVG, content: { image/svg+xml: {} } } }
   /render/geojson:
     post:
@@ -142,13 +143,13 @@ paths:
       summary: GeoJSON по документу из тела запроса
       responses: { '200': { description: OK } }
   /render/documents/{id}.svg:
-    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layers' }]
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layers' }, { $ref: '#/components/parameters/at' }]
     get:
       tags: [render]
       summary: SVG сохранённой карты (по умолчанию — видимые слои)
       responses: { '200': { description: SVG, content: { image/svg+xml: {} } } }
   /render/documents/{id}.geojson:
-    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layers' }]
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/layers' }, { $ref: '#/components/parameters/at' }]
     get:
       tags: [render]
       summary: GeoJSON сохранённой карты

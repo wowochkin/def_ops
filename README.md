@@ -39,18 +39,24 @@ npm install
 # только редактор (работает и без сервера — карты хранятся в браузере)
 npm run dev                 # http://localhost:5173/  · справочник знаков: /library.html · сверка: /compare.html
 
-# платформа целиком для разработки: шлюз :8080, документы :8101, рендер :8102
+# платформа целиком для разработки: шлюз :8080, документы :8101, рендер :8102, реестр :8103
 npm run dev:services        # в отдельном терминале; редактор сам подключится через /api
+                            # без БД: карты — в файлах ./data, реестр — в памяти;
+                            # с БД: DATABASE_URL=postgres://… npm run dev:services
+# PostGIS для разработки:  docker run -d -p 5433:5432 -e POSTGRES_DB=defops -e POSTGRES_USER=defops -e POSTGRES_PASSWORD=defops postgis/postgis:16-3.4-alpine
 
 # всё одной командой из собранного редактора (шлюз отдаёт и фронтенд, и API)
 npm start                   # http://localhost:8080/
 
 # в контейнерах
-docker compose up --build   # http://localhost:8080/ ; AUTH=keys API_KEYS="ключ:организация" — обязательные ключи
+docker compose up --build   # http://localhost:8080/ ; PostgreSQL + PostGIS поднимается рядом (том db-data)
+                            # AUTH=keys API_KEYS="ключ:организация" — обязательные ключи; DB_PASSWORD — пароль БД
                             # за корпоративным прокси: сертификаты — в deploy/extra-ca/*.crt, HTTP(S)_PROXY — из окружения
-                            # Docker Hub отвечает 429: docker pull mirror.gcr.io/library/node:22-alpine && docker tag mirror.gcr.io/library/node:22-alpine node:22-alpine
+                            # Docker Hub отвечает 429: образы берутся с зеркала Google и переименовываются, например
+                            #   docker pull mirror.gcr.io/library/node:22-alpine && docker tag mirror.gcr.io/library/node:22-alpine node:22-alpine
+                            #   docker pull mirror.gcr.io/postgis/postgis:16-3.4-alpine && docker tag mirror.gcr.io/postgis/postgis:16-3.4-alpine postgis/postgis:16-3.4-alpine
 
-npm test                    # ядро + сквозные тесты сервисов через шлюз
+npm test                    # ядро + сквозные тесты сервисов через шлюз (с DATABASE_URL — ещё и на PostgreSQL)
 npm run typecheck
 npm run docs:library        # пересобрать docs/library.md из описания библиотеки
 npm run docs:pdf            # PDF-справочник docs/library.pdf (нужен запущенный редактор)
@@ -66,8 +72,10 @@ npm run docs:pdf            # PDF-справочник docs/library.pdf (нуж�
 packages/core          движок знаков: модель, слои, геопривязка, SVG, GeoJSON (без зависимостей от окружения)
 packages/service-kit   каркас микросервиса: роутинг, ошибки, журналы, health/ready, организация, межсервисные вызовы
 packages/api-client    типизированный клиент API (браузер и Node)
+packages/db            PostgreSQL: пул, миграции по схемам сервисов, транзакции
 services/gateway       API-шлюз: API-ключи → организации, маршрутизация, CORS, статика редактора
-services/documents     хранение карт: ревизии, оптимистичная блокировка, слои, события (SSE)
+services/documents     хранение карт: ревизии, оптимистичная блокировка, слои, события (SSE); PostgreSQL или файлы
+services/registry      реестр объектов: формирования, сооружения, пункты; характеристики во времени, PostGIS
 services/render        SVG/GeoJSON по документу, импорт GeoJSON, каталог знаков (без состояния)
 apps/editor            редактор (React); карта подключается через адаптер MapEngine (сейчас — MapLibre)
 deploy/, docker-compose.yml
@@ -81,6 +89,16 @@ deploy/, docker-compose.yml
 слои экспортируются группами Inkscape/Illustrator, в API — управляются
 отдельно (`/documents/{id}/layers`), а внешняя система может «владеть» своим
 слоем и заливать в него данные в GeoJSON.
+
+**Реестр объектов и время.** Знак на карте можно связать с объектом реестра
+(«150 сд», «Рейхстаг»): характеристики хранятся один раз и видны со всех карт.
+У типа объекта — схема полей (номер, ступень, род войск; во времени — подчинение,
+командир, численность, положение…), организация может добавлять свои поля и типы.
+Изменения записываются фактами «с даты» со ссылкой на источник. Под картой —
+шкала времени: карта показывает обстановку на выбранный момент, знаки появляются
+и исчезают по своим периодам и меняют положение по датам; правка на карте меняет
+положение, действующее на этот момент. Реестр отвечает и на вопрос «какие объекты
+были в этом районе на 25 апреля» (PostGIS). Модель — [docs/data-model.md](docs/data-model.md).
 
 **Другие карты и системы.** Любая XYZ/WMS-подложка добавляется в редакторе
 без кода; другой картографический движок подключается реализацией интерфейса
