@@ -23,6 +23,7 @@ import { randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import tar from 'tar-stream';
 import { createGateway, forwardedPrefix, parseKeys } from '../src/gateway';
+import { DefOpsClient } from '@def-ops/api-client';
 
 let gw: http.Server;
 let base = '';
@@ -290,4 +291,28 @@ describe('платформа через шлюз', () => {
     // время изменения в заголовках tar совпадает (те же файлы) — архивы равны байт в байт
     expect(viaGw.equals(direct)).toBe(true);
   });
+
+  it('клиент API: раздел картографии', async () => {
+    const api2 = new DefOpsClient({ baseUrl: `${base}/api`, apiKey: 'keyA' });
+    const m = await api2.cartography.maps.create({ name: 'Через клиент', tileSize: 256 });
+    const corners: [LngLat, LngLat, LngLat, LngLat] = [[13.3, 52.55], [13.5, 52.55], [13.5, 52.45], [13.3, 52.45]];
+    const up = await api2.cartography.uploadRaster(m.id, new Uint8Array(await quadrantImage(600, 450)), { corners }, 'image/png');
+    expect(up.georef.width).toBe(600);
+    let j = up.job;
+    while (j.status === 'queued' || j.status === 'running') { await new Promise((r) => setTimeout(r, 25)); j = await api2.cartography.jobs.get(j.id); }
+    expect(j.status).toBe('done');
+    expect((await api2.cartography.jobs.list(m.id)).map((x) => x.id)).toEqual([j.id]);
+    const map = await api2.cartography.maps.get(m.id);
+    expect(api2.cartography.tileUrl(map)).toMatch(/\/api\/cartography\/maps\/.+\/tiles\/\{z\}\/\{x\}\/\{y\}\.png\?v=/);
+    expect((await api2.cartography.tilejson(m.id)).tiles[0]).toContain('/api/cartography/');
+    expect((await api2.cartography.scale(52.5, 12)).label).toMatch(/^1:/);
+    const tarball = new Uint8Array(await (await fetch(api2.cartography.packageUrl(m.id))).arrayBuffer());
+    const imp = await api2.cartography.importPackage(tarball);
+    expect(imp.map.stats).toEqual(map.stats);
+    await expect(api2.cartography.importXyz(m.id, { url: 'https://example.org/{z}/{x}/{y}.png', bounds: [13, 52, 14, 53], minzoom: 0, maxzoom: 20 }))
+      .rejects.toMatchObject({ status: 422, code: 'too_many_tiles' });
+    await api2.cartography.maps.remove(imp.map.id);
+    expect((await api2.cartography.maps.list()).map((x) => x.id)).not.toContain(imp.map.id);
+  });
 });
+
