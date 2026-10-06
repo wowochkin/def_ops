@@ -1,7 +1,7 @@
 /**
  * Палитра знаков: библиотека по логическим категориям.
- * Сверху — стиль оформления и принадлежность (свои / противник), поиск.
- * Каждый элемент показан в выбранном стиле (или в ближайшем доступном).
+ * Сверху — оформление (уставное или по образцу карты), принадлежность, поиск.
+ * Каждый элемент показан в выбранном оформлении (или в ближайшем доступном).
  */
 import { useMemo, useState } from 'react';
 import { CATEGORIES, STYLES, PALETTE, variantFor, searchLibrary, sourceText, type StyleId, type Side, type LibraryElement } from '@def-ops/core';
@@ -41,7 +41,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
   return (
     <div className="palette">
       <div className="pal-top">
-        <div className="seg" title="Стиль оформления знаков">
+        <div className="seg" title="Оформление знаков: уставное (по таблице РККА) или по образцу карты">
           {STYLES.map((s) => (
             <button key={s.id} className={s.id === style ? 'on' : ''} title={s.description}
               onClick={() => { setStyle(s.id); save('palette.style', s.id); }}>{s.short}</button>
@@ -57,9 +57,9 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
         </div>
         <input className="pal-search" placeholder="Поиск знака…" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="pal-row">
-          <button className={`tool-select${tool.mode === 'select' ? ' on' : ''}`} onClick={() => setTool({ mode: 'select' })}>⬚ Выбор (Esc)</button>
-          <label className="muted" title="Показывать только знаки, оформленные в выбранном стиле">
-            <input type="checkbox" checked={onlyStyle} onChange={(e) => { setOnlyStyle(e.target.checked); save('palette.onlyStyle', e.target.checked ? '1' : '0'); }} /> только стиль
+          <button className={`tool-select${tool.mode === 'select' ? ' on' : ''}`} title="Режим выбора и правки (Esc)" onClick={() => setTool({ mode: 'select' })}>⬚ Выбор</button>
+          <label className="muted" title="Показывать только знаки, у которых есть выбранное оформление (без подстановки ближайшего)">
+            <input type="checkbox" checked={onlyStyle} onChange={(e) => { setOnlyStyle(e.target.checked); save('palette.onlyStyle', e.target.checked ? '1' : '0'); }} /> без замен
           </label>
           <a className="muted" href="/library.html" target="_blank" rel="noreferrer" title="Справочник: все знаки с описаниями">справочник ↗</a>
         </div>

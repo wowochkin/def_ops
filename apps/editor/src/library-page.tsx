@@ -1,4 +1,4 @@
-/** Справочник библиотеки условных знаков: категории, описания, варианты по стилям, свои/противник. */
+/** Справочник библиотеки условных знаков: категории, описания, варианты оформления, свои/противник. */
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../demo/fonts';
@@ -21,11 +21,11 @@ function LibraryPage() {
         <div className="title-page">
           <div className="tp-kicker">Платформа тактических карт</div>
           <h1 className="tp-title">Библиотека условных знаков</h1>
-          <div className="tp-sub">Справочник: {LIBRARY.length} элементов, {CATEGORIES.length} категорий, {STYLES.length} стилей оформления, {LIBRARY.filter((e) => e.sources).length} знаков со ссылкой на первоисточник</div>
+          <div className="tp-sub">Справочник: {LIBRARY.length} элементов, {CATEGORIES.length} категорий, {STYLES.length} варианта оформления, {LIBRARY.filter((e) => e.sources).length} знаков со ссылкой на первоисточник</div>
           <ol className="tp-toc">{CATEGORIES.map((c) => <li key={c.id}>{c.name} <span className="muted">— {LIBRARY.filter((e) => e.category === c.id).length}</span></li>)}</ol>
           <div className="tp-legend">
             <p><b>Цвета.</b> Свои войска — красным, противник — синим, сооружения, заграждения и топография — чёрным. Для знаков с отметкой «свои / противник» приведены оба варианта.</p>
-            <p><b>Стили.</b> {STYLES.map((s) => `${s.name} — ${s.description}`).join(' ')}</p>
+            <p><b>Оформление.</b> Система знаков одна; варианты оформления меняют только начертание. Нормативное — одно: {STYLES.filter((s) => s.basis === 'standard').map((s) => s.name).join(', ')}. Остальные воспроизводят манеру образцов исторических карт: {STYLES.filter((s) => s.basis === 'sample').map((s) => `${s.name} — ${s.description}`).join(' ')}</p>
             <p><b>Первоисточник.</b></p>
             <ol className="tp-src">{SOURCES.map((s) => <li key={s.id}><b>{s.short}</b> — {s.title}</li>)}</ol>
             <p><b>Пометка «сверить».</b> {verifyCount} знаков не подтверждены первоисточником (знаки исторических карт, флот, партизаны, разграничительные линии армий и фронтов) — их нужно сверить с таблицей, принятой для проекта.</p>
@@ -81,7 +81,7 @@ function LibraryPage() {
                     <div className="vr">
                       {STYLES.filter((s) => e.variants[s.id]).map((s) => <span key={s.id} className={s.id === v.style ? 'cur' : ''}>{s.name}</span>)}
                       {e.sideAware && <span className="side">свои / противник</span>}
-                      {v.style !== style && !PRINT && <span className="muted">нет в стиле «{STYLES.find((s) => s.id === style)!.name}» — показан ближайший</span>}
+                      {v.style !== style && !PRINT && <span className="muted">нет в оформлении «{STYLES.find((s) => s.id === style)!.name}» — показан ближайший</span>}
                     </div>
                   </div>
                 );

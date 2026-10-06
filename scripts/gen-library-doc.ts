@@ -8,11 +8,11 @@ md += `Сгенерировано из \`packages/core/src/library.ts\` — не
 md += `Всего элементов: **${LIBRARY.length}**, категорий: **${CATEGORIES.length}**. `;
 md += `Со ссылкой на первоисточник: **${LIBRARY.filter((e) => e.sources).length}**.\n\n`;
 md += `Первоисточники:\n\n${SOURCES.map((s) => `- **${s.short}** — ${s.title}`).join('\n')}\n\n`;
-md += `Стили оформления:\n\n${STYLES.map((s) => `- **${s.name}** — ${s.description}`).join('\n')}\n\n`;
+md += `Варианты оформления (система знаков одна, меняется только начертание; нормативное — только «Уставные знаки РККА», остальные воспроизводят манеру образцов карт):\n\n${STYLES.map((s) => `- **${s.name}**${s.basis === 'standard' ? ' (норматив)' : ' (по образцу)'} — ${s.description}`).join('\n')}\n\n`;
 md += `Пометка **⚠ сверить** — начертание не подтверждено перечисленными источниками (знаки исторических карт, флот, партизаны, разграничительные линии армий и фронтов); его нужно сверить с таблицей, принятой для проекта.\n\n`;
 md += `## Содержание\n\n${CATEGORIES.map((c) => `- [${c.name}](#${c.id}) — ${LIBRARY.filter((e) => e.category === c.id).length}`).join('\n')}\n\n`;
 for (const c of CATEGORIES) {
-  md += `<a id="${c.id}"></a>\n## ${c.name}\n\n${c.description}\n\n| Элемент | Тип | Описание | Стили | Свои/противник | Источник |\n|---|---|---|---|---|---|\n`;
+  md += `<a id="${c.id}"></a>\n## ${c.name}\n\n${c.description}\n\n| Элемент | Тип | Описание | Оформление | Свои/противник | Источник |\n|---|---|---|---|---|---|\n`;
   for (const e of LIBRARY.filter((x) => x.category === c.id)) {
     const st = STYLES.filter((s) => e.variants[s.id]).map((s) => s.name).join(', ');
     md += `| **${e.name}**${e.verify ? ' ⚠ сверить' : ''} | ${kindName[e.kind]} | ${e.description.replace(/\|/g, '/')} | ${st} | ${e.sideAware ? 'да' : '—'} | ${sourceText(e.sources) || '—'} |\n`;
