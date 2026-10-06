@@ -9,7 +9,8 @@ import {
   type MapDocument, type TimeInstant,
 } from '@def-ops/core';
 import { updateFeature } from './store';
-import { fmtMoment, fromInput, toInput } from './time';
+import { fmtMoment, useZones } from './time';
+import { MomentInput } from './MomentInput';
 
 /** Операции реестра, нужные панели (реализуются клиентом API). */
 export interface RegistryApi {
@@ -57,6 +58,7 @@ export function EntityPanel({ api, doc, setDoc, feature: f, time }: Props) {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rev, setRev] = useState(0);
+  const { local } = useZones();
   const reload = () => setRev((r) => r + 1);
 
   useEffect(() => { api?.types().then(setTypes).catch(() => undefined); }, [api]);
@@ -97,7 +99,7 @@ export function EntityPanel({ api, doc, setDoc, feature: f, time }: Props) {
             <b>{data.entity.shortName || data.entity.name}</b> <span className="muted">· {type.name}</span>
             {data.entity.shortName && <div className="muted">{data.entity.name}</div>}
           </div>
-          <div className="muted ent-at">{time ? `Состояние на ${fmtMoment(time)}` : 'Последнее известное состояние (шкала времени выключена)'}{data.state && !data.state.exists ? ' — объект в это время не существовал' : ''}</div>
+          <div className="muted ent-at">{time ? `Состояние на ${fmtMoment(time, false, local)}` : 'Последнее известное состояние (шкала времени выключена)'}{data.state && !data.state.exists ? ' — объект в это время не существовал' : ''}</div>
           <AttrTable api={api} entity={data.entity} type={type} state={data.state} facts={facts} time={time} onChanged={reload} setError={setError} />
           <div className="btns">
             {(f.kind === 'symbol' || f.kind === 'label') && (data.entity.shortName || data.entity.name) && (
@@ -224,7 +226,7 @@ function AttrTable({ api, entity, type, state, facts, time, onChanged, setError 
                 {fd.temporal && (
                   <>
                     <div className="row"><span className="lbl">действует с</span><span className="ctl">
-                      <input type="datetime-local" value={toInput(from)} onChange={(e) => setFrom(fromInput(e.target.value))} />
+                      <MomentInput value={from} onChange={setFrom} />
                     </span></div>
                     <input className="src-in" placeholder="источник (архив, литература)" value={source} onChange={(e) => setSource(e.target.value)} />
                   </>

@@ -5,8 +5,9 @@ import type {
 } from '@def-ops/core';
 import { PRESETS, SYMBOL_PRESETS, scaleStyle } from '@def-ops/core';
 import { restyle } from '@def-ops/core';
-import { setFeatureLayer, GLYPH_NAMES, featureAt, geometryOf, setKeyframe, removeKeyframe, sortedKeyframes, keyframeAt, type TimeInstant } from '@def-ops/core';
-import { fmtMoment, fromInput, toInput } from './time';
+import { setFeatureLayer, GLYPH_NAMES, featureAt, geometryOf, geometryAt, setKeyframe, removeKeyframe, sortedKeyframes, keyframeAt, type TimeInstant } from '@def-ops/core';
+import { fmtMoment, useZones } from './time';
+import { MomentInput } from './MomentInput';
 import { updateFeature, removeFeature } from './store';
 import { Num, ColorF, Check, Select, Text, DashF, Section, Row } from './fields';
 
@@ -76,27 +77,37 @@ function TimeInspector({ f, doc, setDoc, time, setTime }: {
     const next = { ...(x.time ?? {}), ...p };
     return { ...x, time: next.from || next.to ? next : null };
   });
+  const { local } = useZones();
   const kfs = sortedKeyframes(f);
-  const active = time ? keyframeAt(f, time) : null;
+  const motionDefault = doc.timeline?.motion ?? 'smooth';
+  const at = time ? geometryAt(f, time, f.motion ?? motionDefault) : null;
+  const active = time && at && !at.interpolated && at.key ? kfs.find((k) => k.t === at.key) ?? null : time ? keyframeAt(f, time) : null;
   const visible = time ? featureAt(f, time) !== null : true;
   return (
     <Section title="Время">
       <Row label="На карте с" hint="С какого момента знак есть на карте (пусто — всегда)">
-        <input type="datetime-local" value={toInput(span.from)} onChange={(e) => setSpan({ from: fromInput(e.target.value) })} />
+        <MomentInput value={span.from} onChange={(t) => setSpan({ from: t })} />
         {time && <button className="link" title="С текущей даты" onClick={() => setSpan({ from: time })}>⏱</button>}
       </Row>
       <Row label="по" hint="До какого момента (не включительно); пусто — без конца">
-        <input type="datetime-local" value={toInput(span.to)} onChange={(e) => setSpan({ to: fromInput(e.target.value) })} />
+        <MomentInput value={span.to} onChange={(t) => setSpan({ to: t })} />
         {time && <button className="link" title="По текущую дату" onClick={() => setSpan({ to: time })}>⏱</button>}
       </Row>
-      {time && !visible && <div className="muted">На {fmtMoment(time)} знака на карте нет.</div>}
+      {time && !visible && <div className="muted">На {fmtMoment(time, false, local)} знака на карте нет.</div>}
+      <Row label="Переход" hint="Как знак меняет положение между датами">
+        <select value={f.motion ?? ''} onChange={(e) => up((x) => ({ ...x, motion: (e.target.value || undefined) as Feature['motion'] }))}>
+          <option value="">как для карты ({motionDefault === 'smooth' ? 'плавно' : 'скачком'})</option>
+          <option value="smooth">плавно</option>
+          <option value="step">скачком</option>
+        </select>
+      </Row>
       <div className="kf-list">
-        <div className={`kf${!active ? ' cur' : ''}`}>
-          <span>{kfs.length ? `до ${fmtMoment(kfs[0].t, true)}` : 'положение'}</span><span className="muted">основное</span>
+        <div className={`kf${!active && !at?.interpolated ? ' cur' : ''}`}>
+          <span>{kfs.length ? (f.time?.from ? `с ${fmtMoment(f.time.from, true, local)}` : `до ${fmtMoment(kfs[0].t, true, local)}`) : 'положение'}</span><span className="muted">основное</span>
         </div>
         {kfs.map((k) => (
           <div key={k.t} className={`kf${active?.t === k.t ? ' cur' : ''}`}>
-            <button className="link" title="Показать карту на эту дату" onClick={() => setTime?.(k.t)}>с {fmtMoment(k.t, true)}</button>
+            <button className="link" title="Показать карту на эту дату" onClick={() => setTime?.(k.t)}>{fmtMoment(k.t, true, local)}</button>
             <input className="kf-note" placeholder="пояснение" value={k.note ?? ''}
               onChange={(e) => up((x) => ({ ...x, keyframes: (x.keyframes ?? []).map((q) => (q.t === k.t ? { ...q, note: e.target.value || undefined } : q)) }), `kfnote-${f.id}-${k.t}`)} />
             <button className="link danger" title="Удалить это положение" onClick={() => up((x) => removeKeyframe(x, k.t))}>✕</button>
@@ -107,10 +118,12 @@ function TimeInspector({ f, doc, setDoc, time, setTime }: {
         <button disabled={!time || !visible || active?.t === time}
           title={time ? 'Знак получит новое положение с этого момента; тяните его на карте — изменится только оно' : 'Включите шкалу времени под картой'}
           onClick={() => time && up((x) => setKeyframe(x, time, geometryOf(featureAt(x, time) ?? x)))}>
-          Новое положение с {time ? fmtMoment(time, true) : '…'}
+          Новое положение на {time ? fmtMoment(time, true, local) : '…'}
         </button>
       </div>
-      {time && <div className="muted hint">Перетаскивание на карте меняет положение, действующее на {fmtMoment(time, true)}{active ? ` (с ${fmtMoment(active.t, true)})` : kfs.length ? ' (основное)' : ''}.</div>}
+      {time && <div className="muted hint">{at?.interpolated
+        ? `Показано промежуточное положение на ${fmtMoment(time, true, local)}; перетаскивание создаст новое положение на этот момент.`
+        : `Перетаскивание на карте меняет положение, действующее на ${fmtMoment(time, true, local)}${active ? ` (с ${fmtMoment(active.t, true, local)})` : kfs.length ? ' (основное)' : ''}.`}</div>}
     </Section>
   );
 }

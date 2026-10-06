@@ -8,6 +8,7 @@ import { Palette } from './Palette';
 import { Inspector } from './Inspector';
 import { LayersPanel } from './LayersPanel';
 import { Timeline } from './Timeline';
+import { ZonesContext, zoneAt, type InputZone, type Zones } from './time';
 import { EntityPanel, type RegistryApi } from './EntityPanel';
 import { translateFeature } from './geometry';
 import { download, exportPNG, svgWithFonts } from './exporting';
@@ -64,6 +65,17 @@ export function App() {
   /** Момент, на который показана обстановка (null — все знаки без учёта времени). */
   const [time, setTime] = useState<TimeInstant | null>(() => loadInitialTime());
   const [newFromNow, setNewFromNow] = useState(true);
+  /** Пояс ввода времени: московское (по умолчанию — так датированы документы), местное или UTC. */
+  const [inputZone, setInputZone] = useState<InputZone>(() => (localStorage.getItem('def_ops.inputZone') as InputZone) || 'msk');
+  // местное время — по месту на карте (центр вида), если для карты не задано вручную
+  const viewCenter = engine?.getView().center ?? doc.view?.center ?? doc.origin;
+  const autoZone = useMemo(() => zoneAt(viewCenter), [Math.round(viewCenter[0] * 2), Math.round(viewCenter[1] * 2)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const zones: Zones = useMemo(() => ({
+    local: doc.timeline?.localZone || autoZone,
+    localFixed: !!doc.timeline?.localZone,
+    input: inputZone,
+    setInput: (z) => { setInputZone(z); try { localStorage.setItem('def_ops.inputZone', z); } catch { /* */ } },
+  }), [doc.timeline?.localZone, autoZone, inputZone]);
   /** Документ в том виде, в каком он последний раз сохранён на сервере / получен с него. */
   const syncedRef = useRef<MapDocument | null>(null);
 
@@ -198,6 +210,7 @@ export function App() {
     : server.status === 'offline' ? 'Сервер недоступен (работа в браузере). Запуск: npm run dev:services' : 'Проверка сервера…';
 
   return (
+    <ZonesContext.Provider value={zones}>
     <div className="app">
       <header>
         <b className="brand">Тактическая карта</b>
@@ -266,7 +279,7 @@ export function App() {
           tool={tool} setTool={setTool} activeLayer={activeLayer} basemap={basemap} basemapOpacity={basemapOpacity}
           onEngineReady={(m) => { setEngine(m); (window as unknown as { __engine: MapEngine }).__engine = m; }} onStatus={setStatus}
           time={time} newFromNow={newFromNow} />
-        <Timeline doc={doc} setDoc={set} time={time} setTime={setTime} newFromNow={newFromNow} setNewFromNow={setNewFromNow} />
+        <Timeline doc={doc} setDoc={set} time={time} setTime={setTime} newFromNow={newFromNow} setNewFromNow={setNewFromNow} autoZone={autoZone} />
         {tool.mode === 'draw' && (
           <div className="hintbar">
             {tool.kind === 'arrow' ? 'Стрелка: щёлкайте точки оси от хвоста к острию. Первый щелчок у линии фронта/контура — хвост привяжется (Alt — без привязки). ' : ''}
@@ -301,10 +314,11 @@ export function App() {
           : <div className="help">
             <h3>Как работать</h3>
             <ul>
-              <li>Слева выберите оформление (уставное РККА или по образцу: атлас, инфографика, схема боя) и знак — затем рисуйте на карте.</li>
+              <li>Слева выберите оформление (уставные знаки РККА или по образцу: историческая карта, инфографика) и знак — затем рисуйте на карте.</li>
               <li><b>Слои</b> (ниже): глаз — показать/скрыть (Alt — только этот слой), замок — запретить правку, ▸ — прозрачность и объекты слоя. Объекты перетаскиваются между слоями. Новые объекты ложатся в активный слой или — в режиме «авто» — по смыслу знака.</li>
               <li><b>Стрелки</b> строятся по оси от хвоста к острию; начатая у линии фронта стрелка крепится к ней хвостом.</li>
               <li>В режиме выбора: тяните объект, его узлы, «+» на серединах — новый узел, двойной щелчок по узлу — удалить.</li>
+              <li><b>Время</b>: «Обстановка на дату» под картой. Знаки появляются по своим периодам и движутся между положениями (плавно или скачком). Время — московское и местное; вводится в выбранном поясе (кнопка «мск / местн. / UTC»).</li>
               <li>Ctrl+Z / Ctrl+Shift+Z, Ctrl+D — дублировать, Del — удалить, Ctrl+S — на сервер.</li>
             </ul>
           </div>}
@@ -313,6 +327,7 @@ export function App() {
           activeLayer={activeLayer} setActiveLayer={setActiveLayer} engine={engine} />
       </aside>
     </div>
+    </ZonesContext.Provider>
   );
 }
 
