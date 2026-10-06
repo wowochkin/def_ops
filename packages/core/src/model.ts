@@ -213,6 +213,38 @@ interface FeatureBase {
   scale?: number;
   /** Принадлежность: свои (красный), противник (синий), нейтральное (чёрный). */
   side?: Side;
+  /** Объект реестра, который обозначает знак (например, «150 сд»). Характеристики — в реестре. */
+  entityId?: string | null;
+  /** Период, когда знак присутствует на карте (без границ — всегда). */
+  time?: TimeSpan | null;
+  /**
+   * Положение знака во времени: с момента t знак имеет указанную геометрию.
+   * До первого ключевого кадра действует основная геометрия объекта.
+   */
+  keyframes?: Keyframe[];
+}
+
+/**
+ * Момент времени — строка ISO 8601: «1945-04-25» или «1945-04-25T06:00».
+ * Без часового пояса трактуется как UTC (исторические даты — без перевода поясов).
+ */
+export type TimeInstant = string;
+
+/** Период [from, to): from включительно, to — не включительно; null/нет — без границы. */
+export interface TimeSpan {
+  from?: TimeInstant | null;
+  to?: TimeInstant | null;
+}
+
+/** Геометрия знака с момента t (заполнены поля, соответствующие виду знака). */
+export interface Keyframe {
+  t: TimeInstant;
+  points?: LngLat[];
+  at?: LngLat;
+  rotation?: number;
+  path?: LngLat[] | null;
+  /** Пояснение к положению (например, «к исходу дня»). */
+  note?: string;
 }
 
 /** Привязка хвоста стрелки к линии/контуру: t — доля длины линии. */
@@ -309,6 +341,8 @@ export interface MapDocument {
   layers: Layer[];
   features: Feature[];
   overlays: ImageOverlay[];
+  /** Временная шкала карты: период операции и момент, на который показана обстановка. */
+  timeline?: { start: TimeInstant; end: TimeInstant; current?: TimeInstant | null } | null;
 }
 
 let counter = 0;

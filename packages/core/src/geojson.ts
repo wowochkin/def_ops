@@ -15,6 +15,7 @@ import { arrowAxisPoints } from './render/arrow';
 import { createFeature } from './factory';
 import { pickLayer } from './layers';
 import type { PresetKind } from './presets';
+import { documentAt } from './temporal';
 
 type Position = [number, number];
 export type GeoJSONGeometry =
@@ -43,7 +44,9 @@ const r6 = (v: number) => Math.round(v * 1e6) / 1e6;
 const pos = (p: LngLat): Position => [r6(p[0]), r6(p[1])];
 
 /** Экспорт документа (или выбранных слоёв) в GeoJSON. */
-export function toGeoJSON(doc: MapDocument, opts: { layers?: string[]; includeHidden?: boolean } = {}): GeoJSONCollection {
+export function toGeoJSON(input: MapDocument, opts: { layers?: string[]; includeHidden?: boolean; time?: string | null } = {}): GeoJSONCollection {
+  // на момент времени — геометрия из ключевых кадров, отсутствующие знаки не выгружаются
+  const doc = documentAt(input, opts.time);
   const ctx = createContext(doc);
   const only = opts.layers ? new Set(opts.layers) : null;
   const layerById = new Map(doc.layers.map((l) => [l.id, l]));
@@ -69,6 +72,7 @@ export function toGeoJSON(doc: MapDocument, opts: { layers?: string[]; includeHi
       geometry,
       properties: {
         kind, layerId, layer: layer?.name ?? null, name: name ?? null,
+        entityId: f.entityId ?? null, timeFrom: f.time?.from ?? null, timeTo: f.time?.to ?? null,
         text: f.kind === 'label' ? f.text : null,
         defops: { ...rest, points: 'points' in f ? f.points : undefined, at: 'at' in f ? f.at : undefined },
       },

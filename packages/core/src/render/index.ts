@@ -7,6 +7,7 @@
 import { makeProjection, type Projection } from '../geo';
 import type { Path } from '../curve';
 import { bbox } from '../curve';
+import { documentAt } from '../temporal';
 import type { Feature, MapDocument } from '../model';
 import { type RenderContext, esc } from './context';
 import { orderedFeatures } from '../layers';
@@ -43,6 +44,8 @@ export interface RenderOptions {
   layers?: string[];
   /** Игнорировать видимость слоёв (например, для превью отдельного слоя). */
   includeHidden?: boolean;
+  /** Обстановка на момент времени (знаки вне периода скрыты, положение — по ключевым кадрам). */
+  time?: string | null;
 }
 
 export function createContext(doc: MapDocument, proj: Projection = makeProjection(doc.origin, doc.refZoom)): RenderContext {
@@ -79,8 +82,9 @@ export function renderFeature(f: Feature, ctx: RenderContext): string {
   }
 }
 
-export function renderDocument(doc: MapDocument, opts: RenderOptions | string = {}): RenderResult {
+export function renderDocument(input: MapDocument, opts: RenderOptions | string = {}): RenderResult {
   const o: RenderOptions = typeof opts === 'string' ? { idPrefix: opts } : opts;
+  const doc = documentAt(input, o.time);
   const ctx = createContext(doc);
   if (o.idPrefix) {
     const base = ctx.uid;
@@ -107,7 +111,8 @@ export function renderDocument(doc: MapDocument, opts: RenderOptions | string = 
 }
 
 /** Самостоятельный SVG-файл (экспорт): границы по содержимому или по заданной рамке. */
-export function exportSVG(doc: MapDocument, opts: { padding?: number; background?: string | null; layers?: string[] } = {}): string {
+export function exportSVG(input: MapDocument, opts: { padding?: number; background?: string | null; layers?: string[]; time?: string | null } = {}): string {
+  const doc = documentAt(input, opts.time);
   const r = renderDocument(doc, { idPrefix: 'x' + Math.random().toString(36).slice(2, 7), layers: opts.layers });
   const shown = new Set(r.features.map((f) => f.id));
   const pts = doc.features.filter((f) => shown.has(f.id)).flatMap((f) =>

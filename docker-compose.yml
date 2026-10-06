@@ -7,11 +7,20 @@ x-build: &build
   args: [HTTP_PROXY, HTTPS_PROXY, NO_PROXY]
   network: host
 
+x-db-url: &db-url postgres://defops:${DB_PASSWORD:-defops}@db:5432/defops
+
 services:
+  # PostgreSQL + PostGIS: у каждого сервиса своя схема (documents, registry)
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    environment: { POSTGRES_DB: defops, POSTGRES_USER: defops, POSTGRES_PASSWORD: "${DB_PASSWORD:-defops}" }
+    volumes: [db-data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "defops", "-d", "defops"], interval: 5s, timeout: 3s, retries: 20 }
+
   documents:
     build: *build
-    environment: { SERVICE: documents, PORT: "8101", DATA_DIR: /data/documents }
-    volumes: [documents-data:/data]
+    environment: { SERVICE: documents, PORT: "8101", STORAGE: postgres, DATABASE_URL: *db-url }
+    depends_on: { db: { condition: service_healthy } }
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:8101/ready"], interval: 10s, timeout: 3s, retries: 5 }
 
   render:
@@ -36,4 +45,4 @@ services:
       render: { condition: service_healthy }
 
 volumes:
-  documents-data:
+  db-data:

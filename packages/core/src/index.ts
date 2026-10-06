@@ -10,6 +10,8 @@ export { GLYPHS, GLYPH_NAMES } from './render/glyphs';
 export * from './factory';
 export * from './layers';
 export * from './geojson';
+export * from './temporal';
+export * from './registry';
 export { renderDocument, renderFeature, createContext, exportSVG } from './render/index';
 export type { RenderResult, RenderedFeature, RenderedLayer, RenderOptions } from './render/index';
 export { arrowGeometry, arrowAxisPoints } from './render/arrow';
