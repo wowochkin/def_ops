@@ -34,6 +34,8 @@ export interface RunRecord {
   reasoningTail?: string;
   /** Ответ получен повторной просьбой переписать решение в JSON. */
   repaired?: boolean;
+  /** Разобранный ответ, даже если формальная проверка не пройдена (для перепроверки). */
+  candidate?: unknown;
   /** JSON нашёлся в тексте размышления. */
   jsonFromReasoning?: boolean;
   issues: Issue[];
@@ -89,6 +91,7 @@ export async function runOne(client: LlmClient, s: Situation, model: string, thi
     } catch { /* остаётся исходная ошибка */ }
   }
   if (res.jsonError) { rec.error = `ответ не разобран: ${res.jsonError}`; return rec; }
+  rec.candidate = res.json;
   const { decision, issues } = checkDecision(res.json, { formations: s.own_forces.map((f) => f.name), areas: s.areas });
   rec.issues = issues;
   if (!decision) { rec.error = 'ответ не прошёл формальную проверку'; return rec; }

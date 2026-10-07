@@ -244,3 +244,16 @@ describe('ответ по частям', () => {
     expect(JSON.stringify(lastBody.messages)).toContain('только замысел и приказы');
   });
 });
+
+describe('сравнение названий формирований', () => {
+  it('разные падежи и оригинал в скобках', async () => {
+    const { known } = await import('../src/decision');
+    const list = ['остатки 21-й танковой дивизии (21. Panzer-Division)', '11-й танковый корпус СС (XI. SS-Panzerkorps)'];
+    expect(known('21-я танковая дивизия (21. Panzer-Division)', list)).toBe(true);
+    expect(known('21-я танковая дивизия', list)).toBe(true);
+    expect(known('XI. SS-Panzerkorps', ['11-й танковый корпус СС (XI. SS-Panzerkorps)'])).toBe(false); // только оригинал без скобок — не угадываем
+    expect(known('(XI. SS-Panzerkorps)', list)).toBe(true);
+    expect(known('7-я танковая армия', list)).toBe(false);
+    expect(known('20-я танковая дивизия', list)).toBe(false);
+  });
+});

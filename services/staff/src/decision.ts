@@ -104,10 +104,30 @@ export function norm(s: string): string {
   return s.toLowerCase().replace(/\(.*?\)/g, '').replace(/[«»"'„“”.,]/g, '').replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
 }
 
-function known(name: string, list: string[]): boolean {
+/** Оригинальное название в скобках: «(21. Panzer-Division)» → «21 panzer-division». */
+function original(s: string): string {
+  const m = /\(([^()]*(?:\([^()]*\)[^()]*)*)\)/.exec(s);
+  return m ? m[1].toLowerCase().replace(/[«»"'„“”.,]/g, '').replace(/\s+/g, ' ').trim() : '';
+}
+
+/** Основы значимых слов (первые 5 букв; числа — целиком): «21-й танковой дивизии» ≈ «21-я танковая дивизия». */
+function stems(s: string): Set<string> {
+  return new Set(norm(s).split(/[\s—–-]+/).filter((w) => w.length > 2 || /\d/.test(w)).map((w) => (/^\d/.test(w) ? w.replace(/\D.*$/, '') : w.slice(0, 5))));
+}
+
+export function known(name: string, list: string[]): boolean {
   const n = norm(name);
-  if (!n) return false;
-  return list.some((x) => { const k = norm(x); return k === n || n.includes(k) || k.includes(n); });
+  const o = original(name), sn = stems(name);
+  if (!n && !o) return false;
+  return list.some((x) => {
+    if (o && o === original(x)) return true;
+    if (!n) return false;
+    const k = norm(x);
+    if (k === n || n.includes(k) || k.includes(n)) return true;
+    const sk = stems(x);
+    const common = [...sn].filter((w) => sk.has(w)).length;
+    return common >= 2 && common / Math.min(sn.size, sk.size) >= 0.75;
+  });
 }
 
 /** Формальная проверка решения против обстановки. */

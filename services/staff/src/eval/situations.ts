@@ -23,6 +23,8 @@ export interface Expectation {
   order?: { task: string[]; area?: string; toArea?: string; formation?: string };
   /** Достаточно выполнения любого из вариантов. */
   oneOf?: Omit<Expectation, 'id' | 'text'>[];
+  /** Нужно выполнение всех условий. */
+  allOf?: Omit<Expectation, 'id' | 'text'>[];
 }
 
 export interface Scenario {
@@ -110,6 +112,7 @@ const re = (p: string) => new RegExp(p.toLowerCase().replace(/ё/g, 'е'), 'i');
 
 export function matches(e: Omit<Expectation, 'id' | 'text'>, d: Decision): boolean {
   if (e.oneOf) return e.oneOf.some((x) => matches(x, d));
+  if (e.allOf) return e.allOf.every((x) => matches(x, d));
   const t = decisionText(d);
   if (e.requests) return d.requests.some((r) => r.trim().length > 10);
   if (e.order) {
