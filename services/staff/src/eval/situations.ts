@@ -1,10 +1,11 @@
 /**
- * Контрольные обстановки для проверки модели: ключевые развилки немецкого
- * командования в Берлинской операции. У каждой — что было в истории и
- * признаки ожидаемого решения (автоматические подсказки для экспертов, а не
- * окончательная оценка).
+ * Контрольные обстановки для проверки модели. Обстановки сгруппированы в
+ * сценарии (evals/<сценарий>/scenario.json + обстановки): сторона, которую
+ * ведёт модель, и профиль стороны и эпохи (profiles/<id>.md). Движок и промпты
+ * от сценария не зависят. У каждой обстановки — что было в истории и признаки
+ * ожидаемого решения (подсказки для экспертов, а не окончательная оценка).
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { type Decision, norm } from '../decision';
@@ -22,8 +23,23 @@ export interface Expectation {
   order?: { task: string[]; area?: string; toArea?: string };
 }
 
+export interface Scenario {
+  id: string;
+  name: string;
+  /** Для промпта: «переигровка … (даты)». */
+  description: string;
+  /** Сторона, которую ведёт модель. */
+  side: string;
+  /** Профиль стороны и эпохи — файл profiles/<profile>.md. */
+  profile: string;
+  /** Критерий для оценки экспертом: «соответствие доктрине и обстановке …». */
+  grading: string;
+}
+
 export interface Situation {
   id: string;
+  /** Сценарий, к которому относится обстановка (заполняется при загрузке). */
+  scenario: Scenario;
   title: string;
   draft?: string;
   moment: string;
@@ -42,15 +58,32 @@ export interface Situation {
 }
 
 export const EVALS_DIR = fileURLToPath(new URL('../../evals', import.meta.url));
+export const PROFILES_DIR = fileURLToPath(new URL('../../profiles', import.meta.url));
 
-export function loadSituations(dir = EVALS_DIR): Situation[] {
-  return readdirSync(dir).filter((f) => f.endsWith('.json')).sort()
-    .map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')) as Situation);
+export function loadScenarios(dir = EVALS_DIR): Scenario[] {
+  return readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(dir, d.name, 'scenario.json')))
+    .map((d) => JSON.parse(readFileSync(join(dir, d.name, 'scenario.json'), 'utf8')) as Scenario);
+}
+
+/** Обстановки всех сценариев (или одного). */
+export function loadSituations(dir = EVALS_DIR, scenarioId?: string): Situation[] {
+  return loadScenarios(dir).filter((sc) => !scenarioId || sc.id === scenarioId).flatMap((sc) =>
+    readdirSync(join(dir, sc.id)).filter((f) => f.endsWith('.json') && f !== 'scenario.json').sort()
+      .map((f) => ({ ...(JSON.parse(readFileSync(join(dir, sc.id, f), 'utf8')) as Omit<Situation, 'scenario'>), scenario: sc })));
+}
+
+export function profileText(id: string, dir = PROFILES_DIR): string {
+  return readFileSync(join(dir, `${id}.md`), 'utf8').trim();
+}
+
+/** Подстановки для staff.system.md. */
+export function systemVars(s: Situation): Record<string, string> {
+  return { side: s.scenario.side, scenario: s.scenario.description, profile: profileText(s.scenario.profile) };
 }
 
 const list = (a: string[]) => a.map((x) => `- ${x}`).join('\n');
 
-/** Подстановки для german-staff.user.md. */
+/** Подстановки для staff.user.md. */
 export function promptVars(s: Situation): Record<string, string> {
   return {
     moment: s.moment,

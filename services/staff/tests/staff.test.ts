@@ -5,7 +5,7 @@ import { LlmClient, extractJson, splitThink } from '../src/llm/client';
 import { configFromEnv } from '../src/llm/config';
 import { checkDecision, DECISION_SCHEMA, type Decision } from '../src/decision';
 import { fill, prompt } from '../src/prompts';
-import { loadSituations, matches, promptVars } from '../src/eval/situations';
+import { loadSituations, matches, promptVars, systemVars } from '../src/eval/situations';
 import { runOne } from '../src/eval/run';
 import { renderReport } from '../src/eval/report';
 
@@ -111,11 +111,12 @@ describe('промпты и обстановки', () => {
     const list = loadSituations();
     expect(list.length).toBeGreaterThanOrEqual(6);
     for (const s of list) {
-      const text = prompt('german-staff.user.md', promptVars(s));
+      const text = prompt('staff.user.md', promptVars(s));
+      expect(prompt('staff.system.md', systemVars(s))).toContain(s.scenario.side);
       expect(text).toContain(s.question);
       for (const e of [...s.expect, ...s.avoid]) for (const p of [...(e.any ?? []), ...(e.all ?? []).flat()]) expect(() => new RegExp(p)).not.toThrow();
     }
-    expect(prompt('german-staff.system.md', {})).toContain('JSON');
+    expect(list.every((s) => s.scenario.id === 'berlin-1945')).toBe(true);
   });
 
   it('схема решения — строгая (все поля обязательны)', () => {

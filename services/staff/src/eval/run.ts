@@ -2,10 +2,10 @@
  * Этап 0: проверка локальной модели на контрольных обстановках.
  *
  *   npm run llm:eval -- [--url http://localhost:1234/v1] [--model a,b] [--thinking off,medium]
- *                       [--repeat 2] [--only 01,04] [--out evals-out]
+ *                       [--repeat 2] [--scenario berlin-1945] [--only 01,04] [--out evals-out]
  *
  * Для каждой модели × режима размышления × обстановки × повтора: запрос
- * немецкому штабу, замер скорости, формальная проверка, признаки ожидаемого
+ * штабу стороны, которую ведёт модель, замер скорости, формальная проверка, признаки ожидаемого
  * решения. Итог — отчёт Markdown (для оценки экспертами) и JSON со всеми
  * ответами в каталоге evals-out/<время>/.
  */
@@ -15,7 +15,7 @@ import { LlmClient, LlmUnavailable, type ChatResult } from '../llm/client';
 import { configFromEnv, type Thinking } from '../llm/config';
 import { DECISION_SCHEMA, checkDecision, type Decision, type Issue } from '../decision';
 import { prompt } from '../prompts';
-import { loadSituations, matches, promptVars, type Situation } from './situations';
+import { loadSituations, matches, promptVars, systemVars, type Situation } from './situations';
 import { renderReport } from './report';
 
 export interface RunRecord {
@@ -47,13 +47,13 @@ export async function runOne(client: LlmClient, s: Situation, model: string, thi
   onDelta?: (kind: 'reasoning' | 'content', t: string) => void): Promise<RunRecord> {
   const rec: RunRecord = { situation: s.id, model, thinking, attempt, ok: false, reasoningChars: 0, issues: [], expect: [], avoid: [] };
   const messages = [
-    { role: 'system' as const, content: prompt('german-staff.system.md', {}) },
-    { role: 'user' as const, content: prompt('german-staff.user.md', promptVars(s)) },
+    { role: 'system' as const, content: prompt('staff.system.md', systemVars(s)) },
+    { role: 'user' as const, content: prompt('staff.user.md', promptVars(s)) },
   ];
   let res: ChatResult;
   try {
     const c = new LlmClient({ ...client.config, model });
-    res = await c.chat({ messages, schema: { name: 'german_staff_decision', schema: DECISION_SCHEMA }, thinking, onDelta });
+    res = await c.chat({ messages, schema: { name: 'staff_decision', schema: DECISION_SCHEMA }, thinking, onDelta });
   } catch (e) {
     rec.error = (e as Error).message;
     return rec;
@@ -92,7 +92,7 @@ export async function main(argv = process.argv.slice(2)) {
   const thinkings = (a.thinking ? a.thinking.split(',') : [config.thinking]) as Thinking[];
   const repeat = Math.max(1, Number(a.repeat ?? 1));
   const only = a.only ? a.only.split(',') : null;
-  const situations = loadSituations().filter((s) => !only || only.some((o) => s.id.startsWith(o)));
+  const situations = loadSituations(undefined, a.scenario || undefined).filter((s) => !only || only.some((o) => s.id.startsWith(o)));
 
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const out = join(a.out ?? 'evals-out', stamp);

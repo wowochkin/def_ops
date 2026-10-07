@@ -15,7 +15,9 @@ const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\n+/g, ' ');
 export function renderReport(records: RunRecord[], situations: Situation[],
   meta: { models: string[]; thinkings: string[]; repeat: number; url: string; date: Date }): string {
   const L: string[] = [];
-  L.push('# Проверка модели: немецкий штаб, Берлинская операция', '');
+  const scenarios = [...new Set(situations.map((s) => s.scenario.name))].join(', ');
+  const sides = [...new Set(situations.map((s) => s.scenario.side))].join(', ');
+  L.push(`# Проверка модели: ${scenarios}`, '', `Модель ведёт сторону: ${sides}.`, '');
   L.push(`${meta.date.toLocaleString('ru-RU')} · сервер ${meta.url} · повторов на обстановку: ${meta.repeat}`, '');
   L.push('Автоматические признаки — подсказка, а не оценка: решение оценивают эксперты (раздел «Оценка эксперта» у каждого ответа).', '');
 
@@ -62,7 +64,7 @@ export function renderReport(records: RunRecord[], situations: Situation[],
       L.push('');
       if (d.requests.length) L.push('**Доклады и просьбы наверх:**', ...d.requests.map((x) => `- ${x}`), '');
       if (d.risks.length) L.push('**Риски:**', ...d.risks.map((x) => `- ${x}`), '');
-      L.push('**Оценка эксперта:** реалистичность __ /5 · соответствие доктрине и обстановке 1945 г. __ /5 · исполнимость __ /5 · качество доклада __ /5', '', 'Комментарий: ', '');
+      L.push(`**Оценка эксперта:** реалистичность __ /5 · ${s.scenario.grading} __ /5 · исполнимость __ /5 · качество доклада __ /5`, '', 'Комментарий: ', '');
     }
   }
   return L.join('\n');
