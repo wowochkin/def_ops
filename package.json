@@ -21,7 +21,8 @@
     "llm:eval": "tsx services/staff/src/eval/cli.ts",
     "llm:quick": "tsx services/staff/src/eval/quick.ts",
     "sim:history": "tsx packages/sim/tools/run/history.ts",
-    "sim:scenario": "tsx packages/sim/tools/scenario/build_scenario.ts"
+    "sim:scenario": "tsx packages/sim/tools/scenario/build_scenario.ts",
+    "theatre:sample": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_sample.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
