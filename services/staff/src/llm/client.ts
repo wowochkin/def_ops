@@ -38,6 +38,9 @@ export interface ChatTimings {
   tokensPerSec?: number;
   /** Скорость обработки промпта, токенов/с. */
   promptTokensPerSec?: number;
+  /** Спекулятивное декодирование: принято и отвергнуто черновых токенов (если сервер сообщает). */
+  draftAccepted?: number;
+  draftRejected?: number;
 }
 
 export interface ChatResult {
@@ -48,6 +51,8 @@ export interface ChatResult {
   json?: unknown;
   /** Причина, по которой JSON не разобран. */
   jsonError?: string;
+  /** JSON найден не в ответе, а в тексте размышления. */
+  jsonFrom?: 'reasoning';
   finishReason?: string;
   timings: ChatTimings;
 }
@@ -63,12 +68,30 @@ export function splitThink(text: string): { content: string; reasoning: string }
   return { content: content.trim(), reasoning: parts.join('\n').trim() };
 }
 
-/** Вынуть JSON-объект из ответа: допускает обёртку ```json и текст вокруг. */
+/**
+ * Вынуть JSON-объект из ответа: допускает обёртку ```json и текст вокруг.
+ * Если объектов несколько (например, черновик в размышлении), берётся последний
+ * разбирающийся объект верхнего уровня.
+ */
 export function extractJson(text: string): unknown {
   const t = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
   try { return JSON.parse(t); } catch { /* ниже — по скобкам */ }
-  const a = t.indexOf('{'), b = t.lastIndexOf('}');
-  if (a >= 0 && b > a) return JSON.parse(t.slice(a, b + 1));
+  const found: unknown[] = [];
+  for (let i = 0; i < t.length; i++) {
+    if (t[i] !== '{') continue;
+    let depth = 0, inStr = false, esc = false;
+    for (let j = i; j < t.length; j++) {
+      const c = t[j];
+      if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+      if (c === '"') inStr = true;
+      else if (c === '{') depth++;
+      else if (c === '}' && --depth === 0) {
+        try { found.push(JSON.parse(t.slice(i, j + 1))); i = j; } catch { /* не JSON — дальше */ }
+        break;
+      }
+    }
+  }
+  if (found.length) return found[found.length - 1];
   throw new Error('в ответе нет JSON-объекта');
 }
 
@@ -109,6 +132,7 @@ export class LlmClient {
       chat_template_kwargs: { enable_thinking: thinking !== 'off' },
     };
     if (thinking !== 'off') body.reasoning_effort = thinking;
+    if (this.config.draftModel) body.draft_model = this.config.draftModel;
     if (req.schema) body.response_format = { type: 'json_schema', json_schema: { name: req.schema.name, strict: true, schema: req.schema.schema } };
     return body;
   }
@@ -129,12 +153,17 @@ export class LlmClient {
 
     let content = '', reasoning = '', finishReason: string | undefined, firstTokenMs = 0, chunks = 0;
     let usage: { prompt_tokens?: number; completion_tokens?: number } | undefined;
+    let draft: { accepted?: number; rejected?: number } | undefined;
     const thinkingOff = (req.thinking ?? this.config.thinking) === 'off';
     for await (const ev of sseEvents(r.body)) {
       if (ev === '[DONE]') break;
-      let j: { choices?: { delta?: { content?: string; reasoning_content?: string; reasoning?: string }; finish_reason?: string }[]; usage?: typeof usage };
+      let j: { choices?: { delta?: { content?: string; reasoning_content?: string; reasoning?: string }; finish_reason?: string }[]; usage?: typeof usage;
+        stats?: { accepted_draft_tokens_count?: number; rejected_draft_tokens_count?: number } };
       try { j = JSON.parse(ev); } catch { continue; }
       if (j.usage) usage = j.usage;
+      if (j.stats && (j.stats.accepted_draft_tokens_count != null || j.stats.rejected_draft_tokens_count != null)) {
+        draft = { accepted: j.stats.accepted_draft_tokens_count, rejected: j.stats.rejected_draft_tokens_count };
+      }
       const ch = j.choices?.[0];
       if (!ch) continue;
       if (ch.finish_reason) finishReason = ch.finish_reason;
@@ -158,10 +187,14 @@ export class LlmClient {
       promptTokens: usage?.prompt_tokens, completionTokens: usage?.completion_tokens,
       tokensPerSec: +(completion / (genMs / 1000)).toFixed(1),
       promptTokensPerSec: usage?.prompt_tokens && firstTokenMs ? +(usage.prompt_tokens / (firstTokenMs / 1000)).toFixed(0) : undefined,
+      draftAccepted: draft?.accepted, draftRejected: draft?.rejected,
     };
     const res: ChatResult = { model, content, reasoning, finishReason, timings };
     if (req.schema) {
-      try { res.json = extractJson(content); } catch (e) { res.jsonError = (e as Error).message; }
+      try { res.json = extractJson(content); } catch (e) {
+        // сервер мог положить весь ответ в поле размышления: JSON — в его конце
+        try { res.json = extractJson(reasoning); res.jsonFrom = 'reasoning'; } catch { res.jsonError = (e as Error).message; }
+      }
       if (finishReason === 'length') res.jsonError = (res.jsonError ? res.jsonError + '; ' : '') + 'ответ оборван по пределу длины (DEFOPS_LLM_MAX_TOKENS)';
     }
     return res;

@@ -2,7 +2,7 @@
  * Этап 0: проверка локальной модели на контрольных обстановках.
  *
  *   npm run llm:eval -- [--url http://localhost:1234/v1] [--model a,b] [--thinking off,medium]
- *                       [--repeat 2] [--scenario berlin-1945] [--only 01,04] [--out evals-out]
+ *                       [--repeat 2] [--scenario berlin-1945] [--only 01,04] [--draft <модель>] [--out evals-out]
  *
  * Для каждой модели × режима размышления × обстановки × повтора: запрос
  * штабу стороны, которую ведёт модель, замер скорости, формальная проверка, признаки ожидаемого
@@ -29,6 +29,12 @@ export interface RunRecord {
   reasoningChars: number;
   decision?: Decision;
   raw?: string;
+  /** Конец размышления — для разбора неудач. */
+  reasoningTail?: string;
+  /** Ответ получен повторной просьбой переписать решение в JSON. */
+  repaired?: boolean;
+  /** JSON нашёлся в тексте размышления. */
+  jsonFromReasoning?: boolean;
   issues: Issue[];
   expect: { id: string; text: string; hit: boolean }[];
   avoid: { id: string; text: string; hit: boolean }[];
@@ -61,6 +67,26 @@ export async function runOne(client: LlmClient, s: Situation, model: string, thi
   rec.timings = res.timings;
   rec.reasoningChars = res.reasoning.length;
   rec.raw = res.content;
+  rec.reasoningTail = res.reasoning.slice(-3000);
+  rec.jsonFromReasoning = res.jsonFrom === 'reasoning';
+  if (res.jsonError && (res.content.trim() || res.reasoning.trim())) {
+    // одна попытка исправления: переписать уже принятое решение в JSON, без нового размышления
+    try {
+      const c = new LlmClient({ ...client.config, model });
+      const prev = res.content.trim() || res.reasoning.slice(-12000);
+      const fix = await c.chat({
+        messages: [...messages, { role: 'assistant', content: prev },
+          { role: 'user', content: 'Ответ должен быть одним JSON-объектом по схеме, без текста вокруг. Перепиши своё решение в этот формат, ничего не меняя по существу.' }],
+        schema: { name: 'staff_decision', schema: DECISION_SCHEMA }, thinking: 'off',
+      });
+      if (!fix.jsonError) {
+        res = { ...res, json: fix.json, jsonError: undefined, content: fix.content };
+        rec.raw = fix.content;
+        rec.repaired = true;
+        rec.timings = { ...res.timings, totalMs: res.timings.totalMs + fix.timings.totalMs };
+      }
+    } catch { /* остаётся исходная ошибка */ }
+  }
   if (res.jsonError) { rec.error = `ответ не разобран: ${res.jsonError}`; return rec; }
   const { decision, issues } = checkDecision(res.json, { formations: s.own_forces.map((f) => f.name), areas: s.areas });
   rec.issues = issues;
@@ -76,6 +102,7 @@ export async function main(argv = process.argv.slice(2)) {
   const a = args(argv);
   const env = { ...process.env };
   if (a.url) env.DEFOPS_LLM_URL = a.url;
+  if (a.draft) env.DEFOPS_LLM_DRAFT_MODEL = a.draft;
   const config = configFromEnv(env);
   const client = new LlmClient(config);
 
@@ -98,19 +125,32 @@ export async function main(argv = process.argv.slice(2)) {
   const out = join(a.out ?? 'evals-out', stamp);
   mkdirSync(out, { recursive: true });
 
-  console.log(`Модели: ${models.join(', ')} · размышление: ${thinkings.join(', ')} · обстановок: ${situations.length} · повторов: ${repeat}`);
+  console.log(`Модели: ${models.join(', ')} · размышление: ${thinkings.join(', ')} · обстановок: ${situations.length} · повторов: ${repeat}${config.draftModel ? ` · черновая модель: ${config.draftModel}` : ''}`);
+  console.log(`Отчёт обновляется после каждой обстановки: ${join(out, 'report.md')} (Ctrl+C — прервать, готовое сохранится)`);
   const records: RunRecord[] = [];
   for (const model of models) for (const thinking of thinkings) for (const s of situations) for (let i = 1; i <= repeat; i++) {
-    process.stdout.write(`▸ ${model} · ${thinking} · ${s.id} #${i} `);
-    let n = 0;
-    const rec = await runOne(client, s, model, thinking, i, () => { if (++n % 40 === 0) process.stdout.write('.'); });
+    const t0 = Date.now();
+    let chunks = 0, phase = 'думает';
+    const tick = () => {
+      const sec = (Date.now() - t0) / 1000;
+      process.stdout.write(`\r▸ ${model} · ${thinking} · ${s.id} #${i} — ${phase}: ${Math.round(sec)} с, ~${chunks} ток. (${(chunks / Math.max(sec, 1)).toFixed(1)} ток/с)   `);
+    };
+    const timer = setInterval(tick, 1000);
+    const rec = await runOne(client, s, model, thinking, i, (kind) => { chunks++; phase = kind === 'reasoning' ? 'думает' : 'пишет ответ'; });
+    clearInterval(timer);
     records.push(rec);
     const t = rec.timings;
     const hits = rec.expect.filter((e) => e.hit).length;
-    console.log(rec.ok
-      ? ` ✓ ${(t!.totalMs / 1000).toFixed(0)} с (первый токен ${(t!.firstTokenMs / 1000).toFixed(1)} с, ${t!.tokensPerSec} ток/с) · признаков ${hits}/${rec.expect.length}${rec.avoid.some((x) => x.hit) ? ' · ⚠ нежелательное решение' : ''}`
-      : ` ✗ ${rec.error}`);
+    const done = records.length, total = models.length * thinkings.length * situations.length * repeat;
+    const avgMs = records.filter((r) => r.timings).reduce((a, r) => a + r.timings!.totalMs, 0) / Math.max(1, records.filter((r) => r.timings).length);
+    const eta = Math.round(((total - done) * avgMs) / 60000);
+    const draft = t?.draftAccepted != null ? ` · черновых принято ${Math.round((100 * t.draftAccepted) / Math.max(1, t.draftAccepted + (t.draftRejected ?? 0)))} %` : '';
+    console.log(`\r▸ ${model} · ${thinking} · ${s.id} #${i}` + (rec.ok
+      ? ` ✓ ${(t!.totalMs / 1000).toFixed(0)} с (первый токен ${(t!.firstTokenMs / 1000).toFixed(1)} с, ${t!.tokensPerSec} ток/с${draft}) · признаков ${hits}/${rec.expect.length}${rec.avoid.some((x) => x.hit) ? ' · ⚠ нежелательное решение' : ''}`
+      : ` ✗ ${rec.error}`) + `   [${done}/${total}${done < total ? `, осталось ≈ ${eta} мин` : ''}]`);
+    // результат — после каждой обстановки: прерванный прогон не теряется
     writeFileSync(join(out, 'results.json'), JSON.stringify({ config: { ...config, models, thinkings, repeat }, records }, null, 2));
+    writeFileSync(join(out, 'report.md'), renderReport(records, situations, { models, thinkings, repeat, url: config.url, date: new Date() }));
   }
   const report = renderReport(records, situations, { models, thinkings, repeat, url: config.url, date: new Date() });
   writeFileSync(join(out, 'report.md'), report);

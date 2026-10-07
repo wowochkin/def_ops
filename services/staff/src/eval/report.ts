@@ -44,17 +44,21 @@ export function renderReport(records: RunRecord[], situations: Situation[],
     L.push('**Признаки ожидаемого решения:** ' + s.expect.map((e) => e.text).join('; ') + '.', '');
     for (const r of rs) {
       L.push(`### ${r.model} · размышление ${r.thinking} · попытка ${r.attempt}`, '');
-      if (r.timings) L.push(`Время ${sec(r.timings.totalMs)} с · первый токен ${sec(r.timings.firstTokenMs)} с · ${r.timings.tokensPerSec ?? '—'} ток/с · промпт ${r.timings.promptTokens ?? '—'} ток., ответ ${r.timings.completionTokens ?? '—'} ток. · размышление ${r.reasoningChars} знаков`, '');
+      if (r.timings) L.push(`Время ${sec(r.timings.totalMs)} с · первый токен ${sec(r.timings.firstTokenMs)} с · ${r.timings.tokensPerSec ?? '—'} ток/с · промпт ${r.timings.promptTokens ?? '—'} ток., ответ ${r.timings.completionTokens ?? '—'} ток. · размышление ${r.reasoningChars} знаков`
+        + (r.timings.draftAccepted != null ? ` · черновых токенов принято ${r.timings.draftAccepted}, отвергнуто ${r.timings.draftRejected ?? 0}` : ''), '');
       if (!r.ok) {
         L.push(`**Ответ не принят:** ${r.error}`, '');
         for (const i of r.issues) L.push(`- ${i.level === 'error' ? '✗' : '!'} ${i.text}`);
-        if (r.raw) L.push('', '```', r.raw.slice(0, 3000), '```');
+        L.push('', `Ответ (${(r.raw ?? '').length} знаков):`, '', '```', (r.raw || '— пусто —').slice(0, 3000), '```');
+        if (r.reasoningTail) L.push('', 'Конец размышления:', '', '```', r.reasoningTail, '```');
         L.push('');
         continue;
       }
       const d = r.decision!;
       L.push('**Признаки:** ' + r.expect.map((e) => `${e.hit ? '✓' : '✗'} ${e.text}`).join(' · ')
         + (r.avoid.length ? ' · ' + r.avoid.map((e) => `${e.hit ? '⚠' : '✓'} не: ${e.text}`).join(' · ') : ''), '');
+      if (r.repaired) L.push('_Ответ пришёл не в формате JSON; решение переписано в JSON повторным запросом (без нового размышления)._', '');
+      if (r.jsonFromReasoning) L.push('_JSON найден в тексте размышления, а не в ответе._', '');
       if (r.issues.length) L.push('**Замечания проверки:** ' + r.issues.map((i) => i.text).join('; '), '');
       L.push('**Оценка обстановки**', '', d.assessment, '');
       L.push(`**Замысел противника.** ${d.enemyIntent}`, '');

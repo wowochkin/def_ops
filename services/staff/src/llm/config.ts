@@ -17,6 +17,11 @@ export interface LlmConfig {
   temperature?: number;
   /** Предел длины ответа (вместе с размышлением), токенов. */
   maxTokens: number;
+  /**
+   * Черновая модель для спекулятивного декодирования (LM Studio: поле draft_model).
+   * Нет — без него (или как настроено в самом приложении, например MTP-головы модели).
+   */
+  draftModel?: string;
 }
 
 const THINKING: Thinking[] = ['off', 'low', 'medium', 'high'];
@@ -31,5 +36,6 @@ export function configFromEnv(e: Record<string, string | undefined> = process.en
     timeoutMs: Number(e.DEFOPS_LLM_TIMEOUT_S ?? 600) * 1000,
     temperature: e.DEFOPS_LLM_TEMPERATURE ? Number(e.DEFOPS_LLM_TEMPERATURE) : undefined,
     maxTokens: Number(e.DEFOPS_LLM_MAX_TOKENS ?? 16000),
+    draftModel: e.DEFOPS_LLM_DRAFT_MODEL || undefined,
   };
 }

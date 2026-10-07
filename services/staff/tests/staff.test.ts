@@ -40,10 +40,20 @@ beforeAll(async () => {
         res.write(delta({ content: '<think>думаю\nдолго</think>\n```json\n' }));
         for (const p of parts) res.write(delta({ content: p }));
         res.write(delta({ content: '\n```' }, 'stop'));
+      } else if (mode === 'prose-then-json') {
+        // первый ответ — рассуждение прозой без JSON, повторный (с просьбой) — JSON
+        const fixing = JSON.stringify(lastBody.messages).includes('Перепиши своё решение');
+        if (fixing) for (const p of parts) res.write(delta({ content: p }));
+        else res.write(delta({ content: 'Считаю необходимым отвести войска на вторую позицию.' }));
+        res.write(delta({}, 'stop'));
+      } else if (mode === 'all-in-reasoning') {
+        res.write(delta({ reasoning_content: 'Черновик {"x": 1} и далее итог: ' }));
+        for (const p of parts) res.write(delta({ reasoning_content: p }));
+        res.write(delta({}, 'stop'));
       } else if (mode === 'length') {
         res.write(delta({ content: answer.slice(0, 20) }, 'length'));
       }
-      res.write(sse({ choices: [], usage: { prompt_tokens: 1200, completion_tokens: 300 } }));
+      res.write(sse({ choices: [], usage: { prompt_tokens: 1200, completion_tokens: 300 }, stats: { accepted_draft_tokens_count: 200, rejected_draft_tokens_count: 50 } }));
       res.end('data: [DONE]\n\n');
     });
   });
@@ -65,7 +75,15 @@ describe('клиент модели', () => {
     expect(r.timings.completionTokens).toBe(300);
     expect(lastBody.chat_template_kwargs).toEqual({ enable_thinking: true });
     expect(lastBody.reasoning_effort).toBe('medium');
+    expect(lastBody.draft_model).toBeUndefined();
+    expect(r.timings.draftAccepted).toBe(200);
     expect((lastBody.response_format as { type: string }).type).toBe('json_schema');
+  });
+
+  it('черновая модель передаётся серверу', async () => {
+    mode = 'normal'; answer = '{}';
+    await new LlmClient({ ...configFromEnv({ DEFOPS_LLM_DRAFT_MODEL: 'qwen3.8-27b-mtp' }), url }).chat({ messages: [{ role: 'user', content: 'x' }] });
+    expect(lastBody.draft_model).toBe('qwen3.8-27b-mtp');
   });
 
   it('без размышления ответ в reasoning_content считается ответом', async () => {
@@ -97,6 +115,7 @@ describe('клиент модели', () => {
   it('разбор вспомогательных форматов', () => {
     expect(splitThink('<think>a</think>b')).toEqual({ content: 'b', reasoning: 'a' });
     expect(extractJson('Вот ответ: {"x": [1]} конец')).toEqual({ x: [1] });
+    expect(extractJson('черновик {"a": "}"} итог {"b": 2}')).toEqual({ b: 2 });
   });
 });
 
@@ -155,6 +174,21 @@ describe('проверка решения', () => {
     d.orders.push({ formation: '7-я танковая армия', task: 'attack', area: 'кюстринский плацдарм', toArea: null, deadline: '16.04', details: '' });
     expect(checkDecision(d, { formations: s.own_forces.map((f) => f.name), areas: s.areas }).issues.some((i) => /нет среди своих/.test(i.text))).toBe(true);
     expect(matches(s.avoid[0], d)).toBe(true);
+  });
+
+  it('JSON в конце размышления (сервер не разделил ответ) находится', async () => {
+    mode = 'all-in-reasoning'; answer = JSON.stringify(goodDecision());
+    const rec = await runOne(client(), s1(), 'qwen3.8-test', 'medium', 1);
+    expect(rec.ok).toBe(true);
+    expect(rec.jsonFromReasoning).toBe(true);
+  });
+
+  it('ответ прозой — одна попытка переписать в JSON', async () => {
+    mode = 'prose-then-json'; answer = JSON.stringify(goodDecision());
+    const rec = await runOne(client(), s1(), 'qwen3.8-test', 'medium', 1);
+    expect(rec.ok).toBe(true);
+    expect(rec.repaired).toBe(true);
+    expect(lastBody.chat_template_kwargs).toEqual({ enable_thinking: false });
   });
 
   it('полный прогон обстановки через подставную модель и отчёт', async () => {
