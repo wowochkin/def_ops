@@ -2,7 +2,8 @@
  * Этап 0: проверка локальной модели на контрольных обстановках.
  *
  *   npm run llm:eval -- [--url http://localhost:1234/v1] [--model a,b] [--thinking off,medium]
- *                       [--repeat 2] [--scenario berlin-1945] [--only 01,04] [--draft <модель>] [--out evals-out]
+ *                       [--repeat 2] [--scenario berlin-1945] [--only 01,04] [--draft <модель>]
+ *                       [--concurrency 4] [--out evals-out]
  *
  * Для каждой модели × режима размышления × обстановки × повтора: запрос
  * штабу стороны, которую ведёт модель, замер скорости, формальная проверка, признаки ожидаемого
@@ -128,30 +129,48 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(`Модели: ${models.join(', ')} · размышление: ${thinkings.join(', ')} · обстановок: ${situations.length} · повторов: ${repeat}${config.draftModel ? ` · черновая модель: ${config.draftModel}` : ''}`);
   console.log(`Отчёт обновляется после каждой обстановки: ${join(out, 'report.md')} (Ctrl+C — прервать, готовое сохранится)`);
   const records: RunRecord[] = [];
-  for (const model of models) for (const thinking of thinkings) for (const s of situations) for (let i = 1; i <= repeat; i++) {
-    const t0 = Date.now();
-    let chunks = 0, phase = 'думает';
-    const tick = () => {
-      const sec = (Date.now() - t0) / 1000;
-      process.stdout.write(`\r▸ ${model} · ${thinking} · ${s.id} #${i} — ${phase}: ${Math.round(sec)} с, ~${chunks} ток. (${(chunks / Math.max(sec, 1)).toFixed(1)} ток/с)   `);
-    };
-    const timer = setInterval(tick, 1000);
-    const rec = await runOne(client, s, model, thinking, i, (kind) => { chunks++; phase = kind === 'reasoning' ? 'думает' : 'пишет ответ'; });
-    clearInterval(timer);
-    records.push(rec);
-    const t = rec.timings;
-    const hits = rec.expect.filter((e) => e.hit).length;
-    const done = records.length, total = models.length * thinkings.length * situations.length * repeat;
-    const avgMs = records.filter((r) => r.timings).reduce((a, r) => a + r.timings!.totalMs, 0) / Math.max(1, records.filter((r) => r.timings).length);
-    const eta = Math.round(((total - done) * avgMs) / 60000);
-    const draft = t?.draftAccepted != null ? ` · черновых принято ${Math.round((100 * t.draftAccepted) / Math.max(1, t.draftAccepted + (t.draftRejected ?? 0)))} %` : '';
-    console.log(`\r▸ ${model} · ${thinking} · ${s.id} #${i}` + (rec.ok
-      ? ` ✓ ${(t!.totalMs / 1000).toFixed(0)} с (первый токен ${(t!.firstTokenMs / 1000).toFixed(1)} с, ${t!.tokensPerSec} ток/с${draft}) · признаков ${hits}/${rec.expect.length}${rec.avoid.some((x) => x.hit) ? ' · ⚠ нежелательное решение' : ''}`
-      : ` ✗ ${rec.error}`) + `   [${done}/${total}${done < total ? `, осталось ≈ ${eta} мин` : ''}]`);
-    // результат — после каждой обстановки: прерванный прогон не теряется
-    writeFileSync(join(out, 'results.json'), JSON.stringify({ config: { ...config, models, thinkings, repeat }, records }, null, 2));
+  // задания прогона; при --concurrency N идут параллельно (сервер обслуживает их пакетом)
+  const jobs: { model: string; thinking: Thinking; s: Situation; i: number }[] = [];
+  for (const model of models) for (const thinking of thinkings) for (const s of situations) for (let i = 1; i <= repeat; i++) jobs.push({ model, thinking, s, i });
+  const concurrency = Math.max(1, Number(a.concurrency ?? 1));
+  const total = jobs.length;
+  const runStart = Date.now();
+  let next = 0;
+  const save = () => {
+    writeFileSync(join(out, 'results.json'), JSON.stringify({ config: { ...config, models, thinkings, repeat, concurrency }, records }, null, 2));
     writeFileSync(join(out, 'report.md'), renderReport(records, situations, { models, thinkings, repeat, url: config.url, date: new Date() }));
-  }
+  };
+  const worker = async () => {
+    while (next < jobs.length) {
+      const { model, thinking, s, i } = jobs[next++];
+      const label = `${model} · ${thinking} · ${s.id} #${i}`;
+      const t0 = Date.now();
+      let chunks = 0, phase = 'думает';
+      const timer = concurrency === 1 ? setInterval(() => {
+        const sec = (Date.now() - t0) / 1000;
+        process.stdout.write(`\r▸ ${label} — ${phase}: ${Math.round(sec)} с, ~${chunks} ток. (${(chunks / Math.max(sec, 1)).toFixed(1)} ток/с)   `);
+      }, 1000) : null;
+      if (concurrency > 1) console.log(`▸ начато: ${label}`);
+      const rec = await runOne(client, s, model, thinking, i, (kind) => { chunks++; phase = kind === 'reasoning' ? 'думает' : 'пишет ответ'; });
+      if (timer) clearInterval(timer);
+      records.push(rec);
+      const t = rec.timings;
+      const hits = rec.expect.filter((e) => e.hit).length;
+      const done = records.length;
+      const elapsed = (Date.now() - runStart) / 60000;
+      const eta = Math.round((elapsed / done) * (total - done));
+      const draft = t?.draftAccepted != null ? ` · черновых принято ${Math.round((100 * t.draftAccepted) / Math.max(1, t.draftAccepted + (t.draftRejected ?? 0)))} %` : '';
+      console.log(`${concurrency === 1 ? '\r' : ''}▸ ${label}` + (rec.ok
+        ? ` ✓ ${(t!.totalMs / 1000).toFixed(0)} с (первый токен ${(t!.firstTokenMs / 1000).toFixed(1)} с, ${t!.tokensPerSec} ток/с${draft}) · признаков ${hits}/${rec.expect.length}${rec.avoid.some((x) => x.hit) ? ' · ⚠ нежелательное решение' : ''}`
+        : ` ✗ ${rec.error}`) + `   [${done}/${total}${done < total ? `, осталось ≈ ${eta} мин` : ''}]`);
+      // результат — после каждой обстановки: прерванный прогон не теряется
+      save();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, jobs.length) }, worker));
+  const wall = (Date.now() - runStart) / 1000;
+  const tokens = records.reduce((a, r) => a + (r.timings?.completionTokens ?? 0), 0);
+  if (concurrency > 1) console.log(`\nПараллельно ${concurrency}: всего ${tokens} ток. за ${wall.toFixed(0)} с — суммарно ${(tokens / wall).toFixed(1)} ток/с`);
   const report = renderReport(records, situations, { models, thinkings, repeat, url: config.url, date: new Date() });
   writeFileSync(join(out, 'report.md'), report);
   console.log(`\nОтчёт: ${join(out, 'report.md')}\nВсе ответы: ${join(out, 'results.json')}`);
