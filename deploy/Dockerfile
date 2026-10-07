@@ -16,6 +16,7 @@ COPY services/render/package.json services/render/
 COPY services/registry/package.json services/registry/
 COPY services/cartography/package.json services/cartography/
 COPY services/gateway/package.json services/gateway/
+COPY services/staff/package.json services/staff/
 COPY apps/editor/package.json apps/editor/
 RUN npm ci --no-audit --no-fund
 # sharp (сервис картографии) — готовые сборки libvips под musl (Alpine) из package-lock;
