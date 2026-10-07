@@ -1,0 +1,4208 @@
+{
+ "source": {
+  "LT_CONQ": {
+   "ref": "Le Tissier T. (ed.) Soviet Conquest: Berlin 1945. Pen & Sword",
+   "default_reliability": "B",
+   "note": "memoirs; unit-level self-reporting"
+  }
+ },
+ "formations": [
+  {
+   "id": "su_1gta_11gtk",
+   "name_ru": "11-й гвардейский танковый корпус",
+   "name_orig": "11th Guards Tank Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1gta",
+   "branch": "tank",
+   "commander": "А. Х. Бабаджанян",
+   "source": "LT_CONQ ch.1-2"
+  },
+  {
+   "id": "su_1gta_8gmk",
+   "name_ru": "8-й гвардейский механизированный корпус",
+   "name_orig": "8th Guards Mechanised Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1gta",
+   "branch": "mech",
+   "commander": "И. Ф. Дрёмов",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "id": "su_11tk",
+   "name_ru": "11-й танковый корпус (придан 1 гв. ТА)",
+   "name_orig": "11th Tank Corps (Yushchuk)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1gta",
+   "branch": "tank",
+   "commander": "И. И. Ющук",
+   "source": "LT_CONQ ch.1; ch.2 (на 21.04 «11-й отд. ТК» с 5 УА)"
+  },
+  {
+   "id": "su_1gta_64gtbr",
+   "name_ru": "64-я отдельная гв. танковая бригада",
+   "name_orig": "64th Independent Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1gta",
+   "branch": "tank",
+   "commander": "Бойко",
+   "source": "LT_CONQ ch.1 (с 24.04 передана 8 гв. А)"
+  },
+  {
+   "id": "su_1gta_44gtbr",
+   "name_ru": "44-я гв. танковая бригада",
+   "name_orig": "44th Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1gta_11gtk",
+   "branch": "tank",
+   "commander": "И. И. Гусаковский",
+   "source": "LT_CONQ ch.1-2"
+  },
+  {
+   "id": "su_1gta_45gtbr",
+   "name_ru": "45-я гв. танковая бригада",
+   "name_orig": "45th Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1gta_11gtk",
+   "branch": "tank",
+   "commander": null,
+   "source": "LT_CONQ ch.2"
+  },
+  {
+   "id": "su_1gta_40gtbr",
+   "name_ru": "40-я гв. танковая бригада",
+   "name_orig": "40th Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1gta_11gtk",
+   "branch": "tank",
+   "commander": null,
+   "source": "LT_CONQ ch.2"
+  },
+  {
+   "id": "su_1gta_27gmsbr",
+   "name_ru": "27-я гв. мотострелковая бригада",
+   "name_orig": "27th Guards Motorised Rifle Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1gta_11gtk",
+   "branch": "motor_rifle",
+   "commander": "Федорович",
+   "source": "LT_CONQ ch.2"
+  },
+  {
+   "id": "su_1gta_1gtbr",
+   "name_ru": "1-я гв. танковая бригада",
+   "name_orig": "1st Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1gta_8gmk",
+   "branch": "tank",
+   "commander": "А. М. Темник (ранен ок. 25.04, умер)",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "id": "su_1gta_19gmbr",
+   "name_ru": "19-я гв. механизированная бригада",
+   "name_orig": "19th Guards Mechanised Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1gta_8gmk",
+   "branch": "mech",
+   "commander": null,
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "id": "su_1gta_mcr",
+   "name_ru": "мотоциклетный полк 1 гв. ТА",
+   "name_orig": "motorcycle regiment (Mussatov)",
+   "side": "su",
+   "echelon": "regiment",
+   "parent": "su_1gta",
+   "branch": "recon",
+   "commander": "Мусатов",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "id": "su_8gva_4gsk",
+   "name_ru": "4-й гвардейский стрелковый корпус",
+   "name_orig": "4th Guards Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ map Seelow Heights; map Berlin Surrounded"
+  },
+  {
+   "id": "su_8gva_28gsk",
+   "name_ru": "28-й гвардейский стрелковый корпус",
+   "name_orig": "28th Guards Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ map Seelow Heights"
+  },
+  {
+   "id": "su_8gva_29gsk",
+   "name_ru": "29-й гвардейский стрелковый корпус",
+   "name_orig": "29th Guards Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "branch": "infantry",
+   "commander": "Я. С. Шеменков",
+   "source": "LT_CONQ ch.2"
+  },
+  {
+   "id": "su_8gva_39gsd",
+   "name_ru": "39-я гвардейская стрелковая дивизия",
+   "name_orig": "39th Guards Rifle Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_8gva",
+   "branch": "infantry",
+   "commander": "Марченко",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "id": "su_5ua_26gsk",
+   "name_ru": "26-й гвардейский стрелковый корпус",
+   "name_orig": "26th Guards Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ ch.3; map Berlin Surrounded"
+  },
+  {
+   "id": "su_5ua_9sk",
+   "name_ru": "9-й стрелковый корпус",
+   "name_orig": "9th Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ ch.1; map Berlin Surrounded"
+  },
+  {
+   "id": "su_5ua_266sd",
+   "name_ru": "266-я стрелковая дивизия",
+   "name_orig": "266th Rifle Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_5ua_26gsk",
+   "branch": "infantry",
+   "commander": "Фоменко",
+   "source": "LT_CONQ ch.3"
+  },
+  {
+   "id": "su_5ua_89gsd",
+   "name_ru": "89-я (гв.) стрелковая дивизия",
+   "name_orig": "89th Rifle Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_5ua",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ ch.3 (в тексте без «гв.»)"
+  },
+  {
+   "id": "su_3ua_79sk",
+   "name_ru": "79-й стрелковый корпус",
+   "name_orig": "79th Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "branch": "infantry",
+   "commander": "С. Н. Переверткин",
+   "source": "LT_CONQ ch.3"
+  },
+  {
+   "id": "su_3ua_12gsk",
+   "name_ru": "12-й гвардейский стрелковый корпус",
+   "name_orig": "12th Guards Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ map Berlin Surrounded"
+  },
+  {
+   "id": "su_3ua_7sk",
+   "name_ru": "7-й стрелковый корпус",
+   "name_orig": "7th Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ map Berlin Surrounded"
+  },
+  {
+   "id": "su_47a_125sk",
+   "name_ru": "125-й стрелковый корпус",
+   "name_orig": "125th Rifle Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_47a",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ map Berlin Surrounded; map Southern Suburbs"
+  },
+  {
+   "id": "su_2gta_1mk",
+   "name_ru": "1-й механизированный корпус",
+   "name_orig": "1st (Krasnograd) Mechanised Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_2gta",
+   "branch": "mech",
+   "commander": "С. М. Кривошеин",
+   "source": "LT_CONQ ch.5-6"
+  },
+  {
+   "id": "su_2gta_9gtk",
+   "name_ru": "9-й гвардейский танковый корпус",
+   "name_orig": "9th Guards Tank Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_2gta",
+   "branch": "tank",
+   "commander": "Ю. Е. Веденеев",
+   "source": "LT_CONQ ch.3, ch.5"
+  },
+  {
+   "id": "su_2gta_12gtk",
+   "name_ru": "12-й гвардейский танковый корпус",
+   "name_orig": "12th Guards Tank Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_2gta",
+   "branch": "tank",
+   "commander": "М. К. Салминов",
+   "source": "LT_CONQ ch.5"
+  },
+  {
+   "id": "su_2gta_347gtsap",
+   "name_ru": "347-й гв. тяжёлый самоходно-артиллерийский полк (ИСУ-152)",
+   "name_orig": "347th Guards Heavy SP Artillery Regiment",
+   "side": "su",
+   "echelon": "regiment",
+   "parent": "su_2gta_1mk",
+   "branch": "artillery",
+   "commander": "Миронов",
+   "source": "LT_CONQ ch.5",
+   "strength": {
+    "note": "ИСУ-152; боекомплект 20 выстрелов; 4 роты"
+   }
+  },
+  {
+   "id": "su_2gta_35mbr",
+   "name_ru": "35-я механизированная бригада",
+   "name_orig": "35th Mechanised Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_2gta_1mk",
+   "branch": "mech",
+   "commander": "Бабаян (погиб в Берлине)",
+   "source": "LT_CONQ ch.5-6"
+  },
+  {
+   "id": "su_2gta_37mbr",
+   "name_ru": "37-я механизированная бригада",
+   "name_orig": "37th Mechanised Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_2gta_1mk",
+   "branch": "mech",
+   "commander": null,
+   "source": "LT_CONQ ch.5"
+  },
+  {
+   "id": "su_2gta_219tbr",
+   "name_ru": "219-я танковая бригада (бригада Вайнруба)",
+   "name_orig": "Vainrub tank brigade (219th)",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_2gta_1mk",
+   "branch": "tank",
+   "commander": "М. Г. Вайнруб",
+   "source": "LT_CONQ ch.5 (номер — собственное знание, C)"
+  },
+  {
+   "id": "su_2gta_47tbr",
+   "name_ru": "47-я гв. танковая бригада",
+   "name_orig": "47th Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_2gta_9gtk",
+   "branch": "tank",
+   "commander": null,
+   "source": "LT_CONQ ch.3"
+  },
+  {
+   "id": "su_2gta_65tbr",
+   "name_ru": "65-я гв. танковая бригада",
+   "name_orig": "65th Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_2gta_9gtk",
+   "branch": "tank",
+   "commander": null,
+   "source": "LT_CONQ ch.3"
+  },
+  {
+   "id": "su_2gta_33mbr",
+   "name_ru": "33-я гв. мотострелковая бригада",
+   "name_orig": "33rd Motorised Rifle Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_2gta_9gtk",
+   "branch": "motor_rifle",
+   "commander": null,
+   "source": "LT_CONQ ch.3"
+  },
+  {
+   "id": "su_1bf_33isbr",
+   "name_ru": "33-я отдельная (гв.) инженерно-сапёрная бригада",
+   "name_orig": "33rd Independent Engineer Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1bf",
+   "branch": "engineer",
+   "commander": "М. Ф. Иоффе (НШ — В. К. Харченко)",
+   "source": "LT_CONQ ch.3",
+   "strength": {
+    "note": "8 батальонов: 1,7→5 УА; 2,4→3 УА; 3,6→2 гв. ТА; 17-й (мостовой); 6-й — электрозаграждения; 8-й — спецразминирование"
+   }
+  },
+  {
+   "id": "su_1bf_7gkk",
+   "name_ru": "7-й гвардейский кавалерийский корпус",
+   "name_orig": "7th Guards Cavalry Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1bf",
+   "branch": "cavalry",
+   "commander": null,
+   "source": "LT_CONQ ch.1, ch.4"
+  },
+  {
+   "id": "su_1pa_1pd",
+   "name_ru": "1-я пехотная дивизия им. Т. Костюшко",
+   "name_orig": "1st Polish Infantry Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_1pa",
+   "branch": "infantry",
+   "commander": null,
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_2pd",
+   "name_ru": "2-я пехотная дивизия ВП",
+   "name_orig": "2th Polish Infantry Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_1pa",
+   "branch": "infantry",
+   "commander": "Суржиц",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_3pd",
+   "name_ru": "3-я пехотная дивизия ВП",
+   "name_orig": "3th Polish Infantry Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_1pa",
+   "branch": "infantry",
+   "commander": "Зайковский",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_4pd",
+   "name_ru": "4-я пехотная дивизия ВП",
+   "name_orig": "4th Polish Infantry Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_1pa",
+   "branch": "infantry",
+   "commander": "Кеневич",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_6pd",
+   "name_ru": "6-я пехотная дивизия ВП",
+   "name_orig": "6th Polish Infantry Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_1pa",
+   "branch": "infantry",
+   "commander": "Шейпак",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_1kbr",
+   "name_ru": "1-я отдельная кавалерийская бригада ВП",
+   "name_orig": "1st Independent Polish Cavalry Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1pa",
+   "branch": "cavalry",
+   "commander": null,
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_2gabr",
+   "name_ru": "2-я гаубичная артбригада ВП",
+   "name_orig": "2nd Howitzer Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1pa",
+   "branch": "artillery",
+   "commander": "Викентьев",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_ptbr",
+   "name_ru": "истребительно-противотанковая бригада ВП (Дейнеховского)",
+   "name_orig": "anti-tank brigade (Dejniechowski)",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_1pa",
+   "branch": "artillery",
+   "commander": "Дейнеховский",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_1pa_4sad",
+   "name_ru": "4-я смешанная авиадивизия ВП",
+   "name_orig": "4th Polish Mixed Air Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_1pa",
+   "branch": "air",
+   "commander": "Ромейко",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "id": "su_3gta_6gtk",
+   "name_ru": "6-й гвардейский танковый корпус",
+   "name_orig": "6th Guards Tank Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3gta",
+   "branch": "tank",
+   "commander": "В. А. Митрофанов",
+   "source": "LT_CONQ ch.6"
+  },
+  {
+   "id": "su_3gta_7gtk",
+   "name_ru": "7-й гвардейский танковый корпус",
+   "name_orig": "7th Guards Tank Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3gta",
+   "branch": "tank",
+   "commander": "В. В. Новиков",
+   "source": "LT_CONQ ch.6"
+  },
+  {
+   "id": "su_3gta_9mk",
+   "name_ru": "9-й механизированный корпус",
+   "name_orig": "9th Mechanised Corps",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3gta",
+   "branch": "mech",
+   "commander": "И. П. Сухов",
+   "source": "LT_CONQ ch.6"
+  },
+  {
+   "id": "su_3gta_55gtbr",
+   "name_ru": "55-я гв. танковая бригада",
+   "name_orig": "55th Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_3gta_7gtk",
+   "branch": "tank",
+   "commander": "Д. А. Драгунский",
+   "source": "LT_CONQ ch.6",
+   "strength": {
+    "personnel": {
+     "value": 500,
+     "note": "«около 500 человек в бригаде», конец апреля",
+     "reliability": "C"
+    }
+   }
+  },
+  {
+   "id": "su_3gta_56gtbr",
+   "name_ru": "56-я гв. танковая бригада",
+   "name_orig": "56th Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_3gta_7gtk",
+   "branch": "tank",
+   "commander": "Слюсаренко",
+   "source": "LT_CONQ ch.6"
+  },
+  {
+   "id": "su_3gta_54gtbr",
+   "name_ru": "54-я гв. танковая бригада (Чугунков)",
+   "name_orig": "54th Guards Tank Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_3gta_7gtk",
+   "branch": "tank",
+   "commander": "Чугунков",
+   "source": "LT_CONQ ch.6 (номер — собственное знание, C)"
+  },
+  {
+   "id": "su_3gta_23gmsbr",
+   "name_ru": "23-я гв. мотострелковая бригада",
+   "name_orig": "23rd Guards Motorised Rifle Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_3gta_7gtk",
+   "branch": "motor_rifle",
+   "commander": "Шаповалов",
+   "source": "LT_CONQ ch.6"
+  },
+  {
+   "id": "su_3gta_22gmsbr",
+   "name_ru": "22-я гв. мотострелковая бригада",
+   "name_orig": "22nd Guards Motorised Rifle Brigade",
+   "side": "su",
+   "echelon": "brigade",
+   "parent": "su_3gta_6gtk",
+   "branch": "motor_rifle",
+   "commander": null,
+   "source": "LT_CONQ ch.6 (принадлежность к 6 гв. ТК — собственное знание, C)"
+  },
+  {
+   "id": "su_28a_55gsd",
+   "name_ru": "55-я гв. стрелковая дивизия",
+   "name_orig": "55th Guards Rifle Division",
+   "side": "su",
+   "echelon": "division",
+   "parent": "su_28a",
+   "branch": "infantry",
+   "commander": "А. П. Турчинский",
+   "source": "LT_CONQ ch.6"
+  }
+ ],
+ "positions": [
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-16",
+   "lng": 14.477,
+   "lat": 52.5061,
+   "approx_km": 5,
+   "place": "Sachsendorf",
+   "sector_note": "ночью на 16.04 вошла в плацдарм в полосу 8 гв. А (Альт-Малиш–Долгелин–Зелов); введена днём",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_11tk",
+   "date": "1945-04-16",
+   "lng": 14.3834,
+   "lat": 52.5618,
+   "approx_km": 3,
+   "place": "Werbig",
+   "sector_note": "правый фланг 1 гв. ТА при вводе 16.04",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-16",
+   "lng": 14.4057,
+   "lat": 52.517,
+   "approx_km": 3,
+   "place": "Friedersdorf_MOL",
+   "sector_note": "центр 1 гв. ТА при вводе 16.04 (на склонах Зеловских высот)",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-16",
+   "lng": 14.406,
+   "lat": 52.4952,
+   "approx_km": 3,
+   "place": "Dolgelin",
+   "sector_note": "левый фланг 1 гв. ТА при вводе 16.04",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-17",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "approx_km": 3,
+   "place": "Seelow",
+   "sector_note": "обойдя Зелов с севера, к вечеру 17.04 помог пехоте очистить город; прорвал вторую полосу к концу дня",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "time": "вечер"
+  },
+  {
+   "formation": "su_11tk",
+   "date": "1945-04-17",
+   "lng": 14.2384,
+   "lat": 52.5966,
+   "approx_km": 5,
+   "place": "Neuhardenberg",
+   "sector_note": "вклинился ~10 км против более слабой обороны (к С от Зелова)",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-19",
+   "lng": 14.3286,
+   "lat": 52.5109,
+   "approx_km": 3,
+   "place": "Diedersdorf_MOL",
+   "sector_note": "третья полоса Мюнхеберг–Дидерсдорф; КП 29 гв. СК в Дидерсдорфе",
+   "source": "LT_CONQ ch.2",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-19",
+   "lng": 14.1405,
+   "lat": 52.5037,
+   "approx_km": 4,
+   "place": "Muencheberg",
+   "sector_note": "бои за Мюнхеберг (город трижды переходил из рук в руки)",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_44gtbr",
+   "date": "1945-04-20",
+   "lng": 13.8,
+   "lat": 52.43,
+   "approx_km": 10,
+   "place": "Muencheberg",
+   "sector_note": "выход к Берлинскому автобану (кольцу) с 27 гв. мсбр",
+   "source": "LT_CONQ ch.2",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_44gtbr",
+   "date": "1945-04-21",
+   "lng": 13.7543,
+   "lat": 52.426,
+   "approx_km": 3,
+   "place": "Erkner",
+   "sector_note": "ночью на 21.04 прошли 25 км через Эркнер, бой за внешний обвод",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_1gtbr",
+   "date": "1945-04-21",
+   "lng": 13.7543,
+   "lat": 52.426,
+   "approx_km": 4,
+   "place": "Erkner",
+   "sector_note": "вместе с 44 гв. тбр — лучшие бригады корпусов к 04:00 21.04",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-22",
+   "lng": 13.5236,
+   "lat": 52.4843,
+   "approx_km": 3,
+   "place": "B_Karlshorst",
+   "sector_note": "обходит Карлсхорст",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-22",
+   "lng": 13.5815,
+   "lat": 52.4584,
+   "approx_km": 2,
+   "place": "B_Koepenick",
+   "sector_note": "с пехотой Чуйкова в Кёпенике",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-23",
+   "lng": 13.5815,
+   "lat": 52.4584,
+   "approx_km": 1,
+   "place": "B_Koepenick",
+   "sector_note": "КП корпуса в подвале на берегу Шпрее; мост взорван",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_19gmbr",
+   "date": "1945-04-23",
+   "lng": 13.5475,
+   "lat": 52.4379,
+   "approx_km": 2,
+   "place": "B_Adlershof",
+   "sector_note": "форсировала Шпрее по ж/д мосту севернее Адлерсхофа",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-24",
+   "lng": 13.56,
+   "lat": 52.42,
+   "approx_km": 3,
+   "place": "B_Adlershof",
+   "sector_note": "ночью на 24.04 1 гв. ТА и 8 гв. А переправились через Шпрее, район Адлерсхоф–Бонсдорф",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_mcr",
+   "date": "1945-04-24",
+   "lng": 13.2685,
+   "lat": 52.3806,
+   "approx_km": 3,
+   "place": "B_Teltow",
+   "sector_note": "10:30 24.04 вышел к Тельтову, встреча с танкистами Рыбалко",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "time": "10:30"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-26",
+   "lng": 13.3816,
+   "lat": 52.504,
+   "approx_km": 1,
+   "place": "B_AnhalterBf",
+   "sector_note": "тяжёлые бои у Анхальтского вокзала",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-28",
+   "lng": 13.3816,
+   "lat": 52.504,
+   "approx_km": 1,
+   "place": "B_AnhalterBf",
+   "sector_note": "полная очистка Анхальтского вокзала с 9 СК 5 УА",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_19gmbr",
+   "date": "1945-04-29",
+   "lng": 13.405,
+   "lat": 52.493,
+   "approx_km": 1,
+   "place": "B_Urbanstr",
+   "sector_note": "бой на Урбанштрассе к Зоо (локализация неуверенная)",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-29",
+   "lng": 13.3319,
+   "lat": 52.5071,
+   "approx_km": 1,
+   "place": "B_Zoo",
+   "sector_note": "задача: Зоологический сад совместно с 8 гв. А",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-29",
+   "lng": 13.3756,
+   "lat": 52.5098,
+   "approx_km": 1,
+   "place": "B_PotsdamerPlatz",
+   "sector_note": "задача: вокзал Потсдамер-плац и Рейхсканцелярия",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva_39gsd",
+   "date": "1945-05-01",
+   "lng": 13.3319,
+   "lat": 52.5071,
+   "approx_km": 1,
+   "place": "B_Zoo",
+   "sector_note": "1.05 весь Зоосад в руках дивизии",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_1gtbr",
+   "date": "1945-05-01",
+   "lng": 13.3618,
+   "lat": 52.5163,
+   "approx_km": 1,
+   "place": "B_Tiergarten",
+   "sector_note": "18:00 1.05 последняя атака на Тиргартен",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "time": "18:00"
+  },
+  {
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-17",
+   "lng": 14.3544,
+   "lat": 52.5712,
+   "approx_km": 2,
+   "place": "Gusow",
+   "sector_note": "атака севернее Зелова в направлении Гузов–Платков–Батцлов; обеспечивала переправу 37 мбр через Альте-Одер",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-19",
+   "lng": 14.1195,
+   "lat": 52.6323,
+   "approx_km": 3,
+   "place": "Batzlow",
+   "sector_note": "бой за Батцлов несколько часов",
+   "source": "LT_CONQ ch.5",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-20",
+   "lng": 13.4821,
+   "lat": 52.5799,
+   "approx_km": 2,
+   "place": "B_Malchow",
+   "sector_note": "передовой батальон освободил Цеперник, остановлен у Мальхова ок. 10:00",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "time": "10:00"
+  },
+  {
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-21",
+   "lng": 13.4821,
+   "lat": 52.5799,
+   "approx_km": 1,
+   "place": "B_Malchow",
+   "sector_note": "штурм Мальхова через Шванебек; к ночи продвинулся к окраине Берлина",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-22",
+   "lng": 13.463,
+   "lat": 52.5546,
+   "approx_km": 3,
+   "place": "B_Weissensee",
+   "sector_note": "утром 22.04 прорыв, Berliner Strasse; вход в Берлин с 3 УА",
+   "source": "LT_CONQ ch.5",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-26",
+   "lng": 13.27,
+   "lat": 52.537,
+   "approx_km": 1,
+   "place": "B_Siemensstadt_Canal",
+   "sector_note": "на южном берегу канала у Сименсштадта; 14:00 огонь по Рейхстагу",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "time": "14:00"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-27",
+   "lng": 13.2414,
+   "lat": 52.5257,
+   "approx_km": 2,
+   "place": "B_Ruhleben",
+   "sector_note": "батальон 35 мбр (Протасов) встретил 55 гв. тбр между Сименсштадтом и Рулебеном в 12:00",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "time": "12:00"
+  },
+  {
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-30",
+   "lng": 13.3191,
+   "lat": 52.5052,
+   "approx_km": 1,
+   "place": "B_Savignyplatz",
+   "sector_note": "подготовка атаки на ст. Савиньиплац, огонь по Рейхсканцелярии",
+   "source": "LT_CONQ ch.5",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-05-02",
+   "lng": 13.345,
+   "lat": 52.512,
+   "approx_km": 1,
+   "place": "B_Tiergarten",
+   "sector_note": "200 м от Тиргартена при капитуляции",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_12gtk",
+   "date": "1945-05-01",
+   "lng": 13.324,
+   "lat": 52.515,
+   "approx_km": 1,
+   "place": "B_Englische",
+   "sector_note": "дошёл до Englische Strasse, полуокружён; поддержан 3 пп 1 пд ВП",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-15",
+   "lng": 14.5112,
+   "lat": 52.6129,
+   "approx_km": 3,
+   "place": "Genschmar",
+   "sector_note": "район сосредоточения корпуса (3-й саперный батальон подчинён к 15.04)",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-20",
+   "lng": 14.0,
+   "lat": 52.68,
+   "approx_km": 8,
+   "place": "Wriezen",
+   "sector_note": "после прорыва у Врицен–Альтфридланд пошёл в обход Берлина с севера",
+   "source": "LT_CONQ ch.3",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_47tbr",
+   "date": "1945-04-24",
+   "lng": 12.8773,
+   "lat": 52.6061,
+   "approx_km": 4,
+   "place": "Nauen",
+   "sector_note": "передовой батальон в лесу 4 км восточнее Науэна; мосты через Хафельканал взяты целыми",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_65tbr",
+   "date": "1945-04-26",
+   "lng": 12.876,
+   "lat": 52.4696,
+   "approx_km": 3,
+   "place": "Paretz",
+   "sector_note": "переправа по восстановленному ж/д мосту через Закров-Парецкий канал утром следующего дня",
+   "source": "LT_CONQ ch.3",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-30",
+   "lng": 13.3026,
+   "lat": 52.5043,
+   "approx_km": 2,
+   "place": "B_Charlottenburg",
+   "sector_note": "утром 30.04 танки к Тиргартену из Шарлоттенбурга",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_33mbr",
+   "date": "1945-05-02",
+   "lng": 13.2062,
+   "lat": 52.5351,
+   "approx_km": 1,
+   "place": "B_Charlottenbruecke",
+   "sector_note": "ночью на 2.05 саперы разминировали баррикаду на Шарлоттенбургском мосту",
+   "source": "LT_CONQ ch.3",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1bf_33isbr",
+   "date": "1945-04-21",
+   "lng": 13.4837,
+   "lat": 52.6132,
+   "approx_km": 2,
+   "place": "B_Karow",
+   "sector_note": "опергруппа Голуба в Карове (3 УА)",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1bf_33isbr",
+   "date": "1945-04-30",
+   "lng": 13.33,
+   "lat": 52.542,
+   "approx_km": 1,
+   "place": "B_Moabit_Ploetzensee",
+   "sector_note": "КП опергруппы Голуба в Плётцензее; 4-й батальон у МВД (Мольтке)",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua_26gsk",
+   "date": "1945-04-25",
+   "lng": 13.4136,
+   "lat": 52.522,
+   "approx_km": 1,
+   "place": "B_Alexanderplatz",
+   "sector_note": "бои за Александерплац, ратушу, полицайпрезидиум (дата ориентировочна)",
+   "source": "LT_CONQ ch.3",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua_79sk",
+   "date": "1945-04-29",
+   "lng": 13.3688,
+   "lat": 52.5219,
+   "approx_km": 1,
+   "place": "B_Moltkebruecke",
+   "sector_note": "ночью на 29.04 форсировал мост Мольтке к Рейхстагу",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-13",
+   "lng": 14.4314,
+   "lat": 52.963,
+   "approx_km": 15,
+   "place": "Chojna",
+   "sector_note": "сосредоточение в районе Кёнигсберг (Ноймарк) после 200-км марша 8–13.04",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_2pd",
+   "date": "1945-04-16",
+   "lng": 14.291,
+   "lat": 52.7461,
+   "approx_km": 3,
+   "place": "Neulewin",
+   "sector_note": "исходное в плацдарме 47 А, главный удар",
+   "source": "LT_CONQ ch.4; map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_3pd",
+   "date": "1945-04-16",
+   "lng": 14.26,
+   "lat": 52.74,
+   "approx_km": 3,
+   "place": "Neulewin",
+   "sector_note": "исходное в плацдарме 47 А у Karlshof",
+   "source": "LT_CONQ ch.4; map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_1pd",
+   "date": "1945-04-16",
+   "lng": 14.2445,
+   "lat": 52.809,
+   "approx_km": 3,
+   "place": "Zaeckerick",
+   "sector_note": "форсирование Одера у Кристиансауэ (Zäckerick)",
+   "source": "LT_CONQ ch.4; map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_3pd",
+   "date": "1945-04-17",
+   "lng": 14.2087,
+   "lat": 52.7383,
+   "approx_km": 2,
+   "place": "Altwriezen",
+   "sector_note": "продвинулась на 7 км: Альтврицен, Альтмедевиц, Нойкиц; левый полк у с. окраины Врицена",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_6pd",
+   "date": "1945-04-17",
+   "lng": 14.2,
+   "lat": 52.8,
+   "approx_km": 4,
+   "place": "NeuRuednitz",
+   "sector_note": "ночью на 17.04 поставлена в разрыв с 61 А",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_6pd",
+   "date": "1945-04-18",
+   "lng": 14.12,
+   "lat": 52.8,
+   "approx_km": 4,
+   "place": "NeuRuednitz",
+   "sector_note": "позиция ночью 18.04 (карта)",
+   "source": "LT_CONQ map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_1pd",
+   "date": "1945-04-18",
+   "lng": 14.06,
+   "lat": 52.77,
+   "approx_km": 3,
+   "place": "BadFreienwalde",
+   "sector_note": "позиция ночью 18.04 (карта)",
+   "source": "LT_CONQ map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_2pd",
+   "date": "1945-04-18",
+   "lng": 14.13,
+   "lat": 52.79,
+   "approx_km": 3,
+   "place": "Altmaedewitz",
+   "sector_note": "позиция ночью 18.04 (Адлиг-Рец)",
+   "source": "LT_CONQ map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_3pd",
+   "date": "1945-04-18",
+   "lng": 14.13,
+   "lat": 52.76,
+   "approx_km": 3,
+   "place": "Altmaedewitz",
+   "sector_note": "позиция ночью 18.04 (Альт-Рец/Шпегер)",
+   "source": "LT_CONQ map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_4pd",
+   "date": "1945-04-18",
+   "lng": 14.15,
+   "lat": 52.73,
+   "approx_km": 3,
+   "place": "Wriezen",
+   "sector_note": "позиция ночью 18.04 у Врицена",
+   "source": "LT_CONQ map 1st Polish Army",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-20",
+   "lng": 13.8,
+   "lat": 52.75,
+   "approx_km": 10,
+   "place": "TrampeLine",
+   "sector_note": "линия Трампе–Даневиц–Шметцдорф после +15 и +10 км",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-23",
+   "lng": 13.2458,
+   "lat": 52.7529,
+   "approx_km": 5,
+   "place": "Oranienburg",
+   "sector_note": "полдень 23.04 форсирован Одер-Хафель-канал у Ораниенбурга с кавалерией",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "time": "полдень"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-24",
+   "lng": 12.95,
+   "lat": 52.7,
+   "approx_km": 15,
+   "place": "KremmenNauenLine",
+   "sector_note": "прошла 80 км с боями, линия Креммен–Флатов–Бёрнике–Науэн, переход к обороне (фронт ~40 км)",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_2pd",
+   "date": "1945-04-25",
+   "lng": 13.05,
+   "lat": 52.79,
+   "approx_km": 3,
+   "place": "RuppinerKanal",
+   "sector_note": "контрудар; отход 2 полков на 3 км, плацдарм противника на ю. берегу Руппинского канала",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-30",
+   "lng": 12.7652,
+   "lat": 52.8142,
+   "approx_km": 10,
+   "place": "Fehrbellin",
+   "sector_note": "бои на Рин-канале 27–30.04, взят Фербеллин",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_1pd",
+   "date": "1945-05-01",
+   "lng": 13.3052,
+   "lat": 52.5115,
+   "approx_km": 1,
+   "place": "B_Bismarckstr",
+   "sector_note": "1 пп с 03:00 1.05 по Бисмаркштрассе; 3 пп от Шарлоттенбургер Шоссе",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_1pd",
+   "date": "1945-05-02",
+   "lng": 13.3265,
+   "lat": 52.5125,
+   "approx_km": 1,
+   "place": "B_TechnischeHochschule",
+   "sector_note": "утром 2.05 взята Высшая техническая школа, выход к Зоо/Будапештер-штр.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_2pd",
+   "date": "1945-05-04",
+   "lng": 12.0,
+   "lat": 52.7,
+   "approx_km": 15,
+   "place": "Klietz",
+   "sector_note": "утром 4.05 вышла к Эльбе",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_4pd",
+   "date": "1945-05-06",
+   "lng": 12.0688,
+   "lat": 52.6676,
+   "approx_km": 3,
+   "place": "Klietz",
+   "sector_note": "ночью на 6.05 — Эльба у Клитца",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_6pd",
+   "date": "1945-05-03",
+   "lng": 12.1,
+   "lat": 52.78,
+   "approx_km": 15,
+   "place": "Rhinow",
+   "sector_note": "14 пп переправился через Хафель и вышел к Эльбе (правый фланг)",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1bf_7gkk",
+   "date": "1945-04-20",
+   "lng": 13.8,
+   "lat": 52.75,
+   "approx_km": 10,
+   "place": "TrampeLine",
+   "sector_note": "введён в 10-км разрыв между 1 А ВП и 47 А",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-22",
+   "lng": 13.2077,
+   "lat": 52.387,
+   "approx_km": 2,
+   "place": "B_Stahnsdorf",
+   "sector_note": "у Тельтов-канала напротив Штансдорфа; мост взорван перед бригадой",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_7gtk",
+   "date": "1945-04-23",
+   "lng": 13.23,
+   "lat": 52.39,
+   "approx_km": 3,
+   "place": "B_Stahnsdorf",
+   "sector_note": "форсирование на фронте 5 км двумя участками",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-24",
+   "lng": 13.2077,
+   "lat": 52.387,
+   "approx_km": 1,
+   "place": "B_Stahnsdorf",
+   "sector_note": "неудачная попытка форсирования; переправа вечером по чужому мосту",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_22gmsbr",
+   "date": "1945-04-24",
+   "lng": 13.27,
+   "lat": 52.395,
+   "approx_km": 2,
+   "place": "B_Teltow",
+   "sector_note": "в центре форсировала канал, плацдарм, мост через несколько часов",
+   "source": "LT_CONQ ch.6",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-25",
+   "lng": 13.2586,
+   "lat": 52.4311,
+   "approx_km": 2,
+   "place": "B_Zehlendorf",
+   "sector_note": "ночью к Лихтерфельде-Вест; днём Лихтерфельде и Целендорф, выход к Авусу",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-26",
+   "lng": 13.271,
+   "lat": 52.5095,
+   "approx_km": 1,
+   "place": "B_Heerstr",
+   "sector_note": "на рассвете вышла на Хеерштрассе у Олимпийского стадиона",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-27",
+   "lng": 13.2414,
+   "lat": 52.5257,
+   "approx_km": 1,
+   "place": "B_Ruhleben",
+   "sector_note": "12:00 встреча с 1 мк 2 гв. ТА — замкнуто внутреннее кольцо",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "time": "12:00"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-28",
+   "lng": 13.3191,
+   "lat": 52.5052,
+   "approx_km": 1,
+   "place": "B_Savignyplatz",
+   "sector_note": "атака Шарлоттенбург–Савиньиплац к Зоо",
+   "source": "LT_CONQ ch.6",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-29",
+   "lng": 13.2836,
+   "lat": 52.5011,
+   "approx_km": 1,
+   "place": "B_Westkreuz",
+   "sector_note": "отвод в район Вест-кройц/Витцлебен после смены разграничительной линии",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-30",
+   "lng": 13.2398,
+   "lat": 52.5146,
+   "approx_km": 1,
+   "place": "B_Olympiastadion",
+   "sector_note": "между ст. Райхсшпортфельд и Райхсштрассе; отражение прорыва на запад",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-05-02",
+   "lng": 13.2276,
+   "lat": 52.5102,
+   "approx_km": 1,
+   "place": "B_Pichelsberg",
+   "sector_note": "ночь у Пихельсберга; капитуляция гарнизона",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_6gtk",
+   "date": "1945-04-25",
+   "lng": 13.3223,
+   "lat": 52.4573,
+   "approx_km": 2,
+   "place": "B_Steglitz",
+   "sector_note": "наступление к Шёнебергу (карта Southern Suburbs)",
+   "source": "LT_CONQ map Southern Suburbs",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_9mk",
+   "date": "1945-04-25",
+   "lng": 13.34,
+   "lat": 52.46,
+   "approx_km": 2,
+   "place": "B_Steglitz",
+   "sector_note": "Штеглиц–Шёнеберг (карта)",
+   "source": "LT_CONQ map Southern Suburbs",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_7gtk",
+   "date": "1945-04-26",
+   "lng": 13.2338,
+   "lat": 52.4288,
+   "approx_km": 3,
+   "place": "B_Dueppel",
+   "sector_note": "Целендорф–Далем, удар на север (карта)",
+   "source": "LT_CONQ map Southern Suburbs",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_28a_55gsd",
+   "date": "1945-04-28",
+   "lng": 13.2836,
+   "lat": 52.5011,
+   "approx_km": 2,
+   "place": "B_Westkreuz",
+   "sector_note": "смешалась с танкистами 55 гв. тбр у Вест-кройц",
+   "source": "LT_CONQ ch.6",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-23",
+   "lng": 13.32,
+   "lat": 52.6,
+   "approx_km": 1.5,
+   "place": "Виттенау",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_12gtk",
+   "date": "1945-04-23",
+   "lng": 13.37,
+   "lat": 52.6,
+   "approx_km": 1.5,
+   "place": "юго-вост. Виттенау/Розенталь",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua_79sk",
+   "date": "1945-04-23",
+   "lng": 13.4,
+   "lat": 52.585,
+   "approx_km": 1.5,
+   "place": "Нидершёнхаузен",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua_12gsk",
+   "date": "1945-04-23",
+   "lng": 13.45,
+   "lat": 52.575,
+   "approx_km": 1.5,
+   "place": "Панков–Вайсензее",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua_7sk",
+   "date": "1945-04-23",
+   "lng": 13.46,
+   "lat": 52.555,
+   "approx_km": 1.5,
+   "place": "Вайсензее",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua_26gsk",
+   "date": "1945-04-23",
+   "lng": 13.47,
+   "lat": 52.54,
+   "approx_km": 1.5,
+   "place": "южнее Вайсензее",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua_9sk",
+   "date": "1945-04-23",
+   "lng": 13.52,
+   "lat": 52.48,
+   "approx_km": 1.5,
+   "place": "Карлсхорст",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_8gva_4gsk",
+   "date": "1945-04-23",
+   "lng": 13.5,
+   "lat": 52.465,
+   "approx_km": 1.5,
+   "place": "Йоханнисталь–Трептов",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_8gva_29gsk",
+   "date": "1945-04-23",
+   "lng": 13.52,
+   "lat": 52.45,
+   "approx_km": 1.5,
+   "place": "Адлерсхоф–Йоханнисталь",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_8gva_28gsk",
+   "date": "1945-04-23",
+   "lng": 13.58,
+   "lat": 52.445,
+   "approx_km": 1.5,
+   "place": "Кёпеник",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_47a_125sk",
+   "date": "1945-04-23",
+   "lng": 13.19,
+   "lat": 52.6,
+   "approx_km": 1.5,
+   "place": "Хеннигсдорф–Хайлигензее",
+   "sector_note": "положение по карте «Berlin Surrounded» (метки 23.04/28.04 различаются не везде)",
+   "source": "LT_CONQ map Berlin Surrounded",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_4pd",
+   "date": "1945-05-01",
+   "lng": 12.8,
+   "lat": 52.82,
+   "approx_km": 30,
+   "place": "Oranienburg",
+   "sector_note": "танки дивизии уже за каналом (Рин)",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  }
+ ],
+ "frontline": [
+  {
+   "date": "1945-04-23",
+   "sector": "Берлин: советское кольцо по карте (с севера, востока, юго-востока)",
+   "points": [
+    {
+     "place": "Hennigsdorf",
+     "lng": 13.206,
+     "lat": 52.638
+    },
+    {
+     "place": "B_Wittenau",
+     "lng": 13.323,
+     "lat": 52.591
+    },
+    {
+     "place": "B_Niederschoenhausen",
+     "lng": 13.401,
+     "lat": 52.586
+    },
+    {
+     "place": "B_Weissensee",
+     "lng": 13.463,
+     "lat": 52.555
+    },
+    {
+     "place": "B_Lichtenberg",
+     "lng": 13.496,
+     "lat": 52.51
+    },
+    {
+     "place": "B_Karlshorst",
+     "lng": 13.524,
+     "lat": 52.484
+    },
+    {
+     "place": "B_Johannisthal",
+     "lng": 13.505,
+     "lat": 52.446
+    },
+    {
+     "place": "B_Teltow",
+     "lng": 13.269,
+     "lat": 52.381
+    }
+   ],
+   "source": "LT_CONQ map Berlin Surrounded; LT_CONQ ch.1, ch.6",
+   "reliability": "C"
+  },
+  {
+   "date": "1945-04-27",
+   "sector": "Берлин: окружённая группировка 3–5 × 16 км (Шпандау–Фридрихсхайн)",
+   "points": [
+    {
+     "place": "B_Ruhleben",
+     "lng": 13.241,
+     "lat": 52.526
+    },
+    {
+     "place": "B_Westkreuz",
+     "lng": 13.284,
+     "lat": 52.501
+    },
+    {
+     "place": "B_Kreuzberg_Landwehrkanal",
+     "lng": 13.4,
+     "lat": 52.495
+    },
+    {
+     "place": "B_Friedrichshain",
+     "lng": 13.45,
+     "lat": 52.512
+    },
+    {
+     "place": "B_Alexanderplatz",
+     "lng": 13.414,
+     "lat": 52.522
+    },
+    {
+     "place": "B_Moabit",
+     "lng": 13.335,
+     "lat": 52.535
+    }
+   ],
+   "source": "LT_CONQ ch.1 (размер 3–5 × 16 км); контур — оценка",
+   "reliability": "C"
+  },
+  {
+   "date": "1945-04-24",
+   "sector": "Север: 1 А ВП, оборона по каналам",
+   "points": [
+    {
+     "place": "Kremmen",
+     "lng": 13.03,
+     "lat": 52.761
+    },
+    {
+     "place": "Flatow",
+     "lng": 12.955,
+     "lat": 52.732
+    },
+    {
+     "place": "Boernicke_HVL",
+     "lng": 12.938,
+     "lat": 52.685
+    },
+    {
+     "place": "Nauen",
+     "lng": 12.877,
+     "lat": 52.606
+    }
+   ],
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-20",
+   "sector": "Север: 1 А ВП",
+   "points": [
+    {
+     "place": "Trampe",
+     "lng": 13.837,
+     "lat": 52.778
+    },
+    {
+     "place": "Danewitz",
+     "lng": 13.669,
+     "lat": 52.72
+    },
+    {
+     "place": "Schmetzdorf",
+     "lng": 13.62,
+     "lat": 52.765
+    }
+   ],
+   "source": "LT_CONQ ch.4",
+   "reliability": "C",
+   "note": "порядок точек по тексту; Шметцдорф — оценка"
+  }
+ ],
+ "events": [
+  {
+   "date": "1945-03-28",
+   "title": "Ликвидация окружённой группы в Кюстрине; контратаки 26 и 28.03 силами до батальона с 10–30 танками отбиты",
+   "place": "Kostrzyn",
+   "lng": 14.6536,
+   "lat": 52.5899,
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-13",
+   "title": "Ночью проделано 340 проходов в своих минных полях, снято 72 000 мин (1 БФ)",
+   "place": "Kienitz",
+   "lng": 14.4388,
+   "lat": 52.6735,
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-16",
+   "title": "Арт­подготовка 1 БФ, 140 прожекторов; вторая полоса на Зеловских высотах не прорвана за 9 часов",
+   "place": "Seelow",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "source": "LT_CONQ ch.1, ch.3",
+   "reliability": "B",
+   "time": "05:00 (ch.1) / 05:50 (ch.3)"
+  },
+  {
+   "date": "1945-04-16",
+   "title": "Ввод 1 гв. ТА в бой до прорыва тактической зоны по приказу Жукова",
+   "place": "Dolgelin",
+   "lng": 14.406,
+   "lat": 52.4952,
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-16",
+   "title": "Атака 1 А ВП после 30-мин артподготовки; туман рассеялся на рассвете",
+   "place": "Neulewin",
+   "lng": 14.291,
+   "lat": 52.7461,
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "time": "06:15"
+  },
+  {
+   "date": "1945-04-17",
+   "title": "Зелов очищен 8 гв. А при обходе с севера 11 гв. ТК",
+   "place": "Seelow",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "time": "вечер"
+  },
+  {
+   "date": "1945-04-18",
+   "title": "Кризис боёв за Зеловские высоты; вторая полоса прорвана утром 18.04 (по ch.3)",
+   "place": "Seelow",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "source": "LT_CONQ ch.1, ch.3",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-17",
+   "title": "Части 1 А ВП вступили во Врицен вслед за 47 А; противник оставил город",
+   "place": "Wriezen",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "date": "1945-04-19",
+   "title": "Мюнхеберг трижды переходил из рук в руки; захвачено 38 самолётов на аэродроме",
+   "place": "Muencheberg",
+   "lng": 14.1405,
+   "lat": 52.5037,
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "date": "1945-04-20",
+   "title": "9 гв. ТК: ночное столкновение с немецкой колонной, раздавлено 26 машин, брошено 8 орудий",
+   "place": "Wriezen",
+   "lng": 13.95,
+   "lat": 52.68,
+   "source": "LT_CONQ ch.3",
+   "reliability": "C"
+  },
+  {
+   "date": "1945-04-21",
+   "title": "Первые части 1 БФ (2 гв. ТА/5 УА/3 УА) в Берлине; 1 мк — у Мальхова, 347 гв. тсап штурмует Мальхов",
+   "place": "B_Malchow",
+   "lng": 13.4821,
+   "lat": 52.5799,
+   "source": "LT_CONQ ch.5; map Berlin Surrounded",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-23",
+   "title": "19 гв. мбр форсировала Шпрее по ж/д мосту у Адлерсхофа; сапёры строят мост в Кёпенике (2–3 ч)",
+   "place": "B_Adlershof",
+   "lng": 13.5475,
+   "lat": 52.4379,
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-23",
+   "title": "1 А ВП с кавалерией форсировала Одер-Хафель-канал у Ораниенбурга",
+   "place": "Oranienburg",
+   "lng": 13.2458,
+   "lat": 52.7529,
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "time": "полдень"
+  },
+  {
+   "date": "1945-04-24",
+   "title": "Разведбат Графова захватил аэродром Адлерсхоф, уничтожено 70 самолётов",
+   "place": "B_Adlershof",
+   "lng": 13.5475,
+   "lat": 52.4379,
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "time": "~02:00"
+  },
+  {
+   "date": "1945-04-24",
+   "title": "Мотоциклетный полк 1 гв. ТА встретил части Рыбалко у Тельтова",
+   "place": "B_Teltow",
+   "lng": 13.2685,
+   "lat": 52.3806,
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "time": "10:30"
+  },
+  {
+   "date": "1945-04-24",
+   "title": "Форсирование Тельтов-канала 3 гв. ТА; плотность 600 стволов/км",
+   "place": "B_Teltow",
+   "lng": 13.2685,
+   "lat": 52.3806,
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-24",
+   "title": "47 тбр 9 гв. ТК захватила неповреждённые мосты у Науэна (обезврежено 0,5 т тротила и 3 бомбы по 250 кг)",
+   "place": "Nauen",
+   "lng": 12.8773,
+   "lat": 52.6061,
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-25",
+   "title": "Замыкание кольца вокруг Берлина: 47 А и 2 гв. ТА с 4 гв. ТА в районе Кетцин",
+   "place": "Ketzin",
+   "lng": 12.8444,
+   "lat": 52.4769,
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-25",
+   "title": "Контрудар (25 мд, 3 мор. д, 4 пол. д) против 1 А ВП; отход 2 полков на 3 км на Руппинском канале",
+   "place": "RuppinerKanal",
+   "lng": 13.05,
+   "lat": 52.79,
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-25",
+   "title": "55 гв. тбр попала в засаду в Целендорфе; к вечеру выход к Авусу",
+   "place": "B_Zehlendorf",
+   "lng": 13.2586,
+   "lat": 52.4311,
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-26",
+   "title": "347 гв. тсап открыл огонь прямой наводкой по Рейхстагу из района Сименсштадта",
+   "place": "B_Siemensstadt_Canal",
+   "lng": 13.27,
+   "lat": 52.537,
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "time": "14:00"
+  },
+  {
+   "date": "1945-04-27",
+   "title": "Смыкание внутреннего кольца: 55 гв. тбр (1 УФ) и 35 мбр 1 мк (1 БФ) между Сименсштадтом и Рулебеном",
+   "place": "B_Ruhleben",
+   "lng": 13.2414,
+   "lat": 52.5257,
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "time": "12:00"
+  },
+  {
+   "date": "1945-04-27",
+   "title": "КП 11 гв. ТК: налёты 3–4 самолётов каждые 10 мин по наводке радиста; 5 убитых",
+   "place": "B_Kreuzberg",
+   "lng": 13.4119,
+   "lat": 52.4976,
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "date": "1945-04-28",
+   "title": "Очистка Анхальтского вокзала 11 гв. ТК и 9 СК",
+   "place": "B_AnhalterBf",
+   "lng": 13.3816,
+   "lat": 52.504,
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-29",
+   "title": "79 СК ночью форсировал мост Мольтке",
+   "place": "B_Moltkebruecke",
+   "lng": 13.3688,
+   "lat": 52.5219,
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-29",
+   "title": "Жуков приказал ввести 1 пд ВП в Берлин (полк — сразу в Райникендорф, остальные к 18:00 30.04)",
+   "place": "B_Reinickendorf",
+   "lng": 13.2881,
+   "lat": 52.6048,
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "time": "15:00"
+  },
+  {
+   "date": "1945-04-30",
+   "title": "Штурм Рейхстага, к 18:00 вход в здание; знамя вечером",
+   "place": "B_Reichstag",
+   "lng": 13.3761,
+   "lat": 52.5187,
+   "source": "LT_CONQ ch.5, ch.2",
+   "reliability": "B",
+   "time": "18:00"
+  },
+  {
+   "date": "1945-04-30",
+   "title": "Попытка прорыва на запад (СС, ГЮ) через Витцлебен–Хеерштрассе–Райхсшпортфельд отражена 7 гв. ТК и 55 гв. сд",
+   "place": "B_Olympiastadion",
+   "lng": 13.2398,
+   "lat": 52.5146,
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-05-01",
+   "title": "Контратака танков/САУ из Тиргартена к Рейхстагу; сапёры наспех поставили 100 мин",
+   "place": "B_Tiergarten",
+   "lng": 13.3618,
+   "lat": 52.5163,
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-05-01",
+   "title": "Зоосад взят 39 гв. сд и 8 гв. мк (бункер вскрыт подрывом дверей)",
+   "place": "B_Zoo",
+   "lng": 13.3319,
+   "lat": 52.5071,
+   "source": "LT_CONQ ch.1",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-05-02",
+   "title": "Ночная попытка прорыва (~04:00) у расположения 6-го саперного батальона: потери противника 1 танк, 2 штурмовых орудия, ~50 чел.; ~200 пленных",
+   "place": "B_Mitte",
+   "lng": 13.3598,
+   "lat": 52.5332,
+   "source": "LT_CONQ ch.3",
+   "reliability": "C",
+   "time": "04:00"
+  },
+  {
+   "date": "1945-05-02",
+   "title": "Капитуляция Берлинского гарнизона; бои стихли ок. 15:00; 7 700 сдались 1 гв. ТА",
+   "place": "B_Tiergarten",
+   "lng": 13.3618,
+   "lat": 52.5163,
+   "source": "LT_CONQ ch.1-3",
+   "reliability": "B",
+   "time": "15:00"
+  },
+  {
+   "date": "1945-05-02",
+   "title": "1 пд ВП: взята Высшая техническая школа, соединение с войсками 1 УФ на Будапештер-штрассе",
+   "place": "B_TechnischeHochschule",
+   "lng": 13.3265,
+   "lat": 52.5125,
+   "source": "LT_CONQ ch.4",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-05-09",
+   "title": "55 гв. тбр вошла в Прагу (Вацлавская площадь)",
+   "place": "Praha",
+   "lng": 14.4213,
+   "lat": 50.0875,
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  }
+ ],
+ "orders": [
+  {
+   "date": "1945-04-12",
+   "issuer": "su_1bf",
+   "recipient": "su_1gta",
+   "task": "attack",
+   "area": "Küstrin bridgehead",
+   "summary_ru": "Выдвинуться на Кюстринский плацдарм, войти в прорыв 8 гв. А по выходе на Зелов–Долгелин–Альт-Малиш, к исходу 2-го дня — восточные пригороды Берлина.",
+   "source": "LT_CONQ ch.1",
+   "toArea": "Berlin SE/S suburbs"
+  },
+  {
+   "date": "1945-04-16",
+   "issuer": "su_1bf",
+   "recipient": "su_1gta",
+   "task": "attack",
+   "area": "Seelow Heights",
+   "summary_ru": "Ввести армию в бой до подавления обороны и вместе с 8 гв. А завершить прорыв тактической зоны.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-17",
+   "issuer": "su_1gta",
+   "recipient": "su_1gta_8gmk",
+   "task": "attack",
+   "area": "Seelow N",
+   "summary_ru": "Оставить бригаду в заслоне, главными силами войти в брешь 11 гв. ТК и развивать успех.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-17",
+   "issuer": "su_1gta",
+   "recipient": "su_1gta_64gtbr",
+   "task": "attack",
+   "area": "Seelow",
+   "summary_ru": "Войти в брешь с двумя самоходными полками, прикрыть левый фланг Бабаджаняна от контратак.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-19",
+   "issuer": "su_1bf",
+   "recipient": "su_1bf_7gkk",
+   "task": "relieve",
+   "area": "Müncheberg left flank",
+   "summary_ru": "Кавкорпус из резерва фронта сменяет бригады 8 гв. мк на левом фланге 1 гв. ТА.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-20",
+   "issuer": "su_1bf",
+   "recipient": "su_1gta",
+   "task": "attack",
+   "area": "Erkner",
+   "summary_ru": "Лучшую бригаду каждого корпуса направить в Берлин; прорвать городскую черту не позднее 04:00 21.04.",
+   "source": "LT_CONQ ch.1-2",
+   "time": "вечер",
+   "toArea": "Berlin city limit"
+  },
+  {
+   "date": "1945-04-21",
+   "issuer": "su_2gta_1mk",
+   "recipient": "su_2gta_347gtsap",
+   "task": "attack",
+   "area": "Malchow",
+   "summary_ru": "Тяжёлыми САУ взломать оборону Мальхова и ворваться в Берлин с пехотой: Биркхольц–Мальхов–северо-восточная окраина.",
+   "source": "LT_CONQ ch.5"
+  },
+  {
+   "date": "1945-04-23",
+   "issuer": "su_1bf",
+   "recipient": "su_1gta",
+   "task": "attack",
+   "area": "Adlershof, Tempelhof airfields",
+   "summary_ru": "Сформировать спецгруппы для захвата аэродромов Адлерсхоф и Темпельхоф.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-23",
+   "issuer": "su_3gta_7gtk",
+   "recipient": "su_3gta_55gtbr",
+   "task": "attack",
+   "area": "Teltow Canal at Stahnsdorf",
+   "summary_ru": "Форсировать канал на фронте 5 км двумя участками; готовность доложить к концу 23.04.",
+   "source": "LT_CONQ ch.6",
+   "toArea": "Zehlendorf"
+  },
+  {
+   "date": "1945-04-24",
+   "issuer": "su_1bf",
+   "recipient": "su_1gta",
+   "task": "attack",
+   "area": "Berlin centre",
+   "summary_ru": "Армия получает свою полосу на Вильгельмштрассе; 64 гв. тбр и тяжёлые САУ передать 8 гв. А.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-24",
+   "issuer": "su_3gta_7gtk",
+   "recipient": "su_3gta_55gtbr",
+   "task": "attack",
+   "area": "Lichterfelde",
+   "summary_ru": "Наступать на север до Целендорфа, затем к автобану и западной окраине; Целендорф взять сегодня же.",
+   "source": "LT_CONQ ch.6",
+   "toArea": "Zehlendorf, Avus"
+  },
+  {
+   "date": "1945-04-25",
+   "issuer": "su_2gta_1mk",
+   "recipient": "su_2gta_347gtsap",
+   "task": "attack",
+   "area": "Siemensstadt",
+   "summary_ru": "Выйти к западной окраине, взять Сименсштадт, форсировать Шпандауский канал, наступать на Шарлоттенбург.",
+   "source": "LT_CONQ ch.5",
+   "toArea": "Charlottenburg"
+  },
+  {
+   "date": "1945-04-27",
+   "issuer": "su_3gta_7gtk",
+   "recipient": "su_3gta_55gtbr",
+   "task": "attack",
+   "area": "Charlottenburg",
+   "summary_ru": "Резко повернуть на север на Рулебен–Шпандау, выйти к Шпрее и соединиться с 1 БФ сегодня; армия — к полудню.",
+   "source": "LT_CONQ ch.6",
+   "toArea": "Ruhleben/Spree"
+  },
+  {
+   "date": "1945-04-28",
+   "issuer": "su_3gta_7gtk",
+   "recipient": "su_3gta_55gtbr",
+   "task": "withdraw",
+   "area": "Savignyplatz",
+   "summary_ru": "Отвести бригаду от Савиньиплац в первой половине ночи (смена разграничения); приказ доставлен с опозданием на ночь.",
+   "source": "LT_CONQ ch.6",
+   "toArea": "Westkreuz/Witzleben"
+  },
+  {
+   "date": "1945-04-29",
+   "issuer": "su_1gta",
+   "recipient": "su_1gta_8gmk",
+   "task": "attack",
+   "area": "Zoo",
+   "summary_ru": "Взять Зоологический сад совместно с частями 8 гв. А.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-29",
+   "issuer": "su_1gta",
+   "recipient": "su_1gta_11gtk",
+   "task": "attack",
+   "area": "Potsdamer Platz",
+   "summary_ru": "Взять вокзал Потсдамер-плац и Рейхсканцелярию.",
+   "source": "LT_CONQ ch.1"
+  },
+  {
+   "date": "1945-04-29",
+   "issuer": "su_1bf",
+   "recipient": "su_1pa_1pd",
+   "task": "attack",
+   "area": "Berlin (Reinickendorf→Charlottenburg)",
+   "summary_ru": "Полк немедленно в Райникендорф в распоряжение 2 гв. ТА, остальные к 18:00 30.04; полосу дивизии принимает 61 А.",
+   "source": "LT_CONQ ch.4",
+   "time": "15:00"
+  },
+  {
+   "date": "1945-04-24",
+   "issuer": "su_1bf",
+   "recipient": "su_1pa",
+   "task": "defend",
+   "area": "Kremmen–Nauen",
+   "summary_ru": "По выходе на линию Креммен–Флатов–Бёрнике–Науэн перейти к обороне, прикрывая правый фланг окружающей группировки.",
+   "source": "LT_CONQ ch.4"
+  },
+  {
+   "date": "1945-04-30",
+   "issuer": "su_2gta",
+   "recipient": "su_2gta_1mk",
+   "task": "attack",
+   "area": "Tiergarten (map square 23)",
+   "summary_ru": "Резерв корпуса переправить через Шпрее и атаковать Тиргартен.",
+   "source": "LT_CONQ ch.5"
+  },
+  {
+   "date": "1945-04-30",
+   "issuer": "su_1bf",
+   "recipient": "su_2gta",
+   "task": "attack",
+   "area": "Spree eastward",
+   "summary_ru": "Частью сил наступать на восток вдоль Шпрее в поддержку 3 УА при взятии Рейхстага.",
+   "source": "LT_CONQ ch.5"
+  },
+  {
+   "date": "1945-05-01",
+   "issuer": "su_1bf",
+   "recipient": "su_1gta",
+   "task": "attack",
+   "area": "Tiergarten",
+   "summary_ru": "Усилить штурм после переговоров Кребса; 18:00 артудар и атака 1 гв. тбр с пехотой Чуйкова.",
+   "source": "LT_CONQ ch.1",
+   "time": "18:00"
+  },
+  {
+   "date": "1945-04-15",
+   "issuer": "su_2gta_9gtk",
+   "recipient": "su_1bf_33isbr",
+   "task": "attack",
+   "area": "Genschmar",
+   "summary_ru": "3-му батальону очистить район сосредоточения и два маршрута к переднему краю шириной 100 м.",
+   "source": "LT_CONQ ch.3"
+  }
+ ],
+ "calibration": [
+  {
+   "kind": "advance",
+   "terrain": "open",
+   "value": [
+    35,
+    37
+   ],
+   "unit": "км/сутки",
+   "context_ru": "Плановый темп танковых армий 1 БФ; глубина операции фронта ~160 км, ТА — 80–90 км.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta"
+  },
+  {
+   "kind": "advance",
+   "terrain": "fortified",
+   "value": 4,
+   "unit": "км/сутки (максимум)",
+   "context_ru": "Фактический темп 1 гв. ТА 17–18.04 на Зеловских высотах против укреплённой обороны.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta",
+   "date": "1945-04-17"
+  },
+  {
+   "kind": "advance",
+   "terrain": "fortified",
+   "value": 10,
+   "unit": "км (за день)",
+   "context_ru": "11 ТК против более слабой обороны севернее Зелова, 17.04; 5 УА севернее — также ~10 км.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_11tk",
+   "date": "1945-04-17"
+  },
+  {
+   "kind": "advance",
+   "terrain": "forest",
+   "value": 25,
+   "unit": "км за ночь",
+   "context_ru": "Передовые 1 и 44 гв. тбр ночью на 21.04 через лес и Эркнер по одной дороге с пехотой впереди.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta_44gtbr",
+   "date": "1945-04-21"
+  },
+  {
+   "kind": "advance",
+   "terrain": "river",
+   "value": [
+    5,
+    6
+   ],
+   "unit": "км за первый день",
+   "context_ru": "1 А ВП 16.04 при форсировании Одера с постоянными контратаками; 3 пд — 7 км.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "advance",
+   "terrain": "open",
+   "value": 80,
+   "unit": "км за 9 дней",
+   "context_ru": "1 А ВП 16–24.04 с боями до линии Креммен–Науэн (~9 км/сутки в среднем).",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa",
+   "date": "1945-04-24"
+  },
+  {
+   "kind": "advance",
+   "terrain": "open",
+   "value": [
+    15,
+    10
+   ],
+   "unit": "км (два скачка)",
+   "context_ru": "1 А ВП после отхода противника за Альте-Одер: +15 км, затем после 6 контратак ещё +10 км до линии Трампе.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa",
+   "date": "1945-04-19"
+  },
+  {
+   "kind": "advance",
+   "terrain": "open",
+   "value": 33,
+   "unit": "км/ночь (марш)",
+   "context_ru": "Перегруппировка 1 А ВП: 200 км за 6 ночей (8–13.04), только ночные марши.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa",
+   "date": "1945-04-13"
+  },
+  {
+   "kind": "advance",
+   "terrain": "urban",
+   "value": [
+    100,
+    200
+   ],
+   "unit": "м",
+   "context_ru": "Танки батальона 19 гв. мбр продвинулись на 100–200 м по улице после уничтожения опорного дома разведчиками.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta_19gmbr",
+   "date": "1945-04-29"
+  },
+  {
+   "kind": "advance",
+   "terrain": "urban",
+   "value": "несколько десятков",
+   "unit": "м/час",
+   "context_ru": "55 гв. тбр в Шарлоттенбурге 27.04: темп атаки — лишь несколько десятков метров в час.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-27"
+  },
+  {
+   "kind": "advance",
+   "terrain": "urban",
+   "value": 1,
+   "unit": "км до Тиргартена",
+   "context_ru": "27.04 8 гв. А и 1 гв. ТА отделял ~1 км от Тиргартена; к цели вышли 1–2.05 (~5 суток).",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta",
+   "date": "1945-04-27"
+  },
+  {
+   "kind": "advance",
+   "terrain": "urban",
+   "value": 1,
+   "unit": "сутки на район",
+   "context_ru": "55 гв. тбр: целый день на очистку густонаселённого района Лихтерфельде; Целендорф — к вечеру того же дня.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-25"
+  },
+  {
+   "kind": "advance",
+   "terrain": "river",
+   "value": [
+    3,
+    4
+   ],
+   "unit": "км",
+   "context_ru": "Желаемый скачок самоходного полка за Тельтов-канал для наведения мостов (план, не выполнен).",
+   "source": "LT_CONQ ch.6",
+   "reliability": "C",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-24"
+  },
+  {
+   "kind": "advance",
+   "terrain": "urban",
+   "value": 16,
+   "unit": "суток",
+   "context_ru": "1 гв. ТА вела бои 16 суток (16.04–2.05), из них ~11 в городе.",
+   "source": "LT_CONQ ch.2",
+   "reliability": "B",
+   "formation": "su_1gta"
+  },
+  {
+   "kind": "advance",
+   "terrain": "open",
+   "value": 50,
+   "unit": "км за ночь",
+   "context_ru": "Марш 55 гв. тбр под ливнем по раскисшим дорогам, май 1945 (машины в кюветах).",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-05-07"
+  },
+  {
+   "kind": "density",
+   "terrain": "fortified",
+   "value": 270,
+   "unit": "орудий/км",
+   "context_ru": "Плотность артиллерии на главном направлении 1 БФ.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1bf",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "density",
+   "terrain": "river",
+   "value": 600,
+   "unit": "стволов/км",
+   "context_ru": "Арткорпус сосредоточен за 2 суток на узком участке форсирования Тельтов-канала.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta",
+   "date": "1945-04-24"
+  },
+  {
+   "kind": "density",
+   "terrain": "fortified",
+   "value": 140,
+   "unit": "прожекторов",
+   "context_ru": "Прожекторы в атаке 16.04; свет не пробил пыль и дым разрывов (оценка Катукова).",
+   "source": "LT_CONQ ch.1, ch.3",
+   "reliability": "B",
+   "formation": "su_1bf",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "density",
+   "terrain": "fortified",
+   "value": 70,
+   "unit": "мин артподготовки",
+   "context_ru": "Артподготовка по Зеловским высотам; 800 дальних бомбардировщиков по второй полосе; атака через 2–3 мин после переноса огня.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "density",
+   "terrain": "river",
+   "value": 30,
+   "unit": "мин артподготовки",
+   "context_ru": "1 А ВП, атака в 06:15 16.04.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "density",
+   "terrain": "fortified",
+   "value": 5,
+   "unit": "км на дивизию (противник)",
+   "context_ru": "Оборона немцев у Зелова: дивизия на ~5 км, батальон ~800 м (ранее — 15 км на дивизию).",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "density",
+   "terrain": "fortified",
+   "value": {
+    "main_zone_depth_km": 10,
+    "second_line_offset_km": [
+     10,
+     12
+    ],
+    "second_line_depth_km": 5,
+    "third_line_km_from_Oder": [
+     20,
+     40
+    ],
+    "outer_Berlin_zone_km_from_centre": [
+     25,
+     40
+    ],
+    "total_depth_km": 120
+   },
+   "unit": "км",
+   "context_ru": "Глубина немецкой обороны Одер–Берлин по данным штаба инженерной бригады.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "kind": "density",
+   "terrain": "urban",
+   "value": 15,
+   "unit": "мин огневого налёта",
+   "context_ru": "55 гв. тбр: 7 арт. и минометных дивизионов, танки и ДШК 15 мин по поселкам у Авуса перед ночной атакой.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-25"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "river",
+   "value": 24,
+   "unit": "часа",
+   "context_ru": "Низководный свайный мост 60 т длиной ~400 м через разлившийся Одер (17-й батальон) под огнём; сваи забиты на 1,25 м.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "river",
+   "value": [
+    60,
+    70
+   ],
+   "unit": "см просадки",
+   "context_ru": "Тот же мост после прохода нескольких танков/САУ осел на 60–70 см, но выдержал.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": {
+    "bridges": 25,
+    "ferries": 40,
+    "ferry_capacity_t": [
+     3,
+     60
+    ]
+   },
+   "unit": "шт.",
+   "context_ru": "К началу апреля через Одер в полосе 1 БФ — 25 мостов и 40 паромов.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": [
+    2,
+    3
+   ],
+   "unit": "часа",
+   "context_ru": "Сапёрный мост через Шпрее в Кёпенике после взрыва моста (оценка Дрёмова), 23.04.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-23"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": 0.5,
+   "unit": "часа",
+   "context_ru": "Временно восстановленный мост через Тельтов-канал разрушен огнём двух артдивизионов за ~30 мин; прошли 3 САУ, 2 упали в воду.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-24"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": "несколько",
+   "unit": "часов",
+   "context_ru": "22 гв. мсбр после форсирования Тельтов-канала: мост для танковых бригад наведён через несколько часов.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_22gmsbr",
+   "date": "1945-04-24"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": {
+    "boats": 200,
+    "pile_bridge_m": 200,
+    "pile_bridge_t": 30
+   },
+   "unit": "шт./м/т",
+   "context_ru": "1 А ВП: 200 лодок, понтонный мост дважды под огнём, свайный мост 200 м/30 т — тыловая артерия и для 61 А.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": {
+    "canal_width_m": [
+     40,
+     50
+    ]
+   },
+   "unit": "м",
+   "context_ru": "Тельтов-канал: ширина 40–50 м, укреплённый северный берег.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": {
+    "width_m": [
+     8,
+     30
+    ]
+   },
+   "unit": "м",
+   "context_ru": "Малые реки и каналы вокруг Берлина 8–30 м, твёрдые берега; мосты взрывались или минировались при подходе.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": {
+    "width_m": 20
+   },
+   "unit": "м",
+   "context_ru": "Берлин-Шпандауский судоходный канал у Сименсштадта, крутые берега; ночная разведка моста, сняты 2 заряда.",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-25"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": {
+    "oder_width_m": [
+     250,
+     400
+    ],
+    "note": "обычно ~250 м, в паводок апреля 1945 — до ~400 м; в феврале ~300 м"
+   },
+   "unit": "м",
+   "context_ru": "Ширина Одера у Кюстрина; плацдарм местами не глубже 2 км.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": 1,
+   "unit": "ночь",
+   "context_ru": "Восстановление подорванного ж/д моста через Закров-Парецкий канал (опоры из балок), снято 20 мин; бригада прошла утром.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_2gta_65tbr",
+   "date": "1945-04-25"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "fortified",
+   "value": {
+    "lanes": 340,
+    "mines": 72000
+   },
+   "unit": "проходов/мин",
+   "context_ru": "За ночь на 13.04 в своих минных полях 1 БФ: по 4–6 проходов на сб и 2–3 на танковую роту.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf",
+   "date": "1945-04-13"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "fortified",
+   "value": 100,
+   "unit": "м ширина маршрута",
+   "context_ru": "Разминирование двух маршрутов 9 гв. ТК от района сосредоточения к переднему краю шириной 100 м к утру 16.04.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "open",
+   "value": [
+    2,
+    3
+   ],
+   "unit": "суток",
+   "context_ru": "Сапёрный взвод в голове танковой бригады сменялся каждые 2–3 суток из-за потерь и нервного напряжения.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "urban",
+   "value": 100,
+   "unit": "мин",
+   "context_ru": "Наспех поставлены в Тиргартене двумя ротами за короткое время против контратаки 1.05.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr",
+   "date": "1945-05-01"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "urban",
+   "value": 3,
+   "unit": "выстрела Фаустпатрона",
+   "context_ru": "Достаточно для пролома шиферной/тонкой деревянной стены; один выстрел в окно подавлял огневую точку.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "urban",
+   "value": 3,
+   "unit": "попытки подрыва",
+   "context_ru": "Стену у Александерплац сапёры взорвали лишь с третьего заряда — расчёты по сельским стенам не годились.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "date": "1945-04-27"
+  },
+  {
+   "kind": "engineer",
+   "terrain": "urban",
+   "value": {
+    "mines": 22,
+    "bombs_kg": [
+     150,
+     150,
+     150,
+     150,
+     150
+    ]
+   },
+   "unit": "шт.",
+   "context_ru": "Ночью на 2.05 под огнём сапёры сняли 22 мины на баррикаде моста и обезвредили 5 авиабомб.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_2gta_33mbr",
+   "date": "1945-05-02"
+  },
+  {
+   "kind": "loss",
+   "terrain": "fortified",
+   "value": {
+    "tanks": 26,
+    "men": 200
+   },
+   "unit": "танков/чел.",
+   "context_ru": "Потери немцев на минах 1-го батальона 26 и 28.03 у Кюстрина.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr",
+   "date": "1945-03-28"
+  },
+  {
+   "kind": "loss",
+   "terrain": "fortified",
+   "value": {
+    "tanks": 40,
+    "men": 300
+   },
+   "unit": "танков/чел.",
+   "context_ru": "Итого потери немцев на минах 1-го и 7-го батальонов на плацдармах (март–апрель).",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr"
+  },
+  {
+   "kind": "loss",
+   "terrain": "forest",
+   "value": {
+    "vehicles": 26,
+    "guns": 8
+   },
+   "unit": "шт.",
+   "context_ru": "Ночная встреча 65 тбр с немецкой колонной: 26 машин раздавлено, 8 орудий брошено.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_2gta_65tbr",
+   "date": "1945-04-20"
+  },
+  {
+   "kind": "loss",
+   "terrain": "urban",
+   "value": {
+    "spg_hit": 4,
+    "by": "2 Фаустпатрон, 1 зенитка, 1 снаряд в борт"
+   },
+   "unit": "САУ",
+   "context_ru": "347 гв. тсап (ИСУ-152) за штурм одной деревни Мальхов: подбиты/уничтожены ~4 САУ; командир роты сменил 3 машины.",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-21"
+  },
+  {
+   "kind": "loss",
+   "terrain": "urban",
+   "value": 2,
+   "unit": "танка",
+   "context_ru": "Одно замаскированное орудие в угловом доме сожгло 2 танка батальона на улице у Крумме-Ланке.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-25"
+  },
+  {
+   "kind": "loss",
+   "terrain": "river",
+   "value": {
+    "spg_lost": 2,
+    "crossed": 3
+   },
+   "unit": "САУ",
+   "context_ru": "SU-76 полка Костина: 2 САУ упали с разрушенного моста, 3 переправились; командир полка погиб.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-24"
+  },
+  {
+   "kind": "loss",
+   "terrain": "urban",
+   "value": {
+    "enemy_tanks": 1,
+    "enemy_assault_guns": 2,
+    "enemy_men": 50,
+    "pow": 200
+   },
+   "unit": "шт./чел.",
+   "context_ru": "Отражение ночного прорыва сапёрами (мины, фаустпатроны) с зенитным полком, 2.05.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr",
+   "date": "1945-05-02"
+  },
+  {
+   "kind": "loss",
+   "terrain": "urban",
+   "value": 7700,
+   "unit": "пленных",
+   "context_ru": "Сдались 1 гв. ТА 2.05.",
+   "source": "LT_CONQ ch.2",
+   "reliability": "B",
+   "formation": "su_1gta",
+   "date": "1945-05-02"
+  },
+  {
+   "kind": "loss",
+   "terrain": "fortified",
+   "value": 33000,
+   "unit": "убитых (признано)",
+   "context_ru": "Потери 1 БФ на Зеловских высотах по оценке редактора; «танковая армия техники».",
+   "source": "LT_CONQ ch.1 (комм. Ле Тиссье)",
+   "reliability": "C",
+   "formation": "su_1bf"
+  },
+  {
+   "kind": "loss",
+   "terrain": "urban",
+   "value": 100000,
+   "unit": "убитых и раненых немцев",
+   "context_ru": "Потери противника в боях за Берлин по показаниям пленных генералов.",
+   "source": "LT_CONQ ch.5",
+   "reliability": "C"
+  },
+  {
+   "kind": "loss",
+   "terrain": "urban",
+   "value": 20000,
+   "unit": "похоронено",
+   "context_ru": "Советские воинские кладбища Трептов, Панков, Тиргартен — ~20 000 погибших.",
+   "source": "LT_CONQ conclusion",
+   "reliability": "B"
+  },
+  {
+   "kind": "loss",
+   "terrain": "urban",
+   "value": 5,
+   "unit": "убитых",
+   "context_ru": "Налёты на КП 11 гв. ТК (3–4 самолёта каждые 10 мин, наведение по радио).",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-27"
+  },
+  {
+   "kind": "loss",
+   "terrain": "open",
+   "value": 0.7,
+   "unit": "доля потерь",
+   "context_ru": "«XXXXII танковый корпус» противника (так в тексте; идентификация неясна) по показаниям пленных — 70% людей и техники к 27–30.04.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "C"
+  },
+  {
+   "kind": "loss",
+   "terrain": "open",
+   "value": 3,
+   "unit": "км отхода",
+   "context_ru": "Стык 5 и 6 пп ВП не выдержал контрудара 25.04; ликвидация плацдарма противника заняла 2 суток.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa_2pd",
+   "date": "1945-04-25"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": {
+    "captured": 4500,
+    "training": 1500,
+    "used_in_Berlin": 3000
+   },
+   "unit": "фаустпатронов",
+   "context_ru": "1 гв. ТА: трофейные фаустпатроны применялись штурмгруппами для поджога домов.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": {
+    "penetration_mm": [
+     150,
+     200
+    ],
+    "range_m": 100
+   },
+   "unit": "мм/м",
+   "context_ru": "Оценка Фаустпатрона инженерами бригады (бронепробиваемость и дальность).",
+   "source": "LT_CONQ ch.3",
+   "reliability": "C"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": 2,
+   "unit": "танка одновременно",
+   "context_ru": "В узких улицах могли действовать лишь 2 танка: первый ведёт огонь, второй прикрывает; без пехоты — высокие потери от артиллерии и фаустников.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": {
+    "men_per_tank": [
+     5,
+     6
+    ],
+    "tank_interval_m": 100
+   },
+   "unit": "чел./м",
+   "context_ru": "55 гв. тбр: на каждый танк 5–6 пехотинцев; танки колонной с интервалом 100 м за разведкой и автоматчиками.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": {
+    "storm_group": "стр. взвод + отделение сапёров (2–3 огнемёта) + 2–4 орудия + 1–2 танка/САУ",
+    "storm_battalion": "сб + саперный взвод + огнемётчики + артиллерия и танки"
+   },
+   "unit": "состав",
+   "context_ru": "Типовой состав штурмовой группы/батальона 1 БФ.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": [
+    1,
+    2
+   ],
+   "unit": "снаряда 305 мм",
+   "context_ru": "Одного-двух снарядов 305-мм орудий хватало для разрушения старого здания; 152-мм прямой наводкой с 200–300 м не пробили бункер Зоо.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": 5000,
+   "unit": "чел. гарнизон",
+   "context_ru": "Гарнизон Зоосада/бункера; стена 2 м проломлена подрывами под дымовой завесой.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C",
+   "formation": "su_1gta",
+   "date": "1945-04-30"
+  },
+  {
+   "kind": "other",
+   "terrain": "open",
+   "value": 854,
+   "unit": "танков и САУ",
+   "context_ru": "1 гв. ТА с 11 ТК на начало операции — «свыше 854 исправных».",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "formation": "su_1gta",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "other",
+   "terrain": "open",
+   "value": 237,
+   "unit": "самолёто-вылетов",
+   "context_ru": "4 сад ВП за 29.04.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa_4sad",
+   "date": "1945-04-29"
+  },
+  {
+   "kind": "other",
+   "terrain": "open",
+   "value": 20,
+   "unit": "выстрелов",
+   "context_ru": "Боекомплект ИСУ-152 (снаряды ~44–49 кг).",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "formation": "su_2gta_347gtsap"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": {
+    "length_m": 10,
+    "width_m": 4
+   },
+   "unit": "м",
+   "context_ru": "ИСУ-152 в узких улицах Шарлоттенбурга не могла таранить стены и заборы (габариты по книге, завышены).",
+   "source": "LT_CONQ ch.5",
+   "reliability": "C",
+   "formation": "su_2gta_347gtsap"
+  },
+  {
+   "kind": "supply",
+   "terrain": "urban",
+   "value": {
+    "ammo_trucks": [
+     3,
+     4
+    ],
+    "fuel_trucks": 5
+   },
+   "unit": "машин",
+   "context_ru": "«Красный поезд» тыла 55 гв. тбр; тылы дважды атакованы в городе (2 ч и несколько часов боя).",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr"
+  },
+  {
+   "kind": "supply",
+   "terrain": "open",
+   "value": {
+    "diesel_truckloads": 5,
+    "distance_km": 150
+   },
+   "unit": "машин/км",
+   "context_ru": "55 гв. тбр перед Прагой: 5 бензовозов дизтоплива на 150 км — «едва хватит»; 56 гв. тбр встала без топлива.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-05-08"
+  },
+  {
+   "kind": "supply",
+   "terrain": "open",
+   "value": "почти полное уничтожение",
+   "unit": "полк",
+   "context_ru": "Лёгкий самоходный полк без топлива поставлен в оборону у Кюстрина (янв. 1945) — при танковой атаке не смог маневрировать и погиб.",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B"
+  },
+  {
+   "kind": "supply",
+   "terrain": "urban",
+   "value": "ночь",
+   "unit": "ремонт",
+   "context_ru": "Ремонт подбитых ИСУ-152 за ночь в школе Мальхова при нехватке запчастей (доставлены с корпусного склада в Зелове).",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-22"
+  },
+  {
+   "kind": "supply",
+   "terrain": "urban",
+   "value": "дозаправка в бою",
+   "unit": "танки",
+   "context_ru": "12 гв. ТК в Шарлоттенбурге, полуокружённый, дозаправлялся подвезёнными заправщиками после деблокады польской пехотой.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_2gta_12gtk",
+   "date": "1945-05-01"
+  },
+  {
+   "kind": "delay",
+   "terrain": "forest",
+   "value": 8,
+   "unit": "часов (до 04:00)",
+   "context_ru": "Приказ Жукова вечером 20.04 → прорыв городской черты к 04:00 21.04; выполнено в ночь (25 км).",
+   "source": "LT_CONQ ch.1-2",
+   "reliability": "B",
+   "formation": "su_1gta",
+   "date": "1945-04-20"
+  },
+  {
+   "kind": "delay",
+   "terrain": "fortified",
+   "value": 1,
+   "unit": "час",
+   "context_ru": "29 гв. СК самовольно перенёс атаку с 08:00 на 09:00 (третья полоса, ~19.04).",
+   "source": "LT_CONQ ch.2",
+   "reliability": "B",
+   "formation": "su_8gva_29gsk",
+   "date": "1945-04-19"
+  },
+  {
+   "kind": "delay",
+   "terrain": "urban",
+   "value": 27,
+   "unit": "часов",
+   "context_ru": "Приказ 29.04 15:00 о вводе 1 пд ВП в Берлин: полк — немедленно, остальные к 18:00 30.04.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa_1pd",
+   "date": "1945-04-29"
+  },
+  {
+   "kind": "delay",
+   "terrain": "river",
+   "value": 24,
+   "unit": "часа",
+   "context_ru": "Подготовка форсирования Тельтов-канала бригадой: «одни сутки», готовность к концу 23.04, атака утром 24.04.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-23"
+  },
+  {
+   "kind": "delay",
+   "terrain": "urban",
+   "value": 2,
+   "unit": "часа",
+   "context_ru": "Организация атаки на Целендорф (вызов комбатов, артиллерии, саперов) — 2 ч; приведение бригады в порядок — 1 ч.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-25"
+  },
+  {
+   "kind": "delay",
+   "terrain": "urban",
+   "value": "целая ночь",
+   "unit": "доставка приказа",
+   "context_ru": "Офицер связи корпуса блуждал всю ночь по Берлину; приказ на отвод не выполнен вовремя.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-28"
+  },
+  {
+   "kind": "delay",
+   "terrain": "urban",
+   "value": 2,
+   "unit": "часа на ~1 км",
+   "context_ru": "Командир бригады добирался от штаба до передовых частей (>1 км по карте) 2 часа.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_55gtbr",
+   "date": "1945-04-29"
+  },
+  {
+   "kind": "delay",
+   "terrain": "urban",
+   "value": [
+    10,
+    15
+   ],
+   "unit": "мин",
+   "context_ru": "Командир корпуса требовал доклад обстановки каждые 10–15 мин; связь с батальоном терялась на 2 ч.",
+   "source": "LT_CONQ ch.6",
+   "reliability": "B",
+   "formation": "su_3gta_7gtk",
+   "date": "1945-04-27"
+  },
+  {
+   "kind": "delay",
+   "terrain": "river",
+   "value": 0.75,
+   "unit": "часа",
+   "context_ru": "Ответ техотдела штаба фронта на запрос о глубине забивки свай — 45 мин.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "formation": "su_1bf_33isbr"
+  },
+  {
+   "kind": "delay",
+   "terrain": "urban",
+   "value": 0.5,
+   "unit": "часа",
+   "context_ru": "Разведка места развёртывания колонной ИСУ-152 перед Мальховом — ~30 мин простоя под угрозой авиации.",
+   "source": "LT_CONQ ch.5",
+   "reliability": "B",
+   "formation": "su_2gta_347gtsap",
+   "date": "1945-04-21"
+  },
+  {
+   "kind": "other",
+   "terrain": "river",
+   "value": "туман",
+   "unit": "погода",
+   "context_ru": "15–16.04 густой туман в пойме Одера, рассеялся ветром на рассвете 16.04; апрель солнечный, тёплый, сухой; горящие леса — дым ухудшал дыхание и видимость.",
+   "source": "LT_CONQ ch.4-5, ch.1",
+   "reliability": "B",
+   "date": "1945-04-16"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": "дым",
+   "unit": "погода",
+   "context_ru": "Густой дым над городом мешал авиации; авиация с трудом различала свои войска в перемешанных боях.",
+   "source": "LT_CONQ ch.3, ch.6",
+   "reliability": "B"
+  },
+  {
+   "kind": "other",
+   "terrain": "fortified",
+   "value": [
+    2,
+    4
+   ],
+   "unit": "часа между контратаками",
+   "context_ru": "Немецкие контратаки 26 и 28.03 у Кюстрина с интервалом 2–4 ч силами до батальона с 10–30 танками.",
+   "source": "LT_CONQ ch.3",
+   "reliability": "B",
+   "date": "1945-03-26"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": {
+    "strongpoints": 500,
+    "defenders": 300000,
+    "buildings": 600000
+   },
+   "unit": "шт./чел.",
+   "context_ru": "Оценка обороны Берлина в мемуаре Катукова (пропагандистские цифры).",
+   "source": "LT_CONQ ch.1",
+   "reliability": "C"
+  },
+  {
+   "kind": "other",
+   "terrain": "urban",
+   "value": {
+    "pocket_km": [
+     3,
+     5,
+     16
+    ]
+   },
+   "unit": "км",
+   "context_ru": "Окружённая группировка 27.04 занимала полосу 3–5 км шириной и 16 км длиной.",
+   "source": "LT_CONQ ch.1",
+   "reliability": "B",
+   "date": "1945-04-27"
+  },
+  {
+   "kind": "other",
+   "terrain": "open",
+   "value": 40,
+   "unit": "км фронт обороны",
+   "context_ru": "1 А ВП после 26.04 временно оборонялась на 40-км участке.",
+   "source": "LT_CONQ ch.4",
+   "reliability": "B",
+   "formation": "su_1pa",
+   "date": "1945-04-26"
+  },
+  {
+   "kind": "crossing",
+   "terrain": "river",
+   "value": {
+    "map_bridge_capacities_t": [
+     60,
+     60,
+     60,
+     60,
+     16,
+     16,
+     16,
+     16,
+     16,
+     10,
+     30
+    ]
+   },
+   "unit": "т",
+   "context_ru": "Карта: ~11 мостов через Одер в полосе 8 гв. А/69 А (Кюстрин–Лебус) с грузоподъёмностью 10–60 т.",
+   "source": "LT_CONQ map Seelow Heights",
+   "reliability": "C",
+   "formation": "su_8gva",
+   "date": "1945-04-16"
+  }
+ ],
+ "gazetteer": {
+  "Diedersdorf_MOL": {
+   "lng": 14.3286,
+   "lat": 52.5109,
+   "note": "OSM Nominatim: Diedersdorf, Vierlinden"
+  },
+  "Genschmar": {
+   "lng": 14.5112,
+   "lat": 52.6129,
+   "note": "OSM Nominatim: Genschmar"
+  },
+  "Kietz": {
+   "lng": 14.6133,
+   "lat": 52.5693,
+   "note": "OSM Nominatim: Küstrin-Kietz"
+  },
+  "Gorgast": {
+   "lng": 14.5515,
+   "lat": 52.5682,
+   "note": "OSM Nominatim: Gorgast"
+  },
+  "Kleinmachnow": {
+   "lng": 13.2237,
+   "lat": 52.4064,
+   "note": "OSM Nominatim: Kleinmachnow"
+  },
+  "B_Adlershof": {
+   "lng": 13.5475,
+   "lat": 52.4379,
+   "note": "OSM Nominatim: Adlershof, Berlin"
+  },
+  "B_Erkner": {
+   "lng": 13.7543,
+   "lat": 52.426,
+   "note": "OSM Nominatim: Erkner"
+  },
+  "B_Karow": {
+   "lng": 13.4837,
+   "lat": 52.6132,
+   "note": "OSM Nominatim: Karow, Berlin"
+  },
+  "B_Falkenberg": {
+   "lng": 13.54,
+   "lat": 52.5693,
+   "note": "OSM Nominatim: Falkenberg, Lichtenberg, Berlin"
+  },
+  "B_Malchow": {
+   "lng": 13.4821,
+   "lat": 52.5799,
+   "note": "OSM Nominatim: Malchow, Lichtenberg, Berlin"
+  },
+  "B_Wartenberg": {
+   "lng": 13.5176,
+   "lat": 52.5754,
+   "note": "OSM Nominatim: Wartenberg, Berlin"
+  },
+  "Birkholz_BAR": {
+   "lng": 13.5749,
+   "lat": 52.6263,
+   "note": "OSM Nominatim: Birkholz, Bernau bei Berlin"
+  },
+  "Schwanebeck": {
+   "lng": 13.5439,
+   "lat": 52.6262,
+   "note": "OSM Nominatim: Schwanebeck, Panketal"
+  },
+  "Zepernick": {
+   "lng": 13.5338,
+   "lat": 52.6597,
+   "note": "OSM Nominatim: Zepernick"
+  },
+  "Seefeld_BAR": {
+   "lng": 13.6769,
+   "lat": 52.6213,
+   "note": "OSM Nominatim: Seefeld, Werneuchen"
+  },
+  "B_Ploetzensee": {
+   "lng": 13.33,
+   "lat": 52.5443,
+   "note": "OSM Nominatim: Plötzensee, Berlin"
+  },
+  "B_AnhalterBf": {
+   "lng": 13.3816,
+   "lat": 52.504,
+   "note": "OSM Nominatim: Anhalter Bahnhof, Berlin"
+  },
+  "B_PotsdamerPlatz": {
+   "lng": 13.3756,
+   "lat": 52.5098,
+   "note": "OSM Nominatim: Potsdamer Platz, Berlin"
+  },
+  "B_Zoo": {
+   "lng": 13.3319,
+   "lat": 52.5071,
+   "note": "OSM Nominatim: Zoologischer Garten, Berlin"
+  },
+  "B_Savignyplatz": {
+   "lng": 13.3191,
+   "lat": 52.5052,
+   "note": "OSM Nominatim: Savignyplatz, Berlin"
+  },
+  "B_Witzleben": {
+   "lng": 13.2835,
+   "lat": 52.5077,
+   "note": "OSM Nominatim: Messe Nord/ICC, Berlin"
+  },
+  "B_Ruhleben": {
+   "lng": 13.2414,
+   "lat": 52.5257,
+   "note": "OSM Nominatim: Ruhleben, Berlin"
+  },
+  "B_Olympiastadion": {
+   "lng": 13.2398,
+   "lat": 52.5146,
+   "note": "OSM Nominatim: Olympiastadion Berlin"
+  },
+  "B_Pichelsberg": {
+   "lng": 13.2276,
+   "lat": 52.5102,
+   "note": "OSM Nominatim: Pichelsberg, Berlin"
+  },
+  "B_Eichkamp": {
+   "lng": 13.2702,
+   "lat": 52.4986,
+   "note": "OSM Nominatim: Eichkamp, Berlin"
+  },
+  "B_Teufelsee": {
+   "lng": 13.2336,
+   "lat": 52.4911,
+   "note": "OSM Nominatim: Teufelssee, Grunewald, Berlin"
+  },
+  "B_KrummeLanke": {
+   "lng": 13.2414,
+   "lat": 52.4434,
+   "note": "OSM Nominatim: Krumme Lanke, Berlin"
+  },
+  "B_Schlachtensee": {
+   "lng": 13.2141,
+   "lat": 52.4385,
+   "note": "OSM Nominatim: Schlachtensee, Berlin"
+  },
+  "B_Nikolassee": {
+   "lng": 13.1981,
+   "lat": 52.4262,
+   "note": "OSM Nominatim: Nikolassee, Berlin"
+  },
+  "B_Dueppel": {
+   "lng": 13.2338,
+   "lat": 52.4288,
+   "note": "OSM Nominatim: Düppel, Berlin"
+  },
+  "B_Bismarckstr": {
+   "lng": 13.3052,
+   "lat": 52.5115,
+   "note": "OSM Nominatim: Bismarckstraße, Charlottenburg, Berlin"
+  },
+  "B_SpandauerDamm": {
+   "lng": 13.2723,
+   "lat": 52.5195,
+   "note": "OSM Nominatim: Spandauer Damm, Berlin"
+  },
+  "B_Heerstr": {
+   "lng": 13.271,
+   "lat": 52.5095,
+   "note": "OSM Nominatim: Heerstraße, Westend, Berlin"
+  },
+  "B_Reichsstr": {
+   "lng": 13.2581,
+   "lat": 52.5184,
+   "note": "OSM Nominatim: Reichsstraße, Westend, Berlin"
+  },
+  "B_Wittenau": {
+   "lng": 13.3233,
+   "lat": 52.5912,
+   "note": "OSM Nominatim: Wittenau, Berlin"
+  },
+  "B_Johannisthal": {
+   "lng": 13.5045,
+   "lat": 52.4459,
+   "note": "OSM Nominatim: Johannisthal, Berlin"
+  },
+  "B_Rudow": {
+   "lng": 13.4986,
+   "lat": 52.4147,
+   "note": "OSM Nominatim: Rudow, Berlin"
+  },
+  "B_Mariendorf": {
+   "lng": 13.39,
+   "lat": 52.4401,
+   "note": "OSM Nominatim: Mariendorf, Berlin"
+  },
+  "B_Kreuzberg": {
+   "lng": 13.4119,
+   "lat": 52.4976,
+   "note": "OSM Nominatim: Kreuzberg, Berlin"
+  },
+  "B_Haselhorst": {
+   "lng": 13.2312,
+   "lat": 52.5413,
+   "note": "OSM Nominatim: Haselhorst, Berlin"
+  },
+  "B_Charlottenbruecke": {
+   "lng": 13.2062,
+   "lat": 52.5351,
+   "note": "OSM Nominatim: Charlottenbrücke, Spandau"
+  },
+  "Wuensdorf": {
+   "lng": 13.4771,
+   "lat": 52.163,
+   "note": "OSM Nominatim: Wünsdorf"
+  },
+  "Mahlow": {
+   "lng": 13.4078,
+   "lat": 52.3606,
+   "note": "OSM Nominatim: Mahlow"
+  },
+  "Birkenwerder": {
+   "lng": 13.2831,
+   "lat": 52.6884,
+   "note": "OSM Nominatim: Birkenwerder"
+  },
+  "Flatow": {
+   "lng": 12.9548,
+   "lat": 52.7317,
+   "note": "OSM Nominatim: Flatow, Kremmen"
+  },
+  "Boernicke_HVL": {
+   "lng": 12.9379,
+   "lat": 52.6851,
+   "note": "OSM Nominatim: Börnicke, Nauen"
+  },
+  "Marwitz": {
+   "lng": 13.1453,
+   "lat": 52.6761,
+   "note": "OSM Nominatim: Marwitz, Oberkrämer"
+  },
+  "Paaren": {
+   "lng": 12.9813,
+   "lat": 52.6539,
+   "note": "OSM Nominatim: Paaren im Glien"
+  },
+  "Rhinow": {
+   "lng": 12.3411,
+   "lat": 52.7509,
+   "note": "OSM Nominatim: Rhinow"
+  },
+  "Klietz": {
+   "lng": 12.0688,
+   "lat": 52.6676,
+   "note": "OSM Nominatim: Klietz"
+  },
+  "Altwriezen": {
+   "lng": 14.2087,
+   "lat": 52.7383,
+   "note": "OSM Nominatim: Altwriezen"
+  },
+  "Altmaedewitz": {
+   "lng": 14.1614,
+   "lat": 52.7506,
+   "note": "OSM Nominatim: Altmädewitz"
+  },
+  "Neukietz": {
+   "lng": 14.1683,
+   "lat": 52.7301,
+   "note": "OSM Nominatim: Neukietz"
+  },
+  "Danewitz": {
+   "lng": 13.669,
+   "lat": 52.7202,
+   "note": "OSM Nominatim: Danewitz"
+  },
+  "Paretz": {
+   "lng": 12.876,
+   "lat": 52.4696,
+   "note": "OSM Nominatim: Paretz"
+  },
+  "Sacrow": {
+   "lng": 13.1012,
+   "lat": 52.4326,
+   "note": "OSM Nominatim: Sacrow, Potsdam"
+  },
+  "Riesa": {
+   "lng": 13.3088,
+   "lat": 51.3038,
+   "note": "OSM Nominatim: Riesa"
+  },
+  "Teplice": {
+   "lng": 13.8244,
+   "lat": 50.6407,
+   "note": "OSM Nominatim: Teplice"
+  },
+  "Praha": {
+   "lng": 14.4213,
+   "lat": 50.0875,
+   "note": "OSM Nominatim: Praha"
+  },
+  "Satalice": {
+   "lng": 14.5835,
+   "lat": 50.1267,
+   "note": "OSM Nominatim: Satalice"
+  },
+  "Birnbaum": {
+   "lng": 15.8935,
+   "lat": 52.6046,
+   "note": "OSM Nominatim: Międzychód"
+  },
+  "Greifenberg": {
+   "lng": 15.1987,
+   "lat": 53.9149,
+   "note": "OSM Nominatim: Gryfice"
+  },
+  "Chojna": {
+   "lng": 14.4314,
+   "lat": 52.963,
+   "note": "OSM Nominatim: Chojna"
+  },
+  "Lanke": {
+   "lng": 13.5637,
+   "lat": 52.7605,
+   "note": "OSM Nominatim: Lanke"
+  },
+  "Hennigsdorf": {
+   "lng": 13.2058,
+   "lat": 52.6376,
+   "note": "OSM Nominatim: Hennigsdorf"
+  },
+  "Rathstock": {
+   "lng": 14.5415,
+   "lat": 52.5216,
+   "note": "OSM Nominatim: Rathstock"
+  },
+  "Neuhardenberg": {
+   "lng": 14.2384,
+   "lat": 52.5966,
+   "note": "OSM Nominatim: Neuhardenberg"
+  },
+  "Kuestrin_Altstadt": {
+   "lng": 14.6336,
+   "lat": 52.58,
+   "note": "OSM Nominatim: Kostrzyn nad Odrą Stare Miasto"
+  },
+  "AltMahlisch": {
+   "lng": 14.362,
+   "lat": 52.474,
+   "note": "собственная оценка (Alt Mahlisch, к ЮЗ от Долгелина)"
+  },
+  "AltDrewitz": {
+   "lng": 14.667,
+   "lat": 52.607,
+   "note": "Alt Drewitz = Drzewice, к С от Кюстрина; оценка"
+  },
+  "Schoenow_TF": {
+   "lng": 13.265,
+   "lat": 52.398,
+   "note": "Schönow (Teltow), оценка"
+  },
+  "B_Westkreuz": {
+   "lng": 13.2836,
+   "lat": 52.5011,
+   "note": "S-Bf Westkreuz, оценка"
+  },
+  "Schmetzdorf": {
+   "lng": 13.62,
+   "lat": 52.765,
+   "note": "оценка, к С от Бизенталя"
+  },
+  "AltSchaumburg": {
+   "lng": 14.56,
+   "lat": 52.63,
+   "note": "Alt Schaumburg (Szumiłowo у Костшина), оценка"
+  },
+  "NeuRuednitz": {
+   "lng": 14.2,
+   "lat": 52.8,
+   "note": "Neu Rüdnitz по карте LT_CONQ map 1st Polish Army, оценка"
+  },
+  "B_LichterfeldeWest": {
+   "lng": 13.2933,
+   "lat": 52.443,
+   "note": "S-Bf Lichterfelde West, оценка"
+  },
+  "B_TechnischeHochschule": {
+   "lng": 13.3265,
+   "lat": 52.5125,
+   "note": "Technische Hochschule (Hardenbergstr.), оценка"
+  },
+  "B_Moabit_Ploetzensee": {
+   "lng": 13.33,
+   "lat": 52.542,
+   "note": "Plötzensee"
+  },
+  "B_Siemensstadt_Canal": {
+   "lng": 13.27,
+   "lat": 52.537,
+   "note": "Berlin-Spandauer Schifffahrtskanal у Сименсштадта, оценка"
+  },
+  "B_Urbanstr": {
+   "lng": 13.405,
+   "lat": 52.493,
+   "note": "Urbanstraße (Kreuzberg), оценка; в тексте «ведущая к Зоо» — сомнительно"
+  },
+  "B_Englische": {
+   "lng": 13.324,
+   "lat": 52.515,
+   "note": "Englische Straße (у Charlottenburger Chaussee), оценка"
+  },
+  "B_ZooBunker": {
+   "lng": 13.3375,
+   "lat": 52.511,
+   "note": "Zoo-Flakturm"
+  },
+  "Zellin": {
+   "lng": 14.388,
+   "lat": 52.715,
+   "note": "Czelin, оценка"
+  },
+  "Zaeckerick": {
+   "lng": 14.2445,
+   "lat": 52.809,
+   "note": "= Siekierki (existing)"
+  },
+  "Guestebiese": {
+   "lng": 14.3223,
+   "lat": 52.7659,
+   "note": "= Gozdowice (existing)"
+  },
+  "TrampeLine": {
+   "lng": 13.8,
+   "lat": 52.75,
+   "note": "линия Trampe–Danewitz–Schmetzdorf, центр, оценка"
+  },
+  "KremmenNauenLine": {
+   "lng": 12.95,
+   "lat": 52.7,
+   "note": "линия Kremmen–Flatow–Börnicke–Nauen, центр, оценка"
+  },
+  "RuppinerKanal": {
+   "lng": 13.05,
+   "lat": 52.79,
+   "note": "Ruppiner Kanal у Кремена, оценка"
+  },
+  "Gusow": {
+   "lng": 14.3544,
+   "lat": 52.5712,
+   "note": "existing"
+  },
+  "Platkow": {
+   "lng": 14.3246,
+   "lat": 52.5836,
+   "note": "existing"
+  },
+  "Batzlow": {
+   "lng": 14.1195,
+   "lat": 52.6323,
+   "note": "existing"
+  },
+  "Buckow": {
+   "lng": 14.0762,
+   "lat": 52.5672,
+   "note": "existing"
+  },
+  "Seelow": {
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "note": "existing"
+  },
+  "Dolgelin": {
+   "lng": 14.406,
+   "lat": 52.4952,
+   "note": "existing"
+  },
+  "Muencheberg": {
+   "lng": 14.1405,
+   "lat": 52.5037,
+   "note": "existing"
+  },
+  "Erkner": {
+   "lng": 13.7543,
+   "lat": 52.426,
+   "note": "existing"
+  },
+  "Wriezen": {
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "note": "existing"
+  },
+  "Altfriedland": {
+   "lng": 14.21,
+   "lat": 52.6262,
+   "note": "existing"
+  },
+  "Kienitz": {
+   "lng": 14.4388,
+   "lat": 52.6735,
+   "note": "existing"
+  },
+  "Kostrzyn": {
+   "lng": 14.6536,
+   "lat": 52.5899,
+   "note": "existing"
+  },
+  "Oranienburg": {
+   "lng": 13.2458,
+   "lat": 52.7529,
+   "note": "existing"
+  },
+  "Kremmen": {
+   "lng": 13.0295,
+   "lat": 52.7605,
+   "note": "existing"
+  },
+  "Nauen": {
+   "lng": 12.8773,
+   "lat": 52.6061,
+   "note": "existing"
+  },
+  "Fehrbellin": {
+   "lng": 12.7652,
+   "lat": 52.8142,
+   "note": "existing"
+  },
+  "Ketzin": {
+   "lng": 12.8444,
+   "lat": 52.4769,
+   "note": "existing"
+  },
+  "Potsdam": {
+   "lng": 13.0591,
+   "lat": 52.4009,
+   "note": "existing"
+  },
+  "Brandenburg": {
+   "lng": 12.5498,
+   "lat": 52.4108,
+   "note": "existing"
+  },
+  "Zossen": {
+   "lng": 13.4489,
+   "lat": 52.2159,
+   "note": "existing"
+  },
+  "Fuerstenwalde": {
+   "lng": 14.065,
+   "lat": 52.358,
+   "note": "existing"
+  },
+  "Strausberg": {
+   "lng": 13.9042,
+   "lat": 52.5589,
+   "note": "existing"
+  },
+  "Trampe": {
+   "lng": 13.8369,
+   "lat": 52.7778,
+   "note": "existing"
+  },
+  "Eberswalde": {
+   "lng": 13.7997,
+   "lat": 52.8351,
+   "note": "existing"
+  },
+  "B_Koepenick": {
+   "lng": 13.5815,
+   "lat": 52.4584,
+   "note": "existing"
+  },
+  "B_Karlshorst": {
+   "lng": 13.5236,
+   "lat": 52.4843,
+   "note": "existing"
+  },
+  "B_Schoeneweide": {
+   "lng": 13.5179,
+   "lat": 52.4548,
+   "note": "existing"
+  },
+  "B_Bohnsdorf": {
+   "lng": 13.5707,
+   "lat": 52.4022,
+   "note": "existing"
+  },
+  "B_Tempelhof": {
+   "lng": 13.3775,
+   "lat": 52.4712,
+   "note": "existing"
+  },
+  "B_Teltow": {
+   "lng": 13.2685,
+   "lat": 52.3806,
+   "note": "existing"
+  },
+  "B_Stahnsdorf": {
+   "lng": 13.2077,
+   "lat": 52.387,
+   "note": "existing"
+  },
+  "B_Zehlendorf": {
+   "lng": 13.2586,
+   "lat": 52.4311,
+   "note": "existing"
+  },
+  "B_Lichterfelde": {
+   "lng": 13.3139,
+   "lat": 52.4373,
+   "note": "existing"
+  },
+  "B_Steglitz": {
+   "lng": 13.3223,
+   "lat": 52.4573,
+   "note": "existing"
+  },
+  "B_Charlottenburg": {
+   "lng": 13.3026,
+   "lat": 52.5043,
+   "note": "existing"
+  },
+  "B_Spandau": {
+   "lng": 13.1956,
+   "lat": 52.5348,
+   "note": "existing"
+  },
+  "B_Siemensstadt": {
+   "lng": 13.2569,
+   "lat": 52.5398,
+   "note": "existing"
+  },
+  "B_Reichstag": {
+   "lng": 13.3761,
+   "lat": 52.5187,
+   "note": "existing"
+  },
+  "B_Moltkebruecke": {
+   "lng": 13.3688,
+   "lat": 52.5219,
+   "note": "existing"
+  },
+  "B_Reichskanzlei": {
+   "lng": 13.3795,
+   "lat": 52.5109,
+   "note": "existing"
+  },
+  "B_Tiergarten": {
+   "lng": 13.3618,
+   "lat": 52.5163,
+   "note": "existing"
+  },
+  "B_Alexanderplatz": {
+   "lng": 13.4136,
+   "lat": 52.522,
+   "note": "existing"
+  },
+  "B_Weissensee": {
+   "lng": 13.463,
+   "lat": 52.5546,
+   "note": "existing"
+  },
+  "B_Pankow": {
+   "lng": 13.4353,
+   "lat": 52.5979,
+   "note": "existing"
+  },
+  "B_Niederschoenhausen": {
+   "lng": 13.4014,
+   "lat": 52.5858,
+   "note": "existing"
+  },
+  "B_Lichtenberg": {
+   "lng": 13.4961,
+   "lat": 52.5098,
+   "note": "existing"
+  },
+  "B_Treptow": {
+   "lng": 13.4703,
+   "lat": 52.4884,
+   "note": "existing"
+  },
+  "B_Reinickendorf": {
+   "lng": 13.2881,
+   "lat": 52.6048,
+   "note": "existing"
+  },
+  "B_Schoenefeld": {
+   "lng": 13.5048,
+   "lat": 52.3886,
+   "note": "existing"
+  },
+  "B_Neukoelln": {
+   "lng": 13.4354,
+   "lat": 52.4811,
+   "note": "existing"
+  },
+  "B_Britz": {
+   "lng": 13.4423,
+   "lat": 52.4483,
+   "note": "existing"
+  },
+  "B_Gatow": {
+   "lng": 13.1801,
+   "lat": 52.4856,
+   "note": "existing"
+  },
+  "B_Wannsee": {
+   "lng": 13.1801,
+   "lat": 52.4212,
+   "note": "existing"
+  },
+  "Friedersdorf_MOL": {
+   "lng": 14.4057,
+   "lat": 52.517,
+   "note": "existing"
+  },
+  "Werbig": {
+   "lng": 14.3834,
+   "lat": 52.5618,
+   "note": "existing"
+  },
+  "Sachsendorf": {
+   "lng": 14.477,
+   "lat": 52.5061,
+   "note": "existing"
+  },
+  "Golzow": {
+   "lng": 14.4929,
+   "lat": 52.5743,
+   "note": "existing"
+  },
+  "Reitwein": {
+   "lng": 14.5828,
+   "lat": 52.5015,
+   "note": "existing"
+  },
+  "Lebus": {
+   "lng": 14.5338,
+   "lat": 52.4271,
+   "note": "existing"
+  },
+  "Altlandsberg": {
+   "lng": 13.776,
+   "lat": 52.5936,
+   "note": "existing"
+  },
+  "Bernau": {
+   "lng": 13.5881,
+   "lat": 52.6787,
+   "note": "existing"
+  },
+  "Werneuchen": {
+   "lng": 13.7411,
+   "lat": 52.6461,
+   "note": "existing"
+  },
+  "Dresden": {
+   "lng": 13.7381,
+   "lat": 51.0493,
+   "note": "existing"
+  },
+  "BadFreienwalde": {
+   "lng": 14.0301,
+   "lat": 52.7875,
+   "note": "existing"
+  },
+  "OsinowDolny": {
+   "lng": 14.1447,
+   "lat": 52.8522,
+   "note": "existing"
+  },
+  "StaraRudnica": {
+   "lng": 14.1941,
+   "lat": 52.8349,
+   "note": "existing"
+  },
+  "Neulewin": {
+   "lng": 14.291,
+   "lat": 52.7461,
+   "note": "existing"
+  },
+  "Neutrebbin": {
+   "lng": 14.2675,
+   "lat": 52.6561,
+   "note": "existing"
+  },
+  "B_Mitte": {
+   "lng": 13.3598,
+   "lat": 52.5332,
+   "note": "existing"
+  }
+ },
+ "gaps": [
+  "Нет цифр потерь танков 1 гв. ТА и 2 гв. ТА по дням — только качественные оценки («значительные», «эквивалент танковой армии»).",
+  "Время ch.1 (05:00) и ch.3 (05:50) начала артподготовки 16.04 расходятся; в существующем наборе 05:00 МСК.",
+  "Номера бригад Вайнруба (219 тбр), Чугункова (54 гв. тбр), принадлежность 22 гв. мсбр — из собственного знания (C).",
+  "Дата 26.04 у Мальхова/в Вайсензее для 347 гв. тсап частично выведена: в тексте «новый день» после 20.04 → 21.04; вход в Берлин 22.04.",
+  "Фраза ch.2 «ночью на 24.04 44-я и 45-я гв. тбр открыли огонь по Рейхсканцелярии» явная ошибка датировки (контекст 30.04) — не использована.",
+  "Нет расхода боеприпасов в тоннах/выстрелах, кроме трофейной «сапёрной артиллерии» (200 снарядов 150–211 мм) и Фаустпатронов.",
+  "Положения по карте «Berlin Surrounded» не всегда различимы между 23.04 и 28.04 — помечены C.",
+  "Направление «Urbanstrasse к Зоо» (ch.1) географически сомнительно; координата условная.",
+  "Польские позиции 16/18.04 сняты с карты 1st Polish Army визуально (C).",
+  "Нет данных об артиллерийской плотности 1 А ВП и о расходе горючего на 100 км."
+ ]
+}
