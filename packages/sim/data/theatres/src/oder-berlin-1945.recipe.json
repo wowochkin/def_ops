@@ -1,0 +1,90 @@
+{
+  "id": "oder-berlin-1945",
+  "name": "Одер — Берлин — Эльба, апрель–май 1945",
+  "bbox": [11.0, 50.9, 15.6, 54.45],
+  "cellKm": 2,
+  "defaultTerrain": "open",
+  "grid": { "dLng": 0.015, "dLat": 0.009 },
+  "landcover": {
+    "source": "esa-worldcover-2021",
+    "rules": { "water": 0.5, "urban": 0.35, "marsh": 0.3, "forest": 0.5 }
+  },
+  "relief": { "source": "copernicus-dem-90", "smoothPx": 5, "hillsReliefM": 35, "hillsSlope": 0.025 },
+  "gazetteers": ["../../../../../docs/sources/berlin-1945-positions.json"],
+  "rivers": {
+    "major": ["Oder", "Odra", "Westoder", "Odra Zachodnia", "Odra Wschodnia", "Lausitzer Neiße", "Nysa Łużycka", "Elbe", "Havel", "Spree", "Warta", "Peene"],
+    "minor": ["Alte Oder", "Wriezener Alte Oder", "Güstebieser Alte Oder", "Stille Oder", "Oder-Havel-Kanal", "Oder-Spree-Kanal", "Finowkanal", "Teltowkanal", "Landwehrkanal", "Hohenzollernkanal", "Berlin-Spandauer Schifffahrtskanal", "Elbe-Havel-Kanal", "Dahme", "Nuthe", "Notte", "Welse", "Randow", "Uecker", "Schwarze Elster", "Mulde", "Saale", "Plane", "Spree-Oder-Wasserstraße", "Malxe", "Ucker", "Tollense", "Recknitz", "Warnow", "Rhin", "Dosse", "Stepenitz", "Löcknitz", "Ihna", "Ina", "Myśla", "Bóbr", "Kwisa", "Lubsza", "Schöps", "Weißer Schöps"]
+  },
+  "roads": {
+    "note": "Шоссе — только участки имперских автобанов (Reichsautobahn), построенные к 1945 г.; остальные магистрали и основные дороги сегодняшней сети — как дороги (основа — бывшие имперские шоссе, Reichsstraßen).",
+    "highwayRefs": ["A 2", "A 9", "A 10", "A 11", "A 12", "A 13", "A 15", "A 115", "A18", "A6", "A6;S3"],
+    "roadHighways": ["trunk", "primary"],
+    "simplifyDeg": 0.006
+  },
+  "rail": { "simplifyDeg": 0.006 },
+  "bridges": {
+    "auto": "пересечения дорог и железных дорог с большими реками",
+    "dedupeKm": 1.0,
+    "rules": [
+      { "rivers": ["Oder", "Odra", "Westoder", "Odra Zachodnia", "Odra Wschodnia", "Warta"], "destroyedAt": "1945-03-01T00:00", "note": "мосты через Одер к апрелю взорваны отходившими немецкими войсками; переправы советской стороны — ниже (C)" },
+      { "rivers": ["Lausitzer Neiße", "Nysa Łużycka"], "destroyedAt": "1945-02-20T00:00", "note": "мосты через Нейсе взорваны при отходе в феврале (C)" },
+      { "near": "Frankfurt", "km": 3, "rivers": ["Oder", "Odra"], "destroyedAt": "1945-04-22T00:00", "note": "мост к предмостному укреплению Франкфурта; взорван при оставлении (дата — C)" },
+      { "rivers": ["Elbe"], "destroyedAt": "1945-04-20T00:00", "note": "мосты через Эльбу взорваны при подходе союзников (Магдебург 18.04, Тангермюнде 12.04); общая дата — C" }
+    ],
+    "crossings": [
+      { "id": "x_kuestrin", "name": "переправы Кюстринского плацдарма", "at": "Kostrzyn", "openFrom": "1945-03-31T00:00", "note": "к началу апреля через Одер 25 мостов и 40 паромов (LT_CONQ ch.3)" },
+      { "id": "x_goeritz", "name": "переправы у Гёрица (Гужица) и Рейтвейна", "at": "Reitwein", "openFrom": "1945-03-31T00:00", "note": "LT_CONQ ch.3; место — C" },
+      { "id": "x_kienitz", "name": "переправа у Кинитца", "at": "Kienitz", "openFrom": "1945-03-31T00:00", "note": "северный край плацдарма (C)" },
+      { "id": "x_lebus", "name": "переправы плацдарма 69 А у Лебуса", "at": "Lebus", "openFrom": "1945-03-31T00:00", "note": "C" },
+      { "id": "x_fuerstenberg", "name": "переправы плацдарма 33 А", "at": "Fuerstenberg_O", "openFrom": "1945-03-31T00:00", "note": "C" },
+      { "id": "x_gozdowice", "name": "переправа 1 А ВП у Гоздовице", "at": "Gozdowice", "openFrom": "1945-04-16T12:00", "note": "форсирование 16.04 (LT_CONQ ch.4); время — C" },
+      { "id": "x_cedynia", "name": "переправа у Цедыни (Цеден)", "at": "Cedynia", "openFrom": "1945-04-17T00:00", "note": "C" },
+      { "id": "x_forst", "name": "переправы 1 УФ у Форста", "at": "Forst", "openFrom": "1945-04-16T10:00", "note": "форсирование Нейсе 16.04 утром; 133 переправы в полосе фронта (Конев); место и время — C" },
+      { "id": "x_bademeusel", "name": "переправы 1 УФ у Кляйн-Бадемойзеля", "at": "KleinBademeusel", "openFrom": "1945-04-16T10:00", "note": "главный удар 3 гв. ТА, 4 гв. ТА (C)" },
+      { "id": "x_muskau", "name": "переправы 1 УФ у Бад-Мускау", "at": "BadMuskau", "openFrom": "1945-04-16T10:00", "note": "C" },
+      { "id": "x_rothenburg", "name": "переправы 2 А ВП у Ротенбурга", "at": "Rothenburg", "openFrom": "1945-04-16T12:00", "note": "C" },
+      { "id": "x_gryfino", "name": "переправа 65 А у Грайфенхагена", "at": "Gryfino", "openFrom": "1945-04-20T12:00", "note": "форсирование Ост- и Вест-Одера 20.04 (C)" },
+      { "id": "x_widuchowa", "name": "переправа 70 А у Видухова", "at": "Widuchowa", "openFrom": "1945-04-20T12:00", "note": "C" },
+      { "id": "x_ognica", "name": "переправа 49 А у Огницы", "at": "Ognica", "openFrom": "1945-04-21T00:00", "note": "C" }
+    ]
+  },
+  "lines": [
+    { "id": "de_oder_hkl", "name": "Главная полоса на Одере (Hauptkampflinie)", "side": "de", "fortification": 2,
+      "places": ["Hohensaaten", "GuestebieserLoose", "Kienitz", "Zechin", "Golzow", "Sachsendorf", "Reitwein", "Lebus", "Frankfurt", "Lossow", "Brieskow", "Fuerstenberg_O", "Guben"],
+      "note": "по линии соприкосновения 16.04 (berlin-1945-positions.json); C" },
+    { "id": "de_hardenberg", "name": "Вторая позиция «Харденберг» (Hardenberg-Stellung)", "side": "de", "fortification": 3,
+      "places": ["BadFreienwalde", "Wriezen", "Platkow", "Gusow", "Seelow", "Dolgelin", "Lebus"],
+      "note": "по бровке Зееловских высот; уточнить по LT_RACE/LT_CONQ; C" },
+    { "id": "de_wotan", "name": "Третья позиция «Вотан» (Wotan-Stellung)", "side": "de", "fortification": 1,
+      "places": ["Eberswalde", "Proetzel", "Muencheberg", "Fuerstenwalde"],
+      "note": "C" },
+    { "id": "de_neisse", "name": "Оборона на Нейсе (4-я танковая армия)", "side": "de", "fortification": 2,
+      "places": ["Guben", "Forst", "KleinBademeusel", "BadMuskau", "Rothenburg", "Goerlitz"],
+      "note": "по линии соприкосновения 16.04; C" },
+    { "id": "de_oder_north", "name": "Оборона на Нижнем Одере (3-я танковая армия)", "side": "de", "fortification": 1,
+      "places": ["Dabie", "Gryfino", "Widuchowa", "Krajnik", "Ognica", "Hohensaaten"],
+      "note": "между Ост- и Вест-Одером — заболоченная пойма; C" }
+  ],
+  "areas": {
+    "fromGazetteer": { "radiusKm": 3, "berlinPrefix": "B_", "berlinRadiusKm": 1.5 },
+    "explicit": [
+      { "id": "berlin", "name": "Берлин", "place": "B_Mitte", "radiusKm": 16 },
+      { "id": "seelow_heights", "name": "Зееловские высоты", "places": ["Wriezen", "Seelow", "Dolgelin", "Lebus", "Muencheberg", "Buckow", "Batzlow"] },
+      { "id": "kuestrin_bridgehead", "name": "Кюстринский плацдарм", "places": ["Kienitz", "Kostrzyn", "Reitwein", "Sachsendorf", "Golzow", "Zechin"] },
+      { "id": "oderbruch", "name": "Одербрух", "places": ["Hohensaaten", "Kienitz", "Golzow", "Seelow", "Wriezen", "BadFreienwalde"] },
+      { "id": "spreewald", "name": "Шпревальд", "place": "Luebbenau", "radiusKm": 14 },
+      { "id": "halbe_forest", "name": "леса у Хальбе", "places": ["Halbe", "Teupitz", "MaerkischBuchholz", "Baruth", "Motzen"] }
+    ]
+  },
+  "sources": [
+    "Земной покров: ESA WorldCover 10 m 2021 v200 (CC BY 4.0), © ESA WorldCover project / Copernicus Sentinel data",
+    "Рельеф: Copernicus DEM GLO-90 (© DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, Copernicus programme)",
+    "Реки, дороги, железные дороги: © участники OpenStreetMap (ODbL), выборка через Overpass API",
+    "Исторический слой (рубежи, переправы, разрушенные мосты, автобаны 1945 г.): berlin-1945-positions.json, LT_CONQ, оценки составителя (C)"
+  ],
+  "caveats": [
+    "Земной покров и дорожная сеть современные: пригороды Берлина и часть магистралей больше, чем в 1945 г.; лесистость Бранденбурга близка к исторической.",
+    "Затопление Одербруха весной 1945 г. не отражено (уточнить).",
+    "Рубежи «Харденберг», «Вотан» и переправы — по оценке составителя (C) до сверки с книгами."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "rkka-1945",
+  "name": "Красная армия, 1945",
+  "_status": "черновик до калибровки: числа — порядок величин по уставным нормам и обобщённым данным, подлежат подбору по историческим операциям (этап 2)",
+  "weights": { "personnel": 1.0, "tanks": 0.08, "guns": 0.03 },
+  "unitTypes": {
+    "rifle_army": { "id": "rifle_army", "name": "общевойсковая армия", "mobility": "foot", "quality": 1.0 },
+    "shock_army": { "id": "shock_army", "name": "ударная армия", "mobility": "foot", "quality": 1.05 },
+    "guards_army": { "id": "guards_army", "name": "гвардейская армия", "mobility": "foot", "quality": 1.1 },
+    "tank_army": { "id": "tank_army", "name": "танковая армия", "mobility": "tracked", "quality": 1.1 },
+    "rifle_corps": { "id": "rifle_corps", "name": "стрелковый корпус", "mobility": "foot", "quality": 1.0 },
+    "tank_corps": { "id": "tank_corps", "name": "танковый корпус", "mobility": "tracked", "quality": 1.05 },
+    "mech_corps": { "id": "mech_corps", "name": "механизированный корпус", "mobility": "motor", "quality": 1.05 },
+    "cavalry_corps": { "id": "cavalry_corps", "name": "кавалерийский корпус", "mobility": "foot", "quality": 1.0 }
+  },
+  "offRoad": {
+    "foot": { "open": 25, "forest": 15, "marsh": 8, "urban": 12, "hills": 18, "water": 0 },
+    "motor": { "open": 60, "forest": 25, "marsh": 5, "urban": 25, "hills": 40, "water": 0 },
+    "tracked": { "open": 50, "forest": 25, "marsh": 8, "urban": 20, "hills": 35, "water": 0 }
+  },
+  "road": { "foot": 30, "motor": 150, "tracked": 100 },
+  "consumption": {
+    "attack": { "ammo": 0.5, "fuel": 0.5 },
+    "defend": { "ammo": 0.25, "fuel": 0.05 },
+    "march": { "ammo": 0.02, "fuel": 0.4 },
+    "withdraw": { "ammo": 0.15, "fuel": 0.4 },
+    "reserve": { "ammo": 0, "fuel": 0.02 }
+  },
+  "orderDelayHours": { "front": 0, "army": 6, "corps": 4, "division": 3, "brigade": 2, "regiment": 2 }
+}
