@@ -1,0 +1,6414 @@
+{
+ "meta": {
+  "title": "Berlin Strategic Offensive 16.04–08.05.1945 — positions for army/corps-level calibration",
+  "version": 1,
+  "compiled": "2026-10-07",
+  "crs": "WGS84, decimal degrees (lng, lat)",
+  "reliability": {
+   "A": "Ziemke 1968 / официальный справочник (прочитано в сессии)",
+   "B": "Википедия ru/de/en/pl со ссылкой на монографии",
+   "C": "вывод составителя / неподтверждённое; approx_km увеличен"
+  },
+  "approx_km": "радиус неопределённости положения главных сил (не точность геокодирования)",
+  "time": "для 16.04: start = исходное положение утром, end = к исходу дня; иначе — положение за день (как правило к вечеру)",
+  "place": "ключ населённого пункта из gazetteer; 'A / B' = середина между пунктами",
+  "geocoding": "координаты населённых пунктов: OpenStreetMap Nominatim (ODbL), округлены до 0.001°",
+  "companion": "berlin-1945-positions.md; OOB — berlin-1945-oob.md"
+ },
+ "sources": {
+  "Z": {
+   "ref": "Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. Washington: CMH, 1968, ch. XXI 'Berlin', pp. 467-499 (HyperWar mirror)",
+   "default_reliability": "A"
+  },
+  "OOB": {
+   "ref": "docs/sources/berlin-1945-oob.md (Кривошеев 1993/2001; Боевой состав СА ч. V; Ziemke) — см. там",
+   "default_reliability": "A"
+  },
+  "RW_BNO": {
+   "ref": "ru.wikipedia: «Берлинская наступательная операция» (wikitext 07.10.2026; опирается на История ВМВ т.10, 1979)",
+   "default_reliability": "B"
+  },
+  "RW_ZB": {
+   "ref": "ru.wikipedia: «Зееловско-Берлинская операция» (по История ВМВ т.10, с.326-347)",
+   "default_reliability": "B"
+  },
+  "RW_KP": {
+   "ref": "ru.wikipedia: «Котбус-Потсдамская операция» (Исаев 2007; Конев «Сорок пятый»)",
+   "default_reliability": "B"
+  },
+  "RW_ST": {
+   "ref": "ru.wikipedia: «Шпремберг-Торгауская операция» (Исаев 2007; Конев)",
+   "default_reliability": "B"
+  },
+  "RW_BW": {
+   "ref": "ru.wikipedia: «Баутцен-Вайсенбергская операция» (Исаев 2007; Berndt 1999; Kania 2023)",
+   "default_reliability": "B"
+  },
+  "RW_SR": {
+   "ref": "ru.wikipedia: «Штеттинско-Ростокская операция» (статья с шаблоном «нет сносок»; Рокоссовский «Солдатский долг»)",
+   "default_reliability": "B"
+  },
+  "RW_SHB": {
+   "ref": "ru.wikipedia: «Штурм Берлина»",
+   "default_reliability": "B"
+  },
+  "RW_ARM": {
+   "ref": "ru.wikipedia: статьи об армиях (3-я гв. ТА — Радзиевский 1977; 4-я гв. ТА; 2-я уд. А; 61-я А; 70-я А; 3-я А; 52-я А)",
+   "default_reliability": "B"
+  },
+  "DW_SH": {
+   "ref": "de.wikipedia: «Schlacht um die Seelower Höhen» (Lakowski 2005; Le Tissier 1995; Tieke 1992)",
+   "default_reliability": "B"
+  },
+  "DW_SB": {
+   "ref": "de.wikipedia: «Schlacht um Berlin» (цитирует Le Tissier «Der Kampf um Berlin 1945», Ryan, Boldt)",
+   "default_reliability": "B"
+  },
+  "DW_HA": {
+   "ref": "de.wikipedia: «Kesselschlacht von Halbe»",
+   "default_reliability": "B"
+  },
+  "DW_SRO": {
+   "ref": "de.wikipedia: «Stettin-Rostocker Operation» (Lakowski 2009; Schäufler/Tieke 2003; Освобождение городов 1985)",
+   "default_reliability": "B"
+  },
+  "DW_12A": {
+   "ref": "de.wikipedia: «12. Armee (Wehrmacht)» (Gellermann «Die Armee Wenck»)",
+   "default_reliability": "B"
+  },
+  "DW_5AK": {
+   "ref": "de.wikipedia: «V. Armeekorps (Wehrmacht)»",
+   "default_reliability": "B"
+  },
+  "DW_4PZ": {
+   "ref": "de.wikipedia: «4. Panzerarmee (Wehrmacht)» (Gliederung 30.04.1945)",
+   "default_reliability": "B"
+  },
+  "EW_HA": {
+   "ref": "en.wikipedia: «Battle of Halbe» (Le Tissier «Slaughter at Halbe» 2005; Beevor 2002)",
+   "default_reliability": "B"
+  },
+  "PW_1A": {
+   "ref": "pl.wikipedia: «1 Armia Wojska Polskiego»",
+   "default_reliability": "B"
+  },
+  "PW_2A": {
+   "ref": "pl.wikipedia: «2 Armia Wojska Polskiego» (MEW 1967 и др.)",
+   "default_reliability": "B"
+  },
+  "CIT": {
+   "ref": "вывод составителя из соседних привязанных фактов (см. sector_note); первоисточник с точным местом не найден",
+   "default_reliability": "C"
+  }
+ },
+ "gazetteer": {
+  "Kamien": {
+   "query": "Kamień Pomorski",
+   "lng": 14.7729,
+   "lat": 53.9654,
+   "osm_display_name": "Kamień Pomorski, gmina Kamień Pomorski, powiat kamieński, województwo zachodniopomorskie, Polska"
+  },
+  "Stepnica": {
+   "query": "Stepnica",
+   "lng": 14.63,
+   "lat": 53.6515,
+   "osm_display_name": "Stepnica, gmina Stepnica, powiat goleniowski, województwo zachodniopomorskie, Polska"
+  },
+  "Dabie": {
+   "query": "Dąbie",
+   "lng": 14.6663,
+   "lat": 53.4797,
+   "osm_display_name": "Dąbie, Szczecin, gmina Goleniów, powiat goleniowski, województwo zachodniopomorskie, 71-812, Polska"
+  },
+  "Szczecin": {
+   "query": "Szczecin",
+   "lng": 14.5929,
+   "lat": 53.4298,
+   "osm_display_name": "Szczecin, województwo zachodniopomorskie, Polska"
+  },
+  "Gryfino": {
+   "query": "Gryfino",
+   "lng": 14.4924,
+   "lat": 53.2536,
+   "osm_display_name": "Gryfino, gmina Gryfino, powiat gryfiński, województwo zachodniopomorskie, 74-101, Polska"
+  },
+  "Gartz": {
+   "query": "Gartz (Oder)",
+   "lng": 14.3914,
+   "lat": 53.2086,
+   "osm_display_name": "Gartz (Oder), Uckermark, Brandenburg, 16307, Deutschland"
+  },
+  "Przeclaw": {
+   "query": "Przecław",
+   "lng": 14.4724,
+   "lat": 53.3768,
+   "osm_display_name": "Przecław, gmina Kołbaskowo, powiat policki, województwo zachodniopomorskie, 72-005, Polska"
+  },
+  "Krajnik": {
+   "query": "Krajnik Dolny",
+   "lng": 14.3158,
+   "lat": 53.0316,
+   "osm_display_name": "Krajnik Dolny, gmina Chojna, powiat gryfiński, województwo zachodniopomorskie, 74-506, Polska"
+  },
+  "Ognica": {
+   "query": "Ognica",
+   "lng": 14.3705,
+   "lat": 53.0809,
+   "osm_display_name": "Ognica, gmina Widuchowa, powiat gryfiński, województwo zachodniopomorskie, 74-121, Polska"
+  },
+  "Schwedt": {
+   "query": "Schwedt/Oder",
+   "lng": 14.2841,
+   "lat": 53.0586,
+   "osm_display_name": "Schwedt/Oder, Uckermark, Brandenburg, 16303, Deutschland"
+  },
+  "Hohensaaten": {
+   "query": "Hohensaaten",
+   "lng": 14.1447,
+   "lat": 52.8739,
+   "osm_display_name": "Hohensaaten, Bad Freienwalde (Oder), Oderaue, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Police": {
+   "query": "Police",
+   "lng": 14.5657,
+   "lat": 53.5486,
+   "osm_display_name": "Police, gmina Police, powiat policki, województwo zachodniopomorskie, Polska"
+  },
+  "Trzebiez": {
+   "query": "Trzebież",
+   "lng": 14.5093,
+   "lat": 53.6548,
+   "osm_display_name": "Trzebież, gmina Police, powiat policki, województwo zachodniopomorskie, 72-020, Polska"
+  },
+  "NoweWarpno": {
+   "query": "Nowe Warpno",
+   "lng": 14.2811,
+   "lat": 53.7253,
+   "osm_display_name": "Nowe Warpno, gmina Nowe Warpno, powiat policki, województwo zachodniopomorskie, 72-022, Polska"
+  },
+  "Swinoujscie": {
+   "query": "Świnoujście",
+   "lng": 14.3357,
+   "lat": 53.827,
+   "osm_display_name": "Świnoujście, województwo zachodniopomorskie, Polska"
+  },
+  "Wolin": {
+   "query": "Wolin",
+   "lng": 14.6157,
+   "lat": 53.8438,
+   "osm_display_name": "Wolin, gmina Wolin, powiat kamieński, województwo zachodniopomorskie, 72-510, Polska"
+  },
+  "Kolobrzeg": {
+   "query": "Kołobrzeg",
+   "lng": 15.5766,
+   "lat": 54.1761,
+   "osm_display_name": "Kołobrzeg, powiat kołobrzeski, województwo zachodniopomorskie, 78-100, Polska"
+  },
+  "Gryfice": {
+   "query": "Gryfice",
+   "lng": 15.1987,
+   "lat": 53.9149,
+   "osm_display_name": "Gryfice, gmina Gryfice, powiat gryficki, województwo zachodniopomorskie, 72-300, Polska"
+  },
+  "Petershagen_UM": {
+   "query": "Petershagen",
+   "lng": 14.2516,
+   "lat": 53.2453,
+   "osm_display_name": "Petershagen, Casekow, Gartz (Oder), Uckermark, Brandenburg, 16306, Deutschland"
+  },
+  "Tantow": {
+   "query": "Tantow",
+   "lng": 14.3249,
+   "lat": 53.2676,
+   "osm_display_name": "Tantow, Gartz (Oder), Uckermark, Brandenburg, Deutschland"
+  },
+  "Penkun": {
+   "query": "Penkun",
+   "lng": 14.2413,
+   "lat": 53.2978,
+   "osm_display_name": "Penkun, Löcknitz-Penkun, Vorpommern-Greifswald, Mecklenburg-Vorpommern, 17328, Deutschland"
+  },
+  "Passow": {
+   "query": "Passow",
+   "lng": 14.1124,
+   "lat": 53.1407,
+   "osm_display_name": "Passow, Schwedt/Oder, Uckermark, Brandenburg, Deutschland"
+  },
+  "Loecknitz": {
+   "query": "Löcknitz",
+   "lng": 14.217,
+   "lat": 53.4519,
+   "osm_display_name": "Löcknitz, Löcknitz-Penkun, Vorpommern-Greifswald, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Prenzlau": {
+   "query": "Prenzlau",
+   "lng": 13.8666,
+   "lat": 53.3167,
+   "osm_display_name": "Prenzlau, Uckerfelde, Uckermark, Brandenburg, 17291, Deutschland"
+  },
+  "Anklam": {
+   "query": "Anklam",
+   "lng": 13.6881,
+   "lat": 53.8561,
+   "osm_display_name": "Anklam, Vorpommern-Greifswald, Mecklenburg-Vorpommern, 17389, Deutschland"
+  },
+  "Greifswald": {
+   "query": "Greifswald",
+   "lng": 13.3815,
+   "lat": 54.0958,
+   "osm_display_name": "Greifswald, Vorpommern-Greifswald, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Stralsund": {
+   "query": "Stralsund",
+   "lng": 13.0821,
+   "lat": 54.3096,
+   "osm_display_name": "Stralsund, Vorpommern-Rügen, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Friedland": {
+   "query": "Friedland",
+   "lng": 13.5488,
+   "lat": 53.6716,
+   "osm_display_name": "Friedland, Mecklenburgische Seenplatte, Mecklenburg-Vorpommern, 17098, Deutschland"
+  },
+  "Neubrandenburg": {
+   "query": "Neubrandenburg",
+   "lng": 13.2603,
+   "lat": 53.5574,
+   "osm_display_name": "Neubrandenburg, Mecklenburgische Seenplatte, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Malchin": {
+   "query": "Malchin",
+   "lng": 12.7644,
+   "lat": 53.7383,
+   "osm_display_name": "Malchin, Malchin am Kummerower See, Mecklenburgische Seenplatte, Mecklenburg-Vorpommern, 17139, Deutschland"
+  },
+  "Waren": {
+   "query": "Waren (Müritz)",
+   "lng": 12.6851,
+   "lat": 53.5156,
+   "osm_display_name": "Waren (Müritz), Mecklenburgische Seenplatte, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Rostock": {
+   "query": "Rostock",
+   "lng": 12.14,
+   "lat": 54.0887,
+   "osm_display_name": "Rostock, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Warnemuende": {
+   "query": "Warnemünde",
+   "lng": 12.0813,
+   "lat": 54.1779,
+   "osm_display_name": "Warnemünde, Ortsbeirat 1 : Diedrichshagen, Seebad Warnemünde, Rostock, Mecklenburg-Vorpommern, 18119, Deutschland"
+  },
+  "Grimmen": {
+   "query": "Grimmen",
+   "lng": 13.043,
+   "lat": 54.1129,
+   "osm_display_name": "Grimmen, Vorpommern-Rügen, Mecklenburg-Vorpommern, 18507, Deutschland"
+  },
+  "Demzin": {
+   "query": "Demzin",
+   "lng": 12.7849,
+   "lat": 53.6664,
+   "osm_display_name": "Demzin, Faulenrost, Malchin am Kummerower See, Mecklenburgische Seenplatte, Mecklenburg-Vorpommern, 17139, Deutschland"
+  },
+  "Mirow": {
+   "query": "Mirow",
+   "lng": 12.8477,
+   "lat": 53.2852,
+   "osm_display_name": "Mirow, Mecklenburgische Kleinseenplatte, Mecklenburgische Seenplatte, Mecklenburg-Vorpommern, 17252, Deutschland"
+  },
+  "Templin": {
+   "query": "Templin",
+   "lng": 13.5006,
+   "lat": 53.1193,
+   "osm_display_name": "Templin, Uckermark, Brandenburg, 17268, Deutschland"
+  },
+  "Wismar": {
+   "query": "Wismar",
+   "lng": 11.4648,
+   "lat": 53.891,
+   "osm_display_name": "Wismar, Nordwestmecklenburg, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Gueustrow": {
+   "query": "Güstrow",
+   "lng": 12.1765,
+   "lat": 53.7936,
+   "osm_display_name": "Güstrow, Landkreis Rostock, Mecklenburg-Vorpommern, Deutschland"
+  },
+  "Demmin": {
+   "query": "Demmin",
+   "lng": 13.0328,
+   "lat": 53.907,
+   "osm_display_name": "Demmin, Mecklenburgische Seenplatte, Mecklenburg-Vorpommern, 17109, Deutschland"
+  },
+  "Oderberg": {
+   "query": "Oderberg",
+   "lng": 14.045,
+   "lat": 52.8659,
+   "osm_display_name": "Oderberg, Britz-Chorin-Oderberg, Barnim, Brandenburg, 16248, Deutschland"
+  },
+  "Cedynia": {
+   "query": "Cedynia",
+   "lng": 14.2031,
+   "lat": 52.8784,
+   "osm_display_name": "Cedynia, gmina Cedynia, powiat gryfiński, województwo zachodniopomorskie, Polska"
+  },
+  "OsinowDolny": {
+   "query": "Osinów Dolny",
+   "lng": 14.1447,
+   "lat": 52.8522,
+   "osm_display_name": "Osinów Dolny, gmina Cedynia, powiat gryfiński, województwo zachodniopomorskie, 74-520, Polska"
+  },
+  "StaraRudnica": {
+   "query": "Stara Rudnica",
+   "lng": 14.1941,
+   "lat": 52.8349,
+   "osm_display_name": "Stara Rudnica, gmina Cedynia, powiat gryfiński, województwo zachodniopomorskie, 74-520, Polska"
+  },
+  "StareLysogorki": {
+   "query": "Stare Łysogórki",
+   "lng": 14.2882,
+   "lat": 52.7859,
+   "osm_display_name": "Stare Łysogórki, gmina Mieszkowice, powiat gryfiński, województwo zachodniopomorskie, 74-505, Polska"
+  },
+  "Gozdowice": {
+   "query": "Gozdowice",
+   "lng": 14.3223,
+   "lat": 52.7659,
+   "osm_display_name": "Gozdowice, Mieszkowice, gmina Mieszkowice, powiat gryfiński, województwo zachodniopomorskie, 74-505, Polska"
+  },
+  "Siekierki": {
+   "query": "Siekierki",
+   "lng": 14.2445,
+   "lat": 52.809,
+   "osm_display_name": "Siekierki, gmina Cedynia, powiat gryfiński, województwo zachodniopomorskie, 74-520, Polska"
+  },
+  "Neulewin": {
+   "query": "Neulewin",
+   "lng": 14.291,
+   "lat": 52.7461,
+   "osm_display_name": "Neulewin, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Kienitz": {
+   "query": "Kienitz",
+   "lng": 14.4388,
+   "lat": 52.6735,
+   "osm_display_name": "Kienitz, Letschin, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "GuestebieserLoose": {
+   "query": "Güstebieser Loose",
+   "lng": 14.2939,
+   "lat": 52.755,
+   "osm_display_name": "Güstebieser Loose, Neulewin, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Zechin": {
+   "query": "Zechin",
+   "lng": 14.4564,
+   "lat": 52.6126,
+   "osm_display_name": "Zechin, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Letschin": {
+   "query": "Letschin",
+   "lng": 14.3786,
+   "lat": 52.6751,
+   "osm_display_name": "Letschin, Altbarnim, Märkisch-Oderland, Brandenburg, 15324, Deutschland"
+  },
+  "Altlewin": {
+   "query": "Altlewin",
+   "lng": 14.266,
+   "lat": 52.7021,
+   "osm_display_name": "Altlewin, Neutrebbin, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, 15320, Deutschland"
+  },
+  "Golzow": {
+   "query": "Golzow",
+   "lng": 14.4929,
+   "lat": 52.5743,
+   "osm_display_name": "Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Gorgast": {
+   "query": "Gorgast",
+   "lng": 14.5515,
+   "lat": 52.5682,
+   "osm_display_name": "Gorgast, Küstriner Vorland, Golzow, Märkisch-Oderland, Brandenburg, 15328, Deutschland"
+  },
+  "Kostrzyn": {
+   "query": "Kostrzyn nad Odrą",
+   "lng": 14.6536,
+   "lat": 52.5899,
+   "osm_display_name": "Kostrzyn nad Odrą, powiat gorzowski, województwo lubuskie, 66-470, Polska"
+  },
+  "Sachsendorf": {
+   "query": "Sachsendorf",
+   "lng": 14.477,
+   "lat": 52.5061,
+   "osm_display_name": "Sachsendorf, Lindendorf, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Reitwein": {
+   "query": "Reitwein",
+   "lng": 14.5828,
+   "lat": 52.5015,
+   "osm_display_name": "Reitwein, Lebus, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Lebus": {
+   "query": "Lebus",
+   "lng": 14.5338,
+   "lat": 52.4271,
+   "osm_display_name": "Lebus, Märkisch-Oderland, Brandenburg, 15326, Deutschland"
+  },
+  "Carzig": {
+   "query": "Carzig",
+   "lng": 14.4599,
+   "lat": 52.4596,
+   "osm_display_name": "Carzig, Fichtenhöhe, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Frankfurt": {
+   "query": "Frankfurt (Oder)",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "osm_display_name": "Frankfurt (Oder), Brandenburg, Deutschland"
+  },
+  "Slubice": {
+   "query": "Słubice",
+   "lng": 14.5662,
+   "lat": 52.3557,
+   "osm_display_name": "Słubice, gmina Słubice, powiat słubicki, województwo lubuskie, 69-100, Polska"
+  },
+  "Lossow": {
+   "query": "Lossow",
+   "lng": 14.5488,
+   "lat": 52.2868,
+   "osm_display_name": "Lossow, Frankfurt (Oder), Brandenburg, Deutschland"
+  },
+  "Brieskow": {
+   "query": "Brieskow-Finkenheerd",
+   "lng": 14.5768,
+   "lat": 52.2536,
+   "osm_display_name": "Brieskow-Finkenheerd, Oder-Spree, Brandenburg, Deutschland"
+  },
+  "Fuerstenberg_O": {
+   "query": "Fürstenberg (Oder)",
+   "lng": 14.673,
+   "lat": 52.1456,
+   "osm_display_name": "Fürstenberg (Oder), Eisenhüttenstadt, Oder-Spree, Brandenburg, Deutschland"
+  },
+  "Eisenhuettenstadt": {
+   "query": "Eisenhüttenstadt",
+   "lng": 14.6294,
+   "lat": 52.1449,
+   "osm_display_name": "Eisenhüttenstadt, Oder-Spree, Brandenburg, Deutschland"
+  },
+  "Guben": {
+   "query": "Guben",
+   "lng": 14.7154,
+   "lat": 51.9503,
+   "osm_display_name": "Guben, Spree-Neiße - Sprjewja-Nysa, Brandenburg, Deutschland"
+  },
+  "Wriezen": {
+   "query": "Wriezen",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "osm_display_name": "Wriezen, Oderaue, Märkisch-Oderland, Brandenburg, 16269, Deutschland"
+  },
+  "BadFreienwalde": {
+   "query": "Bad Freienwalde (Oder)",
+   "lng": 14.0301,
+   "lat": 52.7875,
+   "osm_display_name": "Bad Freienwalde (Oder), Wölsickendorf-Wollenberg, Märkisch-Oderland, Brandenburg, 16259, Deutschland"
+  },
+  "Ranft": {
+   "query": "Altranft",
+   "lng": 14.0784,
+   "lat": 52.7685,
+   "osm_display_name": "Altranft, Bad Freienwalde (Oder), Oderaue, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Neutrebbin": {
+   "query": "Neutrebbin",
+   "lng": 14.2675,
+   "lat": 52.6561,
+   "osm_display_name": "Neutrebbin, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Altfriedland": {
+   "query": "Altfriedland",
+   "lng": 14.21,
+   "lat": 52.6262,
+   "osm_display_name": "Altfriedland, Neuhardenberg, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Moeglin": {
+   "query": "Möglin",
+   "lng": 14.1067,
+   "lat": 52.6639,
+   "osm_display_name": "Möglin, Reichenow-Möglin, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Batzlow": {
+   "query": "Batzlow",
+   "lng": 14.1195,
+   "lat": 52.6323,
+   "osm_display_name": "Batzlow, Märkische Höhe, Märkische Schweiz, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Kunersdorf_MOL": {
+   "query": "Kunersdorf",
+   "lng": 14.1467,
+   "lat": 52.6691,
+   "osm_display_name": "Kunersdorf, Bliesdorf, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Platkow": {
+   "query": "Platkow",
+   "lng": 14.3246,
+   "lat": 52.5836,
+   "osm_display_name": "Platkow, Gusow-Platkow, Seelow-Land, Märkisch-Oderland, Brandenburg, 15306, Deutschland"
+  },
+  "Gusow": {
+   "query": "Gusow",
+   "lng": 14.3544,
+   "lat": 52.5712,
+   "osm_display_name": "Gusow, Gusow-Platkow, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Werbig": {
+   "query": "Werbig",
+   "lng": 14.3834,
+   "lat": 52.5618,
+   "osm_display_name": "Werbig, Seelow, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Seelow": {
+   "query": "Seelow",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "osm_display_name": "Seelow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Dolgelin": {
+   "query": "Dolgelin",
+   "lng": 14.406,
+   "lat": 52.4952,
+   "osm_display_name": "Dolgelin, Lindendorf, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Friedersdorf_MOL": {
+   "query": "Friedersdorf",
+   "lng": 14.4057,
+   "lat": 52.517,
+   "osm_display_name": "Friedersdorf, Vierlinden, Seelow-Land, Märkisch-Oderland, Brandenburg, 15306, Deutschland"
+  },
+  "Reichenberg": {
+   "query": "Reichenberg",
+   "lng": 14.1127,
+   "lat": 52.6102,
+   "osm_display_name": "Reichenberg, Märkische Höhe, Märkische Schweiz, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Buckow": {
+   "query": "Buckow",
+   "lng": 14.0762,
+   "lat": 52.5672,
+   "osm_display_name": "Buckow, Märkische Schweiz, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Neuentempel": {
+   "query": "Neuentempel",
+   "lng": 14.3216,
+   "lat": 52.4992,
+   "osm_display_name": "Neuentempel, Vierlinden, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Marxdorf": {
+   "query": "Marxdorf",
+   "lng": 14.2607,
+   "lat": 52.4899,
+   "osm_display_name": "Marxdorf, Vierlinden, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Lüdersdorf": {
+   "query": "Lüdersdorf",
+   "lng": 14.0833,
+   "lat": 52.6991,
+   "osm_display_name": "Lüdersdorf, Wriezen, Oderaue, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Frankenfelde": {
+   "query": "Frankenfelde",
+   "lng": 14.0463,
+   "lat": 52.6835,
+   "osm_display_name": "Frankenfelde, Wriezen, Wölsickendorf-Wollenberg, Märkisch-Oderland, Brandenburg, 16269, Deutschland"
+  },
+  "Proetzel": {
+   "query": "Prötzel",
+   "lng": 13.9886,
+   "lat": 52.6372,
+   "osm_display_name": "Prötzel, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Neuhardenberg": {
+   "query": "Neuhardenberg",
+   "lng": 14.2384,
+   "lat": 52.5966,
+   "osm_display_name": "Neuhardenberg, Seelow-Land, Märkisch-Oderland, Brandenburg, 15320, Deutschland"
+  },
+  "Grunow": {
+   "query": "Grunow",
+   "lng": 14.0341,
+   "lat": 52.6064,
+   "osm_display_name": "Grunow, Oberbarnim, Märkische Schweiz, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Muencheberg": {
+   "query": "Müncheberg",
+   "lng": 14.1405,
+   "lat": 52.5037,
+   "osm_display_name": "Müncheberg, Märkisch-Oderland, Brandenburg, 15374, Deutschland"
+  },
+  "Berkenbrueck": {
+   "query": "Berkenbrück",
+   "lng": 14.1482,
+   "lat": 52.3518,
+   "osm_display_name": "Berkenbrück, Odervorland, Oder-Spree, Brandenburg, Deutschland"
+  },
+  "Kersdorf": {
+   "query": "Kersdorf",
+   "lng": 14.2633,
+   "lat": 52.3398,
+   "osm_display_name": "Kersdorf, Briesen (Mark), Odervorland, Oder-Spree, Brandenburg, 15518, Deutschland"
+  },
+  "Fuerstenwalde": {
+   "query": "Fürstenwalde/Spree",
+   "lng": 14.065,
+   "lat": 52.358,
+   "osm_display_name": "Fürstenwalde/Spree, Oder-Spree, Brandenburg, 15517, Deutschland"
+  },
+  "Strausberg": {
+   "query": "Strausberg",
+   "lng": 13.9042,
+   "lat": 52.5589,
+   "osm_display_name": "Strausberg, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Altlandsberg": {
+   "query": "Altlandsberg",
+   "lng": 13.776,
+   "lat": 52.5936,
+   "osm_display_name": "Altlandsberg, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Bernau": {
+   "query": "Bernau",
+   "lng": 13.5881,
+   "lat": 52.6787,
+   "osm_display_name": "Bernau, Barnim, Brandenburg, 16321, Deutschland"
+  },
+  "Werneuchen": {
+   "query": "Werneuchen",
+   "lng": 13.7411,
+   "lat": 52.6461,
+   "osm_display_name": "Werneuchen, Barnim, Brandenburg, 16356, Deutschland"
+  },
+  "Eberswalde": {
+   "query": "Eberswalde",
+   "lng": 13.7997,
+   "lat": 52.8351,
+   "osm_display_name": "Eberswalde, Barnim, Brandenburg, Deutschland"
+  },
+  "Trampe": {
+   "query": "Trampe",
+   "lng": 13.8369,
+   "lat": 52.7778,
+   "osm_display_name": "Trampe, Breydin, Biesenthal-Barnim, Barnim, Brandenburg, Deutschland"
+  },
+  "Oranienburg": {
+   "query": "Oranienburg",
+   "lng": 13.2458,
+   "lat": 52.7529,
+   "osm_display_name": "Oranienburg, Oberhavel, Brandenburg, 16515, Deutschland"
+  },
+  "Hennigsdorf": {
+   "query": "Hennigsdorf",
+   "lng": 13.2058,
+   "lat": 52.6376,
+   "osm_display_name": "Hennigsdorf, Oberhavel, Brandenburg, 16761, Deutschland"
+  },
+  "Kremmen": {
+   "query": "Kremmen",
+   "lng": 13.0295,
+   "lat": 52.7605,
+   "osm_display_name": "Kremmen, Oberhavel, Brandenburg, 16766, Deutschland"
+  },
+  "Nauen": {
+   "query": "Nauen",
+   "lng": 12.8773,
+   "lat": 52.6061,
+   "osm_display_name": "Nauen, Havelland, Brandenburg, 14641, Deutschland"
+  },
+  "Ketzin": {
+   "query": "Ketzin/Havel",
+   "lng": 12.8444,
+   "lat": 52.4769,
+   "osm_display_name": "Ketzin/Havel, Havelland, Brandenburg, 14669, Deutschland"
+  },
+  "Linum": {
+   "query": "Linum",
+   "lng": 12.8814,
+   "lat": 52.759,
+   "osm_display_name": "Linum, Fehrbellin, Ostprignitz-Ruppin, Brandenburg, Deutschland"
+  },
+  "Braedikow": {
+   "query": "Brädikow",
+   "lng": 12.6503,
+   "lat": 52.69,
+   "osm_display_name": "Brädikow, Wiesenaue, Friesack, Havelland, Brandenburg, Deutschland"
+  },
+  "Friesack": {
+   "query": "Friesack",
+   "lng": 12.5783,
+   "lat": 52.7395,
+   "osm_display_name": "Friesack, Havelland, Brandenburg, 14662, Deutschland"
+  },
+  "Fehrbellin": {
+   "query": "Fehrbellin",
+   "lng": 12.7652,
+   "lat": 52.8142,
+   "osm_display_name": "Fehrbellin, Ostprignitz-Ruppin, Brandenburg, 16833, Deutschland"
+  },
+  "Havelberg": {
+   "query": "Havelberg",
+   "lng": 12.0742,
+   "lat": 52.825,
+   "osm_display_name": "Havelberg, Stendal, Sachsen-Anhalt, 39539, Deutschland"
+  },
+  "Zehdenick": {
+   "query": "Zehdenick",
+   "lng": 13.3349,
+   "lat": 52.9795,
+   "osm_display_name": "Zehdenick, Oberhavel, Brandenburg, 16792, Deutschland"
+  },
+  "Erkner": {
+   "query": "Erkner",
+   "lng": 13.7543,
+   "lat": 52.426,
+   "osm_display_name": "Erkner, Oder-Spree, Brandenburg, Deutschland"
+  },
+  "Beeskow": {
+   "query": "Beeskow",
+   "lng": 14.2471,
+   "lat": 52.1722,
+   "osm_display_name": "Beeskow, Oder-Spree, Brandenburg, 15848, Deutschland"
+  },
+  "Storkow": {
+   "query": "Storkow (Mark)",
+   "lng": 13.905,
+   "lat": 52.2058,
+   "osm_display_name": "Storkow (Mark), Oder-Spree, Brandenburg, 15859, Deutschland"
+  },
+  "Rahnsdorf": {
+   "query": "Rahnsdorf",
+   "lng": 13.69,
+   "lat": 52.4516,
+   "osm_display_name": "Rahnsdorf, 1, Alter Fischerweg, Rahnsdorf, Treptow-Köpenick, Berlin, 12589, Deutschland"
+  },
+  "Neuenhagen": {
+   "query": "Neuenhagen bei Berlin",
+   "lng": 13.6889,
+   "lat": 52.5262,
+   "osm_display_name": "Neuenhagen bei Berlin, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Hoenow": {
+   "query": "Hönow",
+   "lng": 13.6331,
+   "lat": 52.5384,
+   "osm_display_name": "Hönow, Böhlener Straße, Branitzer Karree, Hellersdorf, Marzahn-Hellersdorf, Berlin, 12627, Deutschland"
+  },
+  "Mueggelsee": {
+   "query": "Großer Müggelsee",
+   "lng": 13.6501,
+   "lat": 52.4368,
+   "osm_display_name": "Großer Müggelsee, Treptow-Köpenick, Berlin, Deutschland"
+  },
+  "Lieberose": {
+   "query": "Lieberose",
+   "lng": 14.2997,
+   "lat": 51.9866,
+   "osm_display_name": "Lieberose, Lieberose/Oberspreewald, Dahme-Spreewald, Brandenburg, Deutschland"
+  },
+  "B_Weissensee": {
+   "query": "Weißensee",
+   "lng": 13.463,
+   "lat": 52.5546,
+   "osm_display_name": "Weißensee, Pankow, Berlin, Deutschland"
+  },
+  "B_Pankow": {
+   "query": "Pankow",
+   "lng": 13.4353,
+   "lat": 52.5979,
+   "osm_display_name": "Pankow, Berlin, Deutschland"
+  },
+  "B_Niederschoenhausen": {
+   "query": "Niederschönhausen",
+   "lng": 13.4014,
+   "lat": 52.5858,
+   "osm_display_name": "Niederschönhausen, Pankow, Berlin, 13156, Deutschland"
+  },
+  "B_Wedding": {
+   "query": "Wedding",
+   "lng": 13.367,
+   "lat": 52.5428,
+   "osm_display_name": "Wedding, Lindower Straße, Antonkiez, Wedding, Mitte, Berlin, 13347, Deutschland"
+  },
+  "B_Moabit": {
+   "query": "Berlin-Moabit",
+   "lng": 13.3345,
+   "lat": 52.5347,
+   "osm_display_name": "Berlin-Moabit, Erna-Samuel-Straße, Arminiuskiez, Moabit, Mitte, Berlin, 10551, Deutschland"
+  },
+  "B_Lichtenberg": {
+   "query": "Berlin-Lichtenberg",
+   "lng": 13.4961,
+   "lat": 52.5098,
+   "osm_display_name": "Berlin-Lichtenberg, 22, Weitlingstraße, Weitlingkiez, Rummelsburg, Lichtenberg, Berlin, 10317, Deutschland"
+  },
+  "B_Ostkreuz": {
+   "query": "Diabetologie am Ostkreuz",
+   "lng": 13.4698,
+   "lat": 52.5059,
+   "osm_display_name": "Diabetologie am Ostkreuz, 27, Neue Bahnhofstraße, Travekiez, Friedrichshain, Friedrichshain-Kreuzberg, Berlin, 10245, Deutschland"
+  },
+  "B_Friedrichshain": {
+   "query": "Friedrichshain",
+   "lng": 13.4503,
+   "lat": 52.5122,
+   "osm_display_name": "Friedrichshain, Friedrichshain-Kreuzberg, Berlin, Deutschland"
+  },
+  "B_Karlshorst": {
+   "query": "Karlshorst",
+   "lng": 13.5236,
+   "lat": 52.4843,
+   "osm_display_name": "Karlshorst, Lichtenberg, Berlin, 10318, Deutschland"
+  },
+  "B_Koepenick": {
+   "query": "Berlin-Köpenick",
+   "lng": 13.5815,
+   "lat": 52.4584,
+   "osm_display_name": "Berlin-Köpenick, Elcknerplatz, Dammvorstadt, Köpenick, Treptow-Köpenick, Berlin, 12555, Deutschland"
+  },
+  "B_Schoeneweide": {
+   "query": "Niederschöneweide",
+   "lng": 13.5179,
+   "lat": 52.4548,
+   "osm_display_name": "Niederschöneweide, Treptow-Köpenick, Berlin, Deutschland"
+  },
+  "B_Friedrichshagen": {
+   "query": "Friedrichshagen",
+   "lng": 13.6233,
+   "lat": 52.4574,
+   "osm_display_name": "Friedrichshagen, Fürstenwalder Damm, Friedrichshagen, Treptow-Köpenick, Berlin, 12587, Deutschland"
+  },
+  "B_Bohnsdorf": {
+   "query": "Bohnsdorf",
+   "lng": 13.5707,
+   "lat": 52.4022,
+   "osm_display_name": "Bohnsdorf, Treptow-Köpenick, Berlin, Schenkendorf-Krummensee, 12526, Deutschland"
+  },
+  "B_Schoenefeld": {
+   "query": "Schönefeld",
+   "lng": 13.5048,
+   "lat": 52.3886,
+   "osm_display_name": "Schönefeld, Schenkendorf-Krummensee, Dahme-Spreewald, Brandenburg, 12529, Deutschland"
+  },
+  "B_Tempelhof": {
+   "query": "Berlin-Tempelhof",
+   "lng": 13.3775,
+   "lat": 52.4712,
+   "osm_display_name": "Berlin-Tempelhof, Boelckestraße, Güterbahnhof Tempelhof, Gartenstadt Neu-Tempelhof, Tempelhof, Tempelhof-Schöneberg, Berlin, 12101, Deutschland"
+  },
+  "B_Neukoelln": {
+   "query": "Neukölln",
+   "lng": 13.4354,
+   "lat": 52.4811,
+   "osm_display_name": "Neukölln, Berlin, Deutschland"
+  },
+  "B_Britz": {
+   "query": "Britz",
+   "lng": 13.4423,
+   "lat": 52.4483,
+   "osm_display_name": "Britz, Neukölln, Berlin, Deutschland"
+  },
+  "B_Treptow": {
+   "query": "Treptower Park",
+   "lng": 13.4703,
+   "lat": 52.4884,
+   "osm_display_name": "Treptower Park, Treptow-Köpenick, Berlin, 12435, Deutschland"
+  },
+  "B_Zehlendorf": {
+   "query": "Zehlendorf",
+   "lng": 13.2586,
+   "lat": 52.4311,
+   "osm_display_name": "Zehlendorf, Teltower Damm, Zehlendorf, Steglitz-Zehlendorf, Berlin, 14169, Deutschland"
+  },
+  "B_Dahlem": {
+   "query": "Dahlem",
+   "lng": 13.2811,
+   "lat": 52.4574,
+   "osm_display_name": "Dahlem, Steglitz-Zehlendorf, Berlin, 14195, Deutschland"
+  },
+  "B_Steglitz": {
+   "query": "Steglitz",
+   "lng": 13.3223,
+   "lat": 52.4573,
+   "osm_display_name": "Steglitz, Steglitz-Zehlendorf, Berlin, Deutschland"
+  },
+  "B_Lichterfelde": {
+   "query": "Lichterfelde",
+   "lng": 13.3139,
+   "lat": 52.4373,
+   "osm_display_name": "Lichterfelde, Steglitz-Zehlendorf, Berlin, Deutschland"
+  },
+  "B_Teltow": {
+   "query": "Teltow",
+   "lng": 13.2685,
+   "lat": 52.3806,
+   "osm_display_name": "Teltow, Potsdam-Mittelmark, Brandenburg, 14513, Deutschland"
+  },
+  "B_Stahnsdorf": {
+   "query": "Stahnsdorf",
+   "lng": 13.2077,
+   "lat": 52.387,
+   "osm_display_name": "Stahnsdorf, Potsdam-Mittelmark, Brandenburg, 14532, Deutschland"
+  },
+  "B_Lichtenrade": {
+   "query": "Lichtenrade",
+   "lng": 13.3964,
+   "lat": 52.3869,
+   "osm_display_name": "Lichtenrade, Bahnhofstraße, John-Locke-Siedlung, Lichtenrade, Tempelhof-Schöneberg, Berlin, Schenkendorf-Krummensee, 12307, Deutschland"
+  },
+  "B_Siemensstadt": {
+   "query": "Siemensstadt",
+   "lng": 13.2569,
+   "lat": 52.5398,
+   "osm_display_name": "Siemensstadt, Spandau, Berlin, 13629, Deutschland"
+  },
+  "B_Spandau": {
+   "query": "Berlin-Spandau",
+   "lng": 13.1956,
+   "lat": 52.5348,
+   "osm_display_name": "Berlin-Spandau, 1, Seegefelder Straße, Georg-Ramin-Siedlung, Klosterfelde, Spandau, Berlin, 13597, Deutschland"
+  },
+  "B_Charlottenburg": {
+   "query": "Berlin-Charlottenburg",
+   "lng": 13.3026,
+   "lat": 52.5043,
+   "osm_display_name": "Berlin-Charlottenburg, Gervinusstraße, Witzleben, Charlottenburg, Charlottenburg-Wilmersdorf, Berlin, 10629, Deutschland"
+  },
+  "B_Alexanderplatz": {
+   "query": "Alexanderplatz",
+   "lng": 13.4136,
+   "lat": 52.522,
+   "osm_display_name": "Alexanderplatz, Spandauer Vorstadt, Mitte, Berlin, Deutschland"
+  },
+  "B_Spittelmarkt": {
+   "query": "Spittelmarkt",
+   "lng": 13.4041,
+   "lat": 52.5113,
+   "osm_display_name": "Spittelmarkt, Wallstraße, Friedrichswerder, Friedrichstadt, Mitte, Berlin, 10179, Deutschland"
+  },
+  "B_Reichstag": {
+   "query": "Reichstagsgebäude",
+   "lng": 13.3761,
+   "lat": 52.5187,
+   "osm_display_name": "Reichstagsgebäude, 1, Platz der Republik, Tiergarten, Mitte, Berlin, 11011, Deutschland"
+  },
+  "B_Moltkebruecke": {
+   "query": "Moltkebrücke",
+   "lng": 13.3688,
+   "lat": 52.5219,
+   "osm_display_name": "Moltkebrücke, Europacity, Moabit, Mitte, Berlin, 10557, Deutschland"
+  },
+  "B_Reichskanzlei": {
+   "query": "Voßstraße",
+   "lng": 13.3795,
+   "lat": 52.5109,
+   "osm_display_name": "Voßstraße, Friedrichstadt, Mitte, Berlin, 10117, Deutschland"
+  },
+  "B_Bendlerblock": {
+   "query": "Bendlerblock",
+   "lng": 13.3609,
+   "lat": 52.5071,
+   "osm_display_name": "Bendlerblock, 76, Reichpietschufer, Lützowviertel, Tiergarten, Mitte, Berlin, 10785, Deutschland"
+  },
+  "B_Tiergarten": {
+   "query": "Großer Tiergarten",
+   "lng": 13.3618,
+   "lat": 52.5163,
+   "osm_display_name": "Großer Tiergarten, Mitte, Berlin, Deutschland"
+  },
+  "B_Fehrbelliner": {
+   "query": "Fehrbelliner Platz",
+   "lng": 13.3142,
+   "lat": 52.4907,
+   "osm_display_name": "Fehrbelliner Platz, Jesselkiez, Fasanenkiez, Wilmersdorf, Charlottenburg-Wilmersdorf, Berlin, Deutschland"
+  },
+  "B_Schulenburgring": {
+   "query": "Schulenburgring",
+   "lng": 13.3817,
+   "lat": 52.4839,
+   "osm_display_name": "Schulenburgring, Manfred-von-Richthofen-Kiez, Gartenstadt Neu-Tempelhof, Tempelhof, Tempelhof-Schöneberg, Berlin, 12101, Deutschland"
+  },
+  "B_Mitte": {
+   "query": "Berlin-Mitte",
+   "lng": 13.3598,
+   "lat": 52.5332,
+   "osm_display_name": "Berlin-Mitte, Berlin, Deutschland"
+  },
+  "B_Reinickendorf": {
+   "query": "Berlin-Reinickendorf",
+   "lng": 13.2881,
+   "lat": 52.6048,
+   "osm_display_name": "Berlin-Reinickendorf, Deutschland"
+  },
+  "B_Wannsee": {
+   "query": "Berlin-Wannsee",
+   "lng": 13.1801,
+   "lat": 52.4212,
+   "osm_display_name": "Berlin-Wannsee, 250, Kronprinzessinnenweg, Wannsee, Steglitz-Zehlendorf, Berlin, 14109, Deutschland"
+  },
+  "B_Gatow": {
+   "query": "Gatow",
+   "lng": 13.1801,
+   "lat": 52.4856,
+   "osm_display_name": "Gatow, Spandau, Berlin, Deutschland"
+  },
+  "Potsdam": {
+   "query": "Potsdam",
+   "lng": 13.0591,
+   "lat": 52.4009,
+   "osm_display_name": "Potsdam, Brandenburg, Deutschland"
+  },
+  "Ferch": {
+   "query": "Ferch",
+   "lng": 12.9295,
+   "lat": 52.3116,
+   "osm_display_name": "Ferch, Schwielowsee, Potsdam-Mittelmark, Brandenburg, Deutschland"
+  },
+  "Beelitz": {
+   "query": "Beelitz",
+   "lng": 12.9569,
+   "lat": 52.2288,
+   "osm_display_name": "Beelitz, Potsdam-Mittelmark, Brandenburg, 14547, Deutschland"
+  },
+  "Elsholz": {
+   "query": "Elsholz",
+   "lng": 12.9628,
+   "lat": 52.1986,
+   "osm_display_name": "Elsholz, Beelitz, Potsdam-Mittelmark, Brandenburg, Deutschland"
+  },
+  "Treuenbrietzen": {
+   "query": "Treuenbrietzen",
+   "lng": 12.8735,
+   "lat": 52.0967,
+   "osm_display_name": "Treuenbrietzen, Potsdam-Mittelmark, Brandenburg, 14929, Deutschland"
+  },
+  "Niemegk": {
+   "query": "Niemegk",
+   "lng": 12.6893,
+   "lat": 52.0748,
+   "osm_display_name": "Niemegk, Potsdam-Mittelmark, Brandenburg, Deutschland"
+  },
+  "Belzig": {
+   "query": "Bad Belzig",
+   "lng": 12.5866,
+   "lat": 52.1406,
+   "osm_display_name": "Bad Belzig, Potsdam-Mittelmark, Brandenburg, 14806, Deutschland"
+  },
+  "Brandenburg": {
+   "query": "Brandenburg an der Havel",
+   "lng": 12.5498,
+   "lat": 52.4108,
+   "osm_display_name": "Brandenburg an der Havel, Brandenburg, Deutschland"
+  },
+  "Rathenow": {
+   "query": "Rathenow",
+   "lng": 12.3382,
+   "lat": 52.6064,
+   "osm_display_name": "Rathenow, Havelland, Brandenburg, Deutschland"
+  },
+  "Wittenberg": {
+   "query": "Wittenberg",
+   "lng": 12.6468,
+   "lat": 51.8667,
+   "osm_display_name": "Wittenberg, Sachsen-Anhalt, Deutschland"
+  },
+  "Coswig": {
+   "query": "Coswig (Anhalt)",
+   "lng": 12.4563,
+   "lat": 51.8847,
+   "osm_display_name": "Coswig (Anhalt), Wittenberg, Sachsen-Anhalt, Deutschland"
+  },
+  "Zossen": {
+   "query": "Zossen",
+   "lng": 13.4489,
+   "lat": 52.2159,
+   "osm_display_name": "Zossen, Teltow-Fläming, Brandenburg, 15806, Deutschland"
+  },
+  "Baruth": {
+   "query": "Baruth/Mark",
+   "lng": 13.5019,
+   "lat": 52.0463,
+   "osm_display_name": "Baruth/Mark, Teltow-Fläming, Brandenburg, 15837, Deutschland"
+  },
+  "KoenigsWusterhausen": {
+   "query": "Königs Wusterhausen",
+   "lng": 13.6244,
+   "lat": 52.2995,
+   "osm_display_name": "Königs Wusterhausen, Schenkendorf-Krummensee, Dahme-Spreewald, Brandenburg, Deutschland"
+  },
+  "Mittenwalde": {
+   "query": "Mittenwalde",
+   "lng": 13.5361,
+   "lat": 52.2642,
+   "osm_display_name": "Mittenwalde, Schenkendorf-Krummensee, Dahme-Spreewald, Brandenburg, 15749, Deutschland"
+  },
+  "Teupitz": {
+   "query": "Teupitz",
+   "lng": 13.6098,
+   "lat": 52.136,
+   "osm_display_name": "Teupitz, Schenkenländchen, Dahme-Spreewald, Brandenburg, 15755, Deutschland"
+  },
+  "Halbe": {
+   "query": "Halbe",
+   "lng": 13.7003,
+   "lat": 52.1073,
+   "osm_display_name": "Halbe, Schenkenländchen, Dahme-Spreewald, Brandenburg, 15757, Deutschland"
+  },
+  "MaerkischBuchholz": {
+   "query": "Märkisch Buchholz",
+   "lng": 13.7628,
+   "lat": 52.1102,
+   "osm_display_name": "Märkisch Buchholz, Schenkenländchen, Dahme-Spreewald, Brandenburg, Deutschland"
+  },
+  "Teurow": {
+   "query": "Teurow",
+   "lng": 13.7179,
+   "lat": 52.0892,
+   "osm_display_name": "Teurow, Halbe, Schenkenländchen, Dahme-Spreewald, Brandenburg, 15757, Deutschland"
+  },
+  "Briesen_TF": {
+   "query": "Briesen",
+   "lng": 13.7144,
+   "lat": 52.0534,
+   "osm_display_name": "Briesen, Halbe, Schenkenländchen, Dahme-Spreewald, Brandenburg, Deutschland"
+  },
+  "Kummersdorf": {
+   "query": "Kummersdorf-Gut",
+   "lng": 13.3752,
+   "lat": 52.103,
+   "osm_display_name": "Kummersdorf-Gut, Am Mellensee, Teltow-Fläming, Brandenburg, Deutschland"
+  },
+  "Luckenwalde": {
+   "query": "Luckenwalde",
+   "lng": 13.1742,
+   "lat": 52.0902,
+   "osm_display_name": "Luckenwalde, Teltow-Fläming, Brandenburg, 14943, Deutschland"
+  },
+  "Jueterbog": {
+   "query": "Jüterbog",
+   "lng": 13.0801,
+   "lat": 51.9916,
+   "osm_display_name": "Jüterbog, Teltow-Fläming, Brandenburg, Deutschland"
+  },
+  "Luckau": {
+   "query": "Luckau",
+   "lng": 13.715,
+   "lat": 51.8524,
+   "osm_display_name": "Luckau, Pitschen-Pickel, Dahme-Spreewald, Brandenburg, Deutschland"
+  },
+  "Duben": {
+   "query": "Duben",
+   "lng": 13.8071,
+   "lat": 51.8978,
+   "osm_display_name": "Duben, Luckau, Pitschen-Pickel, Dahme-Spreewald, Brandenburg, 15926, Deutschland"
+  },
+  "Luebben": {
+   "query": "Lübben (Spreewald)",
+   "lng": 13.8964,
+   "lat": 51.9419,
+   "osm_display_name": "Lübben (Spreewald), Dahme-Spreewald, Brandenburg, 15907, Deutschland"
+  },
+  "Luebbenau": {
+   "query": "Lübbenau/Spreewald",
+   "lng": 13.9689,
+   "lat": 51.868,
+   "osm_display_name": "Lübbenau/Spreewald, Oberspreewald-Lausitz - Górne Błota-Łužyca, Brandenburg, 03222, Deutschland"
+  },
+  "Vetschau": {
+   "query": "Vetschau/Spreewald",
+   "lng": 14.0608,
+   "lat": 51.7782,
+   "osm_display_name": "Vetschau/Spreewald, Oberspreewald-Lausitz - Górne Błota-Łužyca, Brandenburg, 03226, Deutschland"
+  },
+  "Calau": {
+   "query": "Calau",
+   "lng": 13.9493,
+   "lat": 51.7467,
+   "osm_display_name": "Calau, Oberspreewald-Lausitz - Górne Błota-Łužyca, Brandenburg, 03205, Deutschland"
+  },
+  "Cottbus": {
+   "query": "Cottbus - Chóśebuz",
+   "lng": 14.3357,
+   "lat": 51.7567,
+   "osm_display_name": "Cottbus - Chóśebuz, Brandenburg, Deutschland"
+  },
+  "Kolkwitz": {
+   "query": "Kolkwitz",
+   "lng": 14.2449,
+   "lat": 51.749,
+   "osm_display_name": "Kolkwitz, Burg-Kolonie - Prizaŕske Borkowy, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03099, Deutschland"
+  },
+  "Forst": {
+   "query": "Forst (Lausitz) - Baršć",
+   "lng": 14.6455,
+   "lat": 51.7439,
+   "osm_display_name": "Forst (Lausitz) - Baršć, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03149, Deutschland"
+  },
+  "KleinBademeusel": {
+   "query": "Klein Bademeusel - Małe Bóžemysle",
+   "lng": 14.7455,
+   "lat": 51.6726,
+   "osm_display_name": "Klein Bademeusel - Małe Bóžemysle, Forst (Lausitz) - Baršć, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03149, Deutschland"
+  },
+  "Domsdorf": {
+   "query": "Domsdorf - Domašojce",
+   "lng": 14.6272,
+   "lat": 51.7121,
+   "osm_display_name": "Domsdorf - Domašojce, Forst (Lausitz) - Baršć, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03149, Deutschland"
+  },
+  "GrossSchacksdorf": {
+   "query": "Groß Schacksdorf",
+   "lng": 14.6279,
+   "lat": 51.6925,
+   "osm_display_name": "Groß Schacksdorf, Groß Schacksdorf-Simmersdorf, Döbern-Land, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03149, Deutschland"
+  },
+  "Gahry": {
+   "query": "Gahry - Garjej",
+   "lng": 14.5567,
+   "lat": 51.6806,
+   "osm_display_name": "Gahry - Garjej, Wiesengrund, Döbern-Land, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03149, Deutschland"
+  },
+  "GrossKoelzig": {
+   "query": "Groß Kölzig",
+   "lng": 14.6017,
+   "lat": 51.6382,
+   "osm_display_name": "Groß Kölzig, Neiße-Malxetal, Döbern-Land, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03159, Deutschland"
+  },
+  "BadMuskau": {
+   "query": "Bad Muskau - Mužakow",
+   "lng": 14.7014,
+   "lat": 51.5631,
+   "osm_display_name": "Bad Muskau - Mužakow, Bad Muskau, Görlitz, Sachsen, Deutschland"
+  },
+  "Trzebiel": {
+   "query": "Trzebiel",
+   "lng": 14.8184,
+   "lat": 51.635,
+   "osm_display_name": "Trzebiel, gmina Trzebiel, powiat żarski, województwo lubuskie, 68-212, Polska"
+  },
+  "Spremberg": {
+   "query": "Spremberg",
+   "lng": 14.3804,
+   "lat": 51.5715,
+   "osm_display_name": "Spremberg, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03130, Deutschland"
+  },
+  "Drebkau": {
+   "query": "Drebkau",
+   "lng": 14.2205,
+   "lat": 51.6577,
+   "osm_display_name": "Drebkau, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03116, Deutschland"
+  },
+  "NeuWelzow": {
+   "query": "Welzow",
+   "lng": 14.1706,
+   "lat": 51.5838,
+   "osm_display_name": "Welzow, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03119, Deutschland"
+  },
+  "Kausche": {
+   "query": "Kausche - Chusej",
+   "lng": 14.236,
+   "lat": 51.6569,
+   "osm_display_name": "Kausche - Chusej, Drebkau, Spree-Neiße - Sprjewja-Nysa, Brandenburg, 03116, Deutschland"
+  },
+  "Brenitz": {
+   "query": "Brenitz",
+   "lng": 13.6005,
+   "lat": 51.7019,
+   "osm_display_name": "Brenitz, Sonnewalde, Elbe-Elster, Brandenburg, 03249, Deutschland"
+  },
+  "Walddrehna": {
+   "query": "Walddrehna",
+   "lng": 13.6275,
+   "lat": 51.7774,
+   "osm_display_name": "Walddrehna, Heideblick, Dahme-Spreewald, Brandenburg, 15926, Deutschland"
+  },
+  "Torgau": {
+   "query": "Torgau",
+   "lng": 12.9934,
+   "lat": 51.5383,
+   "osm_display_name": "Torgau, Nordsachsen, Sachsen, 04861, Deutschland"
+  },
+  "Strehla": {
+   "query": "Strehla",
+   "lng": 13.221,
+   "lat": 51.3521,
+   "osm_display_name": "Strehla, Meißen, Sachsen, Deutschland"
+  },
+  "Rothenburg": {
+   "query": "Rothenburg/Oberlausitz",
+   "lng": 14.9403,
+   "lat": 51.3566,
+   "osm_display_name": "Rothenburg/Oberlausitz, Görlitz, Sachsen, 02929, Deutschland"
+  },
+  "Niesky": {
+   "query": "Niesky",
+   "lng": 14.7926,
+   "lat": 51.3183,
+   "osm_display_name": "Niesky, Görlitz, Sachsen, Deutschland"
+  },
+  "Goerlitz": {
+   "query": "Görlitz",
+   "lng": 14.991,
+   "lat": 51.1563,
+   "osm_display_name": "Görlitz, Sachsen, Deutschland"
+  },
+  "Kodersdorf": {
+   "query": "Kodersdorf",
+   "lng": 14.8969,
+   "lat": 51.2441,
+   "osm_display_name": "Kodersdorf, Weißer Schöps/Neiße, Görlitz, Sachsen, Deutschland"
+  },
+  "Diehsa": {
+   "query": "Diehsa",
+   "lng": 14.7237,
+   "lat": 51.2698,
+   "osm_display_name": "Diehsa, Görlitz, Sachsen, 02906, Deutschland"
+  },
+  "Jaenkendorf": {
+   "query": "Jänkendorf",
+   "lng": 14.8139,
+   "lat": 51.2531,
+   "osm_display_name": "Jänkendorf, Waldhufen, Diehsa, Görlitz, Sachsen, Deutschland"
+  },
+  "Weissenberg": {
+   "query": "Weißenberg",
+   "lng": 14.6587,
+   "lat": 51.1968,
+   "osm_display_name": "Weißenberg, Bautzen - Budyšin, Sachsen, Deutschland"
+  },
+  "Bautzen": {
+   "query": "Bautzen",
+   "lng": 14.4276,
+   "lat": 51.1809,
+   "osm_display_name": "Bautzen, Bautzen - Budyšin, Sachsen, 02625, Deutschland"
+  },
+  "Koenigswartha": {
+   "query": "Königswartha - Rakecy",
+   "lng": 14.3139,
+   "lat": 51.3255,
+   "osm_display_name": "Königswartha - Rakecy, Bautzen - Budyšin, Sachsen, Deutschland"
+  },
+  "Kamenz": {
+   "query": "Kamenz - Kamjenc",
+   "lng": 14.0949,
+   "lat": 51.2701,
+   "osm_display_name": "Kamenz - Kamjenc, Bautzen - Budyšin, Sachsen, 01917, Deutschland"
+  },
+  "Boxberg": {
+   "query": "Boxberg/O.L. - Hamor",
+   "lng": 14.5875,
+   "lat": 51.3887,
+   "osm_display_name": "Boxberg/O.L. - Hamor, Görlitz, Sachsen, 02943, Deutschland"
+  },
+  "Uhyst": {
+   "query": "Uhyst",
+   "lng": 14.5092,
+   "lat": 51.3654,
+   "osm_display_name": "Uhyst, Boxberg/O.L. - Hamor, Görlitz, Sachsen, Deutschland"
+  },
+  "Dresden": {
+   "query": "Dresden",
+   "lng": 13.7381,
+   "lat": 51.0493,
+   "osm_display_name": "Dresden, Sachsen, Deutschland"
+  },
+  "Halle": {
+   "query": "Halle (Saale)",
+   "lng": 11.9713,
+   "lat": 51.4824,
+   "osm_display_name": "Halle (Saale), Sachsen-Anhalt, Deutschland"
+  },
+  "Merseburg": {
+   "query": "Merseburg",
+   "lng": 11.9961,
+   "lat": 51.3564,
+   "osm_display_name": "Merseburg, Saalekreis, Sachsen-Anhalt, 06217, Deutschland"
+  },
+  "Eilenburg": {
+   "query": "Eilenburg",
+   "lng": 12.6004,
+   "lat": 51.4576,
+   "osm_display_name": "Eilenburg, Nordsachsen, Sachsen, Deutschland"
+  },
+  "Wurzen": {
+   "query": "Wurzen",
+   "lng": 12.7411,
+   "lat": 51.371,
+   "osm_display_name": "Wurzen, Landkreis Leipzig, Sachsen, Deutschland"
+  },
+  "Dessau": {
+   "query": "Dessau",
+   "lng": 12.2431,
+   "lat": 51.831,
+   "osm_display_name": "Dessau, Dessau-Roßlau, Sachsen-Anhalt, 06842, Deutschland"
+  },
+  "Magdeburg": {
+   "query": "Magdeburg",
+   "lng": 11.6401,
+   "lat": 52.1315,
+   "osm_display_name": "Magdeburg, Sachsen-Anhalt, Deutschland"
+  },
+  "Tangermuende": {
+   "query": "Tangermünde",
+   "lng": 11.9723,
+   "lat": 52.5431,
+   "osm_display_name": "Tangermünde, Stendal, Sachsen-Anhalt, 39590, Deutschland"
+  },
+  "Uelzen": {
+   "query": "Landkreis Uelzen",
+   "lng": 10.5386,
+   "lat": 52.9841,
+   "osm_display_name": "Landkreis Uelzen, Niedersachsen, Deutschland"
+  },
+  "Pienk": {
+   "query": "Pieńsk",
+   "lng": 15.045,
+   "lat": 51.2458,
+   "osm_display_name": "Pieńsk, gmina Pieńsk, powiat zgorzelecki, województwo dolnośląskie, Polska"
+  },
+  "Leknica": {
+   "query": "Łęknica",
+   "lng": 14.7541,
+   "lat": 51.5473,
+   "osm_display_name": "Łęknica, powiat żarski, województwo lubuskie, 68-208, Polska"
+  },
+  "Gubin": {
+   "query": "Gubin",
+   "lng": 14.7293,
+   "lat": 51.9509,
+   "osm_display_name": "Gubin, powiat krośnieński, województwo lubuskie, 66-620, Polska"
+  },
+  "Widuchowa": {
+   "query": "Widuchowa",
+   "lng": 14.3929,
+   "lat": 53.1271,
+   "osm_display_name": "Widuchowa, gmina Widuchowa, powiat gryfiński, województwo zachodniopomorskie, 74-120, Polska"
+  },
+  "B_Marzahn": {
+   "query": "Marzahn",
+   "lng": 13.5631,
+   "lat": 52.5429,
+   "osm_display_name": "Marzahn, Marzahn-Hellersdorf, Berlin, Deutschland"
+  },
+  "Motzen": {
+   "query": "Motzen",
+   "lng": 13.5828,
+   "lat": 52.2034,
+   "osm_display_name": "Motzen, Mittenwalde, Schenkendorf-Krummensee, Dahme-Spreewald, Brandenburg, Deutschland"
+  }
+ },
+ "formations": [
+  {
+   "id": "su_1bf",
+   "name_ru": "1-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null,
+   "branch": "front",
+   "commander": "Г. К. Жуков",
+   "strength_16_04": {
+    "personnel": {
+     "value": 908500,
+     "source": "OOB (Кривошеев)",
+     "reliability": "A",
+     "note": "участвовавшие объединения"
+    },
+    "tanks_spg": {
+     "value": 3155,
+     "source": "Z p.471",
+     "reliability": "A",
+     "note": "Гончаров 2007: 3 059 (B)"
+    },
+    "guns": {
+     "value": 16934,
+     "source": "Z p.471",
+     "reliability": "A",
+     "note": "Гончаров 2007: 18 934; de-wiki: 20 130 в т.ч. 7 186 миномётов (B)"
+    }
+   }
+  },
+  {
+   "id": "su_1uf",
+   "name_ru": "1-й Украинский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null,
+   "branch": "front",
+   "commander": "И. С. Конев",
+   "strength_16_04": {
+    "personnel": {
+     "value": 550900,
+     "source": "OOB (Кривошеев)",
+     "reliability": "A",
+     "note": "только 3 гв., 5 гв., 13, 52 А, 3 и 4 гв. ТА, 2 ВА"
+    },
+    "tanks_spg": {
+     "value": 2055,
+     "source": "DW_SH",
+     "reliability": "B",
+     "note": "по de-wiki без указания первоисточника"
+    },
+    "guns": {
+     "value": 13571,
+     "source": "DW_SH",
+     "reliability": "B",
+     "note": "в т.ч. 5 225 миномётов"
+    }
+   }
+  },
+  {
+   "id": "su_2bf",
+   "name_ru": "2-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null,
+   "branch": "front",
+   "commander": "К. К. Рокоссовский",
+   "strength_16_04": {
+    "personnel": {
+     "value": 441600,
+     "source": "OOB (Кривошеев)",
+     "reliability": "A",
+     "note": "без 5 гв. ТА и 19-й А"
+    },
+    "tanks_spg": {
+     "value": 951,
+     "source": "Z p.471",
+     "reliability": "A"
+    },
+    "guns": {
+     "value": 6642,
+     "source": "Z p.471",
+     "reliability": "A",
+     "note": "de-wiki: 8 320, в т.ч. 2 770 миномётов (B)"
+    }
+   }
+  },
+  {
+   "id": "su_61a",
+   "name_ru": "61-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "П. А. Белов"
+  },
+  {
+   "id": "su_1pa",
+   "name_ru": "1-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "С. Г. Поплавский",
+   "strength_16_04": {
+    "personnel": {
+     "value": 77293,
+     "source": "PW_1A",
+     "reliability": "B",
+     "note": "«в апреле 1945, в боях под Берлином», с приданными частями"
+    },
+    "tanks_spg": {
+     "value": 88,
+     "source": "PW_1A",
+     "reliability": "B",
+     "note": "+30 бронеавтомобилей"
+    },
+    "guns": {
+     "value": 1326,
+     "source": "PW_1A",
+     "reliability": "B",
+     "note": "орудия и миномёты"
+    }
+   }
+  },
+  {
+   "id": "su_47a",
+   "name_ru": "47-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "Ф. И. Перхорович"
+  },
+  {
+   "id": "su_3ua",
+   "name_ru": "3-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "В. И. Кузнецов"
+  },
+  {
+   "id": "su_5ua",
+   "name_ru": "5-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "Н. Э. Берзарин"
+  },
+  {
+   "id": "su_8gva",
+   "name_ru": "8-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "В. И. Чуйков"
+  },
+  {
+   "id": "su_69a",
+   "name_ru": "69-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "В. Я. Колпакчи"
+  },
+  {
+   "id": "su_33a",
+   "name_ru": "33-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "В. Д. Цветаев"
+  },
+  {
+   "id": "su_3a",
+   "name_ru": "3-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "rifle",
+   "commander": "А. В. Горбатов",
+   "note": "второй эшелон фронта; введена 23.04"
+  },
+  {
+   "id": "su_1gta",
+   "name_ru": "1-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "tank",
+   "commander": "М. Е. Катуков",
+   "strength_16_04": {
+    "tanks_spg": {
+     "value": 854,
+     "source": "OOB (Катуков, мемуары)",
+     "reliability": "B",
+     "note": "вместе с приданным 11 тк"
+    }
+   }
+  },
+  {
+   "id": "su_2gta",
+   "name_ru": "2-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "branch": "tank",
+   "commander": "С. И. Богданов",
+   "strength_16_04": {
+    "tanks_spg": {
+     "value": 667,
+     "source": "OOB (КиберЛенинка)",
+     "reliability": "B",
+     "note": "513 танков + 154 САУ"
+    }
+   }
+  },
+  {
+   "id": "su_3gva",
+   "name_ru": "3-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "rifle",
+   "commander": "В. Н. Гордов"
+  },
+  {
+   "id": "su_13a",
+   "name_ru": "13-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "rifle",
+   "commander": "Н. П. Пухов"
+  },
+  {
+   "id": "su_5gva",
+   "name_ru": "5-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "rifle",
+   "commander": "А. С. Жадов"
+  },
+  {
+   "id": "su_52a",
+   "name_ru": "52-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "rifle",
+   "commander": "К. А. Коротеев"
+  },
+  {
+   "id": "su_2pa",
+   "name_ru": "2-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "rifle",
+   "commander": "К. Сверчевский",
+   "note": "с 1-м польским танковым корпусом"
+  },
+  {
+   "id": "su_3gta",
+   "name_ru": "3-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "tank",
+   "commander": "П. С. Рыбалко",
+   "strength_16_04": {
+    "tanks_spg": {
+     "value": 668,
+     "source": "RW_ARM (3 гв. ТА; Радзиевский 1977)",
+     "reliability": "B",
+     "note": "453 танка + 215 САУ на 16.04.1945"
+    }
+   }
+  },
+  {
+   "id": "su_4gta",
+   "name_ru": "4-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "tank",
+   "commander": "Д. Д. Лелюшенко"
+  },
+  {
+   "id": "su_28a",
+   "name_ru": "28-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "rifle",
+   "commander": "А. А. Лучинский",
+   "note": "из резерва Ставки, введена 21.04"
+  },
+  {
+   "id": "su_31a",
+   "name_ru": "31-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "branch": "rifle",
+   "note": "передислокация на 1 УФ 2–20.04 (ru-wiki); в боях под Берлином не участвовала; позиции не установлены"
+  },
+  {
+   "id": "su_2ua",
+   "name_ru": "2-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "branch": "rifle",
+   "commander": "И. И. Федюнинский"
+  },
+  {
+   "id": "su_65a",
+   "name_ru": "65-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "branch": "rifle",
+   "commander": "П. И. Батов"
+  },
+  {
+   "id": "su_70a",
+   "name_ru": "70-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "branch": "rifle",
+   "commander": "В. С. Попов"
+  },
+  {
+   "id": "su_49a",
+   "name_ru": "49-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "branch": "rifle",
+   "commander": "И. Т. Гришин"
+  },
+  {
+   "id": "su_19a",
+   "name_ru": "19-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "branch": "rifle",
+   "commander": "В. З. Романовский",
+   "note": "не входит в численность Кривошеева; основная задача — побережье"
+  },
+  {
+   "id": "su_5gta",
+   "name_ru": "5-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "branch": "tank",
+   "commander": "М. Д. Синенко (с 16.03.1945, ru-wiki)",
+   "note": "в Берлинской операции не участвовала; позиция на 16.04 в этой сессии не установлена"
+  },
+  {
+   "id": "de_hgr_weichsel",
+   "name_ru": "Группа армий «Висла»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null,
+   "branch": "army_group",
+   "commander": "Г. Хейнрици (с 29.04 — К. Штудент/К. фон Типпельскирх врио)",
+   "strength_16_04": {
+    "personnel": {
+     "value": 104162,
+     "source": "OOB (Lakowski 2008 по en-wiki)",
+     "reliability": "B",
+     "note": "на 1.04.45 боевая численность 9 А + 3 ТА; по штату 185 975"
+    }
+   }
+  },
+  {
+   "id": "de_hgr_mitte",
+   "name_ru": "Группа армий «Центр»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null,
+   "branch": "army_group",
+   "commander": "Ф. Шёрнер"
+  },
+  {
+   "id": "de_3pza",
+   "name_ru": "3-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_weichsel",
+   "branch": "panzer_army",
+   "commander": "Х. фон Мантойфель",
+   "strength_16_04": {
+    "tanks_spg": {
+     "value": 242,
+     "source": "Z p.471",
+     "reliability": "A",
+     "note": "de-wiki Seelow: 212; de-wiki Stettin: ~220 (B)"
+    },
+    "guns": {
+     "value": 650,
+     "source": "Z p.471",
+     "reliability": "A",
+     "note": "практически без полевой артиллерии; 600–700 зенитных орудий"
+    }
+   }
+  },
+  {
+   "id": "de_9a",
+   "name_ru": "9-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_weichsel",
+   "branch": "army",
+   "commander": "Т. Буссе",
+   "strength_16_04": {
+    "personnel": {
+     "value": 112143,
+     "source": "OOB (карточка ru/en-wiki «Seelow Heights»)",
+     "reliability": "B",
+     "note": "первоисточник не указан"
+    },
+    "tanks_spg": {
+     "value": 512,
+     "source": "Z p.471",
+     "reliability": "A",
+     "note": "Исаев 2007: 587, из них 512 исправных (B)"
+    },
+    "guns": {
+     "value": 344,
+     "source": "Z p.471",
+     "reliability": "A",
+     "note": "полевая артиллерия; + 300–400 зенитных; Исаев: 2 625 стволов вкл. 695 зенитных (B)"
+    }
+   }
+  },
+  {
+   "id": "de_4pza",
+   "name_ru": "4-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_mitte",
+   "branch": "panzer_army",
+   "commander": "Ф.-Х. Грезер"
+  },
+  {
+   "id": "de_12a",
+   "name_ru": "12-я армия («армия Венка»)",
+   "side": "de",
+   "echelon": "army",
+   "parent": null,
+   "branch": "army",
+   "commander": "В. Венк",
+   "strength_16_04": {
+    "personnel": {
+     "value": 55000,
+     "source": "OOB (warhistory.org; de-wiki)",
+     "reliability": "B",
+     "note": "фактически ~5,5 дивизий; на 16.04 ещё формировалась (с 10.04), подчинена ОКВ"
+    }
+   },
+   "note": "на 16.04 фронтом на запад против американцев; повёрнута на восток 22.04"
+  },
+  {
+   "id": "de_swinemuende",
+   "name_ru": "Корпусная группа «Свинемюнде»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "branch": "corps",
+   "commander": "Й. Ансат"
+  },
+  {
+   "id": "de_xxxii",
+   "name_ru": "XXXII армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "branch": "corps",
+   "commander": "Ф.-А. Шак"
+  },
+  {
+   "id": "de_oder",
+   "name_ru": "Армейский корпус «Одер»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "branch": "corps",
+   "commander": "Э. фон дем Бах-Зелевски"
+  },
+  {
+   "id": "de_xxxxvi",
+   "name_ru": "XXXXVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "branch": "panzer_corps",
+   "commander": "М. Гарайс"
+  },
+  {
+   "id": "de_iii_ss",
+   "name_ru": "III танковый корпус СС / армейская группа Штайнера",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "branch": "panzer_corps",
+   "commander": "Ф. Штайнер",
+   "note": "на 16.04 в резерве; штаб без войск (Ziemke); с 21.04 Armeeabteilung Steiner"
+  },
+  {
+   "id": "de_ci",
+   "name_ru": "CI армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "branch": "corps",
+   "commander": "В. Берлин; с 18.04 Ф. Зикст"
+  },
+  {
+   "id": "de_lvi",
+   "name_ru": "LVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "branch": "panzer_corps",
+   "commander": "Г. Вейдлинг",
+   "strength_16_04": {
+    "personnel": {
+     "value": 50000,
+     "source": "OOB (ru-wiki «Зееловско-Берлинская операция»)",
+     "reliability": "B",
+     "note": "«вместе с тыловыми частями до 50 000»"
+    }
+   }
+  },
+  {
+   "id": "de_xi_ss",
+   "name_ru": "XI танковый корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "branch": "panzer_corps",
+   "commander": "М. Кляйнхайстеркамп"
+  },
+  {
+   "id": "de_ffo",
+   "name_ru": "Крепость Франкфурт-на-Одере",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "branch": "fortress",
+   "commander": "Э. Билер"
+  },
+  {
+   "id": "de_v_ss",
+   "name_ru": "V горный корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "branch": "corps",
+   "commander": "Ф. Еккельн"
+  },
+  {
+   "id": "de_v",
+   "name_ru": "V армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "branch": "corps",
+   "commander": "К. Вегер",
+   "note": "у 4 ТА; переподчинён 9 А 19/20.04 (DW_5AK: 19.04; Ziemke: 20.04)"
+  },
+  {
+   "id": "de_pzk_gd",
+   "name_ru": "Танковый корпус «Великая Германия»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "branch": "panzer_corps",
+   "commander": "Г. Яуэр"
+  },
+  {
+   "id": "de_lvii",
+   "name_ru": "LVII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "branch": "panzer_corps",
+   "note": "состав на 30.04 по de-wiki: 17 и 72 пд, 6 ФГД; положение на 16.04 не подтверждено"
+  },
+  {
+   "id": "de_xx",
+   "name_ru": "XX армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "branch": "corps",
+   "commander": "К.-Э. Кёлер"
+  },
+  {
+   "id": "de_xxxix",
+   "name_ru": "XXXIX танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "branch": "panzer_corps",
+   "commander": "К. Арндт",
+   "note": "12–21.04 у ОКВ, 21–26.04 у 12 А (OOB)"
+  },
+  {
+   "id": "de_xxxxi",
+   "name_ru": "XXXXI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "branch": "panzer_corps",
+   "commander": "Р. Хольсте"
+  },
+  {
+   "id": "de_xxxxviii",
+   "name_ru": "XXXXVIII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "branch": "panzer_corps",
+   "commander": "М. фон Эдельсхайм"
+  },
+  {
+   "id": "de_berlin",
+   "name_ru": "Берлинский оборонительный район (гарнизон)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_weichsel",
+   "branch": "garrison",
+   "commander": "Х. Рейман (до 22.04); с 23/24.04 Г. Вейдлинг",
+   "strength_16_04": {
+    "personnel": {
+     "value": 90693,
+     "source": "OOB (warhistory.org)",
+     "reliability": "B",
+     "note": "на 23.04: 44 630 солдат + 42 531 фольксштурм + 3 532 гитлерюгенд; советская оценка на 25.04 — не менее 200 000"
+    }
+   },
+   "note": "с 15.04 подчинён ГА «Висла»; с 23–24.04 основу обороны составляет LVI тк"
+  }
+ ],
+ "positions": [
+  {
+   "formation": "su_1bf",
+   "date": "1945-04-16",
+   "lng": 14.437,
+   "lat": 52.553,
+   "approx_km": 25,
+   "place": "Golzow / Seelow",
+   "sector_note": "центр полосы главного удара (Кюстринский плацдарм); фронт от Хоэнзатена до Губена",
+   "source": "Z p.474; DW_SB",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_1uf",
+   "date": "1945-04-16",
+   "lng": 14.673,
+   "lat": 51.653,
+   "approx_km": 30,
+   "place": "Forst / BadMuskau",
+   "sector_note": "центр главной группировки на Нейсе между Форстом и Мускау",
+   "source": "Z p.471",
+   "reliability": "A",
+   "time": "start"
+  },
+  {
+   "formation": "su_2bf",
+   "date": "1945-04-16",
+   "lng": 14.579,
+   "lat": 53.367,
+   "approx_km": 40,
+   "place": "Dabie / Gryfino",
+   "sector_note": "главная группировка (65, 70, 49 А) между Альтдаммом и Шведтом; фронт ~170 км от устья Одера",
+   "source": "DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_hgr_weichsel",
+   "date": "1945-04-16",
+   "lng": 14.487,
+   "lat": 52.981,
+   "approx_km": 80,
+   "place": "Seelow / Szczecin",
+   "sector_note": "условный центр: 3 ТА от Балтики до Хоэнзатена, 9 А от Финов-канала до Губена",
+   "source": "DW_SH; DW_SRO",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_hgr_mitte",
+   "date": "1945-04-16",
+   "lng": 14.991,
+   "lat": 51.156,
+   "approx_km": 80,
+   "place": "Goerlitz",
+   "sector_note": "условно; 4 ТА на Нейсе Губен–Гёрлиц, основные резервы у Гёрлица",
+   "source": "Z p.473; RW_KP",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_61a",
+   "date": "1945-04-16",
+   "lng": 14.258,
+   "lat": 52.967,
+   "approx_km": 12,
+   "place": "OsinowDolny / Ognica",
+   "sector_note": "восточный берег Одера между полосой 49 А (Кранцфельде–Ниппервизе) и 1 А ВП (Стара-Рудница); граница выведена по соседям",
+   "source": "DW_SRO; PW_1A",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_61a",
+   "date": "1945-04-17",
+   "lng": 14.145,
+   "lat": 52.852,
+   "approx_km": 12,
+   "place": "OsinowDolny",
+   "sector_note": "переход в наступление с форсированием Одера севернее полосы 1 А ВП",
+   "source": "RW_BNO; PW_1A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_61a",
+   "date": "1945-04-23",
+   "lng": 13.8,
+   "lat": 52.835,
+   "approx_km": 15,
+   "place": "Eberswalde",
+   "sector_note": "у Финов-канала напротив эберсвальдского плацдарма Штайнера; армия отставала (PW_1A: «наступление правого соседа значительно задержалось» 21–22.04)",
+   "source": "Z p.478-480; PW_1A",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_61a",
+   "date": "1945-04-30",
+   "lng": 12.42,
+   "lat": 52.82,
+   "approx_km": 20,
+   "place": "Fehrbellin / Havelberg",
+   "sector_note": "наступление из района Фербеллина на Хафельберг к Эльбе",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_61a",
+   "date": "1945-05-02",
+   "lng": 12.074,
+   "lat": 52.825,
+   "approx_km": 20,
+   "place": "Havelberg",
+   "sector_note": "выход к Эльбе юго-восточнее Виттенберге «к концу операции» (точная дата не найдена)",
+   "source": "RW_ARM (61 А); DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-16",
+   "lng": 14.241,
+   "lat": 52.81,
+   "approx_km": 6,
+   "place": "StaraRudnica / StareLysogorki",
+   "sector_note": "1 и часть 2 пд на вост. берегу Одера (Стара-Рудница–Стары-Лысогурки); 3 и часть 2 пд на плацдарме 47 А у Гоздовице; 4, 6 пд во втором эшелоне",
+   "source": "PW_1A",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-16",
+   "lng": 14.291,
+   "lat": 52.746,
+   "approx_km": 5,
+   "place": "Neulewin",
+   "sector_note": "к исходу дня преодолён рукав Альте-Одер севернее Нойлевина",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-19",
+   "lng": 14.107,
+   "lat": 52.743,
+   "approx_km": 6,
+   "place": "Ranft / Wriezen",
+   "sector_note": "2 пд форсировала Альте-Одер у Ранфта; 4 и 3 пд ударили из-под Врицена",
+   "source": "PW_1A; DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-21",
+   "lng": 13.837,
+   "lat": 52.778,
+   "approx_km": 10,
+   "place": "Trampe",
+   "sector_note": "правое крыло прорвало рубеж у Трампе; 4 пд вышла к Бернау",
+   "source": "PW_1A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-22",
+   "lng": 13.246,
+   "lat": 52.753,
+   "approx_km": 10,
+   "place": "Oranienburg",
+   "sector_note": "вечером передовые части вышли к каналу Гогенцоллерн",
+   "source": "PW_1A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-24",
+   "lng": 13.03,
+   "lat": 52.761,
+   "approx_km": 15,
+   "place": "Kremmen",
+   "sector_note": "рубеж Бернёве–Зандхаузен–Руппинер-канал–Креммен–Флатов–Паарен–Науэн (внешнее кольцо окружения)",
+   "source": "PW_1A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-25",
+   "lng": 13.03,
+   "lat": 52.761,
+   "approx_km": 15,
+   "place": "Kremmen",
+   "sector_note": "оборона на том же рубеже; удар группы Штайнера по 2 пд (вклинение ~3 км)",
+   "source": "PW_1A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-04-30",
+   "lng": 12.766,
+   "lat": 52.724,
+   "approx_km": 8,
+   "place": "Linum / Braedikow",
+   "sector_note": "прорван рубеж Линум–Брэдиков по Хафелльэндишер-Гроссер-Хауптканал",
+   "source": "PW_1A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa",
+   "date": "1945-05-02",
+   "lng": 12.578,
+   "lat": 52.739,
+   "approx_km": 15,
+   "place": "Friesack",
+   "sector_note": "1.05 6 пд взяла Фризак; 3.05 14 пп вышел к Эльбе у Шёнфельда",
+   "source": "PW_1A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a",
+   "date": "1945-04-16",
+   "lng": 14.366,
+   "lat": 52.714,
+   "approx_km": 8,
+   "place": "GuestebieserLoose / Kienitz",
+   "sector_note": "северный фас Кюстринского плацдарма (плацдарм 47 А у Гоздовице); наступление на Врицен. ⚠ Ziemke: 47 А введена 17.04 как резерв",
+   "source": "PW_1A; DW_SH; Z p.474",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_47a",
+   "date": "1945-04-18",
+   "lng": 14.137,
+   "lat": 52.717,
+   "approx_km": 8,
+   "place": "Wriezen",
+   "sector_note": "CI ак рухнул перед 47 А и 3 УА",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a",
+   "date": "1945-04-19",
+   "lng": 14.137,
+   "lat": 52.717,
+   "approx_km": 5,
+   "place": "Wriezen",
+   "sector_note": "заняла Врицен; придан 9 тк",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a",
+   "date": "1945-04-21",
+   "lng": 13.512,
+   "lat": 52.638,
+   "approx_km": 15,
+   "place": "Bernau / B_Pankow",
+   "sector_note": "в числе армий, вышедших на окраины Берлина (северо-восток); место главных сил не уточнено",
+   "source": "RW_BNO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_47a",
+   "date": "1945-04-22",
+   "lng": 13.206,
+   "lat": 52.638,
+   "approx_km": 8,
+   "place": "Hennigsdorf",
+   "sector_note": "в ночь на 23.04 форсировала Хафель у Хеннигсдорфа",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a",
+   "date": "1945-04-23",
+   "lng": 12.877,
+   "lat": 52.606,
+   "approx_km": 10,
+   "place": "Nauen",
+   "sector_note": "вечером первые части у Науэна",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a",
+   "date": "1945-04-25",
+   "lng": 12.844,
+   "lat": 52.477,
+   "approx_km": 5,
+   "place": "Ketzin",
+   "sector_note": "328 сд соединилась с 6 гв. мк 4 гв. ТА: кольцо вокруг Берлина замкнуто",
+   "source": "Z p.482; RW_BNO; RW_ARM (4 гв. ТА)",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-16",
+   "lng": 14.448,
+   "lat": 52.643,
+   "approx_km": 8,
+   "place": "Zechin / Kienitz",
+   "sector_note": "Кюстринский плацдарм, между 47 А и 5 УА; точная граница полосы не найдена",
+   "source": "CIT",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-16",
+   "lng": 14.322,
+   "lat": 52.689,
+   "approx_km": 5,
+   "place": "Altlewin / Letschin",
+   "sector_note": "к исходу дня вышла на линию Альтлевин–Лечин (продвижение 5–12 км)",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-18",
+   "lng": 14.113,
+   "lat": 52.648,
+   "approx_km": 5,
+   "place": "Moeglin / Batzlow",
+   "sector_note": "151 и 171 сд через Кунерсдорф и Метцдорф вышли на линию Мёглин–Батцлов",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-19",
+   "lng": 13.989,
+   "lat": 52.637,
+   "approx_km": 12,
+   "place": "Proetzel",
+   "sector_note": "смяла последние позиции CI ак, пропустив 2 гв. ТА; место — по рубежу 18 пгд у Прётцеля",
+   "source": "DW_SH",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-20",
+   "lng": 13.665,
+   "lat": 52.662,
+   "approx_km": 15,
+   "place": "Bernau / Werneuchen",
+   "sector_note": "79 ск ведёт огонь дальнобойной артиллерией по Берлину; армия идёт за 2 гв. ТА (Бернау)",
+   "source": "RW_BNO; DW_SB; Z p.476",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-21",
+   "lng": 13.463,
+   "lat": 52.555,
+   "approx_km": 6,
+   "place": "B_Weissensee",
+   "sector_note": "вышла к Вайсензее",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-22",
+   "lng": 13.435,
+   "lat": 52.598,
+   "approx_km": 6,
+   "place": "B_Pankow",
+   "sector_note": "продвижение в Рейникендорф и Панков",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-23",
+   "lng": 13.418,
+   "lat": 52.592,
+   "approx_km": 4,
+   "place": "B_Pankow / B_Niederschoenhausen",
+   "sector_note": "12 гв. ск у ратуши Панков, 79 ск в Нидершёнхаузене",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-24",
+   "lng": 13.367,
+   "lat": 52.543,
+   "approx_km": 4,
+   "place": "B_Wedding",
+   "sector_note": "12 гв. ск в Веддинге, 79 ск у Плётцензее/Вестхафена, 7 ск через Пренцлауэр-Берг к Александерплацу",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-25",
+   "lng": 13.335,
+   "lat": 52.535,
+   "approx_km": 4,
+   "place": "B_Moabit",
+   "sector_note": "79 ск у Плётцензее/Вестхафен-канала, 12 гв. ск в Моабите (мост Фенн), 7 ск у Александерплаца (25–26.04)",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-04-30",
+   "lng": 13.376,
+   "lat": 52.519,
+   "approx_km": 1,
+   "place": "B_Reichstag",
+   "sector_note": "штурм Рейхстага (150 и 171 сд 79 ск)",
+   "source": "RW_BNO; Z p.488",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_3ua",
+   "date": "1945-05-02",
+   "lng": 13.376,
+   "lat": 52.519,
+   "approx_km": 2,
+   "place": "B_Reichstag",
+   "sector_note": "гарнизон Рейхстага капитулировал в ночь на 2.05",
+   "source": "RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-16",
+   "lng": 14.522,
+   "lat": 52.571,
+   "approx_km": 6,
+   "place": "Golzow / Gorgast",
+   "sector_note": "центр плацдарма на оси Кюстрин–Зелов (Рейхсштрассе 1)",
+   "source": "RW_ZB; DW_SH",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-16",
+   "lng": 14.34,
+   "lat": 52.577,
+   "approx_km": 4,
+   "place": "Platkow / Gusow",
+   "sector_note": "к исходу дня вышла к Альте-Одер у Платкова–Гузова",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-18",
+   "lng": 14.369,
+   "lat": 52.566,
+   "approx_km": 4,
+   "place": "Gusow / Werbig",
+   "sector_note": "бои на линии Платков–Гузов–Вербиг с 9 пд и «Мюнхебергом»",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-19",
+   "lng": 14.238,
+   "lat": 52.597,
+   "approx_km": 5,
+   "place": "Neuhardenberg",
+   "sector_note": "теснит парашютистов на Нойхарденберг; 12 гв. тк на Грунов",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-20",
+   "lng": 13.84,
+   "lat": 52.576,
+   "approx_km": 6,
+   "place": "Strausberg / Altlandsberg",
+   "sector_note": "перед Штраусбергом, ночью заняла Альтландсберг",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-21",
+   "lng": 13.563,
+   "lat": 52.543,
+   "approx_km": 4,
+   "place": "B_Marzahn",
+   "sector_note": "первой перешла городскую черту Берлина (Марцан; 26 гв. и 32 ск)",
+   "source": "RW_BNO; DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-22",
+   "lng": 13.496,
+   "lat": 52.51,
+   "approx_km": 5,
+   "place": "B_Lichtenberg",
+   "sector_note": "восток города (Лихтенберг/Карлсхорст)",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-23",
+   "lng": 13.497,
+   "lat": 52.495,
+   "approx_km": 4,
+   "place": "B_Ostkreuz / B_Karlshorst",
+   "sector_note": "26 гв. ск у скотобойни (Шторковер-штрассе), 32 ск у Осткройц, 9 ск взял Карлсхорст и часть Кёпеника, форсировал Шпрее",
+   "source": "DW_SB; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-24",
+   "lng": 13.45,
+   "lat": 52.512,
+   "approx_km": 3,
+   "place": "B_Friedrichshain",
+   "sector_note": "по Франкфуртер-аллее; 9 ск переправился через Шпрее у Трептов-парка",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-25",
+   "lng": 13.45,
+   "lat": 52.512,
+   "approx_km": 3,
+   "place": "B_Friedrichshain",
+   "sector_note": "медленно в Фридрихсхайне, бой за Силезский вокзал",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-04-30",
+   "lng": 13.404,
+   "lat": 52.511,
+   "approx_km": 3,
+   "place": "B_Spittelmarkt",
+   "sector_note": "28.04: 32 ск — Фишеринзель, 9 ск — Шпиттельмаркт; на 30.04 точнее не установлено",
+   "source": "DW_SB",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua",
+   "date": "1945-05-02",
+   "lng": 13.392,
+   "lat": 52.511,
+   "approx_km": 3,
+   "place": "B_Reichskanzlei / B_Spittelmarkt",
+   "sector_note": "центр города (правительственный квартал)",
+   "source": "RW_BNO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-16",
+   "lng": 14.53,
+   "lat": 52.504,
+   "approx_km": 6,
+   "place": "Sachsendorf / Reitwein",
+   "sector_note": "южный фас Кюстринского плацдарма против Зееловских высот",
+   "source": "OOB; DW_SH",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-16",
+   "lng": 14.406,
+   "lat": 52.506,
+   "approx_km": 4,
+   "place": "Dolgelin / Friedersdorf_MOL",
+   "sector_note": "28 и 29 гв. ск перед линией Дольгелин–Фридерсдорф, большие потери",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-17",
+   "lng": 14.381,
+   "lat": 52.532,
+   "approx_km": 4,
+   "place": "Seelow",
+   "sector_note": "4 гв. ск с 11 гв. тк взял Зелов",
+   "source": "RW_ZB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-18",
+   "lng": 14.291,
+   "lat": 52.495,
+   "approx_km": 5,
+   "place": "Neuentempel / Marxdorf",
+   "sector_note": "к вечеру прорвала третью линию 20 пгд",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-19",
+   "lng": 14.14,
+   "lat": 52.504,
+   "approx_km": 5,
+   "place": "Muencheberg",
+   "sector_note": "82 гсд взяла Мюнхеберг",
+   "source": "DW_SH; Z p.475",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-20",
+   "lng": 14.103,
+   "lat": 52.431,
+   "approx_km": 12,
+   "place": "Muencheberg / Fuerstenwalde",
+   "sector_note": "южная группа главных сил прошла за Мюнхеберг, передовой отряд к Фюрстенвальде",
+   "source": "Z p.476",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-21",
+   "lng": 13.754,
+   "lat": 52.426,
+   "approx_km": 8,
+   "place": "Erkner",
+   "sector_note": "севернее Мюггельзе у внешнего оборонительного обвода",
+   "source": "Z p.478; DW_SB",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-22",
+   "lng": 13.623,
+   "lat": 52.457,
+   "approx_km": 5,
+   "place": "B_Friedrichshagen",
+   "sector_note": "взяты Дальвиц, Шёнайхе, Рансдорф, Фридрихсхаген, Венденшлос; ночью Грюнау, Фалькенберг",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-23",
+   "lng": 13.55,
+   "lat": 52.457,
+   "approx_km": 4,
+   "place": "B_Koepenick / B_Schoeneweide",
+   "sector_note": "взяты Карлсхорст, Уленхорст, Шёневайде, Кёпеник; бои западнее Даме",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-24",
+   "lng": 13.538,
+   "lat": 52.395,
+   "approx_km": 4,
+   "place": "B_Bohnsdorf / B_Schoenefeld",
+   "sector_note": "88 гсд встретилась с 71 мбр 3 гв. ТА (Шёнефельд, 10:00) — 9 А отрезана",
+   "source": "DW_HA; Z p.481",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-25",
+   "lng": 13.41,
+   "lat": 52.46,
+   "approx_km": 4,
+   "place": "B_Britz / B_Tempelhof",
+   "sector_note": "вместе с 1 гв. ТА через Тельтов-канал на Темпельгоф",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-04-30",
+   "lng": 13.362,
+   "lat": 52.516,
+   "approx_km": 3,
+   "place": "B_Tiergarten",
+   "sector_note": "Ландвер-канал / южный край Тиргартена; задача 29.04 — имперская канцелярия, Тиргартен, Зоосад",
+   "source": "RW_SHB; DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva",
+   "date": "1945-05-02",
+   "lng": 13.36,
+   "lat": 52.533,
+   "approx_km": 3,
+   "place": "B_Mitte",
+   "sector_note": "Вейдлинг подписал приказ о капитуляции в штабе армии; к концу дня очищен центр",
+   "source": "RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-16",
+   "lng": 14.654,
+   "lat": 52.59,
+   "approx_km": 10,
+   "place": "Kostrzyn",
+   "sector_note": "до ввода в бой на восточном берегу Одера / у переправ",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-16",
+   "lng": 14.393,
+   "lat": 52.513,
+   "approx_km": 6,
+   "place": "Seelow / Dolgelin",
+   "sector_note": "введена днём, к исходу дня все три корпуса в полосе 8 гв. А",
+   "source": "RW_ZB",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-18",
+   "lng": 14.094,
+   "lat": 52.589,
+   "approx_km": 5,
+   "place": "Reichenberg / Buckow",
+   "sector_note": "западнее Райхенберга и севернее Букова, бои у Нойентемпеля и Марксдорфа",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-19",
+   "lng": 14.14,
+   "lat": 52.504,
+   "approx_km": 6,
+   "place": "Muencheberg",
+   "sector_note": "с 8 гв. А сломила LVI тк",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-21",
+   "lng": 13.754,
+   "lat": 52.426,
+   "approx_km": 8,
+   "place": "Erkner",
+   "sector_note": "севернее Мюггельзе у внешнего обвода",
+   "source": "Z p.478",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-24",
+   "lng": 13.571,
+   "lat": 52.402,
+   "approx_km": 6,
+   "place": "B_Bohnsdorf",
+   "sector_note": "подошла к юго-восточным пригородам",
+   "source": "RW_SHB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-25",
+   "lng": 13.377,
+   "lat": 52.471,
+   "approx_km": 4,
+   "place": "B_Tempelhof",
+   "sector_note": "через Тельтов-канал на Темпельгоф",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta",
+   "date": "1945-04-30",
+   "lng": 13.362,
+   "lat": 52.516,
+   "approx_km": 3,
+   "place": "B_Tiergarten",
+   "sector_note": "с 8 гв. А: имперская канцелярия, Тиргартен, Зоосад",
+   "source": "RW_SHB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-16",
+   "lng": 14.573,
+   "lat": 52.582,
+   "approx_km": 10,
+   "place": "Kostrzyn / Golzow",
+   "sector_note": "до ввода; к 19:00 вышла на линию передовых частей 3 и 5 УА",
+   "source": "RW_ZB",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-16",
+   "lng": 14.367,
+   "lat": 52.623,
+   "approx_km": 6,
+   "place": "Letschin / Gusow",
+   "sector_note": "линия передовых частей 3 и 5 УА",
+   "source": "RW_ZB",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-18",
+   "lng": 14.369,
+   "lat": 52.566,
+   "approx_km": 5,
+   "place": "Gusow / Werbig",
+   "sector_note": "бои с 9 пд и «Мюнхебергом» у Платкова–Гузова–Вербига",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-19",
+   "lng": 14.063,
+   "lat": 52.677,
+   "approx_km": 10,
+   "place": "Proetzel / Wriezen",
+   "sector_note": "прорвалась западнее Врицена",
+   "source": "Z p.475; DW_SH",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-20",
+   "lng": 13.588,
+   "lat": 52.679,
+   "approx_km": 5,
+   "place": "Bernau",
+   "sector_note": "вышла к Бернау",
+   "source": "Z p.476",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-21",
+   "lng": 13.598,
+   "lat": 52.541,
+   "approx_km": 8,
+   "place": "Hoenow / B_Marzahn",
+   "sector_note": "через кольцевую автостраду на Хоэншёнхаузен–Марцан–Хёнов; удар юго-западнее Вернойхена до внешнего обвода",
+   "source": "DW_SB; Z p.478",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-22",
+   "lng": 13.226,
+   "lat": 52.695,
+   "approx_km": 10,
+   "place": "Hennigsdorf / Oranienburg",
+   "sector_note": "танки на Хафеле севернее Берлина",
+   "source": "Z p.479",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-23",
+   "lng": 13.206,
+   "lat": 52.638,
+   "approx_km": 8,
+   "place": "Hennigsdorf",
+   "sector_note": "форсировала Хафель ниже Ораниенбурга, поворот на юг",
+   "source": "Z p.480",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-24",
+   "lng": 13.067,
+   "lat": 52.573,
+   "approx_km": 15,
+   "place": "B_Siemensstadt / Nauen",
+   "sector_note": "дошла до Науэна и почти до Шпандау; вечером (19:10) ворвалась в Сименсштадт",
+   "source": "Z p.481; RW_SHB",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-25",
+   "lng": 13.257,
+   "lat": 52.54,
+   "approx_km": 4,
+   "place": "B_Siemensstadt",
+   "sector_note": "бои за Сименсштадт 25–28.04",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta",
+   "date": "1945-04-30",
+   "lng": 13.319,
+   "lat": 52.52,
+   "approx_km": 4,
+   "place": "B_Moabit / B_Charlottenburg",
+   "sector_note": "28.04 шла за 79 ск в Моабите; на 30.04 точнее не установлено",
+   "source": "DW_SB",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_69a",
+   "date": "1945-04-16",
+   "lng": 14.534,
+   "lat": 52.427,
+   "approx_km": 6,
+   "place": "Lebus",
+   "sector_note": "плацдарм севернее Франкфурта; вспомогательный удар",
+   "source": "Z p.471; OOB",
+   "reliability": "A",
+   "time": "start"
+  },
+  {
+   "formation": "su_69a",
+   "date": "1945-04-19",
+   "lng": 14.497,
+   "lat": 52.443,
+   "approx_km": 6,
+   "place": "Lebus / Carzig",
+   "sector_note": "под давлением 69 А немцы (169, 712 пд) отводят фронт Карциг–Лебус",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_69a",
+   "date": "1945-04-21",
+   "lng": 14.534,
+   "lat": 52.427,
+   "approx_km": 10,
+   "place": "Lebus",
+   "sector_note": "«двухармейская группа во франкфуртском плацдарме ничего не добилась»; задача — окружение 9 А",
+   "source": "Z p.478",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_69a",
+   "date": "1945-04-25",
+   "lng": 14.156,
+   "lat": 52.265,
+   "approx_km": 20,
+   "place": "Fuerstenwalde / Beeskow",
+   "sector_note": "с 25.04 атакует котёл с северо-востока (с 3 и 33 А, 2 гв. кк)",
+   "source": "EW_HA; RW_BNO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_33a",
+   "date": "1945-04-16",
+   "lng": 14.611,
+   "lat": 52.216,
+   "approx_km": 10,
+   "place": "Lossow / Fuerstenberg_O",
+   "sector_note": "плацдарм южнее Франкфурта до Фюрстенберга; поддержка бригады Днепровской флотилии",
+   "source": "Z p.471; RW_BNO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_33a",
+   "date": "1945-04-19",
+   "lng": 14.625,
+   "lat": 52.2,
+   "approx_km": 8,
+   "place": "Brieskow / Fuerstenberg_O",
+   "sector_note": "32 пгд СС и 391 охр. д ещё держат южнее Фридрих-Вильгельм-канала до Фюрстенберга",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_33a",
+   "date": "1945-04-22",
+   "lng": 14.577,
+   "lat": 52.254,
+   "approx_km": 15,
+   "place": "Brieskow",
+   "sector_note": "9 А «прорвана южнее Франкфурта» (Ziemke без указания армии; отнесение к 33 А — вывод)",
+   "source": "Z p.479",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_33a",
+   "date": "1945-04-25",
+   "lng": 14.247,
+   "lat": 52.172,
+   "approx_km": 20,
+   "place": "Beeskow",
+   "sector_note": "атакует котёл с северо-востока/востока",
+   "source": "EW_HA; RW_BNO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3a",
+   "date": "1945-04-16",
+   "lng": 14.654,
+   "lat": 52.59,
+   "approx_km": 15,
+   "place": "Kostrzyn",
+   "sector_note": "второй эшелон, «район юго-восточнее Кюстрина»",
+   "source": "RW_ARM (3 А)",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_3a",
+   "date": "1945-04-23",
+   "lng": 13.754,
+   "lat": 52.426,
+   "approx_km": 15,
+   "place": "Erkner",
+   "sector_note": "введена, чтобы перерезать коридор 9 А к Берлину",
+   "source": "Z p.480; DW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3a",
+   "date": "1945-04-24",
+   "lng": 13.754,
+   "lat": 52.426,
+   "approx_km": 10,
+   "place": "Erkner",
+   "sector_note": "район Эркнера (северный фас котла)",
+   "source": "DW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3a",
+   "date": "1945-04-25",
+   "lng": 13.83,
+   "lat": 52.316,
+   "approx_km": 15,
+   "place": "Erkner / Storkow",
+   "sector_note": "атакует котёл с северо-востока",
+   "source": "EW_HA",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-16",
+   "lng": 14.695,
+   "lat": 51.708,
+   "approx_km": 6,
+   "place": "Forst / KleinBademeusel",
+   "sector_note": "Нейсе: (иск.) Форст – 1 км ю-в Кляйн-Бадемойзеля",
+   "source": "RW_KP",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-16",
+   "lng": 14.646,
+   "lat": 51.744,
+   "approx_km": 4,
+   "place": "Forst",
+   "sector_note": "149 сд к 18:00 в центре Форста; продвижение 4–6 км",
+   "source": "RW_KP",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-17",
+   "lng": 14.646,
+   "lat": 51.744,
+   "approx_km": 5,
+   "place": "Forst",
+   "sector_note": "76 ск штурмует Форст, 120 ск на запад",
+   "source": "RW_KP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-18",
+   "lng": 14.491,
+   "lat": 51.75,
+   "approx_km": 8,
+   "place": "Forst / Cottbus",
+   "sector_note": "гарнизону Форста дали уйти на север; подготовка к удару на Котбус",
+   "source": "RW_KP; DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-20",
+   "lng": 14.29,
+   "lat": 51.753,
+   "approx_km": 8,
+   "place": "Cottbus / Kolkwitz",
+   "sector_note": "обход Котбуса, перерезана ж.д. Котбус–Калау, выход к автобану южнее Котбуса",
+   "source": "RW_KP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-21",
+   "lng": 14.336,
+   "lat": 51.757,
+   "approx_km": 5,
+   "place": "Cottbus",
+   "sector_note": "120 ск ворвался в восточную часть Котбуса; группировка окружена с трёх сторон",
+   "source": "RW_KP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-22",
+   "lng": 14.336,
+   "lat": 51.757,
+   "approx_km": 5,
+   "place": "Cottbus",
+   "sector_note": "Котбус взят к 13:00; продвижение на север до Шпрее",
+   "source": "RW_KP; Z p.479",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-24",
+   "lng": 13.798,
+   "lat": 52.025,
+   "approx_km": 12,
+   "place": "Halbe / Luebben",
+   "sector_note": "120 ск южнее Хальбе, 21 ск к Люббену; 25 тк Дубен–Луккау",
+   "source": "DW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-25",
+   "lng": 13.716,
+   "lat": 52.071,
+   "approx_km": 10,
+   "place": "Teurow / Briesen_TF",
+   "sector_note": "активная оборона на пути прорыва 9 А; 1 гв. артдивизия прорыва Тойров–Бризен",
+   "source": "EW_HA; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva",
+   "date": "1945-04-30",
+   "lng": 13.7,
+   "lat": 52.107,
+   "approx_km": 12,
+   "place": "Halbe",
+   "sector_note": "бои с прорывающейся 9 А в районе Хальбе",
+   "source": "EW_HA",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_13a",
+   "date": "1945-04-16",
+   "lng": 14.723,
+   "lat": 51.618,
+   "approx_km": 8,
+   "place": "KleinBademeusel / BadMuskau",
+   "sector_note": "Нейсе, центр главной группировки",
+   "source": "OOB; Z p.471",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_13a",
+   "date": "1945-04-16",
+   "lng": 14.602,
+   "lat": 51.638,
+   "approx_km": 4,
+   "place": "GrossKoelzig",
+   "sector_note": "взяты Гросс- и Кляйн-Кёльциг, продвижение 13 км",
+   "source": "RW_KP",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_13a",
+   "date": "1945-04-19",
+   "lng": 14.22,
+   "lat": 51.658,
+   "approx_km": 10,
+   "place": "Drebkau",
+   "sector_note": "между котбусской и шпрембергской группировками; 172 сд прошла 22 км",
+   "source": "RW_ST",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_13a",
+   "date": "1945-04-20",
+   "lng": 13.614,
+   "lat": 51.74,
+   "approx_km": 10,
+   "place": "Brenitz / Walddrehna",
+   "sector_note": "вышла к ж.д. Берлин–Дрезден на рубеже Вальтерсдорф–Брениц (продвижение 30 км)",
+   "source": "RW_ST",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_13a",
+   "date": "1945-04-24",
+   "lng": 13.127,
+   "lat": 52.041,
+   "approx_km": 12,
+   "place": "Luckenwalde / Jueterbog",
+   "sector_note": "117 гсд к Луккенвальде, 280 сд к Ютербогу; первые атаки 12 А Венка отбиты",
+   "source": "DW_HA; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_13a",
+   "date": "1945-04-30",
+   "lng": 12.915,
+   "lat": 52.163,
+   "approx_km": 15,
+   "place": "Treuenbrietzen / Beelitz",
+   "sector_note": "отражение контрудара 12 А",
+   "source": "RW_BNO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5gva",
+   "date": "1945-04-16",
+   "lng": 14.728,
+   "lat": 51.555,
+   "approx_km": 6,
+   "place": "BadMuskau / Leknica",
+   "sector_note": "Нейсе, левый фланг главной группировки (Мускау)",
+   "source": "OOB; Z p.471",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_5gva",
+   "date": "1945-04-16",
+   "lng": 14.701,
+   "lat": 51.563,
+   "approx_km": 8,
+   "place": "BadMuskau",
+   "sector_note": "продвижение 8 км; часть сил ликвидирует немецкий плацдарм на вост. берегу",
+   "source": "RW_KP",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_5gva",
+   "date": "1945-04-19",
+   "lng": 14.38,
+   "lat": 51.572,
+   "approx_km": 8,
+   "place": "Spremberg",
+   "sector_note": "с 6 гв. мк обходит Шпремберг с юга",
+   "source": "RW_ST",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva",
+   "date": "1945-04-20",
+   "lng": 14.38,
+   "lat": 51.572,
+   "approx_km": 4,
+   "place": "Spremberg",
+   "sector_note": "33 гв. ск взял Шпремберг",
+   "source": "RW_ST",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva",
+   "date": "1945-04-21",
+   "lng": 14.171,
+   "lat": 51.584,
+   "approx_km": 6,
+   "place": "NeuWelzow",
+   "sector_note": "33 гв. ск соединился с 24 ск 13 А у Ной-Вельцова, шпрембергская группировка окружена",
+   "source": "RW_ST",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva",
+   "date": "1945-04-25",
+   "lng": 13.107,
+   "lat": 51.445,
+   "approx_km": 15,
+   "place": "Torgau / Strehla",
+   "sector_note": "34 гв. ск (58 гсд) на Эльбе; 13:30 встреча с 69 пд США у Стрелы, затем у Торгау",
+   "source": "RW_ST; Z p.482",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_5gva",
+   "date": "1945-04-30",
+   "lng": 12.993,
+   "lat": 51.538,
+   "approx_km": 20,
+   "place": "Torgau",
+   "sector_note": "Эльба; 33 гв. ск с 24–26.04 севернее Баутцена",
+   "source": "RW_BW; RW_ST",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-16",
+   "lng": 14.993,
+   "lat": 51.301,
+   "approx_km": 10,
+   "place": "Pienk / Rothenburg",
+   "sector_note": "Нейсе севернее Гёрлица (ударная группа 73 ск), остальной фронт в обороне",
+   "source": "Z p.471; RW_BW",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-18",
+   "lng": 14.659,
+   "lat": 51.197,
+   "approx_km": 8,
+   "place": "Weissenberg",
+   "sector_note": "7 гв. мк ворвался в Буххольц, бой у Вайсенберга; 254 сд следом",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-19",
+   "lng": 14.662,
+   "lat": 51.213,
+   "approx_km": 15,
+   "place": "Bautzen / Kodersdorf",
+   "sector_note": "254 сд штурмует Баутцен; 73 ск застрял у Кодерсдорфа",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-20",
+   "lng": 14.81,
+   "lat": 51.257,
+   "approx_km": 6,
+   "place": "Diehsa / Kodersdorf",
+   "sector_note": "немецкий контрудар (20 тд, 17, 72 пд) отбил Дизу, Кольм",
+   "source": "RW_BW; RW_ARM (52 А)",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-21",
+   "lng": 14.814,
+   "lat": 51.253,
+   "approx_km": 6,
+   "place": "Jaenkendorf",
+   "sector_note": "214, 116, 111 сд на рубеже Шпройц–Енкендорф–Вильгельминенталь",
+   "source": "RW_ARM (52 А)",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-23",
+   "lng": 14.659,
+   "lat": 51.197,
+   "approx_km": 6,
+   "place": "Weissenberg",
+   "sector_note": "48 ск сбит и расчленён ударом LVII тк у Вайсенберга",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-24",
+   "lng": 14.428,
+   "lat": 51.181,
+   "approx_km": 5,
+   "place": "Bautzen",
+   "sector_note": "дивизия «Герман Геринг» штурмует Баутцен; к 21:00 советские части в районе заводов на севере города",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-25",
+   "lng": 14.428,
+   "lat": 51.181,
+   "approx_km": 8,
+   "place": "Bautzen",
+   "sector_note": "вечером прорыв из Баутцена на север к 2 А ВП",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a",
+   "date": "1945-04-30",
+   "lng": 14.371,
+   "lat": 51.253,
+   "approx_km": 12,
+   "place": "Bautzen / Koenigswartha",
+   "sector_note": "оборона севернее Баутцена до начала мая",
+   "source": "RW_ARM (52 А)",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2pa",
+   "date": "1945-04-16",
+   "lng": 14.94,
+   "lat": 51.357,
+   "approx_km": 6,
+   "place": "Rothenburg",
+   "sector_note": "форсирование Нейсе на участке Ротенбург (фл. Обер-Форверк)",
+   "source": "RW_BW; PW_2A",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_2pa",
+   "date": "1945-04-18",
+   "lng": 14.793,
+   "lat": 51.318,
+   "approx_km": 6,
+   "place": "Niesky",
+   "sector_note": "взят Ниски; 1 польский тк продвинулся на 10–15 км",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2pa",
+   "date": "1945-04-20",
+   "lng": 14.371,
+   "lat": 51.253,
+   "approx_km": 10,
+   "place": "Koenigswartha / Bautzen",
+   "sector_note": "5 и 9 пд с 3 бр на линии Кёнигсварта–Баутцен; 10 пд лишь в 10 км западнее Нейсе",
+   "source": "PW_2A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2pa",
+   "date": "1945-04-22",
+   "lng": 13.916,
+   "lat": 51.16,
+   "approx_km": 25,
+   "place": "Kamenz / Dresden",
+   "sector_note": "1 польский тк наступает на Дрезден, в полдень отведён к Баутцену",
+   "source": "RW_BW",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2pa",
+   "date": "1945-04-25",
+   "lng": 14.314,
+   "lat": 51.325,
+   "approx_km": 10,
+   "place": "Koenigswartha",
+   "sector_note": "соединение с вышедшими из Баутцена частями 7 гв. мк севернее Баутцена",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2pa",
+   "date": "1945-04-30",
+   "lng": 14.095,
+   "lat": 51.27,
+   "approx_km": 15,
+   "place": "Kamenz",
+   "sector_note": "оборона 28.04–4.05; 4.05 исходный рубеж Каменц–Тауер для Пражской операции",
+   "source": "PW_2A",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-16",
+   "lng": 14.695,
+   "lat": 51.708,
+   "approx_km": 8,
+   "place": "Forst / KleinBademeusel",
+   "sector_note": "в боевых порядках пехоты южнее Форста",
+   "source": "RW_KP",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-16",
+   "lng": 14.628,
+   "lat": 51.702,
+   "approx_km": 4,
+   "place": "Domsdorf / GrossSchacksdorf",
+   "sector_note": "к вечеру бои за Домсдорф и Гросс-Шаксдорф (9 км вместо 18)",
+   "source": "RW_KP",
+   "reliability": "B",
+   "time": "end"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-17",
+   "lng": 14.557,
+   "lat": 51.681,
+   "approx_km": 5,
+   "place": "Gahry",
+   "sector_note": "ночью Зиммерсдорф, к 8:00 Гари; контратаки 21 тд",
+   "source": "RW_KP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-18",
+   "lng": 14.358,
+   "lat": 51.664,
+   "approx_km": 10,
+   "place": "Spremberg / Cottbus",
+   "sector_note": "7 гв. тк по лесным дорогам вышел к Шпрее севернее Шпремберга и форсировал её; по этой переправе вся армия",
+   "source": "RW_KP; Z p.475",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-19",
+   "lng": 14.005,
+   "lat": 51.762,
+   "approx_km": 8,
+   "place": "Vetschau / Calau",
+   "sector_note": "6 гв. тк: Фетшау 15:00, Гросс-Любенау, Боблиц; 7 гв. тк: Калау к 19:00",
+   "source": "RW_KP; RW_ARM (3 гв. ТА)",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-20",
+   "lng": 13.502,
+   "lat": 52.046,
+   "approx_km": 8,
+   "place": "Baruth",
+   "sector_note": "передовая бригада 6 гв. тк взяла Барут (13:30); 7 гв. тк — Луккау; «в 10 милях южнее Цоссена»",
+   "source": "RW_ARM (3 гв. ТА); Z p.476",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-21",
+   "lng": 13.537,
+   "lat": 52.258,
+   "approx_km": 12,
+   "place": "Zossen / KoenigsWusterhausen",
+   "sector_note": "Барут-Цоссенский рубеж взломан к 14:00; голова армии у Кёнигс-Вустерхаузена; ⚠ Цоссен 21.04 (de-wiki) / 22.04 (ru-wiki)",
+   "source": "RW_KP; Z p.478; DW_SB",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-22",
+   "lng": 13.291,
+   "lat": 52.409,
+   "approx_km": 6,
+   "place": "B_Teltow / B_Lichterfelde",
+   "sector_note": "9 мк и 6 гв. тк вышли к Тельтов-каналу (Тельтов, Лихтерфельде, Мариенфельде, Ланквиц)",
+   "source": "RW_BNO; DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-23",
+   "lng": 13.302,
+   "lat": 52.387,
+   "approx_km": 8,
+   "place": "B_Stahnsdorf / B_Lichtenrade",
+   "sector_note": "перегруппировка, подготовка форсирования; 71 мбр на восток вдоль кольцевой автострады",
+   "source": "DW_SB; RW_KP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-24",
+   "lng": 13.259,
+   "lat": 52.431,
+   "approx_km": 4,
+   "place": "B_Zehlendorf",
+   "sector_note": "6 гв. тк форсировал Тельтов-канал (650 стволов/км); к вечеру южная часть Целендорфа",
+   "source": "RW_BNO; DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-25",
+   "lng": 13.302,
+   "lat": 52.457,
+   "approx_km": 4,
+   "place": "B_Dahlem / B_Steglitz",
+   "sector_note": "Целендорф, Лихтерфельде, Николасзее, Далем; охват Штеглица",
+   "source": "RW_ARM (3 гв. ТА); DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta",
+   "date": "1945-04-30",
+   "lng": 13.308,
+   "lat": 52.498,
+   "approx_km": 4,
+   "place": "B_Fehrbelliner / B_Charlottenburg",
+   "sector_note": "27.04 бои за Фербеллинер-плац; 28.04 попытка на Савиньиплац–Зоо; на 30.04 точнее не установлено",
+   "source": "DW_SB",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-16",
+   "lng": 14.818,
+   "lat": 51.635,
+   "approx_km": 12,
+   "place": "Trzebiel",
+   "sector_note": "за 5 гв. А (главный удар из района Трибеля); ночью 16/17 на Шпрее",
+   "source": "RW_KP; OOB",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-18",
+   "lng": 14.38,
+   "lat": 51.572,
+   "approx_km": 8,
+   "place": "Spremberg",
+   "sector_note": "обход Шпремберга, вечером форсирование Шпрее севернее и южнее города",
+   "source": "RW_KP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-19",
+   "lng": 13.832,
+   "lat": 51.8,
+   "approx_km": 20,
+   "place": "Calau / Luckau",
+   "sector_note": "10 гв. тк (63 гв. тбр) прошёл за день 70 км",
+   "source": "RW_KP",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-20",
+   "lng": 13.398,
+   "lat": 51.922,
+   "approx_km": 15,
+   "place": "Luckau / Jueterbog",
+   "sector_note": "Луккау взят с 3 гв. ТА; головы армии севернее Ютербога",
+   "source": "RW_ARM (3 гв. ТА); Z p.476",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-22",
+   "lng": 13.018,
+   "lat": 52.11,
+   "approx_km": 20,
+   "place": "Beelitz / Jueterbog",
+   "sector_note": "5 гв. мк взял Беелиц, Тройенбрицен, Ютербог (аэродром); 10 гв. тк на Штансдорф",
+   "source": "RW_ARM (4 гв. ТА); RW_KP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-23",
+   "lng": 13.208,
+   "lat": 52.387,
+   "approx_km": 8,
+   "place": "B_Stahnsdorf",
+   "sector_note": "10 гв. тк вышел к Тельтов-каналу у Штансдорфа",
+   "source": "RW_KP; RW_ARM (4 гв. ТА)",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-24",
+   "lng": 13.059,
+   "lat": 52.401,
+   "approx_km": 10,
+   "place": "Potsdam",
+   "sector_note": "вышла к озёрам у Потсдама; 5 гв. мк отражает атаки 12 А у Тройенбрицена",
+   "source": "Z p.481; EW_HA",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-25",
+   "lng": 12.844,
+   "lat": 52.477,
+   "approx_km": 5,
+   "place": "Ketzin",
+   "sector_note": "35 гв. мбр 6 гв. мк — Кетцин, соединение с 328 сд 47 А",
+   "source": "RW_ARM (4 гв. ТА); Z p.482",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_4gta",
+   "date": "1945-04-30",
+   "lng": 13.008,
+   "lat": 52.315,
+   "approx_km": 15,
+   "place": "Potsdam / Beelitz",
+   "sector_note": "27.04 ликвидирована потсдамская группировка; 29.04 XX ак Венка вышел к Ферху; армия между Потсдамом и Беелицем",
+   "source": "RW_KP; Z p.491",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_28a",
+   "date": "1945-04-21",
+   "lng": 13.475,
+   "lat": 52.131,
+   "approx_km": 20,
+   "place": "Baruth / Zossen",
+   "sector_note": "введена из резерва вместо 3 гв. ТА и 13 А против 9 А",
+   "source": "Z p.478",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_28a",
+   "date": "1945-04-24",
+   "lng": 13.563,
+   "lat": 52.173,
+   "approx_km": 15,
+   "place": "KoenigsWusterhausen / Baruth",
+   "sector_note": "Кёнигс-Вустерхаузен; 128 ск Миттенвальде–Моцен; 3 гв. ск у Барута",
+   "source": "DW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_28a",
+   "date": "1945-04-25",
+   "lng": 13.519,
+   "lat": 52.155,
+   "approx_km": 15,
+   "place": "Mittenwalde / Baruth",
+   "sector_note": "на пути прорыва 9 А (автобан Берлин–Дрезден); часть сил в Берлине",
+   "source": "EW_HA; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_28a",
+   "date": "1945-04-30",
+   "lng": 13.556,
+   "lat": 52.091,
+   "approx_km": 10,
+   "place": "Teupitz / Baruth",
+   "sector_note": "28–29.04 прорыв немцев между Тойпицем и Тойровом через 54 и 55 сд, 50 гсд",
+   "source": "DW_HA; EW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2ua",
+   "date": "1945-04-16",
+   "lng": 14.701,
+   "lat": 53.808,
+   "approx_km": 15,
+   "place": "Kamien / Stepnica",
+   "sector_note": "рубеж Каммин–Инамюнде на берегу Штеттинской бухты (с 15.04)",
+   "source": "RW_ARM (2 уд. А); DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_2ua",
+   "date": "1945-04-20",
+   "lng": 14.598,
+   "lat": 53.6,
+   "approx_km": 15,
+   "place": "Police / Stepnica",
+   "sector_note": "демонстрация переправы севернее Штеттина",
+   "source": "RW_SR; DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2ua",
+   "date": "1945-04-25",
+   "lng": 14.472,
+   "lat": 53.377,
+   "approx_km": 10,
+   "place": "Przeclaw",
+   "sector_note": "⚠ переправа по переправам 65 А: к 25.04 (ru-wiki БНО) / 26.04 (ru-wiki 2 уд. А)",
+   "source": "RW_BNO; RW_ARM (2 уд. А)",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2ua",
+   "date": "1945-04-30",
+   "lng": 13.535,
+   "lat": 53.976,
+   "approx_km": 10,
+   "place": "Greifswald / Anklam",
+   "sector_note": "29.04 взят Анклам; 30.04 без боя капитулировал Грайфсвальд (90 сд)",
+   "source": "RW_ARM (2 уд. А); DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2ua",
+   "date": "1945-05-02",
+   "lng": 13.082,
+   "lat": 54.31,
+   "approx_km": 10,
+   "place": "Stralsund",
+   "sector_note": "Штральзунд (сдан без боя; дата 1.05 по общей хронологии — не сверено)",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_65a",
+   "date": "1945-04-16",
+   "lng": 14.666,
+   "lat": 53.48,
+   "approx_km": 8,
+   "place": "Dabie",
+   "sector_note": "плацдарм у Альтдамма (Фердинандштайн)",
+   "source": "DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_65a",
+   "date": "1945-04-20",
+   "lng": 14.472,
+   "lat": 53.377,
+   "approx_km": 4,
+   "place": "Przeclaw",
+   "sector_note": "плацдарм 6 × 1,5 км; к 13:00 две 16-т переправы у Прицлова",
+   "source": "DW_SRO; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_65a",
+   "date": "1945-04-22",
+   "lng": 14.472,
+   "lat": 53.377,
+   "approx_km": 5,
+   "place": "Przeclaw",
+   "sector_note": "удержание плацдарма, до 24.04 сильные контратаки",
+   "source": "DW_SB",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_65a",
+   "date": "1945-04-25",
+   "lng": 14.399,
+   "lat": 53.322,
+   "approx_km": 8,
+   "place": "Przeclaw / Tantow",
+   "sector_note": "прорыв на 20-км фронте, плацдарм расширен до ~8 км в глубину",
+   "source": "RW_SR; DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_65a",
+   "date": "1945-04-26",
+   "lng": 14.593,
+   "lat": 53.43,
+   "approx_km": 5,
+   "place": "Szczecin",
+   "sector_note": "штурмом взят Штеттин; Рокоссовский переносит туда КП",
+   "source": "RW_SR; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_65a",
+   "date": "1945-04-30",
+   "lng": 13.405,
+   "lat": 53.614,
+   "approx_km": 15,
+   "place": "Neubrandenburg / Friedland",
+   "sector_note": "29.04 левый фланг взял Фридланд и Нойбранденбург",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_65a",
+   "date": "1945-05-02",
+   "lng": 13.043,
+   "lat": 54.113,
+   "approx_km": 20,
+   "place": "Grimmen",
+   "sector_note": "354 сд 105 ск вошла в Гриммен (точная дата не указана)",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_70a",
+   "date": "1945-04-16",
+   "lng": 14.492,
+   "lat": 53.254,
+   "approx_km": 8,
+   "place": "Gryfino",
+   "sector_note": "сосредоточена у Грайфенхагена (прибыла 15–16.04)",
+   "source": "DW_SRO; RW_ARM (70 А)",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_70a",
+   "date": "1945-04-20",
+   "lng": 14.391,
+   "lat": 53.209,
+   "approx_km": 5,
+   "place": "Gartz",
+   "sector_note": "закрепилась на западном берегу у Гарца",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_70a",
+   "date": "1945-04-22",
+   "lng": 14.252,
+   "lat": 53.245,
+   "approx_km": 6,
+   "place": "Petershagen_UM",
+   "sector_note": "ограниченный прорыв из района Гарца на Петерсхаген",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_70a",
+   "date": "1945-04-25",
+   "lng": 14.283,
+   "lat": 53.283,
+   "approx_km": 10,
+   "place": "Tantow / Penkun",
+   "sector_note": "продвижение >15 км, остановлена у Рандов-брух",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_70a",
+   "date": "1945-04-30",
+   "lng": 12.725,
+   "lat": 53.627,
+   "approx_km": 15,
+   "place": "Malchin / Waren",
+   "sector_note": "27.04 Пренцлау (3 гв. тк + 47 ск); 30.04 71 сд — Мальхин; бои у Варена",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_70a",
+   "date": "1945-05-02",
+   "lng": 12.111,
+   "lat": 54.133,
+   "approx_km": 8,
+   "place": "Rostock / Warnemuende",
+   "sector_note": "1.05 Росток; 2.05 3 тбр — Варнемюнде",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_49a",
+   "date": "1945-04-16",
+   "lng": 14.343,
+   "lat": 53.056,
+   "approx_km": 8,
+   "place": "Krajnik / Ognica",
+   "sector_note": "между Кранцфельде и Ниппервизе",
+   "source": "DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_49a",
+   "date": "1945-04-21",
+   "lng": 14.393,
+   "lat": 53.127,
+   "approx_km": 6,
+   "place": "Widuchowa",
+   "sector_note": "мелкие плацдармы у Фиддихова; 20.04 успеха не имела",
+   "source": "DW_SRO; RW_SR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_49a",
+   "date": "1945-04-25",
+   "lng": 14.338,
+   "lat": 53.134,
+   "approx_km": 12,
+   "place": "Gartz / Schwedt",
+   "sector_note": "переправилась по переправам 70 А, к вечеру продвинулась на 5–6 км",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_49a",
+   "date": "1945-04-30",
+   "lng": 12.848,
+   "lat": 53.285,
+   "approx_km": 20,
+   "place": "Mirow",
+   "sector_note": "прорвалась на запад южнее Плауэр-Зе и Мюриц",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_19a",
+   "date": "1945-04-16",
+   "lng": 15.388,
+   "lat": 54.046,
+   "approx_km": 50,
+   "place": "Kolobrzeg / Gryfice",
+   "sector_note": "часть армии сменила 3 гв. кк на побережье Балтики; ru-wiki армии: «западное побережье Данцигской бухты» — расположение противоречиво",
+   "source": "DW_SRO; RW_ARM (19 А)",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_19a",
+   "date": "1945-04-27",
+   "lng": 14.476,
+   "lat": 53.835,
+   "approx_km": 15,
+   "place": "Swinoujscie / Wolin",
+   "sector_note": "очищен п-ов Гристов, правый фланг подходит к Свинемюнде",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_19a",
+   "date": "1945-05-02",
+   "lng": 14.476,
+   "lat": 53.835,
+   "approx_km": 15,
+   "place": "Wolin / Swinoujscie",
+   "sector_note": "бои за о-ва Волин и Узедом (до 5.05)",
+   "source": "DW_SRO; RW_SR",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_swinemuende",
+   "date": "1945-04-16",
+   "lng": 14.476,
+   "lat": 53.835,
+   "approx_km": 15,
+   "place": "Swinoujscie / Wolin",
+   "sector_note": "крепость Свинемюнде; 3 мор. д на о. Воллин; 402 уч. д в резерве на Пене",
+   "source": "DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_swinemuende",
+   "date": "1945-05-02",
+   "lng": 14.336,
+   "lat": 53.827,
+   "approx_km": 15,
+   "place": "Swinoujscie",
+   "sector_note": "бои на Узедоме/Воллине до 5.05",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxxii",
+   "date": "1945-04-16",
+   "lng": 14.579,
+   "lat": 53.489,
+   "approx_km": 12,
+   "place": "Police / Szczecin",
+   "sector_note": "побережье Хаффа от Нойварпа, 549 ФГД Цигенорт–Пёлиц, гарнизон Штеттина, 281 пд",
+   "source": "DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxii",
+   "date": "1945-04-26",
+   "lng": 14.593,
+   "lat": 53.43,
+   "approx_km": 10,
+   "place": "Szczecin",
+   "sector_note": "Штеттин сдан (приказ Хейнрици эвакуировать «крепость Штеттин» 25.04)",
+   "source": "DW_SB; RW_SR",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxxii",
+   "date": "1945-04-30",
+   "lng": 12.605,
+   "lat": 53.85,
+   "approx_km": 25,
+   "place": "Demmin / Gueustrow",
+   "sector_note": "остатки корпуса отходят на Гюстров",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_oder",
+   "date": "1945-04-16",
+   "lng": 14.492,
+   "lat": 53.319,
+   "approx_km": 10,
+   "place": "Gartz / Szczecin",
+   "sector_note": "610 пд южнее Штеттина у Курова по обе стороны автобана; дивизия «Велльман» Паргов–Гарц; бригада «Клоссек» в резерве",
+   "source": "DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_oder",
+   "date": "1945-04-25",
+   "lng": 14.283,
+   "lat": 53.283,
+   "approx_km": 12,
+   "place": "Tantow / Penkun",
+   "sector_note": "оборона прорвана на 20-км фронте",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-16",
+   "lng": 14.214,
+   "lat": 52.966,
+   "approx_km": 12,
+   "place": "Schwedt / Hohensaaten",
+   "sector_note": "547 ФГД у Шведта, 1 мор. д до Хоэнзатена",
+   "source": "DW_SRO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-30",
+   "lng": 12.785,
+   "lat": 53.666,
+   "approx_km": 15,
+   "place": "Demzin",
+   "sector_note": "281 пд на промежуточной позиции у Демцина",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_iii_ss",
+   "date": "1945-04-16",
+   "lng": 14.165,
+   "lat": 53.296,
+   "approx_km": 20,
+   "place": "Passow / Loecknitz",
+   "sector_note": "резерв в районе Пассов–Лёкниц (остатки 27 и 28 дд СС); по Ziemke — штаб без войск",
+   "source": "DW_SRO; Z p.477",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_iii_ss",
+   "date": "1945-04-21",
+   "lng": 13.8,
+   "lat": 52.835,
+   "approx_km": 12,
+   "place": "Eberswalde",
+   "sector_note": "завеса на Финов-канале; приказ ударить на юг от Эберсвальде",
+   "source": "Z p.477",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_iii_ss",
+   "date": "1945-04-23",
+   "lng": 13.8,
+   "lat": 52.835,
+   "approx_km": 10,
+   "place": "Eberswalde",
+   "sector_note": "некоторое продвижение южнее Эберсвальде; приказ оставить плацдарм и перебросить войска западнее Ораниенбурга",
+   "source": "Z p.480",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_iii_ss",
+   "date": "1945-04-25",
+   "lng": 13.138,
+   "lat": 52.757,
+   "approx_km": 15,
+   "place": "Oranienburg / Kremmen",
+   "sector_note": "удар по 2 пд 1 А ВП у канала Гогенцоллерн",
+   "source": "PW_1A; Z p.484",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-16",
+   "lng": 14.465,
+   "lat": 52.436,
+   "approx_km": 40,
+   "place": "Seelow / Frankfurt",
+   "sector_note": "полоса от Финов-канала до Губена",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-25",
+   "lng": 13.732,
+   "lat": 52.109,
+   "approx_km": 25,
+   "place": "Halbe / MaerkischBuchholz",
+   "sector_note": "котёл в районе Шпревальда юго-восточнее Фюрстенвальде (~80 тыс.)",
+   "source": "EW_HA; DW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-30",
+   "lng": 13.538,
+   "lat": 52.105,
+   "approx_km": 20,
+   "place": "Halbe / Kummersdorf",
+   "sector_note": "прорыв: авангард у Беелица, арьергард у Шторкова, крупные группы у Хальбе",
+   "source": "EW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-05-01",
+   "lng": 12.963,
+   "lat": 52.199,
+   "approx_km": 8,
+   "place": "Elsholz",
+   "sector_note": "~25 000 солдат вышли к XX ак у Беелица (Эльсхольц); ⚠ Ziemke: 30 000 (утром 2.05)",
+   "source": "DW_HA; Z p.497",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_ci",
+   "date": "1945-04-16",
+   "lng": 14.212,
+   "lat": 52.77,
+   "approx_km": 10,
+   "place": "Oderberg / Letschin",
+   "sector_note": "левый фланг 9 А между Одербергом и Лечином (5 егд, 606 д, 309 пд, 25 пгд)",
+   "source": "DW_SH; OOB",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_ci",
+   "date": "1945-04-18",
+   "lng": 14.083,
+   "lat": 52.752,
+   "approx_km": 8,
+   "place": "Wriezen / BadFreienwalde",
+   "sector_note": "корпус рухнул; 5 егд отходит на Альте-Одер у Врицена",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_ci",
+   "date": "1945-04-20",
+   "lng": 13.8,
+   "lat": 52.835,
+   "approx_km": 10,
+   "place": "Eberswalde",
+   "sector_note": "отошёл на эберсвальдский плацдарм",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_ci",
+   "date": "1945-04-30",
+   "lng": 13.335,
+   "lat": 52.98,
+   "approx_km": 15,
+   "place": "Zehdenick",
+   "sector_note": "остатки корпуса оставляют Цеденик",
+   "source": "DW_SRO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-16",
+   "lng": 14.381,
+   "lat": 52.532,
+   "approx_km": 6,
+   "place": "Seelow",
+   "sector_note": "центр, Зееловские высоты",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-18",
+   "lng": 14.338,
+   "lat": 52.535,
+   "approx_km": 8,
+   "place": "Gusow / Neuentempel",
+   "sector_note": "9 пд и «Мюнхеберг» на линии Платков–Гузов–Вербиг; полк СС у Нойентемпеля/Марксдорфа",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-19",
+   "lng": 14.14,
+   "lat": 52.504,
+   "approx_km": 8,
+   "place": "Muencheberg",
+   "sector_note": "последнее сопротивление у Зееловских высот сломлено",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-20",
+   "lng": 13.689,
+   "lat": 52.489,
+   "approx_km": 8,
+   "place": "Rahnsdorf / Neuenhagen",
+   "sector_note": "отход на линию Ранcдорф–Нойенхаген",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-21",
+   "lng": 13.572,
+   "lat": 52.501,
+   "approx_km": 6,
+   "place": "B_Koepenick / B_Marzahn",
+   "sector_note": "отход на линию Кёпеник–Марцан; северный фланг чуть южнее Вернойхена",
+   "source": "DW_SB; Z p.477",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-23",
+   "lng": 13.406,
+   "lat": 52.476,
+   "approx_km": 6,
+   "place": "B_Neukoelln / B_Tempelhof",
+   "sector_note": "по приказу Гитлера в Берлин — восточный и юго-восточный сектора",
+   "source": "Z p.480",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-24",
+   "lng": 13.435,
+   "lat": 52.481,
+   "approx_km": 5,
+   "place": "B_Neukoelln",
+   "sector_note": "занимает юго-восточный сектор города",
+   "source": "Z p.481",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-04-26",
+   "lng": 13.361,
+   "lat": 52.507,
+   "approx_km": 2,
+   "place": "B_Bendlerblock",
+   "sector_note": "КП Вейдлинга на Бендлерштрассе",
+   "source": "Z p.483",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_lvi",
+   "date": "1945-05-02",
+   "lng": 13.361,
+   "lat": 52.507,
+   "approx_km": 2,
+   "place": "B_Bendlerblock",
+   "sector_note": "Вейдлинг перешёл линию фронта в 5:00 (Ziemke) / 6:00 (ru-wiki), капитуляция",
+   "source": "Z p.497; RW_BNO",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_xi_ss",
+   "date": "1945-04-16",
+   "lng": 14.457,
+   "lat": 52.479,
+   "approx_km": 10,
+   "place": "Seelow / Lebus",
+   "sector_note": "южнее LVI тк до высоты Лебуса (303, 169, 712 пд, «Курмарк»)",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_xi_ss",
+   "date": "1945-04-19",
+   "lng": 14.206,
+   "lat": 52.346,
+   "approx_km": 8,
+   "place": "Berkenbrueck / Kersdorf",
+   "sector_note": "«Курмарк» оставила линию Марксдорф–Дольгелин; попытка рубежа Беркенбрюк–Керсдорф; 169, 712 пд отходят от Карциг–Лебус",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xi_ss",
+   "date": "1945-04-21",
+   "lng": 14.065,
+   "lat": 52.358,
+   "approx_km": 15,
+   "place": "Fuerstenwalde",
+   "sector_note": "9 А наблюдает сосредоточение русских между Мюггельзе и Фюрстенвальде",
+   "source": "Z p.478",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xi_ss",
+   "date": "1945-04-25",
+   "lng": 13.834,
+   "lat": 52.158,
+   "approx_km": 20,
+   "place": "Storkow / MaerkischBuchholz",
+   "sector_note": "в котле",
+   "source": "EW_HA",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xi_ss",
+   "date": "1945-04-29",
+   "lng": 13.655,
+   "lat": 52.122,
+   "approx_km": 10,
+   "place": "Halbe / Teupitz",
+   "sector_note": "во главе прорыва (ночь 28/29.04) через Хальбе",
+   "source": "DW_HA; EW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_ffo",
+   "date": "1945-04-16",
+   "lng": 14.558,
+   "lat": 52.348,
+   "approx_km": 3,
+   "place": "Frankfurt / Slubice",
+   "sector_note": "крепость, в т.ч. на вост. берегу Одера",
+   "source": "DW_SH",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_ffo",
+   "date": "1945-04-23",
+   "lng": 14.55,
+   "lat": 52.341,
+   "approx_km": 5,
+   "place": "Frankfurt",
+   "sector_note": "крепость оставлена комендантом Билером, гарнизон пробился в котёл 9 А",
+   "source": "DW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_v_ss",
+   "date": "1945-04-16",
+   "lng": 14.625,
+   "lat": 52.2,
+   "approx_km": 12,
+   "place": "Brieskow / Fuerstenberg_O",
+   "sector_note": "правый фланг 9 А между Франкфуртом и Фюрстенбергом (286 пд, 32 пгд СС, 391 охр. д); по OOB — до Губена",
+   "source": "DW_SH; OOB",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_v_ss",
+   "date": "1945-04-19",
+   "lng": 14.625,
+   "lat": 52.2,
+   "approx_km": 10,
+   "place": "Brieskow / Fuerstenberg_O",
+   "sector_note": "позиции южнее Фридрих-Вильгельм-канала ещё держатся",
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_v_ss",
+   "date": "1945-04-22",
+   "lng": 14.273,
+   "lat": 52.079,
+   "approx_km": 20,
+   "place": "Beeskow / Lieberose",
+   "sector_note": "разрешён отход 9 А на рубеж севернее Котбуса–Либерозе–Бесков–Шпрее (полночь)",
+   "source": "Z p.480",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_v_ss",
+   "date": "1945-04-28",
+   "lng": 13.905,
+   "lat": 52.206,
+   "approx_km": 10,
+   "place": "Storkow",
+   "sector_note": "прикрывает тыл и восток; арьергард у Шторкова",
+   "source": "DW_HA; EW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_v",
+   "date": "1945-04-16",
+   "lng": 14.68,
+   "lat": 51.847,
+   "approx_km": 15,
+   "place": "Forst / Guben",
+   "sector_note": "Нейсе между Губеном/Фюрстенбергом и Форстом (275, 342 пд, КГ 35 и 36 дд СС); прорыв 1 УФ южнее Форста",
+   "source": "DW_5AK; RW_KP",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_v",
+   "date": "1945-04-19",
+   "lng": 13.798,
+   "lat": 52.025,
+   "approx_km": 20,
+   "place": "Luebben / Halbe",
+   "sector_note": "отжат на Шпревальд, передан 9 А; приказ: фронтом на запад Люббен–Хальбе",
+   "source": "RW_KP; DW_5AK",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_v",
+   "date": "1945-04-21",
+   "lng": 14.336,
+   "lat": 51.757,
+   "approx_km": 10,
+   "place": "Cottbus",
+   "sector_note": "«угловой столб» Котбус",
+   "source": "Z p.477",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_v",
+   "date": "1945-04-22",
+   "lng": 14.318,
+   "lat": 51.872,
+   "approx_km": 15,
+   "place": "Cottbus / Lieberose",
+   "sector_note": "Котбус потерян",
+   "source": "Z p.479; RW_KP",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_v",
+   "date": "1945-04-28",
+   "lng": 13.83,
+   "lat": 52.026,
+   "approx_km": 15,
+   "place": "MaerkischBuchholz / Luebben",
+   "sector_note": "отвечает за отвод южного фаса котла",
+   "source": "DW_HA",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_4pza",
+   "date": "1945-04-16",
+   "lng": 14.818,
+   "lat": 51.45,
+   "approx_km": 50,
+   "place": "Forst / Goerlitz",
+   "sector_note": "Нейсе от Губена до Гёрлица",
+   "source": "DW_SB; DW_4PZ",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_pzk_gd",
+   "date": "1945-04-16",
+   "lng": 14.821,
+   "lat": 51.46,
+   "approx_km": 20,
+   "place": "BadMuskau / Rothenburg",
+   "sector_note": "Нейсе (пгд «Бранденбург», 464 пд, 615 д, КГ 545 ФГД); граница с V ак не уточнена",
+   "source": "RW_KP; RW_BW",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_pzk_gd",
+   "date": "1945-04-20",
+   "lng": 14.548,
+   "lat": 51.377,
+   "approx_km": 10,
+   "place": "Boxberg / Uhyst",
+   "sector_note": "1 полк «Бранденбурга» отошёл к Шпрее у Боксберга; группировка у Шпрефурта (Ухюст)",
+   "source": "RW_BW; PW_2A",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_pzk_gd",
+   "date": "1945-04-22",
+   "lng": 14.659,
+   "lat": 51.197,
+   "approx_km": 10,
+   "place": "Weissenberg",
+   "sector_note": "1 полк «Бранденбурга» с севера выходит к Вайсенбергу",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_pzk_gd",
+   "date": "1945-04-30",
+   "lng": 14.428,
+   "lat": 51.181,
+   "approx_km": 15,
+   "place": "Bautzen",
+   "sector_note": "на 30.04 в составе: 20 тд, «Герман Геринг», «Бранденбург»; фронт у Баутцена",
+   "source": "DW_4PZ; RW_BW",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_lvii",
+   "date": "1945-04-16",
+   "lng": 14.991,
+   "lat": 51.156,
+   "approx_km": 25,
+   "place": "Goerlitz",
+   "sector_note": "положение на 16.04 не подтверждено (по составу 30.04)",
+   "source": "CIT",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_lvii",
+   "date": "1945-04-20",
+   "lng": 14.81,
+   "lat": 51.257,
+   "approx_km": 10,
+   "place": "Diehsa / Kodersdorf",
+   "sector_note": "контрудар с юга на север силами 20 тд, 17 и 72 пд",
+   "source": "RW_BW",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_lvii",
+   "date": "1945-04-23",
+   "lng": 14.659,
+   "lat": 51.197,
+   "approx_km": 8,
+   "place": "Weissenberg",
+   "sector_note": "удар по сходящимся направлениям у Вайсенберга, 48 ск расчленён",
+   "source": "RW_BW",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-04-22",
+   "lng": 11.942,
+   "lat": 51.981,
+   "approx_km": 30,
+   "place": "Magdeburg / Dessau",
+   "sector_note": "фронтом на запад «на линии юго-восточнее Магдебурга»",
+   "source": "Z p.479",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-04-23",
+   "lng": 12.809,
+   "lat": 52.193,
+   "approx_km": 15,
+   "place": "Ferch / Niemegk",
+   "sector_note": "линия Ферх–Нимегк, ~60 км юго-западнее Берлина",
+   "source": "DW_12A",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xx",
+   "date": "1945-04-24",
+   "lng": 12.873,
+   "lat": 52.097,
+   "approx_km": 8,
+   "place": "Treuenbrietzen",
+   "sector_note": "ночью дивизия «Теодор Кёрнер» атакует 5 гв. мк у Тройенбрицена",
+   "source": "EW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xx",
+   "date": "1945-04-25",
+   "lng": 12.957,
+   "lat": 52.229,
+   "approx_km": 8,
+   "place": "Beelitz",
+   "sector_note": "дивизия «Шарнхорст» у Беелица, «Хуттен» на Потсдам",
+   "source": "EW_HA",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xx",
+   "date": "1945-04-26",
+   "lng": 12.772,
+   "lat": 52.185,
+   "approx_km": 20,
+   "place": "Belzig / Beelitz",
+   "sector_note": "оборона линии Бранденбург–Бельциг–Виттенберг; атака с линии Беелиц–Тройенбрицен",
+   "source": "Z p.484; DW_HA",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_xx",
+   "date": "1945-04-29",
+   "lng": 12.93,
+   "lat": 52.312,
+   "approx_km": 5,
+   "place": "Ferch",
+   "sector_note": "«Клаузевиц», «Шарнхорст», «Т. Кёрнер» прошли ~15 миль до оконечности Швиловзе; контакт с потсдамским гарнизоном",
+   "source": "Z p.491; DW_HA",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_xx",
+   "date": "1945-05-01",
+   "lng": 12.96,
+   "lat": 52.214,
+   "approx_km": 8,
+   "place": "Beelitz / Elsholz",
+   "sector_note": "принимает остатки 9 А; вечером начало отхода к Эльбе",
+   "source": "DW_HA; DW_12A",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxxix",
+   "date": "1945-04-16",
+   "lng": 10.539,
+   "lat": 52.984,
+   "approx_km": 40,
+   "place": "Uelzen",
+   "sector_note": "12–21.04 подчинён ОКВ (тд «Клаузевиц» и др.); место по общеизвестным данным, не сверено",
+   "source": "OOB",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxxi",
+   "date": "1945-04-26",
+   "lng": 12.444,
+   "lat": 52.509,
+   "approx_km": 25,
+   "place": "Rathenow / Brandenburg",
+   "sector_note": "прикрывает северный фланг 12 А на Хафеле",
+   "source": "DW_HA; Z p.480",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-04-16",
+   "lng": 11.984,
+   "lat": 51.419,
+   "approx_km": 15,
+   "place": "Halle / Merseburg",
+   "sector_note": "13–17.04 сосредоточен на линии Галле–Заале–южнее Мерзебурга",
+   "source": "DW_12A",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-04-20",
+   "lng": 12.671,
+   "lat": 51.414,
+   "approx_km": 15,
+   "place": "Eilenburg / Wurzen",
+   "sector_note": "отход на Мульде (Вурцен–Гримма–Дессау); плацдарм у Айленбурга оставлен 20.04",
+   "source": "DW_12A",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-04-25",
+   "lng": 12.456,
+   "lat": 51.885,
+   "approx_km": 15,
+   "place": "Coswig",
+   "sector_note": "последний плацдарм у Косвига оставлен 26.04",
+   "source": "DW_12A",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-16",
+   "lng": 14.439,
+   "lat": 53.244,
+   "approx_km": 30,
+   "place": "Szczecin / Schwedt",
+   "sector_note": "Одер от побережья (Свинемюнде) до Хоэнзатена; 11 дивизий",
+   "source": "DW_SRO; Z p.471",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-27",
+   "lng": 13.867,
+   "lat": 53.317,
+   "approx_km": 15,
+   "place": "Prenzlau",
+   "sector_note": "в ночь на 27.04 отход на р. Уккер и линию озёр южнее Пренцлау; утром прорыв",
+   "source": "Z p.485",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-30",
+   "lng": 12.973,
+   "lat": 53.537,
+   "approx_km": 30,
+   "place": "Neubrandenburg / Waren",
+   "sector_note": "отход через Мекленбургское поозерье",
+   "source": "Z p.487; DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-04-16",
+   "lng": 11.942,
+   "lat": 51.981,
+   "approx_km": 40,
+   "place": "Magdeburg / Dessau",
+   "sector_note": "формируется с 10.04, фронтом на запад (Эльба/Мульде); положение на 16.04 экстраполировано с 22.04 (Z)",
+   "source": "Z p.479; DW_12A",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxxi",
+   "date": "1945-04-23",
+   "lng": 12.444,
+   "lat": 52.509,
+   "approx_km": 30,
+   "place": "Rathenow / Brandenburg",
+   "sector_note": "12 А направляет XXXXI тк «сдержать русских с запада» (Хафель)",
+   "source": "Z p.480",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_berlin",
+   "date": "1945-04-16",
+   "lng": 13.36,
+   "lat": 52.533,
+   "approx_km": 12,
+   "place": "B_Mitte",
+   "sector_note": "оборонительный район, 8 секторов A–H + «Z»",
+   "source": "OOB",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_berlin",
+   "date": "1945-04-25",
+   "lng": 13.36,
+   "lat": 52.533,
+   "approx_km": 10,
+   "place": "B_Mitte",
+   "sector_note": "к исходу 25.04 гарнизон обороняется на площади ~327 км²",
+   "source": "RW_SHB",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_berlin",
+   "date": "1945-04-27",
+   "lng": 13.388,
+   "lat": 52.519,
+   "approx_km": 8,
+   "place": "B_Tiergarten / B_Alexanderplatz",
+   "sector_note": "котёл ~16 км с востока на запад, 2–5 км в ширину (Ziemke: 9,5 × 1–3 мили)",
+   "source": "Z p.488; RW_BNO",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_berlin",
+   "date": "1945-04-30",
+   "lng": 13.38,
+   "lat": 52.511,
+   "approx_km": 3,
+   "place": "B_Reichskanzlei",
+   "sector_note": "Тиргартен и правительственный квартал («Цитадель»)",
+   "source": "RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_berlin",
+   "date": "1945-05-02",
+   "lng": 13.38,
+   "lat": 52.511,
+   "approx_km": 3,
+   "place": "B_Reichskanzlei",
+   "sector_note": "капитуляция гарнизона",
+   "source": "RW_BNO; Z p.497",
+   "reliability": "A"
+  }
+ ],
+ "frontline": [
+  {
+   "date": "1945-04-16",
+   "sector": "2 БФ: Одер от устья до Хоэнзатена",
+   "points": [
+    {
+     "place": "Kamien",
+     "lng": 14.773,
+     "lat": 53.965
+    },
+    {
+     "place": "Stepnica",
+     "lng": 14.63,
+     "lat": 53.651
+    },
+    {
+     "place": "Police",
+     "lng": 14.566,
+     "lat": 53.549
+    },
+    {
+     "place": "Dabie",
+     "lng": 14.666,
+     "lat": 53.48
+    },
+    {
+     "place": "Gryfino",
+     "lng": 14.492,
+     "lat": 53.254
+    },
+    {
+     "place": "Widuchowa",
+     "lng": 14.393,
+     "lat": 53.127
+    },
+    {
+     "place": "Krajnik",
+     "lng": 14.316,
+     "lat": 53.032
+    },
+    {
+     "place": "Ognica",
+     "lng": 14.37,
+     "lat": 53.081
+    },
+    {
+     "place": "Hohensaaten",
+     "lng": 14.145,
+     "lat": 52.874
+    }
+   ],
+   "source": "DW_SRO",
+   "reliability": "B",
+   "note": "советская сторона на восточном берегу (в пойме — отдельные дамбы с ночи 16.04); Штеттин — немецкий"
+  },
+  {
+   "date": "1945-04-16",
+   "sector": "1 БФ: Одер и Кюстринский плацдарм",
+   "points": [
+    {
+     "place": "Hohensaaten",
+     "lng": 14.145,
+     "lat": 52.874
+    },
+    {
+     "place": "OsinowDolny",
+     "lng": 14.145,
+     "lat": 52.852
+    },
+    {
+     "place": "StaraRudnica",
+     "lng": 14.194,
+     "lat": 52.835
+    },
+    {
+     "place": "GuestebieserLoose",
+     "lng": 14.294,
+     "lat": 52.755
+    },
+    {
+     "place": "Kienitz",
+     "lng": 14.439,
+     "lat": 52.673
+    },
+    {
+     "place": "Zechin",
+     "lng": 14.456,
+     "lat": 52.613
+    },
+    {
+     "place": "Golzow",
+     "lng": 14.493,
+     "lat": 52.574
+    },
+    {
+     "place": "Sachsendorf",
+     "lng": 14.477,
+     "lat": 52.506
+    },
+    {
+     "place": "Reitwein",
+     "lng": 14.583,
+     "lat": 52.502
+    },
+    {
+     "place": "Lebus",
+     "lng": 14.534,
+     "lat": 52.427
+    },
+    {
+     "place": "Frankfurt",
+     "lng": 14.55,
+     "lat": 52.341
+    },
+    {
+     "place": "Lossow",
+     "lng": 14.549,
+     "lat": 52.287
+    },
+    {
+     "place": "Brieskow",
+     "lng": 14.577,
+     "lat": 52.254
+    },
+    {
+     "place": "Fuerstenberg_O",
+     "lng": 14.673,
+     "lat": 52.146
+    },
+    {
+     "place": "Guben",
+     "lng": 14.715,
+     "lat": 51.95
+    }
+   ],
+   "source": "DW_SH; PW_1A; Z p.471",
+   "reliability": "B",
+   "note": "линия западного края Кюстринского плацдарма (Кинитц–Цехин–Гольцов–Заксендорф–Райтвайн) приблизительна, ±3–5 км (C); Франкфурт с предмостьем — немецкий"
+  },
+  {
+   "date": "1945-04-16",
+   "sector": "1 УФ: Нейсе",
+   "points": [
+    {
+     "place": "Guben",
+     "lng": 14.715,
+     "lat": 51.95
+    },
+    {
+     "place": "Forst",
+     "lng": 14.646,
+     "lat": 51.744
+    },
+    {
+     "place": "KleinBademeusel",
+     "lng": 14.745,
+     "lat": 51.673
+    },
+    {
+     "place": "BadMuskau",
+     "lng": 14.701,
+     "lat": 51.563
+    },
+    {
+     "place": "Rothenburg",
+     "lng": 14.94,
+     "lat": 51.357
+    },
+    {
+     "place": "Goerlitz",
+     "lng": 14.991,
+     "lat": 51.156
+    }
+   ],
+   "source": "Z p.471; RW_KP; RW_BW",
+   "reliability": "B",
+   "note": "река Нейсе; участки прорыва: Форст–Мускау и Ротенбург–севернее Гёрлица"
+  },
+  {
+   "date": "1945-04-18",
+   "sector": "2 БФ",
+   "points": [
+    {
+     "place": "Dabie",
+     "lng": 14.666,
+     "lat": 53.48
+    },
+    {
+     "place": "Gryfino",
+     "lng": 14.492,
+     "lat": 53.254
+    },
+    {
+     "place": "Widuchowa",
+     "lng": 14.393,
+     "lat": 53.127
+    },
+    {
+     "place": "Ognica",
+     "lng": 14.37,
+     "lat": 53.081
+    },
+    {
+     "place": "Hohensaaten",
+     "lng": 14.145,
+     "lat": 52.874
+    }
+   ],
+   "source": "DW_SRO; RW_BNO",
+   "reliability": "B",
+   "note": "без изменений; 65 А разведкой боем занимает междуречье Ост- и Вест-Одера (17–19.04)"
+  },
+  {
+   "date": "1945-04-18",
+   "sector": "1 БФ",
+   "points": [
+    {
+     "place": "Hohensaaten",
+     "lng": 14.145,
+     "lat": 52.874
+    },
+    {
+     "place": "BadFreienwalde",
+     "lng": 14.03,
+     "lat": 52.788
+    },
+    {
+     "place": "Wriezen",
+     "lng": 14.137,
+     "lat": 52.717
+    },
+    {
+     "place": "Moeglin",
+     "lng": 14.107,
+     "lat": 52.664
+    },
+    {
+     "place": "Batzlow",
+     "lng": 14.12,
+     "lat": 52.632
+    },
+    {
+     "place": "Reichenberg",
+     "lng": 14.113,
+     "lat": 52.61
+    },
+    {
+     "place": "Buckow",
+     "lng": 14.076,
+     "lat": 52.567
+    },
+    {
+     "place": "Neuentempel",
+     "lng": 14.322,
+     "lat": 52.499
+    },
+    {
+     "place": "Marxdorf",
+     "lng": 14.261,
+     "lat": 52.49
+    },
+    {
+     "place": "Dolgelin",
+     "lng": 14.406,
+     "lat": 52.495
+    },
+    {
+     "place": "Lebus",
+     "lng": 14.534,
+     "lat": 52.427
+    },
+    {
+     "place": "Frankfurt",
+     "lng": 14.55,
+     "lat": 52.341
+    },
+    {
+     "place": "Fuerstenberg_O",
+     "lng": 14.673,
+     "lat": 52.146
+    },
+    {
+     "place": "Guben",
+     "lng": 14.715,
+     "lat": 51.95
+    }
+   ],
+   "source": "DW_SH; Z p.474",
+   "reliability": "B",
+   "note": "вклинение 10–12 миль западнее Врицена и юго-западнее Зелова (Z); фронт 9 А ещё цел"
+  },
+  {
+   "date": "1945-04-18",
+   "sector": "1 УФ",
+   "points": [
+    {
+     "place": "Guben",
+     "lng": 14.715,
+     "lat": 51.95
+    },
+    {
+     "place": "Forst",
+     "lng": 14.646,
+     "lat": 51.744
+    },
+    {
+     "place": "Cottbus",
+     "lng": 14.336,
+     "lat": 51.757
+    },
+    {
+     "place": "Spremberg",
+     "lng": 14.38,
+     "lat": 51.572
+    },
+    {
+     "place": "Niesky",
+     "lng": 14.793,
+     "lat": 51.318
+    },
+    {
+     "place": "Weissenberg",
+     "lng": 14.659,
+     "lat": 51.197
+    },
+    {
+     "place": "Bautzen",
+     "lng": 14.428,
+     "lat": 51.181
+    }
+   ],
+   "source": "Z p.475; RW_KP; RW_BW",
+   "reliability": "B",
+   "note": "танковые армии на Шпрее севернее и южнее Шпремберга; южная группа у Баутцена; Котбус, Губен, Шпремберг — немецкие"
+  },
+  {
+   "date": "1945-04-20",
+   "sector": "2 БФ",
+   "points": [
+    {
+     "place": "Szczecin",
+     "lng": 14.593,
+     "lat": 53.43
+    },
+    {
+     "place": "Przeclaw",
+     "lng": 14.472,
+     "lat": 53.377
+    },
+    {
+     "place": "Gartz",
+     "lng": 14.391,
+     "lat": 53.209
+    },
+    {
+     "place": "Widuchowa",
+     "lng": 14.393,
+     "lat": 53.127
+    },
+    {
+     "place": "Schwedt",
+     "lng": 14.284,
+     "lat": 53.059
+    },
+    {
+     "place": "Hohensaaten",
+     "lng": 14.145,
+     "lat": 52.874
+    }
+   ],
+   "source": "DW_SRO; Z p.476",
+   "reliability": "B",
+   "note": "плацдармы 65 А (Прицлов, 6×1,5 км) и 70 А (Гарц)"
+  },
+  {
+   "date": "1945-04-20",
+   "sector": "1 БФ: север",
+   "points": [
+    {
+     "place": "Hohensaaten",
+     "lng": 14.145,
+     "lat": 52.874
+    },
+    {
+     "place": "Eberswalde",
+     "lng": 13.8,
+     "lat": 52.835
+    },
+    {
+     "place": "Bernau",
+     "lng": 13.588,
+     "lat": 52.679
+    },
+    {
+     "place": "Werneuchen",
+     "lng": 13.741,
+     "lat": 52.646
+    },
+    {
+     "place": "Strausberg",
+     "lng": 13.904,
+     "lat": 52.559
+    },
+    {
+     "place": "Altlandsberg",
+     "lng": 13.776,
+     "lat": 52.594
+    }
+   ],
+   "source": "Z p.476; DW_SB; DW_SRO",
+   "reliability": "B",
+   "note": "немецкий плацдарм у Эберсвальде; 2 гв. ТА у Бернау"
+  },
+  {
+   "date": "1945-04-20",
+   "sector": "1 БФ: юг",
+   "points": [
+    {
+     "place": "Altlandsberg",
+     "lng": 13.776,
+     "lat": 52.594
+    },
+    {
+     "place": "Fuerstenwalde",
+     "lng": 14.065,
+     "lat": 52.358
+    },
+    {
+     "place": "Berkenbrueck / Kersdorf",
+     "lng": 14.206,
+     "lat": 52.346
+    },
+    {
+     "place": "Lebus",
+     "lng": 14.534,
+     "lat": 52.427
+    },
+    {
+     "place": "Frankfurt",
+     "lng": 14.55,
+     "lat": 52.341
+    },
+    {
+     "place": "Fuerstenberg_O",
+     "lng": 14.673,
+     "lat": 52.146
+    }
+   ],
+   "source": "Z p.476; DW_SH",
+   "reliability": "B",
+   "note": "клин к Фюрстенвальде; Франкфурт и Одер южнее держатся"
+  },
+  {
+   "date": "1945-04-20",
+   "sector": "1 УФ",
+   "points": [
+    {
+     "place": "Baruth",
+     "lng": 13.502,
+     "lat": 52.046
+    },
+    {
+     "place": "Luckau",
+     "lng": 13.715,
+     "lat": 51.852
+    },
+    {
+     "place": "Jueterbog",
+     "lng": 13.08,
+     "lat": 51.992
+    },
+    {
+     "place": "Calau",
+     "lng": 13.949,
+     "lat": 51.747
+    },
+    {
+     "place": "Cottbus",
+     "lng": 14.336,
+     "lat": 51.757
+    },
+    {
+     "place": "Spremberg",
+     "lng": 14.38,
+     "lat": 51.572
+    },
+    {
+     "place": "Brenitz",
+     "lng": 13.601,
+     "lat": 51.702
+    },
+    {
+     "place": "Koenigswartha",
+     "lng": 14.314,
+     "lat": 51.325
+    },
+    {
+     "place": "Bautzen",
+     "lng": 14.428,
+     "lat": 51.181
+    },
+    {
+     "place": "Diehsa / Kodersdorf",
+     "lng": 14.81,
+     "lat": 51.257
+    }
+   ],
+   "source": "Z p.476; RW_KP; RW_ST; RW_BW",
+   "reliability": "B",
+   "note": "танковые клинья (Барут, севернее Ютербога) далеко впереди общевойсковых армий; сплошного фронта нет"
+  },
+  {
+   "date": "1945-04-22",
+   "sector": "2 БФ",
+   "points": [
+    {
+     "place": "Szczecin",
+     "lng": 14.593,
+     "lat": 53.43
+    },
+    {
+     "place": "Przeclaw",
+     "lng": 14.472,
+     "lat": 53.377
+    },
+    {
+     "place": "Petershagen_UM",
+     "lng": 14.252,
+     "lat": 53.245
+    },
+    {
+     "place": "Gartz",
+     "lng": 14.391,
+     "lat": 53.209
+    },
+    {
+     "place": "Widuchowa",
+     "lng": 14.393,
+     "lat": 53.127
+    },
+    {
+     "place": "Schwedt",
+     "lng": 14.284,
+     "lat": 53.059
+    }
+   ],
+   "source": "Z p.479; DW_SRO",
+   "reliability": "B",
+   "note": "плацдарм «10 миль по фронту выше Штеттина» (Z)"
+  },
+  {
+   "date": "1945-04-22",
+   "sector": "Север Берлина",
+   "points": [
+    {
+     "place": "Eberswalde",
+     "lng": 13.8,
+     "lat": 52.835
+    },
+    {
+     "place": "Oranienburg",
+     "lng": 13.246,
+     "lat": 52.753
+    },
+    {
+     "place": "Hennigsdorf",
+     "lng": 13.206,
+     "lat": 52.638
+    },
+    {
+     "place": "B_Reinickendorf",
+     "lng": 13.288,
+     "lat": 52.605
+    },
+    {
+     "place": "B_Pankow",
+     "lng": 13.435,
+     "lat": 52.598
+    },
+    {
+     "place": "B_Weissensee",
+     "lng": 13.463,
+     "lat": 52.555
+    }
+   ],
+   "source": "Z p.479; PW_1A; DW_SB",
+   "reliability": "B",
+   "note": "советские танки на Хафеле; 1 А ВП у канала Гогенцоллерн; немцы держат Эберсвальде"
+  },
+  {
+   "date": "1945-04-22",
+   "sector": "Восток Берлина",
+   "points": [
+    {
+     "place": "B_Weissensee",
+     "lng": 13.463,
+     "lat": 52.555
+    },
+    {
+     "place": "B_Lichtenberg",
+     "lng": 13.496,
+     "lat": 52.51
+    },
+    {
+     "place": "B_Karlshorst",
+     "lng": 13.524,
+     "lat": 52.484
+    },
+    {
+     "place": "B_Friedrichshagen",
+     "lng": 13.623,
+     "lat": 52.457
+    },
+    {
+     "place": "Mueggelsee",
+     "lng": 13.65,
+     "lat": 52.437
+    },
+    {
+     "place": "Erkner",
+     "lng": 13.754,
+     "lat": 52.426
+    }
+   ],
+   "source": "DW_SB",
+   "reliability": "B",
+   "note": "в одной точке прорван внутренний обвод (Z p.479)"
+  },
+  {
+   "date": "1945-04-22",
+   "sector": "Юг Берлина",
+   "points": [
+    {
+     "place": "B_Teltow",
+     "lng": 13.268,
+     "lat": 52.381
+    },
+    {
+     "place": "B_Lichterfelde",
+     "lng": 13.314,
+     "lat": 52.437
+    },
+    {
+     "place": "Zossen",
+     "lng": 13.449,
+     "lat": 52.216
+    },
+    {
+     "place": "Beelitz",
+     "lng": 12.957,
+     "lat": 52.229
+    },
+    {
+     "place": "Treuenbrietzen",
+     "lng": 12.873,
+     "lat": 52.097
+    },
+    {
+     "place": "Jueterbog",
+     "lng": 13.08,
+     "lat": 51.992
+    }
+   ],
+   "source": "RW_BNO; DW_SB; RW_ARM (4 гв. ТА)",
+   "reliability": "B",
+   "note": "3 гв. ТА на Тельтов-канале; 5 гв. мк в Беелице/Тройенбрицене"
+  },
+  {
+   "date": "1945-04-22",
+   "sector": "Коридор 9 А (между фронтами)",
+   "points": [
+    {
+     "place": "Erkner",
+     "lng": 13.754,
+     "lat": 52.426
+    },
+    {
+     "place": "KoenigsWusterhausen",
+     "lng": 13.624,
+     "lat": 52.3
+    },
+    {
+     "place": "Teupitz",
+     "lng": 13.61,
+     "lat": 52.136
+    },
+    {
+     "place": "Luebben",
+     "lng": 13.896,
+     "lat": 51.942
+    },
+    {
+     "place": "Cottbus",
+     "lng": 14.336,
+     "lat": 51.757
+    }
+   ],
+   "source": "Z p.479-480; DW_HA; RW_KP",
+   "reliability": "C",
+   "note": "обе группировки почти замкнули кольцо; немцы держат район Фюрстенвальде–Бесков–Либерозе; Котбус взят"
+  },
+  {
+   "date": "1945-04-25",
+   "sector": "Внешнее кольцо Берлина (запад)",
+   "points": [
+    {
+     "place": "Nauen",
+     "lng": 12.877,
+     "lat": 52.606
+    },
+    {
+     "place": "Ketzin",
+     "lng": 12.844,
+     "lat": 52.477
+    },
+    {
+     "place": "Potsdam",
+     "lng": 13.059,
+     "lat": 52.401
+    },
+    {
+     "place": "B_Stahnsdorf",
+     "lng": 13.208,
+     "lat": 52.387
+    }
+   ],
+   "source": "Z p.482; DW_SB; PW_1A",
+   "reliability": "A",
+   "note": "кольцо замкнуто у Кетцина; Потсдам ещё немецкий (отрезан 27.04)"
+  },
+  {
+   "date": "1945-04-25",
+   "sector": "Берлин (линия в городе)",
+   "points": [
+    {
+     "place": "B_Siemensstadt",
+     "lng": 13.257,
+     "lat": 52.54
+    },
+    {
+     "place": "B_Moabit",
+     "lng": 13.335,
+     "lat": 52.535
+    },
+    {
+     "place": "B_Wedding",
+     "lng": 13.367,
+     "lat": 52.543
+    },
+    {
+     "place": "B_Alexanderplatz",
+     "lng": 13.414,
+     "lat": 52.522
+    },
+    {
+     "place": "B_Friedrichshain",
+     "lng": 13.45,
+     "lat": 52.512
+    },
+    {
+     "place": "B_Treptow",
+     "lng": 13.47,
+     "lat": 52.488
+    },
+    {
+     "place": "B_Neukoelln",
+     "lng": 13.435,
+     "lat": 52.481
+    },
+    {
+     "place": "B_Tempelhof",
+     "lng": 13.377,
+     "lat": 52.471
+    },
+    {
+     "place": "B_Steglitz",
+     "lng": 13.322,
+     "lat": 52.457
+    },
+    {
+     "place": "B_Dahlem",
+     "lng": 13.281,
+     "lat": 52.457
+    },
+    {
+     "place": "B_Zehlendorf",
+     "lng": 13.259,
+     "lat": 52.431
+    },
+    {
+     "place": "B_Wannsee",
+     "lng": 13.18,
+     "lat": 52.421
+    }
+   ],
+   "source": "DW_SB; RW_SHB",
+   "reliability": "B",
+   "note": "приблизительно; площадь под контролем гарнизона ~327 км²"
+  },
+  {
+   "date": "1945-04-25",
+   "sector": "Котёл 9 А (периметр)",
+   "points": [
+    {
+     "place": "Erkner",
+     "lng": 13.754,
+     "lat": 52.426
+    },
+    {
+     "place": "KoenigsWusterhausen",
+     "lng": 13.624,
+     "lat": 52.3
+    },
+    {
+     "place": "Mittenwalde",
+     "lng": 13.536,
+     "lat": 52.264
+    },
+    {
+     "place": "Motzen",
+     "lng": 13.583,
+     "lat": 52.203
+    },
+    {
+     "place": "Teupitz",
+     "lng": 13.61,
+     "lat": 52.136
+    },
+    {
+     "place": "Baruth",
+     "lng": 13.502,
+     "lat": 52.046
+    },
+    {
+     "place": "Briesen_TF",
+     "lng": 13.714,
+     "lat": 52.053
+    },
+    {
+     "place": "Luebben",
+     "lng": 13.896,
+     "lat": 51.942
+    },
+    {
+     "place": "Lieberose",
+     "lng": 14.3,
+     "lat": 51.987
+    },
+    {
+     "place": "Beeskow",
+     "lng": 14.247,
+     "lat": 52.172
+    },
+    {
+     "place": "Fuerstenwalde",
+     "lng": 14.065,
+     "lat": 52.358
+    },
+    {
+     "place": "Erkner",
+     "lng": 13.754,
+     "lat": 52.426
+    }
+   ],
+   "source": "DW_HA; EW_HA; Z p.480",
+   "reliability": "C",
+   "note": "периметр по населённым пунктам расположения советских войск; восточная часть (Бесков–Либерозе) — оценка"
+  },
+  {
+   "date": "1945-04-25",
+   "sector": "Фронт против 12 А",
+   "points": [
+    {
+     "place": "Ferch",
+     "lng": 12.93,
+     "lat": 52.312
+    },
+    {
+     "place": "Beelitz",
+     "lng": 12.957,
+     "lat": 52.229
+    },
+    {
+     "place": "Treuenbrietzen",
+     "lng": 12.873,
+     "lat": 52.097
+    },
+    {
+     "place": "Niemegk",
+     "lng": 12.689,
+     "lat": 52.075
+    }
+   ],
+   "source": "DW_12A; EW_HA",
+   "reliability": "B",
+   "note": "линия XX ак"
+  },
+  {
+   "date": "1945-04-25",
+   "sector": "Эльба",
+   "points": [
+    {
+     "place": "Torgau",
+     "lng": 12.993,
+     "lat": 51.538
+    },
+    {
+     "place": "Strehla",
+     "lng": 13.221,
+     "lat": 51.352
+    }
+   ],
+   "source": "RW_ST; Z p.482",
+   "reliability": "A",
+   "note": "встреча с 1-й армией США"
+  },
+  {
+   "date": "1945-04-25",
+   "sector": "Баутцен",
+   "points": [
+    {
+     "place": "Koenigswartha",
+     "lng": 14.314,
+     "lat": 51.325
+    },
+    {
+     "place": "Bautzen",
+     "lng": 14.428,
+     "lat": 51.181
+    },
+    {
+     "place": "Weissenberg",
+     "lng": 14.659,
+     "lat": 51.197
+    },
+    {
+     "place": "Jaenkendorf",
+     "lng": 14.814,
+     "lat": 51.253
+    }
+   ],
+   "source": "RW_BW",
+   "reliability": "B",
+   "note": "немецкий контрудар; советские части выходят из Баутцена на север"
+  },
+  {
+   "date": "1945-04-25",
+   "sector": "2 БФ",
+   "points": [
+    {
+     "place": "Szczecin",
+     "lng": 14.593,
+     "lat": 53.43
+    },
+    {
+     "place": "Przeclaw / Tantow",
+     "lng": 14.399,
+     "lat": 53.322
+    },
+    {
+     "place": "Tantow",
+     "lng": 14.325,
+     "lat": 53.268
+    },
+    {
+     "place": "Gartz",
+     "lng": 14.391,
+     "lat": 53.209
+    },
+    {
+     "place": "Schwedt",
+     "lng": 14.284,
+     "lat": 53.059
+    }
+   ],
+   "source": "RW_BNO; DW_SRO",
+   "reliability": "B",
+   "note": "плацдарм 35 × 15 км; начало прорыва через Рандов-брух"
+  }
+ ],
+ "events": [
+  {
+   "date": "1945-04-14",
+   "title": "Разведка боем 1 БФ («пять дивизий и 200 танков») у Зееловских высот",
+   "place": "Seelow",
+   "lng": 14.381,
+   "lat": 52.532,
+   "source": "Z p.473",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-16",
+   "title": "Артподготовка 1 БФ, прожекторы; начало штурма Зееловских высот",
+   "place": "Seelow / Golzow",
+   "lng": 14.437,
+   "lat": 52.553,
+   "source": "RW_BNO; Z p.474",
+   "reliability": "A",
+   "time": "05:00 МСК (03:00 MESZ)"
+  },
+  {
+   "date": "1945-04-16",
+   "title": "Форсирование Нейсе 1 УФ между Форстом и Мускау, 133 переправы",
+   "place": "Forst / BadMuskau",
+   "lng": 14.673,
+   "lat": 51.653,
+   "source": "RW_BNO; RW_KP",
+   "reliability": "B",
+   "time": "06:55"
+  },
+  {
+   "date": "1945-04-17",
+   "title": "Взят Зелов (4 гв. ск + 11 гв. тк)",
+   "place": "Seelow",
+   "lng": 14.381,
+   "lat": 52.532,
+   "source": "RW_ZB",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-17",
+   "title": "Разрешение Ставки повернуть 3 и 4 гв. ТА на Берлин (разговор Сталина с Коневым вечером 17.04)",
+   "place": "Forst",
+   "lng": 14.646,
+   "lat": 51.744,
+   "source": "RW_KP; Z p.475",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-18",
+   "title": "7 гв. тк форсирует Шпрее севернее Шпремберга",
+   "place": "Spremberg",
+   "lng": 14.38,
+   "lat": 51.572,
+   "source": "RW_KP; Z p.475",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-18",
+   "title": "⚠ «Зееловские высоты взяты к утру 18.04» (ru-wiki) / прорыв 19.04 (de-wiki, Z)",
+   "place": "Seelow",
+   "lng": 14.381,
+   "lat": 52.532,
+   "source": "RW_BNO; DW_SH",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-19",
+   "title": "Взят Мюнхеберг (82 гсд); прорван третий рубеж; фронт 9 А расколот между Врицен и Белендорф",
+   "place": "Muencheberg",
+   "lng": 14.14,
+   "lat": 52.504,
+   "source": "DW_SH; RW_BNO; Z p.475",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-19",
+   "title": "47 А занимает Врицен",
+   "place": "Wriezen",
+   "lng": 14.137,
+   "lat": 52.717,
+   "source": "DW_SH",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-20",
+   "title": "Первый артобстрел Берлина (79 ск 3 УА) — ⚠ Z: 21.04",
+   "place": "Bernau / Werneuchen",
+   "lng": 13.665,
+   "lat": 52.662,
+   "source": "RW_BNO; DW_SB; Z p.477",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-20",
+   "title": "2 гв. ТА у Бернау; 3 гв. ТА — Барут; 2 БФ форсирует Одер",
+   "place": "Bernau",
+   "lng": 13.588,
+   "lat": 52.679,
+   "source": "Z p.476",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-20",
+   "title": "33 гв. ск взял Шпремберг",
+   "place": "Spremberg",
+   "lng": 14.38,
+   "lat": 51.572,
+   "source": "RW_ST",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-21",
+   "title": "Первые советские части в черте Берлина (5 УА, Марцан)",
+   "place": "B_Marzahn",
+   "lng": 13.563,
+   "lat": 52.543,
+   "source": "DW_SB; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-21",
+   "title": "Цоссен (штаб ОКХ) — ⚠ 21.04 вечером (de-wiki, 6 гв. тк) / 22.04 (ru-wiki «Котбус-Потсдамская»)",
+   "place": "Zossen",
+   "lng": 13.449,
+   "lat": 52.216,
+   "source": "DW_SB; RW_KP",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-22",
+   "title": "Котбус взят (3 гв. А) к 13:00",
+   "place": "Cottbus",
+   "lng": 14.336,
+   "lat": 51.757,
+   "source": "RW_KP",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-22",
+   "title": "3 гв. ТА на Тельтов-канале; Гитлер решает остаться в Берлине; 12 А повёрнута на восток; ночью разрешён отход 9 А",
+   "place": "B_Teltow",
+   "lng": 13.268,
+   "lat": 52.381,
+   "source": "Z p.479-480; RW_BNO",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-23",
+   "title": "Франкфурт-на-Одере оставлен гарнизоном (Билер)",
+   "place": "Frankfurt",
+   "lng": 14.55,
+   "lat": 52.341,
+   "source": "DW_HA",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-23",
+   "title": "Директива Ставки № 11074: разграничительная линия 1 БФ / 1 УФ Люббен–Тойпиц–Миттенвальде–Мариендорф–Анхальтский вокзал",
+   "place": "Teupitz / Mittenwalde",
+   "lng": 13.573,
+   "lat": 52.2,
+   "source": "DW_SB (по Ryan)",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-23",
+   "title": "Вейдлинг (LVI тк) назначен командовать обороной Берлина",
+   "place": "B_Bendlerblock",
+   "lng": 13.361,
+   "lat": 52.507,
+   "source": "Z p.480",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-24",
+   "title": "Окружение 9 А: встреча 1 БФ и 1 УФ (88 гсд и 71 мбр) — Бонсдорф (Z) / Шёнефельд, 10:00 (de-wiki)",
+   "place": "B_Bohnsdorf / B_Schoenefeld",
+   "lng": 13.538,
+   "lat": 52.395,
+   "source": "Z p.481; DW_HA",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-24",
+   "title": "6 гв. тк форсировал Тельтов-канал (650 стволов на км)",
+   "place": "B_Zehlendorf",
+   "lng": 13.259,
+   "lat": 52.431,
+   "source": "RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-24",
+   "title": "Начало наступления XX ак 12 А (Тройенбрицен)",
+   "place": "Treuenbrietzen",
+   "lng": 12.873,
+   "lat": 52.097,
+   "source": "EW_HA; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-25",
+   "title": "Кольцо вокруг Берлина замкнуто: 6 гв. мк 4 гв. ТА + 328 сд 47 А — ⚠ «в 12:00» (ru-wiki) / ночь на 25.04 (ru-wiki 4 гв. ТА)",
+   "place": "Ketzin",
+   "lng": 12.844,
+   "lat": 52.477,
+   "source": "Z p.482; RW_BNO; RW_ARM (4 гв. ТА)",
+   "reliability": "A",
+   "time": "12:00 (?)"
+  },
+  {
+   "date": "1945-04-25",
+   "title": "Встреча на Эльбе: 58 гсд 5 гв. А и 69 пд США — Стрела 13:30, затем Торгау",
+   "place": "Strehla / Torgau",
+   "lng": 13.107,
+   "lat": 51.445,
+   "source": "RW_ST; Z p.482",
+   "reliability": "A",
+   "time": "13:30"
+  },
+  {
+   "date": "1945-04-25",
+   "title": "2 БФ прорывается из плацдарма южнее Штеттина через Рандов-брух на Пренцлау",
+   "place": "Tantow",
+   "lng": 14.325,
+   "lat": 53.268,
+   "source": "Z p.482",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-25",
+   "title": "Первая попытка прорыва 9 А на Барут (КГ фон Люк, Пипкорн) — неудача",
+   "place": "Baruth",
+   "lng": 13.502,
+   "lat": 52.046,
+   "source": "EW_HA",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-26",
+   "title": "65 А взяла Штеттин",
+   "place": "Szczecin",
+   "lng": 14.593,
+   "lat": 53.43,
+   "source": "RW_SR; RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-26",
+   "title": "Начало штурма через кольцо S-Bahn (8 армий)",
+   "place": "B_Mitte",
+   "lng": 13.36,
+   "lat": 52.533,
+   "source": "Z p.488",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-27",
+   "title": "Прорыв у Пренцлау; 3 ТА в бегстве",
+   "place": "Prenzlau",
+   "lng": 13.867,
+   "lat": 53.317,
+   "source": "Z p.486; DW_SRO",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-27",
+   "title": "Потсдамская группировка отрезана",
+   "place": "Potsdam",
+   "lng": 13.059,
+   "lat": 52.401,
+   "source": "Z p.488; RW_KP",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-28",
+   "title": "Кейтель у Цеденика натыкается на тыл 5 егд; 79 ск выходит к мосту Мольтке",
+   "place": "B_Moltkebruecke",
+   "lng": 13.369,
+   "lat": 52.522,
+   "source": "Z p.487; DW_SB",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-29",
+   "title": "Мост Мольтке захвачен (ночь на 29.04)",
+   "place": "B_Moltkebruecke",
+   "lng": 13.369,
+   "lat": 52.522,
+   "source": "RW_BNO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-04-29",
+   "title": "XX ак Венка выходит к Швиловзе (Ферх); прорыв 9 А между Тойпицем и Тойровом",
+   "place": "Ferch",
+   "lng": 12.93,
+   "lat": 52.312,
+   "source": "Z p.491; DW_HA",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-04-30",
+   "title": "Знамя над Рейхстагом (14:25 — группа Сорокина; 21:30 — основная часть здания)",
+   "place": "B_Reichstag",
+   "lng": 13.376,
+   "lat": 52.519,
+   "source": "RW_BNO",
+   "reliability": "B",
+   "time": "14:25 / 21:30"
+  },
+  {
+   "date": "1945-04-30",
+   "title": "Самоубийство Гитлера",
+   "place": "B_Reichskanzlei",
+   "lng": 13.38,
+   "lat": 52.511,
+   "source": "общеизвестно; в прочитанных источниках только упоминание",
+   "reliability": "C"
+  },
+  {
+   "date": "1945-05-01",
+   "title": "Кребс в штабе 8 гв. А (переговоры с Чуйковым)",
+   "place": "B_Schulenburgring",
+   "lng": 13.382,
+   "lat": 52.484,
+   "source": "RW_BNO",
+   "reliability": "B",
+   "note": "место штаба 8 гв. А (Шуленбургринг, Темпельгоф) — по общеизвестным данным, не сверено (C)"
+  },
+  {
+   "date": "1945-05-01",
+   "title": "Остатки 9 А вышли к 12 А у Беелица (Эльсхольц); ~25 000 (de/ru-wiki) / 30 000 (Z)",
+   "place": "Elsholz",
+   "lng": 12.963,
+   "lat": 52.199,
+   "source": "DW_HA; Z p.497",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-05-01",
+   "title": "70 А с 3 гв. тк вошла в Росток",
+   "place": "Rostock",
+   "lng": 12.14,
+   "lat": 54.089,
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-05-02",
+   "title": "Капитуляция Берлинского гарнизона: Вейдлинг перешёл линию фронта (5:00 по Z / 6:00 по ru-wiki); парламентёры на Потсдамском мосту",
+   "place": "B_Bendlerblock",
+   "lng": 13.361,
+   "lat": 52.507,
+   "source": "Z p.497; RW_BNO",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-05-03",
+   "title": "3 гв. тк юго-западнее Висмара соединился с 2-й британской армией",
+   "place": "Wismar",
+   "lng": 11.465,
+   "lat": 53.891,
+   "source": "RW_SR; DW_SRO",
+   "reliability": "B"
+  }
+ ]
+}
