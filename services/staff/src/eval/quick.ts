@@ -26,10 +26,16 @@ const t0 = Date.now();
 const at = () => `${((Date.now() - t0) / 1000).toFixed(1).padStart(5)} с`;
 console.log(`Обстановка: ${s.title} (${s.moment})\n`);
 
+let intentOpen = false;
 const quick = quickDecision(client, {
   messages,
-  onIntent: (t) => console.log(`${at()}  ЗАМЫСЕЛ: ${t}\n`),
-  onOrder: (o, i) => console.log(`${at()}  приказ ${i + 1}: ${o.formation} — ${TASK_RU[o.task] ?? o.task}, ${o.area}${o.toArea ? ` → ${o.toArea}` : ''} (${o.deadline})`),
+  onFirstToken: () => console.log(`${at()}  модель начала отвечать`),
+  onIntentDelta: (d) => {
+    if (!intentOpen) { intentOpen = true; process.stdout.write(`${at()}  ЗАМЫСЕЛ: `); }
+    process.stdout.write(d);
+  },
+  onIntent: () => { if (intentOpen) process.stdout.write(`\n${at()}  (замысел готов)\n\n`); },
+  onOrder: (o, i) => console.log(`${at()}  приказ ${i + 1}: ${o.formation} — ${TASK_RU[o.task] ?? o.task}, ${o.area}${o.toArea ? ` → ${o.toArea}` : ''} (${o.deadline})\n          ${o.details}`),
 }).then((r) => console.log(`\n${at()}  быстрая часть готова: ${r.result.timings.completionTokens ?? '?'} ток., ${r.result.timings.tokensPerSec} ток/с`));
 
 const full = argv.includes('--full')

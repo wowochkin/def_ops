@@ -56,3 +56,46 @@ export class ArrayItemStream<T = unknown> {
     }
   }
 }
+
+/**
+ * Значение строкового поля по мере генерации: onDelta получает новые символы
+ * (уже раскодированные из JSON), пока строка не закрыта. Так замысел или доклад
+ * печатается на экране слово за словом, не дожидаясь конца поля.
+ */
+export class StringFieldStream {
+  private buf = '';
+  private start = -1;
+  private pos = 0;
+  private done = false;
+  private pendingEsc = '';
+  text = '';
+
+  constructor(private readonly key: string, private readonly onDelta: (delta: string) => void, private readonly onDone?: (text: string) => void) {}
+
+  push(chunk: string): void {
+    this.buf += chunk;
+    if (this.done) return;
+    if (this.start < 0) {
+      const m = new RegExp(`"${this.key}"\\s*:\\s*"`).exec(this.buf);
+      if (!m) return;
+      this.start = this.pos = m.index + m[0].length;
+    }
+    let out = '';
+    while (this.pos < this.buf.length) {
+      const c = this.buf[this.pos];
+      if (this.pendingEsc || c === '\\') {
+        // экранирование: \n, \", \\, \uXXXX — ждём, пока придёт целиком
+        const seq = this.buf.slice(this.pos, this.pos + (this.buf[this.pos + 1] === 'u' ? 6 : 2));
+        if (seq.length < 2 || (seq[1] === 'u' && seq.length < 6)) break;
+        try { out += JSON.parse(`"${seq}"`); } catch { out += seq; }
+        this.pos += seq.length;
+        continue;
+      }
+      if (c === '"') { this.done = true; this.pos++; break; }
+      out += c;
+      this.pos++;
+    }
+    if (out) { this.text += out; this.onDelta(out); }
+    if (this.done) this.onDone?.(this.text);
+  }
+}

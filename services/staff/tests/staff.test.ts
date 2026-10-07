@@ -227,16 +227,29 @@ describe('ответ по частям', () => {
     expect(firstAt).toBeLessThan(text.length - 20);
   });
 
+  it('строковое поле — по мере генерации, с экранированием', async () => {
+    const { StringFieldStream } = await import('../src/stream-json');
+    const parts: string[] = [];
+    let done = '';
+    const s = new StringFieldStream('intent', (d) => parts.push(d), (t) => (done = t));
+    const text = '{"intent":"Отвести \\"силы\\"\\nна вторую \\u00abпозицию\\u00bb","orders":[]}';
+    for (const ch of text.match(/.{1,3}/gs)!) s.push(ch);
+    expect(parts.length).toBeGreaterThan(3);
+    expect(done).toBe('Отвести "силы"\nна вторую «позицию»');
+    expect(parts.join('')).toBe(done);
+  });
+
   it('quickDecision: приказы — в onOrder по ходу, без размышления', async () => {
     const { quickDecision } = await import('../src/staff');
     mode = 'normal';
     answer = JSON.stringify({ intent: 'Отвести силы на «Харденберг».', orders: goodDecision().orders });
     const seen: string[] = [];
-    let intent = '';
+    let intent = '', streamed = '';
     const r = await quickDecision(client(), {
       messages: [{ role: 'system', content: 's' }, { role: 'user', content: 'u' }],
-      onOrder: (o) => seen.push(o.formation), onIntent: (t) => (intent = t),
+      onOrder: (o) => seen.push(o.formation), onIntent: (t) => (intent = t), onIntentDelta: (d) => (streamed += d),
     });
+    expect(streamed).toBe(intent);
     expect(seen).toHaveLength(2);
     expect(intent).toContain('Харденберг');
     expect(r.decision?.orders).toHaveLength(2);
