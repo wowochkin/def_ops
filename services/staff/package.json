@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/staff-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Штаб на LLM: локальная модель (LM Studio, протокол OpenAI) — решения немецкой стороны, разбор, ответы на вопросы. Этап 0: клиент модели и проверка качества на контрольных обстановках",
+  "scripts": { "eval": "tsx src/eval/cli.ts" },
+  "dependencies": { "@def-ops/service-kit": "*" }
+}

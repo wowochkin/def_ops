@@ -1,0 +1,170 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { LlmClient, extractJson, splitThink } from '../src/llm/client';
+import { configFromEnv } from '../src/llm/config';
+import { checkDecision, DECISION_SCHEMA, type Decision } from '../src/decision';
+import { fill, prompt } from '../src/prompts';
+import { loadSituations, matches, promptVars } from '../src/eval/situations';
+import { runOne } from '../src/eval/run';
+import { renderReport } from '../src/eval/report';
+
+/** Подставной сервер модели: отвечает потоком SSE по сценарию из заголовка x-mode. */
+let server: Server;
+let url = '';
+let mode = 'normal';
+let lastBody: Record<string, unknown> = {};
+let answer = '{}';
+
+const sse = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
+const delta = (d: Record<string, string>, finish?: string) => sse({ choices: [{ delta: d, finish_reason: finish ?? null }] });
+
+beforeAll(async () => {
+  server = createServer((req, res) => {
+    if (req.url === '/v1/models') { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ data: [{ id: 'text-embedding-x' }, { id: 'qwen3.8-test' }] })); return; }
+    let b = '';
+    req.on('data', (c) => (b += c));
+    req.on('end', () => {
+      lastBody = JSON.parse(b);
+      res.writeHead(200, { 'content-type': 'text/event-stream' });
+      const parts = answer.match(/.{1,17}/gs) ?? [];
+      if (mode === 'normal') {
+        res.write(delta({ reasoning_content: 'Оцениваю ' }));
+        res.write(delta({ reasoning_content: 'обстановку.' }));
+        for (const p of parts) res.write(delta({ content: p }));
+        res.write(delta({}, 'stop'));
+      } else if (mode === 'reasoning-only') {
+        for (const p of parts) res.write(delta({ reasoning_content: p }));
+        res.write(delta({}, 'stop'));
+      } else if (mode === 'think-tags') {
+        res.write(delta({ content: '<think>думаю\nдолго</think>\n```json\n' }));
+        for (const p of parts) res.write(delta({ content: p }));
+        res.write(delta({ content: '\n```' }, 'stop'));
+      } else if (mode === 'length') {
+        res.write(delta({ content: answer.slice(0, 20) }, 'length'));
+      }
+      res.write(sse({ choices: [], usage: { prompt_tokens: 1200, completion_tokens: 300 } }));
+      res.end('data: [DONE]\n\n');
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/v1`;
+});
+afterAll(() => server.close());
+
+const client = (thinking: 'off' | 'medium' = 'medium') => new LlmClient({ ...configFromEnv({}), url, thinking });
+
+describe('клиент модели', () => {
+  it('выбирает модель, не являющуюся эмбеддингом, и шлёт настройки Qwen', async () => {
+    mode = 'normal'; answer = '{"a":1}';
+    const r = await client().chat({ messages: [{ role: 'user', content: 'x' }], schema: { name: 's', schema: { type: 'object' } } });
+    expect(r.model).toBe('qwen3.8-test');
+    expect(r.reasoning).toBe('Оцениваю обстановку.');
+    expect(r.json).toEqual({ a: 1 });
+    expect(r.timings.promptTokens).toBe(1200);
+    expect(r.timings.completionTokens).toBe(300);
+    expect(lastBody.chat_template_kwargs).toEqual({ enable_thinking: true });
+    expect(lastBody.reasoning_effort).toBe('medium');
+    expect((lastBody.response_format as { type: string }).type).toBe('json_schema');
+  });
+
+  it('без размышления ответ в reasoning_content считается ответом', async () => {
+    mode = 'reasoning-only'; answer = '{"b":2}';
+    const r = await client('off').chat({ messages: [{ role: 'user', content: 'x' }], schema: { name: 's', schema: {} } });
+    expect(r.json).toEqual({ b: 2 });
+    expect(lastBody.chat_template_kwargs).toEqual({ enable_thinking: false });
+    expect(lastBody.reasoning_effort).toBeUndefined();
+  });
+
+  it('вынимает <think> и обёртку ```json', async () => {
+    mode = 'think-tags'; answer = '{"c":3}';
+    const r = await client().chat({ messages: [{ role: 'user', content: 'x' }], schema: { name: 's', schema: {} } });
+    expect(r.json).toEqual({ c: 3 });
+    expect(r.reasoning).toContain('думаю');
+  });
+
+  it('оборванный по длине ответ — ошибка разбора', async () => {
+    mode = 'length'; answer = '{"d": "очень длинный ответ"}';
+    const r = await client().chat({ messages: [{ role: 'user', content: 'x' }], schema: { name: 's', schema: {} } });
+    expect(r.jsonError).toMatch(/предел/);
+  });
+
+  it('недоступный сервер — понятная ошибка', async () => {
+    const c = new LlmClient({ ...configFromEnv({}), url: 'http://127.0.0.1:9/v1' });
+    await expect(c.models()).rejects.toThrow(/не отвечает/);
+  });
+
+  it('разбор вспомогательных форматов', () => {
+    expect(splitThink('<think>a</think>b')).toEqual({ content: 'b', reasoning: 'a' });
+    expect(extractJson('Вот ответ: {"x": [1]} конец')).toEqual({ x: [1] });
+  });
+});
+
+describe('промпты и обстановки', () => {
+  it('подстановки: пропущенная и лишняя — ошибки', () => {
+    expect(fill('a {x}', { x: '1' })).toBe('a 1');
+    expect(() => fill('a {x}', {})).toThrow(/нет значения/);
+    expect(() => fill('a', { y: '1' })).toThrow(/не используются/);
+  });
+
+  it('все контрольные обстановки разбираются и подставляются в промпт', () => {
+    const list = loadSituations();
+    expect(list.length).toBeGreaterThanOrEqual(6);
+    for (const s of list) {
+      const text = prompt('german-staff.user.md', promptVars(s));
+      expect(text).toContain(s.question);
+      for (const e of [...s.expect, ...s.avoid]) for (const p of [...(e.any ?? []), ...(e.all ?? []).flat()]) expect(() => new RegExp(p)).not.toThrow();
+    }
+    expect(prompt('german-staff.system.md', {})).toContain('JSON');
+  });
+
+  it('схема решения — строгая (все поля обязательны)', () => {
+    expect(DECISION_SCHEMA.required).toHaveLength(6);
+    expect(DECISION_SCHEMA.properties.orders.items.required).toHaveLength(6);
+  });
+});
+
+const s1 = () => loadSituations().find((s) => s.id.startsWith('01'))!;
+const goodDecision = (): Decision => ({
+  assessment: 'Противник завершил сосредоточение на кюстринском плацдарме. '.repeat(12),
+  enemyIntent: 'Прорыв на Зееловские высоты и выход по шоссе № 1 к Берлину.',
+  intent: 'Отвести основные силы с первой позиции на позицию «Харденберг» до артподготовки; держать подвижный резерв для контратак.',
+  orders: [
+    { formation: '56-й танковый корпус (LVI. Panzerkorps)', task: 'withdraw', area: 'первая позиция по Одербруху (Oderbruch)', toArea: 'позиция «Харденберг» (Hardenberg-Stellung) по Зееловским высотам', deadline: 'к 02:00 16.04', details: 'на первой позиции оставить прикрытие' },
+    { formation: '11-й танковый корпус СС', task: 'defend', area: 'Лебус', toArea: null, deadline: '16.04', details: 'резерв за второй позицией для контратак' },
+  ],
+  requests: ['Просить передачи армии дивизий резерва ОКВ «Нордланд» и «Недерланд».'],
+  risks: ['Противник может ударить ночью до отвода.'],
+});
+
+describe('проверка решения', () => {
+  it('хорошее решение проходит и даёт признаки', () => {
+    const s = s1();
+    const { decision, issues } = checkDecision(goodDecision(), { formations: s.own_forces.map((f) => f.name), areas: s.areas });
+    expect(decision).not.toBeNull();
+    expect(issues.filter((i) => i.level === 'error')).toEqual([]);
+    const hits = Object.fromEntries(s.expect.map((e) => [e.id, matches(e, decision!)]));
+    expect(hits).toEqual({ depth: true, pullback: true, reserves: true, ask: true });
+    expect(s.avoid.every((e) => !matches(e, decision!))).toBe(true);
+  });
+
+  it('выдуманное формирование — ошибка, наступление на плацдарм — нежелательно', () => {
+    const s = s1();
+    const d = goodDecision();
+    d.orders.push({ formation: '7-я танковая армия', task: 'attack', area: 'кюстринский плацдарм', toArea: null, deadline: '16.04', details: '' });
+    expect(checkDecision(d, { formations: s.own_forces.map((f) => f.name), areas: s.areas }).issues.some((i) => /нет среди своих/.test(i.text))).toBe(true);
+    expect(matches(s.avoid[0], d)).toBe(true);
+  });
+
+  it('полный прогон обстановки через подставную модель и отчёт', async () => {
+    mode = 'normal'; answer = JSON.stringify(goodDecision());
+    const s = s1();
+    const rec = await runOne(client(), s, 'qwen3.8-test', 'medium', 1);
+    expect(rec.ok).toBe(true);
+    expect(rec.expect.every((e) => e.hit)).toBe(true);
+    const md = renderReport([rec], [s], { models: ['qwen3.8-test'], thinkings: ['medium'], repeat: 1, url, date: new Date() });
+    expect(md).toContain('Что было в истории');
+    expect(md).toContain('Оценка эксперта');
+    expect(md).toContain('| qwen3.8-test | medium | 1/1 |');
+  });
+});

@@ -10,3 +10,6 @@ deploy/extra-ca/*.crt
 # рабочие копии субагентов
 .claude/worktrees/
 defops-offline*
+
+# отчёты проверки модели
+evals-out/
