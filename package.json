@@ -19,7 +19,9 @@
     "docs:library": "tsx scripts/gen-library-doc.ts",
     "docs:pdf": "node scripts/gen-library-pdf.mjs",
     "llm:eval": "tsx services/staff/src/eval/cli.ts",
-    "llm:quick": "tsx services/staff/src/eval/quick.ts"
+    "llm:quick": "tsx services/staff/src/eval/quick.ts",
+    "sim:history": "tsx packages/sim/tools/run/history.ts",
+    "sim:scenario": "tsx packages/sim/tools/scenario/build_scenario.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -35,6 +35,9 @@ const POSTURE: Record<Task, Posture> = {
   defend: 'defend', hold: 'defend', delay: 'defend', withdraw: 'withdraw', regroup: 'march', reserve: 'reserve',
 };
 
+/** Формирование на театре в момент time: не уничтожено и уже введено. */
+export const onMap = (f: Formation, time: string) => !f.destroyed && (!f.enterAt || f.enterAt <= time);
+
 export function profileOf(ctx: SimContext, side: string): SideProfile {
   const s = ctx.scenario.sides.find((x) => x.id === side);
   const p = s && ctx.profiles[s.profile];
@@ -49,7 +52,7 @@ export function createState(ctx: SimContext, seed = 1): SimState {
     personnel: f.personnel ?? 0, tanks: f.tanks ?? 0, guns: f.guns ?? 0,
     initial: { personnel: f.personnel ?? 0, tanks: f.tanks ?? 0, guns: f.guns ?? 0 },
     ammo: f.ammo ?? 2, fuel: f.fuel ?? 2, fatigue: 0, posture: f.posture ?? 'defend', dugInHours: f.posture === 'defend' ? 48 : 0,
-    order: null, route: null, destroyed: false,
+    order: null, route: null, destroyed: false, enterAt: f.enterAt ?? null,
   }));
   return { scenario: ctx.scenario.id, time: ctx.scenario.start, turn: 0, formations, pending: [...ctx.scenario.orders], rngState: seed >>> 0, journal: [] };
 }
@@ -75,13 +78,14 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   const byId = new Map(fs.map((f) => [f.id, f]));
   const journal: JournalEntry[] = [];
   const xy = (f: Formation): XY => T.proj.toXY(f.position);
-  const active = () => fs.filter((f) => !f.destroyed);
+  const active = () => fs.filter((f) => onMap(f, now));
 
   // 1. приказы, дошедшие до исполнителя к концу хода
   const pending: Order[] = [];
   for (const o of [...prev.pending].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt))) {
     const f = byId.get(o.formation);
     if (!f || f.destroyed) continue;
+    if (!onMap(f, end)) { pending.push(o); continue; } // ещё не прибыло — приказ ждёт
     const delay = profileOf(ctx, f.side).orderDelayHours[f.echelon] ?? 0;
     if (t2ms(addHours(o.issuedAt, delay)) <= t2ms(end)) {
       f.order = o;

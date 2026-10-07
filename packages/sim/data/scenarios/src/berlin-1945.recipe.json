@@ -1,0 +1,91 @@
+{
+  "id": "berlin-1945",
+  "name": "Берлинская стратегическая наступательная операция, 16 апреля – 2 мая 1945 г. (армии и корпуса)",
+  "timeNote": "время московское; положение «за день» сравнивается с состоянием на начало следующего хода",
+  "start": "1945-04-16T05:00",
+  "end": "1945-05-02T05:00",
+  "turnHours": 24,
+  "theatre": "oder-berlin-1945",
+  "rules": "ww2-draft",
+  "dataset": "../../../../../docs/sources/berlin-1945-positions.json",
+  "sides": [
+    { "id": "su", "name": "Красная армия и Войско Польское", "profile": "rkka-1945", "controller": "script" },
+    { "id": "de", "name": "Вермахт и войска СС", "profile": "wehrmacht-1945", "controller": "script" }
+  ],
+  "defaults": {
+    "su": { "ammo": 3, "fuel": 2, "posture": "attack" },
+    "de": { "ammo": 1.5, "fuel": 0.7, "posture": "defend" }
+  },
+  "allocation": {
+    "note": "Где по объединению нет цифр, численность, танки и орудия фронта (Кривошеев, Ziemke) делятся между его армиями пропорционально числу дивизий после вычета заданных явно. Доля боевых войск в численности фронта — combatShare (остальное: воздушная армия, тыл, фронтовые части). Достоверность таких цифр — C.",
+    "fronts": {
+      "su_1bf": { "personnel": 908500, "tanks": 3155, "guns": 16934, "combatShare": 0.8 },
+      "su_1uf": { "personnel": 550900, "tanks": 2055, "guns": 13571, "combatShare": 0.8 },
+      "su_2bf": { "personnel": 441600, "tanks": 951, "guns": 6642, "combatShare": 0.8 },
+      "de_9a": { "personnel": 112143, "tanks": 512, "guns": 1200, "combatShare": 1.0, "note": "в наборе данных 344 орудия — видимо, без зенитных и миномётов; принято 1 200 (C)" },
+      "de_3pza": { "personnel": 95000, "tanks": 242, "guns": 650, "combatShare": 1.0, "note": "численность — оценка (C)" },
+      "de_4pza": { "personnel": 110000, "tanks": 350, "guns": 900, "combatShare": 1.0, "note": "только корпуса против главной группировки 1 УФ; оценка (C)" },
+      "de_12a": { "personnel": 55000, "tanks": 40, "guns": 300, "combatShare": 1.0 }
+    }
+  },
+  "formations": [
+    { "id": "su_1bf" }, { "id": "su_1uf" }, { "id": "su_2bf" },
+    { "id": "su_61a", "type": "rifle_army", "divisions": 9 },
+    { "id": "su_1pa", "type": "rifle_army", "personnel": 77293, "tanks": 88, "guns": 1326, "outsidePool": true, "note": "Войско Польское у Кривошеева учтено отдельно от фронта" },
+    { "id": "su_47a", "type": "rifle_army", "divisions": 9 },
+    { "id": "su_3ua", "type": "shock_army", "divisions": 9 },
+    { "id": "su_5ua", "type": "shock_army", "divisions": 9 },
+    { "id": "su_8gva", "type": "guards_army", "divisions": 9 },
+    { "id": "su_69a", "type": "rifle_army", "divisions": 9 },
+    { "id": "su_33a", "type": "rifle_army", "divisions": 9 },
+    { "id": "su_3a", "type": "rifle_army", "divisions": 9, "posture": "reserve", "note": "второй эшелон фронта, введена 23.04" },
+    { "id": "su_1gta", "type": "tank_army", "personnel": 45000, "tanks": 854, "guns": 700, "note": "танки — Катуков (с 11 тк); численность и орудия — оценка (C)" },
+    { "id": "su_2gta", "type": "tank_army", "personnel": 45000, "tanks": 667, "guns": 700, "note": "513 танков + 154 САУ; численность и орудия — оценка (C)" },
+    { "id": "su_3gva", "type": "guards_army", "divisions": 9 },
+    { "id": "su_13a", "type": "rifle_army", "divisions": 8 },
+    { "id": "su_5gva", "type": "guards_army", "divisions": 9 },
+    { "id": "su_52a", "type": "rifle_army", "divisions": 8 },
+    { "id": "su_2pa", "type": "rifle_army", "personnel": 78607, "tanks": 180, "guns": 1300, "outsidePool": true, "note": "155 900 поляков (Кривошеев) минус 1 А ВП; танки и орудия — оценка (C)" },
+    { "id": "su_3gta", "type": "tank_army", "personnel": 45000, "tanks": 668, "guns": 700 },
+    { "id": "su_4gta", "type": "tank_army", "personnel": 40000, "tanks": 550, "guns": 600, "note": "оценка (C)" },
+    { "id": "su_28a", "type": "rifle_army", "personnel": 54000, "tanks": 50, "guns": 1000, "enterAt": "1945-04-21T05:00", "note": "введена из резерва 21.04; в численность фронта не входит; оценка 9 сд × 6 000 (C)" },
+    { "id": "su_2ua", "type": "shock_army", "divisions": 9 },
+    { "id": "su_65a", "type": "rifle_army", "divisions": 9 },
+    { "id": "su_70a", "type": "rifle_army", "divisions": 9 },
+    { "id": "su_49a", "type": "rifle_army", "divisions": 9 },
+    { "id": "su_19a", "type": "rifle_army", "personnel": 54000, "tanks": 40, "guns": 900, "posture": "defend", "outsidePool": true, "note": "в численность фронта не входит; оценка (C)" },
+
+    { "id": "de_hgr_weichsel" }, { "id": "de_hgr_mitte" },
+    { "id": "de_3pza" }, { "id": "de_9a" }, { "id": "de_4pza" }, { "id": "de_12a" },
+    { "id": "de_swinemuende", "type": "inf_corps", "divisions": 2 },
+    { "id": "de_xxxii", "type": "inf_corps", "divisions": 4 },
+    { "id": "de_oder", "type": "inf_corps", "divisions": 2 },
+    { "id": "de_xxxxvi", "type": "panzer_corps", "divisions": 2 },
+    { "id": "de_iii_ss", "type": "ss_panzer_corps", "personnel": 25000, "tanks": 40, "guns": 150, "enterAt": "1945-04-21T05:00", "note": "на 16.04 штаб без войск (Ziemke); с 21.04 «армейская группа Штайнер»: 4 полиц. дивизия СС, 5 егерская, 25 пгд; оценка (C)" },
+    { "id": "de_ci", "type": "inf_corps", "divisions": 4, "tanks": 50 },
+    { "id": "de_lvi", "type": "panzer_corps", "divisions": 4, "tanks": 220, "note": "9 пдд, 20 пгд, тд «Мюнхеберг», 18 пгд; «Нордланд» подошла 17–18.04 (не учтена отдельно)" },
+    { "id": "de_xi_ss", "type": "ss_panzer_corps", "divisions": 4, "tanks": 160 },
+    { "id": "de_ffo", "type": "fortress", "divisions": 1.5, "tanks": 10, "posture": "defend" },
+    { "id": "de_v_ss", "type": "inf_corps", "divisions": 3, "tanks": 72 },
+    { "id": "de_v", "type": "inf_corps", "divisions": 5, "tanks": 120 },
+    { "id": "de_pzk_gd", "type": "panzer_corps", "divisions": 4, "tanks": 150 },
+    { "id": "de_lvii", "type": "panzer_corps", "divisions": 3, "tanks": 80 },
+    { "id": "de_xx", "type": "inf_corps", "divisions": 4, "tanks": 30, "enterAt": "1945-04-23T05:00", "note": "до 23.04 — фронтом на запад против американцев у Эльбы; поворот на восток (C)" },
+    { "id": "de_xxxxi", "type": "panzer_corps", "divisions": 1.5, "tanks": 6, "enterAt": "1945-04-23T05:00" },
+    { "id": "de_xxxxviii", "type": "panzer_corps", "divisions": 1, "tanks": 4, "posture": "defend" },
+    { "id": "de_berlin", "type": "fortress", "personnel": 90693, "tanks": 60, "guns": 600, "note": "включая фольксштурм; танки и орудия — оценка (C)" }
+  ],
+  "orders": {
+    "auto": {
+      "note": "Исторический прогон: каждое формирование получает приказ идти к своему следующему историческому положению. Советские — «наступать», немецкие — «обороняться», если положение почти не меняется, иначе «отходить». Приказ отдаётся вечером предыдущей известной даты (18:00), с задержкой доведения по профилю.",
+      "issueHour": 18,
+      "su": "attack",
+      "de": { "stay": "defend", "move": "withdraw", "stayKm": 6 }
+    },
+    "manual": [
+      { "formation": "de_lvi", "task": "hold", "issuedAt": "1945-04-15T18:00", "until": "1945-04-18T18:00", "note": "удерживать Зееловские высоты (приказ Гитлера об обороне на рубеже Одера)" },
+      { "formation": "de_ffo", "task": "hold", "issuedAt": "1945-04-15T18:00", "until": "1945-04-22T18:00", "note": "«крепость» Франкфурт: держаться до приказа на отход" },
+      { "formation": "de_berlin", "task": "hold", "issuedAt": "1945-04-15T18:00", "note": "оборона Берлина" }
+    ]
+  }
+}

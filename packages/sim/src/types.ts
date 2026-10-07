@@ -146,6 +146,10 @@ export interface FormationDef {
   ammo?: number;
   fuel?: number;
   posture?: Posture;
+  /** С какого момента формирование на театре (ввод из резерва, прибытие); до этого его нет на карте. */
+  enterAt?: string | null;
+  /** Откуда цифры и положение (для отчёта и справки). */
+  note?: string;
 }
 
 export interface Scenario {
@@ -207,6 +211,8 @@ export interface Formation {
   route: LngLat[] | null;
   /** Уничтожено или распалось. */
   destroyed: boolean;
+  /** С какого момента на театре (null — с начала). */
+  enterAt: string | null;
 }
 
 export interface CombatFactor {

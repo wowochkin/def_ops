@@ -39,6 +39,14 @@ export function renderSymbol(f: SymbolFeature, ctx: RenderContext): string {
         for (let x = 0; x < rx * 2.2; x += step) d += `M${f2(x - ry)} ${f2(ry)}L${f2(x + ry)} ${f2(-ry)}`;
         g += `<g clip-path="url(#${cid})"><path d="${d}" stroke="${st.color}" stroke-width="${f2(sw * 0.55)}" fill="none"/></g>`;
       }
+      // номер объединения: в овале — по центру, у танковых и кавалерийских (знак внутри занят) — под овалом
+      if (st.text) {
+        const ts = st.textStyle;
+        const fs = ts?.size ?? ry * 1.1;
+        const y = st.type === 'armyOval' ? fs * 0.35 : ry + fs * 0.95;
+        const halo = ts?.halo ? ` stroke="${ts.halo.color}" stroke-width="${f2(ts.halo.width)}" paint-order="stroke" stroke-linejoin="round"` : '';
+        g += `<text y="${f2(y)}" text-anchor="middle" font-family="${esc(ts?.font ?? 'PT Sans Narrow')}, sans-serif" font-size="${f2(fs)}" font-weight="${ts?.weight ?? 700}"${ts?.italic ? ' font-style="italic"' : ''} fill="${ts?.color ?? st.color}"${halo}>${esc(st.text)}</text>`;
+      }
       break;
     }
     case 'reserve': {

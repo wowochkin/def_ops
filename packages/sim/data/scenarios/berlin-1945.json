@@ -1,0 +1,7262 @@
+{
+ "id": "berlin-1945",
+ "name": "Берлинская стратегическая наступательная операция, 16 апреля – 2 мая 1945 г. (армии и корпуса)",
+ "start": "1945-04-16T05:00",
+ "end": "1945-05-02T05:00",
+ "turnHours": 24,
+ "theatre": "oder-berlin-1945",
+ "rules": "ww2-draft",
+ "sides": [
+  {
+   "id": "su",
+   "name": "Красная армия и Войско Польское",
+   "profile": "rkka-1945",
+   "controller": "script"
+  },
+  {
+   "id": "de",
+   "name": "Вермахт и войска СС",
+   "profile": "wehrmacht-1945",
+   "controller": "script"
+  }
+ ],
+ "formations": [
+  {
+   "id": "su_1bf",
+   "name": "1-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_1uf",
+   "name": "1-й Украинский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_2bf",
+   "name": "2-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_61a",
+   "name": "61-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.258,
+    52.967
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_1pa",
+   "name": "1-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.241,
+    52.81
+   ],
+   "personnel": 77293,
+   "tanks": 88,
+   "guns": 1326,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "Войско Польское у Кривошеева учтено отдельно от фронта"
+  },
+  {
+   "id": "su_47a",
+   "name": "47-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.366,
+    52.714
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_3ua",
+   "name": "3-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "shock_army",
+   "position": [
+    14.448,
+    52.643
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_5ua",
+   "name": "5-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "shock_army",
+   "position": [
+    14.522,
+    52.571
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_8gva",
+   "name": "8-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "guards_army",
+   "position": [
+    14.53,
+    52.504
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_69a",
+   "name": "69-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.534,
+    52.427
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_33a",
+   "name": "33-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.611,
+    52.216
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_3a",
+   "name": "3-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.654,
+    52.59
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1942,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "второй эшелон фронта, введена 23.04"
+  },
+  {
+   "id": "su_1gta",
+   "name": "1-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "tank_army",
+   "position": [
+    14.654,
+    52.59
+   ],
+   "personnel": 45000,
+   "tanks": 854,
+   "guns": 700,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "танки — Катуков (с 11 тк); численность и орудия — оценка (C)"
+  },
+  {
+   "id": "su_2gta",
+   "name": "2-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "tank_army",
+   "position": [
+    14.573,
+    52.582
+   ],
+   "personnel": 45000,
+   "tanks": 667,
+   "guns": 700,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "513 танков + 154 САУ; численность и орудия — оценка (C)"
+  },
+  {
+   "id": "su_3gva",
+   "name": "3-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "guards_army",
+   "position": [
+    14.695,
+    51.708
+   ],
+   "personnel": 94161,
+   "tanks": 222,
+   "guns": 3248,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_13a",
+   "name": "13-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    14.723,
+    51.618
+   ],
+   "personnel": 83699,
+   "tanks": 197,
+   "guns": 2887,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_5gva",
+   "name": "5-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "guards_army",
+   "position": [
+    14.728,
+    51.555
+   ],
+   "personnel": 94161,
+   "tanks": 222,
+   "guns": 3248,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_52a",
+   "name": "52-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    14.993,
+    51.301
+   ],
+   "personnel": 83699,
+   "tanks": 197,
+   "guns": 2887,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_2pa",
+   "name": "2-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    14.94,
+    51.357
+   ],
+   "personnel": 78607,
+   "tanks": 180,
+   "guns": 1300,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "155 900 поляков (Кривошеев) минус 1 А ВП; танки и орудия — оценка (C)"
+  },
+  {
+   "id": "su_3gta",
+   "name": "3-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "tank_army",
+   "position": [
+    14.695,
+    51.708
+   ],
+   "personnel": 45000,
+   "tanks": 668,
+   "guns": 700,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_4gta",
+   "name": "4-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "tank_army",
+   "position": [
+    14.818,
+    51.635
+   ],
+   "personnel": 40000,
+   "tanks": 550,
+   "guns": 600,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_28a",
+   "name": "28-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    13.475,
+    52.131
+   ],
+   "personnel": 54000,
+   "tanks": 50,
+   "guns": 1000,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "enterAt": "1945-04-21T05:00",
+   "note": "введена из резерва 21.04; в численность фронта не входит; оценка 9 сд × 6 000 (C)"
+  },
+  {
+   "id": "su_2ua",
+   "name": "2-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "shock_army",
+   "position": [
+    14.701,
+    53.808
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_65a",
+   "name": "65-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    14.666,
+    53.48
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_70a",
+   "name": "70-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    14.492,
+    53.254
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_49a",
+   "name": "49-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    14.343,
+    53.056
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_19a",
+   "name": "19-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    15.388,
+    54.046
+   ],
+   "personnel": 54000,
+   "tanks": 40,
+   "guns": 900,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "в численность фронта не входит; оценка (C)"
+  },
+  {
+   "id": "de_hgr_weichsel",
+   "name": "Группа армий «Висла»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "de_hgr_mitte",
+   "name": "Группа армий «Центр»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "de_3pza",
+   "name": "3-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_weichsel"
+  },
+  {
+   "id": "de_9a",
+   "name": "9-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_weichsel"
+  },
+  {
+   "id": "de_4pza",
+   "name": "4-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_mitte"
+  },
+  {
+   "id": "de_12a",
+   "name": "12-я армия («армия Венка»)",
+   "side": "de",
+   "echelon": "army",
+   "parent": null
+  },
+  {
+   "id": "de_swinemuende",
+   "name": "Корпусная группа «Свинемюнде»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "inf_corps",
+   "position": [
+    14.476,
+    53.835
+   ],
+   "personnel": 19000,
+   "tanks": 48,
+   "guns": 130,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xxxii",
+   "name": "XXXII армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "inf_corps",
+   "position": [
+    14.579,
+    53.489
+   ],
+   "personnel": 38000,
+   "tanks": 97,
+   "guns": 260,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_oder",
+   "name": "Армейский корпус «Одер»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "inf_corps",
+   "position": [
+    14.492,
+    53.319
+   ],
+   "personnel": 19000,
+   "tanks": 48,
+   "guns": 130,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xxxxvi",
+   "name": "XXXXVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "panzer_corps",
+   "position": [
+    14.214,
+    52.966
+   ],
+   "personnel": 19000,
+   "tanks": 48,
+   "guns": 130,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_iii_ss",
+   "name": "III танковый корпус СС / армейская группа Штайнера",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "ss_panzer_corps",
+   "position": [
+    13.8,
+    52.835
+   ],
+   "personnel": 25000,
+   "tanks": 40,
+   "guns": 150,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-21T05:00",
+   "note": "на 16.04 штаб без войск (Ziemke); с 21.04 «армейская группа Штайнер»: 4 полиц. дивизия СС, 5 егерская, 25 пгд; оценка (C)"
+  },
+  {
+   "id": "de_ci",
+   "name": "CI армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "inf_corps",
+   "position": [
+    14.212,
+    52.77
+   ],
+   "personnel": 27186,
+   "tanks": 50,
+   "guns": 291,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_lvi",
+   "name": "LVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "panzer_corps",
+   "position": [
+    14.381,
+    52.532
+   ],
+   "personnel": 27186,
+   "tanks": 220,
+   "guns": 291,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "9 пдд, 20 пгд, тд «Мюнхеберг», 18 пгд; «Нордланд» подошла 17–18.04 (не учтена отдельно)"
+  },
+  {
+   "id": "de_xi_ss",
+   "name": "XI танковый корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "ss_panzer_corps",
+   "position": [
+    14.457,
+    52.479
+   ],
+   "personnel": 27186,
+   "tanks": 160,
+   "guns": 291,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_ffo",
+   "name": "Крепость Франкфурт-на-Одере",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "fortress",
+   "position": [
+    14.558,
+    52.348
+   ],
+   "personnel": 10195,
+   "tanks": 10,
+   "guns": 109,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_v_ss",
+   "name": "V горный корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "inf_corps",
+   "position": [
+    14.625,
+    52.2
+   ],
+   "personnel": 20390,
+   "tanks": 72,
+   "guns": 218,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_v",
+   "name": "V армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "type": "inf_corps",
+   "position": [
+    14.68,
+    51.847
+   ],
+   "personnel": 45833,
+   "tanks": 120,
+   "guns": 375,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_pzk_gd",
+   "name": "Танковый корпус «Великая Германия»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "type": "panzer_corps",
+   "position": [
+    14.821,
+    51.46
+   ],
+   "personnel": 36667,
+   "tanks": 150,
+   "guns": 300,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_lvii",
+   "name": "LVII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "type": "panzer_corps",
+   "position": [
+    14.991,
+    51.156
+   ],
+   "personnel": 27500,
+   "tanks": 80,
+   "guns": 225,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xx",
+   "name": "XX армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "type": "inf_corps",
+   "position": [
+    12.873,
+    52.097
+   ],
+   "personnel": 33846,
+   "tanks": 30,
+   "guns": 185,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-23T05:00",
+   "note": "до 23.04 — фронтом на запад против американцев у Эльбы; поворот на восток (C)"
+  },
+  {
+   "id": "de_xxxxi",
+   "name": "XXXXI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "type": "panzer_corps",
+   "position": [
+    12.444,
+    52.509
+   ],
+   "personnel": 12692,
+   "tanks": 6,
+   "guns": 69,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-23T05:00"
+  },
+  {
+   "id": "de_xxxxviii",
+   "name": "XXXXVIII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "type": "panzer_corps",
+   "position": [
+    11.984,
+    51.419
+   ],
+   "personnel": 8462,
+   "tanks": 4,
+   "guns": 46,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_berlin",
+   "name": "Берлинский оборонительный район (гарнизон)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_weichsel",
+   "type": "fortress",
+   "position": [
+    13.36,
+    52.533
+   ],
+   "personnel": 90693,
+   "tanks": 60,
+   "guns": 600,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "включая фольксштурм; танки и орудия — оценка (C)"
+  }
+ ],
+ "orders": [
+  {
+   "id": "de_ci@1945-04-15T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    14.169,
+    52.764
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Wriezen / BadFreienwalde (1945-04-18), день 1 из 3"
+  },
+  {
+   "id": "de_lvii@1945-04-15T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.9548,
+    51.1762
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Diehsa / Kodersdorf (1945-04-20), день 1 из 5"
+  },
+  {
+   "id": "de_oder@1945-04-15T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.4711,
+    53.3154
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 1 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-15T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.7664,
+    51.4434
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Boxberg / Uhyst (1945-04-20), день 1 из 5"
+  },
+  {
+   "id": "de_swinemuende@1945-04-15T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4678,
+    53.8345
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 1 из 17"
+  },
+  {
+   "id": "de_v@1945-04-15T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.4595,
+    51.8915
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Luebben / Halbe (1945-04-19), день 1 из 4"
+  },
+  {
+   "id": "de_v_ss@1945-04-15T18:00",
+   "formation": "de_v_ss",
+   "task": "defend",
+   "target": [
+    14.625,
+    52.2
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow / Fuerstenberg_O (1945-04-19), день 1 из 4"
+  },
+  {
+   "id": "de_xi_ss@1945-04-15T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    14.3942,
+    52.4457
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Berkenbrueck / Kersdorf (1945-04-19), день 1 из 4"
+  },
+  {
+   "id": "de_xxxii@1945-04-15T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5803,
+    53.4836
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 1 из 11"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-15T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    14.1187,
+    53.0127
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 1 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-15T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.1214,
+    51.418
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Eilenburg / Wurzen (1945-04-20), день 1 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-15T17:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    14.602,
+    51.638
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: GrossKoelzig, 1945-04-16 (B, ±4 км)"
+  },
+  {
+   "id": "su_19a@1945-04-15T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    15.312,
+    54.0284
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 1 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-15T17:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    14.393,
+    52.513
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Seelow / Dolgelin, 1945-04-16 (B, ±6 км)"
+  },
+  {
+   "id": "su_1pa@1945-04-15T17:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    14.291,
+    52.746
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Neulewin, 1945-04-16 (B, ±5 км)"
+  },
+  {
+   "id": "su_2gta@1945-04-15T17:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    14.367,
+    52.623
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Letschin / Gusow, 1945-04-16 (B, ±6 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-15T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.891,
+    51.344
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Niesky (1945-04-18), день 1 из 3"
+  },
+  {
+   "id": "su_2ua@1945-04-15T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.6804,
+    53.7664
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Police / Stepnica (1945-04-20), день 1 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-15T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.6145,
+    52.212
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow / Fuerstenberg_O (1945-04-19), день 1 из 4"
+  },
+  {
+   "id": "su_3a@1945-04-15T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    14.5415,
+    52.5695
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-23), день 1 из 8"
+  },
+  {
+   "id": "su_3gta@1945-04-15T17:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    14.628,
+    51.702
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Domsdorf / GrossSchacksdorf, 1945-04-16 (B, ±4 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-15T17:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.646,
+    51.744
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Forst, 1945-04-16 (B, ±4 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-15T17:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    14.322,
+    52.689
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Altlewin / Letschin, 1945-04-16 (B, ±5 км)"
+  },
+  {
+   "id": "su_47a@1945-04-15T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    14.2897,
+    52.715
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Wriezen (1945-04-18), день 1 из 3"
+  },
+  {
+   "id": "su_49a@1945-04-15T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.3513,
+    53.0678
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Widuchowa (1945-04-21), день 1 из 6"
+  },
+  {
+   "id": "su_4gta@1945-04-15T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    14.672,
+    51.614
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Spremberg (1945-04-18), день 1 из 3"
+  },
+  {
+   "id": "su_52a@1945-04-15T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.8817,
+    51.2663
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Weissenberg (1945-04-18), день 1 из 3"
+  },
+  {
+   "id": "su_5gva@1945-04-15T17:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    14.701,
+    51.563
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: BadMuskau, 1945-04-16 (B, ±8 км)"
+  },
+  {
+   "id": "su_5ua@1945-04-15T17:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    14.34,
+    52.577
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Platkow / Gusow, 1945-04-16 (B, ±4 км)"
+  },
+  {
+   "id": "su_61a@1945-04-15T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    14.2015,
+    52.9095
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к OsinowDolny (1945-04-17), день 1 из 2"
+  },
+  {
+   "id": "su_65a@1945-04-15T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.6272,
+    53.4594
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-20), день 1 из 5"
+  },
+  {
+   "id": "su_69a@1945-04-15T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.5248,
+    52.431
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Lebus / Carzig (1945-04-19), день 1 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-15T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.4718,
+    53.245
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "промежуточная цель к Gartz (1945-04-20), день 1 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-15T17:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    14.406,
+    52.506
+   ],
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ист.: Dolgelin / Friedersdorf_MOL, 1945-04-16 (B, ±4 км)"
+  },
+  {
+   "id": "de_berlin@1945-04-15T18:00:hold",
+   "formation": "de_berlin",
+   "task": "hold",
+   "target": [
+    13.36,
+    52.533
+   ],
+   "issuedAt": "1945-04-15T18:00",
+   "source": "script",
+   "note": "оборона Берлина"
+  },
+  {
+   "id": "de_ffo@1945-04-15T18:00:hold",
+   "formation": "de_ffo",
+   "task": "hold",
+   "target": [
+    14.558,
+    52.348
+   ],
+   "issuedAt": "1945-04-15T18:00",
+   "source": "script",
+   "note": "«крепость» Франкфурт: держаться до приказа на отход"
+  },
+  {
+   "id": "de_lvi@1945-04-15T18:00:hold",
+   "formation": "de_lvi",
+   "task": "hold",
+   "target": [
+    14.381,
+    52.532
+   ],
+   "issuedAt": "1945-04-15T18:00",
+   "source": "script",
+   "note": "удерживать Зееловские высоты (приказ Гитлера об обороне на рубеже Одера)"
+  },
+  {
+   "id": "de_ci@1945-04-16T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    14.126,
+    52.758
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Wriezen / BadFreienwalde (1945-04-18), день 2 из 3"
+  },
+  {
+   "id": "de_lvii@1945-04-16T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.9186,
+    51.1964
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Diehsa / Kodersdorf (1945-04-20), день 2 из 5"
+  },
+  {
+   "id": "de_oder@1945-04-16T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.4502,
+    53.3118
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 2 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-16T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.7118,
+    51.4268
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Boxberg / Uhyst (1945-04-20), день 2 из 5"
+  },
+  {
+   "id": "de_swinemuende@1945-04-16T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4595,
+    53.8341
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 2 из 17"
+  },
+  {
+   "id": "de_v@1945-04-16T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.239,
+    51.936
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Luebben / Halbe (1945-04-19), день 2 из 4"
+  },
+  {
+   "id": "de_v_ss@1945-04-16T18:00",
+   "formation": "de_v_ss",
+   "task": "defend",
+   "target": [
+    14.625,
+    52.2
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow / Fuerstenberg_O (1945-04-19), день 2 из 4"
+  },
+  {
+   "id": "de_xi_ss@1945-04-16T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    14.3315,
+    52.4125
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Berkenbrueck / Kersdorf (1945-04-19), день 2 из 4"
+  },
+  {
+   "id": "de_xxxii@1945-04-16T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5815,
+    53.4783
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 2 из 11"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-16T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    14.0235,
+    53.0593
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 2 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-16T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.2588,
+    51.417
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eilenburg / Wurzen (1945-04-20), день 2 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-16T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    14.4747,
+    51.6447
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Drebkau (1945-04-19), день 1 из 3"
+  },
+  {
+   "id": "su_19a@1945-04-16T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    15.236,
+    54.0108
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 2 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-16T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    14.2435,
+    52.551
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Reichenberg / Buckow (1945-04-18), день 1 из 2"
+  },
+  {
+   "id": "su_1pa@1945-04-16T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    14.2297,
+    52.745
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Ranft / Wriezen (1945-04-19), день 1 из 3"
+  },
+  {
+   "id": "su_2gta@1945-04-16T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    14.368,
+    52.5945
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gusow / Werbig (1945-04-18), день 1 из 2"
+  },
+  {
+   "id": "su_2pa@1945-04-16T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.842,
+    51.331
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Niesky (1945-04-18), день 2 из 3"
+  },
+  {
+   "id": "su_2ua@1945-04-16T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.6598,
+    53.7248
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Police / Stepnica (1945-04-20), день 2 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-16T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.618,
+    52.208
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow / Fuerstenberg_O (1945-04-19), день 2 из 4"
+  },
+  {
+   "id": "su_3a@1945-04-16T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    14.429,
+    52.549
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-23), день 2 из 8"
+  },
+  {
+   "id": "su_3gta@1945-04-16T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    14.557,
+    51.681
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "ист.: Gahry, 1945-04-17 (B, ±5 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-16T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.646,
+    51.744
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "ист.: Forst, 1945-04-17 (B, ±5 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-16T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    14.2175,
+    52.6685
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Moeglin / Batzlow (1945-04-18), день 1 из 2"
+  },
+  {
+   "id": "su_47a@1945-04-16T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    14.2133,
+    52.716
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Wriezen (1945-04-18), день 2 из 3"
+  },
+  {
+   "id": "su_49a@1945-04-16T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.3597,
+    53.0797
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Widuchowa (1945-04-21), день 2 из 6"
+  },
+  {
+   "id": "su_4gta@1945-04-16T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    14.526,
+    51.593
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Spremberg (1945-04-18), день 2 из 3"
+  },
+  {
+   "id": "su_52a@1945-04-16T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.7703,
+    51.2317
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Weissenberg (1945-04-18), день 2 из 3"
+  },
+  {
+   "id": "su_5gva@1945-04-16T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    14.594,
+    51.566
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Spremberg (1945-04-19), день 1 из 3"
+  },
+  {
+   "id": "su_5ua@1945-04-16T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    14.3545,
+    52.5715
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gusow / Werbig (1945-04-18), день 1 из 2"
+  },
+  {
+   "id": "su_61a@1945-04-16T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    14.145,
+    52.852
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "ист.: OsinowDolny, 1945-04-17 (B, ±12 км)"
+  },
+  {
+   "id": "su_65a@1945-04-16T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.5884,
+    53.4388
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-20), день 2 из 5"
+  },
+  {
+   "id": "su_69a@1945-04-16T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.5155,
+    52.435
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Lebus / Carzig (1945-04-19), день 2 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-16T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.4516,
+    53.236
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gartz (1945-04-20), день 2 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-16T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    14.381,
+    52.532
+   ],
+   "issuedAt": "1945-04-16T18:00",
+   "source": "script",
+   "note": "ист.: Seelow, 1945-04-17 (B, ±4 км)"
+  },
+  {
+   "id": "de_ci@1945-04-17T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    14.083,
+    52.752
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Wriezen / BadFreienwalde, 1945-04-18 (B, ±8 км)"
+  },
+  {
+   "id": "de_lvii@1945-04-17T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.8824,
+    51.2166
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Diehsa / Kodersdorf (1945-04-20), день 3 из 5"
+  },
+  {
+   "id": "de_oder@1945-04-17T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.4293,
+    53.3082
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 3 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-17T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.6572,
+    51.4102
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Boxberg / Uhyst (1945-04-20), день 3 из 5"
+  },
+  {
+   "id": "de_swinemuende@1945-04-17T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4513,
+    53.8336
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 3 из 17"
+  },
+  {
+   "id": "de_v@1945-04-17T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.0185,
+    51.9805
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Luebben / Halbe (1945-04-19), день 3 из 4"
+  },
+  {
+   "id": "de_v_ss@1945-04-17T18:00",
+   "formation": "de_v_ss",
+   "task": "defend",
+   "target": [
+    14.625,
+    52.2
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow / Fuerstenberg_O (1945-04-19), день 3 из 4"
+  },
+  {
+   "id": "de_xi_ss@1945-04-17T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    14.2688,
+    52.3792
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Berkenbrueck / Kersdorf (1945-04-19), день 3 из 4"
+  },
+  {
+   "id": "de_xxxii@1945-04-17T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5828,
+    53.4729
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 3 из 11"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-17T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.9282,
+    53.106
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 3 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-17T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.3962,
+    51.416
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eilenburg / Wurzen (1945-04-20), день 3 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-17T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    14.3473,
+    51.6513
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Drebkau (1945-04-19), день 2 из 3"
+  },
+  {
+   "id": "su_19a@1945-04-17T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    15.16,
+    53.9933
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 3 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-17T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    14.094,
+    52.589
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Reichenberg / Buckow, 1945-04-18 (B, ±5 км)"
+  },
+  {
+   "id": "su_1pa@1945-04-17T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    14.1683,
+    52.744
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Ranft / Wriezen (1945-04-19), день 2 из 3"
+  },
+  {
+   "id": "su_2gta@1945-04-17T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    14.369,
+    52.566
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Gusow / Werbig, 1945-04-18 (B, ±5 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-17T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.793,
+    51.318
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Niesky, 1945-04-18 (B, ±6 км)"
+  },
+  {
+   "id": "su_2ua@1945-04-17T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.6392,
+    53.6832
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Police / Stepnica (1945-04-20), день 3 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-17T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.6215,
+    52.204
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow / Fuerstenberg_O (1945-04-19), день 3 из 4"
+  },
+  {
+   "id": "su_3a@1945-04-17T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    14.3165,
+    52.5285
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-23), день 3 из 8"
+  },
+  {
+   "id": "su_3gta@1945-04-17T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    14.358,
+    51.664
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Spremberg / Cottbus, 1945-04-18 (A, ±10 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-17T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.491,
+    51.75
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Forst / Cottbus, 1945-04-18 (B, ±8 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-17T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    14.113,
+    52.648
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Moeglin / Batzlow, 1945-04-18 (B, ±5 км)"
+  },
+  {
+   "id": "su_47a@1945-04-17T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    14.137,
+    52.717
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Wriezen, 1945-04-18 (B, ±8 км)"
+  },
+  {
+   "id": "su_49a@1945-04-17T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.368,
+    53.0915
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Widuchowa (1945-04-21), день 3 из 6"
+  },
+  {
+   "id": "su_4gta@1945-04-17T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    14.38,
+    51.572
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Spremberg, 1945-04-18 (B, ±8 км)"
+  },
+  {
+   "id": "su_52a@1945-04-17T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.659,
+    51.197
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Weissenberg, 1945-04-18 (B, ±8 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-17T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    14.487,
+    51.569
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Spremberg (1945-04-19), день 2 из 3"
+  },
+  {
+   "id": "su_5ua@1945-04-17T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    14.369,
+    52.566
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Gusow / Werbig, 1945-04-18 (B, ±4 км)"
+  },
+  {
+   "id": "su_61a@1945-04-17T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    14.0875,
+    52.8492
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eberswalde (1945-04-23), день 1 из 6"
+  },
+  {
+   "id": "su_65a@1945-04-17T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.5496,
+    53.4182
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-20), день 3 из 5"
+  },
+  {
+   "id": "su_69a@1945-04-17T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.5062,
+    52.439
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Lebus / Carzig (1945-04-19), день 3 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-17T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.4314,
+    53.227
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gartz (1945-04-20), день 3 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-17T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    14.291,
+    52.495
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "ист.: Neuentempel / Marxdorf, 1945-04-18 (B, ±5 км)"
+  },
+  {
+   "id": "de_ci@1945-04-18T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.9415,
+    52.7935
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eberswalde (1945-04-20), день 1 из 2"
+  },
+  {
+   "id": "de_lvi@1945-04-18T18:00",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": [
+    14.14,
+    52.504
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Muencheberg, 1945-04-19 (B, ±8 км)"
+  },
+  {
+   "id": "de_lvii@1945-04-18T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.8462,
+    51.2368
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Diehsa / Kodersdorf (1945-04-20), день 4 из 5"
+  },
+  {
+   "id": "de_oder@1945-04-18T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.4084,
+    53.3046
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 4 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-18T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.6026,
+    51.3936
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Boxberg / Uhyst (1945-04-20), день 4 из 5"
+  },
+  {
+   "id": "de_swinemuende@1945-04-18T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4431,
+    53.8331
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 4 из 17"
+  },
+  {
+   "id": "de_v@1945-04-18T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    13.798,
+    52.025
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Luebben / Halbe, 1945-04-19 (B, ±20 км)"
+  },
+  {
+   "id": "de_v_ss@1945-04-18T18:00",
+   "formation": "de_v_ss",
+   "task": "defend",
+   "target": [
+    14.625,
+    52.2
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Brieskow / Fuerstenberg_O, 1945-04-19 (B, ±10 км)"
+  },
+  {
+   "id": "de_xi_ss@1945-04-18T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    14.206,
+    52.346
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Berkenbrueck / Kersdorf, 1945-04-19 (B, ±8 км)"
+  },
+  {
+   "id": "de_xxxii@1945-04-18T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5841,
+    53.4675
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 4 из 11"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-18T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.8329,
+    53.1527
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 4 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-18T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.5336,
+    51.415
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eilenburg / Wurzen (1945-04-20), день 4 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-18T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    14.22,
+    51.658
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Drebkau, 1945-04-19 (B, ±10 км)"
+  },
+  {
+   "id": "su_19a@1945-04-18T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    15.084,
+    53.9757
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 4 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-18T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    14.14,
+    52.504
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Muencheberg, 1945-04-19 (B, ±6 км)"
+  },
+  {
+   "id": "su_1pa@1945-04-18T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    14.107,
+    52.743
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Ranft / Wriezen, 1945-04-19 (B, ±6 км)"
+  },
+  {
+   "id": "su_2gta@1945-04-18T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    14.063,
+    52.677
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Proetzel / Wriezen, 1945-04-19 (A, ±10 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-18T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.582,
+    51.2855
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Koenigswartha / Bautzen (1945-04-20), день 1 из 2"
+  },
+  {
+   "id": "su_2ua@1945-04-18T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.6186,
+    53.6416
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Police / Stepnica (1945-04-20), день 4 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-18T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.625,
+    52.2
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Brieskow / Fuerstenberg_O, 1945-04-19 (B, ±8 км)"
+  },
+  {
+   "id": "su_3a@1945-04-18T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    14.204,
+    52.508
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-23), день 4 из 8"
+  },
+  {
+   "id": "su_3gta@1945-04-18T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    14.005,
+    51.762
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Vetschau / Calau, 1945-04-19 (B, ±8 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-18T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.3905,
+    51.7515
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Cottbus / Kolkwitz (1945-04-20), день 1 из 2"
+  },
+  {
+   "id": "su_3ua@1945-04-18T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.989,
+    52.637
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Proetzel, 1945-04-19 (C, ±12 км)"
+  },
+  {
+   "id": "su_47a@1945-04-18T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    14.137,
+    52.717
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Wriezen, 1945-04-19 (B, ±5 км)"
+  },
+  {
+   "id": "su_49a@1945-04-18T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.3763,
+    53.1033
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Widuchowa (1945-04-21), день 4 из 6"
+  },
+  {
+   "id": "su_4gta@1945-04-18T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    13.832,
+    51.8
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Calau / Luckau, 1945-04-19 (C, ±20 км)"
+  },
+  {
+   "id": "su_52a@1945-04-18T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.662,
+    51.213
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Bautzen / Kodersdorf, 1945-04-19 (B, ±15 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-18T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    14.38,
+    51.572
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Spremberg, 1945-04-19 (B, ±8 км)"
+  },
+  {
+   "id": "su_5ua@1945-04-18T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    14.238,
+    52.597
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Neuhardenberg, 1945-04-19 (B, ±5 км)"
+  },
+  {
+   "id": "su_61a@1945-04-18T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    14.03,
+    52.8463
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eberswalde (1945-04-23), день 2 из 6"
+  },
+  {
+   "id": "su_65a@1945-04-18T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.5108,
+    53.3976
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-20), день 4 из 5"
+  },
+  {
+   "id": "su_69a@1945-04-18T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.497,
+    52.443
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Lebus / Carzig, 1945-04-19 (B, ±6 км)"
+  },
+  {
+   "id": "su_70a@1945-04-18T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.4112,
+    53.218
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gartz (1945-04-20), день 4 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-18T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    14.14,
+    52.504
+   ],
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "ист.: Muencheberg, 1945-04-19 (A, ±5 км)"
+  },
+  {
+   "id": "de_ci@1945-04-19T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.8,
+    52.835
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Eberswalde, 1945-04-20 (B, ±10 км)"
+  },
+  {
+   "id": "de_lvi@1945-04-19T18:00",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": [
+    13.689,
+    52.489
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Rahnsdorf / Neuenhagen, 1945-04-20 (B, ±8 км)"
+  },
+  {
+   "id": "de_lvii@1945-04-19T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.81,
+    51.257
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Diehsa / Kodersdorf, 1945-04-20 (C, ±10 км)"
+  },
+  {
+   "id": "de_oder@1945-04-19T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.3875,
+    53.301
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 5 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-19T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.548,
+    51.377
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Boxberg / Uhyst, 1945-04-20 (B, ±10 км)"
+  },
+  {
+   "id": "de_swinemuende@1945-04-19T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4348,
+    53.8326
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 5 из 17"
+  },
+  {
+   "id": "de_v@1945-04-19T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.067,
+    51.891
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Cottbus (1945-04-21), день 1 из 2"
+  },
+  {
+   "id": "de_v_ss@1945-04-19T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    14.5077,
+    52.1597
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Beeskow / Lieberose (1945-04-22), день 1 из 3"
+  },
+  {
+   "id": "de_xi_ss@1945-04-19T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    14.1355,
+    52.352
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fuerstenwalde (1945-04-21), день 1 из 2"
+  },
+  {
+   "id": "de_xxxii@1945-04-19T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5854,
+    53.4622
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 5 из 11"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-19T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.7377,
+    53.1993
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 5 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-19T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.671,
+    51.414
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Eilenburg / Wurzen, 1945-04-20 (B, ±15 км)"
+  },
+  {
+   "id": "su_13a@1945-04-19T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.614,
+    51.74
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Brenitz / Walddrehna, 1945-04-20 (B, ±10 км)"
+  },
+  {
+   "id": "su_19a@1945-04-19T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    15.008,
+    53.9581
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 5 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-19T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.947,
+    52.465
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-21), день 1 из 2"
+  },
+  {
+   "id": "su_1pa@1945-04-19T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    13.972,
+    52.7605
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Trampe (1945-04-21), день 1 из 2"
+  },
+  {
+   "id": "su_2gta@1945-04-19T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.588,
+    52.679
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Bernau, 1945-04-20 (A, ±5 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-19T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.371,
+    51.253
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Koenigswartha / Bautzen, 1945-04-20 (B, ±10 км)"
+  },
+  {
+   "id": "su_2ua@1945-04-19T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.598,
+    53.6
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Police / Stepnica, 1945-04-20 (B, ±15 км)"
+  },
+  {
+   "id": "su_33a@1945-04-19T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.609,
+    52.218
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow (1945-04-22), день 1 из 3"
+  },
+  {
+   "id": "su_3a@1945-04-19T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    14.0915,
+    52.4875
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-23), день 5 из 8"
+  },
+  {
+   "id": "su_3gta@1945-04-19T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.502,
+    52.046
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Baruth, 1945-04-20 (A, ±8 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-19T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.29,
+    51.753
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Cottbus / Kolkwitz, 1945-04-20 (B, ±8 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-19T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.665,
+    52.662
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Bernau / Werneuchen, 1945-04-20 (C, ±15 км)"
+  },
+  {
+   "id": "su_47a@1945-04-19T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    13.8245,
+    52.6775
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bernau / B_Pankow (1945-04-21), день 1 из 2"
+  },
+  {
+   "id": "su_49a@1945-04-19T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.3847,
+    53.1152
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Widuchowa (1945-04-21), день 5 из 6"
+  },
+  {
+   "id": "su_4gta@1945-04-19T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    13.398,
+    51.922
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Luckau / Jueterbog, 1945-04-20 (A, ±15 км)"
+  },
+  {
+   "id": "su_52a@1945-04-19T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.81,
+    51.257
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Diehsa / Kodersdorf, 1945-04-20 (B, ±6 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-19T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    14.38,
+    51.572
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Spremberg, 1945-04-20 (B, ±4 км)"
+  },
+  {
+   "id": "su_5ua@1945-04-19T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.84,
+    52.576
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Strausberg / Altlandsberg, 1945-04-20 (B, ±6 км)"
+  },
+  {
+   "id": "su_61a@1945-04-19T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.9725,
+    52.8435
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eberswalde (1945-04-23), день 3 из 6"
+  },
+  {
+   "id": "su_65a@1945-04-19T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.472,
+    53.377
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Przeclaw, 1945-04-20 (B, ±4 км)"
+  },
+  {
+   "id": "su_69a@1945-04-19T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.5155,
+    52.435
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Lebus (1945-04-21), день 1 из 2"
+  },
+  {
+   "id": "su_70a@1945-04-19T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.391,
+    53.209
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Gartz, 1945-04-20 (B, ±5 км)"
+  },
+  {
+   "id": "su_8gva@1945-04-19T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    14.103,
+    52.431
+   ],
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "ист.: Muencheberg / Fuerstenwalde, 1945-04-20 (A, ±12 км)"
+  },
+  {
+   "id": "de_ci@1945-04-20T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.7535,
+    52.8495
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 1 из 10"
+  },
+  {
+   "id": "de_iii_ss@1945-04-20T18:00",
+   "formation": "de_iii_ss",
+   "task": "defend",
+   "target": [
+    13.8,
+    52.835
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Eberswalde, 1945-04-21 (A, ±12 км)"
+  },
+  {
+   "id": "de_lvi@1945-04-20T18:00",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": [
+    13.572,
+    52.501
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: B_Koepenick / B_Marzahn, 1945-04-21 (A, ±6 км)"
+  },
+  {
+   "id": "de_lvii@1945-04-20T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.7597,
+    51.237
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Weissenberg (1945-04-23), день 1 из 3"
+  },
+  {
+   "id": "de_oder@1945-04-20T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.3666,
+    53.2974
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 6 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-20T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.6035,
+    51.287
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Weissenberg (1945-04-22), день 1 из 2"
+  },
+  {
+   "id": "de_swinemuende@1945-04-20T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4266,
+    53.8322
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 6 из 17"
+  },
+  {
+   "id": "de_v@1945-04-20T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.336,
+    51.757
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Cottbus, 1945-04-21 (A, ±10 км)"
+  },
+  {
+   "id": "de_v_ss@1945-04-20T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    14.3903,
+    52.1193
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Beeskow / Lieberose (1945-04-22), день 2 из 3"
+  },
+  {
+   "id": "de_xi_ss@1945-04-20T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    14.065,
+    52.358
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Fuerstenwalde, 1945-04-21 (C, ±15 км)"
+  },
+  {
+   "id": "de_xxxii@1945-04-20T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5866,
+    53.4568
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 6 из 11"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-20T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.6424,
+    53.246
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 6 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-20T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.628,
+    51.5082
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Coswig (1945-04-25), день 1 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-20T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.4923,
+    51.8152
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Luckenwalde / Jueterbog (1945-04-24), день 1 из 4"
+  },
+  {
+   "id": "su_19a@1945-04-20T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.932,
+    53.9405
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 6 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-20T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.754,
+    52.426
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Erkner, 1945-04-21 (A, ±8 км)"
+  },
+  {
+   "id": "su_1pa@1945-04-20T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    13.837,
+    52.778
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Trampe, 1945-04-21 (B, ±10 км)"
+  },
+  {
+   "id": "su_28a@1945-04-20T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.475,
+    52.131
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Baruth / Zossen, 1945-04-21 (C, ±20 км)"
+  },
+  {
+   "id": "su_2gta@1945-04-20T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.598,
+    52.541
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Hoenow / B_Marzahn, 1945-04-21 (A, ±8 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-20T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.1435,
+    51.2065
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Kamenz / Dresden (1945-04-22), день 1 из 2"
+  },
+  {
+   "id": "su_2ua@1945-04-20T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.5728,
+    53.5554
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-25), день 1 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-20T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.593,
+    52.236
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Brieskow (1945-04-22), день 2 из 3"
+  },
+  {
+   "id": "su_3a@1945-04-20T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    13.979,
+    52.467
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-23), день 6 из 8"
+  },
+  {
+   "id": "su_3gta@1945-04-20T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.537,
+    52.258
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Zossen / KoenigsWusterhausen, 1945-04-21 (A, ±12 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-20T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.336,
+    51.757
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Cottbus, 1945-04-21 (B, ±5 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-20T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.463,
+    52.555
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: B_Weissensee, 1945-04-21 (B, ±6 км)"
+  },
+  {
+   "id": "su_47a@1945-04-20T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    13.512,
+    52.638
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Bernau / B_Pankow, 1945-04-21 (C, ±15 км)"
+  },
+  {
+   "id": "su_49a@1945-04-20T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.393,
+    53.127
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Widuchowa, 1945-04-21 (B, ±6 км)"
+  },
+  {
+   "id": "su_4gta@1945-04-20T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    13.208,
+    52.016
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Beelitz / Jueterbog (1945-04-22), день 1 из 2"
+  },
+  {
+   "id": "su_52a@1945-04-20T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.814,
+    51.253
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Jaenkendorf, 1945-04-21 (B, ±6 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-20T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    14.171,
+    51.584
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: NeuWelzow, 1945-04-21 (B, ±6 км)"
+  },
+  {
+   "id": "su_5ua@1945-04-20T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.563,
+    52.543
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: B_Marzahn, 1945-04-21 (B, ±4 км)"
+  },
+  {
+   "id": "su_61a@1945-04-20T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.915,
+    52.8407
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eberswalde (1945-04-23), день 4 из 6"
+  },
+  {
+   "id": "su_65a@1945-04-20T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.472,
+    53.377
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-22), день 1 из 2"
+  },
+  {
+   "id": "su_69a@1945-04-20T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.534,
+    52.427
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Lebus, 1945-04-21 (A, ±10 км)"
+  },
+  {
+   "id": "su_70a@1945-04-20T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.3215,
+    53.227
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Petershagen_UM (1945-04-22), день 1 из 2"
+  },
+  {
+   "id": "su_8gva@1945-04-20T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.754,
+    52.426
+   ],
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ист.: Erkner, 1945-04-21 (A, ±8 км)"
+  },
+  {
+   "id": "de_ci@1945-04-21T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.707,
+    52.864
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 2 из 10"
+  },
+  {
+   "id": "de_iii_ss@1945-04-21T18:00",
+   "formation": "de_iii_ss",
+   "task": "defend",
+   "target": [
+    13.8,
+    52.835
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eberswalde (1945-04-23), день 1 из 2"
+  },
+  {
+   "id": "de_lvi@1945-04-21T18:00",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": [
+    13.489,
+    52.4885
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Neukoelln / B_Tempelhof (1945-04-23), день 1 из 2"
+  },
+  {
+   "id": "de_lvii@1945-04-21T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.7093,
+    51.217
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Weissenberg (1945-04-23), день 2 из 3"
+  },
+  {
+   "id": "de_oder@1945-04-21T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.3457,
+    53.2938
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 7 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-21T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.659,
+    51.197
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Weissenberg, 1945-04-22 (B, ±10 км)"
+  },
+  {
+   "id": "de_swinemuende@1945-04-21T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4184,
+    53.8317
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 7 из 17"
+  },
+  {
+   "id": "de_v@1945-04-21T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.318,
+    51.872
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Cottbus / Lieberose, 1945-04-22 (A, ±15 км)"
+  },
+  {
+   "id": "de_v_ss@1945-04-21T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    14.273,
+    52.079
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Beeskow / Lieberose, 1945-04-22 (C, ±20 км)"
+  },
+  {
+   "id": "de_xi_ss@1945-04-21T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    14.0072,
+    52.308
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow / MaerkischBuchholz (1945-04-25), день 1 из 4"
+  },
+  {
+   "id": "de_xxxii@1945-04-21T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5879,
+    53.4515
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 7 из 11"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-21T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.5471,
+    53.2927
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 7 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-21T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.585,
+    51.6024
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Coswig (1945-04-25), день 2 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-21T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.3705,
+    51.8905
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Luckenwalde / Jueterbog (1945-04-24), день 2 из 4"
+  },
+  {
+   "id": "su_19a@1945-04-21T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.856,
+    53.9229
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 7 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-21T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.693,
+    52.418
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bohnsdorf (1945-04-24), день 1 из 3"
+  },
+  {
+   "id": "su_1pa@1945-04-21T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    13.246,
+    52.753
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Oranienburg, 1945-04-22 (B, ±10 км)"
+  },
+  {
+   "id": "su_28a@1945-04-21T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.5043,
+    52.145
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к KoenigsWusterhausen / Baruth (1945-04-24), день 1 из 3"
+  },
+  {
+   "id": "su_2gta@1945-04-21T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.226,
+    52.695
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Hennigsdorf / Oranienburg, 1945-04-22 (A, ±10 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-21T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    13.916,
+    51.16
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Kamenz / Dresden, 1945-04-22 (C, ±25 км)"
+  },
+  {
+   "id": "su_2ua@1945-04-21T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.5476,
+    53.5108
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-25), день 2 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-21T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.577,
+    52.254
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Brieskow, 1945-04-22 (C, ±15 км)"
+  },
+  {
+   "id": "su_3a@1945-04-21T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    13.8665,
+    52.4465
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Erkner (1945-04-23), день 7 из 8"
+  },
+  {
+   "id": "su_3gta@1945-04-21T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.291,
+    52.409
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: B_Teltow / B_Lichterfelde, 1945-04-22 (B, ±6 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-21T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.336,
+    51.757
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Cottbus, 1945-04-22 (A, ±5 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-21T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.435,
+    52.598
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: B_Pankow, 1945-04-22 (B, ±6 км)"
+  },
+  {
+   "id": "su_47a@1945-04-21T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    13.206,
+    52.638
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Hennigsdorf, 1945-04-22 (B, ±8 км)"
+  },
+  {
+   "id": "su_49a@1945-04-21T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.3793,
+    53.1288
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gartz / Schwedt (1945-04-25), день 1 из 4"
+  },
+  {
+   "id": "su_4gta@1945-04-21T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    13.018,
+    52.11
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Beelitz / Jueterbog, 1945-04-22 (B, ±20 км)"
+  },
+  {
+   "id": "su_52a@1945-04-21T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.7365,
+    51.225
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Weissenberg (1945-04-23), день 1 из 2"
+  },
+  {
+   "id": "su_5gva@1945-04-21T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.905,
+    51.5493
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Torgau / Strehla (1945-04-25), день 1 из 4"
+  },
+  {
+   "id": "su_5ua@1945-04-21T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.496,
+    52.51
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: B_Lichtenberg, 1945-04-22 (B, ±5 км)"
+  },
+  {
+   "id": "su_61a@1945-04-21T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.8575,
+    52.8378
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Eberswalde (1945-04-23), день 5 из 6"
+  },
+  {
+   "id": "su_65a@1945-04-21T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.472,
+    53.377
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Przeclaw, 1945-04-22 (B, ±5 км)"
+  },
+  {
+   "id": "su_69a@1945-04-21T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.4395,
+    52.3865
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fuerstenwalde / Beeskow (1945-04-25), день 1 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-21T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.252,
+    53.245
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: Petershagen_UM, 1945-04-22 (B, ±6 км)"
+  },
+  {
+   "id": "su_8gva@1945-04-21T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.623,
+    52.457
+   ],
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "ист.: B_Friedrichshagen, 1945-04-22 (B, ±5 км)"
+  },
+  {
+   "id": "de_ci@1945-04-22T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.6605,
+    52.8785
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 3 из 10"
+  },
+  {
+   "id": "de_ffo@1945-04-22T18:00",
+   "formation": "de_ffo",
+   "task": "defend",
+   "target": [
+    14.55,
+    52.341
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Frankfurt, 1945-04-23 (B, ±5 км)"
+  },
+  {
+   "id": "de_iii_ss@1945-04-22T18:00",
+   "formation": "de_iii_ss",
+   "task": "defend",
+   "target": [
+    13.8,
+    52.835
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Eberswalde, 1945-04-23 (A, ±10 км)"
+  },
+  {
+   "id": "de_lvi@1945-04-22T18:00",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": [
+    13.406,
+    52.476
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: B_Neukoelln / B_Tempelhof, 1945-04-23 (A, ±6 км)"
+  },
+  {
+   "id": "de_lvii@1945-04-22T18:00",
+   "formation": "de_lvii",
+   "task": "withdraw",
+   "target": [
+    14.659,
+    51.197
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Weissenberg, 1945-04-23 (B, ±8 км)"
+  },
+  {
+   "id": "de_oder@1945-04-22T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.3248,
+    53.2902
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 8 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-22T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.6301,
+    51.195
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen (1945-04-30), день 1 из 8"
+  },
+  {
+   "id": "de_swinemuende@1945-04-22T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4101,
+    53.8312
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 8 из 17"
+  },
+  {
+   "id": "de_v@1945-04-22T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.2367,
+    51.8977
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к MaerkischBuchholz / Luebben (1945-04-28), день 1 из 6"
+  },
+  {
+   "id": "de_v_ss@1945-04-22T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    14.2117,
+    52.1002
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow (1945-04-28), день 1 из 6"
+  },
+  {
+   "id": "de_xi_ss@1945-04-22T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    13.9495,
+    52.258
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow / MaerkischBuchholz (1945-04-25), день 2 из 4"
+  },
+  {
+   "id": "de_xx@1945-04-22T18:00",
+   "formation": "de_xx",
+   "task": "defend",
+   "target": [
+    12.873,
+    52.097
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Treuenbrietzen (1945-04-24), день 1 из 2"
+  },
+  {
+   "id": "de_xxxii@1945-04-22T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5892,
+    53.4461
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 8 из 11"
+  },
+  {
+   "id": "de_xxxxi@1945-04-22T18:00",
+   "formation": "de_xxxxi",
+   "task": "defend",
+   "target": [
+    12.444,
+    52.509
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Rathenow / Brandenburg, 1945-04-23 (C, ±30 км)"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-22T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.4519,
+    53.3393
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 8 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-22T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.542,
+    51.6966
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Coswig (1945-04-25), день 3 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-22T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.2488,
+    51.9657
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Luckenwalde / Jueterbog (1945-04-24), день 3 из 4"
+  },
+  {
+   "id": "su_19a@1945-04-22T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.78,
+    53.9053
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 8 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-22T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.632,
+    52.41
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bohnsdorf (1945-04-24), день 2 из 3"
+  },
+  {
+   "id": "su_1pa@1945-04-22T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    13.138,
+    52.757
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Kremmen (1945-04-24), день 1 из 2"
+  },
+  {
+   "id": "su_28a@1945-04-22T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.5337,
+    52.159
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к KoenigsWusterhausen / Baruth (1945-04-24), день 2 из 3"
+  },
+  {
+   "id": "su_2gta@1945-04-22T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.206,
+    52.638
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Hennigsdorf, 1945-04-23 (A, ±8 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-22T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.0487,
+    51.215
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Koenigswartha (1945-04-25), день 1 из 3"
+  },
+  {
+   "id": "su_2ua@1945-04-22T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.5224,
+    53.4662
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-25), день 3 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-22T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.467,
+    52.2267
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Beeskow (1945-04-25), день 1 из 3"
+  },
+  {
+   "id": "su_3a@1945-04-22T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    13.754,
+    52.426
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Erkner, 1945-04-23 (B, ±15 км)"
+  },
+  {
+   "id": "su_3gta@1945-04-22T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.302,
+    52.387
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: B_Stahnsdorf / B_Lichtenrade, 1945-04-23 (B, ±8 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-22T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    14.067,
+    51.891
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe / Luebben (1945-04-24), день 1 из 2"
+  },
+  {
+   "id": "su_3ua@1945-04-22T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.418,
+    52.592
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: B_Pankow / B_Niederschoenhausen, 1945-04-23 (B, ±4 км)"
+  },
+  {
+   "id": "su_47a@1945-04-22T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    12.877,
+    52.606
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Nauen, 1945-04-23 (B, ±10 км)"
+  },
+  {
+   "id": "su_49a@1945-04-22T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.3655,
+    53.1305
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gartz / Schwedt (1945-04-25), день 2 из 4"
+  },
+  {
+   "id": "su_4gta@1945-04-22T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    13.208,
+    52.387
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: B_Stahnsdorf, 1945-04-23 (B, ±8 км)"
+  },
+  {
+   "id": "su_52a@1945-04-22T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.659,
+    51.197
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Weissenberg, 1945-04-23 (B, ±6 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-22T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.639,
+    51.5145
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Torgau / Strehla (1945-04-25), день 2 из 4"
+  },
+  {
+   "id": "su_5ua@1945-04-22T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.497,
+    52.495
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: B_Ostkreuz / B_Karlshorst, 1945-04-23 (B, ±4 км)"
+  },
+  {
+   "id": "su_61a@1945-04-22T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.8,
+    52.835
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: Eberswalde, 1945-04-23 (C, ±15 км)"
+  },
+  {
+   "id": "su_65a@1945-04-22T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.4477,
+    53.3587
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw / Tantow (1945-04-25), день 1 из 3"
+  },
+  {
+   "id": "su_69a@1945-04-22T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.345,
+    52.346
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fuerstenwalde / Beeskow (1945-04-25), день 2 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-22T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.2623,
+    53.2577
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 1 из 3"
+  },
+  {
+   "id": "su_8gva@1945-04-22T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.55,
+    52.457
+   ],
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "ист.: B_Koepenick / B_Schoeneweide, 1945-04-23 (B, ±4 км)"
+  },
+  {
+   "id": "de_ci@1945-04-23T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.614,
+    52.893
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 4 из 10"
+  },
+  {
+   "id": "de_iii_ss@1945-04-23T18:00",
+   "formation": "de_iii_ss",
+   "task": "withdraw",
+   "target": [
+    13.469,
+    52.796
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Oranienburg / Kremmen (1945-04-25), день 1 из 2"
+  },
+  {
+   "id": "de_lvi@1945-04-23T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.435,
+    52.481
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: B_Neukoelln, 1945-04-24 (A, ±5 км)"
+  },
+  {
+   "id": "de_oder@1945-04-23T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.3039,
+    53.2866
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 9 из 10"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-23T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.6013,
+    51.193
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen (1945-04-30), день 2 из 8"
+  },
+  {
+   "id": "de_swinemuende@1945-04-23T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.4019,
+    53.8308
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 9 из 17"
+  },
+  {
+   "id": "de_v@1945-04-23T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.1553,
+    51.9233
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к MaerkischBuchholz / Luebben (1945-04-28), день 2 из 6"
+  },
+  {
+   "id": "de_v_ss@1945-04-23T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    14.1503,
+    52.1213
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow (1945-04-28), день 2 из 6"
+  },
+  {
+   "id": "de_xi_ss@1945-04-23T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    13.8918,
+    52.208
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow / MaerkischBuchholz (1945-04-25), день 3 из 4"
+  },
+  {
+   "id": "de_xx@1945-04-23T18:00",
+   "formation": "de_xx",
+   "task": "defend",
+   "target": [
+    12.873,
+    52.097
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: Treuenbrietzen, 1945-04-24 (B, ±8 км)"
+  },
+  {
+   "id": "de_xxxii@1945-04-23T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5905,
+    53.4407
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 9 из 11"
+  },
+  {
+   "id": "de_xxxxi@1945-04-23T18:00",
+   "formation": "de_xxxxi",
+   "task": "defend",
+   "target": [
+    12.444,
+    52.509
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Rathenow / Brandenburg (1945-04-26), день 1 из 3"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-23T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.3566,
+    53.386
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 9 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-23T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.499,
+    51.7908
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Coswig (1945-04-25), день 4 из 5"
+  },
+  {
+   "id": "su_13a@1945-04-23T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.127,
+    52.041
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: Luckenwalde / Jueterbog, 1945-04-24 (B, ±12 км)"
+  },
+  {
+   "id": "su_19a@1945-04-23T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.704,
+    53.8877
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 9 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-23T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.571,
+    52.402
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: B_Bohnsdorf, 1945-04-24 (B, ±6 км)"
+  },
+  {
+   "id": "su_1pa@1945-04-23T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    13.03,
+    52.761
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: Kremmen, 1945-04-24 (B, ±15 км)"
+  },
+  {
+   "id": "su_28a@1945-04-23T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.563,
+    52.173
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: KoenigsWusterhausen / Baruth, 1945-04-24 (B, ±15 км)"
+  },
+  {
+   "id": "su_2gta@1945-04-23T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.067,
+    52.573
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: B_Siemensstadt / Nauen, 1945-04-24 (A, ±15 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-23T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.1813,
+    51.27
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Koenigswartha (1945-04-25), день 2 из 3"
+  },
+  {
+   "id": "su_2ua@1945-04-23T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.4972,
+    53.4216
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw (1945-04-25), день 4 из 5"
+  },
+  {
+   "id": "su_33a@1945-04-23T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.357,
+    52.1993
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Beeskow (1945-04-25), день 2 из 3"
+  },
+  {
+   "id": "su_3a@1945-04-23T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    13.754,
+    52.426
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: Erkner, 1945-04-24 (B, ±10 км)"
+  },
+  {
+   "id": "su_3gta@1945-04-23T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.259,
+    52.431
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: B_Zehlendorf, 1945-04-24 (B, ±4 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-23T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    13.798,
+    52.025
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: Halbe / Luebben, 1945-04-24 (B, ±12 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-23T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.367,
+    52.543
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: B_Wedding, 1945-04-24 (B, ±4 км)"
+  },
+  {
+   "id": "su_47a@1945-04-23T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    12.8605,
+    52.5415
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Ketzin (1945-04-25), день 1 из 2"
+  },
+  {
+   "id": "su_49a@1945-04-23T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.3517,
+    53.1322
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Gartz / Schwedt (1945-04-25), день 3 из 4"
+  },
+  {
+   "id": "su_4gta@1945-04-23T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    13.059,
+    52.401
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: Potsdam, 1945-04-24 (A, ±10 км)"
+  },
+  {
+   "id": "su_52a@1945-04-23T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.428,
+    51.181
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: Bautzen, 1945-04-24 (B, ±5 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-23T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.373,
+    51.4798
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Torgau / Strehla (1945-04-25), день 3 из 4"
+  },
+  {
+   "id": "su_5ua@1945-04-23T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.45,
+    52.512
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: B_Friedrichshain, 1945-04-24 (B, ±3 км)"
+  },
+  {
+   "id": "su_61a@1945-04-23T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.6029,
+    52.8329
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fehrbellin / Havelberg (1945-04-30), день 1 из 7"
+  },
+  {
+   "id": "su_65a@1945-04-23T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.4233,
+    53.3403
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Przeclaw / Tantow (1945-04-25), день 2 из 3"
+  },
+  {
+   "id": "su_69a@1945-04-23T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.2505,
+    52.3055
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fuerstenwalde / Beeskow (1945-04-25), день 3 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-23T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.2727,
+    53.2703
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Tantow / Penkun (1945-04-25), день 2 из 3"
+  },
+  {
+   "id": "su_8gva@1945-04-23T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.538,
+    52.395
+   ],
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "ист.: B_Bohnsdorf / B_Schoenefeld, 1945-04-24 (A, ±4 км)"
+  },
+  {
+   "id": "de_ci@1945-04-24T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.5675,
+    52.9075
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 5 из 10"
+  },
+  {
+   "id": "de_iii_ss@1945-04-24T18:00",
+   "formation": "de_iii_ss",
+   "task": "withdraw",
+   "target": [
+    13.138,
+    52.757
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Oranienburg / Kremmen, 1945-04-25 (B, ±15 км)"
+  },
+  {
+   "id": "de_lvi@1945-04-24T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.398,
+    52.494
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bendlerblock (1945-04-26), день 1 из 2"
+  },
+  {
+   "id": "de_oder@1945-04-24T18:00",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": [
+    14.283,
+    53.283
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Tantow / Penkun, 1945-04-25 (C, ±12 км)"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-24T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.5724,
+    51.191
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen (1945-04-30), день 3 из 8"
+  },
+  {
+   "id": "de_swinemuende@1945-04-24T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.3936,
+    53.8303
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 10 из 17"
+  },
+  {
+   "id": "de_v@1945-04-24T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    14.074,
+    51.949
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к MaerkischBuchholz / Luebben (1945-04-28), день 3 из 6"
+  },
+  {
+   "id": "de_v_ss@1945-04-24T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    14.089,
+    52.1425
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow (1945-04-28), день 3 из 6"
+  },
+  {
+   "id": "de_xi_ss@1945-04-24T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    13.834,
+    52.158
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Storkow / MaerkischBuchholz, 1945-04-25 (C, ±20 км)"
+  },
+  {
+   "id": "de_xx@1945-04-24T18:00",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": [
+    12.957,
+    52.229
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Beelitz, 1945-04-25 (B, ±8 км)"
+  },
+  {
+   "id": "de_xxxii@1945-04-24T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.5917,
+    53.4354
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Szczecin (1945-04-26), день 10 из 11"
+  },
+  {
+   "id": "de_xxxxi@1945-04-24T18:00",
+   "formation": "de_xxxxi",
+   "task": "defend",
+   "target": [
+    12.444,
+    52.509
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Rathenow / Brandenburg (1945-04-26), день 2 из 3"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-24T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.2613,
+    53.4327
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 10 из 15"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-24T18:00",
+   "formation": "de_xxxxviii",
+   "task": "withdraw",
+   "target": [
+    12.456,
+    51.885
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Coswig, 1945-04-25 (B, ±15 км)"
+  },
+  {
+   "id": "su_13a@1945-04-24T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.0917,
+    52.0613
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Treuenbrietzen / Beelitz (1945-04-30), день 1 из 6"
+  },
+  {
+   "id": "su_19a@1945-04-24T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.628,
+    53.8702
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 10 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-24T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.377,
+    52.471
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: B_Tempelhof, 1945-04-25 (B, ±4 км)"
+  },
+  {
+   "id": "su_1pa@1945-04-24T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    13.03,
+    52.761
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Kremmen, 1945-04-25 (B, ±15 км)"
+  },
+  {
+   "id": "su_28a@1945-04-24T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.519,
+    52.155
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Mittenwalde / Baruth, 1945-04-25 (B, ±15 км)"
+  },
+  {
+   "id": "su_2gta@1945-04-24T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.257,
+    52.54
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: B_Siemensstadt, 1945-04-25 (B, ±4 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-24T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.314,
+    51.325
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Koenigswartha, 1945-04-25 (B, ±10 км)"
+  },
+  {
+   "id": "su_2ua@1945-04-24T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.472,
+    53.377
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Przeclaw, 1945-04-25 (C, ±10 км)"
+  },
+  {
+   "id": "su_33a@1945-04-24T18:00",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": [
+    14.247,
+    52.172
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Beeskow, 1945-04-25 (C, ±20 км)"
+  },
+  {
+   "id": "su_3a@1945-04-24T18:00",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": [
+    13.83,
+    52.316
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Erkner / Storkow, 1945-04-25 (C, ±15 км)"
+  },
+  {
+   "id": "su_3gta@1945-04-24T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.302,
+    52.457
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: B_Dahlem / B_Steglitz, 1945-04-25 (B, ±4 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-24T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    13.716,
+    52.071
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Teurow / Briesen_TF, 1945-04-25 (B, ±10 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-24T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.335,
+    52.535
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: B_Moabit, 1945-04-25 (B, ±4 км)"
+  },
+  {
+   "id": "su_47a@1945-04-24T18:00",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": [
+    12.844,
+    52.477
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Ketzin, 1945-04-25 (A, ±5 км)"
+  },
+  {
+   "id": "su_49a@1945-04-24T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.338,
+    53.134
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Gartz / Schwedt, 1945-04-25 (C, ±12 км)"
+  },
+  {
+   "id": "su_4gta@1945-04-24T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    12.844,
+    52.477
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Ketzin, 1945-04-25 (A, ±5 км)"
+  },
+  {
+   "id": "su_52a@1945-04-24T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.428,
+    51.181
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Bautzen, 1945-04-25 (B, ±8 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-24T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.107,
+    51.445
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Torgau / Strehla, 1945-04-25 (A, ±15 км)"
+  },
+  {
+   "id": "su_5ua@1945-04-24T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.45,
+    52.512
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: B_Friedrichshain, 1945-04-25 (B, ±3 км)"
+  },
+  {
+   "id": "su_61a@1945-04-24T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.4057,
+    52.8307
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fehrbellin / Havelberg (1945-04-30), день 2 из 7"
+  },
+  {
+   "id": "su_65a@1945-04-24T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.399,
+    53.322
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Przeclaw / Tantow, 1945-04-25 (B, ±8 км)"
+  },
+  {
+   "id": "su_69a@1945-04-24T18:00",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": [
+    14.156,
+    52.265
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Fuerstenwalde / Beeskow, 1945-04-25 (C, ±20 км)"
+  },
+  {
+   "id": "su_70a@1945-04-24T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    14.283,
+    53.283
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: Tantow / Penkun, 1945-04-25 (B, ±10 км)"
+  },
+  {
+   "id": "su_8gva@1945-04-24T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.41,
+    52.46
+   ],
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "ист.: B_Britz / B_Tempelhof, 1945-04-25 (B, ±4 км)"
+  },
+  {
+   "id": "de_ci@1945-04-25T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.521,
+    52.922
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 6 из 10"
+  },
+  {
+   "id": "de_lvi@1945-04-25T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.361,
+    52.507
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "ист.: B_Bendlerblock, 1945-04-26 (A, ±2 км)"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-25T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.5435,
+    51.189
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen (1945-04-30), день 4 из 8"
+  },
+  {
+   "id": "de_swinemuende@1945-04-25T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.3854,
+    53.8298
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 11 из 17"
+  },
+  {
+   "id": "de_v@1945-04-25T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    13.9927,
+    51.9747
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к MaerkischBuchholz / Luebben (1945-04-28), день 4 из 6"
+  },
+  {
+   "id": "de_v_ss@1945-04-25T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    14.0277,
+    52.1637
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow (1945-04-28), день 4 из 6"
+  },
+  {
+   "id": "de_xi_ss@1945-04-25T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    13.7892,
+    52.149
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe / Teupitz (1945-04-29), день 1 из 4"
+  },
+  {
+   "id": "de_xx@1945-04-25T18:00",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": [
+    12.772,
+    52.185
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "ист.: Belzig / Beelitz, 1945-04-26 (A, ±20 км)"
+  },
+  {
+   "id": "de_xxxii@1945-04-25T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.593,
+    53.43
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "ист.: Szczecin, 1945-04-26 (B, ±10 км)"
+  },
+  {
+   "id": "de_xxxxi@1945-04-25T18:00",
+   "formation": "de_xxxxi",
+   "task": "defend",
+   "target": [
+    12.444,
+    52.509
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "ист.: Rathenow / Brandenburg, 1945-04-26 (C, ±25 км)"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-25T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.1661,
+    53.4793
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 11 из 15"
+  },
+  {
+   "id": "su_13a@1945-04-25T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.0563,
+    52.0817
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Treuenbrietzen / Beelitz (1945-04-30), день 2 из 6"
+  },
+  {
+   "id": "su_19a@1945-04-25T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.552,
+    53.8526
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie / Wolin (1945-04-27), день 11 из 12"
+  },
+  {
+   "id": "su_1gta@1945-04-25T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.374,
+    52.48
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_1pa@1945-04-25T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    12.9772,
+    52.7536
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Linum / Braedikow (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_28a@1945-04-25T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.5264,
+    52.1422
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Teupitz / Baruth (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_2gta@1945-04-25T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.2694,
+    52.536
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Moabit / B_Charlottenburg (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_2pa@1945-04-25T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.2702,
+    51.314
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Kamenz (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_2ua@1945-04-25T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.2846,
+    53.4968
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Greifswald / Anklam (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_3gta@1945-04-25T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.3032,
+    52.4652
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Fehrbelliner / B_Charlottenburg (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_3gva@1945-04-25T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    13.7128,
+    52.0782
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_3ua@1945-04-25T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.3432,
+    52.5318
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Reichstag (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_49a@1945-04-25T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    14.04,
+    53.1642
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Mirow (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_4gta@1945-04-25T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    12.8768,
+    52.4446
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Potsdam / Beelitz (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_52a@1945-04-25T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.4166,
+    51.1954
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen / Koenigswartha (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_5gva@1945-04-25T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.0842,
+    51.4636
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Torgau (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_5ua@1945-04-25T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.4408,
+    52.5118
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Spittelmarkt (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_61a@1945-04-25T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.2086,
+    52.8286
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fehrbellin / Havelberg (1945-04-30), день 3 из 7"
+  },
+  {
+   "id": "su_65a@1945-04-25T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.593,
+    53.43
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "ист.: Szczecin, 1945-04-26 (B, ±5 км)"
+  },
+  {
+   "id": "su_70a@1945-04-25T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    13.9714,
+    53.3518
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Malchin / Waren (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-25T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.4004,
+    52.4712
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 1 из 5"
+  },
+  {
+   "id": "de_ci@1945-04-26T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.4745,
+    52.9365
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 7 из 10"
+  },
+  {
+   "id": "de_lvi@1945-04-26T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.361,
+    52.507
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bendlerblock (1945-05-02), день 1 из 6"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-26T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.5146,
+    51.187
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen (1945-04-30), день 5 из 8"
+  },
+  {
+   "id": "de_swinemuende@1945-04-26T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.3772,
+    53.8294
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 12 из 17"
+  },
+  {
+   "id": "de_v@1945-04-26T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    13.9113,
+    52.0003
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к MaerkischBuchholz / Luebben (1945-04-28), день 5 из 6"
+  },
+  {
+   "id": "de_v_ss@1945-04-26T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    13.9663,
+    52.1848
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Storkow (1945-04-28), день 5 из 6"
+  },
+  {
+   "id": "de_xi_ss@1945-04-26T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    13.7445,
+    52.14
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe / Teupitz (1945-04-29), день 2 из 4"
+  },
+  {
+   "id": "de_xx@1945-04-26T18:00",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": [
+    12.8247,
+    52.2273
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Ferch (1945-04-29), день 1 из 3"
+  },
+  {
+   "id": "de_xxxii@1945-04-26T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    14.096,
+    53.535
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demmin / Gueustrow (1945-04-30), день 1 из 4"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-26T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    13.0708,
+    53.526
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 12 из 15"
+  },
+  {
+   "id": "su_13a@1945-04-26T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    13.021,
+    52.102
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Treuenbrietzen / Beelitz (1945-04-30), день 3 из 6"
+  },
+  {
+   "id": "su_19a@1945-04-26T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.476,
+    53.835
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "ист.: Swinoujscie / Wolin, 1945-04-27 (B, ±15 км)"
+  },
+  {
+   "id": "su_1gta@1945-04-26T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.371,
+    52.489
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_1pa@1945-04-26T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    12.9244,
+    52.7462
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Linum / Braedikow (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_28a@1945-04-26T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.5338,
+    52.1294
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Teupitz / Baruth (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_2gta@1945-04-26T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.2818,
+    52.532
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Moabit / B_Charlottenburg (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_2pa@1945-04-26T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.2264,
+    51.303
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Kamenz (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_2ua@1945-04-26T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    14.0972,
+    53.6166
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Greifswald / Anklam (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_3gta@1945-04-26T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.3044,
+    52.4734
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Fehrbelliner / B_Charlottenburg (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_3gva@1945-04-26T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    13.7096,
+    52.0854
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_3ua@1945-04-26T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.3514,
+    52.5286
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Reichstag (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_49a@1945-04-26T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    13.742,
+    53.1944
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Mirow (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_4gta@1945-04-26T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    12.9096,
+    52.4122
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Potsdam / Beelitz (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_52a@1945-04-26T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.4052,
+    51.2098
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen / Koenigswartha (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_5gva@1945-04-26T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.0614,
+    51.4822
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Torgau (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_5ua@1945-04-26T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.4316,
+    52.5116
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Spittelmarkt (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_61a@1945-04-26T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    13.0114,
+    52.8264
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fehrbellin / Havelberg (1945-04-30), день 4 из 7"
+  },
+  {
+   "id": "su_65a@1945-04-26T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    14.296,
+    53.476
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Neubrandenburg / Friedland (1945-04-30), день 1 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-26T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    13.6598,
+    53.4206
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Malchin / Waren (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-26T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.3908,
+    52.4824
+   ],
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 2 из 5"
+  },
+  {
+   "id": "de_ci@1945-04-27T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.428,
+    52.951
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 8 из 10"
+  },
+  {
+   "id": "de_lvi@1945-04-27T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.361,
+    52.507
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bendlerblock (1945-05-02), день 2 из 6"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-27T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.4858,
+    51.185
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen (1945-04-30), день 6 из 8"
+  },
+  {
+   "id": "de_swinemuende@1945-04-27T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.3689,
+    53.8289
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 13 из 17"
+  },
+  {
+   "id": "de_v@1945-04-27T18:00",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": [
+    13.83,
+    52.026
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "ист.: MaerkischBuchholz / Luebben, 1945-04-28 (C, ±15 км)"
+  },
+  {
+   "id": "de_v_ss@1945-04-27T18:00",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": [
+    13.905,
+    52.206
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "ист.: Storkow, 1945-04-28 (B, ±10 км)"
+  },
+  {
+   "id": "de_xi_ss@1945-04-27T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    13.6997,
+    52.131
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe / Teupitz (1945-04-29), день 3 из 4"
+  },
+  {
+   "id": "de_xx@1945-04-27T18:00",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": [
+    12.8773,
+    52.2697
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Ferch (1945-04-29), день 2 из 3"
+  },
+  {
+   "id": "de_xxxii@1945-04-27T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    13.599,
+    53.64
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demmin / Gueustrow (1945-04-30), день 2 из 4"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-27T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    12.9755,
+    53.5727
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 13 из 15"
+  },
+  {
+   "id": "su_13a@1945-04-27T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    12.9857,
+    52.1223
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Treuenbrietzen / Beelitz (1945-04-30), день 4 из 6"
+  },
+  {
+   "id": "su_19a@1945-04-27T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.476,
+    53.835
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Wolin / Swinoujscie (1945-05-02), день 1 из 5"
+  },
+  {
+   "id": "su_1gta@1945-04-27T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.368,
+    52.498
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_1pa@1945-04-27T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    12.8716,
+    52.7388
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Linum / Braedikow (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_28a@1945-04-27T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.5412,
+    52.1166
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Teupitz / Baruth (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_2gta@1945-04-27T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.2942,
+    52.528
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Moabit / B_Charlottenburg (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_2pa@1945-04-27T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.1826,
+    51.292
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Kamenz (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_2ua@1945-04-27T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    13.9098,
+    53.7364
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Greifswald / Anklam (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_3gta@1945-04-27T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.3056,
+    52.4816
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Fehrbelliner / B_Charlottenburg (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_3gva@1945-04-27T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    13.7064,
+    52.0926
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_3ua@1945-04-27T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.3596,
+    52.5254
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Reichstag (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_49a@1945-04-27T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    13.444,
+    53.2246
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Mirow (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_4gta@1945-04-27T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    12.9424,
+    52.3798
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Potsdam / Beelitz (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_52a@1945-04-27T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.3938,
+    51.2242
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen / Koenigswartha (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_5gva@1945-04-27T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.0386,
+    51.5008
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Torgau (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_5ua@1945-04-27T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.4224,
+    52.5114
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Spittelmarkt (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_61a@1945-04-27T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    12.8143,
+    52.8243
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fehrbellin / Havelberg (1945-04-30), день 5 из 7"
+  },
+  {
+   "id": "su_65a@1945-04-27T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    13.999,
+    53.522
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Neubrandenburg / Friedland (1945-04-30), день 2 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-27T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    13.3482,
+    53.4894
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Malchin / Waren (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-27T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.3812,
+    52.4936
+   ],
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 3 из 5"
+  },
+  {
+   "id": "de_ci@1945-04-28T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.3815,
+    52.9655
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Zehdenick (1945-04-30), день 9 из 10"
+  },
+  {
+   "id": "de_lvi@1945-04-28T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.361,
+    52.507
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bendlerblock (1945-05-02), день 3 из 6"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-28T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.4569,
+    51.183
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen (1945-04-30), день 7 из 8"
+  },
+  {
+   "id": "de_swinemuende@1945-04-28T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.3607,
+    53.8284
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 14 из 17"
+  },
+  {
+   "id": "de_xi_ss@1945-04-28T18:00",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": [
+    13.655,
+    52.122
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "ист.: Halbe / Teupitz, 1945-04-29 (B, ±10 км)"
+  },
+  {
+   "id": "de_xx@1945-04-28T18:00",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": [
+    12.93,
+    52.312
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "ист.: Ferch, 1945-04-29 (A, ±5 км)"
+  },
+  {
+   "id": "de_xxxii@1945-04-28T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    13.102,
+    53.745
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demmin / Gueustrow (1945-04-30), день 3 из 4"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-28T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    12.8803,
+    53.6193
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Demzin (1945-04-30), день 14 из 15"
+  },
+  {
+   "id": "su_13a@1945-04-28T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    12.9503,
+    52.1427
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Treuenbrietzen / Beelitz (1945-04-30), день 5 из 6"
+  },
+  {
+   "id": "su_19a@1945-04-28T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.476,
+    53.835
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Wolin / Swinoujscie (1945-05-02), день 2 из 5"
+  },
+  {
+   "id": "su_1gta@1945-04-28T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.365,
+    52.507
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_1pa@1945-04-28T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    12.8188,
+    52.7314
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Linum / Braedikow (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_28a@1945-04-28T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.5486,
+    52.1038
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Teupitz / Baruth (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_2gta@1945-04-28T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.3066,
+    52.524
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Moabit / B_Charlottenburg (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_2pa@1945-04-28T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.1388,
+    51.281
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Kamenz (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_2ua@1945-04-28T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    13.7224,
+    53.8562
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Greifswald / Anklam (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_3gta@1945-04-28T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.3068,
+    52.4898
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Fehrbelliner / B_Charlottenburg (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_3gva@1945-04-28T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    13.7032,
+    52.0998
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Halbe (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_3ua@1945-04-28T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.3678,
+    52.5222
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Reichstag (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_49a@1945-04-28T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    13.146,
+    53.2548
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Mirow (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_4gta@1945-04-28T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    12.9752,
+    52.3474
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Potsdam / Beelitz (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_52a@1945-04-28T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.3824,
+    51.2386
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Bautzen / Koenigswartha (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_5gva@1945-04-28T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    13.0158,
+    51.5194
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Torgau (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_5ua@1945-04-28T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.4132,
+    52.5112
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Spittelmarkt (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_61a@1945-04-28T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    12.6171,
+    52.8221
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Fehrbellin / Havelberg (1945-04-30), день 6 из 7"
+  },
+  {
+   "id": "su_65a@1945-04-28T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    13.702,
+    53.568
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Neubrandenburg / Friedland (1945-04-30), день 3 из 4"
+  },
+  {
+   "id": "su_70a@1945-04-28T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    13.0366,
+    53.5582
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Malchin / Waren (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "su_8gva@1945-04-28T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.3716,
+    52.5048
+   ],
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Tiergarten (1945-04-30), день 4 из 5"
+  },
+  {
+   "id": "de_ci@1945-04-29T18:00",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": [
+    13.335,
+    52.98
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Zehdenick, 1945-04-30 (C, ±15 км)"
+  },
+  {
+   "id": "de_lvi@1945-04-29T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.361,
+    52.507
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bendlerblock (1945-05-02), день 4 из 6"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-29T18:00",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": [
+    14.428,
+    51.181
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Bautzen, 1945-04-30 (C, ±15 км)"
+  },
+  {
+   "id": "de_swinemuende@1945-04-29T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.3525,
+    53.8279
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 15 из 17"
+  },
+  {
+   "id": "de_xx@1945-04-29T18:00",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": [
+    12.945,
+    52.263
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Beelitz / Elsholz (1945-05-01), день 1 из 2"
+  },
+  {
+   "id": "de_xxxii@1945-04-29T18:00",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": [
+    12.605,
+    53.85
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Demmin / Gueustrow, 1945-04-30 (C, ±25 км)"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-29T18:00",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": [
+    12.785,
+    53.666
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Demzin, 1945-04-30 (B, ±15 км)"
+  },
+  {
+   "id": "su_13a@1945-04-29T18:00",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": [
+    12.915,
+    52.163
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Treuenbrietzen / Beelitz, 1945-04-30 (C, ±15 км)"
+  },
+  {
+   "id": "su_19a@1945-04-29T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.476,
+    53.835
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Wolin / Swinoujscie (1945-05-02), день 3 из 5"
+  },
+  {
+   "id": "su_1gta@1945-04-29T18:00",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": [
+    13.362,
+    52.516
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: B_Tiergarten, 1945-04-30 (B, ±3 км)"
+  },
+  {
+   "id": "su_1pa@1945-04-29T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    12.766,
+    52.724
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Linum / Braedikow, 1945-04-30 (B, ±8 км)"
+  },
+  {
+   "id": "su_28a@1945-04-29T18:00",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": [
+    13.556,
+    52.091
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Teupitz / Baruth, 1945-04-30 (B, ±10 км)"
+  },
+  {
+   "id": "su_2gta@1945-04-29T18:00",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": [
+    13.319,
+    52.52
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: B_Moabit / B_Charlottenburg, 1945-04-30 (C, ±4 км)"
+  },
+  {
+   "id": "su_2pa@1945-04-29T18:00",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": [
+    14.095,
+    51.27
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Kamenz, 1945-04-30 (B, ±15 км)"
+  },
+  {
+   "id": "su_2ua@1945-04-29T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    13.535,
+    53.976
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Greifswald / Anklam, 1945-04-30 (B, ±10 км)"
+  },
+  {
+   "id": "su_3gta@1945-04-29T18:00",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": [
+    13.308,
+    52.498
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: B_Fehrbelliner / B_Charlottenburg, 1945-04-30 (C, ±4 км)"
+  },
+  {
+   "id": "su_3gva@1945-04-29T18:00",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": [
+    13.7,
+    52.107
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Halbe, 1945-04-30 (C, ±12 км)"
+  },
+  {
+   "id": "su_3ua@1945-04-29T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.376,
+    52.519
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: B_Reichstag, 1945-04-30 (A, ±1 км)"
+  },
+  {
+   "id": "su_49a@1945-04-29T18:00",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": [
+    12.848,
+    53.285
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Mirow, 1945-04-30 (C, ±20 км)"
+  },
+  {
+   "id": "su_4gta@1945-04-29T18:00",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": [
+    13.008,
+    52.315
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Potsdam / Beelitz, 1945-04-30 (C, ±15 км)"
+  },
+  {
+   "id": "su_52a@1945-04-29T18:00",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": [
+    14.371,
+    51.253
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Bautzen / Koenigswartha, 1945-04-30 (C, ±12 км)"
+  },
+  {
+   "id": "su_5gva@1945-04-29T18:00",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": [
+    12.993,
+    51.538
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Torgau, 1945-04-30 (C, ±20 км)"
+  },
+  {
+   "id": "su_5ua@1945-04-29T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.404,
+    52.511
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: B_Spittelmarkt, 1945-04-30 (C, ±3 км)"
+  },
+  {
+   "id": "su_61a@1945-04-29T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    12.42,
+    52.82
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Fehrbellin / Havelberg, 1945-04-30 (B, ±20 км)"
+  },
+  {
+   "id": "su_65a@1945-04-29T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    13.405,
+    53.614
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Neubrandenburg / Friedland, 1945-04-30 (B, ±15 км)"
+  },
+  {
+   "id": "su_70a@1945-04-29T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    12.725,
+    53.627
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: Malchin / Waren, 1945-04-30 (B, ±15 км)"
+  },
+  {
+   "id": "su_8gva@1945-04-29T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.362,
+    52.516
+   ],
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "ист.: B_Tiergarten, 1945-04-30 (B, ±3 км)"
+  },
+  {
+   "id": "de_lvi@1945-04-30T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.361,
+    52.507
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Bendlerblock (1945-05-02), день 5 из 6"
+  },
+  {
+   "id": "de_swinemuende@1945-04-30T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.3442,
+    53.8275
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Swinoujscie (1945-05-02), день 16 из 17"
+  },
+  {
+   "id": "de_xx@1945-04-30T18:00",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": [
+    12.96,
+    52.214
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "ист.: Beelitz / Elsholz, 1945-05-01 (B, ±8 км)"
+  },
+  {
+   "id": "su_19a@1945-04-30T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.476,
+    53.835
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Wolin / Swinoujscie (1945-05-02), день 4 из 5"
+  },
+  {
+   "id": "su_1pa@1945-04-30T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    12.672,
+    52.7315
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Friesack (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "su_2ua@1945-04-30T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    13.3085,
+    54.143
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Stralsund (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "su_3ua@1945-04-30T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.376,
+    52.519
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Reichstag (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "su_5ua@1945-04-30T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.398,
+    52.511
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Reichskanzlei / B_Spittelmarkt (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "su_61a@1945-04-30T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    12.247,
+    52.8225
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Havelberg (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "su_65a@1945-04-30T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    13.224,
+    53.8635
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Grimmen (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "su_70a@1945-04-30T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    12.418,
+    53.88
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к Rostock / Warnemuende (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "su_8gva@1945-04-30T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.361,
+    52.5245
+   ],
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script",
+   "note": "промежуточная цель к B_Mitte (1945-05-02), день 1 из 2"
+  },
+  {
+   "id": "de_lvi@1945-05-01T18:00",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": [
+    13.361,
+    52.507
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: B_Bendlerblock, 1945-05-02 (A, ±2 км)"
+  },
+  {
+   "id": "de_swinemuende@1945-05-01T18:00",
+   "formation": "de_swinemuende",
+   "task": "withdraw",
+   "target": [
+    14.336,
+    53.827
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: Swinoujscie, 1945-05-02 (C, ±15 км)"
+  },
+  {
+   "id": "su_19a@1945-05-01T18:00",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": [
+    14.476,
+    53.835
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: Wolin / Swinoujscie, 1945-05-02 (B, ±15 км)"
+  },
+  {
+   "id": "su_1pa@1945-05-01T18:00",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": [
+    12.578,
+    52.739
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: Friesack, 1945-05-02 (B, ±15 км)"
+  },
+  {
+   "id": "su_2ua@1945-05-01T18:00",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": [
+    13.082,
+    54.31
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: Stralsund, 1945-05-02 (C, ±10 км)"
+  },
+  {
+   "id": "su_3ua@1945-05-01T18:00",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": [
+    13.376,
+    52.519
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: B_Reichstag, 1945-05-02 (B, ±2 км)"
+  },
+  {
+   "id": "su_5ua@1945-05-01T18:00",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": [
+    13.392,
+    52.511
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: B_Reichskanzlei / B_Spittelmarkt, 1945-05-02 (C, ±3 км)"
+  },
+  {
+   "id": "su_61a@1945-05-01T18:00",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": [
+    12.074,
+    52.825
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: Havelberg, 1945-05-02 (C, ±20 км)"
+  },
+  {
+   "id": "su_65a@1945-05-01T18:00",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": [
+    13.043,
+    54.113
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: Grimmen, 1945-05-02 (C, ±20 км)"
+  },
+  {
+   "id": "su_70a@1945-05-01T18:00",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": [
+    12.111,
+    54.133
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: Rostock / Warnemuende, 1945-05-02 (B, ±8 км)"
+  },
+  {
+   "id": "su_8gva@1945-05-01T18:00",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": [
+    13.36,
+    52.533
+   ],
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "ист.: B_Mitte, 1945-05-02 (B, ±3 км)"
+  }
+ ],
+ "timeNote": "время московское; положение «за день» сравнивается с состоянием на начало следующего хода",
+ "notes": [
+  "su_1bf: делится 636800 чел., 1634 танков, 15534 орудий",
+  "su_1uf: делится 355720 чел., 837 танков, 12271 орудий",
+  "su_2bf: делится 353280 чел., 951 танков, 6642 орудий",
+  "de_9a: делится 112143 чел., 0 танков, 1200 орудий — в наборе данных 344 орудия — видимо, без зенитных и миномётов; принято 1 200 (C)",
+  "de_3pza: делится 95000 чел., 242 танков, 650 орудий — численность — оценка (C)",
+  "de_4pza: делится 110000 чел., 0 танков, 900 орудий — только корпуса против главной группировки 1 УФ; оценка (C)",
+  "de_12a: делится 55000 чел., 36 танков, 300 орудий"
+ ]
+}
