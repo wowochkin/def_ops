@@ -11,6 +11,7 @@ COPY packages/core/package.json packages/core/
 COPY packages/service-kit/package.json packages/service-kit/
 COPY packages/db/package.json packages/db/
 COPY packages/api-client/package.json packages/api-client/
+COPY packages/sim/package.json packages/sim/
 COPY services/documents/package.json services/documents/
 COPY services/render/package.json services/render/
 COPY services/registry/package.json services/registry/
