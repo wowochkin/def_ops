@@ -18,7 +18,8 @@
     "start": "npm run build && STATIC_DIR=apps/editor/dist node scripts/dev-services.mjs",
     "docs:library": "tsx scripts/gen-library-doc.ts",
     "docs:pdf": "node scripts/gen-library-pdf.mjs",
-    "llm:eval": "tsx services/staff/src/eval/cli.ts"
+    "llm:eval": "tsx services/staff/src/eval/cli.ts",
+    "llm:quick": "tsx services/staff/src/eval/quick.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

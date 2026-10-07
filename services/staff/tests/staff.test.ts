@@ -213,3 +213,34 @@ describe('проверка решения', () => {
     expect(md).toContain('| qwen3.8-test | medium | 1/1 |');
   });
 });
+
+describe('ответ по частям', () => {
+  it('приказы выдаются по одному, пока ответ ещё идёт', async () => {
+    const { ArrayItemStream } = await import('../src/stream-json');
+    const text = '<think>черновик "orders": это не JSON</think>{"intent":"Отвести {силы}","orders":[{"formation":"A","details":"с \\"кавычками\\" и } скобкой"},{"formation":"B"}],"risks":[]}';
+    let fed = 0, firstAt = -1;
+    const s = new ArrayItemStream<{ formation: string }>('orders', () => { if (firstAt < 0) firstAt = fed; });
+    for (const ch of text.match(/.{1,5}/gs)!) { fed += ch.length; s.push(ch); }
+    expect(s.items.map((x) => x.formation)).toEqual(['A', 'B']);
+    // первый приказ получен до конца ответа
+    expect(firstAt).toBeGreaterThan(0);
+    expect(firstAt).toBeLessThan(text.length - 20);
+  });
+
+  it('quickDecision: приказы — в onOrder по ходу, без размышления', async () => {
+    const { quickDecision } = await import('../src/staff');
+    mode = 'normal';
+    answer = JSON.stringify({ intent: 'Отвести силы на «Харденберг».', orders: goodDecision().orders });
+    const seen: string[] = [];
+    let intent = '';
+    const r = await quickDecision(client(), {
+      messages: [{ role: 'system', content: 's' }, { role: 'user', content: 'u' }],
+      onOrder: (o) => seen.push(o.formation), onIntent: (t) => (intent = t),
+    });
+    expect(seen).toHaveLength(2);
+    expect(intent).toContain('Харденберг');
+    expect(r.decision?.orders).toHaveLength(2);
+    expect(lastBody.chat_template_kwargs).toEqual({ enable_thinking: false });
+    expect(JSON.stringify(lastBody.messages)).toContain('только замысел и приказы');
+  });
+});

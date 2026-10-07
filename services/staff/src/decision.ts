@@ -74,6 +74,26 @@ export const DECISION_SCHEMA = {
   },
 } as const;
 
+/**
+ * Быстрое решение — первая часть ответа по частям: замысел и приказы, коротко,
+ * без размышления. Приказы уходят в движок по одному, по мере генерации;
+ * развёрнутая оценка обстановки идёт отдельным запросом в фоне.
+ */
+export interface QuickDecision {
+  intent: string;
+  orders: Order[];
+}
+
+export const QUICK_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['intent', 'orders'],
+  properties: {
+    intent: DECISION_SCHEMA.properties.intent,
+    orders: DECISION_SCHEMA.properties.orders,
+  },
+} as const;
+
 export interface Issue {
   level: 'error' | 'warning';
   text: string;
