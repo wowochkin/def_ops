@@ -2,7 +2,8 @@
  * Настройки локальной модели. Сервер — LM Studio (или llama.cpp) с протоколом
  * OpenAI на этом же компьютере; облачных вызовов нет.
  */
-export type Thinking = 'off' | 'low' | 'medium' | 'high';
+/** Уровни размышления Qwen3.8: low, medium, xhigh (high — для других моделей). */
+export type Thinking = 'off' | 'low' | 'medium' | 'high' | 'xhigh';
 
 export interface LlmConfig {
   /** Адрес API: http://localhost:1234/v1 (из Docker на Mac — http://host.docker.internal:1234/v1). */
@@ -24,7 +25,7 @@ export interface LlmConfig {
   draftModel?: string;
 }
 
-const THINKING: Thinking[] = ['off', 'low', 'medium', 'high'];
+const THINKING: Thinking[] = ['off', 'low', 'medium', 'high', 'xhigh'];
 
 export function configFromEnv(e: Record<string, string | undefined> = process.env): LlmConfig {
   const thinking = (e.DEFOPS_LLM_THINKING ?? 'medium') as Thinking;

@@ -19,8 +19,10 @@ export interface Expectation {
   all?: string[][];
   /** Есть доклады или просьбы наверх. */
   requests?: boolean;
-  /** Есть приказ с такой задачей и районом (для avoid). */
-  order?: { task: string[]; area?: string; toArea?: string };
+  /** Есть приказ с такой задачей и районом (и, если задано, формированием и направлением). */
+  order?: { task: string[]; area?: string; toArea?: string; formation?: string };
+  /** Достаточно выполнения любого из вариантов. */
+  oneOf?: Omit<Expectation, 'id' | 'text'>[];
 }
 
 export interface Scenario {
@@ -106,13 +108,16 @@ export function decisionText(d: Decision): string {
 
 const re = (p: string) => new RegExp(p.toLowerCase().replace(/ё/g, 'е'), 'i');
 
-export function matches(e: Expectation, d: Decision): boolean {
+export function matches(e: Omit<Expectation, 'id' | 'text'>, d: Decision): boolean {
+  if (e.oneOf) return e.oneOf.some((x) => matches(x, d));
   const t = decisionText(d);
   if (e.requests) return d.requests.some((r) => r.trim().length > 10);
   if (e.order) {
     const o = e.order;
     return d.orders.some((x) => o.task.includes(x.task)
-      && (!o.area || re(o.area).test(norm(x.area)) || (!!o.toArea && !!x.toArea && re(o.toArea).test(norm(x.toArea)))));
+      && (!o.formation || re(o.formation).test(norm(x.formation)))
+      && (!o.area || re(o.area).test(norm(x.area)))
+      && (!o.toArea || (!!x.toArea && re(o.toArea).test(norm(x.toArea)))));
   }
   if (e.any && !e.any.some((p) => re(p).test(t))) return false;
   if (e.all && !e.all.every((g) => g.some((p) => re(p).test(t)))) return false;

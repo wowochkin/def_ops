@@ -150,7 +150,7 @@ const goodDecision = (): Decision => ({
   enemyIntent: 'Прорыв на Зееловские высоты и выход по шоссе № 1 к Берлину.',
   intent: 'Отвести основные силы с первой позиции на позицию «Харденберг» до артподготовки; держать подвижный резерв для контратак.',
   orders: [
-    { formation: '56-й танковый корпус (LVI. Panzerkorps)', task: 'withdraw', area: 'первая позиция по Одербруху (Oderbruch)', toArea: 'позиция «Харденберг» (Hardenberg-Stellung) по Зееловским высотам', deadline: 'к 02:00 16.04', details: 'на первой позиции оставить прикрытие' },
+    { formation: '56-й танковый корпус (LVI. Panzerkorps)', task: 'withdraw', area: 'первая позиция (главная полоса обороны) по Одербруху (Oderbruch)', toArea: 'вторая позиция «Харденберг» (Hardenberg-Stellung)', deadline: 'к 02:00 16.04', details: 'на первой позиции оставить прикрытие' },
     { formation: '11-й танковый корпус СС', task: 'defend', area: 'Лебус', toArea: null, deadline: '16.04', details: 'резерв за второй позицией для контратак' },
   ],
   requests: ['Просить передачи армии дивизий резерва ОКВ «Нордланд» и «Недерланд».'],
@@ -174,6 +174,16 @@ describe('проверка решения', () => {
     d.orders.push({ formation: '7-я танковая армия', task: 'attack', area: 'кюстринский плацдарм', toArea: null, deadline: '16.04', details: '' });
     expect(checkDecision(d, { formations: s.own_forces.map((f) => f.name), areas: s.areas }).issues.some((i) => /нет среди своих/.test(i.text))).toBe(true);
     expect(matches(s.avoid[0], d)).toBe(true);
+  });
+
+  it('«держать первую позицию любой ценой» не засчитывается как отвод', () => {
+    const s = s1();
+    const d = goodDecision();
+    d.intent = 'Удержать первую позицию. Подготовить отвод на «Вотан» при прорыве.';
+    d.orders = [{ formation: '101-й армейский корпус (CI. Armeekorps)', task: 'hold', area: 'первая позиция по Одербруху', toArea: null, deadline: '16.04', details: 'при прорыве первой позиции — отвод' }];
+    const hit = (id: string) => matches(s.expect.find((e) => e.id === id)!, d);
+    expect(hit('pullback')).toBe(false);
+    expect(matches(s.avoid.find((e) => e.id === 'hold-first')!, d)).toBe(true);
   });
 
   it('JSON в конце размышления (сервер не разделил ответ) находится', async () => {
