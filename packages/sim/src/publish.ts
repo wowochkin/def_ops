@@ -4,7 +4,7 @@
  * фронта («призраки») для сравнения, рубежи театра. Всё на шкале времени
  * документа, поэтому прогон смотрится ползунком времени, как обычная карта.
  */
-import { createFeature, emptyDocument, type Feature, type Layer, type LngLat, type MapDocument, type Side, type SymbolFeature } from '@def-ops/core';
+import { createFeature, emptyDocument, type ArrowFeature, type Feature, type Layer, type LngLat, type MapDocument, type Side, type SymbolFeature } from '@def-ops/core';
 import { frontLine } from './front';
 import { dist } from './geo';
 import type { History, RunResult } from './history';
@@ -20,6 +20,8 @@ export interface PublishOptions {
   combats?: boolean;
   /** Линия фронта рисуется, только где формирования обеих сторон ближе этого, км. */
   frontReachKm?: number;
+  /** Наименьшая длина стрелки боя на карте, км. */
+  minArrowKm?: number;
 }
 
 /** Короткая подпись знака: «8 гв. А», «XI тк СС», «Франкфурт». */
@@ -52,7 +54,7 @@ export function shortName(name: string): string {
 const tankish = (f: Formation, ctx: SimContext) => profileOf(ctx, f.side).unitTypes[f.type]?.mobility !== 'foot';
 
 export function runToDocument(ctx: SimContext, run: RunResult, history?: History | null, o: PublishOptions = {}): MapDocument {
-  o = { frontReachKm: 50, ...o };
+  o = { frontReachKm: 50, minArrowKm: 25, ...o };
   const own = o.ownSide ?? ctx.scenario.sides[0].id;
   const sideOf = (s: string): Side => (s === own ? 'own' : 'enemy');
   const T = ctx.theatre;
@@ -65,9 +67,9 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('hist-front', 'История: линия фронта', 'front', 0.5),
     mk('hist-units', 'История: положения («призраки»)', 'custom', 0.45),
     mk('sim-front', 'Переигровка: линия фронта', 'front'),
-    mk('sim-combat', 'Переигровка: бои за ход', 'custom', 0.85, o.combats !== false),
     mk('sim-enemy', 'Переигровка: противник', 'enemy'),
     mk('sim-own', 'Переигровка: свои войска', 'friendly'),
+    mk('sim-combat', 'Переигровка: бои за ход', 'custom', 0.8, o.combats !== false),
   ];
   const features: Feature[] = [];
   const end = run.final.time;
@@ -131,19 +133,34 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     }
   }
 
-  // бои за ход: стрелка от наступающих к обороняющимся
+  // бои за ход: у каждого наступающего — стрелка в сторону обороняющихся длиной не меньше minArrowKm,
+  // хвост позади знака; вид стрелки — по исходу (прорыв, продвижение, отражено)
   if (o.combats !== false) {
+    const P = (p: LngLat) => T.proj.toXY(p);
     for (const j of run.final.journal) {
       if (j.kind !== 'combat') continue;
       const sn = run.snapshots.find((x) => x.time === j.time);
       const pos = (id: string) => sn?.units.find((u) => u.id === id)?.at ?? byId.get(id)!.position;
-      const c = (ids: string[]): LngLat => { const ps = ids.map(pos); return [ps.reduce((a, p) => a + p[0], 0) / ps.length, ps.reduce((a, p) => a + p[1], 0) / ps.length]; };
-      const a = c(j.attackers), d = c(j.defenders);
-      const side = sideOf(byId.get(j.attackers[0])!.side);
-      const arrow = createFeature('arrow', 'rkka.offensive', { points: [a, d], layerId: 'sim-combat' }, 0.8, side);
-      arrow.time = { from: j.time, to: addHours(j.time, ctx.scenario.turnHours) };
-      arrow.name = `${j.attackers.map((x) => shortName(byId.get(x)!.name)).join(', ')} → ${j.defenders.map((x) => shortName(byId.get(x)!.name)).join(', ')}: ${j.outcome}, соотношение ${j.ratio}, ${j.advanceKm} км`;
-      features.push(arrow);
+      const dc = j.defenders.map((id) => P(pos(id)));
+      const d: [number, number] = [dc.reduce((a2, p) => a2 + p[0], 0) / dc.length, dc.reduce((a2, p) => a2 + p[1], 0) / dc.length];
+      const strong = j.outcome === 'breakthrough' || j.outcome === 'advance';
+      const len = Math.max(o.minArrowKm!, j.advanceKm);
+      for (const id of j.attackers) {
+        const a0 = P(pos(id));
+        const v: [number, number] = [d[0] - a0[0], d[1] - a0[1]];
+        const nrm = Math.hypot(v[0], v[1]) || 1;
+        const u: [number, number] = [v[0] / nrm, v[1] / nrm];
+        const tail = T.proj.toLL([a0[0] - u[0] * len * 0.35, a0[1] - u[1] * len * 0.35]);
+        const head = T.proj.toLL([a0[0] + u[0] * len * 0.65, a0[1] + u[1] * len * 0.65]);
+        const side = sideOf(byId.get(id)!.side);
+        // объёмные стрелки инфографики: свои — красная, противник — синяя; неудачная атака — тоньше и бледнее
+        const arrow = <ArrowFeature>createFeature('arrow', side === 'own' ? 'inf.attackFade' : 'inf.counter', { points: [tail, head], layerId: 'sim-combat' }, j.outcome === 'breakthrough' ? 0.75 : strong ? 0.55 : 0.4, side);
+        if (!strong) arrow.style = { ...arrow.style, fill: arrow.style.fill.map((c: { t: number; color: string; opacity: number }) => ({ ...c, opacity: c.opacity * 0.5 })) };
+        arrow.time = { from: j.time, to: addHours(j.time, ctx.scenario.turnHours) };
+        const outcome = { breakthrough: 'прорыв', advance: 'продвижение', held: 'оборона удержана', repelled: 'атака отбита' }[j.outcome];
+        arrow.name = `${shortName(byId.get(id)!.name)} → ${j.defenders.map((x) => shortName(byId.get(x)!.name)).join(', ')}: ${outcome}, соотношение ${j.ratio}, ${j.advanceKm} км`;
+        features.push(arrow);
+      }
     }
   }
 
