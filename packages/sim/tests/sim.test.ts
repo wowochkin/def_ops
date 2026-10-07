@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
-import { Theatre, createState, step, issueOrder, frontLine, power, interp, createRng, type Scenario, type SimContext, type TheatreData, type FormationDef, type Order } from '../src';
+import { Theatre, decodeGrid, encodeGrid, createState, step, issueOrder, frontLine, power, interp, createRng, type Scenario, type SimContext, type TheatreData, type FormationDef, type Order } from '../src';
 import { loadProfile, loadRules } from '../src/data';
 
 /**
@@ -67,6 +67,25 @@ describe('местность и маршрут', () => {
     const road = ctx.theatre.route(ll(-28, 0), ll(-12, 0), 'motor', p, ctx.rules, '1945-04-16T00:00')!;
     const forest = ctx.theatre.route(ll(-28, 10), ll(-12, 10), 'motor', p, ctx.rules, '1945-04-16T00:00')!;
     expect(forest.hours).toBeGreaterThan(road.hours * 2);
+  });
+});
+
+describe('растр местности', () => {
+  it('RLE туда и обратно', () => {
+    const cells = [0, 0, 0, 1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5];
+    const rle = encodeGrid(cells);
+    expect(rle).toBe('3o2fm12uw');
+    expect([...decodeGrid({ bbox: [0, 0, 1, 1], cols: cells.length, rows: 1, rle })]).toEqual(cells);
+    expect(() => decodeGrid({ bbox: [0, 0, 1, 1], cols: 5, rows: 1, rle: '4o' })).toThrow();
+  });
+
+  it('растр ложится под контуры: восточная половина — болото, лес-контур поверх', () => {
+    const [w, s, e, n] = theatreData.bbox;
+    const g = { bbox: [w, s, e, n] as [number, number, number, number], cols: 2, rows: 1, rle: 'om' };
+    const t = new Theatre({ ...theatreData, terrainGrid: g });
+    expect(t.terrainAt(ll(10, 5))).toBe('marsh');
+    expect(t.terrainAt(ll(-5, 5))).toBe('open');
+    expect(t.terrainAt(ll(-20, 5))).toBe('forest');
   });
 });
 

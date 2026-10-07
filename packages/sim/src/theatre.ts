@@ -7,7 +7,7 @@
  */
 import type { LngLat } from '@def-ops/core';
 import { localProjection, pointInPolygon, centroid, dist, type LocalProjection, type XY } from './geo';
-import { TERRAIN_CLASSES, type Mobility, type Rules, type SideProfile, type TerrainClass, type TheatreData } from './types';
+import { TERRAIN_CLASSES, TERRAIN_CODES, type TerrainGrid, type Mobility, type Rules, type SideProfile, type TerrainClass, type TheatreData } from './types';
 
 const SQRT2 = Math.SQRT2;
 
@@ -27,7 +27,7 @@ export class Theatre {
   /** Укреплённость клетки (уровень рубежа). */
   readonly fort: Uint8Array;
   /** Мосты по клеткам. */
-  private readonly bridges = new Map<number, { id: string; destroyedAt?: string | null }[]>();
+  private readonly bridges = new Map<number, { id: string; openFrom?: string | null; destroyedAt?: string | null }[]>();
   private readonly areaRings: { id: string; name: string; ring: XY[]; c: XY }[];
 
   constructor(readonly data: TheatreData) {
@@ -45,6 +45,16 @@ export class Theatre {
     this.river = new Uint8Array(N);
     this.fort = new Uint8Array(N);
 
+    if (data.terrainGrid) {
+      const g = data.terrainGrid, cells = decodeGrid(g);
+      const [gw, gs, ge, gn] = g.bbox;
+      for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
+        const [lng, lat] = this.proj.toLL(this.cellCenter(c, r));
+        const gc = Math.floor(((lng - gw) / (ge - gw)) * g.cols), gr = Math.floor(((gn - lat) / (gn - gs)) * g.rows);
+        if (gc < 0 || gr < 0 || gc >= g.cols || gr >= g.rows) continue;
+        this.terrain[r * this.cols + c] = cells[gr * g.cols + gc];
+      }
+    }
     for (const t of data.terrain) {
       const ring = t.ring.map((p) => this.proj.toXY(p));
       const k = TERRAIN_CLASSES.indexOf(t.class);
@@ -63,7 +73,7 @@ export class Theatre {
       const i = this.indexOf(b.at);
       if (i < 0) continue;
       const list = this.bridges.get(i) ?? [];
-      list.push({ id: b.id, destroyedAt: b.destroyedAt });
+      list.push({ id: b.id, openFrom: b.openFrom, destroyedAt: b.destroyedAt });
       this.bridges.set(i, list);
     }
     for (const l of data.lines) {
@@ -129,7 +139,7 @@ export class Theatre {
 
   /** Есть ли в клетке уцелевший на момент time мост. */
   bridgeOpen(i: number, time: string): boolean {
-    return (this.bridges.get(i) ?? []).some((b) => !b.destroyedAt || time < b.destroyedAt);
+    return (this.bridges.get(i) ?? []).some((b) => (!b.openFrom || time >= b.openFrom) && (!b.destroyedAt || time < b.destroyedAt));
   }
 
   /** Темп в клетке, км/ч; 0 — непроходимо. */
@@ -244,6 +254,36 @@ export class Theatre {
     }
     return { position: pos, km, arrived: false, path: r.path };
   }
+}
+
+/** Раскрыть RLE растра в индексы TERRAIN_CLASSES. */
+export function decodeGrid(g: TerrainGrid): Uint8Array {
+  const out = new Uint8Array(g.cols * g.rows);
+  let i = 0, n = 0;
+  for (const ch of g.rle) {
+    if (ch >= '0' && ch <= '9') { n = n * 10 + (ch.charCodeAt(0) - 48); continue; }
+    const cls = TERRAIN_CODES[ch];
+    if (!cls) throw new Error(`terrainGrid: неизвестный код «${ch}»`);
+    const k = TERRAIN_CLASSES.indexOf(cls);
+    out.fill(k, i, i + (n || 1));
+    i += n || 1;
+    n = 0;
+  }
+  if (i !== out.length) throw new Error(`terrainGrid: ${i} клеток вместо ${out.length}`);
+  return out;
+}
+
+/** Сжать индексы TERRAIN_CLASSES в RLE (для сборщиков театров и тестов). */
+export function encodeGrid(cells: ArrayLike<number>): string {
+  const code = Object.fromEntries(Object.entries(TERRAIN_CODES).map(([k, v]) => [TERRAIN_CLASSES.indexOf(v), k]));
+  let s = '';
+  for (let i = 0; i < cells.length;) {
+    let j = i;
+    while (j < cells.length && cells[j] === cells[i]) j++;
+    s += (j - i > 1 ? j - i : '') + code[cells[i]];
+    i = j;
+  }
+  return s;
 }
 
 function pathKm(t: Theatre, path: LngLat[]): number {

@@ -77,6 +77,20 @@ export interface Rules {
 
 /* ---------------------------------- театр ---------------------------------- */
 
+/** Однобуквенные коды классов местности для растра. */
+export const TERRAIN_CODES: Record<string, TerrainClass> = { o: 'open', f: 'forest', m: 'marsh', u: 'urban', h: 'hills', w: 'water' };
+
+export interface TerrainGrid {
+  /** [запад, юг, восток, север], градусы. */
+  bbox: [number, number, number, number];
+  cols: number;
+  rows: number;
+  /** RLE: число повторов (необязательно, по умолчанию 1) и код класса. */
+  rle: string;
+  /** Откуда растр и как получен. */
+  source?: string;
+}
+
 export interface TheatreData {
   id: string;
   name: string;
@@ -85,16 +99,24 @@ export interface TheatreData {
   /** Шаг сетки проходимости, км. */
   cellKm: number;
   defaultTerrain: TerrainClass;
+  /**
+   * Растр местности (например, из карты земного покрова): сетка в градусах,
+   * строки с севера на юг, клетки — буквы TERRAIN_CODES, сжатые RLE («12o3f»).
+   * Берётся по центру каждой клетки театра; контуры terrain ложатся поверх.
+   */
+  terrainGrid?: TerrainGrid;
   /** Контуры местности; позже в списке — поверх. */
   terrain: { class: TerrainClass; ring: LngLat[] }[];
   roads: { kind: 'highway' | 'road' | 'rail'; line: LngLat[]; name?: string }[];
   rivers: { name: string; line: LngLat[]; major: boolean }[];
-  /** Мосты и переправы; destroyedAt — с какого момента разрушен. */
-  bridges: { id: string; at: LngLat; name?: string; destroyedAt?: string | null }[];
+  /** Мосты и переправы: openFrom — с какого момента действует (наведённая переправа), destroyedAt — с какого разрушен. */
+  bridges: { id: string; at: LngLat; name?: string; openFrom?: string | null; destroyedAt?: string | null }[];
   /** Именованные районы (для приказов и учёта контроля). */
   areas: { id: string; name: string; ring: LngLat[] }[];
   /** Рубежи и позиции: линия и уровень укреплённости (1–3). */
   lines: { id: string; name: string; line: LngLat[]; fortification?: number; side?: string }[];
+  /** Откуда взяты слои (лицензии, даты), для справки и отчёта. */
+  sources?: string[];
 }
 
 /* --------------------------------- сценарий --------------------------------- */
