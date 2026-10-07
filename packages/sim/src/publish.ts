@@ -51,6 +51,8 @@ export function shortName(name: string): string {
   return n.length > 14 ? n.slice(0, 13) + '…' : n;
 }
 
+const POSTURE_RU: Record<string, string> = { attack: 'наступает', defend: 'обороняется', march: 'на марше', withdraw: 'отходит', reserve: 'в резерве' };
+
 const tankish = (f: Formation, ctx: SimContext) => profileOf(ctx, f.side).unitTypes[f.type]?.mobility !== 'foot';
 
 export function runToDocument(ctx: SimContext, run: RunResult, history?: History | null, o: PublishOptions = {}): MapDocument {
@@ -99,7 +101,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     const sym = createFeature('symbol', preset, { at: frames[0].u!.at, layerId: side === 'own' ? 'sim-own' : 'sim-enemy' }, 1, side) as SymbolFeature;
     sym.name = f.name;
     sym.style = { ...sym.style, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 10, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
-    sym.keyframes = frames.map((x) => ({ t: x.t, at: x.u!.at, note: `${x.u!.personnel.toLocaleString('ru')} чел., ${x.u!.tanks} танков; ${x.u!.posture}` }));
+    sym.keyframes = frames.map((x) => ({ t: x.t, at: x.u!.at, note: `${x.u!.personnel.toLocaleString('ru')} чел., ${x.u!.tanks} танков; ${POSTURE_RU[x.u!.posture] ?? x.u!.posture}; боеприпасы ${x.u!.ammo ?? '?'} бк${x.u!.cutOff ? '; ОТРЕЗАНО от снабжения' : ''}` }));
     const gone = frames.find((x) => x.u!.destroyed);
     sym.time = { from: f.enterAt ?? null, to: gone ? gone.t : null };
     features.push(sym);

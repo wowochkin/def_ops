@@ -11,13 +11,58 @@ export interface History {
   scenario: string;
   positions: { formation: string; time: string; at: LngLat; approxKm: number; place: string; reliability: string; source: string }[];
   frontline: { time: string; sector: string; line: LngLat[] }[];
+  /** Ключевые события с историческими датами — проверка «случилось ли и когда». */
+  events?: HistoryEvent[];
+}
+
+export type HistoryEvent = { id: string; title: string; date: string; source?: string } & (
+  | { kind: 'reach'; side: string; place: string; radiusKm: number }
+  | { kind: 'cut'; formation: string }
+  | { kind: 'meet'; formations: string[]; place: string; radiusKm: number }
+);
+
+export interface EventResult {
+  id: string;
+  title: string;
+  historical: string;
+  /** Дата в расчёте (null — не случилось). */
+  simulated: string | null;
+  /** Расхождение в сутках (+ — позже истории); null — не случилось. */
+  days: number | null;
+}
+
+/** Когда в расчёте произошли ключевые события (по снимкам и журналу). */
+export function checkEvents(ctx: SimContext, run: RunResult, history: History): EventResult[] {
+  const T = ctx.theatre;
+  return (history.events ?? []).map((e) => {
+    let when: string | null = null;
+    if (e.kind === 'reach') {
+      const c = T.area(e.place)?.center;
+      const side = new Set(run.final.formations.filter((f) => f.side === e.side).map((f) => f.id));
+      for (const s of run.snapshots) {
+        if (c && s.units.some((u) => side.has(u.id) && !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c)) <= e.radiusKm)) { when = s.time; break; }
+      }
+    } else if (e.kind === 'meet') {
+      const c = T.area(e.place)?.center;
+      for (const s of run.snapshots) {
+        if (c && e.formations.every((id) => s.units.some((u) => u.id === id && !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c)) <= e.radiusKm))) { when = s.time; break; }
+      }
+    } else {
+      const j = run.final.journal.find((x) => (x.kind === 'encircled' && x.formation === e.formation && x.cut) || (x.kind === 'destroyed' && x.formation === e.formation));
+      when = j ? j.time : null;
+    }
+    // снимок — на утро; событие «дня» — день перед ним
+    const day = when ? addHours(when, -12).slice(0, 10) : null;
+    const days = day ? Math.round((Date.parse(day) - Date.parse(e.date)) / 86400000) : null;
+    return { id: e.id, title: e.title, historical: e.date, simulated: day, days };
+  });
 }
 
 /** Снимок после хода: время и положения формирований на карте. */
 export interface Snapshot {
   time: string;
   turn: number;
-  units: { id: string; at: LngLat; personnel: number; tanks: number; posture: string; destroyed: boolean }[];
+  units: { id: string; at: LngLat; personnel: number; tanks: number; posture: string; destroyed: boolean; cutOff?: boolean; ammo?: number }[];
 }
 
 export interface RunResult {
@@ -27,7 +72,7 @@ export interface RunResult {
 
 const snap = (s: SimState): Snapshot => ({
   time: s.time, turn: s.turn,
-  units: s.formations.filter((f) => onMap(f, s.time) || f.destroyed).map((f) => ({ id: f.id, at: f.position, personnel: f.personnel, tanks: f.tanks, posture: f.posture, destroyed: f.destroyed })),
+  units: s.formations.filter((f) => onMap(f, s.time) || f.destroyed).map((f) => ({ id: f.id, at: f.position, personnel: f.personnel, tanks: f.tanks, posture: f.posture, destroyed: f.destroyed, ...(f.cutOff ? { cutOff: true } : {}), ammo: +f.ammo.toFixed(2) })),
 });
 
 /** Прогнать сценарий от начала до конца (или maxTurns ходов). */

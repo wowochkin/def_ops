@@ -179,3 +179,38 @@ describe('линия фронта и арбитр', () => {
     expect(Math.abs(xs.reduce((a, b) => a + b) / xs.length - 0.5)).toBeLessThan(0.03);
   });
 });
+
+describe('цели, снабжение, окружение', () => {
+  const withSupply = (ctx: SimContext, su: (LngLat | string)[], de: (LngLat | string)[]): SimContext => ({ ...ctx, scenario: { ...ctx.scenario, supply: { su: { sources: su }, de: { sources: de } } } });
+
+  it('цель — формирование противника: идёт к нему и входит в соприкосновение', () => {
+    const ctx = ctxWith([su('a1', -25, 10), de('k1', 0, 10)], [order('a1', 'attack', { formation: 'k1' })]);
+    const a = step(step(createState(ctx), ctx), ctx).formations.find((f) => f.id === 'a1')!;
+    expect(xOf(a.position)).toBeGreaterThan(-25);
+    expect(-xOf(a.position)).toBeLessThanOrEqual(ctx.rules.contactKm);
+  });
+
+  it('кольцо зон влияния противника отрезает от снабжения; есть коридор — не отрезано', () => {
+    const ring = [su('n', 0, 9), su('s', 0, -9), su('w', -9, 0)];
+    const closed = withSupply(ctxWith([...ring, su('e', 9, 0), de('k1', 0, 0)]), [ll(-28, 0)], [ll(28, 0)]);
+    const open = withSupply(ctxWith([...ring, de('k1', 0, 0)]), [ll(-28, 0)], [ll(28, 0)]);
+    const cut = (ctx: SimContext) => step(createState(ctx), ctx).journal.some((j) => j.kind === 'encircled' && j.formation === 'k1' && j.cut);
+    expect(cut(closed)).toBe(true);
+    expect(cut(open)).toBe(false);
+  });
+
+  it('отрезанные не пополняются, снабжаемые — пополняются', () => {
+    const ctx = withSupply(ctxWith([su('a1', -20, 15, { ammo: 1 }), de('k1', 20, -15, { ammo: 0.5 })]), [ll(-28, 15)], [ll(28, -15)]);
+    const s1 = step(createState(ctx), ctx);
+    expect(s1.formations.find((f) => f.id === 'a1')!.ammo).toBeGreaterThan(1 - 0.3);
+  });
+
+  it('обороняющийся отходит к своим тылам, а не просто прочь от наступающих', () => {
+    const ctx = withSupply(ctxWith([su('a1', 0, 4, { personnel: 200000, tanks: 600, guns: 5000 }), de('k1', 0, 0, { posture: 'attack', personnel: 15000, tanks: 10, guns: 50 })],
+      [order('a1', 'attack', ll(0, -20)), order('k1', 'withdraw', null)]), [ll(-28, 15)], [ll(28, 0)]);
+    const s1 = step(createState(ctx, 3), ctx);
+    const k = s1.formations.find((f) => f.id === 'k1')!;
+    const c = s1.journal.find((j) => j.kind === 'combat');
+    if (c?.kind === 'combat' && c.advanceKm > 1) expect(xOf(k.position)).toBeGreaterThan(0.5);
+  });
+});

@@ -37,6 +37,12 @@ export interface SideProfile {
   consumption: Record<Posture, { ammo: number; fuel: number }>;
   /** Задержка доведения приказа до исполнения, часов, по ступени получателя. */
   orderDelayHours: Partial<Record<Echelon, number>>;
+  /**
+   * Подвоз: пополнение в сутки (боекомплектов, заправок) для формирований, до
+   * которых подвоз от источников доходит по своей территории не дольше rangeHours;
+   * запасы не выше maxAmmo / maxFuel.
+   */
+  supply?: { ammoPerDay: number; fuelPerDay: number; maxAmmo: number; maxFuel: number; rangeHours: number };
 }
 
 /* ----------------------------- правила (калибровка) ----------------------------- */
@@ -73,6 +79,15 @@ export interface Rules {
   noise: number;
   /** Пересечение реки без моста: доп. часов на клетку для пеших; техника — только по мостам (если не bridgeless). */
   riverCrossHours: number;
+  /**
+   * Множитель темпа продвижения в бою по местности обороняющегося: город —
+   * кварталами (сотни метров в сутки), лес и болото — медленнее открытой местности.
+   */
+  advanceTerrain?: Partial<Record<TerrainClass, number>>;
+  /** Множитель темпов марша из профилей (калибровка: заторы, разрушенные дороги, беженцы). */
+  movementScale?: number;
+  /** Откуда взяты числа: калибровка — сценарий, мерило, дата. */
+  calibration?: Record<string, unknown>;
 }
 
 /* ---------------------------------- театр ---------------------------------- */
@@ -165,6 +180,8 @@ export interface Scenario {
   formations: FormationDef[];
   /** Приказы по сценарию (исторический план или заданные экспертом изменения). */
   orders: Order[];
+  /** Источники снабжения сторон: точки или районы (станции, переправы, тыл). Нет — снабжение без подвоза. */
+  supply?: Record<string, { sources: (LngLat | string)[] }>;
 }
 
 /* --------------------------------- состояние --------------------------------- */
@@ -174,12 +191,14 @@ export type Posture = 'attack' | 'defend' | 'march' | 'withdraw' | 'reserve';
 export const TASKS = ['defend', 'hold', 'delay', 'withdraw', 'counterattack', 'attack', 'breakout', 'regroup', 'reserve', 'relieve'] as const;
 export type Task = (typeof TASKS)[number];
 
+export type Target = LngLat | string | { formation: string } | null;
+
 export interface Order {
   id: string;
   formation: string;
   task: Task;
-  /** Цель: точка или район (id из театра). */
-  target?: LngLat | string | null;
+  /** Цель: точка, район (id из театра) или формирование противника ({ formation }). */
+  target?: Target;
   /** С какого момента приказ отдан (исполнение — после задержки доведения). */
   issuedAt: string;
   /** Кто отдал: эксперт, модель, сценарий. */
@@ -213,6 +232,8 @@ export interface Formation {
   destroyed: boolean;
   /** С какого момента на театре (null — с начала). */
   enterAt: string | null;
+  /** Отрезано от снабжения (окружено). */
+  cutOff?: boolean;
 }
 
 export interface CombatFactor {
@@ -226,6 +247,7 @@ export type JournalEntry =
   | { kind: 'combat'; time: string; attackers: string[]; defenders: string[]; at: LngLat; ratio: number; factors: CombatFactor[];
       noise: number; advanceKm: number; attackerLoss: number; defenderLoss: number; outcome: 'breakthrough' | 'advance' | 'held' | 'repelled' }
   | { kind: 'supply'; time: string; formation: string; what: 'ammo' | 'fuel'; left: number }
+  | { kind: 'encircled'; time: string; formation: string; cut: boolean }
   | { kind: 'destroyed'; time: string; formation: string };
 
 export interface SimState {

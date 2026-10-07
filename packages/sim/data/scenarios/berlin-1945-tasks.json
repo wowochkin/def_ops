@@ -1,0 +1,2290 @@
+{
+ "id": "berlin-1945-tasks",
+ "name": "Берлинская операция, 16.04–2.05.1945: исторические задачи армий и корпусов",
+ "start": "1945-04-16T05:00",
+ "end": "1945-05-02T05:00",
+ "turnHours": 24,
+ "theatre": "oder-berlin-1945",
+ "rules": "ww2-draft",
+ "sides": [
+  {
+   "id": "su",
+   "name": "Красная армия и Войско Польское",
+   "profile": "rkka-1945",
+   "controller": "script"
+  },
+  {
+   "id": "de",
+   "name": "Вермахт и войска СС",
+   "profile": "wehrmacht-1945",
+   "controller": "script"
+  }
+ ],
+ "formations": [
+  {
+   "id": "su_1bf",
+   "name": "1-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_1uf",
+   "name": "1-й Украинский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_2bf",
+   "name": "2-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_61a",
+   "name": "61-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.258,
+    52.967
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1494,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_1pa",
+   "name": "1-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.241,
+    52.81
+   ],
+   "personnel": 77293,
+   "tanks": 88,
+   "guns": 1326,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "Войско Польское у Кривошеева учтено отдельно от фронта"
+  },
+  {
+   "id": "su_47a",
+   "name": "47-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.366,
+    52.714
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1792,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_3ua",
+   "name": "3-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "shock_army",
+   "position": [
+    14.448,
+    52.643
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 2091,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_5ua",
+   "name": "5-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "shock_army",
+   "position": [
+    14.522,
+    52.571
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 2689,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_8gva",
+   "name": "8-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "guards_army",
+   "position": [
+    14.53,
+    52.504
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 2987,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_69a",
+   "name": "69-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.534,
+    52.427
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1494,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_33a",
+   "name": "33-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.611,
+    52.216
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1494,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_3a",
+   "name": "3-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "rifle_army",
+   "position": [
+    14.654,
+    52.59
+   ],
+   "personnel": 79600,
+   "tanks": 204,
+   "guns": 1494,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "второй эшелон фронта, введена 23.04"
+  },
+  {
+   "id": "su_1gta",
+   "name": "1-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "tank_army",
+   "position": [
+    14.654,
+    52.59
+   ],
+   "personnel": 45000,
+   "tanks": 854,
+   "guns": 700,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "танки — Катуков (с 11 тк); численность и орудия — оценка (C)"
+  },
+  {
+   "id": "su_2gta",
+   "name": "2-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "type": "tank_army",
+   "position": [
+    14.573,
+    52.582
+   ],
+   "personnel": 45000,
+   "tanks": 667,
+   "guns": 700,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "513 танков + 154 САУ; численность и орудия — оценка (C)"
+  },
+  {
+   "id": "su_3gva",
+   "name": "3-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "guards_army",
+   "position": [
+    14.695,
+    51.708
+   ],
+   "personnel": 94161,
+   "tanks": 222,
+   "guns": 3130,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_13a",
+   "name": "13-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    14.723,
+    51.618
+   ],
+   "personnel": 83699,
+   "tanks": 197,
+   "guns": 3577,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_5gva",
+   "name": "5-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "guards_army",
+   "position": [
+    14.728,
+    51.555
+   ],
+   "personnel": 94161,
+   "tanks": 222,
+   "guns": 3577,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_52a",
+   "name": "52-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    14.993,
+    51.301
+   ],
+   "personnel": 83699,
+   "tanks": 197,
+   "guns": 1987,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_2pa",
+   "name": "2-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    14.94,
+    51.357
+   ],
+   "personnel": 78607,
+   "tanks": 180,
+   "guns": 1300,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "155 900 поляков (Кривошеев) минус 1 А ВП; танки и орудия — оценка (C)"
+  },
+  {
+   "id": "su_3gta",
+   "name": "3-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "tank_army",
+   "position": [
+    14.695,
+    51.708
+   ],
+   "personnel": 45000,
+   "tanks": 668,
+   "guns": 700,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_4gta",
+   "name": "4-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "tank_army",
+   "position": [
+    14.818,
+    51.635
+   ],
+   "personnel": 40000,
+   "tanks": 550,
+   "guns": 600,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_28a",
+   "name": "28-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf",
+   "type": "rifle_army",
+   "position": [
+    13.475,
+    52.131
+   ],
+   "personnel": 54000,
+   "tanks": 50,
+   "guns": 1000,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack",
+   "enterAt": "1945-04-21T05:00",
+   "note": "введена из резерва 21.04; в численность фронта не входит; оценка 9 сд × 6 000 (C)"
+  },
+  {
+   "id": "su_2ua",
+   "name": "2-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "shock_army",
+   "position": [
+    14.701,
+    53.808
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_65a",
+   "name": "65-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    14.666,
+    53.48
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_70a",
+   "name": "70-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    14.492,
+    53.254
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_49a",
+   "name": "49-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    14.343,
+    53.056
+   ],
+   "personnel": 88320,
+   "tanks": 238,
+   "guns": 1661,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "attack"
+  },
+  {
+   "id": "su_19a",
+   "name": "19-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_2bf",
+   "type": "rifle_army",
+   "position": [
+    15.388,
+    54.046
+   ],
+   "personnel": 54000,
+   "tanks": 40,
+   "guns": 900,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "в численность фронта не входит; оценка (C)"
+  },
+  {
+   "id": "de_hgr_weichsel",
+   "name": "Группа армий «Висла»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "de_hgr_mitte",
+   "name": "Группа армий «Центр»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "de_3pza",
+   "name": "3-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_weichsel"
+  },
+  {
+   "id": "de_9a",
+   "name": "9-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_weichsel"
+  },
+  {
+   "id": "de_4pza",
+   "name": "4-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_mitte"
+  },
+  {
+   "id": "de_12a",
+   "name": "12-я армия («армия Венка»)",
+   "side": "de",
+   "echelon": "army",
+   "parent": null
+  },
+  {
+   "id": "de_swinemuende",
+   "name": "Корпусная группа «Свинемюнде»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "inf_corps",
+   "position": [
+    14.476,
+    53.835
+   ],
+   "personnel": 19000,
+   "tanks": 48,
+   "guns": 130,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xxxii",
+   "name": "XXXII армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "inf_corps",
+   "position": [
+    14.579,
+    53.489
+   ],
+   "personnel": 38000,
+   "tanks": 97,
+   "guns": 260,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_oder",
+   "name": "Армейский корпус «Одер»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "inf_corps",
+   "position": [
+    14.492,
+    53.319
+   ],
+   "personnel": 19000,
+   "tanks": 48,
+   "guns": 130,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xxxxvi",
+   "name": "XXXXVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "panzer_corps",
+   "position": [
+    14.214,
+    52.966
+   ],
+   "personnel": 19000,
+   "tanks": 48,
+   "guns": 130,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_iii_ss",
+   "name": "III танковый корпус СС / армейская группа Штайнера",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_3pza",
+   "type": "ss_panzer_corps",
+   "position": [
+    13.8,
+    52.835
+   ],
+   "personnel": 25000,
+   "tanks": 40,
+   "guns": 150,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-21T05:00",
+   "note": "на 16.04 штаб без войск (Ziemke); с 21.04 «армейская группа Штайнер»: 4 полиц. дивизия СС, 5 егерская, 25 пгд; оценка (C)"
+  },
+  {
+   "id": "de_ci",
+   "name": "CI армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "inf_corps",
+   "position": [
+    14.212,
+    52.77
+   ],
+   "personnel": 27186,
+   "tanks": 50,
+   "guns": 291,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_lvi",
+   "name": "LVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "panzer_corps",
+   "position": [
+    14.381,
+    52.532
+   ],
+   "personnel": 27186,
+   "tanks": 220,
+   "guns": 291,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "9 пдд, 20 пгд, тд «Мюнхеберг», 18 пгд; «Нордланд» подошла 17–18.04 (не учтена отдельно)"
+  },
+  {
+   "id": "de_xi_ss",
+   "name": "XI танковый корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "ss_panzer_corps",
+   "position": [
+    14.457,
+    52.479
+   ],
+   "personnel": 27186,
+   "tanks": 160,
+   "guns": 291,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_ffo",
+   "name": "Крепость Франкфурт-на-Одере",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "fortress",
+   "position": [
+    14.558,
+    52.348
+   ],
+   "personnel": 10195,
+   "tanks": 10,
+   "guns": 109,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_v_ss",
+   "name": "V горный корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "type": "inf_corps",
+   "position": [
+    14.625,
+    52.2
+   ],
+   "personnel": 20390,
+   "tanks": 72,
+   "guns": 218,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_v",
+   "name": "V армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "type": "inf_corps",
+   "position": [
+    14.7,
+    51.7
+   ],
+   "personnel": 45833,
+   "tanks": 120,
+   "guns": 375,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "на 16.04 — полоса Форст–Губен (B); точка — южная часть полосы против главного удара 1 УФ (C)"
+  },
+  {
+   "id": "de_pzk_gd",
+   "name": "Танковый корпус «Великая Германия»",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "type": "panzer_corps",
+   "position": [
+    14.73,
+    51.55
+   ],
+   "personnel": 36667,
+   "tanks": 150,
+   "guns": 300,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "по набору данных — Бад-Мускау/Ротенбург (C); точка — у Мускау (C)"
+  },
+  {
+   "id": "de_lvii",
+   "name": "LVII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza",
+   "type": "panzer_corps",
+   "position": [
+    14.991,
+    51.156
+   ],
+   "personnel": 27500,
+   "tanks": 80,
+   "guns": 225,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xx",
+   "name": "XX армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "type": "inf_corps",
+   "position": [
+    12.873,
+    52.097
+   ],
+   "personnel": 33846,
+   "tanks": 30,
+   "guns": 185,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-23T05:00",
+   "note": "до 23.04 — фронтом на запад против американцев у Эльбы; поворот на восток (C)"
+  },
+  {
+   "id": "de_xxxxi",
+   "name": "XXXXI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "type": "panzer_corps",
+   "position": [
+    12.444,
+    52.509
+   ],
+   "personnel": 12692,
+   "tanks": 6,
+   "guns": 69,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-23T05:00"
+  },
+  {
+   "id": "de_xxxxviii",
+   "name": "XXXXVIII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_12a",
+   "type": "panzer_corps",
+   "position": [
+    11.984,
+    51.419
+   ],
+   "personnel": 8462,
+   "tanks": 4,
+   "guns": 46,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_berlin",
+   "name": "Берлинский оборонительный район (гарнизон)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_weichsel",
+   "type": "fortress",
+   "position": [
+    13.36,
+    52.533
+   ],
+   "personnel": 90693,
+   "tanks": 60,
+   "guns": 600,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "включая фольксштурм; танки и орудия — оценка (C)"
+  }
+ ],
+ "orders": [
+  {
+   "id": "de_berlin@1945-04-15T18:00:hold",
+   "formation": "de_berlin",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "оборона Берлина"
+  },
+  {
+   "id": "de_ci@1945-04-15T18:00:defend",
+   "formation": "de_ci",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_ffo@1945-04-15T18:00:hold",
+   "formation": "de_ffo",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "«крепость» Франкфурт"
+  },
+  {
+   "id": "de_lvi@1945-04-15T18:00:hold",
+   "formation": "de_lvi",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "держать Зееловские высоты (приказ Гитлера)"
+  },
+  {
+   "id": "de_lvii@1945-04-15T18:00:defend",
+   "formation": "de_lvii",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_oder@1945-04-15T18:00:defend",
+   "formation": "de_oder",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-15T18:00:defend",
+   "formation": "de_pzk_gd",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_swinemuende@1945-04-15T18:00:defend",
+   "formation": "de_swinemuende",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v@1945-04-15T18:00:defend",
+   "formation": "de_v",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v_ss@1945-04-15T18:00:defend",
+   "formation": "de_v_ss",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xi_ss@1945-04-15T18:00:defend",
+   "formation": "de_xi_ss",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxii@1945-04-15T18:00:defend",
+   "formation": "de_xxxii",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-15T18:00:defend",
+   "formation": "de_xxxxvi",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxxviii@1945-04-15T18:00:defend",
+   "formation": "de_xxxxviii",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "против американцев"
+  },
+  {
+   "id": "su_13a@1945-04-15T18:00:attack",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": "Drebkau",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "Нейсе, центр главной группировки"
+  },
+  {
+   "id": "su_19a@1945-04-15T18:00:defend",
+   "formation": "su_19a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "su_1gta@1945-04-15T18:00:attack",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": "Seelow",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ввод в бой за 8 гв. А до прорыва обороны (LT_CONQ гл. 1)"
+  },
+  {
+   "id": "su_1pa@1945-04-15T18:00:attack",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": "Wriezen",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "форсирование Одера, наступление на Врицен (LT_CONQ гл. 4)"
+  },
+  {
+   "id": "su_2gta@1945-04-15T18:00:attack",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": "Neuhardenberg",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ввод за 5 УА / 3 УА"
+  },
+  {
+   "id": "su_2pa@1945-04-15T18:00:attack",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": "Niesky",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2ua@1945-04-15T18:00:defend",
+   "formation": "su_2ua",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "su_33a@1945-04-15T18:00:attack",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "со своего плацдарма вдоль автобана (LT_HALBE гл. 1)"
+  },
+  {
+   "id": "su_3a@1945-04-15T18:00:reserve",
+   "formation": "su_3a",
+   "task": "reserve",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "второй эшелон фронта"
+  },
+  {
+   "id": "su_3gta@1945-04-15T18:00:attack",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": "Vetschau",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ввод за 13 А и 3 гв. А"
+  },
+  {
+   "id": "su_3gva@1945-04-15T18:00:attack",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": "Forst",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "Нейсе, правый фланг главной группировки"
+  },
+  {
+   "id": "su_3ua@1945-04-15T18:00:attack",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": "Moeglin",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "главный удар с плацдарма"
+  },
+  {
+   "id": "su_47a@1945-04-15T18:00:attack",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": "Wriezen",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "северный фас плацдарма"
+  },
+  {
+   "id": "su_49a@1945-04-15T18:00:defend",
+   "formation": "su_49a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "su_4gta@1945-04-15T18:00:attack",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": "Spremberg",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "ввод за 5 гв. А"
+  },
+  {
+   "id": "su_52a@1945-04-15T18:00:attack",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": "Weissenberg",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "вспомогательный удар на Дрезден"
+  },
+  {
+   "id": "su_5gva@1945-04-15T18:00:attack",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": "Spremberg",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "su_5ua@1945-04-15T18:00:attack",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": "Neuhardenberg",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "главный удар по оси на Зелов"
+  },
+  {
+   "id": "su_61a@1945-04-15T18:00:attack",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": "Eberswalde",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "вспомогательный удар севернее Кюстрина на Эберсвальде (OOB)"
+  },
+  {
+   "id": "su_65a@1945-04-15T18:00:defend",
+   "formation": "su_65a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "su_69a@1945-04-15T18:00:attack",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1)"
+  },
+  {
+   "id": "su_70a@1945-04-15T18:00:defend",
+   "formation": "su_70a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script"
+  },
+  {
+   "id": "su_8gva@1945-04-15T18:00:attack",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": "Seelow",
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "прорыв на Зееловских высотах"
+  },
+  {
+   "id": "de_xi_ss@1945-04-17T18:00:hold",
+   "formation": "de_xi_ss",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE)"
+  },
+  {
+   "id": "su_1gta@1945-04-17T18:00:attack",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": "Muencheberg",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3gta@1945-04-17T18:00:attack",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": "Baruth",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "через Фетшау–Гольсен–Барут на Берлин (LT_RACE, LT_HALBE)"
+  },
+  {
+   "id": "su_3gva@1945-04-17T18:00:attack",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": "Cottbus",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_49a@1945-04-17T18:00:attack",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": "Widuchowa",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "20.04 успеха не имела; переправлялась по переправам 70 А (OOB)"
+  },
+  {
+   "id": "su_4gta@1945-04-17T18:00:attack",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": "Luckau",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "Дребкау–Калау–Даме–Луккенвальде (LT_RACE)"
+  },
+  {
+   "id": "su_65a@1945-04-17T18:00:attack",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": "Przeclaw",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "форсирование Ост- и Вест-Одера"
+  },
+  {
+   "id": "su_70a@1945-04-17T18:00:attack",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": "Gartz",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_8gva@1945-04-17T18:00:attack",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": "Muencheberg",
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_lvi@1945-04-18T18:00:withdraw",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": "Muencheberg",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE)"
+  },
+  {
+   "id": "su_13a@1945-04-18T18:00:attack",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": "Luckau",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2gta@1945-04-18T18:00:attack",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": "Bernau",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2pa@1945-04-18T18:00:attack",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": "Koenigswartha",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3ua@1945-04-18T18:00:attack",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": "Bernau",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_52a@1945-04-18T18:00:attack",
+   "formation": "su_52a",
+   "task": "attack",
+   "target": "Bautzen",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_ci@1945-04-19T18:00:withdraw",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": "Eberswalde",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_lvi@1945-04-19T18:00:withdraw",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": "Erkner",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-19T18:00:withdraw",
+   "formation": "de_pzk_gd",
+   "task": "withdraw",
+   "target": "Uhyst",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v@1945-04-19T18:00:defend",
+   "formation": "de_v",
+   "task": "defend",
+   "target": "Luebben",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "прикрыть тыл армии рубежом Люббен–Хальбе (LT_HALBE)"
+  },
+  {
+   "id": "su_1gta@1945-04-19T18:00:attack",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": "Erkner",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "лучшие бригады корпусов — в Берлин (LT_CONQ гл. 1)"
+  },
+  {
+   "id": "su_1pa@1945-04-19T18:00:attack",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": "Oranienburg",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "обход Берлина с севера"
+  },
+  {
+   "id": "su_2ua@1945-04-19T18:00:attack",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": "Police",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3gta@1945-04-19T18:00:attack",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": "Zossen",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_47a@1945-04-19T18:00:attack",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": "Bernau",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_4gta@1945-04-19T18:00:attack",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": "Jueterbog",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_5ua@1945-04-19T18:00:attack",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": "Strausberg",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_8gva@1945-04-19T18:00:attack",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": "Erkner",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_lvi@1945-04-20T18:00:withdraw",
+   "formation": "de_lvi",
+   "task": "withdraw",
+   "target": "B_Koepenick",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "в город (LT_RACE)"
+  },
+  {
+   "id": "de_xi_ss@1945-04-20T18:00:withdraw",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2gta@1945-04-20T18:00:attack",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": "Hennigsdorf",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "9 гв. тк с 47 А к Хафелю; 1 мк и 12 гв. тк — северный обход (LT_RACE)"
+  },
+  {
+   "id": "su_2pa@1945-04-20T18:00:attack",
+   "formation": "su_2pa",
+   "task": "attack",
+   "target": "Kamenz",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3a@1945-04-20T18:00:attack",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "ввод из второго эшелона"
+  },
+  {
+   "id": "su_3gta@1945-04-20T18:00:attack",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": "B_Teltow",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3ua@1945-04-20T18:00:attack",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": "B_Weissensee",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "на северо-восток Берлина"
+  },
+  {
+   "id": "su_4gta@1945-04-20T18:00:attack",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_5gva@1945-04-20T18:00:attack",
+   "formation": "su_5gva",
+   "task": "attack",
+   "target": "Torgau",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "к Эльбе, встреча с союзниками 25.04"
+  },
+  {
+   "id": "su_5ua@1945-04-20T18:00:attack",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": "B_Lichtenberg",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_iii_ss@1945-04-21T18:00:defend",
+   "formation": "de_iii_ss",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат"
+  },
+  {
+   "id": "de_lvii@1945-04-21T18:00:counterattack",
+   "formation": "de_lvii",
+   "task": "counterattack",
+   "target": "Weissenberg",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-21T18:00:counterattack",
+   "formation": "de_pzk_gd",
+   "task": "counterattack",
+   "target": "Bautzen",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "контрудар у Баутцена 21–25.04"
+  },
+  {
+   "id": "de_v_ss@1945-04-21T18:00:withdraw",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": "Beeskow",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "двумя скачками (LT_HALBE)"
+  },
+  {
+   "id": "su_13a@1945-04-21T18:00:attack",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": "Jueterbog",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_1gta@1945-04-21T18:00:attack",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": "B_Bohnsdorf",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_28a@1945-04-21T18:00:defend",
+   "formation": "su_28a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "запечатать котёл 9 А у Барута (LT_RACE)"
+  },
+  {
+   "id": "su_47a@1945-04-21T18:00:attack",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": "Hennigsdorf",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "обход Берлина с севера к Хафелю"
+  },
+  {
+   "id": "su_70a@1945-04-21T18:00:attack",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": "Tantow",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_8gva@1945-04-21T18:00:attack",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": "B_Koepenick",
+   "issuedAt": "1945-04-21T18:00",
+   "source": "script",
+   "note": "повернуть на юго-запад, на город с юго-востока (LT_RACE)"
+  },
+  {
+   "id": "de_ffo@1945-04-22T14:00:withdraw",
+   "formation": "de_ffo",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-22T14:00",
+   "source": "script",
+   "note": "гарнизону разрешено оставить Франкфурт (LT_HALBE)"
+  },
+  {
+   "id": "su_1pa@1945-04-22T18:00:attack",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": "Kremmen",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_28a@1945-04-22T18:00:attack",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": "Mittenwalde",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "Бонсдорф–Миттенвальде–Тойпиц фронтом на восток (LT_HALBE)"
+  },
+  {
+   "id": "su_33a@1945-04-22T18:00:attack",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": "Beeskow",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "правым крылом на юго-запад, Бесков–Альт-Шадов (LT_HALBE)"
+  },
+  {
+   "id": "su_3a@1945-04-22T18:00:attack",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": "KoenigsWusterhausen",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "Вильдау–Брузендорф: отсечь 9 А от Берлина (LT_HALBE)"
+  },
+  {
+   "id": "su_3gva@1945-04-22T18:00:attack",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": "Luebben",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "против 9 А (LT_HALBE)"
+  },
+  {
+   "id": "su_3ua@1945-04-22T18:00:attack",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": "B_Wedding",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_47a@1945-04-22T18:00:attack",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": "Nauen",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_4gta@1945-04-22T18:00:attack",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": "Potsdam",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_5ua@1945-04-22T18:00:attack",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": "B_Friedrichshain",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_69a@1945-04-22T18:00:attack",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": "Storkow",
+   "issuedAt": "1945-04-22T18:00",
+   "source": "script",
+   "note": "правым крылом на юг — Шармютцельзе (LT_HALBE)"
+  },
+  {
+   "id": "de_lvi@1945-04-23T18:00:defend",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": "B_Neukoelln",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "секторы A–E (LT_RACE)"
+  },
+  {
+   "id": "de_xi_ss@1945-04-23T18:00:withdraw",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А (LT_HALBE)"
+  },
+  {
+   "id": "de_xx@1945-04-23T18:00:attack",
+   "formation": "de_xx",
+   "task": "attack",
+   "target": "Treuenbrietzen",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE)"
+  },
+  {
+   "id": "de_xxxxi@1945-04-23T18:00:defend",
+   "formation": "de_xxxxi",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "прикрыть северный фланг Венка у Ратенова (LT_RACE)"
+  },
+  {
+   "id": "su_13a@1945-04-23T18:00:attack",
+   "formation": "su_13a",
+   "task": "attack",
+   "target": "Luckenwalde",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_1gta@1945-04-23T18:00:attack",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": "B_Tempelhof",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "аэродромы Адлерсхоф и Темпельхоф (LT_CONQ)"
+  },
+  {
+   "id": "su_28a@1945-04-23T18:00:attack",
+   "formation": "su_28a",
+   "task": "attack",
+   "target": "Teupitz",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2gta@1945-04-23T18:00:attack",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": "B_Siemensstadt",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2pa@1945-04-23T18:00:defend",
+   "formation": "su_2pa",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "контрудар немцев у Баутцена"
+  },
+  {
+   "id": "su_3a@1945-04-23T18:00:attack",
+   "formation": "su_3a",
+   "task": "attack",
+   "target": "Teupitz",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "замкнуть котёл с 28 А (LT_RACE)"
+  },
+  {
+   "id": "su_3gta@1945-04-23T18:00:attack",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": "B_Zehlendorf",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "форсировать Тельтов-канал утром 24.04 (LT_RACE)"
+  },
+  {
+   "id": "su_52a@1945-04-23T18:00:defend",
+   "formation": "su_52a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "отражение контрудара у Баутцена"
+  },
+  {
+   "id": "su_8gva@1945-04-23T18:00:attack",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": "B_Britz",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v_ss@1945-04-24T18:00:withdraw",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_1pa@1945-04-24T18:00:defend",
+   "formation": "su_1pa",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "на рубеже Креммен–Науэн перейти к обороне, прикрыть фланг (LT_CONQ гл. 4)"
+  },
+  {
+   "id": "su_2ua@1945-04-24T18:00:attack",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": "Przeclaw",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "переправа на плацдарм 25–26.04"
+  },
+  {
+   "id": "su_3gva@1945-04-24T18:00:attack",
+   "formation": "su_3gva",
+   "task": "attack",
+   "target": "Halbe",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3ua@1945-04-24T18:00:attack",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": "B_Moabit",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_47a@1945-04-24T18:00:attack",
+   "formation": "su_47a",
+   "task": "attack",
+   "target": "Ketzin",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "замкнуть кольцо вокруг Берлина с 4 гв. ТА (25.04, LT_RACE)"
+  },
+  {
+   "id": "su_49a@1945-04-24T18:00:attack",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": "Prenzlau",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_4gta@1945-04-24T18:00:attack",
+   "formation": "su_4gta",
+   "task": "attack",
+   "target": "Ketzin",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "замкнуть кольцо с 47 А (25.04)"
+  },
+  {
+   "id": "su_61a@1945-04-24T18:00:attack",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": "Fehrbellin",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "к Эльбе северо-западнее Берлина"
+  },
+  {
+   "id": "su_65a@1945-04-24T18:00:attack",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": "Szczecin",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_8gva@1945-04-24T18:00:attack",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": "B_Tempelhof",
+   "issuedAt": "1945-04-24T18:00",
+   "source": "script",
+   "note": "на центр Берлина"
+  },
+  {
+   "id": "de_iii_ss@1945-04-25T18:00:withdraw",
+   "formation": "de_iii_ss",
+   "task": "withdraw",
+   "target": "Oranienburg",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_oder@1945-04-25T18:00:withdraw",
+   "formation": "de_oder",
+   "task": "withdraw",
+   "target": "Penkun",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v@1945-04-25T18:00:withdraw",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": "MaerkischBuchholz",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xx@1945-04-25T18:00:attack",
+   "formation": "de_xx",
+   "task": "attack",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxii@1945-04-25T18:00:withdraw",
+   "formation": "de_xxxii",
+   "task": "withdraw",
+   "target": "Demmin",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_13a@1945-04-25T18:00:defend",
+   "formation": "su_13a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "против 12 А Венка"
+  },
+  {
+   "id": "su_19a@1945-04-25T18:00:attack",
+   "formation": "su_19a",
+   "task": "attack",
+   "target": "Swinoujscie",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_28a@1945-04-25T18:00:defend",
+   "formation": "su_28a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "кольцо окружения"
+  },
+  {
+   "id": "su_3a@1945-04-25T18:00:defend",
+   "formation": "su_3a",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "держать кольцо окружения"
+  },
+  {
+   "id": "su_3gta@1945-04-25T18:00:attack",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": "B_Dahlem",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_5ua@1945-04-25T18:00:attack",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": "B_Spittelmarkt",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "приказ № 69: граница с 8 гв. А по Ландвер-каналу (LT_RACE)"
+  },
+  {
+   "id": "su_70a@1945-04-25T18:00:attack",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": "Malchin",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_lvi@1945-04-26T18:00:defend",
+   "formation": "de_lvi",
+   "task": "defend",
+   "target": "B_Bendlerblock",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_lvii@1945-04-26T18:00:defend",
+   "formation": "de_lvii",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_pzk_gd@1945-04-26T18:00:defend",
+   "formation": "de_pzk_gd",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xx@1945-04-26T18:00:attack",
+   "formation": "de_xx",
+   "task": "attack",
+   "target": "Ferch",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-26T18:00:withdraw",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": "Prenzlau",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2gta@1945-04-26T18:00:attack",
+   "formation": "su_2gta",
+   "task": "attack",
+   "target": "B_Moabit",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2ua@1945-04-26T18:00:attack",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": "Anklam",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_33a@1945-04-26T18:00:attack",
+   "formation": "su_33a",
+   "task": "attack",
+   "target": {
+    "formation": "de_v"
+   },
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3gva@1945-04-26T18:00:defend",
+   "formation": "su_3gva",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "кольца окружения у Хальбе (LT_HALBE)"
+  },
+  {
+   "id": "su_4gta@1945-04-26T18:00:defend",
+   "formation": "su_4gta",
+   "task": "defend",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "5 гв. мк против XX ак Венка"
+  },
+  {
+   "id": "su_5gva@1945-04-26T18:00:defend",
+   "formation": "su_5gva",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_65a@1945-04-26T18:00:attack",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": "Neubrandenburg",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_69a@1945-04-26T18:00:attack",
+   "formation": "su_69a",
+   "task": "attack",
+   "target": {
+    "formation": "de_v_ss"
+   },
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "уничтожение окружённой группировки"
+  },
+  {
+   "id": "de_ci@1945-04-27T18:00:withdraw",
+   "formation": "de_ci",
+   "task": "withdraw",
+   "target": "Zehdenick",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xi_ss@1945-04-27T18:00:withdraw",
+   "formation": "de_xi_ss",
+   "task": "withdraw",
+   "target": "Halbe",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "сосредоточение для прорыва"
+  },
+  {
+   "id": "su_1gta@1945-04-27T18:00:attack",
+   "formation": "su_1gta",
+   "task": "attack",
+   "target": "B_Tiergarten",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3ua@1945-04-27T18:00:attack",
+   "formation": "su_3ua",
+   "task": "attack",
+   "target": "B_Reichstag",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "79 ск — на Рейхстаг (LT_RACE)"
+  },
+  {
+   "id": "su_49a@1945-04-27T18:00:attack",
+   "formation": "su_49a",
+   "task": "attack",
+   "target": "Mirow",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_8gva@1945-04-27T18:00:attack",
+   "formation": "su_8gva",
+   "task": "attack",
+   "target": "B_Tiergarten",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_ffo@1945-04-28T15:00:breakout",
+   "formation": "de_ffo",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v@1945-04-28T15:00:breakout",
+   "formation": "de_v",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v_ss@1945-04-28T15:00:breakout",
+   "formation": "de_v_ss",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script",
+   "note": "арьергард прорыва"
+  },
+  {
+   "id": "de_xi_ss@1945-04-28T15:00:breakout",
+   "formation": "de_xi_ss",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script",
+   "note": "прорыв на запад тремя группами (LT_HALBE)"
+  },
+  {
+   "id": "de_iii_ss@1945-04-28T18:00:withdraw",
+   "formation": "de_iii_ss",
+   "task": "withdraw",
+   "target": "Zehdenick",
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxxvi@1945-04-28T18:00:withdraw",
+   "formation": "de_xxxxvi",
+   "task": "withdraw",
+   "target": "Demzin",
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3gta@1945-04-28T18:00:attack",
+   "formation": "su_3gta",
+   "task": "attack",
+   "target": "B_Fehrbelliner",
+   "issuedAt": "1945-04-28T18:00",
+   "source": "script",
+   "note": "новая граница фронтов, Рейхстаг уходит из полосы (LT_RACE)"
+  },
+  {
+   "id": "de_xx@1945-04-29T18:00:defend",
+   "formation": "de_xx",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script",
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE)"
+  },
+  {
+   "id": "su_1pa@1945-04-29T18:00:attack",
+   "formation": "su_1pa",
+   "task": "attack",
+   "target": "Friesack",
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2ua@1945-04-29T18:00:attack",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": "Greifswald",
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_5ua@1945-04-29T18:00:attack",
+   "formation": "su_5ua",
+   "task": "attack",
+   "target": "B_Reichskanzlei",
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_61a@1945-04-29T18:00:attack",
+   "formation": "su_61a",
+   "task": "attack",
+   "target": "Havelberg",
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_70a@1945-04-29T18:00:attack",
+   "formation": "su_70a",
+   "task": "attack",
+   "target": "Rostock",
+   "issuedAt": "1945-04-29T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_65a@1945-04-30T18:00:attack",
+   "formation": "su_65a",
+   "task": "attack",
+   "target": "Grimmen",
+   "issuedAt": "1945-04-30T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xx@1945-05-01T18:00:withdraw",
+   "formation": "de_xx",
+   "task": "withdraw",
+   "target": "Tangermuende",
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script",
+   "note": "отход к Эльбе"
+  },
+  {
+   "id": "su_2ua@1945-05-01T18:00:attack",
+   "formation": "su_2ua",
+   "task": "attack",
+   "target": "Stralsund",
+   "issuedAt": "1945-05-01T18:00",
+   "source": "script"
+  }
+ ],
+ "timeNote": "время московское; положение «за день» сравнивается с состоянием на начало следующего хода",
+ "notes": [
+  "su_1bf: делится 636800 чел., 1634 танков, 15534 орудий",
+  "su_1uf: делится 355720 чел., 837 танков, 12271 орудий",
+  "su_2bf: делится 353280 чел., 951 танков, 6642 орудий",
+  "de_9a: делится 112143 чел., 0 танков, 1200 орудий — в наборе данных 344 орудия — видимо, без зенитных и миномётов; принято 1 200 (C)",
+  "de_3pza: делится 95000 чел., 242 танков, 650 орудий — численность — оценка (C)",
+  "de_4pza: делится 110000 чел., 0 танков, 900 орудий — только корпуса против главной группировки 1 УФ; оценка (C)",
+  "de_12a: делится 55000 чел., 36 танков, 300 орудий"
+ ],
+ "supply": {
+  "su": {
+   "sources": [
+    "Kostrzyn",
+    "Slubice",
+    "Gubin",
+    "Trzebiel",
+    "Leknica",
+    "Gozdowice",
+    "StaraRudnica",
+    "Dabie",
+    "Krajnik"
+   ]
+  },
+  "de": {
+   "sources": [
+    "B_Mitte",
+    "Brandenburg",
+    "Magdeburg",
+    "Rathenow",
+    "Neubrandenburg",
+    "Rostock",
+    "Dresden",
+    "Kamenz"
+   ]
+  }
+ }
+}

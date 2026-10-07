@@ -14,7 +14,8 @@ import { createRng, type Rng } from './rng';
 import { dist, type XY } from './geo';
 import { interp, power } from './rules';
 import type { Theatre } from './theatre';
-import type { CombatFactor, Formation, JournalEntry, Order, Posture, Rules, Scenario, SideProfile, SimState, Task } from './types';
+import type { CombatFactor, Formation, JournalEntry, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task } from './types';
+import { controlMap, supplyField } from './control';
 
 export interface SimContext {
   scenario: Scenario;
@@ -62,10 +63,30 @@ export function issueOrder(state: SimState, order: Order): SimState {
   return { ...state, pending: [...state.pending, order] };
 }
 
-export function targetPoint(ctx: SimContext, t: Order['target']): LngLat | null {
+/** Точка цели: координаты, центр района или текущее положение формирования (если оно на карте). */
+export function targetPoint(ctx: SimContext, t: Target | undefined, units?: Map<string, Formation>): LngLat | null {
   if (!t) return null;
   if (Array.isArray(t)) return t;
+  if (typeof t === 'object') { const u = units?.get(t.formation); return u && !u.destroyed ? u.position : null; }
   return ctx.theatre.area(t)?.center ?? null;
+}
+
+/** Источники снабжения стороны — точки (районы — их центры). */
+function supplySources(ctx: SimContext, side: string): LngLat[] {
+  return (ctx.scenario.supply?.[side]?.sources ?? []).map((x) => (Array.isArray(x) ? x : ctx.theatre.area(x)?.center ?? null)).filter((x): x is LngLat => !!x);
+}
+
+/** Контроль территории и время подвоза по сторонам на начало хода. */
+export function supplyState(ctx: SimContext, units: Formation[], time: string) {
+  const sides = ctx.scenario.sides.map((x) => x.id);
+  // территория — по положению войск больше, чем по их силе (показатель 0,1): фронтовые части стоят на своей земле
+  const control = controlMap(ctx.theatre, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, 10, 0.1);
+  const fields = new Map<string, Float64Array>();
+  for (const side of sides) {
+    const src = supplySources(ctx, side);
+    if (src.length) fields.set(side, supplyField(ctx.theatre, side, src, units, profileOf(ctx, side), ctx.rules, time, ctx.rules.contactKm * 2).hours);
+  }
+  return { control, fields };
 }
 
 export function step(prev: SimState, ctx: SimContext): SimState {
@@ -95,6 +116,22 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     } else pending.push(o);
   }
 
+  // контроль территории и подвоз — по положению на начало хода
+  const sup = ctx.scenario.supply ? supplyState(ctx, active(), now) : null;
+  // подвоз к формированию — к ближайшей клетке в пределах его полосы (радиус соприкосновения)
+  const supplyHours = (f: Formation, at: LngLat = f.position) => {
+    const fld = sup?.fields.get(f.side);
+    if (!fld) return 0;
+    const i = T.indexOf(at);
+    if (i < 0) return Infinity;
+    const rc = Math.max(1, Math.round(R.contactKm / T.cellKm)), c0 = i % T.cols, r0 = Math.floor(i / T.cols);
+    let best = Infinity;
+    for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) if (T.inside(c, r)) best = Math.min(best, fld[r * T.cols + c]);
+    return best;
+  };
+  const range = (f: Formation) => profileOf(ctx, f.side).supply?.rangeHours ?? Infinity;
+  const isCut = (f: Formation) => !!sup?.fields.get(f.side) && supplyHours(f) > range(f);
+
   const enemiesNear = (f: Formation, km: number) => active().filter((e) => e.side !== f.side && dist(xy(f), xy(e)) <= km);
   const moved = new Set<string>();
 
@@ -107,12 +144,13 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     if (g) { g.att.push(a); for (const d of defs) if (!g.def.includes(d)) g.def.push(d); }
     else groups.push({ att: [a], def: defs });
   }
-  for (const g of groups) resolveCombat(g.att, g.def, ctx, rng, now, dt, journal, moved);
+  const env: CombatEnv = { byId, supplyHours, isCut };
+  for (const g of groups) resolveCombat(g.att, g.def, ctx, rng, now, dt, journal, moved, env);
 
   // 3. движение вне боя
   for (const f of active()) {
     if (moved.has(f.id) || !f.order) continue;
-    const to = targetPoint(ctx, f.order.target);
+    const to = targetPoint(ctx, f.order.target, byId);
     if (!to) continue;
     const prof = profileOf(ctx, f.side);
     const type = prof.unitTypes[f.type];
@@ -121,11 +159,10 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const r = T.advance(f.position, to, mob, prof, R, now, dt);
     if (!r) continue;
     let pos = r.position;
-    // без приказа на наступление в соприкосновение не входить: остановиться на рубеже соприкосновения
-    if (f.posture !== 'attack') {
-      const stop = stopShortOfEnemy(f, pos, active(), T, R.contactKm);
-      if (stop) pos = stop;
-    }
+    // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
+    // остальные — не доходя до него
+    const stop = stopShortOfEnemy(f, pos, active(), T, f.posture === 'attack' ? R.contactKm * 0.8 : R.contactKm);
+    if (stop) pos = stop;
     const km = dist(xy(f), T.proj.toXY(pos));
     if (km > 0.05) {
       journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: pos, km: +km.toFixed(1) });
@@ -145,6 +182,17 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const was = { ammo: f.ammo, fuel: f.fuel };
     f.ammo = Math.max(0, f.ammo - c.ammo * (dt / 24) * (inCombat.has(f.id) ? 1 : 0.3));
     f.fuel = Math.max(0, f.fuel - c.fuel * (dt / 24));
+    // подвоз: по своей территории от источников стороны
+    const ps = prof.supply;
+    if (ps && sup?.fields.get(f.side)) {
+      const cut = isCut(f);
+      if (cut !== !!f.cutOff) journal.push({ kind: 'encircled', time: now, formation: f.id, cut });
+      f.cutOff = cut;
+      if (!cut) {
+        f.ammo = Math.min(ps.maxAmmo, f.ammo + ps.ammoPerDay * (dt / 24));
+        f.fuel = Math.min(ps.maxFuel, f.fuel + ps.fuelPerDay * (dt / 24));
+      }
+    }
     if (was.ammo >= 0.5 && f.ammo < 0.5) journal.push({ kind: 'supply', time: now, formation: f.id, what: 'ammo', left: +f.ammo.toFixed(2) });
     if (was.fuel > 0 && f.fuel <= 0) journal.push({ kind: 'supply', time: now, formation: f.id, what: 'fuel', left: 0 });
     const gain = inCombat.has(f.id) ? R.fatigueGain.combat : moved.has(f.id) ? R.fatigueGain.march : -R.fatigueGain.rest;
@@ -180,7 +228,14 @@ function applyLoss(f: Formation, frac: number) {
   f.guns = Math.round(f.guns * (1 - Math.min(1, frac * 0.8)));
 }
 
-function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng: Rng, now: string, dt: number, journal: JournalEntry[], moved: Set<string>) {
+interface CombatEnv {
+  byId: Map<string, Formation>;
+  /** Часы подвоза к точке для формирования (Infinity — не доходит). */
+  supplyHours: (f: Formation, at?: LngLat) => number;
+  isCut: (f: Formation) => boolean;
+}
+
+function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng: Rng, now: string, dt: number, journal: JournalEntry[], moved: Set<string>, env: CombatEnv) {
   const T = ctx.theatre, R = ctx.rules;
   const A = att.reduce((s, f) => s + power(f, profileOf(ctx, f.side), R).total, 0);
   const dParts = def.map((f) => {
@@ -196,10 +251,14 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   const noise = Math.exp(R.noise * rng.normal());
   const ratio = (A / D) * noise;
   const day = dt / 24;
-  const advancePerDay = interp(R.advance, ratio);
+  // темп — по таблице от соотношения сил, с поправкой на местность обороняющихся (город — кварталами)
+  const at = def.reduce((m, f) => Math.min(m, R.advanceTerrain?.[T.terrainAt(f.position)] ?? 1), 1);
+  const advancePerDay = interp(R.advance, ratio) * at;
   // «удерживать любой ценой»: обороняющиеся не отходят и несут повышенные потери;
   // наступающие продвигаются, только если оборона прорвана (обходят узел сопротивления)
-  const holding = def.every((f) => f.order?.task === 'hold');
+  // окружённые не могут отойти: держатся на месте с повышенными потерями
+  const pinned = (f: Formation) => f.order?.task === 'hold' || env.isCut(f);
+  const holding = def.every(pinned);
   const breakthrough = advancePerDay >= BREAKTHROUGH_KM;
   const advanceKm = holding && !breakthrough ? 0 : advancePerDay * day;
   const attackerLoss = interp(R.attackerLoss, ratio) * day;
@@ -211,6 +270,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     { name: 'подготовленная оборона', value: +avg('prepared').toFixed(2) },
     { name: 'укрепления', value: +avg('fort').toFixed(2) },
     { name: 'случайность (разброс)', value: +noise.toFixed(2) },
+    ...(at < 1 ? [{ name: 'темп по местности', value: +at.toFixed(2) }] : []),
   ];
   for (const f of att) applyLoss(f, attackerLoss);
   for (const f of def) applyLoss(f, defenderLoss);
@@ -219,7 +279,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   if (advanceKm > 0.05) {
     const ca = centerXY(att.map((f) => T.proj.toXY(f.position)));
     for (const f of att) {
-      const to = targetPoint(ctx, f.order?.target);
+      const to = targetPoint(ctx, f.order?.target, env.byId);
       const p = T.proj.toXY(f.position);
       const goal = to ? T.proj.toXY(to) : null;
       if (!goal) continue;
@@ -231,11 +291,9 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
       moved.add(f.id);
     }
     for (const f of def) {
-      if (f.order?.task === 'hold') continue;
+      if (pinned(f)) continue;
       const p = T.proj.toXY(f.position);
-      const v: XY = [p[0] - ca[0], p[1] - ca[1]];
-      const n = Math.hypot(v[0], v[1]) || 1;
-      const np = T.proj.toLL([p[0] + (v[0] / n) * advanceKm, p[1] + (v[1] / n) * advanceKm]);
+      const np = retreatPoint(f, p, ca, advanceKm, T, env);
       journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +advanceKm.toFixed(1) });
       f.position = np;
       f.dugInHours = 0;
@@ -250,6 +308,27 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     ratio: +ratio.toFixed(2), factors, noise: +noise.toFixed(2), advanceKm: +advanceKm.toFixed(1),
     attackerLoss: +attackerLoss.toFixed(3), defenderLoss: +defenderLoss.toFixed(3), outcome,
   });
+}
+
+/**
+ * Куда отходит обороняющийся: из 16 направлений — то, где подвоз ближе (к своим
+ * тылам), при равенстве — прочь от наступающих.
+ */
+function retreatPoint(f: Formation, p: XY, attackersCenter: XY, km: number, T: Theatre, env: CombatEnv): LngLat {
+  const away: XY = [p[0] - attackersCenter[0], p[1] - attackersCenter[1]];
+  const an = Math.hypot(away[0], away[1]) || 1;
+  let best: LngLat | null = null, bestScore = Infinity;
+  for (let k = 0; k < 16; k++) {
+    const a = (Math.PI * 2 * k) / 16;
+    const q: XY = [p[0] + Math.cos(a) * km, p[1] + Math.sin(a) * km];
+    const ll = T.proj.toLL(q);
+    const h = env.supplyHours(f, ll);
+    if (!Number.isFinite(h) || T.terrainAt(ll) === 'water') continue;
+    const awayDot = (Math.cos(a) * away[0] + Math.sin(a) * away[1]) / an; // 1 — прямо от противника
+    const score = h - awayDot * 6; // 6 ч подвоза ≈ выигрыш отхода прямо от противника
+    if (score < bestScore) { bestScore = score; best = ll; }
+  }
+  return best ?? T.proj.toLL([p[0] + (away[0] / an) * km, p[1] + (away[1] / an) * km]);
 }
 
 function centerXY(ps: XY[]): XY {

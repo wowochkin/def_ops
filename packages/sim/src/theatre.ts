@@ -143,9 +143,9 @@ export class Theatre {
   }
 
   /** Темп в клетке, км/ч; 0 — непроходимо. */
-  speedKmh(i: number, mob: Mobility, profile: SideProfile): number {
+  speedKmh(i: number, mob: Mobility, profile: SideProfile, scale = 1): number {
     const perDay = this.road[i] ? profile.road[mob] * (this.road[i] === 2 ? 1 : 0.85) : profile.offRoad[mob][TERRAIN_CLASSES[this.terrain[i]]];
-    return perDay / 24;
+    return (perDay / 24) * scale;
   }
 
   /** Районы: по id или имени; точка — центр района. */
@@ -192,14 +192,14 @@ export class Theatre {
       if (closed[cur]) continue;
       closed[cur] = 1;
       const cc = cur % this.cols, cr = Math.floor(cur / this.cols);
-      const v0 = this.speedKmh(cur, mob, profile);
+      const v0 = this.speedKmh(cur, mob, profile, rules.movementScale ?? 1);
       for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
         if (!dr && !dc) continue;
         const nc = cc + dc, nr = cr + dr;
         if (!this.inside(nc, nr)) continue;
         const ni = nr * this.cols + nc;
         if (closed[ni]) continue;
-        const v1 = this.speedKmh(ni, mob, profile);
+        const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1);
         if (v1 <= 0 || v0 <= 0) continue;
         const d = (dr && dc ? SQRT2 : 1) * this.cellKm;
         const cost = d / ((v0 + v1) / 2) + crossCost(ni);
@@ -219,6 +219,40 @@ export class Theatre {
   }
 
   /**
+   * Время в часах от ближайшего источника до каждой клетки (Дейкстра от многих
+   * источников) — для снабжения: дойдёт ли подвоз и сколько он идёт.
+   * passable(i) — можно ли проходить клетку (например, только своя территория).
+   */
+  distanceField(sources: number[], mob: Mobility, profile: SideProfile, rules: Rules, time: string, passable: (i: number) => boolean = () => true): Float64Array {
+    const N = this.cols * this.rows;
+    const d = new Float64Array(N).fill(Infinity);
+    const heap = new MinHeap();
+    for (const s of sources) if (s >= 0 && passable(s)) { d[s] = 0; heap.push(s, 0); }
+    const done = new Uint8Array(N);
+    while (heap.size) {
+      const cur = heap.pop();
+      if (done[cur]) continue;
+      done[cur] = 1;
+      const cc = cur % this.cols, cr = Math.floor(cur / this.cols);
+      const v0 = this.speedKmh(cur, mob, profile, rules.movementScale ?? 1);
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const nc = cc + dc, nr = cr + dr;
+        if (!this.inside(nc, nr)) continue;
+        const ni = nr * this.cols + nc;
+        if (done[ni] || !passable(ni)) continue;
+        const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1);
+        if (v1 <= 0 || v0 <= 0) continue;
+        const rv = this.river[ni];
+        const cross = !rv || this.bridgeOpen(ni, time) ? 0 : rv === 2 ? (mob === 'foot' ? rules.riverCrossHours : Infinity) : rules.riverCrossHours / 3;
+        const nd = d[cur] + ((dr && dc ? SQRT2 : 1) * this.cellKm) / ((v0 + v1) / 2) + cross;
+        if (nd < d[ni]) { d[ni] = nd; heap.push(ni, nd); }
+      }
+    }
+    return d;
+  }
+
+  /**
    * Продвижение по маршруту не дольше hours: где окажется формирование.
    * Возвращает новую точку, пройденные км и оставшийся путь.
    */
@@ -235,7 +269,7 @@ export class Theatre {
       const pa = this.proj.toLL(this.cellCenter(a % this.cols, Math.floor(a / this.cols)));
       const pb = this.proj.toLL(this.cellCenter(b % this.cols, Math.floor(b / this.cols)));
       const d = dist(this.proj.toXY(pa), this.proj.toXY(pb));
-      const v = (this.speedKmh(a, mob, profile) + this.speedKmh(b, mob, profile)) / 2;
+      const v = (this.speedKmh(a, mob, profile, rules.movementScale ?? 1) + this.speedKmh(b, mob, profile, rules.movementScale ?? 1)) / 2;
       const rv = this.river[b];
       const cross = !rv || this.bridgeOpen(b, time) ? 0 : rv === 2 ? rules.riverCrossHours : rules.riverCrossHours / 3;
       const cost = d / v + cross;

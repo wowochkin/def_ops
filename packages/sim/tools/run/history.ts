@@ -2,7 +2,7 @@
  * Исторический прогон сценария: обе стороны действуют по историческим приказам,
  * арбитр считает движение и бои; результат сравнивается с историей.
  *
- *   npm run sim:history -- [--scenario berlin-1945] [--seed 1] [--runs 20] [--out evals-out/sim]
+ *   npm run sim:history -- [--scenario berlin-1945] [--rules ww2-berlin-cal] [--seed 1] [--runs 20] [--out evals-out/sim]
  *                          [--publish http://localhost:8080]
  *
  * Пишет в каталог: report.md (отклонения по дням и формированиям, бои),
@@ -13,7 +13,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { loadContext, loadHistory } from '../../src/data';
-import { compareWithHistory, runScenario, summarize } from '../../src/history';
+import { checkEvents, compareWithHistory, runScenario, summarize } from '../../src/history';
 import { runToDocument, shortName } from '../../src/publish';
 
 const args = process.argv.slice(2);
@@ -25,7 +25,7 @@ const out = resolve(opt('out', `evals-out/sim/${scenarioId}-${new Date().toISOSt
 const publish = opt('publish');
 const tol = Number(opt('tolerance', '10'));
 
-const ctx = loadContext(scenarioId);
+const ctx = loadContext(scenarioId, opt('rules'));
 const history = loadHistory(scenarioId);
 mkdirSync(out, { recursive: true });
 
@@ -53,6 +53,12 @@ if (runs > 1) {
   const w = spread.map((x) => x.within);
   L.push(`Разброс по ${runs} прогонам (seed ${seed}…${seed + runs - 1}): доля в допуске ${(Math.min(...w) * 100).toFixed(0)}–${(Math.max(...w) * 100).toFixed(0)} %.`, '');
 }
+const events = checkEvents(ctx, run, history);
+if (events.length) {
+  L.push('## Ключевые события', '', '| событие | история | расчёт | расхождение, сут |', '|---|---|---|---|');
+  for (const e of events) L.push(`| ${e.title} | ${e.historical.slice(5)} | ${e.simulated?.slice(5) ?? 'не произошло'} | ${e.days == null ? '—' : e.days > 0 ? `+${e.days}` : e.days} |`);
+  L.push('');
+}
 L.push('## По дням', '', '| день | положений | среднее отклонение, км | медиана сверх, км | в допуске |', '|---|---|---|---|---|');
 for (const d of [...sum.byDay].sort((a, b) => a.key.localeCompare(b.key))) L.push(`| ${d.key} | ${d.n} | ${d.meanKm} | ${d.medianExcessKm} | ${(d.within * 100).toFixed(0)} % |`);
 L.push('', '## По формированиям', '', '| формирование | положений | среднее, км | медиана сверх, км | в допуске |', '|---|---|---|---|---|');
@@ -72,6 +78,7 @@ writeFileSync(join(out, 'deviations.json'), JSON.stringify({ summary: sum, sprea
 
 const doc = runToDocument(ctx, run, history, { name: `Переигровка (история): ${ctx.scenario.id}, seed ${seed}` });
 writeFileSync(join(out, 'map.json'), JSON.stringify(doc));
+for (const e of events) console.log(`  ${e.title}: история ${e.historical.slice(5)}, расчёт ${e.simulated?.slice(5) ?? '—'}`);
 console.log(`ходов ${run.final.turn}, ${ms} мс; в допуске ${(sum.within * 100).toFixed(0)} % из ${sum.n}; медиана сверх ${sum.medianExcessKm} км`);
 if (runs > 1) console.log('по seed:', spread.map((x) => `${x.seed}:${(x.within * 100).toFixed(0)}%`).join(' '));
 console.log(`отчёт: ${join(out, 'report.md')}\nкарта: ${join(out, 'map.json')} (${doc.features.length} объектов)`);

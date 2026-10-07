@@ -2,28 +2,121 @@
   "id": "wehrmacht-1945",
   "name": "Вермахт и войска СС, весна 1945",
   "_status": "черновик до калибровки",
-  "weights": { "personnel": 1.0, "tanks": 0.08, "guns": 0.03 },
+  "weights": {
+    "personnel": 1.0,
+    "tanks": 0.08,
+    "guns": 0.03
+  },
   "unitTypes": {
-    "army": { "id": "army", "name": "армия", "mobility": "foot", "quality": 0.95 },
-    "inf_corps": { "id": "inf_corps", "name": "армейский корпус", "mobility": "foot", "quality": 0.95 },
-    "panzer_corps": { "id": "panzer_corps", "name": "танковый корпус", "mobility": "tracked", "quality": 1.0 },
-    "ss_panzer_corps": { "id": "ss_panzer_corps", "name": "танковый корпус СС", "mobility": "tracked", "quality": 1.05 },
-    "mountain_corps": { "id": "mountain_corps", "name": "горный корпус", "mobility": "foot", "quality": 0.9 },
-    "fortress": { "id": "fortress", "name": "гарнизон крепости", "mobility": "foot", "quality": 0.8 },
-    "volkssturm": { "id": "volkssturm", "name": "фольксштурм", "mobility": "foot", "quality": 0.5 }
+    "army": {
+      "id": "army",
+      "name": "армия",
+      "mobility": "foot",
+      "quality": 0.95
+    },
+    "inf_corps": {
+      "id": "inf_corps",
+      "name": "армейский корпус",
+      "mobility": "foot",
+      "quality": 0.95
+    },
+    "panzer_corps": {
+      "id": "panzer_corps",
+      "name": "танковый корпус",
+      "mobility": "tracked",
+      "quality": 1.0
+    },
+    "ss_panzer_corps": {
+      "id": "ss_panzer_corps",
+      "name": "танковый корпус СС",
+      "mobility": "tracked",
+      "quality": 1.05
+    },
+    "mountain_corps": {
+      "id": "mountain_corps",
+      "name": "горный корпус",
+      "mobility": "foot",
+      "quality": 0.9
+    },
+    "fortress": {
+      "id": "fortress",
+      "name": "гарнизон крепости",
+      "mobility": "foot",
+      "quality": 0.8
+    },
+    "volkssturm": {
+      "id": "volkssturm",
+      "name": "фольксштурм",
+      "mobility": "foot",
+      "quality": 0.5
+    }
   },
   "offRoad": {
-    "foot": { "open": 22, "forest": 14, "marsh": 7, "urban": 12, "hills": 16, "water": 0 },
-    "motor": { "open": 50, "forest": 22, "marsh": 5, "urban": 22, "hills": 35, "water": 0 },
-    "tracked": { "open": 40, "forest": 20, "marsh": 6, "urban": 18, "hills": 30, "water": 0 }
+    "foot": {
+      "open": 22,
+      "forest": 14,
+      "marsh": 7,
+      "urban": 12,
+      "hills": 16,
+      "water": 0
+    },
+    "motor": {
+      "open": 50,
+      "forest": 22,
+      "marsh": 5,
+      "urban": 22,
+      "hills": 35,
+      "water": 0
+    },
+    "tracked": {
+      "open": 40,
+      "forest": 20,
+      "marsh": 6,
+      "urban": 18,
+      "hills": 30,
+      "water": 0
+    }
   },
-  "road": { "foot": 28, "motor": 120, "tracked": 80 },
+  "road": {
+    "foot": 28,
+    "motor": 120,
+    "tracked": 80
+  },
   "consumption": {
-    "attack": { "ammo": 0.5, "fuel": 0.5 },
-    "defend": { "ammo": 0.25, "fuel": 0.05 },
-    "march": { "ammo": 0.02, "fuel": 0.4 },
-    "withdraw": { "ammo": 0.15, "fuel": 0.4 },
-    "reserve": { "ammo": 0, "fuel": 0.02 }
+    "attack": {
+      "ammo": 0.5,
+      "fuel": 0.5
+    },
+    "defend": {
+      "ammo": 0.25,
+      "fuel": 0.05
+    },
+    "march": {
+      "ammo": 0.02,
+      "fuel": 0.4
+    },
+    "withdraw": {
+      "ammo": 0.15,
+      "fuel": 0.4
+    },
+    "reserve": {
+      "ammo": 0,
+      "fuel": 0.02
+    }
   },
-  "orderDelayHours": { "army": 8, "corps": 6, "division": 4, "brigade": 3, "regiment": 3 }
+  "orderDelayHours": {
+    "army": 8,
+    "corps": 6,
+    "division": 4,
+    "brigade": 3,
+    "regiment": 3
+  },
+  "supply": {
+    "ammoPerDay": 0.3,
+    "fuelPerDay": 0.2,
+    "maxAmmo": 2,
+    "maxFuel": 1,
+    "rangeHours": 48
+  },
+  "_supply_note": "подвоз: пополнение в сутки до максимума, если от источника по своей территории не дольше rangeHours (автотранспорт); немецкое горючее — острый дефицит апреля 1945 г. Черновик до калибровки."
 }

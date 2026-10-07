@@ -55,7 +55,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 1494,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -92,7 +92,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 1792,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -110,7 +110,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 2091,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -128,7 +128,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 2689,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -146,7 +146,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 2987,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -164,7 +164,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 1494,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -182,7 +182,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 1494,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -200,7 +200,7 @@
    ],
    "personnel": 79600,
    "tanks": 204,
-   "guns": 1942,
+   "guns": 1494,
    "ammo": 3,
    "fuel": 2,
    "posture": "reserve",
@@ -257,7 +257,7 @@
    ],
    "personnel": 94161,
    "tanks": 222,
-   "guns": 3248,
+   "guns": 3130,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -275,7 +275,7 @@
    ],
    "personnel": 83699,
    "tanks": 197,
-   "guns": 2887,
+   "guns": 3577,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -293,7 +293,7 @@
    ],
    "personnel": 94161,
    "tanks": 222,
-   "guns": 3248,
+   "guns": 3577,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -311,7 +311,7 @@
    ],
    "personnel": 83699,
    "tanks": 197,
-   "guns": 2887,
+   "guns": 1987,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -716,15 +716,16 @@
    "parent": "de_4pza",
    "type": "inf_corps",
    "position": [
-    14.68,
-    51.847
+    14.7,
+    51.7
    ],
    "personnel": 45833,
    "tanks": 120,
    "guns": 375,
    "ammo": 1.5,
    "fuel": 0.7,
-   "posture": "defend"
+   "posture": "defend",
+   "note": "на 16.04 — полоса Форст–Губен (B); точка — южная часть полосы против главного удара 1 УФ (C)"
   },
   {
    "id": "de_pzk_gd",
@@ -734,15 +735,16 @@
    "parent": "de_4pza",
    "type": "panzer_corps",
    "position": [
-    14.821,
-    51.46
+    14.73,
+    51.55
    ],
    "personnel": 36667,
    "tanks": 150,
    "guns": 300,
    "ammo": 1.5,
    "fuel": 0.7,
-   "posture": "defend"
+   "posture": "defend",
+   "note": "по набору данных — Бад-Мускау/Ротенбург (C); точка — у Мускау (C)"
   },
   {
    "id": "de_lvii",
@@ -881,8 +883,8 @@
    "formation": "de_pzk_gd",
    "task": "withdraw",
    "target": [
-    14.7664,
-    51.4434
+    14.6936,
+    51.5154
    ],
    "issuedAt": "1945-04-15T17:00",
    "source": "script",
@@ -905,8 +907,8 @@
    "formation": "de_v",
    "task": "withdraw",
    "target": [
-    14.4595,
-    51.8915
+    14.4745,
+    51.7813
    ],
    "issuedAt": "1945-04-15T17:00",
    "source": "script",
@@ -1325,8 +1327,8 @@
    "formation": "de_pzk_gd",
    "task": "withdraw",
    "target": [
-    14.7118,
-    51.4268
+    14.6572,
+    51.4808
    ],
    "issuedAt": "1945-04-16T18:00",
    "source": "script",
@@ -1349,8 +1351,8 @@
    "formation": "de_v",
    "task": "withdraw",
    "target": [
-    14.239,
-    51.936
+    14.249,
+    51.8625
    ],
    "issuedAt": "1945-04-16T18:00",
    "source": "script",
@@ -1733,8 +1735,8 @@
    "formation": "de_pzk_gd",
    "task": "withdraw",
    "target": [
-    14.6572,
-    51.4102
+    14.6208,
+    51.4462
    ],
    "issuedAt": "1945-04-17T18:00",
    "source": "script",
@@ -1757,8 +1759,8 @@
    "formation": "de_v",
    "task": "withdraw",
    "target": [
-    14.0185,
-    51.9805
+    14.0235,
+    51.9438
    ],
    "issuedAt": "1945-04-17T18:00",
    "source": "script",
@@ -2153,8 +2155,8 @@
    "formation": "de_pzk_gd",
    "task": "withdraw",
    "target": [
-    14.6026,
-    51.3936
+    14.5844,
+    51.4116
    ],
    "issuedAt": "1945-04-18T18:00",
    "source": "script",
@@ -7258,5 +7260,32 @@
   "de_3pza: делится 95000 чел., 242 танков, 650 орудий — численность — оценка (C)",
   "de_4pza: делится 110000 чел., 0 танков, 900 орудий — только корпуса против главной группировки 1 УФ; оценка (C)",
   "de_12a: делится 55000 чел., 36 танков, 300 орудий"
- ]
+ ],
+ "supply": {
+  "su": {
+   "sources": [
+    "Kostrzyn",
+    "Slubice",
+    "Gubin",
+    "Trzebiel",
+    "Leknica",
+    "Gozdowice",
+    "StaraRudnica",
+    "Dabie",
+    "Krajnik"
+   ]
+  },
+  "de": {
+   "sources": [
+    "B_Mitte",
+    "Brandenburg",
+    "Magdeburg",
+    "Rathenow",
+    "Neubrandenburg",
+    "Rostock",
+    "Dresden",
+    "Kamenz"
+   ]
+  }
+ }
 }
