@@ -5,7 +5,7 @@
  * документа, поэтому прогон смотрится ползунком времени, как обычная карта.
  */
 import { createFeature, emptyDocument, type ArrowFeature, type Feature, type Layer, type LngLat, type MapDocument, type Side, type SymbolFeature } from '@def-ops/core';
-import { frontLine } from './front';
+import { frontLine, territoryLine } from './front';
 import { dist } from './geo';
 import type { History, RunResult } from './history';
 import { power } from './rules';
@@ -114,7 +114,9 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     const to = run.snapshots[i + 1]?.time ?? addHours(sn.time, ctx.scenario.turnHours);
     const units = sn.units.filter((u) => !u.destroyed).map((u) => ({ ...byId.get(u.id)!, position: u.at, personnel: u.personnel, tanks: u.tanks, destroyed: false }))
       .filter((f) => onMap(f, sn.time));
-    const raw = frontLine(T, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, { sigmaKm: 25 });
+    // территория ведётся — фронт по её границе (сплошная полоса); иначе — изолиния влияния войск
+    const terr = sn.territory ?? run.snapshots[i + 1]?.territory;
+    const raw = terr ? territoryLine(T, terr) : frontLine(T, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, { sigmaKm: 25 });
     // линия только там, где обе стороны рядом: в глубоком тылу изолиния есть, а фронта нет
     const near = (p: LngLat, side: string) => units.some((u) => u.side === side && dist(T.proj.toXY(u.position), T.proj.toXY(p)) <= o.frontReachKm!);
     const lines: LngLat[][] = [];

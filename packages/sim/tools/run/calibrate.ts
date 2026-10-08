@@ -31,6 +31,8 @@ const history = loadHistory(scenarioId);
 const SPACE = {
   advance: [0.3, 1.6], attackerLoss: [0.5, 2], defenderLoss: [0.5, 2],
   prepared: [1.0, 2.2], fortPerLevel: [0, 0.8], terrainExp: [0.5, 2.5], movement: [0.4, 1.2], urbanAdvance: [0.05, 0.6], fortAdvance: [0.4, 2.0],
+  // темп по территории противника, км/сут (если правила ведут территорию): пешие и подвижные
+  terrFoot: [10, 80], terrMobile: [15, 150],
 } as const;
 type Params = Record<keyof typeof SPACE, number>;
 
@@ -50,6 +52,7 @@ function rulesWith(r0: Rules, p: Params): Rules {
     movementScale: +p.movement.toFixed(3),
     advanceTerrain: { ...(r0.advanceTerrain ?? {}), urban: +p.urbanAdvance.toFixed(3) },
     ...(r0.fortAdvanceKm ? { fortAdvanceKm: r0.fortAdvanceKm.map((v, i) => (i ? +(v * p.fortAdvance).toFixed(2) : v)) } : {}),
+    ...(r0.territory ? { territory: { ...r0.territory, enemyKmPerDay: { foot: +p.terrFoot.toFixed(1), motor: +p.terrMobile.toFixed(1), tracked: +p.terrMobile.toFixed(1) } } } : {}),
   };
 }
 
@@ -81,7 +84,8 @@ function score(p: Params): Score {
 
 const keys = Object.keys(SPACE) as (keyof typeof SPACE)[];
 const rng = createRng(2026);
-const ones: Params = { advance: 1, attackerLoss: 1, defenderLoss: 1, prepared: base.rules.defense.prepared, fortPerLevel: base.rules.defense.fortificationPerLevel, terrainExp: 1, movement: base.rules.movementScale ?? 1, urbanAdvance: base.rules.advanceTerrain?.urban ?? 1, fortAdvance: 1 };
+const ones: Params = { advance: 1, attackerLoss: 1, defenderLoss: 1, prepared: base.rules.defense.prepared, fortPerLevel: base.rules.defense.fortificationPerLevel, terrainExp: 1, movement: base.rules.movementScale ?? 1, urbanAdvance: base.rules.advanceTerrain?.urban ?? 1, fortAdvance: 1,
+  terrFoot: base.rules.territory?.enemyKmPerDay.foot ?? 30, terrMobile: base.rules.territory?.enemyKmPerDay.tracked ?? 50 };
 const rand = (): Params => Object.fromEntries(keys.map((k) => [k, SPACE[k][0] + rng.next() * (SPACE[k][1] - SPACE[k][0])])) as Params;
 const clamp = (k: keyof typeof SPACE, v: number) => Math.min(SPACE[k][1], Math.max(SPACE[k][0], v));
 

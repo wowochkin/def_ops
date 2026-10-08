@@ -66,6 +66,41 @@ export function frontLine(theatre: Theatre, formations: Formation[], sides: [str
   return joinSegments(segs, step * 0.01).filter((l) => l.length >= 3).map((l) => l.map((q) => theatre.proj.toLL(q)));
 }
 
+/**
+ * Линия фронта по территории (rules.territory): граница клеток сторон 0 и 1
+ * (марширующие квадраты по центрам клеток), сглаженная срезанием углов.
+ */
+export function territoryLine(theatre: Theatre, owner: ArrayLike<number>, smooth = 2): LngLat[][] {
+  const { cols, rows } = theatre;
+  const F = (c: number, r: number) => { const o = owner[r * cols + c]; return o === 0 ? 1 : o === 1 ? -1 : NaN; };
+  const segs: [XY, XY][] = [];
+  const mid = (a: XY, b: XY): XY => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
+    const v = [F(c, r), F(c + 1, r), F(c + 1, r + 1), F(c, r + 1)];
+    if (v.some(Number.isNaN)) continue;
+    const p = [theatre.cellCenter(c, r), theatre.cellCenter(c + 1, r), theatre.cellCenter(c + 1, r + 1), theatre.cellCenter(c, r + 1)];
+    const cuts: XY[] = [];
+    for (let k = 0; k < 4; k++) if ((v[k] > 0) !== (v[(k + 1) % 4] > 0)) cuts.push(mid(p[k], p[(k + 1) % 4]));
+    if (cuts.length === 2) segs.push([cuts[0], cuts[1]]);
+    else if (cuts.length === 4) { segs.push([cuts[0], cuts[1]]); segs.push([cuts[2], cuts[3]]); }
+  }
+  const chaikin = (l: XY[]): XY[] => {
+    if (l.length < 3) return l;
+    const out: XY[] = [l[0]];
+    for (let i = 0; i < l.length - 1; i++) {
+      const a = l[i], b = l[i + 1];
+      out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    out.push(l[l.length - 1]);
+    return out;
+  };
+  return joinSegments(segs, theatre.cellKm * 0.01).filter((l) => l.length >= 3).map((l) => {
+    let q = l;
+    for (let k = 0; k < smooth; k++) q = chaikin(q);
+    return q.map((x) => theatre.proj.toLL(x));
+  });
+}
+
 /** Собрать отрезки в ломаные по совпадающим концам. */
 function joinSegments(segs: [XY, XY][], eps: number): XY[][] {
   const key = (p: XY) => `${Math.round(p[0] / eps)}:${Math.round(p[1] / eps)}`;

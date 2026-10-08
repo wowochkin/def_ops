@@ -66,6 +66,8 @@ export interface Snapshot {
   time: string;
   turn: number;
   units: { id: string; at: LngLat; personnel: number; tanks: number; posture: string; destroyed: boolean; cutOff?: boolean; ammo?: number }[];
+  /** Территория после хода (если правила её ведут). */
+  territory?: number[];
 }
 
 export interface RunResult {
@@ -76,6 +78,7 @@ export interface RunResult {
 const snap = (s: SimState): Snapshot => ({
   time: s.time, turn: s.turn,
   units: s.formations.filter((f) => onMap(f, s.time) || f.destroyed).map((f) => ({ id: f.id, at: f.position, personnel: f.personnel, tanks: f.tanks, posture: f.posture, destroyed: f.destroyed, ...(f.cutOff ? { cutOff: true } : {}), ammo: +f.ammo.toFixed(2) })),
+  ...(s.territory ? { territory: s.territory } : {}),
 });
 
 /** Прогнать сценарий от начала до конца (или maxTurns ходов). */

@@ -15,7 +15,7 @@ import { dist, type XY } from './geo';
 import { interp, power } from './rules';
 import type { Theatre } from './theatre';
 import type { CombatFactor, Formation, JournalEntry, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task } from './types';
-import { controlMap, supplyField } from './control';
+import { claimTerritory, controlMap, initialTerritory, supplyField } from './control';
 
 export interface SimContext {
   scenario: Scenario;
@@ -79,7 +79,7 @@ function supplySources(ctx: SimContext, side: string, time: string): LngLat[] {
 }
 
 /** Контроль территории и время подвоза по сторонам на начало хода. */
-export function supplyState(ctx: SimContext, units: Formation[], time: string) {
+export function supplyState(ctx: SimContext, units: Formation[], time: string, territory?: Int8Array | null) {
   const sides = ctx.scenario.sides.map((x) => x.id);
   // территория — по положению войск больше, чем по их силе (показатель 0,1): фронтовые части стоят на своей земле
   const control = controlMap(ctx.theatre, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, 10, 0.1);
@@ -89,7 +89,8 @@ export function supplyState(ctx: SimContext, units: Formation[], time: string) {
     // зона влияния: наступающие и на марше — радиус соприкосновения; в обороне (кольцо окружения) — половина полосы
     const zoc = (f: Formation) => f.posture === 'attack' || f.posture === 'march' ? ctx.rules.contactKm
       : Math.max(ctx.rules.contactKm, (profileOf(ctx, f.side).unitTypes[f.type]?.frontageKm ?? 0) / 2);
-    if (src.length) fields.set(side, supplyField(ctx.theatre, side, src, units, profileOf(ctx, side), ctx.rules, time, zoc).hours);
+    const terr = territory ? { owner: territory, side: sides.indexOf(side) } : undefined;
+    if (src.length) fields.set(side, supplyField(ctx.theatre, side, src, units, profileOf(ctx, side), ctx.rules, time, zoc, terr).hours);
   }
   return { control, fields };
 }
@@ -121,8 +122,23 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     } else pending.push(o);
   }
 
+  // территория (если ведётся): с прошлого хода или исходная — по ближайшим войскам и тылам сторон
+  const sides = ctx.scenario.sides.map((x) => x.id);
+  const sideIdx = (side: string) => sides.indexOf(side);
+  const terr: Int8Array | null = !R.territory ? null : prev.territory ? Int8Array.from(prev.territory)
+    : initialTerritory(T, [
+      ...active().map((f) => ({ side: sideIdx(f.side), at: f.position })),
+      ...sides.flatMap((sd) => supplySources(ctx, sd, now).map((at) => ({ side: sideIdx(sd), at }))),
+    ]);
+  // по территории противника — медленнее (заслоны, разрушения, зачистка)
+  const terrCost = (f: Formation, mob: string) => {
+    const cap = R.territory?.enemyKmPerDay[mob as keyof NonNullable<Rules['territory']>['enemyKmPerDay']];
+    if (!terr || !cap) return () => 0;
+    const k = sideIdx(f.side), h = (T.cellKm * 24) / cap;
+    return (i: number) => (terr[i] >= 0 && terr[i] !== k ? h : 0);
+  };
   // контроль территории и подвоз — по положению на начало хода
-  const sup = ctx.scenario.supply ? supplyState(ctx, active(), now) : null;
+  const sup = ctx.scenario.supply ? supplyState(ctx, active(), now, terr) : null;
   // подвоз к формированию — к его клетке или соседней
   const supplyHours = (f: Formation, at: LngLat = f.position) => {
     const fld = sup?.fields.get(f.side);
@@ -180,7 +196,8 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const type = prof.unitTypes[f.type];
     const mob = type?.mobility === 'foot' || f.fuel > 0 ? type?.mobility ?? 'foot' : 'foot';
     if (dist(xy(f), T.proj.toXY(to)) < 0.5) { if (f.posture === 'march' || f.posture === 'withdraw') f.posture = 'defend'; continue; }
-    const r = T.advance(f.position, to, mob, prof, R, now, dt, fortCost(f));
+    const fc = fortCost(f), tc = terrCost(f, mob);
+    const r = T.advance(f.position, to, mob, prof, R, now, dt, (i) => fc(i) + tc(i));
     if (!r) continue;
     let pos = r.position;
     // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
@@ -232,12 +249,21 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     }
   }
 
+  // территория: клетки на пути и вокруг положения формирований переходят к их стороне, если рядом нет противника
+  if (terr && R.territory) {
+    const before = new Map(prev.formations.map((f) => [f.id, f.position]));
+    const live = active();
+    const rk = R.territory.radiusKm;
+    const enemyNear = (side: number, p: XY) => live.some((e) => sideIdx(e.side) !== side && dist(xy(e), p) < rk);
+    claimTerritory(T, terr, live.map((f) => ({ side: sideIdx(f.side), from: before.get(f.id) ?? f.position, to: f.position })), enemyNear, rk);
+  }
+
   // занятые клетки чужих укреплённых полос — прорваны
   for (const f of active()) {
     const i = T.indexOf(f.position);
     if (i >= 0 && T.fort[i] && T.fortSide[i] && T.fortSide[i] !== f.side) breached.add(i);
   }
-  return { ...prev, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached] };
+  return { ...prev, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}) };
 }
 
 /** Остановиться, не доходя до противника ближе расстояния соприкосновения. */

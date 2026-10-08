@@ -49,13 +49,16 @@ export function controlMap(T: Theatre, units: Formation[], sides: string[], weig
  * ближе zocKm и ближе любого своего формирования (зона влияния противника).
  * Окружение получается, когда кольцо таких зон смыкается вокруг формирования.
  */
-export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number | ((f: Formation) => number)): Uint8Array {
+export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number }): Uint8Array {
   const N = T.cols * T.rows;
   const zoc = typeof zocKm === 'number' ? () => zocKm : zocKm;
   const own = units.filter((u) => u.side === side).map((u) => T.proj.toXY(u.position));
   const enemy = units.filter((u) => u.side !== side).map((u) => ({ p: T.proj.toXY(u.position), r: zoc(u) }));
   const out = new Uint8Array(N).fill(1);
+  // территория противника закрыта для подвоза целиком (сплошная полоса), а не только зоны его формирований
+  if (territory) for (let i = 0; i < N; i++) { const o = territory.owner[i]; if (o >= 0 && o !== territory.side) out[i] = 0; }
   for (let i = 0; i < N; i++) {
+    if (!out[i]) continue;
     const p = T.cellCenter(i % T.cols, Math.floor(i / T.cols));
     let de = Infinity, inZone = false;
     for (const e of enemy) { const d = Math.hypot(e.p[0] - p[0], e.p[1] - p[1]); if (d < de) de = d; if (d < e.r) inZone = true; }
@@ -73,9 +76,53 @@ export interface SupplyField {
 }
 
 /** Поле времени подвоза для стороны: от источников в обход зон влияния противника. */
-export function supplyField(T: Theatre, side: string, sources: LngLat[], units: Formation[], profile: SideProfile, rules: Rules, time: string, zocKm: number | ((f: Formation) => number)): SupplyField {
-  const pass = supplyPassable(T, units, side, zocKm);
+export function supplyField(T: Theatre, side: string, sources: LngLat[], units: Formation[], profile: SideProfile, rules: Rules, time: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number }): SupplyField {
+  const pass = supplyPassable(T, units, side, zocKm, territory);
   const src = sources.map((p) => T.indexOf(p)).filter((i) => i >= 0 && pass[i]);
   const hours = T.distanceField(src, 'motor', profile, rules, time, (i) => pass[i] === 1);
   return { hours };
+}
+
+/**
+ * Исходная территория: клетка — стороне ближайшего формирования или опорной точки
+ * (источники подвоза — тыл стороны). Дальше территория меняется только движением войск.
+ */
+export function initialTerritory(T: Theatre, points: { side: number; at: LngLat }[]): Int8Array {
+  const N = T.cols * T.rows;
+  const out = new Int8Array(N).fill(-1);
+  const ps = points.map((p) => ({ side: p.side, xy: T.proj.toXY(p.at) }));
+  for (let i = 0; i < N; i++) {
+    const c = T.cellCenter(i % T.cols, Math.floor(i / T.cols));
+    let best = -1, bd = Infinity;
+    for (const p of ps) { const d = (p.xy[0] - c[0]) ** 2 + (p.xy[1] - c[1]) ** 2; if (d < bd) { bd = d; best = p.side; } }
+    out[i] = best;
+  }
+  return out;
+}
+
+/**
+ * Занятие территории: клетки в радиусе radiusKm от пути формирования за ход (отрезок
+ * от прежнего положения к новому) переходят к его стороне, если рядом нет противника.
+ */
+export function claimTerritory(T: Theatre, owner: Int8Array, moves: { side: number; from: LngLat; to: LngLat }[], enemyNear: (side: number, cell: [number, number]) => boolean, radiusKm: number) {
+  const rc = Math.ceil(radiusKm / T.cellKm) + 1;
+  for (const m of moves) {
+    const a = T.proj.toXY(m.from), b = T.proj.toXY(m.to);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const steps = Math.max(1, Math.ceil(len / T.cellKm));
+    for (let k = 0; k <= steps; k++) {
+      const q: [number, number] = [a[0] + ((b[0] - a[0]) * k) / steps, a[1] + ((b[1] - a[1]) * k) / steps];
+      const i0 = T.indexOf(T.proj.toLL(q));
+      if (i0 < 0) continue;
+      const c0 = i0 % T.cols, r0 = Math.floor(i0 / T.cols);
+      for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) {
+        if (!T.inside(c, r)) continue;
+        const i = r * T.cols + c;
+        if (owner[i] === m.side) continue;
+        const p = T.cellCenter(c, r);
+        if (Math.hypot(p[0] - q[0], p[1] - q[1]) > radiusKm) continue;
+        if (!enemyNear(m.side, p)) owner[i] = m.side;
+      }
+    }
+  }
 }

@@ -215,3 +215,27 @@ describe('цели, снабжение, окружение', () => {
     if (c?.kind === 'combat' && c.advanceKm > 1) expect(xOf(k.position)).toBeGreaterThan(0.5);
   });
 });
+
+describe('территория — сплошная полоса', () => {
+  const noTerr = (ctx: SimContext): SimContext => ({ ...ctx, rules: { ...ctx.rules, territory: undefined } });
+  it('по территории противника марш медленнее; пройденные клетки переходят к своей стороне', () => {
+    // немцы далеко на юго-востоке: их тыл (восток) — их территория, пока по нему никто не прошёл
+    const ctx = ctxWith([su('t1', -25, 10, { type: 'tank_army' }), de('k1', 15, -15)], [order('t1', 'regroup', ll(10, 10))]);
+    const s1 = step(createState(ctx), ctx);
+    const s0 = step(createState(noTerr(ctx)), noTerr(ctx));
+    const x = (s: typeof s1) => xOf(s.formations.find((f) => f.id === 't1')!.position);
+    expect(x(s1)).toBeLessThan(x(s0));
+    const T = ctx.theatre, terr = s1.territory!;
+    expect(terr[T.indexOf(ll(-25, 10))]).toBe(0); // исходная — своя
+    expect(terr[T.indexOf(ll(x(s1) - 2, 10))]).toBe(0); // пройденная — своя
+    expect(terr[T.indexOf(ll(25, -15))]).toBe(1); // немецкий тыл не тронут
+  });
+  it('подвоз — только по своей территории: прорвавшийся вперёд снабжается по пробитому коридору', () => {
+    const ctx = ctxWith([su('t1', -25, 0, { type: 'tank_army' }), de('k1', 25, 15)], [order('t1', 'regroup', ll(15, 0))]);
+    const sup = { ...ctx, scenario: { ...ctx.scenario, supply: { su: { sources: [ll(-29, 0)] }, de: { sources: [ll(29, 15)] } } } };
+    let st = createState(sup);
+    for (let k = 0; k < 3; k++) st = step(st, sup);
+    expect(st.formations.find((f) => f.id === 't1')!.cutOff ?? false).toBe(false);
+  });
+});
+
