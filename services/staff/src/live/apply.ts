@@ -32,7 +32,7 @@ export function decisionToOrders(d: Pick<Decision, 'orders'>, sit: Situation, so
   const eNames = sit.enemies.map((e) => e.name);
   const resolve = (name: string | null | undefined): { target: Target; text: string } | null => {
     if (!name || !name.trim()) return null;
-    let i = findName(name, aNames);
+    let i = findName(name, aNames, true);
     if (i < 0) i = findName(name, aIds);
     if (i >= 0) return { target: sit.areas[i].id, text: sit.areas[i].title };
     const e = findName(name, eNames);
@@ -91,7 +91,7 @@ export function actionsToStaff(ctx: SimContext, g: GameState, sit: Situation, gi
   if (!sit.staff) return { actions, applied: given.map((x) => ({ given: x, action: null, text: 'тыл и резервы ведёт вышестоящее командование' })) };
   const place = (name: string | null) => {
     if (!name) return null;
-    let i = findName(name, sit.areas.map((a) => a.title));
+    let i = findName(name, sit.areas.map((a) => a.title), true);
     if (i < 0) i = findName(name, sit.areas.map((a) => a.id));
     const a = i >= 0 ? T.area(sit.areas[i].id) : T.area(name);
     return a ? { at: a.center, title: sit.areas[i]?.title ?? a.name } : null;
@@ -100,7 +100,7 @@ export function actionsToStaff(ctx: SimContext, g: GameState, sit: Situation, gi
   for (const x of given ?? []) {
     let a: StaffAction | null = null, why = '';
     if (x.kind === 'base') {
-      const bi = findName(x.subject ?? '', sit.staff.bases.map((b) => b.name)), p = place(x.area);
+      const bi = findName(x.subject ?? '', sit.staff.bases.map((b) => b.name), true), p = place(x.area);
       if (bi < 0) why = `база «${x.subject}» не опознана`; else if (!p) why = `пункт «${x.area}» не опознан`;
       else a = { kind: 'base', side, base: sit.staff.bases[bi].id, to: p.at, toName: p.title, issuedAt: t };
     } else if (x.kind === 'priority') {

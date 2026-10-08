@@ -146,7 +146,7 @@ function stems(s: string): Set<string> {
 }
 
 /** Индекс элемента списка, которому соответствует название (−1 — нет): точное совпадение, затем оригинал в скобках, вхождение, общие основы слов. */
-export function findName(name: string, list: string[]): number {
+export function findName(name: string, list: string[], places = false): number {
   const n = norm(name);
   const o = original(name), sn = stems(name);
   if (!n && !o) return -1;
@@ -156,9 +156,9 @@ export function findName(name: string, list: string[]): number {
   list.forEach((x, i) => {
     let s = 0;
     const ox = original(x);
-    // «Seelow» против «Зелов (Seelow)» — по исходному названию в скобках
-    if ((o && o === ox) || (n && ox && n === ox)) s = 3;
-    else if (n && ox && ox.length > 3 && (n.includes(ox) || ox.includes(n)) && Math.min(n.length, ox.length) >= 4) s = 2.5;
+    // пункты (places): «Seelow» против «Зелов (Seelow)» — и по исходному названию без скобок; у формирований так не угадываем
+    if ((o && o === ox) || (places && n && ox && n === ox)) s = 3;
+    else if (places && n && ox && (n.includes(ox) || ox.includes(n)) && Math.min(n.length, ox.length) >= 4) s = 2.5;
     else if (n) {
       const k = norm(x);
       if (k && (n.includes(k) || k.includes(n))) s = 2 + Math.min(k.length, n.length) / Math.max(k.length, n.length);
@@ -173,8 +173,8 @@ export function findName(name: string, list: string[]): number {
   return best;
 }
 
-export function known(name: string, list: string[]): boolean {
-  return findName(name, list) >= 0;
+export function known(name: string, list: string[], places = false): boolean {
+  return findName(name, list, places) >= 0;
 }
 
 /** Формальная проверка решения против обстановки. */
@@ -191,8 +191,8 @@ export function checkDecision(raw: unknown, ctx: { formations: string[]; areas: 
     if (!o || typeof o !== 'object') { issues.push({ level: 'error', text: `${at}: не объект` }); continue; }
     if (!TASKS.includes(o.task)) issues.push({ level: 'error', text: `${at}: неизвестная задача «${o.task}»` });
     if (!known(o.formation ?? '', ctx.formations)) issues.push({ level: 'error', text: `${at}: формирования нет среди своих сил` });
-    if (!known(o.area ?? '', ctx.areas)) issues.push({ level: 'warning', text: `${at}: район «${o.area}» не из списка обстановки` });
-    if (o.toArea && !known(o.toArea, ctx.areas)) issues.push({ level: 'warning', text: `${at}: район «${o.toArea}» не из списка обстановки` });
+    if (!known(o.area ?? '', ctx.areas, true)) issues.push({ level: 'warning', text: `${at}: район «${o.area}» не из списка обстановки` });
+    if (o.toArea && !known(o.toArea, ctx.areas, true)) issues.push({ level: 'warning', text: `${at}: район «${o.toArea}» не из списка обстановки` });
     if (['withdraw', 'breakout', 'regroup', 'relieve'].includes(o.task) && !o.toArea) issues.push({ level: 'warning', text: `${at}: для задачи «${TASK_RU[o.task]}» не указано, куда` });
   }
   const assessment = (d.assessment ?? '').trim();

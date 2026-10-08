@@ -62,7 +62,7 @@ describe('распоряжения штаба человека: тыл, пере
     expect(unitReports(ctx, g.state, 'su').find((u) => u.id === 'su_28a')!.status).toBe('reserve');
     const bases = g.state.logistics!.su.bases;
     expect(bases.length).toBe(12);
-    expect(bases[0].name).toBe('Kostrzyn');
+    expect(bases[0].name).toBe('Кюстрин (Kostrzyn)');
 
     const t = g.state.time;
     // переправа через Одер у Шведта (река есть, наши рядом — 61 А / 1 А ВП), резерв и база — в полосу 8 гв. А (своя территория)

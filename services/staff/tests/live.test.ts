@@ -217,11 +217,11 @@ describe('пункты по-русски и в исходном написани
   it('приказ находит пункт и по русскому названию, и по исходному', async () => {
     const { findName } = await import('../src/decision');
     const list = ['Зелов (Seelow)', 'Мюнхеберг (Muencheberg)', 'Берлин, Рейхстаг (Reichstag)'];
-    expect(findName('Зелов', list)).toBe(0);
-    expect(findName('Seelow', list)).toBe(0);
-    expect(findName('Muencheberg', list)).toBe(1);
-    expect(findName('Рейхстаг', list)).toBe(2);
-    expect(findName('Reichstag', list)).toBe(2);
-    expect(findName('Берлин, Рейхстаг (Reichstag)', list)).toBe(2);
+    expect(findName('Зелов', list, true)).toBe(0);
+    expect(findName('Seelow', list, true)).toBe(0);
+    expect(findName('Muencheberg', list, true)).toBe(1);
+    expect(findName('Рейхстаг', list, true)).toBe(2);
+    expect(findName('Reichstag', list, true)).toBe(2);
+    expect(findName('Берлин, Рейхстаг (Reichstag)', list, true)).toBe(2);
   });
 });
