@@ -11,7 +11,7 @@ import { ReplayView } from './ReplayView';
 import { KnowledgeView } from './KnowledgeView';
 import * as kb from './kb/kb';
 import { MapsPanel } from './MapsPanel';
-import { BasemapControls, Icon } from './ui';
+import { BasemapControls, Icon, ModelSelect } from './ui';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
 
 type Section = 'editor' | 'replay' | 'maps' | 'library' | 'knowledge' | 'staff';
@@ -107,10 +107,8 @@ function StaffView({ llm }: { llm: Llm }) {
             <small>По умолчанию <code>/llm/v1</code> — через сервер разработки (<code>npm run dev</code>) к LM Studio на <code>localhost:1234</code>; другой адрес — переменная <code>DEFOPS_LLM_URL</code> при запуске.</small>
           </label>
           <label>Модель
-            <select value={settings.model} onChange={(e) => set({ model: e.target.value })}>
-              <option value="">первая загруженная{check.state === 'ok' ? ` (${check.models[0]})` : ''}</option>
-              {check.state === 'ok' && check.models.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <ModelSelect value={settings.model} onChange={(model) => set({ model })} check={check} empty={`первая загруженная${check.state === 'ok' ? ` (${check.models[0]})` : ''}`} />
+            <small>Варианты одной модели (4bit, 8bit) — отдельными строками «имя@вариант»: выбранный сервер загрузит сам (загрузка по запросу), первый запрос — дольше.</small>
           </label>
           <label>Размышление перед ответом
             <select value={settings.thinking} onChange={(e) => set({ thinking: e.target.value as typeof settings.thinking })}>

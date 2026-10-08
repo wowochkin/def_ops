@@ -9,6 +9,7 @@ import { category, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBR
 import * as kb from './kb/kb';
 import { QWEN_EMBED } from './kb/vectors';
 import type { Llm } from './shared';
+import { ModelSelect } from './ui';
 import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
 
@@ -225,10 +226,7 @@ function KbModel({ llm }: { llm: Llm }) {
   const base = llm.settings.model || models[0] || '—';
   return (
     <div className="kb-model">
-      <select value={llm.settings.kbModel ?? ''} onChange={(e) => llm.set({ kbModel: e.target.value || undefined })} title="Модель для ответов и разбора документов">
-        <option value="">как в «ИИ» ({base})</option>
-        {models.map((m) => <option key={m} value={m}>{m}</option>)}
-      </select>
+      <ModelSelect value={llm.settings.kbModel ?? ''} onChange={(v) => llm.set({ kbModel: v || undefined })} check={llm.check} empty={`как в «ИИ» (${base})`} title="Модель для ответов и разбора документов" />
       <select value={llm.settings.kbThinking ?? ''} onChange={(e) => llm.set({ kbThinking: (e.target.value || undefined) as typeof llm.settings.kbThinking })} title="Размышление модели перед ответом">
         <option value="">как в «ИИ» ({THINK_RU[llm.settings.thinking]})</option>
         {Object.entries(THINK_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

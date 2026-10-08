@@ -129,6 +129,8 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
     res.setHeader('access-control-allow-origin', '*');
     res.setHeader('access-control-allow-headers', '*');
     if (req.method === 'OPTIONS') { res.end(); return; }
+    // собственный API LM Studio: модель с двумя вариантами (проверка выбора 4bit / 8bit)
+    if (req.url?.endsWith('/api/v0/models')) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ data: [{ id: 'mock-staff', type: 'llm', quantization: '4bit', state: 'loaded', variants: ['mock-staff@4bit', 'mock-staff@8bit'] }, { id: 'text-embedding-qwen3-embedding-0.6b', type: 'embeddings', state: 'loaded' }] })); return; }
     if (req.url?.endsWith('/models')) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ data: [{ id: 'mock-staff' }, { id: 'text-embedding-qwen3-embedding-0.6b' }] })); return; }
     if (req.url?.endsWith('/embeddings')) {
       let eb = '';

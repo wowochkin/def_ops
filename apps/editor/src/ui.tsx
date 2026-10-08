@@ -63,3 +63,31 @@ export const Icon = {
   help: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.7-.9 1.3v.4M12 16.5h.01" /></svg>,
   layers: <svg viewBox="0 0 24 24"><path d="M12 4l8.5 4.5L12 13 3.5 8.5z" /><path d="M3.5 12.5L12 17l8.5-4.5M3.5 16.5L12 21l8.5-4.5" /></svg>,
 };
+
+/**
+ * Выбор модели на сервере: модели и их варианты (4bit / 8bit — «имя@вариант»), загружена ли, квантование;
+ * «другое имя…» — вписать вручную (например, имя, под которым модель загружена).
+ */
+export function ModelSelect({ value, onChange, check, empty, title }: {
+  value: string; onChange: (v: string) => void; empty: string; title?: string;
+  check: { state: string; models?: string[]; info?: Record<string, { quant?: string; loaded?: boolean; variantOf?: string }> };
+}) {
+  const models = check.models ?? [];
+  const label = (m: string) => {
+    const i = check.info?.[m];
+    const bits = [i?.quant && !m.includes('@') ? i.quant : '', i?.loaded ? 'загружена' : ''].filter(Boolean).join(', ');
+    return `${i?.variantOf ? '  ↳ ' : ''}${m}${bits ? ` (${bits})` : ''}`;
+  };
+  return (
+    <select value={value} title={title} onChange={(e) => {
+      if (e.target.value !== '__other') { onChange(e.target.value); return; }
+      const v = window.prompt('Имя модели на сервере — как в списке /v1/models, вариант через @ (например, qwen/qwen3.8-27b@8bit) или имя, под которым модель загружена:', value);
+      if (v != null) onChange(v.trim());
+    }}>
+      <option value="">{empty}</option>
+      {models.map((m) => <option key={m} value={m}>{label(m)}</option>)}
+      {value && !models.includes(value) && <option value={value}>{value}</option>}
+      <option value="__other">другое имя…</option>
+    </select>
+  );
+}

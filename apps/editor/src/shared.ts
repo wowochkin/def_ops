@@ -73,7 +73,39 @@ export function loadLlm(): LlmSettings {
 }
 
 /** models — модели для ответов; embedModels — модели эмбеддингов (в названии embed), для смыслового поиска по базе знаний. */
-export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[]; embedModels: string[] } | { state: 'fail'; error: string };
+export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[]; embedModels: string[]; info?: Record<string, ModelInfo> } | { state: 'fail'; error: string };
+/** Что известно о модели из собственного API LM Studio: квантование, загружена ли. */
+export interface ModelInfo { quant?: string; loaded?: boolean; variantOf?: string }
+
+/**
+ * Варианты моделей (4bit / 8bit …) из собственного API LM Studio (/api/v1/models, /api/v0/models): у модели
+ * с несколькими вариантами имя вида «qwen/qwen3.8-27b@8bit». Нет такого API — только список /v1/models.
+ */
+async function nativeModels(url: string): Promise<Record<string, ModelInfo>> {
+  const base = url.replace(/\/+$/, '').replace(/\/v1$/, '');
+  const out: Record<string, ModelInfo> = {};
+  // оба API (у версий LM Studio разные поля) — сведения сливаются
+  for (const path of ['/api/v1/models', '/api/v0/models']) {
+    try {
+      const r = await fetch(base + path, { signal: AbortSignal.timeout(3000) });
+      if (!r.ok) continue;
+      const j = (await r.json()) as { data?: unknown[]; models?: unknown[] };
+      for (const raw of (j.data ?? j.models ?? []) as Record<string, unknown>[]) {
+        const id = String(raw.id ?? raw.key ?? raw.modelKey ?? '');
+        if (!id) continue;
+        const q = raw.quantization as string | { name?: string } | undefined;
+        const quant = typeof q === 'string' ? q : q?.name;
+        const loaded = raw.state === 'loaded' || (Array.isArray(raw.loaded_instances) && raw.loaded_instances.length > 0) || undefined;
+        out[id] = { ...out[id], quant: quant ?? out[id]?.quant, loaded: loaded ?? out[id]?.loaded };
+        for (const v of (raw.variants ?? []) as (string | { id?: string; name?: string })[]) {
+          const vid = typeof v === 'string' ? v : v.id ?? (v.name ? `${id}@${v.name}` : '');
+          if (vid) out[vid] = { ...out[vid], variantOf: id, quant: out[vid]?.quant ?? vid.split('@')[1] };
+        }
+      }
+    } catch { /* нет собственного API — не страшно */ }
+  }
+  return out;
+}
 
 /** Проверить связь с сервером модели: список загруженных моделей. */
 export async function checkLlm(url: string): Promise<LlmCheck> {
@@ -81,9 +113,12 @@ export async function checkLlm(url: string): Promise<LlmCheck> {
     const r = await fetch(`${url.replace(/\/+$/, '')}/models`, { signal: AbortSignal.timeout(5000) });
     if (!r.ok) return { state: 'fail', error: `сервер ответил ${r.status}` };
     const j = (await r.json()) as { data?: { id: string }[] };
-    const all = (j.data ?? []).map((m) => m.id);
+    const info = await nativeModels(url);
+    // варианты (qwen/…@8bit) — сразу за своей моделью
+    const ids = (j.data ?? []).map((m) => m.id);
+    const all = ids.flatMap((id) => [id, ...Object.keys(info).filter((v) => info[v].variantOf === id && !ids.includes(v))]);
     const models = all.filter((m) => !/embed/i.test(m));
-    return models.length ? { state: 'ok', models, embedModels: all.filter((m) => /embed/i.test(m)) } : { state: 'fail', error: 'на сервере не загружена ни одна модель' };
+    return models.length ? { state: 'ok', models, embedModels: all.filter((m) => /embed/i.test(m)), info } : { state: 'fail', error: 'на сервере не загружена ни одна модель' };
   } catch (e) {
     return { state: 'fail', error: (e as Error).name === 'TimeoutError' ? 'сервер не отвечает' : (e as Error).message };
   }
