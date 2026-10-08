@@ -26,6 +26,8 @@ export class Theatre {
   readonly river: Uint8Array;
   /** Укреплённость клетки (уровень рубежа). */
   readonly fort: Uint8Array;
+  /** Чья укреплённая полоса в клетке (сторона из lines[].side; null — ничья). */
+  readonly fortSide: (string | null)[];
   /** Мосты по клеткам. */
   private readonly bridges = new Map<number, { id: string; openFrom?: string | null; destroyedAt?: string | null }[]>();
   private readonly areaRings: { id: string; name: string; ring: XY[]; c: XY }[];
@@ -44,6 +46,7 @@ export class Theatre {
     this.road = new Uint8Array(N);
     this.river = new Uint8Array(N);
     this.fort = new Uint8Array(N);
+    this.fortSide = new Array(N).fill(null);
 
     if (data.terrainGrid) {
       const g = data.terrainGrid, cells = decodeGrid(g);
@@ -89,7 +92,17 @@ export class Theatre {
     }
     for (const l of data.lines) {
       if (!l.fortification) continue;
-      this.rasterLine(l.line, (i) => { this.fort[i] = Math.max(this.fort[i], l.fortification!); });
+      const lv = l.fortification;
+      const mark = (i: number) => { if (lv >= this.fort[i]) { this.fort[i] = lv; this.fortSide[i] = l.side ?? null; } };
+      // полоса глубиной depthKm: клетки в пределах половины глубины от линии
+      const half = Math.max(0, (l.depthKm ?? 0) / 2), rc = Math.ceil(half / this.cellKm);
+      this.rasterLine(l.line, (i) => {
+        if (!rc) return mark(i);
+        const c0 = i % this.cols, r0 = Math.floor(i / this.cols);
+        for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) {
+          if (this.inside(c, r) && Math.hypot(c - c0, r - r0) * this.cellKm <= half + this.cellKm / 2) mark(r * this.cols + c);
+        }
+      });
     }
     this.areaRings = data.areas.map((a) => { const ring = a.ring.map((p) => this.proj.toXY(p)); return { id: a.id, name: a.name, ring, c: centroid(ring) }; });
   }
@@ -177,7 +190,7 @@ export class Theatre {
    * клеток) плюс переправа: большая река без моста непроходима для техники,
    * пешим — +riverCrossHours; малая — треть этого.
    */
-  route(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string): { path: LngLat[]; hours: number; cells: number[] } | null {
+  route(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, extraCost?: (i: number) => number): { path: LngLat[]; hours: number; cells: number[] } | null {
     const s = this.indexOf(from), g = this.indexOf(to);
     if (s < 0 || g < 0) return null;
     if (s === g) return { path: [from, to], hours: 0, cells: [s] };
@@ -213,7 +226,7 @@ export class Theatre {
         const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1);
         if (v1 <= 0 || v0 <= 0) continue;
         const d = (dr && dc ? SQRT2 : 1) * this.cellKm;
-        const cost = d / ((v0 + v1) / 2) + crossCost(ni);
+        const cost = d / ((v0 + v1) / 2) + crossCost(ni) + (extraCost ? extraCost(ni) : 0);
         if (!Number.isFinite(cost)) continue;
         const ng = gScore[cur] + cost;
         if (ng < gScore[ni]) { gScore[ni] = ng; came[ni] = cur; heap.push(ni, ng + h(ni)); }
@@ -267,9 +280,9 @@ export class Theatre {
    * Продвижение по маршруту не дольше hours: где окажется формирование.
    * Возвращает новую точку, пройденные км и оставшийся путь.
    */
-  advance(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, hours: number):
+  advance(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, hours: number, extraCost?: (i: number) => number):
     { position: LngLat; km: number; arrived: boolean; path: LngLat[] } | null {
-    const r = this.route(from, to, mob, profile, rules, time);
+    const r = this.route(from, to, mob, profile, rules, time, extraCost);
     if (!r) return null;
     if (r.hours <= hours) return { position: to, km: pathKm(this, r.path), arrived: true, path: r.path };
     // по клеткам: тратим время, пока хватает
@@ -282,7 +295,7 @@ export class Theatre {
       const d = dist(this.proj.toXY(pa), this.proj.toXY(pb));
       const v = (this.speedKmh(a, mob, profile, rules.movementScale ?? 1) + this.speedKmh(b, mob, profile, rules.movementScale ?? 1)) / 2;
       const rv = this.river[b];
-      const cross = !rv || this.bridgeOpen(b, time) ? 0 : rv === 2 ? rules.riverCrossHours : rules.riverCrossHours / 3;
+      const cross = (!rv || this.bridgeOpen(b, time) ? 0 : rv === 2 ? rules.riverCrossHours : rules.riverCrossHours / 3) + (extraCost ? extraCost(b) : 0);
       const cost = d / v + cross;
       if (cost > left) {
         if (cross && left < cross) break; // переправа не закончена — стоим у реки

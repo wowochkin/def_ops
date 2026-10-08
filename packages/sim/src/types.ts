@@ -21,6 +21,11 @@ export interface UnitType {
   mobility: Mobility;
   /** Качество войск: выучка, слаженность, управление (1 — норма эпохи). */
   quality: number;
+  /**
+   * Ширина полосы обороны, км: обороняющийся связывает боем наступающих в
+   * пределах половины этой ширины (а не только в радиусе соприкосновения).
+   */
+  frontageKm?: number;
 }
 
 export interface SideProfile {
@@ -84,6 +89,12 @@ export interface Rules {
    * кварталами (сотни метров в сутки), лес и болото — медленнее открытой местности.
    */
   advanceTerrain?: Partial<Record<TerrainClass, number>>;
+  /**
+   * Преодоление укреплённой полосы противника вне боя (мины, рвы, заграждения):
+   * часов на клетку за каждый уровень укреплённости, пока полоса не прорвана
+   * (клетку не заняли войска стороны).
+   */
+  fortCrossHours?: number;
   /** Множитель темпов марша из профилей (калибровка: заторы, разрушенные дороги, беженцы). */
   movementScale?: number;
   /** Откуда взяты числа: калибровка — сценарий, мерило, дата. */
@@ -135,7 +146,8 @@ export interface TheatreData {
   /** Именованные районы (для приказов и учёта контроля). */
   areas: { id: string; name: string; ring: LngLat[] }[];
   /** Рубежи и позиции: линия и уровень укреплённости (1–3). */
-  lines: { id: string; name: string; line: LngLat[]; fortification?: number; side?: string }[];
+  /** depthKm — глубина полосы (по умолчанию — одна клетка); side — чья полоса. */
+  lines: { id: string; name: string; line: LngLat[]; fortification?: number; side?: string; depthKm?: number }[];
   /** Откуда взяты слои (лицензии, даты), для справки и отчёта. */
   sources?: string[];
 }
@@ -265,4 +277,6 @@ export interface SimState {
   pending: Order[];
   rngState: number;
   journal: JournalEntry[];
+  /** Клетки укреплённых полос, уже занятые противником их владельца (прорваны). */
+  breached?: number[];
 }

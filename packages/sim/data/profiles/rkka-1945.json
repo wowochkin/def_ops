@@ -12,19 +12,22 @@
       "id": "rifle_army",
       "name": "общевойсковая армия",
       "mobility": "foot",
-      "quality": 1.0
+      "quality": 1.0,
+      "frontageKm": 14
     },
     "shock_army": {
       "id": "shock_army",
       "name": "ударная армия",
       "mobility": "foot",
-      "quality": 1.05
+      "quality": 1.05,
+      "frontageKm": 12
     },
     "guards_army": {
       "id": "guards_army",
       "name": "гвардейская армия",
       "mobility": "foot",
-      "quality": 1.1
+      "quality": 1.1,
+      "frontageKm": 12
     },
     "tank_army": {
       "id": "tank_army",
@@ -36,7 +39,8 @@
       "id": "rifle_corps",
       "name": "стрелковый корпус",
       "mobility": "foot",
-      "quality": 1.0
+      "quality": 1.0,
+      "frontageKm": 6
     },
     "tank_corps": {
       "id": "tank_corps",
@@ -125,5 +129,6 @@
     "maxFuel": 2,
     "rangeHours": 48
   },
-  "_supply_note": "подвоз: пополнение в сутки до максимума, если от источника по своей территории не дольше rangeHours (автотранспорт); немецкое горючее — острый дефицит апреля 1945 г. Черновик до калибровки."
+  "_supply_note": "подвоз: пополнение в сутки до максимума, если от источника по своей территории не дольше rangeHours (автотранспорт); немецкое горючее — острый дефицит апреля 1945 г. Черновик до калибровки.",
+  "_frontage_note": "frontageKm — ширина полосы обороны: корпус вермахта в апреле 1945 г. держал 20–30 км, дивизия — ~5–10 км (~5 км на дивизию, LT_CONQ); советская армия в обороне — 12–15 км. Черновик."
 }

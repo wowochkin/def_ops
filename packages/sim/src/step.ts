@@ -118,13 +118,13 @@ export function step(prev: SimState, ctx: SimContext): SimState {
 
   // контроль территории и подвоз — по положению на начало хода
   const sup = ctx.scenario.supply ? supplyState(ctx, active(), now) : null;
-  // подвоз к формированию — к ближайшей клетке в пределах его полосы (радиус соприкосновения)
+  // подвоз к формированию — к его клетке или соседней
   const supplyHours = (f: Formation, at: LngLat = f.position) => {
     const fld = sup?.fields.get(f.side);
     if (!fld) return 0;
     const i = T.indexOf(at);
     if (i < 0) return Infinity;
-    const rc = Math.max(1, Math.round(R.contactKm / T.cellKm)), c0 = i % T.cols, r0 = Math.floor(i / T.cols);
+    const rc = 1, c0 = i % T.cols, r0 = Math.floor(i / T.cols); // своя клетка и соседние: в зоне своего формирования путь не закрыт
     let best = Infinity;
     for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) if (T.inside(c, r)) best = Math.min(best, fld[r * T.cols + c]);
     return best;
@@ -132,7 +132,19 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   const range = (f: Formation) => profileOf(ctx, f.side).supply?.rangeHours ?? Infinity;
   const isCut = (f: Formation) => !!sup?.fields.get(f.side) && supplyHours(f) > range(f);
 
-  const enemiesNear = (f: Formation, km: number) => active().filter((e) => e.side !== f.side && dist(xy(f), xy(e)) <= km);
+  // полоса обороны: обороняющийся связывает боем наступающих в пределах половины своей ширины полосы
+  const reach = (e: Formation) => {
+    if (e.posture === 'attack' || e.posture === 'march') return R.contactKm;
+    const w = profileOf(ctx, e.side).unitTypes[e.type]?.frontageKm ?? 0;
+    return Math.max(R.contactKm, w / 2);
+  };
+  const enemiesNear = (f: Formation, km: number) => active().filter((e) => e.side !== f.side && dist(xy(f), xy(e)) <= Math.max(km, reach(e)));
+  // укреплённые полосы противника: задержка на клетку за уровень, пока полоса не прорвана
+  const breached = new Set(prev.breached ?? []);
+  const fortCost = (f: Formation) => (i: number) => {
+    const lv = T.fort[i], owner = T.fortSide[i];
+    return lv && owner && owner !== f.side && !breached.has(i) ? (R.fortCrossHours ?? 0) * lv : 0;
+  };
   const moved = new Set<string>();
 
   // 2. бои: наступающие в соприкосновении; общие обороняющиеся объединяют наступающих в одно сражение
@@ -156,12 +168,12 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const type = prof.unitTypes[f.type];
     const mob = type?.mobility === 'foot' || f.fuel > 0 ? type?.mobility ?? 'foot' : 'foot';
     if (dist(xy(f), T.proj.toXY(to)) < 0.5) { if (f.posture === 'march' || f.posture === 'withdraw') f.posture = 'defend'; continue; }
-    const r = T.advance(f.position, to, mob, prof, R, now, dt);
+    const r = T.advance(f.position, to, mob, prof, R, now, dt, fortCost(f));
     if (!r) continue;
     let pos = r.position;
     // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
     // остальные — не доходя до него
-    const stop = stopShortOfEnemy(f, pos, active(), T, f.posture === 'attack' ? R.contactKm * 0.8 : R.contactKm);
+    const stop = stopShortOfEnemy(f, pos, active(), T, (e) => (f.posture === 'attack' ? 0.8 : 1) * Math.max(R.contactKm, reach(e)));
     if (stop) pos = stop;
     const km = dist(xy(f), T.proj.toXY(pos));
     if (km > 0.05) {
@@ -204,19 +216,25 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     }
   }
 
-  return { ...prev, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal] };
+  // занятые клетки чужих укреплённых полос — прорваны
+  for (const f of active()) {
+    const i = T.indexOf(f.position);
+    if (i >= 0 && T.fort[i] && T.fortSide[i] && T.fortSide[i] !== f.side) breached.add(i);
+  }
+  return { ...prev, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached] };
 }
 
 /** Остановиться, не доходя до противника ближе расстояния соприкосновения. */
-function stopShortOfEnemy(f: Formation, to: LngLat, all: Formation[], T: Theatre, contactKm: number): LngLat | null {
+function stopShortOfEnemy(f: Formation, to: LngLat, all: Formation[], T: Theatre, radius: (e: Formation) => number): LngLat | null {
   const a = T.proj.toXY(f.position), b = T.proj.toXY(to);
-  const enemies = all.filter((e) => e.side !== f.side).map((e) => T.proj.toXY(e.position));
-  if (!enemies.some((e) => dist(b, e) < contactKm)) return null;
+  const enemies = all.filter((e) => e.side !== f.side).map((e) => ({ p: T.proj.toXY(e.position), r: radius(e) }));
+  const hit = (q: XY) => enemies.some((e) => dist(q, e.p) < e.r && dist(a, e.p) >= e.r * 0.999);
+  if (!hit(b)) return null;
   let lo = 0, hi = 1;
   for (let i = 0; i < 20; i++) {
     const m = (lo + hi) / 2;
     const p: XY = [a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m];
-    if (enemies.some((e) => dist(p, e) < contactKm)) hi = m; else lo = m;
+    if (hit(p)) hi = m; else lo = m;
   }
   return T.proj.toLL([a[0] + (b[0] - a[0]) * lo, a[1] + (b[1] - a[1]) * lo]);
 }

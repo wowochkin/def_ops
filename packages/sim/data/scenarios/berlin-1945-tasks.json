@@ -1702,12 +1702,13 @@
    "note": "аэродромы Адлерсхоф и Темпельхоф (LT_CONQ)"
   },
   {
-   "id": "su_28a@1945-04-23T18:00:attack",
+   "id": "su_28a@1945-04-23T18:00:defend",
    "formation": "su_28a",
-   "task": "attack",
-   "target": "Teupitz",
+   "task": "defend",
+   "target": "Mittenwalde",
    "issuedAt": "1945-04-23T18:00",
-   "source": "script"
+   "source": "script",
+   "note": "двумя дивизиями — участок Бонсдорф–Миттенвальде–Тойпиц фронтом на восток (LT_HALBE)"
   },
   {
    "id": "su_2gta@1945-04-23T18:00:attack",

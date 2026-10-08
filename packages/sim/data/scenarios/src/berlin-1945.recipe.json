@@ -485,12 +485,12 @@
   },
   {
    "id": "berlin_outskirts",
-   "title": "Советские войска на окраинах Берлина",
+   "title": "Советские войска на окраинах Берлина (≤13 км от центра)",
    "date": "1945-04-21",
    "kind": "reach",
    "side": "su",
-   "place": "B_Marzahn",
-   "radiusKm": 6,
+   "place": "B_Mitte",
+   "radiusKm": 13,
    "source": "LT_RACE"
   },
   {
@@ -526,12 +526,12 @@
   },
   {
    "id": "stettin",
-   "title": "Штеттин взят",
+   "title": "Штеттин взят (советские войска в городе)",
    "date": "1945-04-26",
    "kind": "reach",
    "side": "su",
    "place": "Szczecin",
-   "radiusKm": 6,
+   "radiusKm": 2,
    "source": "ru-wiki (B)"
   },
   {

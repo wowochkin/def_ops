@@ -544,7 +544,7 @@ def main():
     log(f"  мостов {len(bridges)}, разрушенных к 16.04: {sum(1 for b in bridges if b.get('destroyedAt', '9') < '1945-04-16')}")
 
     # 5. рубежи и районы
-    lines = [{"id": l["id"], "name": l["name"], "side": l.get("side"), "fortification": l.get("fortification"),
+    lines = [{"id": l["id"], "name": l["name"], "side": l.get("side"), "fortification": l.get("fortification"), "depthKm": l.get("depthKm"),
               "line": [rnd(place(p)) for p in l["places"]], "note": l.get("note")} for l in recipe["lines"]]
     areas = []
     for x in recipe["areas"]["explicit"]:
