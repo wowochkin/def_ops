@@ -71,21 +71,29 @@ export function targetPoint(ctx: SimContext, t: Target | undefined, units?: Map<
   return ctx.theatre.area(t)?.center ?? null;
 }
 
-/** Источники снабжения стороны — точки (районы — их центры). */
-function supplySources(ctx: SimContext, side: string, time: string): LngLat[] {
+/**
+ * Источники снабжения стороны — точки (районы — их центры). Тыл под управлением штаба (logistics) —
+ * его базы: перенесённая база действует с activeFrom и только на своей территории.
+ */
+export function supplySources(ctx: SimContext, side: string, time: string, logistics?: SimState['logistics'], territory?: ArrayLike<number> | null): LngLat[] {
+  const lg = logistics?.[side];
+  if (lg) {
+    const k = ctx.scenario.sides.findIndex((x) => x.id === side);
+    return lg.bases.filter((b) => (!b.activeFrom || b.activeFrom <= time) && (!b.moved || !territory || territory[ctx.theatre.indexOf(b.at)] === k)).map((b) => b.at);
+  }
   const sp = ctx.scenario.supply?.[side];
   const all = [...(sp?.sources ?? []), ...(sp?.phases ?? []).filter((p) => p.from <= time && (!p.until || time < p.until)).flatMap((p) => p.sources)];
   return all.map((x) => (Array.isArray(x) ? x : ctx.theatre.area(x)?.center ?? null)).filter((x): x is LngLat => !!x);
 }
 
 /** Контроль территории и время подвоза по сторонам на начало хода. */
-export function supplyState(ctx: SimContext, units: Formation[], time: string, territory?: Int8Array | null) {
+export function supplyState(ctx: SimContext, units: Formation[], time: string, territory?: Int8Array | null, logistics?: SimState['logistics']) {
   const sides = ctx.scenario.sides.map((x) => x.id);
   // территория — по положению войск больше, чем по их силе (показатель 0,1): фронтовые части стоят на своей земле
   const control = controlMap(ctx.theatre, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, 10, 0.1);
   const fields = new Map<string, Float64Array>();
   for (const side of sides) {
-    const src = supplySources(ctx, side, time);
+    const src = supplySources(ctx, side, time, logistics, territory);
     // зона влияния: наступающие и на марше — радиус соприкосновения; в обороне (кольцо окружения) — половина полосы
     const zoc = (f: Formation) => f.posture === 'attack' || f.posture === 'march' ? ctx.rules.contactKm
       : Math.max(ctx.rules.contactKm, (profileOf(ctx, f.side).unitTypes[f.type]?.frontageKm ?? 0) / 2);
@@ -128,7 +136,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   const terr: Int8Array | null = !R.territory ? null : prev.territory ? Int8Array.from(prev.territory)
     : initialTerritory(T, [
       ...active().map((f) => ({ side: sideIdx(f.side), at: f.position })),
-      ...sides.flatMap((sd) => supplySources(ctx, sd, now).map((at) => ({ side: sideIdx(sd), at }))),
+      ...sides.flatMap((sd) => supplySources(ctx, sd, now, prev.logistics).map((at) => ({ side: sideIdx(sd), at }))),
     ], sides);
   // по территории противника — медленнее (заслоны, разрушения, зачистка)
   const terrCost = (f: Formation, mob: string) => {
@@ -138,25 +146,11 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     return (i: number) => (terr[i] >= 0 && terr[i] !== k ? h : 0);
   };
   // контроль территории и подвоз — по положению на начало хода
-  const sup = ctx.scenario.supply ? supplyState(ctx, active(), now, terr) : null;
-  // подвоз к формированию — к любой клетке его полосы в пределах половины дистанции боя:
-  // армия и корпус занимают район в несколько км глубиной, подвоз приходит к их тыловой части,
-  // а не к точке знака (иначе вплотную к узлу обороны противника знак «отрезан»)
-  const supKm = Math.max(R.contactKm / 2, 1);
+  const sup = ctx.scenario.supply || prev.logistics ? supplyState(ctx, active(), now, terr, prev.logistics) : null;
+  // подвоз к формированию — к тыловой части его полосы (hoursNear)
   const supplyHours = (f: Formation, at: LngLat = f.position) => {
     const fld = sup?.fields.get(f.side);
-    if (!fld) return 0;
-    const i = T.indexOf(at);
-    if (i < 0) return Infinity;
-    const p0 = T.proj.toXY(at), c0 = i % T.cols, r0 = Math.floor(i / T.cols);
-    const rc = Math.max(1, Math.ceil(supKm / T.cellKm) + 1);
-    let best = Infinity;
-    for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) {
-      if (!T.inside(c, r)) continue;
-      const q = T.cellCenter(c, r);
-      if (Math.hypot(q[0] - p0[0], q[1] - p0[1]) <= Math.max(supKm, T.cellKm * 1.5)) best = Math.min(best, fld[r * T.cols + c]);
-    }
-    return best;
+    return fld ? hoursNear(ctx, fld, at) : 0;
   };
   const range = (f: Formation) => profileOf(ctx, f.side).supply?.rangeHours ?? Infinity;
   const isCut = (f: Formation) => !!sup?.fields.get(f.side) && supplyHours(f) > range(f);
@@ -242,8 +236,11 @@ export function step(prev: SimState, ctx: SimContext): SimState {
       if (cut !== !!f.cutOff) journal.push({ kind: 'encircled', time: now, formation: f.id, cut });
       f.cutOff = cut;
       if (!blocked) {
-        f.ammo = Math.min(ps.maxAmmo, f.ammo + ps.ammoPerDay * (dt / 24));
-        f.fuel = Math.min(ps.maxFuel, f.fuel + ps.fuelPerDay * (dt / 24));
+        // приоритет подвоза (тыл под управлением штаба): приоритетным — больше, остальным — меньше
+        const pr = prev.logistics?.[f.side]?.priority ?? [];
+        const k = pr.length ? (pr.includes(f.id) ? 1.5 : 0.75) : 1;
+        f.ammo = Math.min(ps.maxAmmo, f.ammo + ps.ammoPerDay * k * (dt / 24));
+        f.fuel = Math.min(ps.maxFuel, f.fuel + ps.fuelPerDay * k * (dt / 24));
       }
     }
     if (was.ammo >= 0.5 && f.ammo < 0.5) journal.push({ kind: 'supply', time: now, formation: f.id, what: 'ammo', left: +f.ammo.toFixed(2) });
@@ -277,6 +274,36 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     if (i >= 0 && T.fort[i] && T.fortSide[i] && T.fortSide[i] !== f.side) breached.add(i);
   }
   return { ...prev, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}) };
+}
+
+/**
+ * Время подвоза до формирования, часов: к любой клетке его полосы в пределах половины дистанции боя —
+ * армия и корпус занимают район в несколько км глубиной, подвоз приходит к их тыловой части,
+ * а не к точке знака (иначе вплотную к узлу обороны противника знак «отрезан»).
+ */
+function hoursNear(ctx: SimContext, fld: Float64Array, at: LngLat): number {
+  const T = ctx.theatre, supKm = Math.max(ctx.rules.contactKm / 2, 1);
+  const i = T.indexOf(at);
+  if (i < 0) return Infinity;
+  const p0 = T.proj.toXY(at), c0 = i % T.cols, r0 = Math.floor(i / T.cols);
+  const rc = Math.max(1, Math.ceil(supKm / T.cellKm) + 1);
+  let best = Infinity;
+  for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) {
+    if (!T.inside(c, r)) continue;
+    const q = T.cellCenter(c, r);
+    if (Math.hypot(q[0] - p0[0], q[1] - p0[1]) <= Math.max(supKm, T.cellKm * 1.5)) best = Math.min(best, fld[r * T.cols + c]);
+  }
+  return best;
+}
+
+/** Время подвоза до формирований стороны на начало хода, часов (Infinity — не доходит), и предел стороны. */
+export function supplyHoursOf(ctx: SimContext, state: SimState, side: string): { hours: Map<string, number>; rangeHours: number } {
+  const units = state.formations.filter((f) => onMap(f, state.time));
+  const terr = state.territory ? Int8Array.from(state.territory) : null;
+  const sup = supplyState(ctx, units, state.time, terr, state.logistics);
+  const fld = sup.fields.get(side);
+  const hours = new Map(units.filter((f) => f.side === side).map((f) => [f.id, fld ? hoursNear(ctx, fld, f.position) : 0]));
+  return { hours, rangeHours: profileOf(ctx, side).supply?.rangeHours ?? Infinity };
 }
 
 /** Остановиться, не доходя до противника ближе расстояния соприкосновения. */

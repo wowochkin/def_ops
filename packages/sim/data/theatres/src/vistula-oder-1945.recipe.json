@@ -123,56 +123,64 @@
         "name": "переправы Магнушевского плацдарма",
         "at": "Magnuszew",
         "openFrom": "1944-08-15T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_mniszew",
         "name": "переправы у Мнишева",
         "at": "Mniszew",
         "openFrom": "1944-08-15T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_pulawy",
         "name": "переправы Пулавского плацдарма",
         "at": "Pulawy",
         "openFrom": "1944-08-15T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_deblin",
         "name": "переправа у Демблина",
         "at": "Deblin",
         "openFrom": "1944-08-15T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_baranow",
         "name": "переправы Сандомирского плацдарма у Баранува",
         "at": "Baranow",
         "openFrom": "1944-08-15T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_sandomierz",
         "name": "переправы у Сандомира",
         "at": "Sandomierz",
         "openFrom": "1944-08-20T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_polaniec",
         "name": "переправы у Поланца",
         "at": "Polaniec",
         "openFrom": "1944-08-15T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_praga",
         "name": "переправы у Варшавы",
         "at": "Praga_W",
         "openFrom": "1945-01-17T12:00",
-        "note": "после освобождения Варшавы 17.01 (C)"
+        "note": "после освобождения Варшавы 17.01 (C)",
+        "side": "su"
       }
     ]
   },

@@ -3,7 +3,7 @@ export * from './rng';
 export * from './geo';
 export * from './rules';
 export { Theatre, decodeGrid, encodeGrid } from './theatre';
-export { step, onMap, createState, issueOrder, targetPoint, profileOf, addHours, type SimContext } from './step';
+export { step, onMap, createState, issueOrder, targetPoint, profileOf, addHours, supplyHoursOf, supplySources, type SimContext } from './step';
 export { frontLine, territoryLine, type FrontOptions } from './front';
 export { runScenario, compareWithHistory, summarize, checkEvents, type History, type HistoryEvent, type EventResult, type Snapshot, type RunResult, type Deviation } from './history';
 export { runToDocument, shortName, type PublishOptions } from './publish';
@@ -12,3 +12,4 @@ export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } fr
 export { snapshotOf } from './history';
 export { startGame, playTurn, replayGame, gameOver, type GameRecord, type GameTurn, type GameState } from './game';
 export { unitReports, intelReport, nearbyPlaces, dayEvents, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
+export { prepareTakeover, checkAction, applyActions, NOT_COMMITTED, type ActionCheck } from './staff';

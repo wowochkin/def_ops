@@ -49,7 +49,11 @@ export interface SideProfile {
    * которых подвоз от источников доходит по своей территории не дольше rangeHours;
    * запасы не выше maxAmmo / maxFuel.
    */
-  supply?: { ammoPerDay: number; fuelPerDay: number; maxAmmo: number; maxFuel: number; rangeHours: number };
+  supply?: { ammoPerDay: number; fuelPerDay: number; maxAmmo: number; maxFuel: number; rangeHours: number;
+    /** Перенос базы снабжения: развёртывание на новом месте, часов, и темп переезда, км/сутки (по умолчанию 24 ч и 60 км/сут). */
+    baseSetupHours?: number; baseMoveKmPerDay?: number };
+  /** Инженерные войска: наводка переправы через большую и малую реку, часов; сколько переправ одновременно (понтонные парки). */
+  engineering?: { bridgeHoursMajor: number; bridgeHoursMinor: number; parks: number };
 }
 
 /* ----------------------------- правила (калибровка) ----------------------------- */
@@ -167,7 +171,8 @@ export interface TheatreData {
   roads: { kind: 'highway' | 'road' | 'rail'; line: LngLat[]; name?: string }[];
   rivers: { name: string; line: LngLat[]; major: boolean }[];
   /** Мосты и переправы: openFrom — с какого момента действует (наведённая переправа), destroyedAt — с какого разрушен. */
-  bridges: { id: string; at: LngLat; name?: string; openFrom?: string | null; destroyedAt?: string | null }[];
+  /** side — чья переправа (наведённая стороной): при передаче командования её будущие наводки снимаются. */
+  bridges: { id: string; at: LngLat; name?: string; openFrom?: string | null; destroyedAt?: string | null; side?: string; kind?: string }[];
   /** Именованные районы (для приказов и учёта контроля). */
   areas: { id: string; name: string; ring: LngLat[] }[];
   /** Рубежи и позиции: линия и уровень укреплённости (1–3). */
@@ -280,6 +285,8 @@ export interface Formation {
   cutOff?: boolean;
   /** Сколько часов подряд подвоз не доходит. */
   cutHours?: number;
+  /** Резерв Ставки, ещё не введённый в сражение: с какого момента может быть введён (enterAt — когда введут). */
+  reserveFrom?: string;
 }
 
 export interface CombatFactor {
@@ -309,4 +316,17 @@ export interface SimState {
   breached?: number[];
   /** Территория: индекс стороны (по scenario.sides), владеющей клеткой; −1 — ничья. Меняется, только когда через клетку проходят войска. */
   territory?: number[];
+  /** Тыл стороны под управлением штаба (игра): базы снабжения и приоритет подвоза. Нет — источники из сценария. */
+  logistics?: Record<string, Logistics>;
 }
+
+/** База снабжения: activeFrom — с какого момента действует на новом месте (после переноса); null — действует. */
+export interface SupplyBase { id: string; name: string; at: LngLat; activeFrom: string | null; moved?: boolean }
+export interface Logistics { bases: SupplyBase[]; /** Объединения с приоритетом подвоза. */ priority: string[] }
+
+/** Распоряжения штаба помимо приказов войскам: тыл, инженерные, резервы. */
+export type StaffAction =
+  | { kind: 'base'; side: string; base: string; to: LngLat; toName?: string; issuedAt: string }
+  | { kind: 'priority'; side: string; formations: string[]; issuedAt: string }
+  | { kind: 'bridge'; side: string; at: LngLat; issuedAt: string }
+  | { kind: 'commit'; side: string; formation: string; at: LngLat; atName?: string; issuedAt: string };

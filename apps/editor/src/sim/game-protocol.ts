@@ -1,5 +1,5 @@
 import type { LngLat, MapDocument } from '@def-ops/core';
-import type { GameRecord, IntelReport, Order, UnitReport } from '@def-ops/sim';
+import type { ActionCheck, GameRecord, IntelReport, Order, StaffAction, UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 
 export type Thinking = 'off' | 'low' | 'medium' | 'high';
@@ -26,8 +26,10 @@ export interface GameStart {
 
 export type GameRequest =
   | { kind: 'start'; start: GameStart; record?: GameRecord; llm: LlmSettings; enemy: EnemyMode }
-  /** Конец хода человека: его приказы (issuedAt — начало хода). */
-  | { kind: 'turn'; orders: Order[] }
+  /** Конец хода человека: решение, приказы и распоряжения (issuedAt — начало хода). */
+  | { kind: 'turn'; orders: Order[]; actions: StaffAction[]; decision: HumanDecision }
+  /** Проверить распоряжение до конца хода (pendingBridges — переправы, уже включённые в распоряжение). */
+  | { kind: 'check'; id: number; action: StaffAction; pendingBridges: number }
   | { kind: 'settings'; llm: LlmSettings; enemy: EnemyMode }
   | { kind: 'retry-ai' }
   /** Ход без новых приказов противника (модель не ответила). */
@@ -37,11 +39,32 @@ export type GameRequest =
 
 export interface Place { id: string; title: string; at: LngLat }
 
+/** Решение штаба человека на ход — те же части, что у штаба модели. */
+export interface HumanDecision {
+  /** Оценка обстановки. */
+  assessment: string;
+  /** Замысел противника, как его понимает штаб. */
+  enemyIntent: string;
+  /** Решение: замысел своих действий. */
+  intent: string;
+  /** Боевое донесение вышестоящему (Ставке). */
+  report: string;
+  /** Риски решения. */
+  risks: string;
+}
+
+export interface BaseView { id: string; name: string; at: LngLat; state: 'active' | 'moving' | 'idle'; activeFrom: string | null }
+export interface BridgeView { id: string; name: string; at: LngLat; openFrom: string | null; building: boolean }
+
 export interface JournalDay {
   /** Начало хода. */
   time: string;
   /** Наши приказы этого хода — словами. */
   orders: string[];
+  /** Распоряжения штаба (тыл, переправы, резервы) и как исполнены. */
+  actions: string[];
+  /** Решение штаба на этот ход. */
+  decision?: HumanDecision;
   /** Что произошло за ход (донесения). */
   events: string[];
 }
@@ -69,6 +92,17 @@ export interface TurnView {
   goals: Goal[];
   journal: JournalDay[];
   doc: MapDocument;
+  /** Тыл: базы снабжения, приоритет подвоза, время подвоза до объединений (часов; null — не доходит) и предел. */
+  bases: BaseView[];
+  priority: string[];
+  priorityMax: number;
+  supplyHours: Record<string, number | null>;
+  rangeHours: number;
+  /** Свои переправы: действующие и наводимые; понтонных парков всего. */
+  bridges: BridgeView[];
+  parks: number;
+  /** Решение прошлого хода (для продолжения работы над ним). */
+  lastDecision: HumanDecision | null;
 }
 
 export type AiStatus =
@@ -86,4 +120,5 @@ export type GameResponse =
   /** Ход ждёт решения посредника: модель не ответила. */
   | { kind: 'blocked'; error: string }
   | { kind: 'record'; record: GameRecord }
+  | { kind: 'check'; id: number; result: ActionCheck }
   | { kind: 'error'; message: string };

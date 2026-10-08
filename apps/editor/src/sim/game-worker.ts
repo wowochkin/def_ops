@@ -6,15 +6,16 @@
  * пишет приказы. «Провести ход» — дождаться решения модели, отдать приказы обеих
  * сторон и посчитать ход арбитром.
  */
+import { createFeature, type SymbolFeature } from '@def-ops/core';
 import {
-  checkEvents, contextFrom, dayEvents, describeTarget, detected, detectKm, gameOver, intelReport, places, playTurn,
-  runToDocument, startGame, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot,
+  checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOver, intelReport, onMap, places, playTurn,
+  runToDocument, startGame, supplyHoursOf, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction,
 } from '@def-ops/sim';
 import { buildSituation, decideTurn, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
-import type { AiStatus, EnemyMode, GameRequest, GameResponse, JournalDay, LlmSettings, TurnView } from './game-protocol';
+import type { AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 
 const files = import.meta.glob('../../../../packages/sim/data/{scenarios,theatres,profiles,rules}/*.json', { import: 'default' });
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
@@ -40,8 +41,8 @@ let journal: JournalDay[] = [];
 /** Решение модели на текущий ход. */
 let ai: { time: string; promise: Promise<AiTurn | null>; abort: AbortController; result?: AiTurn | null } | null = null;
 let skipAi = false;
-/** Приказы человека, ждущие решения модели. */
-let queued: Order[] | null = null;
+/** Приказы, распоряжения и решение человека, ждущие решения модели. */
+let queued: { orders: Order[]; actions: StaffAction[]; decision: HumanDecision } | null = null;
 let busy = false;
 
 const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
@@ -50,7 +51,8 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
   const m = e.data;
   try {
     if (m.kind === 'start') await start(m.start, m.record, m.llm, m.enemy);
-    else if (m.kind === 'turn') { queued = m.orders; await advance(); }
+    else if (m.kind === 'turn') { queued = { orders: m.orders, actions: m.actions, decision: m.decision }; await advance(); }
+    else if (m.kind === 'check') post({ kind: 'check', id: m.id, result: checkAction(ctx, g.state, { ...m.action, issuedAt: g.state.time }, m.pendingBridges) });
     else if (m.kind === 'settings') {
       const was = enemy;
       llm = m.llm; enemy = m.enemy;
@@ -74,7 +76,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   profileMd = (await profilesMd[`../../../../services/staff/profiles/${cfg.profile}.md`]?.()) as string ?? '';
   const human = ctx.scenario.sides.find((x) => x.id !== cfg.side)!.id;
   post({ kind: 'progress', text: 'расчёт до передачи командования…' });
-  g = startGame(ctx, s.seed, s.takeover);
+  g = startGame(ctx, s.seed, s.takeover, human);
   rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, turns: [] };
   journal = [];
   for (const [k, t] of rec.turns.entries()) {
@@ -82,8 +84,9 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     post({ kind: 'progress', text: `восстановление игры: ход ${k + 1} из ${rec.turns.length}…` });
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится с расчётом (${t.time} ≠ ${g.state.time})`);
     const before = g.state;
-    g = playTurn(ctx, g, t.orders);
-    journal.push(day(before.time, t.orders, before));
+    const r = playTurn(ctx, g, t.orders, t.actions ?? []);
+    g = r;
+    journal.push(day(before.time, t.orders, before, r.results, t.human as HumanDecision | undefined));
   }
   postView();
   post({ kind: 'record', record: rec });
@@ -91,11 +94,18 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
 }
 
 /** Запись журнала за ход: наши приказы словами и донесения. */
-function day(time: string, orders: Order[], before: GameState['state']): JournalDay {
+function day(time: string, orders: Order[], before: GameState['state'], results: { action: StaffAction; ok: boolean; text: string }[], decision?: HumanDecision): JournalDay {
   const names = new Map(before.formations.map((f) => [f.id, f.name]));
+  const bases = new Map((before.logistics?.[rec.human]?.bases ?? []).map((b) => [b.id, b.name]));
+  const what = (a: StaffAction) => a.kind === 'base' ? `Тыл: база «${bases.get(a.base) ?? a.base}» — перенести ${describePlace(ctx.theatre, a.to)}`
+    : a.kind === 'priority' ? `Тыл: приоритет подвоза — ${a.formations.length ? a.formations.map((x) => names.get(x)).join(', ') : 'снят'}`
+    : a.kind === 'bridge' ? `Инженерные: навести переправу ${describePlace(ctx.theatre, a.at)}`
+    : `Резерв Ставки: ввести ${names.get(a.formation)} — район ${describePlace(ctx.theatre, a.at)}`;
   return {
     time,
     orders: orders.filter((o) => o.source === 'human').map((o) => `${names.get(o.formation)}: ${TASK_RU[o.task]} — ${describeTarget(ctx, o.target, names)}${o.note ? `. ${o.note}` : ''}`),
+    actions: results.map((r) => `${what(r.action)}${r.ok ? ` — ${r.text}` : ` — НЕ ИСПОЛНЕНО: ${r.text}`}`),
+    decision,
     events: dayEvents(ctx, g.state, rec.human, before),
   };
 }
@@ -146,14 +156,16 @@ async function advance() {
       if (!t) return; // решение отменено (смена настроек) — ход ждёт нового
       if (!t.ok && !skipAi) { post({ kind: 'blocked', error: t.error ?? 'модель не дала решения' }); return; }
     }
-    const humanOrders = queued.map((o) => ({ ...o, issuedAt: g.state.time, source: 'human' as const }));
+    const humanOrders = queued.orders.map((o) => ({ ...o, issuedAt: g.state.time, source: 'human' as const }));
+    const actions = queued.actions.map((a) => ({ ...a, issuedAt: g.state.time }));
     const aiOrders = t?.ok ? t.orders : [];
     const orders = [...humanOrders, ...aiOrders];
-    rec.turns.push({ time: g.state.time, orders, ...(t ? { ai: slim(t) } : {}) });
+    rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(t ? { ai: slim(t) } : {}) });
     post({ kind: 'progress', text: 'расчёт хода…' });
     const before = g.state;
-    g = playTurn(ctx, g, orders);
-    journal.push(day(before.time, orders, before));
+    const r = playTurn(ctx, g, orders, actions);
+    g = r;
+    journal.push(day(before.time, orders, before, r.results, queued.decision));
     queued = null;
     postView();
     post({ kind: 'record', record: rec });
@@ -189,6 +201,23 @@ function postView() {
   const run = { final: s, snapshots: g.snapshots };
   const doc = runToDocument(ctx, run, history, { name: `Игра: ${ctx.scenario.name} (с ${ddmm(rec.takeover)})`, ownSide: human, visible: reveal ? undefined : fog() });
   for (const l of doc.layers) if (l.id.startsWith('hist-')) l.visible = false;
+  // реки театра — для выбора мест переправ (большие — толще)
+  doc.layers.unshift({ id: 'rivers', name: 'Театр: реки', role: 'base', visible: true, locked: true, opacity: 0.85 });
+  for (const rv of ctx.theatre.data.rivers) {
+    if (rv.line.length < 2) continue;
+    const f = createFeature('line', 'inf.river', { points: rv.line, layerId: 'rivers' }, rv.major ? 1.3 : 0.7);
+    f.name = rv.name;
+    doc.features.unshift(f);
+  }
+  // тыл: базы снабжения (действующие и переносимые)
+  const lg = s.logistics?.[human];
+  doc.layers.push({ id: 'logistics', name: 'Тыл: базы снабжения', role: 'custom', visible: true, locked: true, opacity: 1 });
+  for (const b of lg?.bases ?? []) {
+    const f = createFeature('symbol', 'rkka.supplyStation', { at: b.at, layerId: 'logistics' }, 0.9, 'own') as SymbolFeature;
+    f.name = `База снабжения: ${b.name}${b.activeFrom && b.activeFrom > s.time ? ` (переносится, заработает ${ddmm(b.activeFrom)})` : ''}`;
+    f.time = { from: s.time, to: null };
+    doc.features.push(f);
+  }
   const goals = checkEvents(ctx, run, history).map((r) => {
     const ev = history.events?.find((x) => x.id === r.id);
     const place = ev && 'place' in ev ? ctx.theatre.area(ev.place)?.center ?? null : null;
@@ -209,6 +238,28 @@ function postView() {
     delays: prof.orderDelayHours as Record<string, number>,
     detectKm: Math.round(detectKm(ctx)),
     goals, journal, doc,
+    ...logisticsView(),
+    lastDecision: (([...rec.turns].reverse().find((t) => t.human)?.human) as HumanDecision | undefined) ?? null,
   };
   post({ kind: 'view', view });
+}
+
+/** Тыл и переправы стороны человека — для вкладки «Приказы». */
+function logisticsView() {
+  const s = g.state, human = rec.human, T = ctx.theatre;
+  const lg = s.logistics?.[human];
+  const k = ctx.scenario.sides.findIndex((x) => x.id === human);
+  const bases = (lg?.bases ?? []).map((b) => ({
+    id: b.id, name: b.name, at: b.at, activeFrom: b.activeFrom,
+    state: (b.activeFrom && b.activeFrom > s.time ? 'moving' : b.moved && s.territory && s.territory[T.indexOf(b.at)] !== k ? 'idle' : 'active') as 'active' | 'moving' | 'idle',
+  }));
+  const sh = supplyHoursOf(ctx, s, human);
+  const supplyHours: Record<string, number | null> = {};
+  for (const [id, h] of sh.hours) supplyHours[id] = Number.isFinite(h) ? Math.round(h) : null;
+  const n = s.formations.filter((f) => f.side === human && onMap(f, s.time)).length;
+  const prof = ctx.profiles[ctx.scenario.sides.find((x) => x.id === human)!.profile];
+  const bridges = T.data.bridges.filter((b) => b.side === human).map((b) => ({
+    id: b.id, name: b.name ?? describePlace(T, b.at), at: b.at, openFrom: b.openFrom ?? null, building: !!b.openFrom && b.openFrom > s.time,
+  }));
+  return { bases, priority: lg?.priority ?? [], priorityMax: Math.max(1, Math.ceil(n / 3)), supplyHours, rangeHours: sh.rangeHours, bridges, parks: prof.engineering?.parks ?? 3 };
 }

@@ -161,98 +161,112 @@
         "name": "переправы Кюстринского плацдарма",
         "at": "Kostrzyn",
         "openFrom": "1945-03-31T00:00",
-        "note": "к началу апреля через Одер 25 мостов и 40 паромов (LT_CONQ ch.3)"
+        "note": "к началу апреля через Одер 25 мостов и 40 паромов (LT_CONQ ch.3)",
+        "side": "su"
       },
       {
         "id": "x_goeritz",
         "name": "переправы у Гёрица (Гужица) и Рейтвейна",
         "at": "Reitwein",
         "openFrom": "1945-03-31T00:00",
-        "note": "LT_CONQ ch.3; место — C"
+        "note": "LT_CONQ ch.3; место — C",
+        "side": "su"
       },
       {
         "id": "x_kienitz",
         "name": "переправа у Кинитца",
         "at": "Kienitz",
         "openFrom": "1945-03-31T00:00",
-        "note": "северный край плацдарма (C)"
+        "note": "северный край плацдарма (C)",
+        "side": "su"
       },
       {
         "id": "x_lebus",
         "name": "переправы плацдарма 69 А у Лебуса",
         "at": "Lebus",
         "openFrom": "1945-03-31T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_fuerstenberg",
         "name": "переправы плацдарма 33 А",
         "at": "Fuerstenberg_O",
         "openFrom": "1945-03-31T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_gozdowice",
         "name": "переправа 1 А ВП у Гоздовице",
         "at": "Gozdowice",
         "openFrom": "1945-04-16T12:00",
-        "note": "форсирование 16.04 (LT_CONQ ch.4); время — C"
+        "note": "форсирование 16.04 (LT_CONQ ch.4); время — C",
+        "side": "su"
       },
       {
         "id": "x_cedynia",
         "name": "переправа у Цедыни (Цеден)",
         "at": "Cedynia",
         "openFrom": "1945-04-17T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_forst",
         "name": "переправы 1 УФ у Форста",
         "at": "Forst",
         "openFrom": "1945-04-16T10:00",
-        "note": "форсирование Нейсе 16.04 утром; 133 переправы в полосе фронта (Конев); место и время — C"
+        "note": "форсирование Нейсе 16.04 утром; 133 переправы в полосе фронта (Конев); место и время — C",
+        "side": "su"
       },
       {
         "id": "x_bademeusel",
         "name": "переправы 1 УФ у Кляйн-Бадемойзеля",
         "at": "KleinBademeusel",
         "openFrom": "1945-04-16T10:00",
-        "note": "главный удар 3 гв. ТА, 4 гв. ТА (C)"
+        "note": "главный удар 3 гв. ТА, 4 гв. ТА (C)",
+        "side": "su"
       },
       {
         "id": "x_muskau",
         "name": "переправы 1 УФ у Бад-Мускау",
         "at": "BadMuskau",
         "openFrom": "1945-04-16T10:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_rothenburg",
         "name": "переправы 2 А ВП у Ротенбурга",
         "at": "Rothenburg",
         "openFrom": "1945-04-16T12:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_gryfino",
         "name": "переправа 65 А у Грайфенхагена",
         "at": "Gryfino",
         "openFrom": "1945-04-20T12:00",
-        "note": "форсирование Ост- и Вест-Одера 20.04 (C)"
+        "note": "форсирование Ост- и Вест-Одера 20.04 (C)",
+        "side": "su"
       },
       {
         "id": "x_widuchowa",
         "name": "переправа 70 А у Видухова",
         "at": "Widuchowa",
         "openFrom": "1945-04-20T12:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       },
       {
         "id": "x_ognica",
         "name": "переправа 49 А у Огницы",
         "at": "Ognica",
         "openFrom": "1945-04-21T00:00",
-        "note": "C"
+        "note": "C",
+        "side": "su"
       }
     ]
   },

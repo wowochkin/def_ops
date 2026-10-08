@@ -569,7 +569,7 @@ def main():
             b["destroyedAt"] = rule["destroyedAt"]
             b["note"] = rule.get("note")
     for c in recipe["bridges"]["crossings"]:
-        bridges.append({"id": c["id"], "at": rnd(place(c["at"])), "name": c["name"], "openFrom": c["openFrom"], "kind": "crossing", "note": c.get("note")})
+        bridges.append({"id": c["id"], "at": rnd(place(c["at"])), "name": c["name"], "openFrom": c["openFrom"], "kind": "crossing", "side": c.get("side"), "note": c.get("note")})
     log(f"  мостов {len(bridges)}, разрушенных к 16.04: {sum(1 for b in bridges if b.get('destroyedAt', '9') < '1945-04-16')}")
 
     # 5. рубежи и районы

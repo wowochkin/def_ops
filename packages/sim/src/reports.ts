@@ -90,8 +90,10 @@ export interface UnitReport {
   parent: string | null;
   echelon: Echelon;
   /** На театре и не уничтожено; arrives — прибывает позже (дата). */
-  status: 'active' | 'destroyed' | 'arriving';
+  status: 'active' | 'destroyed' | 'arriving' | 'reserve';
   arrives?: string;
+  /** Резерв Ставки: с какого момента может быть введён. */
+  reserveFrom?: string;
   at: LngLat;
   place: string;
   posture: string;
@@ -167,11 +169,11 @@ export function unitReports(ctx: SimContext, state: SimState, side: string, prev
   const byId = new Map(state.formations.map((f) => [f.id, f]));
   return state.formations.filter((f) => f.side === side).map((f) => {
     const b = before.get(f.id);
-    const status = f.destroyed ? 'destroyed' : onMap(f, state.time) ? 'active' : 'arriving';
+    const status = f.destroyed ? 'destroyed' : onMap(f, state.time) ? 'active' : f.reserveFrom ? 'reserve' : 'arriving';
     const o = f.order;
     const tp = o ? targetPoint(ctx, o.target, byId) : null;
     return {
-      id: f.id, name: f.name, parent: f.parent, echelon: f.echelon, status, ...(status === 'arriving' ? { arrives: f.enterAt! } : {}),
+      id: f.id, name: f.name, parent: f.parent, echelon: f.echelon, status, ...(status === 'arriving' ? { arrives: f.enterAt! } : {}), ...(f.reserveFrom ? { reserveFrom: f.reserveFrom } : {}),
       at: f.position, place: describePlace(T, f.position), posture: POSTURE_RU[f.posture] ?? f.posture,
       task: o ? TASK_RU[o.task] : null, target: o ? (tp || o.target ? describeTarget(ctx, o.target, names) : 'на месте') : null, orderSource: o?.source ?? null,
       personnel: f.personnel, tanks: f.tanks, guns: f.guns,

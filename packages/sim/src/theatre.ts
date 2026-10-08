@@ -162,6 +162,46 @@ export class Theatre {
   }
 
   /** Есть ли в клетке уцелевший на момент time мост. */
+  /** Добавить переправу (наведённую в ходе игры): и в данные (для карты), и в расчёт. */
+  addBridge(b: TheatreData['bridges'][number]): void {
+    this.data.bridges.push(b);
+    const i = this.indexOf(b.at);
+    if (i < 0) return;
+    const list = this.bridges.get(i) ?? [];
+    list.push({ id: b.id, openFrom: b.openFrom, destroyedAt: b.destroyedAt });
+    this.bridges.set(i, list);
+  }
+
+  /** Убрать переправы (например, будущие наводки стороны, перешедшей к человеку). */
+  dropBridges(pred: (b: TheatreData['bridges'][number]) => boolean): TheatreData['bridges'] {
+    const gone = this.data.bridges.filter(pred);
+    if (!gone.length) return gone;
+    const ids = new Set(gone.map((b) => b.id));
+    this.data.bridges.splice(0, this.data.bridges.length, ...this.data.bridges.filter((b) => !ids.has(b.id)));
+    for (const [i, list] of this.bridges) {
+      const left = list.filter((b) => !ids.has(b.id));
+      if (left.length) this.bridges.set(i, left); else this.bridges.delete(i);
+    }
+    return gone;
+  }
+
+  /** Ближайшая клетка реки в пределах km: индекс, центр, большая ли река. */
+  nearestRiver(at: LngLat, km: number): { i: number; at: LngLat; major: boolean } | null {
+    const i0 = this.indexOf(at);
+    if (i0 < 0) return null;
+    const p = this.proj.toXY(at), c0 = i0 % this.cols, r0 = Math.floor(i0 / this.cols), rc = Math.ceil(km / this.cellKm) + 1;
+    let best = -1, bd = Infinity;
+    for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) {
+      if (!this.inside(c, r)) continue;
+      const i = r * this.cols + c;
+      if (!this.river[i]) continue;
+      const q = this.cellCenter(c, r), d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (d <= km && d < bd) { bd = d; best = i; }
+    }
+    if (best < 0) return null;
+    return { i: best, at: this.proj.toLL(this.cellCenter(best % this.cols, Math.floor(best / this.cols))), major: this.river[best] === 2 };
+  }
+
   bridgeOpen(i: number, time: string): boolean {
     return (this.bridges.get(i) ?? []).some((b) => (!b.openFrom || time >= b.openFrom) && (!b.destroyedAt || time < b.destroyedAt));
   }

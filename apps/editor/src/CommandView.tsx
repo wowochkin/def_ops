@@ -8,9 +8,9 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
-import { TASK_RU, type GameRecord, type Order, type Target, type Task, type UnitReport } from '@def-ops/sim';
+import { TASK_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
-import type { AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, Place, TurnView } from './sim/game-protocol';
+import type { AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
@@ -38,7 +38,12 @@ const num = (x: number) => x.toFixed(1).replace('.', ',');
 const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 
 interface Draft { formation: string; task: Task; target: Target; targetText: string; at: LngLat | null; note: string }
-type Tab = 'reports' | 'intel' | 'orders' | 'journal' | 'umpire';
+type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire';
+type Sub = 'units' | 'rear' | 'bridges' | 'reserves';
+/** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
+interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
+type Pick = { kind: 'order' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
+const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 
 const TOGGLES = [
   { key: 'ghosts', title: 'Ист. положения', match: (id: string) => id === 'hist-units' },
@@ -46,6 +51,8 @@ const TOGGLES = [
   { key: 'front', title: 'Фронт', match: (id: string) => id === 'sim-front' },
   { key: 'combat', title: 'Бои', match: (id: string) => id === 'sim-combat' },
   { key: 'plan', title: 'Замысел', match: (id: string) => id === 'plan' },
+  { key: 'rear', title: 'Тыл', match: (id: string) => id === 'logistics' },
+  { key: 'rivers', title: 'Реки', match: (id: string) => id === 'rivers' },
 ];
 
 export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOpenInEditor }: {
@@ -63,15 +70,23 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [tab, setTab] = useState<Tab>('reports');
   const [sel, setSel] = useState<string | null>(null);
-  const [pick, setPick] = useState(false);
+  const [pickMode, setPickMode] = useState<Pick | null>(null);
+  const pick = pickMode?.kind === 'order';
+  const setPick = (b: boolean) => setPickMode(b ? { kind: 'order' } : null);
+  const [sub, setSub] = useState<Sub>('units');
+  const [acts, setActs] = useState<Act[]>([]);
+  const [decision, setDecision] = useState<HumanDecision>(EMPTY);
+  const [notice, setNotice] = useState<string | null>(null);
+  const checks = useRef(new Map<number, (r: ActionCheck) => void>());
+  const checkId = useRef(0);
   const [time, setTime] = useState<string | null>(null);
-  const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true });
+  const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
   const [reveal, setReveal] = useState(false);
   const [now, setNow] = useState(Date.now());
   const worker = useRef<Worker | null>(null);
   const engine = useRef<MapEngine | null>(null);
-  const live = useRef({ pick, sel });
-  live.current = { pick, sel };
+  const live = useRef({ pickMode, sel });
+  live.current = { pickMode, sel };
   const liveView = useRef<TurnView | null>(null);
   liveView.current = view;
 
@@ -88,10 +103,14 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         setProgress(null); setBlocked(null);
         setView({ ...m.view, doc: migrateDocument(m.view.doc) });
         setTime(m.view.time);
-        setDrafts({});
+        setDrafts({}); setActs([]); setPickMode(null);
+        const last = m.view.lastDecision;
+        // новый ход — новая оценка и новое донесение; замысел, замысел противника и риски — от прошлого решения, для правки
+        setDecision((d) => (liveView.current?.time === m.view.time ? d : { ...EMPTY, enemyIntent: last?.enemyIntent ?? '', intent: last?.intent ?? '', risks: last?.risks ?? '' }));
       } else if (m.kind === 'ai') setAi(m.status);
       else if (m.kind === 'ai-stream') setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000)));
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); }
+      else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
       else if (m.kind === 'record') {
         setRecord(m.record);
         try { localStorage.setItem(SAVE_KEY, JSON.stringify({ record: m.record, enemy: enemyRef.current, title: titleRef.current, turn: m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover } satisfies SavedGame)); } catch { /* */ }
@@ -113,7 +132,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     const en = engine.current;
     if (!en) return;
     return en.on('click', (e) => {
-      if (!live.current.pick || !live.current.sel) {
+      const pm = live.current.pickMode;
+      if (pm && pm.kind !== 'order') { pickAction(pm, e.lngLat, null); return; }
+      if (!pm || !live.current.sel) {
         // щелчок по знаку своего объединения — выбрать его (доклад, приказ)
         let best: string | null = null, bd = 18;
         for (const u of liveView.current?.own ?? []) {
@@ -127,9 +148,36 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       }
       const at = e.lngLat;
       setDrafts((d) => ({ ...d, [live.current.sel!]: { ...(d[live.current.sel!] ?? blankDraft(live.current.sel!)), target: at, at, targetText: `точка ${at[1].toFixed(3)}° с.ш., ${at[0].toFixed(3)}° в.д.` } }));
-      setPick(false);
+      setPickMode(null);
     });
   }, [view?.scenario, engine.current]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Проверить распоряжение в расчёте (исполнимо ли, когда вступит в силу). */
+  const check = (action: StaffAction, pendingBridges = 0) => new Promise<ActionCheck>((res) => {
+    const id = ++checkId.current;
+    checks.current.set(id, res);
+    send({ kind: 'check', id, action, pendingBridges });
+  });
+  const liveActs = useRef(acts); liveActs.current = acts;
+  /** Включить распоряжение в проект (после проверки); неисполнимое — сообщение. */
+  const addAct = async (key: string, action: StaffAction, label: string, extra: Partial<Act> = {}) => {
+    const r = await check(action, action.kind === 'bridge' ? liveActs.current.filter((a) => a.action.kind === 'bridge').length : 0);
+    if (!r.ok) { setNotice(`${label}: ${r.text}`); return false; }
+    setActs((l) => [...l.filter((a) => a.key !== key), { key, action: action.kind === 'bridge' && r.at ? { ...action, at: r.at } : action, label, text: r.text, at: r.at ?? (action.kind === 'base' ? action.to : action.kind === 'commit' ? action.at : undefined), ...extra }]);
+    setNotice(null);
+    return true;
+  };
+  const dropAct = (key: string) => setActs((l) => l.filter((a) => a.key !== key));
+  /** Место выбрано (на карте или из списка пунктов) для распоряжения, ожидающего места. */
+  const pickAction = (pm: Pick, at: LngLat, title: string | null) => {
+    const v = liveView.current;
+    if (!v) return;
+    const side = v.human.id, t = v.time;
+    setPickMode(null);
+    if (pm.kind === 'bridge') void addAct(`bridge:${Date.now()}`, { kind: 'bridge', side, at, issuedAt: t }, 'Переправа');
+    else if (pm.kind === 'base') void addAct(`base:${pm.base}`, { kind: 'base', side, base: pm.base, to: at, toName: title ?? undefined, issuedAt: t }, `База «${pm.name}»`, { from: pm.from });
+    else if (pm.kind === 'commit') void addAct(`commit:${pm.formation}`, { kind: 'commit', side, formation: pm.formation, at, atName: title ?? undefined, issuedAt: t }, short(pm.name));
+  };
 
   const unit = (id: string | null) => view?.own.find((u) => u.id === id) ?? null;
   const blankDraft = (id: string): Draft => ({ formation: id, task: 'attack', target: null, targetText: '', at: null, note: '' });
@@ -149,9 +197,23 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       a.time = { from: view.time, to: null };
       return [a];
     });
+    for (const a of acts) {
+      if (!a.at) continue;
+      if (a.action.kind === 'bridge') {
+        const f = createFeature('symbol', 'std.pontoon', { at: a.at, layerId: 'plan' }, 1, 'own');
+        f.name = `Переправа (проект): ${a.text}`; f.time = { from: view.time, to: null }; plan.push(f as never);
+      } else if (a.action.kind === 'base' && a.from) {
+        const mid: LngLat = [(a.from[0] + a.at[0]) / 2, (a.from[1] + a.at[1]) / 2];
+        const f = createFeature('arrow', 'inf.attackFade', { points: [a.from, mid, a.at], layerId: 'plan' }, 0.4, 'own') as ArrowFeature;
+        f.name = `${a.label}: перенос`; f.time = { from: view.time, to: null }; plan.push(f);
+      } else if (a.action.kind === 'commit') {
+        const f = createFeature('symbol', 'std.unitOval', { at: a.at, layerId: 'plan' }, 0.9, 'own');
+        f.name = `${a.label}: район сосредоточения`; f.time = { from: view.time, to: null }; plan.push(f as never);
+      }
+    }
     d.features = [...view.doc.features, ...plan];
     return d;
-  }, [view, drafts, vis]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, drafts, vis, acts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goTo = (at: LngLat | null, zoomIn = true) => {
     const en = engine.current;
@@ -164,9 +226,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     if (!view) return;
     const bad = draftList.filter((d) => NEEDS_TARGET.includes(d.task) && !d.target);
     if (bad.length) { alert(`Не указана цель:\n${bad.map((d) => `${short(unit(d.formation)?.name ?? d.formation)} — ${TASK_RU[d.task]}`).join('\n')}`); setTab('orders'); setSel(bad[0].formation); return; }
+    const missing = decisionMissing(decision);
+    if (missing.length) { setTab('decision'); setNotice(`Решение на ход не готово: ${missing.join(', ')}`); return; }
     const orders: Order[] = draftList.map((d) => ({ id: `human@${view.time}:${d.formation}`, formation: d.formation, task: d.task, target: d.target, issuedAt: view.time, source: 'human', note: d.note || undefined }));
     setProgress('отправка приказов…');
-    send({ kind: 'turn', orders });
+    send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision });
   };
   const aiTurns = (record?.turns ?? []).filter((t) => t.ai).map((t) => t.ai as AiTurn).reverse();
   const current = ai.state === 'done' || ai.state === 'error' ? ai.turn : undefined;
@@ -175,7 +239,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     if (!view) return '';
     const lines = [`# Журнал боевых действий: ${view.scenarioName}`, '', `Командование принято ${ddmm(view.takeover)} ${hhmm(view.takeover)}. Сторона: ${view.human.name}. Противник: ${view.ai.name} — ${enemy === 'llm' ? 'штаб на модели' : 'без штаба (прежние приказы)'}.`, ''];
     for (const d of view.journal) {
-      lines.push(`## ${dayLong(d.time)}, ${hhmm(d.time)}`, '', '**Отданы приказы:**', '', ...(d.orders.length ? d.orders.map((o) => `- ${o}`) : ['- новых приказов нет']), '', '**Донесения за ход:**', '', ...(d.events.length ? d.events.map((x) => `- ${x}`) : ['- существенных событий нет']), '');
+      lines.push(`## ${dayLong(d.time)}, ${hhmm(d.time)}`, '');
+      if (d.decision) lines.push('**Оценка обстановки.** ' + d.decision.assessment, '', '**Замысел противника.** ' + (d.decision.enemyIntent || '—'), '', '**Решение.** ' + d.decision.intent, '', '**Риски.** ' + (d.decision.risks || '—'), '', '**Боевое донесение в Ставку.** ' + d.decision.report, '');
+      lines.push('**Отданы приказы:**', '', ...(d.orders.length ? d.orders.map((o) => `- ${o}`) : ['- новых приказов нет']), '');
+      if (d.actions.length) lines.push('**Распоряжения по тылу, инженерным войскам, резервам:**', '', ...d.actions.map((a) => `- ${a}`), '');
+      lines.push('**Донесения за ход:**', '', ...(d.events.length ? d.events.map((x) => `- ${x}`) : ['- существенных событий нет']), '');
     }
     if (aiTurns.length) {
       lines.push('# Решения штаба противника (для разбора)', '');
@@ -224,15 +292,26 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           <AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.model} onClick={() => setTab('umpire')} />
         </div>
         <nav className="cmd-tabs">
-          {([['reports', 'Доклады'], ['intel', 'Разведка'], ['orders', `Приказы${draftList.length ? ` · ${draftList.length}` : ''}`], ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t}</button>
+          {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
+            <button key={k} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`} onClick={() => setTab(k)}>{t}</button>
           ))}
         </nav>
         <div className="cmd-body">
           {!view ? <div className="cmd-wait"><span className="spinner" /> {progress}</div> : <>
             {tab === 'reports' && <Reports v={view} drafts={drafts} onUnit={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
             {tab === 'intel' && <Intel v={view} onGo={(at) => goTo(at)} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
-            {tab === 'orders' && <Orders v={view} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}
+            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} />}
+            {tab === 'orders' && <>
+              <div className="seg subtabs">
+                {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length]] as [Sub, string, number][]).map(([k, t, n]) => (
+                  <button key={k} className={sub === k ? 'on' : ''} onClick={() => { setSub(k); setPickMode(null); }}>{t}{n ? ` · ${n}` : ''}</button>))}
+              </div>
+              {sub === 'units' && <Orders v={view} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}
+              {sub === 'rear' && <Rear v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} goTo={goTo}
+                setPriority={(ids) => { if (same(ids, view.priority)) dropAct('priority'); else void addAct('priority', { kind: 'priority', side: view.human.id, formations: ids, issuedAt: view.time }, 'Приоритет подвоза'); }} />}
+              {sub === 'bridges' && <Bridges v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo} />}
+              {sub === 'reserves' && <Reserves v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} />}
+            </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
             {tab === 'umpire' && <Umpire ai={ai} turns={aiTurns} current={current} stream={stream} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
               enemy={enemy} setEnemy={setEnemy} llm={llm} onRetry={() => send({ kind: 'retry-ai' })} />}
@@ -244,20 +323,30 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <div><button onClick={() => { setBlocked(null); setProgress('повторный запрос…'); send({ kind: 'retry-ai' }); }}>Повторить запрос</button>
               <button onClick={() => { setBlocked(null); setProgress('расчёт хода…'); send({ kind: 'skip-ai' }); }}>Ход без новых приказов противника</button></div>
           </div> : progress ? <button className="rp-go" disabled><span className="spinner" /> {progress}</button>
-            : <button className="rp-go primary" onClick={endTurn} title="Отдать приказы и посчитать ход">
-              Провести {view.turnHours === 24 ? 'сутки' : `${view.turnHours} ч`} ▸ <small>{draftList.length ? `${draftList.length} прик.` : 'без новых приказов'}</small>
-            </button>}
+            : <>
+              <div className="cmd-check">
+                <span className={decisionMissing(decision).length ? 'no' : 'yes'}>{decisionMissing(decision).length ? '○' : '✓'} решение</span>
+                <span>приказов войскам: {draftList.length}</span>
+                <span>распоряжений: {acts.length}</span>
+              </div>
+              <button className="rp-go primary" onClick={endTurn} title="Утвердить решение, отдать приказы и распоряжения и посчитать ход">
+                Провести {view.turnHours === 24 ? 'сутки' : `${view.turnHours} ч`} ▸
+              </button>
+            </>}
         </div>}
         {view?.over && <div className="cmd-foot cmd-over"><b>Операция завершена — {ddmm(view.time)}</b>
           <span>{goals.filter((g) => g.simulated).length} из {goals.length} контрольных событий случились. Журнал и запись игры — в меню «⋯».</span>
           <button onClick={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')}>Скачать журнал</button></div>}
       </aside>
-      <main className={`rp-main${pick ? ' picking' : ''}`}>
+      <main className={`rp-main${pickMode ? ' picking' : ''}`}>
         {doc && time ? <>
           <MapView doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
-            onEngineReady={(e) => { engine.current = e; }} onStatus={() => {}} time={time} newFromNow={false} />
-          {pick && <div className="pick-hint">Щёлкните по карте — цель приказа для «{short(unit(sel)?.name ?? '')}» <button onClick={() => setPick(false)}>Отмена</button></div>}
+            onEngineReady={(e) => { engine.current = e; if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
+          {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
+            : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
+            <button onClick={() => setPickMode(null)}>Отмена</button></div>}
+          {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           <div className="rp-tools">
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
@@ -291,6 +380,7 @@ function Bar({ v, warn = 0.5, bad = 0.25, label }: { v: number; warn?: number; b
 function UnitCard({ u, open, onToggle, onOrder, draft }: { u: UnitReport; open: boolean; onToggle: () => void; onOrder: () => void; draft?: Draft }) {
   const chips: [string, string][] = [];
   if (u.status === 'arriving') chips.push(['muted', `прибудет ${ddmm(u.arrives!)}`]);
+  if (u.status === 'reserve') chips.push(['warn', 'не введена']);
   if (u.status === 'destroyed') chips.push(['bad', 'утратила боеспособность']);
   if (u.cutOff) chips.push(['bad', 'отрезана']);
   if (u.status === 'active' && u.ammo < 0.5) chips.push(['warn', 'мало боеприпасов']);
@@ -302,7 +392,7 @@ function UnitCard({ u, open, onToggle, onOrder, draft }: { u: UnitReport; open: 
       <button className="ucard-h" onClick={onToggle}>
         <span className="ucard-n">{short(u.name)}</span>
         <span className="ucard-bars"><Bar v={u.strength} label={`укомплектованность ${pct(u.strength)}`} /><Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></span>
-        <span className="ucard-p">{u.status === 'active' ? `${u.posture}, ${u.place}` : u.status === 'arriving' ? `в резерве Ставки, прибудет ${ddmm(u.arrives!)}` : 'уничтожена'}</span>
+        <span className="ucard-p">{u.status === 'active' ? `${u.posture}, ${u.place}` : u.status === 'reserve' ? `резерв Ставки, готова к вводу с ${ddmm(u.reserveFrom!)} — ввести: «Приказы» → «Резервы»` : u.status === 'arriving' ? `вводится в сражение, сосредоточится ${ddmm(u.arrives!)} ${hhmm(u.arrives!)}` : 'уничтожена'}</span>
         {chips.length > 0 && <span className="ucard-chips">{chips.map(([c, t]) => <i key={t} className={c}>{t}</i>)}</span>}
       </button>
       {open && <div className="ucard-b">
@@ -399,7 +489,7 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
       <Grouped v={v}>{(x) => x.status === 'destroyed' ? null : (
         <button key={x.id} className={`orow${x.id === sel ? ' on' : ''}`} onClick={() => setSel(x.id)}>
           <span className="orow-n">{short(x.name)}</span>
-          <span className="orow-t">{drafts[x.id] ? <b className="plan">{TASK_RU[drafts[x.id].task]}{drafts[x.id].targetText ? `: ${drafts[x.id].targetText}` : ''}</b> : x.status === 'arriving' ? `прибудет ${ddmm(x.arrives!)}` : x.task ? `${x.task} — ${x.target}` : 'без задачи'}</span>
+          <span className="orow-t">{drafts[x.id] ? <b className="plan">{TASK_RU[drafts[x.id].task]}{drafts[x.id].targetText ? `: ${drafts[x.id].targetText}` : ''}</b> : x.status === 'reserve' ? 'резерв Ставки, не введена' : x.status === 'arriving' ? `прибудет ${ddmm(x.arrives!)}` : x.task ? `${x.task} — ${x.target}` : 'без задачи'}</span>
         </button>)}</Grouped>
     </div>
   );
@@ -450,6 +540,168 @@ function OrderEditor({ v, u, d, isNew, pick, setPick, save, drop, close }: { v: 
   );
 }
 
+/* ───────────── решение на ход ───────────── */
+
+/** Чего не хватает в решении, чтобы провести ход. */
+export function decisionMissing(d: HumanDecision): string[] {
+  const out: string[] = [];
+  if (!d.assessment.trim()) out.push('оценка обстановки');
+  if (!d.intent.trim()) out.push('решение (замысел)');
+  if (!d.report.trim()) out.push('боевое донесение в Ставку');
+  return out;
+}
+const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+
+function Decision({ v, d, set }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void }) {
+  const draftReport = () => {
+    const active = v.own.filter((u) => u.status === 'active');
+    const cut = active.filter((u) => u.cutOff).map((u) => short(u.name));
+    const lines = [
+      `К ${hhmm(v.time)} ${ddmm(v.time)}: в строю ${active.length} объединений, средняя укомплектованность ${pct(active.reduce((a, u) => a + u.strength, 0) / Math.max(1, active.length))}.`,
+      ...v.events.slice(0, 8),
+      cut.length ? `Отрезаны от подвоза: ${cut.join(', ')}.` : '',
+      d.intent ? `Решение на ${ddmm(v.time)}: ${d.intent}` : '',
+    ].filter(Boolean);
+    set({ report: lines.join('\n') });
+  };
+  const F = ({ k, label, hint, rows, req }: { k: keyof HumanDecision; label: string; hint: string; rows: number; req?: boolean }) => (
+    <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`}>
+      <span>{label}{req && <i> обязательно</i>}</span>
+      <textarea rows={rows} value={d[k]} placeholder={hint} onChange={(e) => set({ [k]: e.target.value })} />
+    </label>
+  );
+  return (
+    <div className="cmd-sec">
+      <h3>Решение на {ddmm(v.time)} {hhmm(v.time)}</h3>
+      <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их.</p>
+      {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
+      {F({ k: 'enemyIntent', label: 'Замысел противника', hint: 'Что противник, по-видимому, намерен делать: где держит, куда отходит, где готовит контрудар…', rows: 3 })}
+      {F({ k: 'intent', label: 'Решение (замысел действий)', hint: 'Цель на сутки, главный удар, кто наступает, кто обеспечивает, куда вводятся резервы…', rows: 4, req: true })}
+      {F({ k: 'risks', label: 'Риски', hint: 'Что может пойти не так и как парировать…', rows: 2 })}
+      <label className={`dfield${!d.report.trim() ? ' need' : ''}`}>
+        <span>Боевое донесение в Ставку<i> обязательно</i><button className="link" onClick={(e) => { e.preventDefault(); draftReport(); }}>черновик по докладам</button></span>
+        <textarea rows={5} value={d.report} placeholder="Положение войск к утру, итоги суток, решение на следующие сутки, просьбы…" onChange={(e) => set({ report: e.target.value })} />
+      </label>
+    </div>
+  );
+}
+
+/* ───────────── тыл, переправы, резервы ───────────── */
+
+function PlacePicker({ v, from, onPick, onMap, mapOn }: { v: TurnView; from: LngLat; onPick: (p: Place) => void; onMap: () => void; mapOn: boolean }) {
+  const [q, setQ] = useState('');
+  const P = (a: LngLat, b: LngLat) => Math.hypot((a[0] - b[0]) * Math.cos((a[1] * Math.PI) / 180), a[1] - b[1]) * 111;
+  const list = useMemo(() => {
+    const ql = q.trim().toLowerCase();
+    return v.places.map((p) => ({ ...p, km: P(from, p.at) })).filter((p) => !ql || p.title.toLowerCase().includes(ql)).sort((a, b) => a.km - b.km).slice(0, ql ? 30 : 12);
+  }, [q, from, v.places]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div className="pick-list inline">
+      <div className="row"><input placeholder="Поиск пункта…" value={q} onChange={(e) => setQ(e.target.value)} /><button className={mapOn ? 'on' : ''} onClick={onMap}>{mapOn ? 'Отмена' : 'На карте'}</button></div>
+      <div className="pl-items">{list.map((p) => <button key={p.id} onClick={() => onPick(p)}>{p.title}<small>{Math.round(p.km)} км</small></button>)}</div>
+    </div>
+  );
+}
+
+function ActLine({ a, drop }: { a: Act; drop: (k: string) => void }) {
+  return <div className="draft"><b>{a.label}</b> — {a.text}<button className="x" title="Отменить распоряжение" onClick={() => drop(a.key)}>×</button></div>;
+}
+
+function Rear({ v, acts, drop, pickMode, setPickMode, pickAction, setPriority, goTo }: {
+  v: TurnView; acts: Act[]; drop: (k: string) => void; pickMode: Pick | null; setPickMode: (p: Pick | null) => void;
+  pickAction: (pm: Pick, at: LngLat, title: string | null) => void; setPriority: (ids: string[]) => void; goTo: (at: LngLat) => void;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const pa = acts.find((a) => a.action.kind === 'priority');
+  const prio = pa && pa.action.kind === 'priority' ? pa.action.formations : v.priority;
+  const active = v.own.filter((u) => u.status === 'active');
+  const toggle = (id: string) => setPriority(prio.includes(id) ? prio.filter((x) => x !== id) : prio.length >= v.priorityMax ? prio : [...prio, id]);
+  return (
+    <div className="cmd-sec">
+      <h3>Тыл и подвоз</h3>
+      <p className="note">Подвоз идёт от баз снабжения по своей территории; дальше {v.rangeHours} ч пути — не доходит. Базу можно перенести вперёд: на время переноса она не действует; на чужой территории — не работает.</p>
+      <h4 className="cmd-h4">Базы снабжения</h4>
+      {v.bases.map((b) => {
+        const a = acts.find((x) => x.key === `base:${b.id}`);
+        const pm = pickMode?.kind === 'base' && pickMode.base === b.id;
+        return (
+          <div key={b.id} className="brow">
+            <div className="brow-h" onClick={() => goTo(b.at)}>
+              <b>{b.name}</b>
+              <span className={`st ${b.state}`}>{b.state === 'active' ? 'действует' : b.state === 'moving' ? `переносится, заработает ${ddmm(b.activeFrom!)} ${hhmm(b.activeFrom!)}` : 'не действует — чужая территория'}</span>
+              {!a && <button className="link" onClick={(e) => { e.stopPropagation(); setOpen(open === b.id ? null : b.id); }}>{open === b.id ? 'отмена' : 'перенести…'}</button>}
+            </div>
+            {a && <ActLine a={a} drop={drop} />}
+            {open === b.id && !a && <PlacePicker v={v} from={b.at} mapOn={pm} onMap={() => setPickMode(pm ? null : { kind: 'base', base: b.id, name: b.name, from: b.at })}
+              onPick={(p) => { setOpen(null); pickAction({ kind: 'base', base: b.id, name: b.name, from: b.at }, p.at, p.title); }} />}
+          </div>
+        );
+      })}
+      <h4 className="cmd-h4">Приоритет подвоза <small>не более {v.priorityMax}; приоритетным ×1,5, остальным ×0,75</small></h4>
+      {pa && <ActLine a={pa} drop={drop} />}
+      <div className="prio">{active.map((u) => {
+        const h = v.supplyHours[u.id];
+        const bad = h == null || h > v.rangeHours;
+        return (
+          <label key={u.id} className={prio.includes(u.id) ? 'on' : ''}>
+            <input type="checkbox" checked={prio.includes(u.id)} disabled={!prio.includes(u.id) && prio.length >= v.priorityMax} onChange={() => toggle(u.id)} />
+            <span className="prio-n">{short(u.name)}</span>
+            <span className={`prio-h${bad ? ' bad' : ''}`} title="Время подвоза от ближайшей действующей базы">{h == null ? 'подвоз не доходит' : `${h} ч${bad ? ' — дальше предела' : ''}`}</span>
+            <Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} />
+          </label>
+        );
+      })}</div>
+    </div>
+  );
+}
+
+function Bridges({ v, acts, drop, pickMode, setPickMode, goTo }: { v: TurnView; acts: Act[]; drop: (k: string) => void; pickMode: Pick | null; setPickMode: (p: Pick | null) => void; goTo: (at: LngLat) => void }) {
+  const mine = acts.filter((a) => a.action.kind === 'bridge');
+  const building = v.bridges.filter((b) => b.building);
+  const busy = building.length + mine.length;
+  return (
+    <div className="cmd-sec">
+      <h3>Инженерные войска: переправы</h3>
+      <p className="note">Через большую реку без моста техника не пройдёт (пехота — медленно), подвоз — тоже. Наводка: большая река — сутки, малая — 12 ч; нужны наши войска рядом. Понтонных парков — {v.parks}, занято {busy}.</p>
+      <button className={pickMode?.kind === 'bridge' ? 'on' : ''} disabled={busy >= v.parks && pickMode?.kind !== 'bridge'} onClick={() => setPickMode(pickMode?.kind === 'bridge' ? null : { kind: 'bridge' })}>
+        {pickMode?.kind === 'bridge' ? 'Щёлкните по реке на карте… (отмена)' : busy >= v.parks ? 'Все понтонные парки заняты' : 'Навести переправу — указать место на карте'}</button>
+      {mine.map((a) => <ActLine key={a.key} a={a} drop={drop} />)}
+      {building.length > 0 && <><h4 className="cmd-h4">Наводятся</h4>{building.map((b) => <div key={b.id} className="brow-h" onClick={() => goTo(b.at)}><b>{b.name}</b><span className="st moving">готова {ddmm(b.openFrom!)} {hhmm(b.openFrom!)}</span></div>)}</>}
+      <h4 className="cmd-h4">Действующие переправы</h4>
+      {v.bridges.filter((b) => !b.building).map((b) => <div key={b.id} className="brow-h" onClick={() => goTo(b.at)}><b>{b.name}</b><span className="st active">действует</span></div>)}
+    </div>
+  );
+}
+
+function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction }: { v: TurnView; acts: Act[]; drop: (k: string) => void; pickMode: Pick | null; setPickMode: (p: Pick | null) => void; pickAction: (pm: Pick, at: LngLat, title: string | null) => void }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const reserves = v.own.filter((u) => u.status === 'reserve');
+  const coming = v.own.filter((u) => u.status === 'arriving');
+  const center = v.own.filter((u) => u.status === 'active').reduce<[number, number]>((c, u, _i, arr) => [c[0] + u.at[0] / arr.length, c[1] + u.at[1] / arr.length], [0, 0]);
+  return (
+    <div className="cmd-sec">
+      <h3>Резервы Ставки</h3>
+      <p className="note">Резерв вводится по вашему решению: укажите район сосредоточения на своей территории. Объединение будет там не раньше, чем готово к вводу, и не раньше чем через сутки после распоряжения. Задачу ему можно поставить сразу — приказ дождётся.</p>
+      {!reserves.length && !coming.length && <p className="muted">Резервов Ставки нет.</p>}
+      {reserves.map((u) => {
+        const a = acts.find((x) => x.key === `commit:${u.id}`);
+        const pm = pickMode?.kind === 'commit' && pickMode.formation === u.id;
+        return (
+          <div key={u.id} className="brow">
+            <div className="brow-h"><b>{short(u.name)}</b><span className="st idle">готова к вводу с {ddmm(u.reserveFrom!)} {hhmm(u.reserveFrom!)}</span>
+              {!a && <button className="link" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? 'отмена' : 'ввести…'}</button>}</div>
+            <div className="muted small">{u.personnel.toLocaleString('ru')} чел., танков и САУ {u.tanks}, орудий {u.guns}</div>
+            {a && <ActLine a={a} drop={drop} />}
+            {open === u.id && !a && <PlacePicker v={v} from={center} mapOn={pm} onMap={() => setPickMode(pm ? null : { kind: 'commit', formation: u.id, name: u.name })}
+              onPick={(p) => { setOpen(null); pickAction({ kind: 'commit', formation: u.id, name: u.name }, p.at, p.title); }} />}
+          </div>
+        );
+      })}
+      {coming.length > 0 && <><h4 className="cmd-h4">Вводятся</h4>{coming.map((u) => <div key={u.id} className="brow-h"><b>{short(u.name)}</b><span className="st moving">сосредоточится {ddmm(u.arrives!)} {hhmm(u.arrives!)}</span></div>)}</>}
+    </div>
+  );
+}
+
 /* ───────────── журнал и посредник ───────────── */
 
 function Journal({ v, onDownload }: { v: TurnView; onDownload: () => void }) {
@@ -460,8 +712,10 @@ function Journal({ v, onDownload }: { v: TurnView; onDownload: () => void }) {
       {[...v.journal].reverse().map((d) => (
         <div key={d.time} className="jday">
           <h4>{dayLong(d.time)}, {hhmm(d.time)}</h4>
+          {d.decision && <><div className="jsub">Решение</div><p>{d.decision.intent}</p><details><summary className="muted">оценка обстановки и донесение</summary><p><b>Оценка.</b> {d.decision.assessment}</p>{d.decision.enemyIntent && <p><b>Противник.</b> {d.decision.enemyIntent}</p>}{d.decision.risks && <p><b>Риски.</b> {d.decision.risks}</p>}<p><b>Донесение в Ставку.</b> {d.decision.report}</p></details></>}
           <div className="jsub">Отданы приказы</div>
           {d.orders.length ? <ul>{d.orders.map((o, i) => <li key={i}>{o}</li>)}</ul> : <p className="muted">новых приказов нет</p>}
+          {d.actions.length > 0 && <><div className="jsub">Тыл, переправы, резервы</div><ul>{d.actions.map((o, i) => <li key={i} className={o.includes('НЕ ИСПОЛНЕНО') ? 'rej' : ''}>{o}</li>)}</ul></>}
           <div className="jsub">Донесения</div>
           {d.events.length ? <ul>{d.events.map((o, i) => <li key={i}>{o}</li>)}</ul> : <p className="muted">существенных событий нет</p>}
         </div>

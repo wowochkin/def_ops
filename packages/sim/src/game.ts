@@ -9,14 +9,19 @@
  * (сохранение, продолжение, разбор), без хранения состояний.
  */
 import { snapshotOf, type Snapshot } from './history';
+import { applyActions, prepareTakeover } from './staff';
 import { createState, issueOrder, step, type SimContext } from './step';
-import type { Order, SimState } from './types';
+import type { Order, SimState, StaffAction } from './types';
 
 export interface GameTurn {
   /** Начало хода — когда отданы приказы. */
   time: string;
   /** Приказы обеих сторон за этот ход. */
   orders: Order[];
+  /** Распоряжения штаба человека: тыл, переправы, резервы. */
+  actions?: StaffAction[];
+  /** Решение штаба человека (оценка, замысел, донесение) — для журнала и разбора; на расчёт не влияет. */
+  human?: unknown;
   /** Сведения о решении штаба модели (оценка, замысел, риски, замеры) — для разбора; на расчёт не влияют. */
   ai?: unknown;
 }
@@ -40,8 +45,12 @@ export interface GameState {
   snapshots: Snapshot[];
 }
 
-/** Прогнать сценарий по истории до хода takeover (ход, начинающийся не раньше этого времени) и снять будущие исторические приказы. */
-export function startGame(ctx: SimContext, seed: number, takeover: string): GameState {
+/**
+ * Прогнать сценарий по истории до хода takeover (ход, начинающийся не раньше этого времени) и снять будущие
+ * исторические приказы. human — сторона человека: её будущие наводки переправ и прибытия резервов тоже сняты,
+ * тыл — под управлением штаба (prepareTakeover).
+ */
+export function startGame(ctx: SimContext, seed: number, takeover: string, human?: string): GameState {
   let s = createState(ctx, seed), prev: SimState | null = null;
   const snapshots = [snapshotOf(s)];
   while (s.time < takeover && s.time < ctx.scenario.end) {
@@ -50,13 +59,15 @@ export function startGame(ctx: SimContext, seed: number, takeover: string): Game
     snapshots.push(snapshotOf(s));
   }
   s = { ...s, pending: s.pending.filter((o) => o.issuedAt < s.time) };
+  if (human) s = prepareTakeover(ctx, s, human);
   return { state: s, prev, snapshots };
 }
 
-/** Ход: приказы обеих сторон (с задержкой доведения по ступени) и расчёт арбитра. */
-export function playTurn(ctx: SimContext, g: GameState, orders: Order[]): GameState {
-  const s = step(orders.reduce(issueOrder, g.state), ctx);
-  return { state: s, prev: g.state, snapshots: [...g.snapshots, snapshotOf(s)] };
+/** Ход: распоряжения штаба, приказы обеих сторон (с задержкой доведения по ступени) и расчёт арбитра. */
+export function playTurn(ctx: SimContext, g: GameState, orders: Order[], actions: StaffAction[] = []): GameState & { results: ReturnType<typeof applyActions>['results'] } {
+  const a = applyActions(ctx, g.state, actions);
+  const s = step(orders.reduce(issueOrder, a.state), ctx);
+  return { state: s, prev: a.state, snapshots: [...g.snapshots, snapshotOf(s)], results: a.results };
 }
 
 /** Игра окончена: время сценария вышло. */
@@ -64,11 +75,11 @@ export const gameOver = (ctx: SimContext, g: GameState) => g.state.time >= ctx.s
 
 /** Восстановить игру по записи. */
 export function replayGame(ctx: SimContext, rec: GameRecord): GameState {
-  let g = startGame(ctx, rec.seed, rec.takeover);
+  let g: GameState = startGame(ctx, rec.seed, rec.takeover, rec.human);
   for (const t of rec.turns) {
     if (gameOver(ctx, g)) break;
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится: ход ${t.time}, расчёт ${g.state.time}`);
-    g = playTurn(ctx, g, t.orders);
+    g = playTurn(ctx, g, t.orders, t.actions ?? []);
   }
   return g;
 }
