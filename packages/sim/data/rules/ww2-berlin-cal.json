@@ -13,93 +13,93 @@
     ],
     [
       1.5,
-      0.8471
+      0.8007
     ],
     [
       2,
-      2.5414
+      2.4022
     ],
     [
       3,
-      5.0829
+      4.8045
     ],
     [
       4,
-      8.4714
+      8.0074
     ],
     [
       6,
-      15.2486
+      14.4134
     ],
     [
       10,
-      25.4143
+      24.0223
     ]
   ],
   "attackerLoss": [
     [
       0.5,
-      0.0532
+      0.0639
     ],
     [
       1,
-      0.0355
+      0.0426
     ],
     [
       2,
-      0.0222
+      0.0266
     ],
     [
       3,
-      0.0133
+      0.016
     ],
     [
       6,
-      0.0071
+      0.0085
     ],
     [
       10,
-      0.0044
+      0.0053
     ]
   ],
   "defenderLoss": [
     [
       0.5,
-      0.0174
+      0.0171
     ],
     [
       1,
-      0.0349
+      0.0342
     ],
     [
       2,
-      0.0697
+      0.0683
     ],
     [
       3,
-      0.1046
+      0.1025
     ],
     [
       6,
-      0.2092
+      0.205
     ],
     [
       10,
-      0.3487
+      0.3417
     ]
   ],
   "defense": {
     "terrain": {
       "open": 1,
-      "forest": 1.214,
-      "marsh": 1.282,
-      "urban": 1.35,
-      "hills": 1.214,
+      "forest": 1.372,
+      "marsh": 1.501,
+      "urban": 1.631,
+      "hills": 1.372,
       "water": 1
     },
-    "prepared": 1.948,
+    "prepared": 1.272,
     "prepareHours": 24,
-    "fortificationPerLevel": 0.123
+    "fortificationPerLevel": 0.285
   },
   "ammoShort": 0.4,
   "fuelOut": 0.5,
@@ -112,13 +112,14 @@
   "noise": 0.2,
   "riverCrossHours": 12,
   "advanceTerrain": {
-    "urban": 0.446,
+    "urban": 0.137,
     "forest": 0.6,
     "marsh": 0.5,
     "hills": 0.8
   },
   "_advanceTerrain_note": "город — кварталами: «несколько десятков метров в час», 100–200 м после падения опорного пункта (LT_CONQ); черновик",
-  "movementScale": 0.87,
+  "fortCrossHours": 4,
+  "movementScale": 0.826,
   "calibration": {
     "scenario": "berlin-1945-tasks",
     "date": "2026-10-08",
@@ -127,31 +128,31 @@
     "trainUntil": "1945-04-25T23:59",
     "from": "ww2-draft",
     "multipliers": {
-      "advance": 0.847,
-      "attackerLoss": 0.886,
-      "defenderLoss": 1.743,
-      "prepared": 1.948,
-      "fortPerLevel": 0.123,
-      "terrainExp": 0.739,
-      "movement": 0.87,
-      "urbanAdvance": 0.446
+      "advance": 0.801,
+      "attackerLoss": 1.065,
+      "defenderLoss": 1.709,
+      "prepared": 1.272,
+      "fortPerLevel": 0.285,
+      "terrainExp": 1.206,
+      "movement": 0.826,
+      "urbanAdvance": 0.137
     },
     "before": {
-      "trainKm": 9.23,
-      "testKm": 5.65,
-      "eventsDays": 1.36,
-      "within": 0.696
+      "trainKm": 7.13,
+      "testKm": 5.86,
+      "eventsDays": 1.86,
+      "within": 0.786
     },
     "after": {
-      "trainKm": 8.3,
-      "testKm": 6.05,
-      "eventsDays": 1.07,
-      "within": 0.708
+      "trainKm": 5.76,
+      "testKm": 4.36,
+      "eventsDays": 1.36,
+      "within": 0.824
     },
     "events": [
       {
         "id": "seelow",
-        "days": 2
+        "days": -1
       },
       {
         "id": "spremberg",
@@ -167,7 +168,7 @@
       },
       {
         "id": "pocket",
-        "days": -2
+        "days": null
       },
       {
         "id": "ring",
@@ -179,14 +180,13 @@
       },
       {
         "id": "stettin",
-        "days": -2
+        "days": -4
       },
       {
         "id": "reichstag",
-        "days": 0
+        "days": -1
       }
     ],
     "note": "Подобрано по одной операции: обязательна проверка на контрольной операции (этап 2). Мерило — среднее превышение отклонения над неопределённостью исторического положения (до 50 км) + 3 × средняя ошибка дат событий (сут)."
-  },
-  "fortCrossHours": 4
+  }
 }
