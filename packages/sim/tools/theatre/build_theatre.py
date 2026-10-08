@@ -357,6 +357,9 @@ def apply_overlays(recipe, rp, k, cols, rows, bbox, roads):
                 j = gr * oc + gc
                 if not cov[j]:
                     continue
+                clip = ov.get("clip")
+                if clip and not (clip[0] <= lng <= clip[2] and clip[1] <= lat <= clip[3]):
+                    continue
                 i = r * cols + c
                 before = k[i]
                 for cls in ("water", "urban", "forest"):
@@ -366,7 +369,9 @@ def apply_overlays(recipe, rp, k, cols, rows, bbox, roads):
                         break
                 else:
                     demote = ov.get("demoteModernUrban")
-                    if demote and k[i] == order.index("urban"):
+                    keep = ov.get("keepUrban")
+                    kept = keep and masks.get(keep) is not None and masks[keep][j]
+                    if demote and k[i] == order.index("urban") and not kept:
                         k[i] = order.index(demote)
                 if ov.get("road") and masks.get(ov["road"]) is not None and masks[ov["road"]][j]:
                     road[i] = 1
