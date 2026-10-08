@@ -119,6 +119,27 @@ export class LlmClient {
     return m;
   }
 
+  /**
+   * Векторы текстов (/v1/embeddings) — модель эмбеддингов (Qwen3-Embedding в LM Studio). Порядок ответа
+   * сервер не обещает — сортируется по index.
+   */
+  async embed(texts: string[], model: string, signal?: AbortSignal): Promise<number[][]> {
+    let r: Response;
+    try {
+      r = await this.fetchImpl(`${this.config.url}/embeddings`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, signal: signal ?? AbortSignal.timeout(120_000),
+        body: JSON.stringify({ model, input: texts, encoding_format: 'float' }),
+      });
+    } catch (e) {
+      throw new LlmUnavailable(`сервер эмбеддингов не отвечает (${this.config.url}): ${(e as Error).message}`);
+    }
+    if (!r.ok) throw new Error(`эмбеддинги: сервер ответил ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const j = (await r.json()) as { data?: { index: number; embedding: number[] }[] };
+    const data = [...(j.data ?? [])].sort((a, b) => a.index - b.index);
+    if (data.length !== texts.length) throw new Error(`эмбеддинги: ожидалось ${texts.length} векторов, пришло ${data.length}`);
+    return data.map((d) => d.embedding);
+  }
+
   body(model: string, req: ChatRequest): Record<string, unknown> {
     const thinking = req.thinking ?? this.config.thinking;
     const body: Record<string, unknown> = {

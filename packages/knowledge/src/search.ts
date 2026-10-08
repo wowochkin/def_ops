@@ -31,6 +31,14 @@ export class Index {
     this.avg = this.len.reduce((a, b) => a + b, 0) / Math.max(1, this.len.length);
   }
 
+  /** Документы индекса (для векторов). */
+  get all(): readonly Doc[] { return this.docs; }
+  /** Документ индекса как выдача (для гибридного поиска). */
+  doc(id: string): Hit | undefined {
+    const d = this.docs.find((x) => x.id === id);
+    return d ? { id: d.id, kind: d.kind, ref: d.ref, title: d.title, text: d.text, score: 0 } : undefined;
+  }
+
   private add(d: Doc) {
     const m = new Map<string, number>();
     const words = [...stems(d.text), ...stems(d.boost).flatMap((w) => [w, w, w])];

@@ -72,7 +72,8 @@ export function loadLlm(): LlmSettings {
   try { return { ...LLM_DEFAULTS, ...JSON.parse(localStorage.getItem('def_ops.llm') || '{}') }; } catch { return LLM_DEFAULTS; }
 }
 
-export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[] } | { state: 'fail'; error: string };
+/** models — модели для ответов; embedModels — модели эмбеддингов (в названии embed), для смыслового поиска по базе знаний. */
+export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[]; embedModels: string[] } | { state: 'fail'; error: string };
 
 /** Проверить связь с сервером модели: список загруженных моделей. */
 export async function checkLlm(url: string): Promise<LlmCheck> {
@@ -80,8 +81,9 @@ export async function checkLlm(url: string): Promise<LlmCheck> {
     const r = await fetch(`${url.replace(/\/+$/, '')}/models`, { signal: AbortSignal.timeout(5000) });
     if (!r.ok) return { state: 'fail', error: `сервер ответил ${r.status}` };
     const j = (await r.json()) as { data?: { id: string }[] };
-    const models = (j.data ?? []).map((m) => m.id).filter((m) => !/embed/i.test(m));
-    return models.length ? { state: 'ok', models } : { state: 'fail', error: 'на сервере не загружена ни одна модель' };
+    const all = (j.data ?? []).map((m) => m.id);
+    const models = all.filter((m) => !/embed/i.test(m));
+    return models.length ? { state: 'ok', models, embedModels: all.filter((m) => /embed/i.test(m)) } : { state: 'fail', error: 'на сервере не загружена ни одна модель' };
   } catch (e) {
     return { state: 'fail', error: (e as Error).name === 'TimeoutError' ? 'сервер не отвечает' : (e as Error).message };
   }

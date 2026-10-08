@@ -5,7 +5,7 @@
  * со ссылками), загрузка документов: модель извлекает сведения с цитатами, человек принимает предложения.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { category, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type Proposal, type Reliability, type Rubric, type Source } from '@def-ops/knowledge';
+import { category, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
 import * as kb from './kb/kb';
 import type { Llm } from './shared';
 import { mdToHtml } from './markdown';
@@ -46,7 +46,15 @@ function Browse({ s, sel, open, back, llm }: { s: kb.KbState; sel: string | null
   const [node, setNode] = useState<string>('1.2');
   const [cat, setCat] = useState<string | null>(null);
   const [limit, setLimit] = useState(150);
-  const found = useMemo(() => (q.trim() && s.index ? s.index.search(q, { limit: 60 }) : null), [q, s.index]);
+  const bm = useMemo(() => (q.trim() && s.index ? s.index.search(q, { limit: 60 }) : null), [q, s.index]);
+  // смысловой поиск (если готовы векторы) — после паузы в наборе
+  const [sem, setSem] = useState<{ q: string; hits: Hit[] } | null>(null);
+  useEffect(() => {
+    if (!q.trim() || s.vec.status !== 'ready') return;
+    const t = setTimeout(() => { void kb.search(q, 60).then((hits) => setSem({ q, hits })); }, 350);
+    return () => clearTimeout(t);
+  }, [q, s.vec.status]);
+  const found = sem && sem.q === q ? sem.hits : bm;
   const rubs = useMemo(() => new Map(s.entries.map((e) => [e.id, rubricsOf(e)])), [s.entries]);
   // число записей в рубрике — с вложенными, каждая запись один раз
   const counts = useMemo(() => {
@@ -245,6 +253,7 @@ function Docs({ s, llm, open }: { s: kb.KbState; llm: Llm; open: (id: string) =>
   };
   return (
     <div className="kb-docs">
+      <VecCard s={s} llm={llm} />
       <section className="card kb-upload">
         <h3>Загрузить документы</h3>
         <p className="muted">PDF (с текстовым слоем), Word (.docx), HTML, txt, md. Документ разбивается на части; модель выписывает из каждой сведения по каркасу — только сказанное в тексте и с дословной цитатой; факты без найденной цитаты отбрасываются. Получаются предложения: новая запись или дополнение существующей — вы принимаете или отклоняете. Текст документа сразу участвует в поиске и ответах. Хранится в этом браузере; обмен — выгрузкой.</p>
@@ -269,6 +278,35 @@ function Docs({ s, llm, open }: { s: kb.KbState; llm: Llm; open: (id: string) =>
         {pending.slice(0, 100).map((p) => <ProposalCard key={p.id} p={p} s={s} open={open} />)}
       </section>
     </div>
+  );
+}
+
+const VEC_RU: Record<kb.KbState['vec']['status'], string> = { none: 'нет модели эмбеддингов', off: 'выключен', testing: 'самопроверка модели…', indexing: 'расчёт векторов…', ready: 'готов', error: 'ошибка' };
+
+/** Смысловой поиск: модель эмбеддингов (Qwen3-Embedding в LM Studio), состояние векторов. */
+function VecCard({ s, llm }: { s: kb.KbState; llm: Llm }) {
+  const v = s.vec;
+  const avail = llm.check.state === 'ok' ? llm.check.embedModels : [];
+  return (
+    <section className="card">
+      <h3>Смысловой поиск</h3>
+      <p className="muted">Кроме поиска по словам база ищет по смыслу: модель эмбеддингов переводит записи и вопрос в векторы, выдачи сливаются.
+        Нужна модель <b>Qwen3-Embedding</b> в LM Studio рядом с основной (поиск «qwen3 embedding», GGUF; 0.6B — быстро, ~0,6 ГБ; 4B — точнее).
+        Без неё работает поиск по словам.</p>
+      <div className="row">
+        <label>Модель <select value={llm.settings.embedModel ?? ''} onChange={(e) => llm.set({ embedModel: e.target.value })}>
+          <option value="">авто{avail.length ? ` (${avail.find((m) => /qwen3?.?embed/i.test(m)) ?? avail[0]})` : ' — не найдена'}</option>
+          {avail.map((m) => <option key={m} value={m}>{m}</option>)}
+          <option value="off">выключить</option>
+        </select></label>
+        <label>Длина вектора <select value={llm.settings.embedDims ?? 1024} onChange={(e) => llm.set({ embedDims: +e.target.value })}>
+          {[256, 512, 1024, 2560, 4096].map((d) => <option key={d} value={d}>{d}</option>)}</select></label>
+        <span className={`kb-vec ${v.status}`}>{VEC_RU[v.status]}{v.status === 'indexing' || v.status === 'ready' ? ` · ${v.done}/${v.total}` : ''}{v.gap !== undefined ? ` · самопроверка ${v.gap}${v.eos ? ', с <|endoftext|>' : ''}` : ''}</span>
+        {v.model && v.status !== 'off' && <button className="link" onClick={() => void kb.rebuildVectors()}>пересчитать</button>}
+      </div>
+      {v.status === 'indexing' && <div className="kb-prog"><i style={{ width: `${(v.done / Math.max(1, v.total)) * 100}%` }} /><span>{v.model}: {v.done} из {v.total}</span></div>}
+      {v.error && <div className="err">{v.error}</div>}
+    </section>
   );
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import seed from '../data/seed.json';
-import { CATEGORIES, RUBRIC_CODES, rubricPath, rubricsOf, applyProposal, chunkText, gameReference, gather, Index, qaMessages, quoteFound, toProposals, type Entry, type ExtractedItem } from '../src';
+import { hybridHits, rrf, toVec, dot, queryText, entryEmbedText, CATEGORIES, RUBRIC_CODES, rubricPath, rubricsOf, applyProposal, chunkText, gameReference, gather, Index, qaMessages, quoteFound, toProposals, type Entry, type ExtractedItem } from '../src';
 
 const entries = (seed as { entries: Entry[] }).entries;
 const byId = new Map(entries.map((e) => [e.id, e]));
@@ -80,5 +80,21 @@ describe('документы: разбивка и проверка извлеч�
     expect(r.proposals[0].rubrics).toEqual(['1.2.2']); // несуществующая рубрика отброшена
     const merged = applyProposal(r.proposals[0], byId.get('f:su_8gva'));
     expect(merged.rubrics).toEqual(['2.1.2', '1.2.2']);
+  });
+});
+
+describe('смысловой поиск: векторы и слияние выдач', () => {
+  it('вектор урезается (MRL) и нормируется; RRF поднимает найденное обоими способами', () => {
+    const v = toVec([3, 4, 12], 2);
+    expect(v.length).toBe(2);
+    expect(dot(v, v)).toBeCloseTo(1, 5);
+    const f = rrf([[{ id: 'a' }, { id: 'b' }, { id: 'c' }], [{ id: 'c' }, { id: 'd' }]]);
+    expect(f[0].id).toBe('c');
+    const idx = new Index(entries);
+    const bm = idx.search('рейхстаг', { limit: 5 });
+    const h = hybridHits(bm, [{ id: 'e:battle:berlin-storm', score: 0.9 }], (id) => idx.doc(id), 5);
+    expect(h.some((x) => x.ref === 'battle:berlin-storm')).toBe(true);
+    expect(queryText('бой за рейхстаг', { dims: 0, eos: true })).toMatch(/^Instruct: .+\nQuery:бой за рейхстаг<\|endoftext\|>$/);
+    expect(entryEmbedText(byId.get('battle:reichstag')!)).toMatch(/^Бой за рейхстаг .*Сражения и бои/);
   });
 });

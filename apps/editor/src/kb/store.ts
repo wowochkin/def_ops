@@ -6,14 +6,14 @@
  */
 import type { Entry, KbDocument, Proposal } from '@def-ops/knowledge';
 
-const DB = 'def_ops_kb', VER = 1;
-type StoreName = 'entries' | 'documents' | 'proposals';
+const DB = 'def_ops_kb', VER = 2;
+type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors';
 
 let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -22,6 +22,7 @@ function db(): Promise<IDBDatabase> {
 const req = <T>(r: IDBRequest<T>) => new Promise<T>((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 
 export async function all<T = Entry | KbDocument | Proposal>(store: StoreName): Promise<T[]> {
+  // vectors — кэш эмбеддингов: { id: модель|документ индекса, hash текста, v: Float32Array }
   try { return await req((await db()).transaction(store).objectStore(store).getAll()) as T[]; } catch { return []; }
 }
 export async function put(store: StoreName, ...items: unknown[]) {

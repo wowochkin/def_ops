@@ -4,13 +4,14 @@
  * компонентов — переключение разделов её не прерывает; подписчики получают изменения.
  */
 import {
-  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, Index, qaMessages, toProposals,
+  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, qaMessages, toProposals,
   type Entry, type ExtractedItem, type KbDocument, type Proposal, type Reliability, type Source,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
 import * as store from './store';
 import { fileText } from './text';
+import { Vectors, type VecState } from './vectors';
 
 export interface KbState {
   ready: boolean;
@@ -21,9 +22,12 @@ export interface KbState {
   proposals: Proposal[];
   /** Обработка документа: id, часть, всего, сообщение. */
   job: { doc: string; at: number; total: number; text: string } | null;
+  /** Смысловой поиск (эмбеддинги). */
+  vec: VecState;
 }
 
-let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], job: null };
+const vectors = new Vectors(() => { state.vec = vectors.state; emit(); });
+let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], job: null, vec: vectors.state };
 const subs = new Set<(s: KbState) => void>();
 const emit = () => { state = { ...state }; subs.forEach((f) => f(state)); };
 export const subscribe = (f: (s: KbState) => void) => { subs.add(f); f(state); return () => { subs.delete(f); }; };
@@ -43,6 +47,23 @@ async function reload() {
   state.index = new Index(entries, documents);
   state.ready = true;
   emit();
+  void vectors.index(state.index, state.byId);
+}
+
+/* ───────────── смысловой поиск ───────────── */
+
+/** Настройки модели (из оболочки): при появлении модели эмбеддингов база индексируется. */
+export function configure(llm: LlmSettings, embedModels: string[] | null) {
+  if (vectors.configure(llm, embedModels) && state.ready) void vectors.index(state.index!, state.byId);
+}
+export const rebuildVectors = () => (state.ready ? vectors.rebuild(state.index!, state.byId) : Promise.resolve());
+
+/** Поиск: BM25, при готовых векторах — гибрид BM25 + смысловая близость (RRF). */
+export async function search(query: string, pool = 30): Promise<Hit[]> {
+  await load();
+  const bm = state.index!.search(query, { limit: pool });
+  if (!vectors.ready) return bm;
+  try { return hybridHits(bm, await vectors.near(query, pool), (id) => state.index!.doc(id), pool); } catch { return bm; }
 }
 
 const client = (llm: LlmSettings, thinking?: LlmSettings['thinking']) => new LlmClient({
@@ -159,7 +180,7 @@ export async function importUser(json: string) {
 
 export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSettings, history: { q: string; a: string }[], onDelta: (t: string) => void, signal?: AbortSignal): Promise<{ text: string; sources: Source[] }> {
   await load();
-  const sources = gather(state.index!, state.byId, question, { limit: mode === 'lecture' ? 10 : 7 });
+  const sources = gather(state.index!, state.byId, question, { limit: mode === 'lecture' ? 10 : 7, hits: await search(question, 30) });
   const r = await client(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') onDelta(t); } });
   return { text: r.content, sources };
 }
@@ -167,5 +188,7 @@ export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSet
 /** Справка из базы для советника в игре: доктрина, техника, местность, источники; ход боёв — только в вопросах истории. */
 export async function reference(query: string, historyAllowed: boolean): Promise<string> {
   try { await load(); } catch { return ''; }
-  return state.index ? gameReference(state.index, state.byId, query, historyAllowed) : '';
+  if (!state.index) return '';
+  // справка отбирается фильтром (доктрина, техника) — нужна широкая выдача
+  return gameReference(state.index, state.byId, query, historyAllowed, 5, await search(query, 300).catch(() => undefined));
 }

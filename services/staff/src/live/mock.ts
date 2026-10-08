@@ -94,6 +94,21 @@ export function mockKbAnswer(prompt: string): string {
   return `Подставная модель (проверка стенда). По запросу «${topic}»:\n\n${mats.map(([, n, t, x]) => `- **${t}**: ${x.slice(0, 220)} [${n}]`).join('\n')}\n\nПодробнее — в материалах по ссылкам.`;
 }
 
+/**
+ * Подставные эмбеддинги (проверка стенда): «мешок основ слов», разложенный хешем по 1024 числам. Близость —
+ * по общим словам, без смысла; инструкция запроса и <|endoftext|> отбрасываются, как их «понимает» модель.
+ */
+export function mockEmbedding(text: string, dims = 1024): number[] {
+  const t = text.replace(/^Instruct:[^\n]*\nQuery:/, '').replace(/<\|endoftext\|>/g, '');
+  const v = new Array<number>(dims).fill(0);
+  for (const w of t.toLowerCase().replace(/ё/g, 'е').split(/[^a-zа-я0-9]+/).filter((x) => x.length > 2)) {
+    let h = 2166136261;
+    for (const ch of w.slice(0, 5)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+    v[h % dims] += 1;
+  }
+  return v;
+}
+
 const sse = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
 
 /** Подставной сервер модели. delayMs — пауза между кусками ответа (имитация генерации). */
@@ -102,7 +117,19 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
     res.setHeader('access-control-allow-origin', '*');
     res.setHeader('access-control-allow-headers', '*');
     if (req.method === 'OPTIONS') { res.end(); return; }
-    if (req.url?.endsWith('/models')) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ data: [{ id: 'mock-staff' }] })); return; }
+    if (req.url?.endsWith('/models')) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ data: [{ id: 'mock-staff' }, { id: 'text-embedding-qwen3-embedding-0.6b' }] })); return; }
+    if (req.url?.endsWith('/embeddings')) {
+      let eb = '';
+      req.on('data', (c) => (eb += c));
+      req.on('end', () => {
+        const { input } = JSON.parse(eb || '{}') as { input?: string | string[] };
+        const list = Array.isArray(input) ? input : [input ?? ''];
+        res.setHeader('content-type', 'application/json');
+        // порядок — обратный, как может прийти от сервера: клиент сортирует по index
+        res.end(JSON.stringify({ object: 'list', data: list.map((t, index) => ({ object: 'embedding', index, embedding: mockEmbedding(t) })).reverse() }));
+      });
+      return;
+    }
     let b = '';
     req.on('data', (c) => (b += c));
     req.on('end', async () => {

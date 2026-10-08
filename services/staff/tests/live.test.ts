@@ -160,3 +160,15 @@ describe('штаб модели ведёт тыл, переправы, резе�
     expect(Array.isArray(t.decision!.actions)).toBe(true);
   }, 60000);
 });
+
+describe('эмбеддинги для базы знаний', () => {
+  it('векторы приходят по порядку входа; самопроверка отличает перефразировку от постороннего', async () => {
+    const { docText, queryText, SELF_TEST, selfTestGap, toVec } = await import('@def-ops/knowledge');
+    const client = new LlmClient({ ...configFromEnv({}), url });
+    const o = { dims: 256, eos: true };
+    const [q, a, b] = (await client.embed([queryText(SELF_TEST.query, o), docText(SELF_TEST.close, o), docText(SELF_TEST.far, o)], 'text-embedding-qwen3-embedding-0.6b')).map((v) => toVec(v, o.dims));
+    expect(q.length).toBe(256);
+    expect(selfTestGap(q, a, b)).toBeGreaterThan(0.05);
+    expect(await client.resolveModel()).toBe('mock-staff'); // модель эмбеддингов не берётся для ответов
+  });
+});

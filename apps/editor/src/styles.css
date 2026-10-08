@@ -864,6 +864,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .kb-prog { position: relative; display: flex; align-items: center; gap: 8px; margin-top: 5px; background: #eee9dd; border-radius: 6px; padding: 4px 4px 4px 9px; overflow: hidden; font-size: 11.5px; }
 .kb-prog i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(140,42,34,.16); transition: width .3s; }
 .kb-prog span { position: relative; flex: 1; } .kb-prog button { position: relative; }
+.kb-vec { font-size: 12px; color: var(--muted); } .kb-vec.ready { color: #2f6b3b; } .kb-vec.error { color: var(--danger); }
 .kb-prop { border: 1px solid var(--line); border-left: 3px solid #2f5f8f; border-radius: 8px; padding: 8px 10px; margin: 8px 0; background: #fff; }
 .kb-prop.update { border-left-color: #8a7a2b; }
 .kb-prop-h { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }

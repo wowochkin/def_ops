@@ -9,6 +9,7 @@ import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
 import { KnowledgeView } from './KnowledgeView';
+import * as kb from './kb/kb';
 import { MapsPanel } from './MapsPanel';
 import { BasemapControls, Icon } from './ui';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
@@ -34,6 +35,8 @@ export function Shell() {
   const llm = useLlm();
   const [incoming, setIncoming] = useState<IncomingDoc | null>(null);
   // разделы, которые уже открывались, остаются смонтированными: карта и расчёт не теряются при переключении
+  // база знаний: модель эмбеддингов из LM Studio — для смыслового поиска (и в разделе «Знания», и для советника)
+  useEffect(() => { if (llm.check.state === 'ok' || llm.check.state === 'fail') kb.configure(llm.settings, llm.check.state === 'ok' ? llm.check.embedModels : null); }, [llm.settings, llm.check]);
   const [mounted, setMounted] = useState<Set<Section>>(() => new Set([section]));
 
   useEffect(() => {
