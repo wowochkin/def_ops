@@ -155,6 +155,8 @@ export type GameResponse =
   /** Разбор операции: текст раздела потоком, ожидание очереди, готово. */
   | { kind: 'review-stream'; id: number; text: string; reset?: boolean }
   | { kind: 'review-wait'; id: number; text: string }
+  /** Размышление модели над разделом — кусками. */
+  | { kind: 'review-think'; id: number; text: string }
   | { kind: 'review-done'; id: number; ok: boolean; text: string; error?: string; model?: string; seconds?: number }
   | { kind: 'advice'; id: number; result: AdviceView }
   /** Варианты решения: ход генерации (знаков, хвост размышления), очередной готовый вариант, конец. */

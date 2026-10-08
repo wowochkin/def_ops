@@ -379,8 +379,9 @@ async function reviewSection(m: Extract<GameRequest, { kind: 'review-section' }>
   try {
     const r = await exclusive('разбор операции', () => reviewClient().chat({
       messages: reviewMessages(sec, digest, { scenario: ctx.scenario.name, side: ctx.scenario.sides.find((x) => x.id === rec.human)!.name }, m.done), signal,
-      onDelta: (k, t) => { if (k !== 'content') { rbuf += t; const now = Date.now(); if (now - rlast > 600) { rlast = now; post({ kind: 'review-wait', id: m.id, text: `модель размышляет… ${rbuf.slice(-280)}` }); } return; } buf += t; const now = Date.now(); if (now - last > 200) { post({ kind: 'review-stream', id: m.id, text: buf }); buf = ''; last = now; } },
+      onDelta: (k, t) => { if (k !== 'content') { rbuf += t; const now = Date.now(); if (now - rlast > 300) { rlast = now; post({ kind: 'review-think', id: m.id, text: rbuf }); rbuf = ''; } return; } buf += t; const now = Date.now(); if (now - last > 200) { post({ kind: 'review-stream', id: m.id, text: buf }); buf = ''; last = now; } },
     }));
+    if (rbuf) post({ kind: 'review-think', id: m.id, text: rbuf });
     if (buf) post({ kind: 'review-stream', id: m.id, text: buf });
     post({ kind: 'review-done', id: m.id, ok: true, text: r.content, model: r.model, seconds: Math.round((Date.now() - t0) / 1000) });
   } catch (e) {

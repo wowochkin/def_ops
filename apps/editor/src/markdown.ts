@@ -12,9 +12,17 @@ const inline = (s: string) => esc(s)
 const BULLET = /^\s*[-*+•] +/;
 const NUMBER = /^\s*\d{1,3}[.)] +/;
 
+/** Ответ целиком в блоке ```markdown … ``` (так иногда отвечает модель) — без обёртки; остатки <think> — прочь. */
+export function unfence(md: string): string {
+  let t = md.replace(/\r/g, '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').replace(/^\s+/, '');
+  const m = /^```(?:markdown|md)?[ \t]*\n/i.exec(t);
+  if (m) t = t.slice(m[0].length).replace(/\n?```\s*$/, '');
+  return t;
+}
+
 export function mdToHtml(md: string): string {
   const out: string[] = [];
-  const lines = md.replace(/\r/g, '').split('\n');
+  const lines = unfence(md).split('\n');
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
     const h = /^\s*(#{1,6})\s+(.*?)\s*#*\s*$/.exec(l);

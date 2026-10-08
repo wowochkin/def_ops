@@ -13,8 +13,8 @@ import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
 
 type Status = 'idle' | 'wait' | 'writing' | 'done' | 'error';
-interface Sec { text: string; status: Status; note?: string; model?: string; seconds?: number }
-type ReviewMsg = Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-done' }>;
+interface Sec { text: string; status: Status; note?: string; thinking?: string; model?: string; seconds?: number }
+type ReviewMsg = Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-think' | 'review-done' }>;
 
 const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}.${t.slice(0, 4)}`;
 const keyOf = (v: TurnView) => `def_ops.review:${v.scenario}:${v.takeover}:${v.seed}`;
@@ -39,9 +39,10 @@ export function ReviewView({ view, llm, send, listen, onClose }: {
       if (!w) return;
       const up = (f: (s: Sec) => Sec) => setSecs((all) => ({ ...all, [w.section]: f(all[w.section] ?? { text: '', status: 'idle' }) }));
       if (m.kind === 'review-wait') up((s) => ({ ...s, status: 'wait', note: m.text }));
+      else if (m.kind === 'review-think') up((s) => ({ ...s, status: 'wait', note: undefined, thinking: (s.thinking ?? '') + m.text }));
       else if (m.kind === 'review-stream') up((s) => ({ ...s, status: 'writing', note: undefined, text: (s.status === 'writing' ? s.text : '') + m.text }));
       else {
-        up((s) => (m.ok ? { text: m.text, status: 'done', model: m.model, seconds: m.seconds } : { ...s, status: 'error', note: m.error }));
+        up((s) => (m.ok ? { text: m.text, status: 'done', thinking: s.thinking, model: m.model, seconds: m.seconds } : { ...s, status: 'error', note: m.error }));
         waiters.current.delete(m.id);
         w.resolve(m.ok);
       }
@@ -134,7 +135,12 @@ ${ready.map((s, i) => `<section class="sec"><h2>${i + 1}. ${esc(s.title)}</h2><d
                 <section key={s.id} className="rv-sec">
                   <h2>{i + 1}. {s.title}<small>{s.role}</small>
                     {!running && x.status !== 'wait' && x.status !== 'writing' && <button className="link" onClick={() => void run([s.id])}>переписать</button>}</h2>
-                  {x.note && <div className={`muted rv-note${x.note.startsWith('модель размышляет') ? ' think' : ''}`}>{x.status === 'wait' && <span className="spinner" />} <span>{x.note}</span></div>}
+                  {x.note && <div className="muted rv-note">{x.status === 'wait' && <span className="spinner" />} <span>{x.note}</span></div>}
+                  {x.thinking && !x.text && x.status !== 'error' && <div className="rv-think">
+                    <div className="rv-think-h"><span className="spinner" /> модель размышляет · {x.thinking.length.toLocaleString('ru')} знаков</div>
+                    <div className="kb-think live">{x.thinking.slice(-700)}</div>
+                  </div>}
+                  {x.thinking && (x.text || x.status === 'error') && <details className="kb-think rv-think-done"><summary>размышление модели ({x.thinking.length.toLocaleString('ru')} знаков)</summary><div>{x.thinking}</div></details>}
                   {x.text && <div className="adv-md" dangerouslySetInnerHTML={{ __html: mdToHtml(x.text) }} />}
                   {x.status === 'done' && x.model && <small className="muted">{x.model} · {x.seconds} с</small>}
                 </section>

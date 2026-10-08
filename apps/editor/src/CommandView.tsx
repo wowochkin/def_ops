@@ -86,7 +86,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [decision, setDecision] = useState<HumanDecision>(EMPTY);
   // разбор операции: окно открывается после игры (или из меню); пока пишется, остаётся смонтированным
   const [review, setReview] = useState<'closed' | 'open' | 'hidden'>('closed');
-  const reviewListener = useRef<((m: Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-done' }>) => void) | null>(null);
+  const reviewListener = useRef<((m: Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-think' | 'review-done' }>) => void) | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const checks = useRef(new Map<number, (r: ActionCheck) => void>());
   const checkId = useRef(0);
@@ -143,7 +143,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
       else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x)));
       else if (m.kind === 'advice-wait') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, wait: m.text } : x)));
-      else if (m.kind === 'review-stream' || m.kind === 'review-wait' || m.kind === 'review-done') reviewListener.current?.(m);
+      else if (m.kind === 'review-stream' || m.kind === 'review-wait' || m.kind === 'review-think' || m.kind === 'review-done') reviewListener.current?.(m);
       else if (m.kind === 'plan-progress') setPlan((p) => (p?.id === m.id ? { ...p, progress: m.text } : p));
       else if (m.kind === 'plan-variant') setPlan((p) => { if (p?.id !== m.id) return p; const v = [...p.variants]; v[m.index] = m.variant; return { ...p, variants: v }; });
       else if (m.kind === 'plan-done') setPlan((p) => (p?.id === m.id ? { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model } : p));

@@ -948,13 +948,16 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .rv-doc { overflow-y: auto; padding: 14px 26px 40px; background: #fff; }
 .rv-empty { padding: 20px 0; line-height: 1.5; }
 .rv-sec { margin-bottom: 22px; } .rv-sec h2 { font: 700 17px/1.3 'PT Serif', Georgia, serif; margin: 0 0 6px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.rv-sec h2 small { font: italic 400 12px/1.2 inherit; color: var(--muted); font-family: inherit; } .rv-sec h2 .link { margin-left: auto; font-size: 11.5px; }
+.rv-sec h2 small { font-family: 'Roboto Condensed', 'PT Sans Narrow', system-ui, sans-serif; font-style: normal; font-weight: 400; font-size: 12px; line-height: 1.2; color: var(--muted); } .rv-sec h2 .link { margin-left: auto; font-size: 11.5px; }
 .rv-sec .adv-md { font-size: 13.5px; line-height: 1.55; } .rv-sec .adv-md h3 { font: 700 14px/1.3 'PT Serif', Georgia, serif; margin: 10px 0 3px; }
 .rv-note { display: flex; gap: 6px; align-items: center; margin: 4px 0; }
 .cmd-over .row-btns { display: flex; gap: 6px; flex-wrap: wrap; } .cmd-over .row-btns .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 @media (max-width: 760px) { .rv-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .rv-list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 38vh; } .rv-doc { padding: 12px 14px 30px; } }
 
 .umpire-seg { margin: 12px 0 8px; }
-.rv-note.think span { font-size: 11.5px; max-height: 6.5em; overflow: hidden; }
+.rv-think { margin: 6px 0 8px; padding: 8px 10px; background: #faf8f2; border: 1px solid #ece6d8; border-radius: 8px; }
+.rv-think-h { display: flex; gap: 6px; align-items: center; font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
+.rv-think .kb-think.live { max-height: 7.5em; border-left: 0; padding-left: 0; }
+.rv-think-done { margin: 2px 0 8px; }
 .plan-cta .primary:disabled { background: #b9a9a3; border-color: #b9a9a3; }
 .adv-plan-bar .primary:hover:not(:disabled), .plan-act .primary:hover:not(:disabled), .plan-cta .primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
