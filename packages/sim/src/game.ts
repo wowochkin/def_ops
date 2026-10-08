@@ -8,9 +8,9 @@
  * ходам. Движок детерминирован, поэтому по записи игра восстанавливается целиком
  * (сохранение, продолжение, разбор), без хранения состояний.
  */
-import { snapshotOf, type Snapshot } from './history';
+import { checkEvents, snapshotOf, type History, type Snapshot } from './history';
 import { applyActions, prepareTakeover } from './staff';
-import { createState, issueOrder, step, type SimContext } from './step';
+import { createState, issueOrder, onMap, step, type SimContext } from './step';
 import type { Order, SimState, StaffAction } from './types';
 
 export interface GameTurn {
@@ -70,14 +70,40 @@ export function playTurn(ctx: SimContext, g: GameState, orders: Order[], actions
   return { state: s, prev: a.state, snapshots: [...g.snapshots, snapshotOf(s)], results: a.results };
 }
 
-/** Игра окончена: время сценария вышло. */
+/** Игра окончена: время сценария вышло (для игры с условиями победы и поражения — gameOutcome). */
 export const gameOver = (ctx: SimContext, g: GameState) => g.state.time >= ctx.scenario.end;
+
+/**
+ * Когда кончается игра: конечной даты нет — победа (событие истории случилось в игре, например Знамя
+ * Победы над рейхстагом) или поражение (сторона человека потеряла боеспособность — численность ниже
+ * доли от той, что была при передаче командования, — или предельный срок вышел).
+ */
+export interface GameEnd {
+  victory: { event: string; title: string };
+  defeat: { strengthBelow: number; deadline: string; deadlineText: string };
+}
+
+export interface GameOutcome { result: 'victory' | 'defeat'; text: string; at: string | null }
+
+/** Численность действующих войск стороны (для условия поражения). */
+export const sideStrength = (s: SimState, side: string) => s.formations.filter((f) => f.side === side && onMap(f, s.time)).reduce((a, f) => a + f.personnel, 0);
+
+export function gameOutcome(ctx: SimContext, history: History, g: GameState, end: GameEnd, human: string, baseStrength: number): GameOutcome | null {
+  const ev = history.events?.find((e) => e.id === end.victory.event);
+  if (ev) {
+    const r = checkEvents(ctx, { final: g.state, snapshots: g.snapshots }, { ...history, events: [ev] })[0];
+    if (r?.at) return { result: 'victory', text: `${end.victory.title} — ${r.simulated?.slice(8, 10)}.${r.simulated?.slice(5, 7)} (в истории ${ev.date.slice(8, 10)}.${ev.date.slice(5, 7)})`, at: r.at };
+  }
+  const k = baseStrength ? sideStrength(g.state, human) / baseStrength : 1;
+  if (k < end.defeat.strengthBelow) return { result: 'defeat', text: `войска потеряли боеспособность: в строю ${Math.round(k * 100)} % численности на момент принятия командования`, at: g.state.time };
+  if (g.state.time >= end.defeat.deadline) return { result: 'defeat', text: end.defeat.deadlineText, at: g.state.time };
+  return null;
+}
 
 /** Восстановить игру по записи. */
 export function replayGame(ctx: SimContext, rec: GameRecord): GameState {
   let g: GameState = startGame(ctx, rec.seed, rec.takeover, rec.human);
   for (const t of rec.turns) {
-    if (gameOver(ctx, g)) break;
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится: ход ${t.time}, расчёт ${g.state.time}`);
     g = playTurn(ctx, g, t.orders, t.actions ?? []);
   }

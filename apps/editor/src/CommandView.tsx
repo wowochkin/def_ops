@@ -1,5 +1,5 @@
 /**
- * «Командование»: игра с выбранного момента переигровки до конца операции.
+ * «Командование»: игра с выбранного момента переигровки до победы (Знамя Победы) или поражения.
  * Советской стороной командует человек — с полной штабной работой: доклады
  * подчинённых, разведсводка, боевое распоряжение (приказы с задержкой доведения),
  * журнал боевых действий. Немецкой стороной — штаб на модели (LM Studio): решает
@@ -9,8 +9,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { TASK_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
-import type { AiTurn } from '@def-ops/staff-service/live';
-import type { AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
+import { ADVICE_CATEGORIES, type AiTurn } from '@def-ops/staff-service/live';
+import type { AdviceView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
@@ -43,6 +43,7 @@ type Sub = 'units' | 'rear' | 'bridges' | 'reserves';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
 type Pick = { kind: 'order' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
+interface AdvMsg { id: number; cat: string; q: string; answer: string; result?: AdviceView }
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 
 const TOGGLES = [
@@ -79,6 +80,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [notice, setNotice] = useState<string | null>(null);
   const checks = useRef(new Map<number, (r: ActionCheck) => void>());
   const checkId = useRef(0);
+  const [advOpen, setAdvOpen] = useState(false);
+  const [adv, setAdv] = useState<AdvMsg[]>([]);
   const [time, setTime] = useState<string | null>(null);
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
   const [reveal, setReveal] = useState(false);
@@ -103,6 +106,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         setProgress(null); setBlocked(null);
         setView({ ...m.view, doc: migrateDocument(m.view.doc) });
         setTime(m.view.time);
+        // победа — к моменту и месту события (Знамя Победы)
+        const o = m.view.outcome;
+        if (o?.result === 'victory' && o.at) {
+          setTime(o.at);
+          const g = m.view.goals.find((x) => x.at === o.at && x.place);
+          if (g?.place) setTimeout(() => engine.current?.setView({ center: g.place!, zoom: 12 }), 300);
+        }
         setDrafts({}); setActs([]); setPickMode(null);
         const last = m.view.lastDecision;
         // новый ход — новая оценка и новое донесение; замысел, замысел противника и риски — от прошлого решения, для правки
@@ -111,6 +121,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'ai-stream') setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000)));
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); }
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
+      else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text } : x)));
+      else if (m.kind === 'advice') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
       else if (m.kind === 'record') {
         setRecord(m.record);
         try { localStorage.setItem(SAVE_KEY, JSON.stringify({ record: m.record, enemy: enemyRef.current, title: titleRef.current, turn: m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover } satisfies SavedGame)); } catch { /* */ }
@@ -232,6 +244,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setProgress('отправка приказов…');
     send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision });
   };
+  /** Проект решения словами — советнику (он видит, что командующий уже готовит). */
+  const draftText = () => [
+    decision.assessment && `Оценка обстановки: ${decision.assessment}`,
+    decision.intent && `Решение: ${decision.intent}`,
+    ...draftList.map((d) => `Приказ: ${unit(d.formation)?.name} — ${TASK_RU[d.task]} — ${d.targetText || 'на месте'}`),
+    ...acts.map((a) => `Распоряжение: ${a.label} — ${a.text}`),
+  ].filter(Boolean).map((x) => `- ${x}`).join('\n');
   const aiTurns = (record?.turns ?? []).filter((t) => t.ai).map((t) => t.ai as AiTurn).reverse();
   const current = ai.state === 'done' || ai.state === 'error' ? ai.turn : undefined;
 
@@ -287,9 +306,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           </div>
           {view && <div className="cmd-date">
             <b>{dayLong(view.time)}, {hhmm(view.time)}</b>
-            <span>ход {view.turn} из {view.turns} · вы командуете: {view.human.name}</span>
+            <span>ход {view.turn} · вы командуете: {view.human.name}</span>
+            <span className="cmd-goal" title={`Победа: ${view.victory}. Поражение: численность ниже ${Math.round(view.strengthBelow * 100)} % исходной или предельный срок ${ddmm(view.deadline)}`}>цель — {view.victory}; срок — {ddmm(view.deadline)}; в строю {pct(view.strength)}</span>
           </div>}
-          <AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.model} onClick={() => setTab('umpire')} />
+          <div className="cmd-chips"><AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.model} onClick={() => setTab('umpire')} />
+            <button className={`adv-btn${advOpen ? ' on' : ''}`} onClick={() => setAdvOpen(!advOpen)} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</button></div>
         </div>
         <nav className="cmd-tabs">
           {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
@@ -334,8 +355,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               </button>
             </>}
         </div>}
-        {view?.over && <div className="cmd-foot cmd-over"><b>Операция завершена — {ddmm(view.time)}</b>
-          <span>{goals.filter((g) => g.simulated).length} из {goals.length} контрольных событий случились. Журнал и запись игры — в меню «⋯».</span>
+        {view?.over && <div className={`cmd-foot cmd-over ${view.outcome?.result ?? ''}`}><b>{view.outcome?.result === 'victory' ? 'Победа' : 'Поражение'}</b>
+          <span>{view.outcome?.text}</span>
+          <span className="muted">{goals.filter((g) => g.simulated).length} из {goals.length} контрольных событий случились. Журнал и запись игры — в меню «⋯».</span>
           <button onClick={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')}>Скачать журнал</button></div>}
       </aside>
       <main className={`rp-main${pickMode ? ' picking' : ''}`}>
@@ -347,6 +369,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
+          {advOpen && view && <Advisor msgs={adv} onClose={() => setAdvOpen(false)} onClear={() => setAdv([])}
+            ask={(cat, q) => {
+              const id = ++checkId.current;
+              const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
+              setAdv((l) => [...l, { id, cat, q, answer: '' }]);
+              send({ kind: 'advise', id, category: cat, question: q, thread, draft: draftText() });
+            }}
+            accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
+            drafted={(f) => !!drafts[f]} />}
           <div className="rp-tools">
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
@@ -530,12 +561,66 @@ function OrderEditor({ v, u, d, isNew, pick, setPick, save, drop, close }: { v: 
       </div></div>}
       {mode === 'point' && <button className={pick ? 'on' : ''} onClick={() => setPick(!pick)}>{pick ? 'Щёлкните по карте… (отмена)' : Array.isArray(d.target) ? 'Указать другую точку' : 'Указать точку на карте'}</button>}
       <div className={`otarget${needs && !d.target && !isNew ? ' miss' : ''}`}>{d.target ? <>Цель: <b>{d.targetText}</b> <button className="link" onClick={() => save({ ...d, target: null, at: null, targetText: '' })}>убрать</button></> : needs ? 'Для этой задачи нужна цель — выберите пункт, противника или точку' : 'Цель не указана — на месте'}</div>
-      <label>Указания <textarea rows={2} value={d.note} placeholder="Силы, порядок, взаимодействие, срок…" onChange={(e) => save({ ...d, note: e.target.value })} /></label>
+      <label>Указания <textarea rows={2} value={d.note} placeholder="Силы, порядок, взаимодействие, срок…" onChange={(e) => save({ ...d, note: e.target.value })} /><small className="muted">для журнала и разбора; арбитр исполняет задачу и цель</small></label>
       <div className="muted small">Дойдёт до войск ≈ {hhmm(arrive)} {ddmm(arrive)} (через {delay} ч).</div>
       <div className="oedit-f">
         {isNew ? <span className="muted small">Приказ войдёт в распоряжение, как только вы выберете задачу или цель.</span>
           : <button className="link danger" onClick={drop}>Отменить приказ</button>}
       </div>
+    </div>
+  );
+}
+
+/* ───────────── советник ───────────── */
+
+function Advisor({ msgs, ask, accept, drafted, onClose, onClear }: {
+  msgs: AdvMsg[]; ask: (cat: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean; onClose: () => void; onClear: () => void;
+}) {
+  const [cat, setCat] = useState(ADVICE_CATEGORIES[0].id);
+  const [text, setText] = useState('');
+  const end = useRef<HTMLDivElement>(null);
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs]);
+  const busy = msgs.some((m) => !m.result);
+  const c = ADVICE_CATEGORIES.find((x) => x.id === cat)!;
+  const go = (q: string) => { if (!q.trim() || busy) return; ask(cat, q.trim()); setText(''); };
+  return (
+    <div className="advisor">
+      <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
+        {msgs.length > 0 && <button className="link" onClick={onClear}>очистить</button>}<button className="x" onClick={onClose} title="Закрыть">×</button></div>
+      <div className="adv-cats">{ADVICE_CATEGORIES.map((x) => <button key={x.id} className={cat === x.id ? 'on' : ''} onClick={() => setCat(x.id)}>{x.title}</button>)}</div>
+      <div className="adv-body">
+        {!msgs.length && <div className="adv-empty">
+          <p>Выберите категорию и вопрос — или спросите своими словами. Советник знает обстановку, ваш проект решения и правила арбитра; может предложить приказы — их можно одним нажатием включить в распоряжение.</p>
+        </div>}
+        {msgs.map((m) => (
+          <div key={m.id} className="adv-msg">
+            <div className="adv-q"><small>{ADVICE_CATEGORIES.find((x) => x.id === m.cat)?.title}</small>{m.q}</div>
+            <div className="adv-a">
+              {m.result && !m.result.ok ? <span className="err">Советник не ответил: {m.result.error}</span>
+                : (m.answer || '…').split(/\n{2,}/).map((p, i) => <p key={i}>{p.split('\n').map((l, j) => <span key={j}>{l}<br /></span>)}</p>)}
+              {!m.result && <span className="spinner" />}
+              {m.result?.suggestions.map((sg, i) => (
+                <div key={i} className={`adv-sug${sg.ok ? '' : ' bad'}`}>
+                  <div><b>{short(sg.name)}</b> — {TASK_RU[sg.task]}{sg.targetText ? `: ${sg.targetText}` : ''}</div>
+                  <div className="muted">{sg.why}</div>
+                  {sg.ok ? <button disabled={drafted(sg.formation)} onClick={() => accept(sg)}>{drafted(sg.formation) ? 'в распоряжении' : 'В распоряжение'}</button>
+                    : <div className="iss">{sg.issue ?? 'не удалось сопоставить с обстановкой'} — не может быть исполнен</div>}
+                </div>
+              ))}
+              {m.result?.followUps.length ? <div className="adv-fu">{m.result.followUps.map((f) => <button key={f} disabled={busy} onClick={() => go(f)}>{f}</button>)}</div> : null}
+              {m.result?.seconds != null && <small className="muted">{m.result.seconds} с</small>}
+            </div>
+          </div>
+        ))}
+        <div ref={end} />
+      </div>
+      <div className="adv-presets">{c.presets.map((q) => <button key={q} disabled={busy} onClick={() => go(q)}>{q}</button>)}</div>
+      <div className="adv-in">
+        <textarea rows={2} value={text} placeholder={`Свой вопрос (${c.title.toLowerCase()})…`} onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(text); } }} />
+        <button className="primary" disabled={busy || !text.trim()} onClick={() => go(text)}>Спросить</button>
+      </div>
+      <div className="adv-note">Вопросы читает только советник. Арбитр исполняет лишь утверждённые вами приказы в строгой форме — объединение, задача, цель.</div>
     </div>
   );
 }
@@ -786,20 +871,19 @@ export function turnStart(t: string, start: string, end: string, turnHours: numb
   return new Date(toMs(start) + k * H).toISOString().slice(0, 16);
 }
 
-export function TakeoverDialog({ at, end, turnHours, start, scenarioName, llm, onStart, onCancel }: {
+export function TakeoverDialog({ at, turnHours, start, scenarioName, llm, onStart, onCancel }: {
   at: string; end: string; turnHours: number; start: string; scenarioName: string; llm: Llm; onStart: (enemy: EnemyMode) => void; onCancel: () => void;
 }) {
   const [enemy, setEnemy] = useState<EnemyMode>(llm.check.state === 'fail' ? 'passive' : 'llm');
   const turn = Math.round((toMs(at) - toMs(start)) / (turnHours * 3600_000)) + 1;
-  const left = Math.round((toMs(end) - toMs(at)) / (turnHours * 3600_000));
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onCancel]);
+    useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onCancel]);
   return (
     <div className="modal-bg" onClick={onCancel}>
       <div className="modal take" onClick={(e) => e.stopPropagation()}>
         <h3>Принять командование</h3>
-        <p className="take-when"><b>{dayLong(at)}, {hhmm(at)}</b> · ход {turn} · до конца операции — {left} {turnHours === 24 ? 'сут.' : 'ходов'} ({ddmm(end)})</p>
+        <p className="take-when"><b>{dayLong(at)}, {hhmm(at)}</b> · ход {turn} · ход — {turnHours === 24 ? 'сутки' : `${turnHours} ч`}</p>
         <ul className="take-list">
-          <li>Советской стороной с этого момента командуете вы — до конца операции: доклады объединений, разведсводка, боевое распоряжение, журнал. Вернуть командование историческому плану нельзя.</li>
+          <li>Советской стороной с этого момента командуете вы. Конечной даты нет: игра идёт до победы (Знамя Победы над рейхстагом) или поражения — войска потеряли боеспособность или предельный срок вышел. Вернуть командование историческому плану нельзя.</li>
           <li>Немецкой стороной с того же момента командует штаб на языковой модели. На каждом ходу он получает свою обстановку — то, что знал бы немецкий штаб, — и отдаёт приказы. Обе стороны решают одновременно.</li>
           <li>Исторические приказы после этого момента отменяются. Приказы, отданные раньше и ещё не дошедшие до войск, остаются в силе.</li>
           <li>Противник виден только в пределах разведки (туман войны). Игра сохраняется в браузере после каждого хода.</li>

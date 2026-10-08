@@ -54,17 +54,19 @@ const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
 const pct = (x: number) => `${Math.round(x * 100)} %`;
 const num = (x: number) => x.toFixed(1).replace('.', ',');
 
-export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, tpl: Templates, previous?: { time: string; intent: string } | null): Situation {
-  const T = ctx.theatre, s = g.state, side = cfg.side;
+/** Общая часть обстановки стороны на утро хода: свои силы, противник (туман войны), пункты, снабжение, итоги суток. */
+export function situationParts(ctx: SimContext, g: GameState, view: { side: string; anchor: string; anchorName: string }) {
+  const T = ctx.theatre, s = g.state, side = view.side;
   const names = new Map(s.formations.map((f) => [f.id, f.name]));
   const own = unitReports(ctx, s, side, g.prev).filter((u) => u.status !== 'destroyed' && s.formations.find((f) => f.id === u.id)!.type);
   const intel = intelReport(ctx, s, side, g.prev);
   const km = detectKm(ctx);
-  const anchor = T.area(cfg.anchor)?.center ?? null;
+  const anchor = T.area(view.anchor)?.center ?? null;
 
   const ownLines = own.map((u) => {
     const parent = u.parent ? names.get(u.parent) : null;
     const head = `- ${u.name}${parent ? ` [в составе: ${parent}]` : ''}`;
+    if (u.status === 'reserve') return `${head} — резерв Ставки, в сражение не введён; готов к вводу с ${ddmm(u.reserveFrom!)}`;
     if (u.status === 'arriving') return `${head} — прибывает на театр ${ddmm(u.arrives!)}${u.pending.length ? `; приказ ждёт: ${u.pending.map((p) => `${p.task} (${p.target})`).join(', ')}` : ''}`;
     const bits = [
       u.place, u.posture,
@@ -85,11 +87,11 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
     : ['- В пределах разведки противник не обнаружен.'];
 
   const near = nearbyPlaces(ctx, s, side, km * 1.5, 70);
-  if (anchor && !near.some((a) => a.id === cfg.anchor)) near.push({ id: cfg.anchor, title: areaTitle(T.area(cfg.anchor)!.name), at: anchor, km: 0 });
+  if (anchor && !near.some((a) => a.id === view.anchor)) near.push({ id: view.anchor, title: areaTitle(T.area(view.anchor)!.name), at: anchor, km: 0 });
   const where = (a: { at: [number, number] }) => {
     if (!anchor) return describePlace(T, a.at);
     const d = dist(T.proj.toXY(anchor), T.proj.toXY(a.at));
-    return d < Math.max(1, T.cellKm * 2) ? cfg.anchorName.replace(/^./, (c) => c.toUpperCase()) : `${d < 10 ? num(d) : Math.round(d)} км к ${rumb(T, anchor, a.at)} от ${cfg.anchorName}`;
+    return d < Math.max(1, T.cellKm * 2) ? view.anchorName.replace(/^./, (c) => c.toUpperCase()) : `${d < 10 ? num(d) : Math.round(d)} км к ${rumb(T, anchor, a.at)} от ${view.anchorName}`;
   };
   const areaLines = near.map((a) => `- ${a.title} — ${where(a)}`);
   const lines = T.data.lines.filter((l) => l.name).map((l) => l.name);
@@ -107,36 +109,45 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
 
   const lastDay = g.prev ? dayEvents(ctx, s, side, g.prev) : [];
   const delays = [...new Set(own.map((u) => `${u.echelon === 'army' ? 'армиям' : u.echelon === 'corps' ? 'корпусам' : u.echelon === 'division' ? 'дивизиям' : u.echelon} — ${orderDelay(ctx, { side, echelon: u.echelon })} ч`))].join(', ');
-  const turnTotal = Math.round((Date.parse(ctx.scenario.end + ':00Z') - Date.parse(ctx.scenario.start + ':00Z')) / 3600_000 / ctx.scenario.turnHours);
-  const hours = ctx.scenario.turnHours;
+  return {
+    vars: {
+      last_day: lastDay.length ? lastDay.map((x) => `- ${x}`).join('\n') : '- Существенных событий не отмечено.',
+      own_forces: ownLines.join('\n'),
+      detect_km: String(Math.round(km)),
+      enemy: enemyLines.join('\n'),
+      areas: areaLines.join('\n'),
+      supply: supply.map((x) => `- ${x}`).join('\n'),
+    },
+    delays,
+    own,
+    formations: own.map((u) => ({ id: u.id, name: u.name })),
+    areas: near.map((a) => ({ id: a.id, title: a.title })),
+    enemies: intel.map((e) => ({ id: e.id, name: e.name })),
+  };
+}
 
+export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, tpl: Templates, previous?: { time: string; intent: string } | null): Situation {
+  const s = g.state;
+  const p = situationParts(ctx, g, cfg);
+  const hours = ctx.scenario.turnHours;
   const system = fill(tpl.system, { side: cfg.sideName, scenario: cfg.description, profile: tpl.profile.trim() }, 'staff.system.md');
   const user = fill(tpl.user, {
     moment: momentRu(s.time),
     turn: String(s.turn + 1),
-    turns: String(turnTotal),
     role: cfg.role,
     higher: cfg.higher,
     constraints: cfg.constraints.map((c) => `- ${c}`).join('\n'),
     previous: previous ? `(${momentRu(previous.time)}) ${previous.intent}` : 'нет — это первое решение в игре; до сих пор войска действовали по прежним приказам.',
-    last_day: lastDay.length ? lastDay.map((x) => `- ${x}`).join('\n') : '- Существенных событий не отмечено.',
-    own_forces: ownLines.join('\n'),
-    detect_km: String(Math.round(km)),
-    enemy: enemyLines.join('\n'),
-    areas: areaLines.join('\n'),
-    supply: supply.map((x) => `- ${x}`).join('\n'),
-    question: `Примите решение на ${hours === 24 ? 'сутки' : `${hours} ч`} — до ${momentRu(addH(s.time, hours))}. Приказы доходят до войск не сразу: ${delays}. `
+    ...p.vars,
+    question: `Примите решение на ${hours === 24 ? 'сутки' : `${hours} ч`} — до ${momentRu(addH(s.time, hours))}. Приказы доходят до войск не сразу: ${p.delays}. `
       + 'Отдавайте приказы только тем формированиям, чья задача должна измениться: остальные продолжают выполнять действующие. '
       + 'area — пункт из списка, где действовать (для обороны — где занять оборону, для наступления и контратаки — цель); '
       + 'toArea — куда (для отхода, прорыва, перегруппировки, деблокирования), иначе null. Если формирование обороняется на месте — area — пункт, у которого оно стоит.',
   }, 'staff.live.md');
-
   return {
     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-    formations: own.map((u) => ({ id: u.id, name: u.name })),
-    areas: near.map((a) => ({ id: a.id, title: a.title })),
-    enemies: intel.map((e) => ({ id: e.id, name: e.name })),
-    time: s.time,
+    formations: p.formations.filter((f) => p.own.find((u) => u.id === f.id)!.status !== 'reserve'),
+    areas: p.areas, enemies: p.enemies, time: s.time,
   };
 }
 

@@ -8,14 +8,17 @@
  */
 import { createFeature, type SymbolFeature } from '@def-ops/core';
 import {
-  checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOver, intelReport, onMap, places, playTurn,
-  runToDocument, startGame, supplyHoursOf, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction,
+  checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
+  runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome,
 } from '@def-ops/sim';
-import { buildSituation, decideTurn, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
+import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
+import { advise, buildAdvice, buildSituation, decideTurn, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
-import type { AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
+import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
+import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
+import type { AdviceView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 
 const files = import.meta.glob('../../../../packages/sim/data/{scenarios,theatres,profiles,rules}/*.json', { import: 'default' });
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
@@ -32,7 +35,8 @@ let ctx: SimContext;
 let history: History;
 let g: GameState;
 let rec: GameRecord;
-let cfg: LiveConfig;
+let cfg: LiveConfig & { advisor?: AdvisorConfig };
+let advisorProfile = '';
 let profileMd = '';
 let llm: LlmSettings;
 let enemy: EnemyMode = 'llm';
@@ -44,6 +48,11 @@ let skipAi = false;
 /** Приказы, распоряжения и решение человека, ждущие решения модели. */
 let queued: { orders: Order[]; actions: StaffAction[]; decision: HumanDecision } | null = null;
 let busy = false;
+/** Условия окончания игры и численность стороны человека при передаче командования. */
+let end: GameEnd;
+let baseStrength = 0;
+let outcome: GameOutcome | null = null;
+const isOver = () => !!outcome;
 
 const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
 
@@ -59,6 +68,7 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
       if (was !== enemy) startAi();
     } else if (m.kind === 'retry-ai') { startAi(); if (queued) await advance(); }
     else if (m.kind === 'skip-ai') { skipAi = true; if (queued) await advance(); }
+    else if (m.kind === 'advise') void adviseReq(m);
     else if (m.kind === 'reveal') { reveal = m.on; postView(); }
   } catch (err) {
     busy = false;
@@ -75,18 +85,23 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   cfg = (await cfgLoad()) as LiveConfig;
   profileMd = (await profilesMd[`../../../../services/staff/profiles/${cfg.profile}.md`]?.()) as string ?? '';
   const human = ctx.scenario.sides.find((x) => x.id !== cfg.side)!.id;
+  advisorProfile = cfg.advisor ? ((await profilesMd[`../../../../services/staff/profiles/${cfg.advisor.profile}.md`]?.()) as string ?? '') : '';
   post({ kind: 'progress', text: 'расчёт до передачи командования…' });
   g = startGame(ctx, s.seed, s.takeover, human);
+  end = ((catalogFile as unknown as { scenarios: { id: string; game: GameEnd }[] }).scenarios.find((x) => x.id === s.scenario)?.game) ?? { victory: { event: '', title: '' }, defeat: { strengthBelow: 0, deadline: ctx.scenario.end, deadlineText: 'время операции вышло' } };
+  baseStrength = sideStrength(g.state, human);
+  outcome = null;
   rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, turns: [] };
   journal = [];
   for (const [k, t] of rec.turns.entries()) {
-    if (gameOver(ctx, g)) break;
+    if (outcome) break;
     post({ kind: 'progress', text: `восстановление игры: ход ${k + 1} из ${rec.turns.length}…` });
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится с расчётом (${t.time} ≠ ${g.state.time})`);
     const before = g.state;
     const r = playTurn(ctx, g, t.orders, t.actions ?? []);
     g = r;
     journal.push(day(before.time, t.orders, before, r.results, t.human as HumanDecision | undefined));
+    outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
   }
   postView();
   post({ kind: 'record', record: rec });
@@ -114,14 +129,14 @@ function startAi() {
   ai?.abort.abort();
   ai = null;
   skipAi = false;
-  if (!g || gameOver(ctx, g)) return;
+  if (!g || isOver()) return;
   if (enemy === 'passive') { status({ state: 'off' }); return; }
   const time = g.state.time;
   const prevAi = [...rec.turns].reverse().find((t) => (t.ai as AiTurn | undefined)?.decision);
   const previous = prevAi ? { time: prevAi.time, intent: (prevAi.ai as AiTurn).decision!.intent } : null;
   const sit = buildSituation(ctx, g, cfg, { system: systemTpl, user: liveTpl, profile: profileMd }, previous);
   const abort = new AbortController();
-  const client = new LlmClient({ url: absolute(llm.url), model: llm.model, thinking: llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
+  const client = llmClient();
   status({ state: 'thinking', time, since: Date.now() });
   post({ kind: 'ai-stream', text: '', reset: true });
   let buf = '', last = 0;
@@ -142,11 +157,37 @@ function startAi() {
   ai = { time, promise, abort };
 }
 
+const llmClient = () => new LlmClient({ url: absolute(llm.url), model: llm.model, thinking: llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
+
+/** Вопрос советнику: ответ потоком, предложенные приказы — с целью на карте, готовые к распоряжению. */
+async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
+  const done = (result: AdviceView) => post({ kind: 'advice', id: m.id, result });
+  if (!cfg.advisor) return done({ ok: false, error: 'для этого сценария советник не настроен', answer: '', followUps: [], suggestions: [] });
+  const t0 = Date.now();
+  const built = buildAdvice(ctx, g, history, cfg.advisor, { system: advisorSystemTpl, user: advisorUserTpl, profile: advisorProfile },
+    { category: m.category, question: m.question, draft: m.draft, goal: end.victory.title, thread: m.thread }, cfg.description);
+  let buf = '', last = 0;
+  const r = await advise(llmClient(), g, built, {
+    onAnswer: (d) => { buf += d; const now = Date.now(); if (now - last > 200) { post({ kind: 'advice-stream', id: m.id, text: buf }); buf = ''; last = now; } },
+  });
+  if (buf) post({ kind: 'advice-stream', id: m.id, text: buf });
+  const byId = new Map(g.state.formations.map((f) => [f.id, f]));
+  const names = new Map(g.state.formations.map((f) => [f.id, f.name]));
+  done({
+    ok: r.ok, error: r.error, answer: r.answer, followUps: r.followUps, seconds: Math.round((Date.now() - t0) / 1000),
+    suggestions: r.suggestions.map((x) => ({
+      formation: x.order?.formation ?? '', name: x.order ? names.get(x.order.formation)! : x.given.formation, task: x.given.task,
+      target: x.order?.target ?? null, targetText: x.target ?? describeTarget(ctx, x.order?.target, names),
+      at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: x.given.why, issue: x.issue, ok: !!x.order,
+    })),
+  });
+}
+
 const absolute = (u: string) => (/^https?:/.test(u) ? u : new URL(u, self.location.origin).href).replace(/\/+$/, '');
 const status = (s: AiStatus) => post({ kind: 'ai', status: s });
 
 async function advance() {
-  if (busy || !queued || gameOver(ctx, g)) return;
+  if (busy || !queued || isOver()) return;
   busy = true;
   try {
     let t: AiTurn | null = null;
@@ -166,6 +207,7 @@ async function advance() {
     const r = playTurn(ctx, g, orders, actions);
     g = r;
     journal.push(day(before.time, orders, before, r.results, queued.decision));
+    outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
     queued = null;
     postView();
     post({ kind: 'record', record: rec });
@@ -224,11 +266,10 @@ function postView() {
     return { title: r.title, historical: r.historical, simulated: r.simulated, days: r.days, at: r.at, place };
   });
   const prof = ctx.profiles[ctx.scenario.sides.find((x) => x.id === human)!.profile];
-  const turnsTotal = Math.round((Date.parse(ctx.scenario.end + ':00Z') - Date.parse(rec.takeover + ':00Z')) / 3600_000 / ctx.scenario.turnHours);
   const view: TurnView = {
     scenario: ctx.scenario.id, scenarioName: ctx.scenario.name, rules: ctx.rules.id, seed: rec.seed,
     start: ctx.scenario.start, end: ctx.scenario.end, takeover: rec.takeover, time: s.time, turnHours: ctx.scenario.turnHours,
-    turn: rec.turns.length + 1, turns: turnsTotal, over: gameOver(ctx, g),
+    turn: rec.turns.length + 1, over: isOver(), outcome, victory: end.victory.title, deadline: end.defeat.deadline, strength: baseStrength ? sideStrength(s, human) / baseStrength : 1, strengthBelow: end.defeat.strengthBelow,
     human: { id: human, name: sideName(human) }, ai: { id: rec.ai, name: sideName(rec.ai) },
     groups: ctx.scenario.formations.filter((f) => f.side === human && !f.type).map((f) => ({ id: f.id, name: f.name })),
     own: unitReports(ctx, s, human, g.prev),

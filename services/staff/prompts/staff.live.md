@@ -1,4 +1,4 @@
-Обстановка на {moment} — ход {turn} из {turns}.
+Обстановка на {moment} — ход {turn}.
 
 Вы — {role}.
 

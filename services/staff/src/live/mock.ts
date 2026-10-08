@@ -52,6 +52,22 @@ export function mockDecision(prompt: string): Decision {
   };
 }
 
+/** Ответ советника (проверка стенда): эхо вопроса, сводка по обстановке, одно предложение приказа и следующие вопросы. */
+export function mockAdvice(prompt: string) {
+  const own = section(prompt, /^Свои силы/m).filter((l) => !/резерв Ставки|прибывает/.test(l));
+  const areas = section(prompt, /^Пункты вблизи войск/m).map((l) => l.split(' — ')[0]);
+  const enemy = section(prompt, /^Противник/m).filter((l) => !/не обнаружен/.test(l)).map((l) => l.split(' — ')[0]);
+  const q = /Вопрос командующего: (.*)/.exec(prompt)?.[1] ?? '';
+  const cat = /Категория вопроса: (.*)\./.exec(prompt)?.[1] ?? '';
+  const name = (l: string) => l.split(/ \[| — /)[0];
+  const weak = own.filter((l) => /ОТРЕЗАНО|состав [1-5]\d %/.test(l)).map(name);
+  return {
+    answer: `Подставной советник (проверка стенда). Категория: ${cat}. Вопрос: «${q}».\n\nВ строю ${own.length} объединений, противник обнаружен: ${enemy.length} соединений.${weak.length ? `\n\nТребуют внимания:\n${weak.map((w) => `- ${w}`).join('\n')}` : ''}\n\nРекомендую сосредоточить усилия на главном направлении и не растягивать коммуникации.`,
+    suggestions: own.length && areas.length ? [{ formation: name(own[0]), task: enemy.length ? 'attack' : 'regroup', area: enemy[0] ?? areas[0], toArea: enemy.length ? null : areas[0], why: 'поддержать главный удар' }] : [],
+    followUps: ['Где противник может нанести контрудар?', 'Каким армиям не хватает подвоза?', 'Как быстрее выйти к цели операции?'],
+  };
+}
+
 const sse = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
 
 /** Подставной сервер модели. delayMs — пауза между кусками ответа (имитация генерации). */
@@ -66,7 +82,8 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
     req.on('end', async () => {
       const body = JSON.parse(b || '{}') as { messages?: { role: string; content: string }[] };
       const user = [...(body.messages ?? [])].reverse().find((m) => m.role === 'user')?.content ?? '';
-      const answer = JSON.stringify(mockDecision(user));
+      const isAdvisor = (body.messages ?? []).some((m) => m.role === 'system' && m.content.includes('Вы — советник'));
+      const answer = JSON.stringify(isAdvisor ? mockAdvice(user) : mockDecision(user));
       res.writeHead(200, { 'content-type': 'text/event-stream' });
       const wait = () => new Promise((r) => setTimeout(r, delayMs));
       for (const w of 'Оцениваю обстановку по докладам и разведсводке. '.split(' ')) { res.write(sse({ choices: [{ delta: { reasoning_content: w + ' ' } }] })); await wait(); }

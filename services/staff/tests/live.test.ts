@@ -63,3 +63,29 @@ describe('штаб модели в игре', () => {
     expect(got.length).toBe(t.orders.length);
   }, 60000);
 });
+
+describe('советник штаба человека', () => {
+  it('обстановка своей стороны, правила арбитра из чисел движка, предложения приказов сопоставляются', async () => {
+    const { advise, buildAdvice, rulesBrief, ADVICE_CATEGORIES } = await import('../src/live');
+    const { loadHistory } = await import('@def-ops/sim/data');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-19T05:00', 'su');
+    const live = JSON.parse(read('live/berlin-1945-tasks.json'));
+    const tplA = { system: read('prompts/advisor.system.md'), user: read('prompts/advisor.user.md'), profile: read('profiles/rkka-1945.md') };
+    expect(rulesBrief(ctx, 'su')).toMatch(/армии — 6 ч/);
+    const built = buildAdvice(ctx, g, loadHistory('berlin-1945-tasks'), live.advisor, tplA,
+      { category: 'history', question: ADVICE_CATEGORIES.find((c) => c.id === 'history')!.presets[0], draft: 'Решение: удар на Берлин', goal: 'Знамя Победы над рейхстагом', thread: [{ q: 'Привет', a: 'Здравствуйте' }] }, live.description);
+    const u = built.messages[built.messages.length - 1].content;
+    expect(u).toContain('8-я гвардейская армия');
+    expect(u).toContain('резерв Ставки');
+    expect(u).toMatch(/в истории 19\.04; в игре/);
+    expect(built.messages.length).toBe(4);
+    const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
+    let streamed = '';
+    const r = await advise(client, g, built, { onAnswer: (d) => { streamed += d; } });
+    expect(r.ok).toBe(true);
+    expect(streamed).toBe(r.answer);
+    expect(r.followUps.length).toBeGreaterThan(0);
+    expect(r.suggestions[0].order?.formation).toMatch(/^su_/);
+  }, 60000);
+});
