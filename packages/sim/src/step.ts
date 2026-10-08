@@ -89,7 +89,7 @@ export function supplyState(ctx: SimContext, units: Formation[], time: string, t
     // зона влияния: наступающие и на марше — радиус соприкосновения; в обороне (кольцо окружения) — половина полосы
     const zoc = (f: Formation) => f.posture === 'attack' || f.posture === 'march' ? ctx.rules.contactKm
       : Math.max(ctx.rules.contactKm, (profileOf(ctx, f.side).unitTypes[f.type]?.frontageKm ?? 0) / 2);
-    const terr = territory ? { owner: territory, side: sides.indexOf(side) } : undefined;
+    const terr = territory ? { owner: territory, side: sides.indexOf(side), ownZoneKm: ctx.rules.contactKm / 2 } : undefined;
     if (src.length) fields.set(side, supplyField(ctx.theatre, side, src, units, profileOf(ctx, side), ctx.rules, time, zoc, terr).hours);
   }
   return { control, fields };
@@ -341,7 +341,10 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   const breakthrough = freePace >= BREAKTHROUGH_KM;
   // городской бой (rules.holdGivesGround): «держаться» — не отходить по своей воле, но квартал за кварталом уступать
   const yields = !!R.holdGivesGround;
-  const advanceKm = holding && !breakthrough && !yields ? 0 : advancePerDay * day;
+  // уличный бой: оборона в застройке «держится», но наступающие берут квартал за кварталом (с городским темпом),
+  // а не стоят перед узлом, пока он не рухнет целиком
+  const streetFight = def.every((f) => T.terrainAt(f.position) === 'urban');
+  const advanceKm = holding && !breakthrough && !yields && !streetFight ? 0 : advancePerDay * day;
   const attackerLoss = interp(R.attackerLoss, ratio) * day;
   const defenderLoss = interp(R.defenderLoss, ratio) * day * (holding && advancePerDay > 0 ? 1.5 : 1);
   const factors: CombatFactor[] = [

@@ -13,93 +13,93 @@
     ],
     [
       1.5,
-      1.3391
+      1.1589
     ],
     [
       2,
-      4.0174
+      3.4766
     ],
     [
       3,
-      8.0348
+      6.9532
     ],
     [
       4,
-      13.3913
+      11.5886
     ],
     [
       6,
-      24.1044
+      20.8595
     ],
     [
       10,
-      40.174
+      34.7659
     ]
   ],
   "attackerLoss": [
     [
       0.5,
-      0.0523
+      0.0849
     ],
     [
       1,
-      0.0348
+      0.0566
     ],
     [
       2,
-      0.0218
+      0.0354
     ],
     [
       3,
-      0.0131
+      0.0212
     ],
     [
       6,
-      0.007
+      0.0113
     ],
     [
       10,
-      0.0044
+      0.0071
     ]
   ],
   "defenderLoss": [
     [
       0.5,
-      0.0099
+      0.0112
     ],
     [
       1,
-      0.0198
+      0.0225
     ],
     [
       2,
-      0.0395
+      0.045
     ],
     [
       3,
-      0.0593
+      0.0675
     ],
     [
       6,
-      0.1185
+      0.1349
     ],
     [
       10,
-      0.1976
+      0.2249
     ]
   ],
   "defense": {
     "terrain": {
       "open": 1,
-      "forest": 1.372,
-      "marsh": 1.5,
-      "urban": 1.63,
-      "hills": 1.372,
+      "forest": 1.352,
+      "marsh": 1.472,
+      "urban": 1.593,
+      "hills": 1.352,
       "water": 1
     },
-    "prepared": 1.803,
+    "prepared": 1.658,
     "prepareHours": 24,
-    "fortificationPerLevel": 0.102
+    "fortificationPerLevel": 0.32
   },
   "ammoShort": 0.4,
   "fuelOut": 0.5,
@@ -112,7 +112,7 @@
   "noise": 0.2,
   "riverCrossHours": 12,
   "advanceTerrain": {
-    "urban": 0.296,
+    "urban": 0.469,
     "forest": 0.6,
     "marsh": 0.5,
     "hills": 0.8
@@ -121,41 +121,52 @@
   "fortCrossHours": 4,
   "fortAdvanceKm": [
     99,
-    14.67,
-    9.17,
-    5.5
+    14.65,
+    9.16,
+    5.49
   ],
   "_fortAdvance_note": "«прогрызание» обороны: на Зееловских высотах 17–18.04 фактически до 4 км/сутки (LT_CONQ), 8 гв. А 16.04 — 3–6 км до Хауптграбена (Исаев); индекс — уровень полосы 1..3. Черновик.",
-  "movementScale": 0.898,
+  "territory": {
+    "radiusKm": 4,
+    "enemyKmPerDay": {
+      "foot": 42.6,
+      "motor": 136.1,
+      "tracked": 136.1
+    },
+    "_note": "сплошная полоса: территория переходит только под ногами войск; по чужой — медленнее (заслоны, разрушения, зачистка); темп — исходная оценка, подбирается калибровкой"
+  },
+  "movementScale": 1.087,
   "calibration": {
     "scenario": "berlin-1945-tasks",
     "date": "2026-10-08",
-    "evals": 150,
+    "evals": 200,
     "seeds": 2,
     "trainUntil": "1945-04-25T23:59",
     "from": "ww2-draft",
     "multipliers": {
-      "advance": 1.339,
-      "attackerLoss": 0.871,
-      "defenderLoss": 0.988,
-      "prepared": 1.803,
-      "fortPerLevel": 0.102,
-      "terrainExp": 1.204,
-      "movement": 0.898,
-      "urbanAdvance": 0.296,
-      "fortAdvance": 1.833
+      "advance": 1.159,
+      "attackerLoss": 1.415,
+      "defenderLoss": 1.124,
+      "prepared": 1.658,
+      "fortPerLevel": 0.32,
+      "terrainExp": 1.149,
+      "movement": 1.087,
+      "urbanAdvance": 0.469,
+      "fortAdvance": 1.831,
+      "terrFoot": 42.557,
+      "terrMobile": 136.145
     },
     "before": {
-      "trainKm": 9.37,
-      "testKm": 5.51,
-      "eventsDays": 2.88,
-      "within": 0.73
+      "trainKm": 9.6,
+      "testKm": 6.83,
+      "eventsDays": 3.25,
+      "within": 0.711
     },
     "after": {
-      "trainKm": 6.91,
-      "testKm": 4.85,
-      "eventsDays": 0.63,
-      "within": 0.797
+      "trainKm": 5.16,
+      "testKm": 4.43,
+      "eventsDays": 0.75,
+      "within": 0.818
     },
     "events": [
       {
@@ -164,7 +175,7 @@
       },
       {
         "id": "spremberg",
-        "days": 0
+        "days": 1
       },
       {
         "id": "zossen",
@@ -172,15 +183,15 @@
       },
       {
         "id": "berlin_outskirts",
-        "days": 0
+        "days": 1
       },
       {
         "id": "pocket",
-        "days": -1
+        "days": -2
       },
       {
         "id": "ring",
-        "days": -1
+        "days": 0
       },
       {
         "id": "torgau",
@@ -192,11 +203,11 @@
       },
       {
         "id": "reichstag",
-        "days": null
+        "days": -2
       },
       {
         "id": "cottbus",
-        "days": 0
+        "days": -1
       }
     ],
     "note": "Подобрано по одной операции: обязательна проверка на контрольной операции (этап 2). Мерило — среднее превышение отклонения над неопределённостью исторического положения (до 50 км) + 3 × средняя ошибка дат событий (сут)."

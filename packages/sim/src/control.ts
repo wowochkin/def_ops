@@ -49,14 +49,18 @@ export function controlMap(T: Theatre, units: Formation[], sides: string[], weig
  * ближе zocKm и ближе любого своего формирования (зона влияния противника).
  * Окружение получается, когда кольцо таких зон смыкается вокруг формирования.
  */
-export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number }): Uint8Array {
+export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number; ownZoneKm: number }): Uint8Array {
   const N = T.cols * T.rows;
   const zoc = typeof zocKm === 'number' ? () => zocKm : zocKm;
   const own = units.filter((u) => u.side === side).map((u) => T.proj.toXY(u.position));
   const enemy = units.filter((u) => u.side !== side).map((u) => ({ p: T.proj.toXY(u.position), r: zoc(u) }));
   const out = new Uint8Array(N).fill(1);
-  // территория противника закрыта для подвоза целиком (сплошная полоса), а не только зоны его формирований
-  if (territory) for (let i = 0; i < N; i++) { const o = territory.owner[i]; if (o >= 0 && o !== territory.side) out[i] = 0; }
+  // территория противника закрыта для подвоза целиком (сплошная полоса); зоны его формирований тогда —
+  // только их собственный район (сами войска), а не широкие зоны влияния: окружение даёт территория
+  if (territory) {
+    for (let i = 0; i < N; i++) { const o = territory.owner[i]; if (o >= 0 && o !== territory.side) out[i] = 0; }
+    for (const e of enemy) e.r = territory.ownZoneKm;
+  }
   for (let i = 0; i < N; i++) {
     if (!out[i]) continue;
     const p = T.cellCenter(i % T.cols, Math.floor(i / T.cols));
@@ -76,7 +80,7 @@ export interface SupplyField {
 }
 
 /** Поле времени подвоза для стороны: от источников в обход зон влияния противника. */
-export function supplyField(T: Theatre, side: string, sources: LngLat[], units: Formation[], profile: SideProfile, rules: Rules, time: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number }): SupplyField {
+export function supplyField(T: Theatre, side: string, sources: LngLat[], units: Formation[], profile: SideProfile, rules: Rules, time: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number; ownZoneKm: number }): SupplyField {
   const pass = supplyPassable(T, units, side, zocKm, territory);
   const src = sources.map((p) => T.indexOf(p)).filter((i) => i >= 0 && pass[i]);
   const hours = T.distanceField(src, 'motor', profile, rules, time, (i) => pass[i] === 1);
@@ -98,14 +102,16 @@ export function initialTerritory(T: Theatre, points: { side: number; at: LngLat 
     const d = new Float64Array(N).fill(Infinity);
     const heap = new MinHeap();
     for (const p of points) if (p.side === k) { const i = T.indexOf(p.at); if (i >= 0 && d[i] > 0) { d[i] = 0; heap.push(i, 0); } }
-    const cost = (i: number) => T.cellKm + (T.river[i] === 2 ? barrierKm : 0) + (T.fort[i] && T.fortSide[i] && T.fortSide[i] !== sideIds[k] ? barrierKm / 2 : 0);
+    // преграда штрафуется один раз — при входе в неё (река и полоса бывают шириной в несколько клеток)
+    const enemyFort = (i: number) => !!T.fort[i] && !!T.fortSide[i] && T.fortSide[i] !== sideIds[k];
+    const cost = (from: number, i: number) => T.cellKm + (T.river[i] === 2 && T.river[from] !== 2 ? barrierKm : 0) + (enemyFort(i) && !enemyFort(from) ? barrierKm / 2 : 0);
     while (heap.size) {
       const cur = heap.pop();
       const c0 = cur % T.cols, r0 = Math.floor(cur / T.cols);
       for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const c = c0 + dc, r = r0 + dr;
         if (!T.inside(c, r)) continue;
-        const ni = r * T.cols + c, nd = d[cur] + cost(ni);
+        const ni = r * T.cols + c, nd = d[cur] + cost(cur, ni);
         if (nd < d[ni]) { d[ni] = nd; heap.push(ni, nd); }
       }
     }
