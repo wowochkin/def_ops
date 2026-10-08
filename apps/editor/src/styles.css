@@ -790,12 +790,24 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .kb-tree { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; padding: 8px; overflow-y: auto; }
 .kb-search { width: 100%; padding: 5px 8px !important; border-radius: 6px !important; margin-bottom: 6px; }
 .kb-cat { display: flex; flex-direction: column; }
+.kb-cat-h span, .kb-grp span { display: flex; gap: 6px; text-align: left; }
+.kb-code { font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 22px; font-weight: 400; }
+.kb-cat-h.on .kb-code, .kb-grp.on .kb-code { color: #bbb; }
+.kb-cat-h.empty, .kb-grp.empty { color: #a29d91; }
+.kb-list-h { display: flex; flex-direction: column; gap: 2px; padding: 2px 6px 6px; font-size: 12.5px; } .kb-list-h small { color: var(--muted); }
+.kb-cats { display: flex; flex-wrap: wrap; gap: 3px; padding: 0 4px 6px; }
+.kb-list .kb-cats button { border: 1px solid var(--line); border-radius: 10px; padding: 1px 7px; font-size: 11px; display: inline-block; }
+.kb-list .kb-cats button.on { background: var(--ink) !important; color: #fff; box-shadow: none; }
+.kb-empty { padding: 6px; }
+.kb-rubs { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px; }
+.kb-rub { border-radius: 10px; padding: 1px 8px; font-size: 11px; background: #eef1f5; border: 1px solid #d9e0ea; color: #2f4a6b; }
+button.kb-rub:hover { border-color: #2f5f8f; }
 .kb-cat-h, .kb-grp { border: 0; background: none; text-align: left; display: flex; justify-content: space-between; gap: 6px; border-radius: 6px; padding: 4px 8px; }
 .kb-cat-h { font-weight: 600; font-size: 13px; }
 .kb-grp { padding-left: 20px; font-size: 12px; color: #4d4a43; }
 .kb-cat-h small, .kb-grp small, .kb-list button small { color: var(--muted); font-weight: 400; font-size: 11px; }
 .kb-cat-h:hover, .kb-grp:hover { background: var(--soft); }
-.kb-cat-h.on, .kb-grp.on { background: var(--ink); color: #fff; } .kb-cat-h.on small, .kb-grp.on small { color: #ccc; }
+.kb-cat-h.on, .kb-grp.on, .kb-cat-h.on:hover, .kb-grp.on:hover { background: var(--ink); color: #fff; } .kb-cat-h.on small, .kb-grp.on small { color: #ccc; }
 .kb-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
 .kb-list button { border: 0; border-bottom: 1px solid #f0eee8; border-radius: 0; background: none; text-align: left; padding: 4px 6px; font-size: 12px; display: flex; flex-direction: column; position: relative; }
 .kb-list button:hover { background: var(--soft); } .kb-list button.on { background: var(--accent-bg) !important; box-shadow: inset 3px 0 0 var(--accent); }

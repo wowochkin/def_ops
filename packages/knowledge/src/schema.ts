@@ -91,6 +91,8 @@ export interface Entry {
   sections?: { title: string; text: string }[];
   facts?: Fact[];
   relations?: Relation[];
+  /** Рубрики (коды рубрикатора, главная — первая); нет — вычисляются по категории (rubrics.ts). */
+  rubrics?: string[];
   /** Период: даты ISO (для хронологии и фильтров). */
   period?: { from?: string; to?: string };
   /** Связь с переигровкой: сценарий и участок (для «показать на карте»). */
@@ -130,5 +132,7 @@ export interface Proposal {
   /** Новые факты и связи (для update — только они). */
   facts: Fact[];
   relations: Relation[];
+  /** Новые рубрики (для update). */
+  rubrics?: string[];
   status: 'pending' | 'accepted' | 'rejected';
 }

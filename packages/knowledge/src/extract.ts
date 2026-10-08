@@ -7,6 +7,7 @@
  */
 import { CATEGORIES, type CategoryId, type Entry, type Fact, type KbDocument, type Proposal, type Relation, type RelationType, type Reliability } from './schema';
 import { stems } from './search';
+import { defaultRubrics, RUBRIC_CODES, rubricPath } from './rubrics';
 
 /** Разбить текст на части по абзацам (около size знаков, с перекрытием). */
 export function chunkText(text: string, size = 3000, overlap = 300): string[] {
@@ -30,9 +31,10 @@ export const EXTRACT_SCHEMA = {
     items: {
       type: 'array',
       items: {
-        type: 'object', additionalProperties: false, required: ['category', 'title', 'aliases', 'summary', 'facts', 'relations', 'dateFrom', 'dateTo'],
+        type: 'object', additionalProperties: false, required: ['category', 'rubrics', 'title', 'aliases', 'summary', 'facts', 'relations', 'dateFrom', 'dateTo'],
         properties: {
           category: { type: 'string', enum: CATEGORIES.map((c) => c.id) },
+          rubrics: { type: 'array', items: { type: 'string', enum: RUBRIC_CODES } },
           title: s, aliases: { type: 'array', items: s }, summary: s,
           facts: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['key', 'value', 'quote'], properties: { key: s, value: s, quote: s } } },
           relations: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['type', 'target'], properties: { type: { type: 'string', enum: RELS }, target: s } } },
@@ -44,13 +46,14 @@ export const EXTRACT_SCHEMA = {
 } as const;
 
 export interface ExtractedItem {
-  category: CategoryId; title: string; aliases: string[]; summary: string;
+  category: CategoryId; rubrics?: string[]; title: string; aliases: string[]; summary: string;
   facts: { key: string; value: string; quote: string }[];
   relations: { type: RelationType; target: string }[];
   dateFrom: string | null; dateTo: string | null;
 }
 
 export function extractMessages(chunk: string, docName: string): { role: 'system' | 'user'; content: string }[] {
+  const rubs = RUBRIC_CODES.filter((c) => c.split('.').length > 1).map((c) => `- ${c} ${rubricPath(c).map((x) => x.title).join(' › ')}`).join('\n');
   const cats = CATEGORIES.map((c) => `- ${c.id} — ${c.title}: ${c.description} Ключи фактов: ${c.fields.map((f) => `${f.key} (${f.title})`).join(', ')}.`).join('\n');
   return [
     { role: 'system', content: `Вы — составитель военно-исторической базы знаний (операции 1945 года: Висло-Одерская, Берлинская). Из фрагмента документа выпишите сведения по каркасу категорий.
@@ -62,10 +65,14 @@ export function extractMessages(chunk: string, docName: string): { role: 'system
 4. Названия — как принято по-русски, оригинал (немецкий, польский) — в aliases.
 5. Связи (relations): target — название другой записи (операции, сражения, формирования, лица), упомянутой во фрагменте.
 6. Даты — ГГГГ-ММ-ДД, если указаны; иначе null.
-7. Если во фрагменте нет таких сведений (оглавление, библиография, посторонний текст) — items пустой.
+7. Рубрики (rubrics) — 1–3 кода из рубрикатора ниже, самая точная первой: о чём запись (операция и этап, тема военного искусства, род войск и т. п.).
+8. Если во фрагменте нет таких сведений (оглавление, библиография, посторонний текст) — items пустой.
 
-Категории:
+Категории (что это за запись):
 ${cats}
+
+Рубрикатор (о чём запись):
+${rubs}
 
 Ответ — один JSON-объект по схеме.` },
     { role: 'user', content: `Документ: «${docName}». Фрагмент:\n\n${chunk}` },
@@ -115,16 +122,18 @@ export function toProposals(items: ExtractedItem[], chunk: string, entries: Entr
       const t = entries.find((e) => [e.title, ...(e.aliases ?? [])].some((x) => norm(x) === norm(r.target))) ?? null;
       if (t && RELS.includes(r.type)) relations.push({ type: r.type, target: t.id });
     }
+    const rubrics = [...new Set((it.rubrics ?? []).filter((c) => RUBRIC_CODES.includes(c)))].slice(0, 3);
     const existing = matchEntry(entries, it.category, it.title, it.aliases ?? []);
     if (existing) {
       const fresh = facts.filter((f) => !(existing.facts ?? []).some((g) => g.key === f.key && norm(g.value) === norm(f.value)));
       const freshRel = relations.filter((r) => !(existing.relations ?? []).some((g) => g.type === r.type && g.target === r.target));
       if (!fresh.length && !freshRel.length) continue;
-      out.push({ id: `${doc.id}:${chunkIndex}:${out.length}`, doc: doc.id, chunk: chunkIndex, kind: 'update', target: existing.id, entry: existing, facts: fresh, relations: freshRel, status: 'pending' });
+      const freshRub = rubrics.filter((c) => !(existing.rubrics ?? defaultRubrics(existing)).includes(c));
+      out.push({ id: `${doc.id}:${chunkIndex}:${out.length}`, doc: doc.id, chunk: chunkIndex, kind: 'update', target: existing.id, entry: existing, facts: fresh, relations: freshRel, ...(freshRub.length ? { rubrics: freshRub } : {}), status: 'pending' });
     } else {
       if (!facts.length) continue; // новая запись — только с подтверждёнными фактами
       const entry: Entry = {
-        id: `u:${it.category}:${slug(it.title)}`, category: it.category, title: it.title.trim(), aliases: it.aliases ?? [], summary: it.summary?.trim() ?? '',
+        id: `u:${it.category}:${slug(it.title)}`, category: it.category, rubrics: rubrics.length ? rubrics : undefined, title: it.title.trim(), aliases: it.aliases ?? [], summary: it.summary?.trim() ?? '',
         facts, relations: [...relations, { type: 'source', target: srcId }], status: 'extracted', origin: 'document',
         ...(it.dateFrom || it.dateTo ? { period: { from: it.dateFrom ?? undefined, to: it.dateTo ?? undefined } } : {}),
       };
@@ -140,6 +149,7 @@ export function applyProposal(p: Proposal, current: Entry | undefined): Entry {
   const base = current ?? p.entry;
   return {
     ...base, origin: base.origin === 'seed' ? 'user' : base.origin,
+    ...(p.rubrics?.length ? { rubrics: [...new Set([...(base.rubrics ?? defaultRubrics(base)), ...p.rubrics])] } : {}),
     facts: [...(base.facts ?? []), ...p.facts], relations: [...(base.relations ?? []), ...p.relations.filter((r) => !(base.relations ?? []).some((g) => g.target === r.target && g.type === r.type))],
     updatedAt: new Date().toISOString(),
   };

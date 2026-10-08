@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import seed from '../data/seed.json';
-import { CATEGORIES, chunkText, gameReference, gather, Index, qaMessages, quoteFound, toProposals, type Entry, type ExtractedItem } from '../src';
+import { CATEGORIES, RUBRIC_CODES, rubricPath, rubricsOf, applyProposal, chunkText, gameReference, gather, Index, qaMessages, quoteFound, toProposals, type Entry, type ExtractedItem } from '../src';
 
 const entries = (seed as { entries: Entry[] }).entries;
 const byId = new Map(entries.map((e) => [e.id, e]));
@@ -41,6 +41,19 @@ describe('база знаний: каркас и начальное наполн
   });
 });
 
+describe('рубрикатор', () => {
+  it('у каждой записи есть рубрика из рубрикатора; сражения — в своей операции и теме', () => {
+    for (const e of entries) {
+      const r = rubricsOf(e);
+      expect(r.length, e.id).toBeGreaterThan(0);
+      for (const c of r) expect(RUBRIC_CODES, e.id).toContain(c);
+    }
+    expect(rubricsOf(byId.get('battle:reichstag')!)).toEqual(['1.2.6', '3.2.3']);
+    expect(rubricPath('1.2.6').map((x) => x.title)).toEqual(['Операции и сражения', 'Берлинская операция (16.04–08.05.1945)', 'Штурм Берлина']);
+    expect(rubricsOf(byId.get('cmd:zhukov') ?? entries.find((e) => e.category === 'commanders' && e.group === 'su')!)).toEqual(['7.1']);
+  });
+});
+
 describe('документы: разбивка и проверка извлечённого', () => {
   const text = 'Предисловие.\n\n' + 'На рассвете 16 апреля 1945 года 8-я гвардейская армия генерала Чуйкова перешла в наступление с Кюстринского плацдарма. '.repeat(3) + '\n\n' + 'Танковая армия была введена в бой к полудню.';
   it('части текста — по абзацам, с перекрытием', () => {
@@ -52,7 +65,7 @@ describe('документы: разбивка и проверка извлеч�
     expect(quoteFound('8-я гвардейская   армия генерала Чуйкова', text)).toBe(true);
     expect(quoteFound('армия взяла Берлин 17 апреля', text)).toBe(false);
     const items: ExtractedItem[] = [
-      { category: 'formations', title: '8-я гвардейская армия', aliases: [], summary: '', dateFrom: null, dateTo: null, relations: [],
+      { category: 'formations', rubrics: ['1.2.2', '9.9.9'], title: '8-я гвардейская армия', aliases: [], summary: '', dateFrom: null, dateTo: null, relations: [],
         facts: [{ key: 'commander', value: 'В. И. Чуйков', quote: '8-я гвардейская армия генерала Чуйкова' }, { key: 'path', value: '16.04 перешла в наступление с Кюстринского плацдарма', quote: 'перешла в наступление с Кюстринского плацдарма' }, { key: 'personnel', value: '100 000', quote: 'численность 100 тысяч' }] },
       { category: 'battles', title: 'Бой у Выдуманной деревни', aliases: [], summary: '', dateFrom: null, dateTo: null, relations: [],
         facts: [{ key: 'outcome', value: 'победа', quote: 'вымышленная цитата, которой нет' }] },
@@ -64,5 +77,8 @@ describe('документы: разбивка и проверка извлеч�
     expect(r.proposals[0].target).toBe('f:su_8gva');
     expect(r.proposals[0].facts.map((f) => f.key)).toEqual(['path']); // командир уже есть — повтор не предлагается
     expect(r.proposals[0].facts[0].source).toBe('doc:d1');
+    expect(r.proposals[0].rubrics).toEqual(['1.2.2']); // несуществующая рубрика отброшена
+    const merged = applyProposal(r.proposals[0], byId.get('f:su_8gva'));
+    expect(merged.rubrics).toEqual(['2.1.2', '1.2.2']);
   });
 });

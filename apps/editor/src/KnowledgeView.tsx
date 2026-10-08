@@ -5,7 +5,7 @@
  * со ссылками), загрузка документов: модель извлекает сведения с цитатами, человек принимает предложения.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CATEGORIES, category, RELATION_RU, RELIABILITY, STATUS_RU, type Entry, type KbDocument, type Proposal, type Reliability, type Source } from '@def-ops/knowledge';
+import { category, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type Proposal, type Reliability, type Rubric, type Source } from '@def-ops/knowledge';
 import * as kb from './kb/kb';
 import type { Llm } from './shared';
 import { mdToHtml } from './markdown';
@@ -43,13 +43,30 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
 
 function Browse({ s, sel, open, back, llm }: { s: kb.KbState; sel: string | null; open: (id: string) => void; back: (() => void) | null; llm: Llm }) {
   const [q, setQ] = useState('');
-  const [node, setNode] = useState<{ cat: string; group?: string } | null>({ cat: 'battles' });
+  const [node, setNode] = useState<string>('1.2');
+  const [cat, setCat] = useState<string | null>(null);
   const [limit, setLimit] = useState(150);
   const found = useMemo(() => (q.trim() && s.index ? s.index.search(q, { limit: 60 }) : null), [q, s.index]);
-  const list = useMemo(() => !node ? [] : s.entries.filter((e) => e.category === node.cat && (!node.group || e.group === node.group)).sort((a, b) => (a.period?.from ?? '').localeCompare(b.period?.from ?? '') || a.title.localeCompare(b.title, 'ru')), [node, s.entries]);
-  const counts = useMemo(() => { const m = new Map<string, number>(); for (const e of s.entries) { m.set(e.category, (m.get(e.category) ?? 0) + 1); m.set(`${e.category}/${e.group}`, (m.get(`${e.category}/${e.group}`) ?? 0) + 1); } return m; }, [s.entries]);
-  useEffect(() => setLimit(150), [node]);
+  const rubs = useMemo(() => new Map(s.entries.map((e) => [e.id, rubricsOf(e)])), [s.entries]);
+  // число записей в рубрике — с вложенными, каждая запись один раз
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const codes of rubs.values()) {
+      const all = new Set<string>();
+      for (const c of codes) { const parts = c.split('.'); for (let i = 1; i <= parts.length; i++) all.add(parts.slice(0, i).join('.')); }
+      for (const c of all) m.set(c, (m.get(c) ?? 0) + 1);
+    }
+    return m;
+  }, [rubs]);
+  const inNode = useMemo(() => s.entries.filter((e) => (rubs.get(e.id) ?? []).some((c) => within(c, node))), [node, s.entries, rubs]);
+  const cats = useMemo(() => { const m = new Map<string, number>(); for (const e of inNode) m.set(e.category, (m.get(e.category) ?? 0) + 1); return m; }, [inNode]);
+  const list = useMemo(() => inNode.filter((e) => !cat || e.category === cat)
+    // сначала записи, у которых эта рубрика главная, затем по дате и названию
+    .sort((a, b) => Number(!within(rubs.get(a.id)?.[0] ?? '', node)) - Number(!within(rubs.get(b.id)?.[0] ?? '', node)) || (a.period?.from ?? '').localeCompare(b.period?.from ?? '') || a.title.localeCompare(b.title, 'ru')), [inNode, cat, node, rubs]);
+  useEffect(() => { setLimit(150); setCat(null); }, [node]);
+  const goRubric = (code: string) => { setQ(''); setNode(code); };
   const e = sel ? s.byId.get(sel) ?? null : null;
+  const path = rubricPath(node);
   return (
     <div className="kb-browse">
       <aside className="kb-tree">
@@ -58,33 +75,45 @@ function Browse({ s, sel, open, back, llm }: { s: kb.KbState; sel: string | null
           {found.length ? found.map((h) => <button key={h.id} className={sel === h.ref ? 'on' : ''} onClick={() => h.kind === 'entry' ? open(h.ref) : open(`doc:${h.ref}`)}>
             {h.title}<small>{h.kind === 'entry' ? category(s.byId.get(h.ref)?.category ?? '')?.title : 'документ'}</small></button>) : <span className="muted">Ничего не найдено</span>}
         </div> : <>
-          {CATEGORIES.map((c) => (
-            <div key={c.id} className="kb-cat">
-              <button className={`kb-cat-h${node?.cat === c.id && !node.group ? ' on' : ''}`} onClick={() => setNode({ cat: c.id })} title={c.description}>{c.title}<small>{counts.get(c.id) ?? 0}</small></button>
-              {node?.cat === c.id && c.groups.map((g) => (counts.get(`${c.id}/${g.id}`) ?? 0) > 0 && (
-                <button key={g.id} className={`kb-grp${node.group === g.id ? ' on' : ''}`} onClick={() => setNode({ cat: c.id, group: g.id })}>{g.title}<small>{counts.get(`${c.id}/${g.id}`)}</small></button>
-              ))}
-            </div>
-          ))}
-          {node && <div className="kb-list">
-            {list.slice(0, limit).map((x) => <button key={x.id} className={sel === x.id ? 'on' : ''} onClick={() => open(x.id)}>{x.title}{x.status !== 'checked' && <i className={`kb-st s-${x.status}`} title={STATUS_RU[x.status]} />}</button>)}
+          <RubricTree list={RUBRICS} node={node} setNode={setNode} counts={counts} />
+          <div className="kb-list">
+            <div className="kb-list-h"><b>{node} {path[path.length - 1]?.title}</b>{rubric(node)?.description && <small>{rubric(node)!.description}</small>}</div>
+            {cats.size > 1 && <div className="kb-cats"><button className={!cat ? 'on' : ''} onClick={() => setCat(null)}>все</button>
+              {[...cats].map(([c, n]) => <button key={c} className={cat === c ? 'on' : ''} onClick={() => setCat(c)}>{category(c)?.title} {n}</button>)}</div>}
+            {list.slice(0, limit).map((x) => <button key={x.id} className={sel === x.id ? 'on' : ''} onClick={() => open(x.id)}>{x.title}<small>{category(x.category)?.title}</small>{x.status !== 'checked' && <i className={`kb-st s-${x.status}`} title={STATUS_RU[x.status]} />}</button>)}
             {list.length > limit && <button className="link" onClick={() => setLimit(limit + 300)}>ещё {list.length - limit}…</button>}
-          </div>}
+            {!list.length && <span className="muted kb-empty">В рубрике пока нет записей — их можно добавить, загрузив документы (вкладка «Документы»).</span>}
+          </div>
         </>}
       </aside>
       <main className="kb-main">
-        {e ? <EntryCard e={e} s={s} open={open} back={back} /> : <div className="muted kb-wait">Выберите запись слева.</div>}
+        {e ? <EntryCard e={e} s={s} open={open} back={back} goRubric={goRubric} /> : <div className="muted kb-wait">Выберите запись слева.</div>}
       </main>
       <Ask llm={llm} s={s} open={open} topic={e?.title ?? ''} />
     </div>
   );
 }
 
+/** Дерево рубрик: раскрыты предки выбранной рубрики и её дети. */
+function RubricTree({ list, node, setNode, counts, depth = 0 }: { list: Rubric[]; node: string; setNode: (c: string) => void; counts: Map<string, number>; depth?: number }) {
+  return <>{list.map((r) => {
+    const open = within(node, r.code) && !!r.children;
+    const n = counts.get(r.code) ?? 0;
+    return (
+      <div key={r.code} className="kb-cat">
+        <button className={`${depth ? 'kb-grp' : 'kb-cat-h'}${node === r.code ? ' on' : ''}${n ? '' : ' empty'}`} style={depth ? { paddingLeft: 8 + depth * 12 } : undefined} onClick={() => setNode(r.code)} title={r.description}>
+          <span><i className="kb-code">{r.code}</i>{r.title}</span><small>{n || '—'}</small></button>
+        {open && <RubricTree list={r.children!} node={node} setNode={setNode} counts={counts} depth={depth + 1} />}
+      </div>
+    );
+  })}</>;
+}
+
 /** Источник в таблице фактов: «Википедия (de): «Статья»» → «de.wiki: Статья», книги — до 26 знаков. */
 const shortSrc = (t: string) => { const w = /^Википедия \((\w+)\): «(.+)»$/.exec(t); const x = w ? `${w[1]}.wiki: ${w[2]}` : t; return x.length > 26 ? `${x.slice(0, 25)}…` : x; };
 const relBadge = (r?: Reliability) => r ? <i className={`kb-rel r${r}`} title={RELIABILITY[r]}>{r}</i> : null;
 
-function EntryCard({ e, s, open, back }: { e: Entry; s: kb.KbState; open: (id: string) => void; back: (() => void) | null }) {
+function EntryCard({ e, s, open, back, goRubric }: { e: Entry; s: kb.KbState; open: (id: string) => void; back: (() => void) | null; goRubric: (code: string) => void }) {
   const c = category(e.category)!;
   const [editing, setEditing] = useState(false);
   const facts = e.facts ?? [];
@@ -98,6 +127,7 @@ function EntryCard({ e, s, open, back }: { e: Entry; s: kb.KbState; open: (id: s
       <div className="kb-crumbs">{back && <button className="link" onClick={back}>← назад</button>}<span>{c.title}{e.group ? ` › ${c.groups.find((g) => g.id === e.group)?.title ?? e.group}` : ''}</span>
         <i className={`kb-status s-${e.status}`}>{STATUS_RU[e.status]}</i>{e.origin && e.origin !== 'seed' && <i className="kb-status user">{e.origin === 'document' ? 'из документа' : 'изменено'}</i>}</div>
       <h1>{e.title}</h1>
+      <div className="kb-rubs">{rubricsOf(e).map((c) => <button key={c} className="kb-rub" onClick={() => goRubric(c)} title="Открыть рубрику">{c} {rubricPath(c).slice(1).map((x) => x.title).join(' › ') || rubric(c)?.title}</button>)}</div>
       {e.aliases?.length ? <div className="muted kb-alias">{e.aliases.filter((a) => !/^[a-z]+_/.test(a)).join(' · ')}</div> : null}
       {e.period?.from && <div className="kb-period">{e.period.from === e.period.to || !e.period.to ? e.period.from : `${e.period.from} — ${e.period.to}`}</div>}
       {editing ? <EditEntry e={e} done={() => setEditing(false)} /> : <p className="kb-summary">{e.summary}</p>}
@@ -269,6 +299,7 @@ function ProposalCard({ p, s, open }: { p: Proposal; s: kb.KbState; open: (id: s
       <div className="kb-prop-h"><i>{p.kind === 'new' ? 'новая запись' : 'дополнение'}</i><b>{p.kind === 'update' ? <button className="link" onClick={() => open(p.target!)}>{s.byId.get(p.target!)?.title ?? p.entry.title}</button> : p.entry.title}</b>
         <span className="muted">{c?.title} · {doc?.name}, часть {p.chunk + 1}</span></div>
       {p.kind === 'new' && p.entry.summary && <p>{p.entry.summary}</p>}
+      {(p.kind === 'new' ? rubricsOf(p.entry) : p.rubrics ?? []).length > 0 && <div className="kb-rubs">{(p.kind === 'new' ? rubricsOf(p.entry) : p.rubrics!).map((c) => <span key={c} className="kb-rub">{p.kind === 'update' ? '+ ' : ''}{c} {rubric(c)?.title}</span>)}</div>}
       <ul>{p.facts.map((f, i) => <li key={i}><b>{c?.fields.find((x) => x.key === f.key)?.title ?? f.key}:</b> {f.value}{f.quote && <div className="kb-quote">«{f.quote}»</div>}</li>)}
         {p.relations.filter((r) => r.type !== 'source').map((r, i) => <li key={`r${i}`}><b>{RELATION_RU[r.type]}:</b> {s.byId.get(r.target)?.title ?? r.target}</li>)}</ul>
       <div className="row"><button className="primary" onClick={() => kb.decide([p.id], true)}>Принять</button><button onClick={() => kb.decide([p.id], false)}>Отклонить</button></div>

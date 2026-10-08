@@ -83,7 +83,7 @@ export function mockExtract(prompt: string) {
   const date = /(\d{1,2})\s+(января|февраля|марта|апреля|мая)\s+(1945)/.exec(text);
   const months: Record<string, string> = { января: '01', февраля: '02', марта: '03', апреля: '04', мая: '05' };
   const iso = date ? `${date[3]}-${months[date[2]]}-${date[1].padStart(2, '0')}` : null;
-  return { items: [{ category: cat, title: name, aliases: [], summary: pick[0], facts: pick.map((q) => ({ key, value: q.replace(/[.!?]$/, ''), quote: q })), relations: [], dateFrom: iso, dateTo: null }] };
+  return { items: [{ category: cat, rubrics: [/Одер|Нейсе|Зеелов/.test(text) ? '1.2.2' : '1.2'], title: name, aliases: [], summary: pick[0], facts: pick.map((q) => ({ key, value: q.replace(/[.!?]$/, ''), quote: q })), relations: [], dateFrom: iso, dateTo: null }] };
 }
 
 /** Ответ по материалам базы знаний (проверка стенда): пересказ первых материалов со ссылками. */

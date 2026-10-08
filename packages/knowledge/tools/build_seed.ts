@@ -11,6 +11,7 @@ import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import type { Entry, Fact, Reliability, Relation } from '../src/schema';
+import { defaultRubrics, RUBRIC_CODES } from '../src/rubrics';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = join(ROOT, 'docs/sources');
@@ -244,6 +245,19 @@ for (const e of entries.values()) for (const r of e.relations ?? []) {
 }
 // висячие ссылки — убрать
 for (const e of entries.values()) e.relations = (e.relations ?? []).filter((r) => entries.has(r.target));
+
+// рубрики: сражения — по месту в операции и теме; прочие — по категории (rubrics.ts)
+const BATTLE_RUBRICS: Record<string, string[]> = {
+  'battle:vo-breakthrough': ['1.1.1', '3.1.1'], 'battle:warsaw': ['1.1.2'], 'battle:oder-exit': ['1.1.3', '3.1.3', '3.2.4'], 'battle:posen': ['1.1.4', '3.1.2', '3.2.3'],
+  'battle:seelow': ['1.2.2', '3.1.1'], 'battle:neisse': ['1.2.2', '3.2.4'], 'battle:lower-oder': ['1.2.2', '3.2.4'], 'battle:ring': ['1.2.3', '3.1.2'],
+  'battle:torgau': ['1.2.3'], 'battle:halbe': ['1.2.4', '3.1.2'], 'battle:bautzen': ['1.2.5', '3.1.4'], 'battle:berlin-storm': ['1.2.6', '3.2.3'], 'battle:reichstag': ['1.2.6', '3.2.3'],
+};
+const OP_RUBRICS: Record<string, string[]> = { 'op:berlin': ['1.2', '1.2.1', '1.2.7'], 'op:vistula-oder': ['1.1', '1.1.5'] };
+for (const e of entries.values()) {
+  e.rubrics = e.rubrics?.length ? e.rubrics : BATTLE_RUBRICS[e.id] ?? OP_RUBRICS[e.id] ?? defaultRubrics(e);
+  const bad = e.rubrics.filter((c) => !RUBRIC_CODES.includes(c));
+  if (bad.length) throw new Error(`${e.id}: нет таких рубрик ${bad.join(', ')}`);
+}
 
 const list = [...entries.values()].sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title, 'ru'));
 const out = join(ROOT, 'packages/knowledge/data/seed.json');
