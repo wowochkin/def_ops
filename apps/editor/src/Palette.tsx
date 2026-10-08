@@ -28,6 +28,8 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
   const [open, setOpen] = useState<Record<string, boolean>>(() => JSON.parse(load('palette.open', '{"maneuver":true}')));
   const [onlyStyle, setOnlyStyle] = useState(() => load('palette.onlyStyle', '0') === '1');
   const [series, setSeries] = useState(() => load('palette.series', '0') === '1');
+  /** Недавние знаки — сверху палитры (последние 8). */
+  const [recent, setRecent] = useState<string[]>(() => { try { return JSON.parse(load('palette.recent', '[]')); } catch { return []; } });
 
   const found = useMemo(() => searchLibrary(q), [q]);
   const groups = useMemo(() => CATEGORIES.map((c) => ({
@@ -39,8 +41,20 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
     const v = variantFor(e, style);
     const on = tool.mode === 'draw' && tool.preset === v.preset && tool.element === e.id;
     setTool(on ? { mode: 'select' } : { mode: 'draw', kind: e.kind, preset: v.preset, element: e.id, side: e.sideAware ? side : undefined, keep: series });
+    if (!on) { const r = [e.id, ...recent.filter((x) => x !== e.id)].slice(0, 8); setRecent(r); save('palette.recent', JSON.stringify(r)); }
   };
   const searching = q.trim().length > 0;
+  const recentItems = recent.map((id) => found.find((e) => e.id === id)).filter((e): e is LibraryElement => !!e && (!onlyStyle || !!e.variants[style]));
+  const tile = (e: LibraryElement) => {
+    const v = variantFor(e, style);
+    const on = tool.mode === 'draw' && tool.element === e.id;
+    return (
+      <button key={e.id} className={`ptile${on ? ' on' : ''}${v.style !== style ? ' other' : ''}`} title={e.sources ? `${e.name}\n\n${e.description}\nИсточник: ${sourceText(e.sources)}` : `${e.name}\n\n${e.description}`} onClick={() => pick(e)}>
+        <span className="pv" style={{ background: paperFor(v.preset) }} dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paperFor(v.preset), e.sideAware ? side : undefined, e.kind === 'symbol') }} />
+        <span className="pn">{e.name}{e.verify && <i className="vf" title="Начертание не подтверждено первоисточниками — сверить">?</i>}</span>
+      </button>
+    );
+  };
 
   return (
     <div className="palette">
@@ -59,7 +73,11 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
             }}>{n}</button>
           ))}
         </div>
-        <input className="pal-search" placeholder="Поиск знака…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <label className="pal-search-w">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /></svg>
+          <input className="pal-search" placeholder="Поиск: танк, мост, котёл…" value={q} onChange={(e) => setQ(e.target.value)} />
+          {q && <button className="link" onClick={() => setQ('')} title="Очистить">✕</button>}
+        </label>
         <div className="pal-row">
           <button className={`tool-select${tool.mode === 'select' ? ' on' : ''}`} title="Режим выбора и правки (Esc)" onClick={() => setTool({ mode: 'select' })}>⬚ Выбор</button>
           <label className="muted" title="Показывать только знаки, у которых есть выбранное оформление (без подстановки ближайшего)">
@@ -75,23 +93,20 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
         </div>
       </div>
       <div className="plist">
+        {!searching && recentItems.length > 0 && (
+          <div className="pcat">
+            <div className="pcat-h static"><span>Недавние</span></div>
+            <div className="pgrid">{recentItems.map(tile)}</div>
+          </div>
+        )}
         {groups.map(({ c, items }) => {
           const isOpen = searching || open[c.id];
           return (
             <div key={c.id} className="pcat">
-              <button className="pcat-h" title={c.description} onClick={() => toggle(c.id)}>
-                <span>{isOpen ? '▾' : '▸'} {c.name}</span><span className="muted">{items.length}</span>
+              <button className={`pcat-h${isOpen ? ' open' : ''}`} title={c.description} onClick={() => toggle(c.id)}>
+                <span><i className="chev">{isOpen ? '▾' : '▸'}</i>{c.name}</span><span className="cnt">{items.length}</span>
               </button>
-              {isOpen && items.map((e) => {
-                const v = variantFor(e, style);
-                const on = tool.mode === 'draw' && tool.element === e.id;
-                return (
-                  <button key={e.id} className={`pitem${on ? ' on' : ''}${v.style !== style ? ' other' : ''}`} title={e.sources ? `${e.description}\nИсточник: ${sourceText(e.sources)}` : e.description} onClick={() => pick(e)}>
-                    <span className="pv" dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paperFor(v.preset), e.sideAware ? side : undefined) }} />
-                    <span className="pn">{e.name}{e.verify && <i className="vf" title="Начертание не подтверждено первоисточниками — сверить">?</i>}</span>
-                  </button>
-                );
-              })}
+              {isOpen && <div className="pgrid">{items.map(tile)}</div>}
             </div>
           );
         })}
