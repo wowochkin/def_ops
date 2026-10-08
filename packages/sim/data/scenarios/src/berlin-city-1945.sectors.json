@@ -1,0 +1,11 @@
+{
+  "_note": "Ключевые участки боя в Берлине: пункты театра и запас, км.",
+  "sectors": [
+    { "id": "citadel", "title": "Цитадель: рейхстаг — рейхсканцелярия", "areas": ["B_Reichstag", "B_Reichskanzlei", "sector_Z"], "padKm": 0.8 },
+    { "id": "tiergarten", "title": "Тиргартен, мост Мольтке, башня «Зоо»", "areas": ["B_Tiergarten", "Zoo_Flakturm", "B_Moltkebruecke"], "padKm": 0.8 },
+    { "id": "alex", "title": "Александерплац", "areas": ["B_Alexanderplatz"], "padKm": 1.5 },
+    { "id": "tempelhof", "title": "Темпельхоф", "areas": ["Tempelhof_Flughafen"], "padKm": 1.5 },
+    { "id": "east", "title": "Восток: Трептов-парк", "areas": ["Treptower_Park"], "padKm": 2 },
+    { "id": "west", "title": "Запад: Вестенд — Сименсштадт", "areas": ["Westend", "Halensee", "Siemensstadt"], "padKm": 1.5 }
+  ]
+}

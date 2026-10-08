@@ -1,0 +1,14 @@
+{
+  "_note": "Ключевые участки Висло-Одерской операции: пункты театра и запас, км.",
+  "sectors": [
+    { "id": "magnuszew", "title": "Магнушевский плацдарм", "areas": ["magnuszew_bh", "Warka"], "padKm": 12 },
+    { "id": "pulawy", "title": "Пулавский плацдарм", "areas": ["Pulawy"], "padKm": 15 },
+    { "id": "sandomierz", "title": "Сандомирский плацдарм", "areas": ["baranow_bh", "Sandomierz", "Opatow"], "padKm": 12 },
+    { "id": "warsaw", "title": "Варшава", "areas": ["Warszawa"], "padKm": 15 },
+    { "id": "lodz", "title": "Лодзь", "areas": ["Lodz"], "padKm": 20 },
+    { "id": "silesia", "title": "Краков — Силезский промышленный район", "areas": ["Krakow", "Katowice", "silesia"], "padKm": 10 },
+    { "id": "posen", "title": "Познань", "areas": ["Poznan"], "padKm": 20 },
+    { "id": "oder_south", "title": "Одер: Бреслау — Оппельн", "areas": ["Wroclaw", "Opole", "Olawa"], "padKm": 15 },
+    { "id": "oder_north", "title": "Выход к Одеру у Кюстрина", "areas": ["Kostrzyn", "Kienitz"], "padKm": 15 }
+  ]
+}

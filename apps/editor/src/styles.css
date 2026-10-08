@@ -758,3 +758,16 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .adv-tab .spinner { width: 11px; height: 11px; }
 .adv-h .adv-min { font-size: 18px; line-height: 1; }
 @media (max-width: 760px) { .adv-h .adv-min { display: none; } .adv-tab { display: none; } }
+.sec-pop .pop-btn { border-radius: 14px; padding: 3px 11px; box-shadow: 0 1px 4px rgba(0,0,0,.12); background: #fff; }
+.sec-chip { max-width: 240px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.sec-menu { display: flex; flex-direction: column; gap: 2px; min-width: 300px; max-height: 70vh; overflow-y: auto; }
+.sec-menu button { text-align: left; border: 0; background: none; border-radius: 6px; padding: 5px 8px; font-size: 12.5px; display: flex; flex-direction: column; }
+.sec-menu button small { color: var(--muted); font-size: 10.5px; }
+.sec-menu button:hover { background: var(--soft); } .sec-menu button.on { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+.sec-row { display: flex; align-items: center; } .sec-row > button:first-child { flex: 1; }
+.sec-menu hr { border: 0; border-top: 1px solid var(--line); width: 100%; margin: 4px 0; }
+.sec-auto { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; padding: 4px 8px; } .sec-auto small { display: block; color: var(--muted); font-size: 10.5px; }
+.focus-bar { display: flex; align-items: center; gap: 10px; margin: 8px 16px 0; padding: 6px 10px; border-radius: 8px; background: var(--accent-bg); font-size: 12px; }
+.focus-bar span { flex: 1; } .focus-bar label { display: flex; gap: 4px; align-items: center; color: #6b675d; }
+.focus-bar .x { border: 0; background: none; font-size: 15px; color: #8c8577; padding: 0 2px; }
+.cmd-chips .adv-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }

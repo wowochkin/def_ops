@@ -17,6 +17,7 @@ import { BasemapControls, Popover } from './ui';
 import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
 import { download, Legend, Player } from './ReplayView';
+import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 
 export const SAVE_KEY = 'def_ops.game';
 export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
@@ -86,6 +87,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [advSeen, setAdvSeen] = useState(0);
   /** Узкий экран (телефон): панель штаба или карта. */
   const [mob, setMob] = useState<'staff' | 'map'>('staff');
+  /** Участок в фокусе; focusOnly — доклады, разведка, приказы только по нему. */
+  const [focus, setFocus] = useState<Sector | null>(null);
+  const [focusOnly, setFocusOnly] = useState(true);
+  const [eng, setEng] = useState<MapEngine | null>(null);
   const [adv, setAdv] = useState<AdvMsg[]>([]);
   const [time, setTime] = useState<string | null>(null);
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
@@ -232,8 +237,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       }
     }
     d.features = [...view.doc.features, ...plan];
-    return d;
-  }, [view, drafts, vis, acts]); // eslint-disable-line react-hooks/exhaustive-deps
+    return withFocus(d, focus);
+  }, [view, drafts, vis, acts, focus]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Обстановка для списков: при фокусе — только объединения и противник на участке. */
+  const fv = useMemo(() => (!view || !focus || !focusOnly ? view : { ...view, own: view.own.filter((u) => u.status !== 'active' || inSector(focus, u.at)), intel: view.intel.filter((e) => inSector(focus, e.at)) }), [view, focus, focusOnly]);
 
   const goTo = (at: LngLat | null, zoomIn = true) => {
     const en = engine.current;
@@ -335,15 +342,16 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         </nav>
         <div className="cmd-body">
           {!view ? <div className="cmd-wait"><span className="spinner" /> {progress}</div> : <>
-            {tab === 'reports' && <Reports v={view} drafts={drafts} onUnit={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
-            {tab === 'intel' && <Intel v={view} onGo={(at) => goTo(at)} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
+            {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" checked={focusOnly} onChange={(e) => setFocusOnly(e.target.checked)} /> только он в списках</label><button className="x" title="Снять фокус" onClick={() => setFocus(null)}>×</button></div>}
+            {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
+            {tab === 'intel' && <Intel v={fv!} onGo={(at) => goTo(at)} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
             {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
                 {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length]] as [Sub, string, number][]).map(([k, t, n]) => (
                   <button key={k} className={sub === k ? 'on' : ''} onClick={() => { setSub(k); setPickMode(null); }}>{t}{n ? ` · ${n}` : ''}</button>))}
               </div>
-              {sub === 'units' && <Orders v={view} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}
+              {sub === 'units' && <Orders v={fv!} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}
               {sub === 'rear' && <Rear v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} goTo={goTo}
                 setPriority={(ids) => { if (same(ids, view.priority)) dropAct('priority'); else void addAct('priority', { kind: 'priority', side: view.human.id, formations: ids, issuedAt: view.time }, 'Приоритет подвоза'); }} />}
               {sub === 'bridges' && <Bridges v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo} />}
@@ -380,13 +388,14 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         {doc && time ? <>
           <MapView doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
-            onEngineReady={(e) => { engine.current = e; if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
+            onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           <div className="rp-tools">
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
+            {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
           <Legend on={layerOn} toggle={toggle} />
@@ -403,7 +412,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
           send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft: draftText() });
         }}
-        dyn={advDyn}
+        dyn={advDyn} focus={focus}
         accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
         drafted={(f) => !!drafts[f]} />}
     </div>
@@ -596,7 +605,7 @@ type Dyn = { own: { id: string; name: string }[]; group: { id: string; name: str
 interface Leaf { q: string; path: string[]; cat: string }
 
 /** Все вопросы дерева (с раскрытыми по обстановке ветвями) — для поиска. */
-function allLeaves(dyn: Dyn): Leaf[] {
+function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   const out: Leaf[] = [];
   const walk = (n: AdviceNode, path: string[], cat: string) => {
     const p = [...path, n.title];
@@ -604,13 +613,13 @@ function allLeaves(dyn: Dyn): Leaf[] {
     if (n.dyn) for (const x of dyn[n.dyn]) out.push({ q: n.template!.replace('{name}', x.name), path: p, cat });
     for (const c of n.children ?? []) walk(c, p, cat);
   };
-  for (const c of ADVICE_TREE) walk(c, [], c.id);
+  for (const c of tree) walk(c, [], c.id);
   return out;
 }
 
-function Advisor({ msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn }: {
+function Advisor({ msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus }: {
   msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
-  onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn;
+  onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn; focus: Sector | null;
 }) {
   /** Путь по дереву: индексы узлов (пусто — категории). */
   const [path, setPath] = useState<AdviceNode[]>([]);
@@ -629,9 +638,18 @@ function Advisor({ msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn
     // телефон: свернуть темы, чтобы ответ был виден
     if (window.matchMedia?.('(max-width: 760px)').matches) setNavOpen(false);
   };
-  const leaves = useMemo(() => allLeaves(dyn), [dyn]);
+  // участок в фокусе — своя категория вопросов первой
+  const tree = useMemo<AdviceNode[]>(() => (focus ? [{ id: 'situation', title: `Участок: ${focus.title}`, hint: 'обстановка, противник, решение на участке', children: [
+    { id: 'sector', title: 'На участке', questions: [
+      `Обстановка на участке «${focus.title}»: силы сторон, итоги суток, угрозы`,
+      `Что противник может предпринять на участке «${focus.title}»?`,
+      `Как действовать нашим войскам на участке «${focus.title}»? Предложи приказы`,
+      `Что мешает продвижению на участке «${focus.title}» — местность, реки, подвоз?`,
+      `Чего мы не знаем о противнике на участке «${focus.title}»?`,
+    ] }] }, ...ADVICE_TREE] : ADVICE_TREE), [focus]);
+  const leaves = useMemo(() => allLeaves(dyn, tree), [dyn, tree]);
   const found = find.trim() ? leaves.filter((l) => l.q.toLowerCase().includes(find.trim().toLowerCase()) || l.path.join(' ').toLowerCase().includes(find.trim().toLowerCase())).slice(0, 40) : null;
-  const items = node ? [...(node.children ?? [])] : ADVICE_TREE;
+  const items = node ? [...(node.children ?? [])] : tree;
   const questions = node ? [...(node.questions ?? []), ...(node.dyn ? dyn[node.dyn].map((x) => node.template!.replace('{name}', x.name)) : [])] : [];
   const dynEmpty = node?.dyn && !dyn[node.dyn].length;
   return (

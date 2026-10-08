@@ -36,6 +36,8 @@ export interface Basemaps {
   offline: boolean; setOffline: (v: boolean) => void;
   custom: BasemapSpec[]; addCustom: (b: BasemapSpec) => void;
   local: BasemapSpec[]; setLocalMaps: (m: MapSource[]) => void;
+  /** Локальные карты с метаданными (охват, детальность, год) — для автоподстановки. */
+  localMeta: MapSource[];
   /** Доступные сейчас (локальные + интернет, если не офлайн) и выбранная. */
   all: BasemapSpec[]; current: BasemapSpec | null;
 }
@@ -58,7 +60,7 @@ export function useBasemaps(): Basemaps {
     id, setId, opacity, setOpacity, offline,
     setOffline: (v) => { setOfflineState(v); try { localStorage.setItem('def_ops.offline', v ? '1' : '0'); } catch { /* */ } if (v && !id.startsWith('local-')) setId('none'); },
     custom, addCustom: (b) => { const l = [...custom, b]; setCustom(l); saveCustomBasemaps(l); setId(b.id); },
-    local, setLocalMaps, all, current: all.find((b) => b.id === id) ?? null,
+    local, setLocalMaps, localMeta: localMaps, all, current: all.find((b) => b.id === id) ?? null,
   };
 }
 
@@ -96,4 +98,26 @@ export function useLlm(): Llm {
     settings, check, recheck,
     set: (p) => { const s = { ...settings, ...p }; setSettings(s); try { localStorage.setItem('def_ops.llm', JSON.stringify(s)); } catch { /* */ } },
   };
+}
+
+/* ───────────── автоподстановка подложки для участка ───────────── */
+
+type BBox = [number, number, number, number];
+const area = (b: BBox) => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]);
+const overlap = (a: BBox, b: BBox) => area([Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])]);
+const year = (d?: string | null) => (d ? Number(/(1[89]\d\d|20\d\d)/.exec(d)?.[1] ?? NaN) : NaN);
+
+/**
+ * Подложка для участка: локальная карта, покрывающая его (не меньше 70 % площади) и достаточно
+ * детальная для его масштаба — из таких ближе по году к операции (историческая), затем крупнее
+ * масштабом (меньше охват листа); нет таких — из интернета: для города — OpenStreetMap, для
+ * местности — топографическая; офлайн — без подложки.
+ */
+export function pickBasemap(bm: Basemaps, bbox: BBox, zoom: number, opYear: number): { id: string; why: string } {
+  const cands = bm.localMeta.filter((m) => overlap(m.bounds as BBox, bbox) >= 0.7 * area(bbox) && m.maxzoom >= Math.min(zoom, 14) - 1)
+    .map((m) => ({ m, dy: Number.isFinite(year(m.date)) ? Math.abs(year(m.date) - opYear) : 50, a: area(m.bounds as BBox) }))
+    .sort((x, y) => x.dy - y.dy || x.a - y.a);
+  if (cands.length) return { id: `local-${cands[0].m.id}`, why: `локальная карта: ${cands[0].m.name}${cands[0].m.date ? ` (${cands[0].m.date})` : ''}` };
+  if (bm.offline) return { id: bm.id.startsWith('local-') ? bm.id : 'none', why: 'офлайн: подходящей локальной карты нет' };
+  return zoom >= 12 ? { id: 'osm', why: 'город — OpenStreetMap (подходящей локальной карты нет)' } : { id: 'topo', why: 'местность — топографическая карта (подходящей локальной карты нет)' };
 }

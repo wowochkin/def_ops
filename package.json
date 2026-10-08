@@ -23,6 +23,7 @@
     "llm:mock": "tsx services/staff/src/live/mock-cli.ts",
     "sim:history": "tsx packages/sim/tools/run/history.ts",
     "sim:scenario": "tsx packages/sim/tools/scenario/build_scenario.ts",
+    "sim:sectors": "tsx packages/sim/tools/scenario/build_sectors.ts",
     "theatre:sample": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_sample.ts",
     "sim:calibrate": "tsx packages/sim/tools/run/calibrate.ts",
     "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts",

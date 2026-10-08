@@ -1,0 +1,17 @@
+{
+  "_note": "Ключевые участки операции для фокуса на карте: пункты театра (areas) и запас вокруг них, км. Границы (bbox) считает tools/scenario/build_sectors.ts.",
+  "sectors": [
+    { "id": "seelow", "title": "Зееловские высоты и Кюстринский плацдарм", "note": "главный удар 1 БФ", "areas": ["Seelow", "Kostrzyn", "Muencheberg", "Wriezen", "seelow_heights", "kuestrin_bridgehead"], "padKm": 6 },
+    { "id": "frankfurt", "title": "Франкфурт-на-Одере: плацдармы 69 А и 33 А", "areas": ["Frankfurt", "Lebus", "Fuerstenwalde"], "padKm": 8 },
+    { "id": "neisse", "title": "Нейсе: прорыв 1 УФ у Форста и Бад-Мускау", "areas": ["Forst", "BadMuskau", "Guben"], "padKm": 10 },
+    { "id": "spree", "title": "Шпрее: Котбус — Шпремберг", "areas": ["Cottbus", "Spremberg"], "padKm": 10 },
+    { "id": "halbe", "title": "Котёл 9-й армии: Хальбе", "areas": ["Halbe", "halbe_forest", "Teupitz", "Beeskow", "Luebben"], "padKm": 6 },
+    { "id": "zossen", "title": "Удар 3 гв. ТА: Барут — Цоссен", "areas": ["Baruth", "Zossen"], "padKm": 10 },
+    { "id": "north", "title": "Обход Берлина с севера: Бернау — Ораниенбург", "areas": ["Bernau", "Oranienburg", "Eberswalde"], "padKm": 8 },
+    { "id": "berlin", "title": "Берлин", "areas": ["berlin", "B_Mitte"], "padKm": 22 },
+    { "id": "ring", "title": "Кольцо вокруг Берлина: Кетцин — Потсдам — Науэн", "areas": ["Ketzin", "Potsdam", "Nauen"], "padKm": 8 },
+    { "id": "elbe", "title": "Эльба у Торгау", "areas": ["Torgau"], "padKm": 20 },
+    { "id": "lower_oder", "title": "Нижний Одер: Штеттин — Шведт (2 БФ)", "areas": ["Szczecin", "Schwedt", "Gryfino"], "padKm": 10 },
+    { "id": "goerlitz", "title": "Гёрлиц — Баутцен: южный фланг 1 УФ", "areas": ["Goerlitz", "Bautzen", "Niesky"], "padKm": 10 }
+  ]
+}

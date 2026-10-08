@@ -13,6 +13,7 @@ import { BasemapControls, Popover } from './ui';
 import type { Basemaps, Llm } from './shared';
 import { CommandView, loadSaved, SAVE_KEY, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
+import { SectorPicker, withFocus, type Sector } from './Sectors';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
 
@@ -55,6 +56,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [saved, setSaved] = useState<SavedGame | null>(loadSaved);
   const [game, setGame] = useState<{ start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode } | null>(null);
   const [take, setTake] = useState<string | null>(null);
+  const [focus, setFocus] = useState<Sector | null>(null);
+  const [eng, setEng] = useState<MapEngine | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const worker = useRef<Worker | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
@@ -73,7 +77,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       else {
         setBusy(null); w.terminate();
         const d = migrateDocument(m.result.doc);
-        setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1);
+        setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
       }
     };
     w.onerror = (e) => { setBusy(null); setError(e.message || 'ошибка расчёта'); };
@@ -147,13 +151,15 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       </aside>
       <main className="rp-main">
         {doc ? <>
-          <MapView key={mapKey} doc={doc} setDoc={(d) => setDoc(d)} selected={null} setSelected={() => {}} selectedOverlay={null}
+          <MapView key={mapKey} doc={withFocus(doc, focus)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
-            onEngineReady={(e) => { engine.current = e; }} onStatus={() => {}} time={time} newFromNow={false} />
+            onEngineReady={(e) => { engine.current = e; setEng(e); }} onStatus={() => {}} time={time} newFromNow={false} />
+          {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {takeAt && <button className="take-btn" onClick={() => setTake(takeAt)} title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
+            {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
           <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} />
