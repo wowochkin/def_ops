@@ -61,9 +61,13 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   const sideOf = (s: string): Side => (s === own ? 'own' : 'enemy');
   const T = ctx.theatre;
   const [w, s, e, n] = T.data.bbox;
-  // масштаб — по охвату театра (окно ~900 px): операция ≈ 7, город ≈ 10
-  const zoom = +(Math.log2((360 * 900) / (256 * (e - w))) - 0.8).toFixed(1);
-  const doc = emptyDocument([(w + e) / 2, (s + n) / 2], zoom);
+  // вид — по войскам в начале (с запасом), не шире театра: операция ≈ 7, город ≈ 10
+  const pts = (run.snapshots[0]?.units ?? []).filter((u) => !u.destroyed).map((u) => u.at);
+  const lng = pts.length ? [Math.min(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[0]))] : [w, e];
+  const lat = pts.length ? [Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[1]))] : [s, n];
+  const span = Math.min(e - w, Math.max(lng[1] - lng[0], (lat[1] - lat[0]) * 1.6, 0.2) * 1.25);
+  const zoom = +(Math.log2((360 * 900) / (256 * span)) - 0.6).toFixed(1);
+  const doc = emptyDocument([(lng[0] + lng[1]) / 2, (lat[0] + lat[1]) / 2], zoom);
   doc.name = o.name ?? `Переигровка: ${ctx.scenario.name}`;
   const mk = (id: string, name: string, role: Layer['role'], opacity = 1, visible = true): Layer => ({ id, name, role, visible, locked: true, opacity, source: { system: 'simulation', ref: ctx.scenario.id, readOnly: true } });
   doc.layers = [
