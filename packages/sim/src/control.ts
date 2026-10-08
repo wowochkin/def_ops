@@ -49,16 +49,17 @@ export function controlMap(T: Theatre, units: Formation[], sides: string[], weig
  * ближе zocKm и ближе любого своего формирования (зона влияния противника).
  * Окружение получается, когда кольцо таких зон смыкается вокруг формирования.
  */
-export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number): Uint8Array {
+export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number | ((f: Formation) => number)): Uint8Array {
   const N = T.cols * T.rows;
+  const zoc = typeof zocKm === 'number' ? () => zocKm : zocKm;
   const own = units.filter((u) => u.side === side).map((u) => T.proj.toXY(u.position));
-  const enemy = units.filter((u) => u.side !== side).map((u) => T.proj.toXY(u.position));
+  const enemy = units.filter((u) => u.side !== side).map((u) => ({ p: T.proj.toXY(u.position), r: zoc(u) }));
   const out = new Uint8Array(N).fill(1);
   for (let i = 0; i < N; i++) {
     const p = T.cellCenter(i % T.cols, Math.floor(i / T.cols));
-    let de = Infinity;
-    for (const e of enemy) { const d = Math.hypot(e[0] - p[0], e[1] - p[1]); if (d < de) de = d; }
-    if (de >= zocKm) continue;
+    let de = Infinity, inZone = false;
+    for (const e of enemy) { const d = Math.hypot(e.p[0] - p[0], e.p[1] - p[1]); if (d < de) de = d; if (d < e.r) inZone = true; }
+    if (!inZone) continue;
     let dOwn = Infinity;
     for (const o of own) { const d = Math.hypot(o[0] - p[0], o[1] - p[1]); if (d < dOwn) dOwn = d; }
     if (dOwn > de) out[i] = 0;
@@ -72,7 +73,7 @@ export interface SupplyField {
 }
 
 /** Поле времени подвоза для стороны: от источников в обход зон влияния противника. */
-export function supplyField(T: Theatre, side: string, sources: LngLat[], units: Formation[], profile: SideProfile, rules: Rules, time: string, zocKm: number): SupplyField {
+export function supplyField(T: Theatre, side: string, sources: LngLat[], units: Formation[], profile: SideProfile, rules: Rules, time: string, zocKm: number | ((f: Formation) => number)): SupplyField {
   const pass = supplyPassable(T, units, side, zocKm);
   const src = sources.map((p) => T.indexOf(p)).filter((i) => i >= 0 && pass[i]);
   const hours = T.distanceField(src, 'motor', profile, rules, time, (i) => pass[i] === 1);

@@ -84,7 +84,10 @@ export function supplyState(ctx: SimContext, units: Formation[], time: string) {
   const fields = new Map<string, Float64Array>();
   for (const side of sides) {
     const src = supplySources(ctx, side);
-    if (src.length) fields.set(side, supplyField(ctx.theatre, side, src, units, profileOf(ctx, side), ctx.rules, time, ctx.rules.contactKm * 2).hours);
+    // зона влияния: наступающие и на марше — радиус соприкосновения; в обороне (кольцо окружения) — половина полосы
+    const zoc = (f: Formation) => f.posture === 'attack' || f.posture === 'march' ? ctx.rules.contactKm
+      : Math.max(ctx.rules.contactKm, (profileOf(ctx, f.side).unitTypes[f.type]?.frontageKm ?? 0) / 2);
+    if (src.length) fields.set(side, supplyField(ctx.theatre, side, src, units, profileOf(ctx, side), ctx.rules, time, zoc).hours);
   }
   return { control, fields };
 }
@@ -197,10 +200,14 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     // подвоз: по своей территории от источников стороны
     const ps = prof.supply;
     if (ps && sup?.fields.get(f.side)) {
-      const cut = isCut(f);
+      // окружение — когда подвоз не доходит дольше rules.encircleHours (по умолчанию 36 ч, т. е. два хода подряд):
+      // разовый разрыв на стыке не считается котлом
+      const blocked = isCut(f);
+      f.cutHours = blocked ? (f.cutHours ?? 0) + dt : 0;
+      const cut = f.cutHours >= (R.encircleHours ?? 36);
       if (cut !== !!f.cutOff) journal.push({ kind: 'encircled', time: now, formation: f.id, cut });
       f.cutOff = cut;
-      if (!cut) {
+      if (!blocked) {
         f.ammo = Math.min(ps.maxAmmo, f.ammo + ps.ammoPerDay * (dt / 24));
         f.fuel = Math.min(ps.maxFuel, f.fuel + ps.fuelPerDay * (dt / 24));
       }
@@ -275,7 +282,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   // «удерживать любой ценой»: обороняющиеся не отходят и несут повышенные потери;
   // наступающие продвигаются, только если оборона прорвана (обходят узел сопротивления)
   // окружённые не могут отойти: держатся на месте с повышенными потерями
-  const pinned = (f: Formation) => f.order?.task === 'hold' || env.isCut(f);
+  const pinned = (f: Formation) => f.order?.task === 'hold' || !!f.cutOff;
   const holding = def.every(pinned);
   const breakthrough = advancePerDay >= BREAKTHROUGH_KM;
   const advanceKm = holding && !breakthrough ? 0 : advancePerDay * day;

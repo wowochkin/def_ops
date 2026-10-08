@@ -191,10 +191,11 @@ describe('цели, снабжение, окружение', () => {
   });
 
   it('кольцо зон влияния противника отрезает от снабжения; есть коридор — не отрезано', () => {
-    const ring = [su('n', 0, 9), su('s', 0, -9), su('w', -9, 0)];
-    const closed = withSupply(ctxWith([...ring, su('e', 9, 0), de('k1', 0, 0)]), [ll(-28, 0)], [ll(28, 0)]);
+    const ring = [su('n', 0, 7), su('s', 0, -7), su('w', -7, 0)];
+    const closed = withSupply(ctxWith([...ring, su('e', 7, 0), de('k1', 0, 0)]), [ll(-28, 0)], [ll(28, 0)]);
     const open = withSupply(ctxWith([...ring, de('k1', 0, 0)]), [ll(-28, 0)], [ll(28, 0)]);
-    const cut = (ctx: SimContext) => step(createState(ctx), ctx).journal.some((j) => j.kind === 'encircled' && j.formation === 'k1' && j.cut);
+    // окружение — после двух ходов подряд без подвоза
+    const cut = (ctx: SimContext) => step(step(createState(ctx), ctx), ctx).journal.some((j) => j.kind === 'encircled' && j.formation === 'k1' && j.cut);
     expect(cut(closed)).toBe(true);
     expect(cut(open)).toBe(false);
   });

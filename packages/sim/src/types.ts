@@ -95,6 +95,8 @@ export interface Rules {
    * (клетку не заняли войска стороны).
    */
   fortCrossHours?: number;
+  /** Через сколько часов непрерывного разрыва подвоза формирование считается окружённым (по умолчанию 36). */
+  encircleHours?: number;
   /** Множитель темпов марша из профилей (калибровка: заторы, разрушенные дороги, беженцы). */
   movementScale?: number;
   /** Откуда взяты числа: калибровка — сценарий, мерило, дата. */
@@ -252,6 +254,8 @@ export interface Formation {
   enterAt: string | null;
   /** Отрезано от снабжения (окружено). */
   cutOff?: boolean;
+  /** Сколько часов подряд подвоз не доходит. */
+  cutHours?: number;
 }
 
 export interface CombatFactor {

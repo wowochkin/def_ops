@@ -17,7 +17,7 @@ export interface History {
 
 export type HistoryEvent = { id: string; title: string; date: string; source?: string } & (
   | { kind: 'reach'; side: string; place: string; radiusKm: number }
-  | { kind: 'cut'; formation: string }
+  | { kind: 'cut'; formation?: string; formations?: string[] }
   | { kind: 'meet'; formations: string[]; place: string; radiusKm: number }
 );
 
@@ -48,7 +48,9 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
         if (c && e.formations.every((id) => s.units.some((u) => u.id === id && !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c)) <= e.radiusKm))) { when = s.time; break; }
       }
     } else {
-      const j = run.final.journal.find((x) => (x.kind === 'encircled' && x.formation === e.formation && x.cut) || (x.kind === 'destroyed' && x.formation === e.formation));
+      // окружено (или уничтожено) хотя бы одно из перечисленных
+      const ids = new Set(e.formations ?? (e.formation ? [e.formation] : []));
+      const j = run.final.journal.find((x) => (x.kind === 'encircled' && ids.has(x.formation) && x.cut) || (x.kind === 'destroyed' && ids.has(x.formation)));
       when = j ? j.time : null;
     }
     // снимок — на утро; событие «дня» — день перед ним

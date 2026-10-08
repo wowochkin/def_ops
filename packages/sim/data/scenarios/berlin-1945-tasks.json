@@ -935,15 +935,16 @@
    "parent": "de_9a",
    "type": "inf_corps",
    "position": [
-    14.625,
-    52.2
+    14.5,
+    52.18
    ],
    "personnel": 16981,
    "tanks": 72,
    "guns": 405,
    "ammo": 1.5,
    "fuel": 0.7,
-   "posture": "defend"
+   "posture": "defend",
+   "note": "в наборе — середина Брисков/Фюрстенберг (B, ±12 км), почти в точке советского плацдарма 33 А; поставлено на 10 км западнее, в полосу обороны против плацдарма (C)"
   },
   {
    "id": "de_v",
@@ -1787,10 +1788,10 @@
    "id": "de_v@1945-04-19T18:00:defend",
    "formation": "de_v",
    "task": "defend",
-   "target": "Luebben",
+   "target": "Cottbus",
    "issuedAt": "1945-04-19T18:00",
    "source": "script",
-   "note": "прикрыть тыл армии рубежом Люббен–Хальбе (LT_HALBE)"
+   "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE)"
   },
   {
    "id": "su_1gta@1945-04-19T18:00:attack",
@@ -1865,7 +1866,7 @@
    "target": "Fuerstenwalde",
    "issuedAt": "1945-04-20T18:00",
    "source": "script",
-   "note": "задача XI танковый корпус СС"
+   "note": "отход на Шпрее у Фюрстенвальде; задача XI танковый корпус СС"
   },
   {
    "id": "de_18pzgd@1945-04-20T18:00:withdraw",
@@ -1892,7 +1893,7 @@
    "target": "Fuerstenwalde",
    "issuedAt": "1945-04-20T18:00",
    "source": "script",
-   "note": "задача XI танковый корпус СС"
+   "note": "отход на Шпрее у Фюрстенвальде; задача XI танковый корпус СС"
   },
   {
    "id": "de_712id@1945-04-20T18:00:withdraw",
@@ -1901,7 +1902,7 @@
    "target": "Fuerstenwalde",
    "issuedAt": "1945-04-20T18:00",
    "source": "script",
-   "note": "задача XI танковый корпус СС"
+   "note": "отход на Шпрее у Фюрстенвальде; задача XI танковый корпус СС"
   },
   {
    "id": "de_9fjd@1945-04-20T18:00:withdraw",
@@ -1919,7 +1920,7 @@
    "target": "Fuerstenwalde",
    "issuedAt": "1945-04-20T18:00",
    "source": "script",
-   "note": "задача XI танковый корпус СС"
+   "note": "отход на Шпрее у Фюрстенвальде; задача XI танковый корпус СС"
   },
   {
    "id": "de_muencheberg@1945-04-20T18:00:withdraw",
@@ -1937,7 +1938,7 @@
    "target": "Fuerstenwalde",
    "issuedAt": "1945-04-20T18:00",
    "source": "script",
-   "note": "задача XI танковый корпус СС"
+   "note": "отход на Шпрее у Фюрстенвальде; задача XI танковый корпус СС"
   },
   {
    "id": "de_nordland@1945-04-20T18:00:withdraw",
@@ -2017,6 +2018,69 @@
    "source": "script"
   },
   {
+   "id": "de_169id@1945-04-21T17:00:hold",
+   "formation": "de_169id",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-21T17:00",
+   "source": "script",
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_303id@1945-04-21T17:00:hold",
+   "formation": "de_303id",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-21T17:00",
+   "source": "script",
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_712id@1945-04-21T17:00:hold",
+   "formation": "de_712id",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-21T17:00",
+   "source": "script",
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_kurmark@1945-04-21T17:00:hold",
+   "formation": "de_kurmark",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-21T17:00",
+   "source": "script",
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nederland@1945-04-21T17:00:hold",
+   "formation": "de_nederland",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-21T17:00",
+   "source": "script",
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_v@1945-04-21T17:00:hold",
+   "formation": "de_v",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-21T17:00",
+   "source": "script",
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE)"
+  },
+  {
+   "id": "de_v_ss@1945-04-21T17:00:hold",
+   "formation": "de_v_ss",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-21T17:00",
+   "source": "script",
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE)"
+  },
+  {
    "id": "de_iii_ss@1945-04-21T18:00:defend",
    "formation": "de_iii_ss",
    "task": "defend",
@@ -2041,15 +2105,6 @@
    "issuedAt": "1945-04-21T18:00",
    "source": "script",
    "note": "контрудар у Баутцена 21–25.04"
-  },
-  {
-   "id": "de_v_ss@1945-04-21T18:00:withdraw",
-   "formation": "de_v_ss",
-   "task": "withdraw",
-   "target": "Beeskow",
-   "issuedAt": "1945-04-21T18:00",
-   "source": "script",
-   "note": "двумя скачками (LT_HALBE)"
   },
   {
    "id": "su_13a@1945-04-21T18:00:attack",
@@ -2197,13 +2252,49 @@
    "note": "правым крылом на юг — Шармютцельзе (LT_HALBE)"
   },
   {
-   "id": "de_169id@1945-04-23T18:00:withdraw",
+   "id": "de_169id@1945-04-23T13:00:withdraw",
    "formation": "de_169id",
    "task": "withdraw",
    "target": "Storkow",
-   "issuedAt": "1945-04-23T18:00",
+   "issuedAt": "1945-04-23T13:00",
    "source": "script",
-   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
+   "note": "разрешение на отход 9 А, 23.04 13:00 (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_303id@1945-04-23T13:00:withdraw",
+   "formation": "de_303id",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T13:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А, 23.04 13:00 (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_712id@1945-04-23T13:00:withdraw",
+   "formation": "de_712id",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T13:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А, 23.04 13:00 (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_kurmark@1945-04-23T13:00:withdraw",
+   "formation": "de_kurmark",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T13:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А, 23.04 13:00 (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nederland@1945-04-23T13:00:withdraw",
+   "formation": "de_nederland",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T13:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А, 23.04 13:00 (LT_HALBE); задача XI танковый корпус СС"
   },
   {
    "id": "de_18pzgd@1945-04-23T18:00:defend",
@@ -2224,24 +2315,6 @@
    "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
   },
   {
-   "id": "de_303id@1945-04-23T18:00:withdraw",
-   "formation": "de_303id",
-   "task": "withdraw",
-   "target": "Storkow",
-   "issuedAt": "1945-04-23T18:00",
-   "source": "script",
-   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
-  },
-  {
-   "id": "de_712id@1945-04-23T18:00:withdraw",
-   "formation": "de_712id",
-   "task": "withdraw",
-   "target": "Storkow",
-   "issuedAt": "1945-04-23T18:00",
-   "source": "script",
-   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
-  },
-  {
    "id": "de_9fjd@1945-04-23T18:00:defend",
    "formation": "de_9fjd",
    "task": "defend",
@@ -2251,15 +2324,6 @@
    "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
   },
   {
-   "id": "de_kurmark@1945-04-23T18:00:withdraw",
-   "formation": "de_kurmark",
-   "task": "withdraw",
-   "target": "Storkow",
-   "issuedAt": "1945-04-23T18:00",
-   "source": "script",
-   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
-  },
-  {
    "id": "de_muencheberg@1945-04-23T18:00:defend",
    "formation": "de_muencheberg",
    "task": "defend",
@@ -2267,15 +2331,6 @@
    "issuedAt": "1945-04-23T18:00",
    "source": "script",
    "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
-  },
-  {
-   "id": "de_nederland@1945-04-23T18:00:withdraw",
-   "formation": "de_nederland",
-   "task": "withdraw",
-   "target": "Storkow",
-   "issuedAt": "1945-04-23T18:00",
-   "source": "script",
-   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
   },
   {
    "id": "de_nordland@1945-04-23T18:00:defend",
@@ -2383,12 +2438,22 @@
    "source": "script"
   },
   {
-   "id": "de_v_ss@1945-04-24T18:00:withdraw",
+   "id": "de_v@1945-04-23T20:00:withdraw",
+   "formation": "de_v",
+   "task": "withdraw",
+   "target": "Luebben",
+   "issuedAt": "1945-04-23T20:00",
+   "source": "script",
+   "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE)"
+  },
+  {
+   "id": "de_v_ss@1945-04-23T20:00:withdraw",
    "formation": "de_v_ss",
    "task": "withdraw",
-   "target": "Storkow",
-   "issuedAt": "1945-04-24T18:00",
-   "source": "script"
+   "target": "Beeskow",
+   "issuedAt": "1945-04-23T20:00",
+   "source": "script",
+   "note": "в ночь 23/24.04 одним скачком на Бург–Швилохзе–Бесков (LT_HALBE)"
   },
   {
    "id": "su_1pa@1945-04-24T18:00:defend",
@@ -2497,6 +2562,14 @@
    "formation": "de_v",
    "task": "withdraw",
    "target": "MaerkischBuchholz",
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_v_ss@1945-04-25T18:00:withdraw",
+   "formation": "de_v_ss",
+   "task": "withdraw",
+   "target": "Storkow",
    "issuedAt": "1945-04-25T18:00",
    "source": "script"
   },
@@ -3034,7 +3107,6 @@
   },
   "de": {
    "sources": [
-    "B_Mitte",
     "Brandenburg",
     "Magdeburg",
     "Rathenow",
