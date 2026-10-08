@@ -49,6 +49,18 @@ export function LayersPanel(p: Props) {
     setDoc({ ...doc, features: a });
   };
 
+  /** Удалить слой: пустой — сразу; с объектами — спросить, перенести их или удалить вместе со слоем. */
+  const deleteLayer = (id: string, count: number) => {
+    const l = doc.layers.find((x) => x.id === id);
+    if (!l || doc.layers.length < 2) return;
+    const others = doc.layers.filter((x) => x.id !== id);
+    const target = others[others.length - 1];
+    if (count > 0 && !ask(`Удалить слой «${l.name}» (${count} объект(ов))?`)) return;
+    const keep = count > 0 && ask(`Перенести ${count} объект(ов) в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
+    setDoc(removeLayer(doc, id, keep ? target.id : null));
+    if (activeLayer === id) setActiveLayer(null);
+  };
+
   return (
     <div className="layers">
       <div className="sec-h">
@@ -99,6 +111,7 @@ export function LayersPanel(p: Props) {
               )}
               <span className="muted cnt">{features.length}</span>
               <button className="link" title="Выше" onClick={() => setDoc(moveLayer(doc, l.id, 1))}>↑</button>
+              <button className="link ldel" title="Удалить слой" disabled={doc.layers.length < 2} onClick={() => deleteLayer(l.id, features.length)}>🗑</button>
               <button className="link" title="Ниже" onClick={() => setDoc(moveLayer(doc, l.id, -1))}>↓</button>
             </div>
             {open[l.id] && (
@@ -118,13 +131,7 @@ export function LayersPanel(p: Props) {
                   </select></span>
                 </div>
                 <div className="btns">
-                  <button className="danger" disabled={doc.layers.length < 2} onClick={() => {
-                    const others = doc.layers.filter((x) => x.id !== l.id);
-                    const target = others[others.length - 1];
-                    const keep = features.length > 0 && ask(`Перенести ${features.length} объект(ов) в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
-                    setDoc(removeLayer(doc, l.id, keep ? target.id : null));
-                    if (activeLayer === l.id) setActiveLayer(null);
-                  }}>Удалить слой</button>
+                  <button className="danger" disabled={doc.layers.length < 2} onClick={() => deleteLayer(l.id, features.length)}>Удалить слой</button>
                 </div>
                 {features.slice().reverse().map((f) => (
                   <div key={f.id} draggable className={`litem${f.id === selected ? ' on' : ''}${f.hidden ? ' hid' : ''}`}
