@@ -9,6 +9,7 @@
 import type { LngLat } from '@def-ops/core';
 import { dist } from './geo';
 import { onMap, profileOf, targetPoint, type SimContext } from './step';
+import PLACES_RU from '../data/places-ru.json';
 import type { Theatre } from './theatre';
 import type { Echelon, Formation, JournalEntry, SimState, Target, Task } from './types';
 
@@ -19,10 +20,22 @@ export const TASK_RU: Record<Task, string> = {
 export const POSTURE_RU: Record<string, string> = { attack: 'наступает', defend: 'обороняется', march: 'на марше', withdraw: 'отходит', reserve: 'в резерве' };
 const OUTCOME_RU = { breakthrough: 'прорыв', advance: 'продвижение', held: 'оборона удержана', repelled: 'атака отбита' } as const;
 
-/** Название пункта для людей и модели: «BadFreienwalde» → «Bad Freienwalde», «B_Reichstag» → «Берлин-Reichstag». */
+/** Исходное написание пункта: «BadFreienwalde» → «Bad Freienwalde», «B_Reichstag» → «Reichstag». */
+export function areaOriginal(name: string): string {
+  return name.replace(/^B_/, '').replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+}
+
+/**
+ * Название пункта для людей и модели: по-русски, исходное — в скобках: «Зелов (Seelow)», «Берлин, Рейхстаг
+ * (Reichstag)». Русские названия — data/places-ru.json; нет перевода — исходное (с «Берлин-» для объектов города).
+ * Приказы модели узнают пункт по любому из двух названий.
+ */
 export function areaTitle(name: string): string {
-  if (/[^\x00-\x7f]/.test(name)) return name;
-  return name.replace(/^B_/, 'Берлин-').replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+  if (/[^\x00-\x7f]/.test(name) && !(name in PLACES_RU)) return name;
+  const ru = (PLACES_RU as Record<string, string>)[name];
+  const orig = areaOriginal(name);
+  if (ru && ru !== orig) return `${ru} (${orig})`;
+  return name.startsWith('B_') ? `Берлин-${orig}` : orig;
 }
 
 const RUMB = ['С', 'СВ', 'В', 'ЮВ', 'Ю', 'ЮЗ', 'З', 'СЗ'];

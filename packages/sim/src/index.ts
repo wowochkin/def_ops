@@ -11,6 +11,6 @@ export { analyze, reportMarkdown, type Analysis, type AnalysisOptions } from './
 export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } from './source';
 export { snapshotOf } from './history';
 export { startGame, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
-export { unitReports, intelReport, nearbyPlaces, dayEvents, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
+export { unitReports, intelReport, nearbyPlaces, dayEvents, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, areaOriginal, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
 export { prepareTakeover, checkAction, applyActions, NOT_COMMITTED, type ActionCheck } from './staff';
 export { evaluateNorms, normScenarios, measurePace, measureLoss, NORM_MARK, fmtNorm, type Norm, type NormTable, type NormResult, type NormVerdict } from './norms';

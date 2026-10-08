@@ -155,7 +155,10 @@ export function findName(name: string, list: string[]): number {
   let best = -1, score = 0;
   list.forEach((x, i) => {
     let s = 0;
-    if (o && o === original(x)) s = 3;
+    const ox = original(x);
+    // «Seelow» против «Зелов (Seelow)» — по исходному названию в скобках
+    if ((o && o === ox) || (n && ox && n === ox)) s = 3;
+    else if (n && ox && ox.length > 3 && (n.includes(ox) || ox.includes(n)) && Math.min(n.length, ox.length) >= 4) s = 2.5;
     else if (n) {
       const k = norm(x);
       if (k && (n.includes(k) || k.includes(n))) s = 2 + Math.min(k.length, n.length) / Math.max(k.length, n.length);

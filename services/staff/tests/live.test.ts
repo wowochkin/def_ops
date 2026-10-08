@@ -212,3 +212,16 @@ describe('выключение размышления', () => {
     expect((c.body('gpt-oss-20b', { messages: msgs }) as { reasoning_effort: string }).reasoning_effort).toBe('low');
   });
 });
+
+describe('пункты по-русски и в исходном написании', () => {
+  it('приказ находит пункт и по русскому названию, и по исходному', async () => {
+    const { findName } = await import('../src/decision');
+    const list = ['Зелов (Seelow)', 'Мюнхеберг (Muencheberg)', 'Берлин, Рейхстаг (Reichstag)'];
+    expect(findName('Зелов', list)).toBe(0);
+    expect(findName('Seelow', list)).toBe(0);
+    expect(findName('Muencheberg', list)).toBe(1);
+    expect(findName('Рейхстаг', list)).toBe(2);
+    expect(findName('Reichstag', list)).toBe(2);
+    expect(findName('Берлин, Рейхстаг (Reichstag)', list)).toBe(2);
+  });
+});
