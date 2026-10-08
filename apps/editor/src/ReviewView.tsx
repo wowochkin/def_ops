@@ -9,7 +9,7 @@ import { REVIEW_SECTIONS } from '@def-ops/staff-service/live';
 import type { GameRequest, GameResponse, TurnView } from './sim/game-protocol';
 import type { Llm } from './shared';
 import { ModelPicker } from './ModelPicker';
-import { mdToHtml } from './markdown';
+import { mdToHtml, unfence } from './markdown';
 import { download } from './ReplayView';
 import { downloadReviewPdf } from './reviewPdf';
 
@@ -78,7 +78,7 @@ export function ReviewView({ view, llm, send, listen, onClose }: {
     `# Разбор операции: ${view.scenarioName}`, '',
     `Сторона: ${view.human.name}. Командование принято ${dm(view.takeover)}; разбор на ${dm(view.time)}.`,
     `Итог: ${view.outcome ? `${view.outcome.result === 'victory' ? 'победа' : 'поражение'} — ${view.outcome.text}` : 'игра не окончена'}.`, '',
-    ...ready.flatMap((s) => [`## ${s.title}`, `*${s.role}*`, '', secs[s.id].text, '']),
+    ...ready.flatMap((s) => [`## ${s.title}`, `*${s.role}*`, '', unfence(secs[s.id].text), '']),
   ].join('\n');
 
   const [pdfBusy, setPdfBusy] = useState(false);

@@ -3,6 +3,7 @@
  * моделью (LM Studio), предложения изменений, вопросы и рассказы по материалам. Обработка идёт вне
  * компонентов — переключение разделов её не прерывает; подписчики получают изменения.
  */
+import { stripMeta } from '../markdown';
 import {
   applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, qaMessages, toProposals,
   type Entry, type ExtractedItem, type KbDocument, type Proposal, type Reliability, type Source,
@@ -201,10 +202,7 @@ export const kbLlm = (llm: LlmSettings): LlmSettings => ({ ...llm, model: llm.kb
 
 /** Убрать из ответа служебные пометки модели о жанре и объёме («Лекция по…», «(Общий объём: около 500 слов)»). */
 export function cleanAnswer(t: string): string {
-  return t.split('\n').filter((l) => {
-    const x = l.replace(/[*_()\s]/g, ' ').trim().toLowerCase();
-    return !/^(общий\s+)?объ[её]м[^а-яё].*слов/.test(x) && !/^(преподавательская\s+)?лекция[^а-яё].*(тема|по военной истории)/.test(x) && !/^\(?\s*около\s+\d+\s+слов/.test(x);
-  }).join('\n').replace(/^\s+/, '');
+  return stripMeta(t).replace(/^\s+/, '');
 }
 
 export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSettings, history: { q: string; a: string }[],

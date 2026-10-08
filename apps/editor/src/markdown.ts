@@ -12,12 +12,21 @@ const inline = (s: string) => esc(s)
 const BULLET = /^\s*[-*+•] +/;
 const NUMBER = /^\s*\d{1,3}[.)] +/;
 
-/** Ответ целиком в блоке ```markdown … ``` (так иногда отвечает модель) — без обёртки; остатки <think> — прочь. */
+/** Служебные строки модели о жанре и объёме («(Объем: ~380 слов)», «Количество слов: 400») — прочь; черта в конце — тоже. */
+export function stripMeta(md: string): string {
+  return md.split('\n').filter((l) => {
+    const x = l.replace(/[*_()\[\]\s]/g, ' ').trim().toLowerCase();
+    return !/^(общий\s+|примерный\s+)?объ[её]м[^а-яё].*слов/.test(x) && !/^(количество|число)\s+слов/.test(x) && !/^word\s*count/.test(x)
+      && !/^~?\s*(около\s+)?\d+\s+слов\.?$/.test(x) && !/^(преподавательская\s+)?лекция[^а-яё].*(тема|по военной истории)/.test(x);
+  }).join('\n').replace(/(\n\s*([-*_])\s*\2\s*\2[\s\-*_]*)+\s*$/, '').replace(/\s+$/, '');
+}
+
+/** Ответ целиком в блоке ```markdown … ``` (так иногда отвечает модель) — без обёртки; остатки <think> и служебные строки — прочь. */
 export function unfence(md: string): string {
   let t = md.replace(/\r/g, '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').replace(/^\s+/, '');
   const m = /^```(?:markdown|md)?[ \t]*\n/i.exec(t);
   if (m) t = t.slice(m[0].length).replace(/\n?```\s*$/, '');
-  return t;
+  return stripMeta(t);
 }
 
 export function mdToHtml(md: string): string {
