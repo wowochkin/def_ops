@@ -544,5 +544,8 @@
    "radiusKm": 2,
    "source": "LT_RACE"
   }
+ ],
+ "frontlineFiles": [
+  "../../../../../docs/sources/berlin-1945-plan-frontline.json"
  ]
 }

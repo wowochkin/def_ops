@@ -26,7 +26,9 @@ interface RecipeFormation {
 }
 interface Recipe {
   id: string; name: string; timeNote?: string; start: string; end: string; turnHours: number; theatre: string; rules: string;
-  dataset: string; sides: Scenario['sides']; events?: unknown[]; supply?: Record<string, { sources: string[] } | string>;
+  dataset: string; sides: Scenario['sides']; events?: unknown[];
+  /** Дополнительные линии фронта (например, обводка исторической карты): файлы с date и lines[{name, points}]. */
+  frontlineFiles?: string[]; supply?: Record<string, { sources: string[] } | string>;
   defaults: Record<string, { ammo: number; fuel: number; posture: Posture }>;
   allocation: { fronts: Record<string, { personnel: number; tanks: number; guns: number; combatShare: number; note?: string }> };
   formations: RecipeFormation[];
@@ -177,7 +179,13 @@ const history = {
     formation: p.formation, time: posTime(p), at: [p.lng, p.lat], approxKm: p.approx_km, place: p.place, reliability: p.reliability, source: p.source,
   })),
   events: R.events ?? [],
-  frontline: ds.frontline.map((l) => ({ time: `${l.date}T20:00`, sector: l.sector, line: l.points.map((p) => [p.lng, p.lat]) })),
+  frontline: [
+    ...ds.frontline.map((l) => ({ time: `${l.date}T20:00`, sector: l.sector, line: l.points.map((p) => [p.lng, p.lat]) })),
+    ...(R.frontlineFiles ?? []).flatMap((f) => {
+      const x = JSON.parse(readFileSync(resolve(dirname(recipePath), f), 'utf8')) as { date: string; title: string; lines: { name: string; points: LngLat[] }[] };
+      return x.lines.map((l) => ({ time: `${x.date}T20:00`, sector: `${l.name} (${x.title})`, line: l.points }));
+    }),
+  ],
 };
 writeFileSync(join(outDir, `${R.id}.history.json`), JSON.stringify(history));
 console.log(`сценарий ${R.id}: формирований ${formations.length} (действующих ${formations.filter((f) => f.type && f.position).length}), приказов ${orders.length}`);
