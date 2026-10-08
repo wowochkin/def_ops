@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { category, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
 import * as kb from './kb/kb';
+import { QWEN_EMBED } from './kb/vectors';
 import type { Llm } from './shared';
 import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
@@ -207,7 +208,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
           onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); void go(text); } }} />
         <button className="primary" disabled={busy || !text.trim()} onClick={() => go(text)}>{mode === 'ask' ? 'Спросить' : 'Рассказать'}</button>
       </div>
-      {llm.check.state === 'fail' && <div className="adv-note err">Модель недоступна: {llm.check.error} — настройки в разделе «Штаб».</div>}
+      {llm.check.state === 'fail' && <div className="adv-note err">Модель недоступна: {llm.check.error} — настройки в разделе «ИИ».</div>}
     </aside>
   );
 }
@@ -291,14 +292,15 @@ function VecCard({ s, llm }: { s: kb.KbState; llm: Llm }) {
     <section className="card">
       <h3>Смысловой поиск</h3>
       <p className="muted">Кроме поиска по словам база ищет по смыслу: модель эмбеддингов переводит записи и вопрос в векторы, выдачи сливаются.
-        Нужна модель <b>Qwen3-Embedding</b> в LM Studio рядом с основной (поиск «qwen3 embedding», GGUF; 0.6B — быстро, ~0,6 ГБ; 4B — точнее).
+        Нужна модель <b>Qwen3-Embedding</b> на сервере моделей (LM Studio и т. п.) рядом с основной (поиск «qwen3 embedding», GGUF; 0.6B — быстро, ~0,6 ГБ; 4B — точнее).
         Без неё работает поиск по словам.</p>
       <div className="row">
         <label>Модель <select value={llm.settings.embedModel ?? ''} onChange={(e) => llm.set({ embedModel: e.target.value })}>
-          <option value="">авто{avail.length ? ` (${avail.find((m) => /qwen3?.?embed/i.test(m)) ?? avail[0]})` : ' — не найдена'}</option>
+          <option value="">авто{avail.some((m) => QWEN_EMBED.test(m)) ? ` (${avail.find((m) => QWEN_EMBED.test(m))})` : ' — Qwen3-Embedding не найдена'}</option>
           {avail.map((m) => <option key={m} value={m}>{m}</option>)}
           <option value="off">выключить</option>
         </select></label>
+        <button className="link" onClick={llm.recheck} title="Перечитать список моделей на сервере">обновить список</button>
         <label>Длина вектора <select value={llm.settings.embedDims ?? 1024} onChange={(e) => llm.set({ embedDims: +e.target.value })}>
           {[256, 512, 1024, 2560, 4096].map((d) => <option key={d} value={d}>{d}</option>)}</select></label>
         <span className={`kb-vec ${v.status}`}>{VEC_RU[v.status]}{v.status === 'indexing' || v.status === 'ready' ? ` · ${v.done}/${v.total}` : ''}{v.gap !== undefined ? ` · самопроверка ${v.gap}${v.eos ? ', с <|endoftext|>' : ''}` : ''}</span>
@@ -320,7 +322,7 @@ function DocRow({ d, s, llm, open, onFilter, filtered }: { d: KbDocument; s: kb.
         <span className="muted">{d.chunks.length} частей · {Math.round(d.size / 1024)} КБ · обработано {done}/{d.chunks.length}</span></div>
       {job ? <div className="kb-prog"><i style={{ width: `${(job.at / job.total) * 100}%` }} /><span>{job.text}</span><button onClick={kb.stop}>Остановить</button></div>
         : <div className="row">
-          {done < d.chunks.length && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «Штаб»' : ''} onClick={() => kb.process(d.id, llm.settings)}>{done ? 'Продолжить обработку' : 'Обработать моделью'}</button>}
+          {done < d.chunks.length && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => kb.process(d.id, llm.settings)}>{done ? 'Продолжить обработку' : 'Обработать моделью'}</button>}
           {props.length > 0 && <button className={filtered ? 'on' : ''} onClick={onFilter}>предложения: {props.filter((p) => p.status === 'pending').length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>}
           <button className="link danger" onClick={() => { if (confirm(`Удалить «${d.name}» из базы?`)) void kb.removeDocument(d.id); }}>удалить</button>
           {d.error && <span className="err">{d.error}</span>}

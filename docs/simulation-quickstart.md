@@ -217,7 +217,7 @@ npm run llm:eval                        # все контрольные обст
 
 Настройки — переменные окружения: `DEFOPS_LLM_URL` (куда сервер разработки направляет `/llm`),
 `DEFOPS_LLM_MODEL`, `DEFOPS_LLM_THINKING` (`off` / `low` / `medium` / `xhigh`), `DEFOPS_LLM_TIMEOUT_S`.
-В собранном приложении (без `npm run dev`) в разделе «Штаб» укажите адрес `http://localhost:1234/v1`
+В собранном приложении (без `npm run dev`) в разделе «ИИ» укажите адрес `http://localhost:1234/v1`
 и включите в LM Studio CORS (Developer → Settings → Enable CORS).
 
 **Участки.** Кнопка «Участки» на карте (и в переигровке, и в игре): ключевые районы операции — Зееловские

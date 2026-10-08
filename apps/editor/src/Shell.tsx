@@ -2,7 +2,7 @@
  * Оболочка приложения: колонка разделов слева и рабочая область раздела.
  * Разделы: редактор карт, переигровка операций, карты-подложки, справочник знаков,
  * база знаний (материалы, загрузка документов, вопросы к модели),
- * штаб (связь с моделью, которая командует противником в игре). Раздел запоминается в адресе (#editor, #replay…).
+ * ИИ (связь с моделями: штаб противника в игре, советник, база знаний). Раздел запоминается в адресе (#editor, #replay…).
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { emptyDocument, type MapDocument } from '@def-ops/core';
@@ -21,7 +21,7 @@ const SECTIONS: { id: Section; title: string; icon: ReactNode; soon?: boolean }[
   { id: 'maps', title: 'Карты', icon: Icon.maps },
   { id: 'library', title: 'Знаки', icon: Icon.library },
   { id: 'knowledge', title: 'Знания', icon: Icon.knowledge },
-  { id: 'staff', title: 'Штаб', icon: Icon.staff },
+  { id: 'staff', title: 'ИИ', icon: Icon.staff },
 ];
 const fromHash = (): Section => {
   const h = location.hash.replace('#', '') as Section;
@@ -98,7 +98,7 @@ function StaffView({ llm }: { llm: Llm }) {
   return (
     <div className="page">
       <div className="page-in narrow">
-        <h2>Штаб</h2>
+        <h2>ИИ</h2>
         <p className="lead">Немецкой стороной в игре командует языковая модель на этом компьютере (LM Studio). Игра начинается в «Переигровке»: выберите момент на шкале времени и нажмите «Принять командование». С этого хода советской стороной командуете вы, немецкой — модель, до конца операции. На каждом ходу модель получает обстановку, которую мог знать немецкий штаб: свои войска, противника в пределах разведки, итоги суток. Она отдаёт приказы, а арбитр считает их последствия так же, как исторические.</p>
         <section className="card staff-cfg">
           <h3>Связь с моделью</h3>

@@ -96,6 +96,8 @@ export function useLlm(): Llm {
   const [check, setCheck] = useState<LlmCheck>({ state: 'unknown' });
   const recheck = () => { setCheck({ state: 'checking' }); checkLlm(settings.url).then(setCheck); };
   useEffect(recheck, [settings.url]); // eslint-disable-line react-hooks/exhaustive-deps
+  // модели загружают в другом приложении — список перечитывается при возврате в окно
+  useEffect(() => { const f = () => checkLlm(settings.url).then(setCheck); window.addEventListener('focus', f); return () => window.removeEventListener('focus', f); }, [settings.url]);
   return {
     settings, check, recheck,
     set: (p) => { const s = { ...settings, ...p }; setSettings(s); try { localStorage.setItem('def_ops.llm', JSON.stringify(s)); } catch { /* */ } },

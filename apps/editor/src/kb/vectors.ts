@@ -23,6 +23,8 @@ export interface VecState {
 
 interface Row { id: string; hash: string; v: Float32Array }
 const BATCH = 16;
+/** Автовыбор — только Qwen3-Embedding: запрос оформляется по её инструкции; другие модели (nomic и пр.) — только явным выбором. */
+export const QWEN_EMBED = /qwen3?[-_ .]?embed/i;
 
 export class Vectors {
   state: VecState = { status: 'none', model: null, dims: 1024, done: 0, total: 0 };
@@ -44,7 +46,7 @@ export class Vectors {
   /** Настройки модели и список моделей эмбеддингов на сервере (из проверки связи). */
   configure(llm: LlmSettings, available: string[] | null) {
     const dims = llm.embedDims || 1024;
-    const model = llm.embedModel === 'off' ? null : llm.embedModel || available?.find((m) => /qwen3?.?embed/i.test(m)) || available?.[0] || null;
+    const model = llm.embedModel === 'off' ? null : llm.embedModel || available?.find((m) => QWEN_EMBED.test(m)) || null;
     const changed = model !== this.state.model || dims !== this.state.dims || llm.url !== this.llm?.url;
     this.llm = llm;
     if (!changed) return false;

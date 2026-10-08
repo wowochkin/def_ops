@@ -17,10 +17,11 @@ const STANDARD_EXAMPLES = ['hq.army', 'hq.division', 'tank.medium', 'dot', 'wire
 const COMPARE = ['attack.main', 'attack.planned', 'area.encircled', 'label.unit', 'line.defense', 'city'];
 const byId = new Map(LIBRARY.map((e) => [e.id, e]));
 
-function DesignSection() {
+function DesignSection({ style, setStyle }: { style: StyleId; setStyle: (s: StyleId) => void }) {
+  // описание длинное — по умолчанию свёрнуто, чтобы под переключателем сразу были знаки (в печати — развёрнуто)
   return (
-    <section className="design" id="design">
-      <h2>Оформление знаков</h2>
+    <details className="design" id="design" open={PRINT}>
+      <summary><h2>Оформление знаков</h2><span className="muted">что это и чем отличаются варианты — развернуть</span></summary>
       <p className="cdesc">
         Система знаков в библиотеке одна: каждый элемент — это смысл (что обозначается), привязка к местности,
         принадлежность (свои / противник) и слой карты. Вариант оформления меняет только начертание — форму стрелок,
@@ -34,7 +35,7 @@ function DesignSection() {
       </p>
       <div className="dgrid">
         {STYLES.map((st) => (
-          <div key={st.id} className="dcard">
+          <div key={st.id} className={`dcard${st.id === style ? ' on' : ''}`} onClick={() => setStyle(st.id)} title="Показать знаки в этом оформлении">
             <div className="dhead">
               <b>{st.name}</b>
               <span className={`basis ${st.basis}`}>{st.basis === 'standard' ? 'норматив' : 'по образцу'}</span>
@@ -60,7 +61,7 @@ function DesignSection() {
       </div>
       <h3>Один элемент — разные варианты оформления</h3>
       <table className="dcmp">
-        <thead><tr><th>Элемент</th>{STYLES.map((st) => <th key={st.id}>{st.name}</th>)}</tr></thead>
+        <thead><tr><th>Элемент</th>{STYLES.map((st) => <th key={st.id} className={st.id === style ? 'on' : ''}>{st.name}</th>)}</tr></thead>
         <tbody>
           {COMPARE.map((id) => {
             const e = byId.get(id)!;
@@ -68,7 +69,7 @@ function DesignSection() {
               <tr key={id}>
                 <td>{e.name}</td>
                 {STYLES.map((st) => (
-                  <td key={st.id}>
+                  <td key={st.id} className={st.id === style ? 'on' : ''}>
                     {e.variants[st.id]
                       ? <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, e.variants[st.id]!, paperFor(e.variants[st.id]!), e.sideAware ? 'own' : undefined) }} />
                       : <span className="muted">—</span>}
@@ -79,7 +80,7 @@ function DesignSection() {
           })}
         </tbody>
       </table>
-    </section>
+    </details>
   );
 }
 
@@ -122,9 +123,10 @@ function LibraryPage() {
           ))}
           <input placeholder="Поиск: танк, мост, котёл, катюша…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
+        <p className="ctl-note">Знаки ниже показаны в оформлении «{STYLES.find((s) => s.id === style)!.name}»: {LIBRARY.filter((e) => e.variants[style]).length} из {LIBRARY.length} есть в нём, остальные — в ближайшем (отмечены бледнее).</p>
       </header>
       <nav><a href="#design">Оформление знаков</a>{CATEGORIES.map((c) => <a key={c.id} href={`#${c.id}`}>{c.name}</a>)}</nav>
-      {!q && <DesignSection />}
+      {!q && <DesignSection style={style} setStyle={setStyle} />}
       {CATEGORIES.map((c) => {
         const items = LIBRARY.filter((e) => e.category === c.id && found.has(e.id));
         if (!items.length) return null;

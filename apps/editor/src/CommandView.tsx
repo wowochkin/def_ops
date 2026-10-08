@@ -1013,7 +1013,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, llm, onStar
         </ul>
         <div className="take-enemy">
           <label className={enemy === 'llm' ? 'on' : ''}><input type="radio" checked={enemy === 'llm'} onChange={() => setEnemy('llm')} />
-            <span><b>Штаб на модели</b> — LM Studio на этом компьютере<small className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `✓ на связи: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `✗ ${llm.check.error} — запустите сервер в LM Studio (настройки — раздел «Штаб»)` : 'проверка связи…'}</small></span></label>
+            <span><b>Штаб на модели</b> — LM Studio на этом компьютере<small className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `✓ на связи: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `✗ ${llm.check.error} — запустите сервер в LM Studio (настройки — раздел «ИИ»)` : 'проверка связи…'}</small></span></label>
           <label className={enemy === 'passive' ? 'on' : ''}><input type="radio" checked={enemy === 'passive'} onChange={() => setEnemy('passive')} />
             <span><b>Без штаба</b> — противник держится прежних приказов<small>для пробы без модели; переключить можно в ходе игры (вкладка «Посредник»)</small></span></label>
         </div>
