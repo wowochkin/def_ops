@@ -214,6 +214,8 @@ export function nearbyPlaces(ctx: SimContext, state: SimState, side: string, km:
   }).filter((a) => a.km <= km).sort((a, b) => a.km - b.km).slice(0, limit);
 }
 
+const km1 = (x: number) => (x >= 10 ? String(Math.round(x)) : x.toFixed(1).replace('.', ','));
+
 /** Сводка «за сутки» для стороны: бои, окружения, уничтоженные, дошедшие приказы (только свои — для чужих — без подробностей). */
 export function dayEvents(_ctx: SimContext, state: SimState, side: string, prev: SimState): string[] {
   const names = new Map(state.formations.map((f) => [f.id, f.name]));
@@ -224,8 +226,8 @@ export function dayEvents(_ctx: SimContext, state: SimState, side: string, prev:
       const ours = sideOf.get(j.attackers[0]) === side;
       const a = j.attackers.map((x) => names.get(x)).join(', '), d = j.defenders.map((x) => names.get(x)).join(', ');
       out.push(ours
-        ? `Наступление: ${a} против ${d} — ${OUTCOME_RU[j.outcome]}${j.advanceKm ? `, продвижение ${j.advanceKm} км` : ''}; соотношение сил ${j.ratio}:1; потери ${Math.round(j.attackerLoss * 100)} %.`
-        : `Атака противника: ${a} против ${d} — ${OUTCOME_RU[j.outcome]}${j.advanceKm ? `, противник продвинулся на ${j.advanceKm} км` : ''}; наши потери ${Math.round(j.defenderLoss * 100)} %.`);
+        ? `Наступление: ${a} против ${d} — ${OUTCOME_RU[j.outcome]}${j.advanceKm ? ` на ${km1(j.advanceKm)} км` : ''}; соотношение сил ${km1(j.ratio)}:1; потери ${Math.round(j.attackerLoss * 100)} %.`
+        : `Атака противника: ${a} против ${d} — ${OUTCOME_RU[j.outcome]}${j.advanceKm ? `, противник продвинулся на ${km1(j.advanceKm)} км` : ''}; наши потери ${Math.round(j.defenderLoss * 100)} %.`);
     } else if (j.kind === 'encircled') {
       const ours = sideOf.get(j.formation) === side;
       if (ours) out.push(j.cut ? `${names.get(j.formation)} — ОТРЕЗАНО от подвоза (окружено).` : `${names.get(j.formation)} — подвоз восстановлен.`);

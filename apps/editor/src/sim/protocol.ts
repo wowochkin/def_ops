@@ -4,6 +4,8 @@ export interface SimRequest { scenario: string; rules: string; seed: number; run
 
 export interface SimResult {
   scenario: string; rules: string; seed: number; runs: number; ms: number;
+  /** Начало, конец сценария и длительность хода — для передачи командования с начала хода. */
+  start: string; end: string; turnHours: number; scenarioName: string;
   /** Доля положений в допуске (первый прогон) и по всем прогонам. */
   within: number; n: number; medianExcessKm: number; spread: number[];
   events: {

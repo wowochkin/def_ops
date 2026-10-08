@@ -7,8 +7,12 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    // API платформы — через шлюз (npm run dev:services)
-    proxy: { '/api': { target: process.env.GATEWAY_URL || 'http://localhost:8080', changeOrigin: true } },
+    proxy: {
+      // API платформы — через шлюз (npm run dev:services)
+      '/api': { target: process.env.GATEWAY_URL || 'http://localhost:8080', changeOrigin: true },
+      // локальная модель штаба (LM Studio): /llm/v1/… → http://localhost:1234/v1/… — браузеру не нужен CORS
+      '/llm': { target: new URL(process.env.DEFOPS_LLM_URL || 'http://localhost:1234/v1').origin, changeOrigin: true, rewrite: (p) => p.replace(/^\/llm/, '') },
+    },
   },
   // MapLibre 6 грузит воркер по относительному пути — пребандлинг Vite его ломает
   optimizeDeps: { exclude: ['maplibre-gl'] },

@@ -1,7 +1,7 @@
 /**
  * Оболочка приложения: колонка разделов слева и рабочая область раздела.
  * Разделы: редактор карт, переигровка операций, карты-подложки, справочник знаков,
- * штаб (слой ИИ — в работе). Раздел запоминается в адресе (#editor, #replay…).
+ * штаб (связь с моделью, которая командует противником в игре). Раздел запоминается в адресе (#editor, #replay…).
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { emptyDocument, type MapDocument } from '@def-ops/core';
@@ -9,7 +9,7 @@ import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
 import { MapsPanel } from './MapsPanel';
 import { BasemapControls, Icon } from './ui';
-import { useBasemaps, useServer, type Basemaps, type ServerState } from './shared';
+import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
 
 type Section = 'editor' | 'replay' | 'maps' | 'library' | 'staff';
 const SECTIONS: { id: Section; title: string; icon: ReactNode; soon?: boolean }[] = [
@@ -17,7 +17,7 @@ const SECTIONS: { id: Section; title: string; icon: ReactNode; soon?: boolean }[
   { id: 'replay', title: 'Переигровка', icon: Icon.replay },
   { id: 'maps', title: 'Карты', icon: Icon.maps },
   { id: 'library', title: 'Знаки', icon: Icon.library },
-  { id: 'staff', title: 'Штаб', icon: Icon.staff, soon: true },
+  { id: 'staff', title: 'Штаб', icon: Icon.staff },
 ];
 const fromHash = (): Section => {
   const h = location.hash.replace('#', '') as Section;
@@ -28,6 +28,7 @@ export function Shell() {
   const [section, setSection] = useState<Section>(fromHash);
   const bm = useBasemaps();
   const server = useServer();
+  const llm = useLlm();
   const [incoming, setIncoming] = useState<IncomingDoc | null>(null);
   // разделы, которые уже открывались, остаются смонтированными: карта и расчёт не теряются при переключении
   const [mounted, setMounted] = useState<Set<Section>>(() => new Set([section]));
@@ -54,10 +55,10 @@ export function Shell() {
       </nav>
       <div className="stage">
         {mounted.has('editor') && <div className="pane" hidden={section !== 'editor'}><EditorView bm={bm} server={server} incoming={incoming} /></div>}
-        {mounted.has('replay') && <div className="pane" hidden={section !== 'replay'}><ReplayView bm={bm} onOpenInEditor={toEditor} /></div>}
+        {mounted.has('replay') && <div className="pane" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
         {section === 'maps' && <MapsView bm={bm} server={server} />}
         {section === 'library' && <iframe className="pane lib" src="/library.html" title="Справочник знаков" />}
-        {section === 'staff' && <StaffView />}
+        {section === 'staff' && <StaffView llm={llm} />}
       </div>
     </div>
   );
@@ -85,18 +86,52 @@ function MapsView({ bm, server }: { bm: Basemaps; server: ServerState }) {
   );
 }
 
-function StaffView() {
+function StaffView({ llm }: { llm: Llm }) {
+  const { settings, set, check, recheck } = llm;
   return (
     <div className="page">
       <div className="page-in narrow">
-        <div className="soon-badge">в работе</div>
         <h2>Штаб</h2>
-        <p className="lead">Немецкой стороной в переигровке будет командовать языковая модель на этом компьютере (LM Studio): на каждом ходе она получает обстановку, которую мог знать штаб на эту дату, и отдаёт приказы. Арбитр считает последствия, отчёт показывает, где решения модели увели операцию от истории.</p>
-        <ul className="steps">
-          <li><b>Готово</b> — подключение к модели, промпт немецкого штаба, схема решений, контрольные обстановки (<code>npm run llm:quick</code>).</li>
-          <li><b>Далее</b> — ход за ходом в переигровке: «немецкая сторона: история / модель», журнал решений с обоснованиями.</li>
-          <li><b>Затем</b> — диалог: вопросы к истории, к ходу игры и к «штабу» с опорой на базу знаний.</li>
-        </ul>
+        <p className="lead">Немецкой стороной в игре командует языковая модель на этом компьютере (LM Studio). Игра начинается в «Переигровке»: выберите момент на шкале времени и нажмите «Принять командование». С этого хода советской стороной командуете вы, немецкой — модель, до конца операции. На каждом ходу модель получает обстановку, которую мог знать немецкий штаб: свои войска, противника в пределах разведки, итоги суток. Она отдаёт приказы, а арбитр считает их последствия так же, как исторические.</p>
+        <section className="card staff-cfg">
+          <h3>Связь с моделью</h3>
+          <label>Адрес сервера
+            <input value={settings.url} onChange={(e) => set({ url: e.target.value })} spellCheck={false} />
+            <small>По умолчанию <code>/llm/v1</code> — через сервер разработки (<code>npm run dev</code>) к LM Studio на <code>localhost:1234</code>; другой адрес — переменная <code>DEFOPS_LLM_URL</code> при запуске.</small>
+          </label>
+          <label>Модель
+            <select value={settings.model} onChange={(e) => set({ model: e.target.value })}>
+              <option value="">первая загруженная{check.state === 'ok' ? ` (${check.models[0]})` : ''}</option>
+              {check.state === 'ok' && check.models.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </label>
+          <label>Размышление перед ответом
+            <select value={settings.thinking} onChange={(e) => set({ thinking: e.target.value as typeof settings.thinking })}>
+              <option value="off">нет — быстрее, решение за 1–2 минуты</option>
+              <option value="low">короткое</option>
+              <option value="medium">обычное — глубже, но в разы дольше</option>
+              <option value="high">глубокое</option>
+            </select>
+          </label>
+          <div className="staff-st">
+            <span className={`llm-st ${check.state}`}>{check.state === 'ok' ? `✓ на связи · моделей: ${check.models.length}` : check.state === 'fail' ? `✗ ${check.error}` : 'проверка…'}</span>
+            <button onClick={recheck}>Проверить связь</button>
+          </div>
+        </section>
+        <section className="card staff-help">
+          <h3>Как подготовить</h3>
+          <ol className="steps">
+            <li>LM Studio → загрузите модель (Qwen 27B, 4 бит) → вкладка Developer → <b>Start Server</b>. Длина контекста — не меньше 16 000 токенов.</li>
+            <li>Здесь нажмите «Проверить связь» — должна появиться модель.</li>
+            <li>Без LM Studio проверить стенд можно на подставной модели: <code>npm run llm:mock</code> в отдельном терминале. Её решения простые, для проверки интерфейса.</li>
+          </ol>
+          <h3>Что видит и делает модель</h3>
+          <ul className="steps">
+            <li>Обстановку на утро хода: доклады своих соединений, разведсводку о противнике в пределах разведки, итоги суток, пункты вблизи войск, действующие ограничения (приказы фюрера и т. п.).</li>
+            <li>Отвечает решением штаба: оценка обстановки, замысел противника, свой замысел, приказы соединениям, доклады наверх, риски. Приказы доходят до войск с той же задержкой, что и в истории.</li>
+            <li>Все решения — во вкладке «Посредник» игры и в журнале. Их можно разобрать с экспертами после игры.</li>
+          </ul>
+        </section>
       </div>
     </div>
   );

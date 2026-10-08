@@ -10,7 +10,9 @@ import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/pro
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
-import type { Basemaps } from './shared';
+import type { Basemaps, Llm } from './shared';
+import { CommandView, loadSaved, SAVE_KEY, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
+import type { EnemyMode, GameStart } from './sim/game-protocol';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
 
@@ -29,7 +31,7 @@ const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] 
   { key: 'theatre', title: 'Рубежи', match: (id) => id === 'theatre' },
 ];
 
-function download(name: string, text: string, type: string) {
+export function download(name: string, text: string, type: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], { type }));
   a.download = name;
@@ -37,7 +39,7 @@ function download(name: string, text: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEditor: (d: MapDocument) => void }) {
+export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm; onOpenInEditor: (d: MapDocument) => void }) {
   const [scenario, setScenario] = useState(CATALOG[0].id);
   const entry = useMemo(() => CATALOG.find((c) => c.id === scenario) ?? CATALOG[0], [scenario]);
   const [rules, setRules] = useState(entry.rules[0].id);
@@ -50,6 +52,9 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
   const [time, setTime] = useState<TimeInstant | null>(null);
   const [mapKey, setMapKey] = useState(0);
   const [report, setReport] = useState(false);
+  const [saved, setSaved] = useState<SavedGame | null>(loadSaved);
+  const [game, setGame] = useState<{ start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode } | null>(null);
+  const [take, setTake] = useState<string | null>(null);
   const worker = useRef<Worker | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
@@ -88,6 +93,17 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
   const tol = CATALOG.find((c) => c.id === result?.scenario)?.toleranceKm ?? entry.toleranceKm;
 
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
+  if (game) {
+    return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} onOpenInEditor={onOpenInEditor}
+      onExit={({ discard }) => { if (discard) try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(loadSaved()); setGame(null); }} />;
+  }
+  const startGame = (enemy: EnemyMode) => {
+    if (!result || !take) return;
+    if (saved && !confirm('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.')) return;
+    setTake(null);
+    setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take }, saved: null, enemy });
+  };
+  const takeAt = result && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
   return (
     <ZonesContext.Provider value={zones}>
     <div className="replay">
@@ -96,6 +112,13 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
           <h2>Переигровка</h2>
           <p>Обе стороны получают исторические задачи; движение, бои, подвоз и окружения считает арбитр. Итог сравнивается с историей.</p>
         </div>
+        {saved && !busy && <div className="rp-saved">
+          <div><b>Незавершённая игра</b><span>{saved.title} · командование с {saved.record.takeover.slice(8, 10)}.{saved.record.takeover.slice(5, 7)}, сыграно ходов: {saved.record.turns.length}</span></div>
+          <div className="rp-saved-b">
+            <button className="primary" onClick={() => setGame({ start: null, saved, enemy: saved.enemy })}>Продолжить</button>
+            <button onClick={() => { if (confirm('Удалить запись незавершённой игры?')) { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); } }}>Удалить</button>
+          </div>
+        </div>}
         <div className="rp-cards">
           {CATALOG.map((c) => (
             <button key={c.id} className={`rp-card${c.id === scenario ? ' on' : ''}`} disabled={!!busy} onClick={() => setScenario(c.id)}>
@@ -127,6 +150,8 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
           <MapView key={mapKey} doc={doc} setDoc={(d) => setDoc(d)} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
             onEngineReady={(e) => { engine.current = e; }} onStatus={() => {}} time={time} newFromNow={false} />
+          {takeAt && <button className="take-btn" onClick={() => setTake(takeAt)} title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
+            <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
@@ -136,6 +161,7 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
             events={result?.events ?? []} onEvent={goEvent} />}
         </> : <Empty busy={!!busy} />}
       </main>
+      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.turnHours} scenarioName={result.scenarioName} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
         onDownload={() => download(`${result.scenario}-seed${result.seed}-report.md`, result.report, 'text/markdown')} />}
     </div>
@@ -199,7 +225,7 @@ const toMs = (t: string) => Date.parse((t.length <= 16 ? t + ':00' : t) + (t.end
 const fromMs = (ms: number) => new Date(ms).toISOString().slice(0, 16);
 const fmtLong = (t: string) => { const d = new Date(toMs(t)); return { day: `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`, hour: `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` }; };
 
-function Player({ start, end, time, setTime, events, onEvent }: { start: string; end: string; time: string; setTime: (t: string) => void; events: SimResult['events']; onEvent: (e: SimResult['events'][number]) => void }) {
+export function Player({ start, end, time, setTime, events, onEvent, mark }: { start: string; end: string; time: string; setTime: (t: string) => void; events: SimResult['events']; onEvent: (e: SimResult['events'][number]) => void; mark?: { at: string; title: string } }) {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(12); // часов операции в секунду
   const t0 = toMs(start), t1 = toMs(end), cur = Math.min(t1, Math.max(t0, toMs(time)));
@@ -244,6 +270,7 @@ function Player({ start, end, time, setTime, events, onEvent }: { start: string;
       <div className="pl-track">
         <div className="pl-days">{days.map((d) => <i key={d} style={{ left: pos(d) }} />)}</div>
         <div className="pl-fill" style={{ width: pos(cur) }} />
+        {mark && toMs(mark.at) >= t0 && toMs(mark.at) <= t1 && <i className="pl-mark" style={{ left: pos(toMs(mark.at)) }} title={mark.title} />}
         {events.filter((e) => e.at).map((e) => (
           <button key={e.title} className={`pl-ev ${e.days[0] == null ? 'miss' : Math.abs(e.days[0]) <= 1 ? 'ok' : Math.abs(e.days[0]) <= 2 ? 'near' : 'off'}${e.marker ? ' star' : ''}`}
             style={{ left: pos(toMs(e.at!)) }} title={`${e.title}\nрасчёт: ${e.simulated ? ddmm(e.simulated) : '—'}, история: ${ddmm(e.historical)}`} onClick={() => onEvent(e)} />
@@ -255,7 +282,7 @@ function Player({ start, end, time, setTime, events, onEvent }: { start: string;
   );
 }
 
-function Legend({ on, toggle }: { on: (key: string) => boolean; toggle: (key: string) => void }) {
+export function Legend({ on, toggle, extra = [] }: { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string }[] }) {
   const [open, setOpen] = useState(true);
   const rows: { key?: string; cls: string; text: string; mark?: string }[] = [
     { cls: 'lg-own', text: 'советские войска' },
@@ -265,6 +292,7 @@ function Legend({ on, toggle }: { on: (key: string) => boolean; toggle: (key: st
     { key: 'hfront', cls: 'lg-hfront', text: 'линия фронта (история)' },
     { key: 'combat', cls: 'lg-arrow', text: 'бой за ход' },
     { cls: 'lg-flag', text: 'Знамя Победы', mark: '⚑' },
+    ...extra,
   ];
   return (
     <div className={`legend${open ? '' : ' closed'}`}>

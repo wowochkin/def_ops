@@ -75,7 +75,7 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
     ];
     if (u.cutOff) bits.push('ОТРЕЗАНО от подвоза');
     if (u.movedKm >= 1) bits.push(`за сутки переместилось на ${Math.round(u.movedKm)} км`);
-    for (const c of u.combats) bits.push(`бой (${c.role === 'attack' ? 'наступали' : 'оборонялись'}) против ${c.against.join(', ')}: ${c.outcome}${c.advanceKm ? `, ${num(c.advanceKm)} км` : ''}, потери ${c.lossPct} %`);
+    for (const c of u.combats) bits.push(`бой (${c.role === 'attack' ? 'наступали' : 'оборонялись'}) против ${c.against.join(', ')}: ${c.outcome}${c.advanceKm ? ` на ${num(c.advanceKm)} км` : ''}, потери ${c.lossPct} %`);
     if (u.pending.length) bits.push(`приказ в пути: ${u.pending.map((p) => `${p.task} (${p.target})`).join(', ')}`);
     return `${head} — ${bits.join('; ')}.`;
   });

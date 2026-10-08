@@ -9,6 +9,7 @@ import { DefOpsClient } from '@def-ops/api-client';
 import type { BasemapSpec } from './engine/types';
 import { BUILTIN_BASEMAPS, loadCustomBasemaps, saveCustomBasemaps } from './engine/basemaps';
 import { cartography } from './MapsPanel';
+import type { LlmSettings } from './sim/game-protocol';
 
 export const api = new DefOpsClient({ baseUrl: '/api', apiKey: localStorage.getItem('def_ops.apiKey') || undefined, sourceSystem: 'editor' });
 
@@ -58,5 +59,41 @@ export function useBasemaps(): Basemaps {
     setOffline: (v) => { setOfflineState(v); try { localStorage.setItem('def_ops.offline', v ? '1' : '0'); } catch { /* */ } if (v && !id.startsWith('local-')) setId('none'); },
     custom, addCustom: (b) => { const l = [...custom, b]; setCustom(l); saveCustomBasemaps(l); setId(b.id); },
     local, setLocalMaps, all, current: all.find((b) => b.id === id) ?? null,
+  };
+}
+
+/* ───────────── локальная модель штаба (LM Studio) ───────────── */
+
+export const LLM_DEFAULTS: LlmSettings = { url: '/llm/v1', model: '', thinking: 'off' };
+
+export function loadLlm(): LlmSettings {
+  try { return { ...LLM_DEFAULTS, ...JSON.parse(localStorage.getItem('def_ops.llm') || '{}') }; } catch { return LLM_DEFAULTS; }
+}
+
+export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[] } | { state: 'fail'; error: string };
+
+/** Проверить связь с сервером модели: список загруженных моделей. */
+export async function checkLlm(url: string): Promise<LlmCheck> {
+  try {
+    const r = await fetch(`${url.replace(/\/+$/, '')}/models`, { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return { state: 'fail', error: `сервер ответил ${r.status}` };
+    const j = (await r.json()) as { data?: { id: string }[] };
+    const models = (j.data ?? []).map((m) => m.id).filter((m) => !/embed/i.test(m));
+    return models.length ? { state: 'ok', models } : { state: 'fail', error: 'на сервере не загружена ни одна модель' };
+  } catch (e) {
+    return { state: 'fail', error: (e as Error).name === 'TimeoutError' ? 'сервер не отвечает' : (e as Error).message };
+  }
+}
+
+export interface Llm { settings: LlmSettings; set: (p: Partial<LlmSettings>) => void; check: LlmCheck; recheck: () => void }
+
+export function useLlm(): Llm {
+  const [settings, setSettings] = useState<LlmSettings>(loadLlm);
+  const [check, setCheck] = useState<LlmCheck>({ state: 'unknown' });
+  const recheck = () => { setCheck({ state: 'checking' }); checkLlm(settings.url).then(setCheck); };
+  useEffect(recheck, [settings.url]); // eslint-disable-line react-hooks/exhaustive-deps
+  return {
+    settings, check, recheck,
+    set: (p) => { const s = { ...settings, ...p }; setSettings(s); try { localStorage.setItem('def_ops.llm', JSON.stringify(s)); } catch { /* */ } },
   };
 }

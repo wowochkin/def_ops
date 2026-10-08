@@ -31,6 +31,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
       kind: 'done',
       result: {
         scenario: q.scenario, rules: ctx.rules.id, seed: q.seed, runs: a.spread.length, ms: a.ms,
+        start: ctx.scenario.start, end: ctx.scenario.end, turnHours: ctx.scenario.turnHours, scenarioName: ctx.scenario.name,
         within: a.summary.within, n: a.summary.n, medianExcessKm: a.summary.medianExcessKm,
         spread: a.spread.map((s) => s.within),
         events: a.eventsBySeed.map((x) => {
