@@ -55,6 +55,17 @@ export class Theatre {
         this.terrain[r * this.cols + c] = cells[gr * g.cols + gc];
       }
     }
+    if (data.roadGrid) {
+      const g = data.roadGrid, [gw, gs, ge, gn] = g.bbox;
+      const codes = decodeCodes(g.rle, g.cols * g.rows);
+      for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
+        const [lng, lat] = this.proj.toLL(this.cellCenter(c, r));
+        const gc = Math.floor(((lng - gw) / (ge - gw)) * g.cols), gr = Math.floor(((gn - lat) / (gn - gs)) * g.rows);
+        if (gc < 0 || gr < 0 || gc >= g.cols || gr >= g.rows) continue;
+        const ch = codes[gr * g.cols + gc];
+        if (ch === 'r' || ch === 'h') this.road[r * this.cols + c] = Math.max(this.road[r * this.cols + c], ch === 'h' ? 2 : 1);
+      }
+    }
     for (const t of data.terrain) {
       const ring = t.ring.map((p) => this.proj.toXY(p));
       const k = TERRAIN_CLASSES.indexOf(t.class);
@@ -304,6 +315,20 @@ export function decodeGrid(g: TerrainGrid): Uint8Array {
     n = 0;
   }
   if (i !== out.length) throw new Error(`terrainGrid: ${i} клеток вместо ${out.length}`);
+  return out;
+}
+
+/** Раскрыть RLE с произвольными однобуквенными кодами. */
+export function decodeCodes(rle: string, n: number): string[] {
+  const out: string[] = new Array(n);
+  let i = 0, k = 0;
+  for (const ch of rle) {
+    if (ch >= '0' && ch <= '9') { k = k * 10 + (ch.charCodeAt(0) - 48); continue; }
+    out.fill(ch, i, i + (k || 1));
+    i += k || 1;
+    k = 0;
+  }
+  if (i !== n) throw new Error(`растр: ${i} клеток вместо ${n}`);
   return out;
 }
 

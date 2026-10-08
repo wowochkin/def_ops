@@ -120,6 +120,12 @@ export interface TheatreData {
    * Берётся по центру каждой клетки театра; контуры terrain ложатся поверх.
    */
   terrainGrid?: TerrainGrid;
+  /**
+   * Растр дорог (например, распознанных по исторической карте): та же схема,
+   * что у terrainGrid, коды «n» — нет дороги, «r» — дорога, «h» — шоссе.
+   * Дополняет линии roads.
+   */
+  roadGrid?: TerrainGrid;
   /** Контуры местности; позже в списке — поверх. */
   terrain: { class: TerrainClass; ring: LngLat[] }[];
   roads: { kind: 'highway' | 'road' | 'rail'; line: LngLat[]; name?: string }[];

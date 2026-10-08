@@ -1,0 +1,191 @@
+{
+  "id": "ww2-berlin-cal",
+  "_status": "черновик до калибровки: форма зависимостей — по обобщённым данным о боях Второй мировой (темп и потери от соотношения сил), числа подбираются на этапе 2 по Берлинской и контрольной операции",
+  "contactKm": 6,
+  "advance": [
+    [
+      0.5,
+      0
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1.5,
+      0.8471
+    ],
+    [
+      2,
+      2.5414
+    ],
+    [
+      3,
+      5.0829
+    ],
+    [
+      4,
+      8.4714
+    ],
+    [
+      6,
+      15.2486
+    ],
+    [
+      10,
+      25.4143
+    ]
+  ],
+  "attackerLoss": [
+    [
+      0.5,
+      0.0532
+    ],
+    [
+      1,
+      0.0355
+    ],
+    [
+      2,
+      0.0222
+    ],
+    [
+      3,
+      0.0133
+    ],
+    [
+      6,
+      0.0071
+    ],
+    [
+      10,
+      0.0044
+    ]
+  ],
+  "defenderLoss": [
+    [
+      0.5,
+      0.0174
+    ],
+    [
+      1,
+      0.0349
+    ],
+    [
+      2,
+      0.0697
+    ],
+    [
+      3,
+      0.1046
+    ],
+    [
+      6,
+      0.2092
+    ],
+    [
+      10,
+      0.3487
+    ]
+  ],
+  "defense": {
+    "terrain": {
+      "open": 1,
+      "forest": 1.214,
+      "marsh": 1.282,
+      "urban": 1.35,
+      "hills": 1.214,
+      "water": 1
+    },
+    "prepared": 1.948,
+    "prepareHours": 24,
+    "fortificationPerLevel": 0.123
+  },
+  "ammoShort": 0.4,
+  "fuelOut": 0.5,
+  "fatigueEffect": 0.4,
+  "fatigueGain": {
+    "combat": 0.15,
+    "march": 0.08,
+    "rest": 0.1
+  },
+  "noise": 0.2,
+  "riverCrossHours": 12,
+  "advanceTerrain": {
+    "urban": 0.446,
+    "forest": 0.6,
+    "marsh": 0.5,
+    "hills": 0.8
+  },
+  "_advanceTerrain_note": "город — кварталами: «несколько десятков метров в час», 100–200 м после падения опорного пункта (LT_CONQ); черновик",
+  "movementScale": 0.87,
+  "calibration": {
+    "scenario": "berlin-1945-tasks",
+    "date": "2026-10-08",
+    "evals": 150,
+    "seeds": 2,
+    "trainUntil": "1945-04-25T23:59",
+    "from": "ww2-draft",
+    "multipliers": {
+      "advance": 0.847,
+      "attackerLoss": 0.886,
+      "defenderLoss": 1.743,
+      "prepared": 1.948,
+      "fortPerLevel": 0.123,
+      "terrainExp": 0.739,
+      "movement": 0.87,
+      "urbanAdvance": 0.446
+    },
+    "before": {
+      "trainKm": 9.23,
+      "testKm": 5.65,
+      "eventsDays": 1.36,
+      "within": 0.696
+    },
+    "after": {
+      "trainKm": 8.3,
+      "testKm": 6.05,
+      "eventsDays": 1.07,
+      "within": 0.708
+    },
+    "events": [
+      {
+        "id": "seelow",
+        "days": 2
+      },
+      {
+        "id": "spremberg",
+        "days": 0
+      },
+      {
+        "id": "zossen",
+        "days": 1
+      },
+      {
+        "id": "berlin_outskirts",
+        "days": 0
+      },
+      {
+        "id": "pocket",
+        "days": -2
+      },
+      {
+        "id": "ring",
+        "days": -1
+      },
+      {
+        "id": "torgau",
+        "days": -1
+      },
+      {
+        "id": "stettin",
+        "days": -2
+      },
+      {
+        "id": "reichstag",
+        "days": 0
+      }
+    ],
+    "note": "Подобрано по одной операции: обязательна проверка на контрольной операции (этап 2). Мерило — среднее превышение отклонения над неопределённостью исторического положения (до 50 км) + 3 × средняя ошибка дат событий (сут)."
+  }
+}

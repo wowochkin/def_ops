@@ -304,6 +304,101 @@ def hull(pts):
     return lo[:-1] + up[:-1]
 
 
+# ------------------------------------------------------------------ исторические поправки
+
+def decode_mask(r, n):
+    out = np.zeros(n, dtype=np.uint8)
+    i = 0
+    for part in r.split(","):
+        cnt = int(part[:-1]) if len(part) > 1 else 1
+        out[i:i + cnt] = int(part[-1])
+        i += cnt
+    if i != n:
+        raise ValueError(f"маска: {i} клеток вместо {n}")
+    return out
+
+
+def apply_overlays(recipe, rp, k, cols, rows, bbox, roads):
+    """
+    Поправки по историческим картам (результат raster_overlay.ts): застройка,
+    леса, вода — поверх современного покрова; современная застройка, которой на
+    исторической карте нет, понижается до открытой местности; дороги исторической
+    карты — растром roadGrid, современные основные дороги в охвате карты убираются.
+    Нет файла — поправка пропускается (театр собирается и без неё).
+    """
+    order = ["open", "forest", "marsh", "urban", "hills", "water"]
+    w, s, e, n = bbox
+    dl, da = (e - w) / cols, (n - s) / rows
+    road = np.zeros(cols * rows, dtype=np.uint8)
+    notes = []
+    any_road = False
+    for ov in recipe.get("overlays", []):
+        f = (rp.parent / ov["file"]).resolve()
+        if not f.exists():
+            log(f"  поправка {ov['file']}: файла нет — пропуск")
+            continue
+        o = json.load(open(f))
+        oc, orr = o["cols"], o["rows"]
+        ow, os_, oe, on = o["bbox"]
+        cov = decode_mask(o["covered"], oc * orr)
+        masks = {name: decode_mask(m, oc * orr) for name, m in o["masks"].items()}
+        changed = {}
+        # центр каждой клетки театра → клетка поправки
+        for r in range(rows):
+            lat = n - (r + 0.5) * da
+            gr = int((on - lat) / (on - os_) * orr)
+            if gr < 0 or gr >= orr:
+                continue
+            for c in range(cols):
+                lng = w + (c + 0.5) * dl
+                gc = int((lng - ow) / (oe - ow) * oc)
+                if gc < 0 or gc >= oc:
+                    continue
+                j = gr * oc + gc
+                if not cov[j]:
+                    continue
+                i = r * cols + c
+                before = k[i]
+                for cls in ("water", "urban", "forest"):
+                    src = ov.get(cls)
+                    if src and masks.get(src) is not None and masks[src][j]:
+                        k[i] = order.index(cls)
+                        break
+                else:
+                    demote = ov.get("demoteModernUrban")
+                    if demote and k[i] == order.index("urban"):
+                        k[i] = order.index(demote)
+                if ov.get("road") and masks.get(ov["road"]) is not None and masks[ov["road"]][j]:
+                    road[i] = 1
+                    any_road = True
+                if k[i] != before:
+                    key = f"{order[before]}→{order[k[i]]}"
+                    changed[key] = changed.get(key, 0) + 1
+        if ov.get("replaceModernRoads"):
+            def inside(line):
+                mx = sum(p[0] for p in line) / len(line)
+                my = sum(p[1] for p in line) / len(line)
+                gc = int((mx - ow) / (oe - ow) * oc)
+                gr = int((on - my) / (on - os_) * orr)
+                return 0 <= gc < oc and 0 <= gr < orr and cov[gr * oc + gc]
+            before = len(roads)
+            roads[:] = [rd for rd in roads if rd["kind"] != "road" or not inside(rd["line"])]
+            changed["современных дорог убрано"] = before - len(roads)
+        log(f"  поправка {o['legend']}: {changed}")
+        notes.append(f"Историческая поправка: {o['name']} (уровень {o['zoom']}, правила распознавания — tools/theatre/legends/{o['legend']}.json); изменения: {changed}")
+    if not any_road:
+        return None, notes
+    letters = "".join("r" if x else "n" for x in road)
+    out, i = [], 0
+    while i < len(letters):
+        j = i
+        while j < len(letters) and letters[j] == letters[i]:
+            j += 1
+        out.append(f"{j - i if j - i > 1 else ''}{letters[i]}")
+        i = j
+    return {"bbox": bbox, "cols": cols, "rows": rows, "rle": "".join(out), "source": "дороги исторических карт (raster_overlay)"}, notes
+
+
 # ------------------------------------------------------------------ сборка
 
 def main():
@@ -461,6 +556,10 @@ def main():
             areas.append({"id": key, "name": key, "ring": circle(c, r, 12)})
         areas += explicit  # большие районы — после точечных: areaAt найдёт сначала пункт
 
+    # 6. исторические поправки по растровым картам (tools/theatre/raster_overlay.ts)
+    road_grid, overlay_notes = apply_overlays(recipe, rp, k, cols, rows, bbox, roads)
+    stats = {c: int((k == i).sum()) for i, c in enumerate(["open", "forest", "marsh", "urban", "hills", "water"])}
+
     theatre = {
         "id": recipe["id"], "name": recipe["name"], "bbox": bbox, "cellKm": recipe["cellKm"],
         "defaultTerrain": recipe["defaultTerrain"],
@@ -469,7 +568,8 @@ def main():
         "terrain": [], "roads": roads, "rivers": [{k2: v for k2, v in r.items() if k2 != "group"} for r in rivers],
         "bridges": [{k2: v for k2, v in b.items() if v is not None} for b in bridges],
         "areas": areas, "lines": [{k2: v for k2, v in l.items() if v is not None} for l in lines],
-        "sources": recipe["sources"], "caveats": recipe.get("caveats", []),
+        **({"roadGrid": road_grid} if road_grid else {}),
+        "sources": recipe["sources"] + overlay_notes, "caveats": recipe.get("caveats", []),
         "build": {"recipe": rp.name, "stats": stats},
     }
     out.write_text(json.dumps(theatre, ensure_ascii=False, separators=(",", ":")))
