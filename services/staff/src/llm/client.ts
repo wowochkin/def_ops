@@ -153,6 +153,8 @@ export class LlmClient {
       chat_template_kwargs: { enable_thinking: thinking !== 'off' },
     };
     if (thinking !== 'off') body.reasoning_effort = thinking;
+    // gpt-oss размышление не выключает (enable_thinking не понимает) — при «без размышления» просим самое короткое
+    else if (/gpt-oss/i.test(model)) body.reasoning_effort = 'low';
     if (this.config.draftModel) body.draft_model = this.config.draftModel;
     if (req.schema) body.response_format = { type: 'json_schema', json_schema: { name: req.schema.name, strict: true, schema: req.schema.schema } };
     return body;

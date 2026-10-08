@@ -183,13 +183,15 @@ export async function importUser(json: string) {
  * reasoning_content, обёрнутым в <think>…</think> прямо в ответе, а при выключенном размышлении — весь ответ
  * в reasoning_content (тогда он и показывается как ответ).
  */
-export function streamView(content: string, reasoning: string, thinkingOff: boolean): { answer: string; thinking: string } {
+export function streamView(content: string, reasoning: string, thinkingOff: boolean, final = false): { answer: string; thinking: string } {
   let think = '';
   let answer = content.replace(/<think>([\s\S]*?)<\/think>/g, (_m, t: string) => { think += t; return ''; });
   const open = answer.indexOf('<think>');
   if (open >= 0) { think += answer.slice(open + 7); answer = answer.slice(0, open); }
   const thinking = [reasoning, think].filter(Boolean).join('\n');
-  if (!answer.trim() && thinkingOff) return { answer: thinking, thinking: '' };
+  // пока идёт поток, текст размышления — размышление (многие модели думают и при выключенном размышлении: gpt-oss,
+  // часть MLX-сборок); ответом он считается, только если к концу ответа так и не было
+  if (final && !answer.trim() && thinkingOff) return { answer: thinking, thinking: '' };
   return { answer: answer.replace(/^\s+/, ''), thinking };
 }
 
@@ -200,7 +202,7 @@ export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSet
   const sources = gather(state.index!, state.byId, question, { limit: mode === 'lecture' ? 10 : 7, hits: await search(question, 30) });
   let content = '', reasoning = '', last = 0;
   const off = llm.thinking === 'off';
-  const push = (force = false) => { const now = performance.now(); if (force || now - last > 60) { last = now; onStream({ ...streamView(content, reasoning, off), stage: 'model' }); } };
+  const push = (final = false) => { const now = performance.now(); if (final || now - last > 60) { last = now; onStream({ ...streamView(content, reasoning, off, final), stage: 'model' }); } };
   onStream({ answer: '', thinking: '', stage: 'model' });
   const r = await client(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') content += t; else reasoning += t; push(); } });
   push(true);

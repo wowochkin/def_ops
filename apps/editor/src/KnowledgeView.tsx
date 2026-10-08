@@ -201,7 +201,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
       <div className="kb-ask-h"><b>Спросить</b><span className="muted">модель отвечает только по материалам базы, со ссылками</span>{msgs.length > 0 && <button className="link" onClick={() => setMsgs([])}>очистить</button>}</div>
       <div className="kb-ask-body">
         {!msgs.length && <div className="muted">Задайте вопрос или попросите рассказать по теме. {topic && <><br /><br /><button className="link" onClick={() => go(topic, 'lecture')}>Рассказать: «{topic}»</button></>}</div>}
-        {msgs.map((m) => <QAItem key={m.id} m={m} s={s} open={open} />)}
+        {msgs.map((m) => <QAItem key={m.id} m={m} s={s} open={open} llmOff={llm.settings.thinking === 'off'} />)}
         <div ref={end} />
       </div>
       <div className="seg kb-mode"><button className={mode === 'ask' ? 'on' : ''} onClick={() => setMode('ask')}>Ответить на вопрос</button><button className={mode === 'lecture' ? 'on' : ''} onClick={() => setMode('lecture')}>Рассказать по теме</button></div>
@@ -216,7 +216,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
   );
 }
 
-function QAItem({ m, s, open }: { m: QA; s: kb.KbState; open: (id: string) => void }) {
+function QAItem({ m, s, open, llmOff }: { m: QA; s: kb.KbState; open: (id: string) => void; llmOff: boolean }) {
   const html = useMemo(() => mdToHtml(m.text || '').replace(/\[(\d{1,2})\]/g, (all, n) => (m.sources.some((x) => x.n === +n) ? `<a class="kb-cite" data-n="${n}">[${n}]</a>` : all)), [m.text, m.sources]);
   const click = (ev: React.MouseEvent) => {
     const n = (ev.target as HTMLElement).dataset.n;
@@ -227,7 +227,7 @@ function QAItem({ m, s, open }: { m: QA; s: kb.KbState; open: (id: string) => vo
     <div className="adv-msg">
       <div className="adv-q"><small>{m.mode === 'ask' ? 'вопрос' : 'рассказ'}</small>{m.q}</div>
       <div className="adv-a kb-answer">
-        {!m.done && !m.text && <div className="kb-wait-line"><span className="spinner" /> {m.stage === 'search' ? 'поиск по базе…' : m.thinking ? 'модель размышляет…' : 'модель читает материалы…'}</div>}
+        {!m.done && !m.text && <div className="kb-wait-line"><span className="spinner" /> {m.stage === 'search' ? 'поиск по базе…' : m.thinking ? `модель размышляет…${llmOff ? ' (эта модель размышляет и при выключенном размышлении)' : ''}` : 'модель читает материалы…'}</div>}
         {m.thinking && (m.done ? <details className="kb-think"><summary>размышление модели</summary><div>{m.thinking}</div></details>
           : !m.text && <div className="kb-think live">{m.thinking.slice(-600)}</div>)}
         {m.error ? <span className="err">{/abort/i.test(m.error) ? 'Остановлено.' : `Нет ответа: ${m.error}`}</span> : m.text && <div onClick={click} dangerouslySetInnerHTML={{ __html: html }} />}
