@@ -208,7 +208,7 @@ export function cleanAnswer(t: string): string {
 }
 
 export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSettings, history: { q: string; a: string }[],
-  onStream: (v: { answer: string; thinking: string; stage: 'search' | 'model' }) => void, signal?: AbortSignal): Promise<{ text: string; thinking: string; sources: Source[]; model: string; seconds: number }> {
+  onStream: (v: { answer: string; thinking: string; stage: 'search' | 'model' }) => void, signal?: AbortSignal): Promise<{ text: string; thinking: string; sources: Source[]; model: string; seconds: number; search: string }> {
   llm = kbLlm(llm);
   const t0 = performance.now();
   onStream({ answer: '', thinking: '', stage: 'search' });
@@ -220,7 +220,15 @@ export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSet
   onStream({ answer: '', thinking: '', stage: 'model' });
   const r = await client(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') content += t; else reasoning += t; push(); } });
   push(true);
-  return { text: r.content, thinking: r.reasoning, sources, model: r.model, seconds: Math.round((performance.now() - t0) / 1000) };
+  return { text: r.content, thinking: r.reasoning, sources, model: r.model, seconds: Math.round((performance.now() - t0) / 1000), search: searchMode() };
+}
+
+/** Как искала база: по словам и по смыслу (эмбеддинги) или только по словам — и почему. */
+export function searchMode(): string {
+  const v = vectors.state;
+  if (vectors.ready) return `поиск: слова + смысл (${v.model})`;
+  const why = { none: 'модели эмбеддингов на сервере нет', off: 'смысловой поиск выключен', testing: 'идёт самопроверка модели эмбеддингов', indexing: `векторы ещё считаются: ${v.done}/${v.total}`, error: `ошибка эмбеддингов: ${v.error ?? ''}`, ready: 'векторов нет' }[v.status];
+  return `поиск: только по словам — ${why}`;
 }
 
 /** Справка из базы для советника в игре: доктрина, техника, местность, источники; ход боёв — только в вопросах истории. */

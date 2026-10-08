@@ -14,7 +14,7 @@ import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
 
 type Tab = 'browse' | 'docs';
-interface QA { id: number; mode: 'ask' | 'lecture'; q: string; text: string; thinking: string; model?: string; seconds?: number; stage?: 'search' | 'model'; sources: Source[]; done: boolean; error?: string }
+interface QA { id: number; mode: 'ask' | 'lecture'; q: string; text: string; thinking: string; model?: string; seconds?: number; search?: string; stage?: 'search' | 'model'; sources: Source[]; done: boolean; error?: string }
 
 export function KnowledgeView({ llm }: { llm: Llm }) {
   const [s, setS] = useState<kb.KbState>(kb.current());
@@ -192,7 +192,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
     try {
       const hist = msgs.filter((x) => x.done && !x.error).slice(-3).map((x) => ({ q: x.q, a: x.text }));
       const r = await kb.ask(m, q, llm.settings, hist, (v) => setMsgs((l) => l.map((x) => (x.id === my ? { ...x, text: v.answer, thinking: v.thinking, stage: v.stage } : x))), ctl.current.signal);
-      setMsgs((l) => l.map((x) => (x.id === my ? { ...x, text: r.text, thinking: r.thinking, sources: r.sources, model: r.model, seconds: r.seconds, done: true } : x)));
+      setMsgs((l) => l.map((x) => (x.id === my ? { ...x, text: r.text, thinking: r.thinking, sources: r.sources, model: r.model, seconds: r.seconds, search: r.search, done: true } : x)));
     } catch (err) {
       setMsgs((l) => l.map((x) => (x.id === my ? { ...x, done: true, error: (err as Error).message } : x)));
     }
@@ -241,7 +241,7 @@ function QAItem({ m, s, open, llmOff }: { m: QA; s: kb.KbState; open: (id: strin
         {!m.done && m.text && <span className="kb-caret" />}
         {m.done && m.sources.length > 0 && <div className="kb-srcs"><small className="muted">Материалы:</small>{m.sources.map((x) => <button key={x.n} className="kb-link" onClick={() => open(x.kind === 'entry' ? x.ref : `doc:${x.ref}`)}>[{x.n}] {x.title}</button>)}</div>}
         {m.done && !m.sources.length && !m.error && <small className="muted">в базе по запросу ничего не найдено</small>}
-        {m.done && m.model && <small className="muted kb-meta">{m.model} · {m.seconds} с</small>}
+        {m.done && m.model && <small className="muted kb-meta">{m.model} · {m.seconds} с{m.search ? ` · ${m.search}` : ''}</small>}
       </div>
       {void s}
     </div>

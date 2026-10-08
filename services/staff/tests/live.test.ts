@@ -276,6 +276,13 @@ describe('ошибка сервера модели', () => {
     expect(calls).toBe(2);
     expect(r.content.length).toBeGreaterThan(0);
   }, 30000);
+  it('400 «Failed to load model» — понятное объяснение с именем модели, без повторов', async () => {
+    let calls = 0;
+    const fail: typeof fetch = async () => { calls++; return new Response('{"error":{"message":"Failed to load model \\"qwen/qwen3.8-27b\\". Error: Failed to load model."}}', { status: 400 }); };
+    const c = new LlmClient({ ...configFromEnv({}), url, model: 'qwen/qwen3.8-27b', thinking: 'off' }, fail);
+    await expect(c.chat({ messages: [{ role: 'user', content: 'тест' }] })).rejects.toThrow(/не смог загрузить модель «qwen\/qwen3\.8-27b».*«загружена»/);
+    expect(calls).toBe(1);
+  });
 });
 
 describe('разбор операции', () => {
