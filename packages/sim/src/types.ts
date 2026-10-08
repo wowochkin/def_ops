@@ -119,7 +119,9 @@ export interface Rules {
    * разрушения, зачистка: к времени марша добавляется клетка / enemyKmPerDay[подвижность]. Подвоз — только
    * по своей территории. Нет поля — территория не ведётся (как раньше).
    */
-  territory?: { radiusKm: number; enemyKmPerDay: Partial<Record<Mobility, number>> };
+  territory?: { radiusKm: number; enemyKmPerDay: Partial<Record<Mobility, number>>;
+    /** Подвоз проходит и по чужой территории, где наши войска ближе этого (км) и ближе противника (по умолчанию — contactKm); 0 — только по своей. */
+    supplyHoldKm?: number };
   /** Через сколько часов непрерывного разрыва подвоза формирование считается окружённым (по умолчанию 36). */
   encircleHours?: number;
   /** Множитель темпов марша из профилей (калибровка: заторы, разрушенные дороги, беженцы). */
@@ -329,4 +331,6 @@ export type StaffAction =
   | { kind: 'base'; side: string; base: string; to: LngLat; toName?: string; issuedAt: string }
   | { kind: 'priority'; side: string; formations: string[]; issuedAt: string }
   | { kind: 'bridge'; side: string; at: LngLat; issuedAt: string }
+  /** Подорвать мост или переправу у точки (на своей территории): через 2 ч не действует. */
+  | { kind: 'demolish'; side: string; at: LngLat; issuedAt: string }
   | { kind: 'commit'; side: string; formation: string; at: LngLat; atName?: string; issuedAt: string };

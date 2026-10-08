@@ -41,6 +41,8 @@ export interface Decision {
   requests: string[];
   /** Главные риски решения. */
   risks: string[];
+  /** Распоряжения по тылу, переправам, резервам (в игре, если штаб их ведёт). */
+  actions?: StaffActionGiven[];
 }
 
 const str = { type: 'string' };
@@ -71,6 +73,34 @@ export const DECISION_SCHEMA = {
     },
     requests: { type: 'array', items: str },
     risks: { type: 'array', items: str },
+  },
+} as const;
+
+/** Распоряжение штаба модели помимо приказов войскам: тыл, переправы, резервы (только в игре, где штаб ведёт их сам). */
+export const STAFF_ACTION_KINDS = ['base', 'priority', 'bridge', 'demolish', 'commit'] as const;
+export interface StaffActionGiven {
+  kind: (typeof STAFF_ACTION_KINDS)[number];
+  /** База снабжения (base) или формирование из резерва (commit). */
+  subject: string | null;
+  /** Пункт: куда перенести базу, где навести переправу или подорвать мост, район ввода резерва. */
+  area: string | null;
+  /** Формирования с приоритетом подвоза (priority). */
+  formations: string[];
+}
+
+/** Решение в игре: то же, что DECISION_SCHEMA, и распоряжения по тылу, переправам, резервам. */
+export const LIVE_DECISION_SCHEMA = {
+  ...DECISION_SCHEMA,
+  required: [...DECISION_SCHEMA.required, 'actions'],
+  properties: {
+    ...DECISION_SCHEMA.properties,
+    actions: {
+      type: 'array',
+      items: {
+        type: 'object', additionalProperties: false, required: ['kind', 'subject', 'area', 'formations'],
+        properties: { kind: { type: 'string', enum: [...STAFF_ACTION_KINDS] }, subject: { type: ['string', 'null'] }, area: { type: ['string', 'null'] }, formations: { type: 'array', items: { type: 'string' } } },
+      },
+    },
   },
 } as const;
 

@@ -49,16 +49,30 @@ export function controlMap(T: Theatre, units: Formation[], sides: string[], weig
  * ближе zocKm и ближе любого своего формирования (зона влияния противника).
  * Окружение получается, когда кольцо таких зон смыкается вокруг формирования.
  */
-export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number; ownZoneKm: number }): Uint8Array {
+export function supplyPassable(T: Theatre, units: Formation[], side: string, zocKm: number | ((f: Formation) => number), territory?: { owner: ArrayLike<number>; side: number; ownZoneKm: number; holdKm?: number }): Uint8Array {
   const N = T.cols * T.rows;
   const zoc = typeof zocKm === 'number' ? () => zocKm : zocKm;
   const own = units.filter((u) => u.side === side).map((u) => T.proj.toXY(u.position));
   const enemy = units.filter((u) => u.side !== side).map((u) => ({ p: T.proj.toXY(u.position), r: zoc(u) }));
   const out = new Uint8Array(N).fill(1);
-  // территория противника закрыта для подвоза целиком (сплошная полоса); зоны его формирований тогда —
-  // только их собственный район (сами войска), а не широкие зоны влияния: окружение даёт территория
+  // территория противника закрыта для подвоза (сплошная полоса); зоны его формирований тогда —
+  // только их собственный район (сами войска), а не широкие зоны влияния: окружение даёт территория.
+  // Но где стоят наши войска (ближе holdKm и ближе противника), туда идут и их колонны: объединение
+  // держит полосу в десятки км, а не точку, и обойдённые узлы противника рядом его подвоз не перерезают.
   if (territory) {
-    for (let i = 0; i < N; i++) { const o = territory.owner[i]; if (o >= 0 && o !== territory.side) out[i] = 0; }
+    const hold = territory.holdKm ?? 0;
+    for (let i = 0; i < N; i++) {
+      const o = territory.owner[i];
+      if (o < 0 || o === territory.side) continue;
+      out[i] = 0;
+      if (!hold) continue;
+      const p = T.cellCenter(i % T.cols, Math.floor(i / T.cols));
+      let dOwn = Infinity, dEn = Infinity;
+      for (const q of own) { const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < dOwn) dOwn = d; }
+      if (dOwn > hold) continue;
+      for (const e of enemy) { const d = Math.hypot(e.p[0] - p[0], e.p[1] - p[1]); if (d < dEn) dEn = d; }
+      if (dOwn < dEn) out[i] = 1;
+    }
     for (const e of enemy) e.r = territory.ownZoneKm;
   }
   for (let i = 0; i < N; i++) {

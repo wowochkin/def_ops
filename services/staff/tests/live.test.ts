@@ -128,3 +128,31 @@ describe('советник: без выдумок и без скрытых св�
     expect(r.answer).toContain('Сведений');
   }, 60000);
 });
+
+describe('штаб модели ведёт тыл, переправы, резервы', () => {
+  it('распоряжения модели сопоставляются с обстановкой и проверяются правилами арбитра', async () => {
+    const { actionsToStaff } = await import('../src/live');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-19T05:00', 'su', 'de');
+    const sit = buildSituation(ctx, g, cfg, tpl, null, true);
+    expect(sit.messages[1].content).toContain('поле actions (может быть пустым)');
+    expect(sit.staff!.bases.length).toBeGreaterThan(3);
+    const bridgeArea = sit.areas.find((a) => /Seelow|Muencheberg|Buckow|Wriezen|Bad Freienwalde/.test(a.title))?.title ?? sit.areas[0].title;
+    const r = actionsToStaff(ctx, g, sit, [
+      { kind: 'priority', subject: null, area: null, formations: [sit.formations[0].name, sit.formations[1].name] },
+      { kind: 'base', subject: sit.staff!.bases[0].name, area: 'Нигде', formations: [] },
+      { kind: 'demolish', subject: null, area: bridgeArea, formations: [] },
+      { kind: 'commit', subject: 'Несуществующий корпус', area: sit.areas[0].title, formations: [] },
+    ]);
+    expect(r.applied[0].action?.kind).toBe('priority');
+    expect(r.applied[1].action).toBeNull();
+    expect(r.applied[1].text).toMatch(/не опознан/);
+    expect(r.applied[3].text).toMatch(/нет среди резервов/);
+    expect(r.applied.every((x) => x.text.length > 0)).toBe(true);
+    // через подставную модель: решение с полем actions
+    const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
+    const t = await decideTurn(client, sit);
+    expect(t.ok).toBe(true);
+    expect(Array.isArray(t.decision!.actions)).toBe(true);
+  }, 60000);
+});

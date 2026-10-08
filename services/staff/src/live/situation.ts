@@ -7,7 +7,7 @@
  */
 import {
   areaTitle, dayEvents, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
-  type GameState, type SimContext,
+  onMap, type GameState, type SimContext,
 } from '@def-ops/sim';
 import { fill } from '../fill';
 
@@ -41,6 +41,8 @@ export interface Situation {
   /** Обнаруженный противник: id и название. */
   enemies: { id: string; name: string }[];
   time: string;
+  /** Штаб ведёт тыл, переправы, резервы: базы снабжения и резервы своей стороны (для распоряжений). */
+  staff?: { side: string; bases: { id: string; name: string }[]; reserves: { id: string; name: string }[] };
 }
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -126,7 +128,7 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
   };
 }
 
-export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, tpl: Templates, previous?: { time: string; intent: string } | null): Situation {
+export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, tpl: Templates, previous?: { time: string; intent: string } | null, staffOn = false): Situation {
   const s = g.state;
   const p = situationParts(ctx, g, cfg);
   const hours = ctx.scenario.turnHours;
@@ -142,13 +144,44 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
     question: `Примите решение на ${hours === 24 ? 'сутки' : `${hours} ч`} — до ${momentRu(addH(s.time, hours))}. Приказы доходят до войск не сразу: ${p.delays}. `
       + 'Отдавайте приказы только тем формированиям, чья задача должна измениться: остальные продолжают выполнять действующие. '
       + 'area — пункт из списка, где действовать (для обороны — где занять оборону, для наступления и контратаки — цель); '
-      + 'toArea — куда (для отхода, прорыва, перегруппировки, деблокирования), иначе null. Если формирование обороняется на месте — area — пункт, у которого оно стоит.',
+      + 'toArea — куда (для отхода, прорыва, перегруппировки, деблокирования), иначе null. Если формирование обороняется на месте — area — пункт, у которого оно стоит.'
+      + (staffOn ? ' Вы ведёте и тыл с инженерными войсками — поле actions (может быть пустым): '
+        + 'base — перенести базу снабжения (subject — название базы из списка, area — пункт; на время переноса база не действует); '
+        + 'priority — приоритет подвоза (formations — не более трети своих формирований; им больше, остальным меньше); '
+        + 'bridge — навести переправу (area — пункт у реки); demolish — подорвать мост или переправу (area — пункт у моста, на своей территории); '
+        + 'commit — ввести резерв в сражение (subject — формирование из резерва, area — район сосредоточения на своей территории). '
+        + 'В полях subject, area, formations — названия точно как в обстановке; в неиспользуемых — null или пустой список.'
+        : ' Тыл, переправы и резервы ведёт вышестоящее командование: поле actions оставьте пустым.'),
+    rear: staffOn ? rearText(ctx, g, cfg.side) : '- Ведёт вышестоящее командование (по плану).',
   }, 'staff.live.md');
   return {
     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
     formations: p.formations.filter((f) => p.own.find((u) => u.id === f.id)!.status !== 'reserve'),
     areas: p.areas, enemies: p.enemies, time: s.time,
+    ...(staffOn ? { staff: {
+      side: cfg.side,
+      bases: (s.logistics?.[cfg.side]?.bases ?? []).map((b) => ({ id: b.id, name: b.name })),
+      reserves: s.formations.filter((f) => f.side === cfg.side && f.reserveFrom && !f.destroyed).map((f) => ({ id: f.id, name: f.name })),
+    } } : {}),
   };
 }
 
 const addH = (t: string, h: number) => new Date(Date.parse(t + (t.length <= 16 ? ':00Z' : '')) + h * 3600_000).toISOString().slice(0, 16);
+
+/** Тыл, переправы, резервы стороны — словами (для штаба модели и советника). */
+export function rearText(ctx: SimContext, g: GameState, side: string): string {
+  const s = g.state, T = ctx.theatre;
+  const lg = s.logistics?.[side];
+  const out: string[] = [];
+  if (lg) {
+    out.push(`- Базы снабжения: ${lg.bases.map((b) => `${b.name}${b.activeFrom && b.activeFrom > s.time ? ` (переносится до ${b.activeFrom.slice(8, 10)}.${b.activeFrom.slice(5, 7)})` : ''}`).join('; ')}.`);
+    if (lg.priority.length) out.push(`- Приоритет подвоза: ${lg.priority.map((id) => s.formations.find((f) => f.id === id)?.name).join(', ')}.`);
+  }
+  const building = T.data.bridges.filter((b) => b.side === side && b.openFrom && b.openFrom > s.time);
+  if (building.length) out.push(`- Наводятся переправы: ${building.map((b) => b.name).join('; ')}.`);
+  const res = s.formations.filter((f) => f.side === side && f.reserveFrom);
+  if (res.length) out.push(`- Резервы Ставки, не введённые в сражение: ${res.map((f) => `${f.name} (готов с ${f.reserveFrom!.slice(8, 10)}.${f.reserveFrom!.slice(5, 7)})`).join('; ')}.`);
+  const coming = s.formations.filter((f) => f.side === side && !f.reserveFrom && f.enterAt && f.enterAt > s.time && !onMap(f, s.time));
+  if (coming.length) out.push(`- Вводятся в сражение: ${coming.map((f) => f.name).join('; ')}.`);
+  return out.length ? out.join('\n') : '- Особых распоряжений нет.';
+}

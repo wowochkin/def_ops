@@ -4,10 +4,10 @@
  * ответила не по схеме — одна просьба переписать решение в JSON без нового
  * размышления (как в проверке на контрольных обстановках).
  */
-import type { Order } from '@def-ops/sim';
+import type { Order, StaffAction } from '@def-ops/sim';
 import { LlmClient, type ChatResult } from '../llm/client';
 import type { Thinking } from '../llm/config';
-import { DECISION_SCHEMA, type Decision, type Issue } from '../decision';
+import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, type Decision, type Issue } from '../decision';
 import { decisionToOrders, type AppliedOrder } from './apply';
 import type { Situation } from './situation';
 
@@ -20,6 +20,9 @@ export interface AiTurn {
   applied: AppliedOrder[];
   orders: Order[];
   issues: Issue[];
+  /** Распоряжения по тылу, переправам, резервам: как поняты и исполнимы ли (заполняет игра — нужны состояние и театр). */
+  staff?: { given: unknown; action: StaffAction | null; text: string }[];
+  staffActions?: StaffAction[];
   timings?: ChatResult['timings'];
   repaired?: boolean;
   /** Конец размышления — для разбора посредником. */
@@ -30,7 +33,7 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
   const out: AiTurn = { time: sit.time, model: client.config.model, ok: false, applied: [], orders: [], issues: [] };
   let res: ChatResult;
   try {
-    res = await client.chat({ messages: sit.messages, schema: { name: 'staff_decision', schema: DECISION_SCHEMA }, thinking: opts.thinking, signal: opts.signal, onDelta: opts.onDelta });
+    res = await client.chat({ messages: sit.messages, schema: { name: 'staff_decision', schema: sit.staff ? LIVE_DECISION_SCHEMA : DECISION_SCHEMA }, thinking: opts.thinking, signal: opts.signal, onDelta: opts.onDelta });
   } catch (e) {
     out.error = (e as Error).message;
     return out;
@@ -43,7 +46,7 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
       const fix = await client.chat({
         messages: [...sit.messages, { role: 'assistant', content: res.content.trim() || res.reasoning.slice(-12000) },
           { role: 'user', content: 'Ответ должен быть одним JSON-объектом по схеме, без текста вокруг. Перепиши своё решение в этот формат, ничего не меняя по существу.' }],
-        schema: { name: 'staff_decision', schema: DECISION_SCHEMA }, thinking: 'off', signal: opts.signal,
+        schema: { name: 'staff_decision', schema: sit.staff ? LIVE_DECISION_SCHEMA : DECISION_SCHEMA }, thinking: 'off', signal: opts.signal,
       });
       if (!fix.jsonError) { res = { ...res, json: fix.json, jsonError: undefined }; out.repaired = true; }
     } catch { /* остаётся исходная ошибка */ }

@@ -172,6 +172,13 @@ export class Theatre {
     this.bridges.set(i, list);
   }
 
+  /** Разрушить мост (подрыв): с момента at не действует. */
+  destroyBridge(id: string, at: string): void {
+    const b = this.data.bridges.find((x) => x.id === id);
+    if (b) b.destroyedAt = at;
+    for (const list of this.bridges.values()) for (const x of list) if (x.id === id) x.destroyedAt = at;
+  }
+
   /** Убрать переправы (например, будущие наводки стороны, перешедшей к человеку). */
   dropBridges(pred: (b: TheatreData['bridges'][number]) => boolean): TheatreData['bridges'] {
     const gone = this.data.bridges.filter(pred);

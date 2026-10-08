@@ -3234,14 +3234,15 @@
   {
    "formation": "su_3gva",
    "date": "1945-04-16",
-   "lng": 14.695,
+   "lng": 14.753,
    "lat": 51.708,
    "approx_km": 6,
    "place": "Forst / KleinBademeusel",
    "sector_note": "Нейсе: (иск.) Форст – 1 км ю-в Кляйн-Бадемойзеля",
    "source": "RW_KP",
    "reliability": "B",
-   "time": "start"
+   "time": "start",
+   "note": "было 14.695 (середина пунктов на реке); утром 16.04 армия на восточном берегу — 4 км восточнее Нейсе, в пределах ±6 км"
   },
   {
    "formation": "su_3gva",
@@ -3346,14 +3347,15 @@
   {
    "formation": "su_13a",
    "date": "1945-04-16",
-   "lng": 14.723,
+   "lng": 14.813,
    "lat": 51.618,
    "approx_km": 8,
    "place": "KleinBademeusel / BadMuskau",
    "sector_note": "Нейсе, центр главной группировки",
    "source": "OOB; Z p.471",
    "reliability": "B",
-   "time": "start"
+   "time": "start",
+   "note": "было 14.723 (середина пунктов на реке); утром 16.04 армия на восточном берегу — 4 км восточнее Нейсе, в пределах ±8 км"
   },
   {
    "formation": "su_13a",
@@ -3414,14 +3416,15 @@
   {
    "formation": "su_5gva",
    "date": "1945-04-16",
-   "lng": 14.728,
+   "lng": 14.784,
    "lat": 51.555,
    "approx_km": 6,
    "place": "BadMuskau / Leknica",
    "sector_note": "Нейсе, левый фланг главной группировки (Мускау)",
    "source": "OOB; Z p.471",
    "reliability": "B",
-   "time": "start"
+   "time": "start",
+   "note": "было 14.728 (середина пунктов на реке); утром 16.04 армия на восточном берегу — 4 км восточнее Нейсе, в пределах ±6 км"
   },
   {
    "formation": "su_5gva",
@@ -3493,14 +3496,15 @@
   {
    "formation": "su_52a",
    "date": "1945-04-16",
-   "lng": 14.993,
+   "lng": 15.072,
    "lat": 51.301,
    "approx_km": 10,
    "place": "Pienk / Rothenburg",
    "sector_note": "Нейсе севернее Гёрлица (ударная группа 73 ск), остальной фронт в обороне",
    "source": "Z p.471; RW_BW",
    "reliability": "B",
-   "time": "start"
+   "time": "start",
+   "note": "было 14.993 (середина пунктов на реке); утром 16.04 армия на восточном берегу — 4 км восточнее Нейсе, в пределах ±10 км"
   },
   {
    "formation": "su_52a",
@@ -3593,14 +3597,15 @@
   {
    "formation": "su_2pa",
    "date": "1945-04-16",
-   "lng": 14.94,
+   "lng": 15.024,
    "lat": 51.357,
    "approx_km": 6,
    "place": "Rothenburg",
    "sector_note": "форсирование Нейсе на участке Ротенбург (фл. Обер-Форверк)",
    "source": "RW_BW; PW_2A",
    "reliability": "B",
-   "time": "start"
+   "time": "start",
+   "note": "было 14.94 (середина пунктов на реке); утром 16.04 армия на восточном берегу — 4 км восточнее Нейсе, в пределах ±6 км"
   },
   {
    "formation": "su_2pa",
@@ -3660,14 +3665,15 @@
   {
    "formation": "su_3gta",
    "date": "1945-04-16",
-   "lng": 14.695,
+   "lng": 14.753,
    "lat": 51.708,
    "approx_km": 8,
    "place": "Forst / KleinBademeusel",
    "sector_note": "в боевых порядках пехоты южнее Форста",
    "source": "RW_KP",
    "reliability": "B",
-   "time": "start"
+   "time": "start",
+   "note": "было 14.695 (середина пунктов на реке); утром 16.04 армия на восточном берегу — 4 км восточнее Нейсе, в пределах ±8 км"
   },
   {
    "formation": "su_3gta",

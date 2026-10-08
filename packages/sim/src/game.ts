@@ -33,6 +33,8 @@ export interface GameRecord {
   seed: number;
   /** С какого хода командование у человека и модели. */
   takeover: string;
+  /** Штаб модели ведёт тыл, переправы, резервы своей стороны (иначе они идут по историческому графику). */
+  aiStaff?: boolean;
   human: string;
   ai: string;
   turns: GameTurn[];
@@ -50,7 +52,7 @@ export interface GameState {
  * исторические приказы. human — сторона человека: её будущие наводки переправ и прибытия резервов тоже сняты,
  * тыл — под управлением штаба (prepareTakeover).
  */
-export function startGame(ctx: SimContext, seed: number, takeover: string, human?: string): GameState {
+export function startGame(ctx: SimContext, seed: number, takeover: string, human?: string, aiStaff?: string): GameState {
   let s = createState(ctx, seed), prev: SimState | null = null;
   const snapshots = [snapshotOf(s)];
   while (s.time < takeover && s.time < ctx.scenario.end) {
@@ -60,6 +62,8 @@ export function startGame(ctx: SimContext, seed: number, takeover: string, human
   }
   s = { ...s, pending: s.pending.filter((o) => o.issuedAt < s.time) };
   if (human) s = prepareTakeover(ctx, s, human);
+  // штаб модели ведёт и тыл, переправы, резервы своей стороны (если включён при передаче командования)
+  if (aiStaff) s = prepareTakeover(ctx, s, aiStaff);
   return { state: s, prev, snapshots };
 }
 
@@ -102,7 +106,7 @@ export function gameOutcome(ctx: SimContext, history: History, g: GameState, end
 
 /** Восстановить игру по записи. */
 export function replayGame(ctx: SimContext, rec: GameRecord): GameState {
-  let g: GameState = startGame(ctx, rec.seed, rec.takeover, rec.human);
+  let g: GameState = startGame(ctx, rec.seed, rec.takeover, rec.human, rec.aiStaff ? rec.ai : undefined);
   for (const t of rec.turns) {
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится: ход ${t.time}, расчёт ${g.state.time}`);
     g = playTurn(ctx, g, t.orders, t.actions ?? []);

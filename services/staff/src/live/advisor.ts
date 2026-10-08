@@ -9,14 +9,14 @@
  * Свободный текст командующего идёт только советнику; арбитр получает лишь
  * приказы в строгой форме (формирование, задача, цель).
  */
-import { checkEvents, onMap, profileOf, type GameState, type History, type Order, type SimContext } from '@def-ops/sim';
+import { checkEvents, profileOf, type GameState, type History, type Order, type SimContext } from '@def-ops/sim';
 import { LlmClient, type ChatMessage, type ChatResult } from '../llm/client';
 import type { Thinking } from '../llm/config';
 import { StringFieldStream } from '../stream-json';
 import { TASKS, type Issue, type Order as StaffOrder } from '../decision';
 import { fill } from '../fill';
 import { decisionToOrders } from './apply';
-import { momentRu, situationParts } from './situation';
+import { momentRu, rearText, situationParts } from './situation';
 
 export interface AdvisorConfig { side: string; sideName: string; profile: string; role: string; anchor: string; anchorName: string }
 
@@ -129,24 +129,6 @@ export function rulesBrief(ctx: SimContext, side: string): string {
     `- Большую реку без моста техника не преодолевает (пехота — с задержкой ${R.riverCrossHours} ч); подвоз через реку — только по переправам.`,
     `- Противник виден в пределах разведки наших войск; дальше — неизвестно.`,
   ].filter(Boolean).join('\n');
-}
-
-/** Тыл, переправы, резервы стороны — словами, для советника. */
-function rearText(ctx: SimContext, g: GameState, side: string): string {
-  const s = g.state, T = ctx.theatre;
-  const lg = s.logistics?.[side];
-  const out: string[] = [];
-  if (lg) {
-    out.push(`- Базы снабжения: ${lg.bases.map((b) => `${b.name}${b.activeFrom && b.activeFrom > s.time ? ` (переносится до ${b.activeFrom.slice(8, 10)}.${b.activeFrom.slice(5, 7)})` : ''}`).join('; ')}.`);
-    if (lg.priority.length) out.push(`- Приоритет подвоза: ${lg.priority.map((id) => s.formations.find((f) => f.id === id)?.name).join(', ')}.`);
-  }
-  const building = T.data.bridges.filter((b) => b.side === side && b.openFrom && b.openFrom > s.time);
-  if (building.length) out.push(`- Наводятся переправы: ${building.map((b) => b.name).join('; ')}.`);
-  const res = s.formations.filter((f) => f.side === side && f.reserveFrom);
-  if (res.length) out.push(`- Резервы Ставки, не введённые в сражение: ${res.map((f) => `${f.name} (готов с ${f.reserveFrom!.slice(8, 10)}.${f.reserveFrom!.slice(5, 7)})`).join('; ')}.`);
-  const coming = s.formations.filter((f) => f.side === side && !f.reserveFrom && f.enterAt && f.enterAt > s.time && !onMap(f, s.time));
-  if (coming.length) out.push(`- Вводятся в сражение: ${coming.map((f) => f.name).join('; ')}.`);
-  return out.length ? out.join('\n') : '- Особых распоряжений нет.';
 }
 
 /**

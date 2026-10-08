@@ -252,7 +252,7 @@
    "parent": "su_1uf",
    "type": "guards_army",
    "position": [
-    14.695,
+    14.753,
     51.708
    ],
    "personnel": 64996,
@@ -270,7 +270,7 @@
    "parent": "su_1uf",
    "type": "rifle_army",
    "position": [
-    14.723,
+    14.813,
     51.618
    ],
    "personnel": 57774,
@@ -288,7 +288,7 @@
    "parent": "su_1uf",
    "type": "guards_army",
    "position": [
-    14.728,
+    14.784,
     51.555
    ],
    "personnel": 64996,
@@ -306,7 +306,7 @@
    "parent": "su_1uf",
    "type": "rifle_army",
    "position": [
-    14.993,
+    15.072,
     51.301
    ],
    "personnel": 57774,
@@ -324,7 +324,7 @@
    "parent": "su_1uf",
    "type": "rifle_army",
    "position": [
-    14.94,
+    15.024,
     51.357
    ],
    "personnel": 78607,
@@ -343,7 +343,7 @@
    "parent": "su_1uf",
    "type": "tank_army",
    "position": [
-    14.695,
+    14.753,
     51.708
    ],
    "personnel": 45000,

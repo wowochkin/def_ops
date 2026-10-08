@@ -12,7 +12,7 @@ import {
   runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { advise, buildAdvice, buildSituation, decideTurn, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
+import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
@@ -87,11 +87,13 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   const human = ctx.scenario.sides.find((x) => x.id !== cfg.side)!.id;
   advisorProfile = cfg.advisor ? ((await profilesMd[`../../../../services/staff/profiles/${cfg.advisor.profile}.md`]?.()) as string ?? '') : '';
   post({ kind: 'progress', text: 'расчёт до передачи командования…' });
-  g = startGame(ctx, s.seed, s.takeover, human);
+  // штаб модели ведёт и тыл, переправы, резервы своей стороны, если противник — модель (решается при передаче командования)
+  const aiStaff = record ? !!record.aiStaff : en === 'llm';
+  g = startGame(ctx, s.seed, s.takeover, human, aiStaff ? cfg.side : undefined);
   end = ((catalogFile as unknown as { scenarios: { id: string; game: GameEnd }[] }).scenarios.find((x) => x.id === s.scenario)?.game) ?? { victory: { event: '', title: '' }, defeat: { strengthBelow: 0, deadline: ctx.scenario.end, deadlineText: 'время операции вышло' } };
   baseStrength = sideStrength(g.state, human);
   outcome = null;
-  rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, turns: [] };
+  rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, aiStaff, turns: [] };
   journal = [];
   for (const [k, t] of rec.turns.entries()) {
     if (outcome) break;
@@ -115,11 +117,12 @@ function day(time: string, orders: Order[], before: GameState['state'], results:
   const what = (a: StaffAction) => a.kind === 'base' ? `Тыл: база «${bases.get(a.base) ?? a.base}» — перенести ${describePlace(ctx.theatre, a.to)}`
     : a.kind === 'priority' ? `Тыл: приоритет подвоза — ${a.formations.length ? a.formations.map((x) => names.get(x)).join(', ') : 'снят'}`
     : a.kind === 'bridge' ? `Инженерные: навести переправу ${describePlace(ctx.theatre, a.at)}`
+    : a.kind === 'demolish' ? `Инженерные: подорвать мост ${describePlace(ctx.theatre, a.at)}`
     : `Резерв Ставки: ввести ${names.get(a.formation)} — район ${describePlace(ctx.theatre, a.at)}`;
   return {
     time,
     orders: orders.filter((o) => o.source === 'human').map((o) => `${names.get(o.formation)}: ${TASK_RU[o.task]} — ${describeTarget(ctx, o.target, names)}${o.note ? `. ${o.note}` : ''}`),
-    actions: results.map((r) => `${what(r.action)}${r.ok ? ` — ${r.text}` : ` — НЕ ИСПОЛНЕНО: ${r.text}`}`),
+    actions: results.filter((r) => r.action.side === rec.human).map((r) => `${what(r.action)}${r.ok ? ` — ${r.text}` : ` — НЕ ИСПОЛНЕНО: ${r.text}`}`),
     decision,
     events: dayEvents(ctx, g.state, rec.human, before),
   };
@@ -134,7 +137,8 @@ function startAi() {
   const time = g.state.time;
   const prevAi = [...rec.turns].reverse().find((t) => (t.ai as AiTurn | undefined)?.decision);
   const previous = prevAi ? { time: prevAi.time, intent: (prevAi.ai as AiTurn).decision!.intent } : null;
-  const sit = buildSituation(ctx, g, cfg, { system: systemTpl, user: liveTpl, profile: profileMd }, previous);
+  const sit = buildSituation(ctx, g, cfg, { system: systemTpl, user: liveTpl, profile: profileMd }, previous, !!rec.aiStaff);
+  const gAt = g;
   const abort = new AbortController();
   const client = llmClient();
   status({ state: 'thinking', time, since: Date.now() });
@@ -150,6 +154,11 @@ function startAi() {
   }).then((t) => {
     if (abort.signal.aborted) return null;
     if (buf) post({ kind: 'ai-stream', text: buf });
+    if (t.ok && t.decision) {
+      const conv = actionsToStaff(ctx, gAt, sit, t.decision.actions ?? []);
+      t.staff = conv.applied;
+      t.staffActions = conv.actions;
+    }
     status(t.ok ? { state: 'done', time, turn: t } : { state: 'error', time, error: t.error ?? 'нет решения', turn: t });
     if (ai) ai.result = t;
     return t;
@@ -200,7 +209,7 @@ async function advance() {
       if (!t.ok && !skipAi) { post({ kind: 'blocked', error: t.error ?? 'модель не дала решения' }); return; }
     }
     const humanOrders = queued.orders.map((o) => ({ ...o, issuedAt: g.state.time, source: 'human' as const }));
-    const actions = queued.actions.map((a) => ({ ...a, issuedAt: g.state.time }));
+    const actions = [...queued.actions.map((a) => ({ ...a, issuedAt: g.state.time })), ...(t?.ok ? t.staffActions ?? [] : [])];
     const aiOrders = t?.ok ? t.orders : [];
     const orders = [...humanOrders, ...aiOrders];
     rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(t ? { ai: slim(t) } : {}) });

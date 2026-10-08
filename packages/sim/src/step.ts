@@ -97,7 +97,7 @@ export function supplyState(ctx: SimContext, units: Formation[], time: string, t
     // зона влияния: наступающие и на марше — радиус соприкосновения; в обороне (кольцо окружения) — половина полосы
     const zoc = (f: Formation) => f.posture === 'attack' || f.posture === 'march' ? ctx.rules.contactKm
       : Math.max(ctx.rules.contactKm, (profileOf(ctx, f.side).unitTypes[f.type]?.frontageKm ?? 0) / 2);
-    const terr = territory ? { owner: territory, side: sides.indexOf(side), ownZoneKm: ctx.rules.contactKm / 2 } : undefined;
+    const terr = territory ? { owner: territory, side: sides.indexOf(side), ownZoneKm: ctx.rules.contactKm / 2, holdKm: ctx.rules.territory?.supplyHoldKm ?? ctx.rules.contactKm } : undefined;
     if (src.length) fields.set(side, supplyField(ctx.theatre, side, src, units, profileOf(ctx, side), ctx.rules, time, zoc, terr).hours);
   }
   return { control, fields };
@@ -153,7 +153,11 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     return fld ? hoursNear(ctx, fld, at) : 0;
   };
   const range = (f: Formation) => profileOf(ctx, f.side).supply?.rangeHours ?? Infinity;
-  const isCut = (f: Formation) => !!sup?.fields.get(f.side) && supplyHours(f) > range(f);
+  // подвоз проверяется там, где формирование было на начало хода: поле подвоза построено на этот момент
+  // (после движения наступающий уже на чужой земле, которая станет своей только в конце хода — иначе
+  // каждая успешно наступающая армия «отрезана»)
+  const startPos = new Map(fs.map((f) => [f.id, f.position]));
+  const isCut = (f: Formation) => !!sup?.fields.get(f.side) && supplyHours(f, startPos.get(f.id) ?? f.position) > range(f);
 
   // полоса обороны: обороняющийся связывает боем наступающих в пределах половины своей ширины полосы
   const reach = (e: Formation) => {

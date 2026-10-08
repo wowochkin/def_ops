@@ -20,7 +20,7 @@ export const NOT_COMMITTED = '9999-01-01T00:00';
 const ENGINEERING = { bridgeHoursMajor: 24, bridgeHoursMinor: 12, parks: 3 };
 const maxH = (a: string, b: string) => (a > b ? a : b);
 
-export interface ActionCheck { ok: boolean; text: string; eta?: string; at?: LngLat }
+export interface ActionCheck { ok: boolean; text: string; eta?: string; at?: LngLat; /** мост для подрыва */ bridge?: string }
 
 /** Передача командования человеку: будущие наводки его стороны сняты, резервы — к вводу по его решению, тыл — под его управлением. */
 export function prepareTakeover(ctx: SimContext, state: SimState, side: string): SimState {
@@ -75,6 +75,15 @@ export function checkAction(ctx: SimContext, state: SimState, a: StaffAction, pe
     const eta = addHours(t, r.major ? eng.bridgeHoursMajor : eng.bridgeHoursMinor);
     return { ok: true, at: r.at, eta, text: `${r.major ? 'большая' : 'малая'} река; переправа будет готова ≈ ${eta.slice(8, 10)}.${eta.slice(5, 7)} ${eta.slice(11, 16)}` };
   }
+  if (a.kind === 'demolish') {
+    const P = T.proj.toXY(a.at);
+    const open = T.data.bridges.filter((b) => (!b.openFrom || b.openFrom <= t) && (!b.destroyedAt || b.destroyedAt > t))
+      .map((b) => ({ b, d: dist(T.proj.toXY(b.at), P) })).filter((x) => x.d <= Math.max(3, T.cellKm * 2)).sort((x, y) => x.d - y.d)[0];
+    if (!open) return { ok: false, text: 'рядом нет действующего моста или переправы' };
+    if (!own(ctx, state, a.side, open.b.at)) return { ok: false, text: 'мост не на нашей территории — подорвать некому' };
+    const eta = addHours(t, 2);
+    return { ok: true, at: open.b.at, eta, text: `${open.b.name ?? 'мост'} будет подорван ≈ ${eta.slice(8, 10)}.${eta.slice(5, 7)} ${eta.slice(11, 16)}`, bridge: open.b.id };
+  }
   const f = state.formations.find((x) => x.id === a.formation);
   if (!f || f.side !== a.side || !f.reserveFrom) return { ok: false, text: 'это не резерв, ожидающий ввода' };
   if (!own(ctx, state, a.side, a.at)) return { ok: false, text: 'район сосредоточения — не на своей территории' };
@@ -100,6 +109,8 @@ export function applyActions(ctx: SimContext, state: SimState, actions: StaffAct
     } else if (a.kind === 'bridge') {
       bridges++;
       ctx.theatre.addBridge({ id: `u_${s.time}_${bridges}`, at: c.at!, name: `переправа ${describePlace(ctx.theatre, c.at!)}`, openFrom: c.eta!, side: a.side, kind: 'crossing' });
+    } else if (a.kind === 'demolish') {
+      ctx.theatre.destroyBridge(c.bridge!, c.eta!);
     } else {
       s.formations = s.formations.map((f) => (f.id === a.formation ? { ...f, position: a.at, enterAt: c.eta!, reserveFrom: undefined } : f));
     }

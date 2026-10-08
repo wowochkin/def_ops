@@ -923,6 +923,9 @@ function Umpire({ ai, turns, current, stream, reveal, setReveal, enemy, setEnemy
             {open === k && t.ok && d && <div className="aiturn-b">
               <div className="jsub">Приказы</div>
               <ul>{t.applied.map((a, i) => <li key={i} className={a.order ? '' : 'rej'}><b>{short(a.formation ?? a.given.formation)}</b>: {TASK_RU[a.given.task]} — {a.target ?? a.given.toArea ?? a.given.area}{a.given.details ? <span className="muted">. {a.given.details}</span> : null}{a.issue && <div className="iss">{a.issue}</div>}</li>)}</ul>
+              {t.staff && t.staff.length > 0 && <><div className="jsub">Тыл, переправы, резервы</div>
+                <ul>{t.staff.map((x, i) => { const gv = x.given as { kind: string; subject: string | null; area: string | null; formations: string[] };
+                  return <li key={i} className={x.action ? '' : 'rej'}><b>{({ base: 'база', priority: 'приоритет подвоза', bridge: 'переправа', demolish: 'подрыв моста', commit: 'ввод резерва' } as Record<string, string>)[gv.kind] ?? gv.kind}</b>{gv.subject ? `: ${gv.subject}` : ''}{gv.area ? ` — ${gv.area}` : ''}{gv.formations?.length ? ` — ${gv.formations.join(', ')}` : ''}<div className={x.action ? 'muted' : 'iss'}>{x.text}</div></li>; })}</ul></>}
               <div className="jsub">Оценка обстановки</div><p>{d.assessment}</p>
               <div className="jsub">Замысел противника (как его понял штаб)</div><p>{d.enemyIntent}</p>
               {d.requests.length > 0 && <><div className="jsub">Доклады наверх</div><ul>{d.requests.map((x, i) => <li key={i}>{x}</li>)}</ul></>}
