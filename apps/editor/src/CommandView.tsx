@@ -536,7 +536,7 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
   return (
     <div className="cmd-sec">
       <h3>Боевое распоряжение на {ddmm(v.time)}</h3>
-      <p className="note">Приказ доходит до войск не сразу: армиям — {v.delays.army ?? 0} ч, корпусам — {v.delays.corps ?? 0} ч. Объединения без нового приказа продолжают выполнять прежнюю задачу.</p>
+      <p className="note">Приказ доходит до войск не сразу: армиям — {v.delays.army ?? 0} ч, корпусам — {v.delays.corps ?? 0} ч. Отданные приказы не пропадают: объединения выполняют их, пока не получат новый («в силе» в списке ниже). Здесь — только новые приказы на этот ход.</p>
       {list.length > 0 && <div className="draft-list">
         {list.map((x) => { const w = v.own.find((y) => y.id === x.formation)!; return (
           <div key={x.formation} className={`draft${x.formation === sel ? ' on' : ''}`} onClick={() => setSel(x.formation)}>
@@ -551,7 +551,10 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
       <Grouped v={v}>{(x) => x.status === 'destroyed' ? null : (
         <button key={x.id} className={`orow${x.id === sel ? ' on' : ''}`} onClick={() => setSel(x.id)}>
           <span className="orow-n">{short(x.name)}</span>
-          <span className="orow-t">{drafts[x.id] ? <b className="plan">{TASK_RU[drafts[x.id].task]}{drafts[x.id].targetText ? `: ${drafts[x.id].targetText}` : ''}</b> : x.status === 'reserve' ? 'резерв Ставки, не введена' : x.status === 'arriving' ? `прибудет ${ddmm(x.arrives!)}` : x.task ? `${x.task} — ${x.target}` : 'без задачи'}</span>
+          <span className="orow-t">{drafts[x.id] ? <b className="plan">новый: {TASK_RU[drafts[x.id].task]}{drafts[x.id].targetText ? `: ${drafts[x.id].targetText}` : ''}</b>
+            : x.status === 'reserve' ? 'резерв Ставки, не введена' : x.status === 'arriving' ? `прибудет ${ddmm(x.arrives!)}`
+            : x.pending.length ? <span className="pend">в пути: {x.pending[x.pending.length - 1].task} — {x.pending[x.pending.length - 1].target}</span>
+            : x.task ? <span className="keep" title="Приказ прошлых ходов в силе, пока не отдан новый">в силе: {x.task} — {x.target}</span> : 'без задачи'}</span>
         </button>)}</Grouped>
     </div>
   );
@@ -734,6 +737,7 @@ export function decisionMissing(d: HumanDecision): string[] {
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
 function Decision({ v, d, set }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void }) {
+  const last = v.lastDecision;
   const draftReport = () => {
     const active = v.own.filter((u) => u.status === 'active');
     const cut = active.filter((u) => u.cutOff).map((u) => short(u.name));
@@ -747,14 +751,14 @@ function Decision({ v, d, set }: { v: TurnView; d: HumanDecision; set: (p: Parti
   };
   const F = ({ k, label, hint, rows, req }: { k: keyof HumanDecision; label: string; hint: string; rows: number; req?: boolean }) => (
     <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`}>
-      <span>{label}{req && <i> обязательно</i>}</span>
+      <span>{label}{req && <i> обязательно</i>}{last?.[k] && last[k] !== d[k] && <button className="link" title={last[k]} onClick={(e) => { e.preventDefault(); set({ [k]: last[k] }); }}>взять с прошлого хода</button>}</span>
       <textarea rows={rows} value={d[k]} placeholder={hint} onChange={(e) => set({ [k]: e.target.value })} />
     </label>
   );
   return (
     <div className="cmd-sec">
       <h3>Решение на {ddmm(v.time)} {hhmm(v.time)}</h3>
-      <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их.</p>
+      <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их; оценку обстановки и донесение пишут заново на каждый ход (обстановка изменилась), прошлые можно взять кнопкой и поправить. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
       {F({ k: 'enemyIntent', label: 'Замысел противника', hint: 'Что противник, по-видимому, намерен делать: где держит, куда отходит, где готовит контрудар…', rows: 3 })}
       {F({ k: 'intent', label: 'Решение (замысел действий)', hint: 'Цель на сутки, главный удар, кто наступает, кто обеспечивает, куда вводятся резервы…', rows: 4, req: true })}

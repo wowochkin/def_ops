@@ -898,3 +898,5 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .kb-answer ol { margin: 2px 0; padding-left: 20px; }
 .kb-answer blockquote { margin: 4px 0; padding-left: 8px; border-left: 2px solid #e2dccd; color: #5c584f; }
 .kb-answer hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+
+.orow-t .keep { color: #5c584f; } .orow-t .pend { color: #2f5f8f; }
