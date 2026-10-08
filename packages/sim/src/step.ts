@@ -278,7 +278,10 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   const day = dt / 24;
   // темп — по таблице от соотношения сил, с поправкой на местность обороняющихся (город — кварталами)
   const at = def.reduce((m, f) => Math.min(m, R.advanceTerrain?.[T.terrainAt(f.position)] ?? 1), 1);
-  const advancePerDay = interp(R.advance, ratio) * at;
+  // укреплённая полоса: темп не выше предельного для её уровня («прогрызание» обороны)
+  const fortLv = def.reduce((m, f) => Math.max(m, T.fortificationAt(f.position)), 0);
+  const cap = fortLv && R.fortAdvanceKm ? R.fortAdvanceKm[Math.min(fortLv, R.fortAdvanceKm.length - 1)] ?? Infinity : Infinity;
+  const advancePerDay = Math.min(interp(R.advance, ratio) * at, cap);
   // «удерживать любой ценой»: обороняющиеся не отходят и несут повышенные потери;
   // наступающие продвигаются, только если оборона прорвана (обходят узел сопротивления)
   // окружённые не могут отойти: держатся на месте с повышенными потерями
@@ -296,6 +299,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     { name: 'укрепления', value: +avg('fort').toFixed(2) },
     { name: 'случайность (разброс)', value: +noise.toFixed(2) },
     ...(at < 1 ? [{ name: 'темп по местности', value: +at.toFixed(2) }] : []),
+    ...(Number.isFinite(cap) ? [{ name: 'предел темпа в укреплённой полосе, км/сут', value: cap }] : []),
   ];
   for (const f of att) applyLoss(f, attackerLoss);
   for (const f of def) applyLoss(f, defenderLoss);

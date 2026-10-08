@@ -13,93 +13,93 @@
     ],
     [
       1.5,
-      0.8007
+      1.4804
     ],
     [
       2,
-      2.4022
+      4.4412
     ],
     [
       3,
-      4.8045
+      8.8823
     ],
     [
       4,
-      8.0074
+      14.8039
     ],
     [
       6,
-      14.4134
+      26.6469
     ],
     [
       10,
-      24.0223
+      44.4116
     ]
   ],
   "attackerLoss": [
     [
       0.5,
-      0.0639
+      0.0537
     ],
     [
       1,
-      0.0426
+      0.0358
     ],
     [
       2,
-      0.0266
+      0.0224
     ],
     [
       3,
-      0.016
+      0.0134
     ],
     [
       6,
-      0.0085
+      0.0072
     ],
     [
       10,
-      0.0053
+      0.0045
     ]
   ],
   "defenderLoss": [
     [
       0.5,
-      0.0171
+      0.0103
     ],
     [
       1,
-      0.0342
+      0.0205
     ],
     [
       2,
-      0.0683
+      0.0411
     ],
     [
       3,
-      0.1025
+      0.0616
     ],
     [
       6,
-      0.205
+      0.1233
     ],
     [
       10,
-      0.3417
+      0.2054
     ]
   ],
   "defense": {
     "terrain": {
       "open": 1,
-      "forest": 1.372,
-      "marsh": 1.501,
-      "urban": 1.631,
-      "hills": 1.372,
+      "forest": 1.369,
+      "marsh": 1.496,
+      "urban": 1.625,
+      "hills": 1.369,
       "water": 1
     },
-    "prepared": 1.272,
+    "prepared": 1.823,
     "prepareHours": 24,
-    "fortificationPerLevel": 0.285
+    "fortificationPerLevel": 0.107
   },
   "ammoShort": 0.4,
   "fuelOut": 0.5,
@@ -112,14 +112,21 @@
   "noise": 0.2,
   "riverCrossHours": 12,
   "advanceTerrain": {
-    "urban": 0.137,
+    "urban": 0.281,
     "forest": 0.6,
     "marsh": 0.5,
     "hills": 0.8
   },
   "_advanceTerrain_note": "город — кварталами: «несколько десятков метров в час», 100–200 м после падения опорного пункта (LT_CONQ); черновик",
   "fortCrossHours": 4,
-  "movementScale": 0.826,
+  "fortAdvanceKm": [
+    99,
+    14,
+    8.75,
+    5.25
+  ],
+  "_fortAdvance_note": "«прогрызание» обороны: на Зееловских высотах 17–18.04 фактически до 4 км/сутки (LT_CONQ), 8 гв. А 16.04 — 3–6 км до Хауптграбена (Исаев); индекс — уровень полосы 1..3. Черновик.",
+  "movementScale": 0.932,
   "calibration": {
     "scenario": "berlin-1945-tasks",
     "date": "2026-10-08",
@@ -128,31 +135,32 @@
     "trainUntil": "1945-04-25T23:59",
     "from": "ww2-draft",
     "multipliers": {
-      "advance": 0.801,
-      "attackerLoss": 1.065,
-      "defenderLoss": 1.709,
-      "prepared": 1.272,
-      "fortPerLevel": 0.285,
-      "terrainExp": 1.206,
-      "movement": 0.826,
-      "urbanAdvance": 0.137
+      "advance": 1.48,
+      "attackerLoss": 0.894,
+      "defenderLoss": 1.027,
+      "prepared": 1.823,
+      "fortPerLevel": 0.107,
+      "terrainExp": 1.197,
+      "movement": 0.932,
+      "urbanAdvance": 0.281,
+      "fortAdvance": 1.75
     },
     "before": {
-      "trainKm": 7.13,
-      "testKm": 5.86,
-      "eventsDays": 1.86,
-      "within": 0.786
+      "trainKm": 9.84,
+      "testKm": 4.01,
+      "eventsDays": 2.63,
+      "within": 0.725
     },
     "after": {
-      "trainKm": 5.76,
-      "testKm": 4.36,
-      "eventsDays": 1.36,
-      "within": 0.824
+      "trainKm": 6.5,
+      "testKm": 3.8,
+      "eventsDays": 1.13,
+      "within": 0.806
     },
     "events": [
       {
         "id": "seelow",
-        "days": -1
+        "days": 0
       },
       {
         "id": "spremberg",
@@ -168,7 +176,7 @@
       },
       {
         "id": "pocket",
-        "days": null
+        "days": -1
       },
       {
         "id": "ring",
@@ -180,11 +188,15 @@
       },
       {
         "id": "stettin",
-        "days": -4
+        "days": -1
       },
       {
         "id": "reichstag",
-        "days": -1
+        "days": null
+      },
+      {
+        "id": "cottbus",
+        "days": 0
       }
     ],
     "note": "Подобрано по одной операции: обязательна проверка на контрольной операции (этап 2). Мерило — среднее превышение отклонения над неопределённостью исторического положения (до 50 км) + 3 × средняя ошибка дат событий (сут)."

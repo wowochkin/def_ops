@@ -362,13 +362,19 @@ def apply_overlays(recipe, rp, k, cols, rows, bbox, roads):
                     continue
                 i = r * cols + c
                 before = k[i]
-                for cls in ("water", "urban", "forest"):
+                promoted = False
+                for mname, cls in (ov.get("promote") or {}).items():
+                    if masks.get(mname) is not None and masks[mname][j] and k[i] != order.index("water"):
+                        k[i] = order.index(cls)
+                        promoted = True
+                        break
+                for cls in (() if promoted else ("water", "urban", "forest")):
                     src = ov.get(cls)
                     if src and masks.get(src) is not None and masks[src][j]:
                         k[i] = order.index(cls)
                         break
                 else:
-                    demote = ov.get("demoteModernUrban")
+                    demote = None if promoted else ov.get("demoteModernUrban")
                     keep = ov.get("keepUrban")
                     kept = keep and masks.get(keep) is not None and masks[keep][j]
                     if demote and k[i] == order.index("urban") and not kept:
@@ -473,7 +479,8 @@ def main():
 
     # 3. дороги
     log("дороги")
-    roads_p = overpass(f'[out:json][timeout:600];(way["highway"~"^(motorway|trunk|primary)$"]({bb}););out tags geom;', osm_dir / "roads.json")
+    hw_re = "|".join(["motorway"] + recipe["roads"]["roadHighways"])
+    roads_p = overpass(f'[out:json][timeout:600];(way["highway"~"^({hw_re})$"]({bb}););out tags geom;', osm_dir / "roads.json")
     rail_p = overpass(f'[out:json][timeout:600];(way["railway"="rail"]["usage"="main"]({bb}););out tags geom;', osm_dir / "rail.json")
     rab = set(recipe["roads"]["highwayRefs"])
     road_kinds = set(recipe["roads"]["roadHighways"])

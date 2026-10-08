@@ -1498,6 +1498,71 @@
    "note": "прорыв на Зееловских высотах"
   },
   {
+   "id": "de_kurmark@1945-04-16T06:00:counterattack",
+   "formation": "de_kurmark",
+   "task": "counterattack",
+   "target": {
+    "formation": "su_8gva"
+   },
+   "issuedAt": "1945-04-16T06:00",
+   "source": "script",
+   "note": "контрудар 2-го эшелона XI тк СС от ст. Дольгелин 16.04 (Исаев, «Берлин 45-го»)"
+  },
+  {
+   "id": "de_25pzgd@1945-04-16T12:00:counterattack",
+   "formation": "de_25pzgd",
+   "task": "counterattack",
+   "target": {
+    "formation": "su_47a"
+   },
+   "issuedAt": "1945-04-16T12:00",
+   "source": "script",
+   "note": "по приказу Гитлера выдвинута против 47 А; контрудар не развился (Исаев, «Берлин 45-го»)"
+  },
+  {
+   "id": "de_18pzgd@1945-04-16T19:00:regroup",
+   "formation": "de_18pzgd",
+   "task": "regroup",
+   "target": [
+    14.27,
+    52.6
+   ],
+   "issuedAt": "1945-04-16T19:00",
+   "source": "script",
+   "note": "резерв ОКХ передан 9 А в 19:10, марш в район Вулькова (Исаев, «Берлин 45-го»)"
+  },
+  {
+   "id": "de_kurmark@1945-04-17T06:00:counterattack",
+   "formation": "de_kurmark",
+   "task": "counterattack",
+   "target": {
+    "formation": "su_8gva"
+   },
+   "issuedAt": "1945-04-17T06:00",
+   "source": "script",
+   "note": "контратака остановила наступающих из Дольгелина и Фридерсдорфа (Исаев, «Берлин 45-го»)"
+  },
+  {
+   "id": "de_muencheberg@1945-04-17T06:00:counterattack",
+   "formation": "de_muencheberg",
+   "task": "counterattack",
+   "target": {
+    "formation": "su_1gta"
+   },
+   "issuedAt": "1945-04-17T06:00",
+   "source": "script",
+   "note": "«Тигры» и «Пантеры» против 1 гв. ТА у Зелова (Исаев, «Берлин 45-го»)"
+  },
+  {
+   "id": "de_25pzgd@1945-04-17T12:00:defend",
+   "formation": "de_25pzgd",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-17T12:00",
+   "source": "script",
+   "note": "2-й эшелон на Альте-Одере, южнее Нойтреббина"
+  },
+  {
    "id": "de_169id@1945-04-17T18:00:hold",
    "formation": "de_169id",
    "task": "hold",
@@ -1505,6 +1570,17 @@
    "issuedAt": "1945-04-17T18:00",
    "source": "script",
    "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_18pzgd@1945-04-17T18:00:counterattack",
+   "formation": "de_18pzgd",
+   "task": "counterattack",
+   "target": {
+    "formation": "su_5ua"
+   },
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "контрудар по обе стороны Нидер-Гёрльсдорфа (донесение ГА «Висла», Исаев, «Берлин 45-го»)"
   },
   {
    "id": "de_303id@1945-04-17T18:00:hold",
@@ -1532,6 +1608,27 @@
    "issuedAt": "1945-04-17T18:00",
    "source": "script",
    "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_kurmark@1945-04-17T18:00:hold",
+   "formation": "de_kurmark",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "удерживать линию Марксдорф–Дольгелин"
+  },
+  {
+   "id": "de_muencheberg@1945-04-17T18:00:withdraw",
+   "formation": "de_muencheberg",
+   "task": "withdraw",
+   "target": [
+    14.25,
+    52.55
+   ],
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "после потери Зелова — отход за Флисс"
   },
   {
    "id": "de_nederland@1945-04-17T18:00:hold",
@@ -1620,6 +1717,15 @@
    "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус"
   },
   {
+   "id": "de_18pzgd@1945-04-18T18:00:defend",
+   "formation": "de_18pzgd",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "с «Нордландом» у Херменсдорфа"
+  },
+  {
    "id": "de_20pzgd@1945-04-18T18:00:withdraw",
    "formation": "de_20pzgd",
    "task": "withdraw",
@@ -1654,6 +1760,17 @@
    "issuedAt": "1945-04-18T18:00",
    "source": "script",
    "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nordland@1945-04-18T18:00:counterattack",
+   "formation": "de_nordland",
+   "task": "counterattack",
+   "target": {
+    "formation": "su_2gta"
+   },
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "бой с 11 тк у Букова (сосредоточение без горючего)"
   },
   {
    "id": "su_13a@1945-04-18T18:00:attack",
@@ -1775,6 +1892,15 @@
    "issuedAt": "1945-04-19T18:00",
    "source": "script",
    "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nordland@1945-04-19T18:00:withdraw",
+   "formation": "de_nordland",
+   "task": "withdraw",
+   "target": "B_Koepenick",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "в Берлин с LVI тк"
   },
   {
    "id": "de_pzk_gd@1945-04-19T18:00:withdraw",

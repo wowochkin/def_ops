@@ -139,7 +139,8 @@ if (R.orders.mode === 'tasks') {
     if (!execs.length) throw new Error(`задача штабу ${fid}, у которого нет действующих подчинённых`);
     const [md, hh2] = when.split('T');
     const issued = `${year}-${md}T${(hh2 ?? hh).padStart(2, '0')}:00`;
-    const target = to == null ? null : to.startsWith('@') ? { formation: to.slice(1) } : to;
+    // цель: место (ключ справочника), «@формирование» или координаты «долгота,широта»
+    const target = to == null ? null : to.startsWith('@') ? { formation: to.slice(1) } : /^-?[\d.]+,-?[\d.]+$/.test(to) ? (to.split(',').map(Number) as LngLat) : to;
     for (const ex of execs) {
       orders.push({ id: `${ex.id}@${issued}:${task}`, formation: ex.id, task, target, issuedAt: issued < R.start ? addHours(R.start, -12) : issued, source: 'script', ...(note || ex !== f ? { note: [note, ex !== f ? `задача ${f.name}` : ''].filter(Boolean).join('; ') } : {}) });
     }

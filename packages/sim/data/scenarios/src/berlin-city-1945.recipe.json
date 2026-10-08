@@ -1,0 +1,921 @@
+{
+ "id": "berlin-city-1945",
+ "name": "Берлин: бои в городе, 24.04–2.05.1945 (корпуса и дивизии, ход 12 ч)",
+ "timeNote": "время московское",
+ "start": "1945-04-24T05:00",
+ "end": "1945-05-02T05:00",
+ "turnHours": 12,
+ "theatre": "berlin-city-1945",
+ "rules": "ww2-berlin-cal",
+ "dataset": "../../../../../docs/sources/berlin-1945-reichstag.json",
+ "extraDatasets": [
+  "../../../../../docs/sources/berlin-1945-positions.json",
+  "../../../../../docs/sources/berlin-1945-city-garrison.json"
+ ],
+ "frontlineFiles": [
+  "../../../../../docs/sources/berlin-1945-plan-frontline.json"
+ ],
+ "sides": [
+  {
+   "id": "su",
+   "name": "Красная армия",
+   "profile": "rkka-1945",
+   "controller": "script"
+  },
+  {
+   "id": "de",
+   "name": "Гарнизон Берлина",
+   "profile": "wehrmacht-1945",
+   "controller": "script"
+  }
+ ],
+ "defaults": {
+  "su": {
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "posture": "attack"
+  },
+  "de": {
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "posture": "defend"
+  }
+ },
+ "allocation": {
+  "note": "численность задана явно (оценки C)",
+  "fronts": {}
+ },
+ "formations": [
+  {
+   "id": "su_1bf"
+  },
+  {
+   "id": "su_1uf"
+  },
+  {
+   "id": "su_3ua"
+  },
+  {
+   "id": "su_5ua"
+  },
+  {
+   "id": "su_8gva"
+  },
+  {
+   "id": "su_2gta"
+  },
+  {
+   "id": "su_3gta"
+  },
+  {
+   "id": "su_47a"
+  },
+  {
+   "id": "su_3ua_79rk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_3ua_12grk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_3ua_7rk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_5ua_26grk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_5ua_32rk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_5ua_9rk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_8gva_4grk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_8gva_28grk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_8gva_29grk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_47a_125rk",
+   "type": "rifle_corps",
+   "personnel": 11000,
+   "tanks": 40,
+   "guns": 420,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_2gta_12gtk",
+   "type": "tank_corps",
+   "personnel": 5000,
+   "tanks": 110,
+   "guns": 150,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_3gta_6gtk",
+   "type": "tank_corps",
+   "personnel": 5000,
+   "tanks": 110,
+   "guns": 150,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_3gta_7gtk",
+   "type": "tank_corps",
+   "personnel": 5000,
+   "tanks": 110,
+   "guns": 150,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_2gta_1mk",
+   "type": "mech_corps",
+   "personnel": 6000,
+   "tanks": 100,
+   "guns": 170,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_3gta_9mk",
+   "type": "mech_corps",
+   "personnel": 6000,
+   "tanks": 100,
+   "guns": 170,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "численность — оценка (C): советская группировка в городе ~464 тыс. чел., 1 500 танков и САУ, 12 700 орудий и минометов на ~27 корпусов (ru-wiki по ЦАМО); боевая доля 0,6"
+  },
+  {
+   "id": "su_1gta",
+   "type": "tank_army",
+   "personnel": 14000,
+   "tanks": 250,
+   "guns": 450,
+   "posture": "attack",
+   "ammo": 2.5,
+   "fuel": 1.5,
+   "note": "1 гв. ТА в городе действовала вместе с 8 гв. А; оценка (C)"
+  },
+  {
+   "id": "de_hgr_weichsel"
+  },
+  {
+   "id": "de_9a"
+  },
+  {
+   "id": "de_lvi"
+  },
+  {
+   "id": "de_berlin"
+  },
+  {
+   "id": "de_9fjd",
+   "type": "fj_div",
+   "personnel": 3000,
+   "tanks": 4,
+   "guns": 40,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "из LVI тк и «Нордланда» в город вышли 13–15 тыс. чел. (ru-wiki); по дивизиям — оценка (C)"
+  },
+  {
+   "id": "de_18pgd",
+   "type": "pzgr_div",
+   "personnel": 3500,
+   "tanks": 15,
+   "guns": 40,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "из LVI тк и «Нордланда» в город вышли 13–15 тыс. чел. (ru-wiki); по дивизиям — оценка (C)"
+  },
+  {
+   "id": "de_20pgd",
+   "type": "pzgr_div",
+   "personnel": 2500,
+   "tanks": 10,
+   "guns": 30,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "из LVI тк и «Нордланда» в город вышли 13–15 тыс. чел. (ru-wiki); по дивизиям — оценка (C)"
+  },
+  {
+   "id": "de_muencheberg",
+   "type": "pz_div",
+   "personnel": 1500,
+   "tanks": 10,
+   "guns": 20,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "из LVI тк и «Нордланда» в город вышли 13–15 тыс. чел. (ru-wiki); по дивизиям — оценка (C)"
+  },
+  {
+   "id": "de_nordland",
+   "type": "ss_pzgr_div",
+   "personnel": 3000,
+   "tanks": 20,
+   "guns": 30,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "из LVI тк и «Нордланда» в город вышли 13–15 тыс. чел. (ru-wiki); по дивизиям — оценка (C)"
+  },
+  {
+   "id": "de_sector_A",
+   "type": "fortress",
+   "personnel": 7200,
+   "tanks": 4,
+   "guns": 108,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «A»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_B",
+   "type": "fortress",
+   "personnel": 4800,
+   "tanks": 4,
+   "guns": 72,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «B»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_C",
+   "type": "fortress",
+   "personnel": 7200,
+   "tanks": 4,
+   "guns": 108,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «C»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_D",
+   "type": "fortress",
+   "personnel": 6000,
+   "tanks": 4,
+   "guns": 90,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «D»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_E",
+   "type": "fortress",
+   "personnel": 4800,
+   "tanks": 4,
+   "guns": 72,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «E»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_F",
+   "type": "fortress",
+   "personnel": 7200,
+   "tanks": 4,
+   "guns": 108,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «F»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_G",
+   "type": "fortress",
+   "personnel": 6000,
+   "tanks": 4,
+   "guns": 90,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «G»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_H",
+   "type": "fortress",
+   "personnel": 6000,
+   "tanks": 4,
+   "guns": 90,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «H»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_sector_Z",
+   "type": "fortress",
+   "personnel": 10800,
+   "tanks": 12,
+   "guns": 162,
+   "posture": "defend",
+   "ammo": 1.5,
+   "fuel": 0.5,
+   "note": "гарнизон сектора «Z»: доля ~60 000 (LT_RACE), C"
+  }
+ ],
+ "orders": {
+  "mode": "tasks",
+  "note": "исторические задачи корпусов и дивизий в городе по LT_RACE / LT_CONQ",
+  "tasks": [
+   [
+    "su_3ua_79rk",
+    "04-24T00",
+    "attack",
+    "B_Moabit",
+    "79 ск: Моабит, к Шпрее (LT_RACE)"
+   ],
+   [
+    "su_3ua_79rk",
+    "04-27T18",
+    "attack",
+    "Moltkebruecke",
+    "выход к мосту Мольтке 28.04 (LT_RACE)"
+   ],
+   [
+    "su_3ua_79rk",
+    "04-28T18",
+    "attack",
+    "B_Reichstag",
+    "МВД, Кёнигсплац, Рейхстаг (LT_RACE)"
+   ],
+   [
+    "su_3ua_12grk",
+    "04-24T00",
+    "attack",
+    "Gesundbrunnen",
+    "Веддинг, Гезундбруннен, Гумбольдтхайн"
+   ],
+   [
+    "su_3ua_12grk",
+    "04-28T00",
+    "attack",
+    "Invalidenstrasse",
+    ""
+   ],
+   [
+    "su_3ua_7rk",
+    "04-24T00",
+    "attack",
+    "Alexanderplatz",
+    "Пренцлауэр-Берг → Александерплац"
+   ],
+   [
+    "su_3ua_7rk",
+    "04-29T00",
+    "attack",
+    "Museumsinsel",
+    ""
+   ],
+   [
+    "su_5ua_26grk",
+    "04-24T00",
+    "attack",
+    "Alexanderplatz",
+    "Фридрихсхайн → Александерплац"
+   ],
+   [
+    "su_5ua_26grk",
+    "04-28T00",
+    "attack",
+    "Rotes_Rathaus",
+    "Полицайпрезидиум 29.04 (LT_RACE)"
+   ],
+   [
+    "su_5ua_32rk",
+    "04-24T00",
+    "attack",
+    "Jannowitzbruecke",
+    "Остбанхоф → Шпрее"
+   ],
+   [
+    "su_5ua_32rk",
+    "04-28T00",
+    "attack",
+    "Lustgarten",
+    ""
+   ],
+   [
+    "su_5ua_9rk",
+    "04-24T00",
+    "attack",
+    "Moritzplatz",
+    "Трептов-парк → Кройцберг (LT_RACE)"
+   ],
+   [
+    "su_5ua_9rk",
+    "04-28T00",
+    "attack",
+    "Reichskanzlei",
+    "Шпиттельмаркт → Вильгельмштрассе → Рейхсканцелярия"
+   ],
+   [
+    "su_8gva_28grk",
+    "04-24T00",
+    "attack",
+    "Tempelhof_Flughafen",
+    "аэропорт Темпельхоф к полудню 26.04 (LT_RACE)"
+   ],
+   [
+    "su_8gva_28grk",
+    "04-27T00",
+    "attack",
+    "Potsdamer_Platz",
+    "через Ландвер-канал"
+   ],
+   [
+    "su_8gva_29grk",
+    "04-24T00",
+    "attack",
+    "Tempelhof_Flughafen",
+    ""
+   ],
+   [
+    "su_8gva_29grk",
+    "04-27T00",
+    "attack",
+    "Potsdamer_Bruecke",
+    "Потсдамский мост 29.04 (LT_RACE)"
+   ],
+   [
+    "su_8gva_29grk",
+    "04-29T12",
+    "attack",
+    "Tiergarten_SBahn",
+    "Тиргартен"
+   ],
+   [
+    "su_8gva_4grk",
+    "04-24T00",
+    "attack",
+    "Hermannplatz",
+    ""
+   ],
+   [
+    "su_8gva_4grk",
+    "04-27T00",
+    "attack",
+    "Hallesches_Tor",
+    ""
+   ],
+   [
+    "su_8gva_4grk",
+    "04-29T00",
+    "attack",
+    "Luftfahrtministerium",
+    ""
+   ],
+   [
+    "su_1gta",
+    "04-24T00",
+    "attack",
+    "Tempelhof_Flughafen",
+    "с 8 гв. А; аэродромы Адлерсхоф и Темпельхоф (LT_CONQ)"
+   ],
+   [
+    "su_1gta",
+    "04-27T00",
+    "attack",
+    "Potsdamer_Platz",
+    ""
+   ],
+   [
+    "su_1gta",
+    "04-29T12",
+    "attack",
+    "Tiergarten_SBahn",
+    ""
+   ],
+   [
+    "su_3gta_6gtk",
+    "04-24T00",
+    "attack",
+    "Schmargendorf",
+    "Тельтов-канал → Целендорф/Шмаргендорф"
+   ],
+   [
+    "su_3gta_6gtk",
+    "04-26T00",
+    "attack",
+    "Wilmersdorf",
+    ""
+   ],
+   [
+    "su_3gta_6gtk",
+    "04-28T22",
+    "attack",
+    "Savignyplatz",
+    "новая граница фронтов 28.04 22:00 (LT_RACE)"
+   ],
+   [
+    "su_3gta_7gtk",
+    "04-24T00",
+    "attack",
+    "Clayallee_Luftgau",
+    ""
+   ],
+   [
+    "su_3gta_7gtk",
+    "04-26T00",
+    "attack",
+    "Halensee",
+    ""
+   ],
+   [
+    "su_3gta_7gtk",
+    "04-28T22",
+    "attack",
+    "Bf_Charlottenburg",
+    ""
+   ],
+   [
+    "su_3gta_9mk",
+    "04-24T00",
+    "attack",
+    "B_Steglitz",
+    ""
+   ],
+   [
+    "su_3gta_9mk",
+    "04-26T00",
+    "attack",
+    "Rathaus_Schoeneberg",
+    ""
+   ],
+   [
+    "su_3gta_9mk",
+    "04-28T00",
+    "attack",
+    "Nollendorfplatz",
+    ""
+   ],
+   [
+    "su_2gta_1mk",
+    "04-24T00",
+    "attack",
+    "Bismarckstrasse",
+    "Сименсштадт → Шарлоттенбург"
+   ],
+   [
+    "su_2gta_1mk",
+    "04-28T00",
+    "attack",
+    "Savignyplatz",
+    "встреча с 3 гв. ТА 2.05 (LT_RACE)"
+   ],
+   [
+    "su_2gta_12gtk",
+    "04-24T00",
+    "attack",
+    "Beusselstrasse",
+    ""
+   ],
+   [
+    "su_2gta_12gtk",
+    "04-28T00",
+    "attack",
+    "Moabit_Spree_Tongue",
+    "восточнее вдоль Шпрее в поддержку 3 УА (LT_CONQ)"
+   ],
+   [
+    "su_47a_125rk",
+    "04-24T00",
+    "attack",
+    "B_Spandau",
+    "Шпандау; Цитадель Шпандау сдалась 1.05"
+   ],
+   [
+    "su_47a_125rk",
+    "04-27T00",
+    "attack",
+    "Gatow_Flugplatz",
+    "аэродром Гатов 27.04"
+   ],
+   [
+    "de_9fjd",
+    "04-24T00",
+    "hold",
+    "Humboldthain_Flakturm",
+    "север: Гумбольдтхайн (LT_RACE)"
+   ],
+   [
+    "de_18pgd",
+    "04-24T00",
+    "defend",
+    "Halensee",
+    "юго-запад: от Ваннзее к Весткройц (LT_RACE)"
+   ],
+   [
+    "de_18pgd",
+    "04-27T00",
+    "withdraw",
+    "Kurfuerstendamm",
+    ""
+   ],
+   [
+    "de_20pgd",
+    "04-24T00",
+    "defend",
+    "Wannsee_Bf",
+    "отрезана на острове Ванзее"
+   ],
+   [
+    "de_muencheberg",
+    "04-24T00",
+    "defend",
+    "Tempelhof_Flughafen",
+    "оборона аэропорта Темпельхоф"
+   ],
+   [
+    "de_muencheberg",
+    "04-26T12",
+    "withdraw",
+    "Potsdamer_Platz",
+    "отход к Ландвер-каналу"
+   ],
+   [
+    "de_nordland",
+    "04-24T00",
+    "defend",
+    "Hermannplatz",
+    "Нойкёльн, Кройцберг (LT_RACE)"
+   ],
+   [
+    "de_nordland",
+    "04-26T18",
+    "withdraw",
+    "Spittelmarkt",
+    "линия Шпиттельмаркт–Бель-Альянс-плац (LT_RACE)"
+   ],
+   [
+    "de_sector_A",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_B",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_C",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_D",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_E",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_F",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_G",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_H",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_sector_Z",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона сектора"
+   ],
+   [
+    "de_lvi",
+    "05-01T23",
+    "breakout",
+    "Charlottenbruecke",
+    "прорыв из города 1–2.05 через Шарлоттенбрюкке (LT_RACE)"
+   ]
+  ]
+ },
+ "supply": {
+  "su": {
+   "sources": [
+    [
+     13.62,
+     52.52
+    ],
+    [
+     13.55,
+     52.4
+    ],
+    [
+     13.35,
+     52.39
+    ],
+    [
+     13.4,
+     52.62
+    ],
+    [
+     13.13,
+     52.55
+    ]
+   ]
+  },
+  "de": {
+   "sources": [
+    "Zoo_Flakturm",
+    "Humboldthain_Flakturm",
+    "Friedrichshain_Flakturm",
+    "Fuehrerbunker"
+   ]
+  },
+  "_note": "советские — края участка (тыл фронтов); немецкие — склады в зенитных башнях и правительственном квартале (C)"
+ },
+ "events": [
+  {
+   "id": "tempelhof",
+   "title": "Аэропорт Темпельхоф взят",
+   "date": "1945-04-26",
+   "kind": "reach",
+   "side": "su",
+   "place": "Tempelhof_Flughafen",
+   "radiusKm": 0.8,
+   "source": "LT_RACE"
+  },
+  {
+   "id": "alex",
+   "title": "Александерплац",
+   "date": "1945-04-29",
+   "kind": "reach",
+   "side": "su",
+   "place": "Alexanderplatz",
+   "radiusKm": 0.5,
+   "source": "LT_RACE (Полицайпрезидиум 29.04)"
+  },
+  {
+   "id": "moltke",
+   "title": "Мост Мольтке",
+   "date": "1945-04-29",
+   "kind": "reach",
+   "side": "su",
+   "place": "Moltkebruecke",
+   "radiusKm": 0.4,
+   "source": "LT_RACE"
+  },
+  {
+   "id": "reichstag",
+   "title": "Рейхстаг",
+   "date": "1945-04-30",
+   "kind": "reach",
+   "side": "su",
+   "place": "B_Reichstag",
+   "radiusKm": 0.4,
+   "source": "LT_RACE"
+  },
+  {
+   "id": "savigny",
+   "title": "Встреча 2 гв. ТА и 3 гв. ТА у Савиньиплац",
+   "date": "1945-05-02",
+   "kind": "meet",
+   "formations": [
+    "su_2gta_1mk",
+    "su_3gta_6gtk"
+   ],
+   "place": "Savignyplatz",
+   "radiusKm": 1.5,
+   "source": "LT_RACE"
+  },
+  {
+   "id": "reichskanzlei",
+   "title": "Рейхсканцелярия",
+   "date": "1945-05-02",
+   "kind": "reach",
+   "side": "su",
+   "place": "Reichskanzlei",
+   "radiusKm": 0.4,
+   "source": "LT_RACE"
+  }
+ ]
+}

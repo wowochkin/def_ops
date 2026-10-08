@@ -1,0 +1,209 @@
+{
+ "meta": {
+  "title": "Берлин 1945: гарнизоны секторов обороны для детального участка",
+  "note": "центры секторов по реконструкции границ (C); численность — по доле от ~60 000 (LT_RACE: ~60 000 и 50–60 танков)"
+ },
+ "formations": [
+  {
+   "id": "de_sector_A",
+   "name_ru": "Гарнизон сектора обороны «A»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "подп. Э. Беренфенгер (план, март) → ген.-м. В. Муммерт (25.04, вместе с B) → ген.-м. Э. Беренфенгер (26.04–2.05, A+B)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.12
+  },
+  {
+   "id": "de_sector_B",
+   "name_ru": "Гарнизон сектора обороны «B»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "полк. Клаузен (план) → ген.-м. Муммерт (25.04) → ген.-м. Беренфенгер (26.04)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.08
+  },
+  {
+   "id": "de_sector_C",
+   "name_ru": "Гарнизон сектора обороны «C»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "полк. Мотц (план) → бригадефюрер СС Й. Циглер («Нордланд», 25.04) → бригадефюрер СС Г. Крукенберг (с 25.04 вечер)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.12
+  },
+  {
+   "id": "de_sector_D",
+   "name_ru": "Гарнизон сектора обороны «D»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "ген.-м. люфтваффе Шедер (план) → полк. Х.-О. Вёлерманн (25.04) → ген.-м. Муммерт («Мюнхеберг», с 26.04)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.1
+  },
+  {
+   "id": "de_sector_E",
+   "name_ru": "Гарнизон сектора обороны «E»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "подп. Ремхильд (план) → командир 20 пгд (ген.-м. Г. Шольце) → ген.-м. Й. Раух (18 пгд, с 25.04)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.08
+  },
+  {
+   "id": "de_sector_F",
+   "name_ru": "Гарнизон сектора обороны «F»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "полк. А. Эдер (весь период)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.12
+  },
+  {
+   "id": "de_sector_G",
+   "name_ru": "Гарнизон сектора обороны «G»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "полк. Шефер (план) → полк. Х. Херрманн (9 пд, с 25.04, вместе с H)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.1
+  },
+  {
+   "id": "de_sector_H",
+   "name_ru": "Гарнизон сектора обороны «H»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "подп. Россбах (план) → полк. Х. Херрманн (с 25.04)",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.1
+  },
+  {
+   "id": "de_sector_Z",
+   "name_ru": "Гарнизон сектора обороны «Z»",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "commander": "подп. люфтваффе Э. Зайферт (весь период; КП в подвалах Министерства авиации); внутри — бригадефюрер СС В. Монке (рейхска",
+   "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
+   "share": 0.18
+  }
+ ],
+ "positions": [
+  {
+   "formation": "de_sector_A",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.4875,
+   "lat": 52.5155,
+   "approx_km": 3,
+   "place": "центр сектора A",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_B",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.5423,
+   "lat": 52.4698,
+   "approx_km": 3,
+   "place": "центр сектора B",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_C",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.4774,
+   "lat": 52.4601,
+   "approx_km": 3,
+   "place": "центр сектора C",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_D",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.3814,
+   "lat": 52.4628,
+   "approx_km": 3,
+   "place": "центр сектора D",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_E",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.2691,
+   "lat": 52.4581,
+   "approx_km": 3,
+   "place": "центр сектора E",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_F",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.2233,
+   "lat": 52.5118,
+   "approx_km": 3,
+   "place": "центр сектора F",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_G",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.3343,
+   "lat": 52.5523,
+   "approx_km": 3,
+   "place": "центр сектора G",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_H",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.4244,
+   "lat": 52.5553,
+   "approx_km": 3,
+   "place": "центр сектора H",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_sector_Z",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.385,
+   "lat": 52.513,
+   "approx_km": 3,
+   "place": "центр сектора Z",
+   "source": "LT_RACE (сектора), центр — расчёт",
+   "reliability": "C"
+  }
+ ],
+ "frontline": []
+}
