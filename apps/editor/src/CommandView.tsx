@@ -924,7 +924,9 @@ function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, 
   enemy: EnemyMode; setEnemy: (e: EnemyMode) => void; llm: Llm; onRetry: () => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
+  const [part, setPart] = useState<'enemy' | 'umpire'>('enemy');
   const list = current && !turns.some((t) => t.time === current.time) ? [current, ...turns] : turns;
+  const nUmp = (record?.turns ?? []).filter((t) => t.umpireNote).length;
   return (
     <div className="cmd-sec">
       <p className="note warnbox">Посредник видит решения штаба противника и может снять туман войны. Если играете честно — заглядывайте сюда после игры.</p>
@@ -945,10 +947,15 @@ function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, 
       </div>
       <label className="switch"><input type="checkbox" checked={!!llm.settings.umpire} onChange={(e) => llm.set({ umpire: e.target.checked })} /><span /> Посредник на модели: нюансы к боям по базе знаний</label>
       <p className="muted umpire-about">Перед каждым ходом модель-посредник смотрит на ожидаемые бои и по справкам базы знаний (доктрина, нормативы, техника) добавляет то, чего правила не учитывают: видимость, взаимодействие родов войск, заграждения, качество обороны. Поправки — множители 0,8–1,25 с обоснованием; видны в журнале боя и записываются в игру.</p>
-      <UmpireNotes record={record} />
+      <div className="seg umpire-seg">
+        <button className={part === 'enemy' ? 'on' : ''} onClick={() => setPart('enemy')}>Как действовал противник · {list.length}</button>
+        <button className={part === 'umpire' ? 'on' : ''} onClick={() => setPart('umpire')}>Поправки посредника · {nUmp}</button>
+      </div>
+      {part === 'umpire' && (nUmp ? <UmpireNotes record={record} /> : <p className="muted">Посредник ещё не работал: включите его выше — поправки появятся со следующего хода.</p>)}
+      {part === 'enemy' && <>
+      <p className="muted">Решения штаба противника по ходам: оценка, замысел, приказы и распоряжения (откройте ход). Где его войска сейчас — «Показать на карте всех» выше.</p>
       {ai.state === 'thinking' && <div className="ai-live"><div className="jsub">Штаб противника думает над решением на {ddmm(ai.time)} {hhmm(ai.time)}…</div><pre>{stream.slice(-1500) || '…'}</pre></div>}
       {ai.state === 'error' && <div className="cmd-blocked"><b>Нет решения на {ddmm(ai.time)}</b><span>{ai.error}</span><div><button onClick={onRetry}>Повторить запрос</button></div></div>}
-      <h4 className="cmd-h4">Решения штаба противника</h4>
       {!list.length && <p className="muted">Решений пока нет.</p>}
       {list.map((t) => {
         const k = t.time, d = t.decision;
@@ -973,6 +980,7 @@ function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, 
           </div>
         );
       })}
+      </>}
     </div>
   );
 }
@@ -983,16 +991,15 @@ function UmpireNotes({ record }: { record: GameRecord | null }) {
   if (!list.length) return null;
   return (
     <>
-      <h4 className="cmd-h4">Посредник</h4>
       {list.slice(0, 12).map((t) => {
-        const n = t.umpireNote as { ok: boolean; error?: string; assessment?: string; issues: { text: string }[]; engagements: number; refs: { id: string; title: string }[]; seconds?: number; names?: Record<string, string> };
+        const n = t.umpireNote as { ok: boolean; error?: string; assessment?: string; issues: { text: string }[]; engagements: number; refs: { id: string; title: string }[]; seconds?: number; names?: Record<string, string>; proposed?: number };
         const refs = new Map(n.refs.map((r) => [r.id, r.title]));
         return (
           <div key={t.time} className="aiturn umpire-turn">
             <div className="aiturn-h"><b>{ddmm(t.time)} {hhmm(t.time)}</b><span>{n.ok ? n.assessment || `боёв ${n.engagements}` : `ошибка: ${n.error}`}</span>
-              <small>боёв {n.engagements} · поправок {t.umpire?.length ?? 0}{n.seconds ? ` · ${n.seconds} с` : ''}</small></div>
-            {(t.umpire?.length ?? 0) > 0 && <ul className="aiturn-b">{t.umpire!.map((m, i) => <li key={i}><b>{UMPIRE_FACTOR_RU[m.factor]} ×{String(m.mult).replace('.', ',')}</b> — {m.reason}<div className="muted">{m.formations.map((id) => short(n.names?.[id] ?? id)).join(', ')} · опора: {m.basis.map((b) => refs.get(b) ?? b).join('; ')}</div></li>)}
-              {n.issues.map((x, i) => <li key={`i${i}`} className="rej">{x.text}</li>)}</ul>}
+              <small>боёв {n.engagements} · поправок {t.umpire?.length ?? 0}{n.proposed != null && n.proposed !== (t.umpire?.length ?? 0) ? ` (предложено ${n.proposed})` : ''}{n.seconds ? ` · ${n.seconds} с` : ''}</small></div>
+            {((t.umpire?.length ?? 0) > 0 || n.issues.length > 0) && <ul className="aiturn-b">{(t.umpire ?? []).map((m, i) => <li key={i}><b>{UMPIRE_FACTOR_RU[m.factor]} ×{String(m.mult).replace('.', ',')}</b> — {m.reason}<div className="muted">{m.formations.map((id) => short(n.names?.[id] ?? id)).join(', ')} · опора: {m.basis.map((b) => refs.get(b) ?? b).join('; ')}</div></li>)}
+              {n.issues.map((x, i) => <li key={`i${i}`} className="rej">отброшено: {x.text}</li>)}</ul>}
           </div>
         );
       })}

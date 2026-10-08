@@ -119,7 +119,24 @@ export const UMPIRE_SCHEMA = {
   },
 } as const;
 
-export interface UmpireRaw { assessment?: string; mods?: { engagement: number; factor: string; mult: number; reason: string; basis: string[] }[] }
+export interface UmpireRaw { assessment?: string; mods?: { engagement: number | string; factor: string; mult: number | string; reason: string; basis: string[] | string }[] }
+
+const FACTOR_ALIASES: [RegExp, UmpireFactor][] = [
+  [/^attack$|наступ.*сил|сила наступ/i, 'attack'], [/^defen[cs]e$|оборон.*сил|сила оборон/i, 'defense'], [/^pace$|темп/i, 'pace'],
+  [/^attackerloss$|потери наступ/i, 'attackerLoss'], [/^defenderloss$|потери оборон/i, 'defenderLoss'],
+];
+/** Обоснование словами модели → id справок и «обстановка»: «R1», «[R1]», «R2 — …», «[R1], [R3]», название справки. */
+function parseBasis(basis: string[] | string | undefined, refs: UmpireRef[]): string[] {
+  const out = new Set<string>();
+  for (const b of (Array.isArray(basis) ? basis : basis ? [basis] : [])) {
+    const s = String(b);
+    for (const m of s.matchAll(/R\s?(\d{1,2})\b/gi)) { const r = refs[+m[1] - 1]; if (r) out.add(r.id); }
+    for (const r of refs) if (r.title && s.toLowerCase().includes(r.title.toLowerCase().slice(0, 24))) out.add(r.id);
+    if (/обстановк|сводк|situation|обстоятельств|условия боя/i.test(s)) out.add('обстановка');
+    if (!out.size && s.trim().length > 3) out.add('обстановка'); // обоснование словами без ссылки — считаем обстановкой
+  }
+  return [...out];
+}
 export interface UmpireIssue { text: string }
 
 /**
@@ -132,25 +149,29 @@ export function umpireMods(raw: UmpireRaw, es: Engagement[], refs: UmpireRef[]):
   const issues: UmpireIssue[] = [];
   const seen = new Set<string>();
   for (const m of raw.mods ?? []) {
-    const e = es.find((x) => x.n === m.engagement);
-    if (!e) { issues.push({ text: `бой ${m.engagement} не найден` }); continue; }
-    if (!UMPIRE_FACTORS.includes(m.factor as UmpireFactor)) { issues.push({ text: `неизвестный множитель ${m.factor}` }); continue; }
-    if (!Number.isFinite(m.mult) || m.mult <= 0) { issues.push({ text: `бой ${e.n}: множитель ${m.mult}` }); continue; }
-    const basis = (m.basis ?? []).map((b) => { const r = /^\[?R(\d+)\]?$/i.exec(b.trim()); return r ? refs[+r[1] - 1]?.id : /обстановк/i.test(b) ? 'обстановка' : null; }).filter((x): x is string => !!x);
-    if (!basis.length || !m.reason?.trim()) { issues.push({ text: `бой ${e.n}: поправка без обоснования отброшена` }); continue; }
-    const mult = Math.min(UMPIRE_LIMITS[1], Math.max(UMPIRE_LIMITS[0], m.mult));
-    if (Math.abs(Math.log(mult)) < 0.02) continue;
-    if (mult !== m.mult) issues.push({ text: `бой ${e.n}: множитель ${m.mult} ограничен до ${mult}` });
-    const key = `${e.n}:${m.factor}`;
+    const n = typeof m.engagement === 'number' ? m.engagement : Number(/\d+/.exec(String(m.engagement))?.[0]);
+    const e = es.find((x) => x.n === n);
+    if (!e) { issues.push({ text: `бой «${m.engagement}» не найден среди ожидаемых` }); continue; }
+    const factor = UMPIRE_FACTORS.includes(m.factor as UmpireFactor) ? m.factor as UmpireFactor : FACTOR_ALIASES.find(([re]) => re.test(String(m.factor)))?.[1];
+    if (!factor) { issues.push({ text: `бой ${e.n}: неизвестный множитель «${m.factor}»` }); continue; }
+    const raw0 = typeof m.mult === 'number' ? m.mult : Number(String(m.mult).replace(',', '.').replace(/[^\d.]/g, ''));
+    if (!Number.isFinite(raw0) || raw0 <= 0) { issues.push({ text: `бой ${e.n}: множитель «${m.mult}» не число` }); continue; }
+    const basis = parseBasis(m.basis, refs);
+    if (!m.reason?.trim()) { issues.push({ text: `бой ${e.n}: поправка без причины отброшена` }); continue; }
+    if (!basis.length) basis.push('обстановка');
+    const mult = Math.min(UMPIRE_LIMITS[1], Math.max(UMPIRE_LIMITS[0], raw0));
+    if (Math.abs(Math.log(mult)) < 0.02) { issues.push({ text: `бой ${e.n}: множитель ${raw0} — без изменения` }); continue; }
+    if (mult !== raw0) issues.push({ text: `бой ${e.n}: множитель ${raw0} ограничен до ${mult}` });
+    const key = `${e.n}:${factor}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const who = m.factor === 'defense' || m.factor === 'defenderLoss' ? e.defenders : e.attackers;
-    mods.push({ formations: who.map((f) => f.id), factor: m.factor as UmpireFactor, mult: +mult.toFixed(3), reason: m.reason.trim().slice(0, 240), basis: [...new Set(basis)] });
+    const who = factor === 'defense' || factor === 'defenderLoss' ? e.defenders : e.attackers;
+    mods.push({ formations: who.map((f) => f.id), factor, mult: +mult.toFixed(3), reason: m.reason.trim().slice(0, 240), basis });
   }
   return { mods, issues };
 }
 
-export interface UmpireTurn { time: string; ok: boolean; error?: string; assessment?: string; mods: UmpireMod[]; issues: UmpireIssue[]; engagements: number; refs: UmpireRef[]; seconds?: number }
+export interface UmpireTurn { time: string; ok: boolean; error?: string; assessment?: string; mods: UmpireMod[]; issues: UmpireIssue[]; engagements: number; refs: UmpireRef[]; seconds?: number; /** Сколько поправок предложила модель (до проверки). */ proposed?: number }
 
 /**
  * Посредник на ход: ожидаемые бои → справки из базы (refsFor — по запросам) → модель → проверенные поправки.
@@ -167,7 +188,7 @@ export async function umpireTurn(client: LlmClient, ctx: SimContext, s: SimState
     if (r.jsonError) return { time: s.time, ok: false, error: `ответ не разобран: ${r.jsonError}`, mods: [], issues: [], engagements: es.length, refs };
     const raw = r.json as UmpireRaw;
     const v = umpireMods(raw, es, refs);
-    return { time: s.time, ok: true, assessment: raw.assessment, mods: v.mods, issues: v.issues, engagements: es.length, refs, seconds: Math.round((Date.now() - t0) / 1000) };
+    return { time: s.time, ok: true, assessment: raw.assessment, mods: v.mods, issues: v.issues, engagements: es.length, refs, seconds: Math.round((Date.now() - t0) / 1000), proposed: raw.mods?.length ?? 0 };
   } catch (e) {
     return { time: s.time, ok: false, error: (e as Error).message, mods: [], issues: [], engagements: es.length, refs };
   }

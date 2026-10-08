@@ -134,7 +134,7 @@ ${ready.map((s, i) => `<section class="sec"><h2>${i + 1}. ${esc(s.title)}</h2><d
                 <section key={s.id} className="rv-sec">
                   <h2>{i + 1}. {s.title}<small>{s.role}</small>
                     {!running && x.status !== 'wait' && x.status !== 'writing' && <button className="link" onClick={() => void run([s.id])}>переписать</button>}</h2>
-                  {x.note && <div className="muted rv-note">{x.status === 'wait' && <span className="spinner" />} {x.note}</div>}
+                  {x.note && <div className={`muted rv-note${x.note.startsWith('модель размышляет') ? ' think' : ''}`}>{x.status === 'wait' && <span className="spinner" />} <span>{x.note}</span></div>}
                   {x.text && <div className="adv-md" dangerouslySetInnerHTML={{ __html: mdToHtml(x.text) }} />}
                   {x.status === 'done' && x.model && <small className="muted">{x.model} · {x.seconds} с</small>}
                 </section>

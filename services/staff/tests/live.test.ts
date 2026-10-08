@@ -186,13 +186,14 @@ describe('посредник на модели', () => {
     const refs = [{ id: 'org:su-other', title: 'Прочие нормативы', text: 'туман в пойме Одера 15–16.04' }];
     const v = umpireMods({ mods: [
       { engagement: 1, factor: 'pace', mult: 0.5, reason: 'туман', basis: ['R1'] },
-      { engagement: 1, factor: 'defense', mult: 1.2, reason: 'без опоры', basis: [] },
+      { engagement: 1, factor: 'defense', mult: 1.2, reason: '', basis: ['R1'] },
       { engagement: 99, factor: 'pace', mult: 0.9, reason: 'нет такого боя', basis: ['обстановка'] },
-      { engagement: 2, factor: 'defenderLoss', mult: 1.1, reason: 'фольксштурм', basis: ['обстановка'] },
+      { engagement: 'Бой 2', factor: 'defenderLoss', mult: '1,1', reason: 'фольксштурм', basis: 'R1 — туман и дым; обстановка' },
+      { engagement: 3, factor: 'сила обороны', mult: 1.15, reason: 'заграждения', basis: [] },
     ] }, es, refs);
-    expect(v.mods.map((m) => [m.factor, m.mult, m.basis[0]])).toEqual([['pace', 0.8, 'org:su-other'], ['defenderLoss', 1.1, 'обстановка']]);
+    expect(v.mods.map((m) => [m.factor, m.mult, m.basis.join('+')])).toEqual([['pace', 0.8, 'org:su-other'], ['defenderLoss', 1.1, 'org:su-other+обстановка'], ['defense', 1.15, 'обстановка']]);
     expect(v.mods[1].formations).toEqual(es[1].defenders.map((f) => f.id));
-    expect(v.issues.length).toBe(3);
+    expect(v.issues.length).toBe(3); // ограничен; без причины; нет боя
     const tpl = { system: read('prompts/umpire.system.md'), user: read('prompts/umpire.user.md') };
     const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
     const r = await runScenarioWith(ctx, 1, async (s) => (await umpireTurn(client, ctx, s, async () => refs, tpl)).mods, 2);

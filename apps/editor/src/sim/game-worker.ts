@@ -241,7 +241,7 @@ async function advance() {
     }
     rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(t ? { ai: slim(t) } : {}),
       ...(ump?.mods.length ? { umpire: ump.mods } : {}),
-      ...(ump ? { umpireNote: { ok: ump.ok, error: ump.error, assessment: ump.assessment, issues: ump.issues, engagements: ump.engagements, refs: ump.refs.map((r) => ({ id: r.id, title: r.title })), seconds: ump.seconds,
+      ...(ump ? { umpireNote: { ok: ump.ok, error: ump.error, assessment: ump.assessment, issues: ump.issues, proposed: ump.proposed, engagements: ump.engagements, refs: ump.refs.map((r) => ({ id: r.id, title: r.title })), seconds: ump.seconds,
         names: Object.fromEntries(ump.mods.flatMap((m) => m.formations).map((id) => [id, g.state.formations.find((f) => f.id === id)?.name ?? id])) } } : {}) });
     post({ kind: 'progress', text: 'расчёт хода…' });
     const before = g.state;
@@ -300,11 +300,11 @@ async function reviewSection(m: Extract<GameRequest, { kind: 'review-section' }>
   const t0 = Date.now();
   const digest = reviewDigest(reviewInput());
   if (llmBusy) post({ kind: 'review-wait', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
-  let buf = '', last = 0, thinking = false;
+  let buf = '', last = 0, rbuf = '', rlast = 0;
   try {
     const r = await exclusive('разбор операции', () => reviewClient().chat({
       messages: reviewMessages(sec, digest, { scenario: ctx.scenario.name, side: ctx.scenario.sides.find((x) => x.id === rec.human)!.name }, m.done), signal,
-      onDelta: (k, t) => { if (k !== 'content') { if (!thinking) { thinking = true; post({ kind: 'review-wait', id: m.id, text: 'модель размышляет…' }); } return; } buf += t; const now = Date.now(); if (now - last > 200) { post({ kind: 'review-stream', id: m.id, text: buf }); buf = ''; last = now; } },
+      onDelta: (k, t) => { if (k !== 'content') { rbuf += t; const now = Date.now(); if (now - rlast > 600) { rlast = now; post({ kind: 'review-wait', id: m.id, text: `модель размышляет… ${rbuf.slice(-280)}` }); } return; } buf += t; const now = Date.now(); if (now - last > 200) { post({ kind: 'review-stream', id: m.id, text: buf }); buf = ''; last = now; } },
     }));
     if (buf) post({ kind: 'review-stream', id: m.id, text: buf });
     post({ kind: 'review-done', id: m.id, ok: true, text: r.content, model: r.model, seconds: Math.round((Date.now() - t0) / 1000) });
