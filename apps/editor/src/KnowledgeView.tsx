@@ -9,7 +9,7 @@ import { category, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBR
 import * as kb from './kb/kb';
 import { QWEN_EMBED } from './kb/vectors';
 import type { Llm } from './shared';
-import { ModelSelect } from './ui';
+import { ModelPicker } from './ModelPicker';
 import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
 
@@ -200,7 +200,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
   return (
     <aside className="kb-ask">
       <div className="kb-ask-h"><b>Спросить</b><span className="muted">модель отвечает только по материалам базы, со ссылками</span>{msgs.length > 0 && <button className="link" onClick={() => setMsgs([])}>очистить</button>}</div>
-      <KbModel llm={llm} />
+      <ModelPicker llm={llm} who="kb" purpose="ответов и разбора документов" />
       <div className="kb-ask-body">
         {!msgs.length && <div className="muted">Задайте вопрос или попросите рассказать по теме. {topic && <><br /><br /><button className="link" onClick={() => go(topic, 'lecture')}>Рассказать: «{topic}»</button></>}</div>}
         {msgs.map((m) => <QAItem key={m.id} m={m} s={s} open={open} llmOff={kb.kbLlm(llm.settings).thinking === 'off'} />)}
@@ -215,24 +215,6 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
       </div>
       {llm.check.state === 'fail' && <div className="adv-note err">Модель недоступна: {llm.check.error} — настройки в разделе «ИИ».</div>}
     </aside>
-  );
-}
-
-const THINK_RU: Record<string, string> = { off: 'без размышления', low: 'короткое', medium: 'обычное', high: 'глубокое' };
-
-/** Модель и размышление для базы знаний (ответы, рассказы, разбор документов); по умолчанию — как в разделе «ИИ». */
-function KbModel({ llm }: { llm: Llm }) {
-  const models = llm.check.state === 'ok' ? llm.check.models : [];
-  const base = llm.settings.model || models[0] || '—';
-  return (
-    <div className="kb-model">
-      <ModelSelect value={llm.settings.kbModel ?? ''} onChange={(v) => llm.set({ kbModel: v || undefined })} check={llm.check} empty={`как в «ИИ» (${base})`} title="Модель для ответов и разбора документов" />
-      <select value={llm.settings.kbThinking ?? ''} onChange={(e) => llm.set({ kbThinking: (e.target.value || undefined) as typeof llm.settings.kbThinking })} title="Размышление модели перед ответом">
-        <option value="">как в «ИИ» ({THINK_RU[llm.settings.thinking]})</option>
-        {Object.entries(THINK_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-      </select>
-      <span className={`llm-st ${llm.check.state}`} title={llm.check.state === 'fail' ? llm.check.error : ''}>{llm.check.state === 'ok' ? '●' : llm.check.state === 'fail' ? '✗' : '…'}</span>
-    </div>
   );
 }
 

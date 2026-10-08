@@ -170,6 +170,8 @@ function startAi() {
 }
 
 const llmClient = () => new LlmClient({ url: absolute(llm.url), model: llm.model, thinking: llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
+/** Советник: своя модель и размышление, если выбраны в его панели. */
+const advisorClient = () => new LlmClient({ url: absolute(llm.url), model: llm.advModel || llm.model, thinking: llm.advThinking ?? llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
 
 /** Вопрос советнику: ответ потоком, предложенные приказы — с целью на карте, готовые к распоряжению. */
 async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
@@ -180,7 +182,7 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
     { category: m.category, topic: m.topic, question: m.question, draft: m.draft, thread: m.thread, reference: m.reference,
       goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
   let buf = '', last = 0;
-  const r = await advise(llmClient(), g, built, {
+  const r = await advise(advisorClient(), g, built, {
     onAnswer: (d) => { buf += d; const now = Date.now(); if (now - last > 200) { post({ kind: 'advice-stream', id: m.id, text: buf }); buf = ''; last = now; } },
   });
   if (buf) post({ kind: 'advice-stream', id: m.id, text: buf });

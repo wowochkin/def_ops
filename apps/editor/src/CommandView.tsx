@@ -19,6 +19,7 @@ import { ZonesContext } from './time';
 import { download, Legend, Player } from './ReplayView';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
+import { ModelPicker } from './ModelPicker';
 
 export const SAVE_KEY = 'def_ops.game';
 export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
@@ -406,7 +407,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       </main>
       {advOpen && view && advMin && <button className="adv-tab" onClick={() => { setAdvMin(false); setAdvSeen(adv.length); }} title="Развернуть советника">
         <span>Советник</span>{adv.some((m) => !m.result) ? <i className="spinner" /> : adv.length > advSeen ? <b className="adv-new">ответ</b> : null}</button>}
-      {advOpen && view && !advMin && <Advisor msgs={adv} onClose={() => setAdvOpen(false)} onMinimize={() => { setAdvMin(true); setAdvSeen(adv.length); }} onClear={() => setAdv([])}
+      {advOpen && view && !advMin && <Advisor llm={llm} msgs={adv} onClose={() => setAdvOpen(false)} onMinimize={() => { setAdvMin(true); setAdvSeen(adv.length); }} onClear={() => setAdv([])}
         ask={(cat, topic, q) => {
           const id = ++checkId.current;
           const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
@@ -619,8 +620,8 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus }: {
-  msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
+function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus }: {
+  llm: Llm; msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
   onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn; focus: Sector | null;
 }) {
   /** Путь по дереву: индексы узлов (пусто — категории). */
@@ -658,6 +659,7 @@ function Advisor({ msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn
     <div className="advisor">
       <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
         {msgs.length > 0 && <button className="link" onClick={onClear}>очистить</button>}<button className="x adv-min" onClick={onMinimize} title="Свернуть к краю карты (беседа сохранится)">–</button><button className="x" onClick={onClose} title="Скрыть советника (беседа сохранится)">×</button></div>
+      <ModelPicker llm={llm} who="adv" purpose="ответов советника" />
       <div className="adv-body">
         {!msgs.length && <div className="adv-empty">
           <p>Выберите тему ниже — категория, раздел, вопрос; разделы «По армиям», «По соединениям», «По резервам» собраны из текущей обстановки. Или найдите вопрос поиском, или спросите своими словами. Советник знает только то, что знает ваш штаб: доклады, разведсводку, ваш проект решения и правила арбитра; о противнике вне разведки сведений у него нет. Каждый ответ помечен, на что он опирается и чего штаб не знает. Предложенные приказы включаются в распоряжение одним нажатием.</p>
