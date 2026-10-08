@@ -289,6 +289,28 @@ def km_proj(lat0):
     return kx, ky
 
 
+def snap_to_river(at, rivers, pattern, max_km):
+    """Ближайшая точка на линии реки, чьё название подходит под pattern, в пределах max_km (иначе None)."""
+    import re
+    rx = re.compile(pattern)
+    kx, ky = km_proj(at[1])
+    best, bd = None, max_km
+    for r in rivers:
+        if not rx.search(r.get("name") or ""):
+            continue
+        ln = r["line"]
+        for a, b in zip(ln, ln[1:]):
+            ax, ay, bx, by = (a[0] - at[0]) * kx, (a[1] - at[1]) * ky, (b[0] - at[0]) * kx, (b[1] - at[1]) * ky
+            dx, dy = bx - ax, by - ay
+            L = dx * dx + dy * dy
+            t = max(0.0, min(1.0, -(ax * dx + ay * dy) / L)) if L else 0.0
+            qx, qy = ax + t * dx, ay + t * dy
+            d = math.hypot(qx, qy)
+            if d < bd:
+                bd, best = d, [at[0] + qx / kx, at[1] + qy / ky]
+    return best
+
+
 def seg_intersect(p1, p2, q1, q2):
     d = (p2[0] - p1[0]) * (q2[1] - q1[1]) - (p2[1] - p1[1]) * (q2[0] - q1[0])
     if d == 0:
@@ -569,7 +591,11 @@ def main():
             b["destroyedAt"] = rule["destroyedAt"]
             b["note"] = rule.get("note")
     for c in recipe["bridges"]["crossings"]:
-        bridges.append({"id": c["id"], "at": rnd(place(c["at"])), "name": c["name"], "openFrom": c["openFrom"], "kind": "crossing", "side": c.get("side"), "note": c.get("note")})
+        # переправа — на линии своей реки (c["river"] — образец названия), а не в центре пункта
+        at = place(c["at"])
+        if c.get("river"):
+            at = snap_to_river(at, rivers, c["river"], 12.0) or at
+        bridges.append({"id": c["id"], "at": rnd(at), "name": c["name"], "openFrom": c["openFrom"], "kind": "crossing", "side": c.get("side"), "note": c.get("note")})
     log(f"  мостов {len(bridges)}, разрушенных к 16.04: {sum(1 for b in bridges if b.get('destroyedAt', '9') < '1945-04-16')}")
 
     # 5. рубежи и районы

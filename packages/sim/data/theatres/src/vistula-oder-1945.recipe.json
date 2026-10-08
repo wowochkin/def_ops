@@ -124,7 +124,8 @@
         "at": "Magnuszew",
         "openFrom": "1944-08-15T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       },
       {
         "id": "x_mniszew",
@@ -132,7 +133,8 @@
         "at": "Mniszew",
         "openFrom": "1944-08-15T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       },
       {
         "id": "x_pulawy",
@@ -140,7 +142,8 @@
         "at": "Pulawy",
         "openFrom": "1944-08-15T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       },
       {
         "id": "x_deblin",
@@ -148,7 +151,8 @@
         "at": "Deblin",
         "openFrom": "1944-08-15T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       },
       {
         "id": "x_baranow",
@@ -156,7 +160,8 @@
         "at": "Baranow",
         "openFrom": "1944-08-15T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       },
       {
         "id": "x_sandomierz",
@@ -164,7 +169,8 @@
         "at": "Sandomierz",
         "openFrom": "1944-08-20T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       },
       {
         "id": "x_polaniec",
@@ -172,7 +178,8 @@
         "at": "Polaniec",
         "openFrom": "1944-08-15T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       },
       {
         "id": "x_praga",
@@ -180,7 +187,8 @@
         "at": "Praga_W",
         "openFrom": "1945-01-17T12:00",
         "note": "после освобождения Варшавы 17.01 (C)",
-        "side": "su"
+        "side": "su",
+        "river": "Wisła|Vistula"
       }
     ]
   },

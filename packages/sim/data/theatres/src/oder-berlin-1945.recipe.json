@@ -162,7 +162,8 @@
         "at": "Kostrzyn",
         "openFrom": "1945-03-31T00:00",
         "note": "к началу апреля через Одер 25 мостов и 40 паромов (LT_CONQ ch.3)",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_goeritz",
@@ -170,7 +171,8 @@
         "at": "Reitwein",
         "openFrom": "1945-03-31T00:00",
         "note": "LT_CONQ ch.3; место — C",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_kienitz",
@@ -178,7 +180,8 @@
         "at": "Kienitz",
         "openFrom": "1945-03-31T00:00",
         "note": "северный край плацдарма (C)",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_lebus",
@@ -186,7 +189,8 @@
         "at": "Lebus",
         "openFrom": "1945-03-31T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_fuerstenberg",
@@ -194,7 +198,8 @@
         "at": "Fuerstenberg_O",
         "openFrom": "1945-03-31T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_gozdowice",
@@ -202,7 +207,8 @@
         "at": "Gozdowice",
         "openFrom": "1945-04-16T12:00",
         "note": "форсирование 16.04 (LT_CONQ ch.4); время — C",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_cedynia",
@@ -210,7 +216,8 @@
         "at": "Cedynia",
         "openFrom": "1945-04-17T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_forst",
@@ -218,7 +225,8 @@
         "at": "Forst",
         "openFrom": "1945-04-16T10:00",
         "note": "форсирование Нейсе 16.04 утром; 133 переправы в полосе фронта (Конев); место и время — C",
-        "side": "su"
+        "side": "su",
+        "river": "Neiße|Nysa"
       },
       {
         "id": "x_bademeusel",
@@ -226,7 +234,8 @@
         "at": "KleinBademeusel",
         "openFrom": "1945-04-16T10:00",
         "note": "главный удар 3 гв. ТА, 4 гв. ТА (C)",
-        "side": "su"
+        "side": "su",
+        "river": "Neiße|Nysa"
       },
       {
         "id": "x_muskau",
@@ -234,7 +243,8 @@
         "at": "BadMuskau",
         "openFrom": "1945-04-16T10:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Neiße|Nysa"
       },
       {
         "id": "x_rothenburg",
@@ -242,7 +252,8 @@
         "at": "Rothenburg",
         "openFrom": "1945-04-16T12:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Neiße|Nysa"
       },
       {
         "id": "x_gryfino",
@@ -250,7 +261,8 @@
         "at": "Gryfino",
         "openFrom": "1945-04-20T12:00",
         "note": "форсирование Ост- и Вест-Одера 20.04 (C)",
-        "side": "su"
+        "side": "su",
+        "river": "Odra Wschodnia|Oder|Odra"
       },
       {
         "id": "x_widuchowa",
@@ -258,7 +270,8 @@
         "at": "Widuchowa",
         "openFrom": "1945-04-20T12:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       },
       {
         "id": "x_ognica",
@@ -266,7 +279,8 @@
         "at": "Ognica",
         "openFrom": "1945-04-21T00:00",
         "note": "C",
-        "side": "su"
+        "side": "su",
+        "river": "Oder|Odra"
       }
     ]
   },

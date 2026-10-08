@@ -185,21 +185,43 @@ export class Theatre {
     return gone;
   }
 
-  /** Ближайшая клетка реки в пределах km: индекс, центр, большая ли река. */
-  nearestRiver(at: LngLat, km: number): { i: number; at: LngLat; major: boolean } | null {
-    const i0 = this.indexOf(at);
-    if (i0 < 0) return null;
-    const p = this.proj.toXY(at), c0 = i0 % this.cols, r0 = Math.floor(i0 / this.cols), rc = Math.ceil(km / this.cellKm) + 1;
-    let best = -1, bd = Infinity;
-    for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) {
-      if (!this.inside(c, r)) continue;
-      const i = r * this.cols + c;
-      if (!this.river[i]) continue;
-      const q = this.cellCenter(c, r), d = Math.hypot(q[0] - p[0], q[1] - p[1]);
-      if (d <= km && d < bd) { bd = d; best = i; }
+  /**
+   * Ближайшая точка на линии реки в пределах km (name — только реки, чьё название подходит).
+   * Переправа ставится на саму линию реки, а клетка расчёта — та, через которую линия проходит.
+   */
+  snapToRiver(at: LngLat, km: number, name?: RegExp): { i: number; at: LngLat; major: boolean; name: string; km: number } | null {
+    const p = this.proj.toXY(at);
+    let best: { xy: XY; major: boolean; name: string; d: number } | null = null;
+    for (const r of this.data.rivers) {
+      if (name && !name.test(r.name)) continue;
+      for (let k = 1; k < r.line.length; k++) {
+        const a = this.proj.toXY(r.line[k - 1]), c = this.proj.toXY(r.line[k]);
+        const dx = c[0] - a[0], dy = c[1] - a[1], L = dx * dx + dy * dy;
+        const t = L ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)) : 0;
+        const q: XY = [a[0] + t * dx, a[1] + t * dy];
+        const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+        if (d <= km && (!best || d < best.d)) best = { xy: q, major: r.major, name: r.name, d };
+      }
     }
-    if (best < 0) return null;
-    return { i: best, at: this.proj.toLL(this.cellCenter(best % this.cols, Math.floor(best / this.cols))), major: this.river[best] === 2 };
+    if (!best) return null;
+    const ll = this.proj.toLL(best.xy);
+    const pt: LngLat = [+ll[0].toFixed(5), +ll[1].toFixed(5)];
+    let i = this.indexOf(pt);
+    if (i < 0) return null;
+    if (!this.river[i]) {
+      // точка на линии у края клетки: клетка реки — соседняя
+      const c0 = i % this.cols, r0 = Math.floor(i / this.cols);
+      let j = -1;
+      for (let r = r0 - 1; r <= r0 + 1 && j < 0; r++) for (let c = c0 - 1; c <= c0 + 1; c++) if (this.inside(c, r) && this.river[r * this.cols + c]) { j = r * this.cols + c; break; }
+      if (j < 0) return null;
+      i = j;
+    }
+    return { i, at: pt, major: best.major, name: best.name, km: +best.d.toFixed(2) };
+  }
+
+  /** Место переправы у точки at: на линии ближайшей реки в пределах km. */
+  nearestRiver(at: LngLat, km: number): { i: number; at: LngLat; major: boolean } | null {
+    return this.snapToRiver(at, km);
   }
 
   bridgeOpen(i: number, time: string): boolean {
