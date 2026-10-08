@@ -283,6 +283,19 @@ describe('ошибка сервера модели', () => {
     await expect(c.chat({ messages: [{ role: 'user', content: 'тест' }] })).rejects.toThrow(/не смог загрузить модель «qwen\/qwen3\.8-27b».*«загружена»/);
     expect(calls).toBe(1);
   });
+  it('имя с вариантом через @, которое сервер не загрузил, — повтор с базовым именем', async () => {
+    const asked: string[] = [];
+    const f: typeof fetch = async (input, init) => {
+      if (!String(input).includes('/chat/')) return fetch(input, init);
+      const m = JSON.parse(String(init?.body)).model as string;
+      asked.push(m);
+      return m.includes('@') ? new Response('{"error":{"message":"Failed to load model \\"x@8bit\\"."}}', { status: 400 }) : fetch(input, init);
+    };
+    const c = new LlmClient({ ...configFromEnv({}), url, model: 'mock-staff@8bit', thinking: 'off' }, f);
+    const r = await c.chat({ messages: [{ role: 'system', content: 'Вы — советник' }, { role: 'user', content: 'Вопрос командующего: тест' }] });
+    expect(asked).toEqual(['mock-staff@8bit', 'mock-staff']);
+    expect(r.content.length).toBeGreaterThan(0);
+  }, 30000);
 });
 
 describe('разбор операции', () => {

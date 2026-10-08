@@ -70,23 +70,25 @@ export const Icon = {
  */
 export function ModelSelect({ value, onChange, check, empty, title }: {
   value: string; onChange: (v: string) => void; empty: string; title?: string;
-  check: { state: string; models?: string[]; info?: Record<string, { quant?: string; loaded?: boolean; variantOf?: string }> };
+  check: { state: string; models?: string[]; info?: Record<string, { quant?: string; loaded?: boolean; variants?: string[]; selected?: string }> };
 }) {
   const models = check.models ?? [];
   const label = (m: string) => {
     const i = check.info?.[m];
-    const bits = [i?.quant && !m.includes('@') ? i.quant : '', i?.loaded ? 'загружена' : ''].filter(Boolean).join(', ');
-    return `${i?.variantOf ? '  ↳ ' : ''}${m}${bits ? ` (${bits})` : ''}`;
+    const q = i?.selected ?? i?.quant;
+    const other = (i?.variants ?? []).filter((v) => v !== q);
+    const bits = [q ? `${q}${other.length ? `; есть ${other.join(', ')}` : ''}` : '', i?.loaded ? 'загружена' : ''].filter(Boolean).join(', ');
+    return `${m}${bits ? ` (${bits})` : ''}`;
   };
   return (
     <select value={value} title={title} onChange={(e) => {
       if (e.target.value !== '__other') { onChange(e.target.value); return; }
-      const v = window.prompt('Имя модели на сервере — как в списке /v1/models, вариант через @ (например, qwen/qwen3.8-27b@8bit) или имя, под которым модель загружена:', value);
+      const v = window.prompt('Имя модели на сервере — как в списке /v1/models или идентификатор загруженного экземпляра (например, qwen-8bit после «lms load qwen/qwen3.8-27b --identifier qwen-8bit»):', value);
       if (v != null) onChange(v.trim());
     }}>
       <option value="">{empty}</option>
       {models.map((m) => <option key={m} value={m}>{label(m)}</option>)}
-      {value && !models.includes(value) && <option value={value}>{value}</option>}
+      {value && !models.includes(value) && <option value={value}>{value} (нет на сервере)</option>}
       <option value="__other">другое имя…</option>
     </select>
   );

@@ -161,7 +161,7 @@ export class LlmClient {
   }
 
   async chat(req: ChatRequest): Promise<ChatResult> {
-    const model = await this.resolveModel();
+    let model = await this.resolveModel();
     const t0 = performance.now();
     const signal = req.signal ? AbortSignal.any([req.signal, AbortSignal.timeout(this.config.timeoutMs)]) : AbortSignal.timeout(this.config.timeoutMs);
     let r: Response;
@@ -174,6 +174,13 @@ export class LlmClient {
       } catch (e) {
         throw new LlmUnavailable(`сервер модели не отвечает: ${(e as Error).message}`);
       }
+      // вариант через @ (qwen/…@8bit) не все версии LM Studio принимают — повтор с базовым именем (ответит выбранный в LM Studio вариант)
+      if (r.status === 400 && /@/.test(model) && attempt < 2) {
+        const t = await r.text().catch(() => '');
+        if (/failed to load model|not found|no model/i.test(t)) { model = model.replace(/@[^/]*$/, ''); continue; }
+        r = new Response(t, { status: 400 });
+        break;
+      }
       if (r.status < 500 || attempt >= 2 || signal.aborted) break;
       await r.text().catch(() => '');
       await new Promise((res) => setTimeout(res, attempt ? 6000 : 2000));
@@ -181,7 +188,7 @@ export class LlmClient {
     if (!r.ok || !r.body) {
       const text = (await r.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
       // LM Studio не смог загрузить модель по запросу (JIT): обычно нехватка памяти или имя без варианта
-      if (/failed to load model/i.test(text)) throw new Error(`LM Studio не смог загрузить модель «${model}». Обычно не хватает памяти (уже загружена другая большая модель) или имя без варианта (@4bit / @8bit). Выберите в списке модель с пометкой «загружена» или загрузите нужную в LM Studio вручную, выгрузив лишние. Ответ сервера (${r.status}): ${text}`);
+      if (/failed to load model/i.test(text)) throw new Error(`LM Studio не смог загрузить модель «${model}». Проверьте, что имя есть в списке моделей сервера (lms ls), и что хватает памяти (lms ps — выгрузите лишние). Надёжнее всего выбрать модель с пометкой «загружена» или загрузить нужную вручную: lms load <модель> --identifier <имя>. Ответ сервера (${r.status}): ${text}`);
       throw new Error(`сервер модели ответил ${r.status}${r.status >= 500 ? ' (ошибка сервера — модель, возможно, занята другим запросом или не загрузилась)' : ''}: ${text}`);
     }
 

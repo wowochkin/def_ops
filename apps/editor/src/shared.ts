@@ -69,17 +69,23 @@ export function useBasemaps(): Basemaps {
 export const LLM_DEFAULTS: LlmSettings = { url: '/llm/v1', model: '', thinking: 'off' };
 
 export function loadLlm(): LlmSettings {
-  try { return { ...LLM_DEFAULTS, ...JSON.parse(localStorage.getItem('def_ops.llm') || '{}') }; } catch { return LLM_DEFAULTS; }
+  try {
+    const v = { ...LLM_DEFAULTS, ...JSON.parse(localStorage.getItem('def_ops.llm') || '{}') } as LlmSettings;
+    // имена с вариантом через @ (qwen/…@8bit) LM Studio по API не принимает — сохранённые раньше заменяются базовым именем
+    for (const k of ['model', 'kbModel', 'advModel', 'revModel'] as const) if (typeof v[k] === 'string' && /@/.test(v[k] as string)) (v as unknown as Record<string, string>)[k] = (v[k] as string).replace(/@[^/]*$/, '');
+    return v;
+  } catch { return LLM_DEFAULTS; }
 }
 
 /** models — модели для ответов; embedModels — модели эмбеддингов (в названии embed), для смыслового поиска по базе знаний. */
 export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[]; embedModels: string[]; info?: Record<string, ModelInfo> } | { state: 'fail'; error: string };
 /** Что известно о модели из собственного API LM Studio: квантование, загружена ли. */
-export interface ModelInfo { quant?: string; loaded?: boolean; variantOf?: string }
+export interface ModelInfo { quant?: string; loaded?: boolean; variants?: string[]; selected?: string }
 
 /**
- * Варианты моделей (4bit / 8bit …) из собственного API LM Studio (/api/v1/models, /api/v0/models): у модели
- * с несколькими вариантами имя вида «qwen/qwen3.8-27b@8bit». Нет такого API — только список /v1/models.
+ * Сведения о моделях из собственного API LM Studio (/api/v1/models, /api/v0/models): квантование, загружена ли,
+ * скачанные варианты (4bit / 8bit …). Вариант через @ в запросе LM Studio не принимает: по API модель зовётся
+ * базовым именем (отвечает выбранный в LM Studio вариант) или идентификатором загруженного экземпляра (qwen-8bit).
  */
 async function nativeModels(url: string): Promise<Record<string, ModelInfo>> {
   const base = url.replace(/\/+$/, '').replace(/\/v1$/, '');
@@ -97,10 +103,10 @@ async function nativeModels(url: string): Promise<Record<string, ModelInfo>> {
         const quant = typeof q === 'string' ? q : q?.name;
         const loaded = raw.state === 'loaded' || (Array.isArray(raw.loaded_instances) && raw.loaded_instances.length > 0) || undefined;
         out[id] = { ...out[id], quant: quant ?? out[id]?.quant, loaded: loaded ?? out[id]?.loaded };
-        for (const v of (raw.variants ?? []) as (string | { id?: string; name?: string })[]) {
-          const vid = typeof v === 'string' ? v : v.id ?? (v.name ? `${id}@${v.name}` : '');
-          if (vid) out[vid] = { ...out[vid], variantOf: id, quant: out[vid]?.quant ?? vid.split('@')[1] };
-        }
+        const vs = ((raw.variants ?? []) as (string | { id?: string; name?: string })[]).map((v) => (typeof v === 'string' ? v : v.id ?? v.name ?? '').split('@').pop()!).filter(Boolean);
+        const sel = String(raw.selectedVariant ?? raw.selected_variant ?? '').split('@')[1];
+        if (vs.length) out[id].variants = [...new Set(vs)];
+        if (sel) out[id].selected = sel;
       }
     } catch { /* нет собственного API — не страшно */ }
   }
@@ -114,9 +120,7 @@ export async function checkLlm(url: string): Promise<LlmCheck> {
     if (!r.ok) return { state: 'fail', error: `сервер ответил ${r.status}` };
     const j = (await r.json()) as { data?: { id: string }[] };
     const info = await nativeModels(url);
-    // варианты (qwen/…@8bit) — сразу за своей моделью
-    const ids = (j.data ?? []).map((m) => m.id);
-    const all = ids.flatMap((id) => [id, ...Object.keys(info).filter((v) => info[v].variantOf === id && !ids.includes(v))]);
+    const all = (j.data ?? []).map((m) => m.id);
     const models = all.filter((m) => !/embed/i.test(m));
     return models.length ? { state: 'ok', models, embedModels: all.filter((m) => /embed/i.test(m)), info } : { state: 'fail', error: 'на сервере не загружена ни одна модель' };
   } catch (e) {
