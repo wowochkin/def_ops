@@ -888,3 +888,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .kb-think.live { max-height: 9em; overflow: hidden; border-left: 2px solid #e2dccd; padding-left: 7px; mask-image: linear-gradient(to bottom, transparent, #000 35%); }
 .kb-think summary { cursor: pointer; } .kb-think > div { margin-top: 4px; max-height: 18em; overflow-y: auto; }
 .kb-caret { display: inline-block; width: 7px; height: 13px; background: var(--accent); animation: pulse 1s ease-in-out infinite; vertical-align: -2px; }
+
+.kb-model { display: flex; gap: 6px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+.kb-model select { flex: 1; min-width: 0; font-size: 11.5px; padding: 3px 4px; }
+.kb-meta { font-size: 10.5px; }

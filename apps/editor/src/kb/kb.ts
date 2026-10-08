@@ -109,6 +109,7 @@ export const stop = () => abort?.abort();
 
 /** Обработать документ моделью: по частям, с места остановки; предложения — в очередь на проверку. */
 export async function process(id: string, llm: LlmSettings) {
+  llm = kbLlm(llm);
   if (state.job) throw new Error('уже идёт обработка другого документа');
   const doc = state.documents.find((d) => d.id === id);
   if (!doc) return;
@@ -195,8 +196,13 @@ export function streamView(content: string, reasoning: string, thinkingOff: bool
   return { answer: answer.replace(/^\s+/, ''), thinking };
 }
 
+/** Настройки модели для базы знаний: своя модель и размышление, если заданы, иначе — как в разделе «ИИ». */
+export const kbLlm = (llm: LlmSettings): LlmSettings => ({ ...llm, model: llm.kbModel || llm.model, thinking: llm.kbThinking ?? llm.thinking });
+
 export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSettings, history: { q: string; a: string }[],
-  onStream: (v: { answer: string; thinking: string; stage: 'search' | 'model' }) => void, signal?: AbortSignal): Promise<{ text: string; thinking: string; sources: Source[] }> {
+  onStream: (v: { answer: string; thinking: string; stage: 'search' | 'model' }) => void, signal?: AbortSignal): Promise<{ text: string; thinking: string; sources: Source[]; model: string; seconds: number }> {
+  llm = kbLlm(llm);
+  const t0 = performance.now();
   onStream({ answer: '', thinking: '', stage: 'search' });
   await load();
   const sources = gather(state.index!, state.byId, question, { limit: mode === 'lecture' ? 10 : 7, hits: await search(question, 30) });
@@ -206,7 +212,7 @@ export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSet
   onStream({ answer: '', thinking: '', stage: 'model' });
   const r = await client(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') content += t; else reasoning += t; push(); } });
   push(true);
-  return { text: r.content, thinking: r.reasoning, sources };
+  return { text: r.content, thinking: r.reasoning, sources, model: r.model, seconds: Math.round((performance.now() - t0) / 1000) };
 }
 
 /** Справка из базы для советника в игре: доктрина, техника, местность, источники; ход боёв — только в вопросах истории. */
