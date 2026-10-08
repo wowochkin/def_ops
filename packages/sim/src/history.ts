@@ -15,7 +15,10 @@ export interface History {
   events?: HistoryEvent[];
 }
 
-export type HistoryEvent = { id: string; title: string; date: string; source?: string } & (
+/** Знак события на карте переигровки: появляется в момент, когда событие случилось в расчёте (и бледный — в исторический). */
+export interface EventMarker { preset: string; name: string; note?: string; historicalAt?: string }
+
+export type HistoryEvent = { id: string; title: string; date: string; source?: string; marker?: EventMarker } & (
   | { kind: 'reach'; side: string; place: string; radiusKm: number; /** взято: в радиусе нет боеспособных частей противника */ control?: boolean }
   | { kind: 'cut'; formation?: string; formations?: string[] }
   | { kind: 'meet'; formations: string[]; place: string; radiusKm: number }
@@ -29,6 +32,8 @@ export interface EventResult {
   simulated: string | null;
   /** Расхождение в сутках (+ — позже истории); null — не случилось. */
   days: number | null;
+  /** Момент в расчёте (снимок после хода, когда событие уже случилось); null — не случилось. */
+  at: string | null;
 }
 
 /** Когда в расчёте произошли ключевые события (по снимкам и журналу). */
@@ -57,7 +62,7 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
     // снимок — на утро; событие «дня» — день перед ним
     const day = when ? addHours(when, -12).slice(0, 10) : null;
     const days = day ? Math.round((Date.parse(day) - Date.parse(e.date)) / 86400000) : null;
-    return { id: e.id, title: e.title, historical: e.date, simulated: day, days };
+    return { id: e.id, title: e.title, historical: e.date, simulated: day, days, at: when };
   });
 }
 

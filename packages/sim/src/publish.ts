@@ -7,7 +7,7 @@
 import { createFeature, emptyDocument, type ArrowFeature, type Feature, type Layer, type LngLat, type MapDocument, type Side, type SymbolFeature } from '@def-ops/core';
 import { frontLine, territoryLine } from './front';
 import { dist } from './geo';
-import type { History, RunResult } from './history';
+import { checkEvents, type History, type RunResult } from './history';
 import { power } from './rules';
 import { addHours, onMap, profileOf, type SimContext } from './step';
 import type { Formation } from './types';
@@ -72,6 +72,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('sim-enemy', 'Переигровка: противник', 'enemy'),
     mk('sim-own', 'Переигровка: свои войска', 'friendly'),
     mk('sim-combat', 'Переигровка: бои за ход', 'custom', 0.8, o.combats !== false),
+    mk('sim-marks', 'Переигровка: особые отметки', 'custom'),
   ];
   const features: Feature[] = [];
   const end = run.final.time;
@@ -191,6 +192,31 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       lf.name = `${l.sector} (история, ${l.time.slice(0, 10)})`;
       lf.time = { from: l.time, to: next };
       features.push(lf);
+    }
+  }
+
+  // особые отметки событий (например, Знамя Победы над Рейхстагом): в момент события в расчёте и бледно — в исторический
+  if (history?.events?.some((e) => e.marker)) {
+    const results = new Map(checkEvents(ctx, run, history).map((r) => [r.id, r]));
+    for (const e of history.events) {
+      if (!e.marker || !('place' in e)) continue;
+      const at = T.area(e.place)?.center;
+      if (!at) continue;
+      const r = results.get(e.id);
+      if (r?.at) {
+        const f = createFeature('symbol', e.marker.preset, { at, layerId: 'sim-marks' }, 1.2, 'own') as SymbolFeature;
+        f.name = `${e.marker.name} (расчёт: ${r.simulated})`;
+        f.note = [e.marker.note, `по истории — ${e.marker.historicalAt?.replace('T', ' ') ?? e.date}`].filter(Boolean).join('; ');
+        f.time = { from: r.at, to: null };
+        features.push(f);
+      }
+      if (e.marker.historicalAt) {
+        const g = createFeature('symbol', e.marker.preset, { at, layerId: 'hist-units' }, 1, 'own') as SymbolFeature;
+        g.name = `${e.marker.name} (история)`;
+        g.note = e.marker.note;
+        g.time = { from: e.marker.historicalAt, to: null };
+        features.push(g);
+      }
     }
   }
 
