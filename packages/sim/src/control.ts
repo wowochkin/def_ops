@@ -9,7 +9,7 @@
  * доходит, отрезано: не пополняется и не может отойти к своим.
  */
 import type { LngLat } from '@def-ops/core';
-import type { Theatre } from './theatre';
+import { MinHeap, type Theatre } from './theatre';
 import type { Formation, Rules, SideProfile } from './types';
 
 export interface ControlMap {
@@ -84,18 +84,32 @@ export function supplyField(T: Theatre, side: string, sources: LngLat[], units: 
 }
 
 /**
- * Исходная территория: клетка — стороне ближайшего формирования или опорной точки
- * (источники подвоза — тыл стороны). Дальше территория меняется только движением войск.
+ * Исходная территория: каждая сторона «растекается» от своих войск и тылов (источники
+ * подвоза) по клеткам; переход большой реки и чужой укреплённой полосы обходится дорого
+ * (barrierKm), поэтому граница ложится по рекам и главной полосе обороны, а не посередине
+ * между ближайшими частями. Клетка — стороне с меньшим «расстоянием». Дальше территория
+ * меняется только движением войск.
  */
-export function initialTerritory(T: Theatre, points: { side: number; at: LngLat }[]): Int8Array {
+export function initialTerritory(T: Theatre, points: { side: number; at: LngLat }[], sideIds: string[], barrierKm = 40): Int8Array {
   const N = T.cols * T.rows;
+  const best = new Float64Array(N).fill(Infinity);
   const out = new Int8Array(N).fill(-1);
-  const ps = points.map((p) => ({ side: p.side, xy: T.proj.toXY(p.at) }));
-  for (let i = 0; i < N; i++) {
-    const c = T.cellCenter(i % T.cols, Math.floor(i / T.cols));
-    let best = -1, bd = Infinity;
-    for (const p of ps) { const d = (p.xy[0] - c[0]) ** 2 + (p.xy[1] - c[1]) ** 2; if (d < bd) { bd = d; best = p.side; } }
-    out[i] = best;
+  for (let k = 0; k < sideIds.length; k++) {
+    const d = new Float64Array(N).fill(Infinity);
+    const heap = new MinHeap();
+    for (const p of points) if (p.side === k) { const i = T.indexOf(p.at); if (i >= 0 && d[i] > 0) { d[i] = 0; heap.push(i, 0); } }
+    const cost = (i: number) => T.cellKm + (T.river[i] === 2 ? barrierKm : 0) + (T.fort[i] && T.fortSide[i] && T.fortSide[i] !== sideIds[k] ? barrierKm / 2 : 0);
+    while (heap.size) {
+      const cur = heap.pop();
+      const c0 = cur % T.cols, r0 = Math.floor(cur / T.cols);
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const c = c0 + dc, r = r0 + dr;
+        if (!T.inside(c, r)) continue;
+        const ni = r * T.cols + c, nd = d[cur] + cost(ni);
+        if (nd < d[ni]) { d[ni] = nd; heap.push(ni, nd); }
+      }
+    }
+    for (let i = 0; i < N; i++) if (d[i] < best[i]) { best[i] = d[i]; out[i] = k; }
   }
   return out;
 }

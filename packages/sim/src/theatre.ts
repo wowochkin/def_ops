@@ -384,7 +384,7 @@ function simplify(pts: LngLat[]): LngLat[] {
 }
 
 /** Двоичная куча по приоритету (для A*). */
-class MinHeap {
+export class MinHeap {
   private ids: number[] = [];
   private pr: number[] = [];
   get size() { return this.ids.length; }

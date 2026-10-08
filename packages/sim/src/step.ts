@@ -129,7 +129,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     : initialTerritory(T, [
       ...active().map((f) => ({ side: sideIdx(f.side), at: f.position })),
       ...sides.flatMap((sd) => supplySources(ctx, sd, now).map((at) => ({ side: sideIdx(sd), at }))),
-    ]);
+    ], sides);
   // по территории противника — медленнее (заслоны, разрушения, зачистка)
   const terrCost = (f: Formation, mob: string) => {
     const cap = R.territory?.enemyKmPerDay[mob as keyof NonNullable<Rules['territory']>['enemyKmPerDay']];
