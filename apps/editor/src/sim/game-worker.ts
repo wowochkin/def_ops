@@ -12,7 +12,7 @@ import {
   runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
+import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
 import { category, gather, Index, type Entry } from '@def-ops/knowledge';
 import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
@@ -21,7 +21,7 @@ import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
-import type { AdviceView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
+import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 
 const files = import.meta.glob('../../../../packages/sim/data/{scenarios,theatres,profiles,rules}/*.json', { import: 'default' });
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
@@ -74,6 +74,8 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
     else if (m.kind === 'retry-ai') { startAi(); if (queued) await advance(); }
     else if (m.kind === 'skip-ai') { skipAi = true; if (queued) await advance(); }
     else if (m.kind === 'advise') void adviseReq(m);
+    else if (m.kind === 'plan') void planReq(m);
+    else if (m.kind === 'plan-stop') planAbort?.abort();
     else if (m.kind === 'reveal') { reveal = m.on; postView(); }
   } catch (err) {
     busy = false;
@@ -213,6 +215,72 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
       at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: x.given.why, issue: x.issue, ok: !!x.order,
     })),
   });
+}
+
+let planAbort: AbortController | null = null;
+const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+
+/** Варианты решения на ход: каждый вариант — как только модель его дописала; приказы и распоряжения сопоставлены с обстановкой. */
+async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
+  const fail = (error: string) => post({ kind: 'plan-done', id: m.id, ok: false, error });
+  if (!cfg.advisor) return fail('для этого сценария советник не настроен');
+  const t0 = Date.now(), gAt = g, side = rec.human;
+  const built = buildAdvice(ctx, g, history, cfg.advisor, { system: advisorSystemTpl, user: advisorUserTpl, profile: advisorProfile },
+    { category: 'plan', topic: 'Решение › Варианты решения на ход', question: `Предложите ${m.count === 1 ? 'вариант' : `${m.count} варианта`} решения на этот ход: оценка, замысел противника, решение, риски, донесение, приказы войскам, распоряжения по тылу, переправам и резервам.`,
+      draft: m.draft, thread: [], reference: m.reference,
+      goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
+  const st = gAt.state, lg = st.logistics?.[side];
+  const sit: Situation = {
+    messages: [], time: st.time, areas: built.parts.areas, allAreas: built.parts.allAreas, enemies: built.parts.enemies,
+    formations: built.parts.formations.filter((f) => built.parts.own.find((u) => u.id === f.id)!.status !== 'destroyed'),
+    staff: { side, bases: (lg?.bases ?? []).map((b) => ({ id: b.id, name: b.name })), reserves: st.formations.filter((f) => f.side === side && f.reserveFrom && !f.destroyed).map((f) => ({ id: f.id, name: f.name })) },
+  };
+  const byId = new Map(st.formations.map((f) => [f.id, f]));
+  const names = new Map(st.formations.map((f) => [f.id, f.name]));
+  const KIND = { base: 'база', priority: 'приоритет подвоза', bridge: 'переправа', demolish: 'подрыв моста', commit: 'ввод резерва' } as const;
+  const view = (v: PlanVariantRaw): PlanVariantView => {
+    const conv = decisionToOrders({ orders: v.orders.map((x) => ({ formation: x.formation, task: x.task, area: x.area, toArea: x.toArea, deadline: '', details: x.why })) }, sit, 'human');
+    const staff = actionsToStaff(ctx, gAt, sit, v.actions);
+    const acts: PlanActView[] = staff.applied.map((x, i) => {
+      const a = x.action, gv = x.given;
+      const given = `${KIND[gv.kind] ?? gv.kind}${gv.subject ? `: ${gv.subject}` : ''}${gv.area ? ` — ${gv.area}` : ''}${gv.formations?.length ? ` — ${gv.formations.join(', ')}` : ''}`;
+      if (!a) return { key: `x:${i}`, action: null, label: given, text: x.text, given, ok: false };
+      if (a.kind === 'base') { const b = lg?.bases.find((y) => y.id === a.base); return { key: `base:${a.base}`, action: a, label: `База «${b?.name ?? a.base}»`, text: x.text, at: a.to, from: b?.at, given, ok: true }; }
+      if (a.kind === 'priority') return { key: 'priority', action: a, label: `Приоритет подвоза${a.formations.length ? `: ${a.formations.map((f) => short(names.get(f) ?? f)).join(', ')}` : ''}`, text: x.text, given, ok: true };
+      if (a.kind === 'bridge') return { key: `bridge:plan${i}`, action: a, label: 'Переправа', text: x.text, at: a.at, given, ok: true };
+      if (a.kind === 'demolish') return { key: `demolish:plan${i}`, action: a, label: 'Подрыв моста', text: x.text, at: a.at, given, ok: true };
+      return { key: `commit:${a.formation}`, action: a, label: short(names.get(a.formation) ?? a.formation), text: x.text, at: a.at, given, ok: true };
+    });
+    return {
+      title: v.title, idea: v.idea,
+      decision: { assessment: v.assessment, enemyIntent: v.enemyIntent, intent: v.intent, risks: v.risks, report: v.report },
+      orders: conv.applied.map((x, i) => ({
+        formation: x.order?.formation ?? '', name: x.order ? names.get(x.order.formation)! : v.orders[i].formation, task: v.orders[i].task,
+        target: x.order?.target ?? null, targetText: x.target ?? describeTarget(ctx, x.order?.target, names),
+        at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: v.orders[i].why, issue: x.issue, ok: !!x.order,
+      })),
+      acts,
+    };
+  };
+  planAbort?.abort();
+  const abort = planAbort = new AbortController();
+  if (llmBusy) post({ kind: 'plan-progress', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
+  let last = 0;
+  const r = await exclusive('варианты решения', () => {
+    post({ kind: 'plan-progress', id: m.id, text: 'советник готовит варианты…' });
+    return planVariants(advisorClient(), gAt, built, m.count, {
+      thinking: llm.advThinking ?? llm.thinking, signal: abort.signal,
+      onVariant: (v, index) => post({ kind: 'plan-variant', id: m.id, index, variant: view(v) }),
+      onProgress: (p) => {
+        const now = Date.now();
+        if (now - last < 300) return;
+        last = now;
+        post({ kind: 'plan-progress', id: m.id, text: p.content ? `пишет варианты… ${p.content.toLocaleString('ru')} знаков` : `размышляет… ${p.tail.replace(/\s+/g, ' ').slice(-160)}` });
+      },
+    });
+  });
+  if (planAbort === abort) planAbort = null;
+  post({ kind: 'plan-done', id: m.id, ok: r.ok, error: abort.signal.aborted ? 'остановлено' : r.error, warning: r.warning, model: r.model, seconds: Math.round((Date.now() - t0) / 1000) });
 }
 
 const absolute = (u: string) => (/^https?:/.test(u) ? u : new URL(u, self.location.origin).href).replace(/\/+$/, '');

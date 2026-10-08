@@ -51,6 +51,9 @@ export type GameRequest =
   | { kind: 'skip-ai' }
   /** Вопрос советнику: категория, вопрос, проект решения словами, предыдущие вопросы и ответы. */
   | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string }
+  /** Советник: варианты решения на ход (count — сколько), проект решения словами, справка из базы знаний; остановить. */
+  | { kind: 'plan'; id: number; count: number; draft: string; reference: string }
+  | { kind: 'plan-stop' }
   /** Разбор операции: написать раздел (done — уже написанные разделы, для итога); остановить. */
   | { kind: 'review-section'; id: number; section: string; done: { title: string; text: string }[] }
   | { kind: 'review-stop' }
@@ -152,6 +155,10 @@ export type GameResponse =
   | { kind: 'review-wait'; id: number; text: string }
   | { kind: 'review-done'; id: number; ok: boolean; text: string; error?: string; model?: string; seconds?: number }
   | { kind: 'advice'; id: number; result: AdviceView }
+  /** Варианты решения: ход генерации (знаков, хвост размышления), очередной готовый вариант, конец. */
+  | { kind: 'plan-progress'; id: number; text: string }
+  | { kind: 'plan-variant'; id: number; index: number; variant: PlanVariantView }
+  | { kind: 'plan-done'; id: number; ok: boolean; error?: string; warning?: string; model?: string; seconds?: number }
   | { kind: 'error'; message: string };
 
 /** Ответ советника для интерфейса: текст, предложенные приказы (готовые к включению в распоряжение), следующие вопросы. */
@@ -168,4 +175,16 @@ export interface AdviceView {
   followUps: string[];
   suggestions: { formation: string; name: string; task: Task; target: Target; targetText: string; at: LngLat | null; why: string; issue?: string; ok: boolean }[];
   seconds?: number;
+}
+
+/** Распоряжение варианта (тыл, переправы, резервы) — готовое к включению в проект; ok=false — не исполнимо. */
+export interface PlanActView { key: string; action: StaffAction | null; label: string; text: string; at?: LngLat; from?: LngLat; given: string; ok: boolean }
+
+/** Вариант решения на ход от советника: решение целиком, приказы и распоряжения, сопоставленные с обстановкой. */
+export interface PlanVariantView {
+  title: string;
+  idea: string;
+  decision: HumanDecision;
+  orders: AdviceView['suggestions'];
+  acts: PlanActView[];
 }

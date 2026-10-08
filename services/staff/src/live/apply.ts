@@ -23,18 +23,25 @@ export interface AppliedOrder {
   issue?: string;
 }
 
+/** Пункт по названию: сначала среди пунктов обстановки (ближних), затем среди всех пунктов театра — по названию и id. */
+export function findArea(name: string, sit: Pick<Situation, 'areas' | 'allAreas'>): { id: string; title: string } | null {
+  for (const list of [sit.areas, sit.allAreas ?? []]) {
+    let i = findName(name, list.map((a) => a.title), true);
+    if (i < 0) i = findName(name, list.map((a) => a.id));
+    if (i >= 0) return list[i];
+  }
+  return null;
+}
+
 export function decisionToOrders(d: Pick<Decision, 'orders'>, sit: Situation, source: Order['source'] = 'llm'): { orders: Order[]; applied: AppliedOrder[]; issues: Issue[] } {
   const issues: Issue[] = [];
   const applied: AppliedOrder[] = [];
   const fNames = sit.formations.map((f) => f.name);
-  const aNames = sit.areas.map((a) => a.title);
-  const aIds = sit.areas.map((a) => a.id);
   const eNames = sit.enemies.map((e) => e.name);
   const resolve = (name: string | null | undefined): { target: Target; text: string } | null => {
     if (!name || !name.trim()) return null;
-    let i = findName(name, aNames, true);
-    if (i < 0) i = findName(name, aIds);
-    if (i >= 0) return { target: sit.areas[i].id, text: sit.areas[i].title };
+    const a = findArea(name, sit);
+    if (a) return { target: a.id, text: a.title };
     const e = findName(name, eNames);
     if (e >= 0) return { target: { formation: sit.enemies[e].id }, text: `против: ${sit.enemies[e].name}` };
     return null;
@@ -91,10 +98,9 @@ export function actionsToStaff(ctx: SimContext, g: GameState, sit: Situation, gi
   if (!sit.staff) return { actions, applied: given.map((x) => ({ given: x, action: null, text: 'тыл и резервы ведёт вышестоящее командование' })) };
   const place = (name: string | null) => {
     if (!name) return null;
-    let i = findName(name, sit.areas.map((a) => a.title), true);
-    if (i < 0) i = findName(name, sit.areas.map((a) => a.id));
-    const a = i >= 0 ? T.area(sit.areas[i].id) : T.area(name);
-    return a ? { at: a.center, title: sit.areas[i]?.title ?? a.name } : null;
+    const f = findArea(name, sit);
+    const a = f ? T.area(f.id) : T.area(name);
+    return a ? { at: a.center, title: f?.title ?? a.name } : null;
   };
   let bridges = 0;
   for (const x of given ?? []) {

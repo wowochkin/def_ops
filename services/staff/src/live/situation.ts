@@ -6,7 +6,7 @@
  * Node, и в браузере.
  */
 import {
-  areaTitle, dayEvents, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
+  areaTitle, dayEvents, places, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
   onMap, type GameState, type SimContext,
 } from '@def-ops/sim';
 import { fill } from '../fill';
@@ -38,6 +38,8 @@ export interface Situation {
   formations: { id: string; name: string }[];
   /** Пункты из обстановки: id района театра и название (как в обстановке). */
   areas: { id: string; title: string }[];
+  /** Все пункты театра (запасной поиск: модель называет пункт, которого нет в ближнем списке). */
+  allAreas?: { id: string; title: string }[];
   /** Обнаруженный противник: id и название. */
   enemies: { id: string; name: string }[];
   time: string;
@@ -124,6 +126,7 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
     own,
     formations: own.map((u) => ({ id: u.id, name: u.name })),
     areas: near.map((a) => ({ id: a.id, title: a.title })),
+    allAreas: places(T).map((a) => ({ id: a.id, title: a.title })),
     enemies: intel.map((e) => ({ id: e.id, name: e.name })),
   };
 }
@@ -157,7 +160,7 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
   return {
     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
     formations: p.formations.filter((f) => p.own.find((u) => u.id === f.id)!.status !== 'reserve'),
-    areas: p.areas, enemies: p.enemies, time: s.time,
+    areas: p.areas, allAreas: p.allAreas, enemies: p.enemies, time: s.time,
     ...(staffOn ? { staff: {
       side: cfg.side,
       bases: (s.logistics?.[cfg.side]?.bases ?? []).map((b) => ({ id: b.id, name: b.name })),

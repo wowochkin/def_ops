@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
-import type { AdviceView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
+import type { AdviceView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
@@ -48,6 +48,8 @@ type Sub = 'units' | 'rear' | 'bridges' | 'reserves';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
 type Pick = { kind: 'order' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
+/** Варианты решения на ход от советника (на ход time): по мере генерации, затем итог. */
+interface PlanState { id: number; time: string; count: number; variants: PlanVariantView[]; progress: string; done: boolean; error?: string; warning?: string; seconds?: number; model?: string; accepted?: number }
 interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; wait?: string; result?: AdviceView }
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 
@@ -99,6 +101,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [focusOnly, setFocusOnly] = useState(true);
   const [eng, setEng] = useState<MapEngine | null>(null);
   const [adv, setAdv] = useState<AdvMsg[]>([]);
+  const [plan, setPlan] = useState<PlanState | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
   const [reveal, setReveal] = useState(false);
@@ -141,6 +144,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x)));
       else if (m.kind === 'advice-wait') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, wait: m.text } : x)));
       else if (m.kind === 'review-stream' || m.kind === 'review-wait' || m.kind === 'review-done') reviewListener.current?.(m);
+      else if (m.kind === 'plan-progress') setPlan((p) => (p?.id === m.id ? { ...p, progress: m.text } : p));
+      else if (m.kind === 'plan-variant') setPlan((p) => { if (p?.id !== m.id) return p; const v = [...p.variants]; v[m.index] = m.variant; return { ...p, variants: v }; });
+      else if (m.kind === 'plan-done') setPlan((p) => (p?.id === m.id ? { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model } : p));
       else if (m.kind === 'advice') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
       else if (m.kind === 'record') {
         setRecord(m.record);
@@ -282,6 +288,33 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     ...draftList.map((d) => `Приказ: ${unit(d.formation)?.name} — ${TASK_RU[d.task]} — ${d.targetText || 'на месте'}`),
     ...acts.map((a) => `Распоряжение: ${a.label} — ${a.text}`),
   ].filter(Boolean).map((x) => `- ${x}`).join('\n');
+  /** Попросить советника о вариантах решения на ход. */
+  const askPlan = (count: number) => {
+    if (!view) return;
+    const id = ++checkId.current;
+    setPlan({ id, time: view.time, count, variants: [], progress: 'подготовка…', done: false });
+    setAdvOpen(true); setAdvMin(false);
+    const draft = draftText();
+    void kb.reference(`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`, false).then((reference) => send({ kind: 'plan', id, count, draft, reference }));
+  };
+  const planDraft = (o: PlanVariantView['orders'][number]): Draft => ({ formation: o.formation, task: o.task, target: o.target, targetText: o.targetText, at: o.at, note: o.why });
+  /** Принять вариант в проект целиком: решение, приказы, распоряжения (текущий проект заменяется). */
+  const acceptPlan = async (v: PlanVariantView, idx: number) => {
+    const has = draftList.length || acts.length || decision.assessment.trim() || decision.report.trim();
+    if (has && !window.confirm(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`)) return;
+    setDecision({ ...v.decision });
+    const orders = v.orders.filter((o) => o.ok);
+    setDrafts(Object.fromEntries(orders.map((o) => [o.formation, planDraft(o)])));
+    setActs([]); liveActs.current = [];
+    let added = 0;
+    const failed: string[] = [];
+    for (const a of v.acts) if (a.ok && a.action) { if (await addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {})) added++; else failed.push(a.label); }
+    setPlan((p) => (p ? { ...p, accepted: idx } : p));
+    setTab('decision');
+    // телефон: советник закрывает экран — убрать, чтобы был виден проект (беседа и варианты сохраняются)
+    if (window.matchMedia?.('(max-width: 760px)').matches) setAdvOpen(false);
+    setNotice(`Вариант «${v.title}» принят в проект: решение, приказов ${orders.length}, распоряжений ${added}${failed.length ? ` (не исполнимы: ${failed.join(', ')})` : ''}. Проверьте и поправьте во вкладках «Решение» и «Приказы», затем завершите ход.`);
+  };
   const aiTurns = (record?.turns ?? []).filter((t) => t.ai).map((t) => t.ai as AiTurn).reverse();
   const current = ai.state === 'done' || ai.state === 'error' ? ai.turn : undefined;
 
@@ -355,7 +388,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" checked={focusOnly} onChange={(e) => setFocusOnly(e.target.checked)} /> только он в списках</label><button className="x" title="Снять фокус" onClick={() => setFocus(null)}>×</button></div>}
             {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
             {tab === 'intel' && <Intel v={fv!} onGo={(at) => goTo(at)} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
-            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} />}
+            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} onPlan={() => askPlan(3)} planBusy={!!plan && !plan.done} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
                 {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length]] as [Sub, string, number][]).map(([k, t, n]) => (
@@ -425,7 +458,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         }}
         dyn={advDyn} focus={focus}
         accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
-        drafted={(f) => !!drafts[f]} />}
+        drafted={(f) => !!drafts[f]}
+        plan={plan} planStale={!!plan && plan.time !== view.time} askPlan={askPlan} stopPlan={() => send({ kind: 'plan-stop' })} acceptPlan={(v, i) => void acceptPlan(v, i)}
+        takeDecision={(v) => { setDecision({ ...v.decision }); setTab('decision'); setNotice(`Решение из варианта «${v.title}» — во вкладке «Решение»; приказы не менялись.`); }}
+        takeAct={(a) => { if (a.action) void addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {}).then((ok) => ok && setNotice(`В распоряжение: ${a.label} — ${a.text}`)); }}
+        hasAct={(k) => acts.some((a) => a.key === k)} />}
       {review !== 'closed' && view && <div hidden={review === 'hidden'}><ReviewView view={view} llm={llm} send={send} listen={(f) => { reviewListener.current = f; }} onClose={() => setReview('hidden')} /></div>}
     </div>
     </ZonesContext.Provider>
@@ -632,18 +669,24 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus }: {
+function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus, plan, planStale, askPlan, stopPlan, acceptPlan, takeDecision, takeAct, hasAct }: {
   llm: Llm; msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
   onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn; focus: Sector | null;
+  plan: PlanState | null; planStale: boolean; askPlan: (count: number) => void; stopPlan: () => void; acceptPlan: (v: PlanVariantView, i: number) => void;
+  takeDecision: (v: PlanVariantView) => void; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean;
 }) {
+  const [planN, setPlanN] = useState(3);
   /** Путь по дереву: индексы узлов (пусто — категории). */
   const [path, setPath] = useState<AdviceNode[]>([]);
   const [find, setFind] = useState('');
   const [text, setText] = useState('');
   const [navOpen, setNavOpen] = useState(true);
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs]);
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs, plan?.variants.length, plan?.id]);
   const busy = msgs.some((m) => !m.result);
+  const planBusy = !!plan && !plan.done;
+  // запрошены варианты — свернуть темы, чтобы карточки были видны
+  useEffect(() => { if (plan) setNavOpen(false); }, [plan?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const node = path[path.length - 1] ?? null;
   const cat = path[0]?.id ?? 'situation';
   const topic = path.map((n) => n.title).join(' › ');
@@ -672,6 +715,11 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
       <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
         {msgs.length > 0 && <button className="link" onClick={onClear}>очистить</button>}<button className="x adv-min" onClick={onMinimize} title="Свернуть к краю карты (беседа сохранится)">–</button><button className="x" onClick={onClose} title="Скрыть советника (беседа сохранится)">×</button></div>
       <ModelPicker llm={llm} who="adv" purpose="ответов советника" />
+      <div className="adv-plan-bar">
+        <span><b>Варианты решения на ход</b><small>решение, приказы, тыл — принять целиком и поправить</small></span>
+        <select value={planN} disabled={planBusy} onChange={(e) => setPlanN(+e.target.value)} title="Сколько вариантов">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
+        {planBusy ? <button onClick={stopPlan}>Стоп</button> : <button className="primary" onClick={() => askPlan(planN)}>Предложить</button>}
+      </div>
       <div className="adv-body">
         {!msgs.length && <div className="adv-empty">
           <p>Выберите тему ниже — категория, раздел, вопрос; разделы «По армиям», «По соединениям», «По резервам» собраны из текущей обстановки. Или найдите вопрос поиском, или спросите своими словами. Советник знает только то, что знает ваш штаб: доклады, разведсводку, ваш проект решения и правила арбитра; о противнике вне разведки сведений у него нет. Каждый ответ помечен, на что он опирается и чего штаб не знает. Предложенные приказы включаются в распоряжение одним нажатием.</p>
@@ -701,6 +749,7 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
             </div>
           </div>
         ))}
+        {plan && <PlanBlock plan={plan} stale={planStale} accept={acceptPlan} takeDecision={takeDecision} takeOrder={accept} drafted={drafted} takeAct={takeAct} hasAct={hasAct} retry={() => askPlan(plan.count)} />}
         <div ref={end} />
       </div>
       <div className={`adv-nav${navOpen ? '' : ' closed'}`}>
@@ -734,6 +783,51 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
   );
 }
 
+/** Варианты решения от советника: карточки по мере генерации; принять целиком, только решение или отдельные приказы и распоряжения. */
+function PlanBlock({ plan, stale, accept, takeDecision, takeOrder, drafted, takeAct, hasAct, retry }: {
+  plan: PlanState; stale: boolean; accept: (v: PlanVariantView, i: number) => void; takeDecision: (v: PlanVariantView) => void;
+  takeOrder: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean; retry: () => void;
+}) {
+  const [open, setOpen] = useState<number | null>(0);
+  const D: [keyof HumanDecision, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение в Ставку']];
+  return (
+    <div className="adv-msg plan">
+      <div className="adv-q"><small>Решение › Варианты решения на ход · {ddmm(plan.time)} {hhmm(plan.time)}</small>Предложите {plan.count === 1 ? 'вариант' : `${plan.count} варианта`} решения на ход</div>
+      {stale && <div className="adv-warn">Ход сменился — эти варианты составлены для прошлой обстановки; принять их нельзя. <button className="link" onClick={retry}>предложить заново</button></div>}
+      {plan.warning && <div className="adv-warn">⚠ {plan.warning}</div>}
+      {plan.variants.map((v, i) => v && (
+        <div key={i} className={`plan-var${plan.accepted === i ? ' on' : ''}`}>
+          <div className="plan-h" onClick={() => setOpen(open === i ? null : i)}>
+            <b>{i + 1}. {v.title}</b>{plan.accepted === i && <i className="plan-ok">принят</i>}<span className="muted">{open === i ? '▾' : '▸'}</span>
+          </div>
+          <div className="plan-idea">{v.idea}</div>
+          <div className="plan-sum muted">приказов {v.orders.filter((o) => o.ok).length}{v.orders.some((o) => !o.ok) ? ` (+${v.orders.filter((o) => !o.ok).length} не сопоставлено)` : ''} · распоряжений {v.acts.filter((a) => a.ok).length}</div>
+          {open === i && <div className="plan-body">
+            {D.filter(([k]) => v.decision[k]).map(([k, t]) => <div key={k} className="plan-f"><small>{t}</small><div>{v.decision[k]}</div></div>)}
+            {v.orders.length > 0 && <div className="plan-f"><small>Приказы войскам</small>
+              {v.orders.map((o, j) => <div key={j} className={`plan-row${o.ok ? '' : ' bad'}`}>
+                <span><b>{short(o.name)}</b> — {TASK_RU[o.task]}{o.targetText ? `: ${o.targetText}` : ''}<em className="muted"> {o.why}</em>{!o.ok && <em className="iss"> {o.issue ?? 'не сопоставлено с обстановкой'}</em>}</span>
+                {o.ok && !stale && <button className="link" disabled={drafted(o.formation)} onClick={() => takeOrder(o)}>{drafted(o.formation) ? 'в проекте' : 'взять'}</button>}
+              </div>)}</div>}
+            {v.acts.length > 0 && <div className="plan-f"><small>Тыл, переправы, резервы</small>
+              {v.acts.map((a, j) => <div key={j} className={`plan-row${a.ok ? '' : ' bad'}`}>
+                <span><b>{a.label}</b> <em className="muted">{a.text}</em>{!a.ok && <em className="muted"> ({a.given})</em>}</span>
+                {a.ok && !stale && <button className="link" disabled={hasAct(a.key)} onClick={() => takeAct(a)}>{hasAct(a.key) ? 'в проекте' : 'взять'}</button>}
+              </div>)}</div>}
+          </div>}
+          {!stale && <div className="plan-act">
+            <button className="primary" disabled={!plan.done} title={plan.done ? '' : 'дождитесь всех вариантов'} onClick={() => accept(v, i)}>{plan.accepted === i ? 'Принять заново' : 'Принять вариант'}</button>
+            <button disabled={!plan.done} onClick={() => takeDecision(v)}>Только решение</button>
+          </div>}
+        </div>
+      ))}
+      {!plan.done && <div className="plan-wait"><span className="spinner" /> {plan.progress}{plan.variants.length ? ` · готово вариантов: ${plan.variants.filter(Boolean).length} из ${plan.count}` : ''}</div>}
+      {plan.done && plan.error && <div className={plan.variants.length ? 'muted' : 'err'}>{plan.variants.length ? `Не все варианты: ${plan.error}` : `Советник не дал вариантов: ${plan.error}`} <button className="link" onClick={retry}>ещё раз</button></div>}
+      {plan.done && <small className="muted">{plan.seconds != null ? `${plan.seconds} с` : ''}{plan.model ? ` · ${plan.model}` : ''} · после принятия правьте решение и приказы как обычно — вариант лишь заполняет проект.</small>}
+    </div>
+  );
+}
+
 /* ───────────── решение на ход ───────────── */
 
 /** Чего не хватает в решении, чтобы провести ход. */
@@ -746,7 +840,7 @@ export function decisionMissing(d: HumanDecision): string[] {
 }
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
-function Decision({ v, d, set }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void }) {
+function Decision({ v, d, set, onPlan, planBusy }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; onPlan: () => void; planBusy: boolean }) {
   const last = v.lastDecision;
   const draftReport = () => {
     const active = v.own.filter((u) => u.status === 'active');
@@ -768,6 +862,8 @@ function Decision({ v, d, set }: { v: TurnView; d: HumanDecision; set: (p: Parti
   return (
     <div className="cmd-sec">
       <h3>Решение на {ddmm(v.time)} {hhmm(v.time)}</h3>
+      <div className="plan-cta"><span>Не знаете, с чего начать? Советник предложит три полных варианта — решение, приказы, тыл, переправы, резервы; выберите, примите и поправьте.</span>
+        <button className="primary" disabled={planBusy} onClick={onPlan}>{planBusy ? <><i className="spinner" /> готовит…</> : 'Варианты от советника'}</button></div>
       <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их; оценку обстановки и донесение пишут заново на каждый ход (обстановка изменилась), прошлые можно взять кнопкой и поправить. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
       {F({ k: 'enemyIntent', label: 'Замысел противника', hint: 'Что противник, по-видимому, намерен делать: где держит, куда отходит, где готовит контрудар…', rows: 3 })}

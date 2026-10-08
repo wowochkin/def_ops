@@ -51,6 +51,18 @@ describe('штаб модели в игре', () => {
     expect(r.issues.filter((i) => i.level === 'error').length).toBe(2);
   });
 
+  it('пункт вне ближнего списка ищется среди всех пунктов театра (и по-немецки, и по-русски)', () => {
+    const c = loadContext('berlin-city-1945');
+    const gc = startGame(c, 1, '1945-04-29T05:00', 'su');
+    const lc = JSON.parse(read('live/berlin-city-1945.json')) as LiveConfig;
+    const sit = buildSituation(c, gc, lc, tpl);
+    expect(sit.areas.some((a) => /Kurfuerstendamm/.test(a.title))).toBe(false);
+    const f = sit.formations[0].name;
+    const r = decisionToOrders({ orders: ['Kurfuerstendamm', 'Курфюрстендамм'].map((area) => ({ formation: f, task: 'delay' as const, area, toArea: null, deadline: '', details: '' })) }, sit);
+    expect(r.applied.map((a) => a.target)).toEqual(['Курфюрстендамм (Kurfuerstendamm)', 'Курфюрстендамм (Kurfuerstendamm)']);
+    expect(r.issues.filter((i) => /не опознан/.test(i.text))).toEqual([]);
+  });
+
   it('ход модели через сервер (подставная модель): приказы исполняются арбитром после задержки', async () => {
     const sit = buildSituation(ctx, g, cfg, tpl);
     expect(mockDecision(sit.messages[1].content).orders.length).toBeGreaterThan(0);
@@ -93,6 +105,34 @@ describe('советник штаба человека', () => {
     expect(streamed).toBe(r.answer);
     expect(r.followUps.length).toBeGreaterThan(0);
     expect(r.suggestions[0].order?.formation).toMatch(/^su_/);
+  }, 60000);
+});
+
+describe('советник: варианты решения на ход', () => {
+  it('промпт с форматом вариантов, варианты приходят по мере генерации, полные (решение, приказы, распоряжения)', async () => {
+    const { buildAdvice, planMessages, planVariants, planVariant } = await import('../src/live');
+    const { loadHistory } = await import('@def-ops/sim/data');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-19T05:00', 'su');
+    const live = JSON.parse(read('live/berlin-1945-tasks.json'));
+    const tplA = { system: read('prompts/advisor.system.md'), user: read('prompts/advisor.user.md'), profile: read('profiles/rkka-1945.md') };
+    const built = buildAdvice(ctx, g, loadHistory('berlin-1945-tasks'), live.advisor, tplA,
+      { category: 'plan', topic: 'Варианты решения на ход', question: 'Предложите варианты решения на ход', draft: '', goal: 'Знамя Победы', thread: [{ q: 'старый', a: 'ответ' }] }, live.description);
+    const m = planMessages(built, 3);
+    expect(m.length).toBe(2);
+    expect(m[0].content).toContain('3 заметно разных варианта');
+    expect(m[0].content).not.toContain('followUps');
+    expect(planVariant({ title: '', intent: 'x', orders: [{ formation: 'a', task: 'nope', area: 'b' }], actions: 'нет' })).toMatchObject({ title: 'Вариант', orders: [], actions: [] });
+    expect(planVariant({ title: 'пусто' })).toBeNull();
+    const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
+    const seen: string[] = [];
+    const r = await planVariants(client, g, built, 3, { onVariant: (v) => seen.push(v.title) });
+    expect(r.ok).toBe(true);
+    expect(r.variants.length).toBe(3);
+    expect(seen).toEqual(r.variants.map((v) => v.title));
+    expect(r.variants[0].intent).toBeTruthy();
+    expect(r.variants[0].orders.length).toBeGreaterThan(0);
+    expect(r.variants[0].actions[0]?.kind).toBe('priority');
   }, 60000);
 });
 

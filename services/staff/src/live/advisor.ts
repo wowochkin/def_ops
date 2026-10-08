@@ -262,7 +262,7 @@ export async function advise(client: LlmClient, g: GameState, built: ReturnType<
     } catch { /* остаётся исходный ответ с предупреждением */ }
   }
   const sugg = Array.isArray(a.suggestions) ? a.suggestions : [];
-  const sit = { messages: [], formations: built.parts.formations.filter((f) => built.parts.own.find((u) => u.id === f.id)!.status !== 'destroyed'), areas: built.parts.areas, enemies: built.parts.enemies, time: g.state.time };
+  const sit = { messages: [], formations: built.parts.formations.filter((f) => built.parts.own.find((u) => u.id === f.id)!.status !== 'destroyed'), areas: built.parts.areas, allAreas: built.parts.allAreas, enemies: built.parts.enemies, time: g.state.time };
   const conv = decisionToOrders({ orders: sugg.map((x) => ({ formation: x.formation, task: x.task, area: x.area, toArea: x.toArea, deadline: '', details: x.why })) }, sit, 'human');
   return {
     ok: true, answer: a.answer!, basis: Array.isArray(a.basis) ? a.basis : [], unknowns: Array.isArray(a.unknowns) ? a.unknowns : [],
