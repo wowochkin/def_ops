@@ -25,7 +25,8 @@
     "theatre:sample": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_sample.ts",
     "sim:calibrate": "tsx packages/sim/tools/run/calibrate.ts",
     "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts",
-    "sim:demo": "node scripts/sim-demo.mjs"
+    "sim:demo": "node scripts/sim-demo.mjs",
+    "docs:model-pdf": "node scripts/gen-model-pdf.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
