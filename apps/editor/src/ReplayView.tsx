@@ -8,7 +8,7 @@ import { migrateDocument, type MapDocument, type TimeInstant } from '@def-ops/co
 import catalogFile from '../../../packages/sim/data/scenarios/catalog.json';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
-import { Timeline } from './Timeline';
+import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
 import type { Basemaps } from './shared';
 import { ZonesContext } from './time';
@@ -50,6 +50,7 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
   const [mapKey, setMapKey] = useState(0);
   const [report, setReport] = useState(false);
   const worker = useRef<Worker | null>(null);
+  const engine = useRef<MapEngine | null>(null);
 
   useEffect(() => { setRules(entry.rules[0].id); }, [entry]);
   useEffect(() => () => worker.current?.terminate(), []);
@@ -77,6 +78,12 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
 
   const layerOn = (t: (typeof TOGGLES)[number]) => !!doc?.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
   const toggle = (t: (typeof TOGGLES)[number]) => doc && setDoc({ ...doc, layers: doc.layers.map((l) => (t.match(l.id) ? { ...l, visible: !layerOn(t) } : l)) });
+  /** К событию: время — момент события в расчёте, карта — к месту. */
+  const goEvent = (e: SimResult['events'][number]) => {
+    if (e.at) setTime(e.at);
+    const en = engine.current;
+    if (e.place && en) { const z = en.getView().zoom; en.setView({ center: e.place, zoom: Math.min(13, Math.max(z, z + 1)) }); }
+  };
   const tol = CATALOG.find((c) => c.id === result?.scenario)?.toleranceKm ?? entry.toleranceKm;
 
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
@@ -112,18 +119,20 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
             : <button className="rp-go primary" onClick={run}>Рассчитать</button>}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
-        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} />}
+        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onEvent={goEvent} />}
       </aside>
       <main className="rp-main">
         {doc ? <>
           <MapView key={mapKey} doc={doc} setDoc={(d) => setDoc(d)} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
-            onEngineReady={() => {}} onStatus={() => {}} time={time} newFromNow={false} />
+            onEngineReady={(e) => { engine.current = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           <div className="rp-tools">
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
-          <Timeline doc={doc} setDoc={(d) => setDoc(d)} time={time} setTime={setTime} newFromNow={false} setNewFromNow={() => {}} autoZone="Europe/Berlin" />
+          <Legend />
+          {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
+            events={result?.events ?? []} onEvent={goEvent} />}
         </> : <Empty busy={!!busy} />}
       </main>
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
@@ -145,7 +154,7 @@ function Empty({ busy }: { busy: boolean }) {
   );
 }
 
-function Results({ r, tol, onReport, onOpen }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void }) {
+function Results({ r, tol, onReport, onOpen, onEvent }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onEvent: (e: SimResult['events'][number]) => void }) {
   const lo = Math.min(...r.spread), hi = Math.max(...r.spread);
   return (
     <div className="rp-res">
@@ -155,7 +164,7 @@ function Results({ r, tol, onReport, onOpen }: { r: SimResult; tol: number; onRe
       </div>
       <div className="rp-events">
         {r.events.map((e) => (
-          <div key={e.title} className="ev" title={e.title}>
+          <div key={e.title} className={`ev${e.at ? ' go' : ''}`} title={e.at ? `${e.title}\nЩёлкните — показать на карте` : `${e.title}\nВ расчёте не случилось`} onClick={() => e.at && onEvent(e)}>
             <div className="ev-t">{e.title.split(':')[0]}</div>
             <div className="ev-d"><span className="muted">{ddmm(e.historical)} → {e.simulated ? ddmm(e.simulated) : '—'}</span>
               <span className="days">{e.days.map((d, i) => <i key={i} className={dayClass(d)}>{fmtDays(d)}</i>)}</span></div>
@@ -179,6 +188,86 @@ function ReportModal({ md, onClose, onDownload }: { md: string; onClose: () => v
         <div className="modal-h"><b>Отчёт о сравнении с историей</b><span style={{ flex: 1 }} /><button onClick={onDownload}>Скачать .md</button><button onClick={onClose}>Закрыть</button></div>
         <div className="modal-body" dangerouslySetInnerHTML={{ __html: html }} />
       </div>
+    </div>
+  );
+}
+
+/* ───────────── плеер и легенда ───────────── */
+const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const toMs = (t: string) => Date.parse((t.length <= 16 ? t + ':00' : t) + (t.endsWith('Z') ? '' : 'Z'));
+const fromMs = (ms: number) => new Date(ms).toISOString().slice(0, 16);
+const fmtLong = (t: string) => { const d = new Date(toMs(t)); return { day: `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`, hour: `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` }; };
+
+function Player({ start, end, time, setTime, events, onEvent }: { start: string; end: string; time: string; setTime: (t: string) => void; events: SimResult['events']; onEvent: (e: SimResult['events'][number]) => void }) {
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(12); // часов операции в секунду
+  const t0 = toMs(start), t1 = toMs(end), cur = Math.min(t1, Math.max(t0, toMs(time)));
+  const H = 3600_000, total = Math.max(1, (t1 - t0) / H);
+  const live = useRef({ cur, speed }); live.current = { cur, speed };
+  useEffect(() => {
+    if (!playing) return;
+    let last = performance.now(), raf = 0;
+    const tick = (now: number) => {
+      const next = live.current.cur + ((now - last) / 1000) * live.current.speed * H;
+      last = now;
+      if (next >= t1) { setTime(fromMs(t1)); setPlaying(false); return; }
+      setTime(fromMs(next));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [playing]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || (e.target as HTMLElement)?.closest('input, select, textarea, button')) return;
+      e.preventDefault(); if (!playing && cur >= t1) setTime(start); setPlaying(!playing);
+    };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  });
+  const days: number[] = [];
+  for (let d = Math.ceil(t0 / (24 * H)) * 24 * H; d <= t1; d += 24 * H) days.push(d);
+  const pos = (ms: number) => `${((ms - t0) / (t1 - t0)) * 100}%`;
+  const { day, hour } = fmtLong(fromMs(cur));
+  const step = (h: number) => setTime(fromMs(Math.min(t1, Math.max(t0, cur + h * H))));
+  return (
+    <div className="player">
+      <div className="pl-date"><b>{day}</b><span>{hour} мск · ход {Math.floor((cur - t0) / H / 24) + 1}</span></div>
+      <div className="pl-ctl">
+        <button className="ic" title="Назад на сутки" onClick={() => step(-24)}>⏮</button>
+        <button className="pl-play" title={playing ? 'Пауза (пробел)' : 'Воспроизвести (пробел)'} onClick={() => { if (!playing && cur >= t1) setTime(start); setPlaying(!playing); }}>{playing ? '❚❚' : '▶'}</button>
+        <button className="ic" title="Вперёд на сутки" onClick={() => step(24)}>⏭</button>
+        <select value={speed} onChange={(e) => setSpeed(+e.target.value)} title="Скорость: часов операции в секунду">
+          {[3, 6, 12, 24, 48].map((v) => <option key={v} value={v}>{v} ч/с</option>)}
+        </select>
+      </div>
+      <div className="pl-track">
+        <div className="pl-days">{days.map((d) => <i key={d} style={{ left: pos(d) }} />)}</div>
+        <div className="pl-fill" style={{ width: pos(cur) }} />
+        {events.filter((e) => e.at).map((e) => (
+          <button key={e.title} className={`pl-ev ${e.days[0] == null ? 'miss' : Math.abs(e.days[0]) <= 1 ? 'ok' : Math.abs(e.days[0]) <= 2 ? 'near' : 'off'}${e.marker ? ' star' : ''}`}
+            style={{ left: pos(toMs(e.at!)) }} title={`${e.title}\nрасчёт: ${e.simulated ? ddmm(e.simulated) : '—'}, история: ${ddmm(e.historical)}`} onClick={() => onEvent(e)} />
+        ))}
+        <input type="range" min={0} max={total} step={1} value={(cur - t0) / H} onChange={(e) => { setPlaying(false); setTime(fromMs(t0 + +e.target.value * H)); }} />
+        <div className="pl-ends"><span>{ddmm(start)}</span><span>{ddmm(end)}</span></div>
+      </div>
+    </div>
+  );
+}
+
+function Legend() {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className={`legend${open ? '' : ' closed'}`}>
+      <button className="lg-h" onClick={() => setOpen(!open)}>Условные обозначения {open ? '▾' : '▸'}</button>
+      {open && <div className="lg-b">
+        <div><i className="lg-own" />советские войска</div>
+        <div><i className="lg-enemy" />немецкие войска</div>
+        <div><i className="lg-ghost" />историческое положение</div>
+        <div><i className="lg-front" />линия фронта (расчёт)</div>
+        <div><i className="lg-hfront" />линия фронта (история)</div>
+        <div><i className="lg-arrow" />бой за ход</div>
+        <div><i className="lg-flag">⚑</i>Знамя Победы</div>
+      </div>}
     </div>
   );
 }

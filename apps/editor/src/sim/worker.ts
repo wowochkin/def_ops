@@ -33,7 +33,12 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
         scenario: q.scenario, rules: ctx.rules.id, seed: q.seed, runs: a.spread.length, ms: a.ms,
         within: a.summary.within, n: a.summary.n, medianExcessKm: a.summary.medianExcessKm,
         spread: a.spread.map((s) => s.within),
-        events: a.eventsBySeed.map((x) => ({ title: x.title, historical: x.historical, simulated: a.events.find((y) => y.id === x.id)?.simulated ?? null, days: x.days })),
+        events: a.eventsBySeed.map((x) => {
+          const first = a.events.find((y) => y.id === x.id);
+          const ev = history.events?.find((y) => y.id === x.id);
+          const place = ev && 'place' in ev ? ctx.theatre.area(ev.place)?.center ?? null : null;
+          return { title: x.title, historical: x.historical, simulated: first?.simulated ?? null, days: x.days, at: first?.at ?? null, place, marker: !!ev?.marker };
+        }),
         eventsHit: all.filter((d) => d != null && Math.abs(d) <= 2).length, eventsTotal: all.length,
         report: reportMarkdown(ctx, a), doc,
       },
