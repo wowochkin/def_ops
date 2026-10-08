@@ -27,6 +27,8 @@ interface RecipeFormation {
 interface Recipe {
   id: string; name: string; timeNote?: string; start: string; end: string; turnHours: number; theatre: string; rules: string;
   dataset: string; sides: Scenario['sides']; events?: unknown[];
+  /** Дополнительные наборы данных того же формата (например, дивизии на детальном участке). */
+  extraDatasets?: string[];
   /** Дополнительные линии фронта (например, обводка исторической карты): файлы с date и lines[{name, points}]. */
   frontlineFiles?: string[]; supply?: Record<string, { sources: string[] } | string>;
   defaults: Record<string, { ammo: number; fuel: number; posture: Posture }>;
@@ -47,6 +49,12 @@ interface Dataset { formations: DsFormation[]; positions: DsPosition[]; frontlin
 const recipePath = resolve(process.argv[2] ?? '');
 const R: Recipe = JSON.parse(readFileSync(recipePath, 'utf8'));
 const ds: Dataset = JSON.parse(readFileSync(resolve(dirname(recipePath), R.dataset), 'utf8'));
+// дополнительные наборы (детализация: дивизии на участке): формирования и положения добавляются к основному
+for (const extra of R.extraDatasets ?? []) {
+  const x = JSON.parse(readFileSync(resolve(dirname(recipePath), extra), 'utf8')) as Partial<Dataset>;
+  for (const f of x.formations ?? []) if (!ds.formations.some((g) => g.id === f.id)) ds.formations.push(f);
+  ds.positions.push(...(x.positions ?? []));
+}
 const outDir = resolve(dirname(recipePath), '..');
 
 const dsF = new Map(ds.formations.map((f) => [f.id, f]));
@@ -123,11 +131,16 @@ const year = R.start.slice(0, 4);
 if (R.orders.mode === 'tasks') {
   for (const [fid, when, task, to, note] of R.orders.tasks ?? []) {
     const f = formations.find((x) => x.id === fid);
-    if (!f?.type) throw new Error(`задача для неизвестного формирования ${fid}`);
+    if (!f) throw new Error(`задача для неизвестного формирования ${fid}`);
+    // задача штабу без собственных войск (корпус, разложенный на дивизии) — каждому подчинённому
+    const execs = f.type ? [f] : formations.filter((x) => x.parent === fid && x.type);
+    if (!execs.length) throw new Error(`задача штабу ${fid}, у которого нет действующих подчинённых`);
     const [md, hh2] = when.split('T');
     const issued = `${year}-${md}T${(hh2 ?? hh).padStart(2, '0')}:00`;
     const target = to == null ? null : to.startsWith('@') ? { formation: to.slice(1) } : to;
-    orders.push({ id: `${fid}@${issued}:${task}`, formation: fid, task, target, issuedAt: issued < R.start ? addHours(R.start, -12) : issued, source: 'script', ...(note ? { note } : {}) });
+    for (const ex of execs) {
+      orders.push({ id: `${ex.id}@${issued}:${task}`, formation: ex.id, task, target, issuedAt: issued < R.start ? addHours(R.start, -12) : issued, source: 'script', ...(note || ex !== f ? { note: [note, ex !== f ? `задача ${f.name}` : ''].filter(Boolean).join('; ') } : {}) });
+    }
   }
 }
 for (const f of R.orders.mode === 'tasks' ? [] : formations) {
