@@ -115,19 +115,33 @@ function stems(s: string): Set<string> {
   return new Set(norm(s).split(/[\s—–-]+/).filter((w) => w.length > 2 || /\d/.test(w)).map((w) => (/^\d/.test(w) ? w.replace(/\D.*$/, '') : w.slice(0, 5))));
 }
 
-export function known(name: string, list: string[]): boolean {
+/** Индекс элемента списка, которому соответствует название (−1 — нет): точное совпадение, затем оригинал в скобках, вхождение, общие основы слов. */
+export function findName(name: string, list: string[]): number {
   const n = norm(name);
   const o = original(name), sn = stems(name);
-  if (!n && !o) return false;
-  return list.some((x) => {
-    if (o && o === original(x)) return true;
-    if (!n) return false;
-    const k = norm(x);
-    if (k === n || n.includes(k) || k.includes(n)) return true;
-    const sk = stems(x);
-    const common = [...sn].filter((w) => sk.has(w)).length;
-    return common >= 2 && common / Math.min(sn.size, sk.size) >= 0.75;
+  if (!n && !o) return -1;
+  const exact = list.findIndex((x) => norm(x) === n && !!n);
+  if (exact >= 0) return exact;
+  let best = -1, score = 0;
+  list.forEach((x, i) => {
+    let s = 0;
+    if (o && o === original(x)) s = 3;
+    else if (n) {
+      const k = norm(x);
+      if (k && (n.includes(k) || k.includes(n))) s = 2 + Math.min(k.length, n.length) / Math.max(k.length, n.length);
+      else {
+        const sk = stems(x);
+        const common = [...sn].filter((w) => sk.has(w)).length;
+        if (common >= 2 && common / Math.min(sn.size, sk.size) >= 0.75) s = 1 + common / Math.max(sn.size, sk.size);
+      }
+    }
+    if (s > score) { score = s; best = i; }
   });
+  return best;
+}
+
+export function known(name: string, list: string[]): boolean {
+  return findName(name, list) >= 0;
 }
 
 /** Формальная проверка решения против обстановки. */

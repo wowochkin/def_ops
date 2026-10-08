@@ -9,3 +9,6 @@ export { runScenario, compareWithHistory, summarize, checkEvents, type History, 
 export { runToDocument, shortName, type PublishOptions } from './publish';
 export { analyze, reportMarkdown, type Analysis, type AnalysisOptions } from './report';
 export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } from './source';
+export { snapshotOf } from './history';
+export { startGame, playTurn, replayGame, gameOver, type GameRecord, type GameTurn, type GameState } from './game';
+export { unitReports, intelReport, nearbyPlaces, dayEvents, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';

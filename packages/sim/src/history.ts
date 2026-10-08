@@ -80,7 +80,8 @@ export interface RunResult {
   snapshots: Snapshot[];
 }
 
-const snap = (s: SimState): Snapshot => ({
+/** Снимок состояния после хода. */
+export const snapshotOf = (s: SimState): Snapshot => ({
   time: s.time, turn: s.turn,
   units: s.formations.filter((f) => onMap(f, s.time) || f.destroyed).map((f) => ({ id: f.id, at: f.position, personnel: f.personnel, tanks: f.tanks, posture: f.posture, destroyed: f.destroyed, ...(f.cutOff ? { cutOff: true } : {}), ammo: +f.ammo.toFixed(2) })),
   ...(s.territory ? { territory: s.territory } : {}),
@@ -89,10 +90,10 @@ const snap = (s: SimState): Snapshot => ({
 /** Прогнать сценарий от начала до конца (или maxTurns ходов). */
 export function runScenario(ctx: SimContext, seed = 1, maxTurns = Infinity): RunResult {
   let s = createState(ctx, seed);
-  const snapshots = [snap(s)];
+  const snapshots = [snapshotOf(s)];
   while (s.time < ctx.scenario.end && s.turn < maxTurns) {
     s = step(s, ctx);
-    snapshots.push(snap(s));
+    snapshots.push(snapshotOf(s));
   }
   return { final: s, snapshots };
 }

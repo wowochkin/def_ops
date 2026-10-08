@@ -1,0 +1,143 @@
+/**
+ * Обстановка для штаба модели — из состояния переигровки, на утро хода. Модель
+ * знает то же, что знал бы штаб: свои войска (доклады), противника — в пределах
+ * разведки (туман войны, оценка сил округлённо), что случилось за сутки, пункты
+ * вблизи войск. Шаблоны промптов передаются текстом: так модуль работает и в
+ * Node, и в браузере.
+ */
+import {
+  areaTitle, dayEvents, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
+  type GameState, type SimContext,
+} from '@def-ops/sim';
+import { fill } from '../fill';
+
+/** Настройки штаба модели для сценария (services/staff/live/<сценарий>.json). */
+export interface LiveConfig {
+  scenario: string;
+  /** Сторона, которую ведёт модель (id из сценария). */
+  side: string;
+  /** Название стороны для промпта. */
+  sideName: string;
+  /** Профиль стороны и эпохи — profiles/<profile>.md. */
+  profile: string;
+  /** «переигровка … (даты)». */
+  description: string;
+  role: string;
+  higher: string;
+  constraints: string[];
+  /** Пункт-ориентир (id района театра) для описания положения пунктов: «20 км к В от Берлина». */
+  anchor: string;
+  anchorName: string;
+}
+
+export interface Templates { system: string; user: string; profile: string }
+
+export interface Situation {
+  messages: { role: 'system' | 'user'; content: string }[];
+  /** Свои формирования, которым можно отдавать приказы: id и название (как в обстановке). */
+  formations: { id: string; name: string }[];
+  /** Пункты из обстановки: id района театра и название (как в обстановке). */
+  areas: { id: string; title: string }[];
+  /** Обнаруженный противник: id и название. */
+  enemies: { id: string; name: string }[];
+  time: string;
+}
+
+const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const part = (h: number) => (h < 5 ? 'ночь' : h < 11 ? 'утро' : h < 17 ? 'день' : h < 22 ? 'вечер' : 'ночь');
+/** «утро 19 апреля 1945 года, 05:00». */
+export function momentRu(t: string): string {
+  const d = new Date(Date.parse(t + (t.length <= 16 ? ':00Z' : '')));
+  return `${part(d.getUTCHours())} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()} года, ${t.slice(11, 16)}`;
+}
+const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
+const pct = (x: number) => `${Math.round(x * 100)} %`;
+const num = (x: number) => x.toFixed(1).replace('.', ',');
+
+export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, tpl: Templates, previous?: { time: string; intent: string } | null): Situation {
+  const T = ctx.theatre, s = g.state, side = cfg.side;
+  const names = new Map(s.formations.map((f) => [f.id, f.name]));
+  const own = unitReports(ctx, s, side, g.prev).filter((u) => u.status !== 'destroyed' && s.formations.find((f) => f.id === u.id)!.type);
+  const intel = intelReport(ctx, s, side, g.prev);
+  const km = detectKm(ctx);
+  const anchor = T.area(cfg.anchor)?.center ?? null;
+
+  const ownLines = own.map((u) => {
+    const parent = u.parent ? names.get(u.parent) : null;
+    const head = `- ${u.name}${parent ? ` [в составе: ${parent}]` : ''}`;
+    if (u.status === 'arriving') return `${head} — прибывает на театр ${ddmm(u.arrives!)}${u.pending.length ? `; приказ ждёт: ${u.pending.map((p) => `${p.task} (${p.target})`).join(', ')}` : ''}`;
+    const bits = [
+      u.place, u.posture,
+      u.task ? `задача: ${u.task} (${u.target})` : 'задачи нет',
+      `состав ${pct(u.strength)} (${u.personnel.toLocaleString('ru')} чел., танков и САУ ${u.tanks}, орудий ${u.guns})`,
+      `боеприпасы ${num(u.ammo)} бк, горючее ${num(u.fuel)} запр.`,
+      `усталость ${pct(u.fatigue)}`,
+    ];
+    if (u.cutOff) bits.push('ОТРЕЗАНО от подвоза');
+    if (u.movedKm >= 1) bits.push(`за сутки переместилось на ${Math.round(u.movedKm)} км`);
+    for (const c of u.combats) bits.push(`бой (${c.role === 'attack' ? 'наступали' : 'оборонялись'}) против ${c.against.join(', ')}: ${c.outcome}${c.advanceKm ? `, ${num(c.advanceKm)} км` : ''}, потери ${c.lossPct} %`);
+    if (u.pending.length) bits.push(`приказ в пути: ${u.pending.map((p) => `${p.task} (${p.target})`).join(', ')}`);
+    return `${head} — ${bits.join('; ')}.`;
+  });
+
+  const enemyLines = intel.length
+    ? intel.map((e) => `- ${e.name} — ${e.place}; ${e.posture}; оценка: ${e.estimate}${e.nearest ? `; ближайшее наше — ${e.nearest.name}, ${Math.round(e.nearest.km)} км` : ''}${e.fresh ? '; обнаружено впервые' : ''}.`)
+    : ['- В пределах разведки противник не обнаружен.'];
+
+  const near = nearbyPlaces(ctx, s, side, km * 1.5, 70);
+  if (anchor && !near.some((a) => a.id === cfg.anchor)) near.push({ id: cfg.anchor, title: areaTitle(T.area(cfg.anchor)!.name), at: anchor, km: 0 });
+  const where = (a: { at: [number, number] }) => {
+    if (!anchor) return describePlace(T, a.at);
+    const d = dist(T.proj.toXY(anchor), T.proj.toXY(a.at));
+    return d < Math.max(1, T.cellKm * 2) ? cfg.anchorName.replace(/^./, (c) => c.toUpperCase()) : `${d < 10 ? num(d) : Math.round(d)} км к ${rumb(T, anchor, a.at)} от ${cfg.anchorName}`;
+  };
+  const areaLines = near.map((a) => `- ${a.title} — ${where(a)}`);
+  const lines = T.data.lines.filter((l) => l.name).map((l) => l.name);
+  if (lines.length) areaLines.push(`Рубежи (для справки; в приказах указывайте пункты): ${lines.join('; ')}.`);
+
+  const cut = own.filter((u) => u.cutOff).map((u) => u.name);
+  const lowAmmo = own.filter((u) => u.status === 'active' && u.ammo < 0.5).map((u) => u.name);
+  const noFuel = own.filter((u) => u.status === 'active' && u.fuel <= 0.05).map((u) => u.name);
+  const supply = [
+    cut.length ? `Отрезаны от подвоза (окружены): ${cut.join(', ')}.` : 'Окружённых соединений нет.',
+    lowAmmo.length ? `Боеприпасов меньше половины боекомплекта: ${lowAmmo.join(', ')}.` : null,
+    noFuel.length ? `Без горючего (технику двигать нельзя): ${noFuel.join(', ')}.` : null,
+    'Подвоз идёт только по своей территории; отрезанные получают его лишь после восстановления связи.',
+  ].filter(Boolean) as string[];
+
+  const lastDay = g.prev ? dayEvents(ctx, s, side, g.prev) : [];
+  const delays = [...new Set(own.map((u) => `${u.echelon === 'army' ? 'армиям' : u.echelon === 'corps' ? 'корпусам' : u.echelon === 'division' ? 'дивизиям' : u.echelon} — ${orderDelay(ctx, { side, echelon: u.echelon })} ч`))].join(', ');
+  const turnTotal = Math.round((Date.parse(ctx.scenario.end + ':00Z') - Date.parse(ctx.scenario.start + ':00Z')) / 3600_000 / ctx.scenario.turnHours);
+  const hours = ctx.scenario.turnHours;
+
+  const system = fill(tpl.system, { side: cfg.sideName, scenario: cfg.description, profile: tpl.profile.trim() }, 'staff.system.md');
+  const user = fill(tpl.user, {
+    moment: momentRu(s.time),
+    turn: String(s.turn + 1),
+    turns: String(turnTotal),
+    role: cfg.role,
+    higher: cfg.higher,
+    constraints: cfg.constraints.map((c) => `- ${c}`).join('\n'),
+    previous: previous ? `(${momentRu(previous.time)}) ${previous.intent}` : 'нет — это первое решение в игре; до сих пор войска действовали по прежним приказам.',
+    last_day: lastDay.length ? lastDay.map((x) => `- ${x}`).join('\n') : '- Существенных событий не отмечено.',
+    own_forces: ownLines.join('\n'),
+    detect_km: String(Math.round(km)),
+    enemy: enemyLines.join('\n'),
+    areas: areaLines.join('\n'),
+    supply: supply.map((x) => `- ${x}`).join('\n'),
+    question: `Примите решение на ${hours === 24 ? 'сутки' : `${hours} ч`} — до ${momentRu(addH(s.time, hours))}. Приказы доходят до войск не сразу: ${delays}. `
+      + 'Отдавайте приказы только тем формированиям, чья задача должна измениться: остальные продолжают выполнять действующие. '
+      + 'area — пункт из списка, где действовать (для обороны — где занять оборону, для наступления и контратаки — цель); '
+      + 'toArea — куда (для отхода, прорыва, перегруппировки, деблокирования), иначе null. Если формирование обороняется на месте — area — пункт, у которого оно стоит.',
+  }, 'staff.live.md');
+
+  return {
+    messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+    formations: own.map((u) => ({ id: u.id, name: u.name })),
+    areas: near.map((a) => ({ id: a.id, title: a.title })),
+    enemies: intel.map((e) => ({ id: e.id, name: e.name })),
+    time: s.time,
+  };
+}
+
+const addH = (t: string, h: number) => new Date(Date.parse(t + (t.length <= 16 ? ':00Z' : '')) + h * 3600_000).toISOString().slice(0, 16);

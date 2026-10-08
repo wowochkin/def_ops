@@ -7,7 +7,7 @@
 import { createFeature, emptyDocument, type ArrowFeature, type Feature, type Layer, type LngLat, type MapDocument, type Side, type SymbolFeature } from '@def-ops/core';
 import { frontLine, territoryLine } from './front';
 import { dist } from './geo';
-import { checkEvents, type History, type RunResult } from './history';
+import { checkEvents, type History, type RunResult, type Snapshot } from './history';
 import { power } from './rules';
 import { addHours, onMap, profileOf, type SimContext } from './step';
 import type { Formation } from './types';
@@ -23,6 +23,8 @@ export interface PublishOptions {
   /** Наименьшая длина стрелки боя на карте, км. */
   /** Устарело: длина стрелок боёв теперь — по масштабу карты (клетка × 10). */
   minArrowKm?: number;
+  /** Туман войны: показывать ли формирование противника в этом снимке (свои — всегда). Нет — показываются все. */
+  visible?: (id: string, snapshot: Snapshot) => boolean;
 }
 
 /** Короткая подпись знака: «8 гв. А», «XI тк СС», «Франкфурт». */
@@ -99,20 +101,30 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     features.push(f);
   }
 
-  // формирования: знак с ключевыми кадрами по ходам
+  // формирования: знак с ключевыми кадрами по ходам; с туманом войны (o.visible) — отрезками, пока противник обнаружен
   const byId = new Map(run.final.formations.map((f) => [f.id, f]));
   for (const f of run.final.formations) {
-    const frames = run.snapshots.map((sn) => ({ t: sn.time, u: sn.units.find((u) => u.id === f.id) })).filter((x) => x.u);
-    if (!frames.length) continue;
+    const all = run.snapshots.map((sn, i) => ({ t: sn.time, i, u: sn.units.find((u) => u.id === f.id) })).filter((x) => x.u);
+    if (!all.length) continue;
     const side = sideOf(f.side);
-    const preset = tankish(f, ctx) ? 'std.mechCorps' : 'std.unitOval';
-    const sym = createFeature('symbol', preset, { at: frames[0].u!.at, layerId: side === 'own' ? 'sim-own' : 'sim-enemy' }, 1, side) as SymbolFeature;
-    sym.name = f.name;
-    sym.style = { ...sym.style, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 10, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
-    sym.keyframes = frames.map((x) => ({ t: x.t, at: x.u!.at, note: `${x.u!.personnel.toLocaleString('ru')} чел., ${x.u!.tanks} танков; ${POSTURE_RU[x.u!.posture] ?? x.u!.posture}; боеприпасы ${x.u!.ammo ?? '?'} бк${x.u!.cutOff ? '; ОТРЕЗАНО от снабжения' : ''}` }));
-    const gone = frames.find((x) => x.u!.destroyed);
-    sym.time = { from: f.enterAt ?? null, to: gone ? gone.t : null };
-    features.push(sym);
+    const runs: (typeof all)[] = [];
+    for (const x of all) {
+      if (o.visible && side !== 'own' && !o.visible(f.id, run.snapshots[x.i])) continue;
+      const cur = runs[runs.length - 1];
+      if (cur && cur[cur.length - 1].i === x.i - 1) cur.push(x); else runs.push([x]);
+    }
+    for (const frames of runs) {
+      const preset = tankish(f, ctx) ? 'std.mechCorps' : 'std.unitOval';
+      const sym = createFeature('symbol', preset, { at: frames[0].u!.at, layerId: side === 'own' ? 'sim-own' : 'sim-enemy' }, 1, side) as SymbolFeature;
+      sym.name = f.name;
+      sym.style = { ...sym.style, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 10, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
+      sym.keyframes = frames.map((x) => ({ t: x.t, at: x.u!.at, note: `${x.u!.personnel.toLocaleString('ru')} чел., ${x.u!.tanks} танков; ${POSTURE_RU[x.u!.posture] ?? x.u!.posture}; боеприпасы ${x.u!.ammo ?? '?'} бк${x.u!.cutOff ? '; ОТРЕЗАНО от снабжения' : ''}` }));
+      const gone = frames.find((x) => x.u!.destroyed);
+      const last = frames[frames.length - 1];
+      const next = run.snapshots[last.i + 1];
+      sym.time = { from: frames[0] === all[0] ? f.enterAt ?? null : frames[0].t, to: gone ? gone.t : last === all[all.length - 1] || !next ? null : next.time };
+      features.push(sym);
+    }
   }
 
   // линия фронта по ходам
