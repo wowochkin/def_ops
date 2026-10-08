@@ -261,6 +261,27 @@ def overpass(query, dest):
     return fetch(OVERPASS, dest, data=urllib.parse.urlencode({"data": query}).encode())
 
 
+def overpass_tiled(template, bbox, dest, parts=1):
+    """Запрос по частям охвата (большие театры: сервер не успевает за один запрос); части сводятся в один файл."""
+    if parts <= 1 or (dest.exists() and dest.stat().st_size > 1000):
+        w, s, e, n = bbox
+        return overpass(template.format(bb=f"{s},{w},{n},{e}"), dest)
+    w, s, e, n = bbox
+    seen, elements = set(), []
+    for i in range(parts):
+        for j in range(parts):
+            ww, ee = w + (e - w) * i / parts, w + (e - w) * (i + 1) / parts
+            ss, nn = s + (n - s) * j / parts, s + (n - s) * (j + 1) / parts
+            part = overpass(template.format(bb=f"{ss},{ww},{nn},{ee}"), dest.with_suffix(f".{i}{j}.part.json"))
+            for el in json.loads(part.read_text()).get("elements", []):
+                if el.get("id") not in seen:
+                    seen.add(el.get("id"))
+                    elements.append(el)
+            time.sleep(2)
+    dest.write_text(json.dumps({"elements": elements}))
+    return dest
+
+
 # ------------------------------------------------------------------ геометрия
 
 def km_proj(lat0):
@@ -480,8 +501,9 @@ def main():
     # 3. дороги
     log("дороги")
     hw_re = "|".join(["motorway"] + recipe["roads"]["roadHighways"])
-    roads_p = overpass(f'[out:json][timeout:600];(way["highway"~"^({hw_re})$"]({bb}););out tags geom;', osm_dir / "roads.json")
-    rail_p = overpass(f'[out:json][timeout:600];(way["railway"="rail"]["usage"="main"]({bb}););out tags geom;', osm_dir / "rail.json")
+    parts = recipe.get("osmParts", 1)
+    roads_p = overpass_tiled('[out:json][timeout:600];(way["highway"~"^(' + hw_re + ')$"]({bb}););out tags geom;', (w, s, e, n), osm_dir / "roads.json", parts)
+    rail_p = overpass_tiled('[out:json][timeout:600];(way["railway"="rail"]["usage"="main"]({bb}););out tags geom;', (w, s, e, n), osm_dir / "rail.json", parts)
     rab = set(recipe["roads"]["highwayRefs"])
     road_kinds = set(recipe["roads"]["roadHighways"])
     roads, crossers, raw_roads, raw_rail = [], [], [], []
