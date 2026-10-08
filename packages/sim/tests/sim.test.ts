@@ -220,7 +220,7 @@ describe('территория — сплошная полоса', () => {
   const noTerr = (ctx: SimContext): SimContext => ({ ...ctx, rules: { ...ctx.rules, territory: undefined } });
   it('по территории противника марш медленнее; пройденные клетки переходят к своей стороне', () => {
     // немцы далеко на юго-востоке: их тыл (восток) — их территория, пока по нему никто не прошёл
-    const ctx = ctxWith([su('t1', -25, 10, { type: 'tank_army' }), de('k1', 15, -15)], [order('t1', 'regroup', ll(10, 10))]);
+    const ctx = ctxWith([su('t1', -25, 10, { type: 'tank_army' }), de('k1', 15, -15)], [order('t1', 'regroup', ll(18, 10))], 18);
     const s1 = step(createState(ctx), ctx);
     const s0 = step(createState(noTerr(ctx)), noTerr(ctx));
     const x = (s: typeof s1) => xOf(s.formations.find((f) => f.id === 't1')!.position);
