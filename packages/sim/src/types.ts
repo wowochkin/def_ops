@@ -320,7 +320,29 @@ export interface SimState {
   territory?: number[];
   /** Тыл стороны под управлением штаба (игра): базы снабжения и приоритет подвоза. Нет — источники из сценария. */
   logistics?: Record<string, Logistics>;
+  /** Поправки посредника на ближайший ход (снимаются после хода). */
+  umpire?: UmpireMod[];
 }
+
+/**
+ * Поправка посредника (модель-посредник с опорой на базу знаний): нюанс, который арбитр сам не учитывает
+ * (видимость, внезапность, взаимодействие родов войск, заграждения, качество войск…). Действует один ход на
+ * бои, где участвует любое из формирований; множитель ограничен UMPIRE_LIMITS. Записывается в игру —
+ * переигровка точна.
+ */
+export interface UmpireMod {
+  formations: string[];
+  factor: UmpireFactor;
+  mult: number;
+  reason: string;
+  /** На что опирается: записи базы знаний (id) или «обстановка». */
+  basis: string[];
+}
+export type UmpireFactor = 'attack' | 'defense' | 'pace' | 'attackerLoss' | 'defenderLoss';
+export const UMPIRE_FACTORS: UmpireFactor[] = ['attack', 'defense', 'pace', 'attackerLoss', 'defenderLoss'];
+export const UMPIRE_FACTOR_RU: Record<UmpireFactor, string> = { attack: 'сила наступающих', defense: 'сила обороны', pace: 'темп продвижения', attackerLoss: 'потери наступающих', defenderLoss: 'потери обороняющихся' };
+/** Пределы множителя поправки: посредник уточняет, а не решает исход. */
+export const UMPIRE_LIMITS: [number, number] = [0.8, 1.25];
 
 /** База снабжения: activeFrom — с какого момента действует на новом месте (после переноса); null — действует. */
 export interface SupplyBase { id: string; name: string; at: LngLat; activeFrom: string | null; moved?: boolean }

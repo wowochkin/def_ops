@@ -12,7 +12,10 @@ import {
   runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
+import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, umpireTurn, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
+import { category, gather, Index, type Entry } from '@def-ops/knowledge';
+import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
+import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
@@ -100,7 +103,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     post({ kind: 'progress', text: `восстановление игры: ход ${k + 1} из ${rec.turns.length}…` });
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится с расчётом (${t.time} ≠ ${g.state.time})`);
     const before = g.state;
-    const r = playTurn(ctx, g, t.orders, t.actions ?? []);
+    const r = playTurn(ctx, g, t.orders, t.actions ?? [], t.umpire ?? []);
     g = r;
     journal.push(day(before.time, t.orders, before, r.results, t.human as HumanDecision | undefined));
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
@@ -212,10 +215,19 @@ async function advance() {
     const actions = [...queued.actions.map((a) => ({ ...a, issuedAt: g.state.time })), ...(t?.ok ? t.staffActions ?? [] : [])];
     const aiOrders = t?.ok ? t.orders : [];
     const orders = [...humanOrders, ...aiOrders];
-    rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(t ? { ai: slim(t) } : {}) });
+    // посредник: нюансы к ожидаемым боям (по справкам из базы знаний); ошибка модели — ход без поправок
+    let ump: Awaited<ReturnType<typeof umpireTurn>> | null = null;
+    if (llm.umpire) {
+      post({ kind: 'progress', text: 'посредник оценивает ожидаемые бои…' });
+      ump = await umpireTurn(llmClient(), ctx, g.state, umpireRefs, { system: umpireSystemTpl, user: umpireUserTpl }, { thinking: 'off' });
+    }
+    rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(t ? { ai: slim(t) } : {}),
+      ...(ump?.mods.length ? { umpire: ump.mods } : {}),
+      ...(ump ? { umpireNote: { ok: ump.ok, error: ump.error, assessment: ump.assessment, issues: ump.issues, engagements: ump.engagements, refs: ump.refs.map((r) => ({ id: r.id, title: r.title })), seconds: ump.seconds,
+        names: Object.fromEntries(ump.mods.flatMap((m) => m.formations).map((id) => [id, g.state.formations.find((f) => f.id === id)?.name ?? id])) } } : {}) });
     post({ kind: 'progress', text: 'расчёт хода…' });
     const before = g.state;
-    const r = playTurn(ctx, g, orders, actions);
+    const r = playTurn(ctx, g, orders, actions, ump?.mods ?? []);
     g = r;
     journal.push(day(before.time, orders, before, r.results, queued.decision));
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
@@ -226,6 +238,20 @@ async function advance() {
   } finally {
     busy = false;
   }
+}
+
+/** Справки посреднику: начальное наполнение базы знаний (доктрина, нормативы, техника — без хода боёв). */
+let kbIndex: Promise<{ index: Index; byId: Map<string, Entry> }> | null = null;
+async function umpireRefs(queries: string[]): Promise<UmpireRef[]> {
+  kbIndex ??= import('../../../../packages/knowledge/data/seed.json').then((m) => {
+    const entries = (m.default as unknown as { entries: Entry[] }).entries;
+    return { index: new Index(entries), byId: new Map(entries.map((e) => [e.id, e])) };
+  });
+  const { index, byId } = await kbIndex;
+  const out = new Map<string, UmpireRef>();
+  for (const q of queries) for (const s of gather(index, byId, q, { limit: 3, pool: 400, filter: (e) => !!e && e.group !== 'model' && e.category !== 'sources' && !!category(e.category)?.gameSafe }))
+    if (!out.has(s.ref)) out.set(s.ref, { id: s.ref, title: s.title, text: s.text.slice(0, 900) });
+  return [...out.values()];
 }
 
 /** Решение модели для записи игры: без длинного размышления. */

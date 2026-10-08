@@ -98,3 +98,22 @@ describe('распоряжения штаба человека: тыл, пере
     expect(again.state.formations).toEqual(g.state.formations);
   }, 120000);
 });
+
+describe('посредник: поправки на ход', () => {
+  const ctx = loadContext('berlin-1945-tasks');
+  it('поправка меняет бой в пределах ограничений, видна в журнале, снимается после хода и записывается в игру', () => {
+    const g0 = startGame(ctx, 1, '1945-04-17T05:00', 'su');
+    const base = playTurn(ctx, g0, []);
+    const combat = base.state.journal.filter((j) => j.kind === 'combat' && j.time === g0.state.time)[0] as Extract<typeof base.state.journal[number], { kind: 'combat' }>;
+    expect(combat).toBeTruthy();
+    const mod = { formations: [combat.attackers[0]], factor: 'pace' as const, mult: 0.5, reason: 'утренний туман и дым', basis: ['org:su-other'] };
+    const g1 = playTurn(ctx, g0, [], [], [mod]);
+    const c1 = g1.state.journal.find((j) => j.kind === 'combat' && j.time === g0.state.time && j.attackers.includes(combat.attackers[0])) as typeof combat;
+    const f = c1.factors.find((x) => x.name.startsWith('посредник: темп'));
+    expect(f?.value).toBe(0.8); // множитель ограничен снизу 0,8
+    expect(c1.advanceKm).toBeLessThanOrEqual(combat.advanceKm);
+    expect(g1.state.umpire).toBeUndefined();
+    const rec: GameRecord = { version: 1, scenario: ctx.scenario.id, rules: ctx.rules.id, seed: 1, takeover: '1945-04-17T05:00', human: 'su', ai: 'de', turns: [{ time: g0.state.time, orders: [], umpire: [mod] }] };
+    expect(replayGame(ctx, rec).snapshots.at(-1)).toEqual(g1.snapshots.at(-1));
+  }, 60000);
+});

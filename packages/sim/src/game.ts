@@ -11,7 +11,7 @@
 import { checkEvents, snapshotOf, type History, type Snapshot } from './history';
 import { applyActions, prepareTakeover } from './staff';
 import { createState, issueOrder, onMap, step, type SimContext } from './step';
-import type { Order, SimState, StaffAction } from './types';
+import type { Order, SimState, StaffAction, UmpireMod } from './types';
 
 export interface GameTurn {
   /** Начало хода — когда отданы приказы. */
@@ -20,10 +20,14 @@ export interface GameTurn {
   orders: Order[];
   /** Распоряжения штаба человека: тыл, переправы, резервы. */
   actions?: StaffAction[];
+  /** Поправки посредника на этот ход (модель-посредник); влияют на расчёт — поэтому в записи. */
+  umpire?: UmpireMod[];
   /** Решение штаба человека (оценка, замысел, донесение) — для журнала и разбора; на расчёт не влияет. */
   human?: unknown;
   /** Сведения о решении штаба модели (оценка, замысел, риски, замеры) — для разбора; на расчёт не влияют. */
   ai?: unknown;
+  /** Разбор посредника (оценка, отброшенные поправки, справки) — для разбора; на расчёт влияют только umpire. */
+  umpireNote?: unknown;
 }
 
 export interface GameRecord {
@@ -68,9 +72,9 @@ export function startGame(ctx: SimContext, seed: number, takeover: string, human
 }
 
 /** Ход: распоряжения штаба, приказы обеих сторон (с задержкой доведения по ступени) и расчёт арбитра. */
-export function playTurn(ctx: SimContext, g: GameState, orders: Order[], actions: StaffAction[] = []): GameState & { results: ReturnType<typeof applyActions>['results'] } {
+export function playTurn(ctx: SimContext, g: GameState, orders: Order[], actions: StaffAction[] = [], umpire: UmpireMod[] = []): GameState & { results: ReturnType<typeof applyActions>['results'] } {
   const a = applyActions(ctx, g.state, actions);
-  const s = step(orders.reduce(issueOrder, a.state), ctx);
+  const s = step({ ...orders.reduce(issueOrder, a.state), ...(umpire.length ? { umpire } : {}) }, ctx);
   return { state: s, prev: a.state, snapshots: [...g.snapshots, snapshotOf(s)], results: a.results };
 }
 
@@ -109,7 +113,7 @@ export function replayGame(ctx: SimContext, rec: GameRecord): GameState {
   let g: GameState = startGame(ctx, rec.seed, rec.takeover, rec.human, rec.aiStaff ? rec.ai : undefined);
   for (const t of rec.turns) {
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится: ход ${t.time}, расчёт ${g.state.time}`);
-    g = playTurn(ctx, g, t.orders, t.actions ?? []);
+    g = playTurn(ctx, g, t.orders, t.actions ?? [], t.umpire ?? []);
   }
   return g;
 }

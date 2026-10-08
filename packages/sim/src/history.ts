@@ -5,7 +5,7 @@
 import type { LngLat } from '@def-ops/core';
 import { dist } from './geo';
 import { createState, onMap, step, addHours, type SimContext } from './step';
-import type { SimState } from './types';
+import type { SimState, UmpireMod } from './types';
 
 export interface History {
   scenario: string;
@@ -96,6 +96,23 @@ export function runScenario(ctx: SimContext, seed = 1, maxTurns = Infinity): Run
     snapshots.push(snapshotOf(s));
   }
   return { final: s, snapshots };
+}
+
+/**
+ * Прогон с поправками посредника: перед каждым ходом before(state) возвращает поправки на этот ход
+ * (модель-посредник — асинхронно). Без поправок совпадает с runScenario.
+ */
+export async function runScenarioWith(ctx: SimContext, seed: number, before: (s: SimState) => Promise<UmpireMod[]>, maxTurns = Infinity): Promise<RunResult & { umpire: { time: string; mods: UmpireMod[] }[] }> {
+  let s = createState(ctx, seed);
+  const snapshots = [snapshotOf(s)];
+  const umpire: { time: string; mods: UmpireMod[] }[] = [];
+  while (s.time < ctx.scenario.end && s.turn < maxTurns) {
+    const mods = await before(s);
+    if (mods.length) umpire.push({ time: s.time, mods });
+    s = step(mods.length ? { ...s, umpire: mods } : s, ctx);
+    snapshots.push(snapshotOf(s));
+  }
+  return { final: s, snapshots, umpire };
 }
 
 export interface Deviation {

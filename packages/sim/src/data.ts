@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import type { Rules, Scenario, SideProfile, TheatreData } from './types';
 import type { History } from './history';
+import type { NormTable } from './norms';
 import { Theatre } from './theatre';
 import { mergeRules } from './source';
 import type { SimContext } from './step';
@@ -20,6 +21,8 @@ export function loadRules(id: string): Rules {
 export const loadTheatre = (id: string) => read<TheatreData>('theatres', `${id}.json`);
 export const loadScenario = (id: string) => read<Scenario>('scenarios', `${id}.json`);
 export const loadHistory = (id: string) => read<History>('scenarios', `${id}.history.json`);
+/** Нормативы опыта войны (из базы знаний) и способ измерить их в модели. */
+export const loadNorms = () => read<NormTable>('rules', 'norms.json');
 
 /** Всё, что нужно для прогона сценария: театр, профили сторон, правила. */
 export function loadContext(scenarioId: string, rulesId?: string): SimContext {

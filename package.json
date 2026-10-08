@@ -20,6 +20,7 @@
     "docs:pdf": "node scripts/gen-library-pdf.mjs",
     "llm:eval": "tsx services/staff/src/eval/cli.ts",
     "llm:quick": "tsx services/staff/src/eval/quick.ts",
+    "llm:umpire": "tsx services/staff/src/eval/umpire-ab.ts",
     "llm:mock": "tsx services/staff/src/live/mock-cli.ts",
     "sim:history": "tsx packages/sim/tools/run/history.ts",
     "sim:scenario": "tsx packages/sim/tools/scenario/build_scenario.ts",

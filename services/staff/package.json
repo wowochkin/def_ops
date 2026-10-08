@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@def-ops/service-kit": "*",
-    "@def-ops/sim": "*"
+    "@def-ops/sim": "*",
+    "@def-ops/knowledge": "*"
   },
   "exports": {
     "./live": "./src/live/index.ts",

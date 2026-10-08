@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
-import { TASK_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
+import { TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
 import type { AdviceView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
@@ -359,7 +359,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               {sub === 'reserves' && <Reserves v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} />}
             </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
-            {tab === 'umpire' && <Umpire ai={ai} turns={aiTurns} current={current} stream={stream} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
+            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
               enemy={enemy} setEnemy={setEnemy} llm={llm} onRetry={() => send({ kind: 'retry-ai' })} />}
           </>}
         </div>
@@ -903,8 +903,8 @@ function Journal({ v, onDownload }: { v: TurnView; onDownload: () => void }) {
   );
 }
 
-function Umpire({ ai, turns, current, stream, reveal, setReveal, enemy, setEnemy, llm, onRetry }: {
-  ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; reveal: boolean; setReveal: (b: boolean) => void;
+function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, setEnemy, llm, onRetry }: {
+  record: GameRecord | null; ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; reveal: boolean; setReveal: (b: boolean) => void;
   enemy: EnemyMode; setEnemy: (e: EnemyMode) => void; llm: Llm; onRetry: () => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -927,6 +927,9 @@ function Umpire({ ai, turns, current, stream, reveal, setReveal, enemy, setEnemy
         </label>
         <span className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `модель: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `LM Studio: ${llm.check.error}` : 'проверка связи…'}</span>
       </div>
+      <label className="switch"><input type="checkbox" checked={!!llm.settings.umpire} onChange={(e) => llm.set({ umpire: e.target.checked })} /><span /> Посредник на модели: нюансы к боям по базе знаний</label>
+      <p className="muted umpire-about">Перед каждым ходом модель-посредник смотрит на ожидаемые бои и по справкам базы знаний (доктрина, нормативы, техника) добавляет то, чего правила не учитывают: видимость, взаимодействие родов войск, заграждения, качество обороны. Поправки — множители 0,8–1,25 с обоснованием; видны в журнале боя и записываются в игру.</p>
+      <UmpireNotes record={record} />
       {ai.state === 'thinking' && <div className="ai-live"><div className="jsub">Штаб противника думает над решением на {ddmm(ai.time)} {hhmm(ai.time)}…</div><pre>{stream.slice(-1500) || '…'}</pre></div>}
       {ai.state === 'error' && <div className="cmd-blocked"><b>Нет решения на {ddmm(ai.time)}</b><span>{ai.error}</span><div><button onClick={onRetry}>Повторить запрос</button></div></div>}
       <h4 className="cmd-h4">Решения штаба противника</h4>
@@ -955,6 +958,29 @@ function Umpire({ ai, turns, current, stream, reveal, setReveal, enemy, setEnemy
         );
       })}
     </div>
+  );
+}
+
+/** Поправки посредника по ходам (из записи игры). */
+function UmpireNotes({ record }: { record: GameRecord | null }) {
+  const list = (record?.turns ?? []).filter((t) => t.umpireNote).reverse();
+  if (!list.length) return null;
+  return (
+    <>
+      <h4 className="cmd-h4">Посредник</h4>
+      {list.slice(0, 12).map((t) => {
+        const n = t.umpireNote as { ok: boolean; error?: string; assessment?: string; issues: { text: string }[]; engagements: number; refs: { id: string; title: string }[]; seconds?: number; names?: Record<string, string> };
+        const refs = new Map(n.refs.map((r) => [r.id, r.title]));
+        return (
+          <div key={t.time} className="aiturn umpire-turn">
+            <div className="aiturn-h"><b>{ddmm(t.time)} {hhmm(t.time)}</b><span>{n.ok ? n.assessment || `боёв ${n.engagements}` : `ошибка: ${n.error}`}</span>
+              <small>боёв {n.engagements} · поправок {t.umpire?.length ?? 0}{n.seconds ? ` · ${n.seconds} с` : ''}</small></div>
+            {(t.umpire?.length ?? 0) > 0 && <ul className="aiturn-b">{t.umpire!.map((m, i) => <li key={i}><b>{UMPIRE_FACTOR_RU[m.factor]} ×{String(m.mult).replace('.', ',')}</b> — {m.reason}<div className="muted">{m.formations.map((id) => short(n.names?.[id] ?? id)).join(', ')} · опора: {m.basis.map((b) => refs.get(b) ?? b).join('; ')}</div></li>)}
+              {n.issues.map((x, i) => <li key={`i${i}`} className="rej">{x.text}</li>)}</ul>}
+          </div>
+        );
+      })}
+    </>
   );
 }
 

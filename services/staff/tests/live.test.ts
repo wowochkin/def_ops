@@ -172,3 +172,32 @@ describe('эмбеддинги для базы знаний', () => {
     expect(await client.resolveModel()).toBe('mock-staff'); // модель эмбеддингов не берётся для ответов
   });
 });
+
+describe('посредник на модели', () => {
+  it('ожидаемые бои, проверка поправок (пределы, обоснование), поправки от модели в расчёте хода', async () => {
+    const { predictEngagements, umpireMods, umpireQueries, umpireTurn } = await import('../src/live');
+    const { runScenarioWith } = await import('@def-ops/sim');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-17T05:00');
+    const es = predictEngagements(ctx, g.state);
+    expect(es.length).toBeGreaterThan(2);
+    expect(es[0].attackers.length).toBeGreaterThan(0);
+    expect(umpireQueries(es).some((q) => /укреплённой полосы/.test(q))).toBe(true);
+    const refs = [{ id: 'org:su-other', title: 'Прочие нормативы', text: 'туман в пойме Одера 15–16.04' }];
+    const v = umpireMods({ mods: [
+      { engagement: 1, factor: 'pace', mult: 0.5, reason: 'туман', basis: ['R1'] },
+      { engagement: 1, factor: 'defense', mult: 1.2, reason: 'без опоры', basis: [] },
+      { engagement: 99, factor: 'pace', mult: 0.9, reason: 'нет такого боя', basis: ['обстановка'] },
+      { engagement: 2, factor: 'defenderLoss', mult: 1.1, reason: 'фольксштурм', basis: ['обстановка'] },
+    ] }, es, refs);
+    expect(v.mods.map((m) => [m.factor, m.mult, m.basis[0]])).toEqual([['pace', 0.8, 'org:su-other'], ['defenderLoss', 1.1, 'обстановка']]);
+    expect(v.mods[1].formations).toEqual(es[1].defenders.map((f) => f.id));
+    expect(v.issues.length).toBe(3);
+    const tpl = { system: read('prompts/umpire.system.md'), user: read('prompts/umpire.user.md') };
+    const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
+    const r = await runScenarioWith(ctx, 1, async (s) => (await umpireTurn(client, ctx, s, async () => refs, tpl)).mods, 2);
+    expect(r.umpire.length).toBeGreaterThan(0);
+    const factors = r.final.journal.filter((j) => j.kind === 'combat').flatMap((j) => j.factors.map((f) => f.name));
+    expect(factors.some((n) => n.startsWith('посредник:'))).toBe(true);
+  }, 120000);
+});

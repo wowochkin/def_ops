@@ -14,7 +14,8 @@ import { createRng, type Rng } from './rng';
 import { dist, type XY } from './geo';
 import { interp, power } from './rules';
 import type { Theatre } from './theatre';
-import type { CombatFactor, Formation, JournalEntry, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task } from './types';
+import type { CombatFactor, Formation, JournalEntry, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
+import { UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
 import { claimTerritory, controlMap, initialTerritory, supplyField } from './control';
 
 export interface SimContext {
@@ -191,7 +192,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     else groups.push({ att: [a], def: defs });
   }
   const env: CombatEnv = { byId, supplyHours, isCut };
-  for (const g of groups) resolveCombat(g.att, g.def, ctx, rng, now, dt, journal, moved, env);
+  for (const g of groups) resolveCombat(g.att, g.def, ctx, rng, now, dt, journal, moved, env, prev.umpire ?? []);
 
   // 3. движение вне боя
   for (const f of active()) {
@@ -277,7 +278,8 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const i = T.indexOf(f.position);
     if (i >= 0 && T.fort[i] && T.fortSide[i] && T.fortSide[i] !== f.side) breached.add(i);
   }
-  return { ...prev, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}) };
+  const { umpire: _used, ...rest } = prev;
+  return { ...rest, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}) };
 }
 
 /**
@@ -340,9 +342,18 @@ interface CombatEnv {
   isCut: (f: Formation) => boolean;
 }
 
-function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng: Rng, now: string, dt: number, journal: JournalEntry[], moved: Set<string>, env: CombatEnv) {
+function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng: Rng, now: string, dt: number, journal: JournalEntry[], moved: Set<string>, env: CombatEnv, umpire: UmpireMod[]) {
   const T = ctx.theatre, R = ctx.rules;
-  const A = att.reduce((s, f) => s + power(f, profileOf(ctx, f.side), R).total, 0);
+  // поправки посредника: к бою, где участвует любое из названных формирований; одна на множитель (самая сильная)
+  const ids = new Set([...att, ...def].map((f) => f.id));
+  const mods = umpire.filter((m) => m.formations.some((id) => ids.has(id)));
+  const um = (k: UmpireFactor) => {
+    const ms = mods.filter((m) => m.factor === k);
+    if (!ms.length) return 1;
+    const m = ms.reduce((a, b) => (Math.abs(Math.log(b.mult)) > Math.abs(Math.log(a.mult)) ? b : a));
+    return Math.min(UMPIRE_LIMITS[1], Math.max(UMPIRE_LIMITS[0], m.mult));
+  };
+  const A = att.reduce((s, f) => s + power(f, profileOf(ctx, f.side), R).total, 0) * um('attack');
   const dParts = def.map((f) => {
     const p = power(f, profileOf(ctx, f.side), R).total;
     const terrain = R.defense.terrain[T.terrainAt(f.position)] ?? 1;
@@ -350,7 +361,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     const fort = 1 + R.defense.fortificationPerLevel * T.fortificationAt(f.position);
     return { f, p, terrain, prepared, fort, total: p * terrain * prepared * fort };
   });
-  const D = dParts.reduce((s, x) => s + x.total, 0);
+  const D = dParts.reduce((s, x) => s + x.total, 0) * um('defense');
   if (D <= 0 || A <= 0) return;
   const avg = (k: 'terrain' | 'prepared' | 'fort') => dParts.reduce((s, x) => s + x[k] * x.p, 0) / Math.max(1e-9, dParts.reduce((s, x) => s + x.p, 0));
   const noise = Math.exp(R.noise * rng.normal());
@@ -362,7 +373,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   const fortLv = def.reduce((m, f) => Math.max(m, T.fortificationAt(f.position)), 0);
   const cap = fortLv && R.fortAdvanceKm ? R.fortAdvanceKm[Math.min(fortLv, R.fortAdvanceKm.length - 1)] ?? Infinity : Infinity;
   const freePace = interp(R.advance, ratio) * at;
-  const advancePerDay = Math.min(freePace, cap);
+  const advancePerDay = Math.min(freePace, cap) * um('pace');
   // «удерживать любой ценой»: обороняющиеся не отходят и несут повышенные потери;
   // наступающие продвигаются, только если оборона прорвана (обходят узел сопротивления)
   // окружённые не могут отойти: держатся на месте с повышенными потерями
@@ -376,8 +387,8 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   // а не стоят перед узлом, пока он не рухнет целиком
   const streetFight = def.every((f) => T.terrainAt(f.position) === 'urban');
   const advanceKm = holding && !breakthrough && !yields && !streetFight ? 0 : advancePerDay * day;
-  const attackerLoss = interp(R.attackerLoss, ratio) * day;
-  const defenderLoss = interp(R.defenderLoss, ratio) * day * (holding && advancePerDay > 0 ? 1.5 : 1);
+  const attackerLoss = interp(R.attackerLoss, ratio) * day * um('attackerLoss');
+  const defenderLoss = interp(R.defenderLoss, ratio) * day * (holding && advancePerDay > 0 ? 1.5 : 1) * um('defenderLoss');
   const factors: CombatFactor[] = [
     { name: 'сила наступающих', value: +A.toFixed(1) },
     { name: 'сила обороняющихся (без поправок)', value: +dParts.reduce((s, x) => s + x.p, 0).toFixed(1) },
@@ -387,6 +398,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     { name: 'случайность (разброс)', value: +noise.toFixed(2) },
     ...(at < 1 ? [{ name: 'темп по местности', value: +at.toFixed(2) }] : []),
     ...(Number.isFinite(cap) ? [{ name: 'предел темпа в укреплённой полосе, км/сут', value: cap }] : []),
+    ...UMPIRE_FACTORS.filter((k) => um(k) !== 1).map((k) => ({ name: `посредник: ${UMPIRE_FACTOR_RU[k]} — ${mods.filter((m) => m.factor === k).map((m) => m.reason).join('; ')}`, value: +um(k).toFixed(2) })),
   ];
   for (const f of att) applyLoss(f, attackerLoss);
   for (const f of def) applyLoss(f, defenderLoss);

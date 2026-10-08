@@ -109,6 +109,18 @@ export function mockEmbedding(text: string, dims = 1024): number[] {
   return v;
 }
 
+/** Посредник (проверка стенда): в городе — темп ниже (по первой справке), в укреплённой полосе — оборона сильнее (обстановка). */
+export function mockUmpire(prompt: string) {
+  const mods: { engagement: number; factor: string; mult: number; reason: string; basis: string[] }[] = [];
+  const hasRef = /\[R1\]/.test(prompt);
+  for (const m of prompt.matchAll(/^Бой (\d+)\. ([^\n]*)/gm)) {
+    const n = +m[1];
+    if (/местность: город/.test(m[2]) && hasRef) mods.push({ engagement: n, factor: 'pace', mult: 0.9, reason: 'уличный бой: танки без пехоты под огнём фаустпатронов', basis: ['R1'] });
+    else if (/укреплённая полоса/.test(m[2])) mods.push({ engagement: n, factor: 'defense', mult: 1.1, reason: 'заграждения и минные поля перед полосой', basis: ['обстановка'] });
+  }
+  return { assessment: `Подставной посредник (проверка стенда): боёв ${[...prompt.matchAll(/^Бой \d+\./gm)].length}, поправок ${mods.length}.`, mods: mods.slice(0, 6) };
+}
+
 const sse = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
 
 /** Подставной сервер модели. delayMs — пауза между кусками ответа (имитация генерации). */
@@ -136,7 +148,8 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
       const body = JSON.parse(b || '{}') as { messages?: { role: string; content: string }[] };
       const user = [...(body.messages ?? [])].reverse().find((m) => m.role === 'user')?.content ?? '';
       const sys = (body.messages ?? []).find((m) => m.role === 'system')?.content ?? '';
-      const answer = sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user))
+      const answer = sys.includes('посредник военно-исторического симулятора') ? JSON.stringify(mockUmpire(user))
+        : sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user))
         : sys.includes('преподаватель военной истории') ? mockKbAnswer(user)
         : JSON.stringify(sys.includes('Вы — советник') ? mockAdvice(user) : mockDecision(user));
       res.writeHead(200, { 'content-type': 'text/event-stream' });
