@@ -142,9 +142,16 @@ export class LlmClient {
 
   body(model: string, req: ChatRequest): Record<string, unknown> {
     const thinking = req.thinking ?? this.config.thinking;
+    // Qwen: если сервер не передаёт enable_thinking в шаблон (бывает у MLX-сборок), размышление выключает
+    // мягкий переключатель /no_think в конце сообщения пользователя — его модель понимает сама
+    let messages = req.messages;
+    if (thinking === 'off' && /qwen/i.test(model)) {
+      const i = messages.map((m) => m.role).lastIndexOf('user');
+      if (i >= 0 && !/\/no_think\s*$/.test(messages[i].content)) messages = messages.map((m, k) => (k === i ? { ...m, content: `${m.content}\n\n/no_think` } : m));
+    }
     const body: Record<string, unknown> = {
       model,
-      messages: req.messages,
+      messages,
       stream: true,
       stream_options: { include_usage: true },
       max_tokens: this.config.maxTokens,
