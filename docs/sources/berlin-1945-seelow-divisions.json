@@ -1,0 +1,3614 @@
+{
+ "meta": {
+  "title": "Seelow Heights / Küstrin bridgehead 16–19.04.1945 — division/corps-level OOB and positions",
+  "compiled": "2026-10-08",
+  "crs": "WGS84 (lng, lat)",
+  "reliability": {
+   "A": "официальный/первичный документ или таблица по архиву (NARA, ЦАМО, Lakowski/DRZW, Ziemke)",
+   "B": "добротная вторичка (Исаев 2007 по ЖБД) или Википедия со ссылками",
+   "C": "вывод составителя"
+  },
+  "approx_km": "радиус неопределённости положения главных сил",
+  "time": "для 16.04: start — утро (исходное), end — к исходу дня; иначе — к исходу дня",
+  "place": "ключи gazetteer berlin-1945-positions.json; новые пункты — в new_gazetteer; 'A / B' = середина",
+  "army_frontages": {
+   "su_47a": "фронт 8 км, прорыв 4,3 км, плотность 270 ств./км; противник 606 пд",
+   "su_3ua": "фронт 11 км, прорыв 6 км, 266 ств./км; противник 309 пд, правый фланг 606 пд",
+   "su_5ua": "фронт 9 км (артподготовка в 8-км полосе: 1 999 стволов + 306 РС), прорыв 7 км, 286 ств./км; противник 652 грп 309 пд, 25 и 26 пп 9 пд",
+   "su_8gva": "фронт 13 км, прорыв 7 км (4 гв. ск 3, 29 гв. ск 3,3, 28 гв. ск 0,7), 268 ств./км; противник 20 пгд + «Мюнхеберг», 303 пд",
+   "su_69a": "фронт 18 км, прорыв 6 км (77 гв. сд 1,3; 61 ск 3,1; 91 ск 1,6), 253 ств./км; противник 169, 712 пд"
+  }
+ },
+ "sources": {
+  "IS7": {
+   "ref": "Исаев А. В. Берлин 45-го: Сражения в логове зверя. М.: Яуза, Эксмо, 2007 — гл. «Оборона в глубину» (с.285–304), «Впереди Берлин» (с.308–332), «Зееловские высоты» (с.362–457); опирается на ЖБД армий 1 БФ (ЦАМО) и донесения ГА «Висла» (NARA). Электронная копия militera (Wayback 2018)",
+   "url": "https://web.archive.org/web/2018/http://militera.lib.ru/h/isaev_av7/17.html",
+   "default_reliability": "B"
+  },
+  "IS7_T": {
+   "ref": "Таблицы у Исаева 2007: «боевая численность» дивизий 9 А на 10.04.45 (Lakowski, Seelower Höhen 1995, S.49); наличие бронетехники ГА «Висла» на 13.04.45 (NARA T311 R171 F7223303–305); боевой и численный состав 8 гв. А на 10.04 (ЦАМО ф.345 оп.5487 д.366), приложения 3–5 (69 А на 15.04, 47 А на 5.04, 5 уд. А на 10.04 — ЦАМО)",
+   "url": "https://web.archive.org/web/2018/http://militera.lib.ru/h/isaev_av7/13.html",
+   "default_reliability": "A"
+  },
+  "IS7_PLAN": {
+   "ref": "Исаев 2007, гл. «Впереди Берлин»: частные директивы Жукова № 00539–00543/оп от 12.04.45 (полосы прорыва, плотности артиллерии, бронетехника армий)",
+   "url": "https://web.archive.org/web/2018/http://militera.lib.ru/h/isaev_av7/15.html",
+   "default_reliability": "A"
+  },
+  "DW_SH": {
+   "ref": "de.wikipedia «Schlacht um die Seelower Höhen» (Lakowski 2005/2008 DRZW 10/1; Le Tissier 1995; Tieke) — текст по дням 16–19.04; ⚠ таблица «Gliederung der 9. Armee» в статье перепутала подчинение дивизий корпусам",
+   "url": "https://de.wikipedia.org/wiki/Schlacht_um_die_Seelower_H%C3%B6hen",
+   "default_reliability": "B"
+  },
+  "EW_SH": {
+   "ref": "en.wikipedia «Battle of the Seelow Heights» (Isaev 2007, Goncharov 2007, Beevor 2002, Ziemke 1968)",
+   "url": "https://en.wikipedia.org/wiki/Battle_of_the_Seelow_Heights",
+   "default_reliability": "B"
+  },
+  "EW_OOB": {
+   "ref": "en.wikipedia «Battle of Berlin order of battle» — немецкий OOB на 16.04 по Bahm K., Berlin 1945: The Final Reckoning (2014)",
+   "url": "https://en.wikipedia.org/wiki/Battle_of_Berlin_order_of_battle",
+   "default_reliability": "B"
+  },
+  "RW_ZB": {
+   "ref": "ru.wikipedia «Зееловско-Берлинская операция» (История ВМВ т.10, 1979; Исаев 2007)",
+   "url": "https://ru.wikipedia.org/wiki/%D0%97%D0%B5%D0%B5%D0%BB%D0%BE%D0%B2%D1%81%D0%BA%D0%BE-%D0%91%D0%B5%D1%80%D0%BB%D0%B8%D0%BD%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F",
+   "default_reliability": "B"
+  },
+  "DW_DIV": {
+   "ref": "de.wikipedia, статьи дивизий: «Panzer-Division Müncheberg», «Panzergrenadier-Division Kurmark», «309. Infanterie-Division», «25. Infanterie-Division (Wehrmacht)», «18. Infanterie-Division (Wehrmacht)», «9. Fallschirmjäger-Division», «LVI. Panzerkorps (Wehrmacht)»",
+   "url": "https://de.wikipedia.org/wiki/Panzer-Division_M%C3%BCncheberg",
+   "default_reliability": "B"
+  },
+  "EW_DIV": {
+   "ref": "en.wikipedia «CI Army Corps (Wehrmacht)», «5th Jäger Division», «LVI Panzer Corps»",
+   "url": "https://en.wikipedia.org/wiki/CI_Army_Corps_(Wehrmacht)",
+   "default_reliability": "B"
+  },
+  "Z": {
+   "ref": "Ziemke E. F. Stalingrad to Berlin. Washington: CMH, 1968, ch. XXI 'Berlin', pp.471–476 (HyperWar)",
+   "url": "https://www.ibiblio.org/hyperwar/USA/USA-E-Stalingrad/",
+   "default_reliability": "A"
+  },
+  "BOB": {
+   "ref": "battleofberlin.com — хроника по дням 16–19.04 (популярный сайт, без ссылок)",
+   "url": "https://battleofberlin.com/days/1945-04-19/",
+   "default_reliability": "C"
+  },
+  "CIT": {
+   "ref": "вывод составителя из соседних привязанных фактов (см. note)",
+   "url": null,
+   "default_reliability": "C"
+  },
+  "GEO": {
+   "ref": "координаты: gazetteer berlin-1945-positions.json; новые пункты — OpenStreetMap Nominatim (ODbL), 08.10.2026",
+   "url": "https://nominatim.openstreetmap.org/",
+   "default_reliability": "A"
+  }
+ },
+ "formations": [
+  {
+   "id": "de_5jd",
+   "name_ru": "5-я егерская дивизия",
+   "name_orig": "5. Jäger-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "personnel": {
+    "value": 4970,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 11,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 1 StuG III, 10 Pz IV/70(A)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 18,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "Одер от р-на Хоэнзатена до Цолльбрюкке (по Исаеву 56 егп у Нойглитцена и ж.д. моста у Нидер-Вутцова)"
+   },
+   "note": "2 полка (56, 75 егп). Ген.-лт Ф. Зикст, с 18/19.04 ген.-лт Э. Блаурок (Зикст принял CI ак). Первая линия CI ак, левый фланг 9 А (стык с 3 ТА). Противник: 61 А и 1 А ВП.",
+   "position": "HKL (Oder-Ufer); с 18.04 — Альте-Одер у Врицена / Бад-Фрайенвальде"
+  },
+  {
+   "id": "de_606",
+   "name_ru": "606-я дивизия особого назначения",
+   "name_orig": "Division z.b.V. 606",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "personnel": {
+    "value": 5495,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 0,
+    "source": "IS7_T",
+    "reliability": "A",
+    "note": "в таблице бронетехники не указана; 1606 ПТ рота — 7 ПТО 75 мм (EW_OOB)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 8,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "против всей 8-км полосы 47 А (Исаев: «противником 47 А была 606 пд»)"
+   },
+   "note": "Ген.-м. М. Росскопф. Полки «A» (Schatten), «Sator», «Rohde», батальон бременской полиции, батальон ЛАГ. По Исаеву к исходу 16.04 «прекратила существование как боеспособное соединение».",
+   "position": "HKL Гюстебизер-Лозе – Карлсбизе – Нойлевин – Нойбарним; затем Альте-Одер/Фриландерштром"
+  },
+  {
+   "id": "de_309id",
+   "name_ru": "309-я пехотная дивизия «Берлин»",
+   "name_orig": "309. Infanterie-Division „Berlin“",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "personnel": {
+    "value": 5926,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 10,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 10 StuG III (+2 в долгоср. ремонте); + 16./1129 рота Jagdpanzer 38 (EW_OOB: 10 исправных)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 11,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "против полосы 3 уд. А (11 км) и правого фланга 5 уд. А у Цехина"
+   },
+   "note": "Ген.-м. Х. Фойгтсбергер. Полк «Великая Германия» (Wachregiment), 365 и 652 грп, 1 дивизион арт. 652 грп стоял против 26 гв. ск 5 уд. А у Цехина. ⚠ de-wiki статья дивизии: «zwischen Trebbin und Altfriedland» — это рубеж 17–18.04.",
+   "position": "HKL Нойбарним – Лечин – Цехин; 17–18.04 — Фриландерштром (Нойтреббин – Альтфридланд)"
+  },
+  {
+   "id": "de_25pzgd",
+   "name_ru": "25-я моторизованная (танко-гренадерская) дивизия",
+   "name_orig": "25. Panzergrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "personnel": {
+    "value": 5605,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 77,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 30 Panther, 31 StuG III, 12 Pz IV/70(A), 1 Pz IV, 2 Flakpz IV, 1 JgPz IV (+3+1 ремонт, +2 в пути)"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Ген.-лт А. Бурмейстер. Резерв CI ак (16.04 утром — во 2-м эшелоне, предположительно р-н Врицена); по приказу Гитлера 16.04 выдвинута против 47 А; 17.04 контрудар не удался. 18.04 119 пгп против 171 и 207 сд у Мёглина–Шульцендорфа; 19.04 отход на эберсвальдский плацдарм.",
+   "position": "резерв → 2-я полоса (Альте-Одер / Фриландерштром) → Вотан"
+  },
+  {
+   "id": "de_111stug",
+   "name_ru": "111-я учебная бригада штурмовых орудий",
+   "name_orig": "Sturmgeschütz-Lehr-Brigade 111",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_ci",
+   "personnel": null,
+   "tanks": {
+    "value": 48,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 33 StuG III, 9 StuH 42, 6 Pz IV/70(A)"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Подвижный резерв CI ак (Исаев). Место на 16.04 точно не установлено.",
+   "position": "резерв"
+  },
+  {
+   "id": "de_kg1001",
+   "name_ru": "боевая группа «1001 ночь» (560 ПТ батальон СС)",
+   "name_orig": "Kampfgruppe „1001 Nacht“ (SS-Pz.Jg.Abt. 560)",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_ci",
+   "personnel": null,
+   "tanks": {
+    "value": 37,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути (560-й ПТ батальон СС): 37 Hetzer (+1+6 ремонт), 3 StuG III в ремонте"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Майор СС Бланкбойс. 16.04 выдвинута из р-на севернее Врицена против 47 А (Исаев).",
+   "position": "резерв"
+  },
+  {
+   "id": "de_9fjd",
+   "name_ru": "9-я парашютная дивизия",
+   "name_orig": "9. Fallschirmjäger-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "personnel": {
+    "value": 6758,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 8,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 8 Hetzer (+1 StuG III в ремонте)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 7,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "против центра/левого фланга 5 уд. А (полоса армии 9 км: 2 км сев. Цехина – Гольцов; 652 грп 309 пд на правом фланге армии)"
+   },
+   "note": "Ген. Б. Брёйер, 18/19.04 снят, вместо него полк. Г. Херрман. 25, 26, 27 парашютные полки (трёхбатальонные). Передана LVI тк из XI тк СС 15.04 в 15:30 (Исаев; поэтому de-wiki пишет «XI. SS-Armeekorps»). 16.04: 25 и 26 пп против 5 уд. А, 27 пп у Вербига против 47 гв. сд.",
+   "position": "HKL Цехин – Гольцов (Оderbruch) → Харденберг (Альте-Одер Платков–Гузов–Вербиг) → распад 17.04"
+  },
+  {
+   "id": "de_20pzgd",
+   "name_ru": "20-я танко-гренадерская дивизия",
+   "name_orig": "20. Panzergrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "personnel": {
+    "value": 4848,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 34,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 15 Pz IV, 16 Pz IV/70(A), 3 Flakpz IV (+1 ремонт; 10 StuG III в пути)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 6,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "против 4 гв. ск (3 км прорыва) и части 29 гв. ск по оси Рейхсштрассе 1"
+   },
+   "note": "Полк./ген.-м. Г. Шольце. 76, 90 пгп. 14–15.04 сбита с позиций у Гольцова (батальон 90 пгп уничтожен 32 ск). Передана LVI тк 15.04; замена её на «Мюнхеберг» не состоялась. 18.04 по de-wiki 8 гв. А прорвала «третью и последнюю линию 20 пгд».",
+   "position": "HKL у Гольцова/Альт-Тухебанда → Харденберг (Зелов) → Штайн (Флисс у Гёрльсдорфа) → Вотан"
+  },
+  {
+   "id": "de_muencheberg",
+   "name_ru": "танковая дивизия «Мюнхеберг»",
+   "name_orig": "Panzer-Division „Müncheberg“",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "personnel": {
+    "value": 1986,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная; ⚠ очень низкая «боевая» при списочной ок. 6 800 (de-wiki: 6 836 на 12.03)"
+   },
+   "tanks": {
+    "value": 36,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 21 Panther, 10 Tiger, 2 Pz IV, 1 Pz III, 1 Pz(L)A, 1 JgPz IV (+1+3 ремонт, +3 в пути)"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Ген.-м. В. Муммерт. Подвижный резерв LVI тк во 2-й линии на Зееловских высотах; подразделения усиливали 20 пгд против 8 гв. А (Исаев). Позиции «Харденберг» с 7.04 (de-wiki). 19.04 обороняла г. Мюнхеберг.",
+   "position": "Харденберг (Зелов) → Мюнхеберг (Вотан)"
+  },
+  {
+   "id": "de_18pzgd",
+   "name_ru": "18-я танко-гренадерская дивизия",
+   "name_orig": "18. Panzergrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "personnel": null,
+   "tanks": {
+    "value": 54,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути (в таблице 3 ТА как «18 мд»): 27 Pz IV, 8 Pz IV/70(A), 19 Hetzer (+4 ремонт)"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Полк. Й. Рауш. Резерв ОКХ/ОКВ в полосе 3 ТА (р-н Эберсвальде); передана 9 А 16.04 в 19:10, марш в р-н Букова–Мюнхеберга. 17.04: 30 и 51 пгп сосредоточены в лесах по обе стороны Вулькова (для восстановления фронта 9 пд), контрудар по обе стороны Нидер-Гёрльсдорфа. 18.04 с «Нордландом» остановила 11 тк и 219 тбр у Херменсдорфа.",
+   "position": "резерв → Штайн/Вулков → Вотан"
+  },
+  {
+   "id": "de_920stug",
+   "name_ru": "920-я учебная бригада штурмовых орудий",
+   "name_orig": "Sturmgeschütz-Lehr-Brigade 920",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_lvi",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "Корпусная часть LVI тк (EW_OOB/Bahm). 14.04 провела результативную контратаку против разведки боем 8 гв. А у Альт-Тухебанда (Исаев). В таблице NARA на 13.04 не указана — численность САУ неизвестна.",
+   "position": "резерв LVI тк у Зееловских высот"
+  },
+  {
+   "id": "de_nordland",
+   "name_ru": "11-я добровольческая танко-гренадерская дивизия СС «Нордланд»",
+   "name_orig": "11. SS-Freiwilligen-Panzergrenadier-Division „Nordland“",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "personnel": {
+    "value": 4000,
+    "source": "RW_ZB",
+    "reliability": "B",
+    "note": "не численность на 16.04, а прорвавшиеся в Берлин ок. 4 000 чел."
+   },
+   "tanks": {
+    "value": 32,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути (в 3 ТА): 22 StuG III, 10 Pz IV/70(V) (+1 ремонт)"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Бригадефюрер Й. Циглер. 17.04 вечером Хейнрици снял её с фронта 3 ТА («в район западнее Зеелова»); движение с полуночи 17/18.04. 18.04 приказ Вейдлинга контратаковать из р-на юго-восточнее Янсфельде не выполнен (нет бензина до вечера); воевала как пехота; разведбат у Вулькова, танковый полк у Нойентемпеля/Марксдорфа (de-wiki); остановила 11 тк у Букова. С ней прибыл 503 тяжёлый танковый батальон СС.",
+   "position": "прибытие 18.04 → Штайн/Вотан у Букова–Мюнхеберга"
+  },
+  {
+   "id": "de_ss503",
+   "name_ru": "503-й тяжёлый танковый батальон СС",
+   "name_orig": "s.SS-Panzer-Abteilung 503",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_lvi",
+   "personnel": null,
+   "tanks": {
+    "value": 18,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути (в 3 ТА): 10 Tiger II, 8 Flakpz IV (+2 ремонт)"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Переброшен с «Нордландом» 17/18.04 (Исаев); en-wiki упоминает контратаки 18.04 («SS-Panzer Abteilung 103 (503)»).",
+   "position": "резерв"
+  },
+  {
+   "id": "de_303id",
+   "name_ru": "303-я пехотная дивизия «Дёбериц»",
+   "name_orig": "303. Infanterie-Division „Döberitz“",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "personnel": {
+    "value": 3860,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 24,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 17 StuG III, 7 Pz IV/70 (+1+2 ремонт)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 8,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "против 29 гв. (частично) и 28 гв. ск 8 гв. А: от Людвигслуста/Альт-Тухебанда до Заксендорфа и Ратштока"
+   },
+   "note": "Полк. Х.-В. Шойнеманн (тяжело ранен 16.04). 300, 301, 302 грп. КП на ст. Дольгелин. Передана из CI ак в XI тк СС 12.04 (en-wiki CI AK). «Три полка 303 пд» против 8 гв. А (Исаев).",
+   "position": "HKL Альт-Тухебанд – Заксендорф – Ратшток → Харденберг Дольгелин – Либбенихен"
+  },
+  {
+   "id": "de_169id",
+   "name_ru": "169-я пехотная дивизия",
+   "name_orig": "169. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "personnel": {
+    "value": 5956,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 0,
+    "source": "IS7_T",
+    "reliability": "A",
+    "note": "в таблице бронетехники не указана; EW_OOB: 230 ПТ батальон с 14 машинами (не подтверждено)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 6,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "против 25 ск 69 А (правый фланг армии): Подельциг – Мальнов"
+   },
+   "note": "Ген.-лт Г. Раджей. Из Норвегии/Финляндии, на фронте с марта 1945. 378, 392 грп, 1242 Fhj-полк (9 батальонов). Исаев: 25 ск 17.04 атаковал оборону 169 пд; Мальнов взят 17.04 к 11:00.",
+   "position": "HKL Подельциг – Вуден – Мальнов (Райтвайнский отрог)"
+  },
+  {
+   "id": "de_712id",
+   "name_ru": "712-я пехотная дивизия",
+   "name_orig": "712. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "personnel": {
+    "value": 4882,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная"
+   },
+   "tanks": {
+    "value": 0,
+    "source": "IS7_T",
+    "reliability": "A",
+    "note": "своей бронетехники нет; поддерживалась ротой Tiger II 502 тб СС"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 10,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "против 61 и 91 ск 69 А: Шёнфлис – Лебус (до стыка с крепостью Франкфурт)"
+   },
+   "note": "Ген.-м. Й. фон Зигрот. Сформирована 26.03.45 из частей «Курмарка»; 732, 745 грп (= Fhj-полки 1239 «Wiener Neustadt», 1241). 16.04 в 18:00 со 2-й ротой 502 тб отбила Шёнфлис.",
+   "position": "HKL Шёнфлис – Лебус"
+  },
+  {
+   "id": "de_kurmark",
+   "name_ru": "танко-гренадерская дивизия «Курмарк»",
+   "name_orig": "Panzergrenadier-Division „Kurmark“",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "personnel": {
+    "value": 4350,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "Kampfstärke (боевая численность) на 10.04.45, Lakowski 1995 S.49 по Исаеву; не штатная/списочная; de-wiki: «никогда не превышала 4 350 чел.»"
+   },
+   "tanks": {
+    "value": 59,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 28 Panther, 16 Hetzer, 12 StuG III, 3 Pz IV (+2+2 ремонт, +5 в пути); с ней II батальон танкового полка «Бранденбург»"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Ген.-м. В. Лангкайт. Подвижный резерв XI тк СС; 14.04 вечером выдвинута к ст. Дольгелин (2-й эшелон). Контрудары 16–17.04 у Дольгелина/Фридерсдорфа. ⚠ de-wiki в таблице ошибочно в LVI тк; ru-wiki: попала в окружение (Хальбе).",
+   "position": "резерв → Харденберг у Дольгелина → Марксдорф"
+  },
+  {
+   "id": "de_ss502",
+   "name_ru": "502-й (102-й) тяжёлый танковый батальон СС",
+   "name_orig": "s.SS-Panzer-Abteilung 502 (102)",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_xi_ss",
+   "personnel": null,
+   "tanks": {
+    "value": 33,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути: 29 Tiger II, 4 Flakpz IV (+1 ремонт)"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Штурмбаннфюрер К. Хартрампф. 16.04 6 «Тигров» разгружены на ст. Дольгелин в 10:30; 2-я рота — у Шёнфлиса с 712 пд. de-wiki (как «102»): 18.04 у Нойентемпеля и Марксдорфа.",
+   "position": "резерв XI тк СС"
+  },
+  {
+   "id": "de_nederland",
+   "name_ru": "23-я добровольческая танко-гренадерская дивизия СС «Недерланд»",
+   "name_orig": "23. SS-Freiwilligen-Panzergrenadier-Division „Nederland“",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "personnel": null,
+   "tanks": {
+    "value": 6,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-13",
+    "note": "исправные на 13.04.45 (NARA T311 R171) по Исаеву; в скобках — в ремонте/в пути (в 3 ТА): 4 StuG III, 2 StuH 42"
+   },
+   "guns": null,
+   "frontageKm": null,
+   "note": "Бригадефюрер Ю. Вагнер (по общим данным). 17.04 предназначалась против прорыва 33 А южнее Франкфурта; 18.04 подчинена XI тк СС и действовала на его левом фланге, против обхода по северной кромке Зееловских высот (Исаев). 19.04 против неё фронтом на юг вёл бой 8 гв. мк.",
+   "position": "прибытие 18.04 → левый фланг XI тк СС у Марксдорфа"
+  },
+  {
+   "id": "su_47a_77sk",
+   "name_ru": "77-й стрелковый корпус",
+   "name_orig": "77-й ск (185, 260, 328 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_47a",
+   "personnel": {
+    "value": 12477,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-05",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 185 сд — 4203, 260 сд — 4111, 328 сд — 4163"
+   },
+   "tanks": {
+    "value": null,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "1204 сап СУ-76 (число машин не указано)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 2.7,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "47 А: фронт 8 км, все три корпуса в линию; ~⅓ полосы"
+   },
+   "note": "Правый (северный) корпус 47 А. 1-й эшелон 260 сд; 328, 185 сд во 2-м эшелоне. Противник — 606 пд."
+  },
+  {
+   "id": "su_47a_125sk",
+   "name_ru": "125-й стрелковый корпус",
+   "name_orig": "125-й ск (60, 76, 175 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_47a",
+   "personnel": {
+    "value": 12589,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-05",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 60 сд — 4210, 76 сд — 4190, 175 сд — 4189; в ведомости 60 сд распознана как «80»"
+   },
+   "tanks": {
+    "value": null,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "1892 сап (СУ-76) и 334 тсап (ИСУ-122)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 2.7,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "47 А: 8 км / 3 корпуса"
+   },
+   "note": "Центр 47 А; 175, 60 сд в 1-м эшелоне, 76 сд во 2-м; две штрафные роты."
+  },
+  {
+   "id": "su_47a_129sk",
+   "name_ru": "129-й стрелковый корпус",
+   "name_orig": "129-й ск (82, 132, 143 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_47a",
+   "personnel": {
+    "value": 13061,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-05",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 82 сд — 4055, 132 сд — 4597, 143 сд — 4409"
+   },
+   "tanks": {
+    "value": null,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "1416 сап СУ-76"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 2.7,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "47 А: 8 км / 3 корпуса; прорыв армии 4,3 км"
+   },
+   "note": "Левый (южный) корпус 47 А; 132, 143 сд в 1-м эшелоне."
+  },
+  {
+   "id": "su_3ua_79sk",
+   "name_ru": "79-й стрелковый корпус",
+   "name_orig": "79-й ск (150, 171, 207 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "personnel": null,
+   "tanks": {
+    "value": 52,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "поддержка: 1203 сап (21 СУ-76), 351 тсап (10+10 ИСУ-152), 85 тп (10 Т-34, 11 ИС-2)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 3,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "прорыв армии 6 км на 2 корпуса (150, 171 сд)"
+   },
+   "note": "Правый корпус 1-го эшелона 3 уд. А (армия: фронт 11 км). Противник — 309 пд, полк «Курмарка» (так у Исаева), правый фланг 606 пд. ⚠ численность дивизий 3 уд. А не найдена."
+  },
+  {
+   "id": "su_3ua_12gsk",
+   "name_ru": "12-й гвардейский стрелковый корпус",
+   "name_orig": "12-й гв. ск (23 гв., 52 гв., 33 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": {
+    "value": 3,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "прорыв армии 6 км на 2 корпуса (23 гв., 33 сд)"
+   },
+   "note": "Левый корпус 1-го эшелона 3 уд. А, на стыке с 5 уд. А; 15.04 разведкой боем продвинулся на 3 км."
+  },
+  {
+   "id": "su_3ua_7sk",
+   "name_ru": "7-й стрелковый корпус",
+   "name_orig": "7-й ск (146, 264/265 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "2-й эшелон 3 уд. А весь период 16–19.04 (Кузнецов берёг его для Берлина)."
+  },
+  {
+   "id": "su_3ua_9tk",
+   "name_ru": "9-й танковый корпус",
+   "name_orig": "9-й тк (23, 95, 108 тбр)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "2-й эшелон 3 уд. А; 18–19.04 введён в первую линию с 79 ск (23 и 95 тбр взяли Кунерсдорф). Число танков не найдено."
+  },
+  {
+   "id": "su_5ua_26gsk",
+   "name_ru": "26-й гвардейский стрелковый корпус",
+   "name_orig": "26-й гв. ск (89 гв., 94 гв., 266 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "personnel": {
+    "value": 16813,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 89 гв. сд — 5470, 94 гв. сд — 5823, 266 сд — 5520; упр. корпуса 796"
+   },
+   "tanks": null,
+   "guns": null,
+   "frontageKm": {
+    "value": 3,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "5 уд. А: фронт 9 км (8 км по артподготовке), 3 корпуса"
+   },
+   "note": "Правый корпус 5 уд. А; 1-й эшелон 94 гв. и 266 сд, 2-й — 89 гв. сд. 15.04 взял траншеи у Цехина (+3,5 км)."
+  },
+  {
+   "id": "su_5ua_32sk",
+   "name_ru": "32-й стрелковый корпус",
+   "name_orig": "32-й ск (60 гв., 295, 416 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "personnel": {
+    "value": 15380,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 60 гв. сд — 5348, 295 сд — 5383, 416 сд — 4649"
+   },
+   "tanks": null,
+   "guns": null,
+   "frontageKm": {
+    "value": 3,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "9 км / 3 корпуса"
+   },
+   "note": "Центр 5 уд. А; 1-й эшелон 60 гв., 295 сд; 2-й — 416 сд."
+  },
+  {
+   "id": "su_5ua_9sk",
+   "name_ru": "9-й стрелковый корпус",
+   "name_orig": "9-й ск (248, 301 сд; 230 сд — резерв армии)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "personnel": {
+    "value": 10644,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 248 сд — 5006, 301 сд — 5638; 230 сд (5 032) в резерве командарма"
+   },
+   "tanks": null,
+   "guns": null,
+   "frontageKm": {
+    "value": 3,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "9 км / 3 корпуса"
+   },
+   "note": "Левый корпус 5 уд. А; 1-й эшелон 301 сд, 2-й — 248 сд. Армия: 353 бронеединицы (128 ИС-2, 41 Т-34, 134 СУ-76, 26 ИСУ-122, 21 ИСУ-152) — по корпусам не разнесены."
+  },
+  {
+   "id": "su_8gva_4gsk",
+   "name_ru": "4-й гвардейский стрелковый корпус",
+   "name_orig": "4-й гв. ск (35, 47, 57 гв. сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "personnel": {
+    "value": 14753,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 35 гв. сд — 5066, 47 гв. сд — 4900, 57 гв. сд — 4787"
+   },
+   "tanks": {
+    "value": null,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "поддержка: 7 гв. ттбр (64 ИС-2 на 15.04; 105, 106 ттп в 1-м эшелоне)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 3,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "участок прорыва 3 км (армия: 13 км фронта, 7 км прорыва)"
+   },
+   "note": "Правый корпус 8 гв. А, ось — Рейхсштрассе 1 на Зелов; 1-й эшелон 47, 57 гв. сд, 2-й — 35 гв. сд. Противник: 20 пгд + части «Мюнхеберга», 27 пп 9 пд у Вербига."
+  },
+  {
+   "id": "su_8gva_29gsk",
+   "name_ru": "29-й гвардейский стрелковый корпус",
+   "name_orig": "29-й гв. ск (27, 74, 82 гв. сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "personnel": {
+    "value": 14625,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 27 гв. сд — 4822, 74 гв. сд — 4740, 82 гв. сд — 5063"
+   },
+   "tanks": {
+    "value": 14,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "65 отп (14 Т-34) + 1200 сап СУ-76"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 3.3,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "участок прорыва 3,3 км"
+   },
+   "note": "Центр 8 гв. А: Альт-Тухебанд → Людвигслуст → Фридерсдорф; 1-й эшелон 27, 74 гв. сд, 2-й — 82 гв. сд."
+  },
+  {
+   "id": "su_8gva_28gsk",
+   "name_ru": "28-й гвардейский стрелковый корпус",
+   "name_orig": "28-й гв. ск (39, 79, 88 гв. сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "personnel": {
+    "value": 14643,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-10",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 39 гв. сд — 4877, 79 гв. сд — 4829, 88 гв. сд — 4937"
+   },
+   "tanks": {
+    "value": 28,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "259 отп (10 Т-34) + 34 гв. ттп (18 ИС-2)"
+   },
+   "guns": null,
+   "frontageKm": {
+    "value": 0.7,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "в прорыве только 0,7 км (один полк 79 гв. сд); остальная полоса — оборона фланга фронтом на юг (Райтвайнский отрог) до стыка с 69 А"
+   },
+   "note": "Левый корпус 8 гв. А: Заксендорф → Дольгелин; противник — 303 пд, «Курмарк»."
+  },
+  {
+   "id": "su_69a_25sk",
+   "name_ru": "25-й стрелковый корпус",
+   "name_orig": "25-й ск (77 гв., 4 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a",
+   "personnel": {
+    "value": 4967,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-15",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 4 сд — 4967; 77 гв. сд в ведомости не распознана; упр. корпуса 837"
+   },
+   "tanks": null,
+   "guns": null,
+   "frontageKm": {
+    "value": 1.3,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "77 гв. сд — 1,3 км участка прорыва (армия 18 км фронта, 6 км прорыва)"
+   },
+   "note": "Правый (северный) корпус 69 А. Противник — 169 пд."
+  },
+  {
+   "id": "su_69a_61sk",
+   "name_ru": "61-й стрелковый корпус",
+   "name_orig": "61-й ск (247, 274, 41 сд; 134 сд во 2-м эшелоне)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a",
+   "personnel": {
+    "value": 16697,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-15",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 247 сд — 4902, 134 сд — 5859, 274 сд — 5936; 274 сд — значение из искажённой строки ведомости; 41 сд (5 747) в ведомости числится за 91 ск"
+   },
+   "tanks": null,
+   "guns": null,
+   "frontageKm": {
+    "value": 3.1,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "центр ударной группировки армии: 3,1 км (274, 247, 41 сд)"
+   },
+   "note": "Центр 69 А. Противник — 712 пд (с ротой Tiger II). ⚠ de-wiki: 246 сд вместо 247."
+  },
+  {
+   "id": "su_69a_91sk",
+   "name_ru": "91-й стрелковый корпус",
+   "name_orig": "91-й ск (312, 370, 117, 283 сд)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a",
+   "personnel": {
+    "value": 16953,
+    "source": "IS7_T",
+    "reliability": "A",
+    "date": "1945-04-15",
+    "note": "сумма стрелковых дивизий (без корпусных частей): 117 сд — 5852, 312 сд — 5833, 370 сд — 5268; 283 сд не распознана"
+   },
+   "tanks": null,
+   "guns": null,
+   "frontageKm": {
+    "value": 1.6,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "в прорыве 1,6 км (312 сд и часть 370 сд); остальная полоса до Франкфурта — оборонительная"
+   },
+   "note": "Левый (южный) корпус 69 А; 68 отбр в армии (6 танков исправных? — ведомость искажена)."
+  },
+  {
+   "id": "su_1gta_11tk",
+   "name_ru": "11-й танковый корпус",
+   "name_orig": "11-й тк (20, 36, 65 тбр, 12 мсбр)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1gta",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "Правый корпус 1 гв. ТА (вплотную к 1 мк 2 гв. ТА). Армия на 14.04: 505 танков и САУ (292 Т-34-85, 42 ИС-2, 21 ИСУ-122, 14 СУ-85, 27 СУ-100, 39 СУ-76, 70 СУ-57) — по корпусам не найдено."
+  },
+  {
+   "id": "su_1gta_11gtk",
+   "name_ru": "11-й гвардейский танковый корпус",
+   "name_orig": "11-й гв. тк (40, 44, 45 гв. тбр, 27 гв. мсбр)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1gta",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "Центр 1 гв. ТА, ось Рейхсштрассе 1. Полк. А. Х. Бабаджанян."
+  },
+  {
+   "id": "su_1gta_8gmk",
+   "name_ru": "8-й гвардейский механизированный корпус",
+   "name_orig": "8-й гв. мк (19, 20, 21 гв. мбр, 1 гв. тбр)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1gta",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "Левый корпус 1 гв. ТА (Дольгелин). Ген.-м. И. Ф. Дрёмов."
+  },
+  {
+   "id": "su_2gta_12gtk",
+   "name_ru": "12-й гвардейский танковый корпус",
+   "name_orig": "12-й гв. тк (48, 49, 66 гв. тбр, 34 гв. мсбр)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_2gta",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "Первым из танковых армий переправился на плацдарм (утро 15.04). Армия к началу операции: 685 машин (310 Т-34, 33 ИС-2, 184 М4А2, 41 ИСУ-122, 46 СУ-100, 15 СУ-85, 56 СУ-76) — по корпусам не найдено. Ген.-м. Н. М. Теляков ранен 18.04."
+  },
+  {
+   "id": "su_2gta_9gtk",
+   "name_ru": "9-й гвардейский танковый корпус",
+   "name_orig": "9-й гв. тк (47, 50, 65 гв. тбр, 33 гв. мсбр)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_2gta",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "С 21:00 18.04 во временном подчинении 3 уд. А; 19.04 — в полосе 47 А/3 уд. А."
+  },
+  {
+   "id": "su_2gta_1mk",
+   "name_ru": "1-й механизированный корпус",
+   "name_orig": "1-й мк (19, 35, 37 мбр, 219 тбр)",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_2gta",
+   "personnel": null,
+   "tanks": null,
+   "guns": null,
+   "frontageKm": null,
+   "note": "Ген.-лт С. М. Кривошеин. По плану — правый фланг армии; фактически 17.04 введён на левом фланге у Гузова и пробил «Харденберг» и «Штайн» у Платкова."
+  }
+ ],
+ "positions": [
+  {
+   "formation": "de_5jd",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.157,
+   "lat": 52.836,
+   "approx_km": 8,
+   "place": "Neuglietzen / StaraRudnica",
+   "sector_from": "Hohensaaten",
+   "sector_to": "Zollbruecke",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "берег Одера; 56 егп у Нойглитцена и Нидер-Вутцова отразил переправу 61 А"
+  },
+  {
+   "formation": "de_5jd",
+   "date": "1945-04-17",
+   "lng": 14.12,
+   "lat": 52.837,
+   "approx_km": 5,
+   "place": "Neuglietzen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "75 гв. сд взяла Нойглитцен; 56 егп не дал расширить плацдарм; переправилось до 4 полков 61 А"
+  },
+  {
+   "formation": "de_5jd",
+   "date": "1945-04-18",
+   "lng": 14.119,
+   "lat": 52.763,
+   "approx_km": 8,
+   "place": "Altwriezen / BadFreienwalde",
+   "source": "DW_SH",
+   "reliability": "B",
+   "note": "вынуждена отойти из Одербруха на Альте-Одер у Врицена (перед 61 А и 1 А ВП)"
+  },
+  {
+   "formation": "de_5jd",
+   "date": "1945-04-19",
+   "lng": 14.054,
+   "lat": 52.778,
+   "approx_km": 6,
+   "place": "BadFreienwalde / Ranft",
+   "source": "DW_SH; IS7",
+   "reliability": "C",
+   "note": "1 А ВП форсировала Альте-Одер у Ранфта (сев. Врицена) и угрожает Бад-Фрайенвальде с юга; 61 А вышла к Альте-Одер"
+  },
+  {
+   "formation": "de_606",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.297,
+   "lat": 52.719,
+   "approx_km": 5,
+   "place": "Karlsbiese / Neubarnim",
+   "sector_from": "GuestebieserLoose",
+   "sector_to": "Neubarnim",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "против 47 А; HKL по Карлсбизе–Нойлевину–Нойбарниму"
+  },
+  {
+   "formation": "de_606",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.238,
+   "lat": 52.697,
+   "approx_km": 8,
+   "place": "Altwriezen / Neutrebbin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "47 А к 11:00 взяла Карлсбизе, Нойлевин, Нойбарним, Альтлевин; дивизия «прекратила существование как боеспособное соединение»"
+  },
+  {
+   "formation": "de_606",
+   "date": "1945-04-17",
+   "lng": 14.202,
+   "lat": 52.686,
+   "approx_km": 6,
+   "place": "Neutrebbin / Wriezen",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "остатки за Альте-Одер/Фриландерштромом вместе с 25 пгд (рубеж южнее Нойтреббин–Хетцдорф–Близдорф по донесению ГА «Висла»)"
+  },
+  {
+   "formation": "de_606",
+   "date": "1945-04-18",
+   "lng": 14.239,
+   "lat": 52.641,
+   "approx_km": 5,
+   "place": "Neutrebbin / Altfriedland",
+   "source": "DW_SH",
+   "reliability": "B",
+   "note": "фронт «дивизионной группы 606» и 309 пд между Нойтреббином и Альтфридландом рухнул"
+  },
+  {
+   "formation": "de_309id",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.333,
+   "lat": 52.667,
+   "approx_km": 6,
+   "place": "Letschin / Sietzing",
+   "sector_from": "Neubarnim",
+   "sector_to": "Zechin",
+   "source": "IS7; DW_SH",
+   "reliability": "B",
+   "note": "против 3 уд. А (79, 12 гв. ск) и правого фланга 5 уд. А (652 грп); боец 309 пд у Зитцинга"
+  },
+  {
+   "formation": "de_309id",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.277,
+   "lat": 52.657,
+   "approx_km": 6,
+   "place": "Sietzing / Neutrebbin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Лечин взят 52 гв. сд; вклинение 6 км на стыке LVI/CI ак, брешь 5 км"
+  },
+  {
+   "formation": "de_309id",
+   "date": "1945-04-17",
+   "lng": 14.266,
+   "lat": 52.638,
+   "approx_km": 5,
+   "place": "Neutrebbin / Quappendorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "вторая полоса по Фриландерштрому; 12 гв. ск частью сил форсировал её"
+  },
+  {
+   "formation": "de_309id",
+   "date": "1945-04-18",
+   "lng": 14.158,
+   "lat": 52.645,
+   "approx_km": 6,
+   "place": "Altfriedland / Moeglin",
+   "source": "DW_SH; IS7",
+   "reliability": "B",
+   "note": "рубеж Нойтреббин–Альтфридланд рухнул; 3 уд. А вышла на Мёглин–Бацлов"
+  },
+  {
+   "formation": "de_309id",
+   "date": "1945-04-19",
+   "lng": 14.054,
+   "lat": 52.635,
+   "approx_km": 8,
+   "place": "Proetzel / Batzlow",
+   "source": "CIT",
+   "reliability": "C",
+   "note": "остатки на позиции «Вотан»; 3 уд. А «смяла последние позиции CI ак», Претцель взят 23 гв. сд к 19:00"
+  },
+  {
+   "formation": "de_25pzgd",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.137,
+   "lat": 52.717,
+   "approx_km": 8,
+   "place": "Wriezen",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "резерв CI ак; днём по приказу Гитлера выдвинута против 47 А (место сосредоточения не указано)"
+  },
+  {
+   "formation": "de_25pzgd",
+   "date": "1945-04-17",
+   "lng": 14.202,
+   "lat": 52.686,
+   "approx_km": 5,
+   "place": "Neutrebbin / Wriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "2-й эшелон на Альте-Одере; контрудар не развился; оборона на линии южнее Нойтреббин–Хетцдорф–Близдорф"
+  },
+  {
+   "formation": "de_25pzgd",
+   "date": "1945-04-18",
+   "lng": 14.076,
+   "lat": 52.674,
+   "approx_km": 5,
+   "place": "Moeglin / Frankenfelde",
+   "source": "IS7; DW_SH",
+   "reliability": "B",
+   "note": "119 пгп против 171, 207 сд у Шульцендорфа–Мёглина; попытка фронта Людерсдорф–Франкенфельде"
+  },
+  {
+   "formation": "de_25pzgd",
+   "date": "1945-04-19",
+   "lng": 13.8,
+   "lat": 52.835,
+   "approx_km": 12,
+   "place": "Eberswalde",
+   "source": "DW_SH",
+   "reliability": "B",
+   "note": "с открытым правым флангом отходит на эберсвальдский плацдарм"
+  },
+  {
+   "formation": "de_kg1001",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.173,
+   "lat": 52.728,
+   "approx_km": 6,
+   "place": "Wriezen / Altwriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "выдвинута из р-на севернее Врицена навстречу 47 А"
+  },
+  {
+   "formation": "de_9fjd",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.405,
+   "lat": 52.592,
+   "approx_km": 6,
+   "place": "Zechin / Gusow",
+   "sector_from": "Zechin",
+   "sector_to": "AltLangsow",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "Großkampf-HKL; 25 и 26 пп против 5 уд. А, 27 пп во 2-й линии у Вербига"
+  },
+  {
+   "formation": "de_9fjd",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.354,
+   "lat": 52.573,
+   "approx_km": 4,
+   "place": "Platkow / Werbig",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "отход на Альте-Одер / Хауптграбен; 27 пп ведёт бой с 47 гв. сд у Вербига и Ной-Вербига"
+  },
+  {
+   "formation": "de_9fjd",
+   "date": "1945-04-17",
+   "lng": 14.234,
+   "lat": 52.583,
+   "approx_km": 5,
+   "place": "Wulkow_N / Neuhardenberg",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "оборона рассыпается: 1 мк взял Платков, Нойхарденберг; 18 пгд введена для восстановления фронта 9 пд"
+  },
+  {
+   "formation": "de_9fjd",
+   "date": "1945-04-18",
+   "lng": 14.186,
+   "lat": 52.567,
+   "approx_km": 5,
+   "place": "Hermersdorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "один полк отброшен в р-н Херменсдорфа; разведбат «Нордланда» в её полосе у Вулькова. ⚠ de-wiki ставит 9 пд с «Мюнхебергом» на линии Платков–Гузов–Вербиг (противоречит Исаеву). Брёйер снят"
+  },
+  {
+   "formation": "de_9fjd",
+   "date": "1945-04-19",
+   "lng": 14.094,
+   "lat": 52.589,
+   "approx_km": 10,
+   "place": "Buckow / Reichenberg",
+   "source": "DW_SH; BOB; CIT",
+   "reliability": "C",
+   "note": "5 уд. А теснит остатки; часть собрана «Нордландом»; отход на запад"
+  },
+  {
+   "formation": "de_20pzgd",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.446,
+   "lat": 52.534,
+   "approx_km": 5,
+   "place": "Seelow / AltTucheband",
+   "sector_from": "Neuwerbig",
+   "sector_to": "Ludwigslust_S",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "полоса по Рейхсштрассе 1 (против 4 и 29 гв. ск); Großkampf-HKL на Хауптграбене у подножия высот"
+  },
+  {
+   "formation": "de_20pzgd",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.397,
+   "lat": 52.526,
+   "approx_km": 3,
+   "place": "Seelow / Ludwigslust_S",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "удержан рубеж Хауптграбена до 18:00; к вечеру 8 гв. А у подножия высот, Людвигслуст взят"
+  },
+  {
+   "formation": "de_20pzgd",
+   "date": "1945-04-17",
+   "lng": 14.288,
+   "lat": 52.527,
+   "approx_km": 4,
+   "place": "Goerlsdorf / Worin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Зелов (15:00) и Фридерсдорф потеряны; отход за Флисс (позиция «Штайн» у Гёрльсдорфа)"
+  },
+  {
+   "formation": "de_20pzgd",
+   "date": "1945-04-18",
+   "lng": 14.224,
+   "lat": 52.522,
+   "approx_km": 5,
+   "place": "Trebnitz / Jahnsfelde",
+   "source": "DW_SH; IS7",
+   "reliability": "B",
+   "note": "8 гв. А прорвала «третью и последнюю линию» 20 пгд; 11 гв. тк к полуночи в Янсфельде на Р1"
+  },
+  {
+   "formation": "de_20pzgd",
+   "date": "1945-04-19",
+   "lng": 14.122,
+   "lat": 52.49,
+   "approx_km": 8,
+   "place": "Muencheberg / Eggersdorf_M",
+   "source": "CIT",
+   "reliability": "C",
+   "note": "отход южнее Мюнхеберга (11 гв. тк к полуночи в Шёнфельде)"
+  },
+  {
+   "formation": "de_muencheberg",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.381,
+   "lat": 52.532,
+   "approx_km": 4,
+   "place": "Seelow",
+   "source": "IS7; DW_DIV",
+   "reliability": "B",
+   "note": "2-я линия на высотах (позиция «Харденберг» с 7.04); Tiger/Panther против ИС 7 гв. ттбр на Хауптграбене"
+  },
+  {
+   "formation": "de_muencheberg",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.381,
+   "lat": 52.532,
+   "approx_km": 3,
+   "place": "Seelow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "к 17:00 сильная ПТО в Зелове остановила 44 гв. тбр"
+  },
+  {
+   "formation": "de_muencheberg",
+   "date": "1945-04-17",
+   "lng": 14.269,
+   "lat": 52.552,
+   "approx_km": 6,
+   "place": "Goerlsdorf / Wulkow_N",
+   "source": "CIT",
+   "reliability": "C",
+   "note": "после потери Зелова — отход за Флисс"
+  },
+  {
+   "formation": "de_muencheberg",
+   "date": "1945-04-18",
+   "lng": 14.185,
+   "lat": 52.507,
+   "approx_km": 6,
+   "place": "Jahnsfelde / Muencheberg",
+   "source": "CIT; DW_SH",
+   "reliability": "C",
+   "note": "отход к Мюнхебергу; ⚠ de-wiki: с 9 пд на линии Платков–Гузов–Вербиг"
+  },
+  {
+   "formation": "de_muencheberg",
+   "date": "1945-04-19",
+   "lng": 14.14,
+   "lat": 52.504,
+   "approx_km": 3,
+   "place": "Muencheberg",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "обороняла г. Мюнхеберг («сняты с Зееловских высот»); город взят 82 гв. сд к 21:00"
+  },
+  {
+   "formation": "de_18pzgd",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 13.8,
+   "lat": 52.835,
+   "approx_km": 12,
+   "place": "Eberswalde",
+   "source": "IS7; DW_DIV",
+   "reliability": "B",
+   "note": "резерв ОКХ в полосе 3 ТА; передана 9 А в 19:10, марш в р-н Букова–Мюнхеберга"
+  },
+  {
+   "formation": "de_18pzgd",
+   "date": "1945-04-17",
+   "lng": 14.23,
+   "lat": 52.569,
+   "approx_km": 4,
+   "place": "Wulkow_N",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "30, 51 пгп в лесах по обе стороны Вулькова; контрудар по обе стороны Нидер-Гёрльсдорфа (донесение ГА)"
+  },
+  {
+   "formation": "de_18pzgd",
+   "date": "1945-04-18",
+   "lng": 14.186,
+   "lat": 52.567,
+   "approx_km": 4,
+   "place": "Hermersdorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "с «Нордландом» остановила 219 тбр и 11 тк у Херменсдорфа; ⚠ de-wiki: «стоящая у Претцеля 18 пгд»"
+  },
+  {
+   "formation": "de_18pzgd",
+   "date": "1945-04-19",
+   "lng": 14.076,
+   "lat": 52.567,
+   "approx_km": 6,
+   "place": "Buckow",
+   "source": "BOB; CIT",
+   "reliability": "C",
+   "note": "остатки с датчанами «Нордланда» контратакуют в Буковском лесу"
+  },
+  {
+   "formation": "de_920stug",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.446,
+   "lat": 52.534,
+   "approx_km": 8,
+   "place": "Seelow / AltTucheband",
+   "source": "IS7; EW_OOB; CIT",
+   "reliability": "C",
+   "note": "14.04 контратака у Альт-Тухебанда; дальше данных нет"
+  },
+  {
+   "formation": "de_nordland",
+   "date": "1945-04-18",
+   "lng": 14.153,
+   "lat": 52.539,
+   "approx_km": 8,
+   "place": "Jahnsfelde / Buckow",
+   "source": "IS7; DW_SH",
+   "reliability": "B",
+   "note": "сосредоточение юго-восточнее Янсфельде без горючего; разведбат у Вулькова; бой с 11 тк у Букова; танковый полк у Нойентемпеля/Марксдорфа (de-wiki)"
+  },
+  {
+   "formation": "de_nordland",
+   "date": "1945-04-19",
+   "lng": 14.09,
+   "lat": 52.578,
+   "approx_km": 6,
+   "place": "Pritzhagen / Buckow",
+   "source": "BOB; CIT",
+   "reliability": "C",
+   "note": "отход к Притцхагену, бои в Буковском лесу"
+  },
+  {
+   "formation": "de_ss503",
+   "date": "1945-04-18",
+   "lng": 14.153,
+   "lat": 52.539,
+   "approx_km": 10,
+   "place": "Jahnsfelde / Buckow",
+   "source": "IS7; EW_SH; CIT",
+   "reliability": "C",
+   "note": "прибыл с «Нордландом»; контратаки 18.04"
+  },
+  {
+   "formation": "de_303id",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.442,
+   "lat": 52.501,
+   "approx_km": 4,
+   "place": "Sachsendorf / Dolgelin",
+   "sector_from": "Ludwigslust_S",
+   "sector_to": "Rathstock",
+   "source": "IS7; CIT",
+   "reliability": "B",
+   "note": "три полка против 8 гв. А; КП на ст. Дольгелин"
+  },
+  {
+   "formation": "de_303id",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.421,
+   "lat": 52.486,
+   "approx_km": 3,
+   "place": "Dolgelin / Libbenichen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Заксендорф потерян к 8:00; 79 гв. сд остановлена у Дольгелина к 16:00; командир тяжело ранен"
+  },
+  {
+   "formation": "de_303id",
+   "date": "1945-04-17",
+   "lng": 14.421,
+   "lat": 52.486,
+   "approx_km": 3,
+   "place": "Dolgelin / Libbenichen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "1 гв. тбр взяла Дольгелин к середине дня; 20 гв. мбр у Либбенихена успеха не имела"
+  },
+  {
+   "formation": "de_303id",
+   "date": "1945-04-18",
+   "lng": 14.421,
+   "lat": 52.474,
+   "approx_km": 5,
+   "place": "Libbenichen / AltMahlisch",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "фронт XI тк СС на восток держится; 28 гв. ск безуспешно; 8 гв. мк в тылу у Марксдорфа"
+  },
+  {
+   "formation": "de_303id",
+   "date": "1945-04-19",
+   "lng": 14.317,
+   "lat": 52.429,
+   "approx_km": 6,
+   "place": "Falkenhagen_MOL",
+   "source": "CIT",
+   "reliability": "C",
+   "note": "отход на юго-запад вместе с XI тк СС"
+  },
+  {
+   "formation": "de_169id",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.515,
+   "lat": 52.464,
+   "approx_km": 4,
+   "place": "Podelzig / Mallnow",
+   "sector_from": "Podelzig",
+   "sector_to": "Mallnow",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "против 25 ск 69 А; 1-я полоса прорвана к 7:30, вторая удержана"
+  },
+  {
+   "formation": "de_169id",
+   "date": "1945-04-17",
+   "lng": 14.475,
+   "lat": 52.458,
+   "approx_km": 3,
+   "place": "Mallnow / Carzig",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Мальнов потерян к 11:00 («гарнизон уничтожен»); 25 ск продвинулся на 1–2 траншеи"
+  },
+  {
+   "formation": "de_169id",
+   "date": "1945-04-18",
+   "lng": 14.475,
+   "lat": 52.458,
+   "approx_km": 3,
+   "place": "Carzig / Mallnow",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "активность 69 А снизилась; без существенных изменений"
+  },
+  {
+   "formation": "de_169id",
+   "date": "1945-04-19",
+   "lng": 14.361,
+   "lat": 52.449,
+   "approx_km": 5,
+   "place": "AltMahlisch / Falkenhagen_MOL",
+   "source": "IS7; DW_SH",
+   "reliability": "B",
+   "note": "Карциг взят ночью, Альт-Малиш к вечеру; фронт 169/712 пд отведён с линии Карциг–Лебус"
+  },
+  {
+   "formation": "de_712id",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.502,
+   "lat": 52.424,
+   "approx_km": 5,
+   "place": "Schoenfliess_L / Lebus",
+   "sector_from": "Schoenfliess_L",
+   "sector_to": "Lebus",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "против 61 и 91 ск; в 18:00 с ротой 502 тб отбила Шёнфлис у 41 сд"
+  },
+  {
+   "formation": "de_712id",
+   "date": "1945-04-17",
+   "lng": 14.502,
+   "lat": 52.424,
+   "approx_km": 4,
+   "place": "Schoenfliess_L / Lebus",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Шёнфлис потерян ночью (247 сд); остальные атаки 61 ск отбиты с ротой Tiger II"
+  },
+  {
+   "formation": "de_712id",
+   "date": "1945-04-18",
+   "lng": 14.502,
+   "lat": 52.424,
+   "approx_km": 4,
+   "place": "Schoenfliess_L / Lebus",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "61 ск продвинулся на 1 км; ночью 18/19 эвакуирован плацдарм Франкфурта"
+  },
+  {
+   "formation": "de_712id",
+   "date": "1945-04-19",
+   "lng": 14.481,
+   "lat": 52.437,
+   "approx_km": 5,
+   "place": "Niederjesar / Lebus",
+   "source": "IS7; DW_SH",
+   "reliability": "B",
+   "note": "61 ск взял Нидер-Езар; дивизия отводится от Лебуса"
+  },
+  {
+   "formation": "de_kurmark",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.406,
+   "lat": 52.495,
+   "approx_km": 3,
+   "place": "Dolgelin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "с 14.04 у ст. Дольгелин во 2-м эшелоне; 16.04 контрудар без успеха"
+  },
+  {
+   "formation": "de_kurmark",
+   "date": "1945-04-17",
+   "lng": 14.406,
+   "lat": 52.506,
+   "approx_km": 3,
+   "place": "Dolgelin / Friedersdorf_MOL",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "контратака остановила наступающих из Дольгелина и Фридерсдорфа на ЮЗ"
+  },
+  {
+   "formation": "de_kurmark",
+   "date": "1945-04-18",
+   "lng": 14.333,
+   "lat": 52.493,
+   "approx_km": 4,
+   "place": "Marxdorf / Dolgelin",
+   "source": "DW_SH",
+   "reliability": "B",
+   "note": "удерживает линию Марксдорф–Дольгелин; 8 гв. мк к ночи взял Марксдорф"
+  },
+  {
+   "formation": "de_kurmark",
+   "date": "1945-04-19",
+   "lng": 14.206,
+   "lat": 52.346,
+   "approx_km": 6,
+   "place": "Berkenbrueck / Kersdorf",
+   "source": "DW_SH",
+   "reliability": "B",
+   "note": "оставила линию Марксдорф–Дольгелин; пытается занять рубеж Беркенбрюк–Керсдорф фронтом на север и восток"
+  },
+  {
+   "formation": "de_ss502",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.406,
+   "lat": 52.495,
+   "approx_km": 6,
+   "place": "Dolgelin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "6 Tiger II разгружены на ст. Дольгелин в 10:30; 2-я рота у Шёнфлиса"
+  },
+  {
+   "formation": "de_ss502",
+   "date": "1945-04-18",
+   "lng": 14.291,
+   "lat": 52.495,
+   "approx_km": 4,
+   "place": "Neuentempel / Marxdorf",
+   "source": "DW_SH",
+   "reliability": "B",
+   "note": "с танковым полком «Нордланда» в бою с 1 гв. ТА (de-wiki: s.SS-Pz.Abt. 102)"
+  },
+  {
+   "formation": "de_nederland",
+   "date": "1945-04-18",
+   "lng": 14.301,
+   "lat": 52.48,
+   "approx_km": 6,
+   "place": "Marxdorf / Lietzen",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "левый фланг XI тк СС, против обхода по северной кромке высот"
+  },
+  {
+   "formation": "de_nederland",
+   "date": "1945-04-19",
+   "lng": 14.301,
+   "lat": 52.48,
+   "approx_km": 6,
+   "place": "Marxdorf / Lietzen",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "против неё фронтом на юг воюет 8 гв. мк (первая половина дня)"
+  },
+  {
+   "formation": "su_47a_77sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.292,
+   "lat": 52.744,
+   "approx_km": 3,
+   "place": "GuestebieserLoose / Karlsbiese",
+   "sector_from": "GuestebieserLoose",
+   "sector_to": "Karlsbiese",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: северный край плацдарма"
+  },
+  {
+   "formation": "su_47a_77sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.209,
+   "lat": 52.738,
+   "approx_km": 3,
+   "place": "Altwriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "к 20:00 бой 260, 328 сд за Борегард (Альтврицен/Борегард); +4–6 км"
+  },
+  {
+   "formation": "su_47a_77sk",
+   "date": "1945-04-17",
+   "lng": 14.173,
+   "lat": 52.728,
+   "approx_km": 3,
+   "place": "Wriezen / Altwriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "бой за Врицен (+5 км)"
+  },
+  {
+   "formation": "su_47a_77sk",
+   "date": "1945-04-18",
+   "lng": 14.137,
+   "lat": 52.717,
+   "approx_km": 2,
+   "place": "Wriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "уличные бои; к полуночи Врицен оставлен немцами"
+  },
+  {
+   "formation": "su_47a_77sk",
+   "date": "1945-04-19",
+   "lng": 14.083,
+   "lat": 52.752,
+   "approx_km": 4,
+   "place": "Wriezen / BadFreienwalde",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "остановлен огнём из Фрайенвальдского городского леса"
+  },
+  {
+   "formation": "su_47a_125sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.297,
+   "lat": 52.719,
+   "approx_km": 3,
+   "place": "Karlsbiese / Neubarnim",
+   "sector_from": "Karlsbiese",
+   "sector_to": "Neubarnim",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: центр полосы 47 А восточнее Нойлевина"
+  },
+  {
+   "formation": "su_47a_125sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.237,
+   "lat": 52.72,
+   "approx_km": 4,
+   "place": "Altlewin / Altwriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "взял опорный пункт Нойлевин; +6 км"
+  },
+  {
+   "formation": "su_47a_125sk",
+   "date": "1945-04-17",
+   "lng": 14.238,
+   "lat": 52.697,
+   "approx_km": 4,
+   "place": "Altwriezen / Neutrebbin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "вышел на Фриландерштром, плацдармы на западном берегу; +4 км"
+  },
+  {
+   "formation": "su_47a_125sk",
+   "date": "1945-04-18",
+   "lng": 14.137,
+   "lat": 52.717,
+   "approx_km": 4,
+   "place": "Wriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "на шоссе Врицен–Шульцендорф, к 20:00 в 1 км западнее; +3 км"
+  },
+  {
+   "formation": "su_47a_125sk",
+   "date": "1945-04-19",
+   "lng": 14.11,
+   "lat": 52.708,
+   "approx_km": 5,
+   "place": "Wriezen / Lüdersdorf",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "безуспешные атаки, обход начат поздно вечером"
+  },
+  {
+   "formation": "su_47a_129sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.372,
+   "lat": 52.688,
+   "approx_km": 3,
+   "place": "Neubarnim / Kienitz",
+   "sector_from": "Neubarnim",
+   "sector_to": "Altlewin",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: южная часть полосы 47 А"
+  },
+  {
+   "formation": "su_47a_129sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.286,
+   "lat": 52.68,
+   "approx_km": 3,
+   "place": "Neubarnim / Neutrebbin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "взял Нойбарним, гарнизон Гросс-Барнима уничтожен; вышел к ж.д. Врицен–Зелов (Херренхоф); +6 км"
+  },
+  {
+   "formation": "su_47a_129sk",
+   "date": "1945-04-17",
+   "lng": 14.207,
+   "lat": 52.663,
+   "approx_km": 4,
+   "place": "Neutrebbin / Kunersdorf_MOL",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "вышел на Фриландерштром, плацдармы; +4 км"
+  },
+  {
+   "formation": "su_47a_129sk",
+   "date": "1945-04-18",
+   "lng": 14.142,
+   "lat": 52.693,
+   "approx_km": 4,
+   "place": "Kunersdorf_MOL / Wriezen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "шоссе Врицен–Шульцендорф и 1 км западнее; +4 км"
+  },
+  {
+   "formation": "su_47a_129sk",
+   "date": "1945-04-19",
+   "lng": 14.011,
+   "lat": 52.687,
+   "approx_km": 4,
+   "place": "Harnekop",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "с 9 гв. тк к оз. Маркграфензее и фл. Бизов; +12 км"
+  },
+  {
+   "formation": "su_3ua_79sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.352,
+   "lat": 52.688,
+   "approx_km": 4,
+   "place": "Altlewin / Kienitz",
+   "sector_from": "Neubarnim",
+   "sector_to": "Letschin",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: правый корпус 1-го эшелона"
+  },
+  {
+   "formation": "su_3ua_79sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.286,
+   "lat": 52.68,
+   "approx_km": 3,
+   "place": "Neubarnim / Neutrebbin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "150 сд форсировала Позедин-Грабен и вышла к дороге Нойлевин–Нойтреббин; 207 сд очистила Нойбарним"
+  },
+  {
+   "formation": "su_3ua_79sk",
+   "date": "1945-04-17",
+   "lng": 14.268,
+   "lat": 52.656,
+   "approx_km": 3,
+   "place": "Neutrebbin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "на восточном берегу Фриландерштрома, подготовка к форсированию"
+  },
+  {
+   "formation": "su_3ua_79sk",
+   "date": "1945-04-18",
+   "lng": 14.127,
+   "lat": 52.666,
+   "approx_km": 3,
+   "place": "Moeglin / Kunersdorf_MOL",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "150 сд с 23, 95 тбр 9 тк взяла Кунерсдорф; 171 сд прошла Шульцендорф–Мёглин; к полуночи на Франкенфельде; +5–6 км"
+  },
+  {
+   "formation": "su_3ua_79sk",
+   "date": "1945-04-19",
+   "lng": 14.029,
+   "lat": 52.685,
+   "approx_km": 5,
+   "place": "Harnekop / Frankenfelde",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "207 сд взяла Франкенфельде, Харнекоп; 171 сд у фл. Блюменталь в Претцельском лесу"
+  },
+  {
+   "formation": "su_3ua_12gsk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.418,
+   "lat": 52.644,
+   "approx_km": 3,
+   "place": "Letschin / Zechin",
+   "sector_from": "Letschin",
+   "sector_to": "Zechin",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: левый корпус 1-го эшелона у стыка с 5 уд. А"
+  },
+  {
+   "formation": "su_3ua_12gsk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.379,
+   "lat": 52.675,
+   "approx_km": 2,
+   "place": "Letschin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "33 сд до 13:00 безуспешно штурмовала Лечин; взят 52 гв. сд"
+  },
+  {
+   "formation": "su_3ua_12gsk",
+   "date": "1945-04-17",
+   "lng": 14.266,
+   "lat": 52.638,
+   "approx_km": 4,
+   "place": "Neutrebbin / Quappendorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "пробился к Фриландерштрому и частью сил форсировал его (переправа 9 гв. тк построена к вечеру); +6–8 км армии"
+  },
+  {
+   "formation": "su_3ua_12gsk",
+   "date": "1945-04-18",
+   "lng": 14.151,
+   "lat": 52.635,
+   "approx_km": 3,
+   "place": "Batzlow / Gottesgabe",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "вышел к высотам северо-восточнее и восточнее Бацлова, остановлен огнём; +4–5 км"
+  },
+  {
+   "formation": "su_3ua_12gsk",
+   "date": "1945-04-19",
+   "lng": 14.054,
+   "lat": 52.635,
+   "approx_km": 4,
+   "place": "Proetzel / Batzlow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "33, 52 гв. сд очищали Бацлов; 23 гв. сд взяла Претцель к 19:00"
+  },
+  {
+   "formation": "su_3ua_7sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.409,
+   "lat": 52.674,
+   "approx_km": 6,
+   "place": "Kienitz / Letschin",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "2-й эшелон армии"
+  },
+  {
+   "formation": "su_3ua_7sk",
+   "date": "1945-04-19",
+   "lng": 14.187,
+   "lat": 52.66,
+   "approx_km": 8,
+   "place": "Neutrebbin / Moeglin",
+   "source": "CIT",
+   "reliability": "C",
+   "note": "по-прежнему во 2-м эшелоне за 79 и 12 гв. ск"
+  },
+  {
+   "formation": "su_3ua_9tk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.409,
+   "lat": 52.674,
+   "approx_km": 6,
+   "place": "Kienitz / Letschin",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "2-й эшелон армии"
+  },
+  {
+   "formation": "su_3ua_9tk",
+   "date": "1945-04-18",
+   "lng": 14.147,
+   "lat": 52.669,
+   "approx_km": 3,
+   "place": "Kunersdorf_MOL",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "23 и 95 тбр с 150 сд взяли Кунерсдорф"
+  },
+  {
+   "formation": "su_3ua_9tk",
+   "date": "1945-04-19",
+   "lng": 14.029,
+   "lat": 52.685,
+   "approx_km": 5,
+   "place": "Frankenfelde / Harnekop",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "поддерживает 79 ск в Претцельском лесу"
+  },
+  {
+   "formation": "su_5ua_26gsk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.456,
+   "lat": 52.613,
+   "approx_km": 2,
+   "place": "Zechin",
+   "sector_from": "отм. 9,3 в 2 км сев. Zechin",
+   "sector_to": "Zechin (юж. окраина)",
+   "source": "IS7_PLAN; IS7",
+   "reliability": "B",
+   "note": "исходное: правый фланг (полоса армии от отм. 9,3 в 2 км сев. Цехина); траншеи у Цехина взяты 15.04"
+  },
+  {
+   "formation": "su_5ua_26gsk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.401,
+   "lat": 52.614,
+   "approx_km": 3,
+   "place": "Steintoch",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "вышел на ж.д. Лечин–Зелов, в 14:00 сбил противника; к 20:00 бой в 3 км западнее; переправа через Хауптграбен в 1 км западнее Лечина"
+  },
+  {
+   "formation": "su_5ua_26gsk",
+   "date": "1945-04-17",
+   "lng": 14.251,
+   "lat": 52.608,
+   "approx_km": 4,
+   "place": "Quappendorf / Neuhardenberg",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "ночью вышел к Альте-Одеру (Кваппендорф), переправа вброд; армия +8–14 км, пересекла Р167"
+  },
+  {
+   "formation": "su_5ua_26gsk",
+   "date": "1945-04-18",
+   "lng": 14.14,
+   "lat": 52.618,
+   "approx_km": 3,
+   "place": "Ringenwalde",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "94 гв. и 266 сд на подступах к Ригенвальде (Рингенвальде); армия +4 км (озёра)"
+  },
+  {
+   "formation": "su_5ua_26gsk",
+   "date": "1945-04-19",
+   "lng": 14.053,
+   "lat": 52.613,
+   "approx_km": 4,
+   "place": "Ihlow_MOL / Grunow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "с 12 гв. тк через Райхенберг, Илов на Грунов; +10,5 км"
+  },
+  {
+   "formation": "su_5ua_32sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.475,
+   "lat": 52.593,
+   "approx_km": 3,
+   "place": "Zechin / Golzow",
+   "sector_from": "Zechin",
+   "sector_to": "Golzow",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: центр армии; 1-й эшелон 60 гв., 295 сд"
+  },
+  {
+   "formation": "su_5ua_32sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.409,
+   "lat": 52.594,
+   "approx_km": 3,
+   "place": "AltLangsow / Steintoch",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "продвижение меньше, чем у 26 гв. ск (каналы, Хауптграбен)"
+  },
+  {
+   "formation": "su_5ua_32sk",
+   "date": "1945-04-17",
+   "lng": 14.282,
+   "lat": 52.59,
+   "approx_km": 4,
+   "place": "Platkow / Neuhardenberg",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "форсирован Альте-Одер; за 1 мк к подножию высот за Р167"
+  },
+  {
+   "formation": "su_5ua_32sk",
+   "date": "1945-04-18",
+   "lng": 14.176,
+   "lat": 52.603,
+   "approx_km": 5,
+   "place": "Neuhardenberg / Reichenberg",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "лесисто-озёрный район (Штобберов); вышел к «западному ответвлению главной полосы»"
+  },
+  {
+   "formation": "su_5ua_32sk",
+   "date": "1945-04-19",
+   "lng": 14.092,
+   "lat": 52.615,
+   "approx_km": 5,
+   "place": "Reichenberg / Ihlow_MOL",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "60 гв. сд с 26 гв. ск сбила противника восточнее Ригенвальде, наступает на Райхенберг–Илов"
+  },
+  {
+   "formation": "su_5ua_9sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.493,
+   "lat": 52.574,
+   "approx_km": 2,
+   "place": "Golzow",
+   "sector_from": "Golzow (сев.)",
+   "sector_to": "ст. в 1 км ЮВ Golzow",
+   "source": "IS7_PLAN; CIT",
+   "reliability": "C",
+   "note": "исходное: левый фланг армии у Гольцова (301 сд в 1-м эшелоне)"
+  },
+  {
+   "formation": "su_5ua_9sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.424,
+   "lat": 52.573,
+   "approx_km": 3,
+   "place": "Golzow / Gusow",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "медленное продвижение через каналы"
+  },
+  {
+   "formation": "su_5ua_9sk",
+   "date": "1945-04-17",
+   "lng": 14.354,
+   "lat": 52.571,
+   "approx_km": 2,
+   "place": "Gusow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "301 и 248 сд обошли Гузов с юга и взяли его; левый фланг загнут из-за отставания 8 гв. А"
+  },
+  {
+   "formation": "su_5ua_9sk",
+   "date": "1945-04-18",
+   "lng": 14.23,
+   "lat": 52.569,
+   "approx_km": 3,
+   "place": "Wulkow_N",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "лесисто-озёрный район; армия +4 км"
+  },
+  {
+   "formation": "su_5ua_9sk",
+   "date": "1945-04-19",
+   "lng": 14.076,
+   "lat": 52.567,
+   "approx_km": 3,
+   "place": "Buckow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "301 сд обходит Буков и оз. Шермютцельзее с севера, 248 сд — с юга (на Хазенхольц); +5 км"
+  },
+  {
+   "formation": "su_8gva_4gsk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.523,
+   "lat": 52.566,
+   "approx_km": 2,
+   "place": "Golzow / Manschnow",
+   "sector_from": "Golzow",
+   "sector_to": "Manschnow",
+   "source": "IS7_PLAN; IS7",
+   "reliability": "B",
+   "note": "исходное: правый фланг 8 гв. А от ст. в 1 км ЮВ Гольцова, ось Р1"
+  },
+  {
+   "formation": "su_8gva_4gsk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.387,
+   "lat": 52.542,
+   "approx_km": 2,
+   "place": "Neuwerbig / Seelow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "к 18:00 форсировал Хауптграбен; 47 гв. сд у Вербига/Ной-Вербига, 57 гв. сд у подножия высот перед Зеловом"
+  },
+  {
+   "formation": "su_8gva_4gsk",
+   "date": "1945-04-17",
+   "lng": 14.344,
+   "lat": 52.534,
+   "approx_km": 3,
+   "place": "Goerlsdorf / Seelow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "57 гв. сд взяла Зелов к 15:00 и к 22:00 вышла к Флиссу у Гёрльсдорфа; 35, 47 гв. сд на Флиссе; +8 км"
+  },
+  {
+   "formation": "su_8gva_4gsk",
+   "date": "1945-04-18",
+   "lng": 14.218,
+   "lat": 52.533,
+   "approx_km": 4,
+   "place": "Trebnitz",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "35 гв. сд к исходу дня у Требница"
+  },
+  {
+   "formation": "su_8gva_4gsk",
+   "date": "1945-04-19",
+   "lng": 14.092,
+   "lat": 52.549,
+   "approx_km": 4,
+   "place": "Dahmsdorf / Buckow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "с 11 тк у Букова и Дамсдорфа; 47 гв. сд к 16:00 у Дамсдорфа"
+  },
+  {
+   "formation": "su_8gva_29gsk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.512,
+   "lat": 52.537,
+   "approx_km": 2,
+   "place": "AltTucheband",
+   "sector_from": "AltTucheband",
+   "sector_to": "Rathstock",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: Альт-Тухебанд (взят 14.04)"
+  },
+  {
+   "formation": "su_8gva_29gsk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.414,
+   "lat": 52.521,
+   "approx_km": 2,
+   "place": "Ludwigslust_S",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "к 10:00 у Зееловских высот южнее Р1; Людвигслуст взят; завал у ж.д. моста на шоссе Людвигслуст–Фридерсдорф"
+  },
+  {
+   "formation": "su_8gva_29gsk",
+   "date": "1945-04-17",
+   "lng": 14.406,
+   "lat": 52.517,
+   "approx_km": 2,
+   "place": "Friedersdorf_MOL",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "27, 74 гв. сд с 40, 44 гв. тбр взяли Фридерсдорф; +2–4 км"
+  },
+  {
+   "formation": "su_8gva_29gsk",
+   "date": "1945-04-18",
+   "lng": 14.288,
+   "lat": 52.527,
+   "approx_km": 3,
+   "place": "Worin / Goerlsdorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "82, 27 гв. сд за Флиссом; 82 гв. сд с 7 гв. ттбр взяла Ворин; 105 ттп вышел на Р1"
+  },
+  {
+   "formation": "su_8gva_29gsk",
+   "date": "1945-04-19",
+   "lng": 14.14,
+   "lat": 52.504,
+   "approx_km": 3,
+   "place": "Muencheberg",
+   "source": "IS7",
+   "reliability": "A",
+   "note": "82 гв. сд взяла Мюнхеберг к 21:00; 27 гв. сд у Элизенхофа (Z p.475 подтверждает)"
+  },
+  {
+   "formation": "su_8gva_28gsk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.506,
+   "lat": 52.506,
+   "approx_km": 2,
+   "place": "Hathenow / Sachsendorf",
+   "sector_from": "Sachsendorf",
+   "sector_to": "Reitwein",
+   "source": "IS7_PLAN; CIT",
+   "reliability": "C",
+   "note": "исходное: левый фланг до Господского двора в 2 км вост. Заксендорфа; дальше фронтом на юг"
+  },
+  {
+   "formation": "su_8gva_28gsk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.442,
+   "lat": 52.501,
+   "approx_km": 2,
+   "place": "Sachsendorf / Dolgelin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "79 гв. сд с 259 отп и 34 гв. ттп взяла Заксендорф к 8:00, остановлена у Дольгелина к 16:00"
+  },
+  {
+   "formation": "su_8gva_28gsk",
+   "date": "1945-04-17",
+   "lng": 14.406,
+   "lat": 52.495,
+   "approx_km": 2,
+   "place": "Dolgelin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "с 8 гв. мк бои на рубеже «Рейхсштрассе №5» (дорога вдоль высот); +1–3 км"
+  },
+  {
+   "formation": "su_8gva_28gsk",
+   "date": "1945-04-18",
+   "lng": 14.421,
+   "lat": 52.486,
+   "approx_km": 3,
+   "place": "Dolgelin / Libbenichen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "атаки безуспешны; прикрывает левый фланг армии (отставание 69 А)"
+  },
+  {
+   "formation": "su_8gva_28gsk",
+   "date": "1945-04-19",
+   "lng": 14.333,
+   "lat": 52.503,
+   "approx_km": 5,
+   "place": "Friedersdorf_MOL / Marxdorf",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "обтекает северный фас Зееловских высот, бой фронтом на юг и юго-запад"
+  },
+  {
+   "formation": "su_69a_25sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.539,
+   "lat": 52.47,
+   "approx_km": 2,
+   "place": "Podelzig",
+   "sector_from": "Podelzig",
+   "sector_to": "Wuhden",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: правый фланг 69 А на Райтвайнском отроге; 77 гв. сд в прорыве 1,3 км"
+  },
+  {
+   "formation": "su_69a_25sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.515,
+   "lat": 52.464,
+   "approx_km": 2,
+   "place": "Podelzig / Mallnow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "к 7:30 прорвана 1-я полоса (3–4 траншеи); перед второй остановлен"
+  },
+  {
+   "formation": "su_69a_25sk",
+   "date": "1945-04-17",
+   "lng": 14.49,
+   "lat": 52.457,
+   "approx_km": 2,
+   "place": "Mallnow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Мальнов взят к 11:00; в 16:30 новая атака на 169 пд"
+  },
+  {
+   "formation": "su_69a_25sk",
+   "date": "1945-04-18",
+   "lng": 14.475,
+   "lat": 52.458,
+   "approx_km": 2,
+   "place": "Mallnow / Carzig",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "передал часть полосы 61 ск; перегруппировка на правый фланг (обход озёр с севера)"
+  },
+  {
+   "formation": "su_69a_25sk",
+   "date": "1945-04-19",
+   "lng": 14.433,
+   "lat": 52.465,
+   "approx_km": 3,
+   "place": "Carzig / AltMahlisch",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "ночью взял Карциг, к вечеру — Альт-Малиш; +3–4 км"
+  },
+  {
+   "formation": "su_69a_61sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.558,
+   "lat": 52.466,
+   "approx_km": 2,
+   "place": "Klessin / Wuhden",
+   "sector_from": "Wuhden",
+   "sector_to": "Klessin",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: центр, 274, 247, 41 сд на 3,1 км"
+  },
+  {
+   "formation": "su_69a_61sk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.513,
+   "lat": 52.442,
+   "approx_km": 2,
+   "place": "Klessin / Schoenfliess_L",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Шёнфлис взят и в 18:00 потерян (41 сд)"
+  },
+  {
+   "formation": "su_69a_61sk",
+   "date": "1945-04-17",
+   "lng": 14.47,
+   "lat": 52.422,
+   "approx_km": 2,
+   "place": "Schoenfliess_L",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "247 сд ночью взяла Шёнфлис; две атаки — вклинение на 1–2 траншеи"
+  },
+  {
+   "formation": "su_69a_61sk",
+   "date": "1945-04-18",
+   "lng": 14.48,
+   "lat": 52.439,
+   "approx_km": 3,
+   "place": "Schoenfliess_L / Mallnow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "введён полк 134 сд; +1 км (единственный продвинувшийся корпус)"
+  },
+  {
+   "formation": "su_69a_61sk",
+   "date": "1945-04-19",
+   "lng": 14.429,
+   "lat": 52.447,
+   "approx_km": 3,
+   "place": "Niederjesar",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "взял Нидер-Езар; +3–4 км"
+  },
+  {
+   "formation": "su_69a_91sk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.545,
+   "lat": 52.444,
+   "approx_km": 3,
+   "place": "Lebus / Klessin",
+   "sector_from": "Klessin",
+   "sector_to": "Lebus",
+   "source": "IS7; CIT",
+   "reliability": "C",
+   "note": "исходное: левый фланг 69 А; 312 сд и часть 370 сд в прорыве 1,6 км, остальное — оборона до Франкфурта"
+  },
+  {
+   "formation": "su_69a_91sk",
+   "date": "1945-04-17",
+   "lng": 14.502,
+   "lat": 52.424,
+   "approx_km": 3,
+   "place": "Lebus / Schoenfliess_L",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "дважды атаковал, местами прошёл одну траншею"
+  },
+  {
+   "formation": "su_69a_91sk",
+   "date": "1945-04-19",
+   "lng": 14.542,
+   "lat": 52.384,
+   "approx_km": 6,
+   "place": "Lebus / Frankfurt",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "283 сд с 33 А заняла оставленный плацдарм у Франкфурта (восточный берег)"
+  },
+  {
+   "formation": "su_1gta_11tk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.603,
+   "lat": 52.579,
+   "approx_km": 6,
+   "place": "Kostrzyn / Gorgast",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "переправа на плацдарм с утра, завершена к 15:00; передовые отряды с 7:10 за пехотой 8 гв. А"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.603,
+   "lat": 52.579,
+   "approx_km": 6,
+   "place": "Kostrzyn / Gorgast",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "переправа на плацдарм с утра, завершена к 15:00; передовые отряды с 7:10 за пехотой 8 гв. А"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.603,
+   "lat": 52.579,
+   "approx_km": 6,
+   "place": "Kostrzyn / Gorgast",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "переправа на плацдарм с утра, завершена к 15:00; передовые отряды с 7:10 за пехотой 8 гв. А"
+  },
+  {
+   "formation": "su_1gta_11tk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.383,
+   "lat": 52.562,
+   "approx_km": 3,
+   "place": "Werbig",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "65 тбр с 50 ттп у ст. Вербиг"
+  },
+  {
+   "formation": "su_1gta_11tk",
+   "date": "1945-04-17",
+   "lng": 14.23,
+   "lat": 52.569,
+   "approx_km": 3,
+   "place": "Wulkow_N",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "65 тбр к 13:00 у Флисса, к исходу дня взяла Вульков (дальше всех в 1 гв. ТА)"
+  },
+  {
+   "formation": "su_1gta_11tk",
+   "date": "1945-04-18",
+   "lng": 14.139,
+   "lat": 52.556,
+   "approx_km": 3,
+   "place": "Muenchehofe",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Вульков, Херменсдорф, Оберсдорф, Требниц; вечером сбор у Мюнхехофе, остановлен у Букова «Нордландом»"
+  },
+  {
+   "formation": "su_1gta_11tk",
+   "date": "1945-04-19",
+   "lng": 14.071,
+   "lat": 52.569,
+   "approx_km": 6,
+   "place": "Grunow / Dahmsdorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "обход Букова: северная группа (Ющук) к Грунову, южная — к Мюнхебергу/Дамсдорфу"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.397,
+   "lat": 52.526,
+   "approx_km": 3,
+   "place": "Seelow / Ludwigslust_S",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "44 гв. тбр к 17:00 у Зелова (сильная ПТО), 40 гв. тбр у Людвигслуста"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-17",
+   "lng": 14.308,
+   "lat": 52.535,
+   "approx_km": 3,
+   "place": "Goerlsdorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Фридерсдорф к 12:00; 44 гв. тбр взяла Гёрльсдорф к 22:00 («Штайн»), переправа через Флисс к 2:00 18.04"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-18",
+   "lng": 14.224,
+   "lat": 52.522,
+   "approx_km": 3,
+   "place": "Jahnsfelde / Trebnitz",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Флисс форсирован к 6:00; 40 гв. тбр взяла Требниц, остальные к полуночи в Янсфельде на Р1"
+  },
+  {
+   "formation": "su_1gta_11gtk",
+   "date": "1945-04-19",
+   "lng": 14.077,
+   "lat": 52.47,
+   "approx_km": 4,
+   "place": "Schoenfelde / Eggersdorf_M",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "обход Мюнхеберга с юга; к 20:00 Фридрихсдорф, Эггерсдорф; к полуночи Шёнфельде"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.421,
+   "lat": 52.486,
+   "approx_km": 2,
+   "place": "Dolgelin / Libbenichen",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "1 гв. тбр бой за ст. Дольгелин, 20 гв. мбр — за ст. Либбенихен"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-17",
+   "lng": 14.406,
+   "lat": 52.495,
+   "approx_km": 2,
+   "place": "Dolgelin",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Дольгелин взят к середине дня; к вечеру снят на правый фланг армии"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-18",
+   "lng": 14.261,
+   "lat": 52.49,
+   "approx_km": 3,
+   "place": "Marxdorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "по маршруту 11 гв. тк на ЮЗ; к 19:00 у Марксдорфа, к концу дня занял его — охват XI тк СС"
+  },
+  {
+   "formation": "su_1gta_8gmk",
+   "date": "1945-04-19",
+   "lng": 14.245,
+   "lat": 52.5,
+   "approx_km": 6,
+   "place": "Marxdorf / Jahnsfelde",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "до полудня бой фронтом на юг с «Недерландом», затем вслед за 11 гв. тк"
+  },
+  {
+   "formation": "su_2gta_12gtk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.522,
+   "lat": 52.571,
+   "approx_km": 4,
+   "place": "Golzow / Gorgast",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "на плацдарме с утра 15.04 (первым из танковых армий)"
+  },
+  {
+   "formation": "su_2gta_12gtk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.455,
+   "lat": 52.574,
+   "approx_km": 4,
+   "place": "AltLangsow / Golzow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "49 гв. тбр (ПО) в Альт-Лангзове; 66 гв. тбр, 34 гв. мсбр в Гольцове, 48 гв. тбр в Горгасте"
+  },
+  {
+   "formation": "su_2gta_12gtk",
+   "date": "1945-04-17",
+   "lng": 14.277,
+   "lat": 52.576,
+   "approx_km": 5,
+   "place": "Platkow / Wulkow_N",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "49 гв. тбр к 7:00 на Альте-Одере у Кваппендорфа; корпус рокирован через переправу 1 мк у Платкова, 48 гв. тбр к вечеру у Вулькова"
+  },
+  {
+   "formation": "su_2gta_12gtk",
+   "date": "1945-04-18",
+   "lng": 14.126,
+   "lat": 52.614,
+   "approx_km": 3,
+   "place": "Ringenwalde / Reichenberg",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "атака на Херменсдорф не удалась; к 21:00 в лесу ЮВ Рингенвальде; 48 гв. тбр штурмует Райхенберг; Теляков ранен"
+  },
+  {
+   "formation": "su_2gta_12gtk",
+   "date": "1945-04-19",
+   "lng": 14.034,
+   "lat": 52.606,
+   "approx_km": 3,
+   "place": "Grunow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Райхенберг к 6:00; Грунов к 17:00 (34 гв. мсбр, 48 гв. тбр)"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.502,
+   "lat": 52.594,
+   "approx_km": 3,
+   "place": "Golzow / Genschmar",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "переправа с 21:00 15.04, сосредоточение Гольцов–Геншмар"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.39,
+   "lat": 52.644,
+   "approx_km": 3,
+   "place": "Letschin / Steintoch",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "47 гв. тбр СЗ Лечина, 65 гв. тбр у Штайнтоха на Хауптграбене, 50 гв. тбр ЮВ Лечина"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-17",
+   "lng": 14.266,
+   "lat": 52.638,
+   "approx_km": 4,
+   "place": "Neutrebbin / Quappendorf",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "бой за западный берег Фриландерштрома, плацдарм 47 гв. тбр; переправа построена только к вечеру (полоса 12 гв. ск)"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-18",
+   "lng": 14.151,
+   "lat": 52.635,
+   "approx_km": 3,
+   "place": "Gottesgabe / Batzlow",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "к 8:30 за Фриландерштромом; через Готтесгабе к Бацлову; в 21:00 подчинён 3 уд. А"
+  },
+  {
+   "formation": "su_2gta_9gtk",
+   "date": "1945-04-19",
+   "lng": 13.994,
+   "lat": 52.673,
+   "approx_km": 4,
+   "place": "Sternebeck",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "к 6:00 Франкенфельде, к 16:00 Харнекоп–Штернебек (прорыв «Вотана»), к 23:00 Штайнбек на Р158"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.552,
+   "lat": 52.568,
+   "approx_km": 3,
+   "place": "Gorgast",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "переправа с 3:30, сосредоточение у Горгаста к 13:30"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-16",
+   "time": "end",
+   "lng": 14.522,
+   "lat": 52.571,
+   "approx_km": 4,
+   "place": "Gorgast / Golzow",
+   "source": "IS7",
+   "reliability": "C",
+   "note": "во 2-м эшелоне армии"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-17",
+   "lng": 14.238,
+   "lat": 52.597,
+   "approx_km": 3,
+   "place": "Neuhardenberg",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "37 мбр от Гузова по Р167: Платков 17:30 (прорыв «Харденберг/Штайн»), Нойхарденберг 19:00, Карлсдорф к 2:00 18.04; 219 тбр к Вулькову"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-18",
+   "lng": 14.13,
+   "lat": 52.625,
+   "approx_km": 3,
+   "place": "Batzlow / Ringenwalde",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Рингенвальде к 12:00; 37 мбр ночной бой за Бацлов, разведка у Илова"
+  },
+  {
+   "formation": "su_2gta_1mk",
+   "date": "1945-04-19",
+   "lng": 14.008,
+   "lat": 52.65,
+   "approx_km": 6,
+   "place": "Predikow / Sternebeck",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Бацлов 7:00, Илов 10:00, Предиков 18:00, Штернебек; обход Претцеля, 37 мбр фл. Блюменталь 21:00, Верфтпфуль к 4:00 20.04; +30 км"
+  }
+ ],
+ "belts": [
+  {
+   "id": "belt_hkl",
+   "name_ru": "1-я (главная) полоса: передний край и Großkampf-HKL в Одербрухе",
+   "name_de": "Hauptkampflinie / Großkampf-HKL (1. Stellung)",
+   "places": [
+    "Hohensaaten",
+    "Neuglietzen",
+    "Zollbruecke",
+    "GuestebieserLoose",
+    "Karlsbiese",
+    "Neubarnim",
+    "Letschin",
+    "Zechin",
+    "AltLangsow",
+    "AltTucheband",
+    "Sachsendorf",
+    "Rathstock",
+    "Podelzig",
+    "Mallnow",
+    "Schoenfliess_L",
+    "Lebus"
+   ],
+   "points": [
+    {
+     "place": "Hohensaaten",
+     "lng": 14.1447,
+     "lat": 52.8739
+    },
+    {
+     "place": "Neuglietzen",
+     "lng": 14.1198,
+     "lat": 52.8369
+    },
+    {
+     "place": "Zollbruecke",
+     "lng": 14.2506,
+     "lat": 52.7883
+    },
+    {
+     "place": "GuestebieserLoose",
+     "lng": 14.2939,
+     "lat": 52.755
+    },
+    {
+     "place": "Karlsbiese",
+     "lng": 14.2899,
+     "lat": 52.7338
+    },
+    {
+     "place": "Neubarnim",
+     "lng": 14.3046,
+     "lat": 52.7032
+    },
+    {
+     "place": "Letschin",
+     "lng": 14.3786,
+     "lat": 52.6751
+    },
+    {
+     "place": "Zechin",
+     "lng": 14.4564,
+     "lat": 52.6126
+    },
+    {
+     "place": "AltLangsow",
+     "lng": 14.4175,
+     "lat": 52.5746
+    },
+    {
+     "place": "AltTucheband",
+     "lng": 14.5118,
+     "lat": 52.5372
+    },
+    {
+     "place": "Sachsendorf",
+     "lng": 14.477,
+     "lat": 52.5061
+    },
+    {
+     "place": "Rathstock",
+     "lng": 14.5415,
+     "lat": 52.5216
+    },
+    {
+     "place": "Podelzig",
+     "lng": 14.539,
+     "lat": 52.47
+    },
+    {
+     "place": "Mallnow",
+     "lng": 14.4902,
+     "lat": 52.4572
+    },
+    {
+     "place": "Schoenfliess_L",
+     "lng": 14.4698,
+     "lat": 52.4218
+    },
+    {
+     "place": "Lebus",
+     "lng": 14.5338,
+     "lat": 52.4271
+    }
+   ],
+   "depthKm": {
+    "value": 5,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "приказ Гитлера 30.03: главная линия сопротивления в 3–6 км за передовой; первые траншеи держали по отделению от роты (≈1/6 гарнизона)"
+   },
+   "fortification": 2,
+   "note": "Немецкий передний край вокруг Кюстринского плацдарма и далее по Одеру; к 16.04 часть первых траншей уже захвачена разведкой боем 14–15.04 (Цехин, Альт-Тухебанд). Густая сеть каналов (Позедин-Грабен, Хауптграбен) с подорванными мостами — естественные ПТ-рвы. 69 А: 1-я полоса 3–4 линии траншей. Пункты — привязка составителя по местам боёв 14–16.04 (C).",
+   "source": "IS7; DW_SH; CIT"
+  },
+  {
+   "id": "belt_hardenberg",
+   "name_ru": "2-я полоса: позиция «Харденберг» (Альте-Одер / Фриландерштром и кромка Зееловских высот)",
+   "name_de": "Hardenberg-Stellung",
+   "places": [
+    "Wriezen",
+    "Altwriezen",
+    "Kunersdorf_MOL",
+    "Neutrebbin",
+    "Quappendorf",
+    "Platkow",
+    "Gusow",
+    "Werbig",
+    "Seelow",
+    "Friedersdorf_MOL",
+    "Dolgelin",
+    "Libbenichen",
+    "Mallnow",
+    "Schoenfliess_L",
+    "Lebus"
+   ],
+   "points": [
+    {
+     "place": "Wriezen",
+     "lng": 14.1366,
+     "lat": 52.7168
+    },
+    {
+     "place": "Altwriezen",
+     "lng": 14.2087,
+     "lat": 52.7383
+    },
+    {
+     "place": "Kunersdorf_MOL",
+     "lng": 14.1467,
+     "lat": 52.6691
+    },
+    {
+     "place": "Neutrebbin",
+     "lng": 14.2675,
+     "lat": 52.6561
+    },
+    {
+     "place": "Quappendorf",
+     "lng": 14.2645,
+     "lat": 52.6194
+    },
+    {
+     "place": "Platkow",
+     "lng": 14.3246,
+     "lat": 52.5836
+    },
+    {
+     "place": "Gusow",
+     "lng": 14.3544,
+     "lat": 52.5712
+    },
+    {
+     "place": "Werbig",
+     "lng": 14.3834,
+     "lat": 52.5618
+    },
+    {
+     "place": "Seelow",
+     "lng": 14.3807,
+     "lat": 52.5318
+    },
+    {
+     "place": "Friedersdorf_MOL",
+     "lng": 14.4057,
+     "lat": 52.517
+    },
+    {
+     "place": "Dolgelin",
+     "lng": 14.406,
+     "lat": 52.4952
+    },
+    {
+     "place": "Libbenichen",
+     "lng": 14.4366,
+     "lat": 52.4776
+    },
+    {
+     "place": "Mallnow",
+     "lng": 14.4902,
+     "lat": 52.4572
+    },
+    {
+     "place": "Schoenfliess_L",
+     "lng": 14.4698,
+     "lat": 52.4218
+    },
+    {
+     "place": "Lebus",
+     "lng": 14.5338,
+     "lat": 52.4271
+    }
+   ],
+   "depthKm": {
+    "value": 3,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "2–3 линии траншей с заграждениями; в советской терминологии — «вторая полоса» (по Альте-Одеру и Фриландерштрому)"
+   },
+   "fortification": 3,
+   "note": "По Исаеву — передовая линия главной полосы обороны по Зееловским высотам и вдоль русла Альте-Одера; Врицен опоясан кольцом обороны. Зенитные полки 23-й зенад на прямой наводке: 53 и 185 — у Кунерсдорфа и Кваппендорфа, 7 — между Гузовом и Дольгелином, 35 и 140 — у Шёнфлиса; ок. 200 зениток (50% 88-мм) по обе стороны шоссе Зелов–Мюнхеберг. Прорвана 17.04 у Платкова/Гузова (1 мк, 5 уд. А) и у Зелова (4 гв. ск), 18.04 у Врицена (47 А).",
+   "source": "IS7; DW_SH"
+  },
+  {
+   "id": "belt_stein",
+   "name_ru": "отсечная позиция «Штайн» (между 2-й и 3-й полосами)",
+   "name_de": "Stein-Stellung",
+   "places": [
+    "Altfriedland",
+    "Neuhardenberg",
+    "Wulkow_N",
+    "Goerlsdorf",
+    "Lietzen",
+    "Falkenhagen_MOL"
+   ],
+   "points": [
+    {
+     "place": "Altfriedland",
+     "lng": 14.21,
+     "lat": 52.6262
+    },
+    {
+     "place": "Neuhardenberg",
+     "lng": 14.2384,
+     "lat": 52.5966
+    },
+    {
+     "place": "Wulkow_N",
+     "lng": 14.2297,
+     "lat": 52.5693
+    },
+    {
+     "place": "Goerlsdorf",
+     "lng": 14.3079,
+     "lat": 52.5355
+    },
+    {
+     "place": "Lietzen",
+     "lng": 14.342,
+     "lat": 52.4704
+    },
+    {
+     "place": "Falkenhagen_MOL",
+     "lng": 14.3169,
+     "lat": 52.4291
+    }
+   ],
+   "depthKm": {
+    "value": 2,
+    "source": "CIT",
+    "reliability": "C",
+    "note": "глубина не найдена"
+   },
+   "fortification": 2,
+   "note": "Позади главной линии; опора для контрударов подвижных резервов и отсечная позиция против выхода в тыл другим участкам. Достоверно привязаны два пункта прорыва: Платков/Нойхарденберг (1 мк, 17.04 вечером) и Гёрльсдорф на Флиссе (44 гв. тбр, 17.04, 22:00). Такая же отсечная позиция поперёк шоссе Франкфурт–Берлин. Остальные пункты — интерполяция составителя (C). en-wiki называет «Stein» второй линией, прорванной к ночи 17.04.",
+   "source": "IS7; EW_SH; CIT"
+  },
+  {
+   "id": "belt_wotan",
+   "name_ru": "3-я (тыловая) полоса: позиция «Вотан»",
+   "name_de": "Wotan-Stellung",
+   "places": [
+    "Eberswalde",
+    "Sternebeck",
+    "Harnekop",
+    "Proetzel",
+    "Batzlow",
+    "Grunow",
+    "Buckow",
+    "Muencheberg",
+    "Fuerstenwalde"
+   ],
+   "points": [
+    {
+     "place": "Eberswalde",
+     "lng": 13.7997,
+     "lat": 52.8351
+    },
+    {
+     "place": "Sternebeck",
+     "lng": 13.9939,
+     "lat": 52.673
+    },
+    {
+     "place": "Harnekop",
+     "lng": 14.0113,
+     "lat": 52.6871
+    },
+    {
+     "place": "Proetzel",
+     "lng": 13.9886,
+     "lat": 52.6372
+    },
+    {
+     "place": "Batzlow",
+     "lng": 14.1195,
+     "lat": 52.6323
+    },
+    {
+     "place": "Grunow",
+     "lng": 14.0341,
+     "lat": 52.6064
+    },
+    {
+     "place": "Buckow",
+     "lng": 14.0762,
+     "lat": 52.5672
+    },
+    {
+     "place": "Muencheberg",
+     "lng": 14.1405,
+     "lat": 52.5037
+    },
+    {
+     "place": "Fuerstenwalde",
+     "lng": 14.065,
+     "lat": 52.358
+    }
+   ],
+   "depthKm": {
+    "value": null,
+    "source": "IS7",
+    "reliability": "B",
+    "note": "цепь опорных пунктов; линия в 15–20 км за 1-й (de-wiki) / 10–15 миль (Ziemke)"
+   },
+   "fortification": 1,
+   "note": "Из-за нехватки материалов — цепочка подготовленных к круговой обороне городов и деревень, промежутки под огнём и с ПТ-препятствиями (Исаев); Ziemke/en-wiki: ПТ-рвы, позиции ПТО, сеть траншей и бункеров. Крупнейшие опорные пункты: Фюрстенвальде, Мюнхеберг, Штернебек, Эберсвальде; по директиве Жукова № 00567/оп важнейшие опорные пункты третьей полосы — Бацлов, Штернебек, Претцель, Грунов. Прорвана 19.04: 9 гв. тк у Харнекопа–Штернебека, 2 гв. ТА (1 мк, 12 гв. тк), 1 гв. ТА обходом Мюнхеберга.",
+   "source": "IS7; DW_SH; Z"
+  }
+ ],
+ "new_gazetteer": {
+  "Quappendorf": {
+   "query": "Quappendorf, Neuhardenberg",
+   "lng": 14.2645,
+   "lat": 52.6194,
+   "osm_display_name": "Quappendorf, Neuhardenberg, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Libbenichen": {
+   "query": "Libbenichen, Lindendorf",
+   "lng": 14.4366,
+   "lat": 52.4776,
+   "osm_display_name": "Libbenichen, Lindendorf, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Mallnow": {
+   "query": "Mallnow, Lebus",
+   "lng": 14.4902,
+   "lat": 52.4572,
+   "osm_display_name": "Mallnow, Lebus, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Schoenfliess_L": {
+   "query": "Schönfließ, Lebus",
+   "lng": 14.4698,
+   "lat": 52.4218,
+   "osm_display_name": "Schönfließ, Lebus, Märkisch-Oderland, Brandenburg, 15326, Deutschland"
+  },
+  "Podelzig": {
+   "query": "Podelzig",
+   "lng": 14.539,
+   "lat": 52.47,
+   "osm_display_name": "Podelzig, Lebus, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "AltTucheband": {
+   "query": "Alt Tucheband",
+   "lng": 14.5118,
+   "lat": 52.5372,
+   "osm_display_name": "Alt Tucheband, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Sietzing": {
+   "query": "Sietzing, Letschin",
+   "lng": 14.2868,
+   "lat": 52.6585,
+   "osm_display_name": "Sietzing, Letschin, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Karlsbiese": {
+   "query": "Karlsbiese, Neulewin",
+   "lng": 14.2899,
+   "lat": 52.7338,
+   "osm_display_name": "Karlsbiese, Neulewin, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, 16259, Deutschland"
+  },
+  "Neuglietzen": {
+   "query": "Neuglietzen, Bad Freienwalde",
+   "lng": 14.1198,
+   "lat": 52.8369,
+   "osm_display_name": "Neuglietzen, Bad Freienwalde (Oder), Oderaue, Märkisch-Oderland, Brandenburg, 16259, Deutschland"
+  },
+  "Zollbruecke": {
+   "query": "Zollbrücke, Oderaue",
+   "lng": 14.2506,
+   "lat": 52.7883,
+   "osm_display_name": "Zollbrücke, Zäckericker Loose, Oderaue, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, 16259, Deutschland"
+  },
+  "Ringenwalde": {
+   "query": "Ringenwalde, Märkische Höhe",
+   "lng": 14.1399,
+   "lat": 52.618,
+   "osm_display_name": "Ringenwalde, Märkische Höhe, Märkische Schweiz, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Ihlow_MOL": {
+   "query": "Ihlow, Oberbarnim",
+   "lng": 14.0709,
+   "lat": 52.6202,
+   "osm_display_name": "Ihlow, Oberbarnim, Märkische Schweiz, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Harnekop": {
+   "query": "Harnekop, Prötzel",
+   "lng": 14.0113,
+   "lat": 52.6871,
+   "osm_display_name": "Harnekop, Prötzel, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Wulkow_N": {
+   "query": "Wulkow, Neuhardenberg",
+   "lng": 14.2297,
+   "lat": 52.5693,
+   "osm_display_name": "Wulkow, Neuhardenberg, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Hermersdorf": {
+   "query": "Hermersdorf, Müncheberg",
+   "lng": 14.1856,
+   "lat": 52.5669,
+   "osm_display_name": "Hermersdorf, Müncheberg, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Obersdorf": {
+   "query": "Obersdorf, Müncheberg",
+   "lng": 14.1703,
+   "lat": 52.5402,
+   "osm_display_name": "Obersdorf, Müncheberg, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Trebnitz": {
+   "query": "Trebnitz, Müncheberg",
+   "lng": 14.2181,
+   "lat": 52.5334,
+   "osm_display_name": "Trebnitz, Müncheberg, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Goerlsdorf": {
+   "query": "Görlsdorf, Vierlinden",
+   "lng": 14.3079,
+   "lat": 52.5355,
+   "osm_display_name": "Görlsdorf, Vierlinden, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Jahnsfelde": {
+   "query": "Jahnsfelde, Müncheberg",
+   "lng": 14.2293,
+   "lat": 52.5102,
+   "osm_display_name": "Jahnsfelde, Müncheberg, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Worin": {
+   "query": "Worin, Vierlinden",
+   "lng": 14.2682,
+   "lat": 52.5191,
+   "osm_display_name": "Worin, Vierlinden, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Dahmsdorf": {
+   "query": "Dahmsdorf, Müncheberg",
+   "lng": 14.107,
+   "lat": 52.5312,
+   "osm_display_name": "Dahmsdorf, Müncheberg, Märkisch-Oderland, Brandenburg, 15374, Deutschland"
+  },
+  "Schoenfelde": {
+   "query": "Schönfelde, Steinhöfel",
+   "lng": 14.0488,
+   "lat": 52.4624,
+   "osm_display_name": "Schönfelde, Steinhöfel, Odervorland, Oder-Spree, Brandenburg, Deutschland"
+  },
+  "Genschmar": {
+   "query": "Genschmar, Bleyen-Genschmar",
+   "lng": 14.5112,
+   "lat": 52.6129,
+   "osm_display_name": "Genschmar, Bleyen-Genschmar, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Ludwigslust_S": {
+   "query": "Ludwigslust, Seelow",
+   "lng": 14.4138,
+   "lat": 52.521,
+   "osm_display_name": "Ludwigslust, Friedersdorf, Vierlinden, Seelow-Land, Märkisch-Oderland, Brandenburg, 15306, Deutschland"
+  },
+  "Lietzen": {
+   "query": "Lietzen",
+   "lng": 14.342,
+   "lat": 52.4704,
+   "osm_display_name": "Lietzen, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Falkenhagen_MOL": {
+   "query": "Falkenhagen (Mark)",
+   "lng": 14.3169,
+   "lat": 52.4291,
+   "osm_display_name": "Falkenhagen (Mark), Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Pritzhagen": {
+   "query": "Pritzhagen, Oberbarnim",
+   "lng": 14.1028,
+   "lat": 52.5887,
+   "osm_display_name": "Pritzhagen, Bollersdorf, Oberbarnim, Märkische Schweiz, Märkisch-Oderland, Brandenburg, 15377, Deutschland"
+  },
+  "Altwriezen": {
+   "query": "Altwriezen, Oderaue",
+   "lng": 14.2087,
+   "lat": 52.7383,
+   "osm_display_name": "Altwriezen/Beauregard, Wriezen, Oderaue, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Hathenow": {
+   "query": "Hathenow, Alt Tucheband",
+   "lng": 14.5353,
+   "lat": 52.5056,
+   "osm_display_name": "Hathenow, Alt Tucheband, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Manschnow": {
+   "query": "Manschnow, Küstriner Vorland",
+   "lng": 14.5538,
+   "lat": 52.5569,
+   "osm_display_name": "Manschnow, Küstriner Vorland, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Wuhden": {
+   "query": "Wuhden, Podelzig",
+   "lng": 14.5601,
+   "lat": 52.4704,
+   "osm_display_name": "Wuhden, Podelzig, Lebus, Märkisch-Oderland, Brandenburg, 15326, Deutschland"
+  },
+  "Klessin": {
+   "query": "Klessin, Podelzig",
+   "lng": 14.5559,
+   "lat": 52.4613,
+   "osm_display_name": "Klessin, Podelzig, Lebus, Märkisch-Oderland, Brandenburg, 15326, Deutschland"
+  },
+  "Kliestow": {
+   "query": "Kliestow, Frankfurt (Oder)",
+   "lng": 14.5114,
+   "lat": 52.3701,
+   "osm_display_name": "Kliestow, Frankfurt (Oder), Brandenburg, Deutschland"
+  },
+  "Steintoch": {
+   "query": "Steintoch, Letschin",
+   "lng": 14.4011,
+   "lat": 52.6138,
+   "osm_display_name": "Steintoch, Letschin, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Eggersdorf_M": {
+   "query": "Eggersdorf, Müncheberg",
+   "lng": 14.1043,
+   "lat": 52.4767,
+   "osm_display_name": "Eggersdorf, Müncheberg, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Kuestrin_Kietz": {
+   "query": "Küstrin-Kietz",
+   "lng": 14.6133,
+   "lat": 52.5693,
+   "osm_display_name": "Küstrin-Kietz, Küstriner Vorland, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Werftpfuhl": {
+   "query": "Werftpfuhl",
+   "lng": 13.7926,
+   "lat": 52.6603,
+   "osm_display_name": "Werftpfuhl, Hirschfelde, Werneuchen, Barnim, Brandenburg, 16356, Deutschland"
+  },
+  "Predikow": {
+   "query": "Prädikow, Prötzel",
+   "lng": 14.0211,
+   "lat": 52.6262,
+   "osm_display_name": "Prädikow, Prötzel, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Reichenow": {
+   "query": "Reichenow, Reichenow-Möglin",
+   "lng": 14.0753,
+   "lat": 52.6457,
+   "osm_display_name": "Reichenow, Reichenow-Möglin, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Gottesgabe": {
+   "query": "Gottesgabe, Neuhardenberg",
+   "lng": 14.183,
+   "lat": 52.638,
+   "osm_display_name": "Gottesgabe, Altfriedland, Neuhardenberg, Seelow-Land, Märkisch-Oderland, Brandenburg, 15320, Deutschland"
+  },
+  "Neuwerbig": {
+   "query": "Neu Werbig, Seelow",
+   "lng": 14.3931,
+   "lat": 52.552,
+   "osm_display_name": "Neu Werbig, Werbig, Seelow, Altbarnim, Märkisch-Oderland, Brandenburg, 15306, Deutschland"
+  },
+  "AltLangsow": {
+   "query": "Alt Langsow, Seelow",
+   "lng": 14.4175,
+   "lat": 52.5746,
+   "osm_display_name": "Alt Langsow, Werbig, Seelow, Altbarnim, Märkisch-Oderland, Brandenburg, 15306, Deutschland"
+  },
+  "Neubarnim": {
+   "query": "Neubarnim",
+   "lng": 14.3046,
+   "lat": 52.7032,
+   "osm_display_name": "Neubarnim, Letschin, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Sternebeck": {
+   "query": "Sternebeck",
+   "lng": 13.9939,
+   "lat": 52.673,
+   "osm_display_name": "Sternebeck, Prötzel, Barnim-Oderbruch, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "AltMahlisch": {
+   "query": "Alt Mahlisch",
+   "lng": 14.4053,
+   "lat": 52.4698,
+   "osm_display_name": "Alt Mahlisch, Fichtenhöhe, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Niederjesar": {
+   "query": "Niederjesar",
+   "lng": 14.4287,
+   "lat": 52.447,
+   "osm_display_name": "Niederjesar, Fichtenhöhe, Seelow-Land, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Rathstock": {
+   "query": "Rathstock",
+   "lng": 14.5415,
+   "lat": 52.5216,
+   "osm_display_name": "Rathstock, Alt Tucheband, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Muenchehofe": {
+   "query": "Münchehofe (Müncheberg, Altbarnim)",
+   "lng": 14.1386,
+   "lat": 52.5564,
+   "osm_display_name": "Münchehofe, Müncheberg, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland"
+  }
+ },
+ "gaps": [
+  "Точные полосы (от–до) немецких дивизий на 16.04 в доступных онлайн-источниках не приводятся (нужны карты Le Tissier «Zhukov at the Oder» / Lakowski «Seelower Höhen 1945»; на archive.org только выдача по подписке). Границы в sector_from/sector_to и frontageKm немецких дивизий — реконструкция по противостоящим советским корпусам (C).",
+  "Подчинение по корпусам расходится: de-wiki (таблица) ставит 9 пд и 20 пгд в XI тк СС, а 25 пгд и «Курмарк» в LVI тк; принято по Исаеву (LVI тк с 15.04 15:30: 9 пд, 20 пгд, «Мюнхеберг»; XI тк СС: 303, 169, 712 пд, «Курмарк»; CI ак: 5 егд, 606, 309 пд, резерв 25 пгд), что совпадает с постановкой задачи и en-wiki (Bahm).",
+  "Порядок 169/712 пд с севера на юг выведен из Исаева (25 ск — против 169 пд у Мальнова, 61 ск — против 712 пд у Шёнфлиса); прямого текста о границе нет.",
+  "Численность немецких дивизий — только «боевая численность» на 10.04 (Lakowski); списочная численность и данные для 18 пгд, «Нордланда», «Недерланда», 920 и 111 бригад не найдены. Орудия по дивизиям не найдены (известно только: 9 А — 2 625 стволов, из них 695 зенитных; три народно-артиллерийских корпуса: 406 у Врицена, 408 севернее Зелова, 404 южнее Зелова — ⚠ en-wiki OOB даёт 404 в XI тк СС и 408 в V горн. тк СС).",
+  "Число САУ 920 учебной бригады штурмовых орудий неизвестно (в таблице NARA на 13.04 отсутствует).",
+  "Противоречие по 18.04: de-wiki ставит 9 пд и «Мюнхеберг» на линии Платков–Гузов–Вербиг, а 18 пгд у Претцеля; по Исаеву этот рубеж прорван 17.04, а 18 пгд воевала у Вулькова/Херменсдорфа. В positions принят Исаев, расхождение отмечено.",
+  "Положение «Нордланда», 503 тб СС и «Недерланда» 16–17.04 (до прибытия) не найдено; 19.04 для «Нордланда» — по популярному сайту (C).",
+  "3 уд. А: численность дивизий и бронетехника по корпусам не найдены; 69 А: 77 гв. и 283 сд в ведомости не распознаны, 274 сд — искажённая строка; 41 сд по ведомости числится в 91 ск, по тексту Исаева — в 61 ск (16.04).",
+  "Танки 1 и 2 гв. ТА по корпусам не найдены (только итоги по армиям: 505 и 685 машин). 9 тк 3 уд. А — численность не найдена.",
+  "Плотность артиллерии известна только по армиям (Исаев по плану Жукова): 5 уд. А — 286, 47 А — 270, 8 гв. А — 268, 3 уд. А — 266, 69 А — 253 ствола и РС на 1 км участка прорыва; в среднем 189/км в 44-км полосе Гюстебизе–Подельциг; 5 уд. А — 1 999 стволов и 306 РС в 8-км полосе. По корпусам — нет.",
+  "Позиция «Штайн» — подтверждены только два пункта (Платков/Нойхарденберг и Гёрльсдорф); остальные — интерполяция. Отдельное «западное ответвление главной полосы» (Исаев, 18.04, полоса 5 уд. А и 79 ск) не привязано.",
+  "156 пд (резерв 9 А) и 32 пд СС (с 12.04 предназначена для сосредоточения за XI тк СС к 18.04) в выборку не включены — положения не найдены.",
+  "Дивизионные положения 19.04 для 303, 606, 309, 20 пгд — вывод (C); 19.04 9 пд — популярный сайт (C)."
+ ]
+}

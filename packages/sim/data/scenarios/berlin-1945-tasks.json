@@ -1,6 +1,6 @@
 {
  "id": "berlin-1945-tasks",
- "name": "Берлинская операция, 16.04–2.05.1945: исторические задачи армий и корпусов",
+ "name": "Берлинская операция, 16.04–2.05.1945: исторические задачи; на участке «Зеелов» — немецкие дивизии",
  "start": "1945-04-16T05:00",
  "end": "1945-05-02T05:00",
  "turnHours": 24,
@@ -623,17 +623,7 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_9a",
-   "type": "inf_corps",
-   "position": [
-    14.212,
-    52.77
-   ],
-   "personnel": 27186,
-   "tanks": 50,
-   "guns": 291,
-   "ammo": 1.5,
-   "fuel": 0.7,
-   "posture": "defend"
+   "note": "штаб корпуса: войска — дивизии ниже (детальный участок «Зеелов»)"
   },
   {
    "id": "de_lvi",
@@ -641,18 +631,7 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_9a",
-   "type": "panzer_corps",
-   "position": [
-    14.381,
-    52.532
-   ],
-   "personnel": 27186,
-   "tanks": 220,
-   "guns": 291,
-   "ammo": 1.5,
-   "fuel": 0.7,
-   "posture": "defend",
-   "note": "9 пдд, 20 пгд, тд «Мюнхеберг», 18 пгд; «Нордланд» подошла 17–18.04 (не учтена отдельно)"
+   "note": "штаб корпуса: войска — дивизии ниже (детальный участок «Зеелов»)"
   },
   {
    "id": "de_xi_ss",
@@ -660,17 +639,275 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_9a",
-   "type": "ss_panzer_corps",
+   "note": "штаб корпуса: войска — дивизии ниже (детальный участок «Зеелов»)"
+  },
+  {
+   "id": "de_5jd",
+   "name": "5-я егерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "type": "inf_div",
    "position": [
-    14.457,
-    52.479
+    14.157,
+    52.836
    ],
-   "personnel": 27186,
-   "tanks": 160,
-   "guns": 291,
+   "personnel": 4970,
+   "tanks": 11,
+   "guns": 60,
    "ammo": 1.5,
    "fuel": 0.7,
-   "posture": "defend"
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_606",
+   "name": "606-я дивизия особого назначения",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "type": "inf_div",
+   "position": [
+    14.297,
+    52.719
+   ],
+   "personnel": 5495,
+   "tanks": 0,
+   "guns": 60,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_309id",
+   "name": "309-я пехотная дивизия «Берлин»",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "type": "inf_div",
+   "position": [
+    14.333,
+    52.667
+   ],
+   "personnel": 5926,
+   "tanks": 95,
+   "guns": 60,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "включены приданные бригады/батальоны штурмовых орудий и тяжёлых танков; боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_25pzgd",
+   "name": "25-я моторизованная (танко-гренадерская) дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_ci",
+   "type": "pzgr_div",
+   "position": [
+    14.137,
+    52.717
+   ],
+   "personnel": 5605,
+   "tanks": 77,
+   "guns": 40,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_9fjd",
+   "name": "9-я парашютная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "type": "fj_div",
+   "position": [
+    14.405,
+    52.592
+   ],
+   "personnel": 6758,
+   "tanks": 8,
+   "guns": 50,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_20pzgd",
+   "name": "20-я танко-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "type": "pzgr_div",
+   "position": [
+    14.446,
+    52.534
+   ],
+   "personnel": 4848,
+   "tanks": 82,
+   "guns": 40,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "включены приданные бригады/батальоны штурмовых орудий и тяжёлых танков; боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_muencheberg",
+   "name": "танковая дивизия «Мюнхеберг»",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "type": "pz_div",
+   "position": [
+    14.381,
+    52.532
+   ],
+   "personnel": 1986,
+   "tanks": 36,
+   "guns": 30,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_18pzgd",
+   "name": "18-я танко-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "type": "pzgr_div",
+   "position": [
+    13.8,
+    52.835
+   ],
+   "personnel": 4000,
+   "tanks": 54,
+   "guns": 40,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "численность — оценка (C); боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_nordland",
+   "name": "11-я добровольческая танко-гренадерская дивизия СС «Нордланд»",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi",
+   "type": "ss_pzgr_div",
+   "position": [
+    14.153,
+    52.539
+   ],
+   "personnel": 4000,
+   "tanks": 32,
+   "guns": 40,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-17T05:00",
+   "note": "подошла 17–18.04; боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_303id",
+   "name": "303-я пехотная дивизия «Дёбериц»",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "type": "inf_div",
+   "position": [
+    14.442,
+    52.501
+   ],
+   "personnel": 3860,
+   "tanks": 24,
+   "guns": 60,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_169id",
+   "name": "169-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "type": "inf_div",
+   "position": [
+    14.515,
+    52.464
+   ],
+   "personnel": 5956,
+   "tanks": 0,
+   "guns": 60,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_712id",
+   "name": "712-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "type": "inf_div",
+   "position": [
+    14.502,
+    52.424
+   ],
+   "personnel": 4882,
+   "tanks": 0,
+   "guns": 60,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_kurmark",
+   "name": "танко-гренадерская дивизия «Курмарк»",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "type": "pzgr_div",
+   "position": [
+    14.406,
+    52.495
+   ],
+   "personnel": 4350,
+   "tanks": 92,
+   "guns": 40,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "включены приданные бригады/батальоны штурмовых орудий и тяжёлых танков; боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
+  },
+  {
+   "id": "de_nederland",
+   "name": "23-я добровольческая танко-гренадерская дивизия СС «Недерланд»",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss",
+   "type": "ss_pzgr_div",
+   "position": [
+    14.301,
+    52.48
+   ],
+   "personnel": 3000,
+   "tanks": 6,
+   "guns": 40,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-04-17T05:00",
+   "note": "численность — оценка (C); подошла 17–18.04; боевая численность на 10.04 (Lakowski по Исаеву); танки и штурмовые орудия на 13.04 (NARA T311); орудия — оценка (C)"
   },
   {
    "id": "de_ffo",
@@ -683,9 +920,9 @@
     14.558,
     52.348
    ],
-   "personnel": 10195,
+   "personnel": 28036,
    "tanks": 10,
-   "guns": 109,
+   "guns": 400,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -701,9 +938,9 @@
     14.625,
     52.2
    ],
-   "personnel": 20390,
+   "personnel": 56072,
    "tanks": 72,
-   "guns": 218,
+   "guns": 800,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -843,6 +1080,96 @@
  ],
  "orders": [
   {
+   "id": "de_169id@1945-04-15T18:00:defend",
+   "formation": "de_169id",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_18pzgd@1945-04-15T18:00:hold",
+   "formation": "de_18pzgd",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_20pzgd@1945-04-15T18:00:hold",
+   "formation": "de_20pzgd",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_25pzgd@1945-04-15T18:00:defend",
+   "formation": "de_25pzgd",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_303id@1945-04-15T18:00:defend",
+   "formation": "de_303id",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_309id@1945-04-15T18:00:defend",
+   "formation": "de_309id",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_5jd@1945-04-15T18:00:defend",
+   "formation": "de_5jd",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_606@1945-04-15T18:00:defend",
+   "formation": "de_606",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_712id@1945-04-15T18:00:defend",
+   "formation": "de_712id",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_9fjd@1945-04-15T18:00:hold",
+   "formation": "de_9fjd",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус"
+  },
+  {
    "id": "de_berlin@1945-04-15T18:00:hold",
    "formation": "de_berlin",
    "task": "hold",
@@ -850,14 +1177,6 @@
    "issuedAt": "1945-04-15T17:00",
    "source": "script",
    "note": "оборона Берлина"
-  },
-  {
-   "id": "de_ci@1945-04-15T18:00:defend",
-   "formation": "de_ci",
-   "task": "defend",
-   "target": null,
-   "issuedAt": "1945-04-15T17:00",
-   "source": "script"
   },
   {
    "id": "de_ffo@1945-04-15T18:00:hold",
@@ -869,13 +1188,13 @@
    "note": "«крепость» Франкфурт"
   },
   {
-   "id": "de_lvi@1945-04-15T18:00:hold",
-   "formation": "de_lvi",
-   "task": "hold",
+   "id": "de_kurmark@1945-04-15T18:00:defend",
+   "formation": "de_kurmark",
+   "task": "defend",
    "target": null,
    "issuedAt": "1945-04-15T17:00",
    "source": "script",
-   "note": "держать Зееловские высоты (приказ Гитлера)"
+   "note": "задача XI танковый корпус СС"
   },
   {
    "id": "de_lvii@1945-04-15T18:00:defend",
@@ -884,6 +1203,33 @@
    "target": null,
    "issuedAt": "1945-04-15T17:00",
    "source": "script"
+  },
+  {
+   "id": "de_muencheberg@1945-04-15T18:00:hold",
+   "formation": "de_muencheberg",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nederland@1945-04-15T18:00:defend",
+   "formation": "de_nederland",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nordland@1945-04-15T18:00:hold",
+   "formation": "de_nordland",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус"
   },
   {
    "id": "de_oder@1945-04-15T18:00:defend",
@@ -920,14 +1266,6 @@
   {
    "id": "de_v_ss@1945-04-15T18:00:defend",
    "formation": "de_v_ss",
-   "task": "defend",
-   "target": null,
-   "issuedAt": "1945-04-15T17:00",
-   "source": "script"
-  },
-  {
-   "id": "de_xi_ss@1945-04-15T18:00:defend",
-   "formation": "de_xi_ss",
    "task": "defend",
    "target": null,
    "issuedAt": "1945-04-15T17:00",
@@ -1159,13 +1497,49 @@
    "note": "прорыв на Зееловских высотах"
   },
   {
-   "id": "de_xi_ss@1945-04-17T18:00:hold",
-   "formation": "de_xi_ss",
+   "id": "de_169id@1945-04-17T18:00:hold",
+   "formation": "de_169id",
    "task": "hold",
    "target": null,
    "issuedAt": "1945-04-17T18:00",
    "source": "script",
-   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE)"
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_303id@1945-04-17T18:00:hold",
+   "formation": "de_303id",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_712id@1945-04-17T18:00:hold",
+   "formation": "de_712id",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_kurmark@1945-04-17T18:00:hold",
+   "formation": "de_kurmark",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nederland@1945-04-17T18:00:hold",
+   "formation": "de_nederland",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-17T18:00",
+   "source": "script",
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС"
   },
   {
    "id": "su_1gta@1945-04-17T18:00:attack",
@@ -1236,13 +1610,49 @@
    "source": "script"
   },
   {
-   "id": "de_lvi@1945-04-18T18:00:withdraw",
-   "formation": "de_lvi",
+   "id": "de_18pzgd@1945-04-18T18:00:withdraw",
+   "formation": "de_18pzgd",
    "task": "withdraw",
    "target": "Muencheberg",
    "issuedAt": "1945-04-18T18:00",
    "source": "script",
-   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE)"
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_20pzgd@1945-04-18T18:00:withdraw",
+   "formation": "de_20pzgd",
+   "task": "withdraw",
+   "target": "Muencheberg",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_9fjd@1945-04-18T18:00:withdraw",
+   "formation": "de_9fjd",
+   "task": "withdraw",
+   "target": "Muencheberg",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_muencheberg@1945-04-18T18:00:withdraw",
+   "formation": "de_muencheberg",
+   "task": "withdraw",
+   "target": "Muencheberg",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nordland@1945-04-18T18:00:withdraw",
+   "formation": "de_nordland",
+   "task": "withdraw",
+   "target": "Muencheberg",
+   "issuedAt": "1945-04-18T18:00",
+   "source": "script",
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус"
   },
   {
    "id": "su_13a@1945-04-18T18:00:attack",
@@ -1285,20 +1695,85 @@
    "source": "script"
   },
   {
-   "id": "de_ci@1945-04-19T18:00:withdraw",
-   "formation": "de_ci",
-   "task": "withdraw",
-   "target": "Eberswalde",
-   "issuedAt": "1945-04-19T18:00",
-   "source": "script"
-  },
-  {
-   "id": "de_lvi@1945-04-19T18:00:withdraw",
-   "formation": "de_lvi",
+   "id": "de_18pzgd@1945-04-19T18:00:withdraw",
+   "formation": "de_18pzgd",
    "task": "withdraw",
    "target": "Erkner",
    "issuedAt": "1945-04-19T18:00",
-   "source": "script"
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_20pzgd@1945-04-19T18:00:withdraw",
+   "formation": "de_20pzgd",
+   "task": "withdraw",
+   "target": "Erkner",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_25pzgd@1945-04-19T18:00:withdraw",
+   "formation": "de_25pzgd",
+   "task": "withdraw",
+   "target": "Eberswalde",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_309id@1945-04-19T18:00:withdraw",
+   "formation": "de_309id",
+   "task": "withdraw",
+   "target": "Eberswalde",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_5jd@1945-04-19T18:00:withdraw",
+   "formation": "de_5jd",
+   "task": "withdraw",
+   "target": "Eberswalde",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_606@1945-04-19T18:00:withdraw",
+   "formation": "de_606",
+   "task": "withdraw",
+   "target": "Eberswalde",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_9fjd@1945-04-19T18:00:withdraw",
+   "formation": "de_9fjd",
+   "task": "withdraw",
+   "target": "Erkner",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_muencheberg@1945-04-19T18:00:withdraw",
+   "formation": "de_muencheberg",
+   "task": "withdraw",
+   "target": "Erkner",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nordland@1945-04-19T18:00:withdraw",
+   "formation": "de_nordland",
+   "task": "withdraw",
+   "target": "Erkner",
+   "issuedAt": "1945-04-19T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
   },
   {
    "id": "de_pzk_gd@1945-04-19T18:00:withdraw",
@@ -1384,21 +1859,94 @@
    "source": "script"
   },
   {
-   "id": "de_lvi@1945-04-20T18:00:withdraw",
-   "formation": "de_lvi",
+   "id": "de_169id@1945-04-20T18:00:withdraw",
+   "formation": "de_169id",
+   "task": "withdraw",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_18pzgd@1945-04-20T18:00:withdraw",
+   "formation": "de_18pzgd",
    "task": "withdraw",
    "target": "B_Koepenick",
    "issuedAt": "1945-04-20T18:00",
    "source": "script",
-   "note": "в город (LT_RACE)"
+   "note": "в город (LT_RACE); задача LVI танковый корпус"
   },
   {
-   "id": "de_xi_ss@1945-04-20T18:00:withdraw",
-   "formation": "de_xi_ss",
+   "id": "de_20pzgd@1945-04-20T18:00:withdraw",
+   "formation": "de_20pzgd",
+   "task": "withdraw",
+   "target": "B_Koepenick",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "в город (LT_RACE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_303id@1945-04-20T18:00:withdraw",
+   "formation": "de_303id",
    "task": "withdraw",
    "target": "Fuerstenwalde",
    "issuedAt": "1945-04-20T18:00",
-   "source": "script"
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_712id@1945-04-20T18:00:withdraw",
+   "formation": "de_712id",
+   "task": "withdraw",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_9fjd@1945-04-20T18:00:withdraw",
+   "formation": "de_9fjd",
+   "task": "withdraw",
+   "target": "B_Koepenick",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "в город (LT_RACE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_kurmark@1945-04-20T18:00:withdraw",
+   "formation": "de_kurmark",
+   "task": "withdraw",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_muencheberg@1945-04-20T18:00:withdraw",
+   "formation": "de_muencheberg",
+   "task": "withdraw",
+   "target": "B_Koepenick",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "в город (LT_RACE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nederland@1945-04-20T18:00:withdraw",
+   "formation": "de_nederland",
+   "task": "withdraw",
+   "target": "Fuerstenwalde",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nordland@1945-04-20T18:00:withdraw",
+   "formation": "de_nordland",
+   "task": "withdraw",
+   "target": "B_Koepenick",
+   "issuedAt": "1945-04-20T18:00",
+   "source": "script",
+   "note": "в город (LT_RACE); задача LVI танковый корпус"
   },
   {
    "id": "su_2gta@1945-04-20T18:00:attack",
@@ -1649,22 +2197,94 @@
    "note": "правым крылом на юг — Шармютцельзе (LT_HALBE)"
   },
   {
-   "id": "de_lvi@1945-04-23T18:00:defend",
-   "formation": "de_lvi",
-   "task": "defend",
-   "target": "B_Neukoelln",
-   "issuedAt": "1945-04-23T18:00",
-   "source": "script",
-   "note": "секторы A–E (LT_RACE)"
-  },
-  {
-   "id": "de_xi_ss@1945-04-23T18:00:withdraw",
-   "formation": "de_xi_ss",
+   "id": "de_169id@1945-04-23T18:00:withdraw",
+   "formation": "de_169id",
    "task": "withdraw",
    "target": "Storkow",
    "issuedAt": "1945-04-23T18:00",
    "source": "script",
-   "note": "разрешение на отход 9 А (LT_HALBE)"
+   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_18pzgd@1945-04-23T18:00:defend",
+   "formation": "de_18pzgd",
+   "task": "defend",
+   "target": "B_Neukoelln",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_20pzgd@1945-04-23T18:00:defend",
+   "formation": "de_20pzgd",
+   "task": "defend",
+   "target": "B_Neukoelln",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_303id@1945-04-23T18:00:withdraw",
+   "formation": "de_303id",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_712id@1945-04-23T18:00:withdraw",
+   "formation": "de_712id",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_9fjd@1945-04-23T18:00:defend",
+   "formation": "de_9fjd",
+   "task": "defend",
+   "target": "B_Neukoelln",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_kurmark@1945-04-23T18:00:withdraw",
+   "formation": "de_kurmark",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_muencheberg@1945-04-23T18:00:defend",
+   "formation": "de_muencheberg",
+   "task": "defend",
+   "target": "B_Neukoelln",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nederland@1945-04-23T18:00:withdraw",
+   "formation": "de_nederland",
+   "task": "withdraw",
+   "target": "Storkow",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "разрешение на отход 9 А (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nordland@1945-04-23T18:00:defend",
+   "formation": "de_nordland",
+   "task": "defend",
+   "target": "B_Neukoelln",
+   "issuedAt": "1945-04-23T18:00",
+   "source": "script",
+   "note": "секторы A–E (LT_RACE); задача LVI танковый корпус"
   },
   {
    "id": "de_xx@1945-04-23T18:00:attack",
@@ -1957,12 +2577,31 @@
    "source": "script"
   },
   {
-   "id": "de_lvi@1945-04-26T18:00:defend",
-   "formation": "de_lvi",
+   "id": "de_18pzgd@1945-04-26T18:00:defend",
+   "formation": "de_18pzgd",
    "task": "defend",
    "target": "B_Bendlerblock",
    "issuedAt": "1945-04-26T18:00",
-   "source": "script"
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_20pzgd@1945-04-26T18:00:defend",
+   "formation": "de_20pzgd",
+   "task": "defend",
+   "target": "B_Bendlerblock",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_9fjd@1945-04-26T18:00:defend",
+   "formation": "de_9fjd",
+   "task": "defend",
+   "target": "B_Bendlerblock",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
   },
   {
    "id": "de_lvii@1945-04-26T18:00:defend",
@@ -1971,6 +2610,24 @@
    "target": null,
    "issuedAt": "1945-04-26T18:00",
    "source": "script"
+  },
+  {
+   "id": "de_muencheberg@1945-04-26T18:00:defend",
+   "formation": "de_muencheberg",
+   "task": "defend",
+   "target": "B_Bendlerblock",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_nordland@1945-04-26T18:00:defend",
+   "formation": "de_nordland",
+   "task": "defend",
+   "target": "B_Bendlerblock",
+   "issuedAt": "1945-04-26T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
   },
   {
    "id": "de_pzk_gd@1945-04-26T18:00:defend",
@@ -2068,21 +2725,85 @@
    "note": "уничтожение окружённой группировки"
   },
   {
-   "id": "de_ci@1945-04-27T18:00:withdraw",
-   "formation": "de_ci",
-   "task": "withdraw",
-   "target": "Zehdenick",
-   "issuedAt": "1945-04-27T18:00",
-   "source": "script"
-  },
-  {
-   "id": "de_xi_ss@1945-04-27T18:00:withdraw",
-   "formation": "de_xi_ss",
+   "id": "de_169id@1945-04-27T18:00:withdraw",
+   "formation": "de_169id",
    "task": "withdraw",
    "target": "Halbe",
    "issuedAt": "1945-04-27T18:00",
    "source": "script",
-   "note": "сосредоточение для прорыва"
+   "note": "сосредоточение для прорыва; задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_25pzgd@1945-04-27T18:00:withdraw",
+   "formation": "de_25pzgd",
+   "task": "withdraw",
+   "target": "Zehdenick",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_303id@1945-04-27T18:00:withdraw",
+   "formation": "de_303id",
+   "task": "withdraw",
+   "target": "Halbe",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "сосредоточение для прорыва; задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_309id@1945-04-27T18:00:withdraw",
+   "formation": "de_309id",
+   "task": "withdraw",
+   "target": "Zehdenick",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_5jd@1945-04-27T18:00:withdraw",
+   "formation": "de_5jd",
+   "task": "withdraw",
+   "target": "Zehdenick",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_606@1945-04-27T18:00:withdraw",
+   "formation": "de_606",
+   "task": "withdraw",
+   "target": "Zehdenick",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "задача CI армейский корпус"
+  },
+  {
+   "id": "de_712id@1945-04-27T18:00:withdraw",
+   "formation": "de_712id",
+   "task": "withdraw",
+   "target": "Halbe",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "сосредоточение для прорыва; задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_kurmark@1945-04-27T18:00:withdraw",
+   "formation": "de_kurmark",
+   "task": "withdraw",
+   "target": "Halbe",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "сосредоточение для прорыва; задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nederland@1945-04-27T18:00:withdraw",
+   "formation": "de_nederland",
+   "task": "withdraw",
+   "target": "Halbe",
+   "issuedAt": "1945-04-27T18:00",
+   "source": "script",
+   "note": "сосредоточение для прорыва; задача XI танковый корпус СС"
   },
   {
    "id": "su_1gta@1945-04-27T18:00:attack",
@@ -2118,12 +2839,57 @@
    "source": "script"
   },
   {
+   "id": "de_169id@1945-04-28T15:00:breakout",
+   "formation": "de_169id",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script",
+   "note": "прорыв на запад тремя группами (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_303id@1945-04-28T15:00:breakout",
+   "formation": "de_303id",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script",
+   "note": "прорыв на запад тремя группами (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_712id@1945-04-28T15:00:breakout",
+   "formation": "de_712id",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script",
+   "note": "прорыв на запад тремя группами (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
    "id": "de_ffo@1945-04-28T15:00:breakout",
    "formation": "de_ffo",
    "task": "breakout",
    "target": "Beelitz",
    "issuedAt": "1945-04-28T15:00",
    "source": "script"
+  },
+  {
+   "id": "de_kurmark@1945-04-28T15:00:breakout",
+   "formation": "de_kurmark",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script",
+   "note": "прорыв на запад тремя группами (LT_HALBE); задача XI танковый корпус СС"
+  },
+  {
+   "id": "de_nederland@1945-04-28T15:00:breakout",
+   "formation": "de_nederland",
+   "task": "breakout",
+   "target": "Beelitz",
+   "issuedAt": "1945-04-28T15:00",
+   "source": "script",
+   "note": "прорыв на запад тремя группами (LT_HALBE); задача XI танковый корпус СС"
   },
   {
    "id": "de_v@1945-04-28T15:00:breakout",
@@ -2141,15 +2907,6 @@
    "issuedAt": "1945-04-28T15:00",
    "source": "script",
    "note": "арьергард прорыва"
-  },
-  {
-   "id": "de_xi_ss@1945-04-28T15:00:breakout",
-   "formation": "de_xi_ss",
-   "task": "breakout",
-   "target": "Beelitz",
-   "issuedAt": "1945-04-28T15:00",
-   "source": "script",
-   "note": "прорыв на запад тремя группами (LT_HALBE)"
   },
   {
    "id": "de_iii_ss@1945-04-28T18:00:withdraw",
@@ -2256,7 +3013,7 @@
   "su_1bf: делится 636800 чел., 1634 танков, 15534 орудий",
   "su_1uf: делится 355720 чел., 837 танков, 12271 орудий",
   "su_2bf: делится 353280 чел., 951 танков, 6642 орудий",
-  "de_9a: делится 112143 чел., 0 танков, 1200 орудий — в наборе данных 344 орудия — видимо, без зенитных и миномётов; принято 1 200 (C)",
+  "de_9a: делится 84107 чел., 430 танков, 1200 орудий — численность 9 А в бою 112 143; доля 0,75 — боевая численность (Kampfstärke), к которой приведены дивизии участка «Зеелов»; остаток — крепости Франкфурт и V гск СС (C)",
   "de_3pza: делится 95000 чел., 242 танков, 650 орудий — численность — оценка (C)",
   "de_4pza: делится 110000 чел., 0 танков, 900 орудий — только корпуса против главной группировки 1 УФ; оценка (C)",
   "de_12a: делится 55000 чел., 36 танков, 300 орудий"
