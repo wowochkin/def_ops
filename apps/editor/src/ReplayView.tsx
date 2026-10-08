@@ -22,7 +22,8 @@ const ddmm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}`;
 
 /** Слои переигровки, которые удобно переключать одной кнопкой. */
 const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] = [
-  { key: 'hist', title: 'История', match: (id) => id.startsWith('hist-') },
+  { key: 'ghosts', title: 'Ист. положения', match: (id) => id === 'hist-units' },
+  { key: 'hfront', title: 'Ист. фронт', match: (id) => id === 'hist-front' },
   { key: 'front', title: 'Фронт', match: (id) => id === 'sim-front' },
   { key: 'combat', title: 'Бои', match: (id) => id === 'sim-combat' },
   { key: 'theatre', title: 'Рубежи', match: (id) => id === 'theatre' },
@@ -130,7 +131,7 @@ export function ReplayView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdito
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
-          <Legend />
+          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
         </> : <Empty busy={!!busy} />}
@@ -254,19 +255,24 @@ function Player({ start, end, time, setTime, events, onEvent }: { start: string;
   );
 }
 
-function Legend() {
+function Legend({ on, toggle }: { on: (key: string) => boolean; toggle: (key: string) => void }) {
   const [open, setOpen] = useState(true);
+  const rows: { key?: string; cls: string; text: string; mark?: string }[] = [
+    { cls: 'lg-own', text: 'советские войска' },
+    { cls: 'lg-enemy', text: 'немецкие войска' },
+    { key: 'ghosts', cls: 'lg-ghost', text: 'историческое положение' },
+    { key: 'front', cls: 'lg-front', text: 'линия фронта (расчёт)' },
+    { key: 'hfront', cls: 'lg-hfront', text: 'линия фронта (история)' },
+    { key: 'combat', cls: 'lg-arrow', text: 'бой за ход' },
+    { cls: 'lg-flag', text: 'Знамя Победы', mark: '⚑' },
+  ];
   return (
     <div className={`legend${open ? '' : ' closed'}`}>
       <button className="lg-h" onClick={() => setOpen(!open)}>Условные обозначения {open ? '▾' : '▸'}</button>
       {open && <div className="lg-b">
-        <div><i className="lg-own" />советские войска</div>
-        <div><i className="lg-enemy" />немецкие войска</div>
-        <div><i className="lg-ghost" />историческое положение</div>
-        <div><i className="lg-front" />линия фронта (расчёт)</div>
-        <div><i className="lg-hfront" />линия фронта (история)</div>
-        <div><i className="lg-arrow" />бой за ход</div>
-        <div><i className="lg-flag">⚑</i>Знамя Победы</div>
+        {rows.map((r) => r.key
+          ? <button key={r.text} className={`lg-row${on(r.key) ? '' : ' off'}`} title={on(r.key) ? 'Скрыть на карте' : 'Показать на карте'} onClick={() => toggle(r.key!)}><i className={r.cls}>{r.mark}</i>{r.text}{!on(r.key) && <span className="lg-eye">скрыто</span>}</button>
+          : <div key={r.text} className="lg-row"><i className={r.cls}>{r.mark}</i>{r.text}</div>)}
       </div>}
     </div>
   );
