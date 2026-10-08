@@ -1,0 +1,362 @@
+{
+  "id": "vistula-oder-1945",
+  "name": "Висла — Одер, январь–февраль 1945 (контрольная операция)",
+  "bbox": [
+    14.0,
+    49.6,
+    22.6,
+    53.8
+  ],
+  "cellKm": 2,
+  "defaultTerrain": "open",
+  "grid": {
+    "dLng": 0.03,
+    "dLat": 0.018
+  },
+  "landcover": {
+    "source": "esa-worldcover-2021",
+    "rules": {
+      "water": 0.5,
+      "urban": 0.35,
+      "marsh": 0.3,
+      "forest": 0.5
+    }
+  },
+  "relief": {
+    "source": "copernicus-dem-90",
+    "smoothPx": 5,
+    "hillsReliefM": 35,
+    "hillsSlope": 0.025
+  },
+  "gazetteers": [
+    "../../../../../docs/sources/vistula-oder-1945.json"
+  ],
+  "rivers": {
+    "major": [
+      "Wisła",
+      "Odra",
+      "Oder",
+      "Warta",
+      "Pilica",
+      "Narew",
+      "Bzura",
+      "Noteć",
+      "Nida",
+      "Prosna"
+    ],
+    "minor": [
+      "Radomka",
+      "Kamienna",
+      "Czarna",
+      "Widawka",
+      "Ner",
+      "Obra",
+      "Barycz",
+      "Nysa Kłodzka",
+      "Kłodnica",
+      "Mała Panew",
+      "Wieprz",
+      "Kanał Bydgoski",
+      "Drwęca",
+      "Brda",
+      "Gwda",
+      "Wkra",
+      "Rawka",
+      "Wolbórka",
+      "Mierzawa",
+      "Czarna Nida",
+      "Kanał Obry",
+      "Kanał Ślesiński",
+      "Bóbr",
+      "Nysa Łużycka",
+      "San",
+      "Wisłoka",
+      "Dunajec",
+      "Przemsza",
+      "Liswarta"
+    ]
+  },
+  "roads": {
+    "note": "Шоссе — имперский автобан Бреслау — Берлин и Бреслау — Гляйвиц (Reichsautobahn, A 4 / A 18 сегодня), построенные к 1945 г. (C); остальные магистрали — как дороги",
+    "highwayRefs": [
+      "A4",
+      "A 4",
+      "A18",
+      "A 18",
+      "A12",
+      "A 12",
+      "E40",
+      "E36"
+    ],
+    "roadHighways": [
+      "trunk",
+      "primary"
+    ],
+    "simplifyDeg": 0.008
+  },
+  "rail": {
+    "simplifyDeg": 0.008
+  },
+  "bridges": {
+    "auto": "пересечения дорог и железных дорог с большими реками",
+    "dedupeKm": 1.5,
+    "rules": [
+      {
+        "rivers": [
+          "Wisła"
+        ],
+        "destroyedAt": "1944-09-15T00:00",
+        "note": "мосты через Вислу на фронте взорваны в 1944 г.; Варшава — 13.09.1944 (C)"
+      },
+      {
+        "rivers": [
+          "Pilica",
+          "Nida"
+        ],
+        "destroyedAt": "1945-01-14T00:00",
+        "note": "подрывались при отходе; часть захвачена передовыми отрядами (C)"
+      }
+    ],
+    "crossings": [
+      {
+        "id": "x_magnuszew",
+        "name": "переправы Магнушевского плацдарма",
+        "at": "Magnuszew",
+        "openFrom": "1944-08-15T00:00",
+        "note": "C"
+      },
+      {
+        "id": "x_mniszew",
+        "name": "переправы у Мнишева",
+        "at": "Mniszew",
+        "openFrom": "1944-08-15T00:00",
+        "note": "C"
+      },
+      {
+        "id": "x_pulawy",
+        "name": "переправы Пулавского плацдарма",
+        "at": "Pulawy",
+        "openFrom": "1944-08-15T00:00",
+        "note": "C"
+      },
+      {
+        "id": "x_deblin",
+        "name": "переправа у Демблина",
+        "at": "Deblin",
+        "openFrom": "1944-08-15T00:00",
+        "note": "C"
+      },
+      {
+        "id": "x_baranow",
+        "name": "переправы Сандомирского плацдарма у Баранува",
+        "at": "Baranow",
+        "openFrom": "1944-08-15T00:00",
+        "note": "C"
+      },
+      {
+        "id": "x_sandomierz",
+        "name": "переправы у Сандомира",
+        "at": "Sandomierz",
+        "openFrom": "1944-08-20T00:00",
+        "note": "C"
+      },
+      {
+        "id": "x_polaniec",
+        "name": "переправы у Поланца",
+        "at": "Polaniec",
+        "openFrom": "1944-08-15T00:00",
+        "note": "C"
+      },
+      {
+        "id": "x_praga",
+        "name": "переправы у Варшавы",
+        "at": "Praga_W",
+        "openFrom": "1945-01-17T12:00",
+        "note": "после освобождения Варшавы 17.01 (C)"
+      }
+    ]
+  },
+  "lines": [
+    {
+      "id": "de_hkl_mag_pul",
+      "name": "Главная полоса перед Магнушевским и Пулавским плацдармами (Hauptkampflinie)",
+      "side": "de",
+      "fortification": 2,
+      "places": [
+        [
+          20.918,
+          52.377
+        ],
+        [
+          21.027,
+          52.265
+        ],
+        [
+          21.28,
+          51.846
+        ],
+        [
+          21.183,
+          51.785
+        ],
+        [
+          20.95,
+          51.648
+        ],
+        [
+          21.324,
+          51.688
+        ],
+        [
+          21.383,
+          51.762
+        ],
+        [
+          21.865,
+          51.562
+        ],
+        [
+          21.813,
+          51.474
+        ],
+        [
+          21.584,
+          51.356
+        ],
+        [
+          21.985,
+          51.426
+        ]
+      ],
+      "depthKm": 5,
+      "note": "по линии фронта 12.01 из набора данных (B/C); 9 А"
+    },
+    {
+      "id": "de_hkl_baranow",
+      "name": "Главная полоса перед Сандомирским плацдармом (Hauptkampflinie)",
+      "side": "de",
+      "fortification": 2,
+      "places": [
+        [
+          21.855,
+          50.885
+        ],
+        [
+          21.666,
+          50.886
+        ],
+        [
+          21.424,
+          50.802
+        ],
+        [
+          21.084,
+          50.776
+        ],
+        [
+          21.005,
+          50.591
+        ],
+        [
+          20.939,
+          50.438
+        ],
+        [
+          20.809,
+          50.299
+        ],
+        [
+          21.075,
+          50.309
+        ],
+        [
+          21.423,
+          50.289
+        ],
+        [
+          21.41,
+          50.051
+        ]
+      ],
+      "depthKm": 5,
+      "note": "по линии фронта 12.01 (B/C); 4 ТА"
+    },
+    {
+      "id": "de_owb",
+      "name": "Укреплённый район Одер — Варта (Festungsfront Oder-Warthe-Bogen, Мезерицкий УР)",
+      "side": "de",
+      "fortification": 3,
+      "places": [
+        [
+          15.5,
+          52.6
+        ],
+        [
+          15.58,
+          52.44
+        ],
+        [
+          15.6,
+          52.33
+        ],
+        [
+          15.62,
+          52.2
+        ]
+      ],
+      "depthKm": 4,
+      "note": "положение — приблизительно по Мезерицу и озёрам Обры (C); гарнизон слабый — ополчение и учебные части (Z)"
+    }
+  ],
+  "areas": {
+    "fromGazetteer": {
+      "radiusKm": 4
+    },
+    "explicit": [
+      {
+        "id": "magnuszew_bh",
+        "name": "Магнушевский плацдарм",
+        "places": [
+          "Magnuszew",
+          "Warka",
+          "Studzianki",
+          "Mniszew"
+        ]
+      },
+      {
+        "id": "baranow_bh",
+        "name": "Сандомирский плацдарм",
+        "places": [
+          "Baranow",
+          "Sandomierz",
+          "Opatow",
+          "Szydlow",
+          "Stopnica",
+          "Polaniec"
+        ]
+      },
+      {
+        "id": "silesia",
+        "name": "Силезский промышленный район",
+        "places": [
+          "Katowice",
+          "Gliwice",
+          "Bytom",
+          "Chorzow",
+          "Sosnowiec"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    "Земной покров: ESA WorldCover 10 m 2021 v200 (CC BY 4.0), © ESA WorldCover project / Copernicus Sentinel data",
+    "Рельеф: Copernicus DEM GLO-90 (© DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, Copernicus programme)",
+    "Реки, дороги, железные дороги: © участники OpenStreetMap (ODbL), выборка через Overpass API",
+    "Исторический слой: docs/sources/vistula-oder-1945.json (Ziemke 1968; мемуары Конева; Википедия ru/de/en/pl)"
+  ],
+  "caveats": [
+    "Земной покров и дороги современные; исторической поправки по картам нет.",
+    "Январь 1945 г.: реки и болота частично замёрзли — в расчёте они такие же препятствия, как летом (ограничение)."
+  ],
+  "overlays": []
+}

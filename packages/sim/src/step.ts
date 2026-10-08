@@ -72,8 +72,10 @@ export function targetPoint(ctx: SimContext, t: Target | undefined, units?: Map<
 }
 
 /** Источники снабжения стороны — точки (районы — их центры). */
-function supplySources(ctx: SimContext, side: string): LngLat[] {
-  return (ctx.scenario.supply?.[side]?.sources ?? []).map((x) => (Array.isArray(x) ? x : ctx.theatre.area(x)?.center ?? null)).filter((x): x is LngLat => !!x);
+function supplySources(ctx: SimContext, side: string, time: string): LngLat[] {
+  const sp = ctx.scenario.supply?.[side];
+  const all = [...(sp?.sources ?? []), ...(sp?.phases ?? []).filter((p) => p.from <= time && (!p.until || time < p.until)).flatMap((p) => p.sources)];
+  return all.map((x) => (Array.isArray(x) ? x : ctx.theatre.area(x)?.center ?? null)).filter((x): x is LngLat => !!x);
 }
 
 /** Контроль территории и время подвоза по сторонам на начало хода. */
@@ -83,7 +85,7 @@ export function supplyState(ctx: SimContext, units: Formation[], time: string) {
   const control = controlMap(ctx.theatre, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, 10, 0.1);
   const fields = new Map<string, Float64Array>();
   for (const side of sides) {
-    const src = supplySources(ctx, side);
+    const src = supplySources(ctx, side, time);
     // зона влияния: наступающие и на марше — радиус соприкосновения; в обороне (кольцо окружения) — половина полосы
     const zoc = (f: Formation) => f.posture === 'attack' || f.posture === 'march' ? ctx.rules.contactKm
       : Math.max(ctx.rules.contactKm, (profileOf(ctx, f.side).unitTypes[f.type]?.frontageKm ?? 0) / 2);

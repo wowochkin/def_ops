@@ -1,0 +1,5953 @@
+{
+ "meta": {
+  "title": "Висло-Одерская стратегическая наступательная операция 12.01–03.02.1945 — положения армий/корпусов (контрольная операция для калибровки)",
+  "version": 1,
+  "compiled": "2026-10-08",
+  "crs": "WGS84, decimal degrees (lng, lat)",
+  "reliability": {
+   "A": "Ziemke 1968 (прочитано в сессии)",
+   "B": "Википедия ru/de/en/pl со ссылкой на монографии; мемуары Конева",
+   "C": "вывод составителя / неподтверждённое; approx_km увеличен"
+  },
+  "approx_km": "радиус неопределённости положения главных сил (не точность геокодирования)",
+  "time": "для даты с time=start — исходное положение утром дня начала наступления (1 УФ 12.01, 1 БФ 14.01); иначе — положение за день (к вечеру)",
+  "place": "ключ населённого пункта из gazetteer; 'A / B' = середина между пунктами",
+  "geocoding": "OpenStreetMap Nominatim (ODbL), запросы по одному с паузой; польские пункты под современными названиями, немецкие — в hist_name; 11 ключей взяты из berlin-1945-positions.json",
+  "id_suffix": "_vo — чтобы не пересекаться с id Берлинской операции",
+  "companion": "нет (отчёт агента); сверять с berlin-1945-positions.md по конвенциям"
+ },
+ "sources": {
+  "Z": {
+   "ref": "Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. CMH, 1968. Ch. XIX «The January Offensive», pp. 410–430; ch. XX «The Defense of the Reich», pp. 437–447 (HyperWar: USA-EF-Defeat-19/-20; страницы по маркерам --NNN--)",
+   "default_reliability": "A"
+  },
+  "KON": {
+   "ref": "Конев И. С. Записки командующего фронтом. М., 1991 (booksite.ru/konev/03_8, 03_9) и англ. пер. «Year of Victory», Progress, 1969 (marxists.org) — мемуары",
+   "default_reliability": "B"
+  },
+  "RW_VO": {
+   "ref": "ru.wikipedia: «Висло-Одерская операция» (wikitext 08.10.2026; БСЭ, Кривошеев)",
+   "default_reliability": "B"
+  },
+  "RW_WP": {
+   "ref": "ru.wikipedia: «Варшавско-Познанская наступательная операция» (БСЭ, СВЭ, Жаркой)",
+   "default_reliability": "B"
+  },
+  "RW_SS": {
+   "ref": "ru.wikipedia: «Сандомирско-Силезская операция» (История ВМВ т.10; Освобождение городов 1985)",
+   "default_reliability": "B"
+  },
+  "RW_CHR": {
+   "ref": "ru.wikipedia: «Хроника Великой Отечественной войны (январь 1945 года)» — по сводкам Совинформбюро и Истории ВОВ",
+   "default_reliability": "B"
+  },
+  "RW_ARM": {
+   "ref": "ru.wikipedia: статьи об армиях (52 А, 59 А, 60 А, 33 А, 69 А, 8 гв. А, 2 гв. ТА, 3 гв. ТА, 1 А ВП)",
+   "default_reliability": "B"
+  },
+  "EW_VO": {
+   "ref": "en.wikipedia: «Vistula–Oder offensive» (Duffy 1991; Glantz & House 1995; Le Tissier; Ziemke 1969)",
+   "default_reliability": "B"
+  },
+  "EW_SS": {
+   "ref": "en.wikipedia: «Sandomierz–Silesian offensive» (Киселёв В. Н., Военная энциклопедия т.7, 2003, с.373–374)",
+   "default_reliability": "B"
+  },
+  "DW_VO": {
+   "ref": "de.wikipedia: «Weichsel-Oder-Operation» (OOB на 12.01.1945; ⚠ XXXX PzK там ошибочно в Armeegruppe Heinrici; дата 13.01 для Магнушева ошибочна)",
+   "default_reliability": "B"
+  },
+  "DW_KORPS": {
+   "ref": "de.wikipedia: статьи о корпусах XXIV, XXXX, XXXXII, XXXXVI, VIII AK, V. SS-Freiwilligen-Gebirgskorps",
+   "default_reliability": "B"
+  },
+  "DW 9. Armee": {
+   "ref": "de.wikipedia: «9. Armee (Wehrmacht)»",
+   "default_reliability": "B"
+  },
+  "DW_POSEN": {
+   "ref": "de.wikipedia: «Schlacht um Posen»",
+   "default_reliability": "B"
+  },
+  "PW_VO": {
+   "ref": "pl.wikipedia: «Operacja wiślańsko-odrzańska» (Dolata 1971; Sobczak 1978; Kienzler 2016)",
+   "default_reliability": "B"
+  },
+  "C": {
+   "ref": "вывод составителя: интерполяция по соседним датам/соседям или по направлению задачи",
+   "default_reliability": "C"
+  }
+ },
+ "gazetteer": {
+  "Annopol": {
+   "query": "Annopol",
+   "lng": 21.8551,
+   "lat": 50.8852,
+   "osm_display_name": "Annopol, gmina Annopol, powiat kraśnicki, województwo lubelskie, 23-235, Polska"
+  },
+  "Aurith": {
+   "query": "Aurith, Ziltendorf",
+   "lng": 14.7014,
+   "lat": 52.2412,
+   "osm_display_name": "Aurith, Ziltendorf, Brieskow-Finkenheerd, Oder-Spree, Brandenburg, 15295, Deutschland"
+  },
+  "Baranow": {
+   "query": "Baranów Sandomierski",
+   "lng": 21.5418,
+   "lat": 50.4995,
+   "osm_display_name": "Baranów Sandomierski, gmina Baranów Sandomierski, powiat tarnobrzeski, województwo podkarpackie, Polska"
+  },
+  "Bialobrzegi": {
+   "query": "Białobrzegi, powiat białobrzeski",
+   "lng": 20.9497,
+   "lat": 51.6482,
+   "osm_display_name": "Białobrzegi, gmina Białobrzegi, powiat białobrzeski, województwo mazowieckie, Polska"
+  },
+  "Blonie": {
+   "query": "Błonie, powiat warszawski zachodni",
+   "lng": 20.617,
+   "lat": 52.1946,
+   "osm_display_name": "Błonie, gmina Błonie, powiat warszawski zachodni, województwo mazowieckie, Polska"
+  },
+  "Bochnia": {
+   "query": "Bochnia",
+   "lng": 20.4253,
+   "lat": 49.9747,
+   "osm_display_name": "Bochnia, powiat bocheński, województwo małopolskie, 32-700, Polska"
+  },
+  "Brzeg": {
+   "query": "Brzeg",
+   "lng": 17.464,
+   "lat": 50.8589,
+   "osm_display_name": "Brzeg, powiat brzeski, województwo opolskie, Polska",
+   "hist_name": "Brieg"
+  },
+  "BrzegDolny": {
+   "query": "Brzeg Dolny",
+   "lng": 16.7081,
+   "lat": 51.2691,
+   "osm_display_name": "Brzeg Dolny, gmina Brzeg Dolny, powiat wołowski, województwo dolnośląskie, Polska",
+   "hist_name": "Dyhernfurth"
+  },
+  "BrzescKuj": {
+   "query": "Brześć Kujawski",
+   "lng": 18.9015,
+   "lat": 52.6048,
+   "osm_display_name": "Brześć Kujawski, gmina Brześć Kujawski, powiat włocławski, województwo kujawsko-pomorskie, Polska"
+  },
+  "BuskoZdroj": {
+   "query": "Busko-Zdrój",
+   "lng": 20.7192,
+   "lat": 50.4676,
+   "osm_display_name": "Busko-Zdrój, gmina Busko-Zdrój, powiat buski, województwo świętokrzyskie, Polska"
+  },
+  "Bydgoszcz": {
+   "query": "Bydgoszcz",
+   "lng": 18.0294,
+   "lat": 53.1297,
+   "osm_display_name": "Bydgoszcz, województwo kujawsko-pomorskie, Polska",
+   "hist_name": "Bromberg"
+  },
+  "Bytom": {
+   "query": "Bytom",
+   "lng": 18.8723,
+   "lat": 50.3653,
+   "osm_display_name": "Bytom, Górnośląsko-Zagłębiowska Metropolia, województwo śląskie, Polska",
+   "hist_name": "Beuthen"
+  },
+  "Checiny": {
+   "query": "Chęciny",
+   "lng": 20.4622,
+   "lat": 50.8001,
+   "osm_display_name": "Chęciny, gmina Chęciny, powiat kielecki, województwo świętokrzyskie, 26-960, Polska"
+  },
+  "Chmielnik": {
+   "query": "Chmielnik, powiat kielecki",
+   "lng": 20.751,
+   "lat": 50.6146,
+   "osm_display_name": "Chmielnik, gmina Chmielnik, powiat kielecki, województwo świętokrzyskie, 26-020, Polska"
+  },
+  "Chobienia": {
+   "query": "Chobienia",
+   "lng": 16.4486,
+   "lat": 51.5438,
+   "osm_display_name": "Chobienia, gmina Rudna, powiat lubiński, województwo dolnośląskie, 59-340, Polska",
+   "hist_name": "Köben"
+  },
+  "Chodziez": {
+   "query": "Chodzież",
+   "lng": 16.916,
+   "lat": 52.9887,
+   "osm_display_name": "Chodzież, powiat chodzieski, województwo wielkopolskie, 64-800, Polska",
+   "hist_name": "Kolmar"
+  },
+  "Chorzele": {
+   "query": "Chorzele",
+   "lng": 20.8979,
+   "lat": 53.261,
+   "osm_display_name": "Chorzele, gmina Chorzele, powiat przasnyski, województwo mazowieckie, 06-330, Polska"
+  },
+  "Chrzanow": {
+   "query": "Chrzanów",
+   "lng": 19.4029,
+   "lat": 50.1412,
+   "osm_display_name": "Chrzanów, gmina Chrzanów, powiat chrzanowski, województwo małopolskie, 32-500, Polska"
+  },
+  "Czarnkow": {
+   "query": "Czarnków",
+   "lng": 16.5726,
+   "lat": 52.9011,
+   "osm_display_name": "Czarnków, powiat czarnkowsko-trzcianecki, województwo wielkopolskie, 64-700, Polska",
+   "hist_name": "Czarnikau"
+  },
+  "Czestochowa": {
+   "query": "Częstochowa",
+   "lng": 19.1244,
+   "lat": 50.809,
+   "osm_display_name": "Częstochowa, województwo śląskie, Polska",
+   "hist_name": "Tschenstochau"
+  },
+  "DabrowaTarn": {
+   "query": "Dąbrowa Tarnowska",
+   "lng": 20.9851,
+   "lat": 50.1743,
+   "osm_display_name": "Dąbrowa Tarnowska, gmina Dąbrowa Tarnowska, powiat dąbrowski, województwo małopolskie, 33-200, Polska"
+  },
+  "Debica": {
+   "query": "Dębica",
+   "lng": 21.4105,
+   "lat": 50.0515,
+   "osm_display_name": "Dębica, powiat dębicki, województwo podkarpackie, 39-200, Polska"
+  },
+  "Deblin": {
+   "query": "Dęblin",
+   "lng": 21.8654,
+   "lat": 51.5625,
+   "osm_display_name": "Dęblin, powiat rycki, województwo lubelskie, Polska"
+  },
+  "Drawno": {
+   "query": "Drawno",
+   "lng": 15.758,
+   "lat": 53.2189,
+   "osm_display_name": "Drawno, gmina Drawno, powiat choszczeński, województwo zachodniopomorskie, Polska",
+   "hist_name": "Neuwedell"
+  },
+  "Dzialoszyce": {
+   "query": "Działoszyce",
+   "lng": 20.3521,
+   "lat": 50.3655,
+   "osm_display_name": "Działoszyce, gmina Działoszyce, powiat pińczowski, województwo świętokrzyskie, Polska"
+  },
+  "Frankfurt": {
+   "query": "Frankfurt (Oder)",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "osm_display_name": "Frankfurt (Oder), Brandenburg, Deutschland",
+   "from": "berlin-1945-positions.json"
+  },
+  "Fuerstenberg_O": {
+   "query": "Fürstenberg (Oder)",
+   "lng": 14.673,
+   "lat": 52.1456,
+   "osm_display_name": "Fürstenberg (Oder), Eisenhüttenstadt, Oder-Spree, Brandenburg, Deutschland",
+   "from": "berlin-1945-positions.json"
+  },
+  "Garwolin": {
+   "query": "Garwolin",
+   "lng": 21.6211,
+   "lat": 51.8958,
+   "osm_display_name": "Garwolin, powiat garwoliński, województwo mazowieckie, 08-400, Polska"
+  },
+  "Genschmar": {
+   "query": "Genschmar",
+   "lng": 14.5112,
+   "lat": 52.6129,
+   "osm_display_name": "Genschmar, Bleyen-Genschmar, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Gliwice": {
+   "query": "Gliwice",
+   "lng": 18.6657,
+   "lat": 50.2941,
+   "osm_display_name": "Gliwice, Górnośląsko-Zagłębiowska Metropolia, województwo śląskie, Polska",
+   "hist_name": "Gleiwitz"
+  },
+  "Glogow": {
+   "query": "Głogów",
+   "lng": 16.0861,
+   "lat": 51.6634,
+   "osm_display_name": "Głogów, powiat głogowski, województwo dolnośląskie, 67-200, Polska",
+   "hist_name": "Glogau"
+  },
+  "Glogowek": {
+   "query": "Głogówek",
+   "lng": 17.8619,
+   "lat": 50.3534,
+   "osm_display_name": "Głogówek, gmina Głogówek, powiat prudnicki, województwo opolskie, Polska",
+   "hist_name": "Oberglogau"
+  },
+  "Gluchow": {
+   "query": "Głuchów, powiat skierniewicki",
+   "lng": 20.0746,
+   "lat": 51.78,
+   "osm_display_name": "Głuchów, gmina Głuchów, powiat skierniewicki, województwo łódzkie, 96-130, Polska"
+  },
+  "Gniewoszow": {
+   "query": "Gniewoszów",
+   "lng": 21.8126,
+   "lat": 51.4744,
+   "osm_display_name": "Gniewoszów, gmina Gniewoszów, powiat kozienicki, województwo mazowieckie, 26-920, Polska"
+  },
+  "Gniezno": {
+   "query": "Gniezno",
+   "lng": 17.5959,
+   "lat": 52.536,
+   "osm_display_name": "Gniezno, powiat gnieźnieński, województwo wielkopolskie, 62-200, Polska",
+   "hist_name": "Gnesen"
+  },
+  "Gorzow": {
+   "query": "Gorzów Wielkopolski",
+   "lng": 15.2108,
+   "lat": 52.7306,
+   "osm_display_name": "Gorzów Wielkopolski, województwo lubuskie, Polska",
+   "hist_name": "Landsberg (Warthe)"
+  },
+  "Gostynin": {
+   "query": "Gostynin",
+   "lng": 19.4633,
+   "lat": 52.4242,
+   "osm_display_name": "Gostynin, powiat gostyniński, województwo mazowieckie, 09-500, Polska"
+  },
+  "Gozdowice": {
+   "query": "Gozdowice",
+   "lng": 14.3223,
+   "lat": 52.7659,
+   "osm_display_name": "Gozdowice, Mieszkowice, gmina Mieszkowice, powiat gryfiński, województwo zachodniopomorskie, 74-505, Polska",
+   "from": "berlin-1945-positions.json"
+  },
+  "Grodkow": {
+   "query": "Grodków",
+   "lng": 17.385,
+   "lat": 50.6982,
+   "osm_display_name": "Grodków, gmina Grodków, powiat brzeski, województwo opolskie, 49-200, Polska",
+   "hist_name": "Grottkau"
+  },
+  "Grojec": {
+   "query": "Grójec",
+   "lng": 20.8675,
+   "lat": 51.8655,
+   "osm_display_name": "Grójec, gmina Grójec, powiat grójecki, województwo mazowieckie, Polska"
+  },
+  "Ilza": {
+   "query": "Iłża",
+   "lng": 21.2373,
+   "lat": 51.1624,
+   "osm_display_name": "Iłża, gmina Iłża, powiat radomski, województwo mazowieckie, 27-100, Polska"
+  },
+  "Inowroclaw": {
+   "query": "Inowrocław",
+   "lng": 18.2463,
+   "lat": 52.7815,
+   "osm_display_name": "Inowrocław, powiat inowrocławski, województwo kujawsko-pomorskie, Polska",
+   "hist_name": "Hohensalza"
+  },
+  "Jablonna": {
+   "query": "Jabłonna, powiat legionowski",
+   "lng": 20.9178,
+   "lat": 52.3767,
+   "osm_display_name": "Jabłonna, gmina Jabłonna, powiat legionowski, województwo mazowieckie, 05-110, Polska"
+  },
+  "Jaslo": {
+   "query": "Jasło",
+   "lng": 21.4743,
+   "lat": 49.747,
+   "osm_display_name": "Jasło, powiat jasielski, województwo podkarpackie, Polska"
+  },
+  "Jastrowie": {
+   "query": "Jastrowie",
+   "lng": 16.815,
+   "lat": 53.4205,
+   "osm_display_name": "Jastrowie, gmina Jastrowie, powiat złotowski, województwo wielkopolskie, Polska",
+   "hist_name": "Jastrow"
+  },
+  "Jedrzejow": {
+   "query": "Jędrzejów",
+   "lng": 20.3046,
+   "lat": 50.6394,
+   "osm_display_name": "Jędrzejów, gmina Jędrzejów, powiat jędrzejowski, województwo świętokrzyskie, Polska"
+  },
+  "Kalisz": {
+   "query": "Kalisz",
+   "lng": 18.0795,
+   "lat": 51.7473,
+   "osm_display_name": "Kalisz, województwo wielkopolskie, 62-800, Polska",
+   "hist_name": "Kalisch"
+  },
+  "Kargowa": {
+   "query": "Kargowa",
+   "lng": 15.8648,
+   "lat": 52.0719,
+   "osm_display_name": "Kargowa, gmina Kargowa, powiat zielonogórski, województwo lubuskie, 66-120, Polska",
+   "hist_name": "Unruhstadt"
+  },
+  "Katowice": {
+   "query": "Katowice",
+   "lng": 19.0059,
+   "lat": 50.2137,
+   "osm_display_name": "Katowice, Górnośląsko-Zagłębiowska Metropolia, województwo śląskie, Polska",
+   "hist_name": "Kattowitz"
+  },
+  "Kedzierzyn": {
+   "query": "Kędzierzyn-Koźle",
+   "lng": 18.211,
+   "lat": 50.3449,
+   "osm_display_name": "Kędzierzyn-Koźle, powiat kędzierzyńsko-kozielski, województwo opolskie, Polska",
+   "hist_name": "Cosel (Kędzierzyn-Koźle)"
+  },
+  "Kielce": {
+   "query": "Kielce",
+   "lng": 20.631,
+   "lat": 50.872,
+   "osm_display_name": "Kielce, województwo świętokrzyskie, Polska"
+  },
+  "Kienitz": {
+   "query": "Kienitz",
+   "lng": 14.4388,
+   "lat": 52.6735,
+   "osm_display_name": "Kienitz, Letschin, Altbarnim, Märkisch-Oderland, Brandenburg, Deutschland",
+   "from": "berlin-1945-positions.json"
+  },
+  "Kluczbork": {
+   "query": "Kluczbork",
+   "lng": 18.214,
+   "lat": 50.9731,
+   "osm_display_name": "Kluczbork, gmina Kluczbork, powiat kluczborski, województwo opolskie, Polska",
+   "hist_name": "Kreuzburg"
+  },
+  "Kolo": {
+   "query": "Koło",
+   "lng": 18.636,
+   "lat": 52.202,
+   "osm_display_name": "Koło, powiat kolski, województwo wielkopolskie, Polska",
+   "hist_name": "Warthbrücken (Koło)"
+  },
+  "Koniecpol": {
+   "query": "Koniecpol",
+   "lng": 19.677,
+   "lat": 50.7725,
+   "osm_display_name": "Koniecpol, gmina Koniecpol, powiat częstochowski, województwo śląskie, 42-230, Polska"
+  },
+  "Konin": {
+   "query": "Konin",
+   "lng": 18.2521,
+   "lat": 52.2302,
+   "osm_display_name": "Konin, województwo wielkopolskie, Polska"
+  },
+  "Konskie": {
+   "query": "Końskie",
+   "lng": 20.4072,
+   "lat": 51.191,
+   "osm_display_name": "Końskie, gmina Końskie, powiat konecki, województwo świętokrzyskie, 26-200, Polska"
+  },
+  "Kostrzyn": {
+   "query": "Kostrzyn nad Odrą",
+   "lng": 14.6536,
+   "lat": 52.5899,
+   "osm_display_name": "Kostrzyn nad Odrą, powiat gorzowski, województwo lubuskie, 66-470, Polska",
+   "from": "berlin-1945-positions.json",
+   "hist_name": "Küstrin"
+  },
+  "Krakow": {
+   "query": "Kraków",
+   "lng": 19.9972,
+   "lat": 50.0469,
+   "osm_display_name": "Kraków, województwo małopolskie, Polska",
+   "hist_name": "Krakau"
+  },
+  "Krapkowice": {
+   "query": "Krapkowice",
+   "lng": 17.9671,
+   "lat": 50.4747,
+   "osm_display_name": "Krapkowice, gmina Krapkowice, powiat krapkowicki, województwo opolskie, Polska",
+   "hist_name": "Krappitz"
+  },
+  "Krosno": {
+   "query": "Krosno Odrzańskie",
+   "lng": 15.098,
+   "lat": 52.0536,
+   "osm_display_name": "Krosno Odrzańskie, gmina Krosno Odrzańskie, powiat krośnieński, województwo lubuskie, Polska",
+   "hist_name": "Crossen"
+  },
+  "Kutno": {
+   "query": "Kutno",
+   "lng": 19.3875,
+   "lat": 52.2222,
+   "osm_display_name": "Kutno, powiat kutnowski, województwo łódzkie, Polska"
+  },
+  "Lagow": {
+   "query": "Łagów, powiat kielecki",
+   "lng": 21.084,
+   "lat": 50.7755,
+   "osm_display_name": "Łagów, gmina Łagów, powiat kielecki, województwo świętokrzyskie, 26-025, Polska"
+  },
+  "Lask": {
+   "query": "Łask",
+   "lng": 19.1335,
+   "lat": 51.593,
+   "osm_display_name": "Łask, gmina Łask, powiat łaski, województwo łódzkie, 98-100, Polska"
+  },
+  "Legionowo": {
+   "query": "Legionowo",
+   "lng": 20.9331,
+   "lat": 52.4049,
+   "osm_display_name": "Legionowo, powiat legionowski, województwo mazowieckie, Polska"
+  },
+  "Leszno": {
+   "query": "Leszno",
+   "lng": 16.5744,
+   "lat": 51.8436,
+   "osm_display_name": "Leszno, województwo wielkopolskie, Polska",
+   "hist_name": "Lissa"
+  },
+  "Lodz": {
+   "query": "Łódź",
+   "lng": 19.457,
+   "lat": 51.7687,
+   "osm_display_name": "Łódź, województwo łódzkie, Polska",
+   "hist_name": "Litzmannstadt"
+  },
+  "Lowicz": {
+   "query": "Łowicz",
+   "lng": 19.9448,
+   "lat": 52.1077,
+   "osm_display_name": "Łowicz, powiat łowicki, województwo łódzkie, Polska"
+  },
+  "Magnuszew": {
+   "query": "Magnuszew",
+   "lng": 21.3828,
+   "lat": 51.7624,
+   "osm_display_name": "Magnuszew, gmina Magnuszew, powiat kozienicki, województwo mazowieckie, 26-910, Polska"
+  },
+  "Manschnow": {
+   "query": "Manschnow",
+   "lng": 14.5538,
+   "lat": 52.5569,
+   "osm_display_name": "Manschnow, Küstriner Vorland, Golzow, Märkisch-Oderland, Brandenburg, Deutschland"
+  },
+  "Miechow": {
+   "query": "Miechów",
+   "lng": 20.0277,
+   "lat": 50.3566,
+   "osm_display_name": "Miechów, gmina Miechów, powiat miechowski, województwo małopolskie, Polska"
+  },
+  "Miedzyrzecz": {
+   "query": "Międzyrzecz",
+   "lng": 15.5786,
+   "lat": 52.4448,
+   "osm_display_name": "Międzyrzecz, gmina Międzyrzecz, powiat międzyrzecki, województwo lubuskie, 66-300, Polska",
+   "hist_name": "Meseritz"
+  },
+  "Mielec": {
+   "query": "Mielec",
+   "lng": 21.4229,
+   "lat": 50.2895,
+   "osm_display_name": "Mielec, powiat mielecki, województwo podkarpackie, Polska"
+  },
+  "Milicz": {
+   "query": "Milicz",
+   "lng": 17.2752,
+   "lat": 51.532,
+   "osm_display_name": "Milicz, gmina Milicz, powiat milicki, województwo dolnośląskie, 56-300, Polska",
+   "hist_name": "Militsch"
+  },
+  "Mniszew": {
+   "query": "Mniszew",
+   "lng": 21.2797,
+   "lat": 51.8465,
+   "osm_display_name": "Mniszew, gmina Magnuszew, powiat kozienicki, województwo mazowieckie, Polska"
+  },
+  "Modlin": {
+   "query": "Modlin Twierdza",
+   "lng": 20.6749,
+   "lat": 52.4397,
+   "osm_display_name": "Modlin Twierdza, Nowy Dwór Mazowiecki, powiat nowodworski, województwo mazowieckie, 05-160, Polska"
+  },
+  "Myslowice": {
+   "query": "Mysłowice",
+   "lng": 19.1415,
+   "lat": 50.2415,
+   "osm_display_name": "Mysłowice, Górnośląsko-Zagłębiowska Metropolia, województwo śląskie, Polska",
+   "hist_name": "Myslowitz"
+  },
+  "Naklo": {
+   "query": "Nakło nad Notecią",
+   "lng": 17.5999,
+   "lat": 53.1387,
+   "osm_display_name": "Nakło nad Notecią, gmina Nakło nad Notecią, powiat nakielski, województwo kujawsko-pomorskie, Polska"
+  },
+  "Namyslow": {
+   "query": "Namysłów",
+   "lng": 17.7186,
+   "lat": 51.0766,
+   "osm_display_name": "Namysłów, gmina Namysłów, powiat namysłowski, województwo opolskie, Polska",
+   "hist_name": "Namslau"
+  },
+  "NoweMiasto": {
+   "query": "Nowe Miasto nad Pilicą",
+   "lng": 20.5796,
+   "lat": 51.6167,
+   "osm_display_name": "Nowe Miasto nad Pilicą, gmina Nowe Miasto nad Pilicą, powiat grójecki, województwo mazowieckie, 26-420, Polska"
+  },
+  "NowyKorczyn": {
+   "query": "Nowy Korczyn",
+   "lng": 20.8091,
+   "lat": 50.2994,
+   "osm_display_name": "Nowy Korczyn, gmina Nowy Korczyn, powiat buski, województwo świętokrzyskie, Polska"
+  },
+  "Olawa": {
+   "query": "Oława",
+   "lng": 17.2903,
+   "lat": 50.9571,
+   "osm_display_name": "Oława, powiat oławski, województwo dolnośląskie, Polska",
+   "hist_name": "Ohlau"
+  },
+  "Olesnica": {
+   "query": "Oleśnica",
+   "lng": 17.3829,
+   "lat": 51.2102,
+   "osm_display_name": "Oleśnica, powiat oleśnicki, województwo dolnośląskie, Polska",
+   "hist_name": "Oels"
+  },
+  "Olesno": {
+   "query": "Olesno",
+   "lng": 18.4219,
+   "lat": 50.8767,
+   "osm_display_name": "Olesno, gmina Olesno, powiat oleski, województwo opolskie, 46-300, Polska",
+   "hist_name": "Rosenberg O.S."
+  },
+  "Opatow": {
+   "query": "Opatów",
+   "lng": 21.4238,
+   "lat": 50.8018,
+   "osm_display_name": "Opatów, gmina Opatów, powiat opatowski, województwo świętokrzyskie, Polska"
+  },
+  "Opoczno": {
+   "query": "Opoczno",
+   "lng": 20.2932,
+   "lat": 51.3782,
+   "osm_display_name": "Opoczno, gmina Opoczno, powiat opoczyński, województwo łódzkie, Polska"
+  },
+  "Opole": {
+   "query": "Opole",
+   "lng": 17.9236,
+   "lat": 50.6668,
+   "osm_display_name": "Opole, województwo opolskie, Polska",
+   "hist_name": "Oppeln"
+  },
+  "OstrowWlkp": {
+   "query": "Ostrów Wielkopolski",
+   "lng": 17.8038,
+   "lat": 51.6472,
+   "osm_display_name": "Ostrów Wielkopolski, powiat ostrowski, województwo wielkopolskie, 63-400, Polska"
+  },
+  "Ostrowiec": {
+   "query": "Ostrowiec Świętokrzyski",
+   "lng": 21.3874,
+   "lat": 50.9399,
+   "osm_display_name": "Ostrowiec Świętokrzyski, powiat ostrowiecki, województwo świętokrzyskie, 27-400, Polska",
+   "hist_name": "Ostrowiec Świętokrzyski"
+  },
+  "Oswiecim": {
+   "query": "Oświęcim",
+   "lng": 19.2601,
+   "lat": 50.0337,
+   "osm_display_name": "Oświęcim, powiat oświęcimski, województwo małopolskie, Polska",
+   "hist_name": "Auschwitz"
+  },
+  "Ozarow": {
+   "query": "Ożarów, powiat opatowski",
+   "lng": 21.6656,
+   "lat": 50.8864,
+   "osm_display_name": "Ożarów, gmina Ożarów, powiat opatowski, województwo świętokrzyskie, Polska"
+  },
+  "Ozimek": {
+   "query": "Ozimek",
+   "lng": 18.2125,
+   "lat": 50.6789,
+   "osm_display_name": "Ozimek, gmina Ozimek, powiat opolski, województwo opolskie, Polska",
+   "hist_name": "Malapane"
+  },
+  "Pila": {
+   "query": "Piła",
+   "lng": 16.738,
+   "lat": 53.1511,
+   "osm_display_name": "Piła, powiat pilski, województwo wielkopolskie, 64-920, Polska",
+   "hist_name": "Schneidemühl"
+  },
+  "Pilzno": {
+   "query": "Pilzno",
+   "lng": 21.2908,
+   "lat": 49.9786,
+   "osm_display_name": "Pilzno, gmina Pilzno, powiat dębicki, województwo podkarpackie, Polska"
+  },
+  "Pinczow": {
+   "query": "Pińczów",
+   "lng": 20.5256,
+   "lat": 50.5202,
+   "osm_display_name": "Pińczów, gmina Pińczów, powiat pińczowski, województwo świętokrzyskie, Polska"
+  },
+  "Piotrkow": {
+   "query": "Piotrków Trybunalski",
+   "lng": 19.6962,
+   "lat": 51.4083,
+   "osm_display_name": "Piotrków Trybunalski, województwo łódzkie, 97-300, Polska",
+   "hist_name": "Petrikau"
+  },
+  "Polaniec": {
+   "query": "Połaniec",
+   "lng": 21.281,
+   "lat": 50.4329,
+   "osm_display_name": "Połaniec, gmina Połaniec, powiat staszowski, województwo świętokrzyskie, 28-230, Polska"
+  },
+  "Poznan": {
+   "query": "Poznań",
+   "lng": 16.9197,
+   "lat": 52.4007,
+   "osm_display_name": "Poznań, powiat poznański, województwo wielkopolskie, Polska",
+   "hist_name": "Posen"
+  },
+  "Praga_W": {
+   "query": "Praga-Północ, Warszawa",
+   "lng": 21.0273,
+   "lat": 52.2649,
+   "osm_display_name": "Praga-Północ, Warszawa, województwo mazowieckie, Polska"
+  },
+  "Praszka": {
+   "query": "Praszka",
+   "lng": 18.4485,
+   "lat": 51.0554,
+   "osm_display_name": "Praszka, gmina Praszka, powiat oleski, województwo opolskie, 46-320, Polska"
+  },
+  "Przedborz": {
+   "query": "Przedbórz",
+   "lng": 19.8744,
+   "lat": 51.0868,
+   "osm_display_name": "Przedbórz, gmina Przedbórz, powiat radomszczański, województwo łódzkie, Polska"
+  },
+  "Przysucha": {
+   "query": "Przysucha",
+   "lng": 20.6285,
+   "lat": 51.3585,
+   "osm_display_name": "Przysucha, gmina Przysucha, powiat przysuski, województwo mazowieckie, Polska"
+  },
+  "Pulawy": {
+   "query": "Puławy",
+   "lng": 21.9853,
+   "lat": 51.4263,
+   "osm_display_name": "Puławy, powiat puławski, województwo lubelskie, 24-111, Polska"
+  },
+  "Raciborz": {
+   "query": "Racibórz",
+   "lng": 18.2151,
+   "lat": 50.0905,
+   "osm_display_name": "Racibórz, powiat raciborski, województwo śląskie, Polska",
+   "hist_name": "Ratibor"
+  },
+  "Radom": {
+   "query": "Radom",
+   "lng": 21.1607,
+   "lat": 51.4167,
+   "osm_display_name": "Radom, województwo mazowieckie, Polska"
+  },
+  "Radomsko": {
+   "query": "Radomsko",
+   "lng": 19.4498,
+   "lat": 51.0711,
+   "osm_display_name": "Radomsko, powiat radomszczański, województwo łódzkie, Polska"
+  },
+  "RawaMaz": {
+   "query": "Rawa Mazowiecka",
+   "lng": 20.2519,
+   "lat": 51.7625,
+   "osm_display_name": "Rawa Mazowiecka, powiat rawski, województwo łódzkie, 96-200, Polska"
+  },
+  "Rawicz": {
+   "query": "Rawicz",
+   "lng": 16.8584,
+   "lat": 51.6102,
+   "osm_display_name": "Rawicz, gmina Rawicz, powiat rawicki, województwo wielkopolskie, 63-900, Polska",
+   "hist_name": "Rawitsch"
+  },
+  "Reitwein": {
+   "query": "Reitwein",
+   "lng": 14.5828,
+   "lat": 52.5015,
+   "osm_display_name": "Reitwein, Lebus, Märkisch-Oderland, Brandenburg, Deutschland",
+   "from": "berlin-1945-positions.json"
+  },
+  "Rogozno": {
+   "query": "Rogoźno",
+   "lng": 16.9936,
+   "lat": 52.7523,
+   "osm_display_name": "Rogoźno, gmina Rogoźno, powiat obornicki, województwo wielkopolskie, Polska"
+  },
+  "Rybnik": {
+   "query": "Rybnik",
+   "lng": 18.5532,
+   "lat": 50.1106,
+   "osm_display_name": "Rybnik, województwo śląskie, Polska",
+   "hist_name": "Rybnik"
+  },
+  "Rzepin": {
+   "query": "Rzepin",
+   "lng": 14.8383,
+   "lat": 52.3443,
+   "osm_display_name": "Rzepin, gmina Rzepin, powiat słubicki, województwo lubuskie, Polska",
+   "hist_name": "Reppen"
+  },
+  "Sandomierz": {
+   "query": "Sandomierz",
+   "lng": 21.7495,
+   "lat": 50.6793,
+   "osm_display_name": "Sandomierz, powiat sandomierski, województwo świętokrzyskie, Polska"
+  },
+  "Scinawa": {
+   "query": "Ścinawa",
+   "lng": 16.426,
+   "lat": 51.4165,
+   "osm_display_name": "Ścinawa, gmina Ścinawa, powiat lubiński, województwo dolnośląskie, 59-330, Polska",
+   "hist_name": "Steinau"
+  },
+  "Sieradz": {
+   "query": "Sieradz",
+   "lng": 18.7399,
+   "lat": 51.6018,
+   "osm_display_name": "Sieradz, powiat sieradzki, województwo łódzkie, Polska",
+   "hist_name": "Schieratz"
+  },
+  "Siewierz": {
+   "query": "Siewierz",
+   "lng": 19.2319,
+   "lat": 50.471,
+   "osm_display_name": "Siewierz, gmina Siewierz, powiat będziński, Górnośląsko-Zagłębiowska Metropolia, województwo śląskie, 42-470, Polska"
+  },
+  "Skalbmierz": {
+   "query": "Skalbmierz",
+   "lng": 20.3997,
+   "lat": 50.3171,
+   "osm_display_name": "Skalbmierz, gmina Skalbmierz, powiat kazimierski, województwo świętokrzyskie, Polska"
+  },
+  "SkarzyskoK": {
+   "query": "Skarżysko-Kamienna",
+   "lng": 20.877,
+   "lat": 51.123,
+   "osm_display_name": "Skarżysko-Kamienna, powiat skarżyski, województwo świętokrzyskie, Polska"
+  },
+  "Skierniewice": {
+   "query": "Skierniewice",
+   "lng": 20.1448,
+   "lat": 51.958,
+   "osm_display_name": "Skierniewice, gmina Maków, województwo łódzkie, Polska"
+  },
+  "Slubice": {
+   "query": "Słubice",
+   "lng": 14.5662,
+   "lat": 52.3557,
+   "osm_display_name": "Słubice, gmina Słubice, powiat słubicki, województwo lubuskie, 69-100, Polska",
+   "from": "berlin-1945-positions.json"
+  },
+  "Sobkow": {
+   "query": "Sobków",
+   "lng": 20.4544,
+   "lat": 50.6987,
+   "osm_display_name": "Sobków, gmina Sobków, powiat jędrzejowski, województwo świętokrzyskie, 28-305, Polska"
+  },
+  "Sochaczew": {
+   "query": "Sochaczew",
+   "lng": 20.2571,
+   "lat": 52.2367,
+   "osm_display_name": "Sochaczew, powiat sochaczewski, województwo mazowieckie, Polska"
+  },
+  "Spala": {
+   "query": "Spała",
+   "lng": 20.1362,
+   "lat": 51.5402,
+   "osm_display_name": "Spała, gmina Inowłódz, powiat tomaszowski, województwo łódzkie, 97-215, Polska"
+  },
+  "StareOsieczno": {
+   "query": "Stare Osieczno",
+   "lng": 15.9525,
+   "lat": 53.0058,
+   "osm_display_name": "Stare Osieczno, Dobiegniew, gmina Dobiegniew, powiat strzelecko-drezdenecki, województwo lubuskie, 66-522, Polska",
+   "hist_name": "Hochzeit"
+  },
+  "Staszow": {
+   "query": "Staszów",
+   "lng": 21.1678,
+   "lat": 50.5612,
+   "osm_display_name": "Staszów, gmina Staszów, powiat staszowski, województwo świętokrzyskie, 28-200, Polska"
+  },
+  "Stopnica": {
+   "query": "Stopnica",
+   "lng": 20.9386,
+   "lat": 50.4383,
+   "osm_display_name": "Stopnica, gmina Stopnica, powiat buski, województwo świętokrzyskie, Polska"
+  },
+  "Strumien": {
+   "query": "Strumień",
+   "lng": 18.7635,
+   "lat": 49.9172,
+   "osm_display_name": "Strumień, gmina Strumień, powiat cieszyński, województwo śląskie, Polska",
+   "hist_name": "Schwarzwasser"
+  },
+  "StrzelceOp": {
+   "query": "Strzelce Opolskie",
+   "lng": 18.3005,
+   "lat": 50.5109,
+   "osm_display_name": "Strzelce Opolskie, gmina Strzelce Opolskie, powiat strzelecki, województwo opolskie, 47-100, Polska",
+   "hist_name": "Gross Strehlitz"
+  },
+  "Studzianki": {
+   "query": "Studzianki Pancerne",
+   "lng": 21.3243,
+   "lat": 51.6883,
+   "osm_display_name": "Studzianki Pancerne, gmina Głowaczów, powiat kozienicki, województwo mazowieckie, Polska"
+  },
+  "Swiebodzin": {
+   "query": "Świebodzin",
+   "lng": 15.5325,
+   "lat": 52.2498,
+   "osm_display_name": "Świebodzin, gmina Świebodzin, powiat świebodziński, województwo lubuskie, 66-200, Polska",
+   "hist_name": "Schwiebus"
+  },
+  "Szamocin": {
+   "query": "Szamocin",
+   "lng": 17.1217,
+   "lat": 53.029,
+   "osm_display_name": "Szamocin, gmina Szamocin, powiat chodzieski, województwo wielkopolskie, Polska"
+  },
+  "Szczekociny": {
+   "query": "Szczekociny",
+   "lng": 19.8195,
+   "lat": 50.626,
+   "osm_display_name": "Szczekociny, gmina Szczekociny, powiat zawierciański, województwo śląskie, 42-445, Polska"
+  },
+  "Szczucin": {
+   "query": "Szczucin",
+   "lng": 21.0752,
+   "lat": 50.309,
+   "osm_display_name": "Szczucin, gmina Szczucin, powiat dąbrowski, województwo małopolskie, 33-230, Polska"
+  },
+  "Szydlow": {
+   "query": "Szydłów",
+   "lng": 21.0046,
+   "lat": 50.5908,
+   "osm_display_name": "Szydłów, gmina Szydłów, powiat staszowski, województwo świętokrzyskie, 28-225, Polska"
+  },
+  "Szydlowiec": {
+   "query": "Szydłowiec",
+   "lng": 20.8575,
+   "lat": 51.2239,
+   "osm_display_name": "Szydłowiec, gmina Szydłowiec, powiat szydłowiecki, województwo mazowieckie, 26-500, Polska"
+  },
+  "Tarnow": {
+   "query": "Tarnów",
+   "lng": 20.9641,
+   "lat": 50.026,
+   "osm_display_name": "Tarnów, województwo małopolskie, Polska"
+  },
+  "TarnowskieGory": {
+   "query": "Tarnowskie Góry",
+   "lng": 18.8555,
+   "lat": 50.4445,
+   "osm_display_name": "Tarnowskie Góry, powiat tarnogórski, Górnośląsko-Zagłębiowska Metropolia, województwo śląskie, Polska",
+   "hist_name": "Tarnowitz"
+  },
+  "TomaszowMaz": {
+   "query": "Tomaszów Mazowiecki",
+   "lng": 20.0338,
+   "lat": 51.5195,
+   "osm_display_name": "Tomaszów Mazowiecki, powiat tomaszowski, województwo łódzkie, 97-200, Polska"
+  },
+  "Trzciel": {
+   "query": "Trzciel",
+   "lng": 15.8732,
+   "lat": 52.3652,
+   "osm_display_name": "Trzciel, gmina Trzciel, powiat międzyrzecki, województwo lubuskie, Polska",
+   "hist_name": "Tirschtiegel"
+  },
+  "Wagrowiec": {
+   "query": "Wągrowiec",
+   "lng": 17.2019,
+   "lat": 52.8122,
+   "osm_display_name": "Wągrowiec, powiat wągrowiecki, województwo wielkopolskie, 62-100, Polska",
+   "hist_name": "Eichenbrück (Wongrowitz)"
+  },
+  "Walcz": {
+   "query": "Wałcz",
+   "lng": 16.4768,
+   "lat": 53.2729,
+   "osm_display_name": "Wałcz, powiat wałecki, województwo zachodniopomorskie, Polska",
+   "hist_name": "Deutsch Krone"
+  },
+  "Warka": {
+   "query": "Warka",
+   "lng": 21.1834,
+   "lat": 51.7851,
+   "osm_display_name": "Warka, gmina Warka, powiat grójecki, województwo mazowieckie, 05-660, Polska"
+  },
+  "Warszawa": {
+   "query": "Warszawa, Polska",
+   "lng": 21.0711,
+   "lat": 52.2334,
+   "osm_display_name": "Warszawa, województwo mazowieckie, Polska"
+  },
+  "Wielbark": {
+   "query": "Wielbark",
+   "lng": 20.9463,
+   "lat": 53.3984,
+   "osm_display_name": "Wielbark, gmina Wielbark, powiat szczycieński, województwo warmińsko-mazurskie, 12-160, Polska"
+  },
+  "Wieliczka": {
+   "query": "Wieliczka",
+   "lng": 20.0602,
+   "lat": 49.9824,
+   "osm_display_name": "Wieliczka, gmina Wieliczka, powiat wielicki, województwo małopolskie, 32-020, Polska"
+  },
+  "Wielun": {
+   "query": "Wieluń",
+   "lng": 18.5701,
+   "lat": 51.2205,
+   "osm_display_name": "Wieluń, gmina Wieluń, powiat wieluński, województwo łódzkie, 98-300, Polska",
+   "hist_name": "Welun"
+  },
+  "Wieruszow": {
+   "query": "Wieruszów",
+   "lng": 18.1511,
+   "lat": 51.2952,
+   "osm_display_name": "Wieruszów, gmina Wieruszów, powiat wieruszowski, województwo łódzkie, Polska"
+  },
+  "Wloclawek": {
+   "query": "Włocławek",
+   "lng": 19.0719,
+   "lat": 52.6604,
+   "osm_display_name": "Włocławek, województwo kujawsko-pomorskie, Polska",
+   "hist_name": "Leslau"
+  },
+  "Wloszczowa": {
+   "query": "Włoszczowa",
+   "lng": 19.9668,
+   "lat": 50.8521,
+   "osm_display_name": "Włoszczowa, gmina Włoszczowa, powiat włoszczowski, województwo świętokrzyskie, 29-100, Polska"
+  },
+  "Wolow": {
+   "query": "Wołów",
+   "lng": 16.6487,
+   "lat": 51.3364,
+   "osm_display_name": "Wołów, gmina Wołów, powiat wołowski, województwo dolnośląskie, 56-100, Polska",
+   "hist_name": "Wohlau"
+  },
+  "Wolsztyn": {
+   "query": "Wolsztyn",
+   "lng": 16.1127,
+   "lat": 52.1172,
+   "osm_display_name": "Wolsztyn, gmina Wolsztyn, powiat wolsztyński, województwo wielkopolskie, 64-200, Polska",
+   "hist_name": "Wollstein"
+  },
+  "Wroclaw": {
+   "query": "Wrocław",
+   "lng": 17.0327,
+   "lat": 51.109,
+   "osm_display_name": "Wrocław, województwo dolnośląskie, Polska",
+   "hist_name": "Breslau"
+  },
+  "Wronki": {
+   "query": "Wronki",
+   "lng": 16.3743,
+   "lat": 52.71,
+   "osm_display_name": "Wronki, gmina Wronki, powiat szamotulski, województwo wielkopolskie, 64-510, Polska"
+  },
+  "Zabrze": {
+   "query": "Zabrze",
+   "lng": 18.7816,
+   "lat": 50.3143,
+   "osm_display_name": "Zabrze, Górnośląsko-Zagłębiowska Metropolia, województwo śląskie, Polska",
+   "hist_name": "Hindenburg"
+  },
+  "Zawichost": {
+   "query": "Zawichost",
+   "lng": 21.8524,
+   "lat": 50.8074,
+   "osm_display_name": "Zawichost, gmina Zawichost, powiat sandomierski, województwo świętokrzyskie, Polska"
+  },
+  "Zawiercie": {
+   "query": "Zawiercie",
+   "lng": 19.4334,
+   "lat": 50.4844,
+   "osm_display_name": "Zawiercie, powiat zawierciański, województwo śląskie, Polska"
+  },
+  "ZielonaGora": {
+   "query": "Zielona Góra",
+   "lng": 15.549,
+   "lat": 51.9276,
+   "osm_display_name": "Zielona Góra, województwo lubuskie, Polska",
+   "hist_name": "Grünberg"
+  },
+  "Zlotow": {
+   "query": "Złotów",
+   "lng": 17.0438,
+   "lat": 53.3592,
+   "osm_display_name": "Złotów, powiat złotowski, województwo wielkopolskie, 77-400, Polska",
+   "hist_name": "Flatow"
+  },
+  "Zwolen": {
+   "query": "Zwoleń",
+   "lng": 21.5845,
+   "lat": 51.3565,
+   "osm_display_name": "Zwoleń, gmina Zwoleń, powiat zwoleński, województwo mazowieckie, 26-700, Polska"
+  },
+  "Zyrardow": {
+   "query": "Żyrardów",
+   "lng": 20.4435,
+   "lat": 52.0543,
+   "osm_display_name": "Żyrardów, powiat żyrardowski, województwo mazowieckie, 96-300, Polska"
+  }
+ },
+ "formations": [
+  {
+   "id": "su_1bf_vo",
+   "name_ru": "1-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null,
+   "branch": "front",
+   "commander": "Г. К. Жуков",
+   "strength_12_01": {
+    "personnel": {
+     "value": 1028900,
+     "source": "RW_WP (Кривошеев)",
+     "reliability": "B",
+     "note": "без Войска Польского (90 900 — отдельно)"
+    },
+    "tanks_spg": {
+     "value": 3805,
+     "source": "C",
+     "reliability": "C",
+     "note": "разность: 7 049 на два фронта (RW_VO) минус 3 244 у 1 УФ (KON); только на Магнушевском плацдарме ~1 700 танков (Z p.417)"
+    },
+    "guns": {
+     "value": 20400,
+     "source": "C",
+     "reliability": "C",
+     "note": "разность: 36 436 орудий и миномётов на два фронта (RW_VO) минус >16 000 у 1 УФ (KON); на Магнушевском плацдарме 8 700 (Z p.417)"
+    }
+   }
+  },
+  {
+   "id": "su_1uf_vo",
+   "name_ru": "1-й Украинский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null,
+   "branch": "front",
+   "commander": "И. С. Конев",
+   "strength_12_01": {
+    "personnel": {
+     "value": 1100000,
+     "source": "KON",
+     "reliability": "B",
+     "note": "«около 1,1 млн человек» к 12.01; Кривошеев (по общим 2 203 600 минус 1 БФ и ВП) даёт ~1 083 800 (C)"
+    },
+    "tanks_spg": {
+     "value": 3244,
+     "source": "KON; EW_SS (Киселёв, ВЭ т.7)",
+     "reliability": "B",
+     "note": "на Сандомирском плацдарме 1 434 танка непосредственной поддержки пехоты (RW_SS)"
+    },
+    "guns": {
+     "value": 16000,
+     "source": "KON",
+     "reliability": "B",
+     "note": "«более 16 тыс. орудий и миномётов»; ВЭ (EW_SS): «более 13 000»; на плацдарме 11 934 (RW_SS)"
+    }
+   }
+  },
+  {
+   "id": "su_47a_vo",
+   "name_ru": "47-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "Ф. И. Перхорович",
+   "divisions": 9,
+   "note": "правое крыло, севернее Варшавы; наступление с 15–16.01; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_1pa_vo",
+   "name_ru": "1-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "С. Г. Поплавский",
+   "divisions": 5,
+   "note": "наступление на 4-й день (17.01) на Варшаву; число дивизий — по DW_VO (OOB 12.01)",
+   "strength_12_01": {
+    "personnel": {
+     "value": 90900,
+     "source": "RW_VO (Кривошеев)",
+     "reliability": "B",
+     "note": "ПКНО/Войско Польское в операции"
+    }
+   }
+  },
+  {
+   "id": "su_3ua_vo",
+   "name_ru": "3-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "Н. П. Симоняк",
+   "divisions": 9,
+   "note": "второй эшелон фронта; введена 31.01 на правом фланге (RW_CHR); число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_61a_vo",
+   "name_ru": "61-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "П. А. Белов",
+   "divisions": 9,
+   "note": "северная часть Магнушевского плацдарма; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_5ua_vo",
+   "name_ru": "5-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "Н. Э. Берзарин",
+   "divisions": 9,
+   "note": "Магнушевский плацдарм; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_8gva_vo",
+   "name_ru": "8-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "В. И. Чуйков",
+   "divisions": 9,
+   "note": "Магнушевский плацдарм; с 25.01 главные силы — штурм Познани; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_69a_vo",
+   "name_ru": "69-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "В. Я. Колпакчи",
+   "divisions": 10,
+   "note": "Пулавский плацдарм (главная задача на плацдарме); число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_33a_vo",
+   "name_ru": "33-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "rifle",
+   "commander": "В. Д. Цветаев",
+   "divisions": 8,
+   "note": "Пулавский плацдарм, южнее 69 А; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_1gta_vo",
+   "name_ru": "1-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "tank",
+   "commander": "М. Е. Катуков",
+   "note": "8 гв. мк, 11 гв. тк (DW_VO; 11 тк в DW_VO тоже показан в армии, по RW_CHR действовал с 69 А); численность танков в сессии не найдена"
+  },
+  {
+   "id": "su_2gta_vo",
+   "name_ru": "2-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "branch": "tank",
+   "commander": "С. И. Богданов",
+   "note": "1 мк, 9 гв. мк (так в DW_VO), 12 гв. тк; численность танков в сессии не найдена"
+  },
+  {
+   "id": "su_11tk_vo",
+   "name_ru": "11-й танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a_vo",
+   "branch": "tank",
+   "commander": "И. И. Ющук",
+   "note": "действовал с 69 А с Пулавского плацдарма (RW_CHR, RW_WP)"
+  },
+  {
+   "id": "su_9tk_vo",
+   "name_ru": "9-й танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_33a_vo",
+   "branch": "tank",
+   "commander": null,
+   "note": "действовал с 33 А (RW_CHR, RW_WP)"
+  },
+  {
+   "id": "su_2gkk_vo",
+   "name_ru": "2-й гвардейский кавалерийский корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1bf_vo",
+   "branch": "cavalry",
+   "commander": "В. В. Крюков",
+   "note": "введён 17.01 на Скерневице–Лович (RW_CHR)"
+  },
+  {
+   "id": "su_7gkk_vo",
+   "name_ru": "7-й гвардейский кавалерийский корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1bf_vo",
+   "branch": "cavalry",
+   "commander": "М. П. Константинов",
+   "note": "введён 17.01 на Томашув-Мазовецки (RW_CHR)"
+  },
+  {
+   "id": "su_6a_vo",
+   "name_ru": "6-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "В. А. Глуздовский",
+   "divisions": 5,
+   "note": "правый фланг на Висле севернее плацдарма; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_3gva_vo",
+   "name_ru": "3-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "В. Н. Гордов",
+   "divisions": 9,
+   "note": "северный фас плацдарма; с 6 А — против островецкой группировки; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_13a_vo",
+   "name_ru": "13-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "Н. П. Пухов",
+   "divisions": 8,
+   "note": "ударная группировка, правый фланг (на Кельце); число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_52a_vo",
+   "name_ru": "52-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "К. А. Коротеев",
+   "divisions": 9,
+   "note": "ударная группировка, центр (участок Шидлув — Жерники-Дольне, RW_ARM); число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_5gva_vo",
+   "name_ru": "5-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "А. С. Жадов",
+   "divisions": 10,
+   "note": "ударная группировка, левый фланг; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_60a_vo",
+   "name_ru": "60-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "П. А. Курочкин",
+   "divisions": 8,
+   "note": "левое крыло, южнее Вислы; на Краков; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_59a_vo",
+   "name_ru": "59-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "И. Т. Коровников",
+   "divisions": 7,
+   "note": "второй эшелон; введена 14.01 с Ниды; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_21a_vo",
+   "name_ru": "21-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "rifle",
+   "commander": "Д. Н. Гусев",
+   "divisions": 9,
+   "note": "второй эшелон; введена ~19–20.01 на Варте; число дивизий — по DW_VO (OOB 12.01)"
+  },
+  {
+   "id": "su_3gta_vo",
+   "name_ru": "3-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "tank",
+   "commander": "П. С. Рыбалко",
+   "note": "6 гв. тк, 7 гв. тк, 9 мк (RW_ARM/RW_CHR); численность танков в сессии не найдена"
+  },
+  {
+   "id": "su_4ta_vo",
+   "name_ru": "4-я танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "branch": "tank",
+   "commander": "Д. Д. Лелюшенко",
+   "note": "10 гв. тк, 6 гв. мк (DW_VO); с 17.03.1945 — 4-я гвардейская ТА; численность танков в сессии не найдена (10 гв. тк ~294 танка и САУ в начале января — armedconflicts.com, C)"
+  },
+  {
+   "id": "su_4gtk_vo",
+   "name_ru": "4-й гвардейский танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_59a_vo",
+   "branch": "tank",
+   "commander": "П. П. Полубояров",
+   "note": "придан 59 А 13.01 (RW_ARM 59 А); на Краков и Катовице"
+  },
+  {
+   "id": "su_31tk_vo",
+   "name_ru": "31-й танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5gva_vo",
+   "branch": "tank",
+   "commander": "Г. Г. Кузнецов",
+   "note": "в полосе 5 гв. А (RW_CHR)"
+  },
+  {
+   "id": "su_1gkk_vo",
+   "name_ru": "1-й гвардейский кавалерийский корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1uf_vo",
+   "branch": "cavalry",
+   "commander": "В. К. Баранов",
+   "note": "резерв фронта; с 20.01 вместе с 3 гв. ТА в обход Силезии (RW_CHR)"
+  },
+  {
+   "id": "de_hgr_a_vo",
+   "name_ru": "Группа армий «А» (с 26.01 — «Центр»)",
+   "side": "de",
+   "echelon": "front",
+   "parent": null,
+   "branch": "army_group",
+   "commander": "Й. Гарпе; с 16/17.01 Ф. Шёрнер (Z p.422; en-wiki: 20.01)",
+   "strength_12_01": {
+    "personnel": {
+     "value": 400000,
+     "source": "Z p.417",
+     "reliability": "A",
+     "note": "9 А + 4 ТА + 17 А; ru-wiki: до 560 тыс. (без АИ), BSE: ~800 тыс. по всей полосе"
+    },
+    "tanks_spg": {
+     "value": 1150,
+     "source": "Z p.417",
+     "reliability": "A",
+     "note": "ru-wiki: 1 220 танков и штурмовых орудий (без АИ)"
+    },
+    "guns": {
+     "value": 4100,
+     "source": "Z p.417",
+     "reliability": "A",
+     "note": "ru-wiki: ~5 000 орудий и миномётов"
+    }
+   },
+   "note": "переименована 25/26.01 (Z p.426); 27.01 9 А передана ГА «Висла»"
+  },
+  {
+   "id": "de_hgr_weichsel_vo",
+   "name_ru": "Группа армий «Висла»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null,
+   "branch": "army_group",
+   "commander": "Г. Гиммлер",
+   "note": "создана ~23–24.01 (Z p.425; DW_VO 24.01); с 27.01 командует 9 А (Z p.426)"
+  },
+  {
+   "id": "de_9a_vo",
+   "name_ru": "9-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_a_vo",
+   "branch": "army",
+   "commander": "С. фон Лютвиц; с ~20.01 Т. Буссе",
+   "strength_12_01": {
+    "personnel": {
+     "value": 143000,
+     "source": "C",
+     "reliability": "C",
+     "note": "разность: 400 000 (Z) минус 257 000 у 4 ТА и 17 А (EW_SS, Киселёв)"
+    },
+    "tanks_spg": {
+     "value": 610,
+     "source": "C",
+     "reliability": "C",
+     "note": "разность 1 150 − 540"
+    },
+    "guns": {
+     "value": 1400,
+     "source": "C",
+     "reliability": "C",
+     "note": "разность 4 100 − 2 700"
+    }
+   },
+   "note": "с 27.01 — в ГА «Висла» (Z p.426)"
+  },
+  {
+   "id": "de_4pza_vo",
+   "name_ru": "4-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_a_vo",
+   "branch": "panzer_army",
+   "commander": "Ф.-Х. Грезер",
+   "note": "4 ТА + 17 А вместе: 257 000 чел., 540 танков и штурмовых орудий, >2 700 орудий и миномётов (EW_SS, Киселёв, ВЭ т.7) — по армиям не разделено"
+  },
+  {
+   "id": "de_17a_vo",
+   "name_ru": "17-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_a_vo",
+   "branch": "army",
+   "commander": "Ф. Шульц",
+   "note": "в Верхней Силезии ~100 000 чел. к 25.01 (en-wiki)"
+  },
+  {
+   "id": "de_xxxxvi_vo",
+   "name_ru": "XXXXVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "branch": "panzer_corps",
+   "commander": "В. Фрис",
+   "note": "Варшава и Висла до Модлина: 337, 542 вгд, 73 пд, крепость Варшава (DW_VO); отброшен за Вислу в полосу 2 А (EW_VO)"
+  },
+  {
+   "id": "de_viii_vo",
+   "name_ru": "VIII армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "branch": "corps",
+   "commander": "В. Хартман",
+   "note": "против Магнушевского плацдарма по обе стороны Пилицы: 6, 45 вгд, 251 пд (DW_VO; DW 9. Armee)"
+  },
+  {
+   "id": "de_lvi_vo",
+   "name_ru": "LVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "branch": "panzer_corps",
+   "commander": "Й. Блок",
+   "note": "против Пулавского плацдарма: 214, 17 пд (DW_VO); «распался» (EW_VO)"
+  },
+  {
+   "id": "de_xxxx_vo",
+   "name_ru": "XXXX танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "branch": "panzer_corps",
+   "commander": "З. Хенрици",
+   "note": "резерв 9 А: 19 и 25 тд (Z p.424 «Ninth Army's XXXX Panzer Corps»; RW_CHR 15.01); DW_VO ошибочно показывает его в Armeegruppe Heinrici"
+  },
+  {
+   "id": "de_xxxxii_vo",
+   "name_ru": "XXXXII армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza_vo",
+   "branch": "corps",
+   "commander": "Г. Рекнагель (убит 23.01)",
+   "note": "северный фас Барановского плацдарма: 72, 88, 291, 342 пд (DW_VO); уничтожен к концу января (DW_KORPS)"
+  },
+  {
+   "id": "de_xxiv_vo",
+   "name_ru": "XXIV танковый корпус (группа Неринга)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza_vo",
+   "branch": "panzer_corps",
+   "commander": "В. Неринг",
+   "note": "резерв 4 ТА: 16, 17 тд, 20 пгд (DW_VO); «блуждающий котёл» до Варты и Одера"
+  },
+  {
+   "id": "de_xxxxviii_vo",
+   "name_ru": "XXXXVIII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza_vo",
+   "branch": "panzer_corps",
+   "commander": "М. фон Эдельсхайм",
+   "strength_12_01": {
+    "tanks_spg": {
+     "value": 136,
+     "source": "Z p.421",
+     "reliability": "C",
+     "note": "3 × ~12 штурмовых орудий + ~100 в резерве корпуса (оценка по тексту)"
+    }
+   },
+   "note": "западный фас плацдарма: 68, 168, 304 пд (DW_VO), по дюжине штурмовых орудий на дивизию + ~100 в резерве корпуса (Z p.421); разгромлен 12.01"
+  },
+  {
+   "id": "de_lix_vo",
+   "name_ru": "LIX армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_17a_vo",
+   "branch": "corps",
+   "commander": "Э. Рёрихт",
+   "note": "371, 359 пд (DW_VO); участок — оценка (C)"
+  },
+  {
+   "id": "de_xi_ss_vo",
+   "name_ru": "XI армейский корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_17a_vo",
+   "branch": "corps",
+   "commander": "М. Кляйнхайстеркамп",
+   "note": "544, 78, 320 вгд (DW_VO); участок — оценка (C)"
+  },
+  {
+   "id": "de_pzk_gd_vo",
+   "name_ru": "Танковый корпус «Великая Германия» (группа Заукена)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_a_vo",
+   "branch": "panzer_corps",
+   "commander": "Д. фон Заукен",
+   "note": "из ГА «Центр» (Вост. Пруссия) по приказу 14.01 (Z p.422); пгд «Бранденбург», тпд «Герман Геринг» — выгрузка у Лодзи/Калиша с 15.01 (DW_VO, EW_VO)"
+  },
+  {
+   "id": "de_v_ss_vo",
+   "name_ru": "V горный корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_weichsel_vo",
+   "branch": "corps",
+   "commander": null,
+   "note": "в конце января — на Обре и Тиршитигельской позиции (EW_VO); в феврале — Франкфурт/Губен в 9 А (DW_KORPS); командир на январь в сессии не уточнён"
+  },
+  {
+   "id": "de_festung_posen_vo",
+   "name_ru": "Крепость Познань (Posen)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_weichsel_vo",
+   "branch": "fortress",
+   "commander": "Э. Маттерн; с 30.01 Э. Гонелль",
+   "strength_12_01": {
+    "personnel": {
+     "value": 17500,
+     "source": "DW_POSEN",
+     "reliability": "B",
+     "note": "последняя работа: 15–20 тыс.; Okęcki 1975: 32 500; Szumowski: 61 000; ru-wiki: ~60–62 тыс."
+    }
+   },
+   "note": "окружена 25.01, капитуляция 23.02 (DW_POSEN)"
+  }
+ ],
+ "positions": [
+  {
+   "formation": "su_1bf_vo",
+   "date": "1945-01-14",
+   "lng": 21.684,
+   "lat": 51.594,
+   "approx_km": 40,
+   "place": "Magnuszew / Pulawy",
+   "sector_note": "центр двух ударных группировок (Магнушевский и Пулавский плацдармы); правое крыло — Варшава",
+   "source": "RW_WP; Z p.417",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_1bf_vo",
+   "date": "1945-01-19",
+   "lng": 19.422,
+   "lat": 51.995,
+   "approx_km": 60,
+   "place": "Lodz / Kutno",
+   "sector_note": "фронт вышел на рубеж Лодзь–Кутно–Сохачев; Варшава взята 17.01",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1bf_vo",
+   "date": "1945-01-25",
+   "lng": 17.258,
+   "lat": 52.468,
+   "approx_km": 70,
+   "place": "Poznan / Gniezno",
+   "sector_note": "главные силы проходят Познань на запад (Z p.425); правое крыло растянуто на 160 км к Быдгощу",
+   "source": "Z p.425; RW_CHR",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_1bf_vo",
+   "date": "1945-02-03",
+   "lng": 15.116,
+   "lat": 52.517,
+   "approx_km": 80,
+   "place": "Kostrzyn / Miedzyrzecz",
+   "sector_note": "центр и левое крыло на Одере (полоса ~100 км южнее Цедена, RW_WP); правое крыло фронтом на север (Померания)",
+   "source": "RW_WP; Z p.439",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-01-12",
+   "lng": 20.925,
+   "lat": 52.391,
+   "approx_km": 15,
+   "place": "Jablonna / Legionowo",
+   "sector_note": "междуречье Вислы и Буга/Нарева севернее Варшавы (Яблонна–Легионово)",
+   "source": "PW_VO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-01-15",
+   "lng": 20.675,
+   "lat": 52.44,
+   "approx_km": 10,
+   "place": "Modlin",
+   "sector_note": "прорыв севернее Варшавы к Модлину (Z p.421); форсировала Вислу у Модлина 15–16.01 (PW_VO, RW_CHR)",
+   "source": "Z p.421; PW_VO",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-01-16",
+   "lng": 20.646,
+   "lat": 52.317,
+   "approx_km": 15,
+   "place": "Modlin / Blonie",
+   "sector_note": "плацдарм на левом берегу, охват Варшавы с северо-запада",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-01-17",
+   "lng": 20.844,
+   "lat": 52.214,
+   "approx_km": 10,
+   "place": "Warszawa / Blonie",
+   "sector_note": "вступила в Варшаву с северо-запада",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-01-22",
+   "lng": 18.987,
+   "lat": 52.633,
+   "approx_km": 35,
+   "place": "Wloclawek / BrzescKuj",
+   "sector_note": "преследование вдоль левого берега Вислы на северо-запад за 2 гв. ТА (положение интерполировано)",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-01-28",
+   "lng": 17.815,
+   "lat": 53.134,
+   "approx_km": 30,
+   "place": "Naklo / Bydgoszcz",
+   "sector_note": "правое крыло фронта западнее Быдгоща",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-01-29",
+   "lng": 17.6,
+   "lat": 53.139,
+   "approx_km": 25,
+   "place": "Naklo",
+   "sector_note": "контратаки с Померанского вала отбросили её местами за р. Нотец",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_47a_vo",
+   "date": "1945-02-03",
+   "lng": 16.891,
+   "lat": 53.255,
+   "approx_km": 40,
+   "place": "Pila / Zlotow",
+   "sector_note": "фронтом на север против ГА «Висла» (Шнайдемюль); оценка",
+   "source": "Z p.444; RW_CHR 31.01",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "date": "1945-01-12",
+   "lng": 21.027,
+   "lat": 52.265,
+   "approx_km": 10,
+   "place": "Praga_W",
+   "sector_note": "на правом берегу Вислы у Праги",
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "date": "1945-01-17",
+   "lng": 21.071,
+   "lat": 52.233,
+   "approx_km": 5,
+   "place": "Warszawa",
+   "sector_note": "утром 17.01 ворвалась в Варшаву (2 пд через Вислу у Яблонны, главные силы — южнее)",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "date": "1945-01-19",
+   "lng": 19.86,
+   "lat": 52.33,
+   "approx_km": 30,
+   "place": "Sochaczew / Gostynin",
+   "sector_note": "марш на Быдгощ вдоль левого берега Вислы: Сохачев–Гостынин–Брест-Куявски",
+   "source": "PW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "date": "1945-01-23",
+   "lng": 18.574,
+   "lat": 52.693,
+   "approx_km": 35,
+   "place": "BrzescKuj / Inowroclaw",
+   "sector_note": "марш на Быдгощ (интерполяция)",
+   "source": "PW_VO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "date": "1945-01-28",
+   "lng": 18.029,
+   "lat": 53.13,
+   "approx_km": 15,
+   "place": "Bydgoszcz",
+   "sector_note": "ru-wiki (1 А ВП): «28 января освободив Быдгощ» ⚠ город взят 23.01 2 гв. ТА",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "date": "1945-01-31",
+   "lng": 16.929,
+   "lat": 53.39,
+   "approx_km": 25,
+   "place": "Zlotow / Jastrowie",
+   "sector_note": "введена 29.01 на правом фланге (RW_CHR); 31.01 взяты Флатов и Ястров «северо-восточнее Шнайдемюля» (RW_CHR, армия не названа)",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "date": "1945-01-14",
+   "lng": 21.45,
+   "lat": 51.871,
+   "approx_km": 40,
+   "place": "Mniszew / Garwolin",
+   "sector_note": "второй эшелон фронта за Магнушевским плацдармом (место не установлено)",
+   "source": "RW_WP",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "date": "1945-01-25",
+   "lng": 17.921,
+   "lat": 52.659,
+   "approx_km": 50,
+   "place": "Inowroclaw / Gniezno",
+   "sector_note": "выдвижение за правым крылом (интерполяция)",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "date": "1945-01-31",
+   "lng": 17.038,
+   "lat": 53.206,
+   "approx_km": 40,
+   "place": "Naklo / Walcz",
+   "sector_note": "введена в сражение 31.01 на правом фланге против Померанского вала",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "date": "1945-02-03",
+   "lng": 16.76,
+   "lat": 53.316,
+   "approx_km": 40,
+   "place": "Walcz / Zlotow",
+   "sector_note": "фронтом на север (Дойч-Кроне)",
+   "source": "Z p.444",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_61a_vo",
+   "date": "1945-01-14",
+   "lng": 21.183,
+   "lat": 51.785,
+   "approx_km": 15,
+   "place": "Warka",
+   "sector_note": "северный фас Магнушевского плацдарма; наступление на Варку–Груец–Гродзиск",
+   "source": "PW_VO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_61a_vo",
+   "date": "1945-01-16",
+   "lng": 20.867,
+   "lat": 51.865,
+   "approx_km": 15,
+   "place": "Grojec",
+   "sector_note": "подошла к Варшаве с юго-запада, окружая варшавскую группировку",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_61a_vo",
+   "date": "1945-01-17",
+   "lng": 20.844,
+   "lat": 52.214,
+   "approx_km": 15,
+   "place": "Warszawa / Blonie",
+   "sector_note": "вступила в Варшаву с юго-запада",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_61a_vo",
+   "date": "1945-01-22",
+   "lng": 19.23,
+   "lat": 52.441,
+   "approx_km": 40,
+   "place": "Kutno / Wloclawek",
+   "sector_note": "преследование на северо-запад (интерполяция)",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_61a_vo",
+   "date": "1945-01-28",
+   "lng": 17.019,
+   "lat": 53.009,
+   "approx_km": 40,
+   "place": "Szamocin / Chodziez",
+   "sector_note": "за 2 гв. ТА на Нотеце (интерполяция; 28.01 взяты Кроне, Мрочно — RW_CHR)",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_61a_vo",
+   "date": "1945-02-03",
+   "lng": 16.117,
+   "lat": 53.246,
+   "approx_km": 40,
+   "place": "Walcz / Drawno",
+   "sector_note": "правое крыло фронтом на север против Померанского вала (оценка)",
+   "source": "RW_CHR 27.01; Z p.444",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-14",
+   "lng": 21.383,
+   "lat": 51.762,
+   "approx_km": 8,
+   "place": "Magnuszew",
+   "sector_note": "Магнушевский плацдарм; к исходу дня +12 км, ночью захвачен мост на Пилице",
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-15",
+   "lng": 21.067,
+   "lat": 51.717,
+   "approx_km": 15,
+   "place": "Bialobrzegi / Warka",
+   "sector_note": "форсировала Пилицу, отбросила противника на северо-запад",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-17",
+   "lng": 20.145,
+   "lat": 51.958,
+   "approx_km": 20,
+   "place": "Skierniewice",
+   "sector_note": "к исходу 17.01 бои у Скерневице–Рава-Мазовецка–Глухув (с 8 гв. А)",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-19",
+   "lng": 19.666,
+   "lat": 52.165,
+   "approx_km": 30,
+   "place": "Lowicz / Kutno",
+   "sector_note": "интерполяция (Лович взят 18.01)",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-22",
+   "lng": 17.921,
+   "lat": 52.659,
+   "approx_km": 40,
+   "place": "Inowroclaw / Gniezno",
+   "sector_note": "интерполяция: 22.01 взяты Иновроцлав, Гнезно",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-26",
+   "lng": 17.098,
+   "lat": 52.782,
+   "approx_km": 30,
+   "place": "Wagrowiec / Rogozno",
+   "sector_note": "северо-западнее Познани (Вонгровец, Рогазен взяты 26.01)",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-28",
+   "lng": 16.473,
+   "lat": 52.806,
+   "approx_km": 30,
+   "place": "Czarnkow / Wronki",
+   "sector_note": "Чарникау, Вронки взяты 28.01 (армия не названа)",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-01-31",
+   "lng": 14.439,
+   "lat": 52.673,
+   "approx_km": 30,
+   "place": "Kienitz",
+   "sector_note": "передовой отряд по льду взял Кинитц 31.01 (EW_VO); главные силы — восточнее, на Ландсберг",
+   "source": "EW_VO; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "date": "1945-02-03",
+   "lng": 14.546,
+   "lat": 52.632,
+   "approx_km": 15,
+   "place": "Kienitz / Kostrzyn",
+   "sector_note": "плацдармы Кинитц–Гюстебизе севернее Кюстрина",
+   "source": "DW_VO; Z p.444",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-01-14",
+   "lng": 21.324,
+   "lat": 51.688,
+   "approx_km": 10,
+   "place": "Studzianki",
+   "sector_note": "южная часть Магнушевского плацдарма; за день овладела первой позицией",
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-01-15",
+   "lng": 20.765,
+   "lat": 51.632,
+   "approx_km": 20,
+   "place": "NoweMiasto / Bialobrzegi",
+   "sector_note": "ввод 1 гв. ТА в её полосе, Пилица",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-01-17",
+   "lng": 20.163,
+   "lat": 51.771,
+   "approx_km": 15,
+   "place": "RawaMaz / Gluchow",
+   "sector_note": "бои Рава-Мазовецка–Глухув",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-01-19",
+   "lng": 19.457,
+   "lat": 51.769,
+   "approx_km": 10,
+   "place": "Lodz",
+   "sector_note": "29 гв. ск с 9 мк взял Лодзь 19.01 (DW_VO); EW_VO: «достигла Лодзи 18.01»",
+   "source": "DW_VO; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-01-22",
+   "lng": 18.444,
+   "lat": 52.216,
+   "approx_km": 40,
+   "place": "Kolo / Konin",
+   "sector_note": "марш на Познань (интерполяция)",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-01-25",
+   "lng": 16.92,
+   "lat": 52.401,
+   "approx_km": 15,
+   "place": "Poznan",
+   "sector_note": "полностью окружила Познань (DW_POSEN); ru-wiki ВПО: окружение 23.01",
+   "source": "DW_POSEN; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-01-28",
+   "lng": 16.249,
+   "lat": 52.423,
+   "approx_km": 50,
+   "place": "Poznan / Miedzyrzecz",
+   "sector_note": "главные силы штурмуют Познань (29 гв. ск и 39 гв. сд); 4 гв. ск — на запад; 28.01 перешла границу Германии (RW_ARM)",
+   "source": "RW_ARM; DW_POSEN",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "date": "1945-02-02",
+   "lng": 14.568,
+   "lat": 52.529,
+   "approx_km": 15,
+   "place": "Manschnow / Reitwein",
+   "sector_note": "передовые части на Одере 1.02; 4 гв. ск — малый плацдарм у Ной-Маншнова 2.02 (только этот корпус)",
+   "source": "DW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_69a_vo",
+   "date": "1945-01-14",
+   "lng": 21.699,
+   "lat": 51.415,
+   "approx_km": 15,
+   "place": "Gniewoszow / Zwolen",
+   "sector_note": "Пулавский плацдарм; 11 тк ввели в первый день — Зволень взят, бои за Радом",
+   "source": "RW_CHR; PW_VO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_69a_vo",
+   "date": "1945-01-16",
+   "lng": 21.161,
+   "lat": 51.417,
+   "approx_km": 10,
+   "place": "Radom",
+   "sector_note": "Радом взят в 20:00 16.01 (с 11 тк; совместно с 33 А)",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_69a_vo",
+   "date": "1945-01-17",
+   "lng": 20.215,
+   "lat": 51.459,
+   "approx_km": 20,
+   "place": "Opoczno / Spala",
+   "sector_note": "район Спала–Опочно",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_69a_vo",
+   "date": "1945-01-19",
+   "lng": 19.745,
+   "lat": 51.644,
+   "approx_km": 30,
+   "place": "TomaszowMaz / Lodz",
+   "sector_note": "освобождение Томашова, участие во взятии Лодзи (RW_ARM 69 А)",
+   "source": "RW_ARM",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_69a_vo",
+   "date": "1945-01-25",
+   "lng": 16.92,
+   "lat": 52.401,
+   "approx_km": 20,
+   "place": "Poznan",
+   "sector_note": "91 ск — в штурме Познани (RW_ARM 8 гв. А и 69 А)",
+   "source": "RW_ARM",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_69a_vo",
+   "date": "1945-01-31",
+   "lng": 15.556,
+   "lat": 52.347,
+   "approx_km": 25,
+   "place": "Miedzyrzecz / Swiebodzin",
+   "sector_note": "Мезериц и Швибус (с 33 А) — RW_ARM; Мезериц, Швибус взяты 31.01 (RW_CHR)",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_69a_vo",
+   "date": "1945-02-03",
+   "lng": 14.702,
+   "lat": 52.35,
+   "approx_km": 30,
+   "place": "Rzepin / Slubice",
+   "sector_note": "выход к Одеру на франкфуртском направлении (Лебус взят 12.02); положение на 3.02 — оценка",
+   "source": "RW_ARM",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-01-14",
+   "lng": 21.785,
+   "lat": 51.391,
+   "approx_km": 20,
+   "place": "Pulawy / Zwolen",
+   "sector_note": "южная часть Пулавского плацдарма; 9 тк введён в первый день",
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-01-16",
+   "lng": 21.047,
+   "lat": 51.193,
+   "approx_km": 20,
+   "place": "Ilza / Szydlowiec",
+   "sector_note": "Илжа 16.01 (RW_ARM 33 А); подошла к Шидловцу (RW_CHR)",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-01-17",
+   "lng": 20.293,
+   "lat": 51.378,
+   "approx_km": 20,
+   "place": "Opoczno",
+   "sector_note": "район Спала–Опочно",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-01-19",
+   "lng": 19.457,
+   "lat": 51.769,
+   "approx_km": 25,
+   "place": "Lodz",
+   "sector_note": "в числе освободивших Лодзь (RW_ARM 33 А)",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-01-23",
+   "lng": 18.079,
+   "lat": 51.747,
+   "approx_km": 15,
+   "place": "Kalisz",
+   "sector_note": "Калиш 23.01 (RW_ARM 33 А; RW_CHR — «к исходу 23 января»)",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-01-28",
+   "lng": 16.344,
+   "lat": 51.98,
+   "approx_km": 40,
+   "place": "Wolsztyn / Leszno",
+   "sector_note": "интерполяция (Калиш → Швибус)",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-01-31",
+   "lng": 15.533,
+   "lat": 52.25,
+   "approx_km": 15,
+   "place": "Swiebodzin",
+   "sector_note": "Швибус 31.01 (с 69 А)",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_33a_vo",
+   "date": "1945-02-03",
+   "lng": 14.687,
+   "lat": 52.193,
+   "approx_km": 20,
+   "place": "Aurith / Fuerstenberg_O",
+   "sector_note": "Ауритский плацдарм южнее Франкфурта расширялся в первую неделю февраля (Z p.444); привязка к 33 А — C",
+   "source": "Z p.444",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-01-14",
+   "lng": 21.354,
+   "lat": 51.725,
+   "approx_km": 20,
+   "place": "Magnuszew / Studzianki",
+   "sector_note": "исходный район за 8 гв. А",
+   "source": "RW_WP",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-01-15",
+   "lng": 20.58,
+   "lat": 51.617,
+   "approx_km": 15,
+   "place": "NoweMiasto",
+   "sector_note": "введена в полосе 8 гв. А, форсировала Пилицу",
+   "source": "RW_CHR; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-01-16",
+   "lng": 20.307,
+   "lat": 51.568,
+   "approx_km": 20,
+   "place": "NoweMiasto / TomaszowMaz",
+   "sector_note": "Нове-Място взято, отражены контратаки XXXX тк; на Лодзь",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-01-18",
+   "lng": 19.745,
+   "lat": 51.644,
+   "approx_km": 30,
+   "place": "Lodz / TomaszowMaz",
+   "sector_note": "на подступах к Лодзи (интерполяция)",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-01-21",
+   "lng": 18.444,
+   "lat": 52.216,
+   "approx_km": 35,
+   "place": "Kolo / Konin",
+   "sector_note": "форсирование Варты 21–24.01 (DW_POSEN); точка — оценка",
+   "source": "DW_POSEN",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-01-25",
+   "lng": 16.92,
+   "lat": 52.401,
+   "approx_km": 20,
+   "place": "Poznan",
+   "sector_note": "обходит Познань с юга, форсировала Варту 25.01 и пошла к Одеру (RW_WP); EW_VO: «окружает Познань к 25.01»",
+   "source": "RW_WP; EW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-01-29",
+   "lng": 15.726,
+   "lat": 52.405,
+   "approx_km": 25,
+   "place": "Trzciel / Miedzyrzecz",
+   "sector_note": "прорыв Мезерицкого укрепрайона (29.01 с 8 гв., 33 и 69 А)",
+   "source": "RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "date": "1945-02-02",
+   "lng": 14.61,
+   "lat": 52.473,
+   "approx_km": 30,
+   "place": "Kostrzyn / Slubice",
+   "sector_note": "8 гв. мк и 11 гв. тк вышли к Одеру 2.02 (DW_VO); ⚠ PW_VO: части армии переправились у Кинитца 31.01",
+   "source": "DW_VO; PW_VO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-14",
+   "lng": 21.331,
+   "lat": 51.804,
+   "approx_km": 20,
+   "place": "Magnuszew / Mniszew",
+   "sector_note": "исходный район за 5 уд. А",
+   "source": "RW_WP",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-16",
+   "lng": 20.655,
+   "lat": 51.96,
+   "approx_km": 25,
+   "place": "Grojec / Zyrardow",
+   "sector_note": "введена утром 16.01 с плацдарма на Пилице; Груец, Жирардув, к исходу дня — к Сохачеву (80 км за день)",
+   "source": "RW_CHR; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-17",
+   "lng": 20.257,
+   "lat": 52.237,
+   "approx_km": 10,
+   "place": "Sochaczew",
+   "sector_note": "взяла Сохачев, вышла на Бзуру, перерезала пути отхода варшавской группировки",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-19",
+   "lng": 19.425,
+   "lat": 52.323,
+   "approx_km": 30,
+   "place": "Kutno / Gostynin",
+   "sector_note": "интерполяция",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-22",
+   "lng": 18.246,
+   "lat": 52.782,
+   "approx_km": 20,
+   "place": "Inowroclaw",
+   "sector_note": "развивала наступление на Иновроцлав (RW_ARM); город взят 22.01 (RW_CHR)",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-23",
+   "lng": 18.029,
+   "lat": 53.13,
+   "approx_km": 15,
+   "place": "Bydgoszcz",
+   "sector_note": "с 2 гв. кк обходным манёвром взяла Быдгощ",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-26",
+   "lng": 17.019,
+   "lat": 53.009,
+   "approx_km": 35,
+   "place": "Szamocin / Chodziez",
+   "sector_note": "интерполяция (выход к старой границе 26.01, RW_WP)",
+   "source": "RW_WP",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-28",
+   "lng": 15.855,
+   "lat": 53.112,
+   "approx_km": 20,
+   "place": "StareOsieczno / Drawno",
+   "sector_note": "с ходу прорвала Померанский вал на участке Старе-Осечно–Дравины; впереди 1 мк",
+   "source": "PW_VO; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-01-31",
+   "lng": 14.381,
+   "lat": 52.72,
+   "approx_km": 30,
+   "place": "Kienitz / Gozdowice",
+   "sector_note": "передовые части с 5 уд. А на Одере 31.01 (RW_WP)",
+   "source": "RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "date": "1945-02-02",
+   "lng": 14.582,
+   "lat": 52.601,
+   "approx_km": 15,
+   "place": "Genschmar / Kostrzyn",
+   "sector_note": "1 мк (Кривошеин) — малый плацдарм у Геншмара (DW_VO); армия ведёт удар во фланг — оценка",
+   "source": "DW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "date": "1945-01-14",
+   "lng": 21.584,
+   "lat": 51.356,
+   "approx_km": 10,
+   "place": "Zwolen",
+   "sector_note": "введён в первый день в полосе 69 А, Зволень взят, бои за Радом",
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "date": "1945-01-16",
+   "lng": 21.161,
+   "lat": 51.417,
+   "approx_km": 10,
+   "place": "Radom",
+   "sector_note": "с 69 А взял Радом, захватил плацдарм на Радомке",
+   "source": "RW_CHR; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "date": "1945-01-14",
+   "lng": 21.785,
+   "lat": 51.391,
+   "approx_km": 20,
+   "place": "Pulawy / Zwolen",
+   "sector_note": "введён в первый день в полосе 33 А",
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "date": "1945-01-16",
+   "lng": 21.009,
+   "lat": 51.32,
+   "approx_km": 20,
+   "place": "Radom / Szydlowiec",
+   "sector_note": "«11 и 9 тк к утру 16.01 освободили Радом» (RW_WP); с 33 А к Шидловцу (RW_CHR)",
+   "source": "RW_WP; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gkk_vo",
+   "date": "1945-01-17",
+   "lng": 20.045,
+   "lat": 52.033,
+   "approx_km": 20,
+   "place": "Skierniewice / Lowicz",
+   "sector_note": "введён 17.01 на Скерневице–Лович",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_2gkk_vo",
+   "date": "1945-01-23",
+   "lng": 18.029,
+   "lat": 53.13,
+   "approx_km": 20,
+   "place": "Bydgoszcz",
+   "sector_note": "с 2 гв. ТА взял Быдгощ",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "date": "1945-01-17",
+   "lng": 20.034,
+   "lat": 51.52,
+   "approx_km": 20,
+   "place": "TomaszowMaz",
+   "sector_note": "введён 17.01 на Томашув-Мазовецки",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1uf_vo",
+   "date": "1945-01-12",
+   "lng": 21.086,
+   "lat": 50.576,
+   "approx_km": 30,
+   "place": "Staszow / Szydlow",
+   "sector_note": "центр ударной группировки на Сандомирском плацдарме (прорыв на 39 км, RW_SS)",
+   "source": "RW_SS; Z p.421",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_1uf_vo",
+   "date": "1945-01-17",
+   "lng": 19.287,
+   "lat": 50.94,
+   "approx_km": 60,
+   "place": "Radomsko / Czestochowa",
+   "sector_note": "рубеж Радомско–Ченстохов–севернее Кракова–Тарнув",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1uf_vo",
+   "date": "1945-01-23",
+   "lng": 18.07,
+   "lat": 50.977,
+   "approx_km": 70,
+   "place": "Namyslow / Olesno",
+   "sector_note": "выход к Одеру у Бреслау на 60 км; Силезская группировка обойдена",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1uf_vo",
+   "date": "1945-02-03",
+   "lng": 17.478,
+   "lat": 50.888,
+   "approx_km": 90,
+   "place": "Wroclaw / Opole",
+   "sector_note": "рубеж западнее Унрухштадта–Штейнау–восточнее Бреслау–Олау–восточнее Ратибора–северо-восточнее Струмени (EW_SS)",
+   "source": "EW_SS",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_6a_vo",
+   "date": "1945-01-12",
+   "lng": 21.854,
+   "lat": 50.846,
+   "approx_km": 20,
+   "place": "Annopol / Zawichost",
+   "sector_note": "правый фланг на Висле севернее плацдарма (оценка)",
+   "source": "RW_SS",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_6a_vo",
+   "date": "1945-01-16",
+   "lng": 21.406,
+   "lat": 50.871,
+   "approx_km": 15,
+   "place": "Ostrowiec / Opatow",
+   "sector_note": "прорвала оборону арьергардов на Висле, +40–50 км, взяла Островец и Опатув",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_6a_vo",
+   "date": "1945-01-27",
+   "lng": 16.716,
+   "lat": 51.727,
+   "approx_km": 60,
+   "place": "Leszno / Rawicz",
+   "sector_note": "положение не установлено; в начале февраля — у Бреслау (KON); точка — оценка",
+   "source": "KON",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_6a_vo",
+   "date": "1945-02-03",
+   "lng": 17.208,
+   "lat": 51.16,
+   "approx_km": 40,
+   "place": "Wroclaw / Olesnica",
+   "sector_note": "«наступала непосредственно на Бреслау» (KON); 3.02 — оценка",
+   "source": "KON",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "date": "1945-01-12",
+   "lng": 21.545,
+   "lat": 50.844,
+   "approx_km": 20,
+   "place": "Ozarow / Opatow",
+   "sector_note": "северный фас плацдарма (оценка)",
+   "source": "RW_SS",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "date": "1945-01-15",
+   "lng": 20.631,
+   "lat": 50.872,
+   "approx_km": 15,
+   "place": "Kielce",
+   "sector_note": "с 13 и 4 ТА выбила XXIV тк из Кельце (Z p.421)",
+   "source": "Z p.421; RW_CHR",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "date": "1945-01-17",
+   "lng": 20.877,
+   "lat": 51.123,
+   "approx_km": 15,
+   "place": "SkarzyskoK",
+   "sector_note": "у Скаржиско-Каменной соединилась с войсками 1 БФ, уничтожены главные силы XXXXII ак",
+   "source": "RW_SS",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "date": "1945-01-22",
+   "lng": 18.41,
+   "lat": 51.675,
+   "approx_km": 50,
+   "place": "Sieradz / Kalisz",
+   "sector_note": "интерполяция: преследование на запад севернее 13 А",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "date": "1945-01-27",
+   "lng": 16.574,
+   "lat": 51.844,
+   "approx_km": 20,
+   "place": "Leszno",
+   "sector_note": "восточнее Лиссы окружила и уничтожила ~15 тыс. (силы, отходившие от 1 БФ)",
+   "source": "KON",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "date": "1945-02-03",
+   "lng": 15.975,
+   "lat": 51.868,
+   "approx_km": 30,
+   "place": "Kargowa / Glogow",
+   "sector_note": "рубеж «западнее Унрухштадта» (EW_SS); у Глогау",
+   "source": "EW_SS",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_13a_vo",
+   "date": "1945-01-12",
+   "lng": 21.044,
+   "lat": 50.683,
+   "approx_km": 15,
+   "place": "Lagow / Szydlow",
+   "sector_note": "правый фланг ударной группировки (оценка участка)",
+   "source": "RW_SS",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_13a_vo",
+   "date": "1945-01-13",
+   "lng": 20.691,
+   "lat": 50.743,
+   "approx_km": 20,
+   "place": "Chmielnik / Kielce",
+   "sector_note": "с 4 ТА отразила контрудар XXIV тк, форсировала Черна-Ниду",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_13a_vo",
+   "date": "1945-01-15",
+   "lng": 20.631,
+   "lat": 50.872,
+   "approx_km": 15,
+   "place": "Kielce",
+   "sector_note": "Кельце взят (с 3 гв. А и 4 ТА)",
+   "source": "Z p.421; RW_CHR",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_13a_vo",
+   "date": "1945-01-19",
+   "lng": 19.222,
+   "lat": 51.154,
+   "approx_km": 50,
+   "place": "Wielun / Przedborz",
+   "sector_note": "интерполяция",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_13a_vo",
+   "date": "1945-01-23",
+   "lng": 16.654,
+   "lat": 51.577,
+   "approx_km": 30,
+   "place": "Chobienia / Rawicz",
+   "sector_note": "вышла на Одер и начала форсирование",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_13a_vo",
+   "date": "1945-01-27",
+   "lng": 16.678,
+   "lat": 51.303,
+   "approx_km": 20,
+   "place": "Wolow / BrzegDolny",
+   "sector_note": "Волау, Оберниге, Дихернфурт (Бжег-Дольны) взяты 27.01",
+   "source": "PW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_13a_vo",
+   "date": "1945-02-03",
+   "lng": 16.537,
+   "lat": 51.376,
+   "approx_km": 20,
+   "place": "Scinawa / Wolow",
+   "sector_note": "Штейнауский плацдарм",
+   "source": "EW_SS; KON",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-01-12",
+   "lng": 21.005,
+   "lat": 50.591,
+   "approx_km": 10,
+   "place": "Szydlow",
+   "sector_note": "участок прорыва Шидлув–Жерники-Дольне",
+   "source": "RW_ARM",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-01-13",
+   "lng": 20.751,
+   "lat": 50.615,
+   "approx_km": 10,
+   "place": "Chmielnik",
+   "sector_note": "Хмельник взят",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-01-14",
+   "lng": 19.677,
+   "lat": 50.773,
+   "approx_km": 20,
+   "place": "Koniecpol",
+   "sector_note": "передовые части на Пилице севернее Конецполя",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-01-16",
+   "lng": 19.45,
+   "lat": 51.071,
+   "approx_km": 10,
+   "place": "Radomsko",
+   "sector_note": "254 сд освободила Радомско (RW_ARM); RW_CHR — 17.01 (3 гв. ТА)",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-01-19",
+   "lng": 18.3,
+   "lat": 51.175,
+   "approx_km": 30,
+   "place": "Wieruszow / Praszka",
+   "sector_note": "пересекла германо-польскую границу восточнее Бреслау (с 3 гв. ТА и 5 гв. А)",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-01-21",
+   "lng": 18.318,
+   "lat": 50.925,
+   "approx_km": 25,
+   "place": "Kluczbork / Olesno",
+   "sector_note": "между Крейцбургом и Розенбергом перешла старую границу (PW_VO); 21.01 Крейцбург, Розенберг, Питшен (RW_CHR)",
+   "source": "PW_VO; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-01-23",
+   "lng": 17.551,
+   "lat": 51.143,
+   "approx_km": 30,
+   "place": "Olesnica / Namyslow",
+   "sector_note": "вышла на Одер (RW_CHR); Милич, Намслау 23.01",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_52a_vo",
+   "date": "1945-02-03",
+   "lng": 16.87,
+   "lat": 51.189,
+   "approx_km": 30,
+   "place": "BrzegDolny / Wroclaw",
+   "sector_note": "на Одере севернее/северо-западнее Бреслау (KON — к 7.02 вся армия на северном плацдарме); 3.02 — оценка",
+   "source": "KON; RW_ARM",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-01-12",
+   "lng": 20.972,
+   "lat": 50.515,
+   "approx_km": 15,
+   "place": "Stopnica / Szydlow",
+   "sector_note": "левый фланг ударной группировки (оценка)",
+   "source": "RW_SS",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-01-13",
+   "lng": 20.719,
+   "lat": 50.468,
+   "approx_km": 15,
+   "place": "BuskoZdroj",
+   "sector_note": "Буско-Здруй взят 13.01 (армия по смыслу)",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-01-15",
+   "lng": 19.82,
+   "lat": 50.626,
+   "approx_km": 20,
+   "place": "Szczekociny",
+   "sector_note": "на Пилице; 31 тк захватил плацдарм",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-01-17",
+   "lng": 19.124,
+   "lat": 50.809,
+   "approx_km": 10,
+   "place": "Czestochowa",
+   "sector_note": "с 3 гв. ТА и 31 тк взяла Ченстохов",
+   "source": "RW_CHR; PW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-01-19",
+   "lng": 18.509,
+   "lat": 51.138,
+   "approx_km": 30,
+   "place": "Praszka / Wielun",
+   "sector_note": "пересекла границу Германии",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-01-22",
+   "lng": 17.821,
+   "lat": 50.872,
+   "approx_km": 25,
+   "place": "Opole / Namyslow",
+   "sector_note": "к исходу 22.01 прорвалась к Одеру северо-западнее Оппельна, первый плацдарм фронта (KON); RW_CHR: 33 гв. ск — 23.01",
+   "source": "KON; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-01-25",
+   "lng": 17.377,
+   "lat": 50.908,
+   "approx_km": 20,
+   "place": "Olawa / Brzeg",
+   "sector_note": "плацдарм у Олау (EW_VO)",
+   "source": "EW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "date": "1945-02-03",
+   "lng": 17.377,
+   "lat": 50.908,
+   "approx_km": 15,
+   "place": "Olawa / Brzeg",
+   "sector_note": "Олау; бои за Бриг до 5–6.02 (KON)",
+   "source": "EW_SS; KON",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_60a_vo",
+   "date": "1945-01-12",
+   "lng": 21.417,
+   "lat": 50.17,
+   "approx_km": 30,
+   "place": "Mielec / Debica",
+   "sector_note": "левое крыло южнее Вислы (оценка по направлениям 13–16.01)",
+   "source": "RW_CHR",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_60a_vo",
+   "date": "1945-01-16",
+   "lng": 21.138,
+   "lat": 50.076,
+   "approx_km": 30,
+   "place": "DabrowaTarn / Pilzno",
+   "sector_note": "овладела Домброва-Тарновска, Пильзно, Ясло",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_60a_vo",
+   "date": "1945-01-17",
+   "lng": 20.211,
+   "lat": 50.011,
+   "approx_km": 25,
+   "place": "Krakow / Bochnia",
+   "sector_note": "бои на северном обводе Кракова (с 59 А)",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_60a_vo",
+   "date": "1945-01-19",
+   "lng": 19.997,
+   "lat": 50.047,
+   "approx_km": 10,
+   "place": "Krakow",
+   "sector_note": "с 59 А взяла Краков",
+   "source": "RW_CHR; Z p.424",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_60a_vo",
+   "date": "1945-01-27",
+   "lng": 19.26,
+   "lat": 50.034,
+   "approx_km": 15,
+   "place": "Oswiecim",
+   "sector_note": "322 сд освободила Освенцим 27.01 (EW_VO; DW_VO)",
+   "source": "EW_VO; DW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_60a_vo",
+   "date": "1945-02-03",
+   "lng": 18.658,
+   "lat": 50.014,
+   "approx_km": 30,
+   "place": "Rybnik / Strumien",
+   "sector_note": "рубеж «восточнее Ратибора, северо-восточнее Струмени» (EW_SS); плацдарм севернее Ратибора (RW_ARM)",
+   "source": "EW_SS; RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_59a_vo",
+   "date": "1945-01-12",
+   "lng": 21.411,
+   "lat": 50.466,
+   "approx_km": 20,
+   "place": "Polaniec / Baranow",
+   "sector_note": "переправилась на плацдарм в ночь на 9.01; второй эшелон",
+   "source": "RW_ARM",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_59a_vo",
+   "date": "1945-01-14",
+   "lng": 20.376,
+   "lat": 50.341,
+   "approx_km": 10,
+   "place": "Dzialoszyce / Skalbmierz",
+   "sector_note": "43 ск за 4 гв. тк вышел на рубеж Дзялошице, Скальмеж",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_59a_vo",
+   "date": "1945-01-16",
+   "lng": 20.028,
+   "lat": 50.357,
+   "approx_km": 10,
+   "place": "Miechow",
+   "sector_note": "прорвала рубеж на Шреняве, взяла Мехув",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_59a_vo",
+   "date": "1945-01-19",
+   "lng": 19.997,
+   "lat": 50.047,
+   "approx_km": 10,
+   "place": "Krakow",
+   "sector_note": "освободила Краков к вечеру 19.01",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_59a_vo",
+   "date": "1945-01-24",
+   "lng": 19.272,
+   "lat": 50.191,
+   "approx_km": 20,
+   "place": "Chrzanow / Myslowice",
+   "sector_note": "вышла к р. Пшемша, малый плацдарм",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_59a_vo",
+   "date": "1945-01-28",
+   "lng": 19.006,
+   "lat": 50.214,
+   "approx_km": 10,
+   "place": "Katowice",
+   "sector_note": "Мысловице, Бендзин 27.01; Катовице 28.01",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_59a_vo",
+   "date": "1945-02-03",
+   "lng": 18.089,
+   "lat": 50.41,
+   "approx_km": 30,
+   "place": "Kedzierzyn / Krapkowice",
+   "sector_note": "к 29.01 главными силами у Одера, задача — на Обер-Глогау (RW_ARM); 3.02 — оценка",
+   "source": "RW_ARM",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_21a_vo",
+   "date": "1945-01-12",
+   "lng": 21.646,
+   "lat": 50.589,
+   "approx_km": 30,
+   "place": "Baranow / Sandomierz",
+   "sector_note": "второй эшелон (место не установлено)",
+   "source": "RW_SS",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_21a_vo",
+   "date": "1945-01-20",
+   "lng": 19.333,
+   "lat": 50.478,
+   "approx_km": 25,
+   "place": "Zawiercie / Siewierz",
+   "sector_note": "введена из второго эшелона, прорвала оборону на Варте северо-восточнее Катовице",
+   "source": "RW_CHR; EW_SS",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_21a_vo",
+   "date": "1945-01-23",
+   "lng": 18.864,
+   "lat": 50.405,
+   "approx_km": 20,
+   "place": "TarnowskieGory / Bytom",
+   "sector_note": "левый фланг взял Тарновске-Гуры, правый вышел к Одеру южнее Оппельна",
+   "source": "EW_SS; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_21a_vo",
+   "date": "1945-01-26",
+   "lng": 18.724,
+   "lat": 50.304,
+   "approx_km": 15,
+   "place": "Gliwice / Zabrze",
+   "sector_note": "Глейвиц 24.01, Гинденбург 26.01 (армии не названы в RW_CHR; по смыслу EW_SS)",
+   "source": "RW_CHR; EW_SS",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_21a_vo",
+   "date": "1945-02-03",
+   "lng": 17.425,
+   "lat": 50.779,
+   "approx_km": 30,
+   "place": "Brzeg / Grodkow",
+   "sector_note": "плацдармы южнее и севернее Брига с 5 гв. А (KON); 3.02 — оценка",
+   "source": "KON",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-12",
+   "lng": 21.086,
+   "lat": 50.576,
+   "approx_km": 15,
+   "place": "Staszow / Szydlow",
+   "sector_note": "введена в 14:00 12.01 (KON); главные силы — с утра 13.01 (EW_SS)",
+   "source": "KON; EW_SS",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-13",
+   "lng": 20.603,
+   "lat": 50.657,
+   "approx_km": 20,
+   "place": "Sobkow / Chmielnik",
+   "sector_note": "на Ниде у Собкува (51 гв. тбр, плацдарм) — RW_ARM; «мимо Хмельника на запад» (Z p.421)",
+   "source": "RW_ARM; Z p.421",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-15",
+   "lng": 19.893,
+   "lat": 50.739,
+   "approx_km": 30,
+   "place": "Szczekociny / Wloszczowa",
+   "sector_note": "форсировала Пилицу с ходу",
+   "source": "EW_SS; RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-17",
+   "lng": 19.287,
+   "lat": 50.94,
+   "approx_km": 25,
+   "place": "Radomsko / Czestochowa",
+   "sector_note": "Ченстохова (7 гв. тк, утро 17.01) и Радомско (6 и 7 гв. тк)",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-18",
+   "lng": 19.287,
+   "lat": 50.94,
+   "approx_km": 40,
+   "place": "Radomsko / Czestochowa",
+   "sector_note": "главные силы у Радомско–Ченстохова; Пиотркув взят 18.01 отрядом (52 гв. тбр) — RW_ARM",
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-19",
+   "lng": 18.151,
+   "lat": 51.295,
+   "approx_km": 20,
+   "place": "Wieruszow",
+   "sector_note": "6 гв. тк взял Верушув, форсировал Просну",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-22",
+   "lng": 17.966,
+   "lat": 50.878,
+   "approx_km": 30,
+   "place": "Namyslow / Ozimek",
+   "sector_note": "9 мк — Намслау к полудню 22.01; танковые корпуса — на Малапане",
+   "source": "RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-24",
+   "lng": 17.924,
+   "lat": 50.667,
+   "approx_km": 15,
+   "place": "Opole",
+   "sector_note": "Оппельн 24.01, поворот вдоль Одера на юго-восток (с 20–21.01)",
+   "source": "EW_SS; Z p.425",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-01-27",
+   "lng": 18.483,
+   "lat": 50.403,
+   "approx_km": 30,
+   "place": "StrzelceOp / Gliwice",
+   "sector_note": "нависла над силезской группировкой с северо-запада; корпус на Ратибор (KON)",
+   "source": "KON; Z p.427",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "date": "1945-02-03",
+   "lng": 17.607,
+   "lat": 50.812,
+   "approx_km": 50,
+   "place": "Opole / Olawa",
+   "sector_note": "перегруппировка на Штейнауский плацдарм 29.01–7.02 (KON); 3.02 — в пути, оценка",
+   "source": "KON; Z p.440",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "date": "1945-01-12",
+   "lng": 21.168,
+   "lat": 50.561,
+   "approx_km": 15,
+   "place": "Staszow",
+   "sector_note": "введена в 14:00 12.01 (KON)",
+   "source": "KON",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "date": "1945-01-13",
+   "lng": 20.462,
+   "lat": 50.8,
+   "approx_km": 20,
+   "place": "Checiny",
+   "sector_note": "повернула на северо-запад к Хенцинам (Z p.421)",
+   "source": "Z p.421",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "date": "1945-01-15",
+   "lng": 20.547,
+   "lat": 50.836,
+   "approx_km": 15,
+   "place": "Kielce / Checiny",
+   "sector_note": "обход Кельце с юго-запада; Кельце взят",
+   "source": "KON; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "date": "1945-01-18",
+   "lng": 19.785,
+   "lat": 51.248,
+   "approx_km": 40,
+   "place": "Piotrkow / Przedborz",
+   "sector_note": "pl-wiki: с 5 гв. А взяла Пиотркув 18.01 ⚠ ru-wiki — 3 гв. ТА",
+   "source": "PW_VO",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "date": "1945-01-20",
+   "lng": 17.942,
+   "lat": 51.697,
+   "approx_km": 40,
+   "place": "OstrowWlkp / Kalisz",
+   "sector_note": "интерполяция",
+   "source": "C",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "date": "1945-01-22",
+   "lng": 16.449,
+   "lat": 51.544,
+   "approx_km": 15,
+   "place": "Chobienia",
+   "sector_note": "в ночь на 22.01 6 гв. мк вышел к Одеру у Кебена и форсировал; 22.01 переправлены остальные силы",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "date": "1945-02-03",
+   "lng": 16.437,
+   "lat": 51.48,
+   "approx_km": 15,
+   "place": "Scinawa / Chobienia",
+   "sector_note": "Штейнауский плацдарм (EW_VO; KON)",
+   "source": "EW_VO; KON",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "date": "1945-01-14",
+   "lng": 20.352,
+   "lat": 50.365,
+   "approx_km": 15,
+   "place": "Dzialoszyce",
+   "sector_note": "введён с 59 А",
+   "source": "RW_ARM",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "date": "1945-01-19",
+   "lng": 19.997,
+   "lat": 50.047,
+   "approx_km": 10,
+   "place": "Krakow",
+   "sector_note": "с 59 и 60 А — Краков (EW_VO)",
+   "source": "EW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "date": "1945-01-28",
+   "lng": 19.006,
+   "lat": 50.214,
+   "approx_km": 15,
+   "place": "Katowice",
+   "sector_note": "наступление на Катовице (KON)",
+   "source": "KON",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "date": "1945-01-12",
+   "lng": 20.939,
+   "lat": 50.438,
+   "approx_km": 15,
+   "place": "Stopnica",
+   "sector_note": "введён 12.01 в полосе 5 гв. А",
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "date": "1945-01-15",
+   "lng": 19.82,
+   "lat": 50.626,
+   "approx_km": 20,
+   "place": "Szczekociny",
+   "sector_note": "форсировал Пилицу, плацдарм",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "date": "1945-01-17",
+   "lng": 19.124,
+   "lat": 50.809,
+   "approx_km": 15,
+   "place": "Czestochowa",
+   "sector_note": "части корпуса в бою за Ченстохов",
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_1gkk_vo",
+   "date": "1945-01-12",
+   "lng": 21.355,
+   "lat": 50.53,
+   "approx_km": 25,
+   "place": "Staszow / Baranow",
+   "sector_note": "резерв фронта (место не установлено)",
+   "source": "RW_SS",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "su_1gkk_vo",
+   "date": "1945-01-25",
+   "lng": 18.3,
+   "lat": 50.511,
+   "approx_km": 20,
+   "place": "StrzelceOp",
+   "sector_note": "с 3 гв. ТА удар на Гросс-Штрелиц",
+   "source": "EW_SS",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_hgr_a_vo",
+   "date": "1945-01-12",
+   "lng": 20.896,
+   "lat": 51.144,
+   "approx_km": 120,
+   "place": "Kielce / Radom",
+   "sector_note": "условный центр: от Модлина до северной границы Венгрии; штаб в Кракове (Z p.413–414)",
+   "source": "Z p.414",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_hgr_a_vo",
+   "date": "1945-01-19",
+   "lng": 19.291,
+   "lat": 51.289,
+   "approx_km": 120,
+   "place": "Lodz / Czestochowa",
+   "sector_note": "разрывы между 9 А и 4 ТА, 4 ТА и 17 А (Z p.424)",
+   "source": "Z p.424",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_hgr_a_vo",
+   "date": "1945-01-25",
+   "lng": 17.478,
+   "lat": 50.888,
+   "approx_km": 100,
+   "place": "Wroclaw / Opole",
+   "sector_note": "отходит за Одер; переименована в ГА «Центр»",
+   "source": "Z p.425–426",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_hgr_weichsel_vo",
+   "date": "1945-01-27",
+   "lng": 16.306,
+   "lat": 52.758,
+   "approx_km": 100,
+   "place": "Pila / Trzciel",
+   "sector_note": "фронт: Висла до Кульма – севернее Нотеца – Тиршитигельская позиция – Одер выше Глогау; штабной поезд в Дойч-Кроне (Валч)",
+   "source": "Z p.425–426",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_hgr_weichsel_vo",
+   "date": "1945-02-03",
+   "lng": 15.696,
+   "lat": 52.87,
+   "approx_km": 100,
+   "place": "Kostrzyn / Pila",
+   "sector_note": "Одер выше Шведта и Померания",
+   "source": "Z p.438",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_9a_vo",
+   "date": "1945-01-12",
+   "lng": 21.116,
+   "lat": 51.825,
+   "approx_km": 70,
+   "place": "Warszawa / Radom",
+   "sector_note": "от Модлина до Пулавы (центр)",
+   "source": "Z p.414; DW_VO",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_9a_vo",
+   "date": "1945-01-19",
+   "lng": 19.457,
+   "lat": 51.769,
+   "approx_km": 50,
+   "place": "Lodz",
+   "sector_note": "удерживать между Лодзью и Вислой, контрудар с правого фланга (приказ Шёрнера 19.01)",
+   "source": "Z p.424",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_9a_vo",
+   "date": "1945-01-27",
+   "lng": 15.703,
+   "lat": 52.308,
+   "approx_km": 60,
+   "place": "Trzciel / Swiebodzin",
+   "sector_note": "штаб 9 А под ГА «Висла» «с одним корпусным штабом и штабами трёх дивизий» (Z p.426)",
+   "source": "Z p.426",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_9a_vo",
+   "date": "1945-02-03",
+   "lng": 14.602,
+   "lat": 52.466,
+   "approx_km": 40,
+   "place": "Frankfurt / Kostrzyn",
+   "sector_note": "оборона на Одере у Кюстрина и Франкфурта",
+   "source": "Z p.444",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_4pza_vo",
+   "date": "1945-01-12",
+   "lng": 20.691,
+   "lat": 50.743,
+   "approx_km": 40,
+   "place": "Kielce / Chmielnik",
+   "sector_note": "перед Барановским плацдармом",
+   "source": "Z p.421; DW_VO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_4pza_vo",
+   "date": "1945-01-19",
+   "lng": 17.761,
+   "lat": 51.362,
+   "approx_km": 60,
+   "place": "OstrowWlkp / Namyslow",
+   "sector_note": "отброшена к германской границе восточнее Бреслау; осталось «части двух дивизий и одна-две бригады» (Z p.424)",
+   "source": "Z p.424",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_4pza_vo",
+   "date": "1945-01-25",
+   "lng": 17.033,
+   "lat": 51.109,
+   "approx_km": 30,
+   "place": "Wroclaw",
+   "sector_note": "плацдарм у Бреслау (Z p.425)",
+   "source": "Z p.425",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_4pza_vo",
+   "date": "1945-02-03",
+   "lng": 16.559,
+   "lat": 51.386,
+   "approx_km": 50,
+   "place": "Glogow / Wroclaw",
+   "sector_note": "Одер Глогау–Бреслау; позже отвечает за Штейнауский плацдарм (Z p.440)",
+   "source": "Z p.440",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_17a_vo",
+   "date": "1945-01-12",
+   "lng": 21.219,
+   "lat": 49.886,
+   "approx_km": 50,
+   "place": "Tarnow / Jaslo",
+   "sector_note": "от Вислы южнее плацдарма до Карпат (оценка)",
+   "source": "DW_VO; EW_VO",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_17a_vo",
+   "date": "1945-01-19",
+   "lng": 19.502,
+   "lat": 50.13,
+   "approx_km": 40,
+   "place": "Krakow / Katowice",
+   "sector_note": "40-мильный фронт на восточной границе Силезского района; Краков потерян 19.01 (Z p.424)",
+   "source": "Z p.424",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_17a_vo",
+   "date": "1945-01-25",
+   "lng": 18.836,
+   "lat": 50.254,
+   "approx_km": 30,
+   "place": "Katowice / Gliwice",
+   "sector_note": "~100 тыс. в выступе у Катовице (EW_VO)",
+   "source": "EW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17a_vo",
+   "date": "1945-01-30",
+   "lng": 18.213,
+   "lat": 50.218,
+   "approx_km": 30,
+   "place": "Raciborz / Kedzierzyn",
+   "sector_note": "отход из «мешка» 28–30.01 (Z p.427)",
+   "source": "Z p.427",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxxxvi_vo",
+   "date": "1945-01-12",
+   "lng": 20.873,
+   "lat": 52.337,
+   "approx_km": 20,
+   "place": "Warszawa / Modlin",
+   "sector_note": "Варшава и Висла до Модлина",
+   "source": "DW_VO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxxvi_vo",
+   "date": "1945-01-17",
+   "lng": 20.675,
+   "lat": 52.44,
+   "approx_km": 25,
+   "place": "Modlin",
+   "sector_note": "отброшен за Вислу в полосу 2 А (EW_VO); Варшава оставлена",
+   "source": "EW_VO; Z p.423",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_viii_vo",
+   "date": "1945-01-12",
+   "lng": 21.067,
+   "lat": 51.717,
+   "approx_km": 15,
+   "place": "Warka / Bialobrzegi",
+   "sector_note": "перед Магнушевским плацдармом по обе стороны Пилицы",
+   "source": "DW 9. Armee; DW_VO",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_viii_vo",
+   "date": "1945-01-15",
+   "lng": 20.416,
+   "lat": 51.69,
+   "approx_km": 30,
+   "place": "NoweMiasto / RawaMaz",
+   "sector_note": "прорыв фронта корпуса, 6 вгд разгромлена; отход (оценка)",
+   "source": "DW_VO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_lvi_vo",
+   "date": "1945-01-12",
+   "lng": 21.584,
+   "lat": 51.356,
+   "approx_km": 15,
+   "place": "Zwolen",
+   "sector_note": "перед Пулавским плацдармом (по составу 214, 17 пд и EW_VO)",
+   "source": "EW_VO; DW_VO",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_lvi_vo",
+   "date": "1945-01-16",
+   "lng": 21.009,
+   "lat": 51.32,
+   "approx_km": 30,
+   "place": "Radom / Szydlowiec",
+   "sector_note": "корпус распался после отсечения путей отхода (EW_VO)",
+   "source": "EW_VO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "date": "1945-01-12",
+   "lng": 21.055,
+   "lat": 51.532,
+   "approx_km": 30,
+   "place": "Radom / Bialobrzegi",
+   "sector_note": "резерв 9 А (19, 25 тд) — точка оценена",
+   "source": "DW_VO; RW_CHR",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "date": "1945-01-15",
+   "lng": 20.765,
+   "lat": 51.632,
+   "approx_km": 25,
+   "place": "NoweMiasto / Bialobrzegi",
+   "sector_note": "введены по частям против обеих группировок 1 БФ",
+   "source": "RW_CHR; DW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "date": "1945-01-17",
+   "lng": 19.745,
+   "lat": 51.644,
+   "approx_km": 40,
+   "place": "TomaszowMaz / Lodz",
+   "sector_note": "25 тд окружена восточнее Нове-Място (RW_CHR); корпус отходит через Лодзь (DW_KORPS)",
+   "source": "RW_CHR; DW_KORPS",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "date": "1945-01-19",
+   "lng": 19.295,
+   "lat": 51.681,
+   "approx_km": 30,
+   "place": "Lodz / Lask",
+   "sector_note": "южнее Лодзи с ТК «ВГ» держит короткую линию до переправы XXIV тк через Пилицу (Z p.424)",
+   "source": "Z p.424",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "date": "1945-01-31",
+   "lng": 15.323,
+   "lat": 51.991,
+   "approx_km": 40,
+   "place": "ZielonaGora / Krosno",
+   "sector_note": "остатки отходят за Одер у Грюнберга к концу января (DW_KORPS)",
+   "source": "DW_KORPS",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "date": "1945-01-12",
+   "lng": 21.406,
+   "lat": 50.871,
+   "approx_km": 20,
+   "place": "Opatow / Ostrowiec",
+   "sector_note": "северный фас плацдарма (72, 88, 291, 342 пд)",
+   "source": "DW_VO; DW_KORPS",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "date": "1945-01-16",
+   "lng": 20.877,
+   "lat": 51.123,
+   "approx_km": 20,
+   "place": "SkarzyskoK",
+   "sector_note": "приказ на отход к Скаржиско-Каменной 15.01 (RW_CHR); основные силы уничтожены у Скаржиско 17.01 (RW_SS)",
+   "source": "RW_CHR; RW_SS",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "date": "1945-01-18",
+   "lng": 20.628,
+   "lat": 51.358,
+   "approx_km": 20,
+   "place": "Przysucha",
+   "sector_note": "большая часть остатков уничтожена в районе Пшисухи (EW_VO)",
+   "source": "EW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "date": "1945-01-23",
+   "lng": 19.865,
+   "lat": 51.464,
+   "approx_km": 25,
+   "place": "Piotrkow / TomaszowMaz",
+   "sector_note": "Рекнагель убит партизанами между Петрикау и Томашувом 23.01 — остатки",
+   "source": "DW_KORPS; DW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-12",
+   "lng": 20.691,
+   "lat": 50.743,
+   "approx_km": 20,
+   "place": "Kielce / Chmielnik",
+   "sector_note": "«в 15 милях позади» две тд против западного фаса, две — у северного (Z p.421)",
+   "source": "Z p.421",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-13",
+   "lng": 20.691,
+   "lat": 50.743,
+   "approx_km": 20,
+   "place": "Chmielnik / Kielce",
+   "sector_note": "контрудар по северному флангу прорыва; две дивизии смяты в районах сосредоточения (Z p.421)",
+   "source": "Z p.421; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-15",
+   "lng": 20.631,
+   "lat": 50.872,
+   "approx_km": 15,
+   "place": "Kielce",
+   "sector_note": "выбит из Кельце (Z p.421)",
+   "source": "Z p.421",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-17",
+   "lng": 20.518,
+   "lat": 51.275,
+   "approx_km": 30,
+   "place": "Konskie / Przysucha",
+   "sector_note": "вырвался северо-западнее Кельце и идёт к Пилице (Z p.423); EW_VO: держался у Кельце до ночи 16.01",
+   "source": "Z p.423; EW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-19",
+   "lng": 19.785,
+   "lat": 51.248,
+   "approx_km": 40,
+   "place": "Przedborz / Piotrkow",
+   "sector_note": "переправа через Пилицу, «блуждающий котёл»; маршрут — оценка",
+   "source": "Z p.424; DW_KORPS",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-22",
+   "lng": 18.74,
+   "lat": 51.602,
+   "approx_km": 20,
+   "place": "Sieradz",
+   "sector_note": "соединился с ТК «ВГ» на Варте у Серадза (Z p.425)",
+   "source": "Z p.425",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-27",
+   "lng": 16.716,
+   "lat": 51.727,
+   "approx_km": 50,
+   "place": "Leszno / Rawicz",
+   "sector_note": "дрейф на запад; часть сил отходивших — у Лиссы (KON); оценка",
+   "source": "KON; Z p.426",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "date": "1945-01-31",
+   "lng": 16.086,
+   "lat": 51.663,
+   "approx_km": 25,
+   "place": "Glogow",
+   "sector_note": "отход на Глогау за Одер (DW_KORPS; EW_VO ~350 км от исходных)",
+   "source": "DW_KORPS; EW_VO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xxxxviii_vo",
+   "date": "1945-01-12",
+   "lng": 20.638,
+   "lat": 50.567,
+   "approx_km": 15,
+   "place": "Pinczow / Chmielnik",
+   "sector_note": "западный фас плацдарма восточнее Пиньчува (68, 168, 304 пд); северные 2/3 фронта под огнём",
+   "source": "DW_VO; Z p.421",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_xxxxviii_vo",
+   "date": "1945-01-14",
+   "lng": 20.305,
+   "lat": 50.639,
+   "approx_km": 40,
+   "place": "Jedrzejow",
+   "sector_note": "три дивизии «изрублены и уничтожены» 12.01 (Z p.421); остатки отходят — оценка",
+   "source": "Z p.421",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_lix_vo",
+   "date": "1945-01-12",
+   "lng": 20.897,
+   "lat": 50.237,
+   "approx_km": 30,
+   "place": "NowyKorczyn / DabrowaTarn",
+   "sector_note": "левый фланг 17 А у Вислы (оценка)",
+   "source": "DW_VO",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_lix_vo",
+   "date": "1945-01-17",
+   "lng": 20.012,
+   "lat": 50.202,
+   "approx_km": 30,
+   "place": "Krakow / Miechow",
+   "sector_note": "северный обвод Кракова (оценка)",
+   "source": "RW_CHR",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_xi_ss_vo",
+   "date": "1945-01-12",
+   "lng": 21.219,
+   "lat": 49.886,
+   "approx_km": 35,
+   "place": "Tarnow / Jaslo",
+   "sector_note": "южнее Вислы против 60 А (оценка)",
+   "source": "DW_VO; RW_CHR",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_xi_ss_vo",
+   "date": "1945-01-19",
+   "lng": 20.243,
+   "lat": 49.979,
+   "approx_km": 30,
+   "place": "Wieliczka / Bochnia",
+   "sector_note": "отход южнее Кракова на запад (KON) — оценка",
+   "source": "KON",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "date": "1945-01-12",
+   "lng": 20.922,
+   "lat": 53.33,
+   "approx_km": 40,
+   "place": "Chorzele / Wielbark",
+   "sector_note": "в ГА «Центр» на южной границе Восточной Пруссии (место не установлено)",
+   "source": "Z p.422",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "date": "1945-01-17",
+   "lng": 19.457,
+   "lat": 51.769,
+   "approx_km": 30,
+   "place": "Lodz",
+   "sector_note": "выгружен у Лодзи, не дойдя до цели (EW_VO); DW_VO: перевозка к Калишу с 15.01",
+   "source": "EW_VO; DW_VO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "date": "1945-01-19",
+   "lng": 19.295,
+   "lat": 51.681,
+   "approx_km": 30,
+   "place": "Lodz / Lask",
+   "sector_note": "южнее Лодзи с XXXX тк (Z p.424)",
+   "source": "Z p.424",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "date": "1945-01-22",
+   "lng": 18.74,
+   "lat": 51.602,
+   "approx_km": 20,
+   "place": "Sieradz",
+   "sector_note": "на Варте у Серадза, встреча с XXIV тк",
+   "source": "Z p.425; DW 9. Armee",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "date": "1945-01-31",
+   "lng": 16.33,
+   "lat": 51.754,
+   "approx_km": 50,
+   "place": "Glogow / Leszno",
+   "sector_note": "дрейф на запад к Одеру (Z p.425–426); с 27.01 подчинён ГА «Центр»",
+   "source": "Z p.426",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_v_ss_vo",
+   "date": "1945-01-28",
+   "lng": 15.726,
+   "lat": 52.405,
+   "approx_km": 25,
+   "place": "Trzciel / Miedzyrzecz",
+   "sector_note": "на Обре и Тиршитигельской позиции (EW_VO); Мезерицкий УР прорван 29–31.01",
+   "source": "EW_VO; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_v_ss_vo",
+   "date": "1945-02-03",
+   "lng": 14.611,
+   "lat": 52.243,
+   "approx_km": 30,
+   "place": "Frankfurt / Fuerstenberg_O",
+   "sector_note": "в феврале — район Франкфурт/Губен (DW_KORPS)",
+   "source": "DW_KORPS",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_festung_posen_vo",
+   "date": "1945-01-25",
+   "lng": 16.92,
+   "lat": 52.401,
+   "approx_km": 3,
+   "place": "Poznan",
+   "sector_note": "окружена; 15–20 тыс. (по новейшей работе)",
+   "source": "DW_POSEN",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_festung_posen_vo",
+   "date": "1945-02-03",
+   "lng": 16.92,
+   "lat": 52.401,
+   "approx_km": 3,
+   "place": "Poznan",
+   "sector_note": "штурм; капитуляция 23.02",
+   "source": "DW_POSEN",
+   "reliability": "B"
+  }
+ ],
+ "frontline": [
+  {
+   "date": "1945-01-12",
+   "sector": "1 БФ: Висла от Варшавы до Пулав; Магнушевский и Пулавский плацдармы",
+   "points": [
+    {
+     "place": "Jablonna",
+     "lng": 20.918,
+     "lat": 52.377
+    },
+    {
+     "place": "Praga_W",
+     "lng": 21.027,
+     "lat": 52.265
+    },
+    {
+     "place": "Mniszew",
+     "lng": 21.28,
+     "lat": 51.846
+    },
+    {
+     "place": "Warka",
+     "lng": 21.183,
+     "lat": 51.785
+    },
+    {
+     "place": "Bialobrzegi",
+     "lng": 20.95,
+     "lat": 51.648
+    },
+    {
+     "place": "Studzianki",
+     "lng": 21.324,
+     "lat": 51.688
+    },
+    {
+     "place": "Magnuszew",
+     "lng": 21.383,
+     "lat": 51.762
+    },
+    {
+     "place": "Deblin",
+     "lng": 21.865,
+     "lat": 51.562
+    },
+    {
+     "place": "Gniewoszow",
+     "lng": 21.813,
+     "lat": 51.474
+    },
+    {
+     "place": "Zwolen",
+     "lng": 21.584,
+     "lat": 51.356
+    },
+    {
+     "place": "Pulawy",
+     "lng": 21.985,
+     "lat": 51.426
+    }
+   ],
+   "source": "Z p.414; PW_VO",
+   "reliability": "C",
+   "note": "западные границы плацдармов грубые (±10 км): Магнушевский — до Варки/Студзянок, Пулавский — до Гневошува/Зволеня (Зволень взят 14.01, т. е. перед фронтом)"
+  },
+  {
+   "date": "1945-01-12",
+   "sector": "1 УФ: Сандомирский (Барановский) плацдарм и Висла",
+   "points": [
+    {
+     "place": "Annopol",
+     "lng": 21.855,
+     "lat": 50.885
+    },
+    {
+     "place": "Ozarow",
+     "lng": 21.666,
+     "lat": 50.886
+    },
+    {
+     "place": "Opatow",
+     "lng": 21.424,
+     "lat": 50.802
+    },
+    {
+     "place": "Lagow",
+     "lng": 21.084,
+     "lat": 50.776
+    },
+    {
+     "place": "Szydlow",
+     "lng": 21.005,
+     "lat": 50.591
+    },
+    {
+     "place": "Stopnica",
+     "lng": 20.939,
+     "lat": 50.438
+    },
+    {
+     "place": "NowyKorczyn",
+     "lng": 20.809,
+     "lat": 50.299
+    },
+    {
+     "place": "Szczucin",
+     "lng": 21.075,
+     "lat": 50.309
+    },
+    {
+     "place": "Mielec",
+     "lng": 21.423,
+     "lat": 50.289
+    },
+    {
+     "place": "Debica",
+     "lng": 21.41,
+     "lat": 50.051
+    }
+   ],
+   "source": "Z p.421; RW_ARM 52 А; RW_SS",
+   "reliability": "C",
+   "note": "западный фас: Лысогоры–Шидлув–Стопница (±10 км); южнее Вислы фронт 60 А на Вислоке"
+  },
+  {
+   "date": "1945-01-17",
+   "sector": "Линия фронтов 1 БФ и 1 УФ к исходу 17.01",
+   "points": [
+    {
+     "place": "Modlin",
+     "lng": 20.675,
+     "lat": 52.44
+    },
+    {
+     "place": "Sochaczew",
+     "lng": 20.257,
+     "lat": 52.237
+    },
+    {
+     "place": "Skierniewice",
+     "lng": 20.145,
+     "lat": 51.958
+    },
+    {
+     "place": "RawaMaz",
+     "lng": 20.252,
+     "lat": 51.763
+    },
+    {
+     "place": "TomaszowMaz",
+     "lng": 20.034,
+     "lat": 51.52
+    },
+    {
+     "place": "Opoczno",
+     "lng": 20.293,
+     "lat": 51.378
+    },
+    {
+     "place": "Piotrkow",
+     "lng": 19.696,
+     "lat": 51.408
+    },
+    {
+     "place": "Radomsko",
+     "lng": 19.45,
+     "lat": 51.071
+    },
+    {
+     "place": "Czestochowa",
+     "lng": 19.124,
+     "lat": 50.809
+    },
+    {
+     "place": "Miechow",
+     "lng": 20.028,
+     "lat": 50.357
+    },
+    {
+     "place": "Krakow",
+     "lng": 19.997,
+     "lat": 50.047
+    },
+    {
+     "place": "Tarnow",
+     "lng": 20.964,
+     "lat": 50.026
+    }
+   ],
+   "source": "RW_CHR; Z p.423",
+   "reliability": "B",
+   "note": "передовые танковые части; в тылу — окружённые группы (XXIV тк, XXXXII ак у Скаржиско/Пшисухи)"
+  },
+  {
+   "date": "1945-01-23",
+   "sector": "Линия к исходу 23.01",
+   "points": [
+    {
+     "place": "Bydgoszcz",
+     "lng": 18.029,
+     "lat": 53.13
+    },
+    {
+     "place": "Inowroclaw",
+     "lng": 18.246,
+     "lat": 52.782
+    },
+    {
+     "place": "Gniezno",
+     "lng": 17.596,
+     "lat": 52.536
+    },
+    {
+     "place": "Poznan",
+     "lng": 16.92,
+     "lat": 52.401
+    },
+    {
+     "place": "Kalisz",
+     "lng": 18.079,
+     "lat": 51.747
+    },
+    {
+     "place": "Milicz",
+     "lng": 17.275,
+     "lat": 51.532
+    },
+    {
+     "place": "Chobienia",
+     "lng": 16.449,
+     "lat": 51.544
+    },
+    {
+     "place": "Namyslow",
+     "lng": 17.719,
+     "lat": 51.077
+    },
+    {
+     "place": "Opole",
+     "lng": 17.924,
+     "lat": 50.667
+    },
+    {
+     "place": "TarnowskieGory",
+     "lng": 18.855,
+     "lat": 50.444
+    },
+    {
+     "place": "Katowice",
+     "lng": 19.006,
+     "lat": 50.214
+    },
+    {
+     "place": "Chrzanow",
+     "lng": 19.403,
+     "lat": 50.141
+    },
+    {
+     "place": "Wieliczka",
+     "lng": 20.06,
+     "lat": 49.982
+    }
+   ],
+   "source": "RW_CHR",
+   "reliability": "B",
+   "note": "Познань — на линии, окружение завершается 25.01; Одер достигнут у Кебена, Бреслау (60 км) и северо-западнее Оппельна"
+  },
+  {
+   "date": "1945-01-31",
+   "sector": "Линия к 31.01–3.02 (Одер)",
+   "points": [
+    {
+     "place": "Zlotow",
+     "lng": 17.044,
+     "lat": 53.359
+    },
+    {
+     "place": "Walcz",
+     "lng": 16.477,
+     "lat": 53.273
+    },
+    {
+     "place": "Drawno",
+     "lng": 15.758,
+     "lat": 53.219
+    },
+    {
+     "place": "Gozdowice",
+     "lng": 14.322,
+     "lat": 52.766
+    },
+    {
+     "place": "Kienitz",
+     "lng": 14.439,
+     "lat": 52.673
+    },
+    {
+     "place": "Kostrzyn",
+     "lng": 14.654,
+     "lat": 52.59
+    },
+    {
+     "place": "Reitwein",
+     "lng": 14.583,
+     "lat": 52.502
+    },
+    {
+     "place": "Slubice",
+     "lng": 14.566,
+     "lat": 52.356
+    },
+    {
+     "place": "Aurith",
+     "lng": 14.701,
+     "lat": 52.241
+    },
+    {
+     "place": "Krosno",
+     "lng": 15.098,
+     "lat": 52.054
+    },
+    {
+     "place": "Kargowa",
+     "lng": 15.865,
+     "lat": 52.072
+    },
+    {
+     "place": "Glogow",
+     "lng": 16.086,
+     "lat": 51.663
+    },
+    {
+     "place": "Scinawa",
+     "lng": 16.426,
+     "lat": 51.416
+    },
+    {
+     "place": "BrzegDolny",
+     "lng": 16.708,
+     "lat": 51.269
+    },
+    {
+     "place": "Wroclaw",
+     "lng": 17.033,
+     "lat": 51.109
+    },
+    {
+     "place": "Olawa",
+     "lng": 17.29,
+     "lat": 50.957
+    },
+    {
+     "place": "Brzeg",
+     "lng": 17.464,
+     "lat": 50.859
+    },
+    {
+     "place": "Opole",
+     "lng": 17.924,
+     "lat": 50.667
+    },
+    {
+     "place": "Kedzierzyn",
+     "lng": 18.211,
+     "lat": 50.345
+    },
+    {
+     "place": "Raciborz",
+     "lng": 18.215,
+     "lat": 50.09
+    },
+    {
+     "place": "Rybnik",
+     "lng": 18.553,
+     "lat": 50.111
+    },
+    {
+     "place": "Strumien",
+     "lng": 18.764,
+     "lat": 49.917
+    }
+   ],
+   "source": "EW_SS; Z p.444; RW_WP",
+   "reliability": "B",
+   "note": "правое крыло 1 БФ — фронтом на север (Шнайдемюль и Дойч-Кроне немецкие); Кюстрин, Франкфурт, Глогау, Бреслау — немецкие крепости; плацдармы: Кинитц/Гюстебизе, Геншмар, Маншнов, Аурит, Штейнау, Олау/Бриг, Оппельн"
+  },
+  {
+   "date": "1945-01-25",
+   "sector": "Котёл Познани (периметр)",
+   "points": [
+    {
+     "place": "Poznan",
+     "lng": 16.92,
+     "lat": 52.401
+    }
+   ],
+   "source": "DW_POSEN",
+   "reliability": "B",
+   "note": "окружение 25.01; кольцо ~10 км вокруг крепости (точка = центр)"
+  }
+ ],
+ "events": [
+  {
+   "date": "1945-01-12",
+   "title": "1 УФ: разведка боем передовых батальонов, артподготовка 10:00–11:50; прорыв на 40 км по фронту, 15–20 км в глубину; ввод 3 гв. ТА и 4 ТА в 14:00",
+   "place": "Szydlow / Stopnica",
+   "lng": 20.972,
+   "lat": 50.515,
+   "source": "KON; RW_CHR; EW_VO (04:35 начало огня)",
+   "reliability": "B",
+   "time": "05:00 разведка боем; 10:00 артподготовка; 14:00 ввод ТА"
+  },
+  {
+   "date": "1945-01-12",
+   "title": "XXXXVIII тк разгромлен; две тд XXIV тк смяты в районах сосредоточения",
+   "place": "Pinczow / Chmielnik",
+   "lng": 20.638,
+   "lat": 50.567,
+   "source": "Z p.421",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-13",
+   "title": "Контрудар XXIV тк по северному флангу прорыва у Кельце/Хмельника; Хмельник и Буско-Здруй взяты; переправа через Ниду",
+   "place": "Chmielnik",
+   "lng": 20.751,
+   "lat": 50.615,
+   "source": "RW_CHR; Z p.421",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-14",
+   "title": "1 БФ переходит в наступление с Магнушевского и Пулавского плацдармов; прорыв 12–20 км; Зволень взят (11 тк)",
+   "place": "Magnuszew / Pulawy",
+   "lng": 21.684,
+   "lat": 51.594,
+   "source": "RW_CHR; Z p.421",
+   "reliability": "B",
+   "time": "25-мин. огневой налёт; EW_VO: 08:30 ⚠ DW_VO: «13.01 из Магнушевского» — ошибка"
+  },
+  {
+   "date": "1945-01-14",
+   "title": "Гитлер приказывает передать ТК «Великая Германия» из ГА «Центр» в ГА «А»",
+   "place": "Chorzele",
+   "lng": 20.898,
+   "lat": 53.261,
+   "source": "Z p.422",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-15",
+   "title": "Кельце взят (3 гв. А, 13 А, 4 ТА)",
+   "place": "Kielce",
+   "lng": 20.631,
+   "lat": 50.872,
+   "source": "Z p.421; RW_CHR; KON",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-15",
+   "title": "1 гв. ТА введена в полосе 8 гв. А, форсирование Пилицы; XXXX тк (19, 25 тд) введён по частям",
+   "place": "NoweMiasto",
+   "lng": 20.58,
+   "lat": 51.617,
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-16",
+   "title": "Радом взят (69 А, 11 тк)",
+   "place": "Radom",
+   "lng": 21.161,
+   "lat": 51.417,
+   "source": "RW_CHR",
+   "reliability": "B",
+   "time": "20:00"
+  },
+  {
+   "date": "1945-01-16",
+   "title": "2 гв. ТА введена в прорыв, 80 км за день к Сохачеву",
+   "place": "Grojec / Sochaczew",
+   "lng": 20.562,
+   "lat": 52.051,
+   "source": "RW_WP; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-16",
+   "title": "Гарпе снят, ГА «А» принимает Шёрнер (en-wiki: 20.01); Лютвиц снят позднее, 9 А — Буссе",
+   "place": "Krakow",
+   "lng": 19.997,
+   "lat": 50.047,
+   "source": "Z p.422–423",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-17",
+   "title": "Варшава освобождена (1 А ВП, 47 и 61 А)",
+   "place": "Warszawa",
+   "lng": 21.071,
+   "lat": 52.233,
+   "source": "RW_CHR; Z p.423",
+   "reliability": "A",
+   "time": "12:00 (RW_CHR)"
+  },
+  {
+   "date": "1945-01-17",
+   "title": "Ченстохов и Радомско взяты (3 гв. ТА, 5 гв. А, 52 А)",
+   "place": "Czestochowa",
+   "lng": 19.124,
+   "lat": 50.809,
+   "source": "RW_CHR; RW_ARM",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-17",
+   "title": "Ставка уточняет задачи: 1 УФ — главными силами на Бреслау, не позднее 22.01 Краков; 1 БФ — на Познань",
+   "place": "Czestochowa",
+   "lng": 19.124,
+   "lat": 50.809,
+   "source": "RW_CHR; EW_SS",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-18",
+   "title": "Пиотркув взят; ликвидация окружённых западнее Варшавы",
+   "place": "Piotrkow",
+   "lng": 19.696,
+   "lat": 51.408,
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-19",
+   "title": "Лодзь освобождена (8 гв. А — 29 гв. ск, 9 мк; 69, 33 А, 1 гв. ТА)",
+   "place": "Lodz",
+   "lng": 19.457,
+   "lat": 51.769,
+   "source": "RW_CHR; DW_VO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-19",
+   "title": "Краков освобождён (59 и 60 А, 4 гв. тк); 1 УФ переходит границу Германии восточнее Бреслау",
+   "place": "Krakow",
+   "lng": 19.997,
+   "lat": 50.047,
+   "source": "RW_CHR; Z p.424",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-20",
+   "title": "3 гв. ТА и 1 гв. кк повёрнуты из района Намслау вдоль Одера на Оппельн; 21 А введена на Варте",
+   "place": "Namyslow",
+   "lng": 17.719,
+   "lat": 51.077,
+   "source": "RW_CHR; KON; Z p.425",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-22",
+   "title": "4 ТА (6 гв. мк) форсирует Одер у Кебена (Штейнау); 5 гв. А — первый плацдарм северо-западнее Оппельна",
+   "place": "Chobienia",
+   "lng": 16.449,
+   "lat": 51.544,
+   "source": "RW_CHR; KON",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-22",
+   "title": "XXIV тк соединяется с ТК «ВГ» на Варте у Серадза",
+   "place": "Sieradz",
+   "lng": 18.74,
+   "lat": 51.602,
+   "source": "Z p.425",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-22",
+   "title": "Иновроцлав и Гнезно взяты; передовые части 1 БФ у Познанского рубежа",
+   "place": "Gniezno",
+   "lng": 17.596,
+   "lat": 52.536,
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-23",
+   "title": "Быдгощ взят (2 гв. ТА, 2 гв. кк)",
+   "place": "Bydgoszcz",
+   "lng": 18.029,
+   "lat": 53.13,
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-23",
+   "title": "Калиш взят (33 А)",
+   "place": "Kalisz",
+   "lng": 18.079,
+   "lat": 51.747,
+   "source": "RW_ARM; RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-23",
+   "title": "Гиммлер прибывает командовать ГА «Висла» (Дойч-Кроне)",
+   "place": "Walcz",
+   "lng": 16.477,
+   "lat": 53.273,
+   "source": "Z p.425",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-23",
+   "title": "Гибель генерала Рекнагеля (XXXXII ак) между Петрикау и Томашувом",
+   "place": "Piotrkow / TomaszowMaz",
+   "lng": 19.865,
+   "lat": 51.464,
+   "source": "DW_KORPS",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-24",
+   "title": "Оппельн (3 гв. ТА) и Глейвиц взяты",
+   "place": "Opole",
+   "lng": 17.924,
+   "lat": 50.667,
+   "source": "RW_CHR; EW_SS",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-25",
+   "title": "Познань окружена (8 гв. А, 1 гв. ТА; 91 ск 69 А); главные силы 1 БФ проходят Познань на запад",
+   "place": "Poznan",
+   "lng": 16.92,
+   "lat": 52.401,
+   "source": "DW_POSEN; Z p.425",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-26",
+   "title": "ГА «А» переименована в ГА «Центр»",
+   "place": "Wroclaw",
+   "lng": 17.033,
+   "lat": 51.109,
+   "source": "Z p.426",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-27",
+   "title": "Освенцим освобождён (60 А, 322 сд); ГА «Висла» принимает 9 А; Ставка требует обеспечить правый фланг 1 БФ",
+   "place": "Oswiecim",
+   "lng": 19.26,
+   "lat": 50.034,
+   "source": "EW_VO; Z p.426; RW_CHR",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-28",
+   "title": "Катовице взят; 17 А выходит из силезского выступа 28–30.01 через оставленный коридор",
+   "place": "Katowice",
+   "lng": 19.006,
+   "lat": 50.214,
+   "source": "RW_CHR; Z p.427; EW_SS",
+   "reliability": "A"
+  },
+  {
+   "date": "1945-01-28",
+   "title": "2 гв. ТА прорывает Померанский вал (Старе-Осечно–Дравины)",
+   "place": "StareOsieczno",
+   "lng": 15.953,
+   "lat": 53.006,
+   "source": "PW_VO; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-29",
+   "title": "1 БФ прорывает Мезерицкий УР и входит в Германию; Силезский промышленный район полностью очищен",
+   "place": "Miedzyrzecz",
+   "lng": 15.579,
+   "lat": 52.445,
+   "source": "RW_CHR; KON",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-31",
+   "title": "Передовой отряд 5 уд. А по льду берёт Кинитц — первый плацдарм на Одере на берлинском направлении",
+   "place": "Kienitz",
+   "lng": 14.439,
+   "lat": 52.673,
+   "source": "EW_VO; RW_WP",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-01-31",
+   "title": "Взяты Ландсберг, Мезериц, Швибус",
+   "place": "Gorzow",
+   "lng": 15.211,
+   "lat": 52.731,
+   "source": "RW_CHR",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-02-02",
+   "title": "8 гв. А: плацдарм у Ной-Маншнова; 1 мк 2 гв. ТА — у Геншмара; 1 гв. ТА выходит к Одеру",
+   "place": "Manschnow",
+   "lng": 14.554,
+   "lat": 52.557,
+   "source": "DW_VO",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-02-03",
+   "title": "Окончание операции: 1 БФ очистил правый берег Одера в 100-км полосе южнее Цедена, плацдармы севернее и южнее Кюстрина; 1 УФ — Штейнау, Олау/Бриг, Оппельн",
+   "place": "Kostrzyn",
+   "lng": 14.654,
+   "lat": 52.59,
+   "source": "RW_WP; EW_SS",
+   "reliability": "B"
+  },
+  {
+   "date": "1945-02-23",
+   "title": "Капитуляция гарнизона Познани (после окончания операции)",
+   "place": "Poznan",
+   "lng": 16.92,
+   "lat": 52.401,
+   "source": "DW_POSEN; RW_WP",
+   "reliability": "B"
+  }
+ ],
+ "tasks": {
+  "mode": "tasks",
+  "note": "Исторические задачи (направление/рубеж/«держаться»), а не исторические положения. Формат: [formation, \"MM-DD\" (18:00 если час не указан), task, цель — ключ gazetteer или null, примечание с источником]. Без источника в примечании — вывод составителя (C).",
+  "tasks": [
+   [
+    "su_47a_vo",
+    "01-15",
+    "attack",
+    "Modlin",
+    "вспомогательный удар севернее Варшавы, ликвидация плацдарма в междуречье, обход Варшавы с северо-запада (PW_VO; RW_WP)"
+   ],
+   [
+    "su_47a_vo",
+    "01-17",
+    "attack",
+    "Warszawa",
+    "с 61 А и 1 А ВП разгромить варшавскую группировку (RW_WP)"
+   ],
+   [
+    "su_47a_vo",
+    "01-19",
+    "attack",
+    "Bydgoszcz",
+    "правое крыло фронта, на северо-запад (RW_CHR)"
+   ],
+   [
+    "su_47a_vo",
+    "01-27",
+    "defend",
+    "Naklo",
+    "Ставка 27.01: обеспечить правый фланг фронта с севера (RW_CHR)"
+   ],
+   [
+    "su_1pa_vo",
+    "01-16",
+    "attack",
+    "Warszawa",
+    "наступление на 4-й день операции, овладеть Варшавой (RW_WP)"
+   ],
+   [
+    "su_1pa_vo",
+    "01-18",
+    "attack",
+    "Bydgoszcz",
+    "марш вдоль левого берега Вислы на Быдгощ (PW_VO)"
+   ],
+   [
+    "su_1pa_vo",
+    "01-29",
+    "attack",
+    "Zlotow",
+    "введена на правом фланге против Померанского вала (RW_CHR)"
+   ],
+   [
+    "su_3ua_vo",
+    "01-14",
+    "reserve",
+    null,
+    "второй эшелон фронта для развития успеха на главном направлении (RW_WP)"
+   ],
+   [
+    "su_3ua_vo",
+    "01-27",
+    "regroup",
+    "Naklo",
+    "выдвижение на правый фланг (Ставка 27.01, RW_CHR)"
+   ],
+   [
+    "su_3ua_vo",
+    "01-31",
+    "attack",
+    "Walcz",
+    "введена в сражение на правом фланге (RW_CHR)"
+   ],
+   [
+    "su_61a_vo",
+    "01-14",
+    "attack",
+    "Grojec",
+    "с северной части Магнушевского плацдарма на Варку–Груец–Гродзиск (PW_VO)"
+   ],
+   [
+    "su_61a_vo",
+    "01-16",
+    "attack",
+    "Warszawa",
+    "окружение варшавской группировки с юго-запада (RW_CHR)"
+   ],
+   [
+    "su_61a_vo",
+    "01-19",
+    "attack",
+    "Szamocin",
+    "на северо-запад за 2 гв. ТА (C)"
+   ],
+   [
+    "su_61a_vo",
+    "01-27",
+    "defend",
+    "Walcz",
+    "выделена для прикрытия правого фланга (RW_CHR 27.01)"
+   ],
+   [
+    "su_5ua_vo",
+    "01-14",
+    "attack",
+    "Bialobrzegi",
+    "главный удар с Магнушевского плацдарма на Кутно–Познань; обеспечить ввод 2 гв. ТА (RW_WP)"
+   ],
+   [
+    "su_5ua_vo",
+    "01-17",
+    "attack",
+    "Lowicz",
+    ""
+   ],
+   [
+    "su_5ua_vo",
+    "01-20",
+    "attack",
+    "Gniezno",
+    "на Познань севернее города (RW_CHR)"
+   ],
+   [
+    "su_5ua_vo",
+    "01-26",
+    "attack",
+    "Kienitz",
+    "к Одеру севернее Кюстрина, захват плацдарма (RW_WP; EW_VO)"
+   ],
+   [
+    "su_5ua_vo",
+    "02-01",
+    "hold",
+    "Kienitz",
+    "удерживать и расширять плацдарм (Z p.439, Ставка — расширять плацдармы у Кюстрина)"
+   ],
+   [
+    "su_8gva_vo",
+    "01-14",
+    "attack",
+    "NoweMiasto",
+    "главный удар с Магнушевского плацдарма; ввод 1 гв. ТА (RW_WP)"
+   ],
+   [
+    "su_8gva_vo",
+    "01-16",
+    "attack",
+    "Lodz",
+    "на Лодзь (RW_CHR; DW_VO)"
+   ],
+   [
+    "su_8gva_vo",
+    "01-20",
+    "attack",
+    "Poznan",
+    "на Познань; овладение городом возложено на ск 8 гв. и 69 А (RW_WP)"
+   ],
+   [
+    "su_8gva_vo",
+    "01-26",
+    "attack",
+    "Poznan",
+    "штурм крепости главными силами (29 гв. ск, 39 гв. сд) (RW_ARM)"
+   ],
+   [
+    "su_8gva_vo",
+    "01-28",
+    "attack",
+    "Kostrzyn",
+    "4 гв. ск — на Одер южнее Кюстрина (DW_VO)"
+   ],
+   [
+    "su_69a_vo",
+    "01-14",
+    "attack",
+    "Radom",
+    "главная задача на Пулавском плацдарме: Зволень–Радом–Томашув–Лодзь (PW_VO)"
+   ],
+   [
+    "su_69a_vo",
+    "01-17",
+    "attack",
+    "TomaszowMaz",
+    ""
+   ],
+   [
+    "su_69a_vo",
+    "01-20",
+    "attack",
+    "Poznan",
+    "91 ск — к Познани (RW_ARM)"
+   ],
+   [
+    "su_69a_vo",
+    "01-27",
+    "attack",
+    "Miedzyrzecz",
+    "прорыв Мезерицкого УР (RW_WP)"
+   ],
+   [
+    "su_69a_vo",
+    "02-01",
+    "attack",
+    "Slubice",
+    "на франкфуртском направлении к Одеру (RW_ARM)"
+   ],
+   [
+    "su_33a_vo",
+    "01-14",
+    "attack",
+    "Szydlowiec",
+    "главный удар армии на Шидловец–Скаржиско-Каменну (PW_VO); с правым крылом 1 УФ окружить кельце-радомскую группировку (KON)"
+   ],
+   [
+    "su_33a_vo",
+    "01-17",
+    "attack",
+    "Lodz",
+    ""
+   ],
+   [
+    "su_33a_vo",
+    "01-21",
+    "attack",
+    "Kalisz",
+    ""
+   ],
+   [
+    "su_33a_vo",
+    "01-27",
+    "attack",
+    "Swiebodzin",
+    ""
+   ],
+   [
+    "su_33a_vo",
+    "02-01",
+    "attack",
+    "Aurith",
+    "плацдарм южнее Франкфурта (Z p.444) — C"
+   ],
+   [
+    "su_1gta_vo",
+    "01-14",
+    "reserve",
+    null,
+    "ввод в прорыв в полосе 8 гв. А (RW_WP)"
+   ],
+   [
+    "su_1gta_vo",
+    "01-15",
+    "attack",
+    "Lodz",
+    "захватить плацдармы на Пилице и наступать на Лодзь (EW_VO)"
+   ],
+   [
+    "su_1gta_vo",
+    "01-20",
+    "attack",
+    "Poznan",
+    "форсировать Варту, обойти Познань с юга (RW_WP)"
+   ],
+   [
+    "su_1gta_vo",
+    "01-25",
+    "attack",
+    "Kostrzyn",
+    "рейд к Одеру, захват плацдарма на берлинском направлении (PW_VO, приказ 25.01)"
+   ],
+   [
+    "su_2gta_vo",
+    "01-16",
+    "attack",
+    "Sochaczew",
+    "ввод в прорыв в полосе 5 уд. А; отрезать варшавскую группировку (RW_CHR)"
+   ],
+   [
+    "su_2gta_vo",
+    "01-18",
+    "attack",
+    "Inowroclaw",
+    "(RW_ARM)"
+   ],
+   [
+    "su_2gta_vo",
+    "01-22",
+    "attack",
+    "Bydgoszcz",
+    ""
+   ],
+   [
+    "su_2gta_vo",
+    "01-25",
+    "attack",
+    "Kostrzyn",
+    "рейд 150 км к Одеру (PW_VO); направление на Кюстрин (RW_ARM)"
+   ],
+   [
+    "su_11tk_vo",
+    "01-14",
+    "attack",
+    "Radom",
+    "с 69 А (RW_CHR)"
+   ],
+   [
+    "su_9tk_vo",
+    "01-14",
+    "attack",
+    "Szydlowiec",
+    "с 33 А (RW_CHR)"
+   ],
+   [
+    "su_2gkk_vo",
+    "01-17",
+    "attack",
+    "Lowicz",
+    "на Скерневице–Лович (RW_CHR)"
+   ],
+   [
+    "su_7gkk_vo",
+    "01-17",
+    "attack",
+    "TomaszowMaz",
+    "(RW_CHR)"
+   ],
+   [
+    "su_6a_vo",
+    "01-12",
+    "hold",
+    null,
+    "правый фланг на Висле; с 3 гв. А и 1 БФ окружить островецко-опатувскую группировку (RW_SS)"
+   ],
+   [
+    "su_6a_vo",
+    "01-15",
+    "attack",
+    "Ostrowiec",
+    "(RW_CHR)"
+   ],
+   [
+    "su_6a_vo",
+    "01-25",
+    "attack",
+    "Wroclaw",
+    "на Бреслау (KON)"
+   ],
+   [
+    "su_3gva_vo",
+    "01-12",
+    "attack",
+    "Ostrowiec",
+    "окружение островецкой группировки с 6 А (RW_SS; EW_SS)"
+   ],
+   [
+    "su_3gva_vo",
+    "01-14",
+    "attack",
+    "Kielce",
+    ""
+   ],
+   [
+    "su_3gva_vo",
+    "01-17",
+    "attack",
+    "SkarzyskoK",
+    "соединение с 1 БФ (RW_SS)"
+   ],
+   [
+    "su_3gva_vo",
+    "01-20",
+    "attack",
+    "Leszno",
+    "правый фланг фронта на запад (KON)"
+   ],
+   [
+    "su_3gva_vo",
+    "01-29",
+    "attack",
+    "Glogow",
+    "к Одеру у Глогау/западнее Унрухштадта (EW_SS)"
+   ],
+   [
+    "su_13a_vo",
+    "01-12",
+    "attack",
+    "Kielce",
+    "главный удар правым флангом ударной группировки (EW_SS; KON)"
+   ],
+   [
+    "su_13a_vo",
+    "01-17",
+    "attack",
+    "Wielun",
+    "на Бреслау (Ставка 17.01)"
+   ],
+   [
+    "su_13a_vo",
+    "01-21",
+    "attack",
+    "Scinawa",
+    "выход к Одеру и форсирование (RW_CHR)"
+   ],
+   [
+    "su_52a_vo",
+    "01-12",
+    "attack",
+    "Chmielnik",
+    "прорыв Шидлув–Жерники-Дольне на Хмельник–Влощова–Радомско, обеспечить ввод 3 гв. ТА (RW_ARM)"
+   ],
+   [
+    "su_52a_vo",
+    "01-15",
+    "attack",
+    "Radomsko",
+    ""
+   ],
+   [
+    "su_52a_vo",
+    "01-18",
+    "attack",
+    "Namyslow",
+    "с 3 гв. ТА к границе и Одеру (RW_ARM)"
+   ],
+   [
+    "su_52a_vo",
+    "01-23",
+    "attack",
+    "Wroclaw",
+    "форсировать Одер у Бреслау (RW_CHR)"
+   ],
+   [
+    "su_5gva_vo",
+    "01-12",
+    "attack",
+    "BuskoZdroj",
+    "главный удар на Хмельник–Радомско–Бреслау (EW_SS)"
+   ],
+   [
+    "su_5gva_vo",
+    "01-15",
+    "attack",
+    "Czestochowa",
+    ""
+   ],
+   [
+    "su_5gva_vo",
+    "01-19",
+    "attack",
+    "Opole",
+    "к Одеру (KON)"
+   ],
+   [
+    "su_5gva_vo",
+    "01-23",
+    "attack",
+    "Olawa",
+    "плацдармы у Олау/Брига (EW_VO; KON)"
+   ],
+   [
+    "su_60a_vo",
+    "01-13",
+    "attack",
+    "Krakow",
+    "главными силами овладеть Краковом (EW_SS)"
+   ],
+   [
+    "su_60a_vo",
+    "01-20",
+    "attack",
+    "Oswiecim",
+    "обход Силезского района с юга (RW_ARM 60 А)"
+   ],
+   [
+    "su_60a_vo",
+    "01-28",
+    "attack",
+    "Raciborz",
+    "к Одеру севернее Ратибора (RW_ARM)"
+   ],
+   [
+    "su_59a_vo",
+    "01-14",
+    "attack",
+    "Miechow",
+    "ввод с Ниды на стыке 5 гв. и 60 А: Мехув–Олькуш–Катовице (RW_ARM)"
+   ],
+   [
+    "su_59a_vo",
+    "01-18",
+    "attack",
+    "Krakow",
+    "штурм Кракова (RW_ARM)"
+   ],
+   [
+    "su_59a_vo",
+    "01-21",
+    "attack",
+    "Katowice",
+    "фронтальный удар по Силезскому району (EW_VO)"
+   ],
+   [
+    "su_59a_vo",
+    "01-29",
+    "attack",
+    "Glogowek",
+    "форсировать Одер, к 2.02 выйти на Нейсе (RW_ARM)"
+   ],
+   [
+    "su_21a_vo",
+    "01-12",
+    "reserve",
+    null,
+    "второй эшелон фронта (EW_SS)"
+   ],
+   [
+    "su_21a_vo",
+    "01-19",
+    "attack",
+    "TarnowskieGory",
+    "введена на Варте: охват Силезского района с северо-запада (EW_SS; RW_CHR)"
+   ],
+   [
+    "su_21a_vo",
+    "01-25",
+    "attack",
+    "Gliwice",
+    ""
+   ],
+   [
+    "su_21a_vo",
+    "01-30",
+    "attack",
+    "Brzeg",
+    "плацдармы у Брига (KON)"
+   ],
+   [
+    "su_3gta_vo",
+    "01-12",
+    "attack",
+    "Radomsko",
+    "подвижная группа: к исходу первого дня на Ниду, затем Радомско–Бреслау (RW_ARM; EW_SS)"
+   ],
+   [
+    "su_3gta_vo",
+    "01-17",
+    "attack",
+    "Wroclaw",
+    "Ставка 17.01: на Бреслау (EW_VO)"
+   ],
+   [
+    "su_3gta_vo",
+    "01-20",
+    "attack",
+    "Opole",
+    "поворот из района Намслау вдоль правого берега Одера на Оппельн–Рыбник (RW_CHR; KON)"
+   ],
+   [
+    "su_3gta_vo",
+    "01-25",
+    "attack",
+    "Raciborz",
+    "охват Силезской группировки с запада, корпус на Ратибор; коридор для отхода противника оставлен намеренно (Z p.427; KON)"
+   ],
+   [
+    "su_3gta_vo",
+    "01-29",
+    "regroup",
+    "Scinawa",
+    "переброска на Штейнауский плацдарм к 7.02 (KON; Z p.440)"
+   ],
+   [
+    "su_4ta_vo",
+    "01-12",
+    "attack",
+    "Checiny",
+    "подвижная группа, северный фланг (EW_SS)"
+   ],
+   [
+    "su_4ta_vo",
+    "01-14",
+    "attack",
+    "Kielce",
+    "обход Кельце с юго-запада (KON)"
+   ],
+   [
+    "su_4ta_vo",
+    "01-17",
+    "attack",
+    "Chobienia",
+    "на Бреслау/Одер (Ставка 17.01)"
+   ],
+   [
+    "su_4ta_vo",
+    "01-22",
+    "hold",
+    "Scinawa",
+    "удерживать и расширять плацдарм (EW_VO)"
+   ],
+   [
+    "su_4gtk_vo",
+    "01-13",
+    "attack",
+    "Krakow",
+    "с 59 А (RW_ARM)"
+   ],
+   [
+    "su_4gtk_vo",
+    "01-20",
+    "attack",
+    "Katowice",
+    "(KON)"
+   ],
+   [
+    "su_31tk_vo",
+    "01-12",
+    "attack",
+    "Czestochowa",
+    "в полосе 5 гв. А (RW_CHR)"
+   ],
+   [
+    "su_1gkk_vo",
+    "01-12",
+    "reserve",
+    null,
+    "резерв фронта (EW_SS)"
+   ],
+   [
+    "su_1gkk_vo",
+    "01-20",
+    "attack",
+    "StrzelceOp",
+    "с 3 гв. ТА на Оппельн/Гросс-Штрелиц (RW_CHR; EW_SS)"
+   ],
+   [
+    "de_hgr_a_vo",
+    "01-12",
+    "defend",
+    null,
+    "Гитлер отклонил план отхода на линию HUBERTUS (Z p.415–416); держать Вислу"
+   ],
+   [
+    "de_hgr_a_vo",
+    "01-16",
+    "hold",
+    "Warszawa",
+    "новая директива Гитлера: как минимум рубеж восточнее Кракова – западнее Радомско – Пилица до Варшавы; Варшаву и Вислу до Модлина удерживать (Z p.422)"
+   ],
+   [
+    "de_hgr_a_vo",
+    "01-25",
+    "withdraw",
+    "Wroclaw",
+    "отход за Одер; контратаки, приказанные Шёрнером, невыполнимы (Z p.425)"
+   ],
+   [
+    "de_hgr_weichsel_vo",
+    "01-24",
+    "hold",
+    "Poznan",
+    "закрыть брешь между ГА «Центр» и «А», не допустить прорыва к Данцигу и Познани, держать коридор в Вост. Пруссию (Z p.425)"
+   ],
+   [
+    "de_hgr_weichsel_vo",
+    "02-01",
+    "hold",
+    "Kostrzyn",
+    "сплошной фронт на Одере выше Шведта; плацдарм у Штаргарда для удара во фланг 2 гв. ТА (Z p.438)"
+   ],
+   [
+    "de_9a_vo",
+    "01-12",
+    "defend",
+    null,
+    "оборона Вислы и плацдармов"
+   ],
+   [
+    "de_9a_vo",
+    "01-16",
+    "withdraw",
+    "Warszawa",
+    "директива ОКХ 16.01: право оставить Варшаву (затем отменена Гитлером) (Z p.422)"
+   ],
+   [
+    "de_9a_vo",
+    "01-19",
+    "hold",
+    "Lodz",
+    "держаться между Лодзью и Вислой, контрудар на юг правым флангом (Z p.424)"
+   ],
+   [
+    "de_9a_vo",
+    "01-27",
+    "defend",
+    "Trzciel",
+    "Тиршитигельская позиция и Одер (Z p.426)"
+   ],
+   [
+    "de_4pza_vo",
+    "01-12",
+    "defend",
+    null,
+    ""
+   ],
+   [
+    "de_4pza_vo",
+    "01-19",
+    "hold",
+    "Czestochowa",
+    "остановить русских западнее Ченстохова и на направлении Бреслау (Z p.424)"
+   ],
+   [
+    "de_4pza_vo",
+    "01-25",
+    "hold",
+    "Wroclaw",
+    "плацдарм Бреслау (Z p.425)"
+   ],
+   [
+    "de_17a_vo",
+    "01-12",
+    "defend",
+    null,
+    ""
+   ],
+   [
+    "de_17a_vo",
+    "01-19",
+    "hold",
+    "Katowice",
+    "оборона Верхней Силезии (Z p.424)"
+   ],
+   [
+    "de_17a_vo",
+    "01-27",
+    "withdraw",
+    "Raciborz",
+    "Шёрнер разрешил отход из выступа в ночь на 27/28.01 (EW_VO; Z p.427)"
+   ],
+   [
+    "de_xxxxvi_vo",
+    "01-12",
+    "defend",
+    "Warszawa",
+    ""
+   ],
+   [
+    "de_xxxxvi_vo",
+    "01-16",
+    "withdraw",
+    "Modlin",
+    "гарнизон Варшавы уничтожает запасы и уходит (Z p.423)"
+   ],
+   [
+    "de_viii_vo",
+    "01-12",
+    "defend",
+    "Warka",
+    "оборона против Магнушевского плацдарма"
+   ],
+   [
+    "de_viii_vo",
+    "01-15",
+    "withdraw",
+    "Lodz",
+    ""
+   ],
+   [
+    "de_lvi_vo",
+    "01-12",
+    "defend",
+    "Zwolen",
+    "оборона против Пулавского плацдарма"
+   ],
+   [
+    "de_lvi_vo",
+    "01-15",
+    "withdraw",
+    "TomaszowMaz",
+    ""
+   ],
+   [
+    "de_xxxx_vo",
+    "01-12",
+    "reserve",
+    null,
+    "резерв 9 А (19, 25 тд)"
+   ],
+   [
+    "de_xxxx_vo",
+    "01-14",
+    "counterattack",
+    "Bialobrzegi",
+    "контрудар 19 и 25 тд против прорыва с Магнушевского плацдарма (DW_VO; RW_CHR)"
+   ],
+   [
+    "de_xxxx_vo",
+    "01-18",
+    "hold",
+    "Lodz",
+    "короткая линия южнее Лодзи до подхода XXIV тк (Z p.424)"
+   ],
+   [
+    "de_xxxx_vo",
+    "01-22",
+    "withdraw",
+    "ZielonaGora",
+    "отход за Одер (DW_KORPS)"
+   ],
+   [
+    "de_xxxxii_vo",
+    "01-12",
+    "defend",
+    "Opatow",
+    ""
+   ],
+   [
+    "de_xxxxii_vo",
+    "01-15",
+    "withdraw",
+    "SkarzyskoK",
+    "приказ командующего 4 ТА на отход к Скаржиско-Каменной (RW_CHR)"
+   ],
+   [
+    "de_xxxxii_vo",
+    "01-18",
+    "breakout",
+    "Piotrkow",
+    "прорыв на запад «блуждающим котлом» (DW_KORPS)"
+   ],
+   [
+    "de_xxiv_vo",
+    "01-12",
+    "counterattack",
+    "Chmielnik",
+    "приказ на контрудар против прорыва (Z p.421)"
+   ],
+   [
+    "de_xxiv_vo",
+    "01-14",
+    "hold",
+    "Kielce",
+    ""
+   ],
+   [
+    "de_xxiv_vo",
+    "01-16",
+    "breakout",
+    "Przedborz",
+    "решение командира на отход ночью 16.01 (EW_VO); к Пилице (Z p.423)"
+   ],
+   [
+    "de_xxiv_vo",
+    "01-20",
+    "breakout",
+    "Sieradz",
+    "к Варте на соединение с ТК «ВГ» (Z p.424–425)"
+   ],
+   [
+    "de_xxiv_vo",
+    "01-23",
+    "withdraw",
+    "Glogow",
+    "отход за Одер (DW_KORPS)"
+   ],
+   [
+    "de_xxxxviii_vo",
+    "01-12",
+    "defend",
+    "Pinczow",
+    ""
+   ],
+   [
+    "de_xxxxviii_vo",
+    "01-13",
+    "withdraw",
+    "Jedrzejow",
+    "остатки (C)"
+   ],
+   [
+    "de_lix_vo",
+    "01-12",
+    "defend",
+    null,
+    ""
+   ],
+   [
+    "de_lix_vo",
+    "01-17",
+    "hold",
+    "Krakow",
+    "(C)"
+   ],
+   [
+    "de_lix_vo",
+    "01-19",
+    "withdraw",
+    "Katowice",
+    "(C)"
+   ],
+   [
+    "de_xi_ss_vo",
+    "01-12",
+    "defend",
+    "Tarnow",
+    ""
+   ],
+   [
+    "de_xi_ss_vo",
+    "01-16",
+    "withdraw",
+    "Wieliczka",
+    "отход 17 А южнее Кракова на запад (KON; RW_CHR)"
+   ],
+   [
+    "de_pzk_gd_vo",
+    "01-15",
+    "regroup",
+    "Lodz",
+    "переброска из Вост. Пруссии в район Кельце (RW_VO) — выгрузка у Лодзи/Калиша (EW_VO; DW_VO)"
+   ],
+   [
+    "de_pzk_gd_vo",
+    "01-18",
+    "counterattack",
+    "Lask",
+    "прикрыть отход 9 А, держать южнее Лодзи (Z p.424; EW_VO)"
+   ],
+   [
+    "de_pzk_gd_vo",
+    "01-21",
+    "relieve",
+    "Sieradz",
+    "навстречу XXIV тк на Варте (DW_KORPS)"
+   ],
+   [
+    "de_pzk_gd_vo",
+    "01-23",
+    "withdraw",
+    "Glogow",
+    "отход к Одеру (Z p.425)"
+   ],
+   [
+    "de_v_ss_vo",
+    "01-26",
+    "defend",
+    "Trzciel",
+    "Обра и Тиршитигельская позиция (EW_VO)"
+   ],
+   [
+    "de_v_ss_vo",
+    "02-01",
+    "defend",
+    "Frankfurt",
+    "(DW_KORPS)"
+   ],
+   [
+    "de_festung_posen_vo",
+    "01-20",
+    "hold",
+    "Poznan",
+    "Познань объявлена «Festung» 20.01; держать безусловно (DW_VO; DW_POSEN)"
+   ]
+  ]
+ },
+ "supply": {
+  "_note": "Предложение источников подвоза (оценка составителя, C). Советские — переправы и станции на Висле, по мере продвижения — узлы в тылу; немецкие — крепости и узлы за Одером. Список «from» — с какой даты источник использовать.",
+  "su": {
+   "sources": [
+    "Mniszew",
+    "Magnuszew",
+    "Pulawy",
+    "Deblin",
+    "Baranow",
+    "Sandomierz",
+    "Polaniec",
+    "Praga_W"
+   ],
+   "phases": [
+    {
+     "from": "1945-01-12",
+     "sources": [
+      "Mniszew",
+      "Magnuszew",
+      "Pulawy",
+      "Deblin",
+      "Baranow",
+      "Sandomierz",
+      "Polaniec",
+      "Praga_W"
+     ],
+     "note": "ж.-д. колея перешита и продлена на плацдармы (Z p.418); 1 БФ: 68 тыс. вагонов, на Магнушевском плацдарме 2,5 млн выстрелов, на Пулавском 1,3 млн"
+    },
+    {
+     "from": "1945-01-18",
+     "sources": [
+      "Warszawa",
+      "Radom",
+      "Kielce",
+      "Krakow"
+     ],
+     "note": "после взятия узлов"
+    },
+    {
+     "from": "1945-01-25",
+     "sources": [
+      "Lodz",
+      "Czestochowa",
+      "Kalisz",
+      "Katowice"
+     ],
+     "note": "тылы отстают на сотни км (KON: «голодная» норма)"
+    }
+   ]
+  },
+  "de": {
+   "sources": [
+    "Kostrzyn",
+    "Frankfurt",
+    "Glogow",
+    "Wroclaw",
+    "Opole",
+    "Raciborz",
+    "Krosno",
+    "Poznan"
+   ],
+   "phases": [
+    {
+     "from": "1945-01-12",
+     "sources": [
+      "Lodz",
+      "Czestochowa",
+      "Krakow",
+      "Poznan",
+      "Wroclaw"
+     ],
+     "note": "тыловые узлы ГА «А»"
+    },
+    {
+     "from": "1945-01-20",
+     "sources": [
+      "Poznan",
+      "Wroclaw",
+      "Glogow",
+      "Opole",
+      "Katowice"
+     ],
+     "note": ""
+    },
+    {
+     "from": "1945-01-26",
+     "sources": [
+      "Kostrzyn",
+      "Frankfurt",
+      "Krosno",
+      "Glogow",
+      "Wroclaw",
+      "Raciborz"
+     ],
+     "note": "Познань окружена — только воздух"
+    }
+   ]
+  }
+ }
+}

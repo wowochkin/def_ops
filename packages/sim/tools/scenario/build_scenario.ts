@@ -30,7 +30,7 @@ interface Recipe {
   /** Дополнительные наборы данных того же формата (например, дивизии на детальном участке). */
   extraDatasets?: string[];
   /** Дополнительные линии фронта (например, обводка исторической карты): файлы с date и lines[{name, points}]. */
-  frontlineFiles?: string[]; supply?: Record<string, { sources: string[] } | string>;
+  frontlineFiles?: string[]; supply?: Record<string, { sources: string[]; phases?: { from: string; until?: string; sources: string[] }[] } | string>;
   defaults: Record<string, { ammo: number; fuel: number; posture: Posture }>;
   allocation: { fronts: Record<string, { personnel: number; tanks: number; guns: number; combatShare: number; note?: string }> };
   formations: RecipeFormation[];
@@ -182,7 +182,7 @@ orders.sort((a, b) => a.issuedAt.localeCompare(b.issuedAt) || a.formation.locale
 const scenario: Scenario & { notes: string[]; timeNote?: string } = {
   id: R.id, name: R.name, start: R.start, end: R.end, turnHours: R.turnHours, theatre: R.theatre, rules: R.rules,
   sides: R.sides, formations, orders, timeNote: R.timeNote, notes,
-  ...(R.supply ? { supply: Object.fromEntries(Object.entries(R.supply).filter(([k]) => !k.startsWith('_')).map(([k, v]) => [k, v as { sources: string[] }])) } : {}),
+  ...(R.supply ? { supply: Object.fromEntries(Object.entries(R.supply).filter(([k]) => !k.startsWith('_')).map(([k, v]) => [k, v as { sources: string[]; phases?: { from: string; until?: string; sources: string[] }[] }])) } : {}),
 };
 writeFileSync(join(outDir, `${R.id}.json`), JSON.stringify(scenario, null, 1));
 

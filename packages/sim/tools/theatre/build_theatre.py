@@ -564,7 +564,7 @@ def main():
         for key, c in sorted(gaz.items()):
             if not (w <= c[0] <= e and s <= c[1] <= n):
                 continue
-            r = fg["berlinRadiusKm"] if key.startswith(fg["berlinPrefix"]) else fg["radiusKm"]
+            r = fg["berlinRadiusKm"] if fg.get("berlinPrefix") and key.startswith(fg["berlinPrefix"]) else fg["radiusKm"]
             areas.append({"id": key, "name": key, "ring": circle(c, r, 12)})
         areas += explicit  # большие районы — после точечных: areaAt найдёт сначала пункт
 
