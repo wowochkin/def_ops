@@ -76,6 +76,7 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
     else if (m.kind === 'advise') void adviseReq(m);
     else if (m.kind === 'plan') void planReq(m);
     else if (m.kind === 'plan-stop') planAbort?.abort();
+    else if (m.kind === 'advise-stop') adviseAbort?.abort();
     else if (m.kind === 'reveal') { reveal = m.on; postView(); }
   } catch (err) {
     busy = false;
@@ -191,6 +192,7 @@ const llmClient = () => new LlmClient({ url: absolute(llm.url), model: llm.model
 const advisorClient = () => new LlmClient({ url: absolute(llm.url), model: llm.advModel || llm.model, thinking: llm.advThinking ?? llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
 
 /** Вопрос советнику: ответ потоком, предложенные приказы — с целью на карте, готовые к распоряжению. */
+let adviseAbort: AbortController | null = null;
 async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
   const done = (result: AdviceView) => post({ kind: 'advice', id: m.id, result });
   if (!cfg.advisor) return done({ ok: false, error: 'для этого сценария советник не настроен', answer: '', basis: [], unknowns: [], followUps: [], suggestions: [] });
@@ -200,9 +202,14 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
       goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
   let buf = '', last = 0;
   if (llmBusy) post({ kind: 'advice-wait', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
-  const r = await exclusive('вопрос советнику', () => advise(advisorClient(), g, built, {
+  adviseAbort?.abort();
+  const abort = adviseAbort = new AbortController();
+  const r = await exclusive('вопрос советнику', () => abort.signal.aborted ? Promise.resolve({ ok: false, error: 'остановлено', answer: '', basis: [], unknowns: [], suggestions: [], followUps: [], issues: [] }) : advise(advisorClient(), g, built, {
+    signal: abort.signal,
     onAnswer: (d) => { buf += d; const now = Date.now(); if (now - last > 200) { post({ kind: 'advice-stream', id: m.id, text: buf }); buf = ''; last = now; } },
   }));
+  if (adviseAbort === abort) adviseAbort = null;
+  if (abort.signal.aborted) r.error = 'остановлено';
   if (buf) post({ kind: 'advice-stream', id: m.id, text: buf });
   const byId = new Map(g.state.formations.map((f) => [f.id, f]));
   const names = new Map(g.state.formations.map((f) => [f.id, f.name]));

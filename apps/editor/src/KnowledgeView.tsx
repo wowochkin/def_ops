@@ -183,6 +183,8 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs]);
   const busy = msgs.some((m) => !m.done);
   const ctl = useRef(new AbortController());
+  // ушли из раздела — ответ прерывается, модель освобождается
+  useEffect(() => () => ctl.current.abort(), []);
   const go = async (q: string, m = mode) => {
     if (!q.trim() || busy) return;
     ctl.current = new AbortController();
@@ -199,7 +201,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
   };
   return (
     <aside className="kb-ask">
-      <div className="kb-ask-h"><b>Спросить</b><span className="muted">модель отвечает только по материалам базы, со ссылками</span>{msgs.length > 0 && <button className="link" onClick={() => setMsgs([])}>очистить</button>}</div>
+      <div className="kb-ask-h"><b>Спросить</b><span className="muted">модель отвечает только по материалам базы, со ссылками</span>{msgs.length > 0 && <button className="link" onClick={() => { ctl.current.abort(); setMsgs([]); }}>очистить</button>}</div>
       <ModelPicker llm={llm} who="kb" purpose="ответов и разбора документов" />
       <div className="kb-ask-body">
         {!msgs.length && <div className="muted">Задайте вопрос или попросите рассказать по теме. {topic && <><br /><br /><button className="link" onClick={() => go(topic, 'lecture')}>Рассказать: «{topic}»</button></>}</div>}

@@ -448,7 +448,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       </main>
       {advOpen && view && advMin && <button className="adv-tab" onClick={() => { setAdvMin(false); setAdvSeen(adv.length); }} title="Развернуть советника">
         <span>Советник</span>{adv.some((m) => !m.result) ? <i className="spinner" /> : adv.length > advSeen ? <b className="adv-new">ответ</b> : null}</button>}
-      {advOpen && view && !advMin && <Advisor llm={llm} msgs={adv} onClose={() => setAdvOpen(false)} onMinimize={() => { setAdvMin(true); setAdvSeen(adv.length); }} onClear={() => setAdv([])}
+      {advOpen && view && !advMin && <Advisor llm={llm} msgs={adv} onClose={() => setAdvOpen(false)} onMinimize={() => { setAdvMin(true); setAdvSeen(adv.length); }} onClear={() => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); setAdv([]); setPlan(null); }}
         ask={(cat, topic, q) => {
           const id = ++checkId.current;
           const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
@@ -462,7 +462,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         plan={plan} planStale={!!plan && plan.time !== view.time} askPlan={askPlan} stopPlan={() => send({ kind: 'plan-stop' })} acceptPlan={(v, i) => void acceptPlan(v, i)}
         takeDecision={(v) => { setDecision({ ...v.decision }); setTab('decision'); setNotice(`Решение из варианта «${v.title}» — во вкладке «Решение»; приказы не менялись.`); }}
         takeAct={(a) => { if (a.action) void addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {}).then((ok) => ok && setNotice(`В распоряжение: ${a.label} — ${a.text}`)); }}
-        hasAct={(k) => acts.some((a) => a.key === k)} />}
+        hasAct={(k) => acts.some((a) => a.key === k)} stop={() => send({ kind: 'advise-stop' })} />}
       {review !== 'closed' && view && <div hidden={review === 'hidden'}><ReviewView view={view} llm={llm} send={send} listen={(f) => { reviewListener.current = f; }} onClose={() => setReview('hidden')} /></div>}
     </div>
     </ZonesContext.Provider>
@@ -669,11 +669,11 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus, plan, planStale, askPlan, stopPlan, acceptPlan, takeDecision, takeAct, hasAct }: {
+function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus, stop, plan, planStale, askPlan, stopPlan, acceptPlan, takeDecision, takeAct, hasAct }: {
   llm: Llm; msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
   onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn; focus: Sector | null;
   plan: PlanState | null; planStale: boolean; askPlan: (count: number) => void; stopPlan: () => void; acceptPlan: (v: PlanVariantView, i: number) => void;
-  takeDecision: (v: PlanVariantView) => void; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean;
+  takeDecision: (v: PlanVariantView) => void; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean; stop: () => void;
 }) {
   const [planN, setPlanN] = useState(3);
   /** Путь по дереву: индексы узлов (пусто — категории). */
@@ -728,7 +728,7 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
           <div key={m.id} className="adv-msg">
             <div className="adv-q"><small>{m.cat}</small>{m.q}</div>
             <div className="adv-a">
-              {m.result && !m.result.ok ? <span className="err">Советник не ответил: {m.result.error} <button className="link" onClick={() => ask(m.catId, m.cat, m.q)}>спросить ещё раз</button></span>
+              {m.result && !m.result.ok ? <span className="err">{m.result.error === 'остановлено' ? 'Остановлено.' : `Советник не ответил: ${m.result.error}`} <button className="link" onClick={() => ask(m.catId, m.cat, m.q)}>спросить ещё раз</button></span>
                 : m.answer ? <div className="adv-md" dangerouslySetInnerHTML={{ __html: mdToHtml(m.answer) }} />
                 : !m.result && m.wait ? <span className="muted">{m.wait}</span> : <span className="muted">…</span>}
               {!m.result && <span className="spinner" />}
@@ -776,7 +776,8 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
       <div className="adv-in">
         <textarea rows={2} value={text} placeholder={node ? `Свой вопрос (${topic})…` : 'Свой вопрос…'} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(text); } }} />
-        <button className="primary" disabled={busy || !text.trim()} onClick={() => go(text)}>Спросить</button>
+        {busy ? <button onClick={stop} title="Прервать ответ (модель освобождается)">Остановить</button>
+          : <button className="primary" disabled={!text.trim()} onClick={() => go(text)}>Спросить</button>}
       </div>
       <div className="adv-note">Вопросы читает только советник. Арбитр исполняет лишь утверждённые вами приказы в строгой форме — объединение, задача, цель.</div>
     </div>

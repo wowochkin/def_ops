@@ -70,24 +70,29 @@ export const Icon = {
  */
 export function ModelSelect({ value, onChange, check, empty, title }: {
   value: string; onChange: (v: string) => void; empty: string; title?: string;
-  check: { state: string; models?: string[]; info?: Record<string, { quant?: string; loaded?: boolean; variants?: string[]; selected?: string }> };
+  check: { state: string; models?: string[]; info?: Record<string, { quant?: string; loaded?: boolean; variants?: string[]; selected?: string; instances?: string[]; instanceOf?: string }> };
 }) {
   const models = check.models ?? [];
+  const info = (m: string) => check.info?.[m];
+  // загруженные — отвечают сразу; базовая модель, загруженная под другими именами, — среди скачанных со ссылкой на них
+  const loaded = models.filter((m) => info(m)?.loaded && !info(m)?.instances?.length);
+  const disk = models.filter((m) => !loaded.includes(m));
   const label = (m: string) => {
-    const i = check.info?.[m];
+    const i = info(m);
+    if (loaded.includes(m)) return `${m}${i?.quant ? ` — ${i.quant}` : ''}${i?.instanceOf ? ` (${i.instanceOf})` : ''}`;
     const q = i?.selected ?? i?.quant;
     const other = (i?.variants ?? []).filter((v) => v !== q);
-    const bits = [q ? `${q}${other.length ? `; есть ${other.join(', ')}` : ''}` : '', i?.loaded ? 'загружена' : ''].filter(Boolean).join(', ');
-    return `${m}${bits ? ` (${bits})` : ''}`;
+    return `${m}${q ? ` — ${q}` : ''}${other.length ? ` (в LM Studio выбран ${q}; есть ${other.join(', ')})` : ''}${i?.instances?.length ? ` · загружена как ${i.instances.join(', ')}` : ''}`;
   };
   return (
     <select value={value} title={title} onChange={(e) => {
       if (e.target.value !== '__other') { onChange(e.target.value); return; }
-      const v = window.prompt('Имя модели на сервере — как в списке /v1/models или идентификатор загруженного экземпляра (например, qwen-8bit после «lms load qwen/qwen3.8-27b --identifier qwen-8bit»):', value);
+      const v = window.prompt('Имя модели на сервере — как в списке /v1/models или идентификатор загруженного экземпляра (например, qwen-8bit после «lms load … --identifier qwen-8bit»):', value);
       if (v != null) onChange(v.trim());
     }}>
       <option value="">{empty}</option>
-      {models.map((m) => <option key={m} value={m}>{label(m)}</option>)}
+      {loaded.length > 0 && <optgroup label="Загружены — отвечают сразу">{loaded.map((m) => <option key={m} value={m}>{label(m)}</option>)}</optgroup>}
+      {disk.length > 0 && <optgroup label={loaded.length ? 'Скачаны — LM Studio загрузит по запросу' : 'Модели'}>{disk.map((m) => <option key={m} value={m}>{label(m)}</option>)}</optgroup>}
       {value && !models.includes(value) && <option value={value}>{value} (нет на сервере)</option>}
       <option value="__other">другое имя…</option>
     </select>

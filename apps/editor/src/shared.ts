@@ -80,7 +80,7 @@ export function loadLlm(): LlmSettings {
 /** models — модели для ответов; embedModels — модели эмбеддингов (в названии embed), для смыслового поиска по базе знаний. */
 export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[]; embedModels: string[]; info?: Record<string, ModelInfo> } | { state: 'fail'; error: string };
 /** Что известно о модели из собственного API LM Studio: квантование, загружена ли. */
-export interface ModelInfo { quant?: string; loaded?: boolean; variants?: string[]; selected?: string }
+export interface ModelInfo { quant?: string; loaded?: boolean; variants?: string[]; selected?: string; instances?: string[]; instanceOf?: string }
 
 /**
  * Сведения о моделях из собственного API LM Studio (/api/v1/models, /api/v0/models): квантование, загружена ли,
@@ -101,8 +101,11 @@ async function nativeModels(url: string): Promise<Record<string, ModelInfo>> {
         if (!id) continue;
         const q = raw.quantization as string | { name?: string } | undefined;
         const quant = typeof q === 'string' ? q : q?.name;
-        const loaded = raw.state === 'loaded' || (Array.isArray(raw.loaded_instances) && raw.loaded_instances.length > 0) || undefined;
+        const inst = (Array.isArray(raw.loaded_instances) ? raw.loaded_instances : []).map((x) => String((x as Record<string, unknown>)?.id ?? (x as Record<string, unknown>)?.identifier ?? x)).filter((x) => x && x !== '[object Object]');
+        const loaded = raw.state === 'loaded' || inst.length > 0 || undefined;
         out[id] = { ...out[id], quant: quant ?? out[id]?.quant, loaded: loaded ?? out[id]?.loaded };
+        // загруженные экземпляры под своими именами (lms load … --identifier qwen-4bit)
+        for (const x of inst) if (x !== id) { out[id].instances = [...new Set([...(out[id].instances ?? []), x])]; out[x] = { ...out[x], instanceOf: id, loaded: true, quant: out[x]?.quant ?? quant }; }
         const vs = ((raw.variants ?? []) as (string | { id?: string; name?: string })[]).map((v) => (typeof v === 'string' ? v : v.id ?? v.name ?? '').split('@').pop()!).filter(Boolean);
         const sel = String(raw.selectedVariant ?? raw.selected_variant ?? '').split('@')[1];
         if (vs.length) out[id].variants = [...new Set(vs)];

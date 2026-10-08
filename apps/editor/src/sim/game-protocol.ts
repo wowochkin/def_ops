@@ -54,6 +54,8 @@ export type GameRequest =
   /** Советник: варианты решения на ход (count — сколько), проект решения словами, справка из базы знаний; остановить. */
   | { kind: 'plan'; id: number; count: number; draft: string; reference: string }
   | { kind: 'plan-stop' }
+  /** Остановить ответ советника. */
+  | { kind: 'advise-stop' }
   /** Разбор операции: написать раздел (done — уже написанные разделы, для итога); остановить. */
   | { kind: 'review-section'; id: number; section: string; done: { title: string; text: string }[] }
   | { kind: 'review-stop' }
