@@ -21,6 +21,7 @@ export interface PublishOptions {
   /** Линия фронта рисуется, только где формирования обеих сторон ближе этого, км. */
   frontReachKm?: number;
   /** Наименьшая длина стрелки боя на карте, км. */
+  /** Устарело: длина стрелок боёв теперь — по масштабу карты (клетка × 10). */
   minArrowKm?: number;
 }
 
@@ -149,7 +150,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     }
   }
 
-  // бои за ход: у каждого наступающего — стрелка в сторону обороняющихся длиной не меньше minArrowKm,
+  // бои за ход: одна стрелка на бой — от наступающих к обороняющимся, длина в масштабе карты;
   // хвост позади знака; вид стрелки — по исходу (прорыв, продвижение, отражено)
   if (o.combats !== false) {
     const P = (p: LngLat) => T.proj.toXY(p);
@@ -160,23 +161,27 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       const dc = j.defenders.map((id) => P(pos(id)));
       const d: [number, number] = [dc.reduce((a2, p) => a2 + p[0], 0) / dc.length, dc.reduce((a2, p) => a2 + p[1], 0) / dc.length];
       const strong = j.outcome === 'breakthrough' || j.outcome === 'advance';
-      const len = Math.max(o.minArrowKm!, j.advanceKm);
-      for (const id of j.attackers) {
-        const a0 = P(pos(id));
-        const v: [number, number] = [d[0] - a0[0], d[1] - a0[1]];
-        const nrm = Math.hypot(v[0], v[1]) || 1;
-        const u: [number, number] = [v[0] / nrm, v[1] / nrm];
-        const tail = T.proj.toLL([a0[0] - u[0] * len * 0.35, a0[1] - u[1] * len * 0.35]);
-        const head = T.proj.toLL([a0[0] + u[0] * len * 0.65, a0[1] + u[1] * len * 0.65]);
-        const side = sideOf(byId.get(id)!.side);
-        // объёмные стрелки инфографики: свои — красная, противник — синяя; неудачная атака — тоньше и бледнее
-        const arrow = <ArrowFeature>createFeature('arrow', side === 'own' ? 'inf.attackFade' : 'inf.counter', { points: [tail, head], layerId: 'sim-combat' }, j.outcome === 'breakthrough' ? 0.75 : strong ? 0.55 : 0.4, side);
-        if (!strong) arrow.style = { ...arrow.style, fill: arrow.style.fill.map((c: { t: number; color: string; opacity: number }) => ({ ...c, opacity: c.opacity * 0.5 })) };
-        arrow.time = { from: j.time, to: addHours(j.time, ctx.scenario.turnHours) };
-        const outcome = { breakthrough: 'прорыв', advance: 'продвижение', held: 'оборона удержана', repelled: 'атака отбита' }[j.outcome];
-        arrow.name = `${shortName(byId.get(id)!.name)} → ${j.defenders.map((x) => shortName(byId.get(x)!.name)).join(', ')}: ${outcome}, соотношение ${j.ratio}, ${j.advanceKm} км`;
-        features.push(arrow);
-      }
+      // одна стрелка на бой: от центра наступающих к обороняющимся; длина — в масштабе карты (клетка × 10)
+      const ac = j.attackers.map((id) => P(pos(id)));
+      const a0: [number, number] = [ac.reduce((s2, p) => s2 + p[0], 0) / ac.length, ac.reduce((s2, p) => s2 + p[1], 0) / ac.length];
+      const v: [number, number] = [d[0] - a0[0], d[1] - a0[1]];
+      const gap = Math.hypot(v[0], v[1]);
+      const u: [number, number] = gap > 1e-6 ? [v[0] / gap, v[1] / gap] : [1, 0];
+      const minLen = Math.max(T.cellKm * 10, 1.5);
+      // успех — остриё за позицией обороны на глубину продвижения; неудача — обрывается, не дойдя до неё
+      const reach = strong ? gap + Math.max(j.advanceKm, minLen * 0.25) : gap * 0.6;
+      const back = Math.max(minLen - reach, minLen * 0.3);
+      const tail = T.proj.toLL([a0[0] - u[0] * back, a0[1] - u[1] * back]);
+      const mid = T.proj.toLL([a0[0] + u[0] * reach * 0.5, a0[1] + u[1] * reach * 0.5]);
+      const head = T.proj.toLL([a0[0] + u[0] * reach, a0[1] + u[1] * reach]);
+      const side = sideOf(byId.get(j.attackers[0])!.side);
+      const k = j.outcome === 'breakthrough' ? 0.8 : strong ? 0.6 : 0.32;
+      const arrow = <ArrowFeature>createFeature('arrow', side === 'own' ? 'inf.attackFade' : 'inf.counter', { points: [tail, mid, head], layerId: 'sim-combat' }, k, side);
+      if (!strong) arrow.style = { ...arrow.style, fill: arrow.style.fill.map((c: { t: number; color: string; opacity: number }) => ({ ...c, opacity: c.opacity * 0.45 })) };
+      arrow.time = { from: j.time, to: addHours(j.time, ctx.scenario.turnHours) };
+      const outcome = { breakthrough: 'прорыв', advance: 'продвижение', held: 'оборона удержана', repelled: 'атака отбита' }[j.outcome];
+      arrow.name = `${j.attackers.map((x) => shortName(byId.get(x)!.name)).join(', ')} → ${j.defenders.map((x) => shortName(byId.get(x)!.name)).join(', ')}: ${outcome}, соотношение ${j.ratio}${j.advanceKm ? `, ${j.advanceKm} км` : ''}`;
+      features.push(arrow);
     }
   }
 
