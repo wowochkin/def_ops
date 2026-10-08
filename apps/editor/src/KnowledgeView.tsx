@@ -67,7 +67,7 @@ function Browse({ s, sel, open, back, llm }: { s: kb.KbState; sel: string | null
             </div>
           ))}
           {node && <div className="kb-list">
-            {list.slice(0, limit).map((x) => <button key={x.id} className={sel === x.id ? 'on' : ''} onClick={() => open(x.id)}>{x.title}{x.status !== 'checked' && <i className={`kb-st ${x.status}`} title={STATUS_RU[x.status]} />}</button>)}
+            {list.slice(0, limit).map((x) => <button key={x.id} className={sel === x.id ? 'on' : ''} onClick={() => open(x.id)}>{x.title}{x.status !== 'checked' && <i className={`kb-st s-${x.status}`} title={STATUS_RU[x.status]} />}</button>)}
             {list.length > limit && <button className="link" onClick={() => setLimit(limit + 300)}>ещё {list.length - limit}…</button>}
           </div>}
         </>}
@@ -80,6 +80,8 @@ function Browse({ s, sel, open, back, llm }: { s: kb.KbState; sel: string | null
   );
 }
 
+/** Источник в таблице фактов: «Википедия (de): «Статья»» → «de.wiki: Статья», книги — до 26 знаков. */
+const shortSrc = (t: string) => { const w = /^Википедия \((\w+)\): «(.+)»$/.exec(t); const x = w ? `${w[1]}.wiki: ${w[2]}` : t; return x.length > 26 ? `${x.slice(0, 25)}…` : x; };
 const relBadge = (r?: Reliability) => r ? <i className={`kb-rel r${r}`} title={RELIABILITY[r]}>{r}</i> : null;
 
 function EntryCard({ e, s, open, back }: { e: Entry; s: kb.KbState; open: (id: string) => void; back: (() => void) | null }) {
@@ -94,7 +96,7 @@ function EntryCard({ e, s, open, back }: { e: Entry; s: kb.KbState; open: (id: s
   return (
     <article className="kb-card">
       <div className="kb-crumbs">{back && <button className="link" onClick={back}>← назад</button>}<span>{c.title}{e.group ? ` › ${c.groups.find((g) => g.id === e.group)?.title ?? e.group}` : ''}</span>
-        <i className={`kb-status ${e.status}`}>{STATUS_RU[e.status]}</i>{e.origin && e.origin !== 'seed' && <i className="kb-status user">{e.origin === 'document' ? 'из документа' : 'изменено'}</i>}</div>
+        <i className={`kb-status s-${e.status}`}>{STATUS_RU[e.status]}</i>{e.origin && e.origin !== 'seed' && <i className="kb-status user">{e.origin === 'document' ? 'из документа' : 'изменено'}</i>}</div>
       <h1>{e.title}</h1>
       {e.aliases?.length ? <div className="muted kb-alias">{e.aliases.filter((a) => !/^[a-z]+_/.test(a)).join(' · ')}</div> : null}
       {e.period?.from && <div className="kb-period">{e.period.from === e.period.to || !e.period.to ? e.period.from : `${e.period.from} — ${e.period.to}`}</div>}
@@ -107,7 +109,7 @@ function EntryCard({ e, s, open, back }: { e: Entry; s: kb.KbState; open: (id: s
         {keys.flatMap((k) => facts.filter((f) => f.key === k).map((f, i) => (
           <tr key={`${k}${i}`}><th>{i === 0 ? c.fields.find((x) => x.key === k)?.title ?? k : ''}</th>
             <td>{f.value}{f.quote && <div className="kb-quote">«{f.quote}»</div>}</td>
-            <td className="kb-src">{relBadge(f.reliability)}{f.source && (s.byId.has(f.source) ? <button className="link" onClick={() => open(f.source!)}>{s.byId.get(f.source)!.aliases?.[0] ?? s.byId.get(f.source)!.title.slice(0, 24)}</button> : <span>{f.source}</span>)}{f.pages && <small> {f.pages}</small>}</td></tr>
+            <td className="kb-src">{relBadge(f.reliability)}{f.source && (s.byId.has(f.source) ? <button className="link" title={s.byId.get(f.source)!.title} onClick={() => open(f.source!)}>{shortSrc(s.byId.get(f.source)!.title)}</button> : <span>{f.source}</span>)}{f.pages && <small> {f.pages}</small>}</td></tr>
         )))}
       </tbody></table>}
       {c.fields.filter((f) => !facts.some((x) => x.key === f.key)).length > 0 && <div className="kb-gaps">Нет сведений: {c.fields.filter((f) => !facts.some((x) => x.key === f.key)).map((f) => f.title.toLowerCase()).join(', ')} — можно дополнить документами.</div>}

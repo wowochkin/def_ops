@@ -26,10 +26,13 @@ describe('база знаний: каркас и начальное наполн
     expect(idx.search('Жуков', { limit: 3 }).some((h) => byId.get(h.ref)?.category === 'commanders')).toBe(true);
   });
 
-  it('справка для игры: без вопросов истории — только доктрина, техника, местность', () => {
+  it('справка для игры: без вопросов истории — только доктрина и техника', () => {
     const idx = new Index(entries);
     const safe = gameReference(idx, byId, 'Зееловские высоты оборона', false);
     expect(safe).not.toMatch(/Сражение на Зееловских высотах/);
+    const tanks = gameReference(idx, byId, 'танки в городе фаустпатрон наступление', false);
+    expect(tanks).toMatch(/Фаустпатрон/);
+    expect(tanks).not.toMatch(/\((Театр|Сражения и бои|Формирования|Источники)\)|Модель:/);
     const hist = gameReference(idx, byId, 'Зееловские высоты оборона', true);
     expect(hist).toMatch(/история/);
     const src = gather(idx, byId, 'бой за рейхстаг', { limit: 4 });

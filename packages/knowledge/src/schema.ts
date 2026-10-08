@@ -41,7 +41,7 @@ export const CATEGORIES: CategoryDef[] = [
   { id: 'equipment', title: 'Вооружение и техника', description: 'Танки, САУ, артиллерия, стрелковое и противотанковое оружие: назначение и характеристики.', gameSafe: true,
     groups: [{ id: 'armor', title: 'Танки и САУ' }, { id: 'artillery', title: 'Артиллерия и реактивные системы' }, { id: 'infantry', title: 'Пехотное и противотанковое оружие' }, { id: 'air', title: 'Авиация' }],
     fields: [{ key: 'side', title: 'Сторона' }, { key: 'type', title: 'Тип' }, { key: 'armament', title: 'Вооружение' }, { key: 'armor', title: 'Броня' }, { key: 'weight', title: 'Масса' }, { key: 'speed', title: 'Скорость' }, { key: 'crew', title: 'Экипаж (расчёт)' }, { key: 'range', title: 'Дальность' }, { key: 'produced', title: 'Выпуск' }] },
-  { id: 'terrain', title: 'Театр', description: 'Реки, высоты, леса, города, укреплённые рубежи: их значение для операций.', gameSafe: true,
+  { id: 'terrain', title: 'Театр', description: 'Реки, высоты, леса, города, укреплённые рубежи: их значение для операций.', gameSafe: false,
     groups: [{ id: 'rivers', title: 'Реки и каналы' }, { id: 'lines', title: 'Рубежи и укрепления' }, { id: 'cities', title: 'Города и узлы' }, { id: 'areas', title: 'Районы местности' }],
     fields: [{ key: 'kind', title: 'Что это' }, { key: 'location', title: 'Где' }, { key: 'features', title: 'Особенности' }, { key: 'significance', title: 'Значение для операций' }] },
   { id: 'chronology', title: 'Хронология', description: 'События по датам.', gameSafe: false,

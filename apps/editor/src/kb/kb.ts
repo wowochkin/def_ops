@@ -67,7 +67,7 @@ export async function addFile(file: File, reliability: Reliability, note: string
   const chunks = chunkText(text).map((t, i) => ({ i, text: t }));
   const doc: KbDocument = { id, name: file.name, mime: file.type, size: file.size, addedAt: new Date().toISOString(), reliability, note: note || undefined, chunks, status: 'new', processed: 0 };
   // запись-источник: документ виден в каркасе (категория «Источники → Загруженные документы»)
-  const src: Entry = { id: `doc:${id}`, category: 'sources', group: 'uploaded', title: file.name, summary: note || `Загруженный документ: ${chunks.length} частей, ${Math.round(text.length / 1000)} тыс. знаков.`, status: 'checked', origin: 'user',
+  const src: Entry = { id: `doc:${id}`, category: 'sources', group: 'uploaded', title: file.name, summary: note || `Загруженный документ: ${chunks.length} частей, ${text.length < 2000 ? `${text.length} знаков` : `${Math.round(text.length / 1000)} тыс. знаков`}.`, status: 'checked', origin: 'document',
     facts: [{ key: 'ref', value: file.name }, { key: 'reliability', value: reliability }, ...(note ? [{ key: 'covers', value: note }] : [])] };
   await store.put('documents', doc);
   await store.put('entries', src);

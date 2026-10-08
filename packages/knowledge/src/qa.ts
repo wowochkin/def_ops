@@ -8,8 +8,8 @@ import { snippet, type Hit, type Index } from './search';
 export interface Source { n: number; kind: 'entry' | 'chunk'; ref: string; title: string; text: string }
 
 /** Материалы для ответа: n лучших совпадений (записи — описание и ключевые факты; документы — отрывок). */
-export function gather(index: Index, byId: Map<string, Entry>, query: string, opts: { limit?: number; filter?: (e: Entry | null, h: Hit) => boolean } = {}): Source[] {
-  const hits = index.search(query, { limit: (opts.limit ?? 8) * 2 });
+export function gather(index: Index, byId: Map<string, Entry>, query: string, opts: { limit?: number; pool?: number; filter?: (e: Entry | null, h: Hit) => boolean } = {}): Source[] {
+  const hits = index.search(query, { limit: opts.pool ?? (opts.limit ?? 8) * 2 });
   const out: Source[] = [];
   for (const h of hits) {
     const e = h.kind === 'entry' ? byId.get(h.ref) ?? null : null;
@@ -44,11 +44,12 @@ export function qaMessages(mode: 'ask' | 'lecture', question: string, src: Sourc
 }
 
 /**
- * Справка из базы для модели в игре: в обычных вопросах — только доктрина, техника, местность, источники
- * (не ход боёв: он — история, а не обстановка); в вопросах истории — всё, с пометкой «история».
+ * Справка из базы для модели в игре: в обычных вопросах — только доктрина и техника (не ход боёв и не описания
+ * местности с историческими позициями: это история, а не обстановка); в вопросах истории — и они, с пометкой «история».
+ * Устройство модели и список источников не включаются: правила арбитра советник получает отдельно.
  */
 export function gameReference(index: Index, byId: Map<string, Entry>, query: string, historyAllowed: boolean, limit = 5): string {
-  const src = gather(index, byId, query, { limit, filter: (e) => !!e && (historyAllowed || !!category(e.category)?.gameSafe) });
+  const src = gather(index, byId, query, { limit, pool: 400, filter: (e) => !!e && e.group !== 'model' && e.category !== 'sources' && (historyAllowed || !!category(e.category)?.gameSafe) });
   if (!src.length) return '';
   return src.map((s) => `- [База знаний${historyAllowed && !category(byId.get(s.ref)?.category ?? 'sources')?.gameSafe ? ', история' : ''}: ${s.title}] ${s.text.replace(/\n/g, '; ').slice(0, 700)}`).join('\n');
 }

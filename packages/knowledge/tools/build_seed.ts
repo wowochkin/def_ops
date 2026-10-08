@@ -36,13 +36,19 @@ const ECH: Record<string, string> = { high_command: 'высшее командо
 const SIDE: Record<string, string> = { su: 'СССР (Красная армия и Войско Польское)', de: 'Германия (вермахт, войска СС, фольксштурм)', pl: 'Польша (Войско Польское)', us: 'США' };
 
 /* ───────────── источники ───────────── */
+/** Краткое название источника: «Википедия (de): «Статья»» или «Автор. Название» без выходных данных. */
+function sourceTitle(ref: string): string {
+  const w = /^(\w\w)\.wikipedia:?\s*«([^»]+)»/.exec(ref);
+  if (w) return `Википедия (${w[1]}): «${w[2]}»`;
+  return ref.replace(/\s\((?:ed|ред)\.\)/, '').split(/\s+—\s+|\s\(|[.,]\s*(?:М\.|M\.|L\.|London|New York|СПб|Berlin|Stuttgart|Washington|Frank Cass|Sutton|Pen & Sword)(?=[\s:,.)]|$)|;\s/)[0].trim().slice(0, 90);
+}
 const SOURCE_FILES = ['berlin-1945-positions.json', 'vistula-oder-1945.json', 'berlin-1945-halbe.json', 'berlin-1945-reichstag.json', 'berlin-1945-conquest.json', 'berlin-1945-seelow-divisions.json'];
 for (const f of SOURCE_FILES) {
   const d = read(`docs/sources/${f}`);
   const s = d.sources ?? d.source ?? {};
   for (const [k, v] of Object.entries(s as Record<string, { ref: string; default_reliability?: string; note?: string }>)) {
     const web = /wikipedia|wiki|\.ru\b|\.com|\.org|http/i.test(v.ref);
-    put({ id: `src:${k}`, category: 'sources', group: web ? 'web' : 'books', title: v.ref.split(/[.:—]/)[0].trim().slice(0, 90) || k, aliases: [k], summary: v.ref, status: 'checked',
+    put({ id: `src:${k}`, category: 'sources', group: web ? 'web' : 'books', title: sourceTitle(v.ref) || k, aliases: [k], summary: v.ref, status: 'checked',
       facts: [{ key: 'ref', value: v.ref }, ...(v.default_reliability ? [{ key: 'reliability', value: v.default_reliability }] : []), ...(v.note ? [{ key: 'covers', value: v.note }] : []), { key: 'covers', value: `набор данных ${f}` }] });
   }
 }
@@ -71,7 +77,7 @@ const RANKS = /^(гл\. маршал авиации|главный маршал 
 function parsePersons(raw: string, side?: string): { id: string; name: string; rank?: string; note?: string }[] {
   const out: { id: string; name: string; rank?: string; note?: string }[] = [];
   // пометки в скобках снимаются до деления на лица (внутри них бывают «;» и «/»)
-  for (let part of raw.replace(/\([^)]*\)/g, ' ').split(/→|\/(?![\wа-я]\.)|;|\|/)) {
+  for (let part of raw.replace(/\([^)]*\)/g, ' ').replace(/\s*\([^)]*$/, '').split(/→|\/(?![\wа-я]\.)|;|\|/)) {
     const notes = '';
     part = part.replace(/\(.*?\)/g, ' ').replace(/«[^»]*»/g, ' ').replace(/\b(с|до|после)\s+~?\d{1,2}\.\d{2}.*$/i, ' ').replace(/[?⚠]/g, ' ').replace(/,.*$/, '').trim();
     let rank = '';

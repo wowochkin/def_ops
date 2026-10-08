@@ -82,6 +82,10 @@ describe('советник штаба человека', () => {
     expect(u).toContain('резерв Ставки');
     expect(u).toMatch(/в истории 19\.04; в игре/);
     expect(built.messages.length).toBe(4);
+    expect(u).not.toContain('Справка из базы знаний');
+    const withRef = buildAdvice(ctx, g, loadHistory('berlin-1945-tasks'), live.advisor, tplA,
+      { category: 'actions', question: 'Как штурмовать город?', draft: '', goal: 'Знамя', thread: [], reference: '- [База знаний: Штурмовые группы] состав и действия' }, live.description);
+    expect(withRef.messages[withRef.messages.length - 1].content).toMatch(/Справка из базы знаний[^\n]*\n- \[База знаний: Штурмовые группы\]/);
     const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
     let streamed = '';
     const r = await advise(client, g, built, { onAnswer: (d) => { streamed += d; } });
