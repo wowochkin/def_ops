@@ -17,7 +17,7 @@ import type { Logistics, SimState, StaffAction } from './types';
 
 /** Время «никогда» для резерва, ещё не введённого в сражение. */
 export const NOT_COMMITTED = '9999-01-01T00:00';
-const ENGINEERING = { bridgeHoursMajor: 24, bridgeHoursMinor: 12, parks: 3 };
+export const ENGINEERING = { bridgeHoursMajor: 24, bridgeHoursMinor: 12, parks: 3 };
 const maxH = (a: string, b: string) => (a > b ? a : b);
 
 export interface ActionCheck { ok: boolean; text: string; eta?: string; at?: LngLat; /** мост для подрыва */ bridge?: string }

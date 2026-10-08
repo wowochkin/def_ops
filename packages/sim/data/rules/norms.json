@@ -1,0 +1,381 @@
+{
+  "_about": "Нормативы из базы знаний (опыт войны по источникам) и как их измерить в модели. Проверка — npm run sim:norms. Источник и достоверность — как в базе знаний (запись kb).",
+  "norms": [
+    {
+      "id": "pace-1gta-seelow",
+      "title": "Темп 1 гв. ТА на Зееловских высотах против укреплённой обороны",
+      "kb": "org:su-advance",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "до 4 км/сут (17–18.04)",
+      "measure": {
+        "kind": "pace",
+        "scenario": "berlin-1945-tasks",
+        "formation": "su_1gta",
+        "from": "1945-04-17T05:00",
+        "to": "1945-04-19T05:00"
+      },
+      "expect": [
+        1,
+        5
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "fortAdvanceKm",
+        "advance",
+        "defense.fortificationPerLevel"
+      ]
+    },
+    {
+      "id": "pace-5ua-seelow-north",
+      "title": "Темп севернее Зееловских высот против более слабой обороны (5 УА, 11 ТК)",
+      "kb": "org:su-advance",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "≈10 км за день (17.04)",
+      "measure": {
+        "kind": "pace",
+        "scenario": "berlin-1945-tasks",
+        "formation": "su_5ua",
+        "from": "1945-04-17T05:00",
+        "to": "1945-04-18T05:00"
+      },
+      "expect": [
+        5,
+        14
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "advance",
+        "fortAdvanceKm"
+      ]
+    },
+    {
+      "id": "pace-1pa-day1",
+      "title": "1 А ВП в первый день форсирования Одера с постоянными контратаками",
+      "kb": "org:su-advance",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "5–6 км (3 пд — 7 км), 16.04",
+      "measure": {
+        "kind": "pace",
+        "scenario": "berlin-1945-tasks",
+        "formation": "su_1pa",
+        "from": "1945-04-16T05:00",
+        "to": "1945-04-17T05:00"
+      },
+      "expect": [
+        3,
+        8
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "riverCrossHours",
+        "advance"
+      ]
+    },
+    {
+      "id": "pace-1pa-avg",
+      "title": "1 А ВП: средний темп с боями 16–24.04 (80 км за 9 дней)",
+      "kb": "org:su-advance",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "≈9 км/сут",
+      "measure": {
+        "kind": "pace",
+        "scenario": "berlin-1945-tasks",
+        "formation": "su_1pa",
+        "from": "1945-04-16T05:00",
+        "to": "1945-04-25T05:00"
+      },
+      "expect": [
+        6,
+        12
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "advance",
+        "territory.enemyKmPerDay"
+      ]
+    },
+    {
+      "id": "pace-tank-exploit",
+      "title": "Плановый темп танковых армий при слабом сопротивлении",
+      "kb": "org:su-advance",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "35–37 км/сут (план)",
+      "measure": {
+        "kind": "param",
+        "expr": "advanceMax"
+      },
+      "expect": [
+        25,
+        45
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "advance"
+      ],
+      "note": "верхняя точка таблицы темпа (перевес 10:1)"
+    },
+    {
+      "id": "pace-city-center",
+      "title": "Последний километр до Тиргартена (8 гв. А — 4 гв. ск, 1 гв. ТА)",
+      "kb": "org:su-advance",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "≈1 км за ≈5 суток (27.04 → 1–2.05)",
+      "measure": {
+        "kind": "pace",
+        "scenario": "berlin-city-1945",
+        "formation": "su_8gva_4grk",
+        "from": "1945-04-27T05:00",
+        "to": "1945-05-01T05:00"
+      },
+      "expect": [
+        0.1,
+        0.6
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "advanceTerrain.urban",
+        "holdGivesGround"
+      ]
+    },
+    {
+      "id": "pace-city-outskirts",
+      "title": "Окраины Берлина: сутки на район (7 гв. тк — 55 гв. тбр, Лихтерфельде — Целендорф)",
+      "kb": "org:su-advance",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "район за день — ≈2–4 км/сут",
+      "measure": {
+        "kind": "pace",
+        "scenario": "berlin-city-1945",
+        "formation": "su_3gta_7gtk",
+        "from": "1945-04-24T05:00",
+        "to": "1945-04-26T05:00"
+      },
+      "expect": [
+        1.5,
+        5
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "advanceTerrain.urban"
+      ]
+    },
+    {
+      "id": "loss-1bf",
+      "title": "Потери 1-го Белорусского фронта за операцию (убитые и раненые)",
+      "kb": "op:berlin",
+      "source": "LT_RACE",
+      "reliability": "A",
+      "historical": "≈20 % (37 610 + 141 880 из ≈908 500, 16.04–8.05)",
+      "measure": {
+        "kind": "loss",
+        "scenario": "berlin-1945-tasks",
+        "parent": "su_1bf",
+        "from": "1945-04-16T05:00",
+        "to": "1945-05-02T05:00"
+      },
+      "expect": [
+        12,
+        24
+      ],
+      "unit": "% численности",
+      "rules": [
+        "attackerLoss",
+        "defenderLoss"
+      ],
+      "note": "в модели нет пополнений и возвращения раненых в строй"
+    },
+    {
+      "id": "loss-1uf",
+      "title": "Потери 1-го Украинского фронта за операцию (убитые и раненые)",
+      "kb": "op:berlin",
+      "source": "LT_RACE",
+      "reliability": "A",
+      "historical": "≈20 % (27 580 + 86 245 из ≈550 000)",
+      "measure": {
+        "kind": "loss",
+        "scenario": "berlin-1945-tasks",
+        "parent": "su_1uf",
+        "from": "1945-04-16T05:00",
+        "to": "1945-05-02T05:00"
+      },
+      "expect": [
+        12,
+        24
+      ],
+      "unit": "% численности",
+      "rules": [
+        "attackerLoss",
+        "defenderLoss"
+      ]
+    },
+    {
+      "id": "cross-small",
+      "title": "Малая река или канал: наводка сапёрного моста / переправа под огнём",
+      "kb": "org:su-crossing",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "2–3 ч (Шпрее у Кёпеника), «несколько часов» (Тельтов-канал)",
+      "measure": {
+        "kind": "param",
+        "expr": "riverCrossHours/3"
+      },
+      "expect": [
+        2,
+        6
+      ],
+      "unit": "ч",
+      "rules": [
+        "riverCrossHours"
+      ]
+    },
+    {
+      "id": "cross-prepared",
+      "title": "Подготовка форсирования крупной преграды бригадой",
+      "kb": "org:su-crossing",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "одни сутки (Тельтов-канал, 23–24.04)",
+      "measure": {
+        "kind": "param",
+        "expr": "riverCrossHours"
+      },
+      "expect": [
+        8,
+        24
+      ],
+      "unit": "ч",
+      "rules": [
+        "riverCrossHours"
+      ]
+    },
+    {
+      "id": "bridge-major",
+      "title": "Низководный свайный мост 60 т через разлившийся Одер (~400 м) под огнём",
+      "kb": "org:su-engineer",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "24 ч",
+      "measure": {
+        "kind": "param",
+        "expr": "bridgeHoursMajor"
+      },
+      "expect": [
+        16,
+        36
+      ],
+      "unit": "ч",
+      "rules": [
+        "staff.ENGINEERING.bridgeHoursMajor"
+      ]
+    },
+    {
+      "id": "bridge-minor",
+      "title": "Восстановление подорванного моста через канал",
+      "kb": "org:su-crossing",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "одна ночь (Закров-Парецкий канал)",
+      "measure": {
+        "kind": "param",
+        "expr": "bridgeHoursMinor"
+      },
+      "expect": [
+        6,
+        14
+      ],
+      "unit": "ч",
+      "rules": [
+        "staff.ENGINEERING.bridgeHoursMinor"
+      ]
+    },
+    {
+      "id": "delay-army",
+      "title": "Приказ армии к исполнению (Жуков вечером 20.04 → прорыв к 04:00 21.04)",
+      "kb": "org:su-other",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "≈8 ч",
+      "measure": {
+        "kind": "param",
+        "expr": "orderDelay.army"
+      },
+      "expect": [
+        4,
+        10
+      ],
+      "unit": "ч",
+      "rules": [
+        "profiles/rkka-1945.orderDelayHours.army"
+      ]
+    },
+    {
+      "id": "delay-brigade",
+      "title": "Организация атаки бригадой (вызов комбатов, артиллерии, сапёров)",
+      "kb": "org:su-other",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "≈2 ч (Целендорф, 25.04)",
+      "measure": {
+        "kind": "param",
+        "expr": "orderDelay.brigade"
+      },
+      "expect": [
+        1,
+        4
+      ],
+      "unit": "ч",
+      "rules": [
+        "profiles/rkka-1945.orderDelayHours.brigade"
+      ]
+    },
+    {
+      "id": "density-artillery",
+      "title": "Плотность артиллерии на главном направлении",
+      "kb": "org:su-density",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "270 орудий/км (1 БФ, 16.04); 600 стволов/км на Тельтов-канале",
+      "measure": {
+        "kind": "unmodelled",
+        "why": "артиллерия входит в общую силу соединения; плотность на километр фронта и артподготовка отдельно не считаются"
+      },
+      "rules": []
+    },
+    {
+      "id": "defence-frontage",
+      "title": "Ширина полосы немецкой дивизии у Зелова",
+      "kb": "org:su-density",
+      "source": "LT_CONQ",
+      "reliability": "B",
+      "historical": "≈5 км на дивизию (ранее — 15 км)",
+      "measure": {
+        "kind": "frontage",
+        "scenario": "berlin-1945-tasks",
+        "side": "de",
+        "echelon": "division",
+        "near": "Зееловские высоты"
+      },
+      "expect": [
+        3,
+        8
+      ],
+      "unit": "км",
+      "rules": [
+        "formation.frontageKm"
+      ]
+    }
+  ],
+  "findings": [
+    "Темп в укреплённой полосе. Модель: 1 гв. ТА на Зееловских высотах 17–19.04 — 7,3 км/сут (бой с соотношением ~9,7:1 упирается в предел полосы 2-го уровня 9,16 км/сут, затем 3-го — 5,49). Опыт — до 4 км/сут. Проба (2026-10-08): пределы [99, 8, 5, 4] вместо [99, 14,65, 9,16, 5,49] дают 4,5 км/сут у 1 гв. ТА, но севернее, против более слабой обороны (5 УА), темп падает до 5 км/сут при опыте ≈10, а сверка с историей чуть хуже (Берлин: положения 74 → 73 %, события 9 → 8 из 11; Висла — Одер: 54 → 52 %). Не принято. Вывод: предел темпа должен зависеть не только от уровня полосы, но и от плотности обороны (дивизий на км фронта) — это изменение устройства арбитра, а не числа.",
+    "Потери 1-го Украинского фронта: в модели ≈7 % против ≈20 % в действительности (у 1-го Белорусского — 18 % при ≈20 %, в пределах). Таблицы потерь общие для обоих фронтов, значит, причина — в сценарии: на участке 1 УФ мало тяжёлых боёв (контрудар у Баутцена по 2 А ВП и 52 А, бои за Котбус и Шпремберг, котёл у Хальбе с юга). Править — силы и задачи группы «Гёрлиц» и 4 ТА в сценарии, затем перекалибровка.",
+    "Последний километр до Тиргартена: 0,7 км/сут при опыте 0,2–0,6 — городской темп в центре чуть выше; правило городского масштаба (advanceTerrain.urban) — общее для окраин и центра; окраины (3,5 км/сут) в пределах. Кандидат — темп по плотности застройки/секторам обороны.",
+    "Плотность артиллерии и артподготовка не моделируются отдельно — это ограничение модели, а не расхождение."
+  ]
+}

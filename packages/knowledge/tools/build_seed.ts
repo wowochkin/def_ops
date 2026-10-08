@@ -36,6 +36,13 @@ const dayRu = (d: string) => `${+d.slice(8, 10)} ${MONTHS[+d.slice(5, 7) - 1]} $
 const ECH: Record<string, string> = { high_command: 'высшее командование', front: 'фронт', army_group: 'группа армий', army: 'армия', corps: 'корпус', division: 'дивизия', brigade: 'бригада', regiment: 'полк', battalion: 'батальон', group: 'группа', fleet: 'флот', flotilla: 'флотилия' };
 const SIDE: Record<string, string> = { su: 'СССР (Красная армия и Войско Польское)', de: 'Германия (вермахт, войска СС, фольксштурм)', pl: 'Польша (Войско Польское)', us: 'США' };
 
+/** Число норматива: 4, [35, 37] → 35–37, { bridges: 25, ferries: 40 } → bridges 25, ferries 40. */
+function normValue(v: unknown): string {
+  if (Array.isArray(v)) return v.join('–');
+  if (v && typeof v === 'object') return Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k.replace(/_/g, ' ')} ${normValue(x)}`).join(', ');
+  return String(v);
+}
+
 /* ───────────── источники ───────────── */
 /** Краткое название источника: «Википедия (de): «Статья»» или «Автор. Название» без выходных данных. */
 function sourceTitle(ref: string): string {
@@ -106,8 +113,15 @@ for (const { f, file } of allF) {
     if (typeof v === 'object') { const o = v as { value: number | null; source?: string; reliability?: string; date?: string; note?: string }; if (o.value == null) continue; facts.push({ key: k, value: `${o.value.toLocaleString('ru')}${o.date ? ` (на ${o.date})` : ''}${o.note ? ` — ${o.note}` : ''}`, source: srcId(o.source) ?? o.source, reliability: rel(o.reliability) }); }
     else facts.push({ key: k, value: String(v), source: src });
   }
-  const st = f.strength as { personnel?: number; tanks?: number; guns?: number; reliability?: string; source?: string } | undefined;
-  if (st) for (const k of ['personnel', 'tanks', 'guns'] as const) if (st[k] != null) facts.push({ key: k, value: st[k]!.toLocaleString('ru'), source: srcId(st.source) ?? st.source, reliability: rel(st.reliability) });
+  // численность: число или { value, source, reliability, note, date }; САУ — к танкам, самолёты — к составу
+  type Num = number | { value: number | null; source?: string; reliability?: string; note?: string; date?: string };
+  const st = f.strength as (Record<string, Num | string | undefined> & { reliability?: string; source?: string }) | undefined;
+  if (st) for (const [k, key, label] of [['personnel', 'personnel', ''], ['tanks', 'tanks', ''], ['spg', 'tanks', 'САУ: '], ['guns', 'guns', ''], ['aircraft', 'composition', 'самолётов: ']] as const) {
+    const v = st[k] as Num | undefined;
+    if (v == null) continue;
+    if (typeof v === 'number') facts.push({ key, value: `${label}${v.toLocaleString('ru')}`, source: srcId(st.source) ?? st.source, reliability: rel(st.reliability) });
+    else if (v.value != null) facts.push({ key, value: `${label}${v.value.toLocaleString('ru')}${v.date ? ` (на ${v.date})` : ''}${v.note ? ` — ${v.note}` : ''}`, source: srcId(v.source ?? st.source) ?? v.source, reliability: rel(v.reliability ?? st.reliability) });
+  }
   if (f.divisions) facts.push({ key: 'composition', value: `${f.divisions} дивизий`, source: src });
   const relations: Relation[] = [];
   if (f.parent) relations.push({ type: 'part_of', target: `f:${f.parent}` });
@@ -197,7 +211,7 @@ for (const [k, title] of Object.entries(KIND)) {
   if (!items.length) continue;
   put({ id: `org:su-${k}`, category: 'organization', group: 'su', title: `${title}: опыт 1-го Белорусского фронта (апрель 1945)`, status: 'checked',
     summary: `${items.length} фактов из воспоминаний командиров (Катуков, Бабаджанян и др.) в сборнике Le Tissier «Soviet Conquest».`,
-    facts: items.map((c: { value: unknown; unit?: string; context_ru?: string; reliability?: string; terrain?: string }) => ({ key: 'numbers', value: `${Array.isArray(c.value) ? c.value.join('–') : c.value} ${c.unit ?? ''}${c.terrain ? ` (${c.terrain})` : ''} — ${c.context_ru ?? ''}`, source: 'src:LT_CONQ', reliability: rel(c.reliability) })),
+    facts: items.map((c: { value: unknown; unit?: string; context_ru?: string; reliability?: string; terrain?: string }) => ({ key: 'numbers', value: `${normValue(c.value)} ${c.unit ?? ''}${c.terrain ? ` (${c.terrain})` : ''} — ${c.context_ru ?? ''}`, source: 'src:LT_CONQ', reliability: rel(c.reliability) })),
     relations: [{ type: 'source', target: 'src:LT_CONQ' }] });
 }
 const art = rq.artillery ?? [];

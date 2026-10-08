@@ -98,3 +98,14 @@ describe('смысловой поиск: векторы и слияние выд
     expect(entryEmbedText(byId.get('battle:reichstag')!)).toMatch(/^Бой за рейхстаг .*Сражения и бои/);
   });
 });
+
+describe('нормативы для правил арбитра', () => {
+  it('каждый норматив таблицы sim:norms ссылается на запись базы знаний', async () => {
+    const { readFileSync } = await import('node:fs');
+    const t = JSON.parse(readFileSync(new URL('../../sim/data/rules/norms.json', import.meta.url), 'utf8')) as { norms: { id: string; kb: string; expect?: number[]; measure: { kind: string } }[] };
+    for (const n of t.norms) {
+      expect(byId.has(n.kb), n.id).toBe(true);
+      if (n.measure.kind !== 'unmodelled') expect(n.expect?.length, n.id).toBe(2);
+    }
+  });
+});
