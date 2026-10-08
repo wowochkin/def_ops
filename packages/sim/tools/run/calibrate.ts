@@ -5,7 +5,7 @@
  * Чтобы не подогнать под всё сразу, мерило считается раздельно: «обучение» —
  * дни до trainUntil, «проверка» — после; подбор идёт только по обучению.
  *
- *   npm run sim:calibrate -- [--scenario berlin-1945-tasks] [--evals 120] [--seeds 2] [--train-until 1945-04-25]
+ *   npm run sim:calibrate -- [--scenario berlin-1945-tasks] [--base ww2-draft] [--evals 120] [--seeds 2] [--train-until 1945-04-25]
  *                            [--out packages/sim/data/rules/ww2-berlin-cal.json]
  */
 import { writeFileSync } from 'node:fs';
@@ -24,7 +24,8 @@ const seeds = Number(opt('seeds', '2'));
 const trainUntil = opt('train-until', '1945-04-25T23:59');
 const out = opt('out', join(DATA_DIR, 'rules', 'ww2-berlin-cal.json'));
 
-const base = loadContext(scenarioId);
+// подбор — от исходных (некалиброванных) правил, а не от тех, что у сценария по умолчанию (там — уже откалиброванные)
+const base = loadContext(scenarioId, opt('base', 'ww2-draft'));
 const history = loadHistory(scenarioId);
 
 /** Подбираемые множители и их границы. */

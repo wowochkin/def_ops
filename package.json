@@ -24,7 +24,8 @@
     "sim:scenario": "tsx packages/sim/tools/scenario/build_scenario.ts",
     "theatre:sample": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_sample.ts",
     "sim:calibrate": "tsx packages/sim/tools/run/calibrate.ts",
-    "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts"
+    "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts",
+    "sim:demo": "node scripts/sim-demo.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
