@@ -35,7 +35,7 @@ export function mdToPdf(md: string): Content[] {
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
     const h = /^\s*(#{1,6})\s+(.*?)\s*#*\s*$/.exec(l);
-    if (h) { out.push({ text: inlineRuns(h[2]), style: h[1].length <= 3 ? 'h3' : 'h4' }); continue; }
+    if (h) { out.push({ text: inlineRuns(h[2]), style: h[1].length <= 3 ? 'h3' : 'h4', headlineLevel: 2 }); continue; }
     if (/^\s*([-*_])\s*\1\s*\1[\s\-*_]*$/.test(l)) { out.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: LINE }], margin: [0, 6, 0, 6] }); continue; }
     if (l.startsWith('|')) {
       const rows: string[][] = [];
@@ -102,6 +102,8 @@ export function reviewDoc(x: ReviewPdfInput): TDocumentDefinitions {
       p: { margin: [0, 0, 0, 5], alignment: 'justify' },
       note: { fontSize: 8.5, color: MUTED },
     },
+    // заголовок не остаётся один внизу страницы — переносится к своему тексту
+    pageBreakBefore: (node, following) => (node.headlineLevel === 1 && following.length < 2) || (node.headlineLevel === 2 && following.length === 0),
     footer: (page, pages) => ({ columns: [{ text: `Разбор операции · ${x.scenario.split(':')[0]}`, style: 'note' }, { text: `${page} / ${pages}`, alignment: 'right', style: 'note' }], margin: [40, 16, 40, 0] }),
     content: [
       { text: 'ОТЧЁТНЫЙ ДОКУМЕНТ', style: 'kicker' },
@@ -117,7 +119,8 @@ export function reviewDoc(x: ReviewPdfInput): TDocumentDefinitions {
       { text: 'Содержание', style: 'h3' },
       { ol: x.sections.map((s) => ({ text: [{ text: s.title }, { text: ` — ${s.role}`, color: MUTED, fontSize: 9.5 }] })) },
       ...x.sections.flatMap((s, i): Content[] => [
-        { text: `${i + 1}. ${s.title}`, style: 'h2', pageBreak: 'before' },
+        // разделы идут подряд; первый — с новой страницы после титула
+        { text: `${i + 1}. ${s.title}`, style: 'h2', headlineLevel: 1, ...(i === 0 ? { pageBreak: 'before' as const } : { margin: [0, 18, 0, 2] as [number, number, number, number] }) },
         { text: s.role, style: 'role' },
         ...mdToPdf(s.text),
       ]),
