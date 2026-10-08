@@ -13,93 +13,93 @@
     ],
     [
       1.5,
-      1.4804
+      1.3391
     ],
     [
       2,
-      4.4412
+      4.0174
     ],
     [
       3,
-      8.8823
+      8.0348
     ],
     [
       4,
-      14.8039
+      13.3913
     ],
     [
       6,
-      26.6469
+      24.1044
     ],
     [
       10,
-      44.4116
+      40.174
     ]
   ],
   "attackerLoss": [
     [
       0.5,
-      0.0537
+      0.0523
     ],
     [
       1,
-      0.0358
+      0.0348
     ],
     [
       2,
-      0.0224
+      0.0218
     ],
     [
       3,
-      0.0134
+      0.0131
     ],
     [
       6,
-      0.0072
+      0.007
     ],
     [
       10,
-      0.0045
+      0.0044
     ]
   ],
   "defenderLoss": [
     [
       0.5,
-      0.0103
+      0.0099
     ],
     [
       1,
-      0.0205
+      0.0198
     ],
     [
       2,
-      0.0411
+      0.0395
     ],
     [
       3,
-      0.0616
+      0.0593
     ],
     [
       6,
-      0.1233
+      0.1185
     ],
     [
       10,
-      0.2054
+      0.1976
     ]
   ],
   "defense": {
     "terrain": {
       "open": 1,
-      "forest": 1.369,
-      "marsh": 1.496,
-      "urban": 1.625,
-      "hills": 1.369,
+      "forest": 1.372,
+      "marsh": 1.5,
+      "urban": 1.63,
+      "hills": 1.372,
       "water": 1
     },
-    "prepared": 1.823,
+    "prepared": 1.803,
     "prepareHours": 24,
-    "fortificationPerLevel": 0.107
+    "fortificationPerLevel": 0.102
   },
   "ammoShort": 0.4,
   "fuelOut": 0.5,
@@ -112,7 +112,7 @@
   "noise": 0.2,
   "riverCrossHours": 12,
   "advanceTerrain": {
-    "urban": 0.281,
+    "urban": 0.296,
     "forest": 0.6,
     "marsh": 0.5,
     "hills": 0.8
@@ -121,12 +121,12 @@
   "fortCrossHours": 4,
   "fortAdvanceKm": [
     99,
-    14,
-    8.75,
-    5.25
+    14.67,
+    9.17,
+    5.5
   ],
   "_fortAdvance_note": "«прогрызание» обороны: на Зееловских высотах 17–18.04 фактически до 4 км/сутки (LT_CONQ), 8 гв. А 16.04 — 3–6 км до Хауптграбена (Исаев); индекс — уровень полосы 1..3. Черновик.",
-  "movementScale": 0.932,
+  "movementScale": 0.898,
   "calibration": {
     "scenario": "berlin-1945-tasks",
     "date": "2026-10-08",
@@ -135,27 +135,27 @@
     "trainUntil": "1945-04-25T23:59",
     "from": "ww2-draft",
     "multipliers": {
-      "advance": 1.48,
-      "attackerLoss": 0.894,
-      "defenderLoss": 1.027,
-      "prepared": 1.823,
-      "fortPerLevel": 0.107,
-      "terrainExp": 1.197,
-      "movement": 0.932,
-      "urbanAdvance": 0.281,
-      "fortAdvance": 1.75
+      "advance": 1.339,
+      "attackerLoss": 0.871,
+      "defenderLoss": 0.988,
+      "prepared": 1.803,
+      "fortPerLevel": 0.102,
+      "terrainExp": 1.204,
+      "movement": 0.898,
+      "urbanAdvance": 0.296,
+      "fortAdvance": 1.833
     },
     "before": {
-      "trainKm": 9.84,
-      "testKm": 4.01,
-      "eventsDays": 2.63,
-      "within": 0.725
+      "trainKm": 9.37,
+      "testKm": 5.51,
+      "eventsDays": 2.88,
+      "within": 0.73
     },
     "after": {
-      "trainKm": 6.5,
-      "testKm": 3.8,
-      "eventsDays": 1.13,
-      "within": 0.806
+      "trainKm": 6.91,
+      "testKm": 4.85,
+      "eventsDays": 0.63,
+      "within": 0.797
     },
     "events": [
       {
