@@ -239,7 +239,16 @@ export function MapView(props: Props) {
       const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
       const f = stamp(createFeature(tool.kind as PresetKind, tool.preset, { points: draft.points, layerId }, k, tool.side));
       if (f.kind === 'arrow') f.anchor = draft.anchor;
-      setDoc(insertFeature(doc, f));
+      // нарисованное не должно пропадать: скрытый слой включаем, о слое не для этого масштаба — предупреждаем
+      let next = insertFeature(doc, f);
+      const layer = next.layers.find((l) => l.id === layerId);
+      if (layer && !layer.visible) {
+        next = { ...next, layers: next.layers.map((l) => (l.id === layerId ? { ...l, visible: true } : l)) };
+        props.onStatus?.(`Слой «${layer.name}» был скрыт — включён, чтобы нарисованное было видно`);
+      } else if (layer?.scales && !inScaleRange(layer.scales, viewDenominator(mapRef.current!.getView().center[1], mapRef.current!.getView().zoom))) {
+        props.onStatus?.(`Слой «${layer.name}» на этом масштабе не показывается — объект сохранён, виден в пределах масштабов слоя`);
+      }
+      setDoc(next);
       setSelected(f.id);
       if (!tool.keep) setTool({ mode: 'select' });
     }
