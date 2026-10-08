@@ -66,7 +66,9 @@ describe('штаб модели в игре', () => {
 
 describe('советник штаба человека', () => {
   it('обстановка своей стороны, правила арбитра из чисел движка, предложения приказов сопоставляются', async () => {
-    const { advise, buildAdvice, rulesBrief, ADVICE_CATEGORIES } = await import('../src/live');
+    const { advise, buildAdvice, rulesBrief, ADVICE_TREE } = await import('../src/live');
+    expect(ADVICE_TREE.length).toBe(8);
+    expect(ADVICE_TREE.every((c) => (c.children ?? []).length >= 3)).toBe(true);
     const { loadHistory } = await import('@def-ops/sim/data');
     const ctx = loadContext('berlin-1945-tasks');
     const g = startGame(ctx, 1, '1945-04-19T05:00', 'su');
@@ -74,7 +76,7 @@ describe('советник штаба человека', () => {
     const tplA = { system: read('prompts/advisor.system.md'), user: read('prompts/advisor.user.md'), profile: read('profiles/rkka-1945.md') };
     expect(rulesBrief(ctx, 'su')).toMatch(/армии — 6 ч/);
     const built = buildAdvice(ctx, g, loadHistory('berlin-1945-tasks'), live.advisor, tplA,
-      { category: 'history', question: ADVICE_CATEGORIES.find((c) => c.id === 'history')!.presets[0], draft: 'Решение: удар на Берлин', goal: 'Знамя Победы над рейхстагом', thread: [{ q: 'Привет', a: 'Здравствуйте' }] }, live.description);
+      { category: 'history', question: 'Как развивались события в эти дни в истории?', draft: 'Решение: удар на Берлин', goal: 'Знамя Победы над рейхстагом', thread: [{ q: 'Привет', a: 'Здравствуйте' }] }, live.description);
     const u = built.messages[built.messages.length - 1].content;
     expect(u).toContain('8-я гвардейская армия');
     expect(u).toContain('резерв Ставки');

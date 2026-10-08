@@ -695,3 +695,54 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .adv-in .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .adv-note { padding: 0 12px 8px; font-size: 10.5px; color: var(--muted); }
 .oedit label small.muted { font-size: 10.5px; }
+.adv-nav { border-top: 1px solid var(--line); display: flex; flex-direction: column; max-height: 46%; min-height: 0; background: #fbfaf6; }
+.adv-nav.closed { max-height: none; }
+.adv-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 4px; padding: 7px 12px 5px; font-size: 12px; color: var(--muted); }
+.adv-toggle { border: 0; background: none; padding: 0 4px 0 0; font-weight: 700; font-size: 12px; color: var(--ink); }
+.crumb { border: 0; background: none; padding: 0 2px; font-size: 12px; color: var(--accent); }
+.crumb.on { color: var(--ink); font-weight: 600; }
+.adv-find { margin-left: auto; width: 130px; font-size: 11.5px; padding: 2px 6px; border-radius: 10px; }
+.adv-list { overflow-y: auto; padding: 2px 12px 8px; display: flex; flex-direction: column; gap: 4px; }
+.adv-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.adv-tiles button { text-align: left; display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 8px; background: #fff; }
+.adv-tiles button b { font-size: 12.5px; } .adv-tiles button small { font-size: 10.5px; color: var(--muted); line-height: 1.3; }
+.adv-tiles button:hover, .adv-sub:hover { border-color: var(--accent); }
+.adv-sub { display: flex; justify-content: space-between; align-items: center; text-align: left; padding: 6px 9px; border-radius: 8px; background: #fff; font-size: 12.5px; font-weight: 600; }
+.adv-sub small { color: var(--muted); font-weight: 400; }
+.adv-leaf { text-align: left; padding: 5px 9px; border-radius: 8px; font-size: 12px; line-height: 1.35; background: var(--accent-bg); border-color: #ecd3ce; }
+.adv-leaf small { display: block; font-size: 10px; color: var(--muted); }
+.adv-leaf:hover:not(:disabled) { border-color: var(--accent); }
+.adv-fu small.muted { width: 100%; font-size: 10.5px; }
+@media (max-width: 700px) { .advisor { left: 6px; right: 6px; width: auto; top: 44px; bottom: 90px; } .adv-tiles { grid-template-columns: 1fr; } }
+.replay.cmd { position: relative; }
+.mob-switch { display: none; }
+@media (max-width: 760px) {
+  .replay.cmd { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .mob-switch { display: flex; gap: 4px; padding: 6px 8px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .mob-switch button { flex: 1; padding: 6px; border-radius: 8px; font-size: 13px; }
+  .mob-switch button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .replay.cmd.mob-staff > .rp-main { display: none; }
+  .replay.cmd.mob-map > .cmd-side { display: none; }
+  .replay.cmd > .cmd-side, .replay.cmd > .rp-main { grid-row: 2; grid-column: 1; min-height: 0; }
+  .replay.cmd .advisor { position: fixed; inset: 0; width: auto; border-radius: 0; z-index: 60; }
+  .replay.cmd .adv-tiles { grid-template-columns: 1fr 1fr; }
+  .replay.cmd .adv-nav { max-height: 55%; }
+  .replay.cmd .rp-tools { left: 8px; right: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .replay.cmd .legend { display: none; }
+  .replay.cmd .player { grid-template-columns: 1fr; gap: 6px; padding: 8px 10px; left: 8px; right: 8px; bottom: 8px; }
+  .cmd-tabs { overflow-x: auto; }
+}
+@media (max-width: 760px) {
+  .replay:not(.cmd) { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 45%) minmax(0, 1fr); }
+  .replay:not(.cmd) .legend { display: none; }
+  .replay:not(.cmd) .player { grid-template-columns: 1fr; gap: 6px; padding: 8px 10px; left: 8px; right: 8px; bottom: 8px; }
+  .replay:not(.cmd) .rp-tools { left: 8px; right: 8px; top: 54px; flex-wrap: wrap; justify-content: flex-end; }
+}
+@media (max-width: 760px) {
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .shell > .stage { grid-row: 1; min-height: 0; }
+  .shell > .rail { grid-row: 2; flex-direction: row; padding: 2px 4px; justify-content: space-around; }
+  .rail-logo, .rail-srv { display: none; }
+  .rail-btn { flex: 1; padding: 5px 2px; }
+  .rail-btn.on::before { display: none; }
+}

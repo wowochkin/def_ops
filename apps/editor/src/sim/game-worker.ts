@@ -165,7 +165,8 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
   if (!cfg.advisor) return done({ ok: false, error: 'для этого сценария советник не настроен', answer: '', followUps: [], suggestions: [] });
   const t0 = Date.now();
   const built = buildAdvice(ctx, g, history, cfg.advisor, { system: advisorSystemTpl, user: advisorUserTpl, profile: advisorProfile },
-    { category: m.category, question: m.question, draft: m.draft, goal: end.victory.title, thread: m.thread }, cfg.description);
+    { category: m.category, topic: m.topic, question: m.question, draft: m.draft, thread: m.thread,
+      goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
   let buf = '', last = 0;
   const r = await advise(llmClient(), g, built, {
     onAnswer: (d) => { buf += d; const now = Date.now(); if (now - last > 200) { post({ kind: 'advice-stream', id: m.id, text: buf }); buf = ''; last = now; } },

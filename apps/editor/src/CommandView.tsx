@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { TASK_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
-import { ADVICE_CATEGORIES, type AiTurn } from '@def-ops/staff-service/live';
+import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
 import type { AdviceView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
@@ -43,7 +43,7 @@ type Sub = 'units' | 'rear' | 'bridges' | 'reserves';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
 type Pick = { kind: 'order' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
-interface AdvMsg { id: number; cat: string; q: string; answer: string; result?: AdviceView }
+interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; result?: AdviceView }
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 
 const TOGGLES = [
@@ -81,6 +81,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const checks = useRef(new Map<number, (r: ActionCheck) => void>());
   const checkId = useRef(0);
   const [advOpen, setAdvOpen] = useState(false);
+  /** Узкий экран (телефон): панель штаба или карта. */
+  const [mob, setMob] = useState<'staff' | 'map'>('staff');
   const [adv, setAdv] = useState<AdvMsg[]>([]);
   const [time, setTime] = useState<string | null>(null);
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
@@ -136,6 +138,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const enemyRef = useRef(enemy); enemyRef.current = enemy;
   const titleRef = useRef(''); titleRef.current = view?.scenarioName ?? saved?.title ?? '';
 
+  // телефон: выбор места на карте — показать карту, выбрано — вернуться к штабу
+  const hadPick = useRef(false);
+  useEffect(() => { if (pickMode) { hadPick.current = true; setMob('map'); } else if (hadPick.current) { hadPick.current = false; setMob('staff'); } }, [pickMode]);
   useEffect(() => { send({ kind: 'settings', llm: llm.settings, enemy }); }, [llm.settings, enemy]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (ai.state !== 'thinking') return; const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, [ai.state]);
 
@@ -244,6 +249,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setProgress('отправка приказов…');
     send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision });
   };
+  /** Ветви дерева тем советника из обстановки: фронты, армии, обнаруженный противник, резервы. */
+  const advDyn = useMemo(() => ({
+    own: (view?.own ?? []).filter((u) => u.status === 'active').map((u) => ({ id: u.id, name: u.name })),
+    group: (view?.groups ?? []).filter((g) => view?.own.some((u) => u.parent === g.id && u.status === 'active')).map((g) => ({ id: g.id, name: g.name })),
+    enemy: (view?.intel ?? []).map((e) => ({ id: e.id, name: e.name })),
+    reserve: (view?.own ?? []).filter((u) => u.status === 'reserve').map((u) => ({ id: u.id, name: u.name })),
+  }), [view]);
   /** Проект решения словами — советнику (он видит, что командующий уже готовит). */
   const draftText = () => [
     decision.assessment && `Оценка обстановки: ${decision.assessment}`,
@@ -288,7 +300,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
 
   return (
     <ZonesContext.Provider value={zones}>
-    <div className="replay cmd">
+    <div className={`replay cmd mob-${mob}`}>
+      <div className="mob-switch"><button className={mob === 'staff' ? 'on' : ''} onClick={() => setMob('staff')}>Штаб</button><button className={mob === 'map' ? 'on' : ''} onClick={() => setMob('map')}>Карта</button><button className={advOpen ? 'on' : ''} onClick={() => setAdvOpen(!advOpen)}>Советник</button></div>
       <aside className="rp-side cmd-side">
         <div className="cmd-head">
           <div className="cmd-top">
@@ -369,15 +382,6 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
-          {advOpen && view && <Advisor msgs={adv} onClose={() => setAdvOpen(false)} onClear={() => setAdv([])}
-            ask={(cat, q) => {
-              const id = ++checkId.current;
-              const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
-              setAdv((l) => [...l, { id, cat, q, answer: '' }]);
-              send({ kind: 'advise', id, category: cat, question: q, thread, draft: draftText() });
-            }}
-            accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
-            drafted={(f) => !!drafts[f]} />}
           <div className="rp-tools">
             {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
@@ -387,6 +391,16 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             onEvent={(e) => { if (e.at) setTime(e.at); goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
         </> : <div className="rp-empty"><div><div className="rp-empty-ic"><span className="spinner big" /></div><b>{progress ?? 'Подготовка…'}</b></div></div>}
       </main>
+      {advOpen && view && <Advisor msgs={adv} onClose={() => setAdvOpen(false)} onClear={() => setAdv([])}
+        ask={(cat, topic, q) => {
+          const id = ++checkId.current;
+          const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
+          setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
+          send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft: draftText() });
+        }}
+        dyn={advDyn}
+        accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
+        drafted={(f) => !!drafts[f]} />}
     </div>
     </ZonesContext.Provider>
   );
@@ -573,28 +587,59 @@ function OrderEditor({ v, u, d, isNew, pick, setPick, save, drop, close }: { v: 
 
 /* ───────────── советник ───────────── */
 
-function Advisor({ msgs, ask, accept, drafted, onClose, onClear }: {
-  msgs: AdvMsg[]; ask: (cat: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean; onClose: () => void; onClear: () => void;
+type Dyn = { own: { id: string; name: string }[]; group: { id: string; name: string }[]; enemy: { id: string; name: string }[]; reserve: { id: string; name: string }[] };
+interface Leaf { q: string; path: string[]; cat: string }
+
+/** Все вопросы дерева (с раскрытыми по обстановке ветвями) — для поиска. */
+function allLeaves(dyn: Dyn): Leaf[] {
+  const out: Leaf[] = [];
+  const walk = (n: AdviceNode, path: string[], cat: string) => {
+    const p = [...path, n.title];
+    for (const q of n.questions ?? []) out.push({ q, path: p, cat });
+    if (n.dyn) for (const x of dyn[n.dyn]) out.push({ q: n.template!.replace('{name}', x.name), path: p, cat });
+    for (const c of n.children ?? []) walk(c, p, cat);
+  };
+  for (const c of ADVICE_TREE) walk(c, [], c.id);
+  return out;
+}
+
+function Advisor({ msgs, ask, accept, drafted, onClose, onClear, dyn }: {
+  msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
+  onClose: () => void; onClear: () => void; dyn: Dyn;
 }) {
-  const [cat, setCat] = useState(ADVICE_CATEGORIES[0].id);
+  /** Путь по дереву: индексы узлов (пусто — категории). */
+  const [path, setPath] = useState<AdviceNode[]>([]);
+  const [find, setFind] = useState('');
   const [text, setText] = useState('');
+  const [navOpen, setNavOpen] = useState(true);
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs]);
   const busy = msgs.some((m) => !m.result);
-  const c = ADVICE_CATEGORIES.find((x) => x.id === cat)!;
-  const go = (q: string) => { if (!q.trim() || busy) return; ask(cat, q.trim()); setText(''); };
+  const node = path[path.length - 1] ?? null;
+  const cat = path[0]?.id ?? 'situation';
+  const topic = path.map((n) => n.title).join(' › ');
+  const go = (q: string, c = cat, t = topic) => {
+    if (!q.trim() || busy) return;
+    ask(c, t || 'свободный вопрос', q.trim()); setText('');
+    // телефон: свернуть темы, чтобы ответ был виден
+    if (window.matchMedia?.('(max-width: 760px)').matches) setNavOpen(false);
+  };
+  const leaves = useMemo(() => allLeaves(dyn), [dyn]);
+  const found = find.trim() ? leaves.filter((l) => l.q.toLowerCase().includes(find.trim().toLowerCase()) || l.path.join(' ').toLowerCase().includes(find.trim().toLowerCase())).slice(0, 40) : null;
+  const items = node ? [...(node.children ?? [])] : ADVICE_TREE;
+  const questions = node ? [...(node.questions ?? []), ...(node.dyn ? dyn[node.dyn].map((x) => node.template!.replace('{name}', x.name)) : [])] : [];
+  const dynEmpty = node?.dyn && !dyn[node.dyn].length;
   return (
     <div className="advisor">
       <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
         {msgs.length > 0 && <button className="link" onClick={onClear}>очистить</button>}<button className="x" onClick={onClose} title="Закрыть">×</button></div>
-      <div className="adv-cats">{ADVICE_CATEGORIES.map((x) => <button key={x.id} className={cat === x.id ? 'on' : ''} onClick={() => setCat(x.id)}>{x.title}</button>)}</div>
       <div className="adv-body">
         {!msgs.length && <div className="adv-empty">
-          <p>Выберите категорию и вопрос — или спросите своими словами. Советник знает обстановку, ваш проект решения и правила арбитра; может предложить приказы — их можно одним нажатием включить в распоряжение.</p>
+          <p>Выберите тему ниже — категория, раздел, вопрос; разделы «По армиям», «По соединениям», «По резервам» собраны из текущей обстановки. Или найдите вопрос поиском, или спросите своими словами. Советник знает обстановку, ваш проект решения и правила арбитра; предложенные им приказы включаются в распоряжение одним нажатием.</p>
         </div>}
         {msgs.map((m) => (
           <div key={m.id} className="adv-msg">
-            <div className="adv-q"><small>{ADVICE_CATEGORIES.find((x) => x.id === m.cat)?.title}</small>{m.q}</div>
+            <div className="adv-q"><small>{m.cat}</small>{m.q}</div>
             <div className="adv-a">
               {m.result && !m.result.ok ? <span className="err">Советник не ответил: {m.result.error}</span>
                 : (m.answer || '…').split(/\n{2,}/).map((p, i) => <p key={i}>{p.split('\n').map((l, j) => <span key={j}>{l}<br /></span>)}</p>)}
@@ -607,16 +652,36 @@ function Advisor({ msgs, ask, accept, drafted, onClose, onClear }: {
                     : <div className="iss">{sg.issue ?? 'не удалось сопоставить с обстановкой'} — не может быть исполнен</div>}
                 </div>
               ))}
-              {m.result?.followUps.length ? <div className="adv-fu">{m.result.followUps.map((f) => <button key={f} disabled={busy} onClick={() => go(f)}>{f}</button>)}</div> : null}
+              {m.result?.followUps.length ? <div className="adv-fu"><small className="muted">Дальше можно спросить:</small>{m.result.followUps.map((f) => <button key={f} disabled={busy} onClick={() => go(f, m.catId, m.cat)}>{f}</button>)}</div> : null}
               {m.result?.seconds != null && <small className="muted">{m.result.seconds} с</small>}
             </div>
           </div>
         ))}
         <div ref={end} />
       </div>
-      <div className="adv-presets">{c.presets.map((q) => <button key={q} disabled={busy} onClick={() => go(q)}>{q}</button>)}</div>
+      <div className={`adv-nav${navOpen ? '' : ' closed'}`}>
+        <div className="adv-crumbs">
+          <button className="adv-toggle" onClick={() => setNavOpen(!navOpen)} title={navOpen ? 'Свернуть темы' : 'Показать темы'}>{navOpen ? '▾' : '▸'} Темы</button>
+          {navOpen && !found && <>
+            <button className={path.length ? 'crumb' : 'crumb on'} onClick={() => setPath([])}>все</button>
+            {path.map((n, i) => <span key={n.id + i}>› <button className={i === path.length - 1 ? 'crumb on' : 'crumb'} onClick={() => setPath(path.slice(0, i + 1))}>{n.title}</button></span>)}
+          </>}
+          {navOpen && <input className="adv-find" placeholder="Найти вопрос…" value={find} onChange={(e) => setFind(e.target.value)} />}
+        </div>
+        {navOpen && <div className="adv-list">
+          {found ? (found.length ? found.map((l, i) => <button key={i} className="adv-leaf" disabled={busy} onClick={() => { go(l.q, l.cat, l.path.join(' › ')); setFind(''); }}><small>{l.path.join(' › ')}</small>{l.q}</button>)
+            : <span className="muted">Ничего не найдено — спросите своими словами ниже.</span>)
+            : <>
+              {!node && <div className="adv-tiles">{items.map((c) => <button key={c.id} onClick={() => setPath([c])}><b>{c.title}</b><small>{c.hint}</small></button>)}</div>}
+              {node && items.map((c) => <button key={c.id} className="adv-sub" onClick={() => setPath([...path, c])}>
+                <span>{c.title}</span><small>{c.dyn ? `${dyn[c.dyn].length}` : (c.questions?.length ?? c.children?.length ?? 0)} ›</small></button>)}
+              {questions.map((q) => <button key={q} className="adv-leaf" disabled={busy} onClick={() => go(q)}>{q}</button>)}
+              {dynEmpty && <span className="muted">Сейчас таких нет.</span>}
+            </>}
+        </div>}
+      </div>
       <div className="adv-in">
-        <textarea rows={2} value={text} placeholder={`Свой вопрос (${c.title.toLowerCase()})…`} onChange={(e) => setText(e.target.value)}
+        <textarea rows={2} value={text} placeholder={node ? `Свой вопрос (${topic})…` : 'Свой вопрос…'} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(text); } }} />
         <button className="primary" disabled={busy || !text.trim()} onClick={() => go(text)}>Спросить</button>
       </div>
