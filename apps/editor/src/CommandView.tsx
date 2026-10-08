@@ -81,6 +81,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const checks = useRef(new Map<number, (r: ActionCheck) => void>());
   const checkId = useRef(0);
   const [advOpen, setAdvOpen] = useState(false);
+  /** Советник свёрнут во вкладку у края карты (беседа сохраняется). */
+  const [advMin, setAdvMin] = useState(false);
+  const [advSeen, setAdvSeen] = useState(0);
   /** Узкий экран (телефон): панель штаба или карта. */
   const [mob, setMob] = useState<'staff' | 'map'>('staff');
   const [adv, setAdv] = useState<AdvMsg[]>([]);
@@ -323,7 +326,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <span className="cmd-goal" title={`Победа: ${view.victory}. Поражение: численность ниже ${Math.round(view.strengthBelow * 100)} % исходной или предельный срок ${ddmm(view.deadline)}`}>цель — {view.victory}; срок — {ddmm(view.deadline)}; в строю {pct(view.strength)}</span>
           </div>}
           <div className="cmd-chips"><AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.model} onClick={() => setTab('umpire')} />
-            <button className={`adv-btn${advOpen ? ' on' : ''}`} onClick={() => setAdvOpen(!advOpen)} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</button></div>
+            <button className={`adv-btn${advOpen ? ' on' : ''}`} onClick={() => { if (advOpen && advMin) setAdvMin(false); else setAdvOpen(!advOpen); }} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</button></div>
         </div>
         <nav className="cmd-tabs">
           {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
@@ -391,7 +394,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             onEvent={(e) => { if (e.at) setTime(e.at); goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
         </> : <div className="rp-empty"><div><div className="rp-empty-ic"><span className="spinner big" /></div><b>{progress ?? 'Подготовка…'}</b></div></div>}
       </main>
-      {advOpen && view && <Advisor msgs={adv} onClose={() => setAdvOpen(false)} onClear={() => setAdv([])}
+      {advOpen && view && advMin && <button className="adv-tab" onClick={() => { setAdvMin(false); setAdvSeen(adv.length); }} title="Развернуть советника">
+        <span>Советник</span>{adv.some((m) => !m.result) ? <i className="spinner" /> : adv.length > advSeen ? <b className="adv-new">ответ</b> : null}</button>}
+      {advOpen && view && !advMin && <Advisor msgs={adv} onClose={() => setAdvOpen(false)} onMinimize={() => { setAdvMin(true); setAdvSeen(adv.length); }} onClear={() => setAdv([])}
         ask={(cat, topic, q) => {
           const id = ++checkId.current;
           const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
@@ -603,9 +608,9 @@ function allLeaves(dyn: Dyn): Leaf[] {
   return out;
 }
 
-function Advisor({ msgs, ask, accept, drafted, onClose, onClear, dyn }: {
+function Advisor({ msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn }: {
   msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
-  onClose: () => void; onClear: () => void; dyn: Dyn;
+  onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn;
 }) {
   /** Путь по дереву: индексы узлов (пусто — категории). */
   const [path, setPath] = useState<AdviceNode[]>([]);
@@ -632,7 +637,7 @@ function Advisor({ msgs, ask, accept, drafted, onClose, onClear, dyn }: {
   return (
     <div className="advisor">
       <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
-        {msgs.length > 0 && <button className="link" onClick={onClear}>очистить</button>}<button className="x" onClick={onClose} title="Закрыть">×</button></div>
+        {msgs.length > 0 && <button className="link" onClick={onClear}>очистить</button>}<button className="x adv-min" onClick={onMinimize} title="Свернуть к краю карты (беседа сохранится)">–</button><button className="x" onClick={onClose} title="Скрыть советника (беседа сохранится)">×</button></div>
       <div className="adv-body">
         {!msgs.length && <div className="adv-empty">
           <p>Выберите тему ниже — категория, раздел, вопрос; разделы «По армиям», «По соединениям», «По резервам» собраны из текущей обстановки. Или найдите вопрос поиском, или спросите своими словами. Советник знает только то, что знает ваш штаб: доклады, разведсводку, ваш проект решения и правила арбитра; о противнике вне разведки сведений у него нет. Каждый ответ помечен, на что он опирается и чего штаб не знает. Предложенные приказы включаются в распоряжение одним нажатием.</p>
