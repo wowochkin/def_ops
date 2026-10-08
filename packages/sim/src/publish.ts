@@ -61,7 +61,9 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   const sideOf = (s: string): Side => (s === own ? 'own' : 'enemy');
   const T = ctx.theatre;
   const [w, s, e, n] = T.data.bbox;
-  const doc = emptyDocument([(w + e) / 2, (s + n) / 2], 7.2);
+  // масштаб — по охвату театра (окно ~900 px): операция ≈ 7, город ≈ 10
+  const zoom = +(Math.log2((360 * 900) / (256 * (e - w))) - 0.8).toFixed(1);
+  const doc = emptyDocument([(w + e) / 2, (s + n) / 2], zoom);
   doc.name = o.name ?? `Переигровка: ${ctx.scenario.name}`;
   const mk = (id: string, name: string, role: Layer['role'], opacity = 1, visible = true): Layer => ({ id, name, role, visible, locked: true, opacity, source: { system: 'simulation', ref: ctx.scenario.id, readOnly: true } });
   doc.layers = [

@@ -49,3 +49,24 @@ describe('сценарий «Берлин-1945»', () => {
     expect(shortName('Корпусная группа «Свинемюнде»')).toBe('«Свинемюнде»');
   });
 });
+
+describe('панель «Переигровка»: загрузка данных без файловой системы и отчёт', () => {
+  it('contextFrom даёт тот же расчёт, что loadContext; отчёт содержит события и бои', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { DATA_DIR, loadContext } = await import('../src/data');
+    const { contextFrom, analyze, reportMarkdown, runScenario } = await import('../src');
+    const get = (kind: string, file: string) => JSON.parse(readFileSync(join(DATA_DIR, kind, file), 'utf8'));
+    const { ctx, history } = await contextFrom(get, 'berlin-city-1945');
+    const ref = loadContext('berlin-city-1945');
+    expect(ctx.rules).toEqual(ref.rules);
+    const a = runScenario(ctx, 2), b = runScenario(ref, 2);
+    expect(a.final.formations.map((f) => f.position)).toEqual(b.final.formations.map((f) => f.position));
+    const an = analyze(ctx, history, { runs: 2, toleranceKm: 2 });
+    expect(an.spread).toHaveLength(2);
+    expect(an.eventsBySeed[0].days).toHaveLength(2);
+    const md = reportMarkdown(ctx, an);
+    expect(md).toContain('## Ключевые события');
+    expect(md).toContain('## Бои');
+  }, 60000);
+});

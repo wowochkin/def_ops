@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import type { Rules, Scenario, SideProfile, TheatreData } from './types';
 import type { History } from './history';
 import { Theatre } from './theatre';
+import { mergeRules } from './source';
 import type { SimContext } from './step';
 
 export const DATA_DIR = fileURLToPath(new URL('../data', import.meta.url));
@@ -14,14 +15,7 @@ export const loadProfile = (id: string) => read<SideProfile>('profiles', `${id}.
 /** Правила; `extends` — взять базовые и переписать поверх указанные поля (вложенные объекты — слиянием). */
 export function loadRules(id: string): Rules {
   const r = read<Rules>('rules', `${id}.json`);
-  if (!r.extends) return r;
-  const base = loadRules(r.extends) as unknown as Record<string, unknown>;
-  const out: Record<string, unknown> = { ...base };
-  for (const [k, v] of Object.entries(r)) {
-    const b = base[k];
-    out[k] = v && b && typeof v === 'object' && typeof b === 'object' && !Array.isArray(v) && !Array.isArray(b) ? { ...b, ...v } : v;
-  }
-  return out as unknown as Rules;
+  return r.extends ? mergeRules(loadRules(r.extends), r) : r;
 }
 export const loadTheatre = (id: string) => read<TheatreData>('theatres', `${id}.json`);
 export const loadScenario = (id: string) => read<Scenario>('scenarios', `${id}.json`);

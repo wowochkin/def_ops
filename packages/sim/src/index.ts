@@ -7,3 +7,5 @@ export { step, onMap, createState, issueOrder, targetPoint, profileOf, addHours,
 export { frontLine, territoryLine, type FrontOptions } from './front';
 export { runScenario, compareWithHistory, summarize, checkEvents, type History, type HistoryEvent, type EventResult, type Snapshot, type RunResult, type Deviation } from './history';
 export { runToDocument, shortName, type PublishOptions } from './publish';
+export { analyze, reportMarkdown, type Analysis, type AnalysisOptions } from './report';
+export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } from './source';

@@ -11,6 +11,7 @@ import { Inspector } from './Inspector';
 import { LayersPanel } from './LayersPanel';
 import { Timeline } from './Timeline';
 import { MapsPanel, cartography } from './MapsPanel';
+import { SimPanel } from './SimPanel';
 import { ZonesContext, zoneAt, type InputZone, type Zones } from './time';
 import { EntityPanel, type RegistryApi } from './EntityPanel';
 import { translateFeature } from './geometry';
@@ -330,6 +331,7 @@ export function App() {
         )}
       </main>
       <aside className="right">
+        <SimPanel doc={doc} onLoad={(d) => loadDoc(migrateDocument(d))} notify={setNotice} />
         {sel ? <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} time={time} setTime={setTime} viewScale={viewScale}
           extra={<EntityPanel api={server.status === 'online' && server.services?.registry === 'up' ? registryApi : null} doc={doc} setDoc={set} feature={sel} time={time} />} />
           : <div className="help">
