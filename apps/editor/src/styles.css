@@ -435,3 +435,23 @@ input[type=checkbox], input[type=radio], input[type=range] { accent-color: #2b2a
 .ptile .pn { padding: 5px 7px 6px; font-size: 11px; line-height: 1.25; color: #3a3833; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 33px; }
 aside.left { min-width: 0; }
 .app { grid-template-columns: 284px 1fr 300px; }
+
+/* режим и переключатели палитры */
+.pal-mode { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 8px; background: #f3f1ea; border: 1px solid transparent; }
+.pal-mode .pm-text { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; color: #3a3833; display: flex; flex-direction: column; }
+.pal-mode .pm-text small { font-weight: 400; color: var(--muted); font-size: 11px; line-height: 1.3; }
+.pal-mode .pm-text b { font-weight: 700; }
+.pal-mode.drawing { background: #fbf3e4; border-color: #e7c99a; }
+.pal-mode .pm-dot { width: 8px; height: 8px; border-radius: 50%; background: #c9822c; flex: 0 0 auto; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.pal-mode button { padding: 3px 10px; background: #2b2a27; color: #fff; border-color: #2b2a27; }
+.pal-mode button:hover:not(:disabled) { background: #000; border-color: #000; }
+.sw { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4a4740; cursor: pointer; user-select: none; }
+.sw input { display: none; }
+.sw i { position: relative; width: 28px; height: 16px; border-radius: 8px; background: #d9d4c8; flex: 0 0 auto; transition: background .15s; }
+.sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left .15s; }
+.sw input:checked + i { background: #2b2a27; }
+.sw input:checked + i::after { left: 14px; }
+.ptile { position: relative; }
+.pfrom { position: absolute; top: 4px; right: 4px; font-size: 9.5px; background: rgba(255,255,255,.9); color: #7a7569; border: 1px solid #e3dfd5; border-radius: 6px; padding: 0 4px; }
+.ptile .pn .vf { margin: 0 4px 0 0; }

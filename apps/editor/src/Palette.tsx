@@ -44,6 +44,9 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
     if (!on) { const r = [e.id, ...recent.filter((x) => x !== e.id)].slice(0, 8); setRecent(r); save('palette.recent', JSON.stringify(r)); }
   };
   const searching = q.trim().length > 0;
+  const styleName = STYLES.find((x) => x.id === style)?.short ?? style;
+  const current = tool.mode === 'draw' ? found.find((e) => e.id === tool.element) ?? searchLibrary('').find((e) => e.id === tool.element) : undefined;
+  const hint = (k: string | undefined) => k === 'symbol' || k === 'label' ? 'щёлкните на карте, чтобы поставить' : 'щёлкайте точки; двойной щелчок или Enter — закончить';
   const recentItems = recent.map((id) => found.find((e) => e.id === id)).filter((e): e is LibraryElement => !!e && (!onlyStyle || !!e.variants[style]));
   const tile = (e: LibraryElement) => {
     const v = variantFor(e, style);
@@ -51,7 +54,8 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
     return (
       <button key={e.id} className={`ptile${on ? ' on' : ''}${v.style !== style ? ' other' : ''}`} title={e.sources ? `${e.name}\n\n${e.description}\nИсточник: ${sourceText(e.sources)}` : `${e.name}\n\n${e.description}`} onClick={() => pick(e)}>
         <span className="pv" style={{ background: paperFor(v.preset) }} dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paperFor(v.preset), e.sideAware ? side : undefined, e.kind === 'symbol') }} />
-        <span className="pn">{e.name}{e.verify && <i className="vf" title="Начертание не подтверждено первоисточниками — сверить">?</i>}</span>
+        <span className="pn">{e.verify && <i className="vf" title="Начертание не подтверждено первоисточниками — сверить">?</i>}{e.name}</span>
+        {v.style !== style && <span className="pfrom" title="В выбранном оформлении этого знака нет — показан в ближайшем">{STYLES.find((x) => x.id === v.style)?.short ?? v.style}</span>}
       </button>
     );
   };
@@ -78,19 +82,24 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
           <input className="pal-search" placeholder="Поиск: танк, мост, котёл…" value={q} onChange={(e) => setQ(e.target.value)} />
           {q && <button className="link" onClick={() => setQ('')} title="Очистить">✕</button>}
         </label>
-        <div className="pal-row">
-          <button className={`tool-select${tool.mode === 'select' ? ' on' : ''}`} title="Режим выбора и правки (Esc)" onClick={() => setTool({ mode: 'select' })}>⬚ Выбор</button>
-          <label className="muted" title="Показывать только знаки, у которых есть выбранное оформление (без подстановки ближайшего)">
-            <input type="checkbox" checked={onlyStyle} onChange={(e) => { setOnlyStyle(e.target.checked); save('palette.onlyStyle', e.target.checked ? '1' : '0'); }} /> без замен
-          </label>
-          <label className="muted" title="Серия: после создания объекта знак остаётся выбранным для рисования следующего. Без флажка — после создания переход к выбору и правке">
-            <input type="checkbox" checked={series} onChange={(e) => {
-              setSeries(e.target.checked); save('palette.series', e.target.checked ? '1' : '0');
-              if (tool.mode === 'draw') setTool({ ...tool, keep: e.target.checked });
-            }} /> серия
-          </label>
-          <a className="muted" href="library.html" target="_blank" rel="noreferrer" title="Справочник: все знаки с описаниями">справочник ↗</a>
+        <div className={`pal-mode${tool.mode === 'draw' ? ' drawing' : ''}`}>
+          {tool.mode === 'draw'
+            ? <>
+              <span className="pm-dot" />
+              <span className="pm-text">Рисуете: <b>{current?.name ?? 'знак'}</b><small>{hint(tool.kind)}</small></span>
+              <button onClick={() => setTool({ mode: 'select' })} title="Закончить рисование (Esc)">Готово</button>
+            </>
+            : <span className="pm-text">Выбор и правка<small>Щёлкните знак на карте, чтобы изменить. Чтобы рисовать — выберите знак ниже.</small></span>}
         </div>
+        <label className="sw" title="После того как знак поставлен, можно сразу ставить следующий такой же. Выключено — после каждого знака возврат к выбору и правке">
+          <input type="checkbox" checked={series} onChange={(e) => {
+            setSeries(e.target.checked); save('palette.series', e.target.checked ? '1' : '0');
+            if (tool.mode === 'draw') setTool({ ...tool, keep: e.target.checked });
+          }} /><i />Рисовать несколько подряд
+        </label>
+        <label className="sw" title={`Показывать только знаки, у которых есть начертание в оформлении «${styleName}». Выключено — остальные знаки показаны в ближайшем оформлении, с пометкой`}>
+          <input type="checkbox" checked={onlyStyle} onChange={(e) => { setOnlyStyle(e.target.checked); save('palette.onlyStyle', e.target.checked ? '1' : '0'); }} /><i />Только в оформлении «{styleName}»
+        </label>
       </div>
       <div className="plist">
         {!searching && recentItems.length > 0 && (
