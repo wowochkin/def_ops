@@ -5,6 +5,7 @@ dist
 data
 # пакеты данных движка — это исходники, а не рабочие данные
 !packages/sim/data
+!packages/knowledge/data
 
 # корпоративные сертификаты для сборки (не коммитятся)
 deploy/extra-ca/*.crt
