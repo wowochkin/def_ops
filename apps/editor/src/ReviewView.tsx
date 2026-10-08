@@ -11,6 +11,7 @@ import type { Llm } from './shared';
 import { ModelPicker } from './ModelPicker';
 import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
+import { downloadReviewPdf } from './reviewPdf';
 
 type Status = 'idle' | 'wait' | 'writing' | 'done' | 'error';
 interface Sec { text: string; status: Status; note?: string; thinking?: string; model?: string; seconds?: number }
@@ -80,6 +81,23 @@ export function ReviewView({ view, llm, send, listen, onClose }: {
     ...ready.flatMap((s) => [`## ${s.title}`, `*${s.role}*`, '', secs[s.id].text, '']),
   ].join('\n');
 
+  const [pdfBusy, setPdfBusy] = useState(false);
+  /** Скачать файл PDF (собирается в браузере). */
+  const pdfFile = async () => {
+    setPdfBusy(true);
+    try {
+      await downloadReviewPdf({
+        scenario: view.scenarioName, side: view.human.name, enemy: view.ai.name, takeover: dm(view.takeover), at: `${dm(view.time)}, ход ${view.turn - 1}`,
+        outcome: view.outcome ? { result: view.outcome.result, text: view.outcome.text } : null,
+        strength: `${Math.round(view.strength * 100)} % численности на момент принятия командования`,
+        goals: view.goals.map((g) => ({ title: g.title, game: g.simulated ? dm(g.simulated).slice(0, 5) : '—', history: dm(g.historical).slice(0, 5) })),
+        sections: ready.map((s) => ({ title: s.title, role: s.role, text: secs[s.id].text })),
+        models: [...new Set(ready.map((s) => secs[s.id].model).filter(Boolean))].join(', '),
+      }, `razbor-${view.scenario}-${view.time.slice(0, 10)}.pdf`);
+    } catch (e) {
+      alert(`Не удалось собрать PDF: ${(e as Error).message}`);
+    } finally { setPdfBusy(false); }
+  };
   const pdf = () => {
     const w = window.open('', '_blank');
     if (!w) { alert('Браузер не дал открыть окно печати — разрешите всплывающие окна для этой страницы.'); return; }
@@ -123,8 +141,9 @@ ${ready.map((s, i) => `<section class="sec"><h2>${i + 1}. ${esc(s.title)}</h2><d
             <div className="rv-ctl">
               {running ? <button onClick={stop}>Остановить</button>
                 : <button className="primary" disabled={!todo.length} onClick={() => void run(todo)}>{ready.length ? `Дописать (${todo.length})` : 'Составить разбор'}</button>}
-              <button disabled={!ready.length} onClick={pdf} title="Откроется окно печати — «Сохранить как PDF»">Скачать PDF</button>
-              <button className="link" disabled={!ready.length} onClick={() => download(`разбор-${view.scenario}.md`, markdown(), 'text/markdown')}>.md</button>
+              <button disabled={!ready.length || pdfBusy} onClick={() => void pdfFile()} title="Скачать файл PDF">{pdfBusy ? 'собираю PDF…' : 'Скачать PDF'}</button>
+              <button className="link" disabled={!ready.length} onClick={pdf} title="Открыть документ для печати">печать</button>
+              <button className="link" disabled={!ready.length} onClick={() => download(`razbor-${view.scenario}.md`, markdown(), 'text/markdown')}>.md</button>
             </div>
           </aside>
           <main className="rv-doc">

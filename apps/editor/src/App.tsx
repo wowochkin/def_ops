@@ -15,7 +15,7 @@ import { BasemapControls, Icon, Popover } from './ui';
 import { ZonesContext, zoneAt, type InputZone, type Zones } from './time';
 import { EntityPanel, type RegistryApi } from './EntityPanel';
 import { translateFeature } from './geometry';
-import { download, exportPNG, svgWithFonts } from './exporting';
+import { download, exportPNG, exportViewPNG, svgWithFonts } from './exporting';
 import type { MapEngine } from './engine/types';
 import { SCENES } from '../demo/scenes';
 
@@ -218,7 +218,8 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
             <button onClick={() => { close(); download(`${doc.name || 'map'}.json`, JSON.stringify(withView(), null, 1), 'application/json'); }}>Документ (JSON)</button>
             <button onClick={() => { close(); download(`${doc.name || 'map'}${suffix}.geojson`, JSON.stringify(toGeoJSON(doc, { time })), 'application/geo+json'); }}>GeoJSON</button>
             <button onClick={() => { close(); svgWithFonts(atTime(), doc.paper).then((x) => download(`${doc.name || 'map'}${suffix}.svg`, x, 'image/svg+xml')); }}>SVG (слои — группами)</button>
-            <button onClick={() => { close(); exportPNG(atTime(), doc.paper, 2).then((x) => download(`${doc.name || 'map'}${suffix}.png`, x)); }}>PNG</button>
+            <button disabled={!engine} onClick={() => { close(); if (engine) exportViewPNG(engine.getContainer(), engine.getView()).then((x) => download(`${doc.name || 'map'}${suffix}-view.png`, x)).catch((e) => alert(`PNG: ${(e as Error).message}`)); }}>PNG — как на экране (с картой)</button>
+            <button onClick={() => { close(); exportPNG(atTime(), doc.paper, 2).then((x) => download(`${doc.name || 'map'}${suffix}.png`, x)); }}>PNG — только знаки (все объекты)</button>
             <div className="menu-sep" />
             <div className="menu-h">Примеры</div>
             {SCENES.map((x) => <button key={x.id} onClick={() => { close(); if (ask(`Открыть пример «${x.name}»? Текущая карта будет заменена.`)) loadDoc(x.build()); }}>{x.name}</button>)}
