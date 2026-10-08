@@ -178,11 +178,33 @@ export async function importUser(json: string) {
 
 /* ───────────── вопросы и рассказы ───────────── */
 
-export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSettings, history: { q: string; a: string }[], onDelta: (t: string) => void, signal?: AbortSignal): Promise<{ text: string; sources: Source[] }> {
+/**
+ * Поток ответа как его видит человек: ответ и размышление отдельно. Сервер может присылать размышление в
+ * reasoning_content, обёрнутым в <think>…</think> прямо в ответе, а при выключенном размышлении — весь ответ
+ * в reasoning_content (тогда он и показывается как ответ).
+ */
+export function streamView(content: string, reasoning: string, thinkingOff: boolean): { answer: string; thinking: string } {
+  let think = '';
+  let answer = content.replace(/<think>([\s\S]*?)<\/think>/g, (_m, t: string) => { think += t; return ''; });
+  const open = answer.indexOf('<think>');
+  if (open >= 0) { think += answer.slice(open + 7); answer = answer.slice(0, open); }
+  const thinking = [reasoning, think].filter(Boolean).join('\n');
+  if (!answer.trim() && thinkingOff) return { answer: thinking, thinking: '' };
+  return { answer: answer.replace(/^\s+/, ''), thinking };
+}
+
+export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSettings, history: { q: string; a: string }[],
+  onStream: (v: { answer: string; thinking: string; stage: 'search' | 'model' }) => void, signal?: AbortSignal): Promise<{ text: string; thinking: string; sources: Source[] }> {
+  onStream({ answer: '', thinking: '', stage: 'search' });
   await load();
   const sources = gather(state.index!, state.byId, question, { limit: mode === 'lecture' ? 10 : 7, hits: await search(question, 30) });
-  const r = await client(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') onDelta(t); } });
-  return { text: r.content, sources };
+  let content = '', reasoning = '', last = 0;
+  const off = llm.thinking === 'off';
+  const push = (force = false) => { const now = performance.now(); if (force || now - last > 60) { last = now; onStream({ ...streamView(content, reasoning, off), stage: 'model' }); } };
+  onStream({ answer: '', thinking: '', stage: 'model' });
+  const r = await client(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') content += t; else reasoning += t; push(); } });
+  push(true);
+  return { text: r.content, thinking: r.reasoning, sources };
 }
 
 /** Справка из базы для советника в игре: доктрина, техника, местность, источники; ход боёв — только в вопросах истории. */

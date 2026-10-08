@@ -13,7 +13,7 @@ import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
 
 type Tab = 'browse' | 'docs';
-interface QA { id: number; mode: 'ask' | 'lecture'; q: string; text: string; sources: Source[]; done: boolean; error?: string }
+interface QA { id: number; mode: 'ask' | 'lecture'; q: string; text: string; thinking: string; stage?: 'search' | 'model'; sources: Source[]; done: boolean; error?: string }
 
 export function KnowledgeView({ llm }: { llm: Llm }) {
   const [s, setS] = useState<kb.KbState>(kb.current());
@@ -181,15 +181,17 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
   const id = useRef(0);
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs]);
   const busy = msgs.some((m) => !m.done);
+  const ctl = useRef(new AbortController());
   const go = async (q: string, m = mode) => {
     if (!q.trim() || busy) return;
+    ctl.current = new AbortController();
     const my = ++id.current;
-    setMsgs((l) => [...l, { id: my, mode: m, q, text: '', sources: [], done: false }]);
+    setMsgs((l) => [...l, { id: my, mode: m, q, text: '', thinking: '', sources: [], done: false }]);
     setText('');
     try {
       const hist = msgs.filter((x) => x.done && !x.error).slice(-3).map((x) => ({ q: x.q, a: x.text }));
-      const r = await kb.ask(m, q, llm.settings, hist, (d) => setMsgs((l) => l.map((x) => (x.id === my ? { ...x, text: x.text + d } : x))));
-      setMsgs((l) => l.map((x) => (x.id === my ? { ...x, text: r.text, sources: r.sources, done: true } : x)));
+      const r = await kb.ask(m, q, llm.settings, hist, (v) => setMsgs((l) => l.map((x) => (x.id === my ? { ...x, text: v.answer, thinking: v.thinking, stage: v.stage } : x))), ctl.current.signal);
+      setMsgs((l) => l.map((x) => (x.id === my ? { ...x, text: r.text, thinking: r.thinking, sources: r.sources, done: true } : x)));
     } catch (err) {
       setMsgs((l) => l.map((x) => (x.id === my ? { ...x, done: true, error: (err as Error).message } : x)));
     }
@@ -206,7 +208,8 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
       <div className="adv-in">
         <textarea rows={2} value={text} placeholder={mode === 'ask' ? 'Например: почему прорыв на Зееловских высотах затянулся?' : 'Тема, например: котёл у Хальбе'} onChange={(ev) => setText(ev.target.value)}
           onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); void go(text); } }} />
-        <button className="primary" disabled={busy || !text.trim()} onClick={() => go(text)}>{mode === 'ask' ? 'Спросить' : 'Рассказать'}</button>
+        {busy ? <button onClick={() => ctl.current.abort()}>Остановить</button>
+          : <button className="primary" disabled={!text.trim()} onClick={() => go(text)}>{mode === 'ask' ? 'Спросить' : 'Рассказать'}</button>}
       </div>
       {llm.check.state === 'fail' && <div className="adv-note err">Модель недоступна: {llm.check.error} — настройки в разделе «ИИ».</div>}
     </aside>
@@ -214,7 +217,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
 }
 
 function QAItem({ m, s, open }: { m: QA; s: kb.KbState; open: (id: string) => void }) {
-  const html = useMemo(() => mdToHtml(m.text || '…').replace(/\[(\d{1,2})\]/g, (all, n) => (m.sources.some((x) => x.n === +n) ? `<a class="kb-cite" data-n="${n}">[${n}]</a>` : all)), [m.text, m.sources]);
+  const html = useMemo(() => mdToHtml(m.text || '').replace(/\[(\d{1,2})\]/g, (all, n) => (m.sources.some((x) => x.n === +n) ? `<a class="kb-cite" data-n="${n}">[${n}]</a>` : all)), [m.text, m.sources]);
   const click = (ev: React.MouseEvent) => {
     const n = (ev.target as HTMLElement).dataset.n;
     const src = n ? m.sources.find((x) => x.n === +n) : null;
@@ -224,8 +227,11 @@ function QAItem({ m, s, open }: { m: QA; s: kb.KbState; open: (id: string) => vo
     <div className="adv-msg">
       <div className="adv-q"><small>{m.mode === 'ask' ? 'вопрос' : 'рассказ'}</small>{m.q}</div>
       <div className="adv-a kb-answer">
-        {m.error ? <span className="err">Нет ответа: {m.error}</span> : <div onClick={click} dangerouslySetInnerHTML={{ __html: html }} />}
-        {!m.done && <span className="spinner" />}
+        {!m.done && !m.text && <div className="kb-wait-line"><span className="spinner" /> {m.stage === 'search' ? 'поиск по базе…' : m.thinking ? 'модель размышляет…' : 'модель читает материалы…'}</div>}
+        {m.thinking && (m.done ? <details className="kb-think"><summary>размышление модели</summary><div>{m.thinking}</div></details>
+          : !m.text && <div className="kb-think live">{m.thinking.slice(-600)}</div>)}
+        {m.error ? <span className="err">{/abort/i.test(m.error) ? 'Остановлено.' : `Нет ответа: ${m.error}`}</span> : m.text && <div onClick={click} dangerouslySetInnerHTML={{ __html: html }} />}
+        {!m.done && m.text && <span className="kb-caret" />}
         {m.done && m.sources.length > 0 && <div className="kb-srcs"><small className="muted">Материалы:</small>{m.sources.map((x) => <button key={x.n} className="kb-link" onClick={() => open(x.kind === 'entry' ? x.ref : `doc:${x.ref}`)}>[{x.n}] {x.title}</button>)}</div>}
         {m.done && !m.sources.length && !m.error && <small className="muted">в базе по запросу ничего не найдено</small>}
       </div>
