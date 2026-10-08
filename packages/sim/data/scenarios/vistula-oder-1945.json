@@ -583,14 +583,76 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_9a_vo",
-   "type": "panzer_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_73id_vo",
+   "name": "73-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "type": "inf_div",
    "position": [
-    20.873,
-    52.337
+    20.91779,
+    52.37668
    ],
-   "personnel": 29250,
-   "tanks": 123,
-   "guns": 491,
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_fest_warschau_vo",
+   "name": "Крепость Варшава",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "type": "fortress",
+   "position": [
+    21.07115,
+    52.23337
+   ],
+   "personnel": 5275,
+   "tanks": 19,
+   "guns": 89,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_337vgd_vo",
+   "name": "337-я народно-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "type": "inf_div",
+   "position": [
+    21.21402,
+    51.98438
+   ],
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_542vgd_vo",
+   "name": "542-я народно-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "type": "inf_div",
+   "position": [
+    20.67493,
+    52.43967
+   ],
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -601,14 +663,58 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_9a_vo",
-   "type": "inf_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_251id_vo",
+   "name": "251-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_viii_vo",
+   "type": "inf_div",
    "position": [
-    21.067,
-    51.717
+    21.18338,
+    51.7851
    ],
-   "personnel": 29250,
-   "tanks": 123,
-   "guns": 491,
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_6vgd_vo",
+   "name": "6-я народно-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_viii_vo",
+   "type": "inf_div",
+   "position": [
+    21.09101,
+    51.64646
+   ],
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_45vgd_vo",
+   "name": "45-я народно-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_viii_vo",
+   "type": "inf_div",
+   "position": [
+    21.31771,
+    51.62318
+   ],
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -619,14 +725,58 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_9a_vo",
-   "type": "panzer_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_17id_vo",
+   "name": "17-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi_vo",
+   "type": "inf_div",
    "position": [
-    21.584,
-    51.356
+    21.81256,
+    51.47437
    ],
-   "personnel": 29250,
-   "tanks": 123,
-   "guns": 491,
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_214id_vo",
+   "name": "214-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi_vo",
+   "type": "inf_div",
+   "position": [
+    21.8,
+    51.3
+   ],
+   "personnel": 8791,
+   "tanks": 32,
+   "guns": 148,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_10pgd_vo",
+   "name": "10-я моторизованная (панцергренадерская) дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi_vo",
+   "type": "pzgr_div",
+   "position": [
+    21.23732,
+    51.16242
+   ],
+   "personnel": 8791,
+   "tanks": 30,
+   "guns": 148,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -637,18 +787,43 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_9a_vo",
-   "type": "panzer_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_19pd_vo",
+   "name": "19-я танковая дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxx_vo",
+   "type": "pz_div",
    "position": [
-    21.055,
-    51.532
+    21.12356,
+    51.51387
    ],
-   "personnel": 19500,
-   "tanks": 82,
-   "guns": 327,
+   "personnel": 11428,
+   "tanks": 80,
+   "guns": 192,
    "ammo": 1.5,
    "fuel": 0.7,
-   "posture": "reserve",
-   "note": "резерв 9 А: 19-я и 25-я танковые дивизии (Z)"
+   "posture": "reserve"
+  },
+  {
+   "id": "de_25pd_vo",
+   "name": "25-я танковая дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxx_vo",
+   "type": "pz_div",
+   "position": [
+    20.94975,
+    51.64823
+   ],
+   "personnel": 11428,
+   "tanks": 68,
+   "guns": 192,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "reserve"
   },
   {
    "id": "de_xxxxii_vo",
@@ -656,14 +831,76 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_4pza_vo",
-   "type": "inf_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_342id_vo",
+   "name": "342-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "type": "inf_div",
    "position": [
-    21.406,
-    50.871
+    21.62,
+    50.89
    ],
-   "personnel": 42000,
-   "tanks": 200,
-   "guns": 720,
+   "personnel": 9906,
+   "tanks": 56,
+   "guns": 170,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_72id_vo",
+   "name": "72-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "type": "inf_div",
+   "position": [
+    21.42383,
+    50.80177
+   ],
+   "personnel": 9906,
+   "tanks": 56,
+   "guns": 170,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_88id_vo",
+   "name": "88-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "type": "inf_div",
+   "position": [
+    21.26266,
+    50.76099
+   ],
+   "personnel": 9906,
+   "tanks": 56,
+   "guns": 170,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_291id_vo",
+   "name": "291-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "type": "inf_div",
+   "position": [
+    21.04234,
+    50.67504
+   ],
+   "personnel": 9906,
+   "tanks": 56,
+   "guns": 170,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -674,18 +911,61 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_4pza_vo",
-   "type": "panzer_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_16pd_vo",
+   "name": "16-я танковая дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxiv_vo",
+   "type": "pz_div",
    "position": [
-    20.691,
-    50.743
+    20.80663,
+    50.80199
    ],
-   "personnel": 31500,
-   "tanks": 150,
-   "guns": 540,
+   "personnel": 12877,
+   "tanks": 100,
+   "guns": 221,
    "ammo": 1.5,
    "fuel": 0.7,
-   "posture": "reserve",
-   "note": "резерв 4 ТА: 16-я и 17-я танковые дивизии и 20-я моторизованная (Z)"
+   "posture": "reserve"
+  },
+  {
+   "id": "de_17pd_vo",
+   "name": "17-я танковая дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxiv_vo",
+   "type": "pz_div",
+   "position": [
+    20.75104,
+    50.6146
+   ],
+   "personnel": 12877,
+   "tanks": 100,
+   "guns": 221,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "reserve"
+  },
+  {
+   "id": "de_20pgd_vo",
+   "name": "20-я панцергренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxiv_vo",
+   "type": "pzgr_div",
+   "position": [
+    20.60992,
+    50.85403
+   ],
+   "personnel": 9906,
+   "tanks": 40,
+   "guns": 170,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "reserve"
   },
   {
    "id": "de_xxxxviii_vo",
@@ -693,14 +973,58 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_4pza_vo",
-   "type": "panzer_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_304id_vo",
+   "name": "304-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxviii_vo",
+   "type": "inf_div",
    "position": [
-    20.638,
-    50.567
+    20.97491,
+    50.38503
    ],
-   "personnel": 31500,
-   "tanks": 150,
-   "guns": 540,
+   "personnel": 9906,
+   "tanks": 12,
+   "guns": 170,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_68id_vo",
+   "name": "68-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxviii_vo",
+   "type": "inf_div",
+   "position": [
+    20.97157,
+    50.51452
+   ],
+   "personnel": 9906,
+   "tanks": 12,
+   "guns": 170,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_168id_vo",
+   "name": "168-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxviii_vo",
+   "type": "inf_div",
+   "position": [
+    21.02345,
+    50.63291
+   ],
+   "personnel": 9906,
+   "tanks": 12,
+   "guns": 170,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -711,14 +1035,58 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_17a_vo",
-   "type": "inf_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_371id_vo",
+   "name": "371-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lix_vo",
+   "type": "inf_div",
    "position": [
-    20.897,
-    50.237
+    21.09323,
+    50.2572
    ],
-   "personnel": 43875,
-   "tanks": 100,
-   "guns": 700,
+   "personnel": 14625,
+   "tanks": 33,
+   "guns": 233,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_359id_vo",
+   "name": "359-я пехотная дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lix_vo",
+   "type": "inf_div",
+   "position": [
+    21.23376,
+    50.16032
+   ],
+   "personnel": 14625,
+   "tanks": 33,
+   "guns": 233,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_544vgd_vo",
+   "name": "544-я народно-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lix_vo",
+   "type": "inf_div",
+   "position": [
+    21.29084,
+    49.97858
+   ],
+   "personnel": 14625,
+   "tanks": 33,
+   "guns": 233,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -729,14 +1097,58 @@
    "side": "de",
    "echelon": "corps",
    "parent": "de_17a_vo",
-   "type": "inf_corps",
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_545vgd_vo",
+   "name": "545-я народно-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss_vo",
+   "type": "inf_div",
    "position": [
-    21.219,
-    49.886
+    21.41186,
+    49.87847
    ],
-   "personnel": 43875,
-   "tanks": 100,
-   "guns": 700,
+   "personnel": 14625,
+   "tanks": 33,
+   "guns": 233,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_78vgd_vo",
+   "name": "78-я народно-гренадерская (штурмовая) дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss_vo",
+   "type": "inf_div",
+   "position": [
+    21.47431,
+    49.74705
+   ],
+   "personnel": 14625,
+   "tanks": 33,
+   "guns": 233,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_320vgd_vo",
+   "name": "320-я народно-гренадерская дивизия",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss_vo",
+   "type": "inf_div",
+   "position": [
+    21.16348,
+    49.66633
+   ],
+   "personnel": 14625,
+   "tanks": 33,
+   "guns": 233,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -804,80 +1216,387 @@
  ],
  "orders": [
   {
-   "id": "de_lix_vo@1945-01-12T18:00:defend",
-   "formation": "de_lix_vo",
-   "task": "defend",
-   "target": null,
-   "issuedAt": "1945-01-12T18:00",
-   "source": "script"
-  },
-  {
-   "id": "de_lvi_vo@1945-01-12T18:00:defend",
-   "formation": "de_lvi_vo",
+   "id": "de_10pgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_10pgd_vo",
    "task": "defend",
    "target": "Zwolen",
    "issuedAt": "1945-01-12T18:00",
    "source": "script",
-   "note": "оборона против Пулавского плацдарма"
+   "note": "оборона против Пулавского плацдарма; задача LVI танковый корпус"
   },
   {
-   "id": "de_viii_vo@1945-01-12T18:00:defend",
-   "formation": "de_viii_vo",
+   "id": "de_168id_vo@1945-01-12T18:00:defend",
+   "formation": "de_168id_vo",
    "task": "defend",
-   "target": "Warka",
+   "target": "Pinczow",
    "issuedAt": "1945-01-12T18:00",
    "source": "script",
-   "note": "оборона против Магнушевского плацдарма"
+   "note": "задача XXXXVIII танковый корпус"
   },
   {
-   "id": "de_xi_ss_vo@1945-01-12T18:00:defend",
-   "formation": "de_xi_ss_vo",
+   "id": "de_168id_vo@1945-01-12T18:00:defend",
+   "formation": "de_168id_vo",
    "task": "defend",
-   "target": "Tarnow",
+   "target": null,
    "issuedAt": "1945-01-12T18:00",
-   "source": "script"
+   "source": "script",
+   "note": "Почти полностью уничтожена"
   },
   {
-   "id": "de_xxiv_vo@1945-01-12T18:00:counterattack",
-   "formation": "de_xxiv_vo",
+   "id": "de_16pd_vo@1945-01-12T18:00:counterattack",
+   "formation": "de_16pd_vo",
    "task": "counterattack",
    "target": "Chmielnik",
    "issuedAt": "1945-01-12T18:00",
    "source": "script",
-   "note": "приказ на контрудар против прорыва (Z p.421)"
+   "note": "приказ на контрудар против прорыва (Z p.421); задача XXIV танковый корпус (группа Неринга)"
   },
   {
-   "id": "de_xxxx_vo@1945-01-12T18:00:reserve",
-   "formation": "de_xxxx_vo",
+   "id": "de_16pd_vo@1945-01-12T18:00:counterattack",
+   "formation": "de_16pd_vo",
+   "task": "counterattack",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Контрудар XXIV Pz.K; дивизия раздроблена на боевые группы, частью окружена"
+  },
+  {
+   "id": "de_17id_vo@1945-01-12T18:00:defend",
+   "formation": "de_17id_vo",
+   "task": "defend",
+   "target": "Zwolen",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "оборона против Пулавского плацдарма; задача LVI танковый корпус"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-12T18:00:counterattack",
+   "formation": "de_17pd_vo",
+   "task": "counterattack",
+   "target": "Chmielnik",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "приказ на контрудар против прорыва (Z p.421); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-12T18:00:counterattack",
+   "formation": "de_17pd_vo",
+   "task": "counterattack",
+   "target": "Chmielnik",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Застигнута в районах сосредоточения, тяжёлые потери от авиации и артиллерии"
+  },
+  {
+   "id": "de_19pd_vo@1945-01-12T18:00:reserve",
+   "formation": "de_19pd_vo",
    "task": "reserve",
    "target": null,
    "issuedAt": "1945-01-12T18:00",
    "source": "script",
-   "note": "резерв 9 А (19, 25 тд)"
+   "note": "резерв 9 А (19, 25 тд); задача XXXX танковый корпус"
   },
   {
-   "id": "de_xxxxii_vo@1945-01-12T18:00:defend",
-   "formation": "de_xxxxii_vo",
+   "id": "de_20pgd_vo@1945-01-12T18:00:counterattack",
+   "formation": "de_20pgd_vo",
+   "task": "counterattack",
+   "target": "Chmielnik",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "приказ на контрудар против прорыва (Z p.421); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_214id_vo@1945-01-12T18:00:defend",
+   "formation": "de_214id_vo",
+   "task": "defend",
+   "target": "Zwolen",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "оборона против Пулавского плацдарма; задача LVI танковый корпус"
+  },
+  {
+   "id": "de_251id_vo@1945-01-12T18:00:defend",
+   "formation": "de_251id_vo",
+   "task": "defend",
+   "target": "Warka",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "оборона против Магнушевского плацдарма; задача VIII армейский корпус"
+  },
+  {
+   "id": "de_25pd_vo@1945-01-12T18:00:reserve",
+   "formation": "de_25pd_vo",
+   "task": "reserve",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "резерв 9 А (19, 25 тд); задача XXXX танковый корпус"
+  },
+  {
+   "id": "de_291id_vo@1945-01-12T18:00:defend",
+   "formation": "de_291id_vo",
    "task": "defend",
    "target": "Opatow",
    "issuedAt": "1945-01-12T18:00",
-   "source": "script"
+   "source": "script",
+   "note": "задача XXXXII армейский корпус"
   },
   {
-   "id": "de_xxxxvi_vo@1945-01-12T18:00:defend",
-   "formation": "de_xxxxvi_vo",
+   "id": "de_291id_vo@1945-01-12T18:00:defend",
+   "formation": "de_291id_vo",
    "task": "defend",
-   "target": "Warszawa",
+   "target": [
+    21.0423,
+    50.675
+   ],
    "issuedAt": "1945-01-12T18:00",
    "source": "script"
   },
   {
-   "id": "de_xxxxviii_vo@1945-01-12T18:00:defend",
-   "formation": "de_xxxxviii_vo",
+   "id": "de_304id_vo@1945-01-12T18:00:defend",
+   "formation": "de_304id_vo",
    "task": "defend",
    "target": "Pinczow",
    "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXVIII танковый корпус"
+  },
+  {
+   "id": "de_304id_vo@1945-01-12T18:00:defend",
+   "formation": "de_304id_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Под главным ударом 1 Укр.Ф; разгромлена 12–13.01"
+  },
+  {
+   "id": "de_320vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_320vgd_vo",
+   "task": "defend",
+   "target": "Tarnow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XI армейский корпус СС"
+  },
+  {
+   "id": "de_337vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_337vgd_vo",
+   "task": "defend",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXVI танковый корпус"
+  },
+  {
+   "id": "de_337vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_337vgd_vo",
+   "task": "defend",
+   "target": [
+    21.214,
+    51.9844
+   ],
+   "issuedAt": "1945-01-12T18:00",
    "source": "script"
+  },
+  {
+   "id": "de_342id_vo@1945-01-12T18:00:defend",
+   "formation": "de_342id_vo",
+   "task": "defend",
+   "target": "Opatow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_359id_vo@1945-01-12T18:00:defend",
+   "formation": "de_359id_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача LIX армейский корпус"
+  },
+  {
+   "id": "de_359id_vo@1945-01-12T18:00:regroup",
+   "formation": "de_359id_vo",
+   "task": "regroup",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Выводится из линии (сменена 371. ID и 544. VGD) для флангового удара"
+  },
+  {
+   "id": "de_371id_vo@1945-01-12T18:00:defend",
+   "formation": "de_371id_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача LIX армейский корпус"
+  },
+  {
+   "id": "de_371id_vo@1945-01-12T18:00:defend",
+   "formation": "de_371id_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Отбила атаки, потеряла несколько сёл на левом фланге"
+  },
+  {
+   "id": "de_45vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_45vgd_vo",
+   "task": "defend",
+   "target": "Warka",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "оборона против Магнушевского плацдарма; задача VIII армейский корпус"
+  },
+  {
+   "id": "de_542vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_542vgd_vo",
+   "task": "defend",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXVI танковый корпус"
+  },
+  {
+   "id": "de_542vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_542vgd_vo",
+   "task": "defend",
+   "target": "Modlin",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_544vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_544vgd_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача LIX армейский корпус"
+  },
+  {
+   "id": "de_544vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_544vgd_vo",
+   "task": "defend",
+   "target": "Pilzno",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "С 13–15.01 растягивает фронт на участок 359. ID"
+  },
+  {
+   "id": "de_545vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_545vgd_vo",
+   "task": "defend",
+   "target": "Tarnow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XI армейский корпус СС"
+  },
+  {
+   "id": "de_68id_vo@1945-01-12T18:00:defend",
+   "formation": "de_68id_vo",
+   "task": "defend",
+   "target": "Pinczow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXVIII танковый корпус"
+  },
+  {
+   "id": "de_68id_vo@1945-01-12T18:00:defend",
+   "formation": "de_68id_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Разгромлена в первый день"
+  },
+  {
+   "id": "de_6vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_6vgd_vo",
+   "task": "defend",
+   "target": "Warka",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "оборона против Магнушевского плацдарма; задача VIII армейский корпус"
+  },
+  {
+   "id": "de_72id_vo@1945-01-12T18:00:defend",
+   "formation": "de_72id_vo",
+   "task": "defend",
+   "target": "Opatow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_73id_vo@1945-01-12T18:00:defend",
+   "formation": "de_73id_vo",
+   "task": "defend",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXVI танковый корпус"
+  },
+  {
+   "id": "de_73id_vo@1945-01-12T18:00:defend",
+   "formation": "de_73id_vo",
+   "task": "defend",
+   "target": [
+    20.9178,
+    52.3767
+   ],
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Оборона по Висле севернее Варшавы"
+  },
+  {
+   "id": "de_78vgd_vo@1945-01-12T18:00:defend",
+   "formation": "de_78vgd_vo",
+   "task": "defend",
+   "target": "Tarnow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XI армейский корпус СС"
+  },
+  {
+   "id": "de_88id_vo@1945-01-12T18:00:defend",
+   "formation": "de_88id_vo",
+   "task": "defend",
+   "target": "Opatow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_88id_vo@1945-01-12T18:00:defend",
+   "formation": "de_88id_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_fest_warschau_vo@1945-01-12T18:00:defend",
+   "formation": "de_fest_warschau_vo",
+   "task": "defend",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "задача XXXXVI танковый корпус"
+  },
+  {
+   "id": "de_fest_warschau_vo@1945-01-12T18:00:hold",
+   "formation": "de_fest_warschau_vo",
+   "task": "hold",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "Fester Platz"
   },
   {
    "id": "su_13a_vo@1945-01-12T18:00:attack",
@@ -970,13 +1689,72 @@
    "note": "правый фланг на Висле; с 3 гв. А и 1 БФ окружить островецко-опатувскую группировку (RW_SS)"
   },
   {
-   "id": "de_xxxxviii_vo@1945-01-13T18:00:withdraw",
-   "formation": "de_xxxxviii_vo",
+   "id": "de_168id_vo@1945-01-13T18:00:withdraw",
+   "formation": "de_168id_vo",
    "task": "withdraw",
    "target": "Jedrzejow",
    "issuedAt": "1945-01-13T18:00",
    "source": "script",
-   "note": "остатки (C)"
+   "note": "остатки (C); задача XXXXVIII танковый корпус"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-13T18:00:counterattack",
+   "formation": "de_17pd_vo",
+   "task": "counterattack",
+   "target": [
+    20.6648,
+    50.6905
+   ],
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "Встречный бой с 4 ТА (вместе с s.Pz.Abt. 424) — C"
+  },
+  {
+   "id": "de_291id_vo@1945-01-13T18:00:withdraw",
+   "formation": "de_291id_vo",
+   "task": "withdraw",
+   "target": null,
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_304id_vo@1945-01-13T18:00:withdraw",
+   "formation": "de_304id_vo",
+   "task": "withdraw",
+   "target": "Jedrzejow",
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "остатки (C); задача XXXXVIII танковый корпус"
+  },
+  {
+   "id": "de_304id_vo@1945-01-13T18:00:withdraw",
+   "formation": "de_304id_vo",
+   "task": "withdraw",
+   "target": null,
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "Остатки на юго-запад; переформирование в Праге/Остраве (февр.)"
+  },
+  {
+   "id": "de_371id_vo@1945-01-13T18:00:withdraw",
+   "formation": "de_371id_vo",
+   "task": "withdraw",
+   "target": [
+    20.8122,
+    50.1877
+   ],
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "Планомерный отход из-за прорыва севернее Вислы"
+  },
+  {
+   "id": "de_68id_vo@1945-01-13T18:00:withdraw",
+   "formation": "de_68id_vo",
+   "task": "withdraw",
+   "target": "Jedrzejow",
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "остатки (C); задача XXXXVIII танковый корпус"
   },
   {
    "id": "su_4gtk_vo@1945-01-13T18:00:attack",
@@ -997,21 +1775,167 @@
    "note": "главными силами овладеть Краковом (EW_SS)"
   },
   {
-   "id": "de_xxiv_vo@1945-01-14T18:00:hold",
-   "formation": "de_xxiv_vo",
+   "id": "de_10pgd_vo@1945-01-14T18:00:counterattack",
+   "formation": "de_10pgd_vo",
+   "task": "counterattack",
+   "target": [
+    21.5741,
+    51.2482
+   ],
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "В составе LVI Pz.K"
+  },
+  {
+   "id": "de_16pd_vo@1945-01-14T18:00:hold",
+   "formation": "de_16pd_vo",
    "task": "hold",
    "target": "Kielce",
    "issuedAt": "1945-01-14T18:00",
-   "source": "script"
+   "source": "script",
+   "note": "задача XXIV танковый корпус (группа Неринга)"
   },
   {
-   "id": "de_xxxx_vo@1945-01-14T18:00:counterattack",
-   "formation": "de_xxxx_vo",
+   "id": "de_17id_vo@1945-01-14T18:00:defend",
+   "formation": "de_17id_vo",
+   "task": "defend",
+   "target": [
+    21.8126,
+    51.4744
+   ],
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "Прорыв 69 и 33 А"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-14T18:00:hold",
+   "formation": "de_17pd_vo",
+   "task": "hold",
+   "target": "Kielce",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_19pd_vo@1945-01-14T18:00:counterattack",
+   "formation": "de_19pd_vo",
    "task": "counterattack",
    "target": "Bialobrzegi",
    "issuedAt": "1945-01-14T18:00",
    "source": "script",
-   "note": "контрудар 19 и 25 тд против прорыва с Магнушевского плацдарма (DW_VO; RW_CHR)"
+   "note": "контрудар 19 и 25 тд против прорыва с Магнушевского плацдарма (DW_VO; RW_CHR); задача XXXX танковый корпус"
+  },
+  {
+   "id": "de_19pd_vo@1945-01-14T18:00:counterattack",
+   "formation": "de_19pd_vo",
+   "task": "counterattack",
+   "target": [
+    21.091,
+    51.6465
+   ],
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "По de.wiki смогла остановить противника на своём участке"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-14T18:00:hold",
+   "formation": "de_20pgd_vo",
+   "task": "hold",
+   "target": "Kielce",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-14T18:00:defend",
+   "formation": "de_20pgd_vo",
+   "task": "defend",
+   "target": "Kielce",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "Удерживает Кельце до 16/17.01"
+  },
+  {
+   "id": "de_214id_vo@1945-01-14T18:00:defend",
+   "formation": "de_214id_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_251id_vo@1945-01-14T18:00:defend",
+   "formation": "de_251id_vo",
+   "task": "defend",
+   "target": "Warka",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "Тяжёлые потери; затем отход на север к Висле/2. Armee"
+  },
+  {
+   "id": "de_25pd_vo@1945-01-14T18:00:counterattack",
+   "formation": "de_25pd_vo",
+   "task": "counterattack",
+   "target": "Bialobrzegi",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "контрудар 19 и 25 тд против прорыва с Магнушевского плацдарма (DW_VO; RW_CHR); задача XXXX танковый корпус"
+  },
+  {
+   "id": "de_25pd_vo@1945-01-14T18:00:counterattack",
+   "formation": "de_25pd_vo",
+   "task": "counterattack",
+   "target": [
+    20.9498,
+    51.6482
+   ],
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "Наткнулась на прорвавшиеся танки, потеряла большую часть техники"
+  },
+  {
+   "id": "de_342id_vo@1945-01-14T18:00:withdraw",
+   "formation": "de_342id_vo",
+   "task": "withdraw",
+   "target": null,
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "Отход под угрозой окружения"
+  },
+  {
+   "id": "de_359id_vo@1945-01-14T18:00:counterattack",
+   "formation": "de_359id_vo",
+   "task": "counterattack",
+   "target": [
+    20.8091,
+    50.2994
+   ],
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "Удар во фланг восточнее Ниды — безуспешно"
+  },
+  {
+   "id": "de_45vgd_vo@1945-01-14T18:00:defend",
+   "formation": "de_45vgd_vo",
+   "task": "defend",
+   "target": [
+    21.3177,
+    51.6232
+   ],
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_6vgd_vo@1945-01-14T18:00:defend",
+   "formation": "de_6vgd_vo",
+   "task": "defend",
+   "target": [
+    21.091,
+    51.6465
+   ],
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "Аufgerieben 8 гв.А"
   },
   {
    "id": "su_11tk_vo@1945-01-14T18:00:attack",
@@ -1121,12 +2045,129 @@
    "note": "с 33 А (RW_CHR)"
   },
   {
-   "id": "de_lvi_vo@1945-01-15T18:00:withdraw",
-   "formation": "de_lvi_vo",
+   "id": "de_10pgd_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_10pgd_vo",
    "task": "withdraw",
    "target": "TomaszowMaz",
    "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_17id_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_17id_vo",
+   "task": "withdraw",
+   "target": "TomaszowMaz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_214id_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_214id_vo",
+   "task": "withdraw",
+   "target": "TomaszowMaz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "задача LVI танковый корпус"
+  },
+  {
+   "id": "de_251id_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_251id_vo",
+   "task": "withdraw",
+   "target": "Lodz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "задача VIII армейский корпус"
+  },
+  {
+   "id": "de_291id_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_291id_vo",
+   "task": "withdraw",
+   "target": "SkarzyskoK",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "приказ командующего 4 ТА на отход к Скаржиско-Каменной (RW_CHR); задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_320vgd_vo@1945-01-15T18:00:defend",
+   "formation": "de_320vgd_vo",
+   "task": "defend",
+   "target": [
+    21.1635,
+    49.6663
+   ],
+   "issuedAt": "1945-01-15T18:00",
    "source": "script"
+  },
+  {
+   "id": "de_342id_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_342id_vo",
+   "task": "withdraw",
+   "target": "SkarzyskoK",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "приказ командующего 4 ТА на отход к Скаржиско-Каменной (RW_CHR); задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_45vgd_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_45vgd_vo",
+   "task": "withdraw",
+   "target": "Lodz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "задача VIII армейский корпус"
+  },
+  {
+   "id": "de_545vgd_vo@1945-01-15T18:00:defend",
+   "formation": "de_545vgd_vo",
+   "task": "defend",
+   "target": [
+    21.4119,
+    49.8785
+   ],
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "Против 38 А 4 Укр.Ф (реконструкция)"
+  },
+  {
+   "id": "de_6vgd_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_6vgd_vo",
+   "task": "withdraw",
+   "target": "Lodz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "задача VIII армейский корпус"
+  },
+  {
+   "id": "de_72id_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_72id_vo",
+   "task": "withdraw",
+   "target": "SkarzyskoK",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "приказ командующего 4 ТА на отход к Скаржиско-Каменной (RW_CHR); задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_78vgd_vo@1945-01-15T18:00:defend",
+   "formation": "de_78vgd_vo",
+   "task": "defend",
+   "target": [
+    21.4743,
+    49.7471
+   ],
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "Ясло освобождено 16.01 — отход на запад"
+  },
+  {
+   "id": "de_88id_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_88id_vo",
+   "task": "withdraw",
+   "target": "SkarzyskoK",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "приказ командующего 4 ТА на отход к Скаржиско-Каменной (RW_CHR); задача XXXXII армейский корпус"
   },
   {
    "id": "de_pzk_gd_vo@1945-01-15T18:00:regroup",
@@ -1136,23 +2177,6 @@
    "issuedAt": "1945-01-15T18:00",
    "source": "script",
    "note": "переброска из Вост. Пруссии в район Кельце (RW_VO) — выгрузка у Лодзи/Калиша (EW_VO; DW_VO)"
-  },
-  {
-   "id": "de_viii_vo@1945-01-15T18:00:withdraw",
-   "formation": "de_viii_vo",
-   "task": "withdraw",
-   "target": "Lodz",
-   "issuedAt": "1945-01-15T18:00",
-   "source": "script"
-  },
-  {
-   "id": "de_xxxxii_vo@1945-01-15T18:00:withdraw",
-   "formation": "de_xxxxii_vo",
-   "task": "withdraw",
-   "target": "SkarzyskoK",
-   "issuedAt": "1945-01-15T18:00",
-   "source": "script",
-   "note": "приказ командующего 4 ТА на отход к Скаржиско-Каменной (RW_CHR)"
   },
   {
    "id": "su_1gta_vo@1945-01-15T18:00:attack",
@@ -1198,31 +2222,175 @@
    "note": "(RW_CHR)"
   },
   {
-   "id": "de_xi_ss_vo@1945-01-16T18:00:withdraw",
-   "formation": "de_xi_ss_vo",
-   "task": "withdraw",
-   "target": "Wieliczka",
+   "id": "de_10pgd_vo@1945-01-16T18:00:defend",
+   "formation": "de_10pgd_vo",
+   "task": "defend",
+   "target": null,
    "issuedAt": "1945-01-16T18:00",
    "source": "script",
-   "note": "отход 17 А южнее Кракова на запад (KON; RW_CHR)"
+   "note": "Круговая оборона"
   },
   {
-   "id": "de_xxiv_vo@1945-01-16T18:00:breakout",
-   "formation": "de_xxiv_vo",
+   "id": "de_16pd_vo@1945-01-16T18:00:breakout",
+   "formation": "de_16pd_vo",
    "task": "breakout",
    "target": "Przedborz",
    "issuedAt": "1945-01-16T18:00",
    "source": "script",
-   "note": "решение командира на отход ночью 16.01 (EW_VO); к Пилице (Z p.423)"
+   "note": "решение командира на отход ночью 16.01 (EW_VO); к Пилице (Z p.423); задача XXIV танковый корпус (группа Неринга)"
   },
   {
-   "id": "de_xxxxvi_vo@1945-01-16T18:00:withdraw",
-   "formation": "de_xxxxvi_vo",
+   "id": "de_17id_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_17id_vo",
+   "task": "withdraw",
+   "target": null,
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "LVI Pz.K окружён и отжат от Радома к югу"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-16T18:00:breakout",
+   "formation": "de_17pd_vo",
+   "task": "breakout",
+   "target": "Przedborz",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "решение командира на отход ночью 16.01 (EW_VO); к Пилице (Z p.423); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-16T18:00:breakout",
+   "formation": "de_20pgd_vo",
+   "task": "breakout",
+   "target": "Przedborz",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "решение командира на отход ночью 16.01 (EW_VO); к Пилице (Z p.423); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_25pd_vo@1945-01-16T18:00:breakout",
+   "formation": "de_25pd_vo",
+   "task": "breakout",
+   "target": null,
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "Прорыв из окружения на запад"
+  },
+  {
+   "id": "de_320vgd_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_320vgd_vo",
+   "task": "withdraw",
+   "target": "Wieliczka",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "отход 17 А южнее Кракова на запад (KON; RW_CHR); задача XI армейский корпус СС"
+  },
+  {
+   "id": "de_337vgd_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_337vgd_vo",
    "task": "withdraw",
    "target": "Modlin",
    "issuedAt": "1945-01-16T18:00",
    "source": "script",
-   "note": "гарнизон Варшавы уничтожает запасы и уходит (Z p.423)"
+   "note": "гарнизон Варшавы уничтожает запасы и уходит (Z p.423); задача XXXXVI танковый корпус"
+  },
+  {
+   "id": "de_342id_vo@1945-01-16T18:00:breakout",
+   "formation": "de_342id_vo",
+   "task": "breakout",
+   "target": [
+    20.6504,
+    51.1333
+   ],
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "С ~16.01 подчинена Нерингу"
+  },
+  {
+   "id": "de_371id_vo@1945-01-16T18:00:hold",
+   "formation": "de_371id_vo",
+   "task": "hold",
+   "target": [
+    20.5147,
+    50.1193
+   ],
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "Позиция a2"
+  },
+  {
+   "id": "de_542vgd_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_542vgd_vo",
+   "task": "withdraw",
+   "target": "Modlin",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "гарнизон Варшавы уничтожает запасы и уходит (Z p.423); задача XXXXVI танковый корпус"
+  },
+  {
+   "id": "de_545vgd_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_545vgd_vo",
+   "task": "withdraw",
+   "target": "Wieliczka",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "отход 17 А южнее Кракова на запад (KON; RW_CHR); задача XI армейский корпус СС"
+  },
+  {
+   "id": "de_72id_vo@1945-01-16T18:00:breakout",
+   "formation": "de_72id_vo",
+   "task": "breakout",
+   "target": null,
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "Под командованием Неринга"
+  },
+  {
+   "id": "de_73id_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_73id_vo",
+   "task": "withdraw",
+   "target": "Modlin",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "гарнизон Варшавы уничтожает запасы и уходит (Z p.423); задача XXXXVI танковый корпус"
+  },
+  {
+   "id": "de_73id_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_73id_vo",
+   "task": "withdraw",
+   "target": [
+    18.5966,
+    53.0145
+   ],
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "Приказ отойти в Festung Thorn; дата приблизительна"
+  },
+  {
+   "id": "de_78vgd_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_78vgd_vo",
+   "task": "withdraw",
+   "target": "Wieliczka",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "отход 17 А южнее Кракова на запад (KON; RW_CHR); задача XI армейский корпус СС"
+  },
+  {
+   "id": "de_88id_vo@1945-01-16T18:00:breakout",
+   "formation": "de_88id_vo",
+   "task": "breakout",
+   "target": null,
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "Под командованием Неринга"
+  },
+  {
+   "id": "de_fest_warschau_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_fest_warschau_vo",
+   "task": "withdraw",
+   "target": "Modlin",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "гарнизон Варшавы уничтожает запасы и уходит (Z p.423); задача XXXXVI танковый корпус"
   },
   {
    "id": "su_1pa_vo@1945-01-16T18:00:attack",
@@ -1261,13 +2429,129 @@
    "note": "на Лодзь (RW_CHR; DW_VO)"
   },
   {
-   "id": "de_lix_vo@1945-01-17T18:00:hold",
-   "formation": "de_lix_vo",
+   "id": "de_10pgd_vo@1945-01-17T18:00:withdraw",
+   "formation": "de_10pgd_vo",
+   "task": "withdraw",
+   "target": [
+    20.8575,
+    51.2239
+   ],
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Остатки к 28.01 у Глогау за Одером"
+  },
+  {
+   "id": "de_16pd_vo@1945-01-17T18:00:breakout",
+   "formation": "de_16pd_vo",
+   "task": "breakout",
+   "target": [
+    20.6504,
+    51.1333
+   ],
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Группа Неринга прорывается из района СЗ Кельце"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-17T18:00:breakout",
+   "formation": "de_17pd_vo",
+   "task": "breakout",
+   "target": [
+    20.6504,
+    51.1333
+   ],
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Группа Неринга прорывается из района СЗ Кельце"
+  },
+  {
+   "id": "de_19pd_vo@1945-01-17T18:00:withdraw",
+   "formation": "de_19pd_vo",
+   "task": "withdraw",
+   "target": [
+    19.4785,
+    51.7728
+   ],
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Отход к Лодзи/Варте"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-17T18:00:breakout",
+   "formation": "de_20pgd_vo",
+   "task": "breakout",
+   "target": [
+    20.6504,
+    51.1333
+   ],
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Группа Неринга прорывается из района СЗ Кельце"
+  },
+  {
+   "id": "de_337vgd_vo@1945-01-17T18:00:withdraw",
+   "formation": "de_337vgd_vo",
+   "task": "withdraw",
+   "target": null,
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "С XXXXVI Pz.K за Вислу в полосу 2. Armee (en.wiki/Duffy)"
+  },
+  {
+   "id": "de_359id_vo@1945-01-17T18:00:hold",
+   "formation": "de_359id_vo",
    "task": "hold",
    "target": "Krakow",
    "issuedAt": "1945-01-17T18:00",
    "source": "script",
-   "note": "(C)"
+   "note": "(C); задача LIX армейский корпус"
+  },
+  {
+   "id": "de_359id_vo@1945-01-17T18:00:withdraw",
+   "formation": "de_359id_vo",
+   "task": "withdraw",
+   "target": [
+    19.9369,
+    50.062
+   ],
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Под угрозой 59 и 60 А"
+  },
+  {
+   "id": "de_371id_vo@1945-01-17T18:00:hold",
+   "formation": "de_371id_vo",
+   "task": "hold",
+   "target": "Krakow",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "(C); задача LIX армейский корпус"
+  },
+  {
+   "id": "de_544vgd_vo@1945-01-17T18:00:hold",
+   "formation": "de_544vgd_vo",
+   "task": "hold",
+   "target": "Krakow",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "(C); задача LIX армейский корпус"
+  },
+  {
+   "id": "de_78vgd_vo@1945-01-17T18:00:withdraw",
+   "formation": "de_78vgd_vo",
+   "task": "withdraw",
+   "target": null,
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_fest_warschau_vo@1945-01-17T18:00:withdraw",
+   "formation": "de_fest_warschau_vo",
+   "task": "withdraw",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Гарнизон оставил город 17.01 (Ziemke); Варшава занята 47 А и 1 Арм. ВП"
   },
   {
    "id": "su_13a_vo@1945-01-17T18:00:attack",
@@ -1357,6 +2641,60 @@
    "note": "(RW_CHR)"
   },
   {
+   "id": "de_19pd_vo@1945-01-18T18:00:hold",
+   "formation": "de_19pd_vo",
+   "task": "hold",
+   "target": "Lodz",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "короткая линия южнее Лодзи до подхода XXIV тк (Z p.424); задача XXXX танковый корпус"
+  },
+  {
+   "id": "de_25pd_vo@1945-01-18T18:00:hold",
+   "formation": "de_25pd_vo",
+   "task": "hold",
+   "target": "Lodz",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "короткая линия южнее Лодзи до подхода XXIV тк (Z p.424); задача XXXX танковый корпус"
+  },
+  {
+   "id": "de_291id_vo@1945-01-18T18:00:breakout",
+   "formation": "de_291id_vo",
+   "task": "breakout",
+   "target": "Piotrkow",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "прорыв на запад «блуждающим котлом» (DW_KORPS); задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_342id_vo@1945-01-18T18:00:breakout",
+   "formation": "de_342id_vo",
+   "task": "breakout",
+   "target": "Piotrkow",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "прорыв на запад «блуждающим котлом» (DW_KORPS); задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_72id_vo@1945-01-18T18:00:breakout",
+   "formation": "de_72id_vo",
+   "task": "breakout",
+   "target": "Piotrkow",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "прорыв на запад «блуждающим котлом» (DW_KORPS); задача XXXXII армейский корпус"
+  },
+  {
+   "id": "de_88id_vo@1945-01-18T18:00:breakout",
+   "formation": "de_88id_vo",
+   "task": "breakout",
+   "target": "Piotrkow",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "прорыв на запад «блуждающим котлом» (DW_KORPS); задача XXXXII армейский корпус"
+  },
+  {
    "id": "de_pzk_gd_vo@1945-01-18T18:00:counterattack",
    "formation": "de_pzk_gd_vo",
    "task": "counterattack",
@@ -1364,24 +2702,6 @@
    "issuedAt": "1945-01-18T18:00",
    "source": "script",
    "note": "прикрыть отход 9 А, держать южнее Лодзи (Z p.424; EW_VO)"
-  },
-  {
-   "id": "de_xxxx_vo@1945-01-18T18:00:hold",
-   "formation": "de_xxxx_vo",
-   "task": "hold",
-   "target": "Lodz",
-   "issuedAt": "1945-01-18T18:00",
-   "source": "script",
-   "note": "короткая линия южнее Лодзи до подхода XXIV тк (Z p.424)"
-  },
-  {
-   "id": "de_xxxxii_vo@1945-01-18T18:00:breakout",
-   "formation": "de_xxxxii_vo",
-   "task": "breakout",
-   "target": "Piotrkow",
-   "issuedAt": "1945-01-18T18:00",
-   "source": "script",
-   "note": "прорыв на запад «блуждающим котлом» (DW_KORPS)"
   },
   {
    "id": "su_1pa_vo@1945-01-18T18:00:attack",
@@ -1420,13 +2740,79 @@
    "note": "штурм Кракова (RW_ARM)"
   },
   {
-   "id": "de_lix_vo@1945-01-19T18:00:withdraw",
-   "formation": "de_lix_vo",
+   "id": "de_16pd_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_16pd_vo",
+   "task": "withdraw",
+   "target": [
+    20.1139,
+    51.306
+   ],
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "Переправа через Пилицу"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_17pd_vo",
+   "task": "withdraw",
+   "target": [
+    20.1139,
+    51.306
+   ],
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "Переправа через Пилицу"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_20pgd_vo",
+   "task": "withdraw",
+   "target": [
+    20.1139,
+    51.306
+   ],
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "Переправа через Пилицу"
+  },
+  {
+   "id": "de_320vgd_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_320vgd_vo",
+   "task": "withdraw",
+   "target": [
+    19.9369,
+    50.062
+   ],
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "Отход в Западные Карпаты (XI SS-AK)"
+  },
+  {
+   "id": "de_359id_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_359id_vo",
    "task": "withdraw",
    "target": "Katowice",
    "issuedAt": "1945-01-19T18:00",
    "source": "script",
-   "note": "(C)"
+   "note": "(C); задача LIX армейский корпус"
+  },
+  {
+   "id": "de_371id_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_371id_vo",
+   "task": "withdraw",
+   "target": "Katowice",
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "(C); задача LIX армейский корпус"
+  },
+  {
+   "id": "de_544vgd_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_544vgd_vo",
+   "task": "withdraw",
+   "target": "Katowice",
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "(C); задача LIX армейский корпус"
   },
   {
    "id": "su_21a_vo@1945-01-19T18:00:attack",
@@ -1465,6 +2851,33 @@
    "note": "на северо-запад за 2 гв. ТА (C)"
   },
   {
+   "id": "de_16pd_vo@1945-01-20T18:00:breakout",
+   "formation": "de_16pd_vo",
+   "task": "breakout",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "к Варте на соединение с ТК «ВГ» (Z p.424–425); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-20T18:00:breakout",
+   "formation": "de_17pd_vo",
+   "task": "breakout",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "к Варте на соединение с ТК «ВГ» (Z p.424–425); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-20T18:00:breakout",
+   "formation": "de_20pgd_vo",
+   "task": "breakout",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "к Варте на соединение с ТК «ВГ» (Z p.424–425); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
    "id": "de_festung_posen_vo@1945-01-20T18:00:hold",
    "formation": "de_festung_posen_vo",
    "task": "hold",
@@ -1472,15 +2885,6 @@
    "issuedAt": "1945-01-20T18:00",
    "source": "script",
    "note": "Познань объявлена «Festung» 20.01; держать безусловно (DW_VO; DW_POSEN)"
-  },
-  {
-   "id": "de_xxiv_vo@1945-01-20T18:00:breakout",
-   "formation": "de_xxiv_vo",
-   "task": "breakout",
-   "target": "Sieradz",
-   "issuedAt": "1945-01-20T18:00",
-   "source": "script",
-   "note": "к Варте на соединение с ТК «ВГ» (Z p.424–425)"
   },
   {
    "id": "su_1gkk_vo@1945-01-20T18:00:attack",
@@ -1608,13 +3012,71 @@
    "note": "фронтальный удар по Силезскому району (EW_VO)"
   },
   {
-   "id": "de_xxxx_vo@1945-01-22T18:00:withdraw",
-   "formation": "de_xxxx_vo",
+   "id": "de_16pd_vo@1945-01-22T18:00:regroup",
+   "formation": "de_16pd_vo",
+   "task": "regroup",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script",
+   "note": "Соединение с Pz.K. GD на Варте; далее на Глогау"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-22T18:00:regroup",
+   "formation": "de_17pd_vo",
+   "task": "regroup",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script",
+   "note": "Соединение с Pz.K. GD на Варте; далее на Глогау"
+  },
+  {
+   "id": "de_19pd_vo@1945-01-22T18:00:withdraw",
+   "formation": "de_19pd_vo",
    "task": "withdraw",
    "target": "ZielonaGora",
    "issuedAt": "1945-01-22T18:00",
    "source": "script",
-   "note": "отход за Одер (DW_KORPS)"
+   "note": "отход за Одер (DW_KORPS); задача XXXX танковый корпус"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-22T18:00:regroup",
+   "formation": "de_20pgd_vo",
+   "task": "regroup",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script",
+   "note": "Соединение с Pz.K. GD на Варте; далее на Глогау"
+  },
+  {
+   "id": "de_25pd_vo@1945-01-22T18:00:withdraw",
+   "formation": "de_25pd_vo",
+   "task": "withdraw",
+   "target": "ZielonaGora",
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script",
+   "note": "отход за Одер (DW_KORPS); задача XXXX танковый корпус"
+  },
+  {
+   "id": "de_359id_vo@1945-01-22T18:00:defend",
+   "formation": "de_359id_vo",
+   "task": "defend",
+   "target": [
+    19.8266,
+    49.9748
+   ],
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_371id_vo@1945-01-22T18:00:withdraw",
+   "formation": "de_371id_vo",
+   "task": "withdraw",
+   "target": [
+    19.3148,
+    50.1031
+   ],
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script"
   },
   {
    "id": "su_2gta_vo@1945-01-22T18:00:attack",
@@ -1634,6 +3096,33 @@
    "note": "удерживать и расширять плацдарм (EW_VO)"
   },
   {
+   "id": "de_16pd_vo@1945-01-23T18:00:withdraw",
+   "formation": "de_16pd_vo",
+   "task": "withdraw",
+   "target": "Glogow",
+   "issuedAt": "1945-01-23T18:00",
+   "source": "script",
+   "note": "отход за Одер (DW_KORPS); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_17pd_vo@1945-01-23T18:00:withdraw",
+   "formation": "de_17pd_vo",
+   "task": "withdraw",
+   "target": "Glogow",
+   "issuedAt": "1945-01-23T18:00",
+   "source": "script",
+   "note": "отход за Одер (DW_KORPS); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
+   "id": "de_20pgd_vo@1945-01-23T18:00:withdraw",
+   "formation": "de_20pgd_vo",
+   "task": "withdraw",
+   "target": "Glogow",
+   "issuedAt": "1945-01-23T18:00",
+   "source": "script",
+   "note": "отход за Одер (DW_KORPS); задача XXIV танковый корпус (группа Неринга)"
+  },
+  {
    "id": "de_pzk_gd_vo@1945-01-23T18:00:withdraw",
    "formation": "de_pzk_gd_vo",
    "task": "withdraw",
@@ -1641,15 +3130,6 @@
    "issuedAt": "1945-01-23T18:00",
    "source": "script",
    "note": "отход к Одеру (Z p.425)"
-  },
-  {
-   "id": "de_xxiv_vo@1945-01-23T18:00:withdraw",
-   "formation": "de_xxiv_vo",
-   "task": "withdraw",
-   "target": "Glogow",
-   "issuedAt": "1945-01-23T18:00",
-   "source": "script",
-   "note": "отход за Одер (DW_KORPS)"
   },
   {
    "id": "su_52a_vo@1945-01-23T18:00:attack",
@@ -1897,8 +3377,8 @@
  "notes": [
   "su_1bf_vo: делится 485340 чел., 1615 танков, 18400 орудий — танки и орудия — разность двух фронтов (C)",
   "su_1uf_vo: делится 533280 чел., 1024 танков, 14250 орудий — Кривошеев; Конев",
-  "de_9a_vo: делится 107250 чел., 450 танков, 1800 орудий — численность — набор данных; танки и орудия — доля от ГА «А» (C)",
-  "de_4pza_vo: делится 105000 чел., 500 танков, 1800 орудий — оценка: ГА «А» 400 тыс., 1 150 танков, ~5 000 орудий и минометов (Z p.417; ru-wiki) минус 9 А, поровну с поправкой на танковые резервы (C)",
+  "de_9a_vo: делится 107250 чел., 272 танков, 1800 орудий — численность — набор данных; танки и орудия — доля от ГА «А» (C)",
+  "de_4pza_vo: делится 105000 чел., 224 танков, 1800 орудий — оценка: ГА «А» 400 тыс., 1 150 танков, ~5 000 орудий и минометов (Z p.417; ru-wiki) минус 9 А, поровну с поправкой на танковые резервы (C)",
   "de_17a_vo: делится 87750 чел., 200 танков, 1400 орудий — оценка (C)"
  ],
  "supply": {

@@ -1,0 +1,2490 @@
+{
+ "meta": {
+  "title": "ГА 'А' (Heeresgruppe A): дивизии 9. Armee, 4. Panzerarmee, 17. Armee, 12–22.01.1945",
+  "generated": "2026-10-08",
+  "sources": [
+   {
+    "id": "dewiki_WO",
+    "title": "de.wikipedia: Weichsel-Oder-Operation (Gliederung HGr A 12.01.1945 nach OKW-KTB Bd. IV, S. 1886)",
+    "url": "https://de.wikipedia.org/wiki/Weichsel-Oder-Operation"
+   },
+   {
+    "id": "ziemke",
+    "title": "Ziemke, Stalingrad to Berlin, ch. XIX The January Offensive (HyperWar)",
+    "url": "https://www.ibiblio.org/hyperwar/USA/USA-EF-Defeat/USA-EF-Defeat-19.html"
+   },
+   {
+    "id": "lexikon",
+    "title": "Lexikon der Wehrmacht, Divisionsseiten (Gliederungen/Infanteriedivisionen, Panzerdivisionen, Panzergrenadierdivisionen)",
+    "url": "https://www.lexikon-der-wehrmacht.de/"
+   },
+   {
+    "id": "nafziger",
+    "title": "Nafziger OOB: German 17th Army 1941-45 (939GXXP), German 9th Army (939GXXI), состояние 31.12.1944",
+    "url": "https://web.archive.org/web/2014/http://usacac.army.mil/cac2/CGSC/CARL/nafziger/939GXXP.pdf"
+   },
+   {
+    "id": "enwiki_div",
+    "title": "en.wikipedia статьи дивизий; численность на 01.01.1945 со ссылкой на Lakowski, DRZW Bd. 10/1 (2008), S. 504",
+    "url": "https://en.wikipedia.org/"
+   },
+   {
+    "id": "plwiki_div",
+    "title": "pl.wikipedia статьи дивизий (по Mitcham 2009/2010, Podsiadło 2014) — участки фронта на плацдарме",
+    "url": "https://pl.wikipedia.org/"
+   },
+   {
+    "id": "nehring_ifz",
+    "title": "W. Nehring, IfZ München ZS 275: доклад и схема 'Der wandernde Kessel des XXIV. Panzerkorps vom 12.-22.1.1945'",
+    "url": "https://www.ifz-muenchen.de/archiv/zs/zs-0275.pdf"
+   },
+   {
+    "id": "dewiki_div",
+    "title": "de.wikipedia статьи дивизий и корпусов (19. Pz.Div. со ссылкой на DRZW 10/1; XXIV/XXXXII/XXXX/XXXXVI/LVI Korps)",
+    "url": "https://de.wikipedia.org/"
+   },
+   {
+    "id": "enwiki_WO",
+    "title": "en.wikipedia: Vistula–Oder offensive (по Duffy, Red Storm on the Reich)",
+    "url": "https://en.wikipedia.org/wiki/Vistula%E2%80%93Oder_offensive"
+   },
+   {
+    "id": "plwiki_WO",
+    "title": "pl.wikipedia: Operacja wiślańsko-odrzańska (OOB на 10.01.1945 по Sawicki 1987)",
+    "url": "https://pl.wikipedia.org/wiki/Operacja_wi%C5%9Bla%C5%84sko-odrza%C5%84ska"
+   },
+   {
+    "id": "enwiki_HGrA",
+    "title": "en.wikipedia: Army Group A (Lakowski 2008: силы ГА 'А' на 01.01.1945)",
+    "url": "https://en.wikipedia.org/wiki/Army_Group_A"
+   },
+   {
+    "id": "geo",
+    "title": "OpenStreetMap Nominatim (геокодирование)",
+    "url": "https://nominatim.openstreetmap.org/"
+   }
+  ],
+  "reliability_legend": {
+   "A": "место/подчинение прямо указано в первичном или детальном источнике (дневник/история дивизии, схема Неринга) с точностью до населённого пункта",
+   "B": "указано во вторичном источнике (вики/Lexikon/Ziemke) на уровне участка или района; координата — центр участка",
+   "C": "реконструкция по косвенным данным (соседи, корпусной участок, география фронта); принимать как плейсхолдер"
+  },
+  "notes": [
+   "Координаты 12.01 — центр участка дивизии (для дивизий первой линии) или район сосредоточения (резервы); approx_km — радиус неопределённости.",
+   "Силы ГА 'А' на 01.01.1945 (Lakowski/DRZW 10/1 через en.wiki): 1816 орудий, 318 боеготовых танков, 616 штурмовых орудий, 793 ПТО; фронт 700 км (9. A 222 км, 4. PzA 187 км, 17. A 128 км, 1. PzA 163 км). Ziemke: ок. 400 000 чел., 4 100 орудий, 1 150 танков у 9., 4. Pz и 17. армий.",
+   "Ziemke: у дивизий XXXXVIII Pz.K примерно по дюжине САУ (StuG), у корпусов ещё ок. 100 в резерве; XXIV Pz.K стоял ~15 миль (24 км) за западным фасом Баранувского плацдарма.",
+   "Наступление: 1-й Укр. фронт с Сандомирского плацдарма 12.01; 1-й Бел. фронт с Магнушевского и Пулавского плацдармов 14.01 (статья de.wiki '9. Armee' ошибочно даёт 12.01); 38-я А 4-го Укр. фронта против XI SS-AK — с 15.01.",
+   "Реальные корпуса 17. Armee 12.01.1945: LIX. AK (Röhricht) и XI. SS-Armeekorps (Kleinheisterkamp). XI. AK (v. Bünau) входил в 1. Panzerarmee (Armeegruppe Heinrici), а не в 17. Armee.",
+   "Схема Неринга подписывает соседний корпус 'LIV. Pz.K. (ohne Panzer)' — по контексту это LVI. Pz.K.",
+   "Kampfgruppen 1. PzA (Armeegruppe Heinrici: 75., 253. ID, 97. JD, 1. Ski-Jäger-Div.) включены как справочные (флаг out_of_scope), без позиций на 12.01: 12.01 их сектор (Бескиды/Словакия) не атаковался."
+  ],
+  "contradictions": [
+   "Дата смены Харпе Шёрнером: Ziemke — 16.01 (снят), pl.wiki — 18.01, en.wiki — 20.01; Люттвиц→Буссе: ~20.01.",
+   "Recknagel: de.wiki — убит партизанами 23.01 между Петрокувом и Томашувом; Неринг — штаб XXXXII 'рассеян' ~16.01, командир погиб, дивизии 342/72/88 перешли к Нерингу.",
+   "Таблица OKW-KTB в de.wiki помещает XXXX Pz.K (19., 25. Pz, 10. PGD, 6. Pz) в Armeegruppe Heinrici — ошибка вёрстки: XXXX Pz.K — резерв 9. Armee у Радома; 6. Pz.Div. в 01.1945 в Венгрии; 10. PGD — 4. PzA/LVI.",
+   "en.wiki включает XI. AK в 17. Armee; де-факто корпуса 17. Armee — LIX и XI SS.",
+   "291. ID: pl.wiki/Неринг — северный фас, отход с XXXXII; de.wiki — 'смята у Ченстоховы'.",
+   "Ziemke: XXIV Pz.K стоял ~24 км за фронтом; Неринг: дивизии 'стояли близко за фронтом по приказу Гитлера' (de.wiki 17. Pz) — согласуется с Хмельником."
+  ]
+ },
+ "gazetteer": {
+  "Warszawa": {
+   "query": "Warszawa, Polska",
+   "lng": 21.07115,
+   "lat": 52.23337
+  },
+  "Jabłonna": {
+   "query": "Jabłonna, powiat legionowski",
+   "lng": 20.91779,
+   "lat": 52.37668
+  },
+  "Modlin": {
+   "query": "Modlin Twierdza, Nowy Dwór Mazowiecki",
+   "lng": 20.67493,
+   "lat": 52.43967
+  },
+  "Góra Kalwaria": {
+   "query": "Góra Kalwaria",
+   "lng": 21.21402,
+   "lat": 51.98438
+  },
+  "Warka": {
+   "query": "Warka",
+   "lng": 21.18338,
+   "lat": 51.7851
+  },
+  "Magnuszew": {
+   "query": "Magnuszew",
+   "lng": 21.3828,
+   "lat": 51.76242
+  },
+  "Stromiec": {
+   "query": "Stromiec",
+   "lng": 21.09101,
+   "lat": 51.64646
+  },
+  "Głowaczów": {
+   "query": "Głowaczów",
+   "lng": 21.31771,
+   "lat": 51.62318
+  },
+  "Białobrzegi": {
+   "query": "Białobrzegi, powiat białobrzeski",
+   "lng": 20.94975,
+   "lat": 51.64823
+  },
+  "Radom": {
+   "query": "Radom",
+   "lng": 21.16074,
+   "lat": 51.41673
+  },
+  "Jedlińsk": {
+   "query": "Jedlińsk",
+   "lng": 21.12356,
+   "lat": 51.51387
+  },
+  "Kozienice": {
+   "query": "Kozienice",
+   "lng": 21.54988,
+   "lat": 51.58497
+  },
+  "Gniewoszów": {
+   "query": "Gniewoszów",
+   "lng": 21.81256,
+   "lat": 51.47437
+  },
+  "Zwoleń": {
+   "query": "Zwoleń",
+   "lng": 21.58447,
+   "lat": 51.35647
+  },
+  "Janowiec": {
+   "query": "Janowiec, powiat puławski",
+   "lng": 21.89062,
+   "lat": 51.32329
+  },
+  "Iłża": {
+   "query": "Iłża",
+   "lng": 21.23732,
+   "lat": 51.16242
+  },
+  "Solec nad Wisłą": {
+   "query": "Solec nad Wisłą",
+   "lng": 21.76547,
+   "lat": 51.13495
+  },
+  "Tarłów": {
+   "query": "Tarłów",
+   "lng": 21.71518,
+   "lat": 51.0011
+  },
+  "Zawichost": {
+   "query": "Zawichost",
+   "lng": 21.85238,
+   "lat": 50.80743
+  },
+  "Ćmielów": {
+   "query": "Ćmielów",
+   "lng": 21.51009,
+   "lat": 50.89184
+  },
+  "Ostrowiec Świętokrzyski": {
+   "query": "Ostrowiec Świętokrzyski",
+   "lng": 21.38743,
+   "lat": 50.93988
+  },
+  "Opatów": {
+   "query": "Opatów",
+   "lng": 21.42383,
+   "lat": 50.80177
+  },
+  "Włostów": {
+   "query": "Włostów, gmina Lipnik",
+   "lng": 21.44135,
+   "lat": 50.7465
+  },
+  "Łagów": {
+   "query": "Łagów, powiat kielecki",
+   "lng": 21.08398,
+   "lat": 50.77549
+  },
+  "Raków": {
+   "query": "Raków, powiat kielecki",
+   "lng": 21.04234,
+   "lat": 50.67504
+  },
+  "Szydłów": {
+   "query": "Szydłów, powiat staszowski",
+   "lng": 21.00457,
+   "lat": 50.59077
+  },
+  "Stopnica": {
+   "query": "Stopnica",
+   "lng": 20.93857,
+   "lat": 50.43826
+  },
+  "Oblekoń": {
+   "query": "Oblekoń",
+   "lng": 21.01125,
+   "lat": 50.3318
+  },
+  "Pacanów": {
+   "query": "Pacanów",
+   "lng": 21.04099,
+   "lat": 50.39997
+  },
+  "Chmielnik": {
+   "query": "Chmielnik, powiat kielecki",
+   "lng": 20.75104,
+   "lat": 50.6146
+  },
+  "Pińczów": {
+   "query": "Pińczów",
+   "lng": 20.52562,
+   "lat": 50.52019
+  },
+  "Busko-Zdrój": {
+   "query": "Busko-Zdrój",
+   "lng": 20.71919,
+   "lat": 50.46759
+  },
+  "Kielce": {
+   "query": "Kielce",
+   "lng": 20.60992,
+   "lat": 50.85403
+  },
+  "Daleszyce": {
+   "query": "Daleszyce",
+   "lng": 20.80663,
+   "lat": 50.80199
+  },
+  "Lisów": {
+   "query": "Lisów, gmina Morawica",
+   "lng": 20.66484,
+   "lat": 50.69051
+  },
+  "Chęciny": {
+   "query": "Chęciny",
+   "lng": 20.46222,
+   "lat": 50.80008
+  },
+  "Odrowąż": {
+   "query": "Odrowąż, gmina Stąporków",
+   "lng": 20.65038,
+   "lat": 51.13332
+  },
+  "Ruski Bród": {
+   "query": "Ruski Bród",
+   "lng": 20.57351,
+   "lat": 51.28542
+  },
+  "Paradyż": {
+   "query": "Paradyż, powiat opoczyński",
+   "lng": 20.11393,
+   "lat": 51.30598
+  },
+  "Końskie": {
+   "query": "Końskie",
+   "lng": 20.40718,
+   "lat": 51.19102
+  },
+  "Opoczno": {
+   "query": "Opoczno",
+   "lng": 20.29318,
+   "lat": 51.37824
+  },
+  "Tomaszów Mazowiecki": {
+   "query": "Tomaszów Mazowiecki",
+   "lng": 20.03375,
+   "lat": 51.51949
+  },
+  "Dłutów": {
+   "query": "Dłutów",
+   "lng": 19.39283,
+   "lat": 51.55644
+  },
+  "Łask": {
+   "query": "Łask",
+   "lng": 19.13348,
+   "lat": 51.59299
+  },
+  "Sieradz": {
+   "query": "Sieradz",
+   "lng": 18.73788,
+   "lat": 51.59425
+  },
+  "Przysucha": {
+   "query": "Przysucha",
+   "lng": 20.62855,
+   "lat": 51.3585
+  },
+  "Piotrków Trybunalski": {
+   "query": "Piotrków Trybunalski",
+   "lng": 19.69617,
+   "lat": 51.40826
+  },
+  "Częstochowa": {
+   "query": "Częstochowa",
+   "lng": 19.12441,
+   "lat": 50.809
+  },
+  "Głogów": {
+   "query": "Głogów",
+   "lng": 16.08608,
+   "lat": 51.66342
+  },
+  "Szczucin": {
+   "query": "Szczucin",
+   "lng": 21.07516,
+   "lat": 50.30903
+  },
+  "Radgoszcz": {
+   "query": "Radgoszcz, powiat dąbrowski",
+   "lng": 21.11131,
+   "lat": 50.20537
+  },
+  "Radomyśl Wielki": {
+   "query": "Radomyśl Wielki",
+   "lng": 21.27616,
+   "lat": 50.19637
+  },
+  "Dąbrowa Tarnowska": {
+   "query": "Dąbrowa Tarnowska",
+   "lng": 20.98507,
+   "lat": 50.17435
+  },
+  "Opatowiec": {
+   "query": "Opatowiec",
+   "lng": 20.72378,
+   "lat": 50.24259
+  },
+  "Nowy Korczyn": {
+   "query": "Nowy Korczyn",
+   "lng": 20.80906,
+   "lat": 50.29943
+  },
+  "Kazimierza Wielka": {
+   "query": "Kazimierza Wielka",
+   "lng": 20.48533,
+   "lat": 50.26749
+  },
+  "Proszowice": {
+   "query": "Proszowice",
+   "lng": 20.29176,
+   "lat": 50.19265
+  },
+  "Koszyce": {
+   "query": "Koszyce, powiat proszowicki",
+   "lng": 20.57565,
+   "lat": 50.16698
+  },
+  "Otfinów": {
+   "query": "Otfinów",
+   "lng": 20.81217,
+   "lat": 50.18767
+  },
+  "Uście Solne": {
+   "query": "Uście Solne",
+   "lng": 20.51467,
+   "lat": 50.11926
+  },
+  "Kraków": {
+   "query": "Kraków",
+   "lng": 19.93686,
+   "lat": 50.06195
+  },
+  "Niepołomice": {
+   "query": "Niepołomice",
+   "lng": 20.21716,
+   "lat": 50.03312
+  },
+  "Wieliczka": {
+   "query": "Wieliczka",
+   "lng": 20.06021,
+   "lat": 49.98238
+  },
+  "Kobierzyn": {
+   "query": "Kobierzyn, Kraków",
+   "lng": 19.89193,
+   "lat": 50.0085
+  },
+  "Skawina": {
+   "query": "Skawina",
+   "lng": 19.82657,
+   "lat": 49.97475
+  },
+  "Zator": {
+   "query": "Zator",
+   "lng": 19.43768,
+   "lat": 49.99631
+  },
+  "Libiąż": {
+   "query": "Libiąż",
+   "lng": 19.31475,
+   "lat": 50.10305
+  },
+  "Chrzanów": {
+   "query": "Chrzanów",
+   "lng": 19.40285,
+   "lat": 50.14119
+  },
+  "Jaworzno": {
+   "query": "Jaworzno",
+   "lng": 19.27251,
+   "lat": 50.1895
+  },
+  "Pilzno": {
+   "query": "Pilzno",
+   "lng": 21.29084,
+   "lat": 49.97858
+  },
+  "Brzostek": {
+   "query": "Brzostek",
+   "lng": 21.41186,
+   "lat": 49.87847
+  },
+  "Jasło": {
+   "query": "Jasło",
+   "lng": 21.47431,
+   "lat": 49.74705
+  },
+  "Gorlice": {
+   "query": "Gorlice",
+   "lng": 21.16348,
+   "lat": 49.66633
+  },
+  "Tarnów": {
+   "query": "Tarnów",
+   "lng": 20.96406,
+   "lat": 50.02599
+  },
+  "Łódź": {
+   "query": "Łódź",
+   "lng": 19.47849,
+   "lat": 51.77282
+  },
+  "Toruń": {
+   "query": "Toruń",
+   "lng": 18.59658,
+   "lat": 53.01454
+  },
+  "Kalisz": {
+   "query": "Kalisz",
+   "lng": 18.07953,
+   "lat": 51.74729
+  },
+  "Nowy Dwór Mazowiecki": {
+   "query": "Nowy Dwór Mazowiecki",
+   "lng": 20.70611,
+   "lat": 52.43418
+  },
+  "Żmigród": {
+   "query": "Nowy Żmigród",
+   "lng": 21.52352,
+   "lat": 49.60392
+  },
+  "Miechów": {
+   "query": "Miechów",
+   "lng": 20.02769,
+   "lat": 50.3566
+  },
+  "Sulejów": {
+   "query": "Sulejów",
+   "lng": 19.88908,
+   "lat": 51.35492
+  },
+  "Kalwaria Zebrzydowska": {
+   "query": "Kalwaria Zebrzydowska",
+   "lng": 19.67631,
+   "lat": 49.86695
+  },
+  "Ciepielów": {
+   "query": "Ciepielów",
+   "lng": 21.57412,
+   "lat": 51.24823
+  },
+  "Szydłowiec": {
+   "query": "Szydłowiec",
+   "lng": 20.85751,
+   "lat": 51.22389
+  },
+  "Wąchock": {
+   "query": "Wąchock",
+   "lng": 21.01169,
+   "lat": 51.07381
+  },
+  "Żarówka": {
+   "query": "Zarówka, Radomyśl Wielki",
+   "lng": 21.23376,
+   "lat": 50.16032
+  },
+  "Chojne": {
+   "query": "Chojne, Sieradz",
+   "lng": 18.80156,
+   "lat": 51.53563
+  },
+  "Mogiła": {
+   "query": "Mogiła, Kraków",
+   "lng": 20.06149,
+   "lat": 50.06272
+  }
+ },
+ "formations": [
+  {
+   "id": "de_73id_vo",
+   "name_ru": "73-я пехотная дивизия",
+   "name_de": "73. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10782,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Участок у Яблонны между Вислой и Наревом (Lexikon, pl.wiki)."
+  },
+  {
+   "id": "de_fest_warschau_vo",
+   "name_ru": "Крепость Варшава",
+   "name_de": "Festung Warschau",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "branch": "Heer",
+   "type": "fortress",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "Комендант Gen.Lt. Erwin Jollasse (OKW-KTB). Численность не установлена (порядка нескольких тысяч, крепостные батальоны)."
+  },
+  {
+   "id": "de_337vgd_vo",
+   "name_ru": "337-я народно-гренадерская дивизия",
+   "name_de": "337. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10386,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Точный участок не найден; принят участок по Висле южнее Варшавы до Пилицы. Затем отход на север (Данциг)."
+  },
+  {
+   "id": "de_542vgd_vo",
+   "name_ru": "542-я народно-гренадерская дивизия",
+   "name_de": "542. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxvi_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "OKW-KTB ставит в XXXXVI Pz.K; de.wiki (статья дивизии) — 2. Armee, район Модлина. Подчинение спорно."
+  },
+  {
+   "id": "de_251id_vo",
+   "name_ru": "251-я пехотная дивизия",
+   "name_de": "251. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_viii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 11488,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Северный фас Магнушевского (Варецкого) плацдарма по Пилице."
+  },
+  {
+   "id": "de_6vgd_vo",
+   "name_ru": "6-я народно-гренадерская дивизия",
+   "name_de": "6. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_viii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 9436,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "За ней сосредоточены 19. и 25. Pz.Div. (DRZW 10/1 через de.wiki 19. Pz.Div.); разгромлена 14.01."
+  },
+  {
+   "id": "de_45vgd_vo",
+   "name_ru": "45-я народно-гренадерская дивизия",
+   "name_de": "45. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_viii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "Lexikon: 'Warka, Radom'. Участок принят на южном фасе по Радомке."
+  },
+  {
+   "id": "de_19pd_vo",
+   "name_ru": "19-я танковая дивизия",
+   "name_de": "19. Panzer-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxx_vo",
+   "branch": "Heer",
+   "type": "pz_div",
+   "strength": {
+    "personnel": 14888,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Резерв 9. Armee; Radom (Dez.44/Jan.45). Число танков не найдено."
+  },
+  {
+   "id": "de_25pd_vo",
+   "name_ru": "25-я танковая дивизия",
+   "name_de": "25. Panzer-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxx_vo",
+   "branch": "Heer",
+   "type": "pz_div",
+   "strength": {
+    "personnel": 13076,
+    "tanks": 68,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "68 ед. бронетехники: 5 Pz IV, 15 Pz IV/70, 21 Jagdpanzer IV/48, 23 Panther, 4 Flakpanzer IV (en.wiki)."
+  },
+  {
+   "id": "de_17id_vo",
+   "name_ru": "17-я пехотная дивизия",
+   "name_de": "17. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10828,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Пулавский плацдарм; Lexikon: 'Warka, Radom'. Точный участок не найден."
+  },
+  {
+   "id": "de_214id_vo",
+   "name_ru": "214-я пехотная дивизия",
+   "name_de": "214. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10328,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Разгромлена 16.01 (Lexikon). Lexikon в таблице пишет 'Baranow' — вероятно устаревшее место."
+  },
+  {
+   "id": "de_10pgd_vo",
+   "name_ru": "10-я моторизованная (панцергренадерская) дивизия",
+   "name_de": "10. Panzergrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lvi_vo",
+   "branch": "Heer",
+   "type": "pzgr_div",
+   "strength": {
+    "personnel": 5932,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "01.01 числилась за 4. PzA (самая слабая дивизия ГА 'А'); 14.01 введена в LVI Pz.K. OKW-KTB (de.wiki) ошибочно ставит её в XXXX Pz.K у Хейнрици. Без Pz.Jg.Abt.10."
+  },
+  {
+   "id": "de_brandenburg_vo",
+   "name_ru": "Панцергренадерская дивизия 'Бранденбург'",
+   "name_de": "Panzergrenadier-Division Brandenburg",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_pzk_gd_vo",
+   "branch": "Heer",
+   "type": "pzgr_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "Резерв ОКХ; переброшена из Восточной Пруссии, выгружалась у Лодзи с 15–18.01. Корпус GD подчинён 9. Armee."
+  },
+  {
+   "id": "de_342id_vo",
+   "name_ru": "342-я пехотная дивизия",
+   "name_de": "342. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10124,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "20-км участок на северном фасе плацдарма напротив Завихоста (de.wiki/Lexikon); pl.wiki: между Островцом и Тарлувом."
+  },
+  {
+   "id": "de_72id_vo",
+   "name_ru": "72-я пехотная дивизия",
+   "name_de": "72. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10493,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Точный участок не найден; Lexikon/de.wiki упоминают Опатув. 27.01 вышла к Одеру у Глогау."
+  },
+  {
+   "id": "de_88id_vo",
+   "name_ru": "88-я пехотная дивизия",
+   "name_de": "88. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10662,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "pl.wiki: вместе с 291. ID держала участок Łagów–Włostów. Командир с 08.01 Gen.Maj. Carl Anders."
+  },
+  {
+   "id": "de_291id_vo",
+   "name_ru": "291-я пехотная дивизия",
+   "name_de": "291. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10957,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "pl.wiki: участок у горы Шчитняк (Łysogóry), соседи 88. и 168. ID. de.wiki: смята у Ченстоховы; командир Finger погиб 27.01."
+  },
+  {
+   "id": "de_304id_vo",
+   "name_ru": "304-я пехотная дивизия",
+   "name_de": "304. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxviii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10667,
+    "tanks": 12,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div; ziemke"
+   },
+   "note": "pl.wiki: участок от Вислы у Облеконя до Стопницы (южный край западного фаса). StuG ≈12 — оценка Ziemke для дивизий XXXXVIII. Командир с 10.01 Gen.Maj. Liß."
+  },
+  {
+   "id": "de_68id_vo",
+   "name_ru": "68-я пехотная дивизия",
+   "name_de": "68. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxviii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 11697,
+    "tanks": 12,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div; ziemke"
+   },
+   "note": "Центр западного фаса (реконструкция); по Duffy комбат 68-й после артподготовки имел лишь взвод."
+  },
+  {
+   "id": "de_168id_vo",
+   "name_ru": "168-я пехотная дивизия",
+   "name_de": "168. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxviii_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 9978,
+    "tanks": 12,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div; ziemke"
+   },
+   "note": "Переброшена к плацдарму в начале января (de.wiki); северный участок XXXXVIII (сосед 291. ID). Командир с 06.01 Oberst Roßkopf."
+  },
+  {
+   "id": "de_16pd_vo",
+   "name_ru": "16-я танковая дивизия",
+   "name_de": "16. Panzer-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxiv_vo",
+   "branch": "Heer",
+   "type": "pz_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "Район отдыха Кельце с 10.1944; один панцергренадерский полк. К корпусу придан s.Pz.Abt. 424 (Tiger/Königstiger) — не дивизия, не включён. Число танков не найдено."
+  },
+  {
+   "id": "de_17pd_vo",
+   "name_ru": "17-я танковая дивизия",
+   "name_de": "17. Panzer-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxiv_vo",
+   "branch": "Heer",
+   "type": "pz_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "Командир Oberst Brux ранен и пленён 17.01. Схема Неринга показывает XXIV Pz.K у Хмельника 12.01."
+  },
+  {
+   "id": "de_20pgd_vo",
+   "name_ru": "20-я панцергренадерская дивизия",
+   "name_de": "20. Panzergrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxiv_vo",
+   "branch": "Heer",
+   "type": "pzgr_div",
+   "strength": {
+    "personnel": 14484,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "В декабре 1944 пополнялась у Кельце; оборона Кельце до 17.01 (Lexikon)."
+  },
+  {
+   "id": "de_371id_vo",
+   "name_ru": "371-я пехотная дивизия",
+   "name_de": "371. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lix_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "Левый фланг 17. Armee южнее Вислы: от Вислы (Borki–Słupiec–Szczucin) до восточнее Radgoszcz (Lexikon, подробная история)."
+  },
+  {
+   "id": "de_359id_vo",
+   "name_ru": "359-я пехотная дивизия",
+   "name_de": "359. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lix_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10081,
+    "tanks": null,
+    "guns": null,
+    "reliability": "A",
+    "source": "lexikon"
+   },
+   "note": "Списочная численность 01.01.1945 — 10 081 (Lexikon). Гр.полк 947 перед 12.01 передан в резерв XXXXVIII Pz.K."
+  },
+  {
+   "id": "de_544vgd_vo",
+   "name_ru": "544-я народно-гренадерская дивизия",
+   "name_de": "544. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_lix_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 9363,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Подчинение: LIX (Nafziger 31.12.44, en.wiki, Lexikon 359. ID: сосед) — против XI SS в OKW-KTB (de.wiki). Бои у Дембицы (de.wiki). Участок — реконструкция."
+  },
+  {
+   "id": "de_545vgd_vo",
+   "name_ru": "545-я народно-гренадерская дивизия",
+   "name_de": "545. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "Nafziger (31.12.44): XI SS-AK; с 08.1944 район Кросно. de/en.wiki: тяжёлые потери 'у Баранувского плацдарма', командир Obenaus пропал без вести; в списке OKW-KTB на 12.01 отсутствует. Участок спорный."
+  },
+  {
+   "id": "de_78vgd_vo",
+   "name_ru": "78-я народно-гренадерская (штурмовая) дивизия",
+   "name_de": "78. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 9715,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "Командир Gen.Maj. v. Hirschfeld, с 18.01 Schrepffer. Участок не найден; принят район Ясло."
+  },
+  {
+   "id": "de_320vgd_vo",
+   "name_ru": "320-я народно-гренадерская дивизия",
+   "name_de": "320. Volksgrenadier-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ss_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "de.wiki: XI SS, 17. Armee, 'Krakau'; бои у Кракова, затем Карпаты."
+  },
+  {
+   "id": "de_344id_vo",
+   "name_ru": "344-я пехотная дивизия",
+   "name_de": "344. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_hgra_res_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": null,
+    "tanks": null,
+    "guns": null,
+    "reliability": "C",
+    "source": null
+   },
+   "note": "12.01 'im Antransport' с Запада (OKW-KTB); Lexikon: применялась в районе Краков–Верхняя Силезия. Позиции не установлены."
+  },
+  {
+   "id": "de_75id_vo",
+   "name_ru": "75-я пехотная дивизия",
+   "name_de": "75. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ak_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 8441,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "1. PzA (XI. AK), Бескиды (Lexikon). Не в трёх армиях.",
+   "out_of_scope": true
+  },
+  {
+   "id": "de_253id_vo",
+   "name_ru": "253-я пехотная дивизия",
+   "name_de": "253. Infanterie-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xi_ak_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 8584,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "1. PzA (XI. AK), Бескиды (Lexikon). В февр. — LIX, Верхняя Силезия.",
+   "out_of_scope": true
+  },
+  {
+   "id": "de_97jd_vo",
+   "name_ru": "97-я егерская дивизия",
+   "name_de": "97. Jäger-Division",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxix_geb_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 10113,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "1. PzA (XXXXIX. Geb.K) на 12.01; в начале 1945 — Верхняя Силезия/Ратибор.",
+   "out_of_scope": true
+  },
+  {
+   "id": "de_1skijd_vo",
+   "name_ru": "1-я лыжно-егерская дивизия (боевая группа)",
+   "name_de": "1. Skijäger-Division (Kampfgruppe)",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxxix_geb_vo",
+   "branch": "Heer",
+   "type": "inf_div",
+   "strength": {
+    "personnel": 12014,
+    "tanks": null,
+    "guns": null,
+    "reliability": "B",
+    "source": "enwiki_div"
+   },
+   "note": "1. PzA (XXXXIX. Geb.K); позже 17. Armee/XI AK в Силезии.",
+   "out_of_scope": true
+  }
+ ],
+ "positions": [
+  {
+   "formation": "de_73id_vo",
+   "date": "1945-01-12",
+   "lng": 20.91779,
+   "lat": 52.37668,
+   "place": "Jabłonna (Weichsel–Narew)",
+   "approx_km": 8,
+   "source": "plwiki_div; lexikon",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_73id_vo",
+   "date": "1945-01-15",
+   "lng": 20.70611,
+   "lat": 52.43418,
+   "place": "между Вислой и Наревом восточнее Модлина (смята)",
+   "approx_km": 15,
+   "source": "lexikon",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_73id_vo",
+   "date": "1945-01-21",
+   "lng": 18.59658,
+   "lat": 53.01454,
+   "place": "крепость Торн (Thorn), отход по приказу",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_fest_warschau_vo",
+   "date": "1945-01-12",
+   "lng": 21.07115,
+   "lat": 52.23337,
+   "place": "Warschau (левобережье)",
+   "approx_km": 5,
+   "source": "dewiki_WO",
+   "reliability": "A",
+   "time": "start"
+  },
+  {
+   "formation": "de_337vgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.21402,
+   "lat": 51.98438,
+   "place": "Висла южнее Варшавы (Góra Kalwaria)",
+   "approx_km": 20,
+   "source": "dewiki_WO; nafziger",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_542vgd_vo",
+   "date": "1945-01-12",
+   "lng": 20.67493,
+   "lat": 52.43967,
+   "place": "Modlin",
+   "approx_km": 12,
+   "source": "dewiki_WO; dewiki_div",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_251id_vo",
+   "date": "1945-01-12",
+   "lng": 21.18338,
+   "lat": 51.7851,
+   "place": "Warka, северный фас по Пилице",
+   "approx_km": 8,
+   "source": "lexikon; dewiki_div",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_251id_vo",
+   "date": "1945-01-14",
+   "lng": 21.18338,
+   "lat": 51.7851,
+   "place": "Warka (прорыв 5 Уд.А)",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_6vgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.09101,
+   "lat": 51.64646,
+   "place": "западный/юго-западный фас плацдарма (Stromiec)",
+   "approx_km": 12,
+   "source": "dewiki_div",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_6vgd_vo",
+   "date": "1945-01-14",
+   "lng": 21.09101,
+   "lat": 51.64646,
+   "place": "Stromiec – разгромлена",
+   "approx_km": 12,
+   "source": "dewiki_div",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_45vgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.31771,
+   "lat": 51.62318,
+   "place": "южный фас плацдарма по Радомке (Głowaczów)",
+   "approx_km": 12,
+   "source": "lexikon",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_19pd_vo",
+   "date": "1945-01-12",
+   "lng": 21.12356,
+   "lat": 51.51387,
+   "place": "район Radom–Jedlińsk, за 6. VGD",
+   "approx_km": 15,
+   "source": "dewiki_div",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_19pd_vo",
+   "date": "1945-01-14",
+   "lng": 21.09101,
+   "lat": 51.64646,
+   "place": "контратака у Магнушевского плацдарма (Stromiec)",
+   "approx_km": 15,
+   "source": "dewiki_div",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_19pd_vo",
+   "date": "1945-01-21",
+   "lng": 18.73788,
+   "lat": 51.59425,
+   "place": "на Варте у Sieradz вместе с Pz.K. GD",
+   "approx_km": 15,
+   "source": "lexikon; nehring_ifz",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_25pd_vo",
+   "date": "1945-01-12",
+   "lng": 20.94975,
+   "lat": 51.64823,
+   "place": "Białobrzegi (NW Radom)",
+   "approx_km": 8,
+   "source": "dewiki_div; lexikon",
+   "reliability": "A",
+   "time": "start"
+  },
+  {
+   "formation": "de_25pd_vo",
+   "date": "1945-01-14",
+   "lng": 20.94975,
+   "lat": 51.64823,
+   "place": "Białobrzegi – запоздавшая контратака",
+   "approx_km": 10,
+   "source": "dewiki_div",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_25pd_vo",
+   "date": "1945-01-16",
+   "lng": 20.94975,
+   "lat": 51.64823,
+   "place": "окружена северо-западнее Радома",
+   "approx_km": 25,
+   "source": "dewiki_div",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_25pd_vo",
+   "date": "1945-01-22",
+   "lng": 18.73788,
+   "lat": 51.59425,
+   "place": "связь с 'Wanderkessel Nehring' (р-н Sieradz)",
+   "approx_km": 30,
+   "source": "lexikon",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_17id_vo",
+   "date": "1945-01-12",
+   "lng": 21.81256,
+   "lat": 51.47437,
+   "place": "северный сектор Пулавского плацдарма (Gniewoszów)",
+   "approx_km": 15,
+   "source": "dewiki_WO; lexikon",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_17id_vo",
+   "date": "1945-01-15",
+   "lng": 21.16074,
+   "lat": 51.41673,
+   "place": "отброшена к Радому и южнее",
+   "approx_km": 20,
+   "source": "dewiki_div",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_214id_vo",
+   "date": "1945-01-12",
+   "lng": 21.8,
+   "lat": 51.3,
+   "place": "южный сектор Пулавского плацдарма (зап. Janowiec)",
+   "approx_km": 15,
+   "source": "dewiki_WO",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_214id_vo",
+   "date": "1945-01-16",
+   "lng": 21.58447,
+   "lat": 51.35647,
+   "place": "разгромлена (р-н Zwoleń)",
+   "approx_km": 20,
+   "source": "lexikon",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_10pgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.23732,
+   "lat": 51.16242,
+   "place": "район сосредоточения не установлен (между Илжей и Зволенем)",
+   "approx_km": 30,
+   "source": "lexikon",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_10pgd_vo",
+   "date": "1945-01-14",
+   "lng": 21.57412,
+   "lat": 51.24823,
+   "place": "контрудар юго-восточнее Zwoleń",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_10pgd_vo",
+   "date": "1945-01-17",
+   "lng": 20.85751,
+   "lat": 51.22389,
+   "place": "отход на запад (Szydłowiec)",
+   "approx_km": 25,
+   "source": "lexikon",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_brandenburg_vo",
+   "date": "1945-01-18",
+   "lng": 19.47849,
+   "lat": 51.77282,
+   "place": "Łódź (выгрузка)",
+   "approx_km": 15,
+   "source": "nehring_ifz; ziemke",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_brandenburg_vo",
+   "date": "1945-01-22",
+   "lng": 18.73788,
+   "lat": 51.59425,
+   "place": "Варта у Sieradz — соединение с группой Неринга",
+   "approx_km": 15,
+   "source": "nehring_ifz",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_342id_vo",
+   "date": "1945-01-12",
+   "lng": 21.62,
+   "lat": 50.89,
+   "place": "участок Ostrowiec–Tarłów, напротив Zawichost",
+   "approx_km": 15,
+   "source": "dewiki_div; plwiki_div",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_342id_vo",
+   "date": "1945-01-17",
+   "lng": 20.65038,
+   "lat": 51.13332,
+   "place": "в 'блуждающем котле' Неринга (Odrowąż)",
+   "approx_km": 20,
+   "source": "nehring_ifz",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_342id_vo",
+   "date": "1945-01-22",
+   "lng": 18.73788,
+   "lat": 51.59425,
+   "place": "Варта у Sieradz (KG вышла к своим)",
+   "approx_km": 20,
+   "source": "nehring_ifz; dewiki_div",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_72id_vo",
+   "date": "1945-01-12",
+   "lng": 21.42383,
+   "lat": 50.80177,
+   "place": "северный фас, район Opatów",
+   "approx_km": 15,
+   "source": "dewiki_div",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_72id_vo",
+   "date": "1945-01-22",
+   "lng": 18.73788,
+   "lat": 51.59425,
+   "place": "Варта у Sieradz с группой Неринга",
+   "approx_km": 20,
+   "source": "nehring_ifz",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_88id_vo",
+   "date": "1945-01-12",
+   "lng": 21.26266,
+   "lat": 50.76099,
+   "place": "участок Łagów–Włostów",
+   "approx_km": 12,
+   "source": "plwiki_div",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_88id_vo",
+   "date": "1945-01-22",
+   "lng": 18.73788,
+   "lat": 51.59425,
+   "place": "Варта у Sieradz с группой Неринга",
+   "approx_km": 20,
+   "source": "nehring_ifz",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_291id_vo",
+   "date": "1945-01-12",
+   "lng": 21.04234,
+   "lat": 50.67504,
+   "place": "гора Szczytniak (у Raków/Łagów)",
+   "approx_km": 10,
+   "source": "plwiki_div",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_291id_vo",
+   "date": "1945-01-27",
+   "lng": 19.12441,
+   "lat": 50.809,
+   "place": "Częstochowa — гибель командира, остатки",
+   "approx_km": 20,
+   "source": "plwiki_div; dewiki_div",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_304id_vo",
+   "date": "1945-01-12",
+   "lng": 20.97491,
+   "lat": 50.38503,
+   "place": "участок Oblekoń (Висла) – Stopnica",
+   "approx_km": 10,
+   "source": "plwiki_div",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_68id_vo",
+   "date": "1945-01-12",
+   "lng": 20.97157,
+   "lat": 50.51452,
+   "place": "западный фас между Stopnica и Szydłów",
+   "approx_km": 12,
+   "source": "enwiki_WO",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_168id_vo",
+   "date": "1945-01-12",
+   "lng": 21.02345,
+   "lat": 50.63291,
+   "place": "западный фас между Szydłów и Raków",
+   "approx_km": 12,
+   "source": "plwiki_div; dewiki_div",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-12",
+   "lng": 20.80663,
+   "lat": 50.80199,
+   "place": "район Kielce–Daleszyce",
+   "approx_km": 15,
+   "source": "lexikon; nehring_ifz",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-15",
+   "lng": 20.60992,
+   "lat": 50.85403,
+   "place": "прорыв бронечастей через Kielce на запад",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-12",
+   "lng": 20.75104,
+   "lat": 50.6146,
+   "place": "район Chmielnik",
+   "approx_km": 10,
+   "source": "nehring_ifz",
+   "reliability": "A",
+   "time": "start"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-13",
+   "lng": 20.66484,
+   "lat": 50.69051,
+   "place": "контратака в р-не Lisów (южнее Кельце)",
+   "approx_km": 15,
+   "source": "enwiki_WO",
+   "reliability": "C"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-12",
+   "lng": 20.60992,
+   "lat": 50.85403,
+   "place": "Kielce",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "B",
+   "time": "start"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-14",
+   "lng": 20.60992,
+   "lat": 50.85403,
+   "place": "оборона Kielce",
+   "approx_km": 8,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-16",
+   "lng": 20.60992,
+   "lat": 50.85403,
+   "place": "блуждающий котёл XXIV Pz.K: Kielce (схема Неринга 16.I)",
+   "approx_km": 10,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-17",
+   "lng": 20.65038,
+   "lat": 51.13332,
+   "place": "блуждающий котёл XXIV Pz.K: Odrowąż",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-18",
+   "lng": 20.57351,
+   "lat": 51.28542,
+   "place": "блуждающий котёл XXIV Pz.K: Ruski Bród",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-19",
+   "lng": 20.11393,
+   "lat": 51.30598,
+   "place": "блуждающий котёл XXIV Pz.K: Paradyż",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-20",
+   "lng": 20.03375,
+   "lat": 51.51949,
+   "place": "блуждающий котёл XXIV Pz.K: Tomaszów Mazowiecki (ночь 20/21)",
+   "approx_km": 10,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-21",
+   "lng": 19.39283,
+   "lat": 51.55644,
+   "place": "блуждающий котёл XXIV Pz.K: Dłutów (полдень)",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "date": "1945-01-22",
+   "lng": 18.80156,
+   "lat": 51.53563,
+   "place": "блуждающий котёл XXIV Pz.K: Chojne/Sieradz, Варта",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-16",
+   "lng": 20.60992,
+   "lat": 50.85403,
+   "place": "блуждающий котёл XXIV Pz.K: Kielce (схема Неринга 16.I)",
+   "approx_km": 10,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-17",
+   "lng": 20.65038,
+   "lat": 51.13332,
+   "place": "блуждающий котёл XXIV Pz.K: Odrowąż",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-18",
+   "lng": 20.57351,
+   "lat": 51.28542,
+   "place": "блуждающий котёл XXIV Pz.K: Ruski Bród",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-19",
+   "lng": 20.11393,
+   "lat": 51.30598,
+   "place": "блуждающий котёл XXIV Pz.K: Paradyż",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-20",
+   "lng": 20.03375,
+   "lat": 51.51949,
+   "place": "блуждающий котёл XXIV Pz.K: Tomaszów Mazowiecki (ночь 20/21)",
+   "approx_km": 10,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-21",
+   "lng": 19.39283,
+   "lat": 51.55644,
+   "place": "блуждающий котёл XXIV Pz.K: Dłutów (полдень)",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "date": "1945-01-22",
+   "lng": 18.80156,
+   "lat": 51.53563,
+   "place": "блуждающий котёл XXIV Pz.K: Chojne/Sieradz, Варта",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-17",
+   "lng": 20.65038,
+   "lat": 51.13332,
+   "place": "блуждающий котёл XXIV Pz.K: Odrowąż",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-18",
+   "lng": 20.57351,
+   "lat": 51.28542,
+   "place": "блуждающий котёл XXIV Pz.K: Ruski Bród",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-19",
+   "lng": 20.11393,
+   "lat": 51.30598,
+   "place": "блуждающий котёл XXIV Pz.K: Paradyż",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-20",
+   "lng": 20.03375,
+   "lat": 51.51949,
+   "place": "блуждающий котёл XXIV Pz.K: Tomaszów Mazowiecki (ночь 20/21)",
+   "approx_km": 10,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-21",
+   "lng": 19.39283,
+   "lat": 51.55644,
+   "place": "блуждающий котёл XXIV Pz.K: Dłutów (полдень)",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "date": "1945-01-22",
+   "lng": 18.80156,
+   "lat": 51.53563,
+   "place": "блуждающий котёл XXIV Pz.K: Chojne/Sieradz, Варта",
+   "approx_km": 8,
+   "source": "nehring_ifz",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_371id_vo",
+   "date": "1945-01-12",
+   "lng": 21.09323,
+   "lat": 50.2572,
+   "place": "участок Szczucin – восточнее Radgoszcz",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "A",
+   "time": "start"
+  },
+  {
+   "formation": "de_371id_vo",
+   "date": "1945-01-15",
+   "lng": 20.81217,
+   "lat": 50.18767,
+   "place": "переправа через Дунаец у Otfinów",
+   "approx_km": 5,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_371id_vo",
+   "date": "1945-01-16",
+   "lng": 20.51467,
+   "lat": 50.11926,
+   "place": "позиция a2 на Рабе/Висле, Uście Solne",
+   "approx_km": 8,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_371id_vo",
+   "date": "1945-01-18",
+   "lng": 19.89193,
+   "lat": 50.0085,
+   "place": "южнее Кракова, линия Rżąka–Piaski–Kurdwanów–Kobierzyn–Sidzina",
+   "approx_km": 6,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_371id_vo",
+   "date": "1945-01-22",
+   "lng": 19.31475,
+   "lat": 50.10305,
+   "place": "отход Skawina–Zator–Oświęcim, сбор у Libiąż–Chrzanów",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_371id_vo",
+   "date": "1945-01-23",
+   "lng": 19.27251,
+   "lat": 50.1895,
+   "place": "бои за Trzebinia–Chrzanów–Jaworzno",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_359id_vo",
+   "date": "1945-01-12",
+   "lng": 21.23376,
+   "lat": 50.16032,
+   "place": "линия Radgoszcz (вост.) – Żarówka – Stara Jastrząbka",
+   "approx_km": 8,
+   "source": "lexikon",
+   "reliability": "A",
+   "time": "start"
+  },
+  {
+   "formation": "de_359id_vo",
+   "date": "1945-01-14",
+   "lng": 20.80906,
+   "lat": 50.29943,
+   "place": "марш через Dąbrowa Tarnowska, переправа через Вислу у Opatowiec/Nowy Korczyn",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_359id_vo",
+   "date": "1945-01-16",
+   "lng": 20.48533,
+   "lat": 50.26749,
+   "place": "бои у Kazimierza Wielka – Proszowice – Koszyce",
+   "approx_km": 15,
+   "source": "lexikon",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_359id_vo",
+   "date": "1945-01-17",
+   "lng": 20.12,
+   "lat": 50.13,
+   "place": "позиция a2 северо-восточнее Кракова",
+   "approx_km": 10,
+   "source": "lexikon",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_359id_vo",
+   "date": "1945-01-18",
+   "lng": 20.21716,
+   "lat": 50.03312,
+   "place": "переправа через Вислу у Mogiła/Niepołomice",
+   "approx_km": 6,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_359id_vo",
+   "date": "1945-01-20",
+   "lng": 20.06021,
+   "lat": 49.98238,
+   "place": "сбор в р-не Wieliczka",
+   "approx_km": 5,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_359id_vo",
+   "date": "1945-01-22",
+   "lng": 19.82657,
+   "lat": 49.97475,
+   "place": "оборона Skawina–Zator–Kalwaria (Wehrmachtbericht 22.01)",
+   "approx_km": 12,
+   "source": "lexikon",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_544vgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.29084,
+   "lat": 49.97858,
+   "place": "западнее Dębica (Pilzno)",
+   "approx_km": 15,
+   "source": "dewiki_div; nafziger",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_545vgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.41186,
+   "lat": 49.87847,
+   "place": "между Pilzno и Jasło (Brzostek)",
+   "approx_km": 25,
+   "source": "nafziger",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_78vgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.47431,
+   "lat": 49.74705,
+   "place": "район Jasło",
+   "approx_km": 20,
+   "source": "nafziger",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_320vgd_vo",
+   "date": "1945-01-12",
+   "lng": 21.16348,
+   "lat": 49.66633,
+   "place": "южный фланг XI SS-AK, р-н Gorlice",
+   "approx_km": 25,
+   "source": "dewiki_div",
+   "reliability": "C",
+   "time": "start"
+  },
+  {
+   "formation": "de_320vgd_vo",
+   "date": "1945-01-19",
+   "lng": 19.93686,
+   "lat": 50.06195,
+   "place": "бои под Краковом",
+   "approx_km": 20,
+   "source": "dewiki_div",
+   "reliability": "C"
+  }
+ ],
+ "new_corps": [
+  {
+   "id": "de_pzk_gd_vo",
+   "name_ru": "Танковый корпус 'Великая Германия'",
+   "name_de": "Panzerkorps Großdeutschland",
+   "parent": "de_9a_vo",
+   "position": {
+    "date": "1945-01-18",
+    "lng": 19.47849,
+    "lat": 51.77282,
+    "place": "Łódź",
+    "approx_km": 15
+   },
+   "note": "Резерв ОКХ, с 15.01 передан ГА 'А' (Saucken); прибыл с дивизией Brandenburg (FJ-Pz.Gren.Div. 2 HG — частично)."
+  },
+  {
+   "id": "de_hgra_res_vo",
+   "name_ru": "Резерв ГА 'А' (условный узел)",
+   "name_de": "Heeresgruppe A Reserve",
+   "parent": "de_hgra_vo",
+   "position": null,
+   "note": "Не корпус: условный родитель для 344. ID и др. резервов (391. Sich.Div., Div.Stäbe z.b.V. 601/602/603/608)."
+  },
+  {
+   "id": "de_xi_ak_vo",
+   "name_ru": "XI армейский корпус",
+   "name_de": "XI. Armeekorps (v. Bünau)",
+   "parent": "de_1pza_vo",
+   "position": null,
+   "note": "1. PzA/Armeegruppe Heinrici, НЕ 17. Armee (en.wiki ошибочно). Вне трёх армий."
+  },
+  {
+   "id": "de_xxxxix_geb_vo",
+   "name_ru": "XXXXIX горный корпус",
+   "name_de": "XXXXIX. Gebirgskorps (Le Suire)",
+   "parent": "de_1pza_vo",
+   "position": null,
+   "note": "1. PzA. Вне трёх армий."
+  }
+ ],
+ "tasks": [
+  [
+   "de_73id_vo",
+   "01-12",
+   "defend",
+   "Jabłonna",
+   "Оборона по Висле севернее Варшавы"
+  ],
+  [
+   "de_73id_vo",
+   "01-16",
+   "withdraw",
+   "Toruń",
+   "Приказ отойти в Festung Thorn; дата приблизительна"
+  ],
+  [
+   "de_fest_warschau_vo",
+   "01-12",
+   "hold",
+   "Warszawa",
+   "Fester Platz"
+  ],
+  [
+   "de_fest_warschau_vo",
+   "01-17",
+   "withdraw",
+   "Warszawa",
+   "Гарнизон оставил город 17.01 (Ziemke); Варшава занята 47 А и 1 Арм. ВП"
+  ],
+  [
+   "de_337vgd_vo",
+   "01-12",
+   "defend",
+   "Góra Kalwaria",
+   ""
+  ],
+  [
+   "de_337vgd_vo",
+   "01-17",
+   "withdraw",
+   null,
+   "С XXXXVI Pz.K за Вислу в полосу 2. Armee (en.wiki/Duffy)"
+  ],
+  [
+   "de_542vgd_vo",
+   "01-12",
+   "defend",
+   "Modlin",
+   ""
+  ],
+  [
+   "de_251id_vo",
+   "01-14",
+   "defend",
+   "Warka",
+   "Тяжёлые потери; затем отход на север к Висле/2. Armee"
+  ],
+  [
+   "de_6vgd_vo",
+   "01-14",
+   "defend",
+   "Stromiec",
+   "Аufgerieben 8 гв.А"
+  ],
+  [
+   "de_45vgd_vo",
+   "01-14",
+   "defend",
+   "Głowaczów",
+   ""
+  ],
+  [
+   "de_19pd_vo",
+   "01-14",
+   "counterattack",
+   "Stromiec",
+   "По de.wiki смогла остановить противника на своём участке"
+  ],
+  [
+   "de_19pd_vo",
+   "01-17",
+   "withdraw",
+   "Łódź",
+   "Отход к Лодзи/Варте"
+  ],
+  [
+   "de_25pd_vo",
+   "01-14",
+   "counterattack",
+   "Białobrzegi",
+   "Наткнулась на прорвавшиеся танки, потеряла большую часть техники"
+  ],
+  [
+   "de_25pd_vo",
+   "01-16",
+   "breakout",
+   null,
+   "Прорыв из окружения на запад"
+  ],
+  [
+   "de_17id_vo",
+   "01-14",
+   "defend",
+   "Gniewoszów",
+   "Прорыв 69 и 33 А"
+  ],
+  [
+   "de_17id_vo",
+   "01-16",
+   "withdraw",
+   null,
+   "LVI Pz.K окружён и отжат от Радома к югу"
+  ],
+  [
+   "de_214id_vo",
+   "01-14",
+   "defend",
+   null,
+   ""
+  ],
+  [
+   "de_10pgd_vo",
+   "01-14",
+   "counterattack",
+   "Ciepielów",
+   "В составе LVI Pz.K"
+  ],
+  [
+   "de_10pgd_vo",
+   "01-16",
+   "defend",
+   null,
+   "Круговая оборона"
+  ],
+  [
+   "de_10pgd_vo",
+   "01-17",
+   "withdraw",
+   "Szydłowiec",
+   "Остатки к 28.01 у Глогау за Одером"
+  ],
+  [
+   "de_brandenburg_vo",
+   "01-18",
+   "regroup",
+   "Łódź",
+   "Выгрузка под ударами 1 Бел.Ф"
+  ],
+  [
+   "de_brandenburg_vo",
+   "01-22",
+   "hold",
+   "Sieradz",
+   "Принимает группу Неринга на Варте"
+  ],
+  [
+   "de_342id_vo",
+   "01-14",
+   "withdraw",
+   null,
+   "Отход под угрозой окружения"
+  ],
+  [
+   "de_342id_vo",
+   "01-16",
+   "breakout",
+   "Odrowąż",
+   "С ~16.01 подчинена Нерингу"
+  ],
+  [
+   "de_72id_vo",
+   "01-16",
+   "breakout",
+   null,
+   "Под командованием Неринга"
+  ],
+  [
+   "de_88id_vo",
+   "01-12",
+   "defend",
+   null,
+   ""
+  ],
+  [
+   "de_88id_vo",
+   "01-16",
+   "breakout",
+   null,
+   "Под командованием Неринга"
+  ],
+  [
+   "de_291id_vo",
+   "01-12",
+   "defend",
+   "Raków",
+   ""
+  ],
+  [
+   "de_291id_vo",
+   "01-13",
+   "withdraw",
+   null,
+   ""
+  ],
+  [
+   "de_304id_vo",
+   "01-12",
+   "defend",
+   null,
+   "Под главным ударом 1 Укр.Ф; разгромлена 12–13.01"
+  ],
+  [
+   "de_304id_vo",
+   "01-13",
+   "withdraw",
+   null,
+   "Остатки на юго-запад; переформирование в Праге/Остраве (февр.)"
+  ],
+  [
+   "de_68id_vo",
+   "01-12",
+   "defend",
+   null,
+   "Разгромлена в первый день"
+  ],
+  [
+   "de_168id_vo",
+   "01-12",
+   "defend",
+   null,
+   "Почти полностью уничтожена"
+  ],
+  [
+   "de_16pd_vo",
+   "01-12",
+   "counterattack",
+   null,
+   "Контрудар XXIV Pz.K; дивизия раздроблена на боевые группы, частью окружена"
+  ],
+  [
+   "de_17pd_vo",
+   "01-12",
+   "counterattack",
+   "Chmielnik",
+   "Застигнута в районах сосредоточения, тяжёлые потери от авиации и артиллерии"
+  ],
+  [
+   "de_17pd_vo",
+   "01-13",
+   "counterattack",
+   "Lisów",
+   "Встречный бой с 4 ТА (вместе с s.Pz.Abt. 424) — C"
+  ],
+  [
+   "de_20pgd_vo",
+   "01-14",
+   "defend",
+   "Kielce",
+   "Удерживает Кельце до 16/17.01"
+  ],
+  [
+   "de_16pd_vo",
+   "01-17",
+   "breakout",
+   "Odrowąż",
+   "Группа Неринга прорывается из района СЗ Кельце"
+  ],
+  [
+   "de_16pd_vo",
+   "01-19",
+   "withdraw",
+   "Paradyż",
+   "Переправа через Пилицу"
+  ],
+  [
+   "de_16pd_vo",
+   "01-22",
+   "regroup",
+   "Sieradz",
+   "Соединение с Pz.K. GD на Варте; далее на Глогау"
+  ],
+  [
+   "de_17pd_vo",
+   "01-17",
+   "breakout",
+   "Odrowąż",
+   "Группа Неринга прорывается из района СЗ Кельце"
+  ],
+  [
+   "de_17pd_vo",
+   "01-19",
+   "withdraw",
+   "Paradyż",
+   "Переправа через Пилицу"
+  ],
+  [
+   "de_17pd_vo",
+   "01-22",
+   "regroup",
+   "Sieradz",
+   "Соединение с Pz.K. GD на Варте; далее на Глогау"
+  ],
+  [
+   "de_20pgd_vo",
+   "01-17",
+   "breakout",
+   "Odrowąż",
+   "Группа Неринга прорывается из района СЗ Кельце"
+  ],
+  [
+   "de_20pgd_vo",
+   "01-19",
+   "withdraw",
+   "Paradyż",
+   "Переправа через Пилицу"
+  ],
+  [
+   "de_20pgd_vo",
+   "01-22",
+   "regroup",
+   "Sieradz",
+   "Соединение с Pz.K. GD на Варте; далее на Глогау"
+  ],
+  [
+   "de_371id_vo",
+   "01-12",
+   "defend",
+   null,
+   "Отбила атаки, потеряла несколько сёл на левом фланге"
+  ],
+  [
+   "de_371id_vo",
+   "01-13",
+   "withdraw",
+   "Otfinów",
+   "Планомерный отход из-за прорыва севернее Вислы"
+  ],
+  [
+   "de_371id_vo",
+   "01-16",
+   "hold",
+   "Uście Solne",
+   "Позиция a2"
+  ],
+  [
+   "de_371id_vo",
+   "01-22",
+   "withdraw",
+   "Libiąż",
+   ""
+  ],
+  [
+   "de_359id_vo",
+   "01-12",
+   "regroup",
+   null,
+   "Выводится из линии (сменена 371. ID и 544. VGD) для флангового удара"
+  ],
+  [
+   "de_359id_vo",
+   "01-14",
+   "counterattack",
+   "Nowy Korczyn",
+   "Удар во фланг восточнее Ниды — безуспешно"
+  ],
+  [
+   "de_359id_vo",
+   "01-17",
+   "withdraw",
+   "Kraków",
+   "Под угрозой 59 и 60 А"
+  ],
+  [
+   "de_359id_vo",
+   "01-22",
+   "defend",
+   "Skawina",
+   ""
+  ],
+  [
+   "de_544vgd_vo",
+   "01-12",
+   "defend",
+   "Pilzno",
+   "С 13–15.01 растягивает фронт на участок 359. ID"
+  ],
+  [
+   "de_545vgd_vo",
+   "01-15",
+   "defend",
+   "Brzostek",
+   "Против 38 А 4 Укр.Ф (реконструкция)"
+  ],
+  [
+   "de_78vgd_vo",
+   "01-15",
+   "defend",
+   "Jasło",
+   "Ясло освобождено 16.01 — отход на запад"
+  ],
+  [
+   "de_78vgd_vo",
+   "01-17",
+   "withdraw",
+   null,
+   ""
+  ],
+  [
+   "de_320vgd_vo",
+   "01-15",
+   "defend",
+   "Gorlice",
+   ""
+  ],
+  [
+   "de_320vgd_vo",
+   "01-19",
+   "withdraw",
+   "Kraków",
+   "Отход в Западные Карпаты (XI SS-AK)"
+  ],
+  [
+   "de_344id_vo",
+   "01-12",
+   "reserve",
+   null,
+   "В пути к ГА 'А'"
+  ]
+ ],
+ "gaps": [
+  "Точные границы участков дивизий 9. Armee (337., 45. VGD, 17., 214. ID) и XI SS-AK (545., 78., 320. VGD), а также 544. VGD — не найдены; координаты C.",
+  "Подчинение 545. VGD на 12.01 (XI SS-AK по Nafziger vs. 'Баранув' по wiki; отсутствует в OKW-KTB) и 544. VGD (LIX vs XI SS) — противоречия.",
+  "'9. Infanterie-Division (Gebb)' в VIII AK по OKW-KTB (de.wiki) не подтверждена: 9. ID уничтожена в 08.1944; вероятна ошибка — не включена.",
+  "Численность танков/StuG по 16., 17., 19. Pz.Div. и 20. PGD не найдена (DRZW 10/1 и Jentz недоступны); есть только 25. Pz.Div. (68 АФВ). Орудия по дивизиям — нет данных.",
+  "Численность личного состава 16., 17. Pz.Div., 45., 320., 545., 542. VGD, 371. ID, Festung Warschau — нет.",
+  "Позиции 12.01 для 10. PGD (числилась за 4. PzA) не установлены; движения 17., 214. ID, 251., 45., 337. VGD после 14.01 — лишь общие.",
+  "Дальнейший путь XXXXVIII Pz.K (штаб уцелел) и остатков 304., 68., 168. ID 13–20.01 — не найден.",
+  "Положение 1. Sperr-Brigade (XXXXVI Pz.K, Nafziger/Sawicki), s.Pz.Abt. 424, 391. Sich.Div., 48. VGD (резерв ГА по Sawicki) — не включены/не уточнены.",
+  "Лагекарты Ost 12.01.1945 и Glantz 1986 Art of War Symposium (HathiTrust) недоступны из этой среды (403)."
+ ]
+}

@@ -35,7 +35,7 @@
   }
  },
  "allocation": {
-  "note": "Тот же порядок, что в Берлинской: численность, танки и орудия фронта (Кривошеев; Ziemke) делятся между армиями по числу дивизий после вычета заданных явно; боевая доля 0,6 у советских фронтов и 0,75 у немецких армий. Правила — откалиброванные по Берлинской операции, без изменений.",
+  "note": "Тот же порядок, что в Берлинской: численность, танки и орудия фронта (Кривошеев; Ziemke) делятся между армиями по числу дивизий после вычета заданных явно; боевая доля 0,6 у советских фронтов и 0,75 у немецких армий. Правила — откалиброванные по Берлинской операции, без изменений. Дивизии: доля армии по весу (танковая 1,3, пехотная и моторизованная 1, крепость 0,6) — тем же мерилом, что у Берлинской операции; танки танковых и моторизованных дивизий — заданы (25 тд — 68 по источнику, остальные — оценка C).",
   "fronts": {
    "su_1bf_vo": {
     "personnel": 1028900,
@@ -295,52 +295,193 @@
   },
   {
    "id": "de_xxxxvi_vo",
-   "type": "panzer_corps",
-   "divisions": 3
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_73id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_fest_warschau_vo",
+   "type": "fortress",
+   "divisions": 0.6
+  },
+  {
+   "id": "de_337vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_542vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
   },
   {
    "id": "de_viii_vo",
-   "type": "inf_corps",
-   "divisions": 3
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_251id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_6vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_45vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
   },
   {
    "id": "de_lvi_vo",
-   "type": "panzer_corps",
-   "divisions": 3
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_17id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_214id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_10pgd_vo",
+   "type": "pzgr_div",
+   "divisions": 1.0,
+   "tanks": 30
   },
   {
    "id": "de_xxxx_vo",
-   "type": "panzer_corps",
-   "divisions": 2,
-   "posture": "reserve",
-   "note": "резерв 9 А: 19-я и 25-я танковые дивизии (Z)"
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_19pd_vo",
+   "type": "pz_div",
+   "divisions": 1.3,
+   "tanks": 80,
+   "posture": "reserve"
+  },
+  {
+   "id": "de_25pd_vo",
+   "type": "pz_div",
+   "divisions": 1.3,
+   "tanks": 68,
+   "posture": "reserve"
   },
   {
    "id": "de_xxxxii_vo",
-   "type": "inf_corps",
-   "divisions": 4
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_342id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_72id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_88id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_291id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
   },
   {
    "id": "de_xxiv_vo",
-   "type": "panzer_corps",
-   "divisions": 3,
-   "posture": "reserve",
-   "note": "резерв 4 ТА: 16-я и 17-я танковые дивизии и 20-я моторизованная (Z)"
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_16pd_vo",
+   "type": "pz_div",
+   "divisions": 1.3,
+   "tanks": 100,
+   "posture": "reserve"
+  },
+  {
+   "id": "de_17pd_vo",
+   "type": "pz_div",
+   "divisions": 1.3,
+   "tanks": 100,
+   "posture": "reserve"
+  },
+  {
+   "id": "de_20pgd_vo",
+   "type": "pzgr_div",
+   "divisions": 1.0,
+   "tanks": 40,
+   "posture": "reserve"
   },
   {
    "id": "de_xxxxviii_vo",
-   "type": "panzer_corps",
-   "divisions": 3
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_304id_vo",
+   "type": "inf_div",
+   "divisions": 1.0,
+   "tanks": 12
+  },
+  {
+   "id": "de_68id_vo",
+   "type": "inf_div",
+   "divisions": 1.0,
+   "tanks": 12
+  },
+  {
+   "id": "de_168id_vo",
+   "type": "inf_div",
+   "divisions": 1.0,
+   "tanks": 12
   },
   {
    "id": "de_lix_vo",
-   "type": "inf_corps",
-   "divisions": 4
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_371id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_359id_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_544vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
   },
   {
    "id": "de_xi_ss_vo",
-   "type": "inf_corps",
-   "divisions": 4
+   "note": "штаб: действуют дивизии (docs/sources/vistula-oder-1945-divisions.json)"
+  },
+  {
+   "id": "de_545vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_78vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
+  },
+  {
+   "id": "de_320vgd_vo",
+   "type": "inf_div",
+   "divisions": 1.0
   },
   {
    "id": "de_pzk_gd_vo",
@@ -376,7 +517,7 @@
  ],
  "orders": {
   "mode": "tasks",
-  "note": "Исторические задачи из набора данных (137, без задач штабов групп армий и армий: у корпусов свои). Цель — ключ справочника. Без подгонки: правила — ww2-berlin-cal как есть.",
+  "note": "Исторические задачи из набора данных (137, без задач штабов групп армий и армий: у корпусов свои). Цель — ключ справочника. Без подгонки: правила — ww2-berlin-cal как есть. Задачи дивизий — из docs/sources/vistula-oder-1945-divisions.json (цели вне справочника местности — координатами).",
   "tasks": [
    [
     "su_47a_vo",
@@ -1238,6 +1379,412 @@
     "hold",
     null,
     "крепость «держаться» (приказ Гитлера; Z)"
+   ],
+   [
+    "de_73id_vo",
+    "01-12",
+    "defend",
+    "20.9178,52.3767",
+    "Оборона по Висле севернее Варшавы"
+   ],
+   [
+    "de_73id_vo",
+    "01-16",
+    "withdraw",
+    "18.5966,53.0145",
+    "Приказ отойти в Festung Thorn; дата приблизительна"
+   ],
+   [
+    "de_fest_warschau_vo",
+    "01-12",
+    "hold",
+    "Warszawa",
+    "Fester Platz"
+   ],
+   [
+    "de_fest_warschau_vo",
+    "01-17",
+    "withdraw",
+    "Warszawa",
+    "Гарнизон оставил город 17.01 (Ziemke); Варшава занята 47 А и 1 Арм. ВП"
+   ],
+   [
+    "de_337vgd_vo",
+    "01-12",
+    "defend",
+    "21.2140,51.9844",
+    ""
+   ],
+   [
+    "de_337vgd_vo",
+    "01-17",
+    "withdraw",
+    null,
+    "С XXXXVI Pz.K за Вислу в полосу 2. Armee (en.wiki/Duffy)"
+   ],
+   [
+    "de_542vgd_vo",
+    "01-12",
+    "defend",
+    "Modlin",
+    ""
+   ],
+   [
+    "de_251id_vo",
+    "01-14",
+    "defend",
+    "Warka",
+    "Тяжёлые потери; затем отход на север к Висле/2. Armee"
+   ],
+   [
+    "de_6vgd_vo",
+    "01-14",
+    "defend",
+    "21.0910,51.6465",
+    "Аufgerieben 8 гв.А"
+   ],
+   [
+    "de_45vgd_vo",
+    "01-14",
+    "defend",
+    "21.3177,51.6232",
+    ""
+   ],
+   [
+    "de_19pd_vo",
+    "01-14",
+    "counterattack",
+    "21.0910,51.6465",
+    "По de.wiki смогла остановить противника на своём участке"
+   ],
+   [
+    "de_19pd_vo",
+    "01-17",
+    "withdraw",
+    "19.4785,51.7728",
+    "Отход к Лодзи/Варте"
+   ],
+   [
+    "de_25pd_vo",
+    "01-14",
+    "counterattack",
+    "20.9498,51.6482",
+    "Наткнулась на прорвавшиеся танки, потеряла большую часть техники"
+   ],
+   [
+    "de_25pd_vo",
+    "01-16",
+    "breakout",
+    null,
+    "Прорыв из окружения на запад"
+   ],
+   [
+    "de_17id_vo",
+    "01-14",
+    "defend",
+    "21.8126,51.4744",
+    "Прорыв 69 и 33 А"
+   ],
+   [
+    "de_17id_vo",
+    "01-16",
+    "withdraw",
+    null,
+    "LVI Pz.K окружён и отжат от Радома к югу"
+   ],
+   [
+    "de_214id_vo",
+    "01-14",
+    "defend",
+    null,
+    ""
+   ],
+   [
+    "de_10pgd_vo",
+    "01-14",
+    "counterattack",
+    "21.5741,51.2482",
+    "В составе LVI Pz.K"
+   ],
+   [
+    "de_10pgd_vo",
+    "01-16",
+    "defend",
+    null,
+    "Круговая оборона"
+   ],
+   [
+    "de_10pgd_vo",
+    "01-17",
+    "withdraw",
+    "20.8575,51.2239",
+    "Остатки к 28.01 у Глогау за Одером"
+   ],
+   [
+    "de_342id_vo",
+    "01-14",
+    "withdraw",
+    null,
+    "Отход под угрозой окружения"
+   ],
+   [
+    "de_342id_vo",
+    "01-16",
+    "breakout",
+    "20.6504,51.1333",
+    "С ~16.01 подчинена Нерингу"
+   ],
+   [
+    "de_72id_vo",
+    "01-16",
+    "breakout",
+    null,
+    "Под командованием Неринга"
+   ],
+   [
+    "de_88id_vo",
+    "01-12",
+    "defend",
+    null,
+    ""
+   ],
+   [
+    "de_88id_vo",
+    "01-16",
+    "breakout",
+    null,
+    "Под командованием Неринга"
+   ],
+   [
+    "de_291id_vo",
+    "01-12",
+    "defend",
+    "21.0423,50.6750",
+    ""
+   ],
+   [
+    "de_291id_vo",
+    "01-13",
+    "withdraw",
+    null,
+    ""
+   ],
+   [
+    "de_304id_vo",
+    "01-12",
+    "defend",
+    null,
+    "Под главным ударом 1 Укр.Ф; разгромлена 12–13.01"
+   ],
+   [
+    "de_304id_vo",
+    "01-13",
+    "withdraw",
+    null,
+    "Остатки на юго-запад; переформирование в Праге/Остраве (февр.)"
+   ],
+   [
+    "de_68id_vo",
+    "01-12",
+    "defend",
+    null,
+    "Разгромлена в первый день"
+   ],
+   [
+    "de_168id_vo",
+    "01-12",
+    "defend",
+    null,
+    "Почти полностью уничтожена"
+   ],
+   [
+    "de_16pd_vo",
+    "01-12",
+    "counterattack",
+    null,
+    "Контрудар XXIV Pz.K; дивизия раздроблена на боевые группы, частью окружена"
+   ],
+   [
+    "de_17pd_vo",
+    "01-12",
+    "counterattack",
+    "Chmielnik",
+    "Застигнута в районах сосредоточения, тяжёлые потери от авиации и артиллерии"
+   ],
+   [
+    "de_17pd_vo",
+    "01-13",
+    "counterattack",
+    "20.6648,50.6905",
+    "Встречный бой с 4 ТА (вместе с s.Pz.Abt. 424) — C"
+   ],
+   [
+    "de_20pgd_vo",
+    "01-14",
+    "defend",
+    "Kielce",
+    "Удерживает Кельце до 16/17.01"
+   ],
+   [
+    "de_16pd_vo",
+    "01-17",
+    "breakout",
+    "20.6504,51.1333",
+    "Группа Неринга прорывается из района СЗ Кельце"
+   ],
+   [
+    "de_16pd_vo",
+    "01-19",
+    "withdraw",
+    "20.1139,51.3060",
+    "Переправа через Пилицу"
+   ],
+   [
+    "de_16pd_vo",
+    "01-22",
+    "regroup",
+    "Sieradz",
+    "Соединение с Pz.K. GD на Варте; далее на Глогау"
+   ],
+   [
+    "de_17pd_vo",
+    "01-17",
+    "breakout",
+    "20.6504,51.1333",
+    "Группа Неринга прорывается из района СЗ Кельце"
+   ],
+   [
+    "de_17pd_vo",
+    "01-19",
+    "withdraw",
+    "20.1139,51.3060",
+    "Переправа через Пилицу"
+   ],
+   [
+    "de_17pd_vo",
+    "01-22",
+    "regroup",
+    "Sieradz",
+    "Соединение с Pz.K. GD на Варте; далее на Глогау"
+   ],
+   [
+    "de_20pgd_vo",
+    "01-17",
+    "breakout",
+    "20.6504,51.1333",
+    "Группа Неринга прорывается из района СЗ Кельце"
+   ],
+   [
+    "de_20pgd_vo",
+    "01-19",
+    "withdraw",
+    "20.1139,51.3060",
+    "Переправа через Пилицу"
+   ],
+   [
+    "de_20pgd_vo",
+    "01-22",
+    "regroup",
+    "Sieradz",
+    "Соединение с Pz.K. GD на Варте; далее на Глогау"
+   ],
+   [
+    "de_371id_vo",
+    "01-12",
+    "defend",
+    null,
+    "Отбила атаки, потеряла несколько сёл на левом фланге"
+   ],
+   [
+    "de_371id_vo",
+    "01-13",
+    "withdraw",
+    "20.8122,50.1877",
+    "Планомерный отход из-за прорыва севернее Вислы"
+   ],
+   [
+    "de_371id_vo",
+    "01-16",
+    "hold",
+    "20.5147,50.1193",
+    "Позиция a2"
+   ],
+   [
+    "de_371id_vo",
+    "01-22",
+    "withdraw",
+    "19.3148,50.1031",
+    ""
+   ],
+   [
+    "de_359id_vo",
+    "01-12",
+    "regroup",
+    null,
+    "Выводится из линии (сменена 371. ID и 544. VGD) для флангового удара"
+   ],
+   [
+    "de_359id_vo",
+    "01-14",
+    "counterattack",
+    "20.8091,50.2994",
+    "Удар во фланг восточнее Ниды — безуспешно"
+   ],
+   [
+    "de_359id_vo",
+    "01-17",
+    "withdraw",
+    "19.9369,50.0620",
+    "Под угрозой 59 и 60 А"
+   ],
+   [
+    "de_359id_vo",
+    "01-22",
+    "defend",
+    "19.8266,49.9748",
+    ""
+   ],
+   [
+    "de_544vgd_vo",
+    "01-12",
+    "defend",
+    "Pilzno",
+    "С 13–15.01 растягивает фронт на участок 359. ID"
+   ],
+   [
+    "de_545vgd_vo",
+    "01-15",
+    "defend",
+    "21.4119,49.8785",
+    "Против 38 А 4 Укр.Ф (реконструкция)"
+   ],
+   [
+    "de_78vgd_vo",
+    "01-15",
+    "defend",
+    "21.4743,49.7471",
+    "Ясло освобождено 16.01 — отход на запад"
+   ],
+   [
+    "de_78vgd_vo",
+    "01-17",
+    "withdraw",
+    null,
+    ""
+   ],
+   [
+    "de_320vgd_vo",
+    "01-15",
+    "defend",
+    "21.1635,49.6663",
+    ""
+   ],
+   [
+    "de_320vgd_vo",
+    "01-19",
+    "withdraw",
+    "19.9369,50.0620",
+    "Отход в Западные Карпаты (XI SS-AK)"
    ]
   ]
  },
@@ -1460,5 +2007,8 @@
    "source": "DW/PW (B)",
    "control": true
   }
+ ],
+ "extraDatasets": [
+  "../../../../../docs/sources/vistula-oder-1945-divisions.json"
  ]
 }
