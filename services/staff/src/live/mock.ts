@@ -71,6 +71,29 @@ export function mockAdvice(prompt: string) {
   };
 }
 
+/** Извлечение для базы знаний (проверка стенда): предложения с датами или числами — факты с дословной цитатой. */
+export function mockExtract(prompt: string) {
+  const text = prompt.split(/Фрагмент:\n\n/)[1] ?? '';
+  const sentences = text.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 20 && x.length < 220);
+  const pick = sentences.filter((x) => /\d/.test(x)).slice(0, 4);
+  if (!pick.length) return { items: [] };
+  const name = /([А-ЯЁ][а-яё]+(?:ая|ский|ое)? (?:операция|сражение|бой|армия|корпус|дивизия))/.exec(text)?.[1] ?? `Сведения: ${pick[0].split(/\s+/).slice(0, 4).join(' ')}`;
+  const cat = /операци/.test(name) ? 'operations' : /сражени|бой/.test(name) ? 'battles' : /арми|корпус|дивизи/.test(name) ? 'formations' : 'chronology';
+  const key = ({ operations: 'outcome', battles: 'course', formations: 'path' } as Record<string, string>)[cat] ?? 'event';
+  const date = /(\d{1,2})\s+(января|февраля|марта|апреля|мая)\s+(1945)/.exec(text);
+  const months: Record<string, string> = { января: '01', февраля: '02', марта: '03', апреля: '04', мая: '05' };
+  const iso = date ? `${date[3]}-${months[date[2]]}-${date[1].padStart(2, '0')}` : null;
+  return { items: [{ category: cat, title: name, aliases: [], summary: pick[0], facts: pick.map((q) => ({ key, value: q.replace(/[.!?]$/, ''), quote: q })), relations: [], dateFrom: iso, dateTo: null }] };
+}
+
+/** Ответ по материалам базы знаний (проверка стенда): пересказ первых материалов со ссылками. */
+export function mockKbAnswer(prompt: string): string {
+  const mats = [...prompt.matchAll(/^\[(\d+)\] (.+)\n(.+)/gm)].slice(0, 3);
+  const topic = /Расскажите по теме «(.+?)»/.exec(prompt)?.[1] ?? /Вопрос: (.*)/.exec(prompt)?.[1] ?? '';
+  if (!mats.length) return `Подставная модель (проверка стенда). В базе знаний об этом нет сведений: «${topic}».`;
+  return `Подставная модель (проверка стенда). По запросу «${topic}»:\n\n${mats.map(([, n, t, x]) => `- **${t}**: ${x.slice(0, 220)} [${n}]`).join('\n')}\n\nПодробнее — в материалах по ссылкам.`;
+}
+
 const sse = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
 
 /** Подставной сервер модели. delayMs — пауза между кусками ответа (имитация генерации). */
@@ -85,8 +108,10 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
     req.on('end', async () => {
       const body = JSON.parse(b || '{}') as { messages?: { role: string; content: string }[] };
       const user = [...(body.messages ?? [])].reverse().find((m) => m.role === 'user')?.content ?? '';
-      const isAdvisor = (body.messages ?? []).some((m) => m.role === 'system' && m.content.includes('Вы — советник'));
-      const answer = JSON.stringify(isAdvisor ? mockAdvice(user) : mockDecision(user));
+      const sys = (body.messages ?? []).find((m) => m.role === 'system')?.content ?? '';
+      const answer = sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user))
+        : sys.includes('преподаватель военной истории') ? mockKbAnswer(user)
+        : JSON.stringify(sys.includes('Вы — советник') ? mockAdvice(user) : mockDecision(user));
       res.writeHead(200, { 'content-type': 'text/event-stream' });
       const wait = () => new Promise((r) => setTimeout(r, delayMs));
       for (const w of 'Оцениваю обстановку по докладам и разведсводке. '.split(' ')) { res.write(sse({ choices: [{ delta: { reasoning_content: w + ' ' } }] })); await wait(); }

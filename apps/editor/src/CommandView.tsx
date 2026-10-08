@@ -18,6 +18,7 @@ import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
 import { download, Legend, Player } from './ReplayView';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
+import * as kb from './kb/kb';
 
 export const SAVE_KEY = 'def_ops.game';
 export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
@@ -410,7 +411,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           const id = ++checkId.current;
           const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
           setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
-          send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft: draftText() });
+          const draft = draftText();
+          void kb.reference(`${topic} ${q}`, cat === 'history').then((reference) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference }));
         }}
         dyn={advDyn} focus={focus}
         accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}

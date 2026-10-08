@@ -35,7 +35,7 @@ export type GameRequest =
   /** Ход без новых приказов противника (модель не ответила). */
   | { kind: 'skip-ai' }
   /** Вопрос советнику: категория, вопрос, проект решения словами, предыдущие вопросы и ответы. */
-  | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[] }
+  | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string }
   /** Посредник: показать на карте всех (без тумана войны). */
   | { kind: 'reveal'; on: boolean };
 

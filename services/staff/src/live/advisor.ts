@@ -89,7 +89,7 @@ export const ADVICE_TREE: AdviceNode[] = [
 export const ADVICE_CATEGORIES = ADVICE_TREE.map((c) => ({ id: c.id, title: c.title }));
 
 export interface AdviceSuggestion { formation: string; task: StaffOrder['task']; area: string; toArea: string | null; why: string }
-export const ADVICE_BASIS = ['доклады', 'разведка', 'правила', 'история', 'общие знания'] as const;
+export const ADVICE_BASIS = ['доклады', 'разведка', 'правила', 'история', 'база знаний', 'общие знания'] as const;
 export interface Advice { answer: string; basis: string[]; unknowns: string[]; suggestions: AdviceSuggestion[]; followUps: string[] }
 
 const str = { type: 'string' };
@@ -180,6 +180,8 @@ export interface AdviceRequest {
   goal: string;
   /** Предыдущие вопросы и ответы этой беседы (последние). */
   thread: { q: string; a: string }[];
+  /** Справка из базы знаний (доктрина, техника, местность; в вопросах истории — и ход боёв). */
+  reference?: string;
 }
 
 export function buildAdvice(ctx: SimContext, g: GameState, history: History, cfg: AdvisorConfig, tpl: { system: string; user: string; profile: string }, req: AdviceRequest, scenarioDescription: string) {
@@ -197,6 +199,7 @@ export function buildAdvice(ctx: SimContext, g: GameState, history: History, cfg
   const user = fill(tpl.user, {
     moment: momentRu(g.state.time), turn: String(g.state.turn + 1), goal: req.goal,
     ...p.vars, rear: rearText(ctx, g, cfg.side), draft: req.draft.trim() || '- пока ничего', history: historyText,
+    reference: req.reference?.trim() ? `\nСправка из базы знаний (общие сведения, не обстановка; положение и силы противника из неё не выводить):\n${req.reference.trim()}\n` : '',
     category: req.topic || cat.title, question: req.question,
   }, 'advisor.user.md');
   const messages: ChatMessage[] = [{ role: 'system', content: system }];

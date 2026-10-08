@@ -1,22 +1,25 @@
 /**
  * Оболочка приложения: колонка разделов слева и рабочая область раздела.
  * Разделы: редактор карт, переигровка операций, карты-подложки, справочник знаков,
+ * база знаний (материалы, загрузка документов, вопросы к модели),
  * штаб (связь с моделью, которая командует противником в игре). Раздел запоминается в адресе (#editor, #replay…).
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
+import { KnowledgeView } from './KnowledgeView';
 import { MapsPanel } from './MapsPanel';
 import { BasemapControls, Icon } from './ui';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
 
-type Section = 'editor' | 'replay' | 'maps' | 'library' | 'staff';
+type Section = 'editor' | 'replay' | 'maps' | 'library' | 'knowledge' | 'staff';
 const SECTIONS: { id: Section; title: string; icon: ReactNode; soon?: boolean }[] = [
   { id: 'editor', title: 'Редактор', icon: Icon.editor },
   { id: 'replay', title: 'Переигровка', icon: Icon.replay },
   { id: 'maps', title: 'Карты', icon: Icon.maps },
   { id: 'library', title: 'Знаки', icon: Icon.library },
+  { id: 'knowledge', title: 'Знания', icon: Icon.knowledge },
   { id: 'staff', title: 'Штаб', icon: Icon.staff },
 ];
 const fromHash = (): Section => {
@@ -58,6 +61,7 @@ export function Shell() {
         {mounted.has('replay') && <div className="pane" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
         {section === 'maps' && <MapsView bm={bm} server={server} />}
         {section === 'library' && <iframe className="pane lib" src="/library.html" title="Справочник знаков" />}
+        {mounted.has('knowledge') && <div className="pane" hidden={section !== 'knowledge'}><KnowledgeView llm={llm} /></div>}
         {section === 'staff' && <StaffView llm={llm} />}
       </div>
     </div>
