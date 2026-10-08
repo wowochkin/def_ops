@@ -72,6 +72,8 @@ main { position: relative; min-width: 0; min-height: 0; }
 .h-draft { fill: #1f6fd1; stroke: #fff; pointer-events: none !important; }
 .h-corner { fill: #fff; stroke: #8e44ad; stroke-width: 2; cursor: move; }
 .ov-frame { fill: none; stroke: #8e44ad; stroke-dasharray: 4 3; pointer-events: none !important; }
+.drawbar { position: absolute; left: 50%; top: 46px; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; background: rgba(255,255,255,.95); border: 1px solid #c9c2ad; border-radius: 6px; padding: 5px 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.18); z-index: 5; }
+.drawbar button { font-size: 12px; }
 .hintbar { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: rgba(20,20,20,.82); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; max-width: 80%; }
 
 /* инспектор */

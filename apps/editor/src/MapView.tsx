@@ -202,6 +202,8 @@ export function MapView(props: Props) {
           if (s) { anchor = { featureId: s.featureId, t: s.t }; p0 = proj.toLngLat(s.point); }
         }
         setDraft({ points: [p0], anchor });
+        // фокус уходит с полей (поиск знака и т. п.), чтобы Enter / Backspace / Esc работали для линии
+        (document.activeElement as HTMLElement | null)?.blur?.();
       } else {
         const last = draft.points[draft.points.length - 1];
         const a = map.project(last);
@@ -465,6 +467,15 @@ export function MapView(props: Props) {
         <g ref={worldRef} transform={transform} className={drawing ? 'nohit' : 'hit'} />
       </svg>
       <svg className="handles">{handles}</svg>
+      {drawing && draft && tool.kind !== 'symbol' && tool.kind !== 'label' && (
+        // явные кнопки: не зависят от двойного щелчка и фокуса клавиатуры
+        <div className="drawbar">
+          <span>точек: {draft.points.length}</span>
+          <button onClick={() => finishDraft()} disabled={draft.points.length < (tool.kind === 'area' ? 3 : 2)} title="Завершить (Enter, двойной щелчок)">✓ Готово</button>
+          <button onClick={() => setDraft(draft.points.length > 1 ? { ...draft, points: draft.points.slice(0, -1) } : null)} title="Убрать последнюю точку (Backspace)">↶ точка</button>
+          <button onClick={() => { setDraft(null); setHover(null); }} title="Отменить линию (Esc)">✕</button>
+        </div>
+      )}
       <ScaleBar engine={mapRef.current} tick={tick} />
     </div>
   );
