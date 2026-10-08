@@ -139,15 +139,23 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   };
   // контроль территории и подвоз — по положению на начало хода
   const sup = ctx.scenario.supply ? supplyState(ctx, active(), now, terr) : null;
-  // подвоз к формированию — к его клетке или соседней
+  // подвоз к формированию — к любой клетке его полосы в пределах половины дистанции боя:
+  // армия и корпус занимают район в несколько км глубиной, подвоз приходит к их тыловой части,
+  // а не к точке знака (иначе вплотную к узлу обороны противника знак «отрезан»)
+  const supKm = Math.max(R.contactKm / 2, 1);
   const supplyHours = (f: Formation, at: LngLat = f.position) => {
     const fld = sup?.fields.get(f.side);
     if (!fld) return 0;
     const i = T.indexOf(at);
     if (i < 0) return Infinity;
-    const rc = 1, c0 = i % T.cols, r0 = Math.floor(i / T.cols); // своя клетка и соседние: в зоне своего формирования путь не закрыт
+    const p0 = T.proj.toXY(at), c0 = i % T.cols, r0 = Math.floor(i / T.cols);
+    const rc = Math.max(1, Math.ceil(supKm / T.cellKm) + 1);
     let best = Infinity;
-    for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) if (T.inside(c, r)) best = Math.min(best, fld[r * T.cols + c]);
+    for (let r = r0 - rc; r <= r0 + rc; r++) for (let c = c0 - rc; c <= c0 + rc; c++) {
+      if (!T.inside(c, r)) continue;
+      const q = T.cellCenter(c, r);
+      if (Math.hypot(q[0] - p0[0], q[1] - p0[1]) <= Math.max(supKm, T.cellKm * 1.5)) best = Math.min(best, fld[r * T.cols + c]);
+    }
     return best;
   };
   const range = (f: Formation) => profileOf(ctx, f.side).supply?.rangeHours ?? Infinity;
@@ -249,13 +257,18 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     }
   }
 
-  // территория: клетки на пути и вокруг положения формирований переходят к их стороне, если рядом нет противника
+  // территория: клетки на пути и вокруг положения формирований переходят к их стороне, если противник к ним не ближе
   if (terr && R.territory) {
     const before = new Map(prev.formations.map((f) => [f.id, f.position]));
     const live = active();
     const rk = R.territory.radiusKm;
-    const enemyNear = (side: number, p: XY) => live.some((e) => sideIdx(e.side) !== side && dist(xy(e), p) < rk);
-    claimTerritory(T, terr, live.map((f) => ({ side: sideIdx(f.side), from: before.get(f.id) ?? f.position, to: f.position })), enemyNear, rk);
+    const enemyCloser = (side: number, p: XY, km: number) => live.some((e) => sideIdx(e.side) !== side && dist(xy(e), p) < km);
+    // отходящие чужую землю не занимают (иначе отход сквозь тыл противника рвёт его коридоры подвоза)
+    claimTerritory(T, terr, live.filter((f) => f.posture !== 'withdraw').map((f) => ({ side: sideIdx(f.side), from: before.get(f.id) ?? f.position, to: f.position })), enemyCloser, rk);
+    // клетка, где стоит формирование, — его стороны (если там нет и противника)
+    const at = new Map<number, Set<number>>();
+    for (const f of live) { const i = T.indexOf(f.position); if (i >= 0) at.set(i, (at.get(i) ?? new Set()).add(sideIdx(f.side))); }
+    for (const [i, ss] of at) if (ss.size === 1) terr[i] = [...ss][0];
   }
 
   // занятые клетки чужих укреплённых полос — прорваны

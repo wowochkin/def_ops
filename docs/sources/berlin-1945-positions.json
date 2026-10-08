@@ -2163,6 +2163,15 @@
     }
    },
    "note": "с 15.04 подчинён ГА «Висла»; с 23–24.04 основу обороны составляет LVI тк"
+  },
+  {
+   "id": "de_festung_stettin",
+   "name_ru": "Гарнизон крепости Штеттин (Festung Stettin)",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxii",
+   "branch": "fortress",
+   "note": "выделен из XXXII ак: гарнизон Штеттина в полосе корпуса (DW_SRO); 25.04 Хейнрици приказал оставить крепость, 26.04 город занят 65 А (DW_SB; RW_SR). Численность — доля корпуса (C)"
   }
  ],
  "positions": [
@@ -5061,6 +5070,27 @@
    "sector_note": "капитуляция гарнизона",
    "source": "RW_BNO; Z p.497",
    "reliability": "A"
+  },
+  {
+   "formation": "de_festung_stettin",
+   "date": "1945-04-16",
+   "time": "start",
+   "lng": 14.553,
+   "lat": 53.428,
+   "approx_km": 3,
+   "place": "Szczecin",
+   "source": "DW_SRO",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_festung_stettin",
+   "date": "1945-04-26",
+   "lng": 14.2,
+   "lat": 53.5,
+   "approx_km": 25,
+   "place": "отход на запад после оставления крепости",
+   "source": "DW_SB (C по месту)",
+   "reliability": "C"
   }
  ],
  "frontline": [

@@ -116,9 +116,9 @@ export function initialTerritory(T: Theatre, points: { side: number; at: LngLat 
 
 /**
  * Занятие территории: клетки в радиусе radiusKm от пути формирования за ход (отрезок
- * от прежнего положения к новому) переходят к его стороне, если рядом нет противника.
+ * от прежнего положения к новому) переходят к его стороне, если противник к ним не ближе.
  */
-export function claimTerritory(T: Theatre, owner: Int8Array, moves: { side: number; from: LngLat; to: LngLat }[], enemyNear: (side: number, cell: [number, number]) => boolean, radiusKm: number) {
+export function claimTerritory(T: Theatre, owner: Int8Array, moves: { side: number; from: LngLat; to: LngLat }[], enemyCloser: (side: number, cell: [number, number], km: number) => boolean, radiusKm: number) {
   const rc = Math.ceil(radiusKm / T.cellKm) + 1;
   for (const m of moves) {
     const a = T.proj.toXY(m.from), b = T.proj.toXY(m.to);
@@ -134,8 +134,9 @@ export function claimTerritory(T: Theatre, owner: Int8Array, moves: { side: numb
         const i = r * T.cols + c;
         if (owner[i] === m.side) continue;
         const p = T.cellCenter(c, r);
-        if (Math.hypot(p[0] - q[0], p[1] - q[1]) > radiusKm) continue;
-        if (!enemyNear(m.side, p)) owner[i] = m.side;
+        const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+        if (d > radiusKm) continue;
+        if (!enemyCloser(m.side, p, d)) owner[i] = m.side;
       }
     }
   }

@@ -278,7 +278,14 @@
   {
    "id": "de_xxxii",
    "type": "inf_corps",
-   "divisions": 4
+   "divisions": 3,
+   "note": "одна дивизия — в гарнизоне Штеттина (de_festung_stettin)"
+  },
+  {
+   "id": "de_festung_stettin",
+   "type": "fortress",
+   "divisions": 1,
+   "posture": "defend"
   },
   {
    "id": "de_oder",
@@ -1779,6 +1786,20 @@
     "withdraw",
     "B_Koepenick",
     "в Берлин с LVI тк"
+   ],
+   [
+    "de_festung_stettin",
+    "04-15",
+    "hold",
+    null,
+    "крепость «держаться» (Festung)"
+   ],
+   [
+    "de_festung_stettin",
+    "04-25",
+    "withdraw",
+    "14.0,53.5",
+    "Хейнрици приказал оставить Штеттин 25.04 (DW_SB)"
    ]
   ]
  },
@@ -1896,8 +1917,10 @@
    "kind": "reach",
    "side": "su",
    "place": "Szczecin",
-   "radiusKm": 2,
-   "source": "ru-wiki (B)"
+   "radiusKm": 3,
+   "source": "ru-wiki (B)",
+   "control": true,
+   "note": "центр района «Szczecin» в справочнике местности — на Одере (14,59); Старый город в 2,7 км западнее, поэтому радиус 3 км"
   },
   {
    "id": "reichstag",

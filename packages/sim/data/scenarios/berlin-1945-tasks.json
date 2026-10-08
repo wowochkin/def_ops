@@ -554,9 +554,28 @@
     14.579,
     53.489
    ],
-   "personnel": 28500,
-   "tanks": 97,
-   "guns": 260,
+   "personnel": 21375,
+   "tanks": 73,
+   "guns": 195,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "note": "одна дивизия — в гарнизоне Штеттина (de_festung_stettin)"
+  },
+  {
+   "id": "de_festung_stettin",
+   "name": "Гарнизон крепости Штеттин (Festung Stettin)",
+   "side": "de",
+   "echelon": "division",
+   "parent": "de_xxxii",
+   "type": "fortress",
+   "position": [
+    14.553,
+    53.428
+   ],
+   "personnel": 7125,
+   "tanks": 24,
+   "guns": 65,
    "ammo": 1.5,
    "fuel": 0.7,
    "posture": "defend"
@@ -1178,6 +1197,15 @@
    "issuedAt": "1945-04-15T17:00",
    "source": "script",
    "note": "оборона Берлина"
+  },
+  {
+   "id": "de_festung_stettin@1945-04-15T18:00:hold",
+   "formation": "de_festung_stettin",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-15T17:00",
+   "source": "script",
+   "note": "крепость «держаться» (Festung)"
   },
   {
    "id": "de_ffo@1945-04-15T18:00:hold",
@@ -2666,6 +2694,18 @@
    "issuedAt": "1945-04-24T18:00",
    "source": "script",
    "note": "на центр Берлина"
+  },
+  {
+   "id": "de_festung_stettin@1945-04-25T18:00:withdraw",
+   "formation": "de_festung_stettin",
+   "task": "withdraw",
+   "target": [
+    14,
+    53.5
+   ],
+   "issuedAt": "1945-04-25T18:00",
+   "source": "script",
+   "note": "Хейнрици приказал оставить Штеттин 25.04 (DW_SB)"
   },
   {
    "id": "de_iii_ss@1945-04-25T18:00:withdraw",
