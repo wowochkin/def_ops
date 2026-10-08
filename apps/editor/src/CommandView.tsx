@@ -635,7 +635,7 @@ function Advisor({ msgs, ask, accept, drafted, onClose, onClear, dyn }: {
         {msgs.length > 0 && <button className="link" onClick={onClear}>очистить</button>}<button className="x" onClick={onClose} title="Закрыть">×</button></div>
       <div className="adv-body">
         {!msgs.length && <div className="adv-empty">
-          <p>Выберите тему ниже — категория, раздел, вопрос; разделы «По армиям», «По соединениям», «По резервам» собраны из текущей обстановки. Или найдите вопрос поиском, или спросите своими словами. Советник знает обстановку, ваш проект решения и правила арбитра; предложенные им приказы включаются в распоряжение одним нажатием.</p>
+          <p>Выберите тему ниже — категория, раздел, вопрос; разделы «По армиям», «По соединениям», «По резервам» собраны из текущей обстановки. Или найдите вопрос поиском, или спросите своими словами. Советник знает только то, что знает ваш штаб: доклады, разведсводку, ваш проект решения и правила арбитра; о противнике вне разведки сведений у него нет. Каждый ответ помечен, на что он опирается и чего штаб не знает. Предложенные приказы включаются в распоряжение одним нажатием.</p>
         </div>}
         {msgs.map((m) => (
           <div key={m.id} className="adv-msg">
@@ -644,6 +644,10 @@ function Advisor({ msgs, ask, accept, drafted, onClose, onClear, dyn }: {
               {m.result && !m.result.ok ? <span className="err">Советник не ответил: {m.result.error}</span>
                 : (m.answer || '…').split(/\n{2,}/).map((p, i) => <p key={i}>{p.split('\n').map((l, j) => <span key={j}>{l}<br /></span>)}</p>)}
               {!m.result && <span className="spinner" />}
+              {m.result?.ok && m.result.rewritten && <span className="adv-rew" key="rw">ответ переписан: в первом варианте были сведения, которых у штаба нет</span>}
+              {m.result?.warning && <div className="adv-warn">⚠ {m.result.warning}</div>}
+              {m.result?.ok && m.result.unknowns.length > 0 && <div className="adv-unk"><b>Неизвестно штабу:</b><ul>{m.result.unknowns.map((u, i) => <li key={i}>{u}</li>)}</ul></div>}
+              {m.result?.ok && m.result.basis.length > 0 && <div className="adv-basis">опора: {m.result.basis.map((b) => <i key={b} className={b === 'история' || b === 'общие знания' ? 'ext' : ''}>{b}</i>)}</div>}
               {m.result?.suggestions.map((sg, i) => (
                 <div key={i} className={`adv-sug${sg.ok ? '' : ' bad'}`}>
                   <div><b>{short(sg.name)}</b> — {TASK_RU[sg.task]}{sg.targetText ? `: ${sg.targetText}` : ''}</div>

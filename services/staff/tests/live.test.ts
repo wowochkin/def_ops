@@ -91,3 +91,40 @@ describe('советник штаба человека', () => {
     expect(r.suggestions[0].order?.formation).toMatch(/^su_/);
   }, 60000);
 });
+
+describe('советник: без выдумок и без скрытых сведений', () => {
+  it('в обстановке советника нет противника вне разведки; ответ с таким соединением переписывается, иначе — предупреждение', async () => {
+    const { advise, buildAdvice, leakedNames } = await import('../src/live');
+    const { loadHistory } = await import('@def-ops/sim/data');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-19T05:00', 'su');
+    const live = JSON.parse(read('live/berlin-1945-tasks.json'));
+    const tplA = { system: read('prompts/advisor.system.md'), user: read('prompts/advisor.user.md'), profile: read('profiles/rkka-1945.md') };
+    const built = buildAdvice(ctx, g, loadHistory('berlin-1945-tasks'), live.advisor, tplA,
+      { category: 'enemy', question: 'Где сейчас LVI танковый корпус и что задумал противник?', draft: '', goal: 'Знамя Победы', thread: [] }, live.description);
+    const prompt = built.messages.map((m) => m.content).join('\n');
+    // скрытые соединения (вне разведки) в промпт не попадают
+    expect(built.hidden.length).toBeGreaterThan(3);
+    for (const h of built.hidden) expect(leakedNames(prompt.split('Свои силы')[1] ?? '', [h]).length, h.name).toBe(0);
+    // ложных срабатываний на город нет: «Мюнхеберг» в кавычках — дивизия, без кавычек — город
+    const mun = built.hidden.filter((h) => h.name.includes('Мюнхеберг'));
+    if (mun.length) {
+      expect(leakedNames('Наступать на Мюнхеберг', mun)).toEqual([]);
+      expect(leakedNames('Дивизия "Мюнхеберг" отходит', mun).length).toBe(1);
+    }
+    // ответ, называющий скрытое соединение: модель просят переписать (подставная модель отвечает без него)
+    const hiddenName = built.hidden[0].name;
+    let calls = 0;
+    const fake = { config: { model: 'fake' }, chat: async (req: { messages: { role: string; content: string }[] }) => {
+      calls++;
+      const fixing = req.messages.some((m) => m.content.includes('Перепиши ответ'));
+      const answer = fixing ? 'Сведений о скрытых резервах противника нет; нужна разведка.' : `Противник: ${hiddenName} стоит у Берлина.`;
+      return { model: 'fake', content: '', reasoning: '', json: { answer, basis: ['разведка'], unknowns: [], suggestions: [], followUps: [] }, timings: { firstTokenMs: 0, totalMs: 1 } };
+    } } as unknown as LlmClient;
+    const r = await advise(fake, g, built);
+    expect(calls).toBe(2);
+    expect(r.rewritten).toBe(true);
+    expect(r.warning).toBeUndefined();
+    expect(r.answer).toContain('Сведений');
+  }, 60000);
+});

@@ -63,6 +63,8 @@ export function mockAdvice(prompt: string) {
   const weak = own.filter((l) => /ОТРЕЗАНО|состав [1-5]\d %/.test(l)).map(name);
   return {
     answer: `Подставной советник (проверка стенда). Категория: ${cat}. Вопрос: «${q}».\n\nВ строю ${own.length} объединений, противник обнаружен: ${enemy.length} соединений.${weak.length ? `\n\nТребуют внимания:\n${weak.map((w) => `- ${w}`).join('\n')}` : ''}\n\nРекомендую сосредоточить усилия на главном направлении и не растягивать коммуникации.`,
+    basis: ['доклады', 'разведка'],
+    unknowns: ['положение резервов противника за пределами разведки'],
     suggestions: own.length && areas.length ? [{ formation: name(own[0]), task: enemy.length ? 'attack' : 'regroup', area: enemy[0] ?? areas[0], toArea: enemy.length ? null : areas[0], why: 'поддержать главный удар' }] : [],
     followUps: ['Где противник может нанести контрудар?', 'Каким армиям не хватает подвоза?', 'Как быстрее выйти к цели операции?'],
   };

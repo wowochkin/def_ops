@@ -89,15 +89,18 @@ export const ADVICE_TREE: AdviceNode[] = [
 export const ADVICE_CATEGORIES = ADVICE_TREE.map((c) => ({ id: c.id, title: c.title }));
 
 export interface AdviceSuggestion { formation: string; task: StaffOrder['task']; area: string; toArea: string | null; why: string }
-export interface Advice { answer: string; suggestions: AdviceSuggestion[]; followUps: string[] }
+export const ADVICE_BASIS = ['доклады', 'разведка', 'правила', 'история', 'общие знания'] as const;
+export interface Advice { answer: string; basis: string[]; unknowns: string[]; suggestions: AdviceSuggestion[]; followUps: string[] }
 
 const str = { type: 'string' };
 export const ADVICE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['answer', 'suggestions', 'followUps'],
+  required: ['answer', 'basis', 'unknowns', 'suggestions', 'followUps'],
   properties: {
     answer: str,
+    basis: { type: 'array', items: { type: 'string', enum: [...ADVICE_BASIS] } },
+    unknowns: { type: 'array', items: str },
     suggestions: {
       type: 'array',
       items: {
@@ -146,6 +149,44 @@ function rearText(ctx: SimContext, g: GameState, side: string): string {
   return out.length ? out.join('\n') : '- Особых распоряжений нет.';
 }
 
+/**
+ * Соединения противника, которых штаб сейчас не видит (нет в разведсводке): их названия
+ * в ответе советника — утечка (из памяти модели об истории) или выдумка.
+ */
+export function hiddenEnemies(_ctx: SimContext, g: GameState, side: string, seen: string[]): { id: string; name: string; keys: string[] }[] {
+  // штабы объединений противника (армии, группы армий) — общеизвестная структура, не данные разведки: не считаются скрытыми
+  const vis = new Set(seen);
+  return g.state.formations.filter((f) => f.side !== side && !vis.has(f.id)).map((f) => ({ id: f.id, name: f.name, keys: nameKeys(f.name) })).filter((x) => x.keys.length);
+}
+
+/**
+ * Признаки названия для поиска в тексте: полное название без скобок; название в кавычках — только в
+ * кавычках («Мюнхеберг» — дивизия, Мюнхеберг без кавычек — город); оригинал в скобках.
+ */
+function nameKeys(name: string): string[] {
+  const low = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
+  const keys = new Set<string>();
+  const plain = low(name.replace(/\(.*?\)/g, ''));
+  if (plain.length >= 8) keys.add(plain);
+  for (const m of name.matchAll(/«([^»]{4,})»/g)) keys.add(`«${low(m[1])}»`);
+  // оригинал в скобках — только собственное имя латиницей («Festung Stettin»), а не пояснение («гарнизон»)
+  for (const m of name.matchAll(/\(([^()]{5,})\)/g)) if (/[a-z]/i.test(m[1])) keys.add(low(m[1]));
+  return [...keys];
+}
+
+/** Название упомянуто в тексте по основным словам («12-й армии» ≈ «12-я армия»). */
+function nameMentioned(text: string, name: string): boolean {
+  const st = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/\(.*?\)/g, '').split(/[^a-zа-я0-9]+/).filter((w) => w.length > 2 || /\d/.test(w)).map((w) => (/^\d/.test(w) ? w.replace(/\D.*$/, '') : w.slice(0, 5)));
+  const t = new Set(st(text)), n = st(name);
+  return n.length > 0 && n.every((w) => t.has(w));
+}
+
+/** Какие скрытые соединения противника упомянуты в тексте (кавычки "…" приравниваются к «…»). */
+export function leakedNames(text: string, hidden: { name: string; keys: string[] }[]): string[] {
+  const t = text.toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').replace(/["“„]([^"”]{4,}?)["”]/g, '«$1»');
+  return hidden.filter((h) => h.keys.some((k) => t.includes(k))).map((h) => h.name);
+}
+
 export interface AdviceRequest {
   category: string;
   /** Путь по дереву тем словами: «Решение › Наступление». */
@@ -177,15 +218,24 @@ export function buildAdvice(ctx: SimContext, g: GameState, history: History, cfg
     category: req.topic || cat.title, question: req.question,
   }, 'advisor.user.md');
   const messages: ChatMessage[] = [{ role: 'system', content: system }];
-  for (const t of req.thread.slice(-3)) messages.push({ role: 'user', content: t.q }, { role: 'assistant', content: JSON.stringify({ answer: t.a, suggestions: [], followUps: [] }) });
+  for (const t of req.thread.slice(-3)) messages.push({ role: 'user', content: t.q }, { role: 'assistant', content: JSON.stringify({ answer: t.a, basis: [], unknowns: [], suggestions: [], followUps: [] }) });
   messages.push({ role: 'user', content: user });
-  return { messages, parts: p };
+  // соединения, названные самим командующим, можно упоминать («сведений о нём нет»); положение и силы — всё равно нельзя (их нет в сведениях)
+  const asked = [req.question, ...req.thread.map((t) => t.q)].join('\n');
+  const hidden = hiddenEnemies(ctx, g, cfg.side, p.enemies.map((e) => e.id)).filter((h) => !leakedNames(asked, [h]).length && !nameMentioned(asked, h.name));
+  return { messages, parts: p, category: cat.id, hidden };
 }
 
 export interface AdviceResult {
   ok: boolean;
   error?: string;
   answer: string;
+  basis: string[];
+  unknowns: string[];
+  /** Предупреждение: ответ упоминает сведения, которых у штаба нет (после попытки переписать). */
+  warning?: string;
+  /** Ответ переписан по требованию проверки. */
+  rewritten?: boolean;
   /** Предложенные приказы, сопоставленные с обстановкой (order — готовый приказ арбитру; null — не опознан). */
   suggestions: { given: AdviceSuggestion; order: Order | null; target: string | null; issue?: string }[];
   followUps: string[];
@@ -195,24 +245,44 @@ export interface AdviceResult {
 
 export async function advise(client: LlmClient, g: GameState, built: ReturnType<typeof buildAdvice>,
   opts: { thinking?: Thinking; signal?: AbortSignal; onAnswer?: (delta: string) => void } = {}): Promise<AdviceResult> {
+  const empty = { answer: '', basis: [], unknowns: [], suggestions: [], followUps: [], issues: [] };
   const stream = new StringFieldStream('answer', (d) => opts.onAnswer?.(d));
+  const ask = (messages: ChatMessage[], onDelta?: (k: 'reasoning' | 'content', t: string) => void) =>
+    client.chat({ messages, schema: { name: 'staff_advice', schema: ADVICE_SCHEMA }, thinking: opts.thinking, signal: opts.signal, onDelta });
   let res: ChatResult;
   try {
-    res = await client.chat({ messages: built.messages, schema: { name: 'staff_advice', schema: ADVICE_SCHEMA }, thinking: opts.thinking, signal: opts.signal, onDelta: (k, t) => { if (k === 'content') stream.push(t); } });
+    res = await ask(built.messages, (k, t) => { if (k === 'content') stream.push(t); });
   } catch (e) {
-    return { ok: false, error: (e as Error).message, answer: '', suggestions: [], followUps: [], issues: [] };
+    return { ok: false, error: (e as Error).message, ...empty };
   }
-  const a = res.json as Partial<Advice> | undefined;
+  let a = res.json as Partial<Advice> | undefined;
   if (!a || typeof a.answer !== 'string') {
-    // не по схеме — показать как есть, без предложений
+    // не по схеме — показать как есть, без предложений (но с той же проверкой на скрытые сведения)
     const text = res.content.trim() || res.reasoning.trim();
-    return { ok: !!text, error: text ? undefined : res.jsonError ?? 'пустой ответ', answer: text, suggestions: [], followUps: [], issues: [], timings: res.timings };
+    const leak = built.category === 'history' ? [] : leakedNames(text, built.hidden);
+    return { ok: !!text, error: text ? undefined : res.jsonError ?? 'пустой ответ', ...empty, answer: text, timings: res.timings,
+      ...(leak.length ? { warning: `упомянуты соединения противника, которых нет в разведсводке: ${leak.join(', ')} — это не данные разведки` } : {}) };
+  }
+  // проверка: скрытые от штаба соединения противника в ответе (кроме вопросов истории) — одна просьба переписать
+  const textOf = (x: Partial<Advice>) => [x.answer, ...(x.unknowns ?? []), ...(x.suggestions ?? []).map((y) => `${y.area} ${y.toArea ?? ''} ${y.why}`)].join('\n');
+  let leak = built.category === 'history' ? [] : leakedNames(textOf(a), built.hidden);
+  let rewritten = false;
+  if (leak.length) {
+    try {
+      const fix = await ask([...built.messages, { role: 'assistant', content: JSON.stringify(a) }, { role: 'user', content:
+        `В ответе есть сведения о соединениях противника, которых нет в разведсводке: ${leak.join(', ')}. Штаб о них ничего не знает — это память об истории или выдумка. `
+        + 'Перепиши ответ: о противнике — только по разведсводке; о скрытом — «сведений нет» или предположение по признакам из обстановки, без названий, положения и сил. Остальное не меняй.' }]);
+      const b = fix.json as Partial<Advice> | undefined;
+      if (b && typeof b.answer === 'string') { a = b; rewritten = true; leak = leakedNames(textOf(b), built.hidden); }
+    } catch { /* остаётся исходный ответ с предупреждением */ }
   }
   const sugg = Array.isArray(a.suggestions) ? a.suggestions : [];
   const sit = { messages: [], formations: built.parts.formations.filter((f) => built.parts.own.find((u) => u.id === f.id)!.status !== 'destroyed'), areas: built.parts.areas, enemies: built.parts.enemies, time: g.state.time };
   const conv = decisionToOrders({ orders: sugg.map((x) => ({ formation: x.formation, task: x.task, area: x.area, toArea: x.toArea, deadline: '', details: x.why })) }, sit, 'human');
   return {
-    ok: true, answer: a.answer, followUps: Array.isArray(a.followUps) ? a.followUps.slice(0, 4) : [], issues: conv.issues, timings: res.timings,
+    ok: true, answer: a.answer!, basis: Array.isArray(a.basis) ? a.basis : [], unknowns: Array.isArray(a.unknowns) ? a.unknowns : [],
+    followUps: Array.isArray(a.followUps) ? a.followUps.slice(0, 4) : [], issues: conv.issues, timings: res.timings, rewritten,
+    ...(leak.length ? { warning: `упомянуты соединения противника, которых нет в разведсводке: ${leak.join(', ')} — это не данные разведки` } : {}),
     suggestions: conv.applied.map((x, i) => ({ given: sugg[i], order: x.order, target: x.target, issue: x.issue })),
   };
 }

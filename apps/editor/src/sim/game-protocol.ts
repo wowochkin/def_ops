@@ -135,6 +135,12 @@ export interface AdviceView {
   ok: boolean;
   error?: string;
   answer: string;
+  /** На что опирается ответ (доклады, разведка, правила, история, общие знания) и чего штаб не знает. */
+  basis: string[];
+  unknowns: string[];
+  /** Ответ всё же упоминает то, чего нет в сведениях штаба; переписан по требованию проверки. */
+  warning?: string;
+  rewritten?: boolean;
   followUps: string[];
   suggestions: { formation: string; name: string; task: Task; target: Target; targetText: string; at: LngLat | null; why: string; issue?: string; ok: boolean }[];
   seconds?: number;

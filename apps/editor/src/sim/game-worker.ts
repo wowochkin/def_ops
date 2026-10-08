@@ -162,7 +162,7 @@ const llmClient = () => new LlmClient({ url: absolute(llm.url), model: llm.model
 /** Вопрос советнику: ответ потоком, предложенные приказы — с целью на карте, готовые к распоряжению. */
 async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
   const done = (result: AdviceView) => post({ kind: 'advice', id: m.id, result });
-  if (!cfg.advisor) return done({ ok: false, error: 'для этого сценария советник не настроен', answer: '', followUps: [], suggestions: [] });
+  if (!cfg.advisor) return done({ ok: false, error: 'для этого сценария советник не настроен', answer: '', basis: [], unknowns: [], followUps: [], suggestions: [] });
   const t0 = Date.now();
   const built = buildAdvice(ctx, g, history, cfg.advisor, { system: advisorSystemTpl, user: advisorUserTpl, profile: advisorProfile },
     { category: m.category, topic: m.topic, question: m.question, draft: m.draft, thread: m.thread,
@@ -176,6 +176,7 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
   const names = new Map(g.state.formations.map((f) => [f.id, f.name]));
   done({
     ok: r.ok, error: r.error, answer: r.answer, followUps: r.followUps, seconds: Math.round((Date.now() - t0) / 1000),
+    basis: r.basis, unknowns: r.unknowns, warning: r.warning, rewritten: r.rewritten,
     suggestions: r.suggestions.map((x) => ({
       formation: x.order?.formation ?? '', name: x.order ? names.get(x.order.formation)! : x.given.formation, task: x.given.task,
       target: x.order?.target ?? null, targetText: x.target ?? describeTarget(ctx, x.order?.target, names),

@@ -746,3 +746,10 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
   .rail-btn { flex: 1; padding: 5px 2px; }
   .rail-btn.on::before { display: none; }
 }
+.adv-basis { font-size: 10.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.adv-basis i { font-style: normal; background: #eef3ee; color: #2f6b3b; border-radius: 8px; padding: 0 6px; }
+.adv-basis i.ext { background: #f4ecd8; color: #7a5d00; }
+.adv-unk { background: #f6f5f1; border-radius: 8px; padding: 5px 8px; font-size: 11.5px; }
+.adv-unk ul { margin: 2px 0 0; padding-left: 16px; }
+.adv-warn { background: #fbe9e6; color: #8c2a22; border-radius: 8px; padding: 5px 8px; font-size: 11.5px; }
+.adv-rew { font-size: 10.5px; color: var(--muted); font-style: italic; }
