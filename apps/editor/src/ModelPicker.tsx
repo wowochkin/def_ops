@@ -7,10 +7,10 @@ import { ModelSelect } from './ui';
 
 export const THINK_RU: Record<string, string> = { off: 'без размышления', low: 'короткое', medium: 'обычное', high: 'глубокое' };
 
-export function ModelPicker({ llm, who, purpose }: { llm: Llm; who: 'kb' | 'adv'; purpose: string }) {
+export function ModelPicker({ llm, who, purpose }: { llm: Llm; who: 'kb' | 'adv' | 'rev'; purpose: string }) {
   const models = llm.check.state === 'ok' ? llm.check.models : [];
   const base = llm.settings.model || models[0] || '—';
-  const mk = who === 'kb' ? 'kbModel' : 'advModel', tk = who === 'kb' ? 'kbThinking' : 'advThinking';
+  const mk = `${who}Model` as 'kbModel' | 'advModel' | 'revModel', tk = `${who}Thinking` as 'kbThinking' | 'advThinking' | 'revThinking';
   return (
     <div className="kb-model">
       <ModelSelect value={llm.settings[mk] ?? ''} onChange={(v) => llm.set({ [mk]: v || undefined })} check={llm.check} empty={`как в «ИИ» (${base})`} title={`Модель для ${purpose}`} />

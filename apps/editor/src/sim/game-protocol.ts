@@ -23,6 +23,9 @@ export interface LlmSettings {
   /** Советник в игре: своя модель и размышление; пусто — как в разделе «ИИ». */
   advModel?: string;
   advThinking?: Thinking;
+  /** Разбор операции: своя модель и размышление; пусто — как в разделе «ИИ». */
+  revModel?: string;
+  revThinking?: Thinking;
 }
 
 /** Противник: штаб на модели или «без штаба» — держится прежних приказов (для пробы без LM Studio). */
@@ -48,6 +51,9 @@ export type GameRequest =
   | { kind: 'skip-ai' }
   /** Вопрос советнику: категория, вопрос, проект решения словами, предыдущие вопросы и ответы. */
   | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string }
+  /** Разбор операции: написать раздел (done — уже написанные разделы, для итога); остановить. */
+  | { kind: 'review-section'; id: number; section: string; done: { title: string; text: string }[] }
+  | { kind: 'review-stop' }
   /** Посредник: показать на карте всех (без тумана войны). */
   | { kind: 'reveal'; on: boolean };
 
@@ -141,6 +147,10 @@ export type GameResponse =
   | { kind: 'advice-stream'; id: number; text: string }
   /** Вопрос ждёт очереди к модели (она занята другим запросом). */
   | { kind: 'advice-wait'; id: number; text: string }
+  /** Разбор операции: текст раздела потоком, ожидание очереди, готово. */
+  | { kind: 'review-stream'; id: number; text: string; reset?: boolean }
+  | { kind: 'review-wait'; id: number; text: string }
+  | { kind: 'review-done'; id: number; ok: boolean; text: string; error?: string; model?: string; seconds?: number }
   | { kind: 'advice'; id: number; result: AdviceView }
   | { kind: 'error'; message: string };
 

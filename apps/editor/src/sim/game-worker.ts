@@ -12,7 +12,7 @@ import {
   runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, umpireTurn, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
+import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
 import { category, gather, Index, type Entry } from '@def-ops/knowledge';
 import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
@@ -69,7 +69,9 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
       const was = enemy;
       llm = m.llm; enemy = m.enemy;
       if (was !== enemy) startAi();
-    } else if (m.kind === 'retry-ai') { startAi(); if (queued) await advance(); }
+    } else if (m.kind === 'review-section') void reviewSection(m);
+    else if (m.kind === 'review-stop') reviewAbort?.abort();
+    else if (m.kind === 'retry-ai') { startAi(); if (queued) await advance(); }
     else if (m.kind === 'skip-ai') { skipAi = true; if (queued) await advance(); }
     else if (m.kind === 'advise') void adviseReq(m);
     else if (m.kind === 'reveal') { reveal = m.on; postView(); }
@@ -253,6 +255,62 @@ async function advance() {
     startAi();
   } finally {
     busy = false;
+  }
+}
+
+/* ───────────── разбор операции ───────────── */
+
+/** Данные игры для разбора: ходы (решения, приказы, распоряжения, события, противник, посредник), силы, события. */
+function reviewInput(): ReviewInput {
+  const s = g.state, human = rec.human;
+  const sideName = (id: string) => ctx.scenario.sides.find((x) => x.id === id)!.name;
+  const at0 = g.snapshots.find((x) => x.time >= rec.takeover) ?? g.snapshots[0];
+  const now = g.snapshots[g.snapshots.length - 1];
+  const forces = s.formations.filter((f) => (f.echelon === 'army' || f.echelon === 'corps') && at0.units.some((u) => u.id === f.id))
+    .map((f) => { const a = at0.units.find((u) => u.id === f.id)!, b = now.units.find((u) => u.id === f.id);
+      return { side: f.side === human ? 'own' : 'enemy', name: f.name, start: a.personnel, now: b?.personnel ?? 0, tanksStart: a.tanks, tanksNow: b?.tanks ?? 0, cutOff: !!b?.cutOff, destroyed: !!b?.destroyed || f.destroyed }; })
+    .sort((a, b) => (a.side === b.side ? b.start - a.start : a.side === 'own' ? -1 : 1)).slice(0, 48);
+  const goals = checkEvents(ctx, { final: s, snapshots: g.snapshots }, history).map((r) => ({ title: r.title, historical: r.historical, simulated: r.simulated, days: r.days }));
+  return {
+    scenario: ctx.scenario.name, side: sideName(human), enemy: sideName(rec.ai), takeover: rec.takeover, now: s.time,
+    outcome: outcome ? `${outcome.result === 'victory' ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ'} — ${outcome.text}` : 'игра не окончена',
+    victory: end.victory.title, strength: { start: 1, now: baseStrength ? sideStrength(s, human) / baseStrength : 1 }, goals, forces,
+    turns: rec.turns.map((t, i) => {
+      const j = journal[i];
+      const ai = t.ai as AiTurn | undefined;
+      return {
+        time: t.time, decision: t.human as ReviewInput['turns'][number]['decision'],
+        orders: j?.orders ?? [], actions: j?.actions ?? [], events: j?.events ?? [],
+        ...(ai?.decision ? { enemy: { intent: ai.decision.intent, orders: ai.applied.filter((a) => a.order).map((a) => `${a.formation ?? a.given.formation}: ${TASK_RU[a.given.task as keyof typeof TASK_RU] ?? a.given.task} — ${a.target ?? a.given.area}`) } } : {}),
+        ...(t.umpire?.length ? { umpire: t.umpire.map((m) => `${m.reason} (×${m.mult})`) } : {}),
+      };
+    }),
+  };
+}
+
+let reviewAbort: AbortController | null = null;
+const reviewClient = () => new LlmClient({ url: absolute(llm.url), model: llm.revModel || llm.model, thinking: llm.revThinking ?? llm.thinking, timeoutMs: 20 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
+
+/** Раздел разбора: модель пишет по сводке игры; текст — потоком; запросы — в общей очереди к модели. */
+async function reviewSection(m: Extract<GameRequest, { kind: 'review-section' }>) {
+  const sec = REVIEW_SECTIONS.find((x) => x.id === m.section);
+  if (!sec) return post({ kind: 'review-done', id: m.id, ok: false, text: '', error: `нет раздела ${m.section}` });
+  reviewAbort ??= new AbortController();
+  const signal = reviewAbort.signal;
+  const t0 = Date.now();
+  const digest = reviewDigest(reviewInput());
+  if (llmBusy) post({ kind: 'review-wait', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
+  let buf = '', last = 0, thinking = false;
+  try {
+    const r = await exclusive('разбор операции', () => reviewClient().chat({
+      messages: reviewMessages(sec, digest, { scenario: ctx.scenario.name, side: ctx.scenario.sides.find((x) => x.id === rec.human)!.name }, m.done), signal,
+      onDelta: (k, t) => { if (k !== 'content') { if (!thinking) { thinking = true; post({ kind: 'review-wait', id: m.id, text: 'модель размышляет…' }); } return; } buf += t; const now = Date.now(); if (now - last > 200) { post({ kind: 'review-stream', id: m.id, text: buf }); buf = ''; last = now; } },
+    }));
+    if (buf) post({ kind: 'review-stream', id: m.id, text: buf });
+    post({ kind: 'review-done', id: m.id, ok: true, text: r.content, model: r.model, seconds: Math.round((Date.now() - t0) / 1000) });
+  } catch (e) {
+    post({ kind: 'review-done', id: m.id, ok: false, text: '', error: signal.aborted ? 'остановлено' : (e as Error).message });
+    if (signal.aborted) reviewAbort = null;
   }
 }
 

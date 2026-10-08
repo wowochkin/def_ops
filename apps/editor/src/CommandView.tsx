@@ -20,6 +20,7 @@ import { download, Legend, Player } from './ReplayView';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
 import { ModelPicker } from './ModelPicker';
+import { ReviewView } from './ReviewView';
 import { mdToHtml } from './markdown';
 
 export const SAVE_KEY = 'def_ops.game';
@@ -81,6 +82,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [sub, setSub] = useState<Sub>('units');
   const [acts, setActs] = useState<Act[]>([]);
   const [decision, setDecision] = useState<HumanDecision>(EMPTY);
+  // разбор операции: окно открывается после игры (или из меню); пока пишется, остаётся смонтированным
+  const [review, setReview] = useState<'closed' | 'open' | 'hidden'>('closed');
+  const reviewListener = useRef<((m: Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-done' }>) => void) | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const checks = useRef(new Map<number, (r: ActionCheck) => void>());
   const checkId = useRef(0);
@@ -136,6 +140,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
       else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x)));
       else if (m.kind === 'advice-wait') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, wait: m.text } : x)));
+      else if (m.kind === 'review-stream' || m.kind === 'review-wait' || m.kind === 'review-done') reviewListener.current?.(m);
       else if (m.kind === 'advice') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
       else if (m.kind === 'record') {
         setRecord(m.record);
@@ -322,6 +327,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <span className="cmd-kicker" title={view?.scenarioName}>Командование · {(view?.scenarioName ?? saved?.title ?? '').split(':')[0]}</span>
             <Popover label="⋯" align="right" title="Игра">{(close) => (
               <div className="menu">
+                <button onClick={() => { close(); setReview('open'); }} disabled={!view || !record?.turns.length}>Разбор операции (отчёт, PDF)…</button>
                 <button onClick={() => { close(); download(`${view?.scenario}-журнал.md`, journalMd(), 'text/markdown'); }}>Скачать журнал боевых действий (.md)</button>
                 <button onClick={() => { close(); if (record) download(`${record.scenario}-игра.json`, JSON.stringify(record, null, 1), 'application/json'); }}>Скачать запись игры (.json)</button>
                 <button onClick={() => { close(); if (doc) onOpenInEditor(doc); }}>Открыть карту в редакторе</button>
@@ -386,7 +392,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         {view?.over && <div className={`cmd-foot cmd-over ${view.outcome?.result ?? ''}`}><b>{view.outcome?.result === 'victory' ? 'Победа' : 'Поражение'}</b>
           <span>{view.outcome?.text}</span>
           <span className="muted">{goals.filter((g) => g.simulated).length} из {goals.length} контрольных событий случились. Журнал и запись игры — в меню «⋯».</span>
-          <button onClick={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')}>Скачать журнал</button></div>}
+          <div className="row-btns"><button className="primary" onClick={() => setReview('open')}>Разбор операции</button><button onClick={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')}>Скачать журнал</button></div></div>}
       </aside>
       <main className={`rp-main${pickMode ? ' picking' : ''}`}>
         {doc && time ? <>
@@ -420,6 +426,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         dyn={advDyn} focus={focus}
         accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
         drafted={(f) => !!drafts[f]} />}
+      {review !== 'closed' && view && <div hidden={review === 'hidden'}><ReviewView view={view} llm={llm} send={send} listen={(f) => { reviewListener.current = f; }} onClose={() => setReview('hidden')} /></div>}
     </div>
     </ZonesContext.Provider>
   );

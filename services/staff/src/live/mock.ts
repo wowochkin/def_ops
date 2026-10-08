@@ -121,6 +121,15 @@ export function mockUmpire(prompt: string) {
   return { assessment: `Подставной посредник (проверка стенда): боёв ${[...prompt.matchAll(/^Бой \d+\./gm)].length}, поправок ${mods.length}.`, mods: mods.slice(0, 6) };
 }
 
+/** Раздел разбора операции (проверка стенда): пересказ сводки по структуре раздела. */
+export function mockReview(system: string, prompt: string): string {
+  const title = /Ваш раздел отчётного документа — «(.+?)»/.exec(system)?.[1] ?? 'раздел';
+  const turns = [...prompt.matchAll(/^### (\d\d\.\d\d)/gm)].map((m) => m[1]);
+  const outcome = /^Итог: (.*)$/m.exec(prompt)?.[1] ?? '—';
+  const intent = /^Решение: (.*)$/m.exec(prompt)?.[1] ?? '—';
+  return `### Оценка\nПодставная модель (проверка стенда): раздел «${title}». Ходов в сводке: ${turns.length} (${turns.join(', ')}). ${outcome}\n\n### Что удалось\n- Решение на первый ход: **${intent.slice(0, 120)}**\n\n### Ошибки и упущенные возможности\n- По сводке не видно разведки флангов.\n\n### Рекомендации\n1. Уточнять замысел противника каждый ход.\n2. Переносить базы снабжения за войсками.`;
+}
+
 const sse = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
 
 /** Подставной сервер модели. delayMs — пауза между кусками ответа (имитация генерации). */
@@ -150,7 +159,8 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
       const body = JSON.parse(b || '{}') as { messages?: { role: string; content: string }[] };
       const user = [...(body.messages ?? [])].reverse().find((m) => m.role === 'user')?.content ?? '';
       const sys = (body.messages ?? []).find((m) => m.role === 'system')?.content ?? '';
-      const answer = sys.includes('посредник военно-исторического симулятора') ? JSON.stringify(mockUmpire(user))
+      const answer = sys.includes('Проводите разбор операции') ? mockReview(sys, user)
+        : sys.includes('посредник военно-исторического симулятора') ? JSON.stringify(mockUmpire(user))
         : sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user))
         : sys.includes('преподаватель военной истории') ? mockKbAnswer(user)
         : JSON.stringify(sys.includes('Вы — советник') ? mockAdvice(user) : mockDecision(user));

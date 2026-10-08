@@ -236,3 +236,23 @@ describe('ошибка сервера модели', () => {
     expect(r.content.length).toBeGreaterThan(0);
   }, 30000);
 });
+
+describe('разбор операции', () => {
+  it('сводка игры: решения, приказы, противник, события; итог получает выводы экспертов', async () => {
+    const { reviewDigest, reviewMessages, REVIEW_SECTIONS } = await import('../src/live');
+    const d = reviewDigest({
+      scenario: 'Берлинская операция', side: 'Красная армия', enemy: 'Вермахт', takeover: '1945-04-19T05:00', now: '1945-04-21T05:00',
+      outcome: 'игра не окончена', victory: 'Знамя Победы', strength: { start: 1, now: 0.9 },
+      goals: [{ title: 'Бой за рейхстаг', historical: '1945-04-30', simulated: null, days: null }],
+      forces: [{ side: 'own', name: '8-я гвардейская армия', start: 70000, now: 61000, tanksStart: 100, tanksNow: 80 }],
+      turns: [{ time: '1945-04-19T05:00', decision: { assessment: 'оборона прорвана', enemyIntent: 'отход за Шпрее', intent: 'удар на Мюнхеберг', risks: '', report: 'донесение' },
+        orders: ['8-я гвардейская армия: наступать — Мюнхеберг (Muencheberg)'], actions: [], events: ['8 гв. А продвинулась на 9 км'], enemy: { intent: 'удерживать Мюнхеберг', orders: ['LVI тк: оборонять — Мюнхеберг'] } }],
+    });
+    expect(d).toMatch(/Решение: удар на Мюнхеберг/);
+    expect(d).toMatch(/Противник \(решение его штаба\): удерживать Мюнхеберг/);
+    expect(d).toMatch(/Бой за рейхстаг: в игре не случилось; в истории 30\.04/);
+    const sum = reviewMessages(REVIEW_SECTIONS.find((s) => s.id === 'summary')!, d, { scenario: 'Берлинская операция', side: 'Красная армия' }, [{ title: 'Тыл и снабжение', text: 'базы отставали' }]);
+    expect(sum[1].content).toMatch(/Тыл и снабжение: базы отставали/);
+    expect(sum[0].content).toMatch(/Не придумывайте/);
+  });
+});
