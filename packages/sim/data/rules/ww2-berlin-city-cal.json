@@ -1,0 +1,190 @@
+{
+  "id": "ww2-berlin-cal",
+  "_status": "городской масштаб (клетка 250 м) поверх откалиброванных ww2-berlin-cal: меньше расстояние соприкосновения; «держаться» — уступая кварталы; темп, потери и укрепления — без изменений, числа не подгонялись",
+  "contactKm": 1.5,
+  "advance": [
+    [
+      0.5,
+      0
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1.5,
+      1.5372
+    ],
+    [
+      2,
+      4.6115
+    ],
+    [
+      3,
+      9.2229
+    ],
+    [
+      4,
+      15.3715
+    ],
+    [
+      6,
+      27.6686
+    ],
+    [
+      10,
+      46.1145
+    ]
+  ],
+  "attackerLoss": [
+    [
+      0.5,
+      0.0831
+    ],
+    [
+      1,
+      0.0554
+    ],
+    [
+      2,
+      0.0346
+    ],
+    [
+      3,
+      0.0207
+    ],
+    [
+      6,
+      0.0111
+    ],
+    [
+      10,
+      0.007
+    ]
+  ],
+  "defenderLoss": [
+    [
+      0.5,
+      0.0197
+    ],
+    [
+      1,
+      0.0391
+    ],
+    [
+      2,
+      0.0784
+    ],
+    [
+      3,
+      0.1175
+    ],
+    [
+      6,
+      0.2352
+    ],
+    [
+      10,
+      0.3919
+    ]
+  ],
+  "defense": {
+    "terrain": {
+      "open": 1,
+      "forest": 1.787,
+      "marsh": 2.106,
+      "urban": 2.454,
+      "hills": 1.787,
+      "water": 1
+    },
+    "prepared": 1.874,
+    "prepareHours": 24,
+    "fortificationPerLevel": 0.684
+  },
+  "ammoShort": 0.4,
+  "fuelOut": 0.5,
+  "fatigueEffect": 0.4,
+  "fatigueGain": {
+    "combat": 0.15,
+    "march": 0.08,
+    "rest": 0.1
+  },
+  "noise": 0.2,
+  "riverCrossHours": 12,
+  "advanceTerrain": {
+    "urban": 0.173,
+    "forest": 0.6,
+    "marsh": 0.5,
+    "hills": 0.8
+  },
+  "_advanceTerrain_note": "город — кварталами: «несколько десятков метров в час», 100–200 м после падения опорного пункта (LT_CONQ); черновик",
+  "fortCrossHours": 4,
+  "fortAdvanceKm": [
+    99,
+    11.16,
+    6.98,
+    4.19
+  ],
+  "_fortAdvance_note": "«прогрызание» обороны: на Зееловских высотах 17–18.04 фактически до 4 км/сутки (LT_CONQ), 8 гв. А 16.04 — 3–6 км до Хауптграбена (Исаев); индекс — уровень полосы 1..3. Черновик.",
+  "movementScale": 0.517,
+  "calibration": {
+    "scenario": "berlin-city-1945",
+    "date": "2026-10-08",
+    "evals": 150,
+    "seeds": 3,
+    "trainUntil": "1945-04-28T23:59",
+    "from": "ww2-berlin-city",
+    "multipliers": {
+      "advance": 1.038,
+      "attackerLoss": 1.547,
+      "defenderLoss": 1.908,
+      "prepared": 1.874,
+      "fortPerLevel": 0.684,
+      "terrainExp": 1.849,
+      "movement": 0.517,
+      "urbanAdvance": 0.173,
+      "fortAdvance": 0.797
+    },
+    "before": {
+      "trainKm": 1.53,
+      "testKm": 1.48,
+      "eventsDays": 1,
+      "within": 0.984
+    },
+    "after": {
+      "trainKm": 0.93,
+      "testKm": 1.14,
+      "eventsDays": 0,
+      "within": 1
+    },
+    "events": [
+      {
+        "id": "tempelhof",
+        "days": 0
+      },
+      {
+        "id": "alex",
+        "days": -3
+      },
+      {
+        "id": "moltke",
+        "days": 1
+      },
+      {
+        "id": "reichstag",
+        "days": 1
+      },
+      {
+        "id": "savigny",
+        "days": -1
+      },
+      {
+        "id": "reichskanzlei",
+        "days": -2
+      }
+    ],
+    "note": "Подобрано по одной операции: обязательна проверка на контрольной операции (этап 2). Мерило — среднее превышение отклонения над неопределённостью исторического положения (до 50 км) + 3 × средняя ошибка дат событий (сут)."
+  },
+  "extends": "ww2-berlin-cal",
+  "holdGivesGround": true
+}

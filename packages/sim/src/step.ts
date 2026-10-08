@@ -235,7 +235,8 @@ export function step(prev: SimState, ctx: SimContext): SimState {
 function stopShortOfEnemy(f: Formation, to: LngLat, all: Formation[], T: Theatre, radius: (e: Formation) => number): LngLat | null {
   const a = T.proj.toXY(f.position), b = T.proj.toXY(to);
   const enemies = all.filter((e) => e.side !== f.side).map((e) => ({ p: T.proj.toXY(e.position), r: radius(e) }));
-  const hit = (q: XY) => enemies.some((e) => dist(q, e.p) < e.r && dist(a, e.p) >= e.r * 0.999);
+  // уже в соприкосновении — можно смещаться, но не глубже в оборону (без боя сквозь противника не пройти)
+  const hit = (q: XY) => enemies.some((e) => { const d0 = dist(a, e.p), d = dist(q, e.p); return d < e.r && (d0 >= e.r * 0.999 || d < d0 - 0.05); });
   if (!hit(b)) return null;
   let lo = 0, hi = 1;
   for (let i = 0; i < 20; i++) {
@@ -288,7 +289,9 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   const pinned = (f: Formation) => f.order?.task === 'hold' || !!f.cutOff;
   const holding = def.every(pinned);
   const breakthrough = advancePerDay >= BREAKTHROUGH_KM;
-  const advanceKm = holding && !breakthrough ? 0 : advancePerDay * day;
+  // городской бой (rules.holdGivesGround): «держаться» — не отходить по своей воле, но квартал за кварталом уступать
+  const yields = !!R.holdGivesGround;
+  const advanceKm = holding && !breakthrough && !yields ? 0 : advancePerDay * day;
   const attackerLoss = interp(R.attackerLoss, ratio) * day;
   const defenderLoss = interp(R.defenderLoss, ratio) * day * (holding && advancePerDay > 0 ? 1.5 : 1);
   const factors: CombatFactor[] = [
@@ -320,7 +323,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
       moved.add(f.id);
     }
     for (const f of def) {
-      if (pinned(f)) continue;
+      if (pinned(f) && !yields) continue;
       const p = T.proj.toXY(f.position);
       const np = retreatPoint(f, p, ca, advanceKm, T, env);
       journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +advanceKm.toFixed(1) });

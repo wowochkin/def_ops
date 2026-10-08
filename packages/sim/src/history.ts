@@ -16,7 +16,7 @@ export interface History {
 }
 
 export type HistoryEvent = { id: string; title: string; date: string; source?: string } & (
-  | { kind: 'reach'; side: string; place: string; radiusKm: number }
+  | { kind: 'reach'; side: string; place: string; radiusKm: number; /** взято: в радиусе нет боеспособных частей противника */ control?: boolean }
   | { kind: 'cut'; formation?: string; formations?: string[] }
   | { kind: 'meet'; formations: string[]; place: string; radiusKm: number }
 );
@@ -39,8 +39,9 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
     if (e.kind === 'reach') {
       const c = T.area(e.place)?.center;
       const side = new Set(run.final.formations.filter((f) => f.side === e.side).map((f) => f.id));
+      const near = (u: Snapshot['units'][number]) => !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c!)) <= e.radiusKm;
       for (const s of run.snapshots) {
-        if (c && s.units.some((u) => side.has(u.id) && !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c)) <= e.radiusKm)) { when = s.time; break; }
+        if (c && s.units.some((u) => side.has(u.id) && near(u)) && !(e.control && s.units.some((u) => !side.has(u.id) && near(u)))) { when = s.time; break; }
       }
     } else if (e.kind === 'meet') {
       const c = T.area(e.place)?.center;

@@ -11,7 +11,18 @@ export const DATA_DIR = fileURLToPath(new URL('../data', import.meta.url));
 
 const read = <T>(...p: string[]) => JSON.parse(readFileSync(join(DATA_DIR, ...p), 'utf8')) as T;
 export const loadProfile = (id: string) => read<SideProfile>('profiles', `${id}.json`);
-export const loadRules = (id: string) => read<Rules>('rules', `${id}.json`);
+/** Правила; `extends` — взять базовые и переписать поверх указанные поля (вложенные объекты — слиянием). */
+export function loadRules(id: string): Rules {
+  const r = read<Rules>('rules', `${id}.json`);
+  if (!r.extends) return r;
+  const base = loadRules(r.extends) as unknown as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...base };
+  for (const [k, v] of Object.entries(r)) {
+    const b = base[k];
+    out[k] = v && b && typeof v === 'object' && typeof b === 'object' && !Array.isArray(v) && !Array.isArray(b) ? { ...b, ...v } : v;
+  }
+  return out as unknown as Rules;
+}
 export const loadTheatre = (id: string) => read<TheatreData>('theatres', `${id}.json`);
 export const loadScenario = (id: string) => read<Scenario>('scenarios', `${id}.json`);
 export const loadHistory = (id: string) => read<History>('scenarios', `${id}.history.json`);

@@ -5,7 +5,7 @@
  "end": "1945-05-02T05:00",
  "turnHours": 12,
  "theatre": "berlin-city-1945",
- "rules": "ww2-berlin-cal",
+ "rules": "ww2-berlin-city-cal",
  "sides": [
   {
    "id": "su",
@@ -370,8 +370,8 @@
    "parent": "su_1bf",
    "type": "tank_army",
    "position": [
-    14.654,
-    52.59
+    13.56,
+    52.4
    ],
    "personnel": 14000,
    "tanks": 250,
@@ -379,7 +379,7 @@
    "ammo": 2.5,
    "fuel": 1.5,
    "posture": "attack",
-   "note": "1 гв. ТА в городе действовала вместе с 8 гв. А; оценка (C)"
+   "note": "1 гв. ТА в городе действовала вместе с 8 гв. А; оценка (C); Бонсдорф, 24.04 (LT_RACE, B)"
   },
   {
    "id": "de_hgr_weichsel",
@@ -674,6 +674,25 @@
    "fuel": 0.5,
    "posture": "defend",
    "note": "гарнизон сектора «Z»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_zoo_flak",
+   "name": "Гарнизон зенитной башни «Зоо» (Flakturm I)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_berlin",
+   "type": "fortress",
+   "position": [
+    13.3378,
+    52.5108
+   ],
+   "personnel": 3000,
+   "tanks": 0,
+   "guns": 40,
+   "ammo": 2,
+   "fuel": 0.5,
+   "posture": "defend",
+   "note": "гарнизон башни «Зоо»: оценка (C); бетон башни — как укрепление"
   }
  ],
  "orders": [
@@ -802,6 +821,15 @@
    "issuedAt": "1945-04-23T17:00",
    "source": "script",
    "note": "оборона сектора"
+  },
+  {
+   "id": "de_zoo_flak@1945-04-24T00:00:hold",
+   "formation": "de_zoo_flak",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-04-23T17:00",
+   "source": "script",
+   "note": "оборона башни до капитуляции 2.05"
   },
   {
    "id": "su_1gta@1945-04-24T00:00:attack",

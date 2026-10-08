@@ -6,7 +6,7 @@
  "end": "1945-05-02T05:00",
  "turnHours": 12,
  "theatre": "berlin-city-1945",
- "rules": "ww2-berlin-cal",
+ "rules": "ww2-berlin-city-cal",
  "dataset": "../../../../../docs/sources/berlin-1945-reichstag.json",
  "extraDatasets": [
   "../../../../../docs/sources/berlin-1945-positions.json",
@@ -244,7 +244,12 @@
    "posture": "attack",
    "ammo": 2.5,
    "fuel": 1.5,
-   "note": "1 гв. ТА в городе действовала вместе с 8 гв. А; оценка (C)"
+   "note": "1 гв. ТА в городе действовала вместе с 8 гв. А; оценка (C)",
+   "position": [
+    13.56,
+    52.4
+   ],
+   "positionNote": "Бонсдорф, 24.04 (LT_RACE, B)"
   },
   {
    "id": "de_hgr_weichsel"
@@ -411,6 +416,18 @@
    "ammo": 1.5,
    "fuel": 0.5,
    "note": "гарнизон сектора «Z»: доля ~60 000 (LT_RACE), C"
+  },
+  {
+   "id": "de_zoo_flak",
+   "type": "fortress",
+   "personnel": 3000,
+   "tanks": 0,
+   "guns": 40,
+   "posture": "defend",
+   "ammo": 2.0,
+   "fuel": 0.5,
+   "outsidePool": true,
+   "note": "гарнизон башни «Зоо»: оценка (C); бетон башни — как укрепление"
   }
  ],
  "orders": {
@@ -815,6 +832,13 @@
     "breakout",
     "Charlottenbruecke",
     "прорыв из города 1–2.05 через Шарлоттенбрюкке (LT_RACE)"
+   ],
+   [
+    "de_zoo_flak",
+    "04-24T00",
+    "hold",
+    null,
+    "оборона башни до капитуляции 2.05"
    ]
   ]
  },
@@ -862,7 +886,8 @@
    "side": "su",
    "place": "Tempelhof_Flughafen",
    "radiusKm": 0.8,
-   "source": "LT_RACE"
+   "source": "LT_RACE",
+   "control": true
   },
   {
    "id": "alex",
@@ -872,7 +897,8 @@
    "side": "su",
    "place": "Alexanderplatz",
    "radiusKm": 0.5,
-   "source": "LT_RACE (Полицайпрезидиум 29.04)"
+   "source": "LT_RACE (Полицайпрезидиум 29.04)",
+   "control": true
   },
   {
    "id": "moltke",
@@ -882,7 +908,8 @@
    "side": "su",
    "place": "Moltkebruecke",
    "radiusKm": 0.4,
-   "source": "LT_RACE"
+   "source": "LT_RACE",
+   "control": true
   },
   {
    "id": "reichstag",
@@ -892,7 +919,8 @@
    "side": "su",
    "place": "B_Reichstag",
    "radiusKm": 0.4,
-   "source": "LT_RACE"
+   "source": "LT_RACE",
+   "control": true
   },
   {
    "id": "savigny",
@@ -915,7 +943,8 @@
    "side": "su",
    "place": "Reichskanzlei",
    "radiusKm": 0.4,
-   "source": "LT_RACE"
+   "source": "LT_RACE",
+   "control": true
   }
  ]
 }

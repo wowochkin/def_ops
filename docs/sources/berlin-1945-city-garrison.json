@@ -102,6 +102,15 @@
    "commander": "подп. люфтваффе Э. Зайферт (весь период; КП в подвалах Министерства авиации); внутри — бригадефюрер СС В. Монке (рейхска",
    "note": "вермахт, СС, фольксштурм, гитлерюгенд сектора; численность — доля гарнизона (C)",
    "share": 0.18
+  },
+  {
+   "id": "de_zoo_flak",
+   "name_ru": "Гарнизон зенитной башни «Зоо» (Flakturm I)",
+   "side": "de",
+   "echelon": "brigade",
+   "parent": "de_berlin",
+   "branch": "garrison",
+   "note": "1-я зенитная дивизия (1. Flak-Division) с частями, укрывшимися в башне; держалась до капитуляции 2.05 (LT_RACE). Численность — оценка (C)"
   }
  ],
  "positions": [
@@ -203,6 +212,17 @@
    "place": "центр сектора Z",
    "source": "LT_RACE (сектора), центр — расчёт",
    "reliability": "C"
+  },
+  {
+   "formation": "de_zoo_flak",
+   "date": "1945-04-24",
+   "time": "start",
+   "lng": 13.3378,
+   "lat": 52.5108,
+   "approx_km": 0.3,
+   "place": "Zoo_Flakturm",
+   "source": "LT_RACE",
+   "reliability": "A"
   }
  ],
  "frontline": []
