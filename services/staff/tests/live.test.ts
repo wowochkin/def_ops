@@ -203,13 +203,12 @@ describe('посредник на модели', () => {
 });
 
 describe('выключение размышления', () => {
-  it('Qwen при «без размышления» получает /no_think в последнем сообщении пользователя; другие модели — нет', () => {
+  it('«без размышления»: флаг шаблона; gpt-oss — самое короткое размышление; текст вопроса не меняется', () => {
     const c = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
     const msgs = [{ role: 'system' as const, content: 's' }, { role: 'user' as const, content: 'вопрос' }];
     const q = c.body('qwen-4bit', { messages: msgs }) as { messages: { content: string }[]; chat_template_kwargs: { enable_thinking: boolean } };
-    expect(q.messages[1].content).toBe('вопрос\n\n/no_think');
+    expect(q.messages[1].content).toBe('вопрос');
     expect(q.chat_template_kwargs.enable_thinking).toBe(false);
-    expect((c.body('gpt-oss-20b', { messages: msgs }) as { messages: { content: string }[]; reasoning_effort: string }).reasoning_effort).toBe('low');
-    expect((c.body('qwen-4bit', { messages: msgs, thinking: 'medium' }) as { messages: { content: string }[] }).messages[1].content).toBe('вопрос');
+    expect((c.body('gpt-oss-20b', { messages: msgs }) as { reasoning_effort: string }).reasoning_effort).toBe('low');
   });
 });
