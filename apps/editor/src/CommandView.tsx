@@ -20,6 +20,7 @@ import { download, Legend, Player } from './ReplayView';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
 import { ModelPicker } from './ModelPicker';
+import { mdToHtml } from './markdown';
 
 export const SAVE_KEY = 'def_ops.game';
 export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
@@ -46,7 +47,7 @@ type Sub = 'units' | 'rear' | 'bridges' | 'reserves';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
 type Pick = { kind: 'order' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
-interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; result?: AdviceView }
+interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; wait?: string; result?: AdviceView }
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 
 const TOGGLES = [
@@ -133,7 +134,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'ai-stream') setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000)));
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); }
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
-      else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text } : x)));
+      else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x)));
+      else if (m.kind === 'advice-wait') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, wait: m.text } : x)));
       else if (m.kind === 'advice') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
       else if (m.kind === 'record') {
         setRecord(m.record);
@@ -671,8 +673,9 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
           <div key={m.id} className="adv-msg">
             <div className="adv-q"><small>{m.cat}</small>{m.q}</div>
             <div className="adv-a">
-              {m.result && !m.result.ok ? <span className="err">Советник не ответил: {m.result.error}</span>
-                : (m.answer || '…').split(/\n{2,}/).map((p, i) => <p key={i}>{p.split('\n').map((l, j) => <span key={j}>{l}<br /></span>)}</p>)}
+              {m.result && !m.result.ok ? <span className="err">Советник не ответил: {m.result.error} <button className="link" onClick={() => ask(m.catId, m.cat, m.q)}>спросить ещё раз</button></span>
+                : m.answer ? <div className="adv-md" dangerouslySetInnerHTML={{ __html: mdToHtml(m.answer) }} />
+                : !m.result && m.wait ? <span className="muted">{m.wait}</span> : <span className="muted">…</span>}
               {!m.result && <span className="spinner" />}
               {m.result?.ok && m.result.rewritten && <span className="adv-rew" key="rw">ответ переписан: в первом варианте были сведения, которых у штаба нет</span>}
               {m.result?.warning && <div className="adv-warn">⚠ {m.result.warning}</div>}

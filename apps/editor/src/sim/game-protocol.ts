@@ -139,6 +139,8 @@ export type GameResponse =
   | { kind: 'record'; record: GameRecord }
   | { kind: 'check'; id: number; result: ActionCheck }
   | { kind: 'advice-stream'; id: number; text: string }
+  /** Вопрос ждёт очереди к модели (она занята другим запросом). */
+  | { kind: 'advice-wait'; id: number; text: string }
   | { kind: 'advice'; id: number; result: AdviceView }
   | { kind: 'error'; message: string };
 

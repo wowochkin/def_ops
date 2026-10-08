@@ -225,3 +225,14 @@ describe('пункты по-русски и в исходном написани
     expect(findName('Берлин, Рейхстаг (Reichstag)', list, true)).toBe(2);
   });
 });
+
+describe('ошибка сервера модели', () => {
+  it('500 — повтор; со второго раза ответ приходит', async () => {
+    let calls = 0;
+    const flaky: typeof fetch = async (input, init) => { if (!String(input).includes('/chat/')) return fetch(input, init); calls++; return calls === 1 ? new Response('<html>Internal Server Error</html>', { status: 500 }) : fetch(input, init); };
+    const c = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' }, flaky);
+    const r = await c.chat({ messages: [{ role: 'system', content: 'Вы — советник' }, { role: 'user', content: 'Вопрос командующего: тест' }] });
+    expect(calls).toBe(2);
+    expect(r.content.length).toBeGreaterThan(0);
+  }, 30000);
+});

@@ -904,3 +904,5 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 /* кнопки масштаба карты — над полосой времени (иначе она их перекрывает) */
 .replay .maplibregl-ctrl-bottom-right { bottom: 88px; }
 @media (max-width: 760px) { .replay .maplibregl-ctrl-bottom-right { bottom: 162px; } }
+
+.adv-md p { margin: 0 0 6px; } .adv-md h1, .adv-md h2, .adv-md h3, .adv-md h4 { font: 700 13px/1.3 'PT Serif', Georgia, serif; margin: 6px 0 2px; } .adv-md ul, .adv-md ol { margin: 2px 0 6px; padding-left: 18px; }

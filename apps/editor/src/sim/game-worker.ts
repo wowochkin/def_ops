@@ -131,6 +131,19 @@ function day(time: string, orders: Order[], before: GameState['state'], results:
   };
 }
 
+/**
+ * Запросы к модели — по очереди: локальный сервер (особенно MLX) параллельные запросы к одной модели часто не
+ * держит (ошибка 500). Штаб противника, советник и посредник ждут друг друга; busy — кто сейчас у модели.
+ */
+let llmQueue: Promise<unknown> = Promise.resolve();
+let llmBusy: string | null = null;
+function exclusive<T>(who: string, f: () => Promise<T>): Promise<T> {
+  const run = async () => { llmBusy = who; try { return await f(); } finally { llmBusy = null; } };
+  const r = llmQueue.then(run, run);
+  llmQueue = r.catch(() => undefined);
+  return r;
+}
+
 function startAi() {
   ai?.abort.abort();
   ai = null;
@@ -147,14 +160,14 @@ function startAi() {
   status({ state: 'thinking', time, since: Date.now() });
   post({ kind: 'ai-stream', text: '', reset: true });
   let buf = '', last = 0;
-  const promise = decideTurn(client, sit, {
+  const promise = exclusive('решение штаба противника', () => decideTurn(client, sit, {
     signal: abort.signal,
     onDelta: (_k, t) => {
       buf += t;
       const now = Date.now();
       if (now - last > 250) { post({ kind: 'ai-stream', text: buf }); buf = ''; last = now; }
     },
-  }).then((t) => {
+  })).then((t) => {
     if (abort.signal.aborted) return null;
     if (buf) post({ kind: 'ai-stream', text: buf });
     if (t.ok && t.decision) {
@@ -182,9 +195,10 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
     { category: m.category, topic: m.topic, question: m.question, draft: m.draft, thread: m.thread, reference: m.reference,
       goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
   let buf = '', last = 0;
-  const r = await advise(advisorClient(), g, built, {
+  if (llmBusy) post({ kind: 'advice-wait', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
+  const r = await exclusive('вопрос советнику', () => advise(advisorClient(), g, built, {
     onAnswer: (d) => { buf += d; const now = Date.now(); if (now - last > 200) { post({ kind: 'advice-stream', id: m.id, text: buf }); buf = ''; last = now; } },
-  });
+  }));
   if (buf) post({ kind: 'advice-stream', id: m.id, text: buf });
   const byId = new Map(g.state.formations.map((f) => [f.id, f]));
   const names = new Map(g.state.formations.map((f) => [f.id, f.name]));
@@ -221,7 +235,7 @@ async function advance() {
     let ump: Awaited<ReturnType<typeof umpireTurn>> | null = null;
     if (llm.umpire) {
       post({ kind: 'progress', text: 'посредник оценивает ожидаемые бои…' });
-      ump = await umpireTurn(llmClient(), ctx, g.state, umpireRefs, { system: umpireSystemTpl, user: umpireUserTpl }, { thinking: 'off' });
+      ump = await exclusive('посредник', () => umpireTurn(llmClient(), ctx, g.state, umpireRefs, { system: umpireSystemTpl, user: umpireUserTpl }, { thinking: 'off' }));
     }
     rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(t ? { ai: slim(t) } : {}),
       ...(ump?.mods.length ? { umpire: ump.mods } : {}),

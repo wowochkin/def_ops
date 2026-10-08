@@ -165,14 +165,23 @@ export class LlmClient {
     const t0 = performance.now();
     const signal = req.signal ? AbortSignal.any([req.signal, AbortSignal.timeout(this.config.timeoutMs)]) : AbortSignal.timeout(this.config.timeoutMs);
     let r: Response;
-    try {
-      r = await this.fetchImpl(`${this.config.url}/chat/completions`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(this.body(model, req)), signal,
-      });
-    } catch (e) {
-      throw new LlmUnavailable(`сервер модели не отвечает: ${(e as Error).message}`);
+    // ошибка сервера (5xx) — обычно модель занята другим запросом или ещё загружается: два повтора с паузой
+    for (let attempt = 0; ; attempt++) {
+      try {
+        r = await this.fetchImpl(`${this.config.url}/chat/completions`, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(this.body(model, req)), signal,
+        });
+      } catch (e) {
+        throw new LlmUnavailable(`сервер модели не отвечает: ${(e as Error).message}`);
+      }
+      if (r.status < 500 || attempt >= 2 || signal.aborted) break;
+      await r.text().catch(() => '');
+      await new Promise((res) => setTimeout(res, attempt ? 6000 : 2000));
     }
-    if (!r.ok || !r.body) throw new Error(`сервер модели ответил ${r.status}: ${(await r.text()).slice(0, 500)}`);
+    if (!r.ok || !r.body) {
+      const text = (await r.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+      throw new Error(`сервер модели ответил ${r.status}${r.status >= 500 ? ' (ошибка сервера — модель, возможно, занята другим запросом или не загрузилась)' : ''}: ${text}`);
+    }
 
     let content = '', reasoning = '', finishReason: string | undefined, firstTokenMs = 0, chunks = 0;
     let usage: { prompt_tokens?: number; completion_tokens?: number } | undefined;
