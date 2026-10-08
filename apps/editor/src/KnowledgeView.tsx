@@ -237,7 +237,12 @@ function KbModel({ llm }: { llm: Llm }) {
 }
 
 function QAItem({ m, s, open, llmOff }: { m: QA; s: kb.KbState; open: (id: string) => void; llmOff: boolean }) {
-  const html = useMemo(() => mdToHtml(m.text || '').replace(/\[(\d{1,2})\]/g, (all, n) => (m.sources.some((x) => x.n === +n) ? `<a class="kb-cite" data-n="${n}">[${n}]</a>` : all)), [m.text, m.sources]);
+  // ссылки [1], [1, 2], [1–3] — каждая цифра ведёт к своему материалу
+  const html = useMemo(() => mdToHtml(kb.cleanAnswer(m.text || '')).replace(/\[(\d{1,2}(?:\s*[,;–-]\s*\d{1,2})*)\]/g, (all, list: string) => {
+    const nums = list.split(/\s*([,;–-])\s*/);
+    if (!nums.some((x) => /^\d+$/.test(x) && m.sources.some((s) => s.n === +x))) return all;
+    return '[' + nums.map((x) => (/^\d+$/.test(x) && m.sources.some((s) => s.n === +x) ? `<a class="kb-cite" data-n="${x}">${x}</a>` : x === ',' || x === ';' ? `${x} ` : x)).join('') + ']';
+  }), [m.text, m.sources]);
   const click = (ev: React.MouseEvent) => {
     const n = (ev.target as HTMLElement).dataset.n;
     const src = n ? m.sources.find((x) => x.n === +n) : null;

@@ -199,6 +199,14 @@ export function streamView(content: string, reasoning: string, thinkingOff: bool
 /** Настройки модели для базы знаний: своя модель и размышление, если заданы, иначе — как в разделе «ИИ». */
 export const kbLlm = (llm: LlmSettings): LlmSettings => ({ ...llm, model: llm.kbModel || llm.model, thinking: llm.kbThinking ?? llm.thinking });
 
+/** Убрать из ответа служебные пометки модели о жанре и объёме («Лекция по…», «(Общий объём: около 500 слов)»). */
+export function cleanAnswer(t: string): string {
+  return t.split('\n').filter((l) => {
+    const x = l.replace(/[*_()\s]/g, ' ').trim().toLowerCase();
+    return !/^(общий\s+)?объ[её]м[^а-яё].*слов/.test(x) && !/^(преподавательская\s+)?лекция[^а-яё].*(тема|по военной истории)/.test(x) && !/^\(?\s*около\s+\d+\s+слов/.test(x);
+  }).join('\n').replace(/^\s+/, '');
+}
+
 export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSettings, history: { q: string; a: string }[],
   onStream: (v: { answer: string; thinking: string; stage: 'search' | 'model' }) => void, signal?: AbortSignal): Promise<{ text: string; thinking: string; sources: Source[]; model: string; seconds: number }> {
   llm = kbLlm(llm);

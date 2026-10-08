@@ -305,7 +305,7 @@ button.ic { font-size: 15px; padding: 1px 7px; }
 .rp-go.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; letter-spacing: .3px; }
 .rp-go.primary:hover { background: #a3342a; }
 .rp-go small { color: var(--muted); }
-.spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid #ddd; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+.spinner { display: inline-block; flex: none; box-sizing: border-box; width: 13px; height: 13px; border: 2px solid #ddd; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
 .spinner.big { width: 34px; height: 34px; border-width: 3px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .err { color: #b3261e; font-size: 12px; }
@@ -883,7 +883,8 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 }
 .umpire-about { margin: 4px 0 10px; line-height: 1.45; }
 
-.kb-wait-line { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.kb-wait-line { display: flex; align-items: flex-start; gap: 6px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.kb-wait-line .spinner { margin-top: 2px; }
 .kb-think { font-size: 11.5px; color: #8a8579; white-space: pre-wrap; line-height: 1.45; }
 .kb-think.live { max-height: 9em; overflow: hidden; border-left: 2px solid #e2dccd; padding-left: 7px; mask-image: linear-gradient(to bottom, transparent, #000 35%); }
 .kb-think summary { cursor: pointer; } .kb-think > div { margin-top: 4px; max-height: 18em; overflow-y: auto; }
@@ -892,3 +893,8 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .kb-model { display: flex; gap: 6px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line); }
 .kb-model select { flex: 1; min-width: 0; font-size: 11.5px; padding: 3px 4px; }
 .kb-meta { font-size: 10.5px; }
+
+.kb-answer h4 { font: 700 13px/1.3 'PT Serif', Georgia, serif; margin: 6px 0 2px; }
+.kb-answer ol { margin: 2px 0; padding-left: 20px; }
+.kb-answer blockquote { margin: 4px 0; padding-left: 8px; border-left: 2px solid #e2dccd; color: #5c584f; }
+.kb-answer hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
