@@ -47,7 +47,8 @@
       "name": "гарнизон крепости",
       "mobility": "foot",
       "quality": 0.8,
-      "frontageKm": 6
+      "frontageKm": 6,
+      "bypassable": true
     },
     "volkssturm": {
       "id": "volkssturm",

@@ -143,7 +143,14 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const w = profileOf(ctx, e.side).unitTypes[e.type]?.frontageKm ?? 0;
     return Math.max(R.contactKm, w / 2);
   };
-  const enemiesNear = (f: Formation, km: number) => active().filter((e) => e.side !== f.side && dist(xy(f), xy(e)) <= Math.max(km, reach(e)));
+  // обход узлов обороны: подвижные соединения с целью дальше крепости не ввязываются в бой за неё
+  const bypasses = (f: Formation, e: Formation) => {
+    if (R.bypassStrongpoints === false || !profileOf(ctx, e.side).unitTypes[e.type]?.bypassable) return false;
+    if ((profileOf(ctx, f.side).unitTypes[f.type]?.mobility ?? 'foot') === 'foot') return false;
+    const to = f.order ? targetPoint(ctx, f.order.target, byId) : null;
+    return !!to && dist(T.proj.toXY(to), xy(e)) > Math.max(R.contactKm, reach(e));
+  };
+  const enemiesNear = (f: Formation, km: number) => active().filter((e) => e.side !== f.side && !bypasses(f, e) && dist(xy(f), xy(e)) <= Math.max(km, reach(e)));
   // укреплённые полосы противника: задержка на клетку за уровень, пока полоса не прорвана
   const breached = new Set(prev.breached ?? []);
   const fortCost = (f: Formation) => (i: number) => {
@@ -178,7 +185,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     let pos = r.position;
     // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
     // остальные — не доходя до него
-    const stop = stopShortOfEnemy(f, pos, active(), T, (e) => (f.posture === 'attack' ? 0.8 : 1) * Math.max(R.contactKm, reach(e)));
+    const stop = stopShortOfEnemy(f, pos, active().filter((e) => !bypasses(f, e)), T, (e) => (f.posture === 'attack' ? 0.8 : 1) * Math.max(R.contactKm, reach(e)), R.contactKm * 0.5);
     if (stop) pos = stop;
     const km = dist(xy(f), T.proj.toXY(pos));
     if (km > 0.05) {
@@ -234,11 +241,11 @@ export function step(prev: SimState, ctx: SimContext): SimState {
 }
 
 /** Остановиться, не доходя до противника ближе расстояния соприкосновения. */
-function stopShortOfEnemy(f: Formation, to: LngLat, all: Formation[], T: Theatre, radius: (e: Formation) => number): LngLat | null {
+function stopShortOfEnemy(f: Formation, to: LngLat, all: Formation[], T: Theatre, radius: (e: Formation) => number, inner = 0): LngLat | null {
   const a = T.proj.toXY(f.position), b = T.proj.toXY(to);
   const enemies = all.filter((e) => e.side !== f.side).map((e) => ({ p: T.proj.toXY(e.position), r: radius(e) }));
-  // уже в соприкосновении — можно смещаться, но не глубже в оборону (без боя сквозь противника не пройти)
-  const hit = (q: XY) => enemies.some((e) => { const d0 = dist(a, e.p), d = dist(q, e.p); return d < e.r && (d0 >= e.r * 0.999 || d < d0 - 0.05); });
+  // уже в зоне противника — можно подходить до дистанции боя (inner), но не глубже: без боя сквозь противника не пройти
+  const hit = (q: XY) => enemies.some((e) => { const d0 = dist(a, e.p), d = dist(q, e.p); return d < e.r && (d0 >= e.r * 0.999 || (d < inner && d < d0 - 0.05)); });
   if (!hit(b)) return null;
   let lo = 0, hi = 1;
   for (let i = 0; i < 20; i++) {
@@ -284,13 +291,15 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   // укреплённая полоса: темп не выше предельного для её уровня («прогрызание» обороны)
   const fortLv = def.reduce((m, f) => Math.max(m, T.fortificationAt(f.position)), 0);
   const cap = fortLv && R.fortAdvanceKm ? R.fortAdvanceKm[Math.min(fortLv, R.fortAdvanceKm.length - 1)] ?? Infinity : Infinity;
-  const advancePerDay = Math.min(interp(R.advance, ratio) * at, cap);
+  const freePace = interp(R.advance, ratio) * at;
+  const advancePerDay = Math.min(freePace, cap);
   // «удерживать любой ценой»: обороняющиеся не отходят и несут повышенные потери;
   // наступающие продвигаются, только если оборона прорвана (обходят узел сопротивления)
   // окружённые не могут отойти: держатся на месте с повышенными потерями
   const pinned = (f: Formation) => f.order?.task === 'hold' || !!f.cutOff;
   const holding = def.every(pinned);
-  const breakthrough = advancePerDay >= BREAKTHROUGH_KM;
+  // прорыв — по темпу без предела полосы: предел ограничивает скорость «прогрызания», но не исключает прорыв
+  const breakthrough = freePace >= BREAKTHROUGH_KM;
   // городской бой (rules.holdGivesGround): «держаться» — не отходить по своей воле, но квартал за кварталом уступать
   const yields = !!R.holdGivesGround;
   const advanceKm = holding && !breakthrough && !yields ? 0 : advancePerDay * day;

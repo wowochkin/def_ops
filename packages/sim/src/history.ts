@@ -40,7 +40,7 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
       const c = T.area(e.place)?.center;
       const side = new Set(run.final.formations.filter((f) => f.side === e.side).map((f) => f.id));
       const near = (u: Snapshot['units'][number]) => !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c!)) <= e.radiusKm;
-      for (const s of run.snapshots) {
+      for (const s of run.snapshots.slice(1)) { // до начала сценария событие произойти не может
         if (c && s.units.some((u) => side.has(u.id) && near(u)) && !(e.control && s.units.some((u) => !side.has(u.id) && near(u)))) { when = s.time; break; }
       }
     } else if (e.kind === 'meet') {

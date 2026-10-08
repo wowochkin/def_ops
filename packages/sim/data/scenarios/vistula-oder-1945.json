@@ -1,0 +1,1980 @@
+{
+ "id": "vistula-oder-1945",
+ "name": "Висло-Одерская операция, 12.01–3.02.1945: контрольная (без подгонки)",
+ "start": "1945-01-12T05:00",
+ "end": "1945-02-03T05:00",
+ "turnHours": 24,
+ "theatre": "vistula-oder-1945",
+ "rules": "ww2-berlin-cal",
+ "sides": [
+  {
+   "id": "su",
+   "name": "Красная армия и Войско Польское",
+   "profile": "rkka-1945",
+   "controller": "script"
+  },
+  {
+   "id": "de",
+   "name": "Вермахт и войска СС",
+   "profile": "wehrmacht-1945",
+   "controller": "script"
+  }
+ ],
+ "formations": [
+  {
+   "id": "su_1bf_vo",
+   "name": "1-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_1uf_vo",
+   "name": "1-й Украинский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "su_47a_vo",
+   "name": "47-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "rifle_army",
+   "position": [
+    20.925,
+    52.391
+   ],
+   "personnel": 69334,
+   "tanks": 231,
+   "guns": 1917,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend"
+  },
+  {
+   "id": "su_1pa_vo",
+   "name": "1-я армия Войска Польского",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.027,
+    52.265
+   ],
+   "personnel": 90900,
+   "tanks": 100,
+   "guns": 1300,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "Войско Польское учтено отдельно от фронта (Кривошеев); танки и орудия — оценка (C)"
+  },
+  {
+   "id": "su_3ua_vo",
+   "name": "3-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "shock_army",
+   "position": [
+    21.45,
+    51.871
+   ],
+   "personnel": 69334,
+   "tanks": 231,
+   "guns": 1917,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "второй эшелон фронта"
+  },
+  {
+   "id": "su_61a_vo",
+   "name": "61-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.183,
+    51.785
+   ],
+   "personnel": 69334,
+   "tanks": 231,
+   "guns": 1917,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend"
+  },
+  {
+   "id": "su_5ua_vo",
+   "name": "5-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "shock_army",
+   "position": [
+    21.383,
+    51.762
+   ],
+   "personnel": 69334,
+   "tanks": 231,
+   "guns": 3450,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "главный удар с Магнушевского плацдарма"
+  },
+  {
+   "id": "su_8gva_vo",
+   "name": "8-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "guards_army",
+   "position": [
+    21.324,
+    51.688
+   ],
+   "personnel": 69334,
+   "tanks": 231,
+   "guns": 3450,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "главный удар с Магнушевского плацдарма"
+  },
+  {
+   "id": "su_69a_vo",
+   "name": "69-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.699,
+    51.415
+   ],
+   "personnel": 77038,
+   "tanks": 256,
+   "guns": 3194,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "главный удар с Пулавского плацдарма"
+  },
+  {
+   "id": "su_33a_vo",
+   "name": "33-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.785,
+    51.391
+   ],
+   "personnel": 61630,
+   "tanks": 205,
+   "guns": 2556,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend"
+  },
+  {
+   "id": "su_1gta_vo",
+   "name": "1-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "tank_army",
+   "position": [
+    21.354,
+    51.725
+   ],
+   "personnel": 40000,
+   "tanks": 750,
+   "guns": 600,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "танки — распространённая оценка (C)"
+  },
+  {
+   "id": "su_2gta_vo",
+   "name": "2-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf_vo",
+   "type": "tank_army",
+   "position": [
+    21.331,
+    51.804
+   ],
+   "personnel": 40000,
+   "tanks": 840,
+   "guns": 600,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_11tk_vo",
+   "name": "11-й танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a_vo",
+   "type": "tank_corps",
+   "position": [
+    21.584,
+    51.356
+   ],
+   "personnel": 11000,
+   "tanks": 200,
+   "guns": 150,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_9tk_vo",
+   "name": "9-й танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_33a_vo",
+   "type": "tank_corps",
+   "position": [
+    21.785,
+    51.391
+   ],
+   "personnel": 11000,
+   "tanks": 200,
+   "guns": 150,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_2gkk_vo",
+   "name": "2-й гвардейский кавалерийский корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1bf_vo",
+   "type": "cavalry_corps",
+   "position": [
+    20.045,
+    52.033
+   ],
+   "personnel": 15000,
+   "tanks": 100,
+   "guns": 250,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_7gkk_vo",
+   "name": "7-й гвардейский кавалерийский корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1bf_vo",
+   "type": "cavalry_corps",
+   "position": [
+    20.034,
+    51.52
+   ],
+   "personnel": 15000,
+   "tanks": 100,
+   "guns": 250,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_6a_vo",
+   "name": "6-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.854,
+    50.846
+   ],
+   "personnel": 41022,
+   "tanks": 79,
+   "guns": 806,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend"
+  },
+  {
+   "id": "su_3gva_vo",
+   "name": "3-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "guards_army",
+   "position": [
+    21.545,
+    50.844
+   ],
+   "personnel": 73839,
+   "tanks": 142,
+   "guns": 1741,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend"
+  },
+  {
+   "id": "su_13a_vo",
+   "name": "13-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.044,
+    50.683
+   ],
+   "personnel": 65634,
+   "tanks": 126,
+   "guns": 2321,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "главный удар с Сандомирского плацдарма"
+  },
+  {
+   "id": "su_52a_vo",
+   "name": "52-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.005,
+    50.591
+   ],
+   "personnel": 73839,
+   "tanks": 142,
+   "guns": 2611,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "главный удар"
+  },
+  {
+   "id": "su_5gva_vo",
+   "name": "5-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "guards_army",
+   "position": [
+    20.972,
+    50.515
+   ],
+   "personnel": 82043,
+   "tanks": 158,
+   "guns": 2902,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "главный удар"
+  },
+  {
+   "id": "su_60a_vo",
+   "name": "60-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.417,
+    50.17
+   ],
+   "personnel": 65634,
+   "tanks": 126,
+   "guns": 1290,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend"
+  },
+  {
+   "id": "su_59a_vo",
+   "name": "59-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.411,
+    50.466
+   ],
+   "personnel": 57430,
+   "tanks": 110,
+   "guns": 1128,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "второй эшелон фронта"
+  },
+  {
+   "id": "su_21a_vo",
+   "name": "21-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "rifle_army",
+   "position": [
+    21.646,
+    50.589
+   ],
+   "personnel": 73839,
+   "tanks": 142,
+   "guns": 1451,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "второй эшелон фронта"
+  },
+  {
+   "id": "su_3gta_vo",
+   "name": "3-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "tank_army",
+   "position": [
+    21.086,
+    50.576
+   ],
+   "personnel": 40000,
+   "tanks": 920,
+   "guns": 600,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_4ta_vo",
+   "name": "4-я танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1uf_vo",
+   "type": "tank_army",
+   "position": [
+    21.168,
+    50.561
+   ],
+   "personnel": 40000,
+   "tanks": 800,
+   "guns": 600,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_4gtk_vo",
+   "name": "4-й гвардейский танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_59a_vo",
+   "type": "tank_corps",
+   "position": [
+    20.352,
+    50.365
+   ],
+   "personnel": 11000,
+   "tanks": 200,
+   "guns": 150,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_31tk_vo",
+   "name": "31-й танковый корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5gva_vo",
+   "type": "tank_corps",
+   "position": [
+    20.939,
+    50.438
+   ],
+   "personnel": 11000,
+   "tanks": 200,
+   "guns": 150,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "defend",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "su_1gkk_vo",
+   "name": "1-й гвардейский кавалерийский корпус",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_1uf_vo",
+   "type": "cavalry_corps",
+   "position": [
+    21.355,
+    50.53
+   ],
+   "personnel": 15000,
+   "tanks": 100,
+   "guns": 250,
+   "ammo": 3,
+   "fuel": 2,
+   "posture": "reserve",
+   "note": "оценка (C)"
+  },
+  {
+   "id": "de_hgr_a_vo",
+   "name": "Группа армий «А» (с 26.01 — «Центр»)",
+   "side": "de",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "de_hgr_weichsel_vo",
+   "name": "Группа армий «Висла»",
+   "side": "de",
+   "echelon": "front",
+   "parent": null
+  },
+  {
+   "id": "de_9a_vo",
+   "name": "9-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_a_vo"
+  },
+  {
+   "id": "de_4pza_vo",
+   "name": "4-я танковая армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_a_vo"
+  },
+  {
+   "id": "de_17a_vo",
+   "name": "17-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": "de_hgr_a_vo"
+  },
+  {
+   "id": "de_xxxxvi_vo",
+   "name": "XXXXVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "type": "panzer_corps",
+   "position": [
+    20.873,
+    52.337
+   ],
+   "personnel": 29250,
+   "tanks": 123,
+   "guns": 491,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_viii_vo",
+   "name": "VIII армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "type": "inf_corps",
+   "position": [
+    21.067,
+    51.717
+   ],
+   "personnel": 29250,
+   "tanks": 123,
+   "guns": 491,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_lvi_vo",
+   "name": "LVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "type": "panzer_corps",
+   "position": [
+    21.584,
+    51.356
+   ],
+   "personnel": 29250,
+   "tanks": 123,
+   "guns": 491,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xxxx_vo",
+   "name": "XXXX танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a_vo",
+   "type": "panzer_corps",
+   "position": [
+    21.055,
+    51.532
+   ],
+   "personnel": 19500,
+   "tanks": 82,
+   "guns": 327,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "reserve",
+   "note": "резерв 9 А: 19-я и 25-я танковые дивизии (Z)"
+  },
+  {
+   "id": "de_xxxxii_vo",
+   "name": "XXXXII армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza_vo",
+   "type": "inf_corps",
+   "position": [
+    21.406,
+    50.871
+   ],
+   "personnel": 42000,
+   "tanks": 200,
+   "guns": 720,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xxiv_vo",
+   "name": "XXIV танковый корпус (группа Неринга)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza_vo",
+   "type": "panzer_corps",
+   "position": [
+    20.691,
+    50.743
+   ],
+   "personnel": 31500,
+   "tanks": 150,
+   "guns": 540,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "reserve",
+   "note": "резерв 4 ТА: 16-я и 17-я танковые дивизии и 20-я моторизованная (Z)"
+  },
+  {
+   "id": "de_xxxxviii_vo",
+   "name": "XXXXVIII танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_4pza_vo",
+   "type": "panzer_corps",
+   "position": [
+    20.638,
+    50.567
+   ],
+   "personnel": 31500,
+   "tanks": 150,
+   "guns": 540,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_lix_vo",
+   "name": "LIX армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_17a_vo",
+   "type": "inf_corps",
+   "position": [
+    20.897,
+    50.237
+   ],
+   "personnel": 43875,
+   "tanks": 100,
+   "guns": 700,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_xi_ss_vo",
+   "name": "XI армейский корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_17a_vo",
+   "type": "inf_corps",
+   "position": [
+    21.219,
+    49.886
+   ],
+   "personnel": 43875,
+   "tanks": 100,
+   "guns": 700,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend"
+  },
+  {
+   "id": "de_pzk_gd_vo",
+   "name": "Танковый корпус «Великая Германия» (группа Заукена)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_a_vo",
+   "type": "panzer_corps",
+   "position": [
+    19.295,
+    51.681
+   ],
+   "personnel": 20000,
+   "tanks": 150,
+   "guns": 200,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-01-19T05:00",
+   "note": "переброшен из Восточной Пруссии по приказу 14.01; численность — оценка (C)"
+  },
+  {
+   "id": "de_v_ss_vo",
+   "name": "V горный корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_weichsel_vo",
+   "type": "mountain_corps",
+   "position": [
+    15.726,
+    52.405
+   ],
+   "personnel": 15000,
+   "tanks": 20,
+   "guns": 150,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-01-26T05:00",
+   "note": "сформирован на Одере в конце января; оценка (C)"
+  },
+  {
+   "id": "de_festung_posen_vo",
+   "name": "Крепость Познань (Posen)",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_hgr_weichsel_vo",
+   "type": "fortress",
+   "position": [
+    16.92,
+    52.401
+   ],
+   "personnel": 17500,
+   "tanks": 10,
+   "guns": 150,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "posture": "defend",
+   "enterAt": "1945-01-21T05:00",
+   "note": "гарнизон крепости Познань (оценки 15–60 тыс.; взята нижняя, C)"
+  }
+ ],
+ "orders": [
+  {
+   "id": "de_lix_vo@1945-01-12T18:00:defend",
+   "formation": "de_lix_vo",
+   "task": "defend",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_lvi_vo@1945-01-12T18:00:defend",
+   "formation": "de_lvi_vo",
+   "task": "defend",
+   "target": "Zwolen",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "оборона против Пулавского плацдарма"
+  },
+  {
+   "id": "de_viii_vo@1945-01-12T18:00:defend",
+   "formation": "de_viii_vo",
+   "task": "defend",
+   "target": "Warka",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "оборона против Магнушевского плацдарма"
+  },
+  {
+   "id": "de_xi_ss_vo@1945-01-12T18:00:defend",
+   "formation": "de_xi_ss_vo",
+   "task": "defend",
+   "target": "Tarnow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxiv_vo@1945-01-12T18:00:counterattack",
+   "formation": "de_xxiv_vo",
+   "task": "counterattack",
+   "target": "Chmielnik",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "приказ на контрудар против прорыва (Z p.421)"
+  },
+  {
+   "id": "de_xxxx_vo@1945-01-12T18:00:reserve",
+   "formation": "de_xxxx_vo",
+   "task": "reserve",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "резерв 9 А (19, 25 тд)"
+  },
+  {
+   "id": "de_xxxxii_vo@1945-01-12T18:00:defend",
+   "formation": "de_xxxxii_vo",
+   "task": "defend",
+   "target": "Opatow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxxvi_vo@1945-01-12T18:00:defend",
+   "formation": "de_xxxxvi_vo",
+   "task": "defend",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxxviii_vo@1945-01-12T18:00:defend",
+   "formation": "de_xxxxviii_vo",
+   "task": "defend",
+   "target": "Pinczow",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_13a_vo@1945-01-12T18:00:attack",
+   "formation": "su_13a_vo",
+   "task": "attack",
+   "target": "Kielce",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "главный удар правым флангом ударной группировки (EW_SS; KON)"
+  },
+  {
+   "id": "su_1gkk_vo@1945-01-12T18:00:reserve",
+   "formation": "su_1gkk_vo",
+   "task": "reserve",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "резерв фронта (EW_SS)"
+  },
+  {
+   "id": "su_21a_vo@1945-01-12T18:00:reserve",
+   "formation": "su_21a_vo",
+   "task": "reserve",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "второй эшелон фронта (EW_SS)"
+  },
+  {
+   "id": "su_31tk_vo@1945-01-12T18:00:attack",
+   "formation": "su_31tk_vo",
+   "task": "attack",
+   "target": "Czestochowa",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "в полосе 5 гв. А (RW_CHR)"
+  },
+  {
+   "id": "su_3gta_vo@1945-01-12T18:00:attack",
+   "formation": "su_3gta_vo",
+   "task": "attack",
+   "target": "Radomsko",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "подвижная группа: к исходу первого дня на Ниду, затем Радомско–Бреслау (RW_ARM; EW_SS)"
+  },
+  {
+   "id": "su_3gva_vo@1945-01-12T18:00:attack",
+   "formation": "su_3gva_vo",
+   "task": "attack",
+   "target": "Ostrowiec",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "окружение островецкой группировки с 6 А (RW_SS; EW_SS)"
+  },
+  {
+   "id": "su_4ta_vo@1945-01-12T18:00:attack",
+   "formation": "su_4ta_vo",
+   "task": "attack",
+   "target": "Checiny",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "подвижная группа, северный фланг (EW_SS)"
+  },
+  {
+   "id": "su_52a_vo@1945-01-12T18:00:attack",
+   "formation": "su_52a_vo",
+   "task": "attack",
+   "target": "Chmielnik",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "прорыв Шидлув–Жерники-Дольне на Хмельник–Влощова–Радомско, обеспечить ввод 3 гв. ТА (RW_ARM)"
+  },
+  {
+   "id": "su_5gva_vo@1945-01-12T18:00:attack",
+   "formation": "su_5gva_vo",
+   "task": "attack",
+   "target": "BuskoZdroj",
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "главный удар на Хмельник–Радомско–Бреслау (EW_SS)"
+  },
+  {
+   "id": "su_6a_vo@1945-01-12T18:00:hold",
+   "formation": "su_6a_vo",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-01-12T18:00",
+   "source": "script",
+   "note": "правый фланг на Висле; с 3 гв. А и 1 БФ окружить островецко-опатувскую группировку (RW_SS)"
+  },
+  {
+   "id": "de_xxxxviii_vo@1945-01-13T18:00:withdraw",
+   "formation": "de_xxxxviii_vo",
+   "task": "withdraw",
+   "target": "Jedrzejow",
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "остатки (C)"
+  },
+  {
+   "id": "su_4gtk_vo@1945-01-13T18:00:attack",
+   "formation": "su_4gtk_vo",
+   "task": "attack",
+   "target": "Krakow",
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "с 59 А (RW_ARM)"
+  },
+  {
+   "id": "su_60a_vo@1945-01-13T18:00:attack",
+   "formation": "su_60a_vo",
+   "task": "attack",
+   "target": "Krakow",
+   "issuedAt": "1945-01-13T18:00",
+   "source": "script",
+   "note": "главными силами овладеть Краковом (EW_SS)"
+  },
+  {
+   "id": "de_xxiv_vo@1945-01-14T18:00:hold",
+   "formation": "de_xxiv_vo",
+   "task": "hold",
+   "target": "Kielce",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxx_vo@1945-01-14T18:00:counterattack",
+   "formation": "de_xxxx_vo",
+   "task": "counterattack",
+   "target": "Bialobrzegi",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "контрудар 19 и 25 тд против прорыва с Магнушевского плацдарма (DW_VO; RW_CHR)"
+  },
+  {
+   "id": "su_11tk_vo@1945-01-14T18:00:attack",
+   "formation": "su_11tk_vo",
+   "task": "attack",
+   "target": "Radom",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "с 69 А (RW_CHR)"
+  },
+  {
+   "id": "su_1gta_vo@1945-01-14T18:00:reserve",
+   "formation": "su_1gta_vo",
+   "task": "reserve",
+   "target": null,
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "ввод в прорыв в полосе 8 гв. А (RW_WP)"
+  },
+  {
+   "id": "su_33a_vo@1945-01-14T18:00:attack",
+   "formation": "su_33a_vo",
+   "task": "attack",
+   "target": "Szydlowiec",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "главный удар армии на Шидловец–Скаржиско-Каменну (PW_VO); с правым крылом 1 УФ окружить кельце-радомскую группировку (KON)"
+  },
+  {
+   "id": "su_3gva_vo@1945-01-14T18:00:attack",
+   "formation": "su_3gva_vo",
+   "task": "attack",
+   "target": "Kielce",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3ua_vo@1945-01-14T18:00:reserve",
+   "formation": "su_3ua_vo",
+   "task": "reserve",
+   "target": null,
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "второй эшелон фронта для развития успеха на главном направлении (RW_WP)"
+  },
+  {
+   "id": "su_4ta_vo@1945-01-14T18:00:attack",
+   "formation": "su_4ta_vo",
+   "task": "attack",
+   "target": "Kielce",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "обход Кельце с юго-запада (KON)"
+  },
+  {
+   "id": "su_59a_vo@1945-01-14T18:00:attack",
+   "formation": "su_59a_vo",
+   "task": "attack",
+   "target": "Miechow",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "ввод с Ниды на стыке 5 гв. и 60 А: Мехув–Олькуш–Катовице (RW_ARM)"
+  },
+  {
+   "id": "su_5ua_vo@1945-01-14T18:00:attack",
+   "formation": "su_5ua_vo",
+   "task": "attack",
+   "target": "Bialobrzegi",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "главный удар с Магнушевского плацдарма на Кутно–Познань; обеспечить ввод 2 гв. ТА (RW_WP)"
+  },
+  {
+   "id": "su_61a_vo@1945-01-14T18:00:attack",
+   "formation": "su_61a_vo",
+   "task": "attack",
+   "target": "Grojec",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "с северной части Магнушевского плацдарма на Варку–Груец–Гродзиск (PW_VO)"
+  },
+  {
+   "id": "su_69a_vo@1945-01-14T18:00:attack",
+   "formation": "su_69a_vo",
+   "task": "attack",
+   "target": "Radom",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "главная задача на Пулавском плацдарме: Зволень–Радом–Томашув–Лодзь (PW_VO)"
+  },
+  {
+   "id": "su_8gva_vo@1945-01-14T18:00:attack",
+   "formation": "su_8gva_vo",
+   "task": "attack",
+   "target": "NoweMiasto",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "главный удар с Магнушевского плацдарма; ввод 1 гв. ТА (RW_WP)"
+  },
+  {
+   "id": "su_9tk_vo@1945-01-14T18:00:attack",
+   "formation": "su_9tk_vo",
+   "task": "attack",
+   "target": "Szydlowiec",
+   "issuedAt": "1945-01-14T18:00",
+   "source": "script",
+   "note": "с 33 А (RW_CHR)"
+  },
+  {
+   "id": "de_lvi_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_lvi_vo",
+   "task": "withdraw",
+   "target": "TomaszowMaz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_pzk_gd_vo@1945-01-15T18:00:regroup",
+   "formation": "de_pzk_gd_vo",
+   "task": "regroup",
+   "target": "Lodz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "переброска из Вост. Пруссии в район Кельце (RW_VO) — выгрузка у Лодзи/Калиша (EW_VO; DW_VO)"
+  },
+  {
+   "id": "de_viii_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_viii_vo",
+   "task": "withdraw",
+   "target": "Lodz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script"
+  },
+  {
+   "id": "de_xxxxii_vo@1945-01-15T18:00:withdraw",
+   "formation": "de_xxxxii_vo",
+   "task": "withdraw",
+   "target": "SkarzyskoK",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "приказ командующего 4 ТА на отход к Скаржиско-Каменной (RW_CHR)"
+  },
+  {
+   "id": "su_1gta_vo@1945-01-15T18:00:attack",
+   "formation": "su_1gta_vo",
+   "task": "attack",
+   "target": "Lodz",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "захватить плацдармы на Пилице и наступать на Лодзь (EW_VO)"
+  },
+  {
+   "id": "su_47a_vo@1945-01-15T18:00:attack",
+   "formation": "su_47a_vo",
+   "task": "attack",
+   "target": "Modlin",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "вспомогательный удар севернее Варшавы, ликвидация плацдарма в междуречье, обход Варшавы с северо-запада (PW_VO; RW_WP)"
+  },
+  {
+   "id": "su_52a_vo@1945-01-15T18:00:attack",
+   "formation": "su_52a_vo",
+   "task": "attack",
+   "target": "Radomsko",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_5gva_vo@1945-01-15T18:00:attack",
+   "formation": "su_5gva_vo",
+   "task": "attack",
+   "target": "Czestochowa",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_6a_vo@1945-01-15T18:00:attack",
+   "formation": "su_6a_vo",
+   "task": "attack",
+   "target": "Ostrowiec",
+   "issuedAt": "1945-01-15T18:00",
+   "source": "script",
+   "note": "(RW_CHR)"
+  },
+  {
+   "id": "de_xi_ss_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_xi_ss_vo",
+   "task": "withdraw",
+   "target": "Wieliczka",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "отход 17 А южнее Кракова на запад (KON; RW_CHR)"
+  },
+  {
+   "id": "de_xxiv_vo@1945-01-16T18:00:breakout",
+   "formation": "de_xxiv_vo",
+   "task": "breakout",
+   "target": "Przedborz",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "решение командира на отход ночью 16.01 (EW_VO); к Пилице (Z p.423)"
+  },
+  {
+   "id": "de_xxxxvi_vo@1945-01-16T18:00:withdraw",
+   "formation": "de_xxxxvi_vo",
+   "task": "withdraw",
+   "target": "Modlin",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "гарнизон Варшавы уничтожает запасы и уходит (Z p.423)"
+  },
+  {
+   "id": "su_1pa_vo@1945-01-16T18:00:attack",
+   "formation": "su_1pa_vo",
+   "task": "attack",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "наступление на 4-й день операции, овладеть Варшавой (RW_WP)"
+  },
+  {
+   "id": "su_2gta_vo@1945-01-16T18:00:attack",
+   "formation": "su_2gta_vo",
+   "task": "attack",
+   "target": "Sochaczew",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "ввод в прорыв в полосе 5 уд. А; отрезать варшавскую группировку (RW_CHR)"
+  },
+  {
+   "id": "su_61a_vo@1945-01-16T18:00:attack",
+   "formation": "su_61a_vo",
+   "task": "attack",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "окружение варшавской группировки с юго-запада (RW_CHR)"
+  },
+  {
+   "id": "su_8gva_vo@1945-01-16T18:00:attack",
+   "formation": "su_8gva_vo",
+   "task": "attack",
+   "target": "Lodz",
+   "issuedAt": "1945-01-16T18:00",
+   "source": "script",
+   "note": "на Лодзь (RW_CHR; DW_VO)"
+  },
+  {
+   "id": "de_lix_vo@1945-01-17T18:00:hold",
+   "formation": "de_lix_vo",
+   "task": "hold",
+   "target": "Krakow",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "(C)"
+  },
+  {
+   "id": "su_13a_vo@1945-01-17T18:00:attack",
+   "formation": "su_13a_vo",
+   "task": "attack",
+   "target": "Wielun",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "на Бреслау (Ставка 17.01)"
+  },
+  {
+   "id": "su_2gkk_vo@1945-01-17T18:00:attack",
+   "formation": "su_2gkk_vo",
+   "task": "attack",
+   "target": "Lowicz",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "на Скерневице–Лович (RW_CHR)"
+  },
+  {
+   "id": "su_33a_vo@1945-01-17T18:00:attack",
+   "formation": "su_33a_vo",
+   "task": "attack",
+   "target": "Lodz",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3gta_vo@1945-01-17T18:00:attack",
+   "formation": "su_3gta_vo",
+   "task": "attack",
+   "target": "Wroclaw",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "Ставка 17.01: на Бреслау (EW_VO)"
+  },
+  {
+   "id": "su_3gva_vo@1945-01-17T18:00:attack",
+   "formation": "su_3gva_vo",
+   "task": "attack",
+   "target": "SkarzyskoK",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "соединение с 1 БФ (RW_SS)"
+  },
+  {
+   "id": "su_47a_vo@1945-01-17T18:00:attack",
+   "formation": "su_47a_vo",
+   "task": "attack",
+   "target": "Warszawa",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "с 61 А и 1 А ВП разгромить варшавскую группировку (RW_WP)"
+  },
+  {
+   "id": "su_4ta_vo@1945-01-17T18:00:attack",
+   "formation": "su_4ta_vo",
+   "task": "attack",
+   "target": "Chobienia",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "на Бреслау/Одер (Ставка 17.01)"
+  },
+  {
+   "id": "su_5ua_vo@1945-01-17T18:00:attack",
+   "formation": "su_5ua_vo",
+   "task": "attack",
+   "target": "Lowicz",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_69a_vo@1945-01-17T18:00:attack",
+   "formation": "su_69a_vo",
+   "task": "attack",
+   "target": "TomaszowMaz",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_7gkk_vo@1945-01-17T18:00:attack",
+   "formation": "su_7gkk_vo",
+   "task": "attack",
+   "target": "TomaszowMaz",
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "(RW_CHR)"
+  },
+  {
+   "id": "de_pzk_gd_vo@1945-01-18T18:00:counterattack",
+   "formation": "de_pzk_gd_vo",
+   "task": "counterattack",
+   "target": "Lask",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "прикрыть отход 9 А, держать южнее Лодзи (Z p.424; EW_VO)"
+  },
+  {
+   "id": "de_xxxx_vo@1945-01-18T18:00:hold",
+   "formation": "de_xxxx_vo",
+   "task": "hold",
+   "target": "Lodz",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "короткая линия южнее Лодзи до подхода XXIV тк (Z p.424)"
+  },
+  {
+   "id": "de_xxxxii_vo@1945-01-18T18:00:breakout",
+   "formation": "de_xxxxii_vo",
+   "task": "breakout",
+   "target": "Piotrkow",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "прорыв на запад «блуждающим котлом» (DW_KORPS)"
+  },
+  {
+   "id": "su_1pa_vo@1945-01-18T18:00:attack",
+   "formation": "su_1pa_vo",
+   "task": "attack",
+   "target": "Bydgoszcz",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "марш вдоль левого берега Вислы на Быдгощ (PW_VO)"
+  },
+  {
+   "id": "su_2gta_vo@1945-01-18T18:00:attack",
+   "formation": "su_2gta_vo",
+   "task": "attack",
+   "target": "Inowroclaw",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "(RW_ARM)"
+  },
+  {
+   "id": "su_52a_vo@1945-01-18T18:00:attack",
+   "formation": "su_52a_vo",
+   "task": "attack",
+   "target": "Namyslow",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "с 3 гв. ТА к границе и Одеру (RW_ARM)"
+  },
+  {
+   "id": "su_59a_vo@1945-01-18T18:00:attack",
+   "formation": "su_59a_vo",
+   "task": "attack",
+   "target": "Krakow",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "штурм Кракова (RW_ARM)"
+  },
+  {
+   "id": "de_lix_vo@1945-01-19T18:00:withdraw",
+   "formation": "de_lix_vo",
+   "task": "withdraw",
+   "target": "Katowice",
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "(C)"
+  },
+  {
+   "id": "su_21a_vo@1945-01-19T18:00:attack",
+   "formation": "su_21a_vo",
+   "task": "attack",
+   "target": "TarnowskieGory",
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "введена на Варте: охват Силезского района с северо-запада (EW_SS; RW_CHR)"
+  },
+  {
+   "id": "su_47a_vo@1945-01-19T18:00:attack",
+   "formation": "su_47a_vo",
+   "task": "attack",
+   "target": "Bydgoszcz",
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "правое крыло фронта, на северо-запад (RW_CHR)"
+  },
+  {
+   "id": "su_5gva_vo@1945-01-19T18:00:attack",
+   "formation": "su_5gva_vo",
+   "task": "attack",
+   "target": "Opole",
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "к Одеру (KON)"
+  },
+  {
+   "id": "su_61a_vo@1945-01-19T18:00:attack",
+   "formation": "su_61a_vo",
+   "task": "attack",
+   "target": "Szamocin",
+   "issuedAt": "1945-01-19T18:00",
+   "source": "script",
+   "note": "на северо-запад за 2 гв. ТА (C)"
+  },
+  {
+   "id": "de_festung_posen_vo@1945-01-20T18:00:hold",
+   "formation": "de_festung_posen_vo",
+   "task": "hold",
+   "target": "Poznan",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "Познань объявлена «Festung» 20.01; держать безусловно (DW_VO; DW_POSEN)"
+  },
+  {
+   "id": "de_xxiv_vo@1945-01-20T18:00:breakout",
+   "formation": "de_xxiv_vo",
+   "task": "breakout",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "к Варте на соединение с ТК «ВГ» (Z p.424–425)"
+  },
+  {
+   "id": "su_1gkk_vo@1945-01-20T18:00:attack",
+   "formation": "su_1gkk_vo",
+   "task": "attack",
+   "target": "StrzelceOp",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "с 3 гв. ТА на Оппельн/Гросс-Штрелиц (RW_CHR; EW_SS)"
+  },
+  {
+   "id": "su_1gta_vo@1945-01-20T18:00:attack",
+   "formation": "su_1gta_vo",
+   "task": "attack",
+   "target": "Poznan",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "форсировать Варту, обойти Познань с юга (RW_WP)"
+  },
+  {
+   "id": "su_3gta_vo@1945-01-20T18:00:attack",
+   "formation": "su_3gta_vo",
+   "task": "attack",
+   "target": "Opole",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "поворот из района Намслау вдоль правого берега Одера на Оппельн–Рыбник (RW_CHR; KON)"
+  },
+  {
+   "id": "su_3gva_vo@1945-01-20T18:00:attack",
+   "formation": "su_3gva_vo",
+   "task": "attack",
+   "target": "Leszno",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "правый фланг фронта на запад (KON)"
+  },
+  {
+   "id": "su_4gtk_vo@1945-01-20T18:00:attack",
+   "formation": "su_4gtk_vo",
+   "task": "attack",
+   "target": "Katowice",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "(KON)"
+  },
+  {
+   "id": "su_5ua_vo@1945-01-20T18:00:attack",
+   "formation": "su_5ua_vo",
+   "task": "attack",
+   "target": "Gniezno",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "на Познань севернее города (RW_CHR)"
+  },
+  {
+   "id": "su_60a_vo@1945-01-20T18:00:attack",
+   "formation": "su_60a_vo",
+   "task": "attack",
+   "target": "Oswiecim",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "обход Силезского района с юга (RW_ARM 60 А)"
+  },
+  {
+   "id": "su_69a_vo@1945-01-20T18:00:attack",
+   "formation": "su_69a_vo",
+   "task": "attack",
+   "target": "Poznan",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "91 ск — к Познани (RW_ARM)"
+  },
+  {
+   "id": "su_8gva_vo@1945-01-20T18:00:attack",
+   "formation": "su_8gva_vo",
+   "task": "attack",
+   "target": "Poznan",
+   "issuedAt": "1945-01-20T18:00",
+   "source": "script",
+   "note": "на Познань; овладение городом возложено на ск 8 гв. и 69 А (RW_WP)"
+  },
+  {
+   "id": "de_festung_posen_vo@1945-01-21T18:00:hold",
+   "formation": "de_festung_posen_vo",
+   "task": "hold",
+   "target": null,
+   "issuedAt": "1945-01-21T18:00",
+   "source": "script",
+   "note": "крепость «держаться» (приказ Гитлера; Z)"
+  },
+  {
+   "id": "de_pzk_gd_vo@1945-01-21T18:00:relieve",
+   "formation": "de_pzk_gd_vo",
+   "task": "relieve",
+   "target": "Sieradz",
+   "issuedAt": "1945-01-21T18:00",
+   "source": "script",
+   "note": "навстречу XXIV тк на Варте (DW_KORPS)"
+  },
+  {
+   "id": "su_13a_vo@1945-01-21T18:00:attack",
+   "formation": "su_13a_vo",
+   "task": "attack",
+   "target": "Scinawa",
+   "issuedAt": "1945-01-21T18:00",
+   "source": "script",
+   "note": "выход к Одеру и форсирование (RW_CHR)"
+  },
+  {
+   "id": "su_33a_vo@1945-01-21T18:00:attack",
+   "formation": "su_33a_vo",
+   "task": "attack",
+   "target": "Kalisz",
+   "issuedAt": "1945-01-21T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_59a_vo@1945-01-21T18:00:attack",
+   "formation": "su_59a_vo",
+   "task": "attack",
+   "target": "Katowice",
+   "issuedAt": "1945-01-21T18:00",
+   "source": "script",
+   "note": "фронтальный удар по Силезскому району (EW_VO)"
+  },
+  {
+   "id": "de_xxxx_vo@1945-01-22T18:00:withdraw",
+   "formation": "de_xxxx_vo",
+   "task": "withdraw",
+   "target": "ZielonaGora",
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script",
+   "note": "отход за Одер (DW_KORPS)"
+  },
+  {
+   "id": "su_2gta_vo@1945-01-22T18:00:attack",
+   "formation": "su_2gta_vo",
+   "task": "attack",
+   "target": "Bydgoszcz",
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_4ta_vo@1945-01-22T18:00:hold",
+   "formation": "su_4ta_vo",
+   "task": "hold",
+   "target": "Scinawa",
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script",
+   "note": "удерживать и расширять плацдарм (EW_VO)"
+  },
+  {
+   "id": "de_pzk_gd_vo@1945-01-23T18:00:withdraw",
+   "formation": "de_pzk_gd_vo",
+   "task": "withdraw",
+   "target": "Glogow",
+   "issuedAt": "1945-01-23T18:00",
+   "source": "script",
+   "note": "отход к Одеру (Z p.425)"
+  },
+  {
+   "id": "de_xxiv_vo@1945-01-23T18:00:withdraw",
+   "formation": "de_xxiv_vo",
+   "task": "withdraw",
+   "target": "Glogow",
+   "issuedAt": "1945-01-23T18:00",
+   "source": "script",
+   "note": "отход за Одер (DW_KORPS)"
+  },
+  {
+   "id": "su_52a_vo@1945-01-23T18:00:attack",
+   "formation": "su_52a_vo",
+   "task": "attack",
+   "target": "Wroclaw",
+   "issuedAt": "1945-01-23T18:00",
+   "source": "script",
+   "note": "форсировать Одер у Бреслау (RW_CHR)"
+  },
+  {
+   "id": "su_5gva_vo@1945-01-23T18:00:attack",
+   "formation": "su_5gva_vo",
+   "task": "attack",
+   "target": "Olawa",
+   "issuedAt": "1945-01-23T18:00",
+   "source": "script",
+   "note": "плацдармы у Олау/Брига (EW_VO; KON)"
+  },
+  {
+   "id": "su_1gta_vo@1945-01-25T18:00:attack",
+   "formation": "su_1gta_vo",
+   "task": "attack",
+   "target": "Kostrzyn",
+   "issuedAt": "1945-01-25T18:00",
+   "source": "script",
+   "note": "рейд к Одеру, захват плацдарма на берлинском направлении (PW_VO, приказ 25.01)"
+  },
+  {
+   "id": "su_21a_vo@1945-01-25T18:00:attack",
+   "formation": "su_21a_vo",
+   "task": "attack",
+   "target": "Gliwice",
+   "issuedAt": "1945-01-25T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_2gta_vo@1945-01-25T18:00:attack",
+   "formation": "su_2gta_vo",
+   "task": "attack",
+   "target": "Kostrzyn",
+   "issuedAt": "1945-01-25T18:00",
+   "source": "script",
+   "note": "рейд 150 км к Одеру (PW_VO); направление на Кюстрин (RW_ARM)"
+  },
+  {
+   "id": "su_3gta_vo@1945-01-25T18:00:attack",
+   "formation": "su_3gta_vo",
+   "task": "attack",
+   "target": "Raciborz",
+   "issuedAt": "1945-01-25T18:00",
+   "source": "script",
+   "note": "охват Силезской группировки с запада, корпус на Ратибор; коридор для отхода противника оставлен намеренно (Z p.427; KON)"
+  },
+  {
+   "id": "su_6a_vo@1945-01-25T18:00:attack",
+   "formation": "su_6a_vo",
+   "task": "attack",
+   "target": "Wroclaw",
+   "issuedAt": "1945-01-25T18:00",
+   "source": "script",
+   "note": "на Бреслау (KON)"
+  },
+  {
+   "id": "de_v_ss_vo@1945-01-26T18:00:defend",
+   "formation": "de_v_ss_vo",
+   "task": "defend",
+   "target": "Trzciel",
+   "issuedAt": "1945-01-26T18:00",
+   "source": "script",
+   "note": "Обра и Тиршитигельская позиция (EW_VO)"
+  },
+  {
+   "id": "su_5ua_vo@1945-01-26T18:00:attack",
+   "formation": "su_5ua_vo",
+   "task": "attack",
+   "target": "Kienitz",
+   "issuedAt": "1945-01-26T18:00",
+   "source": "script",
+   "note": "к Одеру севернее Кюстрина, захват плацдарма (RW_WP; EW_VO)"
+  },
+  {
+   "id": "su_8gva_vo@1945-01-26T18:00:attack",
+   "formation": "su_8gva_vo",
+   "task": "attack",
+   "target": "Poznan",
+   "issuedAt": "1945-01-26T18:00",
+   "source": "script",
+   "note": "штурм крепости главными силами (29 гв. ск, 39 гв. сд) (RW_ARM)"
+  },
+  {
+   "id": "su_33a_vo@1945-01-27T18:00:attack",
+   "formation": "su_33a_vo",
+   "task": "attack",
+   "target": "Swiebodzin",
+   "issuedAt": "1945-01-27T18:00",
+   "source": "script"
+  },
+  {
+   "id": "su_3ua_vo@1945-01-27T18:00:regroup",
+   "formation": "su_3ua_vo",
+   "task": "regroup",
+   "target": "Naklo",
+   "issuedAt": "1945-01-27T18:00",
+   "source": "script",
+   "note": "выдвижение на правый фланг (Ставка 27.01, RW_CHR)"
+  },
+  {
+   "id": "su_47a_vo@1945-01-27T18:00:defend",
+   "formation": "su_47a_vo",
+   "task": "defend",
+   "target": "Naklo",
+   "issuedAt": "1945-01-27T18:00",
+   "source": "script",
+   "note": "Ставка 27.01: обеспечить правый фланг фронта с севера (RW_CHR)"
+  },
+  {
+   "id": "su_61a_vo@1945-01-27T18:00:defend",
+   "formation": "su_61a_vo",
+   "task": "defend",
+   "target": "Walcz",
+   "issuedAt": "1945-01-27T18:00",
+   "source": "script",
+   "note": "выделена для прикрытия правого фланга (RW_CHR 27.01)"
+  },
+  {
+   "id": "su_69a_vo@1945-01-27T18:00:attack",
+   "formation": "su_69a_vo",
+   "task": "attack",
+   "target": "Miedzyrzecz",
+   "issuedAt": "1945-01-27T18:00",
+   "source": "script",
+   "note": "прорыв Мезерицкого УР (RW_WP)"
+  },
+  {
+   "id": "su_60a_vo@1945-01-28T18:00:attack",
+   "formation": "su_60a_vo",
+   "task": "attack",
+   "target": "Raciborz",
+   "issuedAt": "1945-01-28T18:00",
+   "source": "script",
+   "note": "к Одеру севернее Ратибора (RW_ARM)"
+  },
+  {
+   "id": "su_8gva_vo@1945-01-28T18:00:attack",
+   "formation": "su_8gva_vo",
+   "task": "attack",
+   "target": "Kostrzyn",
+   "issuedAt": "1945-01-28T18:00",
+   "source": "script",
+   "note": "4 гв. ск — на Одер южнее Кюстрина (DW_VO)"
+  },
+  {
+   "id": "su_1pa_vo@1945-01-29T18:00:attack",
+   "formation": "su_1pa_vo",
+   "task": "attack",
+   "target": "Zlotow",
+   "issuedAt": "1945-01-29T18:00",
+   "source": "script",
+   "note": "введена на правом фланге против Померанского вала (RW_CHR)"
+  },
+  {
+   "id": "su_3gta_vo@1945-01-29T18:00:regroup",
+   "formation": "su_3gta_vo",
+   "task": "regroup",
+   "target": "Scinawa",
+   "issuedAt": "1945-01-29T18:00",
+   "source": "script",
+   "note": "переброска на Штейнауский плацдарм к 7.02 (KON; Z p.440)"
+  },
+  {
+   "id": "su_3gva_vo@1945-01-29T18:00:attack",
+   "formation": "su_3gva_vo",
+   "task": "attack",
+   "target": "Glogow",
+   "issuedAt": "1945-01-29T18:00",
+   "source": "script",
+   "note": "к Одеру у Глогау/западнее Унрухштадта (EW_SS)"
+  },
+  {
+   "id": "su_59a_vo@1945-01-29T18:00:attack",
+   "formation": "su_59a_vo",
+   "task": "attack",
+   "target": "Glogowek",
+   "issuedAt": "1945-01-29T18:00",
+   "source": "script",
+   "note": "форсировать Одер, к 2.02 выйти на Нейсе (RW_ARM)"
+  },
+  {
+   "id": "su_21a_vo@1945-01-30T18:00:attack",
+   "formation": "su_21a_vo",
+   "task": "attack",
+   "target": "Brzeg",
+   "issuedAt": "1945-01-30T18:00",
+   "source": "script",
+   "note": "плацдармы у Брига (KON)"
+  },
+  {
+   "id": "su_3ua_vo@1945-01-31T18:00:attack",
+   "formation": "su_3ua_vo",
+   "task": "attack",
+   "target": "Walcz",
+   "issuedAt": "1945-01-31T18:00",
+   "source": "script",
+   "note": "введена в сражение на правом фланге (RW_CHR)"
+  },
+  {
+   "id": "de_v_ss_vo@1945-02-01T18:00:defend",
+   "formation": "de_v_ss_vo",
+   "task": "defend",
+   "target": "Frankfurt",
+   "issuedAt": "1945-02-01T18:00",
+   "source": "script",
+   "note": "(DW_KORPS)"
+  },
+  {
+   "id": "su_33a_vo@1945-02-01T18:00:attack",
+   "formation": "su_33a_vo",
+   "task": "attack",
+   "target": "Aurith",
+   "issuedAt": "1945-02-01T18:00",
+   "source": "script",
+   "note": "плацдарм южнее Франкфурта (Z p.444) — C"
+  },
+  {
+   "id": "su_5ua_vo@1945-02-01T18:00:hold",
+   "formation": "su_5ua_vo",
+   "task": "hold",
+   "target": "Kienitz",
+   "issuedAt": "1945-02-01T18:00",
+   "source": "script",
+   "note": "удерживать и расширять плацдарм (Z p.439, Ставка — расширять плацдармы у Кюстрина)"
+  },
+  {
+   "id": "su_69a_vo@1945-02-01T18:00:attack",
+   "formation": "su_69a_vo",
+   "task": "attack",
+   "target": "Slubice",
+   "issuedAt": "1945-02-01T18:00",
+   "source": "script",
+   "note": "на франкфуртском направлении к Одеру (RW_ARM)"
+  }
+ ],
+ "timeNote": "время московское; 1 УФ наступает с 12.01, 1 БФ — с 14.01",
+ "notes": [
+  "su_1bf_vo: делится 485340 чел., 1615 танков, 18400 орудий — танки и орудия — разность двух фронтов (C)",
+  "su_1uf_vo: делится 533280 чел., 1024 танков, 14250 орудий — Кривошеев; Конев",
+  "de_9a_vo: делится 107250 чел., 450 танков, 1800 орудий — численность — набор данных; танки и орудия — доля от ГА «А» (C)",
+  "de_4pza_vo: делится 105000 чел., 500 танков, 1800 орудий — оценка: ГА «А» 400 тыс., 1 150 танков, ~5 000 орудий и минометов (Z p.417; ru-wiki) минус 9 А, поровну с поправкой на танковые резервы (C)",
+  "de_17a_vo: делится 87750 чел., 200 танков, 1400 орудий — оценка (C)"
+ ],
+ "supply": {
+  "su": {
+   "sources": [
+    "Mniszew",
+    "Magnuszew",
+    "Pulawy",
+    "Deblin",
+    "Baranow",
+    "Sandomierz",
+    "Polaniec",
+    "Praga_W"
+   ],
+   "phases": [
+    {
+     "from": "1945-01-18",
+     "sources": [
+      "Warszawa",
+      "Radom",
+      "Kielce",
+      "Krakow"
+     ]
+    },
+    {
+     "from": "1945-01-25",
+     "sources": [
+      "Lodz",
+      "Czestochowa",
+      "Kalisz",
+      "Katowice"
+     ]
+    }
+   ]
+  },
+  "de": {
+   "sources": [
+    "Kostrzyn",
+    "Frankfurt",
+    "Glogow",
+    "Wroclaw",
+    "Opole",
+    "Raciborz",
+    "Krosno"
+   ],
+   "phases": [
+    {
+     "from": "1945-01-12",
+     "until": "1945-01-17",
+     "sources": [
+      "Czestochowa",
+      "Krakow"
+     ]
+    },
+    {
+     "from": "1945-01-12",
+     "until": "1945-01-19",
+     "sources": [
+      "Lodz"
+     ]
+    },
+    {
+     "from": "1945-01-12",
+     "until": "1945-01-24",
+     "sources": [
+      "Poznan"
+     ]
+    },
+    {
+     "from": "1945-01-12",
+     "until": "1945-01-28",
+     "sources": [
+      "Katowice"
+     ]
+    }
+   ]
+  }
+ }
+}

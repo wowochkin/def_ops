@@ -1327,7 +1327,8 @@
    "side": "su",
    "place": "Kielce",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "radom",
@@ -1337,7 +1338,8 @@
    "side": "su",
    "place": "Radom",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "warsaw",
@@ -1346,8 +1348,10 @@
    "kind": "reach",
    "side": "su",
    "place": "Warszawa",
-   "radiusKm": 8,
-   "source": "RW_WP (B)"
+   "radiusKm": 3,
+   "source": "RW_WP (B)",
+   "control": true,
+   "note": "радиус 3 км: Прага на правом берегу (в 4 км от центра) была советской с сентября 1944 г."
   },
   {
    "id": "czestochowa",
@@ -1357,7 +1361,8 @@
    "side": "su",
    "place": "Czestochowa",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "lodz",
@@ -1367,7 +1372,8 @@
    "side": "su",
    "place": "Lodz",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "krakow",
@@ -1377,7 +1383,8 @@
    "side": "su",
    "place": "Krakow",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "oder_steinau",
@@ -1387,7 +1394,8 @@
    "side": "su",
    "place": "Chobienia",
    "radiusKm": 8,
-   "source": "Z; RW_CHR (B)"
+   "source": "Z; RW_CHR (B)",
+   "control": true
   },
   {
    "id": "kalisz",
@@ -1397,7 +1405,8 @@
    "side": "su",
    "place": "Kalisz",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "opole",
@@ -1407,7 +1416,8 @@
    "side": "su",
    "place": "Opole",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "posen",
@@ -1425,7 +1435,8 @@
    "side": "su",
    "place": "Katowice",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "owb",
@@ -1435,7 +1446,8 @@
    "side": "su",
    "place": "Miedzyrzecz",
    "radiusKm": 8,
-   "source": "RW_CHR (B)"
+   "source": "RW_CHR (B)",
+   "control": true
   },
   {
    "id": "kienitz",
@@ -1445,7 +1457,8 @@
    "side": "su",
    "place": "Kienitz",
    "radiusKm": 8,
-   "source": "DW/PW (B)"
+   "source": "DW/PW (B)",
+   "control": true
   }
  ]
 }

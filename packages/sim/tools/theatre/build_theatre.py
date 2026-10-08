@@ -603,7 +603,7 @@ def main():
         "bridges": [{k2: v for k2, v in b.items() if v is not None} for b in bridges],
         "areas": areas, "lines": [{k2: v for k2, v in l.items() if v is not None} for l in lines],
         **({"roadGrid": road_grid} if road_grid else {}),
-        "sources": recipe["sources"] + overlay_notes, "caveats": recipe.get("caveats", []),
+        "sources": recipe["sources"] + overlay_notes, "caveats": recipe.get("caveats", []), **({"frozen": recipe["frozen"]} if recipe.get("frozen") else {}),
         "build": {"recipe": rp.name, "stats": stats},
     }
     out.write_text(json.dumps(theatre, ensure_ascii=False, separators=(",", ":")))

@@ -207,7 +207,7 @@ export class Theatre {
     const crossCost = (i: number): number => {
       const rv = this.river[i];
       if (!rv || this.bridgeOpen(i, time)) return 0;
-      if (rv === 2) return mob === 'foot' ? rules.riverCrossHours : Infinity;
+      if (rv === 2) return mob === 'foot' || this.frozen(time) ? rules.riverCrossHours : Infinity;
       return rules.riverCrossHours / 3;
     };
     while (heap.size) {
@@ -268,7 +268,7 @@ export class Theatre {
         const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1);
         if (v1 <= 0 || v0 <= 0) continue;
         const rv = this.river[ni];
-        const cross = !rv || this.bridgeOpen(ni, time) ? 0 : rv === 2 ? (mob === 'foot' ? rules.riverCrossHours : Infinity) : rules.riverCrossHours / 3;
+        const cross = !rv || this.bridgeOpen(ni, time) ? 0 : rv === 2 ? (mob === 'foot' || this.frozen(time) ? rules.riverCrossHours : Infinity) : rules.riverCrossHours / 3;
         const nd = d[cur] + ((dr && dc ? SQRT2 : 1) * this.cellKm) / ((v0 + v1) / 2) + cross;
         if (nd < d[ni]) { d[ni] = nd; heap.push(ni, nd); }
       }
@@ -280,6 +280,12 @@ export class Theatre {
    * Продвижение по маршруту не дольше hours: где окажется формирование.
    * Возвращает новую точку, пройденные км и оставшийся путь.
    */
+  /** Большие реки скованы льдом (TheatreData.frozen): преодолимы для всех, с задержкой на переправу. */
+  frozen(time: string): boolean {
+    const f = this.data.frozen;
+    return !!f && time >= f.from && time < f.until;
+  }
+
   advance(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, hours: number, extraCost?: (i: number) => number):
     { position: LngLat; km: number; arrived: boolean; path: LngLat[] } | null {
     const r = this.route(from, to, mob, profile, rules, time, extraCost);
