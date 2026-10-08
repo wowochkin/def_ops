@@ -25,7 +25,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
   });
   const [side, setSide] = useState<Side>(() => load('palette.side', 'own') as Side);
   const [q, setQ] = useState('');
-  const [open, setOpen] = useState<Record<string, boolean>>(() => JSON.parse(load('palette.open', '{"maneuver":true}')));
+  const [open, setOpen] = useState<Record<string, boolean>>(() => JSON.parse(load('palette.open.v2', '{}')));
   const [onlyStyle, setOnlyStyle] = useState(() => load('palette.onlyStyle', '0') === '1');
   const [series, setSeries] = useState(() => load('palette.series', '0') === '1');
   /** Недавние знаки — сверху палитры (последние 8). */
@@ -36,7 +36,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
     c, items: found.filter((e) => e.category === c.id && (!onlyStyle || e.variants[style])),
   })).filter((g) => g.items.length), [found, onlyStyle, style]);
 
-  const toggle = (id: string) => { const o = { ...open, [id]: !open[id] }; setOpen(o); save('palette.open', JSON.stringify(o)); };
+  const toggle = (id: string) => { const o = { ...open, [id]: !open[id] }; setOpen(o); save('palette.open.v2', JSON.stringify(o)); };
   const pick = (e: LibraryElement) => {
     const v = variantFor(e, style);
     const on = tool.mode === 'draw' && tool.preset === v.preset && tool.element === e.id;
