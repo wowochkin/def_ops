@@ -74,7 +74,8 @@ npm run sim:demo        # три сценария, сводка и карты в
 npm run dev             # редактор → «Открыть / импорт…» → evals-out/demo/berlin-1945-tasks/map.json
 ```
 
-Подробно — [docs/simulation-quickstart.md](docs/simulation-quickstart.md), замысел и
+Подробно — [docs/simulation-quickstart.md](docs/simulation-quickstart.md); как устроена модель,
+как считается и на каких данных — [docs/simulation-model.md](docs/simulation-model.md); замысел и
 архитектура — [docs/plans/simulation.md](docs/plans/simulation.md).
 
 ## Запуск для разработки

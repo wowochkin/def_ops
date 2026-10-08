@@ -41,6 +41,7 @@ function rulesWith(r0: Rules, p: Params): Rules {
   const scale = (t: [number, number][], k: number) => t.map(([x, y]) => [x, +(y * k).toFixed(4)] as [number, number]);
   return {
     ...r0,
+    _status: `откалибровано по ${scenarioId} (блок calibration); устройство — docs/simulation-model.md`,
     advance: scale(r0.advance, p.advance),
     attackerLoss: scale(r0.attackerLoss, p.attackerLoss),
     defenderLoss: scale(r0.defenderLoss, p.defenderLoss),

@@ -206,15 +206,15 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       if (r?.at) {
         const f = createFeature('symbol', e.marker.preset, { at, layerId: 'sim-marks' }, 1.2, 'own') as SymbolFeature;
         f.name = `${e.marker.name} (расчёт: ${r.simulated})`;
-        f.note = [e.marker.note, `по истории — ${e.marker.historicalAt?.replace('T', ' ') ?? e.date}`].filter(Boolean).join('; ');
         f.time = { from: r.at, to: null };
+        f.keyframes = [{ t: r.at, at, note: [e.marker.note, `по истории — ${e.marker.historicalAt?.replace('T', ' ') ?? e.date}`].filter(Boolean).join('; ') }];
         features.push(f);
       }
       if (e.marker.historicalAt) {
         const g = createFeature('symbol', e.marker.preset, { at, layerId: 'hist-units' }, 1, 'own') as SymbolFeature;
         g.name = `${e.marker.name} (история)`;
-        g.note = e.marker.note;
         g.time = { from: e.marker.historicalAt, to: null };
+        if (e.marker.note) g.keyframes = [{ t: e.marker.historicalAt, at, note: e.marker.note }];
         features.push(g);
       }
     }
