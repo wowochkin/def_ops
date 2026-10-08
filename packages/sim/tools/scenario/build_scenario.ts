@@ -80,7 +80,9 @@ const formations: FormationDef[] = [];
 const notes: string[] = [];
 
 for (const [front, a] of Object.entries(R.allocation.fronts)) {
-  const kids = R.formations.filter((f) => f.type && parentOf(f.id) === front);
+  // действующие формирования фронта (армии) на любом уровне подчинения: армии, корпуса, дивизии
+  const under = (id: string): boolean => { let p = parentOf(id); for (let k = 0; p && k < 6; k++) { if (p === front) return true; p = parentOf(p); } return false; };
+  const kids = R.formations.filter((f) => f.type && under(f.id));
   const explicit = (k: 'personnel' | 'tanks' | 'guns') => kids.reduce((s, f) => s + (f[k] != null && inPool(f) ? (f[k] as number) : 0), 0);
   const pool = { personnel: a.personnel * a.combatShare - explicit('personnel'), tanks: a.tanks - explicit('tanks'), guns: a.guns - explicit('guns') };
   const keys = ['personnel', 'tanks', 'guns'] as const;
