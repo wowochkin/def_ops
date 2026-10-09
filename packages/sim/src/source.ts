@@ -7,7 +7,10 @@ import type { History } from './history';
 import { Theatre } from './theatre';
 import type { SimContext } from './step';
 
-export type DataKind = 'scenarios' | 'theatres' | 'profiles' | 'rules';
+import { applyInfrastructure, type InfraRecord } from './infrastructure';
+
+/** infrastructure — сведения о состоянии инфраструктуры операции (по id сценария); необязательны. */
+export type DataKind = 'scenarios' | 'theatres' | 'profiles' | 'rules' | 'infrastructure';
 export type DataGetter = (kind: DataKind, file: string) => unknown | Promise<unknown>;
 
 /** Правила поверх базовых: поля переписываются, вложенные объекты — слиянием. */
@@ -32,6 +35,8 @@ export async function contextFrom(get: DataGetter, scenarioId: string, rulesId?:
   const history = (await get('scenarios', `${scenarioId}.history.json`)) as History;
   const profiles: Record<string, SideProfile> = {};
   for (const s of scenario.sides) profiles[s.profile] ??= (await get('profiles', `${s.profile}.json`)) as SideProfile;
-  const theatre = new Theatre((await get('theatres', `${scenario.theatre}.json`)) as TheatreData);
+  // сведения об инфраструктуре операции — поверх театра (нет — театр как есть)
+  const infra = await (async () => { try { return (await get('infrastructure', `${scenarioId}.json`)) as { records?: InfraRecord[] } | null; } catch { return null; } })();
+  const theatre = new Theatre(applyInfrastructure((await get('theatres', `${scenario.theatre}.json`)) as TheatreData, infra?.records));
   return { ctx: { scenario, theatre, profiles, rules: await rulesFrom(get, rulesId ?? scenario.rules) }, history };
 }

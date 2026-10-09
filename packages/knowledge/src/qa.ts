@@ -4,6 +4,7 @@
  */
 import { category, type Entry } from './schema';
 import { snippet, type Hit, type Index } from './search';
+import { foreignTo } from './operations';
 
 export interface Source { n: number; kind: 'entry' | 'chunk'; ref: string; title: string; text: string }
 
@@ -52,8 +53,9 @@ export function qaMessages(mode: 'ask' | 'lecture', question: string, src: Sourc
  * местности с историческими позициями: это история, а не обстановка); в вопросах истории — и они, с пометкой «история».
  * Устройство модели и список источников не включаются: правила арбитра советник получает отдельно.
  */
-export function gameReference(index: Index, byId: Map<string, Entry>, query: string, historyAllowed: boolean, limit = 5, hits?: Hit[]): string {
-  const src = gather(index, byId, query, { limit, pool: 400, hits, filter: (e) => !!e && e.group !== 'model' && e.category !== 'sources' && (historyAllowed || !!category(e.category)?.gameSafe) });
+/** operation — операция игры: записи из документов других операций в справку не идут. */
+export function gameReference(index: Index, byId: Map<string, Entry>, query: string, historyAllowed: boolean, limit = 5, hits?: Hit[], operation?: string): string {
+  const src = gather(index, byId, query, { limit, pool: 400, hits, filter: (e) => !!e && e.group !== 'model' && e.category !== 'sources' && (historyAllowed || !!category(e.category)?.gameSafe) && !(operation && foreignTo(e, operation)) });
   if (!src.length) return '';
   return src.map((s) => `- [База знаний${historyAllowed && !category(byId.get(s.ref)?.category ?? 'sources')?.gameSafe ? ', история' : ''}: ${s.title}] ${s.text.replace(/\n/g, '; ').slice(0, 700)}`).join('\n');
 }

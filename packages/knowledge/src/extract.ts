@@ -5,7 +5,8 @@
  * сопоставляется с существующей (по названию и синонимам) — тогда это дополнение, иначе новая запись.
  * В базу попадает только то, что примет человек.
  */
-import { CATEGORIES, type CategoryId, type Entry, type Fact, type KbDocument, type Proposal, type Relation, type RelationType, type Reliability } from './schema';
+import { CATEGORIES, type CategoryId, type Entry, type Fact, type InfraItem, type InfraProposal, type KbDocument, type Proposal, type Relation, type RelationType, type Reliability } from './schema';
+import { foreignTo } from './operations';
 import { stems } from './search';
 import { defaultRubrics, RUBRIC_CODES, rubricPath } from './rubrics';
 
@@ -45,6 +46,24 @@ export const EXTRACT_SCHEMA = {
   },
 } as const;
 
+const INFRA_ITEM = {
+  type: 'object', additionalProperties: false, required: ['kind', 'state', 'title', 'place', 'river', 'date', 'dateTo', 'side', 'note', 'quote'],
+  properties: {
+    kind: { type: 'string', enum: ['bridge', 'crossing', 'road', 'rail', 'line', 'other'] },
+    state: { type: 'string', enum: ['destroyed', 'damaged', 'intact', 'built', 'repaired', 'blocked', 'mined', 'impassable', 'fortified'] },
+    title: s, place: { type: ['string', 'null'] }, river: { type: ['string', 'null'] },
+    date: { type: ['string', 'null'] }, dateTo: { type: ['string', 'null'] }, side: { type: ['string', 'null'] }, note: { type: ['string', 'null'] }, quote: s,
+  },
+} as const;
+/** Разбор документа операции: записи базы и сведения об инфраструктуре. */
+export const OPERATION_EXTRACT_SCHEMA = {
+  ...EXTRACT_SCHEMA, required: ['items', 'infrastructure'],
+  properties: { ...EXTRACT_SCHEMA.properties, infrastructure: { type: 'array', items: INFRA_ITEM } },
+} as const;
+
+/** Операция, к которой относится документ: для подсказки модели (сроки, стороны). */
+export interface OperationHint { id: string; title: string; start: string; end: string; sides: { id: string; name: string }[] }
+
 export interface ExtractedItem {
   category: CategoryId; rubrics?: string[]; title: string; aliases: string[]; summary: string;
   facts: { key: string; value: string; quote: string }[];
@@ -52,7 +71,7 @@ export interface ExtractedItem {
   dateFrom: string | null; dateTo: string | null;
 }
 
-export function extractMessages(chunk: string, docName: string): { role: 'system' | 'user'; content: string }[] {
+export function extractMessages(chunk: string, docName: string, op?: OperationHint): { role: 'system' | 'user'; content: string }[] {
   const rubs = RUBRIC_CODES.filter((c) => c.split('.').length > 1).map((c) => `- ${c} ${rubricPath(c).map((x) => x.title).join(' › ')}`).join('\n');
   const cats = CATEGORIES.map((c) => `- ${c.id} — ${c.title}: ${c.description} Ключи фактов: ${c.fields.map((f) => `${f.key} (${f.title})`).join(', ')}.`).join('\n');
   return [
@@ -74,9 +93,20 @@ ${cats}
 Рубрикатор (о чём запись):
 ${rubs}
 
-Ответ — один JSON-объект по схеме.` },
-    { role: 'user', content: `Документ: «${docName}». Фрагмент:\n\n${chunk}` },
+${op ? infraRules(op) : ''}Ответ — один JSON-объект по схеме.` },
+    { role: 'user', content: `Документ: «${docName}»${op ? ` (материал операции «${op.title}»)` : ''}. Фрагмент:\n\n${chunk}` },
   ];
+}
+
+function infraRules(op: OperationHint): string {
+  return `Документ — материал операции «${op.title}» (${op.start.slice(0, 10)} — ${op.end.slice(0, 10)}). Кроме записей (items), выпишите в infrastructure сведения о состоянии инфраструктуры — то, что влияет на движение войск:
+- kind: bridge — мост; crossing — переправа (понтонная, паромная, вброд, по льду); road — дорога, шоссе, улица; rail — железная дорога, станция; line — рубеж, заграждения, противотанковый ров; other — прочее (аэродром, плотина).
+- state: destroyed — взорван, разрушен; damaged — повреждён, но проходим; intact — захвачен целым, уцелел; built — наведён, построен; repaired — восстановлен; blocked — завал, баррикада, затор; mined — заминирован; impassable — непроходим (распутица, затоплен); fortified — укреплён.
+- title — коротко, что это: «мост через Шпрее у Фюрстенвальде»; place — ближайший населённый пункт или район в именительном падеже, немецкое или польское название — в скобках, если известно: «Фюрстенвальде (Fürstenwalde)»; river — река или канал, если есть.
+- date / dateTo — ГГГГ-ММ-ДД, с какого и до какого дня это так (если сказано); side — id стороны, чьими силами (${op.sides.map((x) => `${x.id} — ${x.name}`).join(', ')}), иначе null; note — подробности (грузоподъёмность, длина, кто подорвал) или null; quote — дословная цитата.
+Только прямо сказанное во фрагменте. Нет таких сведений — infrastructure пустой.
+
+`;
 }
 
 const norm = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/[«»"“”„'’`]/g, '').replace(/[\s ]+/g, ' ').replace(/\s*-\s*/g, '-').trim();
@@ -106,7 +136,10 @@ export function matchEntry(entries: Entry[], cat: string, title: string, aliases
 const slug = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 50);
 
 /** Извлечённое моделью → предложения (с проверкой цитат). */
-export function toProposals(items: ExtractedItem[], chunk: string, entries: Entry[], doc: Pick<KbDocument, 'id' | 'name' | 'reliability'>, chunkIndex: number): { proposals: Proposal[]; dropped: number } {
+export function toProposals(items: ExtractedItem[], chunk: string, entries: Entry[], doc: Pick<KbDocument, 'id' | 'name' | 'reliability' | 'operation'>, chunkIndex: number): { proposals: Proposal[]; dropped: number } {
+  const op = doc.operation;
+  // документ операции не дополняет записи из документов других операций — там своя запись
+  if (op) entries = entries.filter((e) => !foreignTo(e, op));
   const out: Proposal[] = [];
   let dropped = 0;
   const srcId = `doc:${doc.id}`;
@@ -129,15 +162,15 @@ export function toProposals(items: ExtractedItem[], chunk: string, entries: Entr
       const freshRel = relations.filter((r) => !(existing.relations ?? []).some((g) => g.type === r.type && g.target === r.target));
       if (!fresh.length && !freshRel.length) continue;
       const freshRub = rubrics.filter((c) => !(existing.rubrics ?? defaultRubrics(existing)).includes(c));
-      out.push({ id: `${doc.id}:${chunkIndex}:${out.length}`, doc: doc.id, chunk: chunkIndex, kind: 'update', target: existing.id, entry: existing, facts: fresh, relations: freshRel, ...(freshRub.length ? { rubrics: freshRub } : {}), status: 'pending' });
+      out.push({ id: `${doc.id}:${chunkIndex}:${out.length}`, doc: doc.id, chunk: chunkIndex, kind: 'update', target: existing.id, entry: existing, facts: fresh, relations: freshRel, ...(freshRub.length ? { rubrics: freshRub } : {}), ...(op ? { operation: op } : {}), status: 'pending' });
     } else {
       if (!facts.length) continue; // новая запись — только с подтверждёнными фактами
       const entry: Entry = {
-        id: `u:${it.category}:${slug(it.title)}`, category: it.category, rubrics: rubrics.length ? rubrics : undefined, title: it.title.trim(), aliases: it.aliases ?? [], summary: it.summary?.trim() ?? '',
+        id: `u:${op ? `${op}:` : ''}${it.category}:${slug(it.title)}`, ...(op ? { operations: [op] } : {}), category: it.category, rubrics: rubrics.length ? rubrics : undefined, title: it.title.trim(), aliases: it.aliases ?? [], summary: it.summary?.trim() ?? '',
         facts, relations: [...relations, { type: 'source', target: srcId }], status: 'extracted', origin: 'document',
         ...(it.dateFrom || it.dateTo ? { period: { from: it.dateFrom ?? undefined, to: it.dateTo ?? undefined } } : {}),
       };
-      out.push({ id: `${doc.id}:${chunkIndex}:${out.length}`, doc: doc.id, chunk: chunkIndex, kind: 'new', entry, facts, relations, status: 'pending' });
+      out.push({ id: `${doc.id}:${chunkIndex}:${out.length}`, doc: doc.id, chunk: chunkIndex, kind: 'new', entry, facts, relations, ...(op ? { operation: op } : {}), status: 'pending' });
     }
   }
   return { proposals: out, dropped };
@@ -149,8 +182,24 @@ export function applyProposal(p: Proposal, current: Entry | undefined): Entry {
   const base = current ?? p.entry;
   return {
     ...base, origin: base.origin === 'seed' ? 'user' : base.origin,
+    ...(p.operation ? { operations: [...new Set([...(base.operations ?? []), p.operation])] } : {}),
     ...(p.rubrics?.length ? { rubrics: [...new Set([...(base.rubrics ?? defaultRubrics(base)), ...p.rubrics])] } : {}),
     facts: [...(base.facts ?? []), ...p.facts], relations: [...(base.relations ?? []), ...p.relations.filter((r) => !(base.relations ?? []).some((g) => g.target === r.target && g.type === r.type))],
     updatedAt: new Date().toISOString(),
   };
+}
+
+/** Сведения об инфраструктуре → предложения (с проверкой цитат). */
+export function toInfraProposals(items: InfraItem[] | undefined, chunk: string, doc: Pick<KbDocument, 'id' | 'name' | 'reliability'> & { operation: string }, chunkIndex: number): { proposals: InfraProposal[]; dropped: number } {
+  const out: InfraProposal[] = [];
+  let dropped = 0;
+  const date = (d: string | null) => (d && /^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10) : null);
+  for (const it of items ?? []) {
+    if (!it?.title?.trim() || !quoteFound(it.quote ?? '', chunk)) { dropped++; continue; }
+    out.push({
+      id: `${doc.id}:i${chunkIndex}:${out.length}`, doc: doc.id, docName: doc.name, chunk: chunkIndex, operation: doc.operation, reliability: doc.reliability,
+      item: { ...it, title: it.title.trim(), date: date(it.date), dateTo: date(it.dateTo), quote: it.quote.trim() }, status: 'pending',
+    });
+  }
+  return { proposals: out, dropped };
 }

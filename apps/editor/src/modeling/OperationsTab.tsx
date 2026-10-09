@@ -4,9 +4,11 @@
  * модели (какая сторона, роль, опорный пункт, ограничения), сделать контрольный прогон и подготовить к
  * переигровке — операция появится в «Переигровке». Встроенную операцию можно скачать пакетом как образец.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { areaTitle, defaultCatalog, defaultLive, detectPart, mergeEvaluations, validateOperation, type CatalogEntry, type LiveSetup, type OperationPackage, type PackageIssue, type Rules, type Scenario, type SideProfile, type TheatreData, type History } from '@def-ops/sim';
-import { BUILTIN, BUILTIN_CATALOG, deleteOperation, getData, saveOperation, type UserOperation } from '../sim/userdata';
+import { BUILTIN, BUILTIN_CATALOG, deleteOperation, getData, getInfra, saveOperation, type UserOperation } from '../sim/userdata';
+import type { Llm } from '../shared';
+import { Materials } from './Materials';
 import { download, getPool, pct, type SimData } from './data';
 
 const liveFiles = import.meta.glob('../../../../services/staff/live/*.json', { import: 'default' });
@@ -45,14 +47,15 @@ async function readFiles(files: FileList): Promise<{ pkg: Partial<OperationPacka
 
 const LEVEL: Record<PackageIssue['level'], string> = { error: '✗', warning: '!', info: '·' };
 
-export function OperationsTab({ d, onCompare, onCalibrate }: { d: SimData; onCompare: (scenario: string, rules: string[]) => void; onCalibrate: (scenario: string) => void }) {
-  const [sel, setSel] = useState<string | null>(d.ops[0]?.id ?? null);
+export function OperationsTab({ d, llm, onCompare, onCalibrate }: { d: SimData; llm: Llm; onCompare: (scenario: string, rules: string[]) => void; onCalibrate: (scenario: string) => void }) {
+  const [sel, setSel] = useState<string | null>(d.ops[0]?.id ?? BUILTIN_CATALOG[0]?.id ?? null);
   const [upload, setUpload] = useState<{ pkg: Partial<OperationPackage>; notes: string[]; id: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sample, setSample] = useState(BUILTIN_CATALOG[0].id);
   const input = useRef<HTMLInputElement>(null);
   const op = d.ops.find((o) => o.id === sel) ?? null;
+  const builtin = !op ? BUILTIN_CATALOG.find((c) => c.id === sel) ?? null : null;
   const known = useMemo(() => ({ rules: [...BUILTIN.rules, ...d.rules.filter((r) => r.user).map((r) => r.id)], profiles: BUILTIN.profiles }), [d.rules]);
 
   const onFiles = async (files: FileList | null) => {
@@ -88,6 +91,9 @@ export function OperationsTab({ d, onCompare, onCalibrate }: { d: SimData; onCom
   return (
     <div className="mdl-split">
       <aside className="mdl-list">
+        <h4>Операции стенда</h4>
+        {BUILTIN_CATALOG.map((c) => <button key={c.id} className={sel === c.id ? 'on' : ''} onClick={() => { setSel(c.id); setUpload(null); }}>
+          <b>{c.title.split(':')[0]}</b><small>{c.id} · материалы, инфраструктура</small></button>)}
         <h4>Свои операции</h4>
         {d.ops.map((o) => <button key={o.id} className={sel === o.id ? 'on' : ''} onClick={() => { setSel(o.id); setUpload(null); }}>
           <b>{o.pkg.catalog?.title ?? o.pkg.scenario.name}</b><small>{o.id} · {o.ready ? '✓ в переигровке' : 'черновик'}</small></button>)}
@@ -113,9 +119,10 @@ export function OperationsTab({ d, onCompare, onCalibrate }: { d: SimData; onCom
           </div>
           <p className="muted">Не хватает частей — добавьте файлы. Черновик можно проверять, сравнивать и калибровать; в «Переигровке» он появится после подготовки.</p>
         </>}
-        {op && !upload && <OperationCard op={op} d={d} known={known} busy={busy} update={update} control={control} onCompare={onCompare} onCalibrate={onCalibrate}
+        {builtin && !upload && <BuiltinCard id={builtin.id} title={builtin.title} detail={builtin.detail} llm={llm} />}
+        {op && !upload && <OperationCard op={op} d={d} llm={llm} known={known} busy={busy} update={update} control={control} onCompare={onCompare} onCalibrate={onCalibrate}
           remove={() => { if (confirm(`Удалить операцию «${op.pkg.scenario.name}»?`)) void deleteOperation(op.id).then(() => setSel(null)); }} />}
-        {!op && !upload && <div className="mdl-empty">
+        {!op && !builtin && !upload && <div className="mdl-empty">
           <h3>Подготовка новой операции к переигровке</h3>
           <ol className="steps">
             <li><b>Загрузите</b> файлы операции: сценарий (стороны, состав, исторические приказы, сроки), театр (местность, дороги, реки, районы), история (положения по дням, линия фронта, ключевые события). Формат — как у встроенных: скачайте образец слева.</li>
@@ -138,8 +145,20 @@ function Issues({ issues }: { issues: PackageIssue[] }) {
   </section>;
 }
 
-function OperationCard({ op, d, known, busy, update, control, onCompare, onCalibrate, remove }: {
-  op: UserOperation; d: SimData; known: { rules: string[]; profiles: string[] }; busy: string | null;
+/** Встроенная операция: материалы и состояние инфраструктуры (сценарий и театр — из сборки). */
+function BuiltinCard({ id, title, detail, llm }: { id: string; title: string; detail: string; llm: Llm }) {
+  const [T, setT] = useState<TheatreData | null>(null);
+  useEffect(() => { setT(null); void (getData('scenarios', `${id}.json`) as Promise<Scenario>).then((s) => getData('theatres', `${s.theatre}.json`)).then((t) => setT(t as TheatreData)); }, [id]);
+  return <>
+    <div className="mdl-h"><div><h3>{title}</h3><span className="muted">{id} · операция стенда · {detail}</span></div>
+      <div className="mdl-acts"><button onClick={() => void builtinPackage(id).then(async (p) => download(`${id}.operation.json`, JSON.stringify({ ...p, infrastructure: await getInfra(id) })))}>Скачать пакет</button></div></div>
+    <p className="muted">Сценарий, театр и история — из сборки стенда. Здесь — материалы операции (документы → база знаний и сведения об инфраструктуре) и состояние инфраструктуры, которое ложится поверх театра в расчёте и в игре.</p>
+    <Materials op={id} title={title} theatre={T} llm={llm} />
+  </>;
+}
+
+function OperationCard({ op, d, llm, known, busy, update, control, onCompare, onCalibrate, remove }: {
+  op: UserOperation; d: SimData; llm: Llm; known: { rules: string[]; profiles: string[] }; busy: string | null;
   update: (o: UserOperation, p: Partial<OperationPackage>, extra?: Partial<UserOperation>) => Promise<void>; control: (o: UserOperation) => Promise<void>;
   onCompare: (scenario: string, rules: string[]) => void; onCalibrate: (scenario: string) => void; remove: () => void;
 }) {
@@ -156,7 +175,7 @@ function OperationCard({ op, d, known, busy, update, control, onCompare, onCalib
   return <>
     <div className="mdl-h"><div><h3>{cat.title}</h3><span className="muted">{op.id} · {S.start.slice(0, 10)} — {S.end.slice(0, 10)}, ход {S.turnHours} ч · {op.ready ? '✓ в переигровке' : 'черновик'}</span></div>
       <div className="mdl-acts">
-        <button onClick={() => download(`${op.id}.operation.json`, JSON.stringify(P))}>Скачать пакет</button>
+        <button onClick={() => void getInfra(op.id).then((inf) => download(`${op.id}.operation.json`, JSON.stringify(inf.length ? { ...P, infrastructure: inf } : P)))}>Скачать пакет</button>
         <button className="danger" onClick={remove}>Удалить</button>
       </div></div>
     <p className="muted">Формирований {counts.units}, приказов {counts.orders}; театр {P.theatre.name} (клетка {P.theatre.cellKm} км, районов {P.theatre.areas.length}); история: положений {counts.pos}, событий {counts.ev}.</p>
@@ -205,5 +224,6 @@ function OperationCard({ op, d, known, busy, update, control, onCompare, onCalib
       </div>
       {op.ready && <p className="ok">Операция в «Переигровке»: расчёт, карта, принятие командования, советник, разбор.</p>}
     </section>
+  <Materials op={op.id} title={cat.title} theatre={P.theatre} llm={llm} />
   </>;
 }

@@ -317,3 +317,12 @@ describe('разбор операции', () => {
     expect(sum[0].content).toMatch(/Не придумывайте/);
   });
 });
+
+describe('подставная модель: сведения об инфраструктуре', () => {
+  it('предложения о мостах и дорогах с глаголом состояния — с цитатой и датой', async () => {
+    const { mockInfra } = await import('../src/live/mock');
+    const r = mockInfra('Мост через Шпрее у Фюрстенвальде взорван 22 апреля отходящими частями. Погода была ясной весь день.');
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ kind: 'bridge', state: 'destroyed', date: '1945-04-22', place: 'Фюрстенвальд' });
+  });
+});

@@ -3,12 +3,13 @@
  * калибровка) и загруженные операции (пакет: сценарий, театр, история, участки, настройки штаба модели, запись
  * каталога). Поверх данных сборки (packages/sim/data): getter отдаёт сначала встроенный файл, затем свой.
  */
-import type { CatalogEntry, DataKind, OperationPackage, Rules, TheatreData } from '@def-ops/sim';
+import type { CatalogEntry, DataKind, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
+import type { KbOperation, OperationHint } from '@def-ops/knowledge';
 import { defaultCatalog, defaultLive } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 
-const DB = 'def_ops_sim', VER = 2;
-type StoreName = 'rules' | 'operations' | 'theatres';
+const DB = 'def_ops_sim', VER = 3;
+type StoreName = 'rules' | 'operations' | 'theatres' | 'infrastructure';
 
 /** Свой набор правил: правила целиком (без extends), откуда взят, для какой операции подбирался. */
 export interface UserRules { id: string; title: string; note?: string; base: string; scenario?: string; created: string; rules: Rules }
@@ -26,7 +27,7 @@ let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['rules', 'operations', 'theatres']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of ['rules', 'operations', 'theatres', 'infrastructure']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -51,6 +52,10 @@ export interface UserTheatre { id: string; created: string; theatre: TheatreData
 export const listTheatres = () => all<UserTheatre>('theatres');
 export const saveTheatre = (t: UserTheatre) => write('theatres', (o) => o.put(t));
 export const deleteTheatre = (id: string) => write('theatres', (o) => o.delete(id));
+/** Сведения об инфраструктуре операции (встроенной или своей): ложатся поверх театра при расчёте. */
+export interface OperationInfra { id: string; records: InfraRecord[] }
+export const getInfra = async (id: string) => (await one<OperationInfra>('infrastructure', id))?.records ?? [];
+export const saveInfra = (id: string, records: InfraRecord[]) => write('infrastructure', (o) => o.put({ id, records }));
 export const getOperation = (id: string) => one<UserOperation>('operations', id);
 export const saveOperation = (op: UserOperation) => write('operations', (o) => o.put(op));
 export const deleteOperation = (id: string) => write('operations', (o) => o.delete(id));
@@ -85,6 +90,13 @@ export async function getData(kind: DataKind, file: string): Promise<unknown> {
   if (kind === 'theatres') {
     const op = (await listOperations()).find((o) => o.pkg.theatre.id === id); if (op) return op.pkg.theatre;
     const t = await one<UserTheatre>('theatres', id); if (t) return t.theatre;
+  }
+  if (kind === 'infrastructure') {
+    const r = await one<OperationInfra>('infrastructure', id);
+    if (r?.records.length) return r;
+    const op = await getOperation(id);
+    if (op?.pkg.infrastructure?.length) return { id, records: op.pkg.infrastructure };
+    return null;
   }
   if (kind === 'profiles') { for (const o of await listOperations()) { const p = o.pkg.profiles?.find((x) => x.id === id); if (p) return p; } }
   throw new Error(`нет данных ${kind}/${file}`);
@@ -122,4 +134,23 @@ export async function liveOf(id: string) {
 /** Участки для фокуса своей операции. */
 export async function sectorsOf(id: string) {
   return (await getOperation(id))?.pkg.sectors?.sectors ?? [];
+}
+
+/** Операции для группировки базы знаний: встроенные и свои (с черновиками), со сроками. */
+export async function kbOperations(): Promise<KbOperation[]> {
+  const cat = await fullCatalog(true);
+  const out: KbOperation[] = [];
+  for (const c of cat) {
+    try { const sc = (await getData('scenarios', `${c.id}.json`)) as Scenario; out.push({ id: c.id, title: c.title, start: sc.start, end: sc.end }); } catch { /* нет сценария */ }
+  }
+  return out;
+}
+
+/** Подсказка модели при разборе документа операции: название, сроки, стороны. */
+export async function operationHint(id: string): Promise<OperationHint | undefined> {
+  try {
+    const sc = (await getData('scenarios', `${id}.json`)) as Scenario;
+    const title = (await fullCatalog(true)).find((c) => c.id === id)?.title ?? sc.name;
+    return { id, title, start: sc.start, end: sc.end, sides: sc.sides.map((x) => ({ id: x.id, name: x.name })) };
+  } catch { return undefined; }
 }

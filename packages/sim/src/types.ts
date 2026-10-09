@@ -190,6 +190,12 @@ export interface TheatreData {
   /** Рубежи и позиции: линия и уровень укреплённости (1–3). */
   /** depthKm — глубина полосы (по умолчанию — одна клетка); side — чья полоса. */
   lines: { id: string; name: string; line: LngLat[]; fortification?: number; side?: string; depthKm?: number }[];
+  /**
+   * Препятствия на дорогах (из сведений об инфраструктуре: разрушена, завалена, заминирована): в радиусе от точки
+   * дорога в эти сроки не даёт дорожного темпа — движение как вне дорог. kind rail — сведение (подвоз по железной
+   * дороге не моделируется).
+   */
+  obstacles?: { id: string; at: LngLat; radiusKm: number; kind: 'road' | 'rail'; from?: string | null; until?: string | null; note?: string }[];
   /** Откуда взяты слои (лицензии, даты), для справки и отчёта. */
   sources?: string[];
 }

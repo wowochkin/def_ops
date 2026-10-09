@@ -31,6 +31,8 @@ export class Theatre {
   /** Мосты по клеткам. */
   private readonly bridges = new Map<number, { id: string; openFrom?: string | null; destroyedAt?: string | null }[]>();
   private readonly areaRings: { id: string; name: string; ring: XY[]; c: XY }[];
+  /** Перекрытые дороги по клеткам: сроки, когда дорога не действует. */
+  private readonly roadBlocks = new Map<number, { from?: string | null; until?: string | null }[]>();
   /** Высоты (м) по сетке heightGrid; null — сетки нет. */
   private readonly heights: Float32Array | null;
 
@@ -84,6 +86,17 @@ export class Theatre {
       if (rd.kind === 'rail') continue;
       const v = rd.kind === 'highway' ? 2 : 1;
       this.rasterLine(rd.line, (i) => { this.road[i] = Math.max(this.road[i], v); });
+    }
+    for (const o of data.obstacles ?? []) {
+      if (o.kind !== 'road') continue;
+      const p = this.proj.toXY(o.at), k = Math.ceil(o.radiusKm / this.cellKm);
+      const [c0, r0] = this.cellOfXY(p);
+      for (let r = r0 - k; r <= r0 + k; r++) for (let c = c0 - k; c <= c0 + k; c++) {
+        if (!this.inside(c, r) || dist(this.cellCenter(c, r), p) > o.radiusKm + this.cellKm / 2) continue;
+        const i = r * this.cols + c, list = this.roadBlocks.get(i) ?? [];
+        list.push({ from: o.from, until: o.until });
+        this.roadBlocks.set(i, list);
+      }
     }
     for (const rv of data.rivers) this.rasterLine(rv.line, (i) => { this.river[i] = Math.max(this.river[i], rv.major ? 2 : 1); });
     for (const b of data.bridges) {
@@ -248,9 +261,14 @@ export class Theatre {
     return (this.bridges.get(i) ?? []).some((b) => (!b.openFrom || time >= b.openFrom) && (!b.destroyedAt || time < b.destroyedAt));
   }
 
+  /** Дорога в клетке перекрыта на момент time (препятствие из сведений об инфраструктуре). */
+  roadBlocked(i: number, time: string): boolean {
+    return (this.roadBlocks.get(i) ?? []).some((b) => (!b.from || time >= b.from) && (!b.until || time < b.until));
+  }
+
   /** Темп в клетке, км/ч; 0 — непроходимо. */
-  speedKmh(i: number, mob: Mobility, profile: SideProfile, scale = 1): number {
-    const perDay = this.road[i] ? profile.road[mob] * (this.road[i] === 2 ? 1 : 0.85) : profile.offRoad[mob][TERRAIN_CLASSES[this.terrain[i]]];
+  speedKmh(i: number, mob: Mobility, profile: SideProfile, scale = 1, time?: string): number {
+    const perDay = this.road[i] && !(time && this.roadBlocked(i, time)) ? profile.road[mob] * (this.road[i] === 2 ? 1 : 0.85) : profile.offRoad[mob][TERRAIN_CLASSES[this.terrain[i]]];
     return (perDay / 24) * scale;
   }
 
@@ -298,14 +316,14 @@ export class Theatre {
       if (closed[cur]) continue;
       closed[cur] = 1;
       const cc = cur % this.cols, cr = Math.floor(cur / this.cols);
-      const v0 = this.speedKmh(cur, mob, profile, rules.movementScale ?? 1);
+      const v0 = this.speedKmh(cur, mob, profile, rules.movementScale ?? 1, time);
       for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
         if (!dr && !dc) continue;
         const nc = cc + dc, nr = cr + dr;
         if (!this.inside(nc, nr)) continue;
         const ni = nr * this.cols + nc;
         if (closed[ni]) continue;
-        const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1);
+        const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1, time);
         if (v1 <= 0 || v0 <= 0) continue;
         const d = (dr && dc ? SQRT2 : 1) * this.cellKm;
         const cost = d / ((v0 + v1) / 2) + crossCost(ni) + (extraCost ? extraCost(ni) : 0);
@@ -340,14 +358,14 @@ export class Theatre {
       if (done[cur]) continue;
       done[cur] = 1;
       const cc = cur % this.cols, cr = Math.floor(cur / this.cols);
-      const v0 = this.speedKmh(cur, mob, profile, rules.movementScale ?? 1);
+      const v0 = this.speedKmh(cur, mob, profile, rules.movementScale ?? 1, time);
       for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
         if (!dr && !dc) continue;
         const nc = cc + dc, nr = cr + dr;
         if (!this.inside(nc, nr)) continue;
         const ni = nr * this.cols + nc;
         if (done[ni] || !passable(ni)) continue;
-        const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1);
+        const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1, time);
         if (v1 <= 0 || v0 <= 0) continue;
         const rv = this.river[ni];
         const cross = !rv || this.bridgeOpen(ni, time) ? 0 : rv === 2 ? (mob === 'foot' || this.frozen(time) ? rules.riverCrossHours : Infinity) : rules.riverCrossHours / 3;
@@ -381,7 +399,7 @@ export class Theatre {
       const pa = this.proj.toLL(this.cellCenter(a % this.cols, Math.floor(a / this.cols)));
       const pb = this.proj.toLL(this.cellCenter(b % this.cols, Math.floor(b / this.cols)));
       const d = dist(this.proj.toXY(pa), this.proj.toXY(pb));
-      const v = (this.speedKmh(a, mob, profile, rules.movementScale ?? 1) + this.speedKmh(b, mob, profile, rules.movementScale ?? 1)) / 2;
+      const v = (this.speedKmh(a, mob, profile, rules.movementScale ?? 1, time) + this.speedKmh(b, mob, profile, rules.movementScale ?? 1, time)) / 2;
       const rv = this.river[b];
       const cross = (!rv || this.bridgeOpen(b, time) ? 0 : rv === 2 ? rules.riverCrossHours : rules.riverCrossHours / 3) + (extraCost ? extraCost(b) : 0);
       const cost = d / v + cross;

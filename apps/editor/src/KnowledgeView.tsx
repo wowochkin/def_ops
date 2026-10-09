@@ -5,7 +5,8 @@
  * со ссылками), загрузка документов: модель извлекает сведения с цитатами, человек принимает предложения.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { category, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
+import { category, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
+import { kbOperations, onDataChange } from './sim/userdata';
 import * as kb from './kb/kb';
 import { QWEN_EMBED } from './kb/vectors';
 import type { Llm } from './shared';
@@ -22,8 +23,14 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
   const [sel, setSel] = useState<string | null>('op:berlin');
   const [hist, setHist] = useState<string[]>([]);
   useEffect(() => { void kb.load(); return kb.subscribe(setS); }, []);
+  // операция: '' — все материалы, 'general' — общие (без операции), иначе id операции
+  const [ops, setOps] = useState<KbOperation[]>([]);
+  const [op, setOp] = useState<string>(() => { try { return localStorage.getItem('def_ops.kbOp') ?? ''; } catch { return ''; } });
+  useEffect(() => { const f = () => void kbOperations().then(setOps); f(); return onDataChange(f); }, []);
+  useEffect(() => { try { localStorage.setItem('def_ops.kbOp', op); } catch { /* */ } }, [op]);
+  const scoped = useMemo(() => scope(s, op, ops), [s, op, ops]);
   const open = (id: string) => { setTab('browse'); setSel((cur) => { if (cur && cur !== id) setHist((h) => [...h.slice(-20), cur]); return id; }); };
-  const pending = s.proposals.filter((p) => p.status === 'pending').length;
+  const pending = scoped.proposals.filter((p) => p.status === 'pending').length;
   return (
     <div className="kb">
       <div className="kb-top">
@@ -32,13 +39,25 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
           <button className={tab === 'browse' ? 'on' : ''} onClick={() => setTab('browse')}>Материалы</button>
           <button className={tab === 'docs' ? 'on' : ''} onClick={() => setTab('docs')}>Документы{pending ? <i className="kb-badge">{pending}</i> : null}</button>
         </nav>
-        <span className="muted">{s.ready ? `${s.entries.length} записей, ${s.documents.length} документов` : 'загрузка…'}</span>
+        <label className="kb-op" title="Материалы операции: записи из разбора её документов и относящиеся к ней по периоду и рубрикам">Операция
+          <select value={op} onChange={(e) => setOp(e.target.value)}><option value="">все материалы</option><option value="general">общие (без операции)</option>
+            {ops.map((o) => <option key={o.id} value={o.id}>{o.title.split(':')[0]}</option>)}</select></label>
+        <span className="muted">{s.ready ? `${scoped.entries.length} записей, ${scoped.documents.length} документов` : 'загрузка…'}</span>
       </div>
       {!s.ready ? <div className="kb-wait"><span className="spinner" /> загрузка базы…</div>
-        : tab === 'browse' ? <Browse s={s} sel={sel} open={open} back={hist.length ? () => { setSel(hist[hist.length - 1]); setHist((h) => h.slice(0, -1)); } : null} llm={llm} />
-        : <Docs s={s} llm={llm} open={open} />}
+        : tab === 'browse' ? <Browse s={scoped} sel={sel} open={open} back={hist.length ? () => { setSel(hist[hist.length - 1]); setHist((h) => h.slice(0, -1)); } : null} llm={llm} />
+        : <Docs s={scoped} llm={llm} open={open} op={op && op !== 'general' ? ops.find((o) => o.id === op) ?? null : null} ops={ops} />}
     </div>
   );
+}
+
+/** База в разрезе операции: записи, документы и предложения операции (связи и карточки — по всей базе). */
+function scope(s: kb.KbState, op: string, ops: KbOperation[]): kb.KbState {
+  if (!op) return s;
+  const docOk = (d: KbDocument) => (op === 'general' ? !d.operation : d.operation === op);
+  const documents = s.documents.filter(docOk);
+  const ids = new Set(documents.map((d) => d.id));
+  return { ...s, entries: s.entries.filter((e) => inOperation(e, op, ops)), documents, proposals: s.proposals.filter((p) => ids.has(p.doc)), infra: s.infra.filter((p) => ids.has(p.doc)) };
 }
 
 /* ───────────── материалы: каркас, карточка, вопросы ───────────── */
@@ -56,7 +75,8 @@ function Browse({ s, sel, open, back, llm }: { s: kb.KbState; sel: string | null
     const t = setTimeout(() => { void kb.search(q, 60).then((hits) => setSem({ q, hits })); }, 350);
     return () => clearTimeout(t);
   }, [q, s.vec.status]);
-  const found = sem && sem.q === q ? sem.hits : bm;
+  const inScope = useMemo(() => new Set([...s.entries.map((e) => e.id), ...s.documents.map((d) => d.id)]), [s.entries, s.documents]);
+  const found = (sem && sem.q === q ? sem.hits : bm)?.filter((h) => inScope.has(h.ref)) ?? null;
   const rubs = useMemo(() => new Map(s.entries.map((e) => [e.id, rubricsOf(e)])), [s.entries]);
   // число записей в рубрике — с вложенными, каждая запись один раз
   const counts = useMemo(() => {
@@ -252,7 +272,7 @@ function QAItem({ m, s, open, llmOff }: { m: QA; s: kb.KbState; open: (id: strin
 
 /* ───────────── документы ───────────── */
 
-function Docs({ s, llm, open }: { s: kb.KbState; llm: Llm; open: (id: string) => void }) {
+function Docs({ s, llm, open, op, ops }: { s: kb.KbState; llm: Llm; open: (id: string) => void; op: KbOperation | null; ops: KbOperation[] }) {
   const [rel, setRel] = useState<Reliability>('B');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -264,7 +284,7 @@ function Docs({ s, llm, open }: { s: kb.KbState; llm: Llm; open: (id: string) =>
     setErr(null);
     for (const f of [...files]) {
       setBusy(`чтение «${f.name}»…`);
-      try { await kb.addFile(f, rel, note); } catch (e) { setErr(`${f.name}: ${(e as Error).message}`); }
+      try { await kb.addFile(f, rel, note, op?.id); } catch (e) { setErr(`${f.name}: ${(e as Error).message}`); }
     }
     setBusy(null); setNote('');
   };
@@ -274,6 +294,7 @@ function Docs({ s, llm, open }: { s: kb.KbState; llm: Llm; open: (id: string) =>
       <section className="card kb-upload">
         <h3>Загрузить документы</h3>
         <p className="muted">PDF (с текстовым слоем), Word (.docx), HTML, txt, md. Документ разбивается на части; модель выписывает из каждой сведения по каркасу — только сказанное в тексте и с дословной цитатой; факты без найденной цитаты отбрасываются. Получаются предложения: новая запись или дополнение существующей — вы принимаете или отклоняете. Текст документа сразу участвует в поиске и ответах. Хранится в этом браузере; обмен — выгрузкой.</p>
+        <p className={op ? 'ok' : 'muted'}>{op ? <>Документы будут отнесены к операции <b>{op.title.split(':')[0]}</b>: записи — в её разделе базы, а разбор ищет ещё и сведения об инфраструктуре (мосты, переправы, дороги) — их видно и принимают в «Моделирование» → «Операции».</> : 'Общие документы (без операции). Чтобы отнести документ к операции, выберите её вверху.'}</p>
         <div className="row">
           <label>Достоверность <select value={rel} onChange={(e) => setRel(e.target.value as Reliability)}>{(['A', 'B', 'C'] as Reliability[]).map((r) => <option key={r} value={r}>{r} — {RELIABILITY[r]}</option>)}</select></label>
           <input className="grow" placeholder="Что за документ (автор, издание, о чём) — необязательно" value={note} onChange={(e) => setNote(e.target.value)} />
@@ -286,7 +307,7 @@ function Docs({ s, llm, open }: { s: kb.KbState; llm: Llm; open: (id: string) =>
       <section className="card">
         <h3>Документы</h3>
         {!s.documents.length && <p className="muted">Пока нет загруженных документов.</p>}
-        {s.documents.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} open={open} onFilter={() => setFilter(filter === d.id ? null : d.id)} filtered={filter === d.id} />)}
+        {s.documents.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} open={open} opTitle={ops.find((o) => o.id === d.operation)?.title} onFilter={() => setFilter(filter === d.id ? null : d.id)} filtered={filter === d.id} />)}
       </section>
       <section className="card">
         <div className="row"><h3>Предложения на проверку {pending.length ? `· ${pending.length}` : ''}</h3>{filter && <button className="link" onClick={() => setFilter(null)}>все документы</button>}<span className="grow" />
@@ -328,18 +349,20 @@ function VecCard({ s, llm }: { s: kb.KbState; llm: Llm }) {
   );
 }
 
-function DocRow({ d, s, llm, open, onFilter, filtered }: { d: KbDocument; s: kb.KbState; llm: Llm; open: (id: string) => void; onFilter: () => void; filtered: boolean }) {
+export function DocRow({ d, s, llm, open, onFilter, filtered, opTitle }: { d: KbDocument; s: kb.KbState; llm: Llm; open: (id: string) => void; onFilter?: () => void; filtered?: boolean; opTitle?: string }) {
   const job = s.job?.doc === d.id ? s.job : null;
   const props = s.proposals.filter((p) => p.doc === d.id);
   const done = d.processed ?? 0;
   return (
     <div className="kb-doc">
       <div className="kb-doc-h"><button className="link" onClick={() => open(`doc:${d.id}`)}><b>{d.name}</b></button><i className={`kb-rel r${d.reliability}`}>{d.reliability}</i>
-        <span className="muted">{d.chunks.length} частей · {Math.round(d.size / 1024)} КБ · обработано {done}/{d.chunks.length}</span></div>
+        <span className="muted">{d.chunks.length} частей · {Math.round(d.size / 1024)} КБ · обработано {done}/{d.chunks.length}</span>
+        {d.operation && opTitle && <span className="kb-opbadge" title="Материал операции">{opTitle.split(':')[0]}</span>}</div>
+      {d.extracted && <div className="kb-extracted">Извлечено: новых записей <b>{d.extracted.entries}</b>, дополнений <b>{d.extracted.updates}</b>{d.operation ? <>, сведений об инфраструктуре <b>{d.extracted.infra}</b></> : null}{d.extracted.dropped ? <span className="muted"> · отброшено без цитаты {d.extracted.dropped}</span> : null}</div>}
       {job ? <div className="kb-prog"><i style={{ width: `${(job.at / job.total) * 100}%` }} /><span>{job.text}</span><button onClick={kb.stop}>Остановить</button></div>
         : <div className="row">
           {done < d.chunks.length && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => kb.process(d.id, llm.settings)}>{done ? 'Продолжить обработку' : 'Обработать моделью'}</button>}
-          {props.length > 0 && <button className={filtered ? 'on' : ''} onClick={onFilter}>предложения: {props.filter((p) => p.status === 'pending').length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>}
+          {props.length > 0 && onFilter && <button className={filtered ? 'on' : ''} onClick={onFilter}>предложения: {props.filter((p) => p.status === 'pending').length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>}
           <button className="link danger" onClick={() => { if (confirm(`Удалить «${d.name}» из базы?`)) void kb.removeDocument(d.id); }}>удалить</button>
           {d.error && <span className="err">{d.error}</span>}
         </div>}
@@ -347,7 +370,7 @@ function DocRow({ d, s, llm, open, onFilter, filtered }: { d: KbDocument; s: kb.
   );
 }
 
-function ProposalCard({ p, s, open }: { p: Proposal; s: kb.KbState; open: (id: string) => void }) {
+export function ProposalCard({ p, s, open }: { p: Proposal; s: kb.KbState; open: (id: string) => void }) {
   const c = category(p.entry.category);
   const doc = s.documents.find((d) => d.id === p.doc);
   return (

@@ -98,6 +98,8 @@ export interface Entry {
   /** Связь с переигровкой: сценарий и участок (для «показать на карте»). */
   scenario?: string;
   sector?: string;
+  /** К каким операциям относится (id операций раздела «Моделирование»): материалы разбора их документов. Нет — по периоду и рубрикам (operations.ts). */
+  operations?: string[];
   status: EntryStatus;
   /** Откуда запись: seed (начальная), user (добавлена/изменена человеком), document (из документа). */
   origin?: 'seed' | 'user' | 'document';
@@ -118,6 +120,10 @@ export interface KbDocument {
   status: 'new' | 'processing' | 'processed' | 'error';
   processed?: number;
   error?: string;
+  /** Материал операции (id): разбор ищет и сведения об инфраструктуре, записи базы относятся к операции. */
+  operation?: string;
+  /** Итоги разбора: что извлечено (по частям — сумма). */
+  extracted?: { entries: number; updates: number; infra: number; dropped: number };
 }
 
 /** Предложение изменить базу (из документа): новая запись или дополнение существующей. */
@@ -134,5 +140,27 @@ export interface Proposal {
   relations: Relation[];
   /** Новые рубрики (для update). */
   rubrics?: string[];
+  /** Операция документа: принятая запись относится к ней. */
+  operation?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+/** Сведение об инфраструктуре из документа (мост, переправа, дорога, железная дорога, рубеж) — с цитатой. */
+export interface InfraItem {
+  kind: 'bridge' | 'crossing' | 'road' | 'rail' | 'line' | 'other';
+  state: 'destroyed' | 'damaged' | 'intact' | 'built' | 'repaired' | 'blocked' | 'mined' | 'impassable' | 'fortified';
+  title: string;
+  place: string | null;
+  river: string | null;
+  date: string | null;
+  dateTo: string | null;
+  side: string | null;
+  note: string | null;
+  quote: string;
+}
+/** Предложение добавить сведение об инфраструктуре в операцию (проверяет человек). */
+export interface InfraProposal {
+  id: string; doc: string; docName: string; chunk: number; operation: string; reliability: Reliability;
+  item: InfraItem;
   status: 'pending' | 'accepted' | 'rejected';
 }

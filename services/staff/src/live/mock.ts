@@ -93,8 +93,30 @@ export function mockPlan(sys: string, prompt: string) {
 }
 
 /** Извлечение для базы знаний (проверка стенда): предложения с датами или числами — факты с дословной цитатой. */
-export function mockExtract(prompt: string) {
+export function mockExtract(prompt: string, infra = false) {
   const text = prompt.split(/Фрагмент:\n\n/)[1] ?? '';
+  const out = mockExtractItems(text);
+  return infra ? { ...out, infrastructure: mockInfra(text) } : out;
+}
+
+/** Сведения об инфраструктуре (проверка стенда): предложения о мостах, переправах, дорогах с глаголом состояния. */
+export function mockInfra(text: string) {
+  const months: Record<string, string> = { января: '01', февраля: '02', марта: '03', апреля: '04', мая: '05' };
+  const STATE: [RegExp, string][] = [[/взорван|разрушен|уничтожен/, 'destroyed'], [/наведен|навели|построен/, 'built'], [/восстановлен/, 'repaired'], [/заминирован/, 'mined'], [/завал|баррикад|перекрыт/, 'blocked'], [/захвачен цел|уцелел/, 'intact'], [/поврежд/, 'damaged']];
+  const out = [];
+  for (const q of text.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 20 && x.length < 240)) {
+    const kind = /переправ/i.test(q) ? 'crossing' : /мост/i.test(q) ? 'bridge' : /железн/i.test(q) ? 'rail' : /дорог|шоссе|улиц/i.test(q) ? 'road' : null;
+    const st = STATE.find(([re]) => re.test(q.toLowerCase()));
+    if (!kind || !st) continue;
+    const place = /(?:у|под|в районе|в|около|близ)\s+([А-ЯЁ][а-яё]+)/.exec(q)?.[1]?.replace(/(а|ом|е|у)$/, '') ?? null;
+    const river = /через\s+([А-ЯЁ][а-яё]+)/.exec(q)?.[1]?.replace(/у$/, 'а') ?? null;
+    const d = /(\d{1,2})\s+(января|февраля|марта|апреля|мая)(?:\s+(1945))?/.exec(q);
+    out.push({ kind, state: st[1], title: q.split(/[,.]/)[0].slice(0, 80), place, river, date: d ? `1945-${months[d[2]]}-${d[1].padStart(2, '0')}` : null, dateTo: null, side: null, note: null, quote: q });
+  }
+  return out;
+}
+
+function mockExtractItems(text: string) {
   const sentences = text.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 20 && x.length < 220);
   const pick = sentences.filter((x) => /\d/.test(x)).slice(0, 4);
   if (!pick.length) return { items: [] };
@@ -182,7 +204,7 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
       const sys = (body.messages ?? []).find((m) => m.role === 'system')?.content ?? '';
       const answer = sys.includes('Проводите разбор операции') ? mockReview(sys, user)
         : sys.includes('посредник военно-исторического симулятора') ? JSON.stringify(mockUmpire(user))
-        : sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user))
+        : sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user, sys.includes('выпишите в infrastructure')))
         : sys.includes('преподаватель военной истории') ? mockKbAnswer(user)
         : sys.includes('готовые варианты решения на ход') ? JSON.stringify(mockPlan(sys, user))
         : JSON.stringify(sys.includes('Вы — советник') ? mockAdvice(user) : mockDecision(user));

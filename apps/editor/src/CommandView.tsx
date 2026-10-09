@@ -298,7 +298,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setPlan({ id, time: view.time, count, variants: [], progress: 'подготовка…', done: false });
     setAdvOpen(true); setAdvMin(false);
     const draft = draftText();
-    void kb.reference(`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`, false).then((reference) => send({ kind: 'plan', id, count, draft, reference }));
+    void kb.reference(`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`, false, view.scenario).then((reference) => send({ kind: 'plan', id, count, draft, reference }));
   };
   const planDraft = (o: PlanVariantView['orders'][number]): Draft => ({ formation: o.formation, task: o.task, target: o.target, targetText: o.targetText, at: o.at, note: o.why });
   /** Принять вариант в проект целиком: решение, приказы, распоряжения (текущий проект заменяется). */
@@ -460,7 +460,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
           setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
           const draft = draftText();
-          void kb.reference(`${topic} ${q}`, cat === 'history').then((reference) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference }));
+          void kb.reference(`${topic} ${q}`, cat === 'history', view.scenario).then((reference) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference }));
         }}
         dyn={advDyn} focus={focus}
         accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}

@@ -7,6 +7,7 @@
 import type { History } from './history';
 import type { Rules, Scenario, SideProfile, TheatreData } from './types';
 import { areaTitle } from './reports';
+import type { InfraRecord } from './infrastructure';
 
 /** Запись каталога переигровки: название, допуск сравнения, наборы правил, условия окончания игры. */
 export interface CatalogEntry {
@@ -34,6 +35,8 @@ export interface OperationPackage {
   catalog?: CatalogEntry;
   rules?: Rules[];
   profiles?: SideProfile[];
+  /** Сведения о состоянии инфраструктуры (мосты, переправы, дороги) — поверх театра. */
+  infrastructure?: InfraRecord[];
 }
 
 export interface PackageIssue { level: 'error' | 'warning' | 'info'; part: 'сценарий' | 'театр' | 'история' | 'игра' | 'штаб'; text: string }

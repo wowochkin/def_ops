@@ -1,6 +1,7 @@
 export * from './schema';
 export * from './rubrics';
 export { Index, stems, snippet, type Hit } from './search';
-export { chunkText, extractMessages, EXTRACT_SCHEMA, quoteFound, matchEntry, toProposals, applyProposal, type ExtractedItem } from './extract';
+export { chunkText, extractMessages, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, quoteFound, matchEntry, toProposals, toInfraProposals, applyProposal, type ExtractedItem, type OperationHint } from './extract';
 export { gather, qaMessages, gameReference, type Source } from './qa';
 export * from './embed';
+export * from './operations';

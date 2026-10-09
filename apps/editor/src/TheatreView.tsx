@@ -12,6 +12,7 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
 import type { Basemaps } from './shared';
 import { MapHover } from './MapHover';
+import { HistLayer } from './HistLayer';
 import { BUILTIN, deleteTheatre, getData, listOperations, listTheatres, onDataChange, saveTheatre } from './sim/userdata';
 
 const COLORS: Record<string, [number, number, number]> = { open: [243, 239, 226], forest: [150, 190, 135], marsh: [140, 196, 186], urban: [196, 172, 152], hills: [222, 196, 140], water: [120, 172, 220] };
@@ -91,6 +92,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   const [cfg, setCfg] = useState<{ layers: Record<string, boolean>; hillsReliefM: number; autoMajorKm: number | null; roadKinds: string[]; places: string[] }>({
     layers: { landcover: true, hills: true, height: true, rivers: true, roads: true, rail: true, bridges: true, areas: true }, hillsReliefM: 35, autoMajorKm: null, roadKinds: ['trunk', 'primary'], places: ['city', 'town'],
   });
+  const [hist, setHist] = useState<{ url: string; bbox: BBox } | null>(null);
   const [srv, setSrv] = useState<{ ok: boolean; python: string; error?: string; setup: string } | null>(null);
   const [build, setBuild] = useState<{ id: string; name: string; status: 'running' | 'done' | 'error' | 'cancelled'; log: string[]; error?: string; sizeBytes?: number } | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -140,6 +142,10 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
       const [w, s, e, n] = T.heightGrid.bbox;
       d.overlays = [...d.overlays, { id: 'height', name: 'Рельеф', url: relief.url, corners: [[w, n], [e, n], [e, s], [w, s]], opacity: 0.85, visible: !!vis.height }];
     }
+    if (hist) {
+      const [w, s, e, n] = hist.bbox;
+      d.overlays = [...d.overlays, { id: 'hist', name: 'Распознано по карте', url: hist.url, corners: [[w, n], [e, n], [e, s], [w, s]], opacity: 0.85, visible: true }];
+    }
     if (area) {
       const [w, s, e, n] = area;
       d.layers = [...d.layers, { id: 'th-area', name: 'Область', role: 'custom', visible: true, locked: true, opacity: 1 }];
@@ -148,7 +154,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
       d.features = [...d.features, f];
     }
     return d;
-  }, [T, vis, area, terrainUrl, relief]);
+  }, [T, vis, area, terrainUrl, relief, hist]);
 
   // выделение области: два щелчка по карте — противоположные углы
   useEffect(() => {
@@ -289,8 +295,12 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
           {onOpenInEditor && <button disabled={!doc} onClick={editorDoc} title="Слои театра — документом редактора (правка, экспорт SVG / PNG)">Открыть в редакторе</button>}
         </div>
 
+        <h4>Исторический слой по карте</h4>
+        <p className="muted small">Дороги, вода, застройка, лес — по исторической карте, которую вы подложили (скан или тайловый архив): распознавание по цвету сводит её на сетку театра; дороги карты заменяют современные в её охвате.</p>
+        {T && <HistLayer T={T} area={area} eng={eng} bm={bm} onPreview={setHist} onSaved={(id) => setSel(id)} onNotice={setNotice} />}
+
         <h4>Новый театр по области</h4>
-        <p className="muted small">Местность (ESA WorldCover), рельеф (Copernicus DEM), реки, дороги и населённые пункты (OpenStreetMap) сводит на сетку сборщик на Python — на сервере стенда. Большие реки — по длине в охвате, районы — города и посёлки. Исторический слой (рубежи, переправы, разрушенные мосты) дописывается в рецепт.</p>
+        <p className="muted small">Местность (ESA WorldCover), рельеф (Copernicus DEM), реки, дороги и населённые пункты (OpenStreetMap) сводит на сетку сборщик на Python — на сервере стенда. Большие реки — по длине в охвате, районы — города и посёлки. Исторические дороги и местность — разделом выше, по вашей карте; состояние мостов и переправ — в «Моделирование» → «Операции» (из документов или вручную).</p>
         <div className="row"><label className="th-f inl">id <input className="th-id" value={newId} onChange={(e) => setNewId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} /></label>
           <label className="th-f inl">Клетка, км <input type="number" min={0.05} step={0.05} value={cell} onChange={(e) => setCell(Math.max(0.05, +e.target.value || 1))} /></label></div>
         <details className="th-cfg" open>

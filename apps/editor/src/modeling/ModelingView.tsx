@@ -42,7 +42,7 @@ export function ModelingView({ llm }: { llm: Llm }) {
           <div hidden={tab !== 'compare'}><CompareTab d={d} preset={cmp} /></div>
           <div hidden={tab !== 'tune'}><TuneTab d={d} preset={tune} /></div>
           <div hidden={tab !== 'calibrate'}><CalibrateTab key={`${calib}`} d={d} onCompare={compare} initialScenario={calibScenario} /></div>
-          <div hidden={tab !== 'ops'}><OperationsTab d={d} onCompare={compare} onCalibrate={(s) => { setCalibScenario(s); setCalib((x) => x + 1); go('calibrate'); }} /></div>
+          <div hidden={tab !== 'ops'}><OperationsTab d={d} llm={llm} onCompare={compare} onCalibrate={(s) => { setCalibScenario(s); setCalib((x) => x + 1); go('calibrate'); }} /></div>
         </>}
       </div>
     </div>

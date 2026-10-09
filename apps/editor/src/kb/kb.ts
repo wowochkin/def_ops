@@ -5,8 +5,8 @@
  */
 import { stripMeta } from '../markdown';
 import {
-  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, qaMessages, toProposals,
-  type Entry, type ExtractedItem, type KbDocument, type Proposal, type Reliability, type Source,
+  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, OPERATION_EXTRACT_SCHEMA, qaMessages, toInfraProposals, toProposals,
+  type Entry, type ExtractedItem, type InfraItem, type InfraProposal, type KbDocument, type OperationHint, type Proposal, type Reliability, type Source,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
@@ -21,6 +21,8 @@ export interface KbState {
   index: Index | null;
   documents: KbDocument[];
   proposals: Proposal[];
+  /** Сведения об инфраструктуре из документов операций. */
+  infra: InfraProposal[];
   /** Обработка документа: id, часть, всего, сообщение. */
   job: { doc: string; at: number; total: number; text: string } | null;
   /** Смысловой поиск (эмбеддинги). */
@@ -28,7 +30,7 @@ export interface KbState {
 }
 
 const vectors = new Vectors(() => { state.vec = vectors.state; emit(); });
-let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], job: null, vec: vectors.state };
+let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], infra: [], job: null, vec: vectors.state };
 const subs = new Set<(s: KbState) => void>();
 const emit = () => { state = { ...state }; subs.forEach((f) => f(state)); };
 export const subscribe = (f: (s: KbState) => void) => { subs.add(f); f(state); return () => { subs.delete(f); }; };
@@ -40,7 +42,8 @@ export function load(): Promise<void> {
   return loading;
 }
 async function reload() {
-  const [entries, documents, proposals] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals')]);
+  const [entries, documents, proposals, infra] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals'), store.all<InfraProposal>('infra')]);
+  state.infra = infra;
   state.entries = entries;
   state.byId = new Map(entries.map((e) => [e.id, e]));
   state.documents = documents.sort((a, b) => b.addedAt.localeCompare(a.addedAt));
@@ -82,14 +85,15 @@ export async function saveEntry(e: Entry) {
 
 /* ───────────── документы ───────────── */
 
-export async function addFile(file: File, reliability: Reliability, note: string): Promise<KbDocument> {
+/** operation — документ операции (раздел «Моделирование» → «Операции»): записи относятся к ней, разбор ищет и инфраструктуру. */
+export async function addFile(file: File, reliability: Reliability, note: string, operation?: string): Promise<KbDocument> {
   const text = (await fileText(file)).trim();
   if (text.length < 50) throw new Error('в файле не найден текст (скан без текстового слоя? — нужен распознанный PDF)');
   const id = `d${Date.now().toString(36)}`;
   const chunks = chunkText(text).map((t, i) => ({ i, text: t }));
-  const doc: KbDocument = { id, name: file.name, mime: file.type, size: file.size, addedAt: new Date().toISOString(), reliability, note: note || undefined, chunks, status: 'new', processed: 0 };
+  const doc: KbDocument = { id, name: file.name, mime: file.type, size: file.size, addedAt: new Date().toISOString(), reliability, note: note || undefined, chunks, status: 'new', processed: 0, ...(operation ? { operation } : {}) };
   // запись-источник: документ виден в каркасе (категория «Источники → Загруженные документы»)
-  const src: Entry = { id: `doc:${id}`, category: 'sources', group: 'uploaded', title: file.name, summary: note || `Загруженный документ: ${chunks.length} частей, ${text.length < 2000 ? `${text.length} знаков` : `${Math.round(text.length / 1000)} тыс. знаков`}.`, status: 'checked', origin: 'document',
+  const src: Entry = { id: `doc:${id}`, category: 'sources', group: 'uploaded', title: file.name, ...(operation ? { operations: [operation] } : {}), summary: note || `Загруженный документ: ${chunks.length} частей, ${text.length < 2000 ? `${text.length} знаков` : `${Math.round(text.length / 1000)} тыс. знаков`}.`, status: 'checked', origin: 'document',
     facts: [{ key: 'ref', value: file.name }, { key: 'reliability', value: reliability }, ...(note ? [{ key: 'covers', value: note }] : [])] };
   await store.put('documents', doc);
   await store.put('entries', src);
@@ -102,14 +106,19 @@ export async function removeDocument(id: string) {
   await store.del('entries', `doc:${id}`);
   const ps = state.proposals.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
   if (ps.length) await store.del('proposals', ...ps);
+  const ip = state.infra.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
+  if (ip.length) await store.del('infra', ...ip);
   await reload();
 }
 
 let abort: AbortController | null = null;
 export const stop = () => abort?.abort();
 
-/** Обработать документ моделью: по частям, с места остановки; предложения — в очередь на проверку. */
-export async function process(id: string, llm: LlmSettings) {
+/**
+ * Обработать документ моделью: по частям, с места остановки; предложения — в очередь на проверку. Документ
+ * операции (hint — её сроки и стороны) — ещё и сведения об инфраструктуре.
+ */
+export async function process(id: string, llm: LlmSettings, hint?: OperationHint) {
   llm = kbLlm(llm);
   if (state.job) throw new Error('уже идёт обработка другого документа');
   const doc = state.documents.find((d) => d.id === id);
@@ -118,16 +127,27 @@ export async function process(id: string, llm: LlmSettings) {
   const c = client(llm, 'off');
   doc.status = 'processing';
   let dropped = 0, made = 0;
+  if (doc.operation && !hint) hint = await (await import('../sim/userdata')).operationHint(doc.operation);
+  const op = doc.operation && hint ? hint : undefined;
+  const sum = doc.extracted ?? { entries: 0, updates: 0, infra: 0, dropped: 0 };
   try {
     for (let i = doc.processed ?? 0; i < doc.chunks.length; i++) {
       if (abort.signal.aborted) break;
       state.job = { doc: id, at: i, total: doc.chunks.length, text: `часть ${i + 1} из ${doc.chunks.length}…` };
       emit();
-      const r = await c.chat({ messages: extractMessages(doc.chunks[i].text, doc.name), schema: { name: 'kb_extract', schema: EXTRACT_SCHEMA }, signal: abort.signal });
-      const items = ((r.json as { items?: ExtractedItem[] } | undefined)?.items) ?? [];
-      const res = toProposals(items, doc.chunks[i].text, state.entries, doc, i);
+      const r = await c.chat({ messages: extractMessages(doc.chunks[i].text, doc.name, op), schema: op ? { name: 'kb_operation_extract', schema: OPERATION_EXTRACT_SCHEMA } : { name: 'kb_extract', schema: EXTRACT_SCHEMA }, signal: abort.signal });
+      const j = r.json as { items?: ExtractedItem[]; infrastructure?: InfraItem[] } | undefined;
+      const res = toProposals(j?.items ?? [], doc.chunks[i].text, state.entries, doc, i);
       dropped += res.dropped; made += res.proposals.length;
       if (res.proposals.length) await store.put('proposals', ...res.proposals);
+      sum.entries += res.proposals.filter((p) => p.kind === 'new').length; sum.updates += res.proposals.filter((p) => p.kind === 'update').length; sum.dropped += res.dropped;
+      if (op && doc.operation) {
+        const inf = toInfraProposals(j?.infrastructure, doc.chunks[i].text, { ...doc, operation: doc.operation }, i);
+        if (inf.proposals.length) await store.put('infra', ...inf.proposals);
+        state.infra = [...state.infra, ...inf.proposals];
+        sum.infra += inf.proposals.length; sum.dropped += inf.dropped; dropped += inf.dropped; made += inf.proposals.length;
+      }
+      doc.extracted = { ...sum };
       doc.processed = i + 1;
       await store.put('documents', { ...doc });
       state.proposals = [...state.proposals, ...res.proposals];
@@ -163,18 +183,27 @@ export async function decide(ids: string[], accept: boolean) {
   await reload();
 }
 
+/** Сведения об инфраструктуре: отметить принятыми или отклонёнными (в операцию их записывает раздел «Операции»). */
+export async function decideInfra(ids: string[], accept: boolean) {
+  const ps = state.infra.filter((p) => ids.includes(p.id) && p.status === 'pending');
+  for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
+  if (ps.length) await store.put('infra', ...ps);
+  await reload();
+}
+
 /* ───────────── обмен ───────────── */
 
 export async function exportUser(): Promise<string> {
-  const [entries, documents, proposals] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals')]);
-  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals });
+  const [entries, documents, proposals, infra] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra')]);
+  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra });
 }
 export async function importUser(json: string) {
-  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[] };
+  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[] };
   if (d.format !== 'def-ops-knowledge') throw new Error('это не выгрузка базы знаний');
   if (d.entries?.length) await store.put('entries', ...d.entries);
   if (d.documents?.length) await store.put('documents', ...d.documents);
   if (d.proposals?.length) await store.put('proposals', ...d.proposals);
+  if (d.infra?.length) await store.put('infra', ...d.infra);
   await reload();
 }
 
@@ -230,9 +259,27 @@ export function searchMode(): string {
 }
 
 /** Справка из базы для советника в игре: доктрина, техника, местность, источники; ход боёв — только в вопросах истории. */
-export async function reference(query: string, historyAllowed: boolean): Promise<string> {
+export async function reference(query: string, historyAllowed: boolean, operation?: string): Promise<string> {
   try { await load(); } catch { return ''; }
   if (!state.index) return '';
   // справка отбирается фильтром (доктрина, техника) — нужна широкая выдача
-  return gameReference(state.index, state.byId, query, historyAllowed, 5, await search(query, 300).catch(() => undefined));
+  return gameReference(state.index, state.byId, query, historyAllowed, 5, await search(query, 300).catch(() => undefined), operation);
+}
+
+/**
+ * Принятое сведение об инфраструктуре — и в базу знаний: запись «Состояние инфраструктуры» операции (театр;
+ * рубрики «Переправы и мосты», «Дороги и транспорт»), факт с цитатой и источником.
+ */
+export async function addInfraFact(op: { id: string; title: string }, f: { text: string; quote?: string; doc?: string; reliability?: Reliability; road?: boolean }) {
+  await load();
+  const id = `u:${op.id}:infrastructure`;
+  const cur = state.byId.get(id);
+  const fact = { key: 'features', value: f.text, ...(f.quote ? { quote: f.quote } : {}), ...(f.doc ? { source: `doc:${f.doc}` } : {}), ...(f.reliability ? { reliability: f.reliability } : {}) };
+  if (cur?.facts?.some((x) => x.value === fact.value)) return;
+  const e: Entry = cur ?? {
+    id, category: 'terrain', group: 'rivers', title: `Состояние инфраструктуры: ${op.title.split(':')[0]}`, operations: [op.id], rubrics: ['5.3', '5.2'],
+    summary: 'Мосты, переправы, дороги и железные дороги операции — по документам и сведениям, принятым в разделе «Операции».', facts: [], status: 'extracted', origin: 'document',
+  };
+  await store.put('entries', { ...e, facts: [...(e.facts ?? []), fact], updatedAt: new Date().toISOString() });
+  await reload();
 }
