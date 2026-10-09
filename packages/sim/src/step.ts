@@ -354,16 +354,22 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     return Math.min(UMPIRE_LIMITS[1], Math.max(UMPIRE_LIMITS[0], m.mult));
   };
   const A = att.reduce((s, f) => s + power(f, profileOf(ctx, f.side), R).total, 0) * um('attack');
+  // превышение: средняя высота наступающих (по силе) против высоты каждого обороняющегося
+  const HA = R.heightAdvantage;
+  const hs = HA ? att.map((f) => ({ h: T.heightAt(f.position), w: power(f, profileOf(ctx, f.side), R).total })).filter((x) => x.h != null) : [];
+  const hAtt = hs.length ? hs.reduce((s, x) => s + x.h! * x.w, 0) / Math.max(1e-9, hs.reduce((s, x) => s + x.w, 0)) : null;
   const dParts = def.map((f) => {
     const p = power(f, profileOf(ctx, f.side), R).total;
     const terrain = R.defense.terrain[T.terrainAt(f.position)] ?? 1;
     const prepared = f.posture === 'defend' && f.dugInHours >= R.defense.prepareHours ? R.defense.prepared : 1;
     const fort = 1 + R.defense.fortificationPerLevel * T.fortificationAt(f.position);
-    return { f, p, terrain, prepared, fort, total: p * terrain * prepared * fort };
+    const hd = HA && hAtt != null ? T.heightAt(f.position) : null;
+    const height = HA && hd != null ? 1 + Math.max(-HA.max, Math.min(HA.max, ((hd - hAtt!) / HA.perM) * HA.bonus)) : 1;
+    return { f, p, terrain, prepared, fort, height, total: p * terrain * prepared * fort * height };
   });
   const D = dParts.reduce((s, x) => s + x.total, 0) * um('defense');
   if (D <= 0 || A <= 0) return;
-  const avg = (k: 'terrain' | 'prepared' | 'fort') => dParts.reduce((s, x) => s + x[k] * x.p, 0) / Math.max(1e-9, dParts.reduce((s, x) => s + x.p, 0));
+  const avg = (k: 'terrain' | 'prepared' | 'fort' | 'height') => dParts.reduce((s, x) => s + x[k] * x.p, 0) / Math.max(1e-9, dParts.reduce((s, x) => s + x.p, 0));
   const noise = Math.exp(R.noise * rng.normal());
   const ratio = (A / D) * noise;
   const day = dt / 24;
@@ -395,6 +401,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     { name: 'местность', value: +avg('terrain').toFixed(2) },
     { name: 'подготовленная оборона', value: +avg('prepared').toFixed(2) },
     { name: 'укрепления', value: +avg('fort').toFixed(2) },
+    ...(HA && avg('height') !== 1 ? [{ name: 'превышение (высоты местности)', value: +avg('height').toFixed(2) }] : []),
     { name: 'случайность (разброс)', value: +noise.toFixed(2) },
     ...(at < 1 ? [{ name: 'темп по местности', value: +at.toFixed(2) }] : []),
     ...(Number.isFinite(cap) ? [{ name: 'предел темпа в укреплённой полосе, км/сут', value: cap }] : []),

@@ -2,7 +2,7 @@ export * from './types';
 export * from './rng';
 export * from './geo';
 export * from './rules';
-export { Theatre, decodeGrid, encodeGrid } from './theatre';
+export { Theatre, decodeGrid, encodeGrid, decodeHeights } from './theatre';
 export { step, onMap, createState, issueOrder, targetPoint, profileOf, addHours, supplyHoursOf, supplySources, type SimContext } from './step';
 export { frontLine, territoryLine, type FrontOptions } from './front';
 export { runScenario, runScenarioWith, compareWithHistory, summarize, checkEvents, type History, type HistoryEvent, type EventResult, type Snapshot, type RunResult, type Deviation } from './history';

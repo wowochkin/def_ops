@@ -124,6 +124,11 @@ export interface Rules {
     supplyHoldKm?: number };
   /** Через сколько часов непрерывного разрыва подвоза формирование считается окружённым (по умолчанию 36). */
   encircleHours?: number;
+  /**
+   * Превышение в бою (нужна сетка высот театра): оборона выше наступающих на perM метров — сила × (1 + bonus),
+   * ниже — × (1 − bonus); не больше ±max. Нет поля — не учитывается (класс «высоты» действует отдельно).
+   */
+  heightAdvantage?: { perM: number; bonus: number; max: number };
   /** Множитель темпов марша из профилей (калибровка: заторы, разрушенные дороги, беженцы). */
   movementScale?: number;
   /** Откуда взяты числа: калибровка — сценарий, мерило, дата. */
@@ -168,6 +173,11 @@ export interface TheatreData {
    * Дополняет линии roads.
    */
   roadGrid?: TerrainGrid;
+  /**
+   * Сетка высот (Copernicus DEM, средняя высота клетки): высота = base + значение × stepM, м; строки с севера на
+   * юг; rle — «значение» или «значение*повторы» через запятую. Нет — превышение в бою не учитывается.
+   */
+  heightGrid?: { bbox: [number, number, number, number]; cols: number; rows: number; stepM: number; base: number; rle: string; source?: string };
   /** Контуры местности; позже в списке — поверх. */
   terrain: { class: TerrainClass; ring: LngLat[] }[];
   roads: { kind: 'highway' | 'road' | 'rail'; line: LngLat[]; name?: string }[];

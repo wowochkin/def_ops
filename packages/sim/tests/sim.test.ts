@@ -132,6 +132,21 @@ describe('ход', () => {
     expect(r(dug)).toBeLessThan(r(fresh));
   });
 
+  it('превышение: оборона на высоте сильнее; без правила высоты не учитываются', () => {
+    const data = (hDef: number): TheatreData => ({ ...theatreData, lines: [], heightGrid: { bbox: theatreData.bbox, cols: 2, rows: 1, stepM: 1, base: 0, rle: `0,${hDef}` } });
+    const run = (hDef: number, rule: boolean) => {
+      const ctx = ctxWith([su('a1', -3, 0), de('k1', 2, 0, { posture: 'attack' })], [order('a1', 'attack', 'east'), order('k1', 'defend', null)]);
+      ctx.theatre = new Theatre(data(hDef));
+      if (rule) ctx.rules = { ...ctx.rules, heightAdvantage: { perM: 50, bonus: 0.1, max: 0.3 } };
+      const j = step(createState(ctx, 3), ctx).journal.find((x) => x.kind === 'combat');
+      if (j?.kind !== 'combat') throw new Error('нет боя');
+      return { r: j.ratio / j.noise, f: j.factors.map((x) => x.name) };
+    };
+    expect(run(100, true).r).toBeLessThan(run(0, true).r);
+    expect(run(100, true).f.some((n) => n.startsWith('превышение'))).toBe(true);
+    expect(run(100, false).r).toBeCloseTo(run(0, false).r, 6);
+  });
+
   it('детерминирован при одном seed и различается при разных', () => {
     const ctx = ctxWith([su('a1', 0, 0), de('k1', 4, 0)], [order('a1', 'attack', 'east')]);
     const run = (seed: number) => { let s = createState(ctx, seed); for (let i = 0; i < 3; i++) s = step(s, ctx); return JSON.stringify(s.formations); };

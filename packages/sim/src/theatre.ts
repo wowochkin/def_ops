@@ -31,6 +31,8 @@ export class Theatre {
   /** Мосты по клеткам. */
   private readonly bridges = new Map<number, { id: string; openFrom?: string | null; destroyedAt?: string | null }[]>();
   private readonly areaRings: { id: string; name: string; ring: XY[]; c: XY }[];
+  /** Высоты (м) по сетке heightGrid; null — сетки нет. */
+  private readonly heights: Float32Array | null;
 
   constructor(readonly data: TheatreData) {
     const [w, s, e, n] = data.bbox;
@@ -47,6 +49,7 @@ export class Theatre {
     this.river = new Uint8Array(N);
     this.fort = new Uint8Array(N);
     this.fortSide = new Array(N).fill(null);
+    this.heights = data.heightGrid ? decodeHeights(data.heightGrid) : null;
 
     if (data.terrainGrid) {
       const g = data.terrainGrid, cells = decodeGrid(g);
@@ -150,6 +153,16 @@ export class Theatre {
   }
 
   /* ----------------------------- местность ----------------------------- */
+
+  /** Высота местности, м (средняя по клетке сетки высот); null — сетки нет или точка вне неё. */
+  heightAt(ll: LngLat): number | null {
+    const g = this.data.heightGrid;
+    if (!g || !this.heights) return null;
+    const [w, s, e, n] = g.bbox;
+    const c = Math.floor(((ll[0] - w) / (e - w)) * g.cols), r = Math.floor(((n - ll[1]) / (n - s)) * g.rows);
+    if (c < 0 || r < 0 || c >= g.cols || r >= g.rows) return null;
+    return this.heights[r * g.cols + c];
+  }
 
   terrainAt(ll: LngLat): TerrainClass {
     const i = this.indexOf(ll);
@@ -387,6 +400,20 @@ export class Theatre {
     }
     return { position: pos, km, arrived: false, path: r.path };
   }
+}
+
+/** Сетка высот: «значение» или «значение*повторы» через запятую → метры. */
+export function decodeHeights(g: NonNullable<TheatreData['heightGrid']>): Float32Array {
+  const out = new Float32Array(g.cols * g.rows);
+  let i = 0;
+  for (const tok of g.rle.split(',')) {
+    const [v, n] = tok.split('*');
+    const h = g.base + Number(v) * g.stepM;
+    out.fill(h, i, i + (n ? Number(n) : 1));
+    i += n ? Number(n) : 1;
+  }
+  if (i !== out.length) throw new Error(`heightGrid: ${i} клеток вместо ${out.length}`);
+  return out;
 }
 
 /** Раскрыть RLE растра в индексы TERRAIN_CLASSES. */

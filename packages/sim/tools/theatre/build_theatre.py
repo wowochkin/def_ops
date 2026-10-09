@@ -107,11 +107,40 @@ def read_mosaic(paths, bbox, px_deg, resampling, dtype):
     return out
 
 
-def classify(recipe, wc_paths, dem_paths):
+def classify(recipe, wc_paths, dem_paths, layers=None):
+    """Классы местности по клеткам и (по выбору) средняя высота клетки, м. layers — какие слои считать."""
+    layers = layers or LAYER_DEFAULTS
     w, s, e, n = recipe["bbox"]
     dl, da = recipe["grid"]["dLng"], recipe["grid"]["dLat"]
     cols, rows = int(round((e - w) / dl)), int(round((n - s) / da))
     rules = recipe["landcover"]["rules"]
+    if not layers["landcover"]:
+        zero = np.zeros(rows * cols)
+        water = urban = marsh = forest = nodata = zero
+    else:
+        water, urban, marsh, forest, nodata = landcover_fracs(recipe, wc_paths, cols, rows)
+    height, hills = None, np.zeros(rows * cols, dtype=bool)
+    if dem_paths and (layers["hills"] or layers["height"]):
+        hills, height = relief_cells(recipe, dem_paths, cols, rows)
+        if not layers["hills"]:
+            hills = np.zeros(rows * cols, dtype=bool)
+        if not layers["height"]:
+            height = None
+
+    k = np.full(rows * cols, 0, dtype=np.uint8)  # open
+    order = ["open", "forest", "marsh", "urban", "hills", "water"]
+    k[hills] = order.index("hills")
+    k[forest >= rules["forest"]] = order.index("forest")
+    k[marsh >= rules["marsh"]] = order.index("marsh")
+    k[urban >= rules["urban"]] = order.index("urban")
+    k[(water >= rules["water"]) | (nodata >= 0.5)] = order.index("water")  # вне покрытия — море
+    stats = {c: int((k == i).sum()) for i, c in enumerate(order)}
+    return k, cols, rows, stats, height
+
+
+def landcover_fracs(recipe, wc_paths, cols, rows):
+    w, s, e, n = recipe["bbox"]
+    dl, da = recipe["grid"]["dLng"], recipe["grid"]["dLat"]
     # земной покров ~0.0015° (≈100–150 м): ближайший сосед с обзорного уровня, затем доли по клеткам
     px = 0.0015
     lc = read_mosaic(wc_paths, (w, s, e, n), px, Resampling.nearest, np.uint8)
@@ -126,8 +155,13 @@ def classify(recipe, wc_paths, dem_paths):
         m = np.isin(lc.ravel(), codes)
         return np.bincount(cell[m], minlength=rows * cols) / total
 
-    water, urban, marsh, forest = frac([80]), frac([50]), frac([90, 95]), frac([10])
-    nodata = frac([0])
+    return frac([80]), frac([50]), frac([90, 95]), frac([10]), frac([0])
+
+
+def relief_cells(recipe, dem_paths, cols, rows):
+    """Рельеф по клеткам: «высоты» (перепад и уклон) и средняя высота клетки, м (модель поверхности, сглаженная)."""
+    w, s, e, n = recipe["bbox"]
+    dl, da = recipe["grid"]["dLng"], recipe["grid"]["dLat"]
 
     # рельеф: перепад высот и средний уклон в клетке
     dpx = 1 / 1200  # 3″
@@ -156,16 +190,27 @@ def classify(recipe, wc_paths, dem_paths):
     relief = (nmax - nmin).ravel()
     rel = recipe["relief"]
     hills = (relief >= rel["hillsReliefM"]) & (mean_slope >= rel["hillsSlope"])
+    height = np.bincount(dcell, weights=dem.ravel().astype(np.float64), minlength=rows * cols) / dcount
+    return hills, height
 
-    k = np.full(rows * cols, 0, dtype=np.uint8)  # open
-    order = ["open", "forest", "marsh", "urban", "hills", "water"]
-    k[hills] = order.index("hills")
-    k[forest >= rules["forest"]] = order.index("forest")
-    k[marsh >= rules["marsh"]] = order.index("marsh")
-    k[urban >= rules["urban"]] = order.index("urban")
-    k[(water >= rules["water"]) | (nodata >= 0.5)] = order.index("water")  # вне покрытия — море
-    stats = {c: int((k == i).sum()) for i, c in enumerate(order)}
-    return k, cols, rows, stats
+
+LAYER_DEFAULTS = {"landcover": True, "hills": True, "height": True, "rivers": True, "roads": True, "rail": True, "bridges": True, "areas": True}
+
+
+def height_grid(height, bbox, cols, rows, step=5):
+    """Сетка высот для театра: целые шаги step м от base; RLE — «значение» или «значение*повторы» через запятую."""
+    q = np.round(np.asarray(height) / step).astype(int)
+    base = int(q.min())
+    v = (q - base).tolist()
+    out, i = [], 0
+    while i < len(v):
+        j = i
+        while j < len(v) and v[j] == v[i]:
+            j += 1
+        out.append(f"{v[i]}*{j - i}" if j - i > 1 else str(v[i]))
+        i = j
+    return {"bbox": bbox, "cols": cols, "rows": rows, "stepM": step, "base": base * step, "rle": ",".join(out),
+            "source": "Copernicus DEM GLO-90 (модель поверхности, сглаженная), средняя высота клетки"}
 
 
 def box_blur(a, r):
@@ -272,6 +317,20 @@ def latin(name):
         else:
             out.append(ch)
     return unicodedata.normalize("NFKD", "".join(out)).encode("ascii", "ignore").decode()
+
+
+def empty_osm(dest):
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text('{"elements": []}')
+    return dest
+
+
+def fetch_dem(t, dem_dir):
+    try:
+        return fetch(DEM_URL.format(n=t), dem_dir / f"{t}.tif")
+    except RuntimeError:
+        log(f"  нет тайла рельефа {t} (море?) — пропуск")
+        return None
 
 
 def overpass(query, dest):
@@ -480,10 +539,12 @@ def main():
     ap.add_argument("--worldcover")
     ap.add_argument("--dem")
     ap.add_argument("--osm")
+    ap.add_argument("--height-only", help="готовый театр (JSON): добавить в него только сетку высот")
     a = ap.parse_args()
 
     rp = Path(a.recipe).resolve()
     recipe = json.load(open(rp))
+    layers = {**LAYER_DEFAULTS, **recipe.get("layers", {})}
     cache = Path(a.cache)
     bbox = recipe["bbox"]
     w, s, e, n = bbox
@@ -507,21 +568,32 @@ def main():
     log("местность: земной покров и рельеф")
     wc_dir = Path(a.worldcover) if a.worldcover else cache / "worldcover"
     dem_dir = Path(a.dem) if a.dem else cache / "dem"
-    wc_paths = [fetch(WC_URL.format(t=t), wc_dir / f"ESA_WorldCover_10m_2021_v200_{t}_Map.tif") for t in wc_tiles(bbox)]
+    if a.height_only:
+        # только сетка высот — в готовый театр (тот же охват и шаг, что в рецепте)
+        dem_paths = [p for p in (fetch_dem(t, dem_dir) for t in dem_tiles(bbox)) if p]
+        cols, rows = int(round((e - w) / recipe["grid"]["dLng"])), int(round((n - s) / recipe["grid"]["dLat"]))
+        _, height = relief_cells(recipe, dem_paths, cols, rows)
+        th_path = Path(a.height_only)
+        th = json.load(open(th_path))
+        th["heightGrid"] = height_grid(height, bbox, cols, rows)
+        Path(a.out or th_path).write_text(json.dumps(th, ensure_ascii=False, separators=(",", ":")))
+        log(f"высоты: {cols}×{rows}, {th['heightGrid']['base']}…{th['heightGrid']['base'] + 5 * max(int(x.split('*')[0]) for x in th['heightGrid']['rle'].split(','))} м → {a.out or th_path}")
+        return
+    wc_paths = [fetch(WC_URL.format(t=t), wc_dir / f"ESA_WorldCover_10m_2021_v200_{t}_Map.tif") for t in wc_tiles(bbox)] if layers["landcover"] else []
     dem_paths = []
-    for t in dem_tiles(bbox):
+    for t in (dem_tiles(bbox) if layers["hills"] or layers["height"] else []):
         try:
             dem_paths.append(fetch(DEM_URL.format(n=t), dem_dir / f"{t}.tif"))
         except RuntimeError:
             log(f"  нет тайла рельефа {t} (море?) — пропуск")
-    k, cols, rows, stats = classify(recipe, wc_paths, dem_paths)
+    k, cols, rows, stats, height = classify(recipe, wc_paths, dem_paths, layers)
     log(f"  сетка {cols}×{rows}: {stats}")
 
     # 2. реки
     log("реки и каналы")
     osm_dir = Path(a.osm) if a.osm else cache / "osm" / recipe["id"]
     bb = f"{s},{w},{n},{e}"
-    water = overpass(f'[out:json][timeout:600];(way["waterway"~"^(river|canal)$"]({bb}););out tags geom;', osm_dir / "water.json")
+    water = overpass(f'[out:json][timeout:600];(way["waterway"~"^(river|canal)$"]({bb}););out tags geom;', osm_dir / "water.json") if layers["rivers"] else empty_osm(osm_dir / "none.json")
     major, minor = set(recipe["rivers"]["major"]), set(recipe["rivers"]["minor"])
     # новый театр без списка рек: большие — названные реки (не каналы) длиной в охвате не меньше autoMajorKm
     auto_km = recipe["rivers"].get("autoMajorKm")
@@ -556,8 +628,8 @@ def main():
     log("дороги")
     hw_re = "|".join(["motorway"] + recipe["roads"]["roadHighways"])
     parts = recipe.get("osmParts", 1)
-    roads_p = overpass_tiled('[out:json][timeout:600];(way["highway"~"^(' + hw_re + ')$"]({bb}););out tags geom;', (w, s, e, n), osm_dir / "roads.json", parts)
-    rail_p = overpass_tiled('[out:json][timeout:600];(way["railway"="rail"]["usage"="main"]({bb}););out tags geom;', (w, s, e, n), osm_dir / "rail.json", parts)
+    roads_p = empty_osm(osm_dir / "none.json") if not layers["roads"] else overpass_tiled('[out:json][timeout:600];(way["highway"~"^(' + hw_re + ')$"]({bb}););out tags geom;', (w, s, e, n), osm_dir / "roads.json", parts)
+    rail_p = empty_osm(osm_dir / "none.json") if not layers["rail"] else overpass_tiled('[out:json][timeout:600];(way["railway"="rail"]["usage"="main"]({bb}););out tags geom;', (w, s, e, n), osm_dir / "rail.json", parts)
     rab = set(recipe["roads"]["highwayRefs"])
     road_kinds = set(recipe["roads"]["roadHighways"])
     roads, crossers, raw_roads, raw_rail = [], [], [], []
@@ -606,6 +678,8 @@ def main():
                 x = seg_intersect(p1, p2, a1, b1)
                 if x:
                     found.append((x, nm, kind, ref))
+    if not layers["bridges"]:
+        found = []
     dd = recipe["bridges"]["dedupeKm"]
     bridges = []
     for x, nm, kind, ref in found:
@@ -639,7 +713,7 @@ def main():
         areas.append({"id": x["id"], "name": x["name"], "ring": ring})
     # новый театр без справочника: районы — населённые пункты OpenStreetMap (город, городок, по желанию — село)
     fo = recipe["areas"].get("fromOsm")
-    if fo:
+    if fo and layers["areas"]:
         kinds = fo.get("places", ["city", "town"])
         pl = overpass(f'[out:json][timeout:300];(node["place"~"^({"|".join(kinds)})$"]({bb}););out tags;', osm_dir / "places.json")
         radius = fo.get("radiusKm", {"city": 5, "town": 2.5, "village": 1.2, "suburb": 0.8, "quarter": 0.5})
@@ -681,6 +755,7 @@ def main():
         "bridges": [{k2: v for k2, v in b.items() if v is not None} for b in bridges],
         "areas": areas, "lines": [{k2: v for k2, v in l.items() if v is not None} for l in lines],
         **({"roadGrid": road_grid} if road_grid else {}),
+        **({"heightGrid": height_grid(height, bbox, cols, rows)} if height is not None else {}),
         "sources": recipe["sources"] + overlay_notes, "caveats": recipe.get("caveats", []), **({"frozen": recipe["frozen"]} if recipe.get("frozen") else {}),
         "build": {"recipe": rp.name, "stats": stats},
     }

@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFeature, type LngLat, type MapDocument } from '@def-ops/core';
-import { cropGrid, cropTheatre, decodeGrid, layerCounts, layerGeoJSON, recipeFor, theatreToDocument, THEATRE_LAYERS, TERRAIN_CLASSES, type BBox, type TerrainGrid, type TheatreData, type TheatreLayerId } from '@def-ops/sim';
+import { cropGrid, cropTheatre, decodeGrid, decodeHeights, layerCounts, layerGeoJSON, recipeFor, theatreToDocument, THEATRE_LAYERS, TERRAIN_CLASSES, type BBox, type TerrainGrid, type TheatreData, type TheatreLayerId } from '@def-ops/sim';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
@@ -32,6 +32,30 @@ function gridImage(g: TerrainGrid, alpha = 255): { url: string; canvas: HTMLCanv
   return { url: c.toDataURL('image/png'), canvas: c };
 }
 
+/** Сетка высот — картинка: светлое — низко, тёмное — высоко (один тон), с отмывкой склонов; min/max — м. */
+function heightImage(g: NonNullable<TheatreData['heightGrid']>, gray = false): { url: string; canvas: HTMLCanvasElement; min: number; max: number } {
+  const h = decodeHeights(g);
+  let min = Infinity, max = -Infinity;
+  for (const v of h) { if (v < min) min = v; if (v > max) max = v; }
+  const c = document.createElement('canvas');
+  c.width = g.cols; c.height = g.rows;
+  const ctx = c.getContext('2d')!;
+  const img = ctx.createImageData(g.cols, g.rows);
+  const span = Math.max(1, max - min);
+  for (let r = 0; r < g.rows; r++) for (let q = 0; q < g.cols; q++) {
+    const i = r * g.cols + q, t = (h[i] - min) / span;
+    if (gray) { const v = Math.round(t * 255); img.data.set([v, v, v, 255], i * 4); continue; }
+    // отмывка: освещение с северо-запада по разнице с соседями
+    const dx = h[r * g.cols + Math.min(g.cols - 1, q + 1)] - h[r * g.cols + Math.max(0, q - 1)];
+    const dy = h[Math.min(g.rows - 1, r + 1) * g.cols + q] - h[Math.max(0, r - 1) * g.cols + q];
+    const shade = Math.max(-1, Math.min(1, (-dx + dy) / 20));
+    const base = [236 - 120 * t, 222 - 130 * t, 196 - 140 * t];
+    img.data.set([...base.map((x) => Math.max(0, Math.min(255, x + shade * 40))), 150 + Math.round(t * 90)], i * 4);
+  }
+  ctx.putImageData(img, 0, 0);
+  return { url: c.toDataURL('image/png'), canvas: c, min, max };
+}
+
 const save = (name: string, data: string | Blob, type = 'application/json') => {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(typeof data === 'string' ? new Blob([data], { type }) : data);
@@ -39,6 +63,17 @@ const save = (name: string, data: string | Blob, type = 'application/json') => {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
 const r4 = (x: number) => +x.toFixed(4);
+/** Слои сборки театра: ключ рецепта (layers), название, что это. */
+const BUILD_LAYERS: [string, string, string][] = [
+  ['landcover', 'Местность', 'ESA WorldCover: лес, болото, застройка, вода по клеткам'],
+  ['hills', 'Рельеф: «высоты»', 'класс местности по перепаду и уклону (Copernicus DEM): оборона сильнее, марш медленнее'],
+  ['height', 'Рельеф: высоты, м', 'сетка абсолютных высот: превышение в бою (правило «Превышение»), карта рельефа'],
+  ['rivers', 'Реки и каналы', 'OpenStreetMap; большие — по длине в охвате'],
+  ['roads', 'Дороги', 'OpenStreetMap: выбранные классы дорог'],
+  ['rail', 'Железные дороги', 'OpenStreetMap: магистральные'],
+  ['bridges', 'Мосты', 'пересечения дорог и железных дорог с большими реками'],
+  ['areas', 'Районы', 'населённые пункты OpenStreetMap — для приказов и событий'],
+];
 
 export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEditor?: (d: MapDocument) => void }) {
   const [list, setList] = useState<{ id: string; title: string; src: 'builtin' | 'op' | 'user' }[]>([]);
@@ -52,6 +87,10 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   const [notice, setNotice] = useState<string | null>(null);
   const [cell, setCell] = useState(2);
   const [newId, setNewId] = useState('my-theatre');
+  /** Что извлекать при сборке и с какими порогами. */
+  const [cfg, setCfg] = useState<{ layers: Record<string, boolean>; hillsReliefM: number; autoMajorKm: number | null; roadKinds: string[]; places: string[] }>({
+    layers: { landcover: true, hills: true, height: true, rivers: true, roads: true, rail: true, bridges: true, areas: true }, hillsReliefM: 35, autoMajorKm: null, roadKinds: ['trunk', 'primary'], places: ['city', 'town'],
+  });
   const [srv, setSrv] = useState<{ ok: boolean; python: string; error?: string; setup: string } | null>(null);
   const [build, setBuild] = useState<{ id: string; name: string; status: 'running' | 'done' | 'error' | 'cancelled'; log: string[]; error?: string; sizeBytes?: number } | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -73,6 +112,22 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   }, [sel]);
 
   const terrainUrl = useMemo(() => (T?.terrainGrid ? gridImage(T.terrainGrid, 200).url : null), [T]);
+  const relief = useMemo(() => (T?.heightGrid ? heightImage(T.heightGrid) : null), [T]);
+  const heights = useMemo(() => (T?.heightGrid ? decodeHeights(T.heightGrid) : null), [T]);
+  const [cursor, setCursor] = useState<{ at: LngLat; h: number | null } | null>(null);
+  useEffect(() => {
+    if (!eng) return;
+    return eng.on('move', (e) => {
+      const g = T?.heightGrid;
+      let h: number | null = null;
+      if (g && heights) {
+        const [w, s, ee, n] = g.bbox;
+        const c = Math.floor(((e.lngLat[0] - w) / (ee - w)) * g.cols), r = Math.floor(((n - e.lngLat[1]) / (n - s)) * g.rows);
+        if (c >= 0 && r >= 0 && c < g.cols && r < g.rows) h = heights[r * g.cols + c];
+      }
+      setCursor({ at: e.lngLat, h });
+    });
+  }, [eng, T, heights]);
   const doc = useMemo(() => {
     if (!T) return null;
     const d = theatreToDocument(T);
@@ -80,6 +135,10 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
     if (T.terrainGrid && terrainUrl) {
       const [w, s, e, n] = T.terrainGrid.bbox;
       d.overlays = [{ id: 'terrain', name: 'Местность', url: terrainUrl, corners: [[w, n], [e, n], [e, s], [w, s]], opacity: 0.75, visible: vis.terrain !== false }];
+    }
+    if (T.heightGrid && relief) {
+      const [w, s, e, n] = T.heightGrid.bbox;
+      d.overlays = [...d.overlays, { id: 'height', name: 'Рельеф', url: relief.url, corners: [[w, n], [e, n], [e, s], [w, s]], opacity: 0.85, visible: !!vis.height }];
     }
     if (area) {
       const [w, s, e, n] = area;
@@ -89,7 +148,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
       d.features = [...d.features, f];
     }
     return d;
-  }, [T, vis, area, terrainUrl]);
+  }, [T, vis, area, terrainUrl, relief]);
 
   // выделение области: два щелчка по карте — противоположные углы
   useEffect(() => {
@@ -135,13 +194,33 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
       save(`${T.id}-terrain-legend.json`, JSON.stringify({ classes: Object.fromEntries(TERRAIN_CLASSES.map((c) => [c, { title: RU[c], rgb: COLORS[c] }])), bbox: g.bbox, cols: g.cols, rows: g.rows, crs: 'EPSG:4326' }, null, 1));
     }, 'image/png');
   };
+  const pngHeight = () => {
+    if (!T?.heightGrid || !b) return;
+    const crop = cropTheatre(T, b).heightGrid;
+    if (!crop) return;
+    const im = heightImage(crop, true);
+    im.canvas.toBlob((blob) => {
+      if (!blob) return;
+      save(`${T.id}-height.png`, blob, 'image/png');
+      const dx = (crop.bbox[2] - crop.bbox[0]) / crop.cols, dy = (crop.bbox[3] - crop.bbox[1]) / crop.rows;
+      save(`${T.id}-height.pgw`, [dx, 0, 0, -dy, crop.bbox[0] + dx / 2, crop.bbox[3] - dy / 2].map((x) => x.toFixed(10)).join('\n') + '\n', 'text/plain');
+      save(`${T.id}-height-legend.json`, JSON.stringify({ meaning: 'яркость 0…255 = высота min…max, м', minM: im.min, maxM: im.max, bbox: crop.bbox, cols: crop.cols, rows: crop.rows, crs: 'EPSG:4326', source: crop.source }, null, 1));
+      const h = decodeHeights(crop);
+      const rows = Array.from({ length: crop.rows }, (_, r) => Array.from(h.subarray(r * crop.cols, (r + 1) * crop.cols)).join(';'));
+      save(`${T.id}-height.csv`, `# высоты, м; строки с севера на юг; ${crop.cols}×${crop.rows}; охват ${crop.bbox.join(', ')}\n${rows.join('\n')}\n`, 'text/csv');
+    }, 'image/png');
+  };
   const editorDoc = () => {
     if (!doc) return;
     onOpenInEditor?.({ ...doc, name: `Театр: ${T!.name}`, layers: doc.layers.map((l) => ({ ...l, locked: false })) });
   };
   const fmtB = (x: BBox) => `${x[0]}, ${x[1]} — ${x[2]}, ${x[3]}`;
   const sizeKm = b ? [((b[2] - b[0]) * 111.32 * Math.cos(((b[1] + b[3]) / 2) * Math.PI / 180)).toFixed(0), ((b[3] - b[1]) * 111.32).toFixed(0)] : null;
-  const recipe = () => recipeFor({ id: newId, name: area ? `${T?.name ?? 'Театр'} — область` : `${T?.name ?? 'Новый театр'} (пересборка)`, bbox: b!, cellKm: cell });
+  const recipe = () => {
+    const r = recipeFor({ id: newId, name: area ? `${T?.name ?? 'Театр'} — область` : `${T?.name ?? 'Новый театр'} (пересборка)`, bbox: b!, cellKm: cell, places: cfg.places as ('city' | 'town' | 'village')[] });
+    return { ...r, layers: cfg.layers, relief: { ...(r.relief as object), hillsReliefM: cfg.hillsReliefM }, rivers: { ...(r.rivers as object), autoMajorKm: cfg.autoMajorKm ?? (r.rivers as { autoMajorKm: number }).autoMajorKm },
+      roads: { ...(r.roads as object), roadHighways: cfg.roadKinds } };
+  };
   const cmd = `.venv/bin/python packages/sim/tools/theatre/build_theatre.py ${newId}.recipe.json --out ${newId}.json`;
   const API = '/api/cartography/theatre';
   const startBuild = async () => {
@@ -186,10 +265,11 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
 
         <h4>Слои {area && <small className="muted">— в области</small>}</h4>
         <div className="th-layers">{THEATRE_LAYERS.map((l) => counts && <label key={l.id} className={counts[l.id as TheatreLayerId] ? '' : 'empty'}>
-          <input type="checkbox" checked={vis[l.id] ?? !['terrainShapes'].includes(l.id)} onChange={(e) => setVis((v) => ({ ...v, [l.id]: e.target.checked }))} />
-          <span>{l.title}</span><small>{l.id === 'terrain' ? (counts.terrain ? 'есть' : 'нет') : counts[l.id as TheatreLayerId]}</small>
+          <input type="checkbox" checked={vis[l.id] ?? !['terrainShapes', 'height'].includes(l.id)} onChange={(e) => setVis((v) => ({ ...v, [l.id]: e.target.checked }))} />
+          <span>{l.title}</span><small>{l.id === 'terrain' ? (counts.terrain ? 'есть' : 'нет') : l.id === 'height' ? (relief ? `${Math.round(relief.min)}…${Math.round(relief.max)} м` : 'нет') : counts[l.id as TheatreLayerId]}</small>
           {l.geo && counts[l.id as TheatreLayerId] > 0 && <button className="link" title="Скачать слой (GeoJSON) по области" onClick={() => save(`${T!.id}-${l.id}.geojson`, JSON.stringify(layerGeoJSON(T!, l.id as TheatreLayerId, b!)), 'application/geo+json')}>↓</button>}
           {l.id === 'terrain' && counts.terrain > 0 && <button className="link" title="Растр местности по области: PNG, файл привязки .pgw, легенда" onClick={pngTerrain}>↓</button>}
+          {l.id === 'height' && counts.height > 0 && <button className="link" title="Высоты по области: PNG в оттенках серого (min…max м — в легенде), .pgw, легенда, и CSV-сетка высот" onClick={pngHeight}>↓</button>}
         </label>)}</div>
         {T?.terrainGrid && <div className="th-legend">{TERRAIN_CLASSES.map((c) => <span key={c}><i style={{ background: `rgb(${COLORS[c].join(',')})` }} />{RU[c]}</span>)}</div>}
 
@@ -213,6 +293,14 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
         <p className="muted small">Местность (ESA WorldCover), рельеф (Copernicus DEM), реки, дороги и населённые пункты (OpenStreetMap) сводит на сетку сборщик на Python — на сервере стенда. Большие реки — по длине в охвате, районы — города и посёлки. Исторический слой (рубежи, переправы, разрушенные мосты) дописывается в рецепт.</p>
         <div className="row"><label className="th-f inl">id <input className="th-id" value={newId} onChange={(e) => setNewId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} /></label>
           <label className="th-f inl">Клетка, км <input type="number" min={0.05} step={0.05} value={cell} onChange={(e) => setCell(Math.max(0.05, +e.target.value || 1))} /></label></div>
+        <details className="th-cfg" open>
+          <summary>Что извлекать</summary>
+          <div className="th-cfg-l">{BUILD_LAYERS.map(([k, t, hint]) => <label key={k} title={hint}><input type="checkbox" checked={cfg.layers[k]} onChange={(e) => setCfg({ ...cfg, layers: { ...cfg.layers, [k]: e.target.checked } })} />{t}</label>)}</div>
+          {cfg.layers.hills && <label className="th-f inl" title="Клетка — «высоты», если перепад в окне 3×3 клетки не меньше этого и склон заметный">«Высоты» от перепада, м <input type="number" min={5} step={5} value={cfg.hillsReliefM} onChange={(e) => setCfg({ ...cfg, hillsReliefM: +e.target.value || 35 })} /></label>}
+          {cfg.layers.rivers && <label className="th-f inl" title="Большая река (технике — только по мостам): названная река длиной в охвате не меньше; пусто — по размеру области">Большие реки от, км <input type="number" min={1} placeholder="авто" value={cfg.autoMajorKm ?? ''} onChange={(e) => setCfg({ ...cfg, autoMajorKm: e.target.value ? +e.target.value : null })} /></label>}
+          {cfg.layers.roads && <div className="th-cfg-l"><span>Дороги:</span>{[['trunk', 'магистрали'], ['primary', 'основные'], ['secondary', 'второстепенные'], ['tertiary', 'местные']].map(([k, t]) => <label key={k}><input type="checkbox" checked={cfg.roadKinds.includes(k)} onChange={(e) => setCfg({ ...cfg, roadKinds: e.target.checked ? [...cfg.roadKinds, k] : cfg.roadKinds.filter((x) => x !== k) })} />{t}</label>)}</div>}
+          {cfg.layers.areas && <div className="th-cfg-l"><span>Районы:</span>{[['city', 'города'], ['town', 'городки'], ['village', 'сёла'], ['suburb', 'районы городов']].map(([k, t]) => <label key={k}><input type="checkbox" checked={cfg.places.includes(k)} onChange={(e) => setCfg({ ...cfg, places: e.target.checked ? [...cfg.places, k] : cfg.places.filter((x) => x !== k) })} />{t}</label>)}</div>}
+        </details>
         <div className="row">
           {build?.status === 'running' ? <button onClick={() => void cancelBuild()}>Остановить сборку</button>
             : <button className="primary" disabled={!b || !newId} onClick={() => void startBuild()}>Собрать на сервере</button>}
@@ -230,6 +318,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
         {doc && <MapView key={mapKey} doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null}
           basemap={bm.current} basemapOpacity={bm.opacity} onEngineReady={(e) => setEng(e)} onStatus={() => {}} time={null} newFromNow={false} />}
         {doc && <MapHover engine={eng} doc={doc} time={null} />}
+        {cursor && <div className="th-cursor">{cursor.at[1].toFixed(4)}° с.ш., {cursor.at[0].toFixed(4)}° в.д.{cursor.h != null ? ` · высота ${Math.round(cursor.h)} м` : ''}</div>}
         {picking && <div className="pick-hint">{picking === 'first' ? 'Щёлкните по карте — первый угол области' : 'Щёлкните — противоположный угол'}<button onClick={() => setPicking(null)}>Отмена</button></div>}
         <div className="rp-tools"><Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover></div>
         {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}

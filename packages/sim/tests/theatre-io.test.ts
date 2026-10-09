@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadTheatre } from '../src/data';
 import { cropTheatre, layerCounts, layerGeoJSON, recipeFor, theatreToDocument } from '../src/theatre-io';
-import { decodeGrid, Theatre } from '../src/theatre';
+import { decodeGrid, decodeHeights, Theatre } from '../src/theatre';
 
 describe('театр: просмотр, обрезка по области, выгрузка слоёв', () => {
   const T = loadTheatre('oder-berlin-1945');
@@ -34,5 +34,18 @@ describe('театр: просмотр, обрезка по области, вы
     expect((r.grid as { dLat: number }).dLat).toBeCloseTo(1 / 111.32, 4);
     expect((r.areas as { fromOsm: object }).fromOsm).toBeTruthy();
     expect((r.rivers as { autoMajorKm: number }).autoMajorKm).toBeGreaterThan(0);
+  });
+
+  it('сетка высот: раскрывается, читается по точке и обрезается вместе с театром', () => {
+    const g = T.heightGrid!;
+    expect(g).toBeTruthy();
+    expect(decodeHeights(g).length).toBe(g.cols * g.rows);
+    const p: [number, number] = [13.4, 52.52];
+    const h = new Theatre(T).heightAt(p)!;
+    expect(h).toBeGreaterThan(0); expect(h).toBeLessThan(200);
+    expect(new Theatre(T).heightAt([0, 0])).toBeNull();
+    const f = cropTheatre(T, b, 'berlin-area');
+    expect(decodeHeights(f.heightGrid!).length).toBe(f.heightGrid!.cols * f.heightGrid!.rows);
+    expect(new Theatre(f).heightAt(p)).toBe(h);
   });
 });

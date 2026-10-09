@@ -12,6 +12,7 @@ export type BBox = [number, number, number, number];
 /** Слои театра: id, название, сколько объектов. */
 export const THEATRE_LAYERS = [
   { id: 'terrain', title: 'Местность (растр)', geo: false },
+  { id: 'height', title: 'Рельеф: высоты (растр)', geo: false },
   { id: 'terrainShapes', title: 'Местность: контуры', geo: true },
   { id: 'roads', title: 'Дороги и шоссе', geo: true },
   { id: 'rail', title: 'Железные дороги', geo: true },
@@ -33,6 +34,7 @@ export function layerCounts(T: TheatreData, b?: BBox): Record<TheatreLayerId, nu
   const bb = b ?? T.bbox;
   return {
     terrain: T.terrainGrid ? 1 : 0,
+    height: T.heightGrid ? 1 : 0,
     terrainShapes: T.terrain.filter((x) => touches(bb, x.ring)).length,
     roads: T.roads.filter((r) => r.kind !== 'rail' && touches(bb, r.line)).length,
     rail: T.roads.filter((r) => r.kind === 'rail' && touches(bb, r.line)).length,
@@ -41,6 +43,19 @@ export function layerCounts(T: TheatreData, b?: BBox): Record<TheatreLayerId, nu
     areas: T.areas.filter((a) => touches(bb, a.ring)).length,
     lines: (T.lines ?? []).filter((l) => touches(bb, l.line)).length,
   };
+}
+
+/** Высоты «значение*повторы» через запятую → список значений по клеткам и обратно. */
+function heightTokens(rle: string, n: number): string[] {
+  const out: string[] = [];
+  for (const t of rle.split(',')) { const [v, k] = t.split('*'); for (let i = 0; i < (k ? Number(k) : 1); i++) out.push(v); }
+  if (out.length !== n) throw new Error(`высоты: ${out.length} клеток вместо ${n}`);
+  return out;
+}
+function tokensRle(a: string[]): string {
+  const out: string[] = [];
+  for (let i = 0; i < a.length;) { let j = i; while (j < a.length && a[j] === a[i]) j++; out.push(j - i > 1 ? `${a[i]}*${j - i}` : a[i]); i = j; }
+  return out.join(',');
 }
 
 function rleChars(rle: string, n: number): string[] {
@@ -61,26 +76,29 @@ function charsRle(a: string[]): string {
 }
 
 /** Растр, обрезанный по области: целые клетки, границы — по краям клеток. */
-export function cropGrid(g: TerrainGrid, b: BBox): TerrainGrid | null {
+export function cropGrid(g: TerrainGrid, b: BBox, heights = false): TerrainGrid | null {
   const [w, s, e, n] = g.bbox, dx = (e - w) / g.cols, dy = (n - s) / g.rows;
   const c0 = Math.max(0, Math.floor((b[0] - w) / dx)), c1 = Math.min(g.cols, Math.ceil((b[2] - w) / dx));
   const r0 = Math.max(0, Math.floor((n - b[3]) / dy)), r1 = Math.min(g.rows, Math.ceil((n - b[1]) / dy));
   if (c1 <= c0 || r1 <= r0) return null;
   // растры бывают с разными кодами (местность — o/f/m/u/h/w, дороги — n/r/h): режем по буквам, не по классам
-  const all = rleChars(g.rle, g.cols * g.rows), cols = c1 - c0, rows = r1 - r0;
+  const all = heights ? heightTokens(g.rle, g.cols * g.rows) : rleChars(g.rle, g.cols * g.rows), cols = c1 - c0, rows = r1 - r0;
   const out: string[] = [];
   for (let r = 0; r < rows; r++) for (let c = c0; c < c1; c++) out.push(all[(r0 + r) * g.cols + c]);
   const r6 = (x: number) => +x.toFixed(6);
-  return { bbox: [r6(w + c0 * dx), r6(n - r1 * dy), r6(w + c1 * dx), r6(n - r0 * dy)], cols, rows, rle: charsRle(out) };
+  return { bbox: [r6(w + c0 * dx), r6(n - r1 * dy), r6(w + c1 * dx), r6(n - r0 * dy)], cols, rows, rle: heights ? tokensRle(out) : charsRle(out) };
 }
 
 /** Театр, обрезанный по области: объекты, задевающие её, и растры. */
 export function cropTheatre(T: TheatreData, b: BBox, id = `${T.id}-crop`): TheatreData {
   const terrainGrid = T.terrainGrid ? cropGrid(T.terrainGrid, b) ?? undefined : undefined;
   const roadGrid = T.roadGrid ? cropGrid(T.roadGrid, b) ?? undefined : undefined;
+  // сетка высот — та же обрезка по клеткам, значения через запятую (base и stepM — прежние)
+  const hg = T.heightGrid ? cropGrid(T.heightGrid, b, true) : null;
+  const heightGrid = T.heightGrid && hg ? { ...T.heightGrid, bbox: hg.bbox, cols: hg.cols, rows: hg.rows, rle: hg.rle } : undefined;
   return {
     ...T, id, name: `${T.name} — фрагмент`, bbox: b,
-    ...(terrainGrid ? { terrainGrid } : {}), ...(roadGrid ? { roadGrid } : {}),
+    ...(terrainGrid ? { terrainGrid } : {}), ...(roadGrid ? { roadGrid } : {}), ...(heightGrid ? { heightGrid } : {}),
     terrain: T.terrain.filter((x) => touches(b, x.ring)),
     roads: T.roads.filter((r) => touches(b, r.line)),
     rivers: T.rivers.filter((r) => touches(b, r.line)),
