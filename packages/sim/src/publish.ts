@@ -12,6 +12,7 @@ import { power } from './rules';
 import { addHours, onMap, profileOf, type SimContext } from './step';
 import type { Formation } from './types';
 import type { Theatre } from './theatre';
+import { visualPath } from './roadnet';
 
 export interface PublishOptions {
   name?: string;
@@ -129,9 +130,12 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       sym.keyframes = frames.flatMap((x, k) => {
         const end = { t: x.t, at: x.u!.at, note: note(x.u!) };
         const prev = k > 0 ? frames[k - 1] : null;
-        const path = x.u!.path;
-        if (!prev || !path || path.length < 3) return [end];
-        return [...pathFrames(T, path, prev.t, x.t).map((q) => ({ ...q, note: note(prev.u!) })), end];
+        if (!prev) return [end];
+        const moved = prev.u!.at[0] !== x.u!.at[0] || prev.u!.at[1] !== x.u!.at[1];
+        const path = x.u!.path ?? (moved ? [prev.u!.at, x.u!.at] : null);
+        if (!path) return [end];
+        // на карте — по линиям дорог (граф дорог театра), а не по клеткам расчёта
+        return [...pathFrames(T, visualPath(T, path), prev.t, x.t).map((q) => ({ ...q, note: note(prev.u!) })), end];
       });
       const gone = frames.find((x) => x.u!.destroyed);
       const last = frames[frames.length - 1];
