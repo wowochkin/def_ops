@@ -32,5 +32,7 @@ describe('театр: просмотр, обрезка по области, вы
     expect(doc.features.length).toBeGreaterThan(100);
     const r = recipeFor({ id: 'x', name: 'X', bbox: b, cellKm: 1 });
     expect((r.grid as { dLat: number }).dLat).toBeCloseTo(1 / 111.32, 4);
+    expect((r.areas as { fromOsm: object }).fromOsm).toBeTruthy();
+    expect((r.rivers as { autoMajorKm: number }).autoMajorKm).toBeGreaterThan(0);
   });
 });

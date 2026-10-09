@@ -93,6 +93,12 @@ export function validateOperation(pkg: Partial<OperationPackage>, known: { rules
     if (f.type && prof && !prof.unitTypes[f.type]) noType++;
   }
   for (const f of S.formations ?? []) if (f.parent && !ids.has(f.parent)) warn('сценарий', `${f.name}: вышестоящий «${f.parent}» не найден`);
+  // стратегический уровень карты собирает войска по фронтам (группам армий): без такого вышестоящего — отдельно
+  const byIdF = new Map((S.formations ?? []).map((f) => [f.id, f]));
+  const noFront = (S.formations ?? []).filter((f) => f.echelon !== 'front' && (f.type || f.echelon === 'army') && !f.parent).map((f) => f.name);
+  const top = (S.formations ?? []).filter((f) => f.echelon === 'army' && (() => { let p = f.parent ? byIdF.get(f.parent) : undefined; for (let k = 0; p && k < 6; k++) { if (p.echelon === 'front') return false; p = p.parent ? byIdF.get(p.parent) : undefined; } return true; })()).map((f) => f.name);
+  const loose = [...new Set([...noFront, ...top])];
+  if (loose.length) warn('сценарий', `без вышестоящего фронта (группы армий): ${loose.slice(0, 6).join(', ')}${loose.length > 6 ? ` и ещё ${loose.length - 6}` : ''} — на стратегическом уровне карты покажутся отдельно; укажите parent (например, узел ОКВ или Ставки с echelon «front»)`);
   if (outside) warn('сценарий', `формирований вне театра: ${outside}`);
   if (noType) warn('сценарий', `формирований с типом, которого нет в профиле стороны: ${noType}`);
   const active = (S.formations ?? []).filter((f) => f.type && f.position);

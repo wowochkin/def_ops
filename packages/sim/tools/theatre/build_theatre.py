@@ -257,6 +257,23 @@ def river_name(tags, names):
     return None
 
 
+CYR = dict(zip("абвгдеёжзийклмнопрстуфхцчшщъыьэюя", ["a", "b", "v", "g", "d", "e", "e", "zh", "z", "i", "y", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "f", "kh", "ts", "ch", "sh", "shch", "", "y", "", "e", "yu", "ya"]))
+
+
+def latin(name):
+    """Название латиницей для id района: умлауты — как в немецком (ö → oe), кириллица — транслитерацией, прочее — без диакритики."""
+    import unicodedata
+    out = []
+    for ch in name:
+        lo = ch.lower()
+        rep = {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss", "ł": "l", "đ": "d", "ø": "o", "æ": "ae"}.get(lo) or CYR.get(lo)
+        if rep is not None:
+            out.append(rep.capitalize() if ch != lo and rep else rep)
+        else:
+            out.append(ch)
+    return unicodedata.normalize("NFKD", "".join(out)).encode("ascii", "ignore").decode()
+
+
 def overpass(query, dest):
     return fetch(OVERPASS, dest, data=urllib.parse.urlencode({"data": query}).encode())
 
@@ -506,6 +523,21 @@ def main():
     bb = f"{s},{w},{n},{e}"
     water = overpass(f'[out:json][timeout:600];(way["waterway"~"^(river|canal)$"]({bb}););out tags geom;', osm_dir / "water.json")
     major, minor = set(recipe["rivers"]["major"]), set(recipe["rivers"]["minor"])
+    # новый театр без списка рек: большие — названные реки (не каналы) длиной в охвате не меньше autoMajorKm
+    auto_km = recipe["rivers"].get("autoMajorKm")
+    if auto_km:
+        kx0, ky0 = km_proj((s + n) / 2)
+        length = {}
+        for tags, pts in osm_ways(water):
+            nm = tags.get("name")
+            if not nm:
+                continue
+            seg = sum(math.hypot((pts[i][0] - pts[i - 1][0]) * kx0, (pts[i][1] - pts[i - 1][1]) * ky0) for i in range(1, len(pts)))
+            key = (nm, tags.get("waterway"))
+            length[key] = length.get(key, 0) + seg
+        major |= {nm for (nm, ww), km in length.items() if ww == "river" and km >= auto_km}
+        minor |= {nm for (nm, ww), km in length.items() if nm not in major and km >= auto_km / 4}
+        log(f"  большие реки (≥ {auto_km} км в охвате): {', '.join(sorted(major)) or 'нет'}")
     rivers = []
     tol = recipe["roads"]["simplifyDeg"]
     major_segs = []
@@ -605,6 +637,26 @@ def main():
     for x in recipe["areas"]["explicit"]:
         ring = circle(place(x["place"]), x["radiusKm"]) if "place" in x else [rnd(p) for p in hull([place(p) for p in x["places"]])]
         areas.append({"id": x["id"], "name": x["name"], "ring": ring})
+    # новый театр без справочника: районы — населённые пункты OpenStreetMap (город, городок, по желанию — село)
+    fo = recipe["areas"].get("fromOsm")
+    if fo:
+        kinds = fo.get("places", ["city", "town"])
+        pl = overpass(f'[out:json][timeout:300];(node["place"~"^({"|".join(kinds)})$"]({bb}););out tags;', osm_dir / "places.json")
+        radius = fo.get("radiusKm", {"city": 5, "town": 2.5, "village": 1.2, "suburb": 0.8, "quarter": 0.5})
+        seen = set()
+        import re as _re
+        for el in json.load(open(pl))["elements"]:
+            t = el.get("tags", {})
+            nm = t.get("name:de") or t.get("name")
+            if not nm or "lat" not in el:
+                continue
+            key = _re.sub(r"[^A-Za-z0-9]+", "_", latin(t.get("name:en") or t.get("name:de") or nm)).strip("_") or f"p{el['id']}"
+            if key in seen:
+                key = f"{key}_{el['id']}"
+            seen.add(key)
+            r = radius.get(t.get("place"), 2) if isinstance(radius, dict) else radius
+            areas.append({"id": key, "name": nm, "ring": circle((el["lon"], el["lat"]), r, 12)})
+        log(f"  районов из OpenStreetMap: {len(areas)}")
     fg = recipe["areas"].get("fromGazetteer")
     if fg:
         explicit = list(areas)

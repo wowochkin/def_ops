@@ -1095,3 +1095,9 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .th-cmd { display: block; font-size: 10.5px; white-space: pre-wrap; word-break: break-all; cursor: copy; padding: 5px 7px; }
 .th .small { font-size: 11.5px; line-height: 1.4; margin: 0; }
 .th-side { padding: 0 16px 30px; } .th-side .rp-head { padding-left: 0; padding-right: 0; }
+.th-id { width: 150px; }
+.th-srv, .th-build { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; padding: 8px 10px; border-radius: 8px; background: #fbf3e4; border: 1px solid #ecd9b6; }
+.th-srv code { cursor: copy; word-break: break-all; }
+.th-build { background: var(--soft); border-color: var(--line); } .th-build.done { background: #eef6ec; border-color: #cfe5c9; } .th-build.error { background: #fbeeec; border-color: #efcdc7; }
+.th-build b { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+.th-build pre { margin: 0; font-size: 10.5px; white-space: pre-wrap; max-height: 9em; overflow-y: auto; color: var(--muted); }

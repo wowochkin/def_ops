@@ -16,3 +16,5 @@ defops-offline*
 
 # отчёты проверки модели
 evals-out/
+.venv/
+__pycache__/

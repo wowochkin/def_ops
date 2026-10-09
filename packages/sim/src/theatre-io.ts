@@ -108,19 +108,33 @@ export function layerGeoJSON(T: TheatreData, layer: TheatreLayerId, b?: BBox): G
   }
 }
 
-/** Заготовка рецепта сборщика театра по области (как data/theatres/src/*.recipe.json). */
-export function recipeFor(o: { id: string; name: string; bbox: BBox; cellKm: number; base?: Record<string, unknown> }): Record<string, unknown> {
+/**
+ * Рецепт сборщика театра по области (как data/theatres/src/*.recipe.json) — готовый к сборке: местность и рельеф
+ * по правилам встроенных театров, большие реки — по длине в охвате, районы — населённые пункты OpenStreetMap.
+ * Исторический слой (рубежи, разрушенные мосты, переправы, автобаны 1945 г.) дописывается вручную.
+ */
+export function recipeFor(o: { id: string; name: string; bbox: BBox; cellKm: number; places?: ('city' | 'town' | 'village')[] }): Record<string, unknown> {
   const lat = (o.bbox[1] + o.bbox[3]) / 2;
   const dLat = +(o.cellKm / 111.32).toFixed(5), dLng = +(o.cellKm / (111.32 * Math.cos((lat * Math.PI) / 180))).toFixed(5);
-  const b = o.base ?? {};
+  const spanKm = Math.max((o.bbox[2] - o.bbox[0]) * 111.32 * Math.cos((lat * Math.PI) / 180), (o.bbox[3] - o.bbox[1]) * 111.32);
   return {
     id: o.id, name: o.name, bbox: o.bbox.map((x) => +x.toFixed(4)), cellKm: o.cellKm, defaultTerrain: 'open',
     grid: { dLng, dLat },
-    landcover: b.landcover ?? { source: 'esa-worldcover-2021', rules: { water: 0.5, urban: 0.35, marsh: 0.3, forest: 0.5 } },
-    relief: b.relief ?? { source: 'copernicus-dem-90', smoothPx: 5, hillsReliefM: 35, hillsSlope: 0.025 },
-    rivers: b.rivers ?? { major: [], minor: [] },
-    roads: b.roads ?? { highwayRefs: [] },
-    _note: 'Заготовка из раздела «Карты» → «Театры». Дополните: какие реки большие (rivers.major), какие дороги — шоссе (roads.highwayRefs), исторический слой (рубежи, переправы, районы). Сборка: .venv/bin/python packages/sim/tools/theatre/build_theatre.py <этот файл>',
+    landcover: { source: 'esa-worldcover-2021', rules: { water: 0.5, urban: 0.35, marsh: 0.3, forest: 0.5 } },
+    relief: { source: 'copernicus-dem-90', smoothPx: 5, hillsReliefM: 35, hillsSlope: 0.025 },
+    rivers: { major: [], minor: [], autoMajorKm: Math.max(5, Math.round(spanKm / 6)) },
+    roads: { highwayRefs: [], roadHighways: o.cellKm <= 0.5 ? ['trunk', 'primary', 'secondary'] : ['trunk', 'primary'], simplifyDeg: +(o.cellKm * 0.003).toFixed(4) },
+    rail: { simplifyDeg: +(o.cellKm * 0.003).toFixed(4) },
+    bridges: { dedupeKm: Math.max(0.2, o.cellKm / 2), rules: [], crossings: [] },
+    areas: { explicit: [], fromOsm: { places: o.places ?? (o.cellKm <= 0.5 ? ['city', 'town', 'village', 'suburb'] : ['city', 'town']) } },
+    lines: [],
+    osmParts: spanKm > 250 ? 3 : spanKm > 120 ? 2 : 1,
+    sources: [
+      'Земной покров: ESA WorldCover 10 m 2021 v200 (CC BY 4.0), © ESA WorldCover project / Copernicus Sentinel data',
+      'Рельеф: Copernicus DEM GLO-90 (© DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, Copernicus programme)',
+      'Реки, дороги, железные дороги, населённые пункты: © участники OpenStreetMap (ODbL), выборка через Overpass API',
+    ],
+    caveats: ['Земной покров и дорожная сеть современные; исторический слой (рубежи, переправы, разрушенные мосты, шоссе того времени) не задан — дополните рецепт.'],
   };
 }
 

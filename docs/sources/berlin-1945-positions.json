@@ -1965,11 +1965,21 @@
    "commander": "Ф.-Х. Грезер"
   },
   {
+   "id": "de_okw",
+   "name_ru": "ОКВ (Верховное командование вермахта)",
+   "side": "de",
+   "echelon": "front",
+   "parent": null,
+   "branch": "high_command",
+   "commander": "В. Кейтель, А. Йодль",
+   "note": "в прямом подчинении ОКВ с 22–23.04.1945 — 12-я армия Венка (до того — ОБ «Запад»); ОКВ, ставка в Крампнице, затем Фюрстенберге (B)"
+  },
+  {
    "id": "de_12a",
    "name_ru": "12-я армия («армия Венка»)",
    "side": "de",
    "echelon": "army",
-   "parent": null,
+   "parent": "de_okw",
    "branch": "army",
    "commander": "В. Венк",
    "strength_16_04": {

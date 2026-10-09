@@ -14,6 +14,7 @@ import { planRaster, tileRaster } from './raster';
 import { coverageKey, maskedTile, tileRelation, transparentPng } from './coverage';
 import { exportPackage, importPackage, mapFromPackage } from './package';
 import { importArchive, mapFromArchive } from './archive';
+import type { TheatreBuilder } from './theatre';
 import { PATCHABLE, WORLD, asObject, buildMap, intParam, isUuid, rasterRequest, xyzRequest } from './validate';
 
 export interface CartographyOptions {
@@ -44,6 +45,8 @@ export interface Deps {
   store: TileStore;
   bus: EventBus;
   jobs: JobRunner;
+  /** Сборка театров для переигровки (Python-сборщик); нет — маршруты отвечают 503. */
+  theatre?: TheatreBuilder;
   options?: Partial<CartographyOptions>;
 }
 
@@ -438,6 +441,39 @@ export function buildRouter(d: Deps): Router {
     const maxPx = num('maxPx', 20, 1000, 120);
     const denominator = scaleDenominator(lat, zoom, tileSize);
     return { metersPerPixel: metersPerPixel(lat, zoom, tileSize), denominator, label: formatScale(denominator), bar: scaleBar(lat, zoom, maxPx, tileSize) };
+  });
+
+  /* ------------------------------------ театры ------------------------------------ */
+  // Сборка театра по рецепту: Python-сборщик (WorldCover, Copernicus DEM, OpenStreetMap) в отдельном процессе.
+  const tb = () => { if (!d.theatre) throw new HttpError(503, 'unavailable', 'Сборка театров на этом сервере не включена'); return d.theatre; };
+  r.get('/cartography/theatre/check', () => tb().check());
+  r.get('/cartography/theatre/builds', () => tb().list());
+  r.post('/cartography/theatre/builds', async (c) => {
+    const b = asObject(await c.json());
+    const recipe = asObject(b.recipe ?? b);
+    if (typeof recipe.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,60}$/.test(recipe.id)) throw new HttpError(422, 'invalid', '«id» рецепта: латиница, цифры, дефис');
+    const bb = recipe.bbox as number[];
+    if (!Array.isArray(bb) || bb.length !== 4 || !bb.every(Number.isFinite) || !(bb[0] < bb[2] && bb[1] < bb[3])) throw new HttpError(422, 'invalid', '«bbox»: [запад, юг, восток, север]');
+    if ((bb[2] - bb[0]) * (bb[3] - bb[1]) > 60) throw new HttpError(422, 'invalid', 'Охват больше 60 кв. градусов — разбейте на части');
+    if (!(Number(recipe.cellKm) >= 0.05)) throw new HttpError(422, 'invalid', '«cellKm» — от 0,05 км');
+    const chk = await tb().check();
+    if (!chk.ok) throw new HttpError(503, 'unavailable', `Сборщик не готов: ${chk.error ?? 'нет Python с numpy и rasterio'}. Подготовка: ${chk.setup}`);
+    return reply(202, await tb().start(recipe));
+  });
+  r.get('/cartography/theatre/builds/:id', (c) => {
+    const b = tb().get(c.params.id);
+    if (!b) throw new HttpError(404, 'not_found', 'Сборка не найдена');
+    return b;
+  });
+  r.get('/cartography/theatre/builds/:id/result', async (c) => {
+    const text = await tb().result(c.params.id);
+    if (text == null) throw new HttpError(404, 'not_found', 'Театр ещё не собран');
+    return reply(200, Buffer.from(text, 'utf8'), { 'Content-Type': 'application/json; charset=utf-8' });
+  });
+  r.post('/cartography/theatre/builds/:id/cancel', (c) => {
+    const b = tb().cancel(c.params.id);
+    if (!b) throw new HttpError(409, 'conflict', 'Сборка не идёт');
+    return reply(202, b);
   });
 
   return r;

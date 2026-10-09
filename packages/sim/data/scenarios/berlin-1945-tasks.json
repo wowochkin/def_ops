@@ -519,11 +519,18 @@
    "parent": "de_hgr_mitte"
   },
   {
+   "id": "de_okw",
+   "name": "ОКВ (Верховное командование вермахта)",
+   "side": "de",
+   "echelon": "front",
+   "parent": null
+  },
+  {
    "id": "de_12a",
    "name": "12-я армия («армия Венка»)",
    "side": "de",
    "echelon": "army",
-   "parent": null
+   "parent": "de_okw"
   },
   {
    "id": "de_swinemuende",

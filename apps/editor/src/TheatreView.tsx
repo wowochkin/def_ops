@@ -51,6 +51,9 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   const [mapKey, setMapKey] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [cell, setCell] = useState(2);
+  const [newId, setNewId] = useState('my-theatre');
+  const [srv, setSrv] = useState<{ ok: boolean; python: string; error?: string; setup: string } | null>(null);
+  const [build, setBuild] = useState<{ id: string; name: string; status: 'running' | 'done' | 'error' | 'cancelled'; log: string[]; error?: string; sizeBytes?: number } | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const pickRef = useRef(picking); pickRef.current = picking;
 
@@ -65,7 +68,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   }, []);
   useEffect(() => {
     let alive = true;
-    void (getData('theatres', `${sel}.json`) as Promise<TheatreData>).then((t) => { if (!alive) return; setT(t); setArea(null); setCell(t.cellKm); setMapKey((k) => k + 1); }).catch((e) => setNotice((e as Error).message));
+    void (getData('theatres', `${sel}.json`) as Promise<TheatreData>).then((t) => { if (!alive) return; setT(t); setArea(null); setCell(t.cellKm); setNewId(`${t.id}-area`.slice(0, 50)); setMapKey((k) => k + 1); }).catch((e) => setNotice((e as Error).message));
     return () => { alive = false; };
   }, [sel]);
 
@@ -138,8 +141,37 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   };
   const fmtB = (x: BBox) => `${x[0]}, ${x[1]} — ${x[2]}, ${x[3]}`;
   const sizeKm = b ? [((b[2] - b[0]) * 111.32 * Math.cos(((b[1] + b[3]) / 2) * Math.PI / 180)).toFixed(0), ((b[3] - b[1]) * 111.32).toFixed(0)] : null;
-  const recipeId = `${T?.id ?? 'theatre'}-${area ? 'area' : 'new'}`;
-  const cmd = `.venv/bin/python packages/sim/tools/theatre/build_theatre.py ${recipeId}.recipe.json`;
+  const recipe = () => recipeFor({ id: newId, name: area ? `${T?.name ?? 'Театр'} — область` : `${T?.name ?? 'Новый театр'} (пересборка)`, bbox: b!, cellKm: cell });
+  const cmd = `.venv/bin/python packages/sim/tools/theatre/build_theatre.py ${newId}.recipe.json --out ${newId}.json`;
+  const API = '/api/cartography/theatre';
+  const startBuild = async () => {
+    setBuild(null);
+    try {
+      const chk = await fetch(`${API}/check`).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status === 404 || r.status === 502 ? 'сервер стенда не запущен (npm run dev:services)' : `сервер ответил ${r.status}`))));
+      setSrv(chk);
+      if (!chk.ok) return;
+      const r = await fetch(`${API}/builds`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ recipe: recipe() }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error?.message ?? `сервер ответил ${r.status}`);
+      setBuild(j);
+    } catch (e) { setSrv({ ok: false, python: '', error: (e as Error).message, setup: 'python3 -m venv .venv && .venv/bin/pip install -r packages/sim/tools/theatre/requirements.txt' }); }
+  };
+  const cancelBuild = async () => { if (build) setBuild(await fetch(`${API}/builds/${build.id}/cancel`, { method: 'POST' }).then((r) => r.json())); };
+  // ход сборки — опрос раз в 2 с; собран — театр сохраняется в списке и открывается
+  useEffect(() => {
+    if (build?.status !== 'running') return;
+    const t = setInterval(async () => {
+      const x = await fetch(`${API}/builds/${build.id}`).then((r) => r.json()).catch(() => null);
+      if (!x) return;
+      setBuild(x);
+      if (x.status === 'done') {
+        const th = (await fetch(`${API}/builds/${build.id}/result`).then((r) => r.json())) as TheatreData;
+        await saveTheatre({ id: th.id, created: new Date().toISOString(), theatre: th });
+        setSel(th.id);
+      }
+    }, 2000);
+    return () => clearInterval(t);
+  }, [build?.id, build?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="replay th">
@@ -178,11 +210,21 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
         </div>
 
         <h4>Новый театр по области</h4>
-        <p className="muted small">Местность (ESA WorldCover), рельеф (Copernicus DEM), реки и дороги (OpenStreetMap) собирает сборщик на Python — в браузере его не запустить. Скачайте рецепт, дополните (большие реки, шоссе, исторический слой) и соберите:</p>
-        <div className="row"><label className="th-f inl">Клетка, км <input type="number" min={0.1} step={0.1} value={cell} onChange={(e) => setCell(Math.max(0.1, +e.target.value || 1))} /></label>
-          <button disabled={!b} onClick={() => save(`${recipeId}.recipe.json`, JSON.stringify(recipeFor({ id: recipeId, name: area ? `${T?.name ?? 'Театр'} — область` : T?.name ?? 'Новый театр', bbox: b!, cellKm: cell, base: undefined }), null, 2))}>Рецепт</button></div>
-        <code className="th-cmd" title="Скопировать" onClick={() => { void navigator.clipboard?.writeText(cmd); setNotice('Команда скопирована'); }}>{cmd}</code>
-        <p className="muted small">Готовый театр загрузите сюда («Загрузить театр…») — он станет доступен для своих операций в «Моделировании».</p>
+        <p className="muted small">Местность (ESA WorldCover), рельеф (Copernicus DEM), реки, дороги и населённые пункты (OpenStreetMap) сводит на сетку сборщик на Python — на сервере стенда. Большие реки — по длине в охвате, районы — города и посёлки. Исторический слой (рубежи, переправы, разрушенные мосты) дописывается в рецепт.</p>
+        <div className="row"><label className="th-f inl">id <input className="th-id" value={newId} onChange={(e) => setNewId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} /></label>
+          <label className="th-f inl">Клетка, км <input type="number" min={0.05} step={0.05} value={cell} onChange={(e) => setCell(Math.max(0.05, +e.target.value || 1))} /></label></div>
+        <div className="row">
+          {build?.status === 'running' ? <button onClick={() => void cancelBuild()}>Остановить сборку</button>
+            : <button className="primary" disabled={!b || !newId} onClick={() => void startBuild()}>Собрать на сервере</button>}
+          <button disabled={!b} onClick={() => save(`${newId}.recipe.json`, JSON.stringify(recipe(), null, 2))} title="Рецепт для правки и сборки вручную">Рецепт</button>
+        </div>
+        {srv && !srv.ok && <div className="th-srv"><b>Сборщик на сервере не готов</b>{srv.error && <span>{srv.error}</span>}<span>Подготовка (один раз, в папке проекта):</span><code onClick={() => { void navigator.clipboard?.writeText(srv.setup); setNotice('Команда скопирована'); }}>{srv.setup}</code><span>Сервер стенда: <code>npm run dev:services</code>.</span></div>}
+        {build && <div className={`th-build ${build.status}`}>
+          <b>{build.status === 'running' ? <><span className="spinner" /> собирается «{build.name}»…</> : build.status === 'done' ? `Собран: ${build.name} (${((build.sizeBytes ?? 0) / 1e6).toFixed(1)} МБ) — загружен в список` : build.status === 'cancelled' ? 'Сборка остановлена' : `Ошибка: ${build.error}`}</b>
+          <pre>{build.log.slice(-8).join('\n')}</pre>
+        </div>}
+        <details className="small muted"><summary>Собрать вручную</summary><code className="th-cmd" title="Скопировать" onClick={() => { void navigator.clipboard?.writeText(cmd); setNotice('Команда скопирована'); }}>{cmd}</code>
+          <p className="muted small">Готовый театр загрузите сюда («Загрузить театр…») — он станет доступен для своих операций в «Моделировании».</p></details>
       </aside>
       <main className="rp-main">
         {doc && <MapView key={mapKey} doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null}
