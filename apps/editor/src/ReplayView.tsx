@@ -31,6 +31,32 @@ const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] 
   { key: 'theatre', title: 'Рубежи', match: (id) => id === 'theatre' },
 ];
 
+/** Уровень обобщения карты: тактический — соединения и бои, оперативный — объединения (армии), стратегический — фронты. */
+export type MapLevel = 'tac' | 'op' | 'st';
+export const MAP_LEVELS: { id: MapLevel; title: string; hint: string }[] = [
+  { id: 'tac', title: 'Тактический', hint: 'соединения (дивизии, корпуса) и бои за ход' },
+  { id: 'op', title: 'Оперативный', hint: 'объединения (армии): положение, направления действий за сутки, рубежи обороны' },
+  { id: 'st', title: 'Стратегический', hint: 'фронты и группы армий: направления главных ударов за двое суток, оборона' },
+];
+const LEVEL_LAYERS: Record<MapLevel, string[]> = { tac: ['sim-own', 'sim-enemy', 'sim-combat'], op: ['lvl-op-units', 'lvl-op-moves'], st: ['lvl-st-units', 'lvl-st-moves'] };
+const ALL_LEVEL_LAYERS = new Set(Object.values(LEVEL_LAYERS).flat());
+/** Видимость слоёв по уровню; бои (sim-combat) — ещё и по своему переключателю. */
+export function withLevel(doc: MapDocument, level: MapLevel): MapDocument {
+  return { ...doc, layers: doc.layers.map((l) => (ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && (l.id !== 'sim-combat' || l.visible) } : l)) };
+}
+export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
+  const [l, set] = useState<MapLevel>(() => { try { return (localStorage.getItem('def_ops.mapLevel') as MapLevel) || 'tac'; } catch { return 'tac'; } });
+  return [l, (x) => { set(x); try { localStorage.setItem('def_ops.mapLevel', x); } catch { /* */ } }];
+}
+export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l: MapLevel) => void }) {
+  return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <button key={x.id} className={level === x.id ? 'on' : ''} title={x.hint} onClick={() => setLevel(x.id)}>{x.title}</button>)}</div>;
+}
+export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string }[]> = {
+  tac: [],
+  op: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }],
+  st: [{ cls: 'lg-arrow', text: 'главный удар фронта (за двое суток)' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'оборона' }],
+};
+
 export function download(name: string, text: string, type: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], { type }));
@@ -65,6 +91,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [focus, setFocus] = useState<Sector | null>(null);
   const [eng, setEng] = useState<MapEngine | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [level, setLevel] = useMapLevel();
   const worker = useRef<Worker | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
@@ -157,18 +184,19 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       </aside>
       <main className="rp-main">
         {doc ? <>
-          <MapView key={mapKey} doc={withFocus(doc, focus)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
+          <MapView key={mapKey} doc={withFocus(withLevel(doc, level), focus)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
             onEngineReady={(e) => { engine.current = e; setEng(e); }} onStatus={() => {}} time={time} newFromNow={false} />
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {takeAt && <button className="take-btn" onClick={() => setTake(takeAt)} title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
-            {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
+            <LevelSwitch level={level} setLevel={setLevel} />
+            {TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
-          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} />
+          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
         </> : <Empty busy={!!busy} />}
@@ -294,7 +322,7 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
   );
 }
 
-export function Legend({ on, toggle, extra = [] }: { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string }[] }) {
+export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string }[]; combat?: boolean }) {
   const [open, setOpen] = useState(true);
   const rows: { key?: string; cls: string; text: string; mark?: string }[] = [
     { cls: 'lg-own', text: 'советские войска' },
@@ -302,7 +330,7 @@ export function Legend({ on, toggle, extra = [] }: { on: (key: string) => boolea
     { key: 'ghosts', cls: 'lg-ghost', text: 'историческое положение' },
     { key: 'front', cls: 'lg-front', text: 'линия фронта (расчёт)' },
     { key: 'hfront', cls: 'lg-hfront', text: 'линия фронта (история)' },
-    { key: 'combat', cls: 'lg-arrow', text: 'бой за ход' },
+    ...(combat ? [{ key: 'combat', cls: 'lg-arrow', text: 'бой за ход' }] : []),
     { cls: 'lg-flag', text: 'Знамя Победы', mark: '⚑' },
     ...extra,
   ];

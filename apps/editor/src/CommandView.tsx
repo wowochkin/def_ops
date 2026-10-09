@@ -16,7 +16,7 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
 import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
-import { download, Legend, Player } from './ReplayView';
+import { download, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLevel, withLevel } from './ReplayView';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
 import { ModelPicker } from './ModelPicker';
@@ -103,6 +103,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [adv, setAdv] = useState<AdvMsg[]>([]);
   const [plan, setPlan] = useState<PlanState | null>(null);
   const [time, setTime] = useState<string | null>(null);
+  const [level, setLevel] = useMapLevel();
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
   const [reveal, setReveal] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -429,7 +430,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       </aside>
       <main className={`rp-main${pickMode ? ' picking' : ''}`}>
         {doc && time ? <>
-          <MapView doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}}
+          <MapView doc={doc ? withLevel(doc, level) : doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
@@ -437,11 +438,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           <div className="rp-tools">
-            {TOGGLES.map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
+            <LevelSwitch level={level} setLevel={setLevel} />
+            {TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
             {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
-          <Legend on={layerOn} toggle={toggle} />
+          <Legend on={layerOn} toggle={toggle} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
           {view && <Player start={view.start} end={view.time > view.start ? view.time : addH(view.start, view.turnHours)} time={time} setTime={setTime} events={playerEvents}
             onEvent={(e) => { if (e.at) setTime(e.at); goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
         </> : <div className="rp-empty"><div><div className="rp-empty-ic"><span className="spinner big" /></div><b>{progress ?? 'Подготовка…'}</b></div></div>}
