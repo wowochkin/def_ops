@@ -1216,3 +1216,14 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .rp-cov { font-size: 12px; border-radius: 6px; padding: 5px 8px; margin: 6px 0; }
 .kb-cov { padding: 16px; overflow: auto; max-width: 1150px; margin: 0 auto; width: 100%; }
 @media (max-width: 700px) { .cov-row { grid-template-columns: 1fr 60px; } .cov-row .cov-bar, .cov-row .cov-meta { grid-column: 1 / -1; } }
+
+.cov-hints { display: grid; gap: 6px; margin: 8px 0; }
+.cov-hints-h { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.cov-hint { border: 1px solid #e2dccd; border-left: 3px solid #8c2a22; border-radius: 6px; padding: 6px 10px; background: #fffdf8; display: grid; gap: 3px; }
+.cov-hint-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.cov-hint-n { font-style: normal; font-size: 11px; background: #8c2a22; color: #fff; border-radius: 50%; width: 18px; height: 18px; display: inline-grid; place-items: center; }
+.cov-hint-bar { width: 80px; }
+.cov-q { display: flex; flex-wrap: wrap; gap: 4px; }
+.cov-qb { font-size: 11.5px; padding: 1px 7px; background: #f4efe3; border: 1px solid #e2dccd; border-radius: 10px; cursor: copy; }
+.cov-ghints summary { cursor: pointer; font-size: 12.5px; color: #8c2a22; }
+.cov-ghints { display: grid; gap: 6px; }

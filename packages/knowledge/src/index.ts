@@ -6,3 +6,4 @@ export { gather, qaMessages, gameReference, type Source } from './qa';
 export * from './embed';
 export * from './operations';
 export * from './coverage';
+export * from './hints';

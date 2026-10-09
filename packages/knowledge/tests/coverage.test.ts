@@ -53,3 +53,20 @@ describe('полнота материалов по каркасу', () => {
     expect(md).toMatch(/8-я гвардейская армия.*Состав/);
   });
 });
+
+describe('подсказки, что искать', () => {
+  it('по дефицитам: сведения формирований — первыми, с источниками, запросами и списком элементов', async () => {
+    const { coverageHints } = await import('../src/hints');
+    const c = assessCoverage(input, entries);
+    const h = coverageHints(c);
+    expect(h.length).toBeGreaterThan(5);
+    const top = h.slice(0, 6).map((x) => x.id);
+    expect(top.some((id) => id.startsWith('formations:'))).toBe(true);
+    const comp = h.find((x) => x.id === 'formations:composition')!;
+    expect(comp.items).toContain('Дивизия Икс');
+    expect(comp.where.length).toBeGreaterThan(0);
+    expect(comp.queries[0]).toMatch(/состав/);
+    expect(h.every((x, i) => i === 0 || h[i - 1].priority >= x.priority)).toBe(true);
+    expect(coverageTodo(c, 'Операция')).toMatch(/С чего начать/);
+  });
+});

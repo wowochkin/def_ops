@@ -14,6 +14,7 @@
 import { CATEGORIES, type Entry } from './schema';
 import { stems } from './search';
 import { rubricsOf, within } from './rubrics';
+import { coverageHints, hintsMarkdown } from './hints';
 
 type LL = [number, number];
 export interface CoverageInput {
@@ -40,6 +41,10 @@ export interface CoverageInput {
 
 export interface CoverageItem {
   id: string; title: string; note?: string; side?: string;
+  /** Название в оригинале (немецкое, английское) — для поисковых запросов. */
+  alt?: string;
+  /** Значимость элемента (армия важнее батальона) — порядок в подсказках. */
+  weight?: number;
   /** Что должно быть (ключи) и что найдено. */
   need: string[]; filled: string[];
   entries: string[];
@@ -100,6 +105,8 @@ const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.l
 const day = (d: string) => Date.parse(`${d.slice(0, 10)}T00:00:00Z`) / 864e5;
 const overlaps = (e: Entry, a: string, b: string) => !!e.period?.from && day(e.period.from) <= day(b) && day(e.period.to ?? e.period.from) >= day(a);
 
+const ECH_W: Record<string, number> = { front: 5, army: 4, corps: 3, division: 2, brigade: 1.5 };
+
 /** Что должно быть о формировании — по ступени. */
 export function formationNeeds(echelon: string): string[] {
   if (echelon === 'front' || echelon === 'army') return ['commander', 'composition', 'personnel', 'tanks', 'guns', 'path'];
@@ -148,7 +155,11 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
   const fEntries = (f: { id: string; name: string }) => { const byId = formations.filter((e) => (e.aliases ?? []).includes(f.id)); return byId.length ? byId : formations.filter((e) => nameMatch(e, [f.name])); };
   const fKeys = ['parent', 'commander', 'composition', 'personnel', 'tanks', 'guns', 'path'];
   add({ id: 'formations', section: 'forces', title: 'Формирования', what: 'по каждому действующему формированию: подчинённость, командир, состав, численность, танки, орудия, боевой путь в операции', weight: 0.2, labels: labelsOf('formations', fKeys),
-    items: input.formations.map((f) => item(f.id, f.name, formationNeeds(f.echelon), fEntries(f), { side: f.side, at: f.at })) }, true);
+    items: input.formations.map((f) => {
+      const found = fEntries(f);
+      const alt = found.flatMap((e) => e.aliases ?? []).find((a) => /[A-Za-z]/.test(a) && !/_/.test(a) && !/^[a-z]/.test(a));
+      return item(f.id, f.name, formationNeeds(f.echelon), found, { side: f.side, at: f.at, alt, weight: ECH_W[f.echelon] ?? 1 });
+    }) }, true);
 
   const cItems: CoverageItem[] = [];
   for (const f of input.formations.filter((x) => x.echelon === 'front' || x.echelon === 'army')) {
@@ -167,7 +178,7 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
   add({ id: 'commanders', section: 'forces', title: 'Командование', what: 'командующие армий и фронтов: звание, должность в операции, ключевые решения', weight: 0.06, labels: labelsOf('commanders', ['rank', 'post', 'decisions']), items: cItems }, true);
 
   if (input.positions?.length) add({ id: 'positions', section: 'forces', title: 'Положения по дням', what: 'история для сравнения расчёта: в какие дни операции известно положение формирования (по источникам)', weight: 0.1, labels: { days: 'дни с положением' },
-    items: input.positions.map((p) => ({ id: `pos:${p.id}`, title: p.name, side: p.side, need: ['days'], filled: p.days >= p.total * 0.5 ? ['days'] : [], entries: [], score: Math.min(1, p.days / Math.max(1, p.total)), note: `${p.days} из ${p.total} дн.` })) }, true);
+    items: input.positions.map((p) => ({ id: `pos:${p.id}`, title: p.name, side: p.side, alt: formations.filter((e) => (e.aliases ?? []).includes(p.id)).flatMap((e) => e.aliases ?? []).find((a) => /[A-Za-z]/.test(a) && !/_/.test(a) && !/^[a-z]/.test(a)), need: ['days'], filled: p.days >= p.total * 0.5 ? ['days'] : [], entries: [], score: Math.min(1, p.days / Math.max(1, p.total)), note: `${p.days} из ${p.total} дн.` })) }, true);
 
   /* ── местность и инфраструктура ── */
   add({ id: 'places', section: 'ground', title: 'Пункты и районы', what: 'ключевые населённые пункты и районы (цели, места событий): что это, где, особенности, оборона (гарнизон, укрепления), значение', weight: 0.1, labels: labelsOf('terrain', ['kind', 'location', 'features', 'defense', 'significance']),
@@ -244,7 +255,8 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
 
 /** Что собрать: недостающие сведения списком (markdown) — задание на поиск материалов. */
 export function coverageTodo(c: Coverage, title: string): string {
-  const out = [`# Что собрать по операции «${title}»`, '', `Полнота: ${Math.round(c.score * 100)} % — ${COVERAGE_LEVEL[c.level]}.`, ''];
+  const out = [`# Что собрать по операции «${title}»`, '', `Полнота: ${Math.round(c.score * 100)} % — ${COVERAGE_LEVEL[c.level]}.`, '',
+    '## С чего начать — по пользе для модели', '', hintsMarkdown(coverageHints(c), 10), '# Всё недостающее по разделам', ''];
   for (const s of c.sections) {
     out.push(`# ${s.title} — ${Math.round(s.score * 100)} %`, '');
     for (const g of c.groups.filter((x) => x.section === s.id)) {

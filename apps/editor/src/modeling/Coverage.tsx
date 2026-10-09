@@ -7,7 +7,7 @@
  * Пересчитывается при изменении базы.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { COVERAGE_LEVEL, coverageTodo, levelOf, type Coverage, type CoverageGroup, type CoverageItem } from '@def-ops/knowledge';
+import { COVERAGE_LEVEL, coverageHints, coverageTodo, levelOf, type Coverage, type CoverageGroup, type CoverageItem, type SearchHint } from '@def-ops/knowledge';
 import * as kb from '../kb/kb';
 import { coverageOf } from '../kb/coverage';
 import { download } from './data';
@@ -46,6 +46,7 @@ export function CoveragePanel({ op, title }: { op: string; title: string }) {
   const [open, setOpen] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(true);
   if (!c) return <section className="mdl-card cov"><h4>Полнота материалов</h4><p className="muted">Считается…</p></section>;
+  const allHints = coverageHints(c);
   const goGroup = (g: string) => { setOpen(g); setTimeout(() => document.getElementById(`cov-${op}-${g}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); };
   return (
     <section className="mdl-card cov">
@@ -60,16 +61,17 @@ export function CoveragePanel({ op, title }: { op: string; title: string }) {
       <div className="cov-tiles">{c.sections.map((s) => { const x = st(s.score); return (
         <div key={s.id} className="cov-tile"><span className="cov-tile-t">{s.title}</span><b>{pct(s.score)}</b>
           <span className="cov-tile-bar"><i style={{ width: css(s.score), background: x.c }} /></span><small className="muted">{x.i} {x.t}</small></div>); })}</div>
+      <Hints hints={allHints} onPick={goGroup} />
       {showMap && <GapMap c={c} onPick={goGroup} />}
       {c.sections.map((s) => <div key={s.id} className="cov-sec">
         <div className="cov-sec-h">{s.title}</div>
-        {c.groups.filter((g) => g.section === s.id && g.items.length).map((g) => <Group key={g.id} id={`cov-${op}-${g.id}`} g={g} sides={c.sides} open={open === g.id} toggle={() => setOpen(open === g.id ? null : g.id)} />)}
+        {c.groups.filter((g) => g.section === s.id && g.items.length).map((g) => <Group key={g.id} id={`cov-${op}-${g.id}`} g={g} sides={c.sides} hints={allHints} open={open === g.id} toggle={() => setOpen(open === g.id ? null : g.id)} />)}
       </div>)}
     </section>
   );
 }
 
-function Group({ id, g, sides, open, toggle }: { id: string; g: CoverageGroup; sides: Coverage['sides']; open: boolean; toggle: () => void }) {
+function Group({ id, g, sides, hints, open, toggle }: { id: string; g: CoverageGroup; sides: Coverage['sides']; hints: SearchHint[]; open: boolean; toggle: () => void }) {
   const x = st(g.score);
   const none = g.items.filter((i) => !i.entries.length && !['days', 'state', 'have', 'event', 'weather'].includes(i.need[0])).length;
   const full = g.items.filter((i) => i.score >= 1).length;
@@ -82,13 +84,13 @@ function Group({ id, g, sides, open, toggle }: { id: string; g: CoverageGroup; s
         <small className="cov-meta">{x.i} {g.items.length} эл.: полностью {full}{none ? `, без записи ${none}` : ''}
           {g.bySide && <span className="cov-sides">{Object.entries(g.bySide).map(([s, v]) => <span key={s}>{sides.find((y) => y.id === s)?.name ?? s} {pct(v)}</span>)}</span>}</small>
       </button>
-      {open && <GroupDetail g={g} sides={sides} />}
+      {open && <GroupDetail g={g} sides={sides} hints={hints.filter((h) => h.group === g.id)} />}
     </div>
   );
 }
 
 /** Раскрытая группа: каких сведений не хватает чаще всего — и матрица по элементам. */
-function GroupDetail({ g, sides }: { g: CoverageGroup; sides: Coverage['sides'] }) {
+function GroupDetail({ g, sides, hints }: { g: CoverageGroup; sides: Coverage['sides']; hints: SearchHint[] }) {
   const [side, setSide] = useState<string>('');
   const [limit, setLimit] = useState(60);
   const keys = useMemo(() => { const used = new Set(g.items.flatMap((i) => i.need)); return [...Object.keys(g.labels).filter((k) => used.has(k)), ...[...used].filter((k) => !(k in g.labels))]; }, [g]);
@@ -97,6 +99,7 @@ function GroupDetail({ g, sides }: { g: CoverageGroup; sides: Coverage['sides'] 
   return (
     <div className="cov-items">
       <p className="muted small">{g.what}</p>
+      {hints.length > 0 && <details className="cov-ghints"><summary>Что искать по группе: {hints.length}</summary>{hints.map((h) => <HintCard key={h.id} h={h} />)}</details>}
       {!single && <div className="cov-keystats">{keys.map((k) => {
         const need = items.filter((i) => i.need.includes(k)), have = need.filter((i) => i.filled.includes(k)).length, r = need.length ? have / need.length : 1;
         return <div key={k} className="cov-ks" title={`${g.labels[k] ?? k}: есть у ${have} из ${need.length}`}><span>{g.labels[k] ?? k}</span><span className="cov-tile-bar"><i style={{ width: css(r), background: st(r).c }} /></span><small>{have}/{need.length}</small></div>;
@@ -112,6 +115,39 @@ function GroupDetail({ g, sides }: { g: CoverageGroup; sides: Coverage['sides'] 
         </tr>)}</tbody>
       </table></div>
       {items.length > limit && <button className="link" onClick={() => setLimit(limit + 300)}>ещё {items.length - limit}…</button>}
+    </div>
+  );
+}
+
+/* ───────────── что искать ───────────── */
+
+function copy(t: string) { void navigator.clipboard?.writeText(t); }
+
+/** Что искать в первую очередь: подсказки по пользе для модели. */
+function Hints({ hints, onPick }: { hints: SearchHint[]; onPick: (g: string) => void }) {
+  const [all, setAll] = useState(false);
+  if (!hints.length) return <p className="ok">Дефицитов нет — материалов достаточно по всем группам каркаса.</p>;
+  return (
+    <div className="cov-hints">
+      <div className="cov-hints-h"><b>Что искать в первую очередь</b><small className="muted">по пользе для модели: вес группы × важность сведения для расчёта × сколько не хватает</small></div>
+      {(all ? hints : hints.slice(0, 5)).map((h, i) => <HintCard key={h.id} h={h} n={i + 1} onPick={() => onPick(h.group)} />)}
+      {hints.length > 5 && <button className="link" onClick={() => setAll(!all)}>{all ? 'свернуть' : `все подсказки (${hints.length})`}</button>}
+    </div>
+  );
+}
+
+function HintCard({ h, n, onPick }: { h: SearchHint; n?: number; onPick?: () => void }) {
+  const [more, setMore] = useState(false);
+  const share = h.missing / Math.max(1, h.total);
+  return (
+    <div className="cov-hint">
+      <div className="cov-hint-h">{n != null && <i className="cov-hint-n">{n}</i>}<b>{h.title}</b>
+        <span className="cov-tile-bar cov-hint-bar" title={`нет у ${h.missing} из ${h.total}`}><i style={{ width: css(1 - share), background: st(1 - share).c }} /></span>
+        {onPick && <button className="link" onClick={onPick}>к группе ↓</button>}</div>
+      <div className="small"><span className="muted">Зачем модели: </span>{h.why}</div>
+      {h.where.length > 0 && <div className="small"><span className="muted">Где искать: </span>{h.where.slice(0, more ? 9 : 2).join(' · ')}{h.where.length > 2 && !more && <button className="link" onClick={() => setMore(true)}> ещё…</button>}</div>}
+      {h.queries.length > 0 && <div className="cov-q">{h.queries.map((q) => <button key={q} className="cov-qb" title="Скопировать запрос" onClick={() => copy(q)}>⧉ {q}</button>)}</div>}
+      <div className="small muted">Нет у: {h.items.slice(0, more ? 40 : 5).join('; ')}{h.items.length > 5 && !more ? <button className="link" onClick={() => setMore(true)}> и ещё {h.items.length - 5}</button> : null}</div>
     </div>
   );
 }
