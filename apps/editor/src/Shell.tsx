@@ -1,6 +1,7 @@
 /**
  * Оболочка приложения: колонка разделов слева и рабочая область раздела.
- * Разделы: редактор карт, переигровка операций, карты-подложки, справочник знаков,
+ * Разделы: редактор карт, переигровка операций, моделирование (правила, сравнение с историей, калибровка,
+ * подготовка операций), карты-подложки, справочник знаков,
  * база знаний (материалы, загрузка документов, вопросы к модели),
  * ИИ (связь с моделями: штаб противника в игре, советник, база знаний). Раздел запоминается в адресе (#editor, #replay…).
  */
@@ -9,15 +10,17 @@ import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
 import { KnowledgeView } from './KnowledgeView';
+import { ModelingView } from './modeling/ModelingView';
 import * as kb from './kb/kb';
 import { MapsPanel } from './MapsPanel';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
 
-type Section = 'editor' | 'replay' | 'maps' | 'library' | 'knowledge' | 'staff';
+type Section = 'editor' | 'replay' | 'modeling' | 'maps' | 'library' | 'knowledge' | 'staff';
 const SECTIONS: { id: Section; title: string; icon: ReactNode; soon?: boolean }[] = [
   { id: 'editor', title: 'Редактор', icon: Icon.editor },
   { id: 'replay', title: 'Переигровка', icon: Icon.replay },
+  { id: 'modeling', title: 'Моделирование', icon: Icon.modeling },
   { id: 'maps', title: 'Карты', icon: Icon.maps },
   { id: 'library', title: 'Знаки', icon: Icon.library },
   { id: 'knowledge', title: 'Знания', icon: Icon.knowledge },
@@ -54,7 +57,7 @@ export function Shell() {
         <div className="rail-logo" title="Тактическая карта">ТК</div>
         {SECTIONS.map((s) => (
           <button key={s.id} className={`rail-btn${section === s.id ? ' on' : ''}`} onClick={() => setSection(s.id)} title={s.soon ? `${s.title} — в работе` : s.title}>
-            {s.icon}<span>{s.title}</span>{s.soon && <i className="rail-soon" />}
+            {s.icon}<span>{s.id === 'modeling' ? 'Модели\u00adрование' : s.title}</span>{s.soon && <i className="rail-soon" />}
           </button>
         ))}
         <span className={`rail-srv ${server.status}`} title={server.status === 'online' ? 'Сервер доступен' : server.status === 'offline' ? 'Сервер недоступен — работа в браузере' : 'Проверка сервера…'} />
@@ -62,6 +65,7 @@ export function Shell() {
       <div className="stage">
         {mounted.has('editor') && <div className="pane" hidden={section !== 'editor'}><EditorView bm={bm} server={server} incoming={incoming} /></div>}
         {mounted.has('replay') && <div className="pane" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
+        {mounted.has('modeling') && <div className="pane" hidden={section !== 'modeling'}><ModelingView llm={llm} /></div>}
         {section === 'maps' && <MapsView bm={bm} server={server} />}
         {section === 'library' && <iframe className="pane lib" src="/library.html" title="Справочник знаков" />}
         {mounted.has('knowledge') && <div className="pane" hidden={section !== 'knowledge'}><KnowledgeView llm={llm} /></div>}
@@ -108,7 +112,7 @@ function StaffView({ llm }: { llm: Llm }) {
           </label>
           <label>Модель
             <ModelSelect value={settings.model} onChange={(model) => set({ model })} check={check} empty={`первая загруженная${check.state === 'ok' ? ` (${check.models[0]})` : ''}`} />
-            <small>Варианты одной модели (4bit, 8bit) — отдельными строками «имя@вариант»: выбранный сервер загрузит сам (загрузка по запросу), первый запрос — дольше.</small>
+            <small>Варианты одной модели (4bit, 8bit) загрузите в LM Studio под своими именами (например, qwen-4bit и qwen-8bit) — они появятся в списке среди загруженных. Модели по всем ролям — и в разделе «Моделирование».</small>
           </label>
           <label>Размышление перед ответом
             <select value={settings.thinking} onChange={(e) => set({ thinking: e.target.value as typeof settings.thinking })}>

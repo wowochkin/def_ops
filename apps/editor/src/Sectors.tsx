@@ -12,8 +12,11 @@ import { pickBasemap, type Basemaps } from './shared';
 export interface Sector { id: string; title: string; note?: string; bbox: [number, number, number, number]; custom?: boolean }
 
 const files = import.meta.glob('../../../packages/sim/data/scenarios/*.sectors.json', { eager: true, import: 'default' }) as Record<string, { sectors: Sector[] }>;
+/** Участки своих (загруженных) операций — регистрирует каталог при загрузке. */
+const extra = new Map<string, Sector[]>();
+export const registerSectors = (scenario: string, list: Sector[]) => { extra.set(scenario, list); };
 export function scenarioSectors(scenario: string): Sector[] {
-  return files[`../../../packages/sim/data/scenarios/${scenario}.sectors.json`]?.sectors ?? [];
+  return files[`../../../packages/sim/data/scenarios/${scenario}.sectors.json`]?.sectors ?? extra.get(scenario) ?? [];
 }
 const KEY = (s: string) => `def_ops.sectors.${s}`;
 const loadCustom = (s: string): Sector[] => { try { return JSON.parse(localStorage.getItem(KEY(s)) || '[]'); } catch { return []; } };

@@ -5,13 +5,10 @@
  */
 import { analyze, contextFrom, reportMarkdown, runToDocument, type DataKind } from '@def-ops/sim';
 import type { SimRequest, SimResponse } from './protocol';
+import { getData } from './userdata';
 
-const files = import.meta.glob('../../../../packages/sim/data/{scenarios,theatres,profiles,rules}/*.json', { import: 'default' });
-const get = async (kind: DataKind, file: string) => {
-  const load = files[`../../../../packages/sim/data/${kind}/${file}`];
-  if (!load) throw new Error(`нет файла данных ${kind}/${file}`);
-  return load();
-};
+// встроенные данные и свои (правила, загруженные операции)
+const get = (kind: DataKind, file: string) => getData(kind, file);
 
 const post = (m: SimResponse) => (self as unknown as Worker).postMessage(m);
 

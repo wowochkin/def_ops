@@ -5,7 +5,6 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { migrateDocument, type MapDocument, type TimeInstant } from '@def-ops/core';
-import catalogFile from '../../../packages/sim/data/scenarios/catalog.json';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
@@ -13,11 +12,11 @@ import { BasemapControls, Popover } from './ui';
 import type { Basemaps, Llm } from './shared';
 import { CommandView, loadSaved, SAVE_KEY, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
-import { SectorPicker, withFocus, type Sector } from './Sectors';
+import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors';
+import { BUILTIN_CATALOG, fullCatalog, onDataChange, sectorsOf } from './sim/userdata';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
 
-const CATALOG = (catalogFile as { scenarios: CatalogEntry[] }).scenarios;
 const fmtDays = (d: number | null) => (d == null ? '—' : d > 0 ? `+${d}` : String(d));
 const dayClass = (d: number | null) => (d == null ? 'miss' : Math.abs(d) <= 1 ? 'ok' : Math.abs(d) <= 2 ? 'near' : 'off');
 const pct = (x: number) => `${Math.round(x * 100)} %`;
@@ -41,8 +40,15 @@ export function download(name: string, text: string, type: string) {
 }
 
 export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm; onOpenInEditor: (d: MapDocument) => void }) {
-  const [scenario, setScenario] = useState(CATALOG[0].id);
-  const entry = useMemo(() => CATALOG.find((c) => c.id === scenario) ?? CATALOG[0], [scenario]);
+  // каталог: встроенные операции и подготовленные свои (раздел «Моделирование»), со своими наборами правил
+  const [CATALOG, setCatalog] = useState<(CatalogEntry & { custom?: boolean })[]>(BUILTIN_CATALOG);
+  useEffect(() => {
+    const load = () => void fullCatalog().then(async (c) => { setCatalog(c); for (const x of c.filter((y) => y.custom)) registerSectors(x.id, await sectorsOf(x.id)); });
+    load();
+    return onDataChange(load);
+  }, []);
+  const [scenario, setScenario] = useState(BUILTIN_CATALOG[0].id);
+  const entry = useMemo(() => CATALOG.find((c) => c.id === scenario) ?? CATALOG[0], [scenario, CATALOG]);
   const [rules, setRules] = useState(entry.rules[0].id);
   const [seed, setSeed] = useState(1);
   const [runs, setRuns] = useState(5);
@@ -62,7 +68,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const worker = useRef<Worker | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
-  useEffect(() => { setRules(entry.rules[0].id); }, [entry]);
+  useEffect(() => { setRules((r) => (entry.rules.some((x) => x.id === r) ? r : entry.rules[0].id)); }, [entry]);
   useEffect(() => () => worker.current?.terminate(), []);
 
   const run = () => {
@@ -126,7 +132,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         <div className="rp-cards">
           {CATALOG.map((c) => (
             <button key={c.id} className={`rp-card${c.id === scenario ? ' on' : ''}`} disabled={!!busy} onClick={() => setScenario(c.id)}>
-              <b>{c.title}</b><span>{c.detail}</span>
+              <b>{c.title}{c.custom && <i className="rp-own">своя</i>}</b><span>{c.detail}</span>
             </button>
           ))}
         </div>

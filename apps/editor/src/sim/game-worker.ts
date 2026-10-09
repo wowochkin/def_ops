@@ -9,7 +9,7 @@
 import { createFeature, type SymbolFeature } from '@def-ops/core';
 import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
-  runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome,
+  runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
@@ -17,20 +17,17 @@ import { category, gather, Index, type Entry } from '@def-ops/knowledge';
 import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
 import { LlmClient } from '@def-ops/staff-service/llm';
+import { gameEndOf, getData, liveOf } from './userdata';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 
-const files = import.meta.glob('../../../../packages/sim/data/{scenarios,theatres,profiles,rules}/*.json', { import: 'default' });
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
 const liveCfg = import.meta.glob('../../../../services/staff/live/*.json', { import: 'default' });
-const get = async (kind: string, file: string) => {
-  const load = files[`../../../../packages/sim/data/${kind}/${file}`];
-  if (!load) throw new Error(`нет файла данных ${kind}/${file}`);
-  return load();
-};
+// встроенные данные и свои (правила, загруженные операции)
+const get = (kind: string, file: string) => getData(kind as DataKind, file);
 
 const post = (m: GameResponse) => (self as unknown as Worker).postMessage(m);
 
@@ -88,9 +85,10 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   llm = l; enemy = en;
   post({ kind: 'progress', text: 'загрузка данных…' });
   ({ ctx, history } = await contextFrom(get as never, s.scenario, s.rules));
-  const cfgLoad = liveCfg[`../../../../services/staff/live/${s.scenario}.json`];
-  if (!cfgLoad) throw new Error(`для сценария ${s.scenario} нет настроек штаба модели (services/staff/live/${s.scenario}.json)`);
-  cfg = (await cfgLoad()) as LiveConfig;
+  const cfgLoad = (liveCfg as Record<string, (() => Promise<unknown>) | undefined>)[`../../../../services/staff/live/${s.scenario}.json`];
+  const own = cfgLoad ? null : await liveOf(s.scenario);
+  if (!cfgLoad && !own) throw new Error(`для сценария ${s.scenario} нет настроек штаба модели (services/staff/live/${s.scenario}.json)`);
+  cfg = (cfgLoad ? await cfgLoad() : own) as LiveConfig;
   profileMd = (await profilesMd[`../../../../services/staff/profiles/${cfg.profile}.md`]?.()) as string ?? '';
   const human = ctx.scenario.sides.find((x) => x.id !== cfg.side)!.id;
   advisorProfile = cfg.advisor ? ((await profilesMd[`../../../../services/staff/profiles/${cfg.advisor.profile}.md`]?.()) as string ?? '') : '';
@@ -98,7 +96,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   // штаб модели ведёт и тыл, переправы, резервы своей стороны, если противник — модель (решается при передаче командования)
   const aiStaff = record ? !!record.aiStaff : en === 'llm';
   g = startGame(ctx, s.seed, s.takeover, human, aiStaff ? cfg.side : undefined);
-  end = ((catalogFile as unknown as { scenarios: { id: string; game: GameEnd }[] }).scenarios.find((x) => x.id === s.scenario)?.game) ?? { victory: { event: '', title: '' }, defeat: { strengthBelow: 0, deadline: ctx.scenario.end, deadlineText: 'время операции вышло' } };
+  end = ((catalogFile as unknown as { scenarios: { id: string; game: GameEnd }[] }).scenarios.find((x) => x.id === s.scenario)?.game) ?? (await gameEndOf(s.scenario) as GameEnd | undefined) ?? { victory: { event: '', title: '' }, defeat: { strengthBelow: 0, deadline: ctx.scenario.end, deadlineText: 'время операции вышло' } };
   baseStrength = sideStrength(g.state, human);
   outcome = null;
   rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, aiStaff, turns: [] };
