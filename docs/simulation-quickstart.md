@@ -17,8 +17,12 @@ Docker, Python и исходные данные местности не нужн
 ```bash
 git checkout claude/tactical-map-step1
 git pull
-npm install
+npm ci
 ```
+
+`npm ci` ставит зависимости ровно по `package-lock.json` и сам файл не меняет — после него `git pull` проходит без
+`git checkout -- package-lock.json`. `npm install` — только когда добавляете или обновляете зависимость (тогда
+изменённый `package-lock.json` коммитится вместе с `package.json`).
 
 ## 2. Переигровка в приложении (проще всего)
 

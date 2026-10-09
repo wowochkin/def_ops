@@ -69,7 +69,7 @@ PostgreSQL + PostGIS, локальные карты-подложки — в то
 сравнивается с историей и открывается в редакторе как карта с ползунком времени.
 
 ```bash
-npm install
+npm ci                  # зависимости ровно по package-lock.json (файл не меняется)
 npm run sim:demo        # три сценария, сводка и карты в evals-out/demo/
 npm run dev             # редактор → «Открыть / импорт…» → evals-out/demo/berlin-1945-tasks/map.json
 ```
@@ -82,7 +82,7 @@ npm run dev             # редактор → «Открыть / импорт�
 ## Запуск для разработки
 
 ```bash
-npm install
+npm ci
 
 # только редактор (работает и без сервера — карты хранятся в браузере)
 npm run dev                 # http://localhost:5173/  · справочник знаков: /library.html · сверка: /compare.html
