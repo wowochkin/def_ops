@@ -16,7 +16,8 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
 import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
-import { download, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLevel, withLevel } from './ReplayView';
+import { download, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLabels, useMapLevel, withLevel } from './ReplayView';
+import { MapHover, withoutLabels } from './MapHover';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
 import { ModelPicker } from './ModelPicker';
@@ -104,6 +105,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [plan, setPlan] = useState<PlanState | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  const [labels, toggleLabels] = useMapLabels();
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
   const [reveal, setReveal] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -430,15 +432,17 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       </aside>
       <main className={`rp-main${pickMode ? ' picking' : ''}`}>
         {doc && time ? <>
-          <MapView doc={doc ? withLevel(doc, level) : doc} setDoc={() => {}} selected={null} setSelected={() => {}}
+          <MapView doc={doc ? withoutLabels(withLevel(doc, level), labels) : doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
+          {!pickMode && <MapHover engine={eng} doc={doc ? withLevel(doc, level) : null} time={time} />}
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           <div className="rp-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
+            <button className={`chip${labels ? ' on' : ''}`} title={labels ? 'Подписи знаков на карте; выключить — только при наведении' : 'Подписи — при наведении на знак'} onClick={toggleLabels}>Подписи</button>
             {TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
             {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>

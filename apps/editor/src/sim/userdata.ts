@@ -3,12 +3,12 @@
  * калибровка) и загруженные операции (пакет: сценарий, театр, история, участки, настройки штаба модели, запись
  * каталога). Поверх данных сборки (packages/sim/data): getter отдаёт сначала встроенный файл, затем свой.
  */
-import type { CatalogEntry, DataKind, OperationPackage, Rules } from '@def-ops/sim';
+import type { CatalogEntry, DataKind, OperationPackage, Rules, TheatreData } from '@def-ops/sim';
 import { defaultCatalog, defaultLive } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 
-const DB = 'def_ops_sim', VER = 1;
-type StoreName = 'rules' | 'operations';
+const DB = 'def_ops_sim', VER = 2;
+type StoreName = 'rules' | 'operations' | 'theatres';
 
 /** Свой набор правил: правила целиком (без extends), откуда взят, для какой операции подбирался. */
 export interface UserRules { id: string; title: string; note?: string; base: string; scenario?: string; created: string; rules: Rules }
@@ -26,7 +26,7 @@ let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['rules', 'operations']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of ['rules', 'operations', 'theatres']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -46,6 +46,11 @@ export const listRules = () => all<UserRules>('rules');
 export const saveRules = (r: UserRules) => write('rules', (o) => o.put(r));
 export const deleteRules = (id: string) => write('rules', (o) => o.delete(id));
 export const listOperations = () => all<UserOperation>('operations');
+/** Загруженный театр (раздел «Карты» → «Театры»): на него могут ссылаться свои операции. */
+export interface UserTheatre { id: string; created: string; theatre: TheatreData }
+export const listTheatres = () => all<UserTheatre>('theatres');
+export const saveTheatre = (t: UserTheatre) => write('theatres', (o) => o.put(t));
+export const deleteTheatre = (id: string) => write('theatres', (o) => o.delete(id));
 export const getOperation = (id: string) => one<UserOperation>('operations', id);
 export const saveOperation = (op: UserOperation) => write('operations', (o) => o.put(op));
 export const deleteOperation = (id: string) => write('operations', (o) => o.delete(id));
@@ -58,8 +63,9 @@ export function onDataChange(f: () => void) { window.addEventListener('def_ops.s
 
 const files = import.meta.glob('../../../../packages/sim/data/{scenarios,theatres,profiles,rules}/*.json', { import: 'default' });
 const builtin = (kind: string, file: string) => files[`../../../../packages/sim/data/${kind}/${file}`];
-/** id встроенных правил и профилей. */
+/** id встроенных правил, профилей и театров. */
 export const BUILTIN = {
+  theatres: Object.keys(files).filter((k) => k.includes('/theatres/')).map((k) => k.split('/').pop()!.replace('.json', '')),
   rules: Object.keys(files).filter((k) => k.includes('/rules/') && !k.endsWith('norms.json')).map((k) => k.split('/').pop()!.replace('.json', '')),
   profiles: Object.keys(files).filter((k) => k.includes('/profiles/')).map((k) => k.split('/').pop()!.replace('.json', '')),
 };
@@ -76,7 +82,10 @@ export async function getData(kind: DataKind, file: string): Promise<unknown> {
     const op = await getOperation(hist ? id.slice(0, -'.history'.length) : id);
     if (op) return hist ? op.pkg.history : op.pkg.scenario;
   }
-  if (kind === 'theatres') { const op = (await listOperations()).find((o) => o.pkg.theatre.id === id); if (op) return op.pkg.theatre; }
+  if (kind === 'theatres') {
+    const op = (await listOperations()).find((o) => o.pkg.theatre.id === id); if (op) return op.pkg.theatre;
+    const t = await one<UserTheatre>('theatres', id); if (t) return t.theatre;
+  }
   if (kind === 'profiles') { for (const o of await listOperations()) { const p = o.pkg.profiles?.find((x) => x.id === id); if (p) return p; } }
   throw new Error(`нет данных ${kind}/${file}`);
 }

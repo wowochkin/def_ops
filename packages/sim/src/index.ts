@@ -17,3 +17,4 @@ export { evaluateNorms, normScenarios, measurePace, measureLoss, NORM_MARK, fmtN
 export { CALIB_SPACE, CALIB_KEYS, CALIB_INFO, baseParams, rulesWith, scoreRules, evaluateRules, mergeEvaluations, type RulesEvaluation, defaultTrainUntil, Calibrator, calibratedRules, type CalibKey, type CalibParams, type CalibScore } from './calibrate';
 export { describeRules, describeProfile, diffRules, rulesOrigin, type ParamRow } from './describe';
 export { validateOperation, detectPart, defaultCatalog, defaultLive, type OperationPackage, type CatalogEntry, type LiveSetup, type PackageIssue } from './operation';
+export { THEATRE_LAYERS, layerCounts, cropGrid, cropTheatre, layerGeoJSON, recipeFor, theatreToDocument, type BBox, type TheatreLayerId } from './theatre-io';

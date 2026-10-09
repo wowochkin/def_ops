@@ -11,6 +11,7 @@ import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
 import { KnowledgeView } from './KnowledgeView';
 import { ModelingView } from './modeling/ModelingView';
+import { TheatreView } from './TheatreView';
 import * as kb from './kb/kb';
 import { MapsPanel } from './MapsPanel';
 import { BasemapControls, Icon, ModelSelect } from './ui';
@@ -66,7 +67,7 @@ export function Shell() {
         {mounted.has('editor') && <div className="pane" hidden={section !== 'editor'}><EditorView bm={bm} server={server} incoming={incoming} /></div>}
         {mounted.has('replay') && <div className="pane" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
         {mounted.has('modeling') && <div className="pane" hidden={section !== 'modeling'}><ModelingView llm={llm} /></div>}
-        {section === 'maps' && <MapsView bm={bm} server={server} />}
+        {section === 'maps' && <MapsView bm={bm} server={server} onOpenInEditor={toEditor} />}
         {section === 'library' && <iframe className="pane lib" src="/library.html" title="Справочник знаков" />}
         {mounted.has('knowledge') && <div className="pane" hidden={section !== 'knowledge'}><KnowledgeView llm={llm} /></div>}
         {section === 'staff' && <StaffView llm={llm} />}
@@ -75,11 +76,16 @@ export function Shell() {
   );
 }
 
-function MapsView({ bm, server }: { bm: Basemaps; server: ServerState }) {
+function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: ServerState; onOpenInEditor: (d: MapDocument) => void }) {
   const doc = useMemo(() => emptyDocument(), []);
   const [notice, setNotice] = useState<string | null>(null);
+  const [tab, setTab] = useState<'base' | 'theatres'>(() => (localStorage.getItem('def_ops.maps.tab') as 'base' | 'theatres') || 'base');
+  const go = (t: 'base' | 'theatres') => { setTab(t); try { localStorage.setItem('def_ops.maps.tab', t); } catch { /* */ } };
+  const tabs = <nav className="maps-tabs"><button className={tab === 'base' ? 'on' : ''} onClick={() => go('base')}>Подложки</button><button className={tab === 'theatres' ? 'on' : ''} onClick={() => go('theatres')}>Театры</button></nav>;
+  if (tab === 'theatres') return <div className="pane maps-pane">{tabs}<div className="maps-body"><TheatreView bm={bm} onOpenInEditor={onOpenInEditor} /></div></div>;
   return (
     <div className="page">
+      {tabs}
       <div className="page-in">
         <h2>Карты-подложки</h2>
         <p className="lead">Под знаками можно показать современную карту из интернета или свою: историческую карту, скан, тайловый архив. Локальные карты хранятся на сервере и работают без интернета.</p>

@@ -16,6 +16,7 @@ import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors
 import { BUILTIN_CATALOG, fullCatalog, onDataChange, sectorsOf } from './sim/userdata';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
+import { MapHover, withoutLabels } from './MapHover';
 
 const fmtDays = (d: number | null) => (d == null ? '—' : d > 0 ? `+${d}` : String(d));
 const dayClass = (d: number | null) => (d == null ? 'miss' : Math.abs(d) <= 1 ? 'ok' : Math.abs(d) <= 2 ? 'near' : 'off');
@@ -43,6 +44,11 @@ const ALL_LEVEL_LAYERS = new Set(Object.values(LEVEL_LAYERS).flat());
 /** Видимость слоёв по уровню; бои (sim-combat) — ещё и по своему переключателю. */
 export function withLevel(doc: MapDocument, level: MapLevel): MapDocument {
   return { ...doc, layers: doc.layers.map((l) => (ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && (l.id !== 'sim-combat' || l.visible) } : l)) };
+}
+/** Подписи знаков: на карте или только при наведении (запоминается). */
+export function useMapLabels(): [boolean, () => void] {
+  const [on, set] = useState<boolean>(() => { try { return localStorage.getItem('def_ops.mapLabels') !== 'hover'; } catch { return true; } });
+  return [on, () => set((x) => { try { localStorage.setItem('def_ops.mapLabels', x ? 'hover' : 'on'); } catch { /* */ } return !x; })];
 }
 export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
   const [l, set] = useState<MapLevel>(() => { try { return (localStorage.getItem('def_ops.mapLevel') as MapLevel) || 'tac'; } catch { return 'tac'; } });
@@ -92,6 +98,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [eng, setEng] = useState<MapEngine | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  const [labels, toggleLabels] = useMapLabels();
   const worker = useRef<Worker | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
@@ -184,14 +191,16 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       </aside>
       <main className="rp-main">
         {doc ? <>
-          <MapView key={mapKey} doc={withFocus(withLevel(doc, level), focus)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
+          <MapView key={mapKey} doc={withoutLabels(withFocus(withLevel(doc, level), focus), labels)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
             onEngineReady={(e) => { engine.current = e; setEng(e); }} onStatus={() => {}} time={time} newFromNow={false} />
+          <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {takeAt && <button className="take-btn" onClick={() => setTake(takeAt)} title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
+            <button className={`chip${labels ? ' on' : ''}`} title={labels ? 'Подписи знаков на карте; выключить — только при наведении' : 'Подписи — при наведении на знак; включить — все на карте'} onClick={toggleLabels}>Подписи</button>
             {TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
