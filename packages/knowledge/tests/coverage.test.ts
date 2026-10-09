@@ -34,7 +34,17 @@ describe('полнота материалов по каркасу', () => {
     expect(g('places').items[0].filled).toEqual(['kind', 'defense']);
     expect(g('events').items[0].score).toBe(1);
     expect(c.score).toBeGreaterThan(0); expect(c.score).toBeLessThan(1);
-    expect(c.level).toBe('partial');
+    expect(c.level).toBe('little');
+  });
+
+  it('разделы: стороны (организация, вооружение), источники; положения по дням и мосты — из данных операции', () => {
+    expect(g('doctrine').items.length).toBe(16); // 2 стороны × 8 тем
+    expect(g('equipment').items.some((i) => i.title === 'Т-34-85')).toBe(true);
+    expect(g('formations').bySide!.su).toBeGreaterThan(g('formations').bySide!.de);
+    expect(c.sections.map((x) => x.id)).toEqual(['forces', 'ground', 'course', 'sides', 'sources']);
+    const c2 = assessCoverage({ ...input, positions: [{ id: 'su_8gva', name: '8-я гв. А', side: 'su', days: 8, total: 16 }], bridges: [{ id: 'b1', name: 'мост', known: true }, { id: 'b2', name: 'мост 2', known: false }] }, entries);
+    expect(c2.groups.find((x) => x.id === 'positions')!.score).toBe(0.5);
+    expect(c2.groups.find((x) => x.id === 'bridges')!.score).toBe(0.5);
   });
 
   it('список недостающего — по элементам, с названиями сведений', () => {
