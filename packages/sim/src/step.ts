@@ -14,7 +14,7 @@ import { createRng, type Rng } from './rng';
 import { dist, type XY } from './geo';
 import { interp, power } from './rules';
 import { trailTo, type Theatre } from './theatre';
-import type { CombatFactor, Formation, JournalEntry, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
+import type { CombatFactor, Formation, JournalEntry, Mobility, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
 import { UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
 import { claimTerritory, controlMap, initialTerritory, supplyField } from './control';
 
@@ -56,7 +56,7 @@ export function createState(ctx: SimContext, seed = 1): SimState {
     ammo: f.ammo ?? 2, fuel: f.fuel ?? 2, fatigue: 0, posture: f.posture ?? 'defend', dugInHours: f.posture === 'defend' ? 48 : 0,
     order: null, route: null, destroyed: false, enterAt: f.enterAt ?? null,
   }));
-  return { scenario: ctx.scenario.id, time: ctx.scenario.start, turn: 0, formations, pending: [...ctx.scenario.orders], rngState: seed >>> 0, journal: [] };
+  return { scenario: ctx.scenario.id, time: ctx.scenario.start, turn: 0, formations, pending: [...ctx.scenario.orders], rngState: seed >>> 0, seed: seed >>> 0, journal: [] };
 }
 
 /** Принять приказ в любой момент (от эксперта, модели или сценария): исполнение — после задержки доведения. */
@@ -191,7 +191,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     if (g) { g.att.push(a); for (const d of defs) if (!g.def.includes(d)) g.def.push(d); }
     else groups.push({ att: [a], def: defs });
   }
-  const env: CombatEnv = { byId, supplyHours, isCut };
+  const env: CombatEnv = { byId, supplyHours, isCut, seed: prev.seed ?? 0 };
   for (const g of groups) resolveCombat(g.att, g.def, ctx, rng, now, dt, journal, moved, env, prev.umpire ?? []);
 
   // 3. движение вне боя
@@ -203,7 +203,8 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const mob = mobilityOf(ctx, f);
     if (dist(xy(f), T.proj.toXY(to)) < 0.5) { if (f.posture === 'march' || f.posture === 'withdraw') f.posture = 'defend'; continue; }
     const fc = fortCost(f), tc = terrCost(f, mob);
-    const r = T.advance(f.position, to, mob, prof, R, now, dt, (i) => fc(i) + tc(i));
+    const vc = varietyCost(ctx, prev.seed ?? 0, f, mob);
+    const r = T.advance(f.position, to, mob, prof, R, now, dt, (i) => fc(i) + tc(i), vc ?? undefined);
     if (!r) continue;
     let pos = r.position;
     // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
@@ -340,6 +341,8 @@ interface CombatEnv {
   /** Часы подвоза к точке для формирования (Infinity — не доходит). */
   supplyHours: (f: Formation, at?: LngLat) => number;
   isCut: (f: Formation) => boolean;
+  /** seed прогона — для разброса путей. */
+  seed: number;
 }
 
 function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng: Rng, now: string, dt: number, journal: JournalEntry[], moved: Set<string>, env: CombatEnv, umpire: UmpireMod[]) {
@@ -420,7 +423,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
       if (!goal) continue;
       const d = dist(p, goal);
       // продвижение — путём, которым шли бы войска (по дорогам и улицам, через мосты), а не напрямик через кварталы
-      const w = d > 0.05 ? T.walk(f.position, to!, Math.min(advanceKm, d * 1.6), mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now) : null;
+      const w = d > 0.05 ? T.walk(f.position, to!, Math.min(advanceKm, d * 1.6), mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now, varietyCost(ctx, env.seed, f, mobilityOf(ctx, f)) ?? undefined) : null;
       const k = d > 0 ? Math.min(1, advanceKm / d) : 0;
       const np = w ? w.position : T.proj.toLL([p[0] + (goal[0] - p[0]) * k, p[1] + (goal[1] - p[1]) * k]);
       journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +(w ? w.km : d * k).toFixed(1), ...(w ? pathOf(w.trail) : {}) });
@@ -432,7 +435,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
       const p = T.proj.toXY(f.position);
       const aim = retreatPoint(f, p, ca, advanceKm, T, env);
       // отход — тоже путём (улицами, через мосты); пути нет — напрямик
-      const w = T.walk(f.position, aim, advanceKm, mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now);
+      const w = T.walk(f.position, aim, advanceKm, mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now, varietyCost(ctx, env.seed, f, mobilityOf(ctx, f)) ?? undefined);
       const np = w ? w.position : aim;
       journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +(w ? w.km : advanceKm).toFixed(1), ...(w ? pathOf(w.trail) : {}) });
       f.position = np;
@@ -448,6 +451,34 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     ratio: +ratio.toFixed(2), factors, noise: +noise.toFixed(2), advanceKm: +advanceKm.toFixed(1),
     attackerLoss: +attackerLoss.toFixed(3), defenderLoss: +defenderLoss.toFixed(3), outcome,
   });
+}
+
+/** Целое из строки (для шума путей). */
+function hashStr(x: string): number { let h = 2166136261; for (let i = 0; i < x.length; i++) { h ^= x.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function hash3(a: number, b: number, c: number): number {
+  let h = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be59b, 0xc2b2ae35) ^ c;
+  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+/**
+ * Разброс выбора пути: время клетки при выборе пути умножается на плавный шум (районы в несколько км).
+ * Шум свой у формирования и приказа и постоянный на прогон: путь не дёргается от хода к ходу, а разный seed даёт
+ * разные пути — дорогой, лесом, полем напрямик.
+ */
+function varietyCost(ctx: SimContext, seed: number, f: Formation, mob: Mobility): ((i: number) => number) | null {
+  void mob;
+  const v = ctx.rules.routeVariety ?? 0;
+  if (v <= 0) return null;
+  const T = ctx.theatre;
+  const bs = Math.max(2, Math.round(Math.min(4, T.cellKm * 8) / T.cellKm)); // район шума: 2–4 км
+  const key = hashStr(`${f.id}|${f.order?.id ?? ''}`) ^ seed;
+  const at = (x: number, y: number) => hash3(x, y, key);
+  // множитель «как кажется выгодным» 1…1+2v: только выбор пути, время движения — по местности
+  return (i: number) => {
+    const c = i % T.cols, r = Math.floor(i / T.cols), gx = c / bs, gy = r / bs, x0 = Math.floor(gx), y0 = Math.floor(gy), tx = gx - x0, ty = gy - y0;
+    const n = (at(x0, y0) * (1 - tx) + at(x0 + 1, y0) * tx) * (1 - ty) + (at(x0, y0 + 1) * (1 - tx) + at(x0 + 1, y0 + 1) * tx) * ty;
+    return 1 + 2 * v * n;
+  };
 }
 
 /** Подвижность формирования сейчас: техника без горючего идёт пешком. */

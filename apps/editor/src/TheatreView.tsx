@@ -33,6 +33,23 @@ function gridImage(g: TerrainGrid, alpha = 255): { url: string; canvas: HTMLCanv
   return { url: c.toDataURL('image/png'), canvas: c };
 }
 
+/** Растр дорог (распознанных по исторической карте) — картинка: дорога, шоссе; остальное прозрачно. */
+function roadImage(g: TerrainGrid): string {
+  const c = document.createElement('canvas');
+  c.width = g.cols; c.height = g.rows;
+  const ctx = c.getContext('2d')!;
+  const img = ctx.createImageData(g.cols, g.rows);
+  let i = 0, k = 0;
+  for (const ch of g.rle) {
+    if (ch >= '0' && ch <= '9') { k = k * 10 + (ch.charCodeAt(0) - 48); continue; }
+    const n = k || 1;
+    if (ch !== 'n') for (let j = 0; j < n; j++) img.data.set(ch === 'h' ? [170, 40, 30, 235] : [150, 95, 40, 220], (i + j) * 4);
+    i += n; k = 0;
+  }
+  ctx.putImageData(img, 0, 0);
+  return c.toDataURL('image/png');
+}
+
 /** Сетка высот — картинка: светлое — низко, тёмное — высоко (один тон), с отмывкой склонов; min/max — м. */
 function heightImage(g: NonNullable<TheatreData['heightGrid']>, gray = false): { url: string; canvas: HTMLCanvasElement; min: number; max: number } {
   const h = decodeHeights(g);
@@ -115,6 +132,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
 
   const terrainUrl = useMemo(() => (T?.terrainGrid ? gridImage(T.terrainGrid, 200).url : null), [T]);
   const relief = useMemo(() => (T?.heightGrid ? heightImage(T.heightGrid) : null), [T]);
+  const roadsUrl = useMemo(() => (T?.roadGrid ? roadImage(T.roadGrid) : null), [T]);
   const heights = useMemo(() => (T?.heightGrid ? decodeHeights(T.heightGrid) : null), [T]);
   const [cursor, setCursor] = useState<{ at: LngLat; h: number | null } | null>(null);
   useEffect(() => {
@@ -142,6 +160,10 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
       const [w, s, e, n] = T.heightGrid.bbox;
       d.overlays = [...d.overlays, { id: 'height', name: 'Рельеф', url: relief.url, corners: [[w, n], [e, n], [e, s], [w, s]], opacity: 0.85, visible: !!vis.height }];
     }
+    if (T.roadGrid && roadsUrl) {
+      const [w, s, e, n] = T.roadGrid.bbox;
+      d.overlays = [...d.overlays, { id: 'roadgrid', name: 'Дороги растром (по исторической карте)', url: roadsUrl, corners: [[w, n], [e, n], [e, s], [w, s]], opacity: 0.8, visible: vis.roads !== false }];
+    }
     if (hist) {
       const [w, s, e, n] = hist.bbox;
       d.overlays = [...d.overlays, { id: 'hist', name: 'Распознано по карте', url: hist.url, corners: [[w, n], [e, n], [e, s], [w, s]], opacity: 0.85, visible: true }];
@@ -154,7 +176,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
       d.features = [...d.features, f];
     }
     return d;
-  }, [T, vis, area, terrainUrl, relief, hist]);
+  }, [T, vis, area, terrainUrl, relief, hist, roadsUrl]);
 
   // выделение области: два щелчка по карте — противоположные углы
   useEffect(() => {
@@ -272,7 +294,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
         <h4>Слои {area && <small className="muted">— в области</small>}</h4>
         <div className="th-layers">{THEATRE_LAYERS.map((l) => counts && <label key={l.id} className={counts[l.id as TheatreLayerId] ? '' : 'empty'}>
           <input type="checkbox" checked={vis[l.id] ?? !['terrainShapes', 'height'].includes(l.id)} onChange={(e) => setVis((v) => ({ ...v, [l.id]: e.target.checked }))} />
-          <span>{l.title}</span><small>{l.id === 'terrain' ? (counts.terrain ? 'есть' : 'нет') : l.id === 'height' ? (relief ? `${Math.round(relief.min)}…${Math.round(relief.max)} м` : 'нет') : counts[l.id as TheatreLayerId]}</small>
+          <span>{l.title}{l.id === 'roads' && T?.roadGrid ? <small className="muted"> + растр по карте</small> : null}</span><small>{l.id === 'terrain' ? (counts.terrain ? 'есть' : 'нет') : l.id === 'height' ? (relief ? `${Math.round(relief.min)}…${Math.round(relief.max)} м` : 'нет') : counts[l.id as TheatreLayerId]}</small>
           {l.geo && counts[l.id as TheatreLayerId] > 0 && <button className="link" title="Скачать слой (GeoJSON) по области" onClick={() => save(`${T!.id}-${l.id}.geojson`, JSON.stringify(layerGeoJSON(T!, l.id as TheatreLayerId, b!)), 'application/geo+json')}>↓</button>}
           {l.id === 'terrain' && counts.terrain > 0 && <button className="link" title="Растр местности по области: PNG, файл привязки .pgw, легенда" onClick={pngTerrain}>↓</button>}
           {l.id === 'height' && counts.height > 0 && <button className="link" title="Высоты по области: PNG в оттенках серого (min…max м — в легенде), .pgw, легенда, и CSV-сетка высот" onClick={pngHeight}>↓</button>}

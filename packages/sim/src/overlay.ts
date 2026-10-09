@@ -241,3 +241,64 @@ function codesRle(a: string[]): string {
   for (let i = 0; i < a.length;) { let j = i; while (j < a.length && a[j] === a[i]) j++; s += (j - i > 1 ? j - i : '') + a[i]; i = j; }
   return s;
 }
+
+/** Сравнение дорог исторической карты и театра в охвате карты (по клеткам поправки). */
+export interface RoadComparison {
+  bbox: [number, number, number, number]; cols: number; rows: number;
+  /** 0 — нет дороги, 1 — есть и там и там, 2 — только на карте, 3 — только в театре. */
+  cells: Uint8Array;
+  stats: { covered: number; map: number; theatre: number; both: number; mapOnly: number; theatreOnly: number };
+  /** Клетка ≈ км (для перевода клеток в длину дорог). */
+  cellKm: number;
+  /** Дороги театра (линии с названием), которых на карте почти нет: послевоенные или неверно распознанные. */
+  absent: { name: string; kind: string; km: number; share: number }[];
+}
+
+export function compareRoads(T: TheatreData, ov: OverlayResult, o: { road?: string; highway?: string }): RoadComparison {
+  const N = ov.cols * ov.rows;
+  const cov = decodeMask(ov.covered, N);
+  const m = new Uint8Array(N);
+  for (const k of [o.road, o.highway]) if (k && ov.masks[k]) { const x = decodeMask(ov.masks[k], N); for (let i = 0; i < N; i++) if (x[i]) m[i] = 1; }
+  const [w, s, e, n] = ov.bbox, dl = (e - w) / ov.cols, da = (n - s) / ov.rows;
+  const cellOf = (lng: number, lat: number) => { const c = Math.floor((lng - w) / dl), r = Math.floor((n - lat) / da); return c < 0 || r < 0 || c >= ov.cols || r >= ov.rows ? -1 : r * ov.cols + c; };
+  const t = new Uint8Array(N);
+  const absent: RoadComparison['absent'] = [];
+  const kmPerDeg = 111.32 * Math.cos((((s + n) / 2) * Math.PI) / 180);
+  for (const rd of T.roads) {
+    if (rd.kind === 'rail') continue;
+    const seen = new Set<number>();
+    for (let k = 1; k < rd.line.length; k++) {
+      const [a, b] = [rd.line[k - 1], rd.line[k]];
+      const steps = Math.max(1, Math.ceil(Math.max(Math.abs(b[0] - a[0]) / dl, Math.abs(b[1] - a[1]) / da) * 3));
+      for (let q = 0; q <= steps; q++) { const i = cellOf(a[0] + ((b[0] - a[0]) * q) / steps, a[1] + ((b[1] - a[1]) * q) / steps); if (i >= 0 && cov[i]) { t[i] = 1; seen.add(i); } }
+    }
+    if (rd.name && seen.size >= 3) {
+      // дорога «есть на карте», если рядом (в соседней клетке) есть дорога карты
+      let miss = 0;
+      for (const i of seen) { const c = i % ov.cols, r = Math.floor(i / ov.cols); let near = false; for (let dr = -1; dr <= 1 && !near; dr++) for (let dc = -1; dc <= 1 && !near; dc++) { const cc = c + dc, rr = r + dr; if (cc >= 0 && rr >= 0 && cc < ov.cols && rr < ov.rows && m[rr * ov.cols + cc]) near = true; } if (!near) miss++; }
+      const share = miss / seen.size;
+      if (share >= 0.7) absent.push({ name: rd.name, kind: rd.kind, km: +(seen.size * Math.min(dl * kmPerDeg, da * 110.57)).toFixed(1), share: +share.toFixed(2) });
+    }
+  }
+  if (T.roadGrid) {
+    const g = T.roadGrid, [gw, gs, ge, gn] = g.bbox, codes = rleCodes(g.rle, g.cols * g.rows);
+    for (let r = 0; r < ov.rows; r++) for (let c = 0; c < ov.cols; c++) {
+      const i = r * ov.cols + c; if (!cov[i]) continue;
+      const lng = w + (c + 0.5) * dl, lat = n - (r + 0.5) * da;
+      const gc = Math.floor(((lng - gw) / (ge - gw)) * g.cols), gr = Math.floor(((gn - lat) / (gn - gs)) * g.rows);
+      if (gc >= 0 && gr >= 0 && gc < g.cols && gr < g.rows && codes[gr * g.cols + gc] !== 'n') t[i] = 1;
+    }
+  }
+  const cells = new Uint8Array(N);
+  const st = { covered: 0, map: 0, theatre: 0, both: 0, mapOnly: 0, theatreOnly: 0 };
+  for (let i = 0; i < N; i++) {
+    if (!cov[i]) continue;
+    st.covered++;
+    if (m[i]) st.map++;
+    if (t[i]) st.theatre++;
+    cells[i] = m[i] && t[i] ? 1 : m[i] ? 2 : t[i] ? 3 : 0;
+    if (cells[i] === 1) st.both++; else if (cells[i] === 2) st.mapOnly++; else if (cells[i] === 3) st.theatreOnly++;
+  }
+  absent.sort((a, b) => b.km - a.km);
+  return { bbox: ov.bbox, cols: ov.cols, rows: ov.rows, cells, stats: st, cellKm: Math.sqrt(dl * kmPerDeg * da * 110.57), absent: absent.slice(0, 8) };
+}

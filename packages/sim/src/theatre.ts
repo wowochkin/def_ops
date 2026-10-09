@@ -290,7 +290,8 @@ export class Theatre {
    * клеток) плюс переправа: большая река без моста непроходима для техники,
    * пешим — +riverCrossHours; малая — треть этого.
    */
-  route(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, extraCost?: (i: number) => number): { path: LngLat[]; hours: number; cells: number[] } | null {
+  /** prefer — множитель времени клетки только для выбора пути (разброс путей), на время движения не влияет. */
+  route(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, extraCost?: (i: number) => number, prefer?: (i: number) => number): { path: LngLat[]; hours: number; cells: number[] } | null {
     const s = this.indexOf(from), g = this.indexOf(to);
     if (s < 0 || g < 0) return null;
     if (s === g) return { path: [from, to], hours: 0, cells: [s] };
@@ -326,7 +327,7 @@ export class Theatre {
         const v1 = this.speedKmh(ni, mob, profile, rules.movementScale ?? 1, time);
         if (v1 <= 0 || v0 <= 0) continue;
         const d = (dr && dc ? SQRT2 : 1) * this.cellKm;
-        const cost = d / ((v0 + v1) / 2) + crossCost(ni) + (extraCost ? extraCost(ni) : 0);
+        const cost = (d / ((v0 + v1) / 2)) * (prefer ? prefer(ni) : 1) + crossCost(ni) + (extraCost ? extraCost(ni) : 0);
         if (!Number.isFinite(cost)) continue;
         const ng = gScore[cur] + cost;
         if (ng < gScore[ni]) { gScore[ni] = ng; came[ni] = cur; heap.push(ni, ng + h(ni)); }
@@ -386,15 +387,17 @@ export class Theatre {
     return !!f && time >= f.from && time < f.until;
   }
 
-  advance(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, hours: number, extraCost?: (i: number) => number):
+  advance(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, hours: number, extraCost?: (i: number) => number, prefer?: (i: number) => number):
     { position: LngLat; km: number; arrived: boolean; path: LngLat[]; trail: LngLat[] } | null {
-    const r = this.route(from, to, mob, profile, rules, time, extraCost);
+    const r = this.route(from, to, mob, profile, rules, time, extraCost, prefer);
     if (!r) return null;
-    if (r.hours <= hours) return { position: to, km: pathKm(this, r.path), arrived: true, path: r.path, trail: r.path };
+    // с разбросом путей r.hours — «предпочтительное» время, настоящее считается по клеткам ниже
+    if (!prefer && r.hours <= hours) return { position: to, km: pathKm(this, r.path), arrived: true, path: r.path, trail: r.path };
     // по клеткам: тратим время, пока хватает; trail — пройденный путь
     let left = hours, km = 0;
     let pos = from;
     const trail: LngLat[] = [from];
+    let stopped = false;
     for (let k = 1; k < r.cells.length; k++) {
       const a = r.cells[k - 1], b = r.cells[k];
       const pa = this.proj.toLL(this.cellCenter(a % this.cols, Math.floor(a / this.cols)));
@@ -405,12 +408,13 @@ export class Theatre {
       const cross = (!rv || this.bridgeOpen(b, time) ? 0 : rv === 2 ? rules.riverCrossHours : rules.riverCrossHours / 3) + (extraCost ? extraCost(b) : 0);
       const cost = d / v + cross;
       if (cost > left) {
-        if (cross && left < cross) break; // переправа не закончена — стоим у реки
+        if (cross && left < cross) { stopped = true; break; } // переправа не закончена — стоим у реки
         const t = Math.max(0, (left - cross) / (d / v));
         const xa = this.proj.toXY(pa), xb = this.proj.toXY(pb);
         pos = this.proj.toLL([xa[0] + (xb[0] - xa[0]) * t, xa[1] + (xb[1] - xa[1]) * t]);
         km += d * t;
         left = 0;
+        stopped = true;
         break;
       }
       left -= cost;
@@ -418,6 +422,8 @@ export class Theatre {
       pos = pb;
       if (k < r.cells.length - 1) trail.push(pb);
     }
+    // времени хватило на весь путь (с разбросом путей это выясняется только здесь)
+    if (!stopped) return { position: to, km: pathKm(this, r.path), arrived: true, path: r.path, trail: r.path };
     trail.push(pos);
     return { position: pos, km, arrived: false, path: r.path, trail: simplify(trail) };
   }
@@ -426,8 +432,8 @@ export class Theatre {
    * Пройти km по лучшему пути к точке to (по дорогам и улицам, через мосты): продвижение в бою и отход идут
    * не напрямик, а путём, которым прошли бы войска. null — пути нет.
    */
-  walk(from: LngLat, to: LngLat, km: number, mob: Mobility, profile: SideProfile, rules: Rules, time: string): { position: LngLat; km: number; trail: LngLat[] } | null {
-    const r = this.route(from, to, mob, profile, rules, time);
+  walk(from: LngLat, to: LngLat, km: number, mob: Mobility, profile: SideProfile, rules: Rules, time: string, prefer?: (i: number) => number): { position: LngLat; km: number; trail: LngLat[] } | null {
+    const r = this.route(from, to, mob, profile, rules, time, undefined, prefer);
     if (!r || !Number.isFinite(r.hours)) return null;
     const cut = cutAt(this, r.path, km);
     return { position: cut.trail[cut.trail.length - 1], km: cut.km, trail: cut.trail };

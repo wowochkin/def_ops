@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MapSource } from '@def-ops/core';
-import { applyOverlay, decodeMask, hsv, legendFromSamples, OVERLAY_COLORS, overlayGrid, tilesFor, tileXY, type BBox, type OverlayApply, type OverlayLegend, type OverlayResult, type TheatreData } from '@def-ops/sim';
+import { applyOverlay, compareRoads, decodeMask, hsv, legendFromSamples, OVERLAY_COLORS, overlayGrid, tilesFor, tileXY, type BBox, type OverlayApply, type OverlayLegend, type OverlayResult, type RoadComparison, type TheatreData } from '@def-ops/sim';
 import type { MapEngine } from './engine/types';
 import type { Basemaps } from './shared';
 import { cartography } from './MapsPanel';
@@ -35,6 +35,19 @@ function maskImage(ov: OverlayResult): string {
   ctx.putImageData(img, 0, 0);
   return c.toDataURL('image/png');
 }
+
+const CMP_COLORS: Record<number, [number, number, number, number]> = { 1: [70, 70, 70, 230], 2: [240, 140, 40, 255], 3: [70, 120, 220, 230] };
+/** Сравнение дорог — картинка: серое — совпадает, оранжевое — только на карте, синее — только в театре. */
+function compareImage(c: RoadComparison): string {
+  const cv = document.createElement('canvas');
+  cv.width = c.cols; cv.height = c.rows;
+  const ctx = cv.getContext('2d')!;
+  const img = ctx.createImageData(c.cols, c.rows);
+  for (let i = 0; i < c.cells.length; i++) if (c.cells[i]) img.data.set(CMP_COLORS[c.cells[i]], i * 4);
+  ctx.putImageData(img, 0, 0);
+  return cv.toDataURL('image/png');
+}
+const km = (cells: number, c: RoadComparison) => Math.round(cells * c.cellKm);
 
 export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   T: TheatreData; area: BBox | null; eng: MapEngine | null; bm: Basemaps;
@@ -72,6 +85,10 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const cls = legend ? legend.cells.map((c) => c.cls) : [];
   const [opt, setOpt] = useState<{ roads: boolean; replace: 'road' | 'all' | false; terrain: boolean; demote: boolean }>({ roads: true, replace: 'road', terrain: true, demote: false });
   const [newId, setNewId] = useState('');
+  const [view, setView] = useState<'classes' | 'roads'>('classes');
+  const roadCls = cls.includes('road') || cls.includes('highway');
+  const cmp = useMemo(() => (res && roadCls ? compareRoads(T, res.ov, { road: cls.includes('road') ? 'road' : undefined, highway: cls.includes('highway') ? 'highway' : undefined }) : null), [res, T, roadCls]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (res) onPreview({ url: view === 'roads' && cmp ? compareImage(cmp) : maskImage(res.ov), bbox: res.ov.bbox }); }, [view, cmp]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setNewId(`${T.id.replace(/-hist.*$/, '')}-hist`); }, [T]);
 
   // образец цвета: щелчок по карте — пиксель тайла исторической карты под курсором
@@ -172,7 +189,20 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
       {res && <div className="hist-res">
         <b>Распознано: тайлов {res.tiles}{res.missing ? ` (нет ${res.missing})` : ''}, сетка {res.ov.cols}×{res.ov.rows}</b>
         <div className="hist-stats">{Object.entries(res.ov.stats).map(([k, n]) => <span key={k}><i style={{ background: `rgb(${(OVERLAY_COLORS[k] ?? [200, 0, 200]).join(',')})` }} />{RU[k] ?? k}: {n} кл.</span>)}</div>
-        <p className="muted small">На карте — клетки по классам. Мало или много — поправьте образцы, допуск или порог и распознайте снова.</p>
+        {cmp && <div className="hist-roads">
+          <div className="row"><b>Дороги: карта и театр</b><span className="grow" />
+            <div className="seg"><button className={view === 'classes' ? 'on' : ''} onClick={() => setView('classes')}>классы</button><button className={view === 'roads' ? 'on' : ''} onClick={() => setView('roads')}>сравнение дорог</button></div></div>
+          <table className="hist-tab"><tbody>
+            <tr><td>Клеток с дорогой на карте</td><td>{cmp.stats.map}</td><td className="muted">≈ {km(cmp.stats.map, cmp)} км</td></tr>
+            <tr><td>Клеток с дорогой в театре сейчас</td><td>{cmp.stats.theatre}</td><td className="muted">≈ {km(cmp.stats.theatre, cmp)} км</td></tr>
+            <tr><td><i className="sw" style={{ background: 'rgb(70,70,70)' }} />совпадают</td><td>{cmp.stats.both}</td><td className="muted">{cmp.stats.theatre ? Math.round((cmp.stats.both / cmp.stats.theatre) * 100) : 0} % дорог театра есть на карте</td></tr>
+            <tr><td><i className="sw" style={{ background: 'rgb(240,140,40)' }} />только на карте</td><td>{cmp.stats.mapOnly}</td><td className="muted">дороги того времени, которых в театре нет, — добавятся</td></tr>
+            <tr><td><i className="sw" style={{ background: 'rgb(70,120,220)' }} />только в театре</td><td>{cmp.stats.theatreOnly}</td><td className="muted">послевоенные или не распознанные — {opt.roads && opt.replace ? (opt.replace === 'all' ? 'уберутся (и шоссе)' : 'дороги уберутся, шоссе останутся') : 'останутся'}</td></tr>
+          </tbody></table>
+          {cmp.absent.length > 0 && <div className="small"><span className="muted">Дороги театра, которых на карте нет (≥70 % длины):</span> {cmp.absent.map((a) => `${a.name} (${a.km} км)`).join('; ')}</div>}
+          {cmp.stats.map > 0 && cmp.stats.both / Math.max(1, cmp.stats.map) < 0.25 && <div className="warn small">Совпадений мало: возможно, распознаны не дороги (надписи, реки, сетка) — проверьте образцы цвета на «сравнении дорог».</div>}
+        </div>}
+        <p className="muted small">На карте — {view === 'roads' && cmp ? 'сравнение дорог: серое — совпадают, оранжевое — только на карте, синее — только в театре' : 'клетки по классам'}. Мало или много — поправьте образцы, допуск или порог и распознайте снова.</p>
         {(cls.includes('road') || cls.includes('highway')) && <label><input type="checkbox" checked={opt.roads} onChange={(e) => setOpt({ ...opt, roads: e.target.checked })} /> дороги карты — в растр дорог театра</label>}
         {opt.roads && (cls.includes('road') || cls.includes('highway')) && <label className="th-f inl">Современные дороги в охвате карты <select value={String(opt.replace)} onChange={(e) => setOpt({ ...opt, replace: e.target.value === 'false' ? false : (e.target.value as 'road' | 'all') })}>
           <option value="road">убрать дороги (шоссе оставить)</option><option value="all">убрать и шоссе</option><option value="false">оставить</option></select></label>}

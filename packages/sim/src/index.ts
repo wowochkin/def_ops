@@ -19,5 +19,5 @@ export { describeRules, describeProfile, diffRules, rulesOrigin, type ParamRow }
 export { validateOperation, detectPart, defaultCatalog, defaultLive, type OperationPackage, type CatalogEntry, type LiveSetup, type PackageIssue } from './operation';
 export { THEATRE_LAYERS, layerCounts, cropGrid, cropTheatre, layerGeoJSON, recipeFor, theatreToDocument, type BBox, type TheatreLayerId } from './theatre-io';
 export { applyInfrastructure, resolveInfra, locatePlace, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, type InfraRecord, type InfraKind, type InfraState, type InfraResolution } from './infrastructure';
-export { OverlayAccumulator, applyOverlay, legendFromSamples, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
+export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, legendFromSamples, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
 export { RoadNet, roadNet, visualPath } from './roadnet';

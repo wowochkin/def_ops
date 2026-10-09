@@ -73,6 +73,20 @@ describe('местность и маршрут', () => {
     expect(w.km).toBeGreaterThan(16); // длиннее прямой (16 км): крюк к мосту
   });
 
+  it('разброс путей: при routeVariety разные seed — разные пути, один seed — тот же путь', () => {
+    const run = (seed: number, v: number) => {
+      const ctx = ctxWith([su('a1', -28, -15, { posture: 'march' })], [order('a1', 'regroup', 'east')]);
+      ctx.rules = { ...ctx.rules, routeVariety: v };
+      let st = createState(ctx, seed);
+      for (let k = 0; k < 3; k++) st = step(st, ctx);
+      return JSON.stringify(st.formations[0].position);
+    };
+    const many = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((sd) => run(sd, 0.4)));
+    expect(many.size).toBeGreaterThan(1);
+    expect(run(3, 0.4)).toBe(run(3, 0.4));
+    expect(new Set([1, 2, 3, 4].map((sd) => run(sd, 0))).size).toBe(1);
+  });
+
   it('по шоссе быстрее, чем лесом', () => {
     const ctx = ctxWith([]);
     const p = ctx.profiles['rkka-1945'];

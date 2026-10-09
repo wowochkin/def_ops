@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadTheatre } from '../src/data';
 import { applyInfrastructure, infraEffect, locatePlace, resolveInfra, type InfraRecord } from '../src/infrastructure';
-import { applyOverlay, decodeMask, legendFromSamples, maskRle, OverlayAccumulator, overlayGrid, tilesFor, tileXY } from '../src/overlay';
+import { applyOverlay, compareRoads, decodeMask, legendFromSamples, maskRle, OverlayAccumulator, overlayGrid, tilesFor, tileXY } from '../src/overlay';
 import { decodeGrid, Theatre } from '../src/theatre';
 import { loadProfile, loadRules, loadScenario, loadHistory } from '../src/data';
 import { contextFrom } from '../src/source';
@@ -90,6 +90,11 @@ describe('исторический слой по карте', () => {
     expect(ov.stats.road).toBeGreaterThan(10);
     expect(ov.stats.water).toBeGreaterThan(0);
     expect(decodeMask(maskRle(new Uint8Array([1, 1, 0, 1])), 4)).toEqual(new Uint8Array([1, 1, 0, 1]));
+    const cmp = compareRoads(data, ov, { road: 'road' });
+    expect(cmp.stats.map).toBe(ov.stats.road);
+    expect(cmp.stats.both + cmp.stats.mapOnly).toBe(cmp.stats.map);
+    expect(cmp.stats.both + cmp.stats.theatreOnly).toBe(cmp.stats.theatre);
+    expect(cmp.stats.theatre).toBeGreaterThan(0);
     const { theatre, changes } = applyOverlay(data, ov, { road: 'road', water: 'water', replaceModernRoads: 'road' });
     expect(theatre.roadGrid?.rle).toMatch(/r/);
     expect(changes['клеток с дорогой карты']).toBeGreaterThan(10);

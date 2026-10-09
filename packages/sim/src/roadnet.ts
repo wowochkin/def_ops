@@ -8,6 +8,7 @@
 import type { LngLat } from '@def-ops/core';
 import type { XY } from './geo';
 import type { Theatre } from './theatre';
+import { TERRAIN_CLASSES } from './types';
 
 interface Snap { u: number; v: number; p: XY }
 
@@ -169,12 +170,18 @@ export function visualPath(T: Theatre, trail: LngLat[]): LngLat[] {
   // начало и конец могут быть внутри квартала (положение — центр участка): выход к ближайшей улице, не дальше
   // трети пути и километра
   const edgeKm = Math.max(reach, Math.min(1, trailKm * 0.35));
-  const sa = net.snap(xy[0], edgeKm), sb = net.snap(xy[xy.length - 1], edgeKm);
+  // целиком по улицам — только там, где войска и в расчёте шли дорогами или городом: полем, лесом, болотом —
+  // как в расчёте (по участкам с дорогой — по дороге), чтобы показ не прятал выбор пути вне дорог
+  const cellOf = pts.map((p) => T.indexOf(T.proj.toLL(p)));
+  const share = (f: (i: number) => boolean) => cellOf.filter((i) => i >= 0 && f(i)).length / pts.length;
+  const urban = TERRAIN_CLASSES.indexOf('urban');
+  const streetwise = share((i) => T.terrain[i] === urban) >= 0.5 || share((i) => T.road[i] > 0) >= 0.6;
+  const sa = streetwise ? net.snap(xy[0], edgeKm) : null, sb = streetwise ? net.snap(xy[xy.length - 1], edgeKm) : null;
   if (sa && sb) {
     const whole = net.between(sa, sb, trailKm * 1.5);
     if (whole) return douglas(dedupe([xy[0], ...whole, xy[xy.length - 1]]), tol).map((p) => T.proj.toLL(p));
   }
-  const snaps = pts.map((p) => { const i = T.indexOf(T.proj.toLL(p)); return i >= 0 && T.road[i] ? net.snap(p, reach) : null; });
+  const snaps = pts.map((p, k) => { const i = cellOf[k]; return i >= 0 && T.road[i] ? net.snap(p, reach) : null; });
   // куски: по линиям дорог — как есть; вне линий (поле, дороги только растром) — по клеткам, сглаженные
   const out: XY[] = [];
   let free: XY[] = [pts[0]];
