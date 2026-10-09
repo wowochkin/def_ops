@@ -115,12 +115,16 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const show = () => {
     if (!map) return;
     bm.setId(`local-${map.id}`);
-    if (!eng || empty) return;
-    const { width } = eng.size();
-    const fit = Math.log2((360 * width) / (512 * Math.max(1e-6, box[2] - box[0])));
+    if (!eng) return;
+    // карта вне театра или области — показать саму карту и сказать почему распознавать нечего
+    if (empty) onNotice(`Карта «${map.name}» не покрывает ${area ? 'выделенную область' : `театр «${T.name}»`} — показан её охват. Выберите театр или область на ней.`);
+    const bx: BBox = empty ? map.bounds : box;
+    const { width, height } = eng.size();
+    const kk = Math.cos((((bx[1] + bx[3]) / 2) * Math.PI) / 180);
+    const fit = Math.min(Math.log2((360 * width) / (512 * Math.max(1e-6, bx[2] - bx[0]))), Math.log2((360 * height * kk) / (512 * Math.max(1e-6, bx[3] - bx[1])))) - 0.2;
     // уровень движка — для тайлов 512 px: тайлы 256 px карты видны с уровня minzoom − 1
     const zz = Math.min(map.maxzoom - 1, Math.max(map.minzoom - 0.7, fit));
-    eng.setView({ center: [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2], zoom: zz });
+    eng.setView({ center: [(bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2], zoom: zz });
   };
   const start = () => {
     if (!map || !legend || z == null) return;

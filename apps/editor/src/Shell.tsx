@@ -14,6 +14,9 @@ import { ModelingView } from './modeling/ModelingView';
 import { TheatreView } from './TheatreView';
 import * as kb from './kb/kb';
 import { MapsPanel } from './MapsPanel';
+import { MapView } from './MapView';
+import type { MapEngine } from './engine/types';
+import type { MapSource } from '@def-ops/core';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
 
@@ -79,24 +82,39 @@ export function Shell() {
 function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: ServerState; onOpenInEditor: (d: MapDocument) => void }) {
   const doc = useMemo(() => emptyDocument(), []);
   const [notice, setNotice] = useState<string | null>(null);
+  const [eng, setEng] = useState<MapEngine | null>(null);
   const [tab, setTab] = useState<'base' | 'theatres'>(() => (localStorage.getItem('def_ops.maps.tab') as 'base' | 'theatres') || 'base');
   const go = (t: 'base' | 'theatres') => { setTab(t); try { localStorage.setItem('def_ops.maps.tab', t); } catch { /* */ } };
   const tabs = <nav className="maps-tabs"><button className={tab === 'base' ? 'on' : ''} onClick={() => go('base')}>Подложки</button><button className={tab === 'theatres' ? 'on' : ''} onClick={() => go('theatres')}>Театры</button></nav>;
+  /** Вид — на охват карты: целиком в окне, не мельче её наименьшего уровня (тайлы 256 px видны с уровня движка minzoom − 1). */
+  const showArea = (m: MapSource) => {
+    if (!eng) return;
+    const { width, height } = eng.size();
+    const [w, s, e, n] = m.bounds;
+    const k = Math.cos((((s + n) / 2) * Math.PI) / 180);
+    const fit = Math.min(Math.log2((360 * width) / (512 * Math.max(1e-6, e - w))), Math.log2((360 * height * k) / (512 * Math.max(1e-6, n - s))));
+    eng.setView({ center: [(w + e) / 2, (s + n) / 2], zoom: Math.min(m.maxzoom - 1, Math.max(m.minzoom - 0.7, fit - 0.2)) });
+  };
   if (tab === 'theatres') return <div className="pane maps-pane">{tabs}<div className="maps-body"><TheatreView bm={bm} onOpenInEditor={onOpenInEditor} /></div></div>;
   return (
-    <div className="page">
+    <div className="pane maps-pane">
       {tabs}
-      <div className="page-in">
-        <h2>Карты-подложки</h2>
-        <p className="lead">Под знаками можно показать современную карту из интернета или свою: историческую карту, скан, тайловый архив. Локальные карты хранятся на сервере и работают без интернета.</p>
-        <div className="cols">
+      <div className="maps-base">
+        <aside className="maps-base-side">
+          <h2>Карты-подложки</h2>
+          <p className="muted small">Под знаками — современная карта из интернета или своя: историческая карта, скан, тайловый архив. Локальные карты хранятся на сервере и работают без интернета. Справа — как выглядит выбранная подложка.</p>
           <section className="card"><BasemapControls bm={bm} /></section>
           <section className="card">
-            <MapsPanel online={server.status === 'online' && server.services?.cartography === 'up'} doc={doc} selected={null} engine={null}
-              onShow={(m) => { bm.setId(`local-${m.id}`); setNotice(`Подложка: ${m.name}`); }} onMaps={bm.setLocalMaps} notify={setNotice} />
+            <MapsPanel online={server.status === 'online' && server.services?.cartography === 'up'} doc={doc} selected={null} engine={eng}
+              onShow={(m) => { bm.setId(`local-${m.id}`); showArea(m); setNotice(`Подложка: ${m.name}`); }} onArea={showArea} onMaps={bm.setLocalMaps} notify={setNotice} />
             {server.status !== 'online' && <p className="muted">Локальные карты требуют сервера: <code>npm run dev:services</code> или <code>./scripts/start-local.sh</code>.</p>}
           </section>
-        </div>
+        </aside>
+        <main className="maps-base-map">
+          <MapView doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null}
+            basemap={bm.current} basemapOpacity={bm.current ? 1 : bm.opacity} onEngineReady={setEng} onStatus={() => {}} time={null} newFromNow={false} />
+          {!bm.current && <div className="maps-base-hint">Подложка не выбрана — выберите слева или нажмите «подложить» у локальной карты.</div>}
+        </main>
         {notice && <div className="toast" onClick={() => setNotice(null)}>{notice}</div>}
       </div>
     </div>

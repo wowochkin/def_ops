@@ -64,6 +64,8 @@ interface Props {
   engine: MapEngine | null;
   /** Показать карту подложкой. */
   onShow: (m: MapSource) => void;
+  /** Показать район карты (вид на её охват); нет — центр охвата на уровне 12. */
+  onArea?: (m: MapSource) => void;
   /** Список карт изменился (для выбора подложки). */
   onMaps: (list: MapSource[]) => void;
   notify: (s: string) => void;
@@ -87,7 +89,7 @@ function viewBBox(engine: MapEngine | null): BBox | null {
   return b.map((v) => +v.toFixed(5)) as BBox;
 }
 
-export function MapsPanel({ online, doc, selected, engine, onShow, onMaps, notify }: Props) {
+export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMaps, notify }: Props) {
   const [maps, setMaps] = useState<MapSource[]>([]);
   const [jobs, setJobs] = useState<Record<string, MapJob>>({});
   const [form, setForm] = useState<null | 'xyz'>(null);
@@ -156,7 +158,7 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onMaps, notif
           </div>
           <div className="mi-btns">
             <button onClick={() => onShow(m)}>подложить</button>
-            <button onClick={() => engine?.setView({ center: [(m.bounds[0] + m.bounds[2]) / 2, (m.bounds[1] + m.bounds[3]) / 2], zoom: Math.max(m.minzoom, Math.min(m.maxzoom, 12)) })}>показать район</button>
+            <button disabled={!engine && !onArea} title={!engine && !onArea ? 'Здесь нет карты' : 'Вид — на охват карты'} onClick={() => onArea ? onArea(m) : engine?.setView({ center: [(m.bounds[0] + m.bounds[2]) / 2, (m.bounds[1] + m.bounds[3]) / 2], zoom: Math.max(m.minzoom, Math.min(m.maxzoom, 12)) })}>показать район</button>
             <button disabled={!ring} title={ring ? 'Граница карты — по выделенному контуру: за ней тайлы прозрачны' : 'Нарисуйте и выделите район (контур) — он станет границей карты'}
               onClick={async () => { if (!ring) return; try { await cartography.update(m.id, { coverage: ring }); notify(`Граница карты «${m.name}» задана`); reload(); } catch (e) { setErr((e as Error).message); } }}>
               граница = контур
