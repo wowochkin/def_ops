@@ -16,6 +16,8 @@ import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors
 import { BUILTIN_CATALOG, fullCatalog, onDataChange, sectorsOf } from './sim/userdata';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
+import { useCoverage } from './modeling/Coverage';
+import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { MapHover, withoutLabels } from './MapHover';
 
 const fmtDays = (d: number | null) => (d == null ? '—' : d > 0 ? `+${d}` : String(d));
@@ -170,6 +172,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             </button>
           ))}
         </div>
+        <ReplayCoverage op={scenario} />
         <div className="rp-form">
           <label>Правила
             <select value={rules} onChange={(e) => setRules(e.target.value)} disabled={!!busy}>
@@ -353,4 +356,12 @@ export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: st
       </div>}
     </div>
   );
+}
+
+/** Полнота материалов выбранной операции — перед расчётом. */
+function ReplayCoverage({ op }: { op: string }) {
+  const c = useCoverage(op);
+  if (!c) return null;
+  return <div className={`rp-cov l-${c.level}`} title="Подробно — «Моделирование» → «Операции» или «Знания» → «Полнота»">
+    Материалы операции: <b>{Math.round(c.score * 100)} %</b> — {COVERAGE_LEVEL[c.level]}</div>;
 }

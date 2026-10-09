@@ -1154,3 +1154,31 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .hist-tab td:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; padding-right: 8px; }
 .hist-tab .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 .warn { color: #8a5a00; }
+
+/* ───────────── полнота материалов ───────────── */
+.cov-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cov-h h4 { margin: 0; }
+.cov-total { font-size: 22px; font-variant-numeric: tabular-nums; }
+.cov-lvl { font-size: 12px; border-radius: 9px; padding: 1px 8px; }
+.l-enough.cov-lvl, .cov-badge.l-enough, .rp-cov.l-enough { background: #d8ecdc; color: #1f5b30; }
+.l-partial.cov-lvl, .cov-badge.l-partial, .rp-cov.l-partial { background: #f6e7c2; color: #6b4b00; }
+.l-little.cov-lvl, .cov-badge.l-little, .rp-cov.l-little { background: #f3d9d4; color: #7a231b; }
+.cov-total.l-enough { color: #1f5b30; } .cov-total.l-partial { color: #8a5a00; } .cov-total.l-little { color: #8c2a22; }
+.cov-groups { display: grid; gap: 2px; margin-top: 6px; }
+.cov-row { display: grid; grid-template-columns: 170px 1fr 52px minmax(0, 220px); align-items: center; gap: 10px; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 6px; padding: 5px 6px; cursor: pointer; }
+.cov-row:hover { background: #f4efe3; }
+.cov-t { font-weight: 600; font-size: 13px; }
+.cov-bar { height: 8px; background: #ece6d8; border-radius: 4px; overflow: hidden; }
+.cov-bar i { display: block; height: 100%; border-radius: 4px; }
+.cov-bar i.l-enough { background: #1baf7a; } .cov-bar i.l-partial { background: #eda100; } .cov-bar i.l-little { background: #eb6834; }
+.cov-n { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+.cov-items { padding: 4px 6px 10px 12px; border-left: 2px solid #e2dccd; margin: 2px 0 6px 8px; display: grid; gap: 3px; max-height: 420px; overflow: auto; }
+.cov-i { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 12.5px; border-bottom: 1px dashed #ece6d8; padding: 2px 0; }
+.cov-it { min-width: 220px; flex: 1 1 260px; }
+.cov-keys { display: inline-flex; flex-wrap: wrap; gap: 3px; }
+.cov-keys i { font-style: normal; font-size: 10.5px; border-radius: 8px; padding: 0 6px; background: #ece6d8; color: #8a8270; }
+.cov-keys i.ok { background: #d8ecdc; color: #1f5b30; }
+.cov-badge { font-size: 10.5px; border-radius: 9px; padding: 1px 7px; }
+.rp-cov { font-size: 12px; border-radius: 6px; padding: 5px 8px; margin: 6px 0; }
+.kb-cov { padding: 16px; overflow: auto; max-width: 1100px; margin: 0 auto; width: 100%; }
+@media (max-width: 700px) { .cov-row { grid-template-columns: 1fr 60px; } .cov-row .cov-bar, .cov-row small { grid-column: 1 / -1; } }

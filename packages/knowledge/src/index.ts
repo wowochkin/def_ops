@@ -5,3 +5,4 @@ export { chunkText, extractMessages, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, q
 export { gather, qaMessages, gameReference, type Source } from './qa';
 export * from './embed';
 export * from './operations';
+export * from './coverage';

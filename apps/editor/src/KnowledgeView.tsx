@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { category, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
 import { kbOperations, onDataChange } from './sim/userdata';
+import { CoveragePanel } from './modeling/Coverage';
 import * as kb from './kb/kb';
 import { QWEN_EMBED } from './kb/vectors';
 import type { Llm } from './shared';
@@ -14,7 +15,7 @@ import { ModelPicker } from './ModelPicker';
 import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
 
-type Tab = 'browse' | 'docs';
+type Tab = 'browse' | 'docs' | 'coverage';
 interface QA { id: number; mode: 'ask' | 'lecture'; q: string; text: string; thinking: string; model?: string; seconds?: number; search?: string; stage?: 'search' | 'model'; sources: Source[]; done: boolean; error?: string }
 
 export function KnowledgeView({ llm }: { llm: Llm }) {
@@ -38,6 +39,7 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
         <nav className="kb-tabs">
           <button className={tab === 'browse' ? 'on' : ''} onClick={() => setTab('browse')}>Материалы</button>
           <button className={tab === 'docs' ? 'on' : ''} onClick={() => setTab('docs')}>Документы{pending ? <i className="kb-badge">{pending}</i> : null}</button>
+          <button className={tab === 'coverage' ? 'on' : ''} onClick={() => setTab('coverage')} title="Полнота материалов операции по каркасу">Полнота</button>
         </nav>
         <label className="kb-op" title="Материалы операции: записи из разбора её документов и относящиеся к ней по периоду и рубрикам">Операция
           <select value={op} onChange={(e) => setOp(e.target.value)}><option value="">все материалы</option><option value="general">общие (без операции)</option>
@@ -46,6 +48,8 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
       </div>
       {!s.ready ? <div className="kb-wait"><span className="spinner" /> загрузка базы…</div>
         : tab === 'browse' ? <Browse s={scoped} sel={sel} open={open} back={hist.length ? () => { setSel(hist[hist.length - 1]); setHist((h) => h.slice(0, -1)); } : null} llm={llm} />
+        : tab === 'coverage' ? <div className="kb-cov">{op && op !== 'general' ? <CoveragePanel op={op} title={ops.find((o) => o.id === op)?.title ?? op} />
+          : <div className="muted kb-wait">Выберите операцию вверху («Операция») — полнота считается по её данным: формирования, пункты, рубежи, реки, события.</div>}</div>
         : <Docs s={scoped} llm={llm} open={open} op={op && op !== 'general' ? ops.find((o) => o.id === op) ?? null : null} ops={ops} />}
     </div>
   );

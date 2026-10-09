@@ -9,6 +9,8 @@ import { areaTitle, defaultCatalog, defaultLive, detectPart, mergeEvaluations, v
 import { BUILTIN, BUILTIN_CATALOG, deleteOperation, getData, getInfra, saveOperation, type UserOperation } from '../sim/userdata';
 import type { Llm } from '../shared';
 import { Materials } from './Materials';
+import { CoveragePanel, useCoverage } from './Coverage';
+import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { download, getPool, pct, type SimData } from './data';
 
 const liveFiles = import.meta.glob('../../../../services/staff/live/*.json', { import: 'default' });
@@ -153,6 +155,7 @@ function BuiltinCard({ id, title, detail, llm }: { id: string; title: string; de
     <div className="mdl-h"><div><h3>{title}</h3><span className="muted">{id} · операция стенда · {detail}</span></div>
       <div className="mdl-acts"><button onClick={() => void builtinPackage(id).then(async (p) => download(`${id}.operation.json`, JSON.stringify({ ...p, infrastructure: await getInfra(id) })))}>Скачать пакет</button></div></div>
     <p className="muted">Сценарий, театр и история — из сборки стенда. Здесь — материалы операции (документы → база знаний и сведения об инфраструктуре) и состояние инфраструктуры, которое ложится поверх театра в расчёте и в игре.</p>
+    <CoveragePanel op={id} title={title} />
     <Materials op={id} title={title} theatre={T} llm={llm} />
   </>;
 }
@@ -163,6 +166,7 @@ function OperationCard({ op, d, llm, known, busy, update, control, onCompare, on
   onCompare: (scenario: string, rules: string[]) => void; onCalibrate: (scenario: string) => void; remove: () => void;
 }) {
   const P = op.pkg, S = P.scenario;
+  const cov = useCoverage(op.id);
   const cat: CatalogEntry = P.catalog ?? defaultCatalog(P);
   const live: LiveSetup = P.live ?? defaultLive(P);
   const issues = validateOperation({ ...P, catalog: cat, live }, known);
@@ -210,6 +214,7 @@ function OperationCard({ op, d, llm, known, busy, update, control, onCompare, on
         <p className="muted small">Профиль стороны для промпта модели (доктрина, стиль) — из services/staff/profiles/&lt;профиль&gt;.md; для своих профилей — без него.</p>
       </section>
     </div>
+    <CoveragePanel op={op.id} title={cat.title} />
     <section className="mdl-card">
       <h4>Контрольный прогон и подготовка</h4>
       {op.check ? <p>Прогон {op.check.at.slice(0, 10)} (3 × правила сценария «{S.rules}»): положений в допуске <b>{pct(op.check.within)}</b>, медиана превышения <b>{op.check.medianExcessKm} км</b>, события в ±2 сут: <b>{op.check.eventsHit} из {op.check.eventsTotal}</b>.</p>
@@ -220,7 +225,7 @@ function OperationCard({ op, d, llm, known, busy, update, control, onCompare, on
         <button disabled={errors > 0} onClick={() => onCompare(op.id, cat.rules.map((r) => r.id).slice(0, 4))}>Сравнить наборы →</button>
         <span className="grow" />
         {op.ready ? <button onClick={() => void update(op, {}, { ready: false })}>Снять с переигровки</button>
-          : <button className="primary" disabled={errors > 0 || !op.check} title={!op.check ? 'сначала контрольный прогон' : ''} onClick={() => void update(op, { catalog: cat, live }, { ready: true })}>Подготовить к переигровке ✓</button>}
+          : <button className="primary" disabled={errors > 0 || !op.check} title={!op.check ? 'сначала контрольный прогон' : ''} onClick={() => { if (cov && cov.level === 'little' && !confirm(`Материалов по операции мало: ${Math.round(cov.score * 100)} % (${COVERAGE_LEVEL[cov.level]}). Всё равно подготовить к переигровке?`)) return; void update(op, { catalog: cat, live }, { ready: true }); }}>Подготовить к переигровке ✓</button>}
       </div>
       {op.ready && <p className="ok">Операция в «Переигровке»: расчёт, карта, принятие командования, советник, разбор.</p>}
     </section>
