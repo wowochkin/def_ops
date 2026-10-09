@@ -11,6 +11,7 @@ import { checkEvents, type History, type RunResult, type Snapshot } from './hist
 import { power } from './rules';
 import { addHours, onMap, profileOf, type SimContext } from './step';
 import type { Formation } from './types';
+import type { Theatre } from './theatre';
 
 export interface PublishOptions {
   name?: string;
@@ -123,7 +124,15 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       const sym = createFeature('symbol', preset, { at: frames[0].u!.at, layerId: side === 'own' ? 'sim-own' : 'sim-enemy' }, 1, side) as SymbolFeature;
       sym.name = f.name;
       sym.style = { ...sym.style, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 10, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
-      sym.keyframes = frames.map((x) => ({ t: x.t, at: x.u!.at, note: `${x.u!.personnel.toLocaleString('ru')} чел., ${x.u!.tanks} танков; ${POSTURE_RU[x.u!.posture] ?? x.u!.posture}; боеприпасы ${x.u!.ammo ?? '?'} бк${x.u!.cutOff ? '; ОТРЕЗАНО от снабжения' : ''}` }));
+      const note = (u: NonNullable<(typeof frames)[number]['u']>) => `${u.personnel.toLocaleString('ru')} чел., ${u.tanks} танков; ${POSTURE_RU[u.posture] ?? u.posture}; боеприпасы ${u.ammo ?? '?'} бк${u.cutOff ? '; ОТРЕЗАНО от снабжения' : ''}`;
+      // между ходами знак идёт пройденным путём (по дорогам и улицам), а не по прямой: промежуточные кадры — по точкам пути
+      sym.keyframes = frames.flatMap((x, k) => {
+        const end = { t: x.t, at: x.u!.at, note: note(x.u!) };
+        const prev = k > 0 ? frames[k - 1] : null;
+        const path = x.u!.path;
+        if (!prev || !path || path.length < 3) return [end];
+        return [...pathFrames(T, path, prev.t, x.t).map((q) => ({ ...q, note: note(prev.u!) })), end];
+      });
       const gone = frames.find((x) => x.u!.destroyed);
       const last = frames[frames.length - 1];
       const next = run.snapshots[last.i + 1];
@@ -264,6 +273,22 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
 /* ------------------------- уровни обобщения карты ------------------------- */
 
 /** Название фронта или группы армий для карты: «1-й Белорусский фронт», «Группа армий «Висла»» — без пояснений в скобках. */
+/** Промежуточные кадры: вершины пути (кроме концов), время — пропорционально пройденному расстоянию. */
+function pathFrames(T: Theatre, path: LngLat[], t0: string, t1: string): { t: string; at: LngLat }[] {
+  const xy = path.map((p) => T.proj.toXY(p));
+  const seg = xy.slice(1).map((p, i) => Math.hypot(p[0] - xy[i][0], p[1] - xy[i][1]));
+  const total = seg.reduce((a, b) => a + b, 0);
+  if (total <= 0) return [];
+  const a = Date.parse(`${t0}Z`), b = Date.parse(`${t1}Z`);
+  const out: { t: string; at: LngLat }[] = [];
+  let run = 0;
+  for (let i = 1; i < path.length - 1; i++) {
+    run += seg[i - 1];
+    out.push({ t: new Date(a + ((b - a) * run) / total).toISOString().slice(0, 16), at: path[i] });
+  }
+  return out;
+}
+
 function frontName(name: string): string {
   return name.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 }

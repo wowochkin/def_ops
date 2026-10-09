@@ -314,7 +314,8 @@ export interface CombatFactor {
 
 export type JournalEntry =
   | { kind: 'order'; time: string; formation: string; order: Order; effective: boolean }
-  | { kind: 'move'; time: string; formation: string; from: LngLat; to: LngLat; km: number }
+  /** path — пройденный путь (по дорогам и улицам), если он не прямой. */
+  | { kind: 'move'; time: string; formation: string; from: LngLat; to: LngLat; km: number; path?: LngLat[] }
   | { kind: 'combat'; time: string; attackers: string[]; defenders: string[]; at: LngLat; ratio: number; factors: CombatFactor[];
       noise: number; advanceKm: number; attackerLoss: number; defenderLoss: number; outcome: 'breakthrough' | 'advance' | 'held' | 'repelled' }
   | { kind: 'supply'; time: string; formation: string; what: 'ammo' | 'fuel'; left: number }

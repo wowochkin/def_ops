@@ -13,7 +13,7 @@ import type { LngLat } from '@def-ops/core';
 import { createRng, type Rng } from './rng';
 import { dist, type XY } from './geo';
 import { interp, power } from './rules';
-import type { Theatre } from './theatre';
+import { trailTo, type Theatre } from './theatre';
 import type { CombatFactor, Formation, JournalEntry, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
 import { UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
 import { claimTerritory, controlMap, initialTerritory, supplyField } from './control';
@@ -200,8 +200,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const to = targetPoint(ctx, f.order.target, byId);
     if (!to) continue;
     const prof = profileOf(ctx, f.side);
-    const type = prof.unitTypes[f.type];
-    const mob = type?.mobility === 'foot' || f.fuel > 0 ? type?.mobility ?? 'foot' : 'foot';
+    const mob = mobilityOf(ctx, f);
     if (dist(xy(f), T.proj.toXY(to)) < 0.5) { if (f.posture === 'march' || f.posture === 'withdraw') f.posture = 'defend'; continue; }
     const fc = fortCost(f), tc = terrCost(f, mob);
     const r = T.advance(f.position, to, mob, prof, R, now, dt, (i) => fc(i) + tc(i));
@@ -213,7 +212,8 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     if (stop) pos = stop;
     const km = dist(xy(f), T.proj.toXY(pos));
     if (km > 0.05) {
-      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: pos, km: +km.toFixed(1) });
+      const trail = stop ? trailTo(T, r.trail, pos) : r.trail;
+      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: pos, km: +km.toFixed(1), ...pathOf(trail) });
       f.position = pos;
       moved.add(f.id);
       f.route = r.path;
@@ -419,17 +419,22 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
       const goal = to ? T.proj.toXY(to) : null;
       if (!goal) continue;
       const d = dist(p, goal);
+      // продвижение — путём, которым шли бы войска (по дорогам и улицам, через мосты), а не напрямик через кварталы
+      const w = d > 0.05 ? T.walk(f.position, to!, Math.min(advanceKm, d * 1.6), mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now) : null;
       const k = d > 0 ? Math.min(1, advanceKm / d) : 0;
-      const np = T.proj.toLL([p[0] + (goal[0] - p[0]) * k, p[1] + (goal[1] - p[1]) * k]);
-      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +(d * k).toFixed(1) });
+      const np = w ? w.position : T.proj.toLL([p[0] + (goal[0] - p[0]) * k, p[1] + (goal[1] - p[1]) * k]);
+      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +(w ? w.km : d * k).toFixed(1), ...(w ? pathOf(w.trail) : {}) });
       f.position = np;
       moved.add(f.id);
     }
     for (const f of def) {
       if (pinned(f) && !yields) continue;
       const p = T.proj.toXY(f.position);
-      const np = retreatPoint(f, p, ca, advanceKm, T, env);
-      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +advanceKm.toFixed(1) });
+      const aim = retreatPoint(f, p, ca, advanceKm, T, env);
+      // отход — тоже путём (улицами, через мосты); пути нет — напрямик
+      const w = T.walk(f.position, aim, advanceKm, mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now);
+      const np = w ? w.position : aim;
+      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +(w ? w.km : advanceKm).toFixed(1), ...(w ? pathOf(w.trail) : {}) });
       f.position = np;
       f.dugInHours = 0;
       moved.add(f.id);
@@ -444,6 +449,14 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     attackerLoss: +attackerLoss.toFixed(3), defenderLoss: +defenderLoss.toFixed(3), outcome,
   });
 }
+
+/** Подвижность формирования сейчас: техника без горючего идёт пешком. */
+function mobilityOf(ctx: SimContext, f: Formation) {
+  const type = profileOf(ctx, f.side).unitTypes[f.type];
+  return type?.mobility === 'foot' || f.fuel > 0 ? type?.mobility ?? 'foot' : 'foot';
+}
+/** Пройденный путь для журнала (если он не прямой), координаты — до 5 знаков. */
+const pathOf = (t: LngLat[]) => (t.length > 2 ? { path: t.map(([x, y]) => [+x.toFixed(5), +y.toFixed(5)] as LngLat) } : {});
 
 /**
  * Куда отходит обороняющийся: из 16 направлений — то, где подвоз ближе (к своим

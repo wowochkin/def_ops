@@ -56,10 +56,13 @@ describe('штаб модели в игре', () => {
     const gc = startGame(c, 1, '1945-04-29T05:00', 'su');
     const lc = JSON.parse(read('live/berlin-city-1945.json')) as LiveConfig;
     const sit = buildSituation(c, gc, lc, tpl);
-    expect(sit.areas.some((a) => /Kurfuerstendamm/.test(a.title))).toBe(false);
+    // пункт театра, которого нет в ближнем списке (берётся тот, что есть по-русски и по-немецки)
+    const far = sit.allAreas!.find((x) => /^[А-ЯЁ].* \([A-Za-z]/.test(x.title) && !sit.areas.some((n) => n.id === x.id))!;
+    expect(far).toBeTruthy();
+    const [ru, de] = [far.title.replace(/ \(.*$/, ''), /\(([^)]+)\)/.exec(far.title)![1]];
     const f = sit.formations[0].name;
-    const r = decisionToOrders({ orders: ['Kurfuerstendamm', 'Курфюрстендамм'].map((area) => ({ formation: f, task: 'delay' as const, area, toArea: null, deadline: '', details: '' })) }, sit);
-    expect(r.applied.map((a) => a.target)).toEqual(['Курфюрстендамм (Kurfuerstendamm)', 'Курфюрстендамм (Kurfuerstendamm)']);
+    const r = decisionToOrders({ orders: [de, ru].map((area) => ({ formation: f, task: 'delay' as const, area, toArea: null, deadline: '', details: '' })) }, sit);
+    expect(r.applied.map((a) => a.target)).toEqual([far.title, far.title]);
     expect(r.issues.filter((i) => /не опознан/.test(i.text))).toEqual([]);
   });
 

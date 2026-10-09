@@ -387,13 +387,14 @@ export class Theatre {
   }
 
   advance(from: LngLat, to: LngLat, mob: Mobility, profile: SideProfile, rules: Rules, time: string, hours: number, extraCost?: (i: number) => number):
-    { position: LngLat; km: number; arrived: boolean; path: LngLat[] } | null {
+    { position: LngLat; km: number; arrived: boolean; path: LngLat[]; trail: LngLat[] } | null {
     const r = this.route(from, to, mob, profile, rules, time, extraCost);
     if (!r) return null;
-    if (r.hours <= hours) return { position: to, km: pathKm(this, r.path), arrived: true, path: r.path };
-    // по клеткам: тратим время, пока хватает
+    if (r.hours <= hours) return { position: to, km: pathKm(this, r.path), arrived: true, path: r.path, trail: r.path };
+    // по клеткам: тратим время, пока хватает; trail — пройденный путь
     let left = hours, km = 0;
     let pos = from;
+    const trail: LngLat[] = [from];
     for (let k = 1; k < r.cells.length; k++) {
       const a = r.cells[k - 1], b = r.cells[k];
       const pa = this.proj.toLL(this.cellCenter(a % this.cols, Math.floor(a / this.cols)));
@@ -415,8 +416,21 @@ export class Theatre {
       left -= cost;
       km += d;
       pos = pb;
+      if (k < r.cells.length - 1) trail.push(pb);
     }
-    return { position: pos, km, arrived: false, path: r.path };
+    trail.push(pos);
+    return { position: pos, km, arrived: false, path: r.path, trail: simplify(trail) };
+  }
+
+  /**
+   * Пройти km по лучшему пути к точке to (по дорогам и улицам, через мосты): продвижение в бою и отход идут
+   * не напрямик, а путём, которым прошли бы войска. null — пути нет.
+   */
+  walk(from: LngLat, to: LngLat, km: number, mob: Mobility, profile: SideProfile, rules: Rules, time: string): { position: LngLat; km: number; trail: LngLat[] } | null {
+    const r = this.route(from, to, mob, profile, rules, time);
+    if (!r || !Number.isFinite(r.hours)) return null;
+    const cut = cutAt(this, r.path, km);
+    return { position: cut.trail[cut.trail.length - 1], km: cut.km, trail: cut.trail };
   }
 }
 
@@ -485,6 +499,38 @@ function pathKm(t: Theatre, path: LngLat[]): number {
 }
 
 /** Убрать промежуточные точки на прямых участках. */
+/** Начало пути длиной km (по ломаной). */
+export function cutAt(t: Theatre, path: LngLat[], km: number): { trail: LngLat[]; km: number } {
+  const out: LngLat[] = [path[0]];
+  let left = km;
+  for (let i = 1; i < path.length; i++) {
+    const a = t.proj.toXY(path[i - 1]), b = t.proj.toXY(path[i]);
+    const d = dist(a, b);
+    if (d >= left) {
+      const k = d > 0 ? left / d : 0;
+      out.push(t.proj.toLL([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]));
+      return { trail: out, km };
+    }
+    left -= d;
+    out.push(path[i]);
+  }
+  return { trail: out, km: km - left };
+}
+
+/** Путь до точки, ближайшей к pos (движение остановлено раньше — перед противником). */
+export function trailTo(t: Theatre, trail: LngLat[], pos: LngLat): LngLat[] {
+  const p = t.proj.toXY(pos);
+  let best = 0, bd = Infinity;
+  for (let i = 1; i < trail.length; i++) {
+    const a = t.proj.toXY(trail[i - 1]), b = t.proj.toXY(trail[i]);
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy || 1;
+    const k = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L));
+    const d = Math.hypot(a[0] + dx * k - p[0], a[1] + dy * k - p[1]);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return [...trail.slice(0, best), pos];
+}
+
 function simplify(pts: LngLat[]): LngLat[] {
   if (pts.length < 3) return pts;
   const out = [pts[0]];

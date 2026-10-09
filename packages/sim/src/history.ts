@@ -70,7 +70,8 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
 export interface Snapshot {
   time: string;
   turn: number;
-  units: { id: string; at: LngLat; personnel: number; tanks: number; posture: string; destroyed: boolean; cutOff?: boolean; ammo?: number }[];
+  /** path — путь за ход (по дорогам и улицам), если формирование шло не напрямик. */
+  units: { id: string; at: LngLat; personnel: number; tanks: number; posture: string; destroyed: boolean; cutOff?: boolean; ammo?: number; path?: LngLat[] }[];
   /** Территория после хода (если правила её ведут). */
   territory?: number[];
 }
@@ -81,11 +82,20 @@ export interface RunResult {
 }
 
 /** Снимок состояния после хода. */
-export const snapshotOf = (s: SimState): Snapshot => ({
+export const snapshotOf = (s: SimState): Snapshot => {
+  // пути за ход — из записей журнала о движении (бой, затем марш — склеиваются)
+  const paths = new Map<string, LngLat[]>();
+  for (const j of s.journal) if (j.kind === 'move') {
+    const seg = j.path ?? [j.from, j.to];
+    const cur = paths.get(j.formation);
+    paths.set(j.formation, cur ? [...cur, ...seg.slice(1)] : seg);
+  }
+  return {
   time: s.time, turn: s.turn,
-  units: s.formations.filter((f) => onMap(f, s.time) || f.destroyed).map((f) => ({ id: f.id, at: f.position, personnel: f.personnel, tanks: f.tanks, posture: f.posture, destroyed: f.destroyed, ...(f.cutOff ? { cutOff: true } : {}), ammo: +f.ammo.toFixed(2) })),
+  units: s.formations.filter((f) => onMap(f, s.time) || f.destroyed).map((f) => { const p = paths.get(f.id); return { id: f.id, at: f.position, personnel: f.personnel, tanks: f.tanks, posture: f.posture, destroyed: f.destroyed, ...(f.cutOff ? { cutOff: true } : {}), ammo: +f.ammo.toFixed(2), ...(p && p.length > 2 ? { path: p } : {}) }; }),
   ...(s.territory ? { territory: s.territory } : {}),
-});
+  };
+};
 
 /** Прогнать сценарий от начала до конца (или maxTurns ходов). */
 export function runScenario(ctx: SimContext, seed = 1, maxTurns = Infinity): RunResult {

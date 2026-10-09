@@ -61,6 +61,18 @@ describe('местность и маршрут', () => {
     expect(foot.hours).toBeGreaterThan(ctx.rules.riverCrossHours);
   });
 
+  it('продвижение и отход — путём войск: через реку — по мосту, а не напрямик', () => {
+    const ctx = ctxWith([]);
+    const T = ctx.theatre;
+    const w = T.walk(ll(12, -10), ll(28, -10), 40, 'motor', ctx.profiles['rkka-1945'], ctx.rules, '1945-04-16T00:00')!;
+    expect(w).toBeTruthy();
+    const bridge = T.proj.toXY(ll(20, 0));
+    const xy = w.trail.map((p) => T.proj.toXY(p));
+    const segDist = (a: number[], b: number[]) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy || 1, k = Math.max(0, Math.min(1, ((bridge[0] - a[0]) * dx + (bridge[1] - a[1]) * dy) / L)); return Math.hypot(a[0] + dx * k - bridge[0], a[1] + dy * k - bridge[1]); };
+    expect(Math.min(...xy.slice(1).map((b, i) => segDist(xy[i], b)))).toBeLessThan(1.5); // путь проходит через мост
+    expect(w.km).toBeGreaterThan(16); // длиннее прямой (16 км): крюк к мосту
+  });
+
   it('по шоссе быстрее, чем лесом', () => {
     const ctx = ctxWith([]);
     const p = ctx.profiles['rkka-1945'];
