@@ -1,4 +1,5 @@
-// PDF из Markdown: node scripts/gen-doc-pdf.mjs [docs/system.md] [docs/system.pdf]
+// Описание системы в PDF и Word из Markdown: node scripts/gen-doc.mjs [docs/system.md] [docs/system.pdf]
+// (Word — рядом, .docx; стили — docs/reference.docx, собирается scripts/docx-reference.py)
 // Картинки — пути относительно файла Markdown (docs/img/…). Нужны pandoc (Markdown → HTML) и браузер Playwright (CHROMIUM_PATH — свой путь к Chrome).
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
@@ -54,3 +55,23 @@ await page.pdf({
 });
 await browser.close();
 console.log(`PDF: ${out}`);
+
+// Word: название — заголовок документа, затем содержание; картинки — из папки документа
+const docx = out.replace(/\.pdf$/i, '.docx');
+const bodyMd = md.replace(/^#\s+.+\n/m, '');
+// метаданные — файлом в UTF-8 (аргументы командной строки pandoc читает в кодировке локали)
+const meta = join(dir, 'meta.yaml');
+writeFileSync(meta, `title: ${JSON.stringify(title)}\ntoc-title: "Содержание"\n`);
+execFileSync('pandoc', ['--from', 'gfm', '--to', 'docx', '--reference-doc', join(dirname(src), 'reference.docx'), '--resource-path', dirname(src),
+  '--toc', '--toc-depth=2', '--metadata-file', meta, '-o', docx], { input: bodyMd, encoding: 'utf8' });
+// Word при открытии обновит поля — содержание заполнится с номерами страниц
+execFileSync('python3', ['-c', `import sys, zipfile, shutil
+src = sys.argv[1]; tmp = src + '.tmp'
+with zipfile.ZipFile(src) as zi, zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as zo:
+    for it in zi.infolist():
+        data = zi.read(it.filename)
+        if it.filename == 'word/settings.xml' and b'updateFields' not in data:
+            data = data.replace(b'</w:settings>', b'<w:updateFields w:val="true"/></w:settings>')
+        zo.writestr(it, data)
+shutil.move(tmp, src)`, docx]);
+console.log(`Word: ${docx}`);

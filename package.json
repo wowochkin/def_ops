@@ -33,7 +33,7 @@
     "theatre:height": "sh -c '.venv/bin/python packages/sim/tools/theatre/build_theatre.py packages/sim/data/theatres/src/$0.recipe.json --height-only packages/sim/data/theatres/$0.json'",
     "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts",
     "sim:demo": "node scripts/sim-demo.mjs",
-    "docs:system": "node scripts/gen-doc-pdf.mjs"
+    "docs:system": "node scripts/gen-doc.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

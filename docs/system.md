@@ -531,7 +531,8 @@ npm test                  # 218 проверок: ядро, сервисы че�
 npm run typecheck
 ```
 
-PDF этого документа — `npm run docs:system` (нужны pandoc и браузер Playwright).
+PDF и Word этого документа — `npm run docs:system` (нужны pandoc, python3 с python-docx и браузер
+Playwright). Описание обновляется в том же коммите, что и доработка.
 
 
 # Часть II. Модель переигровки
@@ -1251,6 +1252,7 @@ npm test
 | [cartography.md](cartography.md) | карты-подложки в закрытом контуре |
 | [library.md](library.md), [library.pdf](library.pdf) | библиотека условных знаков |
 | [openapi.yaml](openapi.yaml) | контракт API |
+| [system.pdf](system.pdf), [system.docx](system.docx) | это описание в PDF и Word |
 | [plans/simulation.md](plans/simulation.md) | замысел и этапы переигровки |
 
 ## Приложение А. Откалиброванные правила (`ww2-berlin-cal`)
