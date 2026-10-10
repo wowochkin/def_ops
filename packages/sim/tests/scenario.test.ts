@@ -41,6 +41,25 @@ describe('сценарий «Берлин-1945»', () => {
     expect(doc.features.some((f) => f.layerId === 'hist-units')).toBe(true);
   });
 
+  it('графика атласа: исходный и вчерашний фронт, оси танковых армий с датами, черта и дата у остановленных ударов', () => {
+    const tctx = loadContext('berlin-1945-tasks');
+    const run = runScenario(tctx, 1, 8);
+    const doc = runToDocument(tctx, run, loadHistory('berlin-1945-tasks'));
+    const by = (layer: string) => doc.features.filter((f) => f.layerId === layer);
+    expect(by('sim-front-start').length).toBeGreaterThan(0);
+    expect(by('sim-front-start').every((f) => f.time?.to == null)).toBe(true);
+    // вчерашний фронт — та же линия, сдвинутая на сутки
+    const prev = by('sim-front-prev'), cur = by('sim-front');
+    expect(prev.length).toBe(cur.length);
+    expect(Date.parse(`${prev[0].time!.from}Z`) - Date.parse(`${cur[0].time!.from}Z`)).toBe(864e5);
+    const axes = doc.features.filter((f) => f.kind === 'arrow' && f.preset === 'atlas.tankAxis');
+    expect(axes.length).toBeGreaterThan(0);
+    expect(by('lvl-op-moves').some((f) => f.kind === 'label' && /^\d+\.\d+$/.test((f as { text?: string }).text ?? ''))).toBe(true);
+    // дата у острия — только у ударов с чертой «рубеж достигнут»
+    const dated = doc.features.filter((f) => f.kind === 'arrow' && (f as { tipText?: string }).tipText);
+    expect(dated.every((f) => (f as { style: { tip?: string } }).style.tip === 'bar')).toBe(true);
+  });
+
   it('короткие подписи', () => {
     expect(shortName('8-я гвардейская армия')).toBe('8 гв. А');
     expect(shortName('1-я гвардейская танковая армия')).toBe('1 гв. ТА');

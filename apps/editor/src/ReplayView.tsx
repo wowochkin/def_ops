@@ -29,7 +29,7 @@ const ddmm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}`;
 const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] = [
   { key: 'ghosts', title: 'Ист. положения', match: (id) => id === 'hist-units' },
   { key: 'hfront', title: 'Ист. фронт', match: (id) => id === 'hist-front' },
-  { key: 'front', title: 'Фронт', match: (id) => id === 'sim-front' },
+  { key: 'front', title: 'Фронт', match: (id) => id === 'sim-front' || id.startsWith('sim-front-') },
   { key: 'combat', title: 'Бои', match: (id) => id === 'sim-combat' },
   { key: 'theatre', title: 'Рубежи', match: (id) => id === 'theatre' },
   { key: 'hbounds', title: 'Ист. разгр. линии', match: (id) => id === 'hist-bounds' },
@@ -85,10 +85,10 @@ export function LayersMenu({ labels, toggleLabels, items }: { labels: boolean; t
 export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l: MapLevel) => void }) {
   return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <button key={x.id} className={level === x.id ? 'on' : ''} title={x.hint} onClick={() => setLevel(x.id)}>{x.title}</button>)}</div>;
 }
-export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string }[]> = {
-  tac: [],
-  op: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
-  st: [{ cls: 'lg-arrow', text: 'главный удар фронта (за двое суток)' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'оборона' }],
+export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string; mark?: string }[]> = {
+  tac: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
+  op: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-axis', text: 'ось танковой армии, даты по суткам', mark: '◆' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-reserve', text: 'на марше или в резерве' }, { cls: 'lg-routed', text: 'разгромлено' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
+  st: [{ cls: 'lg-arrow', text: 'главный удар фронта (за двое суток)' }, { cls: 'lg-fork', text: 'расходящиеся удары', mark: 'Y' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'оборона' }],
 };
 
 export function download(name: string, text: string, type: string) {
@@ -233,7 +233,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           <div className="rp-map">
           <MapView key={mapKey} doc={withoutLabels(withFocus(withLevel(doc, level), focus), labels)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
-            onEngineReady={(e) => { engine.current = e; setEng(e); }} onStatus={() => {}} time={time} newFromNow={false} />
+            onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __replayEngine: MapEngine }).__replayEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
@@ -363,13 +363,15 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
   );
 }
 
-export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string }[]; combat?: boolean }) {
+export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string; mark?: string }[]; combat?: boolean }) {
   const [open, setOpen] = useState(true);
   const rows: { key?: string; cls: string; text: string; mark?: string }[] = [
     { cls: 'lg-own', text: 'советские войска' },
     { cls: 'lg-enemy', text: 'немецкие войска' },
     { key: 'ghosts', cls: 'lg-ghost', text: 'историческое положение' },
     { key: 'front', cls: 'lg-front', text: 'линия фронта (расчёт)' },
+    { key: 'front', cls: 'lg-front-prev', text: 'она же сутки назад' },
+    { key: 'front', cls: 'lg-front-start', text: 'передний край на начало' },
     { key: 'hfront', cls: 'lg-hfront', text: 'линия фронта (история)' },
     { key: 'bounds', cls: 'lg-bound', text: 'разграничительная линия фронтов' },
     { key: 'hbounds', cls: 'lg-hbound', text: 'разграничительная линия по директиве' },
@@ -380,7 +382,7 @@ export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: st
   return (
     <div className={`legend${open ? '' : ' closed'}`}>
       <button className="lg-h" onClick={() => setOpen(!open)}>Условные обозначения {open ? '▾' : '▸'}</button>
-      {open && <div className="lg-b">
+      {open && <div className={`lg-b${rows.length > 12 ? ' two' : ''}`}>
         {rows.map((r) => r.key
           ? <button key={r.text} className={`lg-row${on(r.key) ? '' : ' off'}`} title={on(r.key) ? 'Скрыть на карте' : 'Показать на карте'} onClick={() => toggle(r.key!)}><i className={r.cls}>{r.mark}</i>{r.text}{!on(r.key) && <span className="lg-eye">скрыто</span>}</button>
           : <div key={r.text} className="lg-row"><i className={r.cls}>{r.mark}</i>{r.text}</div>)}

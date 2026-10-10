@@ -345,11 +345,11 @@ export function renderArrow(f: ArrowFeature, ctx: RenderContext): string {
   return out;
 }
 
-/** Надпись у острия: за наконечником по ходу стрелки, горизонтально. */
+/** Надпись у острия: за наконечником по ходу стрелки, горизонтально; размер — по стрелке (наконечник, шейка, украшения). */
 function tipLabel(text: string, g: ArrowGeometry, st: ArrowStyle, color: string): string {
   const L = g.axis.length;
   const t = g.axis.tangentAt(L, 3);
-  const ts: TextStyle = st.tipTextStyle ?? { font: 'PT Sans Narrow', size: Math.max(12, st.headWidth * 0.9, st.tailWidth * 0.4), weight: 700, italic: false, color, halo: { color: '#ffffff', width: 1.5 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1 };
+  const ts: TextStyle = st.tipTextStyle ?? { font: 'PT Sans Narrow', size: Math.max(st.headWidth * 0.7, st.neckWidth * 1.6, st.tailWidth * 0.4, ...(st.decorations ?? []).map((d) => (d.width ?? 0) * 1.6)), weight: 700, italic: false, color, halo: { color: '#ffffff', width: 1.5 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1 };
   const gap = ts.size * 0.9 + (st.tip === 'bar' ? st.headWidth * 0.15 : 2);
   const p = add(g.axis.pointAt(L), mul(t, gap));
   // по горизонтали надпись смещается по ходу стрелки, чтобы не наезжать на остриё
