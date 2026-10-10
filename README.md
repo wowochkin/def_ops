@@ -1,7 +1,7 @@
 # Тактическая карта: движок знаков и редактор
 
-**Описание системы целиком** (разделы, архитектура, данные, развёртывание, со снимками экрана) —
-[docs/system.md](docs/system.md), PDF — [docs/system.pdf](docs/system.pdf).
+**Описание системы** (часть I — разделы, архитектура, данные, развёртывание; часть II — модель
+переигровки; со снимками экрана) — [docs/system.md](docs/system.md), PDF — [docs/system.pdf](docs/system.pdf).
 
 Шаг 1 продукта: движок, который рисует условные знаки военно-исторических карт
 (стрелки ударов, линии фронта, рубежи с зубцами, окружённые группировки, знаки
@@ -78,7 +78,7 @@ npm run dev             # редактор → «Открыть / импорт�
 ```
 
 Подробно — [docs/simulation-quickstart.md](docs/simulation-quickstart.md); как устроена модель,
-как считается и на каких данных — [docs/simulation-model.md](docs/simulation-model.md); замысел и
+как считается и на каких данных — [docs/system.md](docs/system.md), часть II; замысел и
 архитектура — [docs/plans/simulation.md](docs/plans/simulation.md); раздел «Знания» (база по операциям,
 загрузка документов, вопросы к модели) — [docs/simulation-quickstart.md](docs/simulation-quickstart.md), § 7.
 
@@ -125,7 +125,7 @@ packages/core          движок знаков: модель, слои, гео
 packages/service-kit   каркас микросервиса: роутинг, ошибки, журналы, health/ready, организация, межсервисные вызовы
 packages/api-client    типизированный клиент API (браузер и Node)
 packages/db            PostgreSQL: пул, миграции по схемам сервисов, транзакции
-packages/sim           симулятор операций: театр, арбитр, игра, доклады (docs/simulation-model.md)
+packages/sim           симулятор операций: театр, арбитр, игра, доклады (docs/system.md, часть II)
 packages/knowledge     база знаний: каркас категорий, поиск, извлечение из документов, вопросы к модели
 services/gateway       API-шлюз: API-ключи → организации, маршрутизация, CORS, статика редактора
 services/documents     хранение карт: ревизии, оптимистичная блокировка, слои, события (SSE); PostgreSQL или файлы

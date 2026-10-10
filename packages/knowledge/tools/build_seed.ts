@@ -3,7 +3,7 @@
  *  - docs/sources/*.json — формирования (с численностью, командирами, приказами), события (по дням),
  *    потери, рубежи и секторы обороны, нормативы и темпы (калибровка), пробелы, расхождения источников;
  *  - docs/sources/berlin-1945-oob.md — сводка боевого состава Берлинской операции (разделы — в запись операции);
- *  - профили сторон (services/staff/profiles), устройство модели (docs/simulation-model.md);
+ *  - профили сторон (services/staff/profiles), устройство модели (docs/system.md, часть II);
  *  - data/curated/*.json — краткие описания операций, сражений, местности, техники (черновики — проверить).
  * Результат — data/seed.json. Запуск: npm run kb:seed
  */
@@ -224,7 +224,8 @@ for (const [side, file, title] of [['su', 'rkka-1945', 'Красная арми�
   put({ id: `org:${side}-profile`, category: 'organization', group: side, title, status: 'draft', summary: text.split('\n')[0], sections: [{ title: 'Положения', text: text.split('\n').slice(1).join('\n').trim() }], facts: [{ key: 'side', value: SIDE[side] }] });
 }
 {
-  const md = readFileSync(join(ROOT, 'docs/simulation-model.md'), 'utf8');
+  // устройство модели — часть II описания системы (разделы без номеров: id записей не зависят от нумерации)
+  const md = readFileSync(join(ROOT, 'docs/system.md'), 'utf8').split(/\n# Часть II[^\n]*\n/)[1] ?? '';
   const parts = md.split(/\n## /).slice(1);
   for (const p of parts) {
     const [head, ...rest] = p.split('\n');
@@ -275,7 +276,7 @@ for (const e of entries.values()) {
 
 const list = [...entries.values()].sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title, 'ru'));
 const out = join(ROOT, 'packages/knowledge/data/seed.json');
-writeFileSync(out, JSON.stringify({ built: new Date().toISOString().slice(0, 10), note: 'собрано packages/knowledge/tools/build_seed.ts из docs/sources, профилей сторон, docs/simulation-model.md и data/curated', entries: list }));
+writeFileSync(out, JSON.stringify({ built: new Date().toISOString().slice(0, 10), note: 'собрано packages/knowledge/tools/build_seed.ts из docs/sources, профилей сторон, docs/system.md и data/curated', entries: list }));
 const by = new Map<string, number>();
 for (const e of list) by.set(e.category, (by.get(e.category) ?? 0) + 1);
 console.log(`записей: ${list.length}; ${[...by].map(([k, v]) => `${k} ${v}`).join(', ')}; ${(JSON.stringify(list).length / 1e6).toFixed(1)} МБ`);

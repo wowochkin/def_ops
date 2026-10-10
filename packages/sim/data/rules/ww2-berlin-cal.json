@@ -1,6 +1,6 @@
 {
   "id": "ww2-berlin-cal",
-  "_status": "откалибровано по Берлинской операции (блок calibration: исходные правила, множители, мерило до и после); устройство — docs/simulation-model.md",
+  "_status": "откалибровано по Берлинской операции (блок calibration: исходные правила, множители, мерило до и после); устройство — docs/system.md, часть II",
   "contactKm": 6,
   "routeVariety": 0.2,
   "advance": [

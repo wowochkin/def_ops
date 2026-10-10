@@ -1,4 +1,4 @@
-// PDF из Markdown: node scripts/gen-model-pdf.mjs [docs/simulation-model.md] [docs/simulation-model.pdf] (описание системы — docs/system.md docs/system.pdf)
+// PDF из Markdown: node scripts/gen-doc-pdf.mjs [docs/system.md] [docs/system.pdf]
 // Картинки — пути относительно файла Markdown (docs/img/…). Нужны pandoc (Markdown → HTML) и браузер Playwright (CHROMIUM_PATH — свой путь к Chrome).
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
@@ -7,8 +7,8 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 
-const src = resolve(process.argv[2] || 'docs/simulation-model.md');
-const out = resolve(process.argv[3] || 'docs/simulation-model.pdf');
+const src = resolve(process.argv[2] || 'docs/system.md');
+const out = resolve(process.argv[3] || 'docs/system.pdf');
 const md = readFileSync(src, 'utf8');
 const title = /^#\s+(.+)$/m.exec(md)?.[1] ?? 'Документ';
 const body = execFileSync('pandoc', ['--from', 'gfm', '--to', 'html5'], { input: md, encoding: 'utf8' });
