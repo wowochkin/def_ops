@@ -204,6 +204,28 @@ describe('штаб модели ведёт тыл, переправы, резе�
   }, 60000);
 });
 
+describe('штаб модели устанавливает линии между своими армиями', () => {
+  it('немецкий штаб: линия 3-й танковой / 9-й армии по пунктам — распоряжение «boundary»; армии разных групп армий — отказ', async () => {
+    const { actionsToStaff } = await import('../src/live');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-19T05:00', 'su', 'de');
+    const sit = buildSituation(ctx, g, cfg, tpl, null, true);
+    expect(sit.messages[1].content).toMatch(/line — разграничительная линия между двумя своими армиями/);
+    expect(sit.messages[1].content).toMatch(/группы армий, устанавливает ОКХ/);
+    const r = actionsToStaff(ctx, g, sit, [
+      { kind: 'line', subject: null, area: 'Эберсвальде — Хоэнзатен', formations: ['3-я танковая армия', '9-я армия'] },
+      { kind: 'line', subject: null, area: 'Эберсвальде — Хоэнзатен', formations: ['9-я армия', '4-я танковая армия'] },
+      { kind: 'line', subject: null, area: 'Эберсвальде — Нигде', formations: ['3-я танковая армия', '9-я армия'] },
+    ]);
+    const a = r.applied[0].action;
+    expect(a?.kind).toBe('boundary');
+    if (a?.kind === 'boundary') expect([a.a, a.b].sort()).toEqual(['de_3pza', 'de_9a']);
+    expect(r.applied[0].text).toMatch(/справа по линии — 9-я армия/);
+    expect(r.applied[1].text).toMatch(/разных групп армий — линию между ними устанавливает ОКХ/);
+    expect(r.applied[2].text).toMatch(/пункты линии не опознаны/);
+  });
+});
+
 describe('эмбеддинги для базы знаний', () => {
   it('векторы приходят по порядку входа; самопроверка отличает перефразировку от постороннего', async () => {
     const { docText, queryText, SELF_TEST, selfTestGap, toVec } = await import('@def-ops/knowledge');

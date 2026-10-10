@@ -7,7 +7,7 @@
  */
 import {
   areaTitle, dayEvents, places, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
-  onMap, sectorText, shortName, withBoundaries, type GameState, type SimContext,
+  commandTerms, groupOf, onMap, sectorText, shortName, withBoundaries, type GameState, type SimContext,
 } from '@def-ops/sim';
 import { fill } from '../fill';
 
@@ -140,6 +140,11 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
   const s = g.state;
   const p = situationParts(ctx, g, cfg);
   const hours = ctx.scenario.turnHours;
+  const terms = commandTerms(ctx, cfg.side);
+  // свои армии — по объединениям верхнего уровня (для разграничительных линий)
+  const fronts = groupOf(ctx.scenario, 'front'), armyOf = groupOf(ctx.scenario, 'army');
+  const armies = ctx.scenario.formations.filter((f) => f.side === cfg.side && f.echelon === 'army' && s.formations.some((u) => !u.destroyed && onMap(u, s.time) && (armyOf.get(u.id) ?? u.id) === f.id))
+    .map((f) => `${f.name} (${ctx.scenario.formations.find((x) => x.id === fronts.get(f.id))?.name ?? 'вне объединения'})`);
   const system = fill(tpl.system, { side: cfg.sideName, scenario: cfg.description, profile: tpl.profile.trim() }, 'staff.system.md');
   const user = fill(tpl.user, {
     moment: momentRu(s.time),
@@ -157,7 +162,10 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
         + 'base — перенести базу снабжения (subject — название базы из списка, area — пункт; на время переноса база не действует); '
         + 'priority — приоритет подвоза (formations — не более трети своих формирований; им больше, остальным меньше); '
         + 'bridge — навести переправу (area — пункт у реки); demolish — подорвать мост или переправу (area — пункт у моста, на своей территории); '
-        + 'commit — ввести резерв в сражение (subject — формирование из резерва, area — район сосредоточения на своей территории). '
+        + 'commit — ввести резерв в сражение (subject — формирование из резерва, area — район сосредоточения на своей территории); '
+        + `line — разграничительная линия между двумя своими армиями одного ${terms.group === 'фронт' ? 'фронта' : 'объединения (группы армий)'}, когда они мешают друг другу или нужна новая полоса `
+        + `(formations — две армии${armies.length ? ` из: ${armies.join('; ')}` : ''}; area — пункты линии по порядку через « — », от тыла к переднему краю, от 2 до 6; вступает в силу через задержку доведения армиям; `
+        + `линию, разделяющую ${terms.group === 'фронт' ? 'фронты' : 'группы армий'}, устанавливает ${terms.top}). `
         + 'В полях subject, area, formations — названия точно как в обстановке; в неиспользуемых — null или пустой список.'
         : ' Тыл, переправы и резервы ведёт вышестоящее командование: поле actions оставьте пустым.'),
     rear: staffOn ? rearText(ctx, g, cfg.side) : '- Ведёт вышестоящее командование (по плану).',

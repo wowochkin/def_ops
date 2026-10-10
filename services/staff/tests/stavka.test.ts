@@ -29,6 +29,27 @@ describe('директивы в игре и модель-Ставка', () => {
     expect(stavkaNeed(ctx, s, 'de')).toBeNull();
   });
 
+  it('за вермахт линии между группами армий устанавливает ОКХ: по ходатайству — приказ, исполнимый арбитром', async () => {
+    const ctx = loadContext('berlin-1945-tasks');
+    let g = startGame(ctx, 1, '1945-04-19T05:00', 'de', 'su');
+    g = playTurn(ctx, g, []);
+    const need = stavkaNeed(ctx, g, 'de', 'Прошу установить линию с группой армий «Центр».')!;
+    expect(need).not.toBeNull();
+    const built = buildStavka(ctx, g, 'de', need);
+    expect(built.messages[0].content).toMatch(/^Вы — ОКХ/);
+    expect(built.messages[1].content).toContain('Группы армий и их войска:');
+    expect(built.fronts.map((f) => f.id)).toEqual(expect.arrayContaining(['de_hgr_weichsel', 'de_hgr_mitte']));
+    const r = await stavkaTurn(new LlmClient({ url, model: 'mock', thinking: 'off', timeoutMs: 20_000, maxTokens: 4000 }, fetch), ctx, g, 'de', need);
+    expect(r.ok).toBe(true);
+    // подставная модель берёт две первые группы армий и два первых пункта: линия либо исполнима, либо отклонена с причиной
+    expect(r.actions.length + r.issues.length).toBe(1);
+    for (const a of r.actions) {
+      expect(a.kind).toBe('directive');
+      const g2 = playTurn(ctx, g, [], [a]);
+      expect((g2.state.boundaries ?? []).some((b) => b.side === 'de' && b.issuedBy === 'stavka' && /приказ ОКХ/.test(b.title))).toBe(true);
+    }
+  });
+
   it('Ставка (подставная модель) издаёт линию по образцу; запись игры повторяется точно', async () => {
     const ctx = loadContext('berlin-1945-tasks');
     let g = startGame(ctx, 1, '1945-04-19T05:00', 'su');

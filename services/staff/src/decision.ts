@@ -76,15 +76,18 @@ export const DECISION_SCHEMA = {
   },
 } as const;
 
-/** Распоряжение штаба модели помимо приказов войскам: тыл, переправы, резервы (только в игре, где штаб ведёт их сам). */
-export const STAFF_ACTION_KINDS = ['base', 'priority', 'bridge', 'demolish', 'commit'] as const;
+/**
+ * Распоряжение штаба модели помимо приказов войскам: тыл, переправы, резервы и разграничительные линии между
+ * своими армиями (line: formations — две армии, area — пункты линии через « — »); только в игре, где штаб ведёт их сам.
+ */
+export const STAFF_ACTION_KINDS = ['base', 'priority', 'bridge', 'demolish', 'commit', 'line'] as const;
 export interface StaffActionGiven {
   kind: (typeof STAFF_ACTION_KINDS)[number];
   /** База снабжения (base) или формирование из резерва (commit). */
   subject: string | null;
-  /** Пункт: куда перенести базу, где навести переправу или подорвать мост, район ввода резерва. */
+  /** Пункт: куда перенести базу, где навести переправу или подорвать мост, район ввода резерва; пункты линии (line). */
   area: string | null;
-  /** Формирования с приоритетом подвоза (priority). */
+  /** Формирования с приоритетом подвоза (priority); две армии линии (line). */
   formations: string[];
 }
 

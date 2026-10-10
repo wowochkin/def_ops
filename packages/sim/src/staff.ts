@@ -9,6 +9,7 @@
  * вместе с приказами. Переправы добавляются в театр — поэтому игра повторяется по
  * записи только на новом контексте (как и делает replayGame).
  */
+import { commandTerms } from './command';
 import type { LngLat } from '@def-ops/core';
 import { dist } from './geo';
 import { areaTitle, describePlace } from './reports';
@@ -110,9 +111,10 @@ export function lineOf(ctx: SimContext, state: SimState, a: Extract<StaffAction,
   if (!A || !B || a.a === a.b) return 'нужны два разных объединения';
   if (A.side !== a.side || B.side !== a.side) return 'оба объединения должны быть своими';
   const echelons = level === 'army' ? ['army'] : ['front'];
-  if (!echelons.includes(A.echelon) || !echelons.includes(B.echelon)) return level === 'army' ? 'линия распоряжения — между армиями' : 'директива — между фронтами';
+  const t = commandTerms(ctx, a.side);
+  if (!echelons.includes(A.echelon) || !echelons.includes(B.echelon)) return level === 'army' ? 'линия распоряжения — между армиями' : `${t.directive} — между ${t.groupsGen}`;
   const fronts = groupOf(ctx.scenario, 'front');
-  if (level === 'army' && fronts.get(a.a) !== fronts.get(a.b)) return 'армии разных фронтов — линию между ними устанавливает Ставка';
+  if (level === 'army' && fronts.get(a.a) !== fronts.get(a.b)) return `армии разных ${t.groupsGen} — линию между ними устанавливает ${t.top}`;
   if (a.line.length < 2) return 'линия — хотя бы из двух точек';
   if (a.line.some((p) => ctx.theatre.indexOf(p) < 0)) return 'точка линии вне театра';
   const T = ctx.theatre, groups = groupOf(ctx.scenario, level);
@@ -129,7 +131,7 @@ export function lineOf(ctx: SimContext, state: SimState, a: Extract<StaffAction,
   const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
   return {
     id: `${a.kind === 'boundary' ? 'p' : 's'}_${a.issuedAt}_${[a.a, a.b].sort().join('_')}`, kind: level, side: a.side, right: right.id, left: left.id,
-    title: `${short(right.name)} / ${short(left.name)} (${a.kind === 'boundary' ? 'распоряжение' : 'директива'} ${a.issuedAt.slice(8, 10)}.${a.issuedAt.slice(5, 7)})`,
+    title: `${short(right.name)} / ${short(left.name)} (${a.kind === 'boundary' ? 'распоряжение' : `${t.directive} ${t.topGen}`} ${a.issuedAt.slice(8, 10)}.${a.issuedAt.slice(5, 7)})`,
     from: addHours(a.issuedAt, Math.max(0, delay)), until: null, line: a.line, places: a.places, inclusive: null,
     note: a.kind === 'directive' ? a.reason : undefined, issuedBy: a.kind === 'boundary' ? 'player' : 'stavka', issuedAt: a.issuedAt, rightName: short(right.name),
   };

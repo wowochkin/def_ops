@@ -9,7 +9,7 @@
 import { createFeature, type SymbolFeature } from '@def-ops/core';
 import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
-  activeBoundaries, groupOf, runToDocument, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  activeBoundaries, commandTerms, groupOf, runToDocument, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { stavkaNeed, stavkaTurn, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
@@ -120,20 +120,21 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
 function day(time: string, orders: Order[], before: GameState['state'], results: { action: StaffAction; ok: boolean; text: string }[], decision?: HumanDecision, stavka: StavkaResult[] = []): JournalDay {
   const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...before.formations.map((f) => [f.id, f.name] as const)]);
   const bases = new Map((before.logistics?.[rec.human]?.bases ?? []).map((b) => [b.id, b.name]));
+  const T = commandTerms(ctx, rec.human);
   const what = (a: StaffAction) => a.kind === 'base' ? `Тыл: база «${bases.get(a.base) ?? a.base}» — перенести ${describePlace(ctx.theatre, a.to)}`
     : a.kind === 'priority' ? `Тыл: приоритет подвоза — ${a.formations.length ? a.formations.map((x) => names.get(x)).join(', ') : 'снят'}`
     : a.kind === 'bridge' ? `Инженерные: навести переправу ${describePlace(ctx.theatre, a.at)}`
     : a.kind === 'demolish' ? `Инженерные: подорвать мост ${describePlace(ctx.theatre, a.at)}`
     : a.kind === 'boundary' ? `Разграничительная линия армий${a.places?.length ? ` (${a.places.join(' — ')})` : ''}`
-    : a.kind === 'directive' ? `Директива Ставки о разграничительной линии${a.places?.length ? ` (${a.places.join(' — ')})` : ''}`
-    : `Резерв Ставки: ввести ${names.get(a.formation)} — район ${describePlace(ctx.theatre, a.at)}`;
+    : a.kind === 'directive' ? `${T.directive === 'приказ' ? 'Приказ' : 'Директива'} ${T.topGen} о разграничительной линии${a.places?.length ? ` (${a.places.join(' — ')})` : ''}`
+    : `Резерв ${T.topGen}: ввести ${names.get(a.formation)} — район ${describePlace(ctx.theatre, a.at)}`;
   return {
     time,
     orders: orders.filter((o) => o.source === 'human').map((o) => `${names.get(o.formation)}: ${TASK_RU[o.task]} — ${describeTarget(ctx, o.target, names)}${o.note ? `. ${o.note}` : ''}`),
     actions: results.filter((r) => r.action.side === rec.human).map((r) => `${what(r.action)}${r.ok ? ` — ${r.text}` : ` — НЕ ИСПОЛНЕНО: ${r.text}`}`),
     decision,
     events: [
-      ...stavka.map((x) => x.ok ? `Ставка: ${x.reply ?? ''}${x.issues.length ? ` (не исполнено: ${x.issues.join('; ')})` : ''}` : `Ставка не ответила (${x.error ?? 'ошибка модели'}) — разграничительные линии прежние.`),
+      ...stavka.map((x) => x.ok ? `${T.top}: ${x.reply ?? ''}${x.issues.length ? ` (не исполнено: ${x.issues.join('; ')})` : ''}` : `${T.top} не ${T.top === 'ОКХ' ? 'ответило' : 'ответила'} (${x.error ?? 'ошибка модели'}) — разграничительные линии прежние.`),
       ...dayEvents(ctx, g.state, rec.human, before),
     ],
   };
@@ -247,7 +248,7 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
   };
   const byId = new Map(st.formations.map((f) => [f.id, f]));
   const names = new Map(st.formations.map((f) => [f.id, f.name]));
-  const KIND = { base: 'база', priority: 'приоритет подвоза', bridge: 'переправа', demolish: 'подрыв моста', commit: 'ввод резерва' } as const;
+  const KIND = { base: 'база', priority: 'приоритет подвоза', bridge: 'переправа', demolish: 'подрыв моста', commit: 'ввод резерва', line: 'разграничительная линия' } as const;
   const view = (v: PlanVariantRaw): PlanVariantView => {
     const conv = decisionToOrders({ orders: v.orders.map((x) => ({ formation: x.formation, task: x.task, area: x.area, toArea: x.toArea, deadline: '', details: x.why })) }, sit, 'human');
     const staff = actionsToStaff(ctx, gAt, sit, v.actions);
@@ -325,8 +326,9 @@ async function advance() {
       for (const side of [rec.human, rec.ai]) {
         const need = stavkaNeed(ctx, g, side, side === rec.human ? queued.decision?.request ?? '' : '');
         if (!need) continue;
-        post({ kind: 'progress', text: 'Ставка рассматривает разграничительные линии…' });
-        const r = await exclusive('Ставка', () => stavkaTurn(llmClient(), ctx, g, side, need));
+        const top = commandTerms(ctx, side).top;
+        post({ kind: 'progress', text: `${top} — разграничительные линии…` });
+        const r = await exclusive(top, () => stavkaTurn(llmClient(), ctx, g, side, need));
         stavka.push({ ...r, side });
         actions.push(...r.actions);
       }
@@ -476,6 +478,7 @@ function postView() {
     turn: rec.turns.length + 1, over: isOver(), outcome, victory: end.victory.title, deadline: end.defeat.deadline, strength: baseStrength ? sideStrength(s, human) / baseStrength : 1, strengthBelow: end.defeat.strengthBelow,
     human: { id: human, name: sideName(human) }, ai: { id: rec.ai, name: sideName(rec.ai) },
     groups: ctx.scenario.formations.filter((f) => f.side === human && !f.type).map((f) => ({ id: f.id, name: f.name })),
+    terms: commandTerms(ctx, human),
     own: unitReports(ctx, s, human, g.prev),
     intel: intelReport(ctx, s, human, g.prev),
     events: journal.length ? journal[journal.length - 1].events : [],
@@ -491,7 +494,7 @@ function postView() {
 }
 
 /** Полосы стороны человека: словами (вкладка «Приказы») и действующие линии с объединениями формирований — для проверки цели приказа. */
-function sectorsView(): Pick<TurnView, 'sectors' | 'boundaries' | 'groupOf'> {
+function sectorsView(): Pick<TurnView, 'sectors' | 'boundaries' | 'groupOf' | 'armies'> {
   const s = g.state, human = rec.human;
   const nm = (id: string) => shortName(s.formations.find((f) => f.id === id)?.name ?? ctx.scenario.formations.find((f) => f.id === id)?.name ?? id);
   const units = s.formations.filter((f) => onMap(f, s.time)).map((f) => ({ id: f.id, side: f.side, at: f.position }));
@@ -501,6 +504,12 @@ function sectorsView(): Pick<TurnView, 'sectors' | 'boundaries' | 'groupOf'> {
     sectors: sectorText(ctx.theatre, scen, units, human, s.time, nm),
     boundaries: activeBoundaries(scen, s.time, human).map((b) => ({ right: b.right, left: b.left, rightName: nm(b.right), leftName: nm(b.left), title: b.title, line: b.line })),
     groupOf: Object.fromEntries(s.formations.filter((f) => f.side === human).map((f) => [f.id, groups.get(f.id) ?? f.id])),
+    // армии стороны с живыми войсками: у Красной армии армия — сама действующее объединение, у вермахта — штаб над корпусами
+    armies: (() => {
+      const armyOf = groupOf(ctx.scenario, 'army');
+      return ctx.scenario.formations.filter((f) => f.side === human && f.echelon === 'army' && s.formations.some((u) => !u.destroyed && onMap(u, s.time) && (armyOf.get(u.id) ?? u.id) === f.id))
+        .map((f) => ({ id: f.id, name: f.name, group: groups.get(f.id) ?? f.id }));
+    })(),
   };
 }
 

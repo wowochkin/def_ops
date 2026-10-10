@@ -122,6 +122,14 @@ export function actionsToStaff(ctx: SimContext, g: GameState, sit: Situation, gi
         .map((b) => ({ b, d: Math.hypot(...(T.proj.toXY(b.at).map((v, k) => v - T.proj.toXY(p.at)[k]) as [number, number])) })).filter((q) => q.d <= 8).sort((q, w) => q.d - w.d)[0] : null;
       if (!p) why = `пункт «${x.area}» не опознан`; else if (!near) why = `у пункта «${p.title}» нет действующего моста`;
       else a = { kind: 'demolish', side, at: near.b.at, issuedAt: t };
+    } else if (x.kind === 'line') {
+      // разграничительная линия между двумя своими армиями: армии — по названию, пункты — по списку
+      const armies = ctx.scenario.formations.filter((f) => f.side === side && f.echelon === 'army');
+      const ids = (x.formations ?? []).map((n) => findName(n, armies.map((f) => f.name))).filter((i) => i >= 0).map((i) => armies[i].id);
+      const pts = (x.area ?? '').split(/\s+[—–-]\s+|;|,\s(?=[А-ЯЁA-Z])/).map((n) => n.trim()).filter(Boolean).map(place);
+      if (new Set(ids).size !== 2) why = `не опознаны две армии: ${(x.formations ?? []).join(', ')}`;
+      else if (pts.length < 2 || pts.some((p) => !p)) why = `пункты линии не опознаны: ${x.area}`;
+      else a = { kind: 'boundary', side, a: ids[0], b: ids[1], line: pts.map((p) => p!.at), places: pts.map((p) => p!.title), issuedAt: t };
     } else if (x.kind === 'commit') {
       const ri = findName(x.subject ?? '', sit.staff.reserves.map((r) => r.name)), p = place(x.area);
       if (ri < 0) why = `«${x.subject}» нет среди резервов`; else if (!p) why = `пункт «${x.area}» не опознан`;

@@ -1,3 +1,4 @@
+import type { CommandTerms } from '@def-ops/sim';
 import type { LngLat, MapDocument } from '@def-ops/core';
 import type { ActionCheck, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
@@ -111,6 +112,8 @@ export interface TurnView {
   victory: string; deadline: string; strength: number; strengthBelow: number;
   human: { id: string; name: string };
   ai: { id: string; name: string };
+  /** Как называются высшее командование и объединения стороны игрока: Ставка и фронты, ОКХ и группы армий. */
+  terms: CommandTerms;
   /** Объединения верхнего уровня (фронты) — для группировки докладов. */
   groups: { id: string; name: string }[];
   own: UnitReport[];
@@ -139,6 +142,8 @@ export interface TurnView {
   sectors: string[];
   boundaries: { right: string; left: string; rightName: string; leftName: string; title: string; line: LngLat[] }[];
   groupOf: Record<string, string>;
+  /** Армии стороны игрока с войсками на театре и их объединение верхнего уровня — для линий между армиями. */
+  armies: { id: string; name: string; group: string }[];
 }
 
 export type AiStatus =

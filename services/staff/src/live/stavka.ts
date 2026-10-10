@@ -9,8 +9,8 @@
  * и пишется в запись игры — игра повторяется точно.
  */
 import {
-  checkAction, effectiveBoundaries, groupOf, nearbyPlaces, onMap, places, sectorText, sectorViolations, shortName, withBoundaries,
-  type Boundary, type GameState, type SimContext, type StaffAction,
+  checkAction, commandTerms, effectiveBoundaries, groupOf, nearbyPlaces, onMap, places, sectorText, sectorViolations, shortName, withBoundaries,
+  type Boundary, type CommandTerms, type GameState, type SimContext, type StaffAction,
 } from '@def-ops/sim';
 import type { LlmClient } from '../llm/client';
 import { momentRu } from './situation';
@@ -63,15 +63,23 @@ export interface StavkaRaw { assessment: string; decision: 'keep' | 'issue'; lin
 
 export interface StavkaBuilt { messages: { role: 'system' | 'user'; content: string }[]; fronts: { id: string; name: string; short: string }[]; places: { id: string; title: string; at: [number, number] }[] }
 
-const SYSTEM = `Вы — Ставка Верховного Главнокомандования (модель в военно-историческом симуляторе). Ваше дело здесь — только разграничительные линии между фронтами своей стороны: задачи фронтам ставит их командование.
+/** Системный текст высшего командования стороны: Ставка ВГК (фронты) или ОКХ (группы армий). */
+const system = (t: CommandTerms) => {
+  const german = t.top === 'ОКХ';
+  const who = german
+    ? 'Вы — ОКХ, Главное командование сухопутных войск вермахта (модель в военно-историческом симуляторе); войска, подчинённые ОКВ (например, 12-я армия), здесь тоже на вас'
+    : 'Вы — Ставка Верховного Главнокомандования (модель в военно-историческом симуляторе)';
+  const g = german ? 'группами армий' : 'фронтами', gs = german ? 'группы армий' : 'фронты', g2 = german ? 'группами армий' : 'фронтами';
+  return `${who}. Ваше дело здесь — только разграничительные линии между ${g} своей стороны: задачи ${german ? 'группам армий' : 'фронтам'} ставит их командование.
 
 Правила:
-1. Новая линия — когда без неё фронты мешают друг другу (войска одного стоят или наступают в полосе другого), когда обстановка разошлась с историей так, что прежняя линия не подходит, или по обоснованному ходатайству. Иначе — оставить линии как есть (decision = keep).
-2. Линия — между двумя соседними фронтами (between — их названия точно как в обстановке), пункты — по порядку, точно из списка пунктов, от 2 до 8; первый пункт — там, где линия начинается (обычно в тылу), последний — где кончается (у переднего края или за ним, в глубине противника).
-3. delayHours — через сколько часов линия вступает в силу (на отдачу и доведение директивы): обычно 4–8.
-4. Исторические директивы — образец: так Ставка решала в похожей обстановке. Не копируйте их, если обстановка другая.
-5. reply — короткий текст директивы или ответ на ходатайство, как его получит командующий.
+1. Новая линия — когда без неё ${gs} мешают друг другу (войска одного стоят или наступают в полосе другого), когда обстановка разошлась с историей так, что прежняя линия не подходит, или по обоснованному ходатайству. Иначе — оставить линии как есть (decision = keep).
+2. Линия — между двумя соседними ${g2} (between — их названия точно как в обстановке), пункты — по порядку, точно из списка пунктов, от 2 до 8; первый пункт — там, где линия начинается (обычно в тылу), последний — где кончается (у переднего края или за ним, в глубине противника).
+3. delayHours — через сколько часов линия вступает в силу (на отдачу и доведение ${german ? 'приказа' : 'директивы'}): обычно 4–8.
+4. Исторические ${german ? 'приказы' : 'директивы'} — образец: так ${t.top} ${german ? 'решало' : 'решала'} в похожей обстановке. Не копируйте их, если обстановка другая.
+5. reply — короткий текст ${german ? 'приказа' : 'директивы'} или ответ на ходатайство, как его получит командующий.
 Ответ — один JSON-объект по схеме.`;
+};
 
 /** Обстановка для Ставки: фронты и их армии, действующие линии, поводы, образцы, пункты. */
 export function buildStavka(ctx: SimContext, g: GameState, side: string, need: StavkaNeed): StavkaBuilt {
@@ -92,16 +100,17 @@ export function buildStavka(ctx: SimContext, g: GameState, side: string, need: S
   const units = s.formations.filter((f) => onMap(f, s.time)).map((f) => ({ id: f.id, side: f.side, at: f.position }));
   const lines = sectorText(T, scen, units, side, s.time, (id) => shortName(defs.get(id)?.name ?? id));
   const pattern = need.pending.map((b) => `- ${defs.get(b.right)?.name} / ${defs.get(b.left)?.name}: ${(b.places ?? []).join(' — ')} (в истории — с ${ddmm(b.from)}; вызвало: ${b.trigger?.text ?? '—'})`);
+  const t = commandTerms(ctx, side), german = t.top === 'ОКХ';
   const user = [
     `Обстановка на ${momentRu(s.time)}.`, '',
-    'Фронты и их войска:', ...frontLines, '',
+    `${german ? 'Группы армий' : 'Фронты'} и их войска:`, ...frontLines, '',
     'Действующие разграничительные линии:', ...(lines.length ? lines.map((x) => `- ${x}`) : ['- нет']), '',
-    'Повод обратиться к Ставке:', ...need.reasons.map((x) => `- ${x}`), '',
-    ...(pattern.length ? ['Образец — исторические директивы:', ...pattern, ''] : []),
+    `Повод обратиться ${german ? 'к ОКХ' : 'к Ставке'}:`, ...need.reasons.map((x) => `- ${x}`), '',
+    ...(pattern.length ? [`Образец — исторические ${german ? 'приказы' : 'директивы'}:`, ...pattern, ''] : []),
     'Пункты (в линиях — точно эти названия):', ...near.map((a) => `- ${a.title}`), '',
     'Решение: оставить линии или установить новую линию.',
   ].join('\n');
-  return { messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }], fronts, places: near };
+  return { messages: [{ role: 'system', content: system(t) }, { role: 'user', content: user }], fronts, places: near };
 }
 
 export interface StavkaResult {

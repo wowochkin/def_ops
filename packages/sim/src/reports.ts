@@ -7,6 +7,7 @@
  * Одни и те же сведения идут в доклады человеку и в обстановку для модели.
  */
 import type { LngLat } from '@def-ops/core';
+import { commandTerms } from './command';
 import { dist } from './geo';
 import { onMap, profileOf, targetPoint, type SimContext } from './step';
 import PLACES_RU from '../data/places-ru.json';
@@ -232,7 +233,7 @@ export function nearbyPlaces(ctx: SimContext, state: SimState, side: string, km:
 const km1 = (x: number) => (x >= 10 ? String(Math.round(x)) : x.toFixed(1).replace('.', ','));
 
 /** Сводка «за сутки» для стороны: бои, окружения, уничтоженные, дошедшие приказы (только свои — для чужих — без подробностей). */
-export function dayEvents(_ctx: SimContext, state: SimState, side: string, prev: SimState): string[] {
+export function dayEvents(ctx: SimContext, state: SimState, side: string, prev: SimState): string[] {
   const names = new Map(state.formations.map((f) => [f.id, f.name]));
   const sideOf = new Map(state.formations.map((f) => [f.id, f.side]));
   const out: string[] = [];
@@ -250,7 +251,8 @@ export function dayEvents(_ctx: SimContext, state: SimState, side: string, prev:
     } else if (j.kind === 'destroyed') {
       out.push(sideOf.get(j.formation) === side ? `${names.get(j.formation)} потеряло боеспособность.` : `${names.get(j.formation)} (противник) разгромлено.`);
     } else if (j.kind === 'directive' && j.side === side) {
-      const who = j.issuedBy === 'stavka' ? 'директива Ставки' : j.issuedBy === 'player' ? 'распоряжение' : 'директива Ставки';
+      const t = commandTerms(ctx, side);
+      const who = j.issuedBy === 'player' ? 'распоряжение' : `${t.directive} ${t.topGen}`;
       out.push(`С ${j.from.slice(8, 10)}.${j.from.slice(5, 7)} ${j.from.slice(11, 16)} — разграничительная линия ${j.title.replace(/\s*\(.*\)$/, '')} (${who}).`);
     } else if (j.kind === 'supply' && sideOf.get(j.formation) === side) {
       out.push(j.what === 'ammo' ? `${names.get(j.formation)}: боеприпасы на исходе (${j.left} бк).` : `${names.get(j.formation)}: горючее кончилось.`);

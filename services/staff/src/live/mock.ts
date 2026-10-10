@@ -59,7 +59,7 @@ export function mockDecision(prompt: string): Decision {
  */
 export function mockStavka(prompt: string) {
   const places = section(prompt, /^Пункты \(в линиях/m);
-  const fronts = section(prompt, /^Фронты и их войска/m).map((l) => l.split(' (')[0]);
+  const fronts = section(prompt, /^(Фронты|Группы армий) и их войска/m).map((l) => l.split(' (')[0]);
   const pattern = section(prompt, /^Образец/m)[0];
   const request = section(prompt, /^Повод обратиться/m).find((l) => /^Ходатайство/.test(l));
   const lc = (x: string) => x.toLowerCase();
@@ -255,7 +255,7 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
       const body = JSON.parse(b || '{}') as { messages?: { role: string; content: string }[] };
       const user = [...(body.messages ?? [])].reverse().find((m) => m.role === 'user')?.content ?? '';
       const sys = (body.messages ?? []).find((m) => m.role === 'system')?.content ?? '';
-      const answer = sys.includes('Вы — Ставка Верховного Главнокомандования') ? JSON.stringify(mockStavka(user))
+      const answer = sys.includes('Вы — Ставка Верховного Главнокомандования') || sys.includes('Вы — ОКХ') ? JSON.stringify(mockStavka(user))
         : sys.includes('Проводите разбор операции') ? mockReview(sys, user)
         : sys.includes('посредник военно-исторического симулятора') ? JSON.stringify(mockUmpire(user))
         : sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user, sys.includes('выпишите в infrastructure')))

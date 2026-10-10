@@ -510,7 +510,7 @@ function Bar({ v, warn = 0.5, bad = 0.25, label }: { v: number; warn?: number; b
   return <span className={`bar ${cls}`} title={label}><i style={{ width: `${Math.max(3, Math.min(100, v * 100))}%` }} /></span>;
 }
 
-function UnitCard({ u, open, onToggle, onOrder, draft }: { u: UnitReport; open: boolean; onToggle: () => void; onOrder: () => void; draft?: Draft }) {
+function UnitCard({ u, open, onToggle, onOrder, draft, topGen = 'Ставки' }: { u: UnitReport; open: boolean; onToggle: () => void; onOrder: () => void; draft?: Draft; topGen?: string }) {
   const chips: [string, string][] = [];
   if (u.status === 'arriving') chips.push(['muted', `прибудет ${ddmm(u.arrives!)}`]);
   if (u.status === 'reserve') chips.push(['warn', 'не введена']);
@@ -525,7 +525,7 @@ function UnitCard({ u, open, onToggle, onOrder, draft }: { u: UnitReport; open: 
       <button className="ucard-h" onClick={onToggle}>
         <span className="ucard-n">{short(u.name)}</span>
         <span className="ucard-bars"><Bar v={u.strength} label={`укомплектованность ${pct(u.strength)}`} /><Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></span>
-        <span className="ucard-p">{u.status === 'active' ? `${u.posture}, ${u.place}` : u.status === 'reserve' ? `резерв Ставки, готова к вводу с ${ddmm(u.reserveFrom!)} — ввести: «Приказы» → «Резервы»` : u.status === 'arriving' ? `вводится в сражение, сосредоточится ${ddmm(u.arrives!)} ${hhmm(u.arrives!)}` : 'уничтожена'}</span>
+        <span className="ucard-p">{u.status === 'active' ? `${u.posture}, ${u.place}` : u.status === 'reserve' ? `резерв ${topGen}, готова к вводу с ${ddmm(u.reserveFrom!)} — ввести: «Приказы» → «Резервы»` : u.status === 'arriving' ? `вводится в сражение, сосредоточится ${ddmm(u.arrives!)} ${hhmm(u.arrives!)}` : 'уничтожена'}</span>
         {chips.length > 0 && <span className="ucard-chips">{chips.map(([c, t]) => <i key={t} className={c}>{t}</i>)}</span>}
       </button>
       {open && <div className="ucard-b">
@@ -572,7 +572,7 @@ function Reports({ v, drafts, onUnit, onOrder, sel }: { v: TurnView; drafts: Rec
       {v.turn === 1 && <p className="note">Командование принято. Войска выполняют задачи, полученные до этого момента; исторические приказы дальше не поступают. Новые приказы — во вкладке «Приказы».</p>}
       {reached.length > 0 && <div className="dispatch"><h4>Достигнуто</h4><ul>{reached.map((g) => <li key={g.title}>{g.title.split(':')[0]} — {ddmm(g.simulated!)} <small className="muted">(в истории {ddmm(g.historical)})</small></li>)}</ul></div>}
       <h4 className="cmd-h4">Доклады объединений</h4>
-      <Grouped v={v}>{(u) => <UnitCard key={u.id} u={u} open={sel === u.id} draft={drafts[u.id]} onToggle={() => onUnit(sel === u.id ? '' : u.id)} onOrder={() => onOrder(u.id)} />}</Grouped>
+      <Grouped v={v}>{(u) => <UnitCard topGen={v.terms?.topGen} key={u.id} u={u} open={sel === u.id} draft={drafts[u.id]} onToggle={() => onUnit(sel === u.id ? '' : u.id)} onOrder={() => onOrder(u.id)} />}</Grouped>
     </div>
   );
 }
@@ -625,7 +625,7 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
         <button key={x.id} className={`orow${x.id === sel ? ' on' : ''}`} onClick={() => setSel(x.id)}>
           <span className="orow-n">{short(x.name)}</span>
           <span className="orow-t">{drafts[x.id] ? <b className="plan">новый: {TASK_RU[drafts[x.id].task]}{drafts[x.id].targetText ? `: ${drafts[x.id].targetText}` : ''}</b>
-            : x.status === 'reserve' ? 'резерв Ставки, не введена' : x.status === 'arriving' ? `прибудет ${ddmm(x.arrives!)}`
+            : x.status === 'reserve' ? `резерв ${v.terms?.topGen ?? 'Ставки'}, не введена` : x.status === 'arriving' ? `прибудет ${ddmm(x.arrives!)}`
             : x.pending.length ? <span className="pend">в пути: {x.pending[x.pending.length - 1].task} — {x.pending[x.pending.length - 1].target}</span>
             : x.task ? <span className="keep" title="Приказ прошлых ходов в силе, пока не отдан новый">в силе: {x.task} — {x.target}</span> : 'без задачи'}</span>
         </button>)}</Grouped>
@@ -833,7 +833,7 @@ function PlanBlock({ plan, stale, accept, takeDecision, takeOrder, drafted, take
   takeOrder: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean; retry: () => void;
 }) {
   const [open, setOpen] = useState<number | null>(0);
-  const D: [keyof HumanDecision, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение в Ставку']];
+  const D: [keyof HumanDecision, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение вышестоящему']];
   return (
     <div className="adv-msg plan">
       <div className="adv-q"><small>Решение › Варианты решения на ход · {ddmm(plan.time)} {hhmm(plan.time)}</small>Предложите {plan.count === 1 ? 'вариант' : `${plan.count} варианта`} решения на ход</div>
@@ -879,7 +879,7 @@ export function decisionMissing(d: HumanDecision): string[] {
   const out: string[] = [];
   if (!d.assessment.trim()) out.push('оценка обстановки');
   if (!d.intent.trim()) out.push('решение (замысел)');
-  if (!d.report.trim()) out.push('боевое донесение в Ставку');
+  if (!d.report.trim()) out.push('боевое донесение вышестоящему');
   return out;
 }
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
@@ -914,13 +914,13 @@ function Decision({ v, d, set, onPlan, planBusy }: { v: TurnView; d: HumanDecisi
       {F({ k: 'intent', label: 'Решение (замысел действий)', hint: 'Цель на сутки, главный удар, кто наступает, кто обеспечивает, куда вводятся резервы…', rows: 4, req: true })}
       {F({ k: 'risks', label: 'Риски', hint: 'Что может пойти не так и как парировать…', rows: 2 })}
       <label className={`dfield${!d.report.trim() ? ' need' : ''}`}>
-        <span>Боевое донесение в Ставку<i> обязательно</i><button className="link" onClick={(e) => { e.preventDefault(); draftReport(); }}>черновик по докладам</button></span>
+        <span>Боевое донесение {v.terms?.topTo ?? 'в Ставку'}<i> обязательно</i><button className="link" onClick={(e) => { e.preventDefault(); draftReport(); }}>черновик по докладам</button></span>
         <textarea rows={5} value={d.report} placeholder="Положение войск к утру, итоги суток, решение на следующие сутки, просьбы…" onChange={(e) => set({ report: e.target.value })} />
       </label>
       <label className="dfield">
-        <span>Ходатайство в Ставку о разграничительных линиях</span>
+        <span>Ходатайство {v.terms?.topTo ?? 'в Ставку'} о разграничительных линиях</span>
         <textarea rows={2} value={d.request ?? ''} placeholder="Например: прошу продлить линию с соседом до … — его войска вышли в нашу полосу. Пусто — не ходатайствовать." onChange={(e) => set({ request: e.target.value })} />
-        <small className="muted">Рассматривает модель-Ставка на этом ходу; ответ и новая директива — в донесениях следующего хода и в «Журнале».</small>
+        <small className="muted">Рассматривает модель высшего командования ({v.terms?.top ?? 'Ставка'}) на этом ходу; ответ и новая линия — в донесениях следующего хода и в «Журнале».</small>
       </label>
     </div>
   );
@@ -1020,9 +1020,9 @@ function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction }: { v: Tur
   const center = v.own.filter((u) => u.status === 'active').reduce<[number, number]>((c, u, _i, arr) => [c[0] + u.at[0] / arr.length, c[1] + u.at[1] / arr.length], [0, 0]);
   return (
     <div className="cmd-sec">
-      <h3>Резервы Ставки</h3>
+      <h3>Резервы {v.terms?.topGen ?? 'Ставки'}</h3>
       <p className="note">Резерв вводится по вашему решению: укажите район сосредоточения на своей территории. Объединение будет там не раньше, чем готово к вводу, и не раньше чем через сутки после распоряжения. Задачу ему можно поставить сразу — приказ дождётся.</p>
-      {!reserves.length && !coming.length && <p className="muted">Резервов Ставки нет.</p>}
+      {!reserves.length && !coming.length && <p className="muted">Резервов {v.terms?.topGen ?? 'Ставки'} нет.</p>}
       {reserves.map((u) => {
         const a = acts.find((x) => x.key === `commit:${u.id}`);
         const pm = pickMode?.kind === 'commit' && pickMode.formation === u.id;
@@ -1047,10 +1047,10 @@ function Bounds({ v, acts, drop, picking, setPicking, pts, setPts, add }: {
   v: TurnView; acts: Act[]; drop: (k: string) => void; picking: boolean; setPicking: (b: boolean) => void;
   pts: LngLat[]; setPts: (f: (l: LngLat[]) => LngLat[]) => void; add: (a: Extract<StaffAction, { kind: 'boundary' }>, label: string) => Promise<boolean>;
 }) {
-  const armies = v.own.filter((u) => u.echelon === 'army' && u.status !== 'destroyed');
-  const fronts = v.groups.filter((g) => armies.filter((u) => v.groupOf[u.id] === g.id).length >= 2);
+  const armies = v.armies ?? [];
+  const fronts = v.groups.filter((g) => armies.filter((u) => u.group === g.id).length >= 2);
   const [front, setFront] = useState(fronts[0]?.id ?? '');
-  const inFront = armies.filter((u) => v.groupOf[u.id] === front);
+  const inFront = armies.filter((u) => u.group === front);
   const [a, setA] = useState(''), [b, setB] = useState('');
   const mine = acts.filter((x) => x.action.kind === 'boundary');
   const ready = a && b && a !== b && pts.length >= 2;
@@ -1062,10 +1062,10 @@ function Bounds({ v, acts, drop, picking, setPicking, pts, setPts, add }: {
     <div className="cmd-sec">
       <h3>Полосы и разграничительные линии</h3>
       {v.sectors.length > 0 && <ul className="sect-list">{v.sectors.map((t) => <li key={t}>{t}</li>)}</ul>}
-      <p className="note">Линии между фронтами устанавливает Ставка — исторические директивы вступают, когда обстановка совпала с той, что их вызвала, иначе по поводу или по вашему ходатайству (вкладка «Решение») решает модель-Ставка. Линии между армиями одного фронта — ваше распоряжение: вступает в силу с задержкой доведения армиям; армии идут к целям своей полосой, выход в полосу соседа отмечается в разборе.</p>
+      <p className="note">Линии между {v.terms?.groupsGen ?? 'фронтами'} устанавливает {v.terms?.top ?? 'Ставка'} — исторические {v.terms?.directive === 'приказ' ? 'приказы' : 'директивы'} вступают, когда обстановка совпала с той, что их вызвала, иначе по поводу или по вашему ходатайству (вкладка «Решение») решает модель высшего командования. Линии между армиями одного объединения — ваше распоряжение: вступает в силу с задержкой доведения армиям; армии идут к целям своей полосой, выход в полосу соседа отмечается в разборе.</p>
       {mine.map((x) => <ActLine key={x.key} a={x} drop={drop} />)}
       {fronts.length ? <div className="bnd-form">
-        <label>Фронт <select value={front} onChange={(e) => { setFront(e.target.value); setA(''); setB(''); }}>{fronts.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>
+        <label>{v.terms?.group === 'группа армий' ? 'Группа армий' : 'Фронт'} <select value={front} onChange={(e) => { setFront(e.target.value); setA(''); setB(''); }}>{fronts.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>
         <label>Армия <select value={a} onChange={(e) => setA(e.target.value)}><option value="">—</option>{inFront.map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
         <label>Соседняя армия <select value={b} onChange={(e) => setB(e.target.value)}><option value="">—</option>{inFront.filter((u) => u.id !== a).map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
         <div className="row">
@@ -1128,7 +1128,7 @@ function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, 
         <span className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `модель: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `LM Studio: ${llm.check.error}` : 'проверка связи…'}</span>
       </div>
       <label className="switch"><input type="checkbox" checked={!!llm.settings.umpire} onChange={(e) => llm.set({ umpire: e.target.checked })} /><span /> Посредник на модели: нюансы к боям по базе знаний</label>
-      <label className="switch"><input type="checkbox" checked={llm.settings.stavka !== false} onChange={(e) => llm.set({ stavka: e.target.checked })} /><span /> Модель-Ставка: разграничительные линии фронтов, когда обстановка разошлась с историей или есть ходатайство</label>
+      <label className="switch"><input type="checkbox" checked={llm.settings.stavka !== false} onChange={(e) => llm.set({ stavka: e.target.checked })} /><span /> Модель высшего командования (Ставка, ОКХ): разграничительные линии фронтов и групп армий, когда обстановка разошлась с историей или есть ходатайство</label>
       <p className="muted umpire-about">Перед каждым ходом модель-посредник смотрит на ожидаемые бои и по справкам базы знаний (доктрина, нормативы, техника) добавляет то, чего правила не учитывают: видимость, взаимодействие родов войск, заграждения, качество обороны. Поправки — множители 0,8–1,25 с обоснованием; видны в журнале боя и записываются в игру.</p>
       <div className="seg umpire-seg">
         <button className={part === 'enemy' ? 'on' : ''} onClick={() => setPart('enemy')}>Как действовал противник · {list.length}</button>
