@@ -36,6 +36,7 @@ export function describeRules(r: Rules): ParamRow[] {
   if (r.fortCrossHours) add('fortCross', 'Оборона', 'Заграждения вне боя', `${n(r.fortCrossHours, 1)} ч/клетку за уровень`, 'мины, рвы, заграждения непрорванной полосы', r.fortCrossHours);
   add('ammo', 'Снабжение и состояние', 'Нехватка боеприпасов', `сила ×${n(r.ammoShort)}`, 'при запасе меньше 0,5 боекомплекта', r.ammoShort);
   add('fuel', 'Снабжение и состояние', 'Без горючего', `техника ×${n(r.fuelOut)}`, 'подвижные части без горючего не движутся и слабеют', r.fuelOut);
+  if (r.supplyFlow) add('supplyFlow', 'Снабжение и состояние', 'Подвоз как пропускная способность', `полный до ${r.supplyFlow.fullHours ?? 12} ч пути, дальше слабее; ${n(r.supplyFlow.fuelPer100km ?? 1)} запр. на 100 км марша`, 'горючее подвижных частей — по пройденному пути; пополнение падает с удалением от базы');
   add('fatigue', 'Снабжение и состояние', 'Усталость', `до −${n(r.fatigueEffect * 100, 0)} % силы`, `прирост в бою ${n(r.fatigueGain.combat * 100, 0)} %/сут, на марше ${n(r.fatigueGain.march * 100, 0)} %/сут, отдых −${n(r.fatigueGain.rest * 100, 0)} %/сут`, r.fatigueEffect);
   add('encircle', 'Снабжение и состояние', 'Окружение', `${r.encircleHours ?? 36} ч без подвоза`, 'через сколько часов без подвоза формирование считается окружённым', r.encircleHours ?? 36);
   add('movement', 'Движение', 'Темп марша', `×${n(r.movementScale ?? 1)}`, 'множитель к темпам марша из профилей сторон', r.movementScale ?? 1);

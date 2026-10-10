@@ -252,7 +252,11 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const c = prof.consumption[posture];
     const was = { ammo: f.ammo, fuel: f.fuel };
     f.ammo = Math.max(0, f.ammo - c.ammo * (dt / 24) * (inCombat.has(f.id) ? 1 : 0.3));
-    f.fuel = Math.max(0, f.fuel - c.fuel * (dt / 24));
+    // подвоз как пропускная способность: на марше подвижные части жгут горючее по пройденному пути
+    const SF = R.supplyFlow;
+    const marchKm = SF && posture === 'march' && prof.unitTypes[f.type]?.mobility !== 'foot'
+      ? journal.reduce((a, j) => (j.kind === 'move' && j.formation === f.id ? a + j.km : a), 0) : -1;
+    f.fuel = Math.max(0, f.fuel - (marchKm >= 0 ? (SF!.fuelPer100km ?? 1) * (marchKm / 100) : c.fuel * (dt / 24)));
     // подвоз: по своей территории от источников стороны
     const ps = prof.supply;
     if (ps && sup?.fields.get(f.side)) {
@@ -295,7 +299,10 @@ export function step(prev: SimState, ctx: SimContext): SimState {
       if (!blocked) {
         // приоритет подвоза (тыл под управлением штаба): приоритетным — больше, остальным — меньше
         const pr = prev.logistics?.[f.side]?.priority ?? [];
-        const k = pr.length ? (pr.includes(f.id) ? 1.5 : 0.75) : 1;
+        // пропускная способность: чем дальше база, тем меньше рейсов автотранспорта в сутки
+        const h = SF ? supplyHours(f, startPos.get(f.id) ?? f.position) : 0;
+        const flow = SF && h > (SF.fullHours ?? 12) ? (SF.fullHours ?? 12) / h : 1;
+        const k = (pr.length ? (pr.includes(f.id) ? 1.5 : 0.75) : 1) * flow;
         f.ammo = Math.min(ps.maxAmmo, f.ammo + ps.ammoPerDay * k * (dt / 24));
         f.fuel = Math.min(ps.maxFuel, f.fuel + ps.fuelPerDay * k * (dt / 24));
       }

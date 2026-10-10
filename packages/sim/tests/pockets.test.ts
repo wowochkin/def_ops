@@ -29,3 +29,17 @@ describe('котлы, крепости, переправы сапёров (Бе�
     expect((run.final.crossings ?? []).some((c) => c.side === 'su')).toBe(true);
   });
 });
+
+describe('подвоз как пропускная способность (supplyFlow, по желанию)', () => {
+  const ctx = loadContext('berlin-1945-tasks');
+  const on = { ...ctx.rules, supplyFlow: { fullHours: 12, fuelPer100km: 1 } };
+  const fuelOut = (rules: typeof ctx.rules) => runScenario({ ...ctx, rules }, 1).final.journal.filter((j) => j.kind === 'supply' && j.what === 'fuel').length;
+  it('горючее по пройденному пути: без горючего остаётся не меньше частей, чем при суточном расходе; прогон воспроизводится', () => {
+    const a = fuelOut(on);
+    expect(a).toBeGreaterThanOrEqual(fuelOut(ctx.rules));
+    expect(fuelOut(on)).toBe(a);
+  }, 60000);
+  it('в откалиброванных правилах выключен', () => {
+    expect(ctx.rules.supplyFlow).toBeUndefined();
+  });
+});

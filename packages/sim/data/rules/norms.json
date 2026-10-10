@@ -513,6 +513,48 @@
         "berlin-1945-tasks",
         "vistula-oder-1945"
       ]
+    },
+    {
+      "id": "truck-cycle",
+      "title": "Подвоз автотранспортом: один рейс в сутки — до какого удаления от базы подвоз полный",
+      "kb": "org:su-supply",
+      "source": "",
+      "reliability": "C",
+      "historical": "армейский автотранспорт ≈ 300 т подъёма, суточный ход ≈ 150 км, армейская база в 60–90 км от переднего края (Davie, JSMS 2020, по аннотации — таблиц не читали)",
+      "measure": {
+        "kind": "assumption",
+        "expr": "supplyFlow.fullHours",
+        "why": "полный подвоз на удалении, пока рейс укладывается в сутки; дальше пропорционально числу рейсов; нужны таблицы Davie и данные о тыловых базах армий"
+      },
+      "unit": "ч пути",
+      "rules": [
+        "supplyFlow.fullHours"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "fuel-per-100km",
+      "title": "Расход горючего подвижных частей на 100 км марша",
+      "kb": "org:de-profile",
+      "source": "TM-E 30-451",
+      "reliability": "A",
+      "historical": "немецкая единица расхода (Verbrauchssatz) — горючее на 100 км по дорогам на машину; в танковых соединениях 4 единицы, в остальных 5, на армейских складах 3 (US War Dept., TM-E 30-451, 1945)",
+      "measure": {
+        "kind": "assumption",
+        "expr": "supplyFlow.fuelPer100km",
+        "why": "для советских частей размер заправки в км не подтверждён; нужны нормы расхода горючего по ПУ-44 и отчёты тыла"
+      },
+      "unit": "запр. на 100 км",
+      "rules": [
+        "supplyFlow.fuelPer100km"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     }
   ],
   "findings": [
