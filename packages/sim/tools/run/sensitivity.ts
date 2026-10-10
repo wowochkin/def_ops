@@ -10,6 +10,7 @@
  *
  *   npm run sim:sensitivity -- --scenario berlin-1945-tasks --part morris [--r 8] [--seeds 2] [--out evals-out/sensitivity]
  *   npm run sim:sensitivity -- --scenario berlin-1945-tasks --part local            # локальные ±20 % и шум
+ *   npm run sim:sensitivity -- --scenario vistula-oder-1945 --part scan --key movement --values 1.0,1.2,1.4 --seeds 5
  *   npm run sim:sensitivity -- --report                                              # свести файлы в report.md
  */
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -33,16 +34,17 @@ const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.lengt
 const sd = (a: number[]) => { if (a.length < 2) return 0; const m = mean(a); return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)); };
 
 interface PartResult {
-  scenario: string; part: 'morris' | 'local'; seeds: number; tolerance: number; points: number; seconds: number;
+  scenario: string; part: 'morris' | 'local' | 'scan'; seeds: number; tolerance: number; points: number; seconds: number;
   baseline: Vals;
   morris?: { r: number; levels: number; keys: Record<string, Record<Metric, { mu: number; muStar: number; sigma: number; seMuStar: number }>> };
+  scan?: { key: string; rows: { value: number; vals: Vals }[] };
   local?: { rel: number; keys: Record<string, { from: number; lo: number; hi: number; swing: Vals }>; noise: Record<Metric, { mean: number; sd: number }>; noiseRuns: number };
 }
 
 if (args.includes('--report')) { report(); process.exit(0); }
 
 const scenarioId = opt('scenario', 'berlin-1945-tasks')!;
-const part = (opt('part', 'morris') as 'morris' | 'local');
+const part = (opt('part', 'morris') as 'morris' | 'local' | 'scan');
 const seeds = Number(opt('seeds', '2'));
 const tol = TOLERANCE[scenarioId] ?? 10;
 const ctx = loadContext(scenarioId);
@@ -95,6 +97,17 @@ if (part === 'morris') {
       return [m, { mu: mean(e), muStar: mean(a), sigma: sd(e), seMuStar: sd(a) / Math.sqrt(Math.max(1, a.length)) }];
     }))])),
   };
+} else if (part === 'scan') {
+  // один множитель по списку значений, остальные — как есть; по умолчанию 5 seed (как в sim:demo)
+  const key = opt('key', 'movement') as CalibKey;
+  const values = opt('values', '')!.split(',').map(Number).filter(Number.isFinite);
+  const rows: { value: number; vals: Vals }[] = [];
+  for (const v of values) {
+    const vals = measure({ ...base, [key]: v });
+    rows.push({ value: v, vals });
+    console.log(`  ${key} = ${v}: в допуске ${(vals.within * 100).toFixed(0)} %, события ±2 сут ${(vals.evHit * 100).toFixed(0)} %, ошибка дат ${vals.evErr.toFixed(2)} сут, ${((Date.now() - t0) / 1000).toFixed(0)} с`);
+  }
+  result.scan = { key, rows };
 } else {
   const rel = Number(opt('rel', '0.2'));
   const clamp = (k: CalibKey, v: number) => Math.min(CALIB_SPACE[k][1], Math.max(CALIB_SPACE[k][0], v));
@@ -112,7 +125,7 @@ if (part === 'morris') {
 
 result.points = points; result.seconds = Math.round((Date.now() - t0) / 1000);
 mkdirSync(outDir, { recursive: true });
-const file = join(outDir, `${scenarioId}.${part}.json`);
+const file = join(outDir, `${scenarioId}.${part}${result.scan ? '-' + result.scan.key : ''}.json`);
 writeFileSync(file, JSON.stringify(result, null, 1));
 console.log(`готово: ${points} точек, ${(result.seconds / 60).toFixed(1)} мин → ${file}`);
 
@@ -124,6 +137,7 @@ function report() {
     'локальные отклонения — ±20 % от откалиброванных значений. Все точки считаются на одних и тех же seed.', ''];
   for (const s of scen) {
     const m = files.find((f) => f.scenario === s && f.part === 'morris'), l = files.find((f) => f.scenario === s && f.part === 'local');
+    if (!m && !l) continue;
     L.push(`## ${s}`, '');
     const ref = m ?? l!;
     L.push(`Допуск ${ref.tolerance} км, прогонов на точку: ${ref.seeds}. Исходные правила: ${(ref.baseline.within * 100).toFixed(0)} % положений в допуске, события ±2 сут — ${(ref.baseline.evHit * 100).toFixed(0)} %, ошибка дат ${ref.baseline.evErr.toFixed(2)} сут.`);
@@ -138,6 +152,11 @@ function report() {
       L.push(`| ${CALIB_INFO[k].title} (\`${k}\`) | ${a ? `${pp(a.within.muStar)} ± ${pp(a.within.seMuStar)}` : '—'} | ${a ? pp(a.within.sigma) : '—'} | ${a ? pp(a.evHit.muStar) : '—'} | ${a ? a.obj.muStar.toFixed(1) : '—'} | ${b ? pp(b.swing.within) : '—'} | ${b ? pp(b.swing.evHit) : '—'} | ${b && noise ? (Math.abs(b.swing.within) / noise).toFixed(1) : '—'} |`);
     }
     L.push('');
+    for (const sc of files.filter((f) => f.scenario === s && f.part === 'scan')) {
+      L.push(`Скан множителя \`${sc.scan!.key}\` (прогонов на точку: ${sc.seeds}):`, '', '| Значение | Положения в допуске | События ±2 сут | Ошибка дат, сут | Медиана превышения, км |', '|---|---|---|---|---|');
+      for (const r of sc.scan!.rows) L.push(`| ${r.value} | ${(r.vals.within * 100).toFixed(0)} % | ${(r.vals.evHit * 100).toFixed(0)} % | ${r.vals.evErr.toFixed(2)} | ${r.vals.median.toFixed(1)} |`);
+      L.push('');
+    }
   }
   L.push('μ* — среднее абсолютное элементарное влияние (изменение показателя при сдвиге множителя на весь диапазон подбора), σ — разброс влияния (велик — влияние нелинейно или зависит от остальных множителей); «локально / шум» — размах показателя при ±20 %, делённый на σ шума одного прогона.');
   writeFileSync(join(outDir, 'report.md'), L.join('\n'));
