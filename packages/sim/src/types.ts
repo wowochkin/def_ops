@@ -71,6 +71,12 @@ export interface SideProfile {
 /** Кусочно-линейная таблица: [аргумент, значение], аргумент возрастает. */
 export type Table = [number, number][];
 
+/** Режим боевых действий: бой в застройке, в укреплённой полосе, на открытой местности; марш; преследование. */
+export type Regime = 'urban' | 'belt' | 'open' | 'march' | 'pursuit';
+export const REGIMES: Regime[] = ['urban', 'belt', 'open', 'march', 'pursuit'];
+export const REGIME_RU: Record<Regime, string> = { urban: 'бой в застройке', belt: 'бой в укреплённой полосе', open: 'бой на открытой местности', march: 'марш', pursuit: 'преследование' };
+export interface RegimeParams { advance?: number; attackerLoss?: number; defenderLoss?: number; speed?: number }
+
 export interface Rules {
   id: string;
   /** Базовые правила, поверх которых пишутся поля этого файла (масштабный вариант). */
@@ -183,6 +189,14 @@ export interface Rules {
   sectors?: { foreign: number };
   /** Множитель темпов марша из профилей (калибровка: заторы, разрушенные дороги, беженцы). */
   movementScale?: number;
+  /**
+   * Режимы боевых действий в одном движке: поправки, которые действуют только в своём режиме и калибруются по
+   * записям своего режима (sim:calibrate-regimes). Режим боя — по месту обороняющихся: застройка (все в городской
+   * застройке), укреплённая полоса, открытая местность; режим движения вне боя — марш (приказ не на наступление)
+   * и преследование (наступающие без соприкосновения). advance — множитель темпа в бою, attackerLoss и defenderLoss —
+   * множители потерь, speed — множитель темпа движения вне боя. Нет поля или режима — множители 1.
+   */
+  regimes?: Partial<Record<Regime, RegimeParams>>;
   /** Откуда взяты числа: калибровка — сценарий, мерило, дата. */
   calibration?: Record<string, unknown>;
 }
@@ -421,9 +435,9 @@ export interface CombatFactor {
 export type JournalEntry =
   | { kind: 'order'; time: string; formation: string; order: Order; effective: boolean }
   /** path — пройденный путь (по дорогам и улицам), если он не прямой. */
-  | { kind: 'move'; time: string; formation: string; from: LngLat; to: LngLat; km: number; path?: LngLat[] }
+  | { kind: 'move'; time: string; formation: string; from: LngLat; to: LngLat; km: number; path?: LngLat[]; regime?: Regime }
   | { kind: 'combat'; time: string; attackers: string[]; defenders: string[]; at: LngLat; ratio: number; factors: CombatFactor[];
-      noise: number; advanceKm: number; attackerLoss: number; defenderLoss: number; outcome: 'breakthrough' | 'advance' | 'held' | 'repelled' }
+      noise: number; advanceKm: number; attackerLoss: number; defenderLoss: number; outcome: 'breakthrough' | 'advance' | 'held' | 'repelled'; regime?: Regime }
   | { kind: 'supply'; time: string; formation: string; what: 'ammo' | 'fuel' | 'stock'; left: number }
   | { kind: 'encircled'; time: string; formation: string; cut: boolean }
   | { kind: 'destroyed'; time: string; formation: string }

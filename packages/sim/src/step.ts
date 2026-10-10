@@ -15,8 +15,8 @@ import { dist, type XY } from './geo';
 import { interp, power } from './rules';
 import { describePlace } from './reports';
 import { trailTo, type Theatre } from './theatre';
-import type { CombatFactor, Formation, JournalEntry, Mobility, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
-import { UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
+import type { CombatFactor, Formation, JournalEntry, Mobility, Order, Posture, Regime, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
+import { REGIME_RU, UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
 import { claimTerritory, controlMap, initialTerritory, supplyField } from './control';
 import { activeBoundaries, checkTriggers, effectiveBoundaries, groupOf, sectorMap, sectorPrefer, withBoundaries, type SectorMap } from './sectors';
 
@@ -232,7 +232,9 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     // приказ дошёл в этом ходе — движение только с момента доведения
     const hrs = R.orderPartialTurn && reached.has(f.id) ? Math.min(dt, Math.max(0, (t2ms(end) - Math.max(t2ms(now), reached.get(f.id)!)) / HOUR)) : dt;
     if (hrs <= 0) continue;
-    const r = T.advance(f.position, to, mob, prof, R, now, hrs, (i) => fc(i) + tc(i), prefer(f, mob));
+    // режим движения: наступающие без соприкосновения — преследование, остальные — марш (rules.regimes)
+    const regime: Regime = f.posture === 'attack' ? 'pursuit' : 'march';
+    const r = T.advance(f.position, to, mob, prof, R, now, hrs * (R.regimes?.[regime]?.speed ?? 1), (i) => fc(i) + tc(i), prefer(f, mob));
     if (!r) continue;
     let pos = r.position;
     // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
@@ -242,7 +244,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const km = dist(xy(f), T.proj.toXY(pos));
     if (km > 0.05) {
       const trail = stop ? trailTo(T, r.trail, pos) : r.trail;
-      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: pos, km: +km.toFixed(1), ...pathOf(trail) });
+      journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: pos, km: +km.toFixed(1), ...pathOf(trail), ...(R.regimes ? { regime } : {}) });
       f.position = pos;
       moved.add(f.id);
       f.route = r.path;
@@ -517,7 +519,11 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   // укреплённая полоса: темп не выше предельного для её уровня («прогрызание» обороны)
   const fortLv = def.reduce((m, f) => Math.max(m, T.fortificationAt(f.position)), 0);
   const cap = fortLv && R.fortAdvanceKm ? R.fortAdvanceKm[Math.min(fortLv, R.fortAdvanceKm.length - 1)] ?? Infinity : Infinity;
-  const freePace = interp(R.advance, ratio) * at;
+  // режим боя: застройка (вся оборона в городе), укреплённая полоса, открытая местность — свои поправки (rules.regimes)
+  const streetFight = def.every((f) => T.terrainAt(f.position) === 'urban');
+  const regime: Regime = streetFight ? 'urban' : fortLv ? 'belt' : 'open';
+  const RG = R.regimes?.[regime] ?? {};
+  const freePace = interp(R.advance, ratio) * at * (RG.advance ?? 1);
   const advancePerDay = Math.min(freePace, cap) * um('pace');
   // «удерживать любой ценой»: обороняющиеся не отходят и несут повышенные потери;
   // наступающие продвигаются, только если оборона прорвана (обходят узел сопротивления)
@@ -530,10 +536,9 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   const yields = !!R.holdGivesGround;
   // уличный бой: оборона в застройке «держится», но наступающие берут квартал за кварталом (с городским темпом),
   // а не стоят перед узлом, пока он не рухнет целиком
-  const streetFight = def.every((f) => T.terrainAt(f.position) === 'urban');
   const advanceKm = holding && !breakthrough && !yields && !streetFight ? 0 : advancePerDay * day;
-  const attackerLoss = interp(R.attackerLoss, ratio) * day * um('attackerLoss');
-  const defenderLoss = interp(R.defenderLoss, ratio) * day * (holding && advancePerDay > 0 ? 1.5 : 1) * um('defenderLoss');
+  const attackerLoss = interp(R.attackerLoss, ratio) * day * um('attackerLoss') * (RG.attackerLoss ?? 1);
+  const defenderLoss = interp(R.defenderLoss, ratio) * day * (holding && advancePerDay > 0 ? 1.5 : 1) * um('defenderLoss') * (RG.defenderLoss ?? 1);
   const factors: CombatFactor[] = [
     { name: 'сила наступающих', value: +A.toFixed(1) },
     { name: 'сила обороняющихся (без поправок)', value: +dParts.reduce((s, x) => s + x.p, 0).toFixed(1) },
@@ -543,6 +548,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     ...(HA && avg('height') !== 1 ? [{ name: 'превышение (высоты местности)', value: +avg('height').toFixed(2) }] : []),
     { name: 'случайность (разброс)', value: +noise.toFixed(2) },
     ...(at < 1 ? [{ name: 'темп по местности', value: +at.toFixed(2) }] : []),
+    ...(R.regimes && (RG.advance ?? 1) !== 1 ? [{ name: `темп: ${REGIME_RU[regime]}`, value: RG.advance! }] : []),
     ...(Number.isFinite(cap) ? [{ name: 'предел темпа в укреплённой полосе, км/сут', value: cap }] : []),
     ...UMPIRE_FACTORS.filter((k) => um(k) !== 1).map((k) => ({ name: `посредник: ${UMPIRE_FACTOR_RU[k]} — ${mods.filter((m) => m.factor === k).map((m) => m.reason).join('; ')}`, value: +um(k).toFixed(2) })),
   ];
@@ -585,7 +591,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     kind: 'combat', time: now, attackers: att.map((f) => f.id), defenders: def.map((f) => f.id),
     at: T.proj.toLL(centerXY([...att, ...def].map((f) => T.proj.toXY(f.position)))),
     ratio: +ratio.toFixed(2), factors, noise: +noise.toFixed(2), advanceKm: +advanceKm.toFixed(1),
-    attackerLoss: +attackerLoss.toFixed(3), defenderLoss: +defenderLoss.toFixed(3), outcome,
+    attackerLoss: +attackerLoss.toFixed(3), defenderLoss: +defenderLoss.toFixed(3), outcome, ...(R.regimes ? { regime } : {}),
   });
 }
 

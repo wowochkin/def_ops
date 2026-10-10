@@ -32,6 +32,7 @@
     "sim:sensitivity": "tsx packages/sim/tools/run/sensitivity.ts",
     "sim:data-sensitivity": "tsx packages/sim/tools/run/data-sensitivity.ts",
     "sim:regimes": "tsx packages/sim/tools/run/regimes.ts",
+    "sim:calibrate-regimes": "tsx packages/sim/tools/run/calibrate-regimes.ts",
     "theatre:setup": "python3 -m venv .venv && .venv/bin/pip install -r packages/sim/tools/theatre/requirements.txt",
     "theatre:height": "sh -c '.venv/bin/python packages/sim/tools/theatre/build_theatre.py packages/sim/data/theatres/src/$0.recipe.json --height-only packages/sim/data/theatres/$0.json'",
     "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts",

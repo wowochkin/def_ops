@@ -82,6 +82,9 @@ export function measureParam(ctx: SimContext, expr: string): number {
     default: {
       const d = /^orderDelay\.(\w+)$/.exec(expr);
       if (d) return (su.orderDelayHours as Record<string, number>)[d[1]] ?? NaN;
+      // множитель режима: нет блока regimes — режимы не включены
+      const rg = /^regimes\.(\w+)\.(\w+)$/.exec(expr);
+      if (rg) return R.regimes ? (R.regimes as Record<string, Record<string, number>>)[rg[1]]?.[rg[2]] ?? 1 : NaN;
       throw new Error(`неизвестное выражение ${expr}`);
     }
   }
