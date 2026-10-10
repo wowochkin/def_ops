@@ -3,7 +3,8 @@
  * сторон (вес сил, управление, подвоз, инженерные войска) — параметр, значение, что он значит. Плюс разница
  * между двумя наборами правил — для сравнения моделей.
  */
-import type { Rules, SideProfile, Table } from './types';
+import type { Regime, Rules, SideProfile, Table } from './types';
+import { REGIME_RU } from './types';
 
 export interface ParamRow { key: string; group: string; title: string; value: string; hint: string; num?: number }
 
@@ -44,6 +45,8 @@ export function describeRules(r: Rules): ParamRow[] {
   add('sectors', 'Движение', 'Полосы по директивам', r.sectors?.foreign ? `полоса соседа ×${n(1 + r.sectors.foreign, 1)} при выборе пути` : 'не учитываются', 'по разграничительным линиям директив войска идут своей полосой; время движения не меняется', r.sectors?.foreign ?? 0);
   add('river', 'Движение', 'Река без моста', `+${r.riverCrossHours} ч для пехоты`, 'техника — только по мостам и переправам', r.riverCrossHours);
   if (r.territory) add('territory', 'Движение', 'Территория противника', `пешие ${n(r.territory.enemyKmPerDay.foot ?? 0, 0)}, подвижные ${n(r.territory.enemyKmPerDay.tracked ?? 0, 0)} км/сут`, `территория переходит к стороне, где прошли её войска (полоса ${r.territory.radiusKm} км); по чужой — медленнее`, r.territory.enemyKmPerDay.foot);
+  const rg = Object.entries(r.regimes ?? {}).flatMap(([k, v]) => Object.entries(v ?? {}).filter(([, x]) => x !== 1).map(([p, x]) => `${REGIME_RU[k as Regime]}: ${p === 'speed' ? 'темп движения' : p === 'advance' ? 'темп боя' : 'потери'} ×${n(x as number)}`));
+  if (rg.length) add('regimes', 'Режимы', 'Поправки режимов боевых действий', rg.join('; '), 'множители, которые действуют только в своём режиме (бой в застройке, в полосе, преследование и т. д.); подобраны по темпу там, где операции согласны');
   add('city', 'Движение', 'Городской бой', [r.holdGivesGround ? '«держаться» — уступая кварталы' : null, r.bypassStrongpoints === false ? 'узлы обороны не обходятся' : 'узлы обороны обходятся'].filter(Boolean).join('; '), 'правила городского масштаба');
   return R;
 }

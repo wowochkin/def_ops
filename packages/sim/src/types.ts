@@ -71,10 +71,18 @@ export interface SideProfile {
 /** Кусочно-линейная таблица: [аргумент, значение], аргумент возрастает. */
 export type Table = [number, number][];
 
-/** Режим боевых действий: бой в застройке, в укреплённой полосе, на открытой местности; марш; преследование. */
-export type Regime = 'urban' | 'belt' | 'open' | 'march' | 'pursuit';
-export const REGIMES: Regime[] = ['urban', 'belt', 'open', 'march', 'pursuit'];
-export const REGIME_RU: Record<Regime, string> = { urban: 'бой в застройке', belt: 'бой в укреплённой полосе', open: 'бой на открытой местности', march: 'марш', pursuit: 'преследование' };
+/**
+ * Режим боевых действий. Бой: в котле (окружённые или прорывающиеся), в застройке, в укреплённой полосе, за переправу
+ * (между сторонами большая река), в лесу и болоте, на открытой местности. Вне боя: марш, отход, преследование
+ * подвижных соединений и общевойсковых (пеших).
+ */
+export type Regime = 'pocket' | 'urban' | 'belt' | 'river' | 'forest' | 'open' | 'march' | 'withdraw' | 'pursuitMobile' | 'pursuitFoot';
+export const REGIMES: Regime[] = ['pocket', 'urban', 'belt', 'river', 'forest', 'open', 'march', 'withdraw', 'pursuitMobile', 'pursuitFoot'];
+export const COMBAT_REGIMES: Regime[] = ['pocket', 'urban', 'belt', 'river', 'forest', 'open'];
+export const REGIME_RU: Record<Regime, string> = {
+  pocket: 'бой в котле', urban: 'бой в застройке', belt: 'бой в укреплённой полосе', river: 'бой за переправу', forest: 'бой в лесу и болоте',
+  open: 'бой на открытой местности', march: 'марш', withdraw: 'отход', pursuitMobile: 'преследование подвижными соединениями', pursuitFoot: 'преследование общевойсковыми армиями',
+};
 export interface RegimeParams { advance?: number; attackerLoss?: number; defenderLoss?: number; speed?: number }
 
 export interface Rules {
@@ -190,11 +198,11 @@ export interface Rules {
   /** Множитель темпов марша из профилей (калибровка: заторы, разрушенные дороги, беженцы). */
   movementScale?: number;
   /**
-   * Режимы боевых действий в одном движке: поправки, которые действуют только в своём режиме и калибруются по
-   * записям своего режима (sim:calibrate-regimes). Режим боя — по месту обороняющихся: застройка (все в городской
-   * застройке), укреплённая полоса, открытая местность; режим движения вне боя — марш (приказ не на наступление)
-   * и преследование (наступающие без соприкосновения). advance — множитель темпа в бою, attackerLoss и defenderLoss —
-   * множители потерь, speed — множитель темпа движения вне боя. Нет поля или режима — множители 1.
+   * Режимы боевых действий в одном движке (Regime): поправки, которые действуют только в своём режиме и калибруются
+   * по записям своего режима (sim:calibrate-regimes). Режим боя — по обстановке боя (котёл, застройка, полоса,
+   * переправа, лес и болото, открытая местность), режим движения вне боя — по приказу и подвижности (марш, отход,
+   * преследование подвижными и пешими). advance — множитель темпа в бою, attackerLoss и defenderLoss — множители
+   * потерь, speed — множитель темпа движения вне боя. Нет поля или режима — множители 1.
    */
   regimes?: Partial<Record<Regime, RegimeParams>>;
   /** Откуда взяты числа: калибровка — сценарий, мерило, дата. */

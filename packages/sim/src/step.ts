@@ -232,8 +232,9 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     // приказ дошёл в этом ходе — движение только с момента доведения
     const hrs = R.orderPartialTurn && reached.has(f.id) ? Math.min(dt, Math.max(0, (t2ms(end) - Math.max(t2ms(now), reached.get(f.id)!)) / HOUR)) : dt;
     if (hrs <= 0) continue;
-    // режим движения: наступающие без соприкосновения — преследование, остальные — марш (rules.regimes)
-    const regime: Regime = f.posture === 'attack' ? 'pursuit' : 'march';
+    // режим движения (rules.regimes): наступающие без соприкосновения — преследование (подвижные и пешие отдельно),
+    // отходящие — отход, остальные — марш
+    const regime: Regime = f.posture === 'attack' ? (mob === 'foot' ? 'pursuitFoot' : 'pursuitMobile') : f.posture === 'withdraw' ? 'withdraw' : 'march';
     const r = T.advance(f.position, to, mob, prof, R, now, hrs * (R.regimes?.[regime]?.speed ?? 1), (i) => fc(i) + tc(i), prefer(f, mob));
     if (!r) continue;
     let pos = r.position;
@@ -519,9 +520,8 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   // укреплённая полоса: темп не выше предельного для её уровня («прогрызание» обороны)
   const fortLv = def.reduce((m, f) => Math.max(m, T.fortificationAt(f.position)), 0);
   const cap = fortLv && R.fortAdvanceKm ? R.fortAdvanceKm[Math.min(fortLv, R.fortAdvanceKm.length - 1)] ?? Infinity : Infinity;
-  // режим боя: застройка (вся оборона в городе), укреплённая полоса, открытая местность — свои поправки (rules.regimes)
   const streetFight = def.every((f) => T.terrainAt(f.position) === 'urban');
-  const regime: Regime = streetFight ? 'urban' : fortLv ? 'belt' : 'open';
+  const regime = combatRegime(att, def, T, streetFight, fortLv);
   const RG = R.regimes?.[regime] ?? {};
   const freePace = interp(R.advance, ratio) * at * (RG.advance ?? 1);
   const advancePerDay = Math.min(freePace, cap) * um('pace');
@@ -593,6 +593,29 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     ratio: +ratio.toFixed(2), factors, noise: +noise.toFixed(2), advanceKm: +advanceKm.toFixed(1),
     attackerLoss: +attackerLoss.toFixed(3), defenderLoss: +defenderLoss.toFixed(3), outcome, ...(R.regimes ? { regime } : {}),
   });
+}
+
+/**
+ * Режим боя (rules.regimes): котёл — окружённые обороняются или прорываются; застройка — вся оборона в городе;
+ * укреплённая полоса; переправа — между наступающими и обороняющимися большая река; лес и болото — там бо́льшая
+ * часть обороны; иначе — открытая местность.
+ */
+export function combatRegime(att: Formation[], def: Formation[], T: Theatre, streetFight: boolean, fortLv: number): Regime {
+  if (def.some((f) => f.cutOff) || att.some((f) => f.cutOff || f.order?.task === 'breakout')) return 'pocket';
+  if (streetFight) return 'urban';
+  if (fortLv) return 'belt';
+  const a = centerXY(att.map((f) => T.proj.toXY(f.position)));
+  const crosses = def.some((f) => {
+    const d = T.proj.toXY(f.position), n = Math.max(2, Math.ceil(dist(a, d) / (T.cellKm / 2)));
+    for (let k = 1; k < n; k++) {
+      const i = T.indexOf(T.proj.toLL([a[0] + ((d[0] - a[0]) * k) / n, a[1] + ((d[1] - a[1]) * k) / n]));
+      if (i >= 0 && T.river[i] === 2) return true;
+    }
+    return false;
+  });
+  if (crosses) return 'river';
+  const wooded = def.filter((f) => ['forest', 'marsh'].includes(T.terrainAt(f.position))).length;
+  return wooded * 2 > def.length ? 'forest' : 'open';
 }
 
 /** Целое из строки (для шума путей). */
