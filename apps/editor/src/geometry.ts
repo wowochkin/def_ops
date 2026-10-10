@@ -2,7 +2,8 @@
 import type { LngLat } from '@def-ops/core';
 import type { Vec2 } from '@def-ops/core';
 import { add, mul, sub, dot } from '@def-ops/core';
-import type { ArrowFeature, Feature, MapDocument } from '@def-ops/core';
+import type { ArrowBranch, ArrowFeature, Feature, MapDocument } from '@def-ops/core';
+import { Path, smoothPath, polylinePath } from '@def-ops/core';
 import { createContext, isFeatureVisible } from '@def-ops/core';
 import { arrowAxisPoints, arrowGeometry, scaleStyle } from '@def-ops/core';
 
@@ -70,7 +71,7 @@ export function translateFeature(doc: MapDocument, f: Feature, dWorld: Vec2): Fe
     case 'label':
       return { ...f, at: mv(f.at), path: f.path ? f.path.map(mv) : f.path };
     case 'arrow': {
-      const moved: ArrowFeature = { ...f, points: f.points.map(mv) };
+      const moved: ArrowFeature = { ...f, points: f.points.map(mv), ...(f.branches ? { branches: f.branches.map((b) => ({ ...b, points: b.points.map(mv) })) } : {}) };
       if (f.anchor) {
         // хвост скользит вдоль линии фронта к ближайшей точке
         const ctx = createContext(doc);
@@ -94,3 +95,42 @@ export function widthFromHandle(center: Vec2, normal: Vec2, handle: Vec2): numbe
   return Math.max(0.2, Math.abs(dot(sub(handle, center), normal)) * 2);
 }
 
+
+/* ───────────── ветви стрелки ───────────── */
+
+/** Ось ствола стрелки (мировые координаты), как её строит отрисовка. */
+export function arrowMainAxis(doc: MapDocument, f: ArrowFeature): Path | null {
+  const { pts } = arrowAxisPoints(f, createContext(doc));
+  if (pts.length < 2) return null;
+  return new Path(f.style.smooth ? smoothPath(pts) : polylinePath(pts, false, 1));
+}
+
+/** Новая ветвь: от 60 % длины ствола в сторону, под углом ~35° к концу ствола, длиной в треть ствола. */
+export function newBranch(doc: MapDocument, f: ArrowFeature): ArrowBranch | null {
+  const axis = arrowMainAxis(doc, f);
+  if (!axis) return null;
+  const proj = createContext(doc).proj;
+  const n = (f.branches ?? []).length;
+  const t = 0.6;
+  const fork = axis.pointAt(axis.length * t);
+  const tg = axis.tangentAt(axis.length, 3);
+  const a = (n % 2 === 0 ? 1 : -1) * (Math.PI / 5) * (1 + Math.floor(n / 2) * 0.6);
+  const dir: Vec2 = [tg[0] * Math.cos(a) - tg[1] * Math.sin(a), tg[0] * Math.sin(a) + tg[1] * Math.cos(a)];
+  const tip = add(fork, mul(dir, axis.length * 0.45));
+  return { t, points: [proj.toLngLat(tip)] };
+}
+
+/** Ручки ветвей: точка развилки на стволе и точки ветви (мировые). */
+export function branchHandles(doc: MapDocument, f: ArrowFeature): { fork: Vec2; points: Vec2[] }[] {
+  const axis = arrowMainAxis(doc, f);
+  if (!axis) return [];
+  const proj = createContext(doc).proj;
+  return (f.branches ?? []).map((b) => ({ fork: axis.pointAt(axis.length * Math.min(0.95, Math.max(0.05, b.t))), points: b.points.map((p) => proj.toWorld(p)) }));
+}
+
+/** Доля длины ствола для точки развилки, ближайшей к world. */
+export function forkAt(doc: MapDocument, f: ArrowFeature, world: Vec2): number {
+  const axis = arrowMainAxis(doc, f);
+  if (!axis) return 0.6;
+  return Math.min(0.95, Math.max(0.05, axis.nearest(world).s / axis.length));
+}

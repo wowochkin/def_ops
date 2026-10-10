@@ -11,6 +11,7 @@ import { fmtMoment, useZones } from './time';
 import { MomentInput } from './MomentInput';
 import { updateFeature, removeFeature } from './store';
 import { Num, ColorF, Check, Select, Text, DashF, Section, Row } from './fields';
+import { newBranch } from './geometry';
 
 interface Props {
   doc: MapDocument;
@@ -189,6 +190,21 @@ function ArrowInspector({ f, doc, set, k }: { f: ArrowFeature; doc: MapDocument;
         <Num label="Кривизна граней" value={s.headCurve} min={0.4} max={2.5} step={0.01} hint="1 — прямые, <1 — выпуклые, >1 — вогнутые" onChange={(v) => up({ headCurve: v }, 'hc')} />
         <Check label="Свой цвет" value={!!s.headFill} onChange={(v) => up({ headFill: v ? (s.fill[s.fill.length - 1]?.color ?? '#d43834') : null }, 'hf')} />
         {s.headFill && <ColorF label="Цвет" value={s.headFill} opacity={s.headOpacity} onChange={(c) => up({ headFill: c }, 'hfc')} onOpacity={(o) => up({ headOpacity: o }, 'hfo')} />}
+      </Section>
+      <Section title="Окончание и дата">
+        <Select label="Окончание" value={s.tip ?? 'head'} options={[['head', 'наконечник'], ['bar', 'черта — рубеж достигнут'], ['none', 'без окончания']]} onChange={(v) => up({ tip: v as ArrowStyle['tip'] }, 'tip')} />
+        <Text label="Надпись у острия" value={f.tipText ?? ''} onChange={(v) => set((x) => ({ ...x, tipText: v || undefined }) as Feature, 'tipText')} />
+      </Section>
+      <Section title={`Ветви${f.branches?.length ? ` · ${f.branches.length}` : ''}`} right={<button onClick={() => { const b = newBranch(doc, f); if (b) set((x) => ({ ...x, branches: [...((x as ArrowFeature).branches ?? []), b] }) as Feature, 'branchAdd'); }}>+ ветвь</button>}>
+        {!f.branches?.length && <p className="muted small">Удар, расходящийся на несколько направлений: «+ ветвь» — ветвь от развилки на стволе (ромб на карте тянется вдоль стрелки, точки ветви — как у стрелки).</p>}
+        {(f.branches ?? []).map((b, i) => (
+          <div key={i} className="branch-row">
+            <Num label={`Развилка ${i + 1} (доля длины)`} value={b.t} min={0.05} max={0.95} step={0.01} onChange={(v) => set((x) => ({ ...x, branches: (x as ArrowFeature).branches!.map((q, j) => (j === i ? { ...q, t: v } : q)) }) as Feature, `bt${i}`)} />
+            <Text label="Надпись у острия ветви" value={b.text ?? ''} onChange={(v) => set((x) => ({ ...x, branches: (x as ArrowFeature).branches!.map((q, j) => (j === i ? { ...q, text: v || undefined } : q)) }) as Feature, `bx${i}`)} />
+            <button className="link danger" onClick={() => set((x) => ({ ...x, branches: (x as ArrowFeature).branches!.filter((_, j) => j !== i) }) as Feature, `bd${i}`)}>Удалить ветвь</button>
+          </div>
+        ))}
+        {(f.branches?.length ?? 0) > 0 && <Num label="Ширина ветвей (доля ствола)" value={s.branchWidth ?? 0.7} min={0.3} max={1} step={0.01} onChange={(v) => up({ branchWidth: v }, 'bw')} />}
       </Section>
       <DecorationsEditor list={s.decorations} k={k} onChange={(decorations) => up({ decorations }, 'dec')} />
     </>
@@ -385,6 +401,11 @@ function SymbolInspector({ f, set, k }: { f: SymbolFeature; set: SetFn; k: numbe
       <ColorF label="Цвет" value={s.color} onChange={(c) => up({ color: c }, 'c')} />
       <ColorF label="Заливка" value={s.fill} onChange={(c) => up({ fill: c }, 'fill')} />
       <Num label="Толщина линий" value={s.strokeWidth} max={6 * k} step={0.05} onChange={(v) => up({ strokeWidth: v }, 'sw')} />
+      <Select label="Штриховка" value={s.hatch?.mode ?? 'none'} options={[['none', 'нет'], ['half', 'половина (выдвигается)'], ['full', 'целиком (формируется)']]}
+        onChange={(v) => up({ hatch: v === 'none' ? null : { ...(s.hatch ?? {}), mode: v as 'half' | 'full' } }, 'hatch')} />
+      <Select label="Перечёркнуто" value={s.cross?.mode ?? 'none'} options={[['none', 'нет'], ['slash', 'чертой (разгромлено)'], ['x', 'крестом (уничтожено)']]}
+        onChange={(v) => up({ cross: v === 'none' ? null : { color: s.cross?.color ?? (f.side === 'enemy' ? '#d43834' : '#2f6fae'), ...(s.cross ?? {}), mode: v as 'slash' | 'x' } }, 'cross')} />
+      {s.cross && <ColorF label="Цвет перечёркивания" value={s.cross.color} onChange={(c) => up({ cross: { ...s.cross!, color: c } }, 'crossC')} />}
       {['dateBox', 'meeting', 'reserve', 'cp', 'hq', 'reserveCp', 'cop', 'op', 'depot', 'supply', 'repair', 'kpp', 'railStation', 'fougasse', 'ford', 'height'].includes(s.type) && <Text label="Текст" value={s.text ?? ''} onChange={(v) => up({ text: v }, 'text')} />}
     </Section>
   );

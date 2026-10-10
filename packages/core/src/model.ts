@@ -77,6 +77,20 @@ export interface ArrowStyle {
   decorations: Decoration[];
   /** На сколько хвост заходит за линию фронта при привязке (прячется под линию). */
   anchorOverlap: number;
+  /** Ширина ветвей разветвлённой стрелки — доля ширины ствола (по умолчанию 0,7). */
+  branchWidth?: number;
+  /** Окончание: наконечник (по умолчанию), черта «рубеж достигнут» или без окончания. */
+  tip?: 'head' | 'bar' | 'none';
+  /** Надпись у острия (дата): оформление; нет — мелкий шрифт цвета стрелки. */
+  tipTextStyle?: TextStyle;
+}
+
+/** Ветвь стрелки: отходит от оси ствола на доле длины t и идёт через свои точки к своему острию. */
+export interface ArrowBranch {
+  t: number;
+  points: LngLat[];
+  /** Надпись у острия ветви (дата). */
+  text?: string;
 }
 
 /** Слой штриха линии. Линия фронта/рубежа — набор параллельных слоёв. */
@@ -185,6 +199,10 @@ export interface SymbolStyle {
   strokeWidth: number;
   text?: string;
   textStyle?: TextStyle;
+  /** Штриховка знака: целиком или правая половина (второй эшелон, выдвигающееся, формирующееся соединение). */
+  hatch?: { mode: 'full' | 'half'; color?: Color; angle?: number } | null;
+  /** Перечёркнуто: косая черта (разгромлено) или крест (уничтожено); цвет — обычно противной стороны. */
+  cross?: { mode: 'slash' | 'x'; color: Color; width?: number } | null;
 }
 
 export interface TextStyle {
@@ -272,6 +290,10 @@ export interface ArrowFeature extends FeatureBase {
   kind: 'arrow';
   points: LngLat[];
   anchor?: Anchor | null;
+  /** Ветви: стрелка расходится на несколько направлений (у каждой — своё остриё). */
+  branches?: ArrowBranch[];
+  /** Надпись у острия (дата выхода: «25.4»). */
+  tipText?: string;
   style: ArrowStyle;
 }
 

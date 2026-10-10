@@ -114,7 +114,43 @@ export function renderSymbol(f: SymbolFeature, ctx: RenderContext): string {
       break;
     }
   }
+  if (st.hatch || st.cross) g = withMarks(g, st, ctx);
   return `<g transform="translate(${f2(p[0])} ${f2(p[1])})${f.rotation ? ` rotate(${f2(f.rotation)})` : ''}">${g}</g>`;
+}
+
+/**
+ * Пометки знака: штриховка (целиком или правая половина — второй эшелон, выдвигающееся соединение) под
+ * подписью и перечёркивание поверх (косая черта — разгромлено, крест — уничтожено). Форма — овал знака
+ * (у овальных знаков) или круг размера знака.
+ */
+function withMarks(g: string, st: SymbolFeature['style'], ctx: RenderContext): string {
+  const oval = ['armyOval', 'tankArmy', 'cavalryCorps', 'reserve'].includes(st.type);
+  const rx = st.size / 2, ry = oval ? (st.size / 2) * (st.aspect || 0.6) : st.size / 2;
+  const sw = st.strokeWidth || 1;
+  let out = g;
+  if (st.hatch) {
+    const h = st.hatch;
+    const cid = ctx.uid('hatch');
+    const shape = `<ellipse rx="${f2(rx - sw / 2)}" ry="${f2(ry - sw / 2)}"/>`;
+    ctx.defs.push(h.mode === 'half'
+      ? `<clipPath id="${cid}"><path d="M0 ${f2(-ry)}A${f2(rx - sw / 2)} ${f2(ry - sw / 2)} 0 0 1 0 ${f2(ry)}Z"/></clipPath>`
+      : `<clipPath id="${cid}">${shape}</clipPath>`);
+    const step = Math.max(2, st.size * 0.075), R = Math.max(rx, ry) * 1.5;
+    let d = '';
+    for (let x = -R * 2; x <= R * 2; x += step) d += `M${f2(x - R)} ${f2(R)}L${f2(x + R)} ${f2(-R)}`;
+    const hatch = `<g clip-path="url(#${cid})"><path d="${d}" stroke="${h.color ?? st.color}" stroke-width="${f2(Math.max(0.6, sw * 0.6))}" fill="none"${h.angle ? ` transform="rotate(${f2(h.angle - 45)})"` : ''}/></g>`;
+    const i = out.indexOf('<text');
+    out = i >= 0 ? out.slice(0, i) + hatch + out.slice(i) : out + hatch;
+  }
+  if (st.cross) {
+    const c = st.cross;
+    const w = c.width ?? Math.max(1.6, sw * 1.4);
+    const ex = rx * 1.25, ey = Math.max(ry * 1.35, rx * 0.5);
+    let d = `M${f2(-ex)} ${f2(ey)}L${f2(ex)} ${f2(-ey)}`;
+    if (c.mode === 'x') d += `M${f2(-ex)} ${f2(-ey)}L${f2(ex)} ${f2(ey)}`;
+    out += `<path d="${d}" stroke="${c.color}" stroke-width="${f2(w)}" stroke-linecap="round" fill="none"/>`;
+  }
+  return out;
 }
 
 function defaultSymbolText(color: string, size: number): TextStyle {

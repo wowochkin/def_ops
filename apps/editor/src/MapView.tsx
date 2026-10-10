@@ -10,11 +10,11 @@ import { askText } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArrowFeature, Feature, FeatureKind, ImageOverlay, LngLat, MapDocument, PresetKind, Vec2 } from '@def-ops/core';
 import {
-  makeProjection, dist, sub, dot, createFeature, zoomFactor, viewDenominator, sizeFactor, sizingOf, inScaleRange, pickLayer, isFeatureEditable, renderDocument, documentAt,
+  makeProjection, ARROW_PRESETS, dist, sub, dot, createFeature, zoomFactor, viewDenominator, sizeFactor, sizingOf, inScaleRange, pickLayer, isFeatureEditable, renderDocument, documentAt,
 } from '@def-ops/core';
 import type { TimeInstant } from '@def-ops/core';
 import { type Tool, insertFeature, updateFeature, commitAt } from './store';
-import { findSnap, controlPoints, translateFeature, arrowWidthHandles, widthFromHandle } from './geometry';
+import { findSnap, controlPoints, translateFeature, arrowWidthHandles, widthFromHandle, branchHandles, forkAt, newBranch } from './geometry';
 import type { BasemapSpec, MapEngine, PointerInfo } from './engine/types';
 import { ENGINES, DEFAULT_ENGINE } from './engine/registry';
 import { ScaleBar } from './ScaleBar';
@@ -46,6 +46,8 @@ type Drag =
   | { type: 'move'; id: string; start: Vec2; orig: Feature; key: string }
   | { type: 'tailWidth'; id: string; key: string }
   | { type: 'headWidth'; id: string; key: string }
+  | { type: 'branchPoint'; id: string; branch: number; index: number; key: string }
+  | { type: 'fork'; id: string; branch: number; key: string }
   | { type: 'corner'; id: string; index: number; key: string }
   | { type: 'overlayMove'; id: string; start: Vec2; orig: ImageOverlay; key: string };
 
@@ -240,7 +242,12 @@ export function MapView(props: Props) {
       const k = zoomFactor(doc, mapRef.current!.getView().zoom);
       const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
       const f = stamp(createFeature(tool.kind as PresetKind, tool.preset, { points: draft.points, layerId }, k, tool.side));
-      if (f.kind === 'arrow') f.anchor = draft.anchor;
+      if (f.kind === 'arrow') {
+        f.anchor = draft.anchor;
+        // разветвлённый удар: ветви добавляются сразу (правятся ручками и в инспекторе)
+        const nb = (ARROW_PRESETS[f.preset ?? ""] as { fork?: number } | undefined)?.fork ?? 0;
+        for (let i = 0; i < nb; i++) { const b = newBranch(doc, f); if (b) f.branches = [...(f.branches ?? []), b]; }
+      }
       // нарисованное не должно пропадать: скрытый слой включаем, о слое не для этого масштаба — предупреждаем
       let next = insertFeature(doc, f);
       const layer = next.layers.find((l) => l.id === layerId);
@@ -329,6 +336,13 @@ export function MapView(props: Props) {
     let nf: Feature = f;
     if (d.type === 'move') {
       nf = translateFeature(shown, d.orig, sub(w, d.start));
+    } else if ((d.type === 'branchPoint' || d.type === 'fork') && f.kind === 'arrow') {
+      const br = (f.branches ?? []).map((b, i) => {
+        if (i !== d.branch) return b;
+        if (d.type === 'fork') return { ...b, t: forkAt(shown, f, w) };
+        const pts = b.points.slice(); pts[d.index] = ll; return { ...b, points: pts };
+      });
+      nf = { ...f, branches: br };
     } else if (d.type === 'point') {
       if (f.kind === 'symbol' || f.kind === 'label') nf = { ...f, at: ll };
       else {
@@ -420,6 +434,18 @@ export function MapView(props: Props) {
         </rect>,
       );
     });
+    if (sel.kind === 'arrow' && sel.branches?.length) {
+      branchHandles(shown, sel).forEach((b, bi) => {
+        const fk = toScreen(b.fork);
+        handles.push(<rect key={`bf${bi}`} className="h-fork" x={fk[0] - 5} y={fk[1] - 5} width={10} height={10} transform={`rotate(45 ${fk[0]} ${fk[1]})`}
+          onPointerDown={(e) => beginDrag({ type: 'fork', id: sel.id, branch: bi, key: `bf-${sel.id}-${Date.now()}` }, e)}><title>Развилка ветви: тяните вдоль стрелки</title></rect>);
+        b.points.forEach((p, pi) => {
+          const q = toScreen(p);
+          handles.push(<rect key={`bp${bi}-${pi}`} className="h-pt" x={q[0] - 5} y={q[1] - 5} width={10} height={10}
+            onPointerDown={(e) => beginDrag({ type: 'branchPoint', id: sel.id, branch: bi, index: pi, key: `bp-${sel.id}-${Date.now()}` }, e)}><title>Точка ветви: тяните</title></rect>);
+        });
+      });
+    }
     if (sel.kind === 'arrow') {
       const h = arrowWidthHandles(shown, sel, sizeAt(sel));
       if (h) {

@@ -66,6 +66,8 @@ main { position: relative; min-width: 0; min-height: 0; }
 .h-pt { fill: #fff; stroke: #c9822c; stroke-width: 1.5; cursor: grab; }
 .h-pt.tail { fill: #ffe9a8; }
 .h-pt.anchored { fill: #2ecc71; }
+.h-fork { fill: #ffd27a; stroke: #c9822c; stroke-width: 1.5; cursor: ew-resize; }
+.branch-row { border-top: 1px dashed var(--line); padding-top: 4px; margin-top: 4px; }
 .h-mid { fill: #c9822c; fill-opacity: .35; stroke: #fff; stroke-width: 1; cursor: copy; }
 .h-width { fill: #fff; stroke: #e67e22; stroke-width: 2; cursor: ew-resize; }
 .h-snap { fill: none; stroke: #2ecc71; stroke-width: 2.5; pointer-events: none !important; }

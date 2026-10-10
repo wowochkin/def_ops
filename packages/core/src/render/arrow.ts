@@ -11,8 +11,8 @@
  */
 import { type Vec2, add, sub, mul, dot, perp, lerp, clamp, cross } from '../vec';
 import { Path, smoothPath, polylinePath, removeLoops, pathD, bbox } from '../curve';
-import type { ArrowFeature, ArrowStyle, ColorStop, Decoration } from '../model';
-import { type RenderContext, f2, strokeAttrs, mixColor } from './context';
+import type { ArrowFeature, ArrowStyle, ColorStop, Decoration, TextStyle } from '../model';
+import { type RenderContext, f2, esc, strokeAttrs, mixColor, parseHex } from './context';
 import { GLYPHS, type GlyphCtx } from './glyphs';
 import { fontAttrs } from './symbol';
 
@@ -49,22 +49,37 @@ export function arrowAxisPoints(f: ArrowFeature, ctx: RenderContext): { pts: Vec
   return { pts, anchorPath, anchorS };
 }
 
-export function arrowGeometry(pts: Vec2[], st: ArrowStyle, anchorPath: Path | null = null, anchorS = 0): ArrowGeometry | null {
+/**
+ * Дополнительно для разветвлённой стрелки: dense — ось уже построена (плотная ломаная), taperNeck — общая длина
+ * сужения тела (у всех ветвей ствол одинаковый), forkS — где ствол расходится, forkK — ширина ветвей после развилки.
+ */
+export interface ArrowGeomOptions { dense?: boolean; taperNeck?: number; forkS?: number; forkK?: number }
+
+export function arrowGeometry(pts: Vec2[], st: ArrowStyle, anchorPath: Path | null = null, anchorS = 0, o: ArrowGeomOptions = {}): ArrowGeometry | null {
   if (pts.length < 2) return null;
-  const axis = new Path(st.smooth ? smoothPath(pts) : polylinePath(pts, false, 1));
+  const axis = new Path(o.dense ? pts : st.smooth ? smoothPath(pts) : polylinePath(pts, false, 1));
   const L = axis.length;
   if (L < 1e-3) return null;
 
-  const hl = Math.min(st.headLength, L * 0.85);
+  // окончание: наконечник, черта «рубеж достигнут» (короткий широкий прямоугольник поперёк) или без окончания
+  const tip = st.tip ?? 'head';
+  const bar = tip === 'bar', none = tip === 'none';
+  const hl = bar ? Math.min(Math.max(2, st.neckWidth * 0.6, st.headLength * 0.18), L * 0.5) : none ? Math.min(0.5, L * 0.1) : Math.min(st.headLength, L * 0.85);
   const neckS = L - hl;
-  const sweep = clamp(st.barbSweep, -hl * 0.9, neckS);
+  const sweep = bar || none ? 0 : clamp(st.barbSweep, -hl * 0.9, neckS);
   const barbS = neckS - sweep;
-  const hw = st.headWidth / 2;
+  const ref = o.taperNeck ?? neckS;
+  const forkS = o.forkS ?? Infinity, forkK = o.forkK ?? 1;
+  const blendF = Math.max(st.tailWidth, 6);
 
   const width = (s: number) => {
-    const u = neckS > 0 ? clamp(s / neckS, 0, 1) : 1;
-    return st.neckWidth + (st.tailWidth - st.neckWidth) * Math.pow(1 - u, st.taper || 1);
+    const u = ref > 0 ? clamp(s / ref, 0, 1) : 1;
+    const w = st.neckWidth + (st.tailWidth - st.neckWidth) * Math.pow(1 - u, st.taper || 1);
+    if (s <= forkS) return w;
+    const q = clamp((s - forkS) / blendF, 0, 1);
+    return w * (1 + (forkK - 1) * q * q * (3 - 2 * q));
   };
+  const hw = none ? width(neckS) / 2 : st.headWidth / 2;
   const extent = (s: number) => {
     let e = width(Math.min(s, neckS)) / 2;
     if (s >= Math.min(barbS, neckS)) e = Math.max(e, hw);
@@ -137,7 +152,7 @@ export function arrowGeometry(pts: Vec2[], st: ArrowStyle, anchorPath: Path | nu
   const rightC = removeLoops(right);
 
   // --- наконечник
-  const curve = st.headCurve || 1;
+  const curve = bar || none ? 0 : st.headCurve || 1;
   const sideL: Vec2[] = [];
   const sideR: Vec2[] = [];
   const span = L - barbS;
@@ -150,13 +165,14 @@ export function arrowGeometry(pts: Vec2[], st: ArrowStyle, anchorPath: Path | nu
   };
   headPt(barbS);
   for (let i = 0; i < axis.pts.length; i++) if (axis.cum[i] > barbS && axis.cum[i] < L) headPt(axis.cum[i]);
-  const tip = axis.pointAt(L);
+  if (bar || none) headPt(L);
+  const tipPt = axis.pointAt(L);
 
   const nl = leftC[leftC.length - 1], nr = rightC[rightC.length - 1];
-  const head: Vec2[] = [nl, ...sideL, tip, ...sideR.slice().reverse(), nr];
+  const head: Vec2[] = [nl, ...sideL, tipPt, ...sideR.slice().reverse(), nr];
 
   const rightRev = rightC.slice().reverse();
-  const outline: Vec2[] = [...leftC, ...sideL, tip, ...sideR.slice().reverse(), ...rightRev];
+  const outline: Vec2[] = [...leftC, ...sideL, tipPt, ...sideR.slice().reverse(), ...rightRev];
   // основание: от правой кромки (последняя точка outline) к левой (первая) — без концевых точек
   const baseInner = base.slice(1, -1);
   const closedOutline = [...outline, ...baseInner];
@@ -206,84 +222,139 @@ function slices(g: ArrowGeometry, count: number): { s: number; poly: Vec2[] }[] 
   return out;
 }
 
+/** Оси и геометрии стрелки: ствол и ветви (у неразветвлённой — одна). text — надпись у острия. */
+export function arrowParts(f: ArrowFeature, ctx: RenderContext, st: ArrowStyle = f.style): { g: ArrowGeometry; text?: string; refNeck: number }[] {
+  const { pts, anchorPath, anchorS } = arrowAxisPoints(f, ctx);
+  const branches = (f.branches ?? []).filter((b) => b.points.length >= 1);
+  if (!branches.length) {
+    const g = arrowGeometry(pts, st, anchorPath, anchorS);
+    return g ? [{ g, text: f.tipText, refNeck: g.neckS }] : [];
+  }
+  if (pts.length < 2) return [];
+  const main = new Path(st.smooth ? smoothPath(pts) : polylinePath(pts, false, 1));
+  const L = main.length;
+  if (L < 1e-3) return [];
+  const refNeck = L - Math.min(st.headLength, L * 0.85);
+  const forks = branches.map((b) => clamp(b.t, 0.05, 0.95) * L);
+  const forkS = Math.min(...forks);
+  const o: ArrowGeomOptions = { dense: true, taperNeck: refNeck, forkS, forkK: st.branchWidth ?? 0.7 };
+  const out: { g: ArrowGeometry; text?: string; refNeck: number }[] = [];
+  const gm = arrowGeometry(main.pts, st, anchorPath, anchorS, o);
+  if (gm) out.push({ g: gm, text: f.tipText, refNeck });
+  branches.forEach((b, k) => {
+    const fs = forks[k];
+    const trunk = main.slice(0, fs);
+    const fork = main.pointAt(fs);
+    const before = main.pointAt(Math.max(0, fs - Math.max(10, st.tailWidth)));
+    const bp = b.points.map((p) => ctx.proj.toWorld(p));
+    // продолжение из развилки — гладко, с касательной ствола
+    const tail = st.smooth ? smoothPath([before, fork, ...bp]) : polylinePath([fork, ...bp], false, 1);
+    let i0 = 0, best = Infinity;
+    for (let i = 0; i < tail.length; i++) { const d = Math.hypot(tail[i][0] - fork[0], tail[i][1] - fork[1]); if (d < best) { best = d; i0 = i; } }
+    const g = arrowGeometry([...trunk, ...tail.slice(i0 + 1)], st, anchorPath, anchorS, o);
+    if (g) out.push({ g, text: b.text, refNeck });
+  });
+  return out;
+}
+
 export function renderArrow(f: ArrowFeature, ctx: RenderContext): string {
   const st = f.style;
-  const { pts, anchorPath, anchorS } = arrowAxisPoints(f, ctx);
-  const g = arrowGeometry(pts, st, anchorPath, anchorS);
-  if (!g) return '';
-  const { axis, neckS } = g;
-  const L = axis.length;
-  const outlineD = pathD(g.outline, true);
-
+  const parts = arrowParts(f, ctx);
+  if (!parts.length) return '';
   const stops = st.fill.length ? st.fill : [{ t: 0, color: '#000000', opacity: 1 }];
-  const colorAt = (s: number) => sampleStops(stops, neckS > 0 ? clamp(s / neckS, 0, 1) : 1);
-  const uniformColor = stops.every((s) => s.color.toLowerCase() === stops[0].color.toLowerCase());
-  const uniformAlpha = stops.every((s) => Math.abs(s.opacity - stops[0].opacity) < 1e-3);
-  const headColor = st.headFill || colorAt(neckS).color;
-
-  let inner = '';
-  const count = Math.max(24, Math.min(160, Math.round(L / 3)));
-  const sl = !uniformColor || !uniformAlpha ? slices(g, count) : [];
-
-  // тело
-  if (uniformColor) {
-    inner += `<path d="${outlineD}" fill="${stops[0].color}"/>`;
-  } else {
-    const clip = ctx.uid('clip');
-    ctx.defs.push(`<clipPath id="${clip}"><path d="${outlineD}"/></clipPath>`);
-    inner += `<g clip-path="url(#${clip})">`;
-    for (const q of sl) inner += `<path d="${pathD(q.poly, true)}" fill="${colorAt(q.s).color}"/>`;
-    inner += `</g>`;
-  }
-
-  // объёмный блик
-  if (st.highlight && st.highlight.opacity > 0) {
-    const h = st.highlight;
-    const N = 7;
-    for (let k = 0; k < N; k++) {
-      const r = h.widthRatio * (1 - k / N);
-      const lp = axis.offset((s) => (g.width(Math.min(s, neckS)) / 2) * r).filter((_, i) => axis.cum[i] <= neckS);
-      const rp = axis.offset((s) => (-g.width(Math.min(s, neckS)) / 2) * r).filter((_, i) => axis.cum[i] <= neckS);
-      inner += `<path d="${pathD([...removeLoops(lp), ...removeLoops(rp).reverse()], true)}" fill="${h.color}" fill-opacity="${f2(h.opacity / N)}"/>`;
+  const uniformColor = stops.every((x) => x.color.toLowerCase() === stops[0].color.toLowerCase());
+  const uniformAlpha = stops.every((x) => Math.abs(x.opacity - stops[0].opacity) < 1e-3);
+  let inner = '', mc = '';
+  const boxes: [number, number, number, number][] = [];
+  let pad = 20;
+  let headColorMain = '';
+  for (const { g, refNeck } of parts) {
+    const { axis, neckS } = g;
+    const L = axis.length;
+    const outlineD = pathD(g.outline, true);
+    const colorAt = (s: number) => sampleStops(stops, refNeck > 0 ? clamp(s / refNeck, 0, 1) : 1);
+    const headColor = st.headFill || colorAt(neckS).color;
+    headColorMain ||= headColor;
+    const count = Math.max(24, Math.min(160, Math.round(L / 3)));
+    const sl = !uniformColor || !uniformAlpha ? slices(g, count) : [];
+    // тело
+    if (uniformColor) inner += `<path d="${outlineD}" fill="${stops[0].color}"/>`;
+    else {
+      const clip = ctx.uid('clip');
+      ctx.defs.push(`<clipPath id="${clip}"><path d="${outlineD}"/></clipPath>`);
+      inner += `<g clip-path="url(#${clip})">`;
+      for (const q of sl) inner += `<path d="${pathD(q.poly, true)}" fill="${colorAt(q.s).color}"/>`;
+      inner += `</g>`;
+    }
+    // объёмный блик
+    if (st.highlight && st.highlight.opacity > 0) {
+      const h = st.highlight;
+      const N = 7;
+      for (let k = 0; k < N; k++) {
+        const r = h.widthRatio * (1 - k / N);
+        const lp = axis.offset((s) => (g.width(Math.min(s, neckS)) / 2) * r).filter((_, i) => axis.cum[i] <= neckS);
+        const rp = axis.offset((s) => (-g.width(Math.min(s, neckS)) / 2) * r).filter((_, i) => axis.cum[i] <= neckS);
+        inner += `<path d="${pathD([...removeLoops(lp), ...removeLoops(rp).reverse()], true)}" fill="${h.color}" fill-opacity="${f2(h.opacity / N)}"/>`;
+      }
+    }
+    // осевая линия
+    if (st.centerLine) {
+      const cp = axis.pts.filter((_, i) => axis.cum[i] < L - 0.5);
+      inner += `<path d="${pathD(cp)}" ${strokeAttrs(st.centerLine)} stroke-linecap="butt"/>`;
+    }
+    // наконечник
+    inner += `<path d="${pathD(g.head, true)}" fill="${headColor}"${st.headOpacity < 1 ? ` fill-opacity="${st.headOpacity}"` : ''}/>`;
+    if (!uniformAlpha) {
+      for (const q of sl) {
+        const v = Math.round(clamp(colorAt(q.s).opacity, 0, 1) * 255);
+        mc += `<path d="${pathD(q.poly, true)}" fill="rgb(${v},${v},${v})"/>`;
+      }
+      const hv = Math.round(clamp(colorAt(L).opacity, 0, 1) * 255);
+      mc += `<path d="${pathD(g.head, true)}" fill="rgb(${hv},${hv},${hv})"/>`;
+      boxes.push(bbox(g.outline));
+      pad = Math.max(pad, 20 + g.backReach);
     }
   }
-
-  // осевая линия
-  if (st.centerLine) {
-    const cp = axis.pts.filter((_, i) => axis.cum[i] < L - 0.5);
-    inner += `<path d="${pathD(cp)}" ${strokeAttrs(st.centerLine)} stroke-linecap="butt"/>`;
-  }
-
-  // наконечник
-  inner += `<path d="${pathD(g.head, true)}" fill="${headColor}"${st.headOpacity < 1 ? ` fill-opacity="${st.headOpacity}"` : ''}/>`;
 
   let body = inner;
   if (!uniformAlpha) {
     const m = ctx.uid('mask');
-    const [x0, y0, x1, y1] = bbox(g.outline);
-    const pad = 20 + g.backReach;
-    let mc = '';
-    for (const q of sl) {
-      const v = Math.round(clamp(colorAt(q.s).opacity, 0, 1) * 255);
-      mc += `<path d="${pathD(q.poly, true)}" fill="rgb(${v},${v},${v})"/>`;
-    }
-    // наконечник — по прозрачности конца тела
-    const hv = Math.round(clamp(colorAt(L).opacity, 0, 1) * 255);
-    mc += `<path d="${pathD(g.head, true)}" fill="rgb(${hv},${hv},${hv})"/>`;
-    ctx.defs.push(
-      `<mask id="${m}" maskUnits="userSpaceOnUse" x="${f2(x0 - pad)}" y="${f2(y0 - pad)}" width="${f2(x1 - x0 + 2 * pad)}" height="${f2(y1 - y0 + 2 * pad)}">${mc}</mask>`,
-    );
+    const x0 = Math.min(...boxes.map((b) => b[0])), y0 = Math.min(...boxes.map((b) => b[1])), x1 = Math.max(...boxes.map((b) => b[2])), y1 = Math.max(...boxes.map((b) => b[3]));
+    ctx.defs.push(`<mask id="${m}" maskUnits="userSpaceOnUse" x="${f2(x0 - pad)}" y="${f2(y0 - pad)}" width="${f2(x1 - x0 + 2 * pad)}" height="${f2(y1 - y0 + 2 * pad)}">${mc}</mask>`);
     body = `<g mask="url(#${m})">${inner}</g>`;
   } else if (stops[0].opacity < 1) {
     body = `<g opacity="${stops[0].opacity}">${inner}</g>`;
   }
 
-  let out = body;
+  let out = '';
   if (st.outline && st.outline.width > 0) {
-    out += `<path d="${pathD(g.strokeOutline, g.strokeClosed)}" ${strokeAttrs(st.outline)} stroke-linecap="butt"/>`;
-  }
-  for (const d of st.decorations || []) out += renderDecoration(d, axis);
+    if (parts.length === 1) out = body + `<path d="${pathD(parts[0].g.strokeOutline, parts[0].g.strokeClosed)}" ${strokeAttrs(st.outline)} stroke-linecap="butt"/>`;
+    else {
+      // контур разветвлённой стрелки — объединение: обводки двойной ширины под телами, видна внешняя половина
+      const wide = { ...st.outline, width: st.outline.width * 2 };
+      for (const { g } of parts) out += `<path d="${pathD(g.strokeOutline, g.strokeClosed)}" ${strokeAttrs(wide)} stroke-linecap="butt"/>`;
+      out += body;
+    }
+  } else out = body;
+  for (const d of st.decorations || []) out += renderDecoration(d, parts[0].g.axis);
+  // надписи у острия (даты)
+  // светлое (контурное) острие — надпись цветом обводки
+  const light = (c: string) => { try { const [r, g, b] = parseHex(c); return r + g + b > 600; } catch { return false; } };
+  const labelColor = light(headColorMain) && st.outline ? st.outline.color : headColorMain;
+  for (const { g, text } of parts) if (text) out += tipLabel(text, g, st, labelColor);
   return out;
+}
+
+/** Надпись у острия: за наконечником по ходу стрелки, горизонтально. */
+function tipLabel(text: string, g: ArrowGeometry, st: ArrowStyle, color: string): string {
+  const L = g.axis.length;
+  const t = g.axis.tangentAt(L, 3);
+  const ts: TextStyle = st.tipTextStyle ?? { font: 'PT Sans Narrow', size: Math.max(12, st.headWidth * 0.9, st.tailWidth * 0.4), weight: 700, italic: false, color, halo: { color: '#ffffff', width: 1.5 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1 };
+  const gap = ts.size * 0.9 + (st.tip === 'bar' ? st.headWidth * 0.15 : 2);
+  const p = add(g.axis.pointAt(L), mul(t, gap));
+  // по горизонтали надпись смещается по ходу стрелки, чтобы не наезжать на остриё
+  const anchor = t[0] > 0.45 ? 'start' : t[0] < -0.45 ? 'end' : 'middle';
+  return `<text x="${f2(p[0])}" y="${f2(p[1] + ts.size * 0.35)}" text-anchor="${anchor}" ${fontAttrs(ts)}>${esc(text)}</text>`;
 }
 
 function renderDecoration(d: Decoration, axis: Path): string {

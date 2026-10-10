@@ -37,7 +37,8 @@ export function baseArrow(p: ArrowP = {}): ArrowStyle {
 const C = PALETTE;
 
 /* ---------------------------- стрелки ---------------------------- */
-export const ARROW_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => ArrowStyle }> = {
+/** fork — сколько ветвей добавить стрелке при рисовании (разветвлённый удар). */
+export const ARROW_PRESETS: Record<string, { name: string; group: string; style: (side?: Side) => ArrowStyle; fork?: number }> = {
   'inf.attack': {
     name: 'Удар (сплошная)', group: 'Инфографика',
     style: () => baseArrow({ tailWidth: 24, neckWidth: 17, headWidth: 44, headLength: 32, barbSweep: 10, fill: stops([0, C.inf.red, 1]) }),
@@ -138,6 +139,41 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
       ],
     }),
   },
+  'atlas.fork': {
+    name: 'Удар с разветвлением', group: 'Ист. карта (атлас)', fork: 1,
+    style: () => baseArrow({
+      tailWidth: 34, neckWidth: 6, headWidth: 14, headLength: 21, barbSweep: 6, tailShape: 'notch', tailNotch: 0.28, branchWidth: 0.62,
+      fill: stops([0, '#f8dcd6', 0.5], [0.55, '#eea092', 0.9], [1, '#d6403a', 1]), headFill: C.atlas.red,
+      outline: { color: C.atlas.red, width: 1.1 }, outlineTail: false,
+    }),
+  },
+  'atlas.reached': {
+    name: 'Выход на рубеж (с чертой)', group: 'Ист. карта (атлас)',
+    style: () => baseArrow({
+      tailWidth: 5, neckWidth: 4.4, headWidth: 16, headLength: 20, barbSweep: 0, tip: 'bar', fill: stops([0, C.atlas.darkRed, 1]),
+    }),
+  },
+  'atlas.hollow': {
+    name: 'Контурная стрелка', group: 'Ист. карта (атлас)',
+    style: () => baseArrow({
+      tailWidth: 16, neckWidth: 8, headWidth: 22, headLength: 22, barbSweep: 5, tailShape: 'flat',
+      fill: stops([0, '#ffffff', 0.92]), headFill: '#ffffff', outline: { color: C.atlas.red, width: 1.4 }, outlineTail: true,
+    }),
+  },
+  'atlas.tankAxis': {
+    name: 'Ось танковой армии (ромбы)', group: 'Ист. карта (атлас)',
+    style: () => baseArrow({
+      tailWidth: 1.8, neckWidth: 1.8, headWidth: 9, headLength: 14, barbSweep: 4, fill: stops([0, C.atlas.red, 1]),
+      decorations: [{ type: 'diamond', at: 0.18, to: 0.78, repeat: 0.2, length: 13, width: 7, fill: C.atlas.red, stroke: null }],
+    }),
+  },
+  'atlas.counterWedge': {
+    name: 'Контрудар противника (вилка)', group: 'Ист. карта (атлас)',
+    style: () => baseArrow({
+      tailWidth: 34, neckWidth: 5, headWidth: 14, headLength: 20, barbSweep: 5, tailShape: 'notch', tailNotch: 0.75,
+      fill: stops([0, '#dfe8f2', 0.35], [0.6, '#9cbbd6', 0.95], [1, C.atlas.blue, 1]), headFill: C.atlas.blue,
+    }),
+  },
   'atlas.flotilla': {
     name: 'Речная флотилия', group: 'Ист. карта (атлас)',
     style: () => baseArrow({
@@ -215,6 +251,20 @@ export const LINE_PRESETS: Record<string, { name: string; group: string; style: 
       L({ width: 9, color: '#f4c9c7', opacity: 0.9 }),
       L({ offset: 2, width: 1.6, color: C.atlas.red, dash: [6, 4] }),
       L({ offset: -2, width: 1.6, color: C.atlas.brown, dash: [6, 4] }),
+    ] }),
+  },
+  'atlas.frontGlow': {
+    name: 'Передний край с подсветкой (исходное)', group: 'Ист. карта (атлас)',
+    style: () => ({ smooth: true, layers: [
+      L({ offset: 3, width: 7, color: '#f5d77a', opacity: 0.85 }),
+      L({ offset: 0, width: 1.8, color: C.atlas.red }),
+    ] }),
+  },
+  'atlas.frontPair': {
+    name: 'Положение на две даты (сплошная и пунктир)', group: 'Ист. карта (атлас)',
+    style: () => ({ smooth: true, layers: [
+      L({ offset: 2.2, width: 1.5, color: C.atlas.red }),
+      L({ offset: -2.2, width: 1.5, color: C.atlas.red, dash: [6, 3.5] }),
     ] }),
   },
   'atlas.defense': {
@@ -340,6 +390,10 @@ export const SYMBOL_PRESETS: Record<string, { name: string; group: string; style
   'atlas.tankArmy': { name: 'Танковая армия', group: 'Ист. карта (атлас)', style: () => sym('tankArmy', { size: 48, aspect: 0.54, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.6 }) },
   'atlas.cavalry': { name: 'Кавалерийский корпус', group: 'Ист. карта (атлас)', style: () => sym('cavalryCorps', { size: 40, aspect: 0.5, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.5 }) },
   'atlas.army': { name: 'Армия во втором эшелоне', group: 'Ист. карта (атлас)', style: () => sym('armyOval', { size: 46, aspect: 0.5, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.5 }) },
+  'atlas.armyMoving': { name: 'Армия выдвигается (половина заштрихована)', group: 'Ист. карта (атлас)', style: () => ({ ...sym('armyOval', { size: 46, aspect: 0.5, color: C.atlas.red, fill: C.atlas.pink, strokeWidth: 1.5 }), hatch: { mode: 'half' } }) },
+  'atlas.armyForming': { name: 'Армия формируется (заштрихована)', group: 'Ист. карта (атлас)', style: () => ({ ...sym('armyOval', { size: 46, aspect: 0.5, color: C.atlas.red, fill: '#ffffff', strokeWidth: 1.5 }), hatch: { mode: 'full' } }) },
+  'atlas.enemyRouted': { name: 'Группировка противника разгромлена', group: 'Ист. карта (атлас)', style: () => ({ ...sym('armyOval', { size: 40, aspect: 0.62, color: C.atlas.blue, fill: '#c9dff0', strokeWidth: 1.6 }), cross: { mode: 'slash', color: C.atlas.red } }) },
+  'atlas.enemyDestroyed': { name: 'Группировка противника уничтожена', group: 'Ист. карта (атлас)', style: () => ({ ...sym('armyOval', { size: 40, aspect: 0.62, color: C.atlas.blue, fill: '#c9dff0', strokeWidth: 1.6 }), cross: { mode: 'x', color: C.atlas.red } }) },
   'atlas.reserve': { name: 'Резерв противника (Р)', group: 'Ист. карта (атлас)', style: () => sym('reserve', { size: 18, aspect: 1.3, color: C.atlas.blue, fill: '#c9dff0', strokeWidth: 1.4, text: 'Р' }) },
   'atlas.fortCity': { name: 'Город-крепость', group: 'Ист. карта (атлас)', style: () => sym('fortifiedCity', { size: 15, color: C.atlas.blue, fill: '#ffffff' }) },
   'atlas.aviation': { name: 'Авиация', group: 'Ист. карта (атлас)', style: () => sym('aviation', { size: 28, color: C.atlas.red }) },
