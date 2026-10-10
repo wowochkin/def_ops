@@ -216,7 +216,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             : <button className="rp-go primary" onClick={run}>Рассчитать</button>}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
-        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onEvent={goEvent} />}
+        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onSummary={() => result.summary && onOpenInEditor(result.summary)} onEvent={goEvent} />}
       </aside>
       <main className="rp-main">
         {doc ? <>
@@ -262,7 +262,7 @@ function Empty({ busy }: { busy: boolean }) {
   );
 }
 
-function Results({ r, tol, onReport, onOpen, onEvent }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onEvent: (e: SimResult['events'][number]) => void }) {
+function Results({ r, tol, onReport, onOpen, onSummary, onEvent }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void }) {
   const lo = Math.min(...r.spread), hi = Math.max(...r.spread);
   return (
     <div className="rp-res">
@@ -282,6 +282,7 @@ function Results({ r, tol, onReport, onOpen, onEvent }: { r: SimResult; tol: num
       <div className="rp-actions">
         <button onClick={onReport}>Отчёт</button>
         <button onClick={onOpen} title="Открыть результат в редакторе: правка, экспорт, сохранение на сервер">В редактор →</button>
+        <button onClick={onSummary} disabled={!r.summary} title="Сводная карта операции, как в историческом атласе: этапы, линии фронта с датами, удары армий с датами выхода. Открывается в редакторе — правка, экспорт в SVG и PNG">Сводная карта →</button>
       </div>
     </div>
   );

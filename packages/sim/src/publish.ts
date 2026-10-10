@@ -691,3 +691,256 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
   }
   return out;
 }
+
+/* ------------------------------ сводная карта операции ------------------------------ */
+
+export interface SummaryOptions {
+  name?: string;
+  /** Какая сторона «свои» (красные). */
+  ownSide?: string;
+  /** Число этапов (по умолчанию: 3 для операции от 9 суток, 2 — от 4, иначе 1). */
+  stages?: number;
+  /** Уже построенная карта переигровки этого прогона (из неё берутся линии фронта) — чтобы не строить заново. */
+  base?: MapDocument;
+}
+
+/** Стили ударов по этапам, как в атласе: жёлто-красный, розово-красный, бледный. */
+const STAGE_PRESETS = ['atlas.p1', 'atlas.p2', 'atlas.p3'];
+const ORD = ['1-й', '2-й', '3-й', '4-й', '5-й', '6-й'];
+
+/** Выпуклая оболочка (монотонная цепь). */
+function hull(pts: [number, number][]): [number, number][] {
+  const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cr = (o: [number, number], a: [number, number], b: [number, number]) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo: [number, number][] = [], hi: [number, number][] = [];
+  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (const q of [...p].reverse()) { while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], q) <= 0) hi.pop(); hi.push(q); }
+  return [...lo.slice(0, -1), ...hi.slice(0, -1)];
+}
+
+/**
+ * Сводная карта операции по прогону — одна карта без шкалы времени, как в историческом атласе:
+ * этапы операции (поровну по суткам) — свои цвета ударов; линии фронта на рубежах этапов с датами;
+ * удары объединений за каждый этап — через их положения по суткам, с датой у острия (у остановившихся — черта);
+ * у танковых армий — ромбы на оси; подписи армий и фронтов — у исходного положения; разгромленные группировки
+ * противника перечёркнуты, окружённые к концу — в контуре окружения; заголовок и условные обозначения — на карте.
+ */
+export function summaryToDocument(ctx: SimContext, run: RunResult, history?: History | null, o: SummaryOptions = {}): MapDocument {
+  const base = o.base ?? runToDocument(ctx, run, history, { ownSide: o.ownSide, combats: false });
+  const T = ctx.theatre, snaps = run.snapshots;
+  const own = o.ownSide ?? ctx.scenario.sides[0].id;
+  const sideOf = (s: string): Side => (s === own ? 'own' : 'enemy');
+  const doc = emptyDocument(base.origin, base.refZoom);
+  doc.name = o.name ?? `Сводная карта: ${ctx.scenario.name}`;
+  doc.paper = '#fbf5e4';
+  const mk = (id: string, name: string, role: Layer['role']): Layer => ({ id, name, role, visible: true, locked: false, opacity: 1 });
+  doc.layers = [
+    mk('sum-front', 'Линии фронта по этапам', 'front'),
+    mk('sum-area', 'Окружения', 'custom'),
+    mk('sum-moves', 'Удары по этапам', 'custom'),
+    mk('sum-units', 'Объединения и фронты', 'custom'),
+    mk('sum-legend', 'Заголовок и условные обозначения', 'labels'),
+  ];
+  const out: Feature[] = [];
+  const P = (p: LngLat) => T.proj.toXY(p), LL = (p: [number, number]) => T.proj.toLL(p);
+  const ms = (t: string) => Date.parse(`${t}Z`);
+  const turnsPerDay = Math.max(1, Math.round(24 / ctx.scenario.turnHours));
+  const minKm = Math.max(T.cellKm * 3, 0.6);
+
+  // этапы: границы — снимки, ближайшие к равным долям операции (по суткам)
+  const t0 = ms(snaps[0].time), t1 = ms(snaps[snaps.length - 1].time);
+  const days = Math.max(1, Math.round((t1 - t0) / 864e5));
+  const n = Math.max(1, Math.min(6, o.stages ?? (days >= 9 ? 3 : days >= 4 ? 2 : 1)));
+  const at = (t: number) => snaps.reduce((b, s, i) => (Math.abs(ms(s.time) - t) < Math.abs(ms(snaps[b].time) - t) ? i : b), 0);
+  const bounds = [...new Set([...Array(n + 1)].map((_, k) => at(t0 + Math.round(((t1 - t0) * k) / n / 864e5) * 864e5)))];
+  const stageText = (s: number) => `${ORD[s] ?? `${s + 1}-й`} этап: ${dm(snaps[bounds[s]].time)}–${dm(snaps[bounds[s + 1]].time)}`;
+  const tStyle = (size: number, color: string, weight = 700, italic = false): TextStyle => ({ font: 'PT Sans Narrow', size, weight, italic, color, halo: { color: '#ffffff', width: 2 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.15 });
+
+  // линии фронта на рубежах этапов: исходная — с подсветкой, промежуточные — пунктиром, итоговая — сплошной
+  const fronts = new Map<number, { id: string; xy: [number, number][] }[]>();
+  const kmOf = (pts: LngLat[]) => pts.slice(1).reduce((a, p, j) => a + dist(P(pts[j]), P(p)), 0);
+  bounds.forEach((b, k) => {
+    const pieces = base.features.filter((x) => x.layerId === 'sim-front' && x.time?.from === snaps[b].time) as LineFeature[];
+    // дата — один раз, на самом длинном куске линии
+    const longest = pieces.reduce<LineFeature | null>((a, f) => (!a || kmOf(f.points) > kmOf(a.points) ? f : a), null);
+    for (const f of pieces) {
+      const first = k === 0, last = k === bounds.length - 1;
+      const l = createFeature('line', first ? 'atlas.frontGlow' : 'atlas.frontPair', { points: f.points, layerId: 'sum-front' }, 1, 'own') as LineFeature;
+      if (!first) l.style = { ...l.style, layers: l.style.layers.filter((y) => (last ? !y.dash : !!y.dash)).map((y) => ({ ...y, offset: 0, width: last ? 2.2 : 1.4 })) };
+      if (f === longest) l.style = { ...l.style, labels: [{ text: dm(snaps[b].time), at: [k === 0 ? 0.35 : k === bounds.length - 1 ? 0.65 : 0.5], offset: 6, style: tStyle(10, '#b3261e') }] };
+      l.name = `Линия фронта ${first ? 'на начало операции' : last ? 'на конец' : `к концу ${ORD[k - 1]} этапа`} (${dm(snaps[b].time)}, расчёт)`;
+      out.push(l);
+      fronts.set(k, [...(fronts.get(k) ?? []), { id: l.id, xy: f.points.map((q) => P(q) as [number, number]) }]);
+    }
+  });
+
+  // объединения (армии) и фронты: центры по снимкам
+  const tree = new Map<string, Node>(ctx.scenario.formations.map((f) => [f.id, f]));
+  for (const f of run.final.formations) if (!tree.has(f.id)) tree.set(f.id, f);
+  const byId = new Map(run.final.formations.map((f) => [f.id, f]));
+  const acting = run.final.formations.filter((f) => f.type);
+  type C = { xy: [number, number]; pers: number; attack: number; withdraw: number; cut: number; units: { xy: [number, number]; cut: boolean }[] };
+  const centre = (i: number, members: string[]): C | null => {
+    const sn = snaps[i];
+    const us = sn.units.filter((u) => members.includes(u.id) && !u.destroyed && onMap({ ...byId.get(u.id)!, position: u.at }, sn.time));
+    if (!us.length) return null;
+    const w = us.reduce((a, u) => a + Math.max(1, u.personnel), 0);
+    const xy = us.reduce<[number, number]>((a, u) => { const p = P(u.at), k = Math.max(1, u.personnel) / w; return [a[0] + p[0] * k, a[1] + p[1] * k]; }, [0, 0]);
+    const by = (pred: (u: (typeof us)[number]) => boolean) => us.filter(pred).reduce((a, u) => a + u.personnel, 0) / w;
+    return { xy, pers: us.reduce((a, u) => a + u.personnel, 0), attack: by((u) => u.posture === 'attack'), withdraw: by((u) => u.posture === 'withdraw'), cut: by((u) => !!u.cutOff), units: us.map((u) => ({ xy: P(u.at), cut: !!u.cutOff })) };
+  };
+  const groupsAt = (level: 'army' | 'front') => {
+    const g = new Map<string, { g: Node; members: string[] }>();
+    for (const f of acting) { const x = groupOf(f, tree, level); const y = g.get(x.id) ?? { g: x, members: [] }; y.members.push(f.id); g.set(x.id, y); }
+    return g;
+  };
+  const last = snaps.length - 1;
+  for (const [, x] of groupsAt('army')) {
+    const side = sideOf(x.g.side);
+    const cs = snaps.map((_, i) => centre(i, x.members));
+    const first = cs.findIndex((c) => c);
+    if (first < 0) continue;
+    const tank = x.members.filter((m) => tankish(byId.get(m)!, ctx)).length * 2 > x.members.length;
+    const name = shortName(x.g.name);
+    // подпись — у исходного положения
+    const lb = createFeature('label', side === 'own' ? 'atlas.unit' : 'atlas.enemyUnit', { at: LL(cs[first]!.xy), text: name, layerId: 'sum-units' }, 1, side) as LabelFeature;
+    lb.name = x.g.name;
+    out.push(lb);
+    // удары по этапам
+    for (let s = 0; s + 1 < bounds.length; s++) {
+      const b0 = bounds[s], b1 = bounds[s + 1];
+      const idx: number[] = [];
+      for (let i = b0; i < b1; i += turnsPerDay) idx.push(i);
+      idx.push(b1);
+      const pts = idx.map((i) => cs[i]).filter((c): c is C => !!c);
+      if (pts.length < 2) continue;
+      const c0 = pts[0], c1 = pts[pts.length - 1];
+      const d = Math.hypot(c1.xy[0] - c0.xy[0], c1.xy[1] - c0.xy[1]);
+      // на сводной — только заметные удары: не короче двух порогов (6 клеток)
+      if (d < minKm * 2) continue;
+      const retreat = pts.reduce((a, c) => a + c.withdraw, 0) / pts.length > 0.4;
+      if (retreat && side === 'own') continue;
+      // удар — если объединение наступало (в среднем за этап не меньше четверти людей) и шло, а не петляло
+      // (смещение — не меньше половины пройденного): перегруппировки и марши в тылу на сводную не выносятся
+      const walked = pts.slice(1).reduce((a, c, j) => a + Math.hypot(c.xy[0] - pts[j].xy[0], c.xy[1] - pts[j].xy[1]), 0);
+      if (!retreat && (pts.reduce((a, c) => a + c.attack, 0) / pts.length < 0.25 || d < walked * 0.5)) continue;
+      // путь — по суточным положениям без мелких шагов; хвост — на линии фронта начала этапа, остриё — чуть впереди центра
+      const path: [number, number][] = [];
+      for (const c of pts) if (!path.length || Math.hypot(c.xy[0] - path[path.length - 1][0], c.xy[1] - path[path.length - 1][1]) >= minKm) path.push(c.xy);
+      if (path.length < 2) path.push(c1.xy);
+      const on = nearestOnFront(fronts.get(s), path[0], Math.min(20, minKm * 4));
+      if (on) path[0] = on.at;
+      const e = path[path.length - 1], p = path[path.length - 2];
+      const ul = Math.hypot(e[0] - p[0], e[1] - p[1]) || 1;
+      path[path.length - 1] = [e[0] + ((e[0] - p[0]) / ul) * minKm * 1.5, e[1] + ((e[1] - p[1]) / ul) * minKm * 1.5];
+      if (path.length === 2) path.splice(1, 0, [(path[0][0] + path[1][0]) / 2, (path[0][1] + path[1][1]) / 2]);
+      const preset = side === 'own' ? STAGE_PRESETS[s % STAGE_PRESETS.length] : retreat ? 'inf.retreat' : 'atlas.german';
+      const k = retreat ? 0.7 : 0.4;
+      const a = createFeature('arrow', preset, { points: path.map(LL), layerId: 'sum-moves' }, k, side) as ArrowFeature;
+      if (retreat) recolor(a, '#1f4e8c');
+      const colour = side === 'own' ? '#c0392b' : '#1f4e8c';
+      if (tank && !retreat) a.style = { ...a.style, decorations: [...(a.style.decorations ?? []), { type: 'diamond', at: 0.3, to: 0.8, repeat: 0.25, length: 12, width: 7, fill: colour, stroke: null }] };
+      // остановка к концу этапа (или конец операции) — черта «рубеж достигнут»
+      const nx = cs[Math.min(last, b1 + turnsPerDay)];
+      const halted = b1 === last || (!!nx && Math.hypot(nx.xy[0] - c1.xy[0], nx.xy[1] - c1.xy[1]) < minKm * 0.5);
+      if (!retreat) a.style = { ...a.style, ...(halted ? { tip: 'bar' as const } : {}), tipTextStyle: dateStyle(side, 1) };
+      if (!retreat) a.tipText = dm(snaps[b1].time);
+      a.name = `${name}: ${retreat ? 'отход' : 'удар'}, ${stageText(s)}, ${Math.round(d)} км`;
+      out.push(a);
+    }
+    // разгромлено к концу: меньше половины наибольшей численности или большая часть отрезана и потеряно больше 45 %
+    const peak = Math.max(...cs.map((c) => c?.pers ?? 0));
+    const fin = cs[last] ?? cs.slice().reverse().find((c) => c);
+    if (fin && (fin.pers < peak * 0.5 || (fin.cut >= 0.5 && fin.pers < peak * 0.55))) {
+      const sym = createFeature('symbol', side === 'own' ? 'atlas.army' : 'atlas.enemyRouted', { at: LL(fin.xy), layerId: 'sum-units' }, 0.8, side) as SymbolFeature;
+      sym.style = { ...sym.style, text: name, ...(side === 'own' ? { cross: { mode: 'slash' as const, color: '#3b3a36' } } : {}) };
+      sym.name = `${x.g.name}: разгромлено к ${dm(snaps[last].time)} (${Math.round(fin.pers).toLocaleString('ru')} из ${Math.round(peak).toLocaleString('ru')} чел.)`;
+      out.push(sym);
+    }
+  }
+
+  // окружения к концу: отрезанные соединения противника, сгруппированные по близости (до 25 км)
+  const cut = snaps[last].units.filter((u) => u.cutOff && !u.destroyed).map((u) => ({ u, xy: P(u.at) as [number, number] }));
+  const seen = new Set<number>();
+  for (let i = 0; i < cut.length; i++) {
+    if (seen.has(i)) continue;
+    const grp = [i]; seen.add(i);
+    for (let j = 0; j < grp.length; j++) for (let k = 0; k < cut.length; k++) if (!seen.has(k) && Math.hypot(cut[k].xy[0] - cut[grp[j]].xy[0], cut[k].xy[1] - cut[grp[j]].xy[1]) <= 25) { seen.add(k); grp.push(k); }
+    const side = sideOf(byId.get(cut[i].u.id)!.side);
+    if (side === 'own' || grp.length < 2) continue;
+    const r = Math.max(3, T.cellKm * 2);
+    const ring = hull(grp.flatMap((g) => [...Array(10)].map((_, a) => [cut[g].xy[0] + r * Math.cos((a * Math.PI) / 5), cut[g].xy[1] + r * Math.sin((a * Math.PI) / 5)] as [number, number])));
+    const area = createFeature('area', 'atlas.encircled', { points: ring.map(LL), layerId: 'sum-area' }, 1, 'enemy');
+    area.name = `Окружены к ${dm(snaps[last].time)}: ${grp.map((g) => shortName(byId.get(cut[g].u.id)!.name)).join(', ')}`;
+    out.push(area);
+  }
+
+  // фронты — крупной надписью у исходного положения
+  for (const [, x] of groupsAt('front')) {
+    if (RANK[x.g.echelon] < RANK.front) continue;
+    const c = centre(0, x.members) ?? centre(snaps.findIndex((_, i) => centre(i, x.members)), x.members);
+    if (!c) continue;
+    const side = sideOf(x.g.side);
+    const lb = createFeature('label', 'atlas.front', { at: LL(c.xy), text: frontName(x.g.name), layerId: 'sum-units' }, 1, side) as LabelFeature;
+    lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 3 } };
+    lb.name = x.g.name;
+    out.push(lb);
+  }
+
+  // заголовок и условные обозначения — в углах охвата карты
+  const all = out.flatMap((f) => ('points' in f && f.points ? f.points : 'at' in f && f.at ? [f.at] : [])) as LngLat[];
+  const w = Math.min(...all.map((p) => p[0])), e = Math.max(...all.map((p) => p[0])), s0 = Math.min(...all.map((p) => p[1])), n0 = Math.max(...all.map((p) => p[1]));
+  const dy = (n0 - s0) * 0.035, dx = (e - w) * 0.12;
+  const title = createFeature('label', 'atlas.front', { at: [w, n0 + dy * 2.2], text: `${ctx.scenario.name.split(':')[0]} — сводная карта переигровки`, layerId: 'sum-legend' }, 1, 'neutral') as LabelFeature;
+  title.style = { ...title.style, color: '#2a2a2a', align: 'start', size: 20 };
+  title.name = 'Заголовок';
+  out.push(title);
+  const sub = createFeature('label', 'atlas.town', { at: [w, n0 + dy * 1.1], text: `${dm(snaps[0].time)}–${dm(snaps[last].time)}.${snaps[last].time.slice(0, 4)}; правила ${ctx.rules.id}, seed ${run.final.seed ?? ''}`.replace(/, seed $/, ''), layerId: 'sum-legend' }, 1, 'neutral') as LabelFeature;
+  sub.name = 'Подзаголовок';
+  out.push(sub);
+  const legendRow = (k: number) => s0 - dy * (1.5 + k * 1.3);
+  const text = (k: number, t: string) => {
+    const l = createFeature('label', 'atlas.town', { at: [w + dx * 1.15, legendRow(k)], text: t, layerId: 'sum-legend' }, 1, 'neutral') as LabelFeature;
+    l.style = { ...l.style, italic: false };
+    l.name = `Условные обозначения: ${t}`;
+    out.push(l);
+  };
+  let row = 0;
+  for (let st = 0; st + 1 < bounds.length; st++, row++) {
+    const y = legendRow(row);
+    const a = createFeature('arrow', STAGE_PRESETS[st % STAGE_PRESETS.length], { points: [[w, y], [w + dx * 0.5, y], [w + dx, y]], layerId: 'sum-legend' }, 0.4, 'own') as ArrowFeature;
+    a.name = `Условные обозначения: ${stageText(st)}`;
+    out.push(a);
+    text(row, `${stageText(st)} — удары армий, у острия — дата выхода (черта — рубеж достигнут)`);
+  }
+  const sample = (preset: string, k: number, label: string, pick?: (l: LineFeature) => void) => {
+    const y = legendRow(row);
+    const l = createFeature('line', preset, { points: [[w, y], [w + dx * 0.5, y], [w + dx, y]], layerId: 'sum-legend' }, 1, 'own') as LineFeature;
+    pick?.(l);
+    l.name = `Условные обозначения: ${label}`;
+    out.push(l);
+    text(row, label);
+    row++;
+    void k;
+  };
+  sample('atlas.frontGlow', 1, 'линия фронта на начало операции');
+  if (bounds.length > 2) sample('atlas.frontPair', 1, 'линия фронта к концу этапа (дата у линии)', (l) => { l.style = { ...l.style, layers: l.style.layers.filter((y) => y.dash).map((y) => ({ ...y, offset: 0, width: 1.4 })) }; });
+  sample('atlas.frontPair', 1, 'линия фронта на конец операции', (l) => { l.style = { ...l.style, layers: l.style.layers.filter((y) => !y.dash).map((y) => ({ ...y, offset: 0, width: 2.2 })) }; });
+  if (out.some((f) => f.layerId === 'sum-area')) {
+    const y = legendRow(row), h = dy * 0.45;
+    const ar = createFeature('area', 'atlas.encircled', { points: [[w, y - h], [w + dx, y - h], [w + dx, y + h], [w, y + h]], layerId: 'sum-legend' }, 1, 'enemy');
+    ar.name = 'Условные обозначения: окружение';
+    out.push(ar);
+    text(row++, 'окружённые к концу операции соединения противника');
+  }
+  doc.features = out;
+  // вид и исходный масштаб — по охвату всей карты (с заголовком и легендой) в окне ~800×800: размеры знаков
+  // заданы для этого вида, как на листе атласа
+  const xs = out.flatMap((f) => ('points' in f && f.points ? f.points : 'at' in f && f.at ? [f.at] : [])) as LngLat[];
+  const lw = Math.min(...xs.map((p) => p[0])), le = Math.max(...xs.map((p) => p[0])), ls = Math.min(...xs.map((p) => p[1])), ln = Math.max(...xs.map((p) => p[1]));
+  const fit = Math.log2((360 * 800) / (512 * Math.max(le - lw, (ln - ls) / Math.cos((((ln + ls) / 2) * Math.PI) / 180), 0.05)));
+  doc.refZoom = +Math.min(base.refZoom + 1, fit).toFixed(1);
+  doc.view = { center: [(lw + le) / 2, (ls + ln) / 2], zoom: doc.refZoom, bearing: 0 };
+  return doc;
+}

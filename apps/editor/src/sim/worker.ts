@@ -3,7 +3,7 @@
  * модулями сборки (packages/sim/data), прогон и сравнение с историей — тем же кодом,
  * что и в npm run sim:history. Сервер не нужен.
  */
-import { analyze, contextFrom, reportMarkdown, runToDocument, type DataKind } from '@def-ops/sim';
+import { analyze, contextFrom, reportMarkdown, runToDocument, summaryToDocument, type DataKind } from '@def-ops/sim';
 import type { SimRequest, SimResponse } from './protocol';
 import { getData } from './userdata';
 
@@ -23,6 +23,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
     });
     post({ kind: 'progress', text: 'карта…' });
     const doc = runToDocument(ctx, a.run, history, { name: `Переигровка: ${ctx.scenario.name} (правила ${ctx.rules.id}, seed ${q.seed})` });
+    const summary = summaryToDocument(ctx, a.run, history, { base: doc, name: `Сводная карта: ${ctx.scenario.name.split(':')[0]} (правила ${ctx.rules.id}, seed ${q.seed})` });
     const all = a.eventsBySeed.flatMap((x) => x.days);
     post({
       kind: 'done',
@@ -38,7 +39,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
           return { title: x.title, historical: x.historical, simulated: first?.simulated ?? null, days: x.days, at: first?.at ?? null, place, marker: !!ev?.marker };
         }),
         eventsHit: all.filter((d) => d != null && Math.abs(d) <= 2).length, eventsTotal: all.length,
-        report: reportMarkdown(ctx, a), doc,
+        report: reportMarkdown(ctx, a), doc, summary,
       },
     });
   } catch (err) {

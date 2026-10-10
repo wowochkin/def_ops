@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadContext, loadHistory } from '../src/data';
-import { compareWithHistory, createState, onMap, runScenario, runToDocument, shortName, step, summarize } from '../src';
+import { compareWithHistory, createState, onMap, runScenario, runToDocument, shortName, step, summarize, summaryToDocument } from '../src';
 
 describe('сценарий «Берлин-1945»', () => {
   const ctx = loadContext('berlin-1945');
@@ -58,6 +58,26 @@ describe('сценарий «Берлин-1945»', () => {
     // дата у острия — только у ударов с чертой «рубеж достигнут»
     const dated = doc.features.filter((f) => f.kind === 'arrow' && (f as { tipText?: string }).tipText);
     expect(dated.every((f) => (f as { style: { tip?: string } }).style.tip === 'bar')).toBe(true);
+  });
+
+  it('сводная карта: этапы, линии фронта на их рубежах с датами, удары с датами, легенда; без шкалы времени', () => {
+    const tctx = loadContext('berlin-1945-tasks');
+    const run = runScenario(tctx, 1, 10);
+    const doc = summaryToDocument(tctx, run, loadHistory('berlin-1945-tasks'), { stages: 2 });
+    expect(doc.timeline).toBeUndefined();
+    expect(doc.features.every((f) => !f.time && !f.keyframes)).toBe(true);
+    const by = (layer: string) => doc.features.filter((f) => f.layerId === layer);
+    // линии фронта: на начало (с подсветкой), к концу 1-го этапа и на конец — у каждой ровно одна дата
+    const fronts = by('sum-front') as { preset?: string; style: { labels?: { text: string }[] } }[];
+    expect(fronts.some((f) => f.preset === 'atlas.frontGlow')).toBe(true);
+    const dates = fronts.flatMap((f) => f.style.labels?.map((l) => l.text) ?? []);
+    expect(new Set(dates).size).toBe(3);
+    expect(dates.length).toBe(3);
+    // удары — стилем своего этапа, с датой у острия
+    const moves = by('sum-moves') as { preset?: string; tipText?: string }[];
+    expect(moves.length).toBeGreaterThan(5);
+    expect(moves.filter((m) => m.preset === 'atlas.p1' || m.preset === 'atlas.p2').every((m) => m.tipText && dates.includes(m.tipText))).toBe(true);
+    expect(by('sum-legend').some((f) => f.kind === 'label' && /сводная карта/.test((f as { text?: string }).text ?? ''))).toBe(true);
   });
 
   it('короткие подписи', () => {

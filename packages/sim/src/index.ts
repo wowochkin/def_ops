@@ -6,7 +6,7 @@ export { Theatre, decodeGrid, encodeGrid, decodeHeights } from './theatre';
 export { step, onMap, createState, issueOrder, targetPoint, profileOf, addHours, supplyHoursOf, supplySources, type SimContext } from './step';
 export { frontLine, territoryLine, type FrontOptions } from './front';
 export { runScenario, runScenarioWith, compareWithHistory, summarize, checkEvents, type History, type HistoryEvent, type EventResult, type Snapshot, type RunResult, type Deviation } from './history';
-export { runToDocument, shortName, type PublishOptions } from './publish';
+export { runToDocument, summaryToDocument, shortName, type PublishOptions, type SummaryOptions } from './publish';
 export { analyze, reportMarkdown, sectorBreaches, type Analysis, type AnalysisOptions, type SectorBreach } from './report';
 export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } from './source';
 export { snapshotOf } from './history';

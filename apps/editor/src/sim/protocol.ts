@@ -16,6 +16,8 @@ export interface SimResult {
   eventsHit: number; eventsTotal: number;
   report: string;
   doc: MapDocument;
+  /** Сводная карта операции по этому прогону: этапы, линии фронта с датами, удары армий (без шкалы времени). */
+  summary: MapDocument;
 }
 
 export type SimResponse =
