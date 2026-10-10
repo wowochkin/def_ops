@@ -86,3 +86,22 @@ describe('полнота: разграничительные линии', () => 
   });
 });
 
+describe('исходные положения войск — входные данные расчёта', () => {
+  const c = assessCoverage({
+    ...input,
+    startPositions: [
+      { id: 'su_8gva', name: '8-я гвардейская армия', side: 'su', echelon: 'army', approxKm: 3, reliability: 'A' },
+      { id: 'de_x', name: 'Дивизия Икс', side: 'de', echelon: 'division', approxKm: 12, reliability: 'C' },
+      { id: 'de_y', name: 'Дивизия Игрек', side: 'de', echelon: 'division' },
+    ],
+  }, entries);
+  const items = c.groups.find((x) => x.id === 'start')!.items;
+  it('точное и надёжное — полностью; оценка с большой неопределённостью — только «известно»; нет записи — ноль', () => {
+    expect(items.find((i) => i.id === 'start:su_8gva')!.score).toBe(1);
+    expect(items.find((i) => i.id === 'start:de_x')!.filled).toEqual(['known']);
+    expect(items.find((i) => i.id === 'start:de_y')!.score).toBe(0);
+  });
+  it('без данных о положениях группы нет', () => {
+    expect(assessCoverage(input, entries).groups.some((x) => x.id === 'start')).toBe(false);
+  });
+});

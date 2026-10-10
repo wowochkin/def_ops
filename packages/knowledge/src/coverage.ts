@@ -17,6 +17,8 @@ import { rubricsOf, within } from './rubrics';
 import { coverageHints, hintsMarkdown } from './hints';
 
 type LL = [number, number];
+/** Положение на начало считается точным, если неопределённость не больше этого, км. */
+const START_PRECISE_KM = 5;
 export interface CoverageInput {
   operation: { id: string; title: string; start: string; end: string };
   sides?: { id: string; name: string }[];
@@ -33,6 +35,11 @@ export interface CoverageInput {
   bridges?: { id: string; name: string; river?: string; known: boolean; how?: string; at?: LL }[];
   /** Положения формирований по дням в истории (для сравнения расчёта): дней с положением из дней операции. */
   positions?: { id: string; name: string; side: string; days: number; total: number }[];
+  /**
+   * Исходные положения войск (на начало операции): точность и достоверность положения в истории — это входные данные
+   * расчёта (ошибка положений на допуск сравнения стоит 7–14 п. п. сходства с историей, раздел 21 описания).
+   */
+  startPositions?: { id: string; name: string; side: string; echelon?: string; approxKm?: number; reliability?: string }[];
   /** Нормативы опыта войны (rules/norms.json) по операции. */
   norms?: { id: string; title: string; kb?: string; source?: string; reliability?: string }[];
   /** Документы, загруженные в операцию. */
@@ -167,7 +174,7 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
   /* ── войска и командование ── */
   const fEntries = (f: { id: string; name: string }) => formationEntries(formations, f);
   const fKeys = ['parent', 'commander', 'composition', 'personnel', 'tanks', 'guns', 'path'];
-  add({ id: 'formations', section: 'forces', title: 'Формирования', what: 'по каждому действующему формированию: подчинённость, командир, состав, численность, танки, орудия, боевой путь в операции', weight: 0.2, labels: labelsOf('formations', fKeys),
+  add({ id: 'formations', section: 'forces', title: 'Формирования', what: 'по каждому действующему формированию: подчинённость, командир, состав, численность, танки, орудия, боевой путь в операции', weight: 0.16, labels: labelsOf('formations', fKeys),
     items: input.formations.map((f) => {
       const found = fEntries(f);
       const alt = found.flatMap((e) => e.aliases ?? []).find((a) => /[A-Za-z]/.test(a) && !/_/.test(a) && !/^[a-z]/.test(a));
@@ -193,6 +200,15 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
   if (input.positions?.length) add({ id: 'positions', section: 'forces', title: 'Положения по дням', what: 'история для сравнения расчёта: в какие дни операции известно положение формирования (по источникам)', weight: 0.1, labels: { days: 'дни с положением' },
     items: input.positions.map((p) => ({ id: `pos:${p.id}`, title: p.name, side: p.side, alt: formations.filter((e) => (e.aliases ?? []).includes(p.id)).flatMap((e) => e.aliases ?? []).find((a) => /[A-Za-z]/.test(a) && !/_/.test(a) && !/^[a-z]/.test(a)), need: ['days'], filled: p.days >= p.total * 0.5 ? ['days'] : [], entries: [], score: Math.min(1, p.days / Math.max(1, p.total)), note: `${p.days} из ${p.total} дн.` })) }, true);
 
+  // исходные положения: известно положение на начало, достоверность A/B, неопределённость не больше START_PRECISE_KM
+  if (input.startPositions?.length) add({ id: 'start', section: 'forces', title: 'Исходные положения войск', what: `положение формирования на начало операции — входные данные расчёта: известно, достоверность A/B, неопределённость не больше ${START_PRECISE_KM} км`, weight: 0.12,
+    labels: { known: 'положение известно', reliable: 'достоверность A/B', precise: `точность до ${START_PRECISE_KM} км` },
+    items: input.startPositions.map((p) => {
+      const filled = [p.approxKm !== undefined ? 'known' : '', p.reliability === 'A' || p.reliability === 'B' ? 'reliable' : '', p.approxKm !== undefined && p.approxKm <= START_PRECISE_KM ? 'precise' : ''].filter(Boolean);
+      return { id: `start:${p.id}`, title: p.name, side: p.side, need: ['known', 'reliable', 'precise'], filled, entries: [], score: filled.length / 3, weight: ECH_W[p.echelon ?? ''] ?? 1,
+        note: p.approxKm === undefined ? 'нет положения на начало' : `±${p.approxKm} км, достоверность ${p.reliability ?? '—'}` } as CoverageItem;
+    }) }, true);
+
   if (input.boundaries?.length) {
     // линия известна — директива в сценарии или факт «разграничительные линии» у записи одного из соседей, где назван другой
     const bItems = input.boundaries.map((b) => {
@@ -207,18 +223,18 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
       const note = b.directives.length ? `по директивам: ${b.directives.map((d) => d.title).join('; ')}` : kb.length ? 'в базе знаний' : 'в модели — расчётная (по ближайшим войскам)';
       return { id: `bnd:${b.id}`, title: `${b.a.names[0]} / ${b.b.names[0]}`, side: b.side, need: ['line', 'source', 'reliable'], filled, entries: [...new Set(kb.map((x) => x.e.id))], score: filled.length / 3, note, line: b.line, weight: 4 } as CoverageItem;
     });
-    add({ id: 'boundaries', section: 'forces', title: 'Разграничительные линии', what: 'между соседними фронтами (группами армий) каждой стороны: по каким пунктам и с какого числа (директива), источник, достоверность; без них полосы в модели — расчётные', weight: 0.04,
+    add({ id: 'boundaries', section: 'forces', title: 'Разграничительные линии', what: 'между соседними фронтами (группами армий) каждой стороны: по каким пунктам и с какого числа (директива), источник, достоверность; без них полосы в модели — расчётные', weight: 0.02,
       labels: { line: 'линия известна', source: 'источник', reliable: 'достоверность A/B' }, items: bItems }, true);
   }
 
   /* ── местность и инфраструктура ── */
   add({ id: 'places', section: 'ground', title: 'Пункты и районы', what: 'ключевые населённые пункты и районы (цели, места событий): что это, где, особенности, оборона (гарнизон, укрепления), значение', weight: 0.1, labels: labelsOf('terrain', ['kind', 'location', 'features', 'defense', 'significance']),
     items: input.places.map((p) => item(p.id, p.names[0], ['kind', 'location', 'features', 'defense', 'significance'], terrain.filter((e) => nameMatch(e, p.names, true)), { note: p.why, at: p.at })) });
-  add({ id: 'lines', section: 'ground', title: 'Рубежи и укрепления', what: 'оборонительные полосы и позиции: где, устройство, кто оборонял, значение', weight: 0.06, labels: labelsOf('terrain', ['location', 'features', 'defense', 'significance']),
+  add({ id: 'lines', section: 'ground', title: 'Рубежи и укрепления', what: 'оборонительные полосы и позиции: где, устройство, кто оборонял, значение', weight: 0.09, labels: labelsOf('terrain', ['location', 'features', 'defense', 'significance']),
     items: input.lines.map((l) => item(l.id, l.names[0], ['location', 'features', 'defense', 'significance'], terrain.filter((e) => nameMatch(e, l.names, true)), { line: l.line })) });
-  add({ id: 'rivers', section: 'ground', title: 'Реки', what: 'большие реки в районе действий: особенности, мосты и переправы, значение', weight: 0.03, labels: labelsOf('terrain', ['features', 'crossings', 'significance']),
+  add({ id: 'rivers', section: 'ground', title: 'Реки', what: 'большие реки в районе действий: особенности, мосты и переправы, значение', weight: 0.02, labels: labelsOf('terrain', ['features', 'crossings', 'significance']),
     items: input.rivers.map((r) => item(`river:${r.names[0]}`, r.names[0], ['features', 'crossings', 'significance'], terrain.filter((e) => nameMatch(e, r.names, true)), { lines: r.lines })) });
-  if (input.bridges?.length) add({ id: 'bridges', section: 'ground', title: 'Мосты и переправы', what: 'мосты на больших реках района: известно ли их состояние в операции (разрушен, цел, наведён — в театре или в сведениях операции)', weight: 0.06, labels: { state: 'состояние известно' },
+  if (input.bridges?.length) add({ id: 'bridges', section: 'ground', title: 'Мосты и переправы', what: 'мосты на больших реках района: известно ли их состояние в операции (разрушен, цел, наведён — в театре или в сведениях операции)', weight: 0.04, labels: { state: 'состояние известно' },
     items: input.bridges.map((b) => flag(`br:${b.id}`, b.name, 'state', b.known, { note: b.how ?? (b.river ? `р. ${b.river}` : undefined), at: b.at })) });
 
   /* ── ход операции ── */

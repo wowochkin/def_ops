@@ -36,6 +36,7 @@ const IMPACT: Record<string, Record<string, [number, string]>> = {
   },
   commanders: { rank: [0.2, 'справка'], post: [0.3, 'кто кому подчинён — для штаба модели'], decisions: [0.6, 'исторические решения — роль и ограничения штаба модели'] },
   positions: { days: [1, 'с чем сравнивается расчёт: калибровка правил и «положений в допуске»'] },
+  start: { known: [1, 'откуда стартует формирование в расчёте'], reliable: [0.9, 'оценка вместо источника сдвигает все положения и события'], precise: [1, 'ошибка положения на допуск сравнения стоит 7–14 п. п. сходства с историей'] },
   places: { kind: [0.3, 'справка'], location: [0.3, 'справка'], features: [0.5, 'местность пункта для посредника'], defense: [1, 'укреплённость района и гарнизон — сила обороны в бою'], significance: [0.4, 'цели штаба модели'] },
   lines: { location: [0.7, 'где проходит полоса — её линия в театре'], features: [0.6, 'глубина и устройство полосы'], defense: [1, 'уровень укреплённости и кто оборонял — сила обороны'], significance: [0.3, 'справка'] },
   rivers: { features: [0.5, 'ширина, берега — задержка форсирования'], crossings: [0.9, 'где можно переправиться — маршруты техники'], significance: [0.3, 'справка'] },
@@ -56,6 +57,7 @@ const WHERE: Record<string, string[]> = {
   formations: ['журналы боевых действий и донесения о боевом и численном составе (ЦАМО; «Память народа» — pamyat-naroda.ru)', '«Боевой состав Советской армии» (сб. Генштаба, ч. V — 1945)', 'германская сторона: Tessin «Verbände und Truppen der deutschen Wehrmacht und Waffen-SS»; lexikon-der-wehrmacht.de; KTB OKW', 'исследования: Le Tissier («Zhukov at the Oder», «Race for the Reichstag»), Лаковски «Seelower Höhen», Исаев «Берлин 45-го»'],
   formations_path: ['журналы боевых действий армий и корпусов по дням', 'оперативные карты и схемы в исследованиях (Le Tissier, Исаев, Ziemke «Stalingrad to Berlin»)', 'мемуары командующих (Жуков, Чуйков, Конев, Катуков)'],
   commanders: ['биографические справочники: «Великая Отечественная. Командармы», «Комкоры»', 'германская сторона: lexikon-der-wehrmacht.de (Personenregister), ritterkreuztraeger-1939-45.de', 'мемуары и исследования операции'],
+  start: ['оперативные сводки и боевые донесения на день начала операции (ЦАМО, «Память народа»)', 'германская сторона: Lagekarten OKH и KTB групп армий (NARA T-78, T-311), Tessin «Verbände und Truppen»', 'карты-схемы положения войск на начало в исследованиях (Le Tissier, Lakowski, Ziemke)'],
   positions: ['журналы боевых действий и оперативные сводки по дням (ЦАМО, «Память народа»)', 'карты-схемы положения войск на каждый день в исследованиях (Le Tissier, Ziemke, Исаев)', 'германская сторона: Lagekarten OKH (NARA, микрофильмы T-78), KTB групп армий'],
   places: ['планы обороны городов (Berlin: Kampfabschnitte, Verteidigungsbereich Berlin)', 'исследования боёв за пункт; Le Tissier «The Battle of Berlin 1945»', 'местные краеведческие издания, de-wiki о населённом пункте (Kriegsende 1945)'],
   lines: ['схемы оборонительных полос в исследованиях (Лаковски, Le Tissier «Zhukov at the Oder»)', 'разведсводки фронта о системе обороны противника', 'немецкие документы о строительстве позиций (Wotan-Stellung, Hardenberg-Stellung)'],
@@ -72,7 +74,7 @@ const WHERE: Record<string, string[]> = {
   sources: ['загрузите в операцию официальные документы (A): сборники документов, отчёты фронтов, журналы боевых действий', 'проверенные исследования (B) — с указанием страниц'],
 };
 
-const OP_WORDS: Record<string, string> = { formations: 'апрель 1945', positions: '1945 журнал боевых действий', places: 'оборона 1945', lines: 'оборонительная полоса 1945', rivers: 'форсирование 1945', bridges: 'мост 1945 взорван', battles: '1945 бой', events: '1945', weather: 'погода апрель 1945', doctrine: '1945', equipment: 'ТТХ', boundaries: 'разграничительная линия директива Ставки 1945' };
+const OP_WORDS: Record<string, string> = { formations: 'апрель 1945', start: 'расположение на начало операции 1945', positions: '1945 журнал боевых действий', places: 'оборона 1945', lines: 'оборонительная полоса 1945', rivers: 'форсирование 1945', bridges: 'мост 1945 взорван', battles: '1945 бой', events: '1945', weather: 'погода апрель 1945', doctrine: '1945', equipment: 'ТТХ', boundaries: 'разграничительная линия директива Ставки 1945' };
 const KEY_WORDS: Record<string, string> = { personnel: 'численность', tanks: 'танки САУ', guns: 'орудия миномёты', composition: 'состав', parent: 'подчинение', commander: 'командир', path: 'боевой путь', defense: 'оборона гарнизон', crossings: 'переправы мосты', losses: 'потери', forces: 'силы сторон', numbers: 'нормативы' };
 const EN_WORDS: Record<string, string> = { personnel: 'strength', tanks: 'tanks', guns: 'artillery', composition: 'order of battle', parent: 'subordinated', commander: 'commander', path: 'operations', days: 'positions', state: 'bridge destroyed', line: 'boundary' };
 const DE_WORDS: Record<string, string> = { personnel: 'Stärke', tanks: 'Panzer Bestand', guns: 'Artillerie', composition: 'Gliederung', parent: 'Unterstellung', commander: 'Kommandeur', path: 'Einsatz', defense: 'Verteidigung', crossings: 'Brücken', days: 'Lage', state: 'Brücke gesprengt', line: 'Trennungslinie' };
@@ -92,7 +94,7 @@ function queriesFor(g: CoverageGroup, key: string, items: CoverageItem[], period
   return [...new Set(out)].slice(0, 5);
 }
 
-const UNIT: Record<string, string> = { formations: 'формирований', commanders: 'командующих', positions: 'формирований', places: 'пунктов', lines: 'рубежей', rivers: 'рек', bridges: 'мостов', battles: 'участков', events: 'событий', doctrine: 'тем', equipment: 'образцов', norms: 'нормативов', boundaries: 'пар соседей', operation: '', weather: '', sources: '' };
+const UNIT: Record<string, string> = { formations: 'формирований', commanders: 'командующих', positions: 'формирований', start: 'формирований', places: 'пунктов', lines: 'рубежей', rivers: 'рек', bridges: 'мостов', battles: 'участков', events: 'событий', doctrine: 'тем', equipment: 'образцов', norms: 'нормативов', boundaries: 'пар соседей', operation: '', weather: '', sources: '' };
 
 const sorted = (xs: CoverageItem[]) => [...xs].sort((a, b) => (b.weight ?? 1) - (a.weight ?? 1) || a.score - b.score || a.title.localeCompare(b.title, 'ru'));
 

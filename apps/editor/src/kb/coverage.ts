@@ -91,6 +91,11 @@ export async function coverageInput(opId: string): Promise<CoverageInput> {
     events: (hist.events ?? []).map((ev) => { const a = areas.get(placeOf(ev) ?? ''); return { id: ev.id, title: ev.title, date: ev.date, place: a ? variants(areaTitle(a.name)) : undefined, at: a ? center(a.ring as LL[]) : undefined }; }),
     sectors: sectors.map((x) => ({ id: x.id, title: x.title, bbox: x.bbox })),
     bridges,
+    startPositions: sc.formations.filter((f) => f.echelon !== 'front' && f.position && (!f.enterAt || f.enterAt <= sc.start)).map((f) => {
+      // положение на начало: первая запись истории с начала суток начала операции и до полутора суток после него
+      const h = (hist.positions ?? []).filter((p) => p.formation === f.id && p.time >= `${sc.start.slice(0, 10)}T00:00` && p.time <= new Date(Date.parse(`${sc.start}Z`) + 36 * 3600_000).toISOString().slice(0, 16)).sort((x, y) => x.time.localeCompare(y.time))[0];
+      return { id: f.id, name: f.name, side: f.side, echelon: f.echelon, approxKm: h?.approxKm, reliability: h?.reliability };
+    }),
     positions: sc.formations.filter((f) => f.echelon !== 'front').map((f) => ({ id: f.id, name: f.name, side: f.side, days: daysBy.get(f.id)?.size ?? 0, total })),
     norms: norms.map((x) => ({ id: x.id, title: x.title, kb: x.kb, source: x.source, reliability: x.reliability })),
     documents,
