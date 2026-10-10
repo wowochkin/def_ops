@@ -101,6 +101,10 @@ function syncOverlays(map: maplibregl.Map, overlays: ImageOverlay[]) {
     if (!src) {
       map.addSource(sid, { type: 'image', url: o.url, coordinates: coords });
       map.addLayer({ id: sid, type: 'raster', source: sid, paint: { 'raster-opacity': o.opacity, 'raster-fade-duration': 0 } });
+    } else if (src.url !== o.url) {
+      // картинка сменилась (например, «классы» → «сравнение дорог») — подменить изображение
+      src.updateImage({ url: o.url, coordinates: coords });
+      map.setPaintProperty(sid, 'raster-opacity', o.opacity);
     } else {
       src.setCoordinates(coords);
       map.setPaintProperty(sid, 'raster-opacity', o.opacity);

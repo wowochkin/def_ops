@@ -1,9 +1,10 @@
 // PDF описания модели: node scripts/gen-model-pdf.mjs [docs/simulation-model.md] [docs/simulation-model.pdf]
-// Нужны pandoc (Markdown → HTML) и браузер Playwright (CHROMIUM_PATH — свой путь к Chrome).
+// Картинки — пути относительно файла Markdown (docs/img/…). Нужны pandoc (Markdown → HTML) и браузер Playwright (CHROMIUM_PATH — свой путь к Chrome).
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 
 const src = resolve(process.argv[2] || 'docs/simulation-model.md');
@@ -35,14 +36,17 @@ pre code { background: none; padding: 0; font-size: inherit; }
 hr { border: 0; border-top: 0.6pt solid #b9b4a8; margin: 14pt 0; }
 a { color: #7a1b16; text-decoration: none; }
 strong { color: #111; }
+img { display: block; max-width: 100%; max-height: 120mm; margin: 6pt auto 2pt; border: 0.5pt solid #b9b4a8; break-inside: avoid; }
+p:has(> img) { margin: 8pt 0 0; break-inside: avoid; break-after: avoid; }
+p:has(> img) + p > em:only-child { display: block; text-align: center; font-size: 8.8pt; color: #555; margin-bottom: 10pt; }
 `;
-const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${title}</title><style>${css}</style></head><body>${body}</body></html>`;
+const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><base href="${pathToFileURL(dirname(src)).href}/"><title>${title}</title><style>${css}</style></head><body>${body}</body></html>`;
 const dir = mkdtempSync(join(tmpdir(), 'model-pdf-'));
 const file = join(dir, 'doc.html');
 writeFileSync(file, html);
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const page = await browser.newPage();
-await page.goto('file://' + file);
+await page.goto('file://' + file, { waitUntil: 'load' });
 await page.emulateMedia({ media: 'print' });
 await page.pdf({
   path: out, format: 'A4', printBackground: true, preferCSSPageSize: true,
