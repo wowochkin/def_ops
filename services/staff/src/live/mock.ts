@@ -53,6 +53,27 @@ export function mockDecision(prompt: string): Decision {
   };
 }
 
+/**
+ * Ставка (проверка стенда): если есть образец — историческая директива — линия по её пунктам, которые есть в
+ * списке пунктов; если образца нет, а есть ходатайство — линия по первым двум пунктам списка; иначе — оставить.
+ */
+export function mockStavka(prompt: string) {
+  const places = section(prompt, /^Пункты \(в линиях/m);
+  const fronts = section(prompt, /^Фронты и их войска/m).map((l) => l.split(' (')[0]);
+  const pattern = section(prompt, /^Образец/m)[0];
+  const request = section(prompt, /^Повод обратиться/m).find((l) => /^Ходатайство/.test(l));
+  const lc = (x: string) => x.toLowerCase();
+  if (pattern) {
+    const [pairText, rest] = pattern.split(': ');
+    const base = (x: string) => lc(x.replace(/\s*\(.*\)\s*$/, ''));
+    const pts = (rest ?? '').replace(/ \(в истории.*$/, '').split(' — ').map((p) => places.find((q) => base(q) === base(p))).filter((x): x is string => !!x);
+    const use = pts.length >= 2 ? pts : places.slice(0, 2);
+    return { assessment: 'Подставная Ставка (проверка стенда): обстановка разошлась с историей.', decision: 'issue', lines: [{ between: pairText.split(' / '), points: use, delayHours: 6, reason: 'по образцу исторической директивы' }], reply: `Установить разграничительную линию: ${use.join(', ')}.` };
+  }
+  if (request && fronts.length >= 2 && places.length >= 2) return { assessment: 'Подставная Ставка: ходатайство рассмотрено.', decision: 'issue', lines: [{ between: fronts.slice(0, 2), points: places.slice(0, 2), delayHours: 6, reason: 'по ходатайству' }], reply: `По ходатайству: линия ${places.slice(0, 2).join(', ')}.` };
+  return { assessment: 'Подставная Ставка: оснований менять линии нет.', decision: 'keep', lines: [], reply: 'Разграничительные линии оставить прежние.' };
+}
+
 /** Ответ советника (проверка стенда): эхо вопроса, сводка по обстановке, одно предложение приказа и следующие вопросы. */
 export function mockAdvice(prompt: string) {
   const own = section(prompt, /^Свои силы/m).filter((l) => !/резерв Ставки|прибывает/.test(l));
@@ -234,7 +255,8 @@ export function startMockServer(port = 1234, host = '127.0.0.1', delayMs = 15): 
       const body = JSON.parse(b || '{}') as { messages?: { role: string; content: string }[] };
       const user = [...(body.messages ?? [])].reverse().find((m) => m.role === 'user')?.content ?? '';
       const sys = (body.messages ?? []).find((m) => m.role === 'system')?.content ?? '';
-      const answer = sys.includes('Проводите разбор операции') ? mockReview(sys, user)
+      const answer = sys.includes('Вы — Ставка Верховного Главнокомандования') ? JSON.stringify(mockStavka(user))
+        : sys.includes('Проводите разбор операции') ? mockReview(sys, user)
         : sys.includes('посредник военно-исторического симулятора') ? JSON.stringify(mockUmpire(user))
         : sys.includes('составитель военно-исторической базы') ? JSON.stringify(mockExtract(user, sys.includes('выпишите в infrastructure')))
         : sys.includes('преподаватель военной истории') ? mockKbAnswer(user)

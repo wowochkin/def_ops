@@ -45,10 +45,10 @@ const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 
 interface Draft { formation: string; task: Task; target: Target; targetText: string; at: LngLat | null; note: string }
 type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire';
-type Sub = 'units' | 'rear' | 'bridges' | 'reserves';
+type Sub = 'units' | 'rear' | 'bridges' | 'reserves' | 'bounds';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
-type Pick = { kind: 'order' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
+type Pick = { kind: 'order' } | { kind: 'line' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
 /** Варианты решения на ход от советника (на ход time): по мере генерации, затем итог. */
 interface PlanState { id: number; time: string; count: number; variants: PlanVariantView[]; progress: string; done: boolean; error?: string; warning?: string; seconds?: number; model?: string; accepted?: number }
 interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; wait?: string; result?: AdviceView }
@@ -86,6 +86,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const setPick = (b: boolean) => setPickMode(b ? { kind: 'order' } : null);
   const [sub, setSub] = useState<Sub>('units');
   const [acts, setActs] = useState<Act[]>([]);
+  /** Линия армий, указываемая на карте: точки по щелчкам. */
+  const [linePts, setLinePts] = useState<LngLat[]>([]);
   const [decision, setDecision] = useState<HumanDecision>(EMPTY);
   // разбор операции: окно открывается после игры (или из меню); пока пишется, остаётся смонтированным
   const [review, setReview] = useState<'closed' | 'open' | 'hidden'>('closed');
@@ -138,7 +140,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           const g = m.view.goals.find((x) => x.at === o.at && x.place);
           if (g?.place) setTimeout(() => engine.current?.setView({ center: g.place!, zoom: 12 }), 300);
         }
-        setDrafts({}); setActs([]); setPickMode(null);
+        setDrafts({}); setActs([]); setLinePts([]); setPickMode(null);
         const last = m.view.lastDecision;
         // новый ход — новая оценка и новое донесение; замысел, замысел противника и риски — от прошлого решения, для правки
         setDecision((d) => (liveView.current?.time === m.view.time ? d : { ...EMPTY, enemyIntent: last?.enemyIntent ?? '', intent: last?.intent ?? '', risks: last?.risks ?? '' }));
@@ -178,6 +180,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     if (!en) return;
     return en.on('click', (e) => {
       const pm = live.current.pickMode;
+      if (pm?.kind === 'line') { setLinePts((l) => [...l, e.lngLat]); return; }
       if (pm && pm.kind !== 'order') { pickAction(pm, e.lngLat, null); return; }
       if (!pm || !live.current.sel) {
         // щелчок по знаку своего объединения — выбрать его (доклад, приказ)
@@ -254,11 +257,18 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       } else if (a.action.kind === 'commit') {
         const f = createFeature('symbol', 'std.unitOval', { at: a.at, layerId: 'plan' }, 0.9, 'own');
         f.name = `${a.label}: район сосредоточения`; f.time = { from: view.time, to: null }; plan.push(f as never);
+      } else if (a.action.kind === 'boundary' && a.action.line.length > 1) {
+        const f = createFeature('line', 'rkka.boundaryArmy', { points: a.action.line, layerId: 'plan' }, 1, 'own');
+        f.name = `${a.label} (проект): ${a.text}`; f.time = { from: view.time, to: null }; plan.push(f as never);
       }
+    }
+    if (linePts.length > 1) {
+      const f = createFeature('line', 'rkka.boundaryArmy', { points: linePts, layerId: 'plan' }, 1, 'own');
+      f.name = 'Разграничительная линия (указывается)'; f.time = { from: view.time, to: null }; plan.push(f as never);
     }
     d.features = [...view.doc.features, ...plan];
     return withFocus(d, focus);
-  }, [view, drafts, vis, acts, focus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, drafts, vis, acts, focus, linePts]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Обстановка для списков: при фокусе — только объединения и противник на участке. */
   const fv = useMemo(() => (!view || !focus || !focusOnly ? view : { ...view, own: view.own.filter((u) => u.status !== 'active' || inSector(focus, u.at)), intel: view.intel.filter((e) => inSector(focus, e.at)) }), [view, focus, focusOnly]);
 
@@ -396,13 +406,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} onPlan={() => askPlan(3)} planBusy={!!plan && !plan.done} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
-                {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length]] as [Sub, string, number][]).map(([k, t, n]) => (
+                {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][]).map(([k, t, n]) => (
                   <button key={k} className={sub === k ? 'on' : ''} onClick={() => { setSub(k); setPickMode(null); }}>{t}{n ? ` · ${n}` : ''}</button>))}
               </div>
               {sub === 'units' && <Orders v={fv!} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}
               {sub === 'rear' && <Rear v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} goTo={goTo}
                 setPriority={(ids) => { if (same(ids, view.priority)) dropAct('priority'); else void addAct('priority', { kind: 'priority', side: view.human.id, formations: ids, issuedAt: view.time }, 'Приоритет подвоза'); }} />}
               {sub === 'bridges' && <Bridges v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo} />}
+              {sub === 'bounds' && <Bounds v={view} acts={acts} drop={dropAct} picking={pickMode?.kind === 'line'} setPicking={(b) => setPickMode(b ? { kind: 'line' } : null)} pts={linePts} setPts={setLinePts}
+                add={(a, label) => addAct(`boundary:${[a.a, a.b].sort().join('|')}`, a, label, { at: a.line[0] })} />}
               {sub === 'reserves' && <Reserves v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} />}
             </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
@@ -448,6 +460,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           {!pickMode && <MapHover engine={eng} doc={doc ? withLevel(doc, level) : null} time={time} />}
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
+            : pickMode.kind === 'line' ? `Щёлкайте по карте — точки разграничительной линии (${linePts.length}); закончить — «Готово» во вкладке «Полосы»`
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
@@ -883,7 +896,7 @@ function Decision({ v, d, set, onPlan, planBusy }: { v: TurnView; d: HumanDecisi
     ].filter(Boolean);
     set({ report: lines.join('\n') });
   };
-  const F = ({ k, label, hint, rows, req }: { k: keyof HumanDecision; label: string; hint: string; rows: number; req?: boolean }) => (
+  const F = ({ k, label, hint, rows, req }: { k: Exclude<keyof HumanDecision, 'request'>; label: string; hint: string; rows: number; req?: boolean }) => (
     <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`}>
       <span>{label}{req && <i> обязательно</i>}{last?.[k] && last[k] !== d[k] && <button className="link" title={last[k]} onClick={(e) => { e.preventDefault(); set({ [k]: last[k] }); }}>взять с прошлого хода</button>}</span>
       <textarea rows={rows} value={d[k]} placeholder={hint} onChange={(e) => set({ [k]: e.target.value })} />
@@ -902,6 +915,11 @@ function Decision({ v, d, set, onPlan, planBusy }: { v: TurnView; d: HumanDecisi
       <label className={`dfield${!d.report.trim() ? ' need' : ''}`}>
         <span>Боевое донесение в Ставку<i> обязательно</i><button className="link" onClick={(e) => { e.preventDefault(); draftReport(); }}>черновик по докладам</button></span>
         <textarea rows={5} value={d.report} placeholder="Положение войск к утру, итоги суток, решение на следующие сутки, просьбы…" onChange={(e) => set({ report: e.target.value })} />
+      </label>
+      <label className="dfield">
+        <span>Ходатайство в Ставку о разграничительных линиях</span>
+        <textarea rows={2} value={d.request ?? ''} placeholder="Например: прошу продлить линию с соседом до … — его войска вышли в нашу полосу. Пусто — не ходатайствовать." onChange={(e) => set({ request: e.target.value })} />
+        <small className="muted">Рассматривает модель-Ставка на этом ходу; ответ и новая директива — в донесениях следующего хода и в «Журнале».</small>
       </label>
     </div>
   );
@@ -1023,6 +1041,43 @@ function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction }: { v: Tur
   );
 }
 
+/** Полосы: линии Ставки словами, линии армий — распоряжением игрока (две армии одного фронта, линия точками на карте). */
+function Bounds({ v, acts, drop, picking, setPicking, pts, setPts, add }: {
+  v: TurnView; acts: Act[]; drop: (k: string) => void; picking: boolean; setPicking: (b: boolean) => void;
+  pts: LngLat[]; setPts: (f: (l: LngLat[]) => LngLat[]) => void; add: (a: Extract<StaffAction, { kind: 'boundary' }>, label: string) => Promise<boolean>;
+}) {
+  const armies = v.own.filter((u) => u.echelon === 'army' && u.status !== 'destroyed');
+  const fronts = v.groups.filter((g) => armies.filter((u) => v.groupOf[u.id] === g.id).length >= 2);
+  const [front, setFront] = useState(fronts[0]?.id ?? '');
+  const inFront = armies.filter((u) => v.groupOf[u.id] === front);
+  const [a, setA] = useState(''), [b, setB] = useState('');
+  const mine = acts.filter((x) => x.action.kind === 'boundary');
+  const ready = a && b && a !== b && pts.length >= 2;
+  const put = async () => {
+    const A = inFront.find((u) => u.id === a)!, B = inFront.find((u) => u.id === b)!;
+    if (await add({ kind: 'boundary', side: v.human.id, a, b, line: pts, issuedAt: v.time }, `Линия ${short(A.name)} / ${short(B.name)}`)) { setPts(() => []); setPicking(false); setA(''); setB(''); }
+  };
+  return (
+    <div className="cmd-sec">
+      <h3>Полосы и разграничительные линии</h3>
+      {v.sectors.length > 0 && <ul className="sect-list">{v.sectors.map((t) => <li key={t}>{t}</li>)}</ul>}
+      <p className="note">Линии между фронтами устанавливает Ставка — исторические директивы вступают, когда обстановка совпала с той, что их вызвала, иначе по поводу или по вашему ходатайству (вкладка «Решение») решает модель-Ставка. Линии между армиями одного фронта — ваше распоряжение: вступает в силу с задержкой доведения армиям; армии идут к целям своей полосой, выход в полосу соседа отмечается в разборе.</p>
+      {mine.map((x) => <ActLine key={x.key} a={x} drop={drop} />)}
+      {fronts.length ? <div className="bnd-form">
+        <label>Фронт <select value={front} onChange={(e) => { setFront(e.target.value); setA(''); setB(''); }}>{fronts.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>
+        <label>Армия <select value={a} onChange={(e) => setA(e.target.value)}><option value="">—</option>{inFront.map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
+        <label>Соседняя армия <select value={b} onChange={(e) => setB(e.target.value)}><option value="">—</option>{inFront.filter((u) => u.id !== a).map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
+        <div className="row">
+          <button className={picking ? 'on' : ''} onClick={() => setPicking(!picking)}>{picking ? `Готово (${pts.length} точ.)` : pts.length ? `Продолжить линию (${pts.length} точ.)` : 'Указать линию на карте'}</button>
+          {pts.length > 0 && <button className="link" onClick={() => setPts(() => [])}>сбросить точки</button>}
+          <button className="primary" disabled={!ready} onClick={() => void put()}>В распоряжение</button>
+        </div>
+        <p className="muted small">Линия — от тыла к переднему краю, хотя бы две точки. Кто справа по ходу линии, стенд определит по положению армий.</p>
+      </div> : <p className="muted">Ни в одном фронте нет двух действующих армий — линии армий не нужны.</p>}
+    </div>
+  );
+}
+
 /* ───────────── журнал и посредник ───────────── */
 
 function Journal({ v, onDownload }: { v: TurnView; onDownload: () => void }) {
@@ -1072,6 +1127,7 @@ function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, 
         <span className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `модель: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `LM Studio: ${llm.check.error}` : 'проверка связи…'}</span>
       </div>
       <label className="switch"><input type="checkbox" checked={!!llm.settings.umpire} onChange={(e) => llm.set({ umpire: e.target.checked })} /><span /> Посредник на модели: нюансы к боям по базе знаний</label>
+      <label className="switch"><input type="checkbox" checked={llm.settings.stavka !== false} onChange={(e) => llm.set({ stavka: e.target.checked })} /><span /> Модель-Ставка: разграничительные линии фронтов, когда обстановка разошлась с историей или есть ходатайство</label>
       <p className="muted umpire-about">Перед каждым ходом модель-посредник смотрит на ожидаемые бои и по справкам базы знаний (доктрина, нормативы, техника) добавляет то, чего правила не учитывают: видимость, взаимодействие родов войск, заграждения, качество обороны. Поправки — множители 0,8–1,25 с обоснованием; видны в журнале боя и записываются в игру.</p>
       <div className="seg umpire-seg">
         <button className={part === 'enemy' ? 'on' : ''} onClick={() => setPart('enemy')}>Как действовал противник · {list.length}</button>

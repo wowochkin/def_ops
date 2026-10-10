@@ -288,6 +288,24 @@ export interface Boundary {
   /** Источник: документ, архивный шифр, достоверность A–C. */
   source?: string;
   reliability?: string;
+  /**
+   * Условие вступления в игре: в переигровке по истории линия действует по расписанию (from), в игре — когда
+   * войска объединения group выйдут в радиус radiusKm от точки at (как в истории, когда директиву вызвало
+   * именно это), через delayHours (по умолчанию 6 ч — на отдачу директивы). Не выполнено — действует прежняя линия.
+   */
+  trigger?: BoundaryTrigger;
+  delayHours?: number;
+  /** Кто установил: сценарий (история), модель-Ставка или игрок (линии армиям); когда отдано. */
+  issuedBy?: 'scenario' | 'stavka' | 'player';
+  issuedAt?: string;
+}
+
+export interface BoundaryTrigger {
+  group: string;
+  at: LngLat;
+  radiusKm: number;
+  /** Словами: «правофланговые части 1-го Украинского фронта в районе Ланквиц». */
+  text: string;
 }
 
 /* --------------------------------- состояние --------------------------------- */
@@ -359,7 +377,9 @@ export type JournalEntry =
       noise: number; advanceKm: number; attackerLoss: number; defenderLoss: number; outcome: 'breakthrough' | 'advance' | 'held' | 'repelled' }
   | { kind: 'supply'; time: string; formation: string; what: 'ammo' | 'fuel'; left: number }
   | { kind: 'encircled'; time: string; formation: string; cut: boolean }
-  | { kind: 'destroyed'; time: string; formation: string };
+  | { kind: 'destroyed'; time: string; formation: string }
+  /** Разграничительная линия вступила в силу (директива, распоряжение). */
+  | { kind: 'directive'; time: string; boundary: string; side: string; title: string; from: string; issuedBy: string };
 
 export interface SimState {
   scenario: string;
@@ -380,6 +400,13 @@ export interface SimState {
   logistics?: Record<string, Logistics>;
   /** Поправки посредника на ближайший ход (снимаются после хода). */
   umpire?: UmpireMod[];
+  /**
+   * Директивы в игре: conditional — линии сценария с условием вступают в силу по обстановке (activated — когда
+   * вступили), а не по расписанию. Нет — по расписанию (переигровка по истории).
+   */
+  directives?: { conditional: boolean; activated: Record<string, string> };
+  /** Линии, установленные в ходе игры: модель-Ставка (между фронтами) и игрок (между армиями). */
+  boundaries?: Boundary[];
 }
 
 /**
@@ -413,4 +440,8 @@ export type StaffAction =
   | { kind: 'bridge'; side: string; at: LngLat; issuedAt: string }
   /** Подорвать мост или переправу у точки (на своей территории): через 2 ч не действует. */
   | { kind: 'demolish'; side: string; at: LngLat; issuedAt: string }
-  | { kind: 'commit'; side: string; formation: string; at: LngLat; atName?: string; issuedAt: string };
+  | { kind: 'commit'; side: string; formation: string; at: LngLat; atName?: string; issuedAt: string }
+  /** Разграничительная линия между двумя армиями одного фронта (игрок): вступает в силу с задержкой доведения армиям. */
+  | { kind: 'boundary'; side: string; a: string; b: string; line: LngLat[]; places?: string[]; issuedAt: string }
+  /** Директива о разграничительной линии между фронтами (модель-Ставка): вступает в силу через delayHours. */
+  | { kind: 'directive'; side: string; a: string; b: string; line: LngLat[]; places?: string[]; delayHours: number; reason?: string; issuedAt: string };

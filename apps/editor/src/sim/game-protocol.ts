@@ -17,6 +17,8 @@ export interface LlmSettings {
   embedDims?: number;
   /** Посредник на модели: перед каждым ходом — поправки к ожидаемым боям по справкам из базы знаний. */
   umpire?: boolean;
+  /** Модель-Ставка: разграничительные линии между фронтами, когда есть повод (по умолчанию — да, если в игре есть модель). */
+  stavka?: boolean;
   /** База знаний: своя модель и размышление для ответов и разбора документов; пусто — как в разделе «ИИ». */
   kbModel?: string;
   kbThinking?: Thinking;
@@ -76,6 +78,8 @@ export interface HumanDecision {
   report: string;
   /** Риски решения. */
   risks: string;
+  /** Ходатайство в Ставку (о разграничительных линиях): модель-Ставка рассматривает его на этом ходу. */
+  request?: string;
 }
 
 export interface BaseView { id: string; name: string; at: LngLat; state: 'active' | 'moving' | 'idle'; activeFrom: string | null }

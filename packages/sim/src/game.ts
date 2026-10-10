@@ -28,6 +28,8 @@ export interface GameTurn {
   ai?: unknown;
   /** Разбор посредника (оценка, отброшенные поправки, справки) — для разбора; на расчёт влияют только umpire. */
   umpireNote?: unknown;
+  /** Обращения к модели-Ставке (поводы, ответ, директивы) — для журнала и разбора; директивы на расчёт — в actions. */
+  stavka?: unknown;
 }
 
 export interface GameRecord {
@@ -65,6 +67,9 @@ export function startGame(ctx: SimContext, seed: number, takeover: string, human
     snapshots.push(snapshotOf(s));
   }
   s = { ...s, pending: s.pending.filter((o) => o.issuedAt < s.time) };
+  // директивы с этого момента — по обстановке: вступившие по истории остаются, будущие ждут своего условия
+  const done = Object.fromEntries((ctx.scenario.boundaries ?? []).filter((b) => b.trigger && b.from <= s.time).map((b) => [b.id, b.from]));
+  s = { ...s, directives: { conditional: true, activated: done } };
   if (human) s = prepareTakeover(ctx, s, human);
   // штаб модели ведёт и тыл, переправы, резервы своей стороны (если включён при передаче командования)
   if (aiStaff) s = prepareTakeover(ctx, s, aiStaff);

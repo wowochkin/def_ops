@@ -12,7 +12,7 @@ export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } fr
 export { snapshotOf } from './history';
 export { startGame, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
 export { unitReports, intelReport, nearbyPlaces, dayEvents, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, areaOriginal, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
-export { prepareTakeover, checkAction, applyActions, NOT_COMMITTED, type ActionCheck } from './staff';
+export { prepareTakeover, checkAction, applyActions, lineOf, NOT_COMMITTED, type ActionCheck } from './staff';
 export { evaluateNorms, normScenarios, measurePace, measureLoss, NORM_MARK, fmtNorm, type Norm, type NormTable, type NormResult, type NormVerdict } from './norms';
 export { CALIB_SPACE, CALIB_KEYS, CALIB_INFO, baseParams, rulesWith, scoreRules, evaluateRules, mergeEvaluations, type RulesEvaluation, defaultTrainUntil, Calibrator, calibratedRules, type CalibKey, type CalibParams, type CalibScore } from './calibrate';
 export { describeRules, describeProfile, diffRules, rulesOrigin, type ParamRow } from './describe';
@@ -21,4 +21,4 @@ export { THEATRE_LAYERS, layerCounts, cropGrid, cropTheatre, layerGeoJSON, recip
 export { applyInfrastructure, resolveInfra, locatePlace, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, type InfraRecord, type InfraKind, type InfraState, type InfraResolution } from './infrastructure';
 export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, legendFromSamples, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
 export { RoadNet, roadNet, visualPath } from './roadnet';
-export { groupOf, activeBoundaries, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';
+export { groupOf, activeBoundaries, effectiveBoundaries, withBoundaries, checkTriggers, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';

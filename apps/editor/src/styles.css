@@ -1268,3 +1268,9 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .sect-note summary { cursor: pointer; font-weight: 600; }
 .sect-note ul { margin: 4px 0 2px 18px; padding: 0; }
 .sect-note li { margin: 2px 0; }
+
+/* полосы: линии армий */
+.sect-list { margin: 4px 0 8px 18px; padding: 0; font-size: 12.5px; }
+.sect-list li { margin: 2px 0; }
+.bnd-form { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.bnd-form label { display: flex; flex-direction: column; font-size: 12px; gap: 2px; }

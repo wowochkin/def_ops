@@ -9,10 +9,10 @@
 import { createFeature, type SymbolFeature } from '@def-ops/core';
 import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
-  activeBoundaries, groupOf, runToDocument, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  activeBoundaries, groupOf, runToDocument, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
+import { stavkaNeed, stavkaTurn, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
 import { category, gather, Index, type Entry } from '@def-ops/knowledge';
 import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
@@ -108,7 +108,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     const before = g.state;
     const r = playTurn(ctx, g, t.orders, t.actions ?? [], t.umpire ?? []);
     g = r;
-    journal.push(day(before.time, t.orders, before, r.results, t.human as HumanDecision | undefined));
+    journal.push(day(before.time, t.orders, before, r.results, t.human as HumanDecision | undefined, ((t.stavka ?? []) as (StavkaResult & { side: string })[]).filter((x) => x.side === rec.human)));
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
   }
   postView();
@@ -117,20 +117,25 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
 }
 
 /** Запись журнала за ход: наши приказы словами и донесения. */
-function day(time: string, orders: Order[], before: GameState['state'], results: { action: StaffAction; ok: boolean; text: string }[], decision?: HumanDecision): JournalDay {
-  const names = new Map(before.formations.map((f) => [f.id, f.name]));
+function day(time: string, orders: Order[], before: GameState['state'], results: { action: StaffAction; ok: boolean; text: string }[], decision?: HumanDecision, stavka: StavkaResult[] = []): JournalDay {
+  const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...before.formations.map((f) => [f.id, f.name] as const)]);
   const bases = new Map((before.logistics?.[rec.human]?.bases ?? []).map((b) => [b.id, b.name]));
   const what = (a: StaffAction) => a.kind === 'base' ? `Тыл: база «${bases.get(a.base) ?? a.base}» — перенести ${describePlace(ctx.theatre, a.to)}`
     : a.kind === 'priority' ? `Тыл: приоритет подвоза — ${a.formations.length ? a.formations.map((x) => names.get(x)).join(', ') : 'снят'}`
     : a.kind === 'bridge' ? `Инженерные: навести переправу ${describePlace(ctx.theatre, a.at)}`
     : a.kind === 'demolish' ? `Инженерные: подорвать мост ${describePlace(ctx.theatre, a.at)}`
+    : a.kind === 'boundary' ? `Разграничительная линия армий${a.places?.length ? ` (${a.places.join(' — ')})` : ''}`
+    : a.kind === 'directive' ? `Директива Ставки о разграничительной линии${a.places?.length ? ` (${a.places.join(' — ')})` : ''}`
     : `Резерв Ставки: ввести ${names.get(a.formation)} — район ${describePlace(ctx.theatre, a.at)}`;
   return {
     time,
     orders: orders.filter((o) => o.source === 'human').map((o) => `${names.get(o.formation)}: ${TASK_RU[o.task]} — ${describeTarget(ctx, o.target, names)}${o.note ? `. ${o.note}` : ''}`),
     actions: results.filter((r) => r.action.side === rec.human).map((r) => `${what(r.action)}${r.ok ? ` — ${r.text}` : ` — НЕ ИСПОЛНЕНО: ${r.text}`}`),
     decision,
-    events: dayEvents(ctx, g.state, rec.human, before),
+    events: [
+      ...stavka.map((x) => x.ok ? `Ставка: ${x.reply ?? ''}${x.issues.length ? ` (не исполнено: ${x.issues.join('; ')})` : ''}` : `Ставка не ответила (${x.error ?? 'ошибка модели'}) — разграничительные линии прежние.`),
+      ...dayEvents(ctx, g.state, rec.human, before),
+    ],
   };
 }
 
@@ -254,6 +259,7 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
       if (a.kind === 'priority') return { key: 'priority', action: a, label: `Приоритет подвоза${a.formations.length ? `: ${a.formations.map((f) => short(names.get(f) ?? f)).join(', ')}` : ''}`, text: x.text, given, ok: true };
       if (a.kind === 'bridge') return { key: `bridge:plan${i}`, action: a, label: 'Переправа', text: x.text, at: a.at, given, ok: true };
       if (a.kind === 'demolish') return { key: `demolish:plan${i}`, action: a, label: 'Подрыв моста', text: x.text, at: a.at, given, ok: true };
+      if (a.kind === 'boundary' || a.kind === 'directive') return { key: `boundary:${a.a}|${a.b}`, action: a, label: 'Разграничительная линия', text: x.text, at: a.line[0], given, ok: true };
       return { key: `commit:${a.formation}`, action: a, label: short(names.get(a.formation) ?? a.formation), text: x.text, at: a.at, given, ok: true };
     });
     return {
@@ -312,7 +318,20 @@ async function advance() {
       post({ kind: 'progress', text: 'посредник оценивает ожидаемые бои…' });
       ump = await exclusive('посредник', () => umpireTurn(llmClient(), ctx, g.state, umpireRefs, { system: umpireSystemTpl, user: umpireUserTpl }, { thinking: 'off' }));
     }
-    rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(t ? { ai: slim(t) } : {}),
+    // Ставка: разграничительные линии между фронтами — если есть повод (обстановка разошлась с историей, войска в
+    // полосе соседа, ходатайство); директивы — распоряжения хода, ответ — в журнал
+    const stavka: (StavkaResult & { side: string })[] = [];
+    if (llm.stavka !== false && (enemy === 'llm' || llm.umpire)) {
+      for (const side of [rec.human, rec.ai]) {
+        const need = stavkaNeed(ctx, g, side, side === rec.human ? queued.decision?.request ?? '' : '');
+        if (!need) continue;
+        post({ kind: 'progress', text: 'Ставка рассматривает разграничительные линии…' });
+        const r = await exclusive('Ставка', () => stavkaTurn(llmClient(), ctx, g, side, need));
+        stavka.push({ ...r, side });
+        actions.push(...r.actions);
+      }
+    }
+    rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(stavka.length ? { stavka } : {}), ...(t ? { ai: slim(t) } : {}),
       ...(ump?.mods.length ? { umpire: ump.mods } : {}),
       ...(ump ? { umpireNote: { ok: ump.ok, error: ump.error, assessment: ump.assessment, issues: ump.issues, proposed: ump.proposed, engagements: ump.engagements, refs: ump.refs.map((r) => ({ id: r.id, title: r.title })), seconds: ump.seconds,
         names: Object.fromEntries(ump.mods.flatMap((m) => m.formations).map((id) => [id, g.state.formations.find((f) => f.id === id)?.name ?? id])) } } : {}) });
@@ -320,7 +339,7 @@ async function advance() {
     const before = g.state;
     const r = playTurn(ctx, g, orders, actions, ump?.mods ?? []);
     g = r;
-    journal.push(day(before.time, orders, before, r.results, queued.decision));
+    journal.push(day(before.time, orders, before, r.results, queued.decision, stavka.filter((x) => x.side === rec.human)));
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
     queued = null;
     postView();
@@ -426,7 +445,7 @@ function postView() {
   const human = rec.human;
   const sideName = (id: string) => ctx.scenario.sides.find((x) => x.id === id)!.name;
   const run = { final: s, snapshots: g.snapshots };
-  const doc = runToDocument(ctx, run, history, { name: `Игра: ${ctx.scenario.name} (с ${ddmm(rec.takeover)})`, ownSide: human, visible: reveal ? undefined : fog() });
+  const doc = runToDocument({ ...ctx, scenario: withBoundaries(ctx.scenario, g.state) }, run, history, { name: `Игра: ${ctx.scenario.name} (с ${ddmm(rec.takeover)})`, ownSide: human, visible: reveal ? undefined : fog() });
   for (const l of doc.layers) if (l.id.startsWith('hist-')) l.visible = false;
   // реки театра — для выбора мест переправ (большие — толще)
   doc.layers.unshift({ id: 'rivers', name: 'Театр: реки', role: 'base', visible: true, locked: true, opacity: 0.85 });
@@ -477,9 +496,10 @@ function sectorsView(): Pick<TurnView, 'sectors' | 'boundaries' | 'groupOf'> {
   const nm = (id: string) => shortName(s.formations.find((f) => f.id === id)?.name ?? ctx.scenario.formations.find((f) => f.id === id)?.name ?? id);
   const units = s.formations.filter((f) => onMap(f, s.time)).map((f) => ({ id: f.id, side: f.side, at: f.position }));
   const groups = groupOf(ctx.scenario, 'front');
+  const scen = withBoundaries(ctx.scenario, s);
   return {
-    sectors: sectorText(ctx.theatre, ctx.scenario, units, human, s.time, nm),
-    boundaries: activeBoundaries(ctx.scenario, s.time, human).map((b) => ({ right: b.right, left: b.left, rightName: nm(b.right), leftName: nm(b.left), title: b.title, line: b.line })),
+    sectors: sectorText(ctx.theatre, scen, units, human, s.time, nm),
+    boundaries: activeBoundaries(scen, s.time, human).map((b) => ({ right: b.right, left: b.left, rightName: nm(b.right), leftName: nm(b.left), title: b.title, line: b.line })),
     groupOf: Object.fromEntries(s.formations.filter((f) => f.side === human).map((f) => [f.id, groups.get(f.id) ?? f.id])),
   };
 }

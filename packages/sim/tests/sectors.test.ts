@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
-import { Theatre, activeBoundaries, createState, groupOf, sectorAt, sectorLines, sectorMap, sectorText, sectorViolations, sideOf, step, type Boundary, type FormationDef, type Scenario, type SimContext, type TheatreData } from '../src';
+import { Theatre, activeBoundaries, applyActions, checkTriggers, createState, effectiveBoundaries, groupOf, addHours, lineOf, withBoundaries, sectorAt, sectorLines, sectorMap, sectorText, sectorViolations, sideOf, step, type Boundary, type FormationDef, type Scenario, type SimContext, type TheatreData } from '../src';
 import { loadProfile, loadRules } from '../src/data';
 
 /** Открытая местность 80 × 60 км: два советских фронта (север и юг) наступают на запад, против них — немецкие корпуса. */
@@ -106,5 +106,51 @@ describe('полосы фронтов и разграничительные ли
     };
     const north = (path: LngLat[]) => path.filter((p) => yOf(p) > 0.6).length / Math.max(1, path.length);
     expect(north(run(3))).toBeLessThan(north(run(0)));
+  });
+});
+
+describe('директивы в игре', () => {
+  const T = new Theatre(theatre);
+  const ctxOf = (sc: Scenario): SimContext => ({ scenario: sc, theatre: T, profiles: { 'rkka-1945': loadProfile('rkka-1945'), 'wehrmacht-1945': loadProfile('wehrmacht-1945') }, rules: loadRules('ww2-draft') });
+  // вторая линия пары — с условием: войска 1 УФ в 5 км от точки (−5, −8)
+  const later: Boundary = { ...line, id: 'b2', title: '1 БФ / 1 УФ (вторая)', from: '1945-04-17T00:00', until: null, line: [ll(30, 0), ll(-30, 0)], trigger: { group: 'uf', at: ll(15, -10), radiusKm: 5, text: 'армия 1 УФ у точки' }, delayHours: 6 };
+  const first: Boundary = { ...line, until: '1945-04-17T00:00' };
+
+  it('по расписанию (переигровка) — сроки сценария; в игре — только вступившие, прежняя действует до новой', () => {
+    const sc = scenario([first, later]);
+    expect(effectiveBoundaries(sc).map((b) => [b.id, b.from, b.until])).toEqual([['b1', first.from, '1945-04-17T00:00'], ['b2', later.from, null]]);
+    const game = { directives: { conditional: true, activated: {} as Record<string, string> } };
+    expect(effectiveBoundaries(sc, game).map((b) => [b.id, b.until])).toEqual([['b1', null]]);
+    game.directives.activated.b2 = '1945-04-18T06:00';
+    expect(effectiveBoundaries(sc, game).map((b) => [b.id, b.from, b.until])).toEqual([['b1', first.from, '1945-04-18T06:00'], ['b2', '1945-04-18T06:00', null]]);
+  });
+
+  it('условие вступления: войска объединения в радиусе — через delayHours', () => {
+    const sc = scenario([first, later]);
+    const s0 = { ...createState(ctxOf(sc)), directives: { conditional: true, activated: {} } };
+    expect(checkTriggers(T, sc, s0, '1945-04-16T00:00', addHours)).toEqual({});
+    const s1 = { ...s0, formations: s0.formations.map((f) => (f.id === 'uf_a2' ? { ...f, position: ll(14, -9) } : f)) };
+    expect(checkTriggers(T, sc, s1, '1945-04-16T00:00', addHours)).toEqual({ b2: '1945-04-16T06:00' });
+  });
+
+  it('линия армий (игрок) и директива (Ставка): кто справа — по войскам, срок — задержка доведения', () => {
+    const sc = scenario([line]);
+    sc.formations = sc.formations.map((f) => (f.id === 'uf_a1' ? { ...f, position: ll(20, -2) } : f));
+    const ctx = ctxOf(sc), s = createState(ctx);
+    // линия армий 1 БФ (bf_a1 севернее, bf_a2 южнее) с востока на запад по y = 8
+    const act = { kind: 'boundary' as const, side: 'su', a: 'bf_a2', b: 'bf_a1', line: [ll(30, 8), ll(-10, 8)], issuedAt: s.time };
+    const b = lineOf(ctx, s, act);
+    expect(typeof b).not.toBe('string');
+    if (typeof b === 'string') return;
+    expect([b.right, b.left, b.kind, b.issuedBy]).toEqual(['bf_a1', 'bf_a2', 'army', 'player']);
+    expect(b.from > s.time).toBe(true);
+    expect(lineOf(ctx, s, { ...act, b: 'uf_a1' })).toMatch(/разных фронтов/);
+    const r = applyActions(ctx, s, [act, { kind: 'directive', side: 'su', a: 'bf', b: 'uf', line: [ll(30, -1), ll(-20, -1)], delayHours: 4, issuedAt: s.time }]);
+    expect(r.results.every((x) => x.ok)).toBe(true);
+    expect(r.state.boundaries!.map((x) => [x.kind, x.issuedBy])).toEqual([['army', 'player'], ['front', 'stavka']]);
+    // директива Ставки той же пары — сменяет линию сценария со своего срока
+    const eff = withBoundaries(sc, r.state).boundaries!.filter((x) => x.kind === 'front' && x.side === 'su');
+    expect(eff.map((x) => [x.issuedBy ?? 'scenario', x.until])).toEqual([['scenario', '1945-04-16T04:00'], ['stavka', null]]);
+    expect(activeBoundaries(withBoundaries(sc, r.state), '1945-04-17T00:00').map((x) => x.issuedBy).sort()).toEqual(['player', 'stavka']);
   });
 });

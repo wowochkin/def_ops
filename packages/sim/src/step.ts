@@ -17,7 +17,7 @@ import { trailTo, type Theatre } from './theatre';
 import type { CombatFactor, Formation, JournalEntry, Mobility, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
 import { UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
 import { claimTerritory, controlMap, initialTerritory, supplyField } from './control';
-import { activeBoundaries, groupOf, sectorMap, sectorPrefer, type SectorMap } from './sectors';
+import { activeBoundaries, checkTriggers, effectiveBoundaries, groupOf, sectorMap, sectorPrefer, withBoundaries, type SectorMap } from './sectors';
 
 export interface SimContext {
   scenario: Scenario;
@@ -182,8 +182,16 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     return lv && owner && owner !== f.side && !breached.has(i) ? (R.fortCrossHours ?? 0) * lv : 0;
   };
   const moved = new Set<string>();
+  // директивы в игре: линии с условием вступают по обстановке на начало хода
+  const fresh = checkTriggers(T, ctx.scenario, { ...prev, formations: fs }, now, addHours);
+  const directives = prev.directives && Object.keys(fresh).length ? { ...prev.directives, activated: { ...prev.directives.activated, ...fresh } } : prev.directives;
+  const scen = withBoundaries(ctx.scenario, { directives, boundaries: prev.boundaries });
+  // линии, вступающие в силу за этот ход, — в журнал
+  for (const b of scen === ctx.scenario ? ctx.scenario.boundaries ?? [] : effectiveBoundaries(ctx.scenario, { directives, boundaries: prev.boundaries })) {
+    if (b.from >= now && b.from < end) journal.push({ kind: 'directive', time: now, boundary: b.id, side: b.side, title: b.title, from: b.from, issuedBy: b.issuedBy ?? 'scenario' });
+  }
   // полосы по директивам (разграничительные линии): путь — своей полосой; по положению на начало хода
-  const secPrefer = sectorPreferences(ctx, active(), now);
+  const secPrefer = sectorPreferences(ctx, scen, active(), now);
   const prefer = (f: Formation, mob: Mobility) => {
     const vc = varietyCost(ctx, prev.seed ?? 0, f, mob), sp = secPrefer(f);
     return vc && sp ? (i: number) => vc(i) * sp(i) : vc ?? sp ?? undefined;
@@ -286,7 +294,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     if (i >= 0 && T.fort[i] && T.fortSide[i] && T.fortSide[i] !== f.side) breached.add(i);
   }
   const { umpire: _used, ...rest } = prev;
-  return { ...rest, time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}) };
+  return { ...rest, ...(directives ? { directives } : {}), time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}) };
 }
 
 /**
@@ -489,26 +497,37 @@ function varietyCost(ctx: SimContext, seed: number, f: Formation, mob: Mobility)
   };
 }
 
-/** Полосы сторон по действующим директивам: множитель выбора пути для формирования (null — линий нет). */
-function sectorPreferences(ctx: SimContext, units: Formation[], now: string): (f: Formation) => ((i: number) => number) | null {
+/**
+ * Полосы сторон по действующим линиям: множитель выбора пути для формирования (null — линий нет). Линии между
+ * фронтами делят полосы фронтов, линии между армиями (распоряжения игрока) — полосы армий; множители перемножаются.
+ */
+function sectorPreferences(ctx: SimContext, scen: Scenario, units: Formation[], now: string): (f: Formation) => ((i: number) => number) | null {
   const k = ctx.rules.sectors?.foreign ?? 0;
-  if (k <= 0 || !activeBoundaries(ctx.scenario, now).length) return () => null;
-  const groups = groupCache.get(ctx.scenario) ?? groupOf(ctx.scenario, 'front');
-  groupCache.set(ctx.scenario, groups);
-  const maps = new Map<string, SectorMap>();
+  const act = activeBoundaries(scen, now);
+  if (k <= 0 || !act.length) return () => null;
+  const levels = (['front', 'army'] as const).filter((lv) => act.some((b) => b.kind === lv));
+  const groups = Object.fromEntries(levels.map((lv) => { const key = `${lv}`; const c = groupCache.get(ctx.scenario) ?? {}; c[key] ??= groupOf(ctx.scenario, lv); groupCache.set(ctx.scenario, c); return [lv, c[key]]; })) as Record<'front' | 'army', Map<string, string>>;
+  const pts = units.map((u) => ({ id: u.id, side: u.side, at: u.position }));
   const fns = new Map<string, ((i: number) => number) | null>();
+  const maps = new Map<string, SectorMap | null>();
   return (f) => {
-    const g = groups.get(f.id) ?? f.id;
-    const key = `${f.side}|${g}`;
-    if (fns.has(key)) return fns.get(key)!;
-    if (!maps.has(f.side) && activeBoundaries(ctx.scenario, now, f.side).length) maps.set(f.side, sectorMap(ctx.theatre, ctx.scenario, units.map((u) => ({ id: u.id, side: u.side, at: u.position })), f.side, now, { groups }));
-    const m = maps.get(f.side);
-    const fn = m ? sectorPrefer(ctx.theatre, m, g, k) : null;
-    fns.set(key, fn);
-    return fn;
+    const parts: ((i: number) => number)[] = [];
+    for (const lv of levels) {
+      const g = groups[lv].get(f.id) ?? f.id;
+      const key = `${lv}|${f.side}|${g}`;
+      if (!fns.has(key)) {
+        const mk = `${lv}|${f.side}`;
+        if (!maps.has(mk)) maps.set(mk, act.some((b) => b.kind === lv && b.side === f.side) ? sectorMap(ctx.theatre, { ...scen, boundaries: act.filter((b) => b.kind === lv) }, pts, f.side, now, { level: lv, groups: groups[lv] }) : null);
+        const m = maps.get(mk);
+        fns.set(key, m ? sectorPrefer(ctx.theatre, m, g, k) : null);
+      }
+      const fn = fns.get(key);
+      if (fn) parts.push(fn);
+    }
+    return !parts.length ? null : parts.length === 1 ? parts[0] : (i: number) => parts.reduce((a, p) => a * p(i), 1);
   };
 }
-const groupCache = new WeakMap<object, Map<string, string>>();
+const groupCache = new WeakMap<object, Record<string, Map<string, string>>>();
 
 /** Подвижность формирования сейчас: техника без горючего идёт пешком. */
 function mobilityOf(ctx: SimContext, f: Formation) {

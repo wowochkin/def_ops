@@ -197,7 +197,7 @@ function loadBoundaries(): Boundary[] {
   const out: Boundary[] = [];
   for (const file of R.boundaryFiles ?? []) {
     const x = JSON.parse(readFileSync(resolve(dirname(recipePath), file), 'utf8')) as { boundaries: (Omit<Boundary, 'line' | 'places' | 'source'> & {
-      points: { place: string; lng: number; lat: number }[]; quote?: string; inclusiveNote?: string; beyondEnd?: string;
+      points: { place: string; lng: number; lat: number }[]; quote?: string; inclusiveNote?: string; beyondEnd?: string; triggerSource?: string;
       source: { doc: string; archive?: string; reliability: string } })[] };
     for (const b of x.boundaries) {
       const own = (id: string) => ids.has(id) || (b.kind === 'air' && !id.startsWith(b.side + '_'));
@@ -206,8 +206,9 @@ function loadBoundaries(): Boundary[] {
       if (b.from >= R.end) continue;
       out.push({ id: b.id, kind: b.kind, side: b.side, right: b.right, left: b.left, title: b.title, from: b.from, until: b.until ?? null,
         line: b.points.map((p) => [p.lng, p.lat] as LngLat), places: b.points.map((p) => p.place), inclusive: b.inclusive ?? null,
-        note: [b.inclusiveNote, b.beyondEnd].filter(Boolean).join('; '),
-        source: [b.source.doc, b.source.archive].filter(Boolean).join('; '), reliability: b.source.reliability });
+        note: [b.inclusiveNote, b.beyondEnd, b.triggerSource ? `условие в игре: ${b.triggerSource}` : ''].filter(Boolean).join('; '),
+        source: [b.source.doc, b.source.archive].filter(Boolean).join('; '), reliability: b.source.reliability,
+        ...(b.trigger ? { trigger: b.trigger, delayHours: b.delayHours } : {}) });
     }
   }
   return out;

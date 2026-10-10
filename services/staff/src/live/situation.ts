@@ -7,7 +7,7 @@
  */
 import {
   areaTitle, dayEvents, places, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
-  onMap, sectorText, shortName, type GameState, type SimContext,
+  onMap, sectorText, shortName, withBoundaries, type GameState, type SimContext,
 } from '@def-ops/sim';
 import { fill } from '../fill';
 
@@ -112,7 +112,7 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
   ].filter(Boolean) as string[];
 
   // полосы и разграничительные линии своей стороны (директивы — только уже действующие)
-  const bounds = sectorText(T, ctx.scenario, s.formations.filter((f) => onMap(f, s.time)).map((f) => ({ id: f.id, side: f.side, at: f.position })), side, s.time,
+  const bounds = sectorText(T, withBoundaries(ctx.scenario, s), s.formations.filter((f) => onMap(f, s.time)).map((f) => ({ id: f.id, side: f.side, at: f.position })), side, s.time,
     (id) => shortName(names.get(id) ?? ctx.scenario.formations.find((f) => f.id === id)?.name ?? id));
 
   const lastDay = g.prev ? dayEvents(ctx, s, side, g.prev) : [];

@@ -14,7 +14,7 @@
 import type { LngLat } from '@def-ops/core';
 import type { XY } from './geo';
 import type { Theatre } from './theatre';
-import type { Boundary, Echelon, Scenario } from './types';
+import type { Boundary, Echelon, Scenario, SimState } from './types';
 
 export type SectorLevel = 'front' | 'army';
 
@@ -43,6 +43,59 @@ export function groupOf(scenario: Scenario, level: SectorLevel = 'front'): Map<s
     if (only.length === 1) out.set(f.id, only[0]);
   }
   return out;
+}
+
+const pairKey = (b: Boundary) => `${b.side}|${b.kind}|${[b.right, b.left].sort().join('|')}`;
+
+/**
+ * Линии с действительными сроками: линии сценария (в игре — с условием вступления: только вступившие, с момента
+ * вступления) и линии, установленные в ходе игры (модель-Ставка, игрок). Новая линия той же пары и того же рода
+ * заканчивает срок прежней.
+ */
+export function effectiveBoundaries(scenario: Scenario, state?: Pick<SimState, 'directives' | 'boundaries'> | null): Boundary[] {
+  const cond = !!state?.directives?.conditional, act = state?.directives?.activated ?? {};
+  const base = (scenario.boundaries ?? []).flatMap((b) => {
+    if (!cond || !b.trigger) return [b];
+    return act[b.id] ? [{ ...b, from: act[b.id] }] : [];
+  });
+  const all = [...base, ...(state?.boundaries ?? [])];
+  const groups = new Map<string, Boundary[]>();
+  for (const b of all) { const k = pairKey(b); groups.set(k, [...(groups.get(k) ?? []), b]); }
+  const out: Boundary[] = [];
+  for (const list of groups.values()) {
+    list.sort((x, y) => x.from.localeCompare(y.from));
+    list.forEach((b, i) => {
+      const next = list.slice(i + 1).find((x) => x.from > b.from)?.from ?? null;
+      // в игре срок линии сценария — до следующей вступившей (расписание сценария не действует)
+      const own = cond && (b.issuedBy ?? 'scenario') === 'scenario' && b.kind !== 'air' ? null : b.until ?? null;
+      const until = next && (!own || next < own) ? next : own;
+      out.push({ ...b, until });
+    });
+  }
+  return out.sort((x, y) => x.from.localeCompare(y.from));
+}
+
+/** Сценарий с действительными линиями (для деления полос, карты, отчёта и обстановки). */
+export const withBoundaries = (scenario: Scenario, state?: Pick<SimState, 'directives' | 'boundaries'> | null): Scenario =>
+  state?.directives || state?.boundaries?.length ? { ...scenario, boundaries: effectiveBoundaries(scenario, state) } : scenario;
+
+/**
+ * Условия вступления директив (игра): линия сценария с условием, ещё не вступившая, вступает, если войска её
+ * объединения trigger.group — в радиусе от точки; срок — через delayHours (по умолчанию 6 ч). Возвращает новые записи.
+ */
+export function checkTriggers(T: Theatre, scenario: Scenario, state: SimState, now: string, addHours: (t: string, h: number) => string): Record<string, string> {
+  const d = state.directives;
+  if (!d?.conditional) return {};
+  const groups = groupOf(scenario, 'front');
+  const fresh: Record<string, string> = {};
+  for (const b of scenario.boundaries ?? []) {
+    if (!b.trigger || d.activated[b.id]) continue;
+    const at = T.proj.toXY(b.trigger.at);
+    const hit = state.formations.some((f) => !f.destroyed && (!f.enterAt || f.enterAt <= now) && (groups.get(f.id) ?? f.id) === b.trigger!.group
+      && Math.hypot(T.proj.toXY(f.position)[0] - at[0], T.proj.toXY(f.position)[1] - at[1]) <= b.trigger!.radiusKm);
+    if (hit) fresh[b.id] = addHours(now, b.delayHours ?? 6);
+  }
+  return fresh;
 }
 
 /** Разграничительные линии, действующие в момент time (наземные; авиационные — только для карты). */
@@ -375,6 +428,8 @@ export function sectorText(T: Theatre, scenario: Scenario, units: SectorUnit[], 
       ? `${short(a)} / ${short(b)} — по директиве (${d.title}): ${(d.places ?? []).join(' — ')}${d.inclusive ? `; пункты включительно — для ${short(d.inclusive)}` : ''}; справа по линии — ${short(d.right)}. За концами линии — по расположению войск.`
       : `${short(a)} / ${short(b)} — линия директивой не установлена: полосы по расположению войск.`);
   }
+  for (const b of activeBoundaries(scenario, time, side).filter((x) => x.kind === 'army'))
+    out.push(`${short(b.right)} / ${short(b.left)} — линия армий (${b.title}): ${(b.places?.length ? b.places : b.line.map((p) => `${p[1].toFixed(2)}° с. ш. ${p[0].toFixed(2)}° в. д.`)).join(' — ')}; справа по линии — ${short(b.right)}.`);
   const out2 = sectorViolations(T, scenario, units, time, groups).filter((v) => units.find((u) => u.id === v.formation)?.side === side);
   if (out2.length) out.push(`В полосе соседа: ${out2.map((v) => `${short(v.formation)} (в полосе ${short(v.in)})`).join(', ')}.`);
   return out;

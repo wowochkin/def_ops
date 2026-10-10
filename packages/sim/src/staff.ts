@@ -13,7 +13,8 @@ import type { LngLat } from '@def-ops/core';
 import { dist } from './geo';
 import { areaTitle, describePlace } from './reports';
 import { addHours, onMap, profileOf, supplySources, type SimContext } from './step';
-import type { Logistics, SimState, StaffAction } from './types';
+import { groupOf, sideOf } from './sectors';
+import type { Boundary, Logistics, SimState, StaffAction } from './types';
 
 /** Время «никогда» для резерва, ещё не введённого в сражение. */
 export const NOT_COMMITTED = '9999-01-01T00:00';
@@ -84,11 +85,54 @@ export function checkAction(ctx: SimContext, state: SimState, a: StaffAction, pe
     const eta = addHours(t, 2);
     return { ok: true, at: open.b.at, eta, text: `${open.b.name ?? 'мост'} будет подорван ≈ ${eta.slice(8, 10)}.${eta.slice(5, 7)} ${eta.slice(11, 16)}`, bridge: open.b.id };
   }
+  if (a.kind === 'boundary' || a.kind === 'directive') {
+    const r = lineOf(ctx, state, a);
+    if (typeof r === 'string') return { ok: false, text: r };
+    const eta = r.from;
+    return { ok: true, eta, at: a.line[0], text: `${r.title}: справа по линии — ${r.rightName}; вступит в силу ≈ ${eta.slice(8, 10)}.${eta.slice(5, 7)} ${eta.slice(11, 16)}` };
+  }
   const f = state.formations.find((x) => x.id === a.formation);
   if (!f || f.side !== a.side || !f.reserveFrom) return { ok: false, text: 'это не резерв, ожидающий ввода' };
   if (!own(ctx, state, a.side, a.at)) return { ok: false, text: 'район сосредоточения — не на своей территории' };
   const eta = maxH(f.reserveFrom, addHours(t, 24));
   return { ok: true, eta, text: `сосредоточится в районе ≈ ${eta.slice(8, 10)}.${eta.slice(5, 7)} ${eta.slice(11, 16)}${f.reserveFrom > addHours(t, 24) ? ' (раньше резерв не готов)' : ''}` };
+}
+
+/**
+ * Линия распоряжения (армии — игрок) или директивы (фронты — модель-Ставка): проверка и линия с определённой стороной.
+ * Кто справа по ходу линии — по среднему положению войск каждого объединения; срок — задержка доведения армиям
+ * или delayHours директивы.
+ */
+export function lineOf(ctx: SimContext, state: SimState, a: Extract<StaffAction, { kind: 'boundary' | 'directive' }>): (Boundary & { rightName: string }) | string {
+  const level = a.kind === 'boundary' ? 'army' : 'front';
+  const defs = new Map(ctx.scenario.formations.map((f) => [f.id, f]));
+  const A = defs.get(a.a), B = defs.get(a.b);
+  if (!A || !B || a.a === a.b) return 'нужны два разных объединения';
+  if (A.side !== a.side || B.side !== a.side) return 'оба объединения должны быть своими';
+  const echelons = level === 'army' ? ['army'] : ['front'];
+  if (!echelons.includes(A.echelon) || !echelons.includes(B.echelon)) return level === 'army' ? 'линия распоряжения — между армиями' : 'директива — между фронтами';
+  const fronts = groupOf(ctx.scenario, 'front');
+  if (level === 'army' && fronts.get(a.a) !== fronts.get(a.b)) return 'армии разных фронтов — линию между ними устанавливает Ставка';
+  if (a.line.length < 2) return 'линия — хотя бы из двух точек';
+  if (a.line.some((p) => ctx.theatre.indexOf(p) < 0)) return 'точка линии вне театра';
+  const T = ctx.theatre, groups = groupOf(ctx.scenario, level);
+  const line = a.line.map((p) => T.proj.toXY(p));
+  const centre = (g: string) => {
+    const ps = state.formations.filter((f) => !f.destroyed && onMap(f, state.time) && (groups.get(f.id) ?? f.id) === g).map((f) => T.proj.toXY(f.position));
+    return ps.length ? sideOf(line, [ps.reduce((s, p) => s + p[0], 0) / ps.length, ps.reduce((s, p) => s + p[1], 0) / ps.length], true) : 0;
+  };
+  const sa = centre(a.a), sb = centre(a.b);
+  if (!sa || !sb) return 'у одного из объединений нет войск на театре';
+  if (sa === sb) return 'войска обоих объединений — по одну сторону линии';
+  const [right, left] = sa > 0 ? [A, B] : [B, A];
+  const delay = a.kind === 'boundary' ? profileOf(ctx, a.side).orderDelayHours.army ?? 6 : a.delayHours;
+  const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+  return {
+    id: `${a.kind === 'boundary' ? 'p' : 's'}_${a.issuedAt}_${[a.a, a.b].sort().join('_')}`, kind: level, side: a.side, right: right.id, left: left.id,
+    title: `${short(right.name)} / ${short(left.name)} (${a.kind === 'boundary' ? 'распоряжение' : 'директива'} ${a.issuedAt.slice(8, 10)}.${a.issuedAt.slice(5, 7)})`,
+    from: addHours(a.issuedAt, Math.max(0, delay)), until: null, line: a.line, places: a.places, inclusive: null,
+    note: a.kind === 'directive' ? a.reason : undefined, issuedBy: a.kind === 'boundary' ? 'player' : 'stavka', issuedAt: a.issuedAt, rightName: short(right.name),
+  };
 }
 
 /** Исполнить распоряжения в начале хода; неисполнимые — с причиной. */
@@ -111,6 +155,9 @@ export function applyActions(ctx: SimContext, state: SimState, actions: StaffAct
       ctx.theatre.addBridge({ id: `u_${s.time}_${bridges}`, at: c.at!, name: `переправа ${describePlace(ctx.theatre, c.at!)}`, openFrom: c.eta!, side: a.side, kind: 'crossing' });
     } else if (a.kind === 'demolish') {
       ctx.theatre.destroyBridge(c.bridge!, c.eta!);
+    } else if (a.kind === 'boundary' || a.kind === 'directive') {
+      const b = lineOf(ctx, s, a);
+      if (typeof b !== 'string') { const { rightName: _r, ...line } = b; s.boundaries = [...(s.boundaries ?? []), line]; }
     } else {
       s.formations = s.formations.map((f) => (f.id === a.formation ? { ...f, position: a.at, enterAt: c.eta!, reserveFrom: undefined } : f));
     }
