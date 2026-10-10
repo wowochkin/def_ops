@@ -207,7 +207,9 @@ export function buildAdvice(ctx: SimContext, g: GameState, history: History, cfg
   messages.push({ role: 'user', content: user });
   // соединения, названные самим командующим, можно упоминать («сведений о нём нет»); положение и силы — всё равно нельзя (их нет в сведениях)
   const asked = [req.question, ...req.thread.map((t) => t.q)].join('\n');
-  const hidden = hiddenEnemies(ctx, g, cfg.side, p.enemies.map((e) => e.id)).filter((h) => !leakedNames(asked, [h]).length && !nameMentioned(asked, h.name));
+  // с кем свои войска вели бой за ход — опознан в соприкосновении (пленные, документы): не скрыт
+  const fought = new Set(p.own.flatMap((u) => u.combats.flatMap((c) => c.against)));
+  const hidden = hiddenEnemies(ctx, g, cfg.side, [...p.enemies.map((e) => e.id), ...g.state.formations.filter((f) => fought.has(f.name)).map((f) => f.id)]).filter((h) => !leakedNames(asked, [h]).length && !nameMentioned(asked, h.name));
   return { messages, parts: p, category: cat.id, hidden };
 }
 

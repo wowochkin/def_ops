@@ -56,7 +56,7 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
     } else {
       // окружено (или уничтожено) хотя бы одно из перечисленных
       const ids = new Set(e.formations ?? (e.formation ? [e.formation] : []));
-      const j = run.final.journal.find((x) => (x.kind === 'encircled' && ids.has(x.formation) && x.cut) || (x.kind === 'destroyed' && ids.has(x.formation)));
+      const j = run.final.journal.find((x) => (x.kind === 'encircled' && ids.has(x.formation) && x.cut) || ((x.kind === 'destroyed' || x.kind === 'capitulated') && ids.has(x.formation)));
       when = j ? j.time : null;
     }
     // снимок — на утро; событие «дня» — день перед ним

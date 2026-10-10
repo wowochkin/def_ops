@@ -13,6 +13,7 @@ import type { LngLat } from '@def-ops/core';
 import { createRng, type Rng } from './rng';
 import { dist, type XY } from './geo';
 import { interp, power } from './rules';
+import { describePlace } from './reports';
 import { trailTo, type Theatre } from './theatre';
 import type { CombatFactor, Formation, JournalEntry, Mobility, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
 import { UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
@@ -132,6 +133,10 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     } else pending.push(o);
   }
 
+  // переправы, наведённые сапёрами в этом прогоне, — в расчёт путей и подвоза
+  T.setDynamicCrossings(prev.crossings ?? []);
+  const crossings = [...(prev.crossings ?? [])];
+
   // территория (если ведётся): с прошлого хода или исходная — по ближайшим войскам и тылам сторон
   const sides = ctx.scenario.sides.map((x) => x.id);
   const sideIdx = (side: string) => sides.indexOf(side);
@@ -160,6 +165,9 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   // каждая успешно наступающая армия «отрезана»)
   const startPos = new Map(fs.map((f) => [f.id, f.position]));
   const isCut = (f: Formation) => !!sup?.fields.get(f.side) && supplyHours(f, startPos.get(f.id) ?? f.position) > range(f);
+  // окружено — пути подвоза нет совсем; путь есть, но длиннее предела — войска оторвались от тылов (подвоза нет, но
+  // это не котёл: формирование не скованно и не окружено)
+  const isEncircled = (f: Formation) => !!sup?.fields.get(f.side) && !Number.isFinite(supplyHours(f, startPos.get(f.id) ?? f.position));
 
   // полоса обороны: обороняющийся связывает боем наступающих в пределах половины своей ширины полосы
   const reach = (e: Formation) => {
@@ -248,13 +256,42 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     // подвоз: по своей территории от источников стороны
     const ps = prof.supply;
     if (ps && sup?.fields.get(f.side)) {
-      // окружение — когда подвоз не доходит дольше rules.encircleHours (по умолчанию 36 ч, т. е. два хода подряд):
-      // разовый разрыв на стыке не считается котлом
+      // окружение — когда пути подвоза нет дольше rules.encircleHours (по умолчанию 36 ч, т. е. два хода подряд):
+      // разовый разрыв на стыке не считается котлом; оторвавшиеся от тылов (путь длиннее предела) подвоза не
+      // получают, но окружёнными не считаются
       const blocked = isCut(f);
-      f.cutHours = blocked ? (f.cutHours ?? 0) + dt : 0;
+      f.outOfSupply = blocked && !isEncircled(f) ? true : undefined;
+      f.cutHours = isEncircled(f) ? (f.cutHours ?? 0) + dt : 0;
       const cut = f.cutHours >= (R.encircleHours ?? 36);
       if (cut !== !!f.cutOff) journal.push({ kind: 'encircled', time: now, formation: f.id, cut });
+      // вырвались из котла приказом на прорыв — тяжёлое вооружение брошено (танки и орудия — rules.pocket.breakoutKeep)
+      if (!cut && f.cutOff && f.order?.task === 'breakout') {
+        const keep = R.pocket?.breakoutKeep ?? 0.3;
+        f.tanks = Math.round(f.tanks * keep); f.guns = Math.round(f.guns * keep);
+        journal.push({ kind: 'brokeOut', time: now, formation: f.id, personnel: Math.round(f.personnel) });
+      }
       f.cutOff = cut;
+      // запасы крепости: окружённый гарнизон получает подвоз со своих складов, пока они не кончились (сутки запаса;
+      // в бою расходуются вдвое быстрее, чем в осаде без штурма)
+      const stockDays = prof.unitTypes[f.type]?.stockDays ?? 0;
+      if (stockDays > 0 && f.stock === undefined) f.stock = stockDays;
+      const fromStock = cut && (f.stock ?? 0) > 0;
+      if (fromStock) {
+        f.stock = Math.max(0, f.stock! - (dt / 24) * (inCombat.has(f.id) ? 1 : 0.5));
+        f.ammo = Math.min(ps.maxAmmo, f.ammo + ps.ammoPerDay * (dt / 24));
+        f.fuel = Math.min(ps.maxFuel, f.fuel + ps.fuelPerDay * (dt / 24));
+        if (f.stock === 0) journal.push({ kind: 'supply', time: now, formation: f.id, what: 'stock', left: 0 });
+      }
+      // капитуляция: окружено дольше rules.pocket.capitulateHours (у «держаться любой ценой» — вдвое дольше), складов
+      // нет, боеприпасы на исходе (меньше ammoBelow бк) — котёл сдаётся
+      const P = R.pocket ?? {};
+      // «держаться любой ценой» и прорывающиеся (пробиваются к своим, а не сидят в кольце) — вдвое дольше
+      const capH = (P.capitulateHours ?? 96) * (f.order?.task === 'hold' || f.order?.task === 'breakout' ? 2 : 1);
+      if (cut && prof.capitulates !== false && !fromStock && (f.stock ?? 0) <= 0 && f.cutHours >= capH + (R.encircleHours ?? 36) && f.ammo < (P.ammoBelow ?? 0.25)) {
+        f.destroyed = true;
+        journal.push({ kind: 'capitulated', time: now, formation: f.id, personnel: Math.round(f.personnel) });
+        continue;
+      }
       if (!blocked) {
         // приоритет подвоза (тыл под управлением штаба): приоритетным — больше, остальным — меньше
         const pr = prev.logistics?.[f.side]?.priority ?? [];
@@ -286,6 +323,39 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const at = new Map<number, Set<number>>();
     for (const f of live) { const i = T.indexOf(f.position); if (i >= 0) at.set(i, (at.get(i) ?? new Set()).add(sideIdx(f.side))); }
     for (const [i, ss] of at) if (ss.size === 1) terr[i] = [...ss][0];
+    // закрепление земли за своим фронтом: клетка противника переходит к стороне, если там перевес влияния её войск
+    // (карта контроля), войск противника нет ближе consolidateKm, а своя земля — по крайней мере с трёх сторон из
+    // четырёх в пределах consolidateReachKm (клетка в тылу своего фронта, а не перед ним). Так полосы между
+    // коридорами наступающих армий становятся своими; обойдённые узлы противника, где его войска есть, остаются его
+    // островами — это и есть котлы.
+    const consKm = R.territory.consolidateKm ?? R.contactKm * 1.5;
+    if (consKm > 0) {
+      const reachCells = Math.max(1, Math.round((R.territory.consolidateReachKm ?? 24) / T.cellKm));
+      const ctl = controlMap(T, live, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, 10, 0.1);
+      const bySide = sides.map((_, k) => live.filter((f) => sideIdx(f.side) === k).map((f) => xy(f)));
+      for (let pass = 0; pass < 3; pass++) {
+        const flips: [number, number][] = [];
+        for (let i = 0; i < terr.length; i++) {
+          const o = terr[i], c = ctl.owner[i];
+          if (o < 0 || c < 0 || c === o) continue;
+          const c0 = i % T.cols, r0 = (i - c0) / T.cols;
+          let sidesOwn = 0;
+          for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            for (let k = 1; k <= reachCells; k++) {
+              const cc = c0 + dc * k, rr = r0 + dr * k;
+              if (!T.inside(cc, rr)) break;
+              if (terr[rr * T.cols + cc] === c) { sidesOwn++; break; }
+            }
+          }
+          if (sidesOwn < 3) continue;
+          const p = T.cellCenter(c0, r0);
+          if (bySide[o].some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < consKm)) continue;
+          flips.push([i, c]);
+        }
+        if (!flips.length) break;
+        for (const [i, c] of flips) terr[i] = c;
+      }
+    }
   }
 
   // занятые клетки чужих укреплённых полос — прорваны
@@ -293,8 +363,45 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const i = T.indexOf(f.position);
     if (i >= 0 && T.fort[i] && T.fortSide[i] && T.fortSide[i] !== f.side) breached.add(i);
   }
+  // сапёры без штаба: где сторона держит оба берега большой реки без моста, её войска рядом, а противника нет —
+  // наводится переправа (открыта через engineers.hours). Где тылом управляет штаб (игра), переправы — его распоряжения.
+  const EN = R.engineers;
+  if (EN !== false && terr) {
+    const hours = EN?.hours ?? 24, per = EN?.perTurn ?? 2, nearKm = EN?.nearKm ?? 12, spacing = EN?.spacingKm ?? 15;
+    const live = active();
+    for (const side of sides) {
+      if (prev.logistics?.[side]) continue;
+      const k = sideIdx(side);
+      const own = live.filter((f) => f.side === side).map((f) => xy(f)), enemy = live.filter((f) => f.side !== side).map((f) => xy(f));
+      const mine = crossings.filter((c) => c.side === side).map((c) => T.proj.toXY(c.at));
+      const cand: { i: number; p: XY; d: number }[] = [];
+      for (let i = 0; i < terr.length; i++) {
+        if (T.river[i] !== 2 || T.bridgeOpen(i, end)) continue;
+        const c = i % T.cols, r = (i - c) / T.cols;
+        const ownAt = (cc: number, rr: number) => T.inside(cc, rr) && terr[rr * T.cols + cc] === k && T.river[rr * T.cols + cc] !== 2;
+        // оба берега — свои: напротив друг друга через реку (по горизонтали, вертикали или диагонали, на 2 клетки)
+        if (![[2, 0], [0, 2], [2, 2], [2, -2]].some(([dc, dr]) => ownAt(c + dc, r + dr) && ownAt(c - dc, r - dr))) continue;
+        const p = T.cellCenter(c, r);
+        const d = own.reduce((m, q) => Math.min(m, Math.hypot(q[0] - p[0], q[1] - p[1])), Infinity);
+        if (d > nearKm || enemy.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < R.contactKm)) continue;
+        if (mine.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < spacing)) continue;
+        cand.push({ i, p, d });
+      }
+      cand.sort((a, b) => a.d - b.d);
+      let n = 0;
+      for (const c of cand) {
+        if (n >= per) break;
+        if (mine.some((q) => Math.hypot(q[0] - c.p[0], q[1] - c.p[1]) < spacing)) continue;
+        const at = T.proj.toLL(c.p);
+        crossings.push({ id: `x_${side}_${end}_${n}`, side, at, openFrom: addHours(end, hours), name: `переправа сапёров ${describePlace(T, at)}` });
+        mine.push(c.p);
+        n++;
+      }
+    }
+  }
+
   const { umpire: _used, ...rest } = prev;
-  return { ...rest, ...(directives ? { directives } : {}), time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}) };
+  return { ...rest, ...(directives ? { directives } : {}), time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}), ...(crossings.length ? { crossings } : {}) };
 }
 
 /**

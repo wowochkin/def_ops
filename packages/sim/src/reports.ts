@@ -250,12 +250,16 @@ export function dayEvents(ctx: SimContext, state: SimState, side: string, prev: 
       else if (j.cut) out.push(`По данным разведки, ${names.get(j.formation)} отрезано от своих.`);
     } else if (j.kind === 'destroyed') {
       out.push(sideOf.get(j.formation) === side ? `${names.get(j.formation)} потеряло боеспособность.` : `${names.get(j.formation)} (противник) разгромлено.`);
+    } else if (j.kind === 'capitulated') {
+      out.push(sideOf.get(j.formation) === side ? `${names.get(j.formation)} — в окружении без боеприпасов, капитулировало (${j.personnel.toLocaleString('ru')} чел.).` : `${names.get(j.formation)} (противник) в котле капитулировало: около ${j.personnel.toLocaleString('ru')} пленных.`);
+    } else if (j.kind === 'brokeOut') {
+      out.push(sideOf.get(j.formation) === side ? `${names.get(j.formation)} прорвалось из окружения (${j.personnel.toLocaleString('ru')} чел.), тяжёлое вооружение брошено.` : `По данным разведки, ${names.get(j.formation)} прорвалось из котла.`);
     } else if (j.kind === 'directive' && j.side === side) {
       const t = commandTerms(ctx, side);
       const who = j.issuedBy === 'player' ? 'распоряжение' : `${t.directive} ${t.topGen}`;
       out.push(`С ${j.from.slice(8, 10)}.${j.from.slice(5, 7)} ${j.from.slice(11, 16)} — разграничительная линия ${j.title.replace(/\s*\(.*\)$/, '')} (${who}).`);
     } else if (j.kind === 'supply' && sideOf.get(j.formation) === side) {
-      out.push(j.what === 'ammo' ? `${names.get(j.formation)}: боеприпасы на исходе (${j.left} бк).` : `${names.get(j.formation)}: горючее кончилось.`);
+      out.push(j.what === 'ammo' ? `${names.get(j.formation)}: боеприпасы на исходе (${j.left} бк).` : j.what === 'stock' ? `${names.get(j.formation)}: склады крепости исчерпаны.` : `${names.get(j.formation)}: горючее кончилось.`);
     }
   }
   return out;

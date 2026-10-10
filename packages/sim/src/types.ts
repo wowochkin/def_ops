@@ -28,6 +28,11 @@ export interface UnitType {
   frontageKm?: number;
   /** Узел обороны (крепость): подвижные соединения, чья цель дальше него, обходят его, а не штурмуют. */
   bypassable?: boolean;
+  /**
+   * Запасы на складах (сутки боя): окружённое формирование этого типа (гарнизон крепости) получает подвоз с них, пока
+   * они не кончились; в осаде без боя расходуются вдвое медленнее. Нет поля — складов нет.
+   */
+  stockDays?: number;
 }
 
 export interface SideProfile {
@@ -36,6 +41,11 @@ export interface SideProfile {
   /** Вклад в боевой потенциал: на 1000 человек, на танк/САУ, на орудие/миномёт. */
   weights: { personnel: number; tanks: number; guns: number };
   unitTypes: Record<string, UnitType>;
+  /**
+   * Сдаются ли окружённые (правила котла — rules.pocket). false — нет: в 1945 г. окружённые части Красной армии
+   * держались до деблокирования; по умолчанию — да.
+   */
+  capitulates?: boolean;
   /** Темп марша вне дорог по местности, км/сутки; 0 — непроходимо. */
   offRoad: Record<Mobility, Record<TerrainClass, number>>;
   /** Темп марша по дороге, км/сутки. */
@@ -121,9 +131,27 @@ export interface Rules {
    */
   territory?: { radiusKm: number; enemyKmPerDay: Partial<Record<Mobility, number>>;
     /** Подвоз проходит и по чужой территории, где наши войска ближе этого (км) и ближе противника (по умолчанию — contactKm); 0 — только по своей. */
-    supplyHoldKm?: number };
+    supplyHoldKm?: number;
+    /**
+     * Закрепление земли за фронтом (каждый ход): клетка противника переходит к стороне, если там перевес влияния её
+     * войск, войск противника нет ближе consolidateKm (по умолчанию 1,5 × contactKm; 0 — выключено), а своя земля
+     * есть с трёх сторон из четырёх в пределах consolidateReachKm (по умолчанию 24 км).
+     */
+    consolidateKm?: number; consolidateReachKm?: number };
   /** Через сколько часов непрерывного разрыва подвоза формирование считается окружённым (по умолчанию 36). */
   encircleHours?: number;
+  /**
+   * Котлы. capitulateHours — сколько часов в окружении (сверх encircleHours) котёл держится без складов, прежде чем
+   * сдаться, если боеприпасов меньше ammoBelow бк (по умолчанию 96 ч и 0,25 бк; с приказом «держаться любой ценой» или
+   * на прорыв — вдвое дольше); breakoutKeep — доля танков и орудий, которую выносят прорвавшиеся из котла (по умолчанию 0,3).
+   */
+  pocket?: { capitulateHours?: number; ammoBelow?: number; breakoutKeep?: number };
+  /**
+   * Сапёры без штаба (тылом стороны не управляет игрок или модель): наводят переправу через большую реку там, где
+   * сторона держит оба берега, её войска не дальше nearKm (по умолчанию 12), противника нет ближе contactKm; открыта
+   * через hours (по умолчанию 24); не больше perTurn в ход (по умолчанию 2), не ближе spacingKm друг к другу (15).
+   */
+  engineers?: { hours?: number; perTurn?: number; nearKm?: number; spacingKm?: number } | false;
   /**
    * Превышение в бою (нужна сетка высот театра): оборона выше наступающих на perM метров — сила × (1 + bonus),
    * ниже — × (1 − bonus); не больше ±max. Нет поля — не учитывается (класс «высоты» действует отдельно).
@@ -360,6 +388,10 @@ export interface Formation {
   cutOff?: boolean;
   /** Сколько часов подряд подвоз не доходит. */
   cutHours?: number;
+  /** Остаток складов (сутки), у гарнизонов крепостей (stockDays типа). */
+  stock?: number;
+  /** Оторвалось от тылов: путь подвоза есть, но длиннее предела — подвоза нет, но это не окружение. */
+  outOfSupply?: boolean;
   /** Резерв Ставки, ещё не введённый в сражение: с какого момента может быть введён (enterAt — когда введут). */
   reserveFrom?: string;
 }
@@ -375,9 +407,13 @@ export type JournalEntry =
   | { kind: 'move'; time: string; formation: string; from: LngLat; to: LngLat; km: number; path?: LngLat[] }
   | { kind: 'combat'; time: string; attackers: string[]; defenders: string[]; at: LngLat; ratio: number; factors: CombatFactor[];
       noise: number; advanceKm: number; attackerLoss: number; defenderLoss: number; outcome: 'breakthrough' | 'advance' | 'held' | 'repelled' }
-  | { kind: 'supply'; time: string; formation: string; what: 'ammo' | 'fuel'; left: number }
+  | { kind: 'supply'; time: string; formation: string; what: 'ammo' | 'fuel' | 'stock'; left: number }
   | { kind: 'encircled'; time: string; formation: string; cut: boolean }
   | { kind: 'destroyed'; time: string; formation: string }
+  /** Котёл сдался (окружение без складов и боеприпасов). */
+  | { kind: 'capitulated'; time: string; formation: string; personnel: number }
+  /** Вырвались из котла приказом на прорыв (тяжёлое вооружение брошено). */
+  | { kind: 'brokeOut'; time: string; formation: string; personnel: number }
   /** Разграничительная линия вступила в силу (директива, распоряжение). */
   | { kind: 'directive'; time: string; boundary: string; side: string; title: string; from: string; issuedBy: string };
 
@@ -394,6 +430,8 @@ export interface SimState {
   journal: JournalEntry[];
   /** Клетки укреплённых полос, уже занятые противником их владельца (прорваны). */
   breached?: number[];
+  /** Переправы, наведённые сапёрами в ходе расчёта (где тылом не управляет штаб): через большие реки, с какого часа. */
+  crossings?: { id: string; side: string; at: LngLat; openFrom: string; name: string }[];
   /** Территория: индекс стороны (по scenario.sides), владеющей клеткой; −1 — ничья. Меняется, только когда через клетку проходят войска. */
   territory?: number[];
   /** Тыл стороны под управлением штаба (игра): базы снабжения и приоритет подвоза. Нет — источники из сценария. */

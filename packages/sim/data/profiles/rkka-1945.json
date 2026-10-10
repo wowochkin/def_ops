@@ -7,6 +7,7 @@
     "tanks": 0.08,
     "guns": 0.03
   },
+  "capitulates": false,
   "unitTypes": {
     "rifle_army": {
       "id": "rifle_army",

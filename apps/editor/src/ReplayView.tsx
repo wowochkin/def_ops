@@ -33,6 +33,7 @@ const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] 
   { key: 'combat', title: 'Бои', match: (id) => id === 'sim-combat' },
   { key: 'theatre', title: 'Рубежи', match: (id) => id === 'theatre' || id.startsWith('theatre-') },
   { key: 'pockets', title: 'Котлы', match: (id) => id === 'sim-pockets' },
+  { key: 'fortress', title: 'Крепости', match: (id) => id === 'sim-fortress' },
   { key: 'hbounds', title: 'Ист. разгр. линии', match: (id) => id === 'hist-bounds' },
   { key: 'bounds', title: 'Полосы', match: (id) => id === 'sim-bounds' },
 ];
@@ -40,7 +41,7 @@ const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] 
 const BOUND_LAYERS = ['sim-bounds', 'lvl-op-bounds', 'lvl-st-bounds'];
 
 /** Полные названия слоёв в меню «Слои» (на кнопках были сокращения). */
-export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)', hbounds: 'Разграничительные линии: директивы и распоряжения', bounds: 'Полосы фронтов и армий (расчёт)', pockets: 'Котлы (окружённые группировки)' };
+export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)', hbounds: 'Разграничительные линии: директивы и распоряжения', bounds: 'Полосы фронтов и армий (расчёт)', pockets: 'Котлы (окружённые группировки)', fortress: 'Крепости: обводы по застройке' };
 
 /** Уровень обобщения карты: тактический — соединения и бои, оперативный — объединения (армии), стратегический — фронты. */
 export type MapLevel = 'tac' | 'op' | 'st';
@@ -385,6 +386,7 @@ export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: st
     { key: 'hbounds', cls: 'lg-hbound', text: 'разграничительная линия по директиве' },
     ...(combat ? [{ key: 'combat', cls: 'lg-arrow', text: 'бой за ход' }] : []),
     { key: 'pockets', cls: 'lg-pocket', text: 'котёл (окружённые)' },
+    { key: 'fortress', cls: 'lg-fortline', text: 'крепость: обвод по застройке' },
     { cls: 'lg-flag', text: 'Знамя Победы', mark: '⚑' },
     ...extra,
   ];

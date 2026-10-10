@@ -63,6 +63,7 @@ const TOGGLES = [
   { key: 'rear', title: 'Тыл', match: (id: string) => id === 'logistics' },
   { key: 'rivers', title: 'Реки', match: (id: string) => id === 'rivers' },
   { key: 'pockets', title: 'Котлы', match: (id: string) => id === 'sim-pockets' },
+  { key: 'fortress', title: 'Крепости', match: (id: string) => id === 'sim-fortress' },
   { key: 'hbounds', title: 'Ист. разгр. линии', match: (id: string) => id === 'hist-bounds' },
   { key: 'bounds', title: 'Полосы', match: (id: string) => id === 'sim-bounds' },
 ];

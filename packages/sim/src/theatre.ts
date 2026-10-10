@@ -258,7 +258,18 @@ export class Theatre {
   }
 
   bridgeOpen(i: number, time: string): boolean {
-    return (this.bridges.get(i) ?? []).some((b) => (!b.openFrom || time >= b.openFrom) && (!b.destroyedAt || time < b.destroyedAt));
+    return (this.bridges.get(i) ?? []).some((b) => (!b.openFrom || time >= b.openFrom) && (!b.destroyedAt || time < b.destroyedAt))
+      || (this.dynamic.get(i) ?? []).some((b) => time >= b.openFrom);
+  }
+
+  /**
+   * Переправы прогона (наведённые сапёрами в ходе расчёта, SimState.crossings): задаются на каждый ход из состояния,
+   * поэтому прогоны с разными seed на одном театре друг на друга не влияют.
+   */
+  private dynamic = new Map<number, { openFrom: string }[]>();
+  setDynamicCrossings(list: { at: LngLat; openFrom: string }[]): void {
+    this.dynamic = new Map();
+    for (const b of list) { const i = this.indexOf(b.at); if (i >= 0) this.dynamic.set(i, [...(this.dynamic.get(i) ?? []), { openFrom: b.openFrom }]); }
   }
 
   /** Дорога в клетке перекрыта на момент time (препятствие из сведений об инфраструктуре). */

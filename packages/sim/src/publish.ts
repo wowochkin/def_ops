@@ -6,6 +6,7 @@
  */
 import { createFeature, emptyDocument, type AreaFeature, type ArrowFeature, type Feature, type LabelFeature, type Layer, type LineFeature, type LngLat, type MapDocument, type Side, type SymbolFeature, type TextStyle } from '@def-ops/core';
 import { frontLine, territoryLine } from './front';
+import { TERRAIN_CLASSES } from './types';
 import { dist } from './geo';
 import { checkEvents, type History, type RunResult, type Snapshot } from './history';
 import { power } from './rules';
@@ -109,6 +110,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('sim-combat', 'Переигровка: бои за ход', 'custom', 0.8, o.combats !== false),
     mk('sim-marks', 'Переигровка: особые отметки', 'custom'),
     mk('sim-pockets', 'Переигровка: котлы (окружённые группировки)', 'custom', 0.9),
+    mk('sim-fortress', 'Крепости: обводы по застройке', 'custom', 0.95),
     // разграничительные линии: по директивам (история) и расчётные полосы по уровням карты
     mk('hist-bounds', 'Разграничительные линии: директивы и распоряжения', 'custom', 0.75),
     mk('sim-bounds', 'Переигровка: разграничительные линии фронтов', 'custom', 0.85),
@@ -136,6 +138,14 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     const f = createFeature('symbol', 'std.pontoon', { at: b.at, layerId: 'theatre-crossings' }, 0.8, 'own') as SymbolFeature;
     f.name = b.name;
     f.time = { from: b.openFrom, to: b.destroyedAt ?? null };
+    features.push(f);
+  }
+
+  // переправы, наведённые сапёрами в ходе расчёта
+  for (const c of run.final.crossings ?? []) {
+    const f = createFeature('symbol', 'std.pontoon', { at: c.at, layerId: 'theatre-crossings' }, 0.8, sideOf(c.side)) as SymbolFeature;
+    f.name = `${c.name} (наведена в расчёте)`;
+    f.time = { from: c.openFrom, to: null };
     features.push(f);
   }
 
@@ -468,11 +478,55 @@ function pocketFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => 
 }
 
 /**
- * Крепости (гарнизоны с «узлом обороны» в профиле — Festung): на оперативном и стратегическом масштабах —
- * знак города-крепости с названием, пока гарнизон держится; павшая крепость — перечёркнута.
+ * Обвод города-крепости по застройке: связные клетки класса «застройка» слоя местности театра вокруг гарнизона
+ * (не дальше maxKm) — их контур. Местность театра — по спутниковой съёмке или по историческому слою с карты
+ * (раздел «Карты»: застройка с карты РККА или плана города того времени), поэтому обвод идёт по застройке того
+ * времени, если такой слой наложен. Застройки рядом нет — null.
+ */
+export function cityOutline(T: Theatre, at: LngLat, maxKm = 20): LngLat[] | null {
+  const urban = TERRAIN_CLASSES.indexOf('urban');
+  const i0 = T.indexOf(at);
+  if (i0 < 0) return null;
+  const c0 = i0 % T.cols, r0 = (i0 - c0) / T.cols, P0 = T.cellCenter(c0, r0);
+  const seed: number[] = [];
+  for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+    const c = c0 + dc, r = r0 + dr;
+    if (T.inside(c, r) && T.terrain[r * T.cols + c] === urban) seed.push(r * T.cols + c);
+  }
+  if (!seed.length) return null;
+  const inside = new Uint8Array(T.cols * T.rows);
+  for (const i of seed) inside[i] = 1;
+  const q = [...seed];
+  for (let h = 0; h < q.length; h++) {
+    const c = q[h] % T.cols, r = (q[h] - c) / T.cols;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const cc = c + dc, rr = r + dr;
+      if (!T.inside(cc, rr)) continue;
+      const n = rr * T.cols + cc;
+      if (inside[n] || T.terrain[n] !== urban) continue;
+      const p = T.cellCenter(cc, rr);
+      if (Math.hypot(p[0] - P0[0], p[1] - P0[1]) > maxKm) continue;
+      inside[n] = 1; q.push(n);
+    }
+  }
+  // маленький город — обвод на клетку шире застройки (крепостной обвод — по окраинам, а не по центру)
+  if (q.length < 8) for (const i of [...q]) {
+    const c = i % T.cols, r = (i - c) / T.cols;
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (T.inside(c + dc, r + dr)) inside[(r + dr) * T.cols + c + dc] = 1;
+  }
+  const mask = Array.from(inside, (v) => (v ? 0 : 1));
+  const ring = territoryLine(T, mask, 2).reduce<LngLat[]>((b, l) => (l.length > b.length ? l : b), []);
+  return ring.length >= 4 ? ring : null;
+}
+
+/**
+ * Крепости (гарнизоны с «узлом обороны» в профиле — Festung): обвод по застройке города на всех масштабах (слой
+ * «Крепости»), пока гарнизон держится; на оперативном и стратегическом — ещё знак города-крепости с названием;
+ * павшая крепость — перечёркнута.
  */
 function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, visible: PublishOptions['visible'] | undefined, labelK: number): Feature[] {
   const out: Feature[] = [];
+  const T = ctx.theatre;
   for (const f of run.final.formations) {
     if (!profileOf(ctx, f.side).unitTypes[f.type]?.bypassable) continue;
     const side = sideOf(f.side);
@@ -480,8 +534,19 @@ function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
     if (!all.length) continue;
     const gone = all.find((x) => x.u!.destroyed);
     const colour = side === 'own' ? '#c0392b' : '#1f4e8c';
+    // обвод — по положению гарнизона в начале (крепость не движется)
+    // в городском масштабе (клетка меньше километра) застроено всё — обвод не рисуется
+    const ring = T.cellKm >= 1 ? cityOutline(T, all[0].u!.at, T.cellKm * 11) : null;
+    if (ring) {
+      const a = createFeature('area', 'atlas.encircled', { points: ring, layerId: 'sim-fortress' }, 1, side) as AreaFeature;
+      a.style = { ...a.style, fill: side === 'own' ? '#f6d6d2' : '#d6e4f2', fillOpacity: 0.35,
+        edge: a.style.edge.map((e) => ({ ...e, color: colour, width: 2.2, ...(e.ticks ? { ticks: { ...e.ticks, side: 1, length: 4, spacing: 6, width: 1.4 } } : {}) })) };
+      a.name = `${f.name}: обвод по застройке${gone ? ` (пала ${dm(gone.sn.time)})` : ''}`;
+      a.time = { from: all[0].sn.time, to: gone ? gone.sn.time : null };
+      out.push(a);
+    }
     for (const lay of ['lvl-op-units', 'lvl-st-units']) {
-      const sym = createFeature('symbol', 'atlas.fortCity', { at: all[0].u!.at, layerId: lay }, 1.3 * labelK, side) as SymbolFeature;
+      const sym = createFeature('symbol', 'atlas.fortCity', { at: all[0].u!.at, layerId: lay }, (ring ? 0.9 : 1.3) * labelK, side) as SymbolFeature;
       sym.style = { ...sym.style, color: colour, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 11 * labelK, weight: 700, italic: false, color: colour, halo: { color: '#ffffff', width: 2 * labelK }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
       sym.name = `${f.name}${gone ? ` (пала ${dm(gone.sn.time)})` : ''}`;
       sym.labelRank = 18;

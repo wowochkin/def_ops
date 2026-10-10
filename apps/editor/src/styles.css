@@ -1294,3 +1294,4 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lg-town { position: relative; }
 .lg-town::before { content: ''; position: absolute; left: 7px; top: 2px; width: 6px; height: 6px; border: 1.5px solid #222; border-radius: 50%; background: #fff; }
 .lg-pocket { border: 1.5px solid #1f4e8c; background: #d6e8f2; border-radius: 6px; }
+.lg-fortline { border: 2px solid #1f4e8c; background: #d6e4f2; border-radius: 3px; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #1f4e8c; transform: scale(.75); }
