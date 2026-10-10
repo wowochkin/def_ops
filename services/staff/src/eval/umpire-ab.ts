@@ -105,7 +105,7 @@ const L: string[] = [
   '|---|---|---|---|',
   ...nb.map((x, i) => `| ${x.norm.title} | ${x.norm.expect ? `${fmtNorm(x.norm.expect[0])}–${fmtNorm(x.norm.expect[1])} ${x.norm.unit}` : '—'} | ${x.verdict === 'none' ? '' : x.text + ' '}${NORM_MARK[x.verdict]} | ${nu[i].verdict === 'none' ? '' : nu[i].text + ' '}${NORM_MARK[nu[i].verdict]} |`),
   '',
-  `В пределах: без посредника ${nb.filter((x) => x.verdict === 'ok').length}, с посредником ${nu.filter((x) => x.verdict === 'ok').length} из ${nb.filter((x) => x.verdict !== 'none').length}.`,
+  `В пределах: без посредника ${nb.filter((x) => x.verdict === 'ok').length}, с посредником ${nu.filter((x) => x.verdict === 'ok').length} из ${nb.filter((x) => x.verdict !== 'none' && x.verdict !== 'assumed').length}.`,
   '',
   '## Что делал посредник',
   '',

@@ -105,7 +105,7 @@ describe('нормативы для правил арбитра', () => {
     const t = JSON.parse(readFileSync(new URL('../../sim/data/rules/norms.json', import.meta.url), 'utf8')) as { norms: { id: string; kb: string; expect?: number[]; measure: { kind: string } }[] };
     for (const n of t.norms) {
       expect(byId.has(n.kb), n.id).toBe(true);
-      if (n.measure.kind !== 'unmodelled') expect(n.expect?.length, n.id).toBe(2);
+      if (n.measure.kind !== 'unmodelled' && n.measure.kind !== 'assumption') expect(n.expect?.length, n.id).toBe(2);
     }
   });
 });

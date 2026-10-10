@@ -57,7 +57,7 @@ export async function coverageInput(opId: string): Promise<CoverageInput> {
   const total = Math.max(1, Math.round((Date.parse(`${sc.end}Z`) - Date.parse(`${sc.start}Z`)) / 864e5));
   const daysBy = new Map<string, Set<string>>();
   for (const p of hist.positions ?? []) { const l = daysBy.get(p.formation) ?? new Set<string>(); l.add(p.time.slice(0, 10)); daysBy.set(p.formation, l); }
-  const norms = ((normsFile as unknown as { norms: { id: string; title: string; kb?: string; source?: string; reliability?: string; measure?: { scenario?: string } }[] }).norms ?? []).filter((x) => x.measure?.scenario === opId);
+  const norms = ((normsFile as unknown as { norms: { id: string; title: string; kb?: string; source?: string; reliability?: string; measure?: { scenario?: string }; operations?: string[] }[] }).norms ?? []).filter((x) => x.measure?.scenario === opId || !!x.operations?.includes(opId));
   // разграничительные линии: соседние объединения верхнего уровня каждой стороны — по полосам в начале операции
   const boundaries: NonNullable<CoverageInput['boundaries']> = [];
   try {

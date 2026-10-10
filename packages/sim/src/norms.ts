@@ -15,12 +15,16 @@ export interface Norm {
     | { kind: 'loss'; scenario: string; parent: string; from: string; to: string }
     | { kind: 'param'; expr: string }
     | { kind: 'frontage'; scenario: string; side: string; echelon: string }
-    | { kind: 'unmodelled'; why: string };
+    | { kind: 'unmodelled'; why: string }
+    /** Допущение модели: правило есть, опоры в опыте войны нет — показывается значение и чего не хватает. */
+    | { kind: 'assumption'; expr: string; why: string };
   expect?: [number, number]; unit?: string; rules: string[]; note?: string;
+  /** Операции, к которым относится норматив (для покрытия), если в замере нет сценария. */
+  operations?: string[];
 }
 export interface NormTable { norms: Norm[]; findings?: string[] }
 
-export type NormVerdict = 'ok' | 'low' | 'high' | 'none' | 'error';
+export type NormVerdict = 'ok' | 'low' | 'high' | 'none' | 'assumed' | 'error';
 export interface NormResult { norm: Norm; values: number[]; mean: number | null; verdict: NormVerdict; text: string }
 
 /** Сценарии, которые нужно прогнать для таблицы. */
@@ -47,17 +51,25 @@ export function measureLoss(ctx: SimContext, r: RunResult, m: Extract<Norm['meas
     if (!under(id)) continue;
     const seen = inWin.filter((s) => s.units.some((u) => u.id === id));
     const p0 = seen[0].units.find((u) => u.id === id)!.personnel;
-    const p1 = seen[seen.length - 1].units.find((u) => u.id === id)!.personnel;
+    // сдавшиеся и уничтоженные — потеряны целиком (численность на знаке остаётся последней)
+    const u1 = seen[seen.length - 1].units.find((u) => u.id === id)!;
+    const p1 = u1.destroyed ? 0 : u1.personnel;
     start += p0; end += Math.min(p0, p1);
   }
   return start ? ((start - end) / start) * 100 : NaN;
 }
 
-/** Число из правил и профиля советской стороны. */
+/** Число из правил и профиля советской стороны (немецкой — где сказано). */
 export function measureParam(ctx: SimContext, expr: string): number {
   const R = ctx.rules, su = profileOf(ctx, 'su');
   const eng = su.engineering ?? ENGINEERING;
+  const EN = R.engineers === false ? undefined : R.engineers;
   switch (expr) {
+    case 'stockDays.fortress': return profileOf(ctx, 'de').unitTypes.fortress?.stockDays ?? NaN;
+    case 'pocket.breakoutKeep%': return (R.pocket?.breakoutKeep ?? 0.3) * 100;
+    case 'pocket.capitulateHours': return R.pocket?.capitulateHours ?? 96;
+    case 'territory.consolidateKm': return R.territory?.consolidateKm ?? R.contactKm * 1.5;
+    case 'engineers.hours': return R.engineers === false ? NaN : EN?.hours ?? 24;
     case 'advanceMax': return interp(R.advance, 10);
     case 'riverCrossHours': return R.riverCrossHours;
     case 'riverCrossHours/3': return R.riverCrossHours / 3;
@@ -89,6 +101,7 @@ export function evaluateNorms(t: NormTable, ctxOf: (scenario: string) => SimCont
     let values: number[] = [];
     try {
       if (m.kind === 'unmodelled') { out.push({ norm: n, values, mean: null, verdict: 'none', text: `не моделируется: ${m.why}` }); continue; }
+      if (m.kind === 'assumption') { const v = measureParam(ctxOf(paramScenario), m.expr); out.push({ norm: n, values: [v], mean: v, verdict: 'assumed', text: `${fmt(v)} ${n.unit ?? ''} — ${m.why}` }); continue; }
       values = m.kind === 'pace' ? runsOf(m.scenario).map((r) => measurePace(ctxOf(m.scenario), r, m))
         : m.kind === 'loss' ? runsOf(m.scenario).map((r) => measureLoss(ctxOf(m.scenario), r, m))
         : m.kind === 'frontage' ? measureFrontage(ctxOf(m.scenario), m)
@@ -104,5 +117,5 @@ export function evaluateNorms(t: NormTable, ctxOf: (scenario: string) => SimCont
   return out;
 }
 
-export const NORM_MARK: Record<NormVerdict, string> = { ok: '✓ в пределах', low: '↓ ниже опыта', high: '↑ выше опыта', none: '— не моделируется', error: '? нет данных' };
+export const NORM_MARK: Record<NormVerdict, string> = { ok: '✓ в пределах', low: '↓ ниже опыта', high: '↑ выше опыта', none: '— не моделируется', assumed: '◇ допущение, опоры нет', error: '? нет данных' };
 export const fmtNorm = fmt;

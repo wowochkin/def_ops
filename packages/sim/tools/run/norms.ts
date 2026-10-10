@@ -44,9 +44,9 @@ const L: string[] = [
   '',
   '| Норматив | По опыту (источник, достоверность) | Ожидаемо | Модель | Итог | Правила |',
   '|---|---|---|---|---|---|',
-  ...rows.map((r) => `| ${r.norm.title} | ${r.norm.historical} (${r.norm.source}, ${r.norm.reliability}) | ${r.norm.expect ? `${fmt(r.norm.expect[0])}–${fmt(r.norm.expect[1])} ${r.norm.unit}` : '—'} | ${r.text}${r.norm.note ? ` — ${r.norm.note}` : ''} | ${NORM_MARK[r.verdict]} | ${r.norm.rules.map((x) => `\`${x}\``).join(', ')} |`),
+  ...rows.map((r) => `| ${r.norm.title} | ${r.norm.historical}${r.norm.source ? ` (${r.norm.source}, ${r.norm.reliability})` : ''} | ${r.norm.expect ? `${fmt(r.norm.expect[0])}–${fmt(r.norm.expect[1])} ${r.norm.unit}` : '—'} | ${r.text}${r.norm.note ? ` — ${r.norm.note}` : ''} | ${NORM_MARK[r.verdict]} | ${r.norm.rules.map((x) => `\`${x}\``).join(', ')} |`),
   '',
-  `Итого: в пределах ${rows.filter((r) => r.verdict === 'ok').length} из ${rows.filter((r) => r.verdict !== 'none').length} измеримых; ниже — ${rows.filter((r) => r.verdict === 'low').length}, выше — ${rows.filter((r) => r.verdict === 'high').length}, не моделируется — ${rows.filter((r) => r.verdict === 'none').length}.`,
+  `Итого: в пределах ${rows.filter((r) => r.verdict === 'ok').length} из ${rows.filter((r) => r.verdict !== 'none' && r.verdict !== 'assumed').length} измеримых; ниже — ${rows.filter((r) => r.verdict === 'low').length}, выше — ${rows.filter((r) => r.verdict === 'high').length}, не моделируется — ${rows.filter((r) => r.verdict === 'none').length}, допущений без опоры — ${rows.filter((r) => r.verdict === 'assumed').length}.`,
   '',
   ...(table.findings?.length ? ['## Выводы и пробы', '', ...table.findings.map((f) => `- ${f}`), ''] : []),
 ];

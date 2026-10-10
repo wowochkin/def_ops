@@ -370,6 +370,149 @@
       "rules": [
         "formation.frontageKm"
       ]
+    },
+    {
+      "id": "pocket-9a-loss",
+      "title": "Котёл 9-й армии: потери окружённых до выхода к 12-й армии (25.04–2.05)",
+      "kb": "battle:halbe",
+      "source": "LT_HALBE",
+      "reliability": "C",
+      "historical": "до 12 А дошли ≈25 000 военных (30 000 вместе с беженцами; Коллац), Буссе — 40 000; окружено — по немецким оценкам 50–60 тыс. боевого состава, по советским 200 тыс.: потеряно от ≈55 до ≈85 %",
+      "measure": {
+        "kind": "loss",
+        "scenario": "berlin-1945-tasks",
+        "parent": "de_9a",
+        "from": "1945-04-25T05:00",
+        "to": "1945-05-02T05:00"
+      },
+      "expect": [
+        55,
+        90
+      ],
+      "unit": "% численности",
+      "rules": [
+        "pocket.capitulateHours",
+        "pocket.breakoutKeep",
+        "attackerLoss",
+        "defenderLoss"
+      ],
+      "note": "оценки численности окружённых расходятся в 3–4 раза"
+    },
+    {
+      "id": "pocket-breakout-equipment",
+      "title": "Прорыв из котла: сколько танков и орудий выносят вырвавшиеся",
+      "kb": "battle:halbe",
+      "source": "LT_HALBE",
+      "reliability": "B",
+      "historical": "вся техника потеряна: артиллерию «Курмарк» перед прорывом 28.04 уничтожили сами, все ≈14 «Королевских тигров» потеряны к 1.05, последние «Пантеры» затоплены у Эльсхольца",
+      "measure": {
+        "kind": "param",
+        "expr": "pocket.breakoutKeep%"
+      },
+      "expect": [
+        0,
+        10
+      ],
+      "unit": "%",
+      "rules": [
+        "pocket.breakoutKeep"
+      ],
+      "operations": [
+        "berlin-1945-tasks"
+      ]
+    },
+    {
+      "id": "fortress-stock",
+      "title": "Сколько держится окружённая крепость на своих складах",
+      "kb": "battle:posen",
+      "source": "DW_POSEN",
+      "reliability": "B",
+      "historical": "Познань: окружена 25.01, капитуляция 23.02 — 29 суток, из них со штурмом с 3.02",
+      "measure": {
+        "kind": "param",
+        "expr": "stockDays.fortress"
+      },
+      "expect": [
+        25,
+        35
+      ],
+      "unit": "сут",
+      "rules": [
+        "unitTypes.fortress.stockDays"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ],
+      "note": "один пример: о других крепостях в источниках базы сведений нет"
+    },
+    {
+      "id": "assume-capitulation",
+      "title": "Капитуляция окружённых без складов и боеприпасов",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "pocket.capitulateHours",
+        "why": "срок сдачи — допущение; нужны журналы окружённых гарнизонов и соединений (когда кончились боеприпасы, когда сдались)"
+      },
+      "unit": "ч",
+      "rules": [
+        "pocket.capitulateHours",
+        "pocket.ammoBelow",
+        "SideProfile.capitulates"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "assume-consolidation",
+      "title": "Закрепление территории за фронтом (клетка противника в своём тылу)",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "territory.consolidateKm",
+        "why": "правило арбитра, а не опыт войны: без него узкие полосы чужой земли в тылу рвали подвоз и давали ложные котлы"
+      },
+      "unit": "км",
+      "rules": [
+        "territory.consolidateKm",
+        "territory.consolidateReachKm"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "assume-engineers",
+      "title": "Переправы, наводимые сапёрами без распоряжения штаба",
+      "kb": "org:su-engineer",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "engineers.hours",
+        "why": "срок — по нормативу «мост через Одер» (24 ч), а где и сколько мостов (2 за ход, не ближе 15 км) — допущение; нужны сведения о переправах 2 БФ и 61 А через Одер"
+      },
+      "unit": "ч",
+      "rules": [
+        "engineers.hours",
+        "engineers.perTurn",
+        "engineers.spacingKm"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     }
   ],
   "findings": [
