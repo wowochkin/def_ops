@@ -1288,3 +1288,9 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lg-destroyed { color: #c0392b; font-size: 13px; line-height: 12px; text-align: center; font-style: normal; font-weight: 700; }
 .legend .lg-b.two { display: grid; grid-template-columns: auto auto; column-gap: 14px; row-gap: 3px; }
 @media (max-width: 760px) { .legend .lg-b.two { grid-template-columns: auto; } }
+.lg-atlas { height: 8px !important; background: linear-gradient(90deg, #f8dcd6, #eea092 55%, #d6403a); clip-path: polygon(0 0, 70% 30%, 70% 0, 100% 50%, 70% 100%, 70% 70%, 0 100%, 18% 50%); }
+.lg-atlas-de { height: 8px !important; background: linear-gradient(90deg, #f1dfb0, #9cbbd6 60%, #1f4e8c); clip-path: polygon(0 0, 70% 30%, 70% 0, 100% 50%, 70% 100%, 70% 70%, 0 100%, 18% 50%); }
+.lg-fort { color: #1f4e8c; font-size: 14px; line-height: 12px; text-align: center; font-style: normal; }
+.lg-town { position: relative; }
+.lg-town::before { content: ''; position: absolute; left: 7px; top: 2px; width: 6px; height: 6px; border: 1.5px solid #222; border-radius: 50%; background: #fff; }
+.lg-pocket { border: 1.5px solid #1f4e8c; background: #d6e8f2; border-radius: 6px; }

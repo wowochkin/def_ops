@@ -4,7 +4,7 @@
  * фронта («призраки») для сравнения, рубежи театра. Всё на шкале времени
  * документа, поэтому прогон смотрится ползунком времени, как обычная карта.
  */
-import { createFeature, emptyDocument, type ArrowFeature, type Feature, type LabelFeature, type Layer, type LineFeature, type LngLat, type MapDocument, type Side, type SymbolFeature, type TextStyle } from '@def-ops/core';
+import { createFeature, emptyDocument, type AreaFeature, type ArrowFeature, type Feature, type LabelFeature, type Layer, type LineFeature, type LngLat, type MapDocument, type Side, type SymbolFeature, type TextStyle } from '@def-ops/core';
 import { frontLine, territoryLine } from './front';
 import { dist } from './geo';
 import { checkEvents, type History, type RunResult, type Snapshot } from './history';
@@ -13,6 +13,7 @@ import { addHours, onMap, profileOf, type SimContext } from './step';
 import type { Formation } from './types';
 import type { Theatre } from './theatre';
 import { visualPath } from './roadnet';
+import { areaTitle } from './reports';
 import { groupOf as sectorGroups, sectorLines, sectorMap } from './sectors';
 
 export interface PublishOptions {
@@ -95,7 +96,9 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   doc.name = o.name ?? `Переигровка: ${ctx.scenario.name}`;
   const mk = (id: string, name: string, role: Layer['role'], opacity = 1, visible = true): Layer => ({ id, name, role, visible, locked: true, opacity, source: { system: 'simulation', ref: ctx.scenario.id, readOnly: true } });
   doc.layers = [
-    mk('theatre', 'Театр: рубежи и переправы', 'base', 0.8),
+    mk('theatre', 'Театр: рубежи', 'base', 0.8),
+    // наведённые переправы — только на тактическом масштабе (на обзорных их знаки сливаются в «молотки»)
+    mk('theatre-crossings', 'Театр: наведённые переправы', 'base', 0.8),
     mk('hist-front', 'История: линия фронта', 'front', 0.5),
     mk('hist-units', 'История: положения («призраки»)', 'custom', 0.45),
     mk('sim-front-start', 'Переигровка: передний край на начало', 'front', 0.9),
@@ -105,6 +108,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('sim-own', 'Переигровка: свои войска', 'friendly'),
     mk('sim-combat', 'Переигровка: бои за ход', 'custom', 0.8, o.combats !== false),
     mk('sim-marks', 'Переигровка: особые отметки', 'custom'),
+    mk('sim-pockets', 'Переигровка: котлы (окружённые группировки)', 'custom', 0.9),
     // разграничительные линии: по директивам (история) и расчётные полосы по уровням карты
     mk('hist-bounds', 'Разграничительные линии: директивы и распоряжения', 'custom', 0.75),
     mk('sim-bounds', 'Переигровка: разграничительные линии фронтов', 'custom', 0.85),
@@ -112,6 +116,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('lvl-op-units', 'Оперативный уровень: объединения', 'custom', 1, false),
     mk('lvl-op-moves', 'Оперативный уровень: направления действий', 'custom', 0.85, false),
     mk('lvl-op-bounds', 'Оперативный уровень: полосы фронтов и армий', 'custom', 0.85, false),
+    mk('lvl-st-front', 'Стратегический уровень: линия фронта (как в атласе)', 'front', 1, false),
     mk('lvl-st-units', 'Стратегический уровень: фронты и группы армий', 'custom', 1, false),
     mk('lvl-st-moves', 'Стратегический уровень: направления ударов', 'custom', 0.85, false),
     mk('lvl-st-bounds', 'Стратегический уровень: полосы фронтов', 'custom', 0.85, false),
@@ -128,7 +133,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   }
   for (const b of T.data.bridges) {
     if (!('openFrom' in b) || !b.openFrom) continue;
-    const f = createFeature('symbol', 'std.pontoon', { at: b.at, layerId: 'theatre' }, 0.8, 'own') as SymbolFeature;
+    const f = createFeature('symbol', 'std.pontoon', { at: b.at, layerId: 'theatre-crossings' }, 0.8, 'own') as SymbolFeature;
     f.name = b.name;
     f.time = { from: b.openFrom, to: b.destroyedAt ?? null };
     features.push(f);
@@ -223,6 +228,12 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
         st.name = `Передний край на начало (расчёт, ${dm(sn.time)})`;
         features.push(st);
       }
+      // стратегический масштаб — линия фронта как в атласе: красная с оранжевой полосой
+      const stl = createFeature('line', 'atlas.frontGlow', { points: line, layerId: 'lvl-st-front' }, 1, 'own') as LineFeature;
+      stl.style = { ...stl.style, layers: [{ ...stl.style.layers[0], offset: 2.6, width: 4.5, color: '#f2a65a', opacity: 0.9 }, { ...stl.style.layers[1], width: 2.2 }] };
+      stl.time = lf.time;
+      stl.name = lf.name;
+      features.push(stl);
       const prev = createFeature('line', 'atlas.frontPair', { points: line, layerId: 'sim-front-prev' }, 1, 'own') as LineFeature;
       prev.style = { ...prev.style, layers: prev.style.layers.filter((l) => l.dash).map((l) => ({ ...l, offset: 0, width: 1.3, opacity: 0.75 })) };
       prev.time = { from: addHours(sn.time, 24), to: addHours(to, 24) };
@@ -271,6 +282,33 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   // уровни обобщения: объединения и фронты — по своим соединениям, со стрелками направлений и рубежами обороны
   const labelK = Math.pow(2, doc.refZoom - zoom);
   features.push(...levelFeatures(ctx, run, sideOf, 'army', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'front', o.visible, labelK, frontsByTurn));
+  features.push(...pocketFeatures(ctx, run, sideOf, o.visible), ...fortressFeatures(ctx, run, sideOf, o.visible, labelK));
+
+  // ключевые пункты на обзорных масштабах — как в атласе: кружок и название (места событий истории)
+  const placeIds = new Set((history?.events ?? []).map((ev) => (ev as { place?: string }).place).filter((x): x is string => !!x));
+  const placed: { xy: [number, number]; title: string }[] = [];
+  for (const id of placeIds) {
+    const a = T.area(id);
+    const raw = T.data.areas.find((x) => x.id === id);
+    if (!a || !raw) continue;
+    // название без исходного написания и части города («Берлин, Митте» → «Берлин»); близкие и одноимённые — один раз
+    const title = areaTitle(raw.name).replace(/\s*\(.*\)\s*$/, '').split(',')[0].trim();
+    const xy = T.proj.toXY(a.center) as [number, number];
+    if (placed.some((q) => q.title === title || Math.hypot(q.xy[0] - xy[0], q.xy[1] - xy[1]) < T.cellKm * 6)) continue;
+    placed.push({ xy, title });
+    for (const lay of ['lvl-op-units', 'lvl-st-units']) {
+      const dot = createFeature('symbol', 'atlas.town', { at: a.center, layerId: lay }, 0.8 * labelK, 'neutral') as SymbolFeature;
+      dot.name = title;
+      dot.labelRank = 2;
+      // название — правее кружка (на клетку с небольшим)
+      const c = T.proj.toXY(a.center);
+      const lb = createFeature('label', 'atlas.city', { at: T.proj.toLL([c[0] + T.cellKm * 1.2, c[1]]), text: title, layerId: lay }, 0.9 * labelK, 'neutral') as LabelFeature;
+      lb.style = { ...lb.style, halo: { color: '#fdf8ec', width: 2.5 * labelK } };
+      lb.name = areaTitle(raw.name);
+      lb.labelRank = 2;
+      features.push(dot, lb);
+    }
+  }
 
   // история: «призраки» и линии фронта
   if (history) {
@@ -326,6 +364,140 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
 
   doc.features = features;
   return doc;
+}
+
+/* ------------------------------ котлы и крепости ------------------------------ */
+
+/**
+ * Котлы: на каждый ход — куски территории стороны, отрезанные от её основной территории (связной компоненты
+ * наибольшей площади) не меньше чем тремя клетками чужой земли и не выходящие к краю театра, если в них есть
+ * войска этой стороны и большая часть их людей отрезана от подвоза. Контур — граница
+ * куска. Если территория в прогоне не ведётся, — отрезанные от подвоза соединения, сгруппированные по близости
+ * (до 12 клеток), в общем контуре. Свои котлы — с красной кромкой, противника — с синей. С туманом войны котлы
+ * противника — только где есть обнаруженные соединения.
+ */
+function pocketFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, visible?: PublishOptions['visible']): Feature[] {
+  const T = ctx.theatre, out: Feature[] = [];
+  const byId = new Map(run.final.formations.map((f) => [f.id, f]));
+  const sides = ctx.scenario.sides.map((x) => x.id);
+  const { cols, rows } = T;
+  const push = (sn: Snapshot, to: string, side: string, ring: LngLat[], ids: string[]) => {
+    const sd = sideOf(side);
+    const area = createFeature('area', 'atlas.encircled', { points: ring, layerId: 'sim-pockets' }, 1, sd) as AreaFeature;
+    if (sd === 'own') area.style = { ...area.style, fill: '#f6d6d2', edge: area.style.edge.map((e) => ({ ...e, color: '#c0392b' })) };
+    const pers = sn.units.filter((u) => ids.includes(u.id)).reduce((x, u) => x + u.personnel, 0);
+    area.name = `Котёл: ${ids.map((id) => shortName(byId.get(id)!.name)).join(', ')} — ${pers.toLocaleString('ru')} чел.`;
+    area.time = { from: sn.time, to };
+    out.push(area);
+  };
+  for (let i = 0; i < run.snapshots.length; i++) {
+    const sn = run.snapshots[i];
+    const to = run.snapshots[i + 1]?.time ?? addHours(sn.time, ctx.scenario.turnHours);
+    const units = sn.units.filter((u) => !u.destroyed && byId.get(u.id) && (sideOf(byId.get(u.id)!.side) === 'own' || !visible || visible(u.id, sn)));
+    const terr = sn.territory;
+    if (terr) {
+      for (let si = 0; si < sides.length; si++) {
+        // связные куски территории стороны (по 4 соседям)
+        const comp = new Int32Array(cols * rows).fill(-1);
+        const parts: { cells: number[]; edge: boolean }[] = [];
+        for (let k = 0; k < cols * rows; k++) {
+          if (terr[k] !== si || comp[k] >= 0) continue;
+          const part = { cells: [k], edge: false };
+          comp[k] = parts.length;
+          for (let j = 0; j < part.cells.length; j++) {
+            const q = part.cells[j], c = q % cols, r = (q - c) / cols;
+            if (c === 0 || r === 0 || c === cols - 1 || r === rows - 1) part.edge = true;
+            for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const cc = c + dc, rr = r + dr;
+              if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+              const n = rr * cols + cc;
+              if (terr[n] === si && comp[n] < 0) { comp[n] = parts.length; part.cells.push(n); }
+            }
+          }
+          parts.push(part);
+        }
+        if (parts.length < 2) continue;
+        const main = parts.reduce((b, x, j) => (x.cells.length > parts[b].cells.length ? j : b), 0);
+        // разрыв до основной территории (в клетках, через любые клетки): острие наступления, оторвавшееся на клетку-две
+        // от своей территории, — не котёл; котёл — когда между ним и своими не меньше трёх клеток чужой земли
+        const gap = new Int32Array(cols * rows).fill(-1);
+        const queue = parts[main].cells.slice();
+        for (const q of queue) gap[q] = 0;
+        for (let h = 0; h < queue.length; h++) {
+          const q = queue[h], c = q % cols, r = (q - c) / cols;
+          if (gap[q] >= 4) continue;
+          for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const cc = c + dc, rr = r + dr;
+            if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+            const n = rr * cols + cc;
+            if (gap[n] < 0) { gap[n] = gap[q] + 1; queue.push(n); }
+          }
+        }
+        parts.forEach((part, j) => {
+          if (j === main || part.edge) return;
+          if (part.cells.some((q) => gap[q] >= 0 && gap[q] <= 3)) return;
+          const inside = units.filter((u) => byId.get(u.id)!.side === sides[si] && comp[T.indexOf(u.at)] === j);
+          // и по подвозу: большая часть людей в куске отрезана (иначе это ушедшее вперёд острие, а не котёл)
+          const all = inside.reduce((x, u) => x + u.personnel, 0), cutP = inside.filter((u) => u.cutOff).reduce((x, u) => x + u.personnel, 0);
+          if (!inside.length || cutP * 2 < all) return;
+          const ids = inside.map((u) => u.id);
+          // контур куска: граница маски «кусок / остальное»
+          const mask = Array.from(terr, (_, k) => (comp[k] === j ? 0 : 1));
+          const ring = territoryLine(T, mask, 2).reduce<LngLat[]>((b, l) => (l.length > b.length ? l : b), []);
+          if (ring.length >= 4) push(sn, to, sides[si], ring, ids);
+        });
+      }
+      continue;
+    }
+    // без территории — по отрезанным от подвоза
+    const link = Math.max(T.cellKm * 12, 3), r = Math.max(T.cellKm * 2.5, 1.2);
+    const cut = units.filter((u) => u.cutOff).map((u) => ({ u, f: byId.get(u.id)!, xy: T.proj.toXY(u.at) as [number, number] }));
+    const seen = new Set<number>();
+    for (let a = 0; a < cut.length; a++) {
+      if (seen.has(a)) continue;
+      const grp = [a]; seen.add(a);
+      for (let j = 0; j < grp.length; j++) for (let b = 0; b < cut.length; b++) {
+        if (seen.has(b) || cut[b].f.side !== cut[a].f.side) continue;
+        if (Math.hypot(cut[b].xy[0] - cut[grp[j]].xy[0], cut[b].xy[1] - cut[grp[j]].xy[1]) <= link) { seen.add(b); grp.push(b); }
+      }
+      const ring = hull(grp.flatMap((g) => [...Array(12)].map((_, k) => [cut[g].xy[0] + r * Math.cos((k * Math.PI) / 6), cut[g].xy[1] + r * Math.sin((k * Math.PI) / 6)] as [number, number])));
+      push(sn, to, cut[a].f.side, ring.map((p) => T.proj.toLL(p)), grp.map((g) => cut[g].u.id));
+    }
+  }
+  return out;
+}
+
+/**
+ * Крепости (гарнизоны с «узлом обороны» в профиле — Festung): на оперативном и стратегическом масштабах —
+ * знак города-крепости с названием, пока гарнизон держится; павшая крепость — перечёркнута.
+ */
+function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, visible: PublishOptions['visible'] | undefined, labelK: number): Feature[] {
+  const out: Feature[] = [];
+  for (const f of run.final.formations) {
+    if (!profileOf(ctx, f.side).unitTypes[f.type]?.bypassable) continue;
+    const side = sideOf(f.side);
+    const all = run.snapshots.map((sn) => ({ sn, u: sn.units.find((u) => u.id === f.id) })).filter((x) => x.u && (side === 'own' || !visible || visible(f.id, x.sn)));
+    if (!all.length) continue;
+    const gone = all.find((x) => x.u!.destroyed);
+    const colour = side === 'own' ? '#c0392b' : '#1f4e8c';
+    for (const lay of ['lvl-op-units', 'lvl-st-units']) {
+      const sym = createFeature('symbol', 'atlas.fortCity', { at: all[0].u!.at, layerId: lay }, 1.3 * labelK, side) as SymbolFeature;
+      sym.style = { ...sym.style, color: colour, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 11 * labelK, weight: 700, italic: false, color: colour, halo: { color: '#ffffff', width: 2 * labelK }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
+      sym.name = `${f.name}${gone ? ` (пала ${dm(gone.sn.time)})` : ''}`;
+      sym.labelRank = 18;
+      sym.time = { from: all[0].sn.time, to: null };
+      if (gone) {
+        sym.time = { from: all[0].sn.time, to: gone.sn.time };
+        const x = createFeature('symbol', 'atlas.fortCity', { at: gone.u!.at, layerId: lay }, 1.3 * labelK, side) as SymbolFeature;
+        x.style = { ...sym.style, cross: { mode: 'x', color: side === 'own' ? '#3b3a36' : '#c0392b' } };
+        x.name = `${f.name}: пала ${dm(gone.sn.time)}`;
+        x.time = { from: gone.sn.time, to: null };
+        out.push(x);
+      }
+      out.push(sym);
+    }
+  }
+  return out;
 }
 
 /* ------------------------- полосы и разграничительные линии ------------------------- */
@@ -534,11 +706,34 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
     } else {
       // фронт — надпись, как на оперативной карте; размер — под исходный масштаб карты (надпись масштабируется с картой)
       const lb = createFeature('label', 'atlas.front', { at: LL(frames[0].c!.xy), text: frontName(x.g.name), layerId: `${lay}-units` }, labelK, side) as LabelFeature;
-      lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 3 * labelK } };
+      lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 3 * labelK }, uppercase: true, letterSpacing: 0.5 * labelK };
       lb.name = x.g.name;
       lb.keyframes = frames.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy), note: note(q.c!) }));
       lb.time = { from: frames[0].sn.time, to };
       out.push(lb);
+      // армии фронта — подписью, как в атласе («8 гв. А»); танковые — овалом с ромбом и номером под ним
+      for (const a of armiesOf.get(id) ?? []) {
+        const af = run.snapshots.map((sn, i) => ({ sn, i, c: a.cs[i] })).filter((q) => q.c);
+        if (!af.length || a.g.id === x.g.id) continue;
+        const members = acting.filter((f) => groupOf(f, tree, 'army').id === a.g.id).map((f) => f.id);
+        const tk = members.filter((m) => tankish(byId.get(m)!, ctx)).length * 2 > members.length;
+        const al = af[af.length - 1];
+        const ato = al.i === run.snapshots.length - 1 ? null : run.snapshots[al.i + 1].time;
+        const colour = side === 'own' ? '#b3261e' : '#1f4e8c';
+        let ft: SymbolFeature | LabelFeature;
+        if (tk) {
+          ft = createFeature('symbol', 'atlas.tankArmy', { at: LL(af[0].c!.xy), layerId: `${lay}-units` }, 0.75 * labelK, side) as SymbolFeature;
+          ft.style = { ...ft.style, ...(side === 'own' ? {} : { color: colour, fill: '#d6e4f2' }), text: shortName(a.g.name), textStyle: { font: 'PT Sans Narrow', size: 13 * labelK, weight: 700, italic: false, color: colour, halo: { color: '#ffffff', width: 2 * labelK }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
+        } else {
+          ft = createFeature('label', side === 'own' ? 'atlas.unit' : 'atlas.enemyUnit', { at: LL(af[0].c!.xy), text: shortName(a.g.name), layerId: `${lay}-units` }, labelK, side) as LabelFeature;
+          ft.style = { ...ft.style, halo: { color: '#ffffff', width: 2 * labelK } };
+        }
+        ft.name = a.g.name;
+        ft.labelRank = 15;
+        ft.keyframes = af.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy) }));
+        ft.time = { from: af[0].sn.time, to: ato };
+        out.push(ft);
+      }
     }
     // направления и рубежи по ходам
     for (let i = 1; i < run.snapshots.length; i++) {
@@ -624,18 +819,21 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
           bhead = [fork[0] + br.m.u[0] * Math.max(lb - r, minKm), fork[1] + br.m.u[1] * Math.max(lb - r, minKm)];
         }
         const mid: [number, number] = fork ?? [(tail[0] + head[0]) / 2, (tail[1] + head[1]) / 2];
-        const preset = retreat ? 'inf.retreat' : side === 'own' ? 'inf.attackFade' : 'inf.counter';
-        const k = level === 'army' ? (retreat ? 0.8 : 0.55) : (retreat ? 1.1 : 0.95);
+        // стратегический масштаб — стрелки атласа: клин с вырезом в хвосте и обводкой (свои — розово-красные,
+        // противник — сине-жёлтые), отход — тонкой стрелкой; оперативный — стрелки инфографики
+        const atlas = level === 'front';
+        const preset = atlas ? (retreat ? 'atlas.thin' : side === 'own' ? 'atlas.p2' : 'atlas.german') : retreat ? 'inf.retreat' : side === 'own' ? 'inf.attackFade' : 'inf.counter';
+        const k = level === 'army' ? (retreat ? 0.8 : 0.55) : (retreat ? 1.2 : 1.3);
         const a = createFeature('arrow', preset, { points: [LL(tail), LL(mid), LL(head)], layerId: `${lay}-moves` }, k, side) as ArrowFeature;
         if (at && !br) a.anchor = { featureId: at.id, t: at.t };
-        if (retreat || (side !== 'own' && preset !== 'inf.counter')) recolor(a, side === 'own' ? '#c0392b' : '#1f4e8c');
+        if (atlas ? retreat && side !== 'own' : retreat || (side !== 'own' && preset !== 'inf.counter')) recolor(a, side === 'own' ? '#c0392b' : '#1f4e8c');
         // удар, после которого объединение встало, — с чертой вместо наконечника и датой выхода на рубеж
         if (!retreat && halted) { a.tipText = dm(from); a.style = { ...a.style, tip: 'bar', tipTextStyle: dateStyle(side, k) }; }
         if (br) {
           const d1 = Math.hypot(mid[0] - tail[0], mid[1] - tail[1]), d2 = Math.hypot(head[0] - mid[0], head[1] - mid[1]);
           a.branches = [{ t: d1 / (d1 + d2 || 1), points: [LL(bhead!)], ...(halted ? { text: dm(from) } : {}) }];
           // ствол — без растворения: развилка должна быть видна
-          a.style = { ...a.style, branchWidth: 0.7, fill: a.style.fill.map((c) => ({ ...c, opacity: Math.max(c.opacity, 0.7) })) };
+          a.style = { ...a.style, branchWidth: 0.7, ...(atlas ? {} : { fill: a.style.fill.map((c) => ({ ...c, opacity: Math.max(c.opacity, 0.7) })) }) };
         }
         const who = [...m.who, ...(br?.m.who ?? [])];
         a.name = `${shortName(x.g.name)}: ${retreat ? 'отход' : br ? 'расходящиеся удары' : 'удар'} на ${len.toFixed(len < 10 ? 1 : 0)} км за ${span}${level === 'front' && who.length ? ` (${who.map(shortName).join(', ')})` : ''}${halted && !retreat ? '; далее остановка' : ''}`;
