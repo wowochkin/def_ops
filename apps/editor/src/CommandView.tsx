@@ -432,6 +432,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       </aside>
       <main className={`rp-main${pickMode ? ' picking' : ''}`}>
         {doc && time ? <>
+          <div className="rp-bar">
+          <div className="rp-tools">
+            <LevelSwitch level={level} setLevel={setLevel} />
+            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))} />
+            {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
+            <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
+          </div>
+          </div>
+          <div className="rp-map">
           <MapView doc={doc ? withoutLabels(withLevel(doc, level), labels) : doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
@@ -440,15 +449,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
-          <div className="rp-tools">
-            <LevelSwitch level={level} setLevel={setLevel} />
-            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))} />
-            {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
-            <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
-          </div>
           <Legend on={layerOn} toggle={toggle} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
           {view && <Player start={view.start} end={view.time > view.start ? view.time : addH(view.start, view.turnHours)} time={time} setTime={setTime} events={playerEvents}
             onEvent={(e) => { if (e.at) setTime(e.at); goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
+          </div>
         </> : <div className="rp-empty"><div><div className="rp-empty-ic"><span className="spinner big" /></div><b>{progress ?? 'Подготовка…'}</b></div></div>}
       </main>
       {advOpen && view && advMin && <button className="adv-tab" onClick={() => { setAdvMin(false); setAdvSeen(adv.length); }} title="Развернуть советника">

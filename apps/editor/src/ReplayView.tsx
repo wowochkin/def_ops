@@ -212,11 +212,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       </aside>
       <main className="rp-main">
         {doc ? <>
-          <MapView key={mapKey} doc={withoutLabels(withFocus(withLevel(doc, level), focus), labels)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
-            tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
-            onEngineReady={(e) => { engine.current = e; setEng(e); }} onStatus={() => {}} time={time} newFromNow={false} />
-          <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
-          {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
+          <div className="rp-bar">
           {takeAt && <button className="take-btn" onClick={() => setTake(takeAt)} title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
@@ -225,9 +221,17 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
+          </div>
+          <div className="rp-map">
+          <MapView key={mapKey} doc={withoutLabels(withFocus(withLevel(doc, level), focus), labels)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
+            tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
+            onEngineReady={(e) => { engine.current = e; setEng(e); }} onStatus={() => {}} time={time} newFromNow={false} />
+          <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
+          {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
+          </div>
         </> : <Empty busy={!!busy} />}
       </main>
       {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.turnHours} scenarioName={result.scenarioName} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
