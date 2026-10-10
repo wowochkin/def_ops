@@ -764,7 +764,7 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
   .replay:not(.cmd) { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 45%) minmax(0, 1fr); }
   .replay:not(.cmd) .legend { display: none; }
   .replay:not(.cmd) .player { grid-template-columns: 1fr; gap: 6px; padding: 8px 10px; left: 8px; right: 8px; bottom: 8px; }
-  .replay:not(.cmd) .rp-tools { left: 8px; right: 8px; top: 54px; flex-wrap: wrap; justify-content: flex-end; }
+  .replay:not(.cmd) .rp-tools { left: 8px; right: 8px; top: 54px; max-width: none; flex-wrap: wrap; justify-content: flex-end; }
 }
 @media (max-width: 760px) {
   .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
@@ -931,7 +931,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 
 /* кнопки масштаба карты — над полосой времени (иначе она их перекрывает) */
 .replay .maplibregl-ctrl-bottom-right { bottom: 88px; }
-@media (max-width: 760px) { .replay .maplibregl-ctrl-bottom-right { bottom: 162px; } }
+@media (max-width: 760px) { .replay .maplibregl-ctrl-bottom-right { bottom: 162px; } .replay .scalebar { bottom: 162px; left: 8px; right: auto; } }
 
 .adv-md p { margin: 0 0 6px; } .adv-md h1, .adv-md h2, .adv-md h3, .adv-md h4 { font: 700 13px/1.3 'PT Serif', Georgia, serif; margin: 6px 0 2px; } .adv-md ul, .adv-md ol { margin: 2px 0 6px; padding-left: 18px; }
 
@@ -1251,3 +1251,11 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .mat-infra-h i.k-pos { background: #e6edf7; color: #2a4f86; }
 .recalc-ch ul { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; max-height: 220px; overflow: auto; }
 .recalc-res { display: flex; flex-direction: column; gap: 8px; }
+
+/* карта переигровки и игры: слои — одним меню; кнопки над картой не переносят текст */
+.rp-tools .pop-btn, .rp-tools .chip, .lvl-sw button { white-space: nowrap; }
+.lyr-menu .pop-body { min-width: 240px; padding: 8px 10px; }
+.lyr-row { display: flex; align-items: center; gap: 8px; padding: 4px 2px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.lyr-row input { margin: 0; }
+.lyr-n { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 3px; border-radius: 8px; background: var(--ink); color: #fff; font-size: 10.5px; line-height: 16px; text-align: center; }
+.pop-btn.on .lyr-n { background: #fff; color: var(--ink); }

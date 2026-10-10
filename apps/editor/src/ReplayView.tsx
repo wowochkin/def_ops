@@ -34,6 +34,9 @@ const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] 
   { key: 'theatre', title: 'Рубежи', match: (id) => id === 'theatre' },
 ];
 
+/** Полные названия слоёв в меню «Слои» (на кнопках были сокращения). */
+export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)' };
+
 /** Уровень обобщения карты: тактический — соединения и бои, оперативный — объединения (армии), стратегический — фронты. */
 export type MapLevel = 'tac' | 'op' | 'st';
 export const MAP_LEVELS: { id: MapLevel; title: string; hint: string }[] = [
@@ -56,6 +59,21 @@ export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
   const [l, set] = useState<MapLevel>(() => { try { return (localStorage.getItem('def_ops.mapLevel') as MapLevel) || 'tac'; } catch { return 'tac'; } });
   return [l, (x) => { set(x); try { localStorage.setItem('def_ops.mapLevel', x); } catch { /* */ } }];
 }
+/**
+ * Слои карты одним меню: подписи и слои-переключатели (исторические положения, фронт, бои…) — флажками.
+ * Над картой остаются только масштаб, «Слои», «Участки» и «Подложка»: панель помещается в строку на любом экране.
+ */
+export function LayersMenu({ labels, toggleLabels, items }: { labels: boolean; toggleLabels: () => void; items: { key: string; title: string; on: boolean; toggle: () => void }[] }) {
+  const n = items.filter((x) => x.on).length + (labels ? 1 : 0);
+  return (
+    <Popover label={<>Слои <small className="lyr-n">{n}</small></>} title="Что показать на карте" align="right" className="lyr-menu">
+      <div className="pop-title">Показать на карте</div>
+      <label className="lyr-row" title="Выключено — подписи только при наведении на знак"><input type="checkbox" checked={labels} onChange={toggleLabels} /> Подписи знаков</label>
+      {items.map((x) => <label key={x.key} className="lyr-row"><input type="checkbox" checked={x.on} onChange={x.toggle} /> {x.title}</label>)}
+    </Popover>
+  );
+}
+
 export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l: MapLevel) => void }) {
   return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <button key={x.id} className={level === x.id ? 'on' : ''} title={x.hint} onClick={() => setLevel(x.id)}>{x.title}</button>)}</div>;
 }
@@ -203,8 +221,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
-            <button className={`chip${labels ? ' on' : ''}`} title={labels ? 'Подписи знаков на карте; выключить — только при наведении' : 'Подписи — при наведении на знак; включить — все на карте'} onClick={toggleLabels}>Подписи</button>
-            {TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => <button key={t.key} className={`chip${layerOn(t) ? ' on' : ''}`} onClick={() => toggle(t)}>{t.title}</button>)}
+            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} />
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>

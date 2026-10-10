@@ -16,7 +16,7 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
 import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
-import { download, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLabels, useMapLevel, withLevel } from './ReplayView';
+import { download, LAYER_TITLE, LayersMenu, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLabels, useMapLevel, withLevel } from './ReplayView';
 import { MapHover, withoutLabels } from './MapHover';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -442,8 +442,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           <div className="rp-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
-            <button className={`chip${labels ? ' on' : ''}`} title={labels ? 'Подписи знаков на карте; выключить — только при наведении' : 'Подписи — при наведении на знак'} onClick={toggleLabels}>Подписи</button>
-            {TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => <button key={t.key} className={`chip${layerOn(t.key) ? ' on' : ''}`} onClick={() => toggle(t.key)}>{t.title}</button>)}
+            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))} />
             {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>
