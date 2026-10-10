@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { COVERAGE_LEVEL, coverageHints, coverageTodo, levelOf, type Coverage, type CoverageGroup, type CoverageItem, type SearchHint } from '@def-ops/knowledge';
 import * as kb from '../kb/kb';
 import { coverageOf } from '../kb/coverage';
+import { onDataChange } from '../sim/userdata';
 import { download } from './data';
 
 const pct = (x: number) => `${Math.round(x * 100)} %`;
@@ -31,7 +32,9 @@ export function useCoverage(op: string | null): Coverage | null {
     const run = () => void coverageOf(op).then((x) => { if (alive) setC(x); }).catch(() => { if (alive) setC(null); });
     // пересчёт — при изменении записей или документов базы
     const off = kb.subscribe((s) => { if (s.entries === lastE && s.documents.length === lastD) return; lastE = s.entries; lastD = s.documents.length; if (t) clearTimeout(t); t = setTimeout(run, 300); });
-    return () => { alive = false; off(); if (t) clearTimeout(t); };
+    // и при изменении данных операции (положения из документов в истории, сведения об инфраструктуре)
+    const off2 = onDataChange(() => { if (t) clearTimeout(t); t = setTimeout(run, 300); });
+    return () => { alive = false; off(); off2(); if (t) clearTimeout(t); };
   }, [op]);
   return c;
 }

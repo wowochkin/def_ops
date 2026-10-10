@@ -5,8 +5,8 @@
  */
 import { stripMeta } from '../markdown';
 import {
-  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, OPERATION_EXTRACT_SCHEMA, qaMessages, toInfraProposals, toProposals,
-  type Entry, type ExtractedItem, type InfraItem, type InfraProposal, type KbDocument, type OperationHint, type Proposal, type Reliability, type Source,
+  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, OPERATION_EXTRACT_SCHEMA, qaMessages, toInfraProposals, toPositionProposals, toProposals,
+  type Entry, type ExtractedItem, type Fact, type InfraItem, type InfraProposal, type KbDocument, type OperationHint, type PositionItem, type PositionProposal, type Proposal, type Reliability, type Source,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
@@ -23,6 +23,8 @@ export interface KbState {
   proposals: Proposal[];
   /** Сведения об инфраструктуре из документов операций. */
   infra: InfraProposal[];
+  /** Положения формирований по дням из документов операций. */
+  positions: PositionProposal[];
   /** Обработка документа: id, часть, всего, сообщение. */
   job: { doc: string; at: number; total: number; text: string } | null;
   /** Смысловой поиск (эмбеддинги). */
@@ -30,7 +32,7 @@ export interface KbState {
 }
 
 const vectors = new Vectors(() => { state.vec = vectors.state; emit(); });
-let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], infra: [], job: null, vec: vectors.state };
+let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], infra: [], positions: [], job: null, vec: vectors.state };
 const subs = new Set<(s: KbState) => void>();
 const emit = () => { state = { ...state }; subs.forEach((f) => f(state)); };
 export const subscribe = (f: (s: KbState) => void) => { subs.add(f); f(state); return () => { subs.delete(f); }; };
@@ -42,8 +44,9 @@ export function load(): Promise<void> {
   return loading;
 }
 async function reload() {
-  const [entries, documents, proposals, infra] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals'), store.all<InfraProposal>('infra')]);
+  const [entries, documents, proposals, infra, positions] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals'), store.all<InfraProposal>('infra'), store.all<PositionProposal>('positions')]);
   state.infra = infra;
+  state.positions = positions;
   state.entries = entries;
   state.byId = new Map(entries.map((e) => [e.id, e]));
   state.documents = documents.sort((a, b) => b.addedAt.localeCompare(a.addedAt));
@@ -108,6 +111,8 @@ export async function removeDocument(id: string) {
   if (ps.length) await store.del('proposals', ...ps);
   const ip = state.infra.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
   if (ip.length) await store.del('infra', ...ip);
+  const pp = state.positions.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
+  if (pp.length) await store.del('positions', ...pp);
   await reload();
 }
 
@@ -136,7 +141,7 @@ export async function process(id: string, llm: LlmSettings, hint?: OperationHint
       state.job = { doc: id, at: i, total: doc.chunks.length, text: `часть ${i + 1} из ${doc.chunks.length}…` };
       emit();
       const r = await c.chat({ messages: extractMessages(doc.chunks[i].text, doc.name, op), schema: op ? { name: 'kb_operation_extract', schema: OPERATION_EXTRACT_SCHEMA } : { name: 'kb_extract', schema: EXTRACT_SCHEMA }, signal: abort.signal });
-      const j = r.json as { items?: ExtractedItem[]; infrastructure?: InfraItem[] } | undefined;
+      const j = r.json as { items?: ExtractedItem[]; infrastructure?: InfraItem[]; positions?: PositionItem[] } | undefined;
       const res = toProposals(j?.items ?? [], doc.chunks[i].text, state.entries, doc, i);
       dropped += res.dropped; made += res.proposals.length;
       if (res.proposals.length) await store.put('proposals', ...res.proposals);
@@ -146,6 +151,10 @@ export async function process(id: string, llm: LlmSettings, hint?: OperationHint
         if (inf.proposals.length) await store.put('infra', ...inf.proposals);
         state.infra = [...state.infra, ...inf.proposals];
         sum.infra += inf.proposals.length; sum.dropped += inf.dropped; dropped += inf.dropped; made += inf.proposals.length;
+        const pos = toPositionProposals(j?.positions, doc.chunks[i].text, { ...doc, operation: doc.operation }, i);
+        if (pos.proposals.length) await store.put('positions', ...pos.proposals);
+        state.positions = [...state.positions, ...pos.proposals];
+        sum.positions = (sum.positions ?? 0) + pos.proposals.length; sum.dropped += pos.dropped; dropped += pos.dropped; made += pos.proposals.length;
       }
       doc.extracted = { ...sum };
       doc.processed = i + 1;
@@ -191,19 +200,67 @@ export async function decideInfra(ids: string[], accept: boolean) {
   await reload();
 }
 
+/** Положения из документов: отметить принятыми или отклонёнными (в историю и в базу их пишет раздел «Операции»). */
+export async function decidePositions(ids: string[], accept: boolean) {
+  const ps = state.positions.filter((p) => ids.includes(p.id) && p.status === 'pending');
+  for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
+  if (ps.length) await store.put('positions', ...ps);
+  await reload();
+}
+
+/**
+ * Добавить факты в запись (сверка со сценарием, положения из документов): запись берётся существующая или
+ * создаётся по образцу; повторяющиеся факты (тот же ключ и значение) не добавляются. Одна запись — один раз.
+ */
+export async function addFacts(list: { entry?: string; create?: Entry; facts: Fact[]; operation?: string }[]) {
+  await load();
+  const touched = new Map<string, Entry>();
+  for (const x of list) {
+    const id = x.entry ?? x.create?.id;
+    if (!id) continue;
+    const cur = touched.get(id) ?? state.byId.get(id) ?? x.create;
+    if (!cur) continue;
+    const fresh = x.facts.filter((f) => !(cur.facts ?? []).some((g) => g.key === f.key && g.value === f.value));
+    if (!fresh.length && touched.has(id)) continue;
+    touched.set(id, {
+      ...cur, origin: cur.origin === 'seed' ? 'user' : cur.origin ?? 'user',
+      ...(x.operation ? { operations: [...new Set([...(cur.operations ?? []), x.operation])] } : {}),
+      facts: [...(cur.facts ?? []), ...fresh], updatedAt: new Date().toISOString(),
+    });
+  }
+  if (touched.size) await store.put('entries', ...touched.values());
+  await reload();
+  return touched.size;
+}
+
+/** Запись о калибровке модели по операции (рубрика «Устройство модели стенда»; советнику в игре не подаётся). */
+export async function recordCalibration(op: { id: string; title: string }, at: string, title: string, text: string, facts: Fact[]) {
+  await load();
+  const id = `u:${op.id}:calibration`;
+  const cur = state.byId.get(id);
+  const e: Entry = cur ?? {
+    id, category: 'organization', group: 'model', title: `Калибровка модели: ${op.title.split(':')[0]}`, operations: [op.id], rubrics: ['9.7'],
+    summary: 'Пересчёты модели по этой операции после уточнения данных: что изменилось в данных, мерило до и после, множители правил, контрольная операция.',
+    facts: [], sections: [], status: 'checked', origin: 'user',
+  };
+  await store.put('entries', { ...e, facts: [...(e.facts ?? []), ...facts], sections: [{ title: `${at.slice(8, 10)}.${at.slice(5, 7)}.${at.slice(0, 4)}: ${title}`, text }, ...(e.sections ?? [])], updatedAt: new Date().toISOString() });
+  await reload();
+}
+
 /* ───────────── обмен ───────────── */
 
 export async function exportUser(): Promise<string> {
-  const [entries, documents, proposals, infra] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra')]);
-  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra });
+  const [entries, documents, proposals, infra, positions] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra'), store.all('positions')]);
+  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra, positions });
 }
 export async function importUser(json: string) {
-  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[] };
+  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[] };
   if (d.format !== 'def-ops-knowledge') throw new Error('это не выгрузка базы знаний');
   if (d.entries?.length) await store.put('entries', ...d.entries);
   if (d.documents?.length) await store.put('documents', ...d.documents);
   if (d.proposals?.length) await store.put('proposals', ...d.proposals);
   if (d.infra?.length) await store.put('infra', ...d.infra);
+  if (d.positions?.length) await store.put('positions', ...d.positions);
   await reload();
 }
 

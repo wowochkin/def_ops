@@ -1237,3 +1237,17 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .maps-base-map { position: relative; min-height: 0; }
 .maps-base-hint { position: absolute; left: 12px; top: 12px; background: rgba(255,255,255,.92); border-radius: 6px; padding: 6px 10px; font-size: 12.5px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
 @media (max-width: 800px) { .maps-base { grid-template-columns: 1fr; grid-template-rows: auto 60vh; } .maps-base-side { border-right: 0; } }
+
+/* сверка базы знаний со сценарием, пересчёт модели */
+.sync-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.sync-n { font-size: 12px; color: var(--muted); }
+.sync-n.warn { color: #9a6a00; font-weight: 700; } .sync-n.ok { color: #2f6b3b; }
+.sync-tbl-wrap { max-height: 360px; overflow: auto; border: 1px solid #ece6d8; border-radius: 6px; }
+.sync-tbl { width: 100%; }
+.sync-tbl th { position: sticky; top: 0; background: var(--panel); }
+.sync-tbl td.sync-src { font-size: 12px; max-width: 420px; }
+.sync-tbl td.sync-act { white-space: nowrap; text-align: right; }
+.sync-tbl td.sync-act .link + .link { margin-left: 8px; }
+.mat-infra-h i.k-pos { background: #e6edf7; color: #2a4f86; }
+.recalc-ch ul { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; max-height: 220px; overflow: auto; }
+.recalc-res { display: flex; flex-direction: column; gap: 8px; }

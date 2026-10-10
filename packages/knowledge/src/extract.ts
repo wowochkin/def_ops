@@ -5,7 +5,7 @@
  * сопоставляется с существующей (по названию и синонимам) — тогда это дополнение, иначе новая запись.
  * В базу попадает только то, что примет человек.
  */
-import { CATEGORIES, type CategoryId, type Entry, type Fact, type InfraItem, type InfraProposal, type KbDocument, type Proposal, type Relation, type RelationType, type Reliability } from './schema';
+import { CATEGORIES, type CategoryId, type Entry, type Fact, type InfraItem, type InfraProposal, type KbDocument, type PositionItem, type PositionProposal, type Proposal, type Relation, type RelationType, type Reliability } from './schema';
 import { foreignTo } from './operations';
 import { stems } from './search';
 import { defaultRubrics, RUBRIC_CODES, rubricPath } from './rubrics';
@@ -55,10 +55,14 @@ const INFRA_ITEM = {
     date: { type: ['string', 'null'] }, dateTo: { type: ['string', 'null'] }, side: { type: ['string', 'null'] }, note: { type: ['string', 'null'] }, quote: s,
   },
 } as const;
-/** Разбор документа операции: записи базы и сведения об инфраструктуре. */
+const POSITION_ITEM = {
+  type: 'object', additionalProperties: false, required: ['formation', 'date', 'place', 'note', 'quote'],
+  properties: { formation: s, date: s, place: s, note: { type: ['string', 'null'] }, quote: s },
+} as const;
+/** Разбор документа операции: записи базы, сведения об инфраструктуре, положения формирований по дням. */
 export const OPERATION_EXTRACT_SCHEMA = {
-  ...EXTRACT_SCHEMA, required: ['items', 'infrastructure'],
-  properties: { ...EXTRACT_SCHEMA.properties, infrastructure: { type: 'array', items: INFRA_ITEM } },
+  ...EXTRACT_SCHEMA, required: ['items', 'infrastructure', 'positions'],
+  properties: { ...EXTRACT_SCHEMA.properties, infrastructure: { type: 'array', items: INFRA_ITEM }, positions: { type: 'array', items: POSITION_ITEM } },
 } as const;
 
 /** Операция, к которой относится документ: для подсказки модели (сроки, стороны). */
@@ -105,6 +109,13 @@ function infraRules(op: OperationHint): string {
 - title — коротко, что это: «мост через Шпрее у Фюрстенвальде»; place — ближайший населённый пункт или район в именительном падеже, немецкое или польское название — в скобках, если известно: «Фюрстенвальде (Fürstenwalde)»; river — река или канал, если есть.
 - date / dateTo — ГГГГ-ММ-ДД, с какого и до какого дня это так (если сказано); side — id стороны, чьими силами (${op.sides.map((x) => `${x.id} — ${x.name}`).join(', ')}), иначе null; note — подробности (грузоподъёмность, длина, кто подорвал) или null; quote — дословная цитата.
 Только прямо сказанное во фрагменте. Нет таких сведений — infrastructure пустой.
+
+И в positions — где находилось формирование (фронт, армия, корпус, дивизия) в определённый день операции: «к исходу 22 апреля 8-я гвардейская армия вышла к Эркнеру».
+- formation — название формирования, как принято по-русски («8-я гвардейская армия», «LVI танковый корпус»);
+- date — ГГГГ-ММ-ДД (день, к которому относится положение; год — ${op.start.slice(0, 4)}, если не указан);
+- place — населённый пункт, район или рубеж в именительном падеже, оригинал — в скобках: «Эркнер (Erkner)»;
+- note — подробности (какими силами, передовые части или главные силы) или null; quote — дословная цитата.
+Только положения с датой и местом, прямо сказанные во фрагменте; направление удара без места — не положение. Нет — positions пустой.
 
 `;
 }
@@ -199,6 +210,21 @@ export function toInfraProposals(items: InfraItem[] | undefined, chunk: string, 
     out.push({
       id: `${doc.id}:i${chunkIndex}:${out.length}`, doc: doc.id, docName: doc.name, chunk: chunkIndex, operation: doc.operation, reliability: doc.reliability,
       item: { ...it, title: it.title.trim(), date: date(it.date), dateTo: date(it.dateTo), quote: it.quote.trim() }, status: 'pending',
+    });
+  }
+  return { proposals: out, dropped };
+}
+
+/** Положения формирований из документа → предложения (с проверкой цитат; без даты или места — отбрасываются). */
+export function toPositionProposals(items: PositionItem[] | undefined, chunk: string, doc: Pick<KbDocument, 'id' | 'name' | 'reliability'> & { operation: string }, chunkIndex: number): { proposals: PositionProposal[]; dropped: number } {
+  const out: PositionProposal[] = [];
+  let dropped = 0;
+  for (const it of items ?? []) {
+    const date = /^\d{4}-\d{2}-\d{2}/.test(it?.date ?? '') ? it.date.slice(0, 10) : null;
+    if (!it?.formation?.trim() || !it.place?.trim() || !date || !quoteFound(it.quote ?? '', chunk)) { dropped++; continue; }
+    out.push({
+      id: `${doc.id}:p${chunkIndex}:${out.length}`, doc: doc.id, docName: doc.name, chunk: chunkIndex, operation: doc.operation, reliability: doc.reliability,
+      item: { formation: it.formation.trim(), date, place: it.place.trim(), note: it.note?.trim() || null, quote: it.quote.trim() }, status: 'pending',
     });
   }
   return { proposals: out, dropped };

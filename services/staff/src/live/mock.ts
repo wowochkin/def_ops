@@ -96,7 +96,21 @@ export function mockPlan(sys: string, prompt: string) {
 export function mockExtract(prompt: string, infra = false) {
   const text = prompt.split(/Фрагмент:\n\n/)[1] ?? '';
   const out = mockExtractItems(text);
-  return infra ? { ...out, infrastructure: mockInfra(text) } : out;
+  return infra ? { ...out, infrastructure: mockInfra(text), positions: mockPositions(text) } : out;
+}
+
+/** Положения формирований (проверка стенда): «… армия/корпус … вышла к/у/в … 22 апреля». */
+export function mockPositions(text: string) {
+  const months: Record<string, string> = { января: '01', февраля: '02', марта: '03', апреля: '04', мая: '05' };
+  const out = [];
+  for (const q of text.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 20 && x.length < 240)) {
+    const f = /(\d+-(?:я|й) (?:гвардейск(?:ая|ий) |ударн(?:ая|ый) |танков(?:ая|ый) )*(?:армия|корпус|дивизия))/.exec(q)?.[1];
+    const d = /(\d{1,2})\s+(января|февраля|марта|апреля|мая)/.exec(q);
+    const place = /(?:вышл[аи]? к|у|в районе|в|достиг(?:ла|ли)?)\s+([А-ЯЁ][а-яё]+)/.exec(q)?.[1]?.replace(/(у|а|е)$/, '');
+    if (!f || !d || !place) continue;
+    out.push({ formation: f, date: `1945-${months[d[2]]}-${d[1].padStart(2, '0')}`, place, note: null, quote: q });
+  }
+  return out;
 }
 
 /** Сведения об инфраструктуре (проверка стенда): предложения о мостах, переправах, дорогах с глаголом состояния. */

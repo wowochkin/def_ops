@@ -124,7 +124,7 @@ export interface KbDocument {
   /** Материал операции (id): разбор ищет и сведения об инфраструктуре, записи базы относятся к операции. */
   operation?: string;
   /** Итоги разбора: что извлечено (по частям — сумма). */
-  extracted?: { entries: number; updates: number; infra: number; dropped: number };
+  extracted?: { entries: number; updates: number; infra: number; dropped: number; positions?: number };
 }
 
 /** Предложение изменить базу (из документа): новая запись или дополнение существующей. */
@@ -163,5 +163,20 @@ export interface InfraItem {
 export interface InfraProposal {
   id: string; doc: string; docName: string; chunk: number; operation: string; reliability: Reliability;
   item: InfraItem;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+/** Положение формирования в день операции из документа: кто, когда, где — с цитатой. */
+export interface PositionItem {
+  formation: string;
+  date: string;
+  place: string;
+  note: string | null;
+  quote: string;
+}
+/** Предложение: положение — в боевой путь формирования (база знаний) и в историю операции (для сравнения расчёта). */
+export interface PositionProposal {
+  id: string; doc: string; docName: string; chunk: number; operation: string; reliability: Reliability;
+  item: PositionItem;
   status: 'pending' | 'accepted' | 'rejected';
 }

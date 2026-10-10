@@ -10,6 +10,8 @@ import { BUILTIN, BUILTIN_CATALOG, deleteOperation, getData, getInfra, saveOpera
 import type { Llm } from '../shared';
 import { Materials } from './Materials';
 import { CoveragePanel, useCoverage } from './Coverage';
+import { SyncPanel } from './SyncPanel';
+import { RecalcPanel } from './RecalcPanel';
 import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { download, getPool, pct, type SimData } from './data';
 
@@ -121,7 +123,7 @@ export function OperationsTab({ d, llm, onCompare, onCalibrate }: { d: SimData; 
           </div>
           <p className="muted">Не хватает частей — добавьте файлы. Черновик можно проверять, сравнивать и калибровать; в «Переигровке» он появится после подготовки.</p>
         </>}
-        {builtin && !upload && <BuiltinCard id={builtin.id} title={builtin.title} detail={builtin.detail} llm={llm} />}
+        {builtin && !upload && <BuiltinCard id={builtin.id} title={builtin.title} detail={builtin.detail} llm={llm} d={d} />}
         {op && !upload && <OperationCard op={op} d={d} llm={llm} known={known} busy={busy} update={update} control={control} onCompare={onCompare} onCalibrate={onCalibrate}
           remove={() => { if (confirm(`Удалить операцию «${op.pkg.scenario.name}»?`)) void deleteOperation(op.id).then(() => setSel(null)); }} />}
         {!op && !builtin && !upload && <div className="mdl-empty">
@@ -148,15 +150,17 @@ function Issues({ issues }: { issues: PackageIssue[] }) {
 }
 
 /** Встроенная операция: материалы и состояние инфраструктуры (сценарий и театр — из сборки). */
-function BuiltinCard({ id, title, detail, llm }: { id: string; title: string; detail: string; llm: Llm }) {
+function BuiltinCard({ id, title, detail, llm, d }: { id: string; title: string; detail: string; llm: Llm; d: SimData }) {
   const [T, setT] = useState<TheatreData | null>(null);
   useEffect(() => { setT(null); void (getData('scenarios', `${id}.json`) as Promise<Scenario>).then((s) => getData('theatres', `${s.theatre}.json`)).then((t) => setT(t as TheatreData)); }, [id]);
   return <>
     <div className="mdl-h"><div><h3>{title}</h3><span className="muted">{id} · операция стенда · {detail}</span></div>
       <div className="mdl-acts"><button onClick={() => void builtinPackage(id).then(async (p) => download(`${id}.operation.json`, JSON.stringify({ ...p, infrastructure: await getInfra(id) })))}>Скачать пакет</button></div></div>
-    <p className="muted">Сценарий, театр и история — из сборки стенда. Здесь — материалы операции (документы → база знаний и сведения об инфраструктуре) и состояние инфраструктуры, которое ложится поверх театра в расчёте и в игре.</p>
+    <p className="muted">Сценарий, театр и история — из сборки стенда. Здесь — полнота материалов, сверка базы знаний со сценарием, материалы операции (документы → база знаний, инфраструктура, положения по дням) и пересчёт модели после уточнения данных.</p>
     <CoveragePanel op={id} title={title} />
+    <SyncPanel op={id} />
     <Materials op={id} title={title} theatre={T} llm={llm} />
+    <RecalcPanel op={id} title={title} d={d} />
   </>;
 }
 
@@ -215,6 +219,7 @@ function OperationCard({ op, d, llm, known, busy, update, control, onCompare, on
       </section>
     </div>
     <CoveragePanel op={op.id} title={cat.title} />
+    <SyncPanel op={op.id} />
     <section className="mdl-card">
       <h4>Контрольный прогон и подготовка</h4>
       {op.check ? <p>Прогон {op.check.at.slice(0, 10)} (3 × правила сценария «{S.rules}»): положений в допуске <b>{pct(op.check.within)}</b>, медиана превышения <b>{op.check.medianExcessKm} км</b>, события в ±2 сут: <b>{op.check.eventsHit} из {op.check.eventsTotal}</b>.</p>
@@ -230,5 +235,6 @@ function OperationCard({ op, d, llm, known, busy, update, control, onCompare, on
       {op.ready && <p className="ok">Операция в «Переигровке»: расчёт, карта, принятие командования, советник, разбор.</p>}
     </section>
   <Materials op={op.id} title={cat.title} theatre={P.theatre} llm={llm} />
+  <RecalcPanel op={op.id} title={cat.title} d={d} />
   </>;
 }

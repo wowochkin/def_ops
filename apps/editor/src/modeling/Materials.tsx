@@ -5,13 +5,14 @@
  * расчёте (и пишутся в базу знаний), их можно добавить и вручную.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { RELIABILITY, type InfraProposal, type Reliability } from '@def-ops/knowledge';
+import { RELIABILITY, type InfraProposal, type PositionProposal, type Reliability, type SyncInput } from '@def-ops/knowledge';
 import { areaTitle, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, resolveInfra, Theatre, type InfraKind, type InfraRecord, type InfraState, type TheatreData } from '@def-ops/sim';
 import * as kb from '../kb/kb';
 import { DocRow, ProposalCard } from '../KnowledgeView';
-import { getInfra, onDataChange, saveInfra } from '../sim/userdata';
+import { getEdits, getInfra, onDataChange, saveInfra, type HistPosition } from '../sim/userdata';
 import type { Llm } from '../shared';
 import { resetPool } from './data';
+import { acceptPositions, removePosition, resolvePosition, syncInput } from './sync';
 
 const ddmm = (d?: string | null) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : '');
 const ROADISH = new Set(['road', 'rail']);
@@ -38,7 +39,10 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [view, setView] = useState<'infra' | 'kb'>('infra');
+  const [view, setView] = useState<'infra' | 'kb' | 'pos'>('infra');
+  const [input, setInput] = useState<SyncInput | null>(null);
+  const [added, setAdded] = useState<HistPosition[]>([]);
+  useEffect(() => { const f = () => { void syncInput(op).then(setInput).catch(() => setInput(null)); void getEdits(op).then((e) => setAdded(e.positions)); }; f(); return onDataChange(f); }, [op]);
   const [docF, setDocF] = useState<string | null>(null);
 
   const docs = s.documents.filter((d) => d.operation === op);
@@ -46,6 +50,9 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
   const infra = s.infra.filter((p) => p.operation === op && (!docF || p.doc === docF));
   const props = s.proposals.filter((p) => ids.has(p.doc) && (!docF || p.doc === docF));
   const infraPending = infra.filter((p) => p.status === 'pending'), kbPending = props.filter((p) => p.status === 'pending');
+  const pos = s.positions.filter((p) => p.operation === op && (!docF || p.doc === docF));
+  const posPending = pos.filter((p) => p.status === 'pending');
+  const takePositions = (ps: PositionProposal[]) => { if (input) void acceptPositions(op, ps, input, theatre); };
 
   const add = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -77,16 +84,22 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
       {err && <div className="err">{err}</div>}
       {docs.length > 0 && <div className="mat-docs">{docs.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} open={() => {}} onFilter={() => setDocF(docF === d.id ? null : d.id)} filtered={docF === d.id} />)}</div>}
 
-      {(infra.length > 0 || props.length > 0) && <>
+      {(infra.length > 0 || props.length > 0 || pos.length > 0) && <>
         <div className="mat-tabs">
           <button className={view === 'infra' ? 'on' : ''} onClick={() => setView('infra')}>Инфраструктура: {infraPending.length} ждут, {infra.filter((p) => p.status === 'accepted').length} принято</button>
           <button className={view === 'kb' ? 'on' : ''} onClick={() => setView('kb')}>В базу знаний: {kbPending.length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>
+          <button className={view === 'pos' ? 'on' : ''} onClick={() => setView('pos')}>Положения: {posPending.length} ждут, {pos.filter((p) => p.status === 'accepted').length} принято</button>
           {docF && <button className="link" onClick={() => setDocF(null)}>все документы</button>}
           <span className="grow" />
           {view === 'infra' && infraPending.length > 0 && <><button onClick={() => void accept(infraPending)}>Принять все</button><button onClick={() => void kb.decideInfra(infraPending.map((p) => p.id), false)}>Отклонить все</button></>}
           {view === 'kb' && kbPending.length > 0 && <><button onClick={() => void kb.decide(kbPending.map((p) => p.id), true)}>Принять все</button><button onClick={() => void kb.decide(kbPending.map((p) => p.id), false)}>Отклонить все</button></>}
+          {view === 'pos' && posPending.length > 0 && <><button disabled={!input} onClick={() => takePositions(posPending)}>Принять все</button><button onClick={() => void kb.decidePositions(posPending.map((p) => p.id), false)}>Отклонить все</button></>}
         </div>
-        {view === 'infra' ? <div className="mat-list">
+        {view === 'pos' ? <div className="mat-list">
+          <p className="muted small">Положение формирования в день операции. Принятое ложится в боевой путь формирования в базе знаний (с цитатой) и — если формирование есть в сценарии, а пункт на театре — в историю операции: по нему сверяется расчёт и идёт калибровка.</p>
+          {pos.map((p) => <PositionCard key={p.id} p={p} input={input} T={T} onAccept={() => takePositions([p])} onReject={() => void kb.decidePositions([p.id], false)} />)}
+          {!pos.length && <p className="muted">Положений не найдено.</p>}
+        </div> : view === 'infra' ? <div className="mat-list">
           {infra.map((p) => <InfraCard key={p.id} p={p} T={T} onAccept={() => void accept([p])} onReject={() => void kb.decideInfra([p.id], false)} />)}
           {!infra.length && <p className="muted">Сведений об инфраструктуре не найдено.</p>}
         </div> : <div className="mat-list">
@@ -94,6 +107,13 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
           {!kbPending.length && <p className="muted">Все предложения разобраны. Принятые записи — в «Знаниях», раздел операции.</p>}
         </div>}
       </>}
+
+      {added.length > 0 && <details className="mat-add"><summary>Положения из документов в истории операции · {added.length}</summary>
+        <table className="mdl-tbl"><thead><tr><th>Формирование</th><th>День</th><th>Пункт</th><th>±км</th><th>Источник</th><th /></tr></thead><tbody>
+          {added.map((h) => <tr key={h.id}><td>{input?.formations.find((f) => f.id === h.formation)?.name ?? h.formation}</td><td>{ddmm(h.time)}</td><td>{h.place}</td><td>{Math.round(h.approxKm)}</td>
+            <td title={h.quote ? `«${h.quote}»` : undefined}><i className={`kb-rel r${h.reliability}`}>{h.reliability}</i> {h.source}</td>
+            <td><button className="link danger" title="Убрать из истории (в базе знаний останется)" onClick={() => void removePosition(op, h.id)}>✕</button></td></tr>)}
+        </tbody></table></details>}
 
       <InfraTable records={records} T={T} onRemove={(id) => void store(records.filter((r) => r.id !== id))}
         onAdd={(r) => { void store([...records, r]).then(() => kb.addInfraFact({ id: op, title }, { text: `${factText(r)} — добавлено вручную`, road: ROADISH.has(r.kind) })); }} />
@@ -115,6 +135,24 @@ function InfraCard({ p, T, onAccept, onReject }: { p: InfraProposal; T: Theatre 
       <div className="mat-res">{where ? <>на театре: {where.how}</> : <span className="warn">на театре не найдено — останется сведением (в базе знаний)</span>}
         {' · '}{eff ? <b>в расчёте: {eff}</b> : <span className="muted">в расчёт не входит</span>}</div>
       {p.status === 'pending' ? <div className="row"><button className="primary" onClick={onAccept}>Принять</button><button onClick={onReject}>Отклонить</button></div>
+        : <span className="muted">{p.status === 'accepted' ? '✓ принято' : 'отклонено'}</span>}
+    </div>
+  );
+}
+
+function PositionCard({ p, input, T, onAccept, onReject }: { p: PositionProposal; input: SyncInput | null; T: Theatre | null; onAccept: () => void; onReject: () => void }) {
+  const r = useMemo(() => (input ? resolvePosition(p, input, T) : null), [p, input, T]);
+  const it = p.item;
+  return (
+    <div className={`mat-infra st-${p.status}`}>
+      <div className="mat-infra-h"><i className="k-pos">положение</i><b>{it.formation}</b><span className="muted">{ddmm(it.date)} · {it.place}</span></div>
+      {it.note && <p>{it.note}</p>}
+      <div className="kb-quote">«{it.quote}» <span className="muted">— {p.docName}, часть {p.chunk + 1}</span></div>
+      {r && <div className="mat-res">
+        {r.formation ? <>в сценарии: {r.formation.name}</> : <span className="warn">в сценарии такого формирования нет</span>}
+        {' · '}{r.place ? <>на театре: {r.place.title}</> : <span className="warn">пункт на театре не найден</span>}
+        {' · '}{r.formation && r.place ? <b>в историю и в боевой путь (база)</b> : <span className="muted">только в базу знаний (боевой путь{r.entry ? '' : ', новая запись'})</span>}</div>}
+      {p.status === 'pending' ? <div className="row"><button className="primary" disabled={!input} onClick={onAccept}>Принять</button><button onClick={onReject}>Отклонить</button></div>
         : <span className="muted">{p.status === 'accepted' ? '✓ принято' : 'отклонено'}</span>}
     </div>
   );

@@ -4,17 +4,17 @@
  * сборке (packages/knowledge/data/seed.json); слой пользователя — поверх него. Доступно и из фоновых
  * потоков (игра: справка советнику).
  */
-import type { Entry, InfraProposal, KbDocument, Proposal } from '@def-ops/knowledge';
+import type { Entry, InfraProposal, KbDocument, PositionProposal, Proposal } from '@def-ops/knowledge';
 
-const DB = 'def_ops_kb', VER = 3;
-/** infra — сведения об инфраструктуре из документов операций (на проверку). */
-type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra';
+const DB = 'def_ops_kb', VER = 4;
+/** infra — сведения об инфраструктуре из документов операций (на проверку); positions — положения формирований из них. */
+type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra' | 'positions';
 
 let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors', 'infra']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors', 'infra', 'positions']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -22,7 +22,7 @@ function db(): Promise<IDBDatabase> {
 }
 const req = <T>(r: IDBRequest<T>) => new Promise<T>((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 
-export async function all<T = Entry | KbDocument | Proposal | InfraProposal>(store: StoreName): Promise<T[]> {
+export async function all<T = Entry | KbDocument | Proposal | InfraProposal | PositionProposal>(store: StoreName): Promise<T[]> {
   // vectors — кэш эмбеддингов: { id: модель|документ индекса, hash текста, v: Float32Array }
   try { return await req((await db()).transaction(store).objectStore(store).getAll()) as T[]; } catch { return []; }
 }

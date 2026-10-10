@@ -107,6 +107,13 @@ const overlaps = (e: Entry, a: string, b: string) => !!e.period?.from && day(e.p
 
 const ECH_W: Record<string, number> = { front: 5, army: 4, corps: 3, division: 2, brigade: 1.5 };
 
+/** Записи базы о формировании сценария: по id в синонимах, иначе по названию. */
+export function formationEntries(entries: Entry[], f: { id: string; name: string }): Entry[] {
+  const fs = entries.filter((e) => e.category === 'formations');
+  const byId = fs.filter((e) => (e.aliases ?? []).includes(f.id));
+  return byId.length ? byId : fs.filter((e) => nameMatch(e, [f.name]));
+}
+
 /** Что должно быть о формировании — по ступени. */
 export function formationNeeds(echelon: string): string[] {
   if (echelon === 'front' || echelon === 'army') return ['commander', 'composition', 'personnel', 'tanks', 'guns', 'path'];
@@ -152,7 +159,7 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
   };
 
   /* ── войска и командование ── */
-  const fEntries = (f: { id: string; name: string }) => { const byId = formations.filter((e) => (e.aliases ?? []).includes(f.id)); return byId.length ? byId : formations.filter((e) => nameMatch(e, [f.name])); };
+  const fEntries = (f: { id: string; name: string }) => formationEntries(formations, f);
   const fKeys = ['parent', 'commander', 'composition', 'personnel', 'tanks', 'guns', 'path'];
   add({ id: 'formations', section: 'forces', title: 'Формирования', what: 'по каждому действующему формированию: подчинённость, командир, состав, численность, танки, орудия, боевой путь в операции', weight: 0.2, labels: labelsOf('formations', fKeys),
     items: input.formations.map((f) => {

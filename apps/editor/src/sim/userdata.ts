@@ -3,13 +3,13 @@
  * калибровка) и загруженные операции (пакет: сценарий, театр, история, участки, настройки штаба модели, запись
  * каталога). Поверх данных сборки (packages/sim/data): getter отдаёт сначала встроенный файл, затем свой.
  */
-import type { CatalogEntry, DataKind, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
+import type { CatalogEntry, DataKind, History, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
 import type { KbOperation, OperationHint } from '@def-ops/knowledge';
 import { defaultCatalog, defaultLive } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 
-const DB = 'def_ops_sim', VER = 3;
-type StoreName = 'rules' | 'operations' | 'theatres' | 'infrastructure';
+const DB = 'def_ops_sim', VER = 4;
+type StoreName = 'rules' | 'operations' | 'theatres' | 'infrastructure' | 'edits';
 
 /** Свой набор правил: правила целиком (без extends), откуда взят, для какой операции подбирался. */
 export interface UserRules { id: string; title: string; note?: string; base: string; scenario?: string; created: string; rules: Rules }
@@ -27,7 +27,7 @@ let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['rules', 'operations', 'theatres', 'infrastructure']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of ['rules', 'operations', 'theatres', 'infrastructure', 'edits']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -55,7 +55,75 @@ export const deleteTheatre = (id: string) => write('theatres', (o) => o.delete(i
 /** Сведения об инфраструктуре операции (встроенной или своей): ложатся поверх театра при расчёте. */
 export interface OperationInfra { id: string; records: InfraRecord[] }
 export const getInfra = async (id: string) => (await one<OperationInfra>('infrastructure', id))?.records ?? [];
-export const saveInfra = (id: string, records: InfraRecord[]) => write('infrastructure', (o) => o.put({ id, records }));
+export async function saveInfra(id: string, records: InfraRecord[]) {
+  const before = await getInfra(id);
+  await write('infrastructure', (o) => o.put({ id, records }));
+  const added = records.filter((r) => !before.some((b) => b.id === r.id)), removed = before.filter((b) => !records.some((r) => r.id === b.id));
+  if (added.length || removed.length) await logChange(id, 'infra', [...added.map((r) => `+ ${r.title}`), ...removed.map((r) => `− ${r.title}`)].join('; '));
+}
+
+/* ----------------------- правки операции (слой поверх данных) ----------------------- */
+
+/** Положение по дню, добавленное в историю операции (из документа — с цитатой). */
+export type HistPosition = History['positions'][number] & { id: string; quote?: string; doc?: string };
+/** Изменение данных операции: что и когда (для «изменилось после калибровки»). */
+export interface ChangeLog { at: string; kind: 'scenario' | 'history' | 'infra' | 'kb'; text: string }
+/** Калибровка по кнопке «Пересчитать»: когда, какие правила получились, итог. */
+export interface Recalibration {
+  at: string; rules: string; base: string; title: string;
+  before: { within: number; eventsHit: number; eventsTotal: number; score: number };
+  after: { within: number; eventsHit: number; eventsTotal: number; score: number };
+  control?: { scenario: string; title: string; before: number; after: number; eventsBefore: number; eventsAfter: number; eventsTotal: number }[];
+  changes: number; report: string;
+  /** Нашлись ли правила лучше текущих (по мерилу на 5 прогонах); нет — новый набор не сохранён. */
+  better?: boolean;
+}
+/**
+ * Правки операции поверх сценария и истории (встроенной или своей): цифры формирований из базы знаний, положения
+ * по дням из документов. Сценарий и история в сборке не меняются — правки накладываются при чтении (getData).
+ */
+export interface OperationEdits {
+  id: string;
+  /** Цифры формирований: новое значение, прежнее и на чём основано. */
+  formations: Record<string, Partial<Record<'personnel' | 'tanks' | 'guns', { value: number; was: number; source: string; at: string }>>>;
+  positions: HistPosition[];
+  /** Отклонённые предложения сверки (id). */
+  dismissed: string[];
+  log: ChangeLog[];
+  recalibrations: Recalibration[];
+  /** Набор правил по умолчанию для операции (после пересчёта). */
+  defaultRules?: string;
+}
+const emptyEdits = (id: string): OperationEdits => ({ id, formations: {}, positions: [], dismissed: [], log: [], recalibrations: [] });
+export const getEdits = async (id: string): Promise<OperationEdits> => ({ ...emptyEdits(id), ...(await one<OperationEdits>('edits', id)) });
+export const saveEdits = (e: OperationEdits) => write('edits', (o) => o.put(e));
+/** Изменить правки операции (читать — менять — записать). */
+export async function updateEdits(id: string, f: (e: OperationEdits) => void) {
+  const e = await getEdits(id);
+  f(e);
+  await saveEdits(e);
+}
+export const logChange = (id: string, kind: ChangeLog['kind'], text: string) => updateEdits(id, (e) => { e.log.push({ at: new Date().toISOString(), kind, text }); });
+/** Изменения после последнего пересчёта (калибровки). */
+export function changesSince(e: OperationEdits): ChangeLog[] {
+  const last = e.recalibrations[e.recalibrations.length - 1]?.at ?? '';
+  return e.log.filter((l) => l.at > last);
+}
+
+function applyScenarioEdits(sc: Scenario, e: OperationEdits | undefined): Scenario {
+  if (!e || !Object.keys(e.formations).length) return sc;
+  return { ...sc, formations: sc.formations.map((f) => {
+    const p = e.formations[f.id];
+    if (!p) return f;
+    const n = { ...f };
+    for (const [k, v] of Object.entries(p)) if (v) (n as Record<string, unknown>)[k] = v.value;
+    return n;
+  }) };
+}
+function applyHistoryEdits(h: History, e: OperationEdits | undefined): History {
+  if (!e?.positions.length) return h;
+  return { ...h, positions: [...h.positions, ...e.positions.map(({ id: _id, quote: _q, doc: _d, ...p }) => p)] };
+}
 export const getOperation = (id: string) => one<UserOperation>('operations', id);
 export const saveOperation = (op: UserOperation) => write('operations', (o) => o.put(op));
 export const deleteOperation = (id: string) => write('operations', (o) => o.delete(id));
@@ -78,6 +146,16 @@ export const BUILTIN_CATALOG = (catalogFile as unknown as { scenarios: CatalogEn
 
 /** Получение данных для движка: встроенные файлы, затем свои правила и операции. */
 export async function getData(kind: DataKind, file: string): Promise<unknown> {
+  if (kind === 'scenarios' && !file.endsWith('.sectors.json')) {
+    const d = await rawData(kind, file);
+    const hist = file.endsWith('.history.json');
+    const e = await one<OperationEdits>('edits', file.replace(hist ? /\.history\.json$/ : /\.json$/, ''));
+    return hist ? applyHistoryEdits(d as History, e) : applyScenarioEdits(d as Scenario, e);
+  }
+  return rawData(kind, file);
+}
+/** Данные без правок операции. */
+export async function rawData(kind: DataKind, file: string): Promise<unknown> {
   const b = builtin(kind, file);
   if (b) return b();
   const id = file.replace(/\.json$/, '');
@@ -108,11 +186,14 @@ export async function getData(kind: DataKind, file: string): Promise<unknown> {
  */
 export async function fullCatalog(includeDrafts = false): Promise<(CatalogEntry & { custom?: boolean })[]> {
   const [ops, rules] = await Promise.all([listOperations(), listRules()]);
+  const edits = new Map((await all<OperationEdits>('edits')).map((e) => [e.id, e]));
   const mine = (id: string) => rules.filter((r) => !r.scenario || r.scenario === id).map((r) => ({ id: r.id, title: `свои: ${r.title}` }));
-  const base = BUILTIN_CATALOG.map((c) => ({ ...c, rules: [...c.rules, ...mine(c.id)] }));
+  // набор, сделанный основным после пересчёта, — первым (по умолчанию в переигровке)
+  const order = (id: string, l: { id: string; title: string }[]) => { const d = edits.get(id)?.defaultRules; const i = d ? l.findIndex((r) => r.id === d) : -1; return i > 0 ? [l[i], ...l.slice(0, i), ...l.slice(i + 1)] : l; };
+  const base = BUILTIN_CATALOG.map((c) => ({ ...c, rules: order(c.id, [...c.rules, ...mine(c.id)]) }));
   const custom = ops.filter((o) => o.ready || includeDrafts).map((o) => {
     const c = o.pkg.catalog ?? defaultCatalog(o.pkg);
-    return { ...c, id: o.id, custom: true, rules: [...c.rules, ...mine(o.id)] };
+    return { ...c, id: o.id, custom: true, rules: order(o.id, [...c.rules, ...mine(o.id)]) };
   });
   return [...base, ...custom];
 }
