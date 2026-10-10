@@ -3456,5 +3456,116 @@
     }
    ]
   }
- }
+ },
+ "boundaries": [
+  {
+   "id": "de-9a-4pza-12jan",
+   "kind": "army",
+   "side": "de",
+   "right": "de_9a_vo",
+   "left": "de_4pza_vo",
+   "title": "9 А / 4 ТА с 12.01",
+   "from": "1945-01-12T00:00",
+   "until": "1945-01-19T00:00",
+   "line": [
+    [
+     21.8297,
+     51.0409
+    ],
+    [
+     21.649,
+     51.1585
+    ],
+    [
+     20.8579,
+     51.1139
+    ],
+    [
+     20.4072,
+     51.191
+    ]
+   ],
+   "places": [
+    "Юзефув-над-Вислой",
+    "Липско",
+    "Скаржиско-Каменна",
+    "Конске"
+   ],
+   "inclusive": null,
+   "note": "не установлено западнее Конске — не установлена Граница армий документально не найдена. С 14–15.01 оба корпуса на стыке разбиты, к 19.01 между 9 А и 4 ТА — широкий разрыв (Ziemke p.423); линию после 19.01 не задавать.",
+   "source": "вывод составителя по участкам дивизий: docs/sources/vistula-oder-1945-divisions.json (214 пд, 342 пд, 10 пгд — Lexikon der Wehrmacht, de/pl.wikipedia); Ziemke, ch. XIX, p.417 (линия «Хубертус» и «внутренние фланги» 4 ТА и 9 А между плацдармами); Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. Washington: CMH, 1968 (CMH Pub 30-5); Lage Ost 12.1.1945 — BArch RH 2-KART; KTB OKW Bd. IV, S. 1886 (не просмотрены)",
+   "reliability": "C"
+  },
+  {
+   "id": "de-4pza-17a-12jan",
+   "kind": "army",
+   "side": "de",
+   "right": "de_4pza_vo",
+   "left": "de_17a_vo",
+   "title": "4 ТА / 17 А с 12.01",
+   "from": "1945-01-12T00:00",
+   "until": "1945-01-19T00:00",
+   "line": [
+    [
+     21.0113,
+     50.3318
+    ],
+    [
+     21.0752,
+     50.309
+    ],
+    [
+     20.8091,
+     50.2994
+    ],
+    [
+     20.7238,
+     50.2426
+    ]
+   ],
+   "places": [
+    "Облеконь",
+    "Щуцин",
+    "Новы-Корчин",
+    "Опатовец"
+   ],
+   "inclusive": null,
+   "note": "стык на Висле у Щуцина — B; ход вверх по реке — C граница по Висле: северный берег — 4 ТА, южный — 17 А западнее Опатовца — не установлена (Краков на северном берегу обороняла 17 А — значит, далее к западу линия уходит севернее Вислы) В феврале 1945 Шёрнер перенёс границу 4 ТА / 17 А на Одере (Штайнау — 4 ТА, Бриг–Олау — 17 А, Ziemke ch. XX) — это уже после операции.",
+   "source": "участки 304 и 371 пд: docs/sources/vistula-oder-1945-divisions.json (pl.wikipedia по Mitcham/Podsiadło; Lexikon der Wehrmacht); Ziemke, ch. XIX, p.417 («правый фланг 4 ТА» на Баранувском плацдарме), p.423 (к 19.01 разрыв между 4 ТА и 17 А); Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. Washington: CMH, 1968 (CMH Pub 30-5); Lage Ost 12.1.1945 — BArch RH 2-KART (не просмотрена)",
+   "reliability": "C"
+  },
+  {
+   "id": "de-hgrw-hgra-27jan",
+   "kind": "front",
+   "side": "de",
+   "right": "de_hgr_weichsel_vo",
+   "left": "de_hgr_a_vo",
+   "title": "ГА «Висла» / ГА «Центр» (б. «А») с 27.01",
+   "from": "1945-01-27T00:00",
+   "until": null,
+   "line": [
+    [
+     16.0861,
+     51.6634
+    ],
+    [
+     15.5368,
+     51.5651
+    ],
+    [
+     15.3204,
+     51.6148
+    ]
+   ],
+   "places": [
+    "Глогау",
+    "Шпротау",
+    "Заган"
+   ],
+   "inclusive": null,
+   "note": "точка Глогау и дата 27–28.01 — B; ход линии западнее Глогау — C принадлежность Глогау не установлена (крепость Глогау с февраля — в полосе 4 ТА) восточнее Глогау фронт 1 УФ на Одере; западнее Загана — не установлена. К марту 1945 стык групп армий сдвинулся на Одер у Фюрстенберга (см. de-hgrw-hgrm-16apr) ГА «А» переименована в «Центр» 25/26.01 (в сценарии — один id de_hgr_a_vo). До 27.01 9 А числилась в ГА «А», и граница ГА «Висла» / ГА «А» шла где-то в районе Познани — не установлена (см. gaps). Северный край полосы ГА «Висла» (стык с ГА «Север» у Эльбинга) — вне театра сценария.",
+   "source": "Ziemke, ch. XIX, p.425–426; de.wikipedia «Heeresgruppe Weichsel» (участок «от Глогау до Эльбинга»); Lexikon der Wehrmacht «9. Armee» (в составе ГА «Висла» с 28.01); Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. Washington: CMH, 1968 (CMH Pub 30-5); MS D-408 (Eismann) — по ссылке Ziemke; Karten HGr. Weichsel 24.–31.1.1945 — BArch RH 19-XV/13K (8 карт); «Unterstellungen und Kampfgruppen der HGr Weichsel (Stand 29.1.1945)» — BArch RH 19-XV/19 (не просмотрены)",
+   "reliability": "C"
+  }
+ ]
 }

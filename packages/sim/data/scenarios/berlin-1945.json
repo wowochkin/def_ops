@@ -7577,6 +7577,168 @@
    "note": "все пункты для советских ВВС — исключительно; далее по р. Эльба до Мельника и Праги; южнее Виттенберга — по Эльбе (за пределами театра)",
    "source": "Директива начальника Генштаба КА № 10850 от 22.04.1945, 16.15; ЦА МО РФ. Ф. 233. Оп. 2307. Д. 193. Л. 113",
    "reliability": "A"
+  },
+  {
+   "id": "de-3pza-9a-16apr",
+   "kind": "army",
+   "side": "de",
+   "right": "de_3pza",
+   "left": "de_9a",
+   "title": "3 ТА / 9 А с 16.04",
+   "from": "1945-04-16T00:00",
+   "until": "1945-04-21T18:00",
+   "line": [
+    [
+     14.1447,
+     52.8739
+    ],
+    [
+     14.045,
+     52.8659
+    ],
+    [
+     13.9291,
+     52.8334
+    ],
+    [
+     13.7997,
+     52.8351
+    ],
+    [
+     13.6827,
+     52.8462
+    ],
+    [
+     13.5277,
+     52.8516
+    ],
+    [
+     13.3902,
+     52.8665
+    ]
+   ],
+   "places": [
+    "Хоэнзатен",
+    "Одерберг",
+    "Нидерфинов",
+    "Эберсвальде",
+    "Финовфурт",
+    "Церпеншлойзе",
+    "Либенвальде"
+   ],
+   "inclusive": null,
+   "note": "стык на Одере (Хоэнзатен–Одерберг) — B; ход линии в тылу по Финов-каналу — C (из формулировки «9 А от Финов-канала») чьи пункты включительно — не установлено; Хоэнзатен — последний пункт полосы 3 ТА западнее Либенвальде (Одер-Хафель-канал к Ораниенбургу) — не установлена; модель делит расчётно Линия по Финов-каналу на запад от устья у Хоэнзатена/Одерберга. 19.04 фронт 9 А прорван между Врицен и Белендорф, CI ак отошёл на плацдарм у Эберсвальде и оторвался от 9 А; 21.04 его дивизии севернее канала (5 егд, 25 пгд) переданы Штайнеру — после этого линия как граница 3 ТА / 9 А не действует (см. gaps).",
+   "source": "de.wikipedia «Stettin-Rostocker Operation» (раздел о развёртывании 3. Panzerarmee: 1. Marine-Division до Hohensaaten, на стыке с 9. Armee — 5. Jäger-Division CI AK); de.wikipedia «Schlacht um die Seelower Höhen» (9. Armee «vom Finowkanal im Norden bis nach Guben»; CI AK между Oderberg и Letschin); Ziemke, ch. XXI, p.476 (заслон на фланге 3 ТА «along the Finow Canal»); Lakowski R. Seelower Höhen 1945; Schäufler/Tieke 2003 (по ссылкам статей); Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. Washington: CMH, 1968 (CMH Pub 30-5); оригинал: Lagekarte HGr. Weichsel, Stand 15. Apr. 1945 — BArch RH 19-XV/16K, K-5 (не просмотрена)",
+   "reliability": "B"
+  },
+  {
+   "id": "de-hgrw-hgrm-16apr",
+   "kind": "front",
+   "side": "de",
+   "right": "de_hgr_weichsel",
+   "left": "de_hgr_mitte",
+   "title": "ГА «Висла» / ГА «Центр» с 16.04 (9 А / 4 ТА)",
+   "from": "1945-04-16T00:00",
+   "until": "1945-04-20T00:00",
+   "line": [
+    [
+     14.673,
+     52.1456
+    ],
+    [
+     14.2997,
+     51.9866
+    ],
+    [
+     13.8964,
+     51.9419
+    ]
+   ],
+   "places": [
+    "Фюрстенберг-на-Одере",
+    "Либерозе",
+    "Люббен"
+   ],
+   "inclusive": null,
+   "note": "точка стыка на Одере — B, но источники расходятся (см. note); тыловой ход — C не установлено западнее Люббен — не установлена ⚠ Расхождение: по ряду обзоров 9 А держала фронт «до Губена», а 4 ТА — Нейсе «от Губена до Гёрлица» (de/en.wikipedia, обзорные формулировки). Более конкретные указания (V ак «между Фюрстенбергом и Форстом» по боевому расписанию ОКВ на март и фланг V горн. к СС у Фюрстенберга по Le Tissier) дают стык у Фюрстенберга; участок Одера/Нейсе Фюрстенберг–Ратцдорф–Губен (~20 км) мог принадлежать любой из армий. Для сравнения: советская линия 1 БФ / 1 УФ шла на Гросс-Гастрозе южнее Губена.",
+   "source": "de.wikipedia «Schlacht um die Seelower Höhen» (правый фланг 9. Armee между Франкфуртом и Fürstenberg — V. SS-Gebirgskorps; по Le Tissier «Durchbruch an der Oder», 1997); de.wikipedia «V. Armeekorps (Wehrmacht)» (в начале марта 1945 корпус «zwischen Fürstenberg und Forst», ссылка: Schramm, KTB OKW Bd. IV, Kriegsgliederung S. 1896); Le Tissier T. Durchbruch an der Oder. Augsburg: Bechtermünz, 1997; Schramm P. E. (Hrsg.) Kriegstagebuch des OKW, Bd. IV; KTB OKW Bd. IV, Kriegsgliederung (опубликовано у Schramm); Lagekarte HGr. Weichsel 15.4.1945 — BArch RH 19-XV/16K, K-5; Lage Ost 16.4.1945 — BArch RH 2-KART/1430 (не просмотрены)",
+   "reliability": "B"
+  },
+  {
+   "id": "de-hgrw-hgrm-20apr",
+   "kind": "front",
+   "side": "de",
+   "right": "de_hgr_weichsel",
+   "left": "de_hgr_mitte",
+   "title": "ГА «Висла» / ГА «Центр» с 20.04 (V ак передан 9 А)",
+   "from": "1945-04-20T00:00",
+   "until": null,
+   "line": [
+    [
+     14.6455,
+     51.7439
+    ],
+    [
+     14.3357,
+     51.7567
+    ],
+    [
+     13.9493,
+     51.7467
+    ]
+   ],
+   "places": [
+    "Форст",
+    "Котбус",
+    "Калау"
+   ],
+   "inclusive": "de_hgr_weichsel",
+   "note": "факт и дата передачи V ак — B (19.04 вечером или 20.04 — источники расходятся на сутки); геометрия линии — C Котбус — за 9 А (до его потери 22.04) фактически между флангами групп армий образовался разрыв ~40 миль (Ziemke p.476), занятый советскими танковыми армиями; западнее Калау линия не имеет смысла Передача V ак (35 пгд СС, 36 гд СС, 275, 342 пд, позднее 21 тд) из 4 ТА в 9 А состоялась 19–20.04, а не 22–23.04. После этого граница групп армий проходила по южному флангу V ак; 22.04 Котбус потерян, 9 А разрешён отход на рубеж севернее Котбуса–Либерозе–Бесков–Шпрее (Ziemke p.480); с 24.04 9 А в котле, и граница с ГА «Центр» теряет смысл.",
+   "source": "Ziemke, ch. XXI, p.476 (9. Armee «had taken command the day before» левофлангового корпуса 4 ТА у Котбуса и севернее; разрыв 40 миль между флангами ГА «Висла» и «Центр»; Котбус — «угловой столб»), p.479 (22.04 Котбус потерян); de.wikipedia «Cottbus-Potsdamer Operation» (V. Armeekorps передан 9. Armee вечером 19.04); de.wikipedia «V. Armeekorps (Wehrmacht)» (19.04, по Le Tissier «Der Kampf um Berlin 1945», S. 77); Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. Washington: CMH, 1968 (CMH Pub 30-5); Le Tissier T. Der Kampf um Berlin 1945. Bechtermünz, 1997; MS P-114b (Hofmann) и файлы H.Gr. Weichsel 75122/6–7 (NARA T-311) — по ссылкам Ziemke",
+   "reliability": "B"
+  },
+  {
+   "id": "de-hgrw-12a-23apr",
+   "kind": "front",
+   "side": "de",
+   "right": "de_hgr_weichsel",
+   "left": "de_12a",
+   "title": "ГА «Висла» (группа Штайнера) / 12 А (ОКВ) с 23.04",
+   "from": "1945-04-23T00:00",
+   "until": null,
+   "line": [
+    [
+     13.2058,
+     52.6376
+    ],
+    [
+     13.0295,
+     52.7605
+    ],
+    [
+     12.8093,
+     52.9244
+    ],
+    [
+     12.3967,
+     52.9431
+    ],
+    [
+     11.2609,
+     53.1385
+    ]
+   ],
+   "places": [
+    "Хеннигсдорф",
+    "Креммен",
+    "Нойруппин",
+    "Киритц",
+    "Дёмиц"
+   ],
+   "inclusive": null,
+   "note": "опорные точки Хеннигсдорф/Креммен/Дёмиц — B; линия между ними — C не установлено восточнее Хеннигсдорфа — Берлинский оборонительный район (окружён 25.04) 12 А с 20–21.04 подчинена ОКВ (Wehrmachtführungsstab), по Lexikon der Wehrmacht с 27.04 — ГА «Висла»; 27.04 штабу XXXXI тк приказано принять руководство ударом у Ораниенбурга вместо Штайнера (Ziemke p.484–485). Направление «Висла» справа / 12 А слева — при движении от Хафеля на северо-запад к Эльбе.",
+   "source": "Lexikon der Wehrmacht, «12. Armee» (изложение директивы ОКВ от 22.04.1945: п. 2 — XXXXI тк из обороны Эльбы Дёмиц–Магдебург в район Науэна; оборонительная линия восточнее Бранденбурга – озёра Потсдам–Бранденбург – западнее Науэна и Фербеллина); Ziemke, ch. XXI, p.479–480 (23.04 XXXXI тк «hem the Russians in from the west»), p.491 (донесение Кейтеля 29/30.04: Holste — Brandenburg–Rathenow–Kremmen); Lexikon der Wehrmacht (lexikon-der-wehrmacht.de/Gliederungen/Armeen/12Armee-R.htm); Ziemke E. F. Stalingrad to Berlin: The German Defeat in the East. Washington: CMH, 1968 (CMH Pub 30-5); Gellermann G. Die Armee Wenck (по ссылкам); директива OKW/WFSt 22.04.1945 — в KTB OKW / файлах AOK 12 (BArch RH 20-12, не просмотрено); Lagekarte HGr. Weichsel 25.4. и 28.4.1945 — BArch RH 19-XV/16K, K-6, K-7",
+   "reliability": "C"
   }
  ]
 }
