@@ -6,7 +6,7 @@
  * дни до trainUntil, «проверка» — после; подбор идёт только по обучению.
  *
  *   npm run sim:calibrate -- [--scenario berlin-1945-tasks] [--base ww2-draft] [--evals 120] [--seeds 2] [--train-until 1945-04-25]
- *                            [--out packages/sim/data/rules/ww2-berlin-cal.json]
+ *                            [--patch '{"orderPartialTurn":true}'] [--out packages/sim/data/rules/ww2-berlin-cal.json]
  */
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -23,6 +23,9 @@ const out = opt('out', join(DATA_DIR, 'rules', 'ww2-berlin-cal.json'));
 
 // подбор — от исходных (некалиброванных) правил, а не от тех, что у сценария по умолчанию (там — уже откалиброванные)
 const base = loadContext(scenarioId, opt('base', 'ww2-draft'));
+// правки правил поверх исходных (JSON), например {"orderPartialTurn":true}: подбор множителей — уже с ними
+const patch = opt('patch', '');
+if (patch) base.rules = { ...base.rules, ...JSON.parse(patch) };
 const history = loadHistory(scenarioId);
 const score = (p: ReturnType<typeof baseParams>) => scoreRules(base, rulesWith(base.rules, p), history, { seeds, trainUntil });
 

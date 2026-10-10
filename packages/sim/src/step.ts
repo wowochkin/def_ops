@@ -120,6 +120,8 @@ export function step(prev: SimState, ctx: SimContext): SimState {
 
   // 1. приказы, дошедшие до исполнителя к концу хода
   const pending: Order[] = [];
+  // когда приказ дошёл до исполнителя в этом ходе (rules.orderPartialTurn)
+  const reached = new Map<string, number>();
   for (const o of [...prev.pending].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt))) {
     const f = byId.get(o.formation);
     if (!f || f.destroyed) continue;
@@ -129,6 +131,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
       f.order = o;
       f.posture = POSTURE[o.task];
       f.route = null;
+      reached.set(f.id, t2ms(addHours(o.issuedAt, delay)));
       journal.push({ kind: 'order', time: now, formation: f.id, order: o, effective: true });
     } else pending.push(o);
   }
@@ -226,7 +229,10 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const mob = mobilityOf(ctx, f);
     if (dist(xy(f), T.proj.toXY(to)) < 0.5) { if (f.posture === 'march' || f.posture === 'withdraw') f.posture = 'defend'; continue; }
     const fc = fortCost(f), tc = terrCost(f, mob);
-    const r = T.advance(f.position, to, mob, prof, R, now, dt, (i) => fc(i) + tc(i), prefer(f, mob));
+    // приказ дошёл в этом ходе — движение только с момента доведения
+    const hrs = R.orderPartialTurn && reached.has(f.id) ? Math.min(dt, Math.max(0, (t2ms(end) - Math.max(t2ms(now), reached.get(f.id)!)) / HOUR)) : dt;
+    if (hrs <= 0) continue;
+    const r = T.advance(f.position, to, mob, prof, R, now, hrs, (i) => fc(i) + tc(i), prefer(f, mob));
     if (!r) continue;
     let pos = r.position;
     // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
