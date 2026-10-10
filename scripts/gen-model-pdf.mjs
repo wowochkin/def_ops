@@ -1,4 +1,4 @@
-// PDF описания модели: node scripts/gen-model-pdf.mjs [docs/simulation-model.md] [docs/simulation-model.pdf]
+// PDF из Markdown: node scripts/gen-model-pdf.mjs [docs/simulation-model.md] [docs/simulation-model.pdf] (описание системы — docs/system.md docs/system.pdf)
 // Картинки — пути относительно файла Markdown (docs/img/…). Нужны pandoc (Markdown → HTML) и браузер Playwright (CHROMIUM_PATH — свой путь к Chrome).
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
@@ -17,7 +17,6 @@ const css = `
 html { font-family: 'PT Serif', 'Liberation Serif', 'DejaVu Serif', Georgia, serif; font-size: 10.5pt; line-height: 1.45; color: #1d1d1b; }
 body { margin: 0; }
 h1 { font-family: 'PT Sans', 'Liberation Sans', 'DejaVu Sans', sans-serif; font-size: 21pt; line-height: 1.15; margin: 0 0 6pt; color: #7a1b16; }
-h1 + p { color: #666; font-size: 9.5pt; margin-top: 0; }
 h2 { font-family: 'PT Sans', 'Liberation Sans', 'DejaVu Sans', sans-serif; font-size: 14pt; margin: 20pt 0 6pt; padding-bottom: 3pt; border-bottom: 1.2pt solid #7a1b16; break-after: avoid; }
 h3 { font-family: 'PT Sans', 'Liberation Sans', 'DejaVu Sans', sans-serif; font-size: 11.5pt; margin: 14pt 0 4pt; break-after: avoid; }
 h2:first-of-type { break-before: auto; }

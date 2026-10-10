@@ -995,7 +995,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .mdl-pick > span { color: var(--muted); width: 100%; }
 .mdl-pick label { flex-direction: row !important; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 14px; padding: 3px 10px 3px 6px; background: #fff; cursor: pointer; color: var(--text) !important; font-size: 12px !important; }
 .mdl-pick label.on { border-color: var(--accent); background: var(--accent-bg); }
-.mdl-pick label i, .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.mdl-pick label i, i.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 .mdl-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 .mdl-split { display: grid; grid-template-columns: 290px 1fr; min-height: 100%; }
 .mdl-list { border-right: 1px solid var(--line); background: var(--panel); padding: 10px 10px 30px; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; }
