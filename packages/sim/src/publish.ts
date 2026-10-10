@@ -38,6 +38,7 @@ export function shortName(name: string): string {
     // сокращения штабных карт; собственное имя номерной дивизии («Берлин», «Нордланд») на карту не выносится
     const ss = / СС(?![А-Яа-яЁё])/.test(rest) ? ' СС' : '';
     const rules: [RegExp, string][] = [
+      [/^Белорусский фронт/, 'БФ'], [/^Украинский фронт/, 'УФ'], [/^Прибалтийский фронт/, 'ПрибФ'],
       [/^гвардейская танковая армия/, 'гв. ТА'], [/^танковая армия/, 'ТА'], [/^ударная армия/, 'УА'],
       [/^гвардейская армия/, 'гв. А'], [/^армия Войска Польского/, 'А ВП'], [/^армия/, 'А'],
       [/^гвардейский танковый корпус/, 'гв. тк'], [/^танковый корпус/, 'тк'],
@@ -162,6 +163,8 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
 
   // линия фронта по ходам
   const sides = ctx.scenario.sides.map((x) => x.id) as [string, string];
+  // линии фронта по ходам (в км) — к ним крепятся хвосты стрелок оперативного и стратегического масштабов
+  const frontsByTurn: FrontsByTurn = new Map();
   for (let i = 0; i < run.snapshots.length; i++) {
     const sn = run.snapshots[i];
     const to = run.snapshots[i + 1]?.time ?? addHours(sn.time, ctx.scenario.turnHours);
@@ -192,6 +195,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       lf.time = { from: sn.time, to };
       lf.name = `Линия фронта (расчёт), ход ${sn.turn}`;
       features.push(lf);
+      frontsByTurn.set(i, [...(frontsByTurn.get(i) ?? []), { id: lf.id, xy: line.map((q) => T.proj.toXY(q) as [number, number]) }]);
     }
   }
 
@@ -232,7 +236,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
 
   // уровни обобщения: объединения и фронты — по своим соединениям, со стрелками направлений и рубежами обороны
   const labelK = Math.pow(2, doc.refZoom - zoom);
-  features.push(...levelFeatures(ctx, run, sideOf, 'army', o.visible, labelK), ...levelFeatures(ctx, run, sideOf, 'front', o.visible, labelK));
+  features.push(...levelFeatures(ctx, run, sideOf, 'army', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'front', o.visible, labelK, frontsByTurn));
 
   // история: «призраки» и линии фронта
   if (history) {
@@ -337,7 +341,25 @@ function recolor(a: ArrowFeature, color: string) {
  * по ходам; стрелки — куда объединение сместилось за окно (сутки для армий, двое — для фронтов): вперёд, к
  * противнику — удар, назад — отход; стоящие в обороне — рубеж обороны поперёк направления на противника.
  */
-function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, level: 'army' | 'front', visible: PublishOptions['visible'] | undefined, labelK: number): Feature[] {
+type FrontsByTurn = Map<number, { id: string; xy: [number, number][] }[]>;
+/** Ближайшая точка линий фронта хода (не дальше maxKm): линия, доля длины, точка. */
+function nearestOnFront(lines: { id: string; xy: [number, number][] }[] | undefined, p: [number, number], maxKm: number): { id: string; t: number; at: [number, number] } | null {
+  let best: { id: string; t: number; at: [number, number]; d: number } | null = null;
+  for (const l of lines ?? []) {
+    const seg: number[] = [0];
+    for (let k = 1; k < l.xy.length; k++) seg.push(seg[k - 1] + Math.hypot(l.xy[k][0] - l.xy[k - 1][0], l.xy[k][1] - l.xy[k - 1][1]));
+    const L = seg[seg.length - 1] || 1;
+    for (let k = 1; k < l.xy.length; k++) {
+      const a = l.xy[k - 1], b = l.xy[k], dx = b[0] - a[0], dy = b[1] - a[1], ll = dx * dx + dy * dy || 1;
+      const w = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / ll));
+      const q: [number, number] = [a[0] + dx * w, a[1] + dy * w], d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+      if (d <= maxKm && (!best || d < best.d)) best = { id: l.id, t: (seg[k - 1] + Math.sqrt(ll) * w) / L, at: q, d };
+    }
+  }
+  return best && { id: best.id, t: best.t, at: best.at };
+}
+
+function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, level: 'army' | 'front', visible: PublishOptions['visible'] | undefined, labelK: number, fronts: FrontsByTurn): Feature[] {
   const T = ctx.theatre, out: Feature[] = [];
   const byId = new Map(run.final.formations.map((f) => [f.id, f]));
   // иерархия — из сценария: штабы фронтов и армий без своих войск в расчёте не участвуют
@@ -363,6 +385,14 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
   };
   const cents = new Map<string, (C | null)[]>();
   for (const [id, x] of groups) cents.set(id, run.snapshots.map((sn) => centre(sn, x.members, sideOf(x.g.side))));
+  // для фронтов — их армии (центры по ходам): главные удары собираются из ударов армий
+  const armyMinKm = Math.max(T.cellKm * 3, 0.6);
+  const armiesOf = new Map<string, { g: Node; cs: (C | null)[] }[]>();
+  if (level === 'front') {
+    const am = new Map<string, { g: Node; members: string[]; front: string }>();
+    for (const f of acting) { const a = groupOf(f, tree, 'army'), fr = groupOf(f, tree, 'front'); const y = am.get(a.id) ?? { g: a, members: [], front: fr.id }; y.members.push(f.id); am.set(a.id, y); }
+    for (const y of am.values()) armiesOf.set(y.front, [...(armiesOf.get(y.front) ?? []), { g: y.g, cs: run.snapshots.map((sn) => centre(sn, y.members, sideOf(y.g.side))) }]);
+  }
   const sideById = (id: string) => sideOf(groups.get(id)!.g.side);
 
   for (const [id, x] of groups) {
@@ -403,23 +433,52 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         const d = Math.hypot(ocs[i]!.xy[0] - c.xy[0], ocs[i]!.xy[1] - c.xy[1]);
         if (d < ed) { ed = d; enemy = ocs[i]!.xy; }
       }
-      const v: [number, number] = c0 ? [c.xy[0] - c0.xy[0], c.xy[1] - c0.xy[1]] : [0, 0];
-      const len = Math.hypot(v[0], v[1]);
-      if (c0 && len >= minKm) {
+      type Move = { c0: [number, number]; c: [number, number]; len: number; u: [number, number]; retreat: boolean; w: number; who: string[] };
+      const moveOf = (a: C | null, a0: C | null, who: string): Move | null => {
+        if (!a || !a0) return null;
+        const v: [number, number] = [a.xy[0] - a0.xy[0], a.xy[1] - a0.xy[1]], len = Math.hypot(v[0], v[1]);
+        if (len < armyMinKm) return null;
         const u: [number, number] = [v[0] / len, v[1] / len];
-        const forward = enemy ? (enemy[0] - c0.xy[0]) * u[0] + (enemy[1] - c0.xy[1]) * u[1] > 0 : c.withdraw < 0.4;
-        const retreat = !forward || c.withdraw > 0.4;
-        // остриё — за текущим положением на треть пути: направление, а не только пройденное
-        const head: [number, number] = [c.xy[0] + u[0] * len * 0.35, c.xy[1] + u[1] * len * 0.35];
-        const mid: [number, number] = [(c0.xy[0] + head[0]) / 2, (c0.xy[1] + head[1]) / 2];
+        // отход — по положению войск (отходят больше 40 % людей); наступают — удар; иначе — по направлению на противника
+        const forward = a.withdraw > 0.4 ? false : a.attack >= 0.3 ? true : enemy ? (enemy[0] - a0.xy[0]) * u[0] + (enemy[1] - a0.xy[1]) * u[1] > 0 : true;
+        return { c0: a0.xy, c: a.xy, len, u, retreat: !forward, w: Math.max(1, a.pers), who: [who] };
+      };
+      let moves: Move[] = [];
+      if (level === 'army') {
+        const m = moveOf(c, c0, x.g.name);
+        if (m && m.len >= minKm) moves = [m];
+      } else {
+        // главные удары фронта — из ударов его армий: близкие по месту (30 км) и направлению (40°) сливаются в один
+        const cands = (armiesOf.get(id) ?? []).map((a) => moveOf(a.cs[i], a.cs[Math.max(0, i - win)], a.g.name)).filter((m): m is Move => !!m).sort((p, q) => q.len - p.len);
+        for (const m of cands) {
+          const g = moves.find((q) => q.retreat === m.retreat && Math.hypot(q.c[0] - m.c[0], q.c[1] - m.c[1]) <= 30 && q.u[0] * m.u[0] + q.u[1] * m.u[1] >= Math.cos(Math.PI * 40 / 180));
+          if (!g) { moves.push({ ...m, who: [...m.who] }); continue; }
+          const W = g.w + m.w, mix = (p: [number, number], q: [number, number]): [number, number] => [(p[0] * g.w + q[0] * m.w) / W, (p[1] * g.w + q[1] * m.w) / W];
+          g.c0 = mix(g.c0, m.c0); g.c = mix(g.c, m.c); g.len = (g.len * g.w + m.len * m.w) / W; g.w = W; g.who.push(...m.who);
+          const um = mix(g.u, m.u), ul = Math.hypot(um[0], um[1]) || 1; g.u = [um[0] / ul, um[1] / ul];
+        }
+        moves = [...moves.filter((m) => !m.retreat).slice(0, 3), ...moves.filter((m) => m.retreat).slice(0, 2)].filter((m) => m.len >= minKm * 0.6);
+      }
+      for (const m of moves) {
+        const { u, len, retreat } = m;
+        // хвост — на линии фронта хода (стрелка крепится к ней), остриё — в глубину на пройденное за окно; линии рядом нет — от прежнего положения
+        const at = nearestOnFront(fronts.get(i), m.c, level === 'army' ? 20 : 35);
+        const reach = Math.max(len, minKm * 1.2) * (retreat ? 0.8 : 1);
+        const tail: [number, number] = at ? at.at : m.c0;
+        const head: [number, number] = at ? [tail[0] + u[0] * reach, tail[1] + u[1] * reach] : [m.c[0] + u[0] * len * 0.35, m.c[1] + u[1] * len * 0.35];
+        const mid: [number, number] = [(tail[0] + head[0]) / 2, (tail[1] + head[1]) / 2];
         const preset = retreat ? 'inf.retreat' : side === 'own' ? (tank && level === 'army' ? 'inf.tank' : 'inf.attackFade') : 'inf.counter';
         const k = level === 'army' ? (retreat ? 0.8 : 0.55) : (retreat ? 1.1 : 0.95);
-        const a = createFeature('arrow', preset, { points: [LL(c0.xy), LL(mid), LL(head)], layerId: `${lay}-moves` }, k, side) as ArrowFeature;
+        const a = createFeature('arrow', preset, { points: [LL(tail), LL(mid), LL(head)], layerId: `${lay}-moves` }, k, side) as ArrowFeature;
+        if (at) a.anchor = { featureId: at.id, t: at.t };
         if (retreat || (side !== 'own' && preset !== 'inf.counter')) recolor(a, side === 'own' ? '#c0392b' : '#1f4e8c');
-        a.name = `${shortName(x.g.name)}: ${retreat ? 'отход' : 'удар'} на ${len.toFixed(len < 10 ? 1 : 0)} км за ${win * ctx.scenario.turnHours >= 48 ? `${(win * ctx.scenario.turnHours) / 24} сут` : `${win * ctx.scenario.turnHours} ч`}`;
+        const span = win * ctx.scenario.turnHours >= 48 ? `${(win * ctx.scenario.turnHours) / 24} сут` : `${win * ctx.scenario.turnHours} ч`;
+        a.name = `${shortName(x.g.name)}: ${retreat ? 'отход' : 'удар'} на ${len.toFixed(len < 10 ? 1 : 0)} км за ${span}${level === 'front' && m.who.length ? ` (${m.who.map(shortName).join(', ')})` : ''}`;
         a.time = { from, to: until };
         out.push(a);
-      } else if (enemy && c.defend >= 0.5 && c.units.length) {
+      }
+      if (moves.length) continue;
+      if (enemy && c.defend >= 0.5 && c.units.length) {
         // рубеж обороны: поперёк направления на противника, по ширине расположения соединений, чуть впереди центра
         const d = Math.hypot(enemy[0] - c.xy[0], enemy[1] - c.xy[1]) || 1;
         const u: [number, number] = [(enemy[0] - c.xy[0]) / d, (enemy[1] - c.xy[1]) / d], nrm: [number, number] = [-u[1], u[0]];
