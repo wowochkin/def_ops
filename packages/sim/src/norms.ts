@@ -70,6 +70,8 @@ export function measureParam(ctx: SimContext, expr: string): number {
     case 'pocket.capitulateHours': return R.pocket?.capitulateHours ?? 96;
     case 'territory.consolidateKm': return R.territory?.consolidateKm ?? R.contactKm * 1.5;
     case 'engineers.hours': return R.engineers === false ? NaN : EN?.hours ?? 24;
+    case 'foot.road': return su.road.foot * (R.movementScale ?? 1);
+    case 'foot.open': return su.offRoad.foot.open * (R.movementScale ?? 1);
     case 'supplyFlow.fullHours': return R.supplyFlow ? R.supplyFlow.fullHours ?? 12 : NaN;
     case 'supplyFlow.fuelPer100km': return R.supplyFlow ? R.supplyFlow.fuelPer100km ?? 1 : NaN;
     case 'advanceMax': return interp(R.advance, 10);
