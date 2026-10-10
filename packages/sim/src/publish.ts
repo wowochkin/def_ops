@@ -73,6 +73,8 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   const span = Math.min(e - w, Math.max(lng[1] - lng[0], (lat[1] - lat[0]) * 1.6, 0.2) * 1.25);
   const zoom = +(Math.log2((360 * 900) / (256 * span)) - 0.6).toFixed(1);
   const doc = emptyDocument([(lng[0] + lng[1]) / 2, (lat[0] + lat[1]) / 2], zoom);
+  // подписи соединений на экране разрежаются: при наложении остаётся подпись старшего (название — при наведении)
+  doc.declutter = true;
   doc.name = o.name ?? `Переигровка: ${ctx.scenario.name}`;
   const mk = (id: string, name: string, role: Layer['role'], opacity = 1, visible = true): Layer => ({ id, name, role, visible, locked: true, opacity, source: { system: 'simulation', ref: ctx.scenario.id, readOnly: true } });
   doc.layers = [
@@ -124,6 +126,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       const preset = tankish(f, ctx) ? 'std.mechCorps' : 'std.unitOval';
       const sym = createFeature('symbol', preset, { at: frames[0].u!.at, layerId: side === 'own' ? 'sim-own' : 'sim-enemy' }, 1, side) as SymbolFeature;
       sym.name = f.name;
+      sym.labelRank = 10 + (RANK[f.echelon] ?? 0);
       sym.style = { ...sym.style, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 10, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
       const note = (u: NonNullable<(typeof frames)[number]['u']>) => `${u.personnel.toLocaleString('ru')} чел., ${u.tanks} танков; ${POSTURE_RU[u.posture] ?? u.posture}; боеприпасы ${u.ammo ?? '?'} бк${u.cutOff ? '; ОТРЕЗАНО от снабжения' : ''}`;
       // между ходами знак идёт пройденным путём (по дорогам и улицам), а не по прямой: промежуточные кадры — по точкам пути
@@ -230,6 +233,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       const side = sideOf(f.side);
       const g = createFeature('symbol', tankish(f, ctx) ? 'std.mechCorps' : 'std.unitOval', { at: sorted[0].at, layerId: 'hist-units' }, 0.9, side) as SymbolFeature;
       g.name = `${f.name} (история)`;
+      g.labelRank = RANK[f.echelon] ?? 0;
       g.style = { ...g.style, fill: 'none', text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 9, weight: 400, italic: true, color: g.style.color, halo: null, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
       g.keyframes = sorted.map((p) => ({ t: p.time, at: p.at, note: `${p.place} (${p.reliability}, ±${p.approxKm} км) — ${p.source}` }));
       g.time = { from: sorted[0].time, to: null };
@@ -361,6 +365,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
     if (level === 'army') {
       const sym = createFeature('symbol', tank ? 'std.mechCorps' : 'std.unitOval', { at: LL(frames[0].c!.xy), layerId: `${lay}-units` }, 1.6, side) as SymbolFeature;
       sym.name = x.g.name;
+      sym.labelRank = 20 + (RANK[x.g.echelon] ?? 0);
       sym.style = { ...sym.style, text: shortName(x.g.name), textStyle: { font: 'PT Sans Narrow', size: 13, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2.5 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
       sym.keyframes = frames.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy), note: note(q.c!) }));
       sym.time = { from: frames[0].sn.time, to };
