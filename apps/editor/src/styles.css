@@ -1062,6 +1062,9 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lvl-sw button.on { background: var(--accent); color: #fff; }
 .lvl-sw button:hover:not(.on) { background: var(--soft); }
 .lg-retreat { height: 0 !important; border-top: 2px solid #1f4e8c; }
+.lg-bound { height: 0 !important; border-top: 2.4px dashed #c0392b; }
+.lg-hbound { height: 0 !important; border-top: 2.4px dashed #c0392b; opacity: .6; }
+.lg-barmy { height: 0 !important; border-top: 1.6px dashed #c0392b; }
 .lg-defense { height: 6px !important; border-top: 2px solid #c0392b; background: repeating-linear-gradient(90deg, #c0392b 0 1px, transparent 1px 5px); background-size: 100% 4px; background-repeat: no-repeat; background-position: 0 0; }
 .map-tip { position: fixed; z-index: 50; pointer-events: none; max-width: 340px; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.14); padding: 5px 9px; font-size: 12px; line-height: 1.4; display: flex; flex-direction: column; gap: 1px; }
 .map-tip span { color: var(--muted); }
@@ -1259,3 +1262,9 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lyr-row input { margin: 0; }
 .lyr-n { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 3px; border-radius: 8px; background: var(--ink); color: #fff; font-size: 10.5px; line-height: 16px; text-align: center; }
 .pop-btn.on .lyr-n { background: #fff; color: var(--ink); }
+
+/* полосы и разграничительные линии во вкладке «Приказы» */
+.sect-note { margin: 6px 0 8px; font-size: 12.5px; }
+.sect-note summary { cursor: pointer; font-weight: 600; }
+.sect-note ul { margin: 4px 0 2px 18px; padding: 0; }
+.sect-note li { margin: 2px 0; }

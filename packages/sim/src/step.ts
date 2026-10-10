@@ -17,6 +17,7 @@ import { trailTo, type Theatre } from './theatre';
 import type { CombatFactor, Formation, JournalEntry, Mobility, Order, Posture, Rules, Scenario, SideProfile, SimState, Target, Task, UmpireFactor, UmpireMod } from './types';
 import { UMPIRE_FACTOR_RU, UMPIRE_FACTORS, UMPIRE_LIMITS } from './types';
 import { claimTerritory, controlMap, initialTerritory, supplyField } from './control';
+import { activeBoundaries, groupOf, sectorMap, sectorPrefer, type SectorMap } from './sectors';
 
 export interface SimContext {
   scenario: Scenario;
@@ -181,6 +182,12 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     return lv && owner && owner !== f.side && !breached.has(i) ? (R.fortCrossHours ?? 0) * lv : 0;
   };
   const moved = new Set<string>();
+  // полосы по директивам (разграничительные линии): путь — своей полосой; по положению на начало хода
+  const secPrefer = sectorPreferences(ctx, active(), now);
+  const prefer = (f: Formation, mob: Mobility) => {
+    const vc = varietyCost(ctx, prev.seed ?? 0, f, mob), sp = secPrefer(f);
+    return vc && sp ? (i: number) => vc(i) * sp(i) : vc ?? sp ?? undefined;
+  };
 
   // 2. бои: наступающие в соприкосновении; общие обороняющиеся объединяют наступающих в одно сражение
   const attackers = active().filter((f) => f.posture === 'attack' && enemiesNear(f, R.contactKm).length);
@@ -191,7 +198,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     if (g) { g.att.push(a); for (const d of defs) if (!g.def.includes(d)) g.def.push(d); }
     else groups.push({ att: [a], def: defs });
   }
-  const env: CombatEnv = { byId, supplyHours, isCut, seed: prev.seed ?? 0 };
+  const env: CombatEnv = { byId, supplyHours, isCut, seed: prev.seed ?? 0, prefer };
   for (const g of groups) resolveCombat(g.att, g.def, ctx, rng, now, dt, journal, moved, env, prev.umpire ?? []);
 
   // 3. движение вне боя
@@ -203,8 +210,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const mob = mobilityOf(ctx, f);
     if (dist(xy(f), T.proj.toXY(to)) < 0.5) { if (f.posture === 'march' || f.posture === 'withdraw') f.posture = 'defend'; continue; }
     const fc = fortCost(f), tc = terrCost(f, mob);
-    const vc = varietyCost(ctx, prev.seed ?? 0, f, mob);
-    const r = T.advance(f.position, to, mob, prof, R, now, dt, (i) => fc(i) + tc(i), vc ?? undefined);
+    const r = T.advance(f.position, to, mob, prof, R, now, dt, (i) => fc(i) + tc(i), prefer(f, mob));
     if (!r) continue;
     let pos = r.position;
     // встреча с противником останавливает движение: наступающие — войдя в соприкосновение (бой — в следующий ход),
@@ -343,6 +349,8 @@ interface CombatEnv {
   isCut: (f: Formation) => boolean;
   /** seed прогона — для разброса путей. */
   seed: number;
+  /** Выбор пути: разброс путей и полосы по директивам. */
+  prefer: (f: Formation, mob: Mobility) => ((i: number) => number) | undefined;
 }
 
 function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng: Rng, now: string, dt: number, journal: JournalEntry[], moved: Set<string>, env: CombatEnv, umpire: UmpireMod[]) {
@@ -423,7 +431,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
       if (!goal) continue;
       const d = dist(p, goal);
       // продвижение — путём, которым шли бы войска (по дорогам и улицам, через мосты), а не напрямик через кварталы
-      const w = d > 0.05 ? T.walk(f.position, to!, Math.min(advanceKm, d * 1.6), mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now, varietyCost(ctx, env.seed, f, mobilityOf(ctx, f)) ?? undefined) : null;
+      const w = d > 0.05 ? T.walk(f.position, to!, Math.min(advanceKm, d * 1.6), mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now, env.prefer(f, mobilityOf(ctx, f))) : null;
       const k = d > 0 ? Math.min(1, advanceKm / d) : 0;
       const np = w ? w.position : T.proj.toLL([p[0] + (goal[0] - p[0]) * k, p[1] + (goal[1] - p[1]) * k]);
       journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +(w ? w.km : d * k).toFixed(1), ...(w ? pathOf(w.trail) : {}) });
@@ -435,7 +443,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
       const p = T.proj.toXY(f.position);
       const aim = retreatPoint(f, p, ca, advanceKm, T, env);
       // отход — тоже путём (улицами, через мосты); пути нет — напрямик
-      const w = T.walk(f.position, aim, advanceKm, mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now, varietyCost(ctx, env.seed, f, mobilityOf(ctx, f)) ?? undefined);
+      const w = T.walk(f.position, aim, advanceKm, mobilityOf(ctx, f), profileOf(ctx, f.side), ctx.rules, now, env.prefer(f, mobilityOf(ctx, f)));
       const np = w ? w.position : aim;
       journal.push({ kind: 'move', time: now, formation: f.id, from: f.position, to: np, km: +(w ? w.km : advanceKm).toFixed(1), ...(w ? pathOf(w.trail) : {}) });
       f.position = np;
@@ -480,6 +488,27 @@ function varietyCost(ctx: SimContext, seed: number, f: Formation, mob: Mobility)
     return 1 + 2 * v * n;
   };
 }
+
+/** Полосы сторон по действующим директивам: множитель выбора пути для формирования (null — линий нет). */
+function sectorPreferences(ctx: SimContext, units: Formation[], now: string): (f: Formation) => ((i: number) => number) | null {
+  const k = ctx.rules.sectors?.foreign ?? 0;
+  if (k <= 0 || !activeBoundaries(ctx.scenario, now).length) return () => null;
+  const groups = groupCache.get(ctx.scenario) ?? groupOf(ctx.scenario, 'front');
+  groupCache.set(ctx.scenario, groups);
+  const maps = new Map<string, SectorMap>();
+  const fns = new Map<string, ((i: number) => number) | null>();
+  return (f) => {
+    const g = groups.get(f.id) ?? f.id;
+    const key = `${f.side}|${g}`;
+    if (fns.has(key)) return fns.get(key)!;
+    if (!maps.has(f.side) && activeBoundaries(ctx.scenario, now, f.side).length) maps.set(f.side, sectorMap(ctx.theatre, ctx.scenario, units.map((u) => ({ id: u.id, side: u.side, at: u.position })), f.side, now, { groups }));
+    const m = maps.get(f.side);
+    const fn = m ? sectorPrefer(ctx.theatre, m, g, k) : null;
+    fns.set(key, fn);
+    return fn;
+  };
+}
+const groupCache = new WeakMap<object, Map<string, string>>();
 
 /** Подвижность формирования сейчас: техника без горючего идёт пешком. */
 function mobilityOf(ctx: SimContext, f: Formation) {

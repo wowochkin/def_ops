@@ -48,6 +48,7 @@ const IMPACT: Record<string, Record<string, [number, string]>> = {
   equipment: { type: [0.3, ''], armament: [0.5, 'огневая мощь — вес техники'], armor: [0.5, 'защищённость — вес техники'], weight: [0.2, ''], speed: [0.4, 'темп подвижных частей'], crew: [0.2, ''], range: [0.4, 'запас хода — подвоз горючего'] },
   norms: { kb: [0.5, 'обоснование норматива в базе'], source: [0.6, 'проверяемость'], reliable: [0.6, 'надёжность норматива'] },
   sources: { have: [0.7, 'достоверность всего остального'] },
+  boundaries: { line: [0.7, 'полосы фронтов: войска идут своей полосой, выходы в чужую — в отчёте; без линии полоса расчётная'], source: [0.4, 'проверяемость линии'], reliable: [0.4, 'надёжность линии (директива — A, мемуары — B)'] },
 };
 
 /** Где искать — по группе (и сведению). Известные издания и архивы — ориентиры, не исчерпывающий список. */
@@ -67,13 +68,14 @@ const WHERE: Record<string, string[]> = {
   doctrine: ['уставы и наставления: Полевой устав 1944 (ПУ-43), «Наставление по прорыву позиционной обороны» (1944), Боевой устав пехоты', 'германская сторона: H.Dv. 300 «Truppenführung»; US War Dept. TM-E 30-451 «Handbook on German Military Forces» (1945)', 'сборники «Опыт войны» / «Сборник материалов по изучению опыта войны»'],
   equipment: ['справочники: Солянкин и др. «Отечественные бронированные машины»; Chamberlain & Doyle «Encyclopedia of German Tanks of WWII»; Jentz «Panzer Tracts»', 'ТТХ из наставлений по материальной части', 'Широкорад — артиллерия'],
   norms: ['сборники опыта войны, исследования по темпам и потерям (Кривошеев; Исаев)', 'отчёты фронтов по итогам операции'],
+  boundaries: ['директивы Ставки ВГК фронтам на операцию и об изменении разграничительных линий: «Русский архив. Великая Отечественная», т. 16 (5-4) «Ставка ВГК 1944–1945» и т. 15 (4-5) «Битва за Берлин»', 'оперативные директивы фронтов армиям (полосы армий): ЦАМО, ф. 233 (1 БФ), ф. 236 (1 УФ); «Память народа»', 'мемуары командующих фронтами (Жуков, Конев, Рокоссовский) — пересказ линий (B)', 'германская сторона: Trennungslinien в KTB OKW и групп армий; Lagekarten OKH (NARA T-78); карты в Ziemke «Stalingrad to Berlin»'],
   sources: ['загрузите в операцию официальные документы (A): сборники документов, отчёты фронтов, журналы боевых действий', 'проверенные исследования (B) — с указанием страниц'],
 };
 
-const OP_WORDS: Record<string, string> = { formations: 'апрель 1945', positions: '1945 журнал боевых действий', places: 'оборона 1945', lines: 'оборонительная полоса 1945', rivers: 'форсирование 1945', bridges: 'мост 1945 взорван', battles: '1945 бой', events: '1945', weather: 'погода апрель 1945', doctrine: '1945', equipment: 'ТТХ' };
+const OP_WORDS: Record<string, string> = { formations: 'апрель 1945', positions: '1945 журнал боевых действий', places: 'оборона 1945', lines: 'оборонительная полоса 1945', rivers: 'форсирование 1945', bridges: 'мост 1945 взорван', battles: '1945 бой', events: '1945', weather: 'погода апрель 1945', doctrine: '1945', equipment: 'ТТХ', boundaries: 'разграничительная линия директива Ставки 1945' };
 const KEY_WORDS: Record<string, string> = { personnel: 'численность', tanks: 'танки САУ', guns: 'орудия миномёты', composition: 'состав', parent: 'подчинение', commander: 'командир', path: 'боевой путь', defense: 'оборона гарнизон', crossings: 'переправы мосты', losses: 'потери', forces: 'силы сторон', numbers: 'нормативы' };
-const EN_WORDS: Record<string, string> = { personnel: 'strength', tanks: 'tanks', guns: 'artillery', composition: 'order of battle', parent: 'subordinated', commander: 'commander', path: 'operations', days: 'positions', state: 'bridge destroyed' };
-const DE_WORDS: Record<string, string> = { personnel: 'Stärke', tanks: 'Panzer Bestand', guns: 'Artillerie', composition: 'Gliederung', parent: 'Unterstellung', commander: 'Kommandeur', path: 'Einsatz', defense: 'Verteidigung', crossings: 'Brücken', days: 'Lage', state: 'Brücke gesprengt' };
+const EN_WORDS: Record<string, string> = { personnel: 'strength', tanks: 'tanks', guns: 'artillery', composition: 'order of battle', parent: 'subordinated', commander: 'commander', path: 'operations', days: 'positions', state: 'bridge destroyed', line: 'boundary' };
+const DE_WORDS: Record<string, string> = { personnel: 'Stärke', tanks: 'Panzer Bestand', guns: 'Artillerie', composition: 'Gliederung', parent: 'Unterstellung', commander: 'Kommandeur', path: 'Einsatz', defense: 'Verteidigung', crossings: 'Brücken', days: 'Lage', state: 'Brücke gesprengt', line: 'Trennungslinie' };
 
 /** Оригинальное название из «Русское (Original)» или из записи. */
 const orig = (t: string) => /\(([^)]*[A-Za-zÄÖÜäöüß][^)]*)\)/.exec(t)?.[1];
@@ -82,7 +84,7 @@ function queriesFor(g: CoverageGroup, key: string, items: CoverageItem[], period
   const out: string[] = [];
   for (const it of items.slice(0, 3)) {
     const name = it.title.replace(/ — .*$/, '').replace(/^\d\d\.\d\d /, '').replace(/ \(.*$/, '');
-    out.push(`${name} ${KEY_WORDS[key] ?? ''} ${OP_WORDS[g.id] ?? period}`.replace(/\s+/g, ' ').trim());
+    out.push(g.id === 'boundaries' ? `разграничительная линия ${name.replace(' / ', ' и ')} директива 1945` : `${name} ${KEY_WORDS[key] ?? ''} ${OP_WORDS[g.id] ?? period}`.replace(/\s+/g, ' ').trim());
     const o = it.alt ?? orig(it.title);
     // запрос в оригинале: германская сторона — по-немецки, советская — по-английски (в западной литературе)
     if (o || it.side === 'de') out.push(`${o ?? name} ${(it.side === 'de' ? DE_WORDS : EN_WORDS)[key] ?? ''} ${it.side === 'de' ? 'April 1945' : '1945'}`.replace(/\s+/g, ' ').trim());
@@ -90,7 +92,7 @@ function queriesFor(g: CoverageGroup, key: string, items: CoverageItem[], period
   return [...new Set(out)].slice(0, 5);
 }
 
-const UNIT: Record<string, string> = { formations: 'формирований', commanders: 'командующих', positions: 'формирований', places: 'пунктов', lines: 'рубежей', rivers: 'рек', bridges: 'мостов', battles: 'участков', events: 'событий', doctrine: 'тем', equipment: 'образцов', norms: 'нормативов', operation: '', weather: '', sources: '' };
+const UNIT: Record<string, string> = { formations: 'формирований', commanders: 'командующих', positions: 'формирований', places: 'пунктов', lines: 'рубежей', rivers: 'рек', bridges: 'мостов', battles: 'участков', events: 'событий', doctrine: 'тем', equipment: 'образцов', norms: 'нормативов', boundaries: 'пар соседей', operation: '', weather: '', sources: '' };
 
 const sorted = (xs: CoverageItem[]) => [...xs].sort((a, b) => (b.weight ?? 1) - (a.weight ?? 1) || a.score - b.score || a.title.localeCompare(b.title, 'ru'));
 

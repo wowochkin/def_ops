@@ -554,5 +554,8 @@
  ],
  "frontlineFiles": [
   "../../../../../docs/sources/berlin-1945-plan-frontline.json"
+ ],
+ "boundaryFiles": [
+  "../../../../../docs/sources/berlin-1945-boundaries.json"
  ]
 }

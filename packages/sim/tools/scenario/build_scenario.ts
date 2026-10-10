@@ -14,7 +14,7 @@ import { dirname, join, resolve } from 'node:path';
 import type { LngLat } from '@def-ops/core';
 import { addHours } from '../../src/step';
 import { localProjection, dist } from '../../src/geo';
-import type { Echelon, FormationDef, Order, Posture, Scenario, Task } from '../../src/types';
+import type { Boundary, Echelon, FormationDef, Order, Posture, Scenario, Task } from '../../src/types';
 
 interface RecipeFormation {
   id: string; type?: string; divisions?: number; personnel?: number; tanks?: number; guns?: number;
@@ -30,7 +30,10 @@ interface Recipe {
   /** Дополнительные наборы данных того же формата (например, дивизии на детальном участке). */
   extraDatasets?: string[];
   /** Дополнительные линии фронта (например, обводка исторической карты): файлы с date и lines[{name, points}]. */
-  frontlineFiles?: string[]; supply?: Record<string, { sources: string[]; phases?: { from: string; until?: string; sources: string[] }[] } | string>;
+  frontlineFiles?: string[];
+  /** Разграничительные линии (docs/sources/*-boundaries.json): берутся линии, чьи фронты есть в сценарии и сроки пересекают его. */
+  boundaryFiles?: string[];
+  supply?: Record<string, { sources: string[]; phases?: { from: string; until?: string; sources: string[] }[] } | string>;
   defaults: Record<string, { ammo: number; fuel: number; posture: Posture }>;
   allocation: { fronts: Record<string, { personnel: number; tanks: number; guns: number; combatShare: number; note?: string }> };
   formations: RecipeFormation[];
@@ -184,7 +187,31 @@ const scenario: Scenario & { notes: string[]; timeNote?: string } = {
   sides: R.sides, formations, orders, timeNote: R.timeNote, notes,
   ...(R.supply ? { supply: Object.fromEntries(Object.entries(R.supply).filter(([k]) => !k.startsWith('_')).map(([k, v]) => [k, v as { sources: string[]; phases?: { from: string; until?: string; sources: string[] }[] }])) } : {}),
 };
+const boundaries = loadBoundaries();
+if (boundaries.length) scenario.boundaries = boundaries;
 writeFileSync(join(outDir, `${R.id}.json`), JSON.stringify(scenario, null, 1));
+
+/** Разграничительные линии из файлов источников: только пары, обе стороны которых есть в сценарии (или союзник — для авиации). */
+function loadBoundaries(): Boundary[] {
+  const ids = new Set(formations.map((f) => f.id));
+  const out: Boundary[] = [];
+  for (const file of R.boundaryFiles ?? []) {
+    const x = JSON.parse(readFileSync(resolve(dirname(recipePath), file), 'utf8')) as { boundaries: (Omit<Boundary, 'line' | 'places' | 'source'> & {
+      points: { place: string; lng: number; lat: number }[]; quote?: string; inclusiveNote?: string; beyondEnd?: string;
+      source: { doc: string; archive?: string; reliability: string } })[] };
+    for (const b of x.boundaries) {
+      const own = (id: string) => ids.has(id) || (b.kind === 'air' && !id.startsWith(b.side + '_'));
+      if (!own(b.right) || !own(b.left)) continue;
+      if (b.until && b.until <= R.start) continue;
+      if (b.from >= R.end) continue;
+      out.push({ id: b.id, kind: b.kind, side: b.side, right: b.right, left: b.left, title: b.title, from: b.from, until: b.until ?? null,
+        line: b.points.map((p) => [p.lng, p.lat] as LngLat), places: b.points.map((p) => p.place), inclusive: b.inclusive ?? null,
+        note: [b.inclusiveNote, b.beyondEnd].filter(Boolean).join('; '),
+        source: [b.source.doc, b.source.archive].filter(Boolean).join('; '), reliability: b.source.reliability });
+    }
+  }
+  return out;
+}
 
 /* ------------------------------ история для сравнения ------------------------------ */
 

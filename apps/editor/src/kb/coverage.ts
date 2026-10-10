@@ -3,7 +3,7 @@
  * (формирования, ключевые пункты, рубежи, реки, события), оценка по каркасу — по записям базы.
  */
 import { assessCoverage, type Coverage, type CoverageInput } from '@def-ops/knowledge';
-import { areaOriginal, areaTitle, type History, type LiveSetup, type Scenario, type TheatreData } from '@def-ops/sim';
+import { areaOriginal, areaTitle, groupOf, sectorLines, sectorMap, shortName, Theatre, type History, type LiveSetup, type Scenario, type TheatreData } from '@def-ops/sim';
 import { fullCatalog, getData, getInfra, liveOf, sectorsOf } from '../sim/userdata';
 import normsFile from '../../../../packages/sim/data/rules/norms.json';
 import * as kb from './kb';
@@ -58,6 +58,27 @@ export async function coverageInput(opId: string): Promise<CoverageInput> {
   const daysBy = new Map<string, Set<string>>();
   for (const p of hist.positions ?? []) { const l = daysBy.get(p.formation) ?? new Set<string>(); l.add(p.time.slice(0, 10)); daysBy.set(p.formation, l); }
   const norms = ((normsFile as unknown as { norms: { id: string; title: string; kb?: string; source?: string; reliability?: string; measure?: { scenario?: string } }[] }).norms ?? []).filter((x) => x.measure?.scenario === opId);
+  // разграничительные линии: соседние объединения верхнего уровня каждой стороны — по полосам в начале операции
+  const boundaries: NonNullable<CoverageInput['boundaries']> = [];
+  try {
+    const th = new Theatre(T);
+    const groups = groupOf(sc, 'front');
+    const units = sc.formations.filter((f) => f.position && f.type && (!f.enterAt || f.enterAt <= sc.start)).map((f) => ({ id: f.id, side: f.side, at: f.position! }));
+    const nameOf = (id: string) => sc.formations.find((f) => f.id === id)?.name ?? id;
+    for (const sd of sc.sides) {
+      const m = sectorMap(th, sc, units, sd.id, sc.start, { groups });
+      const seen = new Set<string>();
+      for (const l of sectorLines(th, m, { depthKm: 1e6, minKm: 0 })) {
+        const key = l.pair.join('|');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const [a, b] = l.pair;
+        const dirs = (sc.boundaries ?? []).filter((x) => x.kind !== 'air' && ((x.right === a && x.left === b) || (x.right === b && x.left === a)));
+        boundaries.push({ id: key, side: sd.id, a: { id: a, names: [nameOf(a), shortName(nameOf(a))] }, b: { id: b, names: [nameOf(b), shortName(nameOf(b))] },
+          directives: dirs.map((x) => ({ title: x.title, source: x.source, reliability: x.reliability })), line: (dirs[0]?.line ?? l.points) as LL[] });
+      }
+    }
+  } catch { /* театр без сетки — без линий */ }
   await kb.load();
   const documents = kb.current().documents.filter((d) => d.operation === opId).map((d) => ({ id: d.id, name: d.name, reliability: d.reliability }));
   return {
@@ -73,6 +94,7 @@ export async function coverageInput(opId: string): Promise<CoverageInput> {
     positions: sc.formations.filter((f) => f.echelon !== 'front').map((f) => ({ id: f.id, name: f.name, side: f.side, days: daysBy.get(f.id)?.size ?? 0, total })),
     norms: norms.map((x) => ({ id: x.id, title: x.title, kb: x.kb, source: x.source, reliability: x.reliability })),
     documents,
+    boundaries,
   };
 }
 

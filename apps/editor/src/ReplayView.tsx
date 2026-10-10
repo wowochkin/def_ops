@@ -32,10 +32,14 @@ const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] 
   { key: 'front', title: 'Фронт', match: (id) => id === 'sim-front' },
   { key: 'combat', title: 'Бои', match: (id) => id === 'sim-combat' },
   { key: 'theatre', title: 'Рубежи', match: (id) => id === 'theatre' },
+  { key: 'hbounds', title: 'Ист. разгр. линии', match: (id) => id === 'hist-bounds' },
+  { key: 'bounds', title: 'Полосы', match: (id) => id === 'sim-bounds' },
 ];
+/** Расчётные разграничительные линии — свой слой на каждом уровне карты; переключатель — видимость sim-bounds. */
+const BOUND_LAYERS = ['sim-bounds', 'lvl-op-bounds', 'lvl-st-bounds'];
 
 /** Полные названия слоёв в меню «Слои» (на кнопках были сокращения). */
-export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)' };
+export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)', hbounds: 'Разграничительные линии по директивам', bounds: 'Полосы фронтов и армий (расчёт)' };
 
 /** Уровень обобщения карты: тактический — соединения и бои, оперативный — объединения (армии), стратегический — фронты. */
 export type MapLevel = 'tac' | 'op' | 'st';
@@ -44,11 +48,15 @@ export const MAP_LEVELS: { id: MapLevel; title: string; hint: string }[] = [
   { id: 'op', title: 'Оперативный', hint: 'объединения (армии): положение, направления действий за сутки, рубежи обороны' },
   { id: 'st', title: 'Стратегический', hint: 'фронты и группы армий: направления главных ударов за двое суток, оборона' },
 ];
-const LEVEL_LAYERS: Record<MapLevel, string[]> = { tac: ['sim-own', 'sim-enemy', 'sim-combat'], op: ['lvl-op-units', 'lvl-op-moves'], st: ['lvl-st-units', 'lvl-st-moves'] };
+const LEVEL_LAYERS: Record<MapLevel, string[]> = { tac: ['sim-own', 'sim-enemy', 'sim-combat', 'sim-bounds'], op: ['lvl-op-units', 'lvl-op-moves', 'lvl-op-bounds'], st: ['lvl-st-units', 'lvl-st-moves', 'lvl-st-bounds'] };
 const ALL_LEVEL_LAYERS = new Set(Object.values(LEVEL_LAYERS).flat());
-/** Видимость слоёв по уровню; бои (sim-combat) — ещё и по своему переключателю. */
+/** Слои уровня со своим переключателем: показываются, только если он включён. */
+const SWITCHED = new Set(['sim-combat', ...BOUND_LAYERS]);
+/** Видимость слоёв по уровню; бои и полосы — ещё и по своему переключателю (полосы всех уровней — по слою sim-bounds). */
 export function withLevel(doc: MapDocument, level: MapLevel): MapDocument {
-  return { ...doc, layers: doc.layers.map((l) => (ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && (l.id !== 'sim-combat' || l.visible) } : l)) };
+  const boundsOff = doc.layers.some((l) => l.id === 'sim-bounds' && !l.visible);
+  const on = (l: MapDocument['layers'][number]) => !SWITCHED.has(l.id) || (BOUND_LAYERS.includes(l.id) ? !boundsOff : l.visible);
+  return { ...doc, layers: doc.layers.map((l) => (ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && on(l) } : l)) };
 }
 /** Подписи знаков: на карте или только при наведении (запоминается). */
 export function useMapLabels(): [boolean, () => void] {
@@ -79,7 +87,7 @@ export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l
 }
 export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string }[]> = {
   tac: [],
-  op: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }],
+  op: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
   st: [{ cls: 'lg-arrow', text: 'главный удар фронта (за двое суток)' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'оборона' }],
 };
 
@@ -363,6 +371,8 @@ export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: st
     { key: 'ghosts', cls: 'lg-ghost', text: 'историческое положение' },
     { key: 'front', cls: 'lg-front', text: 'линия фронта (расчёт)' },
     { key: 'hfront', cls: 'lg-hfront', text: 'линия фронта (история)' },
+    { key: 'bounds', cls: 'lg-bound', text: 'разграничительная линия фронтов' },
+    { key: 'hbounds', cls: 'lg-hbound', text: 'разграничительная линия по директиве' },
     ...(combat ? [{ key: 'combat', cls: 'lg-arrow', text: 'бой за ход' }] : []),
     { cls: 'lg-flag', text: 'Знамя Победы', mark: '⚑' },
     ...extra,

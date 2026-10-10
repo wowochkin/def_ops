@@ -252,6 +252,33 @@ for (const [op, file] of [['op:berlin', 'berlin-1945-halbe.json'], ['op:berlin',
 }
 for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedupeFacts([...(e.facts ?? []), l.fact]); }
 
+// разграничительные линии фронтов: директивы Ставки ВГК (документы — «Русский архив»), линия 2 БФ — по мемуарам
+{
+  const d = read('docs/sources/berlin-1945-boundaries.json');
+  put({ id: 'src:RA_15', category: 'sources', group: 'books', title: 'Русский архив: Великая Отечественная. Т. 15 (4-5). Битва за Берлин', aliases: ['RA_15', 'Русский архив т. 15'], status: 'checked',
+    summary: 'Сборник документов: директивы Ставки ВГК и Генштаба, боевые распоряжения и донесения фронтов и армий в Берлинской операции (с архивными шифрами ЦА МО и АП РФ).',
+    facts: [{ key: 'ref', value: 'Русский архив: Великая Отечественная. Т. 15 (4-5). Битва за Берлин (Красная Армия в поверженной Германии). М.: Терра, 1995' }, { key: 'reliability', value: 'A' }, { key: 'covers', value: 'директивы о разграничительных линиях фронтов (№ 11059, 11060, 11074, 11077, 11078, 10850)' }] });
+  put({ id: 'src:ROK_SD', category: 'sources', group: 'books', title: 'Рокоссовский К. К. Солдатский долг', aliases: ['ROK_SD'], status: 'checked',
+    summary: 'Мемуары командующего 2-м Белорусским фронтом; пересказ директивы Ставки на Берлинскую операцию.',
+    facts: [{ key: 'ref', value: 'Рокоссовский К. К. Солдатский долг. М.: Воениздат, 1988' }, { key: 'reliability', value: 'B' }, { key: 'covers', value: 'разграничительная линия 2 БФ / 1 БФ' }] });
+  const nm = (id: string) => entries.get(`f:${id}`)?.title ?? id;
+  for (const b of d.boundaries as { id: string; kind: string; right: string; left: string; title: string; from: string; until: string | null; points: { place: string }[]; inclusiveNote?: string; beyondEnd?: string; quote: string; source: { doc: string; archive?: string; reliability: string } }[]) {
+    const src = b.source.reliability === 'A' ? 'src:RA_15' : 'src:ROK_SD';
+    const pair = b.kind === 'air' ? 'советские ВВС / ВВС союзников' : `${nm(b.right)} / ${nm(b.left)}`;
+    const value = `${pair} с ${b.from.slice(8, 10)}.${b.from.slice(5, 7)}${b.until ? ` до ${b.until.slice(8, 10)}.${b.until.slice(5, 7)}` : ''}: ${b.points.map((x) => x.place).join(' — ')}${b.inclusiveNote ? ` (${b.inclusiveNote})` : ''} — ${b.source.doc}`;
+    const fact = { key: 'boundary', value, source: src, pages: b.source.archive, reliability: rel(b.source.reliability), quote: b.quote };
+    const targets = b.kind === 'air' ? ['op:berlin'] : [`f:${b.right}`, `f:${b.left}`, 'op:berlin'];
+    for (const t of targets) { const e = entries.get(t); if (e) e.facts = dedupeFacts([...(e.facts ?? []), fact]); }
+    const day = b.from.slice(0, 10);
+    put({ id: `bnd:${b.id}`, category: 'chronology', group: 'berlin', title: `${dayRu(day)} — разграничительная линия: ${pair}`, period: { from: day, to: day }, status: 'checked',
+      summary: `${b.title}: ${b.points.map((x) => x.place).join(' — ')}.${b.beyondEnd ? ` ${b.beyondEnd[0].toUpperCase()}${b.beyondEnd.slice(1)}.` : ''}`,
+      facts: [{ key: 'date', value: day }, { key: 'event', value: `${b.source.doc}: ${b.title.toLowerCase()}`, source: src, pages: b.source.archive, reliability: rel(b.source.reliability), quote: b.quote }, { key: 'place', value: b.points.map((x) => x.place).join(', ') }],
+      relations: [{ type: 'related', target: 'op:berlin' }, ...(b.kind === 'air' ? [] : [{ type: 'related' as const, target: `f:${b.right}` }, { type: 'related' as const, target: `f:${b.left}` }]), { type: 'source', target: src }] });
+  }
+  const op = entries.get('op:berlin')!;
+  op.sections = [...(op.sections ?? []), { title: 'Разграничительные линии фронтов: пробелы в данных', text: (d.gaps as { what: string; why: string; where: string }[]).map((g) => `- **${g.what}** — ${g.why}. Где искать: ${g.where}.`).join('\n') }];
+}
+
 // связи «включает» для родительских формирований и операций
 for (const e of entries.values()) for (const r of e.relations ?? []) {
   if (r.type !== 'part_of') continue;

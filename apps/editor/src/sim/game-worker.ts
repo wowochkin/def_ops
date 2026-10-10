@@ -9,7 +9,7 @@
 import { createFeature, type SymbolFeature } from '@def-ops/core';
 import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
-  runToDocument, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  activeBoundaries, groupOf, runToDocument, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
@@ -465,9 +465,23 @@ function postView() {
     detectKm: Math.round(detectKm(ctx)),
     goals, journal, doc,
     ...logisticsView(),
+    ...sectorsView(),
     lastDecision: (([...rec.turns].reverse().find((t) => t.human)?.human) as HumanDecision | undefined) ?? null,
   };
   post({ kind: 'view', view });
+}
+
+/** Полосы стороны человека: словами (вкладка «Приказы») и действующие линии с объединениями формирований — для проверки цели приказа. */
+function sectorsView(): Pick<TurnView, 'sectors' | 'boundaries' | 'groupOf'> {
+  const s = g.state, human = rec.human;
+  const nm = (id: string) => shortName(s.formations.find((f) => f.id === id)?.name ?? ctx.scenario.formations.find((f) => f.id === id)?.name ?? id);
+  const units = s.formations.filter((f) => onMap(f, s.time)).map((f) => ({ id: f.id, side: f.side, at: f.position }));
+  const groups = groupOf(ctx.scenario, 'front');
+  return {
+    sectors: sectorText(ctx.theatre, ctx.scenario, units, human, s.time, nm),
+    boundaries: activeBoundaries(ctx.scenario, s.time, human).map((b) => ({ right: b.right, left: b.left, rightName: nm(b.right), leftName: nm(b.left), title: b.title, line: b.line })),
+    groupOf: Object.fromEntries(s.formations.filter((f) => f.side === human).map((f) => [f.id, groups.get(f.id) ?? f.id])),
+  };
 }
 
 /** Тыл и переправы стороны человека — для вкладки «Приказы». */

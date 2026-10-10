@@ -13,6 +13,7 @@ import { addHours, onMap, profileOf, type SimContext } from './step';
 import type { Formation } from './types';
 import type { Theatre } from './theatre';
 import { visualPath } from './roadnet';
+import { groupOf as sectorGroups, sectorLines, sectorMap } from './sectors';
 
 export interface PublishOptions {
   name?: string;
@@ -99,11 +100,16 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('sim-own', 'Переигровка: свои войска', 'friendly'),
     mk('sim-combat', 'Переигровка: бои за ход', 'custom', 0.8, o.combats !== false),
     mk('sim-marks', 'Переигровка: особые отметки', 'custom'),
+    // разграничительные линии: по директивам (история) и расчётные полосы по уровням карты
+    mk('hist-bounds', 'История: разграничительные линии по директивам', 'custom', 0.75),
+    mk('sim-bounds', 'Переигровка: разграничительные линии фронтов', 'custom', 0.85),
     // уровни обобщения (переключаются в переигровке): оперативный — объединения, стратегический — фронты
     mk('lvl-op-units', 'Оперативный уровень: объединения', 'custom', 1, false),
     mk('lvl-op-moves', 'Оперативный уровень: направления действий', 'custom', 0.85, false),
+    mk('lvl-op-bounds', 'Оперативный уровень: полосы фронтов и армий', 'custom', 0.85, false),
     mk('lvl-st-units', 'Стратегический уровень: фронты и группы армий', 'custom', 1, false),
     mk('lvl-st-moves', 'Стратегический уровень: направления ударов', 'custom', 0.85, false),
+    mk('lvl-st-bounds', 'Стратегический уровень: полосы фронтов', 'custom', 0.85, false),
   ];
   const features: Feature[] = [];
   const end = run.final.time;
@@ -234,6 +240,8 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     }
   }
 
+  features.push(...boundaryFeatures(ctx, run, sideOf, o.visible));
+
   // уровни обобщения: объединения и фронты — по своим соединениям, со стрелками направлений и рубежами обороны
   const labelK = Math.pow(2, doc.refZoom - zoom);
   features.push(...levelFeatures(ctx, run, sideOf, 'army', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'front', o.visible, labelK, frontsByTurn));
@@ -292,6 +300,61 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
 
   doc.features = features;
   return doc;
+}
+
+/* ------------------------- полосы и разграничительные линии ------------------------- */
+
+/**
+ * Разграничительные линии на карте:
+ *  - по директивам (hist-bounds) — линии из Scenario.boundaries в сроки их действия, с источником в названии;
+ *  - расчётные по ходам — границы полос фронтов (sim-bounds, lvl-st-bounds, lvl-op-bounds) и армий внутри фронта
+ *    (lvl-op-bounds) от переднего края в глубину; где действует директива, расчётная линия идёт по ней.
+ * С туманом войны (visible) — только свои полосы.
+ */
+function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, visible?: PublishOptions['visible']): Feature[] {
+  const T = ctx.theatre, out: Feature[] = [];
+  const names = new Map(ctx.scenario.formations.map((f) => [f.id, shortName(f.name)]));
+  for (const b of ctx.scenario.boundaries ?? []) {
+    const air = b.kind === 'air';
+    const f = createFeature('line', air ? 'rkka.boundaryUnit' : b.kind === 'army' ? 'rkka.boundaryArmy' : 'rkka.boundaryFront', { points: b.line, layerId: 'hist-bounds' }, 1, air ? 'neutral' : sideOf(b.side));
+    const pair = air ? 'ВВС: советские / союзников' : `${names.get(b.right) ?? b.right} / ${names.get(b.left) ?? b.left}`;
+    f.name = `${b.title} (${pair}): ${(b.places ?? []).join(' — ')}${b.source ? `. ${b.source}` : ''}${b.reliability ? ` (${b.reliability})` : ''}`;
+    f.time = { from: b.from, to: b.until ?? null };
+    out.push(f);
+  }
+  const front = sectorGroups(ctx.scenario, 'front'), army = sectorGroups(ctx.scenario, 'army');
+  const sideOfF = new Map(ctx.scenario.formations.map((f) => [f.id, f.side]));
+  // глубина линий от переднего края: операция — 40 км, город — ~5 км
+  const depthKm = Math.min(40, T.cellKm * 20);
+  const own = ctx.scenario.sides.map((x) => x.id).filter((sd) => !visible || sideOf(sd) === 'own');
+  for (let i = 0; i < run.snapshots.length; i++) {
+    const sn = run.snapshots[i];
+    const to = run.snapshots[i + 1]?.time ?? addHours(sn.time, ctx.scenario.turnHours);
+    const units = sn.units.filter((u) => !u.destroyed).map((u) => ({ id: u.id, side: sideOfF.get(u.id) ?? '', at: u.at }));
+    for (const sd of own) {
+      const side = sideOf(sd);
+      const fm = sectorMap(T, ctx.scenario, units, sd, sn.time, { groups: front });
+      if (fm.groups.length > 1) for (const l of sectorLines(T, fm, { depthKm })) {
+        const nm = `Разграничительная линия ${l.pair.map((g) => names.get(g) ?? g).join(' / ')} (${l.historical >= 0.5 ? 'по директиве' : 'расчёт'}), ход ${sn.turn}`;
+        for (const layerId of ['sim-bounds', 'lvl-op-bounds', 'lvl-st-bounds']) {
+          const f = createFeature('line', 'rkka.boundaryFront', { points: l.points, layerId }, 0.8, side);
+          f.name = nm;
+          f.time = { from: sn.time, to };
+          out.push(f);
+        }
+      }
+      // полосы армий — внутри фронта
+      const am = sectorMap(T, ctx.scenario, units, sd, sn.time, { level: 'army', groups: army });
+      if (am.groups.length > 1) for (const l of sectorLines(T, am, { depthKm: depthKm * 0.6 })) {
+        if ((front.get(l.pair[0]) ?? l.pair[0]) !== (front.get(l.pair[1]) ?? l.pair[1])) continue;
+        const f = createFeature('line', 'rkka.boundaryArmy', { points: l.points, layerId: 'lvl-op-bounds' }, 0.7, side);
+        f.name = `Разграничительная линия ${l.pair.map((g) => names.get(g) ?? g).join(' / ')} (расчёт), ход ${sn.turn}`;
+        f.time = { from: sn.time, to };
+        out.push(f);
+      }
+    }
+  }
+  return out;
 }
 
 /* ------------------------- уровни обобщения карты ------------------------- */

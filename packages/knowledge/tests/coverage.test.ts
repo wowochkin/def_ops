@@ -70,3 +70,19 @@ describe('подсказки, что искать', () => {
     expect(coverageTodo(c, 'Операция')).toMatch(/С чего начать/);
   });
 });
+
+describe('полнота: разграничительные линии', () => {
+  const pair = (directives: { title: string; source?: string; reliability?: string }[]) => ({ id: 'a|b', side: 'su', a: { id: 'su_1bf', names: ['1-й Белорусский фронт', '1 БФ'] }, b: { id: 'su_1uf', names: ['1-й Украинский фронт', '1 УФ'] }, directives });
+  const kb: Entry[] = [{ id: 'f1', category: 'formations', title: '1-й Белорусский фронт', aliases: ['su_1bf'], summary: '', status: 'checked', facts: [{ key: 'boundary', value: '1-й Белорусский фронт / 1-й Украинский фронт: Люббен — Тойпитц', source: 'src:x', reliability: 'A' }] }];
+  it('линия по директиве в сценарии — заполнено полностью', () => {
+    const c = assessCoverage({ ...input, boundaries: [pair([{ title: 'директива', source: '№ 11074', reliability: 'A' }])] }, []);
+    expect(c.groups.find((g) => g.id === 'boundaries')!.items[0].score).toBe(1);
+  });
+  it('нет директивы — по факту базы о соседе; нет ничего — пробел с подсказкой поиска', () => {
+    expect(assessCoverage({ ...input, boundaries: [pair([])] }, kb).groups.find((g) => g.id === 'boundaries')!.items[0].filled).toEqual(['line', 'source', 'reliable']);
+    const c = assessCoverage({ ...input, boundaries: [pair([])] }, []);
+    expect(c.groups.find((g) => g.id === 'boundaries')!.items[0].score).toBe(0);
+    expect(coverageTodo(c, 'Операция')).toMatch(/Разграничительные линии/);
+  });
+});
+

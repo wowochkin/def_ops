@@ -952,5 +952,8 @@
    "source": "LT_RACE",
    "control": true
   }
+ ],
+ "boundaryFiles": [
+  "../../../../../docs/sources/berlin-1945-boundaries.json"
  ]
 }

@@ -6,15 +6,15 @@
  */
 import type { Entry, InfraProposal, KbDocument, PositionProposal, Proposal } from '@def-ops/knowledge';
 
-const DB = 'def_ops_kb', VER = 4;
-/** infra — сведения об инфраструктуре из документов операций (на проверку); positions — положения формирований из них. */
-type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra' | 'positions';
+const DB = 'def_ops_kb', VER = 5;
+/** infra — сведения об инфраструктуре из документов операций (на проверку); positions — положения формирований из них; boundaries — разграничительные линии. */
+type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra' | 'positions' | 'boundaries';
 
 let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors', 'infra', 'positions']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors', 'infra', 'positions', 'boundaries']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });

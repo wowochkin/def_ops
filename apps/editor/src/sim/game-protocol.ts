@@ -131,6 +131,10 @@ export interface TurnView {
   parks: number;
   /** Решение прошлого хода (для продолжения работы над ним). */
   lastDecision: HumanDecision | null;
+  /** Полосы и разграничительные линии своей стороны словами; действующие линии по директивам; объединение (фронт) каждого своего формирования. */
+  sectors: string[];
+  boundaries: { right: string; left: string; rightName: string; leftName: string; title: string; line: LngLat[] }[];
+  groupOf: Record<string, string>;
 }
 
 export type AiStatus =

@@ -96,7 +96,7 @@ export function mockPlan(sys: string, prompt: string) {
 export function mockExtract(prompt: string, infra = false) {
   const text = prompt.split(/Фрагмент:\n\n/)[1] ?? '';
   const out = mockExtractItems(text);
-  return infra ? { ...out, infrastructure: mockInfra(text), positions: mockPositions(text) } : out;
+  return infra ? { ...out, infrastructure: mockInfra(text), positions: mockPositions(text), boundaries: mockBoundaries(text) } : out;
 }
 
 /** Положения формирований (проверка стенда): «… армия/корпус … вышла к/у/в … 22 апреля». */
@@ -109,6 +109,24 @@ export function mockPositions(text: string) {
     const place = /(?:вышл[аи]? к|у|в районе|в|достиг(?:ла|ли)?)\s+([А-ЯЁ][а-яё]+)/.exec(q)?.[1]?.replace(/(у|а|е)$/, '');
     if (!f || !d || !place) continue;
     out.push({ formation: f, date: `1945-${months[d[2]]}-${d[1].padStart(2, '0')}`, place, note: null, quote: q });
+  }
+  return out;
+}
+
+/** Разграничительные линии (проверка стенда): «… разграничительную линию … фронтами: до X прежняя и далее A, B, C». */
+export function mockBoundaries(text: string) {
+  const months: Record<string, string> = { января: '01', февраля: '02', марта: '03', апреля: '04', мая: '05' };
+  const out = [];
+  for (const q of text.split(/(?<=[.!?])\s+(?=[А-ЯЁ0-9])/).map((x) => x.trim()).filter((x) => x.length > 30 && x.length < 400)) {
+    if (!/разграничительн/i.test(q)) continue;
+    const fronts = [...q.matchAll(/(\d+)-(?:м|го|й)\s+(Белорусск|Украинск)\S*/g)].map((m) => `${m[1]}-й ${m[2]}ий фронт`);
+    if (fronts.length === 1) fronts.unshift('адресат директивы');
+    const tail = /(?:далее|затем)\s+([^.]+)/.exec(q)?.[1] ?? '';
+    const points = tail.split(/,\s*|\s+и\s+далее\s+/).map((x) => x.replace(/^(по железной дороге до)\s+/, '').trim()).filter((x) => /^[А-ЯЁ]|^(оз|ст)\./.test(x));
+    const d = /(\d{1,2})[. ](\d{1,2}|января|февраля|марта|апреля|мая)/.exec(q);
+    const date = d ? `1945-${(months[d[2]] ?? d[2]).padStart(2, '0')}-${d[1].padStart(2, '0')}` : null;
+    if (fronts.length < 2 || points.length < 2) continue;
+    out.push({ between: fronts.slice(0, 2), date, dateTo: null, points, inclusive: null, note: /прежняя/.test(q) ? 'начало линии — прежнее' : null, quote: q });
   }
   return out;
 }

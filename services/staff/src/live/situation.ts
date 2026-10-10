@@ -7,7 +7,7 @@
  */
 import {
   areaTitle, dayEvents, places, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
-  onMap, type GameState, type SimContext,
+  onMap, sectorText, shortName, type GameState, type SimContext,
 } from '@def-ops/sim';
 import { fill } from '../fill';
 
@@ -111,6 +111,10 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
     'Подвоз идёт только по своей территории; отрезанные получают его лишь после восстановления связи.',
   ].filter(Boolean) as string[];
 
+  // полосы и разграничительные линии своей стороны (директивы — только уже действующие)
+  const bounds = sectorText(T, ctx.scenario, s.formations.filter((f) => onMap(f, s.time)).map((f) => ({ id: f.id, side: f.side, at: f.position })), side, s.time,
+    (id) => shortName(names.get(id) ?? ctx.scenario.formations.find((f) => f.id === id)?.name ?? id));
+
   const lastDay = g.prev ? dayEvents(ctx, s, side, g.prev) : [];
   const delays = [...new Set(own.map((u) => `${u.echelon === 'army' ? 'армиям' : u.echelon === 'corps' ? 'корпусам' : u.echelon === 'division' ? 'дивизиям' : u.echelon} — ${orderDelay(ctx, { side, echelon: u.echelon })} ч`))].join(', ');
   return {
@@ -121,6 +125,7 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
       enemy: enemyLines.join('\n'),
       areas: areaLines.join('\n'),
       supply: supply.map((x) => `- ${x}`).join('\n'),
+      boundaries: bounds.length ? bounds.map((x) => `- ${x}`).join('\n') : '- Нет.',
     },
     delays,
     own,

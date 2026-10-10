@@ -25,13 +25,15 @@ export interface CategoryDef {
 export const CATEGORIES: CategoryDef[] = [
   { id: 'operations', title: 'Операции', description: 'Стратегические и фронтовые операции: замысел, силы сторон, ход, итоги.', gameSafe: false,
     groups: [{ id: 'strategic', title: 'Стратегические' }, { id: 'front', title: 'Фронтовые и армейские' }],
-    fields: [{ key: 'dates', title: 'Даты' }, { key: 'theatre', title: 'Театр' }, { key: 'sides', title: 'Стороны и объединения' }, { key: 'command', title: 'Командование' }, { key: 'goal', title: 'Замысел и задачи' }, { key: 'forces', title: 'Силы сторон' }, { key: 'outcome', title: 'Итог' }, { key: 'losses', title: 'Потери' }] },
+    fields: [{ key: 'dates', title: 'Даты' }, { key: 'theatre', title: 'Театр' }, { key: 'sides', title: 'Стороны и объединения' }, { key: 'command', title: 'Командование' }, { key: 'goal', title: 'Замысел и задачи' }, { key: 'forces', title: 'Силы сторон' }, { key: 'outcome', title: 'Итог' }, { key: 'losses', title: 'Потери' },
+      { key: 'boundary', title: 'Разграничительные линии', hint: 'между фронтами (группами армий): пункты, сроки, номер директивы' }] },
   { id: 'battles', title: 'Сражения и бои', description: 'Отдельные сражения и бои внутри операций: место, участники, ход, исход.', gameSafe: false,
     groups: [{ id: 'breakthrough', title: 'Прорыв обороны' }, { id: 'encirclement', title: 'Окружение и котлы' }, { id: 'city', title: 'Бои в городе' }, { id: 'crossing', title: 'Форсирование рек' }, { id: 'other', title: 'Прочие' }],
     fields: [{ key: 'operation', title: 'Операция' }, { key: 'dates', title: 'Даты' }, { key: 'place', title: 'Место' }, { key: 'attacker', title: 'Наступающие' }, { key: 'defender', title: 'Обороняющиеся' }, { key: 'forces', title: 'Силы' }, { key: 'course', title: 'Ход' }, { key: 'outcome', title: 'Исход' }, { key: 'losses', title: 'Потери' }] },
   { id: 'formations', title: 'Формирования', description: 'Фронты, армии, корпуса, дивизии: подчинённость, состав, численность, командиры, боевой путь.', gameSafe: false,
     groups: [{ id: 'su', title: 'Красная армия и Войско Польское' }, { id: 'de', title: 'Вермахт и войска СС' }],
-    fields: [{ key: 'side', title: 'Сторона' }, { key: 'echelon', title: 'Ступень' }, { key: 'parent', title: 'Подчинённость' }, { key: 'commander', title: 'Командир' }, { key: 'composition', title: 'Состав' }, { key: 'personnel', title: 'Численность' }, { key: 'tanks', title: 'Танки и САУ' }, { key: 'guns', title: 'Орудия и миномёты' }, { key: 'path', title: 'Боевой путь в операции' }] },
+    fields: [{ key: 'side', title: 'Сторона' }, { key: 'echelon', title: 'Ступень' }, { key: 'parent', title: 'Подчинённость' }, { key: 'commander', title: 'Командир' }, { key: 'composition', title: 'Состав' }, { key: 'personnel', title: 'Численность' }, { key: 'tanks', title: 'Танки и САУ' }, { key: 'guns', title: 'Орудия и миномёты' }, { key: 'path', title: 'Боевой путь в операции' },
+      { key: 'boundary', title: 'Разграничительные линии', hint: 'с каким соседом, по каким пунктам, с какого числа и до какого, чьи пункты включительно; номер директивы или приказа' }] },
   { id: 'commanders', title: 'Командование', description: 'Командующие и начальники штабов: должность, звание, решения в операции.', gameSafe: false,
     groups: [{ id: 'su', title: 'Советские и польские' }, { id: 'de', title: 'Германские' }],
     fields: [{ key: 'side', title: 'Сторона' }, { key: 'rank', title: 'Звание' }, { key: 'post', title: 'Должность в операции' }, { key: 'years', title: 'Годы жизни' }, { key: 'decisions', title: 'Ключевые решения' }] },
@@ -124,7 +126,7 @@ export interface KbDocument {
   /** Материал операции (id): разбор ищет и сведения об инфраструктуре, записи базы относятся к операции. */
   operation?: string;
   /** Итоги разбора: что извлечено (по частям — сумма). */
-  extracted?: { entries: number; updates: number; infra: number; dropped: number; positions?: number };
+  extracted?: { entries: number; updates: number; infra: number; dropped: number; positions?: number; boundaries?: number };
 }
 
 /** Предложение изменить базу (из документа): новая запись или дополнение существующей. */
@@ -173,6 +175,25 @@ export interface PositionItem {
   place: string;
   note: string | null;
   quote: string;
+}
+/** Разграничительная линия из документа: между кем, с какого числа, по каким пунктам (по порядку) — с цитатой. */
+export interface BoundaryItem {
+  /** Два объединения (фронты, армии, группы армий): названия как в тексте. */
+  between: string[];
+  date: string | null;
+  dateTo: string | null;
+  /** Пункты линии по порядку, как в тексте («Люббен», «Тойпитц»). */
+  points: string[];
+  /** Чьи пункты включительно (название объединения) или null. */
+  inclusive: string | null;
+  note: string | null;
+  quote: string;
+}
+/** Предложение: линия — в сценарий операции (полосы в расчёте) и фактом в записи обоих объединений (база знаний). */
+export interface BoundaryProposal {
+  id: string; doc: string; docName: string; chunk: number; operation: string; reliability: Reliability;
+  item: BoundaryItem;
+  status: 'pending' | 'accepted' | 'rejected';
 }
 /** Предложение: положение — в боевой путь формирования (база знаний) и в историю операции (для сравнения расчёта). */
 export interface PositionProposal {

@@ -5,8 +5,8 @@
  */
 import { stripMeta } from '../markdown';
 import {
-  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, OPERATION_EXTRACT_SCHEMA, qaMessages, toInfraProposals, toPositionProposals, toProposals,
-  type Entry, type ExtractedItem, type Fact, type InfraItem, type InfraProposal, type KbDocument, type OperationHint, type PositionItem, type PositionProposal, type Proposal, type Reliability, type Source,
+  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, OPERATION_EXTRACT_SCHEMA, qaMessages, toBoundaryProposals, toInfraProposals, toPositionProposals, toProposals,
+  type Entry, type ExtractedItem, type Fact, type InfraItem, type BoundaryItem, type BoundaryProposal, type InfraProposal, type KbDocument, type OperationHint, type PositionItem, type PositionProposal, type Proposal, type Reliability, type Source,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
@@ -25,6 +25,7 @@ export interface KbState {
   infra: InfraProposal[];
   /** Положения формирований по дням из документов операций. */
   positions: PositionProposal[];
+  boundaries: BoundaryProposal[];
   /** Обработка документа: id, часть, всего, сообщение. */
   job: { doc: string; at: number; total: number; text: string } | null;
   /** Смысловой поиск (эмбеддинги). */
@@ -32,7 +33,7 @@ export interface KbState {
 }
 
 const vectors = new Vectors(() => { state.vec = vectors.state; emit(); });
-let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], infra: [], positions: [], job: null, vec: vectors.state };
+let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], infra: [], positions: [], boundaries: [], job: null, vec: vectors.state };
 const subs = new Set<(s: KbState) => void>();
 const emit = () => { state = { ...state }; subs.forEach((f) => f(state)); };
 export const subscribe = (f: (s: KbState) => void) => { subs.add(f); f(state); return () => { subs.delete(f); }; };
@@ -44,9 +45,10 @@ export function load(): Promise<void> {
   return loading;
 }
 async function reload() {
-  const [entries, documents, proposals, infra, positions] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals'), store.all<InfraProposal>('infra'), store.all<PositionProposal>('positions')]);
+  const [entries, documents, proposals, infra, positions, boundaries] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals'), store.all<InfraProposal>('infra'), store.all<PositionProposal>('positions'), store.all<BoundaryProposal>('boundaries')]);
   state.infra = infra;
   state.positions = positions;
+  state.boundaries = boundaries;
   state.entries = entries;
   state.byId = new Map(entries.map((e) => [e.id, e]));
   state.documents = documents.sort((a, b) => b.addedAt.localeCompare(a.addedAt));
@@ -113,6 +115,8 @@ export async function removeDocument(id: string) {
   if (ip.length) await store.del('infra', ...ip);
   const pp = state.positions.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
   if (pp.length) await store.del('positions', ...pp);
+  const bp = state.boundaries.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
+  if (bp.length) await store.del('boundaries', ...bp);
   await reload();
 }
 
@@ -141,7 +145,7 @@ export async function process(id: string, llm: LlmSettings, hint?: OperationHint
       state.job = { doc: id, at: i, total: doc.chunks.length, text: `часть ${i + 1} из ${doc.chunks.length}…` };
       emit();
       const r = await c.chat({ messages: extractMessages(doc.chunks[i].text, doc.name, op), schema: op ? { name: 'kb_operation_extract', schema: OPERATION_EXTRACT_SCHEMA } : { name: 'kb_extract', schema: EXTRACT_SCHEMA }, signal: abort.signal });
-      const j = r.json as { items?: ExtractedItem[]; infrastructure?: InfraItem[]; positions?: PositionItem[] } | undefined;
+      const j = r.json as { items?: ExtractedItem[]; infrastructure?: InfraItem[]; positions?: PositionItem[]; boundaries?: BoundaryItem[] } | undefined;
       const res = toProposals(j?.items ?? [], doc.chunks[i].text, state.entries, doc, i);
       dropped += res.dropped; made += res.proposals.length;
       if (res.proposals.length) await store.put('proposals', ...res.proposals);
@@ -155,6 +159,10 @@ export async function process(id: string, llm: LlmSettings, hint?: OperationHint
         if (pos.proposals.length) await store.put('positions', ...pos.proposals);
         state.positions = [...state.positions, ...pos.proposals];
         sum.positions = (sum.positions ?? 0) + pos.proposals.length; sum.dropped += pos.dropped; dropped += pos.dropped; made += pos.proposals.length;
+        const bnd = toBoundaryProposals(j?.boundaries, doc.chunks[i].text, { ...doc, operation: doc.operation }, i);
+        if (bnd.proposals.length) await store.put('boundaries', ...bnd.proposals);
+        state.boundaries = [...state.boundaries, ...bnd.proposals];
+        sum.boundaries = (sum.boundaries ?? 0) + bnd.proposals.length; sum.dropped += bnd.dropped; dropped += bnd.dropped; made += bnd.proposals.length;
       }
       doc.extracted = { ...sum };
       doc.processed = i + 1;
@@ -208,6 +216,14 @@ export async function decidePositions(ids: string[], accept: boolean) {
   await reload();
 }
 
+/** Разграничительные линии из документов: отметить принятыми или отклонёнными (в сценарий и в базу их пишет раздел «Операции»). */
+export async function decideBoundaries(ids: string[], accept: boolean) {
+  const ps = state.boundaries.filter((p) => ids.includes(p.id) && p.status === 'pending');
+  for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
+  if (ps.length) await store.put('boundaries', ...ps);
+  await reload();
+}
+
 /**
  * Добавить факты в запись (сверка со сценарием, положения из документов): запись берётся существующая или
  * создаётся по образцу; повторяющиеся факты (тот же ключ и значение) не добавляются. Одна запись — один раз.
@@ -250,17 +266,18 @@ export async function recordCalibration(op: { id: string; title: string }, at: s
 /* ───────────── обмен ───────────── */
 
 export async function exportUser(): Promise<string> {
-  const [entries, documents, proposals, infra, positions] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra'), store.all('positions')]);
-  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra, positions });
+  const [entries, documents, proposals, infra, positions, boundaries] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra'), store.all('positions'), store.all('boundaries')]);
+  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra, positions, boundaries });
 }
 export async function importUser(json: string) {
-  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[] };
+  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[]; boundaries?: BoundaryProposal[] };
   if (d.format !== 'def-ops-knowledge') throw new Error('это не выгрузка базы знаний');
   if (d.entries?.length) await store.put('entries', ...d.entries);
   if (d.documents?.length) await store.put('documents', ...d.documents);
   if (d.proposals?.length) await store.put('proposals', ...d.proposals);
   if (d.infra?.length) await store.put('infra', ...d.infra);
   if (d.positions?.length) await store.put('positions', ...d.positions);
+  if (d.boundaries?.length) await store.put('boundaries', ...d.boundaries);
   await reload();
 }
 

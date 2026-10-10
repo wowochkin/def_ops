@@ -1983,5 +1983,8 @@
  ],
  "extraDatasets": [
   "../../../../../docs/sources/berlin-1945-seelow-divisions.json"
+ ],
+ "boundaryFiles": [
+  "../../../../../docs/sources/berlin-1945-boundaries.json"
  ]
 }

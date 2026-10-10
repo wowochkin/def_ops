@@ -3,7 +3,7 @@
  * калибровка) и загруженные операции (пакет: сценарий, театр, история, участки, настройки штаба модели, запись
  * каталога). Поверх данных сборки (packages/sim/data): getter отдаёт сначала встроенный файл, затем свой.
  */
-import type { CatalogEntry, DataKind, History, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
+import type { Boundary, CatalogEntry, DataKind, History, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
 import type { KbOperation, OperationHint } from '@def-ops/knowledge';
 import { defaultCatalog, defaultLive } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
@@ -93,6 +93,8 @@ export interface OperationEdits {
   recalibrations: Recalibration[];
   /** Набор правил по умолчанию для операции (после пересчёта). */
   defaultRules?: string;
+  /** Разграничительные линии из документов: добавляются к линиям сценария (та же пара и срок — заменяют). */
+  boundaries?: Boundary[];
 }
 const emptyEdits = (id: string): OperationEdits => ({ id, formations: {}, positions: [], dismissed: [], log: [], recalibrations: [] });
 export const getEdits = async (id: string): Promise<OperationEdits> => ({ ...emptyEdits(id), ...(await one<OperationEdits>('edits', id)) });
@@ -111,6 +113,10 @@ export function changesSince(e: OperationEdits): ChangeLog[] {
 }
 
 function applyScenarioEdits(sc: Scenario, e: OperationEdits | undefined): Scenario {
+  if (e?.boundaries?.length) {
+    const same = (a: Boundary, b: Boundary) => a.from === b.from && ((a.right === b.right && a.left === b.left) || (a.right === b.left && a.left === b.right));
+    sc = { ...sc, boundaries: [...(sc.boundaries ?? []).filter((b) => !e.boundaries!.some((x) => same(x, b))), ...e.boundaries].sort((a, b) => a.from.localeCompare(b.from)) };
+  }
   if (!e || !Object.keys(e.formations).length) return sc;
   return { ...sc, formations: sc.formations.map((f) => {
     const p = e.formations[f.id];

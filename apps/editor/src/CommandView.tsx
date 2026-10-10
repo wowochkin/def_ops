@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
-import { TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
+import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
 import type { AdviceView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
@@ -62,6 +62,8 @@ const TOGGLES = [
   { key: 'plan', title: 'Замысел', match: (id: string) => id === 'plan' },
   { key: 'rear', title: 'Тыл', match: (id: string) => id === 'logistics' },
   { key: 'rivers', title: 'Реки', match: (id: string) => id === 'rivers' },
+  { key: 'hbounds', title: 'Ист. разгр. линии', match: (id: string) => id === 'hist-bounds' },
+  { key: 'bounds', title: 'Полосы', match: (id: string) => id === 'sim-bounds' },
 ];
 
 export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOpenInEditor }: {
@@ -106,7 +108,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
   const [labels, toggleLabels] = useMapLabels();
-  const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true });
+  const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true, hbounds: true, bounds: true });
   const [reveal, setReveal] = useState(false);
   const [now, setNow] = useState(Date.now());
   const worker = useRef<Worker | null>(null);
@@ -602,6 +604,8 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
       {u ? <OrderEditor v={v} u={u} d={d ?? blank(u.id)} isNew={!d} pick={pick} setPick={setPick}
         save={(nd) => setDrafts((all) => ({ ...all, [u.id]: nd }))} drop={() => setDrafts((all) => { const n = { ...all }; delete n[u.id]; return n; })} close={() => setSel(null)} />
         : <p className="muted">Выберите объединение — в списке ниже или щелчком по его знаку на карте.</p>}
+      {(v.sectors?.length ?? 0) > 0 && <details className="sect-note"><summary>Полосы и разграничительные линии</summary><ul>{v.sectors.map((t) => <li key={t}>{t}</li>)}</ul>
+        <p className="muted small">Объединения идут к цели своей полосой; выход в полосу соседа по директиве не запрещён, но отмечается в разборе.</p></details>}
       <h4 className="cmd-h4">Объединения</h4>
       <Grouped v={v}>{(x) => x.status === 'destroyed' ? null : (
         <button key={x.id} className={`orow${x.id === sel ? ' on' : ''}`} onClick={() => setSel(x.id)}>
@@ -613,6 +617,20 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
         </button>)}</Grouped>
     </div>
   );
+}
+
+/** Цель приказа в полосе соседа по действующей директиве: чья полоса (null — в своей или директивы нет). */
+function neighbourAt(v: TurnView, unit: string, at: LngLat): { name: string; title: string } | null {
+  const g = v.groupOf?.[unit];
+  for (const b of v.boundaries ?? []) {
+    if (b.right !== g && b.left !== g) continue;
+    const k = Math.cos((at[1] * Math.PI) / 180) * 111.32;
+    const xy = (p: LngLat): [number, number] => [p[0] * k, p[1] * 110.57];
+    const sd = sideOf(b.line.map(xy), xy(at));
+    const own = b.right === g ? 1 : -1;
+    if (sd !== 0 && sd !== own) return { name: own > 0 ? b.leftName : b.rightName, title: b.title };
+  }
+  return null;
 }
 
 function OrderEditor({ v, u, d, isNew, pick, setPick, save, drop, close }: { v: TurnView; u: UnitReport; d: Draft; isNew: boolean; pick: boolean; setPick: (b: boolean) => void; save: (d: Draft) => void; drop: () => void; close: () => void }) {
@@ -628,6 +646,7 @@ function OrderEditor({ v, u, d, isNew, pick, setPick, save, drop, close }: { v: 
   const setPlace = (p: Place) => save({ ...d, target: p.id, at: p.at, targetText: p.title });
   const needs = NEEDS_TARGET.includes(d.task);
   const arrive = addH(v.time, delay);
+  const foreign = d.at ? neighbourAt(v, u.id, d.at) : null;
   return (
     <div className="oedit">
       <div className="oedit-h"><b>{u.name}</b><button className="x" onClick={close} title="Закрыть">×</button></div>
@@ -650,6 +669,7 @@ function OrderEditor({ v, u, d, isNew, pick, setPick, save, drop, close }: { v: 
       </div></div>}
       {mode === 'point' && <button className={pick ? 'on' : ''} onClick={() => setPick(!pick)}>{pick ? 'Щёлкните по карте… (отмена)' : Array.isArray(d.target) ? 'Указать другую точку' : 'Указать точку на карте'}</button>}
       <div className={`otarget${needs && !d.target && !isNew ? ' miss' : ''}`}>{d.target ? <>Цель: <b>{d.targetText}</b> <button className="link" onClick={() => save({ ...d, target: null, at: null, targetText: '' })}>убрать</button></> : needs ? 'Для этой задачи нужна цель — выберите пункт, противника или точку' : 'Цель не указана — на месте'}</div>
+      {foreign && <div className="adv-warn">⚠ Цель — в полосе соседа ({foreign.name}) по директиве «{foreign.title}». Войска пойдут туда, но своей полосой, где можно; выход в чужую полосу отмечается в разборе.</div>}
       <label>Указания <textarea rows={2} value={d.note} placeholder="Силы, порядок, взаимодействие, срок…" onChange={(e) => save({ ...d, note: e.target.value })} /><small className="muted">для журнала и разбора; арбитр исполняет задачу и цель</small></label>
       <div className="muted small">Дойдёт до войск ≈ {hhmm(arrive)} {ddmm(arrive)} (через {delay} ч).</div>
       <div className="oedit-f">

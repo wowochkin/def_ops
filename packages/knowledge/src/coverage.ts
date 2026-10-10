@@ -37,6 +37,12 @@ export interface CoverageInput {
   norms?: { id: string; title: string; kb?: string; source?: string; reliability?: string }[];
   /** Документы, загруженные в операцию. */
   documents?: { id: string; name: string; reliability: string }[];
+  /**
+   * Разграничительные линии: соседние объединения одной стороны (фронты, группы армий — соседство по полосам в начале
+   * операции) и линии по директивам, которые уже есть в сценарии.
+   */
+  boundaries?: { id: string; side: string; a: { id: string; names: string[] }; b: { id: string; names: string[] };
+    directives: { title: string; source?: string; reliability?: string }[]; line?: LL[] }[];
 }
 
 export interface CoverageItem {
@@ -187,6 +193,24 @@ export function assessCoverage(input: CoverageInput, entries: Entry[]): Coverage
   if (input.positions?.length) add({ id: 'positions', section: 'forces', title: 'Положения по дням', what: 'история для сравнения расчёта: в какие дни операции известно положение формирования (по источникам)', weight: 0.1, labels: { days: 'дни с положением' },
     items: input.positions.map((p) => ({ id: `pos:${p.id}`, title: p.name, side: p.side, alt: formations.filter((e) => (e.aliases ?? []).includes(p.id)).flatMap((e) => e.aliases ?? []).find((a) => /[A-Za-z]/.test(a) && !/_/.test(a) && !/^[a-z]/.test(a)), need: ['days'], filled: p.days >= p.total * 0.5 ? ['days'] : [], entries: [], score: Math.min(1, p.days / Math.max(1, p.total)), note: `${p.days} из ${p.total} дн.` })) }, true);
 
+  if (input.boundaries?.length) {
+    // линия известна — директива в сценарии или факт «разграничительные линии» у записи одного из соседей, где назван другой
+    const bItems = input.boundaries.map((b) => {
+      const mention = (who: { id: string; names: string[] }, other: { names: string[] }) => fEntries({ id: who.id, name: who.names[0] })
+        .flatMap((e) => (e.facts ?? []).filter((f) => f.key === 'boundary' && other.names.some((n) => norm(f.value).includes(norm(n)))).map((f) => ({ e, f })));
+      const kb = [...mention(b.a, b.b), ...mention(b.b, b.a)];
+      const filled = [
+        b.directives.length || kb.length ? 'line' : '',
+        b.directives.some((d) => d.source) || kb.some((x) => x.f.source || x.f.quote) ? 'source' : '',
+        b.directives.some((d) => d.reliability === 'A' || d.reliability === 'B') || kb.some((x) => x.f.reliability === 'A' || x.f.reliability === 'B') ? 'reliable' : '',
+      ].filter(Boolean);
+      const note = b.directives.length ? `по директивам: ${b.directives.map((d) => d.title).join('; ')}` : kb.length ? 'в базе знаний' : 'в модели — расчётная (по ближайшим войскам)';
+      return { id: `bnd:${b.id}`, title: `${b.a.names[0]} / ${b.b.names[0]}`, side: b.side, need: ['line', 'source', 'reliable'], filled, entries: [...new Set(kb.map((x) => x.e.id))], score: filled.length / 3, note, line: b.line, weight: 4 } as CoverageItem;
+    });
+    add({ id: 'boundaries', section: 'forces', title: 'Разграничительные линии', what: 'между соседними фронтами (группами армий) каждой стороны: по каким пунктам и с какого числа (директива), источник, достоверность; без них полосы в модели — расчётные', weight: 0.04,
+      labels: { line: 'линия известна', source: 'источник', reliable: 'достоверность A/B' }, items: bItems }, true);
+  }
+
   /* ── местность и инфраструктура ── */
   add({ id: 'places', section: 'ground', title: 'Пункты и районы', what: 'ключевые населённые пункты и районы (цели, места событий): что это, где, особенности, оборона (гарнизон, укрепления), значение', weight: 0.1, labels: labelsOf('terrain', ['kind', 'location', 'features', 'defense', 'significance']),
     items: input.places.map((p) => item(p.id, p.names[0], ['kind', 'location', 'features', 'defense', 'significance'], terrain.filter((e) => nameMatch(e, p.names, true)), { note: p.why, at: p.at })) });
@@ -275,7 +299,7 @@ export function coverageTodo(c: Coverage, title: string): string {
       if (keys.length > 1) out.push(`Нет сведений: ${keys.map((k) => `${g.labels[k] ?? k} — у ${g.items.filter((i) => i.need.includes(k) && !i.filled.includes(k)).length} из ${g.items.filter((i) => i.need.includes(k)).length}`).join('; ')}.`, '');
       for (const i of miss.sort((a, b) => a.score - b.score)) {
         const need = i.need.filter((k) => !i.filled.includes(k)).map((k) => g.labels[k] ?? k);
-        out.push(`- **${i.title}**${i.note ? ` (${i.note})` : ''}: ${need.join(', ')}${i.entries.length || i.need[0] === 'days' || i.need[0] === 'state' || i.need[0] === 'have' ? '' : ' — записи в базе нет'}`);
+        out.push(`- **${i.title}**${i.note ? ` (${i.note})` : ''}: ${need.join(', ')}${i.entries.length || i.need[0] === 'days' || i.need[0] === 'state' || i.need[0] === 'have' || i.need[0] === 'line' ? '' : ' — записи в базе нет'}`);
       }
       out.push('');
     }

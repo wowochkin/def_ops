@@ -5,7 +5,7 @@
  * сопоставляется с существующей (по названию и синонимам) — тогда это дополнение, иначе новая запись.
  * В базу попадает только то, что примет человек.
  */
-import { CATEGORIES, type CategoryId, type Entry, type Fact, type InfraItem, type InfraProposal, type KbDocument, type PositionItem, type PositionProposal, type Proposal, type Relation, type RelationType, type Reliability } from './schema';
+import { CATEGORIES, type CategoryId, type Entry, type Fact, type InfraItem, type InfraProposal, type KbDocument, type BoundaryItem, type BoundaryProposal, type PositionItem, type PositionProposal, type Proposal, type Relation, type RelationType, type Reliability } from './schema';
 import { foreignTo } from './operations';
 import { stems } from './search';
 import { defaultRubrics, RUBRIC_CODES, rubricPath } from './rubrics';
@@ -59,10 +59,14 @@ const POSITION_ITEM = {
   type: 'object', additionalProperties: false, required: ['formation', 'date', 'place', 'note', 'quote'],
   properties: { formation: s, date: s, place: s, note: { type: ['string', 'null'] }, quote: s },
 } as const;
-/** Разбор документа операции: записи базы, сведения об инфраструктуре, положения формирований по дням. */
+const BOUNDARY_ITEM = {
+  type: 'object', additionalProperties: false, required: ['between', 'date', 'dateTo', 'points', 'inclusive', 'note', 'quote'],
+  properties: { between: { type: 'array', items: s }, date: { type: ['string', 'null'] }, dateTo: { type: ['string', 'null'] }, points: { type: 'array', items: s }, inclusive: { type: ['string', 'null'] }, note: { type: ['string', 'null'] }, quote: s },
+} as const;
+/** Разбор документа операции: записи базы, сведения об инфраструктуре, положения формирований по дням, разграничительные линии. */
 export const OPERATION_EXTRACT_SCHEMA = {
-  ...EXTRACT_SCHEMA, required: ['items', 'infrastructure', 'positions'],
-  properties: { ...EXTRACT_SCHEMA.properties, infrastructure: { type: 'array', items: INFRA_ITEM }, positions: { type: 'array', items: POSITION_ITEM } },
+  ...EXTRACT_SCHEMA, required: ['items', 'infrastructure', 'positions', 'boundaries'],
+  properties: { ...EXTRACT_SCHEMA.properties, infrastructure: { type: 'array', items: INFRA_ITEM }, positions: { type: 'array', items: POSITION_ITEM }, boundaries: { type: 'array', items: BOUNDARY_ITEM } },
 } as const;
 
 /** Операция, к которой относится документ: для подсказки модели (сроки, стороны). */
@@ -116,6 +120,13 @@ function infraRules(op: OperationHint): string {
 - place — населённый пункт, район или рубеж в именительном падеже, оригинал — в скобках: «Эркнер (Erkner)»;
 - note — подробности (какими силами, передовые части или главные силы) или null; quote — дословная цитата.
 Только положения с датой и местом, прямо сказанные во фрагменте; направление удара без места — не положение. Нет — positions пустой.
+
+И в boundaries — разграничительные линии между объединениями (фронтами, армиями, группами армий): «Установить с 15.4.45 г. следующую разграничительную линию с 1-м Белорусским фронтом: до Унруштадт прежняя и далее оз. Енсдорфер-Зее, Гросс-Гастрозе, Люббен».
+- between — два объединения, между которыми линия, как принято по-русски («1-й Белорусский фронт», «1-й Украинский фронт»); если документ адресован одному из них («с 1-м Белорусским фронтом»), второй — адресат документа;
+- date / dateTo — ГГГГ-ММ-ДД, с какого и до какого дня действует (если сказано), иначе null;
+- points — пункты линии по порядку, как в тексте, в именительном падеже («Люббен», «оз. Енсдорфер-Зее»); «прежняя», «по железной дороге» — не пункты (в note);
+- inclusive — чьи пункты включительно (название объединения) или null; note — оговорки («все пункты, кроме Люббен», «до Люббен прежняя») или null; quote — дословная цитата.
+Только прямо сказанные линии. Нет — boundaries пустой.
 
 `;
 }
@@ -225,6 +236,23 @@ export function toPositionProposals(items: PositionItem[] | undefined, chunk: st
     out.push({
       id: `${doc.id}:p${chunkIndex}:${out.length}`, doc: doc.id, docName: doc.name, chunk: chunkIndex, operation: doc.operation, reliability: doc.reliability,
       item: { formation: it.formation.trim(), date, place: it.place.trim(), note: it.note?.trim() || null, quote: it.quote.trim() }, status: 'pending',
+    });
+  }
+  return { proposals: out, dropped };
+}
+
+/** Разграничительные линии из документа → предложения (с проверкой цитат; меньше двух объединений или двух пунктов — отбрасываются). */
+export function toBoundaryProposals(items: BoundaryItem[] | undefined, chunk: string, doc: Pick<KbDocument, 'id' | 'name' | 'reliability'> & { operation: string }, chunkIndex: number): { proposals: BoundaryProposal[]; dropped: number } {
+  const out: BoundaryProposal[] = [];
+  let dropped = 0;
+  const date = (d: string | null) => (d && /^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10) : null);
+  for (const it of items ?? []) {
+    const between = (it?.between ?? []).map((x) => x.trim()).filter(Boolean);
+    const points = (it?.points ?? []).map((x) => x.trim()).filter(Boolean);
+    if (between.length < 2 || points.length < 2 || !quoteFound(it.quote ?? '', chunk)) { dropped++; continue; }
+    out.push({
+      id: `${doc.id}:b${chunkIndex}:${out.length}`, doc: doc.id, docName: doc.name, chunk: chunkIndex, operation: doc.operation, reliability: doc.reliability,
+      item: { between: between.slice(0, 2), date: date(it.date), dateTo: date(it.dateTo), points, inclusive: it.inclusive?.trim() || null, note: it.note?.trim() || null, quote: it.quote.trim() }, status: 'pending',
     });
   }
   return { proposals: out, dropped };

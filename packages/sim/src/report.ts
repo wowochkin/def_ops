@@ -6,6 +6,8 @@
 import type { SimContext } from './step';
 import { checkEvents, compareWithHistory, runScenario, summarize, type Deviation, type EventResult, type History, type RunResult } from './history';
 import { shortName } from './publish';
+import { groupOf, sectorViolations } from './sectors';
+import type { RunResult as Run } from './history';
 
 export interface AnalysisOptions {
   seed?: number;
@@ -30,6 +32,26 @@ export interface Analysis {
   events: EventResult[];
   /** События по всем прогонам: расхождение в сутках (null — не случилось). */
   eventsBySeed: { id: string; title: string; historical: string; days: (number | null)[] }[];
+  /** Выходы в полосу соседа по директивам (первый прогон): формирование, линия, ходов, с какого момента. */
+  sectors: SectorBreach[];
+}
+
+export interface SectorBreach { formation: string; boundary: string; in: string; turns: number; first: string }
+
+/** Выходы формирований в полосу соседа по действующим разграничительным линиям — по снимкам прогона. */
+export function sectorBreaches(ctx: SimContext, run: Run): SectorBreach[] {
+  if (!ctx.scenario.boundaries?.length) return [];
+  const groups = groupOf(ctx.scenario, 'front');
+  const side = new Map(run.final.formations.map((f) => [f.id, f.side]));
+  const acc = new Map<string, SectorBreach>();
+  for (const s of run.snapshots) {
+    for (const v of sectorViolations(ctx.theatre, ctx.scenario, s.units.map((u) => ({ id: u.id, side: side.get(u.id) ?? '', at: u.at, destroyed: u.destroyed })), s.time, groups)) {
+      const k = `${v.formation}|${v.boundary}`;
+      const b = acc.get(k);
+      if (b) b.turns++; else acc.set(k, { formation: v.formation, boundary: v.boundary, in: v.in, turns: 1, first: s.time });
+    }
+  }
+  return [...acc.values()].sort((a, b) => a.first.localeCompare(b.first));
 }
 
 export function analyze(ctx: SimContext, history: History, o: AnalysisOptions = {}): Analysis {
@@ -51,7 +73,7 @@ export function analyze(ctx: SimContext, history: History, o: AnalysisOptions = 
     const ev = checkEvents(ctx, r, history);
     for (const b of bySeed) b.days.push(ev.find((e) => e.id === b.id)?.days ?? null);
   }
-  return { run, ms, seed, toleranceKm: tol, deviations, summary, spread, events, eventsBySeed: bySeed };
+  return { run, ms, seed, toleranceKm: tol, deviations, summary, spread, events, eventsBySeed: bySeed, sectors: sectorBreaches(ctx, run) };
 }
 
 const fmtDays = (d: number | null) => (d == null ? '—' : d > 0 ? `+${d}` : String(d));
@@ -85,6 +107,18 @@ export function reportMarkdown(ctx: SimContext, a: Analysis): string {
       for (const e of a.events) L.push(`| ${e.title} | ${e.historical.slice(5)} | ${e.simulated?.slice(5) ?? 'не произошло'} | ${fmtDays(e.days)} |`);
     }
     L.push('');
+  }
+  if (ctx.scenario.boundaries?.some((b) => b.kind !== 'air')) {
+    const bs = ctx.scenario.boundaries.filter((b) => b.kind !== 'air');
+    const title = new Map(bs.map((b) => [b.id, b.title]));
+    const fname = new Map(ctx.scenario.formations.map((f) => [f.id, shortName(f.name)]));
+    L.push('## Разграничительные линии', '', `Линии по директивам (${bs.length}): ${bs.map((b) => `${b.title} (${b.reliability ?? '—'})`).join('; ')}. Где линий нет и за их концами — полосы расчётные (по ближайшим войскам фронтов).`, '');
+    if (!a.sectors.length) L.push('Выходов в полосу соседа нет.', '');
+    else {
+      L.push(`Выходы в полосу соседа (seed ${a.seed}): ${a.sectors.length}.`, '', '| формирование | линия | в полосе | ходов | с |', '|---|---|---|---|---|');
+      for (const b of a.sectors) L.push(`| ${names.get(b.formation) ?? b.formation} | ${title.get(b.boundary) ?? b.boundary} | ${fname.get(b.in) ?? b.in} | ${b.turns} | ${b.first.slice(5, 16).replace('T', ' ')} |`);
+      L.push('');
+    }
   }
   L.push('## По дням', '', '| день | положений | среднее отклонение, км | медиана сверх, км | в допуске |', '|---|---|---|---|---|');
   for (const d of [...sum.byDay].sort((x, y) => x.key.localeCompare(y.key))) L.push(`| ${d.key} | ${d.n} | ${d.meanKm} | ${d.medianExcessKm} | ${(d.within * 100).toFixed(0)} % |`);

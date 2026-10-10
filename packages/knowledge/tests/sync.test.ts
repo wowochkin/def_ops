@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchFormation, parseCount, reconcile, toPositionProposals, type Entry } from '../src';
+import { matchFormation, parseCount, reconcile, toBoundaryProposals, toPositionProposals, type Entry } from '../src';
 
 const op = { id: 'op', title: 'Операция', start: '1945-04-16T00:00', end: '1945-05-02T00:00' };
 const entry = (id: string, title: string, facts: Entry['facts'], aliases: string[] = []): Entry => ({ id, category: 'formations', title, aliases, summary: '', facts, status: 'checked' });
@@ -66,5 +66,18 @@ describe('сверка базы со сценарием', () => {
     expect(r.proposals).toHaveLength(1);
     expect(r.dropped).toBe(2);
     expect(r.proposals[0].item.date).toBe('1945-04-22');
+  });
+
+  it('разграничительные линии из документа: с цитатой, двумя объединениями и двумя пунктами', () => {
+    const text = 'Установить с 15.4.45 г. следующую разграничительную линию с 1-м Белорусским фронтом: до Унруштадт прежняя и далее оз. Енсдорфер-Зее, Гросс-Гастрозе, Люббен.';
+    const r = toBoundaryProposals([
+      { between: ['1-й Украинский фронт', '1-й Белорусский фронт'], date: '1945-04-15', dateTo: null, points: ['Унруштадт', 'оз. Енсдорфер-Зее', 'Гросс-Гастрозе', 'Люббен'], inclusive: null, note: 'до Унруштадт прежняя', quote: 'до Унруштадт прежняя и далее оз. Енсдорфер-Зее, Гросс-Гастрозе, Люббен' },
+      { between: ['1-й Белорусский фронт'], date: '1945-04-15', dateTo: null, points: ['Люббен', 'Тойпитц'], inclusive: null, note: null, quote: 'до Унруштадт прежняя' },
+      { between: ['1-й Украинский фронт', '1-й Белорусский фронт'], date: null, dateTo: null, points: ['Люббен', 'Тойпитц'], inclusive: null, note: null, quote: 'далее Тойпитц, Миттенвальде' },
+    ], text, { id: 'd1', name: 'doc', reliability: 'A', operation: 'op' }, 0);
+    expect(r.proposals).toHaveLength(1);
+    expect(r.dropped).toBe(2);
+    expect(r.proposals[0].item.points).toHaveLength(4);
+    expect(r.proposals[0].reliability).toBe('A');
   });
 });

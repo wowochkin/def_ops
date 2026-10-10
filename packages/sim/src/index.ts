@@ -7,7 +7,7 @@ export { step, onMap, createState, issueOrder, targetPoint, profileOf, addHours,
 export { frontLine, territoryLine, type FrontOptions } from './front';
 export { runScenario, runScenarioWith, compareWithHistory, summarize, checkEvents, type History, type HistoryEvent, type EventResult, type Snapshot, type RunResult, type Deviation } from './history';
 export { runToDocument, shortName, type PublishOptions } from './publish';
-export { analyze, reportMarkdown, type Analysis, type AnalysisOptions } from './report';
+export { analyze, reportMarkdown, sectorBreaches, type Analysis, type AnalysisOptions, type SectorBreach } from './report';
 export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } from './source';
 export { snapshotOf } from './history';
 export { startGame, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
@@ -21,3 +21,4 @@ export { THEATRE_LAYERS, layerCounts, cropGrid, cropTheatre, layerGeoJSON, recip
 export { applyInfrastructure, resolveInfra, locatePlace, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, type InfraRecord, type InfraKind, type InfraState, type InfraResolution } from './infrastructure';
 export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, legendFromSamples, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
 export { RoadNet, roadNet, visualPath } from './roadnet';
+export { groupOf, activeBoundaries, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';
