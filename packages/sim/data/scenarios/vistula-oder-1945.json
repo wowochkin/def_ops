@@ -2674,6 +2674,24 @@
    "source": "script"
   },
   {
+   "id": "su_6a_vo@1945-01-17T18:00:regroup",
+   "formation": "su_6a_vo",
+   "task": "regroup",
+   "target": [
+    20.92,
+    51.13
+   ],
+   "issuedAt": "1945-01-17T18:00",
+   "source": "script",
+   "note": "выведена во второй эшелон фронта, сосредоточение северо-восточнее Скаржиско-Каменна (ЖБД 6 А)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 11",
+    "quote": "выведена во второй эшелон фронта и начала сосредоточение северо-восточнее Скаржиско-Каменна",
+    "documented": "1945-01-17T20:00"
+   }
+  },
+  {
    "id": "su_7gkk_vo@1945-01-17T18:00:attack",
    "formation": "su_7gkk_vo",
    "task": "attack",
@@ -2776,6 +2794,39 @@
    }
   },
   {
+   "id": "su_3gva_vo@1945-01-18T18:00:attack",
+   "formation": "su_3gva_vo",
+   "task": "attack",
+   "target": "Leszno",
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "правый фланг фронта на запад (KON)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в",
+    "quote": "поворот армии фронтом на северо-запад",
+    "documented": "1945-01-18T20:00"
+   }
+  },
+  {
+   "id": "su_3ua_vo@1945-01-18T18:00:regroup",
+   "formation": "su_3ua_vo",
+   "task": "regroup",
+   "target": [
+    18.68,
+    52.38
+   ],
+   "issuedAt": "1945-01-18T18:00",
+   "source": "script",
+   "note": "марш по приказу фронта через Варшаву, Блоне, Лович, Кутно в район Избица, Бабяк (ЖБД 3 УА)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 115",
+    "quote": "ночью марш в новые районы",
+    "documented": "1945-01-18T22:00"
+   }
+  },
+  {
    "id": "su_52a_vo@1945-01-18T18:00:attack",
    "formation": "su_52a_vo",
    "task": "attack",
@@ -2792,6 +2843,24 @@
    "issuedAt": "1945-01-18T18:00",
    "source": "script",
    "note": "штурм Кракова (RW_ARM)"
+  },
+  {
+   "id": "su_6a_vo@1945-01-19T12:00:regroup",
+   "formation": "su_6a_vo",
+   "task": "regroup",
+   "target": [
+    20.3,
+    51.3
+   ],
+   "issuedAt": "1945-01-19T12:00",
+   "source": "script",
+   "note": "марш за 3 гв. А на Опочно, Коньске; прочёска лесов (ЖБД 6 А)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 14",
+    "quote": "со второй половины 19.01 марш за 3 гв. А по нескольким дорогам",
+    "documented": "1945-01-19T12:00"
+   }
   },
   {
    "id": "de_16pd_vo@1945-01-19T18:00:withdraw",
@@ -2876,24 +2945,6 @@
    "issuedAt": "1945-01-19T18:00",
    "source": "script",
    "note": "введена на Варте: охват Силезского района с северо-запада (EW_SS; RW_CHR)"
-  },
-  {
-   "id": "su_3ua_vo@1945-01-19T18:00:regroup",
-   "formation": "su_3ua_vo",
-   "task": "regroup",
-   "target": [
-    18.68,
-    52.38
-   ],
-   "issuedAt": "1945-01-19T18:00",
-   "source": "script",
-   "note": "марш по приказу фронта через Варшаву, Блоне, Лович, Кутно в район Избица, Бабяк (ЖБД 3 УА)",
-   "basis": {
-    "reliability": "A",
-    "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 116–117",
-    "quote": "по приказу фронта с утра 20.01 марш Варшава, Блоне, Лович",
-    "documented": "1945-01-20T06:00"
-   }
   },
   {
    "id": "su_47a_vo@1945-01-19T18:00:attack",
@@ -2984,15 +3035,6 @@
    "issuedAt": "1945-01-20T18:00",
    "source": "script",
    "note": "поворот из района Намслау вдоль правого берега Одера на Оппельн–Рыбник (RW_CHR; KON)"
-  },
-  {
-   "id": "su_3gva_vo@1945-01-20T18:00:attack",
-   "formation": "su_3gva_vo",
-   "task": "attack",
-   "target": "Leszno",
-   "issuedAt": "1945-01-20T18:00",
-   "source": "script",
-   "note": "правый фланг фронта на запад (KON)"
   },
   {
    "id": "su_4gtk_vo@1945-01-20T18:00:attack",
@@ -3168,6 +3210,24 @@
    "note": "удерживать и расширять плацдарм (EW_VO)"
   },
   {
+   "id": "su_6a_vo@1945-01-22T18:00:regroup",
+   "formation": "su_6a_vo",
+   "task": "regroup",
+   "target": [
+    19.11,
+    51.33
+   ],
+   "issuedAt": "1945-01-22T18:00",
+   "source": "script",
+   "note": "марш на запад, к утру 25.01 — район Щерцув (ЖБД 6 А)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 17",
+    "quote": "в ночь на 23.01 возобновили марш на запад; к утру 25.01 сосредоточились",
+    "documented": "1945-01-22T22:00"
+   }
+  },
+  {
    "id": "de_16pd_vo@1945-01-23T18:00:withdraw",
    "formation": "de_16pd_vo",
    "task": "withdraw",
@@ -3222,6 +3282,20 @@
    "note": "плацдармы у Олау/Брига (EW_VO; KON)"
   },
   {
+   "id": "su_33a_vo@1945-01-24T18:00:attack",
+   "formation": "su_33a_vo",
+   "task": "attack",
+   "target": "Swiebodzin",
+   "issuedAt": "1945-01-24T18:00",
+   "source": "script",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 38–39",
+    "quote": "задача дня выполнена",
+    "documented": "1945-01-24T20:00"
+   }
+  },
+  {
    "id": "su_1gta_vo@1945-01-25T18:00:attack",
    "formation": "su_1gta_vo",
    "task": "attack",
@@ -3272,13 +3346,34 @@
    }
   },
   {
-   "id": "su_6a_vo@1945-01-25T18:00:attack",
-   "formation": "su_6a_vo",
+   "id": "su_69a_vo@1945-01-25T18:00:attack",
+   "formation": "su_69a_vo",
    "task": "attack",
-   "target": "Wroclaw",
+   "target": "Miedzyrzecz",
    "issuedAt": "1945-01-25T18:00",
    "source": "script",
-   "note": "на Бреслау (KON)"
+   "note": "основные силы — на запад к рубежу озёр у Мезерица; Познань штурмует 91 ск (в модели армия не делится — ЖБД 69 А)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 64",
+    "quote": "противник организует упорную оборону г. Познань",
+    "documented": "1945-01-25T20:00"
+   }
+  },
+  {
+   "id": "su_8gva_vo@1945-01-25T18:00:attack",
+   "formation": "su_8gva_vo",
+   "task": "attack",
+   "target": "Kostrzyn",
+   "issuedAt": "1945-01-25T18:00",
+   "source": "script",
+   "note": "главные силы — на запад через Оборники, Пинне, Бирнбаум; Познань штурмует 29 гв. ск (в модели армия не делится — ЖБД 8 гв. А)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 97",
+    "quote": "4 гв. ск — Оборники, Замтер; 29 гв. ск — уличные бои в Познани",
+    "documented": "1945-01-26T08:00"
+   }
   },
   {
    "id": "de_v_ss_vo@1945-01-26T18:00:defend",
@@ -3297,23 +3392,6 @@
    "issuedAt": "1945-01-26T18:00",
    "source": "script",
    "note": "к Одеру севернее Кюстрина, захват плацдарма (RW_WP; EW_VO)"
-  },
-  {
-   "id": "su_8gva_vo@1945-01-26T18:00:attack",
-   "formation": "su_8gva_vo",
-   "task": "attack",
-   "target": "Poznan",
-   "issuedAt": "1945-01-26T18:00",
-   "source": "script",
-   "note": "штурм крепости главными силами (29 гв. ск, 39 гв. сд) (RW_ARM)"
-  },
-  {
-   "id": "su_33a_vo@1945-01-27T18:00:attack",
-   "formation": "su_33a_vo",
-   "task": "attack",
-   "target": "Swiebodzin",
-   "issuedAt": "1945-01-27T18:00",
-   "source": "script"
   },
   {
    "id": "su_47a_vo@1945-01-27T18:00:defend",
@@ -3340,15 +3418,6 @@
    "note": "выделена для прикрытия правого фланга (RW_CHR 27.01)"
   },
   {
-   "id": "su_69a_vo@1945-01-27T18:00:attack",
-   "formation": "su_69a_vo",
-   "task": "attack",
-   "target": "Miedzyrzecz",
-   "issuedAt": "1945-01-27T18:00",
-   "source": "script",
-   "note": "прорыв Мезерицкого УР (RW_WP)"
-  },
-  {
    "id": "su_60a_vo@1945-01-28T18:00:attack",
    "formation": "su_60a_vo",
    "task": "attack",
@@ -3358,13 +3427,22 @@
    "note": "к Одеру севернее Ратибора (RW_ARM)"
   },
   {
-   "id": "su_8gva_vo@1945-01-28T18:00:attack",
-   "formation": "su_8gva_vo",
-   "task": "attack",
-   "target": "Kostrzyn",
+   "id": "su_6a_vo@1945-01-28T18:00:regroup",
+   "formation": "su_6a_vo",
+   "task": "regroup",
+   "target": [
+    16.63,
+    51.34
+   ],
    "issuedAt": "1945-01-28T18:00",
    "source": "script",
-   "note": "4 гв. ск — на Одер южнее Кюстрина (DW_VO)"
+   "note": "тремя суточными переходами в район Волау, сменить 13 А на плацдарме за Одером (ЖБД 6 А)",
+   "basis": {
+    "reliability": "A",
+    "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 19",
+    "quote": "в ночь на 27.01 получена задача: тремя суточными переходами выйти в р-н Волау; 29.01 на рассвете выступили",
+    "documented": "1945-01-29T06:00"
+   }
   },
   {
    "id": "su_1pa_vo@1945-01-29T18:00:attack",

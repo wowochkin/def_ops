@@ -222,7 +222,24 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     if (g) { g.att.push(a); for (const d of defs) if (!g.def.includes(d)) g.def.push(d); }
     else groups.push({ att: [a], def: defs });
   }
-  const env: CombatEnv = { byId, supplyHours, isCut, seed: prev.seed ?? 0, prefer };
+  // прорванная полоса не держит (rules.beltBreachKm): если рядом с обороняющимся полоса уже прорвана (клетку заняли
+  // войска противника), укрепления ему не засчитываются — за прорванной главной полосой оборона на неподготовленных
+  // рубежах, а не «вдоль фаса» той же полосы; прорыв одной полосы не снимает следующую
+  const BB = R.beltBreachKm ?? 0, bbCells = Math.ceil(BB / T.cellKm);
+  const fortAt = (at: LngLat) => {
+    const i = T.indexOf(at);
+    if (i < 0 || !T.fort[i]) return 0;
+    if (BB > 0 && breached.size) {
+      const c0 = i % T.cols, r0 = (i - c0) / T.cols;
+      for (let dr = -bbCells; dr <= bbCells; dr++) for (let dc = -bbCells; dc <= bbCells; dc++) {
+        if (!T.inside(c0 + dc, r0 + dr) || Math.hypot(dc, dr) * T.cellKm > BB) continue;
+        const j = (r0 + dr) * T.cols + c0 + dc;
+        if (breached.has(j) && T.fortLine[j] === T.fortLine[i]) return 0;
+      }
+    }
+    return T.fort[i];
+  };
+  const env: CombatEnv = { byId, supplyHours, isCut, seed: prev.seed ?? 0, prefer, fortAt };
   for (const g of groups) resolveCombat(g.att, g.def, ctx, rng, now, dt, journal, moved, env, prev.umpire ?? []);
 
   // 3. движение вне боя
@@ -490,6 +507,8 @@ interface CombatEnv {
   seed: number;
   /** Выбор пути: разброс путей и полосы по директивам. */
   prefer: (f: Formation, mob: Mobility) => ((i: number) => number) | undefined;
+  /** Уровень укреплённости там, где стоит обороняющийся, с учётом прорыва полосы (rules.beltBreachKm). */
+  fortAt: (at: LngLat) => number;
 }
 
 function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng: Rng, now: string, dt: number, journal: JournalEntry[], moved: Set<string>, env: CombatEnv, umpire: UmpireMod[]) {
@@ -512,7 +531,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
     const p = power(f, profileOf(ctx, f.side), R).total;
     const terrain = R.defense.terrain[T.terrainAt(f.position)] ?? 1;
     const prepared = f.posture === 'defend' && f.dugInHours >= R.defense.prepareHours ? R.defense.prepared : 1;
-    const fort = 1 + R.defense.fortificationPerLevel * T.fortificationAt(f.position);
+    const fort = 1 + R.defense.fortificationPerLevel * env.fortAt(f.position);
     const hd = HA && hAtt != null ? T.heightAt(f.position) : null;
     const height = HA && hd != null ? 1 + Math.max(-HA.max, Math.min(HA.max, ((hd - hAtt!) / HA.perM) * HA.bonus)) : 1;
     return { f, p, terrain, prepared, fort, height, total: p * terrain * prepared * fort * height };
@@ -526,7 +545,7 @@ function resolveCombat(att: Formation[], def: Formation[], ctx: SimContext, rng:
   // темп — по таблице от соотношения сил, с поправкой на местность обороняющихся (город — кварталами)
   const at = def.reduce((m, f) => Math.min(m, R.advanceTerrain?.[T.terrainAt(f.position)] ?? 1), 1);
   // укреплённая полоса: темп не выше предельного для её уровня («прогрызание» обороны)
-  const fortLv = def.reduce((m, f) => Math.max(m, T.fortificationAt(f.position)), 0);
+  const fortLv = def.reduce((m, f) => Math.max(m, env.fortAt(f.position)), 0);
   const cap = fortLv && R.fortAdvanceKm ? R.fortAdvanceKm[Math.min(fortLv, R.fortAdvanceKm.length - 1)] ?? Infinity : Infinity;
   const streetFight = def.every((f) => T.terrainAt(f.position) === 'urban');
   const regime = combatRegime(att, def, T, streetFight, fortLv);

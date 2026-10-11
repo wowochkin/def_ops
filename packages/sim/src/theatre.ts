@@ -28,6 +28,8 @@ export class Theatre {
   readonly fort: Uint8Array;
   /** Чья укреплённая полоса в клетке (сторона из lines[].side; null — ничья). */
   readonly fortSide: (string | null)[];
+  /** Номер укреплённой полосы клетки (индекс в data.lines; −1 — не полоса): прорыв засчитывается в пределах своей полосы. */
+  readonly fortLine: Int16Array;
   /** Мосты по клеткам. */
   private readonly bridges = new Map<number, { id: string; openFrom?: string | null; destroyedAt?: string | null }[]>();
   private readonly areaRings: { id: string; name: string; ring: XY[]; c: XY }[];
@@ -51,6 +53,7 @@ export class Theatre {
     this.river = new Uint8Array(N);
     this.fort = new Uint8Array(N);
     this.fortSide = new Array(N).fill(null);
+    this.fortLine = new Int16Array(N).fill(-1);
     this.heights = data.heightGrid ? decodeHeights(data.heightGrid) : null;
 
     if (data.terrainGrid) {
@@ -106,10 +109,10 @@ export class Theatre {
       list.push({ id: b.id, openFrom: b.openFrom, destroyedAt: b.destroyedAt });
       this.bridges.set(i, list);
     }
-    for (const l of data.lines) {
+    for (const [li, l] of data.lines.entries()) {
       if (!l.fortification) continue;
       const lv = l.fortification;
-      const mark = (i: number) => { if (lv >= this.fort[i]) { this.fort[i] = lv; this.fortSide[i] = l.side ?? null; } };
+      const mark = (i: number) => { if (lv >= this.fort[i]) { this.fort[i] = lv; this.fortSide[i] = l.side ?? null; this.fortLine[i] = li; } };
       // полоса глубиной depthKm: клетки в пределах половины глубины от линии
       const half = Math.max(0, (l.depthKm ?? 0) / 2), rc = Math.ceil(half / this.cellKm);
       this.rasterLine(l.line, (i) => {
