@@ -4,7 +4,9 @@
  *    потери, рубежи и секторы обороны, нормативы и темпы (калибровка), пробелы, расхождения источников;
  *  - docs/sources/berlin-1945-oob.md — сводка боевого состава Берлинской операции (разделы — в запись операции);
  *  - профили сторон (services/staff/profiles), устройство модели (docs/system.md, часть II);
- *  - data/curated/*.json — краткие описания операций, сражений, местности, техники (черновики — проверить).
+ *  - data/curated/*.json — краткие описания операций, сражений, местности, техники (черновики — проверить);
+ *  - docs/sources (выписки ЦАМО: vistula-oder-1945-tsamo, berlin-1945-tsamo) — выписки из документов ЦАМО: дела (источники), положения по дням, приказы,
+ *    разведка, горючее и боеприпасы — в записи формирований, операций и хронологию (короткие пересказы со ссылкой на лист).
  * Результат — data/seed.json. Запуск: npm run kb:seed
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -277,6 +279,117 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
   }
   const op = entries.get('op:berlin')!;
   op.sections = [...(op.sections ?? []), { title: 'Разграничительные линии фронтов: пробелы в данных', text: (d.gaps as { what: string; why: string; where: string }[]).map((g) => `- **${g.what}** — ${g.why}. Где искать: ${g.where}.`).join('\n') }];
+}
+
+/* ───────────── архивные документы (ЦАМО): выписки по схеме docs/tsamo-agent-task.md ───────────── */
+// Тексты документов в базу не попадают — только короткие пересказы и рубежи из выписок, со ссылкой на фонд, опись, дело и лист.
+{
+  type Pos = { army: string; unit: string; date: string | null; time?: string | null; kind: string; place: string; source: string; url?: string; lat?: number | null };
+  type Ord = { to: string; from: string; issued: string | null; received?: string | null; task: string; target: string; deadline?: string | null; source: string; note?: string | null };
+  type Enm = { date: string; formation: string; german?: string; personnel?: number | null; tanks?: number | null; guns?: number | null; strengthNote?: string; place?: string; against?: string; docType?: string; source: string; note?: string };
+  type Sup = { army: string; date: string; fuel?: number | null; ammo?: number | null; units?: string | null; event: string; text: string; distanceKm?: number | null; source: string };
+  type Man = { fond: string; opis: string; delo: string; title: string; dates: string; url?: string; readSheets?: string; covers?: string[]; gaps?: string };
+  const opt = <T,>(f: string): T[] => { try { return read(`docs/sources/${f}`) as T[]; } catch { return []; } };
+  const positions = [...opt<Pos>('vistula-oder-1945-tsamo.json'), ...opt<Pos>('vistula-oder-1945-tsamo-2/positions.json'), ...opt<Pos>('berlin-1945-tsamo/positions.json')];
+  const orders = [...opt<Ord>('vistula-oder-1945-tsamo-2/orders.json'), ...opt<Ord>('berlin-1945-tsamo/orders.json')];
+  const enemy = [...opt<Enm>('vistula-oder-1945-tsamo-2/enemy.json'), ...opt<Enm>('berlin-1945-tsamo/enemy.json')];
+  const supply = opt<Sup>('vistula-oder-1945-tsamo-2/supply.json');
+  const manifest = opt<Man>('vistula-oder-1945-tsamo-2/manifest.json');
+  const opOf = (d?: string | null) => (d && /^1945-0[45]/.test(d) ? 'berlin' : 'vistula');
+  const ddmm = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
+  const cut = (t: string, n: number) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  // источник: «ЦАМО, ф. 233, оп. 2356, д. 739, л. 211» → src:camo-233-2356-739 и лист
+  const docOf = (src: string) => {
+    const m = /ф\.\s*([\dА-Яа-я-]+),\s*оп\.\s*([\dА-Яа-я-]+),\s*д\.\s*([\dА-Яа-я-]+)(?:,\s*(.*))?/.exec(src);
+    return m ? { id: `src:camo-${m[1]}-${m[2]}-${m[3]}`, ref: `ЦАМО, ф. ${m[1]}, оп. ${m[2]}, д. ${m[3]}`, pages: m[4]?.trim() } : null;
+  };
+  const used = new Map<string, Set<string>>();
+  const useDoc = (src: string, what: string) => { const d = docOf(src); if (!d) return undefined; (used.get(d.id) ?? used.set(d.id, new Set()).get(d.id)!).add(what); if (!entries.has(d.id)) put({ id: d.id, category: 'sources', group: 'books', title: d.ref, aliases: [d.ref], summary: d.ref, status: 'checked', facts: [{ key: 'ref', value: d.ref }, { key: 'reliability', value: 'A' }] }); return d; };
+  for (const m of manifest) {
+    const ref = `ЦАМО, ф. ${m.fond}, оп. ${m.opis}, д. ${m.delo}`;
+    put({ id: `src:camo-${m.fond}-${m.opis}-${m.delo}`, category: 'sources', group: 'books', title: cut(`${ref} — ${m.title}`, 140), aliases: [ref], summary: `${m.title} (${m.dates}).`, status: 'checked',
+      facts: [{ key: 'ref', value: `${ref}${m.url ? ` — ${m.url}` : ''}` }, { key: 'reliability', value: 'A' }, { key: 'covers', value: `${m.dates}; прочитано: ${m.readSheets ?? '—'}` }],
+      sections: m.gaps ? [{ title: 'Что не прочитано или отсутствует', text: m.gaps }] : [] });
+  }
+  // формирования базы по сокращению: «47-я армия» → «47 А», «1-й Белорусский фронт» → «1 БФ», «344-я пехотная дивизия» → «344 пд»
+  const abbr = (name: string): string | null => {
+    const m = /^(\d+)-[яйе]\s+(.*?)(?:\s*\(.*)?$/.exec(name.trim());
+    if (!m) return null;
+    const [, n, rest] = m; const gv = /гвардейск/.test(rest) ? 'гв. ' : ''; const r = rest.replace(/гвардейск\S*\s*/, '');
+    const T: [RegExp, string][] = [[/Польск/, 'ПА'], [/^Белорусский фронт/, 'БФ'], [/^Украинский фронт/, 'УФ'], [/^ударная армия/, 'УА'], [/^танковая армия/, `${gv}ТА`], [/^армия/, `${gv}А`],
+      [/^танковый корпус/, `${gv}тк`], [/^механизированный корпус/, `${gv}мк`], [/^кавалерийский корпус/, `${gv}кк`], [/^стрелковый корпус/, `${gv}ск`],
+      [/^пехотная дивизия/, 'пд'], [/^танковая дивизия/, 'тд'], [/^(панцергренадерская|моторизованная)/, 'мд'], [/^горнопехотная|^горно-?егерская|^егерская/, 'гсд'], [/^лёгкая пехотная|^легкая пехотная/, 'лпд'], [/^народно-гренадерская/, 'нгд']];
+    for (const [re, a] of T) if (re.test(r)) return `${n} ${a}`;
+    return null;
+  };
+  const idx = new Map<string, string[]>();
+  for (const e of entries.values()) if (e.category === 'formations') { const a = abbr(e.title); if (a) idx.set(`${e.group}:${a}`, [...(idx.get(`${e.group}:${a}`) ?? []), e.id]); }
+  const norm = (n: string) => n.replace(/\s*Уд\.\s*А$/, ' УА').replace(/\s*А\s?ВП$/, ' ПА').replace(/\s+/g, ' ').trim();
+  const findF = (side: 'su' | 'de', name: string, op: string) => {
+    const c = idx.get(`${side}:${norm(name)}`) ?? (side === 'de' ? idx.get(`de:${norm(name).replace(/ (нгд|пгд)$/, ' пд')}`) : undefined);
+    if (!c) return undefined;
+    return [...c].sort((a, b) => (op === 'vistula' ? +!a.endsWith('_vo') - +!b.endsWith('_vo') : +a.endsWith('_vo') - +b.endsWith('_vo')) || (entries.get(b)!.facts?.length ?? 0) - (entries.get(a)!.facts?.length ?? 0))[0];
+  };
+  const addLine = (id: string, title: string, line: string) => {
+    const e = entries.get(id)!; e.sections ??= [];
+    const s = e.sections.find((x) => x.title === title) ?? (e.sections.push({ title, text: '' }), e.sections[e.sections.length - 1]);
+    s.text += `${s.text ? '\n' : ''}- ${line}`;
+  };
+  const link = (id: string, src?: string) => { if (!src) return; const e = entries.get(id)!; e.relations = dedupeRel([...(e.relations ?? []), { type: 'source', target: src }]); };
+  const OP_ID = { berlin: 'op:berlin', vistula: 'op:vistula-oder' } as const;
+  const cite = (src: string) => src.replace(/^ЦАМО,\s*/, '');
+  // положения по дням → армии и корпуса; главные силы армий → хронология
+  const days2 = new Map<string, string[]>();
+  for (const p of [...positions].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))) {
+    if (!p.date) continue;
+    const op = opOf(p.date); const army = /^армия/.test(p.unit); const name = army ? p.army : p.unit;
+    const d = useDoc(p.source, 'положения');
+    const f = findF('su', name, op);
+    const line = `${ddmm(p.date)}${p.time && p.time !== 'к исходу дня' ? ` (${p.time})` : ''}${p.kind !== 'главные силы' ? ` — ${p.kind}` : ''}: ${cut(p.place, 220)} [${cite(p.source)}]`;
+    if (f) { addLine(f, 'Положения по дням (документы ЦАМО)', line); link(f, d?.id); }
+    if (army && p.kind === 'главные силы') { const k = `${op}:${p.date.slice(0, 10)}`; days2.set(k, [...(days2.get(k) ?? []), `${p.army}: ${cut(p.place, 140)} [${cite(p.source)}]`]); }
+  }
+  for (const [k, items] of [...days2].sort()) {
+    const [op, date] = k.split(':');
+    put({ id: `day:${k}`, category: 'chronology', group: op, title: `${dayRu(date)} — ${op === 'berlin' ? 'Берлинская операция' : 'Висло-Одерская операция'}`, period: { from: date, to: date }, status: 'checked',
+      summary: `Рубежи армий за день по журналам боевых действий (ЦАМО).`, facts: [{ key: 'date', value: date }],
+      sections: [{ title: 'Рубежи армий по документам ЦАМО', text: items.map((x) => `- ${x}`).join('\n') }], relations: [{ type: 'part_of', target: OP_ID[op as 'berlin' | 'vistula'] }] });
+    const e = entries.get(`day:${k}`)!;
+    if (!e.sections!.some((s) => s.title === 'Рубежи армий по документам ЦАМО')) e.sections!.push({ title: 'Рубежи армий по документам ЦАМО', text: items.map((x) => `- ${x}`).join('\n') });
+  }
+  // приказы → адресат (армия, корпус, фронт) и операция
+  for (const o of [...orders].sort((a, b) => (a.issued ?? '').localeCompare(b.issued ?? ''))) {
+    const op = opOf(o.issued ?? o.deadline); const d = useDoc(o.source, 'приказы');
+    const when = o.issued ? `${ddmm(o.issued)}${o.issued.length > 10 ? ` ${o.issued.slice(11, 16)}` : ''}` : 'дата не указана';
+    const line = `${when} — от ${o.from} (${o.task}): ${cut(o.target, 300)}${o.deadline ? `; срок — ${ddmm(o.deadline)}` : ''} [${cite(o.source)}${o.note ? `; ${cut(o.note, 100)}` : ''}]`;
+    const targets = o.to.split(/;\s*|,\s*(?=\d)/).map((t) => findF('su', t, op)).filter((x): x is string => !!x);
+    for (const f of targets) { addLine(f, 'Приказы и распоряжения (документы ЦАМО)', line); link(f, d?.id); }
+    addLine(OP_ID[op], 'Приказы и распоряжения по документам ЦАМО', `${o.to}: ${line}`); link(OP_ID[op], d?.id);
+  }
+  // разведка → немецкие дивизии (если запись об одной дивизии) и операция
+  for (const x of [...enemy].sort((a, b) => a.date.localeCompare(b.date))) {
+    const op = opOf(x.date); const d = useDoc(x.source, 'противник');
+    const nums = [x.personnel != null ? `${x.personnel.toLocaleString('ru')} чел.` : '', x.tanks != null ? `танков ${x.tanks}` : '', x.guns != null ? `орудий ${x.guns}` : ''].filter(Boolean).join(', ');
+    const line = `${ddmm(x.date)} — ${x.formation}${x.place ? ` (${cut(x.place, 120)})` : ''}${nums ? `: ${nums}` : ''}${x.strengthNote ? ` — ${cut(x.strengthNote, 260)}` : ''} [${x.docType ?? 'документ'}; ${cite(x.source)}]`;
+    addLine(OP_ID[op], 'Противник по разведсводкам и журналам (документы ЦАМО)', line); link(OP_ID[op], d?.id);
+    const one = /^\d+\s+\S+$/.test(x.formation.replace(/\s*\(.*\)$/, '').trim()) ? findF('de', x.formation.replace(/\s*\(.*\)$/, ''), op) : undefined;
+    if (one) {
+      const e = entries.get(one)!;
+      const facts: Fact[] = [];
+      for (const [k, v] of [['personnel', x.personnel], ['tanks', x.tanks], ['guns', x.guns]] as const) if (v != null) facts.push({ key: k, value: `${v.toLocaleString('ru')} (на ${ddmm(x.date)}.${x.date.slice(0, 4)}, по разведке${x.against ? ` перед ${x.against}` : ''})`, source: d?.id, pages: d?.pages, reliability: 'B' });
+      e.facts = dedupeFacts([...(e.facts ?? []), ...facts]);
+      addLine(one, 'Разведка (документы ЦАМО)', line); link(one, d?.id);
+    }
+  }
+  // снабжение → армии
+  for (const x of [...supply].sort((a, b) => a.date.localeCompare(b.date))) {
+    const op = opOf(x.date); const d = useDoc(x.source, 'снабжение');
+    const f = findF('su', x.army, op);
+    const line = `${ddmm(x.date)} — ${x.event}: ${cut(x.text, 300)} [${cite(x.source)}]`;
+    if (f) { addLine(f, 'Горючее и боеприпасы (документы ЦАМО)', line); link(f, d?.id); }
+    else { addLine(OP_ID[op], 'Горючее и боеприпасы по документам ЦАМО', `${x.army}: ${line}`); link(OP_ID[op], d?.id); }
+  }
+  for (const [id, what] of used) { const e = entries.get(id); if (e) e.facts = dedupeFacts([...(e.facts ?? []), { key: 'covers', value: `в базе: ${[...what].join(', ')}` }]); }
 }
 
 // связи «включает» для родительских формирований и операций
