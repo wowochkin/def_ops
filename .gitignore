@@ -18,3 +18,7 @@ defops-offline*
 evals-out/
 .venv/
 __pycache__/
+
+# выгрузка «Памяти народа»
+pn-out/
+.pn-profile/
