@@ -14,14 +14,16 @@
  * режиме на прогон, и есть значение, при котором у каждой отношение темпов в пределах ×/÷ AGREE от 1 (или не хуже её
  * лучшего значения более чем на 5 %). Из таких берётся значение с наименьшей суммой |ln отношения| (каждая операция —
  * равный вес). Нет согласия — множитель не меняется, режим отмечается как расхождение операций: искать причину в
- * данных. Согласованные множители затем принимаются по одному (сначала — где темп исправлен больше всего), если доля
- * положений в допуске на проверке ни в одной операции не падает больше чем на 3 п. п. от исходной, а средняя по операциям
- * растёт: в сочетании они могут мешать друг другу. Принятые записываются в правила (--write).
+ * данных. Согласованные множители затем принимаются прямым отбором — по одному, на каждом шаге лучший из оставшихся — по
+ * полной проверке (5 прогонов, все положения и события обеих операций): ни одна операция не теряет против исходных правил
+ * больше 3 п. п. положений в допуске и больше двух событий в пределах двух суток, а средняя по операциям доля положений
+ * растёт не меньше чем на 2 п. п. (меньше — в пределах разброса прогонов); в сочетании множители могут мешать друг другу.
+ * Принятые записываются в правила (--write).
  * Подбор покоординатный по сетке, два прохода; прогоны — в отдельных процессах.
  *
  *   npm run sim:regimes                     — только сравнение (evals-out/regimes/report.md)
  *   npm run sim:calibrate-regimes -- [--scenarios berlin-1945-tasks,vistula-oder-1945] [--seeds 3] [--jobs 4]
- *                                    [--min-legs 5] [--out evals-out/regimes-cal] [--write]
+ *                                    [--min-legs 5] [--check-seeds 5] [--out evals-out/regimes-cal] [--write]
  */
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -29,7 +31,7 @@ import { join, resolve } from 'node:path';
 import { cpus } from 'node:os';
 import { DATA_DIR, loadContext, loadHistory } from '../../src/data';
 import { runScenario } from '../../src/history';
-import { defaultTrainUntil } from '../../src/calibrate';
+import { defaultTrainUntil, evaluateRules } from '../../src/calibrate';
 import { dist } from '../../src/geo';
 import { regimeDeviations, type RecordRegime } from '../../src/regimes';
 import { COMBAT_REGIMES, REGIMES, REGIME_RU, type Regime, type RegimeParams, type Rules } from '../../src/types';
@@ -45,6 +47,15 @@ interface Rec { scenario: string; seed: number; i: number; side: string; excess:
 /** Промежуток между соседними историческими положениями формирования: пройдено в истории и в модели. */
 interface Leg { scenario: string; seed: number; id: string; side: string; regime: RecordRegime; h: number; m: number; days: number; train: boolean }
 interface Out { recs: Rec[]; legs: Leg[] }
+
+// процесс-исполнитель проверки: один сценарий, seed 1–5, заданные режимы → доля всех положений в допуске и события
+if (args[0] === '--check') {
+  const { scenario, regimes, seeds: n } = JSON.parse(args[1]) as { scenario: string; regimes: Params; seeds: number };
+  const ctx = loadContext(scenario);
+  const ev = evaluateRules(ctx, { ...ctx.rules, regimes }, loadHistory(scenario), { seeds: n, seed0: 1, toleranceKm: 10 });
+  process.stdout.write(JSON.stringify({ within: ev.within, events: ev.events.flatMap((e) => e.days).filter((d) => d != null && Math.abs(d) <= 2).length }));
+  process.exit(0);
+}
 
 // процесс-исполнитель: один сценарий, один seed, заданные режимы → положения и промежутки
 if (args[0] === '--job') {
@@ -102,6 +113,12 @@ const MIN_LEGS = Number(opt('min-legs', '5'));
 const AGREE = 1.15;
 /** Падение доли положений в допуске на проверке, при котором найденное не записывается, п. п. */
 const MAX_DROP = 3;
+/** Потеря событий в пределах двух суток (по CHECK_SEEDS прогонам), при которой множитель не принимается. */
+const MAX_EVENTS = 2;
+/** Прогонов на полную проверку при отборе. */
+const CHECK_SEEDS = Number(opt('check-seeds', '5'));
+/** Прирост средней по операциям доли положений в допуске на проверке, меньше которого множитель не принимается (разброс трёх прогонов), п. п. */
+const MIN_ACCEPT = 2;
 const self = resolve(process.argv[1]);
 const ctxs = new Map(scenarios.map((s) => [s, loadContext(s)]));
 const rulesId = ctxs.get(scenarios[0])!.rules.id;
@@ -109,12 +126,13 @@ if (!compareOnly && scenarios.some((s) => ctxs.get(s)!.rules.id !== rulesId)) th
 const t0 = Date.now();
 const min = () => ((Date.now() - t0) / 60000).toFixed(1);
 
-function job(scenario: string, seed: number, regimes: Params): Promise<Out> {
+function job(scenario: string, seed: number, regimes: Params): Promise<Out> { return child('--job', { scenario, seed, regimes }); }
+function child<T>(mode: string, arg: unknown): Promise<T> {
   return new Promise((ok, fail) => {
-    const p = spawn(process.execPath, [...process.execArgv, self, '--job', JSON.stringify({ scenario, seed, regimes })], { stdio: ['ignore', 'pipe', 'inherit'] });
+    const p = spawn(process.execPath, [...process.execArgv, self, mode, JSON.stringify(arg)], { stdio: ['ignore', 'pipe', 'inherit'] });
     let out = '';
     p.stdout.on('data', (b) => (out += b));
-    p.on('close', (code) => (code === 0 ? ok(JSON.parse(out)) : fail(new Error(`${scenario}/${seed}: код ${code}`))));
+    p.on('close', (code) => (code === 0 ? ok(JSON.parse(out)) : fail(new Error(`${mode} ${JSON.stringify(arg).slice(0, 80)}: код ${code}`))));
   });
 }
 const len = (s: string) => Date.parse(ctxs.get(s)!.scenario.end) - Date.parse(ctxs.get(s)!.scenario.start);
@@ -222,26 +240,43 @@ for (const [passNo, grid] of [[0.5, 0.65, 0.8, 1, 1.25, 1.5, 2, 2.5], [0.85, 0.9
   }
 }
 
-// отбор по положениям: согласованные по темпу множители в сочетании могут мешать друг другу (раньше пришли — иначе
-// пошёл бой), поэтому они принимаются по одному, начиная с режима, где темп исправлен больше всего, — если доля
-// положений в допуске на проверке ни в одной операции не падает больше чем на MAX_DROP п. п. от исходной, а средняя
-// по операциям растёт
+// отбор по полной проверке: согласованные по темпу множители в сочетании могут мешать друг другу (раньше пришли — иначе
+// пошёл бой), поэтому они принимаются прямым отбором — на каждом шаге пробуются все оставшиеся, принимается лучший по
+// средней доле положений в допуске, — если по полной проверке (CHECK_SEEDS прогонов, все положения и события обеих
+// операций) ни одна операция не теряет против исходных правил больше MAX_DROP п. п. положений и больше MAX_EVENTS
+// событий в пределах двух суток, а средняя доля растёт не меньше чем на MIN_ACCEPT п. п. Порядок не решает исход.
 const fitted = KEYS.filter(([r, k]) => (best[r]?.[k] ?? 1) !== (start[r]?.[k] ?? 1));
-const gain = (r: Regime) => scenarios.reduce((a, s) => a + Math.abs(Math.log(ratio(base, { regime: r, train: true, scenario: s }))), 0);
-const meanWithin = (o: Out) => mean(scenarios.map((s) => within(o, s)));
-const dropOf = (o: Out) => Math.max(...scenarios.map((s) => (within(base, s) - within(o, s)) * 100));
-let chosen: Params = JSON.parse(JSON.stringify(start)), after = base;
-for (const [r, k] of [...fitted].sort((a, b) => gain(b[0]) - gain(a[0]))) {
-  const cand = set(chosen, r, k, best[r]![k]!);
-  const [o] = await evaluate([cand]);
-  const keep = dropOf(o) <= MAX_DROP && meanWithin(o) > meanWithin(after);
-  const line = `отбор: ${REGIME_RU[r]} ×${best[r]![k]} — в допуске на проверке ${scenarios.map((s) => `${ruS(s)} ${pct(within(o, s))}`).join(', ')} ⇒ ${keep ? 'принят' : 'не принят'}  (${min()} мин)`;
-  log.push(line); console.log(line);
-  if (keep) { chosen = cand; after = o; } else verdict.set(r, `${verdict.get(r)}; по положениям не принят (вместе с уже принятыми ухудшает проверку)`);
+type Check = Record<string, { within: number; events: number }>;
+const check = async (variants: Params[]): Promise<Check[]> => {
+  const tasks = variants.flatMap((v, k) => scenarios.map((s) => ({ k, s, v })));
+  const res: Check[] = variants.map(() => ({}));
+  let next = 0;
+  await Promise.all(Array.from({ length: jobs }, async () => {
+    while (next < tasks.length) { const t = tasks[next++]; res[t.k][t.s] = await child('--check', { scenario: t.s, regimes: t.v, seeds: CHECK_SEEDS }); }
+  }));
+  return res;
+};
+const meanW = (c: Check) => mean(scenarios.map((s) => c[s].within));
+const showC = (c: Check) => scenarios.map((s) => `${ruS(s)} ${pct(c[s].within)}, событий ${c[s].events}`).join('; ');
+const [check0] = await check([start]);
+const passes = (c: Check, prev: Check) => scenarios.every((s) => (check0[s].within - c[s].within) * 100 <= MAX_DROP && check0[s].events - c[s].events <= MAX_EVENTS) && (meanW(c) - meanW(prev)) * 100 >= MIN_ACCEPT;
+log.push(`полная проверка исходных правил: ${showC(check0)}`); console.log(log[log.length - 1]);
+let chosen: Params = JSON.parse(JSON.stringify(start)), chosenC = check0;
+let left = [...fitted];
+for (let step = 1; left.length; step++) {
+  const cs = await check(left.map(([r, k]) => set(chosen, r, k, best[r]![k]!)));
+  const tried = left.map(([r, k], i) => ({ r, k, c: cs[i], ok: passes(cs[i], chosenC) }));
+  for (const t of tried) { const line = `отбор, шаг ${step}: ${REGIME_RU[t.r]} ×${best[t.r]![t.k]} — ${showC(t.c)}${t.ok ? '' : ' — не проходит'}  (${min()} мин)`; log.push(line); console.log(line); }
+  const win = tried.filter((t) => t.ok).sort((a, b) => meanW(b.c) - meanW(a.c))[0];
+  if (!win) break;
+  chosen = set(chosen, win.r, win.k, best[win.r]![win.k]!); chosenC = win.c;
+  log.push(`отбор, шаг ${step}: принят ${REGIME_RU[win.r]} ×${best[win.r]![win.k]}`); console.log(log[log.length - 1]);
+  left = left.filter(([r]) => r !== win.r);
 }
+for (const [r] of left) verdict.set(r, `${verdict.get(r)}; по полной проверке не принят (не улучшает положения больше разброса прогонов или ухудшает положения либо события)`);
 best = chosen;
-const drop = dropOf(after);
-const accepted = drop <= MAX_DROP && fitted.some(([r, k]) => (best[r]?.[k] ?? 1) !== (start[r]?.[k] ?? 1));
+const [after] = await evaluate([best]);
+const accepted = fitted.some(([r, k]) => (best[r]?.[k] ?? 1) !== (start[r]?.[k] ?? 1));
 L.push('## Итог по режимам', '', `Множитель подбирается, если в каждой операции не меньше ${MIN_LEGS} промежутков обучения в режиме на прогон и операции согласны (есть значение, при котором у каждой отношение темпов в пределах ×/÷${AGREE} от 1 или не хуже её лучшего более чем на 5 %). Отношение темпов — история / модель на промежутках режима.`, '',
   '| Режим | Множитель | Итог | ' + scenarios.map((s) => `${ruS(s)}: отношение темпов, обучение до → после; проверка до → после`).join(' | ') + ' |', '|---|---|---|' + scenarios.map(() => '---|').join(''));
 for (const [r, k] of KEYS) {
@@ -250,12 +285,12 @@ for (const [r, k] of KEYS) {
 }
 L.push('', '## Положения, все записи', '', '| Операция | Превышение, обучение, км | Превышение, проверка, км | В допуске, проверка |', '|---|---|---|---|');
 for (const s of scenarios) L.push(`| ${ruS(s)} | ${f1(excess(base, { train: true, scenario: s }))} → ${f1(excess(after, { train: true, scenario: s }))} | ${f1(excess(base, { train: false, scenario: s }))} → ${f1(excess(after, { train: false, scenario: s }))} | ${pct(within(base, s))} → ${pct(within(after, s))} |`);
-L.push('', accepted ? `Принятые множители: ${KEYS.filter(([r, k]) => (best[r]?.[k] ?? 1) !== 1).map(([r, k]) => `${REGIME_RU[r]} ×${best[r]![k]}`).join(', ')}; доля положений в допуске на проверке не падает больше чем на ${MAX_DROP} п. п. ни в одной операции — записываются в правила (--write).` : 'Ни один множитель не принят по положениям — правила не меняются.', '');
+L.push('', `Полная проверка (${CHECK_SEEDS} прогонов, все положения и события): исходные правила — ${showC(check0)}; итог — ${showC(chosenC)}.`, '', accepted ? `Принятые множители: ${KEYS.filter(([r, k]) => (best[r]?.[k] ?? 1) !== 1).map(([r, k]) => `${REGIME_RU[r]} ×${best[r]![k]}`).join(', ')} — записываются в правила (--write).` : 'Ни один множитель не принят — правила не меняются.', '');
 L.push(...compareTable(base, 'Одинаковые режимы в разных операциях — до подбора'), ...compareTable(after, 'После подбора'));
 L.push('## Ход подбора', '', 'Через «/» — отношение темпов (история / модель) на обучении у операций; ✓ — значение, приемлемое для каждой операции.', '', '```', ...log, '```', '');
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, 'report.md'), L.join('\n'));
-writeFileSync(join(outDir, 'regimes.json'), JSON.stringify({ regimes: best, verdict: Object.fromEntries(verdict), accepted, within: Object.fromEntries(scenarios.map((s) => [s, { before: within(base, s), after: within(after, s) }])) }, null, 1));
+writeFileSync(join(outDir, 'regimes.json'), JSON.stringify({ regimes: best, verdict: Object.fromEntries(verdict), accepted, check: { before: check0, after: chosenC } }, null, 1));
 console.log(L.join('\n'));
 if (args.includes('--write')) {
   if (!accepted) console.log('в правила не записано: положения на проверке хуже');

@@ -193,6 +193,11 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     return lv && owner && owner !== f.side && !breached.has(i) ? (R.fortCrossHours ?? 0) * lv : 0;
   };
   const moved = new Set<string>();
+  // расстояние до ближайшего противника на начало хода (режим движения)
+  const startEnemyKm = (f: Formation) => {
+    const p = T.proj.toXY(startPos.get(f.id) ?? f.position);
+    return prev.formations.reduce((m, e) => (e.side !== f.side && !e.destroyed && onMap(e, now) ? Math.min(m, dist(p, T.proj.toXY(e.position))) : m), Infinity);
+  };
   // директивы в игре: линии с условием вступают по обстановке на начало хода
   const fresh = checkTriggers(T, ctx.scenario, { ...prev, formations: fs }, now, addHours);
   const directives = prev.directives && Object.keys(fresh).length ? { ...prev.directives, activated: { ...prev.directives.activated, ...fresh } } : prev.directives;
@@ -232,9 +237,12 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     // приказ дошёл в этом ходе — движение только с момента доведения
     const hrs = R.orderPartialTurn && reached.has(f.id) ? Math.min(dt, Math.max(0, (t2ms(end) - Math.max(t2ms(now), reached.get(f.id)!)) / HOUR)) : dt;
     if (hrs <= 0) continue;
-    // режим движения (rules.regimes): наступающие без соприкосновения — преследование (подвижные и пешие отдельно),
-    // отходящие — отход, остальные — марш
-    const regime: Regime = f.posture === 'attack' ? (mob === 'foot' ? 'pursuitFoot' : 'pursuitMobile') : f.posture === 'withdraw' ? 'withdraw' : 'march';
+    // режим движения (rules.regimes): наступающие без соприкосновения — преследование (подвижные и пешие отдельно), если
+    // противника рядом нет, иначе — выдвижение к противнику (охват, сближение); отходящие — отход, остальные — марш
+    const clear = R.pursuitClearKm ?? R.contactKm * 2;
+    const regime: Regime = f.posture === 'attack'
+      ? (startEnemyKm(f) < clear ? 'approach' : mob === 'foot' ? 'pursuitFoot' : 'pursuitMobile')
+      : f.posture === 'withdraw' ? 'withdraw' : 'march';
     const r = T.advance(f.position, to, mob, prof, R, now, hrs * (R.regimes?.[regime]?.speed ?? 1), (i) => fc(i) + tc(i), prefer(f, mob));
     if (!r) continue;
     let pos = r.position;

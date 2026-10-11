@@ -253,9 +253,6 @@
     }
   },
   "regimes": {
-    "pursuitMobile": {
-      "speed": 1.25
-    },
     "pursuitFoot": {
       "speed": 1.5
     }

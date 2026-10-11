@@ -14,7 +14,7 @@ describe('режимы боевых действий в одном движке 
     const combat = J.filter((j) => j.kind === 'combat');
     expect(combat.length).toBeGreaterThan(0);
     for (const j of combat) expect(COMBAT_REGIMES).toContain(j.kind === 'combat' && j.regime);
-    expect(J.some((j) => j.kind === 'move' && (j.regime === 'pursuitMobile' || j.regime === 'pursuitFoot'))).toBe(true);
+    expect(J.some((j) => j.kind === 'move' && (j.regime === 'pursuitMobile' || j.regime === 'pursuitFoot' || j.regime === 'approach'))).toBe(true);
     const devs = regimeDeviations({ ...ctx, rules: { ...ctx.rules, regimes: {} } }, run, loadHistory('berlin-1945-tasks'));
     expect(devs.length).toBeGreaterThan(0);
     for (const d of devs) expect([...REGIMES, 'stand']).toContain(d.regime);

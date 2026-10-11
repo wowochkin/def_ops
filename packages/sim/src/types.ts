@@ -73,15 +73,16 @@ export type Table = [number, number][];
 
 /**
  * Режим боевых действий. Бой: в котле (окружённые или прорывающиеся), в застройке, в укреплённой полосе, за переправу
- * (между сторонами большая река), в лесу и болоте, на открытой местности. Вне боя: марш, отход, преследование
- * подвижных соединений и общевойсковых (пеших).
+ * (между сторонами большая река), в лесу и болоте, на открытой местности. Вне боя: марш, отход, выдвижение к противнику
+ * (наступающие вне соприкосновения, но противник ближе rules.pursuitClearKm — охват, сближение) и преследование
+ * подвижных соединений и общевойсковых (пеших) — наступающие, у которых противника рядом нет.
  */
-export type Regime = 'pocket' | 'urban' | 'belt' | 'river' | 'forest' | 'open' | 'march' | 'withdraw' | 'pursuitMobile' | 'pursuitFoot';
-export const REGIMES: Regime[] = ['pocket', 'urban', 'belt', 'river', 'forest', 'open', 'march', 'withdraw', 'pursuitMobile', 'pursuitFoot'];
+export type Regime = 'pocket' | 'urban' | 'belt' | 'river' | 'forest' | 'open' | 'march' | 'withdraw' | 'approach' | 'pursuitMobile' | 'pursuitFoot';
+export const REGIMES: Regime[] = ['pocket', 'urban', 'belt', 'river', 'forest', 'open', 'march', 'withdraw', 'approach', 'pursuitMobile', 'pursuitFoot'];
 export const COMBAT_REGIMES: Regime[] = ['pocket', 'urban', 'belt', 'river', 'forest', 'open'];
 export const REGIME_RU: Record<Regime, string> = {
   pocket: 'бой в котле', urban: 'бой в застройке', belt: 'бой в укреплённой полосе', river: 'бой за переправу', forest: 'бой в лесу и болоте',
-  open: 'бой на открытой местности', march: 'марш', withdraw: 'отход', pursuitMobile: 'преследование подвижными соединениями', pursuitFoot: 'преследование общевойсковыми армиями',
+  open: 'бой на открытой местности', march: 'марш', withdraw: 'отход', approach: 'выдвижение к противнику', pursuitMobile: 'преследование подвижными соединениями', pursuitFoot: 'преследование общевойсковыми армиями',
 };
 export interface RegimeParams { advance?: number; attackerLoss?: number; defenderLoss?: number; speed?: number }
 
@@ -200,11 +201,13 @@ export interface Rules {
   /**
    * Режимы боевых действий в одном движке (Regime): поправки, которые действуют только в своём режиме и калибруются
    * по записям своего режима (sim:calibrate-regimes). Режим боя — по обстановке боя (котёл, застройка, полоса,
-   * переправа, лес и болото, открытая местность), режим движения вне боя — по приказу и подвижности (марш, отход,
-   * преследование подвижными и пешими). advance — множитель темпа в бою, attackerLoss и defenderLoss — множители
+   * переправа, лес и болото, открытая местность), режим движения вне боя — по приказу, подвижности и близости
+   * противника (марш, отход, выдвижение к противнику, преследование подвижными и пешими). advance — множитель темпа в бою, attackerLoss и defenderLoss — множители
    * потерь, speed — множитель темпа движения вне боя. Нет поля или режима — множители 1.
    */
   regimes?: Partial<Record<Regime, RegimeParams>>;
+  /** Преследование — только если ближайший противник дальше этого (км) на начало хода; ближе — выдвижение к противнику. По умолчанию 2 × contactKm. */
+  pursuitClearKm?: number;
   /** Откуда взяты числа: калибровка — сценарий, мерило, дата. */
   calibration?: Record<string, unknown>;
 }
