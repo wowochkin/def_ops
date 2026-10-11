@@ -21,3 +21,4 @@ __pycache__/
 
 # сканы ЦАМО (Память народа) — большие файлы, не в git
 docs/sources/vistula-oder-1945-tsamo-scans/
+tsamo-scans/
