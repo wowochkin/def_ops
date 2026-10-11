@@ -134,7 +134,7 @@ class Browser:
         """Открыть страницу во вкладке, вернуть HTML; при проверке — ждать человека."""
         for _ in range(5):
             self._throttle()
-            self.page.goto(url, wait_until="networkidle", timeout=90_000)
+            self.page.goto(url, wait_until="load", timeout=90_000)
             if not self.page_is_captcha():
                 return self.page.content()
             self.wait_for_human("Открылась страница проверки")
@@ -279,42 +279,196 @@ def ext_of(url: str, ct: str) -> str:
         ct.split(";")[0], ".jpg")
 
 
-def collect_view(br: Browser, rid: str) -> tuple[str, list[str]]:
-    seen: list[str] = []
-    handler = lambda r: seen.append(r.url) if "/imageload/" in r.url else None  # noqa: E731
-    br.page.on("request", handler)
+# Просмотрщик отдаёт листы по одному: программа листает его так же, как человек,
+# и сохраняет каждый лист из ответа, который браузер уже получил.
+
+NEXT_SELECTORS = [
+    "[class*='next']:not([class*='disabled'])",
+    "[aria-label*='лед' i]", "[title*='лед' i]",  # «Следующий лист», «следующая»
+    "[aria-label*='next' i]", "[title*='next' i]",
+    "[class*='arrow-right']", "[class*='arrow_right']", "[class*='right-arrow']",
+    "button:has-text('›')", "a:has-text('›')", "button:has-text('→')", "a:has-text('→')",
+    "button:has-text('>')", "a:has-text('>')",
+]
+COUNTER_RES = [
+    re.compile(r"(?:лист|стр\w*|изображени\w*)\D{0,6}(\d{1,4})\s*(?:из|/)\s*(\d{1,4})", re.I),
+    re.compile(r"(?<![\d.])(\d{1,4})\s*(?:из|/)\s*(\d{1,4})(?![\d.])"),
+]
+THUMB_RE = re.compile(r"thumb|preview|small|mini|[?&](?:w|width|h|height|size)=\d{1,3}(?:&|$)",
+                      re.I)
+
+
+class Retry(Exception):
+    """Документ нужно пройти заново (была проверка безопасности)."""
+
+
+class ImageTap:
+    """Собирает ответы /imageload/ в порядке появления."""
+
+    def __init__(self, page):
+        self.page, self.order, self.resp = page, [], {}
+        page.on("response", self._on)
+
+    def _on(self, r) -> None:
+        if "/imageload/" in r.url and r.url not in self.resp:
+            self.order.append(r.url)
+            self.resp[r.url] = r
+
+    def close(self) -> None:
+        self.page.remove_listener("response", self._on)
+
+    def sheets(self) -> list[str]:
+        full = [u for u in self.order if not THUMB_RE.search(u)]
+        return full or list(self.order)
+
+    def body(self, url: str) -> tuple[bytes, str] | None:
+        r = self.resp.get(url)
+        try:
+            ct = r.headers.get("content-type", "")
+            if r.status == 200 and "html" not in ct:
+                return r.body(), ct
+        except Exception:
+            pass
+        return None
+
+
+def sheet_counter(page, selector: str | None) -> tuple[int, int, bool] | None:
+    """(текущий, всего, надёжно): надёжно — счётчик со словом «лист» или из --counter-selector."""
     try:
-        html = br.open(VIEW_URL.format(id=rid))
-    finally:
-        br.page.remove_listener("request", handler)
-    return html, seen
+        text = page.inner_text(selector) if selector else page.inner_text("body")
+    except Exception:
+        return None
+    for k, rx in enumerate(COUNTER_RES):
+        for m in rx.finditer(text):
+            cur, total = int(m.group(1)), int(m.group(2))
+            if 1 <= cur <= total:
+                return cur, total, k == 0 or bool(selector)
+    return None
 
 
-def download_one(br: Browser, out: Path, idx: str, rid: str, src: dict) -> int:
-    folder = doc_dir(out, idx, rid, src)
-    folder.mkdir(parents=True, exist_ok=True)
-    html, seen = collect_view(br, rid)
-    urls = image_urls(src, html, seen)
-    (folder / "meta.json").write_text(json.dumps(
-        {"id": rid, "index": idx, "view": VIEW_URL.format(id=rid), "record": src, "images": urls},
-        ensure_ascii=False, indent=2), encoding="utf-8")
-    n = 0
-    for i, url in enumerate(urls, 1):
-        stem = f"л{i:04d}"
-        if any(folder.glob(stem + ".*")):
-            n += 1
+def next_control(page, custom: str | None):
+    for sel in ([custom] if custom else []) + NEXT_SELECTORS:
+        try:
+            loc = page.locator(sel)
+            for i in range(min(loc.count(), 6)):
+                el = loc.nth(i)
+                if el.is_visible() and el.is_enabled():
+                    return sel, el
+        except Exception:
             continue
+    return None, None
+
+
+def wait_new(br: Browser, tap: ImageTap, before: int, timeout: float) -> bool:
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        br.page.wait_for_timeout(250)  # пока ждём, Playwright доставляет события ответов
+        if len(tap.sheets()) > before:
+            br.page.wait_for_timeout(300)
+            return True
+    return False
+
+
+def save_sheet(br: Browser, tap: ImageTap | None, folder: Path, i: int, url: str) -> bool:
+    stem = f"л{i:04d}"
+    if any(folder.glob(stem + ".*")):
+        return True
+    got = tap.body(url) if tap else None
+    if got is None:  # тела ответа нет (кэш, сброс) — запросить лист ещё раз
         status, ct, data = br.fetch(url, binary=True)
         if status != 200 or isinstance(data, str):
             print(f"    лист {i}: {status} {ct}")
-            continue
-        tmp = folder / (stem + ".part")
-        tmp.write_bytes(data)
-        tmp.rename(folder / (stem + ext_of(url, ct)))
-        n += 1
-    if not urls:
+            return False
+        got = (data, ct)
+    tmp = folder / (stem + ".part")
+    tmp.write_bytes(got[0])
+    tmp.rename(folder / (stem + ext_of(url, got[1])))
+    return True
+
+
+def walk_viewer(br: Browser, rid: str, folder: Path, opt) -> dict:
+    """Пролистать документ от первого листа до последнего, сохраняя листы по порядку."""
+    tap = ImageTap(br.page)
+    saved: list[str] = []
+    info: dict = {"next": None, "counter": None}
+    try:
+        html = br.open(VIEW_URL.format(id=rid))
+        wait_new(br, tap, 0, opt.step_timeout)
+
+        def flush() -> None:
+            for url in tap.sheets():
+                if url not in saved:
+                    saved.append(url)
+                    save_sheet(br, tap, folder, len(saved), url)
+
+        flush()
+        misses = 0
+        while saved and len(saved) < opt.max_sheets:
+            cnt = sheet_counter(br.page, opt.counter_selector)
+            if cnt and cnt[2]:
+                info["counter"] = cnt[1]
+                if len(saved) >= cnt[1]:
+                    break
+            sel, el = next_control(br.page, opt.next_selector)
+            info["next"] = info["next"] or sel
+            before = len(tap.sheets())
+            br._throttle()
+            try:
+                if el is not None:
+                    el.click(timeout=5_000)
+                else:
+                    br.page.keyboard.press("ArrowRight")
+            except Exception:
+                br.page.keyboard.press("ArrowRight")
+            if br.page_is_captcha():
+                br.wait_for_human("Проверка во время листания")
+                raise Retry
+            if f"id={rid}" not in br.page.url:  # кнопка увела на другой документ
+                print(f"\n    «{sel}» ведёт со страницы документа — задайте --next-selector")
+                break
+            if wait_new(br, tap, before, opt.step_timeout):
+                misses = 0
+                flush()
+                print(f"    лист {len(saved)}" + (f"/{info['counter']}" if info["counter"] else ""),
+                      end="\r")
+            else:
+                misses += 1
+                if misses >= 2:  # два шага подряд без нового листа — конец документа
+                    break
+        print()
+        if not saved:  # просмотрщик ничего не подгрузил — адреса из страницы и записи
+            for url in image_urls({}, html, []):
+                saved.append(url)
+                save_sheet(br, tap, folder, len(saved), url)
+    finally:
+        tap.close()
+    info["images"] = saved
+    return info
+
+
+def download_one(br: Browser, out: Path, idx: str, rid: str, src: dict, opt) -> tuple[int, int | None]:
+    folder = doc_dir(out, idx, rid, src)
+    folder.mkdir(parents=True, exist_ok=True)
+    for attempt in range(3):
+        try:
+            info = walk_viewer(br, rid, folder, opt)
+            break
+        except Retry:
+            print("    повтор документа после проверки")
+    else:
+        raise RuntimeError("проверка повторяется, документ пропущен")
+    if not info["images"]:
+        for url in image_urls(src, "", []):
+            info["images"].append(url)
+            save_sheet(br, None, folder, len(info["images"]), url)
+    (folder / "meta.json").write_text(json.dumps(
+        {"id": rid, "index": idx, "view": VIEW_URL.format(id=rid), "record": src,
+         "sheets_on_counter": info["counter"], "images": info["images"]},
+        ensure_ascii=False, indent=2), encoding="utf-8")
+    n = sum(1 for f in folder.glob("л*") if f.suffix != ".part")
+    if n == 0:
         raise RuntimeError("листы не найдены (см. команду probe)")
-    return n
+    return n, info["counter"]
 
 
 # ---------------------------------------------------------------- команды
@@ -351,7 +505,8 @@ def cmd_search(args) -> None:
 def cmd_download(args) -> None:
     out = Path(args.out)
     con = db_open(out)
-    where = "status in ('new','error')" if args.retry_errors else "status='new'"
+    where = ("status in ('new','error','partial')" if args.retry_errors
+             else "status='new'")
     rows = con.execute(f"select idx, id, src from rec where {where} order by idx, id"
                        + (f" limit {int(args.limit)}" if args.limit else "")).fetchall()
     print(f"К скачиванию документов: {len(rows)}")
@@ -363,11 +518,13 @@ def cmd_download(args) -> None:
             print(f"[{k}/{len(rows)}] {idx} {rid} ф{src.get('fond')}-оп{src.get('opis')}"
                   f"-д{src.get('delo')} {str(src.get('document_name', ''))[:60]}")
             try:
-                n = download_one(br, out, idx, rid, src)
+                n, expected = download_one(br, out, idx, rid, src, args)
+                short = expected is not None and n < expected
                 with con:
-                    con.execute("update rec set status='done', files=?, error=null "
-                                "where idx=? and id=?", (n, idx, rid))
-                print(f"    листов: {n}")
+                    con.execute("update rec set status=?, files=?, error=? where idx=? and id=?",
+                                ("partial" if short else "done", n,
+                                 f"скачано {n} из {expected}" if short else None, idx, rid))
+                print(f"    листов: {n}" + (f" из {expected} — НЕ ВСЕ" if short else ""))
             except KeyboardInterrupt:
                 raise
             except Exception as e:  # одна битая запись не останавливает выгрузку
@@ -391,13 +548,29 @@ def cmd_probe(args) -> None:
             print("Запись из поиска не получена:", e)
         net: list[str] = []
         br.page.on("request", lambda r: net.append(f"{r.method} {r.resource_type} {r.url}"))
-        html = br.open(VIEW_URL.format(id=args.id))
-        input("Полистайте документ в просмотрщике (несколько листов) и нажмите Enter… ")
-        (out / "view.html").write_text(html, "utf-8")
-        (out / "network.txt").write_text("\n".join(net), "utf-8")
+        sheets = out / "листы"
+        sheets.mkdir(exist_ok=True)
+        try:
+            info = walk_viewer(br, str(args.id), sheets, args)
+        except Retry:
+            info = walk_viewer(br, str(args.id), sheets, args)
+        (out / "view.html").write_text(br.page.content(), "utf-8")
         br.page.screenshot(path=str(out / "view.png"), full_page=True)
-        urls = image_urls({}, html, [u.split(" ", 2)[2] for u in net if "/imageload/" in u])
-        print("Найдено адресов листов:", len(urls), *urls[:5], sep="\n  ")
+        (out / "controls.json").write_text(json.dumps(br.page.evaluate("""() =>
+            [...document.querySelectorAll('a,button,[role=button],[onclick],span,div,i')]
+              .filter(e => /next|prev|right|left|arrow|след|пред|лист|page/i.test(
+                  (e.className && e.className.baseVal === undefined ? e.className : '') + ' ' +
+                  (e.title || '') + ' ' + (e.getAttribute('aria-label') || '')))
+              .slice(0, 200)
+              .map(e => ({tag: e.tagName, cls: String(e.className), title: e.title,
+                          aria: e.getAttribute('aria-label'), text: e.innerText?.slice(0, 40),
+                          visible: !!(e.offsetWidth || e.offsetHeight)}))"""),
+            ensure_ascii=False, indent=1), "utf-8")
+        print(f"Кнопка «дальше»: {info['next'] or 'не найдена, листал стрелкой →'}")
+        print(f"Счётчик листов на странице: {info['counter'] or 'не найден'}")
+        print(f"Скачано листов: {len(info['images'])}", *info["images"][:5], sep="\n  ")
+        input("Если листы скачались не все — полистайте документ вручную до конца и нажмите Enter… ")
+        (out / "network.txt").write_text("\n".join(net), "utf-8")
         print("Сырые данные:", out)
     with_browser(args, run)
 
@@ -418,6 +591,11 @@ def main() -> None:
     p.add_argument("--profile", default=".pn-profile", help="профиль браузера (куки, проверка)")
     p.add_argument("--channel", default=None, help="chrome / msedge — взять установленный браузер")
     p.add_argument("--delay", type=float, default=2.0, help="пауза между запросами, с")
+    p.add_argument("--step-timeout", type=float, default=10.0,
+                   help="сколько ждать следующий лист после листания, с")
+    p.add_argument("--max-sheets", type=int, default=3000, help="предел листов в документе")
+    p.add_argument("--next-selector", help="CSS-селектор кнопки «следующий лист», если не найдётся сам")
+    p.add_argument("--counter-selector", help="CSS-селектор счётчика «N из M» в просмотрщике")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("login").set_defaults(fn=cmd_login)
