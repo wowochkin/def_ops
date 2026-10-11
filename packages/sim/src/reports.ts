@@ -254,6 +254,8 @@ export function dayEvents(ctx: SimContext, state: SimState, side: string, prev: 
       out.push(sideOf.get(j.formation) === side ? `${names.get(j.formation)} — в окружении без боеприпасов, капитулировало (${j.personnel.toLocaleString('ru')} чел.).` : `${names.get(j.formation)} (противник) в котле капитулировало: около ${j.personnel.toLocaleString('ru')} пленных.`);
     } else if (j.kind === 'brokeOut') {
       out.push(sideOf.get(j.formation) === side ? `${names.get(j.formation)} прорвалось из окружения (${j.personnel.toLocaleString('ru')} чел.), тяжёлое вооружение брошено.` : `По данным разведки, ${names.get(j.formation)} прорвалось из котла.`);
+    } else if (j.kind === 'detached' && sideOf.get(j.formation) === side) {
+      out.push(`Из ${names.get(j.from)} выделено: ${names.get(j.formation)} (${j.personnel.toLocaleString('ru')} чел., ${j.tanks} танков, ${j.guns} орудий).`);
     } else if (j.kind === 'directive' && j.side === side) {
       const t = commandTerms(ctx, side);
       const who = j.issuedBy === 'player' ? 'распоряжение' : `${t.directive} ${t.topGen}`;

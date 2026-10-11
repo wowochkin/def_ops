@@ -28,7 +28,7 @@ export interface ActionCheck { ok: boolean; text: string; eta?: string; at?: Lng
 export function prepareTakeover(ctx: SimContext, state: SimState, side: string): SimState {
   const T = ctx.theatre;
   T.dropBridges((b) => b.side === side && !!b.openFrom && b.openFrom > state.time);
-  const formations = state.formations.map((f) => (f.side === side && f.enterAt && f.enterAt > state.time && !f.destroyed
+  const formations = state.formations.map((f) => (f.side === side && f.enterAt && f.enterAt > state.time && !f.destroyed && !f.detachFrom
     ? { ...f, reserveFrom: f.enterAt, enterAt: NOT_COMMITTED } : f));
   const names = new Map<string, string>();
   const sp = ctx.scenario.supply?.[side];

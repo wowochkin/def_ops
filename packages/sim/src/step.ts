@@ -51,12 +51,13 @@ export function profileOf(ctx: SimContext, side: string): SideProfile {
 
 /** Начальное состояние: действующие формирования — те, у кого есть положение и тип. */
 export function createState(ctx: SimContext, seed = 1): SimState {
-  const formations: Formation[] = ctx.scenario.formations.filter((f) => f.position && f.type).map((f) => ({
-    id: f.id, name: f.name, side: f.side, echelon: f.echelon, parent: f.parent ?? null, type: f.type!, position: f.position!,
+  const defs = new Map(ctx.scenario.formations.map((f) => [f.id, f]));
+  const formations: Formation[] = ctx.scenario.formations.filter((f) => (f.position || f.detachFrom) && f.type).map((f) => ({
+    id: f.id, name: f.name, side: f.side, echelon: f.echelon, parent: f.parent ?? null, type: f.type!, position: f.position ?? defs.get(f.detachFrom!.formation)?.position ?? [0, 0],
     personnel: f.personnel ?? 0, tanks: f.tanks ?? 0, guns: f.guns ?? 0,
     initial: { personnel: f.personnel ?? 0, tanks: f.tanks ?? 0, guns: f.guns ?? 0 },
     ammo: f.ammo ?? 2, fuel: f.fuel ?? 2, fatigue: 0, posture: f.posture ?? 'defend', dugInHours: f.posture === 'defend' ? 48 : 0,
-    order: null, route: null, destroyed: false, enterAt: f.enterAt ?? null,
+    order: null, route: null, destroyed: false, enterAt: f.enterAt ?? null, ...(f.detachFrom ? { detachFrom: f.detachFrom } : {}),
   }));
   return { scenario: ctx.scenario.id, time: ctx.scenario.start, turn: 0, formations, pending: [...ctx.scenario.orders], rngState: seed >>> 0, seed: seed >>> 0, journal: [] };
 }
@@ -117,6 +118,24 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   const journal: JournalEntry[] = [];
   const xy = (f: Formation): XY => T.proj.toXY(f.position);
   const active = () => fs.filter((f) => onMap(f, now));
+
+  // 0. выделение корпусов и отрядов: в момент enterAt — там, где стоит родитель, с долей его сил
+  for (const f of fs) {
+    const d = f.detachFrom;
+    if (!d || !f.enterAt || f.enterAt > now) continue;
+    const p = byId.get(d.formation);
+    f.detachFrom = undefined;
+    if (!p || p.destroyed) { f.destroyed = true; continue; }
+    const take = (k: 'personnel' | 'tanks' | 'guns') => Math.min(p[k], d[k] ?? Math.round(p[k] * (d.share ?? 0)));
+    const got = { personnel: take('personnel'), tanks: take('tanks'), guns: take('guns') };
+    for (const k of ['personnel', 'tanks', 'guns'] as const) {
+      const was = p[k];
+      p[k] -= got[k]; f[k] = got[k]; f.initial[k] = got[k];
+      if (was > 0) p.initial[k] = Math.round(p.initial[k] * (p[k] / was));
+    }
+    Object.assign(f, { position: [...p.position] as LngLat, ammo: p.ammo, fuel: p.fuel, fatigue: p.fatigue, posture: p.posture, dugInHours: 0 });
+    journal.push({ kind: 'detached', time: now, formation: f.id, from: p.id, ...got });
+  }
 
   // 1. приказы, дошедшие до исполнителя к концу хода
   const pending: Order[] = [];

@@ -311,6 +311,12 @@ export interface FormationDef {
   posture?: Posture;
   /** С какого момента формирование на театре (ввод из резерва, прибытие); до этого его нет на карте. */
   enterAt?: string | null;
+  /**
+   * Выделено из другого формирования в момент enterAt (корпус оставлен штурмовать крепость, передовой отряд армии):
+   * появляется там, где стоит родитель, и забирает у него долю share его сил (людей, танков, орудий) или указанные
+   * числа personnel / tanks / guns. Армия в модели — одна точка; так она может разделиться.
+   */
+  detachFrom?: { formation: string; share?: number; personnel?: number; tanks?: number; guns?: number };
   /** Откуда цифры и положение (для отчёта и справки). */
   note?: string;
 }
@@ -441,6 +447,8 @@ export interface Formation {
   outOfSupply?: boolean;
   /** Резерв Ставки, ещё не введённый в сражение: с какого момента может быть введён (enterAt — когда введут). */
   reserveFrom?: string;
+  /** Будет выделено из другого формирования в момент enterAt (FormationDef.detachFrom); после выделения поле снимается. */
+  detachFrom?: FormationDef['detachFrom'];
 }
 
 export interface CombatFactor {
@@ -461,6 +469,8 @@ export type JournalEntry =
   | { kind: 'capitulated'; time: string; formation: string; personnel: number }
   /** Вырвались из котла приказом на прорыв (тяжёлое вооружение брошено). */
   | { kind: 'brokeOut'; time: string; formation: string; personnel: number }
+  /** Выделено из другого формирования (корпус, передовой отряд). */
+  | { kind: 'detached'; time: string; formation: string; from: string; personnel: number; tanks: number; guns: number }
   /** Разграничительная линия вступила в силу (директива, распоряжение). */
   | { kind: 'directive'; time: string; boundary: string; side: string; title: string; from: string; issuedBy: string };
 
