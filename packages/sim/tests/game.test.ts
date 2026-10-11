@@ -57,7 +57,7 @@ describe('распоряжения штаба человека: тыл, пере
     expect(ctx.theatre.data.bridges.some((b) => b.id === 'x_gryfino')).toBe(false);
     expect(ctx.theatre.data.bridges.some((b) => b.id === 'x_kuestrin')).toBe(true);
     const a28 = g.state.formations.find((f) => f.id === 'su_28a')!;
-    expect(a28.reserveFrom).toBe('1945-04-21T05:00');
+    expect(a28.reserveFrom).toBe('1945-04-20T05:00');
     expect(a28.enterAt).toBe(NOT_COMMITTED);
     expect(unitReports(ctx, g.state, 'su').find((u) => u.id === 'su_28a')!.status).toBe('reserve');
     const bases = g.state.logistics!.su.bases;
@@ -87,7 +87,7 @@ describe('распоряжения штаба человека: тыл, пере
       g = r;
     }
     const f28 = g.state.formations.find((f) => f.id === 'su_28a')!;
-    expect(f28.enterAt).toBe('1945-04-21T05:00');
+    expect(f28.enterAt).toBe('1945-04-20T05:00');
     expect(f28.position).toEqual(seelow);
     expect(g.state.logistics!.su.bases[0].moved).toBe(true);
     expect(g.state.logistics!.su.priority).toEqual(['su_8gva', 'su_1gta']);
