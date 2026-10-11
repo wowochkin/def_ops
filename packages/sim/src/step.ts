@@ -150,6 +150,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
       f.order = o;
       f.posture = POSTURE[o.task];
       f.route = null;
+      delete f.followsParent;
       reached.set(f.id, t2ms(addHours(o.issuedAt, delay)));
       journal.push({ kind: 'order', time: now, formation: f.id, order: o, effective: true });
     } else pending.push(o);
@@ -197,11 +198,27 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     const w = profileOf(ctx, e.side).unitTypes[e.type]?.frontageKm ?? 0;
     return Math.max(R.contactKm, w / 2);
   };
+  // цель движения: своя цель приказа; выполнив задачу наступления — цель наступления вышестоящего до нового приказа
+  // (rules.followParentKm)
+  const parentGoal = (f: Formation): LngLat | null => {
+    const p = f.parent ? byId.get(f.parent) : undefined;
+    return p && !p.destroyed && p.order?.task === 'attack' ? targetPoint(ctx, p.order.target, byId) : null;
+  };
+  const goalOf = (f: Formation): LngLat | null => {
+    const to = f.order ? targetPoint(ctx, f.order.target, byId) : null;
+    const FP = R.followParentKm ?? 0;
+    if (!FP || f.order?.task !== 'attack') return to;
+    if (!f.followsParent && to && dist(xy(f), T.proj.toXY(to)) <= FP) {
+      const pt = parentGoal(f);
+      if (pt && dist(xy(f), T.proj.toXY(pt)) > FP) f.followsParent = true;
+    }
+    return f.followsParent ? parentGoal(f) ?? to : to;
+  };
   // обход узлов обороны: подвижные соединения с целью дальше крепости не ввязываются в бой за неё
   const bypasses = (f: Formation, e: Formation) => {
     if (R.bypassStrongpoints === false || !profileOf(ctx, e.side).unitTypes[e.type]?.bypassable) return false;
     if ((profileOf(ctx, f.side).unitTypes[f.type]?.mobility ?? 'foot') === 'foot') return false;
-    const to = f.order ? targetPoint(ctx, f.order.target, byId) : null;
+    const to = goalOf(f);
     return !!to && dist(T.proj.toXY(to), xy(e)) > Math.max(R.contactKm, reach(e));
   };
   const enemiesNear = (f: Formation, km: number) => active().filter((e) => e.side !== f.side && !bypasses(f, e) && dist(xy(f), xy(e)) <= Math.max(km, reach(e)));
@@ -264,7 +281,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   // 3. движение вне боя
   for (const f of active()) {
     if (moved.has(f.id) || !f.order) continue;
-    const to = targetPoint(ctx, f.order.target, byId);
+    const to = goalOf(f);
     if (!to) continue;
     const prof = profileOf(ctx, f.side);
     const mob = mobilityOf(ctx, f);
