@@ -9,6 +9,9 @@ import { Operation } from './Operation';
 import { MapView } from './MapView';
 import { Inspector } from './Inspector';
 import { Chat } from './Chat';
+import { Tour } from './Tour';
+import { Report } from './Report';
+import { TOURS, momentHour } from './tour';
 
 const SPEEDS = [1, 4, 12, 24];
 
@@ -29,6 +32,11 @@ export function App() {
   const [live, setLive] = useState<StaffLiveMsg[]>([]);
   const [runId, setRunId] = useState(0);
   const [showDestroyed, setShowDestroyed] = useState(true);
+  // показ: номер момента, вид карты и час, до которого идёт проигрыш
+  const [tourIdx, setTourIdx] = useState<number | null>(null);
+  const [view, setView] = useState<{ center: [number, number]; zoom: number; n: number } | null>(null);
+  const [playUntil, setPlayUntil] = useState<number | null>(null);
+  const [showReport, setShowReport] = useState(() => new URLSearchParams(location.search).get('report') === '1');
   const [scen, setScen] = useState(() => {
     const q = new URLSearchParams(location.search).get('scen');
     if (q) return scenarioById(q).id;
@@ -84,6 +92,25 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cmpId, scen, seed, runId]);
 
+  const moments = TOURS[scen] ?? [];
+  function goMoment(k: number) {
+    if (!data || k < 0 || k >= moments.length) return;
+    const m = moments[k];
+    setPlaying(false);
+    setPlayUntil(null);
+    setHour(momentHour(data, m).h);
+    setView({ center: m.center, zoom: m.zoom, n: Date.now() });
+    setTourIdx(k);
+  }
+  const playNext = () => {
+    if (tourIdx === null || !data || tourIdx + 1 >= moments.length) return;
+    const next = momentHour(data, moments[tourIdx + 1]).h;
+    if (next <= hour) { goMoment(tourIdx + 1); return; }
+    setSpeed(Math.max(4, Math.min(24, Math.round((next - hour) / 8))));
+    setPlayUntil(next);
+    setPlaying(true);
+  };
+
   // показ: часы модели в секунду, плавно (между кадрами положение интерполируется)
   const last = useRef<number | null>(null);
   useEffect(() => {
@@ -92,12 +119,25 @@ export function App() {
     const tick = (t: number) => {
       const dt = last.current === null ? 0 : (t - last.current) / 1000;
       last.current = t;
-      setHour((h) => { const n = h + dt * speed; if (n >= data.trace.hours) { setPlaying(false); return data.trace.hours; } return n; });
+      setHour((h) => {
+        const n = h + dt * speed;
+        const end = Math.min(data.trace.hours, playUntil ?? Infinity);
+        if (n >= end) { setPlaying(false); return end; }
+        return n;
+      });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); last.current = null; };
-  }, [playing, speed, data]);
+  }, [playing, speed, data, playUntil]);
+
+  // показ: дошли до следующего момента — показать его
+  useEffect(() => {
+    if (playing || playUntil === null || tourIdx === null) return;
+    setPlayUntil(null);
+    goMoment(tourIdx + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing]);
 
   const tree = useMemo(() => {
     if (!data) return [];
@@ -131,8 +171,11 @@ export function App() {
         {isTauri() && (
           <label>прогон <select value={seed} onChange={(e) => setSeed(Number(e.target.value))} disabled={busy}>{[1, 2, 3, 4, 5].map((s) => <option key={s}>{s}</option>)}</select></label>
         )}
+        {moments.length > 0 && <button onClick={() => (tourIdx === null ? goMoment(0) : setTourIdx(null))} title="Проводка по ключевым моментам операции с подписями">Показ</button>}
+        <button onClick={() => setShowReport(!showReport)} title="Сверка с документами, вехи и варианты по готовым прогонам">Отчёт</button>
         <button onClick={() => setShowSettings(!showSettings)}>Модель и штабы</button>
       </header>
+      {showReport && <Report scen={scenarioById(scen)} onClose={() => setShowReport(false)} />}
       {showSettings && <SettingsPanel value={settings} onChange={setSettings} busy={busy} onClose={() => setShowSettings(false)} onRun={() => { setRunId((x) => x + 1); }} />}
       <aside className="tree">
         {tree.map((g) => (
@@ -150,7 +193,8 @@ export function App() {
         ))}
       </aside>
       <main>
-        <MapView data={data} compare={cmp} hour={hour} selected={selected} onSelect={select} focus={focus} showDestroyed={showDestroyed} />
+        <MapView data={data} compare={cmp} hour={hour} selected={selected} onSelect={select} focus={focus} view={view} showDestroyed={showDestroyed} />
+        {tourIdx !== null && moments[tourIdx] && <Tour data={data} moments={moments} idx={tourIdx} playing={playing} onGo={goMoment} onPlayNext={playNext} onClose={() => { setTourIdx(null); setPlayUntil(null); }} />}
         <div className="legend">
           {(['march', 'deploy', 'attack', 'defense', 'withdraw', 'reserve'] as const).map((g) => <span key={g}><i className={`dot ${g}`} />{({ march: 'марш', deploy: 'развёртывание', attack: 'наступление', defense: 'оборона', withdraw: 'отход', reserve: 'резерв' })[g]}</span>)}
           <span><i className="ghost-key" />положение по документам</span>

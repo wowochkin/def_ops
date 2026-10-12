@@ -10,9 +10,9 @@ import { symbolMarkup } from './symbols';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
-interface Props { data: RunData; compare?: RunData | null; hour: number; selected: string | null; onSelect: (id: string | null) => void; focus: [number, number] | null; showDestroyed: boolean }
+interface Props { data: RunData; compare?: RunData | null; hour: number; selected: string | null; onSelect: (id: string | null) => void; focus: [number, number] | null; view?: { center: [number, number]; zoom: number; n: number } | null; showDestroyed: boolean }
 
-export function MapView({ data, compare, hour, selected, onSelect, focus, showDestroyed }: Props) {
+export function MapView({ data, compare, hour, selected, onSelect, focus, view, showDestroyed }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [, setView] = useState(0);
@@ -34,6 +34,7 @@ export function MapView({ data, compare, hour, selected, onSelect, focus, showDe
   }, [theatre]);
 
   useEffect(() => { if (focus && mapRef.current) mapRef.current.easeTo({ center: focus, duration: 600 }); }, [focus]);
+  useEffect(() => { if (view && mapRef.current) mapRef.current.easeTo({ center: view.center, zoom: view.zoom, duration: 900 }); }, [view]);
   // новый сценарий — карта по исходному расположению войск
   useEffect(() => {
     const map = mapRef.current;

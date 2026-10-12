@@ -68,6 +68,19 @@ async function repoText(path: string): Promise<string> {
   return r.text();
 }
 
+/** Сводка готового прогона (agents-run пишет summary.json рядом с trace.json): сверка, вехи, потери по дням. */
+export interface RunSummary {
+  scenario: string; runs: number; seed: number; toleranceKm: number; info: string;
+  perRun: { seed: number; divisions: number; armies: number; outOfTuning: number }[];
+  outOfTuning: { n: number; agent: number; current: number };
+  sectors: { sector: string; period: string; n: number; agent: number; current: number; tuned: boolean }[];
+  milestones: { id: string; title: string; date: string; calc: string | null }[];
+  losses: { day: string; su: number; de: number }[];
+}
+export async function loadSummary(tracePath: string): Promise<RunSummary> {
+  return JSON.parse(await repoText(tracePath.replace(/trace\.json$/, 'summary.json'))) as RunSummary;
+}
+
 export async function loadRun(scenario = SCENARIO, opts: RunOptions = { seed: 1, de: 'script', llm: null }): Promise<RunData> {
   const history = JSON.parse(await repoText(scenario.replace(/\.json$/, '.history.json'))) as History;
   let trace: Trace;

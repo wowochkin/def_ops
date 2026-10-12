@@ -48,6 +48,8 @@ struct History {
 /// объединений в радиусе) или «отсечение» (cut — окружено не меньше 2/3 действующих дивизий названных соединений).
 #[derive(Deserialize)]
 struct Milestone {
+    #[serde(default)]
+    id: String,
     title: String,
     date: String,
     kind: String,
@@ -117,7 +119,9 @@ fn main() {
         .unwrap_or_default();
 
     let mut per_run: Vec<(f64, f64, f64)> = Vec::new(); // доля в допуске: дивизии, армии; время
-    let mut first: Option<(Vec<Dev>, Vec<(Dev, Option<f64>)>, String, String, Vec<(String, String, Option<String>)>)> = None;
+    let mut per_run_out: Vec<f64> = Vec::new(); // доля в допуске вне настройки
+    let mut daily_losses: Vec<(String, f64, f64)> = Vec::new(); // seed0: день, потери советской и немецкой стороны к 20:00
+    let mut first: Option<(Vec<Dev>, Vec<(Dev, Option<f64>)>, String, String, Vec<(String, String, String, Option<String>)>)> = None;
     // --seed N: первый прогон (отчёт и ход — по нему), дальше N+1…
     let seed0: u64 = arg(&args, "seed").and_then(|s| s.parse().ok()).unwrap_or(1);
     for seed in seed0..seed0 + runs {
@@ -157,17 +161,21 @@ fn main() {
         let mut snaps: Vec<Vec<XY>> = Vec::new();
         let mut alive: Vec<Vec<bool>> = Vec::new();
         let mut encircled: Vec<Vec<bool>> = Vec::new();
+        let mut people: Vec<[f64; 2]> = Vec::new(); // численность сторон по часам
         let frame = agents_core::trace::frame;
         let t0 = Instant::now();
         snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
         alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
         encircled.push(vec![false; n]);
+        let sum_people = |sim: &agents_core::world::Sim| { let mut s = [0.0; 2]; for d in &sim.world.divisions { s[if d.side == Side::Su { 0 } else { 1 }] += d.vars.personnel; } s };
+        people.push(sum_people(&sim));
         if seed == seed0 { frames.push(frame(&sim)); }
         for _ in 0..meta.hours {
             sim.step();
             snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
             alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
             encircled.push(sim.world.divisions.iter().map(|d| sim.encircled(d, sim.world.tick)).collect());
+            people.push(sum_people(&sim));
             if seed == seed0 { frames.push(frame(&sim)); }
         }
         let secs = t0.elapsed().as_secs_f64();
@@ -216,6 +224,8 @@ fn main() {
         }
         let share = |v: &[&Dev]| v.iter().filter(|d| d.excess <= tol).count() as f64 / v.len().max(1) as f64;
         per_run.push((share(&devs.iter().collect::<Vec<_>>()), share(&adevs.iter().map(|x| &x.0).collect::<Vec<_>>()), secs));
+        let outs: Vec<&Dev> = adevs.iter().filter(|(d, ts)| ts.is_some() && !(d.sector.contains("настройка") && d.day.as_str() < "1945-04-20")).map(|x| &x.0).collect();
+        per_run_out.push(share(&outs));
         if seed == seed0 {
             // trace.json
             let trace = agents_core::trace::describe(&sim, &meta, std::mem::take(&mut frames));
@@ -245,7 +255,12 @@ fn main() {
                     })
                 }).flatten());
                 let when = hit.map(|t| agents_core::time::format_hours(start + t as i64));
-                miles.push((m.title.clone(), m.date.clone(), Some(when.unwrap_or_else(|| "не достигнуто".into()))));
+                miles.push((m.id.clone(), m.title.clone(), m.date.clone(), Some(when.unwrap_or_else(|| "не достигнуто".into()))));
+            }
+            // потери сторон к 20:00 каждого дня
+            for (t, p) in people.iter().enumerate() {
+                let label = agents_core::time::format_hours(start + t as i64);
+                if label.ends_with("T20:00") { daily_losses.push((label[..10].to_string(), people[0][0] - p[0], people[0][1] - p[1])); }
             }
             first = Some((devs, adevs, summary, format!("{n} дивизий, {} ч, расчёт {:.2} с", meta.hours, secs), miles));
         }
@@ -328,7 +343,7 @@ fn main() {
     worst.sort_by(|a, b| b.excess.total_cmp(&a.excess));
     if !miles.is_empty() {
         let _ = writeln!(r, "## Вехи операции (seed 1)\n\n| веха | по истории | в расчёте |\n|---|---|---|");
-        for (title, date, when) in &miles {
+        for (_, title, date, when) in &miles {
             let _ = writeln!(r, "| {title} | {} | {} |", date, when.clone().unwrap_or_else(|| "— (расчётом не проверяется)".into()));
         }
         let _ = writeln!(r);
@@ -338,6 +353,33 @@ fn main() {
     let _ = writeln!(r, "\n## Частые переходы состояний (seed 1)\n\n| переход и причина | раз |\n|---|---|\n{transitions}\n");
     let _ = writeln!(r, "Ход по часам — `trace.json` (положение, состояние, численность, запасы каждой дивизии; журнал с причинами).");
     std::fs::write(format!("{out_dir}/report.md"), &r).expect("report.md");
+    // сводка для страницы «Отчёт» в приложении: сверка по участкам и периодам, разброс по прогонам, вехи, потери по дням
+    let mut sectors = Vec::new();
+    let mut out_pairs: Vec<(f64, f64)> = Vec::new();
+    {
+        let mut cells: BTreeMap<(String, &str), Vec<(f64, f64)>> = BTreeMap::new();
+        for (d, ts) in &adevs {
+            let Some(x) = ts else { continue };
+            let period = if d.day.as_str() < "1945-04-20" { "16–19.04" } else { "20.04 и позже" };
+            cells.entry((d.sector.clone(), period)).or_default().push((d.excess, *x));
+        }
+        for ((sec, per), v) in &cells {
+            let inn = |f: &dyn Fn(&(f64, f64)) -> f64| v.iter().filter(|p| f(p) <= tol).count() as f64 / v.len() as f64;
+            let tuned = sec.contains("настройка") && *per == "16–19.04";
+            sectors.push(serde_json::json!({ "sector": sec, "period": per, "n": v.len(), "agent": inn(&|p| p.0), "current": inn(&|p| p.1), "tuned": tuned }));
+            if !tuned { out_pairs.extend(v.iter().copied()); }
+        }
+    }
+    let inn_out = |f: &dyn Fn(&(f64, f64)) -> f64| out_pairs.iter().filter(|p| f(p) <= tol).count() as f64 / out_pairs.len().max(1) as f64;
+    let summary = serde_json::json!({
+        "scenario": scen_name, "runs": runs, "seed": seed0, "toleranceKm": tol, "info": runinfo,
+        "perRun": per_run.iter().zip(&per_run_out).enumerate().map(|(k, (x, o))| serde_json::json!({ "seed": seed0 + k as u64, "divisions": x.0, "armies": x.1, "outOfTuning": o })).collect::<Vec<_>>(),
+        "outOfTuning": { "n": out_pairs.len(), "agent": inn_out(&|p| p.0), "current": inn_out(&|p| p.1) },
+        "sectors": sectors,
+        "milestones": miles.iter().map(|(id, title, date, when)| serde_json::json!({ "id": id, "title": title, "date": date, "calc": when })).collect::<Vec<_>>(),
+        "losses": daily_losses.iter().map(|(d, su, de)| serde_json::json!({ "day": d, "su": su.round(), "de": de.round() })).collect::<Vec<_>>(),
+    });
+    std::fs::write(format!("{out_dir}/summary.json"), serde_json::to_string_pretty(&summary).unwrap()).expect("summary.json");
     println!("{}", r.lines().take(4).collect::<Vec<_>>().join("\n"));
     println!("отчёт: {out_dir}/report.md; ход: {out_dir}/trace.json");
 }
