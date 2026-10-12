@@ -566,7 +566,10 @@ impl Sim {
             // потери, доля в сутки: база QJM с поправкой на размер; обороне — до нормы прорыва по мере продвижения
             let a_day = (c.attacker_loss_day * c.size_factor(att_power_people(w, &atts)) * noise).min(c.attacker_loss_max_day);
             let d_base = c.defender_loss_day * c.size_factor(dd.vars.personnel);
-            let d_day = (d_base + (c.defender_loss_penetration_day - d_base).max(0.0) * (adv_day / c.penetration_km_day).min(1.0)) * noise;
+            let d_rate = d_base + (c.defender_loss_penetration_day - d_base).max(0.0) * (adv_day / c.penetration_km_day).min(1.0);
+            // перевес наступающего на полосе: потери обороны растут с ним (калибровка — docs/plans/agents.md, 10и)
+            let d_ratio = (ratio / c.defender_ratio_ref).max(1.0).powf(c.defender_ratio_exp);
+            let d_day = (d_rate * d_ratio).min(c.defender_loss_cap_day) * noise;
             let (a_loss, d_loss, adv_km) = (a_day / 24.0, d_day / 24.0, adv_day / 24.0);
             battle_pace.insert(def, adv_km);
             let hold = matches!(dd.order.as_ref().map(|o| o.kind), Some(OrderKind::Hold));

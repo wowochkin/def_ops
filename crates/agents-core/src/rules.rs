@@ -63,6 +63,10 @@ pub struct Combat {
     pub defender_loss_day: f64,
     pub attacker_loss_max_day: f64,
     pub defender_loss_penetration_day: f64,
+    /// Рост потерь обороны с перевесом наступающего: множитель (перевес / ratio_ref)^exp, не меньше 1; потолок в сутки.
+    pub defender_ratio_ref: f64,
+    pub defender_ratio_exp: f64,
+    pub defender_loss_cap_day: f64,
     pub penetration_km_day: f64,
     /// Поправка на размер (QJM): (до численности, множитель).
     pub size: Vec<(f64, f64)>,
@@ -234,6 +238,9 @@ impl Rules {
             defender_loss_day: num(&ag, "combat.defenderLossDay")?,
             attacker_loss_max_day: num(&ag, "combat.attackerLossMaxDay")?,
             defender_loss_penetration_day: num(&ag, "combat.defenderLossPenetrationDay")?,
+            defender_ratio_ref: num(&ag, "combat.defenderRatio.ref")?,
+            defender_ratio_exp: num(&ag, "combat.defenderRatio.exp")?,
+            defender_loss_cap_day: num(&ag, "combat.defenderRatio.capDay")?,
             penetration_km_day: num(&ag, "combat.penetrationKmDay")?,
             size: ag.pointer("/combat/sizeFactor/value").and_then(Value::as_array).map(|a| a.iter().filter_map(|p| Some((p.get(0)?.as_f64()?, p.get(1)?.as_f64()?))).collect()).unwrap_or_default(),
             tank_loss_factor: num(&ag, "combat.tankLossFactor")?,
