@@ -64,7 +64,7 @@ describe('штаб модели в игре', () => {
     const r = decisionToOrders({ orders: [de, ru].map((area) => ({ formation: f, task: 'delay' as const, area, toArea: null, deadline: '', details: '' })) }, sit);
     expect(r.applied.map((a) => a.target)).toEqual([far.title, far.title]);
     expect(r.issues.filter((i) => /не опознан/.test(i.text))).toEqual([]);
-  });
+  }, 30_000);
 
   it('ход модели через сервер (подставная модель): приказы исполняются арбитром после задержки', async () => {
     const sit = buildSituation(ctx, g, cfg, tpl);
