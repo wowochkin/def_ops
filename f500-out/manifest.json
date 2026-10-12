@@ -1,5 +1,5 @@
 {
- "step": "0 — разведка описей",
+ "step": "0 — разведка; шаг 1–3 частично (первая очередь: скачано 67 листов + тайлы карт)",
  "date": "2026-10-12",
  "catalogued": {
   "12451": 951,
@@ -32,8 +32,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1753",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "л. 1–4 полностью",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -46,8 +46,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1754",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "скачано, не разобрано",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -60,8 +60,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1755",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "скачано, не разобрано",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -74,8 +74,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1756",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "л. 1 (оригинал) и перевод",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -102,8 +102,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1758",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "л. 1",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -116,8 +116,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1759",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "л. 1",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -158,8 +158,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1796",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "карта: тайлы z5 целиком, z6 — район Берлин — Одер",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -172,8 +172,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1797",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "карта: z5 целиком, z6 — Берлин, котёл, 12 А",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -186,8 +186,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1798",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "карта: z6 — Берлин и котёл",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -200,8 +200,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/1793",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "карта: z6 — Берлин и Потсдам (котёл вне вырезки)",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -214,8 +214,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/6315",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "карта, лист 2 — таблица; лист 1 — тыл (Богемия), не разбирался",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -228,8 +228,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/6316",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "таблица",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -242,8 +242,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/6317",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "таблица",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -354,8 +354,8 @@
    "operation": "berlin",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/23844",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "скачано, не разобрано",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -466,8 +466,8 @@
    "operation": "vistula-oder",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/3015",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "скачано, не разобрано",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -480,8 +480,8 @@
    "operation": "vistula-oder",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/3673",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "скачано, не разобрано",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -494,8 +494,8 @@
    "operation": "vistula-oder",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/9001",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "скачано, не разобрано",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -508,8 +508,8 @@
    "operation": "vistula-oder",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/9003",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "скачано, не разобрано",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -536,8 +536,8 @@
    "operation": "vistula-oder",
    "priority": 1,
    "url": "https://wwii.germandocsinrussia.org/ru/nodes/5945",
-   "readSheets": null,
-   "downloaded": false
+   "readSheets": "л. 1–3",
+   "downloaded": true
   },
   {
    "fond": "500",
@@ -579,5 +579,13 @@
   "Опись 12474 (ак): дел VIII, XXXXII, LIX, V ак и корпуса «Одер» за 1945 г. нет, кроме двух карт на 12.01.1945; CI ак — KTB 30.01–28.02/06.04.1945",
   "Опись 12460: Берлинского оборонительного района по секторам, Познани, Бреслау 1945, Франкфурта нет; Шнайдемюль — один приказ",
   "Опись 12451 (ОКХ): Lagekarten Ost за 1945 г. и Zustandsberichte в каталоге не найдены (каталог 951 + 1698 дел просмотрен по названиям)"
+ ],
+ "method": "сканы — /pages/<id>/zooms/8 (до ~2000 px); карты 1:300 000 — тайлы /system/pages/.../map/<hash>/<z>/<x>_<y>.jpg, z6 ≈ оригинал; координаты с карт — линейная привязка по 2–3 городам",
+ "pending": [
+  "12493 д. 8 (оборона Берлина, 107 кадров) и перевод 12462 д. 851 (97)",
+  "12493 д. 31 (численность СС, 48)",
+  "12462 д. 387 (Берлин, допросы Вейдлинга, 63)",
+  "12462 д. 802 (доклады Гитлеру 17–21.4, 56)",
+  "разбор: 12467 д. 9–10 (танки 21 и 25.4), 12474 д. 385, 742 и 12478 д. 117, 119 (январские карты), 12462 д. 836 (перевод приказа Йодля 27.4)"
  ]
 }
