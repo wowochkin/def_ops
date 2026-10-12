@@ -230,3 +230,20 @@ fn remnants_withdraw_and_merge() {
     assert!(sim.journal.iter().any(|e| e.text.contains("приняла остатки")));
     assert!(sim.world.divisions[de].note.contains("сведена в"));
 }
+
+/// Вся операция: сценарий читается, соединения с поздним вводом ждут его, цель-соединение берётся по месту.
+#[test]
+fn berlin_scenario_loads_and_runs() {
+    use agents_core::model::State;
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json");
+    let (mut sim, meta) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    assert!(sim.world.divisions.len() > 300, "{}", sim.world.divisions.len());
+    assert_eq!(meta.hours, 384);
+    let pending: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].state == State::Pending).collect();
+    assert!(!pending.is_empty());
+    for _ in 0..24 { sim.step(); }
+    assert!(sim.world.divisions.iter().filter(|d| d.side == Side::Su).any(|d| matches!(d.state, State::Attack(_))));
+    let still = pending.iter().filter(|&&i| sim.world.divisions[i].state == State::Pending).count();
+    assert!(still > 0, "28 А вводится 20.04 — через сутки ещё не введена");
+}

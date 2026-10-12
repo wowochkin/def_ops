@@ -1,7 +1,7 @@
 /** Приложение агентной модели: карта, иерархия, шкала времени с показом, карточка агента и разговор с ним. */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RunData, Settings, StaffLiveMsg } from './data';
-import { SCENARIO, isTauri, llmRun, loadRun, loadSettings, posAt, rowAt, saveSettings, shortName, stateGroup, timeLabel } from './data';
+import { SCENARIOS, isTauri, llmRun, loadRun, scenarioById, loadSettings, posAt, rowAt, saveSettings, shortName, stateGroup, timeLabel } from './data';
 import { SettingsPanel } from './Settings';
 import { StaffLog } from './StaffLog';
 import { StaffLive } from './StaffLive';
@@ -28,6 +28,12 @@ export function App() {
   const [live, setLive] = useState<StaffLiveMsg[]>([]);
   const [runId, setRunId] = useState(0);
   const [showDestroyed, setShowDestroyed] = useState(true);
+  const [scen, setScen] = useState(() => {
+    const q = new URLSearchParams(location.search).get('scen');
+    if (q) return scenarioById(q).id;
+    try { return scenarioById(localStorage.getItem('agents.scenario')).id; } catch { return SCENARIOS[0].id; }
+  });
+  const pickScen = (id: string) => { setScen(id); setSelected(null); try { localStorage.setItem('agents.scenario', id); } catch { /* без хранилища */ } };
   const setSettings = (s: Settings) => { setSettingsState(s); saveSettings(s); };
 
   // ход решений штабов на модели — событием из ядра
@@ -50,7 +56,7 @@ export function App() {
     setProgress(null);
     setLive([]);
     const opts = { seed, de: settings.de, llm: settings.staffModel ? llmRun(settings) : null };
-    loadRun(SCENARIO, opts).then((d) => {
+    loadRun(scenarioById(scen).path, opts).then((d) => {
       setData(d);
       if (q.get('h')) setHour(Number(q.get('h')));
       if (q.get('sel')) setSelected(q.get('sel'));
@@ -59,7 +65,7 @@ export function App() {
     }).catch((e) => setErr(String(e))).finally(() => { setBusy(false); setProgress(null); });
     // пересчёт — по кнопке (runId) или смене прогона; настройки сами по себе расчёт не запускают
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed, runId]);
+  }, [seed, runId, scen]);
 
   // показ: часы модели в секунду, плавно (между кадрами положение интерполируется)
   const last = useRef<number | null>(null);
@@ -79,7 +85,8 @@ export function App() {
   const tree = useMemo(() => {
     if (!data) return [];
     const { trace } = data;
-    return trace.hqs.filter((h) => h.echelon !== 'front' || !trace.hqs.some((x) => x.id === h.parent)).filter((h) => h.echelon !== 'front')
+    // все штабы, у которых есть свои соединения (фронтовые корпуса и дивизии — под фронтом)
+    return trace.hqs
       .map((h) => ({ hq: h, divs: trace.divisions.map((d, i) => ({ d, i })).filter((x) => x.d.hq === h.id) }))
       .filter((g) => g.divs.length);
   }, [data]);
@@ -97,7 +104,7 @@ export function App() {
   return (
     <div className="app">
       <header>
-        <b>{trace.name}</b>
+        <select className="scen" value={scen} onChange={(e) => pickScen(e.target.value)} disabled={busy} title="Сценарий">{SCENARIOS.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
         <span className="muted">{trace.divisions.length} дивизий · {trace.hours} ч · прогон {trace.seed}{data.live ? '' : ' · из evals-out (браузер)'}</span>
         <span className="muted">· немецкие штабы: {({ script: 'исторические приказы', doctrine: 'по доктрине', llm: `модель ${trace.llm?.model ?? ''}` } as Record<string, string>)[trace.sources?.[1] ?? 'script']}</span>
         <span className="spacer" />

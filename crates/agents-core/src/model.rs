@@ -86,6 +86,8 @@ pub enum State {
     Destroyed,
     /// Остатки сведены в другую дивизию — агент выбыл.
     Merged,
+    /// Ещё не введена в операцию (Division::enter): на карте её нет, в расчёте не участвует.
+    Pending,
 }
 
 impl State {
@@ -109,10 +111,11 @@ impl State {
             State::Remnant => "остатки: выход из боя",
             State::Destroyed => "небоеспособна",
             State::Merged => "сведена в другую дивизию",
+            State::Pending => "не введена в операцию",
         }
     }
     /// Агент выбыл: рассеян или сведён в другую дивизию.
-    pub fn out(&self) -> bool { matches!(self, State::Destroyed | State::Merged) }
+    pub fn out(&self) -> bool { matches!(self, State::Destroyed | State::Merged | State::Pending) }
     pub fn in_combat_posture(&self) -> bool { matches!(self, State::Attack(_) | State::Defense(_) | State::Deploy { .. }) }
 }
 
@@ -178,6 +181,8 @@ pub struct Division {
     pub route: Option<Route>,
     /// Откуда взяты исходные цифры (из сценария): для карточки агента.
     pub note: String,
+    /// Шаг ввода в операцию (0 — с начала); до него — State::Pending.
+    pub enter: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

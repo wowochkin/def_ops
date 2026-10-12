@@ -127,7 +127,7 @@ impl Sim {
         let d = &w.divisions[i];
         if let Some(o) = &d.order { if o.kind == kind && o.target.dist(target) < 2.0 { return; } }
         dec.why.push(format!("{} — {}: {}", d.name, kind.label(), note));
-        dec.orders.push(ScriptOrder { at: tick, hq: h as u32, to: vec![i as u32], kind, target: Some(target), forced: false, note: format!("решение штаба ({src}): {note}") });
+        dec.orders.push(ScriptOrder { at: tick, hq: h as u32, to: vec![i as u32], kind, target: Some(target), forced: false, note: format!("решение штаба ({src}): {note}"), follow: None, offset: XY::default() });
     }
 
     fn doctrine_hq(&self, w: &World, tick: u32, h: usize, subs: &[usize]) -> Decision {

@@ -16,7 +16,7 @@ const VARS: { idx: number; label: string; fmt: (v: number) => string }[] = [
 
 /** Машина состояний (docs/plans/agents.md, раздел 3.3): группы и подсостояния. */
 const DIAGRAM: { group: string; title: string; subs: string[] }[] = [
-  { group: 'reserve', title: 'Резерв', subs: ['резерв'] },
+  { group: 'reserve', title: 'Резерв', subs: ['не введена в операцию', 'резерв'] },
   { group: 'march', title: 'Марш', subs: ['марш: по дороге', 'марш: вне дорог', 'марш: привал', 'марш: затор', 'марш: переправа'] },
   { group: 'deploy', title: 'Развёртывание', subs: ['развёртывание'] },
   { group: 'attack', title: 'Наступление', subs: ['наступление: атака', 'наступление: второй эшелон', 'наступление: бой в глубине', 'наступление: закрепление'] },

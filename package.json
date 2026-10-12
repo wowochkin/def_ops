@@ -36,6 +36,8 @@
     "agents:web": "npm run dev -w @def-ops/agents-app",
     "agents:seelow-data": "npm run -s sim:census -- --json evals-out/census/census.json && tsx packages/sim/tools/agents/build-seelow.ts",
     "agents:seelow": "cargo run --release -q --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json --out evals-out/agents/seelow",
+    "agents:berlin-data": "npm run -s sim:census -- --json evals-out/census/census.json && tsx packages/sim/tools/agents/build-berlin.ts",
+    "agents:berlin": "cargo run --release -q --bin agents-run -- --scenario packages/sim/data/scenarios/agents/berlin-1945.json --out evals-out/agents/berlin",
     "sim:geocode-tsamo": "tsx packages/sim/tools/agents/geocode-tsamo.ts",
     "sim:calibrate": "tsx packages/sim/tools/run/calibrate.ts",
     "sim:sensitivity": "tsx packages/sim/tools/run/sensitivity.ts",

@@ -35,7 +35,14 @@ export interface HistPos { formation: string; time: string; at: LngLat; approxKm
 export interface History { divisions: HistPos[]; armies: HistPos[] }
 export interface RunData { trace: Trace; history: History; theatre: TheatreData; live: boolean }
 
-export const SCENARIO = 'packages/sim/data/scenarios/agents/seelow-1945.json';
+/** Сценарии: путь для ядра и готовый ход прогона для браузера (npm run agents:berlin, agents:seelow). */
+export interface ScenarioInfo { id: string; name: string; path: string; trace: string }
+export const SCENARIOS: ScenarioInfo[] = [
+  { id: 'berlin', name: 'Берлинская операция, 16.04–2.05', path: 'packages/sim/data/scenarios/agents/berlin-1945.json', trace: 'evals-out/agents/berlin/trace.json' },
+  { id: 'seelow', name: 'Зееловские высоты, 16–20.04', path: 'packages/sim/data/scenarios/agents/seelow-1945.json', trace: 'evals-out/agents/seelow/trace.json' },
+];
+export const SCENARIO = SCENARIOS[0].path;
+export const scenarioById = (id: string | null): ScenarioInfo => SCENARIOS.find((x) => x.id === id) ?? SCENARIOS[0];
 
 export const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
@@ -58,7 +65,7 @@ export async function loadRun(scenario = SCENARIO, opts: RunOptions = { seed: 1,
     trace = await invoke<Trace>('run_scenario', { scenario, seed: opts.seed, de: opts.de, llm: opts.de === 'llm' ? opts.llm : null });
     live = true;
   } else {
-    trace = JSON.parse(await repoText('evals-out/agents/seelow/trace.json')) as Trace;
+    trace = JSON.parse(await repoText((SCENARIOS.find((x) => x.path === scenario) ?? SCENARIOS[0]).trace)) as Trace;
   }
   const theatre = JSON.parse(await repoText(`packages/sim/data/theatres/${trace.theatre}.json`)) as TheatreData;
   return { trace, history, theatre, live };
@@ -275,7 +282,8 @@ export function lostAt(trace: Trace): (number | undefined)[] {
 }
 
 /** Группа состояния — для цвета и диаграммы. */
-export function stateGroup(label: string): 'reserve' | 'march' | 'deploy' | 'attack' | 'defense' | 'withdraw' | 'destroyed' {
+export function stateGroup(label: string): 'reserve' | 'march' | 'deploy' | 'attack' | 'defense' | 'withdraw' | 'destroyed' | 'pending' {
+  if (label.startsWith('не введена')) return 'pending';
   if (label.startsWith('марш')) return 'march';
   if (label.startsWith('развёрт')) return 'deploy';
   if (label.startsWith('наступ')) return 'attack';

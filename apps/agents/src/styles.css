@@ -18,7 +18,7 @@ header { grid-area: h; display: flex; align-items: center; gap: 14px; padding: 0
 .tree .item:hover { background: #f0ece2; } .tree .item.sel { background: #efe2c8; font-weight: 600; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--reserve); vertical-align: 1px; }
 .dot.march { background: var(--march); } .dot.deploy { background: var(--deploy); } .dot.attack { background: var(--attack); }
-.dot.defense { background: var(--defense); } .dot.withdraw { background: var(--withdraw); } .dot.destroyed { background: var(--destroyed); }
+.dot.defense { background: var(--defense); } .dot.withdraw { background: var(--withdraw); } .dot.destroyed { background: var(--destroyed); } .dot.pending { background: transparent; border: 1px solid var(--reserve); box-sizing: border-box; }
 main { grid-area: m; position: relative; overflow: hidden; }
 .map { width: 100%; height: 100%; }
 .overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; overflow: visible; }
@@ -120,3 +120,5 @@ header button { border: 1px solid var(--line); background: #fff; border-radius: 
 .staff-live .live-card.done, .staff-live .live-card.error { opacity: 0.6; }
 .staff-live pre { white-space: pre-wrap; font-family: inherit; max-height: 120px; overflow: auto; margin: 4px 0 0; }
 .staff-live pre.think { font-style: italic; color: var(--muted, #666); }
+
+header select.scen { font-weight: 700; font-size: 14px; border: 1px solid var(--line); border-radius: 4px; background: transparent; padding: 2px 4px; }

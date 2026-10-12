@@ -16,6 +16,7 @@ export function MapView({ data, hour, selected, onSelect, focus, showDestroyed }
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [, setView] = useState(0);
+  const [ready, setReady] = useState(false);
   const { trace, history, theatre } = data;
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export function MapView({ data, hour, selected, onSelect, focus, showDestroyed }
       attributionControl: false, canvasContextAttributes: { preserveDrawingBuffer: true },
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    map.on('load', () => { addTheatre(map, theatre); setView((v) => v + 1); });
+    map.on('load', () => { addTheatre(map, theatre); setView((v) => v + 1); setReady(true); });
     const redraw = () => setView((v) => v + 1);
     map.on('move', redraw); map.on('resize', redraw);
     mapRef.current = map;
@@ -33,6 +34,15 @@ export function MapView({ data, hour, selected, onSelect, focus, showDestroyed }
   }, [theatre]);
 
   useEffect(() => { if (focus && mapRef.current) mapRef.current.easeTo({ center: focus, duration: 600 }); }, [focus]);
+  // новый сценарий — карта по исходному расположению войск
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const ps = trace.frames[0].map((r) => [r[0], r[1]] as [number, number]);
+    const b = ps.reduce((a, p) => [Math.min(a[0], p[0]), Math.min(a[1], p[1]), Math.max(a[2], p[0]), Math.max(a[3], p[1])], [180, 90, -180, -90]);
+    map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trace.scenario, ready]);
 
   const townList = useMemo(() => towns(theatre), [theatre]);
   const lost = useMemo(() => lostAt(trace), [trace]);
@@ -66,6 +76,7 @@ export function MapView({ data, hour, selected, onSelect, focus, showDestroyed }
           const row = rowAt(trace, i, hour);
           const grp = stateGroup(row[2]);
           // разгромленная — на месте разгрома, приглушённая и перечёркнутая крест-накрест, с временем разгрома
+          if (grp === 'pending') return null;
           const out = grp === 'destroyed';
           if (out && !showDestroyed && i !== selIdx) return null;
           const [x, y] = P(posAt(trace, i, hour));

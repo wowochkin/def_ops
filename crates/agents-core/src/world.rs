@@ -40,6 +40,10 @@ pub struct ScriptOrder {
     pub target: Option<XY>,
     pub forced: bool,
     pub note: String,
+    /// Цель — соединение («наступать вместе с 3 гв. ТА»): его место в момент приказа (центр дивизий штаба или
+    /// положение дивизии) со сдвигом `offset`, км; иначе — `target`.
+    pub follow: Option<String>,
+    pub offset: XY,
 }
 
 /// Артподготовка (огневой удар) сценария: штаб армии в момент `at` проводит её на полосе своих дивизий.
@@ -185,6 +189,14 @@ impl Sim {
         if tick == 0 { let _ = self.fronts(&self.world); }
         let mut next = self.world.clone();
         let mut journal = Vec::new();
+        // ввод в операцию по времени сценария
+        for (i, d) in next.divisions.iter_mut().enumerate() {
+            if d.state == State::Pending && tick >= d.enter {
+                journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: введена в операцию", State::Pending.label(), State::Reserve.label()) });
+                d.state = State::Reserve;
+                d.state_since = tick;
+            }
+        }
 
         // 0. Приказы: штабы отдают по сценарию или решают по доктрине (staff.rs); до дивизий приказы доходят с задержкой
         // своего уровня. У стороны со штабами по доктрине приказы сценария не действуют.
@@ -201,8 +213,12 @@ impl Sim {
             let hq = &next.hqs[o.hq as usize];
             let sr = self.rules.side(hq.side);
             let delay = match hq.echelon { Echelon::Front => sr.delay_army, Echelon::Army => sr.delay_corps, Echelon::Corps => sr.delay_division };
+            let follow_at = o.follow.as_deref().and_then(|f| self.place_of(&next, f));
             for &d in &o.to {
-                let target = o.target.unwrap_or(next.divisions[d as usize].vars.pos);
+                let target = match follow_at {
+                    Some(c) => XY::new(c.x + o.offset.x, c.y + o.offset.y),
+                    None => o.target.unwrap_or(next.divisions[d as usize].vars.pos),
+                };
                 let order = Order { kind: o.kind, target, forced: o.forced, issued: o.at, arrives: o.at + delay.round() as u32, from: o.hq, note: o.note.clone() };
                 next.in_transit.push((d, order));
             }
@@ -211,7 +227,8 @@ impl Sim {
         next.in_transit.retain(|(d, o)| if o.arrives <= tick { arrived.push((*d, o.clone())); false } else { true });
         for (d, o) in arrived {
             let div = &mut next.divisions[d as usize];
-            if div.state.out() || div.state == State::Remnant { continue; }
+            // не введённая получает приказ заранее — выполнит после ввода
+            if (div.state.out() && div.state != State::Pending) || div.state == State::Remnant { continue; }
             journal.push(Event { tick, agent: d, text: format!("получен приказ «{}» от штаба «{}»: {}", o.kind.label(), next.hqs[o.from as usize].name, o.note) });
             div.order = Some(o);
             div.route = None;
@@ -239,6 +256,17 @@ impl Sim {
         next.tick += 1;
         self.world = next;
         self.journal.extend(journal);
+    }
+
+    /// Место соединения по id: дивизия — её положение; штаб — центр его действующих дивизий (с подчинёнными штабами).
+    fn place_of(&self, w: &World, id: &str) -> Option<XY> {
+        if let Some(d) = w.divisions.iter().find(|d| d.id == id && !d.state.out()) { return Some(d.vars.pos); }
+        let h = w.hqs.iter().position(|h| h.id == id)?;
+        let under = |mut k: usize| { for _ in 0..8 { if k == h { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+        let ps: Vec<XY> = w.divisions.iter().filter(|d| !d.state.out() && under(d.hq as usize)).map(|d| d.vars.pos).collect();
+        if ps.is_empty() { return None; }
+        let n = ps.len() as f64;
+        Some(ps.iter().fold(XY::default(), |s, p| XY::new(s.x + p.x / n, s.y + p.y / n)))
     }
 
     fn night(&self) -> bool { let h = self.hour().rem_euclid(24); !(5..21).contains(&h) }

@@ -66,7 +66,13 @@ struct Dev {
     excess: f64,
     side: Side,
     group: String,
+    /// Участок для сверки вне настройки: фронт (советские) или армия (немецкие); «настройка» — участок Зееловских высот.
+    sector: String,
 }
+
+/// Объединения участка Зееловских высот: на нём выбирались правила модели (docs/plans/agents.md, 10б–10и); остальные
+/// участки — проверка без перенастройки.
+const TUNED: &[&str] = &["su_47a", "su_3ua", "su_5ua", "su_8gva", "su_69a", "su_1gta", "su_2gta", "de_ci", "de_lvi", "de_xi_ss"];
 
 fn median(mut v: Vec<f64>) -> f64 {
     if v.is_empty() { return f64::NAN; }
@@ -145,6 +151,16 @@ fn main() {
         let secs = t0.elapsed().as_secs_f64();
         let idx: HashMap<&str, usize> = sim.world.divisions.iter().enumerate().map(|(i, d)| (d.id.as_str(), i)).collect();
         let hq_name = |i: usize| sim.world.hqs[sim.world.divisions[i].hq as usize].id.clone();
+        // предки штаба (сам штаб первым)
+        let chain = |h: usize| { let mut v = vec![h]; while let Some(p) = sim.world.hqs[*v.last().unwrap()].parent { if v.len() > 8 { break; } v.push(p as usize); } v };
+        let sector_of_hq = |h: usize| -> String {
+            let c = chain(h);
+            let tuned = c.iter().any(|&k| TUNED.contains(&sim.world.hqs[k].id.as_str()));
+            let want = if sim.world.hqs[h].side == Side::Su { agents_core::model::Echelon::Front } else { agents_core::model::Echelon::Army };
+            let top = c.iter().find(|&&k| sim.world.hqs[k].echelon == want).or(c.last()).map(|&k| sim.world.hqs[k].name.clone()).unwrap_or_default();
+            if tuned { format!("{top}: Зееловские высоты (настройка)") } else { top }
+        };
+        let hq_idx_of = |id: &str| sim.world.hqs.iter().position(|h| h.id == id);
         // исходные положения (шаг 0) — вход сценария, а не проверка: в мерило не идут
         let tick_of = |time: &str| -> Option<usize> {
             let h = parse_hours(time)? - start;
@@ -156,22 +172,25 @@ fn main() {
             let (Some(&i), Some(t)) = (idx.get(h.formation.as_str()), tick_of(&h.time)) else { continue };
             let km = snaps[t][i].dist(sim.theatre.proj.to_xy(h.at));
             let excess = (km - h.approx_km.unwrap_or(5.0)).max(0.0);
-            devs.push(Dev { formation: h.formation.clone(), day: h.time[..10].to_string(), km, excess, side: sim.world.divisions[i].side, group: hq_name(i) });
+            devs.push(Dev { formation: h.formation.clone(), day: h.time[..10].to_string(), km, excess, side: sim.world.divisions[i].side, group: hq_name(i), sector: sector_of_hq(sim.world.divisions[i].hq as usize) });
         }
         // армии: центр дивизий армии; немецкие дивизии — сами
         let mut adevs = Vec::new();
         for h in &hist.armies {
             let Some(t) = tick_of(&h.time) else { continue };
             let members: Vec<usize> = if let Some(&i) = idx.get(h.formation.as_str()) { vec![i] } else {
-                (0..n).filter(|&i| sim.world.hqs[sim.world.divisions[i].hq as usize].id == h.formation && alive[t][i]).collect()
+                // все соединения штаба и его подчинённых штабов
+                let Some(k) = hq_idx_of(&h.formation) else { continue };
+                (0..n).filter(|&i| alive[t][i] && chain(sim.world.divisions[i].hq as usize).contains(&k)).collect()
             };
+            let sector = match idx.get(h.formation.as_str()) { Some(&i) => sector_of_hq(sim.world.divisions[i].hq as usize), None => hq_idx_of(&h.formation).map(sector_of_hq).unwrap_or_default() };
             if members.is_empty() { continue; }
             let c = members.iter().fold(XY::default(), |s, &i| XY::new(s.x + snaps[t][i].x / members.len() as f64, s.y + snaps[t][i].y / members.len() as f64));
             let km = c.dist(sim.theatre.proj.to_xy(h.at));
             let excess = (km - h.approx_km.unwrap_or(5.0)).max(0.0);
             let side = if h.formation.starts_with("su_") { Side::Su } else { Side::De };
             let ts = ts_devs.get(&(h.formation.clone(), h.time[..10].to_string())).map(|d| d.excess_km);
-            adevs.push((Dev { formation: h.formation.clone(), day: h.time[..10].to_string(), km, excess, side, group: h.formation.clone() }, ts));
+            adevs.push((Dev { formation: h.formation.clone(), day: h.time[..10].to_string(), km, excess, side, group: h.formation.clone(), sector }, ts));
         }
         let share = |v: &[&Dev]| v.iter().filter(|d| d.excess <= tol).count() as f64 / v.len().max(1) as f64;
         per_run.push((share(&devs.iter().collect::<Vec<_>>()), share(&adevs.iter().map(|x| &x.0).collect::<Vec<_>>()), secs));
@@ -240,6 +259,27 @@ fn main() {
     let w = |f: &dyn Fn(&(f64, f64)) -> f64| pairs.iter().filter(|p| f(p) <= tol).count() as f64 / pairs.len().max(1) as f64 * 100.0;
     let _ = writeln!(r, "\nПарных сравнений {}: агентная модель ближе к истории в {}, нынешняя — в {}, остальные — в пределах 0,5 км. В допуске на этих положениях: агентная модель {:.0} %, нынешняя {:.0} %; медиана превышения {:.1} и {:.1} км.\n",
         both.0, both.1, both.2, w(&|p| p.0), w(&|p| p.1), median(pairs.iter().map(|p| p.0).collect()), median(pairs.iter().map(|p| p.1).collect()));
+    // по участкам и периодам: на участке и в дни настройки и вне их (проверка без перенастройки)
+    let mut cells: BTreeMap<(String, &str), Vec<(f64, f64)>> = BTreeMap::new();
+    for (d, ts) in &adevs {
+        let Some(x) = ts else { continue };
+        let period = if d.day.as_str() < "1945-04-20" { "16–19.04" } else { "20.04 и позже" };
+        cells.entry((d.sector.clone(), period)).or_default().push((d.excess, *x));
+    }
+    if cells.len() > 1 {
+        let _ = writeln!(r, "## По участкам и периодам\n\nПравила модели выбирались на Зееловских высотах 16–19.04; остальные участки и дни — проверка без перенастройки.\n\n| участок | период | положений | в допуске: агентная | нынешняя | среднее превышение, км: агентная | нынешняя |\n|---|---|---|---|---|---|---|");
+        let mut all_out: Vec<(f64, f64)> = Vec::new();
+        for ((sec, per), v) in &cells {
+            let inn = |f: &dyn Fn(&(f64, f64)) -> f64| v.iter().filter(|p| f(p) <= tol).count() as f64 / v.len() as f64 * 100.0;
+            let mean = |f: &dyn Fn(&(f64, f64)) -> f64| v.iter().map(f).sum::<f64>() / v.len() as f64;
+            let _ = writeln!(r, "| {sec} | {per} | {} | {:.0} % | {:.0} % | {:.1} | {:.1} |", v.len(), inn(&|p| p.0), inn(&|p| p.1), mean(&|p| p.0), mean(&|p| p.1));
+            if !(sec.contains("настройка") && *per == "16–19.04") { all_out.extend(v.iter().copied()); }
+        }
+        let a = all_out.iter().filter(|p| p.0 <= tol && p.1 > tol).count();
+        let b = all_out.iter().filter(|p| p.0 > tol && p.1 <= tol).count();
+        let inn = |f: &dyn Fn(&(f64, f64)) -> f64| all_out.iter().filter(|p| f(p) <= tol).count() as f64 / all_out.len().max(1) as f64 * 100.0;
+        let _ = writeln!(r, "\nВне настройки ({} положений): в допуске агентная {:.0} %, нынешняя {:.0} %; в допуске только у агентной — {a}, только у нынешней — {b}.\n", all_out.len(), inn(&|p| p.0), inn(&|p| p.1));
+    }
     let mut worst: Vec<&Dev> = devs.iter().collect();
     worst.sort_by(|a, b| b.excess.total_cmp(&a.excess));
     let _ = writeln!(r, "## Наибольшие расхождения дивизий\n\n| дивизия | объединение | день | расстояние, км | превышение, км |\n|---|---|---|---|---|");

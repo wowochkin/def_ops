@@ -46,6 +46,9 @@ pub struct DivisionIn {
     pub pos: LngLat,
     #[serde(default)]
     pub note: String,
+    /// Ввод в операцию (время сценария); нет — с начала.
+    #[serde(default, rename = "enterAt")]
+    pub enter_at: Option<String>,
 }
 fn one() -> f64 { 1.0 }
 
@@ -61,6 +64,11 @@ pub struct OrderIn {
     /// Цель; null — на месте.
     #[serde(default)]
     pub target: Option<LngLat>,
+    /// Цель — соединение (id штаба или дивизии): его место в момент приказа со сдвигом offsetKm.
+    #[serde(default, rename = "targetFormation")]
+    pub target_formation: Option<String>,
+    #[serde(default, rename = "offsetKm")]
+    pub offset_km: Option<[f64; 2]>,
     #[serde(default)]
     pub forced: bool,
     #[serde(default)]
@@ -92,7 +100,9 @@ pub struct FireIn {
     pub at: serde_json::Value,
     pub hq: String,
     pub duration_min: f64,
-    pub density_per_km: f64,
+    /// Плотность, стволов на км; нет в источниках — норматив правил (combat.artillery.normDensityPerKm).
+    #[serde(default)]
+    pub density_per_km: Option<f64>,
     #[serde(default)]
     pub note: String,
 }
@@ -125,7 +135,7 @@ fn new_division(id: String, name: String, side: Side, hq: u32, params: Params, p
     let mut d = Division {
         id, name, side, hq, params,
         vars: Vars { personnel, tanks, guns, ammo, fuel, fatigue: 0.0, cohesion: 1.0, prepared_h: 0.0, march_h_today: 0.0, pos, strength0: 0.0, personnel0: personnel, positions: None },
-        state: State::Reserve, state_since: 0, order: None, route: None, note: String::new(),
+        state: State::Reserve, state_since: 0, order: None, route: None, note: String::new(), enter: 0,
     };
     let (wp, wt, wg) = rules.side(side).weights;
     d.vars.strength0 = (personnel / 1000.0 * wp + tanks * wt + guns * wg) * d.params.quality;
@@ -163,6 +173,10 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
         let params = Params { kind: d.kind.clone(), mobility: d.mobility, size: d.size, quality: d.quality };
         let mut div = new_division(d.id.clone(), d.name.clone(), d.side, hq, params, d.personnel, d.tanks, d.guns, d.ammo, d.fuel, theatre.proj.to_xy(d.pos), &rules);
         div.note = d.note.clone();
+        if let Some(t) = &d.enter_at {
+            let h = (parse_hours(t).ok_or("ввод: неверная дата")? - start).max(0) as u32;
+            if h > 0 { div.enter = h; div.state = State::Pending; }
+        }
         divisions.push(div);
     }
     let div_idx: HashMap<&str, u32> = s.divisions.iter().enumerate().map(|(i, d)| (d.id.as_str(), i as u32)).collect();
@@ -179,7 +193,8 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
         } else {
             o.to.iter().map(|id| div_idx.get(id.as_str()).copied().ok_or_else(|| format!("приказ: нет дивизии {id}"))).collect::<Result<_, _>>()?
         };
-        script.push(ScriptOrder { at, hq, to, kind: o.kind, target: o.target.map(|p| theatre.proj.to_xy(p)), forced: o.forced, note: o.note.clone() });
+        let off = o.offset_km.unwrap_or([0.0, 0.0]);
+        script.push(ScriptOrder { at, hq, to, kind: o.kind, target: o.target.map(|p| theatre.proj.to_xy(p)), forced: o.forced, note: o.note.clone(), follow: o.target_formation.clone(), offset: XY::new(off[0], off[1]) });
     }
     let tick_of = |v: &serde_json::Value| -> Result<u32, String> {
         match v {
@@ -191,7 +206,7 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
     let mut fires = Vec::new();
     for f in &s.fires {
         let hq = *hq_idx.get(f.hq.as_str()).ok_or_else(|| format!("артподготовка: нет штаба {}", f.hq))?;
-        fires.push(ScriptFire { at: tick_of(&f.at)?, hq, duration_min: f.duration_min, density_per_km: f.density_per_km, note: f.note.clone() });
+        fires.push(ScriptFire { at: tick_of(&f.at)?, hq, duration_min: f.duration_min, density_per_km: f.density_per_km.unwrap_or(rules.combat.artillery.norm_density), note: f.note.clone() });
     }
     let mut withdrawals = Vec::new();
     for w in &s.withdrawals {
@@ -270,7 +285,7 @@ pub fn synthetic(theatre: Arc<Theatre>, rules: Rules, n: usize, n_objects: usize
             let j = XY::new(berlin.x + 20.0 * (r01(i as u64 + 7) - 0.5), berlin.y + 20.0 * (r01(i as u64 + 9) - 0.5));
             (OrderKind::Attack, j)
         } else { (OrderKind::Hold, pos) };
-        script.push(ScriptOrder { at: 0, hq: if side == Side::Su { 0 } else { 1 }, to: vec![i as u32], kind, target: Some(target), forced: false, note: "синтетический приказ".into() });
+        script.push(ScriptOrder { at: 0, hq: if side == Side::Su { 0 } else { 1 }, to: vec![i as u32], kind, target: Some(target), forced: false, note: "синтетический приказ".into(), follow: None, offset: XY::default() });
     }
     let mut objects = theatre_objects(t);
     let mut k = 0u64;
