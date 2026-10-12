@@ -45,5 +45,8 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
         "scenario": meta.id, "name": meta.name, "start": meta.start, "hours": meta.hours, "seed": sim.seed,
         "theatre": sim.theatre.id,
         "fields": FIELDS, "divisions": divisions, "hqs": hqs, "frames": frames, "journal": journal,
+        "sources": sim.sources.iter().map(|s| format!("{s:?}").to_lowercase()).collect::<Vec<_>>(),
+        "llm": sim.llm.as_ref().map(|c| json!({ "url": c.url, "model": c.model })),
+        "staff": sim.llm_log.lock().map(|l| l.clone()).unwrap_or_default(),
     })
 }

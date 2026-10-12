@@ -8,7 +8,8 @@ publish = false
 [dependencies]
 rayon = "1.10"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+ureq = { version = "2", features = ["json"] }
 
 [[bin]]
 name = "agents-bench"

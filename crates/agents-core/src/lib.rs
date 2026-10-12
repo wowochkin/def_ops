@@ -3,6 +3,7 @@
 //! и воспроизводимым результатом на любом числе ядер.
 
 pub mod geo;
+pub mod llm;
 pub mod model;
 pub mod rng;
 pub mod route;

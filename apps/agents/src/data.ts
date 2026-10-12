@@ -14,10 +14,17 @@ export interface JournalEvent { tick: number; time: string; agent: string | null
 /** Кадр дивизии: lng, lat, состояние, люди, танки, орудия, боекомплекты, заправки, усталость, организованность. */
 export type Row = [number, number, string, number, number, number, number, number, number, number];
 
+export interface StaffCall { tick: number; time: string; hq: string; model: string; request: string; reply: string; ok: boolean }
 export interface Trace {
   scenario: string; name: string; start: string; hours: number; seed: number; theatre: string;
   divisions: DivisionInfo[]; hqs: HqInfo[]; frames: Row[][]; journal: JournalEvent[];
+  /** Источник решений штабов: [советская сторона, немецкая] — script, doctrine, llm. */
+  sources?: string[]; llm?: { url: string; model: string } | null; staff?: StaffCall[];
 }
+
+/** Источник решений немецких штабов. */
+export type StaffSource = 'script' | 'doctrine' | 'llm';
+export interface RunOptions { seed: number; de: StaffSource; llm: { url: string; model: string } | null }
 export interface HistPos { formation: string; time: string; at: LngLat; approxKm: number; set?: string; reliability?: string | null }
 export interface History { divisions: HistPos[]; armies: HistPos[] }
 export interface RunData { trace: Trace; history: History; theatre: TheatreData; live: boolean }
@@ -36,13 +43,13 @@ async function repoText(path: string): Promise<string> {
   return r.text();
 }
 
-export async function loadRun(scenario = SCENARIO, seed = 1): Promise<RunData> {
+export async function loadRun(scenario = SCENARIO, opts: RunOptions = { seed: 1, de: 'script', llm: null }): Promise<RunData> {
   const history = JSON.parse(await repoText(scenario.replace(/\.json$/, '.history.json'))) as History;
   let trace: Trace;
   let live = false;
   if (isTauri()) {
     const { invoke } = await import('@tauri-apps/api/core');
-    trace = await invoke<Trace>('run_scenario', { scenario, seed });
+    trace = await invoke<Trace>('run_scenario', { scenario, seed: opts.seed, de: opts.de, llm: opts.de === 'llm' ? opts.llm : null });
     live = true;
   } else {
     trace = JSON.parse(await repoText('evals-out/agents/seelow/trace.json')) as Trace;
@@ -50,6 +57,42 @@ export async function loadRun(scenario = SCENARIO, seed = 1): Promise<RunData> {
   const theatre = JSON.parse(await repoText(`packages/sim/data/theatres/${trace.theatre}.json`)) as TheatreData;
   return { trace, history, theatre, live };
 }
+
+/** Языковая модель (протокол OpenAI): в приложении — через ядро, в браузере — через прокси сервера разработки. */
+export const defaultLlmUrl = () => (isTauri() ? 'http://localhost:1234/v1' : '/llm/v1');
+
+export async function listModels(url: string): Promise<string[]> {
+  if (isTauri()) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return invoke<string[]>('list_models', { url });
+  }
+  const r = await fetch(`${url.replace(/\/$/, '')}/models`);
+  if (!r.ok) throw new Error(`сервер модели ответил ${r.status}`);
+  const j = await r.json();
+  return ((j.data ?? []) as { id: string }[]).map((m) => m.id).sort();
+}
+
+export async function chatLLM(url: string, model: string, messages: { role: string; content: string }[]): Promise<string> {
+  if (isTauri()) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return invoke<string>('llm_chat', { url, model, messages: messages.map((m) => [m.role, m.content]) });
+  }
+  const r = await fetch(`${url.replace(/\/$/, '')}/chat/completions`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, temperature: 0.2, messages }),
+  });
+  if (!r.ok) throw new Error(`модель ответила ${r.status}`);
+  const j = await r.json();
+  return j.choices?.[0]?.message?.content ?? '(пустой ответ)';
+}
+
+/** Настройки модели и источника решений — в хранилище окна (переживают перезапуск). */
+export interface Settings { llmUrl: string; staffModel: string; chatModel: string; de: StaffSource }
+export function loadSettings(): Settings {
+  const d: Settings = { llmUrl: defaultLlmUrl(), staffModel: '', chatModel: '', de: 'script' };
+  try { return { ...d, ...JSON.parse(localStorage.getItem('agents.settings') ?? '{}') }; } catch { return d; }
+}
+export function saveSettings(s: Settings) { try { localStorage.setItem('agents.settings', JSON.stringify(s)); } catch { /* без хранилища */ } }
 
 /** Часы от начала сценария → «16.04.1945 05:00». */
 export function timeLabel(start: string, h: number): string {

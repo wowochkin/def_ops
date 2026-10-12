@@ -1,12 +1,15 @@
 //! Штабы, решающие сами (docs/plans/agents.md, раздел 5): источник решений выбирается для каждой стороны —
-//! исторические приказы сценария или штабы «по доктрине». Штаб по доктрине раз в цикл управления оценивает
-//! обстановку по своим дивизиям и отдаёт приказы: держаться, контратаковать резервом, закрыть прорыв, отойти на
-//! следующий рубеж. Правила и числа — data/rules/agents-v0.json, раздел doctrine; каждое решение — в журнале
-//! с обоснованием.
+//! исторические приказы сценария, штабы «по доктрине» или штабы на языковой модели. Штаб раз в цикл управления
+//! оценивает обстановку по своим дивизиям и отдаёт приказы: держаться, оборонять, контратаковать резервом, закрыть
+//! прорыв, отойти на следующий рубеж. Правила и числа доктрины — data/rules/agents-v0.json, раздел doctrine. Штаб на
+//! модели получает ту же оценку обстановки и выбирает из тех же действий; если модель недоступна или ответила
+//! негодно, решает доктрина. Каждое решение — в журнале с обоснованием; запросы и ответы модели — в llm_log.
 
 use crate::geo::XY;
+use crate::llm;
 use crate::model::*;
 use crate::world::{Event, ScriptOrder, Sim, World};
+use serde_json::{json, Value};
 
 /// Источник решений штабов стороны.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -15,7 +18,12 @@ pub enum Source {
     Script,
     /// Штабы по доктрине стороны.
     Doctrine,
+    /// Штабы на языковой модели (Sim::llm); при сбое — по доктрине.
+    Llm,
 }
+
+/// Формат ответа модели-штаба.
+const REPLY_FORMAT: &str = r#"{"orders": [{"division": "id своей дивизии", "action": "hold|defend|withdraw|counterattack|block", "target": "id или null", "reason": "коротко, по-русски"}]}"#;
 
 /// Оценка дивизии штабом.
 struct Assess {
@@ -26,67 +34,162 @@ struct Assess {
     broken: bool,
 }
 
+/// Решение штаба: приказы и пояснения к ним.
+struct Decision {
+    orders: Vec<ScriptOrder>,
+    why: Vec<String>,
+}
+
 impl Sim {
-    /// Решения штабов по доктрине на шаг `tick`: приказы (с задержкой доведения — как у приказов сценария) и записи журнала.
+    /// Решения штабов (по доктрине или на модели) на шаг `tick`: приказы (с задержкой доведения — как у приказов
+    /// сценария) и записи журнала.
     pub fn doctrine_orders(&self, w: &World, tick: u32) -> (Vec<ScriptOrder>, Vec<Event>) {
-        let doc = &self.rules.doctrine;
+        let cycle = self.rules.doctrine.cycle_hours.max(1.0) as u32;
         let mut orders = Vec::new();
         let mut journal = Vec::new();
-        let cycle = doc.cycle_hours.max(1.0) as u32;
         for (h, hq) in w.hqs.iter().enumerate() {
-            if self.sources[side_idx(hq.side)] != Source::Doctrine { continue; }
+            let src = self.sources[side_idx(hq.side)];
+            if src == Source::Script { continue; }
             // цикл управления; штабы разнесены по часам, чтобы не решать все разом
             if (tick + h as u32) % cycle != 0 && tick != 0 { continue; }
             let subs: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].hq as usize == h && w.divisions[i].state != State::Destroyed).collect();
             if subs.is_empty() { continue; }
-            let a: Vec<Assess> = subs.iter().map(|&i| self.assess(w, i)).collect();
-            let mut why: Vec<String> = Vec::new();
-            let mut issue = |i: usize, kind: OrderKind, target: XY, note: String, why: &mut Vec<String>| {
-                let d = &w.divisions[i];
-                // не повторять тот же приказ
-                if let Some(o) = &d.order { if o.kind == kind && o.target.dist(target) < 2.0 { return; } }
-                why.push(format!("{} — {}: {}", d.name, kind.label(), note));
-                orders.push(ScriptOrder { at: tick, hq: h as u32, to: vec![i as u32], kind, target: Some(target), forced: false, note: format!("решение штаба по доктрине: {note}") });
+            let (dec, how) = match (src, &self.llm) {
+                (Source::Llm, Some(cfg)) => match self.llm_hq(w, tick, h, &subs, cfg) {
+                    Ok(dec) => (dec, format!("языковая модель {}", cfg.model)),
+                    Err(e) => (self.doctrine_hq(w, tick, h, &subs), format!("по доктрине: модель не дала решения — {e}")),
+                },
+                (Source::Llm, None) => (self.doctrine_hq(w, tick, h, &subs), "по доктрине: модель не задана".to_string()),
+                _ => (self.doctrine_hq(w, tick, h, &subs), "по доктрине".to_string()),
             };
-            // прорывы на полосе штаба: дивизия противника глубже нашей дивизии (у неё в тылу) — часть главной позиции
-            // потеряна (TM-E 30-451, A); ответ — немедленная контратака резервом во фланг вклинения, если резерва хватает
-            // (не меньше 1/3 прорвавшегося — DA Pam 20-233, с. 9, B), иначе — закрыть направление рубежом за ней
-            let pens: Vec<(usize, usize)> = a.iter().filter_map(|x| self.penetrator(w, x.i).map(|e| (x.i, e))).collect();
-            let mut used: Vec<usize> = Vec::new();
-            for x in &a {
-                let d = &w.divisions[x.i];
-                let pen = pens.iter().find(|p| p.0 == x.i).map(|p| p.1);
-                if x.broken || pen.is_some() {
-                    // разбита или обойдена: отход на следующий рубеж (угроза охвата — последовательные позиции через 8–10 км,
-                    // DA Pam 20-233, с. 64–70, B); при приказе «держаться» — держаться
-                    let why_txt = if let Some(e) = pen { format!("в тылу — {} (угроза охвата)", w.divisions[e].name) } else {
-                        format!("боевая сила {:.0} % от исходной, организованность {:.2}", 100.0 * x.strength / d.vars.strength0.max(1e-9), d.vars.cohesion) };
-                    if doc.hold_orders {
-                        issue(x.i, OrderKind::Hold, d.vars.pos, format!("{why_txt}; приказ «держаться» (Haltebefehl) — отход запрещён"), &mut why);
-                    } else {
-                        let t = self.line_behind(w, x.i);
-                        issue(x.i, OrderKind::Withdraw, t, format!("{why_txt} — отход на следующий рубеж"), &mut why);
-                    }
-                } else if x.threat > 0.0 {
-                    let kind = if doc.hold_orders { OrderKind::Hold } else { OrderKind::Defend };
-                    issue(x.i, kind, d.vars.pos, format!("противник в соприкосновении, его сила в досягаемости — {:.1} от своей; удерживать полосу", x.threat), &mut why);
-                } else if let Some(&(hit, e)) = pens.iter().filter(|p| !used.contains(&p.1)).min_by(|p, q| w.divisions[p.1].vars.pos.dist(d.vars.pos).total_cmp(&w.divisions[q.1].vars.pos.dist(d.vars.pos))) {
-                    let es = self.strength(&w.divisions[e]);
-                    let ratio = x.strength / es.max(1e-9);
-                    if ratio >= doc.counterattack_ratio {
-                        used.push(e);
-                        issue(x.i, OrderKind::Attack, w.divisions[e].vars.pos, format!("контратака во фланг вклинения: {} в тылу у {}, своих сил к прорвавшимся {:.2}", w.divisions[e].name, w.divisions[hit].name, ratio), &mut why);
-                    } else {
-                        let block = self.behind(w, hit, doc.block_depth_km);
-                        issue(x.i, OrderKind::Defend, block, format!("сил для контратаки мало ({:.2} к прорвавшимся {}) — занять рубеж за {}", ratio, w.divisions[e].name, w.divisions[hit].name), &mut why);
-                    }
-                }
+            if !dec.why.is_empty() {
+                journal.push(Event { tick, agent: u32::MAX, text: format!("штаб «{}» ({how}): {}", hq.name, dec.why.join("; ")) });
             }
-            if !why.is_empty() {
-                journal.push(Event { tick, agent: u32::MAX, text: format!("штаб «{}» (по доктрине): {}", hq.name, why.join("; ")) });
-            }
+            orders.extend(dec.orders);
         }
         (orders, journal)
+    }
+
+    /// Приказ дивизии, если он отличается от действующего.
+    fn order_for(&self, w: &World, tick: u32, h: usize, i: usize, kind: OrderKind, target: XY, note: String, src: &str, dec: &mut Decision) {
+        let d = &w.divisions[i];
+        if let Some(o) = &d.order { if o.kind == kind && o.target.dist(target) < 2.0 { return; } }
+        dec.why.push(format!("{} — {}: {}", d.name, kind.label(), note));
+        dec.orders.push(ScriptOrder { at: tick, hq: h as u32, to: vec![i as u32], kind, target: Some(target), forced: false, note: format!("решение штаба ({src}): {note}") });
+    }
+
+    fn doctrine_hq(&self, w: &World, tick: u32, h: usize, subs: &[usize]) -> Decision {
+        let doc = &self.rules.doctrine;
+        let mut dec = Decision { orders: Vec::new(), why: Vec::new() };
+        let a: Vec<Assess> = subs.iter().map(|&i| self.assess(w, i)).collect();
+        // прорывы на полосе штаба: противник продвинулся вглубь полосы дивизии на глубину главной полосы — часть главной
+        // позиции потеряна (TM-E 30-451, A); ответ — немедленная контратака резервом во фланг вклинения, если резерва
+        // хватает (не меньше 1/3 прорвавшегося — DA Pam 20-233, с. 9, B), иначе — закрыть направление рубежом за ней
+        let pens: Vec<(usize, usize)> = a.iter().filter_map(|x| self.penetrator(w, x.i).map(|e| (x.i, e))).collect();
+        let mut used: Vec<usize> = Vec::new();
+        for x in &a {
+            let d = &w.divisions[x.i];
+            let pen = pens.iter().find(|p| p.0 == x.i).map(|p| p.1);
+            if x.broken || pen.is_some() {
+                // разбита или обойдена: отход на следующий рубеж (угроза охвата — последовательные позиции через 8–10 км,
+                // DA Pam 20-233, с. 64–70, B); при приказе «держаться» — держаться
+                let why_txt = if let Some(e) = pen { format!("в тылу — {} (угроза охвата)", w.divisions[e].name) } else {
+                    format!("боевая сила {:.0} % от исходной, организованность {:.2}", 100.0 * x.strength / d.vars.strength0.max(1e-9), d.vars.cohesion) };
+                if doc.hold_orders {
+                    self.order_for(w, tick, h, x.i, OrderKind::Hold, d.vars.pos, format!("{why_txt}; приказ «держаться» (Haltebefehl) — отход запрещён"), "доктрина", &mut dec);
+                } else {
+                    let t = self.line_behind(w, x.i);
+                    self.order_for(w, tick, h, x.i, OrderKind::Withdraw, t, format!("{why_txt} — отход на следующий рубеж"), "доктрина", &mut dec);
+                }
+            } else if x.threat > 0.0 {
+                let kind = if doc.hold_orders { OrderKind::Hold } else { OrderKind::Defend };
+                self.order_for(w, tick, h, x.i, kind, d.vars.pos, format!("противник в соприкосновении, его сила в досягаемости — {:.1} от своей; удерживать полосу", x.threat), "доктрина", &mut dec);
+            } else if let Some(&(hit, e)) = pens.iter().filter(|p| !used.contains(&p.1)).min_by(|p, q| w.divisions[p.1].vars.pos.dist(d.vars.pos).total_cmp(&w.divisions[q.1].vars.pos.dist(d.vars.pos))) {
+                let ratio = x.strength / self.strength(&w.divisions[e]).max(1e-9);
+                if ratio >= doc.counterattack_ratio {
+                    used.push(e);
+                    self.order_for(w, tick, h, x.i, OrderKind::Attack, w.divisions[e].vars.pos, format!("контратака во фланг вклинения: {} в тылу у {}, своих сил к прорвавшимся {:.2}", w.divisions[e].name, w.divisions[hit].name, ratio), "доктрина", &mut dec);
+                } else {
+                    let block = self.behind(w, hit, doc.block_depth_km);
+                    self.order_for(w, tick, h, x.i, OrderKind::Defend, block, format!("сил для контратаки мало ({:.2} к прорвавшимся {}) — занять рубеж за {}", ratio, w.divisions[e].name, w.divisions[hit].name), "доктрина", &mut dec);
+                }
+            }
+        }
+        dec
+    }
+
+    /// Обстановка для штаба на модели: свои дивизии с оценкой, противник рядом, рубеж позади.
+    fn situation(&self, w: &World, subs: &[usize]) -> Value {
+        let km1 = |x: f64| (x * 10.0).round() / 10.0;
+        let divs: Vec<Value> = subs.iter().map(|&i| {
+            let x = self.assess(w, i);
+            let d = &w.divisions[i];
+            let mut enemies: Vec<(usize, f64)> = w.divisions.iter().enumerate()
+                .filter(|(_, e)| e.side != d.side && e.state != State::Destroyed)
+                .map(|(j, e)| (j, e.vars.pos.dist(d.vars.pos))).filter(|x| x.1 <= 15.0).collect();
+            enemies.sort_by(|a, b| a.1.total_cmp(&b.1));
+            let line = self.line_behind(w, i);
+            json!({
+                "id": d.id, "name": d.name, "state": d.state.label(),
+                "people": d.vars.personnel.round(), "tanks": d.vars.tanks.round(),
+                "strength_pct_of_initial": (100.0 * x.strength / d.vars.strength0.max(1e-9)).round(),
+                "cohesion": km1(d.vars.cohesion), "ammo": km1(d.vars.ammo),
+                "enemy_strength_in_reach_vs_own": km1(x.threat),
+                "penetrated_by": self.penetrator(w, i).map(|e| json!({ "id": w.divisions[e].id, "name": w.divisions[e].name })),
+                "current_order": d.order.as_ref().map(|o| o.kind.label()),
+                "enemies_within_15km": enemies.iter().take(4).map(|&(j, k)| json!({ "id": w.divisions[j].id, "name": w.divisions[j].name, "km": km1(k), "state": w.divisions[j].state.label() })).collect::<Vec<_>>(),
+                "next_line_behind_km": km1(line.dist(d.vars.pos)),
+            })
+        }).collect();
+        json!({ "divisions": divs })
+    }
+
+    /// Решение штаба на языковой модели: обстановка → JSON с приказами из тех же действий, что у доктрины.
+    fn llm_hq(&self, w: &World, tick: u32, h: usize, subs: &[usize], cfg: &llm::LlmConfig) -> Result<Decision, String> {
+        let hq = &w.hqs[h];
+        let time = crate::time::format_hours(self.start_hour + tick as i64);
+        let doc = &self.rules.doctrine;
+        let system = format!(
+            "Ты — начальник штаба соединения «{}» ({}) в Берлинской операции, апрель 1945 года. Раз в {} ч ты решаешь, что приказать подчинённым дивизиям. Действуй по немецкой доктрине обороны 1944–1945 гг.: вклинение противника — немедленная контратака резервом во фланг (силы не меньше 1/3 прорвавшегося), если сил мало — закрыть направление рубежом; обойдённой или разбитой дивизии — отход на следующий рубеж; общий отход армии без приказа сверху запрещён{}.
+Доступные действия: hold — держаться на месте, не отходить; defend — оборонять текущий район; withdraw — отойти на следующий рубеж позади; counterattack — контратаковать дивизию противника (target — её id); block — занять рубеж за своей дивизией (target — её id).
+Ответь только JSON без пояснений вокруг: {}. По дивизии, которой приказ не меняешь, приказ не давай.",
+            hq.name, match hq.echelon { Echelon::Corps => "корпус", Echelon::Army => "армия", Echelon::Front => "группа армий" }, doc.cycle_hours,
+            if doc.hold_orders { "; действует приказ «держаться» — отход запрещён" } else { "" }, REPLY_FORMAT);
+        let user = format!("Время: {time} (МСК). Обстановка по дивизиям (сила противника — в долях своей; strength_pct — от исходной):\n{}", self.situation(w, subs));
+        if let Some(cb) = &self.on_progress { cb(format!("{time}: штаб «{}» запрашивает модель {}…", hq.name, cfg.model)); }
+        let reply = llm::chat(cfg, &[("system".into(), system.clone()), ("user".into(), user.clone())]);
+        let log = |ok: bool, text: &str| {
+            if let Ok(mut l) = self.llm_log.lock() { l.push(json!({ "tick": tick, "time": time, "hq": hq.id, "model": cfg.model, "request": user, "reply": text, "ok": ok })); }
+        };
+        let reply = match reply { Ok(r) => r, Err(e) => { log(false, &e); return Err(e); } };
+        let Some(v) = llm::extract_json(&reply) else { log(false, &reply); return Err("ответ не в формате JSON".into()); };
+        let Some(list) = v.get("orders").and_then(Value::as_array) else { log(false, &reply); return Err("в ответе нет списка orders".into()); };
+        log(true, &reply);
+        let mut dec = Decision { orders: Vec::new(), why: Vec::new() };
+        let id_of = |s: &str| w.divisions.iter().position(|d| d.id == s);
+        for o in list {
+            let Some(i) = o.get("division").and_then(Value::as_str).and_then(id_of) else { continue };
+            if !subs.contains(&i) { continue; }
+            let d = &w.divisions[i];
+            let reason = o.get("reason").and_then(Value::as_str).unwrap_or("").to_string();
+            let target = o.get("target").and_then(Value::as_str).and_then(id_of);
+            match o.get("action").and_then(Value::as_str).unwrap_or("") {
+                "hold" => self.order_for(w, tick, h, i, OrderKind::Hold, d.vars.pos, reason, "модель", &mut dec),
+                "defend" => self.order_for(w, tick, h, i, OrderKind::Defend, d.vars.pos, reason, "модель", &mut dec),
+                "withdraw" if !doc.hold_orders => { let t = self.line_behind(w, i); self.order_for(w, tick, h, i, OrderKind::Withdraw, t, reason, "модель", &mut dec) }
+                "counterattack" => match target {
+                    Some(j) if w.divisions[j].side != d.side && w.divisions[j].vars.pos.dist(d.vars.pos) <= 25.0 =>
+                        self.order_for(w, tick, h, i, OrderKind::Attack, w.divisions[j].vars.pos, reason, "модель", &mut dec),
+                    _ => dec.why.push(format!("{} — отклонено: цель контратаки не найдена рядом", d.name)),
+                },
+                "block" => match target {
+                    Some(j) if w.divisions[j].side == d.side => { let t = self.behind(w, j, doc.block_depth_km); self.order_for(w, tick, h, i, OrderKind::Defend, t, reason, "модель", &mut dec) }
+                    _ => dec.why.push(format!("{} — отклонено: не указана своя дивизия, за которой занять рубеж", d.name)),
+                },
+                other => dec.why.push(format!("{} — отклонено: недопустимое действие «{other}»", d.name)),
+            }
+        }
+        Ok(dec)
     }
 
     fn assess(&self, w: &World, i: usize) -> Assess {

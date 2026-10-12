@@ -106,6 +106,12 @@ pub struct Sim {
     pub sources: [crate::staff::Source; 2],
     /// Направления «в тыл» дивизий по исходной обстановке (для штабов по доктрине).
     pub rear_dir: std::sync::OnceLock<Vec<(XY, f64)>>,
+    /// Языковая модель для штабов на модели.
+    pub llm: Option<crate::llm::LlmConfig>,
+    /// Запросы к модели и ответы (для разбора и записи прогона).
+    pub llm_log: std::sync::Mutex<Vec<serde_json::Value>>,
+    /// Сообщения о ходе долгих решений (запрос к модели) — для окна приложения.
+    pub on_progress: Option<Box<dyn Fn(String) + Send + Sync>>,
     pub journal: Vec<Event>,
     /// Снимки по шагам для перемотки (если включено).
     pub history: Option<Vec<World>>,
@@ -144,7 +150,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), journal: Vec::new(), history: None };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), on_progress: None, journal: Vec::new(), history: None };
         s.script.sort_by_key(|o| o.at);
         s
     }

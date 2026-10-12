@@ -5,8 +5,8 @@
  * со ссылками [S1], [J3]…; где записи нет — модель должна сказать, что это её мнение.
  */
 import { useState } from 'react';
-import type { RunData } from './data';
-import { hourOf, isTauri, km, posAt, rowAt, shortName, timeLabel } from './data';
+import type { RunData, Settings } from './data';
+import { chatLLM, hourOf, km, posAt, rowAt, shortName, timeLabel } from './data';
 
 type Voice = 'commander' | 'analyst';
 interface Rec { id: string; text: string; tick?: number }
@@ -49,14 +49,11 @@ function systemPrompt(data: RunData, id: string, voice: Voice): string {
 Правила: отвечай по-русски. Опирайся только на записи и ссылайся на них в квадратных скобках, например [J3] или [S1]. Если ответа в записях нет, прямо скажи «в записях этого нет» и, если отвечаешь всё же, пометь это как «мнение модели». Не придумывай цифр.`;
 }
 
-const DEFAULT_URL = () => (isTauri() ? 'http://localhost:1234/v1' : '/llm/v1');
-
-export function Chat({ data, id, hour, onHour }: { data: RunData; id: string; hour: number; onHour: (h: number) => void }) {
+export function Chat({ data, id, hour, onHour, settings, onSettings }: { data: RunData; id: string; hour: number; onHour: (h: number) => void; settings: Settings; onSettings: () => void }) {
   const [voice, setVoice] = useState<Voice>('commander');
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const [url, setUrl] = useState(() => { try { return localStorage.getItem('agents.llm') ?? DEFAULT_URL(); } catch { return DEFAULT_URL(); } });
 
   async function ask() {
     const q = text.trim();
@@ -69,16 +66,10 @@ export function Chat({ data, id, hour, onHour }: { data: RunData; id: string; ho
     try {
       const recText = records.map((r) => `[${r.id}] ${r.text}`).join('\n');
       const history = msgs.filter((m) => m.voice === voice).slice(-6).map((m) => ({ role: m.role, content: m.text }));
-      const r = await fetch(`${url.replace(/\/$/, '')}/chat/completions`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'local-model', temperature: 0.2, messages: [{ role: 'system', content: `${systemPrompt(data, id, voice)}\n\nЗаписи:\n${recText}` }, ...history, { role: 'user', content: q }] }),
-      });
-      if (!r.ok) throw new Error(`модель ответила ${r.status}`);
-      const j = await r.json();
-      const answer = j.choices?.[0]?.message?.content ?? '(пустой ответ)';
+      const answer = await chatLLM(settings.llmUrl, settings.chatModel || 'local-model', [{ role: 'system', content: `${systemPrompt(data, id, voice)}\n\nЗаписи:\n${recText}` }, ...history, { role: 'user', content: q }]);
       setMsgs((m) => [...m, { role: 'assistant', text: answer, voice, hour, records }]);
     } catch (e) {
-      setMsgs((m) => [...m, { role: 'assistant', text: `Языковая модель недоступна (${(e as Error).message}). Запустите LM Studio с сервером OpenAI на ${url}.`, voice, hour, records }]);
+      setMsgs((m) => [...m, { role: 'assistant', text: `Языковая модель недоступна (${(e as Error).message}). Запустите LM Studio с сервером OpenAI на ${settings.llmUrl} и выберите модель в «Модель и штабы».`, voice, hour, records }]);
     } finally { setBusy(false); }
   }
 
@@ -110,7 +101,7 @@ export function Chat({ data, id, hour, onHour }: { data: RunData; id: string; ho
         <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Вопрос агенту…" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(); } }} />
         <button onClick={() => void ask()} disabled={busy}>{busy ? '…' : 'Спросить'}</button>
       </div>
-      <label className="llm">Модель: <input value={url} onChange={(e) => { setUrl(e.target.value); try { localStorage.setItem('agents.llm', e.target.value); } catch { /* без хранилища */ } }} /></label>
+      <div className="llm">Модель: {settings.chatModel || 'не выбрана'} · <a href="#" onClick={(e) => { e.preventDefault(); onSettings(); }}>выбрать</a></div>
     </div>
   );
 }

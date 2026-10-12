@@ -1,7 +1,9 @@
 /** Приложение агентной модели: карта, иерархия, шкала времени с показом, карточка агента и разговор с ним. */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RunData } from './data';
-import { SCENARIO, isTauri, loadRun, posAt, rowAt, shortName, stateGroup, timeLabel } from './data';
+import type { RunData, Settings } from './data';
+import { SCENARIO, isTauri, loadRun, loadSettings, posAt, rowAt, saveSettings, shortName, stateGroup, timeLabel } from './data';
+import { SettingsPanel } from './Settings';
+import { StaffLog } from './StaffLog';
 import { MapView } from './MapView';
 import { Inspector } from './Inspector';
 import { Chat } from './Chat';
@@ -19,17 +21,35 @@ export function App() {
   const [tab, setTab] = useState<'card' | 'chat'>('card');
   const [seed, setSeed] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [settings, setSettingsState] = useState<Settings>(() => loadSettings());
+  const [showSettings, setShowSettings] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [runId, setRunId] = useState(0);
+  const setSettings = (s: Settings) => { setSettingsState(s); saveSettings(s); };
+
+  // ход решений штабов на модели — событием из ядра
+  useEffect(() => {
+    if (!isTauri()) return;
+    let off: (() => void) | undefined;
+    void import('@tauri-apps/api/event').then(({ listen }) => listen<string>('staff-progress', (e) => setProgress(e.payload))).then((u) => { off = u; });
+    return () => off?.();
+  }, []);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     setBusy(true);
-    loadRun(SCENARIO, seed).then((d) => {
+    setProgress(null);
+    const opts = { seed, de: settings.de, llm: settings.staffModel ? { url: settings.llmUrl, model: settings.staffModel } : null };
+    loadRun(SCENARIO, opts).then((d) => {
       setData(d);
       if (q.get('h')) setHour(Number(q.get('h')));
       if (q.get('sel')) setSelected(q.get('sel'));
       if (q.get('tab') === 'chat') setTab('chat');
-    }).catch((e) => setErr(String(e))).finally(() => setBusy(false));
-  }, [seed]);
+      if (q.get('settings')) setShowSettings(true);
+    }).catch((e) => setErr(String(e))).finally(() => { setBusy(false); setProgress(null); });
+    // пересчёт — по кнопке (runId) или смене прогона; настройки сами по себе расчёт не запускают
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed, runId]);
 
   // показ: часы модели в секунду, плавно (между кадрами положение интерполируется)
   const last = useRef<number | null>(null);
@@ -69,11 +89,15 @@ export function App() {
       <header>
         <b>{trace.name}</b>
         <span className="muted">{trace.divisions.length} дивизий · {trace.hours} ч · прогон {trace.seed}{data.live ? '' : ' · из evals-out (браузер)'}</span>
+        <span className="muted">· немецкие штабы: {({ script: 'исторические приказы', doctrine: 'по доктрине', llm: `модель ${trace.llm?.model ?? ''}` } as Record<string, string>)[trace.sources?.[1] ?? 'script']}</span>
         <span className="spacer" />
+        {busy && <span className="progress">{progress ?? 'расчёт…'}</span>}
         {isTauri() && (
           <label>прогон <select value={seed} onChange={(e) => setSeed(Number(e.target.value))} disabled={busy}>{[1, 2, 3, 4, 5].map((s) => <option key={s}>{s}</option>)}</select></label>
         )}
+        <button onClick={() => setShowSettings(!showSettings)}>Модель и штабы</button>
       </header>
+      {showSettings && <SettingsPanel value={settings} onChange={setSettings} busy={busy} onClose={() => setShowSettings(false)} onRun={() => { setRunId((x) => x + 1); }} />}
       <aside className="tree">
         {tree.map((g) => (
           <div key={g.hq.id} className="group">
@@ -105,10 +129,13 @@ export function App() {
               <span className="spacer" />
               <button onClick={() => setSelected(null)} title="Закрыть">×</button>
             </div>
-            {tab === 'card' ? <Inspector data={data} id={selected} hour={hour} onHour={setHour} /> : <Chat key={selected} data={data} id={selected} hour={hour} onHour={setHour} />}
+            {tab === 'card' ? <Inspector data={data} id={selected} hour={hour} onHour={setHour} /> : <Chat key={selected} data={data} id={selected} hour={hour} onHour={setHour} settings={settings} onSettings={() => setShowSettings(true)} />}
           </>
         ) : (
-          <div className="empty">Выберите дивизию на карте или в списке слева: карточка с переменными, машиной состояний, журналом и сверкой с документами, разговор с командиром или разбор.</div>
+          <>
+            <div className="empty">Выберите дивизию на карте или в списке слева: карточка с переменными, машиной состояний, журналом и сверкой с документами, разговор с командиром или разбор.</div>
+            <StaffLog data={data} hour={hour} onHour={setHour} />
+          </>
         )}
       </section>
       <footer>
