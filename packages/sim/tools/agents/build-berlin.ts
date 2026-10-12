@@ -31,7 +31,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fixFrankfurt, reinforcements } from './german-forces';
+import { fixFrankfurt, reinforcementOrders, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8')) as T;
@@ -332,6 +332,8 @@ for (const o of ts.orders) {
     orders.push({ at, hq, to: [id], kind, target: t, ...(follow ? { targetFormation: follow, offsetKm: off } : {}), note: `${o.note ?? ''} [${o.id}]`.trim() });
   }
 }
+
+orders.push(...reinforcementOrders(out));
 
 // ---------- резервы фронтов без задач ----------
 // Фронтовые корпуса и дивизии, которым в сценарии нынешней модели задач нет, раз в сутки выдвигаются за своим

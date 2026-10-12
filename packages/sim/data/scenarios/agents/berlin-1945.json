@@ -22080,6 +22080,58 @@
    "note": "[su_2ua@1945-05-01T18:00:attack]"
   },
   {
+   "at": 0,
+   "hq": "de_ci",
+   "to": [
+    "de_ci_reinf"
+   ],
+   "kind": "defend",
+   "target": [
+    14.1222,
+    52.7066
+   ],
+   "note": "вторая позиция (части вне дивизий, berlin-1945-german-forces.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_lvi",
+   "to": [
+    "de_lvi_reinf"
+   ],
+   "kind": "defend",
+   "target": [
+    14.1206,
+    52.5944
+   ],
+   "note": "вторая позиция (части вне дивизий, berlin-1945-german-forces.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xi_ss",
+   "to": [
+    "de_xi_ss_reinf"
+   ],
+   "kind": "defend",
+   "target": [
+    14.3155,
+    52.4782
+   ],
+   "note": "вторая позиция (части вне дивизий, berlin-1945-german-forces.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xi_ss",
+   "to": [
+    "de_hj_pznk"
+   ],
+   "kind": "defend",
+   "target": [
+    13.905,
+    52.2058
+   ],
+   "note": "вторая позиция (части вне дивизий, berlin-1945-german-forces.json)"
+  },
+  {
    "at": "1945-04-17T05:00",
    "hq": "su_1bf",
    "to": [

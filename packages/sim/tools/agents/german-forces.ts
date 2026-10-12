@@ -69,3 +69,9 @@ export function reinforcements(out: Agent[], hqName: (id: string) => string): Ag
   }] : [];
   return [...res, ...hj];
 }
+
+/** Приказ частям усиления и гитлерюгенду — оборонять вторую позицию с начала операции. */
+export function reinforcementOrders(agents: Agent[]): { at: number; hq: string; to: string[]; kind: string; target: LngLat; note: string }[] {
+  return agents.filter((a) => a.kind === 'reinf' || a.id === 'de_hj_pznk')
+    .map((a) => ({ at: 0, hq: a.hq, to: [a.id], kind: 'defend', target: a.pos, note: 'вторая позиция (части вне дивизий, berlin-1945-german-forces.json)' }));
+}

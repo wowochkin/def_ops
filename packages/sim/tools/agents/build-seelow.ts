@@ -22,7 +22,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { reinforcements } from './german-forces';
+import { reinforcementOrders, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8')) as T;
@@ -183,6 +183,8 @@ for (const o of ts.orders) {
     orders.push({ at, hq: d.hq, to: [d.id], kind, target: tgt ? r4(tgt) : null, note: `${o.note ?? ''} [${o.id}]`.trim() });
   }
 }
+
+orders.push(...reinforcementOrders(out));
 
 // ---------- история для сверки ----------
 const ids = new Set(out.map((o) => o.id));
