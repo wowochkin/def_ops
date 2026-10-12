@@ -156,6 +156,7 @@ export function App() {
     const i = trace.divisions.findIndex((d) => d.id === id);
     if (i >= 0) setFocus(posAt(trace, i, hour));
   };
+  const staffLabel = (x?: string) => ({ script: 'исторические приказы', doctrine: 'по доктрине', llm: `модель ${trace.llm?.model ?? ''}` } as Record<string, string>)[x ?? 'script'];
   const dayTicks = Array.from({ length: Math.floor(trace.hours / 24) + 1 }, (_, k) => k * 24);
 
   return (
@@ -163,7 +164,7 @@ export function App() {
       <header>
         <select className="scen" value={scen} onChange={(e) => pickScen(e.target.value)} disabled={busy} title="Сценарий">{SCENARIOS.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
         <span className="muted">{trace.divisions.length} дивизий · {trace.hours} ч · прогон {trace.seed}{data.live ? '' : ' · из evals-out (браузер)'}</span>
-        <span className="muted">· штабы: советские — {trace.sources?.[0] === 'doctrine' ? 'по доктрине' : 'исторические приказы'}, немецкие — {({ script: 'исторические приказы', doctrine: 'по доктрине', llm: `модель ${trace.llm?.model ?? ''}` } as Record<string, string>)[trace.sources?.[1] ?? 'script']}</span>
+        <span className="muted">· штабы: советские — {staffLabel(trace.sources?.[0])}, немецкие — {staffLabel(trace.sources?.[1])}</span>
         <span className="spacer" />
         <label className="cmp">сравнить с <select value={cmpId} onChange={(e) => setCmpId(e.target.value)}><option value="">—</option>{scenarioById(scen).variants.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}</select></label>
         {cmpMsg && <span className="progress">{cmpMsg}</span>}

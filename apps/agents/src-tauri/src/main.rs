@@ -72,8 +72,8 @@ async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>
         let (mut sim, meta) = scenario::load(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs)?;
         if let Some(s) = seed { sim.seed = s; }
         sim.sources[1] = match de.as_deref() { Some("doctrine") => Source::Doctrine, Some("llm") => Source::Llm, _ => Source::Script };
-        // советские штабы: по доктрине (staff_su.rs) или исторические приказы
-        sim.sources[0] = match su.as_deref() { Some("doctrine") => Source::Doctrine, _ => Source::Script };
+        // советские штабы: по доктрине (staff_su.rs), на модели (штаб армии) или исторические приказы
+        sim.sources[0] = match su.as_deref() { Some("doctrine") => Source::Doctrine, Some("llm") => Source::Llm, _ => Source::Script };
         if let Some(l) = llm { sim.llm = Some(l.config()); }
         // варианты для сравнения: без артподготовки, без отвода с первой позиции
         if without_fires.unwrap_or(false) { sim.fires.clear(); }

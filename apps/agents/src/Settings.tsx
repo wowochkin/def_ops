@@ -64,7 +64,7 @@ export function SettingsPanel({ value, onChange, onRun, busy, onClose }: Props) 
       <div className="row head"><b>Модель и штабы</b><span className="spacer" /><button onClick={onClose} title="Закрыть">×</button></div>
       <label className="row">Сервер модели <input value={value.llmUrl} onChange={(e) => set({ llmUrl: e.target.value })} /></label>
       <div className="row"><button onClick={() => void refresh()}>Обновить список моделей</button>{msg && <span className="hint">{msg}</span>}</div>
-      <label className="row">Модель немецкого штаба
+      <label className="row">Модель штаба
         <select value={value.staffModel} onChange={(e) => set({ staffModel: e.target.value })}><option value="">—</option>{options(value.staffModel)}</select>
       </label>
       <label className="row">Модель разговора с агентом
@@ -76,8 +76,9 @@ export function SettingsPanel({ value, onChange, onRun, busy, onClose }: Props) 
       </label>
       <div className="row col">
         <span>Советские штабы</span>
-        <label className="radio"><input type="radio" checked={value.su !== 'doctrine'} onChange={() => set({ su: 'script' })} /> исторические приказы <span className="hint">— задачи и сроки по документам</span></label>
+        <label className="radio"><input type="radio" checked={value.su === 'script' || !value.su} onChange={() => set({ su: 'script' })} /> исторические приказы <span className="hint">— задачи и сроки по документам</span></label>
         <label className="radio"><input type="radio" checked={value.su === 'doctrine'} onChange={() => set({ su: 'doctrine' })} /> по доктрине <span className="hint">— задачи по документам, а эшелоны и ввод танковых армий решает штаб по советской доктрине 1944–45 гг.</span></label>
+        <label className="radio"><input type="radio" checked={value.su === 'llm'} onChange={() => set({ su: 'llm' })} /> языковая модель <span className="hint">— задачи по документам, а кем и когда наступать решает штаб армии на выбранной модели (одним запросом за армию); при сбое — по доктрине</span></label>
       </div>
       <div className="row col">
         <span>Немецкие штабы</span>
@@ -106,9 +107,9 @@ export function SettingsPanel({ value, onChange, onRun, busy, onClose }: Props) 
         <label className="radio"><input type="checkbox" checked={value.byArmy} onChange={(e) => set({ byArmy: e.target.checked })} /> один запрос на армию <span className="hint">— штаб армии решает за свои корпуса: запросов меньше, но корпус уже не отдельный агент</span></label>
       </div>
       <div className="row">
-        <button className="primary" onClick={onRun} disabled={busy || !isTauri() || (value.de === 'llm' && !value.staffModel)}>{busy ? 'Расчёт…' : 'Пересчитать'}</button>
+        <button className="primary" onClick={onRun} disabled={busy || !isTauri() || ((value.de === 'llm' || value.su === 'llm') && !value.staffModel)}>{busy ? 'Расчёт…' : 'Пересчитать'}</button>
         {!isTauri() && <span className="hint">пересчёт — в приложении (npm run agents:app); в браузере показан готовый прогон</span>}
-        {isTauri() && value.de === 'llm' && !value.staffModel && <span className="hint">выберите модель штаба</span>}
+        {isTauri() && (value.de === 'llm' || value.su === 'llm') && !value.staffModel && <span className="hint">выберите модель штаба</span>}
       </div>
     </div>
   );

@@ -31,7 +31,7 @@ export type StaffSource = 'script' | 'doctrine' | 'llm';
 export type Reasoning = 'default' | 'off' | 'low' | 'medium' | 'high';
 /** Настройки штаба на модели для ядра (crates/agents-core/src/llm.rs, LlmConfig). */
 export interface LlmRun { url: string; model: string; reasoning: Reasoning; maxTokens: number; parallel: number; sync: boolean; byArmy: boolean }
-export interface RunOptions { seed: number; de: StaffSource; su?: 'script' | 'doctrine'; llm: LlmRun | null; withoutFires?: boolean; withoutWithdrawals?: boolean; traceFile?: string }
+export interface RunOptions { seed: number; de: StaffSource; su?: StaffSource; llm: LlmRun | null; withoutFires?: boolean; withoutWithdrawals?: boolean; traceFile?: string }
 export interface HistPos { formation: string; time: string; at: LngLat; approxKm: number; set?: string; reliability?: string | null }
 /** Веха операции: выход к пункту (reach), встреча (meet), отсечение (cut — расчётом не проверяется). */
 export interface Milestone { id: string; title: string; date: string; kind: 'reach' | 'meet' | 'cut' | string; at: LngLat | null; radiusKm?: number; formations?: string[]; source?: string; control?: boolean }
@@ -89,7 +89,7 @@ export async function loadRun(scenario = SCENARIO, opts: RunOptions = { seed: 1,
   let live = false;
   if (isTauri()) {
     const { invoke } = await import('@tauri-apps/api/core');
-    trace = await invoke<Trace>('run_scenario', { scenario, seed: opts.seed, de: opts.de, su: opts.su ?? 'script', llm: opts.de === 'llm' ? opts.llm : null, withoutFires: !!opts.withoutFires, withoutWithdrawals: !!opts.withoutWithdrawals });
+    trace = await invoke<Trace>('run_scenario', { scenario, seed: opts.seed, de: opts.de, su: opts.su ?? 'script', llm: opts.de === 'llm' || opts.su === 'llm' ? opts.llm : null, withoutFires: !!opts.withoutFires, withoutWithdrawals: !!opts.withoutWithdrawals });
     live = true;
   } else {
     trace = JSON.parse(await repoText(opts.traceFile ?? (SCENARIOS.find((x) => x.path === scenario) ?? SCENARIOS[0]).trace)) as Trace;
@@ -263,7 +263,7 @@ export interface Settings {
   /** Уровень размышлений в разговоре с агентом. */
   chatReasoning: Reasoning;
   /** Советские штабы: исторические приказы или по доктрине. */
-  su: 'script' | 'doctrine';
+  su: StaffSource;
 }
 export const chatRun = (s: Settings): LlmRun => ({ url: s.llmUrl, model: s.chatModel || 'local-model', reasoning: s.chatReasoning, maxTokens: 0, parallel: 1, sync: false, byArmy: false });
 export const llmRun = (s: Settings): LlmRun => ({ url: s.llmUrl, model: s.staffModel, reasoning: s.reasoning, maxTokens: s.maxTokens, parallel: s.parallel, sync: s.sync, byArmy: s.byArmy });

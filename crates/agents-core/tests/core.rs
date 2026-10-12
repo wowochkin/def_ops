@@ -112,6 +112,11 @@ fn mock_llm() -> String {
             } else if req.contains("\"max_tokens\":7") {
                 // потолок токенов: ответ оборван на размышлениях
                 r#"{"choices":[{"message":{"content":"<think>оцениваю обстановку"},"finish_reason":"length"}],"usage":{"completion_tokens":7}}"#.to_string()
+            } else if req.contains("советской доктрине") {
+                // советский штаб армии: первую дивизию — в наступление на цель замысла
+                let id = req.split("\\\"id\\\":\\\"su_").nth(1).and_then(|r| r.split('\\').next()).map(|r| format!("su_{r}")).unwrap_or("x".into());
+                let content = format!("{{\"orders\": [{{\"division\": \"{id}\", \"action\": \"attack\", \"target\": null, \"reason\": \"первый эшелон\"}}]}}");
+                serde_json::json!({ "choices": [{ "message": { "content": content } }] }).to_string()
             } else {
                 let id = req.split("\\\"id\\\":\\\"de_").nth(1).and_then(|r| r.split('\\').next()).map(|r| format!("de_{r}")).unwrap_or("x".into());
                 let content = format!("<think>оцениваю</think>{{\"orders\": [{{\"division\": \"{id}\", \"action\": \"hold\", \"target\": null, \"reason\": \"держать рубеж по приказу\"}}]}}");
@@ -298,4 +303,20 @@ fn pocket_and_breakout() {
     assert!(sim.journal.iter().any(|e| e.text.contains("вышла с прорывом")), "есть вышедшие с прорывом");
     let su_cut = sim.journal.iter().filter(|e| e.text.starts_with("окружена") && sim.world.divisions[e.agent as usize].side == Side::Su).count();
     assert!(su_cut <= 3, "советских «окружений» {su_cut}");
+}
+
+/// Советские штабы на языковой модели: решает штаб армии за все её дивизии, наступление — на цель замысла.
+#[test]
+fn soviet_staff_on_language_model() {
+    let url = mock_llm();
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
+    let (mut sim, _) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    sim.sources[0] = agents_core::staff::Source::Llm;
+    sim.llm = Some(agents_core::llm::LlmConfig::new(&url, "qwen-test"));
+    for _ in 0..6 { sim.step(); }
+    let log = sim.llm_log.lock().unwrap().clone();
+    assert!(!log.is_empty() && log.iter().all(|e| e["ok"] == true), "{log:?}");
+    assert!(log.iter().all(|e| e["hq"].as_str().unwrap().starts_with("su_")));
+    assert!(sim.journal.iter().any(|e| e.text.contains("решение штаба (модель)") && e.text.contains("наступать")));
 }
