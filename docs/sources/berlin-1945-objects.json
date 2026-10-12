@@ -1,0 +1,2222 @@
+{
+ "meta": {
+  "title": "Берлинская операция 16.04–8.05.1945 — объекты: мосты и переправы, оборонительные полосы, крепости, узлы снабжения",
+  "crs": "WGS84 (lng, lat)",
+  "reliability": {
+   "A": "первичный документ или официальное исследование (Русский архив т.15; Цирлин и др. 1970; Bundesarchiv)",
+   "B": "монография или мемуар по документам (Исаев 2007; Конев; Рокоссовский; Катуков), вики со ссылками",
+   "C": "непроверенное (вики без сносок, туристические/краеведческие сайты, вывод составителя)"
+  },
+  "states": "intact — цел; damaged — повреждён; blown — взорван; pontoon — наведена переправа (мост/паром) советской стороной; captured — захвачен/переправа занята",
+  "capacity_t": "грузоподъёмность в тоннах, если известна (16/30/50/60)",
+  "scope": "не дублируются объекты, уже внесённые: 4 полосы Одерского рубежа (seelow-divisions.json), мосты Кёпеник/Адлерсхоф/Науэн/Парец/Тельтов/Мольтке по Le Tissier (conquest.json), Даме и Тангермюнде по Le Tissier (halbe.json), секторы обороны Берлина (berlin-city-1945.recipe.json) — на них даются ссылки",
+  "coordinates": "города — центр по Nominatim; мосты — по OSM-объекту, где есть; null — пункт не определяется однозначно"
+ },
+ "sources": {
+  "ENG70": {
+   "ref": "Цирлин А. Д., Бирюков П. И., Истомин В. П., Федосеев Е. Н. Инженерные войска в боях за Советскую Родину. М.: Воениздат, 1970 — гл. «В битве за Берлин» (с.311–324); по отчётам инженерных войск фронтов (ЦАМО)",
+   "url": "http://militera.lib.ru/h/engineers/18.html",
+   "default_reliability": "A"
+  },
+  "RA15": {
+   "ref": "Русский архив: Великая Отечественная. Т. 15 (4-5). Битва за Берлин (Красная Армия в поверженной Германии). М.: Терра, 1995 — боевые донесения штаба 1 БФ за 16.04 (№ 36 и след.), распоряжения Конева № 104–106 от 17–18.04, отчёт 5 уд. А об обороне Берлина, выступления на конференции 1 БФ",
+   "url": "http://militera.lib.ru/docs/da/berlin_45/index.html",
+   "default_reliability": "A"
+  },
+  "IS7": {
+   "ref": "Исаев А. В. Берлин 45-го: Сражения в логове зверя. М.: Яуза, Эксмо, 2007 (по ЖБД армий 1 БФ, ЦАМО, и документам ГА «Висла», NARA); электронная копия — loveread.ec (militera.lib.ru/h/isaev_av7 — снята, web.archive.org недоступен из этой сети)",
+   "url": "https://loveread.ec/read_book.php?id=84276&p=1",
+   "default_reliability": "B"
+  },
+  "KON": {
+   "ref": "Конев И. С. Записки командующего фронтом. М., 1991 — гл. «Берлинская операция» (электронная копия booksite.ru)",
+   "url": "https://www.booksite.ru/konev/03_11.html",
+   "default_reliability": "B"
+  },
+  "ROK": {
+   "ref": "Рокоссовский К. К. Солдатский долг. М.: Воениздат, 1988 — гл. о форсировании Одера 20–25.04 (militera)",
+   "url": "http://militera.lib.ru/memo/russian/rokossovsky/index.html",
+   "default_reliability": "B"
+  },
+  "KAT": {
+   "ref": "Катуков М. Е. На острие главного удара. М.: Воениздат, 1974 — гл. о Берлине (militera)",
+   "url": "http://militera.lib.ru/memo/russian/katukov/index.html",
+   "default_reliability": "B"
+  },
+  "RW_BNO": {
+   "ref": "ru.wikipedia «Берлинская наступательная операция» (сноски: [12] Антипенко Н. А. На главном направлении; [14] Сборник боевых документов № 29; [2] История ВМВ т.10); утверждения без сносок — C",
+   "url": "https://ru.wikipedia.org/wiki/Берлинская_наступательная_операция",
+   "default_reliability": "B"
+  },
+  "RW_SRO": {
+   "ref": "ru.wikipedia «Штеттинско-Ростокская наступательная операция» (литература: История ВМВ т.10; Рокоссовский), без сносок",
+   "url": "https://ru.wikipedia.org/wiki/Штеттинско-Ростокская_наступательная_операция",
+   "default_reliability": "C"
+  },
+  "RW_KP": {
+   "ref": "ru.wikipedia «Котбус-Потсдамская операция»",
+   "url": "https://ru.wikipedia.org/wiki/Котбус-Потсдамская_операция",
+   "default_reliability": "B"
+  },
+  "RW_SB": {
+   "ref": "ru.wikipedia «Штурм Берлина»",
+   "url": "https://ru.wikipedia.org/wiki/Штурм_Берлина",
+   "default_reliability": "B"
+  },
+  "DW_FFO": {
+   "ref": "de.wikipedia «Frankfurt (Oder)», раздел «Zweiter Weltkrieg» (без сносок по 1945)",
+   "url": "https://de.wikipedia.org/wiki/Frankfurt_(Oder)",
+   "default_reliability": "C"
+  },
+  "DW_KH": {
+   "ref": "de.wikipedia «Kessel von Halbe»",
+   "url": "https://de.wikipedia.org/wiki/Kessel_von_Halbe",
+   "default_reliability": "B"
+  },
+  "DW_SB": {
+   "ref": "de.wikipedia «Schlacht um Berlin» (сноски [68],[69],[73],[90],[104] и др.)",
+   "url": "https://de.wikipedia.org/wiki/Schlacht_um_Berlin",
+   "default_reliability": "B"
+  },
+  "EW_BB": {
+   "ref": "en.wikipedia «Battle of Berlin» / «Battle in Berlin» (Beevor 2002; Read & Fisher 1992; Ziemke 1969)",
+   "url": "https://en.wikipedia.org/wiki/Battle_in_Berlin",
+   "default_reliability": "B"
+  },
+  "EW_MB": {
+   "ref": "en.wikipedia «Moltke Bridge» (Read & Fisher 1992, p.435–444; Beevor 2002, p.340–349)",
+   "url": "https://en.wikipedia.org/wiki/Moltke_Bridge",
+   "default_reliability": "B"
+  },
+  "EW_CB": {
+   "ref": "en.wikipedia «Charlotten Bridge» (Beevor 2002, p.384–385)",
+   "url": "https://en.wikipedia.org/wiki/Charlotten_Bridge",
+   "default_reliability": "B"
+  },
+  "DW_OBB": {
+   "ref": "de.wikipedia «Oberbaumbrücke», раздел «Zerstörungen im Krieg» (Hölkemann, S.96 f.)",
+   "url": "https://de.wikipedia.org/wiki/Oberbaumbrücke",
+   "default_reliability": "B"
+  },
+  "DW_SCHL": {
+   "ref": "de.wikipedia «Schlossbrücke (Berlin-Mitte)»",
+   "url": "https://de.wikipedia.org/wiki/Schlossbrücke_(Berlin-Mitte)",
+   "default_reliability": "C"
+  },
+  "DW_GLB": {
+   "ref": "de.wikipedia «Glienicker Brücke», раздел о 1945–1949",
+   "url": "https://de.wikipedia.org/wiki/Glienicker_Brücke",
+   "default_reliability": "B"
+  },
+  "DW_LBP": {
+   "ref": "de.wikipedia «Lange Brücke (Potsdam)», раздел «Geschichte» (без сноски)",
+   "url": "https://de.wikipedia.org/wiki/Lange_Brücke_(Potsdam)",
+   "default_reliability": "C"
+  },
+  "DW_POT": {
+   "ref": "de.wikipedia «Potsdam», раздел о 1945",
+   "url": "https://de.wikipedia.org/wiki/Potsdam",
+   "default_reliability": "B"
+  },
+  "DW_HBM": {
+   "ref": "de.wikipedia «Hubbrücke Magdeburg» (Buchholz, Magdeburger Elbbrücken, S.116)",
+   "url": "https://de.wikipedia.org/wiki/Hubbrücke_Magdeburg",
+   "default_reliability": "B"
+  },
+  "DW_MD": {
+   "ref": "de.wikipedia «Geschichte der Stadt Magdeburg»",
+   "url": "https://de.wikipedia.org/wiki/Geschichte_der_Stadt_Magdeburg",
+   "default_reliability": "B"
+  },
+  "DW_TGM": {
+   "ref": "de.wikipedia «Tangermünde» (разделы «Geschichte», «Denkmäler»; ссылка на MDR)",
+   "url": "https://de.wikipedia.org/wiki/Tangermünde",
+   "default_reliability": "C"
+  },
+  "EW_TGM": {
+   "ref": "en.wikipedia «Tangermünde» (12.04 взорван; 4–7.05 переход ~100 тыс. по остаткам моста)",
+   "url": "https://en.wikipedia.org/wiki/Tangermünde",
+   "default_reliability": "C"
+  },
+  "DW_TOR": {
+   "ref": "de.wikipedia «Torgau», раздел «Begegnung an der Elbe»",
+   "url": "https://de.wikipedia.org/wiki/Torgau",
+   "default_reliability": "B"
+  },
+  "DW_STN": {
+   "ref": "de.wikipedia «Stettin», раздел «20. Jahrhundert» и «Oderbrücken»",
+   "url": "https://de.wikipedia.org/wiki/Stettin",
+   "default_reliability": "C"
+  },
+  "PW_SZC": {
+   "ref": "pl.wikipedia «Szczecin», раздел «Historia» (сноска [31])",
+   "url": "https://pl.wikipedia.org/wiki/Szczecin",
+   "default_reliability": "B"
+  },
+  "PW_MD": {
+   "ref": "pl.wikipedia «Most Długi w Szczecinie» (Encyklopedia Szczecina, 2015, s.598)",
+   "url": "https://pl.wikipedia.org/wiki/Most_Długi_w_Szczecinie",
+   "default_reliability": "B"
+  },
+  "PW_FO": {
+   "ref": "pl.wikipedia «Forsowanie Odry (1945)» (Sobczak, Encyklopedia II wojny światowej, 1975; Mała Encyklopedia Wojskowa, 1970)",
+   "url": "https://pl.wikipedia.org/wiki/Forsowanie_Odry_(1945)",
+   "default_reliability": "B"
+  },
+  "PW_TK": {
+   "ref": "pl.wikipedia «Twierdza Kostrzyn» (Dolata, Jurga 1977, s.222–223)",
+   "url": "https://pl.wikipedia.org/wiki/Twierdza_Kostrzyn",
+   "default_reliability": "B"
+  },
+  "DW_KUE": {
+   "ref": "de.wikipedia «Kostrzyn nad Odrą» и «Festung Küstrin» (Kohlase)",
+   "url": "https://de.wikipedia.org/wiki/Festung_Küstrin",
+   "default_reliability": "B"
+  },
+  "DW_SCHW": {
+   "ref": "de.wikipedia «Schwedt/Oder», раздел «Ende des Zweiten Weltkrieges» (сноски 10–11)",
+   "url": "https://de.wikipedia.org/wiki/Schwedt/Oder",
+   "default_reliability": "B"
+  },
+  "DW_FOR": {
+   "ref": "de.wikipedia «Forst (Lausitz)»",
+   "url": "https://de.wikipedia.org/wiki/Forst_(Lausitz)",
+   "default_reliability": "C"
+  },
+  "DW_GUB": {
+   "ref": "de.wikipedia «Guben»",
+   "url": "https://de.wikipedia.org/wiki/Guben",
+   "default_reliability": "C"
+  },
+  "DW_CB": {
+   "ref": "de.wikipedia «Cottbus» (сноска [22])",
+   "url": "https://de.wikipedia.org/wiki/Cottbus",
+   "default_reliability": "B"
+  },
+  "DW_SPB": {
+   "ref": "de.wikipedia «Spremberg», раздел «Geschichte»",
+   "url": "https://de.wikipedia.org/wiki/Spremberg",
+   "default_reliability": "B"
+  },
+  "DW_FW": {
+   "ref": "de.wikipedia «Fürstenwalde/Spree»",
+   "url": "https://de.wikipedia.org/wiki/Fürstenwalde/Spree",
+   "default_reliability": "C"
+  },
+  "DW_BRB": {
+   "ref": "de.wikipedia «Brandenburg an der Havel» + museum-digital (Brandenburg) о боях 24–27.04",
+   "url": "https://de.wikipedia.org/wiki/Brandenburg_an_der_Havel",
+   "default_reliability": "C"
+  },
+  "EW_ORB": {
+   "ref": "en.wikipedia «Oranienburg»",
+   "url": "https://en.wikipedia.org/wiki/Oranienburg",
+   "default_reliability": "C"
+  },
+  "EW_FFO": {
+   "ref": "en.wikipedia «Fortress Division Frankfurt/Oder»; TracesOfWar (Biehler: комендант с 12.02.45, пленён 28.04.45)",
+   "url": "https://en.wikipedia.org/wiki/Fortress_Division_Frankfurt/Oder",
+   "default_reliability": "B"
+  },
+  "BARCH": {
+   "ref": "Bundesarchiv, «Lagekarte zur Schlacht um Berlin» (Grundsätzlicher Befehl Реймана 9.03.1945; карта BArch RH 24-56/145K)",
+   "url": "https://www.bundesarchiv.de/themen-entdecken/online-entdecken/dokumente-zur-zeitgeschichte/lagekarte-zur-schlacht-um-berlin/",
+   "default_reliability": "A"
+  },
+  "TOW": {
+   "ref": "TracesOfWar (Stadtbrücke Frankfurt; Restant brug Gubin)",
+   "url": "https://tracesofwar.com/sights/82200/Stadtbrcke-Frankfurt-Oder.htm",
+   "default_reliability": "C"
+  },
+  "LT_CONQ": {
+   "ref": "Le Tissier T. (ed.) Soviet Conquest: Berlin 1945 — уже внесено в berlin-1945-conquest.json (мосты Кёпеник, Адлерсхоф, Науэн, Парец, Тельтов, Мольтке)",
+   "url": null,
+   "default_reliability": "B"
+  },
+  "LT_HALBE": {
+   "ref": "Le Tissier T. Slaughter at Halbe — уже внесено в berlin-1945-halbe.json (Даме у Меркиш-Буххольца, Нидерлеме, Тангермюнде)",
+   "url": null,
+   "default_reliability": "B"
+  },
+  "CIT": {
+   "ref": "вывод составителя по совокупности источников",
+   "url": null,
+   "default_reliability": "C"
+  }
+ },
+ "bridges": [
+  {
+   "id": "br_oder_kuestrin_su",
+   "name_ru": "переправы Кюстринского плацдарма (мосты и паромы 1 БФ)",
+   "name_orig": "Oder-Übergänge Küstriner Brückenkopf",
+   "river": "Одер",
+   "kind": "pontoon",
+   "lng": 14.654,
+   "lat": 52.59,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-01",
+     "state": "pontoon",
+     "by": "su_1bf",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "25 мостов и 40 паромных переправ через Одер (вся полоса 1 БФ) построены и содержались 13 понтонно-мостовыми, 27 инженерно-сапёрными батальонами и 6 военно-строительными отрядами под обстрелом, бомбёжкой и атаками сплавными минами; многорядные сетевые заграждения против мин"
+    },
+    {
+     "date": "1945-04-01",
+     "state": "pontoon",
+     "by": "su_1bf",
+     "source": "RW_BNO",
+     "reliability": "B",
+     "note": "25 автомобильных мостов общей длиной 15 017 пог. м и 40 паромов [12 — Антипенко]"
+    },
+    {
+     "date": "1945-04-15",
+     "time": "night",
+     "state": "pontoon",
+     "by": "su_1gta; su_2gta",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "выдвижение обеих танковых армий к переправам в ночь на 15.04, переправа под артподготовку; к середине дня 16.04 обе армии на плацдарме"
+    },
+    {
+     "date": "1945-04-16",
+     "state": "pontoon",
+     "by": "su_1bf",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "«большое количество мостовых переходов через Одер» позволило без потерь ввести танковые армии"
+    }
+   ],
+   "source": "ENG70; RW_BNO; IS7",
+   "note": "Общий объект: распределение 25 мостов по участкам (Кюстрин, Гёриц, Кинитц, Лебус) в открытых источниках не найдено; 60-т свайный мост 17-го батальона и грузоподъёмности паромов 3–60 т — в berlin-1945-conquest.json (LT_CONQ). Площадки по армиям на 16.04: 2 гв. ТА — Альт-Блессин–Гросс-Нойендорф, 1 гв. ТА — искл. Гросс-Нойендорф–искл. Каленциг (RA15, директивы 1 БФ)"
+  },
+  {
+   "id": "br_oder_kuestrin_rail",
+   "name_ru": "ж.-д. мосты через Одер и Варту у Кюстрина (немецкие)",
+   "name_orig": "Oderbrücken / Warthebrücke Küstrin",
+   "river": "Одер / Варта",
+   "kind": "rail",
+   "lng": 14.647,
+   "lat": 52.59,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-03-12",
+     "state": "captured",
+     "by": "su_5ua; su_8gva",
+     "source": "PW_TK",
+     "reliability": "B",
+     "note": "по pl-wiki «крепость и город взяты 12.03» (Dolata, Jurga) — это Нойштадт; Альтштадт пала 29–30.03 (см. fortresses)"
+    },
+    {
+     "date": "1945-03-30",
+     "state": "blown",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "к апрелю мосты разрушены: восстановление ж.-д. моста через Одер — 1947 г. (DW_KUE); дата и исполнитель подрыва в доступных источниках не найдены"
+    }
+   ],
+   "source": "DW_KUE; PW_TK; CIT"
+  },
+  {
+   "id": "br_oder_frankfurt",
+   "name_ru": "мост через Одер у Франкфурта (Штадтбрюкке)",
+   "name_orig": "Stadtbrücke Frankfurt (Oder)",
+   "river": "Одер",
+   "kind": "road",
+   "lng": 14.5547,
+   "lat": 52.3477,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-16",
+     "state": "intact",
+     "by": "de_ffo",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "мост связывал крепость с Даммфорштадтом на восточном берегу"
+    },
+    {
+     "date": "1945-04-19",
+     "time": "05:29",
+     "state": "blown",
+     "by": "de_ffo",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "в 5.29 берлинского времени 19.04 мост через Одер взорван после ночного вывода войск с восточного берега (Исаев); de-wiki — та же дата и время (без сноски)"
+    },
+    {
+     "date": "1945-05-01",
+     "state": "pontoon",
+     "by": "su",
+     "source": "DW_FFO",
+     "reliability": "C",
+     "note": "в мае 1945 наведён временный мост Красной Армии (TracesOfWar: остатки опор сохранились)"
+    }
+   ],
+   "source": "IS7; DW_FFO; TOW",
+   "note": "В рецепте oder-berlin-1945 стоит 1945-04-22 (C) — заменить на 19.04 05:29"
+  },
+  {
+   "id": "br_oder_lebus",
+   "name_ru": "переправы плацдарма 69 А у Лебуса",
+   "name_orig": "Lebus",
+   "river": "Одер",
+   "kind": "pontoon",
+   "lng": 14.5338,
+   "lat": 52.4271,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-01",
+     "state": "pontoon",
+     "by": "su_69a",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "входят в 25 мостов 1 БФ; отдельных данных нет"
+    }
+   ],
+   "source": "CIT"
+  },
+  {
+   "id": "br_oder_kienitz",
+   "name_ru": "переправы у Кинитца (5 уд. А / 1 ПА)",
+   "name_orig": "Kienitz",
+   "river": "Одер",
+   "kind": "pontoon",
+   "lng": 14.4388,
+   "lat": 52.6735,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-01-31",
+     "state": "captured",
+     "by": "su_5ua",
+     "source": "RW_BNO",
+     "reliability": "B",
+     "note": "плацдарм Кинитц–Рефельд взят по льду 31.01"
+    },
+    {
+     "date": "1945-04-01",
+     "state": "pontoon",
+     "by": "su_5ua",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "входят в 25 мостов 1 БФ; детализация не найдена"
+    }
+   ],
+   "source": "RW_BNO; CIT",
+   "note": "координаты Кинитца уточнены (Nominatim): 14.4388, 52.6735"
+  },
+  {
+   "id": "br_oder_zollbruecke",
+   "name_ru": "переправа 1 А ВП у Цольбрюкке",
+   "name_orig": "Zollbrücke",
+   "river": "Одер",
+   "kind": "pontoon",
+   "lng": 14.2506,
+   "lat": 52.7883,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-16",
+     "state": "pontoon",
+     "by": "pl_1a",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "«построенная польскими войсками Цольбрюккенская переправа»: 18.04 по ней рокированы два самоходных артполка 61 А, к 20.00 на западном берегу"
+    },
+    {
+     "date": "1945-04-16",
+     "time": "21:00",
+     "state": "captured",
+     "by": "pl_1a_2pd",
+     "source": "RA15",
+     "reliability": "A",
+     "note": "2 ппд 16.04 овладела Цолльбрюкке, Цэкерике-Лоозе, Ной-Литцегерике"
+    }
+   ],
+   "source": "IS7; RA15"
+  },
+  {
+   "id": "br_oder_zaeckerick_rail",
+   "name_ru": "ж.-д. мост через Одер Нойрюдниц–Цэкерик (Секерки)",
+   "name_orig": "Eisenbahnbrücke Neurüdnitz–Siekierki (Oderbrücke Bienenwerder)",
+   "river": "Одер",
+   "kind": "rail",
+   "lng": 14.2237,
+   "lat": 52.813,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-02-20",
+     "state": "blown",
+     "by": "de",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "мост 1890 г., разрушен немецкими войсками в 1945 (komoot, непроверено); восстановлен 1955"
+    },
+    {
+     "date": "1945-04-16",
+     "state": "captured",
+     "by": "pl_1a_1pd",
+     "source": "RA15",
+     "reliability": "A",
+     "note": "1 ппд форсировала Одер в районе ж.-д. моста (1,5 км сев.-зап. Цэкерик), отразила 10 контратак, к исходу дня на рубеже ж.-д. мост (2 км сев.-зап. Цэкерик) — отм. 8,6 — мост через ручей (2 км вост. Ной-Рюдниц); донесение штаба 1 БФ"
+    }
+   ],
+   "source": "RA15; CIT",
+   "note": "1 А ВП: наступление 16.04 с 5.45/6.15 после 30-мин артподготовки; плацдарм к исходу дня 9 км × 0,5 км (PW_FO); КП начинжа 1 А ВП и 6-го понтонно-мостового батальона — Гоздовице (14.04–20.04)"
+  },
+  {
+   "id": "br_oder_neuglietzen",
+   "name_ru": "понтонный мост 61 А у Ной-Глицена",
+   "name_orig": "Neuglietzen",
+   "river": "Одер",
+   "kind": "pontoon",
+   "lng": 14.1198,
+   "lat": 52.8369,
+   "capacity_t": 16,
+   "states": [
+    {
+     "date": "1945-04-17",
+     "time": "06:20",
+     "state": "pontoon",
+     "by": "su_61a",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "61 А начала форсирование 17.04 в 6.20 после артподготовки 6.05–6.50; за день до 4 полков с артиллерией"
+    },
+    {
+     "date": "1945-04-18",
+     "time": "05:45",
+     "state": "pontoon",
+     "by": "su_61a",
+     "capacity_t": 16,
+     "source": "IS7",
+     "reliability": "B",
+     "note": "к 5.45 18.04 построена понтонная переправа у Ной-Глицена грузоподъёмностью 16 т"
+    },
+    {
+     "date": "1945-04-18",
+     "time": "10:35",
+     "state": "damaged",
+     "by": "de_luftwaffe",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "в 10.35 мост разбит бомбардировкой; переправа на паромах, мост восстанавливается"
+    },
+    {
+     "date": "1945-04-19",
+     "state": "pontoon",
+     "by": "su_61a",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "286-й батальон амфибий переправляет людей и технику; 312-й сап на плацдарме"
+    }
+   ],
+   "source": "IS7"
+  },
+  {
+   "id": "br_oder_zellin",
+   "name_ru": "понтонный мост 47 А у Целлина",
+   "name_orig": "Zellin / Czelin",
+   "river": "Одер",
+   "kind": "pontoon",
+   "lng": 14.3809,
+   "lat": 52.7357,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-16",
+     "time": "17:35",
+     "state": "pontoon",
+     "by": "su_47a",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "в 17.35 16.04 таран понтонного моста ФВ-190 с 500-кг бомбой; по советским документам разрушения переправы в полосе 47 А не отмечено"
+    }
+   ],
+   "source": "IS7"
+  },
+  {
+   "id": "br_oder_hohensaaten",
+   "name_ru": "Хоэнзатен (шлюзы Одер–Хафель, мосты через Одер)",
+   "name_orig": "Hohensaaten",
+   "river": "Одер / Одер-Хафель-канал",
+   "kind": "road",
+   "lng": 14.1447,
+   "lat": 52.8739,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-16",
+     "state": "blown",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "сведений о мостах 1945 г. в доступных источниках нет (de-wiki статьи о Хоэнзатене — только о шлюзах)"
+    }
+   ],
+   "source": "CIT"
+  },
+  {
+   "id": "br_oder_schwedt",
+   "name_ru": "мосты у Шведта (шоссейный, канальный)",
+   "name_orig": "Oderbrücken Schwedt",
+   "river": "Одер",
+   "kind": "road",
+   "lng": 14.2841,
+   "lat": 53.0586,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-03-03",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_SCHW",
+     "reliability": "B",
+     "note": "плацдарм Скорцени у Нидеркрениг (с 31.01) оставлен 3.03; «канальный мост взорван» (дата не названа)"
+    },
+    {
+     "date": "1945-04-26",
+     "state": "captured",
+     "by": "su",
+     "source": "DW_SCHW",
+     "reliability": "B",
+     "note": "Шведт взят Красной Армией 26.04; город разрушен на 85 %"
+    }
+   ],
+   "source": "DW_SCHW"
+  },
+  {
+   "id": "br_oder_gryfino",
+   "name_ru": "переправы 65 А через Ост- и Вест-Одер у Грайфенхагена / Прицлова",
+   "name_orig": "Greifenhagen (Gryfino) / Pritzlow (Przecław)",
+   "river": "Ост-Одер / Вест-Одер",
+   "kind": "pontoon",
+   "lng": 14.4724,
+   "lat": 53.3768,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-18",
+     "state": "pontoon",
+     "by": "su_65a",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "18–19.04 передовые части преодолели Ост-Одер и междуречье; к исходу 19.04 через Ост-Одер по одному-два моста в полосе каждой армии (5-й и 7-й тяж. мпмп; 87, 48, 122, 101, 28, 89 опмб); в междуречье военно-строительные отряды строят дороги с деревянным покрытием"
+    },
+    {
+     "date": "1945-04-20",
+     "time": "13:00",
+     "state": "pontoon",
+     "by": "su_65a",
+     "capacity_t": 16,
+     "source": "ROK",
+     "reliability": "B",
+     "note": "к 13.00 две 16-т паромные переправы через Вест-Одер; к вечеру переброшен 31 батальон, 50 орудий 45-мм, 70 миномётов, 15 СУ-76; плацдарм 6 × 1,5 км"
+    },
+    {
+     "date": "1945-04-21",
+     "state": "pontoon",
+     "by": "su_65a",
+     "capacity_t": 50,
+     "source": "ROK",
+     "reliability": "B",
+     "note": "к вечеру на Ост-Одере 30-т и 50-т мосты и 50-т паром; на Вест-Одере шесть паромных переправ, из них два 16-т парома большой площади; 65 А получила 9-й (из 70 А) и 23-й (из 49 А) опмб с парками Н2П (ENG70)"
+    },
+    {
+     "date": "1945-04-22",
+     "state": "pontoon",
+     "by": "su_65a",
+     "capacity_t": 60,
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "к исходу 22.04 на Вест-Одере наведён мост под 60-т грузы из парков 87, 9 и 28-го опмб; тяжёлые паромы 5-го тмпмп и 9-го опмб; к исходу 24.04 переправлены главные силы армии и 1 гв. тк"
+    },
+    {
+     "date": "1945-04-25",
+     "state": "pontoon",
+     "by": "su_2ua",
+     "source": "ROK",
+     "reliability": "B",
+     "note": "2 уд. А переправляется по переправам 65 А в обход Штеттина"
+    }
+   ],
+   "source": "ENG70; ROK",
+   "note": "Опорный пункт Грайфенхаген (напротив переправ 70 А) не был подавлен артиллерией; в полосе 70 А первыми рейсами 10 батальонов (ENG70), за 21.04 — 11 батальонов (ROK)"
+  },
+  {
+   "id": "br_oder_widuchowa",
+   "name_ru": "переправы 70 А (Видухова / Паргово)",
+   "name_orig": "Fiddichow (Widuchowa) / Pargow",
+   "river": "Вест-Одер",
+   "kind": "pontoon",
+   "lng": 14.4,
+   "lat": 53.12,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-20",
+     "state": "pontoon",
+     "by": "su_70a",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "первыми рейсами переправлено 10 стрелковых батальонов; 48, 87 и 8-й опмб обеспечивали паромы"
+    },
+    {
+     "date": "1945-04-21",
+     "state": "pontoon",
+     "by": "su_70a",
+     "source": "ROK",
+     "reliability": "B",
+     "note": "армия переправила 11 батальонов, продвинулась до 3 км, овладела рощей севернее Паргова"
+    },
+    {
+     "date": "1945-04-25",
+     "state": "pontoon",
+     "by": "su_49a",
+     "source": "ROK",
+     "reliability": "B",
+     "note": "главные силы 49 А вышли на западный берег по переправам 70 А"
+    }
+   ],
+   "source": "ENG70; ROK",
+   "note": "координаты Видуховы — приближённо (Nominatim вернул одноимённый пункт в Свентокшиском в.)"
+  },
+  {
+   "id": "br_oder_ognica",
+   "name_ru": "переправы 49 А (Огница / Шведт)",
+   "name_orig": "Nipperwiese (Ognica)",
+   "river": "Вест-Одер",
+   "kind": "pontoon",
+   "lng": 14.3705,
+   "lat": 53.0809,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-20",
+     "state": "damaged",
+     "by": "su_49a",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "попытки форсировать Вест-Одер отбиты сильным огнём; артподготовка пришлась по пустому каналу, принятому за западный рукав (RW_SRO)"
+    },
+    {
+     "date": "1945-04-21",
+     "state": "pontoon",
+     "by": "su_49a",
+     "source": "ROK",
+     "reliability": "B",
+     "note": "удалось лишь зацепиться за западный берег; главный удар перенесён на правый фланг, понтонные части (9-й, 23-й опмб) переданы 65 А"
+    },
+    {
+     "date": "1945-04-26",
+     "state": "pontoon",
+     "by": "su_49a",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "оборона прорвана со второй попытки 26.04 (мемуар военного инженера 11 исбр, proza.ru — непроверено)"
+    }
+   ],
+   "source": "ENG70; ROK; RW_SRO",
+   "note": "инженерные части 49 А: 11-я исбр и 3-я шисбр (ENG70)"
+  },
+  {
+   "id": "br_oder_stettin_hansa",
+   "name_ru": "Ганза-мост (Длинный мост) через Одер в Штеттине",
+   "name_orig": "Hansabrücke (Most Długi), Stettin",
+   "river": "Одер",
+   "kind": "road",
+   "lng": 14.5604,
+   "lat": 53.4222,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-03-20",
+     "state": "intact",
+     "by": "de_festung_stettin",
+     "source": "PW_SZC",
+     "reliability": "B",
+     "note": "после взятия правобережных районов (Альтдамм) 14–20.03 немцы заминировали порт и разрушили мосты через Одру (дата по pl-wiki не названа)"
+    },
+    {
+     "date": "1945-04-20",
+     "state": "blown",
+     "by": "de",
+     "source": "PW_MD",
+     "reliability": "B",
+     "note": "Ганза-мост взорван 20.04.1945 отходящими войсками вермахта (Encyklopedia Szczecina, 2015, s.598)"
+    },
+    {
+     "date": "1945-04-26",
+     "state": "captured",
+     "by": "su_65a",
+     "source": "RW_SRO",
+     "reliability": "C",
+     "note": "Штеттин взят 26.04 без боя (de-wiki: оставлен 25.04)"
+    }
+   ],
+   "source": "PW_MD; PW_SZC; DW_STN",
+   "note": "Банхоф-брюкке (ж.-д./вокзальный мост) разрушен в войну и не восстановлен (DW_STN); автострадный и ж.-д. мосты у Подъюх — данных нет"
+  },
+  {
+   "id": "br_neisse_main",
+   "name_ru": "переправы 1 УФ через Нейсе на главном направлении (Форст–Мускау)",
+   "name_orig": "Neiße-Übergänge Forst–Muskau",
+   "river": "Нейсе",
+   "kind": "pontoon",
+   "lng": 14.673,
+   "lat": 51.653,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-15",
+     "time": "night",
+     "state": "captured",
+     "by": "su_1uf",
+     "source": "RW_KP",
+     "reliability": "B",
+     "note": "вечером 15.04 усиленные роты переправились на западный берег для разведки (Исаев, Конев)"
+    },
+    {
+     "date": "1945-04-16",
+     "time": "06:15",
+     "state": "pontoon",
+     "by": "su_1uf",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "6.15 артподготовка; полупонтоны и элементы сборных мостов выдвинуты к реке; через 20–30 мин после высадки десантов — штурмовые мостики и паромы; через 2 ч повсюду мосты для артиллерии и броды для танков; в 8.40 перешли в наступление дивизии первого эшелона"
+    },
+    {
+     "date": "1945-04-16",
+     "state": "pontoon",
+     "by": "su_1uf",
+     "capacity_t": 60,
+     "source": "KON",
+     "reliability": "B",
+     "note": "лёгкие понтонные мосты (НЛП) за 50 мин, мосты под 30 т — за 2 ч, под 60 т на жёстких опорах — за 4–5 ч; на главном направлении 133 переправы; в полосе 3 гв. А и 13 А — 20 мостов, 9 паромов, 12 пунктов десантных переправ, 17 штурмовых мостиков; средства танковых армий на Нейсе не использовались (приберегались для Шпрее)"
+    },
+    {
+     "date": "1945-04-16",
+     "time": "evening",
+     "state": "pontoon",
+     "by": "su_3gta; su_4gta",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "танковые армии переправились через Нейсе по мостам и десяти бродам; главные силы — вечером 16.04 за ночь (KON)"
+    }
+   ],
+   "source": "ENG70; KON; RW_KP",
+   "note": "1 УФ заготовил 2440 сапёрных лодок, 750 пог. м штурмовых мостиков и свыше 1000 пог. м деревянных мостов под 16 и 60 т (RW_BNO, без сноски). Приданные понтонные батальоны: 3 гв. А — 2, 13 А — 1, 5 гв. А — 2, 52 А — 1, 2 А ВП — 1 (RA15, план фронта)"
+  },
+  {
+   "id": "br_neisse_koebeln",
+   "name_ru": "понтонные мосты 3-й понтонно-мостовой бригады у Кёбельна",
+   "name_orig": "Köbeln (5 км севернее Muskau)",
+   "river": "Нейсе",
+   "kind": "pontoon",
+   "lng": 14.7171,
+   "lat": 51.5734,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-16",
+     "state": "pontoon",
+     "by": "su_1uf_3pmbr",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "3-я понтонно-мостовая бригада ген. Н. В. Соколова навела понтонные мосты для танков за 1 ч 40 мин с незначительными потерями"
+    }
+   ],
+   "source": "ENG70"
+  },
+  {
+   "id": "br_neisse_nlp_79",
+   "name_ru": "два наплавных моста НЛП 79-го штурмового исб",
+   "name_orig": "(участок не назван)",
+   "river": "Нейсе",
+   "kind": "pontoon",
+   "lng": null,
+   "lat": null,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-16",
+     "time": "10:00",
+     "state": "pontoon",
+     "by": "su_1uf_79shisb",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "к 10.00 наведены и содержались два наплавных моста из парка НЛП; противник несколько раз разрушал участки, сапёры восстанавливали"
+    }
+   ],
+   "source": "ENG70",
+   "note": "место не указано — вероятно, полоса 13 А (C)"
+  },
+  {
+   "id": "br_neisse_forst",
+   "name_ru": "мосты через Нейсе в Форсте",
+   "name_orig": "Lange Brücke Forst",
+   "river": "Нейсе",
+   "kind": "road",
+   "lng": 14.6455,
+   "lat": 51.7439,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-02-25",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_FOR",
+     "reliability": "C",
+     "note": "с середины февраля советский плацдарм на западном берегу; обстрел города с 25.02; мосты через Нейсе (Lange Brücke 1922 г.) разрушены в 1945 — дата не названа"
+    },
+    {
+     "date": "1945-04-18",
+     "state": "captured",
+     "by": "su_3gva_149sd",
+     "source": "DW_FOR",
+     "reliability": "C",
+     "note": "Форст взят 16–18.04 (149 сд атаковала с юго-востока 16.04 — RW_KP); 85 % города в руинах"
+    }
+   ],
+   "source": "DW_FOR; RW_KP"
+  },
+  {
+   "id": "br_neisse_guben",
+   "name_ru": "мосты через Нейсе в Губене",
+   "name_orig": "Neißebrücken Guben",
+   "river": "Нейсе",
+   "kind": "road",
+   "lng": 14.7154,
+   "lat": 51.9503,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-03-10",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_GUB",
+     "reliability": "C",
+     "note": "бои 18.02–24.04; все мосты разрушены (Nordbrücke, Große Brücke и др.); восточная часть (Губин) потеряла 88 % застройки; мост у Маркерсдорфа захвачен советскими войсками раньше подрыва — немецкая атака в конце февраля для его разрушения (веб-поиск, C)"
+    },
+    {
+     "date": "1945-04-24",
+     "state": "captured",
+     "by": "su_3gva",
+     "source": "DW_GUB",
+     "reliability": "C",
+     "note": "окончание боёв 24.04"
+    }
+   ],
+   "source": "DW_GUB; TOW"
+  },
+  {
+   "id": "br_spree_spremberg_n",
+   "name_ru": "переправа 3 гв. ТА через Шпрее севернее Шпремберга",
+   "name_orig": "Spree nördlich Spremberg",
+   "river": "Шпрее",
+   "kind": "pontoon",
+   "lng": 14.38,
+   "lat": 51.62,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-17",
+     "state": "pontoon",
+     "by": "su_3gta",
+     "source": "RA15",
+     "reliability": "A",
+     "note": "распоряжение Конева № 104 от 17.04 начинжам фронта, 3 гв., 5 гв., 13 А, командирам 6-й и 3-й понтонных бригад: главное — быстрейшая переправа танков Рыбалко и Лелюшенко; № 105 (18.15) — форсировать ночью, № 106 (01.40 18.04) — 4 гв. ТА форсирует севернее Шпремберга"
+    },
+    {
+     "date": "1945-04-17",
+     "time": "evening",
+     "state": "captured",
+     "by": "su_3gta",
+     "source": "KON",
+     "reliability": "B",
+     "note": "вечером 17.04 подразделения 3 гв. ТА перешли Шпрее вброд"
+    },
+    {
+     "date": "1945-04-18",
+     "time": "19:00",
+     "state": "pontoon",
+     "by": "su_3gta_7gtk",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "танки — по оборудованным сапёрами бродам, колёсные машины — по построенным мостам; в 19.00 18.04 переправилась 53 гв. тбр 6 гв. тк (IS7); основной удар в полосе 13 А, куда направлены обе танковые армии"
+    }
+   ],
+   "source": "RA15; ENG70; KON; IS7",
+   "note": "Положение 3 гв. ТА 18.04 у Шпремберга уже есть в berlin-1945-positions.json"
+  },
+  {
+   "id": "br_spree_fuerstenwalde",
+   "name_ru": "мосты через Шпрее у Фюрстенвальде",
+   "name_orig": "Spreebrücken Fürstenwalde",
+   "river": "Шпрее",
+   "kind": "road",
+   "lng": 14.065,
+   "lat": 52.358,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-20",
+     "time": "16:00",
+     "state": "intact",
+     "by": "de_9a_xi_ss",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "к 16.00 20.04 8 гв. мк вышел к Шпрее западнее Фюрстенвальде; город объявлен комендантом крепостью «незадолго до конца войны» (DW_FW, без даты)"
+    },
+    {
+     "date": "1945-04-22",
+     "state": "blown",
+     "by": "de",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "сведений о дате подрыва нет; уличные бои в Фюрстенвальде по сводке ОКВ 21–22.04"
+    }
+   ],
+   "source": "IS7; DW_FW; CIT"
+  },
+  {
+   "id": "br_spree_koepenick",
+   "name_ru": "мост через Шпрее в Кёпенике",
+   "name_orig": "Spreebrücke Köpenick",
+   "river": "Шпрее",
+   "kind": "road",
+   "lng": 13.5754,
+   "lat": 52.445,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-23",
+     "state": "captured",
+     "by": "su_8gva",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "сапёры-разведчики 8 гв. А захватили переправы через канал между озёрами Штиниц и Кальк у Тосдорфа и мост через Шпрее в Кёпенике; для танков использованы захваченный мост и десять паромов из двух парков Н2П и двух НЛП"
+    },
+    {
+     "date": "1945-04-23",
+     "state": "blown",
+     "by": "de",
+     "source": "LT_CONQ",
+     "reliability": "B",
+     "note": "по Дрёмову (8 гв. мк) мост взорван, сапёрный мост 2–3 ч — уже в conquest.json"
+    },
+    {
+     "date": "1945-04-24",
+     "state": "pontoon",
+     "by": "su_1gta_8gmk",
+     "capacity_t": 60,
+     "source": "IS7",
+     "reliability": "B",
+     "note": "к утру 24.04 8 гв. мк закончил форсирование на 60-т паромах у Кёпеника; 20 гв. мбр — мотопехотой у Обер-Шёневайде"
+    }
+   ],
+   "source": "ENG70; IS7; LT_CONQ",
+   "note": "источники расходятся (захвачен / взорван) — вероятно, разные мосты района Кёпеник–Шпиндлерсфельд"
+  },
+  {
+   "id": "br_spree_adlershof",
+   "name_ru": "переправа 1 гв. ТА через Шпрее у Адлерсхофа (ж.-д. мост, паромы, мост ТМП)",
+   "name_orig": "Spree bei Adlershof / Oberschöneweide",
+   "river": "Шпрее",
+   "kind": "pontoon",
+   "lng": 13.5475,
+   "lat": 52.4379,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-23",
+     "time": "11:00",
+     "state": "pontoon",
+     "by": "su_1gta",
+     "capacity_t": 60,
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "переправа мотопехоты на местных лодках с 11.00 после артподготовки; к 16.00 плацдарм; к 18.00 из армейского парка Н2П три парома по 60 т с буксировкой катерами"
+    },
+    {
+     "date": "1945-04-24",
+     "time": "08:00",
+     "state": "pontoon",
+     "by": "su_1gta_1mpmp",
+     "capacity_t": 60,
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "к 8.00 24.04 1-й моторизованный понтонно-мостовой полк навёл мост из парка ТМП; часть паромов снята и выдвинута к Тельтов-каналу"
+    },
+    {
+     "date": "1945-04-23",
+     "state": "captured",
+     "by": "su_1gta_19gmbr",
+     "source": "KAT",
+     "reliability": "B",
+     "note": "19 гв. мбр — по ж.-д. мосту севернее Адлерсхофа (уже в conquest.json)"
+    }
+   ],
+   "source": "ENG70; KAT; LT_CONQ"
+  },
+  {
+   "id": "br_spree_treptow",
+   "name_ru": "переправа 5 уд. А через Шпрее у Трептов-парка",
+   "name_orig": "Spree Treptower Park",
+   "river": "Шпрее",
+   "kind": "pontoon",
+   "lng": 13.4703,
+   "lat": 52.4884,
+   "capacity_t": 30,
+   "states": [
+    {
+     "date": "1945-04-23",
+     "time": "01:45",
+     "state": "pontoon",
+     "by": "su_5ua_9sk",
+     "capacity_t": 30,
+     "source": "IS7",
+     "reliability": "B",
+     "note": "9 ск: 82 лодки А-3, 36 АМН, парки НЛП и Н2П, 10 полуглиссеров Днепровской флотилии; десант 400 чел. на 23 лодках; в 1.45 полуглиссер № 111 первым переправил 15 чел.; утром собраны понтоны под 30 т — переправа Т-34; к вечеру 301 сд полностью, начата 230 сд"
+    },
+    {
+     "date": "1945-04-24",
+     "state": "pontoon",
+     "by": "su_5ua",
+     "source": "DW_SB",
+     "reliability": "B",
+     "note": "флотилия переправила 16 000 чел. [49]; Днепровская флотилия в Берлине навела 1 понтонный мост (отчёт флотилии, RA15)"
+    }
+   ],
+   "source": "IS7; DW_SB; RA15"
+  },
+  {
+   "id": "br_spree_mahlenstr",
+   "name_ru": "мосты у Маленштрассе и Варшауэрштрассе (5 уд. А)",
+   "name_orig": "Spreebrücken Mahlenstraße / Warschauer Straße",
+   "river": "Шпрее",
+   "kind": "road",
+   "lng": 13.44,
+   "lat": 52.505,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-24",
+     "state": "captured",
+     "by": "su_5ua_32sk",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "32 ск: мост у Маленштрассе взят атакой роты под шквальным огнём; у Варшауэрштрассе подрыв предотвращён; мосты оставались в зоне огня"
+    }
+   ],
+   "source": "IS7",
+   "note": "координаты приближённые (Штралау / Обербаум)"
+  },
+  {
+   "id": "br_spree_oberbaum",
+   "name_ru": "Обербаумбрюкке",
+   "name_orig": "Oberbaumbrücke",
+   "river": "Шпрее",
+   "kind": "road",
+   "lng": 13.4457,
+   "lat": 52.5017,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-23",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_OBB",
+     "reliability": "B",
+     "note": "23.04 немецкие войска взорвали 3/5 среднего свода (накануне выхода Красной Армии на правый берег); 25.04 Красная Армия образовала плацдармы у Шиллинг- и Обербаум-мостов"
+    }
+   ],
+   "source": "DW_OBB"
+  },
+  {
+   "id": "br_spree_jungfernheide",
+   "name_ru": "ж.-д. мост через Шпрее у ст. Юнгфернхайде (2 гв. ТА)",
+   "name_orig": "Spree-Eisenbahnbrücke Jungfernheide",
+   "river": "Шпрее",
+   "kind": "rail",
+   "lng": 13.2993,
+   "lat": 52.5304,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-25",
+     "time": "06:00",
+     "state": "captured",
+     "by": "su_2gta_34gmsbr",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "захвачен 34 гв. мсбр; к 6.00 26.04 приспособлен для переправы танков; из-за обстрела (мост на возвышенности) переправа 12 гв. тк отложена на тёмное время"
+    },
+    {
+     "date": "1945-04-26",
+     "state": "blown",
+     "by": "de",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "1 мк упёрся в череду взорванных переправ через Шпрее в своей полосе; 27.04 главные силы 1 мк к 16.00 переправились у ст. Юнгфернхайде на участке 12 гв. тк"
+    }
+   ],
+   "source": "IS7"
+  },
+  {
+   "id": "br_spree_moltke",
+   "name_ru": "мост Мольтке",
+   "name_orig": "Moltkebrücke",
+   "river": "Шпрее",
+   "kind": "road",
+   "lng": 13.3688,
+   "lat": 52.5219,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-28",
+     "time": "evening",
+     "state": "damaged",
+     "by": "de",
+     "source": "EW_MB",
+     "reliability": "B",
+     "note": "заряды сработали при советской атаке в сумерках: секция упала в Шпрее, но мост проходим для людей и машин (Read & Fisher, p.444)"
+    },
+    {
+     "date": "1945-04-29",
+     "time": "01:30",
+     "state": "captured",
+     "by": "su_3ua_171sd_380sp",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "0.30–1.30 29.04 380 сп 171 сд захватил мост; к полуночи плацдарм 150 и 171 сд (Beevor); на прямую наводку — три батареи 1957 иптап (9 × 57 мм), 152-мм гаубицы"
+    }
+   ],
+   "source": "IS7; EW_MB; DW_SB",
+   "note": "уже есть в positions.json (events 28–29.04) — здесь добавлены состояния"
+  },
+  {
+   "id": "br_spree_schloss",
+   "name_ru": "Шлосс-брюкке (Мitte)",
+   "name_orig": "Schloßbrücke",
+   "river": "Шпрее",
+   "kind": "road",
+   "lng": 13.3985,
+   "lat": 52.5177,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-29",
+     "state": "intact",
+     "by": "de",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "29.04 26 гв. ск всё ещё на восточном берегу у моста Шлосс под огнём с западного берега; de-wiki: мост получил лишь лёгкие повреждения в апреле 1945"
+    }
+   ],
+   "source": "IS7; DW_SCHL"
+  },
+  {
+   "id": "br_spree_weidendamm",
+   "name_ru": "Вайдендаммер-брюкке",
+   "name_orig": "Weidendammer Brücke",
+   "river": "Шпрее",
+   "kind": "road",
+   "lng": 13.388,
+   "lat": 52.5221,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-05-01",
+     "state": "intact",
+     "by": "de",
+     "source": "DW_SB",
+     "reliability": "B",
+     "note": "уцелел; в ночь на 2.05 танковый бой у моста остановил прорыв группы из Рейхсканцелярии"
+    }
+   ],
+   "source": "DW_SB"
+  },
+  {
+   "id": "br_teltow_main",
+   "name_ru": "переправы 3 гв. ТА через Тельтов-канал (Тельтов, Ланквиц)",
+   "name_orig": "Teltowkanal",
+   "river": "Тельтов-канал",
+   "kind": "pontoon",
+   "lng": 13.2685,
+   "lat": 52.3806,
+   "capacity_t": 60,
+   "states": [
+    {
+     "date": "1945-04-22",
+     "state": "blown",
+     "by": "de",
+     "source": "KON",
+     "reliability": "B",
+     "note": "к исходу 22.04 9 мк вышел к каналу, 6 гв. тк взял Тельтов, переправившись вброд (RW_KP); часть мостов подготовлена к взрыву, часть взорвана; на северном берегу траншеи, ДОТы, врытые танки"
+    },
+    {
+     "date": "1945-04-24",
+     "time": "13:00",
+     "state": "pontoon",
+     "by": "su_3gta_6gtk",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "6.05 артподготовка (до 650 орудий на км); 22 гв. мсбр на лодках и по остову разрушенного моста; около 13.00 первый понтонный мост, вскоре второй; 126-й пмб, 182-й миб, к исходу дня 25-й пмб; 7 гв. тк и 9 мк переправлены здесь же"
+    },
+    {
+     "date": "1945-04-25",
+     "state": "pontoon",
+     "by": "su_1uf",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "всего через Тельтов-канал инженерными частями 1 УФ оборудовано 34 переправы: 18 наплавных и 12 деревянных мостов"
+    }
+   ],
+   "source": "ENG70; KON; IS7; RW_KP",
+   "note": "неудача 55 гв. тбр у Штансдорфа и 10 гв. тк — в conquest.json и IS7 (обе бригады развёрнуты на переправы 6 гв. тк)"
+  },
+  {
+   "id": "br_teltow_1gta",
+   "name_ru": "переправа 1 гв. ТА / 8 гв. А через Тельтов-канал (Бритц–Мариендорф)",
+   "name_orig": "Teltowkanal Britz",
+   "river": "Тельтов-канал",
+   "kind": "pontoon",
+   "lng": 13.43,
+   "lat": 52.44,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-24",
+     "time": "12:00",
+     "state": "pontoon",
+     "by": "su_1gta",
+     "source": "EW_BB",
+     "reliability": "B",
+     "note": "атака с 6.20 после артподготовки; пехота к 7.00, танки около 12.00 по понтонным мостам [24]; 20 гв. мбр к 20.00 захватила переправу через канал у Баумшуленвега (IS7)"
+    }
+   ],
+   "source": "EW_BB; IS7",
+   "note": "координаты приближённые"
+  },
+  {
+   "id": "br_landwehr",
+   "name_ru": "мосты через Ландвер-канал",
+   "name_orig": "Landwehrkanal",
+   "river": "Ландвер-канал",
+   "kind": "road",
+   "lng": 13.37,
+   "lat": 52.5,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-26",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_SB",
+     "reliability": "B",
+     "note": "большинство мостов взорвано незадолго до выхода советских войск к каналу (ночь 26/27.04); уцелевшие забаррикадированы ж.-б. балками (отчёт 5 уд. А, RA15 — A)"
+    },
+    {
+     "date": "1945-04-29",
+     "time": "night",
+     "state": "captured",
+     "by": "su_2gta_12gtk_34gmsbr",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "в ночь на 29.04 34 гв. мсбр захватила исправный мост через Ландвер-канал; 1 мк форсировать не смог"
+    },
+    {
+     "date": "1945-04-29",
+     "state": "captured",
+     "by": "su_3gta_44tbr",
+     "source": "ENG70",
+     "reliability": "A",
+     "note": "мост у Потсдамского вокзала: передовой отряд 44-й тбр с взводом сапёров, заряд 60 кг — проход 7 м в баррикаде, мост (заминированный) взят атакой танков; у Принценштрассе — штурмовые мостики по верёвочным лестницам, захвачено несколько мостов"
+    },
+    {
+     "date": "1945-04-28",
+     "state": "damaged",
+     "by": "de_ss",
+     "source": "EW_BB",
+     "reliability": "B",
+     "note": "28.04 взорваны перемычки тоннеля С-бана под каналом — затопление метро у Ангальтского вокзала [42]"
+    }
+   ],
+   "source": "DW_SB; RA15; IS7; ENG70",
+   "note": "Потсдамский мост (Potsdamer Brücke) разрушен лишь частично, бои 29.04, проезжий после боя (DW_SB); парламентёры Вейдлинга 2.05 — на Потсдамском мосту"
+  },
+  {
+   "id": "br_bsk_canal",
+   "name_ru": "переправы через канал Берлин–Шпандау (Шиффартс-канал) и Гогенцоллерн-канал",
+   "name_orig": "Berlin-Spandauer Schifffahrtskanal / Hohenzollernkanal",
+   "river": "канал",
+   "kind": "pontoon",
+   "lng": 13.33,
+   "lat": 52.55,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-22",
+     "state": "blown",
+     "by": "de",
+     "source": "RA15",
+     "reliability": "A",
+     "note": "9 гв. тк к 8.00 22.04 на восточном берегу Гогенцоллерн-канала у Хеннигсдорфа; переправа «с большим трудом и большой затратой времени» (Богданов на конференции 1 БФ)"
+    },
+    {
+     "date": "1945-04-24",
+     "state": "pontoon",
+     "by": "su_3ua; su_2gta",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "24.04 — борьба 3 уд. А и 1 мк за плацдармы на канале Берлин–Шпандауэр–Шиффартс; 25.04 переправа 1 мк и 12 гв. тк; 34 гв. мсбр к 21.00 захватила стадион Олимпия"
+    },
+    {
+     "date": "1945-04-22",
+     "time": "night",
+     "state": "captured",
+     "by": "su_47a",
+     "source": "DW_SB",
+     "reliability": "B",
+     "note": "47 А форсировала Хафель/канал у Хеннигсдорфа в ночь 22/23.04 [25]"
+    }
+   ],
+   "source": "RA15; IS7; DW_SB"
+  },
+  {
+   "id": "br_fenn",
+   "name_ru": "Фенн-брюкке (Моабит)",
+   "name_orig": "Fennbrücke",
+   "river": "Берлин-Шпандауэр-Шиффартс-канал",
+   "kind": "road",
+   "lng": 13.3612,
+   "lat": 52.5377,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-26",
+     "state": "captured",
+     "by": "su_3ua_12gsk",
+     "source": "DW_SB",
+     "reliability": "B",
+     "note": "взят внезапным ударом неповреждённым (25–28.04)"
+    }
+   ],
+   "source": "DW_SB"
+  },
+  {
+   "id": "br_havel_charlotten",
+   "name_ru": "Шарлоттенбрюкке (Шпандау)",
+   "name_orig": "Charlottenbrücke",
+   "river": "Хафель",
+   "kind": "road",
+   "lng": 13.2062,
+   "lat": 52.5351,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-30",
+     "state": "intact",
+     "by": "de_hj",
+     "source": "EW_CB",
+     "reliability": "B",
+     "note": "не повреждён; оборонялся гитлерюгендом; в ночь 30.04/1.05 и 1/2.05 по нему прорыв групп гарнизона на Шпандау под огнём 47 А (Beevor, p.384–385); два моста через Хафель у Шпандау целы до капитуляции 2.05 (RW_SB)"
+    },
+    {
+     "date": "1945-05-02",
+     "state": "captured",
+     "by": "su_2gta_33mbr",
+     "source": "LT_CONQ",
+     "reliability": "C",
+     "note": "сапёры разминировали баррикаду на мосту (conquest.json)"
+    }
+   ],
+   "source": "EW_CB; DW_SB; RW_SB; LT_CONQ"
+  },
+  {
+   "id": "br_havel_hennigsdorf",
+   "name_ru": "переправа 47 А через Хафель у Хеннигсдорфа",
+   "name_orig": "Havel bei Hennigsdorf",
+   "river": "Хафель",
+   "kind": "pontoon",
+   "lng": 13.2058,
+   "lat": 52.6376,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-22",
+     "time": "night",
+     "state": "pontoon",
+     "by": "su_47a",
+     "source": "DW_SB",
+     "reliability": "B",
+     "note": "47 А форсировала в ночь 22/23.04 [25]; директива 1 БФ: одним корпусом захватить переправы через Гогенцоллерн-канал на участке Ораниенбург–Геннигсдорф (RA15)"
+    }
+   ],
+   "source": "DW_SB; RA15"
+  },
+  {
+   "id": "br_havel_ketzin",
+   "name_ru": "Хафель у Кетцина — замыкание кольца",
+   "name_orig": "Havel bei Ketzin",
+   "river": "Хафель",
+   "kind": "pontoon",
+   "lng": 12.8444,
+   "lat": 52.4769,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-25",
+     "time": "12:00",
+     "state": "captured",
+     "by": "su_4gta_6gmk; su_47a_328sd",
+     "source": "RW_KP",
+     "reliability": "B",
+     "note": "в 12.00 25.04 6 гв. мк форсировал Хафель и соединился с 328 сд 47 А — кольцо вокруг Берлина замкнуто"
+    }
+   ],
+   "source": "RW_KP; DW_SB",
+   "note": "мосты у Науэна и ж.-д. мост через Закров-Парецкий канал — уже в conquest.json"
+  },
+  {
+   "id": "br_havel_potsdam_lange",
+   "name_ru": "Длинный мост в Потсдаме",
+   "name_orig": "Lange Brücke (Potsdam)",
+   "river": "Хафель",
+   "kind": "road",
+   "lng": 13.0614,
+   "lat": 52.3938,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-24",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_LBP",
+     "reliability": "C",
+     "note": "24.04.1945 пролёт над Нойе-Фарт взорван вермахтом; часть над Альте-Фарт повреждена, но стояла; в середине 1945 — временный мост на старых опорах"
+    },
+    {
+     "date": "1945-04-27",
+     "state": "blown",
+     "by": "de",
+     "source": "KON",
+     "reliability": "B",
+     "note": "Лелюшенко 27.04 взял только юго-восточную часть Потсдама — «все мосты через Хафель были взорваны немцами»; 10 гв. тк с понтонными частями и батальоном танков-амфибий навёл понтонный мост у Ванзее (KON)"
+    }
+   ],
+   "source": "DW_LBP; KON; DW_POT"
+  },
+  {
+   "id": "br_havel_glienicke",
+   "name_ru": "Глиникский мост",
+   "name_orig": "Glienicker Brücke",
+   "river": "Хафель",
+   "kind": "road",
+   "lng": 13.0902,
+   "lat": 52.4135,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-29",
+     "state": "damaged",
+     "by": "de; su",
+     "source": "DW_GLB",
+     "reliability": "B",
+     "note": "заряды на всех опорах; в последние дни апреля огонь советских танков подорвал два заряда — часть моста разрушена, остальные детонаторы целы (не взорван намеренно); дата 29.04 — по статье Stahlbau (B-TU Cottbus, 2000); восстановлен 1947–49"
+    }
+   ],
+   "source": "DW_GLB"
+  },
+  {
+   "id": "br_havel_brandenburg",
+   "name_ru": "мосты Бранденбурга-на-Хафеле",
+   "name_orig": "Havelbrücken Brandenburg",
+   "river": "Хафель",
+   "kind": "road",
+   "lng": 12.5498,
+   "lat": 52.4108,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-24",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_BRB",
+     "reliability": "C",
+     "note": "все важные мосты заминированы; 24.04 с началом уличных боёв (1 УФ с юго-востока) первым взорван мост Св. Анны (юго-восточный вход в Нойштадт); 26.04 — бои у Нойштедтского ратуши; 27.04 освобождена тюрьма Гёрден (DW_BRB — B)"
+    },
+    {
+     "date": "1945-05-01",
+     "state": "captured",
+     "by": "su_1uf",
+     "source": "CIT",
+     "reliability": "C",
+     "note": "дата полного взятия в доступных источниках не подтверждена; разгранлиния 1 БФ/1 УФ 28.04 шла «искл. ж.-д. мост через Хафель в Бранденбурге» (RA15)"
+    }
+   ],
+   "source": "DW_BRB; RA15; CIT"
+  },
+  {
+   "id": "br_havel_oranienburg",
+   "name_ru": "мосты Ораниенбурга (Хафель, Одер-Хафель-канал)",
+   "name_orig": "Oranienburg / Lehnitz",
+   "river": "Хафель / Одер-Хафель-канал",
+   "kind": "road",
+   "lng": 13.2458,
+   "lat": 52.7529,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-23",
+     "state": "captured",
+     "by": "su_1bf",
+     "source": "EW_ORB",
+     "reliability": "C",
+     "note": "Ораниенбург взят 23.04 (en-wiki, без сноски); мост Хоэнвердер через Одер-Хафель-канал взорван вермахтом в апреле (komoot, C)"
+    }
+   ],
+   "source": "EW_ORB; CIT"
+  },
+  {
+   "id": "br_dahme_zossen",
+   "name_ru": "мост через Нотте-канал в Цоссене",
+   "name_orig": "Nottekanal Zossen",
+   "river": "Нотте-канал",
+   "kind": "road",
+   "lng": 13.4489,
+   "lat": 52.2159,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-22",
+     "state": "blown",
+     "by": "de",
+     "source": "IS7",
+     "reliability": "B",
+     "note": "6 гв. тк остановлен взорванным мостом; переправа по броду восточнее города и по «неумело взорванному» ж.-д. мосту"
+    }
+   ],
+   "source": "IS7",
+   "note": "Даме у Меркиш-Буххольца и Нидерлеме — в halbe.json"
+  },
+  {
+   "id": "br_elbe_torgau",
+   "name_ru": "мост через Эльбу в Торгау",
+   "name_orig": "Elbebrücke Torgau",
+   "river": "Эльба",
+   "kind": "road",
+   "lng": 12.9934,
+   "lat": 51.5383,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-25",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_TOR",
+     "reliability": "B",
+     "note": "к 25.04 мост разрушен; 26.04 на разрушенном мосту постановочная съёмка встречи 58 гв. сд и 69-й пд США («Elbe Day»); дата и исполнитель подрыва не названы; у Штрелы 22.04 вермахт взорвал временный мост с колонной беженцев (via-regia, C)"
+    },
+    {
+     "date": "1945-04-25",
+     "state": "captured",
+     "by": "su_5gva_58gsd",
+     "source": "RA15",
+     "reliability": "A",
+     "note": "2-й батальон 173 гв. сп 58 гв. сд 23.04 вышел на восточный берег; американцы 25.04 просили разрешения построить мост через Эльбу у Торгау (донесение, RA15)"
+    }
+   ],
+   "source": "DW_TOR; RA15"
+  },
+  {
+   "id": "br_elbe_magdeburg",
+   "name_ru": "мосты через Эльбу в Магдебурге",
+   "name_orig": "Elbbrücken Magdeburg (Strombrücke, Hubbrücke, Herrenkrug)",
+   "river": "Эльба",
+   "kind": "road",
+   "lng": 11.6436,
+   "lat": 52.1288,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-11",
+     "state": "intact",
+     "by": "de",
+     "source": "DW_MD",
+     "reliability": "B",
+     "note": "11.04 9-я армия США у западной границы города; 12.04 ген. Регенер отверг ультиматум"
+    },
+    {
+     "date": "1945-04-16",
+     "state": "blown",
+     "by": "de",
+     "source": "DW_HBM",
+     "reliability": "B",
+     "note": "16.04 подъёмный мост у Буккау взорван немецкими войсками; около 18.04 разрушен ж.-д. мост Херренкруг; Штернбрюкке разрушен в 1945 (дата не названа); 19.04 американцы заняли западную часть города"
+    },
+    {
+     "date": "1945-05-05",
+     "state": "captured",
+     "by": "su",
+     "source": "DW_MD",
+     "reliability": "B",
+     "note": "5.05 Красная Армия заняла восточно-эльбскую часть Магдебурга"
+    }
+   ],
+   "source": "DW_HBM; DW_MD",
+   "note": "Штромбрюкке (главный) — дата подрыва в доступных статьях не найдена"
+  },
+  {
+   "id": "br_elbe_tangermuende",
+   "name_ru": "мост через Эльбу в Тангермюнде",
+   "name_orig": "Elbbrücke Tangermünde (1933)",
+   "river": "Эльба",
+   "kind": "rail",
+   "lng": 11.9723,
+   "lat": 52.5431,
+   "capacity_t": null,
+   "states": [
+    {
+     "date": "1945-04-12",
+     "state": "blown",
+     "by": "de",
+     "source": "EW_TGM",
+     "reliability": "C",
+     "note": "совмещённый ж.-д./шоссейный мост 1933 г. взорван отходящими немцами при подходе американцев (12.04 — по мемориальной надписи; 14.04 — бой за город, DW_TGM)"
+    },
+    {
+     "date": "1945-05-04",
+     "state": "damaged",
+     "by": "de_12a",
+     "source": "DW_SB",
+     "reliability": "B",
+     "note": "по остаткам моста (доски по фермам) 4–7.05 на запад перешли ~100 000 солдат 12 А и остатков 9 А и ~300 000 беженцев (Венк, [104]); советские танки у моста 7.05 — halbe.json"
+    }
+   ],
+   "source": "EW_TGM; DW_TGM; DW_SB"
+  }
+ ],
+ "belts": [
+  {
+   "id": "belt_oder_neisse_general",
+   "name_ru": "Одерско-Нейсенский рубеж — общая структура (три полосы, 20–40 км)",
+   "name_orig": "Oder-Neiße-Stellung",
+   "places": [],
+   "points": null,
+   "built_by": "ГА «Висла», ГА «Центр», организация Тодт, фольксштурм",
+   "source": "RW_BNO; ENG70",
+   "reliability": "B",
+   "note": "Три полосы общей глубиной 20–40 км: главная — по левому берегу Одера и Нейсе, 2–3 позиции, 5–10 км, до 5 линий траншей; вторая — в 10–20 км от переднего края (сильнее всего на Зееловских высотах); третья — в 20–40 км. Плотность минирования на важнейших направлениях до 2000 мин/км. Все населённые пункты — опорные пункты круговой обороны. Четыре полосы перед Кюстринским плацдармом уже детализированы в berlin-1945-seelow-divisions.json."
+  },
+  {
+   "id": "belt_neisse_4pza",
+   "name_ru": "Рубеж Нейсе (4 ТА / 9 А): первая и вторая полосы",
+   "name_orig": "Neiße-Stellung",
+   "places": [
+    "Guben",
+    "Forst",
+    "KleinBademeusel",
+    "BadMuskau",
+    "Rothenburg",
+    "Piensk",
+    "Goerlitz"
+   ],
+   "points": [
+    [
+     14.7154,
+     51.9503
+    ],
+    [
+     14.6455,
+     51.7439
+    ],
+    [
+     14.7014,
+     51.5631
+    ],
+    [
+     14.9403,
+     51.3566
+    ],
+    [
+     15.045,
+     51.2458
+    ],
+    [
+     14.991,
+     51.1563
+    ]
+   ],
+   "built_by": "4 ТА (ГА «Центр»), 9 А (V гск СС у Губена)",
+   "source": "ENG70; KON; RW_KP",
+   "reliability": "B",
+   "note": "16.04 главная ударная группировка 1 УФ прорвала первую полосу и завязала бой за вторую; 17.04 вторая полоса прорвана, противник отходит за Шпрее (ENG70). Первая траншея по кромке западного берега, вторая — основной объект артподготовки (RW_KP). Расположение второй полосы (от–до) в источниках не описано; глубина тактической зоны 4–6 км по продвижению за день. На автостраде Берлин–Бреслау минированный завал 150 × 60 м; в полосе 3 гв. А снято 6488 ПТ и 3424 ПП мин, 14 завалов, 59 баррикад (ENG70)."
+  },
+  {
+   "id": "belt_spree_line",
+   "name_ru": "Рубеж по Шпрее (Котбус–Шпремберг) — «последняя водная преграда»",
+   "name_orig": "Spree-Linie",
+   "places": [
+    "Cottbus",
+    "Spremberg"
+   ],
+   "points": [
+    [
+     14.3357,
+     51.7567
+    ],
+    [
+     14.3804,
+     51.5715
+    ]
+   ],
+   "built_by": "4 ТА; крепости Котбус и Шпремберг — фланговые узлы",
+   "source": "RA15; KON; ENG70",
+   "reliability": "B",
+   "note": "Распоряжение Конева № 104 от 17.04: «последняя водная преграда р. Шпрее». Противник не имел резервов для прикрытия рубежа; 12 дивизий из резерва частью отброшены за Шпрее, частью оттеснены к Котбусу и Шпрембергу (KON). 18.04 13 А переправилась целиком; рубеж фактически не удержан."
+  },
+  {
+   "id": "belt_lower_oder_3pza",
+   "name_ru": "Рубеж 3 ТА на Нижнем Одере: Ост-Одер, затопленное междуречье 3–5 км, Вест-Одер, высокий западный берег",
+   "name_orig": "Oder-Stellung der 3. Panzerarmee",
+   "places": [
+    "Dabie",
+    "Gryfino",
+    "Widuchowa",
+    "Ognica",
+    "Krajnik",
+    "Schwedt",
+    "Gartz",
+    "Hohensaaten"
+   ],
+   "points": [
+    [
+     14.6663,
+     53.4797
+    ],
+    [
+     14.4924,
+     53.2536
+    ],
+    [
+     14.4,
+     53.12
+    ],
+    [
+     14.3705,
+     53.0809
+    ],
+    [
+     14.3158,
+     53.0316
+    ],
+    [
+     14.2841,
+     53.0586
+    ],
+    [
+     14.3914,
+     53.2086
+    ],
+    [
+     14.1447,
+     52.8739
+    ]
+   ],
+   "built_by": "3 ТА (Мантейфель); корпусная группа «Свинемюнде» севернее",
+   "source": "ENG70; ROK; RW_SRO",
+   "reliability": "B",
+   "note": "Одер в нижнем течении — два рукава; междуречье 3–5 км к началу апреля затоплено, сплошная полоса воды до 5 км (ROK). Дамбы в пойме захвачены в ночь на 16.04, Ост-Одер преодолён 18–19.04. Главная оборона — на высоком западном берегу Вест-Одера; к 25.04 плацдарм 65/70 А 24 км × 3+ км, 25.04 прорыв на фронте 20 км, далее Рандовское болото (EW: Randowbruch). Опорный пункт Грайфенхаген напротив 70 А не подавлен артиллерией 20.04. Рубеж «Рандов» и позиции Штеттина в деталях не найдены."
+  },
+  {
+   "id": "belt_berlin_outer",
+   "name_ru": "Внешний обвод Берлина (по кольцевой автостраде, 15–18 км от центра; с юга — Нотте-канал)",
+   "name_orig": "Äußerer Sperrring",
+   "places": [],
+   "points": null,
+   "built_by": "комендант Берлина (Рейман, с 6/8.03.1945); «Grundsätzlicher Befehl» 9.03.1945; мобилизованное население, фольксштурм, организация Тодт, запасные части III ВО",
+   "source": "RA15; BARCH; IS7",
+   "reliability": "A",
+   "note": "По отчёту 5 уд. А: внешний обвод — по линии автострады вокруг города, система опорных пунктов в шахматном порядке с огневой связью, опирающихся на озёра, реки, пруды, перелески; не сплошная линия, удерживалась главным образом у мостов и перекрёстков (DW_SB). Между внешним и внутренним обводами все пригороды — опорные пункты с ПТ-препятствиями. На подступах с востока: рубеж по р. Флисс (1–2 траншеи), западнее Мюнхеберга (1–2 траншеи с ПТ-рвом), по озёрам юго-зап. Штраусберга — опирался на внешний обвод; все шоссе с востока и юго-востока перегорожены бревенчатыми заборами до 3 м высотой и 4 м толщиной с амбразурами. 22.04 9 мк и 6 гв. тк 3 гв. ТА форсировали Нотте-канал и прорвали внешний обвод (RW_BNO). Трассировка в рецепте berlin-city-1945 (de_outer_ring) сохраняется."
+  },
+  {
+   "id": "belt_berlin_inner",
+   "name_ru": "Внутренний обвод Берлина (с востока — Шпрее, с юго-востока и юга — Тельтов-канал; кольцо S-Bahn)",
+   "name_orig": "Innerer Sperrring / S-Bahn-Ring",
+   "places": [],
+   "points": null,
+   "built_by": "комендант Берлина",
+   "source": "RA15; EW_BB",
+   "reliability": "A",
+   "note": "Отчёт 5 уд. А: система опорных пунктов в каменных зданиях и развалинах по набережным; большинство мостов через Шпрее и Тельтов-канал подорвано. На северном берегу Тельтов-канала траншеи, ж.-б. ДОТы, врытые танки и САУ; глухие стены промышленных корпусов как крепостная стена (KON). Кольцо S-Bahn прорвано 25–27.04 (EW_BB [13],[16],[37]); Темпельхоф внутри кольца взят к вечеру 25.04."
+  },
+  {
+   "id": "belt_berlin_zitadelle",
+   "name_ru": "Ядро обороны («Цитадель», сектор Z): правительственный квартал",
+   "name_orig": "Zitadelle (Verteidigungsabschnitt Z)",
+   "places": [],
+   "points": null,
+   "built_by": "комендант Берлина; боевой комендант Монке",
+   "source": "RA15; IS7; EW_BB",
+   "reliability": "A",
+   "note": "Границы по отчёту 5 уд. А: с востока — Шпрее, далее Шрёдердамм, Кёстердамм, Хофмандамм, Куртдамм, Ландвер-канал, восточная часть Тиргартена; система ДОТов с огневой связью, сплошная линия ДОТов по Херман-Геринг-штрассе от Фоссштрассе до Унтер-ден-Линден; большинство мостов через Ландвер-канал взорвано, остальные забаррикадированы. Девять секторов обороны (A–H и Z) по периметру плотной застройки; 400+ ж.-б. бункеров (ENG70). Численность на 19.04 (Рейман): 41 253 чел., из них 15 000 военнослужащих, 1713 полицейских, 1215 гитлерюгенд/RAD, 24 000 фольксштурм; 42 095 винтовок (Read & Fisher по IS7); у Вейдлинга ~45 000 солдат + ~40 000 фольксштурм (EW_BB [5]). Секторы в рецепте berlin-city-1945 уже есть."
+  },
+  {
+   "id": "belt_wotan_note",
+   "name_ru": "Позиция «Вотан» (3-я полоса Одерского рубежа) — уже внесена",
+   "name_orig": "Wotan-Stellung",
+   "places": [],
+   "points": null,
+   "built_by": "9 А",
+   "source": "EW_BB; IS7",
+   "reliability": "B",
+   "note": "Дублирует belt_wotan в seelow-divisions.json. Дополнение: 1 гв. ТА прорвалась через «позицию Вотан» южнее Мюнхеберга в разрыв между LVI тк и XI тк СС (IS7); 18.04 к вечеру 1 БФ вышел к «третьей и последней линии обороны» (EW_BB)."
+  },
+  {
+   "id": "belt_12a_havel_lakes",
+   "name_ru": "Оборонительная линия 12 А восточнее Бранденбурга (по озёрам между Потсдамом и Бранденбургом — западнее Ной-Фербеллина), фронтом на восток",
+   "name_orig": "Seenlinie Potsdam–Brandenburg (XLI. Panzerkorps)",
+   "places": [
+    "Brandenburg",
+    "Potsdam"
+   ],
+   "points": [
+    [
+     12.5498,
+     52.4108
+    ],
+    [
+     13.0614,
+     52.3938
+    ]
+   ],
+   "built_by": "12 А (XLI тк), приказ ~24.04",
+   "source": "IS7",
+   "reliability": "B",
+   "note": "Из приказа 12 А (по Исаеву): XLI тк оставляет на Эльбе слабое охранение и переходит на линию озёр; XX ак (Кёлер) — фронтом на восток; «Шарнхорст» у плацдарма Барби; «Гуттен» в Бельциг."
+  }
+ ],
+ "fortresses": [
+  {
+   "id": "fest_kuestrin",
+   "name_ru": "крепость Кюстрин (Küstrin / Kostrzyn)",
+   "name_orig": "Festung Küstrin",
+   "lng": 14.654,
+   "lat": 52.59,
+   "garrison": "≈? (de-wiki не даёт); комендант Х. Райнефарт (2.02–29.03.1945)",
+   "declared": "1945-01-25",
+   "fell": "1945-03-30",
+   "source": "DW_KUE; PW_TK; RW_BNO",
+   "reliability": "B",
+   "note": "Объявлена крепостью 25/26.01.1945 (Kohlase); три пояса траншей, ПТ-ров, 14 боевых бункеров (Dolata, Jurga); Нойштадт взят 12.03 (pl-wiki), Альтштадт — к концу марта (29/30.03), ~1000 чел. с комендантом прорвались (описание Le Tissier «Siege of Küstrin», C); 90 % Альтштадта разрушено. Только исходное состояние для модели."
+  },
+  {
+   "id": "fest_frankfurt",
+   "name_ru": "крепость Франкфурт-на-Одере",
+   "name_orig": "Festung Frankfurt (Oder)",
+   "lng": 14.55,
+   "lat": 52.347,
+   "garrison": "≈14 000 чел. (Исаев); крепостная дивизия: 4 крепостных гренадерских полка по 2 батальона, 1449 крепостной пб, 84 и 829 крепостные пулемётные батальоны, 3 крепостных артдивизиона (1325, 1326, 3157), 952 сапёрный заградительный батальон, XXVI крепостной птд (EW_FFO); ДОТы с танковыми башнями по периметру (IS7)",
+   "declared": "1945-01-26",
+   "fell": "1945-04-23",
+   "source": "IS7; DW_FFO; DW_KH; EW_FFO",
+   "reliability": "B",
+   "note": "Комендант полковник (ген.-майор) Эрнст Билер с 12.02.1945. Статус крепости снят во второй половине дня 21.04 (DW_FFO); гарнизон выведен 22–23.04 (de-wiki Kessel von Halbe: «оставлена 23.04 Билером») и ушёл в котёл 9 А; Билер ранен и пленён 28.04. Первые советские части вошли утром 23.04; налёты 20, 22, 23.04; центр разрушен на 93 %. Гарнизон как формирование — de_ffo в berlin-1945-divisions.json и berlin-1945-halbe.json."
+  },
+  {
+   "id": "fest_stettin",
+   "name_ru": "крепость Штеттин (Szczecin)",
+   "name_orig": "Festung Stettin",
+   "lng": 14.5528,
+   "lat": 53.4285,
+   "garrison": "не найден (ru-wiki: части гарнизона отошли на север; 4-й полк «Померания» севернее города)",
+   "declared": "1945-03-20",
+   "fell": "1945-04-26",
+   "source": "PW_SZC; DW_STN; RW_SRO",
+   "reliability": "B",
+   "note": "pl-wiki: объявлен крепостью 20.03.1945 [31]; эвакуация населения с февраля; de-wiki: оборона «крепости» с 18.04, оставлен 25.04, занят без боя 26.04 (65 А; Рокоссовский перенёс КП в город). Ганза-мост взорван 20.04. Формирование — de_festung_stettin в berlin-1945-divisions.json."
+  },
+  {
+   "id": "fest_schwedt",
+   "name_ru": "крепость Шведт",
+   "name_orig": "Festung Schwedt",
+   "lng": 14.2841,
+   "lat": 53.0586,
+   "garrison": "импровизированные части Скорцени (плацдарм Нидеркрениг с 31.01)",
+   "declared": "1945-02-28",
+   "fell": "1945-04-26",
+   "source": "DW_SCHW",
+   "reliability": "B",
+   "note": "«В последние дни» (февраль) объявлен крепостью; плацдарм на восточном берегу оставлен 3.03; город взят 26.04, разрушен на 85 %. Дата объявления — приближённо."
+  },
+  {
+   "id": "fest_spremberg",
+   "name_ru": "крепость Шпремберг",
+   "name_orig": "Festung Spremberg",
+   "lng": 14.3804,
+   "lat": 51.5715,
+   "garrison": "344 пд (Йоллассе), 10 тд СС «Фрундсберг» (Хармель), дивизия сопровождения фюрера (Ремер), батальон фольксштурма ~300 чел.",
+   "declared": null,
+   "fell": "1945-04-20",
+   "source": "DW_SPB; KON",
+   "reliability": "B",
+   "note": "Объявлен крепостью (дата не названа). 20.04: 30-мин обстрел 1247 орудий (Конев: 1110 орудий и 140 РС), штурм 33 гв. ск в 11.00, взят с продвижением на 5–6 км; окружённые у Кохсдорфа, в ночь 20/21.04 прорыв 10 тд СС на запад, «котёл Кауше» (~20 000 чел.), ~5000 немецких и ~600 советских погибших; 70 % центра разрушено. de-wiki Schlacht um Berlin даёт 21.04 (противоречие)."
+  },
+  {
+   "id": "fest_cottbus",
+   "name_ru": "Котбус (укреплённый район, узел дорог)",
+   "name_orig": "Cottbus",
+   "lng": 14.3357,
+   "lat": 51.7567,
+   "garrison": "части 36 дивизии СС, 242, 214, 275 пд, 21 тд, разведбатальон 10 тд СС (RW_KP)",
+   "declared": null,
+   "fell": "1945-04-22",
+   "source": "RW_KP; KON; DW_CB",
+   "reliability": "B",
+   "note": "Статус Festung в источниках не подтверждён. 20.04 120 ск прорвал внешний обвод, к 21.04 гарнизон окружён, ночью вошёл 21 ск; взят в 13.00 22.04 после трёхдневных боёв (3 гв. А); трофеи 100 танков, 2000 автомашин, ~1700 пленных (Конев). Без взятия Котбуса (узел шоссе) наступавшие на Берлин не могли снабжаться (RW_KP)."
+  },
+  {
+   "id": "fest_forst",
+   "name_ru": "Форст (город-опорный пункт)",
+   "name_orig": "Forst (Lausitz)",
+   "lng": 14.6455,
+   "lat": 51.7439,
+   "garrison": "не найден",
+   "declared": null,
+   "fell": "1945-04-18",
+   "source": "DW_FOR; RW_KP",
+   "reliability": "C",
+   "note": "Статус крепости не подтверждён; оборонялся с февраля до 16–18.04; 85 % в руинах."
+  },
+  {
+   "id": "fest_guben",
+   "name_ru": "Губен (Gubin / Guben)",
+   "name_orig": "Guben",
+   "lng": 14.7154,
+   "lat": 51.9503,
+   "garrison": "не найден (февраль: очень молодые солдаты с 2 неделями обучения, C)",
+   "declared": null,
+   "fell": "1945-04-24",
+   "source": "DW_GUB",
+   "reliability": "C",
+   "note": "Статус крепости не подтверждён; бои 18.02–24.04; восточная часть (Губин) 88 %, центр ~90 % разрушено. Для модели — часть франкфуртско-губенской группировки."
+  },
+  {
+   "id": "fest_fuerstenwalde",
+   "name_ru": "Фюрстенвальде",
+   "name_orig": "Fürstenwalde/Spree",
+   "lng": 14.065,
+   "lat": 52.358,
+   "garrison": "не найден",
+   "declared": null,
+   "fell": "1945-04-22",
+   "source": "DW_FW; IS7",
+   "reliability": "C",
+   "note": "Объявлен крепостью комендантом «незадолго до конца войны» (без даты); 20.04 16.00 8 гв. мк у Шпрее западнее города; уличные бои 21–22.04 (сводка ОКВ, C); 80 % жилья центра разрушено."
+  },
+  {
+   "id": "fest_berlin",
+   "name_ru": "Берлин (Berliner Verteidigungsbereich)",
+   "name_orig": "Festung Berlin",
+   "lng": 13.3888,
+   "lat": 52.517,
+   "garrison": "на 19.04 — 41 253 чел. (Рейман); у Вейдлинга ~45 000 + ~40 000 фольксштурм; советская оценка 200 000, 3000 орудий, 250 танков (RW_SB [10])",
+   "declared": "1945-03-09",
+   "fell": "1945-05-02",
+   "source": "BARCH; IS7; EW_BB; RA15",
+   "reliability": "A",
+   "note": "Подготовка с января штабом III ВО; комендант Рейман с 6.03 (IS7) / 8.03; «Grundsätzlicher Befehl» 9.03.1945 (BArch); Вейдлинг с 23–24.04, восемь секторов A–H + Z; 128 из 226 мостов взорваны (EW_BB [105], DW_SB [73]); капитуляция 2.05 (6.00 — начало сдачи, IS7)."
+  },
+  {
+   "id": "fest_potsdam",
+   "name_ru": "Потсдам (гарнизон «армейская группа Шпрее» Реймана)",
+   "name_orig": "Potsdam",
+   "lng": 13.0614,
+   "lat": 52.3938,
+   "garrison": "«Armeegruppe Spree» ген.-майора Реймана; 15–20 тыс. вышли к 12 А (DW_SB [71])",
+   "declared": null,
+   "fell": "1945-04-30",
+   "source": "DW_POT; DW_SB; KON; RW_KP",
+   "reliability": "B",
+   "note": "Окружён 4 гв. ТА 25.04; 27.04 Красная Армия заняла часть южнее Хафеля; все мосты через Хафель взорваны (KON); прорыв гарнизона на юго-запад через Ферх в ночь 29/30.04 к 12 А; к 27.04 4 гв. ТА и 47 А «закончили очистку потсдамской группировки» (RW_KP), 9 гв. тк — «к 30.04 полностью овладел» (RA15, Богданов). Статус Festung не найден."
+  },
+  {
+   "id": "fest_spandau",
+   "name_ru": "Шпандау (цитадель)",
+   "name_orig": "Zitadelle Spandau",
+   "lng": 13.1978,
+   "lat": 52.5358,
+   "garrison": "не найден; гитлерюгенд на мостах",
+   "declared": null,
+   "fell": "1945-05-01",
+   "source": "DW_SB; RW_SB; EW_CB",
+   "reliability": "B",
+   "note": "Гарнизон Шпандау прорвался к центру в ночь 25/26.04 [57]; окружённая цитадель сдана после переговоров во второй половине дня 1.05 [90]; два моста через Хафель целы до 2.05, по Шарлоттенбрюкке — прорыв 1–2.05."
+  },
+  {
+   "id": "fest_brandenburg",
+   "name_ru": "Бранденбург-на-Хафеле",
+   "name_orig": "Brandenburg an der Havel",
+   "lng": 12.5498,
+   "lat": 52.4108,
+   "garrison": "парашютисты, полиция, СС, фольксштурм (museum-digital, C)",
+   "declared": null,
+   "fell": "1945-05-01",
+   "source": "DW_BRB; CIT",
+   "reliability": "C",
+   "note": "Уличные бои с утра 24.04 (1 УФ с юго-востока); мосты заминированы, Св. Анны взорван 24.04; 27.04 освобождена тюрьма Гёрден; 24.04 советские части вышли на линию Бранденбург–Виттенберг (DW_SB [52]); дата полного взятия не подтверждена. Статус Festung не найден."
+  }
+ ],
+ "supply": [
+  {
+   "id": "sup_1bf_oder_bridges_total",
+   "kind": "railhead",
+   "side": "su",
+   "name_ru": "Железные дороги перешиты на русскую колею «почти до самого Одера» (1 БФ)",
+   "lng": null,
+   "lat": null,
+   "dates": "до 16.04",
+   "source": "RW_BNO",
+   "reliability": "C",
+   "note": "Утверждение без сноски; головные станции и дата перешивки не названы. Поиск по Цирлину, Русскому архиву т.15, Исаеву, мемуарам Рокоссовского/Конева/Катукова/Чуйкова — не дал станций снабжения. «Тыл Советских Вооружённых Сил в ВОВ» (1977) и Антипенко «На главном направлении» в сети не найдены (militera — 404)."
+  },
+  {
+   "id": "sup_1bf_ammo",
+   "kind": "depot",
+   "side": "su",
+   "name_ru": "Запасы 1 БФ: 358 т боеприпасов на 1 км фронта на направлении главного удара; фронтовой боекомплект > 43 000 т",
+   "lng": null,
+   "lat": null,
+   "dates": "1945-04-16",
+   "source": "RW_BNO",
+   "reliability": "B",
+   "note": "сноска [12] — Антипенко Н. А. На главном направлении"
+  },
+  {
+   "id": "sup_61a_depots",
+   "kind": "depot",
+   "side": "su",
+   "name_ru": "Головные склады 61 А — обеспеченность на 20.00 15.04 (в войсках / на гол. складах, б/к): мины 82-мм 1,78/0,64; 120-мм 1,22/0,4; 76-мм ПА 1,43/0,63 и 1,12/0,33; 76-мм ДА 1,0/0,19; 122-мм гауб. 0,66/0,34",
+   "lng": null,
+   "lat": null,
+   "dates": "1945-04-15",
+   "source": "RA15",
+   "reliability": "A",
+   "note": "донесение штаба 1 БФ за 16.04; расположение складов не названо"
+  },
+  {
+   "id": "sup_1pa_depots",
+   "kind": "depot",
+   "side": "pl",
+   "name_ru": "Головные склады 1 А ВП на 20.00 15.04 (в войсках / на складах, б/к): 82-мм 1,2/0,5; 120-мм 0,9/0,5; 76-мм ПА 1,4/1,3 и 0,7/1,1; 76-мм ДА 1,0/0,3; 122-мм гауб. 0,6/0; 122-мм пуш. 1,8/2,5",
+   "lng": null,
+   "lat": null,
+   "dates": "1945-04-15",
+   "source": "RA15",
+   "reliability": "A",
+   "note": "то же донесение"
+  },
+  {
+   "id": "sup_5ua_ammo",
+   "kind": "depot",
+   "side": "su",
+   "name_ru": "5 уд. А: материальное обеспечение 2,5–3 б/к к началу прорыва",
+   "lng": null,
+   "lat": null,
+   "dates": "1945-04-16",
+   "source": "RA15",
+   "reliability": "A",
+   "note": "отчёт 5 уд. А"
+  },
+  {
+   "id": "sup_2bf_regroup",
+   "kind": "railhead",
+   "side": "su",
+   "name_ru": "Перегруппировка 2 БФ 4–15.04 из района Данцига/Гдыни до 350 км: из-за плохого состояния ж.-д. и нехватки подвижного состава — в основном автотранспортом (фронту выделено 1900 автомашин)",
+   "lng": null,
+   "lat": null,
+   "dates": "1945-04-04/15",
+   "source": "RW_BNO",
+   "reliability": "B",
+   "note": "сноска [14] — Сборник боевых документов № 29; 49 А переброшена на 300–500 км по шоссе (мемуар военного инженера, C)"
+  },
+  {
+   "id": "sup_1uf_feeding_points",
+   "kind": "depot",
+   "side": "su",
+   "name_ru": "Пункты питания 1 УФ на главных маршрутах — Луккау, Котбус и др.",
+   "lng": 13.715,
+   "lat": 51.8524,
+   "dates": "с 23–24.04",
+   "source": "KON",
+   "reliability": "B",
+   "note": "организованы управлением тыла и комендантско-дорожной службой за счёт фронтовых ресурсов (для освобождённых и войск); Котбус — узел шоссе, без него снабжение наступавших на Берлин невозможно (RW_KP)"
+  },
+  {
+   "id": "sup_1uf_pontoon_parks",
+   "kind": "depot",
+   "side": "su",
+   "name_ru": "Переправочные парки фронтов: 20–25 понтонных парков Н2П и ДМП на фронт; плотность инженерных войск на участке прорыва 9,5–11 рот/км (1 БФ, 1 УФ), 20–22 роты/км (2 БФ)",
+   "lng": null,
+   "lat": null,
+   "dates": "1945-04-16",
+   "source": "ENG70",
+   "reliability": "A",
+   "note": "Н2П — 40–80 т, НЛП — до 25 т (ru-wiki «Средства преодоления водных преград»)"
+  },
+  {
+   "id": "sup_de_9a_ammo",
+   "kind": "depot",
+   "side": "de",
+   "name_ru": "9 А: боеприпасов на ~2,5 суток боя; горючего и боеприпасов явно недостаточно",
+   "lng": null,
+   "lat": null,
+   "dates": "1945-04-16",
+   "source": "RW_BNO",
+   "reliability": "C",
+   "note": "по К. Райану, без сноски"
+  },
+  {
+   "id": "sup_de_berlin_demolition",
+   "kind": "depot",
+   "side": "de",
+   "name_ru": "Берлин: по приказу Гитлера 19.03.1945 взорвано 128 из 226 мостов, выведено 87 насосных станций; рабочие предотвратили подрыв электростанции Клингенберг и водопровода Йоханнисталь",
+   "lng": 13.49,
+   "lat": 52.49,
+   "dates": "1945-04-20/05-02",
+   "source": "DW_SB; EW_BB",
+   "reliability": "B",
+   "note": "DW_SB [73], EW_BB [105]"
+  },
+  {
+   "id": "sup_airfields_note",
+   "kind": "station",
+   "side": "de",
+   "name_ru": "Аэродромы (низкий приоритет): Темпельхоф — внутри кольца S-Bahn, взят к вечеру 25.04; Ораниенбург (Хейнкель) занят после 23.04",
+   "lng": 13.4019,
+   "lat": 52.4736,
+   "dates": "1945-04-25",
+   "source": "EW_BB; EW_ORB",
+   "reliability": "B",
+   "note": "специально не искались"
+  }
+ ],
+ "gaps": [
+  "Распределение 25 мостов 1 БФ через Одер по участкам и грузоподъёмностям (16/30/60 т) не найдено: Цирлин даёт только итог (25 мостов, 40 паромов, 13 пмб + 27 исб + 6 ВСО), Антипенко — 15 017 пог. м; по Le Tissier — 60-т свайный мост 17-го батальона (уже в conquest.json). Нужны ЖБД инженерных войск 1 БФ (ЦАМО ф.233) или Le Tissier «Zhukov at the Oder» (archive.org — только по абонементу, полнотекстовый поиск закрыт).",
+  "133 переправы 1 УФ: детализация есть только для 3 гв. А + 13 А (20 мостов, 9 паромов, 12 десантных пунктов, 17 штурмовых мостиков — Конев); по 5 гв. А, 2 А ВП и 52 А — нет.",
+  "2 БФ: нет координат мостов и дат наводки 30/50/60-т мостов по 70 и 49 А (Цирлин и Рокоссовский детализируют только 65 А).",
+  "Даты подрыва немецких мостов: Кюстрин (Одер, Варта), Хоэнзатен, Шведт, Гарц, Штеттин (кроме Ганза-моста 20.04), Губен, Форст, Мускау, Ротенбург, Котбус, Шпремберг, Фюрстенвальде, Ораниенбург, Бранденбург (кроме Св. Анны 24.04), Магдебург (Штромбрюкке) — в доступных вики-статьях не названы.",
+  "Рубежи 3 ТА у Штеттина (позиция «Рандов», обводы Штеттина) и вторая/третья полосы рубежа Нейсе — только общие описания; линий «от–до» нет.",
+  "Крепости: Lexikon der Wehrmacht — сайт доступен, но раздел «Festungen» по известным путям не найден (404); статусы Котбуса, Форста, Губена, Потсдама, Бранденбурга как Festung не подтверждены; гарнизоны Штеттина, Шведта, Шпандау, Бранденбурга не найдены.",
+  "Узлы снабжения: станции снабжения, головные станции и склады фронтов/армий, перешивка колеи — не найдены ни в одном доступном источнике (нет Антипенко, «Тыла СВС», ВИЖ, КиберЛенинка по запросу пусто); только суммарные цифры и обеспеченность армий в б/к (RA15).",
+  "Немецкие склады и аэродромы — не искались специально.",
+  "Противоречия: Шпремберг взят 20.04 (de-wiki Spremberg, Конев) / 21.04 (de-wiki Schlacht um Berlin); Франкфурт оставлен 22.04 (ru-wiki, Исаев — мост взорван 19.04) / 23.04 (de-wiki Kessel von Halbe); Кюстрин «взят 12.03» (pl-wiki) — это Нойштадт."
+ ]
+}
