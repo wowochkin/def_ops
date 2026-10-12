@@ -92,8 +92,24 @@ pub struct ScenarioIn {
     pub orders: Vec<OrderIn>,
     #[serde(default)]
     pub fires: Vec<FireIn>,
+    /// Полосы подготовленной обороны за линиями театра (Theatre::mark_zone).
+    #[serde(default, rename = "defenseZones")]
+    pub defense_zones: Vec<ZoneIn>,
     #[serde(default)]
     pub withdrawals: Vec<WithdrawIn>,
+}
+
+/// Полоса подготовленной обороны: глубина за линией театра и уровень укрепления.
+#[derive(Deserialize)]
+pub struct ZoneIn {
+    pub line: String,
+    #[serde(rename = "depthKm")]
+    pub depth_km: f64,
+    pub level: u8,
+    /// Сторона полосы: «west» или «east» от линии.
+    pub towards: String,
+    #[serde(default)]
+    pub note: String,
 }
 
 /// Артподготовка армии.
@@ -162,7 +178,9 @@ struct NameOnly {
 pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
     let s: ScenarioIn = serde_json::from_str(&text).map_err(|e| format!("{path}: {e}"))?;
-    let theatre = Arc::new(Theatre::load(&format!("{root}/{}", s.theatre))?);
+    let mut theatre = Theatre::load(&format!("{root}/{}", s.theatre))?;
+    for z in &s.defense_zones { theatre.mark_zone(&z.line, z.depth_km, z.level, z.towards == "west"); }
+    let theatre = Arc::new(theatre);
     let rules = Rules::load(data_dir)?;
     let start = parse_hours(&s.start).ok_or("start: неверная дата")?;
     let hq_idx: HashMap<&str, u32> = s.hqs.iter().enumerate().map(|(i, h)| (h.id.as_str(), i as u32)).collect();

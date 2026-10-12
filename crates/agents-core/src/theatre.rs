@@ -282,6 +282,35 @@ impl Theatre {
         }
     }
 
+    /// Полоса подготовленной обороны за линией `line_id` (сценарий, defenseZones): клетки своей стороны линии не дальше
+    /// `depth_km` получают уровень укрепления не ниже `level`. Сторона — к западу (`west`) или к востоку от линии.
+    pub fn mark_zone(&mut self, line_id: &str, depth_km: f64, level: u8, west: bool) -> usize {
+        let Some(l) = self.lines.iter().find(|l| l.id == line_id).cloned() else { return 0 };
+        let side = l.side.clone();
+        let pts: Vec<XY> = l.line.iter().map(|p| self.proj.to_xy(*p)).collect();
+        let mut n = 0;
+        for c in 0..self.cols * self.rows {
+            if self.fort[c] >= level { continue; }
+            let p = self.centers[c];
+            let mut best = (f64::INFINITY, XY::default());
+            for w in pts.windows(2) {
+                let (a, b) = (w[0], w[1]);
+                let (vx, vy) = (b.x - a.x, b.y - a.y);
+                let l2 = (vx * vx + vy * vy).max(1e-9);
+                let u = (((p.x - a.x) * vx + (p.y - a.y) * vy) / l2).clamp(0.0, 1.0);
+                let q = XY::new(a.x + vx * u, a.y + vy * u);
+                let d = p.dist(q);
+                if d < best.0 { best = (d, q); }
+            }
+            if best.0 > depth_km { continue; }
+            if (p.x < best.1.x) != west { continue; }
+            self.fort[c] = level;
+            self.fort_side[c] = side.clone();
+            n += 1;
+        }
+        n
+    }
+
     fn mark_forts(&mut self) {
         let lines = self.lines.clone();
         for l in &lines {

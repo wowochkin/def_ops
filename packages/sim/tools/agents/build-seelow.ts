@@ -22,7 +22,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { markDeployed, repeatedFires } from './soviet-fires';
+import { DEFENSE_ZONES, markDeployed, repeatedFires } from './soviet-fires';
 import { reinforcementOrders, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -240,7 +240,7 @@ const scenario = {
   theatre: 'packages/sim/data/theatres/oder-berlin-1945.json',
   start: START, hours: HOURS, seed: 1,
   timeNote: 'время московское, как в сценарии нынешней модели; собрано npm run agents:seelow-data',
-  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, fires, withdrawals,
+  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, fires, withdrawals, defenseZones: DEFENSE_ZONES,
 };
 const dir = resolve(ROOT, 'packages/sim/data/scenarios/agents');
 mkdirSync(dir, { recursive: true });

@@ -599,7 +599,9 @@ impl Sim {
             let armor = if tracked > 0.5 * att_power { c.armor_factor } else { 1.0 };
             let adv_day = c.advance[posture].step(ratio) * armor * r.advance_terrain[terrain] * noise;
             // потери, доля в сутки: база QJM с поправкой на размер; обороне — до нормы прорыва по мере продвижения
-            let a_day = (c.attacker_loss_day * c.size_factor(att_power_people(w, &atts)) * noise).min(c.attacker_loss_max_day);
+            // против подготовленной и укреплённой обороны наступающий теряет больше (калибровка — docs/plans/agents.md, 10п)
+            let a_post = if posture >= 1 { c.attacker_loss_prepared } else { 1.0 };
+            let a_day = (c.attacker_loss_day * c.size_factor(att_power_people(w, &atts)) * a_post * noise).min(c.attacker_loss_max_day * a_post);
             let d_base = c.defender_loss_day * c.size_factor(dd.vars.personnel);
             let d_rate = d_base + (c.defender_loss_penetration_day - d_base).max(0.0) * (adv_day / c.penetration_km_day).min(1.0);
             // перевес наступающего на полосе: потери обороны растут с ним (калибровка — docs/plans/agents.md, 10и)

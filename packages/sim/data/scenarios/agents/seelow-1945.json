@@ -4122,5 +4122,28 @@
    ],
    "note": "отвод на Großkampf-HKL в ночь на 16.04, на первой позиции охранение 1/6 (de-wiki по Stich, C)"
   }
+ ],
+ "defenseZones": [
+  {
+   "line": "de_oder_hkl",
+   "depthKm": 10,
+   "level": 1,
+   "towards": "west",
+   "note": "главная полоса Одерско-Нейсенского рубежа: 2–3 позиции на 5–10 км, населённые пункты — опорные пункты (belt_oder_neisse_general, B)"
+  },
+  {
+   "line": "de_neisse",
+   "depthKm": 10,
+   "level": 1,
+   "towards": "west",
+   "note": "главная полоса Одерско-Нейсенского рубежа: 2–3 позиции на 5–10 км, населённые пункты — опорные пункты (belt_oder_neisse_general, B)"
+  },
+  {
+   "line": "de_oder_north",
+   "depthKm": 10,
+   "level": 1,
+   "towards": "west",
+   "note": "главная полоса Одерско-Нейсенского рубежа: 2–3 позиции на 5–10 км, населённые пункты — опорные пункты (belt_oder_neisse_general, B)"
+  }
  ]
 }
