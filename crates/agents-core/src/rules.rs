@@ -113,9 +113,24 @@ pub struct Doctrine {
     pub penetration_depth_km: f64,
 }
 
+/// Остатки разгромленных дивизий: data/rules/agents-v0.json, раздел remnants.
+#[derive(Clone, Debug)]
+pub struct Remnants {
+    /// Немецкая: доля исходной численности, ниже которой дивизия разгромлена.
+    pub de_share: f64,
+    pub de_consolidate_hours: f64,
+    pub de_search_km: f64,
+    pub de_personnel_share: f64,
+    pub de_heavy_share: f64,
+    /// Советская: численность, ниже которой дивизия выводится из боя.
+    pub su_personnel: f64,
+    pub rear_km: f64,
+}
+
 #[derive(Clone, Debug)]
 pub struct Rules {
     pub doctrine: Doctrine,
+    pub remnants: Remnants,
     pub combat: Combat,
     pub su: SideRules,
     pub de: SideRules,
@@ -253,8 +268,18 @@ impl Rules {
             withdraw_step_km: num(&ag, "doctrine.de.withdrawStepKm")?,
             penetration_depth_km: num(&ag, "doctrine.de.penetrationDepthKm")?,
         };
+        let remnants = Remnants {
+            de_share: num(&ag, "remnants.de.share")?,
+            de_consolidate_hours: num(&ag, "remnants.de.consolidateHours")?,
+            de_search_km: num(&ag, "remnants.de.searchKm")?,
+            de_personnel_share: num(&ag, "remnants.de.personnelShare")?,
+            de_heavy_share: num(&ag, "remnants.de.heavyShare")?,
+            su_personnel: num(&ag, "remnants.su.personnel")?,
+            rear_km: num(&ag, "remnants.rearKm")?,
+        };
         Ok(Rules {
             doctrine,
+            remnants,
             combat,
             su,
             de,

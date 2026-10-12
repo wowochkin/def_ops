@@ -4,7 +4,6 @@
 //!   cargo run --release --bin agents-bench -- [--divisions 400] [--objects 2000] [--hours 552]
 //!       [--threads 1,2,4] [--theatre packages/sim/data/theatres/oder-berlin-1945.json] [--seed 1]
 
-use agents_core::model::State;
 use agents_core::rules::Rules;
 use agents_core::scenario::synthetic;
 use agents_core::theatre::Theatre;
@@ -60,7 +59,7 @@ fn main() {
         println!("\nпотоков {th}: всего {total:.2} с; шаг — среднее {mean:.1} мс, 95 % {p95:.1} мс, максимум {max:.1} мс; первый шаг {:.1} мс; свёртка {digest:016x}", ticks[0]);
         let mut states: BTreeMap<String, usize> = BTreeMap::new();
         for d in &sim.world.divisions { *states.entry(format!("{:?} {}", d.side, d.state.label())).or_default() += 1; }
-        let destroyed = sim.world.divisions.iter().filter(|d| d.state == State::Destroyed).count();
+        let destroyed = sim.world.divisions.iter().filter(|d| d.state.out()).count();
         println!("  к концу: {destroyed} небоеспособных; событий в журнале {}", sim.journal.len());
         for (k, v) in states { println!("  {k}: {v}"); }
     }

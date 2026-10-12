@@ -21,8 +21,8 @@ const DIAGRAM: { group: string; title: string; subs: string[] }[] = [
   { group: 'deploy', title: 'Развёртывание', subs: ['развёртывание'] },
   { group: 'attack', title: 'Наступление', subs: ['наступление: атака', 'наступление: второй эшелон', 'наступление: бой в глубине', 'наступление: закрепление'] },
   { group: 'defense', title: 'Оборона', subs: ['оборона: поспешная', 'оборона: подготовленная'] },
-  { group: 'withdraw', title: 'Отход', subs: ['отход', 'отступление'] },
-  { group: 'destroyed', title: 'Небоеспособна', subs: ['небоеспособна'] },
+  { group: 'withdraw', title: 'Отход', subs: ['отход', 'отступление', 'остатки: выход из боя'] },
+  { group: 'destroyed', title: 'Выбыла', subs: ['небоеспособна', 'сведена в другую дивизию'] },
 ];
 
 function Spark({ data: d, i, idx, hour }: { data: RunData; i: number; idx: number; hour: number }) {

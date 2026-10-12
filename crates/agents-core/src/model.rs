@@ -52,6 +52,9 @@ pub struct Vars {
     pub pos: XY,
     /// Боевая сила в начале операции — для порога прекращения атаки.
     pub strength0: f64,
+    /// Численность в начале операции — для порога разгрома.
+    #[serde(default)]
+    pub personnel0: f64,
     /// Доли войск на позициях главной полосы обороны (1-я, 2-я, 3-я) — под артподготовку; None — по умолчанию из
     /// правил. Отвод с первой позиции меняет их.
     #[serde(default)]
@@ -78,7 +81,11 @@ pub enum State {
     Defense(DefenseSub),
     Withdraw,
     Rout,
+    /// Остатки разгромленной дивизии выходят из боя (world.rs, apply_remnants).
+    Remnant,
     Destroyed,
+    /// Остатки сведены в другую дивизию — агент выбыл.
+    Merged,
 }
 
 impl State {
@@ -99,9 +106,13 @@ impl State {
             State::Defense(DefenseSub::Prepared) => "оборона: подготовленная",
             State::Withdraw => "отход",
             State::Rout => "отступление",
+            State::Remnant => "остатки: выход из боя",
             State::Destroyed => "небоеспособна",
+            State::Merged => "сведена в другую дивизию",
         }
     }
+    /// Агент выбыл: рассеян или сведён в другую дивизию.
+    pub fn out(&self) -> bool { matches!(self, State::Destroyed | State::Merged) }
     pub fn in_combat_posture(&self) -> bool { matches!(self, State::Attack(_) | State::Defense(_) | State::Deploy { .. }) }
 }
 

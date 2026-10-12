@@ -207,3 +207,26 @@ fn language_model_stream() {
     assert_eq!(r.tokens, Some(42));
     assert!(seen.len() >= 4 && seen[0].0 == agents_core::llm::Part::Think);
 }
+
+/// Остатки: немецкая дивизия ниже четверти исходной численности выходит из боя и через сутки сводится в соседнюю;
+/// советская стрелковая ниже 2000 человек выводится в резерв и не сводится.
+#[test]
+fn remnants_withdraw_and_merge() {
+    use agents_core::model::State;
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
+    let (mut sim, _) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    let de = sim.world.divisions.iter().position(|d| d.side == Side::De).unwrap();
+    let su = sim.world.divisions.iter().position(|d| d.side == Side::Su && d.params.kind == "sd").unwrap();
+    let p0 = sim.world.divisions[de].vars.personnel0;
+    sim.world.divisions[de].vars.personnel = 0.2 * p0;
+    sim.world.divisions[su].vars.personnel = 1500.0;
+    sim.step();
+    assert_eq!(sim.world.divisions[de].state, State::Remnant);
+    assert_eq!(sim.world.divisions[su].state, State::Remnant);
+    for _ in 0..26 { sim.step(); }
+    assert_eq!(sim.world.divisions[de].state, State::Merged);
+    assert_eq!(sim.world.divisions[su].state, State::Remnant);
+    assert!(sim.journal.iter().any(|e| e.text.contains("приняла остатки")));
+    assert!(sim.world.divisions[de].note.contains("сведена в"));
+}

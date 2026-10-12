@@ -15,7 +15,7 @@
 //! состояние, численность, запасы каждой дивизии; журнал с причинами).
 
 use agents_core::geo::{LngLat, XY};
-use agents_core::model::{Side, State};
+use agents_core::model::Side;
 use agents_core::scenario;
 use agents_core::time::parse_hours;
 use agents_core::{repo_root, DATA_DIR};
@@ -134,12 +134,12 @@ fn main() {
         let frame = agents_core::trace::frame;
         let t0 = Instant::now();
         snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
-        alive.push(sim.world.divisions.iter().map(|d| d.state != State::Destroyed).collect());
+        alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
         if seed == 1 { frames.push(frame(&sim)); }
         for _ in 0..meta.hours {
             sim.step();
             snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
-            alive.push(sim.world.divisions.iter().map(|d| d.state != State::Destroyed).collect());
+            alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
             if seed == 1 { frames.push(frame(&sim)); }
         }
         let secs = t0.elapsed().as_secs_f64();

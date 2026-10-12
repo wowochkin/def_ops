@@ -280,7 +280,7 @@ export function stateGroup(label: string): 'reserve' | 'march' | 'deploy' | 'att
   if (label.startsWith('развёрт')) return 'deploy';
   if (label.startsWith('наступ')) return 'attack';
   if (label.startsWith('оборона')) return 'defense';
-  if (label.startsWith('отход') || label.startsWith('отступ')) return 'withdraw';
+  if (label.startsWith('отход') || label.startsWith('отступ') || label.startsWith('остатки')) return 'withdraw';
   if (label.startsWith('небоеспособ') || label.startsWith('сведена')) return 'destroyed';
   return 'reserve';
 }

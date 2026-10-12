@@ -47,7 +47,7 @@ impl Sim {
         let cycle = self.rules.doctrine.cycle_hours.max(1.0) as u32;
         // цикл управления; штабы разнесены по часам, чтобы не решать все разом (на модели — по выбору: в один час)
         let due = |key: usize, sync: bool| if sync { tick % cycle == 0 } else { (tick + key as u32) % cycle == 0 || tick == 0 };
-        let subs_of = |h: usize| -> Vec<usize> { (0..w.divisions.len()).filter(|&i| w.divisions[i].hq as usize == h && w.divisions[i].state != State::Destroyed).collect() };
+        let subs_of = |h: usize| -> Vec<usize> { (0..w.divisions.len()).filter(|&i| w.divisions[i].hq as usize == h && !w.divisions[i].state.out() && w.divisions[i].state != State::Remnant).collect() };
         let mut decided: Vec<(usize, Decision, String)> = Vec::new();
         // запросы к модели: ведущий штаб (корпус или армия при объединении) и его корпуса с дивизиями
         let mut asks: Vec<(usize, Vec<(usize, Vec<usize>)>)> = Vec::new();
@@ -177,7 +177,7 @@ impl Sim {
             let x = self.assess(w, i);
             let d = &w.divisions[i];
             let mut enemies: Vec<(usize, f64)> = w.divisions.iter().enumerate()
-                .filter(|(_, e)| e.side != d.side && e.state != State::Destroyed)
+                .filter(|(_, e)| e.side != d.side && !e.state.out())
                 .map(|(j, e)| (j, e.vars.pos.dist(d.vars.pos))).filter(|x| x.1 <= 15.0).collect();
             enemies.sort_by(|a, b| a.1.total_cmp(&b.1));
             let line = self.line_behind(w, i);
@@ -278,7 +278,7 @@ impl Sim {
         let doc = &self.rules.doctrine;
         let reach = self.rules.contact_km + self.rules.combat.defense_frontage_km(d) / 2.0;
         let enemy_strength: f64 = w.divisions.iter()
-            .filter(|e| e.side != d.side && e.state != State::Destroyed && e.vars.pos.dist(d.vars.pos) <= reach)
+            .filter(|e| e.side != d.side && !e.state.out() && e.vars.pos.dist(d.vars.pos) <= reach)
             .map(|e| self.strength(e)).sum();
         let strength = self.strength(d);
         let broken = strength / d.vars.strength0.max(1e-9) < doc.withdraw_strength_share || d.vars.cohesion < doc.withdraw_cohesion;
@@ -288,7 +288,7 @@ impl Sim {
     /// Направление «в тыл» каждой дивизии по исходной обстановке (от центра противника в 20 км к дивизии) и исходная
     /// глубина противника в её полосе — неизменны в прогоне: на плацдарме, где противник охватывает с трёх сторон, а
     /// дивизии — точки в центре своих районов, «тыл» и «прорыв» иначе сбиваются.
-    fn fronts(&self, w: &World) -> &Vec<(XY, f64)> {
+    pub(crate) fn fronts(&self, w: &World) -> &Vec<(XY, f64)> {
         self.rear_dir.get_or_init(|| (0..w.divisions.len()).map(|i| {
             let p = w.divisions[i].vars.pos;
             let c = self.enemy_center(w, i);
@@ -305,7 +305,7 @@ impl Sim {
         let d = &w.divisions[i];
         let half = self.rules.combat.defense_frontage_km(d) / 2.0 + 2.0;
         w.divisions.iter().enumerate()
-            .filter(move |(_, e)| e.side != d.side && e.state != State::Destroyed)
+            .filter(move |(_, e)| e.side != d.side && !e.state.out())
             .filter_map(move |(j, e)| {
                 let (dx, dy) = (e.vars.pos.x - d.vars.pos.x, e.vars.pos.y - d.vars.pos.y);
                 let depth = dx * r.x + dy * r.y;
@@ -327,14 +327,14 @@ impl Sim {
     fn enemy_center(&self, w: &World, i: usize) -> XY {
         let d = &w.divisions[i];
         let pick = |lim: f64| -> Option<XY> {
-            let v: Vec<XY> = w.divisions.iter().filter(|e| e.side != d.side && e.state != State::Destroyed && e.vars.pos.dist(d.vars.pos) <= lim).map(|e| e.vars.pos).collect();
+            let v: Vec<XY> = w.divisions.iter().filter(|e| e.side != d.side && !e.state.out() && e.vars.pos.dist(d.vars.pos) <= lim).map(|e| e.vars.pos).collect();
             if v.is_empty() { None } else { Some(XY::new(v.iter().map(|p| p.x).sum::<f64>() / v.len() as f64, v.iter().map(|p| p.y).sum::<f64>() / v.len() as f64)) }
         };
         pick(20.0).or_else(|| pick(f64::INFINITY)).unwrap_or(d.vars.pos)
     }
 
     /// Точка в `km` за дивизией (по направлению «в тыл» исходной обстановки).
-    fn behind(&self, w: &World, i: usize, km: f64) -> XY {
+    pub(crate) fn behind(&self, w: &World, i: usize, km: f64) -> XY {
         let p = w.divisions[i].vars.pos;
         let r = self.fronts(w)[i].0;
         XY::new(p.x + r.x * km, p.y + r.y * km)

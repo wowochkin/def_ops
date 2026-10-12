@@ -181,6 +181,8 @@ impl Sim {
     pub fn step(&mut self) {
         if let Some(h) = self.history.as_mut() { h.push(self.world.clone()); }
         let tick = self.world.tick;
+        // направления «в тыл» — по исходной обстановке (штабы и выход остатков из боя)
+        if tick == 0 { let _ = self.fronts(&self.world); }
         let mut next = self.world.clone();
         let mut journal = Vec::new();
 
@@ -209,7 +211,7 @@ impl Sim {
         next.in_transit.retain(|(d, o)| if o.arrives <= tick { arrived.push((*d, o.clone())); false } else { true });
         for (d, o) in arrived {
             let div = &mut next.divisions[d as usize];
-            if div.state == State::Destroyed { continue; }
+            if div.state.out() || div.state == State::Remnant { continue; }
             journal.push(Event { tick, agent: d, text: format!("получен приказ «{}» от штаба «{}»: {}", o.kind.label(), next.hqs[o.from as usize].name, o.note) });
             div.order = Some(o);
             div.route = None;
@@ -224,7 +226,7 @@ impl Sim {
         }
 
         // 1. Решения — параллельно по снимку `next` (после доставки приказов).
-        let index = Index::build(next.divisions.iter().enumerate().filter(|(_, d)| d.state != State::Destroyed).map(|(i, d)| (i as u32, d.vars.pos)), 5.0);
+        let index = Index::build(next.divisions.iter().enumerate().filter(|(_, d)| !d.state.out()).map(|(i, d)| (i as u32, d.vars.pos)), 5.0);
         let snap = &next;
         let intents: Vec<Intent> = (0..snap.divisions.len()).into_par_iter().map(|i| self.decide(snap, &index, i as u32)).collect();
 
@@ -244,7 +246,7 @@ impl Sim {
     fn decide(&self, w: &World, index: &Index, i: u32) -> Intent {
         let d = &w.divisions[i as usize];
         let mut out = Intent::default();
-        if d.state == State::Destroyed { return out; }
+        if d.state.out() { return out; }
         let r = &self.rules;
         let pos = d.vars.pos;
         // ближайший противник в пределах соприкосновения
@@ -258,6 +260,18 @@ impl Sim {
         let enemy = options.first().copied();
         out.options = options;
         let set = |out: &mut Intent, s: State, why: &str| if s != d.state { out.state = Some((s, why.to_string())); };
+
+        // остатки выходят из боя к своей точке в тылу и там стоят; приказов не получают
+        if d.state == State::Remnant {
+            if let Some(o) = d.order.as_ref().filter(|o| pos.dist(o.target) >= 1.5) {
+                self.march(w, d, o.target, r.march_hours_forced, &mut out);
+                out.state = None;
+                out.activity = Some(Activity::Withdraw);
+            } else {
+                out.activity = Some(Activity::Reserve);
+            }
+            return out;
+        }
 
         // отступление при потере организованности
         if d.vars.cohesion < r.rout_cohesion && enemy.is_some() && !matches!(d.order.as_ref().map(|o| o.kind), Some(OrderKind::Hold)) {
@@ -480,7 +494,7 @@ impl Sim {
                         used = 0.0;
                         let name = o.name.clone();
                         let d = &mut w.divisions[i];
-                        if d.state != State::March(MarchSub::Jam) {
+                        if d.state != State::March(MarchSub::Jam) && d.state != State::Remnant {
                             journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: мост «{}» занят другой колонной", d.state.label(), State::March(MarchSub::Jam).label(), name) });
                             d.state = State::March(MarchSub::Jam);
                             d.state_since = tick;
@@ -518,7 +532,7 @@ impl Sim {
             let f = c.attack_frontage_km(&w.divisions[a as usize]);
             let pick = intents[a as usize].options.iter().map(|o| o.0).find(|&j| {
                 let dj = &w.divisions[j as usize];
-                if dj.state == State::Destroyed { return false; }
+                if dj.state.out() { return false; }
                 let left = *free.entry(j).or_insert_with(|| c.defense_frontage_km(dj));
                 left + 1e-9 >= f || !battles.contains_key(&j)
             });
@@ -608,7 +622,7 @@ impl Sim {
         // расход по действию
         for (i, it) in intents.iter().enumerate() {
             let d = &mut w.divisions[i];
-            if d.state == State::Destroyed { continue; }
+            if d.state.out() { continue; }
             let act = it.activity.unwrap_or(Activity::Reserve);
             let sr = r.side(d.side);
             let (ammo, fuel) = sr.consumption[act as usize];
@@ -624,34 +638,91 @@ impl Sim {
         }
     }
 
+    /// Остатки разгромленных дивизий (правила — agents-v0.json, раздел remnants; источники —
+    /// docs/sources/division-remnants-1945.json). Немецкая дивизия ниже доли исходной численности разгромлена: выходит
+    /// из боя в тыл, а через сутки остатки сводятся в ближайшую свою дивизию корпуса (иначе армии) — люди и часть
+    /// техники переходят к ней, агент выбывает. Советская дивизия ниже порога численности выводится в резерв армии и
+    /// в пределах операции не сводится.
+    fn apply_remnants(&self, w: &mut World, journal: &mut Vec<Event>) {
+        let rr = &self.rules.remnants;
+        let tick = w.tick;
+        for i in 0..w.divisions.len() {
+            let d = &w.divisions[i];
+            if d.state.out() || d.state == State::Remnant { continue; }
+            let share = d.vars.personnel / d.vars.personnel0.max(1.0);
+            let why = match d.side {
+                Side::De if share < rr.de_share => format!("численность {:.0} % исходной — дивизия разгромлена, остатки выходят из боя", 100.0 * share),
+                // порог — по стрелковым дивизиям (источники); бригады и корпуса меньше его с начала операции
+                Side::Su if d.params.kind == "sd" && d.vars.personnel < rr.su_personnel => format!("численность меньше {:.0} человек — выводится из боя в резерв армии", rr.su_personnel),
+                _ => continue,
+            };
+            let target = self.behind(w, i, rr.rear_km);
+            let d = &mut w.divisions[i];
+            journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: {why}", d.state.label(), State::Remnant.label()) });
+            d.state = State::Remnant;
+            d.state_since = tick;
+            d.order = Some(Order { kind: OrderKind::Withdraw, target, forced: true, issued: tick, arrives: tick, from: d.hq, note: "выход остатков из боя".into() });
+            d.route = None;
+        }
+        // сведение немецких остатков в соседнюю дивизию
+        for i in 0..w.divisions.len() {
+            let d = &w.divisions[i];
+            if d.side != Side::De || d.state != State::Remnant || ((tick - d.state_since) as f64) < rr.de_consolidate_hours { continue; }
+            let army = |h: u32| { let mut k = h as usize; while w.hqs[k].echelon == Echelon::Corps { match w.hqs[k].parent { Some(p) => k = p as usize, None => break } } k };
+            let pick = |same: &dyn Fn(&Division) -> bool| w.divisions.iter().enumerate()
+                .filter(|(j, e)| *j != i && e.side == d.side && !e.state.out() && e.state != State::Remnant && same(e))
+                .map(|(j, e)| (j, e.vars.pos.dist(d.vars.pos)))
+                .filter(|x| x.1 <= rr.de_search_km)
+                .min_by(|a, b| a.1.total_cmp(&b.1).then(a.0.cmp(&b.0)));
+            let Some((j, _)) = pick(&|e| e.hq == d.hq).or_else(|| pick(&|e| army(e.hq) == army(d.hq))) else { continue };
+            let (p, t, g) = (d.vars.personnel * rr.de_personnel_share, d.vars.tanks * rr.de_heavy_share, d.vars.guns * rr.de_heavy_share);
+            let (from, into) = (d.name.clone(), w.divisions[j].name.clone());
+            let e = &mut w.divisions[j];
+            e.vars.personnel += p;
+            e.vars.tanks += t;
+            e.vars.guns += g;
+            journal.push(Event { tick, agent: j as u32, text: format!("приняла остатки «{from}»: {:.0} человек, танков {:.0}, орудий {:.0}", p, t, g) });
+            let d = &mut w.divisions[i];
+            journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: остатки сведены в «{into}» ({:.0} человек, танков {:.0}, орудий {:.0}; остальное — отставшие и брошенная техника)", d.state.label(), State::Merged.label(), p, t, g) });
+            d.note = if d.note.is_empty() { format!("сведена в «{into}»") } else { format!("{}; сведена в «{into}»", d.note) };
+            d.state = State::Merged;
+            d.state_since = tick;
+            d.vars.personnel = 0.0;
+            d.vars.tanks = 0.0;
+            d.vars.guns = 0.0;
+            d.order = None;
+        }
+    }
+
     fn apply(&self, w: &mut World, journal: &mut Vec<Event>) {
         let r = &self.rules;
         let tick = w.tick;
         let day_start = self.hour().rem_euclid(24) == 6;
         let in_battle: Vec<bool> = w.divisions.iter().map(|d| matches!(d.state, State::Attack(_))).collect();
         for (i, d) in w.divisions.iter_mut().enumerate() {
-            if d.state == State::Destroyed { continue; }
+            if d.state.out() { continue; }
             let sr = r.side(d.side);
             d.vars.ammo = (d.vars.ammo + sr.ammo_per_day / 24.0).min(sr.max_ammo);
             if d.params.mobility != Mobility::Foot { d.vars.fuel = (d.vars.fuel + sr.fuel_per_day / 24.0).min(sr.max_fuel); }
             if !in_battle[i] { d.vars.cohesion = (d.vars.cohesion + r.cohesion_recover).min(1.0); }
             if day_start { d.vars.march_h_today = 0.0; }
             if d.vars.personnel < r.destroyed_personnel {
-                journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: численность меньше {} человек", d.state.label(), State::Destroyed.label(), r.destroyed_personnel) });
+                journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: численность меньше {} человек — дивизия рассеяна", d.state.label(), State::Destroyed.label(), r.destroyed_personnel) });
                 d.state = State::Destroyed;
                 d.state_since = tick;
             }
         }
+        self.apply_remnants(w, journal);
         // территория: клетка дивизии и соседние становятся её стороны
         let t = &*self.theatre;
-        for d in w.divisions.iter().filter(|d| d.state != State::Destroyed) {
+        for d in w.divisions.iter().filter(|d| !d.state.out()) {
             let Some(c) = t.cell_of_xy(d.vars.pos) else { continue };
             let code = side_code(d.side);
             if let Some(x) = w.control.get_mut(c) { *x = code; }
             for k in 0..8 { if let Some(nb) = t.neighbor(c, k) { w.control[nb] = code; } }
         }
         // объекты: чей район — по ближайшей дивизии в 2 км (параллельно, только чтение)
-        let index = Index::build(w.divisions.iter().enumerate().filter(|(_, d)| d.state != State::Destroyed).map(|(i, d)| (i as u32, d.vars.pos)), 5.0);
+        let index = Index::build(w.divisions.iter().enumerate().filter(|(_, d)| !d.state.out()).map(|(i, d)| (i as u32, d.vars.pos)), 5.0);
         let divs = &w.divisions;
         let control: Vec<Option<Side>> = w.objects.par_iter().map(|o| {
             index.near(o.pos, 2.0).into_iter()
@@ -686,12 +757,12 @@ impl Sim {
         // цель → (огонь, расстояние до ближайшей дивизии стреляющей армии)
         let mut pick: BTreeMap<usize, (usize, f64)> = BTreeMap::new();
         for (fi, f) in now.iter().enumerate() {
-            let own: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].hq == f.hq && w.divisions[i].state != State::Destroyed).collect();
+            let own: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].hq == f.hq && !w.divisions[i].state.out()).collect();
             let Some(&first) = own.first() else { continue };
             let side = w.divisions[first].side;
             for j in 0..w.divisions.len() {
                 let e = &w.divisions[j];
-                if e.side == side || e.state == State::Destroyed { continue; }
+                if e.side == side || e.state.out() { continue; }
                 let dmin = own.iter().map(|&i| w.divisions[i].vars.pos.dist(e.vars.pos)).fold(f64::INFINITY, f64::min);
                 if dmin > reach { continue; }
                 let better = pick.get(&j).map_or(true, |&(_, d0)| dmin < d0 - 1e-9);
