@@ -64,7 +64,7 @@ const DEFAULTS: Record<string, { personnel: number; tanks: number; guns: number 
 const reg = rd<{ divisions: Div[] }>('docs/sources/berlin-1945-divisions.json');
 const census = new Map(rd<CensusRow[]>(opt('census', 'evals-out/census/census.json')).map((r) => [r.id, r]));
 const ts = rd<{ formations: TsFormation[]; orders: TsOrder[] }>('packages/sim/data/scenarios/berlin-1945-tasks.json');
-const tsHist = rd<{ positions: { formation: string; time: string; at: LngLat; approxKm: number; reliability: string; source?: string }[]; frontline: { time: string; sector: string; line: LngLat[] }[] }>('packages/sim/data/scenarios/berlin-1945-tasks.history.json');
+const tsHist = rd<{ positions: { formation: string; time: string; at: LngLat; approxKm: number; reliability: string; source?: string }[]; frontline: { time: string; sector: string; line: LngLat[] }[]; events: { id: string; title: string; date: string; kind: string; side?: string; place?: string; radiusKm?: number; formations?: string[]; source?: string }[] }>('packages/sim/data/scenarios/berlin-1945-tasks.history.json');
 const theatre = rd<{ areas: { id: string; name: string; ring: LngLat[] }[] }>('packages/sim/data/theatres/oder-berlin-1945.json');
 const seelow = rd<{ positions: { formation: string; date: string; time?: string; lng: number; lat: number }[] }>('docs/sources/berlin-1945-seelow-divisions.json');
 const wehrmacht = rd<{ unitTypes: Record<string, { quality?: number }> }>('packages/sim/data/profiles/wehrmacht-1945.json');
@@ -382,6 +382,9 @@ for (const o of out) {
 const histArmy = tsHist.positions.filter((p) => (hqs.has(p.formation) || agentIds.has(p.formation)) && p.time >= '1945-04-16' && p.time < endDay)
   .map((p) => ({ formation: p.formation, time: p.time.replace(/T00:00$/, 'T05:00'), at: p.at, approxKm: p.approxKm, reliability: p.reliability, source: p.source }));
 
+// вехи операции (история сценария нынешней модели): «выход к пункту» и «встреча» — место по театру
+const events = tsHist.events.filter((e) => e.date < endDay).map((e) => ({ ...e, at: e.place ? areaC.get(e.place) ?? null : null }));
+
 // ---------- запись ----------
 const usedHq = new Set<string>();
 const mark = (h: string | null) => { for (let x = h, n = 0; x && n < 6 && !usedHq.has(x); x = hqs.get(x)?.parent ?? null, n++) usedHq.add(x); };
@@ -404,7 +407,7 @@ writeFileSync(resolve(dir, 'berlin-1945.json'), JSON.stringify(scenario, null, 1
 writeFileSync(resolve(dir, 'berlin-1945.history.json'), JSON.stringify({
   scenario: scenario.id,
   note: `положения дивизий — из наборов переписи (только собственные); отбракованы положения дальше ${REJECT_KM} км от положения армии в тот же день (rejected); армии, корпуса и немецкие дивизии — история сценария нынешней модели (для сравнения с ней); «за день» — 20:00, утро 16.04 — 05:00 (МСК)`,
-  divisions: histDiv, armies: histArmy, rejected,
+  divisions: histDiv, armies: histArmy, events, rejected,
 }, null, 1) + '\n');
 const su = out.filter((o) => o.side === 'su'), de = out.filter((o) => o.side === 'de');
 console.log(`соединений: советских ${su.length}, немецких ${de.length}; штабов ${hqList.length}; приказов ${orders.length} (пропущено видов ${skipped}, без получателей ${empty})`);

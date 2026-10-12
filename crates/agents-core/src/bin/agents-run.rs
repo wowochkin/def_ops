@@ -40,6 +40,23 @@ struct History {
     divisions: Vec<HistPos>,
     #[serde(default)]
     armies: Vec<HistPos>,
+    #[serde(default)]
+    events: Vec<Milestone>,
+}
+
+/// Веха операции: «выход к пункту» (reach — первая советская дивизия в радиусе) или «встреча» (meet — дивизии обоих
+/// объединений в радиусе); «отсечение» (cut) расчётом не проверяется.
+#[derive(Deserialize)]
+struct Milestone {
+    title: String,
+    date: String,
+    kind: String,
+    #[serde(default)]
+    at: Option<[f64; 2]>,
+    #[serde(default, rename = "radiusKm")]
+    radius_km: Option<f64>,
+    #[serde(default)]
+    formations: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -100,7 +117,7 @@ fn main() {
         .unwrap_or_default();
 
     let mut per_run: Vec<(f64, f64, f64)> = Vec::new(); // доля в допуске: дивизии, армии; время
-    let mut first: Option<(Vec<Dev>, Vec<(Dev, Option<f64>)>, String, String)> = None;
+    let mut first: Option<(Vec<Dev>, Vec<(Dev, Option<f64>)>, String, String, Vec<(String, String, Option<String>)>)> = None;
     for seed in 1..=runs {
         let (mut sim, meta) = scenario::load(&scen_path, &format!("{root}/{DATA_DIR}"), &root).unwrap_or_else(|e| panic!("{e}"));
         sim.seed = seed;
@@ -203,12 +220,26 @@ fn main() {
             let mut tr: Vec<(String, usize)> = transitions.into_iter().collect();
             tr.sort_by(|a, b| b.1.cmp(&a.1));
             let summary = tr.iter().take(12).map(|(k, v)| format!("| {k} | {v} |")).collect::<Vec<_>>().join("\n");
-            first = Some((devs, adevs, summary, format!("{n} дивизий, {} ч, расчёт {:.2} с", meta.hours, secs)));
+            // вехи: когда в расчёте
+            let mut miles = Vec::new();
+            for m in &hist.events {
+                let Some(at) = m.at.map(|p| sim.theatre.proj.to_xy(p)) else { miles.push((m.title.clone(), m.date.clone(), None)); continue };
+                let rad = m.radius_km.unwrap_or(8.0);
+                let near = |t: usize, i: usize| alive[t][i] && snaps[t][i].dist(at) <= rad;
+                let hit = (1..snaps.len()).find(|&t| match m.kind.as_str() {
+                    "reach" => (0..n).any(|i| sim.world.divisions[i].side == Side::Su && near(t, i)),
+                    "meet" => m.formations.iter().all(|f| hq_idx_of(f).is_some_and(|k| (0..n).any(|i| near(t, i) && chain(sim.world.divisions[i].hq as usize).contains(&k)))),
+                    _ => false,
+                });
+                let when = hit.map(|t| agents_core::time::format_hours(start + t as i64));
+                miles.push((m.title.clone(), m.date.clone(), if m.kind == "cut" { None } else { Some(when.unwrap_or_else(|| "не достигнуто".into())) }));
+            }
+            first = Some((devs, adevs, summary, format!("{n} дивизий, {} ч, расчёт {:.2} с", meta.hours, secs), miles));
         }
     }
 
     // ---------- отчёт ----------
-    let (devs, adevs, transitions, runinfo) = first.expect("прогон");
+    let (devs, adevs, transitions, runinfo, miles) = first.expect("прогон");
     let mut r = String::new();
     let scen_name = scen.rsplit('/').next().unwrap_or(&scen);
     let _ = writeln!(r, "# Агентная модель: сверка с историей — {scen_name}\n");
@@ -282,6 +313,13 @@ fn main() {
     }
     let mut worst: Vec<&Dev> = devs.iter().collect();
     worst.sort_by(|a, b| b.excess.total_cmp(&a.excess));
+    if !miles.is_empty() {
+        let _ = writeln!(r, "## Вехи операции (seed 1)\n\n| веха | по истории | в расчёте |\n|---|---|---|");
+        for (title, date, when) in &miles {
+            let _ = writeln!(r, "| {title} | {} | {} |", date, when.clone().unwrap_or_else(|| "— (расчётом не проверяется)".into()));
+        }
+        let _ = writeln!(r);
+    }
     let _ = writeln!(r, "## Наибольшие расхождения дивизий\n\n| дивизия | объединение | день | расстояние, км | превышение, км |\n|---|---|---|---|---|");
     for d in worst.iter().take(15) { let _ = writeln!(r, "| {} | {} | {} | {:.1} | {:.1} |", d.formation, d.group, d.day, d.km, d.excess); }
     let _ = writeln!(r, "\n## Частые переходы состояний (seed 1)\n\n| переход и причина | раз |\n|---|---|\n{transitions}\n");

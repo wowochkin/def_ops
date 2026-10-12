@@ -5,6 +5,7 @@ import { SCENARIOS, isTauri, llmRun, loadRun, scenarioById, loadSettings, posAt,
 import { SettingsPanel } from './Settings';
 import { StaffLog } from './StaffLog';
 import { StaffLive } from './StaffLive';
+import { Operation } from './Operation';
 import { MapView } from './MapView';
 import { Inspector } from './Inspector';
 import { Chat } from './Chat';
@@ -33,6 +34,10 @@ export function App() {
     if (q) return scenarioById(q).id;
     try { return scenarioById(localStorage.getItem('agents.scenario')).id; } catch { return SCENARIOS[0].id; }
   });
+  // вариант для сравнения: тот же сценарий с другими условиями
+  const [cmpId, setCmpId] = useState('');
+  const [cmp, setCmp] = useState<RunData | null>(null);
+  const [cmpMsg, setCmpMsg] = useState<string | null>(null);
   const pickScen = (id: string) => { setScen(id); setSelected(null); try { localStorage.setItem('agents.scenario', id); } catch { /* без хранилища */ } };
   const setSettings = (s: Settings) => { setSettingsState(s); saveSettings(s); };
 
@@ -66,6 +71,18 @@ export function App() {
     // пересчёт — по кнопке (runId) или смене прогона; настройки сами по себе расчёт не запускают
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed, runId, scen]);
+
+  useEffect(() => {
+    setCmp(null);
+    setCmpMsg(null);
+    const v = scenarioById(scen).variants.find((x) => x.id === cmpId);
+    if (!v) return;
+    setCmpMsg('расчёт варианта…');
+    loadRun(scenarioById(scen).path, { seed, de: v.de ?? settings.de, llm: settings.staffModel ? llmRun(settings) : null, withoutFires: v.withoutFires, withoutWithdrawals: v.withoutWithdrawals, traceFile: v.trace })
+      .then((d) => { setCmp(d); setCmpMsg(null); })
+      .catch(() => setCmpMsg(isTauri() ? 'вариант не посчитан' : 'нет готового хода варианта — npm run agents:berlin:variants'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cmpId, scen, seed, runId]);
 
   // показ: часы модели в секунду, плавно (между кадрами положение интерполируется)
   const last = useRef<number | null>(null);
@@ -108,6 +125,8 @@ export function App() {
         <span className="muted">{trace.divisions.length} дивизий · {trace.hours} ч · прогон {trace.seed}{data.live ? '' : ' · из evals-out (браузер)'}</span>
         <span className="muted">· немецкие штабы: {({ script: 'исторические приказы', doctrine: 'по доктрине', llm: `модель ${trace.llm?.model ?? ''}` } as Record<string, string>)[trace.sources?.[1] ?? 'script']}</span>
         <span className="spacer" />
+        <label className="cmp">сравнить с <select value={cmpId} onChange={(e) => setCmpId(e.target.value)}><option value="">—</option>{scenarioById(scen).variants.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}</select></label>
+        {cmpMsg && <span className="progress">{cmpMsg}</span>}
         {busy && <span className="progress">{progress ?? 'расчёт…'}</span>}
         {isTauri() && (
           <label>прогон <select value={seed} onChange={(e) => setSeed(Number(e.target.value))} disabled={busy}>{[1, 2, 3, 4, 5].map((s) => <option key={s}>{s}</option>)}</select></label>
@@ -131,10 +150,11 @@ export function App() {
         ))}
       </aside>
       <main>
-        <MapView data={data} hour={hour} selected={selected} onSelect={select} focus={focus} showDestroyed={showDestroyed} />
+        <MapView data={data} compare={cmp} hour={hour} selected={selected} onSelect={select} focus={focus} showDestroyed={showDestroyed} />
         <div className="legend">
           {(['march', 'deploy', 'attack', 'defense', 'withdraw', 'reserve'] as const).map((g) => <span key={g}><i className={`dot ${g}`} />{({ march: 'марш', deploy: 'развёртывание', attack: 'наступление', defense: 'оборона', withdraw: 'отход', reserve: 'резерв' })[g]}</span>)}
           <span><i className="ghost-key" />положение по документам</span>
+          {cmp && <span><i className="variant-key" />вариант (смещение)</span>}
           <label title="Разгромленные и сведённые в другие дивизии — на месте выбытия, перечёркнутые"><input type="checkbox" checked={showDestroyed} onChange={(e) => setShowDestroyed(e.target.checked)} /><i className="strike-key" />выбывшие</label>
         </div>
       </main>
@@ -147,12 +167,15 @@ export function App() {
               <span className="spacer" />
               <button onClick={() => setSelected(null)} title="Закрыть">×</button>
             </div>
-            {tab === 'card' ? <Inspector data={data} id={selected} hour={hour} onHour={setHour} /> : <Chat key={selected} data={data} id={selected} hour={hour} onHour={setHour} settings={settings} onSettings={() => setShowSettings(true)} />}
+            {tab === 'card' ? <Inspector data={data} compare={cmp} compareName={scenarioById(scen).variants.find((v) => v.id === cmpId)?.name ?? null} id={selected} hour={hour} onHour={setHour} /> : <Chat key={selected} data={data} id={selected} hour={hour} onHour={setHour} settings={settings} onSettings={() => setShowSettings(true)} />}
           </>
         ) : (
           <>
             <div className="empty">Выберите дивизию на карте или в списке слева: карточка с переменными, машиной состояний, журналом и сверкой с документами, разговор с командиром или разбор.</div>
-            {busy ? <StaffLive items={live} /> : <StaffLog data={data} hour={hour} onHour={setHour} />}
+            {busy ? <StaffLive items={live} /> : <>
+              <Operation data={data} compare={cmp} compareName={scenarioById(scen).variants.find((v) => v.id === cmpId)?.name ?? null} hour={hour} onHour={setHour} />
+              <StaffLog data={data} hour={hour} onHour={setHour} />
+            </>}
           </>
         )}
       </section>

@@ -30,16 +30,25 @@ export type StaffSource = 'script' | 'doctrine' | 'llm';
 export type Reasoning = 'default' | 'off' | 'low' | 'medium' | 'high';
 /** Настройки штаба на модели для ядра (crates/agents-core/src/llm.rs, LlmConfig). */
 export interface LlmRun { url: string; model: string; reasoning: Reasoning; maxTokens: number; parallel: number; sync: boolean; byArmy: boolean }
-export interface RunOptions { seed: number; de: StaffSource; llm: LlmRun | null }
+export interface RunOptions { seed: number; de: StaffSource; llm: LlmRun | null; withoutFires?: boolean; withoutWithdrawals?: boolean; traceFile?: string }
 export interface HistPos { formation: string; time: string; at: LngLat; approxKm: number; set?: string; reliability?: string | null }
-export interface History { divisions: HistPos[]; armies: HistPos[] }
+/** Веха операции: выход к пункту (reach), встреча (meet), отсечение (cut — расчётом не проверяется). */
+export interface Milestone { id: string; title: string; date: string; kind: 'reach' | 'meet' | 'cut' | string; at: LngLat | null; radiusKm?: number; formations?: string[]; source?: string }
+export interface History { divisions: HistPos[]; armies: HistPos[]; events?: Milestone[] }
 export interface RunData { trace: Trace; history: History; theatre: TheatreData; live: boolean }
 
 /** Сценарии: путь для ядра и готовый ход прогона для браузера (npm run agents:berlin, agents:seelow). */
-export interface ScenarioInfo { id: string; name: string; path: string; trace: string }
+/** Вариант прогона для сравнения: что меняется и где готовый ход для браузера (npm run agents:berlin:variants). */
+export interface VariantInfo { id: string; name: string; de?: StaffSource; withoutFires?: boolean; withoutWithdrawals?: boolean; trace: string }
+export interface ScenarioInfo { id: string; name: string; path: string; trace: string; variants: VariantInfo[] }
+const variantsOf = (dir: string): VariantInfo[] => [
+  { id: 'doctrine', name: 'немецкие штабы по доктрине', de: 'doctrine', trace: `evals-out/agents/${dir}-doctrine/trace.json` },
+  { id: 'nofires', name: 'без артподготовки', withoutFires: true, trace: `evals-out/agents/${dir}-nofires/trace.json` },
+  { id: 'nowithdraw', name: 'без отвода с первой позиции', withoutWithdrawals: true, trace: `evals-out/agents/${dir}-nowithdraw/trace.json` },
+];
 export const SCENARIOS: ScenarioInfo[] = [
-  { id: 'berlin', name: 'Берлинская операция, 16.04–2.05', path: 'packages/sim/data/scenarios/agents/berlin-1945.json', trace: 'evals-out/agents/berlin/trace.json' },
-  { id: 'seelow', name: 'Зееловские высоты, 16–20.04', path: 'packages/sim/data/scenarios/agents/seelow-1945.json', trace: 'evals-out/agents/seelow/trace.json' },
+  { id: 'berlin', name: 'Берлинская операция, 16.04–2.05', path: 'packages/sim/data/scenarios/agents/berlin-1945.json', trace: 'evals-out/agents/berlin/trace.json', variants: variantsOf('berlin') },
+  { id: 'seelow', name: 'Зееловские высоты, 16–20.04', path: 'packages/sim/data/scenarios/agents/seelow-1945.json', trace: 'evals-out/agents/seelow/trace.json', variants: variantsOf('seelow') },
 ];
 export const SCENARIO = SCENARIOS[0].path;
 export const scenarioById = (id: string | null): ScenarioInfo => SCENARIOS.find((x) => x.id === id) ?? SCENARIOS[0];
@@ -62,10 +71,10 @@ export async function loadRun(scenario = SCENARIO, opts: RunOptions = { seed: 1,
   let live = false;
   if (isTauri()) {
     const { invoke } = await import('@tauri-apps/api/core');
-    trace = await invoke<Trace>('run_scenario', { scenario, seed: opts.seed, de: opts.de, llm: opts.de === 'llm' ? opts.llm : null });
+    trace = await invoke<Trace>('run_scenario', { scenario, seed: opts.seed, de: opts.de, llm: opts.de === 'llm' ? opts.llm : null, withoutFires: !!opts.withoutFires, withoutWithdrawals: !!opts.withoutWithdrawals });
     live = true;
   } else {
-    trace = JSON.parse(await repoText((SCENARIOS.find((x) => x.path === scenario) ?? SCENARIOS[0]).trace)) as Trace;
+    trace = JSON.parse(await repoText(opts.traceFile ?? (SCENARIOS.find((x) => x.path === scenario) ?? SCENARIOS[0]).trace)) as Trace;
   }
   const theatre = JSON.parse(await repoText(`packages/sim/data/theatres/${trace.theatre}.json`)) as TheatreData;
   return { trace, history, theatre, live };
@@ -272,6 +281,31 @@ export function posAt(trace: Trace, i: number, h: number): LngLat {
 }
 
 export const rowAt = (trace: Trace, i: number, h: number): Row => trace.frames[Math.max(0, Math.min(trace.frames.length - 1, Math.round(h)))][i];
+
+/** Час вехи в прогоне: первая советская дивизия в радиусе пункта (reach) или дивизии обоих объединений (meet). */
+export function milestoneHour(trace: Trace, m: Milestone): number | null {
+  if (!m.at || (m.kind !== 'reach' && m.kind !== 'meet')) return null;
+  const r = m.radiusKm ?? 8;
+  const parent = new Map(trace.hqs.map((h) => [h.id, h.parent]));
+  const under = (hq: string, f: string) => { for (let x: string | null | undefined = hq, n = 0; x && n < 8; x = parent.get(x), n++) if (x === f) return true; return false; };
+  const live = (g: string) => g !== 'pending' && g !== 'destroyed';
+  for (let h = 1; h < trace.frames.length; h++) {
+    const f = trace.frames[h];
+    const near = (i: number) => live(stateGroup(f[i][2])) && km([f[i][0], f[i][1]], m.at!) <= r;
+    const ok = m.kind === 'reach'
+      ? trace.divisions.some((d, i) => d.side === 'su' && near(i))
+      : (m.formations ?? []).every((fm) => trace.divisions.some((d, i) => under(d.hq, fm) && near(i)));
+    if (ok) return h;
+  }
+  return null;
+}
+
+/** Потери стороны к часу: численность в начале минус к этому часу. */
+export function lossesAt(trace: Trace, side: Side, h: number): number {
+  const f0 = trace.frames[0], f = rowFrame(trace, h);
+  return trace.divisions.reduce((s, d, i) => (d.side === side ? s + Math.max(0, f0[i][3] - f[i][3]) : s), 0);
+}
+const rowFrame = (trace: Trace, h: number) => trace.frames[Math.max(0, Math.min(trace.frames.length - 1, Math.round(h)))];
 
 /** Час, с которого дивизия выбыла (небоеспособна или сведена в другую), — по кадрам прогона. */
 export function lostAt(trace: Trace): (number | undefined)[] {

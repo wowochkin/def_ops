@@ -2,7 +2,7 @@
 import type { RunData } from './data';
 import { hourOf, km, posAt, rowAt, stateGroup, timeLabel } from './data';
 
-interface Props { data: RunData; id: string; hour: number; onHour: (h: number) => void }
+interface Props { data: RunData; compare?: RunData | null; compareName?: string | null; id: string; hour: number; onHour: (h: number) => void }
 
 const VARS: { idx: number; label: string; fmt: (v: number) => string }[] = [
   { idx: 3, label: 'Люди', fmt: (v) => Math.round(v).toLocaleString('ru-RU') },
@@ -41,7 +41,7 @@ function Spark({ data: d, i, idx, hour }: { data: RunData; i: number; idx: numbe
   );
 }
 
-export function Inspector({ data, id, hour, onHour }: Props) {
+export function Inspector({ data, compare, compareName, id, hour, onHour }: Props) {
   const { trace, history } = data;
   const i = trace.divisions.findIndex((d) => d.id === id);
   if (i < 0) return null;
@@ -66,6 +66,10 @@ export function Inspector({ data, id, hour, onHour }: Props) {
         <div className={`state-now ${stateGroup(cur)}`}>{cur}</div>
         {order && <div className="order">Приказ: {order.text.replace(/^получен приказ /, '')}</div>}
         <div className="coords">{pos[1].toFixed(3)}° с. ш., {pos[0].toFixed(3)}° в. д.</div>
+        {compare && compare.trace.divisions[i]?.id === id && (() => {
+          const rb = rowAt(compare.trace, i, hour);
+          return <div className="variant-now">В варианте «{compareName}»: {rb[2]}, люди {Math.round(rb[3]).toLocaleString('ru-RU')} ({Math.round(rb[3] - row[3]) >= 0 ? '+' : ''}{Math.round(rb[3] - row[3]).toLocaleString('ru-RU')}), в {km(pos, posAt(compare.trace, i, hour)).toFixed(1)} км от расчёта</div>;
+        })()}
       </section>
 
       <section>

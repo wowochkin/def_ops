@@ -21191,6 +21191,174 @@
    "source": "ЦАМО, ф. 233, оп. 2356, д. 739, л. 374–376"
   }
  ],
+ "events": [
+  {
+   "id": "seelow",
+   "title": "Прорыв Зееловских высот: советские войска у Мюнхеберга",
+   "date": "1945-04-19",
+   "kind": "reach",
+   "side": "su",
+   "place": "Muencheberg",
+   "radiusKm": 8,
+   "source": "Ziemke p.478 (A); de-wiki",
+   "at": [
+    14.140500000000001,
+    52.5037
+   ]
+  },
+  {
+   "id": "spremberg",
+   "title": "1 УФ форсировал Шпрее у Шпремберга",
+   "date": "1945-04-18",
+   "kind": "reach",
+   "side": "su",
+   "place": "Spremberg",
+   "radiusKm": 8,
+   "source": "LT_RACE гл. 1",
+   "at": [
+    14.3804,
+    51.57150000000001
+   ]
+  },
+  {
+   "id": "zossen",
+   "title": "3 гв. ТА у Цоссена",
+   "date": "1945-04-21",
+   "kind": "reach",
+   "side": "su",
+   "place": "Zossen",
+   "radiusKm": 8,
+   "source": "LT_HALBE",
+   "at": [
+    13.4489,
+    52.215900000000005
+   ]
+  },
+  {
+   "id": "berlin_outskirts",
+   "title": "Советские войска на окраинах Берлина (≤13 км от центра)",
+   "date": "1945-04-21",
+   "kind": "reach",
+   "side": "su",
+   "place": "B_Mitte",
+   "radiusKm": 13,
+   "source": "LT_RACE",
+   "at": [
+    13.359799999999998,
+    52.53320000000001
+   ]
+  },
+  {
+   "id": "pocket",
+   "title": "Главные силы 9-й армии окружены (XI тк СС, V гск СС, гарнизон Франкфурта)",
+   "date": "1945-04-24",
+   "kind": "cut",
+   "source": "LT_RACE, LT_HALBE",
+   "formations": [
+    "de_xi_ss",
+    "de_v_ss",
+    "de_ffo",
+    "de_303id",
+    "de_169id",
+    "de_712id",
+    "de_kurmark"
+   ],
+   "at": null
+  },
+  {
+   "id": "ring",
+   "title": "Кольцо вокруг Берлина замкнуто (47 А и 4 гв. ТА у Кетцина)",
+   "date": "1945-04-25",
+   "kind": "meet",
+   "formations": [
+    "su_47a",
+    "su_4gta"
+   ],
+   "place": "Ketzin",
+   "radiusKm": 12,
+   "source": "LT_RACE",
+   "at": [
+    12.8444,
+    52.4769
+   ]
+  },
+  {
+   "id": "torgau",
+   "title": "Выход к Эльбе у Торгау",
+   "date": "1945-04-25",
+   "kind": "reach",
+   "side": "su",
+   "place": "Torgau",
+   "radiusKm": 10,
+   "source": "OOB",
+   "at": [
+    12.993400000000001,
+    51.53830000000001
+   ]
+  },
+  {
+   "id": "stettin",
+   "title": "Штеттин взят (советские войска в городе)",
+   "date": "1945-04-26",
+   "kind": "reach",
+   "side": "su",
+   "place": "Szczecin",
+   "radiusKm": 3,
+   "source": "ru-wiki (B)",
+   "control": true,
+   "note": "центр района «Szczecin» в справочнике местности — на Одере (14,59); Старый город в 2,7 км западнее, поэтому радиус 3 км",
+   "at": [
+    14.5929,
+    53.4298
+   ]
+  },
+  {
+   "id": "reichstag",
+   "title": "Бой за Рейхстаг",
+   "date": "1945-04-30",
+   "kind": "reach",
+   "side": "su",
+   "place": "B_Reichstag",
+   "radiusKm": 2,
+   "source": "LT_RACE",
+   "at": [
+    13.3761,
+    52.51869999999999
+   ]
+  },
+  {
+   "id": "cottbus",
+   "title": "V ак у Котбуса отрезан (в истории вышел к Люббену и в котёл 9 А)",
+   "date": "1945-04-24",
+   "kind": "cut",
+   "formations": [
+    "de_v"
+   ],
+   "source": "LT_HALBE",
+   "at": null
+  },
+  {
+   "id": "reichstag_taken",
+   "title": "Рейхстаг взят — Знамя Победы",
+   "date": "1945-04-30",
+   "kind": "reach",
+   "side": "su",
+   "place": "B_Reichstag",
+   "radiusKm": 1,
+   "control": true,
+   "source": "LT_RACE; советские донесения",
+   "marker": {
+    "preset": "tac.victoryFlag",
+    "name": "Знамя Победы над Рейхстагом",
+    "historicalAt": "1945-04-30T22:40",
+    "note": "по советским донесениям — 30.04, 22:40 (московское время): штурмовой флаг 150 сд над Рейхстагом; Знамя Победы — М. Егоров, М. Кантария, А. Берест (79 ск 3 уд. А); бои в здании — до 2.05"
+   },
+   "at": [
+    13.3761,
+    52.51869999999999
+   ]
+  }
+ ],
  "rejected": [
   {
    "formation": "su_115ur",

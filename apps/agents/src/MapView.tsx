@@ -4,15 +4,15 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { RunData } from './data';
-import { hourOf, lostAt, posAt, rowAt, shortName, stateGroup, timeLabel } from './data';
+import { hourOf, km, lostAt, posAt, rowAt, shortName, stateGroup, timeLabel } from './data';
 import { addTheatre, baseStyle, towns } from './theatreLayers';
 import { symbolMarkup } from './symbols';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
-interface Props { data: RunData; hour: number; selected: string | null; onSelect: (id: string | null) => void; focus: [number, number] | null; showDestroyed: boolean }
+interface Props { data: RunData; compare?: RunData | null; hour: number; selected: string | null; onSelect: (id: string | null) => void; focus: [number, number] | null; showDestroyed: boolean }
 
-export function MapView({ data, hour, selected, onSelect, focus, showDestroyed }: Props) {
+export function MapView({ data, compare, hour, selected, onSelect, focus, showDestroyed }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [, setView] = useState(0);
@@ -62,6 +62,20 @@ export function MapView({ data, hour, selected, onSelect, focus, showDestroyed }
       <svg className="overlay">
         {zoom >= 9 && townList.map((t, i) => { const [x, y] = P(t.at); return <text key={i} x={x} y={y} className="town">{t.name}</text>; })}
         {trail && <polyline points={trail} className="trail" />}
+        {/* вариант для сравнения: где та же дивизия в варианте, если она там дальше 1,5 км */}
+        {compare && compare.trace.divisions.length === trace.divisions.length && trace.divisions.map((d, i) => {
+          const g = stateGroup(rowAt(compare.trace, i, hour)[2]);
+          if (g === 'pending' || (g === 'destroyed' && !showDestroyed)) return null;
+          const a = posAt(trace, i, hour), b = posAt(compare.trace, i, hour);
+          if (km(a, b) < 1.5) return null;
+          const [x1, y1] = P(a), [x2, y2] = P(b);
+          return (
+            <g key={`v_${d.id}`} className={`variant ${d.side} ${i === selIdx ? 'sel' : ''}`}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2} />
+              <circle cx={x2} cy={y2} r={i === selIdx ? 7 : 5} />
+            </g>
+          );
+        })}
         {ghosts.map((g, i) => {
           const [x, y] = P(g.at);
           const h = hourOf(trace.start, g.time);

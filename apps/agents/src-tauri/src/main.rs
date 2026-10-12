@@ -63,7 +63,7 @@ impl LlmIn {
 }
 
 #[tauri::command]
-async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, llm: Option<LlmIn>) -> Result<serde_json::Value, String> {
+async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>) -> Result<serde_json::Value, String> {
     // расчёт — в отдельном потоке, окно не замирает
     tauri::async_runtime::spawn_blocking(move || {
         let r = root();
@@ -73,6 +73,9 @@ async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>
         if let Some(s) = seed { sim.seed = s; }
         sim.sources[1] = match de.as_deref() { Some("doctrine") => Source::Doctrine, Some("llm") => Source::Llm, _ => Source::Script };
         if let Some(l) = llm { sim.llm = Some(l.config()); }
+        // варианты для сравнения: без артподготовки, без отвода с первой позиции
+        if without_fires.unwrap_or(false) { sim.fires.clear(); }
+        if without_withdrawals.unwrap_or(false) { sim.withdrawals.clear(); }
         let app2 = app.clone();
         sim.on_progress = Some(Box::new(move |m| { let _ = app2.emit("staff-progress", m); }));
         let app3 = app.clone();
