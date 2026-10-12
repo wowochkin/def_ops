@@ -22,6 +22,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { repeatedFires } from './soviet-fires';
 import { reinforcementOrders, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -218,6 +219,8 @@ const fires = Object.entries(PREP).map(([hq, density]) => ({
   at: START, hq, durationMin: 30, densityPerKm: density,
   note: 'артподготовка 16.04: 05:00 МСК, около 30 мин (Антипенко, B); плотность по армиям — berlin-1945-artillery-prep.json',
 }));
+// повторные артподготовки 17–19.04 (soviet-fires.ts)
+fires.push(...repeatedFires(new Set(SU_ARMIES)));
 // Отвод 9 А на Großkampf-HKL в ночь на 16.04: на первой позиции — охранение в 1/6 силы (de-wiki по Stich 2018, C;
 // атрибуция спорная — сравниваются варианты с отводом и без). Доли по позициям до отвода — правила agents-v0
 // (combat.artillery.troopsByPosition: 0,5 / 0,3 / 0,2); после: 1/6 первой позиции остаётся, остальное — на второй.

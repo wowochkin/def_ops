@@ -31,6 +31,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { repeatedFires } from './soviet-fires';
 import { fixFrankfurt, reinforcementOrders, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -363,6 +364,8 @@ const fires = [
   // 1 УФ: около 2,5 ч перед форсированием Нейсе (HistoryNet, C); плотность не найдена — норматив правил (combat.artillery.normDensityPerKm)
   ...['su_3gva', 'su_13a', 'su_5gva', 'su_52a', 'su_2pa'].map((hq) => ({ at: START, hq, durationMin: 150, densityPerKm: null, note: '1 УФ, 16.04, около 150 мин (HistoryNet, C); плотность — норматив правил (допущение)' })),
 ];
+// повторные артподготовки 17–19.04 (soviet-fires.ts)
+fires.push(...repeatedFires(new Set([...hqs.keys()])));
 const ninthArmy = out.filter((o) => o.side === 'de' && ['de_ci', 'de_lvi', 'de_xi_ss'].includes(o.hq) && o.kind !== 'reinf' && o.id !== 'de_hj_pznk').map((o) => o.id);
 const first = 0.5;
 const withdrawals = [{
