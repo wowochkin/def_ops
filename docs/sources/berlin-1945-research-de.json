@@ -1,0 +1,4863 @@
+{
+ "meta": {
+  "title": "Берлинская операция 16.04–8.05.1945: германская сторона — дополнение к реестру по открытым источникам (4 ТА, 3 ТА, 12 А, 9 А вне Зеелова)",
+  "crs": "WGS84 (lng, lat); координаты — центры населённых пунктов по общеизвестным данным, approx_km — радиус неопределённости положения главных сил",
+  "reliability": {
+   "A": "первичный документ или официальное исследование (Lakowski/DRZW 10/1, Panzerlage ЦАМО ф. 500, отчёт Унрайна, описание фонда BArch)",
+   "B": "Lexikon der Wehrmacht (Tessin), de-/en-/ru-wiki со ссылками, выписки ЦАМО о противнике, Русский архив т. 15 (советская разведка)",
+   "C": "непроверенное: warhistory.org, инфобоксы без ссылок, выводы составителя"
+  },
+  "ids": "id как в berlin-1945-divisions.json (in_registry=true); новые — de_<…> в том же стиле. Родители: de_hgr_weichsel, de_hgr_mitte, de_okw/de_okh (ставка), de_9a, de_3pza, de_4pza, de_12a, de_17a, de_1pza, de_11a, de_blumentritt (армейская группа Блюментрит, Запад); корпуса — de_v_ak, de_lvii, de_gd_korps, de_moser, de_kohlsdorfer, de_hg_korps, de_lxxxx, de_swinemuende, de_xxxii, de_oder_korps, de_xxxxvi, de_iii_ss, de_steiner, de_xx_ak, de_xxxix, de_xxxxi, de_xxxxviii, de_aa_spree, de_lvi",
+  "not_duplicated": "численности дивизий 9 А на 10.04 и бронетехника на 13.04 (Lakowski/Исаев) — в berlin-1945-seelow-divisions.json; положения Зеелова — там же; здесь только сводные цифры ГА/армий и то, чего там нет",
+  "parent_by_date": "запись = подчинение, действующее с этой даты; расхождения источников даны отдельными записями с одной датой и разными источниками"
+ },
+ "sources": {
+  "DRZW": {
+   "ref": "Lakowski R. Der Zusammenbruch der deutschen Verteidigung zwischen Ostsee und Karpaten // Das Deutsche Reich und der Zweite Weltkrieg, Bd. 10/1. München: DVA, 2008, S. 491–679 (таблицы по BA-MA RH 19 XV/8, 9a, 9b, 10; RH 2/330–337; RL 7/542–544). Полный текст (OCR) на archive.org; номера страниц — по колонтитулам оригинала",
+   "url": "https://archive.org/details/das-deutsche-reich-und-der-zweite-weltkrieg-horst-boog-richard-lakowski-werner-r",
+   "default_reliability": "A"
+  },
+  "DRZW_ZIMM": {
+   "ref": "Zimmermann J. Die deutsche militärische Kriegführung im Westen 1944/45 // DRZW Bd. 10/1, S. 444–446 (тд «Клаузевиц», по отчёту ген.-лт Унрайна BA-MA ZA 1/700)",
+   "url": "https://archive.org/details/das-deutsche-reich-und-der-zweite-weltkrieg-horst-boog-richard-lakowski-werner-r",
+   "default_reliability": "A"
+  },
+  "PZW": {
+   "ref": "Panzerlage (Zusammenstellung) Stand 5.4.1945, ЦАМО ф. 500 оп. 12450 д. 183 — по группам армий; публикация panzerworld.com",
+   "url": "https://panzerworld.com/panzerlage-april-1945",
+   "default_reliability": "A"
+  },
+  "RA15": {
+   "ref": "Русский архив: Великая Отечественная. Т. 15 (4-5). Битва за Берлин. М.: Терра, 1995 — док. № 10 (справка РО 2 БФ, 12.04.45, ЦАМО ф. 237 оп. 2394 д. 1309 л. 124), № 12, 13, 15, 16 (информации РУ ГШ КА на 17.04 и 4.05.45, ЦАМО ф. 236 оп. 2721 д. 166); militera.lib.ru. Советские разведданные о противнике — B",
+   "url": "https://militera.lib.ru/docs/da/berlin_45/02.html",
+   "default_reliability": "B"
+  },
+  "LEX": {
+   "ref": "Lexikon der Wehrmacht (по Tessin G. Verbände und Truppen…, BA-MA RH 2/348–355, RH 19 XV/19 K-46): страницы армий, корпусов и дивизий (Gliederung и Einsatz)",
+   "url": "https://www.lexikon-der-wehrmacht.de/",
+   "default_reliability": "B"
+  },
+  "DW": {
+   "ref": "de.wikipedia — статьи соединений (4. Panzerarmee, 3. Panzerarmee, 12. Armee, Kesselschlacht von Halbe, Schlacht um Bautzen, Stettin-Rostocker Operation, статьи дивизий; ссылки на Tessin, Gellermann, Le Tissier, Mitcham)",
+   "url": "https://de.wikipedia.org/",
+   "default_reliability": "B"
+  },
+  "EW": {
+   "ref": "en.wikipedia — Battle of Berlin order of battle (Bahm 2014), Battle of Bautzen (Grzelak 1993, Tessin Bd. II S. 145, Berndt 1995)",
+   "url": "https://en.wikipedia.org/wiki/Battle_of_Berlin_order_of_battle",
+   "default_reliability": "B"
+  },
+  "RW": {
+   "ref": "ru.wikipedia — «12-я армия (Германия)» (Gellermann 1984, с. 190–195; Тике 2005; Исаев 2010), «Хальбский котёл» (Le Tissier, Slaughter at Halbe, p. 89–90; Beevor), «Берлинская наступательная операция»",
+   "url": "https://ru.wikipedia.org/",
+   "default_reliability": "B"
+  },
+  "WH": {
+   "ref": "warhistory.org, «Wenck's 12th Army April–May 1945» и «12th Army to the Rescue» (по Le Tissier, без сносок)",
+   "url": "https://warhistory.org/de/article/wencks-12th-army-april-may-1945",
+   "default_reliability": "C"
+  },
+  "TSAMO": {
+   "ref": "Выписки о противнике из ЖБД и разведсводок фронтов и армий (docs/sources/berlin-1945-tsamo/enemy.json; ЦАМО ф. 233, 236, 310, 388) — советская разведка, показания пленных",
+   "url": "docs/sources/berlin-1945-tsamo/enemy.json",
+   "default_reliability": "B"
+  },
+  "BARCH": {
+   "ref": "Bundesarchiv, карточки фондов на archivportal-d.de: RH 20-12 (AOK 12: документы апреля 1945 не сохранились; на 26.04.45 части у Виттенберга, Тройенбрицена, Ратенова), RH 21-3 (PzAOK 3), RH 21-4 (PzAOK 4), RH 20-9 (AOK 9), RH 19 XV (H.Gr. Weichsel)",
+   "url": "https://www.archivportal-d.de/item/O5BKVXZDETTC3OBREMP752JQKYCCRTUB",
+   "default_reliability": "A"
+  },
+  "CIT": {
+   "ref": "вывод составителя по совокупности источников",
+   "url": null,
+   "default_reliability": "C"
+  }
+ },
+ "formations": [
+  {
+   "id": "de_4pza",
+   "name_ru": "4-я танковая армия (ген. танк. войск Ф.-Х. Грезер)",
+   "name_orig": "4. Panzerarmee (PzAOK 4)",
+   "echelon": "army",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_hgr_mitte",
+     "source": "DRZW S.644; LEX"
+    }
+   ],
+   "source": "DRZW; LEX",
+   "reliability": "A",
+   "note": "Полоса от Герлица до стыка с ГА «Висла» у устья Нейсе (Вельмиц). На 12.04 (LEX, по Tessin): LVII тк, тк «Великая Германия», корпусная группа Мозер, V ак; на 30.04: LVII тк, группа Кольсдорфер, тк «Великая Германия», корпусная группа Мозер, парашютно-танковый корпус «Герман Геринг», LXXXX ак, зам. ген. командование IV ак, 269 пд. Начштаба ген.-м. В. Кнюппель.",
+   "in_registry": false
+  },
+  {
+   "id": "de_v_ak",
+   "name_ru": "V армейский корпус (ген. арт. К. Вегер)",
+   "name_orig": "V. Armeekorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_4pza",
+     "source": "DRZW S.645; LEX V. AK"
+    },
+    {
+     "date": "1945-04-19",
+     "parent": "de_9a",
+     "source": "LEX V. AK (19.04); de-wiki Halbe (19.04)"
+    },
+    {
+     "date": "1945-04-20",
+     "parent": "de_9a",
+     "source": "DRZW S.648 (20.04, вечер)"
+    },
+    {
+     "date": "1945-04-21",
+     "parent": "de_9a",
+     "source": "de-wiki 35. SS-Pol. (21.04)"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "A",
+   "note": "Сформирован 26.01.45 (WK XIII), с начала марта на Нейсе между Фюрстенбергом и Форстом. Дата передачи в 9 А по источникам: 19.04 (Lexikon, de-wiki Halbe), 20.04 (Lakowski: после разрыва связи между ГА вечером 20.04), 21.04 (de-wiki 35 SS). На 1.03.45: кгр 342 пд, кгр 72 пд, 275 пд. На 16.04 (Lakowski S.645): 35 полиц. СС, 275, 214 пд (северный фланг армии).",
+   "in_registry": true
+  },
+  {
+   "id": "de_lvii",
+   "name_ru": "LVII танковый корпус (ген. танк. войск Ф. Кирхнер)",
+   "name_orig": "LVII. Panzerkorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_4pza",
+     "source": "DRZW S.645; LEX LVII"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "A",
+   "note": "По Lakowski (S.645) на 16.04 оборонял участок до Гросс-Гастрозе: 36 ваффен-гренадерская СС, 342 пд, 545 нгд, пгд «Бранденбург», див. z.b.V. 615. На 30.04 (de-wiki 4. PzA, по Tessin): 17, 72 пд, 6 нгд. Lexikon: 1.03.45 — Division Nr. 408, 8 тд, тбр 103, дивизия сопровождения фюрера (FBD).",
+   "in_registry": false
+  },
+  {
+   "id": "de_gd_korps",
+   "name_ru": "танковый корпус «Великая Германия» (ген. танк. войск Г. Яуэр)",
+   "name_orig": "Panzerkorps „Großdeutschland“",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_4pza",
+     "source": "LEX 4. PzA 12.04; DW"
+    }
+   ],
+   "source": "LEX; DW; EW",
+   "reliability": "B",
+   "note": "Яуэр с 15.03.45. На 1.03.45 (de-wiki по Schramm KTB OKW IV/2 S.1896): 21 тд, «Бранденбург», FJ-PzD 1 «Герман Геринг», 20 пгд(?), див. штаб z.b.V. 615. На 30.04 (Tessin): 20 тд, «Герман Геринг», «Бранденбург». Радиоразведка 1 УФ 20.04: штаб корпуса из Угист в Лоза. Ударная группа у Баутцена 21–26.04.",
+   "in_registry": true
+  },
+  {
+   "id": "de_moser",
+   "name_ru": "корпусная группа «Мозер»",
+   "name_orig": "Korpsgruppe (Gruppe) Moser",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-12",
+     "parent": "de_4pza",
+     "source": "LEX 4. PzA (12.04 и 30.04)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "На 30.04 (de-wiki 4. PzA по Tessin): дивизионные группы 193 и 404 (из запасных дивизий № 193 и № 404, Дрезден/Лейпциг). Положение: район Дрездена (южный фланг армии). Состав на 16.04 не установлен.",
+   "in_registry": false
+  },
+  {
+   "id": "de_kohlsdorfer",
+   "name_ru": "группа «Кольсдорфер» (ген.-м. Х.-Э. Кольсдорфер, командир 545 нгд)",
+   "name_orig": "Gruppe Kohlsdorfer (Kohlsdorfen)",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-30",
+     "parent": "de_4pza",
+     "source": "LEX 4. PzA 30.04; DW 4. PzA"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Только на 30.04: учебная дивизия 464, 545 нгд, див. штаб z.b.V. 615. Кольсдорфер — командир 545 нгд с 20.04.45 (LEX 545 VGD).",
+   "in_registry": false
+  },
+  {
+   "id": "de_hg_korps",
+   "name_ru": "парашютно-танковый корпус «Герман Геринг» (ген.-лт В. Шмальц)",
+   "name_orig": "Fallschirm-Panzerkorps „Hermann Göring“",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-30",
+     "parent": "de_4pza",
+     "source": "LEX 4. PzA 30.04; DW"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "На 30.04: FJ-PzGrenDiv 2 «Герман Геринг» и остатки 10 тд СС «Фрундсберг». В начале мая — под Дрезденом; капитулировал южнее Дрездена 8.05.",
+   "in_registry": false
+  },
+  {
+   "id": "de_lxxxx",
+   "name_ru": "LXXXX армейский корпус",
+   "name_orig": "LXXXX. Armeekorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-30",
+     "parent": "de_4pza",
+     "source": "DW 4. PzA (по Schramm KTB OKW Bd. 3 S.1147)"
+    }
+   ],
+   "source": "DW",
+   "reliability": "B",
+   "note": "На 30.04: 404, 464, 469 пд (из запасных дивизий), боевой комендант Хемница. Против западных союзников, вне полосы операции.",
+   "in_registry": false
+  },
+  {
+   "id": "de_6id",
+   "name_ru": "6-я пехотная (народно-гренадерская) дивизия",
+   "name_orig": "6. Infanterie-Division (бывш. 6. Volksgrenadier-Division)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_lvii",
+     "source": "DRZW S.645 (правый фланг 4 ТА между Бобром и Нейсе); LEX 6 ID (апрель: LVII ак, 17 А); DW 4. PzA 30.04 (LVII тк)"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "B",
+   "note": "Заново сформирована 10.03.45 из остатков 6 нгд, 291 пд и теневой дивизии «Дрезден» (de-wiki); переименована 10.04.45 (LEX 6 VGD). Lexikon даёт на апрель 17 А, Lakowski — правый фланг 4 ТА; на 30.04 — LVII тк 4 ТА. Участвовала в боях у Лаубана; распущена в мае. Командир ген.-м./ген.-лт О.-Х. Брюккер.",
+   "in_registry": false
+  },
+  {
+   "id": "de_17id",
+   "name_ru": "17-я пехотная дивизия (ген.-м. М. Заксенхаймер)",
+   "name_orig": "17. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_lvii",
+     "source": "DRZW S.645 (между Бобром и Нейсе, правый фланг 4 ТА); LEX 17 ID (апрель: VIII ак, 17 А, Герлиц)"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_lvii",
+     "source": "DW 4. PzA 30.04"
+    },
+    {
+     "date": "1945-05-01",
+     "parent": "de_gd_korps",
+     "source": "LEX 17 ID (май: тк GD)"
+    }
+   ],
+   "source": "DRZW; LEX; DW; EW",
+   "reliability": "B",
+   "note": "Уничтожена на Висле в январе, заново сформирована в марте 1945. Расхождение: Lakowski относит к 4 ТА, Lexikon на апрель — VIII ак 17 А (Герлиц); обе версии записаны. Ударная группа Баутцен 21–24.04 (на Ниски и Вайсенберг с востока). В выписках ЦАМО: 17 пд из района Грайффенберг, 95 пп 21.04 переброшен из Гольдберг к Диза; у Баутцена 26.04.",
+   "in_registry": false
+  },
+  {
+   "id": "de_72id",
+   "name_ru": "72-я пехотная дивизия (ген.-лт Г. Хон, с 20.04 ген.-м. В. Кампфхенкель)",
+   "name_orig": "72. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-03-01",
+     "parent": "de_v_ak",
+     "source": "LEX V. AK 1.03.45 (кгр 72 пд)"
+    },
+    {
+     "date": "1945-04-16",
+     "parent": "de_lvii",
+     "source": "LEX 72 ID (апрель: LVII тк, 4 ТА, Лаузиц); DRZW S.645 (район Герлица)"
+    },
+    {
+     "date": "1945-05-01",
+     "parent": "de_gd_korps",
+     "source": "LEX 72 ID (май: тк GD, Эрцгебирге)"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "B",
+   "note": "Боевая группа. В выписках ЦАМО: 124 пп 72 пд (20.04); 72 пд у Виттенберга(?) 23.04 (так в сводке) и сев.-зап. Дрездена 2.05; пленными подтверждена в котле 30.04 (сомнительно). Капитулировала в протекторате 9.05.",
+   "in_registry": false
+  },
+  {
+   "id": "de_545vgd",
+   "name_ru": "545-я народно-гренадерская дивизия (с 20.04 ген.-м. Х.-Э. Кольсдорфер)",
+   "name_orig": "545. Volksgrenadier-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_lvii",
+     "source": "DRZW S.645"
+    },
+    {
+     "date": "1945-04-01",
+     "parent": "de_gd_korps",
+     "source": "LEX 545 VGD (апрель/май: тк GD, 4 ТА, Лаузиц)"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_kohlsdorfer",
+     "source": "LEX 4. PzA 30.04"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "B",
+   "note": "Заново сформирована в апреле 1945 в Силезии (LEX), боевая группа. По сводкам 1 УФ разгромлена к 22.04; остатки пленены у Губена (de-wiki).",
+   "in_registry": false
+  },
+  {
+   "id": "de_615zbv",
+   "name_ru": "дивизионный штаб особого назначения 615",
+   "name_orig": "Divisionsstab z.b.V. 615",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_lvii",
+     "source": "DRZW S.645"
+    },
+    {
+     "date": "1945-03-01",
+     "parent": "de_gd_korps",
+     "source": "LEX 615 z.b.V. (март: тк GD, Герлиц)"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_kohlsdorfer",
+     "source": "DW 4. PzA 30.04"
+    },
+    {
+     "date": "1945-05-01",
+     "parent": "de_lvii",
+     "source": "LEX (май: LVII, Эрцгебирге)"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "B",
+   "note": "Штаб для управления армейскими и тревожными частями, сформирован 10.02.45; ком. полк. рез. фон Белов. Численность не установлена.",
+   "in_registry": false
+  },
+  {
+   "id": "de_fbd",
+   "name_ru": "дивизия сопровождения фюрера (ген.-м. О. Э. Ремер)",
+   "name_orig": "Führer-Begleit-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-03-01",
+     "parent": "de_lvii",
+     "source": "LEX LVII 1.03.45"
+    },
+    {
+     "date": "1945-04-16",
+     "parent": "de_4pza",
+     "source": "DRZW S.645 (резерв армии у Шпремберга; в тексте ошибочно «1. SS-Panzerdivision Leibstandarte»); TSAMO 17.04"
+    }
+   ],
+   "source": "DRZW; LEX; DW; TSAMO",
+   "reliability": "B",
+   "note": "Сформирована 26.01.45 в Котбусе из бригады. В ночь на 15.04 — вост. Шпремберга (ЦАМО). 20.04 вместе с 10 тд СС получила приказ деблокировать район Шпремберга (DRZW S.648); уничтожена в котле Шпремберг/Кауше (Tessin Bd.14 S.78). В ЖБД 1 УФ 18.04: оперативно подчинена «тд Богемия». РУ ГШ 4.05: «тд Охрана фюрера» разгромлена перед 1 УФ.",
+   "in_registry": false
+  },
+  {
+   "id": "de_344id",
+   "name_ru": "344-я пехотная дивизия",
+   "name_orig": "344. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-01",
+     "parent": "de_1pza",
+     "source": "LEX 344 ID (апрель: XXIV тк 1 ТА, Верхняя Силезия)"
+    },
+    {
+     "date": "1945-04-18",
+     "parent": "de_4pza",
+     "source": "TSAMO 20.04 (18.04 по ж. д. к юго-зап. Шпремберга); DW 344 ID (группа Йоллассе, Дребкау)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "Переброшена из 1 ТА к Шпрембергу 18.04 (ЦАМО: в полках по 800–900 активных штыков, 27 орудий). По de-wiki: в составе группы Йоллассе должна была с FBD и 10 тд СС ударить от Дребкау на север; окружена и пленена в котле Кауше. РУ ГШ 4.05: вновь восстановленная, разгромлена перед 1 УФ.",
+   "in_registry": false
+  },
+  {
+   "id": "de_10ss",
+   "name_ru": "10-я танковая дивизия СС «Фрундсберг» (бригадефюрер Х. Хармель, с 28.04 Ф. Рёстель)",
+   "name_orig": "10. SS-Panzer-Division „Frundsberg“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_4pza",
+     "source": "DRZW S.645 (резерв у Лаубана); LEX 10 SS"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_hg_korps",
+     "source": "DW 4. PzA 30.04 (остатки)"
+    }
+   ],
+   "source": "DRZW; LEX; DW; TSAMO",
+   "reliability": "B",
+   "note": "На 25.03.45 — 14 967 чел., сильное вооружение (LEX). 16.04 из района Герлиц–Лаубан переброшена к Баутцену, из-за нехватки горючего только боевые части дошли до Шпремберга; 20.04 окружена у Шпремберга, прорвалась на Зенфтенберг; второе окружение у Кауше. Остатки — у Морицбурга 3.05, затем Теплиц-Шёнау. В реестре записана как часть V ак 9 А (LT_HALBE) — часть сил действительно попала в котёл Хальбе (южная группа прорыва 25.04 — 35 полиц. СС и 10 тд СС, DRZW S.669).",
+   "in_registry": true
+  },
+  {
+   "id": "de_20pzd",
+   "name_ru": "20-я танковая дивизия (ген.-м. Г. фон Оппельн-Брониковски)",
+   "name_orig": "20. Panzer-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "LEX 20 PD (до апреля — 17 А; с 22.03 у Герлица/Ландскроне); RA15 №12 (переброска из района юж. Нейссе на север)"
+    },
+    {
+     "date": "1945-04-18",
+     "parent": "de_4pza",
+     "source": "DRZW S.648 (приказ 19.04: удар 20 тд и «ГГ» на Веркирх)"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_gd_korps",
+     "source": "DW 4. PzA 30.04"
+    }
+   ],
+   "source": "DRZW; LEX; DW; EW; TSAMO",
+   "reliability": "B",
+   "note": "21.04 наступала на Баутцен с запада, 23.04 в бою за Баутцен; затем отход к Оттендорф-Окрилла и новая ГКЛ Пульсниц–Кёнигсбрюк–Кляйннаундорф; до 3.05 отход на Дрезден (LEX). ЦАМО: до 70 танков (20.04), до 100 (22.04, пленные).",
+   "in_registry": true
+  },
+  {
+   "id": "de_hg",
+   "name_ru": "1-я парашютно-танковая дивизия «Герман Геринг» (ген.-м. М. Лемке)",
+   "name_orig": "Fallschirm-Panzer-Division 1 „Hermann Göring“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-12",
+     "parent": "de_4pza",
+     "source": "DRZW S.646 (12.04: немедленно из 17 А в 4 ТА, резерв ГА)"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_gd_korps",
+     "source": "DW 4. PzA 30.04"
+    }
+   ],
+   "source": "DRZW; LEX; DW; TSAMO",
+   "reliability": "B",
+   "note": "ЦАМО: до 14.04 зап. Нейсе, 16.04 переброшена к Герлицу. Атаковала Баутцен с юго-запада, пересекла Шпрее западнее города (22.04); разгромила 5 пд ВП севернее Баутцена, затем 1 пд ВП у Кёнигсбрюка (26–28.04). 30.04 сменена у Баутцена; танковый полк до 50 Pz III/IV, роты 80–90 чел. (ЦАМО 2.05).",
+   "in_registry": true
+  },
+  {
+   "id": "de_hg2",
+   "name_ru": "2-я парашютно-танко-гренадерская дивизия «Герман Геринг»",
+   "name_orig": "Fallschirm-Panzergrenadier-Division 2 „Hermann Göring“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_okh",
+     "source": "DW (апрель: резерв ОКХ, Средняя Германия)"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_hg_korps",
+     "source": "DW 4. PzA 30.04"
+    }
+   ],
+   "source": "DW; LEX",
+   "reliability": "B",
+   "note": "В район Баутцена к началу боёв не прибыла (de-wiki Schlacht um Bautzen); в мае — Эрцгебирге, капитуляция. В реестре отсутствует.",
+   "in_registry": false
+  },
+  {
+   "id": "de_brandenburg",
+   "name_ru": "танко-гренадерская дивизия «Бранденбург» (ген.-м. Г. Шульте-Хойтхаус)",
+   "name_orig": "Panzergrenadier-Division „Brandenburg“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_lvii",
+     "source": "DRZW S.645"
+    },
+    {
+     "date": "1945-02-01",
+     "parent": "de_gd_korps",
+     "source": "LEX (февраль: тк GD, 4 ТА, Лаузиц)"
+    },
+    {
+     "date": "1945-04-30",
+     "parent": "de_gd_korps",
+     "source": "DW 4. PzA 30.04"
+    }
+   ],
+   "source": "DRZW; LEX; DW; TSAMO",
+   "reliability": "B",
+   "note": "С начала марта до середины апреля в районе Вайсвассер на Нейсе; 16.04 окружена в районе Ротенбург–Пенциг (сев. Герлица), 20.04 прорвалась на Лёбау; бои за Баутцен (24.04 окружила 294 сд у Вайсенберга); 3.05 по ж. д. в район Моравска-Остравы. ЦАМО 17.04: пополнена до штата, 15 танков; 18.04 отходит на Баутцен (2 мп — потери до 50%).",
+   "in_registry": true
+  },
+  {
+   "id": "de_21pzd",
+   "name_ru": "21-я танковая дивизия (ген.-лт В. Маркс)",
+   "name_orig": "21. Panzer-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-03-01",
+     "parent": "de_gd_korps",
+     "source": "LEX 21 PD (март: тк GD)"
+    },
+    {
+     "date": "1945-04-14",
+     "parent": "de_4pza",
+     "source": "DRZW S.645–646 (резерв армии южнее Котбуса, затем район Вайсвассер–Шпремберг)"
+    },
+    {
+     "date": "1945-04-20",
+     "parent": "de_9a",
+     "source": "DRZW S.648/669 (с V ак; в котле прикрытие на северо-запад); LEX 21 PD (апрель: резерв ОКХ — так у Tessin)"
+    }
+   ],
+   "source": "DRZW; LEX; DW; TSAMO",
+   "reliability": "B",
+   "note": "Контратаки 16.04 в районе Домсдорф–Зиммерсдорф безуспешны (DRZW S.646). ЦАМО 17.04: до 50 танков, роты 70–80 чел., 20 штурмовых орудий в артполку, «вошла в тк Великая Германия»; 22.04: потеряла 50% состава и почти всю матчасть. Командир пленён 1.05 (ЦАМО).",
+   "in_registry": true
+  },
+  {
+   "id": "de_kg_moltke",
+   "name_ru": "боевая группа «Мольтке» (Луккау)",
+   "name_orig": "Kampfgruppe „Moltke“",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-19",
+     "parent": "de_okh",
+     "source": "DRZW S.647 (приказ ОКХ 19.04, BA-MA RH 23/337 Bl.3)"
+    }
+   ],
+   "source": "DRZW",
+   "reliability": "A",
+   "note": "Единственное, что ОКХ смогло противопоставить 3 гв. ТА 19.04: должна была оборонять Луккау; удержать не смогла.",
+   "in_registry": false
+  },
+  {
+   "id": "de_464ausb",
+   "name_ru": "464-я учебная (запасная) дивизия",
+   "name_orig": "Ausbildungs-Division 464 (Division Nr. 464)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-30",
+     "parent": "de_kohlsdorfer",
+     "source": "DW 4. PzA 30.04"
+    }
+   ],
+   "source": "DW; RA15",
+   "reliability": "B",
+   "note": "Запасная дивизия WK IV (Дрезден), переведена в полевые части. РУ ГШ на 4.05 снимает с учёта «запасную 464-ю» как использованную для пополнений.",
+   "in_registry": false
+  },
+  {
+   "id": "de_193_404_divgr",
+   "name_ru": "дивизионные группы 193 и 404 (группа Мозер)",
+   "name_orig": "Divisionsgruppe 193, Divisionsgruppe 404",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-30",
+     "parent": "de_moser",
+     "source": "DW 4. PzA 30.04"
+    }
+   ],
+   "source": "DW",
+   "reliability": "B",
+   "note": "Из запасных дивизий № 193 (Дрезден) и № 404 (Лейпциг); район Дрездена. Численность не установлена.",
+   "in_registry": false
+  },
+  {
+   "id": "de_17a",
+   "name_ru": "17-я армия (ген. пех. В. Хассе)",
+   "name_orig": "17. Armee (AOK 17)",
+   "echelon": "army",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_hgr_mitte",
+     "source": "LEX"
+    }
+   ],
+   "source": "LEX",
+   "reliability": "B",
+   "note": "Правый сосед 4 ТА (Силезия, Герлиц–Бреслау–Оппельн). В полосе операции — только частью сил; её дивизии названы в советских разведсводках как противник 1 УФ.",
+   "in_registry": false
+  },
+  {
+   "id": "de_1pza",
+   "name_ru": "1-я танковая армия",
+   "name_orig": "1. Panzerarmee",
+   "echelon": "army",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_hgr_mitte",
+     "source": "LEX"
+    }
+   ],
+   "source": "LEX",
+   "reliability": "B",
+   "note": "Моравия; вне полосы операции. Источник 344 пд и 254 пд.",
+   "in_registry": false
+  },
+  {
+   "id": "de_20ss",
+   "name_ru": "20-я ваффен-гренадерская дивизия СС (эстонская № 1) (бригадефюрер Б. Маак)",
+   "name_orig": "20. Waffen-Grenadier-Division der SS (estnische Nr. 1)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "LEX 20 SS (апрель: остатки в распоряжении 17 А, Силезия; май: VIII ак)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "Февраль — окружение у Нойштадта О.С., прорыв; потеряла тяжёлое оружие; пленена 11.05 у Мельника. ЦАМО 28.04: «после окружения юго-вост. Оппельн пополнена, в ротах 45 пп по 80–90 чел.» (пленные у Барута — сомнительно). РУ ГШ 4.05: «20 эст. пд СС» вновь восстановлена перед 1 УФ.",
+   "in_registry": false
+  },
+  {
+   "id": "de_31ss",
+   "name_ru": "31-я добровольческая гренадерская дивизия СС (бригадефюрер Г. Ломбард)",
+   "name_orig": "31. SS-Freiwilligen-Grenadier-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "LEX 31 SS (апрель, кгр: XVII ак 17 А, Силезия); de-wiki: с 16.02 район Герлица, февраль–май в Силезии"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "РУ ГШ 17.04: «введена в первую линию из резерва». В ЖБД 3 А 24.04 и сводках 1 УФ 29–30.04 «части 31 пд СС» среди окружённых юго-вост. Берлина — противоречит немецким данным (Силезия, Кёниггрец 6.05); возможно, часть сил или ошибка атрибуции.",
+   "in_registry": false
+  },
+  {
+   "id": "de_45vgd",
+   "name_ru": "45-я народно-гренадерская дивизия (ген.-м. Э. Хассенштайн)",
+   "name_orig": "45. Volksgrenadier-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "LEX 45 VGD (апрель: XXXX тк 17 А, Силезия; май: XVII ак, протекторат)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "Части на Одере от Оппельна до Франкфурта (de-wiki); остатки пленены у Кёниггреца 8.05. В сводке 1 УФ 29.04 «45 пд» среди подтверждённых пленными в котле — не подтверждается.",
+   "in_registry": false
+  },
+  {
+   "id": "de_208id",
+   "name_ru": "208-я пехотная дивизия",
+   "name_orig": "208. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "LEX 208 ID (апрель: VIII ак 17 А, Силезия)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "Перед 1 УФ на 14.04 (справка о группировке). Вне полосы удара.",
+   "in_registry": false
+  },
+  {
+   "id": "de_254id",
+   "name_ru": "254-я пехотная дивизия",
+   "name_orig": "254. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_1pza",
+     "source": "LEX 254 ID (апрель: XXIV тк 1 ТА, Верхняя Силезия; май: LXXII ак, Моравия)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "ЖБД 1 УФ: «противник ввёл части 4 тд и 254 пд» у Герлица — по немецким данным дивизия в 1 ТА (РУ ГШ 4.05: вновь восстановлена перед 4 УФ).",
+   "in_registry": false
+  },
+  {
+   "id": "de_359id",
+   "name_ru": "359-я пехотная дивизия",
+   "name_orig": "359. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "LEX 359 ID (с 29.01 кгр, LIX ак 1 ТА; далее 17 А, Силезия — по справке 1 УФ 14.04)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "Перед 1 УФ на 14.04. Сводки 1 УФ 29–30.04 называют среди пленных в котле — сомнительно.",
+   "in_registry": false
+  },
+  {
+   "id": "de_100jd",
+   "name_ru": "100-я егерская дивизия (ген.-м. О. Шури)",
+   "name_orig": "100. Jäger-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "de-wiki (Силезия, сентябрь 1944 — май 1945; остатки пленены у Траутенау); справка 1 УФ 14.04"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "Сводки 1 УФ 29–30.04 называют среди пленных в котле — не подтверждается.",
+   "in_registry": false
+  },
+  {
+   "id": "de_269id",
+   "name_ru": "269-я пехотная дивизия",
+   "name_orig": "269. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_17a",
+     "source": "LEX 269 ID (апрель, кгр: XVII ак 17 А, Олау; май: тк GD 4 ТА, Эрцгебирге); LEX 4. PzA 30.04 (269 пд в подчинении армии)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "ЦАМО 1–2.05: 269 пд сев. Дрездена (Гроссенхайн), 489 пп — роты по 60 чел. РУ ГШ 4.05: вновь восстановлена перед 1 УФ.",
+   "in_registry": false
+  },
+  {
+   "id": "de_19pzd",
+   "name_ru": "19-я танковая дивизия",
+   "name_orig": "19. Panzer-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_1pza",
+     "source": "LEX 19 PD (апрель: LIX ак 1 ТА, Моравия; середина апреля у Моравска-Остравы)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "ЖБД 1 УФ 18.04: «19 тд 17.04 через Глатц — Вальденбург»; РУ ГШ 4.05: переброшена из района зап. Цешина к Брно. Вне полосы операции.",
+   "in_registry": false
+  },
+  {
+   "id": "de_68id",
+   "name_ru": "68-я пехотная дивизия",
+   "name_orig": "68. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_1pza",
+     "source": "LEX 68 ID (апрель: XI ак 1 ТА, Моравия; май: XXX ак 17 А, Егерндорф)"
+    }
+   ],
+   "source": "LEX; DW; TSAMO; RA15",
+   "reliability": "B",
+   "note": "Сводки 1 УФ 29.04: «68 пд из полосы 4 УФ» у Тройенбрицена — немецкими данными не подтверждается (Моравия).",
+   "in_registry": false
+  },
+  {
+   "id": "de_3pza",
+   "name_ru": "3-я танковая армия (ген. танк. войск Х. фон Мантойфель)",
+   "name_orig": "3. Panzerarmee (PzAOK 3)",
+   "echelon": "army",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_hgr_weichsel",
+     "source": "DRZW; LEX"
+    }
+   ],
+   "source": "DRZW; LEX",
+   "reliability": "A",
+   "note": "Полоса ~170 км от о. Воллин до Хоэнзатена. Lakowski S.649: в подчинении — оборонительный район Свинемюнде, крепость Штеттин (меняла подчинение), XXXII ак, корпус «Одер», XXXXVI тк; резервы — танковый учебный соединение «Остзее», остатки «Валлонии» и «Лангемарка»; в тылу армии, но в подчинении ГА — 18 пгд, «Недерланд», «Нордланд». Армейский резерв (III герм. тк СС) западнее Шведта. Lexikon (Tessin) на 11/12.04: XXXII ак, XXXXVI тк, III тк СС, корпус «Одер», 28 СС «Валлония», 33 СС «Шарлемань», комендант тыловых заградительных линий, учебные части «ГГ»; армейские части: истребительно-противотанковая дивизия «Вайхзель», штурмовой батальон PzAOK «Кольберг». Начштаба ген.-м. Б. Мюллер-Гиллебранд.",
+   "in_registry": false
+  },
+  {
+   "id": "de_swinemuende",
+   "name_ru": "оборонительный район / корпусная группа «Свинемюнде» (ген.-лт Й. Ансат)",
+   "name_orig": "Verteidigungsbereich Swinemünde",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_3pza",
+     "source": "DRZW S.649; LEX; DW"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "A",
+   "note": "Создан в марте 1945, КП в Мисдрое; отвечал за о-ва Узедом и Воллин. Состав (de-wiki Stettin-Rostocker Op.): учебная дивизия 402 (резерв у Меллентина), крепость Свинемюнде (ком. ген.-м. Х. фон Некер с апреля; 5 крепостных тревожных полков из школ зенитчиков ВМФ), 3-я морская пехотная дивизия на вост. берегу Воллина. 10 Jagdpanzer на 7.04 (DRZW прим. 397). Не путать с комендатурой крепости.",
+   "in_registry": true
+  },
+  {
+   "id": "de_402id",
+   "name_ru": "402-я учебная (запасная) дивизия (ген.-лт З. фон Шлайниц)",
+   "name_orig": "Ausbildungs-Division 402 (Division Nr. 402)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_swinemuende",
+     "source": "DW Stettin-Rostocker Op.; EW OOB"
+    }
+   ],
+   "source": "DW; EW; RA15",
+   "reliability": "B",
+   "note": "Резерв района у Меллентина (Узедом). Командир фон Шлайниц (так де-wiki; в Русском архиве док. № 201 допрос «командира 402-й запасной дивизии ген.-лт З. Шпайница» от 18.03.45 — т. е. командир пленён до операции, если это тот же человек).",
+   "in_registry": true
+  },
+  {
+   "id": "de_3marined",
+   "name_ru": "3-я морская пехотная дивизия (полк. Х. фон Витцлебен, с 28.04 ген.-м. Ф. Фуллриде)",
+   "name_orig": "3. Marine-Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_swinemuende",
+     "source": "DW 3. Marine-ID; DW Stettin-Rostocker Op."
+    },
+    {
+     "date": "1945-04-20",
+     "parent": "de_steiner",
+     "source": "LEX XXXXI PzK (части 3-й морской дивизии сев. Альтруппина и у Эберсвальде сменены 25 пгд, конец апреля)"
+    }
+   ],
+   "source": "DW; LEX; RA15",
+   "reliability": "B",
+   "note": "Сформирована 1.04.45 из остатков 163 пд и моряков, штаб в Варене; полки MIR 8, 9, 10, MAR 234. Вост. берег Воллина. Бои у Свинемюнде, Заксенхаузена и Линдова; в советский плен у Кирица. РУ ГШ 4.05: «3 морпд» вновь сформирована перед 1 БФ, разгромлена. Реестр даёт у Свинемюнде 2-ю мпд (Bahm) — 2-я мпд в апреле 1945 воевала на Везере–Аллере против англичан (de-wiki), т. е. у Свинемюнде была 3-я.",
+   "in_registry": false
+  },
+  {
+   "id": "de_xxxii",
+   "name_ru": "XXXII армейский корпус (ген.-лт Ф. Шак)",
+   "name_orig": "XXXII. Armeekorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_3pza",
+     "source": "DRZW S.650; LEX XXXII AK"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "A",
+   "note": "Сформирован 28.03.45 в Штеттине; между автобаном и Нойварпом. Gliederung 11.04 (LEX): 281 пд, 549 нгд, боевая группа Фойгт, крепость «Штеттин»; корпусные части: Panzerjagd-Abteilung 1, s.H.Art.Abt. 929. Конец апреля — отход на линию Нойварпер-зее — Лёкниц; 27.04 остатки в Фридланде (Шак — боевой комендант), 28–29.04 Фридланд оставлен, 29.04 потерян Анклам, отход на Темплин, Лихен.",
+   "in_registry": true
+  },
+  {
+   "id": "de_ledebur",
+   "name_ru": "группа (дивизионная группа) «фон Ледебур»",
+   "name_orig": "Gruppe / Divisionsgruppe von Ledebur",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxii",
+     "source": "DRZW S.650; DW Stettin-Rostocker Op."
+    }
+   ],
+   "source": "DRZW; DW",
+   "reliability": "B",
+   "note": "Прикрывала северный фланг между Цигенортом и Нойварпом (побережье залива); де-wiki: также по обе стороны Штеттина.",
+   "in_registry": false
+  },
+  {
+   "id": "de_549vgd",
+   "name_ru": "549-я народно-гренадерская дивизия (ген.-лт К. Янк)",
+   "name_orig": "549. Volksgrenadier-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxii",
+     "source": "LEX 549 VGD (апрель, кгр: XXXII ак); DW Stettin (севернее Штеттина)"
+    }
+   ],
+   "source": "LEX; DW; RA15",
+   "reliability": "B",
+   "note": "Разгромлена в Вост. Пруссии, в марте — на пополнение в Пазевальк (в т. ч. остатки пд «Денеке»); боевая группа на Одере. РУ ГШ 4.05: вновь восстановлена и разгромлена перед 2 БФ. В мае в плен к американцам в Мекленбурге.",
+   "in_registry": true
+  },
+  {
+   "id": "de_281id",
+   "name_ru": "281-я пехотная дивизия (ген.-м. Б. Ортнер, с апреля полк. Шмидт)",
+   "name_orig": "281. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-03-01",
+     "parent": "de_iii_ss",
+     "source": "LEX 281 ID (март: III СС, 3 ТА)"
+    },
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxii",
+     "source": "LEX 281 ID (апрель: XXXII ак, Одер); DW Stettin (по обе стороны Штеттина)"
+    }
+   ],
+   "source": "LEX; DW; RA15",
+   "reliability": "B",
+   "note": "Справка РО 2 БФ на 12.04: единственная пд в первой линии (281 пд). Остатки присоединились к дивизии «Шлагетер» у Варена (de-wiki, Tessin Bd. 9 S.1).",
+   "in_registry": true
+  },
+  {
+   "id": "de_voigt",
+   "name_ru": "боевая группа / дивизия «Фойгт»",
+   "name_orig": "Kampfgruppe Voigt (Infanterie-Division „Voigt“)",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxii",
+     "source": "LEX XXXII AK 11.04; DRZW Gliederung 11.04 (с частями 549 нгд: I./GR 1549? — OCR)"
+    }
+   ],
+   "source": "LEX; DRZW",
+   "reliability": "B",
+   "note": "В схеме Gliederung 3 ТА на 11.04 (DRZW после S.608) — «Gr. Voigt» с частями, переданными из 549 нгд. Численность не установлена.",
+   "in_registry": true
+  },
+  {
+   "id": "de_festung_stettin",
+   "name_ru": "крепость Штеттин (комендант ген.-м. Ф. Брюль)",
+   "name_orig": "Festung Stettin",
+   "echelon": "garrison",
+   "type": "garrison",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxii",
+     "source": "LEX XXXII 11.04; DRZW S.650 («меняла подчинение», оборудована неудовлетворительно)"
+    }
+   ],
+   "source": "LEX; DRZW; DW",
+   "reliability": "B",
+   "note": "Крепостные полки 1–5 (EW). Штеттин оставлен в ночь на 25.04 (новая линия до южной окраины), 26.04 взят 65 А; остатки гарнизона уничтожены у Анклама 27.04 (de-wiki).",
+   "in_registry": true
+  },
+  {
+   "id": "de_oder_korps",
+   "name_ru": "армейский корпус «Одер» (обергруппенфюрер СС Э. фон дем Бах-Зелевски)",
+   "name_orig": "Korps Oder (Oderkorps)",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_3pza",
+     "source": "DRZW S.650; LEX"
+    },
+    {
+     "date": "1945-04-23",
+     "parent": "de_xxxxvi",
+     "source": "DRZW S.653 (23.04 XXXXVI тк принял участок Гарц–Штеттин)"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "A",
+   "note": "Штаб из див. штаба z.b.V. 612 (февраль 1945). Участок от южнее Гарца до севернее автобана — главное направление удара 65 А. Gliederung 11.04 (LEX): див. z.b.V. 610 (с SS-Polizei-Jäger-Brigade 1), группа Клоссек, танковое учебное соединение «Остзее»; зенитный полк «Херцберг». Конец апреля — штаб расформирован, участок передан XXVII ак (ген. пех. В. Хёрнляйн).",
+   "in_registry": true
+  },
+  {
+   "id": "de_610id",
+   "name_ru": "610-я дивизия особого назначения (полк. Ф. Фуллриде)",
+   "name_orig": "Division z.b.V. 610",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_oder_korps",
+     "source": "LEX 610 z.b.V. (апрель: корпус Одер, Штеттин); DW Korps Oder (южнее Штеттина у Курова)"
+    }
+   ],
+   "source": "LEX; DW; RA15",
+   "reliability": "B",
+   "note": "Состав 11.04: SS-PzGren-Ers.u.Ausb.Abt. 9, SS-Polizei-Jäger-Brigade 1 (полки 8 и 50), Feld-Ausb.Rgt. «Oder». РУ ГШ 17.04: «610-я резервная дивизия выведена в резерв»; 4.05 — разгромлена перед 2 БФ.",
+   "in_registry": true
+  },
+  {
+   "id": "de_wellmann",
+   "name_ru": "боевая группа / дивизия «Вельман» (полк. Э. Вельман)",
+   "name_orig": "Kampfgruppe (Division) Wellmann",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_oder_korps",
+     "source": "DW Korps Oder (от сев. Паргова до юж. Гарца); DRZW S.654 (24.04 разгромлена в плацдарме)"
+    }
+   ],
+   "source": "DW; DRZW",
+   "reliability": "B",
+   "note": "Вельман — бывший командир тд «Силезия» (до 25.03). 22.04 1-я морская дивизия получила приказ закрыть брешь в участке Вельмана между Тантовом и Гарцем. Численность не установлена.",
+   "in_registry": false
+  },
+  {
+   "id": "de_klossek",
+   "name_ru": "пехотная бригада «Клоссек»",
+   "name_orig": "Infanterie-Brigade (Gruppe) Klossek",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_oder_korps",
+     "source": "LEX 11.04; DW Korps Oder (резерв у Хоэнлайе)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": null,
+   "in_registry": true
+  },
+  {
+   "id": "de_pz_ausb_ostsee",
+   "name_ru": "танковое учебное соединение «Остзее»",
+   "name_orig": "Panzer-Ausbildungs-Verband „Ostsee“",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-11",
+     "parent": "de_oder_korps",
+     "source": "LEX Korps Oder 11.04; DRZW S.649 (резерв армии)"
+    }
+   ],
+   "source": "LEX; DRZW",
+   "reliability": "B",
+   "note": "В таблице DRZW 7.04 входит в 3 ТА (числится с бронетехникой).",
+   "in_registry": false
+  },
+  {
+   "id": "de_xxxxvi",
+   "name_ru": "XXXXVI танковый корпус (ген. пех. М. Гарайс)",
+   "name_orig": "XXXXVI. Panzerkorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_3pza",
+     "source": "DRZW S.650; LEX"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "A",
+   "note": "Участок Шведт — Гогенцоллерн-канал. Gliederung 11.04 (LEX): 547 нгд, 1-я морская пехотная дивизия, 11 тд СС (так; т. е. «Нордланд» — до 17.04, затем в 9 А); корпусные: штурм. бригады 210 и 184, с.тб СС 503, V./VAK 406. 23.04 принял участок корпуса «Одер» (Гарц–Штеттин); 24.04 линия Хоэн-Райнкендорф — Тантов; ночь на 25.04 — Фридрихсталь — Казеков — Бартин — Баттинсталь — Барнимслов — юж. окраина Штеттина; 26/27.04 отход за Укер; 29.04 — южнее Мюриц-зее (с «Шлагетер»); в мае — Шверин.",
+   "in_registry": true
+  },
+  {
+   "id": "de_547vgd",
+   "name_ru": "547-я народно-гренадерская дивизия (ген.-м. Э. Фронхёфер)",
+   "name_orig": "547. Volksgrenadier-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxxvi",
+     "source": "LEX 547 VGD (апрель: XXXXVI тк, Одер); DW Stettin (вокруг Шведта)"
+    }
+   ],
+   "source": "LEX; DW; RA15",
+   "reliability": "B",
+   "note": "Заново сформирована 10.03.45 в Шведте в двухполковом составе (кадр теневой дивизии «Ганновер»; артполк — один дивизион). 24.04 последние защитники Шведта ушли на Пархим (de-wiki). Капитуляция у Шверина.",
+   "in_registry": true
+  },
+  {
+   "id": "de_1marined",
+   "name_ru": "1-я морская пехотная дивизия (ген.-м. В. Блеквенн)",
+   "name_orig": "1. Marine-Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxxvi",
+     "source": "LEX; DW 1. Marine-ID (с начала апреля южный фланг армии юго-зап. Шведта до Одерберга)"
+    },
+    {
+     "date": "1945-04-24",
+     "parent": "de_xxxxvi",
+     "source": "DRZW S.653 (24.04 выведена с правого фланга и направлена в район Пенкун–Шторков–Шёнефельд–Веттерсхаген)"
+    }
+   ],
+   "source": "DRZW; LEX; DW; RA15",
+   "reliability": "B",
+   "note": "Середина апреля: южный батальон вёл тяжёлые бои у Хоэнзатена на стыке с 9 А. 22.04 приказ идти на север закрыть брешь Тантов–Гарц (не выполнен; Казеков удержан ~1,5 суток). 26.04 полки 2 и 4 оставили позиции Лютцлов–Воллин–Шмёлльн и отошли к линии Укер. 2/3.05 командир пленён у Шверина. РУ ГШ 17.04: «выведена в резерв» (ошибочно).",
+   "in_registry": true
+  },
+  {
+   "id": "de_iii_ss",
+   "name_ru": "III (германский) танковый корпус СС (бригадефюрер Й. Циглер); с конца марта — армейская группа Штайнер",
+   "name_orig": "III. (germ.) SS-Panzerkorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_3pza",
+     "source": "DRZW S.650 (армейский резерв зап. Шведта); LEX 3. PzA 12.04"
+    },
+    {
+     "date": "1945-04-21",
+     "parent": "de_steiner",
+     "source": "DRZW S.669 (с 21.04 приказы Гитлера группе Штайнера); LEX PzJgdDiv Weichsel (21.04 в подчинении III СС)"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "B",
+   "note": "Gliederung 11.04 (LEX): 23 СС «Недерланд», 27 СС «Лангемарк», 18 пгд; Lakowski: в тылу армии 18 пгд, «Недерланд», «Нордланд» (подчинены ГА), резерв армии — остатки «Валлонии» и «Лангемарка». К 17–19.04 «Нордланд» и «Недерланд» ушли в 9 А (ЖБД 1 БФ: введены 19.04).",
+   "in_registry": true
+  },
+  {
+   "id": "de_steiner",
+   "name_ru": "армейская группа «Штайнер» (обергруппенфюрер Ф. Штайнер)",
+   "name_orig": "Armeegruppe (Armeeabteilung) Steiner",
+   "echelon": "army",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-21",
+     "parent": "de_hgr_weichsel",
+     "source": "DRZW S.668; LEX III SS; DW F. Steiner"
+    }
+   ],
+   "source": "DRZW; LEX; DW",
+   "reliability": "B",
+   "note": "Создана в конце марта «в основном на бумаге» из остатков III тк СС для рубежа по Финов- и Гогенцоллерн-каналу севернее Берлина. 21.04 приказ Гитлера деблокировать Берлин с севера (не выполнен); ~23.04 обойдена у Ораниенбурга и отброшена на Руппинер-канал; 27.04 Штайнер смещён; 30.04 Гранзе сдан; 3.05 капитуляция на Эльбе. Состав (Ziemke/OOB): 4 полиц. пгд СС, 5 лпд, 25 пгд, части 3-й морской дивизии, 7 тд (по морю из Данцига), 15 СС (латвийская).",
+   "in_registry": false
+  },
+  {
+   "id": "de_7pzd",
+   "name_ru": "7-я танковая дивизия (боевая группа; полк. Х. Кристерн)",
+   "name_orig": "7. Panzer-Division (Kampfgruppe)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-20",
+     "parent": "de_xxxii",
+     "source": "DW Stettin-Rostocker Op. (первые части по морю из Данцига)"
+    }
+   ],
+   "source": "DW; RA15",
+   "reliability": "B",
+   "note": "РУ ГШ 17.04 сняла с учёта как разгромленную перед 2 БФ, 4.05 — «вновь восстановленная» и вновь разгромлена перед 2 БФ. Капитулировала в Шверине 8.05. В реестре отсутствует.",
+   "in_registry": false
+  },
+  {
+   "id": "de_15ss",
+   "name_ru": "15-я ваффен-гренадерская дивизия СС (латвийская № 1) (бригадефюрер К. Бурк)",
+   "name_orig": "15. Waffen-Grenadier-Division der SS (lettische Nr. 1)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-12",
+     "parent": "de_3pza",
+     "source": "RA15 №10 (резерв сев.-зап. Штеттина); DW Stettin (резерв армии)"
+    }
+   ],
+   "source": "DW; RA15",
+   "reliability": "B",
+   "note": "Справка РО 2 БФ 12.04: «15 пд СС (лат.) в районе сев.-зап. Штеттина» на переформировании; фузилёрный батальон — в Берлине. Капитуляция у Шверина. В реестре отсутствует.",
+   "in_registry": false
+  },
+  {
+   "id": "de_33ss",
+   "name_ru": "33-я ваффен-гренадерская дивизия СС «Шарлемань» (остатки)",
+   "name_orig": "33. Waffen-Grenadier-Division der SS „Charlemagne“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-11",
+     "parent": "de_3pza",
+     "source": "LEX 3. PzA 11.04; LEX 33 SS (апрель: на формировании, Нойштрелиц)"
+    }
+   ],
+   "source": "LEX; DRZW",
+   "reliability": "B",
+   "note": "В схеме DRZW 11.04 — штурмовой батальон «Шарлемань» при III тк СС (отправлен в Берлин). В реестре отсутствует.",
+   "in_registry": false
+  },
+  {
+   "id": "de_pzjagd_weichsel",
+   "name_ru": "истребительно-противотанковая дивизия «Вайхзель» (полк. фон Юнгфельд)",
+   "name_orig": "Panzerjagd-Division „Weichsel“",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-11",
+     "parent": "de_3pza",
+     "source": "LEX 3. PzA 11.04"
+    },
+    {
+     "date": "1945-04-21",
+     "parent": "de_iii_ss",
+     "source": "LEX PzJgdDiv Weichsel (21.04)"
+    }
+   ],
+   "source": "LEX",
+   "reliability": "B",
+   "note": "Сформирована к 1.03.45 (как Panzerjagd-Verband), переименована в конце марта; с середины апреля — за Вотан-позицией. Состав 11.04: истребительно-противотанковые бригады D (I–III), F (II), R (III), P (I–III).",
+   "in_registry": false
+  },
+  {
+   "id": "de_18pzgd",
+   "name_ru": "18-я танко-гренадерская дивизия (ген.-м. Й. Раух)",
+   "name_orig": "18. Panzergrenadier-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-11",
+     "parent": "de_iii_ss",
+     "source": "LEX III SS 11.04; DRZW S.649 (в тылу 3 ТА, подчинена ГА)"
+    },
+    {
+     "date": "1945-04-16",
+     "parent": "de_lvi",
+     "source": "OOB (резерв ОКВ в LVI тк)"
+    }
+   ],
+   "source": "LEX; DRZW; DW",
+   "reliability": "B",
+   "note": "Воссоздана 21.03.45 из остатков тд «Силезия» и «Гольштейн» (в таблице DRZW 7.04: Pz.Abt. и Pz.Jg.Abt. «Schlesien»). Отсюда «118 тд (быв. тд Силезия)» советских сводок. У Йоахимсталя (DW Stettin).",
+   "in_registry": true
+  },
+  {
+   "id": "de_12a",
+   "name_ru": "12-я армия (ген. танк. войск В. Венк)",
+   "name_orig": "12. Armee (AOK 12)",
+   "echelon": "army",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-10",
+     "parent": "de_okw",
+     "source": "LEX 12 Armee; BARCH RH 20-12"
+    },
+    {
+     "date": "1945-04-23",
+     "parent": "de_okw",
+     "source": "DRZW S.664–665 (23.04: новая граница с ГА «Висла»; 9 А тоже подчинена штабу ОКВ)"
+    }
+   ],
+   "source": "LEX; BARCH; DRZW",
+   "reliability": "A",
+   "note": "Сформирована 10.04.45 из штаба ГА «Север». LEX (Tessin), 30.04: XXXXVIII тк, XXXXI тк, XX ак, XXXIX тк, «корпус Рейман», 199 пд. Документы армии за апрель 1945 не сохранились (BArch RH 20-12). 22.04 перегруппирована фронтом на восток; 26.04 удар на Потсдам, 29.04 связь с Потсдамом; 1.05 приняла ~25 000 солдат и ~5 000 гражданских (LEX); 7.05 основная масса на зап. берегу Эльбы.",
+   "in_registry": false
+  },
+  {
+   "id": "de_xx_ak",
+   "name_ru": "XX армейский корпус (ген. кав. К.-Э. Кёлер)",
+   "name_orig": "XX. Armeekorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_12a",
+     "source": "LEX XX AK (район Магдебурга)"
+    },
+    {
+     "date": "1945-04-23",
+     "parent": "de_12a",
+     "source": "LEX XX AK (23.04 подчинены Кёрнер, Хуттен, Шилль, Шарнхорст)"
+    }
+   ],
+   "source": "LEX; DRZW; DW",
+   "reliability": "B",
+   "note": "Штаб эвакуирован по морю из Хайлигенбайля в Свинемюнде, придан 12 А. Атака 26.04 утром на северо-восток Белиц — Ферх (острие — «Хуттен»; слева «Хуттен», в центре «Шарнхорст», справа «Кёрнер» у Нимегка; «Шилль» в первый день переведена на крайний левый фланг для деблокады Потсдама). 29.04 принял остатки корпусной группы Рейман и 9 А; 1.05 — «Ян»; вечером 1.05 отход через Воллин к эльбскому плацдарму (арьергард — «Хуттен»); 2.05 за Плауэр-канал; 5.05 рубеж Шметцдорф — Вустердамм; 6.05 штаб в Фишбек; переправа у Тангермюнде.",
+   "in_registry": true
+  },
+  {
+   "id": "de_hutten",
+   "name_ru": "пехотная дивизия «Ульрих фон Хуттен» (ген.-лт Э. Блаурок, с ~14.04 ген.-лт Г. Энгель)",
+   "name_orig": "Infanterie-Division „Ulrich von Hutten“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-12",
+     "parent": "de_11a",
+     "source": "DW (ок. 12.04 у Биттерфельда, 11 А)"
+    },
+    {
+     "date": "1945-04-23",
+     "parent": "de_xx_ak",
+     "source": "LEX XX AK; DW"
+    }
+   ],
+   "source": "DW; LEX; DRZW",
+   "reliability": "B",
+   "note": "Сформирована 30.03.45 в Виттенберге (35-я волна; штаб 56 пд, части 190 пд и 18 пгд, школы); 3 гренадерских полка, артполк, фузилёрный, ПТ, сапёрный, связи. 26.04 острие удара у Белица (левый фланг), 28.04 с «Шилль» в Ленинском лесу; 1.05 арьергард корпуса; капитуляция у Тангермюнде. Численность не установлена.",
+   "in_registry": true
+  },
+  {
+   "id": "de_scharnhorst",
+   "name_ru": "пехотная дивизия «Шарнхорст» (ген.-лт Г. Гётц)",
+   "name_orig": "Infanterie-Division „Scharnhorst“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-12",
+     "parent": "de_12a",
+     "source": "DW (12.04 первый бой у Барби)"
+    },
+    {
+     "date": "1945-04-23",
+     "parent": "de_xx_ak",
+     "source": "LEX; DW"
+    }
+   ],
+   "source": "DW; LEX; TSAMO",
+   "reliability": "B",
+   "note": "Сформирована 30.03.45 в Дессау-Рослау (части пд «Потсдам», 340 и 167 пд, школы, RAD); 3 грп, артполк (из VAK 412), фузилёрный батальон (из «Потсдама»), ПТ батальон с Jagdpanzer 38. 26.04 центр удара у Белица: взяла Линте и Реесдорф, освободила ~3 000 раненых в Белиц-Хайльштеттен; 2.05 (так de-wiki) капитуляция у Тангермюнде. ЦАМО 25.04: роты по 40–50 чел.",
+   "in_registry": true
+  },
+  {
+   "id": "de_koerner",
+   "name_ru": "пехотная дивизия «Теодор Кёрнер» (3-я дивизия RAD) (ген.-лт Б. Франкевиц)",
+   "name_orig": "Infanterie-Division „Theodor Körner“ (RAD-Division Nr. 3)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-04",
+     "parent": "de_12a",
+     "source": "DW (сформирована 4.04 в Дёберице)"
+    },
+    {
+     "date": "1945-04-23",
+     "parent": "de_xx_ak",
+     "source": "LEX; DW"
+    }
+   ],
+   "source": "DW; LEX; TSAMO",
+   "reliability": "B",
+   "note": "Около 10 000 чел., из них ~7 500 из RAD (de-wiki, по Hübner 2016 S.247); штаб 215 пд. Бои на Мульде, затем правый фланг у Нимегка (прикрытие Тройенбрицен — Нимегк); 24.04 ночью атаковала 5 гв. мк у Тройенбрицена (ru-wiki Хальбе); 1.05 оставила позиции между Нимегком и Тройенбриценом, отход через Бельциг на Шёнхаузен. Капитуляция у Тангермюнде.",
+   "in_registry": true
+  },
+  {
+   "id": "de_schill",
+   "name_ru": "пехотная дивизия «Фердинанд фон Шилль» (майор/подполк. А. Мюллер)",
+   "name_orig": "Infanterie-Division „Ferdinand von Schill“ (Kampfgruppe Burg)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-10",
+     "parent": "de_okh",
+     "source": "LEX (10.04 кгр «Бург», в распоряжении ОКХ, Эльба)"
+    },
+    {
+     "date": "1945-04-20",
+     "parent": "de_12a",
+     "source": "LEX; DW (20.04 переименована, 12 А)"
+    },
+    {
+     "date": "1945-04-26",
+     "parent": "de_xx_ak",
+     "source": "LEX XX AK (крайний левый фланг)"
+    }
+   ],
+   "source": "LEX; DW; DRZW",
+   "reliability": "B",
+   "note": "Из школы штурмовых орудий в Бурге, 8 000–10 000 чел. (LEX; de-wiki ~10 000); штатно укомплектованы только грп «Шилль» 1 и 2 и фузилёрный батальон; штурм. бригада «Шилль», StuG-Brig. 394. 26.04 — левый фланг для деблокады Потсдама; 28.04 с «Хуттен» в Ленинском лесу; 8.05 часть самоходчиков передана советской стороне.",
+   "in_registry": true
+  },
+  {
+   "id": "de_jahn",
+   "name_ru": "пехотная дивизия «Фридрих Людвиг Ян» (2-я дивизия RAD) (полк. Г. Кляйн, с 25.04 полк. Ф. Веллер)",
+   "name_orig": "Infanterie-Division „Friedrich Ludwig Jahn“ (RAD-Division Nr. 2)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-20",
+     "parent": "de_aa_spree",
+     "source": "DW Halbe (25.04 усилила армейский отряд «Шпрее»); DW Jahn (апрель: Armeegruppe Spree)"
+    },
+    {
+     "date": "1945-05-01",
+     "parent": "de_xx_ak",
+     "source": "LEX XX AK (1.05 подчинена корпусу после прорыва из района Потсдама)"
+    }
+   ],
+   "source": "DW; LEX; RW; TSAMO",
+   "reliability": "B",
+   "note": "Сформирована 31.03.45 в Ютербоге (части 251 пд и ~7 500 RAD). Разгромлена у Ютербога 23.04 (Тике, Исаев 2010 с.215); остатки в Потсдаме; прорыв из Потсдама к 12 А под руководством штаба дивизии (Веллер) 29.04 у Ферха; капитуляция у Ферхланда. ЦАМО 23.04: «сформирована в начале апреля у Ютербог».",
+   "in_registry": true
+  },
+  {
+   "id": "de_aa_spree",
+   "name_ru": "армейский отряд «Шпрее» (корпусная группа Рейман; гарнизон Потсдама)",
+   "name_orig": "Armeeabteilung Spree (Korpsgruppe Reymann)",
+   "echelon": "corps",
+   "type": "garrison",
+   "parent_by_date": [
+    {
+     "date": "1945-04-22",
+     "parent": "de_12a",
+     "source": "DW H. Reymann; LEX 12 Armee 30.04 («Korps Reimann»)"
+    }
+   ],
+   "source": "DW; LEX",
+   "reliability": "B",
+   "note": "Рейман после смещения с поста коменданта Берлина (21.04) получил южный фронт Берлина и оборону Потсдама; штаб в Новом дворце/Гольме; 25.04 усилен «Ян»; к 27.04 южная часть Потсдама до Хафеля потеряна; 28.04 12 А вышла на линию Белиц — Ферх, по радио согласован отход гарнизона к 12 А (15 000–20 000 чел. по de-wiki Schlacht um Berlin, прим. 71); 29.04 XX ак принял остатки группы.",
+   "in_registry": true
+  },
+  {
+   "id": "de_xxxix",
+   "name_ru": "XXXIX танковый корпус (ген.-лт К. Арндт с 21.04)",
+   "name_orig": "XXXIX. Panzerkorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-15",
+     "parent": "de_blumentritt",
+     "source": "LEX (15.04 в составе армейской группы Блюментрит, удар Ильцен–Гифхорн на Брауншвейг)"
+    },
+    {
+     "date": "1945-04-21",
+     "parent": "de_12a",
+     "source": "LEX XXXIX PzK (21.04 подчинён 12 А)"
+    },
+    {
+     "date": "1945-04-29",
+     "parent": "de_12a",
+     "source": "LEX (29.04 все соединения переданы XXXXI тк; получил 309 пд (5 бат.) и дивизию Коницки (6 бат.)); в ночь на 1.05 принял Хафельский фронт Бранденбург — Плауэ — Притцербе — Ратенов"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Gliederung 21.04 (LEX): тд «Клаузевиц» (остатки), пд «Шлагетер» (кадры), штаб 84 пд. 26.04: «Шлагетер» передана АОК Блюментрит, взамен — дивизионный резерв «Гамбург» (2 полка), дивизия «Мейер» (2 полка), 84 пд (3 бат.), «Клаузевиц» (3 бат.) — всего силы одной дивизии.",
+   "in_registry": true
+  },
+  {
+   "id": "de_clausewitz",
+   "name_ru": "танковая дивизия «Клаузевиц» (ген.-лт М. Унрайн)",
+   "name_orig": "Panzer-Division „Clausewitz“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-11",
+     "parent": "de_xxxix",
+     "source": "DRZW_ZIMM S.445 (с 11.04 XXXIX тк ген. Деккера)"
+    },
+    {
+     "date": "1945-04-21",
+     "parent": "de_xxxix",
+     "source": "LEX (остатки)"
+    },
+    {
+     "date": "1945-04-29",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 30.04 (остатки)"
+    }
+   ],
+   "source": "DRZW_ZIMM; LEX; DW; RA15",
+   "reliability": "A",
+   "note": "Формировалась с 5.04 у Лауэнбурга (личный состав школ Путлос, Вюнсдорф, бригады GD, 233 рез. тд); артиллерии не получила; автотранспорт 20–50% штата. 11–14.04 бои у Ильцена, 14.04 разделена на боевые группы, 19.04 связь между ними потеряна; к 20.04 — 10–12 танков и штурмовых орудий, остатки штаба; 21.04 переправа через канал у Фаллерслебена, 21–22.04 остатки у Борнум-ам-Эльм без горючего; командир пленён 24.04. РУ ГШ 4.05 числит «тд Клаузевиц» на Западном фронте.",
+   "in_registry": true
+  },
+  {
+   "id": "de_schlageter",
+   "name_ru": "пехотная дивизия «Шлагетер» (1-я дивизия RAD) (ген.-лт В. Хойн)",
+   "name_orig": "Infanterie-Division „Schlageter“ (RAD-Division Nr. 1)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-12",
+     "parent": "de_xxxix",
+     "source": "OOB; LEX (кадры)"
+    },
+    {
+     "date": "1945-04-26",
+     "parent": "de_blumentritt",
+     "source": "LEX XXXIX; DW (26.04 армейская группа Блюментрит)"
+    },
+    {
+     "date": "1945-04-29",
+     "parent": "de_xxxxvi",
+     "source": "DW Schlageter (29.04 XXXXVI тк 3 ТА южнее Мюриц-зее)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Сформирована 31.03.45 в Мунстере (остатки 299 пд + RAD), штатная численность ~12 000 (факт не установлен). У Варена слилась с остатками 281 пд; 2.05 приказ отходить на запад к 9 А США; 3.05 капитуляция на Эльде.",
+   "in_registry": true
+  },
+  {
+   "id": "de_84id",
+   "name_ru": "84-я пехотная дивизия (штаб и остатки)",
+   "name_orig": "84. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-21",
+     "parent": "de_xxxix",
+     "source": "LEX XXXIX 21.04 (штаб); 26.04 — 3 батальона"
+    },
+    {
+     "date": "1945-04-29",
+     "parent": "de_xxxxi",
+     "source": "LEX"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Боевая группа погибла у Везеля в марте 1945 (de-wiki); в 12 А — штаб и ~3 батальона.",
+   "in_registry": true
+  },
+  {
+   "id": "de_hamburg",
+   "name_ru": "дивизионный резерв «Гамбург» (324-я пд / теневая дивизия «Гамбург»)",
+   "name_orig": "Divisions-Reserve „Hamburg“ (Schatten-Division Hamburg, Div.Stab z.b.V. 618)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-26",
+     "parent": "de_xxxix",
+     "source": "LEX XXXIX (26.04, 2 полка из резерва боевого коменданта Гамбурга)"
+    },
+    {
+     "date": "1945-04-29",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 30.04 (резерв позади группы Хольсте)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Теневая дивизия «Гамбург» (сформирована 4–7.03.45) была в марте влита в 180 и 84 пд у Везеля, штаб переименован в див. штаб z.b.V. 618 (LEX). В 12 А — новое формирование из резервов Гамбурга (2 полка). Советские сводки: «части 324 пд» среди окружённых (27.04, ЖБД 3 А) — сомнительно.",
+   "in_registry": true
+  },
+  {
+   "id": "de_meyer",
+   "name_ru": "дивизия «Мейер» (2 полка)",
+   "name_orig": "Division (Reserve) Meyer",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-26",
+     "parent": "de_xxxix",
+     "source": "LEX XXXIX"
+    },
+    {
+     "date": "1945-04-29",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 30.04"
+    }
+   ],
+   "source": "LEX",
+   "reliability": "B",
+   "note": null,
+   "in_registry": true
+  },
+  {
+   "id": "de_konitzky",
+   "name_ru": "дивизия «Коницки» (6 батальонов)",
+   "name_orig": "Division Konitzky",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-29",
+     "parent": "de_xxxix",
+     "source": "LEX XXXIX (29.04); DW 12. Armee"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "С 1.05 южный участок Хафельского фронта XXXIX тк (Бранденбург). В реестре отсутствует.",
+   "in_registry": false
+  },
+  {
+   "id": "de_309id_n",
+   "name_ru": "309-я пехотная дивизия (новое формирование, 5 батальонов) в 12 А",
+   "name_orig": "309. Infanterie-Division (XXXIX. Pz.K., 29.04.45)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-29",
+     "parent": "de_xxxix",
+     "source": "LEX XXXIX (29.04); DW 12. Armee (XXXXI тк)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "C",
+   "note": "Lexikon XXXIX тк: 29.04 корпусу подчинена «309. Infanterie-Division (fünf Bataillone)», с 1.05 северный участок (Ратенов). 309 пд «Берлин» 9 А погибла у Врицена 18–19.04; это, видимо, новое формирование под тем же номером (у de-wiki 12. Armee — в XXXXI тк). Не отождествлять с de_309id без проверки.",
+   "in_registry": false
+  },
+  {
+   "id": "de_xxxxi",
+   "name_ru": "XXXXI танковый корпус (ген.-лт Р. Хольсте с 19.04)",
+   "name_orig": "XXXXI. Panzerkorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-15",
+     "parent": "de_12a",
+     "source": "LEX XXXXI (с 15.04 штаб в лесном лагере Хоэнферхезар у Бранденбурга; передан 12 А на Эльба-Хафель-канале)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Штаб эвакуирован из Пиллау 6–9.04. Группа Хольсте (див. группа Хаке, 1-я противотанковая бригада «Гитлерюгенд», истребительная бригада «Герман Геринг», разведбат 115) сосредоточена у Нойруппина и сев.-зап. Хафельберга против 47 А (Науэн–Кетцин); части 199 пд и резервная дивизия «Гамбург» — позади. 26.04 отвоевал район сосредоточения южнее Хафельлендишес-Лух; 27.04 удар на Берлин стал иллюзорным — прикрытие фланга и тыла 12 А; 1.05 прорыв на Кириц, вечером штаб расформирован (ушла див. группа Гаудеккер). Gliederung 30.04 (LEX): див. группа фон Хаке, див. z.b.V. (Гаудеккер / V-Waffen), ПТ-бригада HJ, истр. бригада HG, PzAufklAbt 115, части 199 пд, рез. див. «Гамбург», рез. див. Мейер, тд «Клаузевиц» (остатки).",
+   "in_registry": true
+  },
+  {
+   "id": "de_vonhake",
+   "name_ru": "дивизионная группа «фон Хаке» (полк. Ф. Хаке)",
+   "name_orig": "Divisionsgruppe von Hake",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-26",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 26.04/30.04"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": null,
+   "in_registry": true
+  },
+  {
+   "id": "de_vwaffen",
+   "name_ru": "дивизия особого назначения «Гаудеккер» (дивизия ФАУ-оружия)",
+   "name_orig": "Division z.b.V. Gaudecker (V-Waffen)",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-30",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 30.04 (1.05 ушла, оголив левый фланг)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": null,
+   "in_registry": true
+  },
+  {
+   "id": "de_199id",
+   "name_ru": "199-я пехотная дивизия (части) (ген.-лт Х. Луц)",
+   "name_orig": "199. Infanterie-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-30",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 30.04 (части); LEX 12 Armee 30.04 (армейское подчинение)"
+    }
+   ],
+   "source": "LEX; DW; RA15",
+   "reliability": "B",
+   "note": "Из Норвегии через Данию (РУ ГШ 17.04: «в переброске из Норвегии в Германию»; 4.05 всё ещё числит в Дании); в конце апреля в Бранденбург; плен у Хафельберга и в Бранденбурге.",
+   "in_registry": true
+  },
+  {
+   "id": "de_pzjagd_hj",
+   "name_ru": "1-я противотанковая бригада «Гитлерюгенд» (обербаннфюрер Керн)",
+   "name_orig": "1. Panzervernichtungs-Brigade „Hitlerjugend“",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-26",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 26.04"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": null,
+   "in_registry": false
+  },
+  {
+   "id": "de_pzjagd_hg",
+   "name_ru": "истребительно-противотанковая бригада «Герман Геринг»",
+   "name_orig": "Panzer-Jagd-Brigade „Hermann Göring“",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-26",
+     "parent": "de_xxxxi",
+     "source": "LEX XXXXI 26.04"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": null,
+   "in_registry": false
+  },
+  {
+   "id": "de_xxxxviii",
+   "name_ru": "XXXXVIII танковый корпус (ген. танк. войск М. фон Эдельсхайм; с 3.05 ген.-лт В. Хагеман)",
+   "name_orig": "XXXXVIII. Panzerkorps",
+   "echelon": "corps",
+   "type": "hq",
+   "parent_by_date": [
+    {
+     "date": "1945-04-10",
+     "parent": "de_12a",
+     "source": "LEX XXXXVIII (30.03 выведен из-под Герлица в 12 А, 10.04 сбор у Ризы, 12.04 принял участок Галле — Риза)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Задача: оборона линии Эльба—Мульде с удержанием Галле и Лейпцига против американцев, прикрытие южного фланга армии у Дессау. Gliederung 16.04 (LEX): 14-я зенитная дивизия; БГ «Галле» (боевой комендант, 8 батальонов и зенитные батареи); БГ «Лейпциг» (8 батальонов фольксштурма, запасной батальон, автотранспортная запасная часть); БГ «Торгау», «Риза», «Герман», «Шерер», батальон «Шильдау». 19.04 пал Галле, 20.04 Лейпциг. С 25.04 боеспособные части на север за Эльбу; оборона Эльбы между Виттенбергом и Дессау; 26.04 оставлен плацдарм Косвиг; 28.04 линия Претцин — Линдау — Кракау — Бергфриден — Грохевиц — Коббельсдорф — Гр. Марценс; 3.05 — Цербен — Гросвустервиц; 4.05 на плацдарм Гентин; переправа у Ферхланда.",
+   "in_registry": true
+  },
+  {
+   "id": "de_14flak",
+   "name_ru": "14-я зенитная дивизия (ген.-м. А. Герлах)",
+   "name_orig": "14. Flak-Division",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxxviii",
+     "source": "LEX XXXXVIII 16.04 (единственное дивизионное соединение корпуса); DW 14. Flak-Div. (16.04 приказ возглавить зенитные силы в районе армии Венка)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Орудия в основном стационарные; полк 90 в Лейпциге до 20.04, полк 140 передан 23 зд и уничтожен южнее Берлина; штаб с 25.04 в Людвигслусте. Не включена в реестр (ПВО).",
+   "in_registry": false
+  },
+  {
+   "id": "de_243stug",
+   "name_ru": "243-я бригада штурмовых орудий (капитан Х. Рюбиг)",
+   "name_orig": "Sturmgeschütz-Brigade 243",
+   "echelon": "division",
+   "type": "stug",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_xxxxviii",
+     "source": "DW 12. Armee (XXXXVIII тк)"
+    }
+   ],
+   "source": "DW; TSAMO",
+   "reliability": "B",
+   "note": "ЦАМО 23.04: «243 бр ШО» южн. и юго-зап. Берлина. В реестре отсутствует.",
+   "in_registry": false
+  },
+  {
+   "id": "de_freikorps_ah",
+   "name_ru": "добровольческий корпус «Адольф Гитлер»",
+   "name_orig": "Freikorps „Adolf Hitler“",
+   "echelon": "division",
+   "type": "kg",
+   "parent_by_date": [
+    {
+     "date": "1945-04-16",
+     "parent": "de_12a",
+     "source": "DW 12. Armee (Gellermann S.195)"
+    }
+   ],
+   "source": "DW; RW",
+   "reliability": "C",
+   "note": "В армейском подчинении; состав и численность не установлены.",
+   "in_registry": false
+  },
+  {
+   "id": "de_potsdam",
+   "name_ru": "пехотная дивизия «Потсдам» (полк. рез. Э. Лоренц)",
+   "name_orig": "Infanterie-Division „Potsdam“",
+   "echelon": "division",
+   "type": "div",
+   "parent_by_date": [
+    {
+     "date": "1945-04-04",
+     "parent": "de_12a",
+     "source": "LEX (4.04 в распоряжении 12 А, Дёбериц)"
+    },
+    {
+     "date": "1945-04-08",
+     "parent": "de_11a",
+     "source": "LEX (8.04: 11 А, Гарц)"
+    }
+   ],
+   "source": "LEX; DW",
+   "reliability": "B",
+   "note": "Из остатков 85 пд; переименована 8.04; с 8.04 в Гарц (участок Вернигероде — Кведлинбург), вводилась по частям по мере прибытия; КП 12–17.04 Тресебург, затем Бланкенбург; 20.04 распущена. Грп «Потсдам» 2 и сапёрный батальон на западе не воевали — действовали с «Хуттен» в Вост. Германии; часть фузилёрного батальона — в «Шарнхорст». В реестре (LT_HALBE) как соединение 12 А на Хальбе — фактически к 20.04 не существовала.",
+   "in_registry": true
+  }
+ ],
+ "strength": [
+  {
+   "formation": "de_hgr_weichsel",
+   "date": "1945-04-01",
+   "personnel": 185975,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.607 (BA-MA RH 19 XV/9b)",
+   "reliability": "A",
+   "note": "Tagesstärke; Gefechtsstärke 126 602; Kampfstärke 104 162; больных/раненых за 8 недель 21 946. 226 соединений + 92 части усиления. Оценка артиллерии ~10 400 орудий и миномётов (S.613, по Воробьёву) — ненадёжна"
+  },
+  {
+   "formation": "de_hgr_weichsel",
+   "date": "1945-04-13",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.613 (Lakowski, Seelow 1945, S.69)",
+   "reliability": "A",
+   "note": "827 танков и штурмовых орудий, из них 754 исправных (поле tanks не делится по типам)"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-01",
+   "personnel": 129151,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.607, таблица (разность: итог 185 975 минус 3 ТА)",
+   "reliability": "A",
+   "note": "Tagesstärke 129 151 (Verbände ≈90 000 + Fecht-Truppe 39 151); Gefechtsstärke 93 178; Kampfstärke 74 703. В тексте S.616: «общая численность ~190 000, Kampfstärke 93 178» — Lakowski смешивает Gefechts- и Kampfstärke"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-13",
+   "personnel": null,
+   "tanks": 512,
+   "stug": null,
+   "guns": 2625,
+   "source": "DRZW S.616",
+   "reliability": "A",
+   "note": "512 исправных танков и штурмовых орудий из 754 по ГА; артиллерия 658 батарей / 2 625 стволов; 23 зд (мот.) — 32 тяжёлые батареи; 4-я авиадивизия ~300 самолётов"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-07",
+   "personnel": null,
+   "tanks": 482,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.614–615, табл. «Panzer- und Sturmgeschützlage H.Gr. Weichsel 7.4.1945» (BA-MA RH 19 XV/9a)",
+   "reliability": "A",
+   "note": "Итог по 9 А: 482 исправных (a), 34 в краткосрочном ремонте (b), 43 в долгосрочном (c); OCR таблицы по дивизиям не читается — см. berlin-1945-seelow-divisions.json (13.04 по Исаеву, NARA T311 R171)"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-07",
+   "personnel": null,
+   "tanks": 444,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.616 прим. 296 (Besprechungsnotiz 7.4.1945, BA-MA RH 19 XV/9a Bl.119)",
+   "reliability": "A",
+   "note": "444 исправных бронемашины у 9 А по совещанию Ia ГА с Ia армий; на том же совещании 3 ТА — 197"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-01",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": 1544,
+   "source": "DRZW S.606, схема Stoart H.Gr. Weichsel Nr. 580/45 (BA-MA RH 19 XV/K 45)",
+   "reliability": "A",
+   "note": "391 батарея (200 лёгких + 73 тяжёлых + 18 горных + 100 зенитных) = 1 544 ствола + 119 залповых установок. По корпусам: CI ак 146 бат./483 ств. + 38 залп.; XI тк СС 112/398; V гск СС 48/218; (ещё одна группа 121 бат./473 ств. — OCR, вероятно LVI тк)"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-01",
+   "personnel": 51406,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.616",
+   "reliability": "A",
+   "note": "Tagesstärke 51 406, Gefechtsstärke 27 595. Таблица S.607 даёт разностью 56 824 / 33 424 / 29 459 (Tages-/Gefechts-/Kampfstärke) — расхождение внутри DRZW; S.649: «общая численность 105 000» (Gesamtstärke с тылами)"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-07",
+   "personnel": null,
+   "tanks": 244,
+   "stug": null,
+   "guns": 1850,
+   "source": "DRZW S.649 (прим. 397: BA-MA RH 19 XV/9a Bl.140)",
+   "reliability": "A",
+   "note": "244 танка и штурмовых орудия, 220 исправных; 1 850 орудий и миномётов; поддержка II зенитного корпуса, 27 зд, зенитной группы «Герхард». Таблица 7.04: 215 исправных / 4 / 19, Свинемюнде 10 Jagdpanzer"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-13",
+   "personnel": null,
+   "tanks": 232,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.616",
+   "reliability": "A",
+   "note": "232 исправных + 18 в ремонте + 5 в пути + 10 Jagdpanzer. Ziemke: 242; de-wiki Stettin-Rostocker Op.: ~11 дивизий, ~220 танков; de-wiki Schlacht um Berlin: артиллерии нет, ~600 зениток (ок. 20.04)"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-01",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.606 схема Stoart",
+   "reliability": "A",
+   "note": "XXXII ак: 42 батареи (178 с предполагаемыми) / 160 (614) стволов; корпус «Одер»: 32 (129) бат. / 120 (453) ств.; XXXXVI тк: 63 бат. / 225 ств.; III тк СС: 86 батарей; Свинемюнде: 30 батарей / 101 ствол (OCR; числа в скобках — оценка Ic по противнику? — проверить по оригиналу)"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-12",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "RA15 №10 (справка РО 2 БФ, ЦАМО ф.237 оп.2394 д.1309 л.124)",
+   "reliability": "B",
+   "note": "Советская оценка на 70-км участке Берг — Штеттин — Шведт: в первой линии 1 пд (281), див. группа «Шведт», БГ «Кройц», 4 отд. полка, 8 спецбатальонов — до 31 батальона; усиление: 503 тб, 8-я ПТ бригада, 3 дивизиона VAK 406, 4 зенитных полка; резерв: 22 тд(?) у Пазевалька, 15 пд СС (лат.) сев.-зап. Штеттина, до 2 пд на формировании у Пенцлина"
+  },
+  {
+   "formation": "de_hgr_mitte",
+   "date": "1945-04-05",
+   "personnel": null,
+   "tanks": 306,
+   "stug": 419,
+   "guns": null,
+   "source": "PZW (Panzerlage 5.4.45, ЦАМО ф.500 оп.12450 д.183)",
+   "reliability": "A",
+   "note": "Исправные по ГА «Центр»: Pz III 2, Pz IV 71, Pz IV/70 108, Panther 125 (=306 «танков»); StuG III 171, StuG IV 24, StuH 14, Jagdpanzer 38 170, Jagdpanther 3, Sturmpanzer/Nashorn 37 (=419); всего (с ремонтом) танков 476, ШО/ИПТ 672; ПТ пушек 75-мм 394, 88-мм 225. Без разбивки по армиям (4 ТА, 17 А, 1 ТА)"
+  },
+  {
+   "formation": "de_hgr_weichsel",
+   "date": "1945-04-05",
+   "personnel": null,
+   "tanks": 170,
+   "stug": 393,
+   "guns": null,
+   "source": "PZW",
+   "reliability": "A",
+   "note": "Исправные: Pz III 2, Pz IV 94, Panther 74 (=170); StuG III 166, StuG IV 20, StuH 29, Jagdpanzer 38 178 (=393); всего танков 210, ШО 449; трофейные танки 10/34; ПТ пушек 75-мм 404, 88-мм 121. Включает 9 А и 3 ТА"
+  },
+  {
+   "formation": "de_4pza",
+   "date": "1945-04-21",
+   "personnel": 50000,
+   "tanks": 300,
+   "stug": null,
+   "guns": 600,
+   "source": "DW Schlacht um Bautzen; EW Battle of Bautzen (инфобокс: 497 бронемашин)",
+   "reliability": "B",
+   "note": "Ударная группировка под Баутценом (тк «Великая Германия» + LVII тк: 20 тд, «ГГ» 1, «Бранденбург», 17 пд, кгр 545 нгд): ~50 000 чел., до 300 танков (в основном Pz IV, немного Panther), ~450 бронемашин всего (с StuG III/IV, Jagdpanzer IV/38, Sd.Kfz. 234), 600 орудий"
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-03-25",
+   "personnel": 14967,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "LEX 10 SS",
+   "reliability": "B",
+   "note": "Иststärke после переформирования по штату Panzer-Division 45, «необычайно сильное тяжёлое вооружение»"
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-04-22",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (ЖБД 1 УФ, разведсводки 112–113)",
+   "reliability": "B",
+   "note": "потеряла 50% личного состава и техники за 7 дней"
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-16",
+   "personnel": null,
+   "tanks": 50,
+   "stug": 20,
+   "guns": null,
+   "source": "TSAMO (разведсводки 107–108 1 УФ)",
+   "reliability": "B",
+   "note": "до 50 танков, в артполку 20 штурмовых орудий, роты мотополков 70–80 чел.; 22.04 — потеряла 50% личного состава и почти всю матчасть"
+  },
+  {
+   "formation": "de_fbd",
+   "date": "1945-04-20",
+   "personnel": 6000,
+   "tanks": 35,
+   "stug": null,
+   "guns": 24,
+   "source": "TSAMO (разведсводка 111 1 УФ, 20.04)",
+   "reliability": "B",
+   "note": "с приданными до 6 000 чел., в тп до 35 танков, в артполку 24 орудия"
+  },
+  {
+   "formation": "de_344id",
+   "date": "1945-04-20",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": 27,
+   "source": "TSAMO (разведсводка 111)",
+   "reliability": "B",
+   "note": "в полках по 800–900 активных штыков, артполк 27 орудий; 22.04 потери до 40%"
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-04-20",
+   "personnel": null,
+   "tanks": 70,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (разведсводка 111; 22.04 по пленным до 100)",
+   "reliability": "B",
+   "note": "до 70 танков в тп (20.04); до 100 танков (22.04, пленные)"
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-04-17",
+   "personnel": null,
+   "tanks": 15,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (разведсводки 107–108)",
+   "reliability": "B",
+   "note": "пополнена до штата, 15 танков; 18.04: 2 мп — потери до 50%"
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-05-02",
+   "personnel": null,
+   "tanks": 50,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (разведсводка 123, пленные)",
+   "reliability": "B",
+   "note": "танковый полк до 50 Pz III/IV, мотополки двухбатальонные, роты 80–90 чел. (на 30.04 после смены у Баутцена)"
+  },
+  {
+   "formation": "de_275id",
+   "date": "1945-04-17",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (разведсводка 109)",
+   "reliability": "B",
+   "note": "роты 80–90 чел. (17.04, после переброски из Губена к Котбусу на автомашинах)"
+  },
+  {
+   "formation": "de_36ss",
+   "date": "1945-02-20",
+   "personnel": 6000,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DW 36. SS (инфобокс; Ingrao 2006)",
+   "reliability": "C",
+   "note": "~6 000 чел. при формировании (включая армейские части: грп 1244, сап. бригада 687, s.PzJgAbt 681, PzAbt Stahnsdorf I); 25.04 во 2-м полку насчитали 36 боеспособных; из советского плена вернулось 634"
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-04-23",
+   "personnel": 55000,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "WH (по Le Tissier; де-wiki 12. Armee — «eher schwach bewaffnet»)",
+   "reliability": "C",
+   "note": "«не более 5,5 дивизий, ~55 000» против плана 10 дивизий / 200 000; немного самоходок, ~40 БТР, стационарная артиллерия у мостов и городов. ru-wiki: ~35 000 при формировании (без ссылки); по Эдельсхайму за Эльбу перешло 90–100 000 (Тике 2005 с.581; с 9 А и беженцами)"
+  },
+  {
+   "formation": "de_koerner",
+   "date": "1945-04-04",
+   "personnel": 10000,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DW (Hübner 2016 S.247)",
+   "reliability": "B",
+   "note": "~10 000 чел., из них ~7 500 RAD; 3 грп, фузилёрный батальон, артполк, сапёрный батальон"
+  },
+  {
+   "formation": "de_schill",
+   "date": "1945-04-20",
+   "personnel": 9000,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "LEX (8 000–10 000); DW (~10 000)",
+   "reliability": "B",
+   "note": "только грп 1, 2 и фузилёрный батальон — по штату; остальные части слабее или недоформированы; StuG-Brig. 394 и штурмовая бригада «Шилль»"
+  },
+  {
+   "formation": "de_jahn",
+   "date": "1945-03-31",
+   "personnel": 7500,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DW (≈7 500 из RAD + части 251 пд)",
+   "reliability": "B",
+   "note": "численность RAD-контингента; всего не установлено"
+  },
+  {
+   "formation": "de_schlageter",
+   "date": "1945-03-31",
+   "personnel": 12000,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DW (Soll ~12 000)",
+   "reliability": "C",
+   "note": "штатная численность; фактическая не установлена"
+  },
+  {
+   "formation": "de_clausewitz",
+   "date": "1945-04-20",
+   "personnel": null,
+   "tanks": 11,
+   "stug": null,
+   "guns": 0,
+   "source": "DRZW_ZIMM S.445 (отчёт Унрайна, BA-MA ZA 1/700)",
+   "reliability": "A",
+   "note": "10–12 танков и штурмовых орудий, немного разведчиков, несколько БТР, ~20 грузовиков; артиллерии не получила вовсе; после потери горючего — 10 офицеров и ~60 чел. мелкими группами к 12 А. До того: Pz IV, Panther, Tiger (4 роты тп 106), 10 Jagdpanzer IV"
+  },
+  {
+   "formation": "de_scharnhorst",
+   "date": "1945-04-25",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (разведсводка 116 1 УФ)",
+   "reliability": "B",
+   "note": "роты по 40–50 чел."
+  },
+  {
+   "formation": "de_18pzgd",
+   "date": "1945-04-25",
+   "personnel": null,
+   "tanks": 11,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (разведсводки 116, 118)",
+   "reliability": "B",
+   "note": "10–12 танков, роты 70–80 чел.; 30 мп на 26.04 — до 1 250 чел."
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-24",
+   "personnel": 80000,
+   "tanks": 79,
+   "stug": null,
+   "guns": 1000,
+   "source": "DW Halbe (welt.de); RW Хальбский котёл (Le Tissier; Beevor)",
+   "reliability": "B",
+   "note": "окружённая группировка (9 А + части 4 ТА): ~80 000 чел., ~1 000 орудий и миномётов, 79 танков и САУ (в т. ч. «Тигры»), 150–200 бронеавтомобилей. ЦАМО: 45 000 (29.04), 80 000 общая / 50 000 боевой состав (28.04, адъютант Буссе), 10–15 тыс. (пленный полковник Вих, 27.04)"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-05-01",
+   "personnel": 30000,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.671",
+   "reliability": "A",
+   "note": "вышло к 12 А ~30 000 чел., в т. ч. 5 000 беженцев (оценки в литературе 20 000–40 000); погибло ~60 000, пленено 120 000 (с гражданскими?), в т. ч. 7 генералов. de-wiki Halbe: ~25 000 солдат и 5 000 гражданских у Хенникендорфа и Белица 1.05; Ziemke: 30 000"
+  },
+  {
+   "formation": "de_aa_spree",
+   "date": "1945-04-28",
+   "personnel": 17500,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DW Schlacht um Berlin (прим. 71)",
+   "reliability": "B",
+   "note": "15 000–20 000 солдат из Потсдама вышли к 12 А (с остатками 9 А)"
+  },
+  {
+   "formation": "de_3marined",
+   "date": "1945-04-01",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "DW",
+   "reliability": "C",
+   "note": "численность не установлена; полки MIR 8, 9, 10, артполк 234 (дополнен в Померании)"
+  },
+  {
+   "formation": "de_1marined",
+   "date": "1945-04-24",
+   "personnel": null,
+   "tanks": 14,
+   "stug": null,
+   "guns": null,
+   "source": "DRZW S.654 (ночь на 25.04, плацдарм у Шмёлльна)",
+   "reliability": "A",
+   "note": "плацдарменная позиция у Шмёлльна: 800 чел. и 14 «Хетцеров» (Jagdpanzer 38) — разбита слабыми силами противника (принадлежность гарнизона к 1-й морской дивизии — предположение)"
+  },
+  {
+   "formation": "de_4pza",
+   "date": "1945-04-16",
+   "personnel": null,
+   "tanks": null,
+   "stug": null,
+   "guns": null,
+   "source": "TSAMO (справка о группировке 1 УФ на 15.04, прил. 8)",
+   "reliability": "B",
+   "note": "перед 1 УФ (410 км): 13 пд, мд «Бранденбург», 21 и 20 тд, тд «ГГ» (в переброске), 17 и 10 зд, 4 бригады ШО, 3 тибр, 78 отд. батальонов (47 фольксштурма), 6 отд. арт. полков, 9 арт. дивизионов, 7 птд, 7 зен. дивизионов, 17 разных полков"
+  }
+ ],
+ "positions": [
+  {
+   "formation": "de_6id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "между Бобром и Нейсе (правый фланг 4 ТА, сев. Лаубана)",
+   "lng": 15.25,
+   "lat": 51.25,
+   "approx_km": 15,
+   "source": "DRZW S.645",
+   "reliability": "A",
+   "note": "район сбора 6 и 17 пд; точные полосы не указаны"
+  },
+  {
+   "formation": "de_17id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "между Бобром и Нейсе (правый фланг 4 ТА)",
+   "lng": 15.2,
+   "lat": 51.2,
+   "approx_km": 15,
+   "source": "DRZW S.645; LEX (апрель: Герлиц)",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_17id",
+   "date": "1945-04-21",
+   "time": null,
+   "place": "Ниски — Вайсенберг (наступление с востока)",
+   "lng": 14.75,
+   "lat": 51.25,
+   "approx_km": 6,
+   "source": "EW Battle of Bautzen (Komornicki; Grzelak)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_17id",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "Диза (95 пп, переброшен из Гольдберга 21.04)",
+   "lng": 14.98,
+   "lat": 51.33,
+   "approx_km": 5,
+   "source": "TSAMO (разведсводка 113)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_17id",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "у Баутцена",
+   "lng": 14.45,
+   "lat": 51.2,
+   "approx_km": 8,
+   "source": "TSAMO (разведсводка 117: 21 тд, «ГГ», 17 и 18 пд, 20 тд у Баутцена)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_17id",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "сев. и сев.-зап. Дрездена — Ниски",
+   "lng": 14.0,
+   "lat": 51.25,
+   "approx_km": 20,
+   "source": "TSAMO (разведсводка 123)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_72id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "район Герлица",
+   "lng": 14.98,
+   "lat": 51.15,
+   "approx_km": 8,
+   "source": "DRZW S.645",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_72id",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "124 пп — перед 1 УФ (участок Шпремберг — Герлиц)",
+   "lng": 14.7,
+   "lat": 51.4,
+   "approx_km": 20,
+   "source": "TSAMO (разведсводка 111)",
+   "reliability": "C",
+   "note": "полк назван без места"
+  },
+  {
+   "formation": "de_72id",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "сев. и сев.-зап. Дрездена",
+   "lng": 13.75,
+   "lat": 51.25,
+   "approx_km": 15,
+   "source": "TSAMO (разведсводка 123)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_lvii",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "участок Нейсе от Герлица до Гросс-Гастрозе (Форст)",
+   "lng": 14.68,
+   "lat": 51.6,
+   "approx_km": 15,
+   "source": "DRZW S.645",
+   "reliability": "A",
+   "note": "36 СС, 342 пд, 545 нгд, «Бранденбург», z.b.V. 615"
+  },
+  {
+   "formation": "de_36ss",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Нейсе южнее Форста (участок LVII тк); действует на Котбус",
+   "lng": 14.63,
+   "lat": 51.68,
+   "approx_km": 8,
+   "source": "DRZW S.645; TSAMO (справка 15.04)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_36ss",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "прикрывает отход окружённых (котёл Хальбе)",
+   "lng": 13.8,
+   "lat": 52.08,
+   "approx_km": 10,
+   "source": "TSAMO (разведсводка 116)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_342id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Нейсе между Губеном и Форстом",
+   "lng": 14.68,
+   "lat": 51.85,
+   "approx_km": 8,
+   "source": "DW 342. ID (Tessin Bd.9 S.226); DRZW S.645",
+   "reliability": "B",
+   "note": "разгромлена 3 гв. А в первый день; от артподготовки потеряла до 50% (ЦАМО)"
+  },
+  {
+   "formation": "de_545vgd",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Нейсе, участок LVII тк (Мускау — Форст)",
+   "lng": 14.68,
+   "lat": 51.55,
+   "approx_km": 10,
+   "source": "DRZW S.645",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_545vgd",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "остатки отходят на запад (разгромлена)",
+   "lng": 14.3,
+   "lat": 51.5,
+   "approx_km": 20,
+   "source": "TSAMO (разведсводки 112–113)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-04-15",
+   "time": null,
+   "place": "район Вайсвассер на Нейсе (с начала марта)",
+   "lng": 14.64,
+   "lat": 51.5,
+   "approx_km": 6,
+   "source": "LEX PGD Brandenburg",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "окружена в районе Ротенбург — Пенциг (сев. Герлица)",
+   "lng": 15.0,
+   "lat": 51.3,
+   "approx_km": 6,
+   "source": "LEX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-04-18",
+   "time": null,
+   "place": "отходит на Баутцен (2 мп — потери до 50%)",
+   "lng": 14.6,
+   "lat": 51.3,
+   "approx_km": 12,
+   "source": "TSAMO (разведсводка 109)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "прорыв на Лёбау",
+   "lng": 14.67,
+   "lat": 51.1,
+   "approx_km": 6,
+   "source": "LEX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "Вайсенберг (окружила 294 сд)",
+   "lng": 14.66,
+   "lat": 51.2,
+   "approx_km": 5,
+   "source": "EW Battle of Bautzen",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "у Гроссенхайна (сев. Дрездена) с отд. полицейскими школами и 24 полиц. полком СС",
+   "lng": 13.53,
+   "lat": 51.29,
+   "approx_km": 10,
+   "source": "TSAMO (разведсводка 122)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_brandenburg",
+   "date": "1945-05-03",
+   "time": null,
+   "place": "по ж. д. в район Моравска-Остравы",
+   "lng": 18.28,
+   "lat": 49.83,
+   "approx_km": 20,
+   "source": "LEX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-14",
+   "time": null,
+   "place": "резерв южнее Котбуса; затем район Вайсвассер — Шпремберг",
+   "lng": 14.5,
+   "lat": 51.6,
+   "approx_km": 10,
+   "source": "DRZW S.645–646",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "контратаки Домсдорф — Зиммерсдорф (сев.-зап. Форста)",
+   "lng": 14.55,
+   "lat": 51.72,
+   "approx_km": 4,
+   "source": "DRZW S.646",
+   "reliability": "A",
+   "note": "безуспешны"
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-18",
+   "time": null,
+   "place": "отход к Шпревальду, прикрытие у Люббена",
+   "lng": 13.9,
+   "lat": 51.94,
+   "approx_km": 8,
+   "source": "DW 21. PzD (арьергард, оборона вокруг Люббена)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "юго-зап. окраина Берлина (так de-wiki)",
+   "lng": 13.3,
+   "lat": 52.4,
+   "approx_km": 15,
+   "source": "DW 21. PzD",
+   "reliability": "C",
+   "note": "de-wiki: марш на Хальбе 18–20.04 и выход к юго-зап. окраине Берлина 20.04 — сомнительно, противоречит ЦАМО (21 тд в 5 ак у Котбуса)"
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "в составе V ак (с 342, 275, 214 пд, 70 сап. бр), потеряла 50% состава",
+   "lng": 14.1,
+   "lat": 51.85,
+   "approx_km": 15,
+   "source": "TSAMO (разведсводка 113)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "Бестензее — Гребендорф, затем в котёл Хальбе",
+   "lng": 13.65,
+   "lat": 52.24,
+   "approx_km": 6,
+   "source": "DW 21. PzD",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "прикрытие на северо-запад; затем «отклапывание» на Хальбе",
+   "lng": 13.7,
+   "lat": 52.15,
+   "approx_km": 8,
+   "source": "DRZW S.668–669 (план Буссе)",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_21pzd",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "Хальбе — прорыв (острие с XI тк СС)",
+   "lng": 13.7,
+   "lat": 52.11,
+   "approx_km": 4,
+   "source": "LEX V. AK; DW",
+   "reliability": "B",
+   "note": "командир ген.-лт Маркс с группой Буссе дошёл до Белица; командир пленён 1.05 по ЦАМО"
+  },
+  {
+   "formation": "de_fbd",
+   "date": "1945-04-07",
+   "time": null,
+   "place": "Герлиц (переброшена 6–7.04)",
+   "lng": 14.98,
+   "lat": 51.15,
+   "approx_km": 5,
+   "source": "TSAMO (разведсводки 107–108)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_fbd",
+   "date": "1945-04-15",
+   "time": null,
+   "place": "вост. Шпремберга (в ночь на 15.04)",
+   "lng": 14.45,
+   "lat": 51.57,
+   "approx_km": 5,
+   "source": "TSAMO; DRZW S.645 (резерв у Шпремберга)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_fbd",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "район Шпремберга (окружение; приказ деблокировать вместе с 10 тд СС)",
+   "lng": 14.38,
+   "lat": 51.57,
+   "approx_km": 6,
+   "source": "DRZW S.648",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_fbd",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "разгромлена, остатки отходят на запад",
+   "lng": 14.1,
+   "lat": 51.55,
+   "approx_km": 15,
+   "source": "TSAMO (разведсводки 112–113)",
+   "reliability": "B",
+   "note": "котёл Кауше (Tessin)"
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-04-15",
+   "time": null,
+   "place": "резерв у Лаубана (вост. Герлица — южнее Лаубана)",
+   "lng": 15.29,
+   "lat": 51.12,
+   "approx_km": 10,
+   "source": "DRZW S.645; LEX",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-04-17",
+   "time": null,
+   "place": "переброска к Баутцену, боевые части — к Шпрембергу (тылы остались в Баутцене)",
+   "lng": 14.4,
+   "lat": 51.45,
+   "approx_km": 15,
+   "source": "LEX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "окружена у Шпремберга",
+   "lng": 14.38,
+   "lat": 51.57,
+   "approx_km": 5,
+   "source": "LEX; DRZW S.648",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "прорыв на Зенфтенберг; потеряла 50% состава",
+   "lng": 14.0,
+   "lat": 51.52,
+   "approx_km": 10,
+   "source": "LEX; TSAMO",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "южная группа прорыва из котла с 35 полиц. СС (20.00, у Штакова/автобан)",
+   "lng": 13.7,
+   "lat": 52.07,
+   "approx_km": 6,
+   "source": "DRZW S.669",
+   "reliability": "A",
+   "note": "часть сил дивизии в котле Хальбе; другая часть (по LEX) — котёл Кауше, затем Морицбург 3.05"
+  },
+  {
+   "formation": "de_10ss",
+   "date": "1945-05-03",
+   "time": null,
+   "place": "Морицбург (последние бои), затем марш на Теплиц-Шёнау",
+   "lng": 13.68,
+   "lat": 51.16,
+   "approx_km": 5,
+   "source": "LEX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_344id",
+   "date": "1945-04-18",
+   "time": null,
+   "place": "по ж. д. к юго-зап. Шпремберга",
+   "lng": 14.3,
+   "lat": 51.52,
+   "approx_km": 8,
+   "source": "TSAMO (разведсводка 111)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_344id",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "Дребкау (группа Йоллассе, удар на север)",
+   "lng": 14.22,
+   "lat": 51.65,
+   "approx_km": 6,
+   "source": "DW 344. ID",
+   "reliability": "C",
+   "note": "без даты в источнике"
+  },
+  {
+   "formation": "de_344id",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "котёл Кауше (окружена, пленена)",
+   "lng": 14.23,
+   "lat": 51.63,
+   "approx_km": 6,
+   "source": "DW 344. ID; TSAMO (потери до 40%)",
+   "reliability": "B",
+   "note": "дата приблизительна"
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-04-15",
+   "time": null,
+   "place": "Ландскроне южнее Герлица (с 22.03)",
+   "lng": 14.95,
+   "lat": 51.12,
+   "approx_km": 6,
+   "source": "LEX 20 PD",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-04-19",
+   "time": null,
+   "place": "приказ: удар с «ГГ» на Веркирх (закрыть брешь)",
+   "lng": 14.78,
+   "lat": 51.33,
+   "approx_km": 8,
+   "source": "DRZW S.648 (FS H.Gr. Mitte 19.04, BA-MA RL 7/544 Bl.123)",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-04-21",
+   "time": null,
+   "place": "наступление на Баутцен с запада",
+   "lng": 14.3,
+   "lat": 51.18,
+   "approx_km": 6,
+   "source": "EW Battle of Bautzen",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-04-23",
+   "time": null,
+   "place": "бой за Баутцен",
+   "lng": 14.42,
+   "lat": 51.18,
+   "approx_km": 4,
+   "source": "LEX 20 PD",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "часть сил юго-вост. Баутцена (дрезденское направление)",
+   "lng": 14.5,
+   "lat": 51.12,
+   "approx_km": 8,
+   "source": "TSAMO (разведсводки 115–116)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "новая ГКЛ Пульсниц — Кёнигсбрюк — Кляйннаундорф; отход к Оттендорф-Окрилла",
+   "lng": 13.95,
+   "lat": 51.22,
+   "approx_km": 8,
+   "source": "LEX 20 PD",
+   "reliability": "B",
+   "note": "дата приблизительна (после 26.04)"
+  },
+  {
+   "formation": "de_20pzd",
+   "date": "1945-05-03",
+   "time": null,
+   "place": "отход на Дрезден",
+   "lng": 13.74,
+   "lat": 51.08,
+   "approx_km": 8,
+   "source": "LEX 20 PD",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-04-14",
+   "time": null,
+   "place": "зап. Нейсе (у 17 А), 12.04 приказ о переходе в 4 ТА как резерв ГА",
+   "lng": 15.1,
+   "lat": 51.05,
+   "approx_km": 15,
+   "source": "TSAMO; DRZW S.646",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "переброшена к Герлицу",
+   "lng": 14.98,
+   "lat": 51.15,
+   "approx_km": 8,
+   "source": "TSAMO (разведсводки 107–108)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "атака на Баутцен с юго-запада, переправа через Шпрее зап. города; разгром 5 пд ВП сев. Баутцена",
+   "lng": 14.4,
+   "lat": 51.2,
+   "approx_km": 6,
+   "source": "DW Schlacht um Bautzen",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-04-23",
+   "time": null,
+   "place": "главные силы в лесу у Лозы; на Кёнигсварту, Хойерсверду",
+   "lng": 14.4,
+   "lat": 51.38,
+   "approx_km": 6,
+   "source": "EW Battle of Bautzen",
+   "reliability": "B",
+   "note": "вся ударная группа"
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-04-27",
+   "time": null,
+   "place": "Кёнигсбрюк (разгром 1 пд ВП)",
+   "lng": 13.9,
+   "lat": 51.27,
+   "approx_km": 6,
+   "source": "DW Schlacht um Bautzen (в два дня после 26.04)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-04-30",
+   "time": null,
+   "place": "сменена у Баутцена",
+   "lng": 14.42,
+   "lat": 51.18,
+   "approx_km": 8,
+   "source": "TSAMO (разведсводка 123)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hg",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "сев. и сев.-зап. Дрездена, Ниски",
+   "lng": 13.8,
+   "lat": 51.2,
+   "approx_km": 20,
+   "source": "TSAMO (разведсводка 123)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_v_ak",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "северный фланг 4 ТА: Нейсе от Форста до стыка с 9 А у Вельмица",
+   "lng": 14.7,
+   "lat": 51.9,
+   "approx_km": 10,
+   "source": "DRZW S.645; LEX",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_v_ak",
+   "date": "1945-04-19",
+   "time": null,
+   "place": "оттеснён на север в Шпревальд",
+   "lng": 14.0,
+   "lat": 51.95,
+   "approx_km": 12,
+   "source": "LEX V. AK; DW Halbe",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_v_ak",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "южная часть котла (Шлепциг — Краусник), ночной удар на Барут",
+   "lng": 13.85,
+   "lat": 52.03,
+   "approx_km": 8,
+   "source": "DRZW S.669 (Morgenmeldung 9. Armee 26.04)",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_v_ak",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "прорыв: южное прикрытие фланга (Хальбе — Барут — Цоссен)",
+   "lng": 13.6,
+   "lat": 52.1,
+   "approx_km": 8,
+   "source": "LEX V. AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_v_ak",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "у Белица — соединение с XX ак",
+   "lng": 12.97,
+   "lat": 52.24,
+   "approx_km": 6,
+   "source": "LEX V. AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_275id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Губен (участок V ак)",
+   "lng": 14.72,
+   "lat": 51.95,
+   "approx_km": 6,
+   "source": "LEX 275 ID (март: V ак, Губен); DRZW",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_275id",
+   "date": "1945-04-17",
+   "time": null,
+   "place": "на автомашинах из Губена к Котбусу",
+   "lng": 14.33,
+   "lat": 51.76,
+   "approx_km": 6,
+   "source": "TSAMO (разведсводка 109)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_275id",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "в окружении (ЖБД 33 А: 337 пд, 286 пд, 35 полиц., 275 пд)",
+   "lng": 14.0,
+   "lat": 52.1,
+   "approx_km": 15,
+   "source": "TSAMO (ЖБД 33 А)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_35ss_pol",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "участок у Губена (с 17.03)",
+   "lng": 14.72,
+   "lat": 51.93,
+   "approx_km": 6,
+   "source": "DW 35. SS; DRZW S.645 (V ак)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_35ss_pol",
+   "date": "1945-04-21",
+   "time": null,
+   "place": "две боевые группы: одна на Нейсе, другая атакует Люббен (полк 91 уничтожен)",
+   "lng": 13.9,
+   "lat": 51.94,
+   "approx_km": 8,
+   "source": "DW 35. SS (Michaelis)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_35ss_pol",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "южная группа прорыва (с 10 тд СС) на Штаков, 20.00",
+   "lng": 13.7,
+   "lat": 52.07,
+   "approx_km": 6,
+   "source": "DRZW S.669",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_hg2",
+   "date": "1945-04-21",
+   "time": null,
+   "place": "не прибыла в район Баутцена (резерв ОКХ, Средняя Германия)",
+   "lng": 13.7,
+   "lat": 51.1,
+   "approx_km": 40,
+   "source": "DW Schlacht um Bautzen; DW FJ-PzGrenDiv 2",
+   "reliability": "C",
+   "note": null
+  },
+  {
+   "formation": "de_hg2",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "под Дрезденом (корпус «ГГ»)",
+   "lng": 13.74,
+   "lat": 51.05,
+   "approx_km": 15,
+   "source": "DW FJ-PzDiv 1 (корпус в начале мая у Дрездена)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_kg_moltke",
+   "date": "1945-04-19",
+   "time": null,
+   "place": "Луккау",
+   "lng": 13.71,
+   "lat": 51.86,
+   "approx_km": 3,
+   "source": "DRZW S.647",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_4pza",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "штаб армии из Кёнигсварты в Кёнигсбрюк (радиоразведка 1 УФ)",
+   "lng": 13.9,
+   "lat": 51.27,
+   "approx_km": 3,
+   "source": "TSAMO (разведсводка 111)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_gd_korps",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "штаб корпуса из Угиста в Лозу",
+   "lng": 14.4,
+   "lat": 51.38,
+   "approx_km": 3,
+   "source": "TSAMO (разведсводка 111)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_269id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Олау (XVII ак 17 А)",
+   "lng": 17.3,
+   "lat": 50.95,
+   "approx_km": 8,
+   "source": "LEX 269 ID (апрель)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_269id",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "у Гроссенхайна (сев. Дрездена)",
+   "lng": 13.53,
+   "lat": 51.29,
+   "approx_km": 8,
+   "source": "TSAMO (разведсводка 122); LEX (май: тк GD)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_20ss",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Силезия, в распоряжении 17 А (остатки)",
+   "lng": 17.0,
+   "lat": 50.5,
+   "approx_km": 40,
+   "source": "LEX 20 SS",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_31ss",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Силезия (XVII ак 17 А), район Герлица — Лаубана",
+   "lng": 15.2,
+   "lat": 51.1,
+   "approx_km": 25,
+   "source": "LEX 31 SS; DW",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Одер от о. Воллин до Хоэнзатена, ~170 км",
+   "lng": 14.35,
+   "lat": 53.3,
+   "approx_km": 40,
+   "source": "DRZW S.649",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_xxxii",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "между автобаном (Штеттин) и Нойварпом",
+   "lng": 14.4,
+   "lat": 53.45,
+   "approx_km": 15,
+   "source": "DRZW S.650",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_ledebur",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Цигенорт — Нойварп (северный фланг, побережье залива)",
+   "lng": 14.4,
+   "lat": 53.6,
+   "approx_km": 10,
+   "source": "DRZW S.650",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_549vgd",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "севернее Штеттина",
+   "lng": 14.55,
+   "lat": 53.5,
+   "approx_km": 8,
+   "source": "DW Stettin-Rostocker Op.",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_281id",
+   "date": "1945-04-12",
+   "time": null,
+   "place": "первая линия у Штеттина (единственная пд в 1-й линии по РО 2 БФ)",
+   "lng": 14.5,
+   "lat": 53.4,
+   "approx_km": 10,
+   "source": "RA15 №10",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_281id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "по обе стороны Штеттина",
+   "lng": 14.5,
+   "lat": 53.42,
+   "approx_km": 8,
+   "source": "DW Stettin-Rostocker Op.",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_281id",
+   "date": "1945-04-30",
+   "time": null,
+   "place": "остатки у Варена, слились с «Шлагетер»",
+   "lng": 12.68,
+   "lat": 53.52,
+   "approx_km": 8,
+   "source": "DW 281. ID; DW Schlageter",
+   "reliability": "B",
+   "note": "дата приблизительна (29.04–2.05)"
+  },
+  {
+   "formation": "de_festung_stettin",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "Штеттин (ночь на 25.04 — отход на линию до южной окраины города)",
+   "lng": 14.55,
+   "lat": 53.43,
+   "approx_km": 3,
+   "source": "DRZW S.654",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_festung_stettin",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "Штеттин взят 65 А",
+   "lng": 14.55,
+   "lat": 53.43,
+   "approx_km": 3,
+   "source": "DW Stettin-Rostocker Op.; RW",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_festung_stettin",
+   "date": "1945-04-27",
+   "time": null,
+   "place": "остатки гарнизона уничтожены у Анклама",
+   "lng": 13.69,
+   "lat": 53.86,
+   "approx_km": 5,
+   "source": "DW Stettin-Rostocker Op.",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_oder_korps",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "южнее Гарца — севернее автобана",
+   "lng": 14.35,
+   "lat": 53.25,
+   "approx_km": 10,
+   "source": "DRZW S.650",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_610id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "южнее Штеттина у Курова",
+   "lng": 14.47,
+   "lat": 53.33,
+   "approx_km": 5,
+   "source": "DW Korps Oder; DW Stettin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_wellmann",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "сев. Паргова — юж. Гарца",
+   "lng": 14.42,
+   "lat": 53.23,
+   "approx_km": 5,
+   "source": "DW Korps Oder",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_wellmann",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "разгромлена в плацдарме западнее Гарца",
+   "lng": 14.3,
+   "lat": 53.22,
+   "approx_km": 5,
+   "source": "DRZW S.654 (Tagesmeldung 24.04)",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_klossek",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "резерв у Хоэнлайе",
+   "lng": 14.3,
+   "lat": 53.3,
+   "approx_km": 5,
+   "source": "DW Korps Oder",
+   "reliability": "B",
+   "note": "Хоэнлайе — координаты приблизительны"
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Шведт — Гогенцоллерн-канал",
+   "lng": 14.25,
+   "lat": 53.0,
+   "approx_km": 12,
+   "source": "DRZW S.650",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-23",
+   "time": null,
+   "place": "принял участок Гарц — Штеттин",
+   "lng": 14.42,
+   "lat": 53.3,
+   "approx_km": 10,
+   "source": "DRZW S.653",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "линия Хоэн-Райнкендорф — Тантов (отсечная позиция)",
+   "lng": 14.33,
+   "lat": 53.27,
+   "approx_km": 5,
+   "source": "DRZW S.653",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "Фридрихсталь — Казеков — Бартин — Баттинсталь — Барнимслов — юж. окраина Штеттина",
+   "lng": 14.35,
+   "lat": 53.28,
+   "approx_km": 6,
+   "source": "DRZW S.654",
+   "reliability": "A",
+   "note": "ночь на 25.04"
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-27",
+   "time": null,
+   "place": "отход на Укер (ночь на 27.04); затем Фельдбергские озёра",
+   "lng": 13.75,
+   "lat": 53.45,
+   "approx_km": 15,
+   "source": "DRZW S.654; DW 1. Marine-ID",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxvi",
+   "date": "1945-04-29",
+   "time": null,
+   "place": "южнее Мюриц-зее (с «Шлагетер»)",
+   "lng": 12.7,
+   "lat": 53.4,
+   "approx_km": 12,
+   "source": "DW Schlageter",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_547vgd",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "вокруг Шведта",
+   "lng": 14.28,
+   "lat": 53.06,
+   "approx_km": 6,
+   "source": "DW Stettin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_547vgd",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "последние защитники Шведта ушли на Пархим",
+   "lng": 14.28,
+   "lat": 53.06,
+   "approx_km": 5,
+   "source": "DW Stettin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_1marined",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "юго-зап. Шведта до Хоэнзатена (южный фланг армии)",
+   "lng": 14.2,
+   "lat": 52.95,
+   "approx_km": 8,
+   "source": "DW 1. Marine-ID",
+   "reliability": "B",
+   "note": "батальон у Хоэнзатена на стыке с 9 А"
+  },
+  {
+   "formation": "de_1marined",
+   "date": "1945-04-22",
+   "time": null,
+   "place": "приказ закрыть брешь Тантов — Гарц (не выполнен; Казеков удержан ~1,5 суток)",
+   "lng": 14.33,
+   "lat": 53.25,
+   "approx_km": 6,
+   "source": "DW 1. Marine-ID",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_1marined",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "на марше в район Пенкун — Шторков — Шёнефельд — Веттерсхаген",
+   "lng": 14.24,
+   "lat": 53.3,
+   "approx_km": 6,
+   "source": "DRZW S.653",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_1marined",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "полки 2 и 4 оставляют Лютцлов — Воллин — Шмёлльн, отход к Укеру",
+   "lng": 14.1,
+   "lat": 53.35,
+   "approx_km": 6,
+   "source": "DW 1. Marine-ID",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_1marined",
+   "date": "1945-04-27",
+   "time": null,
+   "place": "Зеехаузен (с Ваффен-СС пытались удержать Укер-линию)",
+   "lng": 13.9,
+   "lat": 53.3,
+   "approx_km": 5,
+   "source": "DW 1. Marine-ID",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_1marined",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "Шверин (командир пленён британцами 2/3.05)",
+   "lng": 11.42,
+   "lat": 53.63,
+   "approx_km": 8,
+   "source": "DW 1. Marine-ID",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_iii_ss",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "резерв армии западнее Шведта",
+   "lng": 14.0,
+   "lat": 53.05,
+   "approx_km": 10,
+   "source": "DRZW S.650",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_27ss",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "у Пассова и Лёкница (остатки, резерв 3 ТА)",
+   "lng": 14.1,
+   "lat": 53.14,
+   "approx_km": 10,
+   "source": "DW Stettin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_28ss",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "у Пассова и Лёкница (остатки)",
+   "lng": 14.15,
+   "lat": 53.3,
+   "approx_km": 10,
+   "source": "DW Stettin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_18pzgd",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "у Йоахимсталя (резерв ГА в тылу 3 ТА)",
+   "lng": 13.74,
+   "lat": 52.97,
+   "approx_km": 6,
+   "source": "DW Stettin; DRZW S.649",
+   "reliability": "B",
+   "note": "к 17–18.04 введена в LVI тк у Зеелова"
+  },
+  {
+   "formation": "de_15ss",
+   "date": "1945-04-12",
+   "time": null,
+   "place": "сев.-зап. Штеттина (на переформировании)",
+   "lng": 14.4,
+   "lat": 53.55,
+   "approx_km": 10,
+   "source": "RA15 №10",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_15ss",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "Шверин (капитуляция)",
+   "lng": 11.42,
+   "lat": 53.63,
+   "approx_km": 8,
+   "source": "DW 15. SS",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_7pzd",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "первые части морем из Данцига — район Штеттина (XXXII ак)",
+   "lng": 14.45,
+   "lat": 53.45,
+   "approx_km": 10,
+   "source": "DW Stettin",
+   "reliability": "B",
+   "note": "дата приблизительна"
+  },
+  {
+   "formation": "de_7pzd",
+   "date": "1945-05-08",
+   "time": null,
+   "place": "Шверин (капитуляция)",
+   "lng": 11.42,
+   "lat": 53.63,
+   "approx_km": 5,
+   "source": "DW 7. PzD",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_swinemuende",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "о-ва Узедом и Воллин; КП Мисдрой",
+   "lng": 14.45,
+   "lat": 53.93,
+   "approx_km": 15,
+   "source": "DW Verteidigungsbereich Swinemünde",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_402id",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "резерв у Меллентина (Узедом)",
+   "lng": 14.05,
+   "lat": 53.93,
+   "approx_km": 5,
+   "source": "DW Stettin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_3marined",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "восточный берег о. Воллин",
+   "lng": 14.6,
+   "lat": 53.85,
+   "approx_km": 10,
+   "source": "DW Stettin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_3marined",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "части у Эберсвальде и сев. Альтруппина (сменены 25 пгд)",
+   "lng": 13.8,
+   "lat": 52.83,
+   "approx_km": 10,
+   "source": "LEX XXXXI PzK",
+   "reliability": "C",
+   "note": "«конец апреля», дата условная"
+  },
+  {
+   "formation": "de_3marined",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "плен у Кирица",
+   "lng": 12.4,
+   "lat": 52.94,
+   "approx_km": 8,
+   "source": "DW 3. Marine-ID",
+   "reliability": "B",
+   "note": "дата приблизительна"
+  },
+  {
+   "formation": "de_pzjagd_weichsel",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "за Вотан-позицией (Рандов — Лёкниц)",
+   "lng": 14.2,
+   "lat": 53.4,
+   "approx_km": 15,
+   "source": "LEX PzJgdDiv Weichsel",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxii",
+   "date": "1945-04-27",
+   "time": null,
+   "place": "Фридланд (остатки корпуса; Шак — боевой комендант)",
+   "lng": 13.55,
+   "lat": 53.67,
+   "approx_km": 4,
+   "source": "LEX XXXII AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxii",
+   "date": "1945-04-29",
+   "time": null,
+   "place": "Анклам потерян; отход на Темплин, затем Лихен",
+   "lng": 13.69,
+   "lat": 53.86,
+   "approx_km": 6,
+   "source": "LEX XXXII AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_steiner",
+   "date": "1945-04-21",
+   "time": null,
+   "place": "Финов-канал / Гогенцоллерн-канал севернее Берлина",
+   "lng": 13.6,
+   "lat": 52.85,
+   "approx_km": 15,
+   "source": "DW F. Steiner; DRZW S.668",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_steiner",
+   "date": "1945-04-23",
+   "time": null,
+   "place": "обойдена у Ораниенбурга, отброшена на Руппинер-канал",
+   "lng": 13.24,
+   "lat": 52.75,
+   "approx_km": 10,
+   "source": "DW Schlacht um Berlin",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_steiner",
+   "date": "1945-04-30",
+   "time": null,
+   "place": "Гранзе сдан без боя",
+   "lng": 13.16,
+   "lat": 53.01,
+   "approx_km": 5,
+   "source": "DW F. Steiner",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_25pzgd",
+   "date": "1945-04-17",
+   "time": null,
+   "place": "у Врицена (CI ак)",
+   "lng": 14.13,
+   "lat": 52.72,
+   "approx_km": 6,
+   "source": "DW 25. PzGrenDiv",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_25pzgd",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "отход из плацдарма Ораниенбург на Нойбранденбург (конец апреля); части у Эберсвальде и сев. Альтруппина сменили 3-ю морскую дивизию",
+   "lng": 13.24,
+   "lat": 52.75,
+   "approx_km": 10,
+   "source": "DW 25. PzGrenDiv; LEX XXXXI",
+   "reliability": "B",
+   "note": "дата условная"
+  },
+  {
+   "formation": "de_5jd",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "Витенберге — Ленцен (плацдарм, капитуляция американцам в ночь на 3.05)",
+   "lng": 11.48,
+   "lat": 53.09,
+   "approx_km": 6,
+   "source": "DW 5. Jäger-Division (Tessin S.289)",
+   "reliability": "B",
+   "note": "прорыв на Витенберге 1.05 не удался"
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-04-12",
+   "time": null,
+   "place": "участок Галле — Риза (Эльба — Мульде)",
+   "lng": 12.6,
+   "lat": 51.4,
+   "approx_km": 30,
+   "source": "LEX XXXXVIII",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "оставлен плацдарм Косвиг; фронт Нимегк — Косвиг",
+   "lng": 12.5,
+   "lat": 51.95,
+   "approx_km": 10,
+   "source": "LEX XXXXVIII",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "Претцин — Линдау — Кракау — Бергфриден — Грохевиц — Коббельсдорф — Гр. Марценс",
+   "lng": 12.35,
+   "lat": 52.0,
+   "approx_km": 10,
+   "source": "LEX XXXXVIII",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-05-03",
+   "time": null,
+   "place": "Цербен — Гросвустервиц",
+   "lng": 12.25,
+   "lat": 52.4,
+   "approx_km": 8,
+   "source": "LEX XXXXVIII; DW 12. Armee",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxviii",
+   "date": "1945-05-05",
+   "time": null,
+   "place": "плацдарм Гентин; переправа у Ферхланда",
+   "lng": 12.1,
+   "lat": 52.45,
+   "approx_km": 8,
+   "source": "LEX XXXXVIII",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_14flak",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Галле — Лейпциг (стационарные батареи)",
+   "lng": 12.2,
+   "lat": 51.4,
+   "approx_km": 25,
+   "source": "LEX XXXXVIII; DW 14. Flak",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_kg_halle",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Галле (пал 19.04 после 5-дневных боёв)",
+   "lng": 11.97,
+   "lat": 51.48,
+   "approx_km": 4,
+   "source": "LEX XXXXVIII",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_kg_leipzig",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "Лейпциг (пал 20.04 после 3-дневных боёв; de-wiki: 19.04)",
+   "lng": 12.37,
+   "lat": 51.34,
+   "approx_km": 5,
+   "source": "LEX XXXXVIII; DW 12. Armee",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xx_ak",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "район Магдебурга — Цербста (американские плацдармы)",
+   "lng": 11.95,
+   "lat": 52.05,
+   "approx_km": 20,
+   "source": "LEX XX AK; WH",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xx_ak",
+   "date": "1945-04-26",
+   "time": "start",
+   "place": "исходное положение: Белиц — Тройенбрицен (сев.-вост. Бельцига), удар на Белиц — Ферх",
+   "lng": 12.9,
+   "lat": 52.17,
+   "approx_km": 10,
+   "source": "LEX XX AK; DW Halbe",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xx_ak",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "район Ферх — Белиц",
+   "lng": 12.98,
+   "lat": 52.28,
+   "approx_km": 6,
+   "source": "DRZW S.670",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_xx_ak",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "Белиц (принял прорвавшихся из котла); вечером начало отхода через Воллин",
+   "lng": 12.97,
+   "lat": 52.24,
+   "approx_km": 8,
+   "source": "LEX XX AK; DRZW S.671",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xx_ak",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "за Плауэр-канал",
+   "lng": 12.35,
+   "lat": 52.4,
+   "approx_km": 8,
+   "source": "LEX XX AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xx_ak",
+   "date": "1945-05-05",
+   "time": null,
+   "place": "рубеж Шметцдорф — Вустердамм",
+   "lng": 12.2,
+   "lat": 52.47,
+   "approx_km": 6,
+   "source": "LEX XX AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xx_ak",
+   "date": "1945-05-06",
+   "time": null,
+   "place": "штаб в Фишбеке на Эльбе; переправа у Тангермюнде",
+   "lng": 12.03,
+   "lat": 52.52,
+   "approx_km": 4,
+   "source": "LEX XX AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_scharnhorst",
+   "date": "1945-04-12",
+   "time": null,
+   "place": "Барби (первый бой)",
+   "lng": 11.88,
+   "lat": 51.97,
+   "approx_km": 5,
+   "source": "DW Scharnhorst",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_scharnhorst",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "центр удара: Линте — Реесдорф (не взяла Белиц); освободила ~3 000 раненых в Белиц-Хайльштеттен",
+   "lng": 12.92,
+   "lat": 52.2,
+   "approx_km": 4,
+   "source": "DW Scharnhorst; LEX XX AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_scharnhorst",
+   "date": "1945-05-02",
+   "time": null,
+   "place": "Тангермюнде (капитуляция по de-wiki 2.05; по LEX корпус переправлялся 6–7.05)",
+   "lng": 11.97,
+   "lat": 52.54,
+   "approx_km": 5,
+   "source": "DW Scharnhorst",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hutten",
+   "date": "1945-04-12",
+   "time": null,
+   "place": "у Биттерфельда (11 А, затем 12 А)",
+   "lng": 12.32,
+   "lat": 51.62,
+   "approx_km": 8,
+   "source": "DW Hutten",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hutten",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "левый фланг удара, острие на Белиц",
+   "lng": 12.95,
+   "lat": 52.25,
+   "approx_km": 5,
+   "source": "LEX XX AK; DW Hutten",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hutten",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "Ленинский лес (с «Шилль»), после полудня",
+   "lng": 12.74,
+   "lat": 52.32,
+   "approx_km": 5,
+   "source": "DW Halbe",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_hutten",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "арьергард корпуса (отход через Воллин)",
+   "lng": 12.62,
+   "lat": 52.27,
+   "approx_km": 8,
+   "source": "LEX XX AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_koerner",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "ночная атака на 5 гв. мк у Тройенбрицена",
+   "lng": 12.87,
+   "lat": 52.1,
+   "approx_km": 5,
+   "source": "RW Хальбский котёл",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_koerner",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "правый фланг у Нимегка; прикрытие Тройенбрицен — Нимегк",
+   "lng": 12.75,
+   "lat": 52.08,
+   "approx_km": 6,
+   "source": "LEX XX AK; DW Körner",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_koerner",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "оставила позиции Нимегк — Тройенбрицен; через Бельциг на Шёнхаузен",
+   "lng": 12.6,
+   "lat": 52.14,
+   "approx_km": 8,
+   "source": "LEX XX AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_schill",
+   "date": "1945-04-10",
+   "time": null,
+   "place": "Бург (школа штурмовых орудий), вост. берег Эльбы",
+   "lng": 11.85,
+   "lat": 52.27,
+   "approx_km": 6,
+   "source": "LEX Schill",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_schill",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "переведена на крайний левый фланг — деблокада Потсдама",
+   "lng": 13.0,
+   "lat": 52.33,
+   "approx_km": 6,
+   "source": "LEX XX AK",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_schill",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "Ленинский лес (с «Хуттен»)",
+   "lng": 12.74,
+   "lat": 52.32,
+   "approx_km": 5,
+   "source": "DW Halbe",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_jahn",
+   "date": "1945-04-23",
+   "time": null,
+   "place": "разгромлена у Ютербога",
+   "lng": 13.07,
+   "lat": 51.99,
+   "approx_km": 6,
+   "source": "RW 12-я армия (Тике 2005 с.310–311; Исаев 2010 с.215)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_jahn",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "Потсдам (усилила армейский отряд «Шпрее»)",
+   "lng": 13.06,
+   "lat": 52.4,
+   "approx_km": 5,
+   "source": "DW Halbe; DW Reymann",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_jahn",
+   "date": "1945-04-29",
+   "time": null,
+   "place": "Ферх — соединение с 12 А при прорыве из Потсдама",
+   "lng": 12.99,
+   "lat": 52.33,
+   "approx_km": 4,
+   "source": "DW Halbe",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_aa_spree",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "Потсдам (штаб в Новом дворце / Гольме)",
+   "lng": 13.02,
+   "lat": 52.4,
+   "approx_km": 4,
+   "source": "DW Reymann",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_aa_spree",
+   "date": "1945-04-27",
+   "time": null,
+   "place": "южная часть Потсдама до Хафеля потеряна",
+   "lng": 13.06,
+   "lat": 52.39,
+   "approx_km": 3,
+   "source": "DW Reymann",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxix",
+   "date": "1945-04-15",
+   "time": null,
+   "place": "Ильцен — Гифхорн, удар на Брауншвейг (армейская группа Блюментрит)",
+   "lng": 10.6,
+   "lat": 52.7,
+   "approx_km": 20,
+   "source": "LEX XXXIX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxix",
+   "date": "1945-04-21",
+   "time": null,
+   "place": "Борнум-ам-Эльм (остатки «Клаузевиц»); корпус подчинён 12 А",
+   "lng": 10.95,
+   "lat": 52.19,
+   "approx_km": 8,
+   "source": "LEX XXXIX; DW Clausewitz",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxix",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "западнее Потсдама (район 12 А) — «Гамбург», «Мейер», 84 пд, «Клаузевиц» (силы одной дивизии)",
+   "lng": 12.5,
+   "lat": 52.45,
+   "approx_km": 20,
+   "source": "LEX XXXIX; DW Schlageter (XXXIX zapadnee Potsdama)",
+   "reliability": "C",
+   "note": "район условный"
+  },
+  {
+   "formation": "de_xxxix",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "Хафельский фронт: Бранденбург — Плауэ — Притцербе — Ратенов (в ночь на 1.05)",
+   "lng": 12.45,
+   "lat": 52.48,
+   "approx_km": 10,
+   "source": "LEX XXXIX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_clausewitz",
+   "date": "1945-04-05",
+   "time": null,
+   "place": "формирование у Лауэнбурга (Эльба)",
+   "lng": 10.55,
+   "lat": 53.37,
+   "approx_km": 8,
+   "source": "DRZW_ZIMM S.444",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_clausewitz",
+   "date": "1945-04-11",
+   "time": null,
+   "place": "Ильцен (бои против британской тд)",
+   "lng": 10.56,
+   "lat": 52.96,
+   "approx_km": 6,
+   "source": "DRZW_ZIMM S.445",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_clausewitz",
+   "date": "1945-04-21",
+   "time": null,
+   "place": "переправа через канал у Фаллерслебена (02.00); остатки у Борнум-ам-Эльм",
+   "lng": 10.8,
+   "lat": 52.3,
+   "approx_km": 8,
+   "source": "DW Clausewitz; LEX XXXIX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_konitzky",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "южный участок XXXIX тк — Бранденбург",
+   "lng": 12.56,
+   "lat": 52.41,
+   "approx_km": 6,
+   "source": "LEX XXXIX",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_309id_n",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "северный участок XXXIX тк — Ратенов",
+   "lng": 12.34,
+   "lat": 52.6,
+   "approx_km": 6,
+   "source": "LEX XXXIX",
+   "reliability": "C",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxi",
+   "date": "1945-04-15",
+   "time": null,
+   "place": "лесной лагерь Хоэнферхезар у Бранденбурга (сбор штаба)",
+   "lng": 12.47,
+   "lat": 52.5,
+   "approx_km": 4,
+   "source": "LEX XXXXI",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxi",
+   "date": "1945-04-24",
+   "time": null,
+   "place": "группа Хольсте у Нойруппина и сев.-зап. Хафельберга против 47 А (Науэн — Кетцин)",
+   "lng": 12.6,
+   "lat": 52.85,
+   "approx_km": 15,
+   "source": "LEX XXXXI",
+   "reliability": "B",
+   "note": "дата условная (между 20 и 26.04)"
+  },
+  {
+   "formation": "de_xxxxi",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "район сосредоточения южнее Хафельлендишес-Лух",
+   "lng": 12.6,
+   "lat": 52.65,
+   "approx_km": 10,
+   "source": "LEX XXXXI",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_xxxxi",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "прорыв советских войск на Кириц; штаб корпуса расформирован вечером",
+   "lng": 12.4,
+   "lat": 52.94,
+   "approx_km": 8,
+   "source": "LEX XXXXI",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_199id",
+   "date": "1945-04-30",
+   "time": null,
+   "place": "резерв за группой Хольсте (части); затем Хафельберг — Бранденбург",
+   "lng": 12.3,
+   "lat": 52.7,
+   "approx_km": 15,
+   "source": "LEX XXXXI; DW 199. ID",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_vwaffen",
+   "date": "1945-04-30",
+   "time": null,
+   "place": "левый фланг XXXXI тк (1.05 ушла, оголив фланг)",
+   "lng": 12.4,
+   "lat": 52.9,
+   "approx_km": 10,
+   "source": "LEX XXXXI",
+   "reliability": "C",
+   "note": null
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-04-23",
+   "time": null,
+   "place": "60 км юго-зап. Берлина; линия обороны Ферх (север) — Нимегк (юг)",
+   "lng": 12.85,
+   "lat": 52.2,
+   "approx_km": 15,
+   "source": "DW 12. Armee (Der Spiegel 3/1966)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-04-26",
+   "time": null,
+   "place": "части у Виттенберга, Тройенбрицена, Ратенова",
+   "lng": 12.6,
+   "lat": 52.2,
+   "approx_km": 30,
+   "source": "BARCH RH 20-12 (описание фонда)",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-04-30",
+   "time": null,
+   "place": "остановлена южнее Швиловзе (радиограмма Йодля Гитлеру)",
+   "lng": 12.98,
+   "lat": 52.33,
+   "approx_km": 6,
+   "source": "DW Schlacht um Berlin (прим. 72); RW (Дашичев 1973 с.619)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-05-04",
+   "time": null,
+   "place": "эльбский плацдарм Гентин — зап. Ратенова; переправы Штендаль, Ферхланд, Фишбек — Тангермюнде",
+   "lng": 12.05,
+   "lat": 52.45,
+   "approx_km": 15,
+   "source": "LEX XXXXVIII; DW 12. Armee",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_12a",
+   "date": "1945-05-07",
+   "time": null,
+   "place": "основная масса на западном берегу Эльбы",
+   "lng": 11.9,
+   "lat": 52.5,
+   "approx_km": 15,
+   "source": "LEX 12 Armee; DW",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_potsdam",
+   "date": "1945-04-12",
+   "time": null,
+   "place": "Гарц: Тресебург (КП 12–17.04), участок Вернигероде — Кведлинбург",
+   "lng": 10.8,
+   "lat": 51.72,
+   "approx_km": 10,
+   "source": "LEX Potsdam",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_potsdam",
+   "date": "1945-04-20",
+   "time": null,
+   "place": "Бланкенбург (КП); дивизия распущена",
+   "lng": 10.96,
+   "lat": 51.79,
+   "approx_km": 5,
+   "source": "LEX Potsdam",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_schlageter",
+   "date": "1945-04-29",
+   "time": null,
+   "place": "южнее Мюриц-зее (XXXXVI тк 3 ТА); у Варена слияние с остатками 281 пд",
+   "lng": 12.68,
+   "lat": 53.45,
+   "approx_km": 10,
+   "source": "DW Schlageter",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_schlageter",
+   "date": "1945-05-03",
+   "time": null,
+   "place": "южный участок Эльде; капитуляция американцам",
+   "lng": 11.8,
+   "lat": 53.35,
+   "approx_km": 10,
+   "source": "DW Schlageter",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_freikorps_ah",
+   "date": "1945-04-16",
+   "time": null,
+   "place": "в районе 12 А (место не установлено)",
+   "lng": null,
+   "lat": null,
+   "approx_km": null,
+   "source": "DW 12. Armee",
+   "reliability": "C",
+   "note": null
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-25",
+   "time": null,
+   "place": "штаб армии в Альт-Шадове; 26.04 — Мюнхехофе",
+   "lng": 13.95,
+   "lat": 52.14,
+   "approx_km": 3,
+   "source": "TSAMO (разведсводки 116–117)",
+   "reliability": "B",
+   "note": null
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-27",
+   "time": null,
+   "place": "котёл ~10×14 км между Шторковом, Меркиш-Бухгольцем и Хальбе",
+   "lng": 13.8,
+   "lat": 52.15,
+   "approx_km": 7,
+   "source": "DRZW S.670; DW Halbe",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-28",
+   "time": null,
+   "place": "прорыв через Хальбе (начало 18.30); утром 29.04 — автобан",
+   "lng": 13.7,
+   "lat": 52.11,
+   "approx_km": 4,
+   "source": "DRZW S.670–671",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-29",
+   "time": null,
+   "place": "несколько тысяч — дорога Барут — Цоссен (после полудня); ночью штурм полигона Куммерсдорф",
+   "lng": 13.42,
+   "lat": 52.12,
+   "approx_km": 6,
+   "source": "DRZW S.671",
+   "reliability": "A",
+   "note": null
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-05-01",
+   "time": null,
+   "place": "головы колонн в ~10 км от линий 12 А; выход к Хенникендорфу и Белицу (Эльсхольц)",
+   "lng": 13.05,
+   "lat": 52.2,
+   "approx_km": 6,
+   "source": "DRZW S.671; DW Halbe",
+   "reliability": "A",
+   "note": null
+  }
+ ],
+ "tsamo_match": [
+  {
+   "tsamo_label": "17 пд",
+   "formation": "de_17id",
+   "reliability": "B",
+   "note": "17. Infanterie-Division (ген.-м. Заксенхаймер): LVII тк 4 ТА / VIII ак 17 А (Lexikon), Герлиц — Ниски — Баутцен; все 8 упоминаний согласуются"
+  },
+  {
+   "tsamo_label": "72 пд",
+   "formation": "de_72id",
+   "reliability": "B",
+   "note": "72. Infanterie-Division: V ак (март) → LVII тк 4 ТА (апрель), район Герлица; упоминание «в котле» 30.04 сомнительно"
+  },
+  {
+   "tsamo_label": "344 пд",
+   "formation": "de_344id",
+   "reliability": "B",
+   "note": "344. Infanterie-Division: из 1 ТА к Шпрембергу 18.04, группа Йоллассе, котёл Кауше"
+  },
+  {
+   "tsamo_label": "29 мд",
+   "formation": null,
+   "reliability": "C",
+   "note": "29. Panzergrenadier-Division до конца войны в Италии (капитулировала в Сев. Италии — РУ ГШ 4.05); «29 мд (из Италии)» у Герлица/Виттенберга — ошибочная идентификация советской разведки"
+  },
+  {
+   "tsamo_label": "31 пд СС",
+   "formation": "de_31ss",
+   "reliability": "B",
+   "note": "31. SS-Freiwilligen-Grenadier-Division (Ломбард): XVII ак 17 А, район Герлица; «части 31 пд СС» в котле Хальбе (ЖБД 3 А 24.04, 1 УФ 29–30.04) немецкими источниками не подтверждаются"
+  },
+  {
+   "tsamo_label": "545 нгд",
+   "formation": "de_545vgd",
+   "reliability": "B",
+   "note": "545. Volksgrenadier-Division: LVII тк / тк GD 4 ТА, Нейсе Мускау — Форст; разгромлена к 22.04; с 30.04 — группа Кольсдорфер"
+  },
+  {
+   "tsamo_label": "68 пд",
+   "formation": "de_68id",
+   "reliability": "C",
+   "note": "68. Infanterie-Division: XI ак 1 ТА (Моравия); «из полосы 4 УФ у Тройенбрицена» — не подтверждается"
+  },
+  {
+   "tsamo_label": "359 пд",
+   "formation": "de_359id",
+   "reliability": "B",
+   "note": "359. Infanterie-Division (боевая группа): 17 А / 1 ТА, Силезия; перед 1 УФ на 14.04 — да, в котле Хальбе — сомнительно"
+  },
+  {
+   "tsamo_label": "100 лпд",
+   "formation": "de_100jd",
+   "reliability": "C",
+   "note": "100. Jäger-Division: 17 А, Силезия (Траутенау); в котле Хальбе — не подтверждается"
+  },
+  {
+   "tsamo_label": "269 пд",
+   "formation": "de_269id",
+   "reliability": "B",
+   "note": "269. Infanterie-Division: XVII ак 17 А (Олау) → май тк GD 4 ТА; у Гроссенхайна 1–2.05 согласуется (489 пп)"
+  },
+  {
+   "tsamo_label": "69 пд",
+   "formation": null,
+   "reliability": "A",
+   "note": "69-я пехотная дивизия США (V корпус 1-й американской армии) — встреча с 58 гв. сд у Торгау/Стрелы 25.04; не немецкое соединение"
+  },
+  {
+   "tsamo_label": "18 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "«17 и 18 пд у Баутцена» (26.04): 18-й пехотной дивизии в вермахте 1945 г. нет (18 пгд — у Берлина); вероятно, 2-я парашютно-танко-гренадерская «ГГ» или ошибка номера"
+  },
+  {
+   "tsamo_label": "20 пд СС",
+   "formation": "de_20ss",
+   "reliability": "B",
+   "note": "20. Waffen-Grenadier-Division der SS (эстонская № 1): остатки в 17 А, Силезия; показания пленных у Барута 28.04 о 45 пп — возможно, маршевые подразделения"
+  },
+  {
+   "tsamo_label": "6 нгд",
+   "formation": "de_6id",
+   "reliability": "B",
+   "note": "6. Volksgrenadier-Division → 6. Infanterie-Division (с 10.04.45): правый фланг 4 ТА / 17 А, район Лаубана; на 30.04 LVII тк 4 ТА"
+  },
+  {
+   "tsamo_label": "378 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "378-й пехотной дивизии не существовало; «части 324 и 378 пд» в котле (ЖБД 3 А 27.04) — возможно, номера полков или ошибочная расшифровка"
+  },
+  {
+   "tsamo_label": "40 мд",
+   "formation": null,
+   "reliability": "C",
+   "note": "не идентифицировано (ЖБД 1 УФ: «части 40 мд» у Герлица); 40-й моторизованной дивизии в вермахте не было; возможно, Panzer-Jagd-Verband/бригада или ошибка"
+  },
+  {
+   "tsamo_label": "2 мд",
+   "formation": null,
+   "reliability": "C",
+   "note": "в выписках не найдено при проверке; возможно, «2 мп» (2-й мотополк «Бранденбург») из сводки 18.04 или 2-я «ГГ»"
+  },
+  {
+   "tsamo_label": "4 тд",
+   "formation": null,
+   "reliability": "C",
+   "note": "4. Panzer-Division в апреле 1945 — Западная Пруссия (XXIII ак, плацдарм в устье Вислы); «части 4 тд у Герлица» — ошибочная идентификация"
+  },
+  {
+   "tsamo_label": "254 пд",
+   "formation": "de_254id",
+   "reliability": "C",
+   "note": "254. Infanterie-Division: XXIV тк 1 ТА, Верхняя Силезия (апрель); у Герлица — не подтверждается"
+  },
+  {
+   "tsamo_label": "367 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "367. Infanterie-Division — Кёнигсберг (крепость, до 9.04), апрель «Verbleib unbekannt» (Lexikon); РУ ГШ 17.04 сняла с учёта как разгромленную перед 3 БФ; перед 1 УФ быть не могла"
+  },
+  {
+   "tsamo_label": "236 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "236. Infanterie-Division в 1945 — Венгрия/Австрия (ГА «Юг»); в выписках Берлинской операции при проверке не найдена; ошибочная идентификация"
+  },
+  {
+   "tsamo_label": "1 нгд",
+   "formation": null,
+   "reliability": "C",
+   "note": "«1-я народно-гренадерская дивизия» — учётная единица РУ ГШ (вновь сформирована перед 1 БФ, 4.05 разгромлена); в немецких источниках соединения с таким названием нет; возможно, Volkssturm-/Alarm-соединение или 1-я бригада фольксштурма"
+  },
+  {
+   "tsamo_label": "118 тд",
+   "formation": "de_18pzgd",
+   "reliability": "B",
+   "note": "«118 тд (быв. тд Силезия)»: танковая дивизия «Силезия» (февраль–март 1945, 31 Pz IV + 10 Pz IV/70 на 10.03) влита в 18. Panzergrenadier-Division в конце марта (Pz.Abt. «Schlesien» в таблице ГА «Висла» 7.04); РУ ГШ вела её как «113/118 тд»"
+  },
+  {
+   "tsamo_label": "19 тд",
+   "formation": "de_19pzd",
+   "reliability": "B",
+   "note": "19. Panzer-Division: LIX ак 1 ТА, Моравия (середина апреля у Моравска-Остравы); сводка «через Глатц — Вальденбург» 17.04 — вне полосы операции"
+  },
+  {
+   "tsamo_label": "10 пд",
+   "formation": "de_10ss",
+   "reliability": "A",
+   "note": "«10 пд (так в ЖБД) СС» = 10. SS-Panzer-Division «Frundsberg»; «10 пд» в positions.json — 10-я пехотная дивизия Войска Польского (2 А ВП)"
+  },
+  {
+   "tsamo_label": "45 пд",
+   "formation": "de_45vgd",
+   "reliability": "C",
+   "note": "«45 пд» (сводка 29.04) — вероятно 45. Volksgrenadier-Division (XXXX тк 17 А, Силезия); в котле Хальбе не подтверждается"
+  },
+  {
+   "tsamo_label": "302 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "302. Infanterie-Division разгромлена в январе 1945 на Висле и не восстанавливалась (Lexikon: страница без данных за 1945); упоминание в котле 30.04 — ошибка"
+  },
+  {
+   "tsamo_label": "612 пд",
+   "formation": "de_oder_korps",
+   "reliability": "C",
+   "note": "Division z.b.V. 612: сформирована 26.01.45, её штаб в феврале стал штабом корпуса «Одер» (3 ТА); «612 пд» в котле Хальбе (30.04) — не подтверждается"
+  },
+  {
+   "tsamo_label": "13 пд",
+   "formation": null,
+   "reliability": "A",
+   "note": "«13 пд (в т. ч. …)» в справке на 15.04 — число дивизий (тринадцать пехотных), не обозначение соединения"
+  },
+  {
+   "tsamo_label": "208 пд",
+   "formation": "de_208id",
+   "reliability": "B",
+   "note": "208. Infanterie-Division: VIII ак 17 А, Силезия; перед 1 УФ на 14.04 (вне полосы удара)"
+  },
+  {
+   "tsamo_label": "45 нгд",
+   "formation": "de_45vgd",
+   "reliability": "B",
+   "note": "45. Volksgrenadier-Division: XXXX тк 17 А, Силезия (апрель); май — протекторат"
+  },
+  {
+   "tsamo_label": "609 дон",
+   "formation": null,
+   "reliability": "B",
+   "note": "Division z.b.V. 609: с февраля 1945 — крепость Бреслау (полки Райнкобер, Керстен, Шульц, Зайбольд; ген.-лт Руфф); перед 1 УФ, но в осаждённом Бреслау"
+  },
+  {
+   "tsamo_label": "608 дон",
+   "formation": null,
+   "reliability": "C",
+   "note": "Division z.b.V. 608: Лаузиц, XXXX тк 9 А (февраль 1945); РУ ГШ 4.05: «608-я рез. дивизия» разгромлена перед 1 БФ; в реестре нет; вероятно, в полосе 9 А/4 ТА как тревожное соединение"
+  },
+  {
+   "tsamo_label": "17 мд",
+   "formation": null,
+   "reliability": "C",
+   "note": "в выписках при проверке не найдено; 17-й моторизованной дивизии в вермахте не было (17 мд СС «Гётц фон Берлихинген» — на Западе); ошибка"
+  },
+  {
+   "tsamo_label": "14 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "14. Infanterie-Division в апреле 1945 — Курляндия (и «вновь восстановленная» на Земланде по РУ ГШ); в списке ЖБД 3 А 29.04 среди окружённых — ошибка"
+  },
+  {
+   "tsamo_label": "191 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "191-й пехотной дивизии в 1945 г. не было (191. Reserve-Division расформирована в 1944); ошибка"
+  },
+  {
+   "tsamo_label": "206 пд",
+   "formation": null,
+   "reliability": "C",
+   "note": "206. Infanterie-Division уничтожена под Витебском в июне 1944 и не восстанавливалась; ошибка"
+  }
+ ],
+ "gaps": [
+  "Полная Kriegsgliederung 4 ТА на 16.04 с составом корпусов (LVII тк, тк «Великая Германия», группа Мозер) в сети есть только в пересказе Lakowski (DRZW S.645) и в снимках Tessin на 12.04/30.04 без дивизий; нужен NARA T-311 (H.Gr. Mitte) или BA-MA RH 21-4.",
+  "Численность дивизий 4 ТА (Kampfstärke, танки) на апрель 1945 в открытых источниках нет: Lakowski даёт только общий итог ГА «Центр» (Panzerlage 5.04), Jentz «Panzertruppen 2» (таблицы на 15.04.45) в сети недоступен.",
+  "Панзерлага ГА «Висла» на 7.04.45 по дивизиям (DRZW S.614–615) в OCR не читается — нужен скан страницы (archive.org, файл _jp2.zip, 917 МБ) или Lakowski «Seelow 1945».",
+  "Положения дивизий 3 ТА 20–30.04 известны на уровне корпусов и трёх дивизий (1-я морская, 547 нгд, 281 пд); для 549 нгд, 610, «Клоссек», «Фойгт», группы Ледебур после 24.04 — нет.",
+  "12 А: численность дивизий — только штатные/формировочные цифры (Кёрнер ~10 000, Шилль 8–10 000, Ян 7 500 RAD); численность на 26.04 и потери по дивизиям — нет (Gellermann «Die Armee Wenck» недоступен).",
+  "Состав группы Штайнера по датам (4 полиц. СС, 5 лпд, 25 пгд, 3-я морская, 7 тд, 15 СС) и её положения 21–30.04 — только фрагментарно (de-wiki); нужен Tieke «Das Ende zwischen Oder und Elbe» или Hamilton «Oder Front 1945».",
+  "Нафцигеровский OOB ГА «Висла» на 12.04.45 (cgsc.edu, 945GDBC.pdf) — архивная копия недоступна (Wayback пуст).",
+  "Расхождение дат передачи V ак в 9 А (19/20/21.04) и 20 тд (17 А или 4 ТА на 16.04) не снято.",
+  "Отряд «Шпрее»/Потсдам: 20 000 (реестр) против 15 000–20 000 вышедших (de-wiki) — состав гарнизона Потсдама по частям не установлен.",
+  "Соединения 17 А и 1 ТА, названные в советских сводках как участники котла Хальбе (31 СС, 20 СС, 359, 100 лпд, 68, 45, 254 пд), немецкими данными не подтверждаются — возможно, маршевые батальоны или ошибки опознания; проверка по ф. 500 (ЖБД 9 А / 4 ТА)."
+ ]
+}
