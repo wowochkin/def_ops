@@ -653,32 +653,45 @@ impl Sim {
 
     /// Артподготовка: по каждой дивизии противника на полосе армии (в пределах досягаемости её дивизий) потери —
     /// сумма по позициям «доля войск × потери от огня по позиции» (Радзиевский), в доле от нормы по плотности и
-    /// длительности; организованность падает так же, как в бою.
+    /// длительности; организованность падает так же, как в бою. Артподготовки одного часа разбираются вместе:
+    /// полосу дивизии противника обрабатывает одна армия — та, чьи дивизии к ней ближе всего.
     fn apply_fires(&self, w: &mut World, tick: u32, journal: &mut Vec<Event>) {
         let a = &self.rules.combat.artillery;
-        for f in self.fires.iter().filter(|f| f.at == tick) {
+        let now: Vec<&ScriptFire> = self.fires.iter().filter(|f| f.at == tick).collect();
+        if now.is_empty() { return; }
+        let reach = self.rules.contact_km + a.depth_km;
+        // цель → (огонь, расстояние до ближайшей дивизии стреляющей армии)
+        let mut pick: BTreeMap<usize, (usize, f64)> = BTreeMap::new();
+        for (fi, f) in now.iter().enumerate() {
             let own: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].hq == f.hq && w.divisions[i].state != State::Destroyed).collect();
-            if own.is_empty() { continue; }
-            let side = w.divisions[own[0]].side;
-            let reach = self.rules.contact_km + a.depth_km;
-            let mut targets: Vec<usize> = (0..w.divisions.len()).filter(|&j| {
+            let Some(&first) = own.first() else { continue };
+            let side = w.divisions[first].side;
+            for j in 0..w.divisions.len() {
                 let e = &w.divisions[j];
-                e.side != side && e.state != State::Destroyed && own.iter().any(|&i| w.divisions[i].vars.pos.dist(e.vars.pos) <= reach)
-            }).collect();
-            targets.sort_unstable();
-            let k = (f.density_per_km / a.norm_density).min(1.0) * (f.duration_min / a.norm_duration_min).min(1.0);
-            let mut parts = Vec::new();
-            for j in targets {
-                let d = &mut w.divisions[j];
-                let pos = d.vars.positions.unwrap_or(a.positions);
-                let loss = (0..3).map(|p| pos[p] * a.loss_by_position[p]).sum::<f64>() * k;
-                lose(d, loss, self.rules.cohesion_loss_factor, &self.rules.combat);
-                parts.push(format!("{} — {:.1} %", d.name, loss * 100.0));
-                journal.push(Event { tick, agent: j as u32, text: format!("под артподготовкой ({:.0} ств./км, {:.0} мин): потери {:.1} %{}", f.density_per_km, f.duration_min, loss * 100.0,
-                    if d.vars.positions.is_some() { ", первая позиция отведена" } else { "" }) });
+                if e.side == side || e.state == State::Destroyed { continue; }
+                let dmin = own.iter().map(|&i| w.divisions[i].vars.pos.dist(e.vars.pos)).fold(f64::INFINITY, f64::min);
+                if dmin > reach { continue; }
+                let better = pick.get(&j).map_or(true, |&(_, d0)| dmin < d0 - 1e-9);
+                if better { pick.insert(j, (fi, dmin)); }
             }
+        }
+        let mut parts: Vec<Vec<String>> = vec![Vec::new(); now.len()];
+        for (&j, &(fi, _)) in &pick {
+            let f = now[fi];
+            let k = (f.density_per_km / a.norm_density).min(1.0) * (f.duration_min / a.norm_duration_min).min(1.0);
+            let d = &mut w.divisions[j];
+            let pos = d.vars.positions.unwrap_or(a.positions);
+            let loss = (0..3).map(|p| pos[p] * a.loss_by_position[p]).sum::<f64>() * k;
+            lose(d, loss, self.rules.cohesion_loss_factor, &self.rules.combat);
+            parts[fi].push(format!("{} — {:.1} %", d.name, loss * 100.0));
+            journal.push(Event { tick, agent: j as u32, text: format!("под артподготовкой ({}, {:.0} ств./км, {:.0} мин): потери {:.1} %{}", w.hqs[f.hq as usize].name, f.density_per_km, f.duration_min, loss * 100.0,
+                if d.vars.positions.is_some() { ", первая позиция отведена" } else { "" }) });
+        }
+        for (fi, f) in now.iter().enumerate() {
+            let k = (f.density_per_km / a.norm_density).min(1.0) * (f.duration_min / a.norm_duration_min).min(1.0);
             let hq = w.hqs[f.hq as usize].name.clone();
-            journal.push(Event { tick, agent: u32::MAX, text: format!("артподготовка: {hq}, {:.0} ств./км, {:.0} мин (доля нормы {:.2}); {}. {}", f.density_per_km, f.duration_min, k, if parts.is_empty() { "противника на полосе нет".into() } else { parts.join(", ") }, f.note) });
+            journal.push(Event { tick, agent: u32::MAX, text: format!("артподготовка: {hq}, {:.0} ств./км, {:.0} мин (доля нормы {:.2}); {}. {}", f.density_per_km, f.duration_min, k,
+                if parts[fi].is_empty() { "противника на полосе нет".to_string() } else { parts[fi].join(", ") }, f.note) });
         }
     }
 

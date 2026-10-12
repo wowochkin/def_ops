@@ -2,7 +2,7 @@
 //!
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
 //!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10]
-//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json]
+//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals]
 //!
 //! Мерило — как у нынешней модели: расстояние от расчётного положения до исторического, превышение над радиусом
 //! неопределённости источника; «в допуске» — превышение не больше допуска (10 км). Дивизии сверяются каждая со
@@ -96,6 +96,9 @@ fn main() {
     for seed in 1..=runs {
         let (mut sim, meta) = scenario::load(&scen_path, &format!("{root}/{DATA_DIR}"), &root).unwrap_or_else(|e| panic!("{e}"));
         sim.seed = seed;
+        // вариант без отвода с первой позиции (отвод по источникам C — сравнение вариантов)
+        if args.iter().any(|a| a == "--without-withdrawals") { sim.withdrawals.clear(); }
+        if args.iter().any(|a| a == "--without-fires") { sim.fires.clear(); }
         let start = parse_hours(&meta.start).expect("start");
         let n = sim.world.divisions.len();
         // кадры: по часу на дивизию

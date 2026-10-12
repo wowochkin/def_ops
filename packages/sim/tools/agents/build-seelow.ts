@@ -204,13 +204,31 @@ for (const o of out) {
 const histArmy = tsHist.positions.filter((p) => (SU_ARMIES.includes(p.formation) || ids.has(p.formation)) && p.time >= '1945-04-16' && p.time < END_DAY)
   .map((p) => ({ formation: p.formation, time: p.time.replace(/T00:00$/, 'T05:00'), at: p.at, approxKm: p.approxKm, reliability: p.reliability, source: p.source }));
 
+// ---------- артподготовка и отвод с первой позиции (docs/sources/berlin-1945-artillery-prep.json) ----------
+// 1 БФ: 16.04 в 05:00 МСК, около 30 мин (план 60 мин сокращён из-за нехватки боеприпасов — Антипенко, B; ГА «Висла»
+// доносила о 1,5 ч — расхождение); плотность по армиям — стволов на км (de-wiki по Жукову и Исаеву, B).
+const PREP: Record<string, number> = { su_5ua: 286, su_47a: 270, su_8gva: 268, su_3ua: 266, su_69a: 253 };
+const fires = Object.entries(PREP).map(([hq, density]) => ({
+  at: START, hq, durationMin: 30, densityPerKm: density,
+  note: 'артподготовка 16.04: 05:00 МСК, около 30 мин (Антипенко, B); плотность по армиям — berlin-1945-artillery-prep.json',
+}));
+// Отвод 9 А на Großkampf-HKL в ночь на 16.04: на первой позиции — охранение в 1/6 силы (de-wiki по Stich 2018, C;
+// атрибуция спорная — сравниваются варианты с отводом и без). Доли по позициям до отвода — правила agents-v0
+// (combat.artillery.troopsByPosition: 0,5 / 0,3 / 0,2); после: 1/6 первой позиции остаётся, остальное — на второй.
+const first = 0.5;
+const withdrawals = [{
+  at: START, to: out.filter((o) => o.side === 'de').map((o) => o.id),
+  positions: [+(first / 6).toFixed(4), +(0.3 + (first * 5) / 6).toFixed(4), 0.2],
+  note: 'отвод на Großkampf-HKL в ночь на 16.04, на первой позиции охранение 1/6 (de-wiki по Stich, C)',
+}];
+
 const scenario = {
   id: 'agents-seelow-1945',
   name: 'Зееловские высоты, 16–20.04.1945 (агенты-дивизии)',
   theatre: 'packages/sim/data/theatres/oder-berlin-1945.json',
   start: START, hours: HOURS, seed: 1,
   timeNote: 'время московское, как в сценарии нынешней модели; собрано npm run agents:seelow-data',
-  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders,
+  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, fires, withdrawals,
 };
 const dir = resolve(ROOT, 'packages/sim/data/scenarios/agents');
 mkdirSync(dir, { recursive: true });

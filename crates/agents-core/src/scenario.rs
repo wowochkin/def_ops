@@ -7,7 +7,7 @@ use crate::rng::mix;
 use crate::rules::Rules;
 use crate::theatre::Theatre;
 use crate::time::parse_hours;
-use crate::world::{ScriptOrder, Sim, World};
+use crate::world::{ScriptFire, ScriptOrder, ScriptWithdraw, Sim, World};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -79,6 +79,32 @@ pub struct ScenarioIn {
     pub divisions: Vec<DivisionIn>,
     #[serde(default)]
     pub orders: Vec<OrderIn>,
+    #[serde(default)]
+    pub fires: Vec<FireIn>,
+    #[serde(default)]
+    pub withdrawals: Vec<WithdrawIn>,
+}
+
+/// Артподготовка армии.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FireIn {
+    pub at: serde_json::Value,
+    pub hq: String,
+    pub duration_min: f64,
+    pub density_per_km: f64,
+    #[serde(default)]
+    pub note: String,
+}
+
+/// Отвод с первой позиции: доли войск на позициях после отвода.
+#[derive(Deserialize)]
+pub struct WithdrawIn {
+    pub at: serde_json::Value,
+    pub to: Vec<String>,
+    pub positions: [f64; 3],
+    #[serde(default)]
+    pub note: String,
 }
 
 /// Объекты из театра: мосты и населённые пункты (именованные районы).
@@ -155,12 +181,32 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
         };
         script.push(ScriptOrder { at, hq, to, kind: o.kind, target: o.target.map(|p| theatre.proj.to_xy(p)), forced: o.forced, note: o.note.clone() });
     }
+    let tick_of = |v: &serde_json::Value| -> Result<u32, String> {
+        match v {
+            serde_json::Value::Number(n) => Ok(n.as_u64().unwrap_or(0) as u32),
+            serde_json::Value::String(t) => Ok((parse_hours(t).ok_or("неверная дата")? - start).max(0) as u32),
+            _ => Err("время — дата или номер шага".into()),
+        }
+    };
+    let mut fires = Vec::new();
+    for f in &s.fires {
+        let hq = *hq_idx.get(f.hq.as_str()).ok_or_else(|| format!("артподготовка: нет штаба {}", f.hq))?;
+        fires.push(ScriptFire { at: tick_of(&f.at)?, hq, duration_min: f.duration_min, density_per_km: f.density_per_km, note: f.note.clone() });
+    }
+    let mut withdrawals = Vec::new();
+    for w in &s.withdrawals {
+        let to = w.to.iter().map(|id| div_idx.get(id.as_str()).copied().ok_or_else(|| format!("отвод: нет дивизии {id}"))).collect::<Result<Vec<_>, _>>()?;
+        withdrawals.push(ScriptWithdraw { at: tick_of(&w.at)?, to, positions: w.positions, note: w.note.clone() });
+    }
     let objects = theatre_objects(&theatre);
     let mut world = World { tick: 0, divisions, hqs, objects, in_transit: Vec::new(), control: Vec::new() };
     world.init_control(&theatre);
     let name = serde_json::from_str::<NameOnly>(&text).map(|n| n.name).unwrap_or_default();
     let meta = Meta { id: s.id.clone(), name, hours: s.hours, start: s.start.clone() };
-    Ok((Sim::new(theatre, rules, s.seed, start, world, script), meta))
+    let mut sim = Sim::new(theatre, rules, s.seed, start, world, script);
+    sim.fires = fires;
+    sim.withdrawals = withdrawals;
+    Ok((sim, meta))
 }
 
 /// Штаб `h` подчинён штабу `top` (или совпадает с ним).

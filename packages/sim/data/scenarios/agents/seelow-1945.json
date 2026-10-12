@@ -3787,5 +3787,69 @@
    ],
    "note": "[su_8gva@1945-04-19T18:00:attack]"
   }
+ ],
+ "fires": [
+  {
+   "at": "1945-04-16T05:00",
+   "hq": "su_5ua",
+   "durationMin": 30,
+   "densityPerKm": 286,
+   "note": "артподготовка 16.04: 05:00 МСК, около 30 мин (Антипенко, B); плотность по армиям — berlin-1945-artillery-prep.json"
+  },
+  {
+   "at": "1945-04-16T05:00",
+   "hq": "su_47a",
+   "durationMin": 30,
+   "densityPerKm": 270,
+   "note": "артподготовка 16.04: 05:00 МСК, около 30 мин (Антипенко, B); плотность по армиям — berlin-1945-artillery-prep.json"
+  },
+  {
+   "at": "1945-04-16T05:00",
+   "hq": "su_8gva",
+   "durationMin": 30,
+   "densityPerKm": 268,
+   "note": "артподготовка 16.04: 05:00 МСК, около 30 мин (Антипенко, B); плотность по армиям — berlin-1945-artillery-prep.json"
+  },
+  {
+   "at": "1945-04-16T05:00",
+   "hq": "su_3ua",
+   "durationMin": 30,
+   "densityPerKm": 266,
+   "note": "артподготовка 16.04: 05:00 МСК, около 30 мин (Антипенко, B); плотность по армиям — berlin-1945-artillery-prep.json"
+  },
+  {
+   "at": "1945-04-16T05:00",
+   "hq": "su_69a",
+   "durationMin": 30,
+   "densityPerKm": 253,
+   "note": "артподготовка 16.04: 05:00 МСК, около 30 мин (Антипенко, B); плотность по армиям — berlin-1945-artillery-prep.json"
+  }
+ ],
+ "withdrawals": [
+  {
+   "at": "1945-04-16T05:00",
+   "to": [
+    "de_5jd",
+    "de_606",
+    "de_309id",
+    "de_25pzgd",
+    "de_9fjd",
+    "de_20pzgd",
+    "de_muencheberg",
+    "de_18pzgd",
+    "de_nordland",
+    "de_303id",
+    "de_169id",
+    "de_712id",
+    "de_kurmark",
+    "de_nederland"
+   ],
+   "positions": [
+    0.0833,
+    0.7167,
+    0.2
+   ],
+   "note": "отвод на Großkampf-HKL в ночь на 16.04, на первой позиции охранение 1/6 (de-wiki по Stich, C)"
+  }
  ]
 }
