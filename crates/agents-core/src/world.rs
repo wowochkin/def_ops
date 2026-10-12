@@ -447,9 +447,9 @@ impl Sim {
                         out.bridge = Some((obj, pos, rt.next));
                         rt.cleared = rt.next;
                     }
-                    Some(_) => { out.route = Some(None); out.state = Some((State::March(MarchSub::Halt), "мост на маршруте разрушен, ищет новый путь".into())); break; }
-                    None if d.params.mobility == Mobility::Foot => {
-                        rt.crossing_left_h = r.river_cross_hours;
+                    // моста нет или он разрушен: пехота — на подручных средствах, технике наводят переправу
+                    _ => {
+                        rt.crossing_left_h = if d.params.mobility == Mobility::Foot { r.river_cross_hours } else { r.bridging_hours };
                         rt.cleared = rt.next;
                         sub = MarchSub::Crossing;
                         let used = rt.crossing_left_h.min(left);
@@ -457,7 +457,6 @@ impl Sim {
                         left -= used;
                         if rt.crossing_left_h > 0.0 { break; }
                     }
-                    None => { out.route = Some(None); break; }
                 }
             }
             let road = t.road[c].min(t.road[nb]);

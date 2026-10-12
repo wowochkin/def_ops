@@ -27,12 +27,14 @@ fn route_across_oder_to_berlin() {
     assert!(path.len() > 50);
     // около 90 км по прямой: пешком по дорогам при 4 км/ч — не меньше суток чистого движения
     assert!(hours > 20.0 && hours < 80.0, "{hours}");
-    // без мостов технике через Одер хода нет (в том числе в обход через побережье: проливы Свина, Дзивна и
-    // Пенештром — большие реки театра), пехота форсирует с задержкой
+    // без мостов пехота форсирует с задержкой, технике наводят переправу (march.bridgingHours) — не обход:
+    // путь техники без мостов дольше пути по мостам примерно на время наведения (место переправы может быть другим)
     let none_open = |_: u16| false;
-    assert!(route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &none_open).is_none());
     let (_, foot_h) = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &none_open).expect("пехота форсирует");
     assert!(foot_h >= hours);
+    let (_, tank_open) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &all_open).expect("по мостам");
+    let (_, tank_none) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &none_open).expect("по наведённой переправе");
+    assert!(tank_none > tank_open + 0.5 * r.bridging_hours && tank_none < tank_open + 3.0 * r.bridging_hours, "{tank_open} → {tank_none}");
 }
 
 fn run(threads: usize, hours: u32) -> (u64, usize) {

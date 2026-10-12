@@ -14,8 +14,9 @@
  *   танки и орудия армии поровну); немецкие без числа — остаток численности корпуса из сценария нынешней модели
  *   поровну (C), иначе типовое значение по виду (допущение).
  * - **Исходные положения.** Корпуса 1 БФ утром 16.04 (berlin-1945-seelow-divisions.json); собственное положение из
- *   переписи на 10–16.04 не дальше 30 км от штаба; немецкие дивизии сценария нынешней модели; иначе — положение
- *   армии или корпуса с разносом 2,5 км поперёк направления первой задачи (C).
+ *   переписи строго до начала (10–15.04, утро 16.04) не дальше 30 км от штаба; немецкие дивизии сценария нынешней
+ *   модели; иначе — вдоль линии фронта 16.04 двумя эшелонами, подвижные — в глубине (placeSlots, C).
+ * - **Резервы фронтов** без задач раз в сутки выдвигаются за своим фронтом (допущение).
  * - **Приказы** — исторические задачи сценария нынешней модели (berlin-1945-tasks), цели дивизий сдвинуты на их
  *   смещение от центра объединения (не больше 8 км).
  * - **Артподготовка** 16.04: 1 БФ — как у Зееловских высот (плотности по армиям); 1 УФ — 150 мин на Нейсе
@@ -63,7 +64,7 @@ const DEFAULTS: Record<string, { personnel: number; tanks: number; guns: number 
 const reg = rd<{ divisions: Div[] }>('docs/sources/berlin-1945-divisions.json');
 const census = new Map(rd<CensusRow[]>(opt('census', 'evals-out/census/census.json')).map((r) => [r.id, r]));
 const ts = rd<{ formations: TsFormation[]; orders: TsOrder[] }>('packages/sim/data/scenarios/berlin-1945-tasks.json');
-const tsHist = rd<{ positions: { formation: string; time: string; at: LngLat; approxKm: number; reliability: string; source?: string }[] }>('packages/sim/data/scenarios/berlin-1945-tasks.history.json');
+const tsHist = rd<{ positions: { formation: string; time: string; at: LngLat; approxKm: number; reliability: string; source?: string }[]; frontline: { time: string; sector: string; line: LngLat[] }[] }>('packages/sim/data/scenarios/berlin-1945-tasks.history.json');
 const theatre = rd<{ areas: { id: string; name: string; ring: LngLat[] }[] }>('packages/sim/data/theatres/oder-berlin-1945.json');
 const seelow = rd<{ positions: { formation: string; date: string; time?: string; lng: number; lat: number }[] }>('docs/sources/berlin-1945-seelow-divisions.json');
 const wehrmacht = rd<{ unitTypes: Record<string, { quality?: number }> }>('packages/sim/data/profiles/wehrmacht-1945.json');
@@ -125,15 +126,64 @@ const hqPos = (id: string, seen = new Set<string>()): LngLat | null => {
   if (kids.length) return center(kids);
   return h.parent ? hqPos(h.parent, seen) : null;
 };
-/** Направление первой задачи штаба (для разноса поперёк него). */
-const firstDir = (id: string): LngLat => {
-  const o = ts.orders.filter((x) => x.formation === id).sort((a, b) => a.issuedAt.localeCompare(b.issuedAt))[0];
-  const p = hqPos(id), t = o ? targetOf(o.target) : null;
-  if (!p || !t) return [-1, 0];
-  const v: LngLat = [(t[0] - p[0]) * KX, (t[1] - p[1]) * KY];
-  const l = Math.hypot(v[0], v[1]) || 1;
-  return [v[0] / l, v[1] / l];
+
+// ---------- расстановка без своего положения: вдоль линии фронта 16.04 ----------
+// Линия фронта на вечер 16.04 из истории сценария нынешней модели (2 БФ — Одер, 1 БФ — Одер и Кюстринский плацдарм,
+// 1 УФ — Нейсе), с севера на юг. Стрелковые соединения без своего положения — двумя эшелонами вдоль неё на своей
+// стороне (первый — две трети, через 3 км по фронту, второй — на 6 км глубже через 4 км; центр — на удалении штаба от
+// линии), подвижные — группой у своего штаба; если штаб дальше 40 км от линии (гарнизоны, 12 А на Эльбе), — компактно
+// вокруг штаба через 3 км (C).
+const FRONT: LngLat[] = tsHist.frontline.filter((f) => f.time === '1945-04-16T20:00')
+  .sort((a, b) => Math.max(...b.line.map((p) => p[1])) - Math.max(...a.line.map((p) => p[1])))
+  .flatMap((f) => f.line);
+const toKm = (p: LngLat): LngLat => [p[0] * KX, p[1] * KY];
+const toLL = (q: LngLat): LngLat => [q[0] / KX, q[1] / KY];
+const project = (p: LngLat) => {
+  const P = toKm(p);
+  let best = { q: P, t: [0, 1] as LngLat, d: Infinity };
+  for (let i = 0; i + 1 < FRONT.length; i++) {
+    const A = toKm(FRONT[i]), B = toKm(FRONT[i + 1]);
+    const v: LngLat = [B[0] - A[0], B[1] - A[1]];
+    const l2 = v[0] * v[0] + v[1] * v[1] || 1;
+    const u = Math.max(0, Math.min(1, ((P[0] - A[0]) * v[0] + (P[1] - A[1]) * v[1]) / l2));
+    const q: LngLat = [A[0] + v[0] * u, A[1] + v[1] * u];
+    const d = Math.hypot(P[0] - q[0], P[1] - q[1]);
+    if (d < best.d) { const l = Math.sqrt(l2); best = { q, t: [v[0] / l, v[1] / l], d }; }
+  }
+  return best;
 };
+const grid = (c: LngLat, n: number, step: number): LngLat[] => {
+  const cols = Math.ceil(Math.sqrt(n));
+  return Array.from({ length: n }, (_, i) => toLL([c[0] + ((i % cols) - (cols - 1) / 2) * step, c[1] - (Math.floor(i / cols) - (Math.ceil(n / cols) - 1) / 2) * step]));
+};
+const MOBILE = new Set(['tk', 'mk', 'brigade', 'stug', 'kd']);
+function placeSlots(hp: LngLat, side: 'su' | 'de', needs: Div[]): Map<string, { pos: LngLat; note: string }> {
+  const out = new Map<string, { pos: LngLat; note: string }>();
+  if (!needs.length) return out;
+  const pr = project(hp);
+  const H = toKm(hp);
+  if (pr.d > 40) {
+    grid(H, needs.length, 3).forEach((p, i) => out.set(needs[i].id, { pos: p, note: 'положение: вокруг штаба через 3 км, штаб далеко от фронта (C)' }));
+    return out;
+  }
+  // своя сторона: от линии к штабу; если штаб на линии — советские к востоку, немецкие к западу
+  let N: LngLat = pr.d > 0.5 ? [(H[0] - pr.q[0]) / pr.d, (H[1] - pr.q[1]) / pr.d] : [-pr.t[1], pr.t[0]];
+  if (pr.d <= 0.5 && (side === 'su' ? N[0] < 0 : N[0] > 0)) N = [-N[0], -N[1]];
+  const at = (along: number, back: number) => toLL([pr.q[0] + pr.t[0] * along + N[0] * back, pr.q[1] + pr.t[1] * along + N[1] * back]);
+  const mobile = needs.filter((d) => MOBILE.has(d.type));
+  const rifle = needs.filter((d) => !MOBILE.has(d.type));
+  const n1 = Math.ceil((rifle.length * 2) / 3);
+  // глубина эшелонов: второй — на 6 км за первым; первый — так, чтобы центр соединений пришёлся на удаление штаба от
+  // линии (положение армии в источниках — её центр), но не ближе 1 км к линии
+  const back1 = Math.max(1, pr.d - (6 * (rifle.length - n1)) / Math.max(1, rifle.length));
+  rifle.forEach((d, i) => {
+    const first = i < n1;
+    const j = first ? i : i - n1, n = first ? n1 : rifle.length - n1;
+    out.set(d.id, { pos: at((j - (n - 1) / 2) * (first ? 3 : 4), first ? back1 : back1 + 6), note: `положение: ${first ? 'первый' : 'второй'} эшелон вдоль линии фронта 16.04 (C)` });
+  });
+  grid(H, mobile.length, 3).forEach((p, i) => out.set(mobile[i].id, { pos: p, note: 'положение: подвижные — группой у своего штаба (C)' }));
+  return out;
+}
 
 // ---------- соединения ----------
 interface Out { id: string; name: string; side: 'su' | 'de'; hq: string; kind: string; mobility: 'foot' | 'motor' | 'tracked'; size: 'rifle' | 'tank' | 'other'; quality: number; personnel: number; tanks: number; guns: number; ammo: number; fuel: number; pos: LngLat; enterAt?: string; notes: string[] }
@@ -157,9 +207,6 @@ for (const [hqId, divs] of byHq) {
   const hq = hqs.get(hqId)!;
   const f = tsF.get(hqId);
   const hp = hqPos(hqId);
-  const dir = firstDir(hqId);
-  const perp: LngLat = [-dir[1], dir[0]];
-  let k = 0;
   // советские: численность, танки и орудия армии — как у Зееловских высот
   const armyKnown = divs.filter((d) => census.get(d.id)?.personnel && d.type === 'sd').map((d) => census.get(d.id)!.personnel!.value);
   const fill = median(armyKnown.length >= 2 ? armyKnown : knownSd);
@@ -172,6 +219,9 @@ for (const [hqId, divs] of byHq) {
   const deKnown = divs.filter((d) => census.get(d.id)?.personnel || tsDiv(d)?.personnel);
   const deRest = f?.personnel ? Math.max(0, f.personnel - deKnown.reduce((s, d) => s + (census.get(d.id)?.personnel?.value ?? tsDiv(d)?.personnel ?? 0), 0)) : 0;
   const deUnknown = divs.length - deKnown.length;
+  // у кого нет своего положения — расстановка вдоль фронта
+  const cposOf = (d: Div) => { const c = subAt(d, '1945-04-16').corps; return d.side === 'su' && c ? seelowCorpsStart.get(`${hqId}_${c.replace(/^su_/, '')}`) : undefined; };
+  const slots = hp ? placeSlots(hp, hq.side, divs.filter((d) => !cposOf(d) && !tsDiv(d)?.position && !ownStart(d.id, hp))) : new Map();
   for (const d of divs) {
     const c = census.get(d.id);
     const notes: string[] = [];
@@ -187,12 +237,7 @@ for (const [hqId, divs] of byHq) {
     }
     if (!pos && tsDiv(d)?.position) { pos = tsDiv(d)!.position!; notes.push('положение: сценарий нынешней модели'); }
     if (!pos) { const p = ownStart(d.id, hp); if (p) { pos = p; notes.push('положение: перепись, 10–16.04'); } }
-    if (!pos && hp) {
-      const off = (k - (divs.length - 1) / 2) * 2.5;
-      pos = [hp[0] + (perp[0] * off) / KX, hp[1] + (perp[1] * off) / KY];
-      notes.push(`положение: ${hq.echelon === 'corps' ? 'корпус' : hq.echelon === 'army' ? 'армия' : 'фронт'}, разнос 2,5 км (C)`);
-    }
-    k++;
+    if (!pos && slots.has(d.id)) { const sl = slots.get(d.id)!; pos = sl.pos; notes.push(sl.note); }
     if (!pos) { console.warn(`нет положения: ${d.id}`); continue; }
     // численность, танки, орудия
     let personnel: number, tanks: number, guns: number;
@@ -279,6 +324,27 @@ for (const o of ts.orders) {
   }
 }
 
+// ---------- резервы фронтов без задач ----------
+// Фронтовые корпуса и дивизии, которым в сценарии нынешней модели задач нет, раз в сутки выдвигаются за своим
+// фронтом — к центру его соединений со сдвигом на своё исходное удаление от него (не больше 15 км). Допущение до
+// правил советской доктрины (docs/soviet-doctrine-agent-task.md, вопрос 3: ввод вторых эшелонов и подвижных групп).
+const ordered = new Set((orders as { to: string[] }[]).flatMap((o) => o.to));
+let reserveOrders = 0;
+for (const front of [...hqs.values()].filter((h) => h.side === 'su' && h.echelon === 'front' && !args.includes('--no-reserve'))) {
+  const idle = out.filter((o) => o.hq === front.id && !ordered.has(o.id));
+  if (!idle.length) continue;
+  const all = out.filter((o) => { for (let x: string | null = o.hq, n = 0; x && n < 6; x = hqs.get(x)?.parent ?? null, n++) if (x === front.id) return true; return false; });
+  const c = center(all.map((o) => o.pos));
+  for (let day = 1; day < HOURS / 24; day++) {
+    const at = new Date(Date.parse(`${START}:00Z`) + day * 86400000).toISOString().slice(0, 16);
+    for (const o of idle) {
+      const off: LngLat = [+clampKm((o.pos[0] - c[0]) * KX, 15).toFixed(2), +clampKm((o.pos[1] - c[1]) * KY, 15).toFixed(2)];
+      orders.push({ at, hq: front.id, to: [o.id], kind: 'move', target: null, targetFormation: front.id, offsetKm: off, note: 'резерв фронта следует за фронтом (допущение)' });
+      reserveOrders++;
+    }
+  }
+}
+
 // ---------- артподготовка и отвод (docs/sources/berlin-1945-artillery-prep.json) ----------
 const PREP_1BF: Record<string, number> = { su_5ua: 286, su_47a: 270, su_8gva: 268, su_3ua: 266, su_69a: 253 };
 const fires = [
@@ -343,5 +409,6 @@ writeFileSync(resolve(dir, 'berlin-1945.history.json'), JSON.stringify({
 const su = out.filter((o) => o.side === 'su'), de = out.filter((o) => o.side === 'de');
 console.log(`соединений: советских ${su.length}, немецких ${de.length}; штабов ${hqList.length}; приказов ${orders.length} (пропущено видов ${skipped}, без получателей ${empty})`);
 console.log(`положения: ${[...new Set(out.map((o) => o.notes.find((n) => n.startsWith('положение')) ?? '?'))].map((n) => `${n} — ${out.filter((o) => o.notes.includes(n)).length}`).join('; ')}`);
+console.log(`приказов резервам фронтов (допущение): ${reserveOrders}`);
 console.log(`ввод позже начала: ${out.filter((o) => o.enterAt && o.enterAt > START).length}`);
 console.log(`история: положений дивизий ${histDiv.length} (отбраковано ${rejected.length}), армий и корпусов ${histArmy.length}`);

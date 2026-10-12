@@ -162,6 +162,8 @@ pub struct Rules {
     /// Доля обычного темпа наступления по местности обороняющегося.
     pub advance_terrain: [f64; 6],
     pub river_cross_hours: f64,
+    /// Наведение переправы для техники через большую реку без моста, ч.
+    pub bridging_hours: f64,
     pub ammo_short: f64,
     pub fuel_out: f64,
     pub fatigue_effect: f64,
@@ -313,6 +315,7 @@ impl Rules {
                 a
             },
             river_cross_hours: num(&cal, "riverCrossHours")?,
+            bridging_hours: num(&ag, "march.bridgingHours")?,
             ammo_short: num(&cal, "ammoShort")?,
             fuel_out: num(&cal, "fuelOut")?,
             fatigue_effect: num(&cal, "fatigueEffect")?,

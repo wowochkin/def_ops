@@ -26,10 +26,11 @@ pub fn step_cost(t: &Theatre, r: &Rules, side: Side, mob: Mobility, c: usize, d:
     if v <= 0.0 { return None; }
     let mut h = t.centers[c].dist(t.centers[nb]) / v;
     if t.river_cross[c] & (1 << d) != 0 {
+        // пехота переправляется на подручных средствах, технике наводят переправу (march.bridgingHours)
         match t.crossing_bridge.get(&(c as u32, d as u8)) {
             Some(&b) if bridge_open(b) => {}
             _ if mob == Mobility::Foot => h += r.river_cross_hours,
-            _ => return None,
+            _ => h += r.bridging_hours,
         }
     }
     Some((nb, h))
