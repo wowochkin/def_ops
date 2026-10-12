@@ -70,6 +70,10 @@ export function SettingsPanel({ value, onChange, onRun, busy, onClose }: Props) 
       <label className="row">Модель разговора с агентом
         <select value={value.chatModel} onChange={(e) => set({ chatModel: e.target.value })}><option value="">—</option>{options(value.chatModel)}</select>
       </label>
+      <label className="row">Размышления в разговоре
+        <select value={value.chatReasoning} onChange={(e) => set({ chatReasoning: e.target.value as Reasoning })}>{REASONING.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</select>
+        <span className="hint">размышления видны по мере прихода</span>
+      </label>
       <div className="row col">
         <span>Немецкие штабы</span>
         {SOURCES.map((s) => (

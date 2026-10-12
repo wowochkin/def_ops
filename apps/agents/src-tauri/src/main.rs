@@ -2,8 +2,9 @@
 //! ядро agents-core напрямую, без сервера. Команды:
 //! - run_scenario — прогон сценария с записью хода по часам (кадры, журнал, штабы, исходные данные);
 //! - read_text — файл данных репозитория (сценарий, история, театр) только для чтения;
-//! - list_models, llm_chat, probe_parallel — языковая модель по протоколу OpenAI (LM Studio): список моделей,
-//!   запрос к чату, замер числа параллельных запросов
+//! - list_models, llm_chat_stream, llm_cancel, probe_parallel — языковая модель по протоколу OpenAI
+//!   (LM Studio): список моделей, запрос к чату (целиком и потоком, с остановкой), замер параллельных запросов;
+//!   ход ответов штабов на модели — событием staff-stream
 //!   (через ядро, без CORS со стороны сервера модели);
 //! - в run_scenario можно выбрать источник решений немецких штабов (приказы сценария, доктрина, языковая модель);
 //!   ход решений модели приходит в окно событием staff-progress.
@@ -74,6 +75,8 @@ async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>
         if let Some(l) = llm { sim.llm = Some(l.config()); }
         let app2 = app.clone();
         sim.on_progress = Some(Box::new(move |m| { let _ = app2.emit("staff-progress", m); }));
+        let app3 = app.clone();
+        sim.on_stream = Some(Box::new(move |v| { let _ = app3.emit("staff-stream", v); }));
         let hours = meta.hours;
         Ok(trace::run(&mut sim, hours, &meta))
     }).await.map_err(|e| e.to_string())?
@@ -84,9 +87,27 @@ async fn list_models(url: String) -> Result<Vec<String>, String> {
     tauri::async_runtime::spawn_blocking(move || llm::list_models(&url)).await.map_err(|e| e.to_string())?
 }
 
+/// Остановка потоковых ответов по номеру запроса.
+static CANCEL: std::sync::Mutex<Vec<(u64, std::sync::Arc<std::sync::atomic::AtomicBool>)>> = std::sync::Mutex::new(Vec::new());
+
+/// Разговор с агентом потоком: размышления и ответ уходят в окно по мере прихода ({part: think|text, s}), в конце —
+/// весь ответ с размышлениями, токенами и временем.
 #[tauri::command]
-async fn llm_chat(url: String, model: String, messages: Vec<(String, String)>) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || llm::chat(&llm::LlmConfig::new(&url, &model), &messages)).await.map_err(|e| e.to_string())?
+async fn llm_chat_stream(id: u64, llm: LlmIn, messages: Vec<(String, String)>, on_event: tauri::ipc::Channel<serde_json::Value>) -> Result<serde_json::Value, String> {
+    let flag = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    if let Ok(mut c) = CANCEL.lock() { c.push((id, flag.clone())); }
+    let r = tauri::async_runtime::spawn_blocking(move || {
+        llm::complete_stream(&llm.config(), &messages, &mut |p, s| {
+            let _ = on_event.send(serde_json::json!({ "part": if p == llm::Part::Think { "think" } else { "text" }, "s": s }));
+        }, Some(&flag))
+    }).await.map_err(|e| e.to_string())?;
+    if let Ok(mut c) = CANCEL.lock() { c.retain(|x| x.0 != id); }
+    r.map(|r| serde_json::json!({ "text": r.text, "reasoning": r.reasoning, "tokens": r.tokens, "secs": r.secs, "truncated": r.truncated }))
+}
+
+#[tauri::command]
+fn llm_cancel(id: u64) {
+    if let Ok(c) = CANCEL.lock() { for (k, f) in c.iter() { if *k == id { f.store(true, std::sync::atomic::Ordering::Relaxed); } } }
 }
 
 /// Замер числа параллельных запросов к модели (llm::probe_parallel).
@@ -103,7 +124,7 @@ fn read_text(path: String) -> Result<String, String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![run_scenario, read_text, list_models, llm_chat, probe_parallel])
+        .invoke_handler(tauri::generate_handler![run_scenario, read_text, list_models, llm_chat_stream, llm_cancel, probe_parallel])
         .run(tauri::generate_context!())
         .expect("ошибка запуска приложения");
 }

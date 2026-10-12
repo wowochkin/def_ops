@@ -4,15 +4,15 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { RunData } from './data';
-import { hourOf, posAt, rowAt, shortName, stateGroup } from './data';
+import { hourOf, lostAt, posAt, rowAt, shortName, stateGroup, timeLabel } from './data';
 import { addTheatre, baseStyle, towns } from './theatreLayers';
 import { symbolMarkup } from './symbols';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
-interface Props { data: RunData; hour: number; selected: string | null; onSelect: (id: string | null) => void; focus: [number, number] | null }
+interface Props { data: RunData; hour: number; selected: string | null; onSelect: (id: string | null) => void; focus: [number, number] | null; showDestroyed: boolean }
 
-export function MapView({ data, hour, selected, onSelect, focus }: Props) {
+export function MapView({ data, hour, selected, onSelect, focus, showDestroyed }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [, setView] = useState(0);
@@ -35,6 +35,7 @@ export function MapView({ data, hour, selected, onSelect, focus }: Props) {
   useEffect(() => { if (focus && mapRef.current) mapRef.current.easeTo({ center: focus, duration: 600 }); }, [focus]);
 
   const townList = useMemo(() => towns(theatre), [theatre]);
+  const lost = useMemo(() => lostAt(trace), [trace]);
   const map = mapRef.current;
   if (!map) return <div className="map" ref={box} />;
   const zoom = map.getZoom();
@@ -64,15 +65,19 @@ export function MapView({ data, hour, selected, onSelect, focus }: Props) {
         {trace.divisions.map((d, i) => {
           const row = rowAt(trace, i, hour);
           const grp = stateGroup(row[2]);
-          if (grp === 'destroyed' && i !== selIdx) return null;
+          // разгромленная — на месте разгрома, приглушённая и перечёркнутая крест-накрест, с временем разгрома
+          const out = grp === 'destroyed';
+          if (out && !showDestroyed && i !== selIdx) return null;
           const [x, y] = P(posAt(trace, i, hour));
           const sel = i === selIdx;
           const s = (sel ? 1.25 : 1) * k * 0.8;
+          const hw = 12 * s * 1.8, hh = 8 * s * 1.8;
           return (
             <g key={d.id} transform={`translate(${x},${y})`} className={`unit ${grp} ${sel ? 'sel' : ''}`} onClick={(e) => { e.stopPropagation(); onSelect(d.id); }}>
               <g transform={`scale(${s})`} dangerouslySetInnerHTML={{ __html: symbolMarkup(d) }} />
-              <circle className="state-dot" cx={12 * s * 1.8} cy={-7 * s * 1.8} r={3.2} />
-              {(zoom >= 9.6 || sel) && <text y={10 * s * 1.8 + 9} className="unit-label">{shortName(d)}</text>}
+              {out ? <path className="strike" d={`M${-hw},${-hh}L${hw},${hh}M${-hw},${hh}L${hw},${-hh}`} /> : <circle className="state-dot" cx={hw} cy={-7 * s * 1.8} r={3.2} />}
+              {(zoom >= 9.6 || sel) && <text y={hh + 13} className="unit-label">{shortName(d)}</text>}
+              {out && lost[i] !== undefined && (zoom >= 9.6 || sel) && <text y={hh + 25} className="unit-label lost">{row[2]} {timeLabel(trace.start, lost[i]).slice(0, 5)} {timeLabel(trace.start, lost[i]).slice(11)}</text>}
             </g>
           );
         })}

@@ -220,11 +220,25 @@ impl Sim {
         } else { self.situation(w, &groups[0].1) };
         let user = format!("Время: {time} (МСК). Обстановка по дивизиям (сила противника — в долях своей; strength_pct — от исходной):\n{situation}");
         if let Some(cb) = &self.on_progress { cb(format!("{time}: штаб «{}» запрашивает модель {}…", hq.name, cfg.model)); }
-        let reply = llm::complete(cfg, &[("system".into(), system), ("user".into(), user.clone())]);
+        // поток ответа — в окно приложения: хвосты размышлений и ответа, не чаще раза в 0,15 с
+        let t0 = std::time::Instant::now();
+        let (mut think, mut text, mut last, mut n) = (String::new(), String::new(), 0.0f64, 0u64);
+        let tail = |s: &str, k: usize| { let c = s.chars().count(); s.chars().skip(c.saturating_sub(k)).collect::<String>() };
+        let send = |phase: &str, think: &str, text: &str, n: u64| if let Some(cb) = &self.on_stream {
+            cb(json!({ "hq": hq.id, "name": hq.name, "time": time, "phase": phase, "think": tail(think, 700), "text": tail(text, 400), "parts": n, "secs": (t0.elapsed().as_secs_f64() * 10.0).round() / 10.0 }));
+        };
+        send("wait", "", "", 0);
+        let reply = llm::complete_stream(cfg, &[("system".into(), system), ("user".into(), user.clone())], &mut |p, s| {
+            match p { llm::Part::Think => think.push_str(s), llm::Part::Text => text.push_str(s) }
+            n += 1;
+            let now = t0.elapsed().as_secs_f64();
+            if now - last >= 0.15 { last = now; send(if text.trim().is_empty() { "think" } else { "answer" }, &think, &text, n); }
+        }, None);
+        send(if reply.is_ok() { "done" } else { "error" }, &think, &text, n);
         let log = |ok: bool, text: &str, r: Option<&llm::Reply>| {
             if let Ok(mut l) = self.llm_log.lock() {
                 l.push(json!({ "tick": tick, "time": time, "hq": hq.id, "model": cfg.model, "request": user, "reply": text, "ok": ok,
-                    "tokens": r.and_then(|r| r.tokens), "secs": r.map(|r| (r.secs * 10.0).round() / 10.0), "truncated": r.map(|r| r.truncated) }));
+                    "reasoning": r.map(|r| r.reasoning.as_str()).unwrap_or(""), "tokens": r.and_then(|r| r.tokens), "secs": r.map(|r| (r.secs * 10.0).round() / 10.0), "truncated": r.map(|r| r.truncated) }));
             }
         };
         let reply = match reply { Ok(r) => r, Err(e) => { log(false, &e, None); return Err(e); } };

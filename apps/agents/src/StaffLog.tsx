@@ -36,7 +36,7 @@ export function StaffLog({ data, hour, onHour }: { data: RunData; hour: number; 
             <li key={k} onClick={() => onHour(e.tick)}>
               <span className="t">{e.time.slice(8, 10)}.{e.time.slice(5, 7)} {e.time.slice(11, 16)}</span> <b>{head}</b>
               <ul className="notes">{rest.join(': ').split('; ').map((x, i) => <li key={i}>{x}</li>)}</ul>
-              {call && <details onClick={(x) => x.stopPropagation()}><summary>запрос и ответ модели{call.secs != null ? ` · ${call.secs} с` : ''}{call.tokens != null ? ` · ${call.tokens} ток.` : ''}{call.truncated ? ' · оборван потолком' : ''}</summary><pre className="pre">{call.request}</pre><pre className="pre">{call.reply}</pre></details>}
+              {call && <details onClick={(x) => x.stopPropagation()}><summary>запрос и ответ модели{call.secs != null ? ` · ${call.secs} с` : ''}{call.tokens != null ? ` · ${call.tokens} ток.` : ''}{call.truncated ? ' · оборван потолком' : ''}</summary><pre className="pre">{call.request}</pre>{call.reasoning && <details className="thinking"><summary>размышления модели</summary><pre>{call.reasoning}</pre></details>}<pre className="pre">{call.reply}</pre></details>}
             </li>
           );
         })}

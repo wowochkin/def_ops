@@ -177,3 +177,33 @@ fn staff_on_language_model_options() {
     sim.step();
     assert!(sim.journal.iter().any(|e| e.text.contains("ответ оборван потолком токенов (7)")));
 }
+
+/// Поток ответа (text/event-stream): размышления полем reasoning_content и меткой <think> по частям, затем ответ.
+#[test]
+fn language_model_stream() {
+    use std::io::{Read, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = l.local_addr().unwrap();
+    std::thread::spawn(move || {
+        for s in l.incoming() {
+            let Ok(mut s) = s else { continue };
+            let mut buf = [0u8; 65536];
+            let _ = s.read(&mut buf);
+            let ev = |d: serde_json::Value| format!("data: {d}\n\n");
+            let mut body = String::new();
+            body += &ev(serde_json::json!({ "choices": [{ "delta": { "reasoning_content": "сначала " } }] }));
+            for c in ["<thi", "nk>оцен", "ка</th", "ink>{\"orders\"", ": []}"] { body += &ev(serde_json::json!({ "choices": [{ "delta": { "content": c } }] })); }
+            body += &ev(serde_json::json!({ "choices": [{ "delta": {}, "finish_reason": "stop" }] }));
+            body += &ev(serde_json::json!({ "choices": [], "usage": { "completion_tokens": 42 } }));
+            body += "data: [DONE]\n\n";
+            let _ = write!(s, "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", body.len(), body);
+        }
+    });
+    let cfg = agents_core::llm::LlmConfig::new(&format!("http://{addr}/v1"), "m");
+    let mut seen = Vec::new();
+    let r = agents_core::llm::complete_stream(&cfg, &[("user".into(), "?".into())], &mut |p, s| seen.push((p, s.to_string())), None).unwrap();
+    assert_eq!(r.reasoning, "сначала оценка");
+    assert_eq!(r.text, "{\"orders\": []}");
+    assert_eq!(r.tokens, Some(42));
+    assert!(seen.len() >= 4 && seen[0].0 == agents_core::llm::Part::Think);
+}

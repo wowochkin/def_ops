@@ -4,13 +4,15 @@
  * «Разбор» видит ещё исходные данные с источниками и положения по документам. Ответ строится на выданных записях
  * со ссылками [S1], [J3]…; где записи нет — модель должна сказать, что это её мнение.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RunData, Settings } from './data';
-import { chatLLM, hourOf, km, posAt, rowAt, shortName, timeLabel } from './data';
+import { chatRun, chatStream, hourOf, km, posAt, rowAt, shortName, timeLabel } from './data';
 
 type Voice = 'commander' | 'analyst';
 interface Rec { id: string; text: string; tick?: number }
-interface Msg { role: 'user' | 'assistant'; text: string; voice: Voice; hour: number; records?: Rec[] }
+interface Msg { role: 'user' | 'assistant'; text: string; voice: Voice; hour: number; records?: Rec[]; reasoning?: string; secs?: number; tokens?: number | null; note?: string }
+/** Ответ, который ещё идёт: размышления и текст по мере прихода. */
+interface Live { think: string; text: string; t0: number; firstAt: number | null; thinkEnd: number | null }
 
 export function buildRecords(data: RunData, id: string, hour: number, voice: Voice): Rec[] {
   const { trace, history } = data;
@@ -49,11 +51,32 @@ function systemPrompt(data: RunData, id: string, voice: Voice): string {
 Правила: отвечай по-русски. Опирайся только на записи и ссылайся на них в квадратных скобках, например [J3] или [S1]. Если ответа в записях нет, прямо скажи «в записях этого нет» и, если отвечаешь всё же, пометь это как «мнение модели». Не придумывай цифр.`;
 }
 
+/** Размышления модели: пока идут — раскрыты и прокручиваются вниз, после ответа — свёрнуты. */
+function Thinking({ text, open, label }: { text: string; open: boolean; label: string }) {
+  const box = useRef<HTMLPreElement>(null);
+  useEffect(() => { if (open && box.current) box.current.scrollTop = box.current.scrollHeight; }, [text, open]);
+  return <details className="thinking" open={open}><summary>{label}</summary><pre ref={box}>{text}</pre></details>;
+}
+
+const sec = (ms: number) => `${(ms / 1000).toFixed(ms < 10000 ? 1 : 0)} с`;
+
 export function Chat({ data, id, hour, onHour, settings, onSettings }: { data: RunData; id: string; hour: number; onHour: (h: number) => void; settings: Settings; onSettings: () => void }) {
   const [voice, setVoice] = useState<Voice>('commander');
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [live, setLive] = useState<Live | null>(null);
+  const [now, setNow] = useState(() => performance.now());
+  const ctrl = useRef<AbortController | null>(null);
+  const end = useRef<HTMLDivElement>(null);
+  const busy = live !== null;
+
+  // часы ожидания: пока модель отвечает, время идёт на глазах — видно, что она не зависла
+  useEffect(() => {
+    if (!busy) return;
+    const t = setInterval(() => setNow(performance.now()), 200);
+    return () => clearInterval(t);
+  }, [busy]);
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs.length, live?.text.length, live?.think.length === 0]);
 
   async function ask() {
     const q = text.trim();
@@ -62,15 +85,28 @@ export function Chat({ data, id, hour, onHour, settings, onSettings }: { data: R
     const user: Msg = { role: 'user', text: q, voice, hour };
     setMsgs((m) => [...m, user]);
     setText('');
-    setBusy(true);
+    const t0 = performance.now();
+    const acc: Live = { think: '', text: '', t0, firstAt: null, thinkEnd: null };
+    setLive({ ...acc });
+    const ac = new AbortController();
+    ctrl.current = ac;
+    const recText = records.map((r) => `[${r.id}] ${r.text}`).join('\n');
+    const history = msgs.filter((m) => m.voice === voice).slice(-6).map((m) => ({ role: m.role, content: m.text }));
     try {
-      const recText = records.map((r) => `[${r.id}] ${r.text}`).join('\n');
-      const history = msgs.filter((m) => m.voice === voice).slice(-6).map((m) => ({ role: m.role, content: m.text }));
-      const answer = await chatLLM(settings.llmUrl, settings.chatModel || 'local-model', [{ role: 'system', content: `${systemPrompt(data, id, voice)}\n\nЗаписи:\n${recText}` }, ...history, { role: 'user', content: q }]);
-      setMsgs((m) => [...m, { role: 'assistant', text: answer, voice, hour, records }]);
+      const res = await chatStream(chatRun(settings), [{ role: 'system', content: `${systemPrompt(data, id, voice)}\n\nЗаписи:\n${recText}` }, ...history, { role: 'user', content: q }], (p, s) => {
+        const t = performance.now();
+        acc.firstAt ??= t;
+        if (p === 'think') acc.think += s;
+        else { acc.text += s; if (acc.think && acc.thinkEnd === null && acc.text.trim()) acc.thinkEnd = t; }
+        setLive({ ...acc });
+      }, ac.signal);
+      setMsgs((m) => [...m, { role: 'assistant', text: res.text || '(пустой ответ)', voice, hour, records, reasoning: res.reasoning, secs: res.secs, tokens: res.tokens, note: res.truncated ? 'ответ оборван потолком токенов' : undefined }]);
     } catch (e) {
-      setMsgs((m) => [...m, { role: 'assistant', text: `Языковая модель недоступна (${(e as Error).message}). Запустите LM Studio с сервером OpenAI на ${settings.llmUrl} и выберите модель в «Модель и штабы».`, voice, hour, records }]);
-    } finally { setBusy(false); }
+      const stopped = ac.signal.aborted || /остановлено|abort/i.test(String((e as Error).message));
+      setMsgs((m) => [...m, stopped
+        ? { role: 'assistant', text: acc.text || '—', voice, hour, records, reasoning: acc.think, secs: (performance.now() - t0) / 1000, note: 'остановлено' }
+        : { role: 'assistant', text: `Языковая модель недоступна (${(e as Error).message}). Запустите LM Studio с сервером OpenAI на ${settings.llmUrl} и выберите модель в «Модель и штабы».`, voice, hour, records }]);
+    } finally { setLive(null); ctrl.current = null; }
   }
 
   const cite = (m: Msg, s: string) => s.split(/(\[[A-Z]\d+\])/).map((part, k) => {
@@ -80,6 +116,13 @@ export function Chat({ data, id, hour, onHour, settings, onSettings }: { data: R
     return <span key={k} className="cite" title={rec.text} onClick={() => rec.tick !== undefined && onHour(rec.tick)}>{part}</span>;
   });
 
+  const liveStatus = (l: Live) => {
+    const el = now - l.t0;
+    if (l.firstAt === null) return `ждём модель… ${sec(el)} (загрузка модели и чтение записей)`;
+    if (!l.text.trim()) return `размышляет… ${sec(now - l.firstAt)}`;
+    return `отвечает… ${sec(el)}`;
+  };
+
   return (
     <div className="chat">
       <div className="voices">
@@ -88,18 +131,27 @@ export function Chat({ data, id, hour, onHour, settings, onSettings }: { data: R
         <span className="hint">{voice === 'commander' ? 'знает только своё на выбранный час' : 'видит расчёт, источники и документы'}</span>
       </div>
       <div className="msgs">
-        {msgs.length === 0 && <div className="hint">Спросите, например: «Почему остановились?», «Что вам известно о противнике?», «Откуда взята численность?»</div>}
+        {msgs.length === 0 && !live && <div className="hint">Спросите, например: «Почему остановились?», «Что вам известно о противнике?», «Откуда взята численность?»</div>}
         {msgs.map((m, k) => (
           <div key={k} className={`msg ${m.role}`}>
-            <div className="meta">{m.role === 'user' ? 'Вопрос' : m.voice === 'commander' ? 'Командир' : 'Разбор'} · {timeLabel(data.trace.start, m.hour)}</div>
+            <div className="meta">{m.role === 'user' ? 'Вопрос' : m.voice === 'commander' ? 'Командир' : 'Разбор'} · {timeLabel(data.trace.start, m.hour)}{m.secs !== undefined ? ` · ответ за ${m.secs.toFixed(1)} с` : ''}{m.tokens ? ` · ${m.tokens} ток.` : ''}{m.note ? ` · ${m.note}` : ''}</div>
+            {m.reasoning && <Thinking text={m.reasoning} open={false} label={`размышления модели (${m.reasoning.length} зн.)`} />}
             <div>{m.role === 'assistant' ? cite(m, m.text) : m.text}</div>
             {m.records && <details><summary>записи, выданные модели ({m.records.length})</summary><ul>{m.records.map((r) => <li key={r.id}>[{r.id}] {r.text}</li>)}</ul></details>}
           </div>
         ))}
+        {live && (
+          <div className="msg assistant live">
+            <div className="meta"><span className="spinner" />{voice === 'commander' ? 'Командир' : 'Разбор'} · {liveStatus(live)}</div>
+            {live.think && <Thinking text={live.think} open={!live.text.trim()} label={live.text.trim() ? `размышления (${sec((live.thinkEnd ?? now) - (live.firstAt ?? live.t0))})` : 'размышления'} />}
+            {live.text && <div>{live.text}<span className="caret">▍</span></div>}
+          </div>
+        )}
+        <div ref={end} />
       </div>
       <div className="ask">
         <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Вопрос агенту…" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(); } }} />
-        <button onClick={() => void ask()} disabled={busy}>{busy ? '…' : 'Спросить'}</button>
+        {busy ? <button onClick={() => ctrl.current?.abort()}>Стоп</button> : <button onClick={() => void ask()}>Спросить</button>}
       </div>
       <div className="llm">Модель: {settings.chatModel || 'не выбрана'} · <a href="#" onClick={(e) => { e.preventDefault(); onSettings(); }}>выбрать</a></div>
     </div>

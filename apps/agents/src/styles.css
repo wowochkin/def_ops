@@ -28,7 +28,11 @@ main { grid-area: m; position: relative; overflow: hidden; }
 .overlay .unit.sel .unit-label { font-weight: 700; }
 .state-dot { stroke: #fff; stroke-width: 1; fill: var(--reserve); }
 .unit.march .state-dot { fill: var(--march); } .unit.deploy .state-dot { fill: var(--deploy); } .unit.attack .state-dot { fill: var(--attack); }
-.unit.defense .state-dot { fill: var(--defense); } .unit.withdraw .state-dot { fill: var(--withdraw); } .unit.destroyed { opacity: 0.4; }
+.unit.defense .state-dot { fill: var(--defense); } .unit.withdraw .state-dot { fill: var(--withdraw); } .unit.destroyed > g { opacity: 0.6; }
+.overlay .strike { stroke: #1d1f24; stroke-width: 2; stroke-linecap: round; fill: none; }
+.overlay .unit-label.lost { font-size: 10px; fill: #555; }
+.strike-key { display: inline-block; width: 14px; height: 10px; margin-right: 6px; vertical-align: -1px; background: linear-gradient(to top right, transparent 45%, #1d1f24 45% 55%, transparent 55%), linear-gradient(to bottom right, transparent 45%, #1d1f24 45% 55%, transparent 55%); border: 1px solid #999; }
+.legend label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .town { font-size: 10px; fill: #5b5446; paint-order: stroke; stroke: #f4f1e8cc; stroke-width: 3px; }
 .trail { fill: none; stroke: #222; stroke-width: 1.6; stroke-dasharray: 4 3; opacity: 0.7; }
 .ghost circle { fill: none; stroke: #222; stroke-width: 1.5; stroke-dasharray: 2 2; opacity: 0.45; }
@@ -103,3 +107,16 @@ header button { border: 1px solid var(--line); background: #fff; border-radius: 
 .settings table.probe { border-collapse: collapse; font-size: 12px; margin: 2px 0; }
 .settings table.probe th, .settings table.probe td { padding: 2px 8px; border-bottom: 1px solid var(--line, #ddd); text-align: right; }
 .settings table.probe tr.on td { font-weight: 600; }
+
+.thinking { margin: 4px 0; font-size: 12px; color: var(--muted, #666); }
+.thinking summary { cursor: pointer; }
+.thinking pre { white-space: pre-wrap; font-family: inherit; font-style: italic; max-height: 160px; overflow: auto; margin: 4px 0 0; padding: 6px 8px; background: #f3f1ea; border-left: 2px solid #c9c2ad; border-radius: 3px; }
+.spinner { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border: 2px solid #c9c2ad; border-top-color: #555; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -1px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.caret { animation: blink 1s steps(1) infinite; margin-left: 1px; }
+@keyframes blink { 50% { opacity: 0; } }
+
+.staff-live .live-card { margin: 8px 0; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font-size: 12px; }
+.staff-live .live-card.done, .staff-live .live-card.error { opacity: 0.6; }
+.staff-live pre { white-space: pre-wrap; font-family: inherit; max-height: 120px; overflow: auto; margin: 4px 0 0; }
+.staff-live pre.think { font-style: italic; color: var(--muted, #666); }

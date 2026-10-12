@@ -14,7 +14,7 @@ export interface JournalEvent { tick: number; time: string; agent: string | null
 /** Кадр дивизии: lng, lat, состояние, люди, танки, орудия, боекомплекты, заправки, усталость, организованность. */
 export type Row = [number, number, string, number, number, number, number, number, number, number];
 
-export interface StaffCall { tick: number; time: string; hq: string; model: string; request: string; reply: string; ok: boolean; tokens?: number | null; secs?: number | null; truncated?: boolean | null }
+export interface StaffCall { tick: number; time: string; hq: string; model: string; request: string; reply: string; reasoning?: string; ok: boolean; tokens?: number | null; secs?: number | null; truncated?: boolean | null }
 export interface ProbeResult { best: number; rows: { parallel: number; tokensPerSec: number; secs: number }[]; error?: string }
 export interface LlmInfo { url: string; model: string; reasoning?: Reasoning; maxTokens?: number; parallel?: number; sync?: boolean; byArmy?: boolean; parallelUsed?: number; probe?: ProbeResult }
 export interface Trace {
@@ -78,18 +78,107 @@ export async function listModels(url: string): Promise<string[]> {
   return ((j.data ?? []) as { id: string }[]).map((m) => m.id).sort();
 }
 
-export async function chatLLM(url: string, model: string, messages: { role: string; content: string }[]): Promise<string> {
-  if (isTauri()) {
-    const { invoke } = await import('@tauri-apps/api/core');
-    return invoke<string>('llm_chat', { url, model, messages: messages.map((m) => [m.role, m.content]) });
+/** Ход ответа штаба на модели во время расчёта (событие staff-stream ядра). */
+export interface StaffLiveMsg { hq: string; name: string; time: string; phase: 'wait' | 'think' | 'answer' | 'done' | 'error'; think: string; text: string; parts: number; secs: number }
+
+/** Ответ модели целиком: текст, размышления, токены, время. */
+export interface StreamResult { text: string; reasoning: string; tokens: number | null; secs: number; truncated: boolean }
+export type StreamPart = 'think' | 'text';
+
+/** Разделение потока на размышления и ответ по меткам <think>…</think>, приходящим по частям (как ThinkSplit в ядре). */
+export class ThinkSplit {
+  private pending = '';
+  private inside = false;
+  push(s: string, out: [StreamPart, string][]) {
+    this.pending += s;
+    for (;;) {
+      const tag = this.inside ? '</think>' : '<think>';
+      const part: StreamPart = this.inside ? 'think' : 'text';
+      const k = this.pending.indexOf(tag);
+      if (k >= 0) {
+        if (k > 0) out.push([part, this.pending.slice(0, k)]);
+        this.pending = this.pending.slice(k + tag.length);
+        this.inside = !this.inside;
+        continue;
+      }
+      let keep = 0;
+      for (let n = tag.length - 1; n > 0; n--) if (this.pending.endsWith(tag.slice(0, n))) { keep = n; break; }
+      const cut = this.pending.length - keep;
+      if (cut > 0) { out.push([part, this.pending.slice(0, cut)]); this.pending = this.pending.slice(cut); }
+      return;
+    }
   }
-  const r = await fetch(`${url.replace(/\/$/, '')}/chat/completions`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, temperature: 0.2, messages }),
-  });
+  finish(out: [StreamPart, string][]) { if (this.pending) out.push([this.inside ? 'think' : 'text', this.pending]); this.pending = ''; }
+}
+
+let streamId = 0;
+
+/**
+ * Запрос к модели потоком: `onPart` получает размышления и ответ по мере прихода, `signal` останавливает. В приложении —
+ * через ядро (llm_chat_stream), в браузере — напрямую через прокси сервера разработки.
+ */
+export async function chatStream(l: LlmRun, messages: { role: string; content: string }[], onPart: (p: StreamPart, s: string) => void, signal?: AbortSignal): Promise<StreamResult> {
+  if (isTauri()) {
+    const { invoke, Channel } = await import('@tauri-apps/api/core');
+    const id = ++streamId;
+    const ch = new Channel<{ part: StreamPart; s: string }>();
+    ch.onmessage = (m) => onPart(m.part, m.s);
+    const stop = () => { void invoke('llm_cancel', { id }); };
+    signal?.addEventListener('abort', stop);
+    try { return await invoke<StreamResult>('llm_chat_stream', { id, llm: l, messages: messages.map((m) => [m.role, m.content]), onEvent: ch }); }
+    finally { signal?.removeEventListener('abort', stop); }
+  }
+  const t0 = performance.now();
+  const body: Record<string, unknown> = { model: l.model, temperature: 0.2, stream: true, stream_options: { include_usage: true }, messages };
+  if (l.maxTokens > 0) body.max_tokens = l.maxTokens;
+  if (l.reasoning === 'off') {
+    Object.assign(body, { reasoning_effort: 'low', chat_template_kwargs: { enable_thinking: false }, think: false });
+    const last = [...messages].reverse().find((m) => m.role === 'user');
+    body.messages = messages.map((m) => (m === last ? { ...m, content: `${m.content} /no_think` } : m));
+  } else if (l.reasoning !== 'default') body.reasoning_effort = l.reasoning;
+  const r = await fetch(`${l.url.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });
   if (!r.ok) throw new Error(`модель ответила ${r.status}`);
-  const j = await r.json();
-  return j.choices?.[0]?.message?.content ?? '(пустой ответ)';
+  let text = '', reasoning = '', tokens: number | null = null, truncated = false, chunks = 0;
+  const split = new ThinkSplit();
+  const out: [StreamPart, string][] = [];
+  const flush = () => { for (const [p, s] of out.splice(0)) { if (p === 'think') reasoning += s; else text += s; onPart(p, s); } };
+  const take = (c: { finish_reason?: string; delta?: Record<string, string>; message?: Record<string, string> } | undefined, d: Record<string, string> | undefined) => {
+    if (c?.finish_reason === 'length') truncated = true;
+    if (!d) return;
+    for (const k of ['reasoning_content', 'reasoning']) if (d[k]) { out.push(['think', d[k]]); chunks++; }
+    if (d.content) { split.push(d.content, out); chunks++; }
+    flush();
+  };
+  if ((r.headers.get('content-type') ?? '').includes('text/event-stream') && r.body) {
+    const rd = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { done, value } = await rd.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() ?? '';
+      for (const line of lines) {
+        const data = line.startsWith('data:') ? line.slice(5).trim() : '';
+        if (!data || data === '[DONE]') continue;
+        try {
+          const j = JSON.parse(data);
+          if (j.usage?.completion_tokens) tokens = j.usage.completion_tokens;
+          take(j.choices?.[0], j.choices?.[0]?.delta);
+        } catch { /* неполная строка */ }
+      }
+    }
+  } else {
+    const j = await r.json();
+    tokens = j.usage?.completion_tokens ?? null;
+    take(j.choices?.[0], j.choices?.[0]?.message);
+  }
+  split.finish(out);
+  flush();
+  const k = text.indexOf('</think>');
+  if (k >= 0) { reasoning += text.slice(0, k); text = text.slice(k + 8); }
+  return { text: text.trim(), reasoning, tokens: tokens ?? (chunks || null), truncated, secs: (performance.now() - t0) / 1000 };
 }
 
 /**
@@ -137,10 +226,13 @@ export interface Settings {
   sync: boolean;
   /** Один запрос на армию за все её корпуса. */
   byArmy: boolean;
+  /** Уровень размышлений в разговоре с агентом. */
+  chatReasoning: Reasoning;
 }
+export const chatRun = (s: Settings): LlmRun => ({ url: s.llmUrl, model: s.chatModel || 'local-model', reasoning: s.chatReasoning, maxTokens: 0, parallel: 1, sync: false, byArmy: false });
 export const llmRun = (s: Settings): LlmRun => ({ url: s.llmUrl, model: s.staffModel, reasoning: s.reasoning, maxTokens: s.maxTokens, parallel: s.parallel, sync: s.sync, byArmy: s.byArmy });
 export function loadSettings(): Settings {
-  const d: Settings = { llmUrl: defaultLlmUrl(), staffModel: '', chatModel: '', de: 'script', reasoning: 'default', maxTokens: 0, parallel: 0, sync: true, byArmy: false };
+  const d: Settings = { llmUrl: defaultLlmUrl(), staffModel: '', chatModel: '', de: 'script', reasoning: 'default', maxTokens: 0, parallel: 0, sync: true, byArmy: false, chatReasoning: 'default' };
   try { return { ...d, ...JSON.parse(localStorage.getItem('agents.settings') ?? '{}') }; } catch { return d; }
 }
 export function saveSettings(s: Settings) { try { localStorage.setItem('agents.settings', JSON.stringify(s)); } catch { /* без хранилища */ } }
@@ -174,6 +266,14 @@ export function posAt(trace: Trace, i: number, h: number): LngLat {
 
 export const rowAt = (trace: Trace, i: number, h: number): Row => trace.frames[Math.max(0, Math.min(trace.frames.length - 1, Math.round(h)))][i];
 
+/** Час, с которого дивизия выбыла (небоеспособна или сведена в другую), — по кадрам прогона. */
+export function lostAt(trace: Trace): (number | undefined)[] {
+  return trace.divisions.map((_, i) => {
+    const h = trace.frames.findIndex((f) => stateGroup(f[i][2]) === 'destroyed');
+    return h < 0 ? undefined : h;
+  });
+}
+
 /** Группа состояния — для цвета и диаграммы. */
 export function stateGroup(label: string): 'reserve' | 'march' | 'deploy' | 'attack' | 'defense' | 'withdraw' | 'destroyed' {
   if (label.startsWith('марш')) return 'march';
@@ -181,7 +281,7 @@ export function stateGroup(label: string): 'reserve' | 'march' | 'deploy' | 'att
   if (label.startsWith('наступ')) return 'attack';
   if (label.startsWith('оборона')) return 'defense';
   if (label.startsWith('отход') || label.startsWith('отступ')) return 'withdraw';
-  if (label.startsWith('небоеспособ')) return 'destroyed';
+  if (label.startsWith('небоеспособ') || label.startsWith('сведена')) return 'destroyed';
   return 'reserve';
 }
 

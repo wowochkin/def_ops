@@ -1,9 +1,10 @@
 /** Приложение агентной модели: карта, иерархия, шкала времени с показом, карточка агента и разговор с ним. */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RunData, Settings } from './data';
+import type { RunData, Settings, StaffLiveMsg } from './data';
 import { SCENARIO, isTauri, llmRun, loadRun, loadSettings, posAt, rowAt, saveSettings, shortName, stateGroup, timeLabel } from './data';
 import { SettingsPanel } from './Settings';
 import { StaffLog } from './StaffLog';
+import { StaffLive } from './StaffLive';
 import { MapView } from './MapView';
 import { Inspector } from './Inspector';
 import { Chat } from './Chat';
@@ -24,21 +25,30 @@ export function App() {
   const [settings, setSettingsState] = useState<Settings>(() => loadSettings());
   const [showSettings, setShowSettings] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  const [live, setLive] = useState<StaffLiveMsg[]>([]);
   const [runId, setRunId] = useState(0);
+  const [showDestroyed, setShowDestroyed] = useState(true);
   const setSettings = (s: Settings) => { setSettingsState(s); saveSettings(s); };
 
   // ход решений штабов на модели — событием из ядра
   useEffect(() => {
     if (!isTauri()) return;
     let off: (() => void) | undefined;
+    let off2: (() => void) | undefined;
     void import('@tauri-apps/api/event').then(({ listen }) => listen<string>('staff-progress', (e) => setProgress(e.payload))).then((u) => { off = u; });
-    return () => off?.();
+    // ответы штабов по мере прихода: последнее состояние каждого штаба, готовые — внизу
+    void import('@tauri-apps/api/event').then(({ listen }) => listen<StaffLiveMsg>('staff-stream', (e) => setLive((l) => {
+      const rest = l.filter((x) => x.hq !== e.payload.hq);
+      return [e.payload, ...rest].sort((a, b) => Number(a.phase === 'done' || a.phase === 'error') - Number(b.phase === 'done' || b.phase === 'error')).slice(0, 8);
+    }))).then((u) => { off2 = u; });
+    return () => { off?.(); off2?.(); };
   }, []);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     setBusy(true);
     setProgress(null);
+    setLive([]);
     const opts = { seed, de: settings.de, llm: settings.staffModel ? llmRun(settings) : null };
     loadRun(SCENARIO, opts).then((d) => {
       setData(d);
@@ -75,7 +85,7 @@ export function App() {
   }, [data]);
 
   if (err) return <div className="splash">Не удалось загрузить прогон: {err}<br />Для разработки в браузере сначала выполните <code>npm run agents:seelow</code>.</div>;
-  if (!data) return <div className="splash">Расчёт…</div>;
+  if (!data) return <div className="splash">Расчёт…{progress && <div className="hint">{progress}</div>}<StaffLive items={live} /></div>;
   const { trace } = data;
   const select = (id: string | null) => {
     setSelected(id);
@@ -114,10 +124,11 @@ export function App() {
         ))}
       </aside>
       <main>
-        <MapView data={data} hour={hour} selected={selected} onSelect={select} focus={focus} />
+        <MapView data={data} hour={hour} selected={selected} onSelect={select} focus={focus} showDestroyed={showDestroyed} />
         <div className="legend">
           {(['march', 'deploy', 'attack', 'defense', 'withdraw', 'reserve'] as const).map((g) => <span key={g}><i className={`dot ${g}`} />{({ march: 'марш', deploy: 'развёртывание', attack: 'наступление', defense: 'оборона', withdraw: 'отход', reserve: 'резерв' })[g]}</span>)}
           <span><i className="ghost-key" />положение по документам</span>
+          <label title="Разгромленные и сведённые в другие дивизии — на месте выбытия, перечёркнутые"><input type="checkbox" checked={showDestroyed} onChange={(e) => setShowDestroyed(e.target.checked)} /><i className="strike-key" />выбывшие</label>
         </div>
       </main>
       <section className="side">
@@ -134,7 +145,7 @@ export function App() {
         ) : (
           <>
             <div className="empty">Выберите дивизию на карте или в списке слева: карточка с переменными, машиной состояний, журналом и сверкой с документами, разговор с командиром или разбор.</div>
-            <StaffLog data={data} hour={hour} onHour={setHour} />
+            {busy ? <StaffLive items={live} /> : <StaffLog data={data} hour={hour} onHour={setHour} />}
           </>
         )}
       </section>
