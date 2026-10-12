@@ -42,6 +42,25 @@ pub struct ScriptOrder {
     pub note: String,
 }
 
+/// Артподготовка (огневой удар) сценария: штаб армии в момент `at` проводит её на полосе своих дивизий.
+#[derive(Clone, Debug)]
+pub struct ScriptFire {
+    pub at: u32,
+    pub hq: u32,
+    pub duration_min: f64,
+    pub density_per_km: f64,
+    pub note: String,
+}
+
+/// Событие сценария: отвод войск с первой позиции (доли войск по позициям у названных дивизий).
+#[derive(Clone, Debug)]
+pub struct ScriptWithdraw {
+    pub at: u32,
+    pub to: Vec<u32>,
+    pub positions: [f64; 3],
+    pub note: String,
+}
+
 /// Снимок мира на шаг.
 #[derive(Clone)]
 pub struct World {
@@ -81,6 +100,8 @@ pub struct Sim {
     pub start_hour: i64,
     pub world: World,
     pub script: Vec<ScriptOrder>,
+    pub fires: Vec<ScriptFire>,
+    pub withdrawals: Vec<ScriptWithdraw>,
     pub journal: Vec<Event>,
     /// Снимки по шагам для перемотки (если включено).
     pub history: Option<Vec<World>>,
@@ -119,7 +140,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, journal: Vec::new(), history: None };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), journal: Vec::new(), history: None };
         s.script.sort_by_key(|o| o.at);
         s
     }
@@ -170,6 +191,9 @@ impl Sim {
             div.order = Some(o);
             div.route = None;
         }
+        // отвод с первой позиции и артподготовка (события сценария)
+        self.apply_withdrawals(&mut next, tick, &mut journal);
+        self.apply_fires(&mut next, tick, &mut journal);
         // мосты по данным театра (наведение, подрыв)
         let hour = self.hour();
         for ob in next.objects.iter_mut() {
@@ -615,6 +639,47 @@ impl Sim {
                 .or(o.control)
         }).collect();
         for (o, c) in w.objects.iter_mut().zip(control) { o.control = c; }
+    }
+
+    fn apply_withdrawals(&self, w: &mut World, tick: u32, journal: &mut Vec<Event>) {
+        for ev in self.withdrawals.iter().filter(|e| e.at == tick) {
+            for &d in &ev.to {
+                let div = &mut w.divisions[d as usize];
+                div.vars.positions = Some(ev.positions);
+                journal.push(Event { tick, agent: d, text: format!("войска отведены с первой позиции: на позициях {:.0} / {:.0} / {:.0} % — {}", ev.positions[0] * 100.0, ev.positions[1] * 100.0, ev.positions[2] * 100.0, ev.note) });
+            }
+        }
+    }
+
+    /// Артподготовка: по каждой дивизии противника на полосе армии (в пределах досягаемости её дивизий) потери —
+    /// сумма по позициям «доля войск × потери от огня по позиции» (Радзиевский), в доле от нормы по плотности и
+    /// длительности; организованность падает так же, как в бою.
+    fn apply_fires(&self, w: &mut World, tick: u32, journal: &mut Vec<Event>) {
+        let a = &self.rules.combat.artillery;
+        for f in self.fires.iter().filter(|f| f.at == tick) {
+            let own: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].hq == f.hq && w.divisions[i].state != State::Destroyed).collect();
+            if own.is_empty() { continue; }
+            let side = w.divisions[own[0]].side;
+            let reach = self.rules.contact_km + a.depth_km;
+            let mut targets: Vec<usize> = (0..w.divisions.len()).filter(|&j| {
+                let e = &w.divisions[j];
+                e.side != side && e.state != State::Destroyed && own.iter().any(|&i| w.divisions[i].vars.pos.dist(e.vars.pos) <= reach)
+            }).collect();
+            targets.sort_unstable();
+            let k = (f.density_per_km / a.norm_density).min(1.0) * (f.duration_min / a.norm_duration_min).min(1.0);
+            let mut parts = Vec::new();
+            for j in targets {
+                let d = &mut w.divisions[j];
+                let pos = d.vars.positions.unwrap_or(a.positions);
+                let loss = (0..3).map(|p| pos[p] * a.loss_by_position[p]).sum::<f64>() * k;
+                lose(d, loss, self.rules.cohesion_loss_factor, &self.rules.combat);
+                parts.push(format!("{} — {:.1} %", d.name, loss * 100.0));
+                journal.push(Event { tick, agent: j as u32, text: format!("под артподготовкой ({:.0} ств./км, {:.0} мин): потери {:.1} %{}", f.density_per_km, f.duration_min, loss * 100.0,
+                    if d.vars.positions.is_some() { ", первая позиция отведена" } else { "" }) });
+            }
+            let hq = w.hqs[f.hq as usize].name.clone();
+            journal.push(Event { tick, agent: u32::MAX, text: format!("артподготовка: {hq}, {:.0} ств./км, {:.0} мин (доля нормы {:.2}); {}. {}", f.density_per_km, f.duration_min, k, if parts.is_empty() { "противника на полосе нет".into() } else { parts.join(", ") }, f.note) });
+        }
     }
 
     /// Свёртка состояния для проверки воспроизводимости.

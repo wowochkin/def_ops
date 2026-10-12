@@ -73,6 +73,18 @@ pub struct Combat {
     /// Полоса обороны, км: советская, немецкая.
     pub defense_frontage: [f64; 2],
     pub breakpoint_loss: f64,
+    pub artillery: Artillery,
+}
+
+/// Артподготовка: потери по позициям при норме плотности и длительности, доли войск по позициям.
+#[derive(Clone, Debug)]
+pub struct Artillery {
+    pub loss_by_position: [f64; 3],
+    pub positions: [f64; 3],
+    pub norm_density: f64,
+    pub norm_duration_min: f64,
+    /// Глубина огня за передний край (сверх дистанции соприкосновения), км.
+    pub depth_km: f64,
 }
 
 impl Combat {
@@ -199,6 +211,21 @@ impl Rules {
             attack_frontage: [num(&ag, "combat.attackFrontageKm.suRifle")?, num(&ag, "combat.attackFrontageKm.suTank")?, num(&ag, "combat.attackFrontageKm.de")?],
             defense_frontage: [num(&ag, "combat.defenseFrontageKm.su")?, num(&ag, "combat.defenseFrontageKm.de")?],
             breakpoint_loss: num(&ag, "combat.breakpointLoss")?,
+            artillery: {
+                let tri = |k: &str| -> Result<[f64; 3], String> {
+                    let a = ag.pointer(&format!("/combat/artillery/{k}/value")).and_then(Value::as_array).ok_or_else(|| format!("правила: нет combat.artillery.{k}"))?;
+                    let v: Vec<f64> = a.iter().filter_map(Value::as_f64).collect();
+                    if v.len() != 3 { return Err(format!("правила: combat.artillery.{k} — три числа")); }
+                    Ok([v[0], v[1], v[2]])
+                };
+                Artillery {
+                    loss_by_position: tri("lossByPosition")?,
+                    positions: tri("troopsByPosition")?,
+                    norm_density: num(&ag, "combat.artillery.normDensityPerKm")?,
+                    norm_duration_min: num(&ag, "combat.artillery.normDurationMin")?,
+                    depth_km: num(&ag, "combat.artillery.depthKm")?,
+                }
+            },
         };
         Ok(Rules {
             combat,
