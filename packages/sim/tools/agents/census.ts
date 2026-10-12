@@ -15,6 +15,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { makeResolver, parseTokens, type Div, type Registry, type Rel } from './designations';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const args = process.argv.slice(2);
@@ -24,19 +25,12 @@ const docOut = resolve(ROOT, opt('doc', 'docs/plans/agents-census.md')!);
 const jsonOut = opt('json');
 
 // ---------- типы ----------
-type Rel = 'A' | 'B' | 'C';
-interface Sub { date: string; front: string | null; army: string | null; corps: string | null; corps_name: string | null; source: string; reliability: Rel; note?: string }
-interface Div {
-  id: string; side: 'su' | 'de'; type: string; guards?: boolean; polish?: boolean; kind?: string; ss?: boolean;
-  name_ru: string; abbr: string[]; keywords?: string[]; subordination: Sub[]; aliases: string[]; note?: string;
-}
-interface Registry { meta: { types: Record<string, string> }; divisions: Div[]; gaps: { area: string; kind: string; text: string }[] }
 interface Formation { id: string; parent?: string | null; side?: string; echelon?: string; name_ru?: string; [k: string]: unknown }
 interface Position { formation: string; date: string; time?: string | null; approx_km?: number; reliability?: string; source?: string }
 interface DataSet { formations: Formation[]; positions?: Position[]; source?: Record<string, { default_reliability?: string }>; sources?: Record<string, { default_reliability?: string }> }
 
 interface Strength { kind: 'personnel' | 'tanks' | 'guns'; value: number; reliability: Rel; date: string | null; source: string; set: string; note?: string }
-interface PosRec { date: string; set: string; own: boolean; approxKm: number | null }
+interface PosRec { date: string; set: string; own: boolean; approxKm: number | null; fallback?: boolean }
 interface Mention { file: string; date: string | null }
 interface Row {
   div: Div; sets: Set<string>; strength: Strength[]; pos: PosRec[]; corpsDays: Set<string>; mentions: Mention[];
@@ -45,13 +39,15 @@ interface Row {
 const readJson = <T>(p: string): T => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8')) as T;
 const reg = readJson<Registry>(registryPath);
 
-const SETS: { key: string; file: string; label: string }[] = [
+const SETS: { key: string; file: string; label: string; kind?: 'tsamo' }[] = [
   { key: 'seelow', file: 'docs/sources/berlin-1945-seelow-divisions.json', label: 'seelow' },
   { key: 'halbe', file: 'docs/sources/berlin-1945-halbe.json', label: 'halbe' },
   { key: 'conquest', file: 'docs/sources/berlin-1945-conquest.json', label: 'conquest' },
   { key: 'positions', file: 'docs/sources/berlin-1945-positions.json', label: 'positions' },
   { key: 'city', file: 'docs/sources/berlin-1945-city-garrison.json', label: 'city' },
   { key: 'reichstag', file: 'docs/sources/berlin-1945-reichstag.json', label: 'reichstag' },
+  // положения дивизий и корпусов, геокодированные из текста выписок ЖБД (npm run sim:geocode-tsamo)
+  { key: 'tsamo-div', file: 'docs/sources/berlin-1945-tsamo/division-positions.json', label: 'tsamo-div', kind: 'tsamo' },
 ];
 const TSAMO = {
   positions: 'docs/sources/berlin-1945-tsamo/positions.json',
@@ -137,16 +133,36 @@ function corpsNoteStrength(f: Formation, set: string): { key: string; s: Strengt
   return out;
 }
 
-/** Нормализованный id стрелкового корпуса: su_47a_77rk → su_77sk, su_8gva_28gsk → su_28gsk. */
+/** Нормализованный id стрелкового (кавалерийского) корпуса: su_47a_77rk → su_77sk, su_8gva_28gsk → su_28gsk, su_7gkk. */
 function corpsKey(id: string): string | null {
-  const m = /^su_(?:[a-z0-9]+_)?(\d+)(g|gv)?(sk|rk)$/.exec(id);
-  if (m) return `su_${m[1]}${m[2] ? 'g' : ''}sk`;
+  const m = /^su_(?:[a-z0-9]+_)?(\d+)(g|gv)?(sk|rk|kk)$/.exec(id);
+  if (m) return `su_${m[1]}${m[2] ? 'g' : ''}${m[3] === 'kk' ? 'kk' : 'sk'}`;
   return id.startsWith('de_') ? id : null;
 }
 
 const corpsPos = new Map<string, Set<string>>(); // корпус → дни
 const setFormations = new Map<string, number>();
+/** Набор tsamo-div: записи с полем formation (id реестра или корпуса), echelon, date, approxKm. */
+interface TsamoDivPos { formation: string; echelon: 'division' | 'corps'; date: string; approxKm: number; reliability: string; fallback?: 'army' }
+function addTsamoDiv(s: { key: string; file: string }): number {
+  const d = readJson<{ positions: TsamoDivPos[] }>(s.file);
+  const seen = new Set<string>();
+  for (const p of d.positions) {
+    if (p.echelon === 'corps') {
+      const ck = corpsKey(p.formation);
+      if (ck) { if (!corpsPos.has(ck)) corpsPos.set(ck, new Set()); if (inOp(p.date)) corpsPos.get(ck)!.add(p.date); }
+    }
+    const id = aliasOf.get(p.formation);
+    if (!id) continue;
+    seen.add(id);
+    rows.get(id)!.pos.push({ date: p.date, set: s.key, own: true, approxKm: p.approxKm, fallback: !!p.fallback });
+    rows.get(id)!.sets.add(s.key);
+  }
+  return seen.size;
+}
+
 for (const s of SETS) {
+  if (s.kind === 'tsamo') { setFormations.set(s.key, addTsamoDiv(s)); continue; }
   const d = readJson<DataSet>(s.file);
   const srcs = d.source ?? d.sources ?? {};
   const dflt = asRel(Object.values(srcs)[0]?.default_reliability, 'B');
@@ -201,25 +217,7 @@ const tsamo: TsamoRec[] = [];
   for (const r of en) tsamo.push({ file: 'enemy', date: (r.date as string) ?? null, texts: [r.formation, r.strengthNote, r.place, r.note].filter((x): x is string => typeof x === 'string') });
 }
 
-// ключи советских дивизий: «pl|1|pd», «|250|sd»
-const suKey = new Map<string, string>();
-for (const d of reg.divisions) {
-  if (d.side !== 'su') continue;
-  const m = /^su_(pl)?(\d+)([a-z]+)$/.exec(d.id);
-  if (m) suKey.set(`${m[1] ?? ''}|${m[2]}|${m[3]}`, d.id);
-}
-const abbrSu = new Map<string, string>(); // дополнительные обозначения из реестра («48 сд» для 48 гв. сд)
-for (const d of reg.divisions) if (d.side === 'su') for (const a of d.abbr.slice(1)) abbrSu.set(a, d.id);
-const deAbbr = new Map<string, string>();
-for (const d of reg.divisions) if (d.side === 'de') for (const a of d.abbr) deAbbr.set(a, d.id);
-
-const SU_SUF: Record<string, [string, string]> = { // тип в тексте → [без гв., гв.]
-  'сд': ['sd', 'gsd'], 'вдд': ['vdd', 'gvdd'], 'тк': ['tk', 'gtk'], 'мк': ['mk', 'gmk'], 'кд': ['kd', 'gkd'],
-  'тбр': ['tbr', 'gtbr'], 'отбр': ['tbr', 'gtbr'], 'ттбр': ['ttbr', 'gttbr'], 'сабр': ['sabr', 'gsabr'], 'мбр': ['mbr', 'gmbr'],
-  'УР': ['ur', 'ur'], 'апд': ['apd', 'gapd'], 'адп': ['apd', 'gapd'], 'ад': ['ad', 'gapd'], 'пд': ['pd', 'pd'], 'кбр': ['kbr', 'kbr'], 'кавбр': ['kbr', 'kbr'],
-};
-const DE_TYPES = new Set(['пд', 'нгд', 'лпд', 'мд', 'тд', 'пдд', 'пгд', 'дон', 'вдд', 'гд']);
-const TOKEN = /(?<![\d.,])(\d+(?:\s*(?:,|и)\s*\d+)*)\s*(гв\.\s*)?(сд|вдд|ттбр|отбр|тбр|сабр|мбр|тк|мк|кд|кавбр|кбр|УР|апд|адп|ад|пд|нгд|лпд|мд|тд|пдд|пгд|дон|гд)(?![а-яА-ЯёЁ])(\s*СС)?/g;
+const resolveUnit = makeResolver(reg);
 
 const unknownSu = new Map<string, { n: number; armies: Set<string> }>();
 const unknownDe = new Map<string, number>();
@@ -227,31 +225,16 @@ function scan(rec: TsamoRec): Set<string> {
   const hit = new Set<string>();
   const enemy = rec.file === 'enemy';
   for (const text of rec.texts) {
-    for (const m of text.matchAll(TOKEN)) {
-      const nums = m[1].split(/\s*(?:,|и)\s*/).map((x) => x.trim()).filter(Boolean);
-      const guards = !!m[2]; const t = m[3]; const ss = !!m[4];
-      for (const n of nums) {
-        if (n.startsWith('0')) continue;
-        let id: string | undefined;
-        if (!enemy && !(ss && (t === 'тк' || t === 'мк'))) {
-          const suf = SU_SUF[t];
-          if (suf) {
-            const s = suf[guards ? 1 : 0];
-            id = suKey.get(`|${n}|${s}`) ?? suKey.get(`pl|${n}|${s}`) ?? abbrSu.get(`${n} ${guards ? 'гв. ' : ''}${t}`);
-            if (!id && t === 'ад') id = suKey.get(`|${n}|apd`);
-            // «10 тк, 5 и 6 мк 1 УФ» — гвардейские корпуса без «гв.»
-            if (!id && !guards && (t === 'тк' || t === 'мк')) id = suKey.get(`|${n}|${suf[1]}`);
-          }
+    for (const tok of parseTokens(text)) {
+      for (const u of tok.units) {
+        const r = resolveUnit(u, enemy);
+        if (r.id) { hit.add(r.id); continue; }
+        if (r.corps) continue;
+        if (r.side === 'de') unknownDe.set(u.label, (unknownDe.get(u.label) ?? 0) + 1);
+        else if (r.side === 'su' && ['сд', 'вдд', 'кд', 'тк', 'мк'].includes(u.type)) {
+          const un = unknownSu.get(u.label) ?? { n: 0, armies: new Set<string>() };
+          un.n++; if (rec.army) un.armies.add(rec.army); unknownSu.set(u.label, un);
         }
-        if (!id && !guards && DE_TYPES.has(t) && (enemy || t !== 'вдд')) {
-          id = deAbbr.get(`${n} ${t}`);
-          if (!id) unknownDe.set(`${n} ${t}${ss ? ' СС' : ''}`, (unknownDe.get(`${n} ${t}${ss ? ' СС' : ''}`) ?? 0) + 1);
-        } else if (!id && !enemy && !ss && ['сд', 'вдд', 'кд', 'тк', 'мк'].includes(t)) {
-          const label = `${n} ${guards ? 'гв. ' : ''}${t}`;
-          const u = unknownSu.get(label) ?? { n: 0, armies: new Set<string>() };
-          u.n++; if (rec.army) u.armies.add(rec.army); unknownSu.set(label, u);
-        }
-        if (id) hit.add(id);
       }
     }
     for (const d of reg.divisions) if (d.keywords?.some((k) => text.includes(k))) hit.add(d.id);
@@ -333,13 +316,14 @@ L.push('# Перепись агентов уровня дивизии: Берл�
 L.push('Что есть в данных о каждом будущем агенте-дивизии (план — [agents.md](agents.md)). Ожидаемый состав — реестр',
   '`docs/sources/berlin-1945-divisions.json` (боевой состав по OOB: «Боевой состав СА», ч. V, на 1.04.45, у 3, 28, 31 А — на 1.05.45;',
   'немцы — OOB, раздел 2, и наборы по Зееловским высотам, Хальбе и гарнизону Берлина). Наборы: seelow, halbe, conquest, positions,',
-  'city, reichstag (`docs/sources/berlin-1945-*.json`); выписки ЦАМО — `docs/sources/berlin-1945-tsamo/`. Собирается',
+  'city, reichstag (`docs/sources/berlin-1945-*.json`), tsamo-div (из выписок); выписки ЦАМО — `docs/sources/berlin-1945-tsamo/`. Собирается',
   '`npm run sim:census`, данные не меняет.', '');
 L.push('Как читать: «положение» — точка формирования в наборе за день операции; «по частям» — положение подчинённой части',
   '(бригады корпуса, полка, боевой группы дивизии); «корпус» — есть только положение стрелкового корпуса, в который входит',
   'дивизия по OOB. Численность — лучшая по достоверности (A > B > C), при равной — более ранняя запись. Упоминания ЦАМО —',
-  'число записей выписок, где дивизия названа по обозначению («250 сд», «11 гв. тк», «309 пд», «Мюнхеберг»); координат',
-  'дивизий в выписках нет — они на уровне армий.', '');
+  'число записей выписок, где дивизия названа по обозначению («250 сд», «11 гв. тк», «309 пд», «Мюнхеберг»). Набор tsamo-div —',
+  'положения дивизий и корпусов, извлечённые из текста выписок и геокодированные (`berlin-1945-tsamo/division-positions.json`,',
+  '`npm run sim:geocode-tsamo`); положение по координатам армии (пункт не найден, достоверность C) тоже считается положением.', '');
 
 // 1. Сводка
 L.push('## 1. Сводка', '');
@@ -466,7 +450,7 @@ for (const p of prio) {
   const unit = p.g.endsWith(':front') ? 'корпусов' : 'армии';
   const todo = p.recs === 0
     ? `выписать ЖБД ${unit} или фронта (в выписках ${unit === 'армии' ? 'армии' : 'их'} нет)`
-    : p.ment > 0 ? `геокодировать места дивизий из уже выписанных записей; затем ЖБД ${unit}` : `ЖБД ${unit}: в записях фронта дивизии не названы`;
+    : p.ment > 0 ? `дни без положения в tsamo-div — из ЖБД ${unit}; проверить ненайденные пункты в gazetteer.json` : `ЖБД ${unit}: в записях фронта дивизии не названы`;
   L.push(`| ${groupName(p.g)} | ${p.n} | ${p.withPos} | ${pct(Math.round(p.cover * 1000), 1000)} | ${p.pers} | ${p.ment} | ${p.recs}${p.fonds.length ? ` (${p.fonds.join('; ')})` : ''} | ${todo} |`);
 }
 L.push('');
@@ -475,10 +459,14 @@ const noPosMent = mentSu.filter((r) => daysAll(r).size === 0);
 const deMent = de.filter((r) => r.mentions.length > 0);
 const noPers = prio.filter((p) => p.pers === 0 && !p.g.includes(':')).map((p) => groupName(p.g).replace(/ армия$/, ' А').replace('армия Войска Польского', 'А ВП'));
 const armiesTotal = prio.filter((p) => !p.g.includes(':')).length;
+const tsamoDivRecs = all.reduce((n, r) => n + r.pos.filter((p) => p.set === 'tsamo-div').length, 0);
+const tsamoDivC = all.reduce((n, r) => n + r.pos.filter((p) => p.set === 'tsamo-div' && p.fallback).length, 0);
+const tsamoDivStat = `${tsamoDivRecs} положений у ${all.filter((r) => r.sets.has('tsamo-div')).length} формирований, из них ${tsamoDivC} по координатам армии`;
 L.push('Предложение по очереди работ:', '');
 L.push(`1. **Положения из уже выписанного.** В выписках ЖБД 1 БФ (ф. 233, оп. 2356, д. 739), 1 УФ (ф. 236, оп. 2673), 3 А (ф. 310) и 33 А (ф. 388) названы ` +
   `${mentSu.length} ${plural(mentSu.length, 'советская дивизия', 'советские дивизии', 'советских дивизий')} реестра; ${noPosMent.length} из них не имеют ни одного положения в наборах. Места дивизий («260 сд — Хайнрихсдорф») ` +
-  'записаны текстом без координат: геокодирование этих записей даёт положения по дням без нового похода в архив.');
+  `геокодированы в набор tsamo-div (${tsamoDivStat}); пункты, которые не нашлись по газеттирам и Nominatim, ` +
+  'перечислены в `berlin-1945-tsamo/gazetteer.json` с null — их можно дописать вручную (source: "manual").');
 const firstArmies = prio.filter((p) => p.recs > 0 && !p.g.includes(':')).slice(0, 6).map((p) => groupName(p.g).replace(/ армия$/, ' А'));
 L.push(`2. **ЖБД армий 1 БФ и 1 УФ.** Первыми — армии с наибольшим числом непокрытых дивизие-дней: ${firstArmies.join(', ')}. ` +
   'ЖБД армии даёт положения дивизий по дням и разграничительные линии между ними. Армейские ЖБД начаты только для 3 А ' +
