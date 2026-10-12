@@ -67,3 +67,17 @@ fn attackers_march_deploy_and_attack() {
     // каждая смена состояния записана с причиной
     assert!(sim.journal.iter().any(|e| e.text.contains("развёртывается для атаки")));
 }
+
+#[test]
+fn seelow_scenario_loads_and_runs() {
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
+    let (mut sim, meta) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    assert_eq!(meta.hours, 96);
+    assert!(sim.world.divisions.len() > 60);
+    for _ in 0..24 { sim.step(); }
+    // за первые сутки советские дивизии развернулись и атакуют, приказы дошли до всех
+    let attacking = sim.world.divisions.iter().filter(|d| d.side == Side::Su && matches!(d.state, State::Attack(_) | State::Deploy { .. })).count();
+    assert!(attacking > 20, "{attacking}");
+    assert!(sim.world.divisions.iter().all(|d| d.order.is_some()));
+}

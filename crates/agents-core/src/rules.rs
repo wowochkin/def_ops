@@ -66,6 +66,10 @@ pub struct Rules {
     pub prepared: f64,
     pub prepare_hours: f64,
     pub fortification_per_level: f64,
+    /// Предельный темп прорыва укреплённой полосы по уровням, км/сут (индекс — уровень).
+    pub fort_advance_km: Vec<f64>,
+    /// Доля обычного темпа наступления по местности обороняющегося.
+    pub advance_terrain: [f64; 6],
     pub river_cross_hours: f64,
     pub ammo_short: f64,
     pub fuel_out: f64,
@@ -151,6 +155,12 @@ impl Rules {
             prepared: num(&cal, "defense.prepared")?,
             prepare_hours: num(&cal, "defense.prepareHours")?,
             fortification_per_level: num(&cal, "defense.fortificationPerLevel")?,
+            fort_advance_km: cal.get("fortAdvanceKm").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_f64).collect()).unwrap_or_default(),
+            advance_terrain: {
+                let mut a = [1.0; 6];
+                for (t, cls) in TERRAIN.iter().enumerate() { if let Some(v) = cal.get("advanceTerrain").and_then(|x| x.get(*cls)).and_then(Value::as_f64) { a[t] = v; } }
+                a
+            },
             river_cross_hours: num(&cal, "riverCrossHours")?,
             ammo_short: num(&cal, "ammoShort")?,
             fuel_out: num(&cal, "fuelOut")?,

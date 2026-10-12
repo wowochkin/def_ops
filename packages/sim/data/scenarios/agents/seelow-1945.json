@@ -1,0 +1,3791 @@
+{
+ "id": "agents-seelow-1945",
+ "name": "Зееловские высоты, 16–20.04.1945 (агенты-дивизии)",
+ "theatre": "packages/sim/data/theatres/oder-berlin-1945.json",
+ "start": "1945-04-16T05:00",
+ "hours": 96,
+ "seed": 1,
+ "timeNote": "время московское, как в сценарии нынешней модели; собрано npm run agents:seelow-data",
+ "hqs": [
+  {
+   "id": "su_1bf",
+   "name": "1-й Белорусский фронт",
+   "side": "su",
+   "echelon": "front",
+   "parent": null,
+   "pos": [
+    14.6,
+    52.6
+   ]
+  },
+  {
+   "id": "su_47a",
+   "name": "47-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "pos": [
+    14.366,
+    52.714
+   ]
+  },
+  {
+   "id": "su_3ua",
+   "name": "3-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "pos": [
+    14.448,
+    52.643
+   ]
+  },
+  {
+   "id": "su_5ua",
+   "name": "5-я ударная армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "pos": [
+    14.522,
+    52.571
+   ]
+  },
+  {
+   "id": "su_8gva",
+   "name": "8-я гвардейская армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "pos": [
+    14.53,
+    52.504
+   ]
+  },
+  {
+   "id": "su_69a",
+   "name": "69-я армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "pos": [
+    14.534,
+    52.427
+   ]
+  },
+  {
+   "id": "su_1gta",
+   "name": "1-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "pos": [
+    14.654,
+    52.59
+   ]
+  },
+  {
+   "id": "su_2gta",
+   "name": "2-я гвардейская танковая армия",
+   "side": "su",
+   "echelon": "army",
+   "parent": "su_1bf",
+   "pos": [
+    14.573,
+    52.582
+   ]
+  },
+  {
+   "id": "de_9a",
+   "name": "9-я армия",
+   "side": "de",
+   "echelon": "army",
+   "parent": null,
+   "pos": [
+    14.1,
+    52.45
+   ]
+  },
+  {
+   "id": "de_ci",
+   "name": "CI армейский корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "pos": [
+    14.231,
+    52.7348
+   ]
+  },
+  {
+   "id": "de_lvi",
+   "name": "LVI танковый корпус",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "pos": [
+    14.237,
+    52.6064
+   ]
+  },
+  {
+   "id": "de_xi_ss",
+   "name": "XI танковый корпус СС",
+   "side": "de",
+   "echelon": "corps",
+   "parent": "de_9a",
+   "pos": [
+    14.4332,
+    52.4728
+   ]
+  }
+ ],
+ "divisions": [
+  {
+   "id": "su_185sd",
+   "name": "185-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4203,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.292,
+    52.7259
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_260sd",
+   "name": "260-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4111,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.292,
+    52.744
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_328sd",
+   "name": "328-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4163,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.292,
+    52.7621
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_60sd",
+   "name": "60-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4210,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.297,
+    52.7009
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_76sd",
+   "name": "76-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4190,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.297,
+    52.719
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_175sd",
+   "name": "175-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4189,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.297,
+    52.7371
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_82sd",
+   "name": "82-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4055,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.372,
+    52.6699
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_132sd",
+   "name": "132-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4597,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.372,
+    52.688
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_143sd",
+   "name": "143-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_47a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4409,
+   "tanks": 0,
+   "guns": 199,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.372,
+    52.7061
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_23gsd",
+   "name": "23-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.418,
+    52.6259
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_52gsd",
+   "name": "52-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.418,
+    52.644
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_33sd",
+   "name": "33-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.418,
+    52.6621
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_146sd",
+   "name": "146-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.409,
+    52.6559
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_265sd",
+   "name": "265-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.409,
+    52.674
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_364sd",
+   "name": "364-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.409,
+    52.6921
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_150sd",
+   "name": "150-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.352,
+    52.6699
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_171sd",
+   "name": "171-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.352,
+    52.688
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_207sd",
+   "name": "207-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.352,
+    52.7061
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_9tk",
+   "name": "9-й танковый корпус",
+   "side": "su",
+   "hq": "su_3ua",
+   "kind": "tk",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.05,
+   "personnel": 8000,
+   "tanks": 204,
+   "guns": 209,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.448,
+    52.7447
+   ],
+   "note": "положение: армия (C); численность: корпус 8000 (допущение)"
+  },
+  {
+   "id": "su_89gsd",
+   "name": "89-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 5470,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.456,
+    52.5949
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_94gsd",
+   "name": "94-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 5823,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.456,
+    52.613
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_266sd",
+   "name": "266-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 5520,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.456,
+    52.6311
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_230sd",
+   "name": "230-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 5032,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.493,
+    52.5559
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_248sd",
+   "name": "248-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 5006,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.493,
+    52.574
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_301sd",
+   "name": "301-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 5638,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.493,
+    52.5921
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_60gsd",
+   "name": "60-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 5348,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.475,
+    52.5749
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_295sd",
+   "name": "295-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 5383,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.475,
+    52.593
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_416sd",
+   "name": "416-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.05,
+   "personnel": 4649,
+   "tanks": 0,
+   "guns": 299,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.475,
+    52.6111
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_11tbr",
+   "name": "11-я танковая бригада",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "brigade",
+   "mobility": "tracked",
+   "size": "other",
+   "quality": 1.05,
+   "personnel": 1200,
+   "tanks": 68,
+   "guns": 0,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.522,
+    52.6501
+   ],
+   "note": "положение: армия (C); численность: бригада 1200 (допущение)"
+  },
+  {
+   "id": "su_67gtbr",
+   "name": "67-я гвардейская танковая бригада",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "brigade",
+   "mobility": "tracked",
+   "size": "other",
+   "quality": 1.1,
+   "personnel": 1200,
+   "tanks": 68,
+   "guns": 0,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.522,
+    52.6727
+   ],
+   "note": "положение: армия (C); численность: бригада 1200 (допущение)"
+  },
+  {
+   "id": "su_220tbr",
+   "name": "220-я танковая бригада",
+   "side": "su",
+   "hq": "su_5ua",
+   "kind": "brigade",
+   "mobility": "tracked",
+   "size": "other",
+   "quality": 1.05,
+   "personnel": 1200,
+   "tanks": 68,
+   "guns": 0,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.522,
+    52.6954
+   ],
+   "note": "положение: армия (C); численность: бригада 1200 (допущение)"
+  },
+  {
+   "id": "su_35gsd",
+   "name": "35-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 5066,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.523,
+    52.5479
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_47gsd",
+   "name": "47-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4900,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.523,
+    52.566
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_57gsd",
+   "name": "57-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4787,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.523,
+    52.5841
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_39gsd",
+   "name": "39-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4877,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.506,
+    52.4879
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_79gsd",
+   "name": "79-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4829,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.506,
+    52.506
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_88gsd",
+   "name": "88-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4937,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.506,
+    52.5241
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_27gsd",
+   "name": "27-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4822,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.512,
+    52.5189
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_74gsd",
+   "name": "74-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 4740,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.512,
+    52.537
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_82gsd",
+   "name": "82-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 5063,
+   "tanks": 0,
+   "guns": 332,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.512,
+    52.5551
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_7gttbr",
+   "name": "7-я гвардейская тяжёлая танковая бригада",
+   "side": "su",
+   "hq": "su_8gva",
+   "kind": "brigade",
+   "mobility": "tracked",
+   "size": "other",
+   "quality": 1.1,
+   "personnel": 1200,
+   "tanks": 204,
+   "guns": 0,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.53,
+    52.6057
+   ],
+   "note": "положение: армия (C); численность: бригада 1200 (допущение)"
+  },
+  {
+   "id": "su_77gsd",
+   "name": "77-я гвардейская стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1.1,
+   "personnel": 5790,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.539,
+    52.461
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_4sd",
+   "name": "4-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4967,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.539,
+    52.479
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_41sd",
+   "name": "41-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5747,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.545,
+    52.4259
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_312sd",
+   "name": "312-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5833,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.545,
+    52.444
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_370sd",
+   "name": "370-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5268,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.545,
+    52.4621
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_134sd",
+   "name": "134-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5859,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.558,
+    52.4389
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_247sd",
+   "name": "247-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 4902,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.558,
+    52.457
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_274sd",
+   "name": "274-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5936,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.558,
+    52.475
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_246sd",
+   "name": "246-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5790,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.558,
+    52.4931
+   ],
+   "note": "положение: корпус утром 16.04 (seelow), разнос 2 км (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_117sd",
+   "name": "117-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5852,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.534,
+    52.5061
+   ],
+   "note": "положение: армия (C); численность: IS7_T (A)"
+  },
+  {
+   "id": "su_283sd",
+   "name": "283-я стрелковая дивизия",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "sd",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 1,
+   "personnel": 5790,
+   "tanks": 0,
+   "guns": 136,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.534,
+    52.5287
+   ],
+   "note": "положение: армия (C); численность: медиана известных дивизий (C)"
+  },
+  {
+   "id": "su_68tbr",
+   "name": "68-я танковая бригада",
+   "side": "su",
+   "hq": "su_69a",
+   "kind": "brigade",
+   "mobility": "tracked",
+   "size": "other",
+   "quality": 1,
+   "personnel": 1200,
+   "tanks": 204,
+   "guns": 0,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.534,
+    52.5514
+   ],
+   "note": "положение: армия (C); численность: бригада 1200 (допущение)"
+  },
+  {
+   "id": "su_8gmk",
+   "name": "8-й гвардейский механизированный корпус",
+   "side": "su",
+   "hq": "su_1gta",
+   "kind": "mk",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.1,
+   "personnel": 15000,
+   "tanks": 233,
+   "guns": 233,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.654,
+    52.5448
+   ],
+   "note": "положение: армия (C); численность: армия поровну между корпусами (C)"
+  },
+  {
+   "id": "su_11gtk",
+   "name": "11-й гвардейский танковый корпус",
+   "side": "su",
+   "hq": "su_1gta",
+   "kind": "tk",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.1,
+   "personnel": 15000,
+   "tanks": 233,
+   "guns": 233,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.654,
+    52.5674
+   ],
+   "note": "положение: армия (C); численность: армия поровну между корпусами (C)"
+  },
+  {
+   "id": "su_64gtbr",
+   "name": "64-я гвардейская танковая бригада",
+   "side": "su",
+   "hq": "su_1gta",
+   "kind": "brigade",
+   "mobility": "tracked",
+   "size": "other",
+   "quality": 1.1,
+   "personnel": 1200,
+   "tanks": 78,
+   "guns": 0,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.654,
+    52.59
+   ],
+   "note": "положение: армия (C); численность: бригада 1200 (допущение)"
+  },
+  {
+   "id": "su_11tk",
+   "name": "11-й танковый корпус",
+   "side": "su",
+   "hq": "su_1gta",
+   "kind": "tk",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.1,
+   "personnel": 15000,
+   "tanks": 233,
+   "guns": 233,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.654,
+    52.6126
+   ],
+   "note": "положение: армия (C); численность: армия поровну между корпусами (C)"
+  },
+  {
+   "id": "su_19sabr",
+   "name": "19-я самоходно-артиллерийская бригада",
+   "side": "su",
+   "hq": "su_1gta",
+   "kind": "brigade",
+   "mobility": "tracked",
+   "size": "other",
+   "quality": 1.1,
+   "personnel": 1200,
+   "tanks": 78,
+   "guns": 0,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.654,
+    52.6352
+   ],
+   "note": "положение: армия (C); численность: бригада 1200 (допущение)"
+  },
+  {
+   "id": "su_9gtk",
+   "name": "9-й гвардейский танковый корпус",
+   "side": "su",
+   "hq": "su_2gta",
+   "kind": "tk",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.1,
+   "personnel": 15000,
+   "tanks": 222,
+   "guns": 233,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.573,
+    52.5594
+   ],
+   "note": "положение: армия (C); численность: армия поровну между корпусами (C)"
+  },
+  {
+   "id": "su_12gtk",
+   "name": "12-й гвардейский танковый корпус",
+   "side": "su",
+   "hq": "su_2gta",
+   "kind": "tk",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.1,
+   "personnel": 15000,
+   "tanks": 222,
+   "guns": 233,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.573,
+    52.582
+   ],
+   "note": "положение: армия (C); численность: армия поровну между корпусами (C)"
+  },
+  {
+   "id": "su_1mk",
+   "name": "1-й механизированный корпус",
+   "side": "su",
+   "hq": "su_2gta",
+   "kind": "mk",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.1,
+   "personnel": 15000,
+   "tanks": 222,
+   "guns": 233,
+   "ammo": 3,
+   "fuel": 2,
+   "pos": [
+    14.573,
+    52.6046
+   ],
+   "note": "положение: армия (C); численность: армия поровну между корпусами (C)"
+  },
+  {
+   "id": "de_5jd",
+   "name": "5-я егерская дивизия",
+   "side": "de",
+   "hq": "de_ci",
+   "kind": "inf_div",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 0.9,
+   "personnel": 4970,
+   "tanks": 11,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.157,
+    52.836
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_606",
+   "name": "606-я дивизия особого назначения",
+   "side": "de",
+   "hq": "de_ci",
+   "kind": "inf_div",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 0.9,
+   "personnel": 5495,
+   "tanks": 0,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.297,
+    52.719
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_309id",
+   "name": "309-я пехотная дивизия «Берлин»",
+   "side": "de",
+   "hq": "de_ci",
+   "kind": "inf_div",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 0.9,
+   "personnel": 5926,
+   "tanks": 95,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.333,
+    52.667
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_25pzgd",
+   "name": "25-я моторизованная (танко-гренадерская) дивизия",
+   "side": "de",
+   "hq": "de_ci",
+   "kind": "pzgr_div",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1,
+   "personnel": 5605,
+   "tanks": 77,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.137,
+    52.717
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_9fjd",
+   "name": "9-я парашютная дивизия",
+   "side": "de",
+   "hq": "de_lvi",
+   "kind": "fj_div",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 0.9,
+   "personnel": 6758,
+   "tanks": 8,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.405,
+    52.592
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_20pzgd",
+   "name": "20-я танко-гренадерская дивизия",
+   "side": "de",
+   "hq": "de_lvi",
+   "kind": "pzgr_div",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1,
+   "personnel": 4848,
+   "tanks": 82,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.446,
+    52.534
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_muencheberg",
+   "name": "танковая дивизия «Мюнхеберг»",
+   "side": "de",
+   "hq": "de_lvi",
+   "kind": "pz_div",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1,
+   "personnel": 1986,
+   "tanks": 36,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.381,
+    52.532
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_18pzgd",
+   "name": "18-я танко-гренадерская дивизия",
+   "side": "de",
+   "hq": "de_lvi",
+   "kind": "pzgr_div",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1,
+   "personnel": 4000,
+   "tanks": 54,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    13.8,
+    52.835
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_nordland",
+   "name": "11-я добровольческая танко-гренадерская дивизия СС «Нордланд»",
+   "side": "de",
+   "hq": "de_lvi",
+   "kind": "ss_pzgr_div",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.05,
+   "personnel": 4000,
+   "tanks": 32,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.153,
+    52.539
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_303id",
+   "name": "303-я пехотная дивизия «Дёбериц»",
+   "side": "de",
+   "hq": "de_xi_ss",
+   "kind": "inf_div",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 0.9,
+   "personnel": 3860,
+   "tanks": 24,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.442,
+    52.501
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_169id",
+   "name": "169-я пехотная дивизия",
+   "side": "de",
+   "hq": "de_xi_ss",
+   "kind": "inf_div",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 0.9,
+   "personnel": 5956,
+   "tanks": 0,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.515,
+    52.464
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_712id",
+   "name": "712-я пехотная дивизия",
+   "side": "de",
+   "hq": "de_xi_ss",
+   "kind": "inf_div",
+   "mobility": "foot",
+   "size": "rifle",
+   "quality": 0.9,
+   "personnel": 4882,
+   "tanks": 0,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.502,
+    52.424
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_kurmark",
+   "name": "танко-гренадерская дивизия «Курмарк»",
+   "side": "de",
+   "hq": "de_xi_ss",
+   "kind": "pzgr_div",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1,
+   "personnel": 4350,
+   "tanks": 92,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.406,
+    52.495
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  },
+  {
+   "id": "de_nederland",
+   "name": "23-я добровольческая танко-гренадерская дивизия СС «Недерланд»",
+   "side": "de",
+   "hq": "de_xi_ss",
+   "kind": "ss_pzgr_div",
+   "mobility": "tracked",
+   "size": "tank",
+   "quality": 1.05,
+   "personnel": 3000,
+   "tanks": 6,
+   "guns": 135,
+   "ammo": 1.5,
+   "fuel": 0.7,
+   "pos": [
+    14.301,
+    52.48
+   ],
+   "note": "как в сценарии нынешней модели (berlin-1945-tasks)"
+  }
+ ],
+ "orders": [
+  {
+   "at": 0,
+   "hq": "de_xi_ss",
+   "to": [
+    "de_169id"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача XI танковый корпус СС [de_169id@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_lvi",
+   "to": [
+    "de_18pzgd"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус [de_18pzgd@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "de_lvi",
+   "to": [
+    "de_20pzgd"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус [de_20pzgd@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "de_ci",
+   "to": [
+    "de_25pzgd"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача CI армейский корпус [de_25pzgd@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_xi_ss",
+   "to": [
+    "de_303id"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача XI танковый корпус СС [de_303id@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_ci",
+   "to": [
+    "de_309id"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача CI армейский корпус [de_309id@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_ci",
+   "to": [
+    "de_5jd"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача CI армейский корпус [de_5jd@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_ci",
+   "to": [
+    "de_606"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача CI армейский корпус [de_606@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_xi_ss",
+   "to": [
+    "de_712id"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача XI танковый корпус СС [de_712id@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_lvi",
+   "to": [
+    "de_9fjd"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус [de_9fjd@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "de_xi_ss",
+   "to": [
+    "de_kurmark"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача XI танковый корпус СС [de_kurmark@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_lvi",
+   "to": [
+    "de_muencheberg"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус [de_muencheberg@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "de_xi_ss",
+   "to": [
+    "de_nederland"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "задача XI танковый корпус СС [de_nederland@1945-04-15T18:00:defend]"
+  },
+  {
+   "at": 0,
+   "hq": "de_lvi",
+   "to": [
+    "de_nordland"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "держать Зееловские высоты (приказ Гитлера); задача LVI танковый корпус [de_nordland@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "su_1gta",
+   "to": [
+    "su_8gmk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3807,
+    52.4866
+   ],
+   "note": "ввод в бой за 8 гв. А до прорыва обороны (LT_CONQ гл. 1) [su_1gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_1gta",
+   "to": [
+    "su_11gtk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3807,
+    52.5092
+   ],
+   "note": "ввод в бой за 8 гв. А до прорыва обороны (LT_CONQ гл. 1) [su_1gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_1gta",
+   "to": [
+    "su_64gtbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3807,
+    52.5318
+   ],
+   "note": "ввод в бой за 8 гв. А до прорыва обороны (LT_CONQ гл. 1) [su_1gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_1gta",
+   "to": [
+    "su_11tk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3807,
+    52.5544
+   ],
+   "note": "ввод в бой за 8 гв. А до прорыва обороны (LT_CONQ гл. 1) [su_1gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_1gta",
+   "to": [
+    "su_19sabr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3807,
+    52.577
+   ],
+   "note": "ввод в бой за 8 гв. А до прорыва обороны (LT_CONQ гл. 1) [su_1gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_2gta",
+   "to": [
+    "su_9gtk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2384,
+    52.574
+   ],
+   "note": "ввод за 5 УА / 3 УА [su_2gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_2gta",
+   "to": [
+    "su_12gtk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2384,
+    52.5966
+   ],
+   "note": "ввод за 5 УА / 3 УА [su_2gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_2gta",
+   "to": [
+    "su_1mk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2384,
+    52.6192
+   ],
+   "note": "ввод за 5 УА / 3 УА [su_2gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_23gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1262,
+    52.6135
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_52gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1262,
+    52.6316
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_33sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1262,
+    52.6497
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_146sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1172,
+    52.6435
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_265sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1172,
+    52.6616
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_364sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1172,
+    52.6797
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_150sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0602,
+    52.6575
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_171sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0602,
+    52.6756
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_207sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0602,
+    52.6937
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_3ua",
+   "to": [
+    "su_9tk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1562,
+    52.7323
+   ],
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_185sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1083,
+    52.7257
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_260sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1083,
+    52.7438
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_328sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1083,
+    52.7619
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_60sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1133,
+    52.7007
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_76sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1133,
+    52.7188
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_175sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1133,
+    52.7369
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_82sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1883,
+    52.6697
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_132sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1883,
+    52.6878
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_47a",
+   "to": [
+    "su_143sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1883,
+    52.7059
+   ],
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_89gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2079,
+    52.5783
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_94gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2079,
+    52.5964
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_266sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2079,
+    52.6145
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_230sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2449,
+    52.5393
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_248sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2449,
+    52.5574
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_301sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2449,
+    52.5755
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_60gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2269,
+    52.5583
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_295sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2269,
+    52.5764
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_416sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2269,
+    52.5945
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_11tbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2739,
+    52.6335
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_67gtbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2739,
+    52.6561
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_5ua",
+   "to": [
+    "su_220tbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.2739,
+    52.669
+   ],
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_77gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0584,
+    52.3421
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_4sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0584,
+    52.3601
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_41sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0644,
+    52.307
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_312sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0644,
+    52.3251
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_370sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0644,
+    52.3432
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_134sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0774,
+    52.32
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_247sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0774,
+    52.3381
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_274sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0774,
+    52.3561
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_246sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0774,
+    52.3742
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_117sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0534,
+    52.3872
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_283sd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0534,
+    52.4098
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_69a",
+   "to": [
+    "su_68tbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.0534,
+    52.4304
+   ],
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_35gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3884,
+    52.5364
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_47gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3884,
+    52.5545
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_57gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3884,
+    52.5726
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_39gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3714,
+    52.4764
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_79gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3714,
+    52.4945
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_88gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3714,
+    52.5126
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_27gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3774,
+    52.5074
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_74gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3774,
+    52.5255
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_82gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3774,
+    52.5436
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": 0,
+   "hq": "su_8gva",
+   "to": [
+    "su_7gttbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3954,
+    52.5942
+   ],
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "at": "1945-04-16T06:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_kurmark"
+   ],
+   "kind": "attack",
+   "target": [
+    14.53,
+    52.504
+   ],
+   "note": "контрудар 2-го эшелона XI тк СС от ст. Дольгелин 16.04 (Исаев, «Берлин 45-го») [de_kurmark@1945-04-16T06:00:counterattack]"
+  },
+  {
+   "at": "1945-04-16T12:00",
+   "hq": "de_ci",
+   "to": [
+    "de_25pzgd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.366,
+    52.714
+   ],
+   "note": "по приказу Гитлера выдвинута против 47 А; контрудар не развился (Исаев, «Берлин 45-го») [de_25pzgd@1945-04-16T12:00:counterattack]"
+  },
+  {
+   "at": "1945-04-16T19:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_18pzgd"
+   ],
+   "kind": "move",
+   "target": [
+    14.27,
+    52.6
+   ],
+   "note": "резерв ОКХ передан 9 А в 19:10, марш в район Вулькова (Исаев, «Берлин 45-го») [de_18pzgd@1945-04-16T19:00:regroup]"
+  },
+  {
+   "at": "1945-04-17T06:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_kurmark"
+   ],
+   "kind": "attack",
+   "target": [
+    14.53,
+    52.504
+   ],
+   "note": "контратака остановила наступающих из Дольгелина и Фридерсдорфа (Исаев, «Берлин 45-го») [de_kurmark@1945-04-17T06:00:counterattack]"
+  },
+  {
+   "at": "1945-04-17T06:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_muencheberg"
+   ],
+   "kind": "attack",
+   "target": [
+    14.654,
+    52.59
+   ],
+   "note": "«Тигры» и «Пантеры» против 1 гв. ТА у Зелова (Исаев, «Берлин 45-го») [de_muencheberg@1945-04-17T06:00:counterattack]"
+  },
+  {
+   "at": "1945-04-17T12:00",
+   "hq": "de_ci",
+   "to": [
+    "de_25pzgd"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "2-й эшелон на Альте-Одере, южнее Нойтреббина [de_25pzgd@1945-04-17T12:00:defend]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_169id"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС [de_169id@1945-04-17T18:00:hold]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_18pzgd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.522,
+    52.571
+   ],
+   "note": "контрудар по обе стороны Нидер-Гёрльсдорфа (донесение ГА «Висла», Исаев, «Берлин 45-го») [de_18pzgd@1945-04-17T18:00:counterattack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_303id"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС [de_303id@1945-04-17T18:00:hold]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_712id"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС [de_712id@1945-04-17T18:00:hold]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_kurmark"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС [de_kurmark@1945-04-17T18:00:hold]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_kurmark"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "удерживать линию Марксдорф–Дольгелин [de_kurmark@1945-04-17T18:00:hold]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_muencheberg"
+   ],
+   "kind": "withdraw",
+   "target": [
+    14.25,
+    52.55
+   ],
+   "note": "после потери Зелова — отход за Флисс [de_muencheberg@1945-04-17T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "de_xi_ss",
+   "to": [
+    "de_nederland"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "отказ в отводе: держать фронт на Одере (LT_HALBE); задача XI танковый корпус СС [de_nederland@1945-04-17T18:00:hold]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_8gmk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1405,
+    52.4585
+   ],
+   "note": "[su_1gta@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_11gtk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1405,
+    52.4811
+   ],
+   "note": "[su_1gta@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_64gtbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1405,
+    52.5037
+   ],
+   "note": "[su_1gta@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_11tk"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1405,
+    52.5263
+   ],
+   "note": "[su_1gta@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_19sabr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1405,
+    52.5489
+   ],
+   "note": "[su_1gta@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_35gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1482,
+    52.5083
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_47gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1482,
+    52.5264
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_57gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1482,
+    52.5445
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_39gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1312,
+    52.4483
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_79gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1312,
+    52.4664
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_88gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1312,
+    52.4845
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_27gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1372,
+    52.4793
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_74gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1372,
+    52.4974
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_82gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1372,
+    52.5155
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-17T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_7gttbr"
+   ],
+   "kind": "attack",
+   "target": [
+    14.1552,
+    52.5661
+   ],
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_18pzgd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    14.1405,
+    52.5037
+   ],
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус [de_18pzgd@1945-04-18T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_18pzgd"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "с «Нордландом» у Херменсдорфа [de_18pzgd@1945-04-18T18:00:defend]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_20pzgd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    14.1405,
+    52.5037
+   ],
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус [de_20pzgd@1945-04-18T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_9fjd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    14.1405,
+    52.5037
+   ],
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус [de_9fjd@1945-04-18T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_muencheberg"
+   ],
+   "kind": "withdraw",
+   "target": [
+    14.1405,
+    52.5037
+   ],
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус [de_muencheberg@1945-04-18T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_nordland"
+   ],
+   "kind": "withdraw",
+   "target": [
+    14.1405,
+    52.5037
+   ],
+   "note": "отойти к Шпрее между Фюрстенвальде и Эркнером (LT_HALBE); задача LVI танковый корпус [de_nordland@1945-04-18T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_nordland"
+   ],
+   "kind": "attack",
+   "target": [
+    14.573,
+    52.582
+   ],
+   "note": "бой с 11 тк у Букова (сосредоточение без горючего) [de_nordland@1945-04-18T18:00:counterattack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_2gta",
+   "to": [
+    "su_9gtk"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5881,
+    52.6561
+   ],
+   "note": "[su_2gta@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_2gta",
+   "to": [
+    "su_12gtk"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5881,
+    52.6787
+   ],
+   "note": "[su_2gta@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_2gta",
+   "to": [
+    "su_1mk"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5881,
+    52.7013
+   ],
+   "note": "[su_2gta@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_23gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.6076,
+    52.6283
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_52gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.6076,
+    52.6464
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_33sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.6076,
+    52.6645
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_146sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5986,
+    52.6583
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_265sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5986,
+    52.6764
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_364sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5986,
+    52.6945
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_150sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5416,
+    52.6723
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_171sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5416,
+    52.6904
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_207sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5416,
+    52.7085
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-18T18:00",
+   "hq": "su_3ua",
+   "to": [
+    "su_9tk"
+   ],
+   "kind": "attack",
+   "target": [
+    13.6376,
+    52.7471
+   ],
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_18pzgd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7543,
+    52.426
+   ],
+   "note": "задача LVI танковый корпус [de_18pzgd@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_20pzgd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7543,
+    52.426
+   ],
+   "note": "задача LVI танковый корпус [de_20pzgd@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_ci",
+   "to": [
+    "de_25pzgd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7997,
+    52.8351
+   ],
+   "note": "задача CI армейский корпус [de_25pzgd@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_ci",
+   "to": [
+    "de_309id"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7997,
+    52.8351
+   ],
+   "note": "задача CI армейский корпус [de_309id@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_ci",
+   "to": [
+    "de_5jd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7997,
+    52.8351
+   ],
+   "note": "задача CI армейский корпус [de_5jd@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_ci",
+   "to": [
+    "de_606"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7997,
+    52.8351
+   ],
+   "note": "задача CI армейский корпус [de_606@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_9fjd"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7543,
+    52.426
+   ],
+   "note": "задача LVI танковый корпус [de_9fjd@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_muencheberg"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7543,
+    52.426
+   ],
+   "note": "задача LVI танковый корпус [de_muencheberg@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_nordland"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7543,
+    52.426
+   ],
+   "note": "задача LVI танковый корпус [de_nordland@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_lvi",
+   "to": [
+    "de_nordland"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.5815,
+    52.4584
+   ],
+   "note": "в Берлин с LVI тк [de_nordland@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_8gmk"
+   ],
+   "kind": "attack",
+   "target": [
+    13.7543,
+    52.3808
+   ],
+   "note": "лучшие бригады корпусов — в Берлин (LT_CONQ гл. 1) [su_1gta@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_11gtk"
+   ],
+   "kind": "attack",
+   "target": [
+    13.7543,
+    52.4034
+   ],
+   "note": "лучшие бригады корпусов — в Берлин (LT_CONQ гл. 1) [su_1gta@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_64gtbr"
+   ],
+   "kind": "attack",
+   "target": [
+    13.7543,
+    52.426
+   ],
+   "note": "лучшие бригады корпусов — в Берлин (LT_CONQ гл. 1) [su_1gta@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_11tk"
+   ],
+   "kind": "attack",
+   "target": [
+    13.7543,
+    52.4486
+   ],
+   "note": "лучшие бригады корпусов — в Берлин (LT_CONQ гл. 1) [su_1gta@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_1gta",
+   "to": [
+    "su_19sabr"
+   ],
+   "kind": "attack",
+   "target": [
+    13.7543,
+    52.4712
+   ],
+   "note": "лучшие бригады корпусов — в Берлин (LT_CONQ гл. 1) [su_1gta@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_185sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5598,
+    52.6876
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_260sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5598,
+    52.7057
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_328sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5598,
+    52.7238
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_60sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5648,
+    52.6626
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_76sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5648,
+    52.6807
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_175sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.5648,
+    52.6988
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_82sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.6398,
+    52.6316
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_132sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.6398,
+    52.6497
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_47a",
+   "to": [
+    "su_143sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.6398,
+    52.6678
+   ],
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_89gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.8737,
+    52.5406
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_94gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.8737,
+    52.5587
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_266sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.8737,
+    52.5768
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_230sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.9107,
+    52.5016
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_248sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.9107,
+    52.5197
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_301sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.9107,
+    52.5378
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_60gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.8927,
+    52.5206
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_295sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.8927,
+    52.5387
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_416sd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.8927,
+    52.5568
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_11tbr"
+   ],
+   "kind": "attack",
+   "target": [
+    13.9397,
+    52.5958
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_67gtbr"
+   ],
+   "kind": "attack",
+   "target": [
+    13.9397,
+    52.6184
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_5ua",
+   "to": [
+    "su_220tbr"
+   ],
+   "kind": "attack",
+   "target": [
+    13.9397,
+    52.6313
+   ],
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_35gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.762,
+    52.4306
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_47gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.762,
+    52.4487
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_57gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.762,
+    52.4668
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_39gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.745,
+    52.3706
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_79gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.745,
+    52.3887
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_88gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.745,
+    52.4068
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_27gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.751,
+    52.4016
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_74gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.751,
+    52.4197
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_82gsd"
+   ],
+   "kind": "attack",
+   "target": [
+    13.751,
+    52.4378
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "su_8gva",
+   "to": [
+    "su_7gttbr"
+   ],
+   "kind": "attack",
+   "target": [
+    13.769,
+    52.4884
+   ],
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  }
+ ]
+}

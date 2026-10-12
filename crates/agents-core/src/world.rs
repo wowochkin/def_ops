@@ -36,7 +36,8 @@ pub struct ScriptOrder {
     /// Кому: индексы дивизий.
     pub to: Vec<u32>,
     pub kind: OrderKind,
-    pub target: XY,
+    /// Цель; None — на месте (район, где дивизия получит приказ).
+    pub target: Option<XY>,
     pub forced: bool,
     pub note: String,
 }
@@ -133,7 +134,8 @@ impl Sim {
             let sr = self.rules.side(hq.side);
             let delay = match hq.echelon { Echelon::Front => sr.delay_army, Echelon::Army => sr.delay_corps, Echelon::Corps => sr.delay_division };
             for &d in &o.to {
-                let order = Order { kind: o.kind, target: o.target, forced: o.forced, issued: o.at, arrives: o.at + delay.round() as u32, from: o.hq, note: o.note.clone() };
+                let target = o.target.unwrap_or(next.divisions[d as usize].vars.pos);
+                let order = Order { kind: o.kind, target, forced: o.forced, issued: o.at, arrives: o.at + delay.round() as u32, from: o.hq, note: o.note.clone() };
                 next.in_transit.push((d, order));
             }
         }
@@ -433,13 +435,19 @@ impl Sim {
             let cell = t.cell_of_xy(dd.vars.pos).unwrap_or(0);
             let mut def_mult = r.defense_terrain[t.terrain[cell] as usize];
             if dd.state == State::Defense(DefenseSub::Prepared) { def_mult *= r.prepared; }
+            // своя укреплённая полоса: прибавка к силе обороны и предел темпа «прогрызания» (как в нынешней модели)
+            let side_code = match dd.side { Side::Su => "su", Side::De => "de" };
+            let fort_lv = if t.fort_side[cell].as_deref() == Some(side_code) { t.fort[cell] as usize } else { 0 };
+            def_mult *= 1.0 + r.fortification_per_level * fort_lv as f64;
             let def_power = (self.strength(dd) * def_mult).max(1e-6);
             let ratio = att_power / def_power;
             let mut rng = Rng::new(self.seed, def, tick, Stream::Combat);
             let noise = rng.jitter(r.noise);
             let a_loss = (r.attacker_loss.at(ratio) / 24.0 * noise).clamp(0.0, 0.5);
             let d_loss = (r.defender_loss.at(ratio) / 24.0 * noise).clamp(0.0, 0.5);
-            let adv_km = r.advance.at(ratio) / 24.0 * noise;
+            let mut adv_km = r.advance.at(ratio) * r.advance_terrain[t.terrain[cell] as usize] * noise;
+            if fort_lv > 0 { if let Some(&cap) = r.fort_advance_km.get(fort_lv.min(r.fort_advance_km.len().saturating_sub(1))) { adv_km = adv_km.min(cap); } }
+            let adv_km = adv_km / 24.0;
             let hold = matches!(dd.order.as_ref().map(|o| o.kind), Some(OrderKind::Hold));
             // потери обороны
             let att_center = {
@@ -466,7 +474,8 @@ impl Sim {
                 }
             }
             if tick % 6 == 0 {
-                journal.push(Event { tick, agent: def, text: format!("бой: соотношение {:.1}:1, за час потери обороны {:.1} %, наступающих {:.1} %, продвижение {:.2} км", ratio, d_loss * 100.0, a_loss * 100.0, adv_km) });
+                journal.push(Event { tick, agent: def, text: format!("бой: соотношение {:.1}:1{}, за час потери обороны {:.1} %, наступающих {:.1} %, продвижение {:.2} км",
+                    ratio, if fort_lv > 0 { format!(", полоса {fort_lv}-го уровня") } else { String::new() }, d_loss * 100.0, a_loss * 100.0, adv_km) });
             }
         }
         // расход по действию

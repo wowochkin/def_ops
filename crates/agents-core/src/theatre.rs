@@ -138,6 +138,10 @@ pub struct Theatre {
     pub areas: Vec<AreaData>,
     /// Центры клеток в км.
     pub centers: Vec<XY>,
+    /// Укреплённая полоса в клетке: уровень (0 — нет) и чья (как в нынешней модели: клетки в пределах половины
+    /// глубины полосы от её линии, не меньше одной клетки).
+    pub fort: Vec<u8>,
+    pub fort_side: Vec<Option<String>>,
 }
 
 fn decode_rle(rle: &str, n: usize, map: impl Fn(char) -> Option<u8>) -> Result<Vec<u8>, String> {
@@ -192,6 +196,8 @@ impl Theatre {
             lines: f.lines,
             areas: f.areas,
             centers: Vec::with_capacity(n),
+            fort: vec![0u8; n],
+            fort_side: vec![None; n],
         };
         for i in 0..n { let c = t.cell_lnglat(i); t.centers.push(proj.to_xy(c)); }
         // шоссе из линий: отмечаем клетки вдоль линии (железные дороги в движении войск не участвуют)
@@ -216,6 +222,7 @@ impl Theatre {
             });
         }
         t.mark_rivers(&f.rivers);
+        t.mark_forts();
         Ok(t)
     }
 
@@ -269,6 +276,33 @@ impl Theatre {
                     if let Some((i, _)) = best {
                         self.crossing_bridge.insert((c as u32, d as u8), i as u16);
                         self.crossing_bridge.insert((nb as u32, opposite(d) as u8), i as u16);
+                    }
+                }
+            }
+        }
+    }
+
+    fn mark_forts(&mut self) {
+        let lines = self.lines.clone();
+        for l in &lines {
+            let Some(lv) = l.fortification.filter(|&v| v > 0) else { continue };
+            let half = l.depth_km.unwrap_or(0.0) / 2.0;
+            for w in l.line.windows(2) {
+                let (a, b) = (self.proj.to_xy(w[0]), self.proj.to_xy(w[1]));
+                let steps = (a.dist(b) / 0.3).ceil().max(1.0) as usize;
+                for k in 0..=steps {
+                    let q = XY::new(a.x + (b.x - a.x) * k as f64 / steps as f64, a.y + (b.y - a.y) * k as f64 / steps as f64);
+                    let Some(c) = self.cell_of_xy(q) else { continue };
+                    let r = (half.max(0.0) / 1.0).ceil() as i32 + 1;
+                    let (c0, r0) = ((c % self.cols) as i32, (c / self.cols) as i32);
+                    for dr in -r..=r {
+                        for dc in -r..=r {
+                            let (cc, rr) = (c0 + dc, r0 + dr);
+                            if cc < 0 || rr < 0 || cc >= self.cols as i32 || rr >= self.rows as i32 { continue; }
+                            let i = rr as usize * self.cols + cc as usize;
+                            let near = self.centers[i].dist(q) <= half.max(0.5);
+                            if near && lv >= self.fort[i] { self.fort[i] = lv; self.fort_side[i] = l.side.clone(); }
+                        }
                     }
                 }
             }

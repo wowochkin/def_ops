@@ -26,11 +26,12 @@ const jsonOut = opt('json');
 
 // ---------- типы ----------
 interface Formation { id: string; parent?: string | null; side?: string; echelon?: string; name_ru?: string; [k: string]: unknown }
-interface Position { formation: string; date: string; time?: string | null; approx_km?: number; reliability?: string; source?: string }
-interface DataSet { formations: Formation[]; positions?: Position[]; source?: Record<string, { default_reliability?: string }>; sources?: Record<string, { default_reliability?: string }> }
+interface Position { formation: string; date: string; time?: string | null; approx_km?: number; reliability?: string; source?: string; lng?: number | null; lat?: number | null }
+interface StrengthRec { formation: string; date?: string | null; personnel?: unknown; tanks?: unknown; stug?: unknown; spg?: unknown; guns?: unknown; source?: string; reliability?: string; note?: string }
+interface DataSet { formations?: Formation[]; strength?: StrengthRec[]; positions?: Position[]; source?: Record<string, { default_reliability?: string }>; sources?: Record<string, { default_reliability?: string }> }
 
 interface Strength { kind: 'personnel' | 'tanks' | 'guns'; value: number; reliability: Rel; date: string | null; source: string; set: string; note?: string }
-interface PosRec { date: string; set: string; own: boolean; approxKm: number | null; fallback?: boolean }
+interface PosRec { date: string; set: string; own: boolean; approxKm: number | null; fallback?: boolean; time?: string | null; lng?: number | null; lat?: number | null; rel?: string; via?: string }
 interface Mention { file: string; date: string | null }
 interface Row {
   div: Div; sets: Set<string>; strength: Strength[]; pos: PosRec[]; corpsDays: Set<string>; mentions: Mention[];
@@ -48,6 +49,9 @@ const SETS: { key: string; file: string; label: string; kind?: 'tsamo' }[] = [
   { key: 'reichstag', file: 'docs/sources/berlin-1945-reichstag.json', label: 'reichstag' },
   // положения дивизий и корпусов, геокодированные из текста выписок ЖБД (npm run sim:geocode-tsamo)
   { key: 'tsamo-div', file: 'docs/sources/berlin-1945-tsamo/division-positions.json', label: 'tsamo-div', kind: 'tsamo' },
+  // открытые источники по дивизиям (советская и немецкая стороны)
+  { key: 'research-su', file: 'docs/sources/berlin-1945-research-su.json', label: 'research-su' },
+  { key: 'research-de', file: 'docs/sources/berlin-1945-research-de.json', label: 'research-de' },
 ];
 const TSAMO = {
   positions: 'docs/sources/berlin-1945-tsamo/positions.json',
@@ -143,7 +147,7 @@ function corpsKey(id: string): string | null {
 const corpsPos = new Map<string, Set<string>>(); // корпус → дни
 const setFormations = new Map<string, number>();
 /** Набор tsamo-div: записи с полем formation (id реестра или корпуса), echelon, date, approxKm. */
-interface TsamoDivPos { formation: string; echelon: 'division' | 'corps'; date: string; approxKm: number; reliability: string; fallback?: 'army' }
+interface TsamoDivPos { formation: string; echelon: 'division' | 'corps'; date: string; time?: string; approxKm: number; reliability: string; fallback?: 'army'; lng: number; lat: number }
 function addTsamoDiv(s: { key: string; file: string }): number {
   const d = readJson<{ positions: TsamoDivPos[] }>(s.file);
   const seen = new Set<string>();
@@ -156,7 +160,7 @@ function addTsamoDiv(s: { key: string; file: string }): number {
     if (!id) continue;
     seen.add(id);
     // положение по координатам армии (пункты не найдены) — не положение дивизии: учитывается только в статистике набора
-    rows.get(id)!.pos.push({ date: p.date, set: s.key, own: !p.fallback, approxKm: p.approxKm, fallback: !!p.fallback });
+    rows.get(id)!.pos.push({ date: p.date, set: s.key, own: !p.fallback, approxKm: p.approxKm, fallback: !!p.fallback, time: p.time, lng: p.lng, lat: p.lat, rel: p.reliability });
     rows.get(id)!.sets.add(s.key);
   }
   return seen.size;
@@ -167,10 +171,11 @@ for (const s of SETS) {
   const d = readJson<DataSet>(s.file);
   const srcs = d.source ?? d.sources ?? {};
   const dflt = asRel(Object.values(srcs)[0]?.default_reliability, 'B');
-  const byId = new Map(d.formations.map((f) => [f.id, f]));
+  const forms = d.formations ?? [];
+  const byId = new Map(forms.map((f) => [f.id, f]));
   // части: формирование не из реестра, но его старший по цепочке — дивизия реестра
   const compOf = new Map<string, string>();
-  for (const f of d.formations) {
+  for (const f of forms) {
     if (aliasOf.has(f.id)) continue;
     let p = f.parent ? byId.get(f.parent) : undefined;
     for (let guard = 0; p && guard < 10; guard++) {
@@ -180,10 +185,32 @@ for (const s of SETS) {
     }
   }
   let n = 0;
-  for (const f of d.formations) {
+  for (const f of forms) {
     const a = aliasOf.get(f.id);
     if (a) { n++; const r = rows.get(a)!; r.sets.add(s.key); r.strength.push(...strengthOf(f, s.key, dflt)); }
     if (f.echelon === 'corps') for (const { key, s: st } of corpsNoteStrength(f, s.key)) rows.get(key)?.strength.push(st);
+  }
+  // таблица численности (наборы исследований): число или диапазон «2795–2991» (берётся середина, в примечании — диапазон)
+  const val = (v: unknown): { v: number; range?: string } | null => {
+    if (typeof v === 'number') return { v };
+    if (typeof v !== 'string') return null;
+    const m = /^(\d[\d\s ]*)\s*[–-]\s*(\d[\d\s ]*)$/.exec(v.trim());
+    return m ? { v: (num(m[1]) + num(m[2])) / 2, range: v } : null;
+  };
+  for (const st of d.strength ?? []) {
+    const id = aliasOf.get(st.formation);
+    if (!id) continue;
+    const add = (kind: Strength['kind'], v: unknown) => {
+      const x = val(v);
+      if (!x) return;
+      rows.get(id)!.strength.push({ kind, value: x.v, reliability: asRel(st.reliability, dflt), date: st.date ?? null, source: st.source ?? s.key, set: s.key,
+        note: [x.range ? `диапазон ${x.range}` : undefined, st.note].filter(Boolean).join('; ') || undefined });
+    };
+    add('personnel', st.personnel);
+    const tk = [st.tanks, st.stug, st.spg].map(val).filter(Boolean) as { v: number }[];
+    if (tk.length) add('tanks', tk.reduce((a, b) => a + b.v, 0));
+    add('guns', st.guns);
+    rows.get(id)!.sets.add(s.key);
   }
   setFormations.set(s.key, n);
   for (const p of d.positions ?? []) {
@@ -197,7 +224,7 @@ for (const s of SETS) {
     const comp = own ? undefined : compOf.get(p.formation);
     const id = own ?? comp;
     if (!id) continue;
-    rows.get(id)!.pos.push({ date: p.date, set: s.key, own: !!own, approxKm: typeof p.approx_km === 'number' ? p.approx_km : null });
+    rows.get(id)!.pos.push({ date: p.date, set: s.key, own: !!own, approxKm: typeof p.approx_km === 'number' ? p.approx_km : null, time: p.time, lng: p.lng, lat: p.lat, rel: p.reliability ?? dflt, via: own ? undefined : p.formation });
     rows.get(id)!.sets.add(s.key);
   }
 }
@@ -491,6 +518,8 @@ if (jsonOut) {
     id: r.div.id, side: r.div.side, type: r.div.type, group: groupOf(r.div), sets: [...r.sets],
     personnel: best(r, 'personnel') ?? null, tanks: best(r, 'tanks') ?? null, guns: best(r, 'guns') ?? null,
     daysOwn: [...daysOwn(r)].sort(), daysAll: [...daysAll(r)].sort(), corpsDays: [...r.corpsDays].sort(),
+    positions: r.pos.filter((p) => !p.fallback && typeof p.lng === 'number' && typeof p.lat === 'number')
+      .map((p) => ({ date: p.date, time: p.time ?? null, lng: p.lng, lat: p.lat, approxKm: p.approxKm, set: p.set, reliability: p.rel ?? null, own: p.own, via: p.via ?? null })),
     tsamo: { records: r.mentions.length, days: [...new Set(r.mentions.map((m) => m.date).filter(Boolean))].sort() },
   })), null, 1));
 }

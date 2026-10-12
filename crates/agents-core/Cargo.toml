@@ -13,3 +13,7 @@ serde_json = "1"
 [[bin]]
 name = "agents-bench"
 path = "src/bin/agents-bench.rs"
+
+[[bin]]
+name = "agents-run"
+path = "src/bin/agents-run.rs"

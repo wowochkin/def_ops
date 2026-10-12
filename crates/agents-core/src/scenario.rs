@@ -56,7 +56,9 @@ pub struct OrderIn {
     #[serde(default)]
     pub to: Vec<String>,
     pub kind: OrderKind,
-    pub target: LngLat,
+    /// Цель; null — на месте.
+    #[serde(default)]
+    pub target: Option<LngLat>,
     #[serde(default)]
     pub forced: bool,
     #[serde(default)]
@@ -102,7 +104,21 @@ fn new_division(id: String, name: String, side: Side, hq: u32, params: Params, p
     d
 }
 
-pub fn load(path: &str, data_dir: &str, root: &str) -> Result<Sim, String> {
+/// Сведения о сценарии для прогона и отчёта.
+pub struct Meta {
+    pub id: String,
+    pub name: String,
+    pub hours: u32,
+    pub start: String,
+}
+
+#[derive(Deserialize)]
+struct NameOnly {
+    #[serde(default)]
+    name: String,
+}
+
+pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
     let s: ScenarioIn = serde_json::from_str(&text).map_err(|e| format!("{path}: {e}"))?;
     let theatre = Arc::new(Theatre::load(&format!("{root}/{}", s.theatre))?);
@@ -133,13 +149,13 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<Sim, String> {
         } else {
             o.to.iter().map(|id| div_idx.get(id.as_str()).copied().ok_or_else(|| format!("приказ: нет дивизии {id}"))).collect::<Result<_, _>>()?
         };
-        script.push(ScriptOrder { at, hq, to, kind: o.kind, target: theatre.proj.to_xy(o.target), forced: o.forced, note: o.note.clone() });
+        script.push(ScriptOrder { at, hq, to, kind: o.kind, target: o.target.map(|p| theatre.proj.to_xy(p)), forced: o.forced, note: o.note.clone() });
     }
     let objects = theatre_objects(&theatre);
     let world = World { tick: 0, divisions, hqs, objects, in_transit: Vec::new() };
-    let _ = s.id;
-    let _ = s.hours;
-    Ok(Sim::new(theatre, rules, s.seed, start, world, script))
+    let name = serde_json::from_str::<NameOnly>(&text).map(|n| n.name).unwrap_or_default();
+    let meta = Meta { id: s.id.clone(), name, hours: s.hours, start: s.start.clone() };
+    Ok((Sim::new(theatre, rules, s.seed, start, world, script), meta))
 }
 
 /// Штаб `h` подчинён штабу `top` (или совпадает с ним).
@@ -203,7 +219,7 @@ pub fn synthetic(theatre: Arc<Theatre>, rules: Rules, n: usize, n_objects: usize
             let j = XY::new(berlin.x + 20.0 * (r01(i as u64 + 7) - 0.5), berlin.y + 20.0 * (r01(i as u64 + 9) - 0.5));
             (OrderKind::Attack, j)
         } else { (OrderKind::Hold, pos) };
-        script.push(ScriptOrder { at: 0, hq: if side == Side::Su { 0 } else { 1 }, to: vec![i as u32], kind, target, forced: false, note: "синтетический приказ".into() });
+        script.push(ScriptOrder { at: 0, hq: if side == Side::Su { 0 } else { 1 }, to: vec![i as u32], kind, target: Some(target), forced: false, note: "синтетический приказ".into() });
     }
     let mut objects = theatre_objects(t);
     let mut k = 0u64;
