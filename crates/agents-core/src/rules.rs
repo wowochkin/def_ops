@@ -45,8 +45,51 @@ pub struct SideRules {
     pub weights: (f64, f64, f64),
 }
 
+/// Ступенчатая таблица: значение для x не ниже нижней границы ступени; ниже первой — 0.
+#[derive(Clone, Debug)]
+pub struct Steps(pub Vec<(f64, f64)>);
+impl Steps {
+    pub fn step(&self, x: f64) -> f64 { self.0.iter().rev().find(|p| x >= p.0).map_or(0.0, |p| p.1) }
+}
+
+/// Бой дивизионного уровня: нормативы с источниками — data/rules/agents-v0.json, раздел combat
+/// (docs/sources/division-combat-norms.json).
+#[derive(Clone, Debug)]
+pub struct Combat {
+    /// Стандартные темпы, км/сут, по позе обороны: поспешная, подготовленная, укреплённая.
+    pub advance: [Steps; 3],
+    pub armor_factor: f64,
+    pub attacker_loss_day: f64,
+    pub defender_loss_day: f64,
+    pub attacker_loss_max_day: f64,
+    pub defender_loss_penetration_day: f64,
+    pub penetration_km_day: f64,
+    /// Поправка на размер (QJM): (до численности, множитель).
+    pub size: Vec<(f64, f64)>,
+    pub tank_loss_factor: f64,
+    pub gun_loss_factor: f64,
+    /// Участок наступления, км: советская стрелковая, советская танковая (механизированная), немецкая.
+    pub attack_frontage: [f64; 3],
+    /// Полоса обороны, км: советская, немецкая.
+    pub defense_frontage: [f64; 2],
+    pub breakpoint_loss: f64,
+}
+
+impl Combat {
+    pub fn size_factor(&self, people: f64) -> f64 {
+        self.size.iter().find(|&&(lim, _)| people < lim).map_or(1.0, |&(_, f)| f)
+    }
+    pub fn attack_frontage_km(&self, d: &crate::model::Division) -> f64 {
+        match (d.side, d.params.mobility) { (Side::De, _) => self.attack_frontage[2], (Side::Su, Mobility::Foot) => self.attack_frontage[0], _ => self.attack_frontage[1] }
+    }
+    pub fn defense_frontage_km(&self, d: &crate::model::Division) -> f64 {
+        match d.side { Side::Su => self.defense_frontage[0], Side::De => self.defense_frontage[1] }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Rules {
+    pub combat: Combat,
     pub su: SideRules,
     pub de: SideRules,
     // марш
@@ -79,7 +122,6 @@ pub struct Rules {
     pub fatigue_gain: (f64, f64, f64),
     pub noise: f64,
     // пороги агента
-    pub stop_strength_share: f64,
     pub stop_ammo: f64,
     pub rout_cohesion: f64,
     pub cohesion_loss_factor: f64,
@@ -139,7 +181,27 @@ impl Rules {
         };
         let mut defense_terrain = [1.0; 6];
         for (t, cls) in TERRAIN.iter().enumerate() { defense_terrain[t] = num(&cal, &format!("defense.terrain.{cls}"))?; }
+        let steps = |k: &str| -> Result<Steps, String> {
+            let arr = ag.pointer(&format!("/combat/advance/{k}/value")).and_then(Value::as_array).ok_or_else(|| format!("правила: нет combat.advance.{k}"))?;
+            Ok(Steps(arr.iter().filter_map(|p| Some((p.get(0)?.as_f64()?, p.get(1)?.as_f64()?))).collect()))
+        };
+        let combat = Combat {
+            advance: [steps("hasty")?, steps("prepared")?, steps("fortified")?],
+            armor_factor: num(&ag, "combat.armorFactor")?,
+            attacker_loss_day: num(&ag, "combat.attackerLossDay")?,
+            defender_loss_day: num(&ag, "combat.defenderLossDay")?,
+            attacker_loss_max_day: num(&ag, "combat.attackerLossMaxDay")?,
+            defender_loss_penetration_day: num(&ag, "combat.defenderLossPenetrationDay")?,
+            penetration_km_day: num(&ag, "combat.penetrationKmDay")?,
+            size: ag.pointer("/combat/sizeFactor/value").and_then(Value::as_array).map(|a| a.iter().filter_map(|p| Some((p.get(0)?.as_f64()?, p.get(1)?.as_f64()?))).collect()).unwrap_or_default(),
+            tank_loss_factor: num(&ag, "combat.tankLossFactor")?,
+            gun_loss_factor: num(&ag, "combat.gunLossFactor")?,
+            attack_frontage: [num(&ag, "combat.attackFrontageKm.suRifle")?, num(&ag, "combat.attackFrontageKm.suTank")?, num(&ag, "combat.attackFrontageKm.de")?],
+            defense_frontage: [num(&ag, "combat.defenseFrontageKm.su")?, num(&ag, "combat.defenseFrontageKm.de")?],
+            breakpoint_loss: num(&ag, "combat.breakpointLoss")?,
+        };
         Ok(Rules {
+            combat,
             su,
             de,
             march_kmh: [num(&ag, "march.kmh.foot")?, num(&ag, "march.kmh.motor")?, num(&ag, "march.kmh.tracked")?],
@@ -170,7 +232,6 @@ impl Rules {
             fatigue_effect: num(&cal, "fatigueEffect")?,
             fatigue_gain: (num(&cal, "fatigueGain.combat")?, num(&cal, "fatigueGain.march")?, num(&cal, "fatigueGain.rest")?),
             noise: num(&cal, "noise")?,
-            stop_strength_share: num(&ag, "attackStop.strengthShare")?,
             stop_ammo: num(&ag, "attackStop.ammo")?,
             rout_cohesion: num(&ag, "routThreshold.cohesion")?,
             cohesion_loss_factor: num(&ag, "cohesion.combatLossFactor")?,

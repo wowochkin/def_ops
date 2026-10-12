@@ -59,7 +59,7 @@ pub struct Vars {
 pub enum MarchSub { Road, OffRoad, Halt, Jam, Crossing }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AttackSub { Assault, Depth, Consolidate }
+pub enum AttackSub { Assault, Depth, Consolidate, Echelon }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DefenseSub { Hasty, Prepared }
@@ -90,6 +90,7 @@ impl State {
             State::Attack(AttackSub::Assault) => "наступление: атака",
             State::Attack(AttackSub::Depth) => "наступление: бой в глубине",
             State::Attack(AttackSub::Consolidate) => "наступление: закрепление",
+            State::Attack(AttackSub::Echelon) => "наступление: второй эшелон",
             State::Defense(DefenseSub::Hasty) => "оборона: поспешная",
             State::Defense(DefenseSub::Prepared) => "оборона: подготовленная",
             State::Withdraw => "отход",

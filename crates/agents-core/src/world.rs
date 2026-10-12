@@ -110,6 +110,8 @@ struct Intent {
     bridge: Option<(u32, XY, usize)>,
     /// Атакует дивизию противника.
     attacks: Option<u32>,
+    /// Досягаемые дивизии противника по возрастанию расстояния (для распределения по участкам) и расстояния до них.
+    options: Vec<(u32, f64)>,
     /// Отход от противника: куда.
     retreat_to: Option<XY>,
     activity: Option<Activity>,
@@ -200,11 +202,14 @@ impl Sim {
         let pos = d.vars.pos;
         // ближайший противник в пределах соприкосновения
         let reach = r.contact_km + r.size(&r.frontage_km, d.params.size) / 2.0;
-        let enemy = index.near(pos, reach).into_iter()
+        let mut options: Vec<(u32, f64)> = index.near(pos, reach).into_iter()
             .filter(|&j| w.divisions[j as usize].side != d.side)
             .map(|j| (j, w.divisions[j as usize].vars.pos.dist(pos)))
             .filter(|&(_, k)| k <= reach)
-            .min_by(|a, b| a.1.total_cmp(&b.1).then(a.0.cmp(&b.0)));
+            .collect();
+        options.sort_by(|a, b| a.1.total_cmp(&b.1).then(a.0.cmp(&b.0)));
+        let enemy = options.first().copied();
+        out.options = options;
         let set = |out: &mut Intent, s: State, why: &str| if s != d.state { out.state = Some((s, why.to_string())); };
 
         // отступление при потере организованности
@@ -232,7 +237,7 @@ impl Sim {
             OrderKind::Attack => {
                 if let Some((j, _)) = enemy {
                     let s0 = d.vars.strength0.max(1e-9);
-                    if self.strength(d) / s0 < r.stop_strength_share {
+                    if self.strength(d) / s0 < 1.0 - r.combat.breakpoint_loss {
                         set(&mut out, State::Defense(DefenseSub::Hasty), "атака прекращена: боевая сила ниже порога");
                         out.activity = Some(Activity::Defend);
                     } else if d.vars.ammo < r.stop_ammo {
@@ -241,7 +246,11 @@ impl Sim {
                     } else {
                         match d.state {
                             State::Deploy { left_h } if left_h > 1.0 => { out.state = Some((State::Deploy { left_h: left_h - 1.0 }, String::new())); out.activity = Some(Activity::Defend); }
-                            State::Deploy { .. } | State::Attack(_) => {
+                            State::Attack(_) => {
+                                out.attacks = Some(j);
+                                out.activity = Some(Activity::Attack);
+                            }
+                            State::Deploy { .. } => {
                                 set(&mut out, State::Attack(AttackSub::Assault), "развернулась, атакует");
                                 out.attacks = Some(j);
                                 out.activity = Some(Activity::Attack);
@@ -448,34 +457,58 @@ impl Sim {
         for (i, it) in intents.iter().enumerate() {
             if let Some(p) = it.retreat_to { w.divisions[i].vars.pos = p; }
         }
-        // бои: по обороняющимся, в порядке индексов
-        let mut battles: BTreeMap<u32, Vec<u32>> = BTreeMap::new();
-        for (i, it) in intents.iter().enumerate() {
-            if let Some(j) = it.attacks { battles.entry(j).or_default().push(i as u32); }
-        }
+        // бои: по обороняющимся, в порядке индексов (нормативы дивизионного уровня — rules.combat, docs/plans/agents.md, 10в)
+        // распределение по участкам: наступающие по удалению от противника (ближние первыми) занимают участки на полосе
+        // ближайшей досягаемой обороняющейся дивизии, где осталось место; кому места нет — ждёт во втором эшелоне
         let t = &*self.theatre;
+        let c = &r.combat;
+        let mut order: Vec<(f64, u32)> = intents.iter().enumerate().filter(|(_, it)| it.attacks.is_some()).map(|(i, it)| (it.options.first().map_or(f64::MAX, |o| o.1), i as u32)).collect();
+        order.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.cmp(&b.1)));
+        let mut free: BTreeMap<u32, f64> = BTreeMap::new();
+        let mut battles: BTreeMap<u32, Vec<u32>> = BTreeMap::new();
+        let mut waiting: Vec<u32> = Vec::new();
+        for (_, a) in order {
+            let f = c.attack_frontage_km(&w.divisions[a as usize]);
+            let pick = intents[a as usize].options.iter().map(|o| o.0).find(|&j| {
+                let dj = &w.divisions[j as usize];
+                if dj.state == State::Destroyed { return false; }
+                let left = *free.entry(j).or_insert_with(|| c.defense_frontage_km(dj));
+                left + 1e-9 >= f || !battles.contains_key(&j)
+            });
+            match pick {
+                Some(j) => { *free.get_mut(&j).unwrap() -= f; battles.entry(j).or_default().push(a); }
+                None => waiting.push(a),
+            }
+        }
+        // темп боя на полосе каждой обороняющейся дивизии, км за час — за ним идут ожидающие второго эшелона
+        let mut battle_pace: BTreeMap<u32, f64> = BTreeMap::new();
         for (def, atts) in battles {
             let dd = &w.divisions[def as usize];
-            if dd.state == State::Destroyed { continue; }
+            let dpos = dd.vars.pos;
+            let def_front = c.defense_frontage_km(dd);
             let att_power: f64 = atts.iter().map(|&a| self.strength(&w.divisions[a as usize])).sum();
-            let cell = t.cell_of_xy(dd.vars.pos).unwrap_or(0);
-            let mut def_mult = r.defense_terrain[t.terrain[cell] as usize];
-            if dd.state == State::Defense(DefenseSub::Prepared) { def_mult *= r.prepared; }
-            // своя укреплённая полоса: прибавка к силе обороны и предел темпа «прогрызания» (как в нынешней модели)
+            let cell = t.cell_of_xy(dpos).unwrap_or(0);
+            let terrain = t.terrain[cell] as usize;
+            // поза обороны: укреплённая — своя полоса 2-го уровня и выше; подготовленная — полоса 1-го уровня или
+            // подготовленная оборона; иначе — поспешная
             let side_code = match dd.side { Side::Su => "su", Side::De => "de" };
             let fort_lv = if t.fort_side[cell].as_deref() == Some(side_code) { t.fort[cell] as usize } else { 0 };
-            def_mult *= 1.0 + r.fortification_per_level * fort_lv as f64;
-            let def_power = (self.strength(dd) * def_mult).max(1e-6);
+            let posture = if fort_lv >= 2 { 2 } else if fort_lv == 1 || dd.state == State::Defense(DefenseSub::Prepared) { 1 } else { 0 };
+            let def_power = (self.strength(dd) * r.defense_terrain[terrain]).max(1e-6);
             let ratio = att_power / def_power;
             let mut rng = Rng::new(self.seed, def, tick, Stream::Combat);
             let noise = rng.jitter(r.noise);
-            let a_loss = (r.attacker_loss.at(ratio) / 24.0 * noise).clamp(0.0, 0.5);
-            let d_loss = (r.defender_loss.at(ratio) / 24.0 * noise).clamp(0.0, 0.5);
-            let mut adv_km = r.advance.at(ratio) * r.advance_terrain[t.terrain[cell] as usize] * noise;
-            if fort_lv > 0 { if let Some(&cap) = r.fort_advance_km.get(fort_lv.min(r.fort_advance_km.len().saturating_sub(1))) { adv_km = adv_km.min(cap); } }
-            let adv_km = adv_km / 24.0;
+            // темп, км/сут: стандартные темпы Дюпюи по позе обороны; танковым — поправка по танковой таблице
+            let tracked: f64 = atts.iter().filter(|&&a| w.divisions[a as usize].params.mobility != Mobility::Foot).map(|&a| self.strength(&w.divisions[a as usize])).sum();
+            let armor = if tracked > 0.5 * att_power { c.armor_factor } else { 1.0 };
+            let adv_day = c.advance[posture].step(ratio) * armor * r.advance_terrain[terrain] * noise;
+            // потери, доля в сутки: база QJM с поправкой на размер; обороне — до нормы прорыва по мере продвижения
+            let a_day = (c.attacker_loss_day * c.size_factor(att_power_people(w, &atts)) * noise).min(c.attacker_loss_max_day);
+            let d_base = c.defender_loss_day * c.size_factor(dd.vars.personnel);
+            let d_day = (d_base + (c.defender_loss_penetration_day - d_base).max(0.0) * (adv_day / c.penetration_km_day).min(1.0)) * noise;
+            let (a_loss, d_loss, adv_km) = (a_day / 24.0, d_day / 24.0, adv_day / 24.0);
+            battle_pace.insert(def, adv_km);
             let hold = matches!(dd.order.as_ref().map(|o| o.kind), Some(OrderKind::Hold));
-            // потери обороны
             let att_center = {
                 let n = atts.len() as f64;
                 let (sx, sy) = atts.iter().fold((0.0, 0.0), |(x, y), &a| { let p = w.divisions[a as usize].vars.pos; (x + p.x, y + p.y) });
@@ -483,7 +516,7 @@ impl Sim {
             };
             {
                 let d = &mut w.divisions[def as usize];
-                lose(d, d_loss, r.cohesion_loss_factor);
+                lose(d, d_loss, r.cohesion_loss_factor, c);
                 if adv_km > 0.0 && !hold {
                     let p = d.vars.pos;
                     let away = XY::new(p.x + (p.x - att_center.x), p.y + (p.y - att_center.y));
@@ -493,15 +526,36 @@ impl Sim {
             }
             for &a in &atts {
                 let d = &mut w.divisions[a as usize];
-                lose(d, a_loss, r.cohesion_loss_factor);
+                if d.state == State::Attack(AttackSub::Echelon) {
+                    journal.push(Event { tick, agent: a, text: format!("{} → {}: участок освободился, вступает в бой", d.state.label(), State::Attack(AttackSub::Assault).label()) });
+                    d.state = State::Attack(AttackSub::Assault);
+                }
+                lose(d, a_loss, r.cohesion_loss_factor, c);
                 if adv_km > 0.0 {
                     let target = d.order.as_ref().map(|o| o.target).unwrap_or(d.vars.pos);
                     d.vars.pos = d.vars.pos.toward(target, adv_km);
                 }
             }
             if tick % 6 == 0 {
-                journal.push(Event { tick, agent: def, text: format!("бой: соотношение {:.1}:1{}, за час потери обороны {:.1} %, наступающих {:.1} %, продвижение {:.2} км",
-                    ratio, if fort_lv > 0 { format!(", полоса {fort_lv}-го уровня") } else { String::new() }, d_loss * 100.0, a_loss * 100.0, adv_km) });
+                const POSTURE: [&str; 3] = ["поспешная", "подготовленная", "укреплённая"];
+                journal.push(Event { tick, agent: def, text: format!("бой: {} наступающих на полосе {:.0} км, соотношение {:.1}:1, оборона {}; за сутки темп {:.1} км, потери обороны {:.1} %, наступающих {:.1} %",
+                    atts.len(), def_front, ratio, POSTURE[posture], adv_day, d_day * 100.0, a_day * 100.0) });
+            }
+        }
+        // ожидающие участка: в бой не вступают и потерь не несут, но идут за первым эшелоном с темпом боя на своём
+        // направлении (второй эшелон следует за первым, а не стоит на исходном рубеже)
+        for a in waiting {
+            let pace = intents[a as usize].options.iter().find_map(|o| battle_pace.get(&o.0).copied()).unwrap_or(0.0);
+            let d = &mut w.divisions[a as usize];
+            if pace > 0.0 {
+                let target = d.order.as_ref().map(|o| o.target).unwrap_or(d.vars.pos);
+                d.vars.pos = d.vars.pos.toward(target, pace);
+            }
+            if !matches!(d.state, State::Deploy { .. }) && d.state != State::Attack(AttackSub::Depth) {
+                if d.state != State::Attack(AttackSub::Echelon) {
+                    journal.push(Event { tick, agent: a, text: format!("{} → {}: участок прорыва занят, ждёт во втором эшелоне", d.state.label(), State::Attack(AttackSub::Echelon).label()) });
+                }
+                d.state = State::Attack(AttackSub::Echelon);
             }
         }
         // расход по действию
@@ -579,9 +633,12 @@ impl Sim {
     }
 }
 
-fn lose(d: &mut Division, frac: f64, cohesion_factor: f64) {
+/// Численность наступающих, для поправки на размер (QJM).
+fn att_power_people(w: &World, atts: &[u32]) -> f64 { atts.iter().map(|&a| w.divisions[a as usize].vars.personnel).sum() }
+
+fn lose(d: &mut Division, frac: f64, cohesion_factor: f64, c: &crate::rules::Combat) {
     d.vars.personnel *= 1.0 - frac;
-    d.vars.tanks *= 1.0 - frac;
-    d.vars.guns *= 1.0 - frac;
+    d.vars.tanks *= 1.0 - (frac * c.tank_loss_factor).min(1.0);
+    d.vars.guns *= 1.0 - (frac * c.gun_loss_factor).min(1.0);
     d.vars.cohesion = (d.vars.cohesion - frac * cohesion_factor).max(0.0);
 }
