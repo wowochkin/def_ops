@@ -397,7 +397,24 @@ const histArmy = tsHist.positions.filter((p) => (hqs.has(p.formation) || agentId
   .map((p) => ({ formation: p.formation, time: p.time.replace(/T00:00$/, 'T05:00'), at: p.at, approxKm: p.approxKm, reliability: p.reliability, source: p.source }));
 
 // вехи операции (история сценария нынешней модели): «выход к пункту» и «встреча» — место по театру
-const events = tsHist.events.filter((e) => e.date < endDay).map((e) => ({ ...e, at: e.place ? areaC.get(e.place) ?? null : null }));
+const events: unknown[] = tsHist.events.filter((e) => e.date < endDay).map((e) => ({ ...e, at: e.place ? areaC.get(e.place) ?? null : null }));
+
+// ---------- город: обводы обороны Берлина и городские вехи ----------
+// Обводы — berlin-1945-reichstag.json, defence_lines (LT_RACE): внешний (≈100 км по границе города, C), внутренний
+// по кольцу S-Bahn (≈48 км, A), «Цитадель» — центральный сектор Z (B). Город — внутри внешнего обвода; на внутреннем
+// обводе и в «Цитадели» — укреплённая оборона (Theatre::mark_city).
+const reich = rd<{ defence_lines: { name_ru: string; points: { lng: number; lat: number }[]; reliability: string }[] }>('docs/sources/berlin-1945-reichstag.json');
+const RING_LEVEL: [RegExp, number][] = [[/^Внешний оборонительный обвод/, 1], [/кольцо S-Bahn/, 2], [/«Цитадель»/, 3]];
+const cityRings = reich.defence_lines.flatMap((l) => {
+  const lv = RING_LEVEL.find(([re]) => re.test(l.name_ru))?.[1];
+  return lv ? [{ name: l.name_ru, level: lv, side: 'de', ring: l.points.map((p) => r4([p.lng, p.lat])), note: `berlin-1945-reichstag.json, defence_lines (${l.reliability})` }] : [];
+});
+// городские вехи (история городского сценария нынешней модели, LT_RACE): радиус — не меньше 1,5 км (масштаб дивизии)
+const cityHist = rd<{ events: { id: string; title: string; date: string; kind: string; place?: string; radiusKm?: number; source?: string }[] }>('packages/sim/data/scenarios/berlin-city-1945.history.json');
+const CITY_AT: Record<string, LngLat> = { Tempelhof_Flughafen: [13.4017, 52.4733], Alexanderplatz: [13.4132, 52.5219], Moltkebruecke: [13.3688, 52.5219] };
+const cityEvents = cityHist.events.filter((e) => e.date < endDay && e.place && CITY_AT[e.place])
+  .map((e) => ({ ...e, id: `city_${e.id}`, radiusKm: Math.max(1.5, e.radiusKm ?? 0), at: CITY_AT[e.place!], note: 'городская веха; радиус — не меньше 1,5 км (масштаб дивизии)' }));
+events.push(...cityEvents);
 
 // ---------- запись ----------
 const usedHq = new Set<string>();
@@ -416,7 +433,7 @@ const scenario = {
   theatre: 'packages/sim/data/theatres/oder-berlin-1945.json',
   start: START, hours: HOURS, seed: 1,
   timeNote: 'время московское, как в сценарии нынешней модели; собрано npm run agents:berlin-data',
-  hqs: hqList, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, fires, withdrawals, defenseZones: DEFENSE_ZONES,
+  hqs: hqList, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, fires, withdrawals, defenseZones: DEFENSE_ZONES, cityRings,
 };
 const dir = resolve(ROOT, 'packages/sim/data/scenarios/agents');
 mkdirSync(dir, { recursive: true });
@@ -429,6 +446,7 @@ writeFileSync(resolve(dir, 'berlin-1945.history.json'), JSON.stringify({
 const su = out.filter((o) => o.side === 'su'), de = out.filter((o) => o.side === 'de');
 console.log(`соединений: советских ${su.length}, немецких ${de.length}; штабов ${hqList.length}; приказов ${orders.length} (пропущено видов ${skipped}, без получателей ${empty})`);
 console.log(`положения: ${[...new Set(out.map((o) => o.notes.find((n) => n.startsWith('положение')) ?? '?'))].map((n) => `${n} — ${out.filter((o) => o.notes.includes(n)).length}`).join('; ')}`);
+console.log(`обводы города: ${cityRings.map((r) => r.level).join(', ')}; городских вех: ${cityEvents.length}`);
 console.log(`приказов резервам фронтов (допущение): ${reserveOrders}`);
 console.log(`ввод позже начала: ${out.filter((o) => o.enterAt && o.enterAt > START).length}`);
 console.log(`история: положений дивизий ${histDiv.length} (отбраковано ${rejected.length}), армий и корпусов ${histArmy.length}`);

@@ -264,3 +264,17 @@ fn soviet_doctrine_echelons() {
     assert!(sim.journal.iter().any(|e| e.text.contains("ввод подвижной группы") || e.text.contains("ввод для завершения прорыва")));
     assert!(sim.journal.iter().any(|e| e.text.contains("ввод второго эшелона") || e.text.contains("смена вторым эшелоном") || e.text.contains("2–3-й день")));
 }
+
+/// Город: обводы Берлина размечают клетки театра (внешний — 1, кольцо S-Bahn — 2, «Цитадель» — 3).
+#[test]
+fn berlin_city_rings() {
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json");
+    let (sim, _) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    let t = &sim.theatre;
+    let at = |p: [f64; 2]| t.city[t.cell_of(p).unwrap()];
+    assert_eq!(at([13.3761, 52.5187]), 3, "Рейхстаг — «Цитадель»");
+    assert_eq!(at([13.4017, 52.4733]), 2, "Темпельхоф — внутри кольца S-Bahn");
+    assert_eq!(at([13.55, 52.47]), 1, "Обершёневайде — внутри внешнего обвода");
+    assert_eq!(at([14.38, 52.53]), 0, "Зеелов — не город");
+}

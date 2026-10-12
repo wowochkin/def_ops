@@ -95,8 +95,22 @@ pub struct ScenarioIn {
     /// Полосы подготовленной обороны за линиями театра (Theatre::mark_zone).
     #[serde(default, rename = "defenseZones")]
     pub defense_zones: Vec<ZoneIn>,
+    /// Обводы обороны города (Theatre::mark_city).
+    #[serde(default, rename = "cityRings")]
+    pub city_rings: Vec<CityRingIn>,
     #[serde(default)]
     pub withdrawals: Vec<WithdrawIn>,
+}
+
+/// Обвод обороны города: многоугольник и уровень (1 — внешний, 2 — внутренний, 3 — центральный сектор).
+#[derive(Deserialize)]
+pub struct CityRingIn {
+    pub name: String,
+    pub level: u8,
+    pub side: String,
+    pub ring: Vec<LngLat>,
+    #[serde(default)]
+    pub note: String,
 }
 
 /// Полоса подготовленной обороны: глубина за линией театра и уровень укрепления.
@@ -180,6 +194,7 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
     let s: ScenarioIn = serde_json::from_str(&text).map_err(|e| format!("{path}: {e}"))?;
     let mut theatre = Theatre::load(&format!("{root}/{}", s.theatre))?;
     for z in &s.defense_zones { theatre.mark_zone(&z.line, z.depth_km, z.level, z.towards == "west"); }
+    for r in &s.city_rings { let _ = &r.name; theatre.mark_city(&r.ring, r.level, &r.side); }
     let theatre = Arc::new(theatre);
     let rules = Rules::load(data_dir)?;
     let start = parse_hours(&s.start).ok_or("start: неверная дата")?;

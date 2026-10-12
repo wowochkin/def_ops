@@ -142,6 +142,9 @@ pub struct Theatre {
     /// глубины полосы от её линии, не меньше одной клетки).
     pub fort: Vec<u8>,
     pub fort_side: Vec<Option<String>>,
+    /// Город по обводам обороны (сценарий, cityRings): 0 — не город, 1 — внутри внешнего обвода, 2 — внутри
+    /// внутреннего (кольцо S-Bahn), 3 — «Цитадель».
+    pub city: Vec<u8>,
 }
 
 fn decode_rle(rle: &str, n: usize, map: impl Fn(char) -> Option<u8>) -> Result<Vec<u8>, String> {
@@ -198,6 +201,7 @@ impl Theatre {
             centers: Vec::with_capacity(n),
             fort: vec![0u8; n],
             fort_side: vec![None; n],
+            city: vec![0; n],
         };
         for i in 0..n { let c = t.cell_lnglat(i); t.centers.push(proj.to_xy(c)); }
         // шоссе из линий: отмечаем клетки вдоль линии (железные дороги в движении войск не участвуют)
@@ -280,6 +284,29 @@ impl Theatre {
                 }
             }
         }
+    }
+
+    /// Город внутри обвода обороны: клетки внутри многоугольника получают уровень города не ниже `level`. Укреплением
+    /// обводы не помечаются: город замедляют городская норма темпа (combat.urban) и местность — иначе один и тот же
+    /// эффект учитывался бы трижды.
+    pub fn mark_city(&mut self, ring: &[LngLat], level: u8, side: &str) -> usize {
+        let poly: Vec<XY> = ring.iter().map(|p| self.proj.to_xy(*p)).collect();
+        if poly.len() < 3 { return 0; }
+        let mut n = 0;
+        for c in 0..self.cols * self.rows {
+            let p = self.centers[c];
+            let mut inside = false;
+            let mut j = poly.len() - 1;
+            for i in 0..poly.len() {
+                let (a, b) = (poly[i], poly[j]);
+                if (a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x { inside = !inside; }
+                j = i;
+            }
+            if !inside { continue; }
+            if self.city[c] < level { self.city[c] = level; n += 1; }
+            let _ = side;
+        }
+        n
     }
 
     /// Полоса подготовленной обороны за линией `line_id` (сценарий, defenseZones): клетки своей стороны линии не дальше

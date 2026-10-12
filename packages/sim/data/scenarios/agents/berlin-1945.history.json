@@ -21357,6 +21357,54 @@
     13.3761,
     52.51869999999999
    ]
+  },
+  {
+   "id": "city_tempelhof",
+   "title": "Аэропорт Темпельхоф взят",
+   "date": "1945-04-26",
+   "kind": "reach",
+   "side": "su",
+   "place": "Tempelhof_Flughafen",
+   "radiusKm": 1.5,
+   "source": "LT_RACE",
+   "control": true,
+   "at": [
+    13.4017,
+    52.4733
+   ],
+   "note": "городская веха; радиус — не меньше 1,5 км (масштаб дивизии)"
+  },
+  {
+   "id": "city_alex",
+   "title": "Александерплац",
+   "date": "1945-04-29",
+   "kind": "reach",
+   "side": "su",
+   "place": "Alexanderplatz",
+   "radiusKm": 1.5,
+   "source": "LT_RACE (Полицайпрезидиум 29.04)",
+   "control": true,
+   "at": [
+    13.4132,
+    52.5219
+   ],
+   "note": "городская веха; радиус — не меньше 1,5 км (масштаб дивизии)"
+  },
+  {
+   "id": "city_moltke",
+   "title": "Мост Мольтке",
+   "date": "1945-04-29",
+   "kind": "reach",
+   "side": "su",
+   "place": "Moltkebruecke",
+   "radiusKm": 1.5,
+   "source": "LT_RACE",
+   "control": true,
+   "at": [
+    13.3688,
+    52.5219
+   ],
+   "note": "городская веха; радиус — не меньше 1,5 км (масштаб дивизии)"
   }
  ],
  "rejected": [

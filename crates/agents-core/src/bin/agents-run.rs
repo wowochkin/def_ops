@@ -118,7 +118,9 @@ fn main() {
 
     let mut per_run: Vec<(f64, f64, f64)> = Vec::new(); // доля в допуске: дивизии, армии; время
     let mut first: Option<(Vec<Dev>, Vec<(Dev, Option<f64>)>, String, String, Vec<(String, String, Option<String>)>)> = None;
-    for seed in 1..=runs {
+    // --seed N: первый прогон (отчёт и ход — по нему), дальше N+1…
+    let seed0: u64 = arg(&args, "seed").and_then(|s| s.parse().ok()).unwrap_or(1);
+    for seed in seed0..seed0 + runs {
         let (mut sim, meta) = scenario::load(&scen_path, &format!("{root}/{DATA_DIR}"), &root).unwrap_or_else(|e| panic!("{e}"));
         sim.seed = seed;
         // вариант без отвода с первой позиции (отвод по источникам C — сравнение вариантов)
@@ -158,12 +160,12 @@ fn main() {
         let t0 = Instant::now();
         snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
         alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
-        if seed == 1 { frames.push(frame(&sim)); }
+        if seed == seed0 { frames.push(frame(&sim)); }
         for _ in 0..meta.hours {
             sim.step();
             snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
             alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
-            if seed == 1 { frames.push(frame(&sim)); }
+            if seed == seed0 { frames.push(frame(&sim)); }
         }
         let secs = t0.elapsed().as_secs_f64();
         let idx: HashMap<&str, usize> = sim.world.divisions.iter().enumerate().map(|(i, d)| (d.id.as_str(), i)).collect();
@@ -211,7 +213,7 @@ fn main() {
         }
         let share = |v: &[&Dev]| v.iter().filter(|d| d.excess <= tol).count() as f64 / v.len().max(1) as f64;
         per_run.push((share(&devs.iter().collect::<Vec<_>>()), share(&adevs.iter().map(|x| &x.0).collect::<Vec<_>>()), secs));
-        if seed == 1 {
+        if seed == seed0 {
             // trace.json
             let trace = agents_core::trace::describe(&sim, &meta, std::mem::take(&mut frames));
             std::fs::write(format!("{out_dir}/trace.json"), serde_json::to_string(&trace).unwrap()).expect("trace.json");

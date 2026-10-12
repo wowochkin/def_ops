@@ -179,6 +179,13 @@ impl Sim {
         base * d.params.quality * ammo * fuel * (1.0 - v.fatigue * r.fatigue_effect)
     }
 
+    /// Боевая сила по составу (люди, танки, орудия и качество) — без запасов и усталости; как strength0.
+    pub fn material_strength(&self, d: &Division) -> f64 {
+        let (wp, wt, wg) = self.rules.side(d.side).weights;
+        let v = &d.vars;
+        (v.personnel / 1000.0 * wp + v.tanks * wt + v.guns * wg) * d.params.quality
+    }
+
     fn bridge_open(&self, w: &World, b: u16) -> bool {
         w.objects.iter().find(|o| o.bridge == Some(b)).map_or(true, |o| o.intact)
     }
@@ -334,7 +341,9 @@ impl Sim {
             OrderKind::Attack => {
                 if let Some((j, _)) = enemy {
                     let s0 = d.vars.strength0.max(1e-9);
-                    if self.strength(d) / s0 < 1.0 - r.combat.breakpoint_loss {
+                    // порог срыва атаки — по потерям (люди, танки, орудия), а не по боевой силе с усталостью и запасами:
+                    // иначе за неделю боёв одна усталость доводит дивизию до порога (боеприпасы — своя проверка ниже)
+                    if self.material_strength(d) / s0 < 1.0 - r.combat.breakpoint_loss {
                         set(&mut out, State::Defense(DefenseSub::Hasty), "атака прекращена: боевая сила ниже порога");
                         out.activity = Some(Activity::Defend);
                     } else if d.vars.ammo < r.stop_ammo {
@@ -474,6 +483,9 @@ impl Sim {
             // (за часы марша в сутки, поэтому за сутки выходит не больше нормы)
             if w.control.get(nb).copied() == Some(side_code(d.side.enemy())) {
                 v = v.min(r.enemy_territory_km_day[d.params.mobility as usize] / hours_limit);
+                // город противника — кварталами, даже без соприкосновения с его дивизиями: гарнизон рассредоточен
+                let city = t.city[nb] as usize;
+                if city > 0 { v = v.min(r.combat.urban_km_day[city.min(3) - 1] / hours_limit); }
                 if sub != MarchSub::Crossing { sub = MarchSub::OffRoad; }
             }
             if v <= 0.0 { break; }
@@ -597,7 +609,10 @@ impl Sim {
             // темп, км/сут: стандартные темпы Дюпюи по позе обороны; танковым — поправка по танковой таблице
             let tracked: f64 = atts.iter().filter(|&&a| w.divisions[a as usize].params.mobility != Mobility::Foot).map(|&a| self.strength(&w.divisions[a as usize])).sum();
             let armor = if tracked > 0.5 * att_power { c.armor_factor } else { 1.0 };
-            let adv_day = c.advance[posture].step(ratio) * armor * r.advance_terrain[terrain] * noise;
+            let mut adv_day = c.advance[posture].step(ratio) * armor * r.advance_terrain[terrain] * noise;
+            // в городе — кварталами: темп не выше городской нормы по обводу (docs/plans/agents.md, 10р)
+            let city = t.city[cell] as usize;
+            if city > 0 { adv_day = adv_day.min(c.urban_km_day[city.min(3) - 1] * noise); }
             // потери, доля в сутки: база QJM с поправкой на размер; обороне — до нормы прорыва по мере продвижения
             // против подготовленной и укреплённой обороны наступающий теряет больше (калибровка — docs/plans/agents.md, 10п)
             let a_post = if posture >= 1 { c.attacker_loss_prepared } else { 1.0 };
