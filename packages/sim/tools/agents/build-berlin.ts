@@ -16,6 +16,8 @@
  * - **Исходные положения.** Корпуса 1 БФ утром 16.04 (berlin-1945-seelow-divisions.json); собственное положение из
  *   переписи строго до начала (10–15.04, утро 16.04) не дальше 30 км от штаба; немецкие дивизии сценария нынешней
  *   модели; иначе — вдоль линии фронта 16.04 двумя эшелонами, подвижные — в глубине (placeSlots, C).
+ * - **Немецкие силы вне дивизий** (german-forces.ts): крепость Франкфурт по источникам, по агенту «части усиления»
+ *   на корпус 9 А (25,7 тыс. боевых вне дивизий по Lakowski), гитлерюгенд-истребители танков.
  * - **Резервы фронтов** без задач раз в сутки выдвигаются за своим фронтом (допущение).
  * - **Приказы** — исторические задачи сценария нынешней модели (berlin-1945-tasks), цели дивизий сдвинуты на их
  *   смещение от центра объединения (не больше 8 км).
@@ -29,6 +31,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fixFrankfurt, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8')) as T;
@@ -223,7 +226,10 @@ for (const [hqId, divs] of byHq) {
   const cposOf = (d: Div) => { const c = subAt(d, '1945-04-16').corps; return d.side === 'su' && c ? seelowCorpsStart.get(`${hqId}_${c.replace(/^su_/, '')}`) : undefined; };
   const slots = hp ? placeSlots(hp, hq.side, divs.filter((d) => !cposOf(d) && !tsDiv(d)?.position && !ownStart(d.id, hp))) : new Map();
   for (const d of divs) {
-    const c = census.get(d.id);
+    // исходные числа переписи — только на дату не позже начала операции (иначе это остаток после боёв)
+    const raw = census.get(d.id);
+    const ini = (v: CensusVal | null | undefined) => (v && (!v.date || v.date <= '1945-04-16') ? v : null);
+    const c = raw ? { personnel: ini(raw.personnel), tanks: ini(raw.tanks), guns: ini(raw.guns) } : undefined;
     const notes: string[] = [];
     // положение
     let pos: LngLat | null = null;
@@ -282,6 +288,9 @@ for (const f of ts.formations.filter((x) => x.side === 'de' && x.echelon === 'co
     ammo: f.ammo ?? 1, fuel: f.fuel ?? 1, pos: r4(f.position!), enterAt: f.enterAt, notes: ['корпус без разбивки по дивизиям в реестре — один агент; численность и положение — сценарий нынешней модели'],
   });
 }
+// немецкие силы вне дивизий (german-forces.ts): крепость Франкфурт по источникам, части усиления корпусов 9 А
+fixFrankfurt(out);
+out.push(...reinforcements(out, (id) => hqs.get(id)?.name ?? id));
 const agentIds = new Set(out.map((o) => o.id));
 
 // ---------- приказы ----------
@@ -352,7 +361,7 @@ const fires = [
   // 1 УФ: около 2,5 ч перед форсированием Нейсе (HistoryNet, C); плотность не найдена — норматив правил (combat.artillery.normDensityPerKm)
   ...['su_3gva', 'su_13a', 'su_5gva', 'su_52a', 'su_2pa'].map((hq) => ({ at: START, hq, durationMin: 150, densityPerKm: null, note: '1 УФ, 16.04, около 150 мин (HistoryNet, C); плотность — норматив правил (допущение)' })),
 ];
-const ninthArmy = out.filter((o) => o.side === 'de' && ['de_ci', 'de_lvi', 'de_xi_ss'].includes(o.hq)).map((o) => o.id);
+const ninthArmy = out.filter((o) => o.side === 'de' && ['de_ci', 'de_lvi', 'de_xi_ss'].includes(o.hq) && o.kind !== 'reinf' && o.id !== 'de_hj_pznk').map((o) => o.id);
 const first = 0.5;
 const withdrawals = [{
   at: START, to: ninthArmy, positions: [+(first / 6).toFixed(4), +(0.3 + (first * 5) / 6).toFixed(4), 0.2],

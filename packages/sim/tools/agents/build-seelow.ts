@@ -22,6 +22,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8')) as T;
@@ -132,6 +133,9 @@ for (const f of deDivs) {
   });
 }
 
+// немецкие силы вне дивизий (german-forces.ts): части усиления корпусов 9 А, гитлерюгенд-истребители танков
+out.push(...reinforcements(out, (id) => tsF.get(id)?.name ?? id));
+
 // ---------- штабы ----------
 const hqs = [
   { id: 'su_1bf', name: tsF.get('su_1bf')!.name, side: 'su', echelon: 'front', parent: null, pos: [14.6, 52.6] as LngLat },
@@ -217,7 +221,7 @@ const fires = Object.entries(PREP).map(([hq, density]) => ({
 // (combat.artillery.troopsByPosition: 0,5 / 0,3 / 0,2); после: 1/6 первой позиции остаётся, остальное — на второй.
 const first = 0.5;
 const withdrawals = [{
-  at: START, to: out.filter((o) => o.side === 'de').map((o) => o.id),
+  at: START, to: out.filter((o) => o.side === 'de' && o.kind !== 'reinf' && o.id !== 'de_hj_pznk').map((o) => o.id),
   positions: [+(first / 6).toFixed(4), +(0.3 + (first * 5) / 6).toFixed(4), 0.2],
   note: 'отвод на Großkampf-HKL в ночь на 16.04, на первой позиции охранение 1/6 (de-wiki по Stich, C)',
 }];

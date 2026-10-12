@@ -1,0 +1,1776 @@
+{
+ "meta": {
+  "title": "Берлинская операция 1945: немецкая численность по датам и немецкие части вне дивизий на участках 9 А, 4 ТА и 3 ТА",
+  "period": "1945-03-17/1945-04-20",
+  "crs": "WGS84 (lng, lat); координаты — центры названных населённых пунктов из gazetteer репозитория (±10–20 км для районов), null — если место не установлено",
+  "reliability": {
+   "A": "Lakowski в DRZW 10/1 по документам BA-MA и советские документы ЦАМО в публикации",
+   "B": "добротная вторичная литература и Wikipedia со ссылками на монографии (Bahm, Isaev, Le Tissier)",
+   "C": "Wikipedia без подробных ссылок и выводы составителя"
+  },
+  "terms": {
+   "Kampfstärke": "боевая численность (пехота/штыки, в строю)",
+   "Gefechtsstärke": "строевая численность (Kampfstärke + боевое обеспечение)",
+   "Tagesstärke": "списочная численность на день (в values.iststaerke)",
+   "Gesamtstärke": "всё в зоне армии, включая Luftwaffe, SS, фольксштурм, тыловые учреждения (в values.iststaerke отдельной записью)",
+   "Fecht-Truppe": "части усиления вне соединений в таблице DRZW S.607 (в отличие от «Verbände» — дивизий и крепостей)"
+  },
+  "tanks_assault_guns": "tanks — танки и Pz IV/70(A) (Pz.(L)A IV), Flakpanzer; assault_guns — StuG, StuH, Jagdpanzer",
+  "ids": "id — как в berlin-1945-divisions.json; для нерегистровых частей — nd_*, formation: null с formation_name; корпуса: de_ci, de_lvi, de_xi_ss, de_v_ss",
+  "notes": "Тексты — пересказ; цитат нет. В strength поле formation_name добавлено для строк без id или для подмножества формирования (Verbände/Fecht-Truppe)."
+ },
+ "sources": {
+  "DRZW": {
+   "ref": "Lakowski R. Der Zusammenbruch der deutschen Verteidigung zwischen Ostsee und Karpaten // Das Deutsche Reich und der Zweite Weltkrieg, Bd. 10/1. München: DVA, 2008, S. 491–679. Номера страниц — по колонтитулам оригинала; таблицы S.598, 607, 614–615, 640 прочитаны по изображению страницы (текстовый OCR цифр не даёт)",
+   "url": "https://archive.org/details/das-deutsche-reich-und-der-zweite-weltkrieg-horst-boog-richard-lakowski-werner-r",
+   "default_reliability": "A"
+  },
+  "BAHM_WIKI": {
+   "ref": "en.wikipedia «Battle of Berlin order of battle» — немецкая часть по Bahm K., Berlin 1945: The Final Reckoning (2014) и Nafziger; даты внутри раздела не указаны (в целом положение на 16.04 и «позднее»); численности частей даёт редко",
+   "url": "https://en.wikipedia.org/wiki/Battle_of_Berlin_order_of_battle",
+   "default_reliability": "B"
+  },
+  "ISAEV_EW": {
+   "ref": "en.wikipedia «Battle of the Seelow Heights», раздел о 9-й армии (со ссылкой на Исаев А. Берлин 45-го, 2007, с.293–295): 14 дивизий, крепость Франкфурт, 587 танков (512 исправных), 2 625 орудий, в т.ч. 695 зенитных",
+   "url": "https://en.wikipedia.org/wiki/Battle_of_the_Seelow_Heights",
+   "default_reliability": "B"
+  },
+  "DEW_F23": {
+   "ref": "de.wikipedia «23. Flak-Division» (по Hummel K.-H. Die deutsche Flakartillerie 1935–1945, VDM 2010, S.100 f., 200–377); у статьи стоит пометка об отсутствии подробных ссылок",
+   "url": "https://de.wikipedia.org/wiki/23._Flak-Division",
+   "default_reliability": "C"
+  },
+  "DEW_PJD": {
+   "ref": "de.wikipedia «Panzerjagd-Division Weichsel» (по Mitcham, Schmitz/Thies/Wegmann/Zweng «Die deutschen Divisionen 1941–1945», Bd.3)",
+   "url": "https://de.wikipedia.org/wiki/Panzerjagd-Division_Weichsel",
+   "default_reliability": "C"
+  },
+  "DEW_SH": {
+   "ref": "de.wikipedia «Schlacht um die Seelower Höhen»: Gliederung 9 А на 16.04 по Le Tissier T. Der Kampf um Berlin (1997), Anhang S.227–229; в инфобоксе «15 дивизий, 190 000 солдат» по Lakowski",
+   "url": "https://de.wikipedia.org/wiki/Schlacht_um_die_Seelower_H%C3%B6hen",
+   "default_reliability": "B"
+  },
+  "EW_FFO": {
+   "ref": "en.wikipedia «Fortress Division Frankfurt/Oder» (по Mitcham 2007, Nafziger vol. V p.60)",
+   "url": "https://en.wikipedia.org/wiki/Fortress_Division_Frankfurt/Oder",
+   "default_reliability": "C"
+  },
+  "RUW_ZB": {
+   "ref": "ru.wikipedia «Зееловско-Берлинская операция» (абзац об итогах: LVI тк на 16.04 «вместе с тыловыми частями до 50 000»)",
+   "url": "https://ru.wikipedia.org/wiki/Зееловско-Берлинская_операция",
+   "default_reliability": "C"
+  },
+  "LT_HALBE": {
+   "ref": "Le Tissier T. Slaughter at Halbe. Sutton, 2005, по выжимке docs/sources/berlin-1945-halbe.json (9 А на 16.04: ~200 000 чел., 512 танков и САУ, 2 625 орудий; состав крепости Франкфурт; окружённые 25.04 ~50 000 боевых + 10 000 фольксштурма, до 150 000 с тылами — по Бернхарду)",
+   "url": null,
+   "default_reliability": "B"
+  },
+  "IS7_T": {
+   "ref": "Исаев А. В. Берлин 45-го. М., 2007, таблицы по Lakowski «Seelow 1945» S.49 и NARA T311 R171 — в виде, уже сведённом в docs/sources/berlin-1945-seelow-divisions.json",
+   "url": "https://militera.lib.ru/h/isaev_av7/",
+   "default_reliability": "A"
+  },
+  "RA15": {
+   "ref": "Русский архив: Великая Отечественная. Т. 15 (4-5). Битва за Берлин. М., 1995, док. № 13: информация РУ ГШ КА на 17.04.1945 (ЦАМО ф. 236 оп. 2721 д. 166 л. 238–242)",
+   "url": "https://militera.lib.ru/docs/da/berlin_45/02.html",
+   "default_reliability": "B"
+  }
+ },
+ "strength": [
+  {
+   "date": "1945-03-17",
+   "formation": "de_v_ss",
+   "values": {
+    "kampfstaerke": 18769
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "V гск СС: сумма 391 охр. д 3 618 + «52. SS-Div.» 2 846 + дивизия «Регенер» 3 266 + крепость Франкфурт 9 039 (сумма проверена). «52. SS-Div.» — вероятно, 32-я дивизия СС «30 января» (опечатка или ошибка OCR; по контексту корпуса)"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_391sd",
+   "values": {
+    "kampfstaerke": 3618
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "391-я охранная дивизия"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_32ss",
+   "values": {
+    "kampfstaerke": 2846
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "B",
+   "note": "в таблице строка «52. SS-Div.»; отождествление с 32-й дивизией СС — вывод по составу V гск СС"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_regener",
+   "values": {
+    "kampfstaerke": 3266
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "дивизия «Регенер» (Raegener; позднее учебная дивизия 286, de_286id) — остатки 433 и 463 пд, тревожные части, фольксштурм (S.594)"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_ffo",
+   "values": {
+    "kampfstaerke": 9039
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "крепость Франкфурт-на-Одере: боевая численность на 17.03; это больше любой дивизии 9 А. Списочной численности нет"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_xi_ss",
+   "values": {
+    "kampfstaerke": 21393
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "XI тк СС: Мюнхеберг 2 867 + крепость Кюстрин 2 782 + 712 пд 3 699 + Курмарк 3 375 + Дёбериц 3 474 + 25 пгд 5 196 (сумма проверена; Кюстрин пал 30.03)"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_muencheberg",
+   "values": {
+    "kampfstaerke": 2867
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "на 10.04 — 1 986 (Lakowski по Исаеву)"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_712id",
+   "values": {
+    "kampfstaerke": 3699
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "на 10.04 — 4 882"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_kurmark",
+   "values": {
+    "kampfstaerke": 3375
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "на 10.04 — 4 350"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_303id",
+   "values": {
+    "kampfstaerke": 3474
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "«Döberitz»; цифра в OCR с помехой («n»), 3 474 подтверждается суммой корпуса; на 10.04 — 3 860"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_25pzgd",
+   "values": {
+    "kampfstaerke": 5196
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "на 10.04 — 5 605"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_ci",
+   "values": {
+    "kampfstaerke": 10349
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "CI ак: дивизия «Берлин» (309) 5 889 + дивизия 606 4 460 (сумма проверена); 5 егд в таблице отсутствует"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_309id",
+   "values": {
+    "kampfstaerke": 5889
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "на 10.04 — 5 926"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_606",
+   "values": {
+    "kampfstaerke": 4460
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "на 10.04 — 5 495"
+  },
+  {
+   "date": "1945-03-17",
+   "formation": "de_9a",
+   "values": {
+    "kampfstaerke": 50511
+   },
+   "source": "DRZW",
+   "page": "S.598, таблица «Infanterie-Kampfstärke des AOK 9 (Stand: 17. März 1945)», BA-MA RH 19 XV/8",
+   "reliability": "A",
+   "note": "итог «Infanterie-Kampfstärke» по трём корпусам = только дивизии и крепости (без армейских частей усиления): 18 769 + 21 393 + 10 349"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_9a",
+   "values": {
+    "kampfstaerke": 74703,
+    "gefechtsstaerke": 93178,
+    "iststaerke": 129151
+   },
+   "source": "DRZW",
+   "page": "S.607, таблица «Stärke der Heeresgruppe Weichsel (Stand: 1. April 1945)», BA-MA RH 19 XV/9b",
+   "reliability": "A",
+   "note": "итог 9 А (Tagesstärke = списочная численность в строю на день; ставлю в iststaerke). Вместе с 3 ТА ГА «Висла»: 185 975 / 126 602 / 104 162"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_9a",
+   "values": {
+    "kampfstaerke": 49009,
+    "gefechtsstaerke": 61446,
+    "iststaerke": 90000
+   },
+   "source": "DRZW",
+   "page": "S.607, таблица «Stärke der Heeresgruppe Weichsel (Stand: 1. April 1945)», BA-MA RH 19 XV/9b",
+   "reliability": "A",
+   "note": "только «Verbände» (дивизии и крепости; 167 частей/подразделений по таблице). Tagesstärke 90 000 — по разности 129 151 − 39 151, в OCR строка нечитаема. Согласуется с 50 511 на 17.03 (за вычетом Кюстрина 2 782)",
+   "formation_name": "9 А — Verbände (дивизии и крепости)"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_9a",
+   "values": {
+    "kampfstaerke": 25694,
+    "gefechtsstaerke": 31732,
+    "iststaerke": 39151
+   },
+   "source": "DRZW",
+   "page": "S.607, таблица «Stärke der Heeresgruppe Weichsel (Stand: 1. April 1945)», BA-MA RH 19 XV/9b",
+   "reliability": "A",
+   "note": "только «Fecht-Truppe» — части усиления вне дивизий (66 частей по таблице: армейская и корпусная артиллерия, ПТ, штурмовые орудия, зенитные части в наземной роли и пр.; перечень в таблице не дан). Это 34,4 % Kampfstärke и 30,3 % Tagesstärke армии. ГЛАВНЫЙ ответ на вопрос о «не дивизиях» в боевом составе",
+   "formation_name": "9 А — Fecht-Truppe (части вне дивизий)"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_3pza",
+   "values": {
+    "kampfstaerke": 29459,
+    "gefechtsstaerke": 33424,
+    "iststaerke": 56824
+   },
+   "source": "DRZW",
+   "page": "S.607, таблица «Stärke der Heeresgruppe Weichsel (Stand: 1. April 1945)», BA-MA RH 19 XV/9b",
+   "reliability": "A",
+   "note": "итог 3 ТА по таблице (разность ГА − 9 А); в тексте S.616 — 51 406 и 27 595 (расхождение внутри DRZW)"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_3pza",
+   "values": {
+    "kampfstaerke": 4886,
+    "gefechtsstaerke": 5515,
+    "iststaerke": 10400
+   },
+   "source": "DRZW",
+   "page": "S.607, таблица «Stärke der Heeresgruppe Weichsel (Stand: 1. April 1945)», BA-MA RH 19 XV/9b",
+   "reliability": "B",
+   "note": "Fecht-Truppe 3 ТА — по разности итога ГА (30 580 / 37 247 / 49 551) и 9 А; вычислено мной",
+   "formation_name": "3 ТА — Fecht-Truppe (по разности)"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_hgr_weichsel",
+   "values": {
+    "kampfstaerke": 104162,
+    "gefechtsstaerke": 126602,
+    "iststaerke": 185975
+   },
+   "source": "DRZW",
+   "page": "S.607, таблица «Stärke der Heeresgruppe Weichsel (Stand: 1. April 1945)», BA-MA RH 19 XV/9b",
+   "reliability": "A",
+   "note": "ГА «Висла» (9 А + 3 ТА): Verbände 73 582 / 89 355 / 136 424 (К/Г/Tages), Fecht-Truppe 30 580 / 37 247 / 49 551"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_9a",
+   "values": {
+    "guns": 1544
+   },
+   "source": "DRZW",
+   "page": "S.606 (схема Stoart ГА «Висла» № 580/45), по docs/sources/berlin-1945-research-de.json",
+   "reliability": "A",
+   "note": "391 батарея (200 лёгких, 73 тяжёлых, 18 горных, 100 зенитных) + 119 залповых установок; на 13.04 — уже 658 батарей и 2 625 стволов: за 12 дней +267 батарей и +1 081 ствол (приход НАК, зениток 23 зд и др.)"
+  },
+  {
+   "date": "1945-04-01",
+   "formation": "de_3pza",
+   "values": {
+    "iststaerke": 105000
+   },
+   "source": "DRZW",
+   "page": "S.649 (для 3 ТА)",
+   "reliability": "A",
+   "note": "3 ТА: «Gesamtstärke» 105 000 против Tagesstärke 51 406 — аналог разрыва 9 А (190 000 против 129 151)",
+   "formation_name": "3 ТА — Gesamtstärke (справка)"
+  },
+  {
+   "date": "1945-02-07",
+   "formation": "de_9a",
+   "values": {
+    "iststaerke": 52000
+   },
+   "source": "DRZW",
+   "page": "S.593",
+   "reliability": "A",
+   "note": "9 А на 7.02: 52 000 чел., из них 26 000 фольксштурма (половина!), 190 танков и САУ, 288 орудий. К апрелю армия выросла вчетверо; роль фольксштурма в линии уменьшилась (см. nondivisional)",
+   "formation_name": "9 А на 7.02.1945"
+  },
+  {
+   "date": "1945-03-01",
+   "formation": null,
+   "values": {
+    "iststaerke": 16800,
+    "kampfstaerke": 10000
+   },
+   "source": "DRZW",
+   "page": "S.599 прим. 277 (Kohlase, Küstrin, S.129 f.)",
+   "reliability": "A",
+   "note": "крепость Кюстрин в начале марта: гарнизон 16 800, боевая ~10 000: отношение списочной к боевой 1,68 — ориентир для крепостей. Пала 30.03, к своим вышли 32 офицера и 965 унтер-офицеров и солдат",
+   "formation_name": "крепость Кюстрин"
+  },
+  {
+   "date": "1945-04-13",
+   "formation": "de_9a",
+   "values": {
+    "tanks": 512,
+    "guns": 2625
+   },
+   "source": "DRZW",
+   "page": "S.616",
+   "reliability": "A",
+   "note": "512 исправных танков и САУ (из 754 по ГА), 658 батарей, 2 625 стволов; 23 зд — 32 тяжёлые батареи; 4-я авиадивизия ~300 самолётов; Gesamtstärke 9 А «Anfang April» ~190 000"
+  },
+  {
+   "date": "1945-04-13",
+   "formation": "de_9a",
+   "values": {
+    "tanks": 587,
+    "guns": 2625
+   },
+   "source": "ISAEV_EW",
+   "page": "абзац о 9-й армии (Исаев 2007, с.293–295)",
+   "reliability": "B",
+   "note": "587 танков и САУ (512 исправных, 55 в ремонте, 20 в пути); 2 625 орудий, В ТОМ ЧИСЛЕ 695 ЗЕНИТНЫХ (26,5 %); 14 дивизий + крепость Франкфурт"
+  },
+  {
+   "date": "1945-04-16",
+   "formation": "de_9a",
+   "values": {
+    "iststaerke": 190000
+   },
+   "source": "DRZW",
+   "page": "S.616",
+   "reliability": "A",
+   "note": "«rund 190 000» — Gesamtstärke на начало апреля; Le Tissier — 200 000 на 16.04 (LT_HALBE, B). Разложение на составные части в источнике не дано; Lakowski в том же абзаце называет 93 178 «Kampfstärke» (по таблице S.607 это Gefechtsstärke)",
+   "formation_name": "9 А — Gesamtstärke"
+  },
+  {
+   "date": "1945-04-16",
+   "formation": "de_9a",
+   "values": {
+    "iststaerke": 200000
+   },
+   "source": "LT_HALBE",
+   "page": "ch.1 (по выжимке в berlin-1945-halbe.json)",
+   "reliability": "B",
+   "note": "источник «около 200 тыс.» из постановки задачи: у Le Tissier 200 000, 512 танков и САУ, 2 625 орудий; цифры танков и орудий совпадают с Lakowski, значит и 200 тыс. — это его же Gesamtstärke (190 тыс.), округлённая"
+  },
+  {
+   "date": "1945-04-14",
+   "formation": "de_muencheberg",
+   "values": {
+    "iststaerke": 2000,
+    "tanks": 35
+   },
+   "source": "DRZW",
+   "page": "S.632",
+   "reliability": "A",
+   "note": "Müncheberg перед ввода в бой 14.04: около 2 000 человек и 35 исправных танков — согласуется с Kampfstärke 1 986 на 10.04"
+  },
+  {
+   "date": "1945-04-16",
+   "formation": "de_lvi",
+   "values": {
+    "iststaerke": 50000
+   },
+   "source": "RUW_ZB",
+   "page": "итоговый абзац",
+   "reliability": "C",
+   "note": "LVI тк «вместе с тыловыми частями до 50 000» на 16.04 — оценка без ссылки; дивизии корпуса по Kampfstärke дают ~20–25 тыс."
+  },
+  {
+   "date": "1945-04-16",
+   "formation": "de_xi_ss",
+   "values": {
+    "tanks": 168,
+    "guns": 449
+   },
+   "source": "DRZW",
+   "page": "S.620",
+   "reliability": "A",
+   "note": "XI тк СС: фронт 37 км, 6 дивизий, 112 батарей / 449 орудий, 168 бронеединиц; 12 орудий и зениток и 3 танка/км (с армейскими батареями — 45 стволов/км); в резерве корпуса — «Курмарк» и 502 тб СС"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_ss502",
+   "values": {
+    "tanks": 27,
+    "assault_guns": 0
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "2 в кратком и 1 в долгом ремонте; на 13.04 по Исаеву — 33"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_111stug",
+   "values": {
+    "tanks": 5,
+    "assault_guns": 42
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "33 StuG III, 9 StuH 42, 5 Pz IV/70(A); +1 в кратком ремонте. На 13.04 по Исаеву — 48"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_kg1001",
+   "values": {
+    "tanks": 0,
+    "assault_guns": 43
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "6 StuG III + 37 Jagdpanzer 38; в ремонте 1 + 8"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 0,
+    "assault_guns": 24
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "24 Jagdpanzer 38 (+1 в долгом ремонте); по Bahm — 1 рота в гарнизоне Франкфурта",
+   "formation_name": "Pz.Jgd.Abt. 2"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 1,
+    "assault_guns": 15
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "15 Jagdpanzer 38 + 1 Pz; по Bahm — в V гск СС",
+   "formation_name": "Pz.Jgd.Kp. 15 (15-я рота ПТ СС)"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 0,
+    "assault_guns": 10
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "10 Jagdpanzer 38 (+2 в долгом ремонте); по Bahm — в составе 309 пд (16./1129)",
+   "formation_name": "Pz.Jgd.Kp. 1129"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 0,
+    "assault_guns": 10
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "10 исправных +1 в кратком ремонте",
+   "formation_name": "StuG-Abt. 105 (итальянские StuG M42 26)"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 10,
+    "assault_guns": 0
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "10 исправных, 5 в долгом ремонте + 1 StuG (ital.)",
+   "formation_name": "SS-Pz.Kp. 105 (итальянские танки M13/40)"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 0,
+    "assault_guns": 8
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "8 Jagdpanzer 38 исправных, 2 в долгом ремонте, 9 Т-34 в кратком ремонте; по Lakowski S.620 — «без особой боеспособности», частично разоружена, на строительстве позиций",
+   "formation_name": "600. Jagd-Division (русская, РОА Власова)"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_9a",
+   "values": {
+    "tanks": 198,
+    "assault_guns": 284
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "сумма по 9 А: 482 исправных (86 %), 34 в кратком, 43 в долгом ремонте, 1 в пути; из них 287 — организационно в дивизиях, 195 — вне (см. следующую запись)",
+   "formation_name": "9 А — итог по таблице"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 43,
+    "assault_guns": 152
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "B",
+   "note": "ВНЕ нумерованных дивизий, 7.04, исправные: 502 тб СС (27 тк), Lehrbrig 111 (5+42), 560 птб СС (43), ПТ-абт. 2 (24), рота 15 (1+15), рота 1129 (10), StuG-Abt 105 (10), SS-Pz.Kp 105 (10 ital.), 600-я дивизия (8) = 195 из 482 (40 %). Деление «вне/в дивизии» — по подписи строки в таблице, т. е. вывод составителя (в т.ч. приписка 560 птб и Lehrbrig 111 к армии/корпусу, а не к дивизии)",
+   "formation_name": "9 А — бронетехника вне дивизий"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_kurmark",
+   "values": {
+    "tanks": 31,
+    "assault_guns": 27
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева). Pz IV 2, Pz V 1 + 28 Panther (Pz.Abt Brandenburg); Jagdpanzer 38 15, StuG III 12"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_muencheberg",
+   "values": {
+    "tanks": 29,
+    "assault_guns": 1
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_20pzgd",
+   "values": {
+    "tanks": 34,
+    "assault_guns": 0
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_25pzgd",
+   "values": {
+    "tanks": 49,
+    "assault_guns": 30
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева). Pz.Abt 5: 37 танков; Pz.Jgd.Abt 25: 12 Pz IV/70(A) + 30 StuG III"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_5jd",
+   "values": {
+    "tanks": 10,
+    "assault_guns": 1
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_309id",
+   "values": {
+    "tanks": 0,
+    "assault_guns": 8
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_303id",
+   "values": {
+    "tanks": 0,
+    "assault_guns": 17
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_32ss",
+   "values": {
+    "tanks": 0,
+    "assault_guns": 28
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева). 20 StuG III + 8 StuH 42"
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_9fjd",
+   "values": {
+    "tanks": 0,
+    "assault_guns": 8
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_169id",
+   "values": {
+    "tanks": 0,
+    "assault_guns": 10
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": "de_391sd",
+   "values": {
+    "tanks": 2,
+    "assault_guns": 0
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева)."
+  },
+  {
+   "date": "1945-04-07",
+   "formation": null,
+   "values": {
+    "tanks": 0,
+    "assault_guns": 2
+   },
+   "source": "DRZW",
+   "page": "S.614–615, «Panzer- und Sturmgeschützlage bei der Heeresgruppe Weichsel (Stand: 7. April 1945)», BA-MA RH 19 XV/9a; графа a = исправные",
+   "reliability": "A",
+   "note": "бронетехника, организационно приданная дивизии (для сверки с таблицей на 13.04 из Исаева). +6 в кратком ремонте",
+   "formation_name": "Fkl.Pz.Abt. 303 (радиоуправляемые StuG)"
+  },
+  {
+   "date": "1945-04-19",
+   "formation": null,
+   "values": {
+    "iststaerke": 94094
+   },
+   "source": "DRZW",
+   "page": "S.658 и прим. 422 (BA-MA RH 2/337 Bl.45, «Kräftezusammenstellung» от 19.04)",
+   "reliability": "A",
+   "note": "гарнизон Verteidigungsbereich Berlin: 94 094 чел., из них 52 841 — «Clausewitz-Aufgebot» (шестичасовой срок сбора). 9 штабов секторов, 30 штабов подсекторов, 12 батальонов вермахта, 7 отдельных рот, 69 батальонов фольксштурма, 2 крепостные ПТ-роты, 9 батарей, 41 зенитная батарея (в основном неподвижные), 66 зенитных боевых групп (80 % подвижные)",
+   "formation_name": "гарнизон Берлина (без частей 9 А)"
+  },
+  {
+   "date": "1945-02-15",
+   "formation": null,
+   "formation_name": "зенитные части Luftflotte 6 (весь Восток)",
+   "values": {
+    "iststaerke": 34740
+   },
+   "source": "DRZW",
+   "page": "S.608, таблица Quartiermeister-Personalmeldung Luftflotte 6 (BA-MA RL 7/537); страница прочитана по изображению",
+   "reliability": "A",
+   "note": "Flakeinheiten: штат 43 639; налицо 1 169 офицеров + 33 374 унтер-офицеров и рядовых ≈ 34 540 (+197 чиновников/инженеров), т. е. ~34 740. Сверх этого вспомогательный персонал: 4 108 школьников-помощников (HJ), 1 353 «Flaksoldaten», 620 Lw-Wehrm./HJ-добровольцев, 179 помощниц, 1 858 военнопленных и интернированных и др. Это весь Luftflotte 6 (от Балтики до Силезии), а не 9 А: ориентир по порядку величины зенитных частей"
+  }
+ ],
+ "nondivisional": [
+  {
+   "id": "de_23flakd",
+   "name": "23-я зенитная дивизия (23. Flak-Division, Luftwaffe)",
+   "kind": "flak",
+   "subordination": "Luftflotte 6 / II. Flak-Korps; оперативно «auf Zusammenarbeit mit der 9. Armee»",
+   "area": "штаб в Бад-Заров; полки — от Франкфурта до Эберсвальде и Цедена (см. отдельные записи)",
+   "lng": 14.0667,
+   "lat": 52.2833,
+   "date": "1945-04-13",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.616",
+   "reliability": "A",
+   "note": "32 тяжёлые батареи на 13.04 (при 4–6 орудиях 88/105 мм в батарее — порядка 130–190 тяжёлых стволов; это МОЯ оценка, в источнике числа стволов нет). По de-wiki (DEW_F23, C): в феврале 50 тяжёлых + 10 средних/лёгких + 1 аэростатная батарея; ген.-м. К. Андерсен с 30.01. Личный состав не найден; ориентир по Luftflotte 6 — в strength (15.02). Входит в «2 625 стволов, в т.ч. 695 зенитных» 9 А"
+  },
+  {
+   "id": "nd_flak7",
+   "name": "Flak-Regiment 7 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "западнее крепости Франкфурт",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; судьба неизвестна. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak23",
+   "name": "Flak-Regiment 23 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "южнее Эберсвальде",
+   "lng": 13.7997,
+   "lat": 52.8351,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; судьба неизвестна. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak34",
+   "name": "Flak-Regiment 34 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "район Штраусберг — Вернойхен",
+   "lng": 13.9042,
+   "lat": 52.5589,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; судьба неизвестна. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak35",
+   "name": "Flak-Regiment 35 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "восточнее крепости Франкфурт (на правом берегу Одера)",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; судьба неизвестна. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak53",
+   "name": "Flak-Regiment 53 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "западнее Цедена (по DRZW S.634 в бою 16.04 держит Вризен)",
+   "lng": 14.2031,
+   "lat": 52.8784,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; разбит. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak140",
+   "name": "Flak-Regiment 140 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "район Бескова — Мюльроза",
+   "lng": 14.2471,
+   "lat": 52.1722,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; разгромлен в Хальбском котле. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak182",
+   "name": "Flak-Regiment 182 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "западнее Кюстрина (по DRZW S.634 16.04 — Вризен)",
+   "lng": 14.6133,
+   "lat": 52.5693,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; к концу войны отведён в Лудвигслюст. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak85",
+   "name": "leichte Flak-Abteilung 85 (23. Flak-Div.)",
+   "kind": "flak",
+   "subordination": "23. Flak-Division, 9 А",
+   "area": "район «Münchberg» (вероятно, Мюнхеберг)",
+   "lng": 14.1405,
+   "lat": 52.5037,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_F23",
+   "page": "раздел «Gliederung» на 16.04 (Hummel 2010, S.100 f., 200–377)",
+   "reliability": "C",
+   "note": "последнее известное расположение на 16.04; судьба неизвестна. Координата — центр названного пункта (район шире на 10–20 км). Число батарей и стволов не указано"
+  },
+  {
+   "id": "nd_flak_wriezen",
+   "name": "Flak-Regimenter 13, 53 и 182 + 560-й ПТ-батальон СС в опорном пункте Вризен",
+   "kind": "flak",
+   "subordination": "CI ак (левый фланг 9 А); на стыке с 3 ТА",
+   "area": "опорный пункт Вризен — Альте-Одер",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.634",
+   "reliability": "A",
+   "note": "три зенитных полка и 560 птб СС (K.Gr. «1001 Nacht») удержали Вризен на второй день; полк 13 в список 23 зд (DEW_F23) не входит — вероятно, 3 ТА или соседняя зенитная часть. Прорыв 9 тк на Вризен остановлен, 197 советских танков корпуса вышли к Альте-Одер"
+  },
+  {
+   "id": "nd_flak53_bahm",
+   "name": "53-й зенитный полк (336-й дивизион: 7/751, 1/185, 4/336, 2/336, 3/785 RAD, 1/339, 1/876, 3/871 и др.; I./13 — 8 рот; 402-й дивизион — 10 рот)",
+   "kind": "flak",
+   "subordination": "CI ак, 9 А",
+   "area": "Вризен — Альте-Одер",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": "336-й див.: 8×88 мм, 15×105 мм, 27×37 мм, 3×20 мм (по перечню; 13-й и 402-й дивизионы не расписаны)",
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «Ninth Army — CI Corps»",
+   "reliability": "B",
+   "note": "состав по Bahm; даты в источнике нет (положение на 16.04); сумма стволов 336-го дивизиона — моя по списку батарей. Часть батарей — RAD (трудовая повинность)"
+  },
+  {
+   "id": "nd_flak182_bahm",
+   "name": "182-й зенитный полк (I./19, I./54, лёгкий 87-й дивизион)",
+   "kind": "flak",
+   "subordination": "CI ак, 9 А",
+   "area": "Вризен — Альте-Одер",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": "88 мм: 28 (7 рот ×4); 37 мм: 24+; 20 мм: 53+ (без неуказанных)",
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «CI Corps»",
+   "reliability": "B",
+   "note": "по списку рот у Bahm; суммы — мои; часть рот без калибра («? cm»)"
+  },
+  {
+   "id": "nd_flak_ffo",
+   "name": "тяжёлые зенитные дивизионы 185 и 405 + Festungs-Flak-Bataillon 829 в крепости Франкфурт",
+   "kind": "flak",
+   "subordination": "Festung Frankfurt (Oder)",
+   "area": "Франкфурт-на-Одере, оба берега",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «Frankfurt der Oder Garrison»",
+   "reliability": "B",
+   "note": "по EW_FFO 829-й батальон — «возможно, зенитный»; числа орудий нет"
+  },
+  {
+   "id": "nd_flak_3pza",
+   "name": "II. Flak-Korps, 27-я зенитная дивизия и Flak-Gruppe «Gerhard» (поддержка 3 ТА); 3-й зенитный полк (605, 325, 474, 437 тяжёлые дивизионы) в XXXII ак",
+   "kind": "flak",
+   "subordination": "3 ТА",
+   "area": "Одер севернее Хоэнзатена, Штеттин — Шведт",
+   "lng": 14.5929,
+   "lat": 53.4298,
+   "date": "1945-04-07",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.649; для 3-го полка — BAHM_WIKI (XXXII Corps)",
+   "reliability": "A",
+   "note": "в 3 ТА 1 850 орудий и миномётов (на 7.04), Gesamtstärke 105 000; числа зенитных стволов отдельно нет. Для 20.04 данных по зенитным частям 3 ТА не найдено"
+  },
+  {
+   "id": "nd_flak_berlin",
+   "name": "1-я зенитная дивизия (Берлин): полки 126 (Nord) и 22 (Süd); дивизионы 202, 530, 123 (башни Фридрихсхайн 4×128 мм, Зоо 4×128, Гумбольдтхайн 3×128), 733, 422, 126, 979",
+   "kind": "flak",
+   "subordination": "Verteidigungsbereich Berlin, Luftwaffe",
+   "area": "секторы A–H и Z, Берлин",
+   "lng": 13.3618,
+   "lat": 52.5163,
+   "date": "1945-04-15",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «Berlin garrison», «Flak»",
+   "reliability": "B",
+   "note": "батареи расписаны по секторам на 15.04, много батарей — итальянские/русские/французские трофейные орудия 8,8–12,2 см; по DRZW S.658 всего 41 зенитная батарея (в основном неподвижные) и 66 зенитных боевых групп. Число стволов и людей не сведено"
+  },
+  {
+   "id": "nd_vs_ci",
+   "name": "батальоны фольксштурма и тревожные батальоны CI армейского корпуса: VS 16/69, 16/128; 4 роты (16/75, 16/123, 16/511, 16/67/1); при 309 пд — 4 батальона («Бранденбург», 323 «Потсдам», «Шпандау», 338 z.b.V.)",
+   "kind": "volkssturm",
+   "subordination": "CI ак (под 309 пд и корпусом)",
+   "area": "Одербрух — Вризен",
+   "lng": 14.3786,
+   "lat": 52.6751,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «CI Corps»",
+   "reliability": "B",
+   "note": "2 батальона + 4 роты фольксштурма + 4 тревожных батальона; люди — в основном в составе строки дивизии (уже внутри Kampfstärke 309 пд), поэтому НЕ складывать с дивизионными цифрами. Численность батальонов не указана; ориентир по Кёнигсбергу: 7 батальонов — 5 000 чел. (≈710 на батальон, DRZW S.547)"
+  },
+  {
+   "id": "nd_vs_xi_ss",
+   "name": "108-й батальон фольксштурма, тревожный батальон Хаук (712 пд), Festungs-Pak-Verband XXVI (роты 6, 7, 10; 169 пд), Schatten-Regiment B",
+   "kind": "volkssturm",
+   "subordination": "XI тк СС",
+   "area": "Лебус — Шёнфлис — Подельциг",
+   "lng": 14.5338,
+   "lat": 52.4271,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «XI SS Panzer Corps»",
+   "reliability": "B",
+   "note": "в основном в составе дивизий корпуса; отдельная численность не указана"
+  },
+  {
+   "id": "nd_vs_v_ss",
+   "name": "VS-батальоны 27/151 «Дрезден», 7/108 «Майнфранкен», «Обердонау», «Тюрингия» (32 сс), 8/16 (391 д); тревожный батальон «Бриског»; полицейский батальон «Дёринг»; SS-Verband Schüle Arolsen (3 батальона)",
+   "kind": "volkssturm",
+   "subordination": "V гск СС (Йеккельн)",
+   "area": "Одер южнее Франкфурта — Фюрстенберг (Одер)",
+   "lng": 14.5768,
+   "lat": 52.2536,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «V SS Mountain Corps»",
+   "reliability": "B",
+   "note": "5 батальонов фольксштурма + тревожные/полицейские; корпус держал самый длинный участок с 16 стволами на км"
+  },
+  {
+   "id": "nd_vs_sum",
+   "name": "итог по Bahm: нумерованных батальонов фольксштурма в линии 9 А — 8 + 4 роты, ещё ~6 тревожных батальонов",
+   "kind": "volkssturm",
+   "subordination": "9 А",
+   "area": "линия 9 А",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "сводка по трём корпусам выше",
+   "reliability": "C",
+   "note": "при 300–700 чел. в батальоне — порядка 3–6 тыс. человек; в феврале фольксштурм был половиной армии (26 000 из 52 000, DRZW S.593), к апрелю его влили в дивизии/заменили. 5.04 ГА «Висла» просила учебные части «для смены стоящего в линии фольксштурма» (DRZW S.618)"
+  },
+  {
+   "id": "nd_ffo",
+   "name": "крепость Франкфурт-на-Одере (комендант полк. Э. Билер): 4 крепостных гренадерских полка, KGr 5–8, Fest-MG-Btl 84, Fest-Pi-Sperr-Btl 952, 3 крепостных арт. дивизиона (1325: 3 бат., 1326: 4, 1327: 5), Fest-Pak-Verband XXVI (39×88 мм Pak 43), 12 танковых башен 7,5 см, Pz.Jgd.Abt. 2",
+   "kind": "fortress",
+   "subordination": "9 А непосредственно (Bahm) / V гск СС (DRZW S.598)",
+   "area": "Франкфурт-на-Одере и правобережный плацдарм",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-16",
+   "personnel": 9039,
+   "guns": "12 арт. батарей + 39 ПТО 88 мм + 12 башен",
+   "tanks": "24 Jagdpanzer 38 (Pz.Jgd.Abt. 2, на 7.04)",
+   "source": "DRZW",
+   "page": "S.598 (Kampfstärke 17.03); состав — BAHM_WIKI и EW_FFO",
+   "reliability": "A",
+   "note": "9 039 — боевая численность на 17.03 (больше любой дивизии); списочная по аналогии с Кюстрином (×1,68) ≈ 15 000 — вывод. Состав по Bahm (B). Входит в 49 009 «Verbände» на 1.04, т.е. при сложении с 14 дивизиями не удваивать. 17.04 четыре батальона из Франкфурта переброшены южнее города, 18.04 Гитлер разрешил очистить правобережный плацдарм (DRZW S.639)"
+  },
+  {
+   "id": "nd_ffo_eastbank",
+   "name": "гарнизон правобережного плацдарма Франкфурта (Дамм-форштадт / Слубице)",
+   "kind": "fortress",
+   "subordination": "Festung Frankfurt",
+   "area": "Слубице (восточный берег)",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-17",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.639",
+   "reliability": "A",
+   "note": "выделить из 9 039 нельзя; 4 батальона выведены 17.04"
+  },
+  {
+   "id": "nd_kuestrin",
+   "name": "крепость Кюстрин (пала 30.03.1945)",
+   "kind": "fortress",
+   "subordination": "XI тк СС (до падения)",
+   "area": "Кюстрин",
+   "lng": 14.6133,
+   "lat": 52.5693,
+   "date": "1945-03-30",
+   "personnel": 16800,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.599 прим. 277",
+   "reliability": "A",
+   "note": "гарнизон 16 800, боевая ~10 000; прорвались к своим 32 офицера и 965 унтер-офицеров и солдат; потери ≈5 000 убитыми, 12 000 пленных. К 16.04 не существует — нужна лишь как ориентир по крепостям"
+  },
+  {
+   "id": "de_404vak",
+   "name": "404-й народный артиллерийский корпус (Volksartilleriekorps 404)",
+   "kind": "artillery",
+   "subordination": "XI тк СС по Bahm; DRZW S.608 — «beiderseits Seelow (VAK 404 и 408)»",
+   "area": "район Зеелова (севернее/южнее — источники расходятся)",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": "6 дивизионов, 16 батарей по перечню Bahm",
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «XI SS Panzer Corps»",
+   "reliability": "B",
+   "note": "перечень батарей: I (1–3), II (4–6), III (7–9), IV (10–11), V (12–13), VI (14–16). Орудий в батарее и калибров источник не даёт; личный состав не найден"
+  },
+  {
+   "id": "de_406vak",
+   "name": "406-й народный артиллерийский корпус",
+   "kind": "artillery",
+   "subordination": "CI ак по Bahm",
+   "area": "Вризен (по docs seelow: у Вризена)",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": "5 дивизионов, 13 батарей (II и IV — по 2 роты, остальные по 3)",
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «CI Corps»",
+   "reliability": "B",
+   "note": "DRZW S.618: 7.04 один из двух народных артиллерийских корпусов 9 А передан в 3 ТА — какой именно, не сказано (вероятнее всего, один из 406/408); противоречие с Bahm не снято"
+  },
+  {
+   "id": "de_408vak",
+   "name": "408-я народная артиллерийская бригада (корпус)",
+   "kind": "artillery",
+   "subordination": "V гск СС по Bahm; DRZW — рядом с 404-м у Зеелова",
+   "area": "севернее Зеелова (по DRZW S.608) / V гск СС (Bahm)",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": "5 дивизионов, 12 батарей",
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «V SS Mountain Corps»",
+   "reliability": "B",
+   "note": "перечень: I (1–3), II (4–5), III (7–9), IV (10–11), V (13–14)"
+  },
+  {
+   "id": "nd_werfer15",
+   "name": "15-й полк тяжёлых миномётов (II дивизион, 3 роты по 6 × 15 см)",
+   "kind": "artillery",
+   "subordination": "CI ак",
+   "area": "район Вризена",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": "18 реактивных миномётов 15 см",
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «CI Corps»",
+   "reliability": "B",
+   "note": "только II дивизион из перечня"
+  },
+  {
+   "id": "nd_art_ffo",
+   "name": "Festungs-Artillerie-Stab 1320 (дивизионы 1325, 1326, 1327)",
+   "kind": "artillery",
+   "subordination": "Festung Frankfurt",
+   "area": "Франкфурт",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": "12 батарей",
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «Frankfurt Garrison»",
+   "reliability": "B",
+   "note": "трофейные/старые орудия; калибры не указаны"
+  },
+  {
+   "id": "nd_art_9a",
+   "name": "артиллерия 9 А целиком: 658 батарей, 2 625 стволов (в т.ч. 695 зенитных)",
+   "kind": "artillery",
+   "subordination": "9 А",
+   "area": "вся полоса 9 А",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-13",
+   "personnel": null,
+   "guns": 2625,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.616 (+ ISAEV_EW)",
+   "reliability": "A",
+   "note": "в дивизиях/ВАК/зенитных частях, разбивки по принадлежности нет. На 1.04 — 391 батарея и 1 544 ствола, т.е. +1 081 ствол за 12 апреля пришли в основном вне дивизий (ВАК, зенитные, крепостные)"
+  },
+  {
+   "id": "de_pzjgd_weichsel",
+   "name": "Panzerjagd-Division Weichsel (полк. Гедульт фон Юнгенфельд): ПТ-бригады D, F, R, M и парашютная ПТ-бригада «Пират»",
+   "kind": "pzjg",
+   "subordination": "ГА «Висла» (ОКХ); 12.04 бригады D и «Пират» тактически переданы 9 А; с конца апреля — 3 ТА",
+   "area": "западнее Зееловских высот — за позицией «Вотан»",
+   "lng": 14.1043,
+   "lat": 52.4767,
+   "date": "1945-04-12",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.621 (и прим. 308: BA-MA RH 19 XV/9a Bl.191; RH 2/335 Bl.135 f.)",
+   "reliability": "A",
+   "note": "три бригады остались за «Вотаном» на опасных направлениях; расположение бригад — DEW_PJD (C)"
+  },
+  {
+   "id": "nd_pzjgbr_D",
+   "name": "Panzerjagd-Brigade D (I, II, III батальоны)",
+   "kind": "pzjg",
+   "subordination": "Pz.Jgd.Div. Weichsel → 9 А с 12.04",
+   "area": "Хангельсберг — Эггерсдорф — Бухгольц",
+   "lng": 14.1043,
+   "lat": 52.4767,
+   "date": "1945-04-11",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_PJD",
+   "page": "раздел «Gliederung mit Aufstellungsort»",
+   "reliability": "C",
+   "note": "численность не найдена; в источнике 'Hangelsberg, Eggersdorf, Buchholz' — координата по Эггерсдорфу"
+  },
+  {
+   "id": "nd_pzjgbr_pirat",
+   "name": "парашютная ПТ-бригада «Пират» (Fallschirm-Panzerjagd-Brigade P, I–III батальоны; из 541 нгд — по Bahm)",
+   "kind": "pzjg",
+   "subordination": "Pz.Jgd.Div. Weichsel → 9 А с 12.04",
+   "area": "Прётцель — Штернебек — Грунов",
+   "lng": 13.9886,
+   "lat": 52.6372,
+   "date": "1945-04-11",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_PJD",
+   "page": "раздел «Gliederung»; DRZW S.621",
+   "reliability": "B",
+   "note": "в OOB Bahm числится под CI ак («из 541 нгд»); численность не найдена"
+  },
+  {
+   "id": "nd_pzjgbr_R",
+   "name": "Panzerjagd-Brigade R(ußland), III батальон; Brigade F (II батальон, Пренцлау); Brigade M (Нойштрелиц)",
+   "kind": "pzjg",
+   "subordination": "Pz.Jgd.Div. Weichsel",
+   "area": "Альтландсберг — Вернойхен; Пренцлау; Нойштрелиц",
+   "lng": 13.776,
+   "lat": 52.5936,
+   "date": "1945-04-11",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DEW_PJD",
+   "page": "раздел «Gliederung»",
+   "reliability": "C",
+   "note": "в тыловой зоне между «Вотаном» и Берлином; бригады F и M далеко на севере (3 ТА)"
+  },
+  {
+   "id": "de_111stug",
+   "name": "Sturmgeschütz-Lehrbrigade 111",
+   "kind": "stug",
+   "subordination": "CI ак (подвижный резерв)",
+   "area": "резерв CI ак; район Вризена/Врицена",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "date": "1945-04-07",
+   "personnel": null,
+   "guns": null,
+   "tanks": "47 исправных (33 StuG III, 9 StuH 42, 5 Pz IV/70(A)); на 13.04 по Исаеву 48",
+   "source": "DRZW",
+   "page": "S.615",
+   "reliability": "A",
+   "note": "личный состав не найден (бригада штатно ~600–800 — не из источника, не использовать)"
+  },
+  {
+   "id": "de_920stug",
+   "name": "Sturmgeschütz-Lehrbrigade 920",
+   "kind": "stug",
+   "subordination": "LVI тк",
+   "area": "резерв LVI тк у Зееловских высот",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-14",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «LVI Panzer Corps»",
+   "reliability": "B",
+   "note": "14.04 контратака у Альт-Тухебанда; в таблице 7.04 и в списке на 13.04 нет"
+  },
+  {
+   "id": "de_kg1001",
+   "name": "560-й ПТ-батальон СС (K.Gr. «1001 Nacht», майор СС Бланкбойс)",
+   "kind": "pzjg",
+   "subordination": "CI ак; резерв V гск СС по Le Tissier",
+   "area": "Вризен (16.04)",
+   "lng": 14.1366,
+   "lat": 52.7168,
+   "date": "1945-04-07",
+   "personnel": null,
+   "guns": null,
+   "tanks": "43 САУ (6 StuG III + 37 Jagdpanzer 38)",
+   "source": "DRZW",
+   "page": "S.615, S.634",
+   "reliability": "A",
+   "note": "16.04 держал Вризен вместе с зенитными полками"
+  },
+  {
+   "id": "de_ss502",
+   "name": "502-й тяжёлый танковый батальон СС (Tiger II)",
+   "kind": "stug",
+   "subordination": "XI тк СС (резерв)",
+   "area": "Дольгелин — Шёнфлис",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-07",
+   "personnel": null,
+   "guns": null,
+   "tanks": "27 Tiger II (7.04); 33 по Исаеву на 13.04",
+   "source": "DRZW",
+   "page": "S.614",
+   "reliability": "A",
+   "note": "одна рота (6 «Тигров») 16.04 у Дольгелина, 2-я рота — у Шёнфлиса"
+  },
+  {
+   "id": "de_561ss_pzjg",
+   "name": "561-й ПТ-батальон СС",
+   "kind": "pzjg",
+   "subordination": "V гск СС",
+   "area": "южнее Франкфурта",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «V SS Mountain Corps»",
+   "reliability": "B",
+   "note": "в таблице 7.04 не выделен"
+  },
+  {
+   "id": "nd_pzjg_misc",
+   "name": "отдельные ПТ/штурмовые части 9 А: Pz.Jgd.Abt. 2 (24 Jagdpanzer 38), Pz.Jgd.Kp. 15 (15+1), Pz.Jgd.Kp. 1129 (10), StuG-Abt. 105 (10 итал. САУ), SS-Pz.Kp. 105 (10 итал. M13/40), 600-я русская дивизия (8 Jagdpanzer + 9 Т-34 в ремонте)",
+   "kind": "pzjg",
+   "subordination": "9 А (армейские/корпусные)",
+   "area": "V гск СС / Франкфурт; 1129 — в 309 пд",
+   "lng": 14.5495,
+   "lat": 52.3412,
+   "date": "1945-04-07",
+   "personnel": null,
+   "guns": null,
+   "tanks": "67 САУ/ПТ-самоходок и 11 танков (без 502/560/111)",
+   "source": "DRZW",
+   "page": "S.615",
+   "reliability": "A",
+   "note": "сумма вне дивизий — см. strength («9 А — бронетехника вне дивизий»)"
+  },
+  {
+   "id": "nd_hj_pznk",
+   "name": "«Panzernahkampf-Einheit/Brigade Hitlerjugend»: ~6 000 гитлерюгенд к 1.04; 2 000 переданы 9 А (районы Бесков — Шторков и Штраусберг), 1 500 — коменданту Берлина",
+   "kind": "training",
+   "subordination": "9 А / Reichsjugendführung; Bahm: «I–IV батальоны по 4 роты» при AOK 9",
+   "area": "Бесков — Шторков; Штраусберг; окраины Берлина",
+   "lng": 13.905,
+   "lat": 52.2058,
+   "date": "1945-04-01",
+   "personnel": 2000,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.621 и прим. 309",
+   "reliability": "A",
+   "note": "цифры 6 000/2 000/1 500 — из документа от 3.04 (BA NS 6/490 Bl.27); применялись «отрядами» против прорвавшихся танков; особая форма (оливковая блуза, лыжные брюки)"
+  },
+  {
+   "id": "nd_training_ersatz",
+   "name": "учебные части Ersatzheer из Wehrkreis II (4 650) и III (15 400, в т.ч. 3 450 венгров), перемещённые к фронту («Aktion Leuthen»); решение от 9.04: вместе с учебными частями Waffen-SS и Luftwaffe — охранное расположение во второй позиции в 8–10 км за HKL",
+   "kind": "training",
+   "subordination": "ГА «Висла» (запрос 5.04); распределение между армиями в источнике не указано",
+   "area": "вторая позиция 8–10 км за главной линией; корпус-Feldersatz-Regimenter",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-09",
+   "personnel": 20050,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.618 (прим. 298–300)",
+   "reliability": "A",
+   "note": "20 050 — на оба фронта (Запад и Восток) в целом, не только 9 А; боевая ценность «ganz geringer Kampfwert», кроме школ. Часть должна была сменить фольксштурм в линии и сформировать Korps-Feldersatz-Regiment в каждом корпусе"
+  },
+  {
+   "id": "nd_pi275",
+   "name": "Pionier-Bataillon 275 (+9 тяжёлых ПТО) и SS-Ausbildungs- und Ersatz-Bataillon Spreenhagen — переданы 9 А 17.04",
+   "kind": "training",
+   "subordination": "9 А (приказ 17.04)",
+   "area": "Мюльроз; Шпренхаген",
+   "lng": 14.4097,
+   "lat": 52.2497,
+   "date": "1945-04-17",
+   "personnel": null,
+   "guns": "9 тяжёлых ПТО",
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.639 прим. 369 (BA-MA RH 2/335 Bl.260)",
+   "reliability": "A",
+   "note": "Pi.Btl 275 «verstärkt» значится у Bahm в V гск СС; численность не указана"
+  },
+  {
+   "id": "nd_marschbtl_berlin",
+   "name": "маршевые батальоны, ночью 17/18.04 доставленные в городских автобусах из Берлина к фронту у Бухова",
+   "kind": "other",
+   "subordination": "9 А",
+   "area": "Бухов",
+   "lng": 14.0762,
+   "lat": 52.5672,
+   "date": "1945-04-18",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.639",
+   "reliability": "A",
+   "note": "численность не указана"
+  },
+  {
+   "id": "nd_feldjaeger3",
+   "name": "Feldjäger-Kommando (mot.) III — «Auffangorganisationen» Heer, Luftwaffe, Waffen-SS в зоне 9 А (с февраля); Auffanglinie IV (Гудевилль) — в зоне 3 ТА",
+   "kind": "police",
+   "subordination": "ГА «Висла» → 9 А",
+   "area": "тыл 9 А; задержание отставших",
+   "lng": 13.9042,
+   "lat": 52.5589,
+   "date": "1945-02-05",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.624 и прим. 319–320",
+   "reliability": "A",
+   "note": "численность не найдена; пост-«заградительные» функции"
+  },
+  {
+   "id": "nd_sturm_aok",
+   "name": "Sturm-Bataillon AOK 9; 3. Panzer-A.u.E.-Bataillon (3 роты бронеавтомобилей, CI ак); Pz.-Abt. «Brandenburg» (I./Pz.Rgt 26 — 28 «Пантер»)",
+   "kind": "other",
+   "subordination": "9 А",
+   "area": "армейский резерв",
+   "lng": 14.3807,
+   "lat": 52.5318,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": "28 Panther (Brandenburg, 7.04)",
+   "source": "BAHM_WIKI",
+   "page": "раздел «Ninth Army»; DRZW S.614",
+   "reliability": "B",
+   "note": "только перечень; Brandenburg организационно при «Курмарк» (S.614)"
+  },
+  {
+   "id": "nd_berlin_gar",
+   "name": "гарнизон Verteidigungsbereich Berlin на 19.04: 94 094 чел. (52 841 — Clausewitz-Aufgebot)",
+   "kind": "other",
+   "subordination": "Kampfkommandant Berlin (Рейман)",
+   "area": "Берлин",
+   "lng": 13.3618,
+   "lat": 52.5163,
+   "date": "1945-04-19",
+   "personnel": 94094,
+   "guns": null,
+   "tanks": null,
+   "source": "DRZW",
+   "page": "S.658 и прим. 422",
+   "reliability": "A",
+   "note": "состав: 9 штабов секторов, 30 штабов подсекторов, 12 батальонов вермахта, 7 отдельных рот, 69 батальонов фольксштурма, 2 крепостные ПТ-роты, 9 батарей, 41 зенитная батарея, 66 Flak-Kampftrupps. Советская оценка (300 000 чел., 3 000 орудий) названа Lakowski недостоверной. Секторные доли — в berlin-1945-city-garrison.json"
+  },
+  {
+   "id": "nd_berlin_fest_rgt",
+   "name": "Festungs-Regimenter 57–65 (по 3 батальона в секторе), Wach-Regiment Berlin, SS-Wachbataillon RFSS (600)",
+   "kind": "other",
+   "subordination": "Verteidigungsbereich Berlin",
+   "area": "секторы A–H",
+   "lng": 13.5236,
+   "lat": 52.4843,
+   "date": "1945-04-15",
+   "personnel": 600,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «Berlin garrison»",
+   "reliability": "C",
+   "note": "численность дана только для SS-Wachbataillon (600); остальное — перечень"
+  },
+  {
+   "id": "nd_v_ak_4pza",
+   "name": "V армейский корпус 4 ТА: Ausb.-Regiment 561, Korps-MG-Bataillon 95, Alarm-Regimenter 94 и 97 (+ 29-й и 30-й SS-Polizei-Schützen-Regimenter) вне дивизий",
+   "kind": "training",
+   "subordination": "4 ТА (позднее 9 А)",
+   "area": "Нейсе — Шпревальд",
+   "lng": 14.2471,
+   "lat": 52.1722,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «Fourth Panzer Army — V Corps»",
+   "reliability": "C",
+   "note": "численность не найдена; в DRZW S.645 для 4 ТА дан лишь перечень дивизий. Для корпуса «Великая Германия» и LVII тк внедивизионных частей не найдено"
+  },
+  {
+   "id": "nd_4pza_grupa",
+   "name": "перед 1 УФ (по советской справке на 15.04, 410 км): 4 бригады ШО, 3 ПТ-бригады, 78 отдельных батальонов (47 — фольксштурма), 6 отдельных арт. полков, 9 арт. дивизионов, 7 ПТ-дивизионов, 7 зенитных дивизионов, 17 разных полков — на полосу 4 ТА, 17 А и часть ГА «Юг»",
+   "kind": "other",
+   "subordination": "ГА «Центр»",
+   "area": "Нейсе — Шпрее",
+   "lng": 14.2471,
+   "lat": 52.1722,
+   "date": "1945-04-15",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "RA15",
+   "page": "док. 13 (по docs/sources/berlin-1945-research-de.json, запись 4pza на 16.04)",
+   "reliability": "B",
+   "note": "советская оценка внедивизионных частей — граница с 9 А у Мюльроза; уже есть в berlin-1945-research-de.json"
+  },
+  {
+   "id": "nd_stug184",
+   "name": "Sturmgeschütz-Brigade 184",
+   "kind": "stug",
+   "subordination": "3 ТА",
+   "area": "на северном участке",
+   "lng": 13.8666,
+   "lat": 53.3167,
+   "date": "1945-04-07",
+   "personnel": null,
+   "guns": null,
+   "tanks": "31 (23 StuG III + 8 StuH 42; 7.04)",
+   "source": "DRZW",
+   "page": "S.615",
+   "reliability": "A",
+   "note": "переброшена в 3 ТА; для 20.04 данных нет"
+  },
+  {
+   "id": "nd_fest_stettin",
+   "name": "Festung Stettin (5 крепостных пехотных полков, 85-й и «A» крепостные MG-батальоны, 3 арт. полка, 3156-й и 3158-й крепостные зенитные дивизионы, 8-й крепостной ПТ-полк, сапёрные)",
+   "kind": "fortress",
+   "subordination": "3 ТА",
+   "area": "Штеттин",
+   "lng": 14.5929,
+   "lat": 53.4298,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «3rd Panzer Army — Fortress Stettin»",
+   "reliability": "C",
+   "note": "численность не найдена"
+  },
+  {
+   "id": "nd_vs_xxxii",
+   "name": "батальоны фольксштурма XXXII ак и группы «Фойгт»: 244, 26/50, 26/52, 26/62, 26/11, 26/29, 26/70, «Гессен-Нассау»; группа «Гензен», «Гамбург», «Бранденбург» (корпус «Одер»)",
+   "kind": "volkssturm",
+   "subordination": "3 ТА",
+   "area": "Одер севернее Хоэнзатена",
+   "lng": 14.5929,
+   "lat": 53.4298,
+   "date": "1945-04-16",
+   "personnel": null,
+   "guns": null,
+   "tanks": null,
+   "source": "BAHM_WIKI",
+   "page": "раздел «3rd Panzer Army»",
+   "reliability": "C",
+   "note": "11 батальонов фольксштурма на 3 ТА; численность не указана; на 20.04 данных 3 ТА по численности нет"
+  }
+ ],
+ "totals": [
+  {
+   "formation": "de_9a",
+   "date": "1945-04-16",
+   "what": "Gesamtstärke армии (всё, что есть в зоне армии): ~190 000 (Lakowski); Le Tissier — 200 000",
+   "value": 190000,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.616; LT_HALBE"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-01",
+   "what": "Tagesstärke 129 151; Gefechtsstärke 93 178; Kampfstärke 74 703",
+   "value": 129151,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.607"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-01",
+   "what": "из них Verbände (дивизии и крепости) — Tagesstärke ≈90 000, Gefechtsstärke 61 446, Kampfstärke 49 009",
+   "value": 49009,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.607"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-01",
+   "what": "из них Fecht-Truppe (части вне дивизий) — Tagesstärke 39 151, Gefechtsstärke 31 732, Kampfstärke 25 694 (34,4 % боевого состава)",
+   "value": 25694,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.607"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-16",
+   "what": "разрыв между Gesamtstärke 190 000 и Tagesstärke 129 151 — не охваченное суточной отчётностью Heer ≈ 61 000 (вывод; в источнике не расшифровано: по смыслу зенитные части Luftwaffe, фольксштурм, полиция, SS, RAD, строители, тыловые учреждения); для 3 ТА аналог 105 000 − 51 406 ≈ 53 600",
+   "value": 61000,
+   "source": "DRZW",
+   "reliability": "C",
+   "page": "S.607, S.616, S.649 — арифметика составителя"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-13",
+   "what": "орудий 2 625 (658 батарей), из них зенитных 695 (26,5 %); на 1.04 — 1 544 ствола (391 батарея)",
+   "value": 2625,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.606, S.616; ISAEV_EW"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-07",
+   "what": "исправной бронетехники 482; вне нумерованных дивизий 195 (40 %): 43 танка + 152 САУ/ПТ-самоходки",
+   "value": 195,
+   "source": "DRZW",
+   "reliability": "B",
+   "page": "S.614–615"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-16",
+   "what": "фольксштурм в линии: 8 нумерованных батальонов + 4 роты, ~6 тревожных батальонов — порядка 3–6 тыс. человек",
+   "value": 4500,
+   "source": "BAHM_WIKI",
+   "reliability": "C",
+   "page": "перечень по корпусам; пропорция — DRZW S.547"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-16",
+   "what": "гитлерюгенд-истребители танков, переданные 9 А: 2 000",
+   "value": 2000,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.621"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-17",
+   "what": "крепость Франкфурт: Kampfstärke 9 039 (на 17.03); списочная ≈ 15 000 (вывод по коэффициенту Кюстрина 1,68)",
+   "value": 9039,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.598; S.599 прим. 277"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-02-07",
+   "what": "в феврале 26 000 из 52 000 человек армии — фольксштурм",
+   "value": 26000,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.593"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-25",
+   "what": "оценка окружённых в Хальбском котле: ~50 000 боевых + 10 000 фольксштурма, до 150 000 с тылами (Бернхард по Le Tissier)",
+   "value": 150000,
+   "source": "LT_HALBE",
+   "reliability": "B",
+   "page": "ch.7"
+  },
+  {
+   "formation": "de_9a",
+   "date": "1945-04-19",
+   "what": "Berlin: 94 094 человек в Verteidigungsbereich (частей 9 А там ещё нет)",
+   "value": 94094,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.658"
+  },
+  {
+   "formation": "de_3pza",
+   "date": "1945-04-20",
+   "what": "численность 3 ТА на 20.04 в открытых источниках не найдена: ближайшие данные — 1.04 (Tagesstärke 51 406–56 824, Gefechtsstärke 27 595–33 424, Kampfstärke 29 459, Gesamtstärke 105 000) и 13.04 (232 исправных танка и САУ)",
+   "value": null,
+   "source": "DRZW",
+   "reliability": "A",
+   "page": "S.607, S.616, S.649"
+  }
+ ],
+ "gaps": [
+  "Суточные донесения 9 А и ГА «Висла» (Tagesmeldung, Zustandsbericht) на 10–20.04 по дивизиям недоступны (ЦАМО ф. 500, NARA T311 — архивные порталы закрыты); Kampfstärke по дивизиям есть только на 17.03 (DRZW S.598) и 10.04 (Lakowski/Исаев, уже в berlin-1945-seelow-divisions.json), Gefechtsstärke и Iststärke по дивизиям — нет вовсе.",
+  "Численность и перечень 66 частей «Fecht-Truppe» 9 А (DRZW S.607) не расшифрованы в доступных текстах: известна лишь сумма (25 694 / 31 732 / 39 151) на 1.04; рост к 16.04 (приход 502/560/111, зенитных и ВАК) неизвестен. Неясно также, входит ли в «Verbände» крепость Франкфурт (по сходству сумм 17.03 и 1.04 — вероятно, да).",
+  "Расшифровка «Gesamtstärke ~190 000» на составные части в источниках не найдена; разложение выше — арифметическое (Tages-/Gefechts-/Kampfstärke из таблицы), остаток ≈ 61 000 — вывод.",
+  "Личный состав ВАК 404, 406, 408, зенитных полков 23 зд, StuG-бригад 111 и 920, ПТ-бригад «Вайксель» не найден ни в одном открытом источнике; даны только числа батарей/дивизионов/машин. Подчинение ВАК у Bahm и в DRZW (S.608, S.618) расходится; какой из двух корпусов ушёл в 3 ТА 7.04 — не установлено.",
+  "Фольксштурм: поимённые батальоны только по Bahm (en-wiki, C/B), без численности; общий объём фольксштурма в 9 А на 16.04 не найден. Для Берлина — 69 батальонов (A), численность по батальонам нет.",
+  "4 ТА (V ак, ак «Великая Германия», LVII тк): численность по дивизиям и внедивизионные части на 10–20.04 в открытых источниках не найдены (Jentz «Panzertruppen 2», Tieke, Hamilton «Oder Front 1945», Nafziger 945GDBC — недоступны); известны лишь перечень дивизий (DRZW S.645) и группа у Баутцена на 21.04 (~50 000, ~300 танков; уже в berlin-1945-research-de.json).",
+  "3 ТА на 20.04 (2 БФ): численность не найдена; DRZW даёт 1.04, 7.04 и 13.04. Зенитные части 3 ТА (II Flak-Korps, 27 зд, группа «Герхард») — без численности.",
+  "Lexikon der Wehrmacht — пользовательская навигация не позволяет добраться до страниц ВАК/Flak/StuG без сохранённых ссылок; axishistory.com закрыт защитой от ботов (не обходилась); niehorster.org содержит советский OOB на 3.04, но не немецкий OOB Берлинской операции; Nafziger (cgsc.edu) недоступен; Le Tissier, Tieke, Stich, Kortenhaus на archive.org выдаются только по записи/абонементу (не обходилось).",
+  "Артиллерия РГК за пределами ВАК (Heeres-Artillerie-Abteilungen, Nebelwerfer-Regimenter, 15-й Werfer-Rgt. кроме II дивизиона) — только в перечне Bahm; калибры и число стволов для ВАК не указаны.",
+  "Расхождение: Flak-Rgt 13 держал Вризен 16.04 (DRZW S.634), но в списке 23 зд на 16.04 (DEW_F23) его нет; Flak-Rgt 53 и 182 в обоих источниках, однако в DEW_F23 расположены «западнее Цедена» и «западнее Кюстрина», тогда как DRZW ставит оба во Вризен — расположение полков на 16.04 условное.",
+  "Текст DRZW S.614–615 (танковая таблица 7.04) подтверждён по изображению страницы; для 7.04 внедивизионная бронетехника выделена по подписям строк — приписка Lehrbrig 111 и 560 птб к «вне дивизий» — вывод."
+ ]
+}
