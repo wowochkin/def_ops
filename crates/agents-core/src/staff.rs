@@ -147,6 +147,16 @@ impl Sim {
         let mut used: Vec<usize> = Vec::new();
         for x in &a {
             let d = &w.divisions[x.i];
+            // окружена: прорыв к ближайшим своим (при угрозе окружения Буссе и Хейнрици выбирали прорыв вопреки приказам
+            // держаться; 25.04 Буссе получил свободу направления — hold-orders-1945, LT_HALBE)
+            if self.encircled(d, tick) {
+                let going = d.state == crate::model::State::Attack(crate::model::AttackSub::Breakout);
+                if let Some(t) = self.nearest_linked(w, d.side, d.vars.pos).filter(|_| !going) {
+                    let h_cut = d.cut_since.map_or(0, |s| tick.saturating_sub(s));
+                    self.order_for(w, tick, h, x.i, OrderKind::Attack, t, format!("окружена {h_cut} ч — прорыв к своим, до них {:.0} км", t.dist(d.vars.pos)), "доктрина", &mut dec);
+                }
+                continue;
+            }
             let pen = pens.iter().find(|p| p.0 == x.i).map(|p| p.1);
             if x.broken || pen.is_some() {
                 // разбита или обойдена: отход на следующий рубеж (угроза охвата — последовательные позиции через 8–10 км,

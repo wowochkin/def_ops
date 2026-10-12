@@ -31,6 +31,8 @@ main { grid-area: m; position: relative; overflow: hidden; }
 .unit.defense .state-dot { fill: var(--defense); } .unit.withdraw .state-dot { fill: var(--withdraw); } .unit.destroyed > g { opacity: 0.6; }
 .overlay .strike { stroke: #1d1f24; stroke-width: 2; stroke-linecap: round; fill: none; }
 .overlay .unit-label.lost { font-size: 10px; fill: #555; }
+.overlay .pocket-ring { fill: none; stroke: #b3261e; stroke-width: 2; stroke-dasharray: 4 3; }
+.pocket-key { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; border-radius: 50%; border: 2px dashed #b3261e; }
 .strike-key { display: inline-block; width: 14px; height: 10px; margin-right: 6px; vertical-align: -1px; background: linear-gradient(to top right, transparent 45%, #1d1f24 45% 55%, transparent 55%), linear-gradient(to bottom right, transparent 45%, #1d1f24 45% 55%, transparent 55%); border: 1px solid #999; }
 .legend label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .town { font-size: 10px; fill: #5b5446; paint-order: stroke; stroke: #f4f1e8cc; stroke-width: 3px; }
@@ -147,3 +149,5 @@ ol.miles .t { cursor: pointer; } ol.miles .t.done b { text-decoration: underline
 ol.miles .d { color: var(--muted, #888); margin-left: 3px; }
 .legend > span, .legend > label { white-space: nowrap; }
 .legend { flex-wrap: wrap; right: 60px; }
+
+.pocket-now { margin: 4px 0; padding: 3px 6px; border: 1px dashed #b3261e; border-radius: 4px; color: #b3261e; font-size: 12px; }

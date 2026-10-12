@@ -19,7 +19,7 @@ const DIAGRAM: { group: string; title: string; subs: string[] }[] = [
   { group: 'reserve', title: 'Резерв', subs: ['не введена в операцию', 'резерв'] },
   { group: 'march', title: 'Марш', subs: ['марш: по дороге', 'марш: вне дорог', 'марш: привал', 'марш: затор', 'марш: переправа'] },
   { group: 'deploy', title: 'Развёртывание', subs: ['развёртывание'] },
-  { group: 'attack', title: 'Наступление', subs: ['наступление: атака', 'наступление: второй эшелон', 'наступление: бой в глубине', 'наступление: закрепление'] },
+  { group: 'attack', title: 'Наступление', subs: ['наступление: атака', 'наступление: второй эшелон', 'наступление: бой в глубине', 'наступление: закрепление', 'наступление: прорыв из окружения'] },
   { group: 'defense', title: 'Оборона', subs: ['оборона: поспешная', 'оборона: подготовленная'] },
   { group: 'withdraw', title: 'Отход', subs: ['отход', 'отступление', 'остатки: выход из боя'] },
   { group: 'destroyed', title: 'Выбыла', subs: ['небоеспособна', 'сведена в другую дивизию'] },
@@ -64,6 +64,7 @@ export function Inspector({ data, compare, compareName, id, hour, onHour }: Prop
       <section>
         <h3>Сейчас</h3>
         <div className={`state-now ${stateGroup(cur)}`}>{cur}</div>
+        {(row[10] ?? 0) > 0 && <div className="pocket-now">В окружении {row[10]} ч: пути к своим нет, подвоза нет</div>}
         {order && <div className="order">Приказ: {order.text.replace(/^получен приказ /, '')}</div>}
         <div className="coords">{pos[1].toFixed(3)}° с. ш., {pos[0].toFixed(3)}° в. д.</div>
         {compare && compare.trace.divisions[i]?.id === id && (() => {

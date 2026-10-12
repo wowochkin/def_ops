@@ -38,7 +38,7 @@ export function Operation({ data, compare, compareName, hour, onHour }: { data: 
                 <div className="m">{m.title}</div>
                 <div className="w">
                   <span>история <b>{m.date.slice(8, 10)}.{m.date.slice(5, 7)}</b></span>
-                  {m.kind === 'cut' ? <span className="d">расчётом не проверяется</span> : <>
+                  {m.kind === 'cut' && (trace.fields?.length ?? 0) < 11 ? <span className="d">в этом ходе окружение не записано</span> : <>
                     <span className={`t ${a !== null && a <= hour ? 'done' : ''}`} onClick={() => a !== null && onHour(a)}>расчёт <b>{fmt(trace.start, a)}</b><span className="d">{delta(a, hist)}</span></span>
                     {compare && <span className={`t v ${b !== null && b <= hour ? 'done' : ''}`} onClick={() => b !== null && onHour(b)}>вариант <b>{fmt(trace.start, b)}</b><span className="d">{delta(b, hist)}</span></span>}
                   </>}

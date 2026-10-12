@@ -278,3 +278,24 @@ fn berlin_city_rings() {
     assert_eq!(at([13.55, 52.47]), 1, "Обершёневайде — внутри внешнего обвода");
     assert_eq!(at([14.38, 52.53]), 0, "Зеелов — не город");
 }
+
+/// Окружение и прорыв: к концу операции гарнизон Берлина окружён, дивизии 9 А из котла у Хальбе вышли с прорывом,
+/// советские дивизии в городе не «окружены» немецкими секторами.
+#[test]
+fn pocket_and_breakout() {
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json");
+    let (mut sim, meta) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    let mut berlin_cut = false;
+    for _ in 0..meta.hours {
+        sim.step();
+        if sim.world.tick == 300 {
+            let tick = sim.world.tick;
+            berlin_cut = sim.world.divisions.iter().filter(|d| d.id.starts_with("de_sector_")).any(|d| sim.encircled(d, tick));
+        }
+    }
+    assert!(berlin_cut, "гарнизон Берлина к 28.04 окружён");
+    assert!(sim.journal.iter().any(|e| e.text.contains("вышла с прорывом")), "есть вышедшие с прорывом");
+    let su_cut = sim.journal.iter().filter(|e| e.text.starts_with("окружена") && sim.world.divisions[e.agent as usize].side == Side::Su).count();
+    assert!(su_cut <= 3, "советских «окружений» {su_cut}");
+}

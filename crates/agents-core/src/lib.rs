@@ -5,6 +5,7 @@
 pub mod geo;
 pub mod llm;
 pub mod model;
+pub mod pocket;
 pub mod rng;
 pub mod route;
 pub mod rules;

@@ -154,6 +154,7 @@ export function App() {
         <div className="legend">
           {(['march', 'deploy', 'attack', 'defense', 'withdraw', 'reserve'] as const).map((g) => <span key={g}><i className={`dot ${g}`} />{({ march: 'марш', deploy: 'развёртывание', attack: 'наступление', defense: 'оборона', withdraw: 'отход', reserve: 'резерв' })[g]}</span>)}
           <span><i className="ghost-key" />положение по документам</span>
+          <span title="Пути к своим нет сутки и дольше: подвоза нет, немецкие штабы по доктрине ведут на прорыв"><i className="pocket-key" />в окружении</span>
           {cmp && <span><i className="variant-key" />вариант (смещение)</span>}
           <label title="Разгромленные и сведённые в другие дивизии — на месте выбытия, перечёркнутые"><input type="checkbox" checked={showDestroyed} onChange={(e) => setShowDestroyed(e.target.checked)} /><i className="strike-key" />выбывшие</label>
         </div>

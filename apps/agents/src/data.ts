@@ -12,13 +12,14 @@ export interface DivisionInfo { id: string; name: string; side: Side; hq: string
 export interface HqInfo { id: string; name: string; side: Side; echelon: 'front' | 'army' | 'corps'; parent: string | null }
 export interface JournalEvent { tick: number; time: string; agent: string | null; text: string }
 /** Кадр дивизии: lng, lat, состояние, люди, танки, орудия, боекомплекты, заправки, усталость, организованность. */
-export type Row = [number, number, string, number, number, number, number, number, number, number];
+/** Кадр дивизии: положение, состояние, численность, запасы, усталость, организованность, часов в окружении (в старых ходах нет). */
+export type Row = [number, number, string, number, number, number, number, number, number, number, number?];
 
 export interface StaffCall { tick: number; time: string; hq: string; model: string; request: string; reply: string; reasoning?: string; ok: boolean; tokens?: number | null; secs?: number | null; truncated?: boolean | null }
 export interface ProbeResult { best: number; rows: { parallel: number; tokensPerSec: number; secs: number }[]; error?: string }
 export interface LlmInfo { url: string; model: string; reasoning?: Reasoning; maxTokens?: number; parallel?: number; sync?: boolean; byArmy?: boolean; parallelUsed?: number; probe?: ProbeResult }
 export interface Trace {
-  scenario: string; name: string; start: string; hours: number; seed: number; theatre: string;
+  scenario: string; name: string; start: string; hours: number; seed: number; theatre: string; fields?: string[];
   divisions: DivisionInfo[]; hqs: HqInfo[]; frames: Row[][]; journal: JournalEvent[];
   /** Источник решений штабов: [советская сторона, немецкая] — script, doctrine, llm. */
   sources?: string[]; llm?: LlmInfo | null; staff?: StaffCall[];
@@ -288,11 +289,21 @@ export const rowAt = (trace: Trace, i: number, h: number): Row => trace.frames[M
 
 /** Час вехи в прогоне: первая советская дивизия в радиусе пункта (reach) или дивизии обоих объединений (meet). */
 export function milestoneHour(trace: Trace, m: Milestone): number | null {
-  if (!m.at || (m.kind !== 'reach' && m.kind !== 'meet')) return null;
-  const r = m.radiusKm ?? 8;
   const parent = new Map(trace.hqs.map((h) => [h.id, h.parent]));
   const under = (hq: string, f: string) => { for (let x: string | null | undefined = hq, n = 0; x && n < 8; x = parent.get(x), n++) if (x === f) return true; return false; };
   const live = (g: string) => g !== 'pending' && g !== 'destroyed';
+  if (m.kind === 'cut') {
+    // отсечение: окружено не меньше 2/3 действующих дивизий названных соединений (как в agents-run)
+    const mem = trace.divisions.flatMap((d, i) => ((m.formations ?? []).some((fm) => d.id === fm || under(d.hq, fm)) ? [i] : []));
+    for (let h = 1; h < trace.frames.length; h++) {
+      const f = trace.frames[h];
+      const act = mem.filter((i) => live(stateGroup(f[i][2])));
+      if (act.length && 3 * act.filter((i) => (f[i][10] ?? 0) > 0).length >= 2 * act.length) return h;
+    }
+    return null;
+  }
+  if (!m.at || (m.kind !== 'reach' && m.kind !== 'meet')) return null;
+  const r = m.radiusKm ?? 8;
   for (let h = 1; h < trace.frames.length; h++) {
     const f = trace.frames[h];
     const near = (i: number) => live(stateGroup(f[i][2])) && km([f[i][0], f[i][1]], m.at!) <= r;

@@ -45,7 +45,7 @@ struct History {
 }
 
 /// Веха операции: «выход к пункту» (reach — первая советская дивизия в радиусе) или «встреча» (meet — дивизии обоих
-/// объединений в радиусе); «отсечение» (cut) расчётом не проверяется.
+/// объединений в радиусе) или «отсечение» (cut — окружено не меньше 2/3 действующих дивизий названных соединений).
 #[derive(Deserialize)]
 struct Milestone {
     title: String,
@@ -156,15 +156,18 @@ fn main() {
         let mut frames: Vec<Vec<serde_json::Value>> = Vec::new();
         let mut snaps: Vec<Vec<XY>> = Vec::new();
         let mut alive: Vec<Vec<bool>> = Vec::new();
+        let mut encircled: Vec<Vec<bool>> = Vec::new();
         let frame = agents_core::trace::frame;
         let t0 = Instant::now();
         snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
         alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
+        encircled.push(vec![false; n]);
         if seed == seed0 { frames.push(frame(&sim)); }
         for _ in 0..meta.hours {
             sim.step();
             snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
             alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
+            encircled.push(sim.world.divisions.iter().map(|d| sim.encircled(d, sim.world.tick)).collect());
             if seed == seed0 { frames.push(frame(&sim)); }
         }
         let secs = t0.elapsed().as_secs_f64();
@@ -225,16 +228,24 @@ fn main() {
             // вехи: когда в расчёте
             let mut miles = Vec::new();
             for m in &hist.events {
-                let Some(at) = m.at.map(|p| sim.theatre.proj.to_xy(p)) else { miles.push((m.title.clone(), m.date.clone(), None)); continue };
+                let at = m.at.map(|p| sim.theatre.proj.to_xy(p)).unwrap_or_default();
                 let rad = m.radius_km.unwrap_or(8.0);
                 let near = |t: usize, i: usize| alive[t][i] && snaps[t][i].dist(at) <= rad;
                 let hit = (1..snaps.len()).find(|&t| match m.kind.as_str() {
                     "reach" => (0..n).any(|i| sim.world.divisions[i].side == Side::Su && near(t, i)),
                     "meet" => m.formations.iter().all(|f| hq_idx_of(f).is_some_and(|k| (0..n).any(|i| near(t, i) && chain(sim.world.divisions[i].hq as usize).contains(&k)))),
                     _ => false,
-                });
+                }).or_else(|| (m.kind == "cut").then(|| {
+                    // отсечение: окружено не меньше 2/3 действующих дивизий названных соединений
+                    let members: Vec<usize> = (0..n).filter(|&i| m.formations.iter().any(|f| sim.world.divisions[i].id == *f
+                        || hq_idx_of(f).is_some_and(|k| chain(sim.world.divisions[i].hq as usize).contains(&k)))).collect();
+                    (1..snaps.len()).find(|&t| {
+                        let act: Vec<usize> = members.iter().copied().filter(|&i| alive[t][i]).collect();
+                        !act.is_empty() && 3 * act.iter().filter(|&&i| encircled[t][i]).count() >= 2 * act.len()
+                    })
+                }).flatten());
                 let when = hit.map(|t| agents_core::time::format_hours(start + t as i64));
-                miles.push((m.title.clone(), m.date.clone(), if m.kind == "cut" { None } else { Some(when.unwrap_or_else(|| "не достигнуто".into())) }));
+                miles.push((m.title.clone(), m.date.clone(), Some(when.unwrap_or_else(|| "не достигнуто".into()))));
             }
             first = Some((devs, adevs, summary, format!("{n} дивизий, {} ч, расчёт {:.2} с", meta.hours, secs), miles));
         }

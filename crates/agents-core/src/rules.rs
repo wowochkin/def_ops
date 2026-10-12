@@ -123,6 +123,33 @@ pub struct Doctrine {
     pub penetration_depth_km: f64,
 }
 
+/// Окружение: data/rules/agents-v0.json, раздел pocket (pocket.rs).
+#[derive(Clone, Debug)]
+pub struct Pocket {
+    /// Путь к своим не проходит ближе этого к дивизиям противника, км.
+    pub zoc_km: f64,
+    /// Территория противника — преграда не дальше этого от его войск, км.
+    pub hold_km: f64,
+    /// Ближе этого к своим войскам путь есть всегда, км.
+    pub own_km: f64,
+    /// Дивизия связана со своими, если путь доходит до клетки в этом радиусе, км.
+    pub link_km: f64,
+    /// Пути нет дольше — окружена, ч.
+    pub encircle_hours: f64,
+    /// Окружение снимается, когда путь есть столько часов подряд.
+    pub release_hours: f64,
+    /// Доля танков и орудий, вынесенных при прорыве.
+    pub breakout_keep: f64,
+    /// Потери прорывающихся из окружения в сутки, пока рядом противник.
+    pub breakout_loss_day: f64,
+    /// Темп прорыва из окружения, км/сут.
+    pub breakout_km_day: f64,
+    /// Капитуляция окружённой немецкой дивизии без боеприпасов (меньше, бк): через часов; с приказом держаться или на прорыв.
+    pub surrender_ammo: f64,
+    pub surrender_hours: f64,
+    pub surrender_hours_firm: f64,
+}
+
 /// Остатки разгромленных дивизий: data/rules/agents-v0.json, раздел remnants.
 #[derive(Clone, Debug)]
 pub struct Remnants {
@@ -153,6 +180,7 @@ pub struct Rules {
     pub doctrine: Doctrine,
     pub doctrine_su: DoctrineSu,
     pub remnants: Remnants,
+    pub pocket: Pocket,
     pub combat: Combat,
     pub su: SideRules,
     pub de: SideRules,
@@ -300,6 +328,20 @@ impl Rules {
             withdraw_step_km: num(&ag, "doctrine.de.withdrawStepKm")?,
             penetration_depth_km: num(&ag, "doctrine.de.penetrationDepthKm")?,
         };
+        let pocket = Pocket {
+            zoc_km: num(&ag, "pocket.zocKm")?,
+            hold_km: num(&ag, "pocket.holdKm")?,
+            own_km: num(&ag, "pocket.ownKm")?,
+            link_km: num(&ag, "pocket.linkKm")?,
+            encircle_hours: num(&ag, "pocket.encircleHours")?,
+            release_hours: num(&ag, "pocket.releaseHours")?,
+            breakout_keep: num(&ag, "pocket.breakoutKeep")?,
+            breakout_loss_day: num(&ag, "pocket.breakoutLossDay")?,
+            breakout_km_day: num(&ag, "pocket.breakoutKmDay")?,
+            surrender_ammo: num(&ag, "pocket.surrenderAmmo")?,
+            surrender_hours: num(&ag, "pocket.surrenderHours")?,
+            surrender_hours_firm: num(&ag, "pocket.surrenderHoursFirm")?,
+        };
         let remnants = Remnants {
             de_share: num(&ag, "remnants.de.share")?,
             de_consolidate_hours: num(&ag, "remnants.de.consolidateHours")?,
@@ -321,6 +363,7 @@ impl Rules {
             doctrine,
             doctrine_su,
             remnants,
+            pocket,
             combat,
             su,
             de,

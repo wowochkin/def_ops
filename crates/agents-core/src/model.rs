@@ -66,7 +66,7 @@ pub struct Vars {
 pub enum MarchSub { Road, OffRoad, Halt, Jam, Crossing }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AttackSub { Assault, Depth, Consolidate, Echelon }
+pub enum AttackSub { Assault, Depth, Consolidate, Echelon, Breakout }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DefenseSub { Hasty, Prepared }
@@ -104,6 +104,7 @@ impl State {
             State::Attack(AttackSub::Depth) => "наступление: бой в глубине",
             State::Attack(AttackSub::Consolidate) => "наступление: закрепление",
             State::Attack(AttackSub::Echelon) => "наступление: второй эшелон",
+            State::Attack(AttackSub::Breakout) => "наступление: прорыв из окружения",
             State::Defense(DefenseSub::Hasty) => "оборона: поспешная",
             State::Defense(DefenseSub::Prepared) => "оборона: подготовленная",
             State::Withdraw => "отход",
@@ -183,6 +184,10 @@ pub struct Division {
     pub note: String,
     /// Шаг ввода в операцию (0 — с начала); до него — State::Pending.
     pub enter: u32,
+    /// С какого шага пути к своим нет (pocket.rs).
+    pub cut_since: Option<u32>,
+    /// Окружённая: с какого шага путь к своим снова есть.
+    pub relink_since: Option<u32>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -415,6 +415,10 @@ const CITY_AT: Record<string, LngLat> = { Tempelhof_Flughafen: [13.4017, 52.4733
 const cityEvents = cityHist.events.filter((e) => e.date < endDay && e.place && CITY_AT[e.place])
   .map((e) => ({ ...e, id: `city_${e.id}`, radiusKm: Math.max(1.5, e.radiusKm ?? 0), at: CITY_AT[e.place!], note: 'городская веха; радиус — не меньше 1,5 км (масштаб дивизии)' }));
 events.push(...cityEvents);
+// прорыв из котла у Хальбе: остатки 9 А (~30 тыс.) вышли к позициям 12 А у Эльсхольца восточнее Беелица 1.05
+// (berlin-1945-halbe.json, LT_HALBE гл. 13, A) — «встреча» дивизий обеих армий
+events.push({ id: 'breakout', title: 'Остатки 9 А вышли к 12 А у Беелица (прорыв из котла у Хальбе)', date: '1945-05-01', kind: 'meet',
+  formations: ['de_9a', 'de_12a'], place: 'Elsholz', radiusKm: 10, source: 'LT_HALBE гл. 13 (A)', at: [12.963, 52.199] });
 
 // ---------- запись ----------
 const usedHq = new Set<string>();

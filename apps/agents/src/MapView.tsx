@@ -100,6 +100,7 @@ export function MapView({ data, compare, hour, selected, onSelect, focus, showDe
           return (
             <g key={d.id} transform={`translate(${x},${y})`} className={`unit ${grp} ${sel ? 'sel' : ''}`} onClick={(e) => { e.stopPropagation(); onSelect(d.id); }}>
               <g transform={`scale(${s})`} dangerouslySetInnerHTML={{ __html: symbolMarkup(d) }} />
+              {!out && (row[10] ?? 0) > 0 && <circle className="pocket-ring" r={hw + 6} />}
               {out ? <path className="strike" d={`M${-hw},${-hh}L${hw},${hh}M${-hw},${hh}L${hw},${-hh}`} /> : <circle className="state-dot" cx={hw} cy={-7 * s * 1.8} r={3.2} />}
               {(zoom >= 9.6 || sel) && <text y={hh + 13} className="unit-label">{shortName(d)}</text>}
               {out && lost[i] !== undefined && (zoom >= 9.6 || sel) && <text y={hh + 25} className="unit-label lost">{d.note.match(/сведена в «[^»]+»/)?.[0] ?? row[2]} {timeLabel(trace.start, lost[i]).slice(0, 5)} {timeLabel(trace.start, lost[i]).slice(11)}</text>}

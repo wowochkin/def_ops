@@ -77,6 +77,10 @@ pub struct World {
     /// Чья клетка театра: 0 — ничья, 1 — советская, 2 — немецкая. В начале — по ближайшей дивизии (не дальше
     /// CONTROL_INIT_KM), дальше — клетки, где побывали войска.
     pub control: Vec<u8>,
+    /// Клетки, до которых доходит путь к своим: [советская сторона, немецкая] (pocket.rs).
+    pub reach: [Vec<bool>; 2],
+    /// Клетки ближе pocket.hold_km к войскам стороны — её территорию там держат: [советская, немецкая].
+    pub held: [Vec<bool>; 2],
 }
 
 /// Радиус начальной разметки территории вокруг войск, км.
@@ -318,6 +322,16 @@ impl Sim {
             return out;
         }
 
+        // прорыв из окружения: окружённая дивизия с приказом наступать не ввязывается в бой, а колонной идёт к цели
+        // через бреши в кольце, неся потери (apply); темп — не выше pocket.breakout_km_day (march); вырвавшись, идёт до цели
+        if let Some(o) = d.order.as_ref().filter(|o| o.kind == OrderKind::Attack && pos.dist(o.target) >= 1.5 && (self.encircled(d, w.tick) || d.state == State::Attack(AttackSub::Breakout))) {
+            self.march(w, d, o.target, r.march_hours_forced, &mut out);
+            out.state = if d.state == State::Attack(AttackSub::Breakout) { None } else {
+                Some((State::Attack(AttackSub::Breakout), "окружена — прорыв к своим колоннами через бреши".into())) };
+            out.activity = Some(Activity::Attack);
+            return out;
+        }
+
         // отступление при потере организованности
         if d.vars.cohesion < r.rout_cohesion && enemy.is_some() && !matches!(d.order.as_ref().map(|o| o.kind), Some(OrderKind::Hold)) {
             let (j, _) = enemy.unwrap();
@@ -483,12 +497,18 @@ impl Sim {
             let mut v = r.speed_kmh(d.side, d.params.mobility, road, t.terrain[nb], night);
             // по территории противника — не марш, а наступление в глубине: темп не выше нормы за сутки
             // (за часы марша в сутки, поэтому за сутки выходит не больше нормы)
-            if w.control.get(nb).copied() == Some(side_code(d.side.enemy())) {
+            // территория противника — там, где её держат его войска; пустая разметка за своими колоннами — свой тыл
+            let held = w.held[crate::staff::side_idx(d.side.enemy())].get(nb).copied().unwrap_or(true);
+            if held && w.control.get(nb).copied() == Some(side_code(d.side.enemy())) {
                 v = v.min(r.enemy_territory_km_day[d.params.mobility as usize] / hours_limit);
                 // город противника — кварталами, даже без соприкосновения с его дивизиями: гарнизон рассредоточен
                 let city = t.city[nb] as usize;
                 if city > 0 { v = v.min(r.combat.urban_km_day[city.min(3) - 1] / hours_limit); }
                 if sub != MarchSub::Crossing { sub = MarchSub::OffRoad; }
+            }
+            // прорыв из окружения — колоннами по лесам и через бреши, с боями у каждого рубежа
+            if d.state == State::Attack(AttackSub::Breakout) || self.encircled(d, w.tick) && d.order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack) {
+                v = v.min(r.pocket.breakout_km_day / hours_limit);
             }
             if v <= 0.0 { break; }
             let goal_p = if rt.next + 1 == rt.cells.len() { target } else { t.centers[nb] };
@@ -759,8 +779,12 @@ impl Sim {
         for (i, d) in w.divisions.iter_mut().enumerate() {
             if d.state.out() { continue; }
             let sr = r.side(d.side);
-            d.vars.ammo = (d.vars.ammo + sr.ammo_per_day / 24.0).min(sr.max_ammo);
-            if d.params.mobility != Mobility::Foot { d.vars.fuel = (d.vars.fuel + sr.fuel_per_day / 24.0).min(sr.max_fuel); }
+            // окружённым подвоза нет; гарнизон крепости живёт со складов (на 30 суток боя — дольше сценария)
+            let supplied = d.params.kind == "garrison" || !d.cut_since.is_some_and(|s| tick.saturating_sub(s) as f64 >= r.pocket.encircle_hours);
+            if supplied {
+                d.vars.ammo = (d.vars.ammo + sr.ammo_per_day / 24.0).min(sr.max_ammo);
+                if d.params.mobility != Mobility::Foot { d.vars.fuel = (d.vars.fuel + sr.fuel_per_day / 24.0).min(sr.max_fuel); }
+            }
             if !in_battle[i] { d.vars.cohesion = (d.vars.cohesion + r.cohesion_recover).min(1.0); }
             if day_start { d.vars.march_h_today = 0.0; }
             if d.vars.personnel < r.destroyed_personnel {
@@ -778,6 +802,8 @@ impl Sim {
             if let Some(x) = w.control.get_mut(c) { *x = code; }
             for k in 0..8 { if let Some(nb) = t.neighbor(c, k) { w.control[nb] = code; } }
         }
+        self.apply_pockets(w, journal);
+        self.apply_breakout_losses(w);
         // объекты: чей район — по ближайшей дивизии в 2 км (параллельно, только чтение)
         let index = Index::build(w.divisions.iter().enumerate().filter(|(_, d)| !d.state.out()).map(|(i, d)| (i as u32, d.vars.pos)), 5.0);
         let divs = &w.divisions;
@@ -865,7 +891,7 @@ impl Sim {
 /// Численность наступающих, для поправки на размер (QJM).
 fn att_power_people(w: &World, atts: &[u32]) -> f64 { atts.iter().map(|&a| w.divisions[a as usize].vars.personnel).sum() }
 
-fn lose(d: &mut Division, frac: f64, cohesion_factor: f64, c: &crate::rules::Combat) {
+pub(crate) fn lose(d: &mut Division, frac: f64, cohesion_factor: f64, c: &crate::rules::Combat) {
     d.vars.personnel *= 1.0 - frac;
     d.vars.tanks *= 1.0 - (frac * c.tank_loss_factor).min(1.0);
     d.vars.guns *= 1.0 - (frac * c.gun_loss_factor).min(1.0);
