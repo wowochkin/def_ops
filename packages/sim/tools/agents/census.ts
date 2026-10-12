@@ -155,7 +155,8 @@ function addTsamoDiv(s: { key: string; file: string }): number {
     const id = aliasOf.get(p.formation);
     if (!id) continue;
     seen.add(id);
-    rows.get(id)!.pos.push({ date: p.date, set: s.key, own: true, approxKm: p.approxKm, fallback: !!p.fallback });
+    // положение по координатам армии (пункты не найдены) — не положение дивизии: учитывается только в статистике набора
+    rows.get(id)!.pos.push({ date: p.date, set: s.key, own: !p.fallback, approxKm: p.approxKm, fallback: !!p.fallback });
     rows.get(id)!.sets.add(s.key);
   }
   return seen.size;
@@ -266,7 +267,7 @@ const all = [...rows.values()];
 const best = (r: Row, k: Strength['kind']): Strength | undefined =>
   r.strength.filter((s) => s.kind === k).sort((a, b) => (REL_ORDER[b.reliability] - REL_ORDER[a.reliability]) || (a.date ?? '9').localeCompare(b.date ?? '9'))[0];
 const daysOwn = (r: Row) => new Set(r.pos.filter((p) => p.own && inOp(p.date)).map((p) => p.date));
-const daysAll = (r: Row) => new Set(r.pos.filter((p) => inOp(p.date)).map((p) => p.date));
+const daysAll = (r: Row) => new Set(r.pos.filter((p) => !p.fallback && inOp(p.date)).map((p) => p.date));
 const hasPers = (r: Row) => !!best(r, 'personnel');
 const hasAnyStr = (r: Row) => r.strength.length > 0;
 const nothing = (r: Row) => !hasAnyStr(r) && daysAll(r).size === 0 && r.mentions.length === 0;
