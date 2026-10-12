@@ -97,6 +97,23 @@ export function Report({ scen, onClose }: Props) {
 
           <section>
             <h3>Потери сторон</h3>
+            {(base.formationLosses?.length ?? 0) > 0 && (
+              <>
+                <table className="rep">
+                  <thead><tr><th>советское объединение</th><th>расчёт к {dm(base.formationLosses![0].until)}</th><th>источник</th><th>расчёт / источник</th><th>источник</th></tr></thead>
+                  <tbody>
+                    {base.formationLosses!.map((x) => (
+                      <tr key={x.formation}>
+                        <td>{x.name}</td><td className="num">{num(x.model)}</td><td className="num">{num(x.source)}</td>
+                        <td className="num"><span className={`ratio ${x.model / x.source < 0.67 || x.model / x.source > 1.5 ? 'off' : ''}`}>{(x.model / x.source).toFixed(2)}</span></td>
+                        <td className="d">{x.ref} ({x.reliability})</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="hint">Убитые, раненые и пропавшие. Отношение вне 0,67–1,5 выделено.</div>
+              </>
+            )}
             <table className="rep">
               <thead><tr><th>день (20:00)</th><th>советская сторона</th><th>немецкая сторона</th></tr></thead>
               <tbody>{base.losses.map((l) => <tr key={l.day}><td>{dm(l.day)}</td><td className="num">{num(l.su)}</td><td className="num">{num(l.de)}</td></tr>)}</tbody>

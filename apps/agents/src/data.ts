@@ -76,6 +76,8 @@ export interface RunSummary {
   sectors: { sector: string; period: string; n: number; agent: number; current: number; tuned: boolean }[];
   milestones: { id: string; title: string; date: string; calc: string | null }[];
   losses: { day: string; su: number; de: number }[];
+  /** Потери объединений в расчёте против источников к тому же сроку. */
+  formationLosses?: { formation: string; name: string; until: string; model: number; source: number; ref: string; reliability: string }[];
 }
 export async function loadSummary(tracePath: string): Promise<RunSummary> {
   return JSON.parse(await repoText(tracePath.replace(/trace\.json$/, 'summary.json'))) as RunSummary;

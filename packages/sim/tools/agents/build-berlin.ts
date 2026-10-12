@@ -430,6 +430,19 @@ events.push(...cityEvents);
 events.push({ id: 'breakout', title: 'Остатки 9 А вышли к 12 А у Беелица (прорыв из котла у Хальбе)', date: '1945-05-01', kind: 'meet',
   formations: ['de_9a', 'de_12a'], place: 'Elsholz', radiusKm: 10, source: 'LT_HALBE гл. 13 (A)', at: [12.963, 52.199] });
 
+// ---------- потери для сверки: советские армии и фронты к 1.05 20:00 ----------
+// Армии 1 БФ — таблица потерь боевых частей за 11.04–1.05 (ЦАМО ф. 233, оп. 2356, д. 739, л. 507; Русский архив,
+// т. 15 — berlin-1945-losses-daily.json, B); фронты — среднесуточные потери операции 16.04–8.05 по Кривошееву (A,
+// berlin-1945-oob.md) × 15,6 сут до 1.05 20:00 (оценка: потери по дням неравномерны, C).
+const lossDaily = rd<{ records: { date: string; side: string; formation: string | null; kind: string; values: Record<string, number> }[] }>('docs/sources/berlin-1945-losses-daily.json');
+const lossRefs: unknown[] = lossDaily.records
+  .filter((r) => r.date === '1945-04-11' && r.side === 'su' && r.kind === 'own_losses' && r.formation && hqs.has(r.formation) && r.values.total)
+  .map((r) => ({ formation: r.formation, until: '1945-05-01T20:00', value: r.values.total, source: 'ЦАМО ф. 233, оп. 2356, д. 739, л. 507 (11.04–1.05, боевые части)', reliability: 'B' }));
+const KRIVOSHEEV_DAILY: [string, number][] = [['su_1uf', 4949], ['su_2bf', 2570]];
+for (const [f, perDay] of KRIVOSHEEV_DAILY) {
+  lossRefs.push({ formation: f, until: '1945-05-01T20:00', value: Math.round(perDay * 15.6), source: `Кривошеев: ${perDay} в сутки за 16.04–8.05 × 15,6 сут (оценка)`, reliability: 'C' });
+}
+
 // ---------- запись ----------
 const usedHq = new Set<string>();
 const mark = (h: string | null) => { for (let x = h, n = 0; x && n < 6 && !usedHq.has(x); x = hqs.get(x)?.parent ?? null, n++) usedHq.add(x); };
@@ -455,7 +468,7 @@ writeFileSync(resolve(dir, 'berlin-1945.json'), JSON.stringify(scenario, null, 1
 writeFileSync(resolve(dir, 'berlin-1945.history.json'), JSON.stringify({
   scenario: scenario.id,
   note: `положения дивизий — из наборов переписи (только собственные); отбракованы положения дальше ${REJECT_KM} км от положения армии в тот же день (rejected); армии, корпуса и немецкие дивизии — история сценария нынешней модели (для сравнения с ней); «за день» — 20:00, утро 16.04 — 05:00 (МСК)`,
-  divisions: histDiv, armies: histArmy, events, rejected,
+  divisions: histDiv, armies: histArmy, events, rejected, losses: lossRefs,
 }, null, 1) + '\n');
 const su = out.filter((o) => o.side === 'su'), de = out.filter((o) => o.side === 'de');
 console.log(`соединений: советских ${su.length}, немецких ${de.length}; штабов ${hqList.length}; приказов ${orders.length} (пропущено видов ${skipped}, без получателей ${empty})`);

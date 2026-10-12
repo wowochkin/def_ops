@@ -42,6 +42,18 @@ struct History {
     armies: Vec<HistPos>,
     #[serde(default)]
     events: Vec<Milestone>,
+    #[serde(default)]
+    losses: Vec<LossRef>,
+}
+
+/// Потери объединения по источнику к сроку — для сверки (армии и фронты).
+#[derive(Deserialize)]
+struct LossRef {
+    formation: String,
+    until: String,
+    value: f64,
+    source: String,
+    reliability: String,
 }
 
 /// Веха операции: «выход к пункту» (reach — первая советская дивизия в радиусе) или «встреча» (meet — дивизии обоих
@@ -124,6 +136,7 @@ fn main() {
     let mut per_run: Vec<(f64, f64, f64)> = Vec::new(); // доля в допуске: дивизии, армии; время
     let mut per_run_out: Vec<f64> = Vec::new(); // доля в допуске вне настройки
     let mut daily_losses: Vec<(String, f64, f64)> = Vec::new(); // seed0: день, потери советской и немецкой стороны к 20:00
+    let mut loss_rows: Vec<serde_json::Value> = Vec::new(); // seed0: потери объединений против источников
     let mut first: Option<(Vec<Dev>, Vec<(Dev, Option<f64>)>, String, String, Vec<(String, String, String, Option<String>)>)> = None;
     // --seed N: первый прогон (отчёт и ход — по нему), дальше N+1…
     let seed0: u64 = arg(&args, "seed").and_then(|s| s.parse().ok()).unwrap_or(1);
@@ -165,6 +178,7 @@ fn main() {
         let mut alive: Vec<Vec<bool>> = Vec::new();
         let mut encircled: Vec<Vec<bool>> = Vec::new();
         let mut people: Vec<[f64; 2]> = Vec::new(); // численность сторон по часам
+        let mut pers: Vec<Vec<f64>> = Vec::new(); // численность дивизий по часам
         let frame = agents_core::trace::frame;
         let t0 = Instant::now();
         snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
@@ -172,6 +186,7 @@ fn main() {
         encircled.push(vec![false; n]);
         let sum_people = |sim: &agents_core::world::Sim| { let mut s = [0.0; 2]; for d in &sim.world.divisions { s[if d.side == Side::Su { 0 } else { 1 }] += d.vars.personnel; } s };
         people.push(sum_people(&sim));
+        pers.push(sim.world.divisions.iter().map(|d| d.vars.personnel).collect());
         if seed == seed0 { frames.push(frame(&sim)); }
         for _ in 0..meta.hours {
             sim.step();
@@ -179,6 +194,7 @@ fn main() {
             alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
             encircled.push(sim.world.divisions.iter().map(|d| sim.encircled(d, sim.world.tick)).collect());
             people.push(sum_people(&sim));
+            pers.push(sim.world.divisions.iter().map(|d| d.vars.personnel).collect());
             if seed == seed0 { frames.push(frame(&sim)); }
         }
         let secs = t0.elapsed().as_secs_f64();
@@ -260,6 +276,14 @@ fn main() {
                 }).flatten());
                 let when = hit.map(|t| agents_core::time::format_hours(start + t as i64));
                 miles.push((m.id.clone(), m.title.clone(), m.date.clone(), Some(when.unwrap_or_else(|| "не достигнуто".into()))));
+            }
+            // потери объединений к сроку источника
+            for lr in &hist.losses {
+                let Some(k) = hq_idx_of(&lr.formation) else { continue };
+                let Some(until) = parse_hours(&lr.until) else { continue };
+                let t = ((until - start).max(0) as usize).min(pers.len() - 1);
+                let model: f64 = (0..n).filter(|&i| chain(sim.world.divisions[i].hq as usize).contains(&k)).map(|i| (pers[0][i] - pers[t][i]).max(0.0)).sum();
+                loss_rows.push(serde_json::json!({ "formation": lr.formation, "name": sim.world.hqs[k].name, "until": lr.until, "model": model.round(), "source": lr.value, "ref": lr.source, "reliability": lr.reliability }));
             }
             // потери сторон к 20:00 каждого дня
             for (t, p) in people.iter().enumerate() {
@@ -381,6 +405,7 @@ fn main() {
         "outOfTuning": { "n": out_pairs.len(), "agent": inn_out(&|p| p.0), "current": inn_out(&|p| p.1) },
         "sectors": sectors,
         "milestones": miles.iter().map(|(id, title, date, when)| serde_json::json!({ "id": id, "title": title, "date": date, "calc": when })).collect::<Vec<_>>(),
+        "formationLosses": loss_rows,
         "losses": daily_losses.iter().map(|(d, su, de)| serde_json::json!({ "day": d, "su": su.round(), "de": de.round() })).collect::<Vec<_>>(),
     });
     std::fs::write(format!("{out_dir}/summary.json"), serde_json::to_string_pretty(&summary).unwrap()).expect("summary.json");

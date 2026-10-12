@@ -181,3 +181,4 @@ table.rep tr.tuned td { background: #fff4d6; }
 table.rep .d { color: #777; font-size: 11px; }
 table.rep .bar { display: inline-block; height: 8px; background: #3d6fb6; margin-right: 6px; vertical-align: 0; }
 table.rep .bar.cur { background: #9a9a9a; }
+table.rep .ratio.off { color: #b3261e; font-weight: 600; }
