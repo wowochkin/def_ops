@@ -9,6 +9,7 @@ pub mod route;
 pub mod rules;
 pub mod scenario;
 pub mod spatial;
+pub mod staff;
 pub mod theatre;
 pub mod time;
 pub mod trace;

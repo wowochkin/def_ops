@@ -102,6 +102,10 @@ pub struct Sim {
     pub script: Vec<ScriptOrder>,
     pub fires: Vec<ScriptFire>,
     pub withdrawals: Vec<ScriptWithdraw>,
+    /// Источник решений штабов: [советская сторона, немецкая].
+    pub sources: [crate::staff::Source; 2],
+    /// Направления «в тыл» дивизий по исходной обстановке (для штабов по доктрине).
+    pub rear_dir: std::sync::OnceLock<Vec<(XY, f64)>>,
     pub journal: Vec<Event>,
     /// Снимки по шагам для перемотки (если включено).
     pub history: Option<Vec<World>>,
@@ -140,7 +144,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), journal: Vec::new(), history: None };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), journal: Vec::new(), history: None };
         s.script.sort_by_key(|o| o.at);
         s
     }
@@ -169,10 +173,18 @@ impl Sim {
         let mut next = self.world.clone();
         let mut journal = Vec::new();
 
-        // 0. Приказы: штабы отдают по сценарию, до дивизий доходят с задержкой своего уровня.
+        // 0. Приказы: штабы отдают по сценарию или решают по доктрине (staff.rs); до дивизий приказы доходят с задержкой
+        // своего уровня. У стороны со штабами по доктрине приказы сценария не действуют.
+        let mut due: Vec<ScriptOrder> = Vec::new();
         while let Some(o) = self.script.first() {
             if o.at > tick { break; }
             let o = self.script.remove(0);
+            if self.sources[crate::staff::side_idx(next.hqs[o.hq as usize].side)] == crate::staff::Source::Script { due.push(o); }
+        }
+        let (doc_orders, doc_journal) = self.doctrine_orders(&next, tick);
+        due.extend(doc_orders);
+        journal.extend(doc_journal);
+        for o in due {
             let hq = &next.hqs[o.hq as usize];
             let sr = self.rules.side(hq.side);
             let delay = match hq.echelon { Echelon::Front => sr.delay_army, Echelon::Army => sr.delay_corps, Echelon::Corps => sr.delay_division };

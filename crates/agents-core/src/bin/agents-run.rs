@@ -2,7 +2,7 @@
 //!
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
 //!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10]
-//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals]
+//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--de doctrine] [--su doctrine]
 //!
 //! Мерило — как у нынешней модели: расстояние от расчётного положения до исторического, превышение над радиусом
 //! неопределённости источника; «в допуске» — превышение не больше допуска (10 км). Дивизии сверяются каждая со
@@ -99,6 +99,10 @@ fn main() {
         // вариант без отвода с первой позиции (отвод по источникам C — сравнение вариантов)
         if args.iter().any(|a| a == "--without-withdrawals") { sim.withdrawals.clear(); }
         if args.iter().any(|a| a == "--without-fires") { sim.fires.clear(); }
+        // источник решений штабов: --de doctrine / --su doctrine (по умолчанию — приказы сценария)
+        for (k, side) in [("su", 0usize), ("de", 1usize)] {
+            if arg(&args, k).as_deref() == Some("doctrine") { sim.sources[side] = agents_core::staff::Source::Doctrine; }
+        }
         let start = parse_hours(&meta.start).expect("start");
         let n = sim.world.divisions.len();
         // кадры: по часу на дивизию

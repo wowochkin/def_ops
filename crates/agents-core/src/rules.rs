@@ -99,8 +99,23 @@ impl Combat {
     }
 }
 
+/// Штабы по доктрине (staff.rs): правила — data/rules/agents-v0.json, раздел doctrine.
+#[derive(Clone, Debug)]
+pub struct Doctrine {
+    pub cycle_hours: f64,
+    pub counterattack_trigger: f64,
+    pub counterattack_ratio: f64,
+    pub withdraw_strength_share: f64,
+    pub withdraw_cohesion: f64,
+    pub hold_orders: bool,
+    pub block_depth_km: f64,
+    pub withdraw_step_km: f64,
+    pub penetration_depth_km: f64,
+}
+
 #[derive(Clone, Debug)]
 pub struct Rules {
+    pub doctrine: Doctrine,
     pub combat: Combat,
     pub su: SideRules,
     pub de: SideRules,
@@ -227,7 +242,19 @@ impl Rules {
                 }
             },
         };
+        let doctrine = Doctrine {
+            cycle_hours: num(&ag, "doctrine.de.cycleHours")?,
+            counterattack_trigger: num(&ag, "doctrine.de.counterattackTrigger")?,
+            counterattack_ratio: num(&ag, "doctrine.de.counterattackRatio")?,
+            withdraw_strength_share: num(&ag, "doctrine.de.withdrawStrengthShare")?,
+            withdraw_cohesion: num(&ag, "doctrine.de.withdrawCohesion")?,
+            hold_orders: ag.pointer("/doctrine/de/holdOrders/value").and_then(Value::as_bool).unwrap_or(false),
+            block_depth_km: num(&ag, "doctrine.de.blockDepthKm")?,
+            withdraw_step_km: num(&ag, "doctrine.de.withdrawStepKm")?,
+            penetration_depth_km: num(&ag, "doctrine.de.penetrationDepthKm")?,
+        };
         Ok(Rules {
+            doctrine,
             combat,
             su,
             de,
