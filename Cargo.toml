@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["crates/agents-core"]
+
+[profile.release]
+opt-level = 3
+codegen-units = 1

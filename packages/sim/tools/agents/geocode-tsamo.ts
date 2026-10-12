@@ -358,6 +358,8 @@ for (const file of GAZ_FILES) {
 const cache: Record<string, CacheEntry> = existsSync(cachePath) ? readJson<Record<string, CacheEntry>>(cachePath) : {};
 let requests = 0;
 let lastReq = 0;
+let netStopped = false;
+class NetStop extends Error {}
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 interface NomRes { lat: string; lon: string; display_name: string; name?: string; class: string; type: string }
 /** Запрос с окном вокруг координат армии (~40 км): Nominatim отдаёт только три лучших результата, и у частых названий
@@ -372,7 +374,13 @@ async function nominatim(q: string, armyLng: number, armyLat: number): Promise<N
   const dLng = 0.6, dLat = 0.37; // ≈40 км на широте 52°
   const w = Math.max(BOX.west, armyLng - dLng), e = Math.min(BOX.east, armyLng + dLng), so = Math.max(BOX.south, armyLat - dLat), n = Math.min(BOX.north, armyLat + dLat);
   u.searchParams.set('viewbox', `${w},${n},${e},${so}`);
-  const res = await fetch(u, { headers: { 'User-Agent': 'def_ops-geocode-tsamo/1.0 (wladimir.abramow@gmail.com)', 'Accept-Language': 'de' } });
+  const res = await fetch(u, { headers: { 'User-Agent': 'def_ops-geocode-tsamo/1.0', 'Accept-Language': 'de' } });
+  if (res.status === 429 || res.status >= 500) {
+    // предел запросов или сбой сервиса: дальше не спрашивать, а «не найдено» в кэш не писать
+    console.error(`Nominatim ${res.status} для «${q}»: запросы остановлены до следующего прогона`);
+    netStopped = true;
+    throw new NetStop();
+  }
   if (!res.ok) { console.error(`Nominatim ${res.status} для «${q}»`); return []; }
   return (await res.json()) as NomRes[];
 }
@@ -411,14 +419,15 @@ async function geocode(name: string, armyLng: number, armyLat: number, gramCase?
       return { lng: h.lng, lat: h.lat, rel, src: `gazetteer:${h.file}` };
     }
   }
-  if (noNet || requests >= maxRequests) return null;
+  if (noNet || netStopped || requests >= maxRequests) return null;
   // Nominatim: не больше двух вариантов на пункт (основной, затем с одним отклонением)
   const tried: string[] = c?.tried ?? [];
   for (const v of variants.slice(0, 2)) {
     if (tried.includes(v) && !retry) continue;
     if (requests >= maxRequests) break;
+    let res: NomRes[];
+    try { res = await nominatim(v, armyLng, armyLat); } catch (e) { if (e instanceof NetStop) return null; throw e; }
     tried.push(v);
-    const res = await nominatim(v, armyLng, armyLat);
     const cands = res.filter(isPlace).map((r) => ({ r, lng: Number(r.lon), lat: Number(r.lat) })).filter((x) => ok(x.lng, x.lat))
       .sort((a, b) => distKm(a.lng, a.lat, armyLng, armyLat) - distKm(b.lng, b.lat, armyLng, armyLat));
     if (!cands.length) { if (res.length) stats.tooFar++; continue; }

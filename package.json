@@ -29,6 +29,8 @@
     "theatre:sample": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_sample.ts",
     "sim:norms": "tsx packages/sim/tools/run/norms.ts",
     "sim:census": "tsx packages/sim/tools/agents/census.ts",
+    "agents:test": "cargo test --release -p agents-core",
+    "agents:bench": "cargo run --release -q --bin agents-bench --",
     "sim:geocode-tsamo": "tsx packages/sim/tools/agents/geocode-tsamo.ts",
     "sim:calibrate": "tsx packages/sim/tools/run/calibrate.ts",
     "sim:sensitivity": "tsx packages/sim/tools/run/sensitivity.ts",

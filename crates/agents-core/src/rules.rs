@@ -1,0 +1,179 @@
+//! Правила ядра. Источники — те же файлы, что у нынешней модели: профили сторон (`data/profiles`), откалиброванные
+//! правила армий (`data/rules/ww2-berlin-cal.json`) и черновик правил агентов (`data/rules/agents-v0.json`, у каждого
+//! числа — источник или пометка «допущение»).
+
+use crate::model::{Mobility, Side, SizeClass};
+use crate::theatre::TERRAIN;
+use serde_json::Value;
+
+/// Кусочно-линейная зависимость по точкам [x, y], за краями — крайние значения.
+#[derive(Clone, Debug)]
+pub struct Curve(pub Vec<(f64, f64)>);
+
+impl Curve {
+    pub fn at(&self, x: f64) -> f64 {
+        let p = &self.0;
+        if p.is_empty() { return 0.0; }
+        if x <= p[0].0 { return p[0].1; }
+        for w in p.windows(2) {
+            if x <= w[1].0 { let t = (x - w[0].0) / (w[1].0 - w[0].0); return w[0].1 + t * (w[1].1 - w[0].1); }
+        }
+        p[p.len() - 1].1
+    }
+}
+
+/// Действия, по которым считается расход (как в профилях сторон).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Activity { Attack = 0, Defend = 1, March = 2, Withdraw = 3, Reserve = 4 }
+const ACTIVITIES: [&str; 5] = ["attack", "defend", "march", "withdraw", "reserve"];
+
+#[derive(Clone, Debug)]
+pub struct SideRules {
+    /// Доля дорожной скорости вне дорог: [подвижность][класс местности].
+    pub off_road: [[f64; 6]; 3],
+    /// Расход в сутки: [действие] → (боекомплекты, заправки).
+    pub consumption: [(f64, f64); 5],
+    /// Задержка доведения приказа штабом уровня, ч: армия, корпус, дивизия.
+    pub delay_army: f64,
+    pub delay_corps: f64,
+    pub delay_division: f64,
+    /// Подвоз в сутки и предельные запасы.
+    pub ammo_per_day: f64,
+    pub fuel_per_day: f64,
+    pub max_ammo: f64,
+    pub max_fuel: f64,
+    pub weights: (f64, f64, f64),
+}
+
+#[derive(Clone, Debug)]
+pub struct Rules {
+    pub su: SideRules,
+    pub de: SideRules,
+    // марш
+    pub march_kmh: [f64; 3],
+    pub night_factor: f64,
+    pub march_hours_normal: f64,
+    pub march_hours_forced: f64,
+    pub column_km: [f64; 3],
+    pub deploy_hours: [f64; 3],
+    pub frontage_km: [f64; 3],
+    pub contact_km: f64,
+    // бой (из правил армий)
+    pub advance: Curve,
+    pub attacker_loss: Curve,
+    pub defender_loss: Curve,
+    pub defense_terrain: [f64; 6],
+    pub prepared: f64,
+    pub prepare_hours: f64,
+    pub fortification_per_level: f64,
+    pub river_cross_hours: f64,
+    pub ammo_short: f64,
+    pub fuel_out: f64,
+    pub fatigue_effect: f64,
+    pub fatigue_gain: (f64, f64, f64),
+    pub noise: f64,
+    // пороги агента
+    pub stop_strength_share: f64,
+    pub stop_ammo: f64,
+    pub rout_cohesion: f64,
+    pub cohesion_loss_factor: f64,
+    pub cohesion_recover: f64,
+    pub destroyed_personnel: f64,
+}
+
+fn num(v: &Value, path: &str) -> Result<f64, String> {
+    let mut cur = v;
+    for k in path.split('.') { cur = cur.get(k).ok_or_else(|| format!("правила: нет поля {path}"))?; }
+    if let Some(x) = cur.as_f64() { return Ok(x); }
+    cur.get("value").and_then(Value::as_f64).ok_or_else(|| format!("правила: {path} — не число"))
+}
+
+fn curve(v: &Value, key: &str) -> Result<Curve, String> {
+    let arr = v.get(key).and_then(Value::as_array).ok_or_else(|| format!("правила: нет кривой {key}"))?;
+    Ok(Curve(arr.iter().filter_map(|p| Some((p.get(0)?.as_f64()?, p.get(1)?.as_f64()?))).collect()))
+}
+
+fn read(path: &str) -> Result<Value, String> {
+    let t = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+    serde_json::from_str(&t).map_err(|e| format!("{path}: {e}"))
+}
+
+fn side_rules(p: &Value) -> Result<SideRules, String> {
+    let mob = ["foot", "motor", "tracked"];
+    let mut off_road = [[0.0; 6]; 3];
+    for (m, name) in mob.iter().enumerate() {
+        let road = num(p, &format!("road.{name}"))?;
+        for (t, cls) in TERRAIN.iter().enumerate() { off_road[m][t] = num(p, &format!("offRoad.{name}.{cls}"))? / road; }
+    }
+    let mut consumption = [(0.0, 0.0); 5];
+    for (i, a) in ACTIVITIES.iter().enumerate() { consumption[i] = (num(p, &format!("consumption.{a}.ammo"))?, num(p, &format!("consumption.{a}.fuel"))?); }
+    Ok(SideRules {
+        off_road,
+        consumption,
+        delay_army: num(p, "orderDelayHours.army")?,
+        delay_corps: num(p, "orderDelayHours.corps")?,
+        delay_division: num(p, "orderDelayHours.division")?,
+        ammo_per_day: num(p, "supply.ammoPerDay")?,
+        fuel_per_day: num(p, "supply.fuelPerDay")?,
+        max_ammo: num(p, "supply.maxAmmo")?,
+        max_fuel: num(p, "supply.maxFuel")?,
+        weights: (num(p, "weights.personnel")?, num(p, "weights.tanks")?, num(p, "weights.guns")?),
+    })
+}
+
+impl Rules {
+    /// `data` — папка `packages/sim/data`.
+    pub fn load(data: &str) -> Result<Rules, String> {
+        let su = side_rules(&read(&format!("{data}/profiles/rkka-1945.json"))?)?;
+        let de = side_rules(&read(&format!("{data}/profiles/wehrmacht-1945.json"))?)?;
+        let cal = read(&format!("{data}/rules/ww2-berlin-cal.json"))?;
+        let ag = read(&format!("{data}/rules/agents-v0.json"))?;
+        let sz = |k: &str| -> Result<[f64; 3], String> {
+            Ok([num(&ag, &format!("{k}.rifle"))?, num(&ag, &format!("{k}.tank"))?, num(&ag, &format!("{k}.other"))?])
+        };
+        let mut defense_terrain = [1.0; 6];
+        for (t, cls) in TERRAIN.iter().enumerate() { defense_terrain[t] = num(&cal, &format!("defense.terrain.{cls}"))?; }
+        Ok(Rules {
+            su,
+            de,
+            march_kmh: [num(&ag, "march.kmh.foot")?, num(&ag, "march.kmh.motor")?, num(&ag, "march.kmh.tracked")?],
+            night_factor: num(&ag, "march.nightFactor")?,
+            march_hours_normal: num(&ag, "march.hoursPerDay.normal")?,
+            march_hours_forced: num(&ag, "march.hoursPerDay.forced")?,
+            column_km: sz("march.columnKm")?,
+            deploy_hours: sz("deployHours")?,
+            frontage_km: sz("frontageKm")?,
+            contact_km: num(&ag, "contactKm")?,
+            advance: curve(&cal, "advance")?,
+            attacker_loss: curve(&cal, "attackerLoss")?,
+            defender_loss: curve(&cal, "defenderLoss")?,
+            defense_terrain,
+            prepared: num(&cal, "defense.prepared")?,
+            prepare_hours: num(&cal, "defense.prepareHours")?,
+            fortification_per_level: num(&cal, "defense.fortificationPerLevel")?,
+            river_cross_hours: num(&cal, "riverCrossHours")?,
+            ammo_short: num(&cal, "ammoShort")?,
+            fuel_out: num(&cal, "fuelOut")?,
+            fatigue_effect: num(&cal, "fatigueEffect")?,
+            fatigue_gain: (num(&cal, "fatigueGain.combat")?, num(&cal, "fatigueGain.march")?, num(&cal, "fatigueGain.rest")?),
+            noise: num(&cal, "noise")?,
+            stop_strength_share: num(&ag, "attackStop.strengthShare")?,
+            stop_ammo: num(&ag, "attackStop.ammo")?,
+            rout_cohesion: num(&ag, "routThreshold.cohesion")?,
+            cohesion_loss_factor: num(&ag, "cohesion.combatLossFactor")?,
+            cohesion_recover: num(&ag, "cohesion.recoverPerHour")?,
+            destroyed_personnel: num(&ag, "destroyedPersonnel")?,
+        })
+    }
+
+    pub fn side(&self, s: Side) -> &SideRules { match s { Side::Su => &self.su, Side::De => &self.de } }
+
+    /// Скорость, км/ч, в клетке с дорогой `road` и местностью `terrain`, днём или ночью.
+    #[inline]
+    pub fn speed_kmh(&self, side: Side, mob: Mobility, road: u8, terrain: u8, night: bool) -> f64 {
+        let base = self.march_kmh[mob as usize] * if night { self.night_factor } else { 1.0 };
+        if road > 0 { base } else { base * self.side(side).off_road[mob as usize][terrain as usize] }
+    }
+
+    pub fn size(&self, arr: &[f64; 3], c: SizeClass) -> f64 { arr[c as usize] }
+}
