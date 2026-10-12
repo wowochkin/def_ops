@@ -27,12 +27,10 @@ fn route_across_oder_to_berlin() {
     assert!(path.len() > 50);
     // около 90 км по прямой: пешком по дорогам при 4 км/ч — не меньше суток чистого движения
     assert!(hours > 20.0 && hours < 80.0, "{hours}");
-    // без мостов технике через Одер на участке фронта хода нет (обход возможен только через побережье:
-    // проливы Свина, Дзивна и Пенештром в растре 1 км — суша, известный пробел данных театра), пехота форсирует
+    // без мостов технике через Одер хода нет (в том числе в обход через побережье: проливы Свина, Дзивна и
+    // Пенештром — большие реки театра), пехота форсирует с задержкой
     let none_open = |_: u16| false;
-    if let Some((p, _)) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &none_open) {
-        assert!(p.iter().any(|&c| t.cell_lnglat(c as usize)[1] > 53.7), "технике без мостов нашёлся путь через Одер на участке фронта");
-    }
+    assert!(route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &none_open).is_none());
     let (_, foot_h) = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &none_open).expect("пехота форсирует");
     assert!(foot_h >= hours);
 }
