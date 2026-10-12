@@ -93,6 +93,8 @@ pub struct Artillery {
     pub norm_duration_min: f64,
     /// Глубина огня за передний край (сверх дистанции соприкосновения), км.
     pub depth_km: f64,
+    /// Падение организованности на долю потерь от огня.
+    pub cohesion_factor: f64,
 }
 
 impl Combat {
@@ -162,6 +164,8 @@ pub struct Rules {
     pub column_km: [f64; 3],
     /// Темп продвижения по территории противника вне боя, км/сут: [подвижность].
     pub enemy_territory_km_day: [f64; 3],
+    /// Приказы на начало сценария действуют сразу.
+    pub start_orders_delivered: bool,
     pub deploy_hours: [f64; 3],
     pub frontage_km: [f64; 3],
     pub contact_km: f64,
@@ -281,6 +285,7 @@ impl Rules {
                     norm_density: num(&ag, "combat.artillery.normDensityPerKm")?,
                     norm_duration_min: num(&ag, "combat.artillery.normDurationMin")?,
                     depth_km: num(&ag, "combat.artillery.depthKm")?,
+                    cohesion_factor: num(&ag, "combat.artillery.cohesionFactor")?,
                 }
             },
         };
@@ -324,6 +329,7 @@ impl Rules {
             march_hours_normal: num(&ag, "march.hoursPerDay.normal")?,
             march_hours_forced: num(&ag, "march.hoursPerDay.forced")?,
             column_km: sz("march.columnKm")?,
+            start_orders_delivered: num(&ag, "orders.startDelivered")? > 0.0,
             enemy_territory_km_day: [num(&ag, "march.enemyTerritoryKmDay.foot")?, num(&ag, "march.enemyTerritoryKmDay.motor")?, num(&ag, "march.enemyTerritoryKmDay.tracked")?],
             deploy_hours: sz("deployHours")?,
             frontage_km: sz("frontageKm")?,

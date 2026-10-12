@@ -234,7 +234,9 @@ impl Sim {
                     Some(c) => XY::new(c.x + o.offset.x, c.y + o.offset.y),
                     None => o.target.unwrap_or(next.divisions[d as usize].vars.pos),
                 };
-                let order = Order { kind: o.kind, target, forced: o.forced, issued: o.at, arrives: o.at + delay.round() as u32, from: o.hq, note: o.note.clone() };
+                // приказы на начало сценария отданы накануне и уже дошли до дивизий (кроме атаки — у неё свой час «Ч»)
+                let arrives = if o.at == 0 && o.kind != OrderKind::Attack && self.rules.start_orders_delivered { 0 } else { o.at + delay.round() as u32 };
+                let order = Order { kind: o.kind, target, forced: o.forced, issued: o.at, arrives, from: o.hq, note: o.note.clone() };
                 next.in_transit.push((d, order));
             }
         }
@@ -831,7 +833,7 @@ impl Sim {
             let d = &mut w.divisions[j];
             let pos = d.vars.positions.unwrap_or(a.positions);
             let loss = (0..3).map(|p| pos[p] * a.loss_by_position[p]).sum::<f64>() * k;
-            lose(d, loss, self.rules.cohesion_loss_factor, &self.rules.combat);
+            lose(d, loss, a.cohesion_factor, &self.rules.combat);
             parts[fi].push(format!("{} — {:.1} %", d.name, loss * 100.0));
             journal.push(Event { tick, agent: j as u32, text: format!("под артподготовкой ({}, {:.0} ств./км, {:.0} мин): потери {:.1} %{}", w.hqs[f.hq as usize].name, f.density_per_km, f.duration_min, loss * 100.0,
                 if d.vars.positions.is_some() { ", первая позиция отведена" } else { "" }) });
