@@ -32,7 +32,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFENSE_ZONES, markDeployed, repeatedFires } from './soviet-fires';
-import { fixFrankfurt, reinforcementOrders, reinforcements } from './german-forces';
+import { fixFrankfurt, reinforcementOrders, reinforcements, reinforcements4pza } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8')) as T;
@@ -292,6 +292,7 @@ for (const f of ts.formations.filter((x) => x.side === 'de' && x.echelon === 'co
 // немецкие силы вне дивизий (german-forces.ts): крепость Франкфурт по источникам, части усиления корпусов 9 А
 fixFrankfurt(out);
 out.push(...reinforcements(out, (id) => hqs.get(id)?.name ?? id));
+out.push(...reinforcements4pza(out, new Map([['de_v', ['de_v']], ['de_pzk_gd', ['de_pzk_gd']], ['de_4pza', ['de_4pza']]]), (id) => hqs.get(id)?.name ?? id));
 const agentIds = new Set(out.map((o) => o.id));
 
 // ---------- приказы ----------
@@ -335,6 +336,15 @@ for (const o of ts.orders) {
 }
 
 orders.push(...reinforcementOrders(out));
+// приказ «держаться» соединению (крепость) сильнее общего «оборонять» того же часа: иначе он затирается следующим
+{
+  type O = { at: unknown; to: string[]; kind: string };
+  const holds = new Set((orders as O[]).filter((o) => o.kind === 'hold').map((o) => `${o.at}|${o.to[0]}`));
+  for (let k = orders.length - 1; k >= 0; k--) {
+    const o = orders[k] as O;
+    if (o.kind === 'defend' && o.to.length === 1 && holds.has(`${o.at}|${o.to[0]}`)) orders.splice(k, 1);
+  }
+}
 
 // ---------- резервы фронтов без задач ----------
 // Фронтовые корпуса и дивизии, которым в сценарии нынешней модели задач нет, раз в сутки выдвигаются за своим

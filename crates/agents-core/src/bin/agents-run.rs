@@ -45,7 +45,7 @@ struct History {
 }
 
 /// Веха операции: «выход к пункту» (reach — первая советская дивизия в радиусе) или «встреча» (meet — дивизии обоих
-/// объединений в радиусе) или «отсечение» (cut — окружено не меньше 2/3 действующих дивизий названных соединений).
+/// объединений в радиусе; у вех «взят» — и ни одной немецкой) или «отсечение» (cut — окружено не меньше 2/3 действующих дивизий названных соединений).
 #[derive(Deserialize)]
 struct Milestone {
     #[serde(default)]
@@ -59,6 +59,9 @@ struct Milestone {
     radius_km: Option<f64>,
     #[serde(default)]
     formations: Vec<String>,
+    /// «Взят»: в радиусе есть советская дивизия и нет немецкой.
+    #[serde(default)]
+    control: bool,
 }
 
 #[derive(Deserialize)]
@@ -242,7 +245,8 @@ fn main() {
                 let rad = m.radius_km.unwrap_or(8.0);
                 let near = |t: usize, i: usize| alive[t][i] && snaps[t][i].dist(at) <= rad;
                 let hit = (1..snaps.len()).find(|&t| match m.kind.as_str() {
-                    "reach" => (0..n).any(|i| sim.world.divisions[i].side == Side::Su && near(t, i)),
+                    "reach" => (0..n).any(|i| sim.world.divisions[i].side == Side::Su && near(t, i))
+                        && !(m.control && (0..n).any(|i| sim.world.divisions[i].side == Side::De && near(t, i))),
                     "meet" => m.formations.iter().all(|f| hq_idx_of(f).is_some_and(|k| (0..n).any(|i| near(t, i) && chain(sim.world.divisions[i].hq as usize).contains(&k)))),
                     _ => false,
                 }).or_else(|| (m.kind == "cut").then(|| {

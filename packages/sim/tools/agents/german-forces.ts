@@ -70,6 +70,43 @@ export function reinforcements(out: Agent[], hqName: (id: string) => string): Ag
   return [...res, ...hj];
 }
 
+/**
+ * Части вне дивизий 4 ТА. Перед всем 1 УФ (410 км) на 15.04 — 78 отдельных батальонов (47 фольксштурма), 17 разных
+ * полков, 4 бригады штурмовых орудий и 3 истребительно-противотанковые, 6 артполков, 9 артдивизионов, 7 ПТ и 7 зенитных
+ * дивизионов (советская справка, РА-15, док. 13, B). В театр попадает полоса 4 ТА от Губена до Гёрлица — около 90 км,
+ * доля 0,22 (C). Численность (C, допущения): батальон 400 (фольксштурм — 300–700 в батальоне), полк 1 200, бригада
+ * 600, артполк 1 000, дивизион 300 — всего ≈ 69 тыс., в театре ≈ 15 тыс.; орудия — полк 36, дивизион 12 (≈ 490,
+ * в театре ≈ 110); бронетехника — по 20 исправных машин в бригаде (≈ 140, в театре ≈ 30). Раскладка по корпусам —
+ * пропорционально их дивизиям, положение — вторая позиция в 8 км за ними, как у 9 А.
+ */
+const FOURTH_PZA_SHARE = 90 / 410;
+const FOURTH_PZA = { personnel: (78 * 400 + 17 * 1200 + 7 * 600 + 6 * 1000 + 23 * 300) * FOURTH_PZA_SHARE, guns: (6 * 36 + 23 * 12) * FOURTH_PZA_SHARE, tanks: 7 * 20 * FOURTH_PZA_SHARE };
+export function reinforcements4pza(out: Agent[], groups: Map<string, string[]>, hqName: (id: string) => string): Agent[] {
+  const all = [...groups.values()].flat();
+  const units = out.filter((o) => o.side === 'de' && all.includes(o.hq));
+  const total = units.reduce((s, o) => s + o.personnel, 0) || 1;
+  const res: Agent[] = [];
+  for (const [hq, members] of groups) {
+    const cd = units.filter((o) => members.includes(o.hq));
+    if (!cd.length) continue;
+    const share = cd.reduce((s, o) => s + o.personnel, 0) / total;
+    const c = cd.reduce<LngLat>((s, o) => [s[0] + o.pos[0] / cd.length, s[1] + o.pos[1] / cd.length], [0, 0]);
+    // тыл 4 ТА — на запад (фронт по Нейсе на восток)
+    const pos: LngLat = [+(c[0] - 8 / KX).toFixed(4), +c[1].toFixed(4)];
+    res.push({
+      id: `${hq}_reinf`, name: `части усиления ${hqName(hq)} (вне дивизий)`, side: 'de', hq, kind: 'reinf',
+      mobility: 'foot', size: 'other', quality: 0.7,
+      personnel: Math.round(FOURTH_PZA.personnel * share), tanks: Math.round(FOURTH_PZA.tanks * share), guns: Math.round(FOURTH_PZA.guns * share), ammo: 1, fuel: 1, pos,
+      notes: [
+        'положение: вторая позиция в 8 км западнее дивизий корпуса (как у 9 А; допущение)',
+        'численность, орудия, бронетехника: части вне дивизий перед 1 УФ на 15.04 (РА-15, док. 13, B) × доля полосы 4 ТА в театре 0,22, батальон 400, полк 1 200 (C)',
+        'качество 0,7 — допущение (фольксштурм и сборные части)',
+      ],
+    });
+  }
+  return res;
+}
+
 /** Приказ частям усиления и гитлерюгенду — оборонять вторую позицию с начала операции. */
 export function reinforcementOrders(agents: Agent[]): { at: number; hq: string; to: string[]; kind: string; target: LngLat; note: string }[] {
   return agents.filter((a) => a.kind === 'reinf' || a.id === 'de_hj_pznk')

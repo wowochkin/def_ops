@@ -34,7 +34,7 @@ export interface LlmRun { url: string; model: string; reasoning: Reasoning; maxT
 export interface RunOptions { seed: number; de: StaffSource; su?: 'script' | 'doctrine'; llm: LlmRun | null; withoutFires?: boolean; withoutWithdrawals?: boolean; traceFile?: string }
 export interface HistPos { formation: string; time: string; at: LngLat; approxKm: number; set?: string; reliability?: string | null }
 /** Веха операции: выход к пункту (reach), встреча (meet), отсечение (cut — расчётом не проверяется). */
-export interface Milestone { id: string; title: string; date: string; kind: 'reach' | 'meet' | 'cut' | string; at: LngLat | null; radiusKm?: number; formations?: string[]; source?: string }
+export interface Milestone { id: string; title: string; date: string; kind: 'reach' | 'meet' | 'cut' | string; at: LngLat | null; radiusKm?: number; formations?: string[]; source?: string; control?: boolean }
 export interface History { divisions: HistPos[]; armies: HistPos[]; events?: Milestone[] }
 export interface RunData { trace: Trace; history: History; theatre: TheatreData; live: boolean }
 
@@ -321,7 +321,8 @@ export function milestoneHour(trace: Trace, m: Milestone): number | null {
     const f = trace.frames[h];
     const near = (i: number) => live(stateGroup(f[i][2])) && km([f[i][0], f[i][1]], m.at!) <= r;
     const ok = m.kind === 'reach'
-      ? trace.divisions.some((d, i) => d.side === 'su' && near(i))
+      // «взят» (control): в радиусе есть советская дивизия и нет немецкой — как в agents-run
+      ? trace.divisions.some((d, i) => d.side === 'su' && near(i)) && !(m.control && trace.divisions.some((d, i) => d.side === 'de' && near(i)))
       : (m.formations ?? []).every((fm) => trace.divisions.some((d, i) => under(d.hq, fm) && near(i)));
     if (ok) return h;
   }
