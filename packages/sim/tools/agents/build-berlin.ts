@@ -31,7 +31,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { repeatedFires } from './soviet-fires';
+import { markDeployed, repeatedFires } from './soviet-fires';
 import { fixFrankfurt, reinforcementOrders, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -407,6 +407,9 @@ const hqList = [...hqs.values()].filter((h) => usedHq.has(h.id)).map((h) => ({
   id: h.id, name: h.name, side: h.side, echelon: h.echelon, parent: h.parent && usedHq.has(h.parent) ? h.parent : null,
   pos: r4(hqPos(h.id) ?? center(out.filter((o) => o.hq === h.id).map((o) => o.pos))),
 }));
+// развёрнуты к началу в исходном районе (soviet-fires.ts, markDeployed)
+const deployedN = markDeployed(out, orders as { at: unknown; to: string[]; kind: string }[]);
+console.log(`развёрнуты к началу: ${deployedN}`);
 const scenario = {
   id: 'agents-berlin-1945',
   name: 'Берлинская операция, 16.04–2.05.1945 (агенты-дивизии)',

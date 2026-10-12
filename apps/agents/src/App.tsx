@@ -60,7 +60,7 @@ export function App() {
     setBusy(true);
     setProgress(null);
     setLive([]);
-    const opts = { seed, de: settings.de, llm: settings.staffModel ? llmRun(settings) : null };
+    const opts = { seed, de: settings.de, su: settings.su, llm: settings.staffModel ? llmRun(settings) : null };
     loadRun(scenarioById(scen).path, opts).then((d) => {
       setData(d);
       if (q.get('h')) setHour(Number(q.get('h')));
@@ -78,7 +78,7 @@ export function App() {
     const v = scenarioById(scen).variants.find((x) => x.id === cmpId);
     if (!v) return;
     setCmpMsg('расчёт варианта…');
-    loadRun(scenarioById(scen).path, { seed, de: v.de ?? settings.de, llm: settings.staffModel ? llmRun(settings) : null, withoutFires: v.withoutFires, withoutWithdrawals: v.withoutWithdrawals, traceFile: v.trace })
+    loadRun(scenarioById(scen).path, { seed, de: v.de ?? settings.de, su: v.su ?? settings.su, llm: settings.staffModel ? llmRun(settings) : null, withoutFires: v.withoutFires, withoutWithdrawals: v.withoutWithdrawals, traceFile: v.trace })
       .then((d) => { setCmp(d); setCmpMsg(null); })
       .catch(() => setCmpMsg(isTauri() ? 'вариант не посчитан' : 'нет готового хода варианта — npm run agents:berlin:variants'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,7 +123,7 @@ export function App() {
       <header>
         <select className="scen" value={scen} onChange={(e) => pickScen(e.target.value)} disabled={busy} title="Сценарий">{SCENARIOS.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
         <span className="muted">{trace.divisions.length} дивизий · {trace.hours} ч · прогон {trace.seed}{data.live ? '' : ' · из evals-out (браузер)'}</span>
-        <span className="muted">· немецкие штабы: {({ script: 'исторические приказы', doctrine: 'по доктрине', llm: `модель ${trace.llm?.model ?? ''}` } as Record<string, string>)[trace.sources?.[1] ?? 'script']}</span>
+        <span className="muted">· штабы: советские — {trace.sources?.[0] === 'doctrine' ? 'по доктрине' : 'исторические приказы'}, немецкие — {({ script: 'исторические приказы', doctrine: 'по доктрине', llm: `модель ${trace.llm?.model ?? ''}` } as Record<string, string>)[trace.sources?.[1] ?? 'script']}</span>
         <span className="spacer" />
         <label className="cmp">сравнить с <select value={cmpId} onChange={(e) => setCmpId(e.target.value)}><option value="">—</option>{scenarioById(scen).variants.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}</select></label>
         {cmpMsg && <span className="progress">{cmpMsg}</span>}

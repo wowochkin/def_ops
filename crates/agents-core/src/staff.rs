@@ -35,9 +35,9 @@ struct Assess {
 }
 
 /// Решение штаба: приказы и пояснения к ним.
-struct Decision {
-    orders: Vec<ScriptOrder>,
-    why: Vec<String>,
+pub(crate) struct Decision {
+    pub(crate) orders: Vec<ScriptOrder>,
+    pub(crate) why: Vec<String>,
 }
 
 impl Sim {
@@ -51,11 +51,17 @@ impl Sim {
         let mut decided: Vec<(usize, Decision, String)> = Vec::new();
         // запросы к модели: ведущий штаб (корпус или армия при объединении) и его корпуса с дивизиями
         let mut asks: Vec<(usize, Vec<(usize, Vec<usize>)>)> = Vec::new();
+        let su_cycle = self.rules.doctrine_su.cycle_hours.max(1.0) as u32;
         for (h, hq) in w.hqs.iter().enumerate() {
             let src = self.sources[side_idx(hq.side)];
             if src == Source::Script { continue; }
             let subs = subs_of(h);
             if subs.is_empty() { continue; }
+            // советская сторона — по своей доктрине (staff_su.rs); на модели советские штабы пока не решают
+            if hq.side == Side::Su {
+                if tick % su_cycle == 0 { decided.push((h, self.su_doctrine_hq(w, tick, h, &subs), "по доктрине".into())); }
+                continue;
+            }
             match (src, &self.llm) {
                 (Source::Llm, Some(cfg)) => {
                     let lead = if cfg.by_army { army_of(w, h) } else { h };
@@ -123,7 +129,7 @@ impl Sim {
     }
 
     /// Приказ дивизии, если он отличается от действующего.
-    fn order_for(&self, w: &World, tick: u32, h: usize, i: usize, kind: OrderKind, target: XY, note: String, src: &str, dec: &mut Decision) {
+    pub(crate) fn order_for(&self, w: &World, tick: u32, h: usize, i: usize, kind: OrderKind, target: XY, note: String, src: &str, dec: &mut Decision) {
         let d = &w.divisions[i];
         if let Some(o) = &d.order { if o.kind == kind && o.target.dist(target) < 2.0 { return; } }
         dec.why.push(format!("{} — {}: {}", d.name, kind.label(), note));

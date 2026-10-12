@@ -49,6 +49,9 @@ pub struct DivisionIn {
     /// Ввод в операцию (время сценария); нет — с начала.
     #[serde(default, rename = "enterAt")]
     pub enter_at: Option<String>,
+    /// К началу уже развёрнута в исходном районе для наступления (развёртывание не нужно).
+    #[serde(default)]
+    pub deployed: bool,
 }
 fn one() -> f64 { 1.0 }
 
@@ -173,6 +176,7 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
         let params = Params { kind: d.kind.clone(), mobility: d.mobility, size: d.size, quality: d.quality };
         let mut div = new_division(d.id.clone(), d.name.clone(), d.side, hq, params, d.personnel, d.tanks, d.guns, d.ammo, d.fuel, theatre.proj.to_xy(d.pos), &rules);
         div.note = d.note.clone();
+        if d.deployed { div.state = State::Deploy { left_h: 0.0 }; }
         if let Some(t) = &d.enter_at {
             let h = (parse_hours(t).ok_or("ввод: неверная дата")? - start).max(0) as u32;
             if h > 0 { div.enter = h; div.state = State::Pending; }

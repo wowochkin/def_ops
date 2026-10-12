@@ -1,0 +1,1193 @@
+{
+ "meta": {
+  "title": "Зееловские высоты, 16–20.04.1945: потери, огонь и численность по документам ЦАМО",
+  "period": "1945-04-16/1945-04-20",
+  "notes": "Мерило для калибровки потерь обеих сторон. kind: own_losses — свои потери по донесению армии; enemy_claimed — потери противника по советскому донесению (советская оценка, обычно завышена); fire — артподготовка и расход боеприпасов; strength — численность (у немцев — оценка советской разведки, а не Kampfstärke); nondivisional — немецкие части вне дивизий, названные в советских документах. Если запись за несколько суток, date — последний день периода, в поле period — весь период, и это не суточная цифра. В values — только числа из документа; суммы агента не вносились. Время — по документу (московское). Ссылки ЦАМО: фонд, опись, дело, лист по штампу.",
+  "covered": "Суточные свои потери найдены только у 3 уд. А. По 8 гв. А, 2 гв. ТА, 33 А — только за декаду 10–20.04 (у 8 гв. А — только артчасти). Немецкие донесения (ф. 500) не смотрели."
+ },
+ "sources": {
+  "TSAMO-3UA-OCHERK": {
+   "ref": "ЦАМО, ф. 233, оп. 2356, д. 776, л. 77–88. «3 Уд. А в Берлинской операции. Краткий очерк боевых действий с 16.4 по 2.5.45».",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=114805742",
+   "default_reliability": "A"
+  },
+  "TSAMO-2GTA-POTERI": {
+   "ref": "ЦАМО, ф. 307, оп. 4148, д. 312, л. 127–131. Донесение по форме № 8/ОД о потерях личного состава частей и соединений 2 гв. ТА с 10 по 20.04.1945, отдел укомплектования, 21.04.1945.",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=136513161",
+   "default_reliability": "A"
+  },
+  "TSAMO-33A-POTERI": {
+   "ref": "ЦАМО, ф. 388, оп. 8712, д. 1086, л. 32. Донесение о потерях личного состава войск 33 А с 10 по 20.04.1945 (вход. 22.04.1945).",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=114301931",
+   "default_reliability": "A"
+  },
+  "TSAMO-8GVA-ART-POTERI": {
+   "ref": "ЦАМО, ф. 345, оп. 5487, д. 330, л. 767. Итоговые сведения о потерях личного состава и материальной части (артиллерийские части 8 гв. А и усиления) за 11–20.04.1945, нач. штаба артиллерии 8 гв. А, 22.04.1945.",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=133372063",
+   "default_reliability": "A"
+  },
+  "TSAMO-8GVA-BD": {
+   "ref": "ЦАМО, ф. 345, оп. 5487, д. 364, л. 428–479. Боевые донесения штаба 8 гв. А № 0422 (16.04, 22.00), 0426 (17.04, 22.00), 0430 (18.04, 22.00), 0434 (19.04, 22.00), 0438 (20.04, 22.00).",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=133344258",
+   "default_reliability": "A"
+  },
+  "TSAMO-47A-PR": {
+   "ref": "ЦАМО, ф. 233, оп. 2356, д. 588, л. 38. Донесение нач. штаба 47 А нач. штаба 1 БФ о потерях противника за 11–20.04.1945 (вход. 1.05.1945).",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=152336012",
+   "default_reliability": "A"
+  },
+  "TSAMO-8GVA-ART": {
+   "ref": "ЦАМО, ф. 345, оп. 5510, д. 382, л. 283–366. «Отчётный доклад о боевых действиях наземной артиллерии 8 гв. А в Берлинской операции», 24.05.1945.",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=454867558",
+   "default_reliability": "A"
+  },
+  "TSAMO-8GVA-ART-SVOD": {
+   "ref": "ЦАМО, ф. 345, оп. 5487, д. 330, л. 712, 718, 752, 765. Сведения штаба артиллерии 8 гв. А о наличии и расходе боеприпасов на 18.00.",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=133372045",
+   "default_reliability": "A"
+  },
+  "TSAMO-3ALKP-17": {
+   "ref": "ЦАМО, ф. 9604, оп. 1, д. 68, л. 141. Справка штаба 3 АЛКП о расходе боеприпасов на артподготовку армейской артгруппы 8 гв. А 17.04.1945.",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=454039810",
+   "default_reliability": "A"
+  },
+  "TSAMO-8GVA-VYVODY": {
+   "ref": "ЦАМО, ф. 345, оп. 5487, д. 483, л. 175. «Характеристика Берлинской операции» (штаб 8 гв. А, 1946).",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=114300992",
+   "default_reliability": "A"
+  },
+  "TSAMO-1GTA-DOKLAD": {
+   "ref": "ЦАМО, ф. 299, оп. 3070, д. 776, с. 1–18 доклада. «Доклад о боевых действиях 1 гв. ТА в Берлинской операции (16.4–2.5.1945)», июнь 1945.",
+   "url": "https://pamyat-naroda.ru/documents/view/?id=134493143",
+   "default_reliability": "A"
+  },
+  "RADZ79": {
+   "ref": "Радзиевский А. И. Прорыв. М.: Воениздат, 1979; перевод JPRS L/10418 (1982), страницы перевода.",
+   "url": "https://www.cia.gov/readingroom/document/cia-rdp82-00850r000500040064-2",
+   "default_reliability": "B"
+  }
+ },
+ "records": [
+  {
+   "date": "1945-04-15",
+   "period": "1945-04-14/1945-04-15",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "own_losses",
+   "values": {
+    "killed": 41,
+    "wounded": 80
+   },
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 79",
+   "reliability": "A",
+   "note": "Разведка боем двумя усиленными батальонами 14–15.04."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "own_losses",
+   "values": {
+    "killed": 158,
+    "wounded": 483,
+    "tanks": 8,
+    "sp_guns": 8
+   },
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 81",
+   "reliability": "A",
+   "note": "Танки и СУ — «подбито»."
+  },
+  {
+   "date": "1945-04-17",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "own_losses",
+   "values": {
+    "killed": 113,
+    "wounded": 417
+   },
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 82",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-18",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "own_losses",
+   "values": {
+    "killed": 110,
+    "wounded": 416
+   },
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 83",
+   "reliability": "A",
+   "note": "Продвижение за день 7 км."
+  },
+  {
+   "date": "1945-04-19",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "own_losses",
+   "values": {
+    "killed": 166,
+    "wounded": 594,
+    "tanks": 5,
+    "sp_guns": 1,
+    "guns": 4
+   },
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 84",
+   "reliability": "A",
+   "note": "Также 3 автомашины."
+  },
+  {
+   "date": "1945-04-20",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "own_losses",
+   "values": {
+    "killed": 126,
+    "wounded": 613
+   },
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 86",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-21",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "own_losses",
+   "values": {
+    "killed": 112,
+    "wounded": 340
+   },
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 86",
+   "reliability": "A",
+   "note": "За пределами периода; дано для продолжения ряда."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_2gta",
+   "kind": "own_losses",
+   "values": {
+    "killed": 303,
+    "wounded": 1026,
+    "total": 1473,
+    "sick": 135,
+    "noncombat": 9,
+    "killed_officers": 58,
+    "killed_sergeants": 121,
+    "killed_privates": 124
+   },
+   "source": "TSAMO-2GTA-POTERI",
+   "page": "л. 131",
+   "reliability": "A",
+   "note": "Итог по армии (строка «Всего по армии»). Декада, не суточные; армия вступила в бой 16.04. Графы «пропало без вести» и «попало в плен» пустые. wounded — «ранено, контужено и обожжено»."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_9gtk",
+   "kind": "own_losses",
+   "values": {
+    "killed_officers": 27,
+    "killed_sergeants": 55,
+    "killed_privates": 65
+   },
+   "source": "TSAMO-2GTA-POTERI",
+   "page": "л. 128",
+   "reliability": "A",
+   "note": "Строка «Итого» корпуса заполнена только по убитым и небоевым; по бригадам: 47 гв. тбр всего 201, 33 гв. мсбр 205, 50 гв. тбр 55, 65 гв. тбр 42."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_12gtk",
+   "kind": "own_losses",
+   "values": {
+    "total": 454,
+    "killed_officers": 22,
+    "killed_sergeants": 40,
+    "killed_privates": 30,
+    "wounded_officers": 66,
+    "wounded_sergeants": 108,
+    "wounded_privates": 148
+   },
+   "source": "TSAMO-2GTA-POTERI",
+   "page": "л. 129",
+   "reliability": "A",
+   "note": "Заболело с эвакуацией 6/17/17 (оф./серж./ряд.)."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_1mk",
+   "kind": "own_losses",
+   "values": {
+    "total": 274,
+    "killed_officers": 9,
+    "killed_sergeants": 20,
+    "killed_privates": 12,
+    "wounded_officers": 30,
+    "wounded_sergeants": 60,
+    "wounded_privates": 97
+   },
+   "source": "TSAMO-2GTA-POTERI",
+   "page": "л. 130",
+   "reliability": "A",
+   "note": "Итог «274» на скане читается неуверенно (2774?). Заболело 9/9/27."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-11/1945-04-20",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "own_losses",
+   "values": {
+    "killed": 323,
+    "wounded": 790,
+    "sick": 102,
+    "total": 1215,
+    "guns": 115,
+    "guns_irrecoverable": 47
+   },
+   "source": "TSAMO-8GVA-ART-POTERI",
+   "page": "л. 767",
+   "reliability": "A",
+   "note": "ТОЛЬКО АРТИЛЛЕРИЙСКИЕ ЧАСТИ армии и усиления, не вся армия. guns — потери материальной части всех калибров (82–152 мм), из них безвозвратно 47."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_323sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 262,
+    "killed_officers": 6,
+    "killed_sergeants": 7,
+    "killed_privates": 31,
+    "wounded_officers": 17,
+    "wounded_sergeants": 16,
+    "wounded_privates": 154
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": "33 А, участок Франкфурта-на-Одере; армия наступала 16.04 с плацдарма южнее Франкфурта."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_339sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 1166,
+    "killed_officers": 20,
+    "killed_sergeants": 48,
+    "killed_privates": 105,
+    "wounded_officers": 96,
+    "wounded_sergeants": 213,
+    "wounded_privates": 661
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_383sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 980,
+    "killed_officers": 19,
+    "killed_sergeants": 52,
+    "killed_privates": 102,
+    "wounded_officers": 61,
+    "wounded_sergeants": 171,
+    "wounded_privates": 441,
+    "missing_officers": 9,
+    "missing_sergeants": 15,
+    "missing_privates": 21
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_64sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 1080,
+    "killed_officers": 27,
+    "killed_sergeants": 64,
+    "killed_privates": 148,
+    "wounded_officers": 62,
+    "wounded_sergeants": 225,
+    "wounded_privates": 513
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_89sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 918,
+    "killed_officers": 23,
+    "killed_sergeants": 55,
+    "killed_privates": 118,
+    "wounded_officers": 55,
+    "wounded_sergeants": 166,
+    "wounded_privates": 480,
+    "missing_sergeants": 1,
+    "missing_privates": 5
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_129sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 45,
+    "killed_officers": 1,
+    "killed_sergeants": 1,
+    "killed_privates": 11,
+    "wounded_officers": 2,
+    "wounded_sergeants": 7,
+    "wounded_privates": 14
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_49sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 1257,
+    "killed_officers": 27,
+    "killed_sergeants": 38,
+    "killed_privates": 176,
+    "wounded_officers": 99,
+    "wounded_sergeants": 219,
+    "wounded_privates": 664
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_222sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 624,
+    "killed_officers": 9,
+    "killed_sergeants": 27,
+    "killed_privates": 64,
+    "wounded_officers": 66,
+    "wounded_sergeants": 108,
+    "wounded_privates": 273,
+    "missing_sergeants": 8,
+    "missing_privates": 20
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_362sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 898,
+    "killed_officers": 14,
+    "killed_sergeants": 43,
+    "killed_privates": 120,
+    "wounded_officers": 58,
+    "wounded_sergeants": 186,
+    "wounded_privates": 469
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_95sd",
+   "kind": "own_losses",
+   "values": {
+    "total": 341,
+    "killed_officers": 3,
+    "killed_sergeants": 8,
+    "killed_privates": 51,
+    "wounded_officers": 23,
+    "wounded_sergeants": 82,
+    "wounded_privates": 148
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-10/1945-04-20",
+   "side": "su",
+   "formation": "su_119ur",
+   "kind": "own_losses",
+   "values": {
+    "total": 337,
+    "killed_officers": 6,
+    "killed_sergeants": 46,
+    "killed_privates": 39,
+    "wounded_officers": 18,
+    "wounded_sergeants": 102,
+    "wounded_privates": 110
+   },
+   "source": "TSAMO-33A-POTERI",
+   "page": "л. 32",
+   "reliability": "A",
+   "note": "В графах «пропало» и «в плен» по одному человеку — графа на скане неразборчива, не внесено."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed": 1800,
+    "pow": 580,
+    "tanks": 18,
+    "sp_guns": 12,
+    "guns": 32
+   },
+   "target": "20 мд, 303 пд, мд «Мюнхеберг», 169 нгд, 404 нгак, 411 абр РГК, тп «Бранденбург», мп «Курмарк»",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 434–435 (БД № 0422)",
+   "reliability": "A",
+   "note": "«Свыше 1800» уничтожено; пленных — цифра исправлена от руки (580 или 380). Танки и СУ — подбито и сожжено. Также захвачено 8 орудий и 1 танк."
+  },
+  {
+   "date": "1945-04-17",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed": 2300,
+    "pow": 450,
+    "tanks": 19,
+    "guns": 18
+   },
+   "target": "мд «Мюнхеберг», 20 мд, 303 пд, 169 нгд, мп «Курмарк», 404 нак, тп «Бранденбург»",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 446 (БД № 0426)",
+   "reliability": "A",
+   "note": "«Свыше 2300», пленных «до 450»; 19 танков и СУ, из них 7 «Тигр» и «Пантера». Трофеи 16 орудий, 4 танка."
+  },
+  {
+   "date": "1945-04-18",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed": 2000,
+    "pow": 150,
+    "tanks_burned": 11,
+    "tanks_damaged": 7,
+    "guns": 18
+   },
+   "target": "мд «Мюнхеберг», 20 мд, 303 пд, мд «Курмарк», 169 пд, 5 крепостной полк, 1242 пп",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 457 (БД № 0430)",
+   "reliability": "A",
+   "note": "«До 2000», пленных «до 150»; танки: сожжено 11, подбито 7."
+  },
+  {
+   "date": "1945-04-19",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed": 1500,
+    "pow": 100,
+    "tanks_burned": 16,
+    "tanks_damaged": 9,
+    "guns": 13
+   },
+   "target": "«118 тд», «9 адд», мд «Мюнхеберг», 20 мд, 303 пд, мд «Курмарк», 1242 пп, пд СС генерала «Зайцерта» (так в документе)",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 466–467 (БД № 0434)",
+   "reliability": "A",
+   "note": "«До 1500», пленных «до 100»; танки: сожжено 16, подбито 9. Номера «118 тд» и «9 адд» — как в документе, к реестру не привязаны."
+  },
+  {
+   "date": "1945-04-20",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed": 1600,
+    "pow": 200,
+    "tanks_burned": 11,
+    "tanks_damaged": 9,
+    "guns": 17
+   },
+   "target": "те же, что 19.04; рубеж по опушке леса северо-западнее и юго-западнее Мюнхеберга",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 477 (БД № 0438)",
+   "reliability": "A",
+   "note": "«Свыше 1600», пленных «свыше 200»; танки и СУ: сожжено 11, подбито 9. Трофеи: 12 орудий, 2 танка."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed_and_wounded": 2500,
+    "pow": 900,
+    "tanks": 6,
+    "sp_guns": 4,
+    "guns": 17
+   },
+   "target": "309 пд «Берлин», 653 пп, пп «Великая Германия» (так в документе), батальон фольксштурма в Лечине",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 81",
+   "reliability": "A",
+   "note": "«Убитыми и ранеными до 2500»."
+  },
+  {
+   "date": "1945-04-17",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "enemy_claimed",
+   "values": {
+    "pow": 287
+   },
+   "target": "остатки 309 пд, 1234 пп, 15 тяж. минполк, 637 тяж. ад, полк «А» 609 пд",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 82",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-18",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed_and_wounded": 1500,
+    "pow": 546
+   },
+   "target": "1 и 4 авиаполевые полки, 25 сапбат 25 тгд",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 83",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-19",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "enemy_claimed",
+   "values": {
+    "out_of_action": 1000,
+    "pow": 420
+   },
+   "target": "11 мд СС «Нордланд», бригада ИТ «Гитлерюгенд», бригада ШО, минполк, 2 зен. полка, 2 тяж. ад",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 84",
+   "reliability": "A",
+   "note": "«Выведено из строя более 1000»."
+  },
+  {
+   "date": "1945-04-20",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "enemy_claimed",
+   "values": {
+    "pow": 60
+   },
+   "target": "полк «Данемарк»",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 86",
+   "reliability": "A",
+   "note": ""
+  },
+  {
+   "date": "1945-04-15",
+   "period": "1945-04-11/1945-04-15",
+   "side": "su",
+   "formation": "su_47a",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed": 383,
+    "pow": 21,
+    "guns": 2
+   },
+   "target": "перед фронтом 47 А",
+   "source": "TSAMO-47A-PR",
+   "page": "л. 38",
+   "reliability": "A",
+   "note": "Включая разведку боем."
+  },
+  {
+   "date": "1945-04-20",
+   "period": "1945-04-16/1945-04-20",
+   "side": "su",
+   "formation": "su_47a",
+   "kind": "enemy_claimed",
+   "values": {
+    "killed": 4450,
+    "pow": 686,
+    "tanks": 16,
+    "guns": 69
+   },
+   "target": "перед фронтом 47 А (немецкие дивизии не названы)",
+   "source": "TSAMO-47A-PR",
+   "page": "л. 38",
+   "reliability": "A",
+   "note": "За пять суток, не суточные. Также 33 миномёта, 286 пулемётов; трофеи 18 орудий, 1 танк."
+  },
+  {
+   "date": "1945-04-14",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "start": "07:30",
+    "duration_min": 10,
+    "guns": 527,
+    "guns_per_km": 116
+   },
+   "target": "участки разведки боем 2 штрафных рот и 2 сб (27 и 74 гв. сд)",
+   "source": "TSAMO-8GVA-ART",
+   "page": "л. 337–338",
+   "reliability": "A",
+   "note": "Одинарный вал минометами на 1 км."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_1bf",
+   "kind": "fire",
+   "values": {
+    "start": "05:00",
+    "shells": 500000
+   },
+   "target": "вся полоса ударной группировки фронта",
+   "source": "RADZ79",
+   "page": "с. 138",
+   "reliability": "B",
+   "note": "«Около 500 тыс.» выстрелов за артподготовку. Время московское."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "start": "05:00",
+    "duration_min": 30,
+    "guns": 2000,
+    "shells": 120000
+   },
+   "target": "передний край и тактическая глубина на участке 7 км; 20 мд, 303 пд",
+   "source": "TSAMO-8GVA-ART",
+   "page": "л. 343–347",
+   "reliability": "A",
+   "note": "Периоды 10+10+10 мин (план, л. 322). guns — «более 2000 стволов» на 7 км (л. 345); shells — «около 120 тыс.» за артподготовку (л. 347). По характеристике 1946 г. — 288 стволов/км, всего 2017 (TSAMO-8GVA-VYVODY, л. 175)."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "start": "05:00",
+    "duration_min": 25
+   },
+   "target": "то же",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 434 (БД № 0422)",
+   "reliability": "A",
+   "note": "Другая версия длительности: «после 25-минутной артподготовки при прожекторном освещении в 5.25 16.4 атаковали»."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "duration_min": 120
+   },
+   "target": "оборона противника перед 8 гв. А",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 14",
+   "reliability": "A",
+   "note": "Третья версия длительности (сообщает 1 гв. ТА о подготовке 8 гв. А): «в 7.00 16.4 после мощной двухчасовой артподготовки и авиационной обработки» части 8 гв. А атаковали. Расходится с 25–30 мин у 8 гв. А и по порядку совпадает с 1,5 ч по донесению ГА «Висла»; возможно, считали вместе с авиаподготовкой и огневым валом."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "shells": 162441,
+    "guns": 2266
+   },
+   "target": "за сутки по 18.00",
+   "source": "TSAMO-8GVA-ART-SVOD",
+   "page": "л. 712",
+   "reliability": "A",
+   "note": "Расход артчастей 8 гв. А за сутки 16.04 по 18.00: минометы 74 077, орудия 88 364. guns — стволов в строю (всего 2347)."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_3ua",
+   "kind": "fire",
+   "values": {
+    "start": "05:00",
+    "duration_min": 30
+   },
+   "target": "участок прорыва 79 и 12 гв. ск (Золиканте – Лечин)",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 79–80",
+   "reliability": "A",
+   "note": "Атака в 5.30; сигнал — включение 19 прожекторов."
+  },
+  {
+   "date": "1945-04-17",
+   "side": "su",
+   "formation": "su_1bf",
+   "kind": "fire",
+   "values": {
+    "duration_min": [
+     30,
+     40
+    ],
+    "guns_per_km": [
+     250,
+     270
+    ]
+   },
+   "target": "вторая полоса (Зееловские высоты) в полосах армий",
+   "source": "RADZ79",
+   "page": "с. 139",
+   "reliability": "B",
+   "note": "Указание фронта: 30–40 мин артподготовки в армиях, 250–270 стволов/км, боеприпасов примерно как в 1-й день. Атаки армий — в интервале 7.00–11.00; ПСО на 5 км."
+  },
+  {
+   "date": "1945-04-17",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "start": "09:45",
+    "duration_min": 30,
+    "guns_per_km": 183
+   },
+   "target": "гребень Вербиг – Зеелов – Дольгелин – Либбенихен",
+   "source": "TSAMO-8GVA-ART",
+   "page": "л. 355–356",
+   "reliability": "A",
+   "note": "10 мин налёт, 15 мин методический огонь, 5 мин налёт; лимит 0,2–0,5 бк. По боевым донесениям — атака после 30-мин артподготовки в 10.30 (TSAMO-8GVA-BD, л. 440, 446). Справка 3 АЛКП (TSAMO-3ALKP-17) по части армейской артгруппы: 6133 выстрела за артподготовку (сумма агента по таблице)."
+  },
+  {
+   "date": "1945-04-17",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "shells": 59657
+   },
+   "target": "за сутки по 18.00",
+   "source": "TSAMO-8GVA-ART-SVOD",
+   "page": "л. 718",
+   "reliability": "A",
+   "note": "Расход артчастей 8 гв. А за сутки по 18.00 (не только артподготовка); стволов в строю 1921 из 2009."
+  },
+  {
+   "date": "1945-04-18",
+   "side": "su",
+   "formation": "su_1bf",
+   "kind": "fire",
+   "values": {
+    "duration_min": [
+     10,
+     30
+    ]
+   },
+   "target": "промежуточные позиции перед третьей полосой",
+   "source": "RADZ79",
+   "page": "с. 140",
+   "reliability": "B",
+   "note": "«От 10 до 30 минут» артподготовки. В 8 гв. А общей артподготовки 18.04 в отчёте нет: после ночного форсирования Флиса — наступление при ПСО (TSAMO-8GVA-ART, л. 360)."
+  },
+  {
+   "date": "1945-04-19",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "start": "11:30",
+    "duration_min": 30,
+    "guns_per_km": 100
+   },
+   "target": "рубеж юго-восточнее Мюнхеберга",
+   "source": "TSAMO-8GVA-ART",
+   "page": "л. 361–363",
+   "reliability": "A",
+   "note": "5 мин налёт, 20 мин разрушение прямой наводкой с 300–400 м, 5 мин налёт; атака в 12.00. Плотность ~100 стволов/км (в 2,5 раза меньше, чем 16.04). Лимит 0,2–0,4 бк."
+  },
+  {
+   "date": "1945-04-20",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "start": "08:00",
+    "duration_min": 20
+   },
+   "target": "узлы сопротивления и засечённые батареи, 50–200 стволов на объект",
+   "source": "TSAMO-8GVA-ART",
+   "page": "л. 365–366",
+   "reliability": "A",
+   "note": "Назначено на 7.00, проведено в 8.00 (отчёт); по БД № 0438 войска возобновили наступление с 7.00 (TSAMO-8GVA-BD, л. 476)."
+  },
+  {
+   "date": "1945-04-20",
+   "side": "su",
+   "formation": "su_8gva",
+   "kind": "fire",
+   "values": {
+    "shells": 24009
+   },
+   "target": "за сутки по 18.00",
+   "source": "TSAMO-8GVA-ART-SVOD",
+   "page": "л. 752",
+   "reliability": "A",
+   "note": "Расход артчастей 8 гв. А на 18.00 20.04; за какой период — в сведениях не указано (сведений за 18 и 19.04 в деле нет); стволов в строю 1820 из 1849."
+  },
+  {
+   "date": "1945-04-15",
+   "side": "de",
+   "formation": "de_20pzgd",
+   "kind": "strength",
+   "values": {
+    "personnel": 5500,
+    "tanks": 30,
+    "sp_guns": 40,
+    "guns": 56
+   },
+   "target": "первая линия, Гольцов – Альт-Тухебанд",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 6",
+   "reliability": "B",
+   "note": "Оценка разведки штаба 1 гв. ТА («ведомость боевого и численного состава частей противника», дата на скане читается как 15.4.45). Не Kampfstärke. Надёжность B — советская оценка."
+  },
+  {
+   "date": "1945-04-15",
+   "side": "de",
+   "formation": "de_303id",
+   "kind": "strength",
+   "values": {
+    "personnel": 4000,
+    "sp_guns": 12,
+    "guns": 60
+   },
+   "target": "первая линия, Альт-Тухебанд – Хатенов",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 6",
+   "reliability": "B",
+   "note": "Оценка 1 гв. ТА. Отдельно во второй линии — 301 пп 303 пд, 1200 чел. По тому же докладу (с. 10): дивизия сформирована в январе 1945, в февральских боях потеряла до 4500, пополнена до 2000; роты по 80–90 чел. на 1.04."
+  },
+  {
+   "date": "1945-04-15",
+   "side": "de",
+   "formation": "de_muencheberg",
+   "kind": "strength",
+   "values": {
+    "personnel": 5000,
+    "tanks": 40,
+    "sp_guns": 15,
+    "guns": 54
+   },
+   "target": "вторая линия, Гузов – Ной-Вербиг – Зеелов",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 6",
+   "reliability": "B",
+   "note": "Оценка 1 гв. ТА."
+  },
+  {
+   "date": "1945-04-15",
+   "side": "de",
+   "formation": "de_kurmark",
+   "kind": "strength",
+   "values": {
+    "personnel": 5000,
+    "tanks": 40,
+    "sp_guns": 15,
+    "guns": 54
+   },
+   "target": "вторая линия, ~6 км юго-западнее Зеелова",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 6",
+   "reliability": "B",
+   "note": "Оценка 1 гв. ТА."
+  },
+  {
+   "date": "1945-04-15",
+   "side": "de",
+   "formation": "de_18pzgd",
+   "kind": "strength",
+   "values": {
+    "personnel": 9900,
+    "tanks": 60,
+    "sp_guns": 24,
+    "guns": 62
+   },
+   "target": "резерв, район Эберсвальде (?)",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 6",
+   "reliability": "B",
+   "note": "Оценка 1 гв. ТА; также 20 зенитных орудий. Итог ведомости: первая линия 12 700 чел., вторая ~21 000, всего ~33 800 (последняя цифра на скане неразборчива), 170 танков, 106 штурмовых орудий."
+  },
+  {
+   "date": "1945-04-01",
+   "side": "de",
+   "formation": null,
+   "name": "Первая линия против 8 гв. А (20 мд, 303 пд, полк 169 пд с усилением)",
+   "kind": "strength",
+   "values": {
+    "personnel": 15900,
+    "combat_personnel": 10700,
+    "tanks": 110,
+    "guns": 194,
+    "mortars": 80
+   },
+   "target": "1 км северо-восточнее Гольцова – Альт-Тухебанд – Хатенов – Подельциг; XI тк СС",
+   "source": "TSAMO-8GVA-ART",
+   "page": "л. 286",
+   "reliability": "B",
+   "note": "Оценка штаба артиллерии 8 гв. А на начало апреля: 13 пехотных батальонов, 17 артдивизионов; tanks — «танков и штурмовых орудий» 110; также 12 самоходных орудий, 150 зенитных, 750 пулемётов. Во второй линии — 19 пехотных батальонов примерно с тем же насыщением."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "su",
+   "formation": "su_1gta",
+   "kind": "strength",
+   "values": {
+    "personnel": 45794,
+    "tanks_t34": 433,
+    "tanks_is": 64
+   },
+   "target": "",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 8",
+   "reliability": "A",
+   "note": "Боевой состав в строю на 16.04: 11 гв. тк 11 078, 11 тк 10 575, 8 гв. мк 14 176, армейские части 9965; Т-34 433, ИС 64; САУ: СУ-57 76, СУ-76 56, СУ-85 17, СУ-100 41, ИСУ-122 20."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "de",
+   "formation": "de_404vak",
+   "kind": "nondivisional",
+   "values": {
+    "personnel": 2000
+   },
+   "target": "перед 8 гв. А, Зееловские высоты",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 6",
+   "reliability": "B",
+   "note": "«Народно-арт. корпус» в первой линии: 2000 чел., 40 пулемётов, орудий 86 (цифра читается неуверенно). По 8 гв. А — 4 дивизиона 404 нак перед армией (TSAMO-8GVA-ART, л. 343)."
+  },
+  {
+   "date": "1945-04-01",
+   "side": "de",
+   "formation": "de_408vak",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "перед 8 гв. А",
+   "source": "TSAMO-8GVA-ART",
+   "page": "л. 286",
+   "reliability": "B",
+   "note": "3 дивизиона 408 нгак РГК в усилении первой линии (оценка на начало апреля)."
+  },
+  {
+   "date": "1945-04-15",
+   "side": "de",
+   "formation": null,
+   "name": "272, 279, 770 зенитные дивизионы (в наземной обороне)",
+   "kind": "nondivisional",
+   "values": {
+    "personnel": 1000,
+    "guns": 150
+   },
+   "target": "первая линия перед 8 гв. А",
+   "source": "TSAMO-1GTA-DOKLAD",
+   "page": "с. 6",
+   "reliability": "B",
+   "note": "guns — зенитные орудия. По докладу 1 гв. ТА (с. 14, 16) зенитные части ПВО Берлина 15.04 поставлены на противотанковую оборону; у шоссе Зеелов – Мюнхеберг до 200 зенитных орудий четырёх зен. полков, половина — 88 мм."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "de",
+   "formation": null,
+   "name": "411 артбригада РГК",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "перед 8 гв. А",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 434",
+   "reliability": "B",
+   "note": "По отчёту артиллерии 8 гв. А — 1 дивизион (TSAMO-8GVA-ART, л. 286, 343)."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "de",
+   "formation": null,
+   "name": "Танковый полк «Бранденбург»",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "перед 8 гв. А",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 434",
+   "reliability": "B",
+   "note": "В отчёте артиллерии — «I/26 тп „Бранденбург“» (л. 286)."
+  },
+  {
+   "date": "1945-04-18",
+   "side": "de",
+   "formation": null,
+   "name": "5-й крепостной полк",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "перед 8 гв. А",
+   "source": "TSAMO-8GVA-BD",
+   "page": "л. 456",
+   "reliability": "B",
+   "note": "Там же вновь введённый 1242 пп (принадлежность не указана)."
+  },
+  {
+   "date": "1945-04-16",
+   "side": "de",
+   "formation": null,
+   "name": "Батальон фольксштурма в Лечине",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "Лечин, полоса 12 гв. ск 3 уд. А",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 80",
+   "reliability": "B",
+   "note": "Гарнизон Лечина — 2/653 пп, батальон фольксштурма, ПТД 309 пд; 320 сдались в плен."
+  },
+  {
+   "date": "1945-04-15",
+   "side": "de",
+   "formation": null,
+   "name": "Артиллерия РГК и зенитные дивизионы перед 3 уд. А",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "Золиканте – Лечин",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 79",
+   "reliability": "B",
+   "note": "309 ап, 4/234 и 707 тяжёлые ад РГК и пять дивизионов зенитной артиллерии обороняли рубеж с февраля."
+  },
+  {
+   "date": "1945-04-17",
+   "side": "de",
+   "formation": null,
+   "name": "15-й тяжёлый минометный полк, 637 тяжёлый артдивизион, полк «А» 609 пд особого назначения, маршевый батальон",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "канал Фридландер-Штром, полоса 3 уд. А",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 82",
+   "reliability": "B",
+   "note": ""
+  },
+  {
+   "date": "1945-04-18",
+   "side": "de",
+   "formation": null,
+   "name": "1-й и 4-й авиаполевые полки, 25 сапёрный батальон 25 тгд",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "Мёглин – Бацлов, полоса 3 уд. А",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 82",
+   "reliability": "B",
+   "note": ""
+  },
+  {
+   "date": "1945-04-19",
+   "side": "de",
+   "formation": null,
+   "name": "Бригада истребителей танков «Гитлерюгенд», бригада штурмовых орудий, минометный полк, два зенитных полка, два тяжёлых артдивизиона",
+   "kind": "nondivisional",
+   "values": {},
+   "target": "лесной массив западнее Кунерсдорфа – Претцель, полоса 3 уд. А",
+   "source": "TSAMO-3UA-OCHERK",
+   "page": "л. 83",
+   "reliability": "B",
+   "note": "Введены вместе с 11 мд СС «Нордланд»."
+  }
+ ],
+ "gaps": [
+  "Свои суточные потери 8 гв. А, 5 уд. А, 47 А, 69 А, 1 гв. ТА: в боевых донесениях 8 гв. А за 16–20.04 (д. 364, л. 428–479) своих потерь нет, только потери противника. На обороте л. 465 карандашная пометка «За 17.4 735 – 1802 – 28» — по виду убитые, раненые и ещё одна графа за 17.04, но смысл граф не подписан, в values не внесено.",
+  "Найдено в каталоге, но не открывалось (пользователь ограничил объём просмотра пунктами 1–5): 8 гв. А — сведения о потерях личного состава БТ и МВ 10–20.04 (345-5487-329 л. 145); 1 БФ — суточные справки о потерях матчасти БТ и МВ (233-2356-429 л. 243–259) и итоговая за 14.04–5.05 (л. 354); 5 уд. А — сведения о потерях противника и трофеях (233-2356-582 л. 196, 282) и о потерях матчасти БТ (333-4885-377 л. 60); 47 А — потери противника 21–30.04 (233-2356-588 л. 142); 69 А — «Боевые действия войск 69 А на Берлинском направлении» (426-10753-1442 л. 1); 1 гв. ТА — урон противнику и безвозвратные потери техники 21–30.04 (233-2356-577 л. 476); оперативные сводки штаба артиллерии 8 гв. А 16–22.04 (345-5487-330 л. 706–761); боевые донесения 5 уд. А, 3 уд. А, 47 А, 69 А за 16–20.04.",
+  "Артподготовки 17–19.04 у 5 уд., 3 уд., 47, 69 А по армиям не найдены (есть только указания фронта в RADZ79 и данные 8 гв. А); графики артнаступления 5 уд. А на 17.04 (ф. 1596 оп. 1 д. 116 л. 358) и 47 А (ф. 9822 оп. 1 д. 18 л. 92) найдены в каталоге, не открывались.",
+  "Немецкая численность по датам (Kampfstärke, Gefechtsstärke, танки по дивизиям 9 А на 15–20.04) и немецкие потери по суткам: ф. 500 и germandocsinrussia.org не смотрели. Здесь только советские оценки разведки (B).",
+  "Немецкие части вне дивизий — только названия и редкие числа из советских документов; численность, вооружение и подчинение батальонов фольксштурма, крепостных полков и бригад ИТ не найдены.",
+  "33 А в задании не указана, но её донесение за 10–20.04 открыто и внесено по дивизиям; армейских частей в нём нет."
+ ]
+}

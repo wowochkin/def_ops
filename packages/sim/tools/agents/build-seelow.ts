@@ -22,7 +22,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { repeatedFires } from './soviet-fires';
+import { markDeployed, repeatedFires } from './soviet-fires';
 import { reinforcementOrders, reinforcements } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -231,6 +231,9 @@ const withdrawals = [{
   note: 'отвод на Großkampf-HKL в ночь на 16.04, на первой позиции охранение 1/6 (de-wiki по Stich, C)',
 }];
 
+// развёрнуты к началу в исходном районе (soviet-fires.ts, markDeployed)
+const deployedN = markDeployed(out, orders as { at: unknown; to: string[]; kind: string }[]);
+console.log(`развёрнуты к началу: ${deployedN}`);
 const scenario = {
   id: 'agents-seelow-1945',
   name: 'Зееловские высоты, 16–20.04.1945 (агенты-дивизии)',

@@ -11,6 +11,7 @@ pub mod rules;
 pub mod scenario;
 pub mod spatial;
 pub mod staff;
+pub mod staff_su;
 pub mod theatre;
 pub mod time;
 pub mod trace;

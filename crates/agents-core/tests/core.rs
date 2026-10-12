@@ -249,3 +249,18 @@ fn berlin_scenario_loads_and_runs() {
     let still = pending.iter().filter(|&&i| sim.world.divisions[i].state == State::Pending).count();
     assert!(still > 0, "28 А вводится 20.04 — через сутки ещё не введена");
 }
+
+/// Советские штабы по доктрине: второй эшелон и танковые армии ждут, затем вводятся по правилам.
+#[test]
+fn soviet_doctrine_echelons() {
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
+    let (mut sim, _) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    sim.sources[0] = agents_core::staff::Source::Doctrine;
+    sim.step();
+    assert!(sim.journal.iter().any(|e| e.text.contains("второй эшелон армии")));
+    assert!(sim.journal.iter().any(|e| e.text.contains("подвижная группа: ждёт прорыва")));
+    for _ in 0..60 { sim.step(); }
+    assert!(sim.journal.iter().any(|e| e.text.contains("ввод подвижной группы") || e.text.contains("ввод для завершения прорыва")));
+    assert!(sim.journal.iter().any(|e| e.text.contains("ввод второго эшелона") || e.text.contains("смена вторым эшелоном") || e.text.contains("2–3-й день")));
+}

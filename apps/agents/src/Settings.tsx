@@ -75,6 +75,11 @@ export function SettingsPanel({ value, onChange, onRun, busy, onClose }: Props) 
         <span className="hint">размышления видны по мере прихода</span>
       </label>
       <div className="row col">
+        <span>Советские штабы</span>
+        <label className="radio"><input type="radio" checked={value.su !== 'doctrine'} onChange={() => set({ su: 'script' })} /> исторические приказы <span className="hint">— задачи и сроки по документам</span></label>
+        <label className="radio"><input type="radio" checked={value.su === 'doctrine'} onChange={() => set({ su: 'doctrine' })} /> по доктрине <span className="hint">— задачи по документам, а эшелоны и ввод танковых армий решает штаб по советской доктрине 1944–45 гг.</span></label>
+      </div>
+      <div className="row col">
         <span>Немецкие штабы</span>
         {SOURCES.map((s) => (
           <label key={s.id} className="radio"><input type="radio" checked={value.de === s.id} onChange={() => set({ de: s.id })} /> {s.label} <span className="hint">— {s.hint}</span></label>

@@ -117,6 +117,8 @@ pub struct Sim {
     /// Число одновременных запросов, определённое замером (если в настройках «авто»), и сам замер.
     pub llm_par: std::sync::OnceLock<usize>,
     pub llm_probe: std::sync::Mutex<Option<serde_json::Value>>,
+    /// Советские штабы по доктрине: замысел и построение армий (staff_su.rs).
+    pub su_staff: std::sync::Mutex<crate::staff_su::SuStaff>,
     /// Сообщения о ходе долгих решений (запрос к модели) — для окна приложения.
     pub on_progress: Option<Box<dyn Fn(String) + Send + Sync>>,
     /// Ход ответа модели-штаба по мере прихода (размышления и ответ) — для окна приложения.
@@ -159,7 +161,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), on_progress: None, on_stream: None, journal: Vec::new(), history: None };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None };
         s.script.sort_by_key(|o| o.at);
         s
     }
@@ -204,7 +206,13 @@ impl Sim {
         while let Some(o) = self.script.first() {
             if o.at > tick { break; }
             let o = self.script.remove(0);
-            if self.sources[crate::staff::side_idx(next.hqs[o.hq as usize].side)] == crate::staff::Source::Script { due.push(o); }
+            let side = next.hqs[o.hq as usize].side;
+            match self.sources[crate::staff::side_idx(side)] {
+                crate::staff::Source::Script => due.push(o),
+                // советские штабы по доктрине: задача сценария — замысел армии (staff_su.rs)
+                _ if side == Side::Su => self.su_plan(&next, &o, &mut due),
+                _ => {}
+            }
         }
         let (doc_orders, doc_journal) = self.doctrine_orders(&next, tick);
         due.extend(doc_orders);
@@ -259,7 +267,7 @@ impl Sim {
     }
 
     /// Место соединения по id: дивизия — её положение; штаб — центр его действующих дивизий (с подчинёнными штабами).
-    fn place_of(&self, w: &World, id: &str) -> Option<XY> {
+    pub(crate) fn place_of(&self, w: &World, id: &str) -> Option<XY> {
         if let Some(d) = w.divisions.iter().find(|d| d.id == id && !d.state.out()) { return Some(d.vars.pos); }
         let h = w.hqs.iter().position(|h| h.id == id)?;
         let under = |mut k: usize| { for _ in 0..8 { if k == h { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };

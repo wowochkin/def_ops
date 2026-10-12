@@ -131,9 +131,21 @@ pub struct Remnants {
     pub rear_km: f64,
 }
 
+/// Советские штабы по доктрине (staff_su.rs): правила — data/rules/agents-v0.json, раздел doctrine.su.
+#[derive(Clone, Debug)]
+pub struct DoctrineSu {
+    pub cycle_hours: f64,
+    pub first_echelon_share: f64,
+    pub commit_depth_km: f64,
+    pub second_echelon_fallback_hours: f64,
+    pub tank_commit_depth_km: f64,
+    pub tank_commit_fallback_hours: f64,
+}
+
 #[derive(Clone, Debug)]
 pub struct Rules {
     pub doctrine: Doctrine,
+    pub doctrine_su: DoctrineSu,
     pub remnants: Remnants,
     pub combat: Combat,
     pub su: SideRules,
@@ -286,8 +298,17 @@ impl Rules {
             su_personnel: num(&ag, "remnants.su.personnel")?,
             rear_km: num(&ag, "remnants.rearKm")?,
         };
+        let doctrine_su = DoctrineSu {
+            cycle_hours: num(&ag, "doctrine.su.cycleHours")?,
+            first_echelon_share: num(&ag, "doctrine.su.firstEchelonShare")?,
+            commit_depth_km: num(&ag, "doctrine.su.commitDepthKm")?,
+            second_echelon_fallback_hours: num(&ag, "doctrine.su.secondEchelonFallbackHours")?,
+            tank_commit_depth_km: num(&ag, "doctrine.su.tankCommitDepthKm")?,
+            tank_commit_fallback_hours: num(&ag, "doctrine.su.tankCommitFallbackHours")?,
+        };
         Ok(Rules {
             doctrine,
+            doctrine_su,
             remnants,
             combat,
             su,
