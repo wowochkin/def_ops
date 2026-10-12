@@ -116,6 +116,12 @@ pub enum OrderKind {
     Withdraw,
 }
 
+impl OrderKind {
+    pub fn label(self) -> &'static str {
+        match self { OrderKind::Move => "выдвинуться", OrderKind::Attack => "наступать", OrderKind::Defend => "оборонять", OrderKind::Hold => "держаться", OrderKind::Withdraw => "отойти" }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Order {
     pub kind: OrderKind,
@@ -155,6 +161,8 @@ pub struct Division {
     pub state_since: u32,
     pub order: Option<Order>,
     pub route: Option<Route>,
+    /// Откуда взяты исходные цифры (из сценария): для карточки агента.
+    pub note: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

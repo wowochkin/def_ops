@@ -44,6 +44,8 @@ pub struct DivisionIn {
     #[serde(default = "one")]
     pub fuel: f64,
     pub pos: LngLat,
+    #[serde(default)]
+    pub note: String,
 }
 fn one() -> f64 { 1.0 }
 
@@ -97,7 +99,7 @@ fn new_division(id: String, name: String, side: Side, hq: u32, params: Params, p
     let mut d = Division {
         id, name, side, hq, params,
         vars: Vars { personnel, tanks, guns, ammo, fuel, fatigue: 0.0, cohesion: 1.0, prepared_h: 0.0, march_h_today: 0.0, pos, strength0: 0.0 },
-        state: State::Reserve, state_since: 0, order: None, route: None,
+        state: State::Reserve, state_since: 0, order: None, route: None, note: String::new(),
     };
     let (wp, wt, wg) = rules.side(side).weights;
     d.vars.strength0 = (personnel / 1000.0 * wp + tanks * wt + guns * wg) * d.params.quality;
@@ -133,7 +135,9 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
     for d in &s.divisions {
         let hq = *hq_idx.get(d.hq.as_str()).ok_or_else(|| format!("{}: нет штаба {}", d.id, d.hq))?;
         let params = Params { kind: d.kind.clone(), mobility: d.mobility, size: d.size, quality: d.quality };
-        divisions.push(new_division(d.id.clone(), d.name.clone(), d.side, hq, params, d.personnel, d.tanks, d.guns, d.ammo, d.fuel, theatre.proj.to_xy(d.pos), &rules));
+        let mut div = new_division(d.id.clone(), d.name.clone(), d.side, hq, params, d.personnel, d.tanks, d.guns, d.ammo, d.fuel, theatre.proj.to_xy(d.pos), &rules);
+        div.note = d.note.clone();
+        divisions.push(div);
     }
     let div_idx: HashMap<&str, u32> = s.divisions.iter().enumerate().map(|(i, d)| (d.id.as_str(), i as u32)).collect();
     let mut script = Vec::new();

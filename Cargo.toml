@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/agents-core"]
+members = ["crates/agents-core", "apps/agents/src-tauri"]
 
 [profile.release]
 opt-level = 3

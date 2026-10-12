@@ -11,6 +11,7 @@ pub mod scenario;
 pub mod spatial;
 pub mod theatre;
 pub mod time;
+pub mod trace;
 pub mod world;
 
 /// Папка данных `packages/sim/data` относительно корня репозитория.

@@ -1,0 +1,125 @@
+/** Приложение агентной модели: карта, иерархия, шкала времени с показом, карточка агента и разговор с ним. */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { RunData } from './data';
+import { SCENARIO, isTauri, loadRun, posAt, rowAt, shortName, stateGroup, timeLabel } from './data';
+import { MapView } from './MapView';
+import { Inspector } from './Inspector';
+import { Chat } from './Chat';
+
+const SPEEDS = [1, 4, 12, 24];
+
+export function App() {
+  const [data, setData] = useState<RunData | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [hour, setHour] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(4);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [focus, setFocus] = useState<[number, number] | null>(null);
+  const [tab, setTab] = useState<'card' | 'chat'>('card');
+  const [seed, setSeed] = useState(1);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    setBusy(true);
+    loadRun(SCENARIO, seed).then((d) => {
+      setData(d);
+      if (q.get('h')) setHour(Number(q.get('h')));
+      if (q.get('sel')) setSelected(q.get('sel'));
+      if (q.get('tab') === 'chat') setTab('chat');
+    }).catch((e) => setErr(String(e))).finally(() => setBusy(false));
+  }, [seed]);
+
+  // показ: часы модели в секунду, плавно (между кадрами положение интерполируется)
+  const last = useRef<number | null>(null);
+  useEffect(() => {
+    if (!playing || !data) return;
+    let raf = 0;
+    const tick = (t: number) => {
+      const dt = last.current === null ? 0 : (t - last.current) / 1000;
+      last.current = t;
+      setHour((h) => { const n = h + dt * speed; if (n >= data.trace.hours) { setPlaying(false); return data.trace.hours; } return n; });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); last.current = null; };
+  }, [playing, speed, data]);
+
+  const tree = useMemo(() => {
+    if (!data) return [];
+    const { trace } = data;
+    return trace.hqs.filter((h) => h.echelon !== 'front' || !trace.hqs.some((x) => x.id === h.parent)).filter((h) => h.echelon !== 'front')
+      .map((h) => ({ hq: h, divs: trace.divisions.map((d, i) => ({ d, i })).filter((x) => x.d.hq === h.id) }))
+      .filter((g) => g.divs.length);
+  }, [data]);
+
+  if (err) return <div className="splash">Не удалось загрузить прогон: {err}<br />Для разработки в браузере сначала выполните <code>npm run agents:seelow</code>.</div>;
+  if (!data) return <div className="splash">Расчёт…</div>;
+  const { trace } = data;
+  const select = (id: string | null) => {
+    setSelected(id);
+    const i = trace.divisions.findIndex((d) => d.id === id);
+    if (i >= 0) setFocus(posAt(trace, i, hour));
+  };
+  const dayTicks = Array.from({ length: Math.floor(trace.hours / 24) + 1 }, (_, k) => k * 24);
+
+  return (
+    <div className="app">
+      <header>
+        <b>{trace.name}</b>
+        <span className="muted">{trace.divisions.length} дивизий · {trace.hours} ч · прогон {trace.seed}{data.live ? '' : ' · из evals-out (браузер)'}</span>
+        <span className="spacer" />
+        {isTauri() && (
+          <label>прогон <select value={seed} onChange={(e) => setSeed(Number(e.target.value))} disabled={busy}>{[1, 2, 3, 4, 5].map((s) => <option key={s}>{s}</option>)}</select></label>
+        )}
+      </header>
+      <aside className="tree">
+        {tree.map((g) => (
+          <div key={g.hq.id} className="group">
+            <div className={`hq ${g.hq.side}`}>{g.hq.name}</div>
+            {g.divs.map(({ d, i }) => {
+              const st = rowAt(trace, i, hour)[2];
+              return (
+                <div key={d.id} className={`item ${selected === d.id ? 'sel' : ''}`} onClick={() => select(d.id)} title={st}>
+                  <span className={`dot ${stateGroup(st)}`} />{shortName(d)}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </aside>
+      <main>
+        <MapView data={data} hour={hour} selected={selected} onSelect={select} focus={focus} />
+        <div className="legend">
+          {(['march', 'deploy', 'attack', 'defense', 'withdraw', 'reserve'] as const).map((g) => <span key={g}><i className={`dot ${g}`} />{({ march: 'марш', deploy: 'развёртывание', attack: 'наступление', defense: 'оборона', withdraw: 'отход', reserve: 'резерв' })[g]}</span>)}
+          <span><i className="ghost-key" />положение по документам</span>
+        </div>
+      </main>
+      <section className="side">
+        {selected ? (
+          <>
+            <div className="tabs">
+              <button className={tab === 'card' ? 'on' : ''} onClick={() => setTab('card')}>Карточка</button>
+              <button className={tab === 'chat' ? 'on' : ''} onClick={() => setTab('chat')}>Разговор</button>
+              <span className="spacer" />
+              <button onClick={() => setSelected(null)} title="Закрыть">×</button>
+            </div>
+            {tab === 'card' ? <Inspector data={data} id={selected} hour={hour} onHour={setHour} /> : <Chat key={selected} data={data} id={selected} hour={hour} onHour={setHour} />}
+          </>
+        ) : (
+          <div className="empty">Выберите дивизию на карте или в списке слева: карточка с переменными, машиной состояний, журналом и сверкой с документами, разговор с командиром или разбор.</div>
+        )}
+      </section>
+      <footer>
+        <button className="play" onClick={() => { if (hour >= trace.hours) setHour(0); setPlaying(!playing); }}>{playing ? '❚❚' : '▶'}</button>
+        <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>{SPEEDS.map((s) => <option key={s} value={s}>{s} ч/с</option>)}</select>
+        <div className="time">{timeLabel(trace.start, hour)} <span className="muted">МСК</span></div>
+        <div className="slider">
+          <input type="range" min={0} max={trace.hours} step={0.25} value={hour} onChange={(e) => { setPlaying(false); setHour(Number(e.target.value)); }} />
+          <div className="days">{dayTicks.map((h) => <span key={h} style={{ left: `${(h / trace.hours) * 100}%` }}>{timeLabel(trace.start, h).slice(0, 5)}</span>)}</div>
+        </div>
+      </footer>
+    </div>
+  );
+}

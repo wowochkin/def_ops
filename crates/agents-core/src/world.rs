@@ -166,7 +166,7 @@ impl Sim {
         for (d, o) in arrived {
             let div = &mut next.divisions[d as usize];
             if div.state == State::Destroyed { continue; }
-            journal.push(Event { tick, agent: d, text: format!("получен приказ ({:?}) от {}: {}", o.kind, next.hqs[o.from as usize].name, o.note) });
+            journal.push(Event { tick, agent: d, text: format!("получен приказ «{}» от штаба «{}»: {}", o.kind.label(), next.hqs[o.from as usize].name, o.note) });
             div.order = Some(o);
             div.route = None;
         }

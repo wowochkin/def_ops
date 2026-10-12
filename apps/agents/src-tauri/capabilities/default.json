@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Окно приложения: только команды ядра (run_scenario, read_text) и базовые возможности",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

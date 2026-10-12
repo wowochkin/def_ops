@@ -15,10 +15,9 @@
 use agents_core::geo::{LngLat, XY};
 use agents_core::model::{Side, State};
 use agents_core::scenario;
-use agents_core::time::{format_hours, parse_hours};
+use agents_core::time::parse_hours;
 use agents_core::{repo_root, DATA_DIR};
 use serde::Deserialize;
-use serde_json::json;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Write as _;
 use std::time::Instant;
@@ -103,13 +102,7 @@ fn main() {
         let mut frames: Vec<Vec<serde_json::Value>> = Vec::new();
         let mut snaps: Vec<Vec<XY>> = Vec::new();
         let mut alive: Vec<Vec<bool>> = Vec::new();
-        let frame = |sim: &agents_core::world::Sim| -> Vec<serde_json::Value> {
-            sim.world.divisions.iter().map(|d| {
-                let p = sim.theatre.proj.to_lnglat(d.vars.pos);
-                json!([(p[0] * 1e4).round() / 1e4, (p[1] * 1e4).round() / 1e4, d.state.label(), d.vars.personnel.round(), d.vars.tanks.round(), d.vars.guns.round(),
-                       (d.vars.ammo * 100.0).round() / 100.0, (d.vars.fuel * 100.0).round() / 100.0, (d.vars.fatigue * 100.0).round() / 100.0, (d.vars.cohesion * 100.0).round() / 100.0])
-            }).collect()
-        };
+        let frame = agents_core::trace::frame;
         let t0 = Instant::now();
         snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
         alive.push(sim.world.divisions.iter().map(|d| d.state != State::Destroyed).collect());
@@ -155,17 +148,7 @@ fn main() {
         per_run.push((share(&devs.iter().collect::<Vec<_>>()), share(&adevs.iter().map(|x| &x.0).collect::<Vec<_>>()), secs));
         if seed == 1 {
             // trace.json
-            let names: Vec<serde_json::Value> = sim.world.divisions.iter().map(|d| json!({ "id": d.id, "name": d.name, "side": d.side, "hq": sim.world.hqs[d.hq as usize].id, "kind": d.params.kind })).collect();
-            let journal: Vec<serde_json::Value> = sim.journal.iter().map(|e| json!({
-                "time": format_hours(start + e.tick as i64),
-                "agent": if e.agent == u32::MAX { serde_json::Value::Null } else { json!(sim.world.divisions[e.agent as usize].id) },
-                "text": e.text,
-            })).collect();
-            let trace = json!({
-                "scenario": meta.id, "name": meta.name, "start": meta.start, "hours": meta.hours, "seed": seed,
-                "fields": ["lng", "lat", "state", "personnel", "tanks", "guns", "ammo", "fuel", "fatigue", "cohesion"],
-                "divisions": names, "frames": frames, "journal": journal,
-            });
+            let trace = agents_core::trace::describe(&sim, &meta, std::mem::take(&mut frames));
             std::fs::write(format!("{out_dir}/trace.json"), serde_json::to_string(&trace).unwrap()).expect("trace.json");
             let mut transitions: BTreeMap<String, usize> = BTreeMap::new();
             for e in &sim.journal { if let Some((_, rest)) = e.text.split_once(": ") { if e.text.contains(" → ") { *transitions.entry(rest.to_string()).or_default() += 1; } } }

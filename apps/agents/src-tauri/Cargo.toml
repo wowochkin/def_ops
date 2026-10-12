@@ -1,0 +1,14 @@
+[package]
+name = "agents-app"
+version = "0.1.0"
+edition = "2021"
+description = "Приложение агентной модели переигровки: ядро на Rust, интерфейс на веб-технологиях (Tauri)"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+agents-core = { path = "../../../crates/agents-core" }
+tauri = { version = "2", features = [] }
+serde_json = "1"
