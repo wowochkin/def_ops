@@ -1,7 +1,7 @@
 /** Приложение агентной модели: карта, иерархия, шкала времени с показом, карточка агента и разговор с ним. */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RunData, Settings } from './data';
-import { SCENARIO, isTauri, loadRun, loadSettings, posAt, rowAt, saveSettings, shortName, stateGroup, timeLabel } from './data';
+import { SCENARIO, isTauri, llmRun, loadRun, loadSettings, posAt, rowAt, saveSettings, shortName, stateGroup, timeLabel } from './data';
 import { SettingsPanel } from './Settings';
 import { StaffLog } from './StaffLog';
 import { MapView } from './MapView';
@@ -39,7 +39,7 @@ export function App() {
     const q = new URLSearchParams(location.search);
     setBusy(true);
     setProgress(null);
-    const opts = { seed, de: settings.de, llm: settings.staffModel ? { url: settings.llmUrl, model: settings.staffModel } : null };
+    const opts = { seed, de: settings.de, llm: settings.staffModel ? llmRun(settings) : null };
     loadRun(SCENARIO, opts).then((d) => {
       setData(d);
       if (q.get('h')) setHour(Number(q.get('h')));

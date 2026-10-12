@@ -45,29 +45,81 @@ impl Sim {
     /// сценария) и записи журнала.
     pub fn doctrine_orders(&self, w: &World, tick: u32) -> (Vec<ScriptOrder>, Vec<Event>) {
         let cycle = self.rules.doctrine.cycle_hours.max(1.0) as u32;
-        let mut orders = Vec::new();
-        let mut journal = Vec::new();
+        // цикл управления; штабы разнесены по часам, чтобы не решать все разом (на модели — по выбору: в один час)
+        let due = |key: usize, sync: bool| if sync { tick % cycle == 0 } else { (tick + key as u32) % cycle == 0 || tick == 0 };
+        let subs_of = |h: usize| -> Vec<usize> { (0..w.divisions.len()).filter(|&i| w.divisions[i].hq as usize == h && w.divisions[i].state != State::Destroyed).collect() };
+        let mut decided: Vec<(usize, Decision, String)> = Vec::new();
+        // запросы к модели: ведущий штаб (корпус или армия при объединении) и его корпуса с дивизиями
+        let mut asks: Vec<(usize, Vec<(usize, Vec<usize>)>)> = Vec::new();
         for (h, hq) in w.hqs.iter().enumerate() {
             let src = self.sources[side_idx(hq.side)];
             if src == Source::Script { continue; }
-            // цикл управления; штабы разнесены по часам, чтобы не решать все разом
-            if (tick + h as u32) % cycle != 0 && tick != 0 { continue; }
-            let subs: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].hq as usize == h && w.divisions[i].state != State::Destroyed).collect();
+            let subs = subs_of(h);
             if subs.is_empty() { continue; }
-            let (dec, how) = match (src, &self.llm) {
-                (Source::Llm, Some(cfg)) => match self.llm_hq(w, tick, h, &subs, cfg) {
-                    Ok(dec) => (dec, format!("языковая модель {}", cfg.model)),
-                    Err(e) => (self.doctrine_hq(w, tick, h, &subs), format!("по доктрине: модель не дала решения — {e}")),
-                },
-                (Source::Llm, None) => (self.doctrine_hq(w, tick, h, &subs), "по доктрине: модель не задана".to_string()),
-                _ => (self.doctrine_hq(w, tick, h, &subs), "по доктрине".to_string()),
-            };
+            match (src, &self.llm) {
+                (Source::Llm, Some(cfg)) => {
+                    let lead = if cfg.by_army { army_of(w, h) } else { h };
+                    if !due(lead, cfg.sync || cfg.by_army) { continue; }
+                    match asks.iter_mut().find(|a| a.0 == lead) { Some(a) => a.1.push((h, subs)), None => asks.push((lead, vec![(h, subs)])) }
+                }
+                (Source::Llm, None) => if due(h, false) { decided.push((h, self.doctrine_hq(w, tick, h, &subs), "по доктрине: модель не задана".into())) },
+                _ => if due(h, false) { decided.push((h, self.doctrine_hq(w, tick, h, &subs), "по доктрине".into())) },
+            }
+        }
+        if let (Some(cfg), false) = (&self.llm, asks.is_empty()) {
+            let par = self.llm_parallel(cfg).min(asks.len()).max(1);
+            let time = crate::time::format_hours(self.start_hour + tick as i64);
+            if let Some(cb) = &self.on_progress { cb(format!("{time}: штабов к модели {}: {}, одновременно {par}…", cfg.model, asks.len())); }
+            let next = std::sync::atomic::AtomicUsize::new(0);
+            let done = std::sync::atomic::AtomicUsize::new(0);
+            let mut res: Vec<(usize, Result<Decision, String>)> = std::thread::scope(|s| {
+                let hs: Vec<_> = (0..par).map(|_| s.spawn(|| {
+                    let mut out = Vec::new();
+                    loop {
+                        let k = next.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        let Some((lead, groups)) = asks.get(k) else { break };
+                        out.push((k, self.llm_hq(w, tick, *lead, groups, cfg)));
+                        let n = done.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
+                        if let Some(cb) = &self.on_progress { cb(format!("{time}: ответов модели {n} из {}", asks.len())); }
+                    }
+                    out
+                })).collect();
+                hs.into_iter().flat_map(|h| h.join().unwrap_or_default()).collect()
+            });
+            // порядок применения — по порядку штабов, а не по времени ответа: прогон воспроизводим
+            res.sort_by_key(|r| r.0);
+            for (k, r) in res {
+                let (lead, groups) = &asks[k];
+                match r {
+                    Ok(dec) => {
+                        let how = if groups.len() > 1 || groups[0].0 != *lead { format!("языковая модель {}, за корпуса: {}", cfg.model, groups.iter().map(|g| w.hqs[g.0].name.as_str()).collect::<Vec<_>>().join(", ")) } else { format!("языковая модель {}", cfg.model) };
+                        decided.push((*lead, dec, how));
+                    }
+                    Err(e) => for (h, subs) in groups { decided.push((*h, self.doctrine_hq(w, tick, *h, subs), format!("по доктрине: модель не дала решения — {e}"))) },
+                }
+            }
+        }
+        let mut orders = Vec::new();
+        let mut journal = Vec::new();
+        for (h, dec, how) in decided {
             if !dec.why.is_empty() {
-                journal.push(Event { tick, agent: u32::MAX, text: format!("штаб «{}» ({how}): {}", hq.name, dec.why.join("; ")) });
+                journal.push(Event { tick, agent: u32::MAX, text: format!("штаб «{}» ({how}): {}", w.hqs[h].name, dec.why.join("; ")) });
             }
             orders.extend(dec.orders);
         }
         (orders, journal)
+    }
+
+    /// Число одновременных запросов к модели: из настроек или замером один раз за прогон.
+    fn llm_parallel(&self, cfg: &llm::LlmConfig) -> usize {
+        if cfg.parallel > 0 { return cfg.parallel; }
+        *self.llm_par.get_or_init(|| {
+            if let Some(cb) = &self.on_progress { cb(format!("замер параллельных запросов к модели {}…", cfg.model)); }
+            match llm::probe_parallel(cfg, 16) {
+                Ok(p) => { if let Ok(mut l) = self.llm_probe.lock() { *l = Some(p.to_json()); } p.best }
+                Err(e) => { if let Ok(mut l) = self.llm_probe.lock() { *l = Some(json!({ "best": 1, "error": e })); } 1 }
+            }
+        })
     }
 
     /// Приказ дивизии, если он отличается от действующего.
@@ -144,32 +196,47 @@ impl Sim {
         json!({ "divisions": divs })
     }
 
-    /// Решение штаба на языковой модели: обстановка → JSON с приказами из тех же действий, что у доктрины.
-    fn llm_hq(&self, w: &World, tick: u32, h: usize, subs: &[usize], cfg: &llm::LlmConfig) -> Result<Decision, String> {
-        let hq = &w.hqs[h];
+    /// Решение штаба на языковой модели: обстановка → JSON с приказами из тех же действий, что у доктрины. `lead` —
+    /// штаб, который решает (корпус или армия при объединении), `groups` — его корпуса с дивизиями.
+    fn llm_hq(&self, w: &World, tick: u32, lead: usize, groups: &[(usize, Vec<usize>)], cfg: &llm::LlmConfig) -> Result<Decision, String> {
+        let hq = &w.hqs[lead];
         let time = crate::time::format_hours(self.start_hour + tick as i64);
         let doc = &self.rules.doctrine;
+        let joint = groups.len() > 1 || groups[0].0 != lead;
+        let who = if joint {
+            format!("Ты — начальник штаба армии «{}» в Берлинской операции, апрель 1945 года. Раз в {} ч ты решаешь за подчинённые корпуса ({}), что приказать их дивизиям.",
+                hq.name, doc.cycle_hours, groups.iter().map(|g| w.hqs[g.0].name.as_str()).collect::<Vec<_>>().join(", "))
+        } else {
+            format!("Ты — начальник штаба соединения «{}» ({}) в Берлинской операции, апрель 1945 года. Раз в {} ч ты решаешь, что приказать подчинённым дивизиям.",
+                hq.name, match hq.echelon { Echelon::Corps => "корпус", Echelon::Army => "армия", Echelon::Front => "группа армий" }, doc.cycle_hours)
+        };
         let system = format!(
-            "Ты — начальник штаба соединения «{}» ({}) в Берлинской операции, апрель 1945 года. Раз в {} ч ты решаешь, что приказать подчинённым дивизиям. Действуй по немецкой доктрине обороны 1944–1945 гг.: вклинение противника — немедленная контратака резервом во фланг (силы не меньше 1/3 прорвавшегося), если сил мало — закрыть направление рубежом; обойдённой или разбитой дивизии — отход на следующий рубеж; общий отход армии без приказа сверху запрещён{}.
+            "{who} Действуй по немецкой доктрине обороны 1944–1945 гг.: вклинение противника — немедленная контратака резервом во фланг (силы не меньше 1/3 прорвавшегося), если сил мало — закрыть направление рубежом; обойдённой или разбитой дивизии — отход на следующий рубеж; общий отход армии без приказа сверху запрещён{}.
 Доступные действия: hold — держаться на месте, не отходить; defend — оборонять текущий район; withdraw — отойти на следующий рубеж позади; counterattack — контратаковать дивизию противника (target — её id); block — занять рубеж за своей дивизией (target — её id).
 Ответь только JSON без пояснений вокруг: {}. По дивизии, которой приказ не меняешь, приказ не давай.",
-            hq.name, match hq.echelon { Echelon::Corps => "корпус", Echelon::Army => "армия", Echelon::Front => "группа армий" }, doc.cycle_hours,
             if doc.hold_orders { "; действует приказ «держаться» — отход запрещён" } else { "" }, REPLY_FORMAT);
-        let user = format!("Время: {time} (МСК). Обстановка по дивизиям (сила противника — в долях своей; strength_pct — от исходной):\n{}", self.situation(w, subs));
+        let situation = if joint {
+            json!({ "corps": groups.iter().map(|(h, subs)| json!({ "corps": w.hqs[*h].name, "divisions": self.situation(w, subs)["divisions"] })).collect::<Vec<_>>() })
+        } else { self.situation(w, &groups[0].1) };
+        let user = format!("Время: {time} (МСК). Обстановка по дивизиям (сила противника — в долях своей; strength_pct — от исходной):\n{situation}");
         if let Some(cb) = &self.on_progress { cb(format!("{time}: штаб «{}» запрашивает модель {}…", hq.name, cfg.model)); }
-        let reply = llm::chat(cfg, &[("system".into(), system.clone()), ("user".into(), user.clone())]);
-        let log = |ok: bool, text: &str| {
-            if let Ok(mut l) = self.llm_log.lock() { l.push(json!({ "tick": tick, "time": time, "hq": hq.id, "model": cfg.model, "request": user, "reply": text, "ok": ok })); }
+        let reply = llm::complete(cfg, &[("system".into(), system), ("user".into(), user.clone())]);
+        let log = |ok: bool, text: &str, r: Option<&llm::Reply>| {
+            if let Ok(mut l) = self.llm_log.lock() {
+                l.push(json!({ "tick": tick, "time": time, "hq": hq.id, "model": cfg.model, "request": user, "reply": text, "ok": ok,
+                    "tokens": r.and_then(|r| r.tokens), "secs": r.map(|r| (r.secs * 10.0).round() / 10.0), "truncated": r.map(|r| r.truncated) }));
+            }
         };
-        let reply = match reply { Ok(r) => r, Err(e) => { log(false, &e); return Err(e); } };
-        let Some(v) = llm::extract_json(&reply) else { log(false, &reply); return Err("ответ не в формате JSON".into()); };
-        let Some(list) = v.get("orders").and_then(Value::as_array) else { log(false, &reply); return Err("в ответе нет списка orders".into()); };
-        log(true, &reply);
+        let reply = match reply { Ok(r) => r, Err(e) => { log(false, &e, None); return Err(e); } };
+        let cut = if reply.truncated { format!("ответ оборван потолком токенов ({}) — поднимите потолок или поставьте 0", cfg.max_tokens) } else { String::new() };
+        let Some(v) = llm::extract_json(&reply.text) else { log(false, &reply.text, Some(&reply)); return Err(if reply.truncated { cut } else { "ответ не в формате JSON".into() }); };
+        let Some(list) = v.get("orders").and_then(Value::as_array) else { log(false, &reply.text, Some(&reply)); return Err(if reply.truncated { cut } else { "в ответе нет списка orders".into() }); };
+        log(true, &reply.text, Some(&reply));
         let mut dec = Decision { orders: Vec::new(), why: Vec::new() };
         let id_of = |s: &str| w.divisions.iter().position(|d| d.id == s);
         for o in list {
             let Some(i) = o.get("division").and_then(Value::as_str).and_then(id_of) else { continue };
-            if !subs.contains(&i) { continue; }
+            let Some(h) = groups.iter().find(|g| g.1.contains(&i)).map(|g| g.0) else { continue };
             let d = &w.divisions[i];
             let reason = o.get("reason").and_then(Value::as_str).unwrap_or("").to_string();
             let target = o.get("target").and_then(Value::as_str).and_then(id_of);
@@ -279,3 +346,12 @@ impl Sim {
 }
 
 pub fn side_idx(s: Side) -> usize { match s { Side::Su => 0, Side::De => 1 } }
+
+/// Армия, в которую входит штаб (сам штаб, если он армия или выше её нет).
+fn army_of(w: &World, h: usize) -> usize {
+    let mut k = h;
+    loop {
+        if w.hqs[k].echelon == Echelon::Army { return k; }
+        match w.hqs[k].parent { Some(p) => k = p as usize, None => return h }
+    }
+}

@@ -110,6 +110,9 @@ pub struct Sim {
     pub llm: Option<crate::llm::LlmConfig>,
     /// Запросы к модели и ответы (для разбора и записи прогона).
     pub llm_log: std::sync::Mutex<Vec<serde_json::Value>>,
+    /// Число одновременных запросов, определённое замером (если в настройках «авто»), и сам замер.
+    pub llm_par: std::sync::OnceLock<usize>,
+    pub llm_probe: std::sync::Mutex<Option<serde_json::Value>>,
     /// Сообщения о ходе долгих решений (запрос к модели) — для окна приложения.
     pub on_progress: Option<Box<dyn Fn(String) + Send + Sync>>,
     pub journal: Vec<Event>,
@@ -150,7 +153,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), on_progress: None, journal: Vec::new(), history: None };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), on_progress: None, journal: Vec::new(), history: None };
         s.script.sort_by_key(|o| o.at);
         s
     }

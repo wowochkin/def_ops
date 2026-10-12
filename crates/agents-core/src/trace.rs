@@ -46,7 +46,12 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
         "theatre": sim.theatre.id,
         "fields": FIELDS, "divisions": divisions, "hqs": hqs, "frames": frames, "journal": journal,
         "sources": sim.sources.iter().map(|s| format!("{s:?}").to_lowercase()).collect::<Vec<_>>(),
-        "llm": sim.llm.as_ref().map(|c| json!({ "url": c.url, "model": c.model })),
+        "llm": sim.llm.as_ref().map(|c| {
+            let mut v = c.describe();
+            if let Some(&n) = sim.llm_par.get() { v["parallelUsed"] = json!(n); }
+            if let Some(p) = sim.llm_probe.lock().ok().and_then(|p| p.clone()) { v["probe"] = p; }
+            v
+        }),
         "staff": sim.llm_log.lock().map(|l| l.clone()).unwrap_or_default(),
     })
 }

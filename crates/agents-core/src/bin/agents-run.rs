@@ -3,6 +3,8 @@
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
 //!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10]
 //!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
+//!       [--llm-reasoning default|off|low|medium|high] [--llm-max-tokens N (0 — без потолка)] [--llm-parallel auto|N]
+//!       [--llm-sync] [--llm-by-army] [--llm-probe — только замер параллельных запросов]
 //!
 //! Мерило — как у нынешней модели: расстояние от расчётного положения до исторического, превышение над радиусом
 //! неопределённости источника; «в допуске» — превышение не больше допуска (10 км). Дивизии сверяются каждая со
@@ -108,7 +110,19 @@ fn main() {
             }
         }
         if let Some(model) = arg(&args, "llm-model") {
-            sim.llm = Some(agents_core::llm::LlmConfig::new(&arg(&args, "llm-url").unwrap_or_else(|| "http://localhost:1234/v1".into()), &model));
+            let mut c = agents_core::llm::LlmConfig::new(&arg(&args, "llm-url").unwrap_or_else(|| "http://localhost:1234/v1".into()), &model);
+            if let Some(r) = arg(&args, "llm-reasoning") { c.reasoning = agents_core::llm::Reasoning::parse(&r).unwrap_or_else(|| panic!("--llm-reasoning: default|off|low|medium|high")); }
+            if let Some(t) = arg(&args, "llm-max-tokens") { c.max_tokens = t.parse().expect("--llm-max-tokens: число"); }
+            if let Some(p) = arg(&args, "llm-parallel") { c.parallel = if p == "auto" { 0 } else { p.parse().expect("--llm-parallel: auto или число") }; }
+            c.sync = args.iter().any(|a| a == "--llm-sync");
+            c.by_army = args.iter().any(|a| a == "--llm-by-army");
+            if args.iter().any(|a| a == "--llm-probe") {
+                let p = agents_core::llm::probe_parallel(&c, 16).unwrap_or_else(|e| panic!("замер: {e}"));
+                for (n, tps, secs) in &p.rows { println!("одновременно {n:>2}: {tps:>7.1} ток/с всего, ступень {secs:.1} с"); }
+                println!("выбрано: {}", p.best);
+                return;
+            }
+            sim.llm = Some(c);
             sim.on_progress = Some(Box::new(|m| eprintln!("{m}")));
         }
         let start = parse_hours(&meta.start).expect("start");

@@ -83,7 +83,7 @@ fn seelow_scenario_loads_and_runs() {
 }
 
 /// Заглушка сервера модели по протоколу OpenAI: на любой запрос к чату отвечает приказом «держаться» первой дивизии
-/// из обстановки; /models — список из двух моделей.
+/// из обстановки; /models — список из двух моделей; при потолке 7 токенов — оборванный ответ.
 fn mock_llm() -> String {
     use std::io::{Read, Write};
     let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -107,6 +107,9 @@ fn mock_llm() -> String {
             let req = String::from_utf8_lossy(&buf[..n]).to_string();
             let body = if req.starts_with("GET") {
                 r#"{"data":[{"id":"qwen-test"},{"id":"other"}]}"#.to_string()
+            } else if req.contains("\"max_tokens\":7") {
+                // потолок токенов: ответ оборван на размышлениях
+                r#"{"choices":[{"message":{"content":"<think>оцениваю обстановку"},"finish_reason":"length"}],"usage":{"completion_tokens":7}}"#.to_string()
             } else {
                 let id = req.split("\\\"id\\\":\\\"de_").nth(1).and_then(|r| r.split('\\').next()).map(|r| format!("de_{r}")).unwrap_or("x".into());
                 let content = format!("<think>оцениваю</think>{{\"orders\": [{{\"division\": \"{id}\", \"action\": \"hold\", \"target\": null, \"reason\": \"держать рубеж по приказу\"}}]}}");
@@ -137,4 +140,40 @@ fn staff_on_language_model() {
     sim2.llm = Some(agents_core::llm::LlmConfig::new("http://127.0.0.1:9/v1", "нет"));
     sim2.step();
     assert!(sim2.journal.iter().any(|e| e.text.contains("по доктрине: модель не дала решения")));
+}
+
+#[test]
+fn staff_on_language_model_options() {
+    let url = mock_llm();
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
+    let load = || {
+        let (mut sim, _) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+        sim.sources[1] = agents_core::staff::Source::Llm;
+        sim
+    };
+    // корпуса в один час, три запроса одновременно
+    let mut sim = load();
+    let mut c = agents_core::llm::LlmConfig::new(&url, "qwen-test");
+    c.sync = true;
+    c.parallel = 3;
+    sim.llm = Some(c.clone());
+    sim.step();
+    let log = sim.llm_log.lock().unwrap().clone();
+    assert_eq!(log.len(), 3, "по запросу на корпус");
+    // один запрос на армию за все корпуса
+    let mut sim = load();
+    c.by_army = true;
+    sim.llm = Some(c.clone());
+    sim.step();
+    assert_eq!(sim.llm_log.lock().unwrap().len(), 1);
+    assert!(sim.journal.iter().any(|e| e.text.contains("за корпуса") && e.text.contains("держаться")));
+    // ответ оборван потолком токенов — решает доктрина, причина в журнале
+    let mut sim = load();
+    c.by_army = false;
+    c.max_tokens = 7;
+    c.reasoning = agents_core::llm::Reasoning::Off;
+    sim.llm = Some(c);
+    sim.step();
+    assert!(sim.journal.iter().any(|e| e.text.contains("ответ оборван потолком токенов (7)")));
 }

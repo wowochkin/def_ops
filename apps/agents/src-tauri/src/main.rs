@@ -2,7 +2,8 @@
 //! ядро agents-core напрямую, без сервера. Команды:
 //! - run_scenario — прогон сценария с записью хода по часам (кадры, журнал, штабы, исходные данные);
 //! - read_text — файл данных репозитория (сценарий, история, театр) только для чтения;
-//! - list_models, llm_chat — языковая модель по протоколу OpenAI (LM Studio): список моделей и запрос к чату
+//! - list_models, llm_chat, probe_parallel — языковая модель по протоколу OpenAI (LM Studio): список моделей,
+//!   запрос к чату, замер числа параллельных запросов
 //!   (через ядро, без CORS со стороны сервера модели);
 //! - в run_scenario можно выбрать источник решений немецких штабов (приказы сценария, доктрина, языковая модель);
 //!   ход решений модели приходит в окно событием staff-progress.
@@ -29,9 +30,35 @@ fn inside(rel: &str) -> Result<PathBuf, String> {
 }
 
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct LlmIn {
     url: String,
     model: String,
+    /// default | off | low | medium | high
+    #[serde(default)]
+    reasoning: Option<String>,
+    /// Потолок токенов ответа; 0 — без ограничения.
+    #[serde(default)]
+    max_tokens: u32,
+    /// Одновременных запросов; 0 — замер.
+    #[serde(default)]
+    parallel: usize,
+    #[serde(default)]
+    sync: bool,
+    #[serde(default)]
+    by_army: bool,
+}
+
+impl LlmIn {
+    fn config(&self) -> llm::LlmConfig {
+        let mut c = llm::LlmConfig::new(&self.url, &self.model);
+        c.reasoning = self.reasoning.as_deref().and_then(llm::Reasoning::parse).unwrap_or(llm::Reasoning::Default);
+        c.max_tokens = self.max_tokens;
+        c.parallel = self.parallel;
+        c.sync = self.sync;
+        c.by_army = self.by_army;
+        c
+    }
 }
 
 #[tauri::command]
@@ -44,7 +71,7 @@ async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>
         let (mut sim, meta) = scenario::load(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs)?;
         if let Some(s) = seed { sim.seed = s; }
         sim.sources[1] = match de.as_deref() { Some("doctrine") => Source::Doctrine, Some("llm") => Source::Llm, _ => Source::Script };
-        if let Some(l) = llm { sim.llm = Some(llm::LlmConfig::new(&l.url, &l.model)); }
+        if let Some(l) = llm { sim.llm = Some(l.config()); }
         let app2 = app.clone();
         sim.on_progress = Some(Box::new(move |m| { let _ = app2.emit("staff-progress", m); }));
         let hours = meta.hours;
@@ -62,6 +89,12 @@ async fn llm_chat(url: String, model: String, messages: Vec<(String, String)>) -
     tauri::async_runtime::spawn_blocking(move || llm::chat(&llm::LlmConfig::new(&url, &model), &messages)).await.map_err(|e| e.to_string())?
 }
 
+/// Замер числа параллельных запросов к модели (llm::probe_parallel).
+#[tauri::command]
+async fn probe_parallel(llm: LlmIn) -> Result<serde_json::Value, String> {
+    tauri::async_runtime::spawn_blocking(move || llm::probe_parallel(&llm.config(), 16).map(|p| p.to_json())).await.map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 fn read_text(path: String) -> Result<String, String> {
     let p = inside(&path)?;
@@ -70,7 +103,7 @@ fn read_text(path: String) -> Result<String, String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![run_scenario, read_text, list_models, llm_chat])
+        .invoke_handler(tauri::generate_handler![run_scenario, read_text, list_models, llm_chat, probe_parallel])
         .run(tauri::generate_context!())
         .expect("ошибка запуска приложения");
 }

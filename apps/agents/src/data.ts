@@ -14,17 +14,23 @@ export interface JournalEvent { tick: number; time: string; agent: string | null
 /** Кадр дивизии: lng, lat, состояние, люди, танки, орудия, боекомплекты, заправки, усталость, организованность. */
 export type Row = [number, number, string, number, number, number, number, number, number, number];
 
-export interface StaffCall { tick: number; time: string; hq: string; model: string; request: string; reply: string; ok: boolean }
+export interface StaffCall { tick: number; time: string; hq: string; model: string; request: string; reply: string; ok: boolean; tokens?: number | null; secs?: number | null; truncated?: boolean | null }
+export interface ProbeResult { best: number; rows: { parallel: number; tokensPerSec: number; secs: number }[]; error?: string }
+export interface LlmInfo { url: string; model: string; reasoning?: Reasoning; maxTokens?: number; parallel?: number; sync?: boolean; byArmy?: boolean; parallelUsed?: number; probe?: ProbeResult }
 export interface Trace {
   scenario: string; name: string; start: string; hours: number; seed: number; theatre: string;
   divisions: DivisionInfo[]; hqs: HqInfo[]; frames: Row[][]; journal: JournalEvent[];
   /** Источник решений штабов: [советская сторона, немецкая] — script, doctrine, llm. */
-  sources?: string[]; llm?: { url: string; model: string } | null; staff?: StaffCall[];
+  sources?: string[]; llm?: LlmInfo | null; staff?: StaffCall[];
 }
 
 /** Источник решений немецких штабов. */
 export type StaffSource = 'script' | 'doctrine' | 'llm';
-export interface RunOptions { seed: number; de: StaffSource; llm: { url: string; model: string } | null }
+/** Уровень размышлений модели: по умолчанию модели, выключить, низкий, средний, высокий. */
+export type Reasoning = 'default' | 'off' | 'low' | 'medium' | 'high';
+/** Настройки штаба на модели для ядра (crates/agents-core/src/llm.rs, LlmConfig). */
+export interface LlmRun { url: string; model: string; reasoning: Reasoning; maxTokens: number; parallel: number; sync: boolean; byArmy: boolean }
+export interface RunOptions { seed: number; de: StaffSource; llm: LlmRun | null }
 export interface HistPos { formation: string; time: string; at: LngLat; approxKm: number; set?: string; reliability?: string | null }
 export interface History { divisions: HistPos[]; armies: HistPos[] }
 export interface RunData { trace: Trace; history: History; theatre: TheatreData; live: boolean }
@@ -86,10 +92,55 @@ export async function chatLLM(url: string, model: string, messages: { role: stri
   return j.choices?.[0]?.message?.content ?? '(пустой ответ)';
 }
 
+/**
+ * Замер числа параллельных запросов (как llm::probe_parallel в ядре): короткие одинаковые ответы на 1, 2, 4, 8…
+ * одновременных запросах; берётся ступень, после которой суммарная скорость растёт меньше чем на 20 %.
+ */
+export async function probeParallel(l: LlmRun): Promise<ProbeResult> {
+  if (isTauri()) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return invoke<ProbeResult>('probe_parallel', { llm: l });
+  }
+  const url = `${l.url.replace(/\/$/, '')}/chat/completions`;
+  const one = async () => {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: l.model, temperature: 0, max_tokens: 96, reasoning_effort: 'low', chat_template_kwargs: { enable_thinking: false }, think: false, messages: [{ role: 'user', content: 'Перечисли через запятую словами числа от одного до шестидесяти, без пояснений. /no_think' }] }) });
+    if (!r.ok) throw new Error(`модель ответила ${r.status}`);
+    const j = await r.json();
+    return (j.usage?.completion_tokens as number | undefined) ?? String(j.choices?.[0]?.message?.content ?? '').length / 3;
+  };
+  await one();
+  const rows: ProbeResult['rows'] = [];
+  for (let n = 1; n <= 16; n *= 2) {
+    const t0 = performance.now();
+    let toks: number[];
+    try { toks = await Promise.all(Array.from({ length: n }, one)); } catch { break; }
+    const secs = (performance.now() - t0) / 1000;
+    const tps = toks.reduce((a, b) => a + b, 0) / secs;
+    const prev = rows[rows.length - 1];
+    rows.push({ parallel: n, tokensPerSec: Math.round(tps * 10) / 10, secs: Math.round(secs * 10) / 10 });
+    if (prev && tps < prev.tokensPerSec * 1.2) break;
+  }
+  if (!rows.length) throw new Error('сервер не ответил на замер');
+  let best = rows[0].parallel;
+  for (let k = 1; k < rows.length && rows[k].tokensPerSec >= rows[k - 1].tokensPerSec * 1.2; k++) best = rows[k].parallel;
+  return { best, rows };
+}
+
 /** Настройки модели и источника решений — в хранилище окна (переживают перезапуск). */
-export interface Settings { llmUrl: string; staffModel: string; chatModel: string; de: StaffSource }
+export interface Settings {
+  llmUrl: string; staffModel: string; chatModel: string; de: StaffSource;
+  /** Уровень размышлений и потолок токенов ответа штаба (0 — без ограничения). */
+  reasoning: Reasoning; maxTokens: number;
+  /** Одновременных запросов: 0 — авто (замер перед расчётом). */
+  parallel: number;
+  /** Штабы на модели решают в один час — запросы уходят параллельно. */
+  sync: boolean;
+  /** Один запрос на армию за все её корпуса. */
+  byArmy: boolean;
+}
+export const llmRun = (s: Settings): LlmRun => ({ url: s.llmUrl, model: s.staffModel, reasoning: s.reasoning, maxTokens: s.maxTokens, parallel: s.parallel, sync: s.sync, byArmy: s.byArmy });
 export function loadSettings(): Settings {
-  const d: Settings = { llmUrl: defaultLlmUrl(), staffModel: '', chatModel: '', de: 'script' };
+  const d: Settings = { llmUrl: defaultLlmUrl(), staffModel: '', chatModel: '', de: 'script', reasoning: 'default', maxTokens: 0, parallel: 0, sync: true, byArmy: false };
   try { return { ...d, ...JSON.parse(localStorage.getItem('agents.settings') ?? '{}') }; } catch { return d; }
 }
 export function saveSettings(s: Settings) { try { localStorage.setItem('agents.settings', JSON.stringify(s)); } catch { /* без хранилища */ } }

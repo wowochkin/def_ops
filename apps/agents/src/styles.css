@@ -99,3 +99,7 @@ header button { border: 1px solid var(--line); background: #fff; border-radius: 
 .settings .radio { font-size: 12px; }
 .pre { white-space: pre-wrap; font-size: 11px; background: #f6f3ea; padding: 6px; border-radius: 4px; max-height: 220px; overflow: auto; }
 .app { position: relative; }
+
+.settings table.probe { border-collapse: collapse; font-size: 12px; margin: 2px 0; }
+.settings table.probe th, .settings table.probe td { padding: 2px 8px; border-bottom: 1px solid var(--line, #ddd); text-align: right; }
+.settings table.probe tr.on td { font-weight: 600; }
