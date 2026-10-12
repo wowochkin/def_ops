@@ -282,8 +282,12 @@ fn main() {
                 let Some(k) = hq_idx_of(&lr.formation) else { continue };
                 let Some(until) = parse_hours(&lr.until) else { continue };
                 let t = ((until - start).max(0) as usize).min(pers.len() - 1);
-                let model: f64 = (0..n).filter(|&i| chain(sim.world.divisions[i].hq as usize).contains(&k)).map(|i| (pers[0][i] - pers[t][i]).max(0.0)).sum();
-                loss_rows.push(serde_json::json!({ "formation": lr.formation, "name": sim.world.hqs[k].name, "until": lr.until, "model": model.round(), "source": lr.value, "ref": lr.source, "reliability": lr.reliability }));
+                let members: Vec<usize> = (0..n).filter(|&i| chain(sim.world.divisions[i].hq as usize).contains(&k)).collect();
+                let model: f64 = members.iter().map(|&i| (pers[0][i] - pers[t][i]).max(0.0)).sum();
+                // время в бою: часы с потерями, в сутках на дивизию — потери пропорциональны ему
+                let hours: usize = members.iter().map(|&i| (1..=t).filter(|&h| pers[h - 1][i] - pers[h][i] > 0.0).count()).sum();
+                let battle_days = hours as f64 / 24.0 / members.len().max(1) as f64;
+                loss_rows.push(serde_json::json!({ "formation": lr.formation, "name": sim.world.hqs[k].name, "until": lr.until, "model": model.round(), "source": lr.value, "ref": lr.source, "reliability": lr.reliability, "battleDays": (battle_days * 10.0).round() / 10.0 }));
             }
             // потери сторон к 20:00 каждого дня
             for (t, p) in people.iter().enumerate() {

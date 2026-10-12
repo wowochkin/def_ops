@@ -100,18 +100,19 @@ export function Report({ scen, onClose }: Props) {
             {(base.formationLosses?.length ?? 0) > 0 && (
               <>
                 <table className="rep">
-                  <thead><tr><th>советское объединение</th><th>расчёт к {dm(base.formationLosses![0].until)}</th><th>источник</th><th>расчёт / источник</th><th>источник</th></tr></thead>
+                  <thead><tr><th>советское объединение</th><th>расчёт к {dm(base.formationLosses![0].until)}</th><th>источник</th><th>расчёт / источник</th><th>суток боя на дивизию</th><th>источник</th></tr></thead>
                   <tbody>
                     {base.formationLosses!.map((x) => (
                       <tr key={x.formation}>
                         <td>{x.name}</td><td className="num">{num(x.model)}</td><td className="num">{num(x.source)}</td>
                         <td className="num"><span className={`ratio ${x.model / x.source < 0.67 || x.model / x.source > 1.5 ? 'off' : ''}`}>{(x.model / x.source).toFixed(2)}</span></td>
+                        <td className="num">{x.battleDays ?? '—'}</td>
                         <td className="d">{x.ref} ({x.reliability})</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <div className="hint">Убитые, раненые и пропавшие. Отношение вне 0,67–1,5 выделено.</div>
+                <div className="hint">Убитые, раненые и пропавшие. Отношение вне 0,67–1,5 выделено. Сутки боя — часы с потерями на дивизию объединения: наступающий теряет норму за сутки боя, поэтому перекос по армиям идёт от времени в бою.</div>
               </>
             )}
             <table className="rep">
