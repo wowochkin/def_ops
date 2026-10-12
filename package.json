@@ -28,6 +28,7 @@
     "kb:seed": "tsx packages/knowledge/tools/build_seed.ts",
     "theatre:sample": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_sample.ts",
     "sim:norms": "tsx packages/sim/tools/run/norms.ts",
+    "sim:census": "tsx packages/sim/tools/agents/census.ts",
     "sim:calibrate": "tsx packages/sim/tools/run/calibrate.ts",
     "sim:sensitivity": "tsx packages/sim/tools/run/sensitivity.ts",
     "sim:data-sensitivity": "tsx packages/sim/tools/run/data-sensitivity.ts",

@@ -1,0 +1,7871 @@
+{
+ "meta": {
+  "title": "Берлинская операция 16.04–8.05.1945: реестр агентов уровня дивизии (ожидаемый состав)",
+  "note": "Перечень соединений, которые в агентной модели становятся агентами-дивизиями: стрелковые и пехотные дивизии, танковые и механизированные корпуса, отдельные бригады, УР, кавалерийские и артиллерийские дивизии; у немцев — дивизии, боевые группы и отдельные батальоны корпусного подчинения, бригады штурмовых орудий, народные артиллерийские корпуса, гарнизоны крепостей и секторов. Только соединения, названные в источниках; численности и положений здесь нет — их сводит перепись (npm run sim:census).",
+  "id_format": "su_<номер><тип>: sd — сд, gsd — гв. сд, gvdd — гв. вдд, tk/gtk, mk/gmk, kd/gkd, ur, tbr/gtbr/gttbr, sabr/gsabr, mbr, apd/gapd — артдивизия прорыва, ad — артдивизия; Войско Польское — su_pl<номер><тип> (pd, tk, kbr, tbr). Немцы — de_<…> как в berlin-1945-seelow-divisions.json.",
+  "types": {
+   "sd": "стрелковая дивизия",
+   "vdd": "воздушно-десантная дивизия",
+   "tk": "танковый корпус",
+   "mk": "механизированный корпус",
+   "kd": "кавалерийская дивизия",
+   "ur": "укреплённый район",
+   "brigade": "отдельная бригада",
+   "art": "артиллерийская дивизия",
+   "pd": "пехотная дивизия Войска Польского",
+   "div": "дивизия (вермахт, СС)",
+   "kg": "боевая группа, отдельный батальон",
+   "stug": "бригада штурмовых орудий",
+   "garrison": "гарнизон крепости, города, сектора"
+  },
+  "subordination": "subordination[0] — основная запись (OOB по «Боевому составу СА», ч. V, на 1.04.45; у 3, 28, 31 А — на 1.05.45; немцы — OOB раздел 2 на 16.04); следующие — изменения и расхождения по датам. army/corps — id, как в сценарии и наборах; corps у советских стрелковых дивизий — su_<номер>sk / su_<номер>gsk.",
+  "abbr": "Обозначения, как они пишутся в документах ЦАМО: по ним перепись ищет упоминания в выписках.",
+  "reliability": "A — «Боевой состав СА», Кривошеев, Ziemke; B — вторичные (en-/de-wiki, Le Tissier); C — реконструкция составителя.",
+  "sources": {
+   "OOB": "docs/sources/berlin-1945-oob.md (разделы 1.3–1.5 — «Боевой состав СА», ч. V; раздел 2 — Bahm 2014, Ziemke, de-wiki)",
+   "LT_HALBE": "docs/sources/berlin-1945-halbe.json (Le Tissier, Slaughter at Halbe)",
+   "LT_RACE": "docs/sources/berlin-1945-reichstag.json (Le Tissier, Race for the Reichstag, app.1)",
+   "seelow": "docs/sources/berlin-1945-seelow-divisions.json (Исаев 2007 и др.)",
+   "city": "docs/sources/berlin-1945-city-garrison.json"
+  }
+ },
+ "divisions": [
+  {
+   "id": "su_12gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "12-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "12 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_9gsk",
+     "corps_name": "9 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_75gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "75-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "75 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_9gsk",
+     "corps_name": "9 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_415sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "415-я стрелковая дивизия",
+   "abbr": [
+    "415 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_9gsk",
+     "corps_name": "9 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_212sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "212-я стрелковая дивизия",
+   "abbr": [
+    "212 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_80sk",
+     "corps_name": "80 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_234sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "234-я стрелковая дивизия",
+   "abbr": [
+    "234 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_80sk",
+     "corps_name": "80 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_356sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "356-я стрелковая дивизия",
+   "abbr": [
+    "356 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_80sk",
+     "corps_name": "80 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_23sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "23-я стрелковая дивизия",
+   "abbr": [
+    "23 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_89sk",
+     "corps_name": "89 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_311sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "311-я стрелковая дивизия",
+   "abbr": [
+    "311 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_89sk",
+     "corps_name": "89 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_397sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "397-я стрелковая дивизия",
+   "abbr": [
+    "397 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": "su_89sk",
+     "corps_name": "89 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_115ur",
+   "side": "su",
+   "type": "ur",
+   "guards": false,
+   "name_ru": "115-й укреплённый район",
+   "abbr": [
+    "115 УР"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_61a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_185sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "185-я стрелковая дивизия",
+   "abbr": [
+    "185 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_77sk",
+     "corps_name": "77 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_260sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "260-я стрелковая дивизия",
+   "abbr": [
+    "260 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_77sk",
+     "corps_name": "77 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_328sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "328-я стрелковая дивизия",
+   "abbr": [
+    "328 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_77sk",
+     "corps_name": "77 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_60sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "60-я стрелковая дивизия",
+   "abbr": [
+    "60 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_125sk",
+     "corps_name": "125 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_76sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "76-я стрелковая дивизия",
+   "abbr": [
+    "76 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_125sk",
+     "corps_name": "125 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_175sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "175-я стрелковая дивизия",
+   "abbr": [
+    "175 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_125sk",
+     "corps_name": "125 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_82sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "82-я стрелковая дивизия",
+   "abbr": [
+    "82 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_129sk",
+     "corps_name": "129 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_132sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "132-я стрелковая дивизия",
+   "abbr": [
+    "132 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_129sk",
+     "corps_name": "129 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_143sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "143-я стрелковая дивизия",
+   "abbr": [
+    "143 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_47a",
+     "corps": "su_129sk",
+     "corps_name": "129 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_23gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "23-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "23 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_12gsk",
+     "corps_name": "12 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_52gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "52-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "52 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_12gsk",
+     "corps_name": "12 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_33sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "33-я стрелковая дивизия",
+   "abbr": [
+    "33 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_12gsk",
+     "corps_name": "12 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_146sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "146-я стрелковая дивизия",
+   "abbr": [
+    "146 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_7sk",
+     "corps_name": "7 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_265sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "265-я стрелковая дивизия",
+   "abbr": [
+    "265 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_7sk",
+     "corps_name": "7 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_364sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "364-я стрелковая дивизия",
+   "abbr": [
+    "364 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_7sk",
+     "corps_name": "7 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_150sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "150-я стрелковая дивизия",
+   "abbr": [
+    "150 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_79sk",
+     "corps_name": "79 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_171sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "171-я стрелковая дивизия",
+   "abbr": [
+    "171 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_79sk",
+     "corps_name": "79 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_207sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "207-я стрелковая дивизия",
+   "abbr": [
+    "207 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": "su_79sk",
+     "corps_name": "79 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_89gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "89-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "89 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_26gsk",
+     "corps_name": "26 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_5ua_89gsd"
+   ]
+  },
+  {
+   "id": "su_94gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "94-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "94 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_26gsk",
+     "corps_name": "26 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_266sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "266-я стрелковая дивизия",
+   "abbr": [
+    "266 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_26gsk",
+     "corps_name": "26 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_5ua_266sd"
+   ]
+  },
+  {
+   "id": "su_230sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "230-я стрелковая дивизия",
+   "abbr": [
+    "230 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_9sk",
+     "corps_name": "9 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_248sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "248-я стрелковая дивизия",
+   "abbr": [
+    "248 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_9sk",
+     "corps_name": "9 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_301sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "301-я стрелковая дивизия",
+   "abbr": [
+    "301 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_9sk",
+     "corps_name": "9 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_60gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "60-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "60 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_32sk",
+     "corps_name": "32 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_295sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "295-я стрелковая дивизия",
+   "abbr": [
+    "295 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_32sk",
+     "corps_name": "32 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_416sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "416-я стрелковая дивизия",
+   "abbr": [
+    "416 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": "su_32sk",
+     "corps_name": "32 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_35gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "35-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "35 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_4gsk",
+     "corps_name": "4 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_47gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "47-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "47 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_4gsk",
+     "corps_name": "4 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_57gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "57-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "57 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_4gsk",
+     "corps_name": "4 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_39gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "39-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "39 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_28gsk",
+     "corps_name": "28 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_8gva_39gsd"
+   ]
+  },
+  {
+   "id": "su_79gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "79-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "79 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_28gsk",
+     "corps_name": "28 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_88gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "88-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "88 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_28gsk",
+     "corps_name": "28 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_27gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "27-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "27 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_29gsk",
+     "corps_name": "29 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_74gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "74-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "74 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_29gsk",
+     "corps_name": "29 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_82gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "82-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "82 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": "su_29gsk",
+     "corps_name": "29 гв. ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_77gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "77-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "77 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_25sk",
+     "corps_name": "25 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_77gvrd"
+   ]
+  },
+  {
+   "id": "su_4sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "4-я стрелковая дивизия",
+   "abbr": [
+    "4 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_25sk",
+     "corps_name": "25 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_4rd"
+   ]
+  },
+  {
+   "id": "su_41sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "41-я стрелковая дивизия",
+   "abbr": [
+    "41 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_25sk",
+     "corps_name": "25 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_91sk",
+     "corps_name": "91 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_41rd"
+   ]
+  },
+  {
+   "id": "su_134sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "134-я стрелковая дивизия",
+   "abbr": [
+    "134 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_61sk",
+     "corps_name": "61 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_134rd"
+   ]
+  },
+  {
+   "id": "su_247sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "247-я стрелковая дивизия",
+   "abbr": [
+    "247 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_61sk",
+     "corps_name": "61 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_247rd"
+   ]
+  },
+  {
+   "id": "su_274sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "274-я стрелковая дивизия",
+   "abbr": [
+    "274 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_61sk",
+     "corps_name": "61 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_117sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "117-я стрелковая дивизия",
+   "abbr": [
+    "117 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_91sk",
+     "corps_name": "91 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_117rd"
+   ]
+  },
+  {
+   "id": "su_312sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "312-я стрелковая дивизия",
+   "abbr": [
+    "312 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_91sk",
+     "corps_name": "91 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_312rd"
+   ]
+  },
+  {
+   "id": "su_370sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "370-я стрелковая дивизия",
+   "abbr": [
+    "370 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_91sk",
+     "corps_name": "91 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_370rd"
+   ]
+  },
+  {
+   "id": "su_323sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "323-я стрелковая дивизия",
+   "abbr": [
+    "323 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_16sk",
+     "corps_name": "16 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_323rd"
+   ]
+  },
+  {
+   "id": "su_339sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "339-я стрелковая дивизия",
+   "abbr": [
+    "339 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_16sk",
+     "corps_name": "16 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_339rd"
+   ]
+  },
+  {
+   "id": "su_383sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "383-я стрелковая дивизия",
+   "abbr": [
+    "383 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_16sk",
+     "corps_name": "16 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_383rd"
+   ]
+  },
+  {
+   "id": "su_64sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "64-я стрелковая дивизия",
+   "abbr": [
+    "64 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_38sk",
+     "corps_name": "38 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "38 ск убыл из 33 А до 1.05 (OOB 1.3)"
+    }
+   ],
+   "aliases": [
+    "su_64rd"
+   ]
+  },
+  {
+   "id": "su_89sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "89-я стрелковая дивизия",
+   "abbr": [
+    "89 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_38sk",
+     "corps_name": "38 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "38 ск убыл из 33 А до 1.05 (OOB 1.3)"
+    }
+   ],
+   "aliases": [
+    "su_89rd"
+   ]
+  },
+  {
+   "id": "su_95sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "95-я стрелковая дивизия",
+   "abbr": [
+    "95 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_38sk",
+     "corps_name": "38 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "38 ск убыл из 33 А до 1.05 (OOB 1.3)"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_95rd"
+   ]
+  },
+  {
+   "id": "su_49sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "49-я стрелковая дивизия",
+   "abbr": [
+    "49 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_62sk",
+     "corps_name": "62 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_49rd"
+   ]
+  },
+  {
+   "id": "su_222sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "222-я стрелковая дивизия",
+   "abbr": [
+    "222 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_62sk",
+     "corps_name": "62 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_222rd"
+   ]
+  },
+  {
+   "id": "su_362sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "362-я стрелковая дивизия",
+   "abbr": [
+    "362 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_62sk",
+     "corps_name": "62 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_362rd"
+   ]
+  },
+  {
+   "id": "su_119ur",
+   "side": "su",
+   "type": "ur",
+   "guards": false,
+   "name_ru": "119-й укреплённый район",
+   "abbr": [
+    "119 УР"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_250sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "250-я стрелковая дивизия",
+   "abbr": [
+    "250 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_35sk",
+     "corps_name": "35 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_250rd"
+   ]
+  },
+  {
+   "id": "su_290sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "290-я стрелковая дивизия",
+   "abbr": [
+    "290 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_35sk",
+     "corps_name": "35 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_290rd"
+   ]
+  },
+  {
+   "id": "su_348sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "348-я стрелковая дивизия",
+   "abbr": [
+    "348 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_35sk",
+     "corps_name": "35 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_348rd"
+   ]
+  },
+  {
+   "id": "su_5sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "5-я стрелковая дивизия",
+   "abbr": [
+    "5 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_40sk",
+     "corps_name": "40 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_5rd"
+   ]
+  },
+  {
+   "id": "su_129sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "129-я стрелковая дивизия",
+   "abbr": [
+    "129 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_40sk",
+     "corps_name": "40 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_129rd"
+   ]
+  },
+  {
+   "id": "su_169sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "169-я стрелковая дивизия",
+   "abbr": [
+    "169 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_40sk",
+     "corps_name": "40 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_38sk",
+     "corps_name": "38 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_169rd"
+   ]
+  },
+  {
+   "id": "su_120sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "120-я стрелковая дивизия",
+   "abbr": [
+    "120 сд",
+    "120 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_41sk",
+     "corps_name": "41 ск",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A",
+     "note": "в OOB «41 ск (120, …)» — список корпуса неполон"
+    }
+   ],
+   "aliases": [
+    "su_120rd"
+   ],
+   "note": "⚠ в выписках ЖБД 1 БФ (ЦАМО) — «120 гв. сд» в 41 ск 3 А; в OOB и LT — 120 сд. Номер и наименование сверить."
+  },
+  {
+   "id": "su_8gmk",
+   "side": "su",
+   "type": "mk",
+   "guards": true,
+   "name_ru": "8-й гвардейский механизированный корпус",
+   "abbr": [
+    "8 гв. мк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1gta_8gmk"
+   ]
+  },
+  {
+   "id": "su_11gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "11-й гвардейский танковый корпус",
+   "abbr": [
+    "11 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1gta_11gtk"
+   ]
+  },
+  {
+   "id": "su_64gtbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": true,
+   "name_ru": "64-я гвардейская танковая бригада",
+   "abbr": [
+    "64 гв. тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1gta_64gtbr"
+   ]
+  },
+  {
+   "id": "su_11tk",
+   "side": "su",
+   "type": "tk",
+   "guards": false,
+   "name_ru": "11-й танковый корпус",
+   "abbr": [
+    "11 тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой корпус; на 1.04 придан 8 гв. А, в операции — 1 гв. ТА (мемуары Катукова, OOB 1.3)"
+    }
+   ],
+   "aliases": [
+    "su_1gta_11tk"
+   ]
+  },
+  {
+   "id": "su_9gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "9-й гвардейский танковый корпус",
+   "abbr": [
+    "9 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_2gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_2gta_9gtk"
+   ]
+  },
+  {
+   "id": "su_12gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "12-й гвардейский танковый корпус",
+   "abbr": [
+    "12 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_2gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_2gta_12gtk"
+   ]
+  },
+  {
+   "id": "su_1mk",
+   "side": "su",
+   "type": "mk",
+   "guards": false,
+   "name_ru": "1-й механизированный корпус",
+   "abbr": [
+    "1 мк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_2gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_2gta_1mk"
+   ]
+  },
+  {
+   "id": "su_9tk",
+   "side": "su",
+   "type": "tk",
+   "guards": false,
+   "name_ru": "9-й танковый корпус",
+   "abbr": [
+    "9 тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_3ua",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "B",
+     "note": "фронтовой корпус; с 3 УА в ходе операции (en-wiki, OOB 1.3)"
+    }
+   ],
+   "aliases": [
+    "su_3ua_9tk"
+   ]
+  },
+  {
+   "id": "su_3gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "3-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "3 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": null,
+     "corps": "su_2gkk",
+     "corps_name": "2 гв. кк",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 2 гв. кк"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_2gkk",
+     "corps_name": "2 гв. кк",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_3gvkd"
+   ]
+  },
+  {
+   "id": "su_4gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "4-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "4 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": null,
+     "corps": "su_2gkk",
+     "corps_name": "2 гв. кк",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 2 гв. кк"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_2gkk",
+     "corps_name": "2 гв. кк",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_4gvkd"
+   ]
+  },
+  {
+   "id": "su_17gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "17-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "17 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": null,
+     "corps": "su_2gkk",
+     "corps_name": "2 гв. кк",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 2 гв. кк"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": "su_2gkk",
+     "corps_name": "2 гв. кк",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_17gvkd"
+   ]
+  },
+  {
+   "id": "su_14gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "14-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "14 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": null,
+     "corps": "su_7gkk",
+     "corps_name": "7 гв. кк",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 7 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_15gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "15-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "15 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": null,
+     "corps": "su_7gkk",
+     "corps_name": "7 гв. кк",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 7 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_16gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "16-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "16 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": null,
+     "corps": "su_7gkk",
+     "corps_name": "7 гв. кк",
+     "source": "OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 7 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_pl1pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "1-я пехотная дивизия им. Т. Костюшко Войска Польского",
+   "abbr": [
+    "1 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1pa_1pd",
+    "su_pl_1pd"
+   ]
+  },
+  {
+   "id": "su_pl2pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "2-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "2 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1pa_2pd",
+    "su_pl_2pd"
+   ]
+  },
+  {
+   "id": "su_pl3pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "3-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "3 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1pa_3pd",
+    "su_pl_3pd"
+   ]
+  },
+  {
+   "id": "su_pl4pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "4-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "4 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1pa_4pd",
+    "su_pl_4pd"
+   ]
+  },
+  {
+   "id": "su_pl6pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "6-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "6 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_1pa_6pd",
+    "su_pl_6pd"
+   ]
+  },
+  {
+   "id": "su_pl1kbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "polish": true,
+   "name_ru": "1-я кавалерийская бригада Войска Польского",
+   "abbr": [
+    "1 кбр",
+    "1 кавбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1bf",
+     "army": "su_1pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.3",
+     "reliability": "A",
+     "note": "1 отд. кбр"
+    }
+   ],
+   "aliases": [
+    "su_1pa_1kbr",
+    "su_pl_1kbr"
+   ]
+  },
+  {
+   "id": "su_142sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "142-я стрелковая дивизия",
+   "abbr": [
+    "142 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_98sk",
+     "corps_name": "98 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_281sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "281-я стрелковая дивизия",
+   "abbr": [
+    "281 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_98sk",
+     "corps_name": "98 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_381sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "381-я стрелковая дивизия",
+   "abbr": [
+    "381 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_98sk",
+     "corps_name": "98 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_46sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "46-я стрелковая дивизия",
+   "abbr": [
+    "46 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_108sk",
+     "corps_name": "108 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_90sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "90-я стрелковая дивизия",
+   "abbr": [
+    "90 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_108sk",
+     "corps_name": "108 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_372sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "372-я стрелковая дивизия",
+   "abbr": [
+    "372 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_108sk",
+     "corps_name": "108 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_86sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "86-я стрелковая дивизия",
+   "abbr": [
+    "86 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_116sk",
+     "corps_name": "116 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_321sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "321-я стрелковая дивизия",
+   "abbr": [
+    "321 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_116sk",
+     "corps_name": "116 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_326sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "326-я стрелковая дивизия",
+   "abbr": [
+    "326 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_116sk",
+     "corps_name": "116 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_161ur",
+   "side": "su",
+   "type": "ur",
+   "guards": false,
+   "name_ru": "161-й укреплённый район",
+   "abbr": [
+    "161 УР"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_8gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "8-й гвардейский танковый корпус",
+   "abbr": [
+    "8 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_37gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "37-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "37 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_18sk",
+     "corps_name": "18 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_15sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "15-я стрелковая дивизия",
+   "abbr": [
+    "15 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_18sk",
+     "corps_name": "18 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_69sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "69-я стрелковая дивизия",
+   "abbr": [
+    "69 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_18sk",
+     "corps_name": "18 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_108sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "108-я стрелковая дивизия",
+   "abbr": [
+    "108 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_46sk",
+     "corps_name": "46 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_186sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "186-я стрелковая дивизия",
+   "abbr": [
+    "186 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_46sk",
+     "corps_name": "46 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_413sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "413-я стрелковая дивизия",
+   "abbr": [
+    "413 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_46sk",
+     "corps_name": "46 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_44gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "44-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "44 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_105sk",
+     "corps_name": "105 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_193sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "193-я стрелковая дивизия",
+   "abbr": [
+    "193 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_105sk",
+     "corps_name": "105 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_354sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "354-я стрелковая дивизия",
+   "abbr": [
+    "354 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_65a",
+     "corps": "su_105sk",
+     "corps_name": "105 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_71sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "71-я стрелковая дивизия",
+   "abbr": [
+    "71 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_47sk",
+     "corps_name": "47 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_136sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "136-я стрелковая дивизия",
+   "abbr": [
+    "136 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_47sk",
+     "corps_name": "47 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_162sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "162-я стрелковая дивизия",
+   "abbr": [
+    "162 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_47sk",
+     "corps_name": "47 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_38gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "38-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "38 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_96sk",
+     "corps_name": "96 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_165sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "165-я стрелковая дивизия",
+   "abbr": [
+    "165 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_96sk",
+     "corps_name": "96 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_369sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "369-я стрелковая дивизия",
+   "abbr": [
+    "369 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_96sk",
+     "corps_name": "96 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_76gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "76-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "76 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_114sk",
+     "corps_name": "114 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_1sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "1-я стрелковая дивизия",
+   "abbr": [
+    "1 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_114sk",
+     "corps_name": "114 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_160sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "160-я стрелковая дивизия",
+   "abbr": [
+    "160 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_70a",
+     "corps": "su_114sk",
+     "corps_name": "114 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_139sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "139-я стрелковая дивизия",
+   "abbr": [
+    "139 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": "su_70sk",
+     "corps_name": "70 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_238sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "238-я стрелковая дивизия",
+   "abbr": [
+    "238 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": "su_70sk",
+     "corps_name": "70 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_330sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "330-я стрелковая дивизия",
+   "abbr": [
+    "330 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": "su_70sk",
+     "corps_name": "70 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_199sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "199-я стрелковая дивизия",
+   "abbr": [
+    "199 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": "su_121sk",
+     "corps_name": "121 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_200sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "200-я стрелковая дивизия",
+   "abbr": [
+    "200 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": "su_121sk",
+     "corps_name": "121 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_380sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "380-я стрелковая дивизия",
+   "abbr": [
+    "380 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": "su_121sk",
+     "corps_name": "121 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_42sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "42-я стрелковая дивизия",
+   "abbr": [
+    "42 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "армейского подчинения"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_191sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "191-я стрелковая дивизия",
+   "abbr": [
+    "191 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "армейского подчинения"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_385sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "385-я стрелковая дивизия",
+   "abbr": [
+    "385 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_49a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "армейского подчинения"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_10gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "10-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "10 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_40gsk",
+     "corps_name": "40 гв. ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-05-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_40gsk",
+     "corps_name": "40 гв. ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A",
+     "note": "на 1.05 40 гв. ск в составе 2 УА"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_101gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "101-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "101 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_40gsk",
+     "corps_name": "40 гв. ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-05-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_40gsk",
+     "corps_name": "40 гв. ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A",
+     "note": "на 1.05 40 гв. ск в составе 2 УА"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_102gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "102-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "102 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_40gsk",
+     "corps_name": "40 гв. ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-05-01",
+     "front": "su_2bf",
+     "army": "su_2ua",
+     "corps": "su_40gsk",
+     "corps_name": "40 гв. ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A",
+     "note": "на 1.05 40 гв. ск в составе 2 УА"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_18sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "18-я стрелковая дивизия",
+   "abbr": [
+    "18 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_132sk",
+     "corps_name": "132 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_27sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "27-я стрелковая дивизия",
+   "abbr": [
+    "27 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_132sk",
+     "corps_name": "132 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_313sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "313-я стрелковая дивизия",
+   "abbr": [
+    "313 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_132sk",
+     "corps_name": "132 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_205sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "205-я стрелковая дивизия",
+   "abbr": [
+    "205 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_134sk",
+     "corps_name": "134 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_272sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "272-я стрелковая дивизия",
+   "abbr": [
+    "272 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_134sk",
+     "corps_name": "134 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_310sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "310-я стрелковая дивизия",
+   "abbr": [
+    "310 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": "su_134sk",
+     "corps_name": "134 ск",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_153ur",
+   "side": "su",
+   "type": "ur",
+   "guards": false,
+   "name_ru": "153-й укреплённый район",
+   "abbr": [
+    "153 УР"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_19a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_29tk",
+   "side": "su",
+   "type": "tk",
+   "guards": false,
+   "name_ru": "29-й танковый корпус",
+   "abbr": [
+    "29 тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": "su_5gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_5gta_29tk"
+   ]
+  },
+  {
+   "id": "su_1gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "1-й гвардейский танковый корпус",
+   "abbr": [
+    "1 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": null,
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовое подчинение"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_3gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "3-й гвардейский танковый корпус",
+   "abbr": [
+    "3 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": null,
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовое подчинение"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_8mk",
+   "side": "su",
+   "type": "mk",
+   "guards": false,
+   "name_ru": "8-й механизированный корпус",
+   "abbr": [
+    "8 мк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": null,
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовое подчинение"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_5gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "5-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "5 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": null,
+     "corps": "su_3gkk",
+     "corps_name": "3 гв. кк",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 3 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_6gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "6-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "6 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": null,
+     "corps": "su_3gkk",
+     "corps_name": "3 гв. кк",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 3 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_32kd",
+   "side": "su",
+   "type": "kd",
+   "guards": false,
+   "name_ru": "32-я кавалерийская дивизия",
+   "abbr": [
+    "32 кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_2bf",
+     "army": null,
+     "corps": "su_3gkk",
+     "corps_name": "3 гв. кк",
+     "source": "OOB 1.4 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 3 гв. кк; в OOB «32 кд», в LT_RACE — гвардейская"
+    }
+   ],
+   "aliases": [
+    "su_32gkd"
+   ]
+  },
+  {
+   "id": "su_58sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "58-я стрелковая дивизия",
+   "abbr": [
+    "58 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_21sk",
+     "corps_name": "21 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_58rd"
+   ]
+  },
+  {
+   "id": "su_197sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "197-я стрелковая дивизия",
+   "abbr": [
+    "197 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_21sk",
+     "corps_name": "21 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_120sk",
+     "corps_name": "120 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_197rd"
+   ]
+  },
+  {
+   "id": "su_253sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "253-я стрелковая дивизия",
+   "abbr": [
+    "253 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_21sk",
+     "corps_name": "21 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_253rd"
+   ]
+  },
+  {
+   "id": "su_149sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "149-я стрелковая дивизия",
+   "abbr": [
+    "149 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_76sk",
+     "corps_name": "76 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_120sk",
+     "corps_name": "120 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_149rd"
+   ]
+  },
+  {
+   "id": "su_287sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "287-я стрелковая дивизия",
+   "abbr": [
+    "287 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_76sk",
+     "corps_name": "76 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_287rd"
+   ]
+  },
+  {
+   "id": "su_106sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "106-я стрелковая дивизия",
+   "abbr": [
+    "106 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_120sk",
+     "corps_name": "120 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_76sk",
+     "corps_name": "76 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_106rd"
+   ]
+  },
+  {
+   "id": "su_127sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "127-я стрелковая дивизия",
+   "abbr": [
+    "127 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_120sk",
+     "corps_name": "120 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_127rd"
+   ]
+  },
+  {
+   "id": "su_329sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "329-я стрелковая дивизия",
+   "abbr": [
+    "329 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "армейского подчинения"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_21sk",
+     "corps_name": "21 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_329rd"
+   ]
+  },
+  {
+   "id": "su_389sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "389-я стрелковая дивизия",
+   "abbr": [
+    "389 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "армейского подчинения"
+    }
+   ],
+   "aliases": [
+    "su_389rd"
+   ]
+  },
+  {
+   "id": "su_25tk",
+   "side": "su",
+   "type": "tk",
+   "guards": false,
+   "name_ru": "25-й танковый корпус",
+   "abbr": [
+    "25 тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_3gva_25tk"
+   ]
+  },
+  {
+   "id": "su_350sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "350-я стрелковая дивизия",
+   "abbr": [
+    "350 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_24sk",
+     "corps_name": "24 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_27sk",
+     "corps_name": "27 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_350rd"
+   ]
+  },
+  {
+   "id": "su_395sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "395-я стрелковая дивизия",
+   "abbr": [
+    "395 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_24sk",
+     "corps_name": "24 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_395rd"
+   ]
+  },
+  {
+   "id": "su_6gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "6-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "6 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_27sk",
+     "corps_name": "27 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_6gvrd"
+   ]
+  },
+  {
+   "id": "su_117gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "117-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "117 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_27sk",
+     "corps_name": "27 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_102sk",
+     "corps_name": "102 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_117gvrd"
+   ]
+  },
+  {
+   "id": "su_280sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "280-я стрелковая дивизия",
+   "abbr": [
+    "280 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_27sk",
+     "corps_name": "27 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_280rd"
+   ]
+  },
+  {
+   "id": "su_121gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "121-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "121 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_102sk",
+     "corps_name": "102 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_24sk",
+     "corps_name": "24 ск",
+     "source": "LT_HALBE; LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_121gvrd"
+   ]
+  },
+  {
+   "id": "su_147sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "147-я стрелковая дивизия",
+   "abbr": [
+    "147 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_102sk",
+     "corps_name": "102 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_147rd"
+   ]
+  },
+  {
+   "id": "su_172sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "172-я стрелковая дивизия",
+   "abbr": [
+    "172 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_102sk",
+     "corps_name": "102 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_172rd"
+   ]
+  },
+  {
+   "id": "su_13gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "13-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "13 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_32gsk",
+     "corps_name": "32 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_95gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "95-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "95 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_32gsk",
+     "corps_name": "32 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_97gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "97-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "97 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_32gsk",
+     "corps_name": "32 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_9gvdd",
+   "side": "su",
+   "type": "vdd",
+   "guards": true,
+   "name_ru": "9-я гвардейская воздушно-десантная дивизия",
+   "abbr": [
+    "9 гв. вдд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_32gsk",
+     "corps_name": "32 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_33gsk",
+     "corps_name": "33 гв. ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_14gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "14-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "14 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_33gsk",
+     "corps_name": "33 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_34gsk",
+     "corps_name": "34 гв. ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_78gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "78-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "78 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_33gsk",
+     "corps_name": "33 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_118sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "118-я стрелковая дивизия",
+   "abbr": [
+    "118 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_33gsk",
+     "corps_name": "33 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_15gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "15-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "15 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_34gsk",
+     "corps_name": "34 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_58gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "58-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "58 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": "su_34gsk",
+     "corps_name": "34 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_4gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "4-й гвардейский танковый корпус",
+   "abbr": [
+    "4 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_5gva",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_5gva_4gtk"
+   ]
+  },
+  {
+   "id": "su_111sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "111-я стрелковая дивизия",
+   "abbr": [
+    "111 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_48sk",
+     "corps_name": "48 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_73sk",
+     "corps_name": "73 ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_116sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "116-я стрелковая дивизия",
+   "abbr": [
+    "116 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_48sk",
+     "corps_name": "48 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_213sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "213-я стрелковая дивизия",
+   "abbr": [
+    "213 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_48sk",
+     "corps_name": "48 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_31sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "31-я стрелковая дивизия",
+   "abbr": [
+    "31 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_73sk",
+     "corps_name": "73 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_78sk",
+     "corps_name": "78 ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_50sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "50-я стрелковая дивизия",
+   "abbr": [
+    "50 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_73sk",
+     "corps_name": "73 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_214sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "214-я стрелковая дивизия",
+   "abbr": [
+    "214 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_73sk",
+     "corps_name": "73 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_78sk",
+     "corps_name": "78 ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_254sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "254-я стрелковая дивизия",
+   "abbr": [
+    "254 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_78sk",
+     "corps_name": "78 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_73sk",
+     "corps_name": "73 ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_373sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "373-я стрелковая дивизия",
+   "abbr": [
+    "373 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_78sk",
+     "corps_name": "78 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_pl5pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "5-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "5 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_2pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_pl_5pd"
+   ]
+  },
+  {
+   "id": "su_pl7pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "7-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "7 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_2pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_pl_7pd"
+   ]
+  },
+  {
+   "id": "su_pl8pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "8-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "8 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_2pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_pl_8pd"
+   ]
+  },
+  {
+   "id": "su_pl9pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "9-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "9 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_2pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_pl_9pd"
+   ]
+  },
+  {
+   "id": "su_pl10pd",
+   "side": "su",
+   "type": "pd",
+   "guards": false,
+   "polish": true,
+   "name_ru": "10-я пехотная дивизия Войска Польского",
+   "abbr": [
+    "10 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_2pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_pl_10pd"
+   ]
+  },
+  {
+   "id": "su_pl1tk",
+   "side": "su",
+   "type": "tk",
+   "guards": false,
+   "polish": true,
+   "name_ru": "1-й танковый корпус Войска Польского",
+   "abbr": [
+    "1 тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_2pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_2pa_1ptk"
+   ]
+  },
+  {
+   "id": "su_6gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "6-й гвардейский танковый корпус",
+   "abbr": [
+    "6 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_3gta_6gtk",
+    "su_3gta_6gvtk"
+   ]
+  },
+  {
+   "id": "su_7gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "7-й гвардейский танковый корпус",
+   "abbr": [
+    "7 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_3gta_7gtk",
+    "su_3gta_7gvtk"
+   ]
+  },
+  {
+   "id": "su_9mk",
+   "side": "su",
+   "type": "mk",
+   "guards": false,
+   "name_ru": "9-й механизированный корпус",
+   "abbr": [
+    "9 мк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_3gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_3gta_9mk"
+   ]
+  },
+  {
+   "id": "su_5gmk",
+   "side": "su",
+   "type": "mk",
+   "guards": true,
+   "name_ru": "5-й гвардейский механизированный корпус",
+   "abbr": [
+    "5 гв. мк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_4gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_4gta_5gmk",
+    "su_4gta_5gvmk"
+   ]
+  },
+  {
+   "id": "su_6gmk",
+   "side": "su",
+   "type": "mk",
+   "guards": true,
+   "name_ru": "6-й гвардейский механизированный корпус",
+   "abbr": [
+    "6 гв. мк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_4gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_4gta_6gmk",
+    "su_4gta_6gvmk"
+   ]
+  },
+  {
+   "id": "su_10gtk",
+   "side": "su",
+   "type": "tk",
+   "guards": true,
+   "name_ru": "10-й гвардейский танковый корпус",
+   "abbr": [
+    "10 гв. тк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": "su_4gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "su_4gta_10gtk",
+    "su_4gta_10gvtk"
+   ]
+  },
+  {
+   "id": "su_50gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "50-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "50 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_3gsk",
+     "corps_name": "3 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_38gsk",
+     "corps_name": "38 гв. ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_50gvrd"
+   ]
+  },
+  {
+   "id": "su_54gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "54-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "54 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_3gsk",
+     "corps_name": "3 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_38gsk",
+     "corps_name": "38 гв. ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_54gvrd"
+   ]
+  },
+  {
+   "id": "su_96gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "96-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "96 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_3gsk",
+     "corps_name": "3 гв. ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_38gsk",
+     "corps_name": "38 гв. ск",
+     "source": "LT_RACE app.1",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_96gvrd"
+   ]
+  },
+  {
+   "id": "su_48gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "48-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "48 гв. сд",
+    "48 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_20sk",
+     "corps_name": "20 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_20gsk",
+     "corps_name": "20 гв. ск",
+     "source": "LT_HALBE",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_48gvrd"
+   ],
+   "note": "в выписках ЖБД 1 УФ встречается как «48 сд» (20 ск 28 А)"
+  },
+  {
+   "id": "su_55gsd",
+   "side": "su",
+   "type": "sd",
+   "guards": true,
+   "name_ru": "55-я гвардейская стрелковая дивизия",
+   "abbr": [
+    "55 гв. сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_20sk",
+     "corps_name": "20 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_20gsk",
+     "corps_name": "20 гв. ск",
+     "source": "LT_HALBE",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_28a_55gsd",
+    "su_55gvrd"
+   ]
+  },
+  {
+   "id": "su_20sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "20-я стрелковая дивизия",
+   "abbr": [
+    "20 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_20sk",
+     "corps_name": "20 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    },
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_20gsk",
+     "corps_name": "20 гв. ск",
+     "source": "LT_HALBE",
+     "reliability": "B",
+     "note": "по приложению Le Tissier (состав на начало операции); расходится с OOB"
+    }
+   ],
+   "aliases": [
+    "su_20rd"
+   ]
+  },
+  {
+   "id": "su_173sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "173-я стрелковая дивизия",
+   "abbr": [
+    "173 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_31a",
+     "corps": "su_36sk",
+     "corps_name": "36 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_176sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "176-я стрелковая дивизия",
+   "abbr": [
+    "176 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_31a",
+     "corps": "su_36sk",
+     "corps_name": "36 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_352sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "352-я стрелковая дивизия",
+   "abbr": [
+    "352 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_31a",
+     "corps": "su_36sk",
+     "corps_name": "36 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_62sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "62-я стрелковая дивизия",
+   "abbr": [
+    "62 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_31a",
+     "corps": "su_44sk",
+     "corps_name": "44 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_174sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "174-я стрелковая дивизия",
+   "abbr": [
+    "174 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_31a",
+     "corps": "su_44sk",
+     "corps_name": "44 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_220sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "220-я стрелковая дивизия",
+   "abbr": [
+    "220 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-05-01",
+     "front": "su_1uf",
+     "army": "su_31a",
+     "corps": "su_44sk",
+     "corps_name": "44 ск",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.05.45)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_1gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "1-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "1 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": null,
+     "corps": "su_1gkk",
+     "corps_name": "1 гв. кк",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 1 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_2gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "2-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "2 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": null,
+     "corps": "su_1gkk",
+     "corps_name": "1 гв. кк",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 1 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_7gkd",
+   "side": "su",
+   "type": "kd",
+   "guards": true,
+   "name_ru": "7-я гвардейская кавалерийская дивизия",
+   "abbr": [
+    "7 гв. кд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": null,
+     "corps": "su_1gkk",
+     "corps_name": "1 гв. кк",
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовой 1 гв. кк"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_7gmk",
+   "side": "su",
+   "type": "mk",
+   "guards": true,
+   "name_ru": "7-й гвардейский механизированный корпус",
+   "abbr": [
+    "7 гв. мк"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-01",
+     "front": "su_1uf",
+     "army": null,
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 1.5 («Боевой состав СА», ч. V, на 1.04.45)",
+     "reliability": "A",
+     "note": "фронтовое подчинение; на 1.04 значится при 59 А (OOB 1.5)"
+    }
+   ],
+   "aliases": [
+    "su_52a_7gmk"
+   ]
+  },
+  {
+   "id": "su_246sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "246-я стрелковая дивизия",
+   "abbr": [
+    "246 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": "su_61sk",
+     "corps_name": "61 ск",
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "нет в таблице OOB 1.3"
+    }
+   ],
+   "aliases": [
+    "su_246rd"
+   ]
+  },
+  {
+   "id": "su_283sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "283-я стрелковая дивизия",
+   "abbr": [
+    "283 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "нет в таблице OOB 1.3; по ведомости Исаева (seelow, IS7_T) — в 91 ск"
+    }
+   ],
+   "aliases": [
+    "su_283rd"
+   ]
+  },
+  {
+   "id": "su_269sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "269-я стрелковая дивизия",
+   "abbr": [
+    "269 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-23",
+     "front": "su_1bf",
+     "army": "su_3a",
+     "corps": "su_41sk",
+     "corps_name": "41 ск",
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "дополняет неполный список «41 ск (120, …)» OOB"
+    }
+   ],
+   "aliases": [
+    "su_269rd"
+   ]
+  },
+  {
+   "id": "su_294sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "294-я стрелковая дивизия",
+   "abbr": [
+    "294 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_52a",
+     "corps": "su_48sk",
+     "corps_name": "48 ск",
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "нет в таблице OOB 1.5"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "su_61sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "61-я стрелковая дивизия",
+   "abbr": [
+    "61 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-22",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_128sk",
+     "corps_name": "128 ск",
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "в OOB «128 ск» без номеров дивизий; в LT_HALBE — 61-я гвардейская, в LT_RACE — 61-я стрелковая"
+    }
+   ],
+   "aliases": [
+    "su_61gvrd"
+   ]
+  },
+  {
+   "id": "su_130sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "130-я стрелковая дивизия",
+   "abbr": [
+    "130 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-22",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_128sk",
+     "corps_name": "128 ск",
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "в OOB «128 ск» без номеров дивизий"
+    }
+   ],
+   "aliases": [
+    "su_130rd"
+   ]
+  },
+  {
+   "id": "su_152sd",
+   "side": "su",
+   "type": "sd",
+   "guards": false,
+   "name_ru": "152-я стрелковая дивизия",
+   "abbr": [
+    "152 сд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-22",
+     "front": "su_1uf",
+     "army": "su_28a",
+     "corps": "su_128sk",
+     "corps_name": "128 ск",
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "в OOB «128 ск» без номеров дивизий"
+    }
+   ],
+   "aliases": [
+    "su_152rd"
+   ]
+  },
+  {
+   "id": "su_1gapd",
+   "side": "su",
+   "type": "art",
+   "guards": true,
+   "name_ru": "1-я гвардейская артиллерийская дивизия прорыва",
+   "abbr": [
+    "1 гв. апд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_1bf_1gad",
+    "su_1gvapd"
+   ]
+  },
+  {
+   "id": "su_25apd",
+   "side": "su",
+   "type": "art",
+   "guards": false,
+   "name_ru": "25-я артиллерийская дивизия прорыва",
+   "abbr": [
+    "25 апд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_3gva",
+     "corps": "su_10apk",
+     "corps_name": "10 апк",
+     "source": "LT_HALBE (berlin-1945-halbe.json); LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "в LT_HALBE — при 3 гв. А, в LT_RACE — в 10 апк при 5 гв. А"
+    }
+   ],
+   "aliases": [
+    "su_1uf_25adp"
+   ]
+  },
+  {
+   "id": "su_4ad",
+   "side": "su",
+   "type": "art",
+   "guards": false,
+   "name_ru": "4-я артиллерийская дивизия",
+   "abbr": [
+    "4 ад"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_10apk",
+     "corps_name": "10 апк",
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_4apd"
+   ]
+  },
+  {
+   "id": "su_31ad",
+   "side": "su",
+   "type": "art",
+   "guards": false,
+   "name_ru": "31-я артиллерийская дивизия",
+   "abbr": [
+    "31 ад"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_13a",
+     "corps": "su_10apk",
+     "corps_name": "10 апк",
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_31apd"
+   ]
+  },
+  {
+   "id": "su_22ad",
+   "side": "su",
+   "type": "art",
+   "guards": false,
+   "name_ru": "22-я артиллерийская дивизия",
+   "abbr": [
+    "22 ад"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_33a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_22apd"
+   ]
+  },
+  {
+   "id": "su_7gttbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": true,
+   "name_ru": "7-я гвардейская тяжёлая танковая бригада",
+   "abbr": [
+    "7 гв. ттбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_8gva",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json); seelow (IS7)",
+     "reliability": "B",
+     "note": "в seelow: 64 ИС-2 на 15.04, поддержка 4 гв. ск"
+    }
+   ],
+   "aliases": [
+    "su_8gva_7gtbr"
+   ]
+  },
+  {
+   "id": "su_11tbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "11-я танковая бригада",
+   "abbr": [
+    "11 тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_5ua_11tbr"
+   ]
+  },
+  {
+   "id": "su_67gtbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": true,
+   "name_ru": "67-я гвардейская танковая бригада",
+   "abbr": [
+    "67 гв. тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_5ua_67gtbr"
+   ]
+  },
+  {
+   "id": "su_220tbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "220-я танковая бригада",
+   "abbr": [
+    "220 тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_5ua",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_5ua_220tbr"
+   ]
+  },
+  {
+   "id": "su_68tbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "68-я танковая бригада",
+   "abbr": [
+    "68 тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_69a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_69a_68tbr"
+   ]
+  },
+  {
+   "id": "su_19sabr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "19-я самоходно-артиллерийская бригада",
+   "abbr": [
+    "19 сабр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1bf",
+     "army": "su_1gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_1gta_19sabr"
+   ]
+  },
+  {
+   "id": "su_16sabr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "16-я самоходно-артиллерийская бригада",
+   "abbr": [
+    "16 сабр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_3gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_3gta_16sabr"
+   ]
+  },
+  {
+   "id": "su_68gtbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": true,
+   "name_ru": "68-я гвардейская танковая бригада",
+   "abbr": [
+    "68 гв. тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_4gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json); LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_4gta_68gtbr",
+    "su_68gvtbr"
+   ]
+  },
+  {
+   "id": "su_70gsabr",
+   "side": "su",
+   "type": "brigade",
+   "guards": true,
+   "name_ru": "70-я гвардейская самоходно-артиллерийская бригада",
+   "abbr": [
+    "70 гв. сабр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_4gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_4gta_70gsabr"
+   ]
+  },
+  {
+   "id": "su_152tbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "152-я танковая бригада",
+   "abbr": [
+    "152 тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": null,
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B",
+     "note": "фронтовое подчинение"
+    }
+   ],
+   "aliases": [
+    "su_1uf_152tbr"
+   ]
+  },
+  {
+   "id": "su_1tbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "1-я танковая бригада",
+   "abbr": [
+    "1 тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_2bf",
+     "army": "su_5gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_5gta_1tbr"
+   ]
+  },
+  {
+   "id": "su_47mbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "name_ru": "47-я механизированная бригада",
+   "abbr": [
+    "47 мбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_2bf",
+     "army": "su_5gta",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_5gta_47mbr"
+   ]
+  },
+  {
+   "id": "su_pl16tbr",
+   "side": "su",
+   "type": "brigade",
+   "guards": false,
+   "polish": true,
+   "name_ru": "16-я танковая бригада Войска Польского",
+   "abbr": [
+    "16 тбр"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "su_1uf",
+     "army": "su_2pa",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "su_pl_16tbr"
+   ]
+  },
+  {
+   "id": "de_402id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "402-я (учебная) пехотная дивизия",
+   "abbr": [
+    "402 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_swinemuende",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_2marined",
+   "side": "de",
+   "type": "div",
+   "kind": "md",
+   "name_ru": "2-я морская пехотная дивизия",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_swinemuende",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B",
+     "note": "⚠ de-wiki и LT_RACE: 3-я морская дивизия"
+    }
+   ],
+   "aliases": [
+    "de_3marined"
+   ]
+  },
+  {
+   "id": "de_voigt",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Фойгт»",
+   "abbr": [],
+   "keywords": [
+    "«Фойгт»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_xxxii",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_549vgd",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "549-я фольксгренадерская дивизия",
+   "abbr": [
+    "549 пд",
+    "549 нгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_xxxii",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_festung_stettin",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон крепости Штеттин",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_xxxii",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "de_stettin"
+   ]
+  },
+  {
+   "id": "de_281id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "281-я пехотная дивизия",
+   "abbr": [
+    "281 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_xxxii",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_610id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "610-я пехотная дивизия",
+   "abbr": [
+    "610 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_oder",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_klossek",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "бригада/дивизия «Клоссек»",
+   "abbr": [],
+   "keywords": [
+    "«Клоссек»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_oder",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_547vgd",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "547-я фольксгренадерская дивизия",
+   "abbr": [
+    "547 пд",
+    "547 нгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_xxxxvi",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_1marined",
+   "side": "de",
+   "type": "div",
+   "kind": "md",
+   "name_ru": "1-я морская пехотная дивизия",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_xxxxvi",
+     "corps_name": null,
+     "source": "OOB 2.2 (Bahm 2014, по en-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_4ss_pol",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "ss": true,
+   "name_ru": "4-я полицейская танко-гренадерская дивизия СС",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-21",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_iii_ss",
+     "corps_name": null,
+     "source": "OOB 2.2 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "армейская группа Штайнера с 21.04"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_27ss",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "ss": true,
+   "name_ru": "27-я гренадерская дивизия СС «Лангемарк»",
+   "abbr": [],
+   "keywords": [
+    "«Лангемарк»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_iii_ss",
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_28ss",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "ss": true,
+   "name_ru": "28-я гренадерская дивизия СС «Валлония»",
+   "abbr": [],
+   "keywords": [
+    "«Валлония»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_iii_ss",
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_5jd",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "5-я егерская дивизия",
+   "abbr": [
+    "5 лпд",
+    "5 егд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_ci",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-21",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_iii_ss",
+     "corps_name": null,
+     "source": "OOB 2.2 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "армейская группа Штайнера"
+    }
+   ],
+   "aliases": [
+    "de_5ljd"
+   ]
+  },
+  {
+   "id": "de_606",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "606-я дивизия особого назначения",
+   "abbr": [
+    "606 пд",
+    "606 дон"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_ci",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "de_606id"
+   ]
+  },
+  {
+   "id": "de_309id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "309-я пехотная дивизия «Берлин»",
+   "abbr": [
+    "309 пд"
+   ],
+   "keywords": [
+    "пд «Берлин»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_ci",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_25pzgd",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "name_ru": "25-я танко-гренадерская дивизия",
+   "abbr": [
+    "25 мд",
+    "25 пгд",
+    "25 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_ci",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-21",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_iii_ss",
+     "corps_name": null,
+     "source": "OOB 2.2 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "армейская группа Штайнера"
+    }
+   ],
+   "aliases": [
+    "de_25pgd"
+   ]
+  },
+  {
+   "id": "de_406vak",
+   "side": "de",
+   "type": "art",
+   "name_ru": "406-й народный артиллерийский корпус",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_ci",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_111stug",
+   "side": "de",
+   "type": "stug",
+   "name_ru": "111-я учебная бригада штурмовых орудий",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_ci",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_kg1001",
+   "side": "de",
+   "type": "kg",
+   "ss": true,
+   "name_ru": "боевая группа «1001 ночь» (560 ПТ батальон СС)",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_ci",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_9fjd",
+   "side": "de",
+   "type": "div",
+   "kind": "fjd",
+   "name_ru": "9-я парашютная дивизия",
+   "abbr": [
+    "9 пдд",
+    "9 вдд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_lvi",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_20pzgd",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "name_ru": "20-я танко-гренадерская дивизия",
+   "abbr": [
+    "20 мд",
+    "20 пгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_lvi",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "de_20pgd"
+   ]
+  },
+  {
+   "id": "de_muencheberg",
+   "side": "de",
+   "type": "div",
+   "kind": "td",
+   "name_ru": "танковая дивизия «Мюнхеберг»",
+   "abbr": [],
+   "keywords": [
+    "«Мюнхеберг»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_lvi",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_18pzgd",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "name_ru": "18-я танко-гренадерская дивизия",
+   "abbr": [
+    "18 мд",
+    "18 пгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_lvi",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B",
+     "note": "из резерва ОКВ"
+    }
+   ],
+   "aliases": [
+    "de_18pgd"
+   ]
+  },
+  {
+   "id": "de_920stug",
+   "side": "de",
+   "type": "stug",
+   "name_ru": "920-я учебная бригада штурмовых орудий",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_lvi",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": [
+    "de_920stugbr"
+   ]
+  },
+  {
+   "id": "de_nordland",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "ss": true,
+   "name_ru": "11-я добровольческая танко-гренадерская дивизия СС «Нордланд»",
+   "abbr": [
+    "11 мд",
+    "11 пгд"
+   ],
+   "keywords": [
+    "«Нордланд»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-17",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_lvi",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B",
+     "note": "подошла 17–18.04; в LT_RACE — в III тк СС"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_ss503",
+   "side": "de",
+   "type": "kg",
+   "ss": true,
+   "name_ru": "503-й тяжёлый танковый батальон СС",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_lvi",
+     "corps_name": null,
+     "source": "seelow (Исаев 2007 и др.)",
+     "reliability": "B",
+     "note": "батальон корпусного подчинения; в LT_RACE — при «Нордланде»"
+    }
+   ],
+   "aliases": [
+    "de_503sspzabt"
+   ]
+  },
+  {
+   "id": "de_303id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "303-я пехотная дивизия «Дёбериц»",
+   "abbr": [
+    "303 пд"
+   ],
+   "keywords": [
+    "«Дёбериц»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_xi_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_169id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "169-я пехотная дивизия",
+   "abbr": [
+    "169 пд",
+    "169 нгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_xi_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_712id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "712-я пехотная дивизия",
+   "abbr": [
+    "712 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_xi_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_kurmark",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "name_ru": "танко-гренадерская дивизия «Курмарк»",
+   "abbr": [],
+   "keywords": [
+    "«Курмарк»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_xi_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_404vak",
+   "side": "de",
+   "type": "art",
+   "name_ru": "404-й народный артиллерийский корпус",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_xi_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_ss502",
+   "side": "de",
+   "type": "kg",
+   "ss": true,
+   "name_ru": "502-й (102-й) тяжёлый танковый батальон СС",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_xi_ss",
+     "corps_name": null,
+     "source": "seelow (Исаев 2007 и др.)",
+     "reliability": "B",
+     "note": "батальон корпусного подчинения"
+    }
+   ],
+   "aliases": [
+    "de_502ss_spzabt"
+   ]
+  },
+  {
+   "id": "de_nederland",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "ss": true,
+   "name_ru": "23-я добровольческая танко-гренадерская дивизия СС «Недерланд»",
+   "abbr": [
+    "23 мд",
+    "23 пгд"
+   ],
+   "keywords": [
+    "«Нидерланд»",
+    "«Недерланд»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_xi_ss",
+     "corps_name": null,
+     "source": "seelow (Исаев 2007 и др.)",
+     "reliability": "B",
+     "note": "в LT_RACE — в III тк СС"
+    }
+   ],
+   "aliases": [
+    "de_23ss_nederland"
+   ]
+  },
+  {
+   "id": "de_ffo",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон крепости Франкфурт-на-Одере",
+   "abbr": [],
+   "keywords": [
+    "крепости Франкфурт",
+    "крепостное управление «Франкфурт»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_286id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "286-я пехотная дивизия",
+   "abbr": [
+    "286 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_32ss",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "ss": true,
+   "name_ru": "32-я добровольческая гренадерская дивизия СС «30 января»",
+   "abbr": [
+    "32 пд",
+    "32 гд"
+   ],
+   "keywords": [
+    "«30 января»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_391sd",
+   "side": "de",
+   "type": "div",
+   "kind": "ohr",
+   "name_ru": "391-я охранная дивизия (до 21.04 переименована в 337-ю фольксгренадерскую)",
+   "abbr": [
+    "391 пд",
+    "391 охр. д",
+    "337 пд",
+    "337 нгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_408vak",
+   "side": "de",
+   "type": "art",
+   "name_ru": "408-я народная артиллерийская бригада (корпус)",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v_ss",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B",
+     "note": "в OOB — бригада, в LT_RACE — народный артиллерийский корпус"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_561ss_pzjg",
+   "side": "de",
+   "type": "kg",
+   "ss": true,
+   "name_ru": "561-й истребительно-противотанковый батальон СС",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v_ss",
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "A",
+     "note": "резерв V гск СС; затем боевая группа Лобмейер"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_156id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "156-я пехотная дивизия",
+   "abbr": [
+    "156 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": null,
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle»)",
+     "reliability": "B",
+     "note": "резерв армии"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_541vgd",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "541-я фольксгренадерская дивизия",
+   "abbr": [
+    "541 пд",
+    "541 нгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_35ss_pol",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "ss": true,
+   "name_ru": "35-я полицейская гренадерская дивизия СС",
+   "abbr": [
+    "35 пд",
+    "35 нгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle») (V ак 4 ТА)",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-20",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "V ак передан 9 А"
+    }
+   ],
+   "aliases": [
+    "de_35sspol"
+   ]
+  },
+  {
+   "id": "de_36ss",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "ss": true,
+   "name_ru": "36-я гренадерская дивизия СС",
+   "abbr": [
+    "36 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle») (V ак 4 ТА)",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-20",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "V ак передан 9 А"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_275id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "275-я пехотная дивизия",
+   "abbr": [
+    "275 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle») (V ак 4 ТА)",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-20",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "V ак передан 9 А"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_342id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "342-я пехотная дивизия",
+   "abbr": [
+    "342 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle») (V ак 4 ТА)",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-20",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "V ак передан 9 А"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_21pzd",
+   "side": "de",
+   "type": "div",
+   "kind": "td",
+   "name_ru": "21-я танковая дивизия",
+   "abbr": [
+    "21 тд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Bahm 2014 / en-wiki «Battle of Berlin order of battle») (V ак 4 ТА)",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-20",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "OOB 2.3 (Ziemke p.477)",
+     "reliability": "A",
+     "note": "V ак передан 9 А"
+    }
+   ],
+   "aliases": [
+    "de_21pd"
+   ]
+  },
+  {
+   "id": "de_214id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "214-я пехотная дивизия",
+   "abbr": [
+    "214 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-20",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": "de_v",
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "A",
+     "note": "только остатки (LT_HALBE)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_10ss",
+   "side": "de",
+   "type": "div",
+   "kind": "td",
+   "ss": true,
+   "name_ru": "10-я танковая дивизия СС «Фрундсберг» (остатки)",
+   "abbr": [
+    "10 тд"
+   ],
+   "keywords": [
+    "«Фрундсберг»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-20",
+     "front": "de_hgr_weichsel",
+     "army": "de_9a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_20pzd",
+   "side": "de",
+   "type": "div",
+   "kind": "td",
+   "name_ru": "20-я танковая дивизия",
+   "abbr": [
+    "20 тд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-30",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_pzk_gd",
+     "corps_name": null,
+     "source": "OOB 2.4 (de-wiki, состав на 30.04)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_hg",
+   "side": "de",
+   "type": "div",
+   "kind": "td",
+   "name_ru": "парашютно-танковая дивизия «Герман Геринг»",
+   "abbr": [],
+   "keywords": [
+    "«Герман Геринг»",
+    "«Г. Геринг»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-30",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_pzk_gd",
+     "corps_name": null,
+     "source": "OOB 2.4 (de-wiki, состав на 30.04)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_brandenburg",
+   "side": "de",
+   "type": "div",
+   "kind": "pgd",
+   "name_ru": "танко-гренадерская дивизия «Бранденбург»",
+   "abbr": [],
+   "keywords": [
+    "мд «Бранденбург»",
+    "пгд «Бранденбург»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-30",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_pzk_gd",
+     "corps_name": null,
+     "source": "OOB 2.4 (de-wiki, состав на 30.04)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_koerner",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Теодор Кёрнер» (3-я дивизия RAD)",
+   "abbr": [],
+   "keywords": [
+    "«Теодор Кёрнер»",
+    "«Кёрнер»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xx",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_hutten",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Ульрих фон Гуттен»",
+   "abbr": [],
+   "keywords": [
+    "«Ульрих фон Гуттен»",
+    "«Фон Гуттен»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xx",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_schill",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Фердинанд фон Шилль»",
+   "abbr": [],
+   "keywords": [
+    "«Фердинанд фон Шилль»",
+    "пд «Шилль»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xx",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_scharnhorst",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Шарнхорст»",
+   "abbr": [],
+   "keywords": [
+    "«Шарнхорст»",
+    "«Шарнгорст»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xx",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_clausewitz",
+   "side": "de",
+   "type": "div",
+   "kind": "td",
+   "name_ru": "танковая дивизия «Клаузевиц»",
+   "abbr": [],
+   "keywords": [
+    "«Клаузевиц»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxix",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_schlageter",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Шлагетер» (1-я дивизия RAD)",
+   "abbr": [],
+   "keywords": [
+    "«Шлагетер»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxix",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B",
+     "note": "12–21.04 (XXXIX тк у ОКВ)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_84id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "84-я пехотная дивизия",
+   "abbr": [
+    "84 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxix",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B",
+     "note": "12–21.04 XXXIX тк у ОКВ, с 21.04 у 12 А"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_hamburg",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "324-я пехотная дивизия «Гамбург»",
+   "abbr": [
+    "324 пд"
+   ],
+   "keywords": [
+    "«Гамбург»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxix",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B",
+     "note": "с 21.04 (XXXIX тк у 12 А)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_meyer",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Мейер»",
+   "abbr": [],
+   "keywords": [
+    "«Мейер»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxix",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B",
+     "note": "с 21.04 (XXXIX тк у 12 А)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_vonhake",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «фон Хаке»",
+   "abbr": [],
+   "keywords": [
+    "«фон Хаке»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxxi",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_199id",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "199-я пехотная дивизия",
+   "abbr": [
+    "199 пд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxxi",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_vwaffen",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия ФАУ-оружия",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxxi",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_regener",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Регенер»",
+   "abbr": [],
+   "keywords": [
+    "«Регенер»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxxviii",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki), «позднее»",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sachsen",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Заксен»",
+   "abbr": [],
+   "keywords": [
+    "«Заксен»",
+    "«Саксония»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxxviii",
+     "corps_name": null,
+     "source": "OOB 2.5 (en-/de-wiki), «позднее»",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_kg_leipzig",
+   "side": "de",
+   "type": "kg",
+   "name_ru": "боевая группа «Лейпциг» (8 батальонов)",
+   "abbr": [],
+   "keywords": [
+    "«Лейпциг»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxxviii",
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_kg_halle",
+   "side": "de",
+   "type": "kg",
+   "name_ru": "боевая группа «Галле» (8 батальонов)",
+   "abbr": [],
+   "keywords": [
+    "«Галле»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xxxxviii",
+     "corps_name": null,
+     "source": "LT_RACE app.1 (berlin-1945-reichstag.json)",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_1170stug",
+   "side": "de",
+   "type": "stug",
+   "name_ru": "1170-я бригада штурмовых орудий",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": "de_xx",
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "A",
+     "note": "поддерживала «Шарнхорст»"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_jahn",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Фридрих Людвиг Ян» (2-я дивизия RAD)",
+   "abbr": [],
+   "keywords": [
+    "«Фридрих Людвиг Ян»",
+    "«Ф. Л. Ян»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "A",
+     "note": "20.04 переподчинена Берлинскому ОР (LT_HALBE)"
+    }
+   ],
+   "aliases": [
+    "de_fljahn"
+   ]
+  },
+  {
+   "id": "de_potsdam",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "дивизия «Потсдам»",
+   "abbr": [],
+   "keywords": [
+    "пд «Потсдам»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "A"
+    }
+   ],
+   "aliases": [
+    "de_potsdam_id"
+   ]
+  },
+  {
+   "id": "de_aa_spree",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "армейская группа «Шпрее» (гарнизон Потсдама, Рейман)",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": null,
+     "army": "de_12a",
+     "corps": null,
+     "corps_name": null,
+     "source": "LT_HALBE (berlin-1945-halbe.json)",
+     "reliability": "A",
+     "note": "в LT_RACE — в Берлинском оборонительном районе"
+    }
+   ],
+   "aliases": [
+    "de_ad_spree"
+   ]
+  },
+  {
+   "id": "de_sector_A",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «A»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_B",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «B»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_C",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «C»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_D",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «D»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_E",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «E»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_F",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «F»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_G",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «G»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_H",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «H»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_sector_Z",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон сектора обороны «Z»",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE, сектора)",
+     "reliability": "C",
+     "note": "численность — доля от ~60 000 (C)"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_zoo_flak",
+   "side": "de",
+   "type": "garrison",
+   "name_ru": "гарнизон зенитной башни «Зоо» (Flakturm I)",
+   "abbr": [],
+   "subordination": [
+    {
+     "date": "1945-04-24",
+     "front": "de_hgr_weichsel",
+     "army": null,
+     "corps": "de_berlin",
+     "corps_name": null,
+     "source": "city-garrison (LT_RACE)",
+     "reliability": "B",
+     "note": "1-я зенитная дивизия с укрывшимися частями"
+    }
+   ],
+   "aliases": []
+  }
+ ],
+ "gaps": [
+  {
+   "area": "3 А (1 БФ)",
+   "kind": "состав",
+   "text": "OOB 1.3 на 1.05: «41 ск (120, …)» — список неполон; LT добавляет 269 сд. Полный состав 41 ск по «Боевому составу СА» не выписан."
+  },
+  {
+   "area": "3 А (1 БФ)",
+   "kind": "расхождения",
+   "text": "120-я дивизия 41 ск: в OOB и Le Tissier — стрелковая, в выписках ЖБД 1 БФ — «120 гв. сд». В реестре — su_120sd с обоими обозначениями; сверить по «Боевому составу СА»."
+  },
+  {
+   "area": "28 А (1 УФ)",
+   "kind": "состав",
+   "text": "OOB 1.5 на 1.05: «128 ск» без номеров дивизий. Номера 61, 130, 152 сд — только по Le Tissier (B); 61-я в LT_HALBE гвардейская, в LT_RACE — стрелковая."
+  },
+  {
+   "area": "31 А (1 УФ)",
+   "kind": "состав",
+   "text": "OOB 1.5 на 1.05: «71 ск» без номеров дивизий; в реестре 6 дивизий 31 А из 9 («сд-9» по Кривошееву). Командарм не установлен. Армии нет в сценарии."
+  },
+  {
+   "area": "1 БФ",
+   "kind": "артиллерия",
+   "text": "Артиллерийские корпуса прорыва 3, 4, 5, 6, 8 (по en-wiki) — номера входящих дивизий в источниках нет. Ziemke: против 9 А 1 БФ развернул 8 артдивизий; в реестре из них только 22 ад (33 А, по LT_HALBE)."
+  },
+  {
+   "area": "2 БФ",
+   "kind": "артиллерия",
+   "text": "Ziemke: 3 артдивизии — номера не установлены."
+  },
+  {
+   "area": "1 УФ",
+   "kind": "артиллерия",
+   "text": "Известны только 10 апк (4, 31 ад), 1 гв. апд, 25 апд (Le Tissier). Остальные артиллерийские дивизии фронта не установлены."
+  },
+  {
+   "area": "все фронты",
+   "kind": "авиация",
+   "text": "Воздушные армии (16, 4, 2, 18 ВА; авиакорпуса, в т. ч. «6 бак» без номеров дивизий; 4 сад ВП) в реестр агентов не входят: в агентной модели авиация — воздействие среды (вылеты по районам и задачам)."
+  },
+  {
+   "area": "все фронты",
+   "kind": "ПВО",
+   "text": "Зенитные артиллерийские дивизии (18, 64, 69, 10, 23, 6 гв. зад; немецкие 1, 14, 23 зенитные дивизии) в реестр не включены: ПВО — свойство района и штаба. Исключение — гарнизон зенитной башни «Зоо» как гарнизон Берлина. 14 зенитная дивизия была основой XXXXVIII тк 12 А — его состав в реестре неполон."
+  },
+  {
+   "area": "все армии",
+   "kind": "бригады",
+   "text": "Отдельные танковые и самоходные бригады известны только по Le Tissier для 5 УА, 8 гв. А, 69 А, 1 гв., 3 гв., 4 гв., 5 гв. ТА, 2 А ВП и фронтового резерва 1 УФ. Для 61, 47, 3 УА, 33, 3 А, армий 2 БФ, 3 гв., 13, 5 гв., 52, 28, 31 А отдельные бригады не перечислены; отдельные танковые и самоходные полки — ниже уровня агента (средства усиления корпусов и дивизий)."
+  },
+  {
+   "area": "все армии",
+   "kind": "не агенты",
+   "text": "Не включены как агенты: инженерные и понтонные бригады (33 исбр и др.), артиллерийские и миномётные бригады армий (в т. ч. 1 А ВП), Днепровская флотилия, мотоциклетные полки. Они — средства штабов."
+  },
+  {
+   "area": "2 БФ",
+   "kind": "состав",
+   "text": "По «Боевому составу СА» у 2 БФ на 1.04 три УР; в OOB названы два (161 УР во 2 УА, 153 УР в 19 А)."
+  },
+  {
+   "area": "2 БФ",
+   "kind": "состав",
+   "text": "На 1.05 2 УА имела 40 гв. ск, 108 и 116 ск: куда ушёл 98 ск (142, 281, 381 сд) — не установлено. 19 А и 5 гв. ТА в численность Кривошеева не входят; 5 гв. ТА нет в сценарии, её командующий не установлен."
+  },
+  {
+   "area": "подчинение",
+   "kind": "расхождения",
+   "text": "Подчинение дивизий по OOB (на 1.04) и по Le Tissier расходится в 69, 33, 3, 13, 3 гв., 5 гв., 52 и 28 А (в т. ч. 169 сд: 40 ск 3 А по OOB на 1.05 и 38 ск 33 А по LT). Обе версии записаны в subordination; какая действовала на 16.04 — сверить по ЖБД армий."
+  },
+  {
+   "area": "германская сторона",
+   "kind": "состав",
+   "text": "4 ТА: кроме V ак (с 20.04 у 9 А) и тк «Великая Германия» на 30.04 (20 тд, «Герман Геринг», «Бранденбург») дивизии не перечислены; LVII тк, группы Кольсдорфер и Мозер, тк «Герман Геринг» — без состава. Перед 1 УФ стояло 25 дивизий (ru-wiki) — в реестре 8 (5 — V ак, с 20.04 у 9 А, и 3 — тк «Великая Германия»)."
+  },
+  {
+   "area": "германская сторона",
+   "kind": "состав",
+   "text": "9 А: армейские части (штурмовой батальон АОК 9, бригада ближнего боя гитлерюгенда) без идентификаторов. КГ Пипкорна, Беккера, Краусса, фон Люка и др. — части дивизий, их положения засчитываются дивизиям как «по частям»."
+  },
+  {
+   "area": "германская сторона",
+   "kind": "состав",
+   "text": "12 А: «позднее Регенер, Заксен» — без дат; КГ «Лейпциг» и «Галле» только у Le Tissier. Численность 12 А: план 10 дивизий, факт «не более 5,5 дивизий, около 55 000» (B)."
+  },
+  {
+   "area": "Берлин",
+   "kind": "гарнизон",
+   "text": "Гарнизон города — секторы A–H и Z (центры — реконструкция, численность — доля от ~60 000, C). Внутригородские группы (Монке, полк «Анхальт», «Шарлемань», полк ГЮ, «Скорнинг», Хайсмейер, Гатов, фольксштурм) — части секторов; их распределение по секторам — допущение."
+  },
+  {
+   "area": "германская сторона",
+   "kind": "расхождения",
+   "text": "Свинемюнде: 2-я (Bahm) или 3-я (de-wiki, LT_RACE) морская дивизия. «Нордланд» и «Недерланд»: LVI и XI тк СС (OOB, seelow) или III тк СС (LT_RACE)."
+  }
+ ]
+}
