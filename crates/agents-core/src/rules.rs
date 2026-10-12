@@ -55,6 +55,8 @@ pub struct Rules {
     pub march_hours_normal: f64,
     pub march_hours_forced: f64,
     pub column_km: [f64; 3],
+    /// Темп продвижения по территории противника вне боя, км/сут: [подвижность].
+    pub enemy_territory_km_day: [f64; 3],
     pub deploy_hours: [f64; 3],
     pub frontage_km: [f64; 3],
     pub contact_km: f64,
@@ -145,6 +147,7 @@ impl Rules {
             march_hours_normal: num(&ag, "march.hoursPerDay.normal")?,
             march_hours_forced: num(&ag, "march.hoursPerDay.forced")?,
             column_km: sz("march.columnKm")?,
+            enemy_territory_km_day: [num(&ag, "march.enemyTerritoryKmDay.foot")?, num(&ag, "march.enemyTerritoryKmDay.motor")?, num(&ag, "march.enemyTerritoryKmDay.tracked")?],
             deploy_hours: sz("deployHours")?,
             frontage_km: sz("frontageKm")?,
             contact_km: num(&ag, "contactKm")?,

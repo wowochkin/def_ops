@@ -51,6 +51,26 @@ pub struct World {
     pub objects: Vec<Object>,
     /// Приказы в пути: (дивизия, приказ).
     pub in_transit: Vec<(u32, Order)>,
+    /// Чья клетка театра: 0 — ничья, 1 — советская, 2 — немецкая. В начале — по ближайшей дивизии (не дальше
+    /// CONTROL_INIT_KM), дальше — клетки, где побывали войска.
+    pub control: Vec<u8>,
+}
+
+/// Радиус начальной разметки территории вокруг войск, км.
+pub const CONTROL_INIT_KM: f64 = 40.0;
+
+#[inline]
+pub fn side_code(s: Side) -> u8 { match s { Side::Su => 1, Side::De => 2 } }
+
+impl World {
+    /// Начальная разметка территории: клетка принадлежит стороне ближайшей дивизии (не дальше CONTROL_INIT_KM).
+    pub fn init_control(&mut self, t: &Theatre) {
+        let pts: Vec<(XY, u8)> = self.divisions.iter().map(|d| (d.vars.pos, side_code(d.side))).collect();
+        self.control = t.centers.par_iter().map(|c| {
+            pts.iter().map(|&(p, s)| (p.dist(*c), s)).filter(|&(k, _)| k <= CONTROL_INIT_KM)
+                .min_by(|a, b| a.0.total_cmp(&b.0)).map_or(0, |(_, s)| s)
+        }).collect();
+    }
 }
 
 pub struct Sim {
@@ -344,7 +364,13 @@ impl Sim {
             }
             let road = t.road[c].min(t.road[nb]);
             if road == 0 && sub == MarchSub::Road { sub = MarchSub::OffRoad; }
-            let v = r.speed_kmh(d.side, d.params.mobility, road, t.terrain[nb], night);
+            let mut v = r.speed_kmh(d.side, d.params.mobility, road, t.terrain[nb], night);
+            // по территории противника — не марш, а наступление в глубине: темп не выше нормы за сутки
+            // (за часы марша в сутки, поэтому за сутки выходит не больше нормы)
+            if w.control.get(nb).copied() == Some(side_code(d.side.enemy())) {
+                v = v.min(r.enemy_territory_km_day[d.params.mobility as usize] / hours_limit);
+                if sub != MarchSub::Crossing { sub = MarchSub::OffRoad; }
+            }
             if v <= 0.0 { break; }
             let goal_p = if rt.next + 1 == rt.cells.len() { target } else { t.centers[nb] };
             let dist = pos.dist(goal_p);
@@ -514,6 +540,14 @@ impl Sim {
                 d.state = State::Destroyed;
                 d.state_since = tick;
             }
+        }
+        // территория: клетка дивизии и соседние становятся её стороны
+        let t = &*self.theatre;
+        for d in w.divisions.iter().filter(|d| d.state != State::Destroyed) {
+            let Some(c) = t.cell_of_xy(d.vars.pos) else { continue };
+            let code = side_code(d.side);
+            if let Some(x) = w.control.get_mut(c) { *x = code; }
+            for k in 0..8 { if let Some(nb) = t.neighbor(c, k) { w.control[nb] = code; } }
         }
         // объекты: чей район — по ближайшей дивизии в 2 км (параллельно, только чтение)
         let index = Index::build(w.divisions.iter().enumerate().filter(|(_, d)| d.state != State::Destroyed).map(|(i, d)| (i as u32, d.vars.pos)), 5.0);

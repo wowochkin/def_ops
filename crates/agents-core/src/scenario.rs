@@ -152,7 +152,8 @@ pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), Strin
         script.push(ScriptOrder { at, hq, to, kind: o.kind, target: o.target.map(|p| theatre.proj.to_xy(p)), forced: o.forced, note: o.note.clone() });
     }
     let objects = theatre_objects(&theatre);
-    let world = World { tick: 0, divisions, hqs, objects, in_transit: Vec::new() };
+    let mut world = World { tick: 0, divisions, hqs, objects, in_transit: Vec::new(), control: Vec::new() };
+    world.init_control(&theatre);
     let name = serde_json::from_str::<NameOnly>(&text).map(|n| n.name).unwrap_or_default();
     let meta = Meta { id: s.id.clone(), name, hours: s.hours, start: s.start.clone() };
     Ok((Sim::new(theatre, rules, s.seed, start, world, script), meta))
@@ -229,7 +230,8 @@ pub fn synthetic(theatre: Arc<Theatre>, rules: Rules, n: usize, n_objects: usize
         if t.terrain[c] == crate::theatre::WATER { continue; }
         objects.push(Object { id: format!("depot_{k}"), name: format!("склад {k}"), kind: ObjectKind::Depot, pos: t.centers[c], control: None, bridge: None, intact: true, busy_until: 0 });
     }
-    let world = World { tick: 0, divisions, hqs, objects, in_transit: Vec::new() };
+    let mut world = World { tick: 0, divisions, hqs, objects, in_transit: Vec::new(), control: Vec::new() };
+    world.init_control(&theatre);
     let start_h = parse_hours(start).unwrap_or(0);
     Sim::new(theatre, rules, seed, start_h, world, script)
 }
