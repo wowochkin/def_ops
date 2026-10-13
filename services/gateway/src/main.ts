@@ -23,8 +23,9 @@ const server = createGateway({
   auth: env('AUTH', 'open') === 'keys' ? 'keys' : 'open',
   apiKeys: parseKeys(env('API_KEYS', '')),
   staticDir: process.env.STATIC_DIR,
+  llmUrl: process.env.LLM_URL,
   corsOrigin: env('CORS_ORIGIN', '*'),
   requestTimeoutMs: Number(env('REQUEST_TIMEOUT_MS', '3600000')),
 });
-server.listen(port, () => log('gateway', { level: 'info', msg: `listening on :${port}` }));
+server.listen(port, process.env.HOST || undefined, () => log('gateway', { level: 'info', msg: `listening on :${port}` }));
 onShutdown(() => new Promise((r) => server.close(() => r())));

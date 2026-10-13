@@ -1,4 +1,5 @@
-import { createService, env, log, onShutdown } from '@def-ops/service-kit';
+import path from 'node:path';
+import { createService, env, log, onShutdown, persistent } from '@def-ops/service-kit';
 import { MemoryRepo, type MapRepo } from './repo';
 import { PgRepo } from './pg-repo';
 import { EventBus } from './events';
@@ -8,11 +9,12 @@ import { buildRouter } from './app';
 import { USER_AGENT } from './xyz';
 import { TheatreBuilder } from './theatre';
 
-// STORAGE=postgres (по умолчанию при DATABASE_URL) — описания карт в PostgreSQL/PostGIS; memory — в памяти.
-// Тайлы в любом случае — на диске, в TILES_DIR.
+// STORAGE=postgres (по умолчанию при DATABASE_URL) — описания карт в PostgreSQL/PostGIS; memory — в памяти;
+// file — в памяти с записью в DATA_DIR/cartography.json (приложение на одной машине). Тайлы — на диске, в TILES_DIR.
 const storage = env('STORAGE', process.env.DATABASE_URL ? 'postgres' : 'memory');
 let repo: MapRepo;
 if (storage === 'memory') repo = new MemoryRepo();
+else if (storage === 'file') repo = await persistent(new MemoryRepo(), path.join(env('DATA_DIR', './data'), 'cartography.json'));
 else {
   repo = await new PgRepo({ schema: env('CARTOGRAPHY_SCHEMA', 'cartography') }).init();
   log('cartography', { level: 'info', msg: 'миграции схемы картографии применены' });

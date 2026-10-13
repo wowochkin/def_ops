@@ -4,7 +4,10 @@
  * временная registry_test_<случайное>, удаляется после тестов).
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createService } from '@def-ops/service-kit';
+import { createService, persistent } from '@def-ops/service-kit';
+import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { stateAt, type Entity, type Fact } from '@def-ops/core';
 import { MemoryRepo, type RegistryRepo } from '../src/repo';
 import { PgRepo } from '../src/pg-repo';
@@ -346,6 +349,28 @@ function behaviour(name: string, setup: Setup, skip = false) {
 }
 
 behaviour('в памяти', async () => ({ repo: new MemoryRepo(), cleanup: async () => undefined }));
+
+behaviour('в файле', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'registry-'));
+  const repo = await persistent(new MemoryRepo(), path.join(dir, 'registry.json'));
+  return { repo, cleanup: async () => { await repo.close(); rmSync(dir, { recursive: true, force: true }); } };
+});
+
+describe('хранение в файле', () => {
+  it('записанное переживает перезапуск', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'registry-'));
+    const file = path.join(dir, 'registry.json');
+    const a = await persistent(new MemoryRepo(), file, 10);
+    await a.createEntity('org1', { id: 'su_150sd', type: 'formation', name: '150-я стрелковая дивизия', attrs: { echelon: 'division' } });
+    await a.close();
+    expect(existsSync(file)).toBe(true);
+    const b = await persistent(new MemoryRepo(), file, 10);
+    expect((await b.getEntity('org1', 'su_150sd'))?.name).toBe('150-я стрелковая дивизия');
+    expect(await b.getEntity('org2', 'su_150sd')).toBeFalsy();
+    await b.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
 
 const url = process.env.DATABASE_URL;
 behaviour('PostgreSQL + PostGIS', async () => {

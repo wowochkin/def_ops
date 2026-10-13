@@ -153,7 +153,8 @@ export function createService(o: ServiceOptions) {
   return {
     server,
     listen(): Promise<number> {
-      return new Promise((resolve) => server.listen(o.port, () => {
+      // HOST — интерфейс (в настольном приложении 127.0.0.1: сервисы не видны из сети); по умолчанию — все
+      return new Promise((resolve) => server.listen(o.port, process.env.HOST || undefined, () => {
         const addr = server.address();
         const port = typeof addr === 'object' && addr ? addr.port : o.port;
         log(o.name, { level: 'info', msg: `listening on :${port}` });
@@ -210,3 +211,5 @@ export function onShutdown(fn: () => Promise<void>) {
   process.once('SIGTERM', h);
   process.once('SIGINT', h);
 }
+
+export { persistent } from './persist';

@@ -316,3 +316,30 @@ describe('платформа через шлюз', () => {
   });
 });
 
+
+describe('шлюз: языковая модель', () => {
+  it('/llm/… — к серверу модели потоком, путь без /llm; недоступна — понятная ошибка', async () => {
+    const httpMod = await import('node:http');
+    const seen: string[] = [];
+    const llm = httpMod.createServer((req, res) => {
+      seen.push(`${req.method} ${req.url}`);
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      res.write('data: {"choices":[{"delta":{"content":"при"}}]}\n\n');
+      res.end('data: [DONE]\n\n');
+    });
+    await new Promise<void>((r) => llm.listen(0, '127.0.0.1', () => r()));
+    const lPort = (llm.address() as AddressInfo).port;
+    const g = createGateway({ port: 0, services: {}, routes: [], auth: 'open', apiKeys: new Map(), corsOrigin: '*', llmUrl: `http://127.0.0.1:${lPort}/v1` });
+    await new Promise<void>((r) => g.listen(0, '127.0.0.1', () => r()));
+    const gb = `http://127.0.0.1:${(g.address() as AddressInfo).port}`;
+    const r = await fetch(`${gb}/llm/v1/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"stream":true}' });
+    expect(r.status).toBe(200);
+    expect(await r.text()).toContain('[DONE]');
+    expect(seen).toEqual(['POST /v1/chat/completions']);
+    await new Promise<void>((r2) => llm.close(() => r2()));
+    const down = await fetch(`${gb}/llm/v1/models`);
+    expect(down.status).toBe(502);
+    expect((await down.json()).error.code).toBe('llm_unavailable');
+    await new Promise<void>((r2) => g.close(() => r2()));
+  });
+});

@@ -1,13 +1,16 @@
-import { createService, env, log, onShutdown } from '@def-ops/service-kit';
+import path from 'node:path';
+import { createService, env, log, onShutdown, persistent } from '@def-ops/service-kit';
 import { MemoryRepo, type RegistryRepo } from './repo';
 import { PgRepo } from './pg-repo';
 import { EventBus } from './events';
 import { buildRouter } from './app';
 
-// STORAGE=postgres (по умолчанию) — PostgreSQL/PostGIS по DATABASE_URL; STORAGE=memory — в памяти, без СУБД
+// STORAGE=postgres (по умолчанию) — PostgreSQL/PostGIS по DATABASE_URL; memory — в памяти, без СУБД;
+// file — в памяти с записью в DATA_DIR/registry.json (приложение на одной машине)
 const storage = env('STORAGE', 'postgres');
 let repo: RegistryRepo;
 if (storage === 'memory') repo = new MemoryRepo();
+else if (storage === 'file') repo = await persistent(new MemoryRepo(), path.join(env('DATA_DIR', './data'), 'registry.json'));
 else {
   repo = await new PgRepo({ schema: env('REGISTRY_SCHEMA', 'registry') }).init();
   log('registry', { level: 'info', msg: 'миграции схемы реестра применены' });

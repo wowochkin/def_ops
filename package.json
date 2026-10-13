@@ -33,6 +33,8 @@
     "agents:bench": "cargo run --release -q --bin agents-bench --",
     "agents:app": "node scripts/agents-prepare.mjs && npm run tauri -w @def-ops/agents-app -- dev",
     "agents:app:build": "npm run tauri -w @def-ops/agents-app -- build",
+    "desktop:app": "node scripts/desktop-bundle.mjs --node-only && npm run tauri -w @def-ops/desktop -- dev",
+    "desktop:build": "npm run tauri -w @def-ops/desktop -- build",
     "agents:web": "node scripts/agents-prepare.mjs && npm run dev -w @def-ops/agents-app",
     "agents:seelow-data": "npm run -s sim:census -- --json evals-out/census/census.json && tsx packages/sim/tools/agents/build-seelow.ts",
     "agents:seelow": "cargo run --release -q --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json --out evals-out/agents/seelow",

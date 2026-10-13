@@ -1,0 +1,12 @@
+{
+  "name": "@def-ops/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Настольное приложение платформы: редактор, сервисы и агентная модель в одном окне (Tauri), без Docker и СУБД",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

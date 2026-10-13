@@ -6,6 +6,8 @@
  *  - Маршрутизация по префиксу к внутренним сервисам (таблица ROUTES).
  *  - Входящий X-Tenant-Id от клиента НЕ доверяется — шлюз выставляет его сам.
  *  - Отдаёт собранный редактор (STATIC_DIR) — фронтенд и API на одном адресе.
+ *  - /llm/… → локальная языковая модель (LLM_URL, LM Studio): /llm/v1/… → <LLM_URL origin>/v1/… — редактору не нужен
+ *    CORS (так же, как в разработке через vite).
  *  - Тела запросов и ответов идут потоком, без буферизации и перекодирования:
  *    тайлы, архивы карт, загрузка сканов в сотни мегабайт, Server-Sent Events.
  *    Заголовки (Content-Type, Cache-Control, ETag, If-None-Match → 304) — как есть.
@@ -25,6 +27,8 @@ export interface GatewayConfig {
   auth: 'open' | 'keys';
   apiKeys: Map<string, string>;
   staticDir?: string;
+  /** Языковая модель для /llm/… (OpenAI-совместимый сервер, например http://localhost:1234/v1). */
+  llmUrl?: string;
   corsOrigin: string;
   /** Предел времени на запрос целиком, мс (долгая загрузка скана; 0 — без предела). По умолчанию 1 ч. */
   requestTimeoutMs?: number;
@@ -65,6 +69,7 @@ export function createGateway(cfg: GatewayConfig) {
     res.setHeader('Access-Control-Expose-Headers', 'ETag, X-Request-Id, Content-Disposition');
     if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
 
+    if (cfg.llmUrl && url.pathname.startsWith('/llm/')) return proxyLlm(cfg.llmUrl, url, req, res);
     if (!url.pathname.startsWith('/api/')) return serveStatic(cfg, url.pathname, res);
 
     // --- служебное: здоровье платформы и список сервисов
@@ -124,6 +129,19 @@ export function createGateway(cfg: GatewayConfig) {
   // загрузка большого скана по медленной сети может идти дольше стандартных 5 минут
   server.requestTimeout = cfg.requestTimeoutMs ?? 3_600_000;
   return server;
+}
+
+/** /llm/… → языковая модель: путь без /llm, тело и ответ — потоком (ответы модели идут SSE). */
+function proxyLlm(llmUrl: string, url: URL, req: http.IncomingMessage, res: http.ServerResponse) {
+  const target = new URL(url.pathname.slice('/llm'.length) + url.search, new URL(llmUrl).origin);
+  const headers: http.OutgoingHttpHeaders = { ...req.headers, host: target.host };
+  const up = http.request(target, { method: req.method, headers }, (ur) => {
+    res.writeHead(ur.statusCode || 502, ur.headers);
+    ur.pipe(res);
+  });
+  up.on('error', (e) => { if (!res.headersSent) res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' }).end(JSON.stringify({ error: { code: 'llm_unavailable', message: `Языковая модель недоступна (${target.origin}): ${e.message}` } })); else res.destroy(); });
+  res.on('close', () => { if (!res.writableEnded) up.destroy(); });
+  req.pipe(up);
 }
 
 async function serveStatic(cfg: GatewayConfig, pathname: string, res: http.ServerResponse) {

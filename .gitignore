@@ -21,3 +21,9 @@ __pycache__/
 
 # сборка Rust
 /target
+
+# настольное приложение: собирается scripts/desktop-bundle.mjs
+apps/desktop/src-tauri/binaries/
+apps/desktop/server/dist/
+apps/desktop/server/node_modules/
+apps/desktop/src-tauri/gen/
