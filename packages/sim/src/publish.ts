@@ -1217,13 +1217,16 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
   // по длине самой длинной подписи (градусов на пиксель — по исходному масштабу листа)
   {
     const degPx = 360 / (512 * Math.pow(2, doc.refZoom));
-    const kx = 1 / Math.cos((((n0 + s0) / 2) * Math.PI) / 180);
+    // в проекции Меркатора градус долготы на экране не зависит от широты, а градус широты длиннее в 1/cos раз
+    const ky = Math.cos((((n0 + s0) / 2) * Math.PI) / 180);
     const labels = out.filter((f) => f.layerId === 'sum-legend' && f.kind === 'label') as LabelFeature[];
     const box = (fs: LabelFeature[], top: number, bottom: number, left: number, extra = 0) => {
       if (!fs.length) return;
-      const right = Math.max(...fs.map((f) => f.at[0] + f.text.length * (f.style.size ?? 11) * 0.46 * degPx * kx)) + extra;
+      // ширина знака подписи на листе, пикселей исходного масштаба (замер отрисовки): заголовок, подзаголовок, строки легенды
+      const perChar = (f: LabelFeature) => (f.name === 'Заголовок' ? 8.6 : f.name === 'Подзаголовок' ? 4.8 : 6);
+      const right = Math.max(...fs.map((f) => f.at[0] + f.text.length * perChar(f) * degPx)) + extra;
       const pad = 10 * degPx;
-      const pts: LngLat[] = [[left - pad * kx, bottom - pad], [right + pad * kx, bottom - pad], [right + pad * kx, top + pad], [left - pad * kx, top + pad]];
+      const pts: LngLat[] = [[left - pad, bottom - pad * ky], [right + pad, bottom - pad * ky], [right + pad, top + pad * ky], [left - pad, top + pad * ky]];
       const a = createFeature('area', 'atlas.encircled', { points: pts, layerId: 'sum-legend' }, 1, 'neutral');
       a.style = { ...a.style, smooth: false, fill: '#ffffff', fillOpacity: 0.9, hatch: null, cross: null, edge: [{ color: '#8a8579', width: 0.8, opacity: 0.9, offset: 0 }] };
       a.name = 'Подложка';
@@ -1234,6 +1237,8 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     const leg = labels.filter((l) => l.name?.startsWith('Условные обозначения'));
     if (leg.length) box(leg, legendRow(0) + dy * 0.7, legendRow(row - 1) - dy * 0.7, w);
   }
-  doc.view = { center: [(lw + le) / 2, (ls + ln) / 2], zoom: doc.refZoom, bearing: 0 };
+  // начальный вид — весь лист с полями: мельче исходного масштаба и чуть выше середины, чтобы низ листа (легенда)
+  // не уходил под линейку масштаба, кнопки масштаба и поворота и полосу времени у нижнего края окна
+  doc.view = { center: [(lw + le) / 2, (ls + ln) / 2 - (ln - ls) * 0.08], zoom: +(doc.refZoom - 0.45).toFixed(2), bearing: 0 };
   return doc;
 }
