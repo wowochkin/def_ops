@@ -193,7 +193,8 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
       </div>
       {err && <div className="err">{err}</div>}
       {res && <div className="hist-res">
-        <b>Распознано: тайлов {res.tiles}{res.missing ? ` (нет ${res.missing})` : ''}, сетка {res.ov.cols}×{res.ov.rows}</b>
+        <div className="row"><b>Распознано: тайлов {res.tiles}{res.missing ? ` (нет ${res.missing})` : ''}, сетка {res.ov.cols}×{res.ov.rows}</b><span className="grow" />
+          <button className="link" title="Отклонить результат: убрать его с карты, театр не меняется; образцы остаются — их можно поправить и распознать снова" onClick={() => { setRes(null); onPreview(null); }}>Отклонить ✕</button></div>
         <div className="hist-stats">{Object.entries(res.ov.stats).map(([k, n]) => <span key={k}><i style={{ background: `rgb(${(OVERLAY_COLORS[k] ?? [200, 0, 200]).join(',')})` }} />{RU[k] ?? k}: {n} кл.</span>)}</div>
         {cmp && <div className="hist-roads">
           <div className="row"><b>Дороги: карта и театр</b><span className="grow" />
@@ -216,7 +217,8 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
         {cls.includes('urban') && <label title="Застройка, которой на карте нет (послевоенная), — открытая местность"><input type="checkbox" checked={opt.demote} onChange={(e) => setOpt({ ...opt, demote: e.target.checked })} /> современную застройку, которой нет на карте, — в открытую</label>}
         <div className="row"><label className="th-f inl">id театра <input className="th-id" value={newId} onChange={(e) => setNewId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} /></label>
           <button className="primary" onClick={() => void saveIt()}>Сохранить театр</button>
-          <button onClick={dl} title="Поправка для сборщика (рецепт: overlays)">Поправка JSON</button></div>
+          <button onClick={dl} title="Поправка для сборщика (рецепт: overlays)">Поправка JSON</button>
+          <button onClick={() => { setRes(null); onPreview(null); }} title="Театр не меняется; образцы остаются">Отклонить</button></div>
       </div>}
     </div>
   );
