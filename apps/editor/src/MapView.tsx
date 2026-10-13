@@ -70,7 +70,8 @@ export function MapView(props: Props) {
 
   const time = props.time ?? null;
   /** Документ на выбранный момент: что видно и где. Правки пишутся в исходный doc (commitAt). */
-  const shown = useMemo(() => documentAt(doc, time), [doc, time]);
+  // при показе на момент — без знаков скрытых слоёв: при проигрывании это пересчитывается на каждом кадре
+  const shown = useMemo(() => documentAt(doc, time, { visibleOnly: true }), [doc, time]);
   /** Записать отредактированный (показанный) знак в документ с учётом времени. */
   const commit = (base: MapDocument, id: string, edited: Feature, key?: string) =>
     setDoc(updateFeature(base, id, (orig) => commitAt(orig, edited, live.current.time, base.timeline?.motion ?? 'smooth')), key);

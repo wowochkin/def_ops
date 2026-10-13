@@ -3,7 +3,7 @@
  * стрелка или линия видимых слоёв в текущий момент — название и заметка кадра (численность, что делает).
  * Ищется по геометрии, а не по событиям знаков: слои просмотра закрыты, карта свободно перетаскивается.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { documentAt, type Feature, type MapDocument, type TimeInstant } from '@def-ops/core';
 import type { MapEngine } from './engine/types';
 
@@ -21,12 +21,22 @@ function noteAt(f: Feature, t: TimeInstant | null): string | undefined {
 
 export function MapHover({ engine, doc, time, skip = [] }: { engine: MapEngine | null; doc: MapDocument | null; time: TimeInstant | null; skip?: string[] }) {
   const [tip, setTip] = useState<{ x: number; y: number; title: string; note?: string } | null>(null);
-  const shown = useMemo(() => (doc ? documentAt(doc, time) : null), [doc, time]);
+  // обстановка на момент — только когда мышь над картой (при проигрывании время меняется на каждом кадре)
+  const cur = useRef({ doc, time });
+  cur.current = { doc, time };
   useEffect(() => {
     const host = engine?.getContainer().parentElement;
-    if (!engine || !host || !shown) return;
-    const vis = new Set(shown.layers.filter((l) => l.visible && !skip.includes(l.id)).map((l) => l.id));
-    const feats = shown.features.filter((f) => vis.has(f.layerId) && !f.hidden && f.name);
+    if (!engine || !host) return;
+    let cache: { doc: MapDocument; time: TimeInstant | null; feats: Feature[] } | null = null;
+    const featsNow = () => {
+      const { doc: d, time: t } = cur.current;
+      if (!d) return [];
+      if (cache && cache.doc === d && cache.time === t) return cache.feats;
+      const shown = documentAt(d, t, { visibleOnly: true });
+      const vis = new Set(shown.layers.filter((l) => l.visible && !skip.includes(l.id)).map((l) => l.id));
+      cache = { doc: d, time: t, feats: shown.features.filter((f) => vis.has(f.layerId) && !f.hidden && f.name) };
+      return cache.feats;
+    };
     let raf = 0;
     const move = (e: MouseEvent) => {
       cancelAnimationFrame(raf);
@@ -35,7 +45,7 @@ export function MapHover({ engine, doc, time, skip = [] }: { engine: MapEngine |
         const r = host.getBoundingClientRect();
         const p: [number, number] = [e.clientX - r.left, e.clientY - r.top];
         let best: Feature | null = null, bd = 14;
-        for (const f of feats) {
+        for (const f of featsNow()) {
           let d = Infinity;
           if (f.kind === 'symbol' || f.kind === 'label') { const q = engine.project(f.at); d = Math.hypot(q[0] - p[0], q[1] - p[1]) - (f.kind === 'symbol' ? 6 : 10); }
           else if ('points' in f && f.points.length > 1) {
@@ -45,14 +55,14 @@ export function MapHover({ engine, doc, time, skip = [] }: { engine: MapEngine |
           // знаки важнее линий: при равном расстоянии берётся знак
           if (d < bd || (best && d <= bd + 2 && f.kind === 'symbol' && best.kind !== 'symbol')) { bd = d; best = f; }
         }
-        setTip(best ? { x: e.clientX, y: e.clientY, title: best.name!, note: noteAt(best, time) } : null);
+        setTip(best ? { x: e.clientX, y: e.clientY, title: best.name!, note: noteAt(best, cur.current.time) } : null);
       });
     };
     const leave = () => setTip(null);
     host.addEventListener('mousemove', move);
     host.addEventListener('mouseleave', leave);
     return () => { cancelAnimationFrame(raf); host.removeEventListener('mousemove', move); host.removeEventListener('mouseleave', leave); };
-  }, [engine, shown, time, skip.join()]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [engine, skip.join()]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!tip) return null;
   return <div className="map-tip" style={{ left: tip.x + 14, top: tip.y + 12 }}><b>{tip.title}</b>{tip.note && <span>{tip.note}</span>}</div>;
 }

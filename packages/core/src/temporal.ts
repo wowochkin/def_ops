@@ -12,8 +12,21 @@
 import type { Feature, Keyframe, MapDocument, Motion, TimeInstant, TimeSpan } from './model';
 import type { LngLat } from './geo';
 
+/** Разобранные моменты: при проигрывании одни и те же строки разбираются на каждом кадре у тысяч знаков. */
+const TIMES = new Map<string, number>();
+
 /** Момент в миллисекундах. Дата без времени — полночь; без часового пояса — UTC. */
 export function toTime(s: TimeInstant): number {
+  let ms = TIMES.get(s);
+  if (ms === undefined) {
+    if (TIMES.size > 200_000) TIMES.clear();
+    ms = parseTime(s);
+    TIMES.set(s, ms);
+  }
+  return ms;
+}
+
+function parseTime(s: TimeInstant): number {
   const v = s.trim();
   if (/^-?\d{4,6}-\d{2}-\d{2}$/.test(v)) return Date.parse(`${v}T00:00:00Z`);
   if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(v)) return Date.parse(v);
@@ -55,7 +68,19 @@ interface Stop { ms: number; g: Omit<Keyframe, 't'>; key: TimeInstant | null }
  * движении, только если у знака задано начало периода (time.from): тогда она —
  * положение на этот момент. Иначе до первого кадра знак стоит в основном положении.
  */
+const STOPS = new WeakMap<Feature, { kf: Feature['keyframes']; from: TimeInstant | null | undefined; at: unknown; list: Stop[] }>();
+
+/** Опорные положения знака — с запоминанием, пока у знака те же кадры, начало периода и основная геометрия. */
 function stops(f: Feature): Stop[] {
+  const at = 'points' in f ? f.points : 'at' in f ? f.at : null;
+  const c = STOPS.get(f);
+  if (c && c.kf === f.keyframes && c.from === f.time?.from && c.at === at) return c.list;
+  const list = computeStops(f);
+  STOPS.set(f, { kf: f.keyframes, from: f.time?.from, at, list });
+  return list;
+}
+
+function computeStops(f: Feature): Stop[] {
   const out: Stop[] = sortedKeyframes(f).map((k) => ({ ms: toTime(k.t), g: k, key: k.t }));
   const from = f.time?.from;
   const baseTimed = !!from && (!out.length || toTime(from) < out[0].ms);
@@ -91,7 +116,8 @@ export function featureAt<F extends Feature>(f: F, t: TimeInstant, motion: Motio
   if (!inSpan(f.time, t)) return null;
   const { g: k } = geometryAt(f, t, motionOf(f, motion));
   if (!k) return f;
-  const g = structuredClone(f) as F & Record<string, unknown>;
+  // копия знака без глубокого копирования: ключевые кадры и стиль общие, геометрия — своя
+  const g = { ...f } as F & Record<string, unknown>;
   if ('points' in g && k.points) g.points = structuredClone(k.points);
   if ('at' in g && k.at) g.at = [...k.at] as typeof g.at;
   if ('rotation' in g && k.rotation !== undefined) g.rotation = k.rotation;
@@ -99,12 +125,23 @@ export function featureAt<F extends Feature>(f: F, t: TimeInstant, motion: Motio
   return g;
 }
 
-/** Документ на момент t (t не задан — документ без изменений, все знаки сразу). */
-export function documentAt(doc: MapDocument, t?: TimeInstant | null): MapDocument {
+/**
+ * Документ на момент t (t не задан — документ без изменений, все знаки сразу). visibleOnly — без знаков скрытых слоёв
+ * (кроме тех, к которым привязаны стрелки видимых): для показа на экране при проигрывании.
+ */
+export function documentAt(doc: MapDocument, t?: TimeInstant | null, o: { visibleOnly?: boolean } = {}): MapDocument {
   if (!t) return doc;
   const motion = doc.timeline?.motion ?? 'smooth';
   const features: Feature[] = [];
+  let keep: ((f: Feature) => boolean) | null = null;
+  if (o.visibleOnly) {
+    const vis = new Set(doc.layers.filter((l) => l.visible).map((l) => l.id));
+    const anchors = new Set<string>();
+    for (const f of doc.features) if (f.kind === 'arrow' && f.anchor && vis.has(f.layerId)) anchors.add(f.anchor.featureId);
+    keep = (f) => vis.has(f.layerId) || anchors.has(f.id);
+  }
   for (const f of doc.features) {
+    if (keep && !keep(f)) continue;
     const g = featureAt(f, t, motionOf(f, motion));
     if (g) features.push(g);
   }
