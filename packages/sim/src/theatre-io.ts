@@ -5,7 +5,8 @@
  */
 import { createFeature, emptyDocument, type Feature, type Layer, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
 import { areaTitle } from './reports';
-import type { TerrainGrid, TheatreData } from './types';
+import { decodeGrid } from './theatre';
+import { TERRAIN_CLASSES, type TerrainClass, type TerrainGrid, type TheatreData } from './types';
 
 export type BBox = [number, number, number, number];
 
@@ -30,12 +31,89 @@ const touches = (b: BBox, l: LngLat[]) => l.some((p) => inBox(b, p)) || l.slice(
   return Math.min(p[0], q[0]) <= b[2] && Math.max(p[0], q[0]) >= b[0] && Math.min(p[1], q[1]) <= b[3] && Math.max(p[1], q[1]) >= b[1];
 });
 
+/** Контур местности: класс, внешний контур, дыры (поляна в лесу, остров). */
+export interface TerrainShape { class: TerrainClass; ring: LngLat[]; holes: LngLat[][] }
+
+/**
+ * Контуры местности по растру: клетки одного класса сливаются в многоугольники по краям клеток (лес, болото,
+ * застройка, высоты, вода; открытая местность — фон). Так у растровых театров, где векторных контуров нет, есть
+ * слой «Местность: контуры» — на карте, в редакторе и в GeoJSON.
+ */
+export function gridContours(g: TerrainGrid): TerrainShape[] {
+  const k = decodeGrid(g), { cols, rows } = g;
+  const [w, , , n] = g.bbox, dx = (g.bbox[2] - w) / cols, dy = (n - g.bbox[1]) / rows;
+  const out: TerrainShape[] = [];
+  for (const cls of ['hills', 'forest', 'marsh', 'urban', 'water'] as TerrainClass[]) {
+    const ci = TERRAIN_CLASSES.indexOf(cls);
+    const inM = (c: number, r: number) => c >= 0 && r >= 0 && c < cols && r < rows && k[r * cols + c] === ci;
+    // рёбра границы в одном обходе (по часовой стрелке на карте): ключ — начальная вершина
+    const W = cols + 1, next = new Map<number, number[]>();
+    const add = (c0: number, r0: number, c1: number, r1: number) => { const a = r0 * W + c0; const l = next.get(a); if (l) l.push(r1 * W + c1); else next.set(a, [r1 * W + c1]); };
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      if (k[r * cols + c] !== ci) continue;
+      if (!inM(c, r - 1)) add(c, r, c + 1, r);
+      if (!inM(c + 1, r)) add(c + 1, r, c + 1, r + 1);
+      if (!inM(c, r + 1)) add(c + 1, r + 1, c, r + 1);
+      if (!inM(c - 1, r)) add(c, r + 1, c, r);
+    }
+    const outer: [number, number][][] = [], holes: [number, number][][] = [];
+    for (const start of [...next.keys()]) {
+      while (next.get(start)?.length) {
+        const loop: [number, number][] = [];
+        let v = start;
+        do {
+          const l = next.get(v)!;
+          const u = l.pop()!;
+          if (!l.length) next.delete(v);
+          loop.push([v % W, Math.floor(v / W)]);
+          v = u;
+        } while (v !== start && next.has(v));
+        // лишние вершины на прямых участках
+        const pts = loop.filter((p, i) => { const a = loop[(i - 1 + loop.length) % loop.length], b = loop[(i + 1) % loop.length]; return (p[0] - a[0]) * (b[1] - p[1]) !== (p[1] - a[1]) * (b[0] - p[0]); });
+        if (pts.length < 3) continue;
+        let area = 0;
+        for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a[0] * b[1] - b[0] * a[1]; }
+        (area > 0 ? outer : holes).push(pts);
+      }
+    }
+    const toLL = (l: [number, number][]): LngLat[] => l.map(([c, r]) => [+(w + c * dx).toFixed(5), +(n - r * dy).toFixed(5)]);
+    // дыра — к внешнему контуру, внутри которого её вершина (луч по строке сетки)
+    const inside = (pt: [number, number], poly: [number, number][]) => {
+      let o = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [xi, yi] = poly[i], [xj, yj] = poly[j];
+        if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) o = !o;
+      }
+      return o;
+    };
+    const shapes = outer.map((o) => ({ o, h: [] as [number, number][][] }));
+    for (const h of holes) {
+      const p: [number, number] = [h[0][0] + 0.01, h[0][1] + 0.013];
+      const sh = shapes.find((x) => inside(p, x.o));
+      if (sh) sh.h.push(h);
+    }
+    for (const x of shapes) out.push({ class: cls, ring: toLL(x.o), holes: x.h.map(toLL) });
+  }
+  return out;
+}
+
+const shapesCache = new WeakMap<TheatreData, TerrainShape[]>();
+/** Контуры местности театра: векторные (старые театры) или по растру. */
+export function terrainShapes(T: TheatreData): TerrainShape[] {
+  let v = shapesCache.get(T);
+  if (!v) {
+    v = T.terrain.length ? T.terrain.map((x) => ({ class: x.class, ring: x.ring, holes: [] })) : T.terrainGrid ? gridContours(T.terrainGrid) : [];
+    shapesCache.set(T, v);
+  }
+  return v;
+}
+
 export function layerCounts(T: TheatreData, b?: BBox): Record<TheatreLayerId, number> {
   const bb = b ?? T.bbox;
   return {
     terrain: T.terrainGrid ? 1 : 0,
     height: T.heightGrid ? 1 : 0,
-    terrainShapes: T.terrain.filter((x) => touches(bb, x.ring)).length,
+    terrainShapes: terrainShapes(T).filter((x) => touches(bb, x.ring)).length,
     roads: T.roads.filter((r) => r.kind !== 'rail' && touches(bb, r.line)).length,
     rail: T.roads.filter((r) => r.kind === 'rail' && touches(bb, r.line)).length,
     rivers: T.rivers.filter((r) => touches(bb, r.line)).length,
@@ -116,7 +194,7 @@ const ring = (r: LngLat[]) => (r.length && (r[0][0] !== r[r.length - 1][0] || r[
 export function layerGeoJSON(T: TheatreData, layer: TheatreLayerId, b?: BBox): GJ {
   const bb = b ?? T.bbox;
   switch (layer) {
-    case 'terrainShapes': return fc(T.terrain.filter((x) => touches(bb, x.ring)).map((x) => ({ type: 'Feature', properties: { class: x.class }, geometry: { type: 'Polygon', coordinates: [ring(x.ring)] } })));
+    case 'terrainShapes': return fc(terrainShapes(T).filter((x) => touches(bb, x.ring)).map((x) => ({ type: 'Feature', properties: { class: x.class }, geometry: { type: 'Polygon', coordinates: [ring(x.ring), ...x.holes.map(ring)] } })));
     case 'roads': case 'rail': return fc(T.roads.filter((r) => (layer === 'rail') === (r.kind === 'rail') && touches(bb, r.line)).map((r) => ({ type: 'Feature', properties: { kind: r.kind, name: r.name ?? null }, geometry: { type: 'LineString', coordinates: r.line } })));
     case 'rivers': return fc(T.rivers.filter((r) => touches(bb, r.line)).map((r) => ({ type: 'Feature', properties: { name: r.name, major: r.major }, geometry: { type: 'LineString', coordinates: r.line } })));
     case 'bridges': return fc(T.bridges.filter((x) => inBox(bb, x.at)).map((x) => ({ type: 'Feature', properties: { id: x.id, name: x.name ?? null, kind: x.kind ?? null, openFrom: x.openFrom ?? null, destroyedAt: x.destroyedAt ?? null, side: x.side ?? null }, geometry: { type: 'Point', coordinates: x.at } })));
@@ -157,6 +235,7 @@ export function recipeFor(o: { id: string; name: string; bbox: BBox; cellKm: num
 }
 
 const TERR_PRESET: Record<string, string | null> = { forest: 'std.forest', marsh: 'std.swamp' };
+const TERR_FILL: Record<string, [string, string]> = { urban: ['#cfb9ae', '#9c7f70'], hills: ['#ead7a4', '#bfa363'], water: ['#a9c8ea', '#4a7fc0'] };
 
 /** Театр — документ карты: слои театра (растр местности добавляет просмотр — он рисуется в браузере). */
 export function theatreToDocument(T: TheatreData): MapDocument {
@@ -167,9 +246,12 @@ export function theatreToDocument(T: TheatreData): MapDocument {
   const mk = (id: TheatreLayerId, name: string, visible = true, opacity = 1): Layer => ({ id: `th-${id}`, name, role: 'base', visible, locked: true, opacity, source: { system: 'theatre', ref: T.id, readOnly: true } });
   doc.layers = [mk('terrainShapes', 'Местность: контуры', false, 0.6), mk('areas', 'Районы и пункты', true, 0.7), mk('rail', 'Железные дороги'), mk('roads', 'Дороги и шоссе'), mk('rivers', 'Реки и каналы'), mk('lines', 'Рубежи'), mk('bridges', 'Мосты и переправы')];
   const F: Feature[] = [];
-  for (const x of T.terrain) {
+  for (const x of terrainShapes(T)) {
     const p = TERR_PRESET[x.class];
-    const f = p ? createFeature('area', p, { points: x.ring, layerId: 'th-terrainShapes' }, 1) : createFeature('line', 'std.border', { points: [...x.ring, x.ring[0]], layerId: 'th-terrainShapes' }, 0.6, 'neutral');
+    const f = createFeature('area', p ?? 'std.swamp', { points: x.ring, layerId: 'th-terrainShapes' }, 1);
+    // застройка, высоты, вода — заливкой цвета растра местности (лес и болото — своими знаками)
+    const fill = TERR_FILL[x.class];
+    if (!p && fill) f.style = { ...f.style, smooth: false, fill: fill[0], fillOpacity: 0.75, hatch: null, cross: null, edge: [{ color: fill[1], width: 0.6, opacity: 0.9, offset: 0 }] } as typeof f.style;
     f.name = `Местность: ${({ forest: 'лес', marsh: 'болото', urban: 'город', hills: 'высоты', water: 'вода', open: 'открытая' } as Record<string, string>)[x.class] ?? x.class}`;
     F.push(f);
   }

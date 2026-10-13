@@ -129,6 +129,9 @@ export class OverlayAccumulator {
         if (f >= c.min) masks[c.cls][i] = 1;
       }
     }
+    // линейные классы — до осевой линии в одну клетку: толстая линия скана задевает соседние клетки, и дорога
+    // выходила полосой в 2–3 клетки «лесенкой»
+    for (const cls of LINEAR) if (masks[cls]) thinMask(masks[cls], this.grid.cols, this.grid.rows);
     const covered = new Uint8Array(N).map((_, i) => (this.total[i] > 0 ? 1 : 0));
     return {
       legend: this.legend.id, name: this.legend.name, source: meta.source, zoom: meta.zoom, bbox: this.grid.bbox, cols: this.grid.cols, rows: this.grid.rows,
@@ -137,6 +140,40 @@ export class OverlayAccumulator {
     };
   }
 }
+/** Классы-линии: маска утончается до осевой. */
+export const LINEAR = ['road', 'highway', 'rail'];
+
+/**
+ * Утончение маски до осевой линии (Чжан — Суэн): с краёв снимаются клетки, пока не останется линия в одну клетку;
+ * связность (по восьми соседям) и концы линий сохраняются. Маска меняется на месте; возвращает, сколько клеток снято.
+ */
+export function thinMask(m: Uint8Array, cols: number, rows: number): number {
+  const at = (c: number, r: number) => (c >= 0 && r >= 0 && c < cols && r < rows ? m[r * cols + c] : 0);
+  let removed = 0, changed = true;
+  const del: number[] = [];
+  while (changed) {
+    changed = false;
+    for (const step of [0, 1]) {
+      del.length = 0;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        if (!m[r * cols + c]) continue;
+        // соседи P2..P9 по часовой стрелке, начиная с верхнего
+        const p = [at(c, r - 1), at(c + 1, r - 1), at(c + 1, r), at(c + 1, r + 1), at(c, r + 1), at(c - 1, r + 1), at(c - 1, r), at(c - 1, r - 1)];
+        const b = p.reduce((x, v) => x + v, 0);
+        if (b < 2 || b > 6) continue;
+        let a = 0;
+        for (let i = 0; i < 8; i++) if (!p[i] && p[(i + 1) % 8]) a++;
+        if (a !== 1) continue;
+        if (step === 0 ? p[0] * p[2] * p[4] || p[2] * p[4] * p[6] : p[0] * p[2] * p[6] || p[0] * p[4] * p[6]) continue;
+        del.push(r * cols + c);
+      }
+      for (const i of del) m[i] = 0;
+      if (del.length) { changed = true; removed += del.length; }
+    }
+  }
+  return removed;
+}
+
 export const PREVIEW: Record<string, [number, number, number]> = { urban: [210, 80, 70], built: [210, 80, 70], suburb: [230, 150, 130], dark: [40, 40, 40], road: [240, 140, 40], highway: [200, 40, 40], rail: [60, 60, 60], forest: [60, 140, 70], water: [50, 100, 220], marsh: [120, 180, 170] };
 
 export function maskRle(m: Uint8Array): string {
