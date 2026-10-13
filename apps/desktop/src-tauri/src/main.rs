@@ -24,6 +24,10 @@ use tauri::{Manager, RunEvent};
 /// Процесс сервисов: остановить при выходе.
 struct Services(Mutex<Option<Child>>);
 
+/// Адрес редактора, когда сервисы готовы: если окно вернулось на страницу запуска (Backspace или «Назад» в WebKit
+/// листает историю), оно снова открывает редактор, а не ждёт готовности, которая уже была.
+struct Ready(Mutex<Option<tauri::Url>>);
+
 /// Адрес редактора в разработке (vite, npm run dev -w @def-ops/editor).
 const DEV_EDITOR: &str = "http://localhost:5173/";
 
@@ -60,6 +64,15 @@ fn show_error(app: &tauri::AppHandle, msg: &str) {
 fn main() {
     tauri::Builder::default()
         .manage(Services(Mutex::new(None)))
+        .manage(Ready(Mutex::new(None)))
+        .on_page_load(|webview, payload| {
+            // страница запуска — из ресурсов приложения (tauri://localhost, на Windows — http://tauri.localhost)
+            let u = payload.url();
+            let splash = u.scheme() == "tauri" || u.host_str() == Some("tauri.localhost");
+            if splash && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
+                if let Some(url) = webview.app_handle().state::<Ready>().0.lock().unwrap().clone() { let _ = webview.navigate(url); }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models,
             agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop
@@ -81,7 +94,10 @@ fn main() {
                             if let (false, Some(url)) = (ready, line.strip_prefix("DEFOPS_READY ")) {
                                 ready = true;
                                 let target = if cfg!(debug_assertions) { DEV_EDITOR.to_string() } else { format!("{url}/") };
-                                if let (Some(w), Ok(u)) = (handle.get_webview_window("main"), target.parse()) { let _ = w.navigate(u); }
+                                if let Ok(u) = target.parse::<tauri::Url>() {
+                                    *handle.state::<Ready>().0.lock().unwrap() = Some(u.clone());
+                                    if let Some(w) = handle.get_webview_window("main") { let _ = w.navigate(u); }
+                                }
                             }
                         }
                         if !ready { show_error(&handle, "запускатель сервисов завершился раньше готовности — подробности в журнале приложения"); }
