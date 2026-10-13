@@ -654,6 +654,16 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .brow-h { display: flex; align-items: baseline; gap: 8px; cursor: pointer; font-size: 12px; padding: 2px 0; }
 .brow-h b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
 .brow-h .st { font-size: 11px; color: var(--muted); flex: 1; }
+.res-sum { font-size: 12px; margin: 6px 0; }
+.res-card { border: 1px solid #ebe8e0; border-radius: 6px; padding: 6px 8px; margin: 6px 0; display: flex; flex-direction: column; gap: 4px; background: #fdfcf9; }
+.res-card .brow-h b { max-width: 210px; }
+.res-card .row { display: flex; gap: 8px; align-items: center; }
+.res-units summary { font-size: 11.5px; color: var(--muted); cursor: pointer; }
+.res-units .brow-h b { max-width: 190px; }
+.bnd-armies { width: 100%; border-collapse: collapse; font-size: 12px; margin: 4px 0 8px; }
+.bnd-armies td { padding: 3px 4px; border-bottom: 1px solid #f0eee8; }
+.bnd-armies tr { cursor: pointer; } .bnd-armies tr:hover td { background: #f6f4ee; }
+.bnd-armies tr.on td { background: var(--accent-bg); }
 .st.active { color: #2f6b3b; } .st.moving { color: #7a5d00; } .st.idle { color: var(--accent); }
 .pick-list.inline .row { display: flex; gap: 6px; } .pick-list.inline input { flex: 1; font-size: 12px; padding: 3px 6px; }
 .pick-list.inline .row button.on { background: var(--accent); color: #fff; border-color: var(--accent); }

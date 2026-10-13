@@ -6,7 +6,7 @@
  * пишет приказы. «Провести ход» — дождаться решения модели, отдать приказы обеих
  * сторон и посчитать ход арбитром.
  */
-import { createFeature, type SymbolFeature } from '@def-ops/core';
+import { createFeature, type LngLat, type SymbolFeature } from '@def-ops/core';
 import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
   agentsHistory, type AgentGameSpec, type AgentHistory,
@@ -561,6 +561,7 @@ function postView() {
     return { title: r.title, historical: r.historical, simulated: r.simulated, days: r.days, at: r.at, place };
   });
   const prof = ctx.profiles[ctx.scenario.sides.find((x) => x.id === human)!.profile];
+  const own = agents ? (() => { const d = unitReports(ctx, s, human, g.prev); return [...hqReports(ctx, d, human), ...d]; })() : unitReports(ctx, s, human, g.prev);
   const view: TurnView = {
     engine: agents ? 'agents' : 'army',
     scenario: ctx.scenario.id, scenarioName: ctx.scenario.name, rules: ctx.rules.id, seed: rec.seed,
@@ -570,7 +571,7 @@ function postView() {
     // группы докладов — объединения верхнего уровня (в агентной модели штабы всех уровней без типа — берём фронты)
     groups: ctx.scenario.formations.filter((f) => f.side === human && !f.type && (!agents || f.echelon === 'front')).map((f) => ({ id: f.id, name: f.name })),
     terms: commandTerms(ctx, human),
-    own: agents ? (() => { const d = unitReports(ctx, s, human, g.prev); return [...hqReports(ctx, d, human), ...d]; })() : unitReports(ctx, s, human, g.prev),
+    own,
     intel: intelReport(ctx, s, human, g.prev),
     events: journal.length ? journal[journal.length - 1].events : [],
     places: places(ctx.theatre).map((p) => ({ id: p.id, title: p.title, at: p.at })),
@@ -579,9 +580,25 @@ function postView() {
     goals, journal, doc,
     ...logisticsView(),
     ...sectorsView(),
+    reserveGroups: reserveGroupsView(own),
     lastDecision: (([...rec.turns].reverse().find((t) => t.human)?.human) as HumanDecision | undefined) ?? null,
   };
   post({ kind: 'view', view });
+}
+
+/** Резервы и прибывающие войска стороны человека — по армиям (в агентной модели резерв — дивизии армии, вводятся вместе). */
+function reserveGroupsView(own: TurnView['own']): TurnView['reserveGroups'] {
+  const armyOf = groupOf(ctx.scenario, 'army'), frontOf = groupOf(ctx.scenario, 'front');
+  const name = (id: string) => ctx.scenario.formations.find((f) => f.id === id)?.name ?? id;
+  const out = new Map<string, TurnView['reserveGroups'][number]>();
+  for (const u of own) {
+    if (u.status !== 'reserve' && u.status !== 'arriving') continue;
+    const a = armyOf.get(u.id) ?? u.id, k = `${u.status}:${a}`;
+    const fr = frontOf.get(u.id);
+    if (!out.has(k)) out.set(k, { id: a, name: name(a), status: u.status, front: fr && fr !== a ? name(fr) : null, members: [] });
+    out.get(k)!.members.push(u.id);
+  }
+  return [...out.values()];
 }
 
 /** Полосы стороны человека: словами (вкладка «Приказы») и действующие линии с объединениями формирований — для проверки цели приказа. */
@@ -599,7 +616,13 @@ function sectorsView(): Pick<TurnView, 'sectors' | 'boundaries' | 'groupOf' | 'a
     armies: (() => {
       const armyOf = groupOf(ctx.scenario, 'army');
       return ctx.scenario.formations.filter((f) => f.side === human && f.echelon === 'army' && s.formations.some((u) => !u.destroyed && onMap(u, s.time) && (armyOf.get(u.id) ?? u.id) === f.id))
-        .map((f) => ({ id: f.id, name: f.name, group: groups.get(f.id) ?? f.id }));
+        .map((f) => {
+          // середина войск армии (по численности) — для подсказки линии между соседями
+          const l = s.formations.filter((u) => !u.destroyed && onMap(u, s.time) && (armyOf.get(u.id) ?? u.id) === f.id);
+          const P = l.reduce((x, u) => x + u.personnel, 0) || 1;
+          const at: LngLat = [l.reduce((x, u) => x + u.position[0] * u.personnel, 0) / P, l.reduce((x, u) => x + u.position[1] * u.personnel, 0) / P];
+          return { id: f.id, name: f.name, group: groups.get(f.id) ?? f.id, at };
+        });
     })(),
   };
 }

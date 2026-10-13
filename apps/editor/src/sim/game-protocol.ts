@@ -149,7 +149,9 @@ export interface TurnView {
   boundaries: { right: string; left: string; rightName: string; leftName: string; title: string; line: LngLat[] }[];
   groupOf: Record<string, string>;
   /** Армии стороны игрока с войсками на театре и их объединение верхнего уровня — для линий между армиями. */
-  armies: { id: string; name: string; group: string }[];
+  armies: { id: string; name: string; group: string; at: LngLat }[];
+  /** Резервы (ждут ввода) и прибывающие войска — по армиям: объединение, его фронт, соединения. */
+  reserveGroups: { id: string; name: string; status: 'reserve' | 'arriving'; front: string | null; members: string[] }[];
 }
 
 export type AiStatus =

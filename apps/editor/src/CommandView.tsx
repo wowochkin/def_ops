@@ -48,7 +48,7 @@ type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire';
 type Sub = 'units' | 'rear' | 'bridges' | 'reserves' | 'bounds';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
-type Pick = { kind: 'order' } | { kind: 'line' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string };
+type Pick = { kind: 'order' } | { kind: 'line' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string; members?: { id: string; name: string }[] };
 /** Варианты решения на ход от советника (на ход time): по мере генерации, затем итог. */
 interface PlanState { id: number; time: string; count: number; variants: PlanVariantView[]; progress: string; done: boolean; error?: string; warning?: string; seconds?: number; model?: string; accepted?: number }
 interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; wait?: string; result?: AdviceView }
@@ -231,7 +231,17 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setPickMode(null);
     if (pm.kind === 'bridge') void addAct(`bridge:${Date.now()}`, { kind: 'bridge', side, at, issuedAt: t }, 'Переправа');
     else if (pm.kind === 'base') void addAct(`base:${pm.base}`, { kind: 'base', side, base: pm.base, to: at, toName: title ?? undefined, issuedAt: t }, `База «${pm.name}»`, { from: pm.from });
-    else if (pm.kind === 'commit') void addAct(`commit:${pm.formation}`, { kind: 'commit', side, formation: pm.formation, at, atName: title ?? undefined, issuedAt: t }, short(pm.name));
+    else if (pm.kind === 'commit' && pm.members?.length) {
+      // объединение целиком: соединения — в один район, разнесены по кругу в 3–4 км, чтобы не стояли в одной точке
+      const ms = pm.members, kx = 1 / Math.cos((at[1] * Math.PI) / 180);
+      void (async () => {
+        for (let i = 0; i < ms.length; i++) {
+          const r = i ? 3.5 / 111 : 0, a = (2 * Math.PI * i) / Math.max(1, ms.length - 1);
+          const p: LngLat = [at[0] + r * Math.cos(a) * kx, at[1] + r * Math.sin(a)];
+          await addAct(`commit:${ms[i].id}`, { kind: 'commit', side, formation: ms[i].id, at: p, atName: title ?? undefined, issuedAt: t }, `${short(pm.name)}: ${short(ms[i].name)}`);
+        }
+      })();
+    } else if (pm.kind === 'commit') void addAct(`commit:${pm.formation}`, { kind: 'commit', side, formation: pm.formation, at, atName: title ?? undefined, issuedAt: t }, short(pm.name));
   };
 
   const unit = (id: string | null) => view?.own.find((u) => u.id === id) ?? null;
@@ -421,9 +431,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               {sub === 'rear' && <Rear v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} goTo={goTo}
                 setPriority={(ids) => { if (same(ids, view.priority)) dropAct('priority'); else void addAct('priority', { kind: 'priority', side: view.human.id, formations: ids, issuedAt: view.time }, 'Приоритет подвоза'); }} />}
               {sub === 'bridges' && <Bridges v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo} />}
-              {sub === 'bounds' && <Bounds v={view} acts={acts} drop={dropAct} picking={pickMode?.kind === 'line'} setPicking={(b) => setPickMode(b ? { kind: 'line' } : null)} pts={linePts} setPts={setLinePts}
+              {sub === 'bounds' && <Bounds v={view} acts={acts} drop={dropAct} goTo={goTo} picking={pickMode?.kind === 'line'} setPicking={(b) => setPickMode(b ? { kind: 'line' } : null)} pts={linePts} setPts={setLinePts}
                 add={(a, label) => addAct(`boundary:${[a.a, a.b].sort().join('|')}`, a, label, { at: a.line[0] })} />}
-              {sub === 'reserves' && <Reserves v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} />}
+              {sub === 'reserves' && <Reserves v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} goTo={goTo}
+                onOrder={(id) => { setSel(id); setSub('units'); goTo(unit(id)?.at ?? null, false); }} />}
             </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
             {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
@@ -1020,38 +1031,96 @@ function Bridges({ v, acts, drop, pickMode, setPickMode, goTo }: { v: TurnView; 
   );
 }
 
-function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction }: { v: TurnView; acts: Act[]; drop: (k: string) => void; pickMode: Pick | null; setPickMode: (p: Pick | null) => void; pickAction: (pm: Pick, at: LngLat, title: string | null) => void }) {
+/** Резервы: ждущие ввода (по армиям — вводятся целиком или по соединению), прибывающие по плану и резервы на театре. */
+function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction, goTo, onOrder }: {
+  v: TurnView; acts: Act[]; drop: (k: string) => void; pickMode: Pick | null; setPickMode: (p: Pick | null) => void;
+  pickAction: (pm: Pick, at: LngLat, title: string | null) => void; goTo: (at: LngLat | null, zoom?: boolean) => void; onOrder: (id: string) => void;
+}) {
   const [open, setOpen] = useState<string | null>(null);
-  const reserves = v.own.filter((u) => u.status === 'reserve');
-  const coming = v.own.filter((u) => u.status === 'arriving');
-  const center = v.own.filter((u) => u.status === 'active').reduce<[number, number]>((c, u, _i, arr) => [c[0] + u.at[0] / arr.length, c[1] + u.at[1] / arr.length], [0, 0]);
+  const [more, setMore] = useState(false);
+  const byId = new Map(v.own.map((u) => [u.id, u]));
+  const groups = (v.reserveGroups ?? []).map((g) => ({ ...g, units: g.members.map((id) => byId.get(id)).filter((u): u is UnitReport => !!u) })).filter((g) => g.units.length);
+  const waiting = groups.filter((g) => g.status === 'reserve'), coming = groups.filter((g) => g.status === 'arriving');
+  const active = v.own.filter((u) => u.status === 'active');
+  const center = active.reduce<[number, number]>((c, u, _i, arr) => [c[0] + u.at[0] / arr.length, c[1] + u.at[1] / arr.length], [0, 0]);
+  // резервы на театре: соединения в резерве или на марше без боя за ход (без штабов-сводок)
+  const hqs = new Set(v.own.filter((u) => v.own.some((x) => x.parent === u.id)).map((u) => u.id));
+  const onTheatre = active.filter((u) => !hqs.has(u.id) && (u.posture === 'в резерве' || (u.posture === 'на марше' && !u.combats.length)));
+  const sum = (us: UnitReport[]) => ({ p: us.reduce((s, u) => s + u.personnel, 0), t: us.reduce((s, u) => s + u.tanks, 0), g: us.reduce((s, u) => s + u.guns, 0) });
+  const mid = (us: UnitReport[]): LngLat => [us.reduce((s, u) => s + u.at[0], 0) / us.length, us.reduce((s, u) => s + u.at[1], 0) / us.length];
+  const span = (ts: string[]) => { const l = [...ts].sort(); const a = `${ddmm(l[0])} ${hhmm(l[0])}`, b = `${ddmm(l[l.length - 1])} ${hhmm(l[l.length - 1])}`; return a === b ? a : `${a} – ${b}`; };
+  const stats = (us: UnitReport[]) => { const x = sum(us); return `${us.length > 1 ? `${us.length} соед. · ` : ''}${x.p.toLocaleString('ru')} чел., танков и САУ ${x.t}, орудий ${x.g}`; };
+  const all = sum(waiting.flatMap((g) => g.units));
   return (
     <div className="cmd-sec">
       <h3>Резервы {v.terms?.topGen ?? 'Ставки'}</h3>
-      <p className="note">Резерв вводится по вашему решению: укажите район сосредоточения на своей территории. Объединение будет там не раньше, чем готово к вводу, и не раньше чем через сутки после распоряжения. Задачу ему можно поставить сразу — приказ дождётся.</p>
-      {!reserves.length && !coming.length && <p className="muted">Резервов {v.terms?.topGen ?? 'Ставки'} нет.</p>}
-      {reserves.map((u) => {
-        const a = acts.find((x) => x.key === `commit:${u.id}`);
-        const pm = pickMode?.kind === 'commit' && pickMode.formation === u.id;
+      <p className="note">Резерв вводится по вашему решению: укажите район сосредоточения на своей территории — для всего объединения сразу или для отдельного соединения. Войска будут там не раньше, чем готовы к вводу, и не раньше чем через сутки после распоряжения. Задачу можно поставить сразу (вкладка «Войска») — приказ дождётся.</p>
+      {waiting.length > 0 ? <p className="res-sum">Ждут ввода: <b>{waiting.length}</b> {waiting.length === 1 ? 'объединение' : 'объединения'}, {all.p.toLocaleString('ru')} чел., танков и САУ {all.t}, орудий {all.g}.</p>
+        : <p className="muted">Резервов, ждущих вашего решения, нет{coming.length ? ' — прибывающие войска вводятся по плану (ниже)' : ''}.</p>}
+      {waiting.map((g) => {
+        const free = g.units.filter((u) => !acts.some((a) => a.key === `commit:${u.id}`));
+        const done = g.units.filter((u) => acts.some((a) => a.key === `commit:${u.id}`));
+        const one = g.units.length === 1 && g.units[0].id === g.id;
+        const pm = pickMode?.kind === 'commit' && pickMode.formation === g.id;
+        const pickOf = (): Pick => (one ? { kind: 'commit', formation: g.id, name: g.name } : { kind: 'commit', formation: g.id, name: g.name, members: free.map((u) => ({ id: u.id, name: u.name })) });
         return (
-          <div key={u.id} className="brow">
-            <div className="brow-h"><b>{short(u.name)}</b><span className="st idle">готова к вводу с {ddmm(u.reserveFrom!)} {hhmm(u.reserveFrom!)}</span>
-              {!a && <button className="link" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? 'отмена' : 'ввести…'}</button>}</div>
-            <div className="muted small">{u.personnel.toLocaleString('ru')} чел., танков и САУ {u.tanks}, орудий {u.guns}</div>
-            {a && <ActLine a={a} drop={drop} />}
-            {open === u.id && !a && <PlacePicker v={v} from={center} mapOn={pm} onMap={() => setPickMode(pm ? null : { kind: 'commit', formation: u.id, name: u.name })}
-              onPick={(p) => { setOpen(null); pickAction({ kind: 'commit', formation: u.id, name: u.name }, p.at, p.title); }} />}
+          <div key={g.id} className="res-card">
+            <div className="brow-h"><b title={g.name}>{short(g.name)}</b><span className="st idle">готова к вводу с {span(g.units.map((u) => u.reserveFrom!))}</span></div>
+            <div className="muted small">{g.front ? `${g.front} · ` : ''}{stats(g.units)}</div>
+            <div className="muted small">Сейчас: {g.units[0].place} <button className="link" onClick={() => goTo(mid(g.units))}>на карте</button></div>
+            {one ? done.map((u) => { const a = acts.find((x) => x.key === `commit:${u.id}`)!; return <ActLine key={a.key} a={a} drop={drop} />; })
+              : done.length > 0 && (() => {
+                const a = acts.find((x) => x.key === `commit:${done[0].id}`)!;
+                const where = a.action.kind === 'commit' && a.action.atName ? ` в район у ${a.action.atName}` : '';
+                return <div className="draft"><b>Ввод{where}</b> — {done.length === g.units.length ? 'всё объединение' : `${done.length} из ${g.units.length} соед.`}; {a.text}
+                  <button className="x" title="Отменить ввод" onClick={() => done.forEach((u) => drop(`commit:${u.id}`))}>×</button></div>;
+              })()}
+            {free.length > 0 && <div className="row"><button onClick={() => setOpen(open === g.id ? null : g.id)}>{open === g.id ? 'Отмена' : one || free.length === 1 ? 'Ввести…' : `Ввести ${done.length ? 'остальные' : 'всё объединение'} (${free.length})…`}</button>
+</div>}
+            {open === g.id && free.length > 0 && <PlacePicker v={v} from={center} mapOn={pm} onMap={() => setPickMode(pm ? null : pickOf())}
+              onPick={(p) => { setOpen(null); pickAction(pickOf(), p.at, p.title); }} />}
+            {!one && <details className="res-units"><summary>Соединения ({g.units.length})</summary>
+              {g.units.map((u) => {
+                const a = acts.find((x) => x.key === `commit:${u.id}`);
+                const upm = pickMode?.kind === 'commit' && pickMode.formation === u.id;
+                return (
+                  <div key={u.id} className="brow">
+                    <div className="brow-h"><b title={u.name}>{short(u.name)}</b><span className="st">{u.personnel.toLocaleString('ru')} чел., танков {u.tanks}, орудий {u.guns}</span>
+                      {a ? <button className="link" onClick={() => drop(a.key)}>не вводить</button> : <button className="link" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? 'отмена' : 'ввести…'}</button>}</div>
+                    {open === u.id && !a && <PlacePicker v={v} from={center} mapOn={upm} onMap={() => setPickMode(upm ? null : { kind: 'commit', formation: u.id, name: u.name })}
+                      onPick={(p) => { setOpen(null); pickAction({ kind: 'commit', formation: u.id, name: u.name }, p.at, p.title); }} />}
+                  </div>
+                );
+              })}
+            </details>}
           </div>
         );
       })}
-      {coming.length > 0 && <><h4 className="cmd-h4">Вводятся</h4>{coming.map((u) => <div key={u.id} className="brow-h"><b>{short(u.name)}</b><span className="st moving">сосредоточится {ddmm(u.arrives!)} {hhmm(u.arrives!)}</span></div>)}</>}
+      {coming.length > 0 && <><h4 className="cmd-h4">Вводятся</h4>
+        <p className="muted small">Введённые резервы и войска, прибывающие по графику сценария: распоряжения не нужны, задачу можно поставить заранее.</p>
+        {coming.map((g) => (
+          <div key={`a:${g.id}`} className="res-card">
+            <div className="brow-h"><b title={g.name}>{short(g.name)}</b><span className="st moving">сосредоточится {span(g.units.map((u) => u.arrives!))}</span></div>
+            <div className="muted small">{g.front ? `${g.front} · ` : ''}{stats(g.units)}</div>
+            <div className="muted small">Район: {g.units[0].place} <button className="link" onClick={() => goTo(mid(g.units))}>на карте</button></div>
+          </div>
+        ))}</>}
+      <h4 className="cmd-h4">Резервы на театре</h4>
+      <p className="muted small">Свои соединения в резерве или на марше без боя — их можно бросить на угрожаемое направление приказом.</p>
+      {onTheatre.length ? onTheatre.slice(0, more ? undefined : 8).map((u) => (
+        <div key={u.id} className="brow">
+          <div className="brow-h"><b title={u.name}>{short(u.name)}</b><span className="st">{u.posture}, {u.place}</span><button className="link" onClick={() => onOrder(u.id)}>приказ…</button></div>
+          <div className="muted small">{u.personnel.toLocaleString('ru')} чел., танков и САУ {u.tanks}, орудий {u.guns}; укомплектованность {Math.round(u.strength * 100)} %</div>
+        </div>
+      )) : <p className="muted">Все соединения на театре заняты в бою или в обороне.</p>}
+      {onTheatre.length > 8 && <button className="link" onClick={() => setMore(!more)}>{more ? 'свернуть' : `ещё ${onTheatre.length - 8}`}</button>}
     </div>
   );
 }
 
 /** Полосы: линии Ставки словами, линии армий — распоряжением игрока (две армии одного фронта, линия точками на карте). */
-function Bounds({ v, acts, drop, picking, setPicking, pts, setPts, add }: {
-  v: TurnView; acts: Act[]; drop: (k: string) => void; picking: boolean; setPicking: (b: boolean) => void;
+function Bounds({ v, acts, drop, goTo, picking, setPicking, pts, setPts, add }: {
+  v: TurnView; acts: Act[]; drop: (k: string) => void; goTo: (at: LngLat | null, zoom?: boolean) => void; picking: boolean; setPicking: (b: boolean) => void;
   pts: LngLat[]; setPts: (f: (l: LngLat[]) => LngLat[]) => void; add: (a: Extract<StaffAction, { kind: 'boundary' }>, label: string) => Promise<boolean>;
 }) {
   const armies = v.armies ?? [];
@@ -1061,6 +1130,34 @@ function Bounds({ v, acts, drop, picking, setPicking, pts, setPts, add }: {
   const [a, setA] = useState(''), [b, setB] = useState('');
   const mine = acts.filter((x) => x.action.kind === 'boundary');
   const ready = a && b && a !== b && pts.length >= 2;
+  const km = (p: LngLat, q: LngLat) => Math.hypot((p[0] - q[0]) * Math.cos((p[1] * Math.PI) / 180), p[1] - q[1]) * 111;
+  const near = (p: LngLat) => v.places.reduce<Place | null>((m, x) => (!m || km(p, x.at) < km(p, m.at) ? x : m), null)?.title ?? '';
+  const A0 = inFront.find((u) => u.id === a);
+  // соседи выбранной армии — ближние первыми
+  const others = inFront.filter((u) => u.id !== a).sort((x, y) => (A0 ? km(A0.at, x.at) - km(A0.at, y.at) : 0));
+  // действующие линии между армиями этого объединения: кто справа и слева у каждой армии
+  const armyLines = (v.boundaries ?? []).filter((l) => inFront.some((u) => u.id === l.right) && inFront.some((u) => u.id === l.left));
+  /** Линия между двумя армиями: через середину между их войсками, поперёк направления от одной к другой, от тыла к противнику. */
+  const propose = () => {
+    const A = inFront.find((u) => u.id === a), B = inFront.find((u) => u.id === b);
+    if (!A || !B) return;
+    const m: LngLat = [(A.at[0] + B.at[0]) / 2, (A.at[1] + B.at[1]) / 2], c = Math.cos((m[1] * Math.PI) / 180);
+    // направление на противника — среднее направлений от своих соединений рядом (до 40 км) к ближайшему к каждому
+    // обнаруженному противнику, т. е. поперёк фронта; без разведки — поперёк направления между армиями
+    let nx = 0, ny = 0;
+    const near40 = v.own.filter((u) => u.status === 'active' && km(m, u.at) <= 40);
+    if (v.intel.length) for (const u of near40) {
+      const f = v.intel.reduce((b, x) => (km(u.at, x.at) < km(u.at, b.at) ? x : b));
+      const dx = (f.at[0] - u.at[0]) * c, dy = f.at[1] - u.at[1], d = Math.hypot(dx, dy) || 1;
+      nx += dx / d; ny += dy / d;
+    }
+    if (Math.hypot(nx, ny) < 0.3) { nx = -(B.at[1] - A.at[1]); ny = (B.at[0] - A.at[0]) * c; }
+    const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
+    const at = (k: number): LngLat => [+(m[0] + (nx * k) / 111 / c).toFixed(4), +(m[1] + (ny * k) / 111).toFixed(4)];
+    setPts(() => [at(-30), at(0), at(40)]);
+    setPicking(false);
+    goTo(m, false);
+  };
   const put = async () => {
     const A = inFront.find((u) => u.id === a)!, B = inFront.find((u) => u.id === b)!;
     if (await add({ kind: 'boundary', side: v.human.id, a, b, line: pts, issuedAt: v.time }, `Линия ${short(A.name)} / ${short(B.name)}`)) { setPts(() => []); setPicking(false); setA(''); setB(''); }
@@ -1073,14 +1170,23 @@ function Bounds({ v, acts, drop, picking, setPicking, pts, setPts, add }: {
       {mine.map((x) => <ActLine key={x.key} a={x} drop={drop} />)}
       {fronts.length ? <div className="bnd-form">
         <label>{v.terms?.group === 'группа армий' ? 'Группа армий' : 'Фронт'} <select value={front} onChange={(e) => { setFront(e.target.value); setA(''); setB(''); }}>{fronts.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>
-        <label>Армия <select value={a} onChange={(e) => setA(e.target.value)}><option value="">—</option>{inFront.map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
-        <label>Соседняя армия <select value={b} onChange={(e) => setB(e.target.value)}><option value="">—</option>{inFront.filter((u) => u.id !== a).map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
+        <h4 className="cmd-h4">Армии {v.terms?.group === 'группа армий' ? 'группы армий' : 'фронта'} — с севера на юг</h4>
+        <table className="bnd-armies"><tbody>{[...inFront].sort((x, y) => y.at[1] - x.at[1]).map((u) => {
+          const ls = armyLines.filter((l) => l.right === u.id || l.left === u.id).map((l) => (l.right === u.id ? `слева — ${short(l.leftName)}` : `справа — ${short(l.rightName)}`));
+          return <tr key={u.id} className={u.id === a || u.id === b ? 'on' : ''} title="Показать на карте" onClick={() => goTo(u.at, false)}>
+            <td><b>{short(u.name)}</b>{ls.length > 0 && <div className="muted small">линии: {ls.join('; ')}</div>}</td><td className="muted">{near(u.at)}</td></tr>;
+        })}</tbody></table>
+        {armyLines.length === 0 && <p className="muted small">Действующих линий между армиями нет — армии идут к целям напрямую, полосы задают только линии между {v.terms?.groupsGen ?? 'фронтами'}.</p>}
+        <label>Армия <select value={a} onChange={(e) => { const id = e.target.value; setA(id); const A = inFront.find((u) => u.id === id); const tank = (n: string) => /танков/.test(n);
+          const nb = A && inFront.filter((u) => u.id !== id && (tank(A.name) || !tank(u.name))).sort((x, y) => km(A.at, x.at) - km(A.at, y.at))[0]; setB(nb?.id ?? ''); setPts(() => []); }}><option value="">—</option>{inFront.map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
+        <label>Соседняя армия <select value={b} onChange={(e) => setB(e.target.value)}><option value="">—</option>{others.map((u) => <option key={u.id} value={u.id}>{short(u.name)}{A0 ? ` — ${Math.round(km(A0.at, u.at))} км` : ''}</option>)}</select></label>
         <div className="row">
+          <button disabled={!a || !b || a === b} onClick={propose} title="Линия через середину между войсками двух армий, поперёк, от тыла к противнику — её можно поправить, указав точки заново">Предложить линию</button>
           <button className={picking ? 'on' : ''} onClick={() => setPicking(!picking)}>{picking ? `Готово (${pts.length} точ.)` : pts.length ? `Продолжить линию (${pts.length} точ.)` : 'Указать линию на карте'}</button>
           {pts.length > 0 && <button className="link" onClick={() => setPts(() => [])}>сбросить точки</button>}
           <button className="primary" disabled={!ready} onClick={() => void put()}>В распоряжение</button>
         </div>
-        <p className="muted small">Линия — от тыла к переднему краю, хотя бы две точки. Кто справа по ходу линии, стенд определит по положению армий.</p>
+        <p className="muted small">Линия — от тыла к переднему краю, хотя бы две точки: «Предложить линию» проводит её между войсками двух армий, «Указать линию на карте» — своими точками. Кто справа по ходу линии, стенд определит по положению армий.</p>
       </div> : <p className="muted">Ни в одном фронте нет двух действующих армий — линии армий не нужны.</p>}
     </div>
   );
