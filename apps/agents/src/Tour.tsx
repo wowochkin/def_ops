@@ -1,8 +1,8 @@
 /** Панель показа: момент операции с подписью, сверка с историей, переходы и проигрыш до следующего момента. */
 import type { RunData } from './data';
 import { hourOf, timeLabel } from './data';
-import type { Moment } from './tour';
-import { momentHour } from './tour';
+import type { Moment } from './moments';
+import { momentHour } from './moments';
 
 interface Props { data: RunData; moments: Moment[]; idx: number; playing: boolean; onGo: (k: number) => void; onPlayNext: () => void; onClose: () => void }
 

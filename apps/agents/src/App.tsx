@@ -11,7 +11,7 @@ import { Inspector } from './Inspector';
 import { Chat } from './Chat';
 import { Tour } from './Tour';
 import { Report } from './Report';
-import { TOURS, momentHour } from './tour';
+import { TOURS, momentHour } from './moments';
 
 const SPEEDS = [1, 4, 12, 24];
 
