@@ -1213,6 +1213,27 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
   const lw = Math.min(...xs.map((p) => p[0])), le = Math.max(...xs.map((p) => p[0])), ls = Math.min(...xs.map((p) => p[1])), ln = Math.max(...xs.map((p) => p[1]));
   const fit = Math.log2((360 * 800) / (512 * Math.max(le - lw, (ln - ls) / Math.cos((((ln + ls) / 2) * Math.PI) / 180), 0.05)));
   doc.refZoom = +Math.min(base.refZoom + 1, fit).toFixed(1);
+  // подложки под заголовком и условными обозначениями — чтобы не сливались с картой: белые, с тонкой рамкой,
+  // по длине самой длинной подписи (градусов на пиксель — по исходному масштабу листа)
+  {
+    const degPx = 360 / (512 * Math.pow(2, doc.refZoom));
+    const kx = 1 / Math.cos((((n0 + s0) / 2) * Math.PI) / 180);
+    const labels = out.filter((f) => f.layerId === 'sum-legend' && f.kind === 'label') as LabelFeature[];
+    const box = (fs: LabelFeature[], top: number, bottom: number, left: number, extra = 0) => {
+      if (!fs.length) return;
+      const right = Math.max(...fs.map((f) => f.at[0] + f.text.length * (f.style.size ?? 11) * 0.46 * degPx * kx)) + extra;
+      const pad = 10 * degPx;
+      const pts: LngLat[] = [[left - pad * kx, bottom - pad], [right + pad * kx, bottom - pad], [right + pad * kx, top + pad], [left - pad * kx, top + pad]];
+      const a = createFeature('area', 'atlas.encircled', { points: pts, layerId: 'sum-legend' }, 1, 'neutral');
+      a.style = { ...a.style, smooth: false, fill: '#ffffff', fillOpacity: 0.9, hatch: null, cross: null, edge: [{ color: '#8a8579', width: 0.8, opacity: 0.9, offset: 0 }] };
+      a.name = 'Подложка';
+      doc.features.unshift(a);
+    };
+    const head = labels.filter((l) => l.name === 'Заголовок' || l.name === 'Подзаголовок');
+    box(head, n0 + dy * 2.2 + dy * 0.6, n0 + dy * 1.1 - dy * 0.5, w);
+    const leg = labels.filter((l) => l.name?.startsWith('Условные обозначения'));
+    if (leg.length) box(leg, legendRow(0) + dy * 0.7, legendRow(row - 1) - dy * 0.7, w);
+  }
   doc.view = { center: [(lw + le) / 2, (ls + ln) / 2], zoom: doc.refZoom, bearing: 0 };
   return doc;
 }
