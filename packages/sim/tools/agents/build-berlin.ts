@@ -338,6 +338,41 @@ for (const o of ts.orders) {
   }
 }
 
+// вспомогательные направления 1 БФ: с утра 16.04 наступают только дивизии участка прорыва (полоса стрелковой дивизии
+// на прорыве ~2,3 км — в 8 гв. А девять полков на 7 км, B); остальные держат полосу до следующего приказа армии.
+// Участки прорыва — директива 1 БФ (soviet-offensive-doctrine-1945.json: 33 А — 5 км, 69 А — 6 км при фронте 18 км, B);
+// 61 А 17.04 переправлялась четырьмя полками (berlin-1945-seelow-divisions.json, B) — две дивизии.
+const AUX_BREAKTHROUGH: Record<string, { divisions: number; note: string }> = {
+  su_33a: { divisions: Math.ceil(5 / 2.3), note: 'участок прорыва 33 А — 5 км (директива 1 БФ, B)' },
+  su_69a: { divisions: Math.ceil(6 / 2.3), note: 'участок прорыва 69 А — 6 км при фронте 18 км (директива 1 БФ, B)' },
+  su_61a: { divisions: 2, note: '61 А 17.04 переправлялась четырьмя полками (B)' },
+};
+{
+  type O = { at: unknown; hq: string; to: string[]; kind: string; target: LngLat | null; note: string };
+  const de = out.filter((x) => x.side === 'de' && !x.enterAt);
+  const enemyKm = (id: string) => { const p = posOf.get(id)!; return Math.min(...de.map((e) => Math.hypot((e.pos[0] - p[0]) * KX, (e.pos[1] - p[1]) * KY))); };
+  const later: O[] = [];
+  const AUX_JOIN_AT = '1945-04-18T05:00';
+  for (const [army, aux] of Object.entries(AUX_BREAKTHROUGH)) {
+    const first = (orders as O[]).filter((o) => o.kind === 'attack' && (o.at === 0) && o.note.includes(`${army}@`));
+    const rifle = first.filter((o) => !MOBILE.has(out.find((x) => x.id === o.to[0])?.kind ?? ''));
+    const keep = new Set(rifle.map((o) => o.to[0]).sort((a, b) => enemyKm(a) - enemyKm(b)).slice(0, aux.divisions));
+    for (const o of rifle) {
+      if (keep.has(o.to[0])) continue;
+      // через двое суток — исходная задача армии: дивизии вне участка прорыва вводятся с утра второго-третьего дня
+      // (stop-second-echelon-commit-day2, ЦАМО, A; срок — doctrine.su.secondEchelonFallbackHours)
+      later.push({ ...o, at: AUX_JOIN_AT, note: `вспомогательное направление: ввод дивизий вне участка прорыва на третий день ${o.note}` });
+      o.kind = 'defend';
+      o.target = posOf.get(o.to[0])!;
+      o.note = `вспомогательное направление: ${aux.note} — вне участка прорыва держит полосу ${o.note}`;
+    }
+  }
+  // приказ армии позже срока ввода — уже есть; ввод нужен только тем, кому до него нового приказа нет
+  for (const o of later) {
+    const next = (orders as O[]).some((x) => x.to[0] === o.to[0] && typeof x.at === 'string' && x.at > '1945-04-16T05:00' && x.at <= AUX_JOIN_AT && x.kind !== 'defend');
+    if (!next) orders.push(o);
+  }
+}
 orders.push(...reinforcementOrders(out));
 orders.push(...rear.orders);
 // приказ «держаться» соединению (крепость) сильнее общего «оборонять» того же часа: иначе он затирается следующим
