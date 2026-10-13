@@ -18,6 +18,8 @@ const bin = join(app, 'src-tauri/binaries', `node-${triple}${ext}`);
 mkdirSync(dirname(bin), { recursive: true });
 if (!existsSync(bin)) { copyFileSync(process.execPath, bin); chmodSync(bin, 0o755); }
 console.log(`Node ${process.version} → ${bin}`);
+// ресурсы из tauri.conf.json Tauri проверяет и в разработке: пока редактор не собран — пустая папка
+mkdirSync(join(root, 'apps/editor/dist'), { recursive: true });
 if (process.argv.includes('--node-only')) process.exit(0);
 
 // редактор
