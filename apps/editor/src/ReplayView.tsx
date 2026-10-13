@@ -20,7 +20,8 @@ import { useCoverage } from './modeling/Coverage';
 import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { MapHover, withoutLabels } from './MapHover';
 import { invoke } from '@tauri-apps/api/core';
-import type { AgentHistory, AgentTrace } from '@def-ops/sim';
+import { addHours, type AgentHistory, type AgentTrace } from '@def-ops/sim';
+import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
 
 /** В настольном приложении (Tauri): там есть ядро агентной модели на Rust. */
 const DESKTOP = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -151,6 +152,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const useAgents = model === 'agents' && !!agentOp;
   const worker = useRef<Worker | null>(null);
   const runId = useRef(0);
+  // ход агентной модели последнего расчёта (для карточки агента) и выбранная дивизия
+  const [agentRun, setAgentRun] = useState<AgentRun | null>(null);
+  const pendingAgent = useRef<AgentRun | null>(null);
+  const [agentSel, setAgentSel] = useState<string | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
   useEffect(() => { setRules((r) => (entry.rules.some((x) => x.id === r) ? r : entry.rules[0].id)); }, [entry]);
@@ -168,6 +173,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       else {
         setBusy(null); w.terminate();
         const d = migrateDocument(m.result.doc);
+        setAgentRun(m.result.engine === 'agents' ? pendingAgent.current : null); setAgentSel(null);
         setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
       }
     };
@@ -185,11 +191,29 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     Promise.all([invoke<AgentTrace>('run_scenario', { scenario: op.path, seed }), invoke<string>('read_text', { path: op.history })])
       .then(([trace, h]) => {
         if (token !== runId.current) return;
-        startWorker({ ...q, runs: 1, agents: { trace, history: JSON.parse(h) as AgentHistory, title: op.title, stepHours: AGENT_STEP_HOURS } });
+        const history = JSON.parse(h) as AgentHistory;
+        pendingAgent.current = { trace, history };
+        startWorker({ ...q, runs: 1, agents: { trace, history, title: op.title, stepHours: AGENT_STEP_HOURS } });
       })
       .catch((e) => { if (token === runId.current) { setBusy(null); setError(String(e)); } });
   };
   const stop = () => { runId.current++; worker.current?.terminate(); worker.current = null; setBusy(null); };
+
+  // агентная модель: щелчок по дивизии на карте — её карточка и разговор
+  const agentHour = agentRun && time ? hourOf(agentRun.trace.start, time) : 0;
+  useEffect(() => {
+    const host = eng?.getContainer().parentElement;
+    if (!eng || !host || !agentRun) return;
+    const click = (e: MouseEvent) => {
+      if ((e.target as Element).closest('.rp-tools, .legend, .player, .scalebar, .maplibregl-ctrl, .ag-panel, .cmd-notice, button, select')) return;
+      const r = host.getBoundingClientRect();
+      const id = divisionNear(agentRun.trace, agentHour, (p) => eng.project(p) as [number, number], [e.clientX - r.left, e.clientY - r.top]);
+      if (id) setAgentSel(id);
+    };
+    host.addEventListener('click', click);
+    return () => host.removeEventListener('click', click);
+  }, [eng, agentRun, agentHour]);
+  const agentToHour = (h: number) => agentRun && setTime(addHours(agentRun.trace.start, Math.max(0, Math.min(agentRun.trace.frames.length - 1, Math.round(h)))));
 
   const layerOn = (t: (typeof TOGGLES)[number]) => !!doc?.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
   const toggle = (t: (typeof TOGGLES)[number]) => doc && setDoc({ ...doc, layers: doc.layers.map((l) => (t.match(l.id) ? { ...l, visible: !layerOn(t) } : l)) });
@@ -279,6 +303,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __replayEngine: MapEngine }).__replayEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
+          {agentRun && agentSel && eng && <AgentMark engine={eng} at={posAt(agentRun.trace, agentRun.trace.divisions.findIndex((x) => x.id === agentSel), agentHour)} />}
+          {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
+          {agentRun && !agentSel && <div className="ag-hint">Щёлкните по дивизии — карточка агента и разговор с ним</div>}
           <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
