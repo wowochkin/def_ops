@@ -5,3 +5,10 @@ members = ["crates/agents-core", "apps/agents/src-tauri"]
 [profile.release]
 opt-level = 3
 codegen-units = 1
+
+# сборка для разработки (tauri dev): ядро и зависимости с оптимизацией — расчёт всей операции за секунды, а не за полминуты
+[profile.dev.package.agents-core]
+opt-level = 3
+
+[profile.dev.package."*"]
+opt-level = 2
