@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { thinMask } from '../src/overlay';
+import { dropBlobs, thinMask } from '../src/overlay';
 import { gridContours } from '../src/theatre-io';
 import type { TerrainGrid } from '../src/types';
 
@@ -28,5 +28,17 @@ describe('растр → контуры местности и осевые до�
     expect(Math.max(...per)).toBe(1);
     // связность: в каждом столбце середины линии есть клетка
     for (let c = 3; c < 17; c++) expect(per[c]).toBe(1);
+  });
+
+  it('в линейных классах остаются линии: буквы и заливка того же цвета отбрасываются', () => {
+    const S = 128, cls = new Int8Array(S * S).fill(-1);
+    for (let x = 10; x < 120; x++) for (let y = 60; y < 63; y++) cls[y * S + x] = 0; // дорога: 110×3
+    for (const [bx, by] of [[20, 20], [32, 20], [44, 20]]) for (let x = bx; x < bx + 8; x++) for (let y = by; y < by + 10; y++) cls[y * S + x] = 0; // «буквы»
+    for (let x = 80; x < 120; x++) for (let y = 90; y < 125; y++) cls[y * S + x] = 0; // заливка 40×35
+    dropBlobs(cls, S, 0, 24, 6);
+    const at = (x: number, y: number) => cls[y * S + x];
+    expect(at(60, 61)).toBe(0);
+    expect(at(24, 24)).toBe(-1);
+    expect(at(100, 100)).toBe(-1);
   });
 });

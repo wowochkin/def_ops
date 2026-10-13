@@ -101,6 +101,17 @@ export class OverlayAccumulator {
     const { bbox: [w, s, e, n], cols, rows } = this.grid;
     const dLng = (e - w) / cols, dLat = (n - s) / rows;
     this.tiles++;
+    // класс каждого пикселя тайла (−1 — ни один, −2 — прозрачно: карты нет)
+    const cls = new Int8Array(size * size);
+    for (let i = 0; i < size * size; i++) {
+      const o = i * 4;
+      cls[i] = rgba[o + 3] < 128 ? -2 : pixelClass(this.legend, this.names, rgba[o], rgba[o + 1], rgba[o + 2]);
+    }
+    // линейные классы — только длинные тонкие линии: отдельные буквы надписей, цифры, значки и пятна того же цвета
+    // отбрасываются (иначе тёмные образцы дорог собирают все надписи карты)
+    const cellPx = Math.max(4, (size * Math.abs(lat2y(n, z) - lat2y(n - dLat, z))));
+    const minExtent = Math.max(14, Math.round(cellPx * 1.5)), maxWidth = Math.max(4, cellPx * 0.35);
+    for (let k = 0; k < this.names.length; k++) if (LINEAR.includes(this.names[k])) dropBlobs(cls, size, k, minExtent, maxWidth);
     for (let py = 0; py < size; py++) {
       const lat = y2lat(y + (py + 0.5) / size, z);
       const r = Math.floor((n - lat) / dLat);
@@ -109,11 +120,11 @@ export class OverlayAccumulator {
         const lng = x2lon(x + (px + 0.5) / size, z);
         const c = Math.floor((lng - w) / dLng);
         if (c < 0 || c >= cols) continue;
-        const o = (py * size + px) * 4;
-        if (rgba[o + 3] < 128) continue; // прозрачное — карты нет
+        const i = py * size + px, o = i * 4;
+        if (cls[i] === -2) continue;
         const cell = r * cols + c;
         this.total[cell]++;
-        const k = pixelClass(this.legend, this.names, rgba[o], rgba[o + 1], rgba[o + 2]);
+        const k = cls[i];
         if (k >= 0) { this.counts[k][cell]++; if (preview) { const col = PREVIEW[this.names[k]] ?? [200, 0, 200]; preview[o] = col[0]; preview[o + 1] = col[1]; preview[o + 2] = col[2]; preview[o + 3] = 255; } }
       }
     }
@@ -140,6 +151,36 @@ export class OverlayAccumulator {
     };
   }
 }
+/**
+ * Убрать из класса k пиксели связных кусков (по восьми соседям), которые не похожи на линию: короче minExtent
+ * пикселей (буква, цифра, значок) — если не упираются в край тайла (линия продолжится в соседнем), — или толще
+ * maxWidth в среднем (площадь / длина — заливка, крупная надпись). Пиксели снятых кусков становятся «ни одним».
+ */
+export function dropBlobs(cls: Int8Array, size: number, k: number, minExtent: number, maxWidth: number) {
+  const seen = new Uint8Array(size * size), stack: number[] = [], comp: number[] = [];
+  for (let i0 = 0; i0 < cls.length; i0++) {
+    if (cls[i0] !== k || seen[i0]) continue;
+    comp.length = 0; stack.length = 0; stack.push(i0); seen[i0] = 1;
+    let x0 = size, x1 = -1, y0 = size, y1 = -1;
+    while (stack.length) {
+      const i = stack.pop()!; comp.push(i);
+      const x = i % size, y = (i - x) / size;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= size || yy >= size) continue;
+        const j = yy * size + xx;
+        if (!seen[j] && cls[j] === k) { seen[j] = 1; stack.push(j); }
+      }
+    }
+    const extent = Math.max(x1 - x0, y1 - y0) + 1;
+    const edge = x0 === 0 || y0 === 0 || x1 === size - 1 || y1 === size - 1;
+    const long = extent >= minExtent || (edge && extent >= minExtent / 2);
+    const thin = comp.length / extent <= maxWidth;
+    if (!long || !thin) for (const i of comp) cls[i] = -1;
+  }
+}
+
 /** Классы-линии: маска утончается до осевой. */
 export const LINEAR = ['road', 'highway', 'rail'];
 

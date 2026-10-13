@@ -181,6 +181,8 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
           <button className={picking === k ? 'primary' : ''} onClick={() => setPicking(picking === k ? null : k)}>{picking === k ? `щёлкайте: ${t}…` : t}</button>
           <span className="hist-sw">{(samples[k] ?? []).map((c, i) => <i key={i} title={`rgb ${c.join(',')} · тон ${Math.round(hsv(...c)[0])}° — убрать`} style={{ background: `rgb(${c.join(',')})` }} onClick={() => setSamples((s) => ({ ...s, [k]: s[k].filter((_, j) => j !== i) }))} />)}</span>
           {(samples[k]?.length ?? 0) > 0 && <label className="small" title="Клетка относится к классу, если доля таких пикселей в ней не меньше">от <input type="number" min={1} max={90} value={Math.round((mins[k] ?? legendFromSamples({ [k]: samples[k] }).cells[0].min) * 100)} onChange={(e) => setMins({ ...mins, [k]: (+e.target.value || 5) / 100 })} />%</label>}
+          {['road', 'highway'].includes(k) && (samples[k] ?? []).some((c) => { const [, sat, v] = hsv(...c); return sat < 0.15 && v < 0.6; }) &&
+            <div className="hist-warn small">Тёмно-серый или чёрный образец: таким цветом на картах — надписи, железные дороги, контуры. Отдельные буквы и пятна отбрасываются, но надёжнее брать цвет самой дороги (на карте РККА — оранжевый).</div>}
         </div>)}
         <label className="th-f inl">Допуск цвета <input type="range" min={0.4} max={2} step={0.1} value={tol} onChange={(e) => setTol(+e.target.value)} /> ×{tol.toFixed(1)}</label>
       </div> : <p className="muted small">{PRESETS.find((l) => l.id === legendId)?.note}</p>}
