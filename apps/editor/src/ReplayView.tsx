@@ -4,7 +4,7 @@
  * редакторе для правки и экспорта.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { migrateDocument, type MapDocument, type TimeInstant } from '@def-ops/core';
+import { documentAt, migrateDocument, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
@@ -233,27 +233,67 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const exitAgentGame = () => { void invoke('game_stop').catch(() => {}); setAgentGame(null); setPick(null); };
   const stop = () => { runId.current++; worker.current?.terminate(); worker.current = null; setBusy(null); };
 
-  // агентная модель: щелчок по дивизии на карте — её карточка и разговор
+  // агентная модель: щелчок по дивизии на карте — её карточка и разговор. Попадание — по знакам, нарисованным на
+  // карте в этот момент (между снимками знак идёт по дорогам, его место не совпадает с расчётным часом);
+  // щелчок по армии или фронту — тактический масштаб с приближением к ней.
   const agentHour = agentRun && time ? hourOf(agentRun.trace.start, time) : 0;
+  const live = useRef({ doc, level, time, pick, agentGame });
+  live.current = { doc, level, time, pick, agentGame };
   useEffect(() => {
     const host = eng?.getContainer().parentElement;
     if (!eng || !host || !agentRun) return;
+    const byName = new Map(agentRun.trace.divisions.map((d) => [d.name, d.id]));
+    const hqNames = new Set(agentRun.trace.hqs.map((h) => h.name));
     const click = (e: MouseEvent) => {
       if ((e.target as Element).closest('.rp-tools, .legend, .player, .scalebar, .maplibregl-ctrl, .ag-panel, .cmd-notice, button, select')) return;
       const r = host.getBoundingClientRect();
-      if (pick && agentGame) {
-        const at = eng.unproject([e.clientX - r.left, e.clientY - r.top]) as [number, number];
-        const d = agentGame.drafts[pick];
-        if (d) setAgentGame({ ...agentGame, drafts: { ...agentGame.drafts, [pick]: { ...d, target: [+at[0].toFixed(4), +at[1].toFixed(4)] } } });
+      const pt: [number, number] = [e.clientX - r.left, e.clientY - r.top];
+      const { doc: d, level: lv, time: t, pick: pk, agentGame: g } = live.current;
+      if (pk && g) {
+        const at = eng.unproject(pt) as [number, number];
+        const dr = g.drafts[pk];
+        if (dr) setAgentGame({ ...g, drafts: { ...g.drafts, [pk]: { ...dr, target: [+at[0].toFixed(4), +at[1].toFixed(4)] } } });
         setPick(null);
         return;
       }
-      const id = divisionNear(agentRun.trace, agentHour, (p) => eng.project(p) as [number, number], [e.clientX - r.left, e.clientY - r.top]);
+      if (!d || !t) return;
+      // ближайший нарисованный знак: дивизия (свои и противник) или объединение (армия, фронт)
+      const shown = documentAt(withLevel(d, lv), t, { visibleOnly: true });
+      let best: { id?: string; hq?: string; at: LngLat } | null = null, bd = 20;
+      for (const f of shown.features) {
+        if ((f.kind !== 'symbol' && f.kind !== 'label') || f.hidden || !f.name || f.layerId.startsWith('hist')) continue;
+        const name = f.name.replace(/: уничтожено.*$/, '');
+        const id = byName.get(name);
+        const hq = !id && hqNames.has(name) ? name : undefined;
+        if (!id && !hq) continue;
+        const q = eng.project((f as SymbolFeature).at);  // у надписи (label) — тоже at
+        const dd = Math.hypot(q[0] - pt[0], q[1] - pt[1]);
+        if (dd < bd) { bd = dd; best = { id, hq, at: (f as SymbolFeature).at }; }
+      }
+      if (best?.id) { setAgentSel(best.id); return; }
+      if (best?.hq) {
+        setLevel('tac');
+        eng.setView({ center: best.at, zoom: Math.max(eng.getView().zoom + 1.5, 9.5) });
+        setNotice(`${best.hq}: тактический масштаб — щёлкните по дивизии`);
+        return;
+      }
+      const id = divisionNear(agentRun.trace, hourOf(agentRun.trace.start, t), (p) => eng.project(p) as [number, number], pt);
       if (id) setAgentSel(id);
     };
     host.addEventListener('click', click);
     return () => host.removeEventListener('click', click);
-  }, [eng, agentRun, agentHour, pick, agentGame]);
+  }, [eng, agentRun]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Где знак выбранной дивизии нарисован сейчас (иначе — расчётное положение на час). */
+  const agentSelAt = useMemo((): LngLat | null => {
+    if (!agentRun || !agentSel) return null;
+    const i = agentRun.trace.divisions.findIndex((x) => x.id === agentSel);
+    const name = agentRun.trace.divisions[i]?.name;
+    if (doc && time && name) {
+      const f = documentAt(withLevel(doc, 'tac'), time, { visibleOnly: true }).features.find((x) => x.kind === 'symbol' && x.name === name && !x.layerId.startsWith('hist'));
+      if (f) return (f as SymbolFeature).at;
+    }
+    return i >= 0 ? posAt(agentRun.trace, i, agentHour) : null;
+  }, [agentRun, agentSel, doc, time, agentHour]);
   const agentToHour = (h: number) => agentRun && setTime(addHours(agentRun.trace.start, Math.max(0, Math.min(agentRun.trace.frames.length - 1, Math.round(h)))));
 
   const layerOn = (t: (typeof TOGGLES)[number]) => !!doc?.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
@@ -351,7 +391,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __replayEngine: MapEngine }).__replayEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
-          {agentRun && agentSel && eng && <AgentMark engine={eng} at={posAt(agentRun.trace, agentRun.trace.divisions.findIndex((x) => x.id === agentSel), agentHour)} />}
+          {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
           {agentRun && !agentSel && <div className="ag-hint">{pick ? 'Щёлкните по карте — цель приказа армии' : 'Щёлкните по дивизии — карточка агента и разговор с ним'}</div>}
           {agentGame && agentRun && eng && <DraftPins engine={eng} trace={agentRun.trace} drafts={agentGame.drafts} />}
