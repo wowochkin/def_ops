@@ -65,6 +65,10 @@ export function LayersPanel(p: Props) {
     <div className="layers">
       <div className="sec-h">
         <span>Слои</span>
+        <button className="link" title="Показать все слои" disabled={doc.layers.every((l) => l.visible)}
+          onClick={() => setDoc({ ...doc, layers: doc.layers.map((l) => ({ ...l, visible: true })) })}>👁 все</button>
+        <button className="link" title="Скрыть все слои" disabled={doc.layers.every((l) => !l.visible)}
+          onClick={() => setDoc({ ...doc, layers: doc.layers.map((l) => ({ ...l, visible: false })) })}>◌ все</button>
         <button onClick={() => {
           const top = activeLayer ?? doc.layers[doc.layers.length - 1]?.id;
           const r = addLayer(doc, { name: `Слой ${doc.layers.length + 1}` }, top);

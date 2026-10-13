@@ -97,11 +97,16 @@ export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
  * Слои карты одним меню: подписи и слои-переключатели (исторические положения, фронт, бои…) — флажками.
  * Над картой остаются только масштаб, «Слои», «Участки» и «Подложка»: панель помещается в строку на любом экране.
  */
-export function LayersMenu({ labels, toggleLabels, items }: { labels: boolean; toggleLabels: () => void; items: { key: string; title: string; on: boolean; toggle: () => void }[] }) {
+export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: boolean; toggleLabels: () => void; items: { key: string; title: string; on: boolean; toggle: () => void }[]; setAll: (on: boolean) => void }) {
   const n = items.filter((x) => x.on).length + (labels ? 1 : 0);
+  const all = (on: boolean) => { setAll(on); if (labels !== on) toggleLabels(); };
   return (
     <Popover label={<>Слои <small className="lyr-n">{n}</small></>} title="Что показать на карте" align="right" className="lyr-menu">
       <div className="pop-title">Показать на карте</div>
+      <div className="lyr-all">
+        <button disabled={n === items.length + 1} onClick={() => all(true)} title="Включить все слои и подписи">Показать все</button>
+        <button disabled={n === 0} onClick={() => all(false)} title="Выключить все слои и подписи — остаются войска и подложка">Скрыть все</button>
+      </div>
       <label className="lyr-row" title="Выключено — подписи только при наведении на знак"><input type="checkbox" checked={labels} onChange={toggleLabels} /> Подписи знаков</label>
       {items.map((x) => <label key={x.key} className="lyr-row"><input type="checkbox" checked={x.on} onChange={x.toggle} /> {x.title}</label>)}
     </Popover>
@@ -305,6 +310,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
 
   const layerOn = (t: (typeof TOGGLES)[number]) => !!doc?.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
   const toggle = (t: (typeof TOGGLES)[number]) => doc && setDoc({ ...doc, layers: doc.layers.map((l) => (t.match(l.id) ? { ...l, visible: !layerOn(t) } : l)) });
+  /** Все слои-переключатели сразу (войска и подложка остаются). */
+  const setAll = (on: boolean) => doc && setDoc({ ...doc, layers: doc.layers.map((l) => (TOGGLES.some((t) => t.match(l.id)) ? { ...l, visible: on } : l)) });
   /** К событию: время — момент события в расчёте, карта — к месту. */
   const goEvent = (e: SimResult['events'][number]) => {
     if (e.at) setTime(e.at);
@@ -391,7 +398,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
-            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} />
+            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
           </div>

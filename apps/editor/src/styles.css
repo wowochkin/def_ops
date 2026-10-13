@@ -1272,6 +1272,11 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lyr-menu .pop-body { min-width: 240px; padding: 8px 10px; }
 .lyr-row { display: flex; align-items: center; gap: 8px; padding: 4px 2px; font-size: 13px; cursor: pointer; white-space: nowrap; }
 .lyr-row input { margin: 0; }
+.lyr-all { display: flex; gap: 6px; padding: 2px 0 6px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.lyr-all button { flex: 1; font-size: 12px; padding: 3px 6px; }
+.layers > .sec-h > span { flex: 1; }
+.layers > .sec-h > .link { font-size: 11.5px; font-weight: 400; white-space: nowrap; }
+.layers > .sec-h > .link:disabled { opacity: 0.4; }
 .lyr-n { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 3px; border-radius: 8px; background: var(--ink); color: #fff; font-size: 10.5px; line-height: 16px; text-align: center; }
 .pop-btn.on .lyr-n { background: #fff; color: var(--ink); }
 
