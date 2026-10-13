@@ -4,13 +4,13 @@
  * состояния этой модели (agentsToRun, agentsStateAt): дивизии — действующие соединения, штабы — подчинение.
  */
 import {
-  addHours, agentKindOf, agentsStateAt, agentsToRun, describePlace, targetPoint,
-  type AgentOrderKind, type AgentTrace, type GameState, type Order, type SimContext, type UnitReport,
+  activeBoundaries, addHours, agentKindOf, agentsStateAt, agentsToRun, describePlace, groupOf, NOT_COMMITTED, onMap, sectorMap, supplyHoursOf, targetPoint, withBoundaries,
+  type AgentOrderKind, type AgentTrace, type GameState, type Order, type SimContext, type SimState, type UnitReport,
 } from '@def-ops/sim';
 import type { LngLat } from '@def-ops/core';
 
 /** Ход ядра с началом игры и итогом приказов (game_start / game_turn). */
-export type AgentGameTrace = AgentTrace & { game: { takeover: number; hour: number; over: boolean; applied?: { hq: string; divisions?: number; error?: string }[] } };
+export type AgentGameTrace = AgentTrace & { control?: string; game: { takeover: number; hour: number; over: boolean; applied?: { hq: string; divisions?: number; error?: string }[]; reserves?: { id: string; from: number }[]; staffErrors?: string[] } };
 
 /** Приказ ядру: штабу (всем его дивизиям) или дивизии. */
 export interface AgentOrder { hq: string; kind: AgentOrderKind; target: LngLat | null; note: string }
@@ -96,4 +96,140 @@ export function hqReports(ctx: SimContext, own: UnitReport[], side: string): Uni
       cutOff: l.some((u) => u.cutOff), movedKm: +w((u) => u.movedKm).toFixed(1), combats: [], pending: [],
     };
   }).filter((x): x is UnitReport => !!x);
+}
+
+/* ───────────── распоряжения штаба на агентной модели ───────────── */
+
+/**
+ * Штаб игрока между ходами: ход ядра каждый раз даёт новое состояние, а тыл (базы, приоритет), установленные линии,
+ * директивы и введённые резервы ведёт штаб этой модели — они переносятся из хода в ход.
+ */
+export interface AgentStaff {
+  logistics?: SimState['logistics'];
+  boundaries?: SimState['boundaries'];
+  directives?: SimState['directives'];
+  /** Введённые резервы, ещё не вышедшие в район: район и срок. */
+  committed: Record<string, { at: LngLat; eta: string }>;
+}
+
+/**
+ * Сетка ядра — растр рельефа театра (terrainGrid: строки с севера, клетки по долготе и широте), у этой модели — свои
+ * клетки cellKm. Для каждой клетки ядра — клетка этой модели (по центру); запоминается на театр.
+ */
+const CORE_MAP = new WeakMap<object, Int32Array>();
+function coreToModel(T: SimContext['theatre']): Int32Array {
+  let m = CORE_MAP.get(T);
+  if (m) return m;
+  const g = (T.data as { terrainGrid?: { cols: number; rows: number } }).terrainGrid;
+  const [w, s, e, n] = T.data.bbox;
+  const cols = g?.cols ?? 0, rows = g?.rows ?? 0;
+  m = new Int32Array(cols * rows);
+  for (let k = 0; k < m.length; k++) m[k] = T.indexOf([w + ((k % cols) + 0.5) / cols * (e - w), n - (Math.floor(k / cols) + 0.5) / rows * (n - s)]);
+  CORE_MAP.set(T, m);
+  return m;
+}
+
+/** Территория сторон ядра (код клетки: 0 — ничья, 1 — первая сторона, 2 — вторая) на клетках этой модели — большинством. */
+export function territoryFromCore(T: SimContext['theatre'], control: string): number[] | null {
+  const map = coreToModel(T);
+  if (map.length !== control.length) return null;
+  const votes = new Int32Array(T.cols * T.rows * 3);
+  for (let k = 0; k < map.length; k++) { const i = map[k]; if (i >= 0) votes[i * 3 + (control.charCodeAt(k) - 48)]++; }
+  const out = new Array<number>(T.cols * T.rows);
+  for (let i = 0; i < out.length; i++) {
+    const [z, a, b] = [votes[i * 3], votes[i * 3 + 1], votes[i * 3 + 2]];
+    out[i] = a === 0 && b === 0 ? -1 : a >= b ? (a >= z ? 0 : -1) : (b >= z ? 1 : -1);
+  }
+  return out;
+}
+
+/** Распоряжения ядру на ход (StaffIn ядра). */
+export interface AgentStaffIn {
+  supply: [string, number][];
+  bridges: { at: LngLat; from: number }[];
+  demolish: { bridge: string; from: number }[];
+  commit: { division: string; at: LngLat; from: number }[];
+  /** Полосы на клетках ядра: codes — метка объединения клетки знаком ('0' + метка, '.' — вне полос). */
+  sectors: { step: number; cols: number; label: number[]; codes: string; groups: [string, number][]; foreign: number }[];
+}
+
+/**
+ * Состояние хода ядра с тем, что ведёт штаб: территория сторон (для путей подвоза от баз), тыл, линии, директивы;
+ * резервы игрока — ждут ввода (reserveFrom) или идут в район (введены, срок — enterAt).
+ */
+export function withStaff(ctx: SimContext, t: AgentGameTrace & { control?: string }, state: SimState, st: AgentStaff, human: string): SimState {
+  const T = ctx.theatre;
+  const terr = (t.control && territoryFromCore(T, t.control)) ?? state.territory;
+  const reserves = new Map((t.game.reserves ?? []).map((r) => [r.id, addHours(t.start, r.from)]));
+  const formations = state.formations.map((f) => {
+    if (f.side !== human) return f;
+    const r = reserves.get(f.id);
+    if (r) return { ...f, reserveFrom: r, enterAt: NOT_COMMITTED };
+    const c = st.committed[f.id];
+    if (c && c.eta > state.time) return { ...f, enterAt: c.eta, position: c.at, reserveFrom: undefined };
+    return f;
+  });
+  return { ...state, formations, ...(terr ? { territory: terr } : {}), ...(st.logistics ? { logistics: st.logistics } : {}), ...(st.boundaries ? { boundaries: st.boundaries } : {}), ...(st.directives ? { directives: st.directives } : {}) };
+}
+
+/** Переправы театра стороны: что есть и когда действует (до распоряжений хода — для сравнения). */
+export const bridgesOf = (ctx: SimContext) => new Map(ctx.theatre.data.bridges.map((b) => [b.id, { openFrom: b.openFrom ?? null, destroyedAt: b.destroyedAt ?? null }]));
+
+/**
+ * Распоряжения хода → ядру. after — состояние после распоряжений (applyActions этой модели: проверка и исполнение),
+ * before — до них; переправы — по изменениям театра (наведённые — новые, подорванные — с новым сроком подрыва,
+ * снятые при передаче командования — с часа 0). Подвоз — по базам и приоритету: время подвоза до дивизии больше
+ * предела — подвоза нет, приоритетным ×1,5, остальным ×0,75, база дальше supplyFlow.fullHours — меньше. Полосы — по
+ * действующим линиям сторон (фронты и армии), как выбор пути в этой модели.
+ */
+export function staffEffects(ctx: SimContext, start: string, before: SimState, after: SimState, bridgesBefore: ReturnType<typeof bridgesOf>, human: string): AgentStaffIn {
+  const hour = (t: string | null | undefined) => (t ? Math.max(0, hourAt(start, t)) : 0);
+  const now = bridgesOf(ctx);
+  const bridges = ctx.theatre.data.bridges.filter((b) => !bridgesBefore.has(b.id) && b.side === human && b.openFrom).map((b) => ({ at: b.at, from: hour(b.openFrom) }));
+  const demolish = [
+    ...[...bridgesBefore].filter(([id]) => !now.has(id)).map(([id]) => ({ bridge: id, from: 0 })),
+    ...[...now].filter(([id, b]) => bridgesBefore.has(id) && b.destroyedAt && b.destroyedAt !== bridgesBefore.get(id)!.destroyedAt).map(([id, b]) => ({ bridge: id, from: hour(b.destroyedAt) })),
+  ];
+  const was = new Map(before.formations.map((f) => [f.id, f]));
+  const commit = after.formations.filter((f) => f.side === human && was.get(f.id)?.reserveFrom && !f.reserveFrom && f.enterAt && f.enterAt !== NOT_COMMITTED)
+    .map((f) => ({ division: f.id, at: f.position, from: hour(f.enterAt) }));
+  // подвоз
+  const supply: [string, number][] = [];
+  const lg = after.logistics?.[human];
+  if (lg) {
+    const { hours, rangeHours } = supplyHoursOf(ctx, after, human);
+    const pr = lg.priority ?? [];
+    const full = ctx.rules.supplyFlow?.fullHours ?? 12;
+    for (const [id, h] of hours) {
+      if (!Number.isFinite(h)) continue; // пути нет — окружение ведёт ядро
+      const k = h > rangeHours ? 0 : (pr.length ? (pr.includes(id) ? 1.5 : 0.75) : 1) * (ctx.rules.supplyFlow && h > full ? full / h : 1);
+      supply.push([id, +k.toFixed(3)]);
+    }
+  }
+  // полосы
+  const sectors: AgentStaffIn['sectors'] = [];
+  const foreign = ctx.rules.sectors?.foreign ?? 0;
+  const scen = withBoundaries(ctx.scenario, after);
+  const act = activeBoundaries(scen, after.time).filter((b) => b.side === human);
+  if (foreign > 0 && act.length) {
+    const units = after.formations.filter((f) => onMap(f, after.time)).map((f) => ({ id: f.id, side: f.side, at: f.position }));
+    for (const lv of ['front', 'army'] as const) {
+      const lines = act.filter((b) => b.kind === lv);
+      if (!lines.length) continue;
+      const groups = groupOf(ctx.scenario, lv);
+      const m = sectorMap(ctx.theatre, { ...scen, boundaries: lines }, units, human, after.time, { level: lv, groups });
+      // метка на каждую клетку ядра: клетка этой модели → клетка сетки полос (как sectorPrefer)
+      const map = coreToModel(ctx.theatre);
+      let codes = '';
+      for (let k = 0; k < map.length; k++) {
+        const i = map[k];
+        const kk = i < 0 ? -1 : Math.floor(Math.floor(i / ctx.theatre.cols) / m.step) * m.cols + Math.floor((i % ctx.theatre.cols) / m.step);
+        const l = kk >= 0 && m.hist[kk] ? m.label[kk] : -1;
+        codes += l >= 0 && l < 75 ? String.fromCharCode(48 + l) : '.';
+      }
+      const gs: [string, number][] = after.formations.filter((f) => f.side === human).map((f) => [f.id, m.groups.indexOf(groups.get(f.id) ?? f.id)] as [string, number]).filter(([, g]) => g >= 0);
+      sectors.push({ step: 1, cols: (ctx.theatre.data as { terrainGrid?: { cols: number } }).terrainGrid?.cols ?? 0, label: [], codes, groups: gs, foreign });
+    }
+  }
+  return { supply, bridges, demolish, commit, sectors };
 }

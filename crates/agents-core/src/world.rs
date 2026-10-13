@@ -132,7 +132,39 @@ pub struct Sim {
     pub journal: Vec<Event>,
     /// Снимки по шагам для перемотки (если включено).
     pub history: Option<Vec<World>>,
+    /// Распоряжения штаба игрока (игра): подвоз, переправы, подрыв мостов, полосы армий.
+    pub staff: StaffFx,
 }
+
+/// Распоряжения штаба, которые ядро исполняет в расчёте (игра; их проверяет и ведёт штаб вне ядра).
+#[derive(Default, Clone, Debug)]
+pub struct StaffFx {
+    /// Множитель подвоза по дивизиям (индекс; нет — 1): база далеко или подвоз не доходит — меньше, приоритет — больше.
+    pub supply: std::collections::HashMap<u32, f64>,
+    /// Наведённые переправы: место, сторона, с какого шага — переход реки рядом (до PONTOON_KM) без задержки форсирования.
+    pub pontoons: Vec<(XY, Side, u32)>,
+    /// Подорванные мосты театра: индекс моста → с какого шага.
+    pub demolished: std::collections::HashMap<u16, u32>,
+    /// Полосы объединений (фронтов, армий): клетка в полосе соседа «дороже» при выборе пути (время движения то же);
+    /// множители уровней перемножаются.
+    pub sectors: Vec<Sectors>,
+}
+
+/// Полосы объединений на грубой сетке театра: метка объединения клетки (−1 — вне полос), объединение дивизий.
+#[derive(Clone, Debug)]
+pub struct Sectors {
+    /// Клеток театра в клетке сетки по каждой оси; столбцов сетки.
+    pub step: usize,
+    pub cols: usize,
+    pub label: Vec<i16>,
+    /// Объединение (метка) дивизии по её индексу.
+    pub group: std::collections::HashMap<u32, i16>,
+    /// Насколько «дороже» клетка чужой полосы (как sectorPrefer: 1 + foreign).
+    pub foreign: f64,
+}
+
+/// Радиус наведённой переправы, км.
+pub const PONTOON_KM: f64 = 3.0;
 
 #[derive(Clone, Copy, Debug)]
 struct Moved {
@@ -167,7 +199,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None, staff: StaffFx::default() };
         s.script.sort_by_key(|o| o.at);
         s
     }
@@ -194,6 +226,22 @@ impl Sim {
 
     fn bridge_open(&self, w: &World, b: u16) -> bool {
         w.objects.iter().find(|o| o.bridge == Some(b)).map_or(true, |o| o.intact)
+    }
+
+    /// Переход реки из клетки `c` в `nb` по наведённой переправе своей стороны (действует с этого шага).
+    fn pontoon(&self, side: Side, tick: u32, c: usize, nb: usize) -> bool {
+        let t = &*self.theatre;
+        self.staff.pontoons.iter().any(|&(p, s, from)| s == side && tick >= from && (t.centers[c].dist(p) <= PONTOON_KM || t.centers[nb].dist(p) <= PONTOON_KM))
+    }
+
+    /// Множитель выбора пути для дивизии `i`: в полосе соседа — 1 + foreign.
+    fn sector_cost(&self, i: usize, cell: usize) -> f64 {
+        let t = &*self.theatre;
+        self.staff.sectors.iter().map(|s| {
+            let Some(&g) = s.group.get(&(i as u32)) else { return 1.0 };
+            let k = (cell / t.cols / s.step) * s.cols + (cell % t.cols) / s.step;
+            match s.label.get(k) { Some(&l) if l >= 0 && l != g => 1.0 + s.foreign, _ => 1.0 }
+        }).product()
     }
 
     /// Один шаг (1 час).
@@ -262,7 +310,7 @@ impl Sim {
         // мосты по данным театра (наведение, подрыв)
         let hour = self.hour();
         for ob in next.objects.iter_mut() {
-            if let Some(b) = ob.bridge { ob.intact = self.theatre.bridges[b as usize].open_at(hour); }
+            if let Some(b) = ob.bridge { ob.intact = self.theatre.bridges[b as usize].open_at(hour) && !self.staff.demolished.get(&b).is_some_and(|&from| tick >= from); }
         }
 
         // 1. Решения — параллельно по снимку `next` (после доставки приказов).
@@ -441,6 +489,11 @@ impl Sim {
             return;
         }
         let bopen = |b: u16| self.bridge_open(w, b);
+        let tick = w.tick;
+        let pont = |c: usize, nb: usize| self.pontoon(d.side, tick, c, nb);
+        // индекс дивизии — для её полосы (только когда полосы заданы)
+        let di = if !self.staff.sectors.is_empty() { w.divisions.iter().position(|x| std::ptr::eq(x, d)).unwrap_or(usize::MAX) } else { usize::MAX };
+        let prefer = |cell: usize| self.sector_cost(di, cell);
         let goal = t.land_cell_near(target);
         let mut route = d.route.clone();
         let need = match (&route, goal) {
@@ -450,7 +503,7 @@ impl Sim {
         };
         if need {
             let (Some(from), Some(g)) = (t.land_cell_near(d.vars.pos), goal) else { return };
-            match route::find(t, r, d.side, d.params.mobility, from, g, &bopen) {
+            match route::find(t, r, d.side, d.params.mobility, from, g, &route::Ways { bridge_open: &bopen, pontoon: &pont, prefer: &prefer }) {
                 Some((cells, _)) => { route = Some(Route { cells, next: 1, crossing_left_h: 0.0, cleared: 0 }); out.route = Some(route.clone()); }
                 None => {
                     out.route = Some(None);
@@ -483,6 +536,8 @@ impl Sim {
                         out.bridge = Some((obj, pos, rt.next));
                         rt.cleared = rt.next;
                     }
+                    // наведённая переправа (распоряжение штаба) — без задержки форсирования
+                    _ if self.pontoon(d.side, w.tick, c, nb) => { rt.cleared = rt.next; }
                     // моста нет или он разрушен: пехота — на подручных средствах, технике наводят переправу
                     _ => {
                         rt.crossing_left_h = if d.params.mobility == Mobility::Foot { r.river_cross_hours } else { r.bridging_hours };
@@ -802,8 +857,10 @@ impl Sim {
             // окружённым подвоза нет; гарнизон крепости живёт со складов (на 30 суток боя — дольше сценария)
             let supplied = d.params.kind == "garrison" || !d.cut_since.is_some_and(|s| tick.saturating_sub(s) as f64 >= r.pocket.encircle_hours);
             if supplied {
-                d.vars.ammo = (d.vars.ammo + sr.ammo_per_day / 24.0).min(sr.max_ammo);
-                if d.params.mobility != Mobility::Foot { d.vars.fuel = (d.vars.fuel + sr.fuel_per_day / 24.0).min(sr.max_fuel); }
+                // распоряжения тыла (игра): база далеко — меньше, приоритет — больше; без распоряжений — 1
+                let k = self.staff.supply.get(&(i as u32)).copied().unwrap_or(1.0);
+                d.vars.ammo = (d.vars.ammo + k * sr.ammo_per_day / 24.0).min(sr.max_ammo);
+                if d.params.mobility != Mobility::Foot { d.vars.fuel = (d.vars.fuel + k * sr.fuel_per_day / 24.0).min(sr.max_fuel); }
             }
             if !in_battle[i] { d.vars.cohesion = (d.vars.cohesion + r.cohesion_recover).min(1.0); }
             if day_start { d.vars.march_h_today = 0.0; }

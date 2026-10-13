@@ -1,0 +1,54 @@
+//! Игра на агентной модели без окна приложения — для проверок: команды game_start / game_turn / game_stop / read_text
+//! строками JSON на входе ({"cmd": …, "args": {…}}), ответ — строкой JSON на выходе ({"ok": …} или {"error": …}).
+//! Те же команды, что у настольного приложения (crates/agents-tauri).
+
+use agents_core::game::{Game, PlayerOrder, StaffIn};
+use agents_core::model::Side;
+use agents_core::staff::Source;
+use agents_core::{repo_root, scenario, DATA_DIR};
+use serde_json::{json, Value};
+use std::io::{BufRead, Write};
+
+fn main() {
+    let root = std::env::var("DEFOPS_ROOT").unwrap_or_else(|_| repo_root());
+    let mut game: Option<Game> = None;
+    let stdin = std::io::stdin();
+    let mut out = std::io::stdout();
+    for line in stdin.lock().lines().map_while(Result::ok) {
+        let q: Value = match serde_json::from_str(&line) { Ok(v) => v, Err(e) => { let _ = writeln!(out, "{}", json!({ "error": e.to_string() })); continue } };
+        let a = &q["args"];
+        let r: Result<Value, String> = (|| match q["cmd"].as_str().unwrap_or("") {
+            "read_text" => std::fs::read_to_string(format!("{root}/{}", a["path"].as_str().unwrap_or(""))).map(Value::String).map_err(|e| e.to_string()),
+            "game_start" => {
+                let path = format!("{root}/{}", a["scenario"].as_str().unwrap_or(""));
+                let (mut sim, meta) = scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root)?;
+                if let Some(s) = a["seed"].as_u64() { sim.seed = s; }
+                let player = if a["player"] == "de" { Side::De } else { Side::Su };
+                let enemy = if player == Side::Su { Side::De } else { Side::Su };
+                sim.sources[agents_core::staff::side_idx(enemy)] = if a["enemy"] == "doctrine" { Source::Doctrine } else { Source::Script };
+                let free = if a["enemy"] == "llm" { vec![player, enemy] } else { vec![player] };
+                let mut g = Game::start_free(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free);
+                if let Some(u) = a["until"].as_u64() { g.limit = g.limit.max(u as u32); }
+                let t = g.trace();
+                game = Some(g);
+                Ok(t)
+            }
+            "game_turn" => {
+                let g = game.as_mut().ok_or("игра не начата")?;
+                let staff: Option<StaffIn> = serde_json::from_value(a["staff"].clone()).map_err(|e| e.to_string())?;
+                let bad = staff.map(|s| g.staff(&s)).unwrap_or_default();
+                let orders: Vec<PlayerOrder> = serde_json::from_value(a["orders"].clone()).map_err(|e| e.to_string())?;
+                let applied: Vec<Value> = orders.iter().map(|o| match g.order(o) { Ok(n) => json!({ "hq": o.hq, "divisions": n }), Err(e) => json!({ "hq": o.hq, "error": e }) }).collect();
+                g.advance(a["hours"].as_u64().unwrap_or(12) as u32);
+                let mut t = g.trace();
+                t["game"]["applied"] = json!(applied);
+                t["game"]["staffErrors"] = json!(bad);
+                Ok(t)
+            }
+            "game_stop" => { game = None; Ok(Value::Null) }
+            c => Err(format!("нет команды {c}")),
+        })();
+        let _ = writeln!(out, "{}", match r { Ok(v) => json!({ "ok": v }), Err(e) => json!({ "error": e }) });
+        let _ = out.flush();
+    }
+}

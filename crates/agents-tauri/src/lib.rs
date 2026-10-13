@@ -162,12 +162,14 @@ pub mod commands {
         }).await.map_err(|e| e.to_string())?
     }
 
-    /// Ход игры: приказы игрока штабам, затем `hours` часов расчёта. Возвращает ход с начала сценария и итог по приказам.
+    /// Ход игры: распоряжения штаба, приказы штабам и дивизиям, затем `hours` часов расчёта. Возвращает ход с начала сценария и итог по приказам.
     #[tauri::command]
-    pub async fn game_turn(orders: Vec<agents_core::game::PlayerOrder>, hours: u32) -> Result<serde_json::Value, String> {
+    pub async fn game_turn(orders: Vec<agents_core::game::PlayerOrder>, hours: u32, staff: Option<agents_core::game::StaffIn>) -> Result<serde_json::Value, String> {
         tauri::async_runtime::spawn_blocking(move || {
             let mut lock = GAME.lock().map_err(|e| e.to_string())?;
             let g = lock.as_mut().ok_or("игра не начата")?;
+            // распоряжения штаба (подвоз, переправы, подрыв, резервы, полосы) — до приказов хода
+            let staff_bad = staff.map(|s| g.staff(&s)).unwrap_or_default();
             let applied: Vec<serde_json::Value> = orders.iter().map(|o| match g.order(o) {
                 Ok(n) => serde_json::json!({ "hq": o.hq, "divisions": n }),
                 Err(e) => serde_json::json!({ "hq": o.hq, "error": e }),
@@ -175,6 +177,7 @@ pub mod commands {
             g.advance(hours);
             let mut t = g.trace();
             t["game"]["applied"] = serde_json::json!(applied);
+            t["game"]["staffErrors"] = serde_json::json!(staff_bad);
             Ok(t)
         }).await.map_err(|e| e.to_string())?
     }

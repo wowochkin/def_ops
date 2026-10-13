@@ -54,3 +54,41 @@ fn division_orders_and_external_enemy() {
     assert_eq!(t["orders"][i]["kind"], "hold");
     assert!(t["orders"][i]["note"].as_str().unwrap().contains("держать рубеж"));
 }
+
+use agents_core::game::{Commit, Demolish, StaffIn};
+
+#[test]
+fn staff_supply_demolish_and_reserves() {
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json");
+    let load = || agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    let (sim, meta) = load();
+    let mut a = Game::start(sim, meta, 6, Side::Su);
+    // резервы советской стороны ждут решения игрока: сами не вводятся
+    assert!(!a.reserves.is_empty(), "у Берлинской операции есть будущие вводы");
+    let (&ri, &rfrom) = a.reserves.iter().next().unwrap();
+    let rid = a.sim.world.divisions[ri as usize].id.clone();
+    // подвоз: у первой советской дивизии в бою — ноль против двойного
+    let div = a.sim.world.divisions.iter().position(|d| d.side == Side::Su && d.state != agents_core::model::State::Pending).unwrap();
+    let id = a.sim.world.divisions[div].id.clone();
+    let (sim, meta) = load();
+    let mut b = Game::start(sim, meta, 6, Side::Su);
+    a.staff(&StaffIn { supply: vec![(id.clone(), 0.0)], ..Default::default() });
+    b.staff(&StaffIn { supply: vec![(id.clone(), 2.0)], ..Default::default() });
+    // подрыв моста: ближайший к первому мосту театра — с часа 8
+    let bid = a.sim.theatre.bridges[0].id.clone();
+    let bad = a.staff(&StaffIn { supply: vec![(id.clone(), 0.0)], demolish: vec![Demolish { bridge: bid, from: 8 }], commit: vec![Commit { division: rid.clone(), at: [14.3, 52.6], from: 10 }], ..Default::default() });
+    assert!(bad.is_empty(), "{bad:?}");
+    assert!(!a.reserves.contains_key(&ri));
+    a.advance(24);
+    b.advance(24);
+    assert!(a.sim.world.divisions[div].vars.ammo < b.sim.world.divisions[div].vars.ammo, "подвоз 0 против 2");
+    let obj = a.sim.world.objects.iter().find(|o| o.bridge == Some(0)).unwrap();
+    assert!(!obj.intact, "мост подорван");
+    // резерв введён в назначенном районе к своему часу (не раньше 10-го)
+    let d = &a.sim.world.divisions[ri as usize];
+    assert_ne!(d.state, agents_core::model::State::Pending, "резерв введён (готов с {rfrom})");
+    let at = a.sim.theatre.proj.to_lnglat(d.vars.pos);
+    assert!((at[0] - 14.3).abs() < 0.3 && (at[1] - 52.6).abs() < 0.3, "{at:?}");
+    assert!(a.trace()["game"]["reserves"].as_array().unwrap().iter().all(|x| x["id"] != rid.as_str()));
+}

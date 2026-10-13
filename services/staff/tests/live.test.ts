@@ -136,6 +136,19 @@ describe('советник: варианты решения на ход', () => 
     expect(r.variants[0].intent).toBeTruthy();
     expect(r.variants[0].orders.length).toBeGreaterThan(0);
     expect(r.variants[0].actions[0]?.kind).toBe('priority');
+    // в формате — все виды распоряжений, включая линии между армиями; в обстановке — подвоз, переправы, парки
+    expect(m[0].content).toContain('line — разграничительная линия');
+    expect(m[1].content).toMatch(/Понтонных парков свободно: \d из \d/);
+    expect(m[1].content).toMatch(/Подвоз (не доходит|ослаблен|доходит до всех)/);
+    // осторожный вариант подтягивает тыл и вводит резерв — распоряжения сопоставляются с обстановкой и проверяются
+    const careful = r.variants[1];
+    expect(careful.actions.map((a) => a.kind)).toContain('base');
+    const { actionsToStaff } = await import('../src/live');
+    const sit = { messages: [], time: g.state.time, areas: built.parts.areas, allAreas: built.parts.allAreas, enemies: built.parts.enemies, formations: built.parts.formations,
+      staff: { side: 'su', bases: (g.state.logistics?.su?.bases ?? []).map((b) => ({ id: b.id, name: b.name })), reserves: g.state.formations.filter((f) => f.side === 'su' && f.reserveFrom).map((f) => ({ id: f.id, name: f.name })) } };
+    const conv = actionsToStaff(ctx, g, sit as never, careful.actions);
+    expect(conv.applied.length).toBe(careful.actions.length);
+    expect(conv.applied.find((x) => x.given.kind === 'base')?.action?.kind).toBe('base');
   }, 60000);
 });
 

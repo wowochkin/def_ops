@@ -11,9 +11,20 @@ use std::collections::BinaryHeap;
 /// Предел раскрытых клеток на один поиск (весь театр — около 120 тыс. клеток).
 const MAX_EXPANDED: usize = 400_000;
 
+/// Что знает дивизия о переходах и полосе: действующие мосты, наведённые переправы (клетка → соседняя), множитель
+/// выбора пути по клетке (полоса соседа «дороже»; на время движения не влияет).
+pub struct Ways<'a> {
+    pub bridge_open: &'a dyn Fn(u16) -> bool,
+    pub pontoon: &'a dyn Fn(usize, usize) -> bool,
+    pub prefer: &'a dyn Fn(usize) -> f64,
+}
+
+/// Только мосты театра — без переправ штаба и полос.
+pub fn plain<'a>(bridge_open: &'a dyn Fn(u16) -> bool) -> Ways<'a> { Ways { bridge_open, pontoon: &|_, _| false, prefer: &|_| 1.0 } }
+
 /// Стоимость перехода из клетки `c` в направлении `d`, ч; None — хода нет.
 #[inline]
-pub fn step_cost(t: &Theatre, r: &Rules, side: Side, mob: Mobility, c: usize, d: usize, bridge_open: &dyn Fn(u16) -> bool) -> Option<(usize, f64)> {
+pub fn step_cost(t: &Theatre, r: &Rules, side: Side, mob: Mobility, c: usize, d: usize, ways: &Ways) -> Option<(usize, f64)> {
     let nb = t.neighbor(c, d)?;
     if t.terrain[nb] == WATER { return None; }
     // по диагонали между двумя клетками воды не пройти (иначе проливы и протоки «срезаются» углом)
@@ -28,7 +39,8 @@ pub fn step_cost(t: &Theatre, r: &Rules, side: Side, mob: Mobility, c: usize, d:
     if t.river_cross[c] & (1 << d) != 0 {
         // пехота переправляется на подручных средствах, технике наводят переправу (march.bridgingHours)
         match t.crossing_bridge.get(&(c as u32, d as u8)) {
-            Some(&b) if bridge_open(b) => {}
+            Some(&b) if (ways.bridge_open)(b) => {}
+            _ if (ways.pontoon)(c, nb) => {}
             _ if mob == Mobility::Foot => h += r.river_cross_hours,
             _ => h += r.bridging_hours,
         }
@@ -37,7 +49,7 @@ pub fn step_cost(t: &Theatre, r: &Rules, side: Side, mob: Mobility, c: usize, d:
 }
 
 /// Путь из `from` в `to` (включая обе клетки) и время в часах; None — недостижимо.
-pub fn find(t: &Theatre, r: &Rules, side: Side, mob: Mobility, from: usize, to: usize, bridge_open: &dyn Fn(u16) -> bool) -> Option<(Vec<u32>, f64)> {
+pub fn find(t: &Theatre, r: &Rules, side: Side, mob: Mobility, from: usize, to: usize, ways: &Ways) -> Option<(Vec<u32>, f64)> {
     if from == to { return Some((vec![from as u32], 0.0)); }
     let n = t.cols * t.rows;
     let vmax = r.march_kmh[mob as usize];
@@ -64,7 +76,9 @@ pub fn find(t: &Theatre, r: &Rules, side: Side, mob: Mobility, from: usize, to: 
         expanded += 1;
         if expanded > MAX_EXPANDED { return None; }
         for d in 0..DIRS.len() {
-            let Some((nb, h)) = step_cost(t, r, side, mob, c, d, bridge_open) else { continue };
+            let Some((nb, h)) = step_cost(t, r, side, mob, c, d, ways) else { continue };
+            // выбор пути: клетка в полосе соседа «дороже» (множитель ≥ 1 — эвристика остаётся допустимой)
+            let h = h * (ways.prefer)(nb);
             if closed[nb] { continue; }
             let ng = g[c] + h;
             if ng < g[nb] {

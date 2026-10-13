@@ -414,8 +414,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             {tab === 'orders' && <>
               <div className="seg subtabs">
                 {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
-                  // агентная модель: распоряжения тыла, переправ, резервов и полос пока не исполняет — только приказы войскам
-                  .filter(([k]) => view.engine !== 'agents' || k === 'units').map(([k, t, n]) => (
+.map(([k, t, n]) => (
                   <button key={k} className={sub === k ? 'on' : ''} onClick={() => { setSub(k); setPickMode(null); }}>{t}{n ? ` · ${n}` : ''}</button>))}
               </div>
               {sub === 'units' && <Orders v={fv!} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}

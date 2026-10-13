@@ -7,7 +7,7 @@
  */
 import {
   areaTitle, dayEvents, places, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
-  commandTerms, groupOf, onMap, sectorText, shortName, withBoundaries, type GameState, type SimContext,
+  commandTerms, groupOf, onMap, profileOf, sectorText, shortName, supplyHoursOf, withBoundaries, type GameState, type SimContext,
 } from '@def-ops/sim';
 import { fill } from '../fill';
 
@@ -193,8 +193,29 @@ export function rearText(ctx: SimContext, g: GameState, side: string): string {
     out.push(`- Базы снабжения: ${lg.bases.map((b) => `${b.name}${b.activeFrom && b.activeFrom > s.time ? ` (переносится до ${b.activeFrom.slice(8, 10)}.${b.activeFrom.slice(5, 7)})` : ''}`).join('; ')}.`);
     if (lg.priority.length) out.push(`- Приоритет подвоза: ${lg.priority.map((id) => s.formations.find((f) => f.id === id)?.name).join(', ')}.`);
   }
+  // подвоз по объединениям: не доходит (дальше предела) и ослаблен (база далеко) — повод перенести базу или дать приоритет
+  if (lg) {
+    try {
+      const { hours, rangeHours } = supplyHoursOf(ctx, s, side);
+      const nm = (id: string) => shortName(s.formations.find((f) => f.id === id)?.name ?? id);
+      const far = [...hours].filter(([, h]) => Number.isFinite(h) && h > rangeHours).map(([id, h]) => `${nm(id)} (${Math.round(h)} ч)`);
+      const weak = [...hours].filter(([, h]) => Number.isFinite(h) && h <= rangeHours && h > (ctx.rules.supplyFlow?.fullHours ?? 12)).map(([id, h]) => `${nm(id)} (${Math.round(h)} ч)`);
+      if (far.length) out.push(`- Подвоз не доходит (путь от баз длиннее ${rangeHours} ч): ${far.slice(0, 20).join(', ')}${far.length > 20 ? ` и ещё ${far.length - 20}` : ''}.`);
+      if (weak.length) out.push(`- Подвоз ослаблен — база далеко: ${weak.slice(0, 20).join(', ')}${weak.length > 20 ? ` и ещё ${weak.length - 20}` : ''}.`);
+      if (!far.length && !weak.length) out.push('- Подвоз доходит до всех объединений полностью.');
+    } catch { /* подвоз не считается — без этой строки */ }
+  }
+  // переправы: действующие рядом с нашими войсками, наводимые, свободные понтонные парки
+  const own = s.formations.filter((f) => f.side === side && onMap(f, s.time) && !f.destroyed);
+  const near = (at: [number, number]) => own.some((f) => dist(T.proj.toXY(f.position), T.proj.toXY(at)) <= 20);
+  const open = T.data.bridges.filter((b) => (!b.openFrom || b.openFrom <= s.time) && (!b.destroyedAt || b.destroyedAt > s.time) && near(b.at));
+  if (open.length) out.push(`- Действующие мосты и переправы в 20 км от наших войск: ${open.slice(0, 15).map((b) => b.name ?? describePlace(T, b.at)).join('; ')}${open.length > 15 ? ` и ещё ${open.length - 15}` : ''}.`);
   const building = T.data.bridges.filter((b) => b.side === side && b.openFrom && b.openFrom > s.time);
   if (building.length) out.push(`- Наводятся переправы: ${building.map((b) => b.name).join('; ')}.`);
+  if (lg) {
+    const parks = profileOf(ctx, side).engineering?.parks ?? 3;
+    out.push(`- Понтонных парков свободно: ${Math.max(0, parks - building.length)} из ${parks} (наводка: большая река — сутки, малая — 12 ч; нужны наши войска рядом).`);
+  }
   const res = s.formations.filter((f) => f.side === side && f.reserveFrom);
   if (res.length) out.push(`- Резервы Ставки, не введённые в сражение: ${res.map((f) => `${f.name} (готов с ${f.reserveFrom!.slice(8, 10)}.${f.reserveFrom!.slice(5, 7)})`).join('; ')}.`);
   const coming = s.formations.filter((f) => f.side === side && !f.reserveFrom && f.enterAt && f.enterAt > s.time && !onMap(f, s.time));

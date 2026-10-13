@@ -100,13 +100,20 @@ export function mockPlan(sys: string, prompt: string) {
   const name = (l: string) => l.split(/ \[| — /)[0];
   const n = /— один вариант/.test(sys) ? 1 : Number(/— (\d) заметно разных/.exec(sys)?.[1] ?? 2);
   const f = own.map(name), a0 = areas[0] ?? '', a1 = areas[1] ?? a0, e0 = enemy[0] ?? a0;
+  const bases = (/- Базы снабжения: ([^\n]*)\./.exec(prompt)?.[1] ?? '').split('; ').map((b) => b.replace(/ \(переносится.*\)$/, '').trim()).filter(Boolean);
+  const reserves = (/- Резервы Ставки, не введённые в сражение: ([^\n]*)\./.exec(prompt)?.[1] ?? '').split('; ').map((r) => r.replace(/ \(готов с .*\)$/, '').trim()).filter(Boolean);
   const base = { assessment: `Подставной советник (проверка стенда). В строю ${own.length} объединений, обнаружено соединений противника: ${enemy.length}. Подвоз в целом обеспечен.`, enemyIntent: 'Предположение: противник удерживает рубежи и подтягивает резервы.', report: 'Войска фронта выполняют поставленную задачу. Противник оказывает упорное сопротивление. Подвоз обеспечен.' };
   const all = [
     { title: 'Решительный удар', idea: 'Все силы — на главное направление, темп важнее флангов.', ...base, intent: `Главный удар нанести на ${e0}; остальным — сковать противника на фронте.`, risks: 'Открытые фланги; отставание подвоза.',
       orders: f.slice(0, 3).map((x, i) => ({ formation: x, task: i === 0 ? 'attack' : 'attack', area: i === 0 ? e0 : a0, toArea: null, why: i === 0 ? 'главный удар' : 'поддержать главный удар' })),
       actions: f.length >= 2 ? [{ kind: 'priority', subject: null, area: null, formations: f.slice(0, 1) }] : [] },
-    { title: 'Закрепиться и подтянуть тылы', idea: 'Пауза на сутки: закрепить достигнутое, подтянуть подвоз.', ...base, intent: `Закрепиться на достигнутых рубежах у ${a0}, привести войска в порядок.`, risks: 'Противник выиграет время на создание обороны.',
-      orders: f.slice(0, 2).map((x) => ({ formation: x, task: 'defend', area: a0, toArea: null, why: 'закрепить достигнутое' })), actions: [] },
+    { title: 'Закрепиться и подтянуть тылы', idea: 'Пауза на сутки: закрепить достигнутое, подтянуть подвоз.', ...base, intent: `Закрепиться на достигнутых рубежах у ${a0}, привести войска в порядок, подтянуть базу и резерв.`, risks: 'Противник выиграет время на создание обороны.',
+      orders: f.slice(0, 2).map((x) => ({ formation: x, task: 'defend', area: a0, toArea: null, why: 'закрепить достигнутое' })),
+      // тыл и резервы — из раздела «Тыл, переправы, резервы»: первую базу — ближе к войскам, первый резерв — ввести
+      actions: [
+        ...(bases[0] && a0 ? [{ kind: 'base', subject: bases[0], area: a0, formations: [] }] : []),
+        ...(reserves[0] && a0 ? [{ kind: 'commit', subject: reserves[0], area: a0, formations: [] }] : []),
+      ] },
     { title: 'Обход узла обороны', idea: 'Не штурмовать в лоб — обойти и отрезать.', ...base, intent: `Сковать противника у ${a0}, подвижными соединениями выйти к ${a1}.`, risks: 'Растяжение коммуникаций.',
       orders: f.slice(0, 2).map((x, i) => ({ formation: x, task: i ? 'regroup' : 'attack', area: i ? a0 : e0, toArea: i ? a1 : null, why: i ? 'выйти во фланг' : 'сковать с фронта' })), actions: [] },
   ];

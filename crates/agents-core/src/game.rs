@@ -2,12 +2,16 @@
 //! передачи командования; дальше исторические приказы и артподготовки стороны игрока снимаются, игрок отдаёт приказы
 //! штабам (армиям) — они доходят до всех дивизий штаба с задержкой его уровня, как приказы сценария, — и двигает
 //! время ходом на N часов. Противник — по сценарию или по доктрине (Sim::sources).
+//!
+//! Распоряжения штаба игрока (`staff`) проверяет и ведёт штаб вне ядра; ядро их исполняет: подвоз по дивизиям,
+//! наведённые переправы, подрыв мостов, ввод резервов (будущие вводы стороны игрока ждут его решения), полосы армий.
 
 use crate::geo::LngLat;
 use crate::model::{OrderKind, Side};
 use crate::scenario::Meta;
 use crate::trace;
-use crate::world::{ScriptOrder, Sim};
+use crate::world::{ScriptOrder, Sectors, Sim};
+use std::collections::BTreeMap;
 use serde_json::Value;
 
 pub struct Game {
@@ -22,6 +26,52 @@ pub struct Game {
     pub takeover: u32,
     /// До какого часа можно вести игру (по умолчанию — конец сценария; игра может идти и дольше, до своего срока).
     pub limit: u32,
+    /// Резервы стороны игрока, ждущие ввода: индекс дивизии → с какого часа готов (ввод по сценарию).
+    pub reserves: BTreeMap<u32, u32>,
+}
+
+/// Место и час (шаг) для распоряжения.
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct AtHour { pub at: LngLat, pub from: u32 }
+
+/// Подрыв моста театра: id моста и час.
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct Demolish { pub bridge: String, pub from: u32 }
+
+/// Ввод резерва: дивизия, район сосредоточения, час.
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct Commit { pub division: String, pub at: LngLat, pub from: u32 }
+
+/// Полосы объединений (как sectorMap этой модели): сетка меток и объединение каждой дивизии.
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct SectorsIn {
+    pub step: usize,
+    pub cols: usize,
+    #[serde(default)]
+    pub label: Vec<i16>,
+    /// Метки строкой, по знаку на клетку ('0' + метка, '.' — вне полос) — компактнее label.
+    #[serde(default)]
+    pub codes: Option<String>,
+    pub groups: Vec<(String, i16)>,
+    pub foreign: f64,
+}
+
+/// Распоряжения штаба на ход.
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+pub struct StaffIn {
+    /// Множитель подвоза по дивизиям (на ход; весь набор заменяет прежний).
+    #[serde(default)]
+    pub supply: Vec<(String, f64)>,
+    #[serde(default)]
+    pub bridges: Vec<AtHour>,
+    /// Подрыв мостов театра (по id моста) с часа; с часа 0 — мост снят (наводки стороны игрока после передачи командования).
+    #[serde(default)]
+    pub demolish: Vec<Demolish>,
+    #[serde(default)]
+    pub commit: Vec<Commit>,
+    /// Полосы по уровням (фронты, армии); пусто — без полос.
+    #[serde(default)]
+    pub sectors: Vec<SectorsIn>,
 }
 
 /// Приказ штабу (всем его дивизиям) или одной дивизии.
@@ -55,8 +105,16 @@ impl Game {
         sim.fires.retain(|_| *k.next().unwrap());
         // штабы сторон под внешним управлением сами больше не решают
         for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
+        // резервы стороны игрока: ввод больше не по графику сценария — по его решению (commit)
+        let mut reserves = BTreeMap::new();
+        for (i, d) in sim.world.divisions.iter_mut().enumerate() {
+            if d.side == player && d.state == crate::model::State::Pending && d.enter > takeover {
+                reserves.insert(i as u32, d.enter);
+                d.enter = u32::MAX;
+            }
+        }
         let limit = meta.hours;
-        Game { sim, meta, frames, player, free: free.to_vec(), takeover, limit }
+        Game { sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves }
     }
 
     /// Час прогона (сколько шагов сделано).
@@ -102,6 +160,35 @@ impl Game {
         Ok(n)
     }
 
+    /// Распоряжения штаба на ход; возвращает неисполненные с причиной.
+    pub fn staff(&mut self, s: &StaffIn) -> Vec<String> {
+        let mut bad = Vec::new();
+        let ix: std::collections::HashMap<String, u32> = self.sim.world.divisions.iter().enumerate().map(|(i, d)| (d.id.clone(), i as u32)).collect();
+        self.sim.staff.supply = s.supply.iter().filter_map(|(id, k)| ix.get(id).map(|&i| (i, k.max(0.0)))).collect();
+        let theatre = self.sim.theatre.clone();
+        let proj = &theatre.proj;
+        for b in &s.bridges { self.sim.staff.pontoons.push((proj.to_xy(b.at), self.player, b.from)); }
+        for b in &s.demolish {
+            match theatre.bridges.iter().position(|x| x.id == b.bridge) {
+                Some(k) => { self.sim.staff.demolished.insert(k as u16, b.from); }
+                None => bad.push(format!("подрыв: моста {} в театре нет", b.bridge)),
+            }
+        }
+        for c in &s.commit {
+            let Some(&i) = ix.get(&c.division) else { bad.push(format!("резерв {}: нет такой дивизии", c.division)); continue };
+            if self.reserves.remove(&i).is_none() { bad.push(format!("резерв {}: не ждёт ввода", c.division)); continue; }
+            let d = &mut self.sim.world.divisions[i as usize];
+            d.enter = c.from.max(self.sim.world.tick);
+            d.vars.pos = proj.to_xy(c.at);
+        }
+        self.sim.staff.sectors = s.sectors.iter().map(|x| Sectors {
+            step: x.step.max(1), cols: x.cols, foreign: x.foreign,
+            label: match &x.codes { Some(c) => c.bytes().map(|b| if b == b'.' { -1 } else { b as i16 - b'0' as i16 }).collect(), None => x.label.clone() },
+            group: x.groups.iter().filter_map(|(id, g)| ix.get(id).map(|&i| (i, *g))).collect(),
+        }).collect();
+        bad
+    }
+
     /// Ход: `hours` шагов (не дальше `limit`).
     pub fn advance(&mut self, hours: u32) {
         let left = self.limit.saturating_sub(self.hour());
@@ -113,8 +200,12 @@ impl Game {
     /// Ход игры в формате trace.json (кадры с начала сценария) и сведения об игре.
     pub fn trace(&self) -> Value {
         let mut v = trace::describe(&self.sim, &self.meta, self.frames.clone());
+        // территория сторон по клеткам театра (0 — ничья, 1 — советская, 2 — немецкая): для путей подвоза от баз
+        v["control"] = serde_json::json!(self.sim.world.control.iter().map(|&c| (b'0' + c.min(9)) as char).collect::<String>());
         v["game"] = serde_json::json!({
-            "player": self.player, "free": self.free, "takeover": self.takeover, "hour": self.hour(), "over": self.over(),
+            "player": self.player, "free": self.free,
+            "reserves": self.reserves.iter().map(|(&i, &h)| serde_json::json!({ "id": self.sim.world.divisions[i as usize].id, "from": h })).collect::<Vec<_>>(),
+            "takeover": self.takeover, "hour": self.hour(), "over": self.over(),
         });
         v
     }

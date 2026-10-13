@@ -23,17 +23,17 @@ fn route_across_oder_to_berlin() {
     let from = t.land_cell_near(t.proj.to_xy([14.70, 52.58])).unwrap();
     let to = t.land_cell_near(t.proj.to_xy([13.40, 52.52])).unwrap();
     let all_open = |_: u16| true;
-    let (path, hours) = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &all_open).expect("пеший путь есть");
+    let (path, hours) = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &route::plain(&all_open)).expect("пеший путь есть");
     assert!(path.len() > 50);
     // около 90 км по прямой: пешком по дорогам при 4 км/ч — не меньше суток чистого движения
     assert!(hours > 20.0 && hours < 80.0, "{hours}");
     // без мостов пехота форсирует с задержкой, технике наводят переправу (march.bridgingHours) — не обход:
     // путь техники без мостов дольше пути по мостам примерно на время наведения (место переправы может быть другим)
     let none_open = |_: u16| false;
-    let (_, foot_h) = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &none_open).expect("пехота форсирует");
+    let (_, foot_h) = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &route::plain(&none_open)).expect("пехота форсирует");
     assert!(foot_h >= hours);
-    let (_, tank_open) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &all_open).expect("по мостам");
-    let (_, tank_none) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &none_open).expect("по наведённой переправе");
+    let (_, tank_open) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &route::plain(&all_open)).expect("по мостам");
+    let (_, tank_none) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &route::plain(&none_open)).expect("по наведённой переправе");
     assert!(tank_none > tank_open + 0.5 * r.bridging_hours && tank_none < tank_open + 3.0 * r.bridging_hours, "{tank_open} → {tank_none}");
 }
 
@@ -325,4 +325,23 @@ fn soviet_staff_on_language_model() {
     assert!(!log.is_empty() && log.iter().all(|e| e["ok"] == true), "{log:?}");
     assert!(log.iter().all(|e| e["hq"].as_str().unwrap().starts_with("su_")));
     assert!(sim.journal.iter().any(|e| e.text.contains("решение штаба (модель)") && e.text.contains("наступать")));
+}
+
+#[test]
+fn staff_pontoon_and_sector_preference() {
+    let (t, r) = setup();
+    let from = t.land_cell_near(t.proj.to_xy([14.70, 52.58])).unwrap();
+    let to = t.land_cell_near(t.proj.to_xy([13.40, 52.52])).unwrap();
+    let none_open = |_: u16| false;
+    let (_, tank_none) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &route::plain(&none_open)).unwrap();
+    // наведённая переправа штаба: переход реки без задержки наведения — как по мосту
+    let (_, tank_pont) = route::find(&t, &r, Side::Su, Mobility::Tracked, from, to, &route::Ways { bridge_open: &none_open, pontoon: &|_, _| true, prefer: &|_| 1.0 }).unwrap();
+    assert!(tank_pont < tank_none - 0.5 * r.bridging_hours, "{tank_none} → {tank_pont}");
+    // полоса соседа: клетки севернее 52.55° «дороже» — путь уходит южнее
+    let north = |c: usize| t.centers[c].y > t.proj.to_xy([14.0, 52.55]).y;
+    let plain_path = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &route::plain(&none_open)).unwrap().0;
+    let pref = |c: usize| if north(c) { 5.0 } else { 1.0 };
+    let pref_path = route::find(&t, &r, Side::Su, Mobility::Foot, from, to, &route::Ways { bridge_open: &none_open, pontoon: &|_, _| false, prefer: &pref }).unwrap().0;
+    let n = |p: &Vec<u32>| p.iter().filter(|&&c| north(c as usize)).count();
+    assert!(n(&pref_path) < n(&plain_path), "{} → {}", n(&plain_path), n(&pref_path));
 }
