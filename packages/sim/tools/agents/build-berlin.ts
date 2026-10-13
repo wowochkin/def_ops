@@ -32,7 +32,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFENSE_ZONES, markDeployed, repeatedFires } from './soviet-fires';
-import { fixFrankfurt, reinforcementOrders, reinforcements, reinforcements4pza } from './german-forces';
+import { fixFrankfurt, rearUnits, reinforcementOrders, reinforcements, reinforcements4pza } from './german-forces';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8')) as T;
@@ -293,6 +293,9 @@ for (const f of ts.formations.filter((x) => x.side === 'de' && x.echelon === 'co
 fixFrankfurt(out);
 out.push(...reinforcements(out, (id) => hqs.get(id)?.name ?? id));
 out.push(...reinforcements4pza(out, new Map([['de_v', ['de_v']], ['de_pzk_gd', ['de_pzk_gd']], ['de_4pza', ['de_4pza']]]), (id) => hqs.get(id)?.name ?? id));
+// немецкие части в тылу (berlin-1945-german-rear.json)
+const rear = rearUnits(out, rd<{ units: Parameters<typeof rearUnits>[1] }>('docs/sources/berlin-1945-german-rear.json').units);
+out.push(...rear.agents);
 const agentIds = new Set(out.map((o) => o.id));
 
 // ---------- приказы ----------
@@ -336,6 +339,7 @@ for (const o of ts.orders) {
 }
 
 orders.push(...reinforcementOrders(out));
+orders.push(...rear.orders);
 // приказ «держаться» соединению (крепость) сильнее общего «оборонять» того же часа: иначе он затирается следующим
 {
   type O = { at: unknown; to: string[]; kind: string };

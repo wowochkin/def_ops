@@ -74,6 +74,12 @@ pub struct Combat {
     pub penetration_km_day: f64,
     /// Поправка на размер (QJM): (до численности, множитель).
     pub size: Vec<(f64, f64)>,
+    /// Поправка на размер — по силе армии в бою (иначе — по полосе одной обороняющейся дивизии).
+    pub size_by_army: bool,
+    /// Потери наступающего ∝ перевес^(−exp) (0 — не зависят).
+    pub attacker_ratio_exp: f64,
+    /// Потери в соприкосновении без боя, доля в сутки.
+    pub contact_loss_day: f64,
     pub tank_loss_factor: f64,
     pub gun_loss_factor: f64,
     /// Участок наступления, км: советская стрелковая, советская танковая (механизированная), немецкая.
@@ -294,6 +300,9 @@ impl Rules {
             attacker_loss_prepared: num(&ag, "combat.attackerLossPrepared")?,
             urban_km_day: [num(&ag, "combat.urban.outer")?, num(&ag, "combat.urban.inner")?, num(&ag, "combat.urban.citadel")?],
             penetration_km_day: num(&ag, "combat.penetrationKmDay")?,
+            size_by_army: num(&ag, "combat.sizeByArmy")? > 0.0,
+            attacker_ratio_exp: num(&ag, "combat.attackerRatioExp")?,
+            contact_loss_day: num(&ag, "combat.contactLossDay")?,
             size: ag.pointer("/combat/sizeFactor/value").and_then(Value::as_array).map(|a| a.iter().filter_map(|p| Some((p.get(0)?.as_f64()?, p.get(1)?.as_f64()?))).collect()).unwrap_or_default(),
             tank_loss_factor: num(&ag, "combat.tankLossFactor")?,
             gun_loss_factor: num(&ag, "combat.gunLossFactor")?,

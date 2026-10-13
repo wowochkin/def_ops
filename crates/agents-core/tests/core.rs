@@ -292,8 +292,12 @@ fn pocket_and_breakout() {
     let path = format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json");
     let (mut sim, meta) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
     let mut berlin_cut = false;
+    let reichstag = sim.theatre.proj.to_xy([13.3761, 52.5187]);
+    let mut su_city = 0;
     for _ in 0..meta.hours {
         sim.step();
+        let tick = sim.world.tick;
+        su_city += sim.world.divisions.iter().filter(|d| d.side == Side::Su && d.vars.pos.dist(reichstag) < 10.0 && sim.encircled(d, tick)).count();
         if sim.world.tick == 300 {
             let tick = sim.world.tick;
             berlin_cut = sim.world.divisions.iter().filter(|d| d.id.starts_with("de_sector_")).any(|d| sim.encircled(d, tick));
@@ -301,8 +305,10 @@ fn pocket_and_breakout() {
     }
     assert!(berlin_cut, "гарнизон Берлина к 28.04 окружён");
     assert!(sim.journal.iter().any(|e| e.text.contains("вышла с прорывом")), "есть вышедшие с прорывом");
-    let su_cut = sim.journal.iter().filter(|e| e.text.starts_with("окружена") && sim.world.divisions[e.agent as usize].side == Side::Su).count();
-    assert!(su_cut <= 3, "советских «окружений» {su_cut}");
+    // советские дивизии в городе не «окружены» немецкими секторами гарнизона (свои рядом держат коридор)
+    assert_eq!(su_city, 0, "часов советских дивизий в окружении в городе");
+    // прорыв из котла — только у немецкой стороны
+    assert!(!sim.journal.iter().any(|e| e.text.contains("вышла с прорывом") && sim.world.divisions[e.agent as usize].side == Side::Su));
 }
 
 /// Советские штабы на языковой модели: решает штаб армии за все её дивизии, наступление — на цель замысла.

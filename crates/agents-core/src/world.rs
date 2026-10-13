@@ -81,6 +81,8 @@ pub struct World {
     pub reach: [Vec<bool>; 2],
     /// Клетки ближе pocket.hold_km к войскам стороны — её территорию там держат: [советская, немецкая].
     pub held: [Vec<bool>; 2],
+    /// Дивизия вела бой в этом часе (наступала или оборонялась).
+    pub engaged: Vec<bool>,
 }
 
 /// Радиус начальной разметки территории вокруг войск, км.
@@ -323,8 +325,9 @@ impl Sim {
         }
 
         // прорыв из окружения: окружённая дивизия с приказом наступать не ввязывается в бой, а колонной идёт к цели
-        // через бреши в кольце, неся потери (apply); темп — не выше pocket.breakout_km_day (march); вырвавшись, идёт до цели
-        if let Some(o) = d.order.as_ref().filter(|o| o.kind == OrderKind::Attack && pos.dist(o.target) >= 1.5 && (self.encircled(d, w.tick) || d.state == State::Attack(AttackSub::Breakout))) {
+        // через бреши в кольце, неся потери (apply); темп — не выше pocket.breakout_km_day (march); вырвавшись, идёт до цели.
+        // Только немецкая сторона (котёл 9 А): советские подвижные группы, отрезанные в немецком тылу, продолжали задачу
+        if let Some(o) = d.order.as_ref().filter(|o| d.side == Side::De && o.kind == OrderKind::Attack && pos.dist(o.target) >= 1.5 && (self.encircled(d, w.tick) || d.state == State::Attack(AttackSub::Breakout))) {
             self.march(w, d, o.target, r.march_hours_forced, &mut out);
             out.state = if d.state == State::Attack(AttackSub::Breakout) { None } else {
                 Some((State::Attack(AttackSub::Breakout), "окружена — прорыв к своим колоннами через бреши".into())) };
@@ -507,7 +510,7 @@ impl Sim {
                 if sub != MarchSub::Crossing { sub = MarchSub::OffRoad; }
             }
             // прорыв из окружения — колоннами по лесам и через бреши, с боями у каждого рубежа
-            if d.state == State::Attack(AttackSub::Breakout) || self.encircled(d, w.tick) && d.order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack) {
+            if d.state == State::Attack(AttackSub::Breakout) || d.side == Side::De && self.encircled(d, w.tick) && d.order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack) {
                 v = v.min(r.pocket.breakout_km_day / hours_limit);
             }
             if v <= 0.0 { break; }
@@ -533,6 +536,7 @@ impl Sim {
 
     fn resolve(&self, w: &mut World, intents: Vec<Intent>, journal: &mut Vec<Event>) {
         let tick = w.tick;
+        w.engaged = vec![false; w.divisions.len()];
         let r = &self.rules;
         // маршруты и состояния
         for (i, it) in intents.iter().enumerate() {
@@ -610,6 +614,20 @@ impl Sim {
                 None => waiting.push(a),
             }
         }
+        // сила в бою для поправки на размер (QJM): по полосе одной обороняющейся дивизии или по армии целиком
+        let div_army: Vec<usize> = if c.size_by_army {
+            let army_of = |mut h: usize| { for _ in 0..8 { if w.hqs[h].echelon == Echelon::Army { return h; } match w.hqs[h].parent { Some(p) => h = p as usize, None => return h } } h };
+            w.divisions.iter().map(|d| army_of(d.hq as usize)).collect()
+        } else { Vec::new() };
+        let mut army_people: BTreeMap<usize, f64> = BTreeMap::new();
+        if c.size_by_army {
+            for (&def, atts) in &battles {
+                *army_people.entry(div_army[def as usize]).or_default() += w.divisions[def as usize].vars.personnel;
+                for &a in atts { *army_people.entry(div_army[a as usize]).or_default() += w.divisions[a as usize].vars.personnel; }
+            }
+        }
+        let size_people = |i: u32, own: f64| if c.size_by_army { army_people.get(&div_army[i as usize]).copied().unwrap_or(own) } else { own };
+        for (&def, atts) in &battles { w.engaged[def as usize] = true; for &a in atts { w.engaged[a as usize] = true; } }
         // темп боя на полосе каждой обороняющейся дивизии, км за час — за ним идут ожидающие второго эшелона
         let mut battle_pace: BTreeMap<u32, f64> = BTreeMap::new();
         for (def, atts) in battles {
@@ -638,8 +656,10 @@ impl Sim {
             // потери, доля в сутки: база QJM с поправкой на размер; обороне — до нормы прорыва по мере продвижения
             // против подготовленной и укреплённой обороны наступающий теряет больше (калибровка — docs/plans/agents.md, 10п)
             let a_post = if posture >= 1 { c.attacker_loss_prepared } else { 1.0 };
-            let a_day = (c.attacker_loss_day * c.size_factor(att_power_people(w, &atts)) * a_post * noise).min(c.attacker_loss_max_day * a_post);
-            let d_base = c.defender_loss_day * c.size_factor(dd.vars.personnel);
+            // перевес: потери наступающего падают с ним (attacker_ratio_exp; 0 — не зависят)
+            let a_ratio = if c.attacker_ratio_exp > 0.0 { ratio.max(0.25).powf(-c.attacker_ratio_exp) } else { 1.0 };
+            let a_day = (c.attacker_loss_day * c.size_factor(size_people(atts[0], att_power_people(w, &atts))) * a_post * a_ratio * noise).min(c.attacker_loss_max_day * a_post);
+            let d_base = c.defender_loss_day * c.size_factor(size_people(def, dd.vars.personnel));
             let d_rate = d_base + (c.defender_loss_penetration_day - d_base).max(0.0) * (adv_day / c.penetration_km_day).min(1.0);
             // перевес наступающего на полосе: потери обороны растут с ним (калибровка — docs/plans/agents.md, 10и)
             let d_ratio = (ratio / c.defender_ratio_ref).max(1.0).powf(c.defender_ratio_exp);
@@ -804,6 +824,16 @@ impl Sim {
         }
         self.apply_pockets(w, journal);
         self.apply_breakout_losses(w);
+        // потери в соприкосновении без боя: огонь, мины, поиски (contact_loss_day; 0 — нет)
+        if r.combat.contact_loss_day > 0.0 {
+            let reach = r.contact_km;
+            let hit: Vec<usize> = (0..w.divisions.len()).filter(|&i| {
+                let d = &w.divisions[i];
+                !d.state.out() && d.state != State::Remnant && !w.engaged.get(i).copied().unwrap_or(false)
+                    && w.divisions.iter().any(|e| e.side != d.side && !e.state.out() && e.state != State::Remnant && e.vars.pos.dist(d.vars.pos) <= reach)
+            }).collect();
+            for i in hit { lose(&mut w.divisions[i], r.combat.contact_loss_day / 24.0, 1.0, &r.combat); }
+        }
         // объекты: чей район — по ближайшей дивизии в 2 км (параллельно, только чтение)
         let index = Index::build(w.divisions.iter().enumerate().filter(|(_, d)| !d.state.out()).map(|(i, d)| (i as u32, d.vars.pos)), 5.0);
         let divs = &w.divisions;

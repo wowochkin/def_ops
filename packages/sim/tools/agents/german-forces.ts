@@ -112,3 +112,53 @@ export function reinforcementOrders(agents: Agent[]): { at: number; hq: string; 
   return agents.filter((a) => a.kind === 'reinf' || a.id === 'de_hj_pznk')
     .map((a) => ({ at: 0, hq: a.hq, to: [a.id], kind: 'defend', target: a.pos, note: 'вторая позиция (части вне дивизий, berlin-1945-german-forces.json)' }));
 }
+
+/**
+ * Немецкие части в тылу (docs/sources/berlin-1945-german-rear.json): учебные и запасные части, гарнизоны городов,
+ * фольксштурм, боевые группы — от Цоссена и Котбуса до групп III тк СС у Ораниенбурга и батальонов у Эльбы. Берутся
+ * записи с местом и датой 16–24.04; маркеры пробелов, записи вне окна и уже стоящие в сценарии не берутся. Где
+ * численности в источнике нет — допущение по типу (C): батальон 400, полк 1 200, бригада 1 500, гарнизон города 500,
+ * боевая группа 600. Подчинение — по источнику (III тк СС), иначе штаб, чьи соединения ближе всего; приказ — держаться (боевые коменданты городов).
+ * Группы, собранные 21–24.04 (III тк СС, бригада Мюллера, маршевые батальоны флота), вводятся с даты записи.
+ */
+const REAR: Record<string, { size: number; tanks?: number; enter?: boolean }> = {
+  rear_wuensdorf_pz_ausb_rgt: { size: 1200 }, rear_baruth_garrison: { size: 0 }, rear_stug_brig_218: { size: 600, tanks: 10 },
+  rear_kummersdorf_range: { size: 400 }, rear_juterbog_altes_lager: { size: 400 }, rear_treuenbrietzen_volkssturm: { size: 400 },
+  rear_luckenwalde: { size: 500 }, rear_cottbus_garrison: { size: 1500 }, rear_spremberg_volkssturm: { size: 0 },
+  rear_brigade_mueller: { size: 1500, enter: true }, rear_brandenburg_havel_garrison: { size: 500 }, rear_finow_canal_security: { size: 400 },
+  rear_kg_harzer: { size: 600, enter: true }, rear_kg_herber: { size: 0, enter: true }, rear_kg_marine_9rgt: { size: 1200, enter: true },
+  rear_kg_schirmer: { size: 0, enter: true }, rear_kg_kresin: { size: 0, enter: true }, rear_kg_von_wolff: { size: 600, enter: true },
+  rear_marine_march_btls_preiss: { size: 0, enter: true }, rear_7ss_pol_rgt: { size: 0 }, rear_eberswalde_festung: { size: 500 },
+  rear_kg_torgau: { size: 400 }, rear_kg_riesa: { size: 400 }, rear_btl_schildau: { size: 400 }, rear_pi_btl_oschatz: { size: 400 },
+  rear_zeithain_battalions: { size: 400 }, rear_prettin_annaburg: { size: 400 }, rear_kg_hermann: { size: 600 }, rear_kg_scherer: { size: 600 },
+};
+interface RearUnit { id: string; name: string; kind: string; subordination?: string; lng: number | null; lat: number | null; date: string | null; personnel: number | null; guns: number | null; tanks: number | null; source: string; reliability: string; area: string }
+export function rearUnits(out: Agent[], units: RearUnit[]): { agents: (Agent & { enterAt?: string })[]; orders: { at: number | string; hq: string; to: string[]; kind: string; target: LngLat; note: string }[] } {
+  // центры соединений немецких штабов — для подчинения ближайшему
+  const groups = new Map<string, LngLat[]>();
+  for (const o of out) if (o.side === 'de') groups.set(o.hq, [...(groups.get(o.hq) ?? []), o.pos]);
+  const centers = [...groups].map(([hq, ps]) => ({ hq, c: ps.reduce<LngLat>((s, p) => [s[0] + p[0] / ps.length, s[1] + p[1] / ps.length], [0, 0]) }));
+  const agents: (Agent & { enterAt?: string })[] = [];
+  const orders: { at: number | string; hq: string; to: string[]; kind: string; target: LngLat; note: string }[] = [];
+  for (const u of units) {
+    const spec = REAR[u.id];
+    if (!spec || u.lng === null || u.lat === null) continue;
+    const pos: LngLat = [u.lng, u.lat];
+    // подчинение по источнику, если в нём назван III тк СС (армейская группа Штайнера); иначе — ближайший штаб
+    const sub = u.subordination ?? '';
+    const hq = /III/.test(sub) && /(СС|SS|Штайнер|Steiner)/.test(sub) && out.some((o) => o.hq === 'de_iii_ss') ? 'de_iii_ss' : centers.reduce((b, x) => (Math.hypot((x.c[0] - pos[0]) * KX, (x.c[1] - pos[1]) * KY) < Math.hypot((b.c[0] - pos[0]) * KX, (b.c[1] - pos[1]) * KY) ? x : b)).hq;
+    const personnel = u.personnel ?? spec.size;
+    const enterAt = spec.enter && u.date && u.date > '1945-04-16' ? `${u.date}T05:00` : undefined;
+    agents.push({
+      id: u.id, name: u.name.length > 70 ? `${u.name.slice(0, 67)}…` : u.name, side: 'de', hq, kind: 'rear', mobility: 'foot', size: 'other', quality: 0.6,
+      personnel, tanks: u.tanks ?? spec.tanks ?? 0, guns: u.guns ?? 0, ammo: 1, fuel: 1, pos, ...(enterAt ? { enterAt } : {}),
+      notes: [
+        `положение: ${u.area} (${u.reliability}, berlin-1945-german-rear.json)`,
+        u.personnel !== null ? `численность: по источнику ${u.source} (${u.reliability})` : `численность: в источнике нет — допущение по типу ${personnel} (C)`,
+        'качество 0,6 — допущение (тыловые, учебные части, фольксштурм)',
+      ],
+    });
+    orders.push({ at: enterAt ?? 0, hq, to: [u.id], kind: 'hold', target: pos, note: 'держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)' });
+  }
+  return { agents, orders };
+}

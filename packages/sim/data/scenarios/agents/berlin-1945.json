@@ -7050,6 +7050,594 @@
     51.156
    ],
    "note": "положение: вторая позиция в 8 км западнее дивизий корпуса (как у 9 А; допущение); численность, орудия, бронетехника: части вне дивизий перед 1 УФ на 15.04 (РА-15, док. 13, B) × доля полосы 4 ТА в театре 0,22, батальон 400, полк 1 200 (C); качество 0,7 — допущение (фольксштурм и сборные части)"
+  },
+  {
+   "id": "rear_wuensdorf_pz_ausb_rgt",
+   "name": "Учебный танковый полк / школы Вюнсдорфа (заслон на Рейхсштрассе 96)",
+   "side": "de",
+   "hq": "de_berlin",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 1200,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.47,
+    52.17
+   ],
+   "note": "положение: Вюнсдорф — Цоссен, шоссе Барут — Цоссен (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 1200 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_baruth_garrison",
+   "name": "Заслон в Баруте (пехота и танки на ж.-д. платформах)",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 1000,
+   "tanks": 8,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.5,
+    52.06
+   ],
+   "note": "положение: Барут, Барут-Цоссенский рубеж (B, berlin-1945-german-rear.json); численность: по источнику ISAEV (B); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_stug_brig_218",
+   "name": "218-я бригада штурмовых орудий (Sturmgeschütz-Brigade 218)",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 600,
+   "tanks": 10,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.45,
+    52.12
+   ],
+   "note": "положение: Барут — Цоссен (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 600 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kummersdorf_range",
+   "name": "Куммерсдорфский полигон (Heeresversuchsstelle): охрана, Volkssturm …",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 1,
+   "guns": 1,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.375,
+    52.103
+   ],
+   "note": "положение: Куммерсдорф-Гут (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_juterbog_altes_lager",
+   "name": "Оборона лагеря Альтес-Лагер у Ютербога (ПТ-орудия, САУ, фаустники) …",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.08,
+    51.99
+   ],
+   "note": "положение: Ютербог, Альтес-Лагер (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_treuenbrietzen_volkssturm",
+   "name": "Volkssturm Тройенбрицена и отдельные части дивизии «Ян»",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    12.8735,
+    52.0967
+   ],
+   "note": "положение: Тройенбрицен (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_luckenwalde",
+   "name": "Луккенвальде (гарнизон не установлен)",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 500,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.1742,
+    52.0902
+   ],
+   "note": "положение: Луккенвальде (C, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 500 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_cottbus_garrison",
+   "name": "Котбус — «сильно укреплённый опорный пункт» (боевая группа в полуок…",
+   "side": "de",
+   "hq": "de_v",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 1500,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    14.3357,
+    51.7567
+   ],
+   "note": "положение: Котбус (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 1500 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_spremberg_volkssturm",
+   "name": "Батальон фольксштурма в Шпремберге (в составе гарнизона «крепости» …",
+   "side": "de",
+   "hq": "de_pzk_gd",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 300,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    14.3804,
+    51.5715
+   ],
+   "note": "положение: Шпремберг (C, berlin-1945-german-rear.json); численность: по источнику DEWIKI (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_brigade_mueller",
+   "name": "«Бригада Мюллер» (Brigade Müller; пп «Мюллер»)",
+   "side": "de",
+   "hq": "de_berlin",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 1500,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.08,
+    52.53
+   ],
+   "enterAt": "1945-04-21T05:00",
+   "note": "положение: Дёберитц → Хафель, юг Ораниенбург — Шпандау (C, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 1500 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_brandenburg_havel_garrison",
+   "name": "Бранденбург-на-Хафеле: парашютисты, полиция/СС и Volkssturm",
+   "side": "de",
+   "hq": "de_xxxxi",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 500,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    12.5498,
+    52.4108
+   ],
+   "note": "положение: Бранденбург-на-Хафеле (C, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 500 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_finow_canal_security",
+   "name": "Охранение Финов-канала: несколько полицейских батальонов и запасных…",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.52,
+    52.8
+   ],
+   "note": "положение: Финов-канал / Гогенцоллерн-канал, Эберсвальде — Ораниенбург (C, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_harzer",
+   "name": "Боевая группа Харцера (Kampfgruppe Harzer, штандартенфюрер СС Харце…",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 600,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.1,
+    52.7
+   ],
+   "enterAt": "1945-04-23T05:00",
+   "note": "положение: Швант (10 км з. Ораниенбурга) — Ораниенбург (A, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 600 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_herber",
+   "name": "Боевая группа Хербера (гауптман Herber), КП Эйхштедт: подгруппы Вен…",
+   "side": "de",
+   "hq": "de_berlin",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 840,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.111,
+    52.696
+   ],
+   "enterAt": "1945-04-23T05:00",
+   "note": "положение: Эйхштедт (12 км юго-западнее Ораниенбурга) (A, berlin-1945-german-rear.json); численность: по источнику NARA_T311_R170 (A); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_marine_9rgt",
+   "name": "Боевая группа 9-го полка морской пехоты (3-я дивизия морской пехоты…",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 1200,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.2458,
+    52.7529
+   ],
+   "enterAt": "1945-04-23T05:00",
+   "note": "положение: Ораниенбург (A, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 1200 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_schirmer",
+   "name": "Боевая группа Ширмера (подполковник Schirmer; «Brigade Schirmer»), …",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 1600,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.25,
+    52.85
+   ],
+   "enterAt": "1945-04-23T05:00",
+   "note": "положение: Фрайхаген (≈10 км севернее Ораниенбурга) (A, berlin-1945-german-rear.json); численность: по источнику NARA_T311_R170 (A); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_kresin",
+   "name": "Боевая группа Крезина (полковник Kresin, Arko III SS-Pz.K), КП Грос…",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 1000,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.6,
+    52.96
+   ],
+   "enterAt": "1945-04-23T05:00",
+   "note": "положение: Гросс-Шёнебек (5 км севернее Церпеншлёйзе) (A, berlin-1945-german-rear.json); численность: по источнику NARA_T311_R170 (A); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_von_wolff",
+   "name": "Ударная группа фон Вольфа (115-й мот. разведбат + 630-й армейский с…",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 600,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.25,
+    52.75
+   ],
+   "enterAt": "1945-04-23T05:00",
+   "note": "положение: район Ораниенбурга (место не указано) (A, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 600 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_marine_march_btls_preiss",
+   "name": "5 маршевых батальонов Кригсмарине (фрегаттен-капитан Preiss), ~2 20…",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 2200,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.8,
+    52.85
+   ],
+   "enterAt": "1945-04-24T05:00",
+   "note": "положение: Свинемюнде → Ораниенбург — Эберсвальде (B, berlin-1945-german-rear.json); численность: по источнику ISAEV (B); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_7ss_pol_rgt",
+   "name": "7-й танко-гренадерский полк СС (из 4-й СС-полицейской дивизии, восс…",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 240,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.7997,
+    52.8351
+   ],
+   "note": "положение: Эберсвальде (B, berlin-1945-german-rear.json); численность: по источнику ISAEV (B); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_eberswalde_festung",
+   "name": "Эберсвальде: «Festungskommandant», Kreisleitung, позиция Вотан",
+   "side": "de",
+   "hq": "de_iii_ss",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 500,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.7997,
+    52.8351
+   ],
+   "note": "положение: Эберсвальде (C, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 500 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_torgau",
+   "name": "Боевая группа «Торгау»: батальон — резерв корпуса, штаб полка",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    12.9934,
+    51.5383
+   ],
+   "note": "положение: Торгау, ставка корпуса в Градице (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_riesa",
+   "name": "Боевая группа «Риза»: батальон — резерв корпуса + тяжёлая гаубичная…",
+   "side": "de",
+   "hq": "de_xxxxviii",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.29,
+    51.31
+   ],
+   "note": "положение: Риза (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_btl_schildau",
+   "name": "Батальон «Шильдау» (резерв корпуса); КП артиллерии корпуса (Oberst …",
+   "side": "de",
+   "hq": "de_xxxxviii",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    12.9,
+    51.5
+   ],
+   "note": "положение: Шильдау (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_pi_btl_oschatz",
+   "name": "Инструкторский сапёрный батальон Ошац + армейская школа верховой и …",
+   "side": "de",
+   "hq": "de_xxxxviii",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.1,
+    51.3
+   ],
+   "note": "положение: Ошац (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_zeithain_battalions",
+   "name": "Два новых батальона из невооружённых солдат на учебном плацу Цайтха…",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.33,
+    51.37
+   ],
+   "note": "положение: Цайтхайн (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_prettin_annaburg",
+   "name": "Штаб Ersatzheer + 2 пехотных батальона + штаб полка (район Преттин)…",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 400,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13,
+    51.72
+   ],
+   "note": "положение: Преттин — Аннабург (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 400 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_hermann",
+   "name": "Боевое командование ген.-майора Hermann (оборона Эльбы, начальник с…",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 600,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    12.9934,
+    51.5383
+   ],
+   "note": "положение: Эльба — Торгау — Коссвиг (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 600 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
+  },
+  {
+   "id": "rear_kg_scherer",
+   "name": "Боевое командование ген.-лейтенанта Scherer (оборона Шварце-Эльстер…",
+   "side": "de",
+   "hq": "de_xx",
+   "kind": "rear",
+   "mobility": "foot",
+   "size": "other",
+   "quality": 0.6,
+   "personnel": 600,
+   "tanks": 0,
+   "guns": 0,
+   "ammo": 1,
+   "fuel": 1,
+   "pos": [
+    13.4,
+    51.51
+   ],
+   "note": "положение: Шварце-Эльстер: Рулянд — Херцберг; позднее Эльба севернее (B, berlin-1945-german-rear.json); численность: в источнике нет — допущение по типу 600 (C); качество 0,6 — допущение (тыловые, учебные части, фольксштурм)"
   }
  ],
  "orders": [
@@ -7248,6 +7836,36 @@
    "hq": "de_berlin",
    "to": [
     "de_zoo_flak"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "оборона Берлина [de_berlin@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "de_berlin",
+   "to": [
+    "rear_wuensdorf_pz_ausb_rgt"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "оборона Берлина [de_berlin@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "de_berlin",
+   "to": [
+    "rear_brigade_mueller"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "оборона Берлина [de_berlin@1945-04-15T18:00:hold]"
+  },
+  {
+   "at": 0,
+   "hq": "de_berlin",
+   "to": [
+    "rear_kg_herber"
    ],
    "kind": "hold",
    "target": null,
@@ -11716,8 +12334,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    14.5569,
-    51.3935
+    14.6153,
+    51.386
    ],
    "note": "[de_pzk_gd@1945-04-19T18:00:withdraw]"
   },
@@ -11729,8 +12347,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    14.5824,
-    51.3715
+    14.6273,
+    51.364
    ],
    "note": "[de_pzk_gd@1945-04-19T18:00:withdraw]"
   },
@@ -11742,8 +12360,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    14.4769,
-    51.3312
+    14.5352,
+    51.3238
    ],
    "note": "[de_pzk_gd@1945-04-19T18:00:withdraw]"
   },
@@ -11755,8 +12373,21 @@
    ],
    "kind": "withdraw",
    "target": [
-    14.4207,
-    51.3654
+    14.4791,
+    51.358
+   ],
+   "note": "[de_pzk_gd@1945-04-19T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_pzk_gd",
+   "to": [
+    "rear_spremberg_volkssturm"
+   ],
+   "kind": "withdraw",
+   "target": [
+    14.3911,
+    51.3952
    ],
    "note": "[de_pzk_gd@1945-04-19T18:00:withdraw]"
   },
@@ -11768,8 +12399,8 @@
    ],
    "kind": "defend",
    "target": [
-    14.3968,
-    51.82
+    14.4235,
+    51.816
    ],
    "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
   },
@@ -11781,8 +12412,8 @@
    ],
    "kind": "defend",
    "target": [
-    14.3879,
-    51.7934
+    14.4146,
+    51.7894
    ],
    "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
   },
@@ -11794,8 +12425,8 @@
    ],
    "kind": "defend",
    "target": [
-    14.3789,
-    51.7668
+    14.4058,
+    51.7628
    ],
    "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
   },
@@ -11807,8 +12438,8 @@
    ],
    "kind": "defend",
    "target": [
-    14.3701,
-    51.7402
+    14.3968,
+    51.7363
    ],
    "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
   },
@@ -11820,7 +12451,7 @@
    ],
    "kind": "defend",
    "target": [
-    14.2858,
+    14.3127,
     51.6843
    ],
    "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
@@ -11833,8 +12464,8 @@
    ],
    "kind": "defend",
    "target": [
-    14.2959,
-    51.7881
+    14.3226,
+    51.7841
    ],
    "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
   },
@@ -11846,8 +12477,21 @@
    ],
    "kind": "defend",
    "target": [
-    14.2345,
-    51.7567
+    14.2612,
+    51.7527
+   ],
+   "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
+  },
+  {
+   "at": "1945-04-19T18:00",
+   "hq": "de_v",
+   "to": [
+    "rear_cottbus_garrison"
+   ],
+   "kind": "defend",
+   "target": [
+    14.2176,
+    51.7845
    ],
    "note": "Котбус; на Нейсе — лишь завеса, тыл армии прикрыть у Люббена (LT_HALBE) [de_v@1945-04-19T18:00:defend]"
   },
@@ -13936,6 +14580,16 @@
   },
   {
    "at": "1945-04-21T17:00",
+   "hq": "de_v",
+   "to": [
+    "rear_cottbus_garrison"
+   ],
+   "kind": "hold",
+   "target": null,
+   "note": "Гитлер: держать линию Котбус–Фюрстенберг–Мюлльрозе–Фюрстенвальде (21.04 17:20, LT_HALBE) [de_v@1945-04-21T17:00:hold]"
+  },
+  {
+   "at": "1945-04-21T17:00",
    "hq": "de_v_ss",
    "to": [
     "de_286id"
@@ -14026,6 +14680,96 @@
   },
   {
    "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_finow_canal_security"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_harzer"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_marine_9rgt"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_schirmer"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_kresin"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_von_wolff"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_marine_march_btls_preiss"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_7ss_pol_rgt"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_eberswalde_festung"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "«армейская группа Штайнер»: удар на Берлин так и не начат [de_iii_ss@1945-04-21T18:00:defend]"
+  },
+  {
+   "at": "1945-04-21T18:00",
    "hq": "de_4pza",
    "to": [
     "de_lvii"
@@ -14045,8 +14789,8 @@
    ],
    "kind": "attack",
    "target": [
-    14.4753,
-    51.209
+    14.5337,
+    51.2015
    ],
    "note": "контрудар у Баутцена 21–25.04 [de_pzk_gd@1945-04-21T18:00:counterattack]"
   },
@@ -14058,8 +14802,8 @@
    ],
    "kind": "attack",
    "target": [
-    14.5008,
-    51.187
+    14.5457,
+    51.1795
    ],
    "note": "контрудар у Баутцена 21–25.04 [de_pzk_gd@1945-04-21T18:00:counterattack]"
   },
@@ -14071,8 +14815,8 @@
    ],
    "kind": "attack",
    "target": [
-    14.3953,
-    51.1467
+    14.4536,
+    51.1393
    ],
    "note": "контрудар у Баутцена 21–25.04 [de_pzk_gd@1945-04-21T18:00:counterattack]"
   },
@@ -14084,8 +14828,21 @@
    ],
    "kind": "attack",
    "target": [
-    14.3391,
-    51.1809
+    14.3975,
+    51.1735
+   ],
+   "note": "контрудар у Баутцена 21–25.04 [de_pzk_gd@1945-04-21T18:00:counterattack]"
+  },
+  {
+   "at": "1945-04-21T18:00",
+   "hq": "de_pzk_gd",
+   "to": [
+    "rear_spremberg_volkssturm"
+   ],
+   "kind": "attack",
+   "target": [
+    14.3095,
+    51.2107
    ],
    "note": "контрудар у Баутцена 21–25.04 [de_pzk_gd@1945-04-21T18:00:counterattack]"
   },
@@ -16034,8 +16791,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.8381,
-    52.1076
+    12.7554,
+    52.1691
    ],
    "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
   },
@@ -16047,8 +16804,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.8824,
-    52.1076
+    12.7554,
+    52.1691
    ],
    "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
   },
@@ -16060,8 +16817,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9266,
-    52.1076
+    12.7554,
+    52.1691
    ],
    "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
   },
@@ -16073,8 +16830,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.8381,
-    52.0804
+    12.7554,
+    52.1691
    ],
    "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
   },
@@ -16086,8 +16843,151 @@
    ],
    "kind": "attack",
    "target": [
-    12.8824,
-    52.0804
+    12.7554,
+    52.1691
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_baruth_garrison"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9916,
+    52.1691
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_stug_brig_218"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9916,
+    52.1691
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kummersdorf_range"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9916,
+    52.1691
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_juterbog_altes_lager"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8604,
+    52.1691
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_treuenbrietzen_volkssturm"
+   ],
+   "kind": "attack",
+   "target": [
+    12.7554,
+    52.1691
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_luckenwalde"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9545,
+    52.1691
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_torgau"
+   ],
+   "kind": "attack",
+   "target": [
+    12.7737,
+    52.0243
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_zeithain_battalions"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9916,
+    52.0243
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_prettin_annaburg"
+   ],
+   "kind": "attack",
+   "target": [
+    12.7804,
+    52.0243
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_hermann"
+   ],
+   "kind": "attack",
+   "target": [
+    12.7737,
+    52.0243
+   ],
+   "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_scherer"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9916,
+    52.0243
    ],
    "note": "Венк: ударом на Потсдам открыть путь (LT_HALBE) [de_xx@1945-04-23T18:00:attack]"
   },
@@ -16116,6 +17016,16 @@
    "hq": "de_xxxxi",
    "to": [
     "de_vwaffen"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "прикрыть северный фланг Венка у Ратенова (LT_RACE) [de_xxxxi@1945-04-23T18:00:defend]"
+  },
+  {
+   "at": "1945-04-23T18:00",
+   "hq": "de_xxxxi",
+   "to": [
+    "rear_brandenburg_havel_garrison"
    ],
    "kind": "defend",
    "target": null,
@@ -16932,8 +17842,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.9575,
-    52.0052
+    13.9842,
+    52.0012
    ],
    "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
   },
@@ -16945,8 +17855,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.9486,
-    51.9786
+    13.9753,
+    51.9746
    ],
    "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
   },
@@ -16958,8 +17868,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.9396,
-    51.952
+    13.9665,
+    51.948
    ],
    "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
   },
@@ -16971,8 +17881,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.9308,
-    51.9254
+    13.9575,
+    51.9215
    ],
    "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
   },
@@ -16984,7 +17894,7 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.8465,
+    13.8734,
     51.8695
    ],
    "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
@@ -16997,8 +17907,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.8566,
-    51.9733
+    13.8833,
+    51.9693
    ],
    "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
   },
@@ -17010,8 +17920,21 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.7952,
-    51.9419
+    13.8219,
+    51.9379
+   ],
+   "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
+  },
+  {
+   "at": "1945-04-23T20:00",
+   "hq": "de_v",
+   "to": [
+    "rear_cottbus_garrison"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.7783,
+    51.9697
    ],
    "note": "в ночь 23/24.04 на Бург (Шпревальд)–Буцен (LT_HALBE) [de_v@1945-04-23T20:00:withdraw]"
   },
@@ -18474,8 +19397,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.1365,
-    52.7913
+    13.3639,
+    52.7893
    ],
    "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
   },
@@ -18487,8 +19410,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.1365,
-    52.7642
+    13.3639,
+    52.7621
    ],
    "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
   },
@@ -18500,8 +19423,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.1277,
-    52.7734
+    13.3399,
+    52.7713
    ],
    "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
   },
@@ -18514,7 +19437,7 @@
    "kind": "withdraw",
    "target": [
     13.3639,
-    52.7773
+    52.7752
    ],
    "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
   },
@@ -18528,6 +19451,123 @@
    "target": [
     13.3639,
     52.6805
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_finow_canal_security"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.1277,
+    52.7392
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_harzer"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.1277,
+    52.6805
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_marine_9rgt"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.1277,
+    52.6921
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_schirmer"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.1277,
+    52.7893
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_kresin"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.1987,
+    52.8253
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_von_wolff"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.1277,
+    52.6892
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_marine_march_btls_preiss"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.3639,
+    52.7893
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_7ss_pol_rgt"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.3639,
+    52.7743
+   ],
+   "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_eberswalde_festung"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.3639,
+    52.7743
    ],
    "note": "[de_iii_ss@1945-04-25T18:00:withdraw]"
   },
@@ -18565,8 +19605,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.8239,
-    52.1735
+    13.8506,
+    52.1695
    ],
    "note": "[de_v@1945-04-25T18:00:withdraw]"
   },
@@ -18578,8 +19618,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.815,
-    52.1469
+    13.8417,
+    52.1429
    ],
    "note": "[de_v@1945-04-25T18:00:withdraw]"
   },
@@ -18591,8 +19631,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.806,
-    52.1203
+    13.8329,
+    52.1163
    ],
    "note": "[de_v@1945-04-25T18:00:withdraw]"
   },
@@ -18604,8 +19644,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.7972,
-    52.0937
+    13.8239,
+    52.0898
    ],
    "note": "[de_v@1945-04-25T18:00:withdraw]"
   },
@@ -18617,7 +19657,7 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.7129,
+    13.7398,
     52.0378
    ],
    "note": "[de_v@1945-04-25T18:00:withdraw]"
@@ -18630,8 +19670,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.723,
-    52.1416
+    13.7497,
+    52.1376
    ],
    "note": "[de_v@1945-04-25T18:00:withdraw]"
   },
@@ -18643,8 +19683,21 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.6616,
-    52.1102
+    13.6883,
+    52.1062
+   ],
+   "note": "[de_v@1945-04-25T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_v",
+   "to": [
+    "rear_cottbus_garrison"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.6447,
+    52.138
    ],
    "note": "[de_v@1945-04-25T18:00:withdraw]"
   },
@@ -18708,8 +19761,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9215,
-    52.2397
+    12.8388,
+    52.3012
    ],
    "note": "[de_xx@1945-04-25T18:00:attack]"
   },
@@ -18721,8 +19774,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9658,
-    52.2397
+    12.8388,
+    52.3012
    ],
    "note": "[de_xx@1945-04-25T18:00:attack]"
   },
@@ -18734,8 +19787,8 @@
    ],
    "kind": "attack",
    "target": [
-    13.01,
-    52.2397
+    12.8388,
+    52.3012
    ],
    "note": "[de_xx@1945-04-25T18:00:attack]"
   },
@@ -18747,8 +19800,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9215,
-    52.2125
+    12.8388,
+    52.3012
    ],
    "note": "[de_xx@1945-04-25T18:00:attack]"
   },
@@ -18760,8 +19813,151 @@
    ],
    "kind": "attack",
    "target": [
-    12.9658,
-    52.2125
+    12.8388,
+    52.3012
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_baruth_garrison"
+   ],
+   "kind": "attack",
+   "target": [
+    13.075,
+    52.3012
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_stug_brig_218"
+   ],
+   "kind": "attack",
+   "target": [
+    13.075,
+    52.3012
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kummersdorf_range"
+   ],
+   "kind": "attack",
+   "target": [
+    13.075,
+    52.3012
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_juterbog_altes_lager"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9438,
+    52.3012
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_treuenbrietzen_volkssturm"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8388,
+    52.3012
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_luckenwalde"
+   ],
+   "kind": "attack",
+   "target": [
+    13.0379,
+    52.3012
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_torgau"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8571,
+    52.1564
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_zeithain_battalions"
+   ],
+   "kind": "attack",
+   "target": [
+    13.075,
+    52.1564
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_prettin_annaburg"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8638,
+    52.1564
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_hermann"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8571,
+    52.1564
+   ],
+   "note": "[de_xx@1945-04-25T18:00:attack]"
+  },
+  {
+   "at": "1945-04-25T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_scherer"
+   ],
+   "kind": "attack",
+   "target": [
+    13.075,
+    52.1564
    ],
    "note": "[de_xx@1945-04-25T18:00:attack]"
   },
@@ -19469,14 +20665,24 @@
   },
   {
    "at": "1945-04-26T18:00",
+   "hq": "de_pzk_gd",
+   "to": [
+    "rear_spremberg_volkssturm"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "[de_pzk_gd@1945-04-26T18:00:defend]"
+  },
+  {
+   "at": "1945-04-26T18:00",
    "hq": "de_xx",
    "to": [
     "de_koerner"
    ],
    "kind": "attack",
    "target": [
-    12.8941,
-    52.3225
+    12.8114,
+    52.384
    ],
    "note": "[de_xx@1945-04-26T18:00:attack]"
   },
@@ -19488,8 +20694,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9384,
-    52.3225
+    12.8114,
+    52.384
    ],
    "note": "[de_xx@1945-04-26T18:00:attack]"
   },
@@ -19501,8 +20707,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9826,
-    52.3225
+    12.8114,
+    52.384
    ],
    "note": "[de_xx@1945-04-26T18:00:attack]"
   },
@@ -19514,8 +20720,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.8941,
-    52.2953
+    12.8114,
+    52.384
    ],
    "note": "[de_xx@1945-04-26T18:00:attack]"
   },
@@ -19527,8 +20733,151 @@
    ],
    "kind": "attack",
    "target": [
-    12.9384,
-    52.2953
+    12.8114,
+    52.384
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_baruth_garrison"
+   ],
+   "kind": "attack",
+   "target": [
+    13.0476,
+    52.384
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_stug_brig_218"
+   ],
+   "kind": "attack",
+   "target": [
+    13.0476,
+    52.384
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kummersdorf_range"
+   ],
+   "kind": "attack",
+   "target": [
+    13.0476,
+    52.384
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_juterbog_altes_lager"
+   ],
+   "kind": "attack",
+   "target": [
+    12.9164,
+    52.384
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_treuenbrietzen_volkssturm"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8114,
+    52.384
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_luckenwalde"
+   ],
+   "kind": "attack",
+   "target": [
+    13.0105,
+    52.384
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_torgau"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8297,
+    52.2392
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_zeithain_battalions"
+   ],
+   "kind": "attack",
+   "target": [
+    13.0476,
+    52.2392
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_prettin_annaburg"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8364,
+    52.2392
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_hermann"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8297,
+    52.2392
+   ],
+   "note": "[de_xx@1945-04-26T18:00:attack]"
+  },
+  {
+   "at": "1945-04-26T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_scherer"
+   ],
+   "kind": "attack",
+   "target": [
+    13.0476,
+    52.2392
    ],
    "note": "[de_xx@1945-04-26T18:00:attack]"
   },
@@ -21019,8 +22368,8 @@
    ],
    "kind": "attack",
    "target": [
-    13.018,
-    52.2921
+    13.0447,
+    52.2881
    ],
    "note": "[de_v@1945-04-28T15:00:breakout]"
   },
@@ -21032,8 +22381,8 @@
    ],
    "kind": "attack",
    "target": [
-    13.0091,
-    52.2655
+    13.0358,
+    52.2615
    ],
    "note": "[de_v@1945-04-28T15:00:breakout]"
   },
@@ -21045,8 +22394,8 @@
    ],
    "kind": "attack",
    "target": [
-    13.0001,
-    52.2389
+    13.027,
+    52.2349
    ],
    "note": "[de_v@1945-04-28T15:00:breakout]"
   },
@@ -21058,8 +22407,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9913,
-    52.2123
+    13.018,
+    52.2084
    ],
    "note": "[de_v@1945-04-28T15:00:breakout]"
   },
@@ -21071,7 +22420,7 @@
    ],
    "kind": "attack",
    "target": [
-    12.907,
+    12.9339,
     52.1564
    ],
    "note": "[de_v@1945-04-28T15:00:breakout]"
@@ -21084,8 +22433,8 @@
    ],
    "kind": "attack",
    "target": [
-    12.9171,
-    52.2602
+    12.9438,
+    52.2562
    ],
    "note": "[de_v@1945-04-28T15:00:breakout]"
   },
@@ -21097,8 +22446,21 @@
    ],
    "kind": "attack",
    "target": [
-    12.8557,
-    52.2288
+    12.8824,
+    52.2248
+   ],
+   "note": "[de_v@1945-04-28T15:00:breakout]"
+  },
+  {
+   "at": "1945-04-28T15:00",
+   "hq": "de_v",
+   "to": [
+    "rear_cottbus_garrison"
+   ],
+   "kind": "attack",
+   "target": [
+    12.8388,
+    52.2566
    ],
    "note": "[de_v@1945-04-28T15:00:breakout]"
   },
@@ -21162,8 +22524,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.2256,
-    53.0179
+    13.453,
+    53.0159
    ],
    "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
   },
@@ -21175,8 +22537,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.2256,
-    52.9908
+    13.453,
+    52.9887
    ],
    "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
   },
@@ -21188,8 +22550,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    13.2168,
-    53
+    13.429,
+    52.9979
    ],
    "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
   },
@@ -21202,7 +22564,7 @@
    "kind": "withdraw",
    "target": [
     13.453,
-    53.0039
+    53.0018
    ],
    "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
   },
@@ -21216,6 +22578,123 @@
    "target": [
     13.453,
     52.9071
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_finow_canal_security"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.2168,
+    52.9658
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_harzer"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.2168,
+    52.9071
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_marine_9rgt"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.2168,
+    52.9187
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_schirmer"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.2168,
+    53.0159
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_kresin"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.2878,
+    53.0519
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_von_wolff"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.2168,
+    52.9158
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_marine_march_btls_preiss"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.453,
+    53.0159
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_7ss_pol_rgt"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.453,
+    53.0009
+   ],
+   "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
+  },
+  {
+   "at": "1945-04-28T18:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_eberswalde_festung"
+   ],
+   "kind": "withdraw",
+   "target": [
+    13.453,
+    53.0009
    ],
    "note": "[de_iii_ss@1945-04-28T18:00:withdraw]"
   },
@@ -21342,6 +22821,116 @@
    "hq": "de_xx",
    "to": [
     "de_1170stug"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_baruth_garrison"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_stug_brig_218"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kummersdorf_range"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_juterbog_altes_lager"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_treuenbrietzen_volkssturm"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_luckenwalde"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_torgau"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_zeithain_battalions"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_prettin_annaburg"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_hermann"
+   ],
+   "kind": "defend",
+   "target": null,
+   "note": "переход к обороне: наступление на Берлин невозможно (LT_HALBE) [de_xx@1945-04-29T18:00:defend]"
+  },
+  {
+   "at": "1945-04-29T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_scherer"
    ],
    "kind": "defend",
    "target": null,
@@ -22096,8 +23685,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    11.9369,
-    52.554
+    11.8542,
+    52.6155
    ],
    "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
   },
@@ -22109,8 +23698,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    11.9812,
-    52.554
+    11.8542,
+    52.6155
    ],
    "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
   },
@@ -22122,8 +23711,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    12.0254,
-    52.554
+    11.8542,
+    52.6155
    ],
    "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
   },
@@ -22135,8 +23724,8 @@
    ],
    "kind": "withdraw",
    "target": [
-    11.9369,
-    52.5268
+    11.8542,
+    52.6155
    ],
    "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
   },
@@ -22148,8 +23737,151 @@
    ],
    "kind": "withdraw",
    "target": [
-    11.9812,
-    52.5268
+    11.8542,
+    52.6155
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_baruth_garrison"
+   ],
+   "kind": "withdraw",
+   "target": [
+    12.0904,
+    52.6155
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_stug_brig_218"
+   ],
+   "kind": "withdraw",
+   "target": [
+    12.0904,
+    52.6155
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kummersdorf_range"
+   ],
+   "kind": "withdraw",
+   "target": [
+    12.0904,
+    52.6155
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_juterbog_altes_lager"
+   ],
+   "kind": "withdraw",
+   "target": [
+    11.9592,
+    52.6155
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_treuenbrietzen_volkssturm"
+   ],
+   "kind": "withdraw",
+   "target": [
+    11.8542,
+    52.6155
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_luckenwalde"
+   ],
+   "kind": "withdraw",
+   "target": [
+    12.0533,
+    52.6155
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_torgau"
+   ],
+   "kind": "withdraw",
+   "target": [
+    11.8725,
+    52.4707
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_zeithain_battalions"
+   ],
+   "kind": "withdraw",
+   "target": [
+    12.0904,
+    52.4707
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_prettin_annaburg"
+   ],
+   "kind": "withdraw",
+   "target": [
+    11.8792,
+    52.4707
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_hermann"
+   ],
+   "kind": "withdraw",
+   "target": [
+    11.8725,
+    52.4707
+   ],
+   "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
+  },
+  {
+   "at": "1945-05-01T18:00",
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_scherer"
+   ],
+   "kind": "withdraw",
+   "target": [
+    12.0904,
+    52.4707
    ],
    "note": "отход к Эльбе [de_xx@1945-05-01T18:00:withdraw]"
   },
@@ -22425,6 +24157,383 @@
     51.156
    ],
    "note": "вторая позиция (части вне дивизий, berlin-1945-german-forces.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_berlin",
+   "to": [
+    "rear_wuensdorf_pz_ausb_rgt"
+   ],
+   "kind": "hold",
+   "target": [
+    13.47,
+    52.17
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_baruth_garrison"
+   ],
+   "kind": "hold",
+   "target": [
+    13.5,
+    52.06
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_stug_brig_218"
+   ],
+   "kind": "hold",
+   "target": [
+    13.45,
+    52.12
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_kummersdorf_range"
+   ],
+   "kind": "hold",
+   "target": [
+    13.375,
+    52.103
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_juterbog_altes_lager"
+   ],
+   "kind": "hold",
+   "target": [
+    13.08,
+    51.99
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_treuenbrietzen_volkssturm"
+   ],
+   "kind": "hold",
+   "target": [
+    12.8735,
+    52.0967
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_luckenwalde"
+   ],
+   "kind": "hold",
+   "target": [
+    13.1742,
+    52.0902
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_v",
+   "to": [
+    "rear_cottbus_garrison"
+   ],
+   "kind": "hold",
+   "target": [
+    14.3357,
+    51.7567
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_pzk_gd",
+   "to": [
+    "rear_spremberg_volkssturm"
+   ],
+   "kind": "hold",
+   "target": [
+    14.3804,
+    51.5715
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-21T05:00",
+   "hq": "de_berlin",
+   "to": [
+    "rear_brigade_mueller"
+   ],
+   "kind": "hold",
+   "target": [
+    13.08,
+    52.53
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xxxxi",
+   "to": [
+    "rear_brandenburg_havel_garrison"
+   ],
+   "kind": "hold",
+   "target": [
+    12.5498,
+    52.4108
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_finow_canal_security"
+   ],
+   "kind": "hold",
+   "target": [
+    13.52,
+    52.8
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-23T05:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_harzer"
+   ],
+   "kind": "hold",
+   "target": [
+    13.1,
+    52.7
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-23T05:00",
+   "hq": "de_berlin",
+   "to": [
+    "rear_kg_herber"
+   ],
+   "kind": "hold",
+   "target": [
+    13.111,
+    52.696
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-23T05:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_marine_9rgt"
+   ],
+   "kind": "hold",
+   "target": [
+    13.2458,
+    52.7529
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-23T05:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_schirmer"
+   ],
+   "kind": "hold",
+   "target": [
+    13.25,
+    52.85
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-23T05:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_kresin"
+   ],
+   "kind": "hold",
+   "target": [
+    13.6,
+    52.96
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-23T05:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_kg_von_wolff"
+   ],
+   "kind": "hold",
+   "target": [
+    13.25,
+    52.75
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": "1945-04-24T05:00",
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_marine_march_btls_preiss"
+   ],
+   "kind": "hold",
+   "target": [
+    13.8,
+    52.85
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_7ss_pol_rgt"
+   ],
+   "kind": "hold",
+   "target": [
+    13.7997,
+    52.8351
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_iii_ss",
+   "to": [
+    "rear_eberswalde_festung"
+   ],
+   "kind": "hold",
+   "target": [
+    13.7997,
+    52.8351
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_torgau"
+   ],
+   "kind": "hold",
+   "target": [
+    12.9934,
+    51.5383
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xxxxviii",
+   "to": [
+    "rear_kg_riesa"
+   ],
+   "kind": "hold",
+   "target": [
+    13.29,
+    51.31
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xxxxviii",
+   "to": [
+    "rear_btl_schildau"
+   ],
+   "kind": "hold",
+   "target": [
+    12.9,
+    51.5
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xxxxviii",
+   "to": [
+    "rear_pi_btl_oschatz"
+   ],
+   "kind": "hold",
+   "target": [
+    13.1,
+    51.3
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_zeithain_battalions"
+   ],
+   "kind": "hold",
+   "target": [
+    13.33,
+    51.37
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_prettin_annaburg"
+   ],
+   "kind": "hold",
+   "target": [
+    13,
+    51.72
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_hermann"
+   ],
+   "kind": "hold",
+   "target": [
+    12.9934,
+    51.5383
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
+  },
+  {
+   "at": 0,
+   "hq": "de_xx",
+   "to": [
+    "rear_kg_scherer"
+   ],
+   "kind": "hold",
+   "target": [
+    13.4,
+    51.51
+   ],
+   "note": "держаться: гарнизон, заслон в тылу (berlin-1945-german-rear.json)"
   },
   {
    "at": "1945-04-17T05:00",

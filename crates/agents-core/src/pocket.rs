@@ -122,7 +122,7 @@ impl Sim {
                     let r0 = *d.relink_since.get_or_insert(tick);
                     if (tick - r0) as f64 >= p.release_hours {
                         // вырвавшиеся бросают тяжёлое вооружение (9 А вышла к 12 А без техники, LT_HALBE)
-                        let breakout = d.order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack);
+                        let breakout = d.side == Side::De && d.order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack);
                         if breakout {
                             d.vars.tanks *= p.breakout_keep;
                             d.vars.guns *= p.breakout_keep;
