@@ -1171,7 +1171,7 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
   const sub = createFeature('label', 'atlas.town', { at: [w, n0 + dy * 1.1], text: `${dm(snaps[0].time)}–${dm(snaps[last].time)}.${snaps[last].time.slice(0, 4)}; правила ${ctx.rules.id}, seed ${run.final.seed ?? ''}`.replace(/, seed $/, ''), layerId: 'sum-legend' }, 1, 'neutral') as LabelFeature;
   sub.name = 'Подзаголовок';
   out.push(sub);
-  const legendRow = (k: number) => s0 - dy * (1.5 + k * 1.3);
+  const legendRow = (k: number) => s0 - dy * (1.4 + k * 1.05);
   const text = (k: number, t: string) => {
     const l = createFeature('label', 'atlas.town', { at: [w + dx * 1.15, legendRow(k)], text: t, layerId: 'sum-legend' }, 1, 'neutral') as LabelFeature;
     l.style = { ...l.style, italic: false };
@@ -1184,8 +1184,10 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     const a = createFeature('arrow', STAGE_PRESETS[st % STAGE_PRESETS.length], { points: [[w, y], [w + dx * 0.5, y], [w + dx, y]], layerId: 'sum-legend' }, 0.4, 'own') as ArrowFeature;
     a.name = `Условные обозначения: ${stageText(st)}`;
     out.push(a);
-    text(row, `${stageText(st)} — удары армий, у острия — дата выхода (черта — рубеж достигнут)`);
+    text(row, `${stageText(st)} — удары армий`);
   }
+  // пояснение к стрелкам — отдельной строкой: легенда узкая и не заходит под линейку масштаба и кнопки карты
+  if (row) text(row++, 'у острия — дата выхода, черта — рубеж достигнут');
   const sample = (preset: string, k: number, label: string, pick?: (l: LineFeature) => void) => {
     const y = legendRow(row);
     const l = createFeature('line', preset, { points: [[w, y], [w + dx * 0.5, y], [w + dx, y]], layerId: 'sum-legend' }, 1, 'own') as LineFeature;
@@ -1204,14 +1206,14 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     const ar = createFeature('area', 'atlas.encircled', { points: [[w, y - h], [w + dx, y - h], [w + dx, y + h], [w, y + h]], layerId: 'sum-legend' }, 1, 'enemy');
     ar.name = 'Условные обозначения: окружение';
     out.push(ar);
-    text(row++, 'окружённые к концу операции соединения противника');
+    text(row++, 'окружённые к концу соединения противника');
   }
   doc.features = out;
-  // вид и исходный масштаб — по охвату всей карты (с заголовком и легендой) в окне ~800×800: размеры знаков
+  // вид и исходный масштаб — по охвату всей карты (с заголовком и легендой) в окне ~800×740 (по высоте — с запасом под полосу времени внизу): размеры знаков
   // заданы для этого вида, как на листе атласа
   const xs = out.flatMap((f) => ('points' in f && f.points ? f.points : 'at' in f && f.at ? [f.at] : [])) as LngLat[];
   const lw = Math.min(...xs.map((p) => p[0])), le = Math.max(...xs.map((p) => p[0])), ls = Math.min(...xs.map((p) => p[1])), ln = Math.max(...xs.map((p) => p[1]));
-  const fit = Math.log2((360 * 800) / (512 * Math.max(le - lw, (ln - ls) / Math.cos((((ln + ls) / 2) * Math.PI) / 180), 0.05)));
+  const fit = Math.log2((360 * 800) / (512 * Math.max(le - lw, ((ln - ls) / Math.cos((((ln + ls) / 2) * Math.PI) / 180)) * (800 / 740), 0.05)));
   doc.refZoom = +Math.min(base.refZoom + 1, fit).toFixed(1);
   // подложки под заголовком и условными обозначениями — чтобы не сливались с картой: белые, с тонкой рамкой,
   // по длине самой длинной подписи (градусов на пиксель — по исходному масштабу листа)
@@ -1237,8 +1239,9 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     const leg = labels.filter((l) => l.name?.startsWith('Условные обозначения'));
     if (leg.length) box(leg, legendRow(0) + dy * 0.7, legendRow(row - 1) - dy * 0.7, w);
   }
-  // начальный вид — весь лист с полями: мельче исходного масштаба и чуть выше середины, чтобы низ листа (легенда)
-  // не уходил под линейку масштаба, кнопки масштаба и поворота и полосу времени у нижнего края окна
-  doc.view = { center: [(lw + le) / 2, (ls + ln) / 2 - (ln - ls) * 0.08], zoom: +(doc.refZoom - 0.45).toFixed(2), bearing: 0 };
+  // начальный вид — по исходному масштабу; середина чуть ниже листа (на ~12 пикселей), чтобы низ легенды
+  // не уходил под полосу времени у нижнего края окна
+  const shift = (12 * 360 * Math.cos((((ln + ls) / 2) * Math.PI) / 180)) / (512 * Math.pow(2, doc.refZoom));
+  doc.view = { center: [(lw + le) / 2, (ls + ln) / 2 - shift], zoom: doc.refZoom, bearing: 0 };
   return doc;
 }
