@@ -8,6 +8,10 @@
 //! - в собранном приложении — собранный редактор с адреса шлюза; Node — рядом с приложением (externalBin), сервисы
 //!   и редактор — в ресурсах (scripts/desktop-bundle.mjs).
 //! Закрыли окно — закрылся вход запускателя, сервисы остановились.
+//!
+//! Агентная модель (дивизии) считается в самом приложении — команды crates/agents-tauri (run_scenario и др.), их
+//! вызывает «Переигровка» редактора. Данные модели (packages/sim/data): в разработке — из репозитория, в собранном
+//! приложении — из ресурсов (data/).
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -56,8 +60,15 @@ fn show_error(app: &tauri::AppHandle, msg: &str) {
 fn main() {
     tauri::Builder::default()
         .manage(Services(Mutex::new(None)))
+        .invoke_handler(tauri::generate_handler![
+            agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models,
+            agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel
+        ])
         .setup(|app| {
             let handle = app.handle().clone();
+            // корень данных агентной модели
+            if cfg!(debug_assertions) { agents_tauri::set_root(repo_root()); }
+            else if let Ok(res) = handle.path().resource_dir() { agents_tauri::set_root(res.join("data")); }
             match launch(&handle) {
                 Ok(mut child) => {
                     let out = child.stdout.take();

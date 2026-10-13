@@ -1,0 +1,12 @@
+[package]
+name = "agents-tauri"
+version = "0.1.0"
+edition = "2021"
+description = "Команды Tauri агентной модели: прогон сценария, языковая модель, данные — для apps/agents и apps/desktop"
+publish = false
+
+[dependencies]
+agents-core = { path = "../agents-core" }
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

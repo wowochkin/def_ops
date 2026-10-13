@@ -12,7 +12,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 name = "agents-app"
 version = "0.1.0"
 dependencies = [
- "agents-core",
+ "agents-tauri",
  "serde",
  "serde_json",
  "tauri",
@@ -27,6 +27,16 @@ dependencies = [
  "serde",
  "serde_json",
  "ureq",
+]
+
+[[package]]
+name = "agents-tauri"
+version = "0.1.0"
+dependencies = [
+ "agents-core",
+ "serde",
+ "serde_json",
+ "tauri",
 ]
 
 [[package]]
@@ -580,6 +590,7 @@ dependencies = [
 name = "defops-desktop"
 version = "0.1.0"
 dependencies = [
+ "agents-tauri",
  "serde",
  "serde_json",
  "tauri",

@@ -19,6 +19,17 @@ import { mdToHtml } from './markdown';
 import { useCoverage } from './modeling/Coverage';
 import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { MapHover, withoutLabels } from './MapHover';
+import { invoke } from '@tauri-apps/api/core';
+import type { AgentHistory, AgentTrace } from '@def-ops/sim';
+
+/** В настольном приложении (Tauri): там есть ядро агентной модели на Rust. */
+const DESKTOP = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+/** Агентная модель (дивизии) для операций каталога: сценарий и история ядра (packages/sim/data/scenarios/agents). */
+const AGENT_SCENARIOS: Record<string, { path: string; history: string; title: string }> = {
+  'berlin-1945-tasks': { path: 'packages/sim/data/scenarios/agents/berlin-1945.json', history: 'packages/sim/data/scenarios/agents/berlin-1945.history.json', title: 'Берлинская операция' },
+};
+/** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
+const AGENT_STEP_HOURS = 6;
 
 const fmtDays = (d: number | null) => (d == null ? '—' : d > 0 ? `+${d}` : String(d));
 const dayClass = (d: number | null) => (d == null ? 'miss' : Math.abs(d) <= 1 ? 'ok' : Math.abs(d) <= 2 ? 'near' : 'off');
@@ -135,13 +146,17 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [notice, setNotice] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
   const [labels, toggleLabels] = useMapLabels();
+  const [model, setModel] = useState<'army' | 'agents'>('army');
+  const agentOp = DESKTOP ? AGENT_SCENARIOS[scenario] : undefined;
+  const useAgents = model === 'agents' && !!agentOp;
   const worker = useRef<Worker | null>(null);
+  const runId = useRef(0);
   const engine = useRef<MapEngine | null>(null);
 
   useEffect(() => { setRules((r) => (entry.rules.some((x) => x.id === r) ? r : entry.rules[0].id)); }, [entry]);
   useEffect(() => () => worker.current?.terminate(), []);
 
-  const run = () => {
+  const startWorker = (q: SimRequest) => {
     worker.current?.terminate();
     const w = new Worker(new URL('./sim/worker.ts', import.meta.url), { type: 'module' });
     worker.current = w;
@@ -157,10 +172,24 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       }
     };
     w.onerror = (e) => { setBusy(null); setError(e.message || 'ошибка расчёта'); };
-    const q: SimRequest = { scenario, rules, seed, runs, toleranceKm: entry.toleranceKm };
     w.postMessage(q);
   };
-  const stop = () => { worker.current?.terminate(); worker.current = null; setBusy(null); };
+  const run = () => {
+    const token = ++runId.current;
+    const q: SimRequest = { scenario, rules, seed, runs, toleranceKm: entry.toleranceKm };
+    if (!useAgents) { startWorker(q); return; }
+    // агентная модель: ход по часам считает ядро приложения, карту — фоновый поток, как у нынешней модели
+    const op = agentOp!;
+    worker.current?.terminate();
+    setBusy('расчёт агентной модели…'); setError(null);
+    Promise.all([invoke<AgentTrace>('run_scenario', { scenario: op.path, seed }), invoke<string>('read_text', { path: op.history })])
+      .then(([trace, h]) => {
+        if (token !== runId.current) return;
+        startWorker({ ...q, runs: 1, agents: { trace, history: JSON.parse(h) as AgentHistory, title: op.title, stepHours: AGENT_STEP_HOURS } });
+      })
+      .catch((e) => { if (token === runId.current) { setBusy(null); setError(String(e)); } });
+  };
+  const stop = () => { runId.current++; worker.current?.terminate(); worker.current = null; setBusy(null); };
 
   const layerOn = (t: (typeof TOGGLES)[number]) => !!doc?.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
   const toggle = (t: (typeof TOGGLES)[number]) => doc && setDoc({ ...doc, layers: doc.layers.map((l) => (t.match(l.id) ? { ...l, visible: !layerOn(t) } : l)) });
@@ -183,7 +212,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     setTake(null);
     setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take }, saved: null, enemy });
   };
-  const takeAt = result && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
+  const takeAt = result && result.engine !== 'agents' && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
   return (
     <ZonesContext.Provider value={zones}>
     <div className="replay">
@@ -208,16 +237,22 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         </div>
         <ReplayCoverage op={scenario} />
         <div className="rp-form">
-          <label>Правила
+          {agentOp && <label title="Нынешняя модель — армии и корпуса, ход сутки, считается в браузере. Агентная — каждая дивизия со своим состоянием и штабами, шаг час, считается ядром приложения">Модель
+            <select value={model} onChange={(e) => setModel(e.target.value as 'army' | 'agents')} disabled={!!busy}>
+              <option value="army">нынешняя — армии и корпуса</option>
+              <option value="agents">агентная — дивизии</option>
+            </select>
+          </label>}
+          {!useAgents && <label>Правила
             <select value={rules} onChange={(e) => setRules(e.target.value)} disabled={!!busy}>
               {entry.rules.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
             </select>
-          </label>
+          </label>}
           <div className="rp-inline">
             <label title="Номер случайного прогона: один и тот же seed — один и тот же расчёт">Seed <input type="number" min={1} value={seed} onChange={(e) => setSeed(Math.max(1, +e.target.value || 1))} disabled={!!busy} /></label>
-            <label title="Прогонов с разными seed — разброс исходов. На карте — первый">Прогонов
+            {!useAgents && <label title="Прогонов с разными seed — разброс исходов. На карте — первый">Прогонов
               <select value={runs} onChange={(e) => setRuns(+e.target.value)} disabled={!!busy}>{[1, 3, 5, 10].map((n) => <option key={n}>{n}</option>)}</select>
-            </label>
+            </label>}
           </div>
           {busy
             ? <button className="rp-go" onClick={stop}><span className="spinner" /> {busy} <small>остановить</small></button>

@@ -1,9 +1,16 @@
 import type { MapDocument } from '@def-ops/core';
+import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 
-export interface SimRequest { scenario: string; rules: string; seed: number; runs: number; toleranceKm: number }
+export interface SimRequest {
+  scenario: string; rules: string; seed: number; runs: number; toleranceKm: number;
+  /** Агентная модель (дивизии; настольное приложение): ход, посчитанный ядром на Rust, и её история — карта строится здесь. */
+  agents?: { trace: AgentTrace; history: AgentHistory; title: string; stepHours: number };
+}
 
 export interface SimResult {
   scenario: string; rules: string; seed: number; runs: number; ms: number;
+  /** Модель расчёта: нынешняя (армии и корпуса) или агентная (дивизии). */
+  engine?: 'army' | 'agents';
   /** Начало, конец сценария и длительность хода — для передачи командования с начала хода. */
   start: string; end: string; turnHours: number; scenarioName: string;
   /** Доля положений в допуске (первый прогон) и по всем прогонам. */
