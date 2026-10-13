@@ -102,6 +102,8 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('theatre-crossings', 'Театр: наведённые переправы', 'base', 0.8),
     mk('hist-front', 'История: линия фронта', 'front', 0.5),
     mk('hist-units', 'История: положения («призраки»)', 'custom', 0.45),
+    // события истории на карте (знаки в исторический момент) — на всех масштабах; положения армий — на оперативном
+    mk('hist-marks', 'История: события на карте', 'custom', 0.45),
     mk('sim-front-start', 'Переигровка: передний край на начало', 'front', 0.9),
     mk('sim-front-prev', 'Переигровка: линия фронта сутки назад', 'front', 0.8),
     mk('sim-front', 'Переигровка: линия фронта', 'front'),
@@ -118,6 +120,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('lvl-op-units', 'Оперативный уровень: объединения', 'custom', 1, false),
     mk('lvl-op-moves', 'Оперативный уровень: направления действий', 'custom', 0.85, false),
     mk('lvl-op-bounds', 'Оперативный уровень: полосы фронтов и армий', 'custom', 0.85, false),
+    mk('lvl-op-hist', 'Оперативный уровень: исторические положения армий', 'custom', 0.45, false),
     mk('lvl-st-front', 'Стратегический уровень: линия фронта (как в атласе)', 'front', 1, false),
     mk('lvl-st-units', 'Стратегический уровень: фронты и группы армий', 'custom', 1, false),
     mk('lvl-st-moves', 'Стратегический уровень: направления ударов', 'custom', 0.85, false),
@@ -324,18 +327,24 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   if (history) {
     const byF = new Map<string, History['positions']>();
     for (const p of history.positions) byF.set(p.formation, [...(byF.get(p.formation) ?? []), p]);
+    // по масштабам: на тактическом — действующие соединения (как знаки расчёта), на оперативном — армии
+    // (действующие армии и штабы армий — у агентной модели положения армий в истории свои)
     for (const [fid, ps] of byF) {
       const f = byId.get(fid);
       if (!f) continue;
       const sorted = [...ps].sort((a, b) => a.time.localeCompare(b.time));
       const side = sideOf(f.side);
-      const g = createFeature('symbol', tankish(f, ctx) ? 'std.mechCorps' : 'std.unitOval', { at: sorted[0].at, layerId: 'hist-units' }, 0.9, side) as SymbolFeature;
-      g.name = `${f.name} (история)`;
-      g.labelRank = RANK[f.echelon] ?? 0;
-      g.style = { ...g.style, fill: 'none', text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 9, weight: 400, italic: true, color: g.style.color, halo: null, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
-      g.keyframes = sorted.map((p) => ({ t: p.time, at: p.at, note: `${p.place} (${p.reliability}, ±${p.approxKm} км) — ${p.source}` }));
-      g.time = { from: sorted[0].time, to: null };
-      features.push(g);
+      const mech = f.type ? tankish(f, ctx) : /танков|механизир/i.test(f.name);
+      const layers = [...(f.type ? ['hist-units'] : []), ...(f.echelon === 'army' ? ['lvl-op-hist'] : [])];
+      for (const layerId of layers) {
+        const g = createFeature('symbol', mech ? 'std.mechCorps' : 'std.unitOval', { at: sorted[0].at, layerId }, layerId === 'lvl-op-hist' ? 1.1 : 0.9, side) as SymbolFeature;
+        g.name = `${f.name} (история)`;
+        g.labelRank = RANK[f.echelon] ?? 0;
+        g.style = { ...g.style, fill: 'none', text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 9, weight: 400, italic: true, color: g.style.color, halo: null, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
+        g.keyframes = sorted.map((p) => ({ t: p.time, at: p.at, note: `${p.place} (${p.reliability}, ±${p.approxKm} км) — ${p.source}` }));
+        g.time = { from: sorted[0].time, to: null };
+        features.push(g);
+      }
     }
     const dates = [...new Set(history.frontline.map((l) => l.time))].sort();
     for (const l of history.frontline) {
@@ -363,7 +372,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
         features.push(f);
       }
       if (e.marker.historicalAt) {
-        const g = createFeature('symbol', e.marker.preset, { at, layerId: 'hist-units' }, 1, 'own') as SymbolFeature;
+        const g = createFeature('symbol', e.marker.preset, { at, layerId: 'hist-marks' }, 1, 'own') as SymbolFeature;
         g.name = `${e.marker.name} (история)`;
         g.time = { from: e.marker.historicalAt, to: null };
         if (e.marker.note) g.keyframes = [{ t: e.marker.historicalAt, at, note: e.marker.note }];

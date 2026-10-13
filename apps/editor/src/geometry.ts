@@ -105,16 +105,23 @@ export function arrowMainAxis(doc: MapDocument, f: ArrowFeature): Path | null {
   return new Path(f.style.smooth ? smoothPath(pts) : polylinePath(pts, false, 1));
 }
 
-/** Новая ветвь: от 60 % длины ствола в сторону, под углом ~35° к концу ствола, длиной в треть ствола. */
+/**
+ * Новая ветвь (ветвей — сколько угодно): из той же развилки, что и прежние (первая — на 60 % длины ствола), в ту
+ * сторону от ствола, где ветвей меньше, под углом ~35° к концу ствола и шире с каждой ветвью этой стороны.
+ */
 export function newBranch(doc: MapDocument, f: ArrowFeature): ArrowBranch | null {
   const axis = arrowMainAxis(doc, f);
   if (!axis) return null;
   const proj = createContext(doc).proj;
-  const n = (f.branches ?? []).length;
-  const t = 0.6;
+  const list = f.branches ?? [];
+  const t = list[0]?.t ?? 0.6;
   const fork = axis.pointAt(axis.length * t);
   const tg = axis.tangentAt(axis.length, 3);
-  const a = (n % 2 === 0 ? 1 : -1) * (Math.PI / 5) * (1 + Math.floor(n / 2) * 0.6);
+  // сторона ветви: знак векторного произведения касательной и направления на её конец
+  const sideOf = (b: ArrowBranch) => { const q = proj.toWorld(b.points[b.points.length - 1]); return Math.sign(tg[0] * (q[1] - fork[1]) - tg[1] * (q[0] - fork[0])) || 1; };
+  const left = list.filter((b) => b.points.length && sideOf(b) > 0).length, right = list.length - left;
+  const side = left <= right ? 1 : -1;
+  const a = side * (Math.PI / 5) * (1 + (side > 0 ? left : right) * 0.6);
   const dir: Vec2 = [tg[0] * Math.cos(a) - tg[1] * Math.sin(a), tg[0] * Math.sin(a) + tg[1] * Math.cos(a)];
   const tip = add(fork, mul(dir, axis.length * 0.45));
   return { t, points: [proj.toLngLat(tip)] };

@@ -41,7 +41,7 @@ const ddmm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}`;
 
 /** Слои переигровки, которые удобно переключать одной кнопкой. */
 const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] = [
-  { key: 'ghosts', title: 'Ист. положения', match: (id) => id === 'hist-units' },
+  { key: 'ghosts', title: 'Ист. положения', match: (id) => id === 'hist-units' || id === 'hist-marks' || id === 'lvl-op-hist' },
   { key: 'hfront', title: 'Ист. фронт', match: (id) => id === 'hist-front' },
   { key: 'front', title: 'Фронт', match: (id) => id === 'sim-front' || id.startsWith('sim-front-') },
   { key: 'combat', title: 'Бои', match: (id) => id === 'sim-combat' },
@@ -75,7 +75,11 @@ export function withLevel(doc: MapDocument, level: MapLevel): MapDocument {
   // линия фронта на стратегическом — в манере атласа (свой слой), наведённые переправы — только на тактическом
   const frontOn = doc.layers.some((l) => l.id === 'sim-front' && l.visible);
   const theatreOn = doc.layers.some((l) => l.id === 'theatre' && l.visible);
-  return { ...doc, layers: doc.layers.map((l) => (ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && on(l) }
+  // исторические положения — своего масштаба: соединения на тактическом, армии на оперативном, на стратегическом — нет
+  const ghostsOn = doc.layers.some((l) => l.id === 'hist-units' && l.visible);
+  return { ...doc, layers: doc.layers.map((l) => (l.id === 'hist-units' ? { ...l, visible: level === 'tac' && ghostsOn }
+    : l.id === 'lvl-op-hist' ? { ...l, visible: level === 'op' && ghostsOn }
+    : ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && on(l) }
     : l.id === 'lvl-st-front' ? { ...l, visible: level === 'st' && frontOn }
     : l.id === 'sim-front' && level === 'st' ? { ...l, visible: false }
     : l.id === 'theatre-crossings' ? { ...l, visible: level === 'tac' && theatreOn } : l)) };
@@ -473,7 +477,8 @@ function SavedList({ list, current, busy, onOpen, onRename, onDelete }: { list: 
           <div className="rp-sv-b">
             <button className="primary" disabled={busy} onClick={() => onOpen(m)}>Открыть</button>
             <button className="link" onClick={() => { setEdit(m.id); setText(m.title); }}>переименовать</button>
-            <button className="link danger" onClick={() => onDelete(m)}>удалить</button>
+            <span style={{ flex: 1 }} />
+            <button className="danger" onClick={() => onDelete(m)} title="Удалить сохранение (с подтверждением)">Удалить</button>
           </div>
         </div>
       ))}

@@ -147,6 +147,14 @@ export const ARROW_PRESETS: Record<string, { name: string; group: string; style:
       outline: { color: C.atlas.red, width: 1.1 }, outlineTail: false,
     }),
   },
+  'atlas.fork3': {
+    name: 'Удар на три направления', group: 'Ист. карта (атлас)', fork: 2,
+    style: () => baseArrow({
+      tailWidth: 34, neckWidth: 6, headWidth: 14, headLength: 21, barbSweep: 6, tailShape: 'notch', tailNotch: 0.28, branchWidth: 0.62,
+      fill: stops([0, '#f8dcd6', 0.5], [0.55, '#eea092', 0.9], [1, '#d6403a', 1]), headFill: C.atlas.red,
+      outline: { color: C.atlas.red, width: 1.1 }, outlineTail: false,
+    }),
+  },
   'atlas.reached': {
     name: 'Выход на рубеж (с чертой)', group: 'Ист. карта (атлас)',
     style: () => baseArrow({

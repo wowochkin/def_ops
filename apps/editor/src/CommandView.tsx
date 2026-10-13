@@ -55,7 +55,7 @@ interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: st
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 
 const TOGGLES = [
-  { key: 'ghosts', title: 'Ист. положения', match: (id: string) => id === 'hist-units' },
+  { key: 'ghosts', title: 'Ист. положения', match: (id: string) => id === 'hist-units' || id === 'hist-marks' || id === 'lvl-op-hist' },
   { key: 'hfront', title: 'Ист. фронт', match: (id: string) => id === 'hist-front' },
   { key: 'front', title: 'Фронт', match: (id: string) => id === 'sim-front' || id.startsWith('sim-front-') },
   { key: 'combat', title: 'Бои', match: (id: string) => id === 'sim-combat' },

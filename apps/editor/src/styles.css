@@ -1347,3 +1347,4 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .rp-sv-b { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
 .rp-sv-edit { display: flex; gap: 4px; } .rp-sv-edit input { flex: 1; font: inherit; padding: 3px 6px; }
 .rp-actions button.done { color: #2f7a3b; border-color: #9cc9a3; }
+.h-add { cursor: pointer; } .h-add circle { fill: #fff; stroke: #c9822c; stroke-width: 1.5; } .h-add path { stroke: #c9822c; stroke-width: 1.8; } .h-add:hover circle { fill: #ffe9a8; }

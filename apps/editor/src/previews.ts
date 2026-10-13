@@ -16,9 +16,10 @@ export function presetPreview(kind: PresetKind, id: string, paper: string, side?
   let f;
   if (kind === 'arrow') {
     const fork = (ARROW_PRESETS as Record<string, { fork?: number }>)[id]?.fork;
-    // разветвлённая стрелка: ствол вверх-вправо, ветвь — вниз-вправо
+    // разветвлённая стрелка: ствол вверх-вправо, ветви — вправо и вниз-вправо (сколько ветвей у знака)
+    const tips = [H * 0.82, H * 0.48];
     f = fork
-      ? { ...(createFeature(kind, id, { ...g, points: [ll(0, H * 0.6), ll(75, H * 0.35), ll(150, H * 0.12)] }, k, side) as ArrowFeature), branches: [{ t: 0.55, points: [ll(150, H * 0.82)] }] }
+      ? { ...(createFeature(kind, id, { ...g, points: [ll(0, H * 0.6), ll(75, H * 0.35), ll(150, H * 0.12)] }, k, side) as ArrowFeature), branches: Array.from({ length: fork }, (_, i) => ({ t: 0.55, points: [ll(150, tips[i] ?? H * (0.82 - 0.17 * i))] })) }
       : createFeature(kind, id, { ...g, points: [ll(0, H * 0.55), ll(70, H * 0.2), ll(150, H * 0.3)] }, k, side);
   }
   else if (kind === 'line') f = createFeature(kind, id, { ...g, points: [ll(0, H * 0.45), ll(50, H * 0.2), ll(100, H * 0.5), ll(150, H * 0.3)] }, k, side);

@@ -42,6 +42,8 @@ export function agentKindOf(task: Task): AgentOrderKind {
 /** Ход агентной модели по сторонам и в расчёте этой модели. */
 export interface AgentHistory {
   divisions: { formation: string; time: string; at: LngLat; approxKm: number; reliability: string; set?: string; source?: string }[];
+  /** Положения армий (штабов) по документам — для оперативного масштаба карты; в сверку не входят. */
+  armies?: { formation: string; time: string; at: LngLat; approxKm: number; reliability?: string | null; source?: string }[];
   events?: History['events'];
 }
 
@@ -172,7 +174,11 @@ export function agentsStateAt(ctx: SimContext, t: AgentTrace, h: number): SimSta
 export function agentsHistory(h: AgentHistory, base?: History | null): History {
   return {
     scenario: base?.scenario ?? '',
-    positions: h.divisions.map((p) => ({ formation: p.formation, time: p.time, at: p.at, approxKm: p.approxKm, place: '', reliability: p.reliability, source: p.source ?? p.set ?? '' })),
+    // положения дивизий и армий; сверка (compareWithHistory) — только по действующим (дивизиям): армий в снимках нет
+    positions: [
+      ...h.divisions.map((p) => ({ formation: p.formation, time: p.time, at: p.at, approxKm: p.approxKm, place: '', reliability: p.reliability, source: p.source ?? p.set ?? '' })),
+      ...(h.armies ?? []).map((p) => ({ formation: p.formation, time: p.time, at: p.at, approxKm: p.approxKm, place: '', reliability: p.reliability ?? 'C', source: p.source ?? '' })),
+    ],
     frontline: base?.frontline ?? [],
     events: h.events ?? [],
   };

@@ -443,9 +443,27 @@ export function MapView(props: Props) {
         b.points.forEach((p, pi) => {
           const q = toScreen(p);
           handles.push(<rect key={`bp${bi}-${pi}`} className="h-pt" x={q[0] - 5} y={q[1] - 5} width={10} height={10}
-            onPointerDown={(e) => beginDrag({ type: 'branchPoint', id: sel.id, branch: bi, index: pi, key: `bp-${sel.id}-${Date.now()}` }, e)}><title>Точка ветви: тяните</title></rect>);
+            onPointerDown={(e) => beginDrag({ type: 'branchPoint', id: sel.id, branch: bi, index: pi, key: `bp-${sel.id}-${Date.now()}` }, e)}
+            onDoubleClick={(e) => {
+              // двойной клик: точку ветви — удалить; последнюю — удалить ветвь целиком
+              e.stopPropagation();
+              const br = sel.branches ?? [];
+              const nb = br[bi].points.length > 1 ? br.map((x, j) => (j === bi ? { ...x, points: x.points.filter((_, k) => k !== pi) } : x)) : br.filter((_, j) => j !== bi);
+              commit(doc, sel.id, { ...sel, branches: nb } as Feature);
+            }}><title>Точка ветви: тяните. Двойной клик — удалить точку (последнюю — вместе с ветвью).</title></rect>);
         });
       });
+    }
+    if (sel.kind === 'arrow' && sel.points.length >= 2) {
+      // «+» у острия: ещё одна ветвь (ветвей — сколько угодно)
+      const tip = toScreen(proj.toWorld(sel.points[sel.points.length - 1]));
+      const prev = toScreen(proj.toWorld(sel.points[sel.points.length - 2]));
+      const d = Math.hypot(tip[0] - prev[0], tip[1] - prev[1]) || 1;
+      const px = tip[0] + ((prev[1] - tip[1]) / d) * 22, py = tip[1] - ((prev[0] - tip[0]) / d) * 22;
+      handles.push(<g key="addBranch" className="h-add" transform={`translate(${px} ${py})`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); const b = newBranch(shown, sel); if (b) commit(doc, sel.id, { ...sel, branches: [...(sel.branches ?? []), b] } as Feature); }}>
+        <circle r={8} /><path d="M-4 0H4M0 -4V4" /><title>Добавить ветвь (удар ещё на одно направление)</title></g>);
     }
     if (sel.kind === 'arrow') {
       const h = arrowWidthHandles(shown, sel, sizeAt(sel));
