@@ -1221,6 +1221,13 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     const degPx = 360 / (512 * Math.pow(2, doc.refZoom));
     // в проекции Меркатора градус долготы на экране не зависит от широты, а градус широты длиннее в 1/cos раз
     const ky = Math.cos((((n0 + s0) / 2) * Math.PI) / 180);
+    // легенда — у левого края окна (ширина окна ~800 пикселей, середина вида — середина листа), а не под картой
+    const legLeft = Math.min(w, (lw + le) / 2 - 370 * degPx);
+    for (const f of out) {
+      if (!f.name?.startsWith('Условные обозначения')) continue;
+      if ('points' in f && f.points) f.points = f.points.map((p) => [p[0] + legLeft - w, p[1]] as LngLat);
+      else if ('at' in f && f.at) f.at = [f.at[0] + legLeft - w, f.at[1]];
+    }
     const labels = out.filter((f) => f.layerId === 'sum-legend' && f.kind === 'label') as LabelFeature[];
     const box = (fs: LabelFeature[], top: number, bottom: number, left: number, extra = 0) => {
       if (!fs.length) return;
@@ -1237,7 +1244,7 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     const head = labels.filter((l) => l.name === 'Заголовок' || l.name === 'Подзаголовок');
     box(head, n0 + dy * 2.2 + dy * 0.6, n0 + dy * 1.1 - dy * 0.5, w);
     const leg = labels.filter((l) => l.name?.startsWith('Условные обозначения'));
-    if (leg.length) box(leg, legendRow(0) + dy * 0.7, legendRow(row - 1) - dy * 0.7, w);
+    if (leg.length) box(leg, legendRow(0) + dy * 0.7, legendRow(row - 1) - dy * 0.7, legLeft);
   }
   // начальный вид — по исходному масштабу; середина чуть ниже листа (на ~12 пикселей), чтобы низ легенды
   // не уходил под полосу времени у нижнего края окна
