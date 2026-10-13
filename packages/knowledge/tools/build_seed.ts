@@ -236,6 +236,58 @@ for (const [side, file, title] of [['su', 'rkka-1945', 'Красная арми�
   }
 }
 
+{
+  // что модель берёт из профилей сторон и откалиброванных правил: типы объединений, марш, расход и подвоз, задержки приказов,
+  // переправы, местность, укрепления, потери — записи «Как это устроено в модели» с рубрикой темы (числа модели, не история)
+  const cutm = (t: string, n = 480) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  const MOB: Record<string, string> = { foot: 'пешие', motor: 'моторизованные', tracked: 'гусеничные' };
+  const TER: Record<string, string> = { open: 'открытая', forest: 'лес', marsh: 'болото', urban: 'город', hills: 'высоты', water: 'вода' };
+  const ECH: Record<string, string> = { front: 'фронту', army: 'армии', corps: 'корпусу', division: 'дивизии', brigade: 'бригаде', regiment: 'полку' };
+  const POS: Record<string, string> = { attack: 'наступление', defend: 'оборона', march: 'марш', withdraw: 'отход', reserve: 'резерв' };
+  for (const [side, file] of [['su', 'rkka-1945'], ['de', 'wehrmacht-1945']] as const) {
+    const pr = read(`packages/sim/data/profiles/${file}.json`) as {
+      unitTypes: Record<string, { name: string; mobility: string; quality: number; frontageKm?: number }>; offRoad: Record<string, Record<string, number>>; road: Record<string, number>;
+      consumption: Record<string, { ammo: number; fuel: number }>; orderDelayHours: Record<string, number>; supply: { ammoPerDay: number; fuelPerDay: number; maxAmmo: number; maxFuel: number; rangeHours: number };
+      _supply_note?: string; _frontage_note?: string; engineering?: { parks?: number };
+    };
+    const who = side === 'su' ? 'Красная армия' : 'Вермахт';
+    const m = (id: string, title: string, rubrics: string[], summary: string, facts: Fact[]) =>
+      put({ id: `org:model-${side}-${id}`, category: 'organization', group: 'model', rubrics, title: `Модель, ${who}: ${title}`, status: 'checked', summary, facts: [{ key: 'side', value: SIDE[side] }, ...facts], relations: [{ type: 'related', target: `org:${side}-profile` }] });
+    m('unit-types', 'типы объединений и соединений', ['9.7', side === 'su' ? '2.1' : '2.2'], 'Типы формирований в профиле стороны: подвижность, качество (множитель боевой силы) и ширина полосы обороны.',
+      Object.values(pr.unitTypes).map((u) => ({ key: 'numbers', value: `${u.name}: ${MOB[u.mobility] ?? u.mobility}, качество ×${u.quality}${u.frontageKm ? `, полоса обороны ${u.frontageKm} км` : ''}` }))
+        .concat(pr._frontage_note ? [{ key: 'principles', value: cutm(pr._frontage_note) }] : []));
+    m('march', 'скорости марша по дорогам и местности', ['9.7', '5.2', '6.2'], 'Сколько километров в сутки проходят пешие, моторизованные и гусеничные части по дорогам и вне дорог в модели.',
+      [...Object.entries(pr.road).map(([k, v]) => ({ key: 'numbers', value: `${MOB[k] ?? k}, по дороге: ${v} км/сут` })),
+        ...Object.entries(pr.offRoad).map(([k, t]) => ({ key: 'numbers', value: `${MOB[k] ?? k}, вне дорог: ${Object.entries(t).filter(([, v]) => v > 0).map(([g, v]) => `${TER[g] ?? g} ${v}`).join(', ')} км/сут` }))]);
+    m('supply', 'расход и подвоз', ['9.7', '5.1'], 'Расход боеприпасов и горючего по видам действий, пополнение в сутки, запасы и предельное плечо подвоза в модели.',
+      [...Object.entries(pr.consumption).map(([k, c]) => ({ key: 'numbers', value: `${POS[k] ?? k}: боеприпасы ${c.ammo} бк/сут, горючее ${c.fuel} запр./сут` })),
+        { key: 'numbers', value: `подвоз в сутки: боеприпасы ${pr.supply.ammoPerDay} бк, горючее ${pr.supply.fuelPerDay} запр.; запас до ${pr.supply.maxAmmo} бк и ${pr.supply.maxFuel} запр.; плечо подвоза до ${pr.supply.rangeHours} ч пути` },
+        ...(pr._supply_note ? [{ key: 'principles', value: cutm(pr._supply_note) }] : [])]);
+    m('delays', 'задержки доведения приказов', ['9.7', '7.3', '3.4.4'], 'Через сколько часов приказ доходит до исполнителя в модели — по ступени управления.',
+      Object.entries(pr.orderDelayHours).map(([k, h]) => ({ key: 'numbers', value: `приказ ${ECH[k] ?? k}: ${h} ч` })));
+  }
+  const cal = read('packages/sim/data/rules/ww2-berlin-cal.json') as Record<string, unknown>;
+  const cm = (id: string, title: string, rubrics: string[], summary: string, facts: Fact[]) =>
+    put({ id: `org:model-cal-${id}`, category: 'organization', group: 'model', rubrics, title: `Модель: ${title}`, status: 'checked', summary, facts });
+  const note = (k: string) => (typeof cal[`_${k}_note`] === 'string' ? [{ key: 'principles', value: cutm(cal[`_${k}_note`] as string) }] : []);
+  const at = cal.advanceTerrain as Record<string, number>;
+  cm('terrain', 'местность и темп наступления', ['9.7', '6.2', '3.4.1'], 'Во сколько раз местность замедляет наступление и усиливает оборону в откалиброванных правилах Берлинской операции.',
+    [...Object.entries(at).map(([g, v]) => ({ key: 'numbers', value: `темп наступления, ${TER[g] ?? g}: ×${v}` })),
+      ...Object.entries((cal.defense as { terrain: Record<string, number> }).terrain).filter(([, v]) => v !== 1).map(([g, v]) => ({ key: 'numbers', value: `сила обороны, ${TER[g] ?? g}: ×${v}` })), ...note('advanceTerrain')]);
+  const d = cal.defense as { prepared: number; prepareHours: number; fortificationPerLevel: number };
+  cm('fortification', 'подготовленная оборона и укреплённые полосы', ['9.7', '6.4', '3.2.2'], 'Как в модели действуют подготовленная оборона и укреплённые полосы: усиление, срок подготовки, темп «прогрызания».',
+    [{ key: 'numbers', value: `подготовленная оборона: ×${d.prepared} после ${d.prepareHours} ч на месте` }, { key: 'numbers', value: `укреплённая полоса: +${d.fortificationPerLevel} к силе обороны за уровень` },
+      { key: 'numbers', value: `темп через полосу уровня 1–3: ${(cal.fortAdvanceKm as number[]).slice(1).join(', ')} км/сут; пересечение рубежа — ${cal.fortCrossHours} ч` }, ...note('fortAdvance')]);
+  cm('crossing', 'форсирование рек', ['9.7', '6.1', '3.2.4'], 'Сколько часов модель отводит на форсирование реки без переправы.',
+    [{ key: 'numbers', value: `форсирование реки без моста или переправы: ${cal.riverCrossHours} ч` }]);
+  const loss = (l: [number, number][], who: string) => l.map(([r, v]) => `${r}:1 — ${(v * 100).toFixed(1)} %`).join(', ') + ` (${who})`;
+  cm('losses', 'потери в бою по соотношению сил', ['9.7', '3.4.3'], 'Доля потерь за сутки боя у наступающего и обороняющегося в зависимости от соотношения сил — откалиброванные таблицы.',
+    [{ key: 'numbers', value: `наступающий: ${loss(cal.attackerLoss as [number, number][], 'потери в сутки при соотношении')}` }, { key: 'numbers', value: `обороняющийся: ${loss(cal.defenderLoss as [number, number][], 'потери в сутки при соотношении')}` }]);
+  const sf = cal.supplyFlow as { fullHours: number; fuelPer100km: number };
+  cm('supply-flow', 'подвоз как пропускная способность', ['9.7', '5.1', '5.2'], 'Подвоз полный, если путь от базы не длиннее заданного; горючее на марш — по пройденному пути.',
+    [{ key: 'numbers', value: `подвоз полный при пути от базы до ${sf.fullHours} ч; горючее — ${sf.fuelPer100km} запр. на 100 км марша` }, ...note('supplyFlow')]);
+}
+
 /* ───────────── сводка боевого состава (oob.md) → операция ───────────── */
 const curated: Entry[] = readdirSync(join(ROOT, 'packages/knowledge/data/curated')).filter((f) => f.endsWith('.json')).flatMap((f) => read(`packages/knowledge/data/curated/${f}`));
 for (const e of curated) put(e);
@@ -435,7 +487,12 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     if (parent && entries.has(`f:${parent}`)) { const e = entries.get(id)!; e.relations = dedupeRel([...(e.relations ?? []), { type: 'part_of', target: `f:${parent}` }]); }
   }
 
-  // доктрины сторон (свод правил «условие → действие» с нормативами)
+  // доктрины сторон (свод правил «условие → действие» с нормативами); рубрики — по теме группы правил
+  const DOCTRINE_RUBRICS: Record<string, string[]> = {
+    frontage: ['3.1.1', '3.4.2'], echelons: ['3.1.1', '3.2.1'], depth: ['3.1.1'], tempo: ['3.4.1', '3.1.3'], commit: ['3.1.3', '3.3.2'],
+    stop: ['3.2.2', '3.1.4'], bypass: ['3.1.3', '3.2.1'], regroup: ['3.1.4', '7.3'], reserve: ['3.1.4'], artillery: ['3.3.1'], air: ['3.3.3'],
+    layout: ['3.2.2', '6.4'], counterattack: ['3.1.4', '3.2.2'], withdrawal: ['3.2.2'], reserves: ['3.1.4', '3.2.2'], timing: ['3.4.4', '7.3'],
+  };
   const GROUP_RU: Record<string, string> = { frontage: 'ширина полос и участков прорыва', echelons: 'построение в эшелоны', depth: 'глубина задач', tempo: 'темп наступления', commit: 'ввод вторых эшелонов и подвижных групп', stop: 'остановка и переход к обороне', bypass: 'обход узлов обороны', regroup: 'перегруппировка', reserve: 'резервы', artillery: 'артиллерийское наступление', air: 'авиационное обеспечение', layout: 'построение обороны', counterattack: 'контратаки и контрудары', withdrawal: 'отход и отвод с первой позиции', reserves: 'резервы обороны', timing: 'сроки' };
   const LEVEL_RU: Record<string, string> = { front: 'фронт', army: 'армия', corps: 'корпус', division: 'дивизия' };
   for (const file of ['soviet-offensive-doctrine-1945.json', 'soviet-offensive-doctrine-1945-tsamo.json', 'german-defence-doctrine-1945.json']) {
@@ -448,7 +505,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     for (const g of groups) {
       const rs = d.rules.filter((r) => r.group === g);
       const id = `org:${side}-doctrine-${g}`;
-      put({ id, category: 'organization', group: side, title: `${side === 'su' ? 'Наступление Красной армии, 1945' : 'Оборона вермахта, 1945'}: ${GROUP_RU[g] ?? g}`, status: 'checked',
+      put({ id, category: 'organization', group: side, rubrics: DOCTRINE_RUBRICS[g] ?? ['3.1'], title: `${side === 'su' ? 'Наступление Красной армии, 1945' : 'Оборона вермахта, 1945'}: ${GROUP_RU[g] ?? g}`, status: 'checked',
         summary: `Положения доктрины и практики ${side === 'su' ? 'наступления фронтов, армий, корпусов и дивизий' : 'обороны армий, корпусов и дивизий'} с нормативами — по уставам, исследованиям${tsamo ? ' и документам ЦАМО' : ''}; на них опираются штабы агентной модели.`,
         facts: [{ key: 'side', value: SIDE[side] }, { key: 'topic', value: GROUP_RU[g] ?? g },
           ...rs.map((r) => ({ key: 'principles', value: cutx(`${r.level ? `[${LEVEL_RU[r.level] ?? r.level}] ` : ''}${r.condition ? `${r.condition} → ` : ''}${r.action}${r.values ? ` (${normValue(r.values)})` : ''}${r.note ? `. ${r.note}` : ''}`), source: sref(file, r.source), pages: r.page, reliability: rel(r.reliability) })),
@@ -467,7 +524,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     regSources('division-combat-norms.json', dn.sources);
     for (const g of [...new Set(dn.norms.map((n) => n.group))]) {
       const ns = dn.norms.filter((n) => n.group === g);
-      put({ id: `org:norms-division-${g}`, category: 'organization', group: 'su', title: `Нормативы боя дивизии: ${NG[g] ?? g}`, status: 'checked',
+      put({ id: `org:norms-division-${g}`, category: 'organization', group: 'su', rubrics: ({ frontage: ['3.4.2', '3.2.1'], pace: ['3.4.1'], artillery: ['3.3.1', '3.4.2'], losses: ['3.4.3'], ratio: ['3.4.2', '3.2.1'], timing: ['3.4.4'], breakpoint: ['3.4.3', '3.2.2'] } as Record<string, string[]>)[g] ?? ['3.4'], title: `Нормативы боя дивизии: ${NG[g] ?? g}`, status: 'checked',
         summary: 'Нормативы для дивизий 1944–1945 гг. (советские уставы и исследования, западные расчёты Дюпюи и HERO) — на них настроены параметры агентной модели.',
         facts: [{ key: 'topic', value: NG[g] ?? g }, ...ns.map((n) => ({ key: 'numbers', value: cutx(`${n.title}: ${normValue(n.value)}${n.unit ? ` ${n.unit}` : ''}${n.context ? ` — ${n.context}` : ''}`), source: sref('division-combat-norms.json', n.source), pages: n.page, reliability: rel(n.reliability) }))],
         relations: [{ type: 'related', target: 'org:model-agents-params' }] });
@@ -480,7 +537,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
   if (rm) for (const side of ['su', 'de']) {
     const rs = rm.rules.filter((r) => r.side === side);
     if (!rs.length) continue;
-    put({ id: `org:${side}-remnants`, category: 'organization', group: side, title: `${side === 'su' ? 'Красная армия' : 'Вермахт'}, 1945: когда дивизия теряет боеспособность и что с остатками`, status: 'checked',
+    put({ id: `org:${side}-remnants`, category: 'organization', group: side, rubrics: ['3.4.3', '3.2.2'], title: `${side === 'su' ? 'Красная армия' : 'Вермахт'}, 1945: когда дивизия теряет боеспособность и что с остатками`, status: 'checked',
       summary: 'Пороги боеспособности, сроки, рассеяние и сведение остатков разбитых дивизий — основа правил распада в агентной модели.',
       facts: [{ key: 'side', value: SIDE[side] }, ...rs.map((r) => ({ key: r.value != null ? 'numbers' : 'principles', value: cutx(`${({ threshold: 'порог боеспособности', remnants: 'остатки', timing: 'сроки', dispersal: 'рассеяние' } as Record<string, string>)[r.topic] ?? r.topic}: ${r.fact}${r.value != null ? ` (${normValue(r.value)}${r.unit ? ` ${r.unit}` : ''})` : ''}`), source: srcId(r.source ?? '') , reliability: rel(r.reliability), ...(r.source ? { pages: cutx(r.source, 160) } : {}) })),
         ...(rm.examples ?? []).filter((x) => x.side === side).map((x) => ({ key: 'numbers', value: cutx(`${x.division}${x.date ? `, ${ddmm2(x.date)}` : ''}: ${x.what}`), reliability: rel(x.reliability), ...(x.source ? { pages: cutx(x.source, 160) } : {}) }))] });
@@ -648,7 +705,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
   for (const [dir, id, title, group] of [['infantry-mobility-1944-45', 'org:research-mobility', 'Подвижность пехоты, автотранспорт и тыл 1944–1945 гг. (исследование для модели)', 'su'], ['german-defence-vistula-1945', 'org:research-de-vistula', 'Немецкая оборона перед Висло-Одерской операцией (исследование для модели)', 'de']] as const) {
     let files: string[] = [];
     try { files = readdirSync(join(SRC, dir)).filter((f) => f.endsWith('.md')); } catch { continue; }
-    put({ id, category: 'organization', group, title, status: 'checked', summary: 'Отчёты по источникам с оценкой достоверности (A/B/C): что прочитано, таблицы фактов, расхождения, чего не найдено и что взято в модель.',
+    put({ id, category: 'organization', group, title, rubrics: id === 'org:research-mobility' ? ['5.1', '5.2'] : ['3.2.2', '6.4'], status: 'checked', summary: 'Отчёты по источникам с оценкой достоверности (A/B/C): что прочитано, таблицы фактов, расхождения, чего не найдено и что взято в модель.',
       sections: files.map((f) => ({ title: f.replace(/\.md$/, ''), text: readFileSync(join(SRC, dir, f), 'utf8').trim() })) });
   }
 }

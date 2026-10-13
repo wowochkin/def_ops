@@ -1232,6 +1232,20 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .cov-badge { font-size: 10.5px; border-radius: 9px; padding: 1px 7px; }
 .rp-cov { font-size: 12px; border-radius: 6px; padding: 5px 8px; margin: 6px 0; }
 .kb-cov { padding: 16px; overflow: auto; max-width: 1150px; margin: 0 auto; width: 100%; }
+.kb-gcov h3 { margin: 4px 0 6px; font-size: 15px; }
+.kb-gcov h3 + p { margin: 0 0 10px; font-size: 12.5px; }
+.kb-gcov-sum { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; margin: 6px 0 10px; }
+.kb-gcov-sum .ok b { color: #2f6b3b; } .kb-gcov-sum .thin b { color: #8a6a00; } .kb-gcov-sum .empty b { color: var(--accent); }
+.kb-gcov-need { background: #fbf6ec; border: 1px solid #ecdcb8; border-radius: 6px; padding: 8px 10px; font-size: 12.5px; margin-bottom: 12px; line-height: 1.7; }
+.kb-gcov-need .link { margin-right: 10px; } .kb-gcov-need .link.empty { color: var(--accent); } .kb-gcov-need .link.thin { color: #8a6a00; }
+.kb-gcov-t { border-collapse: collapse; width: 100%; font-size: 12.5px; margin-bottom: 18px; }
+.kb-gcov-t th { text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); padding: 4px 6px; }
+.kb-gcov-t td { padding: 3px 6px; border-bottom: 1px solid #f0eee8; }
+.kb-gcov-t td:nth-child(n+2) { width: 90px; text-align: right; }
+.kb-gcov-t tr { cursor: pointer; } .kb-gcov-t tr:hover td { background: #f6f4ee; }
+.kb-gcov-t tr.d0 td:first-child { font-weight: 700; } .kb-gcov-t tr.d1 td:first-child { padding-left: 18px; font-weight: 600; } .kb-gcov-t tr.d2 td:first-child { padding-left: 34px; }
+.kb-gcov-t tr.empty td:nth-child(2) { color: var(--accent); font-weight: 700; } .kb-gcov-t tr.thin td:nth-child(2) { color: #8a6a00; font-weight: 600; }
+.kb-gcov-norms { font-size: 12.5px; padding-left: 18px; columns: 2; column-gap: 24px; } .kb-gcov-norms li { break-inside: avoid; margin: 2px 0; } .kb-gcov-norms li.empty { color: var(--accent); }
 @media (max-width: 700px) { .cov-row { grid-template-columns: 1fr 60px; } .cov-row .cov-bar, .cov-row .cov-meta { grid-column: 1 / -1; } }
 
 .cov-hints { display: grid; gap: 6px; margin: 8px 0; }

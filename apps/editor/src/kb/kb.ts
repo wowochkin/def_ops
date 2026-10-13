@@ -11,6 +11,7 @@ import {
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
 import * as store from './store';
+import normsFile from '../../../../packages/sim/data/rules/norms.json';
 import { fileText } from './text';
 import { Vectors, type VecState } from './vectors';
 
@@ -356,4 +357,10 @@ export async function addInfraFact(op: { id: string; title: string }, f: { text:
   };
   await store.put('entries', { ...e, facts: [...(e.facts ?? []), fact], updatedAt: new Date().toISOString() });
   await reload();
+}
+
+/** Нормативы модели (norms.json) и записи базы, на которые они ссылаются (kb) — для «Полноты» общих знаний. */
+export function normsCoverage(byId: Map<string, Entry>): { id: string; title: string; kb?: string; entry: Entry | null }[] {
+  const list = (normsFile as unknown as { norms: { id: string; title: string; kb?: string }[] }).norms ?? [];
+  return list.map((n) => ({ id: n.id, title: n.title, kb: n.kb, entry: (n.kb && byId.get(n.kb)) || null }));
 }

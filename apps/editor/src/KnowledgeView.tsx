@@ -30,6 +30,8 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
   useEffect(() => { const f = () => void kbOperations().then(setOps); f(); return onDataChange(f); }, []);
   useEffect(() => { try { localStorage.setItem('def_ops.kbOp', op); } catch { /* */ } }, [op]);
   const scoped = useMemo(() => scope(s, op, ops), [s, op, ops]);
+  /** Переход к рубрике из «Полноты». */
+  const [jump, setJump] = useState<{ code: string; n: number } | null>(null);
   const open = (id: string) => { setTab('browse'); setSel((cur) => { if (cur && cur !== id) setHist((h) => [...h.slice(-20), cur]); return id; }); };
   const pending = scoped.proposals.filter((p) => p.status === 'pending').length;
   return (
@@ -47,10 +49,53 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
         <span className="muted">{s.ready ? `${scoped.entries.length} записей, ${scoped.documents.length} документов` : 'загрузка…'}</span>
       </div>
       {!s.ready ? <div className="kb-wait"><span className="spinner" /> загрузка базы…</div>
-        : tab === 'browse' ? <Browse s={scoped} sel={sel} open={open} back={hist.length ? () => { setSel(hist[hist.length - 1]); setHist((h) => h.slice(0, -1)); } : null} llm={llm} />
+        : tab === 'browse' ? <Browse s={scoped} sel={sel} open={open} jump={jump} back={hist.length ? () => { setSel(hist[hist.length - 1]); setHist((h) => h.slice(0, -1)); } : null} llm={llm} />
         : tab === 'coverage' ? <div className="kb-cov">{op && op !== 'general' ? <CoveragePanel op={op} title={ops.find((o) => o.id === op)?.title ?? op} />
-          : <div className="muted kb-wait">Выберите операцию вверху («Операция») — полнота считается по её данным: формирования, пункты, рубежи, реки, события.</div>}</div>
+          : <GeneralCoverage s={scoped} all={!op} onRubric={(code) => { setJump({ code, n: Date.now() }); setTab('browse'); }} open={open} />}</div>
         : <Docs s={scoped} llm={llm} open={open} op={op && op !== 'general' ? ops.find((o) => o.id === op) ?? null : null} ops={ops} />}
+    </div>
+  );
+}
+
+/**
+ * Полнота общих знаний (без операции) — по каркасу рубрик: сколько записей в каждой рубрике военного искусства,
+ * техники, тыла, театра, управления и источников, сколько из них черновиков; пустые и скудные рубрики — сверху
+ * списка «чего не хватает». Операции и хронология — у операций («Операция» вверху). Ниже — нормативы модели
+ * (norms.json): есть ли у каждого запись в базе.
+ */
+function GeneralCoverage({ s, all, onRubric, open }: { s: kb.KbState; all: boolean; onRubric: (code: string) => void; open: (id: string) => void }) {
+  const rows = useMemo(() => {
+    const n = new Map<string, number>(), d = new Map<string, number>();
+    for (const e of s.entries) {
+      const codes = new Set<string>();
+      for (const c of rubricsOf(e)) { const p = c.split('.'); for (let i = 1; i <= p.length; i++) codes.add(p.slice(0, i).join('.')); }
+      for (const c of codes) { n.set(c, (n.get(c) ?? 0) + 1); if (e.status !== 'checked') d.set(c, (d.get(c) ?? 0) + 1); }
+    }
+    const out: { code: string; title: string; depth: number; n: number; draft: number; leaf: boolean }[] = [];
+    const walk = (l: Rubric[], depth: number) => { for (const r of l) { if (depth === 0 && (r.code === '1' || r.code === '8')) continue; out.push({ code: r.code, title: r.title, depth, n: n.get(r.code) ?? 0, draft: d.get(r.code) ?? 0, leaf: !r.children?.length }); if (r.children) walk(r.children, depth + 1); } };
+    walk(RUBRICS, 0);
+    return out;
+  }, [s.entries]);
+  const leaves = rows.filter((r) => r.leaf);
+  const empty = leaves.filter((r) => !r.n && r.code !== '9.5'), thin = leaves.filter((r) => r.n > 0 && r.n < 3);
+  const ok = leaves.filter((r) => r.n >= 3).length;
+  const norms = useMemo(() => kb.normsCoverage(s.byId), [s.byId]);
+  const lvl = (r: { n: number }) => (!r.n ? 'empty' : r.n < 3 ? 'thin' : 'ok');
+  return (
+    <div className="kb-gcov">
+      <h3>Полнота общих знаний {all ? '(все материалы)' : '(без операции)'}</h3>
+      <p className="muted">Доктрина, нормативы, техника, тыл, театр, управление и источники — то, что нужно советнику, штабам на модели и самой модели независимо от операции. Операции и хронология считаются у операций: выберите её вверху («Операция»).</p>
+      <div className="kb-gcov-sum"><span className="ok">заполнено: <b>{ok}</b></span><span className="thin">мало (1–2 записи): <b>{thin.length}</b></span><span className="empty">пусто: <b>{empty.length}</b></span><span>из {leaves.length} рубрик</span></div>
+      {(empty.length > 0 || thin.length > 0) && <div className="kb-gcov-need"><b>Чего не хватает:</b> {[...empty, ...thin].map((r) => <button key={r.code} className={`link ${lvl(r)}`} onClick={() => onRubric(r.code)}>{r.code} {r.title}{r.n ? ` (${r.n})` : ''}</button>)}
+        <div className="muted small">Пополнить можно, загрузив документы во вкладке «Документы» — модель извлечёт сведения с цитатами; пустая «Загруженные документы» (9.5) — до первой загрузки.</div></div>}
+      <table className="kb-gcov-t"><thead><tr><th>Рубрика</th><th>Записей</th><th>Черновики</th></tr></thead><tbody>
+        {rows.map((r) => <tr key={r.code} className={`d${r.depth} ${r.leaf ? lvl(r) : ''}`} onClick={() => onRubric(r.code)} title="Открыть рубрику в «Материалах»">
+          <td>{r.code} {r.title}</td><td>{r.n || '—'}</td><td>{r.draft ? <span className="muted" title="черновики и извлечённые из документов — проверить">{r.draft}</span> : ''}</td></tr>)}
+      </tbody></table>
+      <h3>Нормативы модели в базе знаний</h3>
+      <p className="muted">Каждое правило модели с числом из истории (packages/sim/data/rules/norms.json) ссылается на запись базы с источником.</p>
+      <div className="kb-gcov-sum"><span className="ok">с записью: <b>{norms.filter((x) => x.entry).length}</b></span><span className="empty">без записи: <b>{norms.filter((x) => !x.entry).length}</b></span><span>из {norms.length}</span></div>
+      <ul className="kb-gcov-norms">{norms.map((x) => <li key={x.id} className={x.entry ? '' : 'empty'}>{x.title}{x.entry ? <> — <button className="link" onClick={() => open(x.entry!.id)}>{x.entry.title}</button></> : <span className="muted"> — записи нет{x.kb ? ` (${x.kb})` : ''}</span>}</li>)}</ul>
     </div>
   );
 }
@@ -66,9 +111,10 @@ function scope(s: kb.KbState, op: string, ops: KbOperation[]): kb.KbState {
 
 /* ───────────── материалы: каркас, карточка, вопросы ───────────── */
 
-function Browse({ s, sel, open, back, llm }: { s: kb.KbState; sel: string | null; open: (id: string) => void; back: (() => void) | null; llm: Llm }) {
+function Browse({ s, sel, open, back, llm, jump }: { s: kb.KbState; sel: string | null; open: (id: string) => void; back: (() => void) | null; llm: Llm; jump: { code: string; n: number } | null }) {
   const [q, setQ] = useState('');
-  const [node, setNode] = useState<string>('1.2');
+  const [node, setNode] = useState<string>(jump?.code ?? '1.2');
+  useEffect(() => { if (jump) { setQ(''); setNode(jump.code); } }, [jump]);
   const [cat, setCat] = useState<string | null>(null);
   const [limit, setLimit] = useState(150);
   const bm = useMemo(() => (q.trim() && s.index ? s.index.search(q, { limit: 60 }) : null), [q, s.index]);
