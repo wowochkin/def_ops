@@ -44,7 +44,12 @@ export interface GameRecord {
   human: string;
   ai: string;
   turns: GameTurn[];
+  /** Игра на агентной модели (дивизии, ядро crates/agents-core): её сценарий, история и длина хода. */
+  agents?: AgentGameSpec;
 }
+
+/** Агентная модель в игре: сценарий и история ядра (пути от корня данных), длина хода, часов. */
+export interface AgentGameSpec { path: string; history: string; turnHours: number }
 
 export interface GameState {
   state: SimState;

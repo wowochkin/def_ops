@@ -10,7 +10,7 @@ export { runToDocument, summaryToDocument, shortName, type PublishOptions, type 
 export { analyze, reportMarkdown, sectorBreaches, type Analysis, type AnalysisOptions, type SectorBreach } from './report';
 export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } from './source';
 export { snapshotOf } from './history';
-export { startGame, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
+export { startGame, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type AgentGameSpec, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
 export { unitReports, intelReport, nearbyPlaces, dayEvents, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, areaOriginal, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
 export { prepareTakeover, checkAction, applyActions, lineOf, NOT_COMMITTED, type ActionCheck } from './staff';
 export { commandTerms, type CommandTerms } from './command';
@@ -24,4 +24,4 @@ export { applyInfrastructure, resolveInfra, locatePlace, infraEffect, INFRA_KIND
 export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, legendFromSamples, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
 export { RoadNet, roadNet, visualPath } from './roadnet';
 export { groupOf, activeBoundaries, effectiveBoundaries, withBoundaries, checkTriggers, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';
-export { agentsToRun, agentsHistory, postureOf, type AgentTrace, type AgentHistory } from './agents';
+export { agentsToRun, agentsStateAt, agentsHistory, postureOf, agentKindOf, AGENT_TASK, type AgentTrace, type AgentHistory, type AgentOrderKind } from './agents';

@@ -54,5 +54,10 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
             v
         }),
         "staff": sim.llm_log.lock().map(|l| l.clone()).unwrap_or_default(),
+        // действующий приказ каждой дивизии на последний шаг (для докладов в игре): что, куда, от кого, когда
+        "orders": w.divisions.iter().map(|d| d.order.as_ref().map(|o| json!({
+            "kind": o.kind, "target": sim.theatre.proj.to_lnglat(o.target), "from": w.hqs[o.from as usize].id,
+            "issued": o.issued, "arrives": o.arrives, "note": o.note,
+        }))).collect::<Vec<_>>(),
     })
 }

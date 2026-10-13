@@ -137,19 +137,25 @@ pub mod commands {
     static GAME: std::sync::Mutex<Option<agents_core::game::Game>> = std::sync::Mutex::new(None);
 
     /// Начать игру: прогон по сценарию до часа `takeover`, дальше стороной `player` командует игрок; противник —
-    /// по сценарию (script) или по доктрине (doctrine). Возвращает ход до передачи командования.
+    /// по сценарию (script), по доктрине (doctrine) или штабом на модели вне ядра (llm — его приказы приходят в game_turn). Возвращает ход до передачи командования.
     #[tauri::command]
-    pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>) -> Result<serde_json::Value, String> {
+    pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>, until: Option<u32>) -> Result<serde_json::Value, String> {
         tauri::async_runtime::spawn_blocking(move || {
             let r = root();
             let path = inside(&scenario)?;
             let rs = r.to_string_lossy().to_string();
             let (mut sim, meta) = scenario::load(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs)?;
             if let Some(s) = seed { sim.seed = s; }
-            let player = if player.as_deref() == Some("de") { agents_core::model::Side::De } else { agents_core::model::Side::Su };
-            let other = 1 - agents_core::staff::side_idx(player);
+            use agents_core::model::Side;
+            let player = if player.as_deref() == Some("de") { Side::De } else { Side::Su };
+            let enemy_side = if player == Side::Su { Side::De } else { Side::Su };
+            let other = agents_core::staff::side_idx(enemy_side);
             sim.sources[other] = if enemy.as_deref() == Some("doctrine") { Source::Doctrine } else { Source::Script };
-            let g = agents_core::game::Game::start(sim, meta, takeover, player);
+            // llm — противником командует штаб на языковой модели вне ядра (игра редактора): его приказы — через game_turn
+            let free: Vec<Side> = if enemy.as_deref() == Some("llm") { vec![player, enemy_side] } else { vec![player] };
+            let mut g = agents_core::game::Game::start_free(sim, meta, takeover, player, &free);
+            // срок игры (до победы или поражения) может быть дальше конца сценария
+            if let Some(u) = until { g.limit = g.limit.max(u); }
             let t = g.trace();
             *GAME.lock().map_err(|e| e.to_string())? = Some(g);
             Ok(t)

@@ -1,6 +1,6 @@
 import type { CommandTerms } from '@def-ops/sim';
 import type { LngLat, MapDocument } from '@def-ops/core';
-import type { ActionCheck, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, UnitReport } from '@def-ops/sim';
+import type { ActionCheck, AgentGameSpec, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 
 export type Thinking = 'off' | 'low' | 'medium' | 'high';
@@ -40,6 +40,8 @@ export interface GameStart {
   seed: number;
   /** Момент передачи командования (начало хода). */
   takeover: string;
+  /** Игра на агентной модели (настольное приложение): ход считает ядро через основное окно (agents-call). */
+  agents?: AgentGameSpec;
 }
 
 export type GameRequest =
@@ -63,7 +65,9 @@ export type GameRequest =
   | { kind: 'review-section'; id: number; section: string; done: { title: string; text: string }[] }
   | { kind: 'review-stop' }
   /** Посредник: показать на карте всех (без тумана войны). */
-  | { kind: 'reveal'; on: boolean };
+  | { kind: 'reveal'; on: boolean }
+  /** Ответ основного окна на вызов ядра агентной модели. */
+  | { kind: 'agents-reply'; id: number; ok: boolean; result?: unknown; error?: string };
 
 export interface Place { id: string; title: string; at: LngLat }
 
@@ -102,6 +106,8 @@ export interface JournalDay {
 export interface Goal { title: string; historical: string; simulated: string | null; days: number | null; at: string | null; place: LngLat | null }
 
 export interface TurnView {
+  /** Расчётная модель: нынешняя (армии и корпуса) или агентная (дивизии). */
+  engine?: 'army' | 'agents';
   scenario: string; scenarioName: string; rules: string; seed: number;
   start: string; end: string; takeover: string; time: string; turnHours: number;
   /** Ход игры (с передачи командования). Конечной даты нет: игра идёт до победы или поражения. */
@@ -176,7 +182,9 @@ export type GameResponse =
   | { kind: 'plan-progress'; id: number; text: string }
   | { kind: 'plan-variant'; id: number; index: number; variant: PlanVariantView }
   | { kind: 'plan-done'; id: number; ok: boolean; error?: string; warning?: string; model?: string; seconds?: number }
-  | { kind: 'error'; message: string };
+  | { kind: 'error'; message: string }
+  /** Вызов команды ядра агентной модели (Tauri) — поток сам её вызвать не может, вызывает основное окно. */
+  | { kind: 'agents-call'; id: number; cmd: string; args: Record<string, unknown> };
 
 /** Ответ советника для интерфейса: текст, предложенные приказы (готовые к включению в распоряжение), следующие вопросы. */
 export interface AdviceView {

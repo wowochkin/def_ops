@@ -21,7 +21,6 @@ import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { MapHover, withoutLabels } from './MapHover';
 import { invoke } from '@tauri-apps/api/core';
 import { addHours, type AgentHistory, type AgentTrace } from '@def-ops/sim';
-import { AgentGamePanel, DraftPins, TakeoverAgentDialog, type AgentGameState, type Draft, type Enemy, type GameTrace } from './AgentGame';
 import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
 
 /** В настольном приложении (Tauri): там есть ядро агентной модели на Rust. */
@@ -30,6 +29,8 @@ const DESKTOP = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 const AGENT_SCENARIOS: Record<string, { path: string; history: string; title: string }> = {
   'berlin-1945-tasks': { path: 'packages/sim/data/scenarios/agents/berlin-1945.json', history: 'packages/sim/data/scenarios/agents/berlin-1945.history.json', title: 'Берлинская операция' },
 };
+/** Ход игры на агентной модели, ч. */
+const AGENT_GAME_HOURS = 12;
 /** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
 const AGENT_STEP_HOURS = 6;
 
@@ -157,11 +158,6 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [agentRun, setAgentRun] = useState<AgentRun | null>(null);
   const pendingAgent = useRef<AgentRun | null>(null);
   const [agentSel, setAgentSel] = useState<string | null>(null);
-  // игра на агентной модели: состояние, армия, для которой выбирается цель на карте, и час, к которому перевести карту
-  const [agentGame, setAgentGame] = useState<AgentGameState | null>(null);
-  const [agentTake, setAgentTake] = useState<number | null>(null);
-  const [pick, setPick] = useState<string | null>(null);
-  const timeAfter = useRef<string | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
   useEffect(() => { setRules((r) => (entry.rules.some((x) => x.id === r) ? r : entry.rules[0].id)); }, [entry]);
@@ -180,7 +176,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         setBusy(null); w.terminate();
         const d = migrateDocument(m.result.doc);
         setAgentRun(m.result.engine === 'agents' ? pendingAgent.current : null); setAgentSel(null);
-        setResult(m.result); setDoc(d); setTime(timeAfter.current ?? d.timeline?.start ?? null); timeAfter.current = null; setMapKey((k) => k + 1); setFocus(null);
+        setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
       }
     };
     w.onerror = (e) => { setBusy(null); setError(e.message || 'ошибка расчёта'); };
@@ -188,7 +184,6 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   };
   const run = () => {
     const token = ++runId.current;
-    if (agentGame) exitAgentGame();
     const q: SimRequest = { scenario, rules, seed, runs, toleranceKm: entry.toleranceKm };
     if (!useAgents) { startWorker(q); return; }
     // агентная модель: ход по часам считает ядро приложения, карту — фоновый поток, как у нынешней модели
@@ -204,41 +199,14 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       })
       .catch((e) => { if (token === runId.current) { setBusy(null); setError(String(e)); } });
   };
-  /** Карта по ходу агентной модели (после хода игры) — тем же фоновым потоком. */
-  const agentMap = (trace: AgentTrace, hour: number) => {
-    if (!agentRun || !agentOp) return;
-    pendingAgent.current = { trace, history: agentRun.history };
-    timeAfter.current = addHours(trace.start, hour);
-    startWorker({ scenario, rules, seed, runs: 1, toleranceKm: entry.toleranceKm, agents: { trace, history: agentRun.history, title: `${agentOp.title}: игра`, stepHours: AGENT_STEP_HOURS } });
-  };
-  const gameFrom = (t: GameTrace, prev: Partial<AgentGameState>): AgentGameState => ({
-    takeover: t.game.takeover, hour: t.game.hour, over: t.game.over, turnHours: prev.turnHours ?? 12, enemy: prev.enemy ?? 'script', drafts: {}, applied: t.game.applied ?? [],
-  });
-  const startAgentGame = (enemy: Enemy, turnHours: number) => {
-    if (agentTake == null || !agentOp) return;
-    const h = agentTake;
-    setAgentTake(null); setBusy('передача командования…'); setError(null);
-    invoke<GameTrace>('game_start', { scenario: agentOp.path, seed, takeover: h, player: 'su', enemy })
-      .then((t) => { setAgentGame(gameFrom(t, { enemy, turnHours })); agentMap(t, t.game.hour); })
-      .catch((e) => { setBusy(null); setError(String(e)); });
-  };
-  const agentTurn = () => {
-    if (!agentGame) return;
-    const orders = Object.entries(agentGame.drafts).map(([hq, d]) => ({ hq, kind: d.kind, target: d.target, note: 'приказ игрока' }));
-    setPick(null); setBusy(`ход: ${agentGame.turnHours} ч расчёта…`); setError(null);
-    invoke<GameTrace>('game_turn', { orders, hours: agentGame.turnHours })
-      .then((t) => { setAgentGame(gameFrom(t, agentGame)); agentMap(t, t.game.hour); })
-      .catch((e) => { setBusy(null); setError(String(e)); });
-  };
-  const exitAgentGame = () => { void invoke('game_stop').catch(() => {}); setAgentGame(null); setPick(null); };
   const stop = () => { runId.current++; worker.current?.terminate(); worker.current = null; setBusy(null); };
 
   // агентная модель: щелчок по дивизии на карте — её карточка и разговор. Попадание — по знакам, нарисованным на
   // карте в этот момент (между снимками знак идёт по дорогам, его место не совпадает с расчётным часом);
   // щелчок по армии или фронту — тактический масштаб с приближением к ней.
   const agentHour = agentRun && time ? hourOf(agentRun.trace.start, time) : 0;
-  const live = useRef({ doc, level, time, pick, agentGame });
-  live.current = { doc, level, time, pick, agentGame };
+  const live = useRef({ doc, level, time });
+  live.current = { doc, level, time };
   useEffect(() => {
     const host = eng?.getContainer().parentElement;
     if (!eng || !host || !agentRun) return;
@@ -248,14 +216,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       if ((e.target as Element).closest('.rp-tools, .legend, .player, .scalebar, .maplibregl-ctrl, .ag-panel, .cmd-notice, button, select')) return;
       const r = host.getBoundingClientRect();
       const pt: [number, number] = [e.clientX - r.left, e.clientY - r.top];
-      const { doc: d, level: lv, time: t, pick: pk, agentGame: g } = live.current;
-      if (pk && g) {
-        const at = eng.unproject(pt) as [number, number];
-        const dr = g.drafts[pk];
-        if (dr) setAgentGame({ ...g, drafts: { ...g.drafts, [pk]: { ...dr, target: [+at[0].toFixed(4), +at[1].toFixed(4)] } } });
-        setPick(null);
-        return;
-      }
+      const { doc: d, level: lv, time: t } = live.current;
       if (!d || !t) return;
       // ближайший нарисованный знак: дивизия (свои и противник) или объединение (армия, фронт)
       const shown = documentAt(withLevel(d, lv), t, { visibleOnly: true });
@@ -315,9 +276,11 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     if (!result || !take) return;
     if (saved && !confirm('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.')) return;
     setTake(null);
-    setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take }, saved: null, enemy });
+    // агентная модель: ход игры — AGENT_GAME_HOURS, считает ядро приложения
+    const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS } : undefined;
+    setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take, ...(agents ? { agents } : {}) }, saved: null, enemy });
   };
-  const takeAt = result && result.engine !== 'agents' && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
+  const takeAt = result && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
   return (
     <ZonesContext.Provider value={zones}>
     <div className="replay">
@@ -333,7 +296,6 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <button onClick={() => { if (confirm('Удалить запись незавершённой игры?')) { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); } }}>Удалить</button>
           </div>
         </div>}
-        {!agentGame && <>
         <div className="rp-cards">
           {CATALOG.map((c) => (
             <button key={c.id} className={`rp-card${c.id === scenario ? ' on' : ''}`} disabled={!!busy} onClick={() => setScenario(c.id)}>
@@ -365,17 +327,11 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             : <button className="rp-go primary" onClick={run}>Рассчитать</button>}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
-        </>}
-        {agentGame && agentRun && <AgentGamePanel trace={agentRun.trace} g={agentGame} busy={busy} pick={pick} setPick={setPick}
-          setDrafts={(d: Record<string, Draft>) => setAgentGame({ ...agentGame, drafts: d })} onTurn={agentTurn} onExit={exitAgentGame} />}
-        {agentGame && error && <div className="err" style={{ margin: '0 14px' }}>Ошибка: {error}</div>}
-        {result && !busy && !agentGame && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onSummary={() => result.summary && onOpenInEditor(result.summary)} onEvent={goEvent} />}
+        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onSummary={() => result.summary && onOpenInEditor(result.summary)} onEvent={goEvent} />}
       </aside>
       <main className="rp-main">
         {doc ? <>
           <div className="rp-bar">
-          {agentRun && agentOp && !agentGame && time && <button className="take-btn" onClick={() => setAgentTake(Math.max(0, Math.floor(agentHour)))} title="С этого часа советскими армиями командуете вы; немецкая сторона — по сценарию или по доктрине">
-            <span>⚑</span> Принять командование <small>с {ddmm(time)} {time.slice(11, 13)}:00</small></button>}
           {takeAt && <button className="take-btn" onClick={() => setTake(takeAt)} title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
           <div className="rp-tools">
@@ -393,16 +349,14 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
-          {agentRun && !agentSel && <div className="ag-hint">{pick ? 'Щёлкните по карте — цель приказа армии' : 'Щёлкните по дивизии — карточка агента и разговор с ним'}</div>}
-          {agentGame && agentRun && eng && <DraftPins engine={eng} trace={agentRun.trace} drafts={agentGame.drafts} />}
+          {agentRun && !agentSel && <div className="ag-hint">Щёлкните по дивизии — карточка агента и разговор с ним</div>}
           <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
           </div>
         </> : <Empty busy={!!busy} />}
       </main>
-      {agentTake != null && agentRun && <TakeoverAgentDialog start={agentRun.trace.start} hour={agentTake} onStart={startAgentGame} onCancel={() => setAgentTake(null)} />}
-      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.turnHours} scenarioName={result.scenarioName} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
+      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
         onDownload={() => download(`${result.scenario}-seed${result.seed}-report.md`, result.report, 'text/markdown')} />}
     </div>

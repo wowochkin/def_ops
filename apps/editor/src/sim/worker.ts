@@ -76,7 +76,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History) {
   post({
     kind: 'done',
     result: {
-      scenario: q.scenario, rules: 'agents', seed: q.seed, runs: 1, ms: Date.now() - t0, engine: 'agents',
+      scenario: q.scenario, rules: ctx.rules.id, seed: q.seed, runs: 1, ms: Date.now() - t0, engine: 'agents',
       start: ctx.scenario.start, end: ctx.scenario.end, turnHours: A.stepHours, scenarioName: name,
       within: s.within, n: s.n, medianExcessKm: s.medianExcessKm, spread: [s.within],
       events: events.map((e) => {

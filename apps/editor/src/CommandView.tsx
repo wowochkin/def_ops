@@ -157,7 +157,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'plan-variant') setPlan((p) => { if (p?.id !== m.id) return p; const v = [...p.variants]; v[m.index] = m.variant; return { ...p, variants: v }; });
       else if (m.kind === 'plan-done') setPlan((p) => (p?.id === m.id ? { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model } : p));
       else if (m.kind === 'advice') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
-      else if (m.kind === 'record') {
+      else if (m.kind === 'agents-call') {
+        // ход агентной модели считает ядро приложения: поток вызывает команду через окно
+        void import('@tauri-apps/api/core').then(({ invoke }) => invoke(m.cmd, m.args))
+          .then((result) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: true, result } satisfies GameRequest))
+          .catch((err) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: false, error: String((err as Error)?.message ?? err) } satisfies GameRequest));
+      } else if (m.kind === 'record') {
         setRecord(m.record);
         try { localStorage.setItem(SAVE_KEY, JSON.stringify({ record: m.record, enemy: enemyRef.current, title: titleRef.current, turn: m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover } satisfies SavedGame)); } catch { /* */ }
       }
@@ -389,7 +394,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           </div>
           {view && <div className="cmd-date">
             <b>{dayLong(view.time)}, {hhmm(view.time)}</b>
-            <span>ход {view.turn} · вы командуете: {view.human.name}</span>
+            <span>ход {view.turn} · вы командуете: {view.human.name}{view.engine === 'agents' ? ' · агентная модель: дивизии, расчёт по часам' : ''}</span>
             <span className="cmd-goal" title={`Победа: ${view.victory}. Поражение: численность ниже ${Math.round(view.strengthBelow * 100)} % исходной или предельный срок ${ddmm(view.deadline)}`}>цель — {view.victory}; срок — {ddmm(view.deadline)}; в строю {pct(view.strength)}</span>
           </div>}
           <div className="cmd-chips"><AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.model} onClick={() => setTab('umpire')} />
@@ -408,7 +413,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} onPlan={() => askPlan(3)} planBusy={!!plan && !plan.done} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
-                {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][]).map(([k, t, n]) => (
+                {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
+                  // агентная модель: распоряжения тыла, переправ, резервов и полос пока не исполняет — только приказы войскам
+                  .filter(([k]) => view.engine !== 'agents' || k === 'units').map(([k, t, n]) => (
                   <button key={k} className={sub === k ? 'on' : ''} onClick={() => { setSub(k); setPickMode(null); }}>{t}{n ? ` · ${n}` : ''}</button>))}
               </div>
               {sub === 'units' && <Orders v={fv!} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}

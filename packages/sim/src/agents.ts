@@ -4,7 +4,7 @@
  * summaryToDocument, checkEvents, что и для нынешней модели: «Переигровка» показывает обе одинаково.
  */
 import type { LngLat } from '@def-ops/core';
-import type { Echelon, Formation, FormationDef, Posture, SimState } from './types';
+import type { Echelon, Formation, FormationDef, Order, Posture, SimState, Task } from './types';
 import { addHours, type SimContext } from './step';
 import type { History, RunResult, Snapshot } from './history';
 
@@ -22,6 +22,21 @@ export interface AgentTrace {
   frames: unknown[][][];
   journal: { tick: number; time: string; agent: string | null; text: string }[];
   sources?: string[];
+  /** Действующий приказ каждой дивизии на последний кадр (порядок divisions); null — без приказа. */
+  orders?: ({ kind: AgentOrderKind; target: LngLat; from: string; issued: number; arrives: number; note: string } | null)[];
+}
+
+export type AgentOrderKind = 'move' | 'attack' | 'defend' | 'hold' | 'withdraw';
+/** Приказ агентной модели → задача этой модели и обратно. */
+export const AGENT_TASK: Record<AgentOrderKind, Task> = { move: 'regroup', attack: 'attack', defend: 'defend', hold: 'hold', withdraw: 'withdraw' };
+export function agentKindOf(task: Task): AgentOrderKind {
+  switch (task) {
+    case 'attack': case 'counterattack': case 'breakout': return 'attack';
+    case 'defend': case 'delay': return 'defend';
+    case 'hold': return 'hold';
+    case 'withdraw': return 'withdraw';
+    default: return 'move';
+  }
 }
 
 /** Ход агентной модели по сторонам и в расчёте этой модели. */
@@ -108,6 +123,49 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
   });
   const final: SimState = { scenario: ctx.scenario.id, time: end, turn: snapshots.length - 1, formations, pending: [], rngState: 0, seed: t.seed, journal: [] };
   return { ctx, run: { final, snapshots } };
+}
+
+/**
+ * Состояние на час h хода агентной модели для контекста из agentsToRun: формирования с положением, численностью,
+ * запасами и положением дел на этот час (для докладов, разведки и игры). Не введённые — с enterAt на час ввода,
+ * выбывшие (небоеспособны, сведены) — уничтожены.
+ */
+export function agentsStateAt(ctx: SimContext, t: AgentTrace, h: number): SimState {
+  const F = (k: string) => t.fields.indexOf(k);
+  const [iLng, iLat, iState, iPers, iTanks, iGuns, iAmmo, iFuel, iFat, iEnc] = ['lng', 'lat', 'state', 'personnel', 'tanks', 'guns', 'ammo', 'fuel', 'fatigue', 'encircled'].map(F);
+  const hh = Math.max(0, Math.min(t.frames.length - 1, Math.round(h)));
+  const time = (x: number) => addHours(t.start, x);
+  const row = t.frames[hh], init = t.frames[0];
+  const idx = new Map(t.divisions.map((d, k) => [d.id, k]));
+  const pending = (k: number, x: number) => String(t.frames[x][k][iState]).startsWith('не введена');
+  // в состоянии — только действующие соединения (дивизии); штабы — узлы подчинения сценария, как у нынешней модели
+  const formations: Formation[] = ctx.scenario.formations.filter((f) => idx.has(f.id)).map((f) => {
+    const k = idx.get(f.id)!;
+    // приказ — только на последний кадр (его знает ядро); игрок отдаёт приказы с note «приказ игрока»
+    const o = hh === t.frames.length - 1 ? t.orders?.[k] ?? null : null;
+    const order: Order | null = o ? { id: `agents:${f.id}@${o.issued}`, formation: f.id, task: AGENT_TASK[o.kind] ?? 'defend', target: o.target, issuedAt: time(o.issued), source: o.note.includes('игрок') ? 'human' : 'script', note: o.note.replace(/\s*\[[^\]]*@[^\]]*\]\s*$/, '') || undefined } : null;
+    const base = { id: f.id, name: f.name, side: f.side, echelon: f.echelon, parent: f.parent ?? null, type: f.type ?? '', dugInHours: 0, order, route: null };
+    const r = row[k], r0 = init[k];
+    const st = String(r[iState]);
+    const p = postureOf(st);
+    // ввод: первый час, когда дивизия уже не «не введена» (в пределах хода; дальше — неизвестно, после конца хода)
+    let enterAt: string | null = null;
+    if (pending(k, 0)) {
+      let x = 0;
+      while (x < t.frames.length && pending(k, x)) x++;
+      enterAt = time(x < t.frames.length ? x : t.frames.length + 24 * 365);
+    }
+    return {
+      ...base, position: [r[iLng] as number, r[iLat] as number] as LngLat,
+      personnel: r[iPers] as number, tanks: r[iTanks] as number, guns: r[iGuns] as number,
+      initial: { personnel: r0[iPers] as number, tanks: r0[iTanks] as number, guns: r0[iGuns] as number },
+      ammo: r[iAmmo] as number, fuel: r[iFuel] as number, fatigue: r[iFat] as number,
+      posture: p && p !== 'destroyed' ? p : 'defend',
+      destroyed: p === 'destroyed' || st.startsWith('сведена'), enterAt,
+      ...((r[iEnc] as number) > 0 ? { cutOff: true, cutHours: r[iEnc] as number } : {}),
+    } as Formation;
+  });
+  return { scenario: ctx.scenario.id, time: time(hh), turn: hh, formations, pending: [], rngState: 0, seed: t.seed, journal: [] };
 }
 
 /** История для сверки и «призраков»: положения дивизий и события агентной модели, линии фронта — из истории сценария. */

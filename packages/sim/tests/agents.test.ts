@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { loadHistory, loadProfile, loadRules, loadScenario, loadTheatre } from '../src/data';
 import { contextFrom } from '../src/source';
-import { agentsHistory, agentsToRun, postureOf, type AgentTrace } from '../src/agents';
+import { agentKindOf, agentsHistory, agentsStateAt, agentsToRun, postureOf, type AgentTrace } from '../src/agents';
+import { unitReports } from '../src/reports';
 import { checkEvents, compareWithHistory } from '../src/history';
 import { runToDocument } from '../src/publish';
 
@@ -73,5 +74,27 @@ describe('агентная модель в «Переигровке»', () => {
     const doc = runToDocument(ctx, run, h, { name: 'проба' });
     expect(doc.features.filter((f) => f.layerId === 'sim-own').length).toBeGreaterThan(0);
     expect(doc.timeline?.end).toBe('1945-04-16T17:00');
+  });
+
+  it('состояние на час для игры: только дивизии, приказ ядра — задача, не введённые и выбывшие', async () => {
+    const { ctx: base } = await contextFrom(get, 'berlin-1945-tasks');
+    const t = { ...trace(), orders: [{ kind: 'attack' as const, target: [14.2, 52.5] as [number, number], from: 'su_8gva', issued: 10, arrives: 11, note: 'приказ игрока: на Зелов' }, null, null] };
+    const { ctx } = agentsToRun(base, t, 6);
+    const s4 = agentsStateAt(ctx, t, 4);
+    expect(s4.time).toBe('1945-04-16T09:00');
+    expect(s4.formations.map((f) => f.id)).toEqual(['su_x', 'de_y', 'de_z']);
+    // не введённая к 4-му часу — вводится в 6-м; приказ известен только на последний кадр
+    expect(s4.formations.find((f) => f.id === 'de_z')?.enterAt).toBe('1945-04-16T11:00');
+    expect(s4.formations.find((f) => f.id === 'su_x')?.order).toBeNull();
+    expect(s4.formations.find((f) => f.id === 'de_y')).toMatchObject({ cutOff: true, destroyed: false });
+    const s12 = agentsStateAt(ctx, t, 12);
+    expect(s12.formations.find((f) => f.id === 'su_x')?.order).toMatchObject({ task: 'attack', source: 'human', target: [14.2, 52.5], issuedAt: '1945-04-16T15:00' });
+    expect(s12.formations.find((f) => f.id === 'de_y')?.destroyed).toBe(true);
+    const own = unitReports(ctx, s12, 'su', agentsStateAt(ctx, t, 0));
+    expect(own).toHaveLength(1);
+    expect(own[0]).toMatchObject({ id: 'su_x', status: 'active', personnel: 9000 });
+    expect(['attack', 'counterattack', 'breakout'].map((x) => agentKindOf(x as never))).toEqual(['attack', 'attack', 'attack']);
+    expect(agentKindOf('delay')).toBe('defend');
+    expect(agentKindOf('regroup')).toBe('move');
   });
 });
