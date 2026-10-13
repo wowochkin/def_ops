@@ -7,7 +7,7 @@
  */
 import { checkAction, type GameState, type Order, type SimContext, type StaffAction, type Target } from '@def-ops/sim';
 type LngLat = [number, number];
-import { findName, TASK_RU, type Decision, type Issue, type Order as StaffOrder, type StaffActionGiven } from '../decision';
+import { findName, norm, TASK_RU, type Decision, type Issue, type Order as StaffOrder, type StaffActionGiven } from '../decision';
 import type { Situation } from './situation';
 
 const MOVE: StaffOrder['task'][] = ['withdraw', 'breakout', 'regroup', 'relieve'];
@@ -24,14 +24,40 @@ export interface AppliedOrder {
   issue?: string;
 }
 
-/** Пункт по названию: сначала среди пунктов обстановки (ближних), затем среди всех пунктов театра — по названию и id. */
-export function findArea(name: string, sit: Pick<Situation, 'areas' | 'allAreas'>): { id: string; title: string } | null {
-  for (const list of [sit.areas, sit.allAreas ?? []]) {
-    let i = findName(name, list.map((a) => a.title), true);
-    if (i < 0) i = findName(name, list.map((a) => a.id));
-    if (i >= 0) return list[i];
-  }
-  return null;
+/**
+ * Пункт по названию — среди пунктов обстановки (ближних) и всех пунктов театра сразу: точное совпадение где угодно
+ * важнее похожего названия среди ближних («Альтфридланд» — не «Фридланд», «Берлин, Александерплац» — не «Берлин»);
+ * при равной похожести — ближний пункт.
+ */
+export function findArea(name: string, sit: Pick<Situation, 'areas' | 'allAreas'>): { id: string; title: string; at?: [number, number] } | null {
+  const near = new Set(sit.areas.map((a) => a.id));
+  const list = [...sit.areas, ...(sit.allAreas ?? []).filter((a) => !near.has(a.id))];
+  // точное совпадение с «ё» и оригиналом в скобках: «Лёкниц» (Loecknitz) и «Лекниц» (Leknica) — разные пункты
+  const strict = (x: string) => x.toLowerCase().replace(/[«»"'„“”.,]/g, '').replace(/\s+/g, ' ').trim();
+  const bare = (x: string) => strict(x.replace(/\s*\([^()]*\)\s*$/, ''));
+  const q = strict(name.replace(/^\s*(?:в районе|район|у|в|к|на|до|от)\s+/i, ''));
+  let i = list.findIndex((a) => strict(a.title) === q);
+  if (i < 0) i = list.findIndex((a) => bare(a.title) === q);
+  if (i < 0) i = findName(name, list.map((a) => a.title), true);
+  if (i < 0) i = findName(name, list.map((a) => a.id));
+  return i >= 0 ? list[i] : null;
+}
+
+const RUMB: Record<string, [number, number]> = { 'С': [0, 1], 'СВ': [1, 1], 'В': [1, 0], 'ЮВ': [1, -1], 'Ю': [0, -1], 'ЮЗ': [-1, -1], 'З': [-1, 0], 'СЗ': [-1, 1] };
+
+/**
+ * Место словами, как в докладах: «8,2 км к ЮЗ от Крайник (Krajnik)» — точка в стольких км по румбу от пункта
+ * (null — не такое описание или пункт без координат). Без этого модель, переписавшая место из доклада, получала
+ * сам пункт — в нескольких километрах от нужного.
+ */
+export function findOffset(name: string, sit: Pick<Situation, 'areas' | 'allAreas'>): { at: LngLat; title: string } | null {
+  const m = /^\s*(?:у\s+|в\s+)?(\d+(?:[.,]\d+)?)\s*км\s+(?:к|на)\s+(С|СВ|В|ЮВ|Ю|ЮЗ|З|СЗ)\s+от\s+(.+?)\s*$/i.exec(name);
+  if (!m) return null;
+  const a = findArea(m[3], sit);
+  if (!a?.at) return null;
+  const km = parseFloat(m[1].replace(',', '.')), [dx, dy] = RUMB[m[2].toUpperCase()], k = Math.hypot(dx, dy);
+  const at: LngLat = [a.at[0] + (km * dx) / k / (111 * Math.cos((a.at[1] * Math.PI) / 180)), a.at[1] + (km * dy) / k / 111];
+  return { at: [+at[0].toFixed(4), +at[1].toFixed(4)], title: `${m[1]} км к ${m[2].toUpperCase()} от ${a.title}` };
 }
 
 export function decisionToOrders(d: Pick<Decision, 'orders'>, sit: Situation, source: Order['source'] = 'llm'): { orders: Order[]; applied: AppliedOrder[]; issues: Issue[] } {
@@ -41,6 +67,12 @@ export function decisionToOrders(d: Pick<Decision, 'orders'>, sit: Situation, so
   const eNames = sit.enemies.map((e) => e.name);
   const resolve = (name: string | null | undefined): { target: Target; text: string } | null => {
     if (!name || !name.trim()) return null;
+    const off = findOffset(name, sit);
+    if (off) return { target: off.at, text: off.title };
+    // полное название соединения противника — цель «против него», даже если в нём есть название пункта
+    // («Танковая дивизия «Мюнхеберг»» — не город Мюнхеберг)
+    const ex = eNames.findIndex((x) => norm(x) === norm(name));
+    if (ex >= 0) return { target: { formation: sit.enemies[ex].id }, text: `против: ${sit.enemies[ex].name}` };
     const a = findArea(name, sit);
     if (a) return { target: a.id, text: a.title };
     const e = findName(name, eNames);

@@ -37,9 +37,9 @@ export interface Situation {
   /** Свои формирования, которым можно отдавать приказы: id и название (как в обстановке). */
   formations: { id: string; name: string }[];
   /** Пункты из обстановки: id района театра и название (как в обстановке). */
-  areas: { id: string; title: string }[];
+  areas: { id: string; title: string; at?: [number, number] }[];
   /** Все пункты театра (запасной поиск: модель называет пункт, которого нет в ближнем списке). */
-  allAreas?: { id: string; title: string }[];
+  allAreas?: { id: string; title: string; at?: [number, number] }[];
   /** Обнаруженный противник: id и название. */
   enemies: { id: string; name: string }[];
   time: string;
@@ -147,8 +147,8 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
     delays,
     own,
     formations: own.map((u) => ({ id: u.id, name: u.name })),
-    areas: near.map((a) => ({ id: a.id, title: a.title })),
-    allAreas: places(T).map((a) => ({ id: a.id, title: a.title })),
+    areas: near.map((a) => ({ id: a.id, title: a.title, at: a.at })),
+    allAreas: places(T).map((a) => ({ id: a.id, title: a.title, at: a.at })),
     enemies: intel.map((e) => ({ id: e.id, name: e.name })),
   };
 }
