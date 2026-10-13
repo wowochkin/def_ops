@@ -13,7 +13,7 @@ import type { Basemaps, Llm } from './shared';
 import { CommandView, loadSaved, SAVE_KEY, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
 import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors';
-import { BUILTIN_CATALOG, fullCatalog, onDataChange, sectorsOf } from './sim/userdata';
+import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, listReplays, onDataChange, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
 import { useCoverage } from './modeling/Coverage';
@@ -142,6 +142,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [mapKey, setMapKey] = useState(0);
   const [report, setReport] = useState(false);
   const [saved, setSaved] = useState<SavedGame | null>(loadSaved);
+  // сохранённые переигровки: вкладка списка, список, id сохранения открытого результата
+  const [tab, setTab] = useState<'run' | 'saved'>('run');
+  const [replays, setReplays] = useState<SavedReplay[]>([]);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { const load = () => void listReplays().then(setReplays); load(); return onDataChange(load); }, []);
   const [game, setGame] = useState<{ start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode } | null>(null);
   const [take, setTake] = useState<string | null>(null);
   const [focus, setFocus] = useState<Sector | null>(null);
@@ -176,6 +182,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         setBusy(null); w.terminate();
         const d = migrateDocument(m.result.doc);
         setAgentRun(m.result.engine === 'agents' ? pendingAgent.current : null); setAgentSel(null);
+        setSavedId(null);
         setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
       }
     };
@@ -198,6 +205,41 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         startWorker({ ...q, runs: 1, agents: { trace, history, title: op.title, stepHours: AGENT_STEP_HOURS } });
       })
       .catch((e) => { if (token === runId.current) { setBusy(null); setError(String(e)); } });
+  };
+  /** Сохранить открытый результат: расчёт целиком (без пересчёта при открытии), у агентной модели — и ход дивизий. */
+  const saveCurrent = async () => {
+    if (!result) return;
+    const now = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    const id = `r_${now.getTime().toString(36)}`;
+    const engine = result.engine === 'agents' ? 'agents' : 'army';
+    const title = `${result.scenarioName.split(/[,:—(]/)[0].trim()} — ${engine === 'agents' ? 'агентная модель' : `правила ${result.rules}`}, seed ${result.seed}`;
+    const meta: SavedReplay = {
+      id, title, created: `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}T${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`,
+      scenario: result.scenario, scenarioName: result.scenarioName, engine, rules: result.rules, seed: result.seed, runs: result.runs,
+      within: result.within, eventsHit: result.eventsHit, eventsTotal: result.eventsTotal, start: result.start, end: result.end,
+    };
+    setSaving(true);
+    try {
+      await saveReplay(meta, { id, result, ...(engine === 'agents' && agentRun ? { agents: agentRun } : {}) });
+      setSavedId(id);
+      setNotice(`Переигровка сохранена: «${title}» — вкладка «Сохранённые»`);
+    } catch (e) { setError(`не удалось сохранить: ${(e as Error).message}`); }
+    finally { setSaving(false); }
+  };
+  /** Открыть сохранённую переигровку: результат, карта, у агентной модели — ход дивизий; настройки формы — как при расчёте. */
+  const openReplay = async (m: SavedReplay) => {
+    setBusy('открытие сохранённой переигровки…'); setError(null);
+    const r = await getReplay(m.id);
+    setBusy(null);
+    if (!r) { setError('сохранение не найдено'); return; }
+    runId.current++; worker.current?.terminate();
+    const d = migrateDocument(r.result.doc);
+    setScenario(m.scenario); setModel(m.engine); setSeed(m.seed);
+    if (m.engine === 'army') { setRules(m.rules); setRuns(m.runs); }
+    setAgentRun(r.agents ?? null); setAgentSel(null);
+    setResult(r.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
+    setSavedId(m.id); setTab('run');
   };
   const stop = () => { runId.current++; worker.current?.terminate(); worker.current = null; setBusy(null); };
 
@@ -296,6 +338,13 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <button onClick={() => { if (confirm('Удалить запись незавершённой игры?')) { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); } }}>Удалить</button>
           </div>
         </div>}
+        <div className="seg rp-tabs">
+          <button className={tab === 'run' ? 'on' : ''} onClick={() => setTab('run')}>Расчёт</button>
+          <button className={tab === 'saved' ? 'on' : ''} onClick={() => setTab('saved')}>Сохранённые{replays.length ? ` · ${replays.length}` : ''}</button>
+        </div>
+        {tab === 'saved' && <SavedList list={replays} current={savedId} busy={!!busy} onOpen={(m) => void openReplay(m)}
+          onRename={(m, t) => void renameReplay(m.id, t)} onDelete={(m) => { if (confirm(`Удалить сохранённую переигровку «${m.title}»?`)) { void deleteReplay(m.id); if (savedId === m.id) setSavedId(null); } }} />}
+        {tab === 'run' && <>
         <div className="rp-cards">
           {CATALOG.map((c) => (
             <button key={c.id} className={`rp-card${c.id === scenario ? ' on' : ''}`} disabled={!!busy} onClick={() => setScenario(c.id)}>
@@ -327,7 +376,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             : <button className="rp-go primary" onClick={run}>Рассчитать</button>}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
-        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onSummary={() => result.summary && onOpenInEditor(result.summary)} onEvent={goEvent} />}
+        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onSummary={() => result.summary && onOpenInEditor(result.summary)} onEvent={goEvent}
+          saved={!!savedId} saving={saving} onSave={() => void saveCurrent()} />}
+        </>}
       </aside>
       <main className="rp-main">
         {doc ? <>
@@ -354,7 +405,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
           </div>
-        </> : <Empty busy={!!busy} />}
+        </> : <Empty busy={!!busy} saved={tab === 'saved'} />}
       </main>
       {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
@@ -364,19 +415,19 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   );
 }
 
-function Empty({ busy }: { busy: boolean }) {
+function Empty({ busy, saved }: { busy: boolean; saved?: boolean }) {
   return (
     <div className="rp-empty">
       <div>
         <div className="rp-empty-ic">{busy ? <span className="spinner big" /> : '▶'}</div>
-        <b>{busy ? 'Идёт расчёт…' : 'Выберите сценарий и нажмите «Рассчитать»'}</b>
+        <b>{busy ? 'Идёт расчёт…' : saved ? 'Выберите сохранённую переигровку слева и нажмите «Открыть»' : 'Выберите сценарий и нажмите «Рассчитать»'}</b>
         <p>Расчёт идёт прямо в браузере: 5–30 секунд. На карте — ход операции по часам: соединения, линия фронта, бои, отметки; бледные знаки — исторические положения.</p>
       </div>
     </div>
   );
 }
 
-function Results({ r, tol, onReport, onOpen, onSummary, onEvent }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void }) {
+function Results({ r, tol, onReport, onOpen, onSummary, onEvent, saved, saving, onSave }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void; saved: boolean; saving: boolean; onSave: () => void }) {
   const lo = Math.min(...r.spread), hi = Math.max(...r.spread);
   return (
     <div className="rp-res">
@@ -394,10 +445,38 @@ function Results({ r, tol, onReport, onOpen, onSummary, onEvent }: { r: SimResul
         ))}
       </div>
       <div className="rp-actions">
+        <button className={saved ? 'done' : 'primary'} onClick={onSave} disabled={saved || saving} title="Сохранить расчёт целиком: открывается во вкладке «Сохранённые» без пересчёта">{saving ? 'сохранение…' : saved ? 'Сохранено ✓' : 'Сохранить'}</button>
         <button onClick={onReport}>Отчёт</button>
         <button onClick={onOpen} title="Открыть результат в редакторе: правка, экспорт, сохранение на сервер">В редактор →</button>
         <button onClick={onSummary} disabled={!r.summary} title="Сводная карта операции, как в историческом атласе: этапы, линии фронта с датами, удары армий с датами выхода. Открывается в редакторе — правка, экспорт в SVG и PNG">Сводная карта →</button>
       </div>
+    </div>
+  );
+}
+
+/** Сохранённые переигровки: открыть, переименовать, удалить. */
+function SavedList({ list, current, busy, onOpen, onRename, onDelete }: { list: SavedReplay[]; current: string | null; busy: boolean; onOpen: (m: SavedReplay) => void; onRename: (m: SavedReplay, title: string) => void; onDelete: (m: SavedReplay) => void }) {
+  const [edit, setEdit] = useState<string | null>(null);
+  const [text, setText] = useState('');
+  const dt = (s: string) => `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)} ${s.slice(11, 16)}`;
+  if (!list.length) return <div className="rp-savedlist"><p className="muted">Сохранённых переигровок нет. После расчёта нажмите «Сохранить» под результатом — переигровка появится здесь и будет открываться без пересчёта.</p></div>;
+  return (
+    <div className="rp-savedlist">
+      {list.map((m) => (
+        <div key={m.id} className={`rp-sv${m.id === current ? ' on' : ''}`}>
+          {edit === m.id
+            ? <div className="rp-sv-edit"><input autoFocus value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { onRename(m, text.trim() || m.title); setEdit(null); } if (e.key === 'Escape') setEdit(null); }} />
+              <button onClick={() => { onRename(m, text.trim() || m.title); setEdit(null); }}>OK</button></div>
+            : <b>{m.title}</b>}
+          <span className="muted small">{m.engine === 'agents' ? 'агентная модель — дивизии' : `нынешняя модель · правила ${m.rules}${m.runs > 1 ? ` · ${m.runs} прогонов` : ''}`} · seed {m.seed} · сохранено {dt(m.created)}</span>
+          <span className="small">{Math.round(m.within * 100)} % положений в допуске · событий {m.eventsHit} из {m.eventsTotal} (±2 сут)</span>
+          <div className="rp-sv-b">
+            <button className="primary" disabled={busy} onClick={() => onOpen(m)}>Открыть</button>
+            <button className="link" onClick={() => { setEdit(m.id); setText(m.title); }}>переименовать</button>
+            <button className="link danger" onClick={() => onDelete(m)}>удалить</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -1336,3 +1336,14 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .ag-cite { color: #8e2420; cursor: pointer; font-weight: 600; }
 .ag-ask { display: flex; gap: 6px; } .ag-ask textarea { flex: 1; height: 48px; resize: none; font: inherit; }
 .ag-mark { position: fixed; z-index: 5; width: 44px; height: 44px; margin: -22px 0 0 -22px; border: 2.5px solid #2b2a27; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255,255,255,.8); pointer-events: none; }
+/* сохранённые переигровки */
+.rp-tabs { margin: 0 14px 10px; }
+.rp-tabs button { flex: 1; }
+.rp-savedlist { display: flex; flex-direction: column; gap: 8px; padding: 0 14px 14px; }
+.rp-sv { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; background: #fff; }
+.rp-sv.on { border-color: var(--acc); }
+.rp-sv b { font-size: 13px; }
+.rp-sv .small { font-size: 11px; }
+.rp-sv-b { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.rp-sv-edit { display: flex; gap: 4px; } .rp-sv-edit input { flex: 1; font: inherit; padding: 3px 6px; }
+.rp-actions button.done { color: #2f7a3b; border-color: #9cc9a3; }

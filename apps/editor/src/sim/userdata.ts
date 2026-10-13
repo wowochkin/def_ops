@@ -5,11 +5,14 @@
  */
 import type { Boundary, CatalogEntry, DataKind, History, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
 import type { KbOperation, OperationHint } from '@def-ops/knowledge';
+import type { AgentHistory, AgentTrace } from '@def-ops/sim';
+import type { SimResult } from './protocol';
 import { defaultCatalog, defaultLive } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 
-const DB = 'def_ops_sim', VER = 4;
-type StoreName = 'rules' | 'operations' | 'theatres' | 'infrastructure' | 'edits';
+const DB = 'def_ops_sim', VER = 5;
+type StoreName = 'rules' | 'operations' | 'theatres' | 'infrastructure' | 'edits' | 'replays' | 'replay_data';
+const STORES: StoreName[] = ['rules', 'operations', 'theatres', 'infrastructure', 'edits', 'replays', 'replay_data'];
 
 /** Свой набор правил: правила целиком (без extends), откуда взят, для какой операции подбирался. */
 export interface UserRules { id: string; title: string; note?: string; base: string; scenario?: string; created: string; rules: Rules }
@@ -27,7 +30,7 @@ let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['rules', 'operations', 'theatres', 'infrastructure', 'edits']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of STORES) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -44,6 +47,40 @@ async function write(s: StoreName, f: (o: IDBObjectStore) => void) {
 }
 
 export const listRules = () => all<UserRules>('rules');
+
+/**
+ * Сохранённая переигровка: в списке — только сведения для карточки (replays), сам расчёт — отдельно (replay_data):
+ * результат с картой, сводной картой, событиями и отчётом, у агентной модели — ход дивизий по часам и история
+ * (для карточек агентов, разговора и передачи командования). Открывается без пересчёта.
+ */
+export interface SavedReplay {
+  id: string;
+  title: string;
+  created: string;
+  scenario: string;
+  scenarioName: string;
+  engine: 'army' | 'agents';
+  rules: string;
+  seed: number;
+  runs: number;
+  within: number;
+  eventsHit: number;
+  eventsTotal: number;
+  start: string;
+  end: string;
+}
+export interface SavedReplayData { id: string; result: SimResult; agents?: { trace: AgentTrace; history: AgentHistory } }
+export const listReplays = async () => (await all<SavedReplay>('replays')).sort((a, b) => b.created.localeCompare(a.created));
+export const getReplay = (id: string) => one<SavedReplayData>('replay_data', id);
+export async function saveReplay(meta: SavedReplay, data: SavedReplayData) {
+  await write('replay_data', (o) => o.put(data));
+  await write('replays', (o) => o.put(meta));
+}
+export const renameReplay = async (id: string, title: string) => { const m = await one<SavedReplay>('replays', id); if (m) await write('replays', (o) => o.put({ ...m, title })); };
+export async function deleteReplay(id: string) {
+  await write('replays', (o) => o.delete(id));
+  await write('replay_data', (o) => o.delete(id));
+}
 export const saveRules = (r: UserRules) => write('rules', (o) => o.put(r));
 export const deleteRules = (id: string) => write('rules', (o) => o.delete(id));
 export const listOperations = () => all<UserOperation>('operations');
