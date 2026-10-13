@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-llm-chat-stream"
+description = "Enables the llm_chat_stream command without any pre-configured scope."
+commands.allow = ["llm_chat_stream"]
+
+[[permission]]
+identifier = "deny-llm-chat-stream"
+description = "Denies the llm_chat_stream command without any pre-configured scope."
+commands.deny = ["llm_chat_stream"]

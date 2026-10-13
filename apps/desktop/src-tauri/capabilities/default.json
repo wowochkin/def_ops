@@ -1,8 +1,26 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Окно приложения: страница запуска и редактор с локального шлюза (127.0.0.1) или vite в разработке",
-  "windows": ["main"],
-  "remote": { "urls": ["http://127.0.0.1:*", "http://localhost:*"] },
-  "permissions": ["core:default"]
+  "description": "Окно приложения: страница запуска и редактор с локального шлюза (127.0.0.1) или vite в разработке; команды агентной модели",
+  "windows": [
+    "main"
+  ],
+  "remote": {
+    "urls": [
+      "http://127.0.0.1:*",
+      "http://localhost:*"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "allow-run-scenario",
+    "allow-read-text",
+    "allow-list-models",
+    "allow-llm-chat-stream",
+    "allow-llm-cancel",
+    "allow-probe-parallel",
+    "allow-game-start",
+    "allow-game-turn",
+    "allow-game-stop"
+  ]
 }
