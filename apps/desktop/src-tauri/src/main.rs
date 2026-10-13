@@ -70,7 +70,9 @@ fn main() {
             let u = payload.url();
             let splash = u.scheme() == "tauri" || u.host_str() == Some("tauri.localhost");
             if splash && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
-                if let Some(url) = webview.app_handle().state::<Ready>().0.lock().unwrap().clone() { let _ = webview.navigate(url); }
+                // адрес — копией, блокировка снята до перехода (переход сам вызывает загрузку страницы)
+                let url = webview.app_handle().state::<Ready>().0.lock().unwrap().clone();
+                if let Some(url) = url { let _ = webview.navigate(url); }
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -90,7 +92,9 @@ fn main() {
                     std::thread::spawn(move || {
                         let Some(out) = out else { return };
                         let mut ready = false;
+                        let mut failed = false;
                         for line in BufReader::new(out).lines().map_while(Result::ok) {
+                            if let (false, false, Some(msg)) = (ready, failed, line.strip_prefix("DEFOPS_ERROR ")) { failed = true; show_error(&handle, msg); }
                             if let (false, Some(url)) = (ready, line.strip_prefix("DEFOPS_READY ")) {
                                 ready = true;
                                 let target = if cfg!(debug_assertions) { DEV_EDITOR.to_string() } else { format!("{url}/") };
@@ -100,7 +104,7 @@ fn main() {
                                 }
                             }
                         }
-                        if !ready { show_error(&handle, "запускатель сервисов завершился раньше готовности — подробности в журнале приложения"); }
+                        if !ready && !failed { show_error(&handle, "запускатель сервисов завершился раньше готовности — подробности в терминале"); }
                     });
                 }
                 Err(e) => show_error(&handle, &e),

@@ -18,6 +18,13 @@ const data = resolve(opt('data', join(repo, 'data/desktop')));
 mkdirSync(data, { recursive: true });
 
 const freePort = () => new Promise((r, j) => { const s = createServer(); s.unref(); s.on('error', j); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => r(p)); }); });
+/** Ошибка запуска: строкой «DEFOPS_ERROR <текст>» — приложение покажет её в окне, — и в журнал; выход. */
+const fail = (text) => { process.stdout.write(`DEFOPS_ERROR ${text}\n`); process.stderr.write(`[запуск] ${text}\n`); process.exit(1); };
+const portBusy = (port) => new Promise((r) => { const s = createServer(); s.once('error', () => r(true)); s.listen(port, '127.0.0.1', () => s.close(() => r(false))); });
+// заданный порт шлюза (в разработке — 8080, туда vite проводит /api) занят — обычно сервисами прошлого запуска
+if (Number(opt('port', 0)) && await portBusy(Number(opt('port', 0)))) {
+  fail(`порт ${opt('port')} занят — скорее всего, сервисы прошлого запуска не остановились. Остановите их: lsof -ti tcp:${opt('port')} | xargs kill — и запустите приложение снова`);
+}
 
 const ports = { documents: await freePort(), render: await freePort(), registry: await freePort(), cartography: await freePort(), gateway: Number(opt('port', 0)) || await freePort() };
 const url = (n) => `http://127.0.0.1:${ports[n]}`;
@@ -41,10 +48,10 @@ const procs = services.map((s) => {
   const tag = `[${s.name}] `;
   const out = (d) => process.stderr.write(d.toString().split('\n').filter(Boolean).map((l) => tag + l).join('\n') + '\n');
   p.stdout.on('data', out); p.stderr.on('data', out);
-  p.on('exit', (code) => { if (!stopping) { process.stderr.write(`${tag}остановился (код ${code}) — останавливаю приложение\n`); stop(1); } });
+  p.on('exit', (code) => { if (!stopping) { process.stderr.write(`${tag}остановился (код ${code}) — останавливаю приложение\n`); if (!ready) process.stdout.write(`DEFOPS_ERROR сервис «${s.name}» остановился при запуске (код ${code}) — подробности в терминале\n`); stop(1); } });
   return p;
 });
-let stopping = false;
+let stopping = false, ready = false;
 function stop(code = 0) { if (stopping) return; stopping = true; procs.forEach((p) => p.kill('SIGTERM')); setTimeout(() => process.exit(code), 500); }
 process.on('SIGINT', () => stop()); process.on('SIGTERM', () => stop());
 // --watch-stdin: приложение держит вход открытым; закрылось приложение — закрылся вход — сервисы не переживают окно
@@ -52,7 +59,14 @@ if (args.includes('--watch-stdin')) { process.stdin.on('end', () => stop()); pro
 
 // ждём готовности шлюза и сервисов
 const base = url('gateway');
-for (let i = 0; i < 240 && !stopping; i++) {
-  try { const r = await fetch(`${base}/api/health`); if (r.ok) { process.stdout.write(`DEFOPS_READY ${base}\n`); break; } } catch { /* ещё запускается */ }
+let last = 'шлюз не отвечает';
+for (let i = 0; i < 480 && !stopping; i++) {
+  try {
+    const r = await fetch(`${base}/api/health`);
+    if (r.ok) { ready = true; process.stdout.write(`DEFOPS_READY ${base}\n`); break; }
+    last = `шлюз отвечает ${r.status}: ${(await r.text()).slice(0, 200)}`;
+  } catch { /* ещё запускается */ }
   await new Promise((r) => setTimeout(r, 250));
 }
+// не дождались — не молчать: окно иначе остаётся на «Запуск сервисов…»
+if (!ready && !stopping) { process.stdout.write(`DEFOPS_ERROR сервисы не ответили за 2 минуты (${last}) — подробности в терминале\n`); stop(1); }
