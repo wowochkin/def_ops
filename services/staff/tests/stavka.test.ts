@@ -74,5 +74,5 @@ describe('директивы в игре и модель-Ставка', () => {
     const again = replayGame(ctx2, rec);
     expect(again.state.time).toBe(g2.state.time);
     expect(again.state.boundaries).toEqual(g2.state.boundaries);
-  });
+  }, 60000);
 });

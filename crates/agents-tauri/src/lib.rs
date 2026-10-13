@@ -132,4 +132,47 @@ pub mod commands {
         let p = inside(&path)?;
         std::fs::read_to_string(&p).map_err(|e| format!("{path}: {e}"))
     }
+
+    /// Игра на агентной модели: одна на приложение.
+    static GAME: std::sync::Mutex<Option<agents_core::game::Game>> = std::sync::Mutex::new(None);
+
+    /// Начать игру: прогон по сценарию до часа `takeover`, дальше стороной `player` командует игрок; противник —
+    /// по сценарию (script) или по доктрине (doctrine). Возвращает ход до передачи командования.
+    #[tauri::command]
+    pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>) -> Result<serde_json::Value, String> {
+        tauri::async_runtime::spawn_blocking(move || {
+            let r = root();
+            let path = inside(&scenario)?;
+            let rs = r.to_string_lossy().to_string();
+            let (mut sim, meta) = scenario::load(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs)?;
+            if let Some(s) = seed { sim.seed = s; }
+            let player = if player.as_deref() == Some("de") { agents_core::model::Side::De } else { agents_core::model::Side::Su };
+            let other = 1 - agents_core::staff::side_idx(player);
+            sim.sources[other] = if enemy.as_deref() == Some("doctrine") { Source::Doctrine } else { Source::Script };
+            let g = agents_core::game::Game::start(sim, meta, takeover, player);
+            let t = g.trace();
+            *GAME.lock().map_err(|e| e.to_string())? = Some(g);
+            Ok(t)
+        }).await.map_err(|e| e.to_string())?
+    }
+
+    /// Ход игры: приказы игрока штабам, затем `hours` часов расчёта. Возвращает ход с начала сценария и итог по приказам.
+    #[tauri::command]
+    pub async fn game_turn(orders: Vec<agents_core::game::PlayerOrder>, hours: u32) -> Result<serde_json::Value, String> {
+        tauri::async_runtime::spawn_blocking(move || {
+            let mut lock = GAME.lock().map_err(|e| e.to_string())?;
+            let g = lock.as_mut().ok_or("игра не начата")?;
+            let applied: Vec<serde_json::Value> = orders.iter().map(|o| match g.order(o) {
+                Ok(n) => serde_json::json!({ "hq": o.hq, "divisions": n }),
+                Err(e) => serde_json::json!({ "hq": o.hq, "error": e }),
+            }).collect();
+            g.advance(hours);
+            let mut t = g.trace();
+            t["game"]["applied"] = serde_json::json!(applied);
+            Ok(t)
+        }).await.map_err(|e| e.to_string())?
+    }
+
+    #[tauri::command]
+    pub fn game_stop() { if let Ok(mut g) = GAME.lock() { *g = None; } }
 }

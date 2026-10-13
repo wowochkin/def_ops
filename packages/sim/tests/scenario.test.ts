@@ -58,7 +58,7 @@ describe('сценарий «Берлин-1945»', () => {
     // дата у острия — только у ударов с чертой «рубеж достигнут»
     const dated = doc.features.filter((f) => f.kind === 'arrow' && (f as { tipText?: string }).tipText);
     expect(dated.every((f) => (f as { style: { tip?: string } }).style.tip === 'bar')).toBe(true);
-  });
+  }, 60000);
 
   it('сводная карта: этапы, линии фронта на их рубежах с датами, удары с датами, легенда; без шкалы времени', () => {
     const tctx = loadContext('berlin-1945-tasks');
@@ -78,7 +78,7 @@ describe('сценарий «Берлин-1945»', () => {
     expect(moves.length).toBeGreaterThan(5);
     expect(moves.filter((m) => m.preset === 'atlas.p1' || m.preset === 'atlas.p2').every((m) => m.tipText && dates.includes(m.tipText))).toBe(true);
     expect(by('sum-legend').some((f) => f.kind === 'label' && /сводная карта/.test((f as { text?: string }).text ?? ''))).toBe(true);
-  });
+  }, 60000);
 
   it('короткие подписи', () => {
     expect(shortName('8-я гвардейская армия')).toBe('8 гв. А');

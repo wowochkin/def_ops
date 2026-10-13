@@ -15,7 +15,7 @@
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models, agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel])
+        .invoke_handler(tauri::generate_handler![agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models, agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop])
         .run(tauri::generate_context!())
         .expect("ошибка запуска приложения");
 }
