@@ -392,6 +392,267 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
   for (const [id, what] of used) { const e = entries.get(id); if (e) e.facts = dedupeFacts([...(e.facts ?? []), { key: 'covers', value: `в базе: ${[...what].join(', ')}` }]); }
 }
 
+/* ───────────── всё, чем пользуется модель: доктрины, нормативы, параметры, силы и тыл, объекты, потери ───────────── */
+// Источники каждого файла — свои записи-источники; ключ, уже занятый другой библиографической записью, — с префиксом файла.
+{
+  const cutx = (t: string, n = 480) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  const fileSrc = new Map<string, Map<string, string>>();
+  const regSources = (file: string, dict: Record<string, { ref?: string; title?: string; url?: string; default_reliability?: string; note?: string }> | undefined) => {
+    const m = new Map<string, string>();
+    for (const [k, v] of Object.entries(dict ?? {})) {
+      const ref = (v.ref ?? v.title ?? k).trim();
+      const old = entries.get(`src:${k}`);
+      const same = old && (old.facts ?? []).some((f) => f.key === 'ref' && f.value === ref);
+      const id = !old || same ? `src:${k}` : `src:${slug(file.replace(/\.json$/, ''))}-${slug(k)}`;
+      const web = /wikipedia|wiki|\.ru\b|\.com|\.org|http/i.test(`${ref} ${v.url ?? ''}`);
+      put({ id, category: 'sources', group: web ? 'web' : 'books', title: sourceTitle(ref) || k, aliases: [k], summary: ref, status: 'checked',
+        facts: [{ key: 'ref', value: ref }, ...(v.url ? [{ key: 'ref', value: v.url }] : []), ...(v.default_reliability ? [{ key: 'reliability', value: v.default_reliability }] : []), ...(v.note ? [{ key: 'covers', value: cutx(v.note, 300) }] : []), { key: 'covers', value: `набор данных ${file}` }] });
+      m.set(k, id);
+    }
+    fileSrc.set(file, m);
+  };
+  const sref = (file: string, s?: string | null) => { if (!s) return undefined; const k = String(s).split(/[\s;,(]/)[0]; return fileSrc.get(file)?.get(k) ?? srcId(String(s)); };
+  const addFacts = (id: string, fs: Fact[]) => { const e = entries.get(id); if (e) e.facts = dedupeFacts([...(e.facts ?? []), ...fs]); return !!e; };
+  const addSection = (id: string, title: string, lines: string[]) => {
+    const e = entries.get(id); if (!e || !lines.length) return;
+    const old = (e.sections ?? []).find((s) => s.title === title);
+    if (old) old.text = `${old.text}\n${lines.join('\n')}`; else e.sections = [...(e.sections ?? []), { title, text: lines.join('\n') }];
+  };
+  const ensureF = (id: string, title: string, side: string, more: Partial<Entry> = {}) => {
+    if (!entries.has(`f:${id}`)) put({ id: `f:${id}`, category: 'formations', group: side === 'de' ? 'de' : 'su', title, status: 'draft', summary: '', facts: [{ key: 'side', value: SIDE[side] ?? side }], relations: [], ...more });
+    return `f:${id}`;
+  };
+  const ddmm2 = (d?: string | null) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}${d.length > 10 ? ` ${d.slice(11, 16)}` : ''}` : '');
+  const opt = <T,>(f: string): T | null => { try { return read(`docs/sources/${f}`) as T; } catch { return null; } };
+
+  // реестр дивизий-агентов: каждая дивизия — запись формирования
+  const reg = opt<{ divisions: { id: string; side: string; name_ru: string; abbr?: string[]; aliases?: string[]; subordination?: { parent?: string; army?: string; corps?: string; from?: string }[]; kind?: string; note?: string }[] }>('berlin-1945-divisions.json');
+  for (const d of reg?.divisions ?? []) {
+    const id = ensureF(d.id, d.name_ru, d.side, { aliases: [...(d.abbr ?? []), ...(d.aliases ?? [])].filter(Boolean) });
+    const sub = (d.subordination ?? [])[0] as Record<string, string> | undefined;
+    const parent = sub ? sub.corps ?? sub.army ?? sub.parent : undefined;
+    addFacts(id, [{ key: 'echelon', value: 'дивизия' }, ...(parent ? [{ key: 'parent', value: fname.get(parent) ?? parent }] : []), ...(d.note ? [{ key: 'path', value: cutx(d.note, 300) }] : [])]);
+    if (parent && entries.has(`f:${parent}`)) { const e = entries.get(id)!; e.relations = dedupeRel([...(e.relations ?? []), { type: 'part_of', target: `f:${parent}` }]); }
+  }
+
+  // доктрины сторон (свод правил «условие → действие» с нормативами)
+  const GROUP_RU: Record<string, string> = { frontage: 'ширина полос и участков прорыва', echelons: 'построение в эшелоны', depth: 'глубина задач', tempo: 'темп наступления', commit: 'ввод вторых эшелонов и подвижных групп', stop: 'остановка и переход к обороне', bypass: 'обход узлов обороны', regroup: 'перегруппировка', reserve: 'резервы', artillery: 'артиллерийское наступление', air: 'авиационное обеспечение', layout: 'построение обороны', counterattack: 'контратаки и контрудары', withdrawal: 'отход и отвод с первой позиции', reserves: 'резервы обороны', timing: 'сроки' };
+  const LEVEL_RU: Record<string, string> = { front: 'фронт', army: 'армия', corps: 'корпус', division: 'дивизия' };
+  for (const file of ['soviet-offensive-doctrine-1945.json', 'soviet-offensive-doctrine-1945-tsamo.json', 'german-defence-doctrine-1945.json']) {
+    const d = opt<{ meta?: { title?: string }; sources?: Record<string, { ref: string }>; rules: { id: string; group: string; level?: string; condition?: string; action: string; values?: unknown; source?: string; page?: string; reliability?: string; note?: string }[]; examples?: Record<string, unknown>[]; gaps?: unknown[] }>(file);
+    if (!d) continue;
+    regSources(file, d.sources);
+    const side = file.startsWith('german') ? 'de' : 'su';
+    const tsamo = file.includes('tsamo');
+    const groups = [...new Set(d.rules.map((r) => r.group))];
+    for (const g of groups) {
+      const rs = d.rules.filter((r) => r.group === g);
+      const id = `org:${side}-doctrine-${g}`;
+      put({ id, category: 'organization', group: side, title: `${side === 'su' ? 'Наступление Красной армии, 1945' : 'Оборона вермахта, 1945'}: ${GROUP_RU[g] ?? g}`, status: 'checked',
+        summary: `Положения доктрины и практики ${side === 'su' ? 'наступления фронтов, армий, корпусов и дивизий' : 'обороны армий, корпусов и дивизий'} с нормативами — по уставам, исследованиям${tsamo ? ' и документам ЦАМО' : ''}; на них опираются штабы агентной модели.`,
+        facts: [{ key: 'side', value: SIDE[side] }, { key: 'topic', value: GROUP_RU[g] ?? g },
+          ...rs.map((r) => ({ key: 'principles', value: cutx(`${r.level ? `[${LEVEL_RU[r.level] ?? r.level}] ` : ''}${r.condition ? `${r.condition} → ` : ''}${r.action}${r.values ? ` (${normValue(r.values)})` : ''}${r.note ? `. ${r.note}` : ''}`), source: sref(file, r.source), pages: r.page, reliability: rel(r.reliability) })),
+          ...(tsamo ? [{ key: 'covers', value: 'практика 1-го Белорусского фронта по документам ЦАМО' }] : [])],
+        relations: [...new Set(rs.map((r) => sref(file, r.source)).filter(Boolean) as string[])].map((t) => ({ type: 'source' as const, target: t })) });
+    }
+    const top = `org:${side}-doctrine-${groups[0]}`;
+    addSection(top, `Примеры из операций (${file})`, (d.examples ?? []).map((x) => `- ${cutx(Object.entries(x).filter(([k]) => !/^(id|source|page|reliability)$/.test(k)).map(([, v]) => (typeof v === 'object' ? normValue(v) : String(v))).join('; '), 400)}${x.source ? ` [${x.source}${x.page ? `, ${x.page}` : ''}]` : ''}`));
+    addSection(top, `Пробелы (${file})`, (d.gaps ?? []).map((x) => `- ${typeof x === 'string' ? x : normValue(x)}`));
+  }
+
+  // нормативы боя дивизии (ширина, темп, артиллерия, потери, соотношения, сроки, срыв)
+  const NG: Record<string, string> = { frontage: 'ширина полосы', pace: 'темп продвижения', artillery: 'артиллерия', losses: 'потери в бою', ratio: 'соотношение сил', timing: 'сроки и задержки', breakpoint: 'предел потерь (срыв атаки, утрата боеспособности)' };
+  const dn = opt<{ sources?: Record<string, { ref: string }>; norms: { id: string; group: string; title: string; value: unknown; unit?: string; context?: string; source?: string; page?: string; reliability?: string; note?: string }[]; gaps?: string[] }>('division-combat-norms.json');
+  if (dn) {
+    regSources('division-combat-norms.json', dn.sources);
+    for (const g of [...new Set(dn.norms.map((n) => n.group))]) {
+      const ns = dn.norms.filter((n) => n.group === g);
+      put({ id: `org:norms-division-${g}`, category: 'organization', group: 'su', title: `Нормативы боя дивизии: ${NG[g] ?? g}`, status: 'checked',
+        summary: 'Нормативы для дивизий 1944–1945 гг. (советские уставы и исследования, западные расчёты Дюпюи и HERO) — на них настроены параметры агентной модели.',
+        facts: [{ key: 'topic', value: NG[g] ?? g }, ...ns.map((n) => ({ key: 'numbers', value: cutx(`${n.title}: ${normValue(n.value)}${n.unit ? ` ${n.unit}` : ''}${n.context ? ` — ${n.context}` : ''}`), source: sref('division-combat-norms.json', n.source), pages: n.page, reliability: rel(n.reliability) }))],
+        relations: [{ type: 'related', target: 'org:model-agents-params' }] });
+    }
+    if (dn.gaps?.length) addSection(`org:norms-division-${dn.norms[0].group}`, 'Пробелы в нормативах', dn.gaps.map((x) => `- ${x}`));
+  }
+
+  // распад и остатки дивизий (пороги, сведение остатков)
+  const rm = opt<{ rules: { id: string; side: string; topic: string; fact: string; value?: unknown; unit?: string; source?: string; url?: string; reliability?: string }[]; examples?: { division: string; side: string; date?: string; what: string; source?: string; reliability?: string }[] }>('division-remnants-1945.json');
+  if (rm) for (const side of ['su', 'de']) {
+    const rs = rm.rules.filter((r) => r.side === side);
+    if (!rs.length) continue;
+    put({ id: `org:${side}-remnants`, category: 'organization', group: side, title: `${side === 'su' ? 'Красная армия' : 'Вермахт'}, 1945: когда дивизия теряет боеспособность и что с остатками`, status: 'checked',
+      summary: 'Пороги боеспособности, сроки, рассеяние и сведение остатков разбитых дивизий — основа правил распада в агентной модели.',
+      facts: [{ key: 'side', value: SIDE[side] }, ...rs.map((r) => ({ key: r.value != null ? 'numbers' : 'principles', value: cutx(`${({ threshold: 'порог боеспособности', remnants: 'остатки', timing: 'сроки', dispersal: 'рассеяние' } as Record<string, string>)[r.topic] ?? r.topic}: ${r.fact}${r.value != null ? ` (${normValue(r.value)}${r.unit ? ` ${r.unit}` : ''})` : ''}`), source: srcId(r.source ?? '') , reliability: rel(r.reliability), ...(r.source ? { pages: cutx(r.source, 160) } : {}) })),
+        ...(rm.examples ?? []).filter((x) => x.side === side).map((x) => ({ key: 'numbers', value: cutx(`${x.division}${x.date ? `, ${ddmm2(x.date)}` : ''}: ${x.what}`), reliability: rel(x.reliability), ...(x.source ? { pages: cutx(x.source, 160) } : {}) }))] });
+  }
+
+  // параметры агентной модели: значение, источник или допущение
+  {
+    const ag = read('packages/sim/data/rules/agents-v0.json');
+    const facts: Fact[] = [];
+    const walk = (o: unknown, path: string) => {
+      if (!o || typeof o !== 'object' || Array.isArray(o)) return;
+      const r = o as Record<string, unknown>;
+      if ('value' in r) {
+        const how = [r.source ? `источник: ${r.source}` : '', r.assumption ? `допущение: ${r.assumption}` : '', r.norm ? `норматив ${r.norm}` : '', r.rule ? `правило ${r.rule}` : ''].filter(Boolean).join('; ');
+        facts.push({ key: 'numbers', value: cutx(`${path} = ${normValue(r.value)}${r.unit ? ` ${r.unit}` : ''}${how ? ` — ${how}` : ''}`, 600), reliability: rel(r.reliability) });
+        return;
+      }
+      for (const [k, v] of Object.entries(r)) if (!k.startsWith('_') && k !== 'id') walk(v, path ? `${path}.${k}` : k);
+    };
+    walk(ag, '');
+    put({ id: 'org:model-agents-params', category: 'organization', group: 'model', title: 'Агентная модель: параметры, их источники и допущения', status: 'checked',
+      summary: `Все числовые параметры агентной модели (packages/sim/data/rules/agents-v0.json): ${facts.length} значений; у каждого — источник с достоверностью или пометка «допущение» с обоснованием.`, facts });
+    const nm = read('packages/sim/data/rules/norms.json') as { norms: { id: string; title: string; source?: string; reliability?: string; historical?: string; expect?: [number, number]; unit?: string; rules?: string[]; note?: string }[]; findings?: string[] };
+    put({ id: 'org:model-norms-check', category: 'organization', group: 'model', title: 'Модель: проверка нормативами (что должно получаться в расчёте)', status: 'checked',
+      summary: 'Исторические нормативы и темпы, с которыми сверяется расчёт нынешней модели (npm run sim:norms): исторический показатель, ожидаемый диапазон результата модели и правила, которые он проверяет.',
+      facts: nm.norms.map((n) => ({ key: 'numbers', value: cutx(`${n.title}: по истории — ${n.historical ?? '—'}; ожидается в расчёте ${n.expect ? `${n.expect[0]}–${n.expect[1]}` : '—'}${n.unit ? ` ${n.unit}` : ''}${n.rules?.length ? `; правила: ${n.rules.join(', ')}` : ''}`), source: srcId(n.source), reliability: rel(n.reliability) })),
+      sections: nm.findings?.length ? [{ title: 'Выводы проверки', text: nm.findings.map((f) => `- ${f}`).join('\n') }] : undefined });
+  }
+
+  // сроки отдачи приказов и исходные положения → формирования
+  for (const o of (opt<{ orders: { order: string; issuedAt: string; reliability?: string; source?: string; quote?: string }[] }>('orders-timing-1945.json')?.orders ?? [])) {
+    const [fid, rest] = o.order.split('@');
+    addFacts(`f:${fid}`, [{ key: 'path', value: cutx(`приказ ${rest?.split(':').pop() ?? ''} отдан ${ddmm2(o.issuedAt)} (МСК) — ${o.source ?? ''}`, 300), reliability: rel(o.reliability), quote: o.quote }]);
+  }
+  const sp = opt<Record<string, { formation: string; time: string; place: string; approxKm?: number; reliability?: string; source?: string; quote?: string }[]>>('start-positions-1945.json');
+  for (const [k, rows] of Object.entries(sp ?? {})) if (Array.isArray(rows)) for (const p of rows)
+    addFacts(`f:${p.formation}`, [{ key: 'path', value: cutx(`исходное положение ${ddmm2(p.time)} (${k.startsWith('berlin') ? 'Берлинская операция' : 'Висло-Одерская операция'}): ${p.place}${p.approxKm ? ` (±${p.approxKm} км)` : ''}`, 300), pages: p.source ? cutx(p.source, 160) : undefined, reliability: rel(p.reliability), quote: p.quote }]);
+
+  // артподготовка 16 апреля, отвод с первой позиции
+  const ap = opt<{ sources?: Record<string, { ref: string }>; withdrawal?: Record<string, unknown>[]; prep?: Record<string, unknown>[]; effect?: Record<string, unknown>[]; gaps?: string[] }>('berlin-1945-artillery-prep.json');
+  if (ap) {
+    regSources('berlin-1945-artillery-prep.json', ap.sources);
+    const s = (x: Record<string, unknown>) => sref('berlin-1945-artillery-prep.json', x.source as string);
+    const line = (x: Record<string, unknown>, skip: string[]) => cutx(Object.entries(x).filter(([k, v]) => v != null && v !== '' && !['source', 'page', 'reliability', ...skip].includes(k)).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${typeof v === 'object' ? normValue(v) : v}`).join('; '));
+    put({ id: 'org:su-artillery-prep-16apr', category: 'organization', group: 'su', title: 'Артиллерийская подготовка 16 апреля 1945 г. и отвод немцев с первой позиции', status: 'checked',
+      summary: 'Артподготовка 1-го Белорусского и 1-го Украинского фронтов: начало, продолжительность, плотность, прожекторы; заблаговременный отвод войск 9-й армии с первой позиции и действенность огня — для сценариев агентной модели.',
+      facts: [...(ap.prep ?? []).map((x) => ({ key: 'numbers', value: line(x, []), source: s(x), pages: x.page as string, reliability: rel(x.reliability) })),
+        ...(ap.withdrawal ?? []).map((x) => ({ key: 'principles', value: `отвод: ${line(x, [])}`, source: s(x), pages: x.page as string, reliability: rel(x.reliability) })),
+        ...(ap.effect ?? []).map((x) => ({ key: 'numbers', value: `действенность: ${line(x, [])}`, source: s(x), pages: x.page as string, reliability: rel(x.reliability) }))],
+      relations: [{ type: 'related', target: 'battle:seelow' }], sections: ap.gaps?.length ? [{ title: 'Пробелы', text: ap.gaps.map((g) => `- ${g}`).join('\n') }] : undefined });
+  }
+
+  // суточные потери, огонь, численность по армиям (16–20.04)
+  for (const file of ['berlin-1945-losses-daily.json', 'berlin-1945-losses-daily-tsamo.json']) {
+    const d = opt<{ sources?: Record<string, { ref: string }>; records: { date?: string; date_end?: string; period?: string; side: string; formation: string; name?: string; kind: string; values?: Record<string, unknown>; target?: string; source?: string; page?: string; reliability?: string; note?: string }[] }>(file);
+    if (!d) continue;
+    regSources(file, d.sources);
+    const KR: Record<string, string> = { own_losses: 'потери', enemy_claimed: 'потери противника (по донесению)', strength: 'численность', fire: 'огонь' };
+    for (const r of d.records) {
+      const when = r.period ?? `${ddmm2(r.date)}${r.date_end && r.date_end !== r.date ? `–${ddmm2(r.date_end)}` : ''}`;
+      const v = r.values ? Object.entries(r.values).filter(([, x]) => x != null).map(([k, x]) => `${({ killed: 'убито', wounded: 'ранено', missing: 'пропало', total: 'всего', personnel: 'людей', tanks: 'танков', guns: 'орудий', other_reasons: 'по другим причинам', crew_killed_wounded: 'экипажей убито и ранено' } as Record<string, string>)[k] ?? k} ${typeof x === 'number' ? x.toLocaleString('ru') : normValue(x)}`).join(', ') : '';
+      const fact: Fact = { key: r.kind === 'strength' ? 'personnel' : 'losses', value: cutx(`${KR[r.kind] ?? r.kind}, ${when}: ${v}${r.target ? ` — ${r.target}` : ''}${r.note ? ` (${r.note})` : ''}`, 360), source: sref(file, r.source), pages: r.page, reliability: rel(r.reliability) };
+      if (!addFacts(`f:${r.formation}`, [fact])) addFacts('battle:seelow', [{ ...fact, value: `${r.name ?? r.formation}: ${fact.value}` }]);
+    }
+  }
+
+  // немецкие силы: численность по датам, части вне дивизий, итоги
+  const gf = opt<{ sources?: Record<string, { ref: string }>; strength?: { date: string; formation: string; formation_name?: string; values: Record<string, unknown>; source?: string; page?: string; reliability?: string; note?: string }[]; nondivisional?: Record<string, unknown>[]; totals?: { formation: string; date: string; what: string; value: unknown; source?: string; reliability?: string; page?: string }[]; gaps?: string[] }>('berlin-1945-german-forces.json');
+  const unitEntry = (file: string, u: Record<string, unknown>, what: string) => {
+    const id = ensureF(String(u.id), String(u.name ?? u.id), 'de');
+    const e = entries.get(id)!;
+    if (!e.summary) e.summary = cutx(`${what}${u.kind ? `: ${u.kind}` : ''}${u.area ? `, ${u.area}` : ''}${u.note ? `. ${u.note}` : ''}`, 400);
+    const src = sref(file, u.source as string);
+    addFacts(id, [
+      ...(u.subordination ? [{ key: 'parent', value: fname.get(String(u.subordination)) ?? String(u.subordination), source: src }] : []),
+      ...(u.personnel != null ? [{ key: 'personnel', value: `${Number(u.personnel).toLocaleString('ru')}${u.date ? ` (на ${ddmm2(String(u.date))})` : ''}`, source: src, pages: u.page as string, reliability: rel(u.reliability) }] : []),
+      ...(u.guns != null ? [{ key: 'guns', value: String(u.guns), source: src, reliability: rel(u.reliability) }] : []),
+      ...(u.tanks != null ? [{ key: 'tanks', value: String(u.tanks), source: src, reliability: rel(u.reliability) }] : []),
+      ...(u.fate ? [{ key: 'path', value: cutx(String(u.fate), 400), source: src, reliability: rel(u.reliability) }] : []),
+      { key: 'composition', value: `${what}${u.kind ? ` (${u.kind})` : ''}` },
+    ]);
+    if (u.subordination && entries.has(`f:${u.subordination}`)) e.relations = dedupeRel([...(e.relations ?? []), { type: 'part_of', target: `f:${u.subordination}` }]);
+  };
+  if (gf) {
+    regSources('berlin-1945-german-forces.json', gf.sources);
+    for (const s of gf.strength ?? []) {
+      const id = ensureF(s.formation, s.formation_name ?? fname.get(s.formation) ?? s.formation, 'de');
+      addFacts(id, [{ key: 'personnel', value: cutx(`${Object.entries(s.values).map(([k, v]) => `${k} ${typeof v === 'number' ? v.toLocaleString('ru') : normValue(v)}`).join(', ')} (на ${ddmm2(s.date)})${s.note ? ` — ${s.note}` : ''}`, 360), source: sref('berlin-1945-german-forces.json', s.source), pages: s.page, reliability: rel(s.reliability) }]);
+    }
+    for (const u of gf.nondivisional ?? []) unitEntry('berlin-1945-german-forces.json', u, 'часть вне дивизий');
+    for (const t of gf.totals ?? []) addFacts(entries.has(`f:${t.formation}`) ? `f:${t.formation}` : 'op:berlin', [{ key: 'forces', value: cutx(`${fname.get(t.formation) ?? t.formation}, ${ddmm2(t.date)}: ${t.what} — ${typeof t.value === 'number' ? t.value.toLocaleString('ru') : normValue(t.value)}`), source: sref('berlin-1945-german-forces.json', t.source), pages: t.page, reliability: rel(t.reliability) }]);
+    if (gf.gaps?.length) addSection('op:berlin', 'Немецкие силы: пробелы в данных', gf.gaps.map((g) => `- ${g}`));
+  }
+  const gr = opt<{ sources?: Record<string, { ref: string }>; units?: Record<string, unknown>[]; totals?: { what: string; value: unknown; range?: string; source?: string; reliability?: string; note?: string }[]; gaps?: string[] }>('berlin-1945-german-rear.json');
+  if (gr) {
+    regSources('berlin-1945-german-rear.json', gr.sources);
+    for (const u of gr.units ?? []) unitEntry('berlin-1945-german-rear.json', u, 'немецкий тыл: запасная, учебная или тревожная часть');
+    addSection('op:berlin', 'Немецкий тыл: учебные, запасные и тревожные части', (gr.totals ?? []).map((t) => `- ${t.what}: ${normValue(t.value)}${t.range ? ` (${t.range})` : ''}${t.note ? ` — ${t.note}` : ''} [${t.source ?? ''}, ${t.reliability ?? '—'}]`));
+    if (gr.gaps?.length) addSection('op:berlin', 'Немецкий тыл: пробелы в данных', gr.gaps.map((g) => `- ${g}`));
+  }
+
+  // объекты театра: мосты и переправы (состояние по датам), полосы обороны, крепости, узлы снабжения
+  const ob = opt<{ sources?: Record<string, { ref: string }>; bridges?: { id: string; name_ru: string; name_orig?: string; river?: string; kind?: string; capacity_t?: number; states?: { date: string; state: string; by?: string; source?: string; reliability?: string; note?: string }[]; source?: string; note?: string }[]; belts?: { id: string; name_ru: string; name_orig?: string; places?: string[]; built_by?: string; source?: string; reliability?: string; note?: string }[]; fortresses?: { id: string; names?: string[] | string; garrison?: unknown; declared?: string; fell?: string; source?: string; reliability?: string; note?: string }[]; supply?: { id: string; kind: string; side: string; name_ru: string; dates?: string; source?: string; reliability?: string; note?: string }[]; gaps?: string[] }>('berlin-1945-objects.json');
+  if (ob) {
+    const F = 'berlin-1945-objects.json';
+    regSources(F, ob.sources);
+    const KINDB: Record<string, string> = { pontoon: 'понтонный мост', bridge: 'мост', rail: 'железнодорожный мост', ferry: 'паромная переправа', ford: 'брод', road: 'автодорожный мост' };
+    for (const b of ob.bridges ?? []) put({ id: `obj:${b.id}`, category: 'terrain', group: 'rivers', title: `${b.name_ru}${b.river ? ` (${b.river})` : ''}`, aliases: [b.name_orig].filter(Boolean) as string[], status: 'checked',
+      summary: cutx(`${KINDB[b.kind ?? ''] ?? b.kind ?? 'переправа'}${b.capacity_t ? `, грузоподъёмность ${b.capacity_t} т` : ''}${b.note ? `. ${b.note}` : ''}`, 400),
+      facts: [{ key: 'kind', value: KINDB[b.kind ?? ''] ?? b.kind ?? 'переправа', source: sref(F, b.source) }, ...(b.river ? [{ key: 'location', value: `река ${b.river}` }] : []),
+        ...(b.states ?? []).map((st) => ({ key: 'crossings', value: cutx(`${ddmm2(st.date)}: ${st.state}${st.by ? ` (${fname.get(st.by) ?? st.by})` : ''}${st.note ? ` — ${st.note}` : ''}`, 360), source: sref(F, st.source), reliability: rel(st.reliability) }))],
+      relations: [{ type: 'related', target: 'op:berlin' }] });
+    for (const b of ob.belts ?? []) put({ id: `line:obj-${b.id}`, category: 'terrain', group: 'lines', title: b.name_ru, aliases: [b.name_orig].filter(Boolean) as string[], status: 'checked', summary: cutx(b.note ?? '', 400),
+      facts: [{ key: 'kind', value: 'полоса обороны', source: sref(F, b.source), reliability: rel(b.reliability) }, ...(b.places?.length ? [{ key: 'location', value: b.places.join(', ').replace(/_/g, ' ') }] : []), ...(b.built_by ? [{ key: 'defense', value: `строили: ${b.built_by}` }] : [])], relations: [{ type: 'related', target: 'op:berlin' }] });
+    for (const f of ob.fortresses ?? []) {
+      const names = Array.isArray(f.names) ? f.names : [String(f.names ?? f.id)];
+      put({ id: `ter:fort-${f.id}`, category: 'terrain', group: 'cities', title: `Крепость ${names[0]}`, aliases: names.slice(1), status: 'checked', summary: cutx(f.note ?? '', 400),
+        facts: [{ key: 'kind', value: 'город-крепость (Festung)', source: sref(F, f.source), reliability: rel(f.reliability) }, ...(f.declared ? [{ key: 'defense', value: `объявлена крепостью ${ddmm2(f.declared)}.${f.declared.slice(0, 4)}` }] : []), ...(f.fell ? [{ key: 'defense', value: `пала ${ddmm2(f.fell)}.${f.fell.slice(0, 4)}` }] : []), ...(f.garrison ? [{ key: 'defense', value: `гарнизон: ${normValue(f.garrison)}` }] : [])],
+        relations: [{ type: 'related', target: 'op:berlin' }] });
+    }
+    for (const s of ob.supply ?? []) put({ id: `ter:supply-${s.id}`, category: 'terrain', group: 'areas', title: s.name_ru, status: 'checked', summary: cutx(s.note ?? '', 400),
+      facts: [{ key: 'kind', value: `узел снабжения (${s.kind}), ${s.side === 'su' ? 'советский' : 'немецкий'}`, source: sref(F, s.source), reliability: rel(s.reliability) }, ...(s.dates ? [{ key: 'features', value: `когда: ${s.dates}` }] : [])], relations: [{ type: 'related', target: 'op:berlin' }] });
+    if (ob.gaps?.length) addSection('op:berlin', 'Объекты театра (мосты, полосы, крепости, снабжение): пробелы', ob.gaps.map((g) => `- ${g}`));
+  }
+
+  // исследования составов: подчинённость по датам, численность, положения по дням
+  for (const [file, side] of [['berlin-1945-research-de.json', 'de'], ['berlin-1945-research-su.json', 'su']] as const) {
+    const d = opt<{ sources?: Record<string, { ref: string }>; formations?: { id: string; name_ru: string; name_orig?: string; echelon?: string; parent_by_date?: { date: string; parent: string; source?: string }[]; source?: string; reliability?: string; note?: string }[]; composition?: { corps: string; army?: string; front?: string; date: string; divisions: string[]; source?: string; reliability?: string; page?: string }[]; strength?: Record<string, unknown>[]; positions?: { formation: string; date: string; time?: string; place: string; approx_km?: number; source?: string; reliability?: string; page?: string }[]; gaps?: string[] }>(file);
+    if (!d) continue;
+    regSources(file, d.sources);
+    for (const f of d.formations ?? []) {
+      const id = ensureF(f.id, f.name_ru, side, { aliases: [f.name_orig].filter(Boolean) as string[] });
+      addFacts(id, [...(f.echelon ? [{ key: 'echelon', value: ECH[f.echelon] ?? f.echelon }] : []), ...(f.parent_by_date ?? []).map((p) => ({ key: 'parent', value: `${fname.get(p.parent) ?? p.parent} (с ${ddmm2(p.date)})`, source: sref(file, p.source) })), ...(f.note ? [{ key: 'path', value: cutx(f.note, 300), source: sref(file, f.source), reliability: rel(f.reliability) }] : [])]);
+    }
+    for (const c of d.composition ?? []) addFacts(entries.has(`f:${c.corps}`) ? `f:${c.corps}` : ensureF(c.corps, fname.get(c.corps) ?? c.corps, side), [{ key: 'composition', value: `${ddmm2(c.date)}: ${c.divisions.map((x) => fname.get(x) ?? x).join(', ')}${c.army ? ` (в ${fname.get(c.army) ?? c.army})` : ''}`, source: sref(file, c.source), pages: c.page, reliability: rel(c.reliability) }]);
+    for (const s of d.strength ?? []) {
+      const fid = String(s.formation);
+      const parts = ['personnel', 'tanks', 'stug', 'spg', 'guns', 'mortars'].filter((k) => s[k] != null).map((k) => `${{ personnel: 'людей', tanks: 'танков', stug: 'штурмовых орудий', spg: 'САУ', guns: 'орудий', mortars: 'миномётов' }[k]} ${Number(s[k]).toLocaleString('ru')}`);
+      if (parts.length) addFacts(ensureF(fid, fname.get(fid) ?? fid, side), [{ key: 'personnel', value: cutx(`${parts.join(', ')} (на ${ddmm2(String(s.date))})${s.note ? ` — ${s.note}` : ''}`, 300), source: sref(file, s.source as string), pages: s.page as string, reliability: rel(s.reliability) }]);
+    }
+    const byF = new Map<string, string[]>();
+    for (const p of d.positions ?? []) byF.set(p.formation, [...(byF.get(p.formation) ?? []), `- ${ddmm2(p.date)}${p.time ? ` ${p.time}` : ''}: ${cutx(p.place, 200)}${p.approx_km ? ` (±${p.approx_km} км)` : ''} [${p.source ?? ''}${p.page ? `, ${p.page}` : ''}; ${p.reliability ?? '—'}]`]);
+    for (const [fid, lines] of byF) addSection(ensureF(fid, fname.get(fid) ?? fid, side), 'Положения по дням (исследование источников)', lines);
+    if (d.gaps?.length) addSection('op:berlin', `Пробелы (${file})`, d.gaps.map((g) => `- ${g}`));
+  }
+
+  // немецкие разграничительные линии армий и групп армий
+  const gb = opt<{ boundaries: { id: string; kind: string; side: string; right: string; left: string; title: string; from: string; until?: string | null; points: { place: string }[]; inclusiveNote?: string; source?: { doc?: string } | string; reliabilityNote?: string; note?: string }[]; gaps?: unknown[] }>('german-1945-boundaries.json');
+  for (const b of gb?.boundaries ?? []) {
+    const pair = `${fname.get(b.right) ?? b.right} / ${fname.get(b.left) ?? b.left}`;
+    const doc = typeof b.source === 'string' ? b.source : b.source?.doc ?? '';
+    const value = cutx(`${pair} с ${ddmm2(b.from)}${b.until ? ` до ${ddmm2(b.until)}` : ''}: ${b.points.map((x) => x.place).join(' — ')}${b.inclusiveNote ? ` (${b.inclusiveNote})` : ''}${doc ? ` — ${doc}` : ''}`, 400);
+    for (const t of [`f:${b.right}`, `f:${b.left}`]) addFacts(t, [{ key: 'boundary', value, reliability: 'C' }]);
+    const day = b.from.slice(0, 10);
+    put({ id: `bnd:${b.id}`, category: 'chronology', group: day.startsWith('1945-0') && +day.slice(5, 7) >= 4 ? 'berlin' : 'vistula', title: `${dayRu(day)} — немецкая разграничительная линия: ${pair}`, period: { from: day, to: day }, status: 'draft',
+      summary: `${b.title}: ${b.points.map((x) => x.place).join(' — ')}.${b.reliabilityNote ? ` ${b.reliabilityNote}` : ''}`, facts: [{ key: 'date', value: day }, { key: 'event', value: b.title }, { key: 'place', value: b.points.map((x) => x.place).join(', ') }],
+      relations: [{ type: 'related', target: `f:${b.right}` }, { type: 'related', target: `f:${b.left}` }] });
+  }
+
+  // линия фронта в центре Берлина по советской карте
+  const pf = opt<{ title: string; date: string; dateNote?: string; source?: { ref: string; reliability?: string }; armies?: string[] }>('berlin-1945-plan-frontline.json');
+  if (pf) addFacts('op:berlin', [{ key: 'outcome', value: cutx(`${pf.title} (${pf.date}${pf.dateNote ? `; ${pf.dateNote}` : ''})${pf.armies ? ` — армии: ${Array.isArray(pf.armies) ? pf.armies.join(', ') : normValue(pf.armies)}` : ''}`), reliability: rel(pf.source?.reliability), pages: pf.source?.ref }]);
+
+  // исследовательские отчёты (марш, автотранспорт, преследование, немецкая оборона на Висле) — разделами
+  for (const [dir, id, title, group] of [['infantry-mobility-1944-45', 'org:research-mobility', 'Подвижность пехоты, автотранспорт и тыл 1944–1945 гг. (исследование для модели)', 'su'], ['german-defence-vistula-1945', 'org:research-de-vistula', 'Немецкая оборона перед Висло-Одерской операцией (исследование для модели)', 'de']] as const) {
+    let files: string[] = [];
+    try { files = readdirSync(join(SRC, dir)).filter((f) => f.endsWith('.md')); } catch { continue; }
+    put({ id, category: 'organization', group, title, status: 'checked', summary: 'Отчёты по источникам с оценкой достоверности (A/B/C): что прочитано, таблицы фактов, расхождения, чего не найдено и что взято в модель.',
+      sections: files.map((f) => ({ title: f.replace(/\.md$/, ''), text: readFileSync(join(SRC, dir, f), 'utf8').trim() })) });
+  }
+}
+
 // связи «включает» для родительских формирований и операций
 for (const e of entries.values()) for (const r of e.relations ?? []) {
   if (r.type !== 'part_of') continue;
