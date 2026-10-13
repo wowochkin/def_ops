@@ -299,7 +299,7 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
   if (abort.signal.aborted) r.error = 'остановлено';
   if (buf) post({ kind: 'advice-stream', id: m.id, text: buf });
   const byId = new Map(g.state.formations.map((f) => [f.id, f]));
-  const names = new Map(g.state.formations.map((f) => [f.id, f.name]));
+  const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...g.state.formations.map((f) => [f.id, f.name] as const)]);
   done({
     ok: r.ok, error: r.error, answer: r.answer, followUps: r.followUps, seconds: Math.round((Date.now() - t0) / 1000),
     basis: r.basis, unknowns: r.unknowns, warning: r.warning, rewritten: r.rewritten,
@@ -330,7 +330,8 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
     staff: { side, bases: (lg?.bases ?? []).map((b) => ({ id: b.id, name: b.name })), reserves: st.formations.filter((f) => f.side === side && f.reserveFrom && !f.destroyed).map((f) => ({ id: f.id, name: f.name })) },
   };
   const byId = new Map(st.formations.map((f) => [f.id, f]));
-  const names = new Map(st.formations.map((f) => [f.id, f.name]));
+  // названия — и штабов (на агентной модели армии и корпуса — не формирования состояния, но приказы им отдаются)
+  const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...st.formations.map((f) => [f.id, f.name] as const)]);
   const KIND = { base: 'база', priority: 'приоритет подвоза', bridge: 'переправа', demolish: 'подрыв моста', commit: 'ввод резерва', line: 'разграничительная линия' } as const;
   const view = (v: PlanVariantRaw): PlanVariantView => {
     const conv = decisionToOrders({ orders: v.orders.map((x) => ({ formation: x.formation, task: x.task, area: x.area, toArea: x.toArea, deadline: '', details: x.why })) }, sit, 'human');
@@ -344,7 +345,8 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
       if (a.kind === 'bridge') return { key: `bridge:plan${i}`, action: a, label: 'Переправа', text: x.text, at: a.at, given, ok: true };
       if (a.kind === 'demolish') return { key: `demolish:plan${i}`, action: a, label: 'Подрыв моста', text: x.text, at: a.at, given, ok: true };
       if (a.kind === 'boundary' || a.kind === 'directive') return { key: `boundary:${a.a}|${a.b}`, action: a, label: 'Разграничительная линия', text: x.text, at: a.line[0], given, ok: true };
-      return { key: `commit:${a.formation}`, action: a, label: short(names.get(a.formation) ?? a.formation), text: x.text, at: a.at, given, ok: true };
+      const nm = short(names.get(a.formation) ?? a.formation), grp = gv.subject && short(gv.subject) !== nm ? `${short(gv.subject)}: ` : '';
+      return { key: `commit:${a.formation}`, action: a, label: `${grp}${nm}`, text: x.text, at: a.at, given, ok: true };
     });
     return {
       title: v.title, idea: v.idea,

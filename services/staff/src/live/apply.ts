@@ -6,6 +6,7 @@
  * отброшено.
  */
 import { checkAction, type GameState, type Order, type SimContext, type StaffAction, type Target } from '@def-ops/sim';
+type LngLat = [number, number];
 import { findName, TASK_RU, type Decision, type Issue, type Order as StaffOrder, type StaffActionGiven } from '../decision';
 import type { Situation } from './situation';
 
@@ -91,6 +92,12 @@ export function decisionToOrders(d: Pick<Decision, 'orders'>, sit: Situation, so
  * пунктов сопоставляются с обстановкой; исполнимость проверяется теми же правилами, что и у человека
  * (checkAction): неисполнимое не уходит арбитру и остаётся в замечаниях с причиной.
  */
+/** Соединение id входит в объединение hq (по подчинению сценария). */
+function under(defs: Map<string, { parent?: string | null }>, id: string, hq: string): boolean {
+  for (let x = defs.get(id)?.parent, n = 0; x && n < 8; x = defs.get(x)?.parent, n++) if (x === hq) return true;
+  return false;
+}
+
 export function actionsToStaff(ctx: SimContext, g: GameState, sit: Situation, given: StaffActionGiven[]): { actions: StaffAction[]; applied: { given: StaffActionGiven; action: StaffAction | null; text: string }[] } {
   const T = ctx.theatre, side = sit.staff?.side ?? '', t = sit.time;
   const applied: { given: StaffActionGiven; action: StaffAction | null; text: string }[] = [];
@@ -132,8 +139,29 @@ export function actionsToStaff(ctx: SimContext, g: GameState, sit: Situation, gi
       else a = { kind: 'boundary', side, a: ids[0], b: ids[1], line: pts.map((p) => p!.at), places: pts.map((p) => p!.title), issuedAt: t };
     } else if (x.kind === 'commit') {
       const ri = findName(x.subject ?? '', sit.staff.reserves.map((r) => r.name)), p = place(x.area);
-      if (ri < 0) why = `«${x.subject}» нет среди резервов`; else if (!p) why = `пункт «${x.area}» не опознан`;
-      else a = { kind: 'commit', side, formation: sit.staff.reserves[ri].id, at: p.at, atName: p.title, issuedAt: t };
+      // не соединение из резерва — может быть объединение (армия, корпус), чьи соединения в резерве: вводится целиком
+      const defs = new Map(ctx.scenario.formations.map((f) => [f.id, f]));
+      const heads = ctx.scenario.formations.filter((f) => f.side === side && !f.type && sit.staff!.reserves.some((r) => under(defs, r.id, f.id)));
+      const hi = ri < 0 ? findName(x.subject ?? '', heads.map((f) => f.name)) : -1;
+      if (ri < 0 && hi < 0) why = `«${x.subject}» нет среди резервов`; else if (!p) why = `пункт «${x.area}» не опознан`;
+      else if (ri >= 0) a = { kind: 'commit', side, formation: sit.staff.reserves[ri].id, at: p.at, atName: p.title, issuedAt: t };
+      else {
+        // соединения объединения — в один район, разнесены в 3–4 км: точки района — сам пункт и круги в 3,5 и 7 км;
+        // берутся только точки на своей территории (пункт у линии фронта — часть круга за ней)
+        const ms = sit.staff.reserves.filter((r) => under(defs, r.id, heads[hi].id)), kx = 1 / Math.cos((p.at[1] * Math.PI) / 180);
+        const ring = (km: number, n: number) => Array.from({ length: n }, (_, k): LngLat => [p.at[0] + (km / 111) * Math.cos((2 * Math.PI * k) / n) * kx, p.at[1] + (km / 111) * Math.sin((2 * Math.PI * k) / n)]);
+        const probe = (at: LngLat): StaffAction => ({ kind: 'commit', side, formation: ms[0].id, at, atName: p.title, issuedAt: t });
+        const spots = [p.at, ...ring(3.5, 8), ...ring(7, 12)].filter((at) => checkAction(ctx, g.state, probe(at)).ok);
+        ms.forEach((m, i) => {
+          if (!spots.length) { applied.push({ given: x, action: null, text: `не исполнено (${m.name}): район сосредоточения — не на своей территории` }); return; }
+          const c: StaffAction = { kind: 'commit', side, formation: m.id, at: spots[i % spots.length], atName: p.title, issuedAt: t };
+          const ok = checkAction(ctx, g.state, c);
+          if (!ok.ok) { applied.push({ given: x, action: null, text: `не исполнено (${m.name}): ${ok.text}` }); return; }
+          actions.push(c);
+          applied.push({ given: x, action: c, text: ok.text });
+        });
+        continue;
+      }
     }
     if (a) {
       const c = checkAction(ctx, g.state, a, a.kind === 'bridge' ? bridges : 0);

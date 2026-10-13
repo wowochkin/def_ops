@@ -26,6 +26,8 @@ export interface SimContext {
   /** Профили сторон по id профиля. */
   profiles: Record<string, SideProfile>;
   rules: Rules;
+  /** Агентная модель: действуют дивизии, армии и корпуса — узлы подчинения (приказ им ядро доводит до всех их дивизий). */
+  agentModel?: boolean;
 }
 
 const HOUR = 3600_000;

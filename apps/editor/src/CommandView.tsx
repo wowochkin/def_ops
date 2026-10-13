@@ -232,13 +232,19 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     if (pm.kind === 'bridge') void addAct(`bridge:${Date.now()}`, { kind: 'bridge', side, at, issuedAt: t }, 'Переправа');
     else if (pm.kind === 'base') void addAct(`base:${pm.base}`, { kind: 'base', side, base: pm.base, to: at, toName: title ?? undefined, issuedAt: t }, `База «${pm.name}»`, { from: pm.from });
     else if (pm.kind === 'commit' && pm.members?.length) {
-      // объединение целиком: соединения — в один район, разнесены по кругу в 3–4 км, чтобы не стояли в одной точке
+      // объединение целиком: соединения — в один район, разнесены в 3–4 км (сам пункт, круги в 3,5 и 7 км), чтобы не стояли
+      // в одной точке; точка за линией фронта пропускается — соединение встаёт в следующую
       const ms = pm.members, kx = 1 / Math.cos((at[1] * Math.PI) / 180);
+      const ring = (km: number, n: number) => Array.from({ length: n }, (_, k): LngLat => [at[0] + (km / 111) * Math.cos((2 * Math.PI * k) / n) * kx, at[1] + (km / 111) * Math.sin((2 * Math.PI * k) / n)]);
+      const spots = [at, ...ring(3.5, 8), ...ring(7, 12)];
       void (async () => {
-        for (let i = 0; i < ms.length; i++) {
-          const r = i ? 3.5 / 111 : 0, a = (2 * Math.PI * i) / Math.max(1, ms.length - 1);
-          const p: LngLat = [at[0] + r * Math.cos(a) * kx, at[1] + r * Math.sin(a)];
-          await addAct(`commit:${ms[i].id}`, { kind: 'commit', side, formation: ms[i].id, at: p, atName: title ?? undefined, issuedAt: t }, `${short(pm.name)}: ${short(ms[i].name)}`);
+        let k = 0;
+        for (const m of ms) {
+          let ok = false;
+          for (let tries = 0; tries < spots.length && !ok; tries++, k++) {
+            ok = await addAct(`commit:${m.id}`, { kind: 'commit', side, formation: m.id, at: spots[k % spots.length], atName: title ?? undefined, issuedAt: t }, `${short(pm.name)}: ${short(m.name)}`);
+          }
+          if (!ok) break; // во всём районе нет своей территории — остальным тоже некуда
         }
       })();
     } else if (pm.kind === 'commit') void addAct(`commit:${pm.formation}`, { kind: 'commit', side, formation: pm.formation, at, atName: title ?? undefined, issuedAt: t }, short(pm.name));
@@ -311,7 +317,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     own: (view?.own ?? []).filter((u) => u.status === 'active').map((u) => ({ id: u.id, name: u.name })),
     group: (view?.groups ?? []).filter((g) => view?.own.some((u) => u.parent === g.id && u.status === 'active')).map((g) => ({ id: g.id, name: g.name })),
     enemy: (view?.intel ?? []).map((e) => ({ id: e.id, name: e.name })),
-    reserve: (view?.own ?? []).filter((u) => u.status === 'reserve').map((u) => ({ id: u.id, name: u.name })),
+    // резервы — по армиям (на агентной модели резерв — дивизии армии)
+    reserve: (view?.reserveGroups ?? []).filter((g) => g.status === 'reserve').map((g) => ({ id: g.id, name: g.name })),
   }), [view]);
   /** Проект решения словами — советнику (он видит, что командующий уже готовит). */
   const draftText = () => [

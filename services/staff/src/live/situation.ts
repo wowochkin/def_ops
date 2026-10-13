@@ -6,7 +6,7 @@
  * Node, и в браузере.
  */
 import {
-  areaTitle, dayEvents, places, detectKm, describePlace, dist, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
+  areaTitle, dayEvents, places, detectKm, describePlace, dist, hqReports, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
   commandTerms, groupOf, onMap, profileOf, sectorText, shortName, supplyHoursOf, withBoundaries, type GameState, type SimContext,
 } from '@def-ops/sim';
 import { fill } from '../fill';
@@ -61,15 +61,32 @@ const num = (x: number) => x.toFixed(1).replace('.', ',');
 /** Общая часть обстановки стороны на утро хода: свои силы, противник (туман войны), пункты, снабжение, итоги суток. */
 export function situationParts(ctx: SimContext, g: GameState, view: { side: string; anchor: string; anchorName: string }) {
   const T = ctx.theatre, s = g.state, side = view.side;
-  const names = new Map(s.formations.map((f) => [f.id, f.name]));
-  const own = unitReports(ctx, s, side, g.prev).filter((u) => u.status !== 'destroyed' && s.formations.find((f) => f.id === u.id)!.type);
+  const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...s.formations.map((f) => [f.id, f.name] as const)]);
+  const units = unitReports(ctx, s, side, g.prev).filter((u) => u.status !== 'destroyed' && s.formations.find((f) => f.id === u.id)!.type);
+  // агентная модель: в состоянии только дивизии, армии и корпуса — узлы подчинения; их доклады — сводкой по дивизиям,
+  // чтобы им можно было отдавать приказы (ядро доведёт до всех дивизий) и называть армии в разграничительных линиях
+  const inState = new Set(s.formations.map((f) => f.id));
+  const hq = ctx.agentModel ? hqReports(ctx, units, side).filter((u) => !inState.has(u.id)) : [];
+  const own = [...hq, ...units];
+  const hqIds = new Set(hq.map((u) => u.id));
+  const defs = new Map(ctx.scenario.formations.map((f) => [f.id, f]));
+  /** Подчинение до армии: «26-й гв. ск, 5-я ударная армия» (фронт не называется — он в полосах). */
+  const chain = (id: string | null) => {
+    const out: string[] = [];
+    for (let x = id ? defs.get(id) : undefined, n = 0; x && n < 6 && x.echelon !== 'front'; x = x.parent ? defs.get(x.parent) : undefined, n++) {
+      out.push(names.get(x.id) ?? x.id);
+      if (x.echelon === 'army') break;
+    }
+    return out.join(', ');
+  };
   const intel = intelReport(ctx, s, side, g.prev);
   const km = detectKm(ctx);
   const anchor = T.area(view.anchor)?.center ?? null;
 
   const ownLines = own.map((u) => {
-    const parent = u.parent ? names.get(u.parent) : null;
-    const head = `- ${u.name}${parent ? ` [в составе: ${parent}]` : ''}`;
+    const parent = hq.length ? chain(u.parent) : u.parent ? names.get(u.parent) : null;
+    const n = hqIds.has(u.id) ? units.filter((d) => d.status === 'active' && chain(d.parent).split(', ').includes(u.name)).length : 0;
+    const head = `- ${u.name}${parent ? ` [в составе: ${parent}]` : ''}${n ? ` (${u.echelon === 'army' ? 'армия' : 'корпус'}, соединений: ${n}; приказ ${u.echelon === 'army' ? 'ей' : 'ему'} доводится до всех ${u.echelon === 'army' ? 'её' : 'его'} соединений)` : ''}`;
     if (u.status === 'reserve') return `${head} — резерв Ставки, в сражение не введён; готов к вводу с ${ddmm(u.reserveFrom!)}`;
     if (u.status === 'arriving') return `${head} — прибывает на театр ${ddmm(u.arrives!)}${u.pending.length ? `; приказ ждёт: ${u.pending.map((p) => `${p.task} (${p.target})`).join(', ')}` : ''}`;
     const bits = [
@@ -101,9 +118,9 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
   const lines = T.data.lines.filter((l) => l.name).map((l) => l.name);
   if (lines.length) areaLines.push(`Рубежи (для справки; в приказах указывайте пункты): ${lines.join('; ')}.`);
 
-  const cut = own.filter((u) => u.cutOff).map((u) => u.name);
-  const lowAmmo = own.filter((u) => u.status === 'active' && u.ammo < 0.5).map((u) => u.name);
-  const noFuel = own.filter((u) => u.status === 'active' && u.fuel <= 0.05).map((u) => u.name);
+  const cut = units.filter((u) => u.cutOff).map((u) => u.name);
+  const lowAmmo = units.filter((u) => u.status === 'active' && u.ammo < 0.5).map((u) => u.name);
+  const noFuel = units.filter((u) => u.status === 'active' && u.fuel <= 0.05).map((u) => u.name);
   const supply = [
     cut.length ? `Отрезаны от подвоза (окружены): ${cut.join(', ')}.` : 'Окружённых соединений нет.',
     lowAmmo.length ? `Боеприпасов меньше половины боекомплекта: ${lowAmmo.join(', ')}.` : null,
@@ -217,7 +234,16 @@ export function rearText(ctx: SimContext, g: GameState, side: string): string {
     out.push(`- Понтонных парков свободно: ${Math.max(0, parks - building.length)} из ${parks} (наводка: большая река — сутки, малая — 12 ч; нужны наши войска рядом).`);
   }
   const res = s.formations.filter((f) => f.side === side && f.reserveFrom);
-  if (res.length) out.push(`- Резервы Ставки, не введённые в сражение: ${res.map((f) => `${f.name} (готов с ${f.reserveFrom!.slice(8, 10)}.${f.reserveFrom!.slice(5, 7)})`).join('; ')}.`);
+  if (res.length) {
+    // по армиям: в агентной модели резерв — дивизии армии; ввести можно армию целиком (subject — армия) или дивизию
+    const armyOf = groupOf(ctx.scenario, 'army'), nm = (id: string) => ctx.scenario.formations.find((f) => f.id === id)?.name ?? id;
+    const by = new Map<string, typeof res>();
+    for (const f of res) { const a = armyOf.get(f.id) ?? f.id; by.set(a, [...(by.get(a) ?? []), f]); }
+    const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
+    const txt = [...by].map(([a, fs]) => (fs.length === 1 && fs[0].id === a ? `${fs[0].name} (готов с ${dm(fs[0].reserveFrom!)})`
+      : `${nm(a)} — ${fs.length} соед.: ${fs.map((f) => f.name).join(', ')} (готовы с ${dm(fs.map((f) => f.reserveFrom!).sort()[0])})`));
+    out.push(`- Резервы ${commandTerms(ctx, side).topGen}, не введённые в сражение: ${txt.join('; ')}.${[...by].some(([a, fs]) => !(fs.length === 1 && fs[0].id === a)) ? ' Объединение вводится целиком (subject — его название) или по соединению.' : ''}`);
+  }
   const coming = s.formations.filter((f) => f.side === side && !f.reserveFrom && f.enterAt && f.enterAt > s.time && !onMap(f, s.time));
   if (coming.length) out.push(`- Вводятся в сражение: ${coming.map((f) => f.name).join('; ')}.`);
   return out.length ? out.join('\n') : '- Особых распоряжений нет.';

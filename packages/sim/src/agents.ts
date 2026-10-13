@@ -80,7 +80,7 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
     ...t.hqs.map((h) => ({ id: h.id, name: h.name, side: h.side, echelon: (ECH.includes(h.echelon as Echelon) ? h.echelon : 'army') as Echelon, parent: h.parent })),
     ...t.divisions.map((d) => ({ id: d.id, name: d.name, side: d.side, echelon: 'division' as Echelon, parent: d.hq, type: typeOf(d.side, d.mobility), note: d.note })),
   ];
-  const ctx: SimContext = { ...base, scenario: { ...base.scenario, formations: defs, orders: [], end, turnHours: stepHours } };
+  const ctx: SimContext = { ...base, agentModel: true, scenario: { ...base.scenario, formations: defs, orders: [], end, turnHours: stepHours } };
 
   // снимки: начальный кадр и далее через stepHours (и последний)
   const at = (row: unknown[]) => [row[iLng] as number, row[iLat] as number] as LngLat;

@@ -271,3 +271,33 @@ export function dayEvents(ctx: SimContext, state: SimState, side: string, prev: 
 export function orderDelay(ctx: SimContext, f: Pick<Formation, 'side' | 'echelon'>): number {
   return profileOf(ctx, f.side).orderDelayHours[f.echelon as keyof ReturnType<typeof profileOf>['orderDelayHours']] ?? 0;
 }
+
+/**
+ * Доклады армий и корпусов стороны по докладам их дивизий: в агентной модели действуют дивизии, а приказы удобно
+ * отдавать и объединениям (ядро разошлёт приказ всем их дивизиям). Место — центр тяжести, силы — сумма, запасы и
+ * укомплектованность — средние по численности, положение и задача — у большинства людей.
+ */
+export function hqReports(ctx: SimContext, own: UnitReport[], side: string): UnitReport[] {
+  const parent = new Map(ctx.scenario.formations.map((f) => [f.id, f.parent ?? null]));
+  const under = (id: string, hq: string) => { for (let x: string | null | undefined = parent.get(id), n = 0; x && n < 8; x = parent.get(x), n++) if (x === hq) return true; return false; };
+  const top = <K extends string>(l: UnitReport[], key: (u: UnitReport) => K | null) => {
+    const m = new Map<K, number>();
+    for (const u of l) { const k = key(u); if (k) m.set(k, (m.get(k) ?? 0) + u.personnel); }
+    return [...m].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  };
+  return ctx.scenario.formations.filter((f) => f.side === side && (f.echelon === 'army' || f.echelon === 'corps') && !f.type).map((h): UnitReport | null => {
+    const l = own.filter((u) => u.status === 'active' && under(u.id, h.id));
+    if (!l.length) return null;
+    const P = l.reduce((s, u) => s + u.personnel, 0) || 1;
+    const w = (k: (u: UnitReport) => number) => l.reduce((s, u) => s + k(u) * u.personnel, 0) / P;
+    const at: LngLat = [w((u) => u.at[0]), w((u) => u.at[1])];
+    const task = top(l, (u) => u.task);
+    return {
+      id: h.id, name: h.name, parent: h.parent ?? null, echelon: h.echelon, status: 'active', at, place: describePlace(ctx.theatre, at),
+      posture: top(l, (u) => u.posture) ?? '', task, target: task ? top(l.filter((u) => u.task === task), (u) => u.target) : null,
+      orderSource: top(l, (u) => u.orderSource), personnel: Math.round(P), tanks: l.reduce((s, u) => s + u.tanks, 0), guns: l.reduce((s, u) => s + u.guns, 0),
+      strength: w((u) => u.strength), ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
+      cutOff: l.some((u) => u.cutOff), movedKm: +w((u) => u.movedKm).toFixed(1), combats: [], pending: [],
+    };
+  }).filter((x): x is UnitReport => !!x);
+}
