@@ -893,6 +893,7 @@ npm run agents:bench      # замер ядра: 400 дивизий, 23 суто
 npm run agents:berlin     # агентная модель: вся Берлинская операция, сверка по участкам вне настройки (report.md, summary.json — для «Отчёта»)
 npm run agents:berlin-data # сборка сценария всей операции из реестра и переписи
 npm run agents:berlin:variants # варианты для сравнения в браузере: штабы по доктрине, без артподготовки, без отвода
+                          # (agents:app и agents:web сами пересчитывают устаревшие прогоны — scripts/agents-prepare.mjs)
 npm run agents:seelow     # агентная модель: Зееловские высоты на дивизиях, сверка с историей и нынешней моделью
                           # (--de doctrine — штабы по доктрине; --de llm --llm-model <id> — на языковой модели;
                           #  --llm-reasoning, --llm-max-tokens, --llm-parallel auto|N, --llm-sync, --llm-by-army, --llm-probe)
