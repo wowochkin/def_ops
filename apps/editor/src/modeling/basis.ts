@@ -32,12 +32,19 @@ export function basisKindOf(p: Provenance): BasisKind | null {
   return null;
 }
 
-/** Сводка: по видам входов — сколько на фактах A, B, C и сколько на допущениях. */
-export function basisSummary(prov: Provenance[]): Record<BasisKind, RelCount> {
+/**
+ * Сводка: по видам входов — сколько на фактах A, B, C и сколько на допущениях. isInput — читает ли модель поля
+ * формирования (действующие формирования сценария с типом, дивизии агентного сценария): поля штабов и фронтов
+ * (<id>.personnel|tanks|guns|parent|enterAt) модель не берёт — не считаются. Нет isInput — считаются все.
+ */
+export function basisSummary(prov: Provenance[], isInput?: (formationId: string) => boolean): Record<BasisKind, RelCount> {
   const out = Object.fromEntries(BASIS_KINDS.map(([k]) => [k, { A: 0, B: 0, C: 0, assumption: 0 }])) as Record<BasisKind, RelCount>;
   for (const p of prov) {
     const k = basisKindOf(p);
-    if (k) out[k][p.reliability]++;
+    if (!k) continue;
+    const dot = p.input.lastIndexOf('.');
+    if (isInput && !p.input.includes(':') && dot > 0 && !isInput(p.input.slice(0, dot))) continue;
+    out[k][p.reliability]++;
   }
   return out;
 }

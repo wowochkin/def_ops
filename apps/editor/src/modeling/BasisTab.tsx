@@ -4,7 +4,7 @@
  * нужный (пересборка через секунду, запись в журнале операции); факты о формированиях, которых в операции нет;
  * итог — доли входов на фактах A, B, C и на допущениях по видам.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState, type ReactElement } from 'react';
 import type { FactRef, Pins, Provenance } from '@def-ops/knowledge';
 import type { Scenario } from '@def-ops/sim';
 import * as kb from '../kb/kb';
@@ -19,7 +19,9 @@ export function openKbEntry(id: string) {
   location.hash = '#knowledge';
 }
 
-interface Node { id: string; name: string; echelon: string; parent: string | null; personnel?: number; tanks?: number; guns?: number; division?: boolean }
+interface Node { id: string; name: string; echelon: string; parent: string | null; personnel?: number; tanks?: number; guns?: number; division?: boolean;
+  /** Поля читает модель: действующее формирование сценария (с типом) или дивизия агентного сценария; штабы и фронты — нет. */
+  input: boolean }
 type Field = 'personnel' | 'tanks' | 'guns' | 'parent' | 'enterAt';
 const FIELD_RU: Record<Field, string> = { personnel: 'людей', tanks: 'танков', guns: 'орудий', parent: 'подчинён', enterAt: 'ввод' };
 const REL_RU: Record<keyof RelCount, string> = { A: 'A — справочник, исследование', B: 'B — надёжный вторичный', C: 'C — оценка', assumption: 'допущение сценария' };
@@ -38,6 +40,7 @@ export function BasisTab({ op }: { op: string }) {
   const [pick, setPick] = useState<{ node: string; field: string } | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => { void kb.load(); return kb.subscribe(setS); }, []);
   useEffect(() => {
@@ -45,11 +48,11 @@ export function BasisTab({ op }: { op: string }) {
     const run = () => void Promise.all([getEdits(op), getData('scenarios', `${op}.json`) as Promise<Scenario>, agentScenario(op), kb.getPins()]).then(([e, sc, ag]) => {
       if (!alive) return;
       setKb(e.kb ?? null);
-      const list: Node[] = sc.formations.map((f) => ({ id: f.id, name: f.name, echelon: f.echelon, parent: f.parent ?? null, personnel: f.personnel, tanks: f.tanks, guns: f.guns }));
+      const list: Node[] = sc.formations.map((f) => ({ id: f.id, name: f.name, echelon: f.echelon, parent: f.parent ?? null, personnel: f.personnel, tanks: f.tanks, guns: f.guns, input: !!f.type }));
       if (ag) {
         const have = new Set(list.map((n) => n.id));
-        for (const h of ag.hqs) if (!have.has(h.id)) { list.push({ id: h.id, name: h.name, echelon: h.echelon, parent: h.parent ?? null }); have.add(h.id); }
-        for (const d of ag.divisions) if (!have.has(d.id)) list.push({ id: d.id, name: d.name, echelon: 'division', parent: d.hq, personnel: d.personnel, tanks: d.tanks, guns: d.guns, division: true });
+        for (const h of ag.hqs) if (!have.has(h.id)) { list.push({ id: h.id, name: h.name, echelon: h.echelon, parent: h.parent ?? null, input: false }); have.add(h.id); }
+        for (const d of ag.divisions) if (!have.has(d.id)) list.push({ id: d.id, name: d.name, echelon: 'division', parent: d.hq, personnel: d.personnel, tanks: d.tanks, guns: d.guns, division: true, input: true });
       }
       setNodes(list);
     });
@@ -77,20 +80,23 @@ export function BasisTab({ op }: { op: string }) {
     }
     return m;
   }, [nodes, kbOf]);
+  const isInput = useMemo(() => { const m = new Set(nodes.filter((n) => n.input).map((n) => n.id)); return (id: string) => m.has(id); }, [nodes]);
 
   if (kbOf === undefined) return <section className="mdl-card"><p className="muted"><span className="spinner" /> загрузка…</p></section>;
   if (kbOf === null) return <section className="mdl-card"><h4>Основа модели</h4><p className="muted">Сборки из базы знаний для операции ещё нет: она делается при запуске и при каждом изменении базы. Подождите несколько секунд.</p></section>;
 
-  const sum = basisSummary(kbOf.provenance);
+  const sum = basisSummary(kbOf.provenance, isInput);
   const pinOf = (key: string) => pins[key];
   const doPin = async (key: string, f: FactRef | null) => {
-    setBusy(key);
-    try { await kb.setPins({ [key]: f ? { entry: f.entry, index: f.index } : null }); setPinsState(await kb.getPins()); } finally { setBusy(null); }
+    setBusy(key); setErr(null);
+    try { await kb.setPins({ [key]: f ? { entry: f.entry, index: f.index } : null }); setPinsState(await kb.getPins()); }
+    catch (e) { setErr(`Закрепление не удалось: ${(e as Error).message}`); }
+    finally { setBusy(null); }
   };
   const srcTitle = (id?: string) => (id ? s.byId.get(id)?.title ?? s.documents.find((d) => d.id === id)?.name ?? id : '');
 
   /** Факт: формальная часть, надёжность, источник со страницами, цитата, переход к записи. */
-  const FactView = ({ f }: { f: FactRef }) => <div className="bs-fact">
+  const factView = (f: FactRef, key?: string | number) => <div key={key} className="bs-fact">
     <div><i className={`kb-rel r${f.fact.reliability ?? 'C'}`}>{f.fact.reliability ?? 'C'}</i>{f.fact.claim ? claimText(f.fact.claim, nameOf) : f.fact.value}</div>
     <div className="muted small">{f.fact.source ? <>источник: {srcTitle(f.fact.source)}{f.fact.pages ? `, ${f.fact.pages}` : ''}</> : 'источник не указан'}
       {' · '}<button className="link" onClick={() => openKbEntry(f.entry)}>запись «{s.byId.get(f.entry)?.title ?? f.entry}» →</button></div>
@@ -115,14 +121,15 @@ export function BasisTab({ op }: { op: string }) {
     return [...idx(kbOf.compiled.changes, 'change'), ...idx(kbOf.compiled.checkpoints, 'checkpoint'), ...idx(kbOf.compiled.positions, 'position')];
   };
 
-  const Row = ({ n, depth }: { n: Node; depth: number }) => {
+  // строки дерева — вызовом функции, не компонентом: при щелчке не пересоздаются заново
+  const row = (n: Node, depth: number): ReactElement => {
     const kids = children.get(n.id) ?? [];
     const isOpen = depth === 0 ? !open.has(n.id) : open.has(n.id); // корни раскрыты, остальное свёрнуто
     const fields = fieldsOf(n);
     const extra = extraOf(n.id);
     const sel = pick?.node === n.id ? pick.field : null;
     const toggle = () => setOpen((o) => { const x = new Set(o); if (x.has(n.id)) x.delete(n.id); else x.add(n.id); return x; });
-    return <>
+    return <Fragment key={n.id}>
       <div className={`bs-row${sel ? ' on' : ''}`}>
         <span className="bs-name" title={n.id} style={{ paddingLeft: depth * 16 }}>
           {kids.length ? <button className="link bs-tg" onClick={toggle}>{isOpen ? '▾' : '▸'}</button> : <span className="bs-tg" />}{n.name}</span>
@@ -133,20 +140,21 @@ export function BasisTab({ op }: { op: string }) {
         </span>
       </div>
       {sel && <div className="bs-detail" style={{ marginLeft: 28 + depth * 16 }}>
-        {sel === 'extra' ? extra.map((x) => <div key={x.input} className="bs-x"><b>{inputRu(x.input, kbOf)}</b>{x.p.map((p, i) => p.fact ? <FactView key={i} f={p.fact} /> : <span key={i} className="muted"> допущение</span>)}</div>)
-          : (() => { const p = byInput.get(`${n.id}.${sel}`)?.[0]; return p?.fact ? <FactView f={p.fact} /> : <p className="muted">Допущение сценария: значение из сценария операции, в базе нет факта на начало операции. Добавьте факт с источником в запись формирования — модель возьмёт его.</p>; })()}
+        {sel === 'extra' ? extra.map((x) => <div key={x.input} className="bs-x"><b>{inputRu(x.input, kbOf)}</b>{x.p.map((p, i) => p.fact ? factView(p.fact, i) : <span key={i} className="muted"> допущение</span>)}</div>)
+          : (() => { const p = byInput.get(`${n.id}.${sel}`)?.[0]; return p?.fact ? factView(p.fact) : <p className="muted">Допущение сценария: значение из сценария операции, в базе нет факта на начало операции. Добавьте факт с источником в запись формирования — модель возьмёт его.</p>; })()}
       </div>}
-      {isOpen && kids.map((k) => <Row key={k.id} n={k} depth={depth + 1} />)}
-    </>;
+      {isOpen && kids.map((k) => row(k, depth + 1))}
+    </Fragment>;
   };
 
   const totalOf = (r: RelCount) => r.A + r.B + r.C + r.assumption;
   return <section className="mdl-card bs">
     <div className="sync-h"><h4>Основа модели</h4>
       <span className="muted">сборка из базы {ruDate(kbOf.at)} · входов {kbOf.provenance.length}</span></div>
+    {err && <div className="err" onClick={() => setErr(null)}>{err}</div>}
     <p className="muted small">На чём держится каждый вход модели: факт базы знаний (источник, страницы, достоверность, цитата) или допущение сценария. Где факты расходятся — закрепите нужный: модель пересоберётся, в журнале операции появится запись.</p>
     <div className="bs-sum">
-      <h5>Итог</h5>
+      <h5 title="Поля штабов и фронтов модель не читает — в итог не входят">Итог</h5>
       {BASIS_KINDS.map(([k, title]) => { const r = sum[k], t = totalOf(r); return <div key={k} className="bs-sum-row">
         <span>{title}</span>
         <div className="bs-bar" title={(['A', 'B', 'C', 'assumption'] as const).map((x) => `${REL_RU[x]}: ${r[x]}`).join('\n')}>
@@ -163,7 +171,7 @@ export function BasisTab({ op }: { op: string }) {
 
     {part === 'tree' && <div className="bs-tree">
       <p className="muted small">Щелчок по значению — на каком факте оно держится. Подчинённость — по сборке.</p>
-      {(children.get(null) ?? []).map((n) => <Row key={n.id} n={n} depth={0} />)}
+      {(children.get(null) ?? []).map((n) => row(n, 0))}
     </div>}
 
     {part === 'conflicts' && <div className="bs-list">
@@ -175,7 +183,7 @@ export function BasisTab({ op }: { op: string }) {
           {pin && <button disabled={busy === c.key} onClick={() => void doPin(c.key, null)}>Снять закрепление</button>}</div>
         {c.candidates.map((f) => { const chosen = !!c.chosen && same(c.chosen, f); const pinned = !!pin && pin !== 'none' && same(pin, f); return <div key={`${f.entry}#${f.index}`} className={`bs-cand${chosen ? ' on' : ''}`}>
           <span className="bs-mark">{chosen ? '✓ в модели' : ''}</span>
-          <FactView f={f} />
+          factView(f)
           {!pinned && <button disabled={busy === c.key} onClick={() => void doPin(c.key, f)}>Закрепить этот</button>}
           {pinned && <span className="bs-pin">закреплён</span>}
         </div>; })}
@@ -185,7 +193,7 @@ export function BasisTab({ op }: { op: string }) {
     {part === 'unmatched' && <div className="bs-list">
       <p className="muted small">Факты в пределах времени операции о формированиях, которых в её сценарии нет: возможно, другой id или формирование стоит добавить в сценарий.</p>
       {!kbOf.unmatched.length && <p className="ok">Всё сопоставлено.</p>}
-      {kbOf.unmatched.map((f) => <div key={`${f.entry}#${f.index}`} className="bs-cand"><span className="bs-mark">{(f.fact.claim && 'subject' in f.fact.claim) ? f.fact.claim.subject : ''}</span><FactView f={f} /></div>)}
+      {kbOf.unmatched.map((f) => <div key={`${f.entry}#${f.index}`} className="bs-cand"><span className="bs-mark">{(f.fact.claim && 'subject' in f.fact.claim) ? f.fact.claim.subject : ''}</span>factView(f)</div>)}
     </div>}
   </section>;
 }

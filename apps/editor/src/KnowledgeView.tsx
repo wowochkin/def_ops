@@ -277,7 +277,7 @@ function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
       {typed.map(({ f, index }) => <tr key={index}>
         <th>{KIND_RU[f.claim!.kind] ?? f.claim!.kind}</th>
         <td>{claimText(f.claim!, name)}</td>
-        <td className="kb-src">{relBadge(f.reliability)}</td>
+        <td className="kb-src">{relBadge(f.reliability ?? 'C')}</td>
         {list.map((o) => { const u = factUse(e.id, index, kbs.get(o.id)!); return <td key={o.id} className="kb-use">
           {u === 'used' ? <span className="ok" title="держит вход модели операции">✓ в модели</span>
             : u === 'unused' ? <span className="muted">—</span>

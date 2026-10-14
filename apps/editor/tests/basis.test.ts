@@ -34,6 +34,19 @@ describe('basisSummary: доли входов по видам и надёжно�
       crossing: { A: 1, B: 0, C: 0, assumption: 0 },
     });
   });
+  it('isInput: поля штабов и фронтов (факт и допущение) не считаются, изменения и точки — считаются', () => {
+    const s = basisSummary([
+      p('su_1bf.personnel', ref('h', 0, 'A')),
+      p('su_1bf.tanks', null),
+      p('su_1bf.parent', null),
+      p('su_61a.personnel', ref('a', 0, 'B')),
+      p('su_61a.guns', null),
+      p('su_61a.parent', ref('a', 1, 'C', 'parent')),
+      p('checkpoint:0', ref('c', 0, 'A')),
+    ], (id) => id !== 'su_1bf');
+    expect(s.strength).toEqual({ A: 1, B: 1, C: 0, assumption: 1 });
+    expect(s.parent).toEqual({ A: 0, B: 0, C: 1, assumption: 0 });
+  });
   it('пусто — нули по всем видам', () => {
     expect(basisSummary([]).strength).toEqual({ A: 0, B: 0, C: 0, assumption: 0 });
   });
