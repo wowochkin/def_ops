@@ -11,6 +11,8 @@ export const DESKTOP = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in
 
 export const AGENT_SCENARIOS: Record<string, { path: string; history: string; title: string }> = {
   'berlin-1945-tasks': { path: 'packages/sim/data/scenarios/agents/berlin-1945.json', history: 'packages/sim/data/scenarios/agents/berlin-1945.history.json', title: 'Берлинская операция' },
+  // советская сторона — из армий с допущениями (npm run agents:vistula-data)
+  'vistula-oder-1945': { path: 'packages/sim/data/scenarios/agents/vistula-oder-1945.json', history: 'packages/sim/data/scenarios/agents/vistula-oder-1945.history.json', title: 'Висло-Одерская операция (с допущениями)' },
 };
 
 /** Вариант параметров: поправки «путь → значение» (как в agents-v0.json). */

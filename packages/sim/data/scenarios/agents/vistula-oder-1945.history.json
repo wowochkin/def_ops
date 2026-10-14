@@ -1,0 +1,6557 @@
+{
+ "scenario": "agents-vistula-oder-1945",
+ "note": "положения — история сценария нынешней модели: немецкие дивизии и советские танковые корпуса (агенты) — сверка; армии и корпуса — для сравнения с нынешней моделью",
+ "divisions": [
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    20.95,
+    50.48
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 3об–4об"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.66484,
+    50.69051
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "enwiki_WO"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.55,
+    50.48
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 4об–5"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "time": "1945-01-14T00:00",
+   "at": [
+    20.352,
+    50.365
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "RW_ARM"
+  },
+  {
+   "formation": "de_10pgd_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.57412,
+    51.24823
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_19pd_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.09101,
+    51.64646
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "dewiki_div"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.60992,
+    50.85403
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_251id_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.18338,
+    51.7851
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_25pd_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.94975,
+    51.64823
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "dewiki_div"
+  },
+  {
+   "formation": "de_359id_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.80906,
+    50.29943
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_6vgd_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.09101,
+    51.64646
+   ],
+   "approxKm": 12,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "dewiki_div"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.62,
+    51.42
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 104–109"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.19,
+    50.52
+   ],
+   "approxKm": 6,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 58"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.55,
+    51.4
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 18–19"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.60992,
+    50.85403
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_17id_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    21.16074,
+    51.41673
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "dewiki_div"
+  },
+  {
+   "formation": "de_371id_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.81217,
+    50.18767
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_73id_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.70611,
+    52.43418
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "lexikon"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    21.35,
+    51.38
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 109–111"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    19.8,
+    50.65
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 7об–8"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    21.15,
+    51.39
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 19–20"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.60992,
+    50.85403
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.60992,
+    50.85403
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_214id_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    21.58447,
+    51.35647
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_25pd_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.94975,
+    51.64823
+   ],
+   "approxKm": 25,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "dewiki_div"
+  },
+  {
+   "formation": "de_359id_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.48533,
+    50.26749
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_371id_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.51467,
+    50.11926
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.85,
+    51.4
+   ],
+   "approxKm": 12,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 112–117"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    19.82,
+    50.63
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 8об–9"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.75,
+    51.33
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 20"
+  },
+  {
+   "formation": "de_10pgd_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.85751,
+    51.22389
+   ],
+   "approxKm": 25,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.65038,
+    51.13332
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.65038,
+    51.13332
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.65038,
+    51.13332
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_342id_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.65038,
+    51.13332
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_359id_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.12,
+    50.13
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    19.457,
+    51.769
+   ],
+   "approxKm": 30,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "EW_VO; DW_VO"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.55,
+    51.45
+   ],
+   "approxKm": 12,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 118–126"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    18.95,
+    50.9
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 9об, 11"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    19.88,
+    51.37
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 21"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.57351,
+    51.28542
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.57351,
+    51.28542
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.57351,
+    51.28542
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_359id_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.21716,
+    50.03312
+   ],
+   "approxKm": 6,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_371id_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.89193,
+    50.0085
+   ],
+   "approxKm": 6,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.01,
+    51.53
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 127–129"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.05,
+    50.85
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 10"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.88,
+    51.36
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 21"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    20.11393,
+    51.30598
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    20.11393,
+    51.30598
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    20.11393,
+    51.30598
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_320vgd_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.93686,
+    50.06195
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "dewiki_div"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.295,
+    51.681
+   ],
+   "approxKm": 30,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "Z p.424"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.46,
+    51.76
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 129–132"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    18.75,
+    50.67
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 12–13"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.997,
+    50.047
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "EW_VO"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.46,
+    51.76
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 21–22"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    20.03375,
+    51.51949
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    20.03375,
+    51.51949
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    20.03375,
+    51.51949
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_359id_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    20.06021,
+    49.98238
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    18.65,
+    51.7
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 132–133"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    18.55,
+    50.62
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 13об–14об"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    18.85,
+    51.6
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 22–23"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19.39283,
+    51.55644
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19.39283,
+    51.55644
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_19pd_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.73788,
+    51.59425
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "lexikon; nehring_ifz"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19.39283,
+    51.55644
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_73id_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.59658,
+    53.01454
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "lexikon"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.6,
+    52.05
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 133"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.3,
+    50.51
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 15–15об"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.7,
+    51.7
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 23–24"
+  },
+  {
+   "formation": "de_16pd_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.80156,
+    51.53563
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_17pd_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.80156,
+    51.53563
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_20pgd_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.80156,
+    51.53563
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_25pd_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.73788,
+    51.59425
+   ],
+   "approxKm": 30,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_342id_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.73788,
+    51.59425
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "nehring_ifz; dewiki_div"
+  },
+  {
+   "formation": "de_359id_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    19.82657,
+    49.97475
+   ],
+   "approxKm": 12,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_371id_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    19.31475,
+    50.10305
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "de_72id_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.73788,
+    51.59425
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_88id_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.73788,
+    51.59425
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "nehring_ifz"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.74,
+    51.602
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "Z p.425; DW 9. Armee"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    17.6,
+    52.2
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 135–136"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.55,
+    50.4
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 16–16об"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.1,
+    51.75
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 24"
+  },
+  {
+   "formation": "de_371id_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    19.27251,
+    50.1895
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "lexikon"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    17,
+    52.1
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 136"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.65,
+    50.33
+   ],
+   "approxKm": 12,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 17–18"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.08,
+    51.76
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 25"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    16.75,
+    52.15
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 137–138"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    18.7,
+    50.3
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 18об–19об"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    17.3,
+    51.95
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 25–26"
+  },
+  {
+   "formation": "su_5ua_apo_vo",
+   "time": "1945-01-25T18:00",
+   "at": [
+    17.0978,
+    52.7823
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 82"
+  },
+  {
+   "formation": "de_festung_posen_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.92,
+    52.401
+   ],
+   "approxKm": 3,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "DW_POSEN"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.62,
+    52.2
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 138–139"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    18.78,
+    50.31
+   ],
+   "approxKm": 6,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 19об–20"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.9,
+    52
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 26"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    15.92,
+    52.18
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 139–142"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    18.8,
+    50.32
+   ],
+   "approxKm": 6,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 20об–21об"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    16.9,
+    52
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 26"
+  },
+  {
+   "formation": "su_5ua_apo_vo",
+   "time": "1945-01-26T23:59",
+   "at": [
+    16.564,
+    52.905
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 83 об."
+  },
+  {
+   "formation": "su_5ua_apo_vo",
+   "time": "1945-01-27T15:00",
+   "at": [
+    16.0927,
+    52.887
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 85 об."
+  },
+  {
+   "formation": "de_291id_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    19.12441,
+    50.809
+   ],
+   "approxKm": 20,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "plwiki_div; dewiki_div"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    18.85,
+    50.32
+   ],
+   "approxKm": 6,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 21об–22"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.15,
+    52.1
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 26–27"
+  },
+  {
+   "formation": "de_v_ss_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    15.726,
+    52.405
+   ],
+   "approxKm": 25,
+   "set": "vistula-oder-1945.history",
+   "reliability": "B",
+   "source": "EW_VO; RW_WP"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    18.88,
+    50.32
+   ],
+   "approxKm": 6,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 23–23об"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    19.006,
+    50.214
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "KON"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16,
+    52.1
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 27"
+  },
+  {
+   "formation": "su_5ua_apo_vo",
+   "time": "1945-01-29T19:00",
+   "at": [
+    15.5327,
+    52.8786
+   ],
+   "approxKm": 2,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 94 об."
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    15.85,
+    52.15
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 143"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    18.65,
+    50.42
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3421, оп. 1, д. 37, л. 24об–25"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    15.62,
+    52.08
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 27"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    15.4,
+    52.2
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 144–146"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    17.9,
+    50.6
+   ],
+   "approxKm": 15,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 152"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    18.4,
+    50.42
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 153"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    15.62,
+    52.05
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 28"
+  },
+  {
+   "formation": "su_5ua_apo_vo",
+   "time": "1945-01-31T19:00",
+   "at": [
+    14.4388,
+    52.6735
+   ],
+   "approxKm": 3,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 100 об.; 101 об.; 102"
+  },
+  {
+   "formation": "de_pzk_gd_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    16.33,
+    51.754
+   ],
+   "approxKm": 50,
+   "set": "vistula-oder-1945.history",
+   "reliability": "C",
+   "source": "Z p.426"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.1,
+    52.32
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 147–148"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.55,
+    52.2
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 28"
+  },
+  {
+   "formation": "su_5ua_apo_vo",
+   "time": "1945-02-01T19:00",
+   "at": [
+    14.4388,
+    52.6735
+   ],
+   "approxKm": 3,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 4885, д. 388, л. 10 об."
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    15.07,
+    52.33
+   ],
+   "approxKm": 8,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 148–149"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    15.65,
+    52.05
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 29"
+  },
+  {
+   "formation": "su_11tk_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    14.65,
+    52.35
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3412, оп. 1, д. 50, л. 149–151"
+  },
+  {
+   "formation": "su_31tk_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    17.95,
+    50.73
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 52"
+  },
+  {
+   "formation": "su_4gtk_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    17.36,
+    50.98
+   ],
+   "approxKm": 5,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 51"
+  },
+  {
+   "formation": "su_9tk_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    16.55,
+    52.62
+   ],
+   "approxKm": 10,
+   "set": "vistula-oder-1945.history",
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3408, оп. 1, д. 58, л. 29"
+  }
+ ],
+ "armies": [
+  {
+   "formation": "de_17a_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.219,
+    49.886
+   ],
+   "approxKm": 50,
+   "reliability": "C",
+   "source": "DW_VO; EW_VO"
+  },
+  {
+   "formation": "de_4pza_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    20.691,
+    50.743
+   ],
+   "approxKm": 40,
+   "reliability": "B",
+   "source": "Z p.421; DW_VO"
+  },
+  {
+   "formation": "de_9a_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.116,
+    51.825
+   ],
+   "approxKm": 70,
+   "reliability": "C",
+   "source": "Z p.414; DW_VO"
+  },
+  {
+   "formation": "de_hgr_a_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    20.896,
+    51.144
+   ],
+   "approxKm": 120,
+   "reliability": "C",
+   "source": "Z p.414"
+  },
+  {
+   "formation": "de_lix_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    20.897,
+    50.237
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "DW_VO"
+  },
+  {
+   "formation": "de_lvi_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.584,
+    51.356
+   ],
+   "approxKm": 15,
+   "reliability": "C",
+   "source": "EW_VO; DW_VO"
+  },
+  {
+   "formation": "de_viii_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.067,
+    51.717
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "DW 9. Armee; DW_VO"
+  },
+  {
+   "formation": "de_xi_ss_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.219,
+    49.886
+   ],
+   "approxKm": 35,
+   "reliability": "C",
+   "source": "DW_VO; RW_CHR"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    20.691,
+    50.743
+   ],
+   "approxKm": 20,
+   "reliability": "C",
+   "source": "Z p.421"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.055,
+    51.532
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "DW_VO; RW_CHR"
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.406,
+    50.871
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "DW_VO; DW_KORPS"
+  },
+  {
+   "formation": "de_xxxxvi_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    20.873,
+    52.337
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "DW_VO"
+  },
+  {
+   "formation": "de_xxxxviii_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    20.638,
+    50.567
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "DW_VO; Z p.421"
+  },
+  {
+   "formation": "su_1gkk_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.355,
+    50.53
+   ],
+   "approxKm": 25,
+   "reliability": "C",
+   "source": "RW_SS"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.027,
+    52.265
+   ],
+   "approxKm": 10,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_1uf_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.086,
+    50.576
+   ],
+   "approxKm": 30,
+   "reliability": "B",
+   "source": "RW_SS; Z p.421"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    20.925,
+    52.391
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "PW_VO"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.168,
+    50.561
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "KON"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-12T00:00",
+   "at": [
+    21.854,
+    50.846
+   ],
+   "approxKm": 20,
+   "reliability": "C",
+   "source": "RW_SS"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    20.95,
+    50.62
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 6; 14"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    21.65,
+    50.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 108"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    20.95,
+    50.55
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 315, оп. 4440, д. 708, л. 13"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    21.05,
+    50.68
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    21.3,
+    50.45
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 108"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    21.35,
+    50.5
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 105"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    21.15,
+    50.38
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 73–74"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-12T20:00",
+   "at": [
+    21.25,
+    51.7
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 2"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-12T22:00",
+   "at": [
+    20.7973,
+    50.5477
+   ],
+   "approxKm": 6,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 4"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.691,
+    50.743
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "Z p.421; RW_CHR"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.691,
+    50.743
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.5,
+    50.62
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 315, оп. 4440, д. 708, л. 21–22"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.462,
+    50.8
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "Z p.421"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.6649,
+    50.5982
+   ],
+   "approxKm": 5,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 5"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.719,
+    50.468
+   ],
+   "approxKm": 15,
+   "reliability": "C",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    20.95,
+    50.35
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 75–76"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    21.1,
+    51.78
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 12–14"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-13T20:00",
+   "at": [
+    21.8,
+    51.42
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 27"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-13T21:00",
+   "at": [
+    20.95,
+    50.45
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 120–121"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-13T23:59",
+   "at": [
+    21.45,
+    52.2
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 112"
+  },
+  {
+   "formation": "su_1bf_vo",
+   "time": "1945-01-14T00:00",
+   "at": [
+    21.684,
+    51.594
+   ],
+   "approxKm": 40,
+   "reliability": "B",
+   "source": "RW_WP; Z p.417"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-14T00:00",
+   "at": [
+    21.354,
+    51.725
+   ],
+   "approxKm": 20,
+   "reliability": "C",
+   "source": "RW_WP"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-14T00:00",
+   "at": [
+    21.331,
+    51.804
+   ],
+   "approxKm": 20,
+   "reliability": "C",
+   "source": "RW_WP"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-14T19:00",
+   "at": [
+    21.0966,
+    51.7006
+   ],
+   "approxKm": 6,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 44 об."
+  },
+  {
+   "formation": "de_xxxxviii_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.305,
+    50.639
+   ],
+   "approxKm": 40,
+   "reliability": "C",
+   "source": "Z p.421"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.75,
+    50.75
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 6"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.85,
+    51.33
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 19"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.3,
+    50.65
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 315, оп. 4440, д. 708, л. 23"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.8,
+    50.8
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.55,
+    52.18
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 113"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.85,
+    52.42
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 38"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.45,
+    50.8
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 133–134"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.3,
+    50.32
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 132"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.35,
+    50.52
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 57–58"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    20.7,
+    50.3
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 76–77"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.08,
+    51.8
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 15–16"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-14T20:00",
+   "at": [
+    21.4,
+    51.45
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 35"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-14T21:00",
+   "at": [
+    21.15,
+    51.64
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 42"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-14T22:00",
+   "at": [
+    20.4078,
+    50.6796
+   ],
+   "approxKm": 9,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 6"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-15T19:00",
+   "at": [
+    20.9767,
+    51.7081
+   ],
+   "approxKm": 7,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 50"
+  },
+  {
+   "formation": "de_viii_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.416,
+    51.69
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "DW_VO"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.631,
+    50.872
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "Z p.421"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.765,
+    51.632
+   ],
+   "approxKm": 25,
+   "reliability": "B",
+   "source": "RW_CHR; DW_VO"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.631,
+    50.872
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "Z p.421; RW_CHR"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.63,
+    50.87
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 6"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.58,
+    51.617
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "RW_CHR; RW_WP"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    19.85,
+    50.85
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 315, оп. 4440, д. 708, л. 25"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.631,
+    50.872
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "Z p.421; RW_CHR"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.72,
+    50.86
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.75,
+    52.4
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 42–43"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.15,
+    50.3
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 147"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    19.85,
+    50.75
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 145"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.45,
+    50.25
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 78"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    21.05,
+    51.82
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 17–18"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-15T20:00",
+   "at": [
+    20.765,
+    51.632
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-15T21:00",
+   "at": [
+    20.05,
+    51.03
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 144"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-15T21:00",
+   "at": [
+    20.0713,
+    50.7673
+   ],
+   "approxKm": 11,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 7"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-15T21:00",
+   "at": [
+    21.43,
+    50.87
+   ],
+   "approxKm": 6,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 8"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-16T11:00",
+   "at": [
+    21.05,
+    51.42
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 37"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-16T18:00",
+   "at": [
+    20.6686,
+    51.8065
+   ],
+   "approxKm": 9,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 55"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-16T19:00",
+   "at": [
+    20.4,
+    52
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 13"
+  },
+  {
+   "formation": "de_lvi_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    21.009,
+    51.32
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "EW_VO"
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.877,
+    51.123
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "RW_CHR; RW_SS"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.4,
+    51
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 6"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.58,
+    51.62
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 033"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.3,
+    50.6
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 165"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    21,
+    51.2
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 25"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    19.6,
+    51.07
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 165"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.63,
+    50.87
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    21.55,
+    52.18
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 113"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.7,
+    52.36
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 47–48"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.3,
+    51.1
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 165"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    19.95,
+    50.3
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 162–163"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    19.55,
+    50.7
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 162"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.3,
+    50.2
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 163–164"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.85,
+    51.95
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 20"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    21.406,
+    50.871
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-16T20:00",
+   "at": [
+    20.85,
+    51.55
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 53"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-16T22:00",
+   "at": [
+    19.7411,
+    50.8733
+   ],
+   "approxKm": 13,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 8"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-17T18:00",
+   "at": [
+    20.4101,
+    51.8627
+   ],
+   "approxKm": 16,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 56 об.–57"
+  },
+  {
+   "formation": "de_lix_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.012,
+    50.202
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.518,
+    51.275
+   ],
+   "approxKm": 30,
+   "reliability": "B",
+   "source": "Z p.423; EW_VO"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    19.745,
+    51.644
+   ],
+   "approxKm": 40,
+   "reliability": "C",
+   "source": "RW_CHR; DW_KORPS"
+  },
+  {
+   "formation": "de_xxxxvi_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.675,
+    52.44
+   ],
+   "approxKm": 25,
+   "reliability": "B",
+   "source": "EW_VO; Z p.423"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20,
+    51.1
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 6"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.25,
+    51.75
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 035–036"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    21.071,
+    52.233
+   ],
+   "approxKm": 5,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_1uf_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    19.287,
+    50.94
+   ],
+   "approxKm": 60,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.35,
+    50.6
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 15–17"
+  },
+  {
+   "formation": "su_2gkk_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.045,
+    52.033
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.25,
+    52.2
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 15–16"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.293,
+    51.378
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    19.45,
+    51.05
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 315, оп. 4440, д. 708, л. 30"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.9,
+    50.95
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    21.1,
+    52.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 113–114"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.55,
+    52.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 52"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    19.8,
+    50.2
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 180"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    19.25,
+    50.75
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 180"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.15,
+    50.15
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 181"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.6,
+    52.1
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 22"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.7,
+    51.47
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 44"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.95,
+    51.1
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 11"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.4,
+    51.42
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 23–25"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-17T20:00",
+   "at": [
+    20.163,
+    51.771
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-17T22:00",
+   "at": [
+    19.2665,
+    51.0897
+   ],
+   "approxKm": 17,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 9–10"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-18T17:00",
+   "at": [
+    19.7,
+    52.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 18"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-18T18:00",
+   "at": [
+    20.0069,
+    52.0103
+   ],
+   "approxKm": 14,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 61–61 об."
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.628,
+    51.358
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "EW_VO"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.7,
+    51.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 6"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.745,
+    51.644
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "C"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.65,
+    50.42
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 19"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.15,
+    51.45
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 29"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19,
+    51.15
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 315, оп. 4440, д. 708, л. 32"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.87,
+    51.11
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    21.15,
+    52.25
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 114–115"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.25,
+    52.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 55–56"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.6,
+    51.42
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 203"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.8,
+    50.12
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 200–201"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    18.95,
+    50.85
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 199–200"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.15,
+    50.08
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 201–202"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.25,
+    52.15
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 25"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.25,
+    51.55
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 46"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.92,
+    51.13
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 14"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    20.01,
+    51.53
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 27"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-18T20:00",
+   "at": [
+    19.9,
+    51.8
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 63"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-18T21:00",
+   "at": [
+    18.8849,
+    51.0871
+   ],
+   "approxKm": 16,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 10–11"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-19T12:00",
+   "at": [
+    19.4,
+    50.5
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 21–22"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-19T18:00",
+   "at": [
+    19.5378,
+    52.051
+   ],
+   "approxKm": 6,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 66 об."
+  },
+  {
+   "formation": "de_17a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.502,
+    50.13
+   ],
+   "approxKm": 40,
+   "reliability": "A",
+   "source": "Z p.424"
+  },
+  {
+   "formation": "de_4pza_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    17.761,
+    51.362
+   ],
+   "approxKm": 60,
+   "reliability": "C",
+   "source": "Z p.424"
+  },
+  {
+   "formation": "de_9a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.457,
+    51.769
+   ],
+   "approxKm": 50,
+   "reliability": "B",
+   "source": "Z p.424"
+  },
+  {
+   "formation": "de_hgr_a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.291,
+    51.289
+   ],
+   "approxKm": 120,
+   "reliability": "C",
+   "source": "Z p.424"
+  },
+  {
+   "formation": "de_xi_ss_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    20.243,
+    49.979
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "KON"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.785,
+    51.248
+   ],
+   "approxKm": 40,
+   "reliability": "C",
+   "source": "Z p.424; DW_KORPS"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.295,
+    51.681
+   ],
+   "approxKm": 30,
+   "reliability": "A",
+   "source": "Z p.424"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.2,
+    51.33
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 214"
+  },
+  {
+   "formation": "su_1bf_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.422,
+    51.995
+   ],
+   "approxKm": 60,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.86,
+    52.33
+   ],
+   "approxKm": 30,
+   "reliability": "B",
+   "source": "PW_VO"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.425,
+    52.323
+   ],
+   "approxKm": 30,
+   "reliability": "C",
+   "source": "C"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.457,
+    51.769
+   ],
+   "approxKm": 25,
+   "reliability": "B",
+   "source": "RW_ARM"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    18.5,
+    51.2
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 220"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    20.4,
+    51.22
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    20.88,
+    52.27
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 115"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.9,
+    52.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 59"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    18.3993,
+    51.153
+   ],
+   "approxKm": 14,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 12–13"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.7,
+    50.1
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 217–218"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    18.65,
+    50.85
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 79–80"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.95,
+    50.03
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 86–87"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.9,
+    52.2
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 27–28"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.9,
+    51.7
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 48"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    20.53,
+    51.24
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 14"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-19T20:00",
+   "at": [
+    19.3,
+    51.72
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 28–30"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-19T21:00",
+   "at": [
+    19.4,
+    51.85
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 67"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-20T16:00",
+   "at": [
+    19.35,
+    51.65
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 32"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-20T17:00",
+   "at": [
+    18.8,
+    52.55
+   ],
+   "approxKm": 30,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 22"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-20T19:00",
+   "at": [
+    19.167,
+    52.1676
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 69 об."
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    19,
+    51.25
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 7"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    19.05,
+    50.55
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 24–28"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    18.1,
+    51.2
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 234"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    20.05,
+    51.33
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    20.75,
+    52.24
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 116–117"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    19.5,
+    52.45
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 63–64"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    18.8,
+    51.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 234"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    19.45,
+    50.15
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 232"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    18.4,
+    50.88
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 230"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    19.95,
+    50
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2520, л. 232–233"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    19.45,
+    52.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 29"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-20T20:00",
+   "at": [
+    18.95,
+    51.7
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 31–32"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-20T21:00",
+   "at": [
+    18.1639,
+    51.1473
+   ],
+   "approxKm": 22,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 13–14"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-20T21:00",
+   "at": [
+    18.95,
+    51.95
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 71"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-21T18:00",
+   "at": [
+    18.85,
+    51.6
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 33"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-21T18:00",
+   "at": [
+    17.85,
+    51.15
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 10–11"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-21T19:00",
+   "at": [
+    17.8428,
+    51.1383
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 14"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-21T19:00",
+   "at": [
+    18.7467,
+    52.2968
+   ],
+   "approxKm": 7,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 75"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.57,
+    51.22
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 7"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.444,
+    52.216
+   ],
+   "approxKm": 35,
+   "reliability": "C",
+   "source": "DW_POSEN"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19,
+    50.52
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 28–29"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    20.2,
+    51.31
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    20.45,
+    52.15
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 117"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19.05,
+    52.65
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 67"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19.4,
+    50.25
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 8"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18,
+    50.95
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 6"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19.8,
+    49.98
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 9"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    19,
+    52.45
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 34"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    20.3,
+    51.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 15"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.63,
+    51.71
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 33"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-21T20:00",
+   "at": [
+    18.7,
+    52.08
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 78"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-22T19:00",
+   "at": [
+    18.4156,
+    52.4028
+   ],
+   "approxKm": 16,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 76 об.–77"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.74,
+    51.602
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "Z p.425"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    17.99,
+    51.28
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 7"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.85,
+    50.5
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 35–37"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    17.75,
+    53
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 26"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    17.8,
+    50.8
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 25–26"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    20.12,
+    51.31
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    20.2,
+    52.12
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 118"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.7,
+    52.85
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 69–70"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    16.449,
+    51.544
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    17.5621,
+    51.163
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 15–17"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    19.3,
+    50.25
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 23–24"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    17.55,
+    50.9
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 90–92"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    19.7,
+    50.05
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 24–25"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.6,
+    52.65
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 35"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.55,
+    52.05
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 56"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.1,
+    51.8
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 34"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-22T20:00",
+   "at": [
+    18.444,
+    52.216
+   ],
+   "approxKm": 40,
+   "reliability": "C",
+   "source": "C"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-23T19:00",
+   "at": [
+    18.0362,
+    52.5544
+   ],
+   "approxKm": 14,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 78"
+  },
+  {
+   "formation": "de_xxxxii_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    19.865,
+    51.464
+   ],
+   "approxKm": 25,
+   "reliability": "B",
+   "source": "DW_KORPS; DW_VO"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    17.72,
+    51.29
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 7"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    16.95,
+    52.4
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 050–051"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.574,
+    52.693
+   ],
+   "approxKm": 35,
+   "reliability": "C",
+   "source": "PW_VO"
+  },
+  {
+   "formation": "su_1uf_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.07,
+    50.977
+   ],
+   "approxKm": 70,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.75,
+    50.43
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 42–43"
+  },
+  {
+   "formation": "su_2gkk_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.029,
+    53.13
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.029,
+    53.13
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.079,
+    51.747
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "RW_ARM; RW_CHR"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    17.95,
+    50.55
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 315, оп. 4440, д. 708, л. 43"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.95,
+    51.5
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    19.3,
+    52.2
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 119"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.15,
+    53.05
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 72"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    16.9,
+    51.6
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 38–39"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    17.35,
+    51.15
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 34"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    19.27,
+    50.22
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 37"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    17.62,
+    50.8
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 92–96"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    19.55,
+    50.05
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 37–38"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.25,
+    52.8
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 37"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    19.7,
+    51.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 39"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    18.08,
+    51.76
+   ],
+   "approxKm": 5,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 35–36"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-23T20:00",
+   "at": [
+    17.2,
+    52.4
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 87"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-24T16:00",
+   "at": [
+    17.1,
+    52.85
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 33"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-24T16:00",
+   "at": [
+    17.65,
+    52.17
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 59"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-24T19:00",
+   "at": [
+    18.4,
+    50.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 53"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-24T19:00",
+   "at": [
+    17.7398,
+    52.6456
+   ],
+   "approxKm": 16,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 80–80 об."
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    16.95,
+    52.42
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 052"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    18.3,
+    50.5
+   ],
+   "approxKm": 35,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 45"
+  },
+  {
+   "formation": "su_29gsk_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    17,
+    52.42
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 889, оп. 1, д. 108, л. 13–14"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    18.2,
+    51.7
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 36"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    18.15,
+    51.75
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1в"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    19.05,
+    52.3
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 120"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    17.8,
+    53.12
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 74–75"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    16.45,
+    51.48
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 323, оп. 4757, д. 5, л. 25–28"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    17.3234,
+    51.111
+   ],
+   "approxKm": 19,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 17–18"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    19.272,
+    50.191
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "RW_ARM"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    17.75,
+    50.75
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 98–99"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    19.4,
+    50.1
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 98–99"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    17.75,
+    52.95
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 38"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-24T20:00",
+   "at": [
+    17.5,
+    51.97
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 37–38"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-25T17:30",
+   "at": [
+    17.65,
+    51.8
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 38–39"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-25T18:00",
+   "at": [
+    17.3764,
+    52.7505
+   ],
+   "approxKm": 13,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 81 об."
+  },
+  {
+   "formation": "de_17a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    18.836,
+    50.254
+   ],
+   "approxKm": 30,
+   "reliability": "B",
+   "source": "EW_VO"
+  },
+  {
+   "formation": "de_4pza_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.033,
+    51.109
+   ],
+   "approxKm": 30,
+   "reliability": "B",
+   "source": "Z p.425"
+  },
+  {
+   "formation": "de_hgr_a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.478,
+    50.888
+   ],
+   "approxKm": 100,
+   "reliability": "C",
+   "source": "Z p.425–426"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.95,
+    51.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 7"
+  },
+  {
+   "formation": "su_1bf_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.258,
+    52.468
+   ],
+   "approxKm": 70,
+   "reliability": "A",
+   "source": "Z p.425; RW_CHR"
+  },
+  {
+   "formation": "su_1gkk_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    18.3,
+    50.511
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "EW_SS"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.1,
+    52.3
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 054"
+  },
+  {
+   "formation": "su_29gsk_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.98,
+    52.42
+   ],
+   "approxKm": 6,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 889, оп. 1, д. 108, л. 14"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    18.55,
+    50.27
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 71"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.81,
+    51.65
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1г"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    18.68,
+    52.38
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 120"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.7,
+    53.13
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 79"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.45,
+    51.47
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 70–71"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.2602,
+    51.1065
+   ],
+   "approxKm": 14,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 18–19"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    19.2,
+    50.28
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 69"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.55,
+    50.82
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 103–104"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    19.3,
+    50.05
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 70"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.4,
+    52.95
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 39"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    16.85,
+    52.25
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 64"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    19.11,
+    51.33
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 17"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-25T20:00",
+   "at": [
+    17.5,
+    51.97
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 38–39"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-25T21:00",
+   "at": [
+    16.95,
+    52.55
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 91"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-26T19:00",
+   "at": [
+    17.25,
+    51.85
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 40"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-26T19:00",
+   "at": [
+    17.1273,
+    52.8353
+   ],
+   "approxKm": 13,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 83"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    16.75,
+    51.3
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 81"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    16,
+    52.3
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 056"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    18.3,
+    50.5
+   ],
+   "approxKm": 35,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 55"
+  },
+  {
+   "formation": "su_29gsk_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    16.9,
+    52.37
+   ],
+   "approxKm": 6,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 889, оп. 1, д. 108, л. 14"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    17.019,
+    53.009
+   ],
+   "approxKm": 35,
+   "reliability": "C",
+   "source": "RW_WP"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    18.6,
+    50.15
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 87"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    17.43,
+    51.7
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1г"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    18.45,
+    52.55
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 124"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    17.7,
+    53.17
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 82–83"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    16.45,
+    51.42
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 86"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    17.21,
+    51.0988
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 19–20"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    17.55,
+    50.8
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 104–106"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    19.2,
+    50.05
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 86"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    17,
+    53
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 41–42"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    16.98,
+    51.96
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 41"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-26T20:00",
+   "at": [
+    16.8,
+    52.5
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 97"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-27T15:00",
+   "at": [
+    16.7,
+    52.05
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 42"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-27T18:00",
+   "at": [
+    16.6,
+    53.05
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 38"
+  },
+  {
+   "formation": "de_9a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    15.703,
+    52.308
+   ],
+   "approxKm": 60,
+   "reliability": "C",
+   "source": "Z p.426"
+  },
+  {
+   "formation": "de_hgr_weichsel_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.306,
+    52.758
+   ],
+   "approxKm": 100,
+   "reliability": "A",
+   "source": "Z p.425–426"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.716,
+    51.727
+   ],
+   "approxKm": 50,
+   "reliability": "C",
+   "source": "KON; Z p.426"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.678,
+    51.303
+   ],
+   "approxKm": 20,
+   "reliability": "B",
+   "source": "PW_VO"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    15.9,
+    52.3
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 058"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    18.85,
+    50.33
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 59"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    18.7,
+    50.12
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 100"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.95,
+    51.6
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1г"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    18.25,
+    52.8
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 124"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    17.35,
+    53.3
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 86"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    17.2151,
+    51.1301
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 21"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    17.55,
+    50.8
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 106–107"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.4707,
+    52.9837
+   ],
+   "approxKm": 5,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 87 об."
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    19.2,
+    50.04
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 103"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.8,
+    53.05
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 43"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.716,
+    51.727
+   ],
+   "approxKm": 60,
+   "reliability": "C",
+   "source": "KON"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.4,
+    52.1
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 42–44"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-27T20:00",
+   "at": [
+    16.3,
+    52.55
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 101"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-28T19:00",
+   "at": [
+    15.9499,
+    52.8076
+   ],
+   "approxKm": 19,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 91"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16.45,
+    51.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 7"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    15.75,
+    52.25
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 060–061"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    18.029,
+    53.13
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "RW_ARM"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    18.4,
+    50.4
+   ],
+   "approxKm": 35,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 63–64"
+  },
+  {
+   "formation": "su_29gsk_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16.92,
+    52.4
+   ],
+   "approxKm": 3,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 889, оп. 1, д. 108, л. 15"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16.1,
+    52.15
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 42"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    18.65,
+    50.13
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 120–121"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16.75,
+    51.65
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1г"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    17.95,
+    52.95
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 125"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    17.25,
+    53.3
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 89–90"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16.45,
+    51.55
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 120"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    19.006,
+    50.214
+   ],
+   "approxKm": 10,
+   "reliability": "B",
+   "source": "RW_ARM; RW_CHR"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    17.3,
+    50.93
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 108–109"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    19.1,
+    50.05
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 417, оп. 10564, д. 1265, л. 104–105"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16.6,
+    53.1
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 44–45"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    15.8,
+    52.3
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 72"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    15.95,
+    52.05
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 44–45"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-28T20:00",
+   "at": [
+    16.05,
+    52.6
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 107"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-28T23:59",
+   "at": [
+    16.1,
+    53.05
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 43"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-29T19:00",
+   "at": [
+    15.6403,
+    52.8666
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 94–94 об."
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    15.55,
+    52.35
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 062"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    18.4,
+    50.4
+   ],
+   "approxKm": 35,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 65–66"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    18.35,
+    50.12
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 139–140"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    16.55,
+    51.62
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1г"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    17.75,
+    53.15
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 125–126"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    16.95,
+    53.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 94"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    16.4,
+    51.55
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 139"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    17.1231,
+    51.0896
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 21–22"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    17.3,
+    50.93
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 328, оп. 4852, д. 328, л. 110–111"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    18.95,
+    50.1
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 138"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    16.3,
+    53.05
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 47"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    15.8,
+    52.3
+   ],
+   "approxKm": 30,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 426, оп. 10753, д. 1402, л. 75"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    15.65,
+    52.05
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 45–46"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-29T20:00",
+   "at": [
+    15.8,
+    52.45
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 111"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-30T18:00",
+   "at": [
+    17.1175,
+    51.075
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 23–24"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-30T19:00",
+   "at": [
+    15.3047,
+    52.7233
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 95 об."
+  },
+  {
+   "formation": "de_17a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    18.213,
+    50.218
+   ],
+   "approxKm": 30,
+   "reliability": "B",
+   "source": "Z p.427"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    16.4,
+    51.4
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 147–148"
+  },
+  {
+   "formation": "su_1gkk_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    18.18,
+    50.17
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 155"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    15.35,
+    52.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 064–065"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    17.85,
+    50.62
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 151–152"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    15.5,
+    52.85
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 45"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    18.55,
+    50.08
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 154–155"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    16.55,
+    51.72
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1г"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    16.85,
+    53.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 96–97"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    18.15,
+    50.35
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 152–153"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    17.35,
+    50.85
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 150–151"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    18.8,
+    50
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 153–154"
+  },
+  {
+   "formation": "su_61a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    16.1,
+    53.05
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 418, оп. 10695, д. 545, л. 49"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    17.95,
+    51.35
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 155"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-30T20:00",
+   "at": [
+    15.62,
+    52.03
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 47–51"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-30T23:59",
+   "at": [
+    17.55,
+    53.25
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 126"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-01-31T19:00",
+   "at": [
+    14.7,
+    52.7
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 307, оп. 4148, д. 369, л. 47–48"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-01-31T19:00",
+   "at": [
+    14.6989,
+    52.7046
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 1, д. 385, л. 100"
+  },
+  {
+   "formation": "de_xxiv_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    16.086,
+    51.663
+   ],
+   "approxKm": 25,
+   "reliability": "C",
+   "source": "DW_KORPS; EW_VO"
+  },
+  {
+   "formation": "de_xxxx_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.323,
+    51.991
+   ],
+   "approxKm": 40,
+   "reliability": "C",
+   "source": "DW_KORPS"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    16.43,
+    51.41
+   ],
+   "approxKm": 8,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 357, л. 7"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.1,
+    52.35
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 066"
+  },
+  {
+   "formation": "su_1pa_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    16.929,
+    53.39
+   ],
+   "approxKm": 25,
+   "reliability": "C",
+   "source": "RW_CHR"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    18.05,
+    50.65
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 696, с. 69"
+  },
+  {
+   "formation": "su_29gsk_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    16.9,
+    52.43
+   ],
+   "approxKm": 4,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 889, оп. 1, д. 108, л. 15"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.7,
+    52.2
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1107, л. 48"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    18.25,
+    50.3
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 171"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    16.57,
+    51.8
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 312, оп. 4245, д. 297, л. 1г"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    17.3,
+    53.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 758, л. 127"
+  },
+  {
+   "formation": "su_47a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    16.65,
+    53.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 402, оп. 9575, д. 852, л. 100"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    17.0833,
+    51.1133
+   ],
+   "approxKm": 21,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 460, л. 24"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    18.2,
+    50.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 168–169"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    17.4,
+    50.86
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 166–167"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    18.6,
+    50.07
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2537, л. 169–170"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.556,
+    52.347
+   ],
+   "approxKm": 25,
+   "reliability": "B",
+   "source": "RW_ARM; RW_CHR"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    17.06,
+    51.31
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 560, с. 19"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.65,
+    52.05
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 50–53"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-01-31T20:00",
+   "at": [
+    15.4,
+    52.58
+   ],
+   "approxKm": 40,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 385, л. 120"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-02-01T19:00",
+   "at": [
+    14.5146,
+    52.7011
+   ],
+   "approxKm": 26,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 4885, д. 388, л. 10–11 об."
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    16.3,
+    51.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 369, л. 4–6"
+  },
+  {
+   "formation": "su_1gkk_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    18.2,
+    50.17
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 40"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    14.65,
+    52.35
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 067–068"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    17.8,
+    50.72
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 701, с. 11–15"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    15.2,
+    52.2
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1110, л. 3–4"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    18.35,
+    50.15
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 40–41"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    16.05,
+    51.85
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 33–35"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    16.3,
+    51.55
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 40"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    17.13,
+    51.09
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 463, с. 1–2"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    18.15,
+    50.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 38–39"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    17.4,
+    50.88
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 36–37"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    18.45,
+    50.1
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 39–40"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    15.35,
+    52.38
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 762, л. 121"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    17.15,
+    51.3
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 41"
+  },
+  {
+   "formation": "su_7gkk_vo",
+   "time": "1945-02-01T20:00",
+   "at": [
+    15.65,
+    52.05
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 3475, оп. 1, д. 191, л. 55–56"
+  },
+  {
+   "formation": "su_29gsk_vo",
+   "time": "1945-02-01T21:00",
+   "at": [
+    16.92,
+    52.41
+   ],
+   "approxKm": 3,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 394, л. 7"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-02-01T22:00",
+   "at": [
+    17.4,
+    53.47
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 433, л. 172"
+  },
+  {
+   "formation": "su_8gva_vo",
+   "time": "1945-02-02T17:00",
+   "at": [
+    14.95,
+    52.45
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 345, оп. 5487, д. 394, л. 12–15"
+  },
+  {
+   "formation": "su_5ua_vo",
+   "time": "1945-02-02T19:00",
+   "at": [
+    14.4153,
+    52.6809
+   ],
+   "approxKm": 16,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 333, оп. 4885, д. 388, л. 16"
+  },
+  {
+   "formation": "su_13a_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    16.3,
+    51.4
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 361, оп. 6079, д. 369, л. 9–11"
+  },
+  {
+   "formation": "su_1gkk_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    18.2,
+    50.17
+   ],
+   "approxKm": 10,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 54"
+  },
+  {
+   "formation": "su_1gta_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    14.6,
+    52.45
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 299, оп. 3070, д. 827, л. 069–070"
+  },
+  {
+   "formation": "su_21a_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    17.8,
+    50.72
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 375, оп. 6675, д. 701, с. 18–25"
+  },
+  {
+   "formation": "su_2gta_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    14.582,
+    52.601
+   ],
+   "approxKm": 15,
+   "reliability": "B",
+   "source": "DW_VO"
+  },
+  {
+   "formation": "su_3gta_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    18.3,
+    50.12
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 55"
+  },
+  {
+   "formation": "su_3gva_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    15.9,
+    51.75
+   ],
+   "approxKm": 25,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 47–48"
+  },
+  {
+   "formation": "su_3ua_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    17.45,
+    53.43
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 433, л. 173–174"
+  },
+  {
+   "formation": "su_4ta_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    16.35,
+    51.45
+   ],
+   "approxKm": 12,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 54–55"
+  },
+  {
+   "formation": "su_52a_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    17.15,
+    51.08
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 408, оп. 9991, д. 463, с. 4"
+  },
+  {
+   "formation": "su_59a_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    18.15,
+    50.25
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 52–53"
+  },
+  {
+   "formation": "su_5gva_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    17.3,
+    50.9
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 50а–51"
+  },
+  {
+   "formation": "su_60a_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    18.45,
+    50.1
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 236, оп. 2673, д. 2539, л. 53–54"
+  },
+  {
+   "formation": "su_69a_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    14.95,
+    52.35
+   ],
+   "approxKm": 15,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 233, оп. 2356, д. 762, л. 123–124"
+  },
+  {
+   "formation": "su_6a_vo",
+   "time": "1945-02-02T20:00",
+   "at": [
+    16.85,
+    51.3
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 462, оп. 5252, д. 564, л. 1"
+  },
+  {
+   "formation": "su_33a_vo",
+   "time": "1945-02-02T23:59",
+   "at": [
+    14.9,
+    52.2
+   ],
+   "approxKm": 20,
+   "reliability": "A",
+   "source": "ЦАМО, ф. 388, оп. 8712, д. 1110, л. 9–10"
+  }
+ ],
+ "events": [
+  {
+   "id": "kielce",
+   "title": "Кельце взят",
+   "date": "1945-01-15",
+   "kind": "reach",
+   "side": "su",
+   "place": "Kielce",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    20.631,
+    50.872
+   ]
+  },
+  {
+   "id": "radom",
+   "title": "Радом взят",
+   "date": "1945-01-16",
+   "kind": "reach",
+   "side": "su",
+   "place": "Radom",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    21.1607,
+    51.416700000000006
+   ]
+  },
+  {
+   "id": "warsaw",
+   "title": "Варшава освобождена",
+   "date": "1945-01-17",
+   "kind": "reach",
+   "side": "su",
+   "place": "Warszawa",
+   "radiusKm": 3,
+   "source": "RW_WP (B)",
+   "control": true,
+   "note": "радиус 3 км: Прага на правом берегу (в 4 км от центра) была советской с сентября 1944 г.",
+   "at": [
+    21.0711,
+    52.2334
+   ]
+  },
+  {
+   "id": "czestochowa",
+   "title": "Ченстохов взят",
+   "date": "1945-01-17",
+   "kind": "reach",
+   "side": "su",
+   "place": "Czestochowa",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    19.124399999999998,
+    50.809
+   ]
+  },
+  {
+   "id": "lodz",
+   "title": "Лодзь освобождена",
+   "date": "1945-01-19",
+   "kind": "reach",
+   "side": "su",
+   "place": "Lodz",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    19.456999999999997,
+    51.7687
+   ]
+  },
+  {
+   "id": "krakow",
+   "title": "Краков освобождён",
+   "date": "1945-01-19",
+   "kind": "reach",
+   "side": "su",
+   "place": "Krakow",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    19.997199999999996,
+    50.046899999999994
+   ]
+  },
+  {
+   "id": "oder_steinau",
+   "title": "4 ТА на Одере у Штейнау (Кебен)",
+   "date": "1945-01-22",
+   "kind": "reach",
+   "side": "su",
+   "place": "Chobienia",
+   "radiusKm": 8,
+   "source": "Z; RW_CHR (B)",
+   "control": true,
+   "at": [
+    16.4486,
+    51.54379999999999
+   ]
+  },
+  {
+   "id": "kalisz",
+   "title": "Калиш взят",
+   "date": "1945-01-23",
+   "kind": "reach",
+   "side": "su",
+   "place": "Kalisz",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    18.0795,
+    51.747299999999996
+   ]
+  },
+  {
+   "id": "opole",
+   "title": "Оппельн — 3 гв. ТА на Одере",
+   "date": "1945-01-24",
+   "kind": "reach",
+   "side": "su",
+   "place": "Opole",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": false,
+   "note": "выход к Одеру, а не взятие города: левобережную часть Оппельна и плацдарм северо-западнее его на 1.02 удерживали 712 пд и 20 пд СС (ЖБД 1 УФ, ЦАМО, ф. 236, оп. 2673, д. 2537, л. 210)",
+   "at": [
+    17.923599999999997,
+    50.6668
+   ]
+  },
+  {
+   "id": "posen",
+   "title": "Познань окружена",
+   "date": "1945-01-25",
+   "kind": "cut",
+   "formation": "de_festung_posen_vo",
+   "source": "RW_CHR; Z (23–25.01, B)",
+   "at": null
+  },
+  {
+   "id": "katowice",
+   "title": "Катовице взят",
+   "date": "1945-01-28",
+   "kind": "reach",
+   "side": "su",
+   "place": "Katowice",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    19.0059,
+    50.21369999999999
+   ]
+  },
+  {
+   "id": "owb",
+   "title": "Прорыв Мезерицкого укреплённого района",
+   "date": "1945-01-29",
+   "kind": "reach",
+   "side": "su",
+   "place": "Miedzyrzecz",
+   "radiusKm": 8,
+   "source": "RW_CHR (B)",
+   "control": true,
+   "at": [
+    15.578600000000002,
+    52.444800000000015
+   ]
+  },
+  {
+   "id": "kienitz",
+   "title": "Выход к Одеру у Кинитца",
+   "date": "1945-01-31",
+   "kind": "reach",
+   "side": "su",
+   "place": "Kienitz",
+   "radiusKm": 8,
+   "source": "DW/PW (B)",
+   "control": true,
+   "at": [
+    14.4388,
+    52.67350000000002
+   ]
+  }
+ ],
+ "rejected": [],
+ "losses": []
+}
