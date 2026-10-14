@@ -4,7 +4,7 @@
  * «Переигровке» (agentsToRun → compareWithHistory, checkEvents), без карты.
  */
 import { agentsHistory, agentsToRun, type AgentHistory, type AgentTrace } from './agents';
-import { checkEvents, compareStrength, compareWithHistory, summarize, type History } from './history';
+import { checkEvents, compareStrength, compareWithHistory, STRENGTH_MIN_POINTS, STRENGTH_WEIGHT, summarize, type History } from './history';
 import type { SimContext } from './step';
 
 export interface AgentsScore {
@@ -46,6 +46,6 @@ export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentH
     events: ev.map((e) => ({ id: e.id, title: e.title, days: e.days })),
     byGroup: [...groups].map(([id, x]) => ({ id: name.get(id) ?? id, within: +(x.ok / x.n).toFixed(2), n: x.n })).sort((a, b) => b.n - a.n),
     ...(st.n > 0 ? { strength: { n: st.n, within: st.within } } : {}),
-    score: +(st.n >= 10 ? posEv * 0.75 + st.within * 0.25 : posEv).toFixed(3),
+    score: +(st.n >= STRENGTH_MIN_POINTS ? posEv * (1 - STRENGTH_WEIGHT) + st.within * STRENGTH_WEIGHT : posEv).toFixed(3),
   };
 }

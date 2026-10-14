@@ -5,7 +5,7 @@
  * «проверка» — после) и подбор: сначала широкий случайный поиск, потом уточнение вокруг лучшего.
  * Подбор пошаговый (next → report): кандидатов можно считать параллельно в нескольких потоках.
  */
-import { checkEvents, compareStrength, compareWithHistory, runScenario, type History } from './history';
+import { checkEvents, compareStrength, compareWithHistory, runScenario, STRENGTH_MIN_POINTS, STRENGTH_WEIGHT, type History } from './history';
 import { createRng } from './rng';
 import type { SimContext } from './step';
 import type { Rules } from './types';
@@ -146,7 +146,7 @@ export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o
   const sorted = [...all].sort((a, b) => a - b);
   const strength = cpN ? { n: Math.round(cpN / seeds), within: +(cpWithin / cpN).toFixed(3) } : undefined;
   const base = train + 3 * evd;
-  const total = strength && strength.n >= 10 ? base * 0.75 + (1 - strength.within) * 50 * 0.25 : base;
+  const total = strength && strength.n >= STRENGTH_MIN_POINTS ? base * (1 - STRENGTH_WEIGHT) + (1 - strength.within) * 50 * STRENGTH_WEIGHT : base;
   return {
     score: { total: +total.toFixed(3), train: +train.toFixed(2), test: +test.toFixed(2), within: +(within10 / Math.max(1, n)).toFixed(3), events: +evd.toFixed(2), detail, ...(strength ? { strength } : {}) },
     within: +(all.filter((x) => x <= tol).length / Math.max(1, all.length)).toFixed(3),

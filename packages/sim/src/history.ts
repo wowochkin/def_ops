@@ -23,6 +23,15 @@ export type StrengthCheckpoint =
   /** накопленные потери за [from, at]: personnel — люди */
   | { at: string; formation: string; kind: 'losses'; from: string; personnel: number; tanks?: number };
 
+/**
+ * Сверка численности и потерь (допущения без опоры, norms.json: assume-strength-tolerance, assume-strength-weight):
+ * точка в допуске — ошибка не больше STRENGTH_TOL от документа; в мерило калибровки и итог агентной модели сверка
+ * входит с весом STRENGTH_WEIGHT, если точек не меньше STRENGTH_MIN_POINTS.
+ */
+export const STRENGTH_TOL = 0.25;
+export const STRENGTH_WEIGHT = 0.25;
+export const STRENGTH_MIN_POINTS = 10;
+
 export interface StrengthComparison {
   /** Сверено точек; доля в допуске; медиана относительной ошибки. */
   n: number;
@@ -38,7 +47,7 @@ export interface StrengthComparison {
  * пополнения и полученное при выделении − выделенное из него − люди на at; дата без времени: at — конец дня, from — начало; from раньше начала — начало сценария) против документа. Точки вне
  * сценария, без людей в документе или без формирования на карте — не сверяются. В допуске — ошибка ≤ tol.
  */
-export function compareStrength(ctx: SimContext, run: RunResult, history: History, tol = 0.25): StrengthComparison {
+export function compareStrength(ctx: SimContext, run: RunResult, history: History, tol = STRENGTH_TOL): StrengthComparison {
   const rows: { key: string; rel: number }[] = [];
   const last = addHours(ctx.scenario.end, 12);
   const unitAt = (time: string, id: string) => {
