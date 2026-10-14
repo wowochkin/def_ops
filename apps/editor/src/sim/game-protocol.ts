@@ -23,6 +23,9 @@ export interface LlmSettings {
   /** База знаний: своя модель и размышление для ответов и разбора документов; пусто — как в разделе «ИИ». */
   kbModel?: string;
   kbThinking?: Thinking;
+  /** Штаб противника в игре: своя модель и размышление; пусто — как в разделе «ИИ». */
+  enemyModel?: string;
+  enemyThinking?: Thinking;
   /** Советник в игре: своя модель и размышление; пусто — как в разделе «ИИ». */
   advModel?: string;
   advThinking?: Thinking;

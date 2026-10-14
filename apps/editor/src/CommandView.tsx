@@ -414,7 +414,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <span>ход {view.turn} · вы командуете: {view.human.name}{view.engine === 'agents' ? ' · агентная модель: дивизии, расчёт по часам' : ''}</span>
             <span className="cmd-goal" title={`Победа: ${view.victory}. Поражение: численность ниже ${Math.round(view.strengthBelow * 100)} % исходной или предельный срок ${ddmm(view.deadline)}`}>цель — {view.victory}; срок — {ddmm(view.deadline)}; в строю {pct(view.strength)}</span>
           </div>}
-          <div className="cmd-chips"><AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.model} onClick={() => setTab('umpire')} />
+          <div className="cmd-chips"><AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.enemyModel || llm.settings.model} onClick={() => setTab('umpire')} />
             <button className={`adv-btn${advOpen ? ' on' : ''}`} onClick={() => { if (advOpen && advMin) setAdvMin(false); else setAdvOpen(!advOpen); }} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</button></div>
         </div>
         <nav className="cmd-tabs">
@@ -1241,13 +1241,9 @@ function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, 
             <option value="passive">без штаба — держится прежних приказов</option>
           </select>
         </label>
-        <label>Размышление
-          <select value={llm.settings.thinking} onChange={(e) => llm.set({ thinking: e.target.value as typeof llm.settings.thinking })}>
-            <option value="off">нет (быстрее)</option><option value="low">короткое</option><option value="medium">обычное</option><option value="high">глубокое</option>
-          </select>
-        </label>
-        <span className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `модель: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `LM Studio: ${llm.check.error}` : 'проверка связи…'}</span>
       </div>
+      {enemy === 'llm' && <label className="umpire-model">Модель штаба противника и размышление <ModelPicker llm={llm} who="enemy" purpose="штаба противника" />
+        {llm.check.state === 'fail' && <span className="err small">LM Studio: {llm.check.error}</span>}</label>}
       <label className="switch"><input type="checkbox" checked={!!llm.settings.umpire} onChange={(e) => llm.set({ umpire: e.target.checked })} /><span /> Посредник на модели: нюансы к боям по базе знаний</label>
       <label className="switch"><input type="checkbox" checked={llm.settings.stavka !== false} onChange={(e) => llm.set({ stavka: e.target.checked })} /><span /> Модель высшего командования (Ставка, ОКХ): разграничительные линии фронтов и групп армий, когда обстановка разошлась с историей или есть ходатайство</label>
       <p className="muted umpire-about">Перед каждым ходом модель-посредник смотрит на ожидаемые бои и по справкам базы знаний (доктрина, нормативы, техника) добавляет то, чего правила не учитывают: видимость, взаимодействие родов войск, заграждения, качество обороны. Поправки — множители 0,8–1,25 с обоснованием; видны в журнале боя и записываются в игру.</p>

@@ -189,14 +189,17 @@ struct NameOnly {
     name: String,
 }
 
-pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), String> {
+pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), String> { load_with(path, data_dir, root, None) }
+
+/// Сценарий с поправками параметров агентной модели (rules::apply_overrides).
+pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serde_json::Value>) -> Result<(Sim, Meta), String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
     let s: ScenarioIn = serde_json::from_str(&text).map_err(|e| format!("{path}: {e}"))?;
     let mut theatre = Theatre::load(&format!("{root}/{}", s.theatre))?;
     for z in &s.defense_zones { theatre.mark_zone(&z.line, z.depth_km, z.level, z.towards == "west"); }
     for r in &s.city_rings { let _ = &r.name; theatre.mark_city(&r.ring, r.level, &r.side); }
     let theatre = Arc::new(theatre);
-    let rules = Rules::load(data_dir)?;
+    let rules = Rules::load_with(data_dir, overrides)?;
     let start = parse_hours(&s.start).ok_or("start: неверная дата")?;
     let hq_idx: HashMap<&str, u32> = s.hqs.iter().enumerate().map(|(i, h)| (h.id.as_str(), i as u32)).collect();
     let hqs: Vec<Hq> = s.hqs.iter().map(|h| Hq {

@@ -271,13 +271,29 @@ fn side_rules(p: &Value) -> Result<SideRules, String> {
     })
 }
 
+/// Поправки параметров агентной модели: путь через точку (как в agents-v0.json, «combat.armorFactor») → значение.
+/// У параметра с полем value меняется value (источник и пояснение остаются), иначе — сам узел. Неизвестный путь — ошибка.
+pub fn apply_overrides(ag: &mut Value, overrides: &Value) -> Result<(), String> {
+    let Some(map) = overrides.as_object() else { return Err("поправки параметров: нужен объект «путь → значение»".into()) };
+    for (path, v) in map {
+        let mut cur = &mut *ag;
+        for k in path.split('.') { cur = cur.get_mut(k).ok_or_else(|| format!("поправки параметров: нет параметра {path}"))?; }
+        if let Some(obj) = cur.as_object_mut().filter(|o| o.contains_key("value")) { obj.insert("value".into(), v.clone()); } else { *cur = v.clone(); }
+    }
+    Ok(())
+}
+
 impl Rules {
     /// `data` — папка `packages/sim/data`.
-    pub fn load(data: &str) -> Result<Rules, String> {
+    pub fn load(data: &str) -> Result<Rules, String> { Rules::load_with(data, None) }
+
+    /// Правила с поправками параметров агентной модели (сравнение вариантов, калибровка).
+    pub fn load_with(data: &str, overrides: Option<&Value>) -> Result<Rules, String> {
         let su = side_rules(&read(&format!("{data}/profiles/rkka-1945.json"))?)?;
         let de = side_rules(&read(&format!("{data}/profiles/wehrmacht-1945.json"))?)?;
         let cal = read(&format!("{data}/rules/ww2-berlin-cal.json"))?;
-        let ag = read(&format!("{data}/rules/agents-v0.json"))?;
+        let mut ag = read(&format!("{data}/rules/agents-v0.json"))?;
+        if let Some(o) = overrides { apply_overrides(&mut ag, o)?; }
         let sz = |k: &str| -> Result<[f64; 3], String> {
             Ok([num(&ag, &format!("{k}.rifle"))?, num(&ag, &format!("{k}.tank"))?, num(&ag, &format!("{k}.other"))?])
         };
@@ -424,4 +440,18 @@ impl Rules {
     }
 
     pub fn size(&self, arr: &[f64; 3], c: SizeClass) -> f64 { arr[c as usize] }
+}
+
+#[cfg(test)]
+mod overrides_tests {
+    use super::*;
+    #[test]
+    fn overrides_change_value_keep_source() {
+        let mut ag = serde_json::json!({ "combat": { "armorFactor": { "value": 1.5, "source": "Дюпюи" }, "x": 2 } });
+        apply_overrides(&mut ag, &serde_json::json!({ "combat.armorFactor": 2.0, "combat.x": 3 })).unwrap();
+        assert_eq!(ag["combat"]["armorFactor"]["value"], 2.0);
+        assert_eq!(ag["combat"]["armorFactor"]["source"], "Дюпюи");
+        assert_eq!(ag["combat"]["x"], 3);
+        assert!(apply_overrides(&mut ag, &serde_json::json!({ "нет.такого": 1 })).is_err());
+    }
 }

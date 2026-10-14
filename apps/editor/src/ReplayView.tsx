@@ -20,15 +20,10 @@ import { useCoverage } from './modeling/Coverage';
 import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { MapHover, withoutLabels } from './MapHover';
 import { invoke } from '@tauri-apps/api/core';
-import { addHours, type AgentHistory, type AgentTrace } from '@def-ops/sim';
+import { addHours, type AgentHistory } from '@def-ops/sim';
 import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
 
-/** В настольном приложении (Tauri): там есть ядро агентной модели на Rust. */
-const DESKTOP = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-/** Агентная модель (дивизии) для операций каталога: сценарий и история ядра (packages/sim/data/scenarios/agents). */
-const AGENT_SCENARIOS: Record<string, { path: string; history: string; title: string }> = {
-  'berlin-1945-tasks': { path: 'packages/sim/data/scenarios/agents/berlin-1945.json', history: 'packages/sim/data/scenarios/agents/berlin-1945.history.json', title: 'Берлинская операция' },
-};
+import { AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentVariant } from './sim/agent-scenarios';
 /** Ход игры на агентной модели, ч. */
 const AGENT_GAME_HOURS = 12;
 /** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
@@ -165,6 +160,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [level, setLevel] = useMapLevel();
   const [labels, toggleLabels] = useMapLabels();
   const [model, setModel] = useState<'army' | 'agents'>('army');
+  // параметры агентной модели: базовые (agents-v0.json) или сохранённый вариант (калибровка в «Моделировании»)
+  const [variants, setVariants] = useState<AgentVariant[]>(agentVariants);
+  const [variantId, setVariantId] = useState('');
+  useEffect(() => { const f = () => setVariants(agentVariants()); window.addEventListener('def_ops.agents.variants', f); return () => window.removeEventListener('def_ops.agents.variants', f); }, []);
   const agentOp = DESKTOP ? AGENT_SCENARIOS[scenario] : undefined;
   const useAgents = model === 'agents' && !!agentOp;
   const worker = useRef<Worker | null>(null);
@@ -206,7 +205,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     const op = agentOp!;
     worker.current?.terminate();
     setBusy('расчёт агентной модели…'); setError(null);
-    Promise.all([invoke<AgentTrace>('run_scenario', { scenario: op.path, seed }), invoke<string>('read_text', { path: op.history })])
+    const params = variants.find((v) => v.id === variantId)?.params;
+    Promise.all([runAgents(scenario, { seed, params }), invoke<string>('read_text', { path: op.history })])
       .then(([trace, h]) => {
         if (token !== runId.current) return;
         const history = JSON.parse(h) as AgentHistory;
@@ -369,6 +369,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <select value={model} onChange={(e) => setModel(e.target.value as 'army' | 'agents')} disabled={!!busy}>
               <option value="army">нынешняя — армии и корпуса</option>
               <option value="agents">агентная — дивизии</option>
+            </select>
+          </label>}
+          {useAgents && variants.length > 0 && <label title="Поправки параметров агентной модели — варианты из «Моделирования → Агентная модель»">Параметры
+            <select value={variantId} onChange={(e) => setVariantId(e.target.value)} disabled={!!busy}>
+              <option value="">базовые (agents-v0)</option>
+              {variants.filter((v) => !v.scenario || v.scenario === scenario).map((v) => <option key={v.id} value={v.id}>{v.title}</option>)}
             </select>
           </label>}
           {!useAgents && <label>Правила

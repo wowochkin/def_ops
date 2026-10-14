@@ -24,4 +24,5 @@ export { applyInfrastructure, resolveInfra, locatePlace, infraEffect, INFRA_KIND
 export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, legendFromSamples, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
 export { RoadNet, roadNet, visualPath } from './roadnet';
 export { groupOf, activeBoundaries, effectiveBoundaries, withBoundaries, checkTriggers, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';
+export { agentsScore, type AgentsScore } from './agents-score';
 export { agentsToRun, agentsStateAt, agentsHistory, postureOf, agentKindOf, AGENT_TASK, type AgentTrace, type AgentHistory, type AgentOrderKind } from './agents';

@@ -11,13 +11,15 @@ import { CompareTab } from './CompareTab';
 import { TuneTab } from './TuneTab';
 import { CalibrateTab } from './CalibrateTab';
 import { OperationsTab } from './OperationsTab';
+import { AgentsTab } from './AgentsTab';
 
-type Tab = 'models' | 'compare' | 'tune' | 'calibrate' | 'ops';
+type Tab = 'models' | 'compare' | 'tune' | 'calibrate' | 'agents' | 'ops';
 const TABS: [Tab, string, string][] = [
   ['models', 'Модели', 'описание правил, профилей, языковых моделей'],
   ['compare', 'Сравнение', 'модели между собой и с историей'],
   ['tune', 'Настройка', 'свой вариант правил'],
   ['calibrate', 'Калибровка', 'подбор по истории операции'],
+  ['agents', 'Агентная модель', 'сравнение вариантов параметров с историей и калибровка (ядро приложения)'],
   ['ops', 'Операции', 'загрузка и подготовка к переигровке'],
 ];
 
@@ -42,6 +44,7 @@ export function ModelingView({ llm }: { llm: Llm }) {
           <div hidden={tab !== 'compare'}><CompareTab d={d} preset={cmp} /></div>
           <div hidden={tab !== 'tune'}><TuneTab d={d} preset={tune} /></div>
           <div hidden={tab !== 'calibrate'}><CalibrateTab key={`${calib}`} d={d} onCompare={compare} initialScenario={calibScenario} /></div>
+          <div hidden={tab !== 'agents'}><AgentsTab /></div>
           <div hidden={tab !== 'ops'}><OperationsTab d={d} llm={llm} onCompare={compare} onCalibrate={(s) => { setCalibScenario(s); setCalib((x) => x + 1); go('calibrate'); }} /></div>
         </>}
       </div>

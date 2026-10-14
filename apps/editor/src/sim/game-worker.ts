@@ -248,7 +248,7 @@ function startAi() {
   const sit = buildSituation(ctx, g, cfg, { system: systemTpl, user: liveTpl, profile: profileMd }, previous, !!rec.aiStaff);
   const gAt = g;
   const abort = new AbortController();
-  const client = llmClient();
+  const client = enemyClient();
   status({ state: 'thinking', time, since: Date.now() });
   post({ kind: 'ai-stream', text: '', reset: true });
   let buf = '', last = 0;
@@ -276,6 +276,8 @@ function startAi() {
 
 const llmClient = () => new LlmClient({ url: absolute(llm.url), model: llm.model, thinking: llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
 /** Советник: своя модель и размышление, если выбраны в его панели. */
+/** Штаб противника: своя модель, если выбрана в «Посреднике», иначе — как в «ИИ». */
+const enemyClient = () => new LlmClient({ url: absolute(llm.url), model: llm.enemyModel || llm.model, thinking: llm.enemyThinking ?? llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
 const advisorClient = () => new LlmClient({ url: absolute(llm.url), model: llm.advModel || llm.model, thinking: llm.advThinking ?? llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
 
 /** Вопрос советнику: ответ потоком, предложенные приказы — с целью на карте, готовые к распоряжению. */

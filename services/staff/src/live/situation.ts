@@ -86,7 +86,7 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
   const ownLines = own.map((u) => {
     const parent = hq.length ? chain(u.parent) : u.parent ? names.get(u.parent) : null;
     const n = hqIds.has(u.id) ? units.filter((d) => d.status === 'active' && chain(d.parent).split(', ').includes(u.name)).length : 0;
-    const head = `- ${u.name}${parent ? ` [в составе: ${parent}]` : ''}${n ? ` (${u.echelon === 'army' ? 'армия' : 'корпус'}, соединений: ${n}; приказ ${u.echelon === 'army' ? 'ей' : 'ему'} доводится до всех ${u.echelon === 'army' ? 'её' : 'его'} соединений)` : ''}`;
+    const head = `- ${u.name}${parent ? ` [в составе: ${parent}]` : ''}${n ? ` (${u.echelon === 'army' ? 'армия' : 'корпус'}, соединений: ${n})` : ''}`;
     if (u.status === 'reserve') return `${head} — резерв Ставки, в сражение не введён; готов к вводу с ${ddmm(u.reserveFrom!)}`;
     if (u.status === 'arriving') return `${head} — прибывает на театр ${ddmm(u.arrives!)}${u.pending.length ? `; приказ ждёт: ${u.pending.map((p) => `${p.task} (${p.target})`).join(', ')}` : ''}`;
     const bits = [
@@ -94,18 +94,39 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
       u.task ? `задача: ${u.task} (${u.target})` : 'задачи нет',
       `состав ${pct(u.strength)} (${u.personnel.toLocaleString('ru')} чел., танков и САУ ${u.tanks}, орудий ${u.guns})`,
       `боеприпасы ${num(u.ammo)} бк, горючее ${num(u.fuel)} запр.`,
-      `усталость ${pct(u.fatigue)}`,
+      hq.length && u.fatigue < 0.1 ? '' : `усталость ${pct(u.fatigue)}`,
     ];
     if (u.cutOff) bits.push('ОТРЕЗАНО от подвоза');
     if (u.movedKm >= 1) bits.push(`за сутки переместилось на ${Math.round(u.movedKm)} км`);
     for (const c of u.combats) bits.push(`бой (${c.role === 'attack' ? 'наступали' : 'оборонялись'}) против ${c.against.join(', ')}: ${c.outcome}${c.advanceKm ? ` на ${num(c.advanceKm)} км` : ''}, потери ${c.lossPct} %`);
     if (u.pending.length) bits.push(`приказ в пути: ${u.pending.map((p) => `${p.task} (${p.target})`).join(', ')}`);
-    return `${head} — ${bits.join('; ')}.`;
+    return `${head} — ${bits.filter(Boolean).join('; ')}.`;
   });
 
-  const enemyLines = intel.length
-    ? intel.map((e) => `- ${e.name} — ${e.place}; ${e.posture}; оценка: ${e.estimate}${e.nearest ? `; ближайшее наше — ${e.nearest.name}, ${Math.round(e.nearest.km)} км` : ''}${e.fresh ? '; обнаружено впервые' : ''}.`)
-    : ['- В пределах разведки противник не обнаружен.'];
+  const enemyLine = (e: (typeof intel)[number]) => `- ${e.name} — ${e.place}; ${e.posture}; оценка: ${e.estimate}${e.nearest ? `; ближайшее наше — ${e.nearest.name}, ${Math.round(e.nearest.km)} км` : ''}${e.fresh ? '; обнаружено впервые' : ''}.`;
+  let enemyLines = intel.length ? intel.map(enemyLine) : ['- В пределах разведки противник не обнаружен.'];
+  let ownOut = ownLines;
+  // агентная модель: сотни дивизий — запрос длиннее контекста небольшой модели. Полностью — армии и корпуса (сводкой),
+  // дивизии с поводом (бой за сутки, окружение, меньше 60 % людей, мало боеприпасов или горючего, только что прибыли);
+  // остальные дивизии — коротко под своей армией. Разведсводка: полностью — ближние к нашим войскам, остальные — списком
+  if (hq.length) {
+    const notable = (u: (typeof units)[number]) => u.status !== 'active' || u.combats.length > 0 || u.cutOff || u.strength < 0.5 || u.ammo < 0.3 || u.fuel <= 0.05;
+    const armyOf = (u: (typeof units)[number]) => chain(u.parent).split(', ').pop() || 'без объединения';
+    const quiet = new Map<string, string[]>();
+    ownOut = [];
+    own.forEach((u, i) => {
+      if (hqIds.has(u.id) || notable(u)) { ownOut.push(ownLines[i]); return; }
+      const a = armyOf(u);
+      quiet.set(a, [...(quiet.get(a) ?? []), shortName(u.name)]);
+    });
+    ownOut.unshift('- Приказ армии или корпусу ядро доводит до всех их соединений; приказ дивизии — ей одной.');
+    if (quiet.size) ownOut.push(`- Остальные дивизии (без боя за сутки; положение и задача — как у их объединения выше), по объединениям: ${[...quiet].map(([a, l]) => `${a}: ${l.join(', ')}`).join(' | ')}.`);
+    const NEAR = 30;
+    if (intel.length > NEAR) {
+      const sorted = [...intel].sort((a, b) => (a.nearest?.km ?? 1e9) - (b.nearest?.km ?? 1e9));
+      enemyLines = [...sorted.slice(0, NEAR).map(enemyLine), `- Ещё обнаружено в глубине (${sorted.length - NEAR}): ${sorted.slice(NEAR).map((e) => shortName(e.name)).join(', ')}.`];
+    }
+  }
 
   const near = nearbyPlaces(ctx, s, side, km * 1.5, 70);
   if (anchor && !near.some((a) => a.id === view.anchor)) near.push({ id: view.anchor, title: areaTitle(T.area(view.anchor)!.name), at: anchor, km: 0 });
@@ -137,7 +158,7 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
   return {
     vars: {
       last_day: lastDay.length ? lastDay.map((x) => `- ${x}`).join('\n') : '- Существенных событий не отмечено.',
-      own_forces: ownLines.join('\n'),
+      own_forces: ownOut.join('\n'),
       detect_km: String(Math.round(km)),
       enemy: enemyLines.join('\n'),
       areas: areaLines.join('\n'),

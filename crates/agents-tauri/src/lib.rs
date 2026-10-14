@@ -69,13 +69,14 @@ pub mod commands {
     use super::*;
 
     #[tauri::command]
-    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>) -> Result<serde_json::Value, String> {
+    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>, params: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
         // расчёт — в отдельном потоке, окно не замирает
         tauri::async_runtime::spawn_blocking(move || {
             let r = root();
             let path = inside(&scenario)?;
             let rs = r.to_string_lossy().to_string();
-            let (mut sim, meta) = scenario::load(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs)?;
+            // params — поправки параметров агентной модели (путь → значение): варианты для сравнения и калибровки
+            let (mut sim, meta) = scenario::load_with(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs, params.as_ref())?;
             if let Some(s) = seed { sim.seed = s; }
             sim.sources[1] = match de.as_deref() { Some("doctrine") => Source::Doctrine, Some("llm") => Source::Llm, _ => Source::Script };
             // советские штабы: по доктрине (staff_su.rs), на модели (штаб армии) или исторические приказы

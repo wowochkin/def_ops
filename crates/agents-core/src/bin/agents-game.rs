@@ -1,4 +1,4 @@
-//! Игра на агентной модели без окна приложения — для проверок: команды game_start / game_turn / game_stop / read_text
+//! Игра на агентной модели без окна приложения — для проверок: команды run_scenario / game_start / game_turn / game_stop / read_text
 //! строками JSON на входе ({"cmd": …, "args": {…}}), ответ — строкой JSON на выходе ({"ok": …} или {"error": …}).
 //! Те же команды, что у настольного приложения (crates/agents-tauri).
 
@@ -19,6 +19,19 @@ fn main() {
         let a = &q["args"];
         let r: Result<Value, String> = (|| match q["cmd"].as_str().unwrap_or("") {
             "read_text" => std::fs::read_to_string(format!("{root}/{}", a["path"].as_str().unwrap_or(""))).map(Value::String).map_err(|e| e.to_string()),
+            "run_scenario" => {
+                // прогон целиком (как команда приложения): сценарий, seed, источники решений, поправки параметров
+                let path = format!("{root}/{}", a["scenario"].as_str().unwrap_or(""));
+                let params = if a["params"].is_object() { Some(&a["params"]) } else { None };
+                let (mut sim, meta) = scenario::load_with(&path, &format!("{root}/{DATA_DIR}"), &root, params)?;
+                if let Some(s) = a["seed"].as_u64() { sim.seed = s; }
+                sim.sources[1] = if a["de"] == "doctrine" { Source::Doctrine } else { Source::Script };
+                sim.sources[0] = if a["su"] == "doctrine" { Source::Doctrine } else { Source::Script };
+                if a["withoutFires"] == true { sim.fires.clear(); }
+                if a["withoutWithdrawals"] == true { sim.withdrawals.clear(); }
+                let hours = meta.hours;
+                Ok(agents_core::trace::run(&mut sim, hours, &meta))
+            }
             "game_start" => {
                 let path = format!("{root}/{}", a["scenario"].as_str().unwrap_or(""));
                 let (mut sim, meta) = scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root)?;

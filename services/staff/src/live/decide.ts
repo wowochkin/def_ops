@@ -51,7 +51,13 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
       if (!fix.jsonError) { res = { ...res, json: fix.json, jsonError: undefined }; out.repaired = true; }
     } catch { /* остаётся исходная ошибка */ }
   }
-  if (res.jsonError) { out.error = `ответ не разобран: ${res.jsonError}`; return out; }
+  if (res.jsonError) {
+    // пустой или обрывочный ответ на длинный запрос — обычно запрос длиннее контекста, загруженного в LM Studio
+    const tokens = Math.round(sit.messages.reduce((a, m) => a + m.content.length, 0) / 3.2);
+    const empty = !res.content.trim() || res.content.trim().length < 40;
+    out.error = `ответ не разобран: ${res.jsonError}${empty ? ` — модель вернула ${res.content.trim() ? 'обрывок' : 'пустой ответ'}; запрос ≈ ${Math.round(tokens / 100) / 10} тыс. токенов — проверьте длину контекста модели в LM Studio (Context Length: нужно не меньше ${Math.ceil((tokens + 4000) / 4096) * 4} тыс.) или выберите модель с большим контекстом` : `; начало ответа: «${res.content.trim().slice(0, 160)}»`}`;
+    return out;
+  }
   const d = res.json as Decision;
   if (!d || !Array.isArray(d.orders)) { out.error = 'в ответе нет приказов'; return out; }
   out.decision = d;

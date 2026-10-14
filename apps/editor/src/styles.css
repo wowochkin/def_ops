@@ -1379,3 +1379,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .h-add { cursor: pointer; } .h-add circle { fill: #fff; stroke: #c9822c; stroke-width: 1.5; } .h-add path { stroke: #c9822c; stroke-width: 1.8; } .h-add:hover circle { fill: #ffe9a8; }
 
 .hist-warn { flex-basis: 100%; color: #8a5a00; background: #fbf3e2; border-radius: 4px; padding: 3px 6px; margin-top: 3px; }
+.umpire-model { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; margin: 6px 0 4px; }
+.ag-params { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
+.ag-params label { font-size: 12.5px; }
+.mdl-tbl tr.on td { background: var(--accent-bg); }
