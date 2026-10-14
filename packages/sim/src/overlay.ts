@@ -47,8 +47,9 @@ export function legendFromSamples(samples: Record<string, [number, number, numbe
     pixels[cls] = list.map(([r, g, b]) => {
       const [h, s, v] = hsv(r, g, b);
       const dh = 14 * tol, ds = 0.16 * tol, dv = 0.16 * tol;
-      // серые и чёрные (тушь, железные дороги): тон не определён — только яркость и малая насыщенность
-      if (s < 0.12) return { s: clamp(0, s + ds), v: clamp(v - dv, v + dv) };
+      // серые и чёрные (тушь, железные дороги): тон не определён — только яркость и малая насыщенность (узко: иначе
+      // под условие попадает бумага карты). Бледный цвет с оттенком (серо-голубая вода) — по тону, как цветной
+      if (s < 0.06) return { s: clamp(0, s + 0.05), v: clamp(v - dv, v + dv) };
       return { h: [(h - dh + 360) % 360, (h + dh) % 360] as Range, s: clamp(s - ds, s + ds), v: clamp(v - dv, v + dv) };
     });
   }
@@ -142,7 +143,7 @@ export class OverlayAccumulator {
     }
     // линейные классы — до осевой линии в одну клетку: толстая линия скана задевает соседние клетки, и дорога
     // выходила полосой в 2–3 клетки «лесенкой»
-    for (const cls of LINEAR) if (masks[cls]) thinMask(masks[cls], this.grid.cols, this.grid.rows);
+    for (const cls of LINEAR) if (masks[cls]) { thinMask(masks[cls], this.grid.cols, this.grid.rows); dropSpecks(masks[cls], this.grid.cols, this.grid.rows, 3); }
     const covered = new Uint8Array(N).map((_, i) => (this.total[i] > 0 ? 1 : 0));
     return {
       legend: this.legend.id, name: this.legend.name, source: meta.source, zoom: meta.zoom, bbox: this.grid.bbox, cols: this.grid.cols, rows: this.grid.rows,
@@ -153,19 +154,31 @@ export class OverlayAccumulator {
 }
 /**
  * Убрать из класса k пиксели связных кусков (по восьми соседям), которые не похожи на линию: короче minExtent
- * пикселей (буква, цифра, значок) — если не упираются в край тайла (линия продолжится в соседнем), — или толще
- * maxWidth в среднем (площадь / длина — заливка, крупная надпись). Пиксели снятых кусков становятся «ни одним».
+ * пикселей (буква, цифра, значок) — если не упираются в край тайла (линия продолжится в соседнем), — или с
+ * заливкой: заметная доля «сплошных» пикселей, у которых всё окно (толще линии, maxWidth) того же класса. Сеть тонких
+ * дорог любой длины и разветвлённости сплошных пикселей не имеет и остаётся целиком. Снятые пиксели — «ни один».
  */
 export function dropBlobs(cls: Int8Array, size: number, k: number, minExtent: number, maxWidth: number) {
+  // сплошные пиксели: окно (2r+1)² целиком класса k — по суммам по площади
+  const r = Math.max(1, Math.ceil(maxWidth / 2)), W = size + 1;
+  const sum = new Int32Array(W * W);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) sum[(y + 1) * W + x + 1] = (cls[y * size + x] === k ? 1 : 0) + sum[y * W + x + 1] + sum[(y + 1) * W + x] - sum[y * W + x];
+  const full = (2 * r + 1) ** 2;
+  const solid = (x: number, y: number) => {
+    if (x < r || y < r || x + r >= size || y + r >= size) return false;
+    const x0 = x - r, y0 = y - r, x1 = x + r + 1, y1 = y + r + 1;
+    return sum[y1 * W + x1] - sum[y0 * W + x1] - sum[y1 * W + x0] + sum[y0 * W + x0] === full;
+  };
   const seen = new Uint8Array(size * size), stack: number[] = [], comp: number[] = [];
   for (let i0 = 0; i0 < cls.length; i0++) {
     if (cls[i0] !== k || seen[i0]) continue;
     comp.length = 0; stack.length = 0; stack.push(i0); seen[i0] = 1;
-    let x0 = size, x1 = -1, y0 = size, y1 = -1;
+    let x0 = size, x1 = -1, y0 = size, y1 = -1, core = 0;
     while (stack.length) {
       const i = stack.pop()!; comp.push(i);
       const x = i % size, y = (i - x) / size;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (solid(x, y)) core++;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         const xx = x + dx, yy = y + dy;
         if (xx < 0 || yy < 0 || xx >= size || yy >= size) continue;
@@ -176,9 +189,31 @@ export function dropBlobs(cls: Int8Array, size: number, k: number, minExtent: nu
     const extent = Math.max(x1 - x0, y1 - y0) + 1;
     const edge = x0 === 0 || y0 === 0 || x1 === size - 1 || y1 === size - 1;
     const long = extent >= minExtent || (edge && extent >= minExtent / 2);
-    const thin = comp.length / extent <= maxWidth;
-    if (!long || !thin) for (const i of comp) cls[i] = -1;
+    const filled = core > comp.length * 0.05;
+    if (!long || filled) for (const i of comp) cls[i] = -1;
   }
+}
+
+/** Убрать из маски связные (по восьми соседям) обрывки короче minCells клеток: слова надписей, не связанные с сетью линий. */
+export function dropSpecks(m: Uint8Array, cols: number, rows: number, minCells: number): number {
+  const seen = new Uint8Array(m.length), comp: number[] = [], stack: number[] = [];
+  let removed = 0;
+  for (let i0 = 0; i0 < m.length; i0++) {
+    if (!m[i0] || seen[i0]) continue;
+    comp.length = 0; stack.length = 0; stack.push(i0); seen[i0] = 1;
+    while (stack.length) {
+      const i = stack.pop()!; comp.push(i);
+      const c = i % cols, r = (i - c) / cols;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        const cc = c + dc, rr = r + dr;
+        if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+        const j = rr * cols + cc;
+        if (m[j] && !seen[j]) { seen[j] = 1; stack.push(j); }
+      }
+    }
+    if (comp.length < minCells) { for (const i of comp) m[i] = 0; removed += comp.length; }
+  }
+  return removed;
 }
 
 /** Классы-линии: маска утончается до осевой. */

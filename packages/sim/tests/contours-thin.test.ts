@@ -32,13 +32,28 @@ describe('растр → контуры местности и осевые до�
 
   it('в линейных классах остаются линии: буквы и заливка того же цвета отбрасываются', () => {
     const S = 128, cls = new Int8Array(S * S).fill(-1);
+    const at = (x: number, y: number) => cls[y * S + x];
     for (let x = 10; x < 120; x++) for (let y = 60; y < 63; y++) cls[y * S + x] = 0; // дорога: 110×3
     for (const [bx, by] of [[20, 20], [32, 20], [44, 20]]) for (let x = bx; x < bx + 8; x++) for (let y = by; y < by + 10; y++) cls[y * S + x] = 0; // «буквы»
     for (let x = 80; x < 120; x++) for (let y = 90; y < 125; y++) cls[y * S + x] = 0; // заливка 40×35
+    // сеть дорог: решётка тонких линий через весь тайл — длина веток много больше размера, но заливки нет
+    for (let x = 0; x < S; x++) for (const y of [5, 45]) cls[y * S + x] = 0;
+    for (let y = 0; y < 50; y++) for (const x of [5, 70, 100, 125]) cls[y * S + x] = 0;
     dropBlobs(cls, S, 0, 24, 6);
-    const at = (x: number, y: number) => cls[y * S + x];
+    expect(at(64, 45)).toBe(0);
+    expect(at(70, 15)).toBe(0);
     expect(at(60, 61)).toBe(0);
     expect(at(24, 24)).toBe(-1);
     expect(at(100, 100)).toBe(-1);
+  });
+});
+
+describe('образцы цвета', () => {
+  it('бледная серо-голубая вода — по оттенку: бумага карты водой не считается', async () => {
+    const { legendFromSamples, pixelClass } = await import('../src/overlay');
+    const lg = legendFromSamples({ water: [[160, 180, 190], [150, 165, 185]] }, 0.6);
+    expect(pixelClass(lg, ['water'], 158, 178, 190)).toBe(0);
+    expect(pixelClass(lg, ['water'], 236, 222, 196)).toBe(-1); // бумага
+    expect(pixelClass(lg, ['water'], 205, 200, 185)).toBe(-1); // серая бумага, штриховка
   });
 });
