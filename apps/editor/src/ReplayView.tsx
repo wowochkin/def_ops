@@ -3,7 +3,7 @@
  * плеером времени, итоги и отчёт о сравнении с историей. Результат можно открыть в
  * редакторе для правки и экспорта.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { documentAt, migrateDocument, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
@@ -309,9 +309,13 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const agentToHour = (h: number) => agentRun && setTime(addHours(agentRun.trace.start, Math.max(0, Math.min(agentRun.trace.frames.length - 1, Math.round(h)))));
 
   const layerOn = (t: (typeof TOGGLES)[number]) => !!doc?.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
-  const toggle = (t: (typeof TOGGLES)[number]) => doc && setDoc({ ...doc, layers: doc.layers.map((l) => (t.match(l.id) ? { ...l, visible: !layerOn(t) } : l)) });
+  const toggle = (t: (typeof TOGGLES)[number]) => setDoc((d) => {
+    if (!d) return d;
+    const on = d.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
+    return { ...d, layers: d.layers.map((l) => (t.match(l.id) ? { ...l, visible: !on } : l)) };
+  });
   /** Все слои-переключатели сразу (войска и подложка остаются). */
-  const setAll = (on: boolean) => doc && setDoc({ ...doc, layers: doc.layers.map((l) => (TOGGLES.some((t) => t.match(l.id)) ? { ...l, visible: on } : l)) });
+  const setAll = (on: boolean) => setDoc((d) => d && { ...d, layers: d.layers.map((l) => (TOGGLES.some((t) => t.match(l.id)) ? { ...l, visible: on } : l)) });
   /** К событию: время — момент события в расчёте, карта — к месту. */
   const goEvent = (e: SimResult['events'][number]) => {
     if (e.at) setTime(e.at);
@@ -319,7 +323,20 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     if (e.place && en) { const z = en.getView().zoom; en.setView({ center: e.place, zoom: Math.min(13, Math.max(z, z + 1)) }); }
   };
   const tol = CATALOG.find((c) => c.id === result?.scenario)?.toleranceKm ?? entry.toleranceKm;
+  // действия панели итогов — через ссылку на свежие значения: сама панель не перерисовывается каждый кадр проигрывания
+  const act = useRef({ report: () => {}, open: () => {}, summary: () => {}, event: goEvent, save: () => {} });
+  act.current = {
+    report: () => setReport(true), open: () => doc && onOpenInEditor(doc), summary: () => result?.summary && onOpenInEditor(result.summary),
+    event: goEvent, save: () => void saveCurrent(),
+  };
+  const resultsAct = useMemo(() => ({
+    onReport: () => act.current.report(), onOpen: () => act.current.open(), onSummary: () => act.current.summary(),
+    onEvent: (e: SimResult['events'][number]) => act.current.event(e), onSave: () => act.current.save(),
+  }), []);
 
+  // документ для карты — тот же объект, пока не изменились документ, уровень, участок и подписи
+  // (иначе каждый кадр проигрывания давал бы новые знаки и перерисовку всей карты)
+  const mapDoc = useMemo(() => (doc ? withoutLabels(withFocus(withLevel(doc, level), focus), labels) : null), [doc, level, focus, labels]);
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
   if (game) {
     return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} onOpenInEditor={onOpenInEditor}
@@ -393,8 +410,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             : <button className="rp-go primary" onClick={run}>Рассчитать</button>}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
-        {result && !busy && <Results r={result} tol={tol} onReport={() => setReport(true)} onOpen={() => doc && onOpenInEditor(doc)} onSummary={() => result.summary && onOpenInEditor(result.summary)} onEvent={goEvent}
-          saved={!!savedId} saving={saving} onSave={() => void saveCurrent()} />}
+        {result && !busy && <Results r={result} tol={tol} {...resultsAct} saved={!!savedId} saving={saving} />}
         </>}
       </aside>
       <main className="rp-main">
@@ -410,7 +426,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
           </div>
           <div className="rp-map">
-          <MapView key={mapKey} doc={withoutLabels(withFocus(withLevel(doc, level), focus), labels)} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
+          <MapView key={mapKey} doc={mapDoc!} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __replayEngine: MapEngine }).__replayEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
@@ -418,7 +434,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
           {agentRun && !agentSel && <div className="ag-hint">Щёлкните по дивизии — карточка агента и разговор с ним</div>}
-          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
+          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'}
+            sig={doc.layers.map((l) => (l.visible ? 1 : 0)).join('')} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
           </div>
@@ -444,7 +461,8 @@ function Empty({ busy, saved }: { busy: boolean; saved?: boolean }) {
   );
 }
 
-function Results({ r, tol, onReport, onOpen, onSummary, onEvent, saved, saving, onSave }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void; saved: boolean; saving: boolean; onSave: () => void }) {
+const Results = memo(ResultsPanel);
+function ResultsPanel({ r, tol, onReport, onOpen, onSummary, onEvent, saved, saving, onSave }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void; saved: boolean; saving: boolean; onSave: () => void }) {
   const lo = Math.min(...r.spread), hi = Math.max(...r.spread);
   return (
     <div className="rp-res">
@@ -575,7 +593,11 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
   );
 }
 
-export function Legend({ on, toggle, extra = [], combat = true }: { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string; mark?: string }[]; combat?: boolean }) {
+type LegendProps = { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string; mark?: string }[]; combat?: boolean;
+  /** Подпись состояния слоёв: с ней легенда не перерисовывается, пока состояние то же (кадры проигрывания). */
+  sig?: string };
+export const Legend = memo(LegendPanel, (a, b) => a.sig != null && a.sig === b.sig && a.extra === b.extra && a.combat === b.combat);
+function LegendPanel({ on, toggle, extra = [], combat = true }: LegendProps) {
   const [open, setOpen] = useState(true);
   const rows: { key?: string; cls: string; text: string; mark?: string }[] = [
     { cls: 'lg-own', text: 'советские войска' },

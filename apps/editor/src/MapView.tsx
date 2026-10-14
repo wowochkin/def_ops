@@ -10,7 +10,7 @@ import { askText } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArrowFeature, Feature, FeatureKind, ImageOverlay, LngLat, MapDocument, PresetKind, Vec2 } from '@def-ops/core';
 import {
-  makeProjection, ARROW_PRESETS, dist, sub, dot, createFeature, zoomFactor, viewDenominator, sizeFactor, sizingOf, inScaleRange, pickLayer, isFeatureEditable, renderDocument, documentAt,
+  makeProjection, ARROW_PRESETS, dist, sub, dot, createFeature, zoomFactor, viewDenominator, sizeFactor, sizingOf, inScaleRange, pickLayer, isFeatureEditable, renderDocument, documentAt, createRenderCache,
 } from '@def-ops/core';
 import type { TimeInstant } from '@def-ops/core';
 import { type Tool, insertFeature, updateFeature, commitAt } from './store';
@@ -140,21 +140,44 @@ export function MapView(props: Props) {
   viewRef.current = { zoom: zq, denominator: denom };
 
   // ---------- рендер знаков (при изменении документа, размеров или видимости по масштабу)
+  // кэш отрисованных знаков: при проигрывании неподвижные знаки не перерисовываются каждый кадр
+  const renderCache = useMemo(() => createRenderCache(), []);
   const rendered = useMemo(() => {
     const d = draftFeature ? { ...shown, features: [...shown.features, draftFeature] } : shown;
-    return renderDocument(d, { idPrefix: 'm', view: viewRef.current });
-  }, [shown, draftFeature, sizeKey, visKey]);
+    return renderDocument(d, { idPrefix: 'm', view: viewRef.current, cache: renderCache });
+  }, [shown, draftFeature, sizeKey, visKey, renderCache]);
 
+  // в DOM меняются только изменившиеся знаки (и <defs>, если изменились); новый состав слоя — слой целиком
+  const domRef = useRef<{ head: string; defs: string; ids: string[]; items: string[][] } | null>(null);
   useEffect(() => {
     const g = worldRef.current;
     if (!g) return;
     const locked = new Set(doc.layers.filter((l) => l.locked || l.source?.readOnly).map((l) => l.id));
-    g.innerHTML =
-      `<defs>${rendered.defs}</defs>` +
-      rendered.layers.map((l) =>
-        `<g data-layer="${l.id}" class="layer${locked.has(l.id) ? ' locked' : ''}"${l.opacity < 1 ? ` opacity="${l.opacity}"` : ''}>` +
-        l.features.map((f) => `<g data-id="${f.id}" class="feat${f.id === selected ? ' sel' : ''}">${f.svg}</g>`).join('') +
-        '</g>').join('');
+    const heads = rendered.layers.map((l) =>
+      `<g data-layer="${l.id}" class="layer${locked.has(l.id) ? ' locked' : ''}"${l.opacity < 1 ? ` opacity="${l.opacity}"` : ''}>`);
+    const ids = rendered.layers.map((l) => l.features.map((f) => f.id).join('\n'));
+    const items = rendered.layers.map((l) => l.features.map((f) => f.svg + (f.id === selected ? '\u0001' : '')));
+    const wrap = (l: (typeof rendered.layers)[number], i: number) =>
+      l.features.map((f, j) => `<g data-id="${f.id}" class="feat${f.id === selected ? ' sel' : ''}">${items[i][j].replace('\u0001', '')}</g>`).join('');
+    const head = heads.join('|');
+    const prev = domRef.current;
+    if (prev && prev.head === head && g.childElementCount === heads.length + 1) {
+      if (prev.defs !== rendered.defs) g.firstElementChild!.innerHTML = rendered.defs;
+      rendered.layers.forEach((l, i) => {
+        const el = g.children[i + 1];
+        if (prev.ids[i] !== ids[i] || el.childElementCount !== l.features.length) { el.innerHTML = wrap(l, i); return; }
+        const was = prev.items[i];
+        l.features.forEach((f, j) => {
+          if (was[j] === items[i][j]) return;
+          const fe = el.children[j];
+          fe.setAttribute('class', `feat${f.id === selected ? ' sel' : ''}`);
+          fe.innerHTML = f.svg;
+        });
+      });
+    } else {
+      g.innerHTML = `<defs>${rendered.defs}</defs>` + heads.map((h, i) => h + wrap(rendered.layers[i], i) + '</g>').join('');
+    }
+    domRef.current = { head, defs: rendered.defs, ids, items };
   }, [rendered, selected, doc.layers]);
 
   // ---------- преобразование мир → экран

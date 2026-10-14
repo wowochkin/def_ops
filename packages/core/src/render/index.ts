@@ -54,7 +54,21 @@ export interface RenderOptions {
    * всё в размере, с которым нарисовано, на любом масштабе (экспорт, печать).
    */
   view?: { zoom: number; denominator?: number } | null;
+  /**
+   * Кэш отрисованных знаков между вызовами (проигрывание: неподвижные знаки не перерисовываются
+   * каждый кадр). Знак берётся из кэша, если это тот же объект и тот же размер оформления; знаки,
+   * которые при отрисовке смотрят на другие знаки (привязанные стрелки), не кэшируются.
+   */
+  cache?: RenderCache;
 }
+
+/** Кэш отрисовки: создаётся вызывающим (createRenderCache) и передаётся в каждый renderDocument. */
+export interface RenderCache {
+  map: WeakMap<Feature, { key: string; svg: string; defs: string[] }>;
+  /** Сквозной счётчик id в <defs>: id закэшированных знаков не совпадут с новыми. */
+  n: number;
+}
+export const createRenderCache = (): RenderCache => ({ map: new WeakMap(), n: 0 });
 
 export function createContext(doc: MapDocument, proj: Projection = makeProjection(doc.origin, doc.refZoom)): RenderContext {
   const byId = new Map(doc.features.map((f) => [f.id, f]));
@@ -94,9 +108,19 @@ export function renderDocument(input: MapDocument, opts: RenderOptions | string 
   const o: RenderOptions = typeof opts === 'string' ? { idPrefix: opts } : opts;
   const doc = documentAt(input, o.time);
   const ctx = createContext(doc);
+  const cache = o.cache;
+  if (cache) ctx.uid = (p) => `${p}-c${(cache.n++).toString(36)}`;
   if (o.idPrefix) {
     const base = ctx.uid;
     ctx.uid = (p) => o.idPrefix + base(p);
+  }
+  // обращения к другим знакам при отрисовке (такой знак зависит не только от себя — не кэшируется)
+  let lookups = 0;
+  const orig = new Map<Feature, [Feature, string]>();
+  if (cache) {
+    const { feature, featurePath } = ctx;
+    ctx.feature = (id) => { lookups++; return feature(id); };
+    ctx.featurePath = (id) => { lookups++; return featurePath(id); };
   }
   const only = o.layers ? new Set(o.layers) : null;
   const sizing = sizingOf(input);
@@ -112,17 +136,35 @@ export function renderDocument(input: MapDocument, opts: RenderOptions | string 
       if (f.hidden) continue;
       if (denom != null && !visibleAtScale(f, layer, denom)) continue;
       const m = o.view ? sizeFactor(f, doc.refZoom, o.view.zoom, sizing) : 1;
-      vis.push(Math.abs(m - 1) < 1e-3 ? f : ({ ...f, style: scaleStyle(f.style, m) } as Feature));
+      const one = Math.abs(m - 1) < 1e-3;
+      vis.push(one ? f : ({ ...f, style: scaleStyle(f.style, m) } as Feature));
+      if (cache) orig.set(vis[vis.length - 1], [f, one ? '1' : m.toFixed(4)]);
     }
     shown.push({ layer, list: vis });
   }
   const mute = o.view && input.declutter ? declutter(shown.flatMap((x) => x.list), ctx.proj) : null;
+  // проекция и префикс — часть ключа кэша
+  const base = cache ? `${o.idPrefix ?? ''}|${doc.origin.join()}|${doc.refZoom}|` : '';
   for (const { layer, list } of shown) {
     const out: RenderedFeature[] = [];
     for (const f of list) {
       try {
-        const g = mute?.has(f.id) && f.kind === 'symbol' ? ({ ...f, style: { ...f.style, text: '' } } as Feature) : f;
-        out.push({ id: f.id, svg: renderFeature(g, ctx) });
+        const muted = !!mute?.has(f.id) && f.kind === 'symbol';
+        const g = muted ? ({ ...f, style: { ...f.style, text: '' } } as Feature) : f;
+        if (!cache) { out.push({ id: f.id, svg: renderFeature(g, ctx) }); continue; }
+        const [src, m] = orig.get(f)!;
+        const key = base + m + (muted ? 'm' : '');
+        const hit = cache.map.get(src);
+        if (hit && hit.key === key) {
+          ctx.defs.push(...hit.defs);
+          out.push({ id: f.id, svg: hit.svg });
+          continue;
+        }
+        const d0 = ctx.defs.length;
+        const looks = lookups;
+        const svg = renderFeature(g, ctx);
+        if (lookups === looks) cache.map.set(src, { key, svg, defs: ctx.defs.slice(d0) });
+        out.push({ id: f.id, svg });
       } catch (e) {
         console.error('render failed', f.id, e);
       }
