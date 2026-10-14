@@ -21,7 +21,7 @@ export { describeRules, describeProfile, diffRules, rulesOrigin, type ParamRow }
 export { validateOperation, detectPart, defaultCatalog, defaultLive, type OperationPackage, type CatalogEntry, type LiveSetup, type PackageIssue } from './operation';
 export { THEATRE_LAYERS, layerCounts, cropGrid, cropTheatre, layerGeoJSON, recipeFor, theatreToDocument, type BBox, type TheatreLayerId } from './theatre-io';
 export { applyInfrastructure, resolveInfra, locatePlace, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, type InfraRecord, type InfraKind, type InfraState, type InfraResolution } from './infrastructure';
-export { NetworkLearner, cutAbsent, colorBin, binRule, binColor, osmRoadsQuery, osmToRoads, absentLines, OSM_HIGHWAY, OSM_ROAD, type NetworkCheck } from './overlay-network';
+export { NetworkLearner, cutAbsent, colorBin, binRule, binColor, osmRoadsQuery, osmToRoads, osmNetworkQuery, osmToRivers, absentLines, roadLines, riverLines, OSM_HIGHWAY, OSM_ROAD, OSM_WATERWAY, type NetworkCheck, type WaterCheck, type NetLine } from './overlay-network';
 export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, legendFromSamples, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
 export { RoadNet, roadNet, visualPath } from './roadnet';
 export { groupOf, activeBoundaries, effectiveBoundaries, withBoundaries, checkTriggers, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';

@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MapSource } from '@def-ops/core';
-import { applyOverlay, compareRoads, decodeMask, hsv, legendFromSamples, OVERLAY_COLORS, overlayGrid, tilesFor, tileXY, type BBox, type OverlayApply, type OverlayLegend, type OverlayResult, type RoadComparison, type TheatreData, type NetworkCheck, osmRoadsQuery, osmToRoads, absentLines } from '@def-ops/sim';
+import { applyOverlay, compareRoads, decodeMask, hsv, legendFromSamples, OVERLAY_COLORS, overlayGrid, tilesFor, tileXY, type BBox, type OverlayApply, type OverlayLegend, type OverlayResult, type RoadComparison, type TheatreData, type NetworkCheck, type WaterCheck, osmNetworkQuery, osmToRoads, osmToRivers, absentLines } from '@def-ops/sim';
 import type { MapEngine } from './engine/types';
 import type { Basemaps } from './shared';
 import { cartography } from './MapsPanel';
@@ -17,7 +17,7 @@ import type { OverlayRequest, OverlayResponse } from './sim/overlay-worker';
 const LEGENDS = import.meta.glob('../../../packages/sim/tools/theatre/legends/*.json', { eager: true, import: 'default' }) as Record<string, OverlayLegend>;
 const PRESETS = Object.values(LEGENDS);
 const CLASSES: [string, string][] = [['road', 'дороги'], ['highway', 'шоссе'], ['water', 'вода'], ['urban', 'застройка'], ['forest', 'лес'], ['marsh', 'болото']];
-const RU = { ...Object.fromEntries(CLASSES), 'net-present': 'сверяемые дороги есть на карте', 'net-absent': 'сверяемых дорог нет на карте' } as Record<string, string>;
+const RU = { ...Object.fromEntries(CLASSES), 'net-present': 'сверяемые дороги есть на карте', 'net-absent': 'сверяемых дорог нет на карте', 'wnet-present': 'сверяемые реки есть на карте', 'wnet-absent': 'сверяемых рек нет на карте', 'water-gone': 'водоёмы театра, которых нет на карте', 'water-new': 'новая вода карты' } as Record<string, string>;
 const MAX_TILES = 4000;
 /** Серверы Overpass (как у сборщика театра): по очереди, пока один не ответит. */
 const OVERPASS = ['https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter'];
@@ -42,7 +42,7 @@ function maskImage(ov: OverlayResult): string {
  * Проверка сети — картинка линиями (клетки театра для этого крупны): сверяемые дороги серым, отрезки «нет на
  * карте» синим, новые дороги карты (клетки) оранжевым поверх. Меркатор внутри рамки — почти линейно.
  */
-function networkImage(ov: OverlayResult, roads: TheatreData['roads']): string {
+function networkImage(ov: OverlayResult, roads: TheatreData['roads'], rivers: { line: [number, number][] }[]): string {
   const [w, s, e, n] = ov.bbox;
   const k = Math.cos((((s + n) / 2) * Math.PI) / 180);
   const W = 1600, H = Math.max(1, Math.round((W * (n - s)) / ((e - w) * k)));
@@ -54,10 +54,25 @@ function networkImage(ov: OverlayResult, roads: TheatreData['roads']): string {
     g.strokeStyle = color; g.lineWidth = width; g.lineCap = 'round'; g.lineJoin = 'round';
     for (const l of lines) { g.beginPath(); l.forEach((p, i) => { const [x, y] = X(p); if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke(); }
   };
-  stroke(roads.filter((r) => r.kind !== 'rail').map((r) => r.line), 'rgba(60,60,60,0.85)', 3);
-  stroke(absentLines(roads, ov.network?.absent ?? []), 'rgb(40,100,230)', 5);
-  // новые дороги карты — клетками
   const N = ov.cols * ov.rows, cw = W / ov.cols, ch = H / ov.rows;
+  const cells = (key: string, col: string) => {
+    if (!ov.masks[key]) return;
+    const m = decodeMask(ov.masks[key], N);
+    g.fillStyle = col;
+    for (let i = 0; i < N; i++) if (m[i]) g.fillRect((i % ov.cols) * cw, Math.floor(i / ov.cols) * ch, Math.ceil(cw), Math.ceil(ch));
+  };
+  // вода: водоёмы, которых на карте нет, — пурпурным, новая вода карты — голубым; реки — бирюзой, «нет» — пурпурным
+  if (ov.water) {
+    cells('water-gone', 'rgba(200,40,170,0.55)');
+    cells('water-new', 'rgba(60,170,240,0.7)');
+    stroke(rivers.map((r) => r.line), 'rgba(20,120,150,0.85)', 3);
+    stroke(absentLines(rivers as TheatreData['roads'], ov.water.absent), 'rgb(200,40,170)', 5);
+  }
+  if (ov.network) {
+    stroke(roads.filter((r) => r.kind !== 'rail').map((r) => r.line), 'rgba(60,60,60,0.85)', 3);
+    stroke(absentLines(roads, ov.network.absent), 'rgb(40,100,230)', 5);
+  }
+  // новые дороги карты — клетками
   for (const [key, col] of [['road', 'rgba(240,140,40,0.9)'], ['highway', 'rgba(200,40,40,0.9)']] as const) {
     if (!ov.masks[key]) continue;
     const m = decodeMask(ov.masks[key], N);
@@ -79,6 +94,27 @@ function compareImage(c: RoadComparison): string {
   return cv.toDataURL('image/png');
 }
 const km = (cells: number, c: RoadComparison) => Math.round(cells * c.cellKm);
+
+/** Итог проверки воды: узнанный цвет, реки и каналы (км), водоёмы. */
+function WaterSummary({ n }: { n: WaterCheck }) {
+  const pct = (x: number) => (n.km.checked ? Math.round((x / n.km.checked) * 100) : 0);
+  const col = n.colors.water ?? [];
+  return (
+    <div className="hist-roads">
+      <div className="row"><b>Вода: цвет узнан по {n.rivers ? 'рекам OSM' : 'рекам театра'}</b><span className="grow" />
+        {col.length > 0 ? <span className="hist-sw">{col.map((c) => <i key={c.bin} title={`у реки — ${Math.round(c.road * 100)} % точек, в стороне — ${Math.round(c.side * 100)} %`} style={{ background: `rgb(${c.rgb.join(',')})` }} />)}</span> : <span className="muted small">не узнан</span>}</div>
+      <table className="hist-tab"><tbody>
+        <tr><td>Проверено рек и каналов</td><td>{n.km.checked} км</td><td className="muted">точек {n.covered} из {n.points}</td></tr>
+        <tr><td><i className="sw" style={{ background: 'rgb(20,120,150)' }} />есть на карте</td><td>{n.km.present} км</td><td className="muted">{pct(n.km.present)} %</td></tr>
+        <tr><td><i className="sw" style={{ background: 'rgb(200,40,170)' }} />нет на карте</td><td>{n.km.absent} км</td><td className="muted">{pct(n.km.absent)} % — послевоенные каналы и спрямления (или карта их не показывает); вырезаются отрезки от 1 км подряд — {cutKm(n)} км</td></tr>
+        <tr><td>Водоёмы театра</td><td>{n.areas.total}</td><td className="muted">подтверждено {n.areas.present}; нет на карте {n.areas.gone} ({n.areas.goneCells} кл.) — станут сушей</td></tr>
+        <tr><td><i className="sw" style={{ background: 'rgb(60,170,240)' }} />новая вода карты</td><td>{n.areas.added}</td><td className="muted">{n.areas.addedCells} кл. — озёра, пруды, разливы того времени, которых в театре нет</td></tr>
+      </tbody></table>
+      {n.absentNamed.length > 0 && <div className="small"><span className="muted">Нет на карте больше всего:</span> {n.absentNamed.map((a) => `${a.name} (${a.km} км)`).join('; ')}</div>}
+      {!col.length && <div className="warn small">Цвет воды не узнан: вдоль рек на карте нет устойчивого цвета — проверьте привязку карты или распознайте воду по образцам.</div>}
+    </div>
+  );
+}
 
 /** Сколько км вырежется при сохранении: отрезки «нет на карте» от 1 км подряд. */
 const cutKm = (n: NetworkCheck) => Math.round(n.absent.reduce((a, x) => a + x.to - x.from, 0) * 10) / 10;
@@ -129,29 +165,33 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const net = legendId === 'network';
   // дороги для сверки: театра или OpenStreetMap для охвата карты (загружаются по кнопке)
   const [netSrc, setNetSrc] = useState<'theatre' | 'osm'>('theatre');
-  const [osm, setOsm] = useState<{ box: BBox; roads: TheatreData['roads']; km: number } | null>(null);
+  const [osm, setOsm] = useState<{ box: BBox; roads: TheatreData['roads']; km: number; rivers: NonNullable<WaterCheck['rivers']>; kmRivers: number } | null>(null);
+  // что сверять по современной сети: дороги, воду или всё
+  const [netWhat, setNetWhat] = useState<'all' | 'roads' | 'water'>('all');
   const [osmBusy, setOsmBusy] = useState<string | null>(null);
   const osmFresh = osm && osm.box.every((x, i) => Math.abs(x - box[i]) < 1e-9) ? osm : null;
   const boxKm = [(box[2] - box[0]) * 111.32 * Math.cos((((box[1] + box[3]) / 2) * Math.PI) / 180), (box[3] - box[1]) * 110.57];
+  const inBoxRivers = T.rivers.filter((r) => r.line.some((p) => p[0] >= box[0] && p[0] <= box[2] && p[1] >= box[1] && p[1] <= box[3])).length;
   const inBox = T.roads.filter((r) => r.kind !== 'rail' && r.line.some((p) => p[0] >= box[0] && p[0] <= box[2] && p[1] >= box[1] && p[1] <= box[3])).length;
   const loadOsm = async () => {
     setOsmBusy('запрос к OpenStreetMap…'); setErr(null);
-    const q = osmRoadsQuery(box);
+    const q = osmNetworkQuery(box);
     let last = '';
     for (const url of OVERPASS) {
       try {
         const r = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }), signal: AbortSignal.timeout(200_000) });
         if (!r.ok) { last = `${new URL(url).host}: ${r.status}`; continue; }
         setOsmBusy('разбор…');
-        const roads = osmToRoads(await r.json(), box);
+        const json = await r.json();
+        const roads = osmToRoads(json, box), rivers = osmToRivers(json, box);
         const k = Math.cos((((box[1] + box[3]) / 2) * Math.PI) / 180);
-        const km = roads.reduce((a, x) => a + x.line.slice(1).reduce((b, p, i) => b + Math.hypot((p[0] - x.line[i][0]) * k, p[1] - x.line[i][1]) * 111.2, 0), 0);
-        setOsm({ box, roads, km: Math.round(km) }); setNetSrc('osm'); setOsmBusy(null);
+        const len = (list: { line: [number, number][] }[]) => Math.round(list.reduce((a, x) => a + x.line.slice(1).reduce((b, p, i) => b + Math.hypot((p[0] - x.line[i][0]) * k, p[1] - x.line[i][1]) * 111.2, 0), 0));
+        setOsm({ box, roads, km: len(roads), rivers, kmRivers: len(rivers) }); setNetSrc('osm'); setOsmBusy(null);
         return;
       } catch (e) { last = `${new URL(url).host}: ${(e as Error).message}`; }
     }
     setOsmBusy(null);
-    setErr(`Дороги OSM не загружены (${last}). Нужен интернет; при занятом сервере Overpass повторите через минуту.`);
+    setErr(`Данные OSM не загружены (${last}). Нужен интернет; при занятом сервере Overpass повторите через минуту.`);
   };
   const legend: OverlayLegend | null = net ? null : legendId === 'samples' ? (Object.values(samples).some((l) => l.length) ? legendFromSamples(samples, tol, mins) : null) : PRESETS.find((l) => l.id === legendId) ?? null;
   const [run, setRun] = useState<{ done: number; total: number; stage?: string } | null>(null);
@@ -163,13 +203,13 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
 
   // как применять: по классам, которые есть в легенде
   const cls = net ? (res ? ['road', 'highway'].filter((k) => res.ov.masks[k]) : []) : legend ? legend.cells.map((c) => c.cls) : [];
-  const [opt, setOpt] = useState<{ roads: boolean; replace: 'road' | 'all' | false; terrain: boolean; demote: boolean; dropAbsent: boolean }>({ roads: true, replace: 'road', terrain: true, demote: false, dropAbsent: true });
+  const [opt, setOpt] = useState<{ roads: boolean; replace: 'road' | 'all' | false; terrain: boolean; demote: boolean; dropAbsent: boolean; waterNet: boolean }>({ roads: true, replace: 'road', terrain: true, demote: false, dropAbsent: true, waterNet: true });
   const [newId, setNewId] = useState('');
   const [view, setView] = useState<'classes' | 'roads'>('classes');
   const roadCls = cls.includes('road') || cls.includes('highway');
   const cmp = useMemo(() => (res && roadCls && !res.ov.network ? compareRoads(T, res.ov, { road: cls.includes('road') ? 'road' : undefined, highway: cls.includes('highway') ? 'highway' : undefined }) : null), [res, T, roadCls]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Картинка результата: проверка сети — линиями, иначе — клетки по классам. */
-  const preview = (ov: OverlayResult) => (ov.network ? networkImage(ov, ov.network.roads ?? T.roads) : maskImage(ov));
+  const preview = (ov: OverlayResult) => (ov.network || ov.water ? networkImage(ov, ov.network?.roads ?? T.roads, ov.water?.rivers ?? T.rivers) : maskImage(ov));
   useEffect(() => { if (res) onPreview({ url: view === 'roads' && cmp ? compareImage(cmp) : preview(res.ov), bbox: res.ov.bbox }); }, [view, cmp]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setNewId(`${T.id.replace(/-hist.*$/, '')}-hist`); }, [T]);
 
@@ -224,14 +264,15 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
     const grid = overlayGrid(T, box);
     const source = `${map.name}${map.date ? ` (${map.date})` : ''}`;
     const useOsm = netSrc === 'osm' && !!osmFresh;
-    if (net) w.postMessage({ kind: 'network', template: cartography.tileTemplate(map), theatre: { id: T.id, name: T.name, bbox: T.bbox, cellKm: T.cellKm, roads: useOsm ? osmFresh!.roads : T.roads }, grid, zoom: z, source, osm: useOsm } satisfies OverlayRequest);
+    if (net) w.postMessage({ kind: 'network', template: cartography.tileTemplate(map), theatre: { id: T.id, name: T.name, bbox: T.bbox, cellKm: T.cellKm, roads: T.roads, rivers: T.rivers, terrainGrid: T.terrainGrid }, grid, zoom: z, source,
+      what: netWhat, ...(useOsm ? { roads: osmFresh!.roads, rivers: osmFresh!.rivers } : {}) } satisfies OverlayRequest);
     else w.postMessage({ kind: 'run', template: cartography.tileTemplate(map), legend: legend!, grid, zoom: z, source } satisfies OverlayRequest);
   };
   const stop = () => { worker.current?.postMessage({ kind: 'stop' } satisfies OverlayRequest); };
 
   const apply = (): OverlayApply => net ? {
     road: opt.roads && cls.includes('road') ? 'road' : undefined, highway: opt.roads && cls.includes('highway') ? 'highway' : undefined,
-    replaceModernRoads: false, dropAbsent: opt.dropAbsent,
+    replaceModernRoads: false, dropAbsent: opt.dropAbsent, waterNet: opt.waterNet,
   } : ({
     road: opt.roads && cls.includes('road') ? 'road' : undefined, highway: opt.roads && cls.includes('highway') ? 'highway' : undefined,
     replaceModernRoads: opt.roads && (cls.includes('road') || cls.includes('highway')) ? opt.replace : false,
@@ -277,10 +318,11 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
       </div> : net ? <p className="muted small">Современные дороги — театра или OpenStreetMap, загруженные для охвата карты, — подсказывают, где на карте дороги: вдоль них берётся цвет, который встречается заметно чаще, чем в стороне, — это цвет дорог на этой карте (отдельно дороги и шоссе). По нему каждый отрезок дороги театра проверяется — есть ли он на карте (дорога того времени) или нет (послевоенная); затем вся область распознаётся этим цветом — длинные линии вдали от дорог театра — дороги того времени, которых в театре нет. Нужна привязка карты: дороги театра должны ложиться на её дороги (сдвиг до ~200 м допустим).</p>
         : <p className="muted small">{PRESETS.find((l) => l.id === legendId)?.note}</p>}
       {net && map && !empty && <div className="hist-net-src">
-        <span className="small">Дороги для сверки:</span>
-        <label className="small"><input type="radio" checked={netSrc === 'theatre' || !osmFresh} onChange={() => setNetSrc('theatre')} /> театра — {inBox} в охвате</label>
-        <label className="small" title={osmFresh ? '' : 'сначала загрузите'}><input type="radio" disabled={!osmFresh} checked={netSrc === 'osm' && !!osmFresh} onChange={() => setNetSrc('osm')} /> OpenStreetMap для охвата карты{osmFresh ? ` — ${osmFresh.roads.length} линий, ${osmFresh.km} км` : ''}</label>
-        <div className="row"><button disabled={!!osmBusy || boxKm[0] * boxKm[1] > 120 * 120} onClick={() => void loadOsm()} title={`Шоссе (motorway, trunk, primary) и дороги (secondary, tertiary, unclassified) в охвате ≈ ${Math.round(boxKm[0])} × ${Math.round(boxKm[1])} км; подтверждённые картой куски при сохранении заменят дороги театра в охвате`}>{osmBusy ?? (osmFresh ? 'Загрузить OSM заново' : 'Загрузить дороги OSM')}</button>
+        <div className="seg small">{([['all', 'дороги и вода'], ['roads', 'дороги'], ['water', 'вода']] as const).map(([k, t]) => <button key={k} className={netWhat === k ? 'on' : ''} onClick={() => setNetWhat(k)}>{t}</button>)}</div>
+        <span className="small">Линии для сверки:</span>
+        <label className="small"><input type="radio" checked={netSrc === 'theatre' || !osmFresh} onChange={() => setNetSrc('theatre')} /> театра — дорог {inBox}, рек {inBoxRivers} в охвате</label>
+        <label className="small" title={osmFresh ? '' : 'сначала загрузите'}><input type="radio" disabled={!osmFresh} checked={netSrc === 'osm' && !!osmFresh} onChange={() => setNetSrc('osm')} /> OpenStreetMap для охвата карты{osmFresh ? ` — дорог ${osmFresh.roads.length} (${osmFresh.km} км), рек и каналов ${osmFresh.rivers.length} (${osmFresh.kmRivers} км)` : ''}</label>
+        <div className="row"><button disabled={!!osmBusy || boxKm[0] * boxKm[1] > 120 * 120} onClick={() => void loadOsm()} title={`Шоссе (motorway, trunk, primary), дороги (secondary, tertiary, unclassified), реки и каналы в охвате ≈ ${Math.round(boxKm[0])} × ${Math.round(boxKm[1])} км; подтверждённые картой линии при сохранении заменят дороги и малые реки театра в охвате`}>{osmBusy ?? (osmFresh ? 'Загрузить OSM заново' : 'Загрузить дороги и реки OSM')}</button>
           {boxKm[0] * boxKm[1] > 120 * 120 && <span className="muted small">охват больше 120 × 120 км — выделите область поменьше</span>}</div>
       </div>}
       {map && !empty && <label className="th-f inl">Уровень тайлов <select value={z ?? ''} onChange={(e) => setZoom(+e.target.value)}>{zooms.map((k) => <option key={k} value={k}>{k}</option>)}</select> <span className="muted small">тайлов {nTiles}{nTiles > MAX_TILES ? ` — больше ${MAX_TILES}: уменьшите область или уровень` : ''}</span></label>}
@@ -294,6 +336,8 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
           <button className="link" title="Отклонить результат: убрать его с карты, театр не меняется; образцы остаются — их можно поправить и распознать снова" onClick={() => { setRes(null); onPreview(null); }}>Отклонить ✕</button></div>
         <div className="hist-stats">{Object.entries(res.ov.stats).map(([k, n]) => <span key={k}><i style={{ background: `rgb(${(OVERLAY_COLORS[k] ?? [200, 0, 200]).join(',')})` }} />{RU[k] ?? k}: {n} кл.</span>)}</div>
         {res.ov.network && <NetworkSummary n={res.ov.network} />}
+        {res.ov.water && <WaterSummary n={res.ov.water} />}
+        {res.ov.water && <label title="При сохранении: реки и каналы, которых на карте нет (≥ 1 км подряд), вырезаются (реки OSM — заменяют малые реки театра в охвате, большие остаются); водоёмы, которых на карте нет, становятся сушей (класс — по соседним клеткам); новая вода карты — водой"><input type="checkbox" checked={opt.waterNet} onChange={(e) => setOpt({ ...opt, waterNet: e.target.checked })} /> воду театра — по карте: реки без {cutKm(res.ov.water)} км, водоёмов сушей {res.ov.water.areas.gone}, новой воды {res.ov.water.areas.added}</label>}
         {res.ov.network && !res.ov.network.roads && <label title="Отрезки дорог театра, которых на карте нет (≥ 1 км подряд), — послевоенные: вырезаются из линий дорог; остальные дороги театра остаются как есть"><input type="checkbox" checked={opt.dropAbsent} onChange={(e) => setOpt({ ...opt, dropAbsent: e.target.checked })} /> убрать отрезки дорог театра, которых на карте нет ({cutKm(res.ov.network)} км)</label>}
         {res.ov.network?.roads && <label title="При сохранении дороги театра в охвате карты (кроме железных) заменяются дорогами OSM; отрезки OSM, которых на карте нет (≥ 1 км подряд), — послевоенные — не берутся"><input type="checkbox" checked={opt.dropAbsent} onChange={(e) => setOpt({ ...opt, dropAbsent: e.target.checked })} /> убрать отрезки OSM, которых на карте нет ({cutKm(res.ov.network)} км); дороги театра в охвате заменятся дорогами OSM</label>}
         {cmp && <div className="hist-roads">
@@ -309,7 +353,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
           {cmp.absent.length > 0 && <div className="small"><span className="muted">Дороги театра, которых на карте нет (≥70 % длины):</span> {cmp.absent.map((a) => `${a.name} (${a.km} км)`).join('; ')}</div>}
           {cmp.stats.map > 0 && cmp.stats.both / Math.max(1, cmp.stats.map) < 0.25 && <div className="warn small">Совпадений мало: возможно, распознаны не дороги (надписи, реки, сетка) — проверьте образцы цвета на «сравнении дорог».</div>}
         </div>}
-        <p className="muted small">На карте — {res.ov.network ? `серое — ${res.ov.network.roads ? 'дороги OSM' : 'дороги театра'} есть на карте, синее — нет (послевоенные), оранжевое и красное — дороги карты, которых ${res.ov.network.roads ? 'нет в OSM' : 'в театре нет'}` : view === 'roads' && cmp ? 'сравнение дорог: серое — совпадают, оранжевое — только на карте, синее — только в театре' : 'клетки по классам'}. Мало или много — поправьте образцы, допуск или порог и распознайте снова.</p>
+        <p className="muted small">На карте — {res.ov.water ? 'вода: бирюзой — сверяемые реки, пурпурным — реки и водоёмы, которых на карте нет, голубым — новая вода карты; ' : ''}{res.ov.network ? `дороги: серое — ${res.ov.network.roads ? 'дороги OSM' : 'дороги театра'} есть на карте, синее — нет (послевоенные), оранжевое и красное — дороги карты, которых ${res.ov.network.roads ? 'нет в OSM' : 'в театре нет'}` : view === 'roads' && cmp ? 'сравнение дорог: серое — совпадают, оранжевое — только на карте, синее — только в театре' : 'клетки по классам'}. Мало или много — поправьте образцы, допуск или порог и распознайте снова.</p>
         {(cls.includes('road') || cls.includes('highway')) && <label><input type="checkbox" checked={opt.roads} onChange={(e) => setOpt({ ...opt, roads: e.target.checked })} /> дороги карты — в растр дорог театра</label>}
         {!net && opt.roads && (cls.includes('road') || cls.includes('highway')) && <label className="th-f inl">Современные дороги в охвате карты <select value={String(opt.replace)} onChange={(e) => setOpt({ ...opt, replace: e.target.value === 'false' ? false : (e.target.value as 'road' | 'all') })}>
           <option value="road">убрать дороги (шоссе оставить)</option><option value="all">убрать и шоссе</option><option value="false">оставить</option></select></label>}

@@ -7,7 +7,7 @@
  */
 import type { LngLat } from '@def-ops/core';
 import { decodeGrid, encodeGrid } from './theatre';
-import { cutAbsent, type NetworkCheck } from './overlay-network';
+import { cutAbsent, type NetworkCheck, type WaterCheck } from './overlay-network';
 import { TERRAIN_CLASSES, type TerrainClass, type TerrainGrid, type TheatreData } from './types';
 
 type Range = [number, number];
@@ -26,6 +26,8 @@ export interface OverlayResult {
   covered: string; masks: Record<string, string>; stats: Record<string, number>;
   /** Проверка дорог театра по карте (распознавание по современной сети). */
   network?: NetworkCheck;
+  /** Проверка воды театра по карте: реки линиями, водоёмы площадями. */
+  water?: WaterCheck;
 }
 
 /** HSV: тон 0–360, насыщенность и яркость 0–1. */
@@ -253,7 +255,7 @@ export function thinMask(m: Uint8Array, cols: number, rows: number): number {
   return removed;
 }
 
-export const PREVIEW: Record<string, [number, number, number]> = { urban: [210, 80, 70], built: [210, 80, 70], suburb: [230, 150, 130], dark: [40, 40, 40], road: [240, 140, 40], highway: [200, 40, 40], rail: [60, 60, 60], forest: [60, 140, 70], water: [50, 100, 220], marsh: [120, 180, 170], 'net-present': [70, 70, 70], 'net-absent': [70, 120, 220] };
+export const PREVIEW: Record<string, [number, number, number]> = { urban: [210, 80, 70], built: [210, 80, 70], suburb: [230, 150, 130], dark: [40, 40, 40], road: [240, 140, 40], highway: [200, 40, 40], rail: [60, 60, 60], forest: [60, 140, 70], water: [50, 100, 220], marsh: [120, 180, 170], 'net-present': [70, 70, 70], 'net-absent': [70, 120, 220], 'wnet-present': [20, 120, 150], 'wnet-absent': [200, 40, 170], 'water-gone': [200, 40, 170], 'water-new': [60, 170, 240] };
 
 export function maskRle(m: Uint8Array): string {
   const out: string[] = [];
@@ -278,6 +280,12 @@ export interface OverlayApply {
   demoteModernUrban?: TerrainClass; keepUrban?: string;
   /** Убрать отрезки дорог театра, которых на карте нет (по проверке сети, ov.network). */
   dropAbsent?: boolean;
+  /**
+   * Вода по проверке сети (ov.water): реки и каналы, которых на карте нет, вырезаются (реки OSM — заменяют малые реки
+   * театра в охвате); водоёмы, которых на карте нет, становятся сушей (класс — по соседним клеткам); новая вода карты
+   * (маска water-new) — водой.
+   */
+  waterNet?: boolean;
   /** Только внутри рамки (поля листа с легендой не трогать). */
   clip?: [number, number, number, number];
 }
@@ -321,6 +329,8 @@ export function applyOverlay(T: TheatreData, ov: OverlayResult, o: OverlayApply)
       const before = k[i];
       const set = ([['water', o.water], ['urban', o.urban], ['forest', o.forest], ['marsh', o.marsh]] as [TerrainClass, string | undefined][]).find(([, m]) => on1(m, j));
       if (set && !(set[0] !== 'water' && k[i] === I('water'))) k[i] = I(set[0]);
+      else if (o.waterNet && on1('water-new', j)) k[i] = I('water');
+      else if (o.waterNet && on1('water-gone', j) && k[i] === I('water')) k[i] = landAround(k, g.cols, g.rows, i, I('water'));
       else if (!set && o.demoteModernUrban && k[i] === I('urban') && !on1(o.keepUrban, j)) k[i] = I(o.demoteModernUrban);
       if (k[i] !== before) { const key = `${TERRAIN_CLASSES[before]}→${TERRAIN_CLASSES[k[i]]}`; changes[key] = (changes[key] ?? 0) + 1; }
     }
@@ -351,13 +361,43 @@ export function applyOverlay(T: TheatreData, ov: OverlayResult, o: OverlayApply)
     lines = lines.filter((x) => x.kind === 'rail' || (x.kind === 'highway' && o.replaceModernRoads !== 'all') || !covered(x.line));
     changes['современных дорог убрано'] = before - lines.length;
   }
+  let rivers = T.rivers;
+  if (o.waterNet && ov.water) {
+    const wc = ov.water;
+    if (wc.rivers) {
+      // реки OSM: малые реки театра в охвате заменяются подтверждёнными картой; большие (с переправами) остаются
+      const mid = (line: LngLat[]) => line[Math.floor(line.length / 2)];
+      const kept = cutAbsent(wc.rivers, wc.absent);
+      const before = rivers.length;
+      rivers = [...rivers.filter((x) => x.major || cellAt(mid(x.line)[0], mid(x.line)[1]) < 0), ...kept.roads];
+      changes['малых рек театра в охвате заменено'] = before - rivers.filter((x) => !kept.roads.includes(x)).length;
+      changes['км рек и каналов OSM нет на карте'] = kept.km;
+    } else if (wc.absent.length) {
+      const c = cutAbsent(rivers, wc.absent);
+      rivers = c.roads;
+      changes['км рек и каналов театра убрано (нет на карте)'] = c.km;
+    }
+  }
   const theatre: TheatreData = {
-    ...T, roads: lines,
+    ...T, roads: lines, rivers,
     ...(k ? { terrainGrid: { ...g, rle: encodeGrid(k) } } : {}),
     ...(anyRoad ? { roadGrid: { bbox: g.bbox, cols: g.cols, rows: g.rows, rle: codesRle(roads), source: `дороги исторических карт (${ov.name})` } as TerrainGrid } : {}),
     sources: [...(T.sources ?? []), `Историческая поправка: ${ov.name}, ${ov.source}, уровень ${ov.zoom}; изменения: ${JSON.stringify(changes)}`],
   };
   return { theatre, changes };
+}
+
+/** Класс суши для клетки бывшей воды: самый частый среди соседей (не вода), иначе открытая местность. */
+function landAround(k: Uint8Array | number[], cols: number, rows: number, i: number, water: number): number {
+  const c = i % cols, r = (i - c) / cols, count = new Map<number, number>();
+  for (let rad = 1; rad <= 3 && !count.size; rad++)
+    for (let dr = -rad; dr <= rad; dr++) for (let dc = -rad; dc <= rad; dc++) {
+      const cc = c + dc, rr = r + dr;
+      if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+      const v = k[rr * cols + cc];
+      if (v !== water) count.set(v, (count.get(v) ?? 0) + 1);
+    }
+  return count.size ? [...count].sort((a, b) => b[1] - a[1])[0][0] : TERRAIN_CLASSES.indexOf('open');
 }
 
 function rleCodes(rle: string, n: number): string[] {
