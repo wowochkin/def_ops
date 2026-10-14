@@ -5,6 +5,8 @@ import { compileOperation, type Claim, type Entry } from '@def-ops/knowledge';
 import { applyInfrastructure, Theatre, type Boundary, type InfraRecord, type Scenario, type TheatreData } from '@def-ops/sim';
 import scenarioFile from '../../../packages/sim/data/scenarios/berlin-1945.json';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
+import citySc from '../../../packages/sim/data/scenarios/berlin-city-1945.json';
+import cityFile from '../../../packages/sim/data/theatres/berlin-city-1945.json';
 import { applyCompiledBoundaries, applyCompiledCrossings } from '../src/sim/kb-compile';
 
 const sc = scenarioFile as unknown as Scenario;
@@ -30,11 +32,33 @@ describe('линии из базы — в сценарий', () => {
     expect(out.boundaries!.length).toBe((sc.boundaries ?? []).length + 1);
   });
 
-  it('прежняя линия в правках операции и её перенесённый факт — одна линия', () => {
-    const old: Boundary = { id: 'doc-x', kind: 'front', side: 'su', right: 'su_1uf', left: 'su_1bf', title: 'прежняя', from: '1945-04-17T00:00', line: [[14.2, 52.2], [14.3, 51.8]] };
+  it('прежняя линия в правках операции и её перенесённый факт (те же пункты) — одна линия, прежняя', () => {
+    const old: Boundary = { id: 'doc-x', kind: 'front', side: 'su', right: 'su_1uf', left: 'su_1bf', title: 'прежняя', from: '1945-04-17T00:00', places: ['Beeskow', 'Cottbus'], line: [[14.2, 52.2], [14.3, 51.8]] };
     const withOld = { ...sc, boundaries: [...(sc.boundaries ?? []), old] };
     const out = applyCompiledBoundaries(withOld, compiled([line]), T);
     expect(out.boundaries!.filter((b) => b.from === '1945-04-17T00:00' && pair(b) === 'su_1bf|su_1uf')).toEqual([old]);
+  });
+
+  it('линия базы той же пары и начала, но с другими пунктами, заменяет линию сценария (id и условие вступления — прежние)', () => {
+    const base = sc.boundaries!.find((b) => b.id === '1bf-1uf-23apr')!;
+    const fixed: Claim = { kind: 'boundary', between: ['su_1bf', 'su_1uf'], from: base.from, to: base.until!, points: ['Beeskow', 'Cottbus'], inclusive: 'su_1uf' };
+    const out = applyCompiledBoundaries(sc, compiled([fixed]), T);
+    const same = out.boundaries!.filter((b) => b.from === base.from && pair(b) === 'su_1bf|su_1uf');
+    expect(same).toHaveLength(1);
+    expect(same[0]).toMatchObject({ id: base.id, trigger: base.trigger, source: 'база знаний', inclusive: 'su_1uf', until: base.until });
+    expect(same[0].line).toHaveLength(2);
+    expect(out.boundaries!.length).toBe(sc.boundaries!.length);
+  });
+
+  it('встроенная линия из сида (те же пункты, срок, «включительно» id) — сценарий не меняется', () => {
+    const base = sc.boundaries!.find((b) => b.id === '1bf-1uf-15apr')!;
+    const seedLine: Claim = { kind: 'boundary', between: ['su_1bf', 'su_1uf'], from: base.from, to: base.until!, points: base.places!, inclusive: 'su_1bf' };
+    expect(applyCompiledBoundaries(sc, compiled([seedLine]), T)).toBe(sc);
+  });
+
+  it('«включительно» — id формирования сценария берётся как есть', () => {
+    const out = applyCompiledBoundaries(sc, compiled([{ ...line, inclusive: 'su_1uf' } as Claim]), T);
+    expect(out.boundaries!.find((b) => b.from === '1945-04-17T00:00' && pair(b) === 'su_1bf|su_1uf')?.inclusive).toBe('su_1uf');
   });
 
   it('пункты не найдены — линия пропускается', () => {
@@ -53,6 +77,30 @@ describe('переправы из базы — в сведения об инфр
     expect(recs[0].bridge).toBe('br56');
     const b = applyInfrastructure(data, recs).bridges.find((x) => x.id === recs[0].bridge)!;
     expect(b.destroyedAt).toBe('1945-04-18T00:00');
+  });
+
+  it('не привязалась к театру — не применяется (не несвязанное сведение)', () => {
+    expect(applyCompiledCrossings([], compiled([{ kind: 'crossing', subject: 'мост у Нигдебурга', from: '1945-04-18', state: 'destroyed' }]), T)).toEqual([]);
+  });
+
+  it('объект встроенной базы (subject — id объекта): мост театра по названиям записи obj:<id>, на той же реке', () => {
+    const obj = (id: string, title: string, aliases: string[], claim: Claim): Entry => ({
+      id: `obj:${id}`, category: 'terrain', group: 'rivers', title, aliases, summary: '', status: 'checked', origin: 'seed',
+      facts: [{ key: 'crossings', value: 'v', claim, source: 'src:x', reliability: 'B' }],
+    });
+    const cityT = new Theatre(cityFile as unknown as TheatreData);
+    const city = citySc as unknown as Scenario;
+    const entries = [
+      obj('br_spree_oberbaum', 'Обербаумбрюкке (Шпрее)', ['Oberbaumbrücke'], { kind: 'crossing', subject: 'br_spree_oberbaum', from: '1945-04-25', state: 'destroyed' }),
+      // одноимённый мост на другой реке (Одер) — не берлинский Hansabrücke на Шпрее
+      obj('br_oder_hansa', 'Ганза-мост через Одер в Штеттине (Одер)', ['Hansabrücke'], { kind: 'crossing', subject: 'br_oder_hansa', from: '1945-04-25', state: 'destroyed' }),
+      // названия нет среди мостов театра — не применяется
+      obj('br_nowhere', 'Безымянный мост (Шпрее)', ['Namenlose Brücke'], { kind: 'crossing', subject: 'br_nowhere', from: '1945-04-25', state: 'destroyed' }),
+    ];
+    const c = compileOperation(entries, { id: 'berlin-city-1945', start: city.start, end: city.end, formations: city.formations }, {}).edits;
+    const recs = applyCompiledCrossings([], c, cityT);
+    expect(recs).toHaveLength(1);
+    expect(recs[0]).toMatchObject({ title: 'Обербаумбрюкке (Шпрее)', state: 'destroyed', bridge: 'br5' });
   });
 
   it('принятое раньше сведение о том же — не повторяется', () => {

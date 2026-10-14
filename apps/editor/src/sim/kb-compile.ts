@@ -142,35 +142,56 @@ export function orientBoundary(sc: Scenario, T: Theatre, a: string, b: string, l
 const atMoment = (s: string) => (s.length === 10 ? `${s}T00:00` : s.slice(0, 16));
 const samePair = (x: Boundary, a: string, b: string) => (x.right === a && x.left === b) || (x.right === b && x.left === a);
 
+const normPlace = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
+/** Чьи пункты включительно: id формирования сценария как есть, иначе — по названию. */
+const inclusiveOf = (sc: Scenario, v: string | undefined): string | null =>
+  !v ? null : sc.formations.some((f) => f.id === v) ? v : matchFormation(v, sc.formations, []);
+
 /**
  * Линии из базы — в сценарий (полосы в расчёте обеих моделей): пункты — на театре, стороны — по войскам в начале.
  * Не собирается (пунктов меньше двух, стороны не понять) — пропускается (видна в «Основе модели»). Линия той же пары
- * с тем же началом в сценарии уже есть (своя или принятая раньше в правки операции) — не повторяется.
+ * с тем же началом в сценарии уже есть (своя или принятая раньше в правки операции): та же (те же пункты или та же
+ * геометрия, срок и «включительно») — остаётся как есть, без повтора; другая — линия базы её заменяет (база —
+ * источник: исправленная встроенная линия доходит до модели), с id, условием вступления и задержкой прежней.
  */
 export function applyCompiledBoundaries(sc: Scenario, c: CompiledEdits | undefined, T: Theatre | null): Scenario {
   if (!c?.boundaries.length || !T) return sc;
-  const have = [...(sc.boundaries ?? [])];
-  const add: Boundary[] = [];
+  const out = [...(sc.boundaries ?? [])];
+  let touched = false;
   for (const raw of c.boundaries as Extract<Claim, { kind: 'boundary' }>[]) {
     const [a, b] = raw.between;
     const from = atMoment(raw.from);
-    if (a === b || [...have, ...add].some((x) => samePair(x, a, b) && atMoment(x.from) === from)) continue;
+    if (a === b) continue;
+    const at = out.findIndex((x) => samePair(x, a, b) && atMoment(x.from) === from);
+    const was = at >= 0 ? out[at] : null;
+    if (was?.source === 'база знаний') continue;   // уже из базы (две линии одной пары и начала сборщик не выдаёт)
     const { points, missing } = locatePoints(T, raw.points);
     if (points.length < 2) continue;
-    const o = orientBoundary(sc, T, a, b, points.map((x) => x.at));
+    const until = raw.to ? atMoment(raw.to) : null;
+    const inclusive = inclusiveOf(sc, raw.inclusive);
+    if (was) {
+      const samePlaces = !!was.places && was.places.length === raw.points.length && was.places.every((x, i) => normPlace(x) === normPlace(raw.points[i]));
+      const sameLine = was.line.length === points.length && was.line.every((q, i) => Math.abs(q[0] - points[i].at[0]) < 1e-4 && Math.abs(q[1] - points[i].at[1]) < 1e-4);
+      const same = (samePlaces || sameLine) && (was.until ? atMoment(was.until) : null) === until && (was.inclusive ?? null) === inclusive;
+      if (same) continue;
+    }
+    const o = orientBoundary(sc, T, a, b, points.map((x) => x.at)) ?? (was ? { right: was.right, left: was.left } : null);
     if (!o) continue;
     const right = sc.formations.find((x) => x.id === o.right), left = sc.formations.find((x) => x.id === o.left);
     if (!right || !left) continue;
-    add.push({
-      id: `kb-${a}-${b}-${raw.from}`.replace(/[^a-z0-9-]/gi, '-'), kind: right.echelon === 'army' ? 'army' : 'front', side: right.side,
-      right: right.id, left: left.id, title: `${right.name} / ${left.name} с ${ddmm(raw.from)}`,
-      from, until: raw.to ? atMoment(raw.to) : null, line: points.map((x) => x.at), places: points.map((x) => x.title),
-      inclusive: raw.inclusive ? matchFormation(raw.inclusive, sc.formations, []) : null,
-      ...(missing.length ? { note: `не найдены на театре: ${missing.join(', ')}` } : {}), source: 'база знаний',
-    });
+    const line: Boundary = {
+      ...(was ?? {}),
+      id: was?.id ?? `kb-${a}-${b}-${raw.from}`.replace(/[^a-z0-9-]/gi, '-'), kind: was?.kind ?? (right.echelon === 'army' ? 'army' : 'front'), side: right.side,
+      right: right.id, left: left.id, title: was?.title ?? `${right.name} / ${left.name} с ${ddmm(raw.from)}`,
+      from: was?.from ?? from, until, line: points.map((x) => x.at), places: points.map((x) => x.title), inclusive,
+      note: missing.length ? `не найдены на театре: ${missing.join(', ')}` : undefined, source: 'база знаний',
+    };
+    if (!line.note) delete line.note;
+    if (was) out[at] = line; else out.push(line);
+    touched = true;
   }
-  if (!add.length) return sc;
-  return { ...sc, boundaries: [...have, ...add].sort((x, y) => x.from.localeCompare(y.from)) };
+  if (!touched) return sc;
+  return { ...sc, boundaries: out.sort((x, y) => x.from.localeCompare(y.from)) };
 }
 
 /** Состояние сведения об инфраструктуре → состояние переправы базы (нет — не переправа или не читается). */
@@ -180,26 +201,59 @@ const CROSSING_OF: Partial<Record<InfraState, Extract<Claim, { kind: 'crossing' 
 const RECORD_OF: Record<Extract<Claim, { kind: 'crossing' }>['state'], InfraState> = { open: 'intact', destroyed: 'destroyed', built: 'built' };
 const normTitle = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/[«»"“”„'’`]/g, '').replace(/\s+/g, ' ').trim();
 
+/** Переправа из сборки: формальная часть и, у объекта встроенной базы, его названия (compileOperation). */
+type KbCrossing = Extract<Claim, { kind: 'crossing' }> & { names?: string[] };
+
+/** Река в названии переправы: «через …» или в скобках в конце («Обербаумбрюкке (Шпрее)»). */
+const riverIn = (title: string): string | undefined =>
+  /через\s+(?:р\.\s*)?([^\s,()]+)/i.exec(title)?.[1] ?? /\((?:р\.\s*)?([А-ЯЁA-Z][\p{L}-]*)\)\s*$/u.exec(title)?.[1];
+
+/** Сведение о переправе: название, пункт, река (нет — не указываются). */
+function crossingRecord(x: KbCrossing, title: string, place?: string, river?: string): InfraRecord {
+  return {
+    id: `kb-${normTitle(title).replace(/[^a-zа-я0-9]+/gi, '-')}-${x.from}`, kind: x.state === 'built' ? 'crossing' : 'bridge', state: RECORD_OF[x.state],
+    title, ...(place ? { place } : {}), ...(river ? { river } : {}), from: x.from, until: null, origin: 'document', source: { docName: 'база знаний' },
+  };
+}
+
 /**
- * Переправы из базы — в сведения об инфраструктуре операции (поверх театра в обеих моделях): мост театра — по
- * названию или у пункта («… у Фюрстенвальде», река — «через …»). Сведение о том же (название, начало, состояние)
- * уже есть (принятое раньше в разделе «Операции») — не повторяется.
+ * Привязка переправы к театру. Объект встроенной базы (names — его названия) — только мост театра по названию (на
+ * той же реке, если она названа): сопоставление «у пункта» по названию объекта ненадёжно. Переправа из документа —
+ * мост по названию или у пункта («… у Фюрстенвальде», река — «через …»); наведённая — и точкой на реке у пункта.
+ * null — не привязана.
+ */
+function bindCrossing(T: Theatre, x: KbCrossing): InfraRecord | null {
+  const title = x.names?.[0] ?? x.subject;
+  const titles = [...new Set([x.subject, ...(x.names ?? [])].map((t) => t?.trim()).filter((t): t is string => !!t))];
+  const river = titles.map(riverIn).find(Boolean);
+  const tries = x.names?.length
+    ? titles.filter((t) => t !== x.subject).map((t) => crossingRecord(x, t, undefined, river))
+    : [crossingRecord(x, x.subject, /(?:^|\s)у\s+(.+)$/i.exec(x.subject)?.[1]?.trim(), river)];
+  for (const rec of tries) {
+    const r = resolveInfra(T, rec);
+    if (!r || !(r.bridge || (!x.names?.length && x.state === 'built' && r.at))) continue;
+    // название — понятное человеку: у объекта встроенной базы — его название, а не id
+    return { ...rec, title, id: crossingRecord(x, title).id, ...(r.bridge ? { bridge: r.bridge } : {}), ...(r.at ? { at: r.at } : {}), ...(r.radiusKm ? { radiusKm: r.radiusKm } : {}) };
+  }
+  return null;
+}
+
+/**
+ * Переправы из базы — в сведения об инфраструктуре операции (поверх театра в обеих моделях): привязка к театру —
+ * bindCrossing. Не привязалась — не применяется (вход виден в «Основе модели», в сведения операции не попадает).
+ * Сведение о том же (название, начало, состояние) уже есть (принятое раньше в разделе «Операции») — не повторяется.
  */
 export function applyCompiledCrossings(records: InfraRecord[], c: CompiledEdits | undefined, T: Theatre | null): InfraRecord[] {
-  if (!c?.crossings.length) return records;
+  if (!c?.crossings.length || !T) return records;
   const out = [...records];
-  for (const x of c.crossings as Extract<Claim, { kind: 'crossing' }>[]) {
-    const same = out.some((r) => (r.kind === 'bridge' || r.kind === 'crossing') && normTitle(r.title) === normTitle(x.subject)
+  for (const x of c.crossings as KbCrossing[]) {
+    if (!x.subject?.trim()) continue;
+    const titles = [x.subject, ...(x.names ?? [])];
+    const same = out.some((r) => (r.kind === 'bridge' || r.kind === 'crossing') && titles.some((t) => normTitle(r.title) === normTitle(t))
       && day(r.from ?? '') === day(x.from) && CROSSING_OF[r.state] === x.state);
     if (same) continue;
-    const place = /(?:^|\s)у\s+(.+)$/i.exec(x.subject)?.[1]?.trim();
-    const river = /через\s+(?:р\.\s*)?([^\s,]+)/i.exec(x.subject)?.[1];
-    const rec: InfraRecord = {
-      id: `kb-${normTitle(x.subject).replace(/[^a-zа-я0-9]+/gi, '-')}-${x.from}`, kind: x.state === 'built' ? 'crossing' : 'bridge', state: RECORD_OF[x.state],
-      title: x.subject, ...(place ? { place } : {}), ...(river ? { river } : {}), from: x.from, until: null, origin: 'document', source: { docName: 'база знаний' },
-    };
-    const r = T ? resolveInfra(T, rec) : null;
-    out.push(r ? { ...rec, ...(r.bridge ? { bridge: r.bridge } : {}), ...(r.at ? { at: r.at } : {}), ...(r.radiusKm ? { radiusKm: r.radiusKm } : {}) } : rec);
+    const rec = bindCrossing(T, x);
+    if (rec) out.push(rec);
   }
   return out;
 }

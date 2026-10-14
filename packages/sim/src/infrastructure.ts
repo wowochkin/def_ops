@@ -108,7 +108,9 @@ export function resolveInfra(T: Theatre, r: Pick<InfraRecord, 'kind' | 'state' |
   const rivers = riverNames(r.river);
   if (r.kind === 'bridge' || r.kind === 'crossing') {
     // мост по названию («мост Мольтке») — среди мостов театра
-    const named = T.data.bridges.find((b) => b.name && variants(r.title).some((t) => norm(t).length > 6 && norm(b.name!).includes(norm(t))));
+    // река названа — мост театра на другой реке не подходит («Ганза-мост через Одер» — не берлинский Hansabrücke на Шпрее)
+    const onRiver = (b: { river?: string }) => !rivers.length || !b.river || rivers.some((n) => sameName(n, b.river!));
+    const named = T.data.bridges.find((b) => b.name && variants(r.title).some((t) => norm(t).length > 6 && norm(b.name!).includes(norm(t))) && onRiver(b as { river?: string }));
     if (named) return { bridge: named.id, at: named.at, how: `мост театра «${named.name}»` };
     if (!p) return null;
     const c = T.proj.toXY(p.at);
