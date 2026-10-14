@@ -61,9 +61,12 @@ const INFRA_ITEM = {
 /** Виды формальных фактов (часть 1). */
 export const CLAIM_KINDS = ['strength', 'reinforce', 'parent', 'enter', 'position', 'boundary', 'crossing', 'event', 'losses'] as const;
 export type ClaimKind = (typeof CLAIM_KINDS)[number];
+/** Нормативы модели (часть 3): значение правила и итог прогона — извлекаются из документов вместе с прочими видами. */
+export const NORM_KINDS = ['param', 'outcome'] as const;
+export type ExtractKind = ClaimKind | (typeof NORM_KINDS)[number];
 const nul = (type: string) => ({ type: [type, 'null'] });
 const CLAIM_PROPS = {
-  kind: { type: 'string', enum: [...CLAIM_KINDS] },
+  kind: { type: 'string', enum: [...CLAIM_KINDS, ...NORM_KINDS] },
   subject: nul('string'), parent: nul('string'), place: nul('string'),
   between: { type: ['array', 'null'], items: s, minItems: 2, maxItems: 2 },
   points: { type: ['array', 'null'], items: s }, inclusive: nul('string'), title: nul('string'),
@@ -71,6 +74,8 @@ const CLAIM_PROPS = {
   personnel: nul('number'), tanks: nul('number'), guns: nul('number'), killed: nul('number'), wounded: nul('number'), missing: nul('number'), total: nul('number'),
   state: { type: ['string', 'null'], enum: ['open', 'destroyed', 'built', null] },
   lat: nul('number'), lon: nul('number'), approxKm: nul('number'),
+  param: nul('string'), value: nul('number'), range: { type: ['array', 'null'], items: { type: 'number' }, minItems: 2, maxItems: 2 },
+  unit: nul('string'), side: { type: ['string', 'null'], enum: ['su', 'de', null] }, measure: nul('string'),
   quote: s,
 } as const;
 const CLAIM_REQUIRED = Object.keys(CLAIM_PROPS);
@@ -100,7 +105,7 @@ export const OPERATION_EXTRACT_SCHEMA = {
 
 /** Формальный факт из ответа модели (названия — как в тексте). */
 export interface ExtractedClaim {
-  kind: ClaimKind;
+  kind: ExtractKind;
   subject: string | null; parent: string | null; place: string | null;
   between: string[] | null; points: string[] | null; inclusive: string | null; title: string | null;
   /** ГГГГ-ММ-ДД (начало периода или момент). */
@@ -109,6 +114,8 @@ export interface ExtractedClaim {
   killed: number | null; wounded: number | null; missing: number | null; total: number | null;
   state: 'open' | 'destroyed' | 'built' | null;
   lat: number | null; lon: number | null; approxKm: number | null;
+  /** Норматив: путь параметра, значение или диапазон, единица, сторона; у итога — мера (pace, loss, frontage). */
+  param?: string | null; value?: number | null; range?: number[] | null; unit?: string | null; side?: 'su' | 'de' | null; measure?: string | null;
   quote: string;
   /** Место на странице скана (доли). */
   box?: [number, number, number, number] | null;
@@ -124,7 +131,10 @@ export interface ExtractedItem {
   dateFrom: string | null; dateTo: string | null;
 }
 
-export function extractMessages(chunk: string, docName: string, op?: OperationHint): { role: 'system' | 'user'; content: string }[] {
+/** Вход правил для подсказки извлечению нормативов: путь, название, единица. */
+export interface ParamHint { path: string; title: string; unit?: string }
+
+export function extractMessages(chunk: string, docName: string, op?: OperationHint, params?: ParamHint[]): { role: 'system' | 'user'; content: string }[] {
   const rubs = RUBRIC_CODES.filter((c) => c.split('.').length > 1).map((c) => `- ${c} ${rubricPath(c).map((x) => x.title).join(' › ')}`).join('\n');
   const cats = CATEGORIES.map((c) => `- ${c.id} — ${c.title}: ${c.description} Ключи фактов: ${c.fields.map((f) => `${f.key} (${f.title})`).join(', ')}.`).join('\n');
   return [
@@ -147,14 +157,15 @@ ${cats}
 Рубрикатор (о чём запись):
 ${rubs}
 
-${claimRules(op)}${op ? infraRules(op) : ''}Ответ — один JSON-объект по схеме.` },
+${claimRules(op, params)}${op ? infraRules(op) : ''}Ответ — один JSON-объект по схеме.` },
     { role: 'user', content: `Документ: «${docName}»${op ? ` (материал операции «${op.title}»)` : ''}. Фрагмент:\n\n${chunk}` },
   ];
 }
 
 /** Правила формальных фактов (claims): общие для текста и скана. */
-export function claimRules(op?: OperationHint): string {
+export function claimRules(op?: OperationHint, params?: ParamHint[]): string {
   const year = op ? op.start.slice(0, 4) : '1945';
+  const list = params?.length ? `\n  Параметры модели (param — только из этого перечня):\n${params.map((p) => `  - ${p.path} — ${p.title}${p.unit ? `, ${p.unit}` : ''}`).join('\n')}` : '';
   return `Кроме записей (items), выпишите в claims формальные факты — то, что можно занести в модель. Вид (kind):
 - strength — численность соединения на дату: subject, date, personnel / tanks / guns (что названо);
 - reinforce — пополнение, прибывшее в соединение: subject, date, personnel / tanks / guns;
@@ -164,7 +175,9 @@ export function claimRules(op?: OperationHint): string {
 - boundary — разграничительная линия между объединениями: between (два объединения; если документ адресован одному из них — «с 1-м Белорусским фронтом», — второй адресат документа), date / dateTo — с какого и до какого дня, points — пункты линии по порядку в именительном падеже («прежняя», «по железной дороге» — не пункты), inclusive — чьи пункты включительно или null;
 - crossing — переправа или мост: subject (название «мост через Шпрее у Фюрстенвальде»), place, date — с какого дня, state: open — проходима, destroyed — разрушена, built — наведена;
 - event — событие (сражение, взятие города, удар): title, date, place;
-- losses — потери соединения за период: subject, date (начало), dateTo (конец, включительно), killed / wounded / missing / total (total — если разбивки нет), tanks.
+- losses — потери соединения за период: subject, date (начало), dateTo (конец, включительно), killed / wounded / missing / total (total — если разбивки нет), tanks;
+- param — норматив, задающий число правил модели (темп, поправка обороны, срок переправы): param — путь параметра, value — число или range — [от, до], unit — единица как в тексте, side — su (советский) / de (германский) / null;${list}
+- outcome — исторический итог, с которым сверяется расчёт: measure (pace — темп продвижения, loss — потери в % численности, frontage — ширина полосы), subject — соединение (у ширины полосы — null), date / dateTo — период, range — [от, до], unit.
 Правила claims:
 1. Названия соединений (subject, parent, between) и мест — как в тексте, не расшифровывайте и не исправляйте («8 гв. А» так и остаётся).
 2. Даты — ГГГГ-ММ-ДД; если в тексте нет года, он ${year}. «С 16 по 19 апреля» — date 16-е, dateTo 19-е. Нет даты — null.
@@ -346,6 +359,8 @@ export const KIND_RU: Record<ClaimKind, string> = {
   strength: 'численность', reinforce: 'пополнение', parent: 'подчинённость', enter: 'ввод в бой', position: 'положение',
   boundary: 'разграничительная линия', crossing: 'переправа', event: 'событие', losses: 'потери',
 };
+/** Ключ текстового факта норматива — как у фактов нормативов сида. */
+const NORM_KEY = 'numbers';
 const STATE_RU = { open: 'проходима', destroyed: 'разрушена', built: 'наведена' } as const;
 const NUM_RU: [string, string][] = [['personnel', 'людей'], ['tanks', 'танков'], ['guns', 'орудий'], ['killed', 'убито'], ['wounded', 'ранено'], ['missing', 'пропало'], ['total', 'всего']];
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
@@ -384,10 +399,26 @@ export function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; valu
     }
     case 'event': claim = { kind: 'event', id: '', at: date, title: str(x.title) || str(x.quote).slice(0, 80), ...(place ? { place } : {}) }; value = `${(claim as { title: string }).title}, ${date}`; break;
     case 'losses': claim = { kind: 'losses', subject, from: date, to: dateTo, ...pickNums(nums, ['killed', 'wounded', 'missing', 'total', 'tanks']) }; value = `${numText}, ${date} — ${dateTo}`; break;
+    case 'param': {
+      const p = str(x.param), v = num(x.value), r = rangeOf(x.range), unit = str(x.unit);
+      if (!p || (v == null && !r)) return null;
+      claim = { kind: 'param', param: p, ...(r ? { range: r } : { value: v }), ...(unit ? { unit } : {}), ...(x.side === 'su' || x.side === 'de' ? { side: x.side } : {}) };
+      return { claim, key: NORM_KEY, value: `${p}: ${r ? r.join('–') : v}${unit ? ` ${unit}` : ''}` };
+    }
+    case 'outcome': {
+      const m = str(x.measure), r = rangeOf(x.range), unit = str(x.unit);
+      if (!m || !r) return null;
+      // операция — документа (toCandidates), соединение — проверкой по names.subject
+      claim = { kind: 'outcome', measure: m, scenario: '', subject, from: date, to: dateTo, range: r, unit };
+      return { claim, key: NORM_KEY, value: `${m}: ${r.join('–')}${unit ? ` ${unit}` : ''}, ${date} — ${dateTo}` };
+    }
     default: return null;
   }
   return { claim, key: KIND_RU[x.kind], value: value.trim() };
 }
+/** Диапазон [от, до] из ответа модели: два числа, иначе undefined (порядок проверяет проверка «норматив»). */
+const rangeOf = (v: unknown): [number, number] | undefined =>
+  Array.isArray(v) && v.length === 2 && v.every((n) => num(n) != null) ? [v[0] as number, v[1] as number] : undefined;
 const pickNums = (n: Record<string, number>, keys: string[]) => Object.fromEntries(keys.filter((k) => n[k] != null).map((k) => [k, n[k]]));
 
 /**
@@ -416,6 +447,7 @@ export function toCandidates(
     const box = 'page' in where ? (x.box ?? where.box ?? undefined) : undefined;
     const id = `${doc.id}:${tag}:${out.length}`;
     if (b.claim.kind === 'event') b.claim.id = id;
+    if (b.claim.kind === 'outcome') b.claim.scenario = doc.operation ?? '';
     out.push({
       id, claim: b.claim, names, key: b.key, value: b.value, source: `doc:${doc.id}`,
       pages: 'chunk' in where ? `часть ${where.chunk + 1}` : `стр. ${where.page}`,

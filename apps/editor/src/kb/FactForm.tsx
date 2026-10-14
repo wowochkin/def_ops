@@ -8,8 +8,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { RELIABILITY, runChecks, type CheckCtx, type Claim, type Entry, type Fact, type FactRef, type Reliability } from '@def-ops/knowledge';
 import { claimText, KIND_RU } from '../modeling/basis';
 import { addManual, correctBuiltin, editFact } from './candidates';
-import { claimToForm, FACT_KEY, FORM_FIELDS, formToClaim, formWarnings, manualCandidate, type FormMeta } from './fact-form';
-import { strengthFrom, type OpContext } from './ingest';
+import { claimToForm, FACT_KEY, FORM_FIELDS, formToClaim, formWarnings, manualCandidate, PARAM_OPTIONS, type FormMeta } from './fact-form';
+import { KNOWN_PARAMS, strengthFrom, type OpContext } from './ingest';
 import { opCtx } from './ReviewQueue';
 import * as kb from './kb';
 import * as store from './store';
@@ -21,6 +21,7 @@ export type FactFormMode =
 
 const KINDS = Object.keys(FORM_FIELDS) as Claim['kind'][];
 const STATE_OPTS: [string, string][] = [['open', 'действует'], ['destroyed', 'разрушена'], ['built', 'наведена']];
+const SIDE_OPTS: [string, string][] = [['su', 'советская'], ['de', 'германская']];
 
 /** Вид нового факта по категории записи. */
 const defaultKind = (e: Entry): Claim['kind'] => (e.category === 'terrain' ? 'crossing' : e.category === 'operations' || e.category === 'chronology' ? 'event' : 'strength');
@@ -80,7 +81,10 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
       b.forEach((v, i) => { if (unknownName(v)) { nm[i] = v; b[i] = ''; any = true; } });
       c.between = b;
       if (any) names.between = nm;
-    } else if (c.kind !== 'event' && c.kind !== 'crossing' && c.kind !== 'param' && c.kind !== 'outcome') {
+    } else if (c.kind === 'outcome') {
+      // итог: соединение необязательно (у ширины полосы его нет)
+      if (c.subject && unknownName(c.subject)) { names.subject = c.subject; c.subject = ''; }
+    } else if (c.kind !== 'event' && c.kind !== 'crossing' && c.kind !== 'param') {
       if (unknownName(c.subject)) { names.subject = c.subject; c.subject = ''; }
       if (c.kind === 'parent' && unknownName(c.parent)) { names.parent = c.parent; c.parent = ''; }
     }
@@ -92,7 +96,7 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
     if ('error' in built || !cx) return null;
     const existing = s.entries.flatMap((e) => (e.facts ?? []).filter((f, i) => f.claim && !(mode.kind === 'edit' && e.id === mode.entry.id && i === mode.index)));
     const c = manualCandidate(structuredClone(built.claim), meta, { id: `manual:${Date.now().toString(36)}`, names: built.names, value: '', ...(ops.length === 1 ? { op: ops[0] } : {}) });
-    const ctx: CheckCtx = { formations: cx.formations, entries: s.entries, ...(cx.theatre ? { theatre: cx.theatre } : {}), ...(cx.op ? { op: cx.op } : {}), strengthOf: strengthFrom(existing), existing };
+    const ctx: CheckCtx = { formations: cx.formations, entries: s.entries, ...(cx.theatre ? { theatre: cx.theatre } : {}), ...(cx.op ? { op: cx.op } : {}), strengthOf: strengthFrom(existing), existing, knownParams: KNOWN_PARAMS };
     c.checks = runChecks(c, ctx);
     // не сопоставлено — остаётся введённое название (факт попадёт в «Не сопоставлено» сборки, а не потеряет соединение)
     const cl = c.claim as Claim & Record<string, unknown>;
@@ -139,13 +143,19 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
     <b>{title}</b>
     {mode.kind === 'correct' && <p className="muted small">Сохранение создаёт ваш факт с источником и пометкой «исправляет встроенный»; встроенный в модель больше не берётся. Сам встроенный факт не меняется.</p>}
     <div className="row">
-      <label>Вид <select value={kind} disabled={mode.kind !== 'add'} onChange={(e) => { setKind(e.target.value as Claim['kind']); }}>
+      <label>Вид <select value={kind} disabled={mode.kind !== 'add'} onChange={(e) => { const k = e.target.value as Claim['kind']; setKind(k); if (k === 'outcome' && ops.length === 1) setFields((x) => ({ ...x, scenario: x.scenario || ops[0] })); }}>
         {KINDS.map((k) => <option key={k} value={k}>{KIND_RU[k] ?? k}</option>)}</select></label>
     </div>
     <datalist id="kb-ff-formations">{[...known].map(([id, n]) => <option key={id} value={id}>{n}</option>)}</datalist>
     <div className="kb-ff-fields">
       {FORM_FIELDS[kind].map((f) => <label key={f.key}>{f.title}{f.required ? ' *' : ''}
-        {f.type === 'state' ? <select value={fields[f.key] ?? ''} onChange={(e) => set(f.key, e.target.value)}><option value="">—</option>{STATE_OPTS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>
+        {f.type === 'state' || f.type === 'side' ? <select value={fields[f.key] ?? ''} onChange={(e) => set(f.key, e.target.value)}><option value="">—</option>{(f.type === 'side' ? SIDE_OPTS : STATE_OPTS).map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>
+          : f.type === 'param' ? <select value={fields[f.key] ?? ''} onChange={(e) => { const p = PARAM_OPTIONS.find((x) => x.path === e.target.value); setFields((x) => ({ ...x, [f.key]: e.target.value, ...(p?.unit && !x.unit ? { unit: p.unit } : {}) })); }}>
+            <option value="">— параметр модели —</option>
+            {/* норматив на путь вне перечня (из документа) остаётся выбранным — проверка «норматив» отметит его */}
+            {fields[f.key] && !KNOWN_PARAMS.has(fields[f.key]) && <option value={fields[f.key]}>{fields[f.key]} (нет в перечне)</option>}
+            {[...new Set(PARAM_OPTIONS.map((x) => x.group))].map((g) => <optgroup key={g} label={g}>{PARAM_OPTIONS.filter((x) => x.group === g).map((x) => <option key={x.path} value={x.path}>{x.title} — {x.path}</option>)}</optgroup>)}
+          </select>
           : <input type="text" value={fields[f.key] ?? ''} list={f.type === 'subject' ? 'kb-ff-formations' : undefined}
             placeholder={f.type === 'date' ? 'ГГГГ-ММ-ДД' : f.type === 'subject' ? 'id или название' : f.type === 'list' ? 'пункт — пункт' : ''}
             title={f.type === 'subject' && fields[f.key] ? name(fields[f.key]) : undefined} onChange={(e) => set(f.key, e.target.value)} />}</label>)}

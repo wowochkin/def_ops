@@ -291,3 +291,53 @@ describe('verdictOf', () => {
     expect(verdictOf([{ check: 'quote', level: 'ok' }])).toBe('auto');
   });
 });
+
+describe('нормативы модели: param и outcome', () => {
+  const param = (p: string, v: { value?: number; range?: [number, number] }): Claim => ({ kind: 'param', param: p, ...v });
+  const cand = (claim: Claim, quote: string, over: Partial<Candidate> = {}): Candidate => ({
+    id: 'c1', claim, names: {}, key: 'numbers', value: 'v', source: 'doc:d1', origin: 'text', evidence: { kind: 'quote', doc: 'd1', chunk: 0, quote },
+    checks: [], verdict: 'auto', state: 'pending', ...over,
+  });
+  const ctx = (over: Partial<CheckCtx> = {}): CheckCtx => ({ formations: [{ id: 'su_5ua', name: '5 уд. А', echelon: 'army' }], entries: [], strengthOf: () => null, existing: [], ...over });
+  const known = new Set(['defense.prepared', 'advanceMax']);
+  const lvl = (c: Candidate, x: CheckCtx, check: string) => runChecks(c, x).find((r) => r.check === check);
+
+  it('неизвестный параметр — сомнение, не отбой', () => {
+    const c = cand(param('defense.prepard', { value: 1.5 }), 'подготовленная оборона сильнее в 1,5 раза');
+    const r = lvl(c, ctx({ knownParams: known, text: 'подготовленная оборона сильнее в 1,5 раза' }), 'param');
+    expect(r?.level).toBe('doubt');
+    expect(r?.why).toMatch(/неизвестный параметр/);
+  });
+  it('известный параметр, число в цитате — ok; соединение не требуется', () => {
+    const c = cand(param('defense.prepared', { value: 1.5 }), 'сильнее в 1,5 раза');
+    const r = runChecks(c, ctx({ knownParams: known, text: 'оборона сильнее в 1,5 раза' }));
+    expect(r.find((x) => x.check === 'param')?.level).toBe('ok');
+    expect(r.find((x) => x.check === 'numbers')?.level).toBe('ok');
+    expect(r.find((x) => x.check === 'subject')).toBeUndefined();
+  });
+  it('числа диапазона ищутся в цитате', () => {
+    const c = cand(param('advanceMax', { range: [25, 45] }), 'темп 25–40 км в сутки');
+    expect(lvl(c, ctx({ knownParams: known, text: 'темп 25–40 км в сутки' }), 'numbers')?.level).toBe('fail');
+  });
+  it('диапазон не упорядочен — отбой', () => {
+    const c = cand(param('advanceMax', { range: [45, 25] }), 'темп 45–25');
+    expect(lvl(c, ctx({ knownParams: known, text: 'темп 45–25' }), 'param')?.level).toBe('fail');
+  });
+  it('outcome: соединение сопоставляется, даты проверяются, диапазон упорядочен', () => {
+    const oc: Claim = { kind: 'outcome', measure: 'pace', scenario: 'op', subject: '', from: '1945-04-17', to: '1945-04-18', range: [5, 14], unit: 'км/сут' };
+    const c = cand(oc, 'армия продвинулась на 5–14 км', { names: { subject: '5 уд. А' } });
+    const r = runChecks(c, ctx({ text: 'армия продвинулась на 5–14 км' }));
+    expect(r.find((x) => x.check === 'subject')?.level).toBe('ok');
+    expect((c.claim as { subject: string }).subject).toBe('su_5ua');
+    expect(r.find((x) => x.check === 'date')?.level).toBe('ok');
+    const bad = cand({ ...oc, from: '1945-04-19', range: [14, 5] }, 'на 5–14 км', { names: { subject: '5 уд. А' } });
+    const rb = runChecks(bad, ctx({ text: 'на 5–14 км' }));
+    expect(rb.find((x) => x.check === 'date')?.level).toBe('fail');
+    expect(rb.find((x) => x.check === 'param')?.level).toBe('fail');
+  });
+  it('outcome без операции — сомнение', () => {
+    const oc: Claim = { kind: 'outcome', measure: 'pace', scenario: '', subject: 'su_5ua', from: '1945-04-17', to: '1945-04-18', range: [5, 14], unit: 'км/сут' };
+    const c = cand(oc, 'на 5–14 км', { names: { subject: '5 уд. А' } });
+    expect(lvl(c, ctx({ text: 'на 5–14 км' }), 'param')?.level).toBe('doubt');
+  });
+});

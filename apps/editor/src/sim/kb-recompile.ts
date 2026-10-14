@@ -5,11 +5,16 @@
  *
  * Агентный сценарий операции: ключ AGENT_SCENARIOS совпадает с id операции каталога (berlin-1945-tasks,
  * vistula-oder-1945) — его дивизии и штабы входят в сборку (divisions).
+ *
+ * Там же — основа правил операции (sim/kb-rules.ts): коридоры множителей калибровки по нормативам базы и нормативы-итоги
+ * операции для набора правил операции; изменились — запись в журнал операции («данные изменились» в панели пересчёта).
+ * Наборы правил не меняются.
  */
 import { compileOperation, type CompileInput, type CompiledEdits } from '@def-ops/knowledge';
 import type { Scenario, TakeoverState } from '@def-ops/sim';
 import * as kbStore from '../kb/store';
 import { AGENT_SCENARIOS } from './agent-scenarios';
+import { diffDigest, rulesBasis, rulesDigest, type RulesDigest } from './kb-rules';
 import { applyCompiled, diffCompiled, migratePins, norm, toCoreEdits, type CoreEdits, type GameKb } from './kb-compile';
 import { fullCatalog, getEdits, rawData, updateEdits } from './userdata';
 import { parentsAt, takeoverState, toCoreTakeover, type CoreTakeover, type TakeoverSummary, type TakeoverUnit } from './takeover-state';
@@ -49,9 +54,13 @@ export async function recompile(opId: string): Promise<{ changed: string[] }> {
     pins = { ...pins, ...migrated.pins };
   }
   const r = compileOperation(entries, { id: opId, start: sc.start, end: sc.end, formations: sc.formations, ...(agents ? { divisions: divisionsIn(agents) } : {}) }, pins);
-  const next = { compiled: r.edits, provenance: r.provenance, conflicts: r.conflicts, unmatched: r.unmatched };
+  // основа правил операции: набор правил по умолчанию (после пересчёта) или сценария; не собралась — прежняя
+  let rules: RulesDigest | undefined = edits.kb?.rules;
+  try { rules = rulesDigest(await rulesBasis(edits.defaultRules ?? sc.rules, { entries, pins }), opId); } catch (e) { console.warn(`основа правил: ${opId}:`, e); }
+  const next = { compiled: r.edits, provenance: r.provenance, conflicts: r.conflicts, unmatched: r.unmatched, ...(rules ? { rules } : {}) };
   if (edits.kb && !migrated && norm(next) === norm({ ...edits.kb, at: undefined })) return { changed: [] };
-  const changed = diffCompiled(edits.kb?.compiled, r.edits);
+  const rulesChanged = rules ? diffDigest(edits.kb?.rules, rules) : [];
+  const changed = [...diffCompiled(edits.kb?.compiled, r.edits), ...rulesChanged];
   const at = new Date().toISOString();
   await updateEdits(opId, (e) => {
     if (migrated) {
@@ -60,10 +69,12 @@ export async function recompile(opId: string): Promise<{ changed: string[] }> {
       if (n) e.log.push({ at, kind: 'kb', text: `прежняя сверка — в закрепления: ${n}${migrated.kept.length ? `; ручные правки остались: ${migrated.kept.join(', ')}` : ''}` });
     }
     e.kb = { ...next, at };
-    if (changed.length) {
-      const text = edits.kb ? `изменено из базы: ${changed.slice(0, 8).join('; ')}${changed.length > 8 ? `; и ещё ${changed.length - 8}` : ''}` : `собрано из базы: ${changed.length} изменений входов модели`;
+    const inputs = changed.slice(0, changed.length - rulesChanged.length);
+    if (inputs.length) {
+      const text = edits.kb ? `изменено из базы: ${inputs.slice(0, 8).join('; ')}${inputs.length > 8 ? `; и ещё ${inputs.length - 8}` : ''}` : `собрано из базы: ${inputs.length} изменений входов модели`;
       e.log.push({ at, kind: 'kb', text });
     }
+    if (rulesChanged.length) e.log.push({ at, kind: 'kb', text: `основа правил из базы: ${rulesChanged.slice(0, 8).join('; ')}${rulesChanged.length > 8 ? `; и ещё ${rulesChanged.length - 8}` : ''}` });
   });
   return { changed };
 }

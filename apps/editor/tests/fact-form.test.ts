@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runChecks, type Claim } from '@def-ops/knowledge';
-import { ASSUMPTION_WARNING, claimToForm, formToClaim, formWarnings, manualCandidate, parseDate } from '../src/kb/fact-form';
+import { ASSUMPTION_WARNING, claimToForm, formToClaim, formWarnings, manualCandidate, PARAM_OPTIONS, parseDate } from '../src/kb/fact-form';
 
 const ok = (kind: Claim['kind'], fields: Record<string, string>): Claim => {
   const r = formToClaim(kind, fields);
@@ -98,5 +98,45 @@ describe('manualCandidate и замечания формы', () => {
     expect(checks.map((r) => r.check)).not.toContain('numbers');
     const w = formWarnings(checks, { source: 'Условный журнал' });
     expect(w.some((x) => /150000/.test(x))).toBe(true);
+  });
+});
+
+describe('нормативы модели в форме: param и outcome', () => {
+  it('param: значение (дробное), диапазон, сторона, масштаб', () => {
+    expect(ok('param', { param: 'defense.prepared', value: '1,35', unit: '×' })).toEqual({ kind: 'param', param: 'defense.prepared', value: 1.35, unit: '×' });
+    expect(ok('param', { param: 'foot.road', rangeFrom: '25', rangeTo: '35', unit: 'км/сут', side: 'su' }))
+      .toEqual({ kind: 'param', param: 'foot.road', range: [25, 35], unit: 'км/сут', side: 'su' });
+    expect(ok('param', { param: 'riverCrossHours', rangeFrom: '2', rangeTo: '6', scale: '3' })).toEqual({ kind: 'param', param: 'riverCrossHours', range: [2, 6], scale: 3 });
+  });
+  it('param: допущение — без числа, с «почему»', () => {
+    expect(ok('param', { param: 'pocket.capitulateHours', why: 'нет журналов' })).toEqual({ kind: 'param', param: 'pocket.capitulateHours', why: 'нет журналов' });
+  });
+  it('param: ошибки — нет числа и «почему», половина диапазона, «до» меньше «от», сторона', () => {
+    expect(err('param', { param: 'advanceMax' })).toMatch(/значение, диапазон или «почему допущение»/);
+    expect(err('param', { param: 'advanceMax', rangeFrom: '25' })).toMatch(/обе границы/);
+    expect(err('param', { param: 'advanceMax', rangeFrom: '45', rangeTo: '25' })).toMatch(/меньше/);
+    expect(err('param', { param: 'advanceMax', value: '30', side: 'fr' })).toMatch(/su или de/);
+  });
+  it('outcome: период, диапазон, единица; ширина полосы — без соединения', () => {
+    expect(ok('outcome', { subject: 'su_5ua', measure: 'pace', scenario: 'berlin-1945-tasks', from: '1945-04-17', to: '1945-04-18', rangeFrom: '5', rangeTo: '14', unit: 'км/сут' }))
+      .toEqual({ kind: 'outcome', subject: 'su_5ua', measure: 'pace', scenario: 'berlin-1945-tasks', from: '1945-04-17', to: '1945-04-18', range: [5, 14], unit: 'км/сут' });
+    expect(ok('outcome', { measure: 'frontage', scenario: 's', from: '1945-04-16', to: '1945-04-16', rangeFrom: '3', rangeTo: '8', unit: 'км', side: 'de', echelon: 'division', near: 'Высоты' }))
+      .toMatchObject({ kind: 'outcome', measure: 'frontage', range: [3, 8], side: 'de', echelon: 'division', near: 'Высоты' });
+    expect(err('outcome', { measure: 'pace', scenario: 's', from: '1945-04-18', to: '1945-04-17', rangeFrom: '1', rangeTo: '2', unit: 'км' })).toMatch(/раньше/);
+    expect(err('outcome', { measure: 'pace', scenario: 's', from: '1945-04-17', to: '1945-04-18', unit: 'км' })).toMatch(/не заполнено: от/);
+  });
+  it('claimToForm → formToClaim — тот же норматив', () => {
+    const list: Claim[] = [
+      { kind: 'param', param: 'riverCrossHours', range: [2, 6], unit: 'ч', scale: 3 },
+      { kind: 'param', param: 'stockDays.fortress', range: [25, 35], unit: 'сут', side: 'de' },
+      { kind: 'param', param: 'engineers.hours', unit: 'ч', why: 'нет сведений' },
+      { kind: 'outcome', measure: 'loss', scenario: 's', subject: 'su_1bf', from: '1945-04-16T05:00', to: '1945-05-02T05:00', range: [12, 24], unit: '% численности' },
+    ];
+    for (const c of list) expect(ok(c.kind, claimToForm(c))).toEqual(c);
+  });
+  it('параметр выбирается из перечня входов правил', () => {
+    expect(PARAM_OPTIONS.length).toBeGreaterThan(50);
+    expect(PARAM_OPTIONS.find((o) => o.path === 'defense.prepared')?.title).toMatch(/оборона/i);
+    expect(PARAM_OPTIONS.some((o) => o.path.startsWith('agents.'))).toBe(true);
   });
 });

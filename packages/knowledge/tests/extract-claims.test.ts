@@ -50,3 +50,34 @@ describe('claims из текста', () => {
     expect(out[3].names.between).toEqual(['1 БФ', '1 УФ']);
   });
 });
+
+describe('нормативы модели из текста: param и outcome', () => {
+  const base = { subject: null, parent: null, place: null, between: null, points: null, inclusive: null, title: null, date: null, dateTo: null, personnel: null, tanks: null, guns: null, killed: null, wounded: null, missing: null, total: null, state: null, lat: null, lon: null, approxKm: null, quote: 'цитата' } as const;
+  const opDoc = { ...doc, operation: 'berlin-1945-tasks' };
+  it('param: путь, значение или диапазон, единица, сторона', () => {
+    const out = toCandidates([
+      { ...base, kind: 'param', param: 'advanceMax', range: [25, 45], unit: 'км/сут', side: null },
+      { ...base, kind: 'param', param: 'foot.road', value: 30, unit: 'км/сут', side: 'su' },
+      { ...base, kind: 'param', param: null, value: 3 },
+      { ...base, kind: 'param', param: 'advanceMax' },
+    ], opDoc, { chunk: 0 }, 'text');
+    expect(out.map((c) => c.claim)).toEqual([
+      { kind: 'param', param: 'advanceMax', range: [25, 45], unit: 'км/сут' },
+      { kind: 'param', param: 'foot.road', value: 30, unit: 'км/сут', side: 'su' },
+    ]);
+    expect(out[0].key).toBe('numbers');
+  });
+  it('outcome: операция документа, соединение — в names, период и диапазон', () => {
+    const out = toCandidates([
+      { ...base, kind: 'outcome', measure: 'pace', subject: '5 уд. А', date: '1945-04-17', dateTo: '1945-04-18', range: [5, 14], unit: 'км/сут' },
+    ], opDoc, { chunk: 0 }, 'text');
+    expect(out[0].claim).toEqual({ kind: 'outcome', measure: 'pace', scenario: 'berlin-1945-tasks', subject: '', from: '1945-04-17', to: '1945-04-18', range: [5, 14], unit: 'км/сут' });
+    expect(out[0].names.subject).toBe('5 уд. А');
+  });
+  it('схема и промпт знают нормативы; перечень параметров — в промпте', () => {
+    expect(EXTRACT_SCHEMA.properties.claims.items.properties.kind.enum).toEqual(expect.arrayContaining(['param', 'outcome']));
+    const p = extractMessages('текст', 'Д', undefined, [{ path: 'advanceMax', title: 'Наибольший темп', unit: 'км/сут' }])[0].content;
+    expect(p).toContain('param');
+    expect(p).toContain('advanceMax — Наибольший темп');
+  });
+});

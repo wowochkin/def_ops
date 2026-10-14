@@ -1,5 +1,5 @@
 /**
- * Проверки кандидата-факта 1–7 (восьмая, перекрёстное прочтение цитаты моделью, — вне этого модуля).
+ * Проверки кандидата-факта 1–7 (и у нормативов модели — параметр и диапазон) (восьмая, перекрёстное прочтение цитаты моделью, — вне этого модуля).
  * Чистые функции: всё нужное приходит в контексте CheckCtx.
  */
 import type { Claim, Entry, Fact } from './schema';
@@ -30,6 +30,8 @@ export interface CheckCtx {
   strengthOf(subject: string, at: string): number | null;
   /** Факты базы (для поиска повтора). */
   existing: Fact[];
+  /** Пути входов правил и профилей (перечень входов модели): норматив на другой путь — сомнение «неизвестный параметр». */
+  knownParams?: Set<string>;
 }
 
 const DAY = 86400000;
@@ -46,9 +48,11 @@ export function numbersIn(text: string): number[] {
   return out;
 }
 
-/** Числа формальной части: численность, техника, потери. */
+/** Числа формальной части: численность, техника, потери; у норматива — значение и границы диапазона. */
 export function claimNumbers(c: Claim): number[] {
   const r = c as Record<string, unknown>;
+  if (c.kind === 'param') return [c.value, ...(c.range ?? [])].filter((v): v is number => typeof v === 'number');
+  if (c.kind === 'outcome') return (c.range ?? []).filter((v): v is number => typeof v === 'number');
   return ['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing', 'total'].map((k) => r[k]).filter((v): v is number => typeof v === 'number');
 }
 
@@ -146,8 +150,13 @@ function checkSubject(c: Candidate, ctx: CheckCtx): CheckResult | null {
       if ('id' in m) { cl[field] = m.id; if (m.loose) whys.push(m.loose); } else whys.push(m.why);
     } else if (!cl[field]) whys.push(`не указано: ${field === 'parent' ? 'вышестоящий' : 'соединение'}`);
   };
-  // событие — не о соединении: сопоставление не выполняется
-  if (c.claim.kind === 'event') return null;
+  // событие и значение правила — не о соединении: сопоставление не выполняется
+  if (c.claim.kind === 'event' || c.claim.kind === 'param') return null;
+  // итог прогона: соединение — если названо (у ширины полосы его нет)
+  if (c.claim.kind === 'outcome') {
+    if (!c.names.subject && !c.claim.subject) return c.claim.measure === 'frontage' ? null : res('subject', 'doubt', 'не указано: соединение');
+    if (!c.names.subject) return ok('subject');
+  }
   // переправа — о мосте, не о соединении: claim.subject — её название (мост театра находит сборщик по названию)
   if (c.claim.kind === 'crossing') {
     const name = (c.names.subject ?? '').trim() || c.claim.subject.trim();
@@ -208,6 +217,8 @@ function checkDate(c: Candidate, ctx: CheckCtx): CheckResult | null {
   if (!ds.length) return null;
   const bad = ds.filter((d) => parseIso(d) == null);
   if (bad.length) return res('date', 'fail', bad.every((d) => !d) ? 'даты нет' : `не дата: ${bad.filter(Boolean).join(', ') || 'пусто'}`);
+  const cl = c.claim as Record<string, unknown>;
+  if (typeof cl.from === 'string' && typeof cl.to === 'string' && cl.to && parseIso(cl.to)! < parseIso(cl.from)!) return res('date', 'fail', `конец периода (${cl.to}) раньше начала (${cl.from})`);
   // переправа сопоставляется с мостом театра по названию: без операции она пойдёт в расчёт всех операций с таким мостом
   if (!ctx.op) return c.claim.kind === 'crossing' ? res('date', 'doubt', 'документ без операции — переправа пойдёт в расчёт всех операций, где есть мост с таким названием') : ok('date');
   const s = parseIso(ctx.op.start), e = parseIso(ctx.op.end);
@@ -253,6 +264,21 @@ function checkPlausible(c: Candidate, ctx: CheckCtx): CheckResult | null {
   return whys.length ? res('plausible', 'doubt', whys.join('; ')) : ok('plausible');
 }
 
+/**
+ * Норматив модели: у значения правила — путь известен (перечень входов; нет — сомнение «неизвестный параметр»), есть
+ * число или это допущение, диапазон упорядочен; у итога — названа операция, диапазон упорядочен.
+ */
+function checkNorm(c: Candidate, ctx: CheckCtx): CheckResult | null {
+  const cl = c.claim;
+  if (cl.kind !== 'param' && cl.kind !== 'outcome') return null;
+  const r = cl.range;
+  if (r && (r.length !== 2 || !r.every(Number.isFinite) || r[0] > r[1])) return res('param', 'fail', `диапазон не упорядочен: ${r.join('–')}`);
+  if (cl.kind === 'outcome') return cl.scenario ? ok('param') : res('param', 'doubt', 'не указана операция итога');
+  if (cl.value == null && !r && cl.why == null) return res('param', 'fail', 'нет ни значения, ни диапазона');
+  if (ctx.knownParams && !ctx.knownParams.has(cl.param)) return res('param', 'doubt', `неизвестный параметр: «${cl.param}» нет среди входов правил`);
+  return ok('param');
+}
+
 const claimFp = (c: Claim) => fingerprint({ key: '', value: '', claim: c });
 /**
  * Тот же факт по формальной части: кандидат (как извлечён) и факт базы (как записан). Положение по названию места
@@ -282,7 +308,7 @@ export function runChecks(c: Candidate, ctx: CheckCtx): CheckResult[] {
   return [
     ...(manual ? [] : [checkQuote(c, ctx), checkNumbers(c)]),
     ...(subject ? [subject] : []),
-    ...[checkPlace(c, ctx), checkDate(c, ctx), checkPlausible(c, ctx)].filter((r): r is CheckResult => r != null),
+    ...[checkNorm(c, ctx), checkPlace(c, ctx), checkDate(c, ctx), checkPlausible(c, ctx)].filter((r): r is CheckResult => r != null),
     checkDuplicate(c, ctx),
   ];
 }

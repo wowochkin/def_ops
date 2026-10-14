@@ -4,15 +4,21 @@
  * Чистые функции — форма (FactForm.tsx) и тесты.
  */
 import { fingerprint, type Candidate, type CheckResult, type Claim, type Entry, type Evidence, type Fact, type Reliability } from '@def-ops/knowledge';
+import { RULE_INPUTS } from '@def-ops/sim';
 import { parseCount } from './queue';
 
-export type FormFieldType = 'subject' | 'date' | 'number' | 'text' | 'list' | 'state';
+/** param — путь из перечня входов правил; side — сторона (su, de). */
+export type FormFieldType = 'subject' | 'date' | 'number' | 'text' | 'list' | 'state' | 'param' | 'side';
 export interface FormField { key: string; title: string; type: FormFieldType; required?: boolean }
 
 const F = (key: string, title: string, type: FormFieldType, required = false): FormField => ({ key, title, type, required });
 const SUBJ = F('subject', 'соединение', 'subject', true);
 const SUBJ_OPT = F('subject', 'соединение', 'subject');
 const NUMS = [F('personnel', 'людей', 'number'), F('tanks', 'танков', 'number'), F('guns', 'орудий', 'number')];
+const RANGE = (required = false) => [F('rangeFrom', 'от', 'number', required), F('rangeTo', 'до', 'number', required)];
+
+/** Параметры норматива: входы правил, профилей и агентной модели (путь, название, единица, группа). */
+export const PARAM_OPTIONS = RULE_INPUTS.map((i) => ({ path: i.path, title: i.title, unit: i.unit, group: i.group }));
 
 /** Поля формы по виду факта (порядок — как в форме). */
 export const FORM_FIELDS: Record<Claim['kind'], FormField[]> = {
@@ -27,9 +33,11 @@ export const FORM_FIELDS: Record<Claim['kind'], FormField[]> = {
   event: [F('title', 'событие', 'text', true), F('at', 'дата', 'date', true), F('place', 'место', 'text')],
   losses: [SUBJ, F('from', 'с', 'date', true), F('to', 'по', 'date', true), F('killed', 'убитых', 'number'), F('wounded', 'раненых', 'number'),
     F('missing', 'пропавших', 'number'), F('total', 'всего', 'number'), F('tanks', 'танков', 'number')],
-  // нормативы модели: форма — в задаче 3 части 3
-  param: [F('param', 'параметр', 'text', true), F('value', 'значение', 'number'), F('unit', 'единица', 'text'), F('why', 'почему допущение', 'text')],
-  outcome: [SUBJ_OPT, F('measure', 'мера', 'text', true), F('scenario', 'сценарий', 'text', true), F('from', 'с', 'date', true), F('to', 'по', 'date', true), F('unit', 'единица', 'text', true)],
+  // нормативы модели: значение правила (число или диапазон; без них — допущение с «почему») и итог прогона
+  param: [F('param', 'параметр', 'param', true), F('value', 'значение', 'number'), ...RANGE(), F('unit', 'единица', 'text'), F('side', 'сторона', 'side'),
+    F('scale', 'дано на 1/n входа', 'number'), F('why', 'почему допущение', 'text')],
+  outcome: [SUBJ_OPT, F('measure', 'мера (pace, loss, frontage)', 'text', true), F('scenario', 'операция', 'text', true), F('from', 'с', 'date', true), F('to', 'по', 'date', true),
+    ...RANGE(true), F('unit', 'единица', 'text', true), F('side', 'сторона', 'side'), F('echelon', 'ступень', 'text'), F('near', 'район', 'text')],
 };
 
 /** Ключ текстового факта по виду (как у фактов встроенной базы). */
@@ -55,7 +63,7 @@ export function parseDate(raw: string): string | null {
   return h != null ? `${day}T${h}:${mi}` : day;
 }
 
-const FRACTIONAL = new Set(['lat', 'lon', 'uncertaintyKm']);
+const FRACTIONAL = new Set(['lat', 'lon', 'uncertaintyKm', 'value', 'rangeFrom', 'rangeTo', 'scale']);
 
 const STATES: Record<string, Extract<Claim, { kind: 'crossing' }>['state']> = {
   open: 'open', destroyed: 'destroyed', built: 'built', действует: 'open', цела: 'open', цел: 'open', разрушена: 'destroyed', разрушен: 'destroyed', взорван: 'destroyed', взорвана: 'destroyed', наведена: 'built', наведён: 'built', наведен: 'built',
@@ -89,6 +97,10 @@ export function formToClaim(kind: Claim['kind'], fields: Record<string, string>)
       const st = STATES[raw.toLowerCase()];
       if (!st) return { error: `${f.title}: «${raw}» — одно из: действует, разрушена, наведена` };
       out[f.key] = st;
+    } else if (f.type === 'side') {
+      const sd = ({ su: 'su', de: 'de', ссср: 'su', германия: 'de' } as Record<string, 'su' | 'de'>)[raw.toLowerCase()];
+      if (!sd) return { error: `${f.title}: «${raw}» — su или de` };
+      out[f.key] = sd;
     } else out[f.key] = raw;
   }
   const nums = (keys: string[]) => keys.some((k) => typeof out[k] === 'number');
@@ -120,8 +132,21 @@ export function formToClaim(kind: Claim['kind'], fields: Record<string, string>)
       if ((out.to as string) < (out.from as string)) return { error: '«по» раньше, чем «с»' };
       if (!nums(['killed', 'wounded', 'missing', 'total', 'tanks'])) return { error: 'нужно хотя бы одно число потерь' };
       return { claim: { kind, subject: out.subject as string, from: out.from as string, to: out.to as string, ...pick(out, ['killed', 'wounded', 'missing', 'total', 'tanks']) } };
-    case 'param': case 'outcome':
-      return { error: 'форма нормативов модели — в следующей версии' };
+    case 'param': case 'outcome': {
+      const hasFrom = typeof out.rangeFrom === 'number', hasTo = typeof out.rangeTo === 'number';
+      if (hasFrom !== hasTo) return { error: 'диапазон: нужны обе границы — «от» и «до»' };
+      const range = hasFrom ? [out.rangeFrom as number, out.rangeTo as number] as [number, number] : undefined;
+      if (range && range[1] < range[0]) return { error: 'диапазон: «до» меньше, чем «от»' };
+      if (kind === 'param') {
+        if (range == null && out.value == null && !out.why) return { error: 'нужно значение, диапазон или «почему допущение»' };
+        if (out.scale != null && !((out.scale as number) > 0)) return { error: 'дано на 1/n входа: n больше нуля' };
+        return { claim: { kind, param: out.param as string, ...(range ? { range } : pick(out, ['value'])), ...pick(out, ['unit', 'side', 'scale', 'why']) } as Claim };
+      }
+      if (!range) return { error: 'нужен диапазон: «от» и «до»' };
+      if ((out.to as string) < (out.from as string)) return { error: '«по» раньше, чем «с»' };
+      return { claim: { kind, measure: out.measure as string, scenario: out.scenario as string, ...pick(out, ['subject']), from: out.from as string, to: out.to as string,
+        range, unit: out.unit as string, ...pick(out, ['side', 'echelon', 'near']) } as Claim };
+    }
   }
 }
 
@@ -138,6 +163,7 @@ export function claimToForm(c: Claim): Record<string, string> {
   if (c.kind === 'boundary') { out.subject = c.between[0]; out.subject2 = c.between[1]; }
   if (c.kind === 'position' && c.lngLat) { out.lon = String(c.lngLat[0]); out.lat = String(c.lngLat[1]); }
   if (c.kind === 'event') out.id = c.id;
+  if ((c.kind === 'param' || c.kind === 'outcome') && c.range) { out.rangeFrom = String(c.range[0]); out.rangeTo = String(c.range[1]); }
   return out;
 }
 

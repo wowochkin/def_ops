@@ -15,12 +15,17 @@ import {
   type Candidate, type CheckCtx, type CheckResult, type CrossAnswer, type Entry, type ExtractedClaim, type ExtractedItem, type Fact, type InfraItem,
   type KbDocument, type OperationHint, type RowError, type TableMapping,
 } from '@def-ops/knowledge';
+import { RULE_INPUTS } from '@def-ops/sim';
 import type { ChatMessage, LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
 import { infraTextCandidate, saveCandidates, textCandidateOf, type StoredCandidate, type TextCandidate } from './candidates';
 import { crossLlm, kbLlm, llmClient, scanLlm } from './kb';
 import * as store from './store';
 import { cropImage, renderPdfPage, type PageImage } from './text';
+
+/** Перечень входов правил — подсказка извлечению нормативов (param) и проверке «норматив» (неизвестный параметр). */
+const PARAM_HINTS = RULE_INPUTS.map((i) => ({ path: i.path, title: i.title, ...(i.unit ? { unit: i.unit } : {}) }));
+export const KNOWN_PARAMS = new Set(RULE_INPUTS.map((i) => i.path));
 
 export interface IngestProgress { done: number; total: number; auto: number; review: number; drop: number; stage: string }
 
@@ -210,7 +215,7 @@ export async function ingest(docId: string, llm: LlmSettings, o: IngestOptions):
   /** Проверки 1–7, перекрёстное прочтение (текст и скан), итог. */
   const check = async (cands: Candidate[], extra: Partial<CheckCtx>, entries: Entry[]): Promise<Candidate[]> => {
     const existing = entries.flatMap((e) => (e.facts ?? []).filter((f) => f.claim));
-    const ctx: CheckCtx = { formations: cx.formations, entries, theatre: cx.theatre, op: cx.op, strengthOf: strengthFrom(existing), existing, ...extra };
+    const ctx: CheckCtx = { formations: cx.formations, entries, theatre: cx.theatre, op: cx.op, strengthOf: strengthFrom(existing), existing, knownParams: KNOWN_PARAMS, ...extra };
     const match = (name: string) => matchFormation(name, cx.formations, entries);
     for (const c of cands) {
       const checks: CheckResult[] = runChecks(c, ctx);
@@ -244,7 +249,7 @@ export async function ingest(docId: string, llm: LlmSettings, o: IngestOptions):
     if (p.kind === 'chunk') {
       const text = doc.chunks.find((c) => c.i === p.i)?.text ?? '';
       const schema = hint ? { name: 'kb_operation_extract', schema: OPERATION_EXTRACT_SCHEMA } : { name: 'kb_extract', schema: EXTRACT_SCHEMA };
-      const j = await ask<{ items?: ExtractedItem[]; claims?: ExtractedClaim[]; infrastructure?: InfraItem[] }>(kbChat, extractMessages(text, doc.name, hint), schema, o.signal);
+      const j = await ask<{ items?: ExtractedItem[]; claims?: ExtractedClaim[]; infrastructure?: InfraItem[] }>(kbChat, extractMessages(text, doc.name, hint, PARAM_HINTS), schema, o.signal);
       if (!j) return { cands: [], text: [], failed: true };
       const cands = await check(toCandidates(j.claims, doc, { chunk: p.i }, 'text'), { text }, entries);
       const props = toProposals(j.items ?? [], text, entries, doc, p.i).proposals;
@@ -268,7 +273,7 @@ export async function ingest(docId: string, llm: LlmSettings, o: IngestOptions):
         const url = strips.length > 1 ? await deps.crop(img.url, strips[k], img.width) : img.url;
         let j: { transcript?: string; claims?: ExtractedClaim[] } | null;
         try {
-          j = await ask(scanChat, scanMessages(url, doc.name, hint) as ChatMessage[], { name: 'kb_scan', schema: SCAN_SCHEMA }, o.signal);
+          j = await ask(scanChat, scanMessages(url, doc.name, hint, PARAM_HINTS) as ChatMessage[], { name: 'kb_scan', schema: SCAN_SCHEMA }, o.signal);
         } catch (e) {
           if (!o.signal?.aborted && noVision((e as Error).message)) return { cands: [], text: [], waiting: true };
           throw e;

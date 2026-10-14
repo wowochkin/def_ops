@@ -8,7 +8,7 @@ import type { StoredCandidate } from './candidates';
 
 /** Проверки по-русски (причины сомнения и отбоя). */
 export const CHECK_RU: Record<CheckId, string> = {
-  quote: 'цитата', numbers: 'числа', subject: 'соединение', place: 'место', date: 'дата', plausible: 'правдоподобие', duplicate: 'повтор', cross: 'перекрёстная проверка',
+  quote: 'цитата', numbers: 'числа', subject: 'соединение', param: 'норматив', place: 'место', date: 'дата', plausible: 'правдоподобие', duplicate: 'повтор', cross: 'перекрёстная проверка',
 };
 export const CHECK_IDS = Object.keys(CHECK_RU) as CheckId[];
 

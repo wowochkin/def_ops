@@ -17,7 +17,8 @@ export type Evidence =
   | { kind: 'agent'; ref: string; quote?: string }     // шифр, ссылка на карточку документа, выписка
   | { kind: 'manual'; note?: string };
 
-export type CheckId = 'quote' | 'numbers' | 'subject' | 'place' | 'date' | 'plausible' | 'duplicate' | 'cross';
+/** param — норматив модели: параметр известен, диапазон упорядочен (у итога — названа операция). */
+export type CheckId = 'quote' | 'numbers' | 'subject' | 'param' | 'place' | 'date' | 'plausible' | 'duplicate' | 'cross';
 export type CheckResult = { check: CheckId; level: 'ok' | 'doubt' | 'fail'; why?: string };
 
 export interface Candidate {

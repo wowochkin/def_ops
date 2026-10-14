@@ -139,7 +139,11 @@ export interface OperationEdits {
    */
   kb?: OperationKb;
 }
-export interface OperationKb { compiled: CompiledEdits; provenance: Provenance[]; conflicts: CompileConflict[]; unmatched: FactRef[]; at: string }
+export interface OperationKb {
+  compiled: CompiledEdits; provenance: Provenance[]; conflicts: CompileConflict[]; unmatched: FactRef[]; at: string;
+  /** Основа правил операции (sim/kb-rules.ts): коридоры множителей калибровки и нормативы-итоги операции. */
+  rules?: { corridors: Record<string, [number, number]>; outcomes: string[] };
+}
 const emptyEdits = (id: string): OperationEdits => ({ id, formations: {}, positions: [], dismissed: [], log: [], recalibrations: [] });
 export const getEdits = async (id: string): Promise<OperationEdits> => ({ ...emptyEdits(id), ...(await one<OperationEdits>('edits', id)) });
 export const saveEdits = (e: OperationEdits) => write('edits', (o) => o.put(e));
