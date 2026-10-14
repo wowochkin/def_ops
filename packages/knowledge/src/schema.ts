@@ -97,6 +97,11 @@ export interface Fact {
   evidence?: Evidence;
   /** Ключ встроенного факта (запись#номер + отпечаток), который этот факт исправляет. */
   corrects?: string;
+  /**
+   * Закрепления, записанные исправлением (ключ pinKey) и что стояло по ключу до него (null — ничего): при удалении или
+   * правке исправления снимаются ровно они, прежние значения возвращаются.
+   */
+  correctionPins?: { key: string; prev: { entry: string; index: number; fp?: string } | 'none' | null }[];
 }
 
 export type RelationType = 'part_of' | 'includes' | 'participant' | 'commanded_by' | 'commands' | 'located' | 'opponent' | 'related' | 'source';

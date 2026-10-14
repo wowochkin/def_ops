@@ -12,6 +12,7 @@ import { claimToForm, FACT_KEY, FORM_FIELDS, formToClaim, formWarnings, manualCa
 import { strengthFrom, type OpContext } from './ingest';
 import { opCtx } from './ReviewQueue';
 import * as kb from './kb';
+import * as store from './store';
 
 export type FactFormMode =
   | { kind: 'add'; entry: Entry }
@@ -34,7 +35,14 @@ async function checkContext(ops: string[]): Promise<OpContext> {
   return { formations, ...(list[0]?.theatre ? { theatre: list[0].theatre } : {}), ...(list.length === 1 && list[0].op ? { op: list[0].op } : {}) };
 }
 
-export function FactForm({ mode, ops, starts, onDone }: { mode: FactFormMode; ops: string[]; starts: string[]; onDone: (msg?: string) => void }) {
+/** Встроенные записи (сид) по id — для «встроенный» (тот же факт на том же месте, что в сиде); null — ещё не загружен. */
+export function useSeed(): Map<string, Entry> | null {
+  const [m, setM] = useState<Map<string, Entry> | null>(null);
+  useEffect(() => { let alive = true; void store.seed().then((l) => { if (alive) setM(new Map(l.map((e) => [e.id, e]))); }); return () => { alive = false; }; }, []);
+  return m;
+}
+
+export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: FactFormMode; ops: string[]; starts: string[]; allStarts?: string[]; onDone: (msg?: string) => void }) {
   const entry = mode.kind === 'correct' ? null : mode.entry;
   const base: Fact | null = mode.kind === 'correct' ? mode.ref.fact : mode.kind === 'edit' ? mode.entry.facts?.[mode.index] ?? null : null;
   const [kind, setKind] = useState<Claim['kind']>(base?.claim?.kind ?? (entry ? defaultKind(entry) : 'strength'));
@@ -116,7 +124,7 @@ export function FactForm({ mode, ops, starts, onDone }: { mode: FactFormMode; op
           evidence: !base.evidence || base.evidence.kind === 'manual' ? checked.evidence : base.evidence,
           check: { by: 'human', at: '', results: checked.checks },
         };
-        await editFact(mode.entry.id, mode.index, fact, { starts });
+        await editFact(mode.entry.id, mode.index, fact, { starts, allStarts });
         onDone('Факт изменён.');
       } else if (entry) {
         const r = await addManual(checked, { formations: cx?.formations ?? [], ...(cx?.theatre ? { theatre: cx.theatre } : {}) }, entry.id);

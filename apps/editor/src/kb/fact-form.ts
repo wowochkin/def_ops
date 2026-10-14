@@ -3,7 +3,7 @@
  * кандидат ручного ввода (manualCandidate: проверки 3–7, без источника — допущение) и замечания формы (formWarnings).
  * Чистые функции — форма (FactForm.tsx) и тесты.
  */
-import type { Candidate, CheckResult, Claim, Evidence, Fact, Reliability } from '@def-ops/knowledge';
+import { fingerprint, type Candidate, type CheckResult, type Claim, type Entry, type Evidence, type Fact, type Reliability } from '@def-ops/knowledge';
 import { parseCount } from './queue';
 
 export type FormFieldType = 'subject' | 'date' | 'number' | 'text' | 'list' | 'state';
@@ -163,13 +163,23 @@ export function formWarnings(checks: CheckResult[], meta: FormMeta): string[] {
   return out;
 }
 
-/** Кто проверил факт: человек, проверки (авто) или встроенный (сид; факт без отметки проверки). */
-export type FactOrigin = 'human' | 'auto' | 'seed';
-export const factOrigin = (f: Pick<Fact, 'check'>): FactOrigin => (f.check?.by === 'human' ? 'human' : f.check?.by === 'auto' ? 'auto' : 'seed');
-export const ORIGIN_RU: Record<FactOrigin, string> = { human: 'человек', auto: 'авто', seed: 'встроенный' };
+/**
+ * Как принят факт: человеком (check.by 'human'), проверками (авто), встроенный (сид: та же запись, тот же номер и
+ * отпечаток, что у факта сида) или «ваш, без проверки» (факт пользователя, принятый до части 2, без отметки проверки).
+ */
+export type FactOrigin = 'human' | 'auto' | 'seed' | 'legacy';
+/** seedById нет (сид не загружен или не нужен) — факт без отметки проверки считается встроенным. */
+export function originOf(ref: { entry: string; index: number; fact: Pick<Fact, 'check' | 'claim' | 'value'> }, seedById?: Map<string, Entry> | null): FactOrigin {
+  const by = ref.fact.check?.by;
+  if (by === 'human' || by === 'auto') return by;
+  if (!seedById) return 'seed';
+  const b = seedById.get(ref.entry)?.facts?.[ref.index];
+  return b && fingerprint(b) === fingerprint(ref.fact as Fact) ? 'seed' : 'legacy';
+}
+export const ORIGIN_RU: Record<FactOrigin, string> = { human: 'человек', auto: 'авто', seed: 'встроенный', legacy: 'ваш, без проверки' };
 
 /** Как принят факт — для «Основы модели» и записи. */
-export const ORIGIN_LONG: Record<FactOrigin, string> = { human: 'проверено человеком', auto: 'принято автоматически (проверки пройдены)', seed: 'встроенная база' };
+export const ORIGIN_LONG: Record<FactOrigin, string> = { human: 'проверено человеком', auto: 'принято автоматически (проверки пройдены)', seed: 'встроенная база', legacy: 'ваш факт, принятый без проверки (до проверок базы)' };
 
 /** Доказательство факта одной строкой; docName — название документа по id. */
 export function evidenceRu(e: Evidence, docName: (id: string) => string = (id) => id): string {

@@ -5,14 +5,15 @@
  * factUse — используется ли факт записи в сборке операции (держит вход, перекрыт другим кандидатом, не нужен);
  * claimText — формальная часть факта по-русски.
  */
-import type { Claim, CompileConflict, FactRef, Provenance } from '@def-ops/knowledge';
+import type { Claim, CompileConflict, Entry, FactRef, Provenance } from '@def-ops/knowledge';
+import { originOf } from '../kb/fact-form';
 
 export type BasisKind = 'strength' | 'parent' | 'position' | 'boundary' | 'crossing';
 /**
  * Входы вида: по надёжности (A, B, C, допущение) и, для входов на фактах, — кем проверен факт: человеком
- * (check.by = 'human'), автоматически ('auto'), встроенный (без отметки проверки — сид и прежние факты).
+ * (check.by = 'human'), автоматически ('auto'), встроенный (сид) или ваш без проверки (до части 2) — originOf.
  */
-export type RelCount = { A: number; B: number; C: number; assumption: number; human: number; auto: number; seed: number };
+export type RelCount = { A: number; B: number; C: number; assumption: number; human: number; auto: number; seed: number; legacy: number };
 export type Rel = 'A' | 'B' | 'C' | 'assumption';
 export const BASIS_KINDS: [BasisKind, string][] = [
   ['strength', 'численность и пополнения'], ['parent', 'подчинённость'], ['position', 'положения'], ['boundary', 'разграничительные линии'], ['crossing', 'переправы'],
@@ -41,17 +42,17 @@ export function basisKindOf(p: Provenance): BasisKind | null {
 /**
  * Сводка: по видам входов — сколько на фактах A, B, C и сколько на допущениях. isInput — читает ли модель поля
  * формирования (действующие формирования сценария с типом, дивизии агентного сценария): поля штабов и фронтов
- * (<id>.personnel|tanks|guns|parent|enterAt) модель не берёт — не считаются. Нет isInput — считаются все.
+ * (<id>.personnel|tanks|guns|parent|enterAt) модель не берёт — не считаются. Нет isInput — считаются все. seedById — сид по id записи (встроенный или «ваш, без проверки»; нет — без отметки = встроенный).
  */
-export function basisSummary(prov: Provenance[], isInput?: (formationId: string) => boolean): Record<BasisKind, RelCount> {
-  const out = Object.fromEntries(BASIS_KINDS.map(([k]) => [k, { A: 0, B: 0, C: 0, assumption: 0, human: 0, auto: 0, seed: 0 }])) as Record<BasisKind, RelCount>;
+export function basisSummary(prov: Provenance[], isInput?: (formationId: string) => boolean, seedById?: Map<string, Entry> | null): Record<BasisKind, RelCount> {
+  const out = Object.fromEntries(BASIS_KINDS.map(([k]) => [k, { A: 0, B: 0, C: 0, assumption: 0, human: 0, auto: 0, seed: 0, legacy: 0 }])) as Record<BasisKind, RelCount>;
   for (const p of prov) {
     const k = basisKindOf(p);
     if (!k) continue;
     const dot = p.input.lastIndexOf('.');
     if (isInput && !p.input.includes(':') && dot > 0 && !isInput(p.input.slice(0, dot))) continue;
     out[k][p.reliability]++;
-    if (p.fact) { const by = p.fact.fact.check?.by; out[k][by === 'human' ? 'human' : by === 'auto' ? 'auto' : 'seed']++; }
+    if (p.fact) out[k][originOf(p.fact, seedById)]++;
   }
   return out;
 }

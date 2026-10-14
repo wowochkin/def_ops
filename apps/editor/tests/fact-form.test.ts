@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runChecks, type Claim } from '@def-ops/knowledge';
-import { ASSUMPTION_WARNING, claimToForm, factOrigin, formToClaim, formWarnings, manualCandidate, parseDate } from '../src/kb/fact-form';
+import { ASSUMPTION_WARNING, claimToForm, formToClaim, formWarnings, manualCandidate, parseDate } from '../src/kb/fact-form';
 
 const ok = (kind: Claim['kind'], fields: Record<string, string>): Claim => {
   const r = formToClaim(kind, fields);
@@ -98,10 +98,5 @@ describe('manualCandidate и замечания формы', () => {
     expect(checks.map((r) => r.check)).not.toContain('numbers');
     const w = formWarnings(checks, { source: 'Условный журнал' });
     expect(w.some((x) => /150000/.test(x))).toBe(true);
-  });
-  it('factOrigin: человек, авто, встроенный', () => {
-    expect(factOrigin({ check: { by: 'human', at: '', results: [] } })).toBe('human');
-    expect(factOrigin({ check: { by: 'auto', at: '', results: [] } })).toBe('auto');
-    expect(factOrigin({})).toBe('seed');
   });
 });

@@ -7,13 +7,12 @@
  */
 import { confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { category, entryOperations, fingerprint, type Claim, type Fact, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Reliability, type Rubric, type Source, type Hit, type TableMapping } from '@def-ops/knowledge';
+import { category, entryOperations, type Claim, type Fact, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Reliability, type Rubric, type Source, type Hit, type TableMapping } from '@def-ops/knowledge';
 import { getEdits, kbOperations, onDataChange, type OperationKb } from './sim/userdata';
 import { claimText, factUse, KIND_RU } from './modeling/basis';
 import { correctsKey, deleteFact, parseCorrects, staleNow } from './kb/candidates';
-import { FactForm, type FactFormMode } from './kb/FactForm';
-import { factOrigin, ORIGIN_LONG, ORIGIN_RU } from './kb/fact-form';
-import * as kbStore from './kb/store';
+import { FactForm, useSeed, type FactFormMode } from './kb/FactForm';
+import { originOf, ORIGIN_LONG, ORIGIN_RU } from './kb/fact-form';
 import { CoveragePanel } from './modeling/Coverage';
 import * as kb from './kb/kb';
 import { ColumnMapping } from './kb/ColumnMapping';
@@ -294,18 +293,11 @@ const TYPED_CATEGORIES = new Set(['formations', 'terrain', 'operations', 'chrono
 /** Дата факта (как в resolve): у потерь — конец периода, иначе at или from. */
 const claimDate = (c: Claim) => (c.kind === 'losses' ? c.to : 'at' in c ? c.at : c.from);
 
-/** Встроенные записи (сид) по id — для значка «встроенный» (тот же факт на том же месте, что в сиде). */
-function useSeed(): Map<string, Entry> | null {
-  const [m, setM] = useState<Map<string, Entry> | null>(null);
-  useEffect(() => { let alive = true; void kbStore.seed().then((l) => { if (alive) setM(new Map(l.map((e) => [e.id, e]))); }); return () => { alive = false; }; }, []);
-  return m;
-}
-
 /**
  * Формальные факты записи (то, из чего собирается модель) и их использование в операциях: держит вход модели,
  * перекрыт другим фактом расхождения или не используется. Операции — те, к которым относится запись, и те,
- * где её факты в ходу. Значок — кто проверил факт (авто / человек / встроенный); свои факты — «изменить», «удалить»,
- * встроенные — «исправить»; «+ Факт». Исправление, чей встроенный факт изменился при обновлении базы, — с пометкой.
+ * где её факты в ходу. Значок — как принят факт (авто / человек / встроенный / ваш без проверки); свои факты —
+ * «изменить», «удалить» (после загрузки сида: иначе не отличить встроенный), встроенные — «исправить»; «+ Факт». Исправление, чей встроенный факт изменился при обновлении базы, — с пометкой.
  */
 function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
   const { ops, kbs } = useOperationKbs();
@@ -320,8 +312,10 @@ function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
   const list = ops.filter((o) => kbs.has(o.id) && (own.has(o.id) || typed.some(({ index }) => factUse(e.id, index, kbs.get(o.id)!) !== 'unused')));
   const name = (id: string) => s.entries.find((x) => x.aliases?.includes(id))?.title ?? id;
   const short = (t: string) => t.split(/[:,]/)[0].replace(/ операция$/, '');
-  /** Встроенный: тот же факт на том же месте записи сида. */
-  const builtin = (f: Fact, index: number) => { const b = seed?.get(e.id)?.facts?.[index]; return !!b && !f.check && fingerprint(b) === fingerprint(f); };
+  /** Встроенный: тот же факт на том же месте записи сида (сид загружен). */
+  const builtin = (f: Fact, index: number) => !!seed && originOf({ entry: e.id, index, fact: f }, seed) === 'seed';
+  /** Начала всех операций каталога (прежние исправления без записи закреплений). */
+  const allStarts = ops.map((o) => o.start);
   /** Исправленные встроенные факты записи (ключ corrects). */
   const corrected = new Set(facts.flatMap((f) => (f.corrects ? [f.corrects] : [])));
   /**
@@ -339,7 +333,7 @@ function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
   };
   const remove = async (f: Fact, index: number) => {
     if (!await confirmAsync(`Удалить факт «${claimText(f.claim!, name)}»?${f.corrects ? ' Это исправление встроенного факта — встроенный снова будет браться в модель.' : ''}`, { ok: 'Удалить', danger: true })) return;
-    try { await deleteFact(e.id, index, { starts: startsFor(f, index) }); setMsg('Факт удалён.'); } catch (x) { setMsg(`Не удалось удалить: ${(x as Error).message}`); }
+    try { await deleteFact(e.id, index, { starts: startsFor(f, index), allStarts }); setMsg('Факт удалён.'); } catch (x) { setMsg(`Не удалось удалить: ${(x as Error).message}`); }
   };
   const done = (m?: string) => { setForm(null); if (m) setMsg(m); };
   const formStarts = !form ? [] : form.kind === 'correct' ? startsOf(form.ref.entry, form.ref.index, form.ref.fact.claim)
@@ -348,7 +342,7 @@ function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
   const checkOps = (list.length ? list : ops).map((o) => o.id);
   return <section className="kb-sec"><h3>Формальные факты — входы модели</h3>
     {typed.length > 0 && <table className="kb-facts kb-typed"><thead><tr><th>Вид</th><th>Значение</th><th /><th title="кто проверил факт">Кто</th>{list.map((o) => <th key={o.id} title={o.title}>{short(o.title)}</th>)}<th /></tr></thead><tbody>
-      {typed.map(({ f, index }) => { const b = builtin(f, index); const o = b ? 'seed' : factOrigin(f) === 'seed' ? 'human' : factOrigin(f);
+      {typed.map(({ f, index }) => { const b = builtin(f, index); const o = originOf({ entry: e.id, index, fact: f }, seed);
         const fixed = b && corrected.has(correctsKey({ entry: e.id, index, fact: f })); return <tr key={index} className={fixed ? 'kb-fixed' : undefined}>
         <th>{KIND_RU[f.claim!.kind] ?? f.claim!.kind}</th>
         <td>{claimText(f.claim!, name)}
@@ -356,19 +350,19 @@ function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
           {fixed && <div className="small muted">исправлен — в модель идёт исправление</div>}
           {!f.source && f.check && <div className="small muted">без источника — допущение</div>}</td>
         <td className="kb-src">{relBadge(f.reliability ?? 'C')}</td>
-        <td><i className={`kb-origin o-${o}`} title={b ? ORIGIN_LONG.seed : ORIGIN_LONG[o]}>{ORIGIN_RU[o]}</i></td>
+        <td><i className={`kb-origin o-${o}`} title={ORIGIN_LONG[o]}>{ORIGIN_RU[o]}</i></td>
         {list.map((op) => { const u = factUse(e.id, index, kbs.get(op.id)!); return <td key={op.id} className="kb-use">
           {u === 'used' ? <span className="ok" title="держит вход модели операции">✓ в модели</span>
             : u === 'unused' ? <span className="muted">—</span>
             : <span className="warn" title={`выбран факт записи «${s.byId.get(u.overriddenBy.entry)?.title ?? u.overriddenBy.entry}»: ${u.overriddenBy.fact.value}`}>перекрыт</span>}</td>; })}
         <td className="kb-fact-act">{b ? (!fixed && <button className="link" onClick={() => setForm({ kind: 'correct', ref: { entry: e.id, index, fact: f, updated: e.updatedAt ?? '' } })}>исправить</button>)
-          : <><button className="link" onClick={() => setForm({ kind: 'edit', entry: e, index })}>изменить</button> <button className="link danger" onClick={() => void remove(f, index)}>удалить</button></>}</td>
+          : seed && <><button className="link" onClick={() => setForm({ kind: 'edit', entry: e, index })}>изменить</button> <button className="link danger" onClick={() => void remove(f, index)}>удалить</button></>}</td>
       </tr>; })}
     </tbody></table>}
     {typed.length > 0 && !list.length && <p className="muted small">Запись не относится ни к одной операции, и её факты сборками не используются.</p>}
     {!typed.length && <p className="muted small">Формальных фактов в записи нет: модель берёт значения сценария. Добавьте факт с источником.</p>}
     {msg && <div className="muted small" onClick={() => setMsg(null)}>{msg}</div>}
-    {form ? <FactForm key={JSON.stringify(form.kind === 'correct' ? [form.ref.entry, form.ref.index] : form.kind === 'edit' ? [form.kind, form.index] : form.kind)} mode={form} ops={checkOps} starts={formStarts} onDone={done} />
+    {form ? <FactForm key={JSON.stringify(form.kind === 'correct' ? [form.ref.entry, form.ref.index] : form.kind === 'edit' ? [form.kind, form.index] : form.kind)} mode={form} ops={checkOps} starts={formStarts} allStarts={allStarts} onDone={done} />
       : <div className="kb-actions"><button className="link" onClick={() => { setMsg(null); setForm({ kind: 'add', entry: e }); }}>+ Факт</button></div>}
   </section>;
 }

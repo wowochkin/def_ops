@@ -315,9 +315,33 @@ function correctionPins(old: Claim, next: Claim, self: Pins[string], starts: str
   return pins;
 }
 
+type PinVal = Pins[string];
+type PinRecord = NonNullable<Fact['correctionPins']>;
+
+/** Записать закрепления исправления: прежние значения по ключам (cur — нынешние закрепления) — в запись для отката. */
+function recordPins(write: Record<string, PinVal>, cur: Record<string, PinVal | null | undefined>): PinRecord {
+  return Object.keys(write).map((key) => ({ key, prev: cur[key] ?? null }));
+}
+
+/** Откат закреплений исправления: ровно записанные ключи — к прежним значениям. */
+const restorePins = (rec: PinRecord): Record<string, PinVal | null> => Object.fromEntries(rec.map((r) => [r.key, r.prev]));
+
+/**
+ * Прежнее исправление без записи закреплений: ключи встроенного — его дата, переданные starts и все начала операций
+ * каталога (allStarts) не раньше его даты; снимаются 'none' и закрепления на само исправление.
+ */
+function legacyCleanup(builtin: Claim, starts: string[], allStarts: string[], all: Pins, entry: string, index: number): Record<string, PinVal | null> {
+  const from = dateOf(builtin);
+  const keys = Object.keys(correctionPins(builtin, builtin, 'none', [...starts, ...allStarts.filter((s) => s >= from)]));
+  const out: Record<string, PinVal | null> = {};
+  for (const key of keys) { const p = all[key]; if (p === 'none' || (p && pinAt(p, entry, index))) out[key] = null; }
+  return out;
+}
+
 /**
  * Исправить встроенный факт: факт пользователя в той же записи (с источником и пометкой corrects) и закрепления
  * встроенного по моментам, где он выбирался (correctionPins; meta.starts — начала операций, на которые факт влияет).
+ * Записанные ключи и прежние значения по ним — в факте (correctionPins): удаление и правка исправления откатывают ровно их.
  */
 export async function correctBuiltin(ref: FactRef, next: Claim, meta: { source: string; pages?: string; reliability?: Reliability; note?: string; starts?: string[] }): Promise<void> {
   const old = ref.fact.claim;
@@ -331,9 +355,11 @@ export async function correctBuiltin(ref: FactRef, next: Claim, meta: { source: 
     check: { by: 'human', at: new Date().toISOString(), results: [] }, evidence: { kind: 'manual', ...(meta.note ? { note: meta.note } : {}) },
     corrects: correctsKey(ref),
   };
+  const write = correctionPins(old, next, { entry: ref.entry, index, fp: fingerprint(fact) }, meta.starts);
+  fact.correctionPins = recordPins(write, await store.pins());
   w.set({ ...e, facts: [...(e.facts ?? []), fact] });
   await w.save();
-  await store.putPins(correctionPins(old, next, { entry: ref.entry, index, fp: fingerprint(fact) }, meta.starts));
+  await store.putPins(write);
   await changed();
 }
 
@@ -344,63 +370,85 @@ async function correctedBuiltin(corrects: string): Promise<Fact | null> {
   return (await store.seed()).find((e) => e.id === k.entry)?.facts?.[k.index] ?? null;
 }
 
-const pinAt = (p: Pins[string], entry: string, index: number): p is { entry: string; index: number; fp?: string } => p !== 'none' && p.entry === entry && p.index === index;
+const pinAt = (p: PinVal, entry: string, index: number): p is { entry: string; index: number; fp?: string } => p !== 'none' && p.entry === entry && p.index === index;
+
+/** Встроенный факт (тот же на том же месте записи сида, без отметки проверки) не правится и не удаляется — только «исправить». */
+async function refuseBuiltin(entryId: string, index: number, f: Fact) {
+  const b = (await store.seed()).find((e) => e.id === entryId)?.facts?.[index];
+  if (b && !f.check && fingerprint(b) === fingerprint(f)) throw new Error('встроенный факт не правится и не удаляется — используйте «исправить»');
+}
+
+/** Для правки и удаления исправления: starts — моменты встроенного; allStarts — начала всех операций каталога (прежние исправления без записи). */
+export interface FactEditOpts { starts?: string[]; allStarts?: string[] }
 
 /**
  * Изменить свой факт (запись, номер): факт заменяется (проверено человеком), закрепления на него переводятся на
- * новый отпечаток — если вид и соединение ключа не изменились; иначе снимаются (у исправления — «не брать»).
- * Исправление встроенного закрепляется заново, как при «исправить» (correctionPins с теми же starts): без этого
- * закрепление стало бы «закреплённый факт удалён», и встроенный снова мог бы выиграть.
+ * новый отпечаток — если вид и соединение ключа не изменились; иначе снимаются. Исправление встроенного: сначала
+ * откат его закреплений (по записи correctionPins; прежнее без записи — legacyCleanup), затем закрепление заново, как
+ * при «исправить» (correctionPins с теми же starts) — иначе закрепление стало бы «закреплённый факт удалён», и
+ * встроенный снова мог бы выиграть.
  */
-export async function editFact(entryId: string, index: number, next: Fact, o: { starts?: string[] } = {}): Promise<void> {
+export async function editFact(entryId: string, index: number, next: Fact, o: FactEditOpts = {}): Promise<void> {
   const w = await work();
   const e = w.get(entryId);
   const old = e?.facts?.[index];
   if (!e || !old) throw new Error('факт не найден');
-  const fact: Fact = { ...next, check: { ...next.check, by: 'human', at: new Date().toISOString(), results: next.check?.results ?? [] }, ...(old.corrects ? { corrects: old.corrects } : {}) };
-  w.set({ ...e, facts: (e.facts ?? []).map((f, i) => (i === index ? fact : f)) });
-  await w.save();
+  await refuseBuiltin(entryId, index, old);
+  const { correctionPins: _rec, ...rest } = next;
+  const fact: Fact = { ...rest, check: { ...next.check, by: 'human', at: new Date().toISOString(), results: next.check?.results ?? [] }, ...(old.corrects ? { corrects: old.corrects } : {}) };
   const fpOld = fingerprint(old), self = { entry: entryId, index, fp: fingerprint(fact) };
-  const pins: Record<string, Pins[string] | null> = {};
-  for (const [key, p] of Object.entries(await store.pins())) {
-    if (!pinAt(p, entryId, index) || (p.fp != null && p.fp !== fpOld)) continue;
+  const all = await store.pins();
+  const b = old.corrects ? await correctedBuiltin(old.corrects) : null;
+  // 1) откат закреплений исправления
+  const pins: Record<string, PinVal | null> = old.correctionPins ? restorePins(old.correctionPins)
+    : b?.claim ? legacyCleanup(b.claim, o.starts ?? [], o.allStarts ?? [], all, entryId, index) : {};
+  // 2) прочие закрепления на изменяемый факт (выбор человека в «Расхождениях»)
+  for (const [key, p] of Object.entries(all)) {
+    if (key in pins || !pinAt(p, entryId, index) || (p.fp != null && p.fp !== fpOld)) continue;
     const parts = key.split('|');
     const same = !!fact.claim && parts[0] === fact.claim.kind && parts.slice(1, -1).join('|') === subjectOf(fact.claim);
-    pins[key] = same ? self : old.corrects ? 'none' : null;
+    pins[key] = same ? self : null;
   }
-  const b = old.corrects ? await correctedBuiltin(old.corrects) : null;
-  if (b?.claim && fact.claim) Object.assign(pins, correctionPins(b.claim, fact.claim, self, o.starts));
+  // 3) исправление — закрепить заново, с записью прежних значений (после отката)
+  if (b?.claim && fact.claim) {
+    const write = correctionPins(b.claim, fact.claim, self, o.starts);
+    const cur: Record<string, PinVal | null | undefined> = { ...all, ...pins };
+    fact.correctionPins = recordPins(write, cur);
+    Object.assign(pins, write);
+  }
+  w.set({ ...e, facts: (e.facts ?? []).map((f, i) => (i === index ? fact : f)) });
+  await w.save();
   if (Object.keys(pins).length) await store.putPins(pins);
   await changed();
 }
 
 /**
  * Удалить свой факт (запись, номер). Закрепления на него снимаются, на следующие факты записи — сдвигаются на номер
- * назад (номера поменялись, отпечатки — нет); у исправления встроенного снимаются и закрепления «не брать» встроенного
- * (его собственная дата и starts) — встроенный снова выбирается по правилу. Адреса принятых кандидатов — так же.
+ * назад (номера поменялись, отпечатки — нет). Исправление встроенного откатывает свои закрепления: ровно записанные
+ * ключи к прежним значениям (сознательное «не брать» части 1 возвращается); прежнее без записи — legacyCleanup
+ * (starts и все начала операций каталога не раньше даты встроенного). Адреса принятых кандидатов — сдвигаются.
  */
-export async function deleteFact(entryId: string, index: number, o: { starts?: string[] } = {}): Promise<void> {
+export async function deleteFact(entryId: string, index: number, o: FactEditOpts = {}): Promise<void> {
   const w = await work();
   const e = w.get(entryId);
   const facts = e?.facts ?? [];
   const old = facts[index];
   if (!e || !old) throw new Error('факт не найден');
-  w.set({ ...e, facts: facts.filter((_, i) => i !== index) });
-  await w.save();
-  const pins: Record<string, Pins[string] | null> = {};
+  await refuseBuiltin(entryId, index, old);
   const all = await store.pins();
+  const b = old.corrects && !old.correctionPins ? await correctedBuiltin(old.corrects) : null;
+  const restored = old.correctionPins ? restorePins(old.correctionPins)
+    : b?.claim ? legacyCleanup(b.claim, o.starts ?? [], o.allStarts ?? [], all, entryId, index) : {};
+  // прежние значения могут указывать на факты этой записи после удаляемого — номер назад
+  const pins: Record<string, PinVal | null> = Object.fromEntries(Object.entries(restored).map(([key, p]) =>
+    [key, p && p !== 'none' && p.entry === entryId && p.index >= index ? (p.index === index ? null : { ...p, index: p.index - 1 }) : p]));
   for (const [key, p] of Object.entries(all)) {
-    if (p === 'none' || p.entry !== entryId || p.index < index) continue;
+    if (key in pins || p === 'none' || p.entry !== entryId || p.index < index) continue;
     if (p.index === index) { if (p.fp == null || p.fp === fingerprint(old)) pins[key] = null; continue; }
     if (p.fp == null || p.fp === fingerprint(facts[p.index] ?? { key: '', value: '' })) pins[key] = { ...p, index: p.index - 1 };
   }
-  const b = old.corrects ? await correctedBuiltin(old.corrects) : null;
-  if (b?.claim) {
-    for (const key of Object.keys(correctionPins(b.claim, b.claim, 'none', o.starts))) {
-      const p = all[key];
-      if (p === 'none' || (p && pinAt(p, entryId, index))) pins[key] = null;
-    }
-  }
+  w.set({ ...e, facts: facts.filter((_, i) => i !== index) });
+  await w.save();
   if (Object.keys(pins).length) await store.putPins(pins);
   const cands = (await store.all<StoredCandidate>('candidates')).filter((c) => c.accepted?.entry === entryId && c.accepted.index >= index);
   if (cands.length) {

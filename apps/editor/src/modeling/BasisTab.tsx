@@ -14,7 +14,8 @@ import { agentScenario } from '../sim/kb-recompile';
 import { BASIS_KINDS, basisSummary, KIND_RU, claimText, ruDate, splitKey, type Rel, type RelCount } from './basis';
 import { downloadAgentTask } from '../kb/agent-task';
 import { staleNow } from '../kb/candidates';
-import { evidenceRu, factOrigin, ORIGIN_LONG, ORIGIN_RU } from '../kb/fact-form';
+import { evidenceRu, originOf, ORIGIN_LONG, ORIGIN_RU } from '../kb/fact-form';
+import { useSeed } from '../kb/FactForm';
 
 /** Открыть запись базы в разделе «Знания». */
 export function openKbEntry(id: string) {
@@ -48,6 +49,7 @@ export function BasisTab({ op }: { op: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [stale, setStale] = useState<Set<string>>(new Set());
+  const seed = useSeed();
 
   useEffect(() => { void kb.load(); return kb.subscribe(setS); }, []);
   // исправления, у которых встроенный факт изменился, — «пересмотрите»
@@ -94,7 +96,7 @@ export function BasisTab({ op }: { op: string }) {
   if (kbOf === undefined) return <section className="mdl-card"><p className="muted"><span className="spinner" /> загрузка…</p></section>;
   if (kbOf === null) return <section className="mdl-card"><h4>Основа модели</h4><p className="muted">Сборки из базы знаний для операции ещё нет: она делается при запуске и при каждом изменении базы. Подождите несколько секунд.</p></section>;
 
-  const sum = basisSummary(kbOf.provenance, isInput);
+  const sum = basisSummary(kbOf.provenance, isInput, seed);
   const pinAt = (key: string) => pins[key];
   const doPin = async (key: string, f: FactRef | null) => {
     setBusy(key); setErr(null);
@@ -110,7 +112,7 @@ export function BasisTab({ op }: { op: string }) {
   };
 
   /** Факт: формальная часть, надёжность, источник со страницами, как принят, доказательство (или цитата), переход к записи. */
-  const factView = (f: FactRef, key?: string | number) => { const o = factOrigin(f.fact); return <div key={key} className="bs-fact">
+  const factView = (f: FactRef, key?: string | number) => { const o = originOf(f, seed); return <div key={key} className="bs-fact">
     <div><i className={`kb-rel r${f.fact.reliability ?? 'C'}`}>{f.fact.reliability ?? 'C'}</i>{f.fact.claim ? claimText(f.fact.claim, nameOf) : f.fact.value}
       {' '}<i className={`kb-origin o-${o}`} title={ORIGIN_LONG[o]}>{ORIGIN_RU[o]}</i>
       {f.fact.corrects && <i className="kb-origin o-fix" title="факт пользователя вместо встроенного">исправляет встроенный</i>}
@@ -182,10 +184,10 @@ export function BasisTab({ op }: { op: string }) {
         <div className="bs-bar" title={(['A', 'B', 'C', 'assumption'] as const).map((x) => `${REL_RU[x]}: ${r[x]}`).join('\n')}>
           {t ? (['A', 'B', 'C', 'assumption'] as const).map((x) => r[x] ? <i key={x} className={`b${x}`} style={{ width: `${(r[x] / t) * 100}%` }} /> : null) : null}</div>
         <small>{t ? `${Math.round(((r.A + r.B + r.C) / t) * 100)} % на фактах · A ${r.A}, B ${r.B}, C ${r.C}, доп. ${r.assumption}` : 'нет входов'}
-          {r.human + r.auto + r.seed > 0 && <span className="bs-by" title="кем проверены факты, на которых держатся входы"> · человеком {r.human}, автоматически {r.auto}, встроенное {r.seed}</span>}</small>
+          {r.human + r.auto + r.seed + r.legacy > 0 && <span className="bs-by" title="кем проверены факты, на которых держатся входы"> · человеком {r.human}, автоматически {r.auto}, встроенное {r.seed}{r.legacy ? `, ваши без проверки ${r.legacy}` : ''}</span>}</small>
       </div>; })}
-      {(() => { const by = BASIS_KINDS.reduce((a, [k]) => ({ human: a.human + sum[k].human, auto: a.auto + sum[k].auto, seed: a.seed + sum[k].seed }), { human: 0, auto: 0, seed: 0 });
-        return <div className="bs-by-total small">Входы на фактах: проверено человеком <b>{by.human}</b> · автоматически <b>{by.auto}</b> · встроенное <b>{by.seed}</b></div>; })()}
+      {(() => { const by = BASIS_KINDS.reduce((a, [k]) => ({ human: a.human + sum[k].human, auto: a.auto + sum[k].auto, seed: a.seed + sum[k].seed, legacy: a.legacy + sum[k].legacy }), { human: 0, auto: 0, seed: 0, legacy: 0 });
+        return <div className="bs-by-total small">Входы на фактах: проверено человеком <b>{by.human}</b> · автоматически <b>{by.auto}</b> · встроенное <b>{by.seed}</b>{by.legacy > 0 && <> · ваши без проверки <b>{by.legacy}</b></>}</div>; })()}
       <div className="bs-legend">{(['A', 'B', 'C', 'assumption'] as const).map((x) => <span key={x}><i className={`b${x}`} />{REL_RU[x]}</span>)}</div>
     </div>
     <div className="mat-tabs">

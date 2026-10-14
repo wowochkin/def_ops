@@ -210,6 +210,76 @@ describe('editFact и deleteFact: правка своих фактов и исп
   });
 });
 
+describe('откат закреплений исправления (запись correctionPins)', () => {
+  const S = '1945-04-16T05:00';
+  async function builtinRef(): Promise<FactRef> {
+    const e = (await store.seed()).find((x) => x.id === 'f:su_1bf')!;
+    const index = e.facts!.findIndex((f) => f.claim?.kind === 'strength' && f.claim.at === '1945-04-16');
+    return { entry: e.id, index, fact: e.facts![index], updated: '' };
+  }
+  const fixIndex = async (entry: string) => (await store.entries()).find((x) => x.id === entry)!.facts!.findIndex((f) => f.corrects);
+
+  it('исправление о другом соединении: удаление со starts [] снимает «не брать» и на начале операции', async () => {
+    const ref = await builtinRef();
+    const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
+    await correctBuiltin(ref, { ...old, subject: 'su_1uf' }, { source: 'src:test', starts: [S] });
+    const i = await fixIndex(ref.entry);
+    const f = (await store.entries()).find((x) => x.id === ref.entry)!.facts![i];
+    expect(f.correctionPins?.map((r) => r.key).sort()).toEqual([pinKey('strength', 'su_1bf', '1945-04-16'), pinKey('strength', 'su_1bf', S)].sort());
+    await deleteFact(ref.entry, i, { starts: [] });
+    const pins = await store.pins();
+    expect(pins[pinKey('strength', 'su_1bf', S)]).toBeUndefined();
+    expect(pins[pinKey('strength', 'su_1bf', '1945-04-16')]).toBeUndefined();
+  });
+
+  it('прежнее закрепление человека по ключу возвращается при удалении исправления', async () => {
+    const ref = await builtinRef();
+    const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
+    await store.putPins({ [pinKey('strength', 'su_1bf', S)]: 'none' });
+    await correctBuiltin(ref, { ...old, personnel: old.personnel! + 1000 }, { source: 'src:test', starts: [S] });
+    expect((await store.pins())[pinKey('strength', 'su_1bf', S)]).not.toBe('none');
+    await deleteFact(ref.entry, await fixIndex(ref.entry), { starts: [] });
+    expect((await store.pins())[pinKey('strength', 'su_1bf', S)]).toBe('none');
+  });
+
+  it('правка исправления: прежние значения записи — до первого исправления, а не его собственные закрепления', async () => {
+    const ref = await builtinRef();
+    const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
+    await correctBuiltin(ref, { ...old, subject: 'su_1uf' }, { source: 'src:test', starts: [S] });
+    const i = await fixIndex(ref.entry);
+    const f0 = (await store.entries()).find((x) => x.id === ref.entry)!.facts![i];
+    await editFact(ref.entry, i, { ...f0, claim: { ...old, personnel: old.personnel! + 500 }, value: 'то же соединение' }, { starts: [S] });
+    const f1 = (await store.entries()).find((x) => x.id === ref.entry)!.facts![i];
+    expect(f1.correctionPins?.every((r) => r.prev === null)).toBe(true);
+    expect((await store.pins())[pinKey('strength', 'su_1bf', S)]).toEqual({ entry: ref.entry, index: i, fp: fingerprint(f1) });
+    await deleteFact(ref.entry, i);
+    expect((await store.pins())[pinKey('strength', 'su_1bf', S)]).toBeUndefined();
+  });
+
+  it('прежнее исправление без записи: удаление снимает «не брать» по началам операций каталога не раньше даты встроенного', async () => {
+    const ref = await builtinRef();
+    const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
+    await correctBuiltin(ref, { ...old, subject: 'su_1uf' }, { source: 'src:test', starts: [S] });
+    const e = (await store.all<Entry>('entries')).find((x) => x.id === ref.entry)!;
+    const i = e.facts!.findIndex((f) => f.corrects);
+    const { correctionPins: _r, ...legacy } = e.facts![i];
+    await store.put('entries', { ...e, facts: e.facts!.map((f, j) => (j === i ? legacy : f)) });
+    await store.putPins({ [pinKey('strength', 'su_1bf', '1945-01-12T05:00')]: 'none' });
+    await deleteFact(ref.entry, i, { starts: [], allStarts: ['1945-01-12T05:00', S] });
+    const pins = await store.pins();
+    expect(pins[pinKey('strength', 'su_1bf', S)]).toBeUndefined();
+    // начало операции раньше даты встроенного — не его ключ, не трогается
+    expect(pins[pinKey('strength', 'su_1bf', '1945-01-12T05:00')]).toBe('none');
+  });
+
+  it('встроенный факт не правится и не удаляется', async () => {
+    const ref = await builtinRef();
+    await correctBuiltin(ref, { ...(ref.fact.claim as Claim) }, { source: 'src:test', starts: [S] }); // запись пользователя — копия сида
+    await expect(deleteFact(ref.entry, ref.index)).rejects.toThrow(/исправить/);
+    await expect(editFact(ref.entry, ref.index, { ...ref.fact, value: 'x' })).rejects.toThrow(/исправить/);
+  });
+});
+
 describe('addManual: переправа, введённая вручную', () => {
   it('принята человеком в запись инфраструктуры операции, кандидат — принятым с адресом', async () => {
     const { addManual } = await import('../src/kb/candidates');
