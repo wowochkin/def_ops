@@ -8,7 +8,7 @@
  * списками обстановки так же, как приказы штаба модели.
  */
 import type { GameState } from '@def-ops/sim';
-import { LlmClient, type ChatMessage, type ChatResult } from '../llm/client';
+import { LlmClient, textOf, type ChatMessage, type ChatResult } from '../llm/client';
 import type { Thinking } from '../llm/config';
 import { ArrayItemStream } from '../stream-json';
 import { STAFF_ACTION_KINDS, TASKS, type StaffActionGiven } from '../decision';
@@ -72,8 +72,7 @@ const FORMAT = (n: number) => `Сейчас командующий просит 
 
 /** Сообщения модели: системный промпт советника с форматом вариантов вместо формата ответа на вопрос. */
 export function planMessages(built: ReturnType<typeof buildAdvice>, n: number): ChatMessage[] {
-  const first = built.messages[0].content;
-  const sys = typeof first === 'string' ? first : first.map((p) => (p.type === 'text' ? p.text : '')).join('');
+  const sys = textOf(built.messages[0].content);
   const cut = sys.indexOf('Ответ — строго один JSON-объект');
   const system = `${cut > 0 ? sys.slice(0, cut).trimEnd() : sys}\n\n${FORMAT(n)}`;
   return [{ role: 'system', content: system }, built.messages[built.messages.length - 1]];

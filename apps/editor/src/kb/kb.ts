@@ -336,6 +336,12 @@ export function streamView(content: string, reasoning: string, thinkingOff: bool
 /** Настройки модели для базы знаний: своя модель и размышление, если заданы, иначе — как в разделе «ИИ». */
 export const kbLlm = (llm: LlmSettings): LlmSettings => ({ ...llm, model: llm.kbModel || llm.model, thinking: llm.kbThinking ?? llm.thinking });
 
+/** Модель чтения сканов (со зрением): своя модель и размышление, если заданы, иначе — как в разделе «ИИ». */
+export const scanLlm = (llm: LlmSettings): LlmSettings => ({ ...llm, model: llm.scanModel || llm.model, thinking: llm.scanThinking ?? llm.thinking });
+
+/** Модель перекрёстной проверки цитат: своя, если задана, иначе — как в разделе «ИИ». */
+export const crossLlm = (llm: LlmSettings): LlmSettings => ({ ...llm, model: llm.crossModel || llm.model, thinking: llm.crossThinking ?? llm.thinking });
+
 /** Убрать из ответа служебные пометки модели о жанре и объёме («Лекция по…», «(Общий объём: около 500 слов)»). */
 export function cleanAnswer(t: string): string {
   return stripMeta(t).replace(/^\s+/, '');

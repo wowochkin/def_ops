@@ -21,6 +21,21 @@ function Params({ rows }: { rows: ParamRow[] }) {
   ))}</div>;
 }
 
+/** Проба «видит ли модель изображения»: кнопка и результат текстом. */
+function VisionCheck({ llm }: { llm: Llm }) {
+  const [res, setRes] = useState<string>('');
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true); setRes('');
+    try {
+      const { probeVision } = await import('../kb/vision-probe');
+      const r = await probeVision(llm.settings);
+      setRes(r.ok ? 'модель видит изображения' : r.why ?? 'проба не прошла');
+    } finally { setBusy(false); }
+  };
+  return <span><button className="link" disabled={busy} onClick={run}>{busy ? 'проверяю…' : 'Проверить'}</button> {res && <small>{res}</small>}</span>;
+}
+
 export function ModelsTab({ d, llm, onTune, onCompare }: { d: SimData; llm: Llm; onTune: (rulesId: string) => void; onCompare: (scenario: string, rules: string[]) => void }) {
   const [sel, setSel] = useState<string>('rules:ww2-berlin-cal');
   const [kind, id] = sel.split(':') as ['rules' | 'profile' | 'llm', string];
@@ -80,6 +95,9 @@ export function ModelsTab({ d, llm, onTune, onCompare }: { d: SimData; llm: Llm;
             <div><b>Советник командующего</b><small>ответы и варианты решения на ход</small><ModelPicker llm={llm} who="adv" purpose="советника" /></div>
             <div><b>Разбор операции</b><small>отчётный документ после игры</small><ModelPicker llm={llm} who="rev" purpose="разбора" /></div>
             <div><b>База знаний</b><small>ответы, лекции, разбор документов</small><ModelPicker llm={llm} who="kb" purpose="базы знаний" /></div>
+            <div><b>Чтение сканов</b><small>модель со зрением: распознаёт страницы сканов</small><ModelPicker llm={llm} who="scan" purpose="чтения сканов" /><VisionCheck llm={llm} /></div>
+            <label className="row"><input type="checkbox" checked={llm.settings.crossCheck !== false} onChange={(e) => llm.set({ crossCheck: e.target.checked })} /> Перекрёстная проверка <small>лучше другая модель, чем для разбора</small></label>
+            <div><b>Модель перекрёстной проверки</b><small>второе прочтение цитаты</small><ModelPicker llm={llm} who="cross" purpose="перекрёстной проверки" /></div>
           </section>
           <p className="muted">Связь с сервером и модель эмбеддингов — в разделах «ИИ» и «Знания».</p>
         </>}

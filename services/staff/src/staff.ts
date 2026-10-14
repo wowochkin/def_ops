@@ -7,7 +7,7 @@
  *     доклады и риски, с размышлением; идёт параллельно с первым запросом
  *     (сервер обслуживает их пакетом), размышление и текст — потоком в onDelta.
  */
-import { LlmClient, type ChatMessage, type ChatResult } from './llm/client';
+import { LlmClient, textOf, type ChatMessage, type ChatResult } from './llm/client';
 import { ArrayItemStream, StringFieldStream } from './stream-json';
 import { DECISION_SCHEMA, QUICK_SCHEMA, type Decision, type Order, type QuickDecision } from './decision';
 
@@ -35,7 +35,7 @@ export async function quickDecision(client: LlmClient, req: StaffRequest): Promi
   let intentSent = false;
   let first = false;
   const intent = new StringFieldStream('intent', (d) => req.onIntentDelta?.(d), (t) => { intentSent = true; req.onIntent?.(t); });
-  const messages = [...req.messages.slice(0, -1), { ...req.messages[req.messages.length - 1], content: `${req.messages[req.messages.length - 1].content}\n\n${QUICK_NOTE}` }];
+  const messages = [...req.messages.slice(0, -1), { ...req.messages[req.messages.length - 1], content: `${textOf(req.messages[req.messages.length - 1].content)}\n\n${QUICK_NOTE}` }];
   const result = await client.chat({
     messages, schema: { name: 'staff_quick_decision', schema: QUICK_SCHEMA }, thinking: 'off', signal: req.signal,
     onDelta: (_kind, text) => {

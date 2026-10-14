@@ -15,6 +15,11 @@ import type { LlmConfig } from './config';
 /** Часть сообщения: текст или картинка (data: URL) для моделей со зрением. */
 export type ChatPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
 
+/** Текст сообщения: строка как есть, у составного содержимого — склейка текстовых частей (картинки пропускаются). */
+export function textOf(content: string | ChatPart[]): string {
+  return typeof content === 'string' ? content : content.map((p) => (p.type === 'text' ? p.text : '')).join('');
+}
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string | ChatPart[];

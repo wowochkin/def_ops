@@ -23,6 +23,13 @@ export interface LlmSettings {
   /** База знаний: своя модель и размышление для ответов и разбора документов; пусто — как в разделе «ИИ». */
   kbModel?: string;
   kbThinking?: Thinking;
+  /** Чтение сканов (модель со зрением) и перекрёстная проверка цитат: свои модели и размышление; пусто — как в «ИИ». */
+  scanModel?: string;
+  scanThinking?: Thinking;
+  crossModel?: string;
+  crossThinking?: Thinking;
+  /** Перекрёстная проверка цитаты второй моделью (по умолчанию включена). */
+  crossCheck?: boolean;
   /** Штаб противника в игре: своя модель и размышление; пусто — как в разделе «ИИ». */
   enemyModel?: string;
   enemyThinking?: Thinking;

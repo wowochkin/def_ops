@@ -7,10 +7,10 @@ import { ModelSelect } from './ui';
 
 export const THINK_RU: Record<string, string> = { off: 'без размышления', low: 'короткое', medium: 'обычное', high: 'глубокое' };
 
-export function ModelPicker({ llm, who, purpose }: { llm: Llm; who: 'kb' | 'adv' | 'rev' | 'enemy'; purpose: string }) {
+export function ModelPicker({ llm, who, purpose }: { llm: Llm; who: 'kb' | 'adv' | 'rev' | 'enemy' | 'scan' | 'cross'; purpose: string }) {
   const models = llm.check.state === 'ok' ? llm.check.models : [];
   const base = llm.settings.model || models[0] || '—';
-  const mk = `${who}Model` as 'kbModel' | 'advModel' | 'revModel' | 'enemyModel', tk = `${who}Thinking` as 'kbThinking' | 'advThinking' | 'revThinking' | 'enemyThinking';
+  const mk = `${who}Model` as 'kbModel' | 'advModel' | 'revModel' | 'enemyModel' | 'scanModel' | 'crossModel', tk = `${who}Thinking` as 'kbThinking' | 'advThinking' | 'revThinking' | 'enemyThinking' | 'scanThinking' | 'crossThinking';
   return (
     <div className="kb-model">
       <ModelSelect value={llm.settings[mk] ?? ''} onChange={(v) => llm.set({ [mk]: v || undefined })} check={llm.check} empty={`как в «ИИ» (${base})`} title={`Модель для ${purpose}`} />

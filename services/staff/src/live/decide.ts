@@ -5,7 +5,7 @@
  * размышления (как в проверке на контрольных обстановках).
  */
 import type { Order, StaffAction } from '@def-ops/sim';
-import { LlmClient, type ChatResult } from '../llm/client';
+import { LlmClient, textOf, type ChatResult } from '../llm/client';
 import type { Thinking } from '../llm/config';
 import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, type Decision, type Issue } from '../decision';
 import { decisionToOrders, type AppliedOrder } from './apply';
@@ -42,7 +42,7 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
     if (res.degenerate && !opts.signal?.aborted) {
       opts.onRetry?.(`генерация зациклилась (${res.degenerate}) — повтор без схемы на сервере`);
       const again = await client.chat({
-        messages: [...sit.messages.slice(0, -1), { ...sit.messages[sit.messages.length - 1], content: sit.messages[sit.messages.length - 1].content + '\n\nОтветь одним JSON-объектом с полями из описания формата, без текста до и после него.' }],
+        messages: [...sit.messages.slice(0, -1), { ...sit.messages[sit.messages.length - 1], content: textOf(sit.messages[sit.messages.length - 1].content) + '\n\nОтветь одним JSON-объектом с полями из описания формата, без текста до и после него.' }],
         schema, schemaLoose: true, thinking: opts.thinking, signal: opts.signal, onDelta: opts.onDelta,
       });
       res = { ...again, timings: again.timings };
@@ -67,7 +67,7 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
   }
   if (res.jsonError) {
     // пустой или обрывочный ответ на длинный запрос — обычно запрос длиннее контекста, загруженного в LM Studio
-    const tokens = Math.round(sit.messages.reduce((a, m) => a + m.content.length, 0) / 3.2);
+    const tokens = Math.round(sit.messages.reduce((a, m) => a + textOf(m.content).length, 0) / 3.2);
     const empty = !res.content.trim() || res.content.trim().length < 40;
     out.error = `ответ не разобран: ${res.jsonError}${empty ? ` — модель вернула ${res.content.trim() ? 'обрывок' : 'пустой ответ'}; запрос ≈ ${Math.round(tokens / 100) / 10} тыс. токенов — проверьте длину контекста модели в LM Studio (Context Length: нужно не меньше ${Math.ceil((tokens + 4000) / 4096) * 4} тыс.) или выберите модель с большим контекстом` : `; начало ответа: «${res.content.trim().slice(0, 160)}»`}`;
     return out;
