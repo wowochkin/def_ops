@@ -40,7 +40,8 @@ type Claim =
   | { kind: 'position'; subject: string; at: string; place?: string; lngLat?: [number, number]; uncertaintyKm?: number }
   | { kind: 'boundary'; between: [string, string]; from: string; to?: string; points: string[]; inclusive?: string }
   | { kind: 'crossing'; subject: string; from: string; state: 'open' | 'destroyed' | 'built' }
-  | { kind: 'event'; id: string; at: string; title: string; place?: string };
+  | { kind: 'event'; id: string; at: string; title: string; place?: string }
+  | { kind: 'losses'; subject: string; from: string; to: string; killed?: number; wounded?: number; missing?: number; tanks?: number };
 ```
 
 - `subject` — id формирования сценария (`su_61a`, `de_9fjd`) или объекта театра (мост); сопоставление названия с id —
@@ -74,7 +75,10 @@ type Claim =
 | положения (`berlin-1945-positions.json`, выписки ЦАМО) | `position` |
 | разграничительные линии (`*-boundaries.json`) | `boundary` |
 | объекты (`berlin-1945-objects.json`: мосты, переправы) | `crossing` |
-| ежедневные потери (`berlin-1945-losses-daily*.json`), остатки дивизий (`division-remnants-1945.json`) | `strength` на даты, `reinforce` (где источник говорит о пополнении) |
+| ежедневные потери (`berlin-1945-losses-daily*.json`) | `losses` за период (убито, ранено, пропало) — контрольные точки накопленных потерь |
+
+Остатки дивизий (`division-remnants-1945.json`) — общие правила и текстовые примеры без чисел по дивизиям;
+формальных частей в части 1 не дают.
 | события истории сценария | `event` |
 
 Допущения сборщика сценария (медиана известных дивизий и т. п.) фактами не становятся — во «Основе модели» они
@@ -90,7 +94,8 @@ type Claim =
 
 - `formations` — начальные численность, подчинённость (`parent`), `enterAt` (сейчас — только численность);
 - `changes` (новое) — изменения по датам: `{ at, formation, kind: 'reinforce' | 'resubordinate', personnel?, tanks?, guns?, parent?, fact }`;
-- `checkpoints` (новое, в историю) — `{ at, formation, personnel?, tanks?, guns?, fact }`;
+- `checkpoints` (новое, в историю) — численность на дату `{ at, formation, personnel?, tanks?, guns?, fact }` и
+  накопленные с начала операции потери `{ at, formation, losses, fact }` (сумма `losses` по `to ≤ at`);
 - `positions`, `boundaries` — как сейчас; события — в `history.events`;
 - переправы — в нынешние правки инфраструктуры (`saveInfra`).
 
@@ -118,8 +123,9 @@ type Claim =
   изменения: `reinforce` прибавляет к численности, танкам, орудиям (и к исходным, по которым считается доля сил),
   `resubordinate` меняет `parent`. События журнала: `reinforced`, `resubordinated`.
 - `History` (`history.ts`): `checkpoints?: StrengthCheckpoint[]`.
-- Сверка: `compareStrength(run, history)` — доля контрольных точек, где расчётная численность в пределах ±25 %
-  документальной, медиана расхождения, по формированиям и дням. В отчёте переигровки (`report.ts`) — свой раздел.
+- Сверка: `compareStrength(run, history)` — доля контрольных точек в пределах ±25 % документа (численность — против
+  расчётной; потери — против расчётных накопленных: начальные + пополнения − текущие), медиана расхождения, по
+  формированиям и дням. В отчёте переигровки (`report.ts`) — свой раздел.
 - Калибровка (`calibrate.ts`, `evaluateRules`): если контрольных точек в обучающей половине не меньше 10, мерило =
   ¾ нынешнего + ¼ доли численности в допуске; иначе — как сейчас.
 
