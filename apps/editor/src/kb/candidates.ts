@@ -253,7 +253,8 @@ export async function decideCandidates(ids: string[], accept: boolean, edits: Re
  */
 export async function addManual(c: Candidate, ctx: AcceptCtx): Promise<{ entry: string; index: number } | { pending: 'no-entry' }> {
   const r = await acceptCandidate(c, 'human', ctx);
-  await store.put('candidates', 'pending' in r ? toQueue(c) : { ...c, verdict: 'auto', state: 'accepted', accepted: r } satisfies StoredCandidate);
+  // ручной ввод — решение человека, а не итог проверок: verdict 'review' (как принятый из очереди), state 'accepted'
+  await store.put('candidates', 'pending' in r ? toQueue(c) : { ...c, verdict: 'review', state: 'accepted', accepted: r } satisfies StoredCandidate);
   await changed();
   return r;
 }

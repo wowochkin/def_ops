@@ -5,9 +5,8 @@
 import type { Claim, Entry, Fact } from './schema';
 import type { Candidate, CheckResult } from './candidate';
 import { matchFormation } from './sync';
-import { matchEntry, quoteFound } from './extract';
+import { matchEntryHow, quoteFound, stemSimilarity } from './extract';
 import { fingerprint } from './resolve';
-import { stems } from './search';
 
 /** Пороги правдоподобия — допущения без опоры (norms.json: assume-plausible-*). */
 export const PLAUSIBLE = {
@@ -98,26 +97,28 @@ function checkNumbers(c: Candidate): CheckResult {
   return miss.length ? res('numbers', 'fail', `в цитате нет числа: ${miss.join(', ')}`) : ok('numbers');
 }
 
-/** Сопоставить название с соединением сценария или записью базы: id или причина сомнения. */
-function matchName(name: string, ctx: CheckCtx): { id: string } | { why: string } {
+/**
+ * Сопоставить название с соединением сценария или записью базы: id или причина сомнения. loose — найдено только по
+ * сходству основ слов (не точное название, синоним или номер): id ставится, но проверка — сомнение.
+ */
+function matchName(name: string, ctx: CheckCtx): { id: string; loose?: string } | { why: string } {
   const f = matchFormation(name, ctx.formations, ctx.entries);
   if (f) return { id: f };
-  const n = normName(name), st = new Set(stems(name));
-  const similar = (title: string) => {
-    if (normName(title) === n) return true;
-    const es = stems(title);
-    const common = es.filter((w) => st.has(w)).length;
-    // все слова названия есть в записи (название короче) или почти все слова совпали
-    return common >= 2 && (common === st.size || common / Math.max(es.length, st.size) > 0.75);
-  };
+  const n = normName(name);
+  const similar = (title: string) => normName(title) === n || stemSimilarity(name, title) > 0;
   const hitEntries = ctx.entries.filter((e) => e.category === 'formations' && [e.title, ...(e.aliases ?? [])].some(similar));
   const hitForms = ctx.formations.filter((x) => similar(x.name));
   const titles = [...new Set([...hitEntries.map((e) => e.title), ...hitForms.map((x) => x.name)])];
   if (titles.length > 1) return { why: `«${name}» подходит к нескольким: ${titles.join('; ')}` };
-  const one = matchEntry(ctx.entries, 'formations', name, []);
-  if (one) return { id: ctx.formations.find((x) => (one.aliases ?? []).includes(x.id))?.id ?? one.id };
-  if (hitEntries.length === 1) return { id: hitEntries[0].id };
-  if (hitForms.length === 1) return { id: hitForms[0].id };
+  const one = matchEntryHow(ctx.entries, 'formations', name, []);
+  const loose = (title: string) => `сопоставлено по сходству названия: «${name}» → «${title}» — проверьте`;
+  if (one) {
+    const id = ctx.formations.find((x) => (one.entry.aliases ?? []).includes(x.id))?.id ?? one.entry.id;
+    return one.exact ? { id } : { id, loose: loose(one.entry.title) };
+  }
+  const exactName = (t: string) => normName(t) === n;
+  if (hitEntries.length === 1) { const e = hitEntries[0]; return [e.title, ...(e.aliases ?? [])].some(exactName) ? { id: e.id } : { id: e.id, loose: loose(e.title) }; }
+  if (hitForms.length === 1) { const x = hitForms[0]; return exactName(x.name) ? { id: x.id } : { id: x.id, loose: loose(x.name) }; }
   return { why: `«${name}» не найдено среди соединений` };
 }
 
@@ -128,7 +129,7 @@ function checkSubject(c: Candidate, ctx: CheckCtx): CheckResult | null {
   const set = (field: string, name: string | undefined) => {
     if (name) {
       const m = matchName(name, ctx);
-      if ('id' in m) cl[field] = m.id; else whys.push(m.why);
+      if ('id' in m) { cl[field] = m.id; if (m.loose) whys.push(m.loose); } else whys.push(m.why);
     } else if (!cl[field]) whys.push(`не указано: ${field === 'parent' ? 'вышестоящий' : 'соединение'}`);
   };
   if (c.claim.kind === 'event') return null;
@@ -136,7 +137,7 @@ function checkSubject(c: Candidate, ctx: CheckCtx): CheckResult | null {
     const b = c.claim.between;
     [0, 1].forEach((i) => {
       const name = c.names.between?.[i];
-      if (name) { const m = matchName(name, ctx); if ('id' in m) b[i] = m.id; else whys.push(m.why); }
+      if (name) { const m = matchName(name, ctx); if ('id' in m) { b[i] = m.id; if (m.loose) whys.push(m.loose); } else whys.push(m.why); }
       else if (!b[i]) whys.push('не указано: объединение линии');
     });
   } else {

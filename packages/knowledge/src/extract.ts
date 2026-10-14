@@ -193,21 +193,50 @@ export function quoteFound(quote: string, text: string): boolean {
   return norm(quote).split(/\s*(?:\.\.\.|…)\s*/).filter((p) => p.length >= 8).every((p) => t.includes(p)) && norm(quote).replace(/\.\.\.|…/g, '').length >= 8;
 }
 
-/** Найти существующую запись той же категории по названию и синонимам. */
-export function matchEntry(entries: Entry[], cat: string, title: string, aliases: string[]): Entry | null {
+/**
+ * Основы слов рода и вида войск (корпус, дивизия, армия, батальон…): совпадение только по ним не говорит, что это
+ * то же соединение («Неизвестный корпус» — не «Батальон … (резерв корпуса)»).
+ */
+const GENERIC = /^(корп|дивиз|арми|армей|батал|бат|полк|бриг|груп|фронт|отряд|гарни|крепо|резер|част|соеди|объед|войск|гвард|гв|удар|танк|стрел|пехот|кавал|механ|мех|мотор|артил|штаб|кп|сапер|инжен|морск|ополч|народ|division|div|corps|korps|armee|army|brig|regim|panze|infan|grena|volks|festu|kampf|gruppe|batai|abtei|ss)/i;
+/** Основа слова отличительная: число или имя собственное (не род и вид войск). */
+export const distinctiveStem = (w: string) => /\d/.test(w) || !GENERIC.test(w);
+
+/**
+ * Сходство названий по основам слов (без повторов): совпало не меньше двух основ, среди них хотя бы одна
+ * отличительная (число или имя собственное), и все основы названия есть в записи или почти все совпали.
+ */
+export function stemSimilarity(name: string, title: string): number {
+  const st = new Set(stems(name));
+  const es = [...new Set(stems(title))];
+  const common = es.filter((w) => st.has(w));
+  if (common.length < 2 || !common.some(distinctiveStem)) return 0;
+  const score = common.length / Math.max(es.length, st.size);
+  return common.length === st.size || score > 0.75 ? score : 0;
+}
+
+/**
+ * Найти существующую запись той же категории по названию и синонимам. exact — совпало название или синоним;
+ * иначе найдено по сходству основ слов (stemSimilarity) — такое сопоставление требует проверки человеком.
+ */
+export function matchEntryHow(entries: Entry[], cat: string, title: string, aliases: string[]): { entry: Entry; exact: boolean } | null {
   const names = [title, ...aliases].map(norm);
   const exact = entries.find((e) => e.category === cat && [e.title, ...(e.aliases ?? [])].some((x) => names.includes(norm(x))));
-  if (exact) return exact;
-  const st = new Set(stems(title));
+  if (exact) return { entry: exact, exact: true };
   let best: Entry | null = null, bs = 0;
   for (const e of entries) {
     if (e.category !== cat) continue;
-    const es = stems(e.title);
-    const common = es.filter((w) => st.has(w)).length;
-    const score = common / Math.max(es.length, st.size);
-    if (common >= 2 && score > 0.75 && score > bs) { bs = score; best = e; }
+    const st = new Set(stems(title));
+    const es = [...new Set(stems(e.title))];
+    const common = es.filter((w) => st.has(w));
+    const score = common.length / Math.max(es.length, st.size);
+    if (common.length >= 2 && common.some(distinctiveStem) && score > 0.75 && score > bs) { bs = score; best = e; }
   }
-  return best;
+  return best ? { entry: best, exact: false } : null;
+}
+
+/** Найти существующую запись той же категории по названию и синонимам (точно или по сходству основ). */
+export function matchEntry(entries: Entry[], cat: string, title: string, aliases: string[]): Entry | null {
+  return matchEntryHow(entries, cat, title, aliases)?.entry ?? null;
 }
 
 const slug = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 50);

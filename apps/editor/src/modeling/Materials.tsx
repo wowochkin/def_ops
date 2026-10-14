@@ -73,7 +73,7 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
       const claim: Claim = { kind: 'crossing', subject, from, state };
       const c: Candidate = {
         id: `manual:${op}:${Date.now().toString(36)}`, claim, names: { subject, ...(r.place ? { place: r.place } : {}) }, key: 'переправа', value: claimText(claim),
-        source: 'вручную', origin: 'manual', evidence: { kind: 'manual', ...(r.note ? { note: r.note } : {}) }, op, checks: [], verdict: 'auto', state: 'pending',
+        source: 'вручную', origin: 'manual', evidence: { kind: 'manual', ...(r.note ? { note: r.note } : {}) }, op, checks: [], verdict: 'review', state: 'pending',
       };
       const res = await addManual(c, { formations: (await opCtx(op)).formations });
       setMsg('pending' in res ? 'Переправа ждёт в очереди «На проверку».' : 'Переправа добавлена в базу знаний (запись «Состояние инфраструктуры» операции) и войдёт в расчёт через сборщик операции.');

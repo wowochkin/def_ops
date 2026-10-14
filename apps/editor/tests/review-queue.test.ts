@@ -106,6 +106,13 @@ describe('подсказка модели', () => {
     expect(l.claim).toMatchObject({ between: ['su_99a', ''] });
     expect(l.names?.between).toEqual(['99-я армия', '3-я армия']);
     expect(applyFixes(list[0], [], match)).toEqual({});
+    const par = cand('p', { kind: 'parent', subject: 'su_99a', from: '1945-04-16', parent: 'su_1bf' }, []);
+    const pf = applyFixes(par, [{ field: 'parent', value: '8-я гв. армия' }], match);
+    expect(pf.claim).toMatchObject({ parent: 'su_8ga' });
+    expect(pf.names?.parent).toBe('8-я гв. армия');
+    const pu = applyFixes(par, [{ field: 'parent', value: 'Неизвестный фронт' }], match);
+    expect(pu.claim).toMatchObject({ parent: '' });
+    expect(pu.names?.parent).toBe('Неизвестный фронт');
   });
 });
 

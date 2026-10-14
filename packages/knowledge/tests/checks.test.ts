@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { numbersIn, claimNumbers, runChecks, verdictOf, PLAUSIBLE, type Candidate, type CheckCtx, type Claim, type Entry, type Evidence } from '../src';
+import { numbersIn, claimNumbers, matchEntry, runChecks, verdictOf, PLAUSIBLE, type Candidate, type CheckCtx, type Claim, type Entry, type Evidence } from '../src';
 
 const cand = (claim: Claim, evidence: Evidence, over: Partial<Candidate> = {}): Candidate => ({
   id: 'c1', claim, names: {}, key: 'k', value: 'v', source: 'doc:d1', origin: 'text', evidence,
@@ -114,6 +114,31 @@ describe('subject', () => {
   it('не найдено — doubt', () => {
     const c = cand({ ...base }, q('x'), { names: { subject: 'Неизвестный корпус' } });
     expect(lvl(c, ctx({ formations }), 'subject')?.level).toBe('doubt');
+  });
+  const mk = (id: string, title: string, aliases?: string[]): Entry => ({ id, category: 'formations', title, summary: '', status: 'checked', ...(aliases ? { aliases } : {}) });
+  it('совпадение только по роду войск (повторы основ не в счёт) — не сопоставлено', () => {
+    const entries = [mk('f:rear_btl_schildau', 'Батальон «Шильдау» (резерв корпуса); КП артиллерии корпуса (Oberst Köhler) в Шильдау с 12.04')];
+    const c = cand({ ...base }, q('x'), { names: { subject: 'Неизвестный корпус' } });
+    const r = lvl(c, ctx({ entries }), 'subject');
+    expect(r?.level).toBe('doubt');
+    expect((c.claim as { subject: string }).subject).toBe('');
+    expect(matchEntry(entries, 'formations', 'Неизвестный корпус', [])).toBeNull();
+  });
+  it('сопоставлено только по сходству основ — id ставится, но doubt', () => {
+    const entries = [mk('f:x', 'Боевая группа Хартманн (Kampfgruppe)')];
+    const c = cand({ ...base }, q('x'), { names: { subject: 'группа Хартманн' } });
+    const r = lvl(c, ctx({ entries }), 'subject');
+    expect((c.claim as { subject: string }).subject).toBe('f:x');
+    expect(r?.level).toBe('doubt');
+    expect(r?.why).toContain('по сходству');
+  });
+  it('точное название или синоним записи — ok', () => {
+    const entries = [mk('f:x', 'Боевая группа Хартманн', ['KG Hartmann'])];
+    for (const name of ['Боевая группа Хартманн', 'KG Hartmann']) {
+      const c = cand({ ...base }, q('x'), { names: { subject: name } });
+      expect(lvl(c, ctx({ entries }), 'subject')?.level).toBe('ok');
+      expect((c.claim as { subject: string }).subject).toBe('f:x');
+    }
   });
 });
 

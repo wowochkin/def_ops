@@ -156,13 +156,13 @@ describe('addManual: переправа, введённая вручную', () 
     const { addManual } = await import('../src/kb/candidates');
     const c: Candidate = {
       id: 'm1', claim: { kind: 'crossing', subject: 'мост у Кюстрина', from: '1945-04-16', state: 'destroyed' }, names: { subject: 'мост у Кюстрина' },
-      key: 'переправа', value: 'мост у Кюстрина', source: 'вручную', origin: 'manual', evidence: { kind: 'manual' }, op: OP, checks: [], verdict: 'auto', state: 'pending',
+      key: 'переправа', value: 'мост у Кюстрина', source: 'вручную', origin: 'manual', evidence: { kind: 'manual' }, op: OP, checks: [], verdict: 'review', state: 'pending',
     };
     const r = await addManual(c, ctx);
     expect(r).toEqual({ entry: `u:${OP}:infrastructure`, index: 0 });
     const f = (await userEntry(`u:${OP}:infrastructure`))?.facts?.[0];
     expect(f?.check?.by).toBe('human');
     expect(f?.claim).toMatchObject({ kind: 'crossing', state: 'destroyed' });
-    expect((await queue())[0]).toMatchObject({ id: 'm1', state: 'accepted', accepted: { entry: `u:${OP}:infrastructure`, index: 0 } });
+    expect((await queue())[0]).toMatchObject({ id: 'm1', verdict: 'review', state: 'accepted', accepted: { entry: `u:${OP}:infrastructure`, index: 0 } });
   });
 });

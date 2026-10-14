@@ -83,7 +83,7 @@ export function ReviewQueue({ s, llm, open, filter, setFilter }: { s: kb.KbState
     const name = s.documents.find((d) => d.id === doc)?.name ?? doc;
     if (!await confirmAsync(`Отклонить все ${cs.length} кандидатов из «${name}», ждущих проверки?`, { ok: 'Отклонить', danger: true })) return;
     setBusy(true);
-    try { await decideCandidates(cs.map((c) => c.id), false); setMsg(`Отклонено: ${cs.length}.`); } finally { setBusy(false); }
+    try { await decideCandidates(cs.map((c) => c.id), false); setMsg(`Отклонено: ${cs.length}.`); } catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
   };
   const set = (p: Partial<QueueFilter>) => setFilter({ ...filter, ...p });
   const any = !!(filter.doc || filter.kind || filter.subject || filter.reason);

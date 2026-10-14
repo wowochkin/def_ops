@@ -507,6 +507,8 @@ export function DocRow({ d, s, llm, open, onQueue, opTitle }: { d: KbDocument; s
     } catch (e) { setMsg((e as Error).message); }
   };
   const c = d.counts;
+  // таблицу и пакет фактов разбирает код; модель только предлагает сопоставление столбцов (нет её — сопоставит человек)
+  const needsModel = d.kind !== 'table' && d.kind !== 'facts';
   return (
     <div className="kb-doc">
       <div className="kb-doc-h">{open ? <button className="link" onClick={() => open(`doc:${d.id}`)}><b>{d.name}</b></button> : <b>{d.name}</b>}<i className={`kb-rel r${d.reliability}`}>{d.reliability}</i>
@@ -516,7 +518,7 @@ export function DocRow({ d, s, llm, open, onQueue, opTitle }: { d: KbDocument; s
       {d.extracted && <div className="kb-extracted">Извлечено (прежний разбор): новых записей <b>{d.extracted.entries}</b>, дополнений <b>{d.extracted.updates}</b>{d.operation ? <>, сведений об инфраструктуре <b>{d.extracted.infra}</b>, положений <b>{d.extracted.positions ?? 0}</b>, разграничительных линий <b>{d.extracted.boundaries ?? 0}</b></> : null}{d.extracted.dropped ? <span className="muted"> · отброшено без цитаты {d.extracted.dropped}</span> : null}</div>}
       {job ? <div className="kb-prog"><i style={{ width: `${(job.at / Math.max(1, job.total)) * 100}%` }} /><span>{job.text}</span><button onClick={kb.stop}>Остановить</button></div>
         : <div className="row">
-          {(done < total || d.status === 'waiting') && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => void run()}>{done ? 'Продолжить разбор' : 'Разобрать'}</button>}
+          {(done < total || d.status === 'waiting') && <button className="primary" disabled={!!s.job || (needsModel && llm.check.state !== 'ok')} title={needsModel && llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => void run()}>{done ? 'Продолжить разбор' : 'Разобрать'}</button>}
           {done < total && (d.pageCount ?? 0) > 1 && <span className="kb-range muted">страницы <input type="number" min={1} max={d.pageCount} value={from} placeholder="1" onChange={(e) => setFrom(e.target.value)} style={{ width: '4.5em' }} /> — <input type="number" min={1} max={d.pageCount} value={to} placeholder={String(d.pageCount)} onChange={(e) => setTo(e.target.value)} style={{ width: '4.5em' }} /></span>}
           {(c || d.processed) ? <button className={results ? 'on' : ''} onClick={() => setResults(!results)}>Итоги</button> : null}
           {waiting > 0 && onQueue && <button onClick={onQueue} title="Кандидаты этого документа в очереди «На проверку»">на проверку: {waiting}</button>}

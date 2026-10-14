@@ -203,7 +203,9 @@ export function applyFixes(c: AnyCand, fixes: AssistAnswer['fixes'], match: (nam
       continue;
     }
     if (!CLAIM_FIELDS[claim.kind].some((f) => f.key === field)) continue;
-    const next = field === 'parent' ? { ...claim, parent: match(value) ?? value } as Claim : setClaimField(claim, field, value);
+    // вышестоящее — как соединение: id по названию (не нашлось — пусто), название — в names
+    if (field === 'parent') { claim = { ...claim, parent: match(value) ?? '' } as Claim; names = { ...names, parent: value }; touched = true; continue; }
+    const next = setClaimField(claim, field, value);
     if (next !== claim) { claim = next; touched = true; }
   }
   return touched ? { claim, names } : {};
