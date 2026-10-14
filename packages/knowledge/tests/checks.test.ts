@@ -52,6 +52,18 @@ describe('quote и numbers', () => {
     expect(lvl(cand(losses, sc('численность 1 250 человек'), { origin: 'scan' }), ctx({ transcript: 'численность 1 250 человек' }), 'quote')?.level).toBe('ok');
     expect(lvl(cand(losses, sc('численность 9 999 человек'), { origin: 'scan' }), ctx({ transcript: tr }), 'quote')?.level).toBe('fail');
   });
+  it('скан с «?» в числе: numbers — doubt, итог review (не drop)', () => {
+    const c = cand({ kind: 'strength', subject: 's', at: '1945-04-16', personnel: 1250 }, { kind: 'scan', doc: 'd1', page: 1, quote: 'численность 1 2?0 человек' }, { origin: 'scan' });
+    const r = runChecks(c, ctx({ transcript: 'численность 1 2?0 человек' }));
+    expect(r.find((x) => x.check === 'numbers')?.level).toBe('doubt');
+    expect(verdictOf(r)).toBe('review');
+  });
+  it('агент со ссылкой без выписки: numbers — doubt', () => {
+    const c = cand(losses, { kind: 'agent', ref: 'ЦАМО 233-2356' }, { origin: 'agent' });
+    const r = runChecks(c, ctx());
+    expect(r.find((x) => x.check === 'quote')?.level).toBe('ok');
+    expect(r.find((x) => x.check === 'numbers')?.level).toBe('doubt');
+  });
   it('таблица: строка есть — ok, нет — fail; числа берутся из ячеек', () => {
     const e: Evidence = { kind: 'row', doc: 'd1', row: 3, cells: { 'Убито': '4 910' } };
     const c = cand(losses, e, { origin: 'table' });
@@ -83,6 +95,22 @@ describe('subject', () => {
     expect(r?.why).toContain('1-го формирования');
     expect(r?.why).toContain('2-го формирования');
   });
+  it('сокращения названий сопоставляются', () => {
+    const fs = [
+      { id: 'su_8gva', name: '8-я гвардейская армия' }, { id: 'su_1gta', name: '1-я гвардейская танковая армия' },
+      { id: 'su_5ua', name: '5-я ударная армия' }, { id: 'su_47a', name: '47-я армия' },
+      { id: 'su_79sk', name: '79-й стрелковый корпус' }, { id: 'su_9tk', name: '9-й танковый корпус' },
+    ];
+    const id = (name: string) => { const c = cand({ ...base }, q('x'), { names: { subject: name } }); runChecks(c, ctx({ formations: fs })); return (c.claim as { subject: string }).subject; };
+    expect(id('8 гв. А')).toBe('su_8gva');
+    expect(id('8 гв.А')).toBe('su_8gva');
+    expect(id('1 гв. ТА')).toBe('su_1gta');
+    expect(id('5 уд. А')).toBe('su_5ua');
+    expect(id('5 УА')).toBe('su_5ua');
+    expect(id('47 А')).toBe('su_47a');
+    expect(id('79 ск')).toBe('su_79sk');
+    expect(id('9 тк')).toBe('su_9tk');
+  });
   it('не найдено — doubt', () => {
     const c = cand({ ...base }, q('x'), { names: { subject: 'Неизвестный корпус' } });
     expect(lvl(c, ctx({ formations }), 'subject')?.level).toBe('doubt');
@@ -99,6 +127,9 @@ describe('date', () => {
     expect(lvl(cand(at('1945-04-01'), q('x')), ctx({ op }), 'date')?.level).toBe('doubt');
     expect(lvl(cand(at('1945-05-03'), q('x')), ctx({ op }), 'date')?.level).toBe('doubt');
     expect(lvl(cand(at('1945-05-02'), q('x')), ctx({ op }), 'date')?.level).toBe('ok');
+  });
+  it('граница: 1945-04-08 (8 суток до начала) — doubt', () => {
+    expect(lvl(cand(at('1945-04-08'), q('x')), ctx({ op }), 'date')?.level).toBe('doubt');
   });
   it('не дата — fail', () => {
     expect(lvl(cand(at('1945-13-01'), q('x')), ctx({ op }), 'date')?.level).toBe('fail');

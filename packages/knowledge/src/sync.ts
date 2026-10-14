@@ -170,7 +170,10 @@ export function matchFormation(name: string, formations: Pick<SyncFormation, 'id
     const s = norm(x);
     const num = /\b(\d+|[ivxlc]+)\b/i.exec(s)?.[1]?.toLowerCase() ?? '';
     const guards = /гв|garde|guards|gds/.test(s);
-    const kind = /танк|panzer|tank|\bта\b/.test(s) ? 'tank' : /удар|shock|\bуда\b/.test(s) ? 'shock' : /корпус|korps|corps|\bск\b|\bтк\b|\bмк\b|\bак\b/.test(s) ? 'corps' : /дивиз|division|\bсд\b|\bпд\b/.test(s) ? 'div' : /фронт|front/.test(s) ? 'front' : /арми|armee|army|\bа\b/.test(s) ? 'army' : '';
+    // границы слова — по Unicode: \b в JS не видит кириллицу, и сокращения («ТА», «ск», «А») не находились
+    const w = (alt: string) => new RegExp(`(?<![\\p{L}\\d])(?:${alt})(?![\\p{L}\\d])`, 'u');
+    // корпус раньше танковой армии: «танковый корпус» и «тк» — корпус
+    const kind = /корпус|korps|corps/.test(s) || w('ск|тк|мк|ак').test(s) ? 'corps' : /танк|panzer|tank/.test(s) || w('та').test(s) ? 'tank' : /удар|shock/.test(s) || w('уда|уд|уа').test(s) ? 'shock' : /дивиз|division/.test(s) || w('сд|пд').test(s) ? 'div' : /фронт|front/.test(s) ? 'front' : /арми|armee|army/.test(s) || w('а').test(s) ? 'army' : '';
     return num && kind ? `${num}|${guards}|${kind}` : null;
   };
   const k = key(name);

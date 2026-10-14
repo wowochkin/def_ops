@@ -88,8 +88,13 @@ function evidenceText(c: Candidate): string {
 
 /** 2. Числа факта есть в цитате. */
 function checkNumbers(c: Candidate): CheckResult {
+  const e = c.evidence;
+  // выписки нет, есть только ссылка на документ: числа сверить не с чем
+  if (e.kind === 'agent' && !e.quote) return res('numbers', 'doubt', 'выписки нет — числа не сверены');
   const have = new Set(numbersIn(evidenceText(c)));
   const miss = claimNumbers(c.claim).filter((n) => !have.has(n));
+  // скан: «?» у цифры — цифры неразборчивы, число не найдено не из-за ошибки извлечения, а из-за плохого чтения
+  if (miss.length && e.kind === 'scan' && /\d\s?\?|\?\s?\d/.test(e.quote)) return res('numbers', 'doubt', 'цифры помечены как неразборчивые');
   return miss.length ? res('numbers', 'fail', `в цитате нет числа: ${miss.join(', ')}`) : ok('numbers');
 }
 
