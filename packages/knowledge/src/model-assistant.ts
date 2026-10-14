@@ -10,15 +10,54 @@ export const ASSIST_LIMITS = { docs: 6, code: 6, chars: 24_000, need: 4, history
 
 export interface ModelIx { index: Index; byId: Map<string, ModelFragment>; all: ModelFragment[] }
 
-/** Короткое имя для поиска: у кода — имя функции (и тип, и метод у Rust), у раздела — номер, у норматива — id. */
+/**
+ * Русские слова к частям английских имён в коде: вопросы задаются по-русски, а функции названы по-английски
+ * (resolveCombat — «бой», supplyState — «подвоз»). Ключ — начало части имени.
+ */
+const CODE_RU: [string, string][] = [
+  ['combat', 'бой боя бою боем бои боев сражение'], ['battle', 'бой боя бою бои сражение'], ['fight', 'бой боя бою'], ['attack', 'наступление атака'], ['defen', 'оборона'],
+  ['power', 'сила потенциал'], ['strength', 'численность сила'], ['ratio', 'соотношение'], ['loss', 'потери'], ['casualt', 'потери'],
+  ['supply', 'подвоз снабжение'], ['logistic', 'подвоз тыл'], ['ammo', 'боеприпасы'], ['fuel', 'горючее'], ['base', 'база снабжения'],
+  ['advance', 'наступление темп продвижение'], ['pace', 'темп'], ['tempo', 'темп'], ['move', 'движение марш'], ['march', 'марш движение'],
+  ['route', 'маршрут путь'], ['path', 'путь маршрут'], ['road', 'дорога'], ['retreat', 'отход отступление'], ['withdraw', 'отход'],
+  ['fatigue', 'усталость'], ['morale', 'моральный дух'], ['fort', 'укрепления полоса'], ['belt', 'полоса укрепления'], ['terrain', 'местность'],
+  ['river', 'река'], ['bridge', 'мост переправа'], ['crossing', 'переправа'], ['pocket', 'окружение котёл'], ['encircl', 'окружение'],
+  ['cut', 'окружение отрезан'], ['capitul', 'капитуляция сдача'], ['territor', 'территория'], ['front', 'фронт'], ['boundar', 'разграничительная линия полоса'],
+  ['sector', 'полоса участок'], ['regime', 'режим'], ['agent', 'агент'], ['division', 'дивизия'], ['corps', 'корпус'], ['army', 'армия'],
+  ['hq', 'штаб'], ['staff', 'штаб'], ['order', 'приказ'], ['intent', 'намерение решение'], ['decid', 'решение'], ['target', 'цель'],
+  ['reserve', 'резерв'], ['commit', 'ввод'], ['reinforc', 'пополнение'], ['detach', 'выделение'], ['resubord', 'переподчинение'],
+  ['calib', 'калибровка'], ['score', 'оценка'], ['rule', 'правила'], ['history', 'история сверка'], ['compare', 'сравнение'],
+  ['deviation', 'отклонение'], ['umpire', 'посредник'], ['detect', 'разведка обнаружение'], ['intel', 'разведка'], ['random', 'случайность'],
+  ['rng', 'случайность'], ['seed', 'случайность'], ['remnant', 'остатки'], ['merge', 'сведение'], ['urban', 'город'], ['street', 'уличный бой город'],
+  ['airborne', 'десант'], ['air', 'авиация'], ['artiller', 'артиллерия'], ['tank', 'танки'], ['gun', 'орудия'], ['infantr', 'пехота'],
+  ['quality', 'качество'], ['profile', 'профиль сторона'], ['doctrine', 'доктрина'], ['takeover', 'передача командования'], ['game', 'игра'],
+];
+
+/** Части имени (camelCase, snake_case, Тип::метод) → русские слова. */
+export function codeWords(name: string): string[] {
+  const parts = name.replace(/::/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase().split(/\s+/).filter(Boolean);
+  const out = new Set<string>();
+  for (const p of parts) for (const [k, ru] of CODE_RU) if (p.startsWith(k)) for (const w of ru.split(' ')) out.add(w);
+  return [...out];
+}
+
+/** Короткое имя для поиска: у кода — имя функции (и тип, и метод у Rust) и русские слова к нему, у раздела — номер, у норматива — id. */
 function aliasesOf(f: ModelFragment): string[] {
-  if (f.kind === 'code') return [f.title, ...f.title.split('::'), f.place.split(':')[0].split('/').pop()!];
+  if (f.kind === 'code') return [f.title, ...f.title.split('::'), f.place.split(':')[0].split('/').pop()!, ...codeWords(f.title)];
   if (f.kind === 'doc') return [f.place.replace(/^раздел /, '')];
   return [f.place];
 }
 
+/** Комментарий и строка объявления фрагмента кода. */
+function headOf(text: string): string {
+  const lines = text.split('\n');
+  const i = lines.findIndex((l) => !/^\s*(\/\/|\/\*|\*|#\[)/.test(l));
+  return lines.slice(0, i < 0 ? lines.length : i + 1).join('\n');
+}
+
 export function modelIndex(frags: ModelFragment[]): ModelIx {
-  const pseudo = frags.map((f) => ({ id: f.id, category: 'model', title: f.title, summary: f.text, aliases: aliasesOf(f), facts: [], relations: [] }) as unknown as Entry);
+  // у кода ищется по комментарию и строке объявления (тело большое и забивает ранжирование словами кода)
+  const pseudo = frags.map((f) => ({ id: f.id, category: 'model', title: f.title, summary: f.kind === 'code' ? headOf(f.text) : f.text, aliases: aliasesOf(f), facts: [], relations: [] }) as unknown as Entry);
   return { index: new Index(pseudo), byId: new Map(frags.map((f) => [f.id, f])), all: frags };
 }
 
