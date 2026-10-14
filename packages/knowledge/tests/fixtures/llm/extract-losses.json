@@ -1,0 +1,19 @@
+{
+  "items": [],
+  "claims": [
+    {
+      "kind": "losses", "subject": "8 гв. А", "parent": null, "place": null, "between": null, "points": null, "inclusive": null, "title": null,
+      "date": "1945-04-16", "dateTo": "1945-04-19",
+      "personnel": null, "tanks": null, "guns": null, "killed": 1200, "wounded": 3400, "missing": null, "total": null,
+      "state": null, "lat": null, "lon": null, "approxKm": null,
+      "quote": "С 16 по 19.04 8 гв. А потеряла убитыми 1 200, ранеными 3 400 человек"
+    },
+    {
+      "kind": "crossing", "subject": "мост у Лебуса", "parent": null, "place": "Лебус", "between": null, "points": null, "inclusive": null, "title": null,
+      "date": "1945-04-18", "dateTo": null,
+      "personnel": null, "tanks": null, "guns": null, "killed": null, "wounded": null, "missing": null, "total": null,
+      "state": null, "lat": null, "lon": null, "approxKm": null,
+      "quote": "мост у Лебуса противник взорвал"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "transcript": "Донесение штаба 8 гв. А. За 17.04 убито 2 3?0, ранено 1 500. Дивизии продолжали бой.",
+  "claims": [
+    {
+      "kind": "losses", "subject": "8 гв. А", "parent": null, "place": null, "between": null, "points": null, "inclusive": null, "title": null,
+      "date": "1945-04-17", "dateTo": "1945-04-17",
+      "personnel": null, "tanks": null, "guns": null, "killed": 2300, "wounded": 1500, "missing": null, "total": null,
+      "state": null, "lat": null, "lon": null, "approxKm": null,
+      "quote": "За 17.04 убито 2 300, ранено 1 500",
+      "box": [0.08, 0.12, 0.9, 0.16]
+    }
+  ]
+}

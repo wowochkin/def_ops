@@ -72,7 +72,8 @@ const FORMAT = (n: number) => `Сейчас командующий просит 
 
 /** Сообщения модели: системный промпт советника с форматом вариантов вместо формата ответа на вопрос. */
 export function planMessages(built: ReturnType<typeof buildAdvice>, n: number): ChatMessage[] {
-  const sys = built.messages[0].content;
+  const first = built.messages[0].content;
+  const sys = typeof first === 'string' ? first : first.map((p) => (p.type === 'text' ? p.text : '')).join('');
   const cut = sys.indexOf('Ответ — строго один JSON-объект');
   const system = `${cut > 0 ? sys.slice(0, cut).trimEnd() : sys}\n\n${FORMAT(n)}`;
   return [{ role: 'system', content: system }, built.messages[built.messages.length - 1]];

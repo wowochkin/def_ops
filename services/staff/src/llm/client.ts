@@ -12,9 +12,12 @@
  */
 import type { LlmConfig } from './config';
 
+/** Часть сообщения: текст или картинка (data: URL) для моделей со зрением. */
+export type ChatPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | ChatPart[];
 }
 
 export interface ChatRequest {
