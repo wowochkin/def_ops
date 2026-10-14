@@ -5,14 +5,15 @@
  */
 import { stripMeta } from '../markdown';
 import {
-  applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, OPERATION_EXTRACT_SCHEMA, qaMessages, toBoundaryProposals, toInfraProposals, toPositionProposals, toProposals,
-  type Entry, type ExtractedItem, type Fact, type InfraItem, type BoundaryItem, type BoundaryProposal, type InfraProposal, type KbDocument, type OperationHint, type Pins, type PositionItem, type PositionProposal, type Proposal, type Reliability, type Source,
+  applyProposal, chunkText, gameReference, gather, hybridHits, Index, type Hit, qaMessages,
+  type Entry, type Fact, type BoundaryProposal, type InfraProposal, type KbDocument, type OperationHint, type Pins, type PositionProposal, type Proposal, type Reliability, type Source, type TableMapping,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
 import * as store from './store';
 import normsFile from '../../../../packages/sim/data/rules/norms.json';
-import { fileText } from './text';
+import { readDocument } from './text';
+import { ingest, type IngestProgress, type IngestResult } from './ingest';
 import { Vectors, type VecState } from './vectors';
 import type { StoredCandidate } from './candidates';
 
@@ -100,7 +101,7 @@ export async function search(query: string, pool = 30): Promise<Hit[]> {
   try { return hybridHits(bm, await vectors.near(query, pool), (id) => state.index!.doc(id), pool); } catch { return bm; }
 }
 
-const client = (llm: LlmSettings, thinking?: LlmSettings['thinking']) => new LlmClient({
+export const llmClient = (llm: LlmSettings, thinking?: LlmSettings['thinking']) => new LlmClient({
   url: /^https?:/.test(llm.url) ? llm.url : new URL(llm.url, location.origin).href.replace(/\/+$/, ''),
   model: llm.model, thinking: thinking ?? llm.thinking, timeoutMs: 10 * 60_000, maxTokens: 12000,
 }, fetch.bind(globalThis));
@@ -129,16 +130,64 @@ export async function setPins(list: Record<string, Pins[string] | null>) {
 
 /* ───────────── документы ───────────── */
 
-/** operation — документ операции (раздел «Моделирование» → «Операции»): записи относятся к ней, разбор ищет и инфраструктуру. */
+/** Чтение файла (подменяется в тестах): тип входа определяется сам. */
+export const reader = { read: readDocument };
+
+const normWs = (t: string) => t.replace(/\s+/g, ' ').trim();
+/** Страница PDF, с которой начинается часть (по первым словам части); не найдено — как у предыдущей. */
+function chunkPages(chunks: string[], pages: string[]): (number | undefined)[] {
+  const norm = pages.map(normWs);
+  let last: number | undefined;
+  return chunks.map((c) => {
+    const head = normWs(c).slice(0, 60);
+    const i = head ? norm.findIndex((p, k) => (last == null || k + 1 >= last) && p.includes(head)) : -1;
+    if (i >= 0) last = i + 1;
+    return last;
+  });
+}
+
+const size = (n: number) => (n < 2000 ? `${n} знаков` : `${Math.round(n / 1000)} тыс. знаков`);
+
+/**
+ * Загрузить документ любого типа: текст (PDF с текстовым слоем, docx, txt, md, html), скан (PDF без текста —
+ * меньше 50 знаков на страницу, JPG, PNG), таблица (CSV, XLSX), пакет фактов (JSON def-ops-facts). Картинки
+ * сканов и байты PDF — в хранилище pages (картинки страниц PDF рисуются при разборе). operation — документ
+ * операции: кандидаты относятся к ней, проверки идут по её сценарию и театру.
+ */
 export async function addFile(file: File, reliability: Reliability, note: string, operation?: string): Promise<KbDocument> {
-  const text = (await fileText(file)).trim();
-  if (text.length < 50) throw new Error('в файле не найден текст (скан без текстового слоя? — нужен распознанный PDF)');
-  const id = `d${Date.now().toString(36)}`;
-  const chunks = chunkText(text).map((t, i) => ({ i, text: t }));
-  const doc: KbDocument = { id, name: file.name, mime: file.type, size: file.size, addedAt: new Date().toISOString(), reliability, note: note || undefined, chunks, status: 'new', processed: 0, ...(operation ? { operation } : {}) };
+  const r = await reader.read(file);
+  const id = `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+  const base = { id, name: file.name, mime: file.type, size: file.size, addedAt: new Date().toISOString(), reliability, note: note || undefined, status: 'new' as const, processed: 0, ...(operation ? { operation } : {}) };
+  let doc: KbDocument, about: string;
+  const pages: unknown[] = [];
+  if (r.kind === 'text') {
+    const text = r.text.trim();
+    const scans = r.scanPages ?? [];
+    if (text.length < 50 && !scans.length) throw new Error('в файле не найден текст');
+    const parts = text.length >= 50 ? chunkText(text) : [];
+    const at = r.pages ? chunkPages(parts, r.pages) : [];
+    doc = { ...base, kind: scans.length && !parts.length ? 'scan' : 'text', chunks: parts.map((t, i) => ({ i, text: t, ...(at[i] ? { page: at[i] } : {}) })),
+      ...(r.pages ? { pageCount: r.pages.length } : {}), ...(scans.length ? { scans: scans.map((page) => ({ page })) } : {}) };
+    if (scans.length && r.pdf) pages.push({ id: `${id}:pdf`, doc: id, pdf: r.pdf });
+    about = [parts.length ? `${parts.length} частей, ${size(text.length)}` : '', scans.length ? `страниц-сканов: ${scans.length}` : ''].filter(Boolean).join('; ');
+  } else if (r.kind === 'image') {
+    doc = { ...base, kind: 'scan', chunks: [], pageCount: 1, scans: [{ page: 1, width: r.image.width, height: r.image.height }] };
+    pages.push({ id: `${id}:1`, doc: id, page: 1, ...r.image });
+    about = 'скан (картинка)';
+  } else if (r.kind === 'table') {
+    if (r.rows.length < 2) throw new Error('в таблице нет строк');
+    doc = { ...base, kind: 'table', chunks: [], table: r.rows };
+    about = `таблица: ${r.rows.length - 1} строк, ${r.rows[0].length} столбцов`;
+  } else {
+    const j = r.json as { format?: unknown; facts?: unknown[] } | null;
+    if (j?.format !== 'def-ops-facts') throw new Error(j && (j as { format?: unknown }).format === 'def-ops-knowledge' ? 'это выгрузка базы знаний — её загружают кнопкой «Загрузить выгрузку»' : 'это не пакет фактов (формат def-ops-facts)');
+    doc = { ...base, kind: 'facts', chunks: [], facts: r.json };
+    about = `пакет фактов: ${Array.isArray(j.facts) ? j.facts.length : 0}`;
+  }
   // запись-источник: документ виден в каркасе (категория «Источники → Загруженные документы»)
-  const src: Entry = { id: `doc:${id}`, category: 'sources', group: 'uploaded', title: file.name, ...(operation ? { operations: [operation] } : {}), summary: note || `Загруженный документ: ${chunks.length} частей, ${text.length < 2000 ? `${text.length} знаков` : `${Math.round(text.length / 1000)} тыс. знаков`}.`, status: 'checked', origin: 'document',
+  const src: Entry = { id: `doc:${id}`, category: 'sources', group: 'uploaded', title: file.name, ...(operation ? { operations: [operation] } : {}), summary: note || `Загруженный документ: ${about}.`, status: 'checked', origin: 'document',
     facts: [{ key: 'ref', value: file.name }, { key: 'reliability', value: reliability }, ...(note ? [{ key: 'covers', value: note }] : [])] };
+  if (pages.length) await store.put('pages', ...pages);
   await store.put('documents', doc);
   await store.put('entries', src);
   await reload();
@@ -157,6 +206,13 @@ export async function removeDocument(id: string) {
   if (pp.length) await store.del('positions', ...pp);
   const bp = state.boundaries.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
   if (bp.length) await store.del('boundaries', ...bp);
+  // кандидаты документа, ждущие решения, картинки страниц и расшифровки
+  const cp = state.candidates.filter((c) => c.source === `doc:${id}` && c.state === 'pending').map((c) => c.id);
+  if (cp.length) await store.del('candidates', ...cp);
+  for (const s of ['pages', 'transcripts'] as const) {
+    const ids = (await store.all<{ id: string; doc?: string }>(s)).filter((x) => x.doc === id).map((x) => x.id);
+    if (ids.length) await store.del(s, ...ids);
+  }
   await reload();
   kbChanged();
 }
@@ -164,65 +220,27 @@ export async function removeDocument(id: string) {
 let abort: AbortController | null = null;
 export const stop = () => abort?.abort();
 
+/** Ход разбора для человека: «часть / страница N из M; принято автоматически X, на проверку Y, отброшено Z». */
+export const progressText = (p: IngestProgress) => `${p.stage}; принято автоматически ${p.auto}, на проверку ${p.review}, отброшено ${p.drop}`;
+
 /**
- * Обработать документ моделью: по частям, с места остановки; предложения — в очередь на проверку. Документ
- * операции (hint — её сроки и стороны) — ещё и сведения об инфраструктуре.
+ * Разобрать документ (поток ingest.ts): по частям или страницам, с места остановки; кандидаты проходят проверки и
+ * ложатся в базу, в очередь «На проверку» или в отброшенные. Ход — в state.job; стоп — stop().
  */
-export async function process(id: string, llm: LlmSettings, hint?: OperationHint) {
-  llm = kbLlm(llm);
+export async function process(id: string, llm: LlmSettings, o: { hint?: OperationHint; pages?: [number, number]; mapping?: TableMapping } = {}): Promise<IngestResult | undefined> {
   if (state.job) throw new Error('уже идёт обработка другого документа');
-  const doc = state.documents.find((d) => d.id === id);
-  if (!doc) return;
+  if (!state.documents.some((d) => d.id === id)) return undefined;
   abort = new AbortController();
-  const c = client(llm, 'off');
-  doc.status = 'processing';
-  let dropped = 0, made = 0;
-  if (doc.operation && !hint) hint = await (await import('../sim/userdata')).operationHint(doc.operation);
-  const op = doc.operation && hint ? hint : undefined;
-  const sum = doc.extracted ?? { entries: 0, updates: 0, infra: 0, dropped: 0 };
+  state.job = { doc: id, at: 0, total: 1, text: 'подготовка…' };
+  emit();
   try {
-    for (let i = doc.processed ?? 0; i < doc.chunks.length; i++) {
-      if (abort.signal.aborted) break;
-      state.job = { doc: id, at: i, total: doc.chunks.length, text: `часть ${i + 1} из ${doc.chunks.length}…` };
-      emit();
-      const r = await c.chat({ messages: extractMessages(doc.chunks[i].text, doc.name, op), schema: op ? { name: 'kb_operation_extract', schema: OPERATION_EXTRACT_SCHEMA } : { name: 'kb_extract', schema: EXTRACT_SCHEMA }, signal: abort.signal });
-      const j = r.json as { items?: ExtractedItem[]; infrastructure?: InfraItem[]; positions?: PositionItem[]; boundaries?: BoundaryItem[] } | undefined;
-      const res = toProposals(j?.items ?? [], doc.chunks[i].text, state.entries, doc, i);
-      dropped += res.dropped; made += res.proposals.length;
-      if (res.proposals.length) await store.put('proposals', ...res.proposals);
-      sum.entries += res.proposals.filter((p) => p.kind === 'new').length; sum.updates += res.proposals.filter((p) => p.kind === 'update').length; sum.dropped += res.dropped;
-      if (op && doc.operation) {
-        const inf = toInfraProposals(j?.infrastructure, doc.chunks[i].text, { ...doc, operation: doc.operation }, i);
-        if (inf.proposals.length) await store.put('infra', ...inf.proposals);
-        state.infra = [...state.infra, ...inf.proposals];
-        sum.infra += inf.proposals.length; sum.dropped += inf.dropped; dropped += inf.dropped; made += inf.proposals.length;
-        const pos = toPositionProposals(j?.positions, doc.chunks[i].text, { ...doc, operation: doc.operation }, i);
-        if (pos.proposals.length) await store.put('positions', ...pos.proposals);
-        state.positions = [...state.positions, ...pos.proposals];
-        sum.positions = (sum.positions ?? 0) + pos.proposals.length; sum.dropped += pos.dropped; dropped += pos.dropped; made += pos.proposals.length;
-        const bnd = toBoundaryProposals(j?.boundaries, doc.chunks[i].text, { ...doc, operation: doc.operation }, i);
-        if (bnd.proposals.length) await store.put('boundaries', ...bnd.proposals);
-        state.boundaries = [...state.boundaries, ...bnd.proposals];
-        sum.boundaries = (sum.boundaries ?? 0) + bnd.proposals.length; sum.dropped += bnd.dropped; dropped += bnd.dropped; made += bnd.proposals.length;
-      }
-      doc.extracted = { ...sum };
-      doc.processed = i + 1;
-      await store.put('documents', { ...doc });
-      state.proposals = [...state.proposals, ...res.proposals];
-    }
-    doc.status = (doc.processed ?? 0) >= doc.chunks.length ? 'processed' : 'new';
-    doc.error = undefined;
-  } catch (e) {
-    doc.status = 'error';
-    doc.error = abort.signal.aborted ? 'остановлено' : (e as Error).message;
+    return await ingest(id, llm, { ...o, signal: abort.signal, onProgress: (p) => { state.job = { doc: id, at: p.done, total: p.total, text: progressText(p) }; emit(); } });
   } finally {
-    await store.put('documents', { ...doc });
     state.job = null;
     abort = null;
     await reload();
     kbChanged();
   }
-  return { made, dropped };
 }
 
 /* ───────────── предложения ───────────── */
@@ -387,7 +405,7 @@ export async function ask(mode: 'ask' | 'lecture', question: string, llm: LlmSet
   const off = llm.thinking === 'off';
   const push = (final = false) => { const now = performance.now(); if (final || now - last > 60) { last = now; onStream({ ...streamView(content, reasoning, off, final), stage: 'model' }); } };
   onStream({ answer: '', thinking: '', stage: 'model' });
-  const r = await client(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') content += t; else reasoning += t; push(); } });
+  const r = await llmClient(llm).chat({ messages: qaMessages(mode, question, sources, history), signal, onDelta: (k, t) => { if (k === 'content') content += t; else reasoning += t; push(); } });
   push(true);
   return { text: r.content, thinking: r.reasoning, sources, model: r.model, seconds: Math.round((performance.now() - t0) / 1000), search: searchMode() };
 }

@@ -11,6 +11,7 @@ import { getEdits, kbOperations, onDataChange, type OperationKb } from './sim/us
 import { claimText, factUse, KIND_RU } from './modeling/basis';
 import { CoveragePanel } from './modeling/Coverage';
 import * as kb from './kb/kb';
+import { ACCEPT } from './kb/text';
 import { QWEN_EMBED } from './kb/vectors';
 import type { Llm } from './shared';
 import { ModelPicker } from './ModelPicker';
@@ -399,13 +400,13 @@ function Docs({ s, llm, open, op, ops }: { s: kb.KbState; llm: Llm; open: (id: s
       <VecCard s={s} llm={llm} />
       <section className="card kb-upload">
         <h3>Загрузить документы</h3>
-        <p className="muted">PDF (с текстовым слоем), Word (.docx), HTML, txt, md. Документ разбивается на части; модель выписывает из каждой сведения по каркасу — только сказанное в тексте и с дословной цитатой; факты без найденной цитаты отбрасываются. Получаются предложения: новая запись или дополнение существующей — вы принимаете или отклоняете. Текст документа сразу участвует в поиске и ответах. Хранится в этом браузере; обмен — выгрузкой.</p>
+        <p className="muted">Текст (PDF, Word, HTML, txt, md), сканы (PDF без текстового слоя, JPG, PNG), таблицы (CSV, XLSX) и пакеты фактов (JSON) — тип определяется сам. Разбор идёт по частям и страницам: модель выписывает факты с дословной цитатой, проверки решают — в базу сразу, на проверку или отбросить. Текст документа сразу участвует в поиске и ответах. Хранится в этом браузере; обмен — выгрузкой.</p>
         <p className={op ? 'ok' : 'muted'}>{op ? <>Документы будут отнесены к операции <b>{op.title.split(':')[0]}</b>: записи — в её разделе базы, а разбор ищет ещё и сведения об инфраструктуре (мосты, переправы, дороги) — их видно и принимают в «Моделирование» → «Операции».</> : 'Общие документы (без операции). Чтобы отнести документ к операции, выберите её вверху.'}</p>
         <div className="row">
           <label>Достоверность <select value={rel} onChange={(e) => setRel(e.target.value as Reliability)}>{(['A', 'B', 'C'] as Reliability[]).map((r) => <option key={r} value={r}>{r} — {RELIABILITY[r]}</option>)}</select></label>
           <input className="grow" placeholder="Что за документ (автор, издание, о чём) — необязательно" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
-        <label className="kb-drop"><input type="file" multiple accept=".pdf,.docx,.txt,.md,.html,.htm" onChange={(e) => { void add(e.target.files); e.target.value = ''; }} />{busy ?? 'Выбрать файлы…'}</label>
+        <label className="kb-drop"><input type="file" multiple accept={ACCEPT} onChange={(e) => { void add(e.target.files); e.target.value = ''; }} />{busy ?? 'Загрузить…'}</label>
         {err && <div className="err">{err}</div>}
         <div className="row"><button onClick={async () => download(`база-знаний-${new Date().toISOString().slice(0, 10)}.json`, await kb.exportUser(), 'application/json')}>Выгрузить мои материалы</button>
           <label className="btnlike">Загрузить выгрузку<input type="file" accept=".json" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await kb.importUser(await f.text()); } catch (x) { setErr((x as Error).message); } } e.target.value = ''; }} /></label></div>
@@ -455,22 +456,48 @@ function VecCard({ s, llm }: { s: kb.KbState; llm: Llm }) {
   );
 }
 
+/** Частей разбора у документа: части текста и страницы-сканы; таблица и пакет — одна. */
+export const docParts = (d: KbDocument) => (d.kind === 'table' || d.kind === 'facts' ? 1 : d.chunks.length + (d.scans?.length ?? 0));
+
+/** Что за документ: части, страницы-сканы, таблица. */
+function docAbout(d: KbDocument): string {
+  if (d.kind === 'table') return `таблица, ${Math.max(0, (d.table?.length ?? 1) - 1)} строк`;
+  if (d.kind === 'facts') return 'пакет фактов';
+  return [d.chunks.length ? `${d.chunks.length} частей` : '', d.scans?.length ? `${d.scans.length} стр. скана` : '', d.pageCount && d.pageCount > 1 ? `${d.pageCount} стр.` : ''].filter(Boolean).join(' · ');
+}
+
 export function DocRow({ d, s, llm, open, onFilter, filtered, opTitle }: { d: KbDocument; s: kb.KbState; llm: Llm; open: (id: string) => void; onFilter?: () => void; filtered?: boolean; opTitle?: string }) {
   const job = s.job?.doc === d.id ? s.job : null;
   const props = s.proposals.filter((p) => p.doc === d.id);
-  const done = d.processed ?? 0;
+  const total = docParts(d);
+  const done = Math.min(d.processed ?? 0, total);
+  const [from, setFrom] = useState(''), [to, setTo] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+  const range: [number, number] | undefined = from || to ? [Math.max(1, +from || 1), Math.min(d.pageCount ?? 1e6, +to || d.pageCount || 1e6)] : undefined;
+  const run = async () => {
+    setMsg(null);
+    try {
+      const r = await kb.process(d.id, llm.settings, { pages: range });
+      if (r?.needsMapping) setMsg('Таблица не по шаблону: нужно сопоставить столбцы (модель предложила смысл столбцов).');
+      else if (r?.waitingVision) setMsg('Скан ждёт распознавания: выберите модель со зрением в роли «Чтение сканов» («Моделирование» → «Модели»).');
+    } catch (e) { setMsg((e as Error).message); }
+  };
+  const c = d.counts;
   return (
     <div className="kb-doc">
       <div className="kb-doc-h"><button className="link" onClick={() => open(`doc:${d.id}`)}><b>{d.name}</b></button><i className={`kb-rel r${d.reliability}`}>{d.reliability}</i>
-        <span className="muted">{d.chunks.length} частей · {Math.round(d.size / 1024)} КБ · обработано {done}/{d.chunks.length}</span>
+        <span className="muted">{docAbout(d)} · {Math.round(d.size / 1024)} КБ · разобрано {done}/{total}</span>
         {d.operation && opTitle && <span className="kb-opbadge" title="Материал операции">{opTitle.split(':')[0]}</span>}</div>
+      {c && <div className="kb-extracted">Принято автоматически <b>{c.auto}</b>, на проверку <b>{c.review}</b>, отброшено <b>{c.drop}</b>{c.duplicate ? <span className="muted"> · повторов {c.duplicate}</span> : null}{d.failedParts?.length ? <span className="warn"> · не разобрано частей: {d.failedParts.length}</span> : null}</div>}
       {d.extracted && <div className="kb-extracted">Извлечено: новых записей <b>{d.extracted.entries}</b>, дополнений <b>{d.extracted.updates}</b>{d.operation ? <>, сведений об инфраструктуре <b>{d.extracted.infra}</b>, положений <b>{d.extracted.positions ?? 0}</b>, разграничительных линий <b>{d.extracted.boundaries ?? 0}</b></> : null}{d.extracted.dropped ? <span className="muted"> · отброшено без цитаты {d.extracted.dropped}</span> : null}</div>}
-      {job ? <div className="kb-prog"><i style={{ width: `${(job.at / job.total) * 100}%` }} /><span>{job.text}</span><button onClick={kb.stop}>Остановить</button></div>
+      {job ? <div className="kb-prog"><i style={{ width: `${(job.at / Math.max(1, job.total)) * 100}%` }} /><span>{job.text}</span><button onClick={kb.stop}>Остановить</button></div>
         : <div className="row">
-          {done < d.chunks.length && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => kb.process(d.id, llm.settings)}>{done ? 'Продолжить обработку' : 'Обработать моделью'}</button>}
+          {(done < total || d.status === 'waiting') && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => void run()}>{done ? 'Продолжить разбор' : 'Разобрать'}</button>}
+          {done < total && (d.pageCount ?? 0) > 1 && <span className="kb-range muted">страницы <input type="number" min={1} max={d.pageCount} value={from} placeholder="1" onChange={(e) => setFrom(e.target.value)} style={{ width: '4.5em' }} /> — <input type="number" min={1} max={d.pageCount} value={to} placeholder={String(d.pageCount)} onChange={(e) => setTo(e.target.value)} style={{ width: '4.5em' }} /></span>}
           {props.length > 0 && onFilter && <button className={filtered ? 'on' : ''} onClick={onFilter}>предложения: {props.filter((p) => p.status === 'pending').length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>}
           <button className="link danger" onClick={() => { void confirmAsync(`Удалить «${d.name}» из базы?`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void kb.removeDocument(d.id); }); }}>удалить</button>
           {d.error && <span className="err">{d.error}</span>}
+          {msg && <span className="warn">{msg}</span>}
         </div>}
     </div>
   );

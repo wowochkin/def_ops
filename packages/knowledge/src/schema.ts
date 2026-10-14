@@ -6,6 +6,7 @@
  */
 
 import type { CheckResult, Evidence } from './candidate';
+import type { RowError, TableMapping } from './tables';
 
 export type CategoryId = 'operations' | 'battles' | 'formations' | 'commanders' | 'organization' | 'equipment' | 'terrain' | 'chronology' | 'sources';
 
@@ -145,10 +146,33 @@ export interface KbDocument {
   /** Достоверность, которую назначил человек при загрузке. */
   reliability: Reliability;
   note?: string;
-  chunks: { i: number; text: string }[];
-  status: 'new' | 'processing' | 'processed' | 'error';
+  /** Части текста; page — страница PDF, с которой часть начинается (для диапазона страниц). */
+  chunks: { i: number; text: string; page?: number }[];
+  /** waiting — скан ждёт распознавания (нет модели со зрением). */
+  status: 'new' | 'processing' | 'processed' | 'error' | 'waiting';
+  /** Разобрано частей (части текста, затем страницы-сканы; таблица и пакет — одна часть). */
   processed?: number;
   error?: string;
+  /** Что за вход: text — текст (по умолчанию; PDF может иметь и страницы-сканы), scan — картинка или PDF без текста, table — CSV/XLSX, facts — пакет def-ops-facts. */
+  kind?: 'text' | 'scan' | 'table' | 'facts';
+  /** Страниц в PDF. */
+  pageCount?: number;
+  /** Страницы-сканы (меньше 50 знаков текста; номера с 1) и размер их картинки, если она уже есть (хранилище pages). */
+  scans?: { page: number; width?: number; height?: number }[];
+  /** Таблица: строки (первая — заголовок); пакет агента — разобранный JSON. */
+  table?: string[][];
+  facts?: unknown;
+  /** Подтверждённое сопоставление столбцов таблицы. */
+  mapping?: TableMapping;
+  /** Номера разобранных частей (продолжение с места остановки, диапазон страниц). */
+  done?: number[];
+  /** Части, которые модель так и не разобрала (зацикливание, ответ не по схеме). */
+  failedParts?: number[];
+  /** Итоги разбора кандидатов (сумма по запускам). */
+  counts?: { auto: number; review: number; drop: number; duplicate: number };
+  /** Строки таблицы или пакета с ошибкой (номер строки и причина) и пропущенные (несопоставленные) столбцы. */
+  rowErrors?: RowError[];
+  skippedColumns?: string[];
   /** Материал операции (id): разбор ищет и сведения об инфраструктуре, записи базы относятся к операции. */
   operation?: string;
   /** Итоги разбора: что извлечено (по частям — сумма). */

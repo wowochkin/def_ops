@@ -1,0 +1,12 @@
+{
+  "items": [],
+  "claims": [
+    {
+      "kind": "strength", "subject": "8 гв. А", "parent": null, "place": null, "between": null, "points": null, "inclusive": null, "title": null,
+      "date": "1945-04-20", "dateTo": null,
+      "personnel": 52000, "tanks": null, "guns": null, "killed": null, "wounded": null, "missing": null, "total": null,
+      "state": null, "lat": null, "lon": null, "approxKm": null,
+      "quote": "к 20.04 в 8 гв. А насчитывалось 52 000 человек"
+    }
+  ]
+}

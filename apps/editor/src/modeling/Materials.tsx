@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { RELIABILITY, type BoundaryProposal, type InfraProposal, type PositionProposal, type Reliability, type SyncInput } from '@def-ops/knowledge';
 import { areaTitle, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, resolveInfra, Theatre, type Boundary, type InfraKind, type InfraRecord, type InfraState, type Scenario, type TheatreData } from '@def-ops/sim';
 import * as kb from '../kb/kb';
+import { ACCEPT } from '../kb/text';
 import { DocRow, ProposalCard } from '../KnowledgeView';
 import { getEdits, getInfra, onDataChange, saveInfra, type HistPosition } from '../sim/userdata';
 import type { Llm } from '../shared';
@@ -79,11 +80,11 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
   return (
     <section className="mdl-card mat">
       <h4>Материалы операции</h4>
-      <p className="muted">Книги, донесения, журналы боевых действий (PDF с текстом, Word, HTML, txt). Модель выписывает из каждой части сведения в базу знаний — в раздел этой операции — и сведения о состоянии мостов, переправ, дорог; каждое — с дословной цитатой (без цитаты отбрасывается). Вы смотрите, что извлеклось, и принимаете. Принятое об инфраструктуре ложится поверх театра при расчёте.</p>
+      <p className="muted">Книги, донесения, журналы боевых действий — текст (PDF, Word, HTML, txt), сканы (PDF без текста, JPG, PNG), таблицы (CSV, XLSX), пакеты фактов (JSON). Модель выписывает факты с дословной цитатой; проверки по сценарию и театру этой операции решают — в базу сразу, на проверку или отбросить. Сведения о дорогах и рубежах — как прежде, на принятие ниже.</p>
       <div className="row">
         <label>Достоверность <select value={rel} onChange={(e) => setRel(e.target.value as Reliability)}>{(['A', 'B', 'C'] as Reliability[]).map((r) => <option key={r} value={r}>{r} — {RELIABILITY[r]}</option>)}</select></label>
         <input className="grow" placeholder="Что за документ (автор, издание) — необязательно" value={note} onChange={(e) => setNote(e.target.value)} />
-        <label className="btnlike primary">{busy ?? 'Загрузить документы…'}<input type="file" multiple hidden accept=".pdf,.docx,.txt,.md,.html,.htm" onChange={(e) => { void add(e.target.files); e.target.value = ''; }} /></label>
+        <label className="btnlike primary">{busy ?? 'Загрузить…'}<input type="file" multiple hidden accept={ACCEPT} onChange={(e) => { void add(e.target.files); e.target.value = ''; }} /></label>
       </div>
       {err && <div className="err">{err}</div>}
       {docs.length > 0 && <div className="mat-docs">{docs.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} open={() => {}} onFilter={() => setDocF(docF === d.id ? null : d.id)} filtered={docF === d.id} />)}</div>}
