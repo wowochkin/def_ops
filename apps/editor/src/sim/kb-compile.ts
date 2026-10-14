@@ -4,7 +4,7 @@
  * прежних ручных «принять» и «отклонить» сверки в закрепления. Сама сборка с чтением базы — kb-recompile.ts.
  */
 import { pinKey, type CompiledEdits, type Entry, type Pins } from '@def-ops/knowledge';
-import type { History, Scenario, ScenarioChange, StrengthCheckpoint } from '@def-ops/sim';
+import type { History, Scenario, ScenarioChange, StrengthCheckpoint, TakeoverState } from '@def-ops/sim';
 
 const day = (s: string) => s.slice(0, 10);
 const ddmm = (s: string) => `${s.slice(8, 10)}.${s.slice(5, 7)}`;
@@ -142,10 +142,10 @@ export function toCoreEdits(c: CompiledEdits, divisions: Map<string, string>, hq
 /* ───────────── данные игры ───────────── */
 
 /**
- * Данные из базы, на которых идёт игра: собранное для нынешней модели и поправки ядра; takeoverState — место для
- * состояния при передаче командования. Пишутся в запись игры при начале — восстановление идёт на тех же данных.
+ * Данные из базы, на которых идёт игра: собранное для нынешней модели и поправки ядра; takeoverState — состояние
+ * соединений при передаче командования по фактам (takeover-state.ts). Пишутся в запись игры при начале — восстановление идёт на тех же данных.
  */
-export interface GameKb { compiled: CompiledEdits | null; core: CoreEdits | null; takeoverState?: unknown }
+export interface GameKb { compiled: CompiledEdits | null; core: CoreEdits | null; takeoverState?: TakeoverState }
 /** Записанные в игре данные важнее нынешних; в записи нет (новая игра, старая запись) — нынешние. */
 export const gameKbData = (record: { kb?: GameKb } | undefined, current: GameKb): GameKb => record?.kb ?? current;
 

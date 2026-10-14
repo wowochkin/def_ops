@@ -3,7 +3,7 @@
  * между собой и с историей, настройка своих вариантов правил, калибровка по истории, подготовка новых операций
  * к переигровке. Всё считается в браузере — пулом фоновых потоков.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Llm } from '../shared';
 import { useSimData } from './data';
 import { ModelsTab } from './ModelsTab';
@@ -31,6 +31,12 @@ export function ModelingView({ llm }: { llm: Llm }) {
   const [calib, setCalib] = useState(0);
   const [calibScenario, setCalibScenario] = useState<string | null>(null);
   const go = (t: Tab) => { setTab(t); try { localStorage.setItem('def_ops.modeling.tab', t); } catch { /* */ } };
+  // переход извне (окно «Принять командование» → «Основа модели»): нужная вкладка
+  useEffect(() => {
+    const f = (e: Event) => { const t = (e as CustomEvent<{ tab?: Tab }>).detail?.tab; if (t && TABS.some(([k]) => k === t)) go(t); };
+    window.addEventListener('def_ops.modeling.open', f);
+    return () => window.removeEventListener('def_ops.modeling.open', f);
+  }, []);
   const compare = (scenario: string, rules: string[]) => { setCmp({ scenario, rules }); go('compare'); };
   return (
     <div className="mdl">

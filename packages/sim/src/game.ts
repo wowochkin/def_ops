@@ -50,7 +50,31 @@ export interface GameRecord {
    * Данные из базы знаний на момент начала игры (редактор): собранные поправки нынешней модели, поправки ядра,
    * состояние при передаче командования. Восстановление игры идёт на них, а не на нынешней базе.
    */
-  kb?: { compiled: unknown; core: unknown; takeoverState?: unknown };
+  kb?: { compiled: unknown; core: unknown; takeoverState?: TakeoverState };
+}
+
+/**
+ * Состояние соединений на момент передачи командования по фактам базы знаний (абсолютные значения):
+ * численность, танки, орудия, положение [долгота, широта], вышестоящий. Чего нет — остаётся рассчитанным.
+ */
+export type TakeoverState = Record<string, { personnel?: number; tanks?: number; guns?: number; position?: [number, number]; parent?: string }>;
+
+/**
+ * Наложить состояние при передаче на рассчитанное: численность — как есть; положение — только формированию на
+ * карте (маршрут пересчитывается); вышестоящий — только существующий в сценарии. Неизвестные id пропускаются.
+ */
+export function applyTakeoverState(s: SimState, ts: TakeoverState): SimState {
+  const ids = new Set(s.formations.map((f) => f.id));
+  const formations = s.formations.map((f) => {
+    const t = ts[f.id];
+    if (!t) return f;
+    const n = { ...f };
+    for (const k of ['personnel', 'tanks', 'guns'] as const) if (typeof t[k] === 'number') n[k] = Math.max(0, t[k]!);
+    if (t.position && onMap(f, s.time)) { n.position = [t.position[0], t.position[1]]; n.route = null; }
+    if (t.parent && t.parent !== f.id && ids.has(t.parent)) n.parent = t.parent;
+    return n;
+  });
+  return { ...s, formations };
 }
 
 /** Агентная модель в игре: сценарий и история ядра (пути от корня данных), длина хода, часов. */
@@ -66,9 +90,10 @@ export interface GameState {
 /**
  * Прогнать сценарий по истории до хода takeover (ход, начинающийся не раньше этого времени) и снять будущие
  * исторические приказы. human — сторона человека: её будущие наводки переправ и прибытия резервов тоже сняты,
- * тыл — под управлением штаба (prepareTakeover).
+ * тыл — под управлением штаба (prepareTakeover). takeoverState — состояние соединений по фактам базы на этот момент
+ * (applyTakeoverState).
  */
-export function startGame(ctx: SimContext, seed: number, takeover: string, human?: string, aiStaff?: string): GameState {
+export function startGame(ctx: SimContext, seed: number, takeover: string, human?: string, aiStaff?: string, takeoverState?: TakeoverState): GameState {
   let s = createState(ctx, seed), prev: SimState | null = null;
   const snapshots = [snapshotOf(s)];
   while (s.time < takeover && s.time < ctx.scenario.end) {
@@ -77,6 +102,8 @@ export function startGame(ctx: SimContext, seed: number, takeover: string, human
     snapshots.push(snapshotOf(s));
   }
   s = { ...s, pending: s.pending.filter((o) => o.issuedAt < s.time) };
+  // состояние по фактам — и на карте момента передачи (последний снимок)
+  if (takeoverState) { s = applyTakeoverState(s, takeoverState); snapshots[snapshots.length - 1] = snapshotOf(s); }
   // директивы с этого момента — по обстановке: вступившие по истории остаются, будущие ждут своего условия
   const done = Object.fromEntries((ctx.scenario.boundaries ?? []).filter((b) => b.trigger && b.from <= s.time).map((b) => [b.id, b.from]));
   s = { ...s, directives: { conditional: true, activated: done } };
@@ -125,7 +152,7 @@ export function gameOutcome(ctx: SimContext, history: History, g: GameState, end
 
 /** Восстановить игру по записи. */
 export function replayGame(ctx: SimContext, rec: GameRecord): GameState {
-  let g: GameState = startGame(ctx, rec.seed, rec.takeover, rec.human, rec.aiStaff ? rec.ai : undefined);
+  let g: GameState = startGame(ctx, rec.seed, rec.takeover, rec.human, rec.aiStaff ? rec.ai : undefined, rec.kb?.takeoverState);
   for (const t of rec.turns) {
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится: ход ${t.time}, расчёт ${g.state.time}`);
     g = playTurn(ctx, g, t.orders, t.actions ?? [], t.umpire ?? []);

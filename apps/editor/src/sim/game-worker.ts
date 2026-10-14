@@ -20,7 +20,7 @@ import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import { gameEndOf, getData, liveOf } from './userdata';
-import { gameKbNow } from './kb-recompile';
+import { coreTakeoverFor, gameKbNow, takeoverNow } from './kb-recompile';
 import { gameKbData, type GameKb } from './kb-compile';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
@@ -142,6 +142,9 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   post({ kind: 'progress', text: 'загрузка данных…' });
   // данные из базы: записанные в игре при начале (восстановление — на тех же данных), иначе нынешние
   const kb = gameKbData(record as { kb?: GameKb } | undefined, record?.kb ? { compiled: null, core: null } : await gameKbNow(s.scenario, !!(record?.agents ?? s.agents)));
+  // состояние соединений при передаче по фактам базы: новой игре — по нынешней базе (считается один раз и пишется
+  // в запись), записанной — то, с которым она начата (нет в записи — без него)
+  if (!record) kb.takeoverState = (await takeoverNow(s.scenario, s.takeover, !!s.agents)).state;
   const get = (kind: string, file: string) => getData(kind as DataKind, file, kb.compiled);
   ({ ctx, history } = await contextFrom(get as never, s.scenario, s.rules));
   const cfgLoad = (liveCfg as Record<string, (() => Promise<unknown>) | undefined>)[`../../../../services/staff/live/${s.scenario}.json`];
@@ -168,6 +171,8 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
       enemy: en === 'llm' ? 'llm' : 'script', until: hourAt(ctx.scenario.start, end.defeat.deadline),
       // поправки сценария из базы знаний (дивизии) — те, с которыми игра началась
       edits: kb.core ?? undefined,
+      // состояние дивизий при передаче по фактам базы (game::TakeoverIn)
+      takeoverState: kb.takeoverState ? (await coreTakeoverFor(s.scenario, kb.takeoverState)) ?? undefined : undefined,
     }));
     // тыл — под управлением штаба: базы снабжения стороны; будущие наводки переправ сняты (ядру — с первым ходом);
     // директивы с этого момента — по обстановке
@@ -179,7 +184,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     g = { ...g, state: withStaff(ctx, agentTrace!, g.state, agentStaff, human) };
   } else {
     post({ kind: 'progress', text: 'расчёт до передачи командования…' });
-    g = startGame(ctx, s.seed, s.takeover, human, aiStaff ? cfg.side : undefined);
+    g = startGame(ctx, s.seed, s.takeover, human, aiStaff ? cfg.side : undefined, kb.takeoverState);
   }
   baseStrength = sideStrength(g.state, human);
   outcome = null;

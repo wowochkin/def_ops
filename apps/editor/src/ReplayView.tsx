@@ -25,7 +25,8 @@ import { addHours, type AgentHistory } from '@def-ops/sim';
 import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
 
 import { AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentVariant } from './sim/agent-scenarios';
-import { coreEditsFor } from './sim/kb-recompile';
+import { coreEditsFor, takeoverNow } from './sim/kb-recompile';
+import type { TakeoverSummary } from './sim/takeover-state';
 /** Ход игры на агентной модели, ч. */
 const AGENT_GAME_HOURS = 12;
 /** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
@@ -168,6 +169,15 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   useEffect(() => { const f = () => setVariants(agentVariants()); window.addEventListener('def_ops.agents.variants', f); return () => window.removeEventListener('def_ops.agents.variants', f); }, []);
   const agentOp = DESKTOP ? AGENT_SCENARIOS[scenario] : undefined;
   const useAgents = model === 'agents' && !!agentOp;
+  // сводка окна «Принять командование»: что из состояния соединений на этот момент берётся по фактам базы
+  const [takeKb, setTakeKb] = useState<TakeoverSummary | null>(null);
+  useEffect(() => {
+    setTakeKb(null);
+    if (!take || !result) return;
+    let live = true;
+    takeoverNow(result.scenario, take, result.engine === 'agents' && !!agentOp).then((r) => { if (live) setTakeKb(r.summary); }).catch(() => { /* без сводки */ });
+    return () => { live = false; };
+  }, [take, result, agentOp]);
   const worker = useRef<Worker | null>(null);
   const runId = useRef(0);
   // ход агентной модели последнего расчёта (для карточки агента) и выбранная дивизия
@@ -443,7 +453,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
         </> : <Empty busy={!!busy} saved={tab === 'saved'} />}
       </main>
-      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
+      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} scenario={result.scenario} kbSummary={takeKb} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
         onDownload={() => download(`${result.scenario}-seed${result.seed}-report.md`, result.report, 'text/markdown')} />}
     </div>

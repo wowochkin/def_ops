@@ -53,7 +53,17 @@ async function readFiles(files: FileList): Promise<{ pkg: Partial<OperationPacka
 const LEVEL: Record<PackageIssue['level'], string> = { error: '✗', warning: '!', info: '·' };
 
 export function OperationsTab({ d, llm, onCompare, onCalibrate }: { d: SimData; llm: Llm; onCompare: (scenario: string, rules: string[]) => void; onCalibrate: (scenario: string) => void }) {
-  const [sel, setSel] = useState<string | null>(d.ops[0]?.id ?? BUILTIN_CATALOG[0]?.id ?? null);
+  const [sel, setSel] = useState<string | null>(() => {
+    // переход из окна «Принять командование» («Основа модели»): выбрана та операция
+    let want: string | null = null;
+    try { want = localStorage.getItem('def_ops.modeling.op'); localStorage.removeItem('def_ops.modeling.op'); } catch { /* */ }
+    return want ?? d.ops[0]?.id ?? BUILTIN_CATALOG[0]?.id ?? null;
+  });
+  useEffect(() => {
+    const f = (e: Event) => { const op = (e as CustomEvent<{ op?: string }>).detail?.op; if (op) { setSel(op); try { localStorage.removeItem('def_ops.modeling.op'); } catch { /* */ } } };
+    window.addEventListener('def_ops.modeling.open', f);
+    return () => window.removeEventListener('def_ops.modeling.open', f);
+  }, []);
   const [upload, setUpload] = useState<{ pkg: Partial<OperationPackage>; notes: string[]; id: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

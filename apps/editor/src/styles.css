@@ -621,6 +621,7 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .modal.take { width: min(560px, 92%); padding: 18px 22px; }
 .modal.take h3 { margin: 0 0 4px; font: 700 20px/1.2 'PT Serif', Georgia, serif; }
 .take-when { margin: 0 0 8px; color: #55554f; font-size: 13px; }
+.take-kb .link { padding: 0; font-size: inherit; }
 .take-list { padding-left: 18px; margin: 0 0 12px; font-size: 12.5px; line-height: 1.5; color: #3c3a35; } .take-list li { margin-bottom: 4px; }
 .take-enemy { display: flex; flex-direction: column; gap: 6px; }
 .take-enemy label { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 12.5px; }

@@ -24,6 +24,7 @@ import * as kb from './kb/kb';
 import { ModelPicker } from './ModelPicker';
 import { ReviewView } from './ReviewView';
 import { mdToHtml } from './markdown';
+import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
 
 export const SAVE_KEY = 'def_ops.game';
 export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
@@ -1327,8 +1328,15 @@ export function turnStart(t: string, start: string, end: string, turnHours: numb
   return new Date(toMs(start) + k * H).toISOString().slice(0, 16);
 }
 
-export function TakeoverDialog({ at, turnHours, start, scenarioName, llm, onStart, onCancel }: {
-  at: string; end: string; turnHours: number; start: string; scenarioName: string; llm: Llm; onStart: (enemy: EnemyMode) => void; onCancel: () => void;
+/** Открыть «Основу модели» операции: Моделирование → Операции, выбрана эта операция. */
+export function openModelBasis(op: string) {
+  try { localStorage.setItem('def_ops.modeling.tab', 'ops'); localStorage.setItem('def_ops.modeling.op', op); } catch { /* */ }
+  window.dispatchEvent(new CustomEvent('def_ops.modeling.open', { detail: { tab: 'ops', op } }));
+  location.hash = '#modeling';
+}
+
+export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, kbSummary, llm, onStart, onCancel }: {
+  at: string; end: string; turnHours: number; start: string; scenarioName: string; scenario: string; kbSummary: TakeoverSummary | null; llm: Llm; onStart: (enemy: EnemyMode) => void; onCancel: () => void;
 }) {
   const [enemy, setEnemy] = useState<EnemyMode>(llm.check.state === 'fail' ? 'passive' : 'llm');
   const turn = Math.round((toMs(at) - toMs(start)) / (turnHours * 3600_000)) + 1;
@@ -1343,6 +1351,8 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, llm, onStar
           <li>Немецкой стороной с того же момента командует штаб на языковой модели. На каждом ходу он получает свою обстановку — то, что знал бы немецкий штаб, — и отдаёт приказы. Обе стороны решают одновременно.</li>
           <li>Исторические приказы после этого момента отменяются. Приказы, отданные раньше и ещё не дошедшие до войск, остаются в силе.</li>
           <li>Противник виден только в пределах разведки (туман войны). Игра сохраняется в браузере после каждого хода.</li>
+          <li className="take-kb">Состояние соединений на этот момент: {kbSummary ? <>{takeoverText(kbSummary)}. </> : <span className="muted">сверка с базой знаний… </span>}
+            <button className="link" onClick={() => { onCancel(); openModelBasis(scenario); }} title="Моделирование → Операции: факты базы, из которых собраны входы модели">Основа модели</button></li>
         </ul>
         <div className="take-enemy">
           <label className={enemy === 'llm' ? 'on' : ''}><input type="radio" checked={enemy === 'llm'} onChange={() => setEnemy('llm')} />
