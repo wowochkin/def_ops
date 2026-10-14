@@ -1,0 +1,344 @@
+/**
+ * Дороги исторической карты по современной сети: дороги театра (OSM) — подсказка, где на карте искать дороги.
+ * 1) Вдоль каждой дороги театра снимаются пиксели карты поперёк линии (окно — на ошибку привязки и сдвиг трассы),
+ *    рядом — такие же окна в стороне (фон). Цвет, который вдоль дорог встречается заметно чаще, чем в стороне, —
+ *    цвет дороги на этой карте (бумага, лес, надписи есть и там и там — отсеиваются). Так цвета узнаются сами,
+ *    без образцов, отдельно для дорог и шоссе.
+ * 2) По узнанным цветам каждый отрезок дороги театра — есть на карте (дорога того времени), нет (послевоенная) или
+ *    не ясно. Отрезки «нет» можно убрать из театра, остальные остаются линиями.
+ * 3) Второй проход распознаёт карту узнанными цветами (как образцы): длинные линии этого цвета вдали от дорог
+ *    театра — дороги того времени, которых в театре нет; они ложатся в растр дорог.
+ */
+import type { LngLat } from '@def-ops/core';
+import { decodeMask, hsv, maskRle, tileXY, type LegendRule, type OverlayLegend, type OverlayResult } from './overlay';
+import type { TheatreData } from './types';
+
+/** Цвет пикселя → корзина: тон по 15°, насыщенность и яркость по пятым; серые — только по яркости. */
+export function colorBin(r: number, g: number, b: number): number {
+  const [h, s, v] = hsv(r, g, b);
+  if (s < 0.12) return 600 + Math.min(9, Math.floor(v * 10));
+  return Math.floor(h / 15) * 25 + Math.min(4, Math.floor(s * 5)) * 5 + Math.min(4, Math.floor(v * 5));
+}
+export const BINS = 610;
+/** Корзина → правило легенды (окно тона, насыщенности, яркости). */
+export function binRule(bin: number): LegendRule {
+  if (bin >= 600) { const v = bin - 600; return { s: [0, 0.12], v: [v / 10, (v + 1) / 10] }; }
+  const h = Math.floor(bin / 25), s = Math.floor((bin % 25) / 5), v = bin % 5;
+  return { h: [h * 15, (h + 1) * 15], s: [Math.max(0.12, s / 5), (s + 1) / 5], v: [v / 5, (v + 1) / 5] };
+}
+/** Средний цвет корзины (для показа узнанного цвета). */
+export function binColor(bin: number): [number, number, number] {
+  const r = binRule(bin);
+  const h = r.h ? (r.h[0] + r.h[1]) / 2 : 0, s = r.s ? (r.s[0] + r.s[1]) / 2 : 0, v = r.v ? (r.v[0] + r.v[1]) / 2 : 0.5;
+  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+  const [a, b, d] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [Math.round((a + m) * 255), Math.round((b + m) * 255), Math.round((d + m) * 255)];
+}
+
+type Cls = 'road' | 'highway';
+/** Точка проверки на дороге театра: место на карте (пиксели уровня z), нормаль, расстояние вдоль линии. */
+interface Pt { line: number; cls: Cls; gx: number; gy: number; nx: number; ny: number; d: number; ll: LngLat }
+
+export interface NetworkCheck {
+  /** Узнанные цвета: корзина, доля точек дороги, где цвет есть рядом, и доля в стороне. */
+  colors: Record<Cls, { bin: number; rgb: [number, number, number]; road: number; side: number }[]>;
+  /** Проверено точек и их итог. */
+  points: number; covered: number;
+  km: { checked: number; present: number; absent: number; unclear: number };
+  /** Отрезки дорог театра, которых на карте нет: номер линии в T.roads и расстояния вдоль неё, км. */
+  absent: { line: number; from: number; to: number }[];
+  /** Дороги театра с названием, которых на карте нет больше всего (км). */
+  absentNamed: { name: string; km: number }[];
+}
+
+const KM_PER_DEG = 111.32;
+const kmBetween = (a: LngLat, b: LngLat) => {
+  const k = Math.cos((((a[1] + b[1]) / 2) * Math.PI) / 180);
+  return Math.hypot((b[0] - a[0]) * k, b[1] - a[1]) * KM_PER_DEG;
+};
+
+/**
+ * Проверка сети: точки на дорогах театра в области через spacing пикселей уровня z; окно поперёк — ±w пикселей
+ * (≈ 200 м) — для узнавания цвета, фон — такие же окна на 3w в обе стороны. Есть ли дорога в точке — по узкому
+ * окну ±w/2 (≈ 100 м): в плотной сети широкое окно задевает соседние улицы.
+ */
+export class NetworkLearner {
+  readonly pts: Pt[] = [];
+  readonly w: number;
+  private readonly byTile = new Map<string, number[]>();
+  /** Корзины, встреченные в узком окне каждой точки (±w/2, без повторов): по ним — есть ли дорога. */
+  private readonly seen: Uint16Array[] = [];
+  private readonly ok: Uint8Array;
+  private readonly road: Record<Cls, Float64Array> = { road: new Float64Array(BINS), highway: new Float64Array(BINS) };
+  private readonly side: Record<Cls, Float64Array> = { road: new Float64Array(BINS), highway: new Float64Array(BINS) };
+  private readonly n: Record<Cls, number> = { road: 0, highway: 0 };
+  private readonly nSide: Record<Cls, number> = { road: 0, highway: 0 };
+  tiles = 0;
+  /** Шаг точек, км. */
+  readonly stepKm: number;
+
+  constructor(readonly T: TheatreData, readonly bbox: [number, number, number, number], readonly z: number, o: { spacing?: number; windowM?: number } = {}) {
+    const lat = (bbox[1] + bbox[3]) / 2;
+    const mpp = (156543.03 * Math.cos((lat * Math.PI) / 180)) / 2 ** z;
+    this.w = Math.max(3, Math.min(20, Math.round((o.windowM ?? 200) / mpp)));
+    const spacing = o.spacing ?? Math.max(6, Math.round(this.w * 0.8));
+    this.stepKm = (spacing * mpp) / 1000;
+    const inBox = (p: LngLat) => p[0] >= bbox[0] && p[0] <= bbox[2] && p[1] >= bbox[1] && p[1] <= bbox[3];
+    const P = (p: LngLat): [number, number] => [tileXY.lon2x(p[0], z) * 256, tileXY.lat2y(p[1], z) * 256];
+    T.roads.forEach((rd, li) => {
+      if (rd.kind === 'rail') return;
+      let d = 0, carry = 0;
+      for (let k = 1; k < rd.line.length; k++) {
+        const a = rd.line[k - 1], b = rd.line[k];
+        const segKm = kmBetween(a, b);
+        const [ax, ay] = P(a), [bx, by] = P(b);
+        const len = Math.hypot(bx - ax, by - ay);
+        if (len < 1e-6) continue;
+        const nx = -(by - ay) / len, ny = (bx - ax) / len;
+        for (let t = carry; t < len; t += spacing) {
+          const u = t / len;
+          const ll: LngLat = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+          if (inBox(ll)) {
+            const gx = ax + (bx - ax) * u, gy = ay + (by - ay) * u;
+            const i = this.pts.length;
+            this.pts.push({ line: li, cls: rd.kind as Cls, gx, gy, nx, ny, d: d + segKm * u, ll });
+            const key = `${Math.floor(gx / 256)},${Math.floor(gy / 256)}`;
+            (this.byTile.get(key) ?? this.byTile.set(key, []).get(key)!).push(i);
+          }
+        }
+        // следующая точка — через spacing от последней, уже на следующем отрезке
+        carry += Math.max(0, Math.ceil((len - carry) / spacing)) * spacing - len;
+        d += segKm;
+      }
+    });
+    this.ok = new Uint8Array(this.pts.length);
+  }
+  /** Тайлы, в которых есть точки проверки. */
+  tileList(): { x: number; y: number }[] {
+    return [...this.byTile.keys()].map((k) => { const [x, y] = k.split(',').map(Number); return { x, y }; });
+  }
+  addTile(rgba: Uint8ClampedArray | Uint8Array, size: number, x: number, y: number) {
+    const list = this.byTile.get(`${x},${y}`);
+    if (!list) return;
+    this.tiles++;
+    const k = size / 256, w = this.w;
+    const bins = new Set<number>(), inner = new Set<number>();
+    const wi = Math.ceil(w / 2);
+    const read = (gx: number, gy: number): number => {
+      const px = Math.round((gx - x * 256) * k), py = Math.round((gy - y * 256) * k);
+      if (px < 0 || py < 0 || px >= size || py >= size) return -1;
+      const o = (py * size + px) * 4;
+      if (rgba[o + 3] < 128) return -2;
+      return colorBin(rgba[o], rgba[o + 1], rgba[o + 2]);
+    };
+    for (const i of list) {
+      const p = this.pts[i];
+      bins.clear(); inner.clear();
+      let blank = 0, total = 0;
+      for (let t = -w; t <= w; t++) {
+        const b = read(p.gx + p.nx * t, p.gy + p.ny * t);
+        if (b === -1) continue;
+        total++;
+        if (b === -2) { blank++; continue; }
+        bins.add(b);
+        if (Math.abs(t) <= wi) inner.add(b);
+      }
+      if (!total || blank > total / 2) continue; // карты здесь нет
+      this.ok[i] = 1;
+      this.seen[i] = Uint16Array.from(inner);
+      this.n[p.cls]++;
+      for (const b of bins) this.road[p.cls][b]++;
+      for (const sgn of [-1, 1]) {
+        bins.clear();
+        let any = false;
+        for (let t = -w; t <= w; t += 1) {
+          const b = read(p.gx + p.nx * (sgn * 3 * w + t), p.gy + p.ny * (sgn * 3 * w + t));
+          if (b >= 0) { bins.add(b); any = true; }
+        }
+        if (!any) continue;
+        this.nSide[p.cls]++;
+        for (const b of bins) this.side[p.cls][b]++;
+      }
+    }
+  }
+  /** Узнанные цвета класса: чаще у дороги, чем в стороне (не меньше 15 % точек и в 2,5 раза чаще). */
+  colors(cls: Cls): NetworkCheck['colors'][Cls] {
+    const n = this.n[cls], ns = this.nSide[cls];
+    if (n < 20 || !ns) return [];
+    const out: NetworkCheck['colors'][Cls] = [];
+    for (let b = 0; b < BINS; b++) {
+      const r = this.road[cls][b] / n, s = this.side[cls][b] / ns;
+      if (r >= 0.15 && r >= 2.5 * s + 0.05) out.push({ bin: b, rgb: binColor(b), road: +r.toFixed(3), side: +s.toFixed(3) });
+    }
+    return out.sort((a, b) => b.road - b.side - (a.road - a.side)).slice(0, 6);
+  }
+  /** Легенда второго прохода — узнанные цвета; порог клетки — как у образцов линий. */
+  legend(): OverlayLegend {
+    const pixels: Record<string, LegendRule[]> = {};
+    const hw = this.colors('highway'), rd = this.colors('road');
+    // цвет, общий для дорог и шоссе, — у того класса, у которого он заметнее
+    const own = (a: typeof hw, b: typeof rd) => a.filter((c) => { const o = b.find((x) => x.bin === c.bin); return !o || c.road - c.side >= o.road - o.side; });
+    const H = own(hw, rd), R = own(rd, hw);
+    if (H.length) pixels.highway = H.map((c) => binRule(c.bin));
+    if (R.length) pixels.road = R.map((c) => binRule(c.bin));
+    return { id: 'network', name: 'цвета дорог по современной сети', pixels, cells: Object.keys(pixels).map((c) => ({ cls: c, of: [c], min: 0.06 })) };
+  }
+  /** Итог по точкам: есть / нет / не ясно — по соседним точкам той же линии (±smooth). */
+  check(smooth = 4): { state: Int8Array; result: NetworkCheck } {
+    const all = new Set([...this.colors('road'), ...this.colors('highway')].map((c) => c.bin));
+    const hit = new Uint8Array(this.pts.length);
+    for (let i = 0; i < this.pts.length; i++) if (this.ok[i]) hit[i] = this.seen[i].some((b) => all.has(b)) ? 1 : 0;
+    // −1 — карты нет, 0 — нет дороги, 1 — есть, 2 — не ясно
+    const state = new Int8Array(this.pts.length).fill(-1);
+    for (let i = 0; i < this.pts.length; i++) {
+      if (!this.ok[i] || !all.size) continue;
+      let n = 0, h = 0;
+      for (let j = i - smooth; j <= i + smooth; j++) {
+        if (j < 0 || j >= this.pts.length || this.pts[j].line !== this.pts[i].line || !this.ok[j]) continue;
+        n++; h += hit[j];
+      }
+      const share = h / n;
+      state[i] = share >= 0.5 ? 1 : share <= 0.2 ? 0 : 2;
+    }
+    const step = (i: number) => {
+      const p = this.pts[i], q = this.pts[i + 1];
+      // разрыв (линия выходила из области) — не длина проверенной дороги
+      return q && q.line === p.line ? Math.min(q.d - p.d, this.stepKm * 1.5) : 0;
+    };
+    const km = { checked: 0, present: 0, absent: 0, unclear: 0 };
+    const absent: NetworkCheck['absent'] = [];
+    const named = new Map<string, number>();
+    let covered = 0;
+    for (let i = 0; i < this.pts.length; i++) {
+      if (state[i] < 0) continue;
+      covered++;
+      const s = step(i);
+      km.checked += s;
+      if (state[i] === 1) km.present += s; else if (state[i] === 0) km.absent += s; else km.unclear += s;
+    }
+    // отрезки «нет» — подряд идущие точки одной линии, не короче 1 км
+    for (let i = 0; i < this.pts.length;) {
+      if (state[i] !== 0) { i++; continue; }
+      let j = i;
+      while (j + 1 < this.pts.length && state[j + 1] === 0 && this.pts[j + 1].line === this.pts[i].line) j++;
+      const p = this.pts[i], q = this.pts[j];
+      const half = (step(Math.max(i - 1, 0)) || step(i)) / 2;
+      const from = Math.max(0, p.d - half), to = q.d + (step(j) || half * 2) / 2;
+      if (to - from >= 1) {
+        absent.push({ line: p.line, from: +from.toFixed(3), to: +to.toFixed(3) });
+        const nm = this.T.roads[p.line].name;
+        if (nm) named.set(nm, (named.get(nm) ?? 0) + (to - from));
+      }
+      i = j + 1;
+    }
+    const r1 = (x: number) => +x.toFixed(1);
+    return {
+      state,
+      result: {
+        colors: { road: this.colors('road'), highway: this.colors('highway') },
+        points: this.pts.length, covered,
+        km: { checked: r1(km.checked), present: r1(km.present), absent: r1(km.absent), unclear: r1(km.unclear) },
+        absent,
+        absentNamed: [...named].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, k]) => ({ name, km: r1(k) })),
+      },
+    };
+  }
+  /**
+   * Сводка в результат распознавания (второй проход — ov с масками road/highway по узнанным цветам): маски
+   * net-present / net-absent — дороги театра по итогу проверки; road / highway — только новые дороги (куски, уходящие от
+   * дорог театра дальше соседней клетки).
+   */
+  merge(ov: OverlayResult, state: Int8Array, check: NetworkCheck): OverlayResult {
+    const N = ov.cols * ov.rows, [w, s, e, n] = ov.bbox, dl = (e - w) / ov.cols, da = (n - s) / ov.rows;
+    const cellOf = (p: LngLat) => { const c = Math.floor((p[0] - w) / dl), r = Math.floor((n - p[1]) / da); return c < 0 || r < 0 || c >= ov.cols || r >= ov.rows ? -1 : r * ov.cols + c; };
+    const present = new Uint8Array(N), absent = new Uint8Array(N), net = new Uint8Array(N);
+    for (let i = 0; i < this.pts.length; i++) {
+      const c = cellOf(this.pts[i].ll);
+      if (c < 0) continue;
+      net[c] = 1;
+      if (state[i] === 1 || state[i] === 2) present[c] = 1;
+      else if (state[i] === 0) absent[c] = 1;
+    }
+    for (let i = 0; i < N; i++) if (present[i]) absent[i] = 0;
+    // окрестность сети в одну клетку: там дорога карты — та же, что в театре
+    const near = new Uint8Array(N);
+    for (let i = 0; i < N; i++) if (net[i]) {
+      const c = i % ov.cols, r = (i - c) / ov.cols;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const cc = c + dc, rr = r + dr; if (cc >= 0 && rr >= 0 && cc < ov.cols && rr < ov.rows) near[rr * ov.cols + cc] = 1; }
+    }
+    const masks: Record<string, string> = {}, stats: Record<string, number> = {};
+    for (const k of ['road', 'highway']) {
+      if (!ov.masks[k]) continue;
+      const m = decodeMask(ov.masks[k], N);
+      // клетки самой сети — дорога театра; остальное — связными кусками: кусок, который хоть где-то уходит от сети
+      // дальше соседней клетки, — новая дорога целиком (и там, где подходит к сети); весь у сети — сдвиг той же дороги
+      for (let i = 0; i < N; i++) if (net[i]) m[i] = 0;
+      const seen = new Uint8Array(N), comp: number[] = [];
+      for (let i0 = 0; i0 < N; i0++) {
+        if (!m[i0] || seen[i0]) continue;
+        comp.length = 0; const st = [i0]; seen[i0] = 1;
+        let away = false;
+        while (st.length) {
+          const i = st.pop()!; comp.push(i);
+          if (!near[i]) away = true;
+          const c = i % ov.cols, r = (i - c) / ov.cols;
+          for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+            const cc = c + dc, rr = r + dr;
+            if (cc < 0 || rr < 0 || cc >= ov.cols || rr >= ov.rows) continue;
+            const j = rr * ov.cols + cc;
+            if (m[j] && !seen[j]) { seen[j] = 1; st.push(j); }
+          }
+        }
+        if (!away) for (const i of comp) m[i] = 0;
+      }
+      masks[k] = maskRle(m); stats[k] = m.reduce((a, x) => a + x, 0);
+    }
+    masks['net-present'] = maskRle(present); stats['net-present'] = present.reduce((a, x) => a + x, 0);
+    masks['net-absent'] = maskRle(absent); stats['net-absent'] = absent.reduce((a, x) => a + x, 0);
+    return { ...ov, legend: 'network', name: 'дороги по современной сети', masks, stats, network: check };
+  }
+}
+
+/**
+ * Убрать из дорог театра отрезки, которых на карте нет (absent из проверки сети): линия режется по расстоянию
+ * вдоль неё, остатки короче 0,3 км не сохраняются.
+ */
+export function cutAbsent(roads: TheatreData['roads'], absent: NetworkCheck['absent']): { roads: TheatreData['roads']; km: number } {
+  const by = new Map<number, { from: number; to: number }[]>();
+  for (const a of absent) (by.get(a.line) ?? by.set(a.line, []).get(a.line)!).push(a);
+  const out: TheatreData['roads'] = [];
+  let cut = 0;
+  roads.forEach((rd, li) => {
+    const gaps = by.get(li);
+    if (!gaps) { out.push(rd); return; }
+    gaps.sort((a, b) => a.from - b.from);
+    // точка на расстоянии d вдоль линии
+    const cum = [0];
+    for (let k = 1; k < rd.line.length; k++) cum.push(cum[k - 1] + kmBetween(rd.line[k - 1], rd.line[k]));
+    const at = (d: number): LngLat => {
+      let k = 1;
+      while (k < cum.length - 1 && cum[k] < d) k++;
+      const u = cum[k] > cum[k - 1] ? Math.max(0, Math.min(1, (d - cum[k - 1]) / (cum[k] - cum[k - 1]))) : 0;
+      const a = rd.line[k - 1], b = rd.line[k];
+      return [+(a[0] + (b[0] - a[0]) * u).toFixed(6), +(a[1] + (b[1] - a[1]) * u).toFixed(6)];
+    };
+    const piece = (from: number, to: number) => {
+      if (to - from < 0.3) return;
+      const line: LngLat[] = [at(from)];
+      for (let k = 0; k < cum.length; k++) if (cum[k] > from && cum[k] < to) line.push(rd.line[k]);
+      line.push(at(to));
+      out.push({ ...rd, line });
+    };
+    let pos = 0;
+    const total = cum[cum.length - 1];
+    for (const g of gaps) {
+      const from = Math.max(pos, g.from), to = Math.min(total, g.to);
+      if (to <= from) continue;
+      piece(pos, from);
+      cut += to - from;
+      pos = to;
+    }
+    piece(pos, total);
+  });
+  return { roads: out, km: +cut.toFixed(1) };
+}

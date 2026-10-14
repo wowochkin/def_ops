@@ -1170,7 +1170,8 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .hist-roads .seg button.on { background: #8c2a22; color: #fff; }
 .hist-tab { border-collapse: collapse; font-size: 12px; }
 .hist-tab td { padding: 1px 6px 1px 0; vertical-align: top; }
-.hist-tab td:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; padding-right: 8px; }
+.hist-roads .hist-sw { display: inline-flex; gap: 3px; align-items: center; margin-left: 8px; font-size: 12px; }
+.hist-tab td:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; padding-right: 8px; white-space: nowrap; }
 .hist-tab .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 .warn { color: #8a5a00; }
 

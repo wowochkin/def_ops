@@ -7,6 +7,7 @@
  */
 import type { LngLat } from '@def-ops/core';
 import { decodeGrid, encodeGrid } from './theatre';
+import { cutAbsent, type NetworkCheck } from './overlay-network';
 import { TERRAIN_CLASSES, type TerrainClass, type TerrainGrid, type TheatreData } from './types';
 
 type Range = [number, number];
@@ -23,6 +24,8 @@ export interface OverlayResult {
   bbox: [number, number, number, number]; cols: number; rows: number;
   /** RLE «число+0/1» через запятую, строки с севера на юг. */
   covered: string; masks: Record<string, string>; stats: Record<string, number>;
+  /** Проверка дорог театра по карте (распознавание по современной сети). */
+  network?: NetworkCheck;
 }
 
 /** HSV: тон 0–360, насыщенность и яркость 0–1. */
@@ -250,7 +253,7 @@ export function thinMask(m: Uint8Array, cols: number, rows: number): number {
   return removed;
 }
 
-export const PREVIEW: Record<string, [number, number, number]> = { urban: [210, 80, 70], built: [210, 80, 70], suburb: [230, 150, 130], dark: [40, 40, 40], road: [240, 140, 40], highway: [200, 40, 40], rail: [60, 60, 60], forest: [60, 140, 70], water: [50, 100, 220], marsh: [120, 180, 170] };
+export const PREVIEW: Record<string, [number, number, number]> = { urban: [210, 80, 70], built: [210, 80, 70], suburb: [230, 150, 130], dark: [40, 40, 40], road: [240, 140, 40], highway: [200, 40, 40], rail: [60, 60, 60], forest: [60, 140, 70], water: [50, 100, 220], marsh: [120, 180, 170], 'net-present': [70, 70, 70], 'net-absent': [70, 120, 220] };
 
 export function maskRle(m: Uint8Array): string {
   const out: string[] = [];
@@ -273,6 +276,8 @@ export interface OverlayApply {
   water?: string; urban?: string; forest?: string; marsh?: string;
   /** Современная застройка, которой на карте нет, → этот класс (обычно open); keepUrban — маска, где застройку оставить. */
   demoteModernUrban?: TerrainClass; keepUrban?: string;
+  /** Убрать отрезки дорог театра, которых на карте нет (по проверке сети, ov.network). */
+  dropAbsent?: boolean;
   /** Только внутри рамки (поля листа с легендой не трогать). */
   clip?: [number, number, number, number];
 }
@@ -323,6 +328,12 @@ export function applyOverlay(T: TheatreData, ov: OverlayResult, o: OverlayApply)
     if (hw || rd) { roads[i] = hw ? 'h' : roads[i] === 'h' ? 'h' : 'r'; anyRoad = true; changes['клеток с дорогой карты'] = (changes['клеток с дорогой карты'] ?? 0) + 1; }
   }
   let lines = T.roads;
+  // отрезки, которых на карте нет (номера линий в проверке — по T.roads, поэтому раньше прочих правок)
+  if (o.dropAbsent && ov.network?.absent.length) {
+    const c = cutAbsent(T.roads, ov.network.absent);
+    lines = c.roads;
+    changes['км дорог театра убрано (нет на карте)'] = c.km;
+  }
   if (o.replaceModernRoads) {
     const covered = (line: LngLat[]) => { const m = line[Math.floor(line.length / 2)]; return cellAt(m[0], m[1]) >= 0; };
     const before = lines.length;

@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MapSource } from '@def-ops/core';
-import { applyOverlay, compareRoads, decodeMask, hsv, legendFromSamples, OVERLAY_COLORS, overlayGrid, tilesFor, tileXY, type BBox, type OverlayApply, type OverlayLegend, type OverlayResult, type RoadComparison, type TheatreData } from '@def-ops/sim';
+import { applyOverlay, compareRoads, decodeMask, hsv, legendFromSamples, OVERLAY_COLORS, overlayGrid, tilesFor, tileXY, type BBox, type OverlayApply, type OverlayLegend, type OverlayResult, type RoadComparison, type TheatreData, type NetworkCheck } from '@def-ops/sim';
 import type { MapEngine } from './engine/types';
 import type { Basemaps } from './shared';
 import { cartography } from './MapsPanel';
@@ -17,7 +17,7 @@ import type { OverlayRequest, OverlayResponse } from './sim/overlay-worker';
 const LEGENDS = import.meta.glob('../../../packages/sim/tools/theatre/legends/*.json', { eager: true, import: 'default' }) as Record<string, OverlayLegend>;
 const PRESETS = Object.values(LEGENDS);
 const CLASSES: [string, string][] = [['road', 'дороги'], ['highway', 'шоссе'], ['water', 'вода'], ['urban', 'застройка'], ['forest', 'лес'], ['marsh', 'болото']];
-const RU = Object.fromEntries(CLASSES) as Record<string, string>;
+const RU = { ...Object.fromEntries(CLASSES), 'net-present': 'дороги театра есть на карте', 'net-absent': 'дорог театра нет на карте' } as Record<string, string>;
 const MAX_TILES = 4000;
 
 type Samples = Record<string, [number, number, number][]>;
@@ -29,9 +29,9 @@ function maskImage(ov: OverlayResult): string {
   c.width = ov.cols; c.height = ov.rows;
   const ctx = c.getContext('2d')!;
   const img = ctx.createImageData(ov.cols, ov.rows);
-  const order = ['suburb', 'marsh', 'forest', 'urban', 'water', 'rail', 'road', 'highway'].filter((k) => ov.masks[k]);
+  const order = ['suburb', 'marsh', 'forest', 'urban', 'water', 'rail', 'net-absent', 'net-present', 'road', 'highway'].filter((k) => ov.masks[k]);
   const masks = order.map((k) => [k, decodeMask(ov.masks[k], N)] as const);
-  for (let i = 0; i < N; i++) for (const [k, m] of masks) if (m[i]) img.data.set([...(OVERLAY_COLORS[k] ?? [200, 0, 200]), k === 'road' || k === 'highway' ? 255 : 150], i * 4);
+  for (let i = 0; i < N; i++) for (const [k, m] of masks) if (m[i]) img.data.set([...(OVERLAY_COLORS[k] ?? [200, 0, 200]), k === 'road' || k === 'highway' || k.startsWith('net-') ? 255 : 150], i * 4);
   ctx.putImageData(img, 0, 0);
   return c.toDataURL('image/png');
 }
@@ -49,6 +49,25 @@ function compareImage(c: RoadComparison): string {
 }
 const km = (cells: number, c: RoadComparison) => Math.round(cells * c.cellKm);
 
+/** Итог проверки дорог театра по карте: узнанные цвета, километры, послевоенные дороги с названием. */
+function NetworkSummary({ n }: { n: NetworkCheck }) {
+  const pct = (x: number) => (n.km.checked ? Math.round((x / n.km.checked) * 100) : 0);
+  const sw = (list: NetworkCheck['colors']['road'], title: string) => list.length > 0 && <span className="hist-sw" title={title}>{title}: {list.map((c) => <i key={c.bin} title={`у дороги — ${Math.round(c.road * 100)} % точек, в стороне — ${Math.round(c.side * 100)} %`} style={{ background: `rgb(${c.rgb.join(',')})` }} />)}</span>;
+  return (
+    <div className="hist-roads">
+      <div className="row"><b>Цвет дорог узнан по дорогам театра</b><span className="grow" />{sw(n.colors.road, 'дороги')}{sw(n.colors.highway, 'шоссе')}</div>
+      <table className="hist-tab"><tbody>
+        <tr><td>Проверено дорог театра</td><td>{n.km.checked} км</td><td className="muted">точек {n.covered} из {n.points}</td></tr>
+        <tr><td><i className="sw" style={{ background: 'rgb(70,70,70)' }} />есть на карте</td><td>{n.km.present} км</td><td className="muted">{pct(n.km.present)} % — дороги того времени, остаются</td></tr>
+        <tr><td><i className="sw" style={{ background: 'rgb(70,120,220)' }} />нет на карте</td><td>{n.km.absent} км</td><td className="muted">{pct(n.km.absent)} % — послевоенные (или карта их не показывает)</td></tr>
+        {n.km.unclear > 0 && <tr><td>не ясно</td><td>{n.km.unclear} км</td><td className="muted">остаются</td></tr>}
+      </tbody></table>
+      {n.absentNamed.length > 0 && <div className="small"><span className="muted">Нет на карте больше всего:</span> {n.absentNamed.map((a) => `${a.name} (${a.km} км)`).join('; ')}</div>}
+      {n.km.checked > 0 && n.km.present / n.km.checked < 0.3 && <div className="warn small">Подтверждено меньше трети дорог театра: возможно, карта сдвинута относительно театра или цвет дорог узнан неверно (см. образцы цвета выше) — проверьте привязку карты.</div>}
+    </div>
+  );
+}
+
 export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   T: TheatreData; area: BBox | null; eng: MapEngine | null; bm: Basemaps;
   onPreview: (p: { url: string; bbox: BBox } | null) => void; onSaved: (id: string) => void; onNotice: (t: string) => void;
@@ -56,7 +75,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const maps = bm.localMeta;
   const [mapId, setMapId] = useState<string>('');
   const map: MapSource | undefined = maps.find((m) => m.id === mapId) ?? maps[0];
-  const [legendId, setLegendId] = useState<string>('samples');
+  const [legendId, setLegendId] = useState<string>('network');
   const [samples, setSamples] = useState<Samples>({});
   const [picking, setPicking] = useState<string | null>(null);
   const [tol, setTol] = useState(1);
@@ -73,8 +92,9 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const autoZoom = useMemo(() => { if (!map || empty) return null; let z = map.minzoom; for (const k of zooms) if (tilesFor(box, k).length <= 1500) z = k; return z; }, [map, box, empty]); // eslint-disable-line react-hooks/exhaustive-deps
   const z = zoom != null && zooms.includes(zoom) ? zoom : autoZoom;
   const nTiles = z != null && !empty ? tilesFor(box, z).length : 0;
-  const legend: OverlayLegend | null = legendId === 'samples' ? (Object.values(samples).some((l) => l.length) ? legendFromSamples(samples, tol, mins) : null) : PRESETS.find((l) => l.id === legendId) ?? null;
-  const [run, setRun] = useState<{ done: number; total: number } | null>(null);
+  const net = legendId === 'network';
+  const legend: OverlayLegend | null = net ? null : legendId === 'samples' ? (Object.values(samples).some((l) => l.length) ? legendFromSamples(samples, tol, mins) : null) : PRESETS.find((l) => l.id === legendId) ?? null;
+  const [run, setRun] = useState<{ done: number; total: number; stage?: string } | null>(null);
   const [res, setRes] = useState<{ ov: OverlayResult; tiles: number; missing: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const worker = useRef<Worker | null>(null);
@@ -82,12 +102,12 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   useEffect(() => { setRes(null); onPreview(null); }, [T, mapId, legendId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // как применять: по классам, которые есть в легенде
-  const cls = legend ? legend.cells.map((c) => c.cls) : [];
-  const [opt, setOpt] = useState<{ roads: boolean; replace: 'road' | 'all' | false; terrain: boolean; demote: boolean }>({ roads: true, replace: 'road', terrain: true, demote: false });
+  const cls = net ? (res ? ['road', 'highway'].filter((k) => res.ov.masks[k]) : []) : legend ? legend.cells.map((c) => c.cls) : [];
+  const [opt, setOpt] = useState<{ roads: boolean; replace: 'road' | 'all' | false; terrain: boolean; demote: boolean; dropAbsent: boolean }>({ roads: true, replace: 'road', terrain: true, demote: false, dropAbsent: true });
   const [newId, setNewId] = useState('');
   const [view, setView] = useState<'classes' | 'roads'>('classes');
   const roadCls = cls.includes('road') || cls.includes('highway');
-  const cmp = useMemo(() => (res && roadCls ? compareRoads(T, res.ov, { road: cls.includes('road') ? 'road' : undefined, highway: cls.includes('highway') ? 'highway' : undefined }) : null), [res, T, roadCls]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cmp = useMemo(() => (res && roadCls && !res.ov.network ? compareRoads(T, res.ov, { road: cls.includes('road') ? 'road' : undefined, highway: cls.includes('highway') ? 'highway' : undefined }) : null), [res, T, roadCls]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (res) onPreview({ url: view === 'roads' && cmp ? compareImage(cmp) : maskImage(res.ov), bbox: res.ov.bbox }); }, [view, cmp]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setNewId(`${T.id.replace(/-hist.*$/, '')}-hist`); }, [T]);
 
@@ -127,7 +147,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
     eng.setView({ center: [(bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2], zoom: zz });
   };
   const start = () => {
-    if (!map || !legend || z == null) return;
+    if (!map || (!legend && !net) || z == null) return;
     setErr(null); setRes(null); onPreview(null);
     worker.current?.terminate();
     const w = new Worker(new URL('./sim/overlay-worker.ts', import.meta.url), { type: 'module' });
@@ -135,16 +155,21 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
     setRun({ done: 0, total: nTiles });
     w.onmessage = (e: MessageEvent<OverlayResponse>) => {
       const m = e.data;
-      if (m.kind === 'progress') setRun({ done: m.done, total: m.total });
+      if (m.kind === 'progress') setRun({ done: m.done, total: m.total, stage: m.stage });
       else if (m.kind === 'done') { setRun(null); setRes({ ov: m.result, tiles: m.tiles, missing: m.missing }); onPreview({ url: maskImage(m.result), bbox: m.result.bbox }); w.terminate(); }
       else { setRun(null); setErr(m.error); w.terminate(); }
     };
     const grid = overlayGrid(T, box);
-    w.postMessage({ kind: 'run', template: cartography.tileTemplate(map), legend, grid, zoom: z, source: `${map.name}${map.date ? ` (${map.date})` : ''}` } satisfies OverlayRequest);
+    const source = `${map.name}${map.date ? ` (${map.date})` : ''}`;
+    if (net) w.postMessage({ kind: 'network', template: cartography.tileTemplate(map), theatre: { id: T.id, name: T.name, bbox: T.bbox, cellKm: T.cellKm, roads: T.roads }, grid, zoom: z, source } satisfies OverlayRequest);
+    else w.postMessage({ kind: 'run', template: cartography.tileTemplate(map), legend: legend!, grid, zoom: z, source } satisfies OverlayRequest);
   };
   const stop = () => { worker.current?.postMessage({ kind: 'stop' } satisfies OverlayRequest); };
 
-  const apply = (): OverlayApply => ({
+  const apply = (): OverlayApply => net ? {
+    road: opt.roads && cls.includes('road') ? 'road' : undefined, highway: opt.roads && cls.includes('highway') ? 'highway' : undefined,
+    replaceModernRoads: false, dropAbsent: opt.dropAbsent,
+  } : ({
     road: opt.roads && cls.includes('road') ? 'road' : undefined, highway: opt.roads && cls.includes('highway') ? 'highway' : undefined,
     replaceModernRoads: opt.roads && (cls.includes('road') || cls.includes('highway')) ? opt.replace : false,
     ...(opt.terrain ? { water: cls.includes('water') ? 'water' : undefined, urban: cls.includes('urban') ? 'urban' : undefined, forest: cls.includes('forest') ? 'forest' : undefined, marsh: cls.includes('marsh') ? 'marsh' : undefined } : {}),
@@ -173,6 +198,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
       <div className="row"><button onClick={show} title="Карта — подложкой, вид — на её охват в области (крупнее её наименьшего уровня)">{bm.id === `local-${map?.id}` ? 'К карте' : 'Показать подложкой'}</button>
         <span className="muted small">{empty ? 'карта не покрывает область театра' : `охват: уровни ${map!.minzoom}–${map!.maxzoom}`}</span></div>
       <label className="th-f">Как распознавать <select value={legendId} onChange={(e) => setLegendId(e.target.value)}>
+        <option value="network">по дорогам театра — цвет дорог узнаётся сам</option>
         <option value="samples">по образцам цвета (щелчком по карте)</option>
         {PRESETS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>
       {legendId === 'samples' ? <div className="hist-samples">
@@ -185,17 +211,20 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
             <div className="hist-warn small">Тёмно-серый или чёрный образец: таким цветом на картах — надписи, железные дороги, контуры. Отдельные буквы и пятна отбрасываются, но надёжнее брать цвет самой дороги (на карте РККА — оранжевый).</div>}
         </div>)}
         <label className="th-f inl">Допуск цвета <input type="range" min={0.4} max={2} step={0.1} value={tol} onChange={(e) => setTol(+e.target.value)} /> ×{tol.toFixed(1)}</label>
-      </div> : <p className="muted small">{PRESETS.find((l) => l.id === legendId)?.note}</p>}
+      </div> : net ? <p className="muted small">Дороги театра (современные) подсказывают, где на карте дороги: вдоль них берётся цвет, который встречается заметно чаще, чем в стороне, — это цвет дорог на этой карте (отдельно дороги и шоссе). По нему каждый отрезок дороги театра проверяется — есть ли он на карте (дорога того времени) или нет (послевоенная); затем вся область распознаётся этим цветом — длинные линии вдали от дорог театра — дороги того времени, которых в театре нет. Нужна привязка карты: дороги театра должны ложиться на её дороги (сдвиг до ~200 м допустим).</p>
+        : <p className="muted small">{PRESETS.find((l) => l.id === legendId)?.note}</p>}
       {map && !empty && <label className="th-f inl">Уровень тайлов <select value={z ?? ''} onChange={(e) => setZoom(+e.target.value)}>{zooms.map((k) => <option key={k} value={k}>{k}</option>)}</select> <span className="muted small">тайлов {nTiles}{nTiles > MAX_TILES ? ` — больше ${MAX_TILES}: уменьшите область или уровень` : ''}</span></label>}
       <div className="row">
-        {run ? <><div className="kb-prog grow"><i style={{ width: `${(run.done / Math.max(1, run.total)) * 100}%` }} /><span>тайлы {run.done}/{run.total}</span></div><button onClick={stop}>Остановить</button></>
-          : <button className="primary" disabled={!legend || empty || z == null || nTiles > MAX_TILES} title={!legend ? 'нет образцов цвета' : ''} onClick={start}>Распознать</button>}
+        {run ? <><div className="kb-prog grow"><i style={{ width: `${(run.done / Math.max(1, run.total)) * 100}%` }} /><span>{run.stage ? `${run.stage}: ` : ''}тайлы {run.done}/{run.total}</span></div><button onClick={stop}>Остановить</button></>
+          : <button className="primary" disabled={(!legend && !net) || empty || z == null || nTiles > MAX_TILES} title={!legend ? 'нет образцов цвета' : ''} onClick={start}>Распознать</button>}
       </div>
       {err && <div className="err">{err}</div>}
       {res && <div className="hist-res">
         <div className="row"><b>Распознано: тайлов {res.tiles}{res.missing ? ` (нет ${res.missing})` : ''}, сетка {res.ov.cols}×{res.ov.rows}</b><span className="grow" />
           <button className="link" title="Отклонить результат: убрать его с карты, театр не меняется; образцы остаются — их можно поправить и распознать снова" onClick={() => { setRes(null); onPreview(null); }}>Отклонить ✕</button></div>
         <div className="hist-stats">{Object.entries(res.ov.stats).map(([k, n]) => <span key={k}><i style={{ background: `rgb(${(OVERLAY_COLORS[k] ?? [200, 0, 200]).join(',')})` }} />{RU[k] ?? k}: {n} кл.</span>)}</div>
+        {res.ov.network && <NetworkSummary n={res.ov.network} />}
+        {res.ov.network && <label title="Отрезки дорог театра, которых на карте нет (≥ 1 км подряд), — послевоенные: вырезаются из линий дорог; остальные дороги театра остаются как есть"><input type="checkbox" checked={opt.dropAbsent} onChange={(e) => setOpt({ ...opt, dropAbsent: e.target.checked })} /> убрать отрезки дорог театра, которых на карте нет ({res.ov.network.km.absent} км)</label>}
         {cmp && <div className="hist-roads">
           <div className="row"><b>Дороги: карта и театр</b><span className="grow" />
             <div className="seg"><button className={view === 'classes' ? 'on' : ''} onClick={() => setView('classes')}>классы</button><button className={view === 'roads' ? 'on' : ''} onClick={() => setView('roads')}>сравнение дорог</button></div></div>
@@ -209,9 +238,9 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
           {cmp.absent.length > 0 && <div className="small"><span className="muted">Дороги театра, которых на карте нет (≥70 % длины):</span> {cmp.absent.map((a) => `${a.name} (${a.km} км)`).join('; ')}</div>}
           {cmp.stats.map > 0 && cmp.stats.both / Math.max(1, cmp.stats.map) < 0.25 && <div className="warn small">Совпадений мало: возможно, распознаны не дороги (надписи, реки, сетка) — проверьте образцы цвета на «сравнении дорог».</div>}
         </div>}
-        <p className="muted small">На карте — {view === 'roads' && cmp ? 'сравнение дорог: серое — совпадают, оранжевое — только на карте, синее — только в театре' : 'клетки по классам'}. Мало или много — поправьте образцы, допуск или порог и распознайте снова.</p>
+        <p className="muted small">На карте — {res.ov.network ? 'серое — дороги театра есть на карте, синее — нет (послевоенные), оранжевое и красное — дороги карты, которых в театре нет' : view === 'roads' && cmp ? 'сравнение дорог: серое — совпадают, оранжевое — только на карте, синее — только в театре' : 'клетки по классам'}. Мало или много — поправьте образцы, допуск или порог и распознайте снова.</p>
         {(cls.includes('road') || cls.includes('highway')) && <label><input type="checkbox" checked={opt.roads} onChange={(e) => setOpt({ ...opt, roads: e.target.checked })} /> дороги карты — в растр дорог театра</label>}
-        {opt.roads && (cls.includes('road') || cls.includes('highway')) && <label className="th-f inl">Современные дороги в охвате карты <select value={String(opt.replace)} onChange={(e) => setOpt({ ...opt, replace: e.target.value === 'false' ? false : (e.target.value as 'road' | 'all') })}>
+        {!net && opt.roads && (cls.includes('road') || cls.includes('highway')) && <label className="th-f inl">Современные дороги в охвате карты <select value={String(opt.replace)} onChange={(e) => setOpt({ ...opt, replace: e.target.value === 'false' ? false : (e.target.value as 'road' | 'all') })}>
           <option value="road">убрать дороги (шоссе оставить)</option><option value="all">убрать и шоссе</option><option value="false">оставить</option></select></label>}
         {cls.some((c) => ['water', 'urban', 'forest', 'marsh'].includes(c)) && <label><input type="checkbox" checked={opt.terrain} onChange={(e) => setOpt({ ...opt, terrain: e.target.checked })} /> вода, застройка, лес, болото карты — поверх местности</label>}
         {cls.includes('urban') && <label title="Застройка, которой на карте нет (послевоенная), — открытая местность"><input type="checkbox" checked={opt.demote} onChange={(e) => setOpt({ ...opt, demote: e.target.checked })} /> современную застройку, которой нет на карте, — в открытую</label>}
