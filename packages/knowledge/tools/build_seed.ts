@@ -198,8 +198,10 @@ function lossesClaim(r: { kind: string; formation: string | null; date?: string;
   const from = (a ?? r.date ?? '').slice(0, 10), to = (b ?? a ?? r.date ?? '').slice(0, 10);
   if (!from) return undefined;
   const n = (k: string) => (typeof r.values?.[k] === 'number' ? (r.values[k] as number) : undefined);
-  const [killed, wounded, missing] = [n('killed'), n('wounded'), n('missing')];
-  return { kind: 'losses', subject: r.formation, from, to, ...(killed != null ? { killed } : {}), ...(wounded != null ? { wounded } : {}), ...(missing != null ? { missing } : {}) };
+  const [killed, wounded, missing, total] = [n('killed'), n('wounded'), n('missing'), n('total')];
+  // записи только с техникой или процентами claim не дают
+  if (killed == null && wounded == null && missing == null && total == null) { skipClaim('потери: нет числа людей'); return undefined; }
+  return { kind: 'losses', subject: r.formation, from, to, ...(killed != null ? { killed } : {}), ...(wounded != null ? { wounded } : {}), ...(missing != null ? { missing } : {}), ...(total != null ? { total } : {}) };
 }
 
 /** События операции (events[]) → event в записи операции. */
@@ -639,9 +641,12 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     const id = ensureF(d.id, d.name_ru, d.side, { aliases: [...(d.abbr ?? []), ...(d.aliases ?? [])].filter(Boolean) });
     const sub = (d.subordination ?? [])[0] as Record<string, string> | undefined;
     const parent = sub ? sub.corps ?? sub.army ?? sub.parent : undefined;
-    addFacts(id, [{ key: 'echelon', value: 'дивизия' }, ...(parent ? [{ key: 'parent', value: fname.get(parent) ?? parent }] : []), ...(d.note ? [{ key: 'path', value: cutx(d.note, 300) }] : [])]);
+    // claim первой строки — на уже пишущийся факт (тот же вышестоящий), остальные строки — новыми фактами
+    const pcs = parentClaims(d, (x) => fname.get(x) ?? x);
+    const same = pcs.find((f) => f.claim?.kind === 'parent' && f.claim.parent === parent && f.claim.from === (sub?.date ?? '').slice(0, 10));
+    addFacts(id, [{ key: 'echelon', value: 'дивизия' }, ...(parent ? [{ key: 'parent', value: fname.get(parent) ?? parent, ...(same ? { claim: same.claim, reliability: same.reliability } : {}) }] : []), ...(d.note ? [{ key: 'path', value: cutx(d.note, 300) }] : [])]);
     if (parent && entries.has(`f:${parent}`)) { const e = entries.get(id)!; e.relations = dedupeRel([...(e.relations ?? []), { type: 'part_of', target: `f:${parent}` }]); }
-    addClaimFacts(id, parentClaims(d, (x) => fname.get(x) ?? x));
+    addClaimFacts(id, pcs.filter((f) => f !== same));
   }
 
   // доктрины сторон (свод правил «условие → действие» с нормативами); рубрики — по теме группы правил

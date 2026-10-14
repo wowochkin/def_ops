@@ -34,13 +34,14 @@ describe('формальные части фактов в сиде встрое�
     expect(p.some((c) => c.claim.parent === 'su_61a' && c.claim.from === '1945-04-01')).toBe(true);
   });
 
-  it('потери: по одной формальной части на запись own_losses с известным формированием', () => {
+  it('потери: по одной формальной части на запись own_losses с известным формированием и числом людей', () => {
     let total = 0, known = 0;
+    const hasPeople = (v: Record<string, unknown>) => ['killed', 'wounded', 'missing', 'total'].some((k) => typeof v[k] === 'number');
     for (const f of ['berlin-1945-losses-daily.json', 'berlin-1945-losses-daily-tsamo.json']) {
-      for (const r of json<{ records: { kind: string; formation: string | null }[] }>(`docs/sources/${f}`).records) {
+      for (const r of json<{ records: { kind: string; formation: string | null; values: Record<string, unknown> }[] }>(`docs/sources/${f}`).records) {
         if (r.kind !== 'own_losses') continue;
         total++;
-        if (r.formation && scenarioIds.has(r.formation)) known++;
+        if (r.formation && scenarioIds.has(r.formation) && hasPeople(r.values)) known++;
       }
     }
     expect(total).toBeGreaterThan(0);
@@ -49,6 +50,7 @@ describe('формальные части фактов в сиде встрое�
     expect(l?.claim.killed).toBe(4145);
     expect(l?.claim.wounded).toBe(18919);
     expect(l?.claim.missing).toBe(421);
+    for (const { claim } of of('losses')) expect([claim.killed, claim.wounded, claim.missing, claim.total].some((x) => typeof x === 'number'), `${claim.subject} ${claim.from}`).toBe(true);
   });
 
   it('есть положения, линии, переправы и события', () => {
@@ -72,7 +74,20 @@ describe('формальные части фактов в сиде встрое�
     expect([...bad], `нет в сценариях:\n${[...bad].join('\n')}`).toEqual([]);
   });
 
-  it('текст фактов не меняется: у фактов с формальной частью есть значение', () => {
-    for (const e of seed.entries) for (const f of e.facts ?? []) if (f.claim) expect(f.value.length, `${e.id}/${f.key}`).toBeGreaterThan(0);
+  it('тексты существующих фактов сохранились (в том числе у фактов, получивших claim)', () => {
+    const val = (id: string, key: string) => (seed.entries.find((e) => e.id === id)?.facts ?? []).filter((f) => f.key === key).map((f) => f.value);
+    expect(val('f:su_1bf', 'commander')).toContain('Г. К. Жуков');
+    expect(val('f:su_12gsd', 'echelon')).toContain('дивизия');
+    // su_12gsd: в реестре корпус не в сценарии, а в факте — корпус; прежний факт остаётся, claim на армию — отдельный
+    const f12 = (seed.entries.find((e) => e.id === 'f:su_12gsd')?.facts ?? []).filter((f) => f.key === 'parent');
+    expect(f12.some((f) => !f.claim && /9-й гвардейский/.test(f.value))).toBe(true);
+    // там, где вышестоящий в факте и в claim один, claim лежит на прежнем тексте (без пометки «с даты»)
+    let attached = 0;
+    for (const e of seed.entries) {
+      for (const f of e.facts ?? []) if (f.claim?.kind === 'parent') {
+        if (!/\(с \d\d\.\d\d\)$/.test(f.value)) attached++;
+      }
+    }
+    expect(attached).toBeGreaterThan(100);
   });
 });

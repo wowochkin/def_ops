@@ -75,7 +75,7 @@ export type Claim =
   | { kind: 'boundary'; between: [string, string]; from: string; to?: string; points: string[]; inclusive?: string }
   | { kind: 'crossing'; subject: string; from: string; state: 'open' | 'destroyed' | 'built' }
   | { kind: 'event'; id: string; at: string; title: string; place?: string }
-  | { kind: 'losses'; subject: string; from: string; to: string; killed?: number; wounded?: number; missing?: number; tanks?: number };
+  | { kind: 'losses'; subject: string; from: string; to: string; killed?: number; wounded?: number; missing?: number; /** общие потери людьми, если разбивки нет */ total?: number; tanks?: number };
 
 export interface Fact {
   key: string;
