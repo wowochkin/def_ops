@@ -78,7 +78,7 @@ describe('сборщик «база → модель»', () => {
     expect(r.provenance.filter((p) => p.input === 'checkpoint:1').length).toBe(2);
   });
 
-  it('потери: общее число без разбивки; перекрывающиеся периоды не складываются дважды', () => {
+  it('потери: общее число без разбивки; итог с началом до операции не даёт точки', () => {
     const r = compileOperation([entry('l', [
       [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-16', killed: 100, wounded: 300 }, 'B'],
       [{ kind: 'losses', subject: 'su_x', from: '1945-04-17', to: '1945-04-17', total: 200 }, 'B'],
@@ -86,8 +86,35 @@ describe('сборщик «база → модель»', () => {
     ])], op, {});
     const l = r.edits.checkpoints.filter((c) => c.kind === 'losses');
     expect(l.map((c) => [c.at, c.kind === 'losses' && c.from, c.kind === 'losses' && c.personnel])).toEqual([
-      ['1945-04-16', '1945-04-16', 400], ['1945-04-17', '1945-04-16', 600], ['1945-04-19', '1945-04-11', 1500],
+      ['1945-04-16', '1945-04-16', 400], ['1945-04-17', '1945-04-16', 600],
     ]);
+  });
+
+  it('потери: на один конец — цепочка по дням важнее итога с началом до операции', () => {
+    const r = compileOperation([entry('l', [
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-16', killed: 100, wounded: 300 }, 'B'],
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-17', to: '1945-04-17', total: 200 }, 'B'],
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-11', to: '1945-04-17', total: 1500 }, 'B'],
+    ])], op, {});
+    const l = r.edits.checkpoints.filter((c) => c.kind === 'losses');
+    expect(l.map((c) => [c.at, c.kind === 'losses' && c.from, c.kind === 'losses' && c.personnel])).toEqual([
+      ['1945-04-16', '1945-04-16', 400], ['1945-04-17', '1945-04-16', 600],
+    ]);
+  });
+
+  it('потери: две цепочки на один конец с разной суммой — подробнее выбрана, расхождение видно', () => {
+    const r = compileOperation([entry('l', [
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-16', killed: 100, wounded: 300 }, 'B'],
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-17', to: '1945-04-17', total: 200 }, 'B'],
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-17', total: 1000 }, 'B'],
+    ])], op, {});
+    const l = r.edits.checkpoints.filter((c) => c.kind === 'losses');
+    expect(l.map((c) => [c.at, c.kind === 'losses' && c.from, c.kind === 'losses' && c.personnel])).toEqual([
+      ['1945-04-16', '1945-04-16', 400], ['1945-04-17', '1945-04-16', 600],
+    ]);
+    const c = r.conflicts.find((x) => x.key === 'losses|su_x|1945-04-17');
+    expect(c?.chosen?.index).toBe(1);
+    expect(c?.candidates.map((x) => x.index).sort()).toEqual([1, 2]);
   });
 
   it('факт о неизвестном формировании — в unmatched, без исключения', () => {
@@ -148,7 +175,7 @@ describe('воспроизводимость: сид → начальное со
    * Сценарий делит численность армии между корпусами по числу дивизий, а у факта — своя оценка.
    */
   const ALLOWED: Record<string, string> = {
-    de_lvi: 'ru-wiki: «вместе с тыловыми частями до 50 000» (оценка без ссылки); сценарий делит 112 143 чел. 9 А по дивизиям корпусов — 27 186',
+    'de_lvi.personnel': 'ru-wiki: «вместе с тыловыми частями до 50 000» (оценка без ссылки); сценарий делит 112 143 чел. 9 А по дивизиям корпусов — 27 186',
   };
 
   it('численность, танки, орудия на начало совпадают со сценарием там, где у формирования есть факт', () => {
@@ -160,12 +187,13 @@ describe('воспроизводимость: сид → начальное со
       for (const k of ['personnel', 'tanks', 'guns'] as const) {
         if (e[k] == null || f[k] == null) continue;
         compared++;
-        if (e[k] !== f[k] && !ALLOWED[f.id]) bad.push(`${f.id}.${k}: база ${e[k]}, сценарий ${f[k]}`);
+        if (e[k] !== f[k] && !ALLOWED[`${f.id}.${k}`]) bad.push(`${f.id}.${k}: база ${e[k]}, сценарий ${f[k]}`);
       }
     }
-    for (const id of Object.keys(ALLOWED)) {
+    for (const key of Object.keys(ALLOWED)) {
+      const [id, k] = key.split('.') as [string, 'personnel' | 'tanks' | 'guns'];
       const f = sc.formations.find((x) => x.id === id)!;
-      if (r.edits.formations[id]?.personnel === f.personnel) bad.push(`${id}: в списке известных расхождений, но совпадает — убрать из списка`);
+      if (r.edits.formations[id]?.[k] === f[k]) bad.push(`${key}: в списке известных расхождений, но совпадает — убрать из списка`);
     }
     if (bad.length) console.log('расхождения сида и сценария:\n' + bad.join('\n'));
     expect(compared).toBeGreaterThan(5);

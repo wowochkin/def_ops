@@ -49,6 +49,7 @@ const DAY = 86400000;
 const ms = (s: string) => Date.parse(s);
 const day = (s: string) => s.slice(0, 10);
 const NUM = ['personnel', 'tanks', 'guns'] as const;
+const prevDay = (d: string) => new Date(ms(`${day(d)}T00:00Z`) - DAY).toISOString().slice(0, 10);
 /** Окно начального состояния, сут. */
 const START_WINDOW = 2;
 /** Неизвестное формирование в unmatched — если факт не раньше начала больше чем на столько суток. */
@@ -153,43 +154,50 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
     }
 
     // численность после начала — контрольные точки
-    const after = strength.filter((x) => x !== s0 && ms(claimOf<'strength'>(x).at) > tStart && ms(claimOf<'strength'>(x).at) <= tEnd);
+    // (факты в окне начального состояния — его кандидаты, не точки)
+    const after = strength.filter((x) => { const t = ms(claimOf<'strength'>(x).at); return t > tStart + START_WINDOW * DAY && t <= tEnd; });
     for (const { moment, chosen } of atMoments(after, 'strength', id, (x) => claimOf<'strength'>(x).at)) {
       const c = claimOf<'strength'>(chosen);
       prov(`checkpoint:${edits.checkpoints.length}`, chosen);
       edits.checkpoints.push({ at: moment, formation: id, kind: 'strength', ...Object.fromEntries(NUM.filter((k) => typeof c[k] === 'number').map((k) => [k, c[k]])) });
     }
 
-    // потери: по периоду — один выбранный факт; точка на конец периода — сумма цепочки смежных периодов
-    const losses = of('losses', id).filter((x) => inOp(claimOf<'losses'>(x).to));
-    const periods = [...groupBy(losses, (x) => { const c = claimOf<'losses'>(x); return `${day(c.from)}|${day(c.to)}`; }).values()]
-      .map((g) => pick(g, 'losses', id, claimOf<'losses'>(g[0]).to))
-      .filter((x): x is FactRef => !!x && people(claimOf<'losses'>(x)) != null);
-    const prevDay = (d: string) => new Date(ms(`${d}T00:00Z`) - DAY).toISOString().slice(0, 10);
-    /** Цепочка от периода назад: перед ним — смежный (конец — накануне начала), самый длинный из таких. */
-    const chain = (c: FactRef): FactRef[] => {
-      const out = [c];
-      for (let cur = c; out.length <= periods.length;) {
-        const want = prevDay(day(claimOf<'losses'>(cur).from));
-        const prev = periods.filter((x) => day(claimOf<'losses'>(x).to) === want)
-          .sort((a, b) => claimOf<'losses'>(a).from.localeCompare(claimOf<'losses'>(b).from))[0];
-        if (!prev || out.includes(prev)) break;
-        out.push(prev); cur = prev;
-      }
-      return out;
+    // потери: по периоду — один выбранный факт; точка на конец периода — сумма цепочки смежных периодов,
+    // только накопленных в операции: начало цепочки не раньше чем за сутки до её начала
+    const minFrom = prevDay(dStart);
+    const L = (x: FactRef) => claimOf<'losses'>(x);
+    const losses = of('losses', id).filter((x) => inOp(L(x).to));
+    const periods = [...groupBy(losses, (x) => `${day(L(x).from)}|${day(L(x).to)}`).values()]
+      .map((g) => pick(g, 'losses', id, L(g[0]).to))
+      .filter((x): x is FactRef => !!x && people(L(x)) != null && day(L(x).from) >= minFrom);
+    /** Все цепочки от периода назад (каждый предшественник кончается накануне начала следующего), до упора. */
+    const chains = (c: FactRef, seen: FactRef[] = []): FactRef[][] => {
+      const want = prevDay(day(L(c).from));
+      const prev = periods.filter((x) => day(L(x).to) === want && !seen.includes(x));
+      return prev.length ? prev.flatMap((x) => chains(x, [...seen, c]).map((ch) => [c, ...ch])) : [[c]];
     };
-    const byTo = groupBy(periods, (x) => day(claimOf<'losses'>(x).to));
+    const sum = (ch: FactRef[]) => ch.reduce((s, x) => s + people(L(x))!, 0);
+    const byTo = groupBy(periods, (x) => day(L(x).to));
     for (const to of [...byTo.keys()].sort()) {
-      const best = byTo.get(to)!.map(chain).sort((a, b) =>
-        claimOf<'losses'>(a[a.length - 1]).from.localeCompare(claimOf<'losses'>(b[b.length - 1]).from) || b.length - a.length)[0];
-      const cs = best.map((x) => claimOf<'losses'>(x));
+      // раньше начало, затем подробнее (больше звеньев)
+      const all = byTo.get(to)!.flatMap((c) => chains(c)).sort((a, b) =>
+        day(L(a[a.length - 1]).from).localeCompare(day(L(b[b.length - 1]).from)) || b.length - a.length);
+      const best = all[0];
+      const total = sum(best);
+      const cs = best.map(L);
+      // другие цепочки на тот же конец с иной суммой (> 5 %) — расхождение
+      const rivals = all.slice(1).filter((ch) => Math.abs(sum(ch) - total) / Math.max(1, sum(ch), total) > 0.05);
+      if (rivals.length) {
+        const key = pinKey('losses', id, cs[0].to);
+        const candidates = [...new Set([best[0], ...rivals.map((ch) => ch[0])])];
+        const was = conflicts.find((c) => c.key === key);
+        if (was) was.candidates = [...new Set([...was.candidates, ...candidates])];
+        else conflicts.push({ key, candidates, chosen: best[0] });
+      }
       const tanks = cs.every((c) => typeof c.tanks === 'number') ? cs.reduce((s, c) => s + c.tanks!, 0) : undefined;
       const n = edits.checkpoints.length;
       for (const x of [...best].reverse()) prov(`checkpoint:${n}`, x);
-      edits.checkpoints.push({
-        at: cs[0].to, formation: id, kind: 'losses', from: cs[cs.length - 1].from,
-        personnel: cs.reduce((s, c) => s + people(c)!, 0), ...(tanks != null ? { tanks } : {}),
-      });
+      edits.checkpoints.push({ at: cs[0].to, formation: id, kind: 'losses', from: cs[cs.length - 1].from, personnel: total, ...(tanks != null ? { tanks } : {}) });
     }
 
     // положения
