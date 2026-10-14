@@ -5,6 +5,7 @@
  * карты становятся растром дорог театра (вместо современных — в охвате карты), вода, застройка и лес — поправкой
  * к местности. Результат — новый театр (свои операции могут на него ссылаться) и поправка для сборщика.
  */
+import { SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MapSource } from '@def-ops/core';
 import { applyOverlay, compareRoads, decodeMask, hsv, legendFromSamples, OVERLAY_COLORS, overlayGrid, tilesFor, tileXY, type BBox, type OverlayApply, type OverlayLegend, type OverlayResult, type RoadComparison, type TheatreData, type NetworkCheck, type WaterCheck, osmNetworkQuery, osmToRoads, osmToRivers, absentLines, mergeOhm, OHM_OVERPASS } from '@def-ops/sim';
@@ -305,7 +306,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
     a.download = `${T.id}-${res.ov.legend}-overlay.json`; a.click();
   };
 
-  if (!maps.length) return <div className="hist"><p className="muted small">Нет локальных карт. Загрузите историческую карту в «Карты» → «Подложки»: скан с привязкой по углам или точкам, тайловый архив .sqlitedb / .mbtiles, OziExplorer .map. Нужен сервер стенда (<code>npm run dev:services</code>).</p></div>;
+  if (!maps.length) return <div className="hist"><p className="muted small">Нет локальных карт. Загрузите историческую карту в «Карты» → «Подложки»: скан с привязкой по углам или точкам, тайловый архив .sqlitedb / .mbtiles, OziExplorer .map. Нужны сервисы: {SERVICES_HINT}.</p></div>;
   return (
     <div className="hist">
       <label className="th-f">Карта <select value={map?.id ?? ''} onChange={(e) => setMapId(e.target.value)}>{maps.map((m) => <option key={m.id} value={m.id}>{m.name}{m.date ? ` (${m.date})` : ''}</option>)}</select></label>

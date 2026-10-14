@@ -5,6 +5,7 @@
  * база знаний (материалы, загрузка документов, вопросы к модели),
  * ИИ (связь с моделями: штаб противника в игре, советник, база знаний). Раздел запоминается в адресе (#editor, #replay…).
  */
+import { IN_APP, SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
@@ -107,7 +108,7 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
           <section className="card">
             <MapsPanel online={server.status === 'online' && server.services?.cartography === 'up'} doc={doc} selected={null} engine={eng}
               onShow={(m) => { bm.setId(`local-${m.id}`); showArea(m); setNotice(`Подложка: ${m.name}`); }} onArea={showArea} onMaps={bm.setLocalMaps} notify={setNotice} />
-            {server.status !== 'online' && <p className="muted">Локальные карты требуют сервера: <code>npm run dev:services</code> или <code>./scripts/start-local.sh</code>.</p>}
+            {server.status !== 'online' && <p className="muted">Локальные карты требуют сервисов: {SERVICES_HINT}.</p>}
           </section>
         </aside>
         <main className="maps-base-map">
@@ -132,7 +133,7 @@ function StaffView({ llm }: { llm: Llm }) {
           <h3>Связь с моделью</h3>
           <label>Адрес сервера
             <input value={settings.url} onChange={(e) => set({ url: e.target.value })} spellCheck={false} />
-            <small>По умолчанию <code>/llm/v1</code> — через сервер разработки (<code>npm run dev</code>) к LM Studio на <code>localhost:1234</code>; другой адрес — переменная <code>DEFOPS_LLM_URL</code> при запуске.</small>
+            <small>По умолчанию <code>/llm/v1</code> — к LM Studio на этом компьютере (<code>localhost:1234</code>) через {IN_APP ? 'сервисы приложения' : 'сервер разработки'}; другой сервер — полным адресом здесь, например <code>http://192.168.1.10:1234/v1</code>.</small>
           </label>
           <label>Модель
             <ModelSelect value={settings.model} onChange={(model) => set({ model })} check={check} empty={`первая загруженная${check.state === 'ok' ? ` (${check.models[0]})` : ''}`} />
@@ -156,7 +157,7 @@ function StaffView({ llm }: { llm: Llm }) {
           <ol className="steps">
             <li>LM Studio → загрузите модель (Qwen 27B, 4 бит) → вкладка Developer → <b>Start Server</b>. Длина контекста — не меньше 16 000 токенов.</li>
             <li>Здесь нажмите «Проверить связь» — должна появиться модель.</li>
-            <li>Без LM Studio проверить стенд можно на подставной модели: <code>npm run llm:mock</code> в отдельном терминале. Её решения простые, для проверки интерфейса.</li>
+            <li>Разработчикам: без LM Studio проверить стенд можно на подставной модели: <code>npm run llm:mock</code> в отдельном терминале. Её решения простые, для проверки интерфейса.</li>
           </ol>
           <h3>Что видит и делает модель</h3>
           <ul className="steps">

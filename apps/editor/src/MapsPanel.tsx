@@ -4,6 +4,7 @@
  * привязанного скана, граница карты по нарисованному контуру, пакеты для
  * переноса в закрытый контур.
  */
+import { SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useState } from 'react';
 import {
   parseOziMap, tileCount, validBBox, type BBox, type ControlPoint, type Feature, type ImageOverlay, type LngLat, type MapDocument, type MapJob, type MapSource,
@@ -118,7 +119,7 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMap
     return (
       <div className="maps">
         <div className="sec-h"><span>Локальные карты</span></div>
-        <div className="muted pad">Сервис картографии недоступен. Запуск: npm run dev:services или docker compose up.</div>
+        <div className="muted pad">Сервис картографии недоступен: {SERVICES_HINT}.</div>
       </div>
     );
   }

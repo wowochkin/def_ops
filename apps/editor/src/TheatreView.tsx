@@ -4,7 +4,7 @@
  * по ней: слои в GeoJSON, растр местности PNG (с файлом привязки), театр-фрагмент JSON, заготовка рецепта для
  * сборки нового театра. Театр можно загрузить своим файлом — им смогут пользоваться свои операции.
  */
-import { confirmAsync } from './dialogs';
+import { confirmAsync, IN_APP, SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { cropGrid, cropTheatre, decodeGrid, decodeHeights, layerCounts, layerGeoJSON, recipeFor, theatreToDocument, THEATRE_LAYERS, TERRAIN_CLASSES, type BBox, type TerrainGrid, type TheatreData, type TheatreLayerId } from '@def-ops/sim';
@@ -255,7 +255,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   const startBuild = async () => {
     setBuild(null);
     try {
-      const chk = await fetch(`${API}/check`).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status === 404 || r.status === 502 ? 'сервер стенда не запущен (npm run dev:services)' : `сервер ответил ${r.status}`))));
+      const chk = await fetch(`${API}/check`).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status === 404 || r.status === 502 ? `сервисы не отвечают: ${SERVICES_HINT}` : `сервер ответил ${r.status}`))));
       setSrv(chk);
       if (!chk.ok) return;
       const r = await fetch(`${API}/builds`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ recipe: recipe() }) });
@@ -339,7 +339,8 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
             : <button className="primary" disabled={!b || !newId} onClick={() => void startBuild()}>Собрать на сервере</button>}
           <button disabled={!b} onClick={() => save(`${newId}.recipe.json`, JSON.stringify(recipe(), null, 2))} title="Рецепт для правки и сборки вручную">Рецепт</button>
         </div>
-        {srv && !srv.ok && <div className="th-srv"><b>Сборщик на сервере не готов</b>{srv.error && <span>{srv.error}</span>}<span>Подготовка (один раз, в папке проекта):</span><code onClick={() => { void navigator.clipboard?.writeText(srv.setup); setNotice('Команда скопирована'); }}>{srv.setup}</code><span>Сервер стенда: <code>npm run dev:services</code>.</span></div>}
+        {srv && !srv.ok && IN_APP && <div className="th-srv"><b>В настольном приложении сборка театров выключена</b><span>Сборщику нужен Python с GDAL. Готовые театры и исторический слой работают; новый театр соберите в серверном варианте или по «Рецепту» вручную и загрузите кнопкой «Загрузить театр…».</span></div>}
+        {srv && !srv.ok && !IN_APP && <div className="th-srv"><b>Сборщик на сервере не готов</b>{srv.error && <span>{srv.error}</span>}<span>Подготовка (один раз, в папке проекта):</span><code onClick={() => { void navigator.clipboard?.writeText(srv.setup); setNotice('Команда скопирована'); }}>{srv.setup}</code><span>Сервер стенда: <code>npm run dev:services</code>.</span></div>}
         {build && <div className={`th-build ${build.status}`}>
           <b>{build.status === 'running' ? <><span className="spinner" /> собирается «{build.name}»…</> : build.status === 'done' ? `Собран: ${build.name} (${((build.sizeBytes ?? 0) / 1e6).toFixed(1)} МБ) — загружен в список` : build.status === 'cancelled' ? 'Сборка остановлена' : `Ошибка: ${build.error}`}</b>
           <pre>{build.log.slice(-8).join('\n')}</pre>

@@ -4,6 +4,7 @@
  * текст виден по мере написания, любой раздел можно переписать. Документ сохраняется в браузере (для этой игры)
  * и скачивается в PDF (через печать) или Markdown.
  */
+import { say } from './dialogs';
 import { useEffect, useRef, useState } from 'react';
 import { REVIEW_SECTIONS } from '@def-ops/staff-service/live';
 import type { GameRequest, GameResponse, TurnView } from './sim/game-protocol';
@@ -95,12 +96,12 @@ export function ReviewView({ view, llm, send, listen, onClose }: {
         models: [...new Set(ready.map((s) => secs[s.id].model).filter(Boolean))].join(', '),
       }, `razbor-${view.scenario}-${view.time.slice(0, 10)}.pdf`);
     } catch (e) {
-      alert(`Не удалось собрать PDF: ${(e as Error).message}`);
+      void say(`Не удалось собрать PDF: ${(e as Error).message}`);
     } finally { setPdfBusy(false); }
   };
   const pdf = () => {
     const w = window.open('', '_blank');
-    if (!w) { alert('Браузер не дал открыть окно печати — разрешите всплывающие окна для этой страницы.'); return; }
+    if (!w) { void say('Окно печати не открылось — сохраните разбор кнопкой «Скачать PDF» (в браузере — или разрешите всплывающие окна для этой страницы).'); return; }
     const goals = view.goals.map((g) => `<tr><td>${esc(g.title)}</td><td>${g.simulated ? dm(g.simulated).slice(0, 5) : '—'}</td><td>${dm(g.historical).slice(0, 5)}</td></tr>`).join('');
     const models = [...new Set(ready.map((s) => secs[s.id].model).filter(Boolean))].join(', ');
     w.document.write(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Разбор операции — ${esc(view.scenarioName)}</title><style>${PRINT_CSS}</style></head><body>

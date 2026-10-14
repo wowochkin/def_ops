@@ -6,7 +6,7 @@
  * одновременно с человеком по своей обстановке. Посредник видит решения модели и
  * может снять туман войны. Игра сохраняется в браузере после каждого хода.
  */
-import { confirmAsync } from './dialogs';
+import { confirmAsync, say } from './dialogs';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
@@ -343,7 +343,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const endTurn = () => {
     if (!view) return;
     const bad = draftList.filter((d) => NEEDS_TARGET.includes(d.task) && !d.target);
-    if (bad.length) { alert(`Не указана цель:\n${bad.map((d) => `${short(unit(d.formation)?.name ?? d.formation)} — ${TASK_RU[d.task]}`).join('\n')}`); setTab('orders'); setSel(bad[0].formation); return; }
+    if (bad.length) { void say(`Не указана цель:\n${bad.map((d) => `${short(unit(d.formation)?.name ?? d.formation)} — ${TASK_RU[d.task]}`).join('\n')}`); setTab('orders'); setSel(bad[0].formation); return; }
     const missing = decisionMissing(decision);
     if (missing.length) { setTab('decision'); setNotice(`Решение на ход не готово: ${missing.join(', ')}`); return; }
     const orders: Order[] = draftList.map((d) => ({ id: `human@${view.time}:${d.formation}`, formation: d.formation, task: d.task, target: d.target, issuedAt: view.time, source: 'human', note: d.note || undefined }));

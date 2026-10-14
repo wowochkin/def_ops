@@ -2,6 +2,7 @@
  * Раздел инспектора «Объект реестра»: какой реальный объект обозначает знак,
  * его характеристики на момент шкалы времени, запись изменений с даты, история.
  */
+import { SERVICES_HINT } from './dialogs';
 import { ask } from './dialogs';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -80,7 +81,7 @@ export function EntityPanel({ api, doc, setDoc, feature: f, time }: Props) {
     return (
       <div className="section">
         <div className="sec-h"><span>Объект реестра</span></div>
-        <div className="muted">Реестр объектов доступен при подключении к серверу (npm run dev:services или docker compose).</div>
+        <div className="muted">Реестр объектов недоступен: {SERVICES_HINT}.</div>
       </div>
     );
   }

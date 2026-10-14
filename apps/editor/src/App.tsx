@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ask } from './dialogs';
+import { ask, say, SERVICES_HINT } from './dialogs';
 import type { MapDocument, GeoJSONCollection } from '@def-ops/core';
 import { emptyDocument, newId, migrateDocument, toGeoJSON, fromGeoJSON, zoomFactor, documentAt, SIZING_MODES, sizingOf, sizingModeId, type TimeInstant } from '@def-ops/core';
 import { useViewScale } from './ScaleRange';
@@ -157,7 +157,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
       const data = JSON.parse(await file.text());
       if (data?.type === 'FeatureCollection') return importGeoJSON(data);
       loadDoc(migrateDocument(data));
-    } catch (e) { alert('Не удалось открыть файл: ' + (e as Error).message); }
+    } catch (e) { void say('Не удалось открыть файл: ' + (e as Error).message); }
   };
   const importGeoJSON = (fc: GeoJSONCollection) => {
     const k = engine ? zoomFactor(doc, engine.getView().zoom) : 1;
@@ -185,16 +185,16 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
       syncedRef.current = m;
       reset({ ...doc, id: m.id, revision: m.revision });
       setNotice(`Сохранено на сервере: ревизия ${m.revision}`);
-    } catch (e) { alert('Ошибка сохранения: ' + (e as Error).message); }
+    } catch (e) { void say('Ошибка сохранения: ' + (e as Error).message); }
   };
   const openServerList = async () => {
-    try { setServerList(await api.documents.list()); } catch (e) { alert('Сервер: ' + (e as Error).message); }
+    try { setServerList(await api.documents.list()); } catch (e) { void say('Сервер: ' + (e as Error).message); }
   };
 
   const suffix = time ? `-${time.replace(/[:T]/g, '-')}` : '';
   const serverTitle = server.status === 'online'
     ? `Сервер доступен: ${Object.entries(server.services ?? {}).map(([k, v]) => `${k} — ${v}`).join(', ')}`
-    : server.status === 'offline' ? 'Сервер недоступен (работа в браузере). Запуск: npm run dev:services' : 'Проверка сервера…';
+    : server.status === 'offline' ? `Сервисы недоступны: ${SERVICES_HINT}` : 'Проверка сервера…';
 
   return (
     <ZonesContext.Provider value={zones}>
@@ -218,7 +218,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
             <button onClick={() => { close(); download(`${doc.name || 'map'}.json`, JSON.stringify(withView(), null, 1), 'application/json'); }}>Документ (JSON)</button>
             <button onClick={() => { close(); download(`${doc.name || 'map'}${suffix}.geojson`, JSON.stringify(toGeoJSON(doc, { time })), 'application/geo+json'); }}>GeoJSON</button>
             <button onClick={() => { close(); svgWithFonts(atTime(), doc.paper).then((x) => download(`${doc.name || 'map'}${suffix}.svg`, x, 'image/svg+xml')); }}>SVG (слои — группами)</button>
-            <button disabled={!engine} onClick={() => { close(); if (engine) exportViewPNG(engine.getContainer(), engine.getView()).then((x) => download(`${doc.name || 'map'}${suffix}-view.png`, x)).catch((e) => alert(`PNG: ${(e as Error).message}`)); }}>PNG — как на экране (с картой)</button>
+            <button disabled={!engine} onClick={() => { close(); if (engine) exportViewPNG(engine.getContainer(), engine.getView()).then((x) => download(`${doc.name || 'map'}${suffix}-view.png`, x)).catch((e) => void say(`PNG: ${(e as Error).message}`)); }}>PNG — как на экране (с картой)</button>
             <button onClick={() => { close(); exportPNG(atTime(), doc.paper, 2).then((x) => download(`${doc.name || 'map'}${suffix}.png`, x)); }}>PNG — только знаки (все объекты)</button>
             <div className="menu-sep" />
             <div className="menu-h">Примеры</div>
@@ -261,7 +261,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
               {serverList.map((m) => (
                 <div key={m.id} className="srvitem">
                   <span className="nm" onClick={async () => {
-                    try { loadDoc(migrateDocument(await api.documents.get(m.id)), true); setServerList(null); } catch (e) { alert((e as Error).message); }
+                    try { loadDoc(migrateDocument(await api.documents.get(m.id)), true); setServerList(null); } catch (e) { void say((e as Error).message); }
                   }}>{m.name}</span>
                   <span className="muted">рев. {m.revision} · слоёв {m.layers} · объектов {m.features} · {new Date(m.updatedAt).toLocaleString('ru-RU')}</span>
                   <button className="link danger" title="Удалить" onClick={async () => {

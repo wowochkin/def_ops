@@ -6,6 +6,18 @@
  */
 export const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
 
+/** Окно настольного приложения (Tauri), а не браузер. */
+export const IN_APP = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+/** Что делать, когда сервисы не отвечают: в приложении они запускаются вместе с окном, в браузере — отдельно. */
+export const SERVICES_HINT = IN_APP
+  ? 'сервисы запускаются вместе с окном приложения — если они не отвечают, перезапустите приложение'
+  : 'запуск: npm run dev:services или ./scripts/start-local.sh';
+
+/** Сообщение (ошибка, предупреждение) — диалогом внутри страницы: системный alert в настольном окне не показывается. */
+export function say(message: string): Promise<void> {
+  return inFrame ? Promise.resolve() : dialog(message, { ok: 'ОК', alone: true }).then(() => undefined);
+}
+
 /** Да/нет — диалогом внутри страницы (системный confirm в настольном окне не работает). */
 export function ask(message: string, inFrameAnswer = true): Promise<boolean> {
   return inFrame ? Promise.resolve(inFrameAnswer) : confirmAsync(message);
@@ -32,7 +44,7 @@ export function chooseAsync(message: string, actions: { label: string; danger?: 
 }
 
 /** Диалог: с input — возвращает введённую строку или false (отмена); без — true / false; с actions — номер действия. */
-function dialog(message: string, o: { ok?: string; cancel?: string; danger?: boolean; input?: string; actions?: { label: string; danger?: boolean }[] }): Promise<string | boolean | number> {
+function dialog(message: string, o: { ok?: string; cancel?: string; danger?: boolean; input?: string; actions?: { label: string; danger?: boolean }[]; alone?: boolean }): Promise<string | boolean | number> {
   return new Promise((resolve) => {
     const back = document.createElement('div');
     back.className = 'confirm-back';
@@ -55,7 +67,7 @@ function dialog(message: string, o: { ok?: string; cancel?: string; danger?: boo
       b.onclick = () => finish(i);
       return b;
     });
-    if (extra.length) row.append(no, ...extra); else row.append(no, yes);
+    if (extra.length) row.append(no, ...extra); else if (o.alone) row.append(yes); else row.append(no, yes);
     const inp = o.input != null ? document.createElement(/\n/.test(o.input) ? 'textarea' : 'input') : null;
     if (inp) { inp.value = o.input!; inp.className = 'confirm-input'; }
     box.append(...(inp ? [p, inp, row] : [p, row]));

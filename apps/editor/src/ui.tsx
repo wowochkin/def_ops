@@ -1,7 +1,7 @@
 /** Общие элементы интерфейса: всплывающее меню, выбор подложки, значки разделов. */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { newId } from '@def-ops/core';
-import { askText } from './dialogs';
+import { askText, say } from './dialogs';
 import { isValidTemplate } from './engine/basemaps';
 import type { Basemaps } from './shared';
 
@@ -44,7 +44,7 @@ export function BasemapControls({ bm }: { bm: Basemaps }) {
           const name = await askText('Название подложки:', 'Моя карта');
           if (!name) return;
           const url = await askText('Шаблон адреса тайлов XYZ, например https://server/{z}/{x}/{y}.png\n(или WMS с {bbox-epsg-3857}):', '');
-          if (!url || !isValidTemplate(url)) { if (url) alert('Нужен адрес с {z}/{x}/{y}, {quadkey} или {bbox-epsg-3857}'); return; }
+          if (!url || !isValidTemplate(url)) { if (url) void say('Нужен адрес с {z}/{x}/{y}, {quadkey} или {bbox-epsg-3857}'); return; }
           bm.addCustom({ id: 'custom-' + newId('b'), name, tiles: [url], tileSize: 256 });
         }}>+ своя XYZ / WMS…</button>}
       </div>

@@ -1,11 +1,11 @@
 // Сервисы платформы внутри настольного приложения: документы, рендер, реестр, картография и шлюз — фоновыми
-// процессами на свободных портах, данные — в папке пользователя (без СУБД и Docker), редактор и API — с одного адреса
+// процессами на свободных портах (шлюз — на постоянном), данные — в папке пользователя (без СУБД и Docker), редактор и API — с одного адреса
 // шлюза. Когда шлюз готов, в stdout — строка «DEFOPS_READY <адрес>»; приложение открывает этот адрес в окне.
 //   node launch.mjs --data <папка данных> [--static <собранный редактор>] [--dev] [--port N] [--llm http://localhost:1234/v1] [--watch-stdin]
 // --dev — сервисы из исходников (npx tsx), иначе — собранные файлы рядом (server/dist/<сервис>.mjs).
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,7 +26,19 @@ if (Number(opt('port', 0)) && await portBusy(Number(opt('port', 0)))) {
   fail(`порт ${opt('port')} занят — скорее всего, сервисы прошлого запуска не остановились. Остановите их: lsof -ti tcp:${opt('port')} | xargs kill — и запустите приложение снова`);
 }
 
-const ports = { documents: await freePort(), render: await freePort(), registry: await freePort(), cartography: await freePort(), gateway: Number(opt('port', 0)) || await freePort() };
+// Порт шлюза постоянный (записан в папке данных): хранилище окна (IndexedDB, localStorage) привязано к адресу с
+// портом, и на новом порту окно не увидело бы базу знаний, переигровки и настройки прошлых запусков.
+// Занят чужой программой — на этот запуск свободный порт, записанный не меняется.
+async function gatewayPort() {
+  const file = join(data, 'gateway-port');
+  let saved = 0;
+  try { saved = Number(readFileSync(file, 'utf8').trim()) || 0; } catch { /* первый запуск */ }
+  if (saved && !(await portBusy(saved))) return saved;
+  if (saved) { process.stderr.write(`[запуск] порт ${saved} занят — на этот запуск другой; данные окна прошлых запусков вернутся, когда порт освободится\n`); return freePort(); }
+  for (const p of [47615, 47625, 47635]) if (!(await portBusy(p))) { writeFileSync(file, String(p)); return p; }
+  const p = await freePort(); writeFileSync(file, String(p)); return p;
+}
+const ports = { documents: await freePort(), render: await freePort(), registry: await freePort(), cartography: await freePort(), gateway: Number(opt('port', 0)) || await gatewayPort() };
 const url = (n) => `http://127.0.0.1:${ports[n]}`;
 const services = [
   { name: 'documents', env: { STORAGE: 'file', DATA_DIR: join(data, 'documents') } },
