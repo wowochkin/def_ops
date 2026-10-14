@@ -34,11 +34,11 @@ const time = (s: string) => Date.parse(s);
 
 /**
  * О ком факт: subject, id события или пара объединений линии; у значения правила — путь параметра (с '@su'/'@de',
- * если норматив одной стороны); у итога — 'outcome:сценарий:мера:соединение'.
+ * если норматив одной стороны); у итога — 'outcome:сценарий:мера:соединение[:сторона/ступень/район]:с–по'.
  */
 export const subjectOf = (c: Claim): string => c.kind === 'boundary' ? c.between.join('|') : c.kind === 'event' ? c.id
   : c.kind === 'param' ? (c.side ? `${c.param}@${c.side}` : c.param)
-  : c.kind === 'outcome' ? `outcome:${c.scenario}:${c.measure}:${c.subject ?? ''}` : c.subject;
+  : c.kind === 'outcome' ? `outcome:${c.scenario}:${c.measure}:${c.subject ?? ''}${c.side || c.echelon || c.near ? `:${c.side ?? ''}/${c.echelon ?? ''}/${c.near ?? ''}` : ''}:${c.from}–${c.to}` : c.subject;
 
 /** Дата факта для близости к моменту: at, иначе from; у потерь и итога — конец периода; у значения правила даты нет (''). */
 export const dateOf = (c: Claim): string => c.kind === 'losses' || c.kind === 'outcome' ? c.to : c.kind === 'param' ? '' : 'at' in c ? c.at : c.from;

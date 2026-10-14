@@ -43,7 +43,6 @@ export function subjectKeys(c: AnyCand): string[] {
   const cl = c.claim;
   if (!cl || cl.kind === 'event' || cl.kind === 'param') return [];
   if (cl.kind === 'boundary') return cl.between.map((x, i) => x || c.names.between?.[i] || '').filter(Boolean);
-  if (cl.kind === 'outcome') return [cl.subject || c.names.subject || ''].filter(Boolean);
   return [cl.subject || c.names.subject || ''].filter(Boolean);
 }
 
@@ -135,7 +134,7 @@ export function setClaimField(claim: Claim, key: string, raw: string): Claim {
 /** Соединение кандидата (между — i-й из пары). */
 export function setSubject(claim: Claim, id: string, i = 0): Claim {
   if (claim.kind === 'boundary') { const b: [string, string] = [...claim.between]; b[i] = id; return { ...claim, between: b }; }
-  if (claim.kind === 'event' || claim.kind === 'param') return claim;
+  if (claim.kind === 'event' || claim.kind === 'param' || (claim.kind === 'outcome' && claim.measure === 'frontage')) return claim;
   return { ...claim, subject: id };
 }
 

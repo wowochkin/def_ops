@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { normRowOf, type Entry, type Fact } from '../src';
+import { normRowOf, subjectOf, type Entry, type Fact } from '../src';
 
 const root = new URL('../../../', import.meta.url);
 const json = <T,>(p: string) => JSON.parse(readFileSync(new URL(p, root), 'utf8')) as T;
@@ -39,6 +39,18 @@ describe('нормативы модели в сиде', () => {
   it('темп 1 гв. ТА у Зелова — итог 1–5 км/сут', () => {
     const c = factOf('pace-1gta-seelow')[0].fact.claim!;
     expect(c).toMatchObject({ kind: 'outcome', measure: 'pace', subject: 'su_1gta', range: [1, 5], unit: 'км/сут' });
+  });
+
+  it('путь param чистый: без «%» и «/», масштаб — в scale', () => {
+    for (const { fact } of normFacts) if (fact.claim?.kind === 'param') expect(fact.claim.param, fact.norm!.id).not.toMatch(/[%/]/);
+    expect(factOf('cross-small')[0].fact.claim).toMatchObject({ param: 'riverCrossHours', scale: 3 });
+    expect(factOf('assume-strength-tolerance')[0].fact.claim).toMatchObject({ param: 'strength.tolerance', unit: '%' });
+  });
+
+  it('итоги одного соединения за разные периоды — разные подлежащие', () => {
+    const k = (id: string) => subjectOf(factOf(id)[0].fact.claim!);
+    expect(k('pace-1pa-day1')).not.toBe(k('pace-1pa-avg'));
+    expect(subjectOf(factOf('defence-frontage')[0].fact.claim!)).toContain('de/division/');
   });
 
   it('из фактов собирается прежняя таблица: строки совпадают с norms.json по всем полям', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolve, pinKey, pinOf, claimFacts, type FactRef, type Fact, type Entry, type Claim } from '../src';
+import { subjectOf, resolve, pinKey, pinOf, claimFacts, type FactRef, type Fact, type Entry, type Claim } from '../src';
 
 const ref = (index: number, claim: Claim, reliability: 'A' | 'B' | 'C' | undefined, updated = '', entry = 'e1'): FactRef => ({
   entry, index, updated, fact: { key: 'k', value: 'v', reliability, claim },
@@ -188,8 +188,20 @@ describe('значения правил (param) и итоги (outcome)', () => 
     expect(resolve([a], 'param', 'advanceMax@su', '', {}).chosen).toBe(a);
     expect(resolve([a], 'param', 'advanceMax', '', {}).chosen).toBeNull();
   });
-  it('outcome: о ком outcome:сценарий:мера:соединение, дата — to', () => {
+  it('outcome: о ком ключ с периодом, дата — to', () => {
     const o = ref(0, { kind: 'outcome', measure: 'pace', scenario: 's', subject: 'su_1gta', from: '1945-04-17', to: '1945-04-19', range: [1, 5], unit: 'км/сут' }, 'B');
-    expect(resolve([o], 'outcome', 'outcome:s:pace:su_1gta', '1945-04-19', {}).chosen).toBe(o);
+    expect(resolve([o], 'outcome', subjectOf(o.fact.claim!), '1945-04-19', {}).chosen).toBe(o);
+  });
+});
+
+describe('итоги за разные периоды', () => {
+  const oc = (i: number, to: string, range: [number, number]): FactRef =>
+    ref(i, { kind: 'outcome', measure: 'pace', scenario: 's', subject: 'su_1pa', from: '1945-04-16', to, range, unit: 'км/сут' }, 'B');
+  it('другой период — другой subject, расхождения нет', () => {
+    const a = oc(0, '1945-04-17', [3, 8]), b = oc(1, '1945-04-25', [10, 20]);
+    const r = resolve([a, b], 'outcome', subjectOf(a.fact.claim!), '1945-04-17', {});
+    expect(r.chosen).toBe(a);
+    expect(r.conflict).toBe(false);
+    expect(subjectOf(a.fact.claim!)).not.toBe(subjectOf(b.fact.claim!));
   });
 });

@@ -80,9 +80,9 @@ export type Claim =
   | { kind: 'event'; id: string; at: string; title: string; place?: string }
   | { kind: 'losses'; subject: string; from: string; to: string; killed?: number; wounded?: number; missing?: number; /** общие потери людьми, если разбивки нет */ total?: number; tanks?: number }
   /** Значение входа правил или профиля (путь param): число или диапазон; без value/range и без надёжности — допущение (why — почему и чего не хватает). side — норматив одной стороны. */
-  | { kind: 'param'; param: string; value?: number; range?: [number, number]; unit?: string; side?: 'su' | 'de'; why?: string }
+  | { kind: 'param'; param: string; value?: number; range?: [number, number]; unit?: string; side?: 'su' | 'de'; why?: string; /** значение дано на 1/scale входа (riverCrossHours/3 — scale 3) */ scale?: number }
   /** Ожидаемый итог прогона (темп, потери, ширина полосы…): что мерить, в каком сценарии, у кого, за какой период и в каких пределах. */
-  | { kind: 'outcome'; measure: 'pace' | 'loss' | 'frontage' | string; scenario: string; subject?: string; from: string; to: string; range: [number, number]; unit: string };
+  | { kind: 'outcome'; measure: 'pace' | 'loss' | 'frontage' | string; scenario: string; subject?: string; from: string; to: string; range: [number, number]; unit: string; /** для ширины полосы: сторона, ступень, район */ side?: string; echelon?: string; near?: string };
 
 /**
  * Сведения норматива модели, не помещающиеся в формальную часть (строка norms.json): по ним собирается прежняя
@@ -95,6 +95,8 @@ export interface NormMeta {
   /** Идентификатор источника как в norms.json (LT_CONQ), может быть пустым. */
   src: string;
   historical: string;
+  /** Выражение замера как в norms.json (measure.expr), если оно отличается от пути param (суффикс «%», «/n»). */
+  expr?: string;
   /** Надёжность допущения, если в строке она указана (у допущения факт надёжности не имеет). */
   reliability?: string;
   rules: string[];

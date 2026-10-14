@@ -20,14 +20,15 @@ export function normRowOf(f: Fact): NormRow | null {
   let unit: string | undefined;
   if (!c) measure = { kind: 'unmodelled', why: n.extra?.why ?? '' };
   else if (c.kind === 'param') {
-    measure = c.why != null ? { kind: 'assumption', expr: c.param, why: c.why } : { kind: 'param', expr: c.param };
+    const expr = n.expr ?? c.param;
+    measure = c.why != null ? { kind: 'assumption', expr, why: c.why } : { kind: 'param', expr };
     expect = c.range ?? (c.value != null ? [c.value, c.value] : undefined);
     unit = c.unit;
   } else if (c.kind === 'outcome') {
     expect = c.range; unit = c.unit;
     measure = c.measure === 'pace' ? { kind: 'pace', scenario: c.scenario, formation: c.subject ?? '', from: c.from, to: c.to }
       : c.measure === 'loss' ? { kind: 'loss', scenario: c.scenario, parent: c.subject ?? '', from: c.from, to: c.to }
-      : { kind: c.measure, scenario: c.scenario, ...(n.extra ?? {}) };
+      : { kind: c.measure, scenario: c.scenario, ...(c.side ? { side: c.side } : {}), ...(c.echelon ? { echelon: c.echelon } : {}), ...(c.near ? { near: c.near } : {}), ...(n.extra ?? {}) };
   } else return null;
   return {
     id: n.id, title: n.title, kb: n.kb, source: n.src, reliability: f.reliability ?? n.reliability ?? '', historical: n.historical, measure,

@@ -921,6 +921,9 @@ for (const e of entries.values()) e.relations = (e.relations ?? []).filter((r) =
     id: string; title: string; kb: string; source: string; reliability: string; historical: string; expect?: [number, number]; unit?: string; rules: string[]; note?: string; operations?: string[];
     measure: Record<string, string> & { kind: string };
   }[] };
+  // путь входа без отображения: «%» в конце и «/n» (значение дано на 1/n входа) — не часть пути
+  const cleanPath = (e: string) => e.replace(/\/\d+$/, '').replace(/%$/, '');
+  const scaleOf = (e: string) => { const k = /\/(\d+)$/.exec(e); return k ? +k[1] : undefined; };
   const KNOWN_KB = (id: string) => entries.has(id);
   for (const n of nt.norms) {
     const m = n.measure;
@@ -934,16 +937,15 @@ for (const e of entries.values()) e.relations = (e.relations ?? []).filter((r) =
     const rng = range ? (range[0] === range[1] ? { value: range[0] } : { range }) : {};
     if (m.kind === 'param') {
       const side = NORM_SIDE[m.expr] ?? (SU_PARAM.test(m.expr) ? 'su' : undefined);
-      claim = { kind: 'param', param: m.expr, ...rng, ...(unit ? { unit } : {}), ...(side ? { side } : {}) };
+      claim = { kind: 'param', param: cleanPath(m.expr), ...(scaleOf(m.expr) ? { scale: scaleOf(m.expr) } : {}), ...rng, ...(unit ? { unit } : {}), ...(side ? { side } : {}) };
     } else if (m.kind === 'assumption') {
-      claim = { kind: 'param', param: m.expr, ...(unit ? { unit } : {}), why: m.why };
+      claim = { kind: 'param', param: cleanPath(m.expr), ...(unit ? { unit } : {}), why: m.why };
     } else if (m.kind === 'pace' || m.kind === 'loss') {
       claim = { kind: 'outcome', measure: m.kind, scenario: m.scenario, subject: m.kind === 'pace' ? m.formation : m.parent, from: m.from, to: m.to, range: range!, unit: unit! };
     } else if (m.kind === 'frontage') {
       // ширина полосы — состояние на начало сценария
       const start = String(read(`packages/sim/data/scenarios/${m.scenario}.json`).start);
-      for (const k of ['side', 'echelon', 'near']) if (m[k]) extra[k] = m[k];
-      claim = { kind: 'outcome', measure: 'frontage', scenario: m.scenario, from: start, to: start, range: range!, unit: unit! };
+      claim = { kind: 'outcome', measure: 'frontage', scenario: m.scenario, from: start, to: start, range: range!, unit: unit!, ...(m.side ? { side: m.side } : {}), ...(m.echelon ? { echelon: m.echelon } : {}), ...(m.near ? { near: m.near } : {}) };
     } else if (m.kind === 'unmodelled') extra.why = m.why;
     else throw new Error(`норматив ${n.id}: неизвестный замер ${m.kind}`);
     const what = claim?.kind === 'outcome' ? `ожидается в расчёте ${n.expect![0]}–${n.expect![1]} ${n.unit}` : claim?.kind === 'param'
@@ -952,7 +954,7 @@ for (const e of entries.values()) e.relations = (e.relations ?? []).filter((r) =
       key: 'numbers', value: cutc(`${n.title} — ${what}${n.historical && n.historical !== '—' ? `; по истории: ${n.historical}` : ''}`, 600),
       ...(srcId(n.source) ? { source: srcId(n.source) } : {}), ...(m.kind !== 'assumption' && rel(n.reliability) ? { reliability: rel(n.reliability) } : {}),
       ...(claim ? { claim } : {}),
-      norm: { id: n.id, title: n.title, kb: n.kb, src: n.source, historical: n.historical, ...(m.kind === 'assumption' && n.reliability ? { reliability: n.reliability } : {}), rules: n.rules, ...(n.note ? { note: n.note } : {}), ...(n.operations ? { operations: n.operations } : {}), ...(Object.keys(extra).length ? { extra } : {}) },
+      norm: { id: n.id, title: n.title, kb: n.kb, src: n.source, historical: n.historical, ...(m.expr && cleanPath(m.expr) !== m.expr ? { expr: m.expr } : {}), ...(m.kind === 'assumption' && n.reliability ? { reliability: n.reliability } : {}), rules: n.rules, ...(n.note ? { note: n.note } : {}), ...(n.operations ? { operations: n.operations } : {}), ...(Object.keys(extra).length ? { extra } : {}) },
     };
     const e = entries.get(target)!;
     e.facts = [...(e.facts ?? []), fact];
