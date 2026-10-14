@@ -131,13 +131,14 @@ function agentParentsAt(a: AgentScenarioFile, core: CoreEdits | null | undefined
 }
 
 /**
- * Состояние соединений при передаче командования по нынешней базе (записи и закрепления) на момент moment:
+ * Состояние соединений при передаче командования по нынешней базе (записи; закрепления не действуют) на момент moment:
  * нынешняя модель — действующие формирования сценария (с типом), агентная — дивизии агентного сценария. Нынешняя
  * подчинённость — по сценарию с данными базы игры (kb; нет — нынешние) и переподчинениям не позже момента: факт,
  * совпадающий с ней или указывающий старшего над нынешним штабом, — не поправка.
  */
 export async function takeoverNow(opId: string, moment: string, agents: boolean, kb?: GameKb): Promise<{ state: TakeoverState; summary: TakeoverSummary }> {
-  const [entries, pins] = await Promise.all([kbStore.entries(), kbStore.pins()]);
+  // при передаче факт выбирается по правилу: закрепления «Основы модели» действуют на собранные входы операции
+  const entries = await kbStore.entries();
   const data = kb ?? await gameKbNow(opId, agents);
   let ids: TakeoverUnit[];
   let hqs: Map<string, string | null>;
@@ -151,7 +152,7 @@ export async function takeoverNow(opId: string, moment: string, agents: boolean,
     hqs = parentsAt(new Map(sc.formations.map((f) => [f.id, f.parent ?? null])), (sc.changes ?? []) as CompiledEdits['changes'], moment);
     ids = sc.formations.filter((f) => f.type).map((f) => ({ id: f.id, echelon: f.echelon, parent: hqs.get(f.id) }));
   }
-  return takeoverState(entries, pins, ids, moment, hqs);
+  return takeoverState(entries, {}, ids, moment, hqs);
 }
 
 /**
