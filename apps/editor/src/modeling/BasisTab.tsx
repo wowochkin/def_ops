@@ -183,7 +183,7 @@ export function BasisTab({ op }: { op: string }) {
           {pin && <button disabled={busy === c.key} onClick={() => void doPin(c.key, null)}>Снять закрепление</button>}</div>
         {c.candidates.map((f) => { const chosen = !!c.chosen && same(c.chosen, f); const pinned = !!pin && pin !== 'none' && same(pin, f); return <div key={`${f.entry}#${f.index}`} className={`bs-cand${chosen ? ' on' : ''}`}>
           <span className="bs-mark">{chosen ? '✓ в модели' : ''}</span>
-          factView(f)
+          {factView(f)}
           {!pinned && <button disabled={busy === c.key} onClick={() => void doPin(c.key, f)}>Закрепить этот</button>}
           {pinned && <span className="bs-pin">закреплён</span>}
         </div>; })}
@@ -193,7 +193,7 @@ export function BasisTab({ op }: { op: string }) {
     {part === 'unmatched' && <div className="bs-list">
       <p className="muted small">Факты в пределах времени операции о формированиях, которых в её сценарии нет: возможно, другой id или формирование стоит добавить в сценарий.</p>
       {!kbOf.unmatched.length && <p className="ok">Всё сопоставлено.</p>}
-      {kbOf.unmatched.map((f) => <div key={`${f.entry}#${f.index}`} className="bs-cand"><span className="bs-mark">{(f.fact.claim && 'subject' in f.fact.claim) ? f.fact.claim.subject : ''}</span>factView(f)</div>)}
+      {kbOf.unmatched.map((f) => <div key={`${f.entry}#${f.index}`} className="bs-cand"><span className="bs-mark">{(f.fact.claim && 'subject' in f.fact.claim) ? f.fact.claim.subject : ''}</span>{factView(f)}</div>)}
     </div>}
   </section>;
 }
