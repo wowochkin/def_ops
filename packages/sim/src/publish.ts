@@ -168,6 +168,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
       const preset = tankish(f, ctx) ? 'std.mechCorps' : 'std.unitOval';
       const sym = createFeature('symbol', preset, { at: frames[0].u!.at, layerId: side === 'own' ? 'sim-own' : 'sim-enemy' }, 1, side) as SymbolFeature;
       sym.name = f.name;
+      sym.ref = f.id;
       sym.labelRank = 10 + (RANK[f.echelon] ?? 0);
       sym.style = { ...sym.style, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 10, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
       const note = (u: NonNullable<(typeof frames)[number]['u']>) => `${u.personnel.toLocaleString('ru')} чел., ${u.tanks} танков; ${POSTURE_RU[u.posture] ?? u.posture}; боеприпасы ${u.ammo ?? '?'} бк${u.cutOff ? '; ОТРЕЗАНО от снабжения' : ''}`;
@@ -191,6 +192,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
         // уничтоженное соединение остаётся на месте гибели перечёркнутым крестом (у противника — красным)
         const x = createFeature('symbol', preset, { at: gone.u!.at, layerId: sym.layerId }, 1, side) as SymbolFeature;
         x.name = `${f.name}: уничтожено ${dm(gone.t)}`;
+        x.ref = f.id;
         x.labelRank = (sym.labelRank ?? 0) - 5;
         x.style = { ...sym.style, fill: '#ffffff', cross: { mode: 'x', color: side === 'own' ? '#3b3a36' : '#c0392b' } };
         x.time = { from: gone.t, to: null };
@@ -558,6 +560,7 @@ function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
       const sym = createFeature('symbol', 'atlas.fortCity', { at: all[0].u!.at, layerId: lay }, (ring ? 0.9 : 1.3) * labelK, side) as SymbolFeature;
       sym.style = { ...sym.style, color: colour, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 11 * labelK, weight: 700, italic: false, color: colour, halo: { color: '#ffffff', width: 2 * labelK }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
       sym.name = `${f.name}${gone ? ` (пала ${dm(gone.sn.time)})` : ''}`;
+      sym.ref = f.id;
       sym.labelRank = 18;
       sym.time = { from: all[0].sn.time, to: null };
       if (gone) {
@@ -565,6 +568,7 @@ function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
         const x = createFeature('symbol', 'atlas.fortCity', { at: gone.u!.at, layerId: lay }, 1.3 * labelK, side) as SymbolFeature;
         x.style = { ...sym.style, cross: { mode: 'x', color: side === 'own' ? '#3b3a36' : '#c0392b' } };
         x.name = `${f.name}: пала ${dm(gone.sn.time)}`;
+        x.ref = f.id;
         x.time = { from: gone.sn.time, to: null };
         out.push(x);
       }
@@ -768,6 +772,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       for (const [n, sg] of segs.entries()) {
         const fs = frames.slice(sg.a, sg.b + 1);
         const sym = createFeature('symbol', tank ? 'std.mechCorps' : 'std.unitOval', { at: LL(fs[0].c!.xy), layerId: `${lay}-units` }, 1.6, side) as SymbolFeature;
+        sym.ref = x.g.id;
         sym.name = x.g.name + (sg.st === 'routed' ? ' — разгромлено' : sg.st === 'reserve' ? ' — на марше / в резерве' : '');
         sym.labelRank = 20 + (RANK[x.g.echelon] ?? 0);
         sym.style = { ...sym.style, text: shortName(x.g.name), textStyle: { font: 'PT Sans Narrow', size: 13, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2.5 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 },
@@ -782,6 +787,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       const lb = createFeature('label', 'atlas.front', { at: LL(frames[0].c!.xy), text: frontName(x.g.name), layerId: `${lay}-units` }, labelK, side) as LabelFeature;
       lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 3 * labelK }, uppercase: true, letterSpacing: 0.5 * labelK };
       lb.name = x.g.name;
+      lb.ref = x.g.id;
       lb.keyframes = frames.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy), note: note(q.c!) }));
       lb.time = { from: frames[0].sn.time, to };
       out.push(lb);
@@ -803,6 +809,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
           ft.style = { ...ft.style, halo: { color: '#ffffff', width: 2 * labelK } };
         }
         ft.name = a.g.name;
+        ft.ref = a.g.id;
         ft.labelRank = 15;
         ft.keyframes = af.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy) }));
         ft.time = { from: af[0].sn.time, to: ato };

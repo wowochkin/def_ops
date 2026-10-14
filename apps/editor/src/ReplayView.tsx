@@ -4,7 +4,7 @@
  * редакторе для правки и экспорта.
  */
 import { confirmAsync } from './dialogs';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { documentAt, migrateDocument, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
@@ -23,6 +23,9 @@ import { MapHover, withoutLabels } from './MapHover';
 import { invoke } from '@tauri-apps/api/core';
 import { addHours, type AgentHistory } from '@def-ops/sim';
 import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
+import { nearestFeature, OVER_MAP, shownFeatures, unitAt, unitPlace } from './map-pick';
+import { agentHqCard, formationCard } from './formation-card';
+import { FormationPanel, useEsc } from './FormationCard';
 
 import { AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentVariant } from './sim/agent-scenarios';
 import { coreEditsFor, takeoverNow } from './sim/kb-recompile';
@@ -264,60 +267,83 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   };
   const stop = () => { runId.current++; worker.current?.terminate(); worker.current = null; setBusy(null); };
 
-  // агентная модель: щелчок по дивизии на карте — её карточка и разговор. Попадание — по знакам, нарисованным на
-  // карте в этот момент (между снимками знак идёт по дорогам, его место не совпадает с расчётным часом);
-  // щелчок по армии или фронту — тактический масштаб с приближением к ней.
+  // щелчок по знаку соединения на карте — карточка. Попадание — по знакам, нарисованным на карте в этот момент
+  // (между снимками знак идёт по дорогам, его место не совпадает с расчётным), знак связан с формированием по ref.
+  // Нынешняя модель: любое соединение и штаб — карточка по снимкам прогона. Агентная: дивизия — карточка агента и
+  // разговор, штаб (армия, корпус, фронт) — карточка штаба с переходом к его дивизиям.
   const agentHour = agentRun && time ? hourOf(agentRun.trace.start, time) : 0;
-  const live = useRef({ doc, level, time });
-  live.current = { doc, level, time };
+  const units = result?.units ?? null;
+  const [cardSel, setCardSel] = useState<string | null>(null);
+  const live = useRef({ doc, level, time, focus, units });
+  live.current = { doc, level, time, focus, units };
   useEffect(() => {
     const host = eng?.getContainer().parentElement;
-    if (!eng || !host || !agentRun) return;
-    const byName = new Map(agentRun.trace.divisions.map((d) => [d.name, d.id]));
-    const hqNames = new Set(agentRun.trace.hqs.map((h) => h.name));
+    if (!eng || !host) return;
+    const divIds = new Set(agentRun?.trace.divisions.map((d) => d.id));
+    const hqIds = new Set(agentRun?.trace.hqs.map((h) => h.id));
+    // старые сохранения агентной модели: у знаков нет ref — по названию
+    const byName = new Map<string, string>([...(agentRun?.trace.divisions ?? []), ...(agentRun?.trace.hqs ?? [])].map((d) => [d.name, d.id]));
     const click = (e: MouseEvent) => {
-      if ((e.target as Element).closest('.rp-tools, .legend, .player, .scalebar, .maplibregl-ctrl, .ag-panel, .cmd-notice, button, select')) return;
+      if ((e.target as Element).closest(OVER_MAP)) return;
       const r = host.getBoundingClientRect();
       const pt: [number, number] = [e.clientX - r.left, e.clientY - r.top];
-      const { doc: d, level: lv, time: t } = live.current;
+      const { doc: d, level: lv, time: t, focus: fc, units: un } = live.current;
       if (!d || !t) return;
-      // ближайший нарисованный знак: дивизия (свои и противник) или объединение (армия, фронт)
-      const shown = documentAt(withLevel(d, lv), t, { visibleOnly: true });
-      let best: { id?: string; hq?: string; at: LngLat } | null = null, bd = 20;
-      for (const f of shown.features) {
-        if ((f.kind !== 'symbol' && f.kind !== 'label') || f.hidden || !f.name || f.layerId.startsWith('hist')) continue;
-        const name = f.name.replace(/: уничтожено.*$/, '');
-        const id = byName.get(name);
-        const hq = !id && hqNames.has(name) ? name : undefined;
-        if (!id && !hq) continue;
-        const q = eng.project((f as SymbolFeature).at);  // у надписи (label) — тоже at
-        const dd = Math.hypot(q[0] - pt[0], q[1] - pt[1]);
-        if (dd < bd) { bd = dd; best = { id, hq, at: (f as SymbolFeature).at }; }
-      }
-      if (best?.id) { setAgentSel(best.id); return; }
-      if (best?.hq) {
-        setLevel('tac');
-        eng.setView({ center: best.at, zoom: Math.max(eng.getView().zoom + 1.5, 9.5) });
-        setNotice(`${best.hq}: тактический масштаб — щёлкните по дивизии`);
+      const feats = shownFeatures(withFocus(withLevel(d, lv), fc), t, ['focus']);
+      const project = (p: LngLat) => eng.project(p);
+      let ref = unitAt(feats, project, pt)?.ref ?? null;
+      if (agentRun) {
+        if (!ref) {
+          const f = nearestFeature(feats, project, pt, { lines: false, filter: (x) => !x.layerId.startsWith('hist') && byName.has(x.name!.replace(/: уничтожено.*$/, '')) });
+          ref = f ? byName.get(f.name!.replace(/: уничтожено.*$/, ''))! : null;
+        }
+        if (ref && divIds.has(ref)) { setAgentSel(ref); setCardSel(null); return; }
+        if (ref && hqIds.has(ref)) { setCardSel(ref); setAgentSel(null); return; }
+        const id = divisionNear(agentRun.trace, hourOf(agentRun.trace.start, t), (p) => eng.project(p) as [number, number], pt);
+        if (id) { setAgentSel(id); setCardSel(null); }
         return;
       }
-      const id = divisionNear(agentRun.trace, hourOf(agentRun.trace.start, t), (p) => eng.project(p) as [number, number], pt);
-      if (id) setAgentSel(id);
+      if (ref && un?.formations.some((f) => f.id === ref)) { setCardSel(ref); return; }
+      if (!un && unitAt(feats, project, pt) === null && nearestFeature(feats, project, pt, { lines: false, filter: (x) => /^(sim-own|sim-enemy|lvl-..-units)$/.test(x.layerId) })) {
+        setNotice('В этой сохранённой переигровке нет данных для карточек соединений — рассчитайте её заново');
+      }
     };
     host.addEventListener('click', click);
     return () => host.removeEventListener('click', click);
   }, [eng, agentRun]); // eslint-disable-line react-hooks/exhaustive-deps
-  /** Где знак выбранной дивизии нарисован сейчас (иначе — расчётное положение на час). */
+  useEffect(() => { setCardSel(null); }, [result]);
+  const closeCards = useCallback(() => { setCardSel(null); setAgentSel(null); }, []);
+  useEsc(!!(cardSel || agentSel), closeCards);
+  /** Карточка выбранного соединения или штаба на момент проигрывания. */
+  const card = useMemo(() => {
+    if (!cardSel || !time) return null;
+    if (agentRun) return agentHqCard(agentRun.trace, cardSel, agentHour);
+    return units ? formationCard(units, cardSel, time) : null;
+  }, [cardSel, time, units, agentRun, agentHour]);
+  /** Где знак выбранного нарисован сейчас: на текущем масштабе, иначе — на любом (агентная дивизия — расчётное положение на час). */
   const agentSelAt = useMemo((): LngLat | null => {
-    if (!agentRun || !agentSel) return null;
-    const i = agentRun.trace.divisions.findIndex((x) => x.id === agentSel);
-    const name = agentRun.trace.divisions[i]?.name;
-    if (doc && time && name) {
-      const f = documentAt(withLevel(doc, 'tac'), time, { visibleOnly: true }).features.find((x) => x.kind === 'symbol' && x.name === name && !x.layerId.startsWith('hist'));
+    const sel = agentSel ?? cardSel;
+    if (!sel || !doc || !time) return null;
+    const lv = agentSel ? 'tac' as const : level;
+    const at = unitPlace(shownFeatures(withLevel(doc, lv), time), sel) ?? (agentSel ? null : MAP_LEVELS.map((x) => unitPlace(shownFeatures(withLevel(doc, x.id), time), sel)).find(Boolean) ?? null);
+    if (at) return at;
+    if (agentRun && agentSel) {
+      const i = agentRun.trace.divisions.findIndex((x) => x.id === agentSel);
+      const name = agentRun.trace.divisions[i]?.name;
+      const f = name ? documentAt(withLevel(doc, 'tac'), time, { visibleOnly: true }).features.find((x) => x.kind === 'symbol' && x.name === name && !x.layerId.startsWith('hist')) : undefined;
       if (f) return (f as SymbolFeature).at;
+      return i >= 0 ? posAt(agentRun.trace, i, agentHour) : null;
     }
-    return i >= 0 ? posAt(agentRun.trace, i, agentHour) : null;
-  }, [agentRun, agentSel, doc, time, agentHour]);
+    return null;
+  }, [agentRun, agentSel, cardSel, doc, time, agentHour, level]);
+  /** Штаб агентной модели: тактический масштаб с приближением к нему — щёлкать по его дивизиям. */
+  const showDivisions = () => {
+    if (!eng || !card) return;
+    const at = agentSelAt;
+    setLevel('tac');
+    if (at) eng.setView({ center: at, zoom: Math.max(eng.getView().zoom + 1.5, 9.5) });
+    setNotice(`${card.name}: тактический масштаб — щёлкните по дивизии`);
+  };
   const agentToHour = (h: number) => agentRun && setTime(addHours(agentRun.trace.start, Math.max(0, Math.min(agentRun.trace.frames.length - 1, Math.round(h)))));
 
   const layerOn = (t: (typeof TOGGLES)[number]) => !!doc?.layers.filter((l) => t.match(l.id)).some((l) => l.visible);
@@ -445,7 +471,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
-          {agentRun && !agentSel && <div className="ag-hint">Щёлкните по дивизии — карточка агента и разговор с ним</div>}
+          {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)}
+            onPick={(id) => { if (agentRun?.trace.divisions.some((x) => x.id === id)) { setAgentSel(id); setCardSel(null); } else setCardSel(id); }}
+            actions={agentRun ? <button onClick={showDivisions} title="Тактический масштаб с приближением к штабу">Показать дивизии</button> : undefined} />}
+          {!agentSel && !card && <div className="ag-hint">{agentRun ? 'Щёлкните по дивизии — карточка агента и разговор с ним; по штабу — его карточка' : 'Щёлкните по знаку соединения — его карточка'}</div>}
           <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'}
             sig={doc.layers.map((l) => (l.visible ? 1 : 0)).join('')} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}

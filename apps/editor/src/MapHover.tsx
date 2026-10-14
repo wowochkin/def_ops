@@ -4,14 +4,9 @@
  * Ищется по геометрии, а не по событиям знаков: слои просмотра закрыты, карта свободно перетаскивается.
  */
 import { useEffect, useRef, useState } from 'react';
-import { documentAt, type Feature, type MapDocument, type TimeInstant } from '@def-ops/core';
+import type { Feature, MapDocument, TimeInstant } from '@def-ops/core';
 import type { MapEngine } from './engine/types';
-
-const segDist = (p: [number, number], a: [number, number], b: [number, number]) => {
-  const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
-  const t = L ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)) : 0;
-  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
-};
+import { nearestFeature, shownFeatures } from './map-pick';
 
 /** Заметка кадра на момент времени (последний ключевой кадр не позже него). */
 function noteAt(f: Feature, t: TimeInstant | null): string | undefined {
@@ -32,9 +27,7 @@ export function MapHover({ engine, doc, time, skip = [] }: { engine: MapEngine |
       const { doc: d, time: t } = cur.current;
       if (!d) return [];
       if (cache && cache.doc === d && cache.time === t) return cache.feats;
-      const shown = documentAt(d, t, { visibleOnly: true });
-      const vis = new Set(shown.layers.filter((l) => l.visible && !skip.includes(l.id)).map((l) => l.id));
-      cache = { doc: d, time: t, feats: shown.features.filter((f) => vis.has(f.layerId) && !f.hidden && f.name) };
+      cache = { doc: d, time: t, feats: shownFeatures(d, t, skip) };
       return cache.feats;
     };
     let raf = 0;
@@ -44,17 +37,7 @@ export function MapHover({ engine, doc, time, skip = [] }: { engine: MapEngine |
         if ((e.target as Element).closest('.rp-tools, .legend, .player, .scalebar, .maplibregl-ctrl, .pick-hint, .cmd-notice, button, select')) { setTip(null); return; }
         const r = host.getBoundingClientRect();
         const p: [number, number] = [e.clientX - r.left, e.clientY - r.top];
-        let best: Feature | null = null, bd = 14;
-        for (const f of featsNow()) {
-          let d = Infinity;
-          if (f.kind === 'symbol' || f.kind === 'label') { const q = engine.project(f.at); d = Math.hypot(q[0] - p[0], q[1] - p[1]) - (f.kind === 'symbol' ? 6 : 10); }
-          else if ('points' in f && f.points.length > 1) {
-            const pts = f.points.map((x) => engine.project(x) as [number, number]);
-            for (let i = 1; i < pts.length; i++) d = Math.min(d, segDist(p, pts[i - 1], pts[i]) - (f.kind === 'arrow' ? 6 : 2));
-          }
-          // знаки важнее линий: при равном расстоянии берётся знак
-          if (d < bd || (best && d <= bd + 2 && f.kind === 'symbol' && best.kind !== 'symbol')) { bd = d; best = f; }
-        }
+        const best = nearestFeature(featsNow(), (x) => engine.project(x), p);
         setTip(best ? { x: e.clientX, y: e.clientY, title: best.name!, note: noteAt(best, cur.current.time) } : null);
       });
     };

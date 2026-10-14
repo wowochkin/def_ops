@@ -7,7 +7,7 @@
  * может снять туман войны. Игра сохраняется в браузере после каждого хода.
  */
 import { confirmAsync } from './dialogs';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
@@ -19,6 +19,9 @@ import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
 import { download, LAYER_TITLE, LayersMenu, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLabels, useMapLevel, withLevel } from './ReplayView';
 import { MapHover, withoutLabels } from './MapHover';
+import { shownFeatures, unitAt } from './map-pick';
+import { IntelPanel, useEsc } from './FormationCard';
+import { AgentMark } from './AgentCard';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
 import { ModelPicker } from './ModelPicker';
@@ -122,8 +125,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [now, setNow] = useState(Date.now());
   const worker = useRef<Worker | null>(null);
   const engine = useRef<MapEngine | null>(null);
-  const live = useRef({ pickMode, sel });
-  live.current = { pickMode, sel };
+  const [intelSel, setIntelSel] = useState<string | null>(null);
+  const live = useRef<{ pickMode: Pick | null; sel: string | null; mapDoc: MapDocument | null; time: string | null }>({ pickMode, sel, mapDoc: null, time: null });
+  live.current = { ...live.current, pickMode, sel };
   const liveView = useRef<TurnView | null>(null);
   liveView.current = view;
 
@@ -196,15 +200,28 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       if (pm?.kind === 'line') { setLinePts((l) => [...l, e.lngLat]); return; }
       if (pm && pm.kind !== 'order') { pickAction(pm, e.lngLat, null); return; }
       if (!pm || !live.current.sel) {
-        // щелчок по знаку своего объединения — выбрать его (доклад, приказ)
-        let best: string | null = null, bd = 18;
-        for (const u of liveView.current?.own ?? []) {
-          if (u.status !== 'active') continue;
-          const p = en.project(u.at);
-          const dd = Math.hypot(p[0] - e.point[0], p[1] - e.point[1]);
-          if (dd < bd) { bd = dd; best = u.id; }
+        // щелчок по знаку: своё объединение (дивизия на агентной модели) — выбрать и показать его доклад;
+        // противник — карточка разведданных; штаб без своего доклада (фронт) — доклады его объединений
+        const v = liveView.current, { mapDoc, time: t } = live.current;
+        if (!v) return;
+        const pt = e.point as [number, number];
+        const f = mapDoc && t ? unitAt(shownFeatures(mapDoc, t, ['focus']), (p) => en.project(p), pt) : null;
+        let id = f?.ref ?? null;
+        if (!id) {
+          // знак без ref (нарисован не расчётом) — ближайшее своё объединение по месту, как раньше
+          let bd = 18;
+          for (const u of v.own) {
+            if (u.status !== 'active') continue;
+            const p = en.project(u.at);
+            const dd = Math.hypot(p[0] - pt[0], p[1] - pt[1]);
+            if (dd < bd) { bd = dd; id = u.id; }
+          }
         }
-        if (best) setSel(best);
+        if (!id) return;
+        if (v.own.some((u) => u.id === id)) { showUnit(id); return; }
+        if (v.intel.some((x) => x.id === id)) { setIntelSel(id); return; }
+        const g = v.groups.find((x) => x.id === id);
+        if (g) { setIntelSel(null); setTab('reports'); setNotice(`${g.name}: доклады его объединений — во вкладке «Доклады»`); }
         return;
       }
       const at = e.lngLat;
@@ -257,6 +274,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   };
 
   const unit = (id: string | null) => view?.own.find((u) => u.id === id) ?? null;
+  /** Показать доклад своего объединения: выбрать его; если открыта не «Доклады» и не «Приказы → Войска» — открыть «Доклады». */
+  const showUnit = (id: string) => {
+    setSel(id); setIntelSel(null);
+    const tb = liveTab.current;
+    if (tb.tab === 'orders' && tb.sub !== 'units') setSub('units');
+    else if (tb.tab !== 'reports' && tb.tab !== 'orders') setTab('reports');
+    setMob('staff');
+  };
+  const liveTab = useRef({ tab, sub }); liveTab.current = { tab, sub };
   const blankDraft = (id: string): Draft => ({ formation: id, task: 'attack', target: null, targetText: '', at: null, note: '' });
 
   /** Документ карты: туман войны (из расчёта), замысел — стрелки проекта приказов, видимость слоёв. */
@@ -299,6 +325,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     return withFocus(d, focus);
   }, [view, drafts, vis, acts, focus, linePts]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Обстановка для списков: при фокусе — только объединения и противник на участке. */
+  /** Карта, как она нарисована (уровень обобщения) — для щелчка по знаку. */
+  const pickDoc = useMemo(() => (doc ? withLevel(doc, level) : null), [doc, level]);
+  live.current.mapDoc = pickDoc; live.current.time = time;
+  const intelE = view?.intel.find((x) => x.id === intelSel) ?? null;
+  const closeIntel = useCallback(() => setIntelSel(null), []);
+  useEsc(!!intelE, closeIntel);
   const fv = useMemo(() => (!view || !focus || !focusOnly ? view : { ...view, own: view.own.filter((u) => u.status !== 'active' || inSector(focus, u.at)), intel: view.intel.filter((e) => inSector(focus, e.at)) }), [view, focus, focusOnly]);
 
   const goTo = (at: LngLat | null, zoomIn = true) => {
@@ -500,6 +532,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
+          {intelE && eng && <AgentMark engine={eng} at={intelE.at} />}
+          {intelE && view && <IntelPanel e={intelE} time={view.time} first={view.turn === 1} onClose={closeIntel}
+            actions={<><button onClick={() => { setTab('intel'); setMob('staff'); }}>Разведсводка →</button>
+              {unit(sel) && unit(sel)!.status !== 'destroyed' && <button onClick={() => { setDrafts((d) => ({ ...d, [sel!]: { ...(d[sel!] ?? blankDraft(sel!)), task: 'attack', target: { formation: intelE.id }, at: intelE.at, targetText: `против: ${intelE.name}` } })); setTab('orders'); setSub('units'); }}
+                title="Цель удара для выбранного объединения — во вкладке «Приказы»">Целью удара для «{short(unit(sel)!.name)}»</button>}</>} />}
           <Legend on={layerOn} toggle={toggle} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
           {view && <Player start={view.start} end={view.time > view.start ? view.time : addH(view.start, view.turnHours)} time={time} setTime={setTime} events={playerEvents}
             onEvent={(e) => { if (e.at) setTime(e.at); goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
@@ -589,6 +626,8 @@ function Grouped({ v, children }: { v: TurnView; children: (u: UnitReport) => Re
 
 function Reports({ v, drafts, onUnit, onOrder, sel }: { v: TurnView; drafts: Record<string, Draft>; onUnit: (id: string) => void; onOrder: (id: string) => void; sel: string | null }) {
   const active = v.own.filter((u) => u.status === 'active');
+  // выбран щелчком на карте — раскрытый доклад прокручивается в поле зрения
+  useEffect(() => { if (sel) document.querySelector('.cmd-body .ucard.open')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [sel]);
   const cut = active.filter((u) => u.cutOff).length;
   const strength = active.length ? active.reduce((s, u) => s + u.strength, 0) / active.length : 0;
   const reached = v.goals.filter((g) => g.simulated);

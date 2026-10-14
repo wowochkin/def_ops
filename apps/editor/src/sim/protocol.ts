@@ -1,5 +1,6 @@
 import type { MapDocument } from '@def-ops/core';
 import type { AgentHistory, AgentTrace } from '@def-ops/sim';
+import type { ReplayUnits } from '../formation-card';
 
 export interface SimRequest {
   scenario: string; rules: string; seed: number; runs: number; toleranceKm: number;
@@ -25,6 +26,8 @@ export interface SimResult {
   doc: MapDocument;
   /** Сводная карта операции по этому прогону: этапы, линии фронта с датами, удары армий (без шкалы времени). */
   summary: MapDocument;
+  /** Формирования и снимки первого прогона — для карточки по щелчку на знаке (в старых сохранениях нет). */
+  units?: ReplayUnits;
 }
 
 export type SimResponse =

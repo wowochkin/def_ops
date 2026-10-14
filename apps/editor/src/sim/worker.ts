@@ -6,6 +6,7 @@
 import { agentsHistory, agentsToRun, analyze, checkEvents, compareWithHistory, contextFrom, reportMarkdown, runToDocument, summarize, summaryToDocument, type DataKind, type History, type SimContext } from '@def-ops/sim';
 import type { SimRequest, SimResponse } from './protocol';
 import { getData } from './userdata';
+import { replayUnits } from '../formation-card';
 
 // встроенные данные и свои (правила, загруженные операции)
 const get = (kind: DataKind, file: string) => getData(kind, file);
@@ -40,7 +41,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
           return { title: x.title, historical: x.historical, simulated: first?.simulated ?? null, days: x.days, at: first?.at ?? null, place, marker: !!ev?.marker };
         }),
         eventsHit: all.filter((d) => d != null && Math.abs(d) <= 2).length, eventsTotal: all.length,
-        report: reportMarkdown(ctx, a), doc, summary,
+        report: reportMarkdown(ctx, a), doc, summary, units: replayUnits(ctx, a.run),
       },
     });
   } catch (err) {
@@ -85,7 +86,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History) {
         return { title: e.title, historical: e.historical, simulated: e.simulated, days: [e.days], at: e.at, place, marker: !!h?.marker };
       }),
       eventsHit: events.filter((e) => e.days != null && Math.abs(e.days) <= 2).length, eventsTotal: events.length,
-      report, doc, summary,
+      report, doc, summary, units: replayUnits(ctx, run),
     },
   });
 }

@@ -10,6 +10,7 @@ import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from './sim/game-protocol';
 import type { MapEngine } from './engine/types';
+import { agentGroup } from './formation-card';
 
 export interface AgentRun { trace: AgentTrace; history: AgentHistory }
 type Row = [number, number, string, number, number, number, number, number, number, number, number];
@@ -51,16 +52,7 @@ export function AgentMark({ engine, at }: { engine: MapEngine; at: LngLat }) {
   return <div className="ag-mark" style={{ left: host.left + p[0], top: host.top + p[1] }} />;
 }
 
-function group(s: string) {
-  if (s.startsWith('не введена')) return 'pending';
-  if (s.startsWith('марш')) return 'march';
-  if (s.startsWith('развёрт')) return 'deploy';
-  if (s.startsWith('наступ')) return 'attack';
-  if (s.startsWith('оборона')) return 'defense';
-  if (s.startsWith('отход') || s.startsWith('отступ') || s.startsWith('остатки')) return 'withdraw';
-  if (s.startsWith('небоеспособ') || s.startsWith('сведена')) return 'destroyed';
-  return 'reserve';
-}
+const group = agentGroup;
 
 const VARS: { idx: number; label: string; fmt: (v: number) => string }[] = [
   { idx: 3, label: 'Люди', fmt: (v) => Math.round(v).toLocaleString('ru-RU') },

@@ -1435,3 +1435,15 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .kb-typed thead th { font-size: 11px; color: var(--muted); font-weight: 600; text-align: left; width: auto; white-space: nowrap; padding-left: 10px; }
 .kb-typed td.kb-use { width: 1%; padding-left: 10px; }
 .kb-use { white-space: nowrap; font-size: 12px; } .kb-use .ok { color: #2f6b3b; } .kb-use .warn { color: #9a6a00; cursor: help; }
+
+/* карточка соединения (щелчок по знаку) — короче карточки агента */
+.ag-panel.fc-panel { bottom: auto; max-height: calc(100% - 110px); }
+.fc-link { color: var(--acc); cursor: pointer; text-decoration: underline dotted; }
+.fc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.fc-kids { list-style: none; margin: 0; padding: 0; }
+.fc-kids li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 6px; border-radius: 6px; cursor: pointer; border-bottom: 1px solid var(--line); }
+.fc-kids li:hover { background: rgba(127,127,127,.12); }
+.fc-kids li.out { opacity: .55; }
+.fc-kids small { display: block; color: var(--muted); font-size: 10.5px; }
+.fc-kn { flex: 1; min-width: 0; }
+.fc-ks { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }

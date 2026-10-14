@@ -1,0 +1,89 @@
+/**
+ * Карточки поверх карты по щелчку на знаке: соединение в переигровке (нынешняя модель — по снимкам прогона,
+ * агентная — штаб по ходу дивизий) и обнаруженный противник в игре (разведсводка). Справа, как карточка агента;
+ * «×» и Esc закрывают.
+ */
+import { useEffect, type ReactNode } from 'react';
+import type { IntelReport } from '@def-ops/sim';
+import { ECHELON_RU, type FormationCardData } from './formation-card';
+
+const n0 = (x: number) => Math.round(x).toLocaleString('ru-RU');
+const pct = (x: number | null) => (x == null ? '—' : `${Math.round(x * 100)} %`);
+const when = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
+
+/** Закрыть по Esc (пока карточка открыта). */
+export function useEsc(on: boolean, close: () => void) {
+  useEffect(() => {
+    if (!on) return;
+    const f = (e: KeyboardEvent) => { if (e.key === 'Escape' && !(e.target as Element)?.closest?.('input, textarea, select')) close(); };
+    window.addEventListener('keydown', f);
+    return () => window.removeEventListener('keydown', f);
+  }, [on, close]);
+}
+
+export function FormationPanel({ c, onClose, onPick, actions, note }: { c: FormationCardData; onClose: () => void; onPick: (id: string, hq: boolean) => void; actions?: ReactNode; note?: string }) {
+  const cut = c.hq ? (c.cutOff.n ? `${c.cutOff.n} из ${c.cutOff.of} соединений` : 'нет') : c.cutOff.n ? 'да — подвоза нет' : 'нет';
+  return (
+    <div className="ag-panel fc-panel">
+      <div className="ag-head">
+        <div><b>{c.name}</b><span>{c.sideName} · {c.echelon}{c.parent ? <> · в подчинении: <a className="fc-link" onClick={() => onPick(c.parent!.id, true)}>{c.parent.name}</a></> : ''}</span>
+          <span>на {when(c.time)} МСК{note ? ` · ${note}` : ''}</span></div>
+        <button className="x" onClick={onClose} title="Закрыть (Esc)">×</button>
+      </div>
+      <div className="ag-body">
+        <section>
+          <div className={`ag-state ${c.status === 'destroyed' ? 'destroyed' : c.status === 'pending' ? '' : c.posture === 'наступает' ? 'attack' : c.posture === 'обороняется' ? 'defense' : c.posture === 'отходит' ? 'withdraw' : 'march'}`}>
+            {c.status === 'pending' ? 'ещё не введено в сражение' : c.status === 'destroyed' ? (c.hq ? 'все соединения уничтожены' : 'уничтожено') : c.posture}
+          </div>
+          {c.status === 'active' && c.cutOff.n > 0 && <div className="ag-pocket">{c.hq ? `Отрезаны от снабжения: ${cut}` : 'Отрезано от снабжения: подвоза нет'}</div>}
+        </section>
+        <section>
+          <h4>{c.hq ? `Силы — сумма ${c.members} действующих соединений` : 'Силы'}</h4>
+          <table className="ag-vars"><tbody>
+            <tr><td>Люди</td><td className="num">{c.status === 'pending' ? '—' : n0(c.personnel)}</td><td className="muted">{c.initial.personnel ? `${pct(c.share.personnel)} от исходных ${n0(c.initial.personnel)}` : ''}</td></tr>
+            <tr><td>Танки и САУ</td><td className="num">{c.status === 'pending' ? '—' : n0(c.tanks)}</td><td className="muted">{c.initial.tanks ? `${pct(c.share.tanks)} от исходных ${n0(c.initial.tanks)}` : ''}</td></tr>
+            <tr><td>Боеприпасы</td><td className="num">{c.ammo == null ? '—' : c.ammo.toFixed(2).replace('.', ',')}</td><td className="muted">бк{c.hq ? ', средние по людям' : ''}</td></tr>
+            <tr><td>Отрезано</td><td className="num" colSpan={2} style={{ textAlign: 'left' }}>{c.status === 'active' ? cut : '—'}</td></tr>
+          </tbody></table>
+        </section>
+        {actions && <section className="fc-actions">{actions}</section>}
+        {c.children.length > 0 && <section>
+          <h4>Подчинённые ({c.children.length})</h4>
+          <ul className="fc-kids">
+            {c.children.map((k) => (
+              <li key={k.id} className={k.out ? 'out' : ''} onClick={() => onPick(k.id, k.hq)} title="Карточка">
+                <span className="fc-kn">{k.name}<small>{ECHELON_RU[k.echelon] ?? k.echelon}</small></span>
+                <span className="fc-ks">{k.out ? k.state : `${n0(k.personnel)} чел.${k.tanks ? `, ${n0(k.tanks)} танков` : ''}`}<small>{k.out ? '' : k.state}</small></span>
+              </li>
+            ))}
+          </ul>
+        </section>}
+      </div>
+    </div>
+  );
+}
+
+/** Карточка обнаруженного противника: что о нём известно по разведсводке хода. */
+export function IntelPanel({ e, time, first, onClose, actions }: { e: IntelReport; time: string; first: boolean; onClose: () => void; actions?: ReactNode }) {
+  return (
+    <div className="ag-panel fc-panel">
+      <div className="ag-head">
+        <div><b>{e.name}</b><span>противник · разведсводка к {when(time)} МСК</span></div>
+        <button className="x" onClick={onClose} title="Закрыть (Esc)">×</button>
+      </div>
+      <div className="ag-body">
+        <section><div className="ag-state">{e.posture}</div></section>
+        <section>
+          <table className="ag-vars"><tbody>
+            <tr><td>Силы (оценка)</td><td>{e.estimate}</td></tr>
+            <tr><td>Где</td><td>{e.place}</td></tr>
+            {e.nearest && <tr><td>Ближе всех</td><td>{e.nearest.name} — {e.nearest.km.toFixed(e.nearest.km < 10 ? 1 : 0).replace('.', ',')} км</td></tr>}
+            <tr><td>Обнаружен</td><td>{e.fresh ? 'впервые — за прошедший ход' : first ? 'к принятию командования' : 'был в разведсводке и раньше'}</td></tr>
+          </tbody></table>
+          <div className="muted small">Силы — оценка разведки, округлённо; намерения противника неизвестны.</div>
+        </section>
+        {actions && <section className="fc-actions">{actions}</section>}
+      </div>
+    </div>
+  );
+}
