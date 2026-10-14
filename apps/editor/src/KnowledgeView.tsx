@@ -5,19 +5,19 @@
  * со ссылками), загрузка документов: разбор даёт кандидатов-фактов, проверки решают — в базу, в очередь «На проверку»
  * (решает человек) или в отброшенные (итоги документа).
  */
-import { confirmAsync } from './dialogs';
+import { chooseAsync, confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { category, entryOperations, type Claim, type Fact, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Reliability, type Rubric, type Source, type Hit, type TableMapping } from '@def-ops/knowledge';
 import { getEdits, kbOperations, onDataChange, type OperationKb } from './sim/userdata';
 import { claimText, factUse, KIND_RU } from './modeling/basis';
-import { correctsKey, deleteFact, parseCorrects, staleNow } from './kb/candidates';
+import { correctsKey, deleteFact, parseCorrects, rollbackDocument, staleNow } from './kb/candidates';
 import { FactForm, useSeed, type FactFormMode } from './kb/FactForm';
 import { originOf, ORIGIN_LONG, ORIGIN_RU } from './kb/fact-form';
 import { CoveragePanel } from './modeling/Coverage';
 import * as kb from './kb/kb';
 import { ColumnMapping } from './kb/ColumnMapping';
 import { DocumentResults } from './kb/DocumentResults';
-import { candDoc, type QueueFilter } from './kb/queue';
+import { candDoc, docAccepted, type QueueFilter } from './kb/queue';
 import { ReviewQueue } from './kb/ReviewQueue';
 import { ACCEPT } from './kb/text';
 import { QWEN_EMBED } from './kb/vectors';
@@ -550,6 +550,21 @@ export function DocRow({ d, s, llm, open, onQueue, opTitle }: { d: KbDocument; s
   const [mapping, setMapping] = useState<{ header: string[]; sample: string[][]; proposed: TableMapping } | null>(null);
   const [results, setResults] = useState(false);
   const waiting = useMemo(() => s.candidates.filter((c) => c.state === 'pending' && candDoc(c) === d.id).length, [s.candidates, d.id]);
+  /**
+   * Удалить документ. Принятые из него автоматически факты после удаления не откатить (итогов документа больше нет) —
+   * поэтому, если они есть, выбор: «откатить и удалить» (факты снимаются, как «Откатить документ») или «только удалить».
+   */
+  const remove = async () => {
+    const auto = docAccepted(s.entries, d.id).filter((x) => x.fact.check?.by === 'auto' && !x.fact.check.docRolledBack).length;
+    if (!auto) { if (await confirmAsync(`Удалить «${d.name}» из базы?`, { ok: 'Удалить', danger: true })) await kb.removeDocument(d.id); return; }
+    const pick = await chooseAsync(`Удалить «${d.name}» из базы?\n\nИз документа автоматически принято фактов: ${auto}. После удаления их уже не откатить: «Откатить и удалить» снимет их из базы и из модели (принятые человеком останутся), «Только удалить» — оставит.`,
+      [{ label: 'Только удалить', danger: true }, { label: 'Откатить и удалить', danger: true }]);
+    if (pick == null) return;
+    try {
+      if (pick === 1) await rollbackDocument(d.id);
+      await kb.removeDocument(d.id);
+    } catch (e) { setMsg((e as Error).message); }
+  };
   const range: [number, number] | undefined = from || to ? [Math.max(1, +from || 1), Math.min(d.pageCount ?? 1e6, +to || d.pageCount || 1e6)] : undefined;
   const run = async (m?: TableMapping) => {
     setMsg(null);
@@ -577,7 +592,7 @@ export function DocRow({ d, s, llm, open, onQueue, opTitle }: { d: KbDocument; s
           {done < total && (d.pageCount ?? 0) > 1 && <span className="kb-range muted">страницы <input type="number" min={1} max={d.pageCount} value={from} placeholder="1" onChange={(e) => setFrom(e.target.value)} style={{ width: '4.5em' }} /> — <input type="number" min={1} max={d.pageCount} value={to} placeholder={String(d.pageCount)} onChange={(e) => setTo(e.target.value)} style={{ width: '4.5em' }} /></span>}
           {(c || d.processed) ? <button className={results ? 'on' : ''} onClick={() => setResults(!results)}>Итоги</button> : null}
           {waiting > 0 && onQueue && <button onClick={onQueue} title="Кандидаты этого документа в очереди «На проверку»">на проверку: {waiting}</button>}
-          <button className="link danger" onClick={() => { void confirmAsync(`Удалить «${d.name}» из базы?`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void kb.removeDocument(d.id); }); }}>удалить</button>
+          <button className="link danger" onClick={() => void remove()}>удалить</button>
           {d.error && <span className="err">{d.error}</span>}
           {msg && <span className="warn">{msg}</span>}
         </div>}

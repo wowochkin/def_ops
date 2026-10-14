@@ -6,7 +6,7 @@
  * кнопке: правка подставляется в карточку, принимает человек. Групповые действия и фильтры — над списком.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { category, matchFormation, RELIABILITY, type Candidate, type CheckId, type Claim, type Entry, type KbDocument } from '@def-ops/knowledge';
+import { category, matchFormation, RELIABILITY, scenarioIdOf, type Candidate, type CheckId, type Claim, type Entry, type KbDocument } from '@def-ops/knowledge';
 import { confirmAsync } from '../dialogs';
 import { claimText, KIND_RU } from '../modeling/basis';
 import { onDataChange } from '../sim/userdata';
@@ -134,13 +134,13 @@ function useNames(s: kb.KbState): (id: string) => string {
 /** Карточка кандидата: правка на месте, соединение, доказательство, решение, подсказка модели. */
 function CandidateCard({ c, s, llm, open }: { c: StoredCandidate; s: kb.KbState; llm: Llm; open: (id: string) => void }) {
   const cx = useOpCtx(c.op);
-  const [claim, setClaim] = useState<Claim | undefined>(c.claim);
+  const [claim, setClaim] = useState<Claim | undefined>(() => initialClaim(c));
   const [names, setNames] = useState<Candidate['names']>(c.names);
   const [note, setNote] = useState<{ text: string; kind?: 'warn' | 'ok' } | null>(null);
   const [assist, setAssist] = useState<{ mode: AssistMode; text: string; busy?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { setClaim(c.claim); setNames(c.names); }, [c]);
-  const edited = !!claim && JSON.stringify(claim) !== JSON.stringify(c.claim);
+  useEffect(() => { setClaim(initialClaim(c)); setNames(c.names); }, [c]);
+  const edited = !!claim && (JSON.stringify(claim) !== JSON.stringify(initialClaim(c)) || JSON.stringify(names) !== JSON.stringify(c.names));
   const doc = s.documents.find((d) => d.id === candDoc(c));
   const fname = useNames(s);
   const nameOf = (id: string) => cx?.formations.find((f) => f.id === id)?.name ?? fname(id);
@@ -180,7 +180,7 @@ function CandidateCard({ c, s, llm, open }: { c: StoredCandidate; s: kb.KbState;
         {claim ? <ClaimEditor claim={claim} names={names} cx={cx} s={s} nameOf={nameOf} match={match}
           onChange={(x, n) => { setClaim(x); if (n) setNames(n); }} />
           : 'proposal' in c && c.proposal ? <ProposalView c={c} s={s} open={open} /> : null}
-        {edited && <div className="rq-edited">изменено <button className="link" onClick={() => { setClaim(c.claim); setNames(c.names); }}>вернуть как было</button></div>}
+        {edited && <div className="rq-edited">изменено <button className="link" onClick={() => { setClaim(initialClaim(c)); setNames(c.names); }}>вернуть как было</button></div>}
         <div className="rq-act">
           <button className="primary" disabled={busy} onClick={() => void decide(true)}>{edited ? 'Принять с правкой' : 'Принять'}</button>
           <button disabled={busy} onClick={() => void decide(false)}>Отклонить</button>
@@ -197,24 +197,34 @@ function CandidateCard({ c, s, llm, open }: { c: StoredCandidate; s: kb.KbState;
   );
 }
 
-/** Поля формальной части: соединение (выбор), даты, числа, пункты, состояние переправы. */
+/** Формальная часть для карточки: у переправы без названия в claim (прежние кандидаты) — название из источника. */
+function initialClaim(c: StoredCandidate): Claim | undefined {
+  const cl = c.claim;
+  return cl?.kind === 'crossing' && !cl.subject.trim() && c.names.subject?.trim() ? { ...cl, subject: c.names.subject.trim() } : cl;
+}
+
+/** Поля формальной части: соединение (выбор), даты, числа, пункты, название и состояние переправы. */
 function ClaimEditor({ claim, names, cx, s, nameOf, match, onChange }: {
   claim: Claim; names: Candidate['names']; cx: OpContext | null; s: kb.KbState; nameOf: (id: string) => string; match: (n: string) => string | null;
   onChange: (c: Claim, n?: Candidate['names']) => void;
 }) {
+  // запись базы без соединения сценария — соединение пусто, название записи — в names (приём найдёт запись по названию)
   const pick = (i: number) => <SubjectPicker key={`s${i}`} label={claim.kind === 'boundary' ? (i ? 'второе объединение' : 'первое объединение') : 'соединение'}
     value={claim.kind === 'boundary' ? claim.between[i] : 'subject' in claim ? claim.subject : ''} name={claim.kind === 'boundary' ? names.between?.[i] : names.subject}
-    cx={cx} entries={s.entries} nameOf={nameOf} match={match} onChange={(id) => onChange(setSubject(claim, id, i))} />;
+    cx={cx} entries={s.entries} nameOf={nameOf} match={match} onChange={(id, title) => onChange(setSubject(claim, id, i), title == null ? undefined
+      : claim.kind === 'boundary' ? { ...names, between: (i ? [names.between?.[0] ?? '', title] : [title, names.between?.[1] ?? '']) as [string, string] } : { ...names, subject: title })} />;
   return (
     <div className="rq-fields">
       {claim.kind === 'boundary' ? [pick(0), pick(1)] : claim.kind !== 'event' && claim.kind !== 'crossing' ? pick(0) : null}
       {CLAIM_FIELDS[claim.kind].map((f) => f.type === 'subject'
         ? <SubjectPicker key={f.key} label={f.title} value={fieldText(claim, f.key)} name={names.parent} cx={cx} entries={s.entries} nameOf={nameOf} match={match}
-          onChange={(id) => onChange({ ...claim, [f.key]: id } as Claim)} />
+          onChange={(id, title) => onChange({ ...claim, [f.key]: id } as Claim, title == null ? undefined : { ...names, parent: title })} />
         : <label key={f.key} className={`rq-f t-${f.type}`}><span>{f.title}</span>
           {f.type === 'state' ? <select value={fieldText(claim, f.key)} onChange={(e) => onChange(setClaimField(claim, f.key, e.target.value))}>
             {Object.entries(CROSSING_STATE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-            : <FieldInput claim={claim} k={f.key} onChange={onChange} placeholder={f.type === 'date' ? 'ГГГГ-ММ-ДД' : ''} />}</label>)}
+            // название переправы правится на месте и остаётся названием из источника (names.subject)
+            : <FieldInput claim={claim} k={f.key} placeholder={f.type === 'date' ? 'ГГГГ-ММ-ДД' : claim.kind === 'crossing' && f.key === 'subject' ? 'название: мост через Шпрее у …' : ''}
+              onChange={(x) => onChange(x, x.kind === 'crossing' && f.key === 'subject' ? { ...names, subject: x.subject } : undefined)} />}</label>)}
     </div>
   );
 }
@@ -230,10 +240,12 @@ function FieldInput({ claim, k, onChange, placeholder }: { claim: Claim; k: stri
 
 /**
  * Выбор соединения: предложенное (сопоставленное или найденное по названию из источника) — первым, затем формирования
- * сценария операции; другая запись базы — поиском по названию.
+ * сценария операции; другая запись базы — поиском по названию. Соединение — id сценария: у записи берётся её синоним-id
+ * сценария; у записи без него соединение пусто, а её название (title) уходит в названия кандидата — факт ляжет в эту
+ * запись, но в модель не попадёт.
  */
 function SubjectPicker({ label, value, name, cx, entries, nameOf, match, onChange }: {
-  label: string; value: string; name?: string; cx: OpContext | null; entries: Entry[]; nameOf: (id: string) => string; match: (n: string) => string | null; onChange: (id: string) => void;
+  label: string; value: string; name?: string; cx: OpContext | null; entries: Entry[]; nameOf: (id: string) => string; match: (n: string) => string | null; onChange: (id: string, title?: string) => void;
 }) {
   const proposed = value || (name ? match(name) ?? '' : '');
   const [find, setFind] = useState(false);
@@ -257,7 +269,8 @@ function SubjectPicker({ label, value, name, cx, entries, nameOf, match, onChang
       </div>
       {find && <div className="rq-find"><input autoFocus placeholder="название формирования" value={q} onChange={(e) => setQ(e.target.value)} />
         <button className="link" onClick={() => { setFind(false); setQ(''); }}>✕</button>
-        {hits.map((e) => <button key={e.id} className="link" onClick={() => { onChange(e.id); setFind(false); setQ(''); }}>{e.title}</button>)}
+        {hits.map((e) => { const id = scenarioIdOf(e); return <button key={e.id} className="link" title={id ? `соединение сценария ${id}` : 'запись без соединения сценария: факт ляжет в запись, но в модель не попадёт'}
+          onClick={() => { onChange(id, id ? undefined : e.title); setFind(false); setQ(''); }}>{e.title}{id ? '' : ' (без соединения сценария)'}</button>; })}
         {q.trim().length >= 2 && !hits.length && <span className="muted">не найдено</span>}</div>}
     </div>
   );

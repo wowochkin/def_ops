@@ -4,6 +4,7 @@
  */
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
+import { noVision } from './ingest';
 import { scanLlm } from './kb';
 
 export const PROBE_NUMBER = '4817';
@@ -38,7 +39,7 @@ export async function probeVision(llm: LlmSettings, fetchImpl: typeof fetch = fe
     return r.content.replace(/\s/g, '').includes(PROBE_NUMBER) ? { ok: true } : { ok: false, why: `модель ответила не то число: «${r.content.trim().slice(0, 80)}»` };
   } catch (e) {
     const m = (e as Error).message;
-    if (/image|vision|multimodal|modalit/i.test(m)) return { ok: false, why: 'эта модель не видит изображений' };
+    if (noVision(m)) return { ok: false, why: 'эта модель не видит изображений' };
     return { ok: false, why: m };
   }
 }

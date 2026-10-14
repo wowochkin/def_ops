@@ -102,6 +102,29 @@ describe('decideCandidates и rollbackDocument', () => {
     expect(after.find((f) => f.check?.by === 'human')?.check?.docRolledBack).toBe(true);
   });
 
+  it('откат сдвигает закрепления и адреса следующих фактов записи: исправление после авто-фактов сохраняет закрепление', async () => {
+    // два авто-факта документа d1, затем в той же записи — факт человека из другого источника, закреплённый в «Расхождениях»
+    await saveCandidates(list().slice(0, 1).concat(cand('b', { kind: 'strength', subject: 'su_99a', at: '1945-04-17', personnel: 49000 }, 'auto')), ctx);
+    const { addManual } = await import('../src/kb/candidates');
+    const own: Candidate = { ...cand('h', { kind: 'strength', subject: 'su_99a', at: '1945-04-17', personnel: 49500 }, 'review'), source: 'src:other', evidence: { kind: 'manual' }, origin: 'manual' };
+    await addManual(own, ctx);
+    const e0 = (await userEntry(ENTRY))!;
+    const ih = e0.facts!.findIndex((f) => f.source === 'src:other');
+    expect(e0.facts!.slice(0, ih).filter((f) => f.check?.by === 'auto')).toHaveLength(2);
+    const key = pinKey('strength', 'su_99a', '1945-04-17');
+    await store.putPins({ [key]: { entry: ENTRY, index: ih, fp: fingerprint(e0.facts![ih]) } });
+    expect(await rollbackDocument('d1')).toEqual({ removed: 2, kept: 0 });
+    const e1 = (await userEntry(ENTRY))!;
+    expect(e1.facts!.findIndex((f) => f.source === 'src:other')).toBe(ih - 2);
+    expect((await store.pins())[key]).toEqual({ entry: ENTRY, index: ih - 2, fp: fingerprint(e0.facts![ih]) });
+    // выбор по закреплению — тот же факт человека
+    const r = resolve(claimFacts(await store.entries()), 'strength', 'su_99a', '1945-04-17', await store.pins(), { window: 0 });
+    expect(r.chosen?.fact.source).toBe('src:other');
+    // адрес принятого кандидата сдвинут, у снятых — снят
+    const q = await queue();
+    expect(q.find((c) => c.id === 'h')?.accepted).toEqual({ entry: ENTRY, index: ih - 2 });
+  });
+
   it('отклонение — состояние rejected', async () => {
     await saveCandidates(list(), ctx);
     await decideCandidates(['r'], false);
@@ -232,6 +255,33 @@ describe('откат закреплений исправления (запись
     expect(pins[pinKey('strength', 'su_1bf', '1945-04-16')]).toBeUndefined();
   });
 
+  it('выбор человека, сделанный после исправления, удаление исправления не трогает', async () => {
+    const ref = await builtinRef();
+    const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
+    await correctBuiltin(ref, { ...old, personnel: old.personnel! + 1000 }, { source: 'src:test', starts: [S] });
+    const key = pinKey('strength', 'su_1bf', S), own = pinKey('strength', 'su_1bf', '1945-04-16');
+    // человек позже закрепил на начале операции встроенный факт; второй ключ остался за исправлением
+    const later = { entry: ref.entry, index: ref.index, fp: fingerprint(ref.fact) };
+    await store.putPins({ [key]: later });
+    await deleteFact(ref.entry, await fixIndex(ref.entry), { starts: [] });
+    const pins = await store.pins();
+    expect(pins[key]).toEqual(later);
+    expect(pins[own]).toBeUndefined();
+  });
+
+  it('правка исправления не перезаписывает выбор человека, сделанный после исправления', async () => {
+    const ref = await builtinRef();
+    const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
+    await correctBuiltin(ref, { ...old, personnel: old.personnel! + 1000 }, { source: 'src:test', starts: [S] });
+    const key = pinKey('strength', 'su_1bf', S);
+    const i = await fixIndex(ref.entry);
+    const f0 = (await store.entries()).find((x) => x.id === ref.entry)!.facts![i];
+    const later = { entry: ref.entry, index: ref.index, fp: fingerprint(ref.fact) };
+    await store.putPins({ [key]: later });
+    await editFact(ref.entry, i, { ...f0, claim: { ...old, personnel: old.personnel! + 2000 }, value: 'ещё раз' }, { starts: [S] });
+    expect((await store.pins())[key]).toEqual(later);
+  });
+
   it('прежнее закрепление человека по ключу возвращается при удалении исправления', async () => {
     const ref = await builtinRef();
     const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
@@ -277,6 +327,25 @@ describe('откат закреплений исправления (запись
     await correctBuiltin(ref, { ...(ref.fact.claim as Claim) }, { source: 'src:test', starts: [S] }); // запись пользователя — копия сида
     await expect(deleteFact(ref.entry, ref.index)).rejects.toThrow(/исправить/);
     await expect(editFact(ref.entry, ref.index, { ...ref.fact, value: 'x' })).rejects.toThrow(/исправить/);
+  });
+});
+
+describe('соединение — id сценария', () => {
+  it('прежний кандидат с id записи (u:…:formations:su_99a) — факт с id сценария su_99a', async () => {
+    await saveCandidates([cand('a', { kind: 'strength', subject: 'su_99a', at: '1945-04-16', personnel: 50000 }, 'auto')], ctx);
+    await store.put('candidates', { ...cand('e', { kind: 'enter', subject: ENTRY, at: '1945-04-17' }, 'review') });
+    expect(await decideCandidates(['e'], true, {}, ctx)).toEqual({ accepted: 1, pending: [] });
+    const f = (await userEntry(ENTRY))!.facts!.find((x) => x.claim?.kind === 'enter');
+    expect(f?.claim).toMatchObject({ subject: 'su_99a' });
+  });
+});
+
+describe('событие из документа без операции', () => {
+  it('ложится в общую хронологию, без сомнения «соединение не найдено»', async () => {
+    const ev: Candidate = { ...cand('ev', { kind: 'event', id: 'ev', at: '1945-04-20', title: 'взят город' }, 'auto', [], {}), op: undefined };
+    expect(await saveCandidates([ev], ctx)).toMatchObject({ auto: 1, review: 0 });
+    expect((await userEntry('u:general:chronology'))?.facts?.[0].claim).toMatchObject({ kind: 'event', title: 'взят город' });
+    expect(await queue()).toEqual([]);
   });
 });
 

@@ -5,7 +5,7 @@
  * сборщик пересобирает операции (факты в модель идут только через compileOperation).
  */
 import {
-  applyProposal, fingerprint, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey,
+  applyProposal, fingerprint, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey, scenarioIdOf,
   type Candidate, type Claim, type Entry, type Fact, type FactRef, type InfraProposal, type Pins, type Proposal, type Reliability,
 } from '@def-ops/knowledge';
 import { claimText } from '../modeling/basis';
@@ -85,7 +85,10 @@ export class Work {
 }
 export const work = async () => new Work(await store.entries());
 
-/** Запись для формирования по id (сценария или записи) или по названию из источника. */
+/**
+ * Запись для формирования по id сценария или по названию из источника. Прежний кандидат с id записи (f:su_1bf) —
+ * та же запись (соединение в факте — её id сценария, см. subjectId).
+ */
 function formationTarget(id: string, name: string | undefined, op: string | undefined, w: Work, ctx: AcceptCtx): Entry | null {
   if (id) {
     const own = w.get(id);
@@ -98,28 +101,55 @@ function formationTarget(id: string, name: string | undefined, op: string | unde
   return name ? matchEntry(w.entries, 'formations', name, []) : null;
 }
 
-/** Запись операции по шаблону (переправы — «Состояние инфраструктуры», события — «Хронология»). */
-function opEntry(op: string, kind: 'crossing' | 'event', w: Work): Entry {
-  const id = kind === 'crossing' ? `u:${op}:infrastructure` : `u:${op}:chronology`;
+/**
+ * Запись операции по шаблону (переправы — «Состояние инфраструктуры», события — «Хронология»). Документ без
+ * операции — общие записи (u:general:…): событие и переправа не о соединении, ждать «соединения» им незачем.
+ */
+function opEntry(op: string | undefined, kind: 'crossing' | 'event', w: Work): Entry {
+  const o = op ?? 'general';
+  const id = kind === 'crossing' ? `u:${o}:infrastructure` : `u:${o}:chronology`;
+  const ops = op ? { operations: [op] } : {};
   return w.get(id) ?? (kind === 'crossing'
-    ? { id, category: 'terrain', group: 'rivers', title: `Состояние инфраструктуры: ${op}`, operations: [op], rubrics: ['5.3', '5.2'], summary: 'Мосты, переправы, дороги и железные дороги операции — по документам.', facts: [], status: 'extracted', origin: 'document' }
-    : { id, category: 'chronology', group: 'other', title: `События: ${op}`, operations: [op], summary: 'События операции по документам.', facts: [], status: 'extracted', origin: 'document' });
+    ? { id, category: 'terrain', group: 'rivers', title: op ? `Состояние инфраструктуры: ${op}` : 'Состояние инфраструктуры (без операции)', ...ops, rubrics: ['5.3', '5.2'], summary: 'Мосты, переправы, дороги и железные дороги — по документам.', facts: [], status: 'extracted', origin: 'document' }
+    : { id, category: 'chronology', group: 'other', title: op ? `События: ${op}` : 'События (без операции)', ...ops, summary: 'События по документам.', facts: [], status: 'extracted', origin: 'document' });
 }
 
-/** Куда ляжет факт кандидата; null — некуда (соединение не найдено). Пустой subject заполняется по названию. */
+/** Соединение в факте — id сценария: прежний id записи (f:su_1bf) — её синоним-id сценария (нет — пусто). */
+function subjectId(id: string, w: Work): string {
+  if (!id) return id;
+  const e = w.get(id);
+  return e && e.category === 'formations' ? scenarioIdOf(e) : id;
+}
+
+/**
+ * Куда ляжет факт кандидата; null — некуда (соединение не найдено). Пустой subject заполняется по названию; id записи
+ * вместо id сценария (прежние кандидаты) — заменяется. Переправа — с названием из источника (subject — название).
+ */
 function targetOf(c: Candidate, w: Work, ctx: AcceptCtx): Entry | null {
   const cl = c.claim;
-  if (cl.kind === 'event') return c.op ? opEntry(c.op, 'event', w) : null;
-  if (cl.kind === 'crossing') return c.op ? opEntry(c.op, 'crossing', w) : matchEntry(w.entries, 'terrain', cl.subject, []);
+  if (cl.kind === 'event') return opEntry(c.op, 'event', w);
+  if (cl.kind === 'crossing') {
+    if (!cl.subject.trim() && c.names.subject?.trim()) cl.subject = c.names.subject.trim();
+    if (!cl.subject.trim()) return null;
+    return c.op ? opEntry(c.op, 'crossing', w) : matchEntry(w.entries, 'terrain', cl.subject, []) ?? opEntry(undefined, 'crossing', w);
+  }
   if (cl.kind === 'boundary') {
-    for (const i of [0, 1]) { const e = formationTarget(cl.between[i], c.names.between?.[i], c.op, w, ctx); if (e) return e; }
-    return null;
+    let hit: Entry | null = null;
+    for (const i of [0, 1]) {
+      const e = formationTarget(cl.between[i], c.names.between?.[i], c.op, w, ctx);
+      cl.between[i] = subjectId(cl.between[i], w);
+      hit ??= e;
+    }
+    return hit;
   }
   if (!cl.subject && c.names.subject) {
     const id = matchFormation(c.names.subject, ctx.formations, w.entries);
     if (id) cl.subject = id;
   }
-  return formationTarget(cl.subject, c.names.subject, c.op, w, ctx);
+  const target = formationTarget(cl.subject, c.names.subject, c.op, w, ctx);
+  cl.subject = subjectId(cl.subject, w);
+  if (cl.kind === 'parent') cl.parent = subjectId(cl.parent, w);
+  return target;
 }
 
 /** Факт из кандидата: текст, формальная часть, проверка (кто, когда, итоги), доказательство, исправляемый встроенный. */
@@ -130,8 +160,10 @@ function factOf(c: Candidate, by: 'auto' | 'human', ctx: AcceptCtx): Fact {
     if (at) claim = { ...claim, lngLat: at };
   }
   const quote = quoteOf(c);
+  // переправа: в тексте факта — её название (прежние кандидаты писали только состояние и дату)
+  const value = claim.kind === 'crossing' && claim.subject && !c.value.includes(claim.subject) ? `${claim.subject}: ${c.value}` : c.value;
   return {
-    key: c.key, value: c.value, claim, source: c.source,
+    key: c.key, value, claim, source: c.source,
     ...(c.pages ? { pages: c.pages } : {}), ...(c.reliability ? { reliability: c.reliability } : {}), ...(quote ? { quote } : {}),
     check: { by, at: new Date().toISOString(), results: c.checks }, evidence: c.evidence,
     ...(c.corrects ? { corrects: c.corrects } : {}),
@@ -143,7 +175,7 @@ type Placed = { entry: string; index: number; duplicate: boolean } | { pending: 
 /** Записать факт кандидата в рабочий набор: тот же факт уже в записи — его адрес (повтор). Кандидат не меняется. */
 function place(c0: Candidate, by: 'auto' | 'human', ctx: AcceptCtx, w: Work, into?: string): Placed {
   // targetOf заполняет subject по названию — в копии формальной части
-  const c: Candidate = { ...c0, claim: { ...c0.claim } as Claim };
+  const c: Candidate = { ...c0, claim: (c0.claim.kind === 'boundary' ? { ...c0.claim, between: [...c0.claim.between] } : { ...c0.claim }) as Claim };
   const found = targetOf(c, w, ctx);
   // into — запись, в которую человек добавляет факт («+ Факт» в карточке записи)
   const target = into ? w.get(into) ?? null : found;
@@ -268,25 +300,91 @@ const docOf = (f: Fact): string | undefined =>
 
 /**
  * Откатить документ: принятые из него автоматически факты снимаются, принятые человеком остаются с пометкой
- * «документ откачен» (check.docRolledBack).
+ * «документ откачен» (check.docRolledBack). Номера следующих фактов записи меняются — закрепления на них, прежние
+ * значения в записях исправлений и адреса принятых кандидатов сдвигаются (как при удалении факта).
  */
 export async function rollbackDocument(docId: string): Promise<{ removed: number; kept: number }> {
   let removed = 0, kept = 0;
-  const touched: Entry[] = [];
-  for (const e of await store.all<Entry>('entries')) {
+  const w = await work();
+  const cuts = new Map<string, { before: Fact[]; removed: Set<number> }>();
+  for (const e of [...w.entries]) {
     let hit = false;
+    const gone = new Set<number>();
     const facts: Fact[] = [];
-    for (const f of e.facts ?? []) {
-      if (!f.check || docOf(f) !== docId) { facts.push(f); continue; }
+    (e.facts ?? []).forEach((f, i) => {
+      if (!f.check || docOf(f) !== docId) { facts.push(f); return; }
       hit = true;
-      if (f.check.by === 'auto') { removed++; continue; }
+      if (f.check.by === 'auto') { removed++; gone.add(i); return; }
       kept++;
       facts.push({ ...f, check: { ...f.check, docRolledBack: true } });
-    }
-    if (hit) touched.push({ ...e, facts, updatedAt: new Date().toISOString() });
+    });
+    if (!hit) continue;
+    w.set({ ...e, facts });
+    if (gone.size) cuts.set(e.id, { before: e.facts ?? [], removed: gone });
   }
-  if (touched.length) { await store.put('entries', ...touched); await changed(); }
+  if (!w.touched.size) return { removed, kept };
+  const pins = await shiftAddresses(w, cuts, await store.pins());
+  await w.save();
+  if (Object.keys(pins).length) await store.putPins(pins);
+  await shiftCandidates(cuts);
+  await changed();
   return { removed, kept };
+}
+
+type Cuts = Map<string, { before: Fact[]; removed: Set<number> }>;
+/** Новый номер факта записи после снятия (null — снят; запись не менялась или номера нет — тот же). */
+function newIndex(cuts: Cuts, entry: string, index: number): number | null {
+  const c = cuts.get(entry);
+  if (!c || index >= c.before.length) return index;
+  if (c.removed.has(index)) return null;
+  let n = 0;
+  for (const r of c.removed) if (r < index) n++;
+  return index - n;
+}
+/** Закрепление после снятия фактов: на снятый — null, на следующий — с новым номером; на изменённый (отпечаток другой) — как было. */
+function shiftPin(cuts: Cuts, p: PinVal | null): PinVal | null {
+  if (!p || p === 'none' || !cuts.has(p.entry)) return p;
+  const was = cuts.get(p.entry)!.before[p.index];
+  if (p.fp != null && was && p.fp !== fingerprint(was)) return p;
+  const ni = newIndex(cuts, p.entry, p.index);
+  return ni === null ? null : ni === p.index ? p : { ...p, index: ni };
+}
+
+/**
+ * Сдвиг после снятия фактов (cuts — запись → факты до снятия и снятые номера): закрепления из all (изменённые — в
+ * ответе для putPins; over — уже вычисленные значения по ключам, их тоже сдвинуть) и прежние значения в записях
+ * исправлений (correctionPins) — в рабочем наборе w.
+ */
+function shiftAddresses(w: Work, cuts: Cuts, all: Pins, over: Record<string, PinVal | null> = {}): Record<string, PinVal | null> {
+  const out: Record<string, PinVal | null> = {};
+  for (const [key, p] of Object.entries(over)) out[key] = shiftPin(cuts, p);
+  for (const [key, p] of Object.entries(all)) {
+    if (key in out) continue;
+    const q = shiftPin(cuts, p);
+    if (q !== p) out[key] = q;
+  }
+  for (const e of [...w.entries]) {
+    let hit = false;
+    const facts = (e.facts ?? []).map((f) => {
+      if (!f.correctionPins?.some((r) => r.prev && r.prev !== 'none' && cuts.has(r.prev.entry))) return f;
+      hit = true;
+      return { ...f, correctionPins: f.correctionPins.map((r) => ({ ...r, prev: shiftPin(cuts, r.prev) })) };
+    });
+    if (hit) w.set({ ...e, facts });
+  }
+  return out;
+}
+
+/** Адреса принятых кандидатов после снятия фактов: снятый — без адреса, следующие — с новым номером. */
+async function shiftCandidates(cuts: Cuts) {
+  const cands = (await store.all<StoredCandidate>('candidates')).filter((c) => c.accepted && cuts.has(c.accepted.entry));
+  const out: StoredCandidate[] = [];
+  for (const c of cands) {
+    const ni = newIndex(cuts, c.accepted!.entry, c.accepted!.index);
+    if (ni === c.accepted!.index) continue;
+    if (ni === null) { const { accepted: _a, ...rest } = c; out.push(rest); } else out.push({ ...c, accepted: { entry: c.accepted!.entry, index: ni } });
+  }
+  if (out.length) await store.put('candidates', ...out);
 }
 
 /** О ком факт (как в pinKey): subject, id события или пара объединений линии. */
@@ -323,8 +421,21 @@ function recordPins(write: Record<string, PinVal>, cur: Record<string, PinVal | 
   return Object.keys(write).map((key) => ({ key, prev: cur[key] ?? null }));
 }
 
-/** Откат закреплений исправления: ровно записанные ключи — к прежним значениям. */
-const restorePins = (rec: PinRecord): Record<string, PinVal | null> => Object.fromEntries(rec.map((r) => [r.key, r.prev]));
+/**
+ * Откат закреплений исправления: записанные ключи — к прежним значениям, но только где закрепление всё ещё то, что
+ * записало исправление ('none' или само исправление — self); выбор человека, сделанный позже, остаётся. kept — ключи,
+ * где остался выбор человека.
+ */
+function restorePins(rec: PinRecord, cur: Pins, self: { entry: string; index: number; fp: string }): { pins: Record<string, PinVal | null>; kept: Set<string> } {
+  const pins: Record<string, PinVal | null> = {};
+  const kept = new Set<string>();
+  for (const r of rec) {
+    const p = cur[r.key];
+    if (p === 'none' || (p && pinAt(p, self.entry, self.index) && (p.fp == null || p.fp === self.fp))) pins[r.key] = r.prev;
+    else kept.add(r.key);
+  }
+  return { pins, kept };
+}
 
 /**
  * Прежнее исправление без записи закреплений: ключи встроенного — его дата, переданные starts и все начала операций
@@ -399,8 +510,9 @@ export async function editFact(entryId: string, index: number, next: Fact, o: Fa
   const fpOld = fingerprint(old), self = { entry: entryId, index, fp: fingerprint(fact) };
   const all = await store.pins();
   const b = old.corrects ? await correctedBuiltin(old.corrects) : null;
-  // 1) откат закреплений исправления
-  const pins: Record<string, PinVal | null> = old.correctionPins ? restorePins(old.correctionPins)
+  // 1) откат закреплений исправления (кроме ключей, где человек позже выбрал другое)
+  const restored = old.correctionPins ? restorePins(old.correctionPins, all, { entry: entryId, index, fp: fpOld }) : null;
+  const pins: Record<string, PinVal | null> = restored ? restored.pins
     : b?.claim ? legacyCleanup(b.claim, o.starts ?? [], o.allStarts ?? [], all, entryId, index) : {};
   // 2) прочие закрепления на изменяемый факт (выбор человека в «Расхождениях»)
   for (const [key, p] of Object.entries(all)) {
@@ -412,6 +524,7 @@ export async function editFact(entryId: string, index: number, next: Fact, o: Fa
   // 3) исправление — закрепить заново, с записью прежних значений (после отката)
   if (b?.claim && fact.claim) {
     const write = correctionPins(b.claim, fact.claim, self, o.starts);
+    for (const key of restored?.kept ?? []) delete write[key];
     const cur: Record<string, PinVal | null | undefined> = { ...all, ...pins };
     fact.correctionPins = recordPins(write, cur);
     Object.assign(pins, write);
@@ -437,27 +550,16 @@ export async function deleteFact(entryId: string, index: number, o: FactEditOpts
   await refuseBuiltin(entryId, index, old);
   const all = await store.pins();
   const b = old.corrects && !old.correctionPins ? await correctedBuiltin(old.corrects) : null;
-  const restored = old.correctionPins ? restorePins(old.correctionPins)
+  // откат закреплений исправления (кроме ключей, где человек позже выбрал другое)
+  const restored = old.correctionPins ? restorePins(old.correctionPins, all, { entry: entryId, index, fp: fingerprint(old) }).pins
     : b?.claim ? legacyCleanup(b.claim, o.starts ?? [], o.allStarts ?? [], all, entryId, index) : {};
-  // прежние значения могут указывать на факты этой записи после удаляемого — номер назад
-  const pins: Record<string, PinVal | null> = Object.fromEntries(Object.entries(restored).map(([key, p]) =>
-    [key, p && p !== 'none' && p.entry === entryId && p.index >= index ? (p.index === index ? null : { ...p, index: p.index - 1 }) : p]));
-  for (const [key, p] of Object.entries(all)) {
-    if (key in pins || p === 'none' || p.entry !== entryId || p.index < index) continue;
-    if (p.index === index) { if (p.fp == null || p.fp === fingerprint(old)) pins[key] = null; continue; }
-    if (p.fp == null || p.fp === fingerprint(facts[p.index] ?? { key: '', value: '' })) pins[key] = { ...p, index: p.index - 1 };
-  }
   w.set({ ...e, facts: facts.filter((_, i) => i !== index) });
+  // номера фактов после удаляемого — на один назад: закрепления (и прежние значения, к которым откатываемся), записи исправлений, кандидаты
+  const cuts: Cuts = new Map([[entryId, { before: facts, removed: new Set([index]) }]]);
+  const pins = shiftAddresses(w, cuts, all, restored);
   await w.save();
   if (Object.keys(pins).length) await store.putPins(pins);
-  const cands = (await store.all<StoredCandidate>('candidates')).filter((c) => c.accepted?.entry === entryId && c.accepted.index >= index);
-  if (cands.length) {
-    await store.put('candidates', ...cands.map((c) => {
-      if (c.accepted!.index > index) return { ...c, accepted: { entry: entryId, index: c.accepted!.index - 1 } };
-      const { accepted: _a, ...rest } = c;
-      return rest;
-    }));
-  }
+  await shiftCandidates(cuts);
   await changed();
 }
 

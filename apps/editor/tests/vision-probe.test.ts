@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { probeVision } from '../src/kb/vision-probe';
+import { noVision } from '../src/kb/ingest';
 import { scanLlm, crossLlm } from '../src/kb/kb';
 import type { LlmSettings } from '../src/sim/game-protocol';
 
@@ -20,6 +21,20 @@ describe('probeVision', () => {
     const r = await probeVision(llm, f, img);
     expect(r.ok).toBe(false);
     expect(r.why).toMatch(/не видит изображений/);
+  });
+  it('сервер недоступен (в тексте ошибки — image) — не «не видит изображений», а сама ошибка', async () => {
+    const f = (async () => { throw new Error('connect ECONNREFUSED (image upload)'); }) as unknown as typeof fetch;
+    const r = await probeVision(llm, f, img);
+    expect(r.ok).toBe(false);
+    expect(r.why).not.toMatch(/не видит изображений/);
+    expect(r.why).toMatch(/не отвечает/);
+  });
+  it('noVision: только 4xx про изображения', () => {
+    expect(noVision('сервер модели ответил 400: image input not supported')).toBe(true);
+    expect(noVision('сервер модели ответил 422: model is not multimodal')).toBe(true);
+    expect(noVision('сервер модели ответил 500 (ошибка сервера): image decode failed')).toBe(false);
+    expect(noVision('сервер модели не отвечает: vision timeout')).toBe(false);
+    expect(noVision('сервер модели ответил 404: not found')).toBe(false);
   });
   it('роли: своя модель или общая', () => {
     expect(scanLlm({ ...llm, scanModel: 's' }).model).toBe('s');

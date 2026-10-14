@@ -131,8 +131,11 @@ async function ask<T>(client: Chat, messages: ChatMessage[], schema: { name: str
   return r.json != null && typeof r.json === 'object' ? (r.json as T) : null;
 }
 
-/** Ошибка сервера: модель не принимает изображения. */
-const NO_VISION = /image|vision|multimodal|modalit/i;
+/**
+ * Ошибка сервера «модель не принимает изображения»: только ответ 4xx, где сказано об изображениях (image, vision,
+ * multimodal). 5xx, недоступность сервера, незагруженная модель — другие ошибки, не «не видит изображений».
+ */
+export const noVision = (message: string): boolean => /ответил 4\d\d\b/.test(message) && /image|vision|multimodal/i.test(message);
 const WAITING = 'ждёт распознавания: модель чтения сканов не видит изображений — выберите модель со зрением (роль «Чтение сканов»)';
 const CROSS_OFF = 'перекрёстная проверка выключена';
 
@@ -267,7 +270,7 @@ export async function ingest(docId: string, llm: LlmSettings, o: IngestOptions):
         try {
           j = await ask(scanChat, scanMessages(url, doc.name, hint) as ChatMessage[], { name: 'kb_scan', schema: SCAN_SCHEMA }, o.signal);
         } catch (e) {
-          if (!o.signal?.aborted && NO_VISION.test((e as Error).message)) return { cands: [], text: [], waiting: true };
+          if (!o.signal?.aborted && noVision((e as Error).message)) return { cands: [], text: [], waiting: true };
           throw e;
         }
         if (!j) { bad = true; transcripts[k] = ''; continue; }
