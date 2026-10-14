@@ -35,7 +35,7 @@ export interface StrengthComparison {
 /**
  * Сверка численности и потерь с документами по снимкам прогона (снимок — первый не раньше момента точки).
  * strength — |расч − док| / док по людям; losses — накопленные потери расчёта за [from, at] (люди на from +
- * пополнения − выделенное − люди на at; from раньше начала — начало сценария) против документа. Точки вне
+ * пополнения и полученное при выделении − выделенное из него − люди на at; дата без времени: at — конец дня, from — начало; from раньше начала — начало сценария) против документа. Точки вне
  * сценария, без людей в документе или без формирования на карте — не сверяются. В допуске — ошибка ≤ tol.
  */
 export function compareStrength(ctx: SimContext, run: RunResult, history: History, tol = 0.25): StrengthComparison {
@@ -45,15 +45,19 @@ export function compareStrength(ctx: SimContext, run: RunResult, history: Histor
     for (const s of run.snapshots) if (s.time >= time) { const u = s.units.find((x) => x.id === id); if (u) return { time: s.time, u }; }
     return null;
   };
+  // дата без времени (из базы знаний): at — конец дня (00:00 следующего), from — начало дня
+  const dateOnly = (t: string) => t.length <= 10;
   for (const c of history.checkpoints ?? []) {
-    if (!c.personnel || c.personnel <= 0 || c.at < ctx.scenario.start || c.at > last) continue;
-    const b = unitAt(c.at, c.formation);
+    const cAt = dateOnly(c.at) ? addHours(`${c.at}T00:00`, 24) : c.at;
+    if (!c.personnel || c.personnel <= 0 || cAt < ctx.scenario.start || cAt > last) continue;
+    const b = unitAt(cAt, c.formation);
     if (!b) continue;
     let sim: number;
     if (c.kind === 'strength') sim = b.u.personnel;
     else {
       // потери от начала сценария, если документ считает раньше; резерв — с его ввода
-      const a = unitAt(c.from > ctx.scenario.start ? c.from : ctx.scenario.start, c.formation);
+      const from = dateOnly(c.from) ? `${c.from}T00:00` : c.from;
+      const a = unitAt(from > ctx.scenario.start ? from : ctx.scenario.start, c.formation);
       if (!a || a.time >= b.time) continue;
       // журнал хода t отражён в снимках после t: учитываем записи a.time ≤ t < b.time
       let inflow = 0;
@@ -61,6 +65,7 @@ export function compareStrength(ctx: SimContext, run: RunResult, history: Histor
         if (j.time < a.time || j.time >= b.time) continue;
         if (j.kind === 'reinforced' && j.formation === c.formation) inflow += j.personnel;
         else if (j.kind === 'detached' && j.from === c.formation) inflow -= j.personnel;
+        else if (j.kind === 'detached' && j.formation === c.formation) inflow += j.personnel; // выделено при вводе — приход
       }
       sim = a.u.personnel + inflow - b.u.personnel;
     }
