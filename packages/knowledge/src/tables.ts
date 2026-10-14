@@ -1,0 +1,267 @@
+/**
+ * Таблицы фактов (CSV, XLSX) и пакеты внешнего агента (JSON) → кандидаты. Шаблон — столбцы TEMPLATE_COLUMNS
+ * (docs/facts-template.md); не шаблон — смысл столбцов предлагает модель, подтверждает человек, дальше строки
+ * разбираются кодом. Названия остаются в names, claim.subject пуст — его заполняет проверка соединения.
+ * Строка с ошибкой (дата не дата, число не число) в кандидаты не идёт — она в errors с номером строки.
+ */
+import type { Candidate } from './candidate';
+import { buildClaim, CLAIM_KINDS, KIND_RU, type ClaimKind, type ExtractedClaim } from './extract';
+import type { Claim, KbDocument, Reliability } from './schema';
+
+/** Сообщение модели (текст) — как ChatMessage клиента моделей. */
+export type TableMessage = { role: 'system' | 'user'; content: string };
+
+export const TEMPLATE_COLUMNS = ['kind', 'subject', 'date', 'date_to', 'personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing', 'total', 'parent', 'place', 'lat', 'lon', 'approx_km', 'source', 'pages', 'reliability', 'quote', 'note'] as const;
+export type TemplateColumn = (typeof TEMPLATE_COLUMNS)[number];
+const NUMBER_FIELDS = ['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing', 'total'] as const;
+export type NumberField = (typeof NUMBER_FIELDS)[number];
+
+export type ColumnMeaning = TemplateColumn | 'skip' | { day: string; field: NumberField };
+export interface TableMapping { kind: Claim['kind']; columns: ColumnMeaning[] }
+export type DocInfo = Pick<KbDocument, 'id' | 'name' | 'reliability' | 'operation'>;
+export type RowError = { row: number; why: string };
+
+/** Разбор CSV: разделитель «,» или «;» (по первой строке), кавычки с удвоением, переводы строк в кавычках. */
+export function parseCsv(text: string): string[][] {
+  const t = text.replace(/^﻿/, '');
+  const first = t.split(/\r?\n/)[0] ?? '';
+  let q = false, nSemi = 0, nComma = 0;
+  for (const ch of first) { if (ch === '"') q = !q; else if (!q) { if (ch === ';') nSemi++; else if (ch === ',') nComma++; } }
+  const sep = nSemi > nComma ? ';' : ',';
+  const rows: string[][] = [];
+  let row: string[] = [], cell = '', inQ = false;
+  const endCell = () => { row.push(cell); cell = ''; };
+  const endRow = () => { endCell(); rows.push(row); row = []; };
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (inQ) {
+      if (ch === '"') { if (t[i + 1] === '"') { cell += '"'; i++; } else inQ = false; } else cell += ch;
+    } else if (ch === '"' && cell === '') inQ = true;
+    else if (ch === sep) endCell();
+    else if (ch === '\n') endRow();
+    else if (ch === '\r') { if (t[i + 1] !== '\n') endRow(); }
+    else cell += ch;
+  }
+  if (cell !== '' || row.length) endRow();
+  const out = rows.map((r) => r.map((c) => c.trim()));
+  while (out.length && !out[out.length - 1].some(Boolean)) out.pop();   // пустые строки в конце; внутри остаются — номера строк как в файле
+  return out;
+}
+
+/** Байты файла → текст: UTF-8, а если в нём символы замены — Windows-1251. */
+export function decodeTable(bytes: Uint8Array): string {
+  const u = new TextDecoder('utf-8').decode(bytes);
+  return (u.includes('�') ? new TextDecoder('windows-1251').decode(bytes) : u).replace(/^﻿/, '');
+}
+
+const norm = (h: string) => h.replace(/^﻿/, '').trim().toLowerCase();
+
+/** Первая строка — столбцы шаблона (нужны хотя бы kind, subject и date). */
+export function isTemplate(header: string[]): boolean {
+  const h = new Set(header.map(norm));
+  return h.has('kind') && h.has('subject') && h.has('date');
+}
+
+/** Сопоставление для шаблона: столбец по имени, лишние — skip. */
+export function templateMapping(header: string[]): TableMapping {
+  const known = new Set<string>(TEMPLATE_COLUMNS);
+  return { kind: 'strength', columns: header.map((h) => (known.has(norm(h)) ? (norm(h) as TemplateColumn) : 'skip')) };
+}
+
+export const MAPPING_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['kind', 'columns'],
+  properties: {
+    kind: { type: 'string', enum: [...CLAIM_KINDS] },
+    columns: {
+      type: 'array',
+      items: {
+        anyOf: [
+          { type: 'string', enum: [...TEMPLATE_COLUMNS, 'skip'] },
+          { type: 'object', additionalProperties: false, required: ['day', 'field'], properties: { day: { type: 'string' }, field: { type: 'string', enum: [...NUMBER_FIELDS] } } },
+        ],
+      },
+    },
+  },
+} as const;
+
+/** Запрос модели: что за столбцы. Получает заголовок и первые 10 строк; ответ по MAPPING_SCHEMA. */
+export function mappingMessages(header: string[], sample: string[][]): TableMessage[] {
+  const rows = [header, ...sample.slice(0, 10)].map((r) => r.join(' | ')).join('\n');
+  return [
+    { role: 'system', content: `Вы помогаете загрузить таблицу военно-исторических фактов (1945 год) в базу знаний. По заголовку и первым строкам определите, какие факты в таблице (kind) и что означает каждый столбец.
+
+Виды фактов (kind): ${CLAIM_KINDS.map((k) => `${k} — ${KIND_RU[k as ClaimKind]}`).join('; ')}.
+Смысл столбца — одно из значений: ${TEMPLATE_COLUMNS.join(', ')} или skip (столбец не нужен). Даты — date (начало или момент) и date_to (конец периода); название соединения — subject; вышестоящее — parent; населённый пункт — place; число людей — personnel; всего потерь — total.
+Если заголовки столбцов — даты (дни в столбцах, а в ячейках числа), вместо слова поставьте объект { "day": "ГГГГ-ММ-ДД", "field": personnel|tanks|guns|killed|wounded|missing|total }.
+Ответ — JSON: columns строго по одному значению на каждый столбец, в порядке столбцов. Ничего не выдумывайте: не уверены — skip.` },
+    { role: 'user', content: `Столбцов: ${header.length}. Таблица (ячейки через « | »):\n${rows}` },
+  ];
+}
+
+/** Проверить ответ модели: число значений равно числу столбцов, слова — из списка. null — негодно. */
+export function normalizeMapping(raw: unknown, width: number): TableMapping | null {
+  const m = raw as { kind?: unknown; columns?: unknown } | null;
+  if (!m || !(CLAIM_KINDS as readonly string[]).includes(m.kind as string) || !Array.isArray(m.columns)) return null;
+  const ok = new Set<string>([...TEMPLATE_COLUMNS, 'skip']);
+  const cols = m.columns.map((c): ColumnMeaning => {
+    if (typeof c === 'string') return ok.has(c) ? (c as ColumnMeaning) : 'skip';
+    const d = c as { day?: unknown; field?: unknown } | null;
+    return d && typeof d.day === 'string' && (NUMBER_FIELDS as readonly string[]).includes(d.field as string) ? { day: d.day, field: d.field as NumberField } : 'skip';
+  });
+  while (cols.length < width) cols.push('skip');
+  return { kind: m.kind as Claim['kind'], columns: cols.slice(0, width) };
+}
+
+/** Дата ГГГГ-ММ-ДД или ДД.ММ.ГГГГ (и с времени) → ISO; пусто/негодно/несуществующий день — null. */
+export function parseDate(v: string): string | null {
+  const s = v.trim();
+  let y: number, m: number, d: number;
+  let r = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/.exec(s);
+  if (r) { y = +r[1]; m = +r[2]; d = +r[3]; } else {
+    r = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(s);
+    if (!r) return null;
+    d = +r[1]; m = +r[2]; y = +r[3];
+  }
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+  return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+/** Число: «12,5», «1 200», «1200» → число; не число — null. */
+export function parseNumber(v: string): number | null {
+  const s = v.replace(/[\s  ]/g, '').replace(',', '.');
+  return /^[-+]?\d+(?:\.\d+)?$/.test(s) ? Number(s) : null;
+}
+
+const CROSSING_RU: Record<string, 'open' | 'destroyed' | 'built'> = {
+  open: 'open', destroyed: 'destroyed', built: 'built', проходима: 'open', открыта: 'open', разрушена: 'destroyed', наведена: 'built', построена: 'built',
+};
+const KIND_FROM_RU = Object.fromEntries(Object.entries(KIND_RU).map(([k, ru]) => [ru, k])) as Record<string, ClaimKind>;
+const kindOf = (v: string): ClaimKind | null => {
+  const s = v.trim().toLowerCase();
+  return (CLAIM_KINDS as readonly string[]).includes(s) ? (s as ClaimKind) : KIND_FROM_RU[s] ?? null;
+};
+
+type Fields = Partial<Record<TemplateColumn, string>>;
+
+/**
+ * Одна запись (поля шаблона) → кандидат или причина отказа. subject для boundary — «A / B» (две стороны),
+ * place — «точка | точка | …»; переправа: состояние — в note; событие: название — note, иначе quote.
+ */
+function build(f: Fields, kind: ClaimKind, day: string | null, nums: Partial<Record<NumberField, number>>, doc: DocInfo, id: string, evidence: Candidate['evidence'], origin: 'table' | 'agent', row: number): Candidate | string {
+  const date = parseDate(day ?? f.date ?? '');
+  if (!date) return `дата «${(day ?? f.date ?? '').trim()}» не распознана (ГГГГ-ММ-ДД или ДД.ММ.ГГГГ)`;
+  const dateTo = f.date_to?.trim() ? parseDate(f.date_to) : null;
+  if (f.date_to?.trim() && !dateTo) return `дата «${f.date_to.trim()}» (date_to) не распознана`;
+  const numeric = (k: 'lat' | 'lon' | 'approx_km') => (f[k]?.trim() ? parseNumber(f[k]!) : null);
+  for (const k of ['lat', 'lon', 'approx_km'] as const) if (f[k]?.trim() && numeric(k) == null) return `число «${f[k]}» в столбце ${k} не распознано`;
+  const subject = f.subject?.trim() ?? '';
+  if (kind !== 'boundary' && kind !== 'event' && !subject) return 'не указан объект (subject)';
+  if ((kind === 'strength' || kind === 'reinforce') && !(['personnel', 'tanks', 'guns'] as const).some((k) => nums[k] != null)) return 'нет чисел (personnel, tanks, guns)';
+  if (kind === 'losses' && !(['killed', 'wounded', 'missing', 'total', 'tanks'] as const).some((k) => nums[k] != null)) return 'нет чисел потерь';
+  const crossing = CROSSING_RU[(f.note ?? '').trim().toLowerCase()];
+  if (kind === 'crossing' && !crossing) return 'переправа: в note нужно состояние (open, destroyed, built)';
+  const between = kind === 'boundary' ? subject.split(/\s*[/|]\s*/).filter(Boolean) : [];
+  if (kind === 'boundary' && between.length !== 2) return 'разграничительная линия: в subject нужны две стороны через «/»';
+  const x: ExtractedClaim = {
+    kind, subject: kind === 'boundary' ? null : subject || null, parent: f.parent?.trim() || null, place: f.place?.trim() || null,
+    between: kind === 'boundary' ? between : null, points: kind === 'boundary' ? (f.place ?? '').split('|').map((p) => p.trim()).filter(Boolean) : null,
+    inclusive: null, title: kind === 'event' ? (f.note?.trim() || f.quote?.trim() || null) : null,
+    date, dateTo: dateTo ?? date,
+    personnel: nums.personnel ?? null, tanks: nums.tanks ?? null, guns: nums.guns ?? null, killed: nums.killed ?? null, wounded: nums.wounded ?? null, missing: nums.missing ?? null, total: nums.total ?? null,
+    state: crossing ?? null, lat: numeric('lat'), lon: numeric('lon'), approxKm: numeric('approx_km'), quote: f.quote?.trim() ?? '',
+  };
+  const b = buildClaim(x);
+  if (!b) return 'факт не собрать из этой строки';
+  if (kind === 'parent' && !x.parent) return 'не указано вышестоящее (parent)';
+  const names: Candidate['names'] = {
+    ...(kind !== 'boundary' && subject ? { subject } : {}), ...(x.parent ? { parent: x.parent } : {}), ...(kind !== 'boundary' && x.place ? { place: x.place } : {}),
+    ...(kind === 'boundary' ? { between: [between[0], between[1]] as [string, string] } : {}),
+  };
+  if (b.claim.kind === 'event') b.claim.id = id;
+  const rel = f.reliability?.trim().toUpperCase();
+  return {
+    id, claim: b.claim, names, key: b.key, value: b.value, source: `doc:${doc.id}`,
+    pages: f.pages?.trim() || (origin === 'table' ? `строка ${row}` : undefined),
+    reliability: rel === 'A' || rel === 'B' || rel === 'C' ? (rel as Reliability) : doc.reliability, origin, evidence,
+    ...(doc.operation ? { op: doc.operation } : {}),
+    checks: [], verdict: 'review', state: 'pending',
+  };
+}
+
+/**
+ * Строки таблицы (первая — заголовок) → кандидаты. Номер строки в errors — как в файле (заголовок — 1).
+ * Столбец kind (если есть) задаёт вид по строке, иначе вид — mapping.kind. «Дни в столбцах»: на каждую
+ * непустую ячейку-день — кандидат с date = день столбца.
+ */
+export function rowsToCandidates(rows: string[][], mapping: TableMapping, doc: DocInfo): { candidates: Candidate[]; errors: RowError[]; skipped: string[] } {
+  const header = rows[0] ?? [];
+  const candidates: Candidate[] = [];
+  const errors: RowError[] = [];
+  const skipped = header.filter((_, i) => (mapping.columns[i] ?? 'skip') === 'skip' && header[i].trim());
+  for (let r = 1; r < rows.length; r++) {
+    const cells = rows[r];
+    if (!cells.some((c) => c.trim())) continue;
+    const row = r + 1;
+    const f: Fields = {};
+    const days: { day: string; field: NumberField; text: string }[] = [];
+    mapping.columns.forEach((m, i) => {
+      const v = (cells[i] ?? '').trim();
+      if (m === 'skip') return;
+      if (typeof m === 'object') { if (v) days.push({ day: m.day, field: m.field, text: v }); } else if (v) f[m] = v;
+    });
+    const evidence: Candidate['evidence'] = { kind: 'row', doc: doc.id, row, cells: Object.fromEntries(header.map((h, i) => [h.trim() || `#${i + 1}`, (cells[i] ?? '').trim()]).filter(([, v]) => v)) };
+    const kind = f.kind ? kindOf(f.kind) : (mapping.kind as ClaimKind);
+    if (!kind) { errors.push({ row, why: `вид «${f.kind}» не распознан` }); continue; }
+    // обычные числа: из числовых столбцов
+    const nums: Partial<Record<NumberField, number>> = {};
+    let bad = '';
+    for (const k of NUMBER_FIELDS) if (f[k]) { const n = parseNumber(f[k]!); if (n == null) bad = `число «${f[k]}» в столбце ${k} не распознано`; else nums[k] = n; }
+    if (bad) { errors.push({ row, why: bad }); continue; }
+    if (days.length) {
+      for (const d of days) {
+        const n = parseNumber(d.text);
+        const dayIso = parseDate(d.day);
+        if (n == null) { errors.push({ row, why: `число «${d.text}» (столбец ${d.day}) не распознано` }); continue; }
+        if (!dayIso) { errors.push({ row, why: `дата столбца «${d.day}» не распознана` }); continue; }
+        const c = build(f, kind, dayIso, { ...nums, [d.field]: n }, doc, `${doc.id}:r${row}:${candidates.length}`, evidence, 'table', row);
+        if (typeof c === 'string') errors.push({ row, why: c }); else candidates.push(c);
+      }
+    } else {
+      const c = build(f, kind, null, nums, doc, `${doc.id}:r${row}:${candidates.length}`, evidence, 'table', row);
+      if (typeof c === 'string') errors.push({ row, why: c }); else candidates.push(c);
+    }
+  }
+  return { candidates, errors, skipped };
+}
+
+/** Пакет внешнего агента: { format: 'def-ops-facts', version: 1, source?, facts: [строки шаблона как объекты] }. */
+export function parseFactsJson(json: unknown, doc: DocInfo): { candidates: Candidate[]; errors: RowError[] } {
+  const j = json as { format?: unknown; version?: unknown; source?: { reliability?: unknown }; facts?: unknown } | null;
+  if (!j || typeof j !== 'object' || j.format !== 'def-ops-facts') return { candidates: [], errors: [{ row: 0, why: 'не формат def-ops-facts' }] };
+  if (j.version !== 1) return { candidates: [], errors: [{ row: 0, why: `версия ${String(j.version)} не поддерживается (нужна 1)` }] };
+  if (!Array.isArray(j.facts)) return { candidates: [], errors: [{ row: 0, why: 'нет списка facts' }] };
+  const pkgRel = typeof j.source?.reliability === 'string' ? j.source.reliability.toUpperCase() : '';
+  const d: DocInfo = pkgRel === 'A' || pkgRel === 'B' || pkgRel === 'C' ? { ...doc, reliability: pkgRel as Reliability } : doc;
+  const candidates: Candidate[] = [];
+  const errors: RowError[] = [];
+  j.facts.forEach((raw, i) => {
+    const row = i + 1;
+    if (!raw || typeof raw !== 'object') { errors.push({ row, why: 'факт не объект' }); return; }
+    const o = raw as Record<string, unknown>;
+    const f: Fields = {};
+    for (const k of TEMPLATE_COLUMNS) {
+      const v = o[k] ?? (k === 'approx_km' ? o.approxKm : undefined);
+      if (v != null && String(v).trim() !== '') f[k] = String(v).trim();
+    }
+    const kind = kindOf(f.kind ?? '');
+    if (!kind) { errors.push({ row, why: `вид «${f.kind ?? ''}» не распознан` }); return; }
+    const nums: Partial<Record<NumberField, number>> = {};
+    for (const k of NUMBER_FIELDS) if (f[k]) { const n = parseNumber(f[k]!); if (n == null) { errors.push({ row, why: `число «${f[k]}» в поле ${k} не распознано` }); return; } nums[k] = n; }
+    const ref = typeof o.ref === 'string' ? o.ref.trim() : '';
+    const evidence: Candidate['evidence'] = ref ? { kind: 'agent', ref, ...(f.quote ? { quote: f.quote } : {}) } : { kind: 'row', doc: doc.id, row, cells: f as Record<string, string> };
+    const c = build(f, kind, null, nums, d, `${doc.id}:j${row}:${candidates.length}`, evidence, ref ? 'agent' : 'table', row);
+    if (typeof c === 'string') errors.push({ row, why: c }); else candidates.push(c);
+  });
+  return { candidates, errors };
+}

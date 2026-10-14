@@ -27,3 +27,18 @@ export async function fileText(file: File): Promise<string> {
   }
   return raw;
 }
+
+/** Таблица из CSV или XLSX (первый лист) → строки ячеек; первая строка — заголовок. Даты Excel — ГГГГ-ММ-ДД. */
+export async function tableRows(file: File): Promise<string[][]> {
+  const name = file.name.toLowerCase();
+  const { decodeTable, parseCsv } = await import('@def-ops/knowledge');
+  if (name.endsWith('.xlsx') || file.type.includes('spreadsheetml')) {
+    const { readSheet } = await import('read-excel-file/browser');
+    const data = await readSheet(file);
+    const cell = (v: unknown): string => (v == null ? '' : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).trim());
+    const rows = data.map((r) => r.map(cell));
+    while (rows.length && !rows[rows.length - 1].some(Boolean)) rows.pop();
+    return rows;
+  }
+  return parseCsv(decodeTable(new Uint8Array(await file.arrayBuffer())));
+}

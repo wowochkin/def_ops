@@ -313,7 +313,7 @@ export function toBoundaryProposals(items: BoundaryItem[] | undefined, chunk: st
   return { proposals: out, dropped };
 }
 
-const KIND_RU: Record<ClaimKind, string> = {
+export const KIND_RU: Record<ClaimKind, string> = {
   strength: 'численность', reinforce: 'пополнение', parent: 'подчинённость', enter: 'ввод в бой', position: 'положение',
   boundary: 'разграничительная линия', crossing: 'переправа', event: 'событие', losses: 'потери',
 };
@@ -325,7 +325,7 @@ const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 const iso = (v: unknown): string => { const d = str(v); return /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?$/.test(d) ? d.slice(0, 10) : ''; };
 
 /** Формальный факт из ответа модели → формальная часть и текстовая (ключ, значение). null — собрать нельзя. */
-function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; value: string } | null {
+export function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; value: string } | null {
   const nums = Object.fromEntries(['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing', 'total'].map((k) => [k, num((x as unknown as Record<string, unknown>)[k])]).filter(([, v]) => v != null)) as Record<string, number>;
   const numText = NUM_RU.filter(([k]) => nums[k] != null).map(([k, ru]) => `${ru} ${nums[k]}`).join(', ');
   const date = iso(x.date), dateTo = iso(x.dateTo) || date;

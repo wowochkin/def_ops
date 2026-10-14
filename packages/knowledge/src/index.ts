@@ -14,3 +14,4 @@ export * from './resolve';
 export * from './compile';
 export { SCAN_SCHEMA, scanMessages, stripes, boxOnPage, type ScanMessage } from './scan';
 export * from './cross';
+export * from './tables';
