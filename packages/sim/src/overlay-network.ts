@@ -49,6 +49,11 @@ export interface NetworkCheck {
   absent: { line: number; from: number; to: number }[];
   /** Дороги театра с названием, которых на карте нет больше всего (км). */
   absentNamed: { name: string; km: number }[];
+  /**
+   * Свои линии сверки (дороги OpenStreetMap для охвата карты), если сверялись не дороги театра: номера в absent —
+   * по ним; при сохранении подтверждённые куски заменяют дороги театра в охвате карты.
+   */
+  roads?: TheatreData['roads'];
 }
 
 const KM_PER_DEG = 111.32;
@@ -341,4 +346,77 @@ export function cutAbsent(roads: TheatreData['roads'], absent: NetworkCheck['abs
     piece(pos, total);
   });
   return { roads: out, km: +cut.toFixed(1) };
+}
+
+/* ------------------------- дороги OpenStreetMap для охвата карты ------------------------- */
+
+/** Классы OSM для сверки: шоссе — магистрали и главные, дороги — второстепенные и местные (без улиц и полевых). */
+export const OSM_HIGHWAY = ['motorway', 'trunk', 'primary'];
+export const OSM_ROAD = ['secondary', 'tertiary', 'unclassified'];
+
+/** Запрос Overpass: дороги в рамке [w, s, e, n] с геометрией. */
+export function osmRoadsQuery(b: [number, number, number, number]): string {
+  return `[out:json][timeout:180];way["highway"~"^(${[...OSM_HIGHWAY, ...OSM_ROAD].join('|')})$"](${b[1]},${b[0]},${b[3]},${b[2]});out tags geom;`;
+}
+
+/** Упрощение ломаной (Дуглас — Пекер), допуск в градусах. */
+function simplify(pts: LngLat[], tol: number): LngLat[] {
+  if (pts.length < 3) return pts;
+  const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
+  const st: [number, number][] = [[0, pts.length - 1]];
+  while (st.length) {
+    const [a, b] = st.pop()!;
+    const [ax, ay] = pts[a], [bx, by] = pts[b], dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy) || 1e-12;
+    let m = -1, md = tol;
+    for (let i = a + 1; i < b; i++) { const d = Math.abs((pts[i][0] - ax) * dy - (pts[i][1] - ay) * dx) / L; if (d > md) { md = d; m = i; } }
+    if (m > 0) { keep[m] = 1; st.push([a, m], [m, b]); }
+  }
+  return pts.filter((_, i) => keep[i]);
+}
+
+/**
+ * Ответ Overpass → дороги в формате театра: линии обрезаются рамкой (куски внутри неё), упрощаются (~10 м),
+ * название — номер дороги (ref) или имя.
+ */
+export function osmToRoads(json: { elements?: { type: string; tags?: Record<string, string>; geometry?: { lat: number; lon: number }[] }[] }, b: [number, number, number, number]): TheatreData['roads'] {
+  const inB = (p: LngLat) => p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3];
+  const out: TheatreData['roads'] = [];
+  for (const el of json.elements ?? []) {
+    if (el.type !== 'way' || !el.geometry || !el.tags?.highway) continue;
+    const kind = OSM_HIGHWAY.includes(el.tags.highway) ? 'highway' : OSM_ROAD.includes(el.tags.highway) ? 'road' : null;
+    if (!kind) continue;
+    const name = el.tags.ref || el.tags.name;
+    let run: LngLat[] = [];
+    const flush = () => { if (run.length >= 2) out.push({ kind, line: simplify(run, 0.0001).map(([x, y]) => [+x.toFixed(6), +y.toFixed(6)] as LngLat), ...(name ? { name } : {}) }); run = []; };
+    for (const g of el.geometry) {
+      const p: LngLat = [g.lon, g.lat];
+      if (inB(p)) run.push(p); else flush();
+    }
+    flush();
+  }
+  return out;
+}
+
+/** Отрезки «нет на карте» линиями (для показа): куски дорог по расстояниям вдоль линии из проверки. */
+export function absentLines(roads: TheatreData['roads'], absent: NetworkCheck['absent']): LngLat[][] {
+  const out: LngLat[][] = [];
+  for (const a of absent) {
+    const rd = roads[a.line];
+    if (!rd) continue;
+    const line: LngLat[] = [];
+    let d = 0;
+    for (let k = 1; k < rd.line.length; k++) {
+      const p = rd.line[k - 1], q = rd.line[k], L = kmBetween(p, q);
+      const u0 = L ? (a.from - d) / L : 0, u1 = L ? (a.to - d) / L : 0;
+      if (u1 >= 0 && u0 <= 1) {
+        const lo = Math.max(0, u0), hi = Math.min(1, u1);
+        const P = (u: number): LngLat => [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u];
+        if (!line.length) line.push(P(lo));
+        line.push(P(hi));
+      }
+      d += L;
+    }
+    if (line.length >= 2) out.push(line);
+  }
+  return out;
 }

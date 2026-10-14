@@ -328,8 +328,19 @@ export function applyOverlay(T: TheatreData, ov: OverlayResult, o: OverlayApply)
     if (hw || rd) { roads[i] = hw ? 'h' : roads[i] === 'h' ? 'h' : 'r'; anyRoad = true; changes['клеток с дорогой карты'] = (changes['клеток с дорогой карты'] ?? 0) + 1; }
   }
   let lines = T.roads;
+  // сверка шла по дорогам OpenStreetMap для охвата карты: дороги театра в охвате (кроме железных) заменяются
+  // подтверждёнными кусками дорог OSM (отрезки «нет на карте» вырезаны)
+  if (ov.network?.roads) {
+    const mid = (line: LngLat[]) => line[Math.floor(line.length / 2)];
+    const before = lines.length;
+    const kept = cutAbsent(ov.network.roads, o.dropAbsent ? ov.network.absent : []);
+    lines = [...lines.filter((x) => x.kind === 'rail' || cellAt(mid(x.line)[0], mid(x.line)[1]) < 0), ...kept.roads];
+    changes['дорог театра в охвате заменено'] = before - lines.filter((x) => !kept.roads.includes(x)).length;
+    changes['дорог OSM подтверждено картой (кусков)'] = kept.roads.length;
+    if (o.dropAbsent) changes['км дорог OSM нет на карте'] = kept.km;
+  }
   // отрезки, которых на карте нет (номера линий в проверке — по T.roads, поэтому раньше прочих правок)
-  if (o.dropAbsent && ov.network?.absent.length) {
+  else if (o.dropAbsent && ov.network?.absent.length) {
     const c = cutAbsent(T.roads, ov.network.absent);
     lines = c.roads;
     changes['км дорог театра убрано (нет на карте)'] = c.km;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
-import { NetworkLearner, OverlayAccumulator, applyOverlay, colorBin, cutAbsent, decodeMask, overlayGrid, tilesFor, tileXY, type TheatreData } from '../src';
+import { NetworkLearner, OverlayAccumulator, applyOverlay, osmRoadsQuery, osmToRoads, colorBin, cutAbsent, decodeMask, overlayGrid, tilesFor, tileXY, type TheatreData } from '../src';
 
 // синтетическая «историческая карта» уровня 12: бумага, лес пятнами, надписи чёрным, дороги оранжевым
 const Z = 12;
@@ -83,5 +83,33 @@ describe('дороги исторической карты по современ
     expect(r.roads.length).toBe(2);
     expect(r.km).toBeCloseTo(10, 0);
     expect(r.roads[0].line[r.roads[0].line.length - 1][0]).toBeLessThan(r.roads[1].line[0][0]);
+  });
+});
+
+describe('дороги OpenStreetMap для охвата карты', () => {
+  const box: [number, number, number, number] = [13.6, 52.3, 14.4, 52.7];
+  const json: Parameters<typeof osmToRoads>[0] = { elements: [
+    { type: 'way', tags: { highway: 'primary', ref: 'B 1' }, geometry: [{ lon: 13.5, lat: 52.5 }, { lon: 13.7, lat: 52.5 }, { lon: 13.9, lat: 52.5 }, { lon: 14.5, lat: 52.5 }] },
+    { type: 'way', tags: { highway: 'tertiary', name: 'Dorfstraße' }, geometry: [{ lon: 14.0, lat: 52.32 }, { lon: 14.0, lat: 52.4 }, { lon: 14.0, lat: 52.48 }] },
+    { type: 'way', tags: { highway: 'residential' }, geometry: [{ lon: 14.0, lat: 52.6 }, { lon: 14.1, lat: 52.6 }] },
+  ] };
+  it('разбор Overpass: классы, обрезка рамкой, упрощение, названия', () => {
+    const r = osmToRoads(json, box);
+    expect(r.map((x) => [x.kind, x.name])).toEqual([['highway', 'B 1'], ['road', 'Dorfstraße']]);
+    expect(r[0].line).toEqual([[13.7, 52.5], [13.9, 52.5]]); // вне рамки — отрезано
+    expect(r[1].line.length).toBe(2); // прямая — без средней точки
+    expect(osmRoadsQuery(box)).toContain('(52.3,13.6,52.7,14.4)');
+  });
+  it('сохранение: дороги театра в охвате заменяются подтверждёнными кусками OSM', () => {
+    const osm = osmToRoads(json, box);
+    const T = { id: 't', name: 't', bbox: box, cellKm: 1, roads: [
+      { kind: 'road', line: [[13.8, 52.45], [13.9, 52.45]], name: 'старая в охвате' },
+      { kind: 'road', line: [[15.0, 52.0], [15.1, 52.0]], name: 'вне охвата' },
+      { kind: 'rail', line: [[13.8, 52.4], [13.9, 52.4]] },
+    ] } as unknown as TheatreData;
+    const ov = { legend: 'network', name: 'n', source: 's', zoom: 12, bbox: box, cols: 8, rows: 4, covered: '321', masks: {}, stats: {},
+      network: { colors: { road: [], highway: [] }, points: 0, covered: 0, km: { checked: 0, present: 0, absent: 0, unclear: 0 }, absent: [{ line: 1, from: 0, to: 100 }], absentNamed: [], roads: osm } };
+    const { theatre } = applyOverlay(T, ov, { dropAbsent: true });
+    expect(theatre.roads.map((r) => r.name ?? r.kind).sort()).toEqual(['B 1', 'rail', 'вне охвата']);
   });
 });
