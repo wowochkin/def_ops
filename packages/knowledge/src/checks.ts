@@ -208,7 +208,8 @@ function checkDate(c: Candidate, ctx: CheckCtx): CheckResult | null {
   if (!ds.length) return null;
   const bad = ds.filter((d) => parseIso(d) == null);
   if (bad.length) return res('date', 'fail', bad.every((d) => !d) ? 'даты нет' : `не дата: ${bad.filter(Boolean).join(', ') || 'пусто'}`);
-  if (!ctx.op) return ok('date');
+  // переправа сопоставляется с мостом театра по названию: без операции она пойдёт в расчёт всех операций с таким мостом
+  if (!ctx.op) return c.claim.kind === 'crossing' ? res('date', 'doubt', 'документ без операции — переправа пойдёт в расчёт всех операций, где есть мост с таким названием') : ok('date');
   const s = parseIso(ctx.op.start), e = parseIso(ctx.op.end);
   if (s == null || e == null) return ok('date');
   const lo = Math.floor(s / DAY) * DAY - 7 * DAY, hi = Math.floor(e / DAY) * DAY + DAY - 1;

@@ -187,6 +187,17 @@ describe('subject', () => {
     const none = cand({ ...cross }, q('x'));
     expect(lvl(none, ctx({ formations }), 'subject')).toMatchObject({ level: 'doubt', why: 'не названа переправа' });
   });
+  it('переправа из документа без операции — на проверку, с операцией — по дате', () => {
+    const cross = (): Candidate => cand({ kind: 'crossing', subject: '', from: '1945-04-20', state: 'destroyed' }, q('x'), { names: { subject: 'мост у Франкфурта' } });
+    const no = cross();
+    expect(lvl(no, ctx({ formations }), 'date')).toMatchObject({ level: 'doubt' });
+    expect(verdictOf(runChecks(no, ctx({ formations })))).not.toBe('auto');
+    const withOp = cross();
+    expect(lvl(withOp, ctx({ formations, op: { start: '1945-04-16T03:00', end: '1945-05-02T23:59' } }), 'date')?.level).toBe('ok');
+    // прочие виды без операции дату не оспаривают
+    const pos = cand({ kind: 'position', subject: '', at: '1945-04-20', place: 'Зелов' }, q('x'), { names: { subject: '8 гв. А' } });
+    expect(lvl(pos, ctx({ formations }), 'date')?.level).toBe('ok');
+  });
   it('событие: проверки соединения нет', () => {
     const c = cand({ kind: 'event', id: 'e1', at: '1945-04-20', title: 'взят город' }, q('x'));
     expect(lvl(c, ctx({ formations }), 'subject')).toBeUndefined();
