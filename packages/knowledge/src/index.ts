@@ -17,3 +17,4 @@ export * from './cross';
 export * from './tables';
 export * from './agent-task';
 export * from './model-index';
+export * from './model-assistant';

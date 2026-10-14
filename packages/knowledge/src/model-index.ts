@@ -30,13 +30,29 @@ function refsOf(text: string): string[] {
   return [...out];
 }
 
-/** Часть II описания: подразделы с путём заголовков; длинные — по абзацам; таблицы целиком; без снимков и подписей. */
-export function docFragments(md: string): ModelFragment[] {
+/**
+ * Часть II описания: подразделы с путём заголовков; длинные — по абзацам; таблицы целиком; без снимков и подписей.
+ * extra — номера разделов части I, которые тоже описывают модель (агентная модель — в «Переигровке» и «Моделировании»).
+ */
+export function docFragments(md: string, o: { extra?: string[] } = {}): ModelFragment[] {
+  const out: ModelFragment[] = [];
   const lines = md.split('\n');
+  for (const n of o.extra ?? []) {
+    const s = lines.findIndex((l) => l.startsWith(`## ${n}. `));
+    if (s < 0) continue;
+    const e = lines.findIndex((l, i) => i > s && /^#{1,2} /.test(l));
+    out.push(...sectionFragments(lines, s - 1, e < 0 ? lines.length : e));
+  }
   const start = lines.findIndex((l) => /^# Часть II\b/.test(l));
-  if (start < 0) return [];
+  if (start < 0) return out;
   let end = lines.findIndex((l, i) => i > start && /^# /.test(l));
   if (end < 0) end = lines.length;
+  out.push(...sectionFragments(lines, start, end));
+  return out;
+}
+
+/** Фрагменты строк (start, end): заголовки ##–#### задают путь. */
+function sectionFragments(lines: string[], start: number, end: number): ModelFragment[] {
   const out: ModelFragment[] = [];
   const path: { level: number; text: string }[] = [];
   let body: string[] = [];

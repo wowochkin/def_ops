@@ -1,6 +1,6 @@
 /**
  * Выжимка для ассистента модели: npm run model:index → packages/knowledge/data/model-index.json.
- * Источники: часть II docs/system.md, packages/sim/data/rules/norms.json, код packages/sim/src (TS) и
+ * Источники: часть II docs/system.md и разделы 6–7 части I (переигровка, агентная модель, моделирование), packages/sim/data/rules/norms.json, код packages/sim/src (TS) и
  * crates/agents-core/src (Rust). Пересобирать после правок кода модели или части II (тест сверяет).
  */
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
@@ -21,7 +21,7 @@ function files(dir: string, ext: string): string[] {
 export function buildModelIndex(root: string): ModelFragment[] {
   const rel = (p: string) => relative(root, p).split('\\').join('/');
   const out: ModelFragment[] = [
-    ...docFragments(readFileSync(join(root, 'docs/system.md'), 'utf8')),
+    ...docFragments(readFileSync(join(root, 'docs/system.md'), 'utf8'), { extra: ['6', '7'] }),
     ...normFragments(JSON.parse(readFileSync(join(root, 'packages/sim/data/rules/norms.json'), 'utf8'))),
   ];
   for (const p of files(join(root, 'packages/sim/src'), '.ts')) out.push(...tsFragments(rel(p), readFileSync(p, 'utf8')));
