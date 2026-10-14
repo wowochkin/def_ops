@@ -106,7 +106,7 @@ describe('сборщик «база → модель»', () => {
     const r = compileOperation([entry('l', [
       [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-16', killed: 100, wounded: 300 }, 'B'],
       [{ kind: 'losses', subject: 'su_x', from: '1945-04-17', to: '1945-04-17', total: 200 }, 'B'],
-      [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-17', total: 1000 }, 'B'],
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-17', total: 1600 }, 'B'],
     ])], op, {});
     const l = r.edits.checkpoints.filter((c) => c.kind === 'losses');
     expect(l.map((c) => [c.at, c.kind === 'losses' && c.from, c.kind === 'losses' && c.personnel])).toEqual([
@@ -141,6 +141,51 @@ describe('сборщик «база → модель»', () => {
       entry('b', [[{ kind: 'strength', subject: 'su_x', at: '1945-04-16', personnel: 7000 }, 'B']]),
     ], op, { [`strength|su_x|${op.start}`]: { entry: 'b', index: 0 } });
     expect(r.edits.formations.su_x.personnel).toBe(7000);
+  });
+
+  it('закреплённый факт удалён — в расхождениях с отметкой, выбор по правилу', () => {
+    const r = compileOperation([
+      entry('a', [[{ kind: 'strength', subject: 'su_x', at: '1945-04-16', personnel: 6000 }, 'A']]),
+    ], op, { [`strength|su_x|${op.start}`]: { entry: 'b', index: 0 } });
+    expect(r.edits.formations.su_x.personnel).toBe(6000);
+    const c = r.conflicts.find((x) => x.key === `strength|su_x|${op.start}`);
+    expect(c?.pin).toBe('missing');
+    expect(c?.chosen?.entry).toBe('a');
+  });
+
+  it("закрепление «не брать» — в расхождениях; вход — допущение, исключённое закреплением", () => {
+    const r = compileOperation([
+      entry('a', [[{ kind: 'strength', subject: 'su_x', at: '1945-04-16', personnel: 6000 }, 'A']]),
+    ], op, { [`strength|su_x|${op.start}`]: 'none' });
+    expect(r.edits.formations.su_x?.personnel).toBeUndefined();
+    const c = r.conflicts.find((x) => x.key === `strength|su_x|${op.start}`);
+    expect(c?.pin).toBe('none');
+    expect(c?.candidates.map((x) => x.entry)).toEqual(['a']);
+    const p = r.provenance.find((x) => x.input === 'su_x.personnel');
+    expect(p?.reliability).toBe('assumption');
+    expect(p?.excluded).toBe(true);
+    // без фактов «не брать» — тоже видно (снять), но вход не исключён: фактов нет
+    const r2 = compileOperation([], op, { [`strength|su_x|${op.start}`]: 'none' });
+    expect(r2.conflicts.find((x) => x.key === `strength|su_x|${op.start}`)?.pin).toBe('none');
+    expect(r2.provenance.find((x) => x.input === 'su_x.personnel')?.excluded).toBeUndefined();
+  });
+
+  it('подчинённость: поздняя смена B важнее раннего A — не переподчинение по ходу', () => {
+    const r = compileOperation([entry('p', [
+      [{ kind: 'parent', subject: 'su_x', from: '1945-04-01', parent: 'su_f' }, 'A'],
+      [{ kind: 'parent', subject: 'su_x', from: '1945-04-16', parent: 'su_g' }, 'B'],
+    ])], op, {});
+    expect(r.edits.formations.su_x.parent).toBe('su_g');
+    expect(r.edits.changes).toEqual([]);
+  });
+
+  it('потери: цепочки с разницей меньше порога людей (500) — не расхождение', () => {
+    const r = compileOperation([entry('l', [
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-16', total: 1000 }, 'B'],
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-17', to: '1945-04-17', total: 2000 }, 'B'],
+      [{ kind: 'losses', subject: 'su_x', from: '1945-04-16', to: '1945-04-17', total: 3400 }, 'B'],
+    ])], op, {});
+    expect(r.conflicts.find((x) => x.key === 'losses|su_x|1945-04-17')).toBeUndefined();
   });
 
   it('линии, положения, события — из выбранных фактов; дивизии агентного сценария — свои', () => {

@@ -5,7 +5,7 @@
  * итог — доли входов на фактах A, B, C и на допущениях по видам.
  */
 import { Fragment, useEffect, useMemo, useState, type ReactElement } from 'react';
-import type { FactRef, Pins, Provenance } from '@def-ops/knowledge';
+import { pinOf, type FactRef, type Pins, type Provenance } from '@def-ops/knowledge';
 import type { Scenario } from '@def-ops/sim';
 import * as kb from '../kb/kb';
 import { getData, getEdits, onDataChange, type OperationKb } from '../sim/userdata';
@@ -28,8 +28,10 @@ const REL_RU: Record<keyof RelCount, string> = { A: 'A — справочник,
 const fmtN = (n?: number) => (typeof n === 'number' ? n.toLocaleString('ru-RU') : '—');
 const same = (a: { entry: string; index: number }, b: { entry: string; index: number }) => a.entry === b.entry && a.index === b.index;
 
-/** Значок надёжности входа. */
-const Rel = ({ r }: { r: Provenance['reliability'] }) => r === 'assumption' ? <i className="bs-asm" title="допущение сценария — в базе нет факта">доп.</i> : <i className={`kb-rel r${r}`}>{r}</i>;
+/** Значок надёжности входа; допущение из-за закрепления «не брать» — своим значком (факты в базе есть). */
+const Rel = ({ p }: { p: Provenance }) => p.reliability === 'assumption'
+  ? (p.excluded ? <i className="bs-asm" title="допущение сценария — факты в базе есть, но исключены закреплением «не брать»">искл.</i> : <i className="bs-asm" title="допущение сценария — в базе нет факта">доп.</i>)
+  : <i className={`kb-rel r${p.reliability}`}>{p.reliability}</i>;
 
 export function BasisTab({ op }: { op: string }) {
   const [kbOf, setKb] = useState<OperationKb | null | undefined>(undefined);
@@ -86,10 +88,10 @@ export function BasisTab({ op }: { op: string }) {
   if (kbOf === null) return <section className="mdl-card"><h4>Основа модели</h4><p className="muted">Сборки из базы знаний для операции ещё нет: она делается при запуске и при каждом изменении базы. Подождите несколько секунд.</p></section>;
 
   const sum = basisSummary(kbOf.provenance, isInput);
-  const pinOf = (key: string) => pins[key];
+  const pinAt = (key: string) => pins[key];
   const doPin = async (key: string, f: FactRef | null) => {
     setBusy(key); setErr(null);
-    try { await kb.setPins({ [key]: f ? { entry: f.entry, index: f.index } : null }); setPinsState(await kb.getPins()); }
+    try { await kb.setPins({ [key]: f ? pinOf(f) : null }); setPinsState(await kb.getPins()); }
     catch (e) { setErr(`Закрепление не удалось: ${(e as Error).message}`); }
     finally { setBusy(null); }
   };
@@ -135,13 +137,15 @@ export function BasisTab({ op }: { op: string }) {
           {kids.length ? <button className="link bs-tg" onClick={toggle}>{isOpen ? '▾' : '▸'}</button> : <span className="bs-tg" />}{n.name}</span>
         <span className="bs-vals">
           {fields.map(({ field, value, prov }) => <button key={field} className={`bs-v${sel === field ? ' on' : ''}`} title={FIELD_RU[field]} onClick={() => setPick(sel === field ? null : { node: n.id, field })}>
-            <small>{FIELD_RU[field]}</small> {value} <Rel r={prov.reliability} /></button>)}
+            <small>{FIELD_RU[field]}</small> {value} <Rel p={prov} /></button>)}
           {extra.length > 0 && <button className={`bs-v${sel === 'extra' ? ' on' : ''}`} onClick={() => setPick(sel === 'extra' ? null : { node: n.id, field: 'extra' })} title="изменения, контрольные точки, положения по ходу операции"><small>по ходу</small> {extra.length}</button>}
         </span>
       </div>
       {sel && <div className="bs-detail" style={{ marginLeft: 28 + depth * 16 }}>
         {sel === 'extra' ? extra.map((x) => <div key={x.input} className="bs-x"><b>{inputRu(x.input, kbOf)}</b>{x.p.map((p, i) => p.fact ? factView(p.fact, i) : <span key={i} className="muted"> допущение</span>)}</div>)
-          : (() => { const p = byInput.get(`${n.id}.${sel}`)?.[0]; return p?.fact ? factView(p.fact) : <p className="muted">Допущение сценария: значение из сценария операции, в базе нет факта на начало операции. Добавьте факт с источником в запись формирования — модель возьмёт его.</p>; })()}
+          : (() => { const p = byInput.get(`${n.id}.${sel}`)?.[0]; return p?.fact ? factView(p.fact)
+            : p?.excluded ? <p className="muted">Исключено закреплением «не брать»: факты в базе есть, модель берёт значение сценария. Снять закрепление — во вкладке «Расхождения».</p>
+            : <p className="muted">Допущение сценария: значение из сценария операции, в базе нет факта на начало операции. Добавьте факт с источником в запись формирования — модель возьмёт его.</p>; })()}
       </div>}
       {isOpen && kids.map((k) => row(k, depth + 1))}
     </Fragment>;
@@ -176,12 +180,14 @@ export function BasisTab({ op }: { op: string }) {
 
     {part === 'conflicts' && <div className="bs-list">
       {!kbOf.conflicts.length && <p className="ok">Расхождений между фактами нет.</p>}
-      {kbOf.conflicts.map((c) => { const k = splitKey(c.key); const pin = pinOf(c.key); return <div key={c.key} className="bs-conf">
+      {kbOf.conflicts.map((c) => { const k = splitKey(c.key); const pin = pinAt(c.key); return <div key={c.key} className="bs-conf">
         <div className="bs-conf-h"><b>{KIND_RU[k.kind] ?? k.kind}: {k.subject.split('|').map(nameOf).join(' — ')}</b><span className="muted"> на {ruDate(k.moment)}</span>
-          {pin && <span className="bs-pin">{pin === 'none' ? 'закреплено: не брать ни один' : 'закреплено'}</span>}
+          {pin && <span className={`bs-pin${c.pin === 'missing' ? ' bad' : ''}`} title={c.pin === 'missing' ? 'закреплённого факта в базе больше нет (удалён, изменён или сдвинут) — выбор по правилу' : undefined}>
+            {c.pin === 'missing' ? 'закреплённый факт удалён' : pin === 'none' ? 'закреплено: не брать' : 'закреплено'}</span>}
           <span className="grow" />
           {pin && <button disabled={busy === c.key} onClick={() => void doPin(c.key, null)}>Снять закрепление</button>}</div>
-        {c.candidates.map((f) => { const chosen = !!c.chosen && same(c.chosen, f); const pinned = !!pin && pin !== 'none' && same(pin, f); return <div key={`${f.entry}#${f.index}`} className={`bs-cand${chosen ? ' on' : ''}`}>
+        {!c.candidates.length && <p className="muted small">Фактов на этот момент в базе нет.</p>}
+        {c.candidates.map((f) => { const chosen = !!c.chosen && same(c.chosen, f); const pinned = !!pin && pin !== 'none' && c.pin !== 'missing' && same(pin, f); return <div key={`${f.entry}#${f.index}`} className={`bs-cand${chosen ? ' on' : ''}`}>
           <span className="bs-mark">{chosen ? '✓ в модели' : ''}</span>
           {factView(f)}
           {!pinned && <button disabled={busy === c.key} onClick={() => void doPin(c.key, f)}>Закрепить этот</button>}

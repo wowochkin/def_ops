@@ -3,7 +3,7 @@
  * наложение собранного на сценарий и историю (getData), поправки для ядра агентной модели (дивизии), перенос
  * прежних ручных «принять» и «отклонить» сверки в закрепления. Сама сборка с чтением базы — kb-recompile.ts.
  */
-import { pinKey, type CompiledEdits, type Entry, type Pins } from '@def-ops/knowledge';
+import { fingerprint, pinKey, type CompiledEdits, type Entry, type Pins } from '@def-ops/knowledge';
 import type { History, Scenario, ScenarioChange, StrengthCheckpoint, TakeoverState } from '@def-ops/sim';
 
 const day = (s: string) => s.slice(0, 10);
@@ -169,17 +169,17 @@ export function migratePins(entries: Entry[], start: string, formations: ManualF
       if (!v) continue;
       const i = v.source.indexOf('; ');
       const tail = i >= 0 ? v.source.slice(i + 2).trim() : '';
-      let hit: { entry: string; index: number } | null = null;
+      let hit: { entry: string; index: number; fp: string } | null = null;
       if (tail) for (const e of entries) {
         (e.facts ?? []).forEach((f, index) => {
           const c = f.claim;
-          if (!hit && c?.kind === 'strength' && c.subject === fid && typeof c[k] === 'number' && f.value.startsWith(tail)) hit = { entry: e.id, index };
+          if (!hit && c?.kind === 'strength' && c.subject === fid && typeof c[k] === 'number' && f.value.startsWith(tail)) hit = { entry: e.id, index, fp: fingerprint(f) };
         });
         if (hit) break;
       }
       const key = pinKey('strength', fid, start);
       const was = out[key] ?? pins[key];
-      const h = hit as { entry: string; index: number } | null;
+      const h = hit as { entry: string; index: number; fp: string } | null;
       const same = !!h && !!was && was !== 'none' && was.entry === h.entry && was.index === h.index;
       if (h && (!was || same)) { out[key] = h; continue; }
       (rest[fid] ??= {})[k] = v;

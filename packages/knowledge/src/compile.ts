@@ -5,7 +5,7 @@
  * Чистая функция: выбор из нескольких — resolve, закрепления — pins.
  */
 import type { Claim, Entry } from './schema';
-import { claimFacts, pinKey, resolve, type FactRef, type Pins } from './resolve';
+import { claimFacts, differsNum, pinKey, resolve, type FactRef, type Pins } from './resolve';
 
 type FormationIn = {
   id: string; name: string; side: string; echelon: string; parent?: string | null;
@@ -20,6 +20,8 @@ export interface Provenance {
   input: string;
   fact: FactRef | null;
   reliability: 'A' | 'B' | 'C' | 'assumption';
+  /** Допущение потому, что факты есть, но исключены закреплением «не брать». */
+  excluded?: true;
 }
 
 export type ScenarioChangeIn =
@@ -41,7 +43,11 @@ export interface CompiledEdits {
   events: unknown[];
 }
 
-export interface CompileConflict { key: string; candidates: FactRef[]; chosen: FactRef | null }
+/**
+ * Расхождение между фактами на один ключ — или закрепление, требующее внимания: pin 'missing' — закреплённого
+ * факта больше нет (удалён, изменён, сдвинут; выбор по правилу), 'none' — закреплено «не брать» (снять можно).
+ */
+export interface CompileConflict { key: string; candidates: FactRef[]; chosen: FactRef | null; pin?: 'missing' | 'none' }
 
 export interface CompileResult { edits: CompiledEdits; provenance: Provenance[]; conflicts: CompileConflict[]; unmatched: FactRef[] }
 
@@ -89,11 +95,24 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
   const bySubject = groupBy(facts, (f) => `${f.fact.claim!.kind}|${subjectOf(f.fact.claim!)}`);
   const of = (kind: Claim['kind'], subject: string) => bySubject.get(`${kind}|${subject}`) ?? [];
 
-  const prov = (input: string, fact: FactRef | null) => provenance.push({ input, fact, reliability: fact ? relOf(fact) : 'assumption' });
-  /** Выбор с учётом закреплений; расхождение — в список. */
+  /** Ключи, у которых факты есть, но исключены закреплением «не брать». */
+  const excluded = new Set<string>();
+  const prov = (input: string, fact: FactRef | null, key?: string) =>
+    provenance.push({ input, fact, reliability: fact ? relOf(fact) : 'assumption', ...(!fact && key && excluded.has(key) ? { excluded: true as const } : {}) });
+  /** В список расхождений (тот же ключ — кандидаты вместе). */
+  const addConflict = (c: CompileConflict) => {
+    const was = conflicts.find((x) => x.key === c.key);
+    if (!was) { conflicts.push(c); return; }
+    was.candidates = [...new Set([...was.candidates, ...c.candidates])];
+    if (c.pin && !was.pin) was.pin = c.pin;
+  };
+  /** Выбор с учётом закреплений; расхождение и закрепление «не брать» или на пропавший факт — в список. */
   const pick = (group: FactRef[], kind: Claim['kind'], subject: string, moment: string, window = 0): FactRef | null => {
     const r = resolve(group, kind, subject, moment, pins, { window });
-    if (r.conflict) conflicts.push({ key: pinKey(kind, subject, moment), candidates: r.candidates, chosen: r.chosen });
+    const key = pinKey(kind, subject, moment);
+    const pin = r.pin === 'none' || r.pin === 'missing' ? r.pin : undefined;
+    if (r.conflict || pin) addConflict({ key, candidates: r.candidates, chosen: r.chosen, ...(pin ? { pin } : {}) });
+    if (r.pin === 'none' && r.candidates.length) excluded.add(key);
     return r.chosen;
   };
   /** Выбор среди фактов на один момент (точечные факты: пополнение, точка, положение, период потерь). */
@@ -120,7 +139,7 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
     for (const k of NUM) {
       const v = s0 ? claimOf<'strength'>(s0)[k] : undefined;
       if (typeof v === 'number') { setField(id, k, v); prov(`${id}.${k}`, s0); }
-      else if (k === 'personnel' || f[k] != null) prov(`${id}.${k}`, null);
+      else if (k === 'personnel' || f[k] != null) prov(`${id}.${k}`, null, pinKey('strength', id, op.start));
     }
 
     // подчинённость на начало; переподчинения по ходу операции
@@ -129,7 +148,7 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
     // старший вне операции (de_12a → ОКВ) — в операции формирование верхнее: поправки нет, основание — факт
     const p0to = p0 ? claimOf<'parent'>(p0).parent : null;
     if (p0to && known.has(p0to)) setField(id, 'parent', p0to);
-    prov(`${id}.parent`, p0);
+    prov(`${id}.parent`, p0, pinKey('parent', id, op.start));
     let parent = p0to ?? f.parent ?? null;
     const later = parents.filter((x) => { const t = ms(claimOf<'parent'>(x).from); return t > tStart && t <= tEnd; });
     for (const { moment, chosen } of atMoments(later, 'parent', id, (x) => claimOf<'parent'>(x).from)) {
@@ -143,7 +162,7 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
     // ввод: момент после начала
     const enters = of('enter', id).filter((x) => { const t = ms(claimOf<'enter'>(x).at); return t > tStart && t <= tEnd; });
     const e0 = enters.length ? pick(enters, 'enter', id, op.start, Math.ceil((tEnd - tStart) / DAY)) : null;
-    if (e0) { setField(id, 'enterAt', claimOf<'enter'>(e0).at); prov(`${id}.enterAt`, e0); } else if (f.enterAt) prov(`${id}.enterAt`, null);
+    if (e0) { setField(id, 'enterAt', claimOf<'enter'>(e0).at); prov(`${id}.enterAt`, e0); } else if (f.enterAt) prov(`${id}.enterAt`, null, pinKey('enter', id, op.start));
 
     // пополнения
     const reinf = of('reinforce', id).filter((x) => inOp(claimOf<'reinforce'>(x).at));
@@ -185,15 +204,9 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
       const best = all[0];
       const total = sum(best);
       const cs = best.map(L);
-      // другие цепочки на тот же конец с иной суммой (> 5 %) — расхождение
-      const rivals = all.slice(1).filter((ch) => Math.abs(sum(ch) - total) / Math.max(1, sum(ch), total) > 0.05);
-      if (rivals.length) {
-        const key = pinKey('losses', id, cs[0].to);
-        const candidates = [...new Set([best[0], ...rivals.map((ch) => ch[0])])];
-        const was = conflicts.find((c) => c.key === key);
-        if (was) was.candidates = [...new Set([...was.candidates, ...candidates])];
-        else conflicts.push({ key, candidates, chosen: best[0] });
-      }
+      // другие цепочки на тот же конец с иной суммой (больше 5 % и больше 500 человек) — расхождение
+      const rivals = all.slice(1).filter((ch) => differsNum('personnel', sum(ch), total));
+      if (rivals.length) addConflict({ key: pinKey('losses', id, cs[0].to), candidates: [...new Set([best[0], ...rivals.map((ch) => ch[0])])], chosen: best[0] });
       const tanks = cs.every((c) => typeof c.tanks === 'number') ? cs.reduce((s, c) => s + c.tanks!, 0) : undefined;
       const n = edits.checkpoints.length;
       for (const x of [...best].reverse()) prov(`checkpoint:${n}`, x);

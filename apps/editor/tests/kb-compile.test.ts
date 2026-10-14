@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CompiledEdits } from '@def-ops/knowledge';
+import { fingerprint, type CompiledEdits, type Fact } from '@def-ops/knowledge';
 import type { History, Scenario } from '@def-ops/sim';
 import { applyCompiled, applyCompiledHistory, diffCompiled, gameKbData, migratePins, toCoreEdits } from '../src/sim/kb-compile';
 
@@ -158,7 +158,9 @@ describe('migratePins: ручные правки и отклонённое — �
       su_47a: { tanks: { value: 10, was: 5, source: 'как-то; 10 танков', at: 'x' } },
     };
     const r = migratePins(entries, '1945-04-16T05:00', formations, ['toScenario|su_8ga|personnel', 'toKb|su_8ga|path'], {});
-    expect(r.pins).toEqual({ 'strength|su_61a|1945-04-16T05:00': { entry: 'e1', index: 0 }, 'strength|su_8ga|1945-04-16T05:00': 'none' });
+    // закрепление — с отпечатком факта (вставка фактов в запись сдвигает номер — по отпечатку это видно)
+    const fp = fingerprint((entries as { facts: Fact[] }[])[0].facts[0]);
+    expect(r.pins).toEqual({ 'strength|su_61a|1945-04-16T05:00': { entry: 'e1', index: 0, fp }, 'strength|su_8ga|1945-04-16T05:00': 'none' });
     expect(r.formations).toEqual({ su_47a: formations.su_47a });
     expect(r.kept).toEqual(['su_47a.tanks']);
   });

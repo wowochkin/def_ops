@@ -1430,6 +1430,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .bs-cand.on { background: #eef6ee; }
 .bs-mark { font-size: 11.5px; color: #2f6b3b; font-weight: 600; }
 .bs-pin { font-size: 11px; padding: 0 6px; border-radius: 8px; background: var(--accent-bg); color: var(--accent); }
+.bs-pin.bad { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
 .kb-typed th { width: 90px; } .kb-typed td.kb-src { width: 24px; }
 .kb-typed thead th { font-size: 11px; color: var(--muted); font-weight: 600; text-align: left; width: auto; white-space: nowrap; padding-left: 10px; }
 .kb-typed td.kb-use { width: 1%; padding-left: 10px; }

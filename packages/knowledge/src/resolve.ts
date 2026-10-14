@@ -1,14 +1,20 @@
 /**
  * Выбор одного факта из нескольких об одном: закрепление → надёжность (A > B > C) → близость даты
- * к нужному моменту → более свежий документ. Чистая функция, без обращения к хранилищу.
+ * к нужному моменту → более свежий документ. У состояния (подчинённость, переправа) — сначала последнее
+ * действующее на момент (позднее начало), надёжность — только среди фактов с тем же началом.
+ * Чистая функция, без обращения к хранилищу.
  */
 import type { Claim, Entry, Fact } from './schema';
 
 /** Факт с адресом (запись, номер в ней) и датой записи (для выбора более свежего документа). */
 export interface FactRef { entry: string; index: number; fact: Fact; updated: string }
 
-/** Закрепления: ключ pinKey → факт или 'none' (не брать ничего). */
-export type Pins = Record<string, { entry: string; index: number } | 'none'>;
+/**
+ * Закрепления: ключ pinKey → факт или 'none' (не брать ничего). Факт — по адресу (запись, номер) и отпечатку fp
+ * (формальная часть и значение): вставка фактов сдвигает номера, по отпечатку сдвиг виден — закрепление не действует.
+ * Прежние закрепления без отпечатка — только по адресу.
+ */
+export type Pins = Record<string, { entry: string; index: number; fp?: string } | 'none'>;
 
 export const pinKey = (kind: Claim['kind'], subject: string, moment: string): string => `${kind}|${subject}|${moment}`;
 
@@ -33,8 +39,13 @@ const dateOf = (c: Claim): string => c.kind === 'losses' ? c.to : 'at' in c ? c.
 /** Состояние, действующее с from до смены: берётся последнее действующее на момент. */
 const isState = (k: Claim['kind']) => k === 'parent' || k === 'crossing';
 
-const NUMS: (keyof Extract<Claim, { kind: 'losses' }> | 'personnel' | 'guns')[] = ['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing'];
+/** Порог существенного расхождения чисел по полю (как в сверке, sync.ts): люди 500, танки 5, орудия 20. */
+const FLOOR: Record<string, number> = { personnel: 500, killed: 500, wounded: 500, missing: 500, total: 500, tanks: 5, guns: 20 };
+const NUMS = Object.keys(FLOOR);
 const isNumeric = (k: Claim['kind']) => k === 'strength' || k === 'reinforce' || k === 'losses';
+/** Существенно ли различаются два числа поля: больше 5 % и больше порога поля. */
+export const differsNum = (field: string, u: number, v: number): boolean =>
+  Math.abs(u - v) > Math.max(FLOOR[field] ?? 0, 0.05 * Math.max(Math.abs(u), Math.abs(v)));
 
 /** Нормализованная запись значения: порядок ключей объекта не влияет. */
 const norm = (v: unknown): string => Array.isArray(v) ? `[${v.map(norm).join(',')}]`
@@ -42,15 +53,18 @@ const norm = (v: unknown): string => Array.isArray(v) ? `[${v.map(norm).join(','
   : JSON.stringify(v) ?? 'null';
 const deepEqual = (a: unknown, b: unknown): boolean => norm(a) === norm(b);
 
-/** Различаются ли значения двух утверждений (числа — больше чем на 5 %, остальное — не равно). */
+/** Отпечаток факта для закрепления: нормализованная формальная часть и значение. */
+export const fingerprint = (f: Fact): string => `${norm(f.claim ?? null)}|${f.value.trim()}`;
+/** Закрепление факта: адрес и отпечаток. */
+export const pinOf = (f: FactRef): { entry: string; index: number; fp: string } => ({ entry: f.entry, index: f.index, fp: fingerprint(f.fact) });
+
+/** Различаются ли значения двух утверждений (числа — больше 5 % и больше порога поля, остальное — не равно). */
 function differ(a: Claim, b: Claim): boolean {
   if (isNumeric(a.kind)) {
     const x = a as Record<string, unknown>, y = b as Record<string, unknown>;
     for (const f of NUMS) {
       const u = x[f], v = y[f];
-      if (typeof u !== 'number' || typeof v !== 'number') continue;
-      const m = Math.max(Math.abs(u), Math.abs(v));
-      if (m > 0 && Math.abs(u - v) / m > 0.05) return true;
+      if (typeof u === 'number' && typeof v === 'number' && differsNum(f, u, v)) return true;
     }
     return false;
   }
@@ -60,7 +74,11 @@ function differ(a: Claim, b: Claim): boolean {
 export function resolve(
   facts: FactRef[], kind: Claim['kind'], subject: string, moment: string, pins: Pins,
   o: { window?: number } = {},
-): { chosen: FactRef | null; candidates: FactRef[]; conflict: boolean; pinMissing?: boolean } {
+): {
+  chosen: FactRef | null; candidates: FactRef[]; conflict: boolean; pinMissing?: boolean;
+  /** Закрепление по ключу: действует на факт, 'none' — не брать ничего, 'missing' — закреплённого факта нет (удалён, изменён, сдвинут). */
+  pin?: 'fact' | 'none' | 'missing';
+} {
   const window = o.window ?? 0;
   const t = time(moment);
   const same = facts.filter((f) => f.fact.claim && f.fact.claim.kind === kind && subjectOf(f.fact.claim) === subject);
@@ -80,21 +98,23 @@ export function resolve(
   };
 
   const pin = pins[pinKey(kind, subject, moment)];
-  if (pin === 'none') return { chosen: null, candidates, conflict: window > 0 && conflictOf(null) };
+  if (pin === 'none') return { chosen: null, candidates, conflict: window > 0 && conflictOf(null), pin: 'none' };
   let pinMissing: true | undefined;
   if (pin) {
-    // закрепление действует, только если факт того же вида и о том же
+    // закрепление действует, только если факт того же вида и о том же и (при отпечатке) тот же самый
     const hit = facts.find((f) => f.fact.claim && f.entry === pin.entry && f.index === pin.index
-      && f.fact.claim.kind === kind && subjectOf(f.fact.claim) === subject);
-    if (hit) return { chosen: hit, candidates, conflict: conflictOf(hit) };
+      && f.fact.claim.kind === kind && subjectOf(f.fact.claim) === subject && (pin.fp == null || fingerprint(f.fact) === pin.fp));
+    if (hit) return { chosen: hit, candidates, conflict: conflictOf(hit), pin: 'fact' };
     pinMissing = true;
   }
   const d = (f: FactRef) => time(dateOf(f.fact.claim!));
   const sorted = [...candidates].sort((a, b) =>
-    rank(a) - rank(b)
-    // состояние: последнее действующее; прочее: ближайшее к моменту
-    || (state ? d(b) - d(a) : Math.abs(d(a) - t) - Math.abs(d(b) - t))
+    // состояние: сначала последнее действующее (позднее начало), надёжность — среди одного начала
+    (state ? d(b) - d(a) : 0)
+    || rank(a) - rank(b)
+    // прочее: ближайшее к моменту
+    || (state ? 0 : Math.abs(d(a) - t) - Math.abs(d(b) - t))
     || (a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0));
   const chosen = sorted[0] ?? null;
-  return { chosen, candidates, conflict: conflictOf(chosen), ...(pinMissing ? { pinMissing } : {}) };
+  return { chosen, candidates, conflict: conflictOf(chosen), ...(pinMissing ? { pinMissing, pin: 'missing' as const } : {}) };
 }
