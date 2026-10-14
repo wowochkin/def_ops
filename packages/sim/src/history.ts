@@ -13,6 +13,69 @@ export interface History {
   frontline: { time: string; sector: string; line: LngLat[] }[];
   /** Ключевые события с историческими датами — проверка «случилось ли и когда». */
   events?: HistoryEvent[];
+  /** Документальные контрольные точки численности и потерь (из базы знаний) — сверка с расчётом (compareStrength). */
+  checkpoints?: StrengthCheckpoint[];
+}
+
+/** Контрольная точка по документу: численность на момент at или накопленные потери за [from, at]. */
+export type StrengthCheckpoint =
+  | { at: string; formation: string; kind: 'strength'; personnel?: number; tanks?: number; guns?: number }
+  /** накопленные потери за [from, at]: personnel — люди */
+  | { at: string; formation: string; kind: 'losses'; from: string; personnel: number; tanks?: number };
+
+export interface StrengthComparison {
+  /** Сверено точек; доля в допуске; медиана относительной ошибки. */
+  n: number;
+  within: number;
+  medianRel: number;
+  /** По формированиям: точек, доля в допуске, медиана относительной ошибки. */
+  byFormation: { key: string; n: number; within: number; medianRel: number }[];
+}
+
+/**
+ * Сверка численности и потерь с документами по снимкам прогона (снимок — первый не раньше момента точки).
+ * strength — |расч − док| / док по людям; losses — накопленные потери расчёта за [from, at] (люди на from +
+ * пополнения − выделенное − люди на at; from раньше начала — начало сценария) против документа. Точки вне
+ * сценария, без людей в документе или без формирования на карте — не сверяются. В допуске — ошибка ≤ tol.
+ */
+export function compareStrength(ctx: SimContext, run: RunResult, history: History, tol = 0.25): StrengthComparison {
+  const rows: { key: string; rel: number }[] = [];
+  const last = addHours(ctx.scenario.end, 12);
+  const unitAt = (time: string, id: string) => {
+    for (const s of run.snapshots) if (s.time >= time) { const u = s.units.find((x) => x.id === id); if (u) return { time: s.time, u }; }
+    return null;
+  };
+  for (const c of history.checkpoints ?? []) {
+    if (!c.personnel || c.personnel <= 0 || c.at < ctx.scenario.start || c.at > last) continue;
+    const b = unitAt(c.at, c.formation);
+    if (!b) continue;
+    let sim: number;
+    if (c.kind === 'strength') sim = b.u.personnel;
+    else {
+      // потери от начала сценария, если документ считает раньше; резерв — с его ввода
+      const a = unitAt(c.from > ctx.scenario.start ? c.from : ctx.scenario.start, c.formation);
+      if (!a || a.time >= b.time) continue;
+      // журнал хода t отражён в снимках после t: учитываем записи a.time ≤ t < b.time
+      let inflow = 0;
+      for (const j of run.final.journal) {
+        if (j.time < a.time || j.time >= b.time) continue;
+        if (j.kind === 'reinforced' && j.formation === c.formation) inflow += j.personnel;
+        else if (j.kind === 'detached' && j.from === c.formation) inflow -= j.personnel;
+      }
+      sim = a.u.personnel + inflow - b.u.personnel;
+    }
+    rows.push({ key: c.formation, rel: Math.abs(sim - c.personnel) / c.personnel });
+  }
+  const med = (a: number[]) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+  const share = (l: { rel: number }[]) => l.filter((r) => r.rel <= tol).length / Math.max(1, l.length);
+  const by = new Map<string, number[]>();
+  for (const r of rows) by.set(r.key, [...(by.get(r.key) ?? []), r.rel]);
+  return {
+    n: rows.length,
+    within: +share(rows).toFixed(3),
+    medianRel: +med(rows.map((r) => r.rel)).toFixed(3),
+    byFormation: [...by.entries()].map(([key, l]) => ({ key, n: l.length, within: +share(l.map((rel) => ({ rel }))).toFixed(3), medianRel: +med(l).toFixed(3) })),
+  };
 }
 
 /** Знак события на карте переигровки: появляется в момент, когда событие случилось в расчёте (и бледный — в исторический). */

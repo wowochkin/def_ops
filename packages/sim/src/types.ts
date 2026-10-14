@@ -344,7 +344,17 @@ export interface Scenario {
   supply?: Record<string, { sources: (LngLat | string)[]; phases?: { from: string; until?: string; sources: (LngLat | string)[] }[] }>;
   /** Исторические разграничительные линии (директивы): где их нет или за их концами — полосы расчётные. */
   boundaries?: Boundary[];
+  /**
+   * Изменения по датам (из базы знаний): пополнения и переподчинение. Исполняется в первом ходе, начало которого
+   * не раньше at; пополнение ещё не введённого формирования — при его вводе.
+   */
+  changes?: ScenarioChange[];
 }
+
+/** Изменение по дате: пополнение (прибавка к текущим и начальным силам) или переподчинение другому штабу. */
+export type ScenarioChange =
+  | { at: string; formation: string; kind: 'reinforce'; personnel?: number; tanks?: number; guns?: number }
+  | { at: string; formation: string; kind: 'resubordinate'; parent: string };
 
 /**
  * Разграничительная линия между объединениями одной стороны (фронтами, армиями) или с союзником (авиация).
@@ -479,7 +489,13 @@ export type JournalEntry =
   /** Выделено из другого формирования (корпус, передовой отряд). */
   | { kind: 'detached'; time: string; formation: string; from: string; personnel: number; tanks: number; guns: number }
   /** Разграничительная линия вступила в силу (директива, распоряжение). */
-  | { kind: 'directive'; time: string; boundary: string; side: string; title: string; from: string; issuedBy: string };
+  | { kind: 'directive'; time: string; boundary: string; side: string; title: string; from: string; issuedBy: string }
+  /** Пополнение по дате (Scenario.changes). */
+  | { kind: 'reinforced'; time: string; formation: string; personnel: number; tanks: number; guns: number }
+  /** Переподчинение по дате: from — прежний штаб. */
+  | { kind: 'resubordinated'; time: string; formation: string; from: string | null; to: string }
+  /** Изменение по дате не исполнено: change — индекс в Scenario.changes. */
+  | { kind: 'change-skipped'; time: string; formation: string; change: number; reason: string };
 
 export interface SimState {
   scenario: string;
@@ -509,6 +525,8 @@ export interface SimState {
   directives?: { conditional: boolean; activated: Record<string, string> };
   /** Линии, установленные в ходе игры: модель-Ставка (между фронтами) и игрок (между армиями). */
   boundaries?: Boundary[];
+  /** Исполненные изменения по датам — индексы в Scenario.changes. */
+  changesDone?: number[];
 }
 
 /**

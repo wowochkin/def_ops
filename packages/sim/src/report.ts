@@ -4,7 +4,7 @@
  * и в браузере (панель «Переигровка» редактора).
  */
 import type { SimContext } from './step';
-import { checkEvents, compareWithHistory, runScenario, summarize, type Deviation, type EventResult, type History, type RunResult } from './history';
+import { checkEvents, compareStrength, compareWithHistory, runScenario, summarize, type Deviation, type EventResult, type History, type RunResult, type StrengthComparison } from './history';
 import { shortName } from './publish';
 import { groupOf, sectorViolations } from './sectors';
 import type { RunResult as Run } from './history';
@@ -34,6 +34,8 @@ export interface Analysis {
   eventsBySeed: { id: string; title: string; historical: string; days: (number | null)[] }[];
   /** Выходы в полосу соседа по директивам (первый прогон): формирование, линия, ходов, с какого момента. */
   sectors: SectorBreach[];
+  /** Сверка численности и потерь с документами (первый прогон); нет контрольных точек — поля нет. */
+  strength?: StrengthComparison;
 }
 
 export interface SectorBreach { formation: string; boundary: string; in: string; turns: number; first: string }
@@ -73,7 +75,8 @@ export function analyze(ctx: SimContext, history: History, o: AnalysisOptions = 
     const ev = checkEvents(ctx, r, history);
     for (const b of bySeed) b.days.push(ev.find((e) => e.id === b.id)?.days ?? null);
   }
-  return { run, ms, seed, toleranceKm: tol, deviations, summary, spread, events, eventsBySeed: bySeed, sectors: sectorBreaches(ctx, run) };
+  const strength = history.checkpoints?.length ? compareStrength(ctx, run, history) : undefined;
+  return { run, ms, seed, toleranceKm: tol, deviations, summary, spread, events, eventsBySeed: bySeed, sectors: sectorBreaches(ctx, run), ...(strength ? { strength } : {}) };
 }
 
 const fmtDays = (d: number | null) => (d == null ? '—' : d > 0 ? `+${d}` : String(d));
@@ -119,6 +122,15 @@ export function reportMarkdown(ctx: SimContext, a: Analysis): string {
       for (const b of a.sectors) L.push(`| ${names.get(b.formation) ?? b.formation} | ${title.get(b.boundary) ?? b.boundary} | ${fname.get(b.in) ?? b.in} | ${b.turns} | ${b.first.slice(5, 16).replace('T', ' ')} |`);
       L.push('');
     }
+  }
+  if (a.strength?.n) {
+    const st = a.strength;
+    L.push('## Численность и потери против документов', '',
+      `Контрольные точки по документам: ${st.n}; в пределах ±25 %: ${(st.within * 100).toFixed(0)} %; медиана относительной ошибки ${(st.medianRel * 100).toFixed(0)} %. Численность — люди в расчёте против документа; потери — накопленные за период (люди в начале + пополнения − люди в конце).`, '');
+    const worst = [...st.byFormation].sort((x, y) => x.within - y.within || y.medianRel - x.medianRel).slice(0, 10);
+    L.push('Наибольшие расхождения (до 10 формирований):', '', '| формирование | точек | в допуске | медиана ошибки |', '|---|---|---|---|');
+    for (const b of worst) L.push(`| ${names.get(b.key) ?? b.key} | ${b.n} | ${(b.within * 100).toFixed(0)} % | ${(b.medianRel * 100).toFixed(0)} % |`);
+    L.push('');
   }
   L.push('## По дням', '', '| день | положений | среднее отклонение, км | медиана сверх, км | в допуске |', '|---|---|---|---|---|');
   for (const d of [...sum.byDay].sort((x, y) => x.key.localeCompare(y.key))) L.push(`| ${d.key} | ${d.n} | ${d.meanKm} | ${d.medianExcessKm} | ${(d.within * 100).toFixed(0)} % |`);

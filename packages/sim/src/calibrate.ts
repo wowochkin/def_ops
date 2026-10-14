@@ -5,7 +5,7 @@
  * «проверка» — после) и подбор: сначала широкий случайный поиск, потом уточнение вокруг лучшего.
  * Подбор пошаговый (next → report): кандидатов можно считать параллельно в нескольких потоках.
  */
-import { checkEvents, compareWithHistory, runScenario, type History } from './history';
+import { checkEvents, compareStrength, compareWithHistory, runScenario, type History } from './history';
 import { createRng } from './rng';
 import type { SimContext } from './step';
 import type { Rules } from './types';
@@ -72,7 +72,7 @@ export const defaultTrainUntil = (ctx: SimContext) =>
   new Date((Date.parse(ctx.scenario.start + 'Z') + Date.parse(ctx.scenario.end + 'Z')) / 2).toISOString().slice(0, 10) + 'T23:59';
 
 export interface CalibScore {
-  /** Мерило подбора: обучение (км) + 3 × ошибка дат событий (сут). Меньше — лучше. */
+  /** Мерило подбора: обучение (км) + 3 × ошибка дат событий (сут); с контрольными точками — см. strength. Меньше — лучше. */
   total: number;
   /** Среднее превышение отклонения над неопределённостью, км (до 50): обучение и проверка. */
   train: number;
@@ -82,6 +82,11 @@ export interface CalibScore {
   /** Средняя ошибка дат событий обучения, сут (несостоявшееся — 6). */
   events: number;
   detail: { id: string; days: number | null }[];
+  /**
+   * Сверка численности и потерь с документами на обучении (History.checkpoints до trainUntil): точек за прогон и доля
+   * в пределах ±25 %. От 10 точек входит в total: total × 0,75 + (1 − within) × 50 × 0,25. Нет точек — поля нет.
+   */
+  strength?: { n: number; within: number };
 }
 
 /** Итог прогонов набора правил: мерило калибровки и всё для сравнения с историей и другими моделями. */
@@ -107,6 +112,9 @@ export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o
   const days = new Map<string, number[]>();
   const events = new Map<string, RulesEvaluation['events'][number]>();
   let detail: CalibScore['detail'] = [];
+  // контрольные точки численности и потерь обучения
+  const cpTrain = (history.checkpoints ?? []).filter((c) => c.at <= trainUntil);
+  let cpN = 0, cpWithin = 0;
   const t0 = Date.now();
   for (let s = 0; s < seeds; s++) {
     const run = runScenario(c, (o.seed0 ?? 101) + s);
@@ -129,11 +137,18 @@ export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o
       nev++;
     }
     detail = evs.map((e) => ({ id: e.id, days: e.days }));
+    if (cpTrain.length) {
+      const st = compareStrength(c, run, { ...history, checkpoints: cpTrain });
+      cpN += st.n; cpWithin += st.within * st.n;
+    }
   }
   const train = tr / Math.max(1, ntr), test = te / Math.max(1, nte), evd = ev / Math.max(1, nev);
   const sorted = [...all].sort((a, b) => a - b);
+  const strength = cpN ? { n: Math.round(cpN / seeds), within: +(cpWithin / cpN).toFixed(3) } : undefined;
+  const base = train + 3 * evd;
+  const total = strength && strength.n >= 10 ? base * 0.75 + (1 - strength.within) * 50 * 0.25 : base;
   return {
-    score: { total: +(train + 3 * evd).toFixed(3), train: +train.toFixed(2), test: +test.toFixed(2), within: +(within10 / Math.max(1, n)).toFixed(3), events: +evd.toFixed(2), detail },
+    score: { total: +total.toFixed(3), train: +train.toFixed(2), test: +test.toFixed(2), within: +(within10 / Math.max(1, n)).toFixed(3), events: +evd.toFixed(2), detail, ...(strength ? { strength } : {}) },
     within: +(all.filter((x) => x <= tol).length / Math.max(1, all.length)).toFixed(3),
     medianExcessKm: sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0,
     n: all.length,
@@ -208,8 +223,11 @@ export function mergeEvaluations(list: RulesEvaluation[]): RulesEvaluation {
   const days = new Map<string, { s: number; w: number; n: number }>();
   for (const e of list) for (const d of e.byDay) { const x = days.get(d.day) ?? { s: 0, w: 0, n: 0 }; x.s += d.meanExcessKm * d.n; x.w += d.within * d.n; x.n += d.n; days.set(d.day, x); }
   const events = list[0].events.map((ev) => ({ ...ev, days: list.flatMap((e) => e.events.find((x) => x.id === ev.id)?.days ?? []) }));
+  const st = list.filter((e) => e.score.strength?.n);
+  const stN = st.reduce((a, e) => a + e.score.strength!.n, 0);
+  const strength = st.length ? { n: Math.round(stN / st.length), within: +(st.reduce((a, e) => a + e.score.strength!.within * e.score.strength!.n, 0) / stN).toFixed(3) } : undefined;
   return {
-    score: { total: +avg((e) => e.score.total).toFixed(3), train: +avg((e) => e.score.train).toFixed(2), test: +avg((e) => e.score.test).toFixed(2), within: +avg((e) => e.score.within).toFixed(3), events: +avg((e) => e.score.events).toFixed(2), detail: list[0].score.detail },
+    score: { total: +avg((e) => e.score.total).toFixed(3), train: +avg((e) => e.score.train).toFixed(2), test: +avg((e) => e.score.test).toFixed(2), within: +avg((e) => e.score.within).toFixed(3), events: +avg((e) => e.score.events).toFixed(2), detail: list[0].score.detail, ...(strength ? { strength } : {}) },
     within: +w((e) => e.within).toFixed(3),
     medianExcessKm: meds[Math.floor(meds.length / 2)],
     n: list.reduce((a, e) => a + e.n, 0),

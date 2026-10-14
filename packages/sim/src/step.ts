@@ -139,6 +139,9 @@ export function step(prev: SimState, ctx: SimContext): SimState {
     journal.push({ kind: 'detached', time: now, formation: f.id, from: p.id, ...got });
   }
 
+  // 0а. изменения по датам (пополнения, переподчинение) — после выделения: выделенному при вводе прибавляется к его доле
+  const changesDone = applyChanges(ctx.scenario, fs, byId, now, prev.changesDone, journal);
+
   // 1. приказы, дошедшие до исполнителя к концу хода
   const pending: Order[] = [];
   // когда приказ дошёл до исполнителя в этом ходе (rules.orderPartialTurn)
@@ -480,7 +483,49 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   }
 
   const { umpire: _used, ...rest } = prev;
-  return { ...rest, ...(directives ? { directives } : {}), time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}), ...(crossings.length ? { crossings } : {}) };
+  return { ...rest, ...(directives ? { directives } : {}), time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}), ...(crossings.length ? { crossings } : {}), ...(changesDone ? { changesDone } : {}) };
+}
+
+/**
+ * Изменения по датам (Scenario.changes): исполняются в первом ходе, начало которого не раньше at, один раз (индексы
+ * исполненных — в состоянии). Пополнение — к текущим силам и к начальным (укомплектованность); ещё не введённому
+ * формированию — откладывается до ввода. Переподчинение — только существующему штабу, не себе и не своему потомку;
+ * иначе — запись change-skipped с причиной. Возвращает индексы исполненных (undefined — изменений нет).
+ */
+function applyChanges(scen: Scenario, fs: Formation[], byId: Map<string, Formation>, now: string, done0: number[] | undefined, journal: JournalEntry[]): number[] | undefined {
+  const list = scen.changes;
+  if (!list?.length) return done0;
+  const done = new Set(done0 ?? []);
+  // подчинённость: штабы без положения (фронты) — из сценария, действующие формирования — из состояния
+  const parentOf = new Map<string, string | null>(scen.formations.map((f) => [f.id, f.parent ?? null]));
+  for (const f of fs) parentOf.set(f.id, f.parent);
+  const skip = (i: number, formation: string, reason: string) => { done.add(i); journal.push({ kind: 'change-skipped', time: now, formation, change: i, reason }); };
+  list.forEach((c, i) => {
+    if (done.has(i) || c.at > now) return;
+    const f = byId.get(c.formation);
+    if (c.kind === 'reinforce') {
+      if (!f) return skip(i, c.formation, `нет действующего формирования ${c.formation}`);
+      if (f.destroyed) return skip(i, c.formation, 'формирование уже разгромлено — пополнять нечего');
+      if (!onMap(f, now) || f.detachFrom) return; // ещё не введено — пополнение при вводе
+      const got = { personnel: c.personnel ?? 0, tanks: c.tanks ?? 0, guns: c.guns ?? 0 };
+      for (const k of ['personnel', 'tanks', 'guns'] as const) { f[k] += got[k]; f.initial[k] += got[k]; }
+      done.add(i);
+      journal.push({ kind: 'reinforced', time: now, formation: f.id, ...got });
+      return;
+    }
+    if (c.parent === c.formation) return skip(i, c.formation, 'переподчинение самому себе');
+    if (!parentOf.has(c.parent)) return skip(i, c.formation, `нет штаба ${c.parent} среди формирований сценария`);
+    for (let p: string | null | undefined = c.parent, n = 0; p && n < 64; p = parentOf.get(p), n++) {
+      if (p === c.formation) return skip(i, c.formation, `${c.parent} — в подчинении самого ${c.formation}: переподчинение образовало бы цикл`);
+    }
+    if (!f) return skip(i, c.formation, `нет действующего формирования ${c.formation}`);
+    const from = f.parent;
+    f.parent = c.parent;
+    parentOf.set(f.id, c.parent);
+    done.add(i);
+    journal.push({ kind: 'resubordinated', time: now, formation: f.id, from, to: c.parent });
+  });
+  return [...done].sort((a, b) => a - b);
 }
 
 /**
