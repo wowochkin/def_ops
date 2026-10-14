@@ -34,7 +34,7 @@ export function crossMessages(quote: string): { role: 'system' | 'user'; content
   return [
     { role: 'system', content: `Вы читаете одну выписку из военного документа 1945 года. Ответьте на вопросы только по тексту выписки, ничего не домысливая и не используя других знаний.
 
-- side — чья это численность, потери или положение: own — советских войск («наши», «армия», «фронт» без уточнения о противнике), enemy — противника (немецких войск, «противник», «уничтожено», «взято в плен»), unknown — по выписке не понять;
+- side — чья это численность, потери или положение, в абсолютном смысле: own — советских войск, enemy — немецких войск, unknown — по выписке не понять. Слова «наши», «свои», «противник», «уничтожено», «взято в плен» определяют сторону ТОЛЬКО если сама выписка показывает, чей это документ (язык, названия частей, «русские», «немцы», звания); иначе — unknown;
 - plan — true, если это план, приказ, задача или предположение («должна», «предписано», «ожидается»), false, если описан свершившийся факт;
 - subject — какое соединение (армия, корпус, дивизия, фронт) названо, как в тексте; нет — пустая строка;
 - date, dateTo — день или период, к которому относится сказанное, ГГГГ-ММ-ДД (год 1945, если не указан); нет — пустая строка и null;
@@ -50,32 +50,39 @@ const MEANING_RU: Record<Meaning, string> = { personnel: 'численность
 const SIDE_RU = { own: 'наши войска', enemy: 'противник', unknown: 'неясно' } as const;
 const FIELDS = ['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing', 'total'] as const;
 
-/** Сторона соединения по id сценария: su_… — свои, de_… — противник. */
-function sideOfId(id: string): 'own' | 'enemy' | null {
-  return /^su_/.test(id) ? 'own' : /^de_/.test(id) ? 'enemy' : null;
+/** Сторона соединения по id сценария, если сторона не передана: su_… — советские войска, de_… — немецкие. */
+function sideByPrefix(id: string): 'su' | 'de' | null {
+  return /^su_/.test(id) ? 'su' : /^de_/.test(id) ? 'de' : null;
 }
+const iso = (d: string | null | undefined) => (typeof d === 'string' ? d.slice(0, 10) : '');
 
 /**
  * Сравнить ответ модели с формальной частью кандидата. doubt — модель прочла иначе: «план», другая сторона,
  * другое соединение (после сопоставления по match) или другое значение числа; иначе ok.
  */
-export function crossCompare(c: Candidate, answer: CrossAnswer, match: (name: string) => string | null): CheckResult {
+export function crossCompare(c: Candidate, answer: CrossAnswer, match: (name: string) => string | null, sideOf?: (id: string) => 'su' | 'de' | null): CheckResult {
   const whys: string[] = [];
   const claim = c.claim as unknown as Record<string, unknown>;
   const subject = typeof claim.subject === 'string' ? claim.subject : '';
   if (answer.plan) whys.push('модель прочла выписку как план или приказ, а не как свершившееся');
-  const mine = subject ? sideOfId(subject) : null;
+  const sd = subject ? (sideOf ?? sideByPrefix)(subject) : null;
+  const mine = sd === 'su' ? 'own' : sd === 'de' ? 'enemy' : null;
   if (mine && answer.side !== 'unknown' && answer.side !== mine) whys.push(`модель: речь о стороне «${SIDE_RU[answer.side]}», а соединение — ${SIDE_RU[mine]}`);
   const named = answer.subject?.trim();
   if (named && subject) {
     const m = match(named);
     if (m && m !== subject) whys.push(`модель называет другое соединение: «${named}»`);
   }
+  const cs = [claim.at, claim.from].find((v) => typeof v === 'string' && v) as string | undefined;
+  const ce = (typeof claim.to === 'string' && claim.to) || cs;
+  const as = iso(answer.date), ae = iso(answer.dateTo) || as;
+  if (cs && as && (iso(cs) !== as || iso(ce) !== ae)) whys.push(`период не совпадает: в факте ${iso(cs)}${iso(ce) !== iso(cs) ? ` — ${iso(ce)}` : ''}, у модели ${as}${ae !== as ? ` — ${ae}` : ''}`);
   for (const f of FIELDS) {
     const v = claim[f];
     if (typeof v !== 'number') continue;
     const said = answer.numbers.filter((n) => n.value === v);
-    if (said.length && !said.some((n) => n.meaning === f)) whys.push(`число ${v} (${MEANING_RU[f]}) модель прочла как «${MEANING_RU[said[0].meaning]}»`);
+    if (!said.length) whys.push(`число ${v} при повторном прочтении не найдено`);
+    else if ( !said.some((n) => n.meaning === f)) whys.push(`число ${v} (${MEANING_RU[f]}) модель прочла как «${MEANING_RU[said[0].meaning]}»`);
   }
   if (!whys.length) return { check: 'cross', level: 'ok' };
   return { check: 'cross', level: 'doubt', why: `${whys.join('; ')}${answer.note ? `. Модель: ${answer.note}` : ''}` };

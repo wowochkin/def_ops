@@ -33,6 +33,25 @@ describe('скан', () => {
   });
 });
 
+describe('кандидаты по полосам', () => {
+  it('две полосы одной страницы — разные id', () => {
+    const ans = fx<{ claims: ExtractedClaim[] }>('scan-page');
+    const a = toCandidates(ans.claims, doc, { page: 3, stripe: 0 }, 'scan');
+    const b = toCandidates(ans.claims, doc, { page: 3, stripe: 1 }, 'scan');
+    expect(a[0].id).not.toBe(b[0].id);
+    expect(a[0].id).toBe('d2:s3.0:0');
+    expect(toCandidates(ans.claims, doc, { page: 3 }, 'scan')[0].id).toBe('d2:s3:0');
+  });
+  it('дата не ISO — пустая, runChecks: date fail, итог drop', () => {
+    const ans = fx<{ claims: ExtractedClaim[] }>('scan-page');
+    const [c] = toCandidates([{ ...ans.claims[0], date: '17 апреля', dateTo: null }], doc, { page: 1 }, 'scan');
+    expect(c.claim).toMatchObject({ from: '', to: '' });
+    const r = runChecks(c, ctx('За 17.04 убито 2 300, ранено 1 500'));
+    expect(r.find((x) => x.check === 'date')).toMatchObject({ level: 'fail', why: 'даты нет' });
+    expect(verdictOf(r)).toBe('drop');
+  });
+});
+
 describe('полосы', () => {
   it('невысокая страница — одна полоса', () => {
     expect(stripes(1000, 1400)).toEqual([{ y: 0, h: 1400 }]);

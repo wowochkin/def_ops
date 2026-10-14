@@ -48,4 +48,36 @@ describe('перекрёстное прочтение', () => {
     expect(m[1].content).toContain('убито 5');
     expect(CROSS_SCHEMA.required).toContain('plan');
   });
+
+  const de = () => {
+    const c = cand({ subject: 'Armee', date: '1945-04-17', dateTo: '1945-04-17', killed: 800, quote: 'наши потери за 17.04 — 800 убитыми' });
+    (c.claim as { subject: string }).subject = 'de_9a';
+    return c;
+  };
+  it('выписка с точки зрения немцев, сторона unknown, de_-соединение — без сомнения', () => {
+    expect(crossCompare(de(), fx<CrossAnswer>('cross-unknown-side'), match)).toEqual({ check: 'cross', level: 'ok' });
+  });
+  it('сторона: переданная sideOf важнее префикса id, без стороны — сравнение пропускается', () => {
+    const a = { ...fx<CrossAnswer>('cross-match'), subject: '' };
+    expect(crossCompare(cand({ wounded: 3400 }), a, match, () => 'de').level).toBe('doubt');
+    expect(crossCompare(cand({ wounded: 3400 }), a, match, () => null).level).toBe('ok');
+    expect(crossCompare(cand({ wounded: 3400 }), a, match).level).toBe('ok');
+    const x = cand({ wounded: 3400 });
+    (x.claim as { subject: string }).subject = 'zz_unknown';
+    expect(crossCompare(x, { ...a, side: 'enemy' }, match).level).toBe('ok');
+  });
+  it('период: другой день или сутки вместо периода — doubt', () => {
+    const c = cand({ wounded: 3400 });
+    const a = fx<CrossAnswer>('cross-match');
+    expect(crossCompare(c, { ...a, dateTo: null }, match)).toMatchObject({ level: 'doubt', why: expect.stringContaining('период не совпадает') });
+    expect(crossCompare(c, { ...a, date: '1945-04-17' }, match).level).toBe('doubt');
+    expect(crossCompare(c, { ...a, date: '' }, match).level).toBe('ok');
+  });
+  it('число, которого нет в ответе — doubt', () => {
+    const a = { ...fx<CrossAnswer>('cross-match'), numbers: [{ value: 3400, meaning: 'wounded' as const }] };
+    expect(crossCompare(cand({ wounded: 3400 }), a, match)).toMatchObject({ level: 'doubt', why: expect.stringContaining('число 1200 при повторном прочтении не найдено') });
+  });
+  it('промпт: сторона по словам «наши/противник» только при признаках в выписке', () => {
+    expect(crossMessages('x')[0].content).toContain('ТОЛЬКО');
+  });
 });

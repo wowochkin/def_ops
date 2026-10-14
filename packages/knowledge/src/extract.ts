@@ -321,7 +321,8 @@ const STATE_RU = { open: 'проходима', destroyed: 'разрушена', 
 const NUM_RU: [string, string][] = [['personnel', 'людей'], ['tanks', 'танков'], ['guns', 'орудий'], ['killed', 'убито'], ['wounded', 'ранено'], ['missing', 'пропало'], ['total', 'всего']];
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
-const iso = (v: unknown): string => { const d = str(v); return /^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10) : d; };
+/** ISO-дата (день, возможно с временем) → ГГГГ-ММ-ДД; всё прочее — '' (проверка даты отбросит такой факт). */
+const iso = (v: unknown): string => { const d = str(v); return /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?$/.test(d) ? d.slice(0, 10) : ''; };
 
 /** Формальный факт из ответа модели → формальная часть и текстовая (ключ, значение). null — собрать нельзя. */
 function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; value: string } | null {
@@ -365,11 +366,11 @@ const pickNums = (n: Record<string, number>, keys: string[]) => Object.fromEntri
 export function toCandidates(
   claims: ExtractedClaim[] | undefined,
   doc: Pick<KbDocument, 'id' | 'name' | 'reliability' | 'operation'>,
-  where: { chunk: number } | { page: number; box?: [number, number, number, number] },
+  where: { chunk: number } | { page: number; stripe?: number; box?: [number, number, number, number] },
   origin: 'text' | 'scan',
 ): Candidate[] {
   const out: Candidate[] = [];
-  const tag = 'chunk' in where ? `c${where.chunk}` : `s${where.page}`;
+  const tag = 'chunk' in where ? `c${where.chunk}` : `s${where.page}${where.stripe != null ? `.${where.stripe}` : ''}`;
   for (const x of claims ?? []) {
     const b = x ? buildClaim(x) : null;
     if (!b || !x.quote?.trim()) continue;
