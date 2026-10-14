@@ -3,7 +3,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { claimFacts, fingerprint, pinKey, resolve, type Candidate, type Claim, type Entry, type FactRef } from '@def-ops/knowledge';
 import * as store from '../src/kb/store';
-import { correctBuiltin, decideCandidates, rollbackDocument, saveCandidates, staleCorrections, type StoredCandidate } from '../src/kb/candidates';
+import { correctBuiltin, decideCandidates, deleteFact, editFact, rollbackDocument, saveCandidates, staleCorrections, type StoredCandidate } from '../src/kb/candidates';
 
 beforeEach(async () => {
   await store.resetForTests();
@@ -148,6 +148,65 @@ describe('correctBuiltin и staleCorrections', () => {
     const pins = await store.pins();
     expect(pins[pinKey('strength', 'su_1bf', '1945-04-16T05:00')]).toBe('none');
     expect(pins[pinKey('strength', 'su_1bf', '1945-04-16')]).toBe('none');
+  });
+});
+
+describe('editFact и deleteFact: правка своих фактов и исправлений', () => {
+  async function corrected() {
+    const seed = await store.seed();
+    const e = seed.find((x) => x.id === 'f:su_1bf')!;
+    const index = e.facts!.findIndex((f) => f.claim?.kind === 'strength' && f.claim.at === '1945-04-16');
+    const ref: FactRef = { entry: e.id, index, fact: e.facts![index], updated: '' };
+    const old = ref.fact.claim as Extract<Claim, { kind: 'strength' }>;
+    await correctBuiltin(ref, { ...old, personnel: old.personnel! + 1000 }, { source: 'src:test', starts: ['1945-04-16T05:00'] });
+    const ent = (await store.entries()).find((x) => x.id === ref.entry)!;
+    return { ref, old, fix: ent.facts!.findIndex((f) => f.corrects) };
+  }
+
+  it('изменённое исправление закреплено заново (не «закреплённый факт удалён»), встроенный не выигрывает', async () => {
+    const { ref, old, fix } = await corrected();
+    const f0 = (await store.entries()).find((x) => x.id === ref.entry)!.facts![fix];
+    const nextClaim: Claim = { ...old, personnel: old.personnel! + 2000 };
+    await editFact(ref.entry, fix, { ...f0, claim: nextClaim, value: 'исправлено ещё раз' }, { starts: ['1945-04-16T05:00'] });
+    const entries = await store.entries();
+    const f = entries.find((x) => x.id === ref.entry)!.facts![fix];
+    expect(f.corrects).toBe(f0.corrects);
+    expect(f.check?.by).toBe('human');
+    const pins = await store.pins();
+    expect(pins[pinKey('strength', 'su_1bf', '1945-04-16T05:00')]).toEqual({ entry: ref.entry, index: fix, fp: fingerprint(f) });
+    const r = resolve(claimFacts(entries), 'strength', 'su_1bf', '1945-04-16T05:00', pins, { window: 2 });
+    expect(r.pin).toBe('fact');
+    expect(r.chosen?.fact.value).toBe('исправлено ещё раз');
+  });
+
+  it('удалённое исправление снимает закрепления — встроенный снова выбирается', async () => {
+    const { ref, fix } = await corrected();
+    await deleteFact(ref.entry, fix, { starts: ['1945-04-16T05:00'] });
+    const entries = await store.entries();
+    expect(entries.find((x) => x.id === ref.entry)!.facts!.some((f) => f.corrects)).toBe(false);
+    const pins = await store.pins();
+    expect(pins[pinKey('strength', 'su_1bf', '1945-04-16T05:00')]).toBeUndefined();
+    expect(pins[pinKey('strength', 'su_1bf', '1945-04-16')]).toBeUndefined();
+    const r = resolve(claimFacts(entries), 'strength', 'su_1bf', '1945-04-16T05:00', pins, { window: 2 });
+    expect(r.chosen).toMatchObject({ entry: ref.entry, index: ref.index });
+  });
+
+  it('удаление сдвигает закрепления следующих фактов записи и адреса принятых кандидатов', async () => {
+    await saveCandidates([
+      cand('a', { kind: 'strength', subject: 'su_99a', at: '1945-04-16', personnel: 50000 }, 'auto'),
+      cand('b', { kind: 'strength', subject: 'su_99a', at: '1945-04-20', personnel: 48000 }, 'auto'),
+    ], ctx);
+    const e = (await userEntry(ENTRY))!;
+    const i1 = e.facts!.findIndex((f) => f.value === 'b');
+    const i0 = e.facts!.findIndex((f) => f.value === 'a');
+    expect(i1).toBeGreaterThan(i0);
+    await store.putPins({ k: { entry: ENTRY, index: i1, fp: fingerprint(e.facts![i1]) }, k0: { entry: ENTRY, index: i0, fp: fingerprint(e.facts![i0]) } });
+    await store.put('candidates', { ...cand('b', e.facts![i1].claim!, 'auto'), state: 'accepted', accepted: { entry: ENTRY, index: i1 } });
+    await deleteFact(ENTRY, i0);
+    const pins = await store.pins();
+    expect(pins.k).toEqual({ entry: ENTRY, index: i1 - 1, fp: fingerprint(e.facts![i1]) });
+    expect(pins.k0).toBeUndefined();
+    expect((await queue()).find((c) => c.id === 'b')?.accepted).toEqual({ entry: ENTRY, index: i1 - 1 });
   });
 });
 

@@ -141,10 +141,12 @@ function factOf(c: Candidate, by: 'auto' | 'human', ctx: AcceptCtx): Fact {
 type Placed = { entry: string; index: number; duplicate: boolean } | { pending: 'no-entry' };
 
 /** Записать факт кандидата в рабочий набор: тот же факт уже в записи — его адрес (повтор). Кандидат не меняется. */
-function place(c0: Candidate, by: 'auto' | 'human', ctx: AcceptCtx, w: Work): Placed {
+function place(c0: Candidate, by: 'auto' | 'human', ctx: AcceptCtx, w: Work, into?: string): Placed {
   // targetOf заполняет subject по названию — в копии формальной части
   const c: Candidate = { ...c0, claim: { ...c0.claim } as Claim };
-  const target = targetOf(c, w, ctx);
+  const found = targetOf(c, w, ctx);
+  // into — запись, в которую человек добавляет факт («+ Факт» в карточке записи)
+  const target = into ? w.get(into) ?? null : found;
   if (!target) return { pending: 'no-entry' };
   const facts = target.facts ?? [];
   const have = facts.findIndex((f) => sameFact(f, c.claim, c.source));
@@ -161,9 +163,9 @@ const changed = () => kb.refresh();
  * Принять кандидата: факт — в запись соединения (найденную по сопоставлению; нет записи, но соединение в сценарии —
  * создаётся). Соединение не найдено нигде — { pending: 'no-entry' } (кандидат ждёт в очереди).
  */
-export async function acceptCandidate(c: Candidate, by: 'auto' | 'human', ctx: AcceptCtx): Promise<{ entry: string; index: number } | { pending: 'no-entry' }> {
+export async function acceptCandidate(c: Candidate, by: 'auto' | 'human', ctx: AcceptCtx, into?: string): Promise<{ entry: string; index: number } | { pending: 'no-entry' }> {
   const w = await work();
-  const r = place(c, by, ctx, w);
+  const r = place(c, by, ctx, w, into);
   await w.save();
   if ('pending' in r) return r;
   if (!r.duplicate) await changed();
@@ -248,11 +250,12 @@ export async function decideCandidates(ids: string[], accept: boolean, edits: Re
 }
 
 /**
- * Факт, введённый человеком вручную (переправа в «Материалах»): тем же путём, что кандидат из очереди — принят
- * человеком (check.by = 'human'), в хранилище кандидатов с адресом факта; записи соединения нет — ждёт в очереди.
+ * Факт, введённый человеком вручную (переправа в «Материалах», «+ Факт» в записи): тем же путём, что кандидат из
+ * очереди — принят человеком (check.by = 'human', итоги проверок 3–7 — в c.checks), в хранилище кандидатов с адресом
+ * факта; записи соединения нет — ждёт в очереди. into — запись, в которую добавляется факт (иначе — по сопоставлению).
  */
-export async function addManual(c: Candidate, ctx: AcceptCtx): Promise<{ entry: string; index: number } | { pending: 'no-entry' }> {
-  const r = await acceptCandidate(c, 'human', ctx);
+export async function addManual(c: Candidate, ctx: AcceptCtx, into?: string): Promise<{ entry: string; index: number } | { pending: 'no-entry' }> {
+  const r = await acceptCandidate(c, 'human', ctx, into);
   // ручной ввод — решение человека, а не итог проверок: verdict 'review' (как принятый из очереди), state 'accepted'
   await store.put('candidates', 'pending' in r ? toQueue(c) : { ...c, verdict: 'review', state: 'accepted', accepted: r } satisfies StoredCandidate);
   await changed();
@@ -293,17 +296,28 @@ const dateOf = (c: Claim): string => c.kind === 'losses' ? c.to : 'at' in c ? c.
 
 /** Ключ исправления: запись#номер встроенного факта и его отпечаток. */
 export const correctsKey = (ref: Pick<FactRef, 'entry' | 'index' | 'fact'>) => `${ref.entry}#${ref.index}|${fingerprint(ref.fact)}`;
-const parseCorrects = (s: string): { entry: string; index: number; fp: string } | null => {
+export const parseCorrects = (s: string): { entry: string; index: number; fp: string } | null => {
   const m = /^(.+?)#(\d+)\|([\s\S]*)$/.exec(s);
   return m ? { entry: m[1], index: Number(m[2]), fp: m[3] } : null;
 };
 
 /**
+ * Закрепления исправления встроенного факта old по моментам, где встроенный выбирался, — его собственная дата и начала
+ * операций (starts). Исправление того же вида и о том же — на само исправление (self; resolve при закреплении «не брать»
+ * не берёт ничего, и исправление тоже не попало бы в модель); иначе, и на собственной дате встроенного, если у
+ * исправления другая дата (там исправления нет среди кандидатов), — 'none'.
+ */
+function correctionPins(old: Claim, next: Claim, self: Pins[string], starts: string[] = []): Record<string, Pins[string]> {
+  const same = next.kind === old.kind && subjectOf(next) === subjectOf(old);
+  const pins: Record<string, Pins[string]> = {};
+  pins[pinKey(old.kind, subjectOf(old), dateOf(old))] = same && dateOf(next) === dateOf(old) ? self : 'none';
+  for (const s of starts) pins[pinKey(old.kind, subjectOf(old), s)] = same ? self : 'none';
+  return pins;
+}
+
+/**
  * Исправить встроенный факт: факт пользователя в той же записи (с источником и пометкой corrects) и закрепления
- * встроенного по моментам, где он выбирался, — его собственная дата и начала операций (meta.starts). Закрепление:
- * исправление того же вида и о том же — на само исправление (resolve при закреплении «не брать» не берёт ничего,
- * и исправление тоже не попало бы в модель); иначе, и на собственной дате встроенного, если у исправления другая
- * дата (там исправления нет среди кандидатов), — 'none'.
+ * встроенного по моментам, где он выбирался (correctionPins; meta.starts — начала операций, на которые факт влияет).
  */
 export async function correctBuiltin(ref: FactRef, next: Claim, meta: { source: string; pages?: string; reliability?: Reliability; note?: string; starts?: string[] }): Promise<void> {
   const old = ref.fact.claim;
@@ -319,12 +333,83 @@ export async function correctBuiltin(ref: FactRef, next: Claim, meta: { source: 
   };
   w.set({ ...e, facts: [...(e.facts ?? []), fact] });
   await w.save();
-  const same = next.kind === old.kind && subjectOf(next) === subjectOf(old);
-  const self: Pins[string] = { entry: ref.entry, index, fp: fingerprint(fact) };
-  const pins: Record<string, Pins[string]> = {};
-  pins[pinKey(old.kind, subjectOf(old), dateOf(old))] = same && dateOf(next) === dateOf(old) ? self : 'none';
-  for (const s of meta.starts ?? []) pins[pinKey(old.kind, subjectOf(old), s)] = same ? self : 'none';
-  await store.putPins(pins);
+  await store.putPins(correctionPins(old, next, { entry: ref.entry, index, fp: fingerprint(fact) }, meta.starts));
+  await changed();
+}
+
+/** Встроенный факт, который исправляет факт с corrects (по сиду; нет — null). */
+async function correctedBuiltin(corrects: string): Promise<Fact | null> {
+  const k = parseCorrects(corrects);
+  if (!k) return null;
+  return (await store.seed()).find((e) => e.id === k.entry)?.facts?.[k.index] ?? null;
+}
+
+const pinAt = (p: Pins[string], entry: string, index: number): p is { entry: string; index: number; fp?: string } => p !== 'none' && p.entry === entry && p.index === index;
+
+/**
+ * Изменить свой факт (запись, номер): факт заменяется (проверено человеком), закрепления на него переводятся на
+ * новый отпечаток — если вид и соединение ключа не изменились; иначе снимаются (у исправления — «не брать»).
+ * Исправление встроенного закрепляется заново, как при «исправить» (correctionPins с теми же starts): без этого
+ * закрепление стало бы «закреплённый факт удалён», и встроенный снова мог бы выиграть.
+ */
+export async function editFact(entryId: string, index: number, next: Fact, o: { starts?: string[] } = {}): Promise<void> {
+  const w = await work();
+  const e = w.get(entryId);
+  const old = e?.facts?.[index];
+  if (!e || !old) throw new Error('факт не найден');
+  const fact: Fact = { ...next, check: { ...next.check, by: 'human', at: new Date().toISOString(), results: next.check?.results ?? [] }, ...(old.corrects ? { corrects: old.corrects } : {}) };
+  w.set({ ...e, facts: (e.facts ?? []).map((f, i) => (i === index ? fact : f)) });
+  await w.save();
+  const fpOld = fingerprint(old), self = { entry: entryId, index, fp: fingerprint(fact) };
+  const pins: Record<string, Pins[string] | null> = {};
+  for (const [key, p] of Object.entries(await store.pins())) {
+    if (!pinAt(p, entryId, index) || (p.fp != null && p.fp !== fpOld)) continue;
+    const parts = key.split('|');
+    const same = !!fact.claim && parts[0] === fact.claim.kind && parts.slice(1, -1).join('|') === subjectOf(fact.claim);
+    pins[key] = same ? self : old.corrects ? 'none' : null;
+  }
+  const b = old.corrects ? await correctedBuiltin(old.corrects) : null;
+  if (b?.claim && fact.claim) Object.assign(pins, correctionPins(b.claim, fact.claim, self, o.starts));
+  if (Object.keys(pins).length) await store.putPins(pins);
+  await changed();
+}
+
+/**
+ * Удалить свой факт (запись, номер). Закрепления на него снимаются, на следующие факты записи — сдвигаются на номер
+ * назад (номера поменялись, отпечатки — нет); у исправления встроенного снимаются и закрепления «не брать» встроенного
+ * (его собственная дата и starts) — встроенный снова выбирается по правилу. Адреса принятых кандидатов — так же.
+ */
+export async function deleteFact(entryId: string, index: number, o: { starts?: string[] } = {}): Promise<void> {
+  const w = await work();
+  const e = w.get(entryId);
+  const facts = e?.facts ?? [];
+  const old = facts[index];
+  if (!e || !old) throw new Error('факт не найден');
+  w.set({ ...e, facts: facts.filter((_, i) => i !== index) });
+  await w.save();
+  const pins: Record<string, Pins[string] | null> = {};
+  const all = await store.pins();
+  for (const [key, p] of Object.entries(all)) {
+    if (p === 'none' || p.entry !== entryId || p.index < index) continue;
+    if (p.index === index) { if (p.fp == null || p.fp === fingerprint(old)) pins[key] = null; continue; }
+    if (p.fp == null || p.fp === fingerprint(facts[p.index] ?? { key: '', value: '' })) pins[key] = { ...p, index: p.index - 1 };
+  }
+  const b = old.corrects ? await correctedBuiltin(old.corrects) : null;
+  if (b?.claim) {
+    for (const key of Object.keys(correctionPins(b.claim, b.claim, 'none', o.starts))) {
+      const p = all[key];
+      if (p === 'none' || (p && pinAt(p, entryId, index))) pins[key] = null;
+    }
+  }
+  if (Object.keys(pins).length) await store.putPins(pins);
+  const cands = (await store.all<StoredCandidate>('candidates')).filter((c) => c.accepted?.entry === entryId && c.accepted.index >= index);
+  if (cands.length) {
+    await store.put('candidates', ...cands.map((c) => {
+      if (c.accepted!.index > index) return { ...c, accepted: { entry: entryId, index: c.accepted!.index - 1 } };
+      const { accepted: _a, ...rest } = c;
+      return rest;
+    }));
+  }
   await changed();
 }
 

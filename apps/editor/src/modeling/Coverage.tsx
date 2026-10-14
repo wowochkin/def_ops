@@ -12,6 +12,7 @@ import * as kb from '../kb/kb';
 import { coverageOf } from '../kb/coverage';
 import { onDataChange } from '../sim/userdata';
 import { download } from './data';
+import { downloadAgentTask } from '../kb/agent-task';
 
 const pct = (x: number) => `${Math.round(x * 100)} %`;
 const css = (x: number) => `${Math.round(x * 100)}%`;
@@ -64,7 +65,7 @@ export function CoveragePanel({ op, title }: { op: string; title: string }) {
       <div className="cov-tiles">{c.sections.map((s) => { const x = st(s.score); return (
         <div key={s.id} className="cov-tile"><span className="cov-tile-t">{s.title}</span><b>{pct(s.score)}</b>
           <span className="cov-tile-bar"><i style={{ width: css(s.score), background: x.c }} /></span><small className="muted">{x.i} {x.t}</small></div>); })}</div>
-      <Hints hints={allHints} onPick={goGroup} />
+      <Hints op={op} hints={allHints} onPick={goGroup} />
       {showMap && <GapMap c={c} onPick={goGroup} />}
       {c.sections.map((s) => <div key={s.id} className="cov-sec">
         <div className="cov-sec-h">{s.title}</div>
@@ -127,12 +128,23 @@ function GroupDetail({ g, sides, hints }: { g: CoverageGroup; sides: Coverage['s
 function copy(t: string) { void navigator.clipboard?.writeText(t); }
 
 /** Что искать в первую очередь: подсказки по пользе для модели. */
-function Hints({ hints, onPick }: { hints: SearchHint[]; onPick: (g: string) => void }) {
+/** Кнопка «Задание для агента»: md-файл по пробелам операции (agentTask). */
+function AgentTaskButton({ op }: { op: string }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  return <>
+    <button disabled={busy} title="md-файл для внешнего агента: каких фактов не хватает операции, где искать и в каком виде вернуть ответ"
+      onClick={() => { setBusy(true); setErr(null); void downloadAgentTask(op).catch((e) => setErr((e as Error).message)).finally(() => setBusy(false)); }}>{busy ? 'Составляется…' : 'Задание для агента'}</button>
+    {err && <span className="err small">задание не составлено: {err}</span>}
+  </>;
+}
+
+function Hints({ op, hints, onPick }: { op: string; hints: SearchHint[]; onPick: (g: string) => void }) {
   const [all, setAll] = useState(false);
-  if (!hints.length) return <p className="ok">Дефицитов нет — материалов достаточно по всем группам каркаса.</p>;
+  if (!hints.length) return <p className="ok">Дефицитов нет — материалов достаточно по всем группам каркаса. <AgentTaskButton op={op} /></p>;
   return (
     <div className="cov-hints">
-      <div className="cov-hints-h"><b>Что искать в первую очередь</b><small className="muted">по пользе для модели: вес группы × важность сведения для расчёта × сколько не хватает</small></div>
+      <div className="cov-hints-h"><b>Что искать в первую очередь</b><small className="muted">по пользе для модели: вес группы × важность сведения для расчёта × сколько не хватает</small><AgentTaskButton op={op} /></div>
       {(all ? hints : hints.slice(0, 5)).map((h, i) => <HintCard key={h.id} h={h} n={i + 1} onPick={() => onPick(h.group)} />)}
       {hints.length > 5 && <button className="link" onClick={() => setAll(!all)}>{all ? 'свернуть' : `все подсказки (${hints.length})`}</button>}
     </div>

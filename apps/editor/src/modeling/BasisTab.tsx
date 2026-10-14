@@ -2,7 +2,8 @@
  * «Основа модели» операции: на чём держится каждый вход модели — факт базы (источник, страницы, достоверность,
  * цитата) или допущение сценария. Формирования деревом по подчинённости; расхождения между фактами — закрепить
  * нужный (пересборка через секунду, запись в журнале операции); факты о формированиях, которых в операции нет;
- * итог — доли входов на фактах A, B, C и на допущениях по видам.
+ * итог — доли входов на фактах A, B, C и на допущениях по видам и кем проверены факты (человеком, автоматически,
+ * встроенные); у факта — как принят и доказательство; «Задание для агента» — md-файл по пробелам операции.
  */
 import { Fragment, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { pinOf, type FactRef, type Pins, type Provenance } from '@def-ops/knowledge';
@@ -10,7 +11,10 @@ import type { Scenario } from '@def-ops/sim';
 import * as kb from '../kb/kb';
 import { getData, getEdits, onDataChange, type OperationKb } from '../sim/userdata';
 import { agentScenario } from '../sim/kb-recompile';
-import { BASIS_KINDS, basisSummary, KIND_RU, claimText, ruDate, splitKey, type RelCount } from './basis';
+import { BASIS_KINDS, basisSummary, KIND_RU, claimText, ruDate, splitKey, type Rel, type RelCount } from './basis';
+import { downloadAgentTask } from '../kb/agent-task';
+import { staleNow } from '../kb/candidates';
+import { evidenceRu, factOrigin, ORIGIN_LONG, ORIGIN_RU } from '../kb/fact-form';
 
 /** Открыть запись базы в разделе «Знания». */
 export function openKbEntry(id: string) {
@@ -24,7 +28,7 @@ interface Node { id: string; name: string; echelon: string; parent: string | nul
   input: boolean }
 type Field = 'personnel' | 'tanks' | 'guns' | 'parent' | 'enterAt';
 const FIELD_RU: Record<Field, string> = { personnel: 'людей', tanks: 'танков', guns: 'орудий', parent: 'подчинён', enterAt: 'ввод' };
-const REL_RU: Record<keyof RelCount, string> = { A: 'A — справочник, исследование', B: 'B — надёжный вторичный', C: 'C — оценка', assumption: 'допущение сценария' };
+const REL_RU: Record<Rel, string> = { A: 'A — справочник, исследование', B: 'B — надёжный вторичный', C: 'C — оценка', assumption: 'допущение сценария' };
 const fmtN = (n?: number) => (typeof n === 'number' ? n.toLocaleString('ru-RU') : '—');
 const same = (a: { entry: string; index: number }, b: { entry: string; index: number }) => a.entry === b.entry && a.index === b.index;
 
@@ -43,8 +47,11 @@ export function BasisTab({ op }: { op: string }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [stale, setStale] = useState<Set<string>>(new Set());
 
   useEffect(() => { void kb.load(); return kb.subscribe(setS); }, []);
+  // исправления, у которых встроенный факт изменился, — «пересмотрите»
+  useEffect(() => { let alive = true; void staleNow().then((l) => { if (alive) setStale(new Set(l.map((x) => `${x.entry}#${x.index}`))); }).catch(() => {}); return () => { alive = false; }; }, [s.entries]);
   useEffect(() => {
     let alive = true;
     const run = () => void Promise.all([getEdits(op), getData('scenarios', `${op}.json`) as Promise<Scenario>, agentScenario(op), kb.getPins()]).then(([e, sc, ag]) => {
@@ -95,15 +102,24 @@ export function BasisTab({ op }: { op: string }) {
     catch (e) { setErr(`Закрепление не удалось: ${(e as Error).message}`); }
     finally { setBusy(null); }
   };
-  const srcTitle = (id?: string) => (id ? s.byId.get(id)?.title ?? s.documents.find((d) => d.id === id)?.name ?? id : '');
+  const docName = (id: string) => s.documents.find((d) => d.id === id)?.name ?? id;
+  const srcTitle = (id?: string) => (id ? s.byId.get(id)?.title ?? (id.startsWith('doc:') ? docName(id.slice(4)) : s.documents.find((d) => d.id === id)?.name ?? id) : '');
+  const agentTask = async () => {
+    setBusy('agent'); setErr(null);
+    try { await downloadAgentTask(op); } catch (e) { setErr(`Задание не составлено: ${(e as Error).message}`); } finally { setBusy(null); }
+  };
 
-  /** Факт: формальная часть, надёжность, источник со страницами, цитата, переход к записи. */
-  const factView = (f: FactRef, key?: string | number) => <div key={key} className="bs-fact">
-    <div><i className={`kb-rel r${f.fact.reliability ?? 'C'}`}>{f.fact.reliability ?? 'C'}</i>{f.fact.claim ? claimText(f.fact.claim, nameOf) : f.fact.value}</div>
-    <div className="muted small">{f.fact.source ? <>источник: {srcTitle(f.fact.source)}{f.fact.pages ? `, ${f.fact.pages}` : ''}</> : 'источник не указан'}
+  /** Факт: формальная часть, надёжность, источник со страницами, как принят, доказательство (или цитата), переход к записи. */
+  const factView = (f: FactRef, key?: string | number) => { const o = factOrigin(f.fact); return <div key={key} className="bs-fact">
+    <div><i className={`kb-rel r${f.fact.reliability ?? 'C'}`}>{f.fact.reliability ?? 'C'}</i>{f.fact.claim ? claimText(f.fact.claim, nameOf) : f.fact.value}
+      {' '}<i className={`kb-origin o-${o}`} title={ORIGIN_LONG[o]}>{ORIGIN_RU[o]}</i>
+      {f.fact.corrects && <i className="kb-origin o-fix" title="факт пользователя вместо встроенного">исправляет встроенный</i>}
+      {stale.has(`${f.entry}#${f.index}`) && <i className="kb-origin o-stale" title="встроенный факт, который исправлялся, изменён при обновлении базы">встроенный факт изменился — пересмотрите</i>}</div>
+    <div className="muted small">{f.fact.source ? <>источник: {srcTitle(f.fact.source)}{f.fact.pages ? `, ${f.fact.pages}` : ''}</> : f.fact.check ? 'источник не указан — допущение' : 'источник не указан'}
+      {' · '}{ORIGIN_LONG[o]}{f.fact.check?.docRolledBack ? ' · документ откачен' : ''}
       {' · '}<button className="link" onClick={() => openKbEntry(f.entry)}>запись «{s.byId.get(f.entry)?.title ?? f.entry}» →</button></div>
-    {f.fact.quote && <div className="kb-quote">«{f.fact.quote}»</div>}
-  </div>;
+    {f.fact.evidence ? <div className="kb-quote">доказательство: {evidenceRu(f.fact.evidence, docName)}</div> : f.fact.quote && <div className="kb-quote">«{f.fact.quote}»</div>}
+  </div>; };
 
   const fieldsOf = (n: Node): { field: Field; value: string; prov: Provenance }[] => {
     const c = kbOf.compiled.formations[n.id] ?? {};
@@ -154,7 +170,9 @@ export function BasisTab({ op }: { op: string }) {
   const totalOf = (r: RelCount) => r.A + r.B + r.C + r.assumption;
   return <section className="mdl-card bs">
     <div className="sync-h"><h4>Основа модели</h4>
-      <span className="muted">сборка из базы {ruDate(kbOf.at)} · входов {kbOf.provenance.length}</span></div>
+      <span className="muted">сборка из базы {ruDate(kbOf.at)} · входов {kbOf.provenance.length}</span>
+      <span className="grow" />
+      <button disabled={busy === 'agent'} onClick={() => void agentTask()} title="md-файл для внешнего агента: каких фактов не хватает операции, где искать и в каком виде вернуть ответ">{busy === 'agent' ? 'Составляется…' : 'Задание для агента'}</button></div>
     {err && <div className="err" onClick={() => setErr(null)}>{err}</div>}
     <p className="muted small">На чём держится каждый вход модели: факт базы знаний (источник, страницы, достоверность, цитата) или допущение сценария. Где факты расходятся — закрепите нужный: модель пересоберётся, в журнале операции появится запись.</p>
     <div className="bs-sum">
@@ -163,8 +181,11 @@ export function BasisTab({ op }: { op: string }) {
         <span>{title}</span>
         <div className="bs-bar" title={(['A', 'B', 'C', 'assumption'] as const).map((x) => `${REL_RU[x]}: ${r[x]}`).join('\n')}>
           {t ? (['A', 'B', 'C', 'assumption'] as const).map((x) => r[x] ? <i key={x} className={`b${x}`} style={{ width: `${(r[x] / t) * 100}%` }} /> : null) : null}</div>
-        <small>{t ? `${Math.round(((r.A + r.B + r.C) / t) * 100)} % на фактах · A ${r.A}, B ${r.B}, C ${r.C}, доп. ${r.assumption}` : 'нет входов'}</small>
+        <small>{t ? `${Math.round(((r.A + r.B + r.C) / t) * 100)} % на фактах · A ${r.A}, B ${r.B}, C ${r.C}, доп. ${r.assumption}` : 'нет входов'}
+          {r.human + r.auto + r.seed > 0 && <span className="bs-by" title="кем проверены факты, на которых держатся входы"> · человеком {r.human}, автоматически {r.auto}, встроенное {r.seed}</span>}</small>
       </div>; })}
+      {(() => { const by = BASIS_KINDS.reduce((a, [k]) => ({ human: a.human + sum[k].human, auto: a.auto + sum[k].auto, seed: a.seed + sum[k].seed }), { human: 0, auto: 0, seed: 0 });
+        return <div className="bs-by-total small">Входы на фактах: проверено человеком <b>{by.human}</b> · автоматически <b>{by.auto}</b> · встроенное <b>{by.seed}</b></div>; })()}
       <div className="bs-legend">{(['A', 'B', 'C', 'assumption'] as const).map((x) => <span key={x}><i className={`b${x}`} />{REL_RU[x]}</span>)}</div>
     </div>
     <div className="mat-tabs">

@@ -1419,6 +1419,18 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .kb-typed thead th { font-size: 11px; color: var(--muted); font-weight: 600; text-align: left; width: auto; white-space: nowrap; padding-left: 10px; }
 .kb-typed td.kb-use { width: 1%; padding-left: 10px; }
 .kb-use { white-space: nowrap; font-size: 12px; } .kb-use .ok { color: #2f6b3b; } .kb-use .warn { color: #9a6a00; cursor: help; }
+.kb-origin { font-style: normal; font-size: 10.5px; border-radius: 8px; padding: 0 7px; margin-right: 4px; white-space: nowrap; background: #eee9dd; color: #6b675d; }
+.kb-origin.o-human { background: #e2efe4; color: #2f6b3b; } .kb-origin.o-auto { background: #e3ebf5; color: #2f5f8f; }
+.kb-origin.o-fix { background: #efe6f5; color: #6a3f8a; } .kb-origin.o-stale { background: #f6dedb; color: var(--danger); }
+.kb-typed tr.kb-fixed td, .kb-typed tr.kb-fixed th { opacity: .65; }
+.kb-typed td.kb-fact-act { width: 1%; white-space: nowrap; font-size: 12px; }
+.kb-fact-form { margin-top: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.kb-ff-fields { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.kb-ff-fields label { display: flex; flex-direction: column; font-size: 11.5px; color: var(--muted); gap: 2px; min-width: 110px; }
+.kb-ff-fields label.grow { flex: 1 1 220px; }
+.kb-ff-fields input, .kb-ff-fields select { font-size: 13px; }
+.kb-ff-warn { margin: 0; padding-left: 18px; font-size: 12px; }
+.bs-by { color: var(--muted); } .bs-by-total { margin: 4px 0; color: var(--muted); } .bs-by-total b { color: inherit; }
 
 /* карточка соединения (щелчок по знаку) — короче карточки агента */
 .ag-panel.fc-panel { bottom: auto; max-height: calc(100% - 110px); }

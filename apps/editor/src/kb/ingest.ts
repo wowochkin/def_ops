@@ -137,7 +137,7 @@ const WAITING = 'ждёт распознавания: модель чтения 
 const CROSS_OFF = 'перекрёстная проверка выключена';
 
 /** Последняя известная численность соединения на дату — по фактам базы. */
-function strengthFrom(facts: Fact[]) {
+export function strengthFrom(facts: Fact[]) {
   return (subject: string, at: string): number | null => {
     let best: { at: string; n: number } | null = null;
     for (const f of facts) {

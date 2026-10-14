@@ -1,13 +1,19 @@
 /**
  * «Основа модели»: на чём держатся входы модели операции — чистые функции для вкладки и записи базы.
- * basisSummary — сколько входов каждого вида держится на фактах A/B/C и сколько на допущениях сценария;
+ * basisSummary — сколько входов каждого вида держится на фактах A/B/C и сколько на допущениях сценария, и кем
+ * проверены факты (человеком, автоматически, встроенные);
  * factUse — используется ли факт записи в сборке операции (держит вход, перекрыт другим кандидатом, не нужен);
  * claimText — формальная часть факта по-русски.
  */
 import type { Claim, CompileConflict, FactRef, Provenance } from '@def-ops/knowledge';
 
 export type BasisKind = 'strength' | 'parent' | 'position' | 'boundary' | 'crossing';
-export type RelCount = { A: number; B: number; C: number; assumption: number };
+/**
+ * Входы вида: по надёжности (A, B, C, допущение) и, для входов на фактах, — кем проверен факт: человеком
+ * (check.by = 'human'), автоматически ('auto'), встроенный (без отметки проверки — сид и прежние факты).
+ */
+export type RelCount = { A: number; B: number; C: number; assumption: number; human: number; auto: number; seed: number };
+export type Rel = 'A' | 'B' | 'C' | 'assumption';
 export const BASIS_KINDS: [BasisKind, string][] = [
   ['strength', 'численность и пополнения'], ['parent', 'подчинённость'], ['position', 'положения'], ['boundary', 'разграничительные линии'], ['crossing', 'переправы'],
 ];
@@ -38,13 +44,14 @@ export function basisKindOf(p: Provenance): BasisKind | null {
  * (<id>.personnel|tanks|guns|parent|enterAt) модель не берёт — не считаются. Нет isInput — считаются все.
  */
 export function basisSummary(prov: Provenance[], isInput?: (formationId: string) => boolean): Record<BasisKind, RelCount> {
-  const out = Object.fromEntries(BASIS_KINDS.map(([k]) => [k, { A: 0, B: 0, C: 0, assumption: 0 }])) as Record<BasisKind, RelCount>;
+  const out = Object.fromEntries(BASIS_KINDS.map(([k]) => [k, { A: 0, B: 0, C: 0, assumption: 0, human: 0, auto: 0, seed: 0 }])) as Record<BasisKind, RelCount>;
   for (const p of prov) {
     const k = basisKindOf(p);
     if (!k) continue;
     const dot = p.input.lastIndexOf('.');
     if (isInput && !p.input.includes(':') && dot > 0 && !isInput(p.input.slice(0, dot))) continue;
     out[k][p.reliability]++;
+    if (p.fact) { const by = p.fact.fact.check?.by; out[k][by === 'human' ? 'human' : by === 'auto' ? 'auto' : 'seed']++; }
   }
   return out;
 }

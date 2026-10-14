@@ -27,11 +27,11 @@ describe('basisSummary: доли входов по видам и надёжно�
       p('event:0', ref('g', 0, 'A')),
     ]);
     expect(s).toEqual({
-      strength: { A: 1, B: 2, C: 1, assumption: 1 },
-      parent: { A: 1, B: 0, C: 1, assumption: 1 },
-      position: { A: 1, B: 0, C: 1, assumption: 0 },
-      boundary: { A: 0, B: 1, C: 0, assumption: 0 },
-      crossing: { A: 1, B: 0, C: 0, assumption: 0 },
+      strength: { A: 1, B: 2, C: 1, assumption: 1, human: 0, auto: 0, seed: 4 },
+      parent: { A: 1, B: 0, C: 1, assumption: 1, human: 0, auto: 0, seed: 2 },
+      position: { A: 1, B: 0, C: 1, assumption: 0, human: 0, auto: 0, seed: 2 },
+      boundary: { A: 0, B: 1, C: 0, assumption: 0, human: 0, auto: 0, seed: 1 },
+      crossing: { A: 1, B: 0, C: 0, assumption: 0, human: 0, auto: 0, seed: 1 },
     });
   });
   it('isInput: поля штабов и фронтов (факт и допущение) не считаются, изменения и точки — считаются', () => {
@@ -44,11 +44,24 @@ describe('basisSummary: доли входов по видам и надёжно�
       p('su_61a.parent', ref('a', 1, 'C', 'parent')),
       p('checkpoint:0', ref('c', 0, 'A')),
     ], (id) => id !== 'su_1bf');
-    expect(s.strength).toEqual({ A: 1, B: 1, C: 0, assumption: 1 });
-    expect(s.parent).toEqual({ A: 0, B: 0, C: 1, assumption: 0 });
+    expect(s.strength).toEqual({ A: 1, B: 1, C: 0, assumption: 1, human: 0, auto: 0, seed: 2 });
+    expect(s.parent).toEqual({ A: 0, B: 0, C: 1, assumption: 0, human: 0, auto: 0, seed: 1 });
   });
   it('пусто — нули по всем видам', () => {
-    expect(basisSummary([]).strength).toEqual({ A: 0, B: 0, C: 0, assumption: 0 });
+    expect(basisSummary([]).strength).toEqual({ A: 0, B: 0, C: 0, assumption: 0, human: 0, auto: 0, seed: 0 });
+  });
+  it('кем проверены факты: человек, автоматически, встроенный (без отметки); допущения — ни в одну', () => {
+    const by = (r: FactRef, who: 'human' | 'auto'): FactRef => ({ ...r, fact: { ...r.fact, check: { by: who, at: '', results: [] } } });
+    const s = basisSummary([
+      p('su_61a.personnel', by(ref('a', 0, 'A'), 'human')),
+      p('su_61a.tanks', by(ref('a', 1, 'B'), 'auto')),
+      p('su_61a.guns', ref('a', 2, 'C')),
+      p('checkpoint:0', by(ref('c', 0, 'C'), 'auto')),
+      p('su_5a.personnel', null),
+      p('su_61a.parent', by(ref('a', 3, 'A', 'parent'), 'human')),
+    ]);
+    expect(s.strength).toEqual({ A: 1, B: 1, C: 2, assumption: 1, human: 1, auto: 2, seed: 1 });
+    expect(s.parent).toEqual({ A: 1, B: 0, C: 0, assumption: 0, human: 1, auto: 0, seed: 0 });
   });
 });
 
