@@ -7,9 +7,9 @@ use crate::rng::mix;
 use crate::rules::Rules;
 use crate::theatre::Theatre;
 use crate::time::parse_hours;
-use crate::world::{ScriptFire, ScriptOrder, ScriptWithdraw, Sim, World};
+use crate::world::{ChangeKind, Event, ScriptChange, ScriptFire, ScriptOrder, ScriptWithdraw, Sim, World};
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
 #[derive(Deserialize)]
@@ -150,6 +150,55 @@ pub struct WithdrawIn {
     pub note: String,
 }
 
+/// Поправки сценария из базы знаний: исходные цифры дивизий и изменения по датам. Всё необязательно; без поправок
+/// сценарий загружается как есть.
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditsIn {
+    /// id дивизии → поправка исходных значений.
+    #[serde(default)]
+    pub divisions: BTreeMap<String, DivEdit>,
+    #[serde(default)]
+    pub changes: Vec<ChangeIn>,
+}
+
+/// Поправка исходных значений дивизии: заменяет значение сценария.
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DivEdit {
+    #[serde(default)]
+    pub personnel: Option<f64>,
+    #[serde(default)]
+    pub tanks: Option<f64>,
+    #[serde(default)]
+    pub guns: Option<f64>,
+    /// id штаба; неизвестный — поправка штаба пропускается (запись в журнале).
+    #[serde(default)]
+    pub hq: Option<String>,
+    #[serde(default)]
+    pub enter_at: Option<String>,
+}
+
+/// Изменение по дате: пополнение или переподчинение.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangeIn {
+    /// Дата и время («1945-04-16T05:00»); исполняется в первом часе не раньше неё.
+    pub at: String,
+    /// id дивизии или штаба (для штаба переподчинение меняет его вышестоящий штаб).
+    pub formation: String,
+    pub kind: ChangeKind,
+    #[serde(default)]
+    pub personnel: Option<f64>,
+    #[serde(default)]
+    pub tanks: Option<f64>,
+    #[serde(default)]
+    pub guns: Option<f64>,
+    /// Для переподчинения — id нового вышестоящего штаба.
+    #[serde(default)]
+    pub parent: Option<String>,
+}
+
 /// Объекты из театра: мосты и населённые пункты (именованные районы).
 pub fn theatre_objects(t: &Theatre) -> Vec<Object> {
     let mut out = Vec::new();
@@ -189,10 +238,12 @@ struct NameOnly {
     name: String,
 }
 
-pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), String> { load_with(path, data_dir, root, None) }
+pub fn load(path: &str, data_dir: &str, root: &str) -> Result<(Sim, Meta), String> { load_with(path, data_dir, root, None, None) }
 
-/// Сценарий с поправками параметров агентной модели (rules::apply_overrides).
-pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serde_json::Value>) -> Result<(Sim, Meta), String> {
+/// Сценарий с поправками параметров агентной модели (rules::apply_overrides) и поправками сценария из базы знаний
+/// (`edits`): исходные цифры дивизий — до расчёта начальной силы, изменения по датам — в Sim::changes. Пропущенные
+/// поправки (неизвестная дивизия или штаб) — записи журнала на шаге 0 «поправка пропущена: …».
+pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serde_json::Value>, edits: Option<&EditsIn>) -> Result<(Sim, Meta), String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
     let s: ScenarioIn = serde_json::from_str(&text).map_err(|e| format!("{path}: {e}"))?;
     let mut theatre = Theatre::load(&format!("{root}/{}", s.theatre))?;
@@ -207,13 +258,30 @@ pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serd
         parent: h.parent.as_deref().and_then(|p| hq_idx.get(p).copied()), pos: theatre.proj.to_xy(h.pos),
     }).collect();
     let mut divisions = Vec::new();
-    for d in &s.divisions {
-        let hq = *hq_idx.get(d.hq.as_str()).ok_or_else(|| format!("{}: нет штаба {}", d.id, d.hq))?;
+    let mut notes: Vec<Event> = Vec::new();
+    if let Some(e) = edits {
+        for id in e.divisions.keys().filter(|id| !s.divisions.iter().any(|d| &d.id == *id)) {
+            notes.push(Event { tick: 0, agent: u32::MAX, text: format!("поправка пропущена: нет дивизии {id}") });
+        }
+    }
+    for (i, d) in s.divisions.iter().enumerate() {
+        let mut hq = *hq_idx.get(d.hq.as_str()).ok_or_else(|| format!("{}: нет штаба {}", d.id, d.hq))?;
+        let ed = edits.and_then(|e| e.divisions.get(&d.id));
+        if let Some(h) = ed.and_then(|e| e.hq.as_deref()) {
+            match hq_idx.get(h) {
+                Some(&k) => hq = k,
+                None => notes.push(Event { tick: 0, agent: i as u32, text: format!("поправка пропущена: {} — нет штаба {h}", d.id) }),
+            }
+        }
+        let personnel = ed.and_then(|e| e.personnel).unwrap_or(d.personnel);
+        let tanks = ed.and_then(|e| e.tanks).unwrap_or(d.tanks);
+        let guns = ed.and_then(|e| e.guns).unwrap_or(d.guns);
+        let enter_at = ed.and_then(|e| e.enter_at.as_ref()).or(d.enter_at.as_ref());
         let params = Params { kind: d.kind.clone(), mobility: d.mobility, size: d.size, quality: d.quality };
-        let mut div = new_division(d.id.clone(), d.name.clone(), d.side, hq, params, d.personnel, d.tanks, d.guns, d.ammo, d.fuel, theatre.proj.to_xy(d.pos), &rules);
+        let mut div = new_division(d.id.clone(), d.name.clone(), d.side, hq, params, personnel, tanks, guns, d.ammo, d.fuel, theatre.proj.to_xy(d.pos), &rules);
         div.note = d.note.clone();
         if d.deployed { div.state = State::Deploy { left_h: 0.0 }; }
-        if let Some(t) = &d.enter_at {
+        if let Some(t) = enter_at {
             let h = (parse_hours(t).ok_or("ввод: неверная дата")? - start).max(0) as u32;
             if h > 0 { div.enter = h; div.state = State::Pending; }
         }
@@ -261,6 +329,15 @@ pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serd
     let mut sim = Sim::new(theatre, rules, s.seed, start, world, script);
     sim.fires = fires;
     sim.withdrawals = withdrawals;
+    if let Some(e) = edits {
+        for c in &e.changes {
+            let at = (parse_hours(&c.at).ok_or_else(|| format!("изменение {}: неверная дата {}", c.formation, c.at))? - start).max(0) as u32;
+            sim.changes.push(ScriptChange { at, formation: c.formation.clone(), kind: c.kind, personnel: c.personnel.unwrap_or(0.0), tanks: c.tanks.unwrap_or(0.0), guns: c.guns.unwrap_or(0.0), parent: c.parent.clone() });
+        }
+        // по часу; в одном часе — в порядке входа
+        sim.changes.sort_by_key(|c| c.at);
+    }
+    sim.journal = notes;
     Ok((sim, meta))
 }
 
@@ -339,4 +416,120 @@ pub fn synthetic(theatre: Arc<Theatre>, rules: Rules, n: usize, n_objects: usize
     world.init_control(&theatre);
     let start_h = parse_hours(start).unwrap_or(0);
     Sim::new(theatre, rules, seed, start_h, world, script)
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use super::*;
+    use crate::{repo_root, DATA_DIR};
+
+    /// Маленький сценарий на театре «Одер — Берлин»: фронт с армией, немецкая армия; дивизии сторон далеко друг от друга
+    /// (без соприкосновения), приказов нет. Файл — во временной папке под именем `name`.
+    pub(crate) fn tiny(name: &str, edits: Option<&EditsIn>) -> (Sim, Meta) {
+        let root = repo_root();
+        let s = serde_json::json!({
+            "id": name, "theatre": "packages/sim/data/theatres/oder-berlin-1945.json",
+            "start": "1945-04-16T05:00", "hours": 24, "seed": 1,
+            "hqs": [
+                { "id": "su_f", "name": "фронт", "side": "su", "echelon": "front", "parent": null, "pos": [15.2, 52.5] },
+                { "id": "su_a", "name": "армия А", "side": "su", "echelon": "army", "parent": "su_f", "pos": [15.1, 52.5] },
+                { "id": "su_b", "name": "армия Б", "side": "su", "echelon": "army", "parent": "su_f", "pos": [15.1, 52.6] },
+                { "id": "de_a", "name": "немецкая армия", "side": "de", "echelon": "army", "parent": null, "pos": [13.4, 52.5] }
+            ],
+            "divisions": [
+                { "id": "su_1", "name": "1 сд", "side": "su", "hq": "su_a", "kind": "sd", "mobility": "foot", "size": "rifle", "personnel": 5000, "tanks": 0, "guns": 100, "pos": [15.1, 52.5] },
+                { "id": "su_2", "name": "2 сд", "side": "su", "hq": "su_b", "kind": "sd", "mobility": "foot", "size": "rifle", "personnel": 6000, "tanks": 0, "guns": 120, "pos": [15.1, 52.6], "enterAt": "1945-04-16T10:00" },
+                { "id": "de_1", "name": "1 пд", "side": "de", "hq": "de_a", "kind": "pd", "mobility": "foot", "size": "rifle", "personnel": 7000, "tanks": 10, "guns": 60, "pos": [13.4, 52.5] }
+            ]
+        });
+        let path = std::env::temp_dir().join(format!("agents-core-{name}-{}.json", std::process::id()));
+        std::fs::write(&path, s.to_string()).unwrap();
+        load_with(&path.to_string_lossy(), &format!("{root}/{DATA_DIR}"), &root, None, edits).expect("сценарий")
+    }
+
+    fn edits(v: serde_json::Value) -> EditsIn { serde_json::from_value(v).expect("поправки") }
+
+    fn div<'a>(sim: &'a Sim, id: &str) -> &'a Division { sim.world.divisions.iter().find(|d| d.id == id).unwrap() }
+
+    #[test]
+    fn edits_apply_initial() {
+        let (base, _) = tiny("edits-base", None);
+        let e = edits(serde_json::json!({ "divisions": {
+            "su_1": { "personnel": 8000, "hq": "su_b" },
+            "su_2": { "hq": "нет_штаба", "enterAt": "1945-04-16T07:00" },
+            "нет_дивизии": { "personnel": 1 }
+        } }));
+        let (sim, _) = tiny("edits-initial", Some(&e));
+        let d = div(&sim, "su_1");
+        assert_eq!(d.vars.personnel, 8000.0);
+        assert_eq!(d.vars.personnel0, 8000.0);
+        assert_eq!(sim.world.hqs[d.hq as usize].id, "su_b");
+        // боевая сила на начало — по поправленным цифрам
+        assert!(d.vars.strength0 > div(&base, "su_1").vars.strength0);
+        assert!((d.vars.strength0 - sim.material_strength(d)).abs() < 1e-9);
+        // неизвестный штаб: поправка штаба пропущена (с записью), остальные поправки дивизии — исполнены
+        let d2 = div(&sim, "su_2");
+        assert_eq!(sim.world.hqs[d2.hq as usize].id, "su_b");
+        assert_eq!(d2.enter, 2);
+        assert!(sim.journal.iter().any(|e| e.text.contains("поправка пропущена") && e.text.contains("нет_штаба")));
+        assert!(sim.journal.iter().any(|e| e.text.contains("поправка пропущена") && e.text.contains("нет_дивизии")));
+        // без поправок — как раньше: журнал пуст
+        assert!(base.journal.is_empty());
+    }
+
+    #[test]
+    fn change_reinforce_at_hour() {
+        let e = edits(serde_json::json!({ "changes": [
+            { "at": "1945-04-16T08:00", "formation": "su_1", "kind": "reinforce", "personnel": 1000, "guns": 20 },
+            // не введённая к часу изменения — пополняется при вводе (10:00, шаг 5)
+            { "at": "1945-04-16T06:00", "formation": "su_2", "kind": "reinforce", "personnel": 500 }
+        ] }));
+        let (mut sim, _) = tiny("change-reinforce", Some(&e));
+        for _ in 0..3 { sim.step(); }
+        let before = div(&sim, "su_1").clone();
+        assert_eq!(before.vars.personnel, 5000.0);
+        sim.step(); // шаг 3 = 08:00
+        let d = div(&sim, "su_1");
+        assert!((d.vars.personnel - before.vars.personnel - 1000.0).abs() < 1e-6, "{}", d.vars.personnel);
+        assert!((d.vars.guns - before.vars.guns - 20.0).abs() < 1e-6);
+        assert_eq!(d.vars.personnel0, 6000.0);
+        let (wp, _, wg) = sim.rules.side(d.side).weights;
+        assert!((d.vars.strength0 - before.vars.strength0 - (1.0 * wp + 20.0 * wg) * d.params.quality).abs() < 1e-9);
+        assert!(sim.journal.iter().any(|e| e.tick == 3 && e.text.contains("пополнение +1000 чел.")));
+        // su_2 до ввода не пополнена, при вводе — пополнена
+        assert_eq!(div(&sim, "su_2").vars.personnel, 6000.0);
+        sim.step();
+        assert_eq!(div(&sim, "su_2").vars.personnel, 6000.0);
+        sim.step(); // шаг 5 — ввод
+        let d2 = div(&sim, "su_2");
+        assert_eq!(d2.vars.personnel, 6500.0);
+        assert_eq!(d2.vars.personnel0, 6500.0);
+    }
+
+    #[test]
+    fn change_resubordinate_bad() {
+        let e = edits(serde_json::json!({ "changes": [
+            { "at": "1945-04-16T06:00", "formation": "su_1", "kind": "resubordinate", "parent": "нет_штаба" },
+            { "at": "1945-04-16T06:00", "formation": "su_f", "kind": "resubordinate", "parent": "su_a" },
+            { "at": "1945-04-16T06:00", "formation": "su_a", "kind": "resubordinate", "parent": "su_a" },
+            { "at": "1945-04-16T06:00", "formation": "нет_формирования", "kind": "resubordinate", "parent": "su_f" },
+            { "at": "1945-04-16T07:00", "formation": "su_1", "kind": "resubordinate", "parent": "su_b" },
+            { "at": "1945-04-16T07:00", "formation": "su_b", "kind": "resubordinate", "parent": "su_a" }
+        ] }));
+        let (mut sim, _) = tiny("change-resub", Some(&e));
+        let hq_of = |sim: &Sim, id: &str| sim.world.hqs[div(sim, id).hq as usize].id.clone();
+        let parent_of = |sim: &Sim, id: &str| sim.world.hqs.iter().find(|h| h.id == id).unwrap().parent.map(|p| sim.world.hqs[p as usize].id.clone());
+        sim.step();
+        sim.step(); // шаг 1 = 06:00
+        assert_eq!(hq_of(&sim, "su_1"), "su_a");
+        assert_eq!(parent_of(&sim, "su_f"), None);
+        assert_eq!(parent_of(&sim, "su_a").as_deref(), Some("su_f"));
+        let skipped = sim.journal.iter().filter(|e| e.tick == 1 && e.text.starts_with("изменение пропущено: ")).count();
+        assert_eq!(skipped, 4);
+        sim.step(); // шаг 2 = 07:00 — допустимые переподчинения исполнены
+        assert_eq!(hq_of(&sim, "su_1"), "su_b");
+        assert_eq!(parent_of(&sim, "su_b").as_deref(), Some("su_a"));
+        assert!(sim.journal.iter().any(|e| e.tick == 2 && e.text == "переподчинение → армия Б"));
+        assert!(sim.journal.iter().any(|e| e.tick == 2 && e.agent == u32::MAX && e.text == "армия Б: переподчинение → армия А"));
+    }
 }

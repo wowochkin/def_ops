@@ -2,7 +2,8 @@
 //! строками JSON на входе ({"cmd": …, "args": {…}}), ответ — строкой JSON на выходе ({"ok": …} или {"error": …}).
 //! Те же команды, что у настольного приложения (crates/agents-tauri).
 
-use agents_core::game::{Game, PlayerOrder, StaffIn};
+use agents_core::game::{Game, PlayerOrder, StaffIn, TakeoverIn};
+use agents_core::scenario::EditsIn;
 use agents_core::model::Side;
 use agents_core::staff::Source;
 use agents_core::{repo_root, scenario, DATA_DIR};
@@ -17,13 +18,16 @@ fn main() {
     for line in stdin.lock().lines().map_while(Result::ok) {
         let q: Value = match serde_json::from_str(&line) { Ok(v) => v, Err(e) => { let _ = writeln!(out, "{}", json!({ "error": e.to_string() })); continue } };
         let a = &q["args"];
+        // поправки сценария из базы знаний (edits) и состояние дивизий на час передачи (takeoverState) — необязательны
+        let opt = |k: &str| -> Option<Value> { if a[k].is_null() { None } else { Some(a[k].clone()) } };
         let r: Result<Value, String> = (|| match q["cmd"].as_str().unwrap_or("") {
             "read_text" => std::fs::read_to_string(format!("{root}/{}", a["path"].as_str().unwrap_or(""))).map(Value::String).map_err(|e| e.to_string()),
             "run_scenario" => {
-                // прогон целиком (как команда приложения): сценарий, seed, источники решений, поправки параметров
+                // прогон целиком (как команда приложения): сценарий, seed, источники решений, поправки параметров и сценария
                 let path = format!("{root}/{}", a["scenario"].as_str().unwrap_or(""));
                 let params = if a["params"].is_object() { Some(&a["params"]) } else { None };
-                let (mut sim, meta) = scenario::load_with(&path, &format!("{root}/{DATA_DIR}"), &root, params)?;
+                let edits: Option<EditsIn> = opt("edits").map(serde_json::from_value).transpose().map_err(|e| format!("edits: {e}"))?;
+                let (mut sim, meta) = scenario::load_with(&path, &format!("{root}/{DATA_DIR}"), &root, params, edits.as_ref())?;
                 if let Some(s) = a["seed"].as_u64() { sim.seed = s; }
                 sim.sources[1] = if a["de"] == "doctrine" { Source::Doctrine } else { Source::Script };
                 sim.sources[0] = if a["su"] == "doctrine" { Source::Doctrine } else { Source::Script };
@@ -34,13 +38,15 @@ fn main() {
             }
             "game_start" => {
                 let path = format!("{root}/{}", a["scenario"].as_str().unwrap_or(""));
-                let (mut sim, meta) = scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root)?;
+                let edits: Option<EditsIn> = opt("edits").map(serde_json::from_value).transpose().map_err(|e| format!("edits: {e}"))?;
+                let state: Option<TakeoverIn> = opt("takeoverState").map(serde_json::from_value).transpose().map_err(|e| format!("takeoverState: {e}"))?;
+                let (mut sim, meta) = scenario::load_with(&path, &format!("{root}/{DATA_DIR}"), &root, None, edits.as_ref())?;
                 if let Some(s) = a["seed"].as_u64() { sim.seed = s; }
                 let player = if a["player"] == "de" { Side::De } else { Side::Su };
                 let enemy = if player == Side::Su { Side::De } else { Side::Su };
                 sim.sources[agents_core::staff::side_idx(enemy)] = if a["enemy"] == "doctrine" { Source::Doctrine } else { Source::Script };
                 let free = if a["enemy"] == "llm" { vec![player, enemy] } else { vec![player] };
-                let mut g = Game::start_free(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free);
+                let mut g = Game::start_free(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free, state.as_ref());
                 if let Some(u) = a["until"].as_u64() { g.limit = g.limit.max(u as u32); }
                 let t = g.trace();
                 game = Some(g);

@@ -42,7 +42,7 @@ fn division_orders_and_external_enemy() {
     let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
     let (sim, meta) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
     // обе стороны под внешним управлением (противник — штаб на модели вне ядра): исторических приказов не осталось
-    let mut g = Game::start_free(sim, meta, 12, Side::Su, &[Side::Su, Side::De]);
+    let mut g = Game::start_free(sim, meta, 12, Side::Su, &[Side::Su, Side::De], None);
     assert!(g.sim.script.is_empty());
     let div = g.sim.world.divisions.iter().find(|d| d.side == Side::Su && d.state != agents_core::model::State::Pending).unwrap().id.clone();
     assert_eq!(g.order(&PlayerOrder { hq: div.clone(), kind: OrderKind::Hold, target: None, note: "держать рубеж".into() }).unwrap(), 1);

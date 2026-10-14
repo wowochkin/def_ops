@@ -64,19 +64,26 @@ impl LlmIn {
     }
 }
 
+/// Поправки сценария из окна (JSON) → scenario::EditsIn; null — без поправок.
+fn edits_in(v: Option<serde_json::Value>) -> Result<Option<scenario::EditsIn>, String> {
+    v.filter(|v| !v.is_null()).map(serde_json::from_value).transpose().map_err(|e| format!("edits: {e}"))
+}
+
 /// Команды (в подмодуле: макрос команды в корне библиотеки даёт двойные имена при подключении).
 pub mod commands {
     use super::*;
 
     #[tauri::command]
-    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>, params: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
+    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>, params: Option<serde_json::Value>, edits: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
         // расчёт — в отдельном потоке, окно не замирает
         tauri::async_runtime::spawn_blocking(move || {
             let r = root();
             let path = inside(&scenario)?;
             let rs = r.to_string_lossy().to_string();
             // params — поправки параметров агентной модели (путь → значение): варианты для сравнения и калибровки
-            let (mut sim, meta) = scenario::load_with(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs, params.as_ref())?;
+            // edits — поправки сценария из базы знаний (scenario::EditsIn): исходные цифры дивизий, изменения по датам
+            let edits = edits_in(edits)?;
+            let (mut sim, meta) = scenario::load_with(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs, params.as_ref(), edits.as_ref())?;
             if let Some(s) = seed { sim.seed = s; }
             sim.sources[1] = match de.as_deref() { Some("doctrine") => Source::Doctrine, Some("llm") => Source::Llm, _ => Source::Script };
             // советские штабы: по доктрине (staff_su.rs), на модели (штаб армии) или исторические приказы
@@ -140,12 +147,15 @@ pub mod commands {
     /// Начать игру: прогон по сценарию до часа `takeover`, дальше стороной `player` командует игрок; противник —
     /// по сценарию (script), по доктрине (doctrine) или штабом на модели вне ядра (llm — его приказы приходят в game_turn). Возвращает ход до передачи командования.
     #[tauri::command]
-    pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>, until: Option<u32>) -> Result<serde_json::Value, String> {
+    pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>, until: Option<u32>, edits: Option<serde_json::Value>, takeover_state: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
         tauri::async_runtime::spawn_blocking(move || {
             let r = root();
             let path = inside(&scenario)?;
             let rs = r.to_string_lossy().to_string();
-            let (mut sim, meta) = scenario::load(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs)?;
+            let edits = edits_in(edits)?;
+            // состояние дивизий на час передачи (game::TakeoverIn) — заменяет рассчитанное к этому часу
+            let state: Option<agents_core::game::TakeoverIn> = takeover_state.filter(|v| !v.is_null()).map(serde_json::from_value).transpose().map_err(|e| format!("takeoverState: {e}"))?;
+            let (mut sim, meta) = scenario::load_with(&path.to_string_lossy(), &format!("{rs}/{DATA_DIR}"), &rs, None, edits.as_ref())?;
             if let Some(s) = seed { sim.seed = s; }
             use agents_core::model::Side;
             let player = if player.as_deref() == Some("de") { Side::De } else { Side::Su };
@@ -154,7 +164,7 @@ pub mod commands {
             sim.sources[other] = if enemy.as_deref() == Some("doctrine") { Source::Doctrine } else { Source::Script };
             // llm — противником командует штаб на языковой модели вне ядра (игра редактора): его приказы — через game_turn
             let free: Vec<Side> = if enemy.as_deref() == Some("llm") { vec![player, enemy_side] } else { vec![player] };
-            let mut g = agents_core::game::Game::start_free(sim, meta, takeover, player, &free);
+            let mut g = agents_core::game::Game::start_free(sim, meta, takeover, player, &free, state.as_ref());
             // срок игры (до победы или поражения) может быть дальше конца сценария
             if let Some(u) = until { g.limit = g.limit.max(u); }
             let t = g.trace();

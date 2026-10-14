@@ -65,6 +65,26 @@ pub struct ScriptWithdraw {
     pub note: String,
 }
 
+/// Вид изменения по дате.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ChangeKind { Reinforce, Resubordinate }
+
+/// Изменение по дате (поправки сценария из базы знаний, scenario::EditsIn): пополнение дивизии или переподчинение
+/// дивизии или штаба. Исполняется на первом шаге не раньше `at`; пополнение не введённой дивизии — при вводе.
+#[derive(Clone, Debug)]
+pub struct ScriptChange {
+    pub at: u32,
+    /// id дивизии или штаба.
+    pub formation: String,
+    pub kind: ChangeKind,
+    pub personnel: f64,
+    pub tanks: f64,
+    pub guns: f64,
+    /// Новый вышестоящий штаб (id) — для переподчинения.
+    pub parent: Option<String>,
+}
+
 /// Снимок мира на шаг.
 #[derive(Clone)]
 pub struct World {
@@ -112,6 +132,8 @@ pub struct Sim {
     pub script: Vec<ScriptOrder>,
     pub fires: Vec<ScriptFire>,
     pub withdrawals: Vec<ScriptWithdraw>,
+    /// Изменения по датам, ещё не исполненные (по возрастанию часа).
+    pub changes: Vec<ScriptChange>,
     /// Источник решений штабов: [советская сторона, немецкая].
     pub sources: [crate::staff::Source; 2],
     /// Направления «в тыл» дивизий по исходной обстановке (для штабов по доктрине).
@@ -199,7 +221,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None, staff: StaffFx::default() };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None, staff: StaffFx::default() };
         s.script.sort_by_key(|o| o.at);
         s
     }
@@ -260,6 +282,8 @@ impl Sim {
                 d.state_since = tick;
             }
         }
+        // изменения по датам: пополнения и переподчинение (после ввода — введённая в этом часе уже пополняется)
+        self.apply_changes(&mut next, tick, &mut journal);
 
         // 0. Приказы: штабы отдают по сценарию или решают по доктрине (staff.rs); до дивизий приказы доходят с задержкой
         // своего уровня. У стороны со штабами по доктрине приказы сценария не действуют.
@@ -903,6 +927,66 @@ impl Sim {
                 .or(o.control)
         }).collect();
         for (o, c) in w.objects.iter_mut().zip(control) { o.control = c; }
+    }
+
+    /// Изменения по датам на шаге `tick`. Пополнение — к текущим силам и к начальным (personnel0, strength0 — на силу
+    /// прибавки), чтобы доли от начальных оставались осмысленными; не введённой дивизии — откладывается до ввода.
+    /// Переподчинение дивизии меняет её штаб, штаба — его вышестоящий штаб; новый штаб должен существовать, быть своей
+    /// стороны, не совпадать с переподчиняемым и не быть его подчинённым (цикл). Иначе — запись «изменение пропущено».
+    fn apply_changes(&mut self, w: &mut World, tick: u32, journal: &mut Vec<Event>) {
+        if self.changes.first().map_or(true, |c| c.at > tick) { return; }
+        let mut keep = Vec::new();
+        for c in std::mem::take(&mut self.changes) {
+            if c.at > tick { keep.push(c); continue; }
+            let div = w.divisions.iter().position(|d| d.id == c.formation);
+            let hq = w.hqs.iter().position(|h| h.id == c.formation);
+            let agent = div.map_or(u32::MAX, |i| i as u32);
+            let mut skip = |why: String| journal.push(Event { tick, agent, text: format!("изменение пропущено: {why}") });
+            match c.kind {
+                ChangeKind::Reinforce => {
+                    let Some(i) = div else { skip(format!("пополнение {} — нет такой дивизии", c.formation)); continue };
+                    let d = &mut w.divisions[i];
+                    if d.state == State::Pending { keep.push(c); continue; }
+                    if matches!(d.state, State::Destroyed | State::Merged) { skip(format!("пополнение «{}» — дивизия выбыла, пополнять нечего", d.name)); continue; }
+                    let (p, t, g) = (c.personnel.max(0.0), c.tanks.max(0.0), c.guns.max(0.0));
+                    let (wp, wt, wg) = self.rules.side(d.side).weights;
+                    d.vars.personnel += p;
+                    d.vars.tanks += t;
+                    d.vars.guns += g;
+                    d.vars.personnel0 += p;
+                    d.vars.strength0 += (p / 1000.0 * wp + t * wt + g * wg) * d.params.quality;
+                    let mut text = format!("пополнение +{p:.0} чел.");
+                    if t > 0.0 { text += &format!(", танков +{t:.0}"); }
+                    if g > 0.0 { text += &format!(", орудий +{g:.0}"); }
+                    journal.push(Event { tick, agent, text });
+                }
+                ChangeKind::Resubordinate => {
+                    let Some(pid) = c.parent.as_deref() else { skip(format!("переподчинение {} — не указан новый штаб", c.formation)); continue };
+                    if pid == c.formation { skip(format!("переподчинение {} самому себе", c.formation)); continue; }
+                    let Some(p) = w.hqs.iter().position(|h| h.id == pid) else { skip(format!("переподчинение {} — нет штаба {pid}", c.formation)); continue };
+                    let (side, name) = (w.hqs[p].side, w.hqs[p].name.clone());
+                    if let Some(i) = div {
+                        if w.divisions[i].side != side { skip(format!("переподчинение {} — штаб {pid} другой стороны", c.formation)); continue; }
+                        w.divisions[i].hq = p as u32;
+                        journal.push(Event { tick, agent, text: format!("переподчинение → {name}") });
+                    } else if let Some(h) = hq {
+                        if w.hqs[h].side != side { skip(format!("переподчинение {} — штаб {pid} другой стороны", c.formation)); continue; }
+                        // новый вышестоящий — в подчинении переподчиняемого: цикл
+                        let mut up = Some(p);
+                        let mut cycle = false;
+                        for _ in 0..=w.hqs.len() {
+                            match up { Some(x) if x == h => { cycle = true; break } Some(x) => up = w.hqs[x].parent.map(|q| q as usize), None => break }
+                        }
+                        if cycle { skip(format!("{pid} — в подчинении самого {}: переподчинение образовало бы цикл", c.formation)); continue; }
+                        w.hqs[h].parent = Some(p as u32);
+                        journal.push(Event { tick, agent: u32::MAX, text: format!("{}: переподчинение → {name}", w.hqs[h].name) });
+                    } else {
+                        skip(format!("переподчинение {} — нет такой дивизии или штаба", c.formation));
+                    }
+                }
+            }
+        }
+        self.changes = keep;
     }
 
     fn apply_withdrawals(&self, w: &mut World, tick: u32, journal: &mut Vec<Event>) {

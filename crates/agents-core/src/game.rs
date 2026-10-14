@@ -74,6 +74,31 @@ pub struct StaffIn {
     pub sectors: Vec<SectorsIn>,
 }
 
+/// Состояние дивизий на час передачи командования (из базы знаний): заменяет рассчитанное к этому часу.
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TakeoverIn {
+    /// id дивизии → состояние; неизвестные id не учитываются.
+    #[serde(default)]
+    pub divisions: std::collections::HashMap<String, TakeoverDiv>,
+}
+
+/// Состояние дивизии при передаче: численность, танки, орудия (абсолютные), место, штаб (если такой есть).
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TakeoverDiv {
+    #[serde(default)]
+    pub personnel: Option<f64>,
+    #[serde(default)]
+    pub tanks: Option<f64>,
+    #[serde(default)]
+    pub guns: Option<f64>,
+    #[serde(default)]
+    pub pos: Option<LngLat>,
+    #[serde(default)]
+    pub hq: Option<String>,
+}
+
 /// Приказ штабу (всем его дивизиям) или одной дивизии.
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct PlayerOrder {
@@ -89,13 +114,27 @@ pub struct PlayerOrder {
 
 impl Game {
     /// Прогон до часа `takeover` по сценарию, затем сторона `player` переходит к игроку.
-    pub fn start(sim: Sim, meta: Meta, takeover: u32, player: Side) -> Game { Game::start_free(sim, meta, takeover, player, &[player]) }
+    pub fn start(sim: Sim, meta: Meta, takeover: u32, player: Side) -> Game { Game::start_free(sim, meta, takeover, player, &[player], None) }
 
-    /// То же, со сторонами под внешним управлением `free` (игрок и штаб противника на модели вне ядра).
-    pub fn start_free(mut sim: Sim, meta: Meta, takeover: u32, player: Side, free: &[Side]) -> Game {
+    /// То же, со сторонами под внешним управлением `free` (игрок и штаб противника на модели вне ядра) и состоянием
+    /// дивизий на час передачи `takeover_state` (заменяет рассчитанное; в последнем кадре до передачи — уже оно).
+    pub fn start_free(mut sim: Sim, meta: Meta, takeover: u32, player: Side, free: &[Side], takeover_state: Option<&TakeoverIn>) -> Game {
         let takeover = takeover.min(meta.hours);
         let mut frames = vec![trace::frame(&sim)];
         for _ in 0..takeover { sim.step(); frames.push(trace::frame(&sim)); }
+        if let Some(st) = takeover_state {
+            let w = &mut sim.world;
+            let proj = &sim.theatre.proj;
+            for d in w.divisions.iter_mut() {
+                let Some(s) = st.divisions.get(&d.id) else { continue };
+                if let Some(p) = s.personnel { d.vars.personnel = p.max(0.0); }
+                if let Some(t) = s.tanks { d.vars.tanks = t.max(0.0); }
+                if let Some(g) = s.guns { d.vars.guns = g.max(0.0); }
+                if let Some(p) = s.pos { d.vars.pos = proj.to_xy(p); d.route = None; }
+                if let Some(h) = s.hq.as_deref().and_then(|h| w.hqs.iter().position(|x| x.id == h && x.side == d.side)) { d.hq = h as u32; }
+            }
+            if let Some(f) = frames.last_mut() { *f = trace::frame(&sim); }
+        }
         let mine = |hq: u32, sim: &Sim| free.contains(&sim.world.hqs[hq as usize].side);
         let keep: Vec<bool> = sim.script.iter().map(|o| !mine(o.hq, &sim)).collect();
         let mut k = keep.iter();
@@ -208,5 +247,31 @@ impl Game {
             "takeover": self.takeover, "hour": self.hour(), "over": self.over(),
         });
         v
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn takeover_state_sets() {
+        let (sim, meta) = crate::scenario::tests::tiny("takeover-state", None);
+        let st: TakeoverIn = serde_json::from_value(serde_json::json!({ "divisions": {
+            "su_1": { "personnel": 4321, "tanks": 3, "guns": 77, "pos": [15.0, 52.45], "hq": "su_b" },
+            "de_1": { "personnel": 1500, "hq": "нет_штаба" },
+            "нет_дивизии": { "personnel": 1 }
+        } })).unwrap();
+        let g = Game::start_free(sim, meta, 2, Side::Su, &[Side::Su], Some(&st));
+        assert_eq!(g.hour(), 2);
+        let w = &g.sim.world;
+        let d = w.divisions.iter().find(|d| d.id == "su_1").unwrap();
+        assert_eq!((d.vars.personnel, d.vars.tanks, d.vars.guns), (4321.0, 3.0, 77.0));
+        let p = g.sim.theatre.proj.to_xy([15.0, 52.45]);
+        assert!(d.vars.pos.dist(p) < 1e-9);
+        assert_eq!(w.hqs[d.hq as usize].id, "su_b");
+        let e = w.divisions.iter().find(|d| d.id == "de_1").unwrap();
+        assert_eq!(e.vars.personnel, 1500.0);
+        assert_eq!(w.hqs[e.hq as usize].id, "de_a");
     }
 }
