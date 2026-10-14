@@ -66,6 +66,23 @@ describe('штаб модели в игре', () => {
     expect(r.issues.filter((i) => /не опознан/.test(i.text))).toEqual([]);
   });
 
+  it('«Все соединения» — тем, у кого нет отдельного приказа; выдуманная группа — не исполнена', () => {
+    const sit = buildSituation(ctx, g, cfg, tpl);
+    const area = sit.areas[0].title;
+    const r = decisionToOrders({
+      orders: [
+        { formation: '9-я парашютная дивизия (9. Fallschirmjäger-Division)', task: 'hold', area, toArea: null, deadline: '', details: '' },
+        { formation: 'Партизанские/боевые группы (прибывающие)', task: 'reserve', area: '', toArea: null, deadline: '', details: '' },
+        { formation: 'Все соединения', task: 'defend', area: '', toArea: null, deadline: '', details: '' },
+      ],
+    }, sit);
+    const top = sit.formations.filter((f) => !f.parent || !sit.formations.some((x) => x.id === f.parent));
+    expect(r.orders.find((o) => o.formation === 'de_9fjd')?.task).toBe('hold');
+    expect(r.orders.filter((o) => o.task === 'defend').length).toBe(top.filter((f) => f.id !== 'de_9fjd').length);
+    expect(r.applied[1].order).toBeNull();
+    expect(r.applied[2].order).not.toBeNull();
+  });
+
   it('ход модели через сервер (подставная модель): приказы исполняются арбитром после задержки', async () => {
     const sit = buildSituation(ctx, g, cfg, tpl);
     expect(mockDecision(sit.messages[1].content).orders.length).toBeGreaterThan(0);
@@ -362,5 +379,14 @@ describe('подставная модель: сведения об инфрас�
     const r = mockInfra('Мост через Шпрее у Фюрстенвальде взорван 22 апреля отходящими частями. Погода была ясной весь день.');
     expect(r).toHaveLength(1);
     expect(r[0]).toMatchObject({ kind: 'bridge', state: 'destroyed', date: '1945-04-22', place: 'Фюрстенвальд' });
+  });
+});
+
+describe('зацикливание генерации', async () => {
+  const { degenerate } = await import('../src/llm/client');
+  it('бесконечные пробелы и повтор куска распознаются; обычный JSON — нет', () => {
+    expect(degenerate('{"assessment": "Обстановка на вечер 22 апреля' + ' '.repeat(500))).toMatch(/пробелы/);
+    expect(degenerate('{"a": "' + 'и т. д. '.repeat(60))).toMatch(/повтор/);
+    expect(degenerate(JSON.stringify({ orders: Array.from({ length: 30 }, (_, i) => ({ formation: `${i}-я дивизия`, task: 'defend', area: 'Зеелов' })) }, null, 2))).toBeUndefined();
   });
 });

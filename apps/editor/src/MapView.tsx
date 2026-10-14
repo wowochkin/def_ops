@@ -208,9 +208,18 @@ export function MapView(props: Props) {
       if (tool.kind === 'symbol' || tool.kind === 'label') {
         let text: string | undefined;
         if (tool.kind === 'label') {
-          const t = askText('Текст надписи (перенос строки — \\n):', 'Надпись');
-          if (!t) return;
-          text = t.replace(/\\n/g, '\n');
+          // текст — диалогом внутри страницы; знак ставится после ответа
+          void askText('Текст надписи (перенос строки — \\n):', 'Надпись').then((t) => {
+            if (!t) return;
+            const { tool, doc } = live.current;
+            if (tool.mode !== 'draw' || tool.kind !== 'label') return;
+            const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
+            const f = stamp(createFeature(tool.kind, tool.preset, { at: ll, text: t.replace(/\\n/g, '\n'), layerId }, k, tool.side));
+            setDoc(insertFeature(doc, f));
+            setSelected(f.id);
+            if (!tool.keep) setTool({ mode: 'select' });
+          });
+          return;
         }
         const layerId = pickLayer(doc, tool.kind, tool.preset, live.current.props.activeLayer, tool.side);
         const f = stamp(createFeature(tool.kind, tool.preset, { at: ll, text, layerId }, k, tool.side));

@@ -5,6 +5,7 @@
  * ли), отчёт. Новые правила сохраняются своим набором; основными их делает человек. Итог записывается и в базу
  * знаний (рубрика «Устройство модели стенда»).
  */
+import { confirmAsync } from '../dialogs';
 import { useEffect, useRef, useState } from 'react';
 import { baseParams, CALIB_INFO, CALIB_KEYS, calibratedRules, Calibrator, mergeEvaluations, type CalibParams, type Rules, type RulesEvaluation, type Scenario } from '@def-ops/sim';
 import * as kb from '../kb/kb';
@@ -134,7 +135,7 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
         <div className="row">
           <button onClick={() => download(`${op}-пересчёт-${shown.at.slice(0, 10)}.md`, shown.report, 'text/markdown')}>Отчёт .md</button>
           {isDefault ? <span className="ok small">✓ основные правила операции</span>
-            : shown.better !== false && <button className={fails ? '' : 'primary'} onClick={() => { if (!fails || confirm('На контрольной операции новые правила хуже. Всё равно сделать их основными?')) makeDefault(shown.rules); }} title="Набор станет первым в «Переигровке» и в следующем пересчёте">Сделать основными</button>}
+            : shown.better !== false && <button className={fails ? '' : 'primary'} onClick={() => { if (!fails) makeDefault(shown.rules); else void confirmAsync('На контрольной операции новые правила хуже. Всё равно сделать их основными?').then((ok) => { if (ok) makeDefault(shown.rules); }); }} title="Набор станет первым в «Переигровке» и в следующем пересчёте">Сделать основными</button>}
           {edits.defaultRules && <button className="link" onClick={() => void updateEdits(op, (e) => { delete e.defaultRules; })}>вернуть встроенные</button>}
         </div>
       </div>}

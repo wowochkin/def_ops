@@ -4,6 +4,7 @@
  * записей с фактами и источниками, вопросы и рассказы по материалам базы (модель отвечает только по ним,
  * со ссылками), загрузка документов: модель извлекает сведения с цитатами, человек принимает предложения.
  */
+import { confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { category, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
 import { kbOperations, onDataChange } from './sim/userdata';
@@ -413,7 +414,7 @@ export function DocRow({ d, s, llm, open, onFilter, filtered, opTitle }: { d: Kb
         : <div className="row">
           {done < d.chunks.length && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => kb.process(d.id, llm.settings)}>{done ? 'Продолжить обработку' : 'Обработать моделью'}</button>}
           {props.length > 0 && onFilter && <button className={filtered ? 'on' : ''} onClick={onFilter}>предложения: {props.filter((p) => p.status === 'pending').length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>}
-          <button className="link danger" onClick={() => { if (confirm(`Удалить «${d.name}» из базы?`)) void kb.removeDocument(d.id); }}>удалить</button>
+          <button className="link danger" onClick={() => { void confirmAsync(`Удалить «${d.name}» из базы?`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void kb.removeDocument(d.id); }); }}>удалить</button>
           {d.error && <span className="err">{d.error}</span>}
         </div>}
     </div>

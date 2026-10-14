@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import type { MapEngine } from './engine/types';
 import { Popover } from './ui';
+import { askText } from './dialogs';
 import { pickBasemap, type Basemaps } from './shared';
 
 export interface Sector { id: string; title: string; note?: string; bbox: [number, number, number, number]; custom?: boolean }
@@ -49,7 +50,7 @@ export function SectorPicker({ scenario, engine, bm, focus, setFocus, opYear, on
   const [auto, setAuto] = useState(() => localStorage.getItem('def_ops.autoBasemap') !== '0');
   const [drawing, setDrawing] = useState<LngLat | null | 'wait'>(null);
   const list = useMemo(() => [...scenarioSectors(scenario), ...custom], [scenario, custom]);
-  const live = useRef({ drawing }); live.current = { drawing };
+  const live = useRef({ drawing, custom }); live.current = { drawing, custom };
   useEffect(() => { setCustom(loadCustom(scenario)); }, [scenario]);
 
   const go = (s: Sector | null) => {
@@ -72,13 +73,14 @@ export function SectorPicker({ scenario, engine, bm, focus, setFocus, opYear, on
       if (!d) return;
       const a = d, b = e.lngLat;
       const s: Sector = { id: `c${Date.now()}`, title: `Свой участок ${custom.length + 1}`, custom: true, bbox: [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])] };
-      const name = prompt('Название участка:', s.title);
-      if (name) s.title = name;
-      const next = [...custom, s];
-      setCustom(next);
-      try { localStorage.setItem(KEY(scenario), JSON.stringify(next)); } catch { /* */ }
       setDrawing(null);
-      go(s);
+      void askText('Название участка:', s.title).then((name) => {
+        if (name) s.title = name;
+        const next = [...live.current.custom, s];
+        setCustom(next);
+        try { localStorage.setItem(KEY(scenario), JSON.stringify(next)); } catch { /* */ }
+        go(s);
+      });
     });
   }, [engine, drawing]); // eslint-disable-line react-hooks/exhaustive-deps
 

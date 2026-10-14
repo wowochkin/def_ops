@@ -3,6 +3,7 @@
  * откуда он (базовый, калибровка: по какой операции, мерило до и после, множители), параметры по группам
  * словами, где используется; свои — скачать, удалить, взять в настройку.
  */
+import { confirmAsync } from '../dialogs';
 import { useMemo, useState } from 'react';
 import { CALIB_INFO, describeProfile, describeRules, rulesOrigin, type CalibKey, type ParamRow } from '@def-ops/sim';
 import { deleteRules } from '../sim/userdata';
@@ -45,7 +46,7 @@ export function ModelsTab({ d, llm, onTune, onCompare }: { d: SimData; llm: Llm;
               <button onClick={() => onTune(item.id)}>{item.user ? 'Править' : 'Сделать свой вариант'}</button>
               {usedIn[0] && <button onClick={() => onCompare(usedIn[0].id, [...new Set([item.id, ...usedIn[0].rules.map((r) => r.id)])].slice(0, 4))}>Сравнить на «{usedIn[0].title.split(',')[0]}»</button>}
               <button onClick={() => download(`${item.id}.json`, JSON.stringify(item.rules, null, 2))}>JSON</button>
-              {item.user && <button className="danger" onClick={() => { if (confirm(`Удалить набор «${item.title}»?`)) void deleteRules(item.id).then(() => setSel('rules:ww2-berlin-cal')); }}>Удалить</button>}
+              {item.user && <button className="danger" onClick={() => { void confirmAsync(`Удалить набор «${item.title}»?`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void deleteRules(item.id).then(() => setSel('rules:ww2-berlin-cal')); }); }}>Удалить</button>}
             </div></div>
           {(item.saved?.note || origin.status) && <p className="mdl-note">{item.saved?.note || origin.status}</p>}
           {origin.extends && <p className="muted">Поверх набора «{origin.extends}»: поля этого файла переписывают базовые.</p>}

@@ -35,7 +35,8 @@ export interface Templates { system: string; user: string; profile: string }
 export interface Situation {
   messages: { role: 'system' | 'user'; content: string }[];
   /** Свои формирования, которым можно отдавать приказы: id и название (как в обстановке). */
-  formations: { id: string; name: string }[];
+  /** parent — вышестоящее по подчинению (для приказа «всем соединениям»). */
+  formations: { id: string; name: string; parent?: string | null }[];
   /** Пункты из обстановки: id района театра и название (как в обстановке). */
   areas: { id: string; title: string; at?: [number, number] }[];
   /** Все пункты театра (запасной поиск: модель называет пункт, которого нет в ближнем списке). */
@@ -167,7 +168,7 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
     },
     delays,
     own,
-    formations: own.map((u) => ({ id: u.id, name: u.name })),
+    formations: own.map((u) => ({ id: u.id, name: u.name, parent: u.parent ?? null })),
     areas: near.map((a) => ({ id: a.id, title: a.title, at: a.at })),
     allAreas: places(T).map((a) => ({ id: a.id, title: a.title, at: a.at })),
     enemies: intel.map((e) => ({ id: e.id, name: e.name })),

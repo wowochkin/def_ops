@@ -176,7 +176,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
       else {
         try { out = await api.documents.save(d, d.revision); } catch (e) {
           if (!(e instanceof ApiError) || !e.isConflict) throw e;
-          const overwrite = ask(`${e.message}.\n\nОК — перезаписать своей версией.\nОтмена — загрузить версию с сервера (ваши изменения будут потеряны).`);
+          const overwrite = await ask(`${e.message}.\n\nОК — перезаписать своей версией.\nОтмена — загрузить версию с сервера (ваши изменения будут потеряны).`);
           if (overwrite) out = await api.documents.save(d);
           else { const fresh = migrateDocument(await api.documents.get(d.id)); loadDoc(fresh, true); return; }
         }
@@ -208,7 +208,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
         <span className="sep" />
         <Popover label="Файл" title="Открыть, сохранить, экспорт, примеры">{(close) => (
           <div className="menu">
-            <button onClick={() => { close(); if (ask('Создать пустую карту? Несохранённые изменения будут потеряны.')) { const vw = engine?.getView(); loadDoc(emptyDocument(vw?.center, vw?.zoom)); } }}>Новая пустая карта</button>
+            <button onClick={async () => { close(); if (await ask('Создать пустую карту? Несохранённые изменения будут потеряны.')) { const vw = engine?.getView(); loadDoc(emptyDocument(vw?.center, vw?.zoom)); } }}>Новая пустая карта</button>
             <label className="menu-file">Открыть / импорт JSON, GeoJSON…<input type="file" accept=".json,.geojson,application/json,application/geo+json" onChange={(e) => { const f = e.target.files?.[0]; if (f) openFile(f); e.target.value = ''; close(); }} /></label>
             <div className="menu-sep" />
             <button disabled={server.status !== 'online'} title={serverTitle} onClick={() => { close(); openServerList(); }}>Открыть с сервера…</button>
@@ -222,7 +222,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
             <button onClick={() => { close(); exportPNG(atTime(), doc.paper, 2).then((x) => download(`${doc.name || 'map'}${suffix}.png`, x)); }}>PNG — только знаки (все объекты)</button>
             <div className="menu-sep" />
             <div className="menu-h">Примеры</div>
-            {SCENES.map((x) => <button key={x.id} onClick={() => { close(); if (ask(`Открыть пример «${x.name}»? Текущая карта будет заменена.`)) loadDoc(x.build()); }}>{x.name}</button>)}
+            {SCENES.map((x) => <button key={x.id} onClick={async () => { close(); if (await ask(`Открыть пример «${x.name}»? Текущая карта будет заменена.`)) loadDoc(x.build()); }}>{x.name}</button>)}
           </div>
         )}</Popover>
         <Popover label="Вид" title="Подложка, бумага, размер знаков">
@@ -265,7 +265,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
                   }}>{m.name}</span>
                   <span className="muted">рев. {m.revision} · слоёв {m.layers} · объектов {m.features} · {new Date(m.updatedAt).toLocaleString('ru-RU')}</span>
                   <button className="link danger" title="Удалить" onClick={async () => {
-                    if (!ask(`Удалить «${m.name}» с сервера?`)) return;
+                    if (!(await ask(`Удалить «${m.name}» с сервера?`))) return;
                     await api.documents.remove(m.id); setServerList(serverList.filter((x) => x.id !== m.id));
                   }}>✕</button>
                 </div>

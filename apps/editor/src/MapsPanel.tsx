@@ -165,7 +165,7 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMap
             </button>
             {m.coverage && <button onClick={async () => { await cartography.update(m.id, { coverage: null }); reload(); }}>снять границу</button>}
             <a className="btnlink" href={cartography.packageUrl(m.id)} title="Выгрузить пакет для переноса в закрытый контур">пакет ↓</a>
-            <button className="danger" onClick={async () => { if (!ask(`Удалить карту «${m.name}» со всеми тайлами?`)) return; await cartography.remove(m.id); reload(); }}>✕</button>
+            <button className="danger" onClick={async () => { if (!(await ask(`Удалить карту «${m.name}» со всеми тайлами?`))) return; await cartography.remove(m.id); reload(); }}>✕</button>
           </div>
         </div>
       ))}

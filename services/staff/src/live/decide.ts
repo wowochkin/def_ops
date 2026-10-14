@@ -29,11 +29,25 @@ export interface AiTurn {
   reasoningTail?: string;
 }
 
-export async function decideTurn(client: LlmClient, sit: Situation, opts: { thinking?: Thinking; signal?: AbortSignal; onDelta?: (kind: 'reasoning' | 'content', text: string) => void } = {}): Promise<AiTurn> {
+export async function decideTurn(client: LlmClient, sit: Situation, opts: { thinking?: Thinking; signal?: AbortSignal; onDelta?: (kind: 'reasoning' | 'content', text: string) => void;
+  /** Повтор запроса (после зацикливания): почему — для показа. */
+  onRetry?: (why: string) => void } = {}): Promise<AiTurn> {
   const out: AiTurn = { time: sit.time, model: client.config.model, ok: false, applied: [], orders: [], issues: [] };
   let res: ChatResult;
   try {
-    res = await client.chat({ messages: sit.messages, schema: { name: 'staff_decision', schema: sit.staff ? LIVE_DECISION_SCHEMA : DECISION_SCHEMA }, thinking: opts.thinking, signal: opts.signal, onDelta: opts.onDelta });
+    const schema = { name: 'staff_decision', schema: sit.staff ? LIVE_DECISION_SCHEMA : DECISION_SCHEMA };
+    res = await client.chat({ messages: sit.messages, schema, thinking: opts.thinking, signal: opts.signal, onDelta: opts.onDelta });
+    // зацикливание на схеме (бесконечные пробелы после первых слов) — повтор без схемы на сервере: тот же
+    // запрос с просьбой ответить одним JSON-объектом, разбор — по схеме у нас
+    if (res.degenerate && !opts.signal?.aborted) {
+      opts.onRetry?.(`генерация зациклилась (${res.degenerate}) — повтор без схемы на сервере`);
+      const again = await client.chat({
+        messages: [...sit.messages.slice(0, -1), { ...sit.messages[sit.messages.length - 1], content: sit.messages[sit.messages.length - 1].content + '\n\nОтветь одним JSON-объектом с полями из описания формата, без текста до и после него.' }],
+        schema, schemaLoose: true, thinking: opts.thinking, signal: opts.signal, onDelta: opts.onDelta,
+      });
+      res = { ...again, timings: again.timings };
+      out.repaired = true;
+    }
   } catch (e) {
     out.error = (e as Error).message;
     return out;

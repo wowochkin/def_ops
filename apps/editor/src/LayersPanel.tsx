@@ -50,13 +50,13 @@ export function LayersPanel(p: Props) {
   };
 
   /** Удалить слой: пустой — сразу; с объектами — спросить, перенести их или удалить вместе со слоем. */
-  const deleteLayer = (id: string, count: number) => {
+  const deleteLayer = async (id: string, count: number) => {
     const l = doc.layers.find((x) => x.id === id);
     if (!l || doc.layers.length < 2) return;
     const others = doc.layers.filter((x) => x.id !== id);
     const target = others[others.length - 1];
-    if (count > 0 && !ask(`Удалить слой «${l.name}» (${count} объект(ов))?`)) return;
-    const keep = count > 0 && ask(`Перенести ${count} объект(ов) в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
+    if (count > 0 && !(await ask(`Удалить слой «${l.name}» (${count} объект(ов))?`))) return;
+    const keep = count > 0 && await ask(`Перенести ${count} объект(ов) в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
     setDoc(removeLayer(doc, id, keep ? target.id : null));
     if (activeLayer === id) setActiveLayer(null);
   };

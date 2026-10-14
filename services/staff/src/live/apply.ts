@@ -80,8 +80,12 @@ export function decisionToOrders(d: Pick<Decision, 'orders'>, sit: Situation, so
     return null;
   };
   const byFormation = new Map<string, Order>();
+  // «Все соединения», «остальные войска» — после именных приказов, тем, кому приказа нет
+  const ALL = /^(все|всем|остальн\S*|прочи\S*)\s+(соединени|войск|част|дивизи|сил|объединени)/i;
+  const toAll: [number, NonNullable<Decision['orders']>[number]][] = [];
   for (const [k, o] of (d.orders ?? []).entries()) {
     const fi = findName(o.formation ?? '', fNames);
+    if (fi < 0 && ALL.test((o.formation ?? '').trim())) { toAll.push([k, o]); continue; }
     if (fi < 0) {
       const issue = `приказ ${k + 1}: «${o.formation}» — нет среди своих сил, не исполнен`;
       issues.push({ level: 'error', text: issue });
@@ -115,6 +119,34 @@ export function decisionToOrders(d: Pick<Decision, 'orders'>, sit: Situation, so
     if (byFormation.has(f.id)) issues.push({ level: 'warning', text: `${f.name}: несколько приказов — исполняется последний` });
     byFormation.set(f.id, order);
     applied.push({ given: o, order, formation: f.name, target: t?.text ?? 'на месте', issue });
+  }
+  if (toAll.length) {
+    // старшие из своих: у кого вышестоящего нет среди своих сил; приказ объединению ядро доводит до его соединений
+    const ids = new Set(sit.formations.map((f) => f.id));
+    const parentOf = new Map(sit.formations.map((f) => [f.id, f.parent ?? null]));
+    const covered = (id: string) => { for (let x: string | null | undefined = id, n = 0; x && n < 8; x = parentOf.get(x), n++) if (byFormation.has(x)) return true; return false; };
+    const top = sit.formations.filter((f) => !f.parent || !ids.has(f.parent));
+    for (const [k, o] of toAll) {
+      const want = MOVE.includes(o.task) ? o.toArea ?? o.area : o.area;
+      const t = resolve(want);
+      if (!t && !STAY.includes(o.task)) {
+        const issue = `приказ ${k + 1}: «${o.formation}» — для задачи «${TASK_RU[o.task]}» нужна цель${want ? ` («${want}» не опознана)` : ''}, не исполнен`;
+        issues.push({ level: 'error', text: issue });
+        applied.push({ given: o, order: null, formation: null, target: null, issue });
+        continue;
+      }
+      const list = top.filter((f) => !covered(f.id));
+      for (const f of list) {
+        const order: Order = {
+          id: `${source}@${sit.time}:${f.id}`, formation: f.id, task: o.task, target: t?.target ?? null, issuedAt: sit.time, source,
+          note: [o.details, o.deadline ? `срок: ${o.deadline}` : ''].filter(Boolean).join('; '),
+        };
+        byFormation.set(f.id, order);
+      }
+      const issue = list.length ? `«${o.formation}» — тем, кому нет отдельного приказа: ${list.map((f) => f.name).join(', ')}` : `«${o.formation}» — все уже получили отдельные приказы`;
+      issues.push({ level: 'warning', text: issue });
+      applied.push({ given: o, order: list.length ? byFormation.get(list[0].id)! : null, formation: list.length ? `${list.length} объед./соед.` : null, target: t?.text ?? 'на месте', issue });
+    }
   }
   return { orders: [...byFormation.values()], applied, issues };
 }

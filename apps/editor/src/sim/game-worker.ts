@@ -251,15 +251,24 @@ function startAi() {
   const client = enemyClient();
   status({ state: 'thinking', time, since: Date.now() });
   post({ kind: 'ai-stream', text: '', reset: true });
-  let buf = '', last = 0;
-  const promise = exclusive('решение штаба противника', () => decideTurn(client, sit, {
+  let buf = '', last = 0, phase = '';
+  const setPhase = (t: string) => { if (t !== phase) { phase = t; post({ kind: 'ai-phase', text: t }); } };
+  const tokens = Math.round(sit.messages.reduce((a, m) => a + m.content.length, 0) / 3.2);
+  setPhase(llmBusy ? `ждёт очереди: модель занята (${llmBusy})` : 'отправка запроса…');
+  const promise = exclusive('решение штаба противника', () => {
+    // до первого токена модель читает обстановку: на локальной модели длинный запрос — минута и больше
+    setPhase(`модель читает обстановку: запрос ≈ ${Math.round(tokens / 100) / 10} тыс. токенов — на локальной модели это может занять минуту-две; ответ появится здесь по мере генерации`);
+    return decideTurn(client, sit, {
     signal: abort.signal,
-    onDelta: (_k, t) => {
+    onDelta: (k, t) => {
+      setPhase(k === 'reasoning' ? 'размышляет…' : 'пишет решение…');
       buf += t;
       const now = Date.now();
       if (now - last > 250) { post({ kind: 'ai-stream', text: buf }); buf = ''; last = now; }
     },
-  })).then((t) => {
+    onRetry: (why) => { buf = ''; post({ kind: 'ai-stream', text: '', reset: true }); post({ kind: 'ai-stream', text: `[${why}]\n` }); setPhase('повтор запроса без схемы…'); },
+  });
+  }).then((t) => {
     if (abort.signal.aborted) return null;
     if (buf) post({ kind: 'ai-stream', text: buf });
     if (t.ok && t.decision) {

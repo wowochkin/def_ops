@@ -4,6 +4,7 @@
  * по ней: слои в GeoJSON, растр местности PNG (с файлом привязки), театр-фрагмент JSON, заготовка рецепта для
  * сборки нового театра. Театр можно загрузить своим файлом — им смогут пользоваться свои операции.
  */
+import { confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { cropGrid, cropTheatre, decodeGrid, decodeHeights, layerCounts, layerGeoJSON, recipeFor, theatreToDocument, THEATRE_LAYERS, TERRAIN_CLASSES, type BBox, type TerrainGrid, type TheatreData, type TheatreLayerId } from '@def-ops/sim';
@@ -288,7 +289,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
           {list.map((x) => <option key={x.id} value={x.id}>{x.title}{x.src === 'user' ? ' · загружен' : ''}</option>)}</select></label>
         <div className="row"><input ref={input} type="file" accept=".json" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ''; }} />
           <button onClick={() => input.current?.click()}>Загрузить театр…</button>
-          {list.find((x) => x.id === sel)?.src === 'user' && <button className="danger" onClick={() => { if (confirm('Удалить загруженный театр?')) void deleteTheatre(sel).then(() => setSel('oder-berlin-1945')); }}>Удалить</button>}</div>
+          {list.find((x) => x.id === sel)?.src === 'user' && <button className="danger" onClick={() => { void confirmAsync('Удалить загруженный театр?', { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void deleteTheatre(sel).then(() => setSel('oder-berlin-1945')); }); }}>Удалить</button>}</div>
         {T && <p className="muted th-info">{T.id} · клетка {T.cellKm} км{T.terrainGrid ? ` · растр ${T.terrainGrid.cols}×${T.terrainGrid.rows}` : ''} · районов {T.areas.length}{T.frozen ? ` · ледостав ${T.frozen.from.slice(5, 10)}–${T.frozen.until.slice(5, 10)}` : ''}</p>}
 
         <h4>Слои {area && <small className="muted">— в области</small>}</h4>

@@ -169,6 +169,8 @@ export type GameResponse =
   | { kind: 'ai'; status: AiStatus }
   /** Поток ответа модели (для посредника), кусками. */
   | { kind: 'ai-stream'; text: string; reset?: boolean }
+  /** Этап запроса штаба противника: ждёт очереди, модель читает обстановку, размышляет, пишет ответ. */
+  | { kind: 'ai-phase'; text: string }
   /** Ход ждёт решения посредника: модель не ответила. */
   | { kind: 'blocked'; error: string }
   | { kind: 'record'; record: GameRecord }

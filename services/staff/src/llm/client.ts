@@ -26,6 +26,8 @@ export interface ChatRequest {
   /** Куски ответа по мере генерации: kind — размышление или сам ответ. */
   onDelta?: (kind: 'reasoning' | 'content', text: string) => void;
   signal?: AbortSignal;
+  /** Схема — только для разбора ответа, серверу не передаётся (повтор после зацикливания на схеме). */
+  schemaLoose?: boolean;
 }
 
 export interface ChatTimings {
@@ -55,6 +57,8 @@ export interface ChatResult {
   jsonFrom?: 'reasoning';
   finishReason?: string;
   timings: ChatTimings;
+  /** Генерация зациклилась и прервана (что именно). */
+  degenerate?: string;
 }
 
 export class LlmUnavailable extends Error {}
@@ -156,7 +160,7 @@ export class LlmClient {
     // gpt-oss размышление не выключает (enable_thinking не понимает) — при «без размышления» просим самое короткое
     else if (/gpt-oss/i.test(model)) body.reasoning_effort = 'low';
     if (this.config.draftModel) body.draft_model = this.config.draftModel;
-    if (req.schema) body.response_format = { type: 'json_schema', json_schema: { name: req.schema.name, strict: true, schema: req.schema.schema } };
+    if (req.schema && !req.schemaLoose) body.response_format = { type: 'json_schema', json_schema: { name: req.schema.name, strict: true, schema: req.schema.schema } };
     return body;
   }
 
@@ -192,7 +196,7 @@ export class LlmClient {
       throw new Error(`сервер модели ответил ${r.status}${r.status >= 500 ? ' (ошибка сервера — модель, возможно, занята другим запросом или не загрузилась)' : ''}: ${text}`);
     }
 
-    let content = '', reasoning = '', finishReason: string | undefined, firstTokenMs = 0, chunks = 0;
+    let content = '', reasoning = '', finishReason: string | undefined, firstTokenMs = 0, chunks = 0, degenerated: string | undefined, checkedAt = 0;
     let usage: { prompt_tokens?: number; completion_tokens?: number } | undefined;
     let draft: { accepted?: number; rejected?: number } | undefined;
     const thinkingOff = (req.thinking ?? this.config.thinking) === 'off';
@@ -211,7 +215,13 @@ export class LlmClient {
       const d = ch.delta ?? {};
       const rs = d.reasoning_content ?? d.reasoning;
       if (rs) { if (!firstTokenMs) firstTokenMs = performance.now() - t0; reasoning += rs; chunks++; req.onDelta?.('reasoning', rs); }
-      if (d.content) { if (!firstTokenMs) firstTokenMs = performance.now() - t0; content += d.content; chunks++; req.onDelta?.('content', d.content); }
+      if (d.content) {
+        if (!firstTokenMs) firstTokenMs = performance.now() - t0; content += d.content; chunks++; req.onDelta?.('content', d.content);
+        // зацикливание: локальные модели на JSON-схеме иногда после первых слов выдают бесконечные пробелы или
+        // переводы строк (или один и тот же кусок) — ждать бесполезно, ответ всё равно не разобрать
+        const loop = content.length - checkedAt >= 100 ? (checkedAt = content.length, degenerate(content)) : undefined;
+        if (loop) { degenerated = loop; void r.body.cancel().catch(() => {}); break; }
+      }
     }
     const totalMs = performance.now() - t0;
 
@@ -230,16 +240,34 @@ export class LlmClient {
       promptTokensPerSec: usage?.prompt_tokens && firstTokenMs ? +(usage.prompt_tokens / (firstTokenMs / 1000)).toFixed(0) : undefined,
       draftAccepted: draft?.accepted, draftRejected: draft?.rejected,
     };
-    const res: ChatResult = { model, content, reasoning, finishReason, timings };
+    const res: ChatResult = { model, content, reasoning, finishReason, timings, ...(degenerated ? { degenerate: degenerated } : {}) };
     if (req.schema) {
       try { res.json = extractJson(content); } catch (e) {
         // сервер мог положить весь ответ в поле размышления: JSON — в его конце
         try { res.json = extractJson(reasoning); res.jsonFrom = 'reasoning'; } catch { res.jsonError = (e as Error).message; }
       }
+      if (degenerated) res.jsonError = (res.jsonError ? res.jsonError + '; ' : '') + `генерация зациклилась (${degenerated}) и прервана`;
       if (finishReason === 'length') res.jsonError = (res.jsonError ? res.jsonError + '; ' : '') + 'ответ оборван по пределу длины (DEFOPS_LLM_MAX_TOKENS)';
     }
     return res;
   }
+}
+
+/**
+ * Зацикленный ответ: в конце — больше 400 пробельных символов подряд или один кусок (до 40 символов),
+ * повторённый 25 раз подряд. Возвращает, что именно, или undefined.
+ */
+export function degenerate(text: string): string | undefined {
+  if (text.length < 400) return undefined;
+  const tail = text.slice(-1200);
+  const ws = tail.length - tail.trimEnd().length;
+  if (ws > 400) return 'пробелы и переводы строк';
+  for (let n = 1; n <= 40; n++) {
+    const unit = tail.slice(-n);
+    if (!unit.trim()) continue;
+    if (tail.length >= n * 25 && unit.repeat(25) === tail.slice(-n * 25)) return `повтор «${unit.trim().slice(0, 20)}»`;
+  }
+  return undefined;
 }
 
 /** События SSE (поле data) из потока ответа. */

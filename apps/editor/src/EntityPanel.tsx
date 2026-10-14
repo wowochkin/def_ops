@@ -315,7 +315,7 @@ function History({ api, entity, type, facts, onChanged, setError }: {
           <div className="fact-h">
             <b>с {fmtMoment(x.validFrom, true)}</b>{x.validTo ? ` по ${fmtMoment(x.validTo, true)}` : ''}
             <button className="link danger" title="Удалить запись" onClick={async () => {
-              if (!ask('Удалить запись истории?')) return;
+              if (!(await ask('Удалить запись истории?'))) return;
               try { await api.removeFact(entity.id, x.id); onChanged(); } catch (e) { setError((e as Error).message); }
             }}>✕</button>
           </div>

@@ -40,10 +40,10 @@ export function BasemapControls({ bm }: { bm: Basemaps }) {
       {bm.current && <label className="bm-row">Прозрачность <input type="range" min={0} max={1} step={0.05} value={bm.opacity} onChange={(e) => bm.setOpacity(+e.target.value)} /></label>}
       <div className="bm-row">
         <label title="Только локальные карты, без обращений в интернет"><input type="checkbox" checked={bm.offline} onChange={(e) => bm.setOffline(e.target.checked)} /> офлайн</label>
-        {!bm.offline && <button className="link" onClick={() => {
-          const name = askText('Название подложки:', 'Моя карта');
+        {!bm.offline && <button className="link" onClick={async () => {
+          const name = await askText('Название подложки:', 'Моя карта');
           if (!name) return;
-          const url = askText('Шаблон адреса тайлов XYZ, например https://server/{z}/{x}/{y}.png\n(или WMS с {bbox-epsg-3857}):', '');
+          const url = await askText('Шаблон адреса тайлов XYZ, например https://server/{z}/{x}/{y}.png\n(или WMS с {bbox-epsg-3857}):', '');
           if (!url || !isValidTemplate(url)) { if (url) alert('Нужен адрес с {z}/{x}/{y}, {quadkey} или {bbox-epsg-3857}'); return; }
           bm.addCustom({ id: 'custom-' + newId('b'), name, tiles: [url], tileSize: 256 });
         }}>+ своя XYZ / WMS…</button>}
@@ -88,8 +88,7 @@ export function ModelSelect({ value, onChange, check, empty, title }: {
   return (
     <select value={value} title={title} onChange={(e) => {
       if (e.target.value !== '__other') { onChange(e.target.value); return; }
-      const v = window.prompt('Имя модели на сервере — как в списке /v1/models или идентификатор загруженного экземпляра (например, qwen-8bit после «lms load … --identifier qwen-8bit»):', value);
-      if (v != null) onChange(v.trim());
+      void askText('Имя модели на сервере — как в списке /v1/models или идентификатор загруженного экземпляра (например, qwen-8bit после «lms load … --identifier qwen-8bit»):', value).then((v) => { if (v != null) onChange(v.trim()); });
     }}>
       <option value="">{empty}</option>
       {loaded.length > 0 && <optgroup label="Загружены — отвечают сразу">{loaded.map((m) => <option key={m} value={m}>{label(m)}</option>)}</optgroup>}

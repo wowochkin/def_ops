@@ -4,6 +4,7 @@
  * модели (какая сторона, роль, опорный пункт, ограничения), сделать контрольный прогон и подготовить к
  * переигровке — операция появится в «Переигровке». Встроенную операцию можно скачать пакетом как образец.
  */
+import { confirmAsync } from '../dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { areaTitle, defaultCatalog, defaultLive, detectPart, mergeEvaluations, validateOperation, type CatalogEntry, type LiveSetup, type OperationPackage, type PackageIssue, type Rules, type Scenario, type SideProfile, type TheatreData, type History } from '@def-ops/sim';
 import { BUILTIN, BUILTIN_CATALOG, deleteOperation, getData, getInfra, saveOperation, type UserOperation } from '../sim/userdata';
@@ -125,7 +126,7 @@ export function OperationsTab({ d, llm, onCompare, onCalibrate }: { d: SimData; 
         </>}
         {builtin && !upload && <BuiltinCard id={builtin.id} title={builtin.title} detail={builtin.detail} llm={llm} d={d} />}
         {op && !upload && <OperationCard op={op} d={d} llm={llm} known={known} busy={busy} update={update} control={control} onCompare={onCompare} onCalibrate={onCalibrate}
-          remove={() => { if (confirm(`Удалить операцию «${op.pkg.scenario.name}»?`)) void deleteOperation(op.id).then(() => setSel(null)); }} />}
+          remove={() => { void confirmAsync(`Удалить операцию «${op.pkg.scenario.name}»?`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void deleteOperation(op.id).then(() => setSel(null)); }); }} />}
         {!op && !builtin && !upload && <div className="mdl-empty">
           <h3>Подготовка новой операции к переигровке</h3>
           <ol className="steps">
@@ -230,7 +231,7 @@ function OperationCard({ op, d, llm, known, busy, update, control, onCompare, on
         <button disabled={errors > 0} onClick={() => onCompare(op.id, cat.rules.map((r) => r.id).slice(0, 4))}>Сравнить наборы →</button>
         <span className="grow" />
         {op.ready ? <button onClick={() => void update(op, {}, { ready: false })}>Снять с переигровки</button>
-          : <button className="primary" disabled={errors > 0 || !op.check} title={!op.check ? 'сначала контрольный прогон' : ''} onClick={() => { if (cov && cov.level === 'little' && !confirm(`Материалов по операции мало: ${Math.round(cov.score * 100)} % (${COVERAGE_LEVEL[cov.level]}). Всё равно подготовить к переигровке?`)) return; void update(op, { catalog: cat, live }, { ready: true }); }}>Подготовить к переигровке ✓</button>}
+          : <button className="primary" disabled={errors > 0 || !op.check} title={!op.check ? 'сначала контрольный прогон' : ''} onClick={() => { const go = () => void update(op, { catalog: cat, live }, { ready: true }); if (cov && cov.level === 'little') void confirmAsync(`Материалов по операции мало: ${Math.round(cov.score * 100)} % (${COVERAGE_LEVEL[cov.level]}). Всё равно подготовить к переигровке?`).then((ok) => { if (ok) go(); }); else go(); }}>Подготовить к переигровке ✓</button>}
       </div>
       {op.ready && <p className="ok">Операция в «Переигровке»: расчёт, карта, принятие командования, советник, разбор.</p>}
     </section>

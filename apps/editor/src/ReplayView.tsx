@@ -3,6 +3,7 @@
  * плеером времени, итоги и отчёт о сравнении с историей. Результат можно открыть в
  * редакторе для правки и экспорта.
  */
+import { confirmAsync } from './dialogs';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { documentAt, migrateDocument, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
@@ -342,9 +343,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} onOpenInEditor={onOpenInEditor}
       onExit={({ discard }) => { if (discard) try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(loadSaved()); setGame(null); }} />;
   }
-  const startGame = (enemy: EnemyMode) => {
+  const startGame = async (enemy: EnemyMode) => {
     if (!result || !take) return;
-    if (saved && !confirm('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.')) return;
+    if (saved && !(await confirmAsync('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', { ok: 'Начать новую' }))) return;
     setTake(null);
     // агентная модель: ход игры — AGENT_GAME_HOURS, считает ядро приложения
     const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS } : undefined;
@@ -363,7 +364,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           <div><b>Незавершённая игра</b><span>{saved.title} · командование с {saved.record.takeover.slice(8, 10)}.{saved.record.takeover.slice(5, 7)}, сыграно ходов: {saved.record.turns.length}</span></div>
           <div className="rp-saved-b">
             <button className="primary" onClick={() => setGame({ start: null, saved, enemy: saved.enemy })}>Продолжить</button>
-            <button onClick={() => { if (confirm('Удалить запись незавершённой игры?')) { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); } }}>Удалить</button>
+            <button onClick={() => { void confirmAsync('Удалить запись незавершённой игры?', { ok: 'Удалить', danger: true }).then((ok) => { if (!ok) return; try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); }); }}>Удалить</button>
           </div>
         </div>}
         <div className="seg rp-tabs">
@@ -371,7 +372,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           <button className={tab === 'saved' ? 'on' : ''} onClick={() => setTab('saved')}>Сохранённые{replays.length ? ` · ${replays.length}` : ''}</button>
         </div>
         {tab === 'saved' && <SavedList list={replays} current={savedId} busy={!!busy} onOpen={(m) => void openReplay(m)}
-          onRename={(m, t) => void renameReplay(m.id, t)} onDelete={(m) => { if (confirm(`Удалить сохранённую переигровку «${m.title}»?`)) { void deleteReplay(m.id); if (savedId === m.id) setSavedId(null); } }} />}
+          onRename={(m, t) => void renameReplay(m.id, t)} onDelete={(m) => { void confirmAsync(`Удалить сохранённую переигровку «${m.title}»?`, { ok: 'Удалить', danger: true }).then((ok) => { if (!ok) return; void deleteReplay(m.id); if (savedId === m.id) setSavedId(null); }); }} />}
         {tab === 'run' && <>
         <div className="rp-cards">
           {CATALOG.map((c) => (

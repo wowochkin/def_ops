@@ -6,6 +6,7 @@
  * одновременно с человеком по своей обстановке. Посредник видит решения модели и
  * может снять туман войны. Игра сохраняется в браузере после каждого хода.
  */
+import { confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
@@ -77,6 +78,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [error, setError] = useState<string | null>(null);
   const [ai, setAi] = useState<AiStatus>({ state: 'off' });
   const [stream, setStream] = useState('');
+  const [aiPhase, setAiPhase] = useState('');
   const [blocked, setBlocked] = useState<string | null>(null);
   const [record, setRecord] = useState<GameRecord | null>(saved?.record ?? null);
   const [enemy, setEnemy] = useState<EnemyMode>(saved?.enemy ?? enemy0);
@@ -148,6 +150,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         setDecision((d) => (liveView.current?.time === m.view.time ? d : { ...EMPTY, enemyIntent: last?.enemyIntent ?? '', intent: last?.intent ?? '', risks: last?.risks ?? '' }));
       } else if (m.kind === 'ai') setAi(m.status);
       else if (m.kind === 'ai-stream') setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000)));
+      else if (m.kind === 'ai-phase') setAiPhase(m.text);
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); }
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
       else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x)));
@@ -343,7 +346,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   /** Принять вариант в проект целиком: решение, приказы, распоряжения (текущий проект заменяется). */
   const acceptPlan = async (v: PlanVariantView, idx: number) => {
     const has = draftList.length || acts.length || decision.assessment.trim() || decision.report.trim();
-    if (has && !window.confirm(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`)) return;
+    if (has && !(await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' }))) return;
     setDecision({ ...v.decision });
     const orders = v.orders.filter((o) => o.ok);
     setDrafts(Object.fromEntries(orders.map((o) => [o.formation, planDraft(o)])));
@@ -408,7 +411,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
                 <button onClick={() => { close(); if (doc) onOpenInEditor(doc); }}>Открыть карту в редакторе</button>
                 <hr />
                 <button onClick={() => { close(); onExit({ discard: false }); }}>Выйти (игра сохранена)</button>
-                <button className="danger" onClick={() => { close(); if (confirm('Завершить игру и удалить её запись?')) onExit({ discard: true }); }}>Завершить и удалить игру</button>
+                <button className="danger" onClick={() => { close(); void confirmAsync('Завершить игру и удалить её запись?', { ok: 'Завершить и удалить', danger: true }).then((ok) => { if (ok) onExit({ discard: true }); }); }}>Завершить и удалить игру</button>
               </div>
             )}</Popover>
           </div>
@@ -447,7 +450,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
                 onOrder={(id) => { setSel(id); setSub('units'); goTo(unit(id)?.at ?? null, false); }} />}
             </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
-            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
+            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
               enemy={enemy} setEnemy={setEnemy} llm={llm} onRetry={() => send({ kind: 'retry-ai' })} />}
           </>}
         </div>
@@ -1227,8 +1230,8 @@ function Journal({ v, onDownload }: { v: TurnView; onDownload: () => void }) {
   );
 }
 
-function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, setEnemy, llm, onRetry }: {
-  record: GameRecord | null; ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; reveal: boolean; setReveal: (b: boolean) => void;
+function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, enemy, setEnemy, llm, onRetry }: {
+  record: GameRecord | null; ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; phase: string; reveal: boolean; setReveal: (b: boolean) => void;
   enemy: EnemyMode; setEnemy: (e: EnemyMode) => void; llm: Llm; onRetry: () => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -1259,7 +1262,9 @@ function Umpire({ record, ai, turns, current, stream, reveal, setReveal, enemy, 
       {part === 'umpire' && (nUmp ? <UmpireNotes record={record} /> : <p className="muted">Посредник ещё не работал: включите его выше — поправки появятся со следующего хода.</p>)}
       {part === 'enemy' && <>
       <p className="muted">Решения штаба противника по ходам: оценка, замысел, приказы и распоряжения (откройте ход). Где его войска сейчас — «Показать на карте всех» выше.</p>
-      {ai.state === 'thinking' && <div className="ai-live"><div className="jsub">Штаб противника думает над решением на {ddmm(ai.time)} {hhmm(ai.time)}…</div><pre>{stream.slice(-1500) || '…'}</pre></div>}
+      {ai.state === 'thinking' && <div className="ai-live"><div className="jsub">Штаб противника думает над решением на {ddmm(ai.time)} {hhmm(ai.time)}…</div>
+        {phase && <div className="ai-phase"><i className="spinner" /> {phase}</div>}<pre>{stream.trimEnd().slice(-1500) || '…'}</pre>
+        {stream.length > 0 && <small className="muted">получено символов: {stream.length}{stream.length - stream.trimEnd().length > 50 ? ` · в конце ${stream.length - stream.trimEnd().length} пробелов подряд — модель, похоже, зациклилась; запрос повторится без схемы` : ''}</small>}</div>}
       {ai.state === 'error' && <div className="cmd-blocked"><b>Нет решения на {ddmm(ai.time)}</b><span>{ai.error}</span><div><button onClick={onRetry}>Повторить запрос</button></div></div>}
       {!list.length && <p className="muted">Решений пока нет.</p>}
       {list.map((t) => {
