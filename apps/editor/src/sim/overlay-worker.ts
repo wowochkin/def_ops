@@ -14,7 +14,7 @@ export type OverlayRequest =
    * вместо дорог / рек театра (уходят в результат: при сохранении заменяют театровые в охвате).
    */
   | { kind: 'network'; template: string; theatre: Pick<TheatreData, 'id' | 'name' | 'bbox' | 'cellKm' | 'roads' | 'rivers' | 'terrainGrid'>; grid: Grid; zoom: number; source: string;
-      what: 'roads' | 'water' | 'all'; roads?: TheatreData['roads']; rivers?: WaterCheck['rivers'] }
+      what: 'roads' | 'water' | 'all'; roads?: TheatreData['roads']; rivers?: WaterCheck['rivers']; sourceName?: string }
   | { kind: 'stop' };
 export type OverlayResponse = { kind: 'progress'; done: number; total: number; stage?: string } | { kind: 'done'; result: OverlayResult; tiles: number; missing: number } | { kind: 'error'; error: string };
 
@@ -84,7 +84,8 @@ async function network(q: Extract<OverlayRequest, { kind: 'network' }>) {
   const m2 = await eachTile(q.template, q.zoom, all, (rgba, x, y) => acc.addTile(rgba, 256, x, y, q.zoom), (done) => post({ kind: 'progress', done: first.length + done, total, stage: 'вся область узнанными цветами' }));
   if (stopped) { post({ kind: 'error', error: 'остановлено' }); return; }
   let ov = acc.result({ source: q.source, zoom: q.zoom });
-  if (roads) ov = L.merge(ov, roads.state, q.roads ? { ...roads.result, roads: q.roads } : roads.result);
-  if (water) ov = L.mergeWater(ov, water.state, water.result, T as TheatreData, q.rivers);
+  const src = q.sourceName ? { source: q.sourceName } : {};
+  if (roads) ov = L.merge(ov, roads.state, q.roads ? { ...roads.result, roads: q.roads, ...src } : roads.result);
+  if (water) ov = L.mergeWater(ov, water.state, q.rivers ? { ...water.result, ...src } : water.result, T as TheatreData, q.rivers);
   post({ kind: 'done', result: { ...ov, legend: 'network', name: 'по современной сети' }, tiles: L.tiles + acc.tiles, missing: m1 + m2 });
 }

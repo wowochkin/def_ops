@@ -64,6 +64,8 @@ export interface NetworkCheck {
    * по ним; при сохранении подтверждённые куски заменяют дороги театра в охвате карты.
    */
   roads?: TheatreData['roads'];
+  /** Откуда свои линии сверки (для показа): «OSM», «OSM + OpenHistoricalMap на 1945-04-16». */
+  source?: string;
 }
 
 /** Вода по карте: реки и каналы линиями (как дороги) и водоёмы площадями (клетки воды растра местности театра). */
@@ -528,4 +530,111 @@ export function absentLines(roads: TheatreData['roads'], absent: NetworkCheck['a
     if (line.length >= 2) out.push(line);
   }
   return out;
+}
+
+/* ------------------------- OpenHistoricalMap: линии на дату ------------------------- */
+
+/** Сервер Overpass OpenHistoricalMap (данные OSM с датами start_date / end_date; лицензия CC0). */
+export const OHM_OVERPASS = 'https://overpass-api.openhistoricalmap.org/api/interpreter';
+
+/** Дата OHM («1936», «1936-09», «1936-09-27», «~1930») → ISO-день или null, если не разобрать. */
+export function ohmDate(v: string | undefined, end = false): string | null {
+  const m = v && /(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(v);
+  if (!m) return null;
+  // неполная дата: начало — с первого дня периода, конец — по последний
+  return `${m[1]}-${m[2] ?? (end ? '12' : '01')}-${m[3] ?? (end ? '28' : '01')}`;
+}
+/** Линия OHM на дату: существует, построена позже, уже не существует; без дат — undated. */
+export function ohmAt(tags: Record<string, string>, date: string): 'valid' | 'later' | 'ended' | 'undated' {
+  const s = ohmDate(tags.start_date), e = ohmDate(tags.end_date, true);
+  if (s && s > date) return 'later';
+  if (e && e <= date) return 'ended';
+  return s || e ? 'valid' : 'undated';
+}
+
+type Kind = 'road' | 'water';
+/** Сетка отрезков для «есть ли линия рядом» (≈ 0,01°). */
+function segIndex(lines: LngLat[][]) {
+  const cell = 0.01, idx = new Map<string, [LngLat, LngLat][]>();
+  for (const l of lines) for (let k = 1; k < l.length; k++) {
+    const a = l[k - 1], b = l[k];
+    for (let x = Math.floor(Math.min(a[0], b[0]) / cell) - 1; x <= Math.floor(Math.max(a[0], b[0]) / cell) + 1; x++)
+      for (let y = Math.floor(Math.min(a[1], b[1]) / cell) - 1; y <= Math.floor(Math.max(a[1], b[1]) / cell) + 1; y++)
+        (idx.get(`${x},${y}`) ?? idx.set(`${x},${y}`, []).get(`${x},${y}`)!).push([a, b]);
+  }
+  return (p: LngLat, km: number) => {
+    const list = idx.get(`${Math.floor(p[0] / cell)},${Math.floor(p[1] / cell)}`);
+    if (!list) return false;
+    const k = Math.cos((p[1] * Math.PI) / 180);
+    for (const [a, b] of list) {
+      const ax = a[0] * k, ay = a[1], bx = b[0] * k, by = b[1], px = p[0] * k, py = p[1];
+      const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy || 1e-12, u = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L));
+      if (Math.hypot(px - ax - dx * u, py - ay - dy * u) * KM_PER_DEG <= km) return true;
+    }
+    return false;
+  };
+}
+/** Доля точек линии (через ~50 м), у которых рядом (≤ km) есть линия индекса. */
+function shareNear(line: LngLat[], near: (p: LngLat, km: number) => boolean, km: number): number {
+  let n = 0, hit = 0;
+  for (let k = 1; k < line.length; k++) {
+    const a = line[k - 1], b = line[k], steps = Math.max(1, Math.ceil(kmBetween(a, b) / 0.05));
+    for (let q = 0; q < steps; q++) { const u = q / steps; n++; if (near([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u], km)) hit++; }
+  }
+  return n ? hit / n : 0;
+}
+const lenKm = (l: LngLat[]) => l.slice(1).reduce((a, p, i) => a + kmBetween(l[i], p), 0);
+
+export interface OhmMerge {
+  roads: TheatreData['roads'];
+  rivers: { name: string; line: LngLat[]; major: boolean }[];
+  /** Сколько линий OHM на дату взято (с датой / без даты), сколько отброшено как построенные позже или упразднённые. */
+  ohm: { valid: number; undated: number; later: number; ended: number };
+  /** Линии OSM, убранные до сверки: совпали с линией OHM, которой на дату не было (послевоенные по датам OHM). */
+  postwar: { kind: Kind; name?: string; km: number }[];
+  /** Линии OSM, заменённые своими двойниками из OHM. */
+  replaced: number;
+}
+
+/**
+ * OSM + OpenHistoricalMap на дату: линии OHM, существующие на дату, берутся вместо своих двойников из OSM (≥ 70 %
+ * длины в 100 м); линии OSM, совпадающие с линией OHM, которой на дату не было (построена позже или упразднена), —
+ * убираются как послевоенные; остальные линии OSM остаются (их проверит карта).
+ */
+export function mergeOhm(osm: { roads: TheatreData['roads']; rivers: OhmMerge['rivers'] }, ohmJson: OsmJson, date: string, b: [number, number, number, number]): OhmMerge {
+  const ohm = { valid: 0, undated: 0, later: 0, ended: 0 };
+  const keep: Record<Kind, LngLat[][]> = { road: [], water: [] }, gone: Record<Kind, LngLat[][]> = { road: [], water: [] };
+  const ohmRoads: TheatreData['roads'] = [], ohmRivers: OhmMerge['rivers'] = [];
+  for (const el of ohmJson.elements ?? []) {
+    if (el.type !== 'way' || !el.geometry || !el.tags) continue;
+    const t = el.tags;
+    const road = t.highway && [...OSM_HIGHWAY, ...OSM_ROAD].includes(t.highway), water = t.waterway && OSM_WATERWAY.includes(t.waterway);
+    if (!road && !water) continue;
+    const at = ohmAt(t, date);
+    ohm[at]++;
+    const lines = clipRuns(el.geometry, b);
+    const kind: Kind = road ? 'road' : 'water';
+    if (at === 'later' || at === 'ended') { gone[kind].push(...lines); continue; }
+    keep[kind].push(...lines);
+    const name = road ? t.ref || t.name : t.name;
+    for (const line of lines) {
+      if (road) ohmRoads.push({ kind: OSM_HIGHWAY.includes(t.highway) ? 'highway' : 'road', line, ...(name ? { name } : {}) });
+      else ohmRivers.push({ name: name ?? (t.waterway === 'canal' ? 'канал' : ''), line, major: false });
+    }
+  }
+  const nearKeep = { road: segIndex(keep.road), water: segIndex(keep.water) }, nearGone = { road: segIndex(gone.road), water: segIndex(gone.water) };
+  const postwar: OhmMerge['postwar'] = [];
+  let replaced = 0;
+  const pick = <L extends { line: LngLat[]; name?: string }>(list: L[], kind: Kind): L[] => list.filter((x) => {
+    if (gone[kind].length && shareNear(x.line, nearGone[kind], 0.1) >= 0.7 && shareNear(x.line, nearKeep[kind], 0.1) < 0.3) {
+      postwar.push({ kind, name: x.name || undefined, km: +lenKm(x.line).toFixed(1) }); return false;
+    }
+    if (keep[kind].length && shareNear(x.line, nearKeep[kind], 0.1) >= 0.7) { replaced++; return false; }
+    return true;
+  });
+  return {
+    roads: [...ohmRoads, ...pick(osm.roads, 'road')],
+    rivers: [...ohmRivers, ...pick(osm.rivers, 'water')],
+    ohm, postwar, replaced,
+  };
 }

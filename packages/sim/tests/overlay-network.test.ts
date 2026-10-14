@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
-import { NetworkLearner, OverlayAccumulator, applyOverlay, osmRoadsQuery, osmToRoads, osmToRivers, osmNetworkQuery, roadLines, riverLines, encodeGrid, decodeGrid, TERRAIN_CLASSES, colorBin, cutAbsent, decodeMask, overlayGrid, tilesFor, tileXY, type TheatreData } from '../src';
+import { NetworkLearner, OverlayAccumulator, applyOverlay, osmRoadsQuery, osmToRoads, osmToRivers, osmNetworkQuery, ohmDate, ohmAt, mergeOhm, roadLines, riverLines, encodeGrid, decodeGrid, TERRAIN_CLASSES, colorBin, cutAbsent, decodeMask, overlayGrid, tilesFor, tileXY, type TheatreData } from '../src';
 
 // синтетическая «историческая карта» уровня 12: бумага, лес пятнами, надписи чёрным, дороги оранжевым
 const Z = 12;
@@ -215,5 +215,41 @@ describe('реки и каналы OpenStreetMap для охвата карты'
         areas: { total: 0, present: 0, gone: 0, goneCells: 0, added: 0, addedCells: 0 } } };
     const { theatre } = applyOverlay(T, ov, { waterNet: true });
     expect(theatre.rivers.map((r) => r.name).sort()).toEqual(['Oder', 'Spree', 'малая вне охвата']);
+  });
+});
+
+describe('OpenHistoricalMap на дату', () => {
+  const box: [number, number, number, number] = [13.6, 52.3, 14.4, 52.7];
+  it('даты: год, месяц, день; начало после даты — позже, конец до даты — упразднена', () => {
+    expect(ohmDate('1936')).toBe('1936-01-01');
+    expect(ohmDate('1936-09', true)).toBe('1936-09-28');
+    expect(ohmDate('~1930s')).toBe('1930-01-01');
+    expect(ohmDate('неизвестно')).toBeNull();
+    expect(ohmAt({ start_date: '1936-09-27' }, '1945-04-16')).toBe('valid');
+    expect(ohmAt({ start_date: '1970' }, '1945-04-16')).toBe('later');
+    expect(ohmAt({ start_date: '1900', end_date: '1939' }, '1945-04-16')).toBe('ended');
+    expect(ohmAt({}, '1945-04-16')).toBe('undated');
+  });
+  it('объединение: двойник OHM заменяет линию OSM, послевоенная по датам OHM убирается, прочие OSM остаются', () => {
+    const g = (pts: [number, number][]) => pts.map(([lon, lat]) => ({ lon, lat }));
+    const osm = {
+      roads: [
+        { kind: 'road' as const, line: [[13.7, 52.5], [14.0, 52.5]] as LngLat[], name: 'старая' },
+        { kind: 'highway' as const, line: [[13.7, 52.4], [14.0, 52.4]] as LngLat[], name: 'A 99' },
+        { kind: 'road' as const, line: [[13.7, 52.6], [14.0, 52.6]] as LngLat[], name: 'никто не знает' },
+      ],
+      rivers: [],
+    };
+    const ohm: Parameters<typeof mergeOhm>[1] = { elements: [
+      { type: 'way', tags: { highway: 'primary', name: 'Chaussee', start_date: '1831' }, geometry: g([[13.7, 52.5005], [14.0, 52.5005]]) },
+      { type: 'way', tags: { highway: 'motorway', ref: 'A 99', start_date: '1975' }, geometry: g([[13.7, 52.4], [14.0, 52.4]]) },
+      { type: 'way', tags: { waterway: 'canal', name: 'Neuer Kanal', start_date: '1960' }, geometry: g([[13.8, 52.35], [13.8, 52.45]]) },
+    ] };
+    const m = mergeOhm(osm, ohm, '1945-04-16', box);
+    expect(m.roads.map((r) => r.name).sort()).toEqual(['Chaussee', 'никто не знает']);
+    expect(m.postwar.map((x) => x.name)).toEqual(['A 99']);
+    expect(m.replaced).toBe(1);
+    expect(m.ohm).toEqual({ valid: 1, undated: 0, later: 2, ended: 0 });
+    expect(m.rivers).toEqual([]);
   });
 });
