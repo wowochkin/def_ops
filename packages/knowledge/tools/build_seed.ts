@@ -12,7 +12,7 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import type { Entry, Fact, Reliability, Relation } from '../src/schema';
+import type { Claim, Entry, Fact, Reliability, Relation } from '../src/schema';
 import { defaultRubrics, RUBRIC_CODES } from '../src/rubrics';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -71,6 +71,153 @@ const srcId = (s?: string) => {
   return entries.has(`src:${k}`) ? `src:${k}` : undefined;
 };
 
+/* ───────────── формальные части фактов (claim) ───────────── */
+// Формальная часть берётся из тех же наборов docs/sources, из которых собраны сценарии; текст фактов не меняется:
+// claim добавляется к факту, который сид и так пишет (тот же смысл), иначе — новым фактом с ключом того же рода.
+// Формирования — только те, что есть в сценариях (общих и агентных): остальным модель не пользуется.
+const SCENARIO_IDS = new Set<string>();
+const OP_START: Record<'berlin' | 'vistula', string> = { berlin: '', vistula: '' };
+for (const [op, s] of [['berlin', 'berlin-1945'], ['vistula', 'vistula-oder-1945']] as const) {
+  const sc = read(`packages/sim/data/scenarios/${s}.json`);
+  OP_START[op] = String(sc.start).slice(0, 10);
+  for (const f of sc.formations as { id: string }[]) SCENARIO_IDS.add(f.id);
+  const ag = read(`packages/sim/data/scenarios/agents/${s}.json`);
+  for (const f of [...ag.hqs, ...ag.divisions] as { id: string }[]) SCENARIO_IDS.add(f.id);
+}
+const inScenario = (id?: string | null): id is string => !!id && SCENARIO_IDS.has(id);
+/** Операция по имени файла набора. */
+const opOfFile = (file: string): 'berlin' | 'vistula' => (file.startsWith('vistula') ? 'vistula' : 'berlin');
+const claimSkipped = new Map<string, number>();
+const skipClaim = (why: string) => claimSkipped.set(why, (claimSkipped.get(why) ?? 0) + 1);
+/** Момент ISO: дата с временем из записи («start» — 05:00 начала сценария, «end» и «к исходу дня» — 23:59), иначе день. */
+const momentOf = (date: string, time?: string | null): string => {
+  const d = date.slice(0, 10);
+  if (date.length > 10) return date.slice(0, 16);
+  const t = time ?? '';
+  if (t === 'start') return `${d}T05:00`;
+  if (t === 'end' || /исход/.test(t)) return `${d}T23:59`;
+  const m = /^~?(\d{1,2})[:.](\d\d)/.exec(t);
+  return m ? `${d}T${m[1].padStart(2, '0')}:${m[2]}` : d;
+};
+const cutc = (t: string, n: number) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+const addClaimFacts = (entryId: string, facts: Fact[]): boolean => {
+  const e = entries.get(entryId);
+  if (!e) { skipClaim('нет записи'); return false; }
+  e.facts = dedupeFacts([...(e.facts ?? []), ...facts]);
+  return true;
+};
+const RELW = { A: 0, B: 1, C: 2 } as const;
+/** Наименее надёжная из достоверностей (объединённая оценка по нескольким полям). */
+const worstRel = (l: (Reliability | undefined)[]): Reliability | undefined => {
+  const k = l.filter((x): x is Reliability => !!x);
+  return k.length ? k.reduce((a, b) => (RELW[b] > RELW[a] ? b : a)) : undefined;
+};
+
+type StrengthField = { value?: number | null; source?: string; reliability?: string; note?: string };
+/** Численность на начало операции: formations[].strength_16_04 / strength_12_01 (танки — «танки и САУ») → strength на дату старта сценария. */
+function strengthClaims(): { entry: string; fact: Fact }[] {
+  const out: { entry: string; fact: Fact }[] = [];
+  for (const file of ['berlin-1945-positions.json', 'vistula-oder-1945.json']) {
+    const at = OP_START[opOfFile(file)];
+    for (const f of read(`docs/sources/${file}`).formations as (F & Record<string, unknown>)[]) {
+      const key = Object.keys(f).find((k) => k.startsWith('strength_'));
+      if (!key || !inScenario(f.id)) continue;
+      const st = f[key] as Record<'personnel' | 'tanks_spg' | 'guns', StrengthField | undefined>;
+      const num = (x?: StrengthField) => (typeof x?.value === 'number' ? x.value : undefined);
+      const personnel = num(st.personnel), tanks = num(st.tanks_spg), guns = num(st.guns);
+      if (personnel == null && tanks == null && guns == null) continue;
+      const parts = [personnel != null ? `людей ${personnel.toLocaleString('ru')}` : '', tanks != null ? `танков и САУ ${tanks.toLocaleString('ru')}` : '', guns != null ? `орудий и миномётов ${guns.toLocaleString('ru')}` : ''].filter(Boolean);
+      const used = (['personnel', 'tanks_spg', 'guns'] as const).map((k) => st[k]).filter((x): x is StrengthField => typeof x?.value === 'number');
+      const claim: Claim = { kind: 'strength', subject: f.id, at, ...(personnel != null ? { personnel } : {}), ...(tanks != null ? { tanks } : {}), ...(guns != null ? { guns } : {}) };
+      out.push({ entry: `f:${f.id}`, fact: { key: 'personnel', value: `на ${dayRu(at)}: ${parts.join(', ')}`, source: srcId(used[0]?.source), pages: cutc(used.map((x) => x.source).filter(Boolean).join('; '), 200) || undefined, reliability: worstRel(used.map((x) => rel(x.reliability))), claim } });
+    }
+  }
+  return out;
+}
+
+/** Подчинённость по строкам реестра дивизий: на каждую дату строки — ближайший вышестоящий, известный сценарию (корпус, армия, фронт). */
+function parentClaims(d: { id: string; subordination?: { date?: string; front?: string; army?: string; corps?: string; source?: string; reliability?: string }[] }, name: (id: string) => string): Fact[] {
+  const out: Fact[] = [];
+  if (!inScenario(d.id)) return out;
+  for (const row of d.subordination ?? []) {
+    const parent = [row.corps, row.army, row.front].find(inScenario);
+    if (!parent) { skipClaim('подчинённость: вышестоящий не в сценариях'); continue; }
+    const from = row.date ? row.date.slice(0, 10) : OP_START.berlin;
+    out.push({ key: 'parent', value: `${name(parent)} (с ${from.slice(8, 10)}.${from.slice(5, 7)})`, source: srcId(row.source), reliability: rel(row.reliability), claim: { kind: 'parent', subject: d.id, from, parent } });
+  }
+  return out;
+}
+
+type PosIn = { subject: string; date: string; time?: string | null; place: string; lng?: number | null; lat?: number | null; approxKm?: number | null; source?: string; reliability?: string; src?: string; pages?: string };
+/** Положение формирования: position; факт — в «боевой путь». */
+function positionClaim(p: PosIn): Fact {
+  const at = momentOf(p.date, p.time);
+  const place = p.place.replace(/_/g, ' ');
+  const claim: Claim = { kind: 'position', subject: p.subject, at, place: cutc(place, 200), ...(typeof p.lng === 'number' && typeof p.lat === 'number' ? { lngLat: [p.lng, p.lat] as [number, number] } : {}), ...(typeof p.approxKm === 'number' ? { uncertaintyKm: p.approxKm } : {}) };
+  return { key: 'path', value: `${p.date.slice(8, 10)}.${p.date.slice(5, 7)}${at.length > 10 ? ` ${at.slice(11)}` : ''}: ${cutc(place, 200)}${typeof p.approxKm === 'number' ? ` (±${p.approxKm} км)` : ''}`, source: p.src ?? srcId(p.source), pages: p.pages, reliability: rel(p.reliability), claim };
+}
+const POSITION_FILES = ['berlin-1945-positions.json', 'vistula-oder-1945.json', 'berlin-1945-halbe.json', 'berlin-1945-reichstag.json', 'berlin-1945-conquest.json', 'berlin-1945-seelow-divisions.json', 'vistula-oder-1945-divisions.json', 'berlin-1945-city-garrison.json', 'berlin-1945-research-de.json', 'berlin-1945-research-su.json'];
+/** positions[] наборов и исходные положения (start-positions-1945.json) → position. */
+function positionClaims(): { entry: string; fact: Fact }[] {
+  const out: { entry: string; fact: Fact }[] = [];
+  for (const file of POSITION_FILES) {
+    for (const p of (read(`docs/sources/${file}`).positions ?? []) as { formation: string; date: string; time?: string; place: string; lng?: number; lat?: number; approx_km?: number; source?: string; reliability?: string; page?: string }[]) {
+      if (!inScenario(p.formation) || !/^\d{4}-\d\d-\d\d/.test(p.date)) { skipClaim('положение: формирования нет в сценариях'); continue; }
+      out.push({ entry: `f:${p.formation}`, fact: positionClaim({ subject: p.formation, date: p.date, time: p.time, place: p.place, lng: p.lng, lat: p.lat, approxKm: p.approx_km, source: p.source, reliability: p.reliability, pages: p.page }) });
+    }
+  }
+  const sp = read('docs/sources/start-positions-1945.json') as Record<string, { formation: string; time: string; place: string; approxKm?: number; source?: string; reliability?: string }[] | string>;
+  for (const k of ['berlin_su', 'berlin_de', 'vistula_su', 'vistula_de']) {
+    for (const p of (sp[k] ?? []) as Exclude<(typeof sp)[string], string>) {
+      if (!inScenario(p.formation)) { skipClaim('положение: формирования нет в сценариях'); continue; }
+      out.push({ entry: `f:${p.formation}`, fact: positionClaim({ subject: p.formation, date: p.time, place: p.place, approxKm: p.approxKm, source: p.source, reliability: p.reliability }) });
+    }
+  }
+  return out;
+}
+
+/** Разграничительная линия двух объединений (оба — в сценариях); воздушная линия и линии без формаций claim не выпускают. */
+function boundaryClaim(b: { right: string; left: string; from?: string; until?: string | null; points: { place: string }[]; inclusive?: string; kind?: string }): Claim | undefined {
+  if (b.kind === 'air' || !b.from || !inScenario(b.right) || !inScenario(b.left)) { skipClaim('линия: не между формированиями сценариев'); return undefined; }
+  return { kind: 'boundary', between: [b.right, b.left], from: b.from, ...(b.until ? { to: b.until } : {}), points: b.points.map((x) => x.place), ...(b.inclusive ? { inclusive: b.inclusive } : {}) };
+}
+
+const CROSSING_STATE: Record<string, 'open' | 'destroyed' | 'built'> = { pontoon: 'built', captured: 'open', intact: 'open', blown: 'destroyed' };
+/** Состояние моста на дату → crossing (повреждённый мост в три состояния не укладывается — без claim). */
+function crossingClaim(bridgeId: string, st: { date: string; state: string }): Claim | undefined {
+  const state = CROSSING_STATE[st.state];
+  if (!state) { skipClaim(`переправа: состояние «${st.state}» не сводится к open/destroyed/built`); return undefined; }
+  return { kind: 'crossing', subject: bridgeId, from: st.date.slice(0, 10), state };
+}
+
+/** Потери формирования за период (own_losses): period «от/до» или день date…date_end. Без известного формирования — без claim. */
+function lossesClaim(r: { kind: string; formation: string | null; date?: string; date_end?: string; period?: string; values?: Record<string, unknown> }): Claim | undefined {
+  if (r.kind !== 'own_losses') return undefined;
+  if (!inScenario(r.formation)) { skipClaim('потери: формирования нет в сценариях'); return undefined; }
+  const [a, b] = r.period ? r.period.split('/') : [r.date, r.date_end ?? r.date];
+  const from = (a ?? r.date ?? '').slice(0, 10), to = (b ?? a ?? r.date ?? '').slice(0, 10);
+  if (!from) return undefined;
+  const n = (k: string) => (typeof r.values?.[k] === 'number' ? (r.values[k] as number) : undefined);
+  const [killed, wounded, missing] = [n('killed'), n('wounded'), n('missing')];
+  return { kind: 'losses', subject: r.formation, from, to, ...(killed != null ? { killed } : {}), ...(wounded != null ? { wounded } : {}), ...(missing != null ? { missing } : {}) };
+}
+
+/** События операции (events[]) → event в записи операции. */
+function eventClaims(): { entry: string; fact: Fact }[] {
+  const out: { entry: string; fact: Fact }[] = [];
+  for (const file of ['berlin-1945-positions.json', 'vistula-oder-1945.json']) {
+    const op = opOfFile(file);
+    (read(`docs/sources/${file}`).events as { date: string; time?: string; title: string; place?: string; source?: string; reliability?: string }[]).forEach((ev, i) => {
+      if (!/^\d{4}-\d\d-\d\d/.test(ev.date)) { skipClaim('событие: нет ISO-даты'); return; }
+      const at = /^\d{1,2}:\d\d$/.test(ev.time ?? '') ? momentOf(ev.date, ev.time) : ev.date.slice(0, 16);
+      const place = ev.place?.replace(/_/g, ' ');
+      out.push({ entry: op === 'berlin' ? 'op:berlin' : 'op:vistula-oder', fact: { key: 'event', value: `${dayRu(ev.date.slice(0, 10))}: ${cutc(ev.title, 300)}${place ? ` (${place})` : ''}`, source: srcId(ev.source), reliability: rel(ev.reliability),
+        claim: { kind: 'event', id: `${op}-${ev.date.slice(0, 10)}-${i}`, at, title: ev.title, ...(place ? { place } : {}) } } });
+    });
+  }
+  return out;
+}
+
 /* ───────────── формирования и командиры ───────────── */
 type F = Record<string, unknown> & { id: string; side?: string; echelon?: string; parent?: string | null; commander?: string; name_ru?: string; name?: string; name_orig?: string; name_de?: string; source?: string; note?: string };
 const allF: { f: F; file: string; src?: string }[] = [];
@@ -107,7 +254,11 @@ for (const { f, file } of allF) {
   const src = srcId(f.source as string) ?? undefined;
   if (f.side) facts.push({ key: 'side', value: SIDE[f.side] ?? f.side, source: src });
   if (f.echelon) facts.push({ key: 'echelon', value: ECH[f.echelon] ?? f.echelon, source: src });
-  if (f.parent) facts.push({ key: 'parent', value: fname.get(f.parent) ?? f.parent, source: src });
+  if (f.parent) {
+    // подчинённость в наборе формирований действует с начала операции
+    const claim: Claim | undefined = inScenario(f.id) && inScenario(f.parent) ? { kind: 'parent', subject: f.id, from: OP_START[opOfFile(file)], parent: f.parent } : undefined;
+    facts.push({ key: 'parent', value: fname.get(f.parent) ?? f.parent, source: src, ...(claim ? { claim } : {}) });
+  }
   if (f.commander) facts.push({ key: 'commander', value: f.commander, source: src });
   for (const k of ['personnel', 'tanks', 'guns'] as const) {
     const v = f[k] as unknown;
@@ -316,13 +467,14 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     summary: 'Мемуары командующего 2-м Белорусским фронтом; пересказ директивы Ставки на Берлинскую операцию.',
     facts: [{ key: 'ref', value: 'Рокоссовский К. К. Солдатский долг. М.: Воениздат, 1988' }, { key: 'reliability', value: 'B' }, { key: 'covers', value: 'разграничительная линия 2 БФ / 1 БФ' }] });
   const nm = (id: string) => entries.get(`f:${id}`)?.title ?? id;
-  for (const b of d.boundaries as { id: string; kind: string; right: string; left: string; title: string; from: string; until: string | null; points: { place: string }[]; inclusiveNote?: string; beyondEnd?: string; quote: string; source: { doc: string; archive?: string; reliability: string } }[]) {
+  for (const b of d.boundaries as { id: string; kind: string; right: string; left: string; title: string; from: string; until: string | null; points: { place: string }[]; inclusive?: string; inclusiveNote?: string; beyondEnd?: string; quote: string; source: { doc: string; archive?: string; reliability: string } }[]) {
     const src = b.source.reliability === 'A' ? 'src:RA_15' : 'src:ROK_SD';
     const pair = b.kind === 'air' ? 'советские ВВС / ВВС союзников' : `${nm(b.right)} / ${nm(b.left)}`;
     const value = `${pair} с ${b.from.slice(8, 10)}.${b.from.slice(5, 7)}${b.until ? ` до ${b.until.slice(8, 10)}.${b.until.slice(5, 7)}` : ''}: ${b.points.map((x) => x.place).join(' — ')}${b.inclusiveNote ? ` (${b.inclusiveNote})` : ''} — ${b.source.doc}`;
-    const fact = { key: 'boundary', value, source: src, pages: b.source.archive, reliability: rel(b.source.reliability), quote: b.quote };
+    const fact: Fact = { key: 'boundary', value, source: src, pages: b.source.archive, reliability: rel(b.source.reliability), quote: b.quote };
+    const claim = boundaryClaim(b as Parameters<typeof boundaryClaim>[0]);
     const targets = b.kind === 'air' ? ['op:berlin'] : [`f:${b.right}`, `f:${b.left}`, 'op:berlin'];
-    for (const t of targets) { const e = entries.get(t); if (e) e.facts = dedupeFacts([...(e.facts ?? []), fact]); }
+    for (const t of targets) { const e = entries.get(t); if (e) { const withClaim = claim && t !== 'op:berlin'; e.facts = dedupeFacts([...(e.facts ?? []), withClaim ? { ...fact, claim } : fact]); } }
     const day = b.from.slice(0, 10);
     put({ id: `bnd:${b.id}`, category: 'chronology', group: 'berlin', title: `${dayRu(day)} — разграничительная линия: ${pair}`, period: { from: day, to: day }, status: 'checked',
       summary: `${b.title}: ${b.points.map((x) => x.place).join(' — ')}.${b.beyondEnd ? ` ${b.beyondEnd[0].toUpperCase()}${b.beyondEnd.slice(1)}.` : ''}`,
@@ -336,7 +488,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
 /* ───────────── архивные документы (ЦАМО): выписки по схеме docs/tsamo-agent-task.md ───────────── */
 // Тексты документов в базу не попадают — только короткие пересказы и рубежи из выписок, со ссылкой на фонд, опись, дело и лист.
 {
-  type Pos = { army: string; unit: string; date: string | null; time?: string | null; kind: string; place: string; source: string; url?: string; lat?: number | null };
+  type Pos = { army: string; unit: string; date: string | null; time?: string | null; kind: string; place: string; source: string; url?: string; lat?: number | null; lon?: number | null; approxKm?: number | null };
   type Ord = { to: string; from: string; issued: string | null; received?: string | null; task: string; target: string; deadline?: string | null; source: string; note?: string | null };
   type Enm = { date: string; formation: string; german?: string; personnel?: number | null; tanks?: number | null; guns?: number | null; strengthNote?: string; place?: string; against?: string; docType?: string; source: string; note?: string };
   type Sup = { army: string; date: string; fuel?: number | null; ammo?: number | null; units?: string | null; event: string; text: string; distanceKm?: number | null; source: string };
@@ -398,7 +550,11 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     const d = useDoc(p.source, 'положения');
     const f = findF('su', name, op);
     const line = `${ddmm(p.date)}${p.time && p.time !== 'к исходу дня' ? ` (${p.time})` : ''}${p.kind !== 'главные силы' ? ` — ${p.kind}` : ''}: ${cut(p.place, 220)} [${cite(p.source)}]`;
-    if (f) { addLine(f, 'Положения по дням (документы ЦАМО)', line); link(f, d?.id); }
+    if (f) {
+      addLine(f, 'Положения по дням (документы ЦАМО)', line); link(f, d?.id);
+      if (inScenario(f.slice(2))) addClaimFacts(f, [positionClaim({ subject: f.slice(2), date: p.date, time: p.time, place: cut(p.place, 200), lng: p.lon, lat: p.lat, approxKm: p.approxKm, reliability: 'A', src: d?.id, pages: d?.pages })]);
+      else skipClaim('положение: формирования нет в сценариях');
+    }
     if (army && p.kind === 'главные силы') { const k = `${op}:${p.date.slice(0, 10)}`; days2.set(k, [...(days2.get(k) ?? []), `${p.army}: ${cut(p.place, 140)} [${cite(p.source)}]`]); }
   }
   for (const [k, items] of [...days2].sort()) {
@@ -485,6 +641,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     const parent = sub ? sub.corps ?? sub.army ?? sub.parent : undefined;
     addFacts(id, [{ key: 'echelon', value: 'дивизия' }, ...(parent ? [{ key: 'parent', value: fname.get(parent) ?? parent }] : []), ...(d.note ? [{ key: 'path', value: cutx(d.note, 300) }] : [])]);
     if (parent && entries.has(`f:${parent}`)) { const e = entries.get(id)!; e.relations = dedupeRel([...(e.relations ?? []), { type: 'part_of', target: `f:${parent}` }]); }
+    addClaimFacts(id, parentClaims(d, (x) => fname.get(x) ?? x));
   }
 
   // доктрины сторон (свод правил «условие → действие» с нормативами); рубрики — по теме группы правил
@@ -600,6 +757,8 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
       const when = r.period ?? `${ddmm2(r.date)}${r.date_end && r.date_end !== r.date ? `–${ddmm2(r.date_end)}` : ''}`;
       const v = r.values ? Object.entries(r.values).filter(([, x]) => x != null).map(([k, x]) => `${({ killed: 'убито', wounded: 'ранено', missing: 'пропало', total: 'всего', personnel: 'людей', tanks: 'танков', guns: 'орудий', other_reasons: 'по другим причинам', crew_killed_wounded: 'экипажей убито и ранено' } as Record<string, string>)[k] ?? k} ${typeof x === 'number' ? x.toLocaleString('ru') : normValue(x)}`).join(', ') : '';
       const fact: Fact = { key: r.kind === 'strength' ? 'personnel' : 'losses', value: cutx(`${KR[r.kind] ?? r.kind}, ${when}: ${v}${r.target ? ` — ${r.target}` : ''}${r.note ? ` (${r.note})` : ''}`, 360), source: sref(file, r.source), pages: r.page, reliability: rel(r.reliability) };
+      const lc = lossesClaim(r);
+      if (lc) fact.claim = lc;
       if (!addFacts(`f:${r.formation}`, [fact])) addFacts('battle:seelow', [{ ...fact, value: `${r.name ?? r.formation}: ${fact.value}` }]);
     }
   }
@@ -648,7 +807,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     for (const b of ob.bridges ?? []) put({ id: `obj:${b.id}`, category: 'terrain', group: 'rivers', title: `${b.name_ru}${b.river ? ` (${b.river})` : ''}`, aliases: [b.name_orig].filter(Boolean) as string[], status: 'checked',
       summary: cutx(`${KINDB[b.kind ?? ''] ?? b.kind ?? 'переправа'}${b.capacity_t ? `, грузоподъёмность ${b.capacity_t} т` : ''}${b.note ? `. ${b.note}` : ''}`, 400),
       facts: [{ key: 'kind', value: KINDB[b.kind ?? ''] ?? b.kind ?? 'переправа', source: sref(F, b.source) }, ...(b.river ? [{ key: 'location', value: `река ${b.river}` }] : []),
-        ...(b.states ?? []).map((st) => ({ key: 'crossings', value: cutx(`${ddmm2(st.date)}: ${st.state}${st.by ? ` (${fname.get(st.by) ?? st.by})` : ''}${st.note ? ` — ${st.note}` : ''}`, 360), source: sref(F, st.source), reliability: rel(st.reliability) }))],
+        ...(b.states ?? []).map((st) => { const claim = crossingClaim(b.id, st); return { key: 'crossings', value: cutx(`${ddmm2(st.date)}: ${st.state}${st.by ? ` (${fname.get(st.by) ?? st.by})` : ''}${st.note ? ` — ${st.note}` : ''}`, 360), source: sref(F, st.source), reliability: rel(st.reliability), ...(claim ? { claim } : {}) }; })],
       relations: [{ type: 'related', target: 'op:berlin' }] });
     for (const b of ob.belts ?? []) put({ id: `line:obj-${b.id}`, category: 'terrain', group: 'lines', title: b.name_ru, aliases: [b.name_orig].filter(Boolean) as string[], status: 'checked', summary: cutx(b.note ?? '', 400),
       facts: [{ key: 'kind', value: 'полоса обороны', source: sref(F, b.source), reliability: rel(b.reliability) }, ...(b.places?.length ? [{ key: 'location', value: b.places.join(', ').replace(/_/g, ' ') }] : []), ...(b.built_by ? [{ key: 'defense', value: `строили: ${b.built_by}` }] : [])], relations: [{ type: 'related', target: 'op:berlin' }] });
@@ -690,7 +849,8 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     const pair = `${fname.get(b.right) ?? b.right} / ${fname.get(b.left) ?? b.left}`;
     const doc = typeof b.source === 'string' ? b.source : b.source?.doc ?? '';
     const value = cutx(`${pair} с ${ddmm2(b.from)}${b.until ? ` до ${ddmm2(b.until)}` : ''}: ${b.points.map((x) => x.place).join(' — ')}${b.inclusiveNote ? ` (${b.inclusiveNote})` : ''}${doc ? ` — ${doc}` : ''}`, 400);
-    for (const t of [`f:${b.right}`, `f:${b.left}`]) addFacts(t, [{ key: 'boundary', value, reliability: 'C' }]);
+    const claim = boundaryClaim(b);
+    for (const t of [`f:${b.right}`, `f:${b.left}`]) addFacts(t, [{ key: 'boundary', value, reliability: 'C', ...(claim ? { claim } : {}) }]);
     const day = b.from.slice(0, 10);
     put({ id: `bnd:${b.id}`, category: 'chronology', group: day.startsWith('1945-0') && +day.slice(5, 7) >= 4 ? 'berlin' : 'vistula', title: `${dayRu(day)} — немецкая разграничительная линия: ${pair}`, period: { from: day, to: day }, status: 'draft',
       summary: `${b.title}: ${b.points.map((x) => x.place).join(' — ')}.${b.reliabilityNote ? ` ${b.reliabilityNote}` : ''}`, facts: [{ key: 'date', value: day }, { key: 'event', value: b.title }, { key: 'place', value: b.points.map((x) => x.place).join(', ') }],
@@ -709,6 +869,9 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
       sections: files.map((f) => ({ title: f.replace(/\.md$/, ''), text: readFileSync(join(SRC, dir, f), 'utf8').trim() })) });
   }
 }
+
+// формальные части фактов, у которых нет «своего» факта в сиде: численность на старт, положения, события
+for (const { entry, fact } of [...strengthClaims(), ...positionClaims(), ...eventClaims()]) addClaimFacts(entry, [fact]);
 
 // связи «включает» для родительских формирований и операций
 for (const e of entries.values()) for (const r of e.relations ?? []) {
@@ -737,4 +900,7 @@ const out = join(ROOT, 'packages/knowledge/data/seed.json');
 writeFileSync(out, JSON.stringify({ built: new Date().toISOString().slice(0, 10), note: 'собрано packages/knowledge/tools/build_seed.ts из docs/sources, профилей сторон, docs/system.md и data/curated', entries: list }));
 const by = new Map<string, number>();
 for (const e of list) by.set(e.category, (by.get(e.category) ?? 0) + 1);
+const claimStats = new Map<string, number>();
+for (const e of list) for (const f of e.facts ?? []) if (f.claim) claimStats.set(f.claim.kind, (claimStats.get(f.claim.kind) ?? 0) + 1);
+console.log(`формальных частей: ${[...claimStats].map(([k, v]) => `${k} ${v}`).join(', ')}; пропущено: ${[...claimSkipped].map(([k, v]) => `${k} — ${v}`).join('; ')}`);
 console.log(`записей: ${list.length}; ${[...by].map(([k, v]) => `${k} ${v}`).join(', ')}; ${(JSON.stringify(list).length / 1e6).toFixed(1)} МБ`);
