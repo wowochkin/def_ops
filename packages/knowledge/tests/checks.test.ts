@@ -78,6 +78,14 @@ describe('quote и numbers', () => {
     expect(lvl(cand(day(640), e, { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
     expect(lvl(cand(day(1120), e, { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
   });
+  it('дни в столбцах: число сверяется с ячейкой своего дня', () => {
+    const cells = { 'Соединение': '2-я гв. танковая армия', '16.04.1945': '310', '17.04.1945': '640' };
+    const ev = (cell: string): Evidence => ({ kind: 'row', doc: 'd1', row: 2, cells, cell, dayCells: ['16.04.1945', '17.04.1945'] });
+    const day = (total: number): Claim => ({ kind: 'losses', subject: 'su_2gta', from: '1945-04-16', to: '1945-04-16', total });
+    expect(lvl(cand(day(310), ev('16.04.1945'), { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
+    // факт за 16.04 с числом ячейки 17.04 — ошибка
+    expect(lvl(cand(day(640), ev('16.04.1945'), { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('fail');
+  });
   it('ручная правка не проходит проверки 1–2', () => {
     const c = cand(losses, { kind: 'manual' }, { origin: 'manual' });
     const r = runChecks(c, ctx());

@@ -219,13 +219,15 @@ export function rowsToCandidates(rows: string[][], mapping: TableMapping, doc: D
     if (!cells.some((c) => c.trim())) continue;
     const row = r + 1;
     const f: Fields = {};
-    const days: { day: string; field: NumberField; text: string }[] = [];
+    const days: { day: string; field: NumberField; text: string; key: string }[] = [];
+    const keyOf = (i: number) => header[i]?.trim() || `#${i + 1}`;
     mapping.columns.forEach((m, i) => {
       const v = (cells[i] ?? '').trim();
       if (m === 'skip') return;
-      if (typeof m === 'object') { if (v) days.push({ day: m.day, field: m.field, text: v }); } else if (v) f[m] = v;
+      if (typeof m === 'object') { if (v) days.push({ day: m.day, field: m.field, text: v, key: keyOf(i) }); } else if (v) f[m] = v;
     });
-    const evidence: Candidate['evidence'] = { kind: 'row', doc: doc.id, row, cells: Object.fromEntries(header.map((h, i) => [h.trim() || `#${i + 1}`, (cells[i] ?? '').trim()]).filter(([, v]) => v)) };
+    const evidence: Candidate['evidence'] = { kind: 'row', doc: doc.id, row, cells: Object.fromEntries(header.map((_, i) => [keyOf(i), (cells[i] ?? '').trim()]).filter(([, v]) => v)) };
+    const dayCells = days.map((d) => d.key);
     if (hasKind && !f.kind) { errors.push({ row, why: 'не указан вид (kind)' }); continue; }
     const kind = f.kind ? kindOf(f.kind) : (mapping.kind as ClaimKind);
     if (!kind) { errors.push({ row, why: `неизвестный вид «${f.kind}»` }); continue; }
@@ -240,7 +242,9 @@ export function rowsToCandidates(rows: string[][], mapping: TableMapping, doc: D
         const dayIso = parseDate(d.day);
         if ('err' in n) { errors.push({ row, why: `${n.err} (столбец ${d.day})` }); continue; }
         if (!dayIso) { errors.push({ row, why: `дата столбца «${d.day}» не распознана` }); continue; }
-        const c = build(f, kind, dayIso, { ...nums, [d.field]: n.n }, doc, `${doc.id}:r${row}:${candidates.length}`, evidence, 'table', row);
+        // доказательство — строка с отметкой ячейки этого дня: числа сверяются с ней, а не с соседними днями
+        const ev: Candidate['evidence'] = { ...evidence, cell: d.key, dayCells } as Candidate['evidence'];
+        const c = build(f, kind, dayIso, { ...nums, [d.field]: n.n }, doc, `${doc.id}:r${row}:${candidates.length}`, ev, 'table', row);
         if (typeof c === 'string') errors.push({ row, why: c }); else candidates.push(c);
       }
     } else {

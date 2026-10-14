@@ -9,7 +9,8 @@ export type Origin = 'text' | 'scan' | 'table' | 'agent' | 'manual';
 export type Evidence =
   | { kind: 'quote'; doc: string; chunk: number; quote: string }
   | { kind: 'scan'; doc: string; page: number; quote: string; box?: [number, number, number, number] }  // доли страницы
-  | { kind: 'row'; doc: string; row: number; cells: Record<string, string> }
+  /** cell — столбец, из которого факт (дни в столбцах); dayCells — все столбцы-дни строки: числа сверяются только с ячейкой факта. */
+  | { kind: 'row'; doc: string; row: number; cells: Record<string, string>; cell?: string; dayCells?: string[] }
   | { kind: 'agent'; ref: string; quote?: string }     // шифр, ссылка на карточку документа, выписка
   | { kind: 'manual'; note?: string };
 

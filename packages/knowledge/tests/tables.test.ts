@@ -50,6 +50,9 @@ describe('таблицы', () => {
     expect(r.candidates.map((c) => (c.claim as { from: string }).from)).toEqual(['1945-04-16', '1945-04-16', '1945-04-17']);
     expect(r.candidates[0].claim).toMatchObject({ kind: 'losses', total: 1200, to: '1945-04-16' });
     expect(new Set(r.candidates.map((c) => c.id)).size).toBe(3);
+    // доказательство помнит ячейку своего дня
+    expect(r.candidates[1].evidence).toMatchObject({ kind: 'row', cell: '16.04.1945', dayCells: ['16.04.1945', '17.04.1945'] });
+    expect(r.candidates[2].evidence).toMatchObject({ cell: '17.04.1945' });
   });
 
   it('дата 32.04.1945 — ошибка строки 2; 16.04.1945 и 1945-04-16 равны', () => {
