@@ -616,6 +616,70 @@
       ]
     },
     {
+      "id": "assume-corridor-tolerance",
+      "title": "Допуски коридора калибровки вокруг значения норматива: A ±10 %, B ±20 %, C ±35 %",
+      "kb": "model:калибровка",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "corridor.tolerance%",
+        "why": "допуски по надёжности — допущение; в строке — допуск для B; нужен разбор расхождений источников одного параметра, чтобы связать допуск с реальным разбросом"
+      },
+      "unit": "%",
+      "rules": [],
+      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+    },
+    {
+      "id": "assume-outcome-weight",
+      "title": "Вес нормативов-итогов в мериле калибровки — одна восьмая (от 3 итогов операции)",
+      "kb": "model:калибровка",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "outcome.weight%",
+        "why": "доля итогов в мериле — допущение: она должна быть заметной, но не вытеснять положения и события; нужны прогоны с разной долей и оценка устойчивости подбора"
+      },
+      "unit": "%",
+      "rules": [],
+      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+    },
+    {
+      "id": "assume-outcome-min",
+      "title": "Порог числа нормативов-итогов операции для их учёта в мериле — 3",
+      "kb": "model:калибровка",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "outcome.min",
+        "why": "порог — допущение: при меньшем числе итогов мерило по ним шумит; итоги остаются проверкой"
+      },
+      "unit": "шт.",
+      "rules": [],
+      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+    },
+    {
+      "id": "assume-corridor-edge",
+      "title": "Порог «упирается в границу» — итог в пределах 2 % ширины коридора от края",
+      "kb": "model:калибровка",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "corridor.edge%",
+        "why": "порог — допущение: нужен разбор, при каком отступе от края подбор считается упёршимся"
+      },
+      "unit": "%",
+      "rules": [],
+      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+    },
+    {
       "id": "assume-plausible-strength",
       "title": "Правдоподобие численности по ступени при приёме фактов из документов: дивизия до 20 000 (корпус 60 000, армия 150 000, фронт и группа армий 1 200 000)",
       "kb": "model:сравнение-с-историей",

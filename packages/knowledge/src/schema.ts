@@ -78,7 +78,31 @@ export type Claim =
   | { kind: 'boundary'; between: [string, string]; from: string; to?: string; points: string[]; inclusive?: string }
   | { kind: 'crossing'; subject: string; from: string; state: 'open' | 'destroyed' | 'built' }
   | { kind: 'event'; id: string; at: string; title: string; place?: string }
-  | { kind: 'losses'; subject: string; from: string; to: string; killed?: number; wounded?: number; missing?: number; /** общие потери людьми, если разбивки нет */ total?: number; tanks?: number };
+  | { kind: 'losses'; subject: string; from: string; to: string; killed?: number; wounded?: number; missing?: number; /** общие потери людьми, если разбивки нет */ total?: number; tanks?: number }
+  /** Значение входа правил или профиля (путь param): число или диапазон; без value/range и без надёжности — допущение (why — почему и чего не хватает). side — норматив одной стороны. */
+  | { kind: 'param'; param: string; value?: number; range?: [number, number]; unit?: string; side?: 'su' | 'de'; why?: string }
+  /** Ожидаемый итог прогона (темп, потери, ширина полосы…): что мерить, в каком сценарии, у кого, за какой период и в каких пределах. */
+  | { kind: 'outcome'; measure: 'pace' | 'loss' | 'frontage' | string; scenario: string; subject?: string; from: string; to: string; range: [number, number]; unit: string };
+
+/**
+ * Сведения норматива модели, не помещающиеся в формальную часть (строка norms.json): по ним собирается прежняя
+ * таблица нормативов для `sim:norms`. У факта сида; у фактов из документов и ручных — нет.
+ */
+export interface NormMeta {
+  id: string; title: string;
+  /** Запись базы, к которой относится норматив (строка kb в norms.json). */
+  kb: string;
+  /** Идентификатор источника как в norms.json (LT_CONQ), может быть пустым. */
+  src: string;
+  historical: string;
+  /** Надёжность допущения, если в строке она указана (у допущения факт надёжности не имеет). */
+  reliability?: string;
+  rules: string[];
+  note?: string;
+  operations?: string[];
+  /** Прочие поля замера (ширина полосы: side, echelon, near); у «не моделируется» — why. */
+  extra?: Record<string, string>;
+}
 
 export interface Fact {
   key: string;
@@ -91,6 +115,8 @@ export interface Fact {
   quote?: string;
   /** Формальная часть (нет — факт только справка). */
   claim?: Claim;
+  /** Сведения норматива модели (факты `param`/`outcome` и «не моделируется» из norms.json). */
+  norm?: NormMeta;
   /** Проверка при приёме: кто (авто — по правилам, человек — вручную), когда, итоги проверок. Нет — факт сида или прежний пользовательский. */
   check?: { by: 'auto' | 'human'; at: string; results: CheckResult[]; docRolledBack?: true };
   /** Подтверждение факта (откуда взят): цитата, скан, строка таблицы, выписка агента. */

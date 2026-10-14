@@ -11,6 +11,7 @@ export interface FormField { key: string; title: string; type: FormFieldType; re
 
 const F = (key: string, title: string, type: FormFieldType, required = false): FormField => ({ key, title, type, required });
 const SUBJ = F('subject', 'соединение', 'subject', true);
+const SUBJ_OPT = F('subject', 'соединение', 'subject');
 const NUMS = [F('personnel', 'людей', 'number'), F('tanks', 'танков', 'number'), F('guns', 'орудий', 'number')];
 
 /** Поля формы по виду факта (порядок — как в форме). */
@@ -26,11 +27,14 @@ export const FORM_FIELDS: Record<Claim['kind'], FormField[]> = {
   event: [F('title', 'событие', 'text', true), F('at', 'дата', 'date', true), F('place', 'место', 'text')],
   losses: [SUBJ, F('from', 'с', 'date', true), F('to', 'по', 'date', true), F('killed', 'убитых', 'number'), F('wounded', 'раненых', 'number'),
     F('missing', 'пропавших', 'number'), F('total', 'всего', 'number'), F('tanks', 'танков', 'number')],
+  // нормативы модели: форма — в задаче 3 части 3
+  param: [F('param', 'параметр', 'text', true), F('value', 'значение', 'number'), F('unit', 'единица', 'text'), F('why', 'почему допущение', 'text')],
+  outcome: [SUBJ_OPT, F('measure', 'мера', 'text', true), F('scenario', 'сценарий', 'text', true), F('from', 'с', 'date', true), F('to', 'по', 'date', true), F('unit', 'единица', 'text', true)],
 };
 
 /** Ключ текстового факта по виду (как у фактов встроенной базы). */
 export const FACT_KEY: Record<Claim['kind'], string> = {
-  strength: 'personnel', reinforce: 'reinforce', parent: 'parent', enter: 'enter', position: 'path', boundary: 'boundary', crossing: 'crossings', event: 'event', losses: 'losses',
+  strength: 'personnel', reinforce: 'reinforce', parent: 'parent', enter: 'enter', position: 'path', boundary: 'boundary', crossing: 'crossings', event: 'event', losses: 'losses', param: 'numbers', outcome: 'numbers',
 };
 
 /** Дата из ввода: ГГГГ-ММ-ДД[ЧЧ:ММ] или ДД.ММ.ГГГГ [ЧЧ:ММ] → ISO; пусто — ''; не дата — null. */
@@ -116,6 +120,8 @@ export function formToClaim(kind: Claim['kind'], fields: Record<string, string>)
       if ((out.to as string) < (out.from as string)) return { error: '«по» раньше, чем «с»' };
       if (!nums(['killed', 'wounded', 'missing', 'total', 'tanks'])) return { error: 'нужно хотя бы одно число потерь' };
       return { claim: { kind, subject: out.subject as string, from: out.from as string, to: out.to as string, ...pick(out, ['killed', 'wounded', 'missing', 'total', 'tanks']) } };
+    case 'param': case 'outcome':
+      return { error: 'форма нормативов модели — в следующей версии' };
   }
 }
 

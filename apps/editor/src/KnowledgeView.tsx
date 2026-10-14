@@ -7,7 +7,7 @@
  */
 import { chooseAsync, confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { category, entryOperations, type Claim, type Fact, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Reliability, type Rubric, type Source, type Hit, type TableMapping } from '@def-ops/knowledge';
+import { category, dateOf, entryOperations, type Claim, type Fact, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Reliability, type Rubric, type Source, type Hit, type TableMapping } from '@def-ops/knowledge';
 import { getEdits, kbOperations, onDataChange, type OperationKb } from './sim/userdata';
 import { claimText, factUse, KIND_RU } from './modeling/basis';
 import { correctsKey, deleteFact, parseCorrects, rollbackDocument, staleNow } from './kb/candidates';
@@ -292,7 +292,7 @@ function useOperationKbs(): { ops: KbOperation[]; kbs: Map<string, OperationKb> 
 /** Категории записей, где «+ Факт» уместен и без формальных фактов: формирования, театр (переправы), операции и хронология (события). */
 const TYPED_CATEGORIES = new Set(['formations', 'terrain', 'operations', 'chronology']);
 /** Дата факта (как в resolve): у потерь — конец периода, иначе at или from. */
-const claimDate = (c: Claim) => (c.kind === 'losses' ? c.to : 'at' in c ? c.at : c.from);
+const claimDate = (c: Claim) => dateOf(c);
 
 /**
  * Формальные факты записи (то, из чего собирается модель) и их использование в операциях: держит вход модели,

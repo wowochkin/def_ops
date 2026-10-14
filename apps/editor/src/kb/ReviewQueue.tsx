@@ -210,7 +210,7 @@ function ClaimEditor({ claim, names, cx, s, nameOf, match, onChange }: {
 }) {
   // запись базы без соединения сценария — соединение пусто, название записи — в names (приём найдёт запись по названию)
   const pick = (i: number) => <SubjectPicker key={`s${i}`} label={claim.kind === 'boundary' ? (i ? 'второе объединение' : 'первое объединение') : 'соединение'}
-    value={claim.kind === 'boundary' ? claim.between[i] : 'subject' in claim ? claim.subject : ''} name={claim.kind === 'boundary' ? names.between?.[i] : names.subject}
+    value={claim.kind === 'boundary' ? claim.between[i] : 'subject' in claim ? claim.subject ?? '' : ''} name={claim.kind === 'boundary' ? names.between?.[i] : names.subject}
     cx={cx} entries={s.entries} nameOf={nameOf} match={match} onChange={(id, title) => onChange(setSubject(claim, id, i), title == null ? undefined
       : claim.kind === 'boundary' ? { ...names, between: (i ? [names.between?.[0] ?? '', title] : [title, names.between?.[1] ?? '']) as [string, string] } : { ...names, subject: title })} />;
   return (

@@ -73,8 +73,13 @@ describe('формальные части фактов в сиде встрое�
   it('у каждой формальной части формирования есть сценарная формация с этим id', () => {
     const bad = new Set<string>();
     for (const { claim } of claims) {
-      const ids = claim.kind === 'boundary' ? claim.between : claim.kind === 'event' || claim.kind === 'crossing' ? [] : claim.kind === 'parent' ? [claim.subject, claim.parent] : [claim.subject];
+      const ids = claim.kind === 'boundary' ? claim.between : claim.kind === 'event' || claim.kind === 'crossing' || claim.kind === 'param' ? [] : claim.kind === 'outcome' ? []  : claim.kind === 'parent' ? [claim.subject, claim.parent] : [claim.subject];
       for (const id of ids) if (!scenarioIds.has(id)) bad.add(`${claim.kind}: ${id}`);
+    }
+    // соединение итога — в сценарии, который он измеряет
+    for (const { claim } of claims) if (claim.kind === 'outcome' && claim.subject) {
+      const ids = new Set(json<{ formations: { id: string }[] }>(`packages/sim/data/scenarios/${claim.scenario}.json`).formations.map((f) => f.id));
+      if (!ids.has(claim.subject)) bad.add(`outcome: ${claim.subject}`);
     }
     expect([...bad], `нет в сценариях:\n${[...bad].join('\n')}`).toEqual([]);
   });

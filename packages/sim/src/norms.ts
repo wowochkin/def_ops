@@ -22,6 +22,12 @@ export interface Norm {
   /** Операции, к которым относится норматив (для покрытия), если в замере нет сценария. */
   operations?: string[];
 }
+/** Допущения калибровки в коридорах (строки assume-corridor-* и assume-outcome-* в norms.json). */
+export const CORRIDOR_TOL = { A: 0.10, B: 0.20, C: 0.35 } as const;
+export const OUTCOME_WEIGHT = 1 / 8;
+export const OUTCOME_MIN = 3;
+export const CORRIDOR_EDGE = 0.02;
+
 export interface NormTable { norms: Norm[]; findings?: string[] }
 
 export type NormVerdict = 'ok' | 'low' | 'high' | 'none' | 'assumed' | 'error';
@@ -79,6 +85,10 @@ export function measureParam(ctx: SimContext, expr: string): number {
     case 'strength.weight%': return STRENGTH_WEIGHT * 100;
     case 'supplyFlow.fuelPer100km': return R.supplyFlow ? R.supplyFlow.fuelPer100km ?? 1 : NaN;
     // пороги правдоподобия проверок базы знаний (packages/knowledge/src/checks.ts, PLAUSIBLE) — допущения без опоры
+    case 'corridor.tolerance%': return CORRIDOR_TOL.B * 100;
+    case 'outcome.weight%': return OUTCOME_WEIGHT * 100;
+    case 'outcome.min': return OUTCOME_MIN;
+    case 'corridor.edge%': return CORRIDOR_EDGE * 100;
     case 'plausible.division': return 20000;
     case 'plausible.lossesShare%': return 100;
     case 'plausible.dailyLossShare%': return 100 / 3;

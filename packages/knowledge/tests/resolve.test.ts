@@ -168,3 +168,28 @@ describe('последнее звено: проверка', () => {
     expect(pick(human, auto)).toBe(auto);
   });
 });
+
+describe('значения правил (param) и итоги (outcome)', () => {
+  const prm = (i: number, rel: 'A' | 'B' | 'C', value: number, side?: 'su' | 'de'): FactRef =>
+    ref(i, { kind: 'param', param: 'advanceMax', value, ...(side ? { side } : {}) }, rel);
+  it('param: A побеждает B, даты нет', () => {
+    const a = prm(0, 'A', 30), b = prm(1, 'B', 40);
+    const r = resolve([b, a], 'param', 'advanceMax', '', {});
+    expect(r.chosen).toBe(a);
+    expect(r.conflict).toBe(true);
+  });
+  it('param: закрепление действует', () => {
+    const a = prm(0, 'A', 30), b = prm(1, 'B', 40);
+    const pins = { [pinKey('param', 'advanceMax', '')]: { entry: 'e1', index: 1 } };
+    expect(resolve([a, b], 'param', 'advanceMax', '', pins).chosen).toBe(b);
+  });
+  it('param с side — о ком param@su', () => {
+    const a = prm(0, 'B', 30, 'su');
+    expect(resolve([a], 'param', 'advanceMax@su', '', {}).chosen).toBe(a);
+    expect(resolve([a], 'param', 'advanceMax', '', {}).chosen).toBeNull();
+  });
+  it('outcome: о ком outcome:сценарий:мера:соединение, дата — to', () => {
+    const o = ref(0, { kind: 'outcome', measure: 'pace', scenario: 's', subject: 'su_1gta', from: '1945-04-17', to: '1945-04-19', range: [1, 5], unit: 'км/сут' }, 'B');
+    expect(resolve([o], 'outcome', 'outcome:s:pace:su_1gta', '1945-04-19', {}).chosen).toBe(o);
+  });
+});

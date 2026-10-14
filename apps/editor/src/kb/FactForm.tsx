@@ -80,7 +80,7 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
       b.forEach((v, i) => { if (unknownName(v)) { nm[i] = v; b[i] = ''; any = true; } });
       c.between = b;
       if (any) names.between = nm;
-    } else if (c.kind !== 'event' && c.kind !== 'crossing') {
+    } else if (c.kind !== 'event' && c.kind !== 'crossing' && c.kind !== 'param' && c.kind !== 'outcome') {
       if (unknownName(c.subject)) { names.subject = c.subject; c.subject = ''; }
       if (c.kind === 'parent' && unknownName(c.parent)) { names.parent = c.parent; c.parent = ''; }
     }

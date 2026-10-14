@@ -94,6 +94,11 @@ export function claimText(c: Claim, name: (id: string) => string = (id) => id): 
       const parts = [['убитых', c.killed], ['раненых', c.wounded], ['пропавших', c.missing], ['всего', c.total], ['танков', c.tanks]].filter(([, v]) => typeof v === 'number').map(([t, v]) => `${t} ${v}`);
       return `потери ${ruDate(c.from)} — ${ruDate(c.to)}: ${parts.join(', ')}`;
     }
+    case 'param': {
+      const v = c.range ? `${c.range[0]}–${c.range[1]}` : c.value != null ? String(c.value) : c.why ? 'допущение' : '—';
+      return `параметр ${c.param}${c.side ? ` (${c.side === 'su' ? 'СССР' : 'Германия'})` : ''}: ${v}${c.unit ? ` ${c.unit}` : ''}`;
+    }
+    case 'outcome': return `итог ${c.measure}${c.subject ? ` ${name(c.subject)}` : ''}, ${c.scenario}, ${ruDate(c.from)} — ${ruDate(c.to)}: ${c.range[0]}–${c.range[1]} ${c.unit}`;
   }
 }
 

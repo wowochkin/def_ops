@@ -5,7 +5,7 @@
  * Чистая функция: выбор из нескольких — resolve, закрепления — pins.
  */
 import type { Claim, Entry } from './schema';
-import { claimFacts, differsNum, pinKey, resolve, type FactRef, type Pins } from './resolve';
+import { claimFacts, dateOf, differsNum, pinKey, resolve, subjectOf, type FactRef, type Pins } from './resolve';
 
 type FormationIn = {
   id: string; name: string; side: string; echelon: string; parent?: string | null;
@@ -63,8 +63,6 @@ const UNMATCHED_BEFORE = 30;
 /** Неопределённость положения по ступени, км (если у факта нет своей). */
 const approxKmOf = (echelon: string) => echelon === 'front' ? 25 : echelon === 'army' ? 15 : echelon === 'corps' ? 8 : 5;
 
-const subjectOf = (c: Claim): string => c.kind === 'boundary' ? c.between.join('|') : c.kind === 'event' ? c.id : c.subject;
-const dateOf = (c: Claim): string => c.kind === 'losses' ? c.to : 'at' in c ? c.at : c.from;
 const claimOf = <K extends Claim['kind']>(f: FactRef) => f.fact.claim as Extract<Claim, { kind: K }>;
 const relOf = (f: FactRef): 'A' | 'B' | 'C' => f.fact.reliability ?? 'C';
 
@@ -266,7 +264,7 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
   const from = tStart - UNMATCHED_BEFORE * DAY;
   for (const x of facts) {
     const c = x.fact.claim!;
-    if (c.kind === 'crossing' || c.kind === 'event') continue;
+    if (c.kind === 'crossing' || c.kind === 'event' || c.kind === 'param' || c.kind === 'outcome') continue;
     const ids = c.kind === 'boundary' ? c.between : [c.subject];
     if (ids.every((i) => known.has(i))) continue;
     const t = ms(dateOf(c));

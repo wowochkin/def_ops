@@ -910,6 +910,55 @@ for (const e of entries.values()) for (const r of e.relations ?? []) {
 // висячие ссылки — убрать
 for (const e of entries.values()) e.relations = (e.relations ?? []).filter((r) => entries.has(r.target));
 
+/* ───────────── нормативы модели → факты param/outcome ───────────── */
+// Каждая строка packages/sim/data/rules/norms.json — факт в записи kb (иначе — в «Нормативы модели»): значение правила
+// (param), допущение (param без надёжности, why) или итог прогона (outcome); «не моделируется» — текстовый факт.
+// Сведения, нужные sim:norms (замер, правила, история, примечание), лежат в fact.norm — по ним норматив собирается обратно.
+{
+  const NORM_SIDE: Record<string, 'su' | 'de'> = { 'stockDays.fortress': 'de' };
+  const SU_PARAM = /^(foot\.|orderDelay\.|bridgeHours)/;
+  const nt = read('packages/sim/data/rules/norms.json') as { norms: {
+    id: string; title: string; kb: string; source: string; reliability: string; historical: string; expect?: [number, number]; unit?: string; rules: string[]; note?: string; operations?: string[];
+    measure: Record<string, string> & { kind: string };
+  }[] };
+  const KNOWN_KB = (id: string) => entries.has(id);
+  for (const n of nt.norms) {
+    const m = n.measure;
+    const target = KNOWN_KB(n.kb) ? n.kb : 'gen:model-norms';
+    if (target === 'gen:model-norms' && !entries.has(target)) put({ id: target, category: 'organization', group: 'model', title: 'Нормативы модели', status: 'checked',
+      summary: 'Нормативы модели, чьей записи в базе нет: значения правил и профилей, допущения и итоги прогонов.', facts: [] });
+    const extra: Record<string, string> = {};
+    let claim: Claim | undefined;
+    const range: [number, number] | undefined = n.expect ? [n.expect[0], n.expect[1]] : undefined;
+    const unit = n.unit || undefined;
+    const rng = range ? (range[0] === range[1] ? { value: range[0] } : { range }) : {};
+    if (m.kind === 'param') {
+      const side = NORM_SIDE[m.expr] ?? (SU_PARAM.test(m.expr) ? 'su' : undefined);
+      claim = { kind: 'param', param: m.expr, ...rng, ...(unit ? { unit } : {}), ...(side ? { side } : {}) };
+    } else if (m.kind === 'assumption') {
+      claim = { kind: 'param', param: m.expr, ...(unit ? { unit } : {}), why: m.why };
+    } else if (m.kind === 'pace' || m.kind === 'loss') {
+      claim = { kind: 'outcome', measure: m.kind, scenario: m.scenario, subject: m.kind === 'pace' ? m.formation : m.parent, from: m.from, to: m.to, range: range!, unit: unit! };
+    } else if (m.kind === 'frontage') {
+      // ширина полосы — состояние на начало сценария
+      const start = String(read(`packages/sim/data/scenarios/${m.scenario}.json`).start);
+      for (const k of ['side', 'echelon', 'near']) if (m[k]) extra[k] = m[k];
+      claim = { kind: 'outcome', measure: 'frontage', scenario: m.scenario, from: start, to: start, range: range!, unit: unit! };
+    } else if (m.kind === 'unmodelled') extra.why = m.why;
+    else throw new Error(`норматив ${n.id}: неизвестный замер ${m.kind}`);
+    const what = claim?.kind === 'outcome' ? `ожидается в расчёте ${n.expect![0]}–${n.expect![1]} ${n.unit}` : claim?.kind === 'param'
+      ? (m.kind === 'assumption' ? `допущение: ${m.why}` : n.expect ? `по источнику ${n.expect[0] === n.expect[1] ? n.expect[0] : `${n.expect[0]}–${n.expect[1]}`}${n.unit ? ` ${n.unit}` : ''}` : 'значение правила') : `не моделируется: ${m.why}`;
+    const fact: Fact = {
+      key: 'numbers', value: cutc(`${n.title} — ${what}${n.historical && n.historical !== '—' ? `; по истории: ${n.historical}` : ''}`, 600),
+      ...(srcId(n.source) ? { source: srcId(n.source) } : {}), ...(m.kind !== 'assumption' && rel(n.reliability) ? { reliability: rel(n.reliability) } : {}),
+      ...(claim ? { claim } : {}),
+      norm: { id: n.id, title: n.title, kb: n.kb, src: n.source, historical: n.historical, ...(m.kind === 'assumption' && n.reliability ? { reliability: n.reliability } : {}), rules: n.rules, ...(n.note ? { note: n.note } : {}), ...(n.operations ? { operations: n.operations } : {}), ...(Object.keys(extra).length ? { extra } : {}) },
+    };
+    const e = entries.get(target)!;
+    e.facts = [...(e.facts ?? []), fact];
+  }
+}
+
 // рубрики: сражения — по месту в операции и теме; прочие — по категории (rubrics.ts)
 const BATTLE_RUBRICS: Record<string, string[]> = {
   'battle:vo-breakthrough': ['1.1.1', '3.1.1'], 'battle:warsaw': ['1.1.2'], 'battle:oder-exit': ['1.1.3', '3.1.3', '3.2.4'], 'battle:posen': ['1.1.4', '3.1.2', '3.2.3'],

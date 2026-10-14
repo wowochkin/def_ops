@@ -14,7 +14,7 @@ export { startGame, applyTakeoverState, playTurn, replayGame, gameOver, gameOutc
 export { unitReports, hqReports, intelReport, nearbyPlaces, dayEvents, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, areaOriginal, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
 export { prepareTakeover, checkAction, applyActions, lineOf, NOT_COMMITTED, type ActionCheck } from './staff';
 export { commandTerms, type CommandTerms } from './command';
-export { evaluateNorms, normScenarios, measurePace, measureLoss, NORM_MARK, fmtNorm, type Norm, type NormTable, type NormResult, type NormVerdict } from './norms';
+export { CORRIDOR_TOL, OUTCOME_WEIGHT, OUTCOME_MIN, CORRIDOR_EDGE, evaluateNorms, normScenarios, measurePace, measureLoss, NORM_MARK, fmtNorm, type Norm, type NormTable, type NormResult, type NormVerdict } from './norms';
 export { CALIB_SPACE, CALIB_KEYS, CALIB_INFO, baseParams, rulesWith, scoreRules, evaluateRules, mergeEvaluations, type RulesEvaluation, defaultTrainUntil, Calibrator, calibratedRules, type CalibKey, type CalibParams, type CalibScore } from './calibrate';
 export { regimeDeviations, type RecordRegime, type RegimeDeviation } from './regimes';
 export { describeRules, describeProfile, diffRules, rulesOrigin, type ParamRow } from './describe';

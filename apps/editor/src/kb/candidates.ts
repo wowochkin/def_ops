@@ -5,7 +5,7 @@
  * сборщик пересобирает операции (факты в модель идут только через compileOperation).
  */
 import {
-  applyProposal, fingerprint, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey, scenarioIdOf,
+  applyProposal, dateOf, fingerprint, subjectOf, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey, scenarioIdOf,
   type Candidate, type Claim, type Entry, type Fact, type FactRef, type InfraProposal, type Pins, type Proposal, type Reliability,
 } from '@def-ops/knowledge';
 import { claimText } from '../modeling/basis';
@@ -128,6 +128,8 @@ function subjectId(id: string, w: Work): string {
 function targetOf(c: Candidate, w: Work, ctx: AcceptCtx): Entry | null {
   const cl = c.claim;
   if (cl.kind === 'event') return opEntry(c.op, 'event', w);
+  // нормативы модели (значение правила, итог прогона): записи пока нет — приём в части 3, задача 3
+  if (cl.kind === 'param' || cl.kind === 'outcome') return null;
   if (cl.kind === 'crossing') {
     if (!cl.subject.trim() && c.names.subject?.trim()) cl.subject = c.names.subject.trim();
     if (!cl.subject.trim()) return null;
@@ -388,9 +390,7 @@ async function shiftCandidates(cuts: Cuts) {
 }
 
 /** О ком факт (как в pinKey): subject, id события или пара объединений линии. */
-const subjectOf = (c: Claim): string => c.kind === 'boundary' ? c.between.join('|') : c.kind === 'event' ? c.id : c.subject;
 /** Дата факта (как в resolve): у потерь — конец периода, иначе at или from. */
-const dateOf = (c: Claim): string => c.kind === 'losses' ? c.to : 'at' in c ? c.at : c.from;
 
 /** Ключ исправления: запись#номер встроенного факта и его отпечаток. */
 export const correctsKey = (ref: Pick<FactRef, 'entry' | 'index' | 'fact'>) => `${ref.entry}#${ref.index}|${fingerprint(ref.fact)}`;
