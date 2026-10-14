@@ -171,10 +171,15 @@ export class Calibrator {
   private rng;
   private issued = 0;
   best: { p: CalibParams; s: CalibScore } | null = null;
-  constructor(readonly start: CalibParams, readonly evals: number, seed = 2026, readonly keys: CalibKey[] = CALIB_KEYS) { this.rng = createRng(seed); }
+  /** Границы поиска: коридоры нормативов (сборщик «база → правила»), где их нет — CALIB_SPACE. */
+  readonly space: Record<CalibKey, readonly [number, number]>;
+  constructor(readonly start: CalibParams, readonly evals: number, seed = 2026, readonly keys: CalibKey[] = CALIB_KEYS, space?: Partial<Record<CalibKey, [number, number]>>) {
+    this.rng = createRng(seed);
+    this.space = { ...CALIB_SPACE, ...(space ?? {}) };
+  }
   get done() { return this.issued >= this.evals; }
   get progress() { return this.issued; }
-  private clamp(k: CalibKey, v: number) { return Math.min(CALIB_SPACE[k][1], Math.max(CALIB_SPACE[k][0], v)); }
+  private clamp(k: CalibKey, v: number) { return Math.min(this.space[k][1], Math.max(this.space[k][0], v)); }
   next(k: number): CalibParams[] {
     const out: CalibParams[] = [];
     const explore = Math.floor(this.evals * 0.4);
@@ -183,7 +188,7 @@ export class Calibrator {
       const p = { ...(this.best?.p ?? this.start) };
       for (const key of this.keys) {
         p[key] = i < explore || !this.best
-          ? CALIB_SPACE[key][0] + this.rng.next() * (CALIB_SPACE[key][1] - CALIB_SPACE[key][0])
+          ? this.space[key][0] + this.rng.next() * (this.space[key][1] - this.space[key][0])
           : this.clamp(key, this.best.p[key] * Math.exp(this.rng.normal() * 0.15 * (1 - i / this.evals)));
       }
       out.push(p);

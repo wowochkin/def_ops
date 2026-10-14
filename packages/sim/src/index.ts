@@ -16,6 +16,7 @@ export { prepareTakeover, checkAction, applyActions, lineOf, NOT_COMMITTED, type
 export { commandTerms, type CommandTerms } from './command';
 export { CORRIDOR_TOL, OUTCOME_WEIGHT, OUTCOME_MIN, CORRIDOR_EDGE, evaluateNorms, normScenarios, measurePace, measureLoss, NORM_MARK, fmtNorm, type Norm, type NormTable, type NormResult, type NormVerdict } from './norms';
 export { CALIB_SPACE, CALIB_KEYS, CALIB_INFO, baseParams, rulesWith, scoreRules, evaluateRules, mergeEvaluations, type RulesEvaluation, defaultTrainUntil, Calibrator, calibratedRules, type CalibKey, type CalibParams, type CalibScore } from './calibrate';
+export { RULE_INPUTS, ruleInput, TOLERANCE, corridorOf, toMultiplier, type RuleInput, type RuleGroup } from './rule-inputs';
 export { regimeDeviations, type RecordRegime, type RegimeDeviation } from './regimes';
 export { describeRules, describeProfile, diffRules, rulesOrigin, type ParamRow } from './describe';
 export { validateOperation, detectPart, defaultCatalog, defaultLive, type OperationPackage, type CatalogEntry, type LiveSetup, type PackageIssue } from './operation';
