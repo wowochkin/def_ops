@@ -34,18 +34,23 @@ describe('формальные части фактов в сиде встрое�
     expect(p.some((c) => c.claim.parent === 'su_61a' && c.claim.from === '1945-04-01')).toBe(true);
   });
 
-  it('потери: по одной формальной части на запись own_losses с известным формированием и числом людей', () => {
-    let total = 0, known = 0;
+  it('потери: по одной формальной части на запись own_losses с известным формированием и числом людей, кроме частичных («только …»)', () => {
+    let total = 0, known = 0, partial = 0;
     const hasPeople = (v: Record<string, unknown>) => ['killed', 'wounded', 'missing', 'total'].some((k) => typeof v[k] === 'number');
     for (const f of ['berlin-1945-losses-daily.json', 'berlin-1945-losses-daily-tsamo.json']) {
-      for (const r of json<{ records: { kind: string; formation: string | null; values: Record<string, unknown> }[] }>(`docs/sources/${f}`).records) {
+      for (const r of json<{ records: { kind: string; formation: string | null; values: Record<string, unknown>; note?: string }[] }>(`docs/sources/${f}`).records) {
         if (r.kind !== 'own_losses') continue;
         total++;
-        if (r.formation && scenarioIds.has(r.formation) && hasPeople(r.values)) known++;
+        if (!r.formation || !scenarioIds.has(r.formation) || !hasPeople(r.values)) continue;
+        if (/^\s*только(?!\p{L})/iu.test(r.note ?? '')) partial++; else known++;
       }
     }
     expect(total).toBeGreaterThan(0);
     expect(of('losses').length).toBe(known);
+    // частичные записи — 8 гв. А (только артиллерия, две записи) и 4 гв. ТА (только 62 гв. тбр, две записи)
+    expect(partial).toBe(4);
+    expect(of('losses').some((c) => c.claim.subject === 'su_8gva' && c.claim.from === '1945-04-16' && c.claim.to === '1945-04-27')).toBe(false);
+    expect(of('losses').some((c) => c.claim.subject === 'su_4gta' && c.claim.to === '1945-04-17')).toBe(false);
     const l = of('losses').find((c) => c.claim.subject === 'su_8gva' && c.claim.from === '1945-04-11' && c.claim.to === '1945-05-01');
     expect(l?.claim.killed).toBe(4145);
     expect(l?.claim.wounded).toBe(18919);

@@ -191,9 +191,18 @@ function crossingClaim(bridgeId: string, st: { date: string; state: string }): C
 }
 
 /** Потери формирования за период (own_losses): period «от/до» или день date…date_end. Без известного формирования — без claim. */
-function lossesClaim(r: { kind: string; formation: string | null; date?: string; date_end?: string; period?: string; values?: Record<string, unknown> }): Claim | undefined {
+/**
+ * Частичная запись — потери не всего формирования, а одного рода войск или части: примечание записи начинается
+ * со слова «только» («ТОЛЬКО АРТИЛЛЕРИЙСКИЕ ЧАСТИ армии…», «Только артиллерия…», «Только 62-я гв. тбр…») — так
+ * составитель наборов помечает охват. Контрольной точкой потерь формирования она быть не может (расчёт считает
+ * потери всего формирования), поэтому формальной части не даёт; сам факт остаётся справкой.
+ */
+const partialLosses = (note?: string) => /^\s*только(?!\p{L})/iu.test(note ?? '');
+
+function lossesClaim(r: { kind: string; formation: string | null; date?: string; date_end?: string; period?: string; values?: Record<string, unknown>; note?: string }): Claim | undefined {
   if (r.kind !== 'own_losses') return undefined;
   if (!inScenario(r.formation)) { skipClaim('потери: формирования нет в сценариях'); return undefined; }
+  if (partialLosses(r.note)) { skipClaim('потери: только часть формирования (род войск, отдельная часть)'); return undefined; }
   const [a, b] = r.period ? r.period.split('/') : [r.date, r.date_end ?? r.date];
   const from = (a ?? r.date ?? '').slice(0, 10), to = (b ?? a ?? r.date ?? '').slice(0, 10);
   if (!from) return undefined;

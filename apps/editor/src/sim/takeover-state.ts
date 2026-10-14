@@ -16,14 +16,18 @@ export interface TakeoverSummary {
 }
 
 const DAY = 86400000;
-/** Дата без времени — начало дня (как момент без часового пояса, чтобы сравнивать одинаково). */
-const iso = (s: string) => (s.length === 10 ? `${s}T00:00` : s);
-const ms = (s: string) => Date.parse(iso(s));
+/**
+ * Дата без времени — как в сверке численности (compareStrength): состояние на дату (`at`) — «к исходу дня», то есть
+ * конец дня (00:00 следующего), начало действия (`from`) — начало дня. Момент без часового пояса, чтобы сравнивать одинаково.
+ */
+const isoFrom = (s: string) => (s.length === 10 ? `${s}T00:00` : s);
+const isoAt = (s: string) => (s.length === 10 ? new Date(Date.parse(`${s}T00:00Z`) + DAY).toISOString().slice(0, 16) : s);
+const ms = (s: string) => Date.parse(isoFrom(s));
 
 /** Копия факта с датой, приведённой к моменту (для resolve). */
 function normalized(f: FactRef): FactRef {
   const c = f.fact.claim!;
-  const claim = ('at' in c ? { ...c, at: iso(c.at) } : 'from' in c ? { ...c, from: iso(c.from) } : c) as Claim;
+  const claim = ('at' in c ? { ...c, at: isoAt(c.at) } : 'from' in c ? { ...c, from: isoFrom(c.from) } : c) as Claim;
   return { ...f, fact: { ...f.fact, claim } };
 }
 
@@ -74,4 +78,4 @@ export function toCoreTakeover(s: TakeoverState, divisions: Set<string>, hqs: Se
 
 /** Сводка для окна «Принять командование». */
 export const takeoverText = (s: TakeoverSummary) =>
-  `по фактам поправлено ${s.corrected} соединений (численность ${s.strength}, положение ${s.position}, подчинённость ${s.parent}); на допущениях — ${s.assumed}`;
+  `по фактам поправлено соединений: ${s.corrected} (численность ${s.strength}, положение ${s.position}, подчинённость ${s.parent}); на допущениях — ${s.assumed}`;

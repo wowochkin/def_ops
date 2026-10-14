@@ -143,8 +143,12 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   // данные из базы: записанные в игре при начале (восстановление — на тех же данных), иначе нынешние
   const kb = gameKbData(record as { kb?: GameKb } | undefined, record?.kb ? { compiled: null, core: null } : await gameKbNow(s.scenario, !!(record?.agents ?? s.agents)));
   // состояние соединений при передаче по фактам базы: новой игре — по нынешней базе (считается один раз и пишется
-  // в запись), записанной — то, с которым она начата (нет в записи — без него)
-  if (!record) kb.takeoverState = (await takeoverNow(s.scenario, s.takeover, !!s.agents)).state;
+  // в запись), записанной — то, с которым она начата (нет в записи — без него). База недоступна — игра начинается
+  // без состояния по фактам (как прежде), а не падает
+  if (!record) {
+    try { kb.takeoverState = (await takeoverNow(s.scenario, s.takeover, !!s.agents)).state; }
+    catch (e) { console.warn('состояние при передаче по фактам базы не получено:', e); }
+  }
   const get = (kind: string, file: string) => getData(kind as DataKind, file, kb.compiled);
   ({ ctx, history } = await contextFrom(get as never, s.scenario, s.rules));
   const cfgLoad = (liveCfg as Record<string, (() => Promise<unknown>) | undefined>)[`../../../../services/staff/live/${s.scenario}.json`];

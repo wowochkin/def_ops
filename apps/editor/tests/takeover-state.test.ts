@@ -10,12 +10,17 @@ const entry = (id: string, claims: [Claim, 'A' | 'B' | 'C'][], updatedAt = '2026
 const ids = [{ id: 'su_8ga', echelon: 'army' }, { id: 'su_d1', echelon: 'division' }, { id: 'su_c1', echelon: 'corps' }];
 
 describe('takeoverState: состояние при передаче командования по фактам', () => {
-  it('численность старше суток не берётся; в пределах суток — берётся', () => {
-    const r = takeoverState([entry('e1', [[{ kind: 'strength', subject: 'su_8ga', at: '1945-04-16', personnel: 50000 }, 'A']])], {}, ids, moment);
+  it('численность старше суток не берётся; в пределах суток — берётся; дата без времени — к исходу дня', () => {
+    // 15.04 без времени — конец дня 15.04 (16.04 00:00): 36 ч до момента — старше суток
+    const r = takeoverState([entry('e1', [[{ kind: 'strength', subject: 'su_8ga', at: '1945-04-15', personnel: 50000 }, 'A']])], {}, ids, moment);
     expect(r.state.su_8ga).toBeUndefined();
-    const r2 = takeoverState([entry('e1', [[{ kind: 'strength', subject: 'su_8ga', at: '1945-04-17', personnel: 50000, tanks: 100 }, 'B']])], {}, ids, moment);
+    // 16.04 без времени — конец дня 16.04 (17.04 00:00): 12 ч до момента — берётся
+    const r2 = takeoverState([entry('e1', [[{ kind: 'strength', subject: 'su_8ga', at: '1945-04-16', personnel: 50000, tanks: 100 }, 'B']])], {}, ids, moment);
     expect(r2.state.su_8ga).toEqual({ personnel: 50000, tanks: 100 });
     expect(r2.summary.strength).toBe(1);
+    // 17.04 без времени — к исходу 17.04, позже момента 17.04 12:00 — не берётся
+    const r3 = takeoverState([entry('e1', [[{ kind: 'strength', subject: 'su_8ga', at: '1945-04-17', personnel: 1 }, 'A']])], {}, ids, moment);
+    expect(r3.state.su_8ga).toBeUndefined();
   });
 
   it('факт позже момента передачи не берётся', () => {
@@ -67,6 +72,6 @@ describe('takeoverState: состояние при передаче команд
 
   it('текст сводки', () => {
     expect(takeoverText({ strength: 2, position: 1, parent: 0, corrected: 3, assumed: 5 }))
-      .toBe('по фактам поправлено 3 соединений (численность 2, положение 1, подчинённость 0); на допущениях — 5');
+      .toBe('по фактам поправлено соединений: 3 (численность 2, положение 1, подчинённость 0); на допущениях — 5');
   });
 });
