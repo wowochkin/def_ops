@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { compileOperation, agentTask, operationGaps, type CompileInput, type Entry } from '../src';
+import { compileOperation, agentTask, parseFactsJson, operationGaps, type CompileInput, type Entry } from '../src';
 
 const root = new URL('../../../', import.meta.url);
 const json = <T,>(p: string) => JSON.parse(readFileSync(new URL(p, root), 'utf8')) as T;
@@ -35,5 +35,12 @@ describe('задание для агента: Берлинская операц�
   it('в разделе «Что найти» нет дат и нет текста книг', () => {
     const sec = md.split('## Что найти')[1].split('## Где искать')[0];
     expect(sec).not.toMatch(/\d{4}-\d{2}-\d{2}|\d{2}\.\d{2}\.\d{4}|\b19\d\d\b/);
+  });
+
+  it('пример JSON из задания читается загрузчиком пакета фактов', () => {
+    const block = /```json\n([\s\S]*?)\n```/.exec(md)![1];
+    const r = parseFactsJson(JSON.parse(block), { id: 'doc', name: 'doc', reliability: 'B', operation: undefined } as never);
+    expect(r.errors).toEqual([]);
+    expect(r.candidates).toHaveLength(2);
   });
 });
