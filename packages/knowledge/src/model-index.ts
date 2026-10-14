@@ -275,24 +275,29 @@ export function tsFragments(path: string, src: string): ModelFragment[] {
   return out;
 }
 
-/** Первая «{» тела функции: после сбалансированных (...) параметров и возможного типа результата. */
+/**
+ * Первая «{» тела функции: после сбалансированных (...) параметров, обобщений <...> и типа результата. Строки в
+ * параметрах пропускаются; «{…}» внутри параметров, обобщений и объектного типа результата перескакиваются целиком.
+ */
 function firstBodyBrace(src: string, from: number): number {
   let paren = 0, angle = 0;
   for (let i = from; i < src.length; i++) {
     const c = src[i];
+    if (c === '"' || c === "'") { i = skipString(src, i, c); if (i < 0) return -1; continue; }
+    if (c === '`') { i = skipTemplate(src, i); if (i < 0) return -1; continue; }
     if (c === '(') paren++;
     else if (c === ')') paren--;
     else if (c === '<') angle++;
     else if (c === '>' && src[i - 1] !== '=') angle = Math.max(0, angle - 1);
-    else if (c === '{' && paren === 0 && angle === 0) {
-      // «{» в типе результата (: { a: number }) — тоже тело-кандидат: тело — последний «{» перед переводом строки
-      // объявления; проще: если после «{» до парной «}» идёт «{», это был тип
+    else if (c === '{') {
       const close = matchBrace(src, i, 'ts');
       if (close < 0) return -1;
+      if (paren > 0 || angle > 0) { i = close; continue; }
+      // «{» в типе результата (: { a: number } {, : (x) => { a } {) — тип: тело идёт следом
       const rest = src.slice(close + 1, close + 40);
       if (/^\s*(\[\]|\|[^{]*)?\s*\{/.test(rest) || /^\s*=>/.test(rest)) { i = close; continue; }
       return i;
-    } else if (c === ';' && paren === 0) return -1;
+    } else if (c === ';' && paren === 0 && angle === 0) return -1;
   }
   return -1;
 }

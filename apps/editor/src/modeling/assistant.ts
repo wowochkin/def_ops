@@ -16,7 +16,8 @@ export interface AssistDeps { load?: () => Promise<ModelFragment[]>; chat?: (llm
 let ixp: Promise<ModelIx> | null = null;
 const loadIx = (deps: AssistDeps): Promise<ModelIx> => {
   if (deps.load) return deps.load().then(modelIndex);
-  ixp ??= import('../../../../packages/knowledge/data/model-index.json').then((m) => modelIndex((m.default ?? m) as unknown as ModelFragment[]));
+  // неудачная загрузка не запоминается: следующий вопрос пробует снова
+  ixp ??= import('../../../../packages/knowledge/data/model-index.json').then((m) => modelIndex((m.default ?? m) as unknown as ModelFragment[])).catch((e) => { ixp = null; throw e; });
   return ixp;
 };
 
@@ -24,7 +25,10 @@ const loadIx = (deps: AssistDeps): Promise<ModelIx> => {
 export async function askModel(question: string, llm: LlmSettings, history: { q: string; a: string }[], onStream: (v: AssistStream) => void, signal?: AbortSignal, deps: AssistDeps = {}): Promise<AssistResult> {
   llm = kbLlm(llm);
   onStream({ stage: 'search', answer: '', thinking: '' });
-  const ix = await loadIx(deps);
+  let ix: ModelIx;
+  try { ix = await loadIx(deps); } catch (e) {
+    return { text: '', thinking: '', sources: [], extra: [], error: `выжимка модели не загрузилась: ${(e as Error).message || e}` };
+  }
   const sources = findFragments(ix, question);
   const chat: Chat = deps.chat ? deps.chat(llm) : (req) => llmClient(llm).chat(req);
   const off = llm.thinking === 'off';
@@ -50,7 +54,7 @@ export async function askModel(question: string, llm: LlmSettings, history: { q:
     return { text, thinking: second.reasoning, sources, extra, need };
   } catch (e) {
     const msg = (e as Error).message || String(e);
-    const error = signal?.aborted ? 'остановлено' : /fetch|network|ECONNREFUSED|Failed/i.test(msg) ? `сервер моделей недоступен: ${msg}` : msg;
+    const error = signal?.aborted ? 'остановлено' : /fetch|network|ECONNREFUSED/i.test(msg) ? `сервер моделей недоступен: ${msg}` : msg;
     return { text: '', thinking: '', sources, extra: [], error };
   }
 }

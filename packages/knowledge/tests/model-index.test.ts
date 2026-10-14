@@ -127,3 +127,35 @@ describe('выжимка: свежесть', () => {
     for (const k of ['doc', 'norm', 'code']) expect(all.some((x) => x.kind === k)).toBe(true);
   });
 });
+
+describe('выжимка: полнота кода', () => {
+  it('каждая функция верхнего уровня packages/sim/src попадает в выжимку', async () => {
+    const { readdirSync } = await import('node:fs');
+    const dir = new URL('../../sim/src/', import.meta.url).pathname;
+    const missing: string[] = [];
+    for (const name of readdirSync(dir).filter((n) => n.endsWith('.ts'))) {
+      const src = readFileSync(dir + name, 'utf8');
+      const got = new Set(tsFragments(`packages/sim/src/${name}`, src).map((f) => f.title));
+      for (const m of src.matchAll(/^(?:export\s+)?(?:async\s+)?function\*?\s+(\w+)/gm)) if (!got.has(m[1])) missing.push(`${name}:${m[1]}`);
+    }
+    expect(missing).toEqual([]);
+  });
+  it('сигнатура с объектным типом и «;» в результате или в обобщении, строка со скобкой в параметре', () => {
+    const src = [
+      'export async function ctx(a: string): Promise<{ ctx: number; history: string }> {',
+      '  return { ctx: 1, history: a };',
+      '}',
+      'export function det<U extends { id: string; at: number }>(xs: U[]): Set<string> {',
+      '  return new Set(xs.map((x) => x.id));',
+      '}',
+      "export function sep(s = '(', t = '{'): string {",
+      '  return s + t;',
+      '}',
+    ].join('\n');
+    const f = tsFragments('a.ts', src);
+    expect(f.map((x) => x.title)).toEqual(['ctx', 'det', 'sep']);
+    expect(f[0].text).toContain('history: a');
+    expect(f[1].text).toContain('xs.map');
+    expect(f[2].text).toContain('return s + t;');
+  });
+});

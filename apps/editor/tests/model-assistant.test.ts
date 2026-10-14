@@ -61,3 +61,16 @@ describe('ассистент модели: поток', () => {
     expect(r.sources.length).toBeGreaterThan(0);
   });
 });
+
+describe('ассистент модели: сбой загрузки выжимки', () => {
+  it('выжимка не загрузилась — понятная ошибка, без исключения; следующий вопрос пробует снова', async () => {
+    let n = 0;
+    const d: AssistDeps = { load: async () => { n++; if (n === 1) throw new Error('chunk load failed'); return all; }, chat: () => async () => ({ content: 'ответ [1]', reasoning: '' }) };
+    const r = await askModel('Как считается бой?', llm, [], () => {}, undefined, d);
+    expect(r.error).toMatch(/выжимка/);
+    expect(r.error).not.toMatch(/сервер моделей/);
+    const r2 = await askModel('Как считается бой?', llm, [], () => {}, undefined, d);
+    expect(r2.error).toBeUndefined();
+    expect(r2.sources.length).toBeGreaterThan(0);
+  });
+});

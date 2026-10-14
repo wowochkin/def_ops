@@ -2,7 +2,7 @@
  * «Моделирование» → «Ассистент»: вопросы об устройстве модели. Слева разговор, справа источники ответа
  * (разделы описания, нормативы, код). Отвечает модель роли «база знаний» по выжимке model-index.json.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ModelFragment } from '@def-ops/knowledge';
 import type { Llm } from '../shared';
 import { mdToHtml } from '../markdown';
@@ -12,7 +12,7 @@ import { loadHistory, saveHistory, type Turn } from './assistant-history';
 
 const STARTERS = [
   'Как считается исход боя?',
-  'Что такое формула Дюпюи и как она используется?',
+  'Как считается сила стороны в бою?',
   'Как устроен агент дивизии?',
   'Откуда берётся темп наступления?',
   'Как работает калибровка?',
@@ -120,8 +120,11 @@ function TurnView({ t, on, onPick }: { t: Turn; on: boolean; onPick: (n: number)
 }
 
 function Fragment({ n, f, extra, open }: { n: number; f: ModelFragment; extra: boolean; open: boolean }) {
+  const el = useRef<HTMLDetailsElement>(null);
+  // прокрутка к фрагменту — только когда его раскрыли ссылкой, не на каждой перерисовке (ответ идёт потоком)
+  useEffect(() => { if (open) el.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [open]);
   return (
-    <details className={`as-frag as-${f.kind}`} open={open || undefined} ref={(el) => { if (el && open) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }}>
+    <details className={`as-frag as-${f.kind}`} open={open || undefined} ref={el}>
       <summary><b>[{n}]</b> <span className="as-kind">{KIND_RU[f.kind]}</span> {f.title} <small className="muted">{f.place}</small>{extra && <small className="as-extra">дозапрос</small>}</summary>
       {f.kind === 'code' ? <pre className="as-code">{f.text}</pre> : <div className="as-text">{f.text}</div>}
     </details>
