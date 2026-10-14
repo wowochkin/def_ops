@@ -9,3 +9,4 @@ export * from './coverage';
 export * from './hints';
 export * from './sync';
 export * from './resolve';
+export * from './compile';
