@@ -1,13 +1,14 @@
 import 'fake-indexeddb/auto';
 import { IDBFactory } from 'fake-indexeddb';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { formationEntries, type BoundaryProposal, type Entry, type Fact, type PositionProposal, type Proposal } from '@def-ops/knowledge';
+import { formationEntries, type BoundaryProposal, type Entry, type Fact, type InfraProposal, type PositionProposal, type Proposal } from '@def-ops/knowledge';
 import type { Scenario, TheatreData } from '@def-ops/sim';
 import scenarioFile from '../../../packages/sim/data/scenarios/berlin-1945.json';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
 import * as store from '../src/kb/store';
 import { importUser } from '../src/kb/kb';
-import { migrateLegacy, migrateV7, type MigrateCtx } from '../src/kb/migrate';
+import { migrateLegacy, migrateV7, MIGRATED_V7, MIGRATED_V7_INFRA, type MigrateCtx } from '../src/kb/migrate';
+import { decideCandidates } from '../src/kb/candidates';
 import type { StoredCandidate } from '../src/kb/candidates';
 
 const OP = 'berlin-1945';
@@ -140,5 +141,23 @@ describe('перенос базы версии 6', () => {
     const p = pos('p-x', 'accepted', 'Нигдебург');
     const r = await migrateLegacy({ positions: [p] }, ctx);
     expect(r).toEqual({ facts: 0, candidates: 0 });
+  });
+
+  it('ждущая дорога — текстовым кандидатом и в базе, перенесённой раньше (один раз); принятие — факт инфраструктуры', async () => {
+    const road: InfraProposal = {
+      id: 'i1', doc: 'd1', docName: 'выписка.txt', chunk: 0, operation: OP, reliability: 'B', status: 'pending',
+      item: { kind: 'road', state: 'blocked', title: 'шоссе на Мюнхеберг', place: null, river: null, date: '1945-04-17', dateTo: null, side: null, note: null, quote: 'шоссе было забито (i1)' },
+    };
+    await store.put('infra', road);
+    await store.put('pins', { id: MIGRATED_V7, at: '' });
+    expect(await migrateV7(ctx)).toEqual({ facts: 0, candidates: 1 });
+    expect(await store.one('pins', MIGRATED_V7_INFRA)).toBeTruthy();
+    expect(await migrateV7(ctx)).toEqual({ facts: 0, candidates: 0 });
+    const c = (await store.all<StoredCandidate>('candidates'))[0];
+    expect(c).toMatchObject({ id: 'v6:inf:i1', state: 'pending', key: 'инфраструктура' });
+    expect(c.claim).toBeUndefined();
+    expect((await decideCandidates([c.id], true)).accepted).toBe(1);
+    const e = (await store.all<Entry>('entries')).find((x) => x.id === `u:${OP}:infrastructure`);
+    expect(e?.facts?.[0]).toMatchObject({ key: 'features', quote: 'шоссе было забито (i1)', source: 'doc:d1' });
   });
 });

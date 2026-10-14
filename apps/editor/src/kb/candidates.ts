@@ -6,7 +6,7 @@
  */
 import {
   applyProposal, fingerprint, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey,
-  type Candidate, type Claim, type Entry, type Fact, type FactRef, type Pins, type Proposal, type Reliability,
+  type Candidate, type Claim, type Entry, type Fact, type FactRef, type InfraProposal, type Pins, type Proposal, type Reliability,
 } from '@def-ops/knowledge';
 import { claimText } from '../modeling/basis';
 import * as kb from './kb';
@@ -25,6 +25,28 @@ export function textCandidateOf(p: Proposal, o: { id: string; state: Candidate['
     evidence: { kind: 'quote', doc: p.doc, chunk: p.chunk, quote: p.facts.find((f) => f.quote)?.quote ?? '' }, ...(p.operation ? { op: p.operation } : {}),
     checks: [], verdict: 'review', state: o.state, proposal: p,
   };
+}
+
+const ddmm = (d?: string | null) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : '');
+
+/**
+ * Дорога, рубеж и прочая инфраструктура (не переправа) из документа операции → текстовый кандидат: принятие пишет
+ * тот же факт, что прежде addInfraFact (запись «Состояние инфраструктуры» операции, ключ features, с цитатой и
+ * источником). id — как у прежнего сведения: повторный разбор или перенос не задваивает. stateRu — состояния по-русски.
+ */
+export function infraTextCandidate(x: Pick<InfraProposal, 'id' | 'doc' | 'chunk' | 'item' | 'reliability' | 'status'>, op: { id: string; title: string }, stateRu: Record<string, string>): TextCandidate {
+  const it = x.item;
+  const id = `u:${op.id}:infrastructure`;
+  const entry: Entry = {
+    id, category: 'terrain', group: 'rivers', title: `Состояние инфраструктуры: ${op.title.split(':')[0]}`, operations: [op.id], rubrics: ['5.3', '5.2'],
+    summary: 'Мосты, переправы, дороги и железные дороги операции — по документам и сведениям, принятым в разделе «Операции».', facts: [], status: 'extracted', origin: 'document',
+  };
+  const value = `${it.title}: ${stateRu[it.state] ?? it.state}${it.date ? ` с ${ddmm(it.date)}` : ''}${it.dateTo ? ` до ${ddmm(it.dateTo)}` : ''}${it.note ? ` (${it.note})` : ''}`;
+  const p: Proposal = {
+    id: x.id, doc: x.doc, chunk: x.chunk, kind: 'update', target: id, entry, relations: [], operation: op.id, status: x.status,
+    facts: [{ key: 'features', value, quote: it.quote, source: `doc:${x.doc}`, reliability: x.reliability }],
+  };
+  return textCandidateOf(p, { id: x.id, state: x.status, key: 'инфраструктура', value });
 }
 
 /** Кандидат в хранилище: с формальной частью или текстовый; принятый — с адресом факта. */
@@ -223,6 +245,17 @@ export async function decideCandidates(ids: string[], accept: boolean, edits: Re
   if (out.length) await store.put('candidates', ...out);
   if (out.length || w.touched.size) await changed();
   return { accepted, pending };
+}
+
+/**
+ * Факт, введённый человеком вручную (переправа в «Материалах»): тем же путём, что кандидат из очереди — принят
+ * человеком (check.by = 'human'), в хранилище кандидатов с адресом факта; записи соединения нет — ждёт в очереди.
+ */
+export async function addManual(c: Candidate, ctx: AcceptCtx): Promise<{ entry: string; index: number } | { pending: 'no-entry' }> {
+  const r = await acceptCandidate(c, 'human', ctx);
+  await store.put('candidates', 'pending' in r ? toQueue(c) : { ...c, verdict: 'auto', state: 'accepted', accepted: r } satisfies StoredCandidate);
+  await changed();
+  return r;
 }
 
 /** Документ факта: из доказательства, иначе из источника doc:… */

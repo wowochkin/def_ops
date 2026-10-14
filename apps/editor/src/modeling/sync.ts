@@ -4,7 +4,7 @@
  * принято в сценарий или историю, остаётся в ней с источником и цитатой; всё, чем уже пользуется расчёт, — тоже.
  */
 import { ECHELON_KM, formationEntries, formationEntry, matchEntry, matchFormation, reconcile, type BoundaryProposal, type Claim, type Entry, type Fact, type PositionProposal, type SyncInput, type SyncItem } from '@def-ops/knowledge';
-import { locatePlace, Theatre, type Boundary, type History, type Scenario, type TheatreData } from '@def-ops/sim';
+import { locatePlace, Theatre, type Boundary, type History, type Scenario } from '@def-ops/sim';
 import * as kb from '../kb/kb';
 import { fullCatalog, getData, getEdits, updateEdits } from '../sim/userdata';
 import { resetPool } from './data';
@@ -128,31 +128,6 @@ export function positionTarget(p: PositionProposal, r: PositionResolution, input
   };
 }
 
-/**
- * Принять положения: в базу — факт «боевой путь» записи формирования (с цитатой и документом); если формирование
- * и пункт нашлись — с формальной частью (положение), тогда оно идёт в модель через сборку из базы (kb-recompile).
- * В правки операции положения больше не пишутся.
- */
-export async function acceptPositions(opId: string, ps: PositionProposal[], input: SyncInput, theatre: TheatreData | null) {
-  const T = theatre ? new Theatre(theatre) : null;
-  const add: { entry?: string; create?: Entry; facts: Fact[]; operation: string }[] = [];
-  let formal = 0;
-  for (const p of ps) {
-    const r = resolvePosition(p, input, T);
-    const fact = positionFact(p, r);
-    if (fact.claim) formal++;
-    add.push({ ...positionTarget(p, r, input), facts: [fact], operation: opId });
-  }
-  await kb.addFacts(add);
-  const at = new Date().toISOString();
-  await updateEdits(opId, (e) => {
-    if (formal) e.log.push({ at, kind: 'kb', text: `положений из документов в базу (в модель — через сборку): +${formal}` });
-    if (ps.length > formal) e.log.push({ at, kind: 'kb', text: `положений только текстом (формирование или пункт не найдены): ${ps.length - formal}` });
-  });
-  await kb.decidePositions(ps.map((p) => p.id), true);
-  return { history: formal, kb: ps.length };
-}
-
 /** Убрать положение из истории (в базе знаний факт остаётся). */
 export async function removePosition(opId: string, id: string) {
   await updateEdits(opId, (e) => {
@@ -222,33 +197,6 @@ export function boundaryTargets(p: BoundaryProposal, r: BoundaryResolution, inpu
     const entry = fm ? formationEntries(entries, fm)[0]?.id : matchEntry(entries, 'formations', it.between[k], [])?.id;
     return { entry, create: entry ? undefined : fm ? formationEntry(input.operation, fm) : { ...formationEntry(input.operation, { id: `doc-${it.between[k].toLowerCase().replace(/[^a-zа-яё0-9]+/gi, '-')}`, name: it.between[k], side: '', echelon: '' }), aliases: [], facts: [] } };
   });
-}
-
-/**
- * Принять линии: в базу — факт «разграничительные линии» обоих объединений (с цитатой и документом); формальная часть
- * (линия) — у факта первого из них, если объединения нашлись и на театре есть хотя бы два пункта: в модель линия идёт
- * через сборку из базы. В сценарий операции линии больше не пишутся.
- */
-export async function acceptBoundaries(opId: string, ps: BoundaryProposal[], input: SyncInput & { scenario: Scenario }, theatre: TheatreData | null) {
-  const T = theatre ? new Theatre(theatre) : null;
-  const add: { entry?: string; create?: Entry; facts: Fact[]; operation: string }[] = [];
-  const at = new Date().toISOString();
-  let formal = 0;
-  for (const p of ps) {
-    const r = resolveBoundary(p, input, T);
-    const it = p.item;
-    const text: Fact = { key: 'boundary', value: boundaryText(it), quote: it.quote, source: `doc:${p.doc}`, pages: `часть ${p.chunk + 1}`, reliability: p.reliability };
-    const claim = boundaryClaim(p, r);
-    if (claim) formal++;
-    boundaryTargets(p, r, input).forEach((t, k) => add.push({ ...t, facts: [k === 0 && claim ? { ...text, claim, check: { by: 'human', at, results: [] }, evidence: { kind: 'quote', doc: p.doc, chunk: p.chunk, quote: it.quote } } : text], operation: opId }));
-  }
-  await kb.addFacts(add);
-  await updateEdits(opId, (e) => {
-    if (formal) e.log.push({ at, kind: 'kb', text: `разграничительных линий из документов в базу (в модель — через сборку): +${formal}` });
-    if (ps.length > formal) e.log.push({ at, kind: 'kb', text: `разграничительных линий только текстом (объединения или пункты не найдены): ${ps.length - formal}` });
-  });
-  await kb.decideBoundaries(ps.map((p) => p.id), true);
-  return { scenario: formal, kb: ps.length };
 }
 
 /** Убрать линию из сценария операции (в базе знаний факт остаётся). */

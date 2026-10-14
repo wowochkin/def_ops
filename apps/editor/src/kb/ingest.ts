@@ -13,11 +13,11 @@ import {
   normalizeMapping, OPERATION_EXTRACT_SCHEMA, parseFactsJson, rowsToCandidates, runChecks, SCAN_SCHEMA, scanMessages, stripes, templateMapping,
   toCandidates, toInfraProposals, toProposals, verdictOf,
   type Candidate, type CheckCtx, type CheckResult, type CrossAnswer, type Entry, type ExtractedClaim, type ExtractedItem, type Fact, type InfraItem,
-  type KbDocument, type OperationHint, type Proposal, type RowError, type TableMapping,
+  type KbDocument, type OperationHint, type RowError, type TableMapping,
 } from '@def-ops/knowledge';
 import type { ChatMessage, LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
-import { saveCandidates, textCandidateOf, type StoredCandidate, type TextCandidate } from './candidates';
+import { infraTextCandidate, saveCandidates, textCandidateOf, type StoredCandidate, type TextCandidate } from './candidates';
 import { crossLlm, kbLlm, llmClient, scanLlm } from './kb';
 import * as store from './store';
 import { cropImage, renderPdfPage, type PageImage } from './text';
@@ -149,30 +149,14 @@ function strengthFrom(facts: Fact[]) {
   };
 }
 
-const ddmm = (d?: string | null) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : '');
-
 /**
- * Дороги, рубежи и прочая инфраструктура (не переправы — они в claims) → текстовые кандидаты: принятие пишет тот же
- * факт, что прежде addInfraFact (запись «Состояние инфраструктуры» операции, ключ features, с цитатой и источником).
+ * Дороги, рубежи и прочая инфраструктура (не переправы — они в claims) → текстовые кандидаты (infraTextCandidate).
  * id — как у прежнего сведения (документ, часть, номер): повторный разбор части не задваивает и не сбрасывает принятое.
  */
 async function infraCandidates(items: InfraItem[], text: string, doc: KbDocument, chunk: number, op: { id: string; title: string }): Promise<TextCandidate[]> {
   const { INFRA_STATE_RU } = await import('@def-ops/sim');
   const inf = toInfraProposals(items.filter((x) => x.kind !== 'bridge' && x.kind !== 'crossing'), text, { ...doc, operation: op.id }, chunk);
-  const id = `u:${op.id}:infrastructure`;
-  const entry: Entry = {
-    id, category: 'terrain', group: 'rivers', title: `Состояние инфраструктуры: ${op.title.split(':')[0]}`, operations: [op.id], rubrics: ['5.3', '5.2'],
-    summary: 'Мосты, переправы, дороги и железные дороги операции — по документам и сведениям, принятым в разделе «Операции».', facts: [], status: 'extracted', origin: 'document',
-  };
-  return inf.proposals.map((x) => {
-    const it = x.item;
-    const value = `${it.title}: ${INFRA_STATE_RU[it.state]}${it.date ? ` с ${ddmm(it.date)}` : ''}${it.dateTo ? ` до ${ddmm(it.dateTo)}` : ''}${it.note ? ` (${it.note})` : ''}`;
-    const p: Proposal = {
-      id: x.id, doc: doc.id, chunk, kind: 'update', target: id, entry, relations: [], operation: op.id, status: 'pending',
-      facts: [{ key: 'features', value, quote: it.quote, source: `doc:${doc.id}`, reliability: doc.reliability }],
-    };
-    return textCandidateOf(p, { id: x.id, state: 'pending', key: 'инфраструктура', value });
-  });
+  return inf.proposals.map((x) => infraTextCandidate({ ...x, status: 'pending' }, op, INFRA_STATE_RU));
 }
 
 type Counts = { auto: number; review: number; drop: number; duplicate: number };

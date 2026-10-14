@@ -5,13 +5,15 @@
  * Принятые положения, линии, переправы и мосты — факты с claim и check.by = 'human' (прежний текстовый факт
  * дополняется формальной частью; нет его — факт добавляется). Где claim не собрать (формирование, место или дата не
  * найдены) — текстовый факт остаётся как был. Ждущие и отклонённые — кандидатами с прежним состоянием; предложения
- * записей — текстовыми кандидатами (без claim). Прочая инфраструктура (дороги, рубежи) остаётся как была.
+ * записей — текстовыми кандидатами (без claim). Прочая инфраструктура (дороги, рубежи; переправы с состоянием, которое
+ * не читается как проходима / разрушена / наведена): принятая остаётся как была (текстовый факт), ждущая и
+ * отклонённая — текстовыми кандидатами (принятие — тот же факт, что прежде addInfraFact).
  * Повторный запуск ничего не задваивает: метка migrated:v7 в хранилище pins, а сам перенос узнаёт сделанное.
  */
 import type { BoundaryProposal, Claim, Entry, Fact, InfraItem, InfraProposal, PositionProposal, Proposal, SyncInput } from '@def-ops/knowledge';
 import { Theatre, type Scenario, type TheatreData } from '@def-ops/sim';
 import { boundaryClaim, boundaryTargets, boundaryText, positionClaim, positionFact, positionTarget, resolveBoundary, resolvePosition, syncInput, type BoundaryResolution, type PositionResolution } from '../modeling/sync';
-import { textCandidateOf, work, type StoredCandidate } from './candidates';
+import { infraTextCandidate, textCandidateOf, work, type StoredCandidate } from './candidates';
 import * as store from './store';
 
 /** Данные операции для переноса: сценарий (формирования) и театр; null — операции нет. */
@@ -31,6 +33,8 @@ const defaultCtx: MigrateCtx = {
 };
 
 export const MIGRATED_V7 = 'migrated:v7';
+/** Метка второго шага переноса: ждущая прочая инфраструктура (дороги, рубежи) — кандидатами (базы, перенесённые раньше). */
+export const MIGRATED_V7_INFRA = 'migrated:v7-infra';
 
 /** Прежние очереди (из хранилищ версии 6 или из выгрузки версии 1). */
 export interface Legacy { proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[]; boundaries?: BoundaryProposal[] }
@@ -42,13 +46,19 @@ export function migrateV7(ctx: MigrateCtx = defaultCtx): Promise<{ facts: number
   return running;
 }
 async function runV7(ctx: MigrateCtx): Promise<{ facts: number; candidates: number }> {
-  if (await store.one('pins', MIGRATED_V7)) return { facts: 0, candidates: 0 };
+  if (await store.one('pins', MIGRATED_V7)) {
+    // база перенесена до того, как прочая инфраструктура стала кандидатами, — дополнить один раз (перенос идемпотентен)
+    if (await store.one('pins', MIGRATED_V7_INFRA)) return { facts: 0, candidates: 0 };
+    const { missing, ...r } = await migrateLegacy({ infra: await store.all<InfraProposal>('infra') }, ctx);
+    if (!missing?.length) await store.put('pins', { id: MIGRATED_V7_INFRA, at: new Date().toISOString(), ...r });
+    return r;
+  }
   const [proposals, infra, positions, boundaries] = await Promise.all([
     store.all<Proposal>('proposals'), store.all<InfraProposal>('infra'), store.all<PositionProposal>('positions'), store.all<BoundaryProposal>('boundaries'),
   ]);
   const { missing, ...r } = await migrateLegacy({ proposals, infra, positions, boundaries }, ctx);
   // операция (сценарий или театр) не прочиталась — метки нет: при следующем открытии перенос повторится (без повторов)
-  if (!missing?.length) await store.put('pins', { id: MIGRATED_V7, at: new Date().toISOString(), ...r });
+  if (!missing?.length) await store.put('pins', { id: MIGRATED_V7, at: new Date().toISOString(), ...r }, { id: MIGRATED_V7_INFRA, at: new Date().toISOString() });
   return r;
 }
 
@@ -181,6 +191,14 @@ export async function migrateLegacy(data: Legacy, ctx: MigrateCtx = defaultCtx):
       names: { subject: p.item.title, ...(p.item.place ? { place: p.item.place } : {}) },
       key: 'переправа', value: `${p.item.title}${p.item.date ? `, с ${p.item.date}` : ''}`,
     });
+  }
+
+  // прочая инфраструктура и переправы с нечитаемым состоянием: ждущие и отклонённые — текстовыми кандидатами
+  const { INFRA_STATE_RU } = await import('@def-ops/sim');
+  for (const p of (data.infra ?? []).filter((x) => x.status !== 'accepted' && (!isCrossing(x) || !CROSSING_STATE[x.item.state]))) {
+    const { od } = await opData(p.operation);
+    if (!od) continue; // операция не прочиталась — при следующем запуске
+    addCand(infraTextCandidate({ ...p, id: `v6:inf:${p.id}` }, { id: p.operation, title: od?.input.operation.title ?? p.operation }, INFRA_STATE_RU));
   }
 
   for (const p of data.proposals ?? []) {

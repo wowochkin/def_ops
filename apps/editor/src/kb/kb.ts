@@ -5,7 +5,7 @@
  */
 import { stripMeta } from '../markdown';
 import {
-  applyProposal, chunkText, gameReference, gather, hybridHits, Index, type Hit, qaMessages,
+  chunkText, gameReference, gather, hybridHits, Index, type Hit, qaMessages,
   type Entry, type Fact, type BoundaryProposal, type InfraProposal, type KbDocument, type OperationHint, type Pins, type PositionProposal, type Proposal, type Reliability, type Source, type TableMapping,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
@@ -241,51 +241,6 @@ export async function process(id: string, llm: LlmSettings, o: { hint?: Operatio
     await reload();
     kbChanged();
   }
-}
-
-/* ───────────── предложения ───────────── */
-
-export async function decide(ids: string[], accept: boolean) {
-  const ps = state.proposals.filter((p) => ids.includes(p.id) && p.status === 'pending');
-  const touched = new Map<string, Entry>();
-  for (const p of ps) {
-    p.status = accept ? 'accepted' : 'rejected';
-    if (!accept) continue;
-    const key = p.kind === 'new' ? p.entry.id : p.target!;
-    const cur = touched.get(key) ?? state.byId.get(key);
-    touched.set(key, applyProposal(p, cur));
-  }
-  if (touched.size) await store.put('entries', ...touched.values());
-  await store.put('proposals', ...ps);
-  await reload();
-  kbChanged();
-}
-
-/** Сведения об инфраструктуре: отметить принятыми или отклонёнными (в операцию их записывает раздел «Операции»). */
-export async function decideInfra(ids: string[], accept: boolean) {
-  const ps = state.infra.filter((p) => ids.includes(p.id) && p.status === 'pending');
-  for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
-  if (ps.length) await store.put('infra', ...ps);
-  await reload();
-  kbChanged();
-}
-
-/** Положения из документов: отметить принятыми или отклонёнными (в историю и в базу их пишет раздел «Операции»). */
-export async function decidePositions(ids: string[], accept: boolean) {
-  const ps = state.positions.filter((p) => ids.includes(p.id) && p.status === 'pending');
-  for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
-  if (ps.length) await store.put('positions', ...ps);
-  await reload();
-  kbChanged();
-}
-
-/** Разграничительные линии из документов: отметить принятыми или отклонёнными (в сценарий и в базу их пишет раздел «Операции»). */
-export async function decideBoundaries(ids: string[], accept: boolean) {
-  const ps = state.boundaries.filter((p) => ids.includes(p.id) && p.status === 'pending');
-  for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
-  if (ps.length) await store.put('boundaries', ...ps);
-  await reload();
-  kbChanged();
 }
 
 /**

@@ -2,15 +2,20 @@
  * Раздел «Знания»: база знаний по операциям — для обучения и для модели. Каркас категорий (операции,
  * сражения, формирования, командование, доктрина, техника, театр, хронология, источники), карточки
  * записей с фактами и источниками, вопросы и рассказы по материалам базы (модель отвечает только по ним,
- * со ссылками), загрузка документов: модель извлекает сведения с цитатами, человек принимает предложения.
+ * со ссылками), загрузка документов: разбор даёт кандидатов-фактов, проверки решают — в базу, в очередь «На проверку»
+ * (решает человек) или в отброшенные (итоги документа).
  */
 import { confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { category, entryOperations, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
+import { category, entryOperations, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Reliability, type Rubric, type Source, type Hit, type TableMapping } from '@def-ops/knowledge';
 import { getEdits, kbOperations, onDataChange, type OperationKb } from './sim/userdata';
 import { claimText, factUse, KIND_RU } from './modeling/basis';
 import { CoveragePanel } from './modeling/Coverage';
 import * as kb from './kb/kb';
+import { ColumnMapping } from './kb/ColumnMapping';
+import { DocumentResults } from './kb/DocumentResults';
+import { candDoc, type QueueFilter } from './kb/queue';
+import { ReviewQueue } from './kb/ReviewQueue';
 import { ACCEPT } from './kb/text';
 import { QWEN_EMBED } from './kb/vectors';
 import type { Llm } from './shared';
@@ -18,7 +23,7 @@ import { ModelPicker } from './ModelPicker';
 import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
 
-type Tab = 'browse' | 'docs' | 'coverage';
+type Tab = 'browse' | 'queue' | 'docs' | 'coverage';
 interface QA { id: number; mode: 'ask' | 'lecture'; q: string; text: string; thinking: string; model?: string; seconds?: number; search?: string; stage?: 'search' | 'model'; sources: Source[]; done: boolean; error?: string }
 
 export function KnowledgeView({ llm }: { llm: Llm }) {
@@ -35,6 +40,21 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
     window.addEventListener('def_ops.kb.open', f);
     return () => window.removeEventListener('def_ops.kb.open', f);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // очередь «На проверку» с фильтром — из «Моделирования» → «Материалы» (операция, документ)
+  const [qf, setQf] = useState<QueueFilter>({});
+  useEffect(() => {
+    const go = (f: { op?: string; doc?: string }) => {
+      try { localStorage.removeItem('def_ops.kb.queue'); } catch { /* */ }
+      if (f.op) setOp(f.op);
+      setQf(f.doc ? { doc: f.doc } : {});
+      setTab('queue');
+    };
+    try { const x = localStorage.getItem('def_ops.kb.queue'); if (x) go(JSON.parse(x) as { op?: string; doc?: string }); } catch { /* */ }
+    const f = (e: Event) => go((e as CustomEvent<{ op?: string; doc?: string }>).detail ?? {});
+    window.addEventListener('def_ops.kb.queue', f);
+    return () => window.removeEventListener('def_ops.kb.queue', f);
+  }, []);
+  const toQueue = (doc?: string) => { setQf(doc ? { doc } : {}); setTab('queue'); };
   // операция: '' — все материалы, 'general' — общие (без операции), иначе id операции
   const [ops, setOps] = useState<KbOperation[]>([]);
   const [op, setOp] = useState<string>(() => { try { return localStorage.getItem('def_ops.kbOp') ?? ''; } catch { return ''; } });
@@ -44,14 +64,15 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
   /** Переход к рубрике из «Полноты». */
   const [jump, setJump] = useState<{ code: string; n: number } | null>(null);
   const open = (id: string) => { setTab('browse'); setSel((cur) => { if (cur && cur !== id) setHist((h) => [...h.slice(-20), cur]); return id; }); };
-  const pending = scoped.proposals.filter((p) => p.status === 'pending').length;
+  const pending = scoped.candidates.filter((c) => c.state === 'pending').length;
   return (
     <div className="kb">
       <div className="kb-top">
         <h2>Знания</h2>
         <nav className="kb-tabs">
           <button className={tab === 'browse' ? 'on' : ''} onClick={() => setTab('browse')}>Материалы</button>
-          <button className={tab === 'docs' ? 'on' : ''} onClick={() => setTab('docs')}>Документы{pending ? <i className="kb-badge">{pending}</i> : null}</button>
+          <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')} title="Кандидаты-факты, которые проверки не пропустили в базу сразу: решает человек">На проверку{pending ? <i className="kb-badge">{pending}</i> : null}</button>
+          <button className={tab === 'docs' ? 'on' : ''} onClick={() => setTab('docs')}>Документы</button>
           <button className={tab === 'coverage' ? 'on' : ''} onClick={() => setTab('coverage')} title="Полнота материалов операции по каркасу">Полнота</button>
         </nav>
         <label className="kb-op" title="Материалы операции: записи из разбора её документов и относящиеся к ней по периоду и рубрикам">Операция
@@ -63,7 +84,8 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
         : tab === 'browse' ? <Browse s={scoped} sel={sel} open={open} jump={jump} back={hist.length ? () => { setSel(hist[hist.length - 1]); setHist((h) => h.slice(0, -1)); } : null} llm={llm} />
         : tab === 'coverage' ? <div className="kb-cov">{op && op !== 'general' ? <CoveragePanel op={op} title={ops.find((o) => o.id === op)?.title ?? op} />
           : <GeneralCoverage s={scoped} all={!op} onRubric={(code) => { setJump({ code, n: Date.now() }); setTab('browse'); }} open={open} />}</div>
-        : <Docs s={scoped} llm={llm} open={open} op={op && op !== 'general' ? ops.find((o) => o.id === op) ?? null : null} ops={ops} />}
+        : tab === 'queue' ? <ReviewQueue s={scoped} llm={llm} open={open} filter={qf} setFilter={setQf} />
+        : <Docs s={scoped} llm={llm} open={open} op={op && op !== 'general' ? ops.find((o) => o.id === op) ?? null : null} ops={ops} onQueue={toQueue} />}
     </div>
   );
 }
@@ -111,13 +133,15 @@ function GeneralCoverage({ s, all, onRubric, open }: { s: kb.KbState; all: boole
   );
 }
 
-/** База в разрезе операции: записи, документы и предложения операции (связи и карточки — по всей базе). */
+/** База в разрезе операции: записи, документы и кандидаты операции (связи и карточки — по всей базе). */
 function scope(s: kb.KbState, op: string, ops: KbOperation[]): kb.KbState {
   if (!op) return s;
   const docOk = (d: KbDocument) => (op === 'general' ? !d.operation : d.operation === op);
   const documents = s.documents.filter(docOk);
   const ids = new Set(documents.map((d) => d.id));
-  return { ...s, entries: s.entries.filter((e) => inOperation(e, op, ops)), documents, proposals: s.proposals.filter((p) => ids.has(p.doc)), infra: s.infra.filter((p) => ids.has(p.doc)) };
+  // кандидат операции — по операции или по документу; общие — без операции из общих документов
+  const candidates = s.candidates.filter((c) => (op === 'general' ? !c.op : c.op === op) || ids.has(candDoc(c) ?? ''));
+  return { ...s, entries: s.entries.filter((e) => inOperation(e, op, ops)), documents, candidates, proposals: s.proposals.filter((p) => ids.has(p.doc)), infra: s.infra.filter((p) => ids.has(p.doc)) };
 }
 
 /* ───────────── материалы: каркас, карточка, вопросы ───────────── */
@@ -379,13 +403,11 @@ function QAItem({ m, s, open, llmOff }: { m: QA; s: kb.KbState; open: (id: strin
 
 /* ───────────── документы ───────────── */
 
-function Docs({ s, llm, open, op, ops }: { s: kb.KbState; llm: Llm; open: (id: string) => void; op: KbOperation | null; ops: KbOperation[] }) {
+function Docs({ s, llm, open, op, ops, onQueue }: { s: kb.KbState; llm: Llm; open: (id: string) => void; op: KbOperation | null; ops: KbOperation[]; onQueue: (doc?: string) => void }) {
   const [rel, setRel] = useState<Reliability>('B');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string | null>(null);
-  const pending = s.proposals.filter((p) => p.status === 'pending' && (!filter || p.doc === filter));
   const add = async (files: FileList | null) => {
     if (!files?.length) return;
     setErr(null);
@@ -401,7 +423,7 @@ function Docs({ s, llm, open, op, ops }: { s: kb.KbState; llm: Llm; open: (id: s
       <section className="card kb-upload">
         <h3>Загрузить документы</h3>
         <p className="muted">Текст (PDF, Word, HTML, txt, md), сканы (PDF без текстового слоя, JPG, PNG), таблицы (CSV, XLSX) и пакеты фактов (JSON) — тип определяется сам. Разбор идёт по частям и страницам: модель выписывает факты с дословной цитатой, проверки решают — в базу сразу, на проверку или отбросить. Текст документа сразу участвует в поиске и ответах. Хранится в этом браузере; обмен — выгрузкой.</p>
-        <p className={op ? 'ok' : 'muted'}>{op ? <>Документы будут отнесены к операции <b>{op.title.split(':')[0]}</b>: записи — в её разделе базы, а разбор ищет ещё и сведения об инфраструктуре (мосты, переправы, дороги) — их видно и принимают в «Моделирование» → «Операции».</> : 'Общие документы (без операции). Чтобы отнести документ к операции, выберите её вверху.'}</p>
+        <p className={op ? 'ok' : 'muted'}>{op ? <>Документы будут отнесены к операции <b>{op.title.split(':')[0]}</b>: факты проверяются по её сценарию и театру, записи — в её разделе базы; разбор ищет ещё и сведения об инфраструктуре (мосты, переправы, дороги).</> : 'Общие документы (без операции). Чтобы отнести документ к операции, выберите её вверху.'}</p>
         <div className="row">
           <label>Достоверность <select value={rel} onChange={(e) => setRel(e.target.value as Reliability)}>{(['A', 'B', 'C'] as Reliability[]).map((r) => <option key={r} value={r}>{r} — {RELIABILITY[r]}</option>)}</select></label>
           <input className="grow" placeholder="Что за документ (автор, издание, о чём) — необязательно" value={note} onChange={(e) => setNote(e.target.value)} />
@@ -414,13 +436,7 @@ function Docs({ s, llm, open, op, ops }: { s: kb.KbState; llm: Llm; open: (id: s
       <section className="card">
         <h3>Документы</h3>
         {!s.documents.length && <p className="muted">Пока нет загруженных документов.</p>}
-        {s.documents.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} open={open} opTitle={ops.find((o) => o.id === d.operation)?.title} onFilter={() => setFilter(filter === d.id ? null : d.id)} filtered={filter === d.id} />)}
-      </section>
-      <section className="card">
-        <div className="row"><h3>Предложения на проверку {pending.length ? `· ${pending.length}` : ''}</h3>{filter && <button className="link" onClick={() => setFilter(null)}>все документы</button>}<span className="grow" />
-          {pending.length > 0 && <><button onClick={() => kb.decide(pending.map((p) => p.id), true)}>Принять все</button><button onClick={() => kb.decide(pending.map((p) => p.id), false)}>Отклонить все</button></>}</div>
-        {!pending.length && <p className="muted">Нет предложений. Обработайте документ моделью.</p>}
-        {pending.slice(0, 100).map((p) => <ProposalCard key={p.id} p={p} s={s} open={open} />)}
+        {s.documents.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} open={open} opTitle={ops.find((o) => o.id === d.operation)?.title} onQueue={() => onQueue(d.id)} />)}
       </section>
     </div>
   );
@@ -466,55 +482,50 @@ function docAbout(d: KbDocument): string {
   return [d.chunks.length ? `${d.chunks.length} частей` : '', d.scans?.length ? `${d.scans.length} стр. скана` : '', d.pageCount && d.pageCount > 1 ? `${d.pageCount} стр.` : ''].filter(Boolean).join(' · ');
 }
 
-export function DocRow({ d, s, llm, open, onFilter, filtered, opTitle }: { d: KbDocument; s: kb.KbState; llm: Llm; open: (id: string) => void; onFilter?: () => void; filtered?: boolean; opTitle?: string }) {
+/**
+ * Документ в списке: разбор (диапазон страниц, продолжение), ход, итоги (DocumentResults), переход к его кандидатам в
+ * очереди «На проверку», окно сопоставления столбцов для таблицы не по шаблону.
+ */
+export function DocRow({ d, s, llm, open, onQueue, opTitle }: { d: KbDocument; s: kb.KbState; llm: Llm; open?: (id: string) => void; onQueue?: () => void; opTitle?: string }) {
   const job = s.job?.doc === d.id ? s.job : null;
-  const props = s.proposals.filter((p) => p.doc === d.id);
   const total = docParts(d);
   const done = Math.min(d.processed ?? 0, total);
   const [from, setFrom] = useState(''), [to, setTo] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
+  const [mapping, setMapping] = useState<{ header: string[]; sample: string[][]; proposed: TableMapping } | null>(null);
+  const [results, setResults] = useState(false);
+  const waiting = useMemo(() => s.candidates.filter((c) => c.state === 'pending' && candDoc(c) === d.id).length, [s.candidates, d.id]);
   const range: [number, number] | undefined = from || to ? [Math.max(1, +from || 1), Math.min(d.pageCount ?? 1e6, +to || d.pageCount || 1e6)] : undefined;
-  const run = async () => {
+  const run = async (m?: TableMapping) => {
     setMsg(null);
     try {
-      const r = await kb.process(d.id, llm.settings, { pages: range });
-      if (r?.needsMapping) setMsg('Таблица не по шаблону: нужно сопоставить столбцы (модель предложила смысл столбцов).');
+      const r = await kb.process(d.id, llm.settings, { pages: range, ...(m ? { mapping: m } : {}) });
+      if (r?.needsMapping) setMapping(r.needsMapping);
       else if (r?.waitingVision) setMsg('Скан ждёт распознавания: выберите модель со зрением в роли «Чтение сканов» («Моделирование» → «Модели»).');
+      else if (r?.stopped) setMsg(`Разбор остановлен: ${r.stopped}. Сделанное сохранено — «Продолжить разбор» продолжит с этого места.`);
+      else if (r) setResults(true);
     } catch (e) { setMsg((e as Error).message); }
   };
   const c = d.counts;
   return (
     <div className="kb-doc">
-      <div className="kb-doc-h"><button className="link" onClick={() => open(`doc:${d.id}`)}><b>{d.name}</b></button><i className={`kb-rel r${d.reliability}`}>{d.reliability}</i>
+      <div className="kb-doc-h">{open ? <button className="link" onClick={() => open(`doc:${d.id}`)}><b>{d.name}</b></button> : <b>{d.name}</b>}<i className={`kb-rel r${d.reliability}`}>{d.reliability}</i>
         <span className="muted">{docAbout(d)} · {Math.round(d.size / 1024)} КБ · разобрано {done}/{total}</span>
         {d.operation && opTitle && <span className="kb-opbadge" title="Материал операции">{opTitle.split(':')[0]}</span>}</div>
       {c && <div className="kb-extracted">Принято автоматически <b>{c.auto}</b>, на проверку <b>{c.review}</b>, отброшено <b>{c.drop}</b>{c.duplicate ? <span className="muted"> · повторов {c.duplicate}</span> : null}{d.failedParts?.length ? <span className="warn"> · не разобрано частей: {d.failedParts.length}</span> : null}</div>}
-      {d.extracted && <div className="kb-extracted">Извлечено: новых записей <b>{d.extracted.entries}</b>, дополнений <b>{d.extracted.updates}</b>{d.operation ? <>, сведений об инфраструктуре <b>{d.extracted.infra}</b>, положений <b>{d.extracted.positions ?? 0}</b>, разграничительных линий <b>{d.extracted.boundaries ?? 0}</b></> : null}{d.extracted.dropped ? <span className="muted"> · отброшено без цитаты {d.extracted.dropped}</span> : null}</div>}
+      {d.extracted && <div className="kb-extracted">Извлечено (прежний разбор): новых записей <b>{d.extracted.entries}</b>, дополнений <b>{d.extracted.updates}</b>{d.operation ? <>, сведений об инфраструктуре <b>{d.extracted.infra}</b>, положений <b>{d.extracted.positions ?? 0}</b>, разграничительных линий <b>{d.extracted.boundaries ?? 0}</b></> : null}{d.extracted.dropped ? <span className="muted"> · отброшено без цитаты {d.extracted.dropped}</span> : null}</div>}
       {job ? <div className="kb-prog"><i style={{ width: `${(job.at / Math.max(1, job.total)) * 100}%` }} /><span>{job.text}</span><button onClick={kb.stop}>Остановить</button></div>
         : <div className="row">
           {(done < total || d.status === 'waiting') && <button className="primary" disabled={!!s.job || llm.check.state !== 'ok'} title={llm.check.state !== 'ok' ? 'Модель недоступна — раздел «ИИ»' : ''} onClick={() => void run()}>{done ? 'Продолжить разбор' : 'Разобрать'}</button>}
           {done < total && (d.pageCount ?? 0) > 1 && <span className="kb-range muted">страницы <input type="number" min={1} max={d.pageCount} value={from} placeholder="1" onChange={(e) => setFrom(e.target.value)} style={{ width: '4.5em' }} /> — <input type="number" min={1} max={d.pageCount} value={to} placeholder={String(d.pageCount)} onChange={(e) => setTo(e.target.value)} style={{ width: '4.5em' }} /></span>}
-          {props.length > 0 && onFilter && <button className={filtered ? 'on' : ''} onClick={onFilter}>предложения: {props.filter((p) => p.status === 'pending').length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>}
+          {(c || d.processed) ? <button className={results ? 'on' : ''} onClick={() => setResults(!results)}>Итоги</button> : null}
+          {waiting > 0 && onQueue && <button onClick={onQueue} title="Кандидаты этого документа в очереди «На проверку»">на проверку: {waiting}</button>}
           <button className="link danger" onClick={() => { void confirmAsync(`Удалить «${d.name}» из базы?`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void kb.removeDocument(d.id); }); }}>удалить</button>
           {d.error && <span className="err">{d.error}</span>}
           {msg && <span className="warn">{msg}</span>}
         </div>}
-    </div>
-  );
-}
-
-export function ProposalCard({ p, s, open }: { p: Proposal; s: kb.KbState; open: (id: string) => void }) {
-  const c = category(p.entry.category);
-  const doc = s.documents.find((d) => d.id === p.doc);
-  return (
-    <div className={`kb-prop ${p.kind}`}>
-      <div className="kb-prop-h"><i>{p.kind === 'new' ? 'новая запись' : 'дополнение'}</i><b>{p.kind === 'update' ? <button className="link" onClick={() => open(p.target!)}>{s.byId.get(p.target!)?.title ?? p.entry.title}</button> : p.entry.title}</b>
-        <span className="muted">{c?.title} · {doc?.name}, часть {p.chunk + 1}</span></div>
-      {p.kind === 'new' && p.entry.summary && <p>{p.entry.summary}</p>}
-      {(p.kind === 'new' ? rubricsOf(p.entry) : p.rubrics ?? []).length > 0 && <div className="kb-rubs">{(p.kind === 'new' ? rubricsOf(p.entry) : p.rubrics!).map((c) => <span key={c} className="kb-rub">{p.kind === 'update' ? '+ ' : ''}{c} {rubric(c)?.title}</span>)}</div>}
-      <ul>{p.facts.map((f, i) => <li key={i}><b>{c?.fields.find((x) => x.key === f.key)?.title ?? f.key}:</b> {f.value}{f.quote && <div className="kb-quote">«{f.quote}»</div>}</li>)}
-        {p.relations.filter((r) => r.type !== 'source').map((r, i) => <li key={`r${i}`}><b>{RELATION_RU[r.type]}:</b> {s.byId.get(r.target)?.title ?? r.target}</li>)}</ul>
-      <div className="row"><button className="primary" onClick={() => kb.decide([p.id], true)}>Принять</button><button onClick={() => kb.decide([p.id], false)}>Отклонить</button></div>
+      {results && <DocumentResults d={d} s={s} open={open} onQueue={onQueue} />}
+      {mapping && <ColumnMapping name={d.name} {...mapping} onClose={() => setMapping(null)} onRun={(m) => { setMapping(null); void run(m); }} />}
     </div>
   );
 }

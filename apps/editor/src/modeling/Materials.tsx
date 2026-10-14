@@ -1,34 +1,31 @@
 /**
- * Материалы операции: документы (книги, донесения, журналы боевых действий) разбирает модель — записи базы знаний
- * (в разделе этой операции) и сведения о состоянии инфраструктуры (мосты, переправы, дороги) с цитатами. Здесь
- * видно, что извлеклось из каждого документа; принятые сведения об инфраструктуре ложатся поверх театра при
- * расчёте (и пишутся в базу знаний), их можно добавить и вручную.
+ * Материалы операции: документы (книги, донесения, журналы боевых действий, сканы, таблицы, пакеты агента) разбирает
+ * модель — кандидаты-факты проверяются по сценарию и театру этой операции и ложатся в базу знаний, в очередь
+ * «На проверку» (раздел «Знания», с фильтром по операции и документу) или в отброшенные (итоги документа). Здесь —
+ * документы операции, переход к их очереди, положения и линии в правках операции (прежний приём) и сведения об
+ * инфраструктуре в расчёте; переправа, добавленная вручную, — фактом базы (тот же путь, что принятый кандидат).
  */
 import { useEffect, useMemo, useState } from 'react';
-import { RELIABILITY, type BoundaryProposal, type InfraProposal, type PositionProposal, type Reliability, type SyncInput } from '@def-ops/knowledge';
+import { RELIABILITY, type Candidate, type Claim, type Reliability, type SyncInput } from '@def-ops/knowledge';
 import { areaTitle, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, resolveInfra, Theatre, type Boundary, type InfraKind, type InfraRecord, type InfraState, type Scenario, type TheatreData } from '@def-ops/sim';
+import { addManual } from '../kb/candidates';
 import * as kb from '../kb/kb';
+import { candDoc } from '../kb/queue';
+import { openKbQueue, opCtx } from '../kb/ReviewQueue';
 import { ACCEPT } from '../kb/text';
-import { DocRow, ProposalCard } from '../KnowledgeView';
+import { DocRow } from '../KnowledgeView';
+import { claimText } from './basis';
 import { getEdits, getInfra, onDataChange, saveInfra, type HistPosition } from '../sim/userdata';
 import type { Llm } from '../shared';
 import { resetPool } from './data';
-import { acceptBoundaries, acceptPositions, removeBoundary, removePosition, resolveBoundary, resolvePosition, syncInput } from './sync';
+import { removeBoundary, removePosition, syncInput } from './sync';
 
 const ddmm = (d?: string | null) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : '');
 const ROADISH = new Set(['road', 'rail']);
-
-/** Сведение из документа → запись операции (с привязкой к театру). */
-function toRecord(p: InfraProposal, T: Theatre | null): InfraRecord {
-  const it = p.item;
-  const rec: InfraRecord = {
-    id: p.id.replace(/[^a-z0-9]/gi, '-'), kind: it.kind, state: it.state, title: it.title, place: it.place ?? undefined, river: it.river ?? undefined,
-    from: it.date, until: it.dateTo, side: it.side, note: it.note ?? undefined, origin: 'document', added: new Date().toISOString(),
-    source: { doc: p.doc, docName: p.docName, quote: it.quote, reliability: p.reliability },
-  };
-  const r = T ? resolveInfra(T, rec) : null;
-  return r ? { ...rec, bridge: r.bridge, at: r.at, radiusKm: r.radiusKm } : rec;
-}
+/** Состояние сведения → состояние переправы базы (нет — не читается как проходима / разрушена / наведена). */
+const CROSSING_OF: Partial<Record<InfraState, Extract<Claim, { kind: 'crossing' }>['state']>> = {
+  intact: 'open', built: 'built', repaired: 'built', destroyed: 'destroyed', impassable: 'destroyed',
+};
 
 export function Materials({ op, title, theatre, llm }: { op: string; title: string; theatre: TheatreData | null; llm: Llm }) {
   const [s, setS] = useState<kb.KbState>(kb.current());
@@ -40,24 +37,16 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [view, setView] = useState<'infra' | 'kb' | 'pos' | 'bnd'>('infra');
+  const [msg, setMsg] = useState<string | null>(null);
   const [input, setInput] = useState<(SyncInput & { scenario: Scenario }) | null>(null);
   const [added, setAdded] = useState<HistPosition[]>([]);
   const [addedB, setAddedB] = useState<Boundary[]>([]);
   useEffect(() => { const f = () => { void syncInput(op).then(setInput).catch(() => setInput(null)); void getEdits(op).then((e) => { setAdded(e.positions); setAddedB(e.boundaries ?? []); }); }; f(); return onDataChange(f); }, [op]);
-  const [docF, setDocF] = useState<string | null>(null);
 
   const docs = s.documents.filter((d) => d.operation === op);
   const ids = new Set(docs.map((d) => d.id));
-  const infra = s.infra.filter((p) => p.operation === op && (!docF || p.doc === docF));
-  const props = s.proposals.filter((p) => ids.has(p.doc) && (!docF || p.doc === docF));
-  const infraPending = infra.filter((p) => p.status === 'pending'), kbPending = props.filter((p) => p.status === 'pending');
-  const pos = s.positions.filter((p) => p.operation === op && (!docF || p.doc === docF));
-  const posPending = pos.filter((p) => p.status === 'pending');
-  const takePositions = (ps: PositionProposal[]) => { if (input) void acceptPositions(op, ps, input, theatre); };
-  const bnd = s.boundaries.filter((p) => p.operation === op && (!docF || p.doc === docF));
-  const bndPending = bnd.filter((p) => p.status === 'pending');
-  const takeBoundaries = (ps: BoundaryProposal[]) => { if (input) void acceptBoundaries(op, ps, input, theatre); };
+  // очередь операции: кандидаты операции и её документов
+  const waiting = s.candidates.filter((c) => c.state === 'pending' && (c.op === op || ids.has(candDoc(c) ?? '')));
 
   const add = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -70,54 +59,45 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
   };
   const store = async (list: InfraRecord[]) => { await saveInfra(op, list); setRecords(list); resetPool(); };
   const factText = (r: InfraRecord) => `${r.title}: ${INFRA_STATE_RU[r.state]}${r.from ? ` с ${ddmm(r.from)}` : ''}${r.until ? ` до ${ddmm(r.until)}` : ''}${r.note ? ` (${r.note})` : ''}`;
-  const accept = async (ps: InfraProposal[]) => {
-    const recs = ps.map((p) => toRecord(p, T));
-    await store([...records.filter((r) => !recs.some((x) => x.id === r.id)), ...recs]);
-    for (const r of recs) await kb.addInfraFact({ id: op, title }, { text: factText(r), quote: r.source?.quote, doc: r.source?.doc, reliability: r.source?.reliability as Reliability, road: ROADISH.has(r.kind) });
-    await kb.decideInfra(ps.map((p) => p.id), true);
+  /**
+   * Сведение вручную: мост или переправа с состоянием «цел / наведён / разрушен …» — фактом базы (переправа; в расчёт —
+   * через сборщик операции), прочее — в сведения операции и текстовым фактом в базу, как прежде.
+   */
+  const addRecord = async (r: InfraRecord) => {
+    setMsg(null);
+    const state = CROSSING_OF[r.state];
+    if ((r.kind === 'bridge' || r.kind === 'crossing') && state) {
+      const subject = `${r.title}${r.river && !r.title.includes(r.river) ? ` через ${r.river}` : ''}${r.place && !r.title.includes(r.place) ? ` у ${r.place}` : ''}`;
+      const from = r.from ?? input?.operation.start.slice(0, 10) ?? '';
+      if (!from) { setMsg('Укажите дату «С»: переправа ложится в базу фактом с датой.'); return; }
+      const claim: Claim = { kind: 'crossing', subject, from, state };
+      const c: Candidate = {
+        id: `manual:${op}:${Date.now().toString(36)}`, claim, names: { subject, ...(r.place ? { place: r.place } : {}) }, key: 'переправа', value: claimText(claim),
+        source: 'вручную', origin: 'manual', evidence: { kind: 'manual', ...(r.note ? { note: r.note } : {}) }, op, checks: [], verdict: 'auto', state: 'pending',
+      };
+      const res = await addManual(c, { formations: (await opCtx(op)).formations });
+      setMsg('pending' in res ? 'Переправа ждёт в очереди «На проверку».' : 'Переправа добавлена в базу знаний (запись «Состояние инфраструктуры» операции) и войдёт в расчёт через сборщик операции.');
+      return;
+    }
+    await store([...records, r]);
+    await kb.addInfraFact({ id: op, title }, { text: `${factText(r)} — добавлено вручную`, road: ROADISH.has(r.kind) });
   };
 
   return (
     <section className="mdl-card mat">
       <h4>Материалы операции</h4>
-      <p className="muted">Книги, донесения, журналы боевых действий — текст (PDF, Word, HTML, txt), сканы (PDF без текста, JPG, PNG), таблицы (CSV, XLSX), пакеты фактов (JSON). Модель выписывает факты с дословной цитатой; проверки по сценарию и театру этой операции решают — в базу сразу, на проверку или отбросить. Сведения о дорогах и рубежах — как прежде, на принятие ниже.</p>
+      <p className="muted">Книги, донесения, журналы боевых действий — текст (PDF, Word, HTML, txt), сканы (PDF без текста, JPG, PNG), таблицы (CSV, XLSX), пакеты фактов (JSON). Модель выписывает факты с дословной цитатой; проверки по сценарию и театру этой операции решают — в базу сразу, на проверку или отбросить. Сомнительное (в том числе положения, линии, переправы, дороги) — в очереди «На проверку» раздела «Знания».</p>
       <div className="row">
         <label>Достоверность <select value={rel} onChange={(e) => setRel(e.target.value as Reliability)}>{(['A', 'B', 'C'] as Reliability[]).map((r) => <option key={r} value={r}>{r} — {RELIABILITY[r]}</option>)}</select></label>
         <input className="grow" placeholder="Что за документ (автор, издание) — необязательно" value={note} onChange={(e) => setNote(e.target.value)} />
         <label className="btnlike primary">{busy ?? 'Загрузить…'}<input type="file" multiple hidden accept={ACCEPT} onChange={(e) => { void add(e.target.files); e.target.value = ''; }} /></label>
       </div>
       {err && <div className="err">{err}</div>}
-      {docs.length > 0 && <div className="mat-docs">{docs.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} open={() => {}} onFilter={() => setDocF(docF === d.id ? null : d.id)} filtered={docF === d.id} />)}</div>}
-
-      {(infra.length > 0 || props.length > 0 || pos.length > 0 || bnd.length > 0) && <>
-        <div className="mat-tabs">
-          <button className={view === 'infra' ? 'on' : ''} onClick={() => setView('infra')}>Инфраструктура: {infraPending.length} ждут, {infra.filter((p) => p.status === 'accepted').length} принято</button>
-          <button className={view === 'kb' ? 'on' : ''} onClick={() => setView('kb')}>В базу знаний: {kbPending.length} ждут, {props.filter((p) => p.status === 'accepted').length} принято</button>
-          <button className={view === 'pos' ? 'on' : ''} onClick={() => setView('pos')}>Положения: {posPending.length} ждут, {pos.filter((p) => p.status === 'accepted').length} принято</button>
-          <button className={view === 'bnd' ? 'on' : ''} onClick={() => setView('bnd')}>Разграничительные линии: {bndPending.length} ждут, {bnd.filter((p) => p.status === 'accepted').length} принято</button>
-          {docF && <button className="link" onClick={() => setDocF(null)}>все документы</button>}
-          <span className="grow" />
-          {view === 'infra' && infraPending.length > 0 && <><button onClick={() => void accept(infraPending)}>Принять все</button><button onClick={() => void kb.decideInfra(infraPending.map((p) => p.id), false)}>Отклонить все</button></>}
-          {view === 'kb' && kbPending.length > 0 && <><button onClick={() => void kb.decide(kbPending.map((p) => p.id), true)}>Принять все</button><button onClick={() => void kb.decide(kbPending.map((p) => p.id), false)}>Отклонить все</button></>}
-          {view === 'bnd' && bndPending.length > 0 && <><button disabled={!input} onClick={() => takeBoundaries(bndPending)}>Принять все</button><button onClick={() => void kb.decideBoundaries(bndPending.map((p) => p.id), false)}>Отклонить все</button></>}
-          {view === 'pos' && posPending.length > 0 && <><button disabled={!input} onClick={() => takePositions(posPending)}>Принять все</button><button onClick={() => void kb.decidePositions(posPending.map((p) => p.id), false)}>Отклонить все</button></>}
-        </div>
-        {view === 'bnd' ? <div className="mat-list">
-          <p className="muted small">Разграничительная линия между объединениями (директива, приказ). Принятая ложится фактом в записи обоих объединений в базе знаний (с цитатой) и — если объединения есть в сценарии, а хотя бы два пункта на театре — в сценарий операции: полосы в расчёте (войска идут своей полосой) и линия на карте переигровки.</p>
-          {bnd.map((p) => <BoundaryCard key={p.id} p={p} input={input} T={T} onAccept={() => takeBoundaries([p])} onReject={() => void kb.decideBoundaries([p.id], false)} />)}
-          {!bnd.length && <p className="muted">Разграничительных линий не найдено.</p>}
-        </div> : view === 'pos' ? <div className="mat-list">
-          <p className="muted small">Положение формирования в день операции. Принятое ложится в боевой путь формирования в базе знаний (с цитатой) и — если формирование есть в сценарии, а пункт на театре — в историю операции: по нему сверяется расчёт и идёт калибровка.</p>
-          {pos.map((p) => <PositionCard key={p.id} p={p} input={input} T={T} onAccept={() => takePositions([p])} onReject={() => void kb.decidePositions([p.id], false)} />)}
-          {!pos.length && <p className="muted">Положений не найдено.</p>}
-        </div> : view === 'infra' ? <div className="mat-list">
-          {infra.map((p) => <InfraCard key={p.id} p={p} T={T} onAccept={() => void accept([p])} onReject={() => void kb.decideInfra([p.id], false)} />)}
-          {!infra.length && <p className="muted">Сведений об инфраструктуре не найдено.</p>}
-        </div> : <div className="mat-list">
-          {kbPending.slice(0, 60).map((p) => <ProposalCard key={p.id} p={p} s={s} open={() => {}} />)}
-          {!kbPending.length && <p className="muted">Все предложения разобраны. Принятые записи — в «Знаниях», раздел операции.</p>}
-        </div>}
-      </>}
+      {docs.length > 0 && <div className="mat-docs">{docs.map((d) => <DocRow key={d.id} d={d} s={s} llm={llm} onQueue={() => openKbQueue({ op, doc: d.id })} />)}</div>}
+      <div className="mat-queue">
+        {waiting.length ? <>На проверку по операции: <b>{waiting.length}</b> <button onClick={() => openKbQueue({ op })}>Открыть очередь</button></>
+          : <span className="muted">Очередь «На проверку» по операции пуста.</span>}
+      </div>
 
       {added.length > 0 && <details className="mat-add"><summary>Положения из документов в истории операции · {added.length}</summary>
         <table className="mdl-tbl"><thead><tr><th>Формирование</th><th>День</th><th>Пункт</th><th>±км</th><th>Источник</th><th /></tr></thead><tbody>
@@ -133,64 +113,9 @@ export function Materials({ op, title, theatre, llm }: { op: string; title: stri
             <td>{doc && <button className="link danger" title="Убрать из сценария (в базе знаний останется)" onClick={() => void removeBoundary(op, b.id)}>✕</button>}</td></tr>; })}
         </tbody></table></details>}
 
-      <InfraTable records={records} T={T} onRemove={(id) => void store(records.filter((r) => r.id !== id))}
-        onAdd={(r) => { void store([...records, r]).then(() => kb.addInfraFact({ id: op, title }, { text: `${factText(r)} — добавлено вручную`, road: ROADISH.has(r.kind) })); }} />
+      <InfraTable records={records} T={T} onRemove={(id) => void store(records.filter((r) => r.id !== id))} onAdd={(r) => void addRecord(r).catch((e) => setMsg((e as Error).message))} />
+      {msg && <p className="ok small">{msg}</p>}
     </section>
-  );
-}
-
-function InfraCard({ p, T, onAccept, onReject }: { p: InfraProposal; T: Theatre | null; onAccept: () => void; onReject: () => void }) {
-  const rec = useMemo(() => toRecord(p, T), [p, T]);
-  const where = T ? resolveInfra(T, rec) : null;
-  const eff = infraEffect(rec);
-  const it = p.item;
-  return (
-    <div className={`mat-infra st-${p.status}`}>
-      <div className="mat-infra-h"><i className={`k-${it.kind}`}>{INFRA_KIND_RU[it.kind]}</i><i className={`s-${it.state}`}>{INFRA_STATE_RU[it.state]}</i><b>{it.title}</b>
-        <span className="muted">{[it.place, it.river && `р. ${it.river}`, it.date && `с ${ddmm(it.date)}`, it.dateTo && `до ${ddmm(it.dateTo)}`].filter(Boolean).join(' · ')}</span></div>
-      {it.note && <p>{it.note}</p>}
-      <div className="kb-quote">«{it.quote}» <span className="muted">— {p.docName}, часть {p.chunk + 1}</span></div>
-      <div className="mat-res">{where ? <>на театре: {where.how}</> : <span className="warn">на театре не найдено — останется сведением (в базе знаний)</span>}
-        {' · '}{eff ? <b>в расчёте: {eff}</b> : <span className="muted">в расчёт не входит</span>}</div>
-      {p.status === 'pending' ? <div className="row"><button className="primary" onClick={onAccept}>Принять</button><button onClick={onReject}>Отклонить</button></div>
-        : <span className="muted">{p.status === 'accepted' ? '✓ принято' : 'отклонено'}</span>}
-    </div>
-  );
-}
-
-function PositionCard({ p, input, T, onAccept, onReject }: { p: PositionProposal; input: SyncInput | null; T: Theatre | null; onAccept: () => void; onReject: () => void }) {
-  const r = useMemo(() => (input ? resolvePosition(p, input, T) : null), [p, input, T]);
-  const it = p.item;
-  return (
-    <div className={`mat-infra st-${p.status}`}>
-      <div className="mat-infra-h"><i className="k-pos">положение</i><b>{it.formation}</b><span className="muted">{ddmm(it.date)} · {it.place}</span></div>
-      {it.note && <p>{it.note}</p>}
-      <div className="kb-quote">«{it.quote}» <span className="muted">— {p.docName}, часть {p.chunk + 1}</span></div>
-      {r && <div className="mat-res">
-        {r.formation ? <>в сценарии: {r.formation.name}</> : <span className="warn">в сценарии такого формирования нет</span>}
-        {' · '}{r.place ? <>на театре: {r.place.title}</> : <span className="warn">пункт на театре не найден</span>}
-        {' · '}{r.formation && r.place ? <b>в историю и в боевой путь (база)</b> : <span className="muted">только в базу знаний (боевой путь{r.entry ? '' : ', новая запись'})</span>}</div>}
-      {p.status === 'pending' ? <div className="row"><button className="primary" disabled={!input} onClick={onAccept}>Принять</button><button onClick={onReject}>Отклонить</button></div>
-        : <span className="muted">{p.status === 'accepted' ? '✓ принято' : 'отклонено'}</span>}
-    </div>
-  );
-}
-
-function BoundaryCard({ p, input, T, onAccept, onReject }: { p: BoundaryProposal; input: (SyncInput & { scenario: Scenario }) | null; T: Theatre | null; onAccept: () => void; onReject: () => void }) {
-  const r = useMemo(() => (input ? resolveBoundary(p, input, T) : null), [p, input, T]);
-  const it = p.item;
-  return (
-    <div className={`mat-infra st-${p.status}`}>
-      <div className="mat-infra-h"><i className="k-line">разгр. линия</i><b>{it.between.join(' / ')}</b><span className="muted">{[it.date && `с ${ddmm(it.date)}`, it.dateTo && `до ${ddmm(it.dateTo)}`].filter(Boolean).join(' · ')}</span></div>
-      <p>{it.points.join(' — ')}{it.inclusive ? ` · включительно для: ${it.inclusive}` : ''}{it.note ? ` · ${it.note}` : ''}</p>
-      <div className="kb-quote">«{it.quote}» <span className="muted">— {p.docName}, часть {p.chunk + 1}</span></div>
-      {r && <div className="mat-res">
-        {r.a && r.b ? <>в сценарии: {r.a.name} / {r.b.name}</> : <span className="warn">в сценарии нет {!r.a && !r.b ? 'обоих объединений' : `«${!r.a ? it.between[0] : it.between[1]}»`}</span>}
-        {' · '}на театре: {r.points.length} из {it.points.length} пунктов{r.missing.length ? <span className="warn"> (нет: {r.missing.join(', ')})</span> : null}
-        {' · '}{r.boundary ? <b>в сценарий (справа — {r.boundary.right === r.a?.id ? r.a?.name : r.b?.name}) и в базу</b> : <span className="muted">только в базу знаний</span>}</div>}
-      {p.status === 'pending' ? <div className="row"><button className="primary" disabled={!input} onClick={onAccept}>Принять</button><button onClick={onReject}>Отклонить</button></div>
-        : <span className="muted">{p.status === 'accepted' ? '✓ принято' : 'отклонено'}</span>}
-    </div>
   );
 }
 
