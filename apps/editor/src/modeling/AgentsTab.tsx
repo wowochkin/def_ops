@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AgentsScore } from '@def-ops/sim';
 import { getData } from '../sim/userdata';
+import { coreEditsFor } from '../sim/kb-recompile';
 import { AGENT_SCENARIOS, agentHistory, agentVariants, deleteAgentVariant, DESKTOP, runAgents, saveAgentVariant, type AgentVariant } from '../sim/agent-scenarios';
 import type { ScoreRequest, ScoreResponse } from '../sim/agents-score-worker';
 import { pct, SERIES } from './data';
@@ -54,10 +55,12 @@ interface Eval { score: number; within: number; medianExcessKm: number; eventsHi
 /** Вариант параметров на нескольких seed: средние по прогонам. */
 async function evaluate(scenario: string, params: Record<string, unknown>, seeds: number, opts: { de: 'script' | 'doctrine'; su: 'script' | 'doctrine' }, stop: () => boolean): Promise<Eval | null> {
   const history = await agentHistory(scenario);
+  // поправки сценария из базы знаний (дивизии): id операции = ключ агентного сценария
+  const edits = await coreEditsFor(scenario);
   const list: AgentsScore[] = [];
   for (let k = 0; k < seeds; k++) {
     if (stop()) return null;
-    const trace = await runAgents(scenario, { seed: 101 + k, params, ...opts });
+    const trace = await runAgents(scenario, { seed: 101 + k, params, edits, ...opts });
     list.push(await score(scenario, trace, history));
   }
   const avg = (f: (s: AgentsScore) => number) => +(list.reduce((a, s) => a + f(s), 0) / list.length).toFixed(3);

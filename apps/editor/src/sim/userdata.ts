@@ -4,7 +4,8 @@
  * каталога). Поверх данных сборки (packages/sim/data): getter отдаёт сначала встроенный файл, затем свой.
  */
 import type { Boundary, CatalogEntry, DataKind, History, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
-import type { KbOperation, OperationHint } from '@def-ops/knowledge';
+import type { CompileConflict, CompiledEdits, FactRef, KbOperation, OperationHint, Provenance } from '@def-ops/knowledge';
+import { applyCompiled, applyCompiledHistory } from './kb-compile';
 import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 import type { SimResult } from './protocol';
 import { defaultCatalog, defaultLive } from '@def-ops/sim';
@@ -116,8 +117,8 @@ export interface Recalibration {
   better?: boolean;
 }
 /**
- * Правки операции поверх сценария и истории (встроенной или своей): цифры формирований из базы знаний, положения
- * по дням из документов. Сценарий и история в сборке не меняются — правки накладываются при чтении (getData).
+ * Правки операции поверх сценария и истории (встроенной или своей): цифры формирований из базы знаний (ручные —
+ * прежняя сверка; собранные — kb), положения по дням из документов. Сценарий и история в сборке не меняются — правки накладываются при чтении (getData).
  */
 export interface OperationEdits {
   id: string;
@@ -132,7 +133,13 @@ export interface OperationEdits {
   defaultRules?: string;
   /** Разграничительные линии из документов: добавляются к линиям сценария (та же пара и срок — заменяют). */
   boundaries?: Boundary[];
+  /**
+   * Сборка из базы знаний (sim/kb-recompile.ts, при каждом изменении базы): поправки (накладываются после ручных —
+   * база важнее), на каком факте держится каждый вход, расхождения и факты о формированиях вне операции.
+   */
+  kb?: OperationKb;
 }
+export interface OperationKb { compiled: CompiledEdits; provenance: Provenance[]; conflicts: CompileConflict[]; unmatched: FactRef[]; at: string }
 const emptyEdits = (id: string): OperationEdits => ({ id, formations: {}, positions: [], dismissed: [], log: [], recalibrations: [] });
 export const getEdits = async (id: string): Promise<OperationEdits> => ({ ...emptyEdits(id), ...(await one<OperationEdits>('edits', id)) });
 export const saveEdits = (e: OperationEdits) => write('edits', (o) => o.put(e));
@@ -194,7 +201,11 @@ export async function getData(kind: DataKind, file: string): Promise<unknown> {
     const d = await rawData(kind, file);
     const hist = file.endsWith('.history.json');
     const e = await one<OperationEdits>('edits', file.replace(hist ? /\.history\.json$/ : /\.json$/, ''));
-    return hist ? applyHistoryEdits(d as History, e) : applyScenarioEdits(d as Scenario, e);
+    // сначала ручные правки, затем собранное из базы (база важнее)
+    if (!hist) return applyCompiled(applyScenarioEdits(d as Scenario, e), e?.kb?.compiled);
+    // положения из базы — только формирований сценария (дивизии агентной модели — в её истории)
+    const ids = e?.kb ? new Set(((await rawData(kind, file.replace(/\.history\.json$/, '.json'))) as Scenario).formations.map((f) => f.id)) : undefined;
+    return applyCompiledHistory(applyHistoryEdits(d as History, e), e?.kb?.compiled, ids);
   }
   return rawData(kind, file);
 }

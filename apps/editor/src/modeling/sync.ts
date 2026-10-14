@@ -3,7 +3,7 @@
  * путь формирования в базе и в историю для сравнения расчёта). База знаний — общее место сведений: всё, что
  * принято в сценарий или историю, остаётся в ней с источником и цитатой; всё, чем уже пользуется расчёт, — тоже.
  */
-import { ECHELON_KM, formationEntries, formationEntry, matchEntry, matchFormation, reconcile, type BoundaryProposal, type Fact, type PositionProposal, type SyncInput, type SyncItem } from '@def-ops/knowledge';
+import { ECHELON_KM, pinKey, type Pins, formationEntries, formationEntry, matchEntry, matchFormation, reconcile, type BoundaryProposal, type Fact, type PositionProposal, type SyncInput, type SyncItem } from '@def-ops/knowledge';
 import { groupOf, locatePlace, sideOf, Theatre, type Boundary, type History, type Scenario, type TheatreData } from '@def-ops/sim';
 import * as kb from '../kb/kb';
 import { fullCatalog, getData, getEdits, updateEdits, type HistPosition } from '../sim/userdata';
@@ -36,12 +36,28 @@ export async function syncItems(opId: string): Promise<{ items: SyncItem[]; inpu
   return { items: reconcile(input, kb.current().entries).filter((i) => !off.has(i.id)), input };
 }
 
-/** Принять «в сценарий»: цифры формирования из базы — в правки операции (прежнее значение помнится). */
+/** Факт начальной численности, на котором основано предложение, — адрес для закрепления (нет формальной части — null). */
+function strengthPin(i: SyncItem): { entry: string; index: number } | null {
+  const c = i.fact?.claim;
+  if (!i.fact || c?.kind !== 'strength' || c.subject !== i.formation || typeof c[i.key as 'personnel' | 'tanks' | 'guns'] !== 'number') return null;
+  const index = (kb.current().byId.get(i.fact.entry)?.facts ?? []).findIndex((f) => f.key === i.fact!.key && f.value === i.fact!.value);
+  return index >= 0 ? { entry: i.fact.entry, index } : null;
+}
+const opStart = async (opId: string) => ((await getData('scenarios', `${opId}.json`)) as Scenario).start;
+
+/**
+ * Принять «в сценарий»: факт начальной численности с формальной частью — закрепление (сборка из базы берёт его);
+ * иначе цифра — в ручные правки операции (прежнее значение помнится).
+ */
 export async function acceptToScenario(opId: string, items: SyncItem[]) {
-  const list = items.filter((i) => i.dir === 'toScenario' && i.value != null && (i.key === 'personnel' || i.key === 'tanks' || i.key === 'guns'));
-  if (!list.length) return;
+  const all = items.filter((i) => i.dir === 'toScenario' && i.value != null && (i.key === 'personnel' || i.key === 'tanks' || i.key === 'guns'));
+  if (!all.length) return;
+  const start = await opStart(opId);
+  const pins: Pins = {};
+  const list = all.filter((i) => { const p = strengthPin(i); if (p) pins[pinKey('strength', i.formation, start)] = p; return !p; });
   const at = new Date().toISOString();
   await updateEdits(opId, (e) => {
+    for (const i of all.filter((x) => !list.includes(x))) e.log.push({ at, kind: 'kb', text: `${i.name}: ${KEY_RU[i.key as 'personnel' | 'tanks' | 'guns']} — закреплён факт базы (${(i.fact?.value ?? '').slice(0, 80)})` });
     for (const i of list) {
       const k = i.key as 'personnel' | 'tanks' | 'guns';
       const was = e.formations[i.formation]?.[k]?.was ?? (i.scenario as number);
@@ -49,6 +65,7 @@ export async function acceptToScenario(opId: string, items: SyncItem[]) {
       e.log.push({ at, kind: 'scenario', text: `${i.name}: ${KEY_RU[k]} ${fmt(i.scenario as number)} → ${fmt(i.value!)} (из базы)` });
     }
   });
+  await kb.setPins(pins);
   resetPool();
 }
 
@@ -74,8 +91,17 @@ export async function acceptToKb(opId: string, items: SyncItem[], input: SyncInp
   return n;
 }
 
+/** Отклонить предложения; отклонённая цифра «в сценарий» — закрепление «ничего» (численность — из сценария), если ключ свободен. */
 export async function dismiss(opId: string, ids: string[]) {
   await updateEdits(opId, (e) => { e.dismissed = [...new Set([...e.dismissed, ...ids])]; });
+  const [start, have] = await Promise.all([opStart(opId), kb.getPins()]);
+  const pins: Pins = {};
+  for (const id of ids) {
+    const m = /^toScenario\|(.+)\|(personnel|tanks|guns)$/.exec(id);
+    const key = m ? pinKey('strength', m[1], start) : null;
+    if (key && !have[key]) pins[key] = 'none';
+  }
+  await kb.setPins(pins);
 }
 
 /* ───────────── положения из документов ───────────── */

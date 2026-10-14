@@ -2,8 +2,11 @@ import { createRoot } from 'react-dom/client';
 import '../demo/fonts';
 import './styles.css';
 import { Shell } from './Shell';
+import { watchKb } from './sim/kb-recompile';
 
 createRoot(document.getElementById('root')!).render(<Shell />);
+// поправки операций собираются из базы знаний: при запуске и после каждого её изменения
+watchKb();
 // Backspace вне поля ввода в окне приложения (WebKit) листает историю назад — со страницы редактора на страницу запуска.
 // Свои действия редактора по Backspace (удалить знак, точку) срабатывают раньше — на всплытии до окна; здесь только
 // запрет перехода по истории.

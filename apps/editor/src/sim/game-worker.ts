@@ -20,6 +20,7 @@ import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import { gameEndOf, getData, liveOf } from './userdata';
+import { coreEditsFor } from './kb-recompile';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
@@ -162,6 +163,8 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     setAgent(await agentsCall<AgentGameTrace>('game_start', {
       scenario: agents.path, seed: s.seed, takeover: hourAt(ctx.scenario.start, takeover), player: human,
       enemy: en === 'llm' ? 'llm' : 'script', until: hourAt(ctx.scenario.start, end.defeat.deadline),
+      // поправки сценария из базы знаний (дивизии): id операции = ключ агентного сценария
+      edits: await coreEditsFor(s.scenario),
     }));
     // тыл — под управлением штаба: базы снабжения стороны; будущие наводки переправ сняты (ядру — с первым ходом);
     // директивы с этого момента — по обстановке

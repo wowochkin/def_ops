@@ -6,7 +6,7 @@
 import { stripMeta } from '../markdown';
 import {
   applyProposal, chunkText, EXTRACT_SCHEMA, extractMessages, gameReference, gather, hybridHits, Index, type Hit, OPERATION_EXTRACT_SCHEMA, qaMessages, toBoundaryProposals, toInfraProposals, toPositionProposals, toProposals,
-  type Entry, type ExtractedItem, type Fact, type InfraItem, type BoundaryItem, type BoundaryProposal, type InfraProposal, type KbDocument, type OperationHint, type PositionItem, type PositionProposal, type Proposal, type Reliability, type Source,
+  type Entry, type ExtractedItem, type Fact, type InfraItem, type BoundaryItem, type BoundaryProposal, type InfraProposal, type KbDocument, type OperationHint, type Pins, type PositionItem, type PositionProposal, type Proposal, type Reliability, type Source,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
@@ -39,6 +39,13 @@ const subs = new Set<(s: KbState) => void>();
 const emit = () => { state = { ...state }; subs.forEach((f) => f(state)); };
 export const subscribe = (f: (s: KbState) => void) => { subs.add(f); f(state); return () => { subs.delete(f); }; };
 export const current = () => state;
+
+/**
+ * База изменилась (запись, факты, решение по предложениям, загрузка, закрепление): событие в окне — поправки
+ * операций пересобираются (sim/kb-recompile.ts). В фоновом потоке окна нет — не нужно.
+ */
+export const KB_CHANGED = 'def_ops.kb-changed';
+function kbChanged() { if (typeof window !== 'undefined') window.dispatchEvent(new Event(KB_CHANGED)); }
 
 let loading: Promise<void> | null = null;
 export function load(): Promise<void> {
@@ -87,6 +94,20 @@ export async function saveEntry(e: Entry) {
   const x: Entry = { ...e, origin: e.origin === 'seed' ? 'user' : e.origin ?? 'user', updatedAt: new Date().toISOString() };
   await store.put('entries', x);
   await reload();
+  kbChanged();
+}
+
+/* ───────────── закрепления ───────────── */
+
+/** Закрепления выбора факта: ключ pinKey → факт или 'none' (не брать ничего). */
+export const getPins = () => store.pins();
+/** Закрепить факт за ключом (null — снять закрепление). */
+export const setPin = (key: string, pin: Pins[string] | null) => setPins({ [key]: pin });
+/** Несколько закреплений разом (одно событие «база изменилась»). */
+export async function setPins(list: Record<string, Pins[string] | null>) {
+  if (!Object.keys(list).length) return;
+  await store.putPins(list);
+  kbChanged();
 }
 
 /* ───────────── документы ───────────── */
@@ -104,6 +125,7 @@ export async function addFile(file: File, reliability: Reliability, note: string
   await store.put('documents', doc);
   await store.put('entries', src);
   await reload();
+  kbChanged();
   return doc;
 }
 
@@ -119,6 +141,7 @@ export async function removeDocument(id: string) {
   const bp = state.boundaries.filter((p) => p.doc === id && p.status === 'pending').map((p) => p.id);
   if (bp.length) await store.del('boundaries', ...bp);
   await reload();
+  kbChanged();
 }
 
 let abort: AbortController | null = null;
@@ -180,6 +203,7 @@ export async function process(id: string, llm: LlmSettings, hint?: OperationHint
     state.job = null;
     abort = null;
     await reload();
+  kbChanged();
   }
   return { made, dropped };
 }
@@ -199,6 +223,7 @@ export async function decide(ids: string[], accept: boolean) {
   if (touched.size) await store.put('entries', ...touched.values());
   await store.put('proposals', ...ps);
   await reload();
+  kbChanged();
 }
 
 /** Сведения об инфраструктуре: отметить принятыми или отклонёнными (в операцию их записывает раздел «Операции»). */
@@ -207,6 +232,7 @@ export async function decideInfra(ids: string[], accept: boolean) {
   for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
   if (ps.length) await store.put('infra', ...ps);
   await reload();
+  kbChanged();
 }
 
 /** Положения из документов: отметить принятыми или отклонёнными (в историю и в базу их пишет раздел «Операции»). */
@@ -215,6 +241,7 @@ export async function decidePositions(ids: string[], accept: boolean) {
   for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
   if (ps.length) await store.put('positions', ...ps);
   await reload();
+  kbChanged();
 }
 
 /** Разграничительные линии из документов: отметить принятыми или отклонёнными (в сценарий и в базу их пишет раздел «Операции»). */
@@ -223,6 +250,7 @@ export async function decideBoundaries(ids: string[], accept: boolean) {
   for (const p of ps) p.status = accept ? 'accepted' : 'rejected';
   if (ps.length) await store.put('boundaries', ...ps);
   await reload();
+  kbChanged();
 }
 
 /**
@@ -247,6 +275,7 @@ export async function addFacts(list: { entry?: string; create?: Entry; facts: Fa
   }
   if (touched.size) await store.put('entries', ...touched.values());
   await reload();
+  kbChanged();
   return touched.size;
 }
 
@@ -262,16 +291,17 @@ export async function recordCalibration(op: { id: string; title: string }, at: s
   };
   await store.put('entries', { ...e, facts: [...(e.facts ?? []), ...facts], sections: [{ title: `${at.slice(8, 10)}.${at.slice(5, 7)}.${at.slice(0, 4)}: ${title}`, text }, ...(e.sections ?? [])], updatedAt: new Date().toISOString() });
   await reload();
+  kbChanged();
 }
 
 /* ───────────── обмен ───────────── */
 
 export async function exportUser(): Promise<string> {
-  const [entries, documents, proposals, infra, positions, boundaries] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra'), store.all('positions'), store.all('boundaries')]);
-  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra, positions, boundaries });
+  const [entries, documents, proposals, infra, positions, boundaries, pins] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra'), store.all('positions'), store.all('boundaries'), store.all('pins')]);
+  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra, positions, boundaries, pins });
 }
 export async function importUser(json: string) {
-  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[]; boundaries?: BoundaryProposal[] };
+  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[]; boundaries?: BoundaryProposal[]; pins?: { id: string; pin: Pins[string] }[] };
   if (d.format !== 'def-ops-knowledge') throw new Error('это не выгрузка базы знаний');
   if (d.entries?.length) await store.put('entries', ...d.entries);
   if (d.documents?.length) await store.put('documents', ...d.documents);
@@ -279,7 +309,9 @@ export async function importUser(json: string) {
   if (d.infra?.length) await store.put('infra', ...d.infra);
   if (d.positions?.length) await store.put('positions', ...d.positions);
   if (d.boundaries?.length) await store.put('boundaries', ...d.boundaries);
+  if (d.pins?.length) await store.put('pins', ...d.pins);
   await reload();
+  kbChanged();
 }
 
 /* ───────────── вопросы и рассказы ───────────── */
@@ -357,6 +389,7 @@ export async function addInfraFact(op: { id: string; title: string }, f: { text:
   };
   await store.put('entries', { ...e, facts: [...(e.facts ?? []), fact], updatedAt: new Date().toISOString() });
   await reload();
+  kbChanged();
 }
 
 /** Нормативы модели (norms.json) и записи базы, на которые они ссылаются (kb) — для «Полноты» общих знаний. */

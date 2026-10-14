@@ -25,6 +25,7 @@ import { addHours, type AgentHistory } from '@def-ops/sim';
 import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
 
 import { AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentVariant } from './sim/agent-scenarios';
+import { coreEditsFor } from './sim/kb-recompile';
 /** Ход игры на агентной модели, ч. */
 const AGENT_GAME_HOURS = 12;
 /** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
@@ -207,7 +208,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     worker.current?.terminate();
     setBusy('расчёт агентной модели…'); setError(null);
     const params = variants.find((v) => v.id === variantId)?.params;
-    Promise.all([runAgents(scenario, { seed, params }), invoke<string>('read_text', { path: op.history })])
+    Promise.all([coreEditsFor(scenario).then((edits) => runAgents(scenario, { seed, params, edits })), invoke<string>('read_text', { path: op.history })])
       .then(([trace, h]) => {
         if (token !== runId.current) return;
         const history = JSON.parse(h) as AgentHistory;

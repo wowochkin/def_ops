@@ -4,17 +4,20 @@
  * сборке (packages/knowledge/data/seed.json); слой пользователя — поверх него. Доступно и из фоновых
  * потоков (игра: справка советнику).
  */
-import type { Entry, InfraProposal, KbDocument, PositionProposal, Proposal } from '@def-ops/knowledge';
+import type { Entry, InfraProposal, KbDocument, Pins, PositionProposal, Proposal } from '@def-ops/knowledge';
 
-const DB = 'def_ops_kb', VER = 5;
-/** infra — сведения об инфраструктуре из документов операций (на проверку); positions — положения формирований из них; boundaries — разграничительные линии. */
-type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra' | 'positions' | 'boundaries';
+const DB = 'def_ops_kb', VER = 6;
+/**
+ * infra — сведения об инфраструктуре из документов операций (на проверку); positions — положения формирований из них;
+ * boundaries — разграничительные линии; pins — закрепления выбора факта ({ id: ключ pinKey, pin: факт или 'none' }).
+ */
+type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra' | 'positions' | 'boundaries' | 'pins';
 
 let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors', 'infra', 'positions', 'boundaries']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors', 'infra', 'positions', 'boundaries', 'pins']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -50,4 +53,16 @@ export async function entries(): Promise<Entry[]> {
   const m = new Map(s.map((e) => [e.id, e]));
   for (const e of u) m.set(e.id, e);
   return [...m.values()];
+}
+
+/** Закрепления выбора факта (слой пользователя; в сиде их нет). */
+export async function pins(): Promise<Pins> {
+  return Object.fromEntries((await all<{ id: string; pin: Pins[string] }>('pins')).map((p) => [p.id, p.pin]));
+}
+/** Записать закрепления; null — снять. */
+export async function putPins(list: Record<string, Pins[string] | null>) {
+  const set = Object.entries(list).filter(([, v]) => v != null).map(([id, pin]) => ({ id, pin }));
+  const off = Object.entries(list).filter(([, v]) => v == null).map(([id]) => id);
+  if (set.length) await put('pins', ...set);
+  if (off.length) await del('pins', ...off);
 }
