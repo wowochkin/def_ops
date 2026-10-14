@@ -43,4 +43,14 @@ describe('задание для агента: Берлинская операц�
     expect(r.errors).toEqual([]);
     expect(r.candidates).toHaveLength(2);
   });
+
+  it('переправа: время — в quote, а не в state', () => {
+    expect(md).not.toContain('рядом со словом состояния');
+    expect(md).toMatch(/У переправы время — только в `quote`/);
+    const r = parseFactsJson({ format: 'def-ops-facts', version: 1, source: { title: 'Пример', ref: 'Условный фонд, оп. 1, д. 1', reliability: 'B' },
+      facts: [{ kind: 'crossing', subject: 'Мост у Условных Холмов', date: '1945-04-17', state: 'разрушена', quote: 'мост разрушен к 19.00' }] },
+    { id: 'doc', name: 'doc', reliability: 'B', operation: undefined } as never);
+    expect(r.errors).toEqual([]);
+    expect(r.candidates).toHaveLength(1);
+  });
 });
