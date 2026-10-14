@@ -182,7 +182,8 @@ const builtin = (kind: string, file: string) => files[`../../../../packages/sim/
 /** id встроенных правил, профилей и театров. */
 export const BUILTIN = {
   theatres: Object.keys(files).filter((k) => k.includes('/theatres/')).map((k) => k.split('/').pop()!.replace('.json', '')),
-  rules: Object.keys(files).filter((k) => k.includes('/rules/') && !k.endsWith('norms.json')).map((k) => k.split('/').pop()!.replace('.json', '')),
+  // правила нынешней модели: без проверки нормативами и без параметров агентной модели (agents-*.json — их читает ядро)
+  rules: Object.keys(files).filter((k) => k.includes('/rules/') && !k.endsWith('norms.json') && !/\/agents-[^/]*\.json$/.test(k)).map((k) => k.split('/').pop()!.replace('.json', '')),
   profiles: Object.keys(files).filter((k) => k.includes('/profiles/')).map((k) => k.split('/').pop()!.replace('.json', '')),
 };
 export const BUILTIN_CATALOG = (catalogFile as unknown as { scenarios: CatalogEntry[] }).scenarios;
