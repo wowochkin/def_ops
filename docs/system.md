@@ -1615,6 +1615,7 @@ npm run desktop:build     # установщик настольного прил
 
 PDF и Word этого документа — `npm run docs:system` (нужны pandoc, python3 с python-docx и браузер
 Playwright). Описание обновляется в том же коммите, что и доработка.
+Руководство пользователя простым языком, по задачам — [guide.md](guide.md); PDF и Word — `npm run docs:guide`.
 
 ### Приложение разработчика «Переигровка — агенты»
 

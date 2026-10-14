@@ -168,7 +168,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
 
   /* ------------------------------ сервер ------------------------------ */
   const saveToServer = async () => {
-    if (server.status !== 'online') { setNotice('Сервер недоступен — карта сохранена только в браузере.'); return; }
+    if (server.status !== 'online') { setNotice('Сервисы недоступны — карта сохранена только черновиком.'); return; }
     try {
       const d = withView();
       let out: MapDocument;
