@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { toCandidates, runChecks, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, extractMessages, type ExtractedClaim, type CheckCtx } from '../src';
+import { toCandidates, runChecks, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, extractMessages, claimRules, isNormative, scanMessages, type ExtractedClaim, type CheckCtx } from '../src';
 
 const fx = <T>(n: string) => JSON.parse(readFileSync(new URL(`./fixtures/llm/${n}.json`, import.meta.url), 'utf8')) as T;
 const doc = { id: 'd1', name: 'Выписка', reliability: 'B' as const, operation: 'berlin' };
@@ -76,8 +76,39 @@ describe('нормативы модели из текста: param и outcome', 
   });
   it('схема и промпт знают нормативы; перечень параметров — в промпте', () => {
     expect(EXTRACT_SCHEMA.properties.claims.items.properties.kind.enum).toEqual(expect.arrayContaining(['param', 'outcome']));
-    const p = extractMessages('текст', 'Д', undefined, [{ path: 'advanceMax', title: 'Наибольший темп', unit: 'км/сут' }])[0].content;
+    const p = extractMessages('темп по наставлению', 'Д', undefined, [{ path: 'advanceMax', title: 'Наибольший темп', unit: 'км/сут' }])[0].content;
     expect(p).toContain('param');
     expect(p).toContain('advanceMax — Наибольший темп');
+  });
+});
+
+describe('промпт нормативов: правила и перечень параметров', () => {
+  const P = [{ path: 'advanceMax', title: 'Наибольший темп', unit: 'км/сут' }, { path: 'agents.combat.penetrationKmDay', title: 'Темп в прорыве', unit: 'км/сут' }];
+  it('правила чисел и «только факты» не запрещают нормативы: дробные — как в тексте, предписания устава — выписываются', () => {
+    const r = claimRules(undefined, P);
+    expect(r).toMatch(/param и outcome[^\n]*дробн/);
+    expect(r).toMatch(/1,35/);
+    expect(r).toMatch(/устав|наставлен/);
+    expect(r).toMatch(/кроме param/);
+  });
+  it('перечень — только во фрагменте с признаками норматива; agents.* в перечень не входят', () => {
+    const norm = extractMessages('По наставлению темп наступления 25–45 км/сут.', 'Д', undefined, P)[0].content;
+    expect(norm).toContain('advanceMax — Наибольший темп');
+    expect(norm).not.toContain('agents.combat.penetrationKmDay');
+    const plain = extractMessages('8 гв. А заняла Зеелов 17 апреля.', 'Д', undefined, P)[0].content;
+    expect(plain).not.toContain('advanceMax — Наибольший темп');
+    expect(plain).toContain('param');
+  });
+  it('признаки норматива', () => {
+    expect(isNormative('поправка обороны 1,5')).toBe(true);
+    expect(isNormative('потери 12 % численности')).toBe(true);
+    expect(isNormative('продвигались 30 км в сутки')).toBe(true);
+    expect(isNormative('Боевой устав пехоты')).toBe(true);
+    expect(isNormative('8 гв. А заняла Зеелов')).toBe(false);
+  });
+  it('скан: перечень — если название документа с признаками норматива', () => {
+    const txt = (m: ReturnType<typeof scanMessages>) => String(m[0].content);
+    expect(txt(scanMessages('data:', 'Полевой устав 1944', undefined, P))).toContain('advanceMax — Наибольший темп');
+    expect(txt(scanMessages('data:', 'Журнал боевых действий', undefined, P))).not.toContain('advanceMax — Наибольший темп');
   });
 });

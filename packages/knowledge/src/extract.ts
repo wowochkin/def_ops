@@ -134,6 +134,15 @@ export interface ExtractedItem {
 /** Вход правил для подсказки извлечению нормативов: путь, название, единица. */
 export interface ParamHint { path: string; title: string; unit?: string }
 
+/**
+ * Признаки норматива в тексте (устав, наставление, темп, поправка, проценты, «в сутки»…): только тогда в промпт идёт
+ * перечень параметров модели — он длинный, а в журналах и сводках нормативов почти нет. Виды param и outcome
+ * разрешены и без перечня (неизвестный путь отметит проверка «норматив»).
+ */
+export function isNormative(text: string): boolean {
+  return /норматив|устав|наставлен|темп|км\/сут|поправк|коэффициент|%|процент|в сутки|за сутки|на 1 км|на один километр|плотност/i.test(text);
+}
+
 export function extractMessages(chunk: string, docName: string, op?: OperationHint, params?: ParamHint[]): { role: 'system' | 'user'; content: string }[] {
   const rubs = RUBRIC_CODES.filter((c) => c.split('.').length > 1).map((c) => `- ${c} ${rubricPath(c).map((x) => x.title).join(' › ')}`).join('\n');
   const cats = CATEGORIES.map((c) => `- ${c.id} — ${c.title}: ${c.description} Ключи фактов: ${c.fields.map((f) => `${f.key} (${f.title})`).join(', ')}.`).join('\n');
@@ -157,7 +166,7 @@ ${cats}
 Рубрикатор (о чём запись):
 ${rubs}
 
-${claimRules(op, params)}${op ? infraRules(op) : ''}Ответ — один JSON-объект по схеме.` },
+${claimRules(op, isNormative(chunk) || isNormative(docName) ? params : undefined)}${op ? infraRules(op) : ''}Ответ — один JSON-объект по схеме.` },
     { role: 'user', content: `Документ: «${docName}»${op ? ` (материал операции «${op.title}»)` : ''}. Фрагмент:\n\n${chunk}` },
   ];
 }
@@ -165,7 +174,9 @@ ${claimRules(op, params)}${op ? infraRules(op) : ''}Ответ — один JSON
 /** Правила формальных фактов (claims): общие для текста и скана. */
 export function claimRules(op?: OperationHint, params?: ParamHint[]): string {
   const year = op ? op.start.slice(0, 4) : '1945';
-  const list = params?.length ? `\n  Параметры модели (param — только из этого перечня):\n${params.map((p) => `  - ${p.path} — ${p.title}${p.unit ? `, ${p.unit}` : ''}`).join('\n')}` : '';
+  // параметры агентной модели в перечень промпта не входят (их нормативы — из её описания, а не из документов)
+  const ps = (params ?? []).filter((p) => !p.path.startsWith('agents.'));
+  const list = ps.length ? `\n  Параметры модели (param — только из этого перечня):\n${ps.map((p) => `  - ${p.path} — ${p.title}${p.unit ? `, ${p.unit}` : ''}`).join('\n')}` : '';
   return `Кроме записей (items), выпишите в claims формальные факты — то, что можно занести в модель. Вид (kind):
 - strength — численность соединения на дату: subject, date, personnel / tanks / guns (что названо);
 - reinforce — пополнение, прибывшее в соединение: subject, date, personnel / tanks / guns;
@@ -181,9 +192,9 @@ export function claimRules(op?: OperationHint, params?: ParamHint[]): string {
 Правила claims:
 1. Названия соединений (subject, parent, between) и мест — как в тексте, не расшифровывайте и не исправляйте («8 гв. А» так и остаётся).
 2. Даты — ГГГГ-ММ-ДД; если в тексте нет года, он ${year}. «С 16 по 19 апреля» — date 16-е, dateTo 19-е. Нет даты — null.
-3. Числа — как в тексте, целыми, без своих пересчётов; «4 910» — 4910. Названо «до 1 200», «около» — берите названное число. Не называйте то, чего нет, — null.
+3. Числа — как в тексте, без своих пересчётов; численность, техника, потери — целыми: «4 910» — 4910. Названо «до 1 200», «около» — берите названное число. У param и outcome числа дробные, как в тексте: «1,35» — 1.35, «0,5 км» — 0.5. Не называйте то, чего нет, — null.
 4. quote — дословная цитата (до 200 знаков), в которой есть все названные числа факта. Нет такой цитаты — нет факта.
-5. Только факты о фактическом положении дел; планы, приказы «наступать», потери противника, не относящиеся к названному соединению, — не выписывайте. Нет таких сведений — claims пустой.
+5. Только факты о фактическом положении дел; планы, приказы «наступать», потери противника, не относящиеся к названному соединению, — не выписывайте (кроме param и outcome: предписания уставов и наставлений, нормы и нормативы — «темп наступления должен быть 25–45 км в сутки» — выписываются как param). Нет таких сведений — claims пустой.
 
 `;
 }

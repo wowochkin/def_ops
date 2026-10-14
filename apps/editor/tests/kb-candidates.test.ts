@@ -43,7 +43,7 @@ describe('saveCandidates: маршрут по итогу проверок', () =
     const d = q.find((c) => c.id === 'd');
     expect(d?.state).toBe('rejected');
     expect(d?.checks[0].why).toContain('5000');
-  });
+  }, 20000); // первая запись в пустую базу загружает сид — под нагрузкой полного прогона дольше 5 с
 
   it('повторная загрузка того же списка — все повторы, новых фактов нет', async () => {
     await saveCandidates(list(), ctx);

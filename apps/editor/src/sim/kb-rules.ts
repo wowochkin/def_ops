@@ -12,10 +12,14 @@ import { CALIB_SPACE, corridorOf, RULE_INPUTS, rulesFrom, toMultiplier, type Cal
 import * as kbStore from '../kb/store';
 import { BUILTIN, getData } from './userdata';
 
-/** Сторона входа: профиль советской стороны (марш, переправы, задержка приказа) — su, крепость и профиль вермахта — de. */
+/**
+ * Сторона входа: профиль советской стороны (марш, переправы, задержка приказа) — su, крепость и профиль вермахта — de;
+ * иначе — по сегменту пути «.su» / «.de» (agents.doctrine.su.…, agents.combat.attackFrontageKm.de).
+ */
 export function inputSide(path: string): 'su' | 'de' | undefined {
-  if (path.startsWith('profiles.su.') || path.startsWith('orderDelay.') || ['foot.road', 'foot.open', 'bridgeHoursMajor', 'bridgeHoursMinor'].includes(path)) return 'su';
-  if (path.startsWith('profiles.de.') || path === 'stockDays.fortress') return 'de';
+  const seg = path.split('.');
+  if (path.startsWith('profiles.su.') || seg.includes('su') || path.startsWith('orderDelay.') || ['foot.road', 'foot.open', 'bridgeHoursMajor', 'bridgeHoursMinor'].includes(path)) return 'su';
+  if (path.startsWith('profiles.de.') || seg.includes('de') || path === 'stockDays.fortress') return 'de';
   return undefined;
 }
 
@@ -56,7 +60,10 @@ export interface RulesDigest { corridors: Record<string, [number, number]>; outc
 export function rulesDigest(b: CompiledRules, opId: string): RulesDigest {
   const corridors = Object.fromEntries(Object.entries(b.corridors).map(([k, c]) => [k, c.range])) as Record<string, [number, number]>;
   const outcomes = b.outcomes.filter((o) => o.claim.scenario === opId)
-    .map((o) => `${o.claim.measure} ${o.claim.subject ?? ''} ${o.claim.from.slice(0, 10)}–${o.claim.to.slice(0, 10)}: ${o.claim.range[0]}–${o.claim.range[1]} ${o.claim.unit}`.replace(/\s+/g, ' ').trim()).sort();
+    .map((o) => {
+      const c = o.claim, where = [c.side, c.echelon, c.near].filter(Boolean).join(', ');
+      return `${c.measure} ${c.subject ?? ''}${where ? ` (${where})` : ''} ${c.from.slice(0, 10)}–${c.to.slice(0, 10)}: ${c.range[0]}–${c.range[1]} ${c.unit}`.replace(/\s+/g, ' ').trim();
+    }).sort();
   return { corridors, outcomes };
 }
 

@@ -60,4 +60,16 @@ describe('основа правил из встроенной базы', () => {
     expect(d.outcomes.length).toBe(b.outcomes.filter((o) => o.claim.scenario === 'berlin-1945-tasks').length);
     expect(rulesDigest(b, 'нет-такой').outcomes).toEqual([]);
   });
+  it('сторона по сегменту пути: agents.doctrine.su.* — su, …Km.de — de; норматив de на вход su не берётся', () => {
+    expect(inputSide('agents.doctrine.su.firstEchelonShare')).toBe('su');
+    expect(inputSide('agents.combat.attackFrontageKm.de')).toBe('de');
+    expect(inputSide('agents.combat.penetrationKmDay')).toBeUndefined();
+    const de: Entry = { id: 'u:x', category: 'organization', title: 'x', summary: '', status: 'checked', facts: [{ key: 'numbers', value: 'v', source: 's', reliability: 'A', claim: { kind: 'param', param: 'agents.doctrine.su.firstEchelonShare', value: 0.6, side: 'de' } }] };
+    const r = basisFrom([de], {}, cal, rules('ww2-draft'), profiles, agents);
+    expect(r.provenance.find((p) => p.path === 'agents.doctrine.su.firstEchelonShare')!.fact).toBeNull();
+  });
+  it('отпечаток итога: сторона, ступень, район (ширина полосы)', () => {
+    const d = rulesDigest(b, 'berlin-1945-tasks');
+    expect(d.outcomes.some((o) => /frontage/.test(o) && /de/.test(o) && /division/.test(o) && /Зееловские высоты/.test(o))).toBe(true);
+  });
 });
