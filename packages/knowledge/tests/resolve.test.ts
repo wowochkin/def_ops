@@ -49,6 +49,34 @@ describe('выбор факта из нескольких', () => {
     expect(resolve(fs, 'parent', 'su_x', '1945-04-25', {}).chosen?.fact.claim).toMatchObject({ parent: 'su_5ua' });
     expect(resolve(fs, 'parent', 'su_x', '1945-04-20', {}).chosen?.fact.claim).toMatchObject({ parent: 'su_8ga' });
   });
+  it('смена подчинённости не расхождение', () => {
+    const p = (from: string, parent: string, i: number) => ref(i, { kind: 'parent', subject: 'su_x', from, parent }, 'B');
+    const r = resolve([p('1945-04-16', 'su_8ga', 0), p('1945-04-24', 'su_5ua', 1)], 'parent', 'su_x', '1945-04-25', {});
+    expect(r.conflict).toBe(false);
+  });
+  it('численность на разные даты при окне 0 — не расхождение', () => {
+    const r = resolve([str('1945-04-15', 6000, 'B', 0), str('1945-04-16', 6400, 'B', 1)], 'strength', 'su_61a', '1945-04-16', {});
+    expect(r.conflict).toBe(false);
+  });
+  it('A и B на одну дату с разными числами — расхождение, выбран A', () => {
+    const a = str('1945-04-16', 6000, 'A', 0), b = str('1945-04-16', 6400, 'B', 1);
+    const r = resolve([b, a], 'strength', 'su_61a', '1945-04-16', {});
+    expect(r.conflict).toBe(true);
+    expect(r.chosen).toBe(a);
+  });
+  it('закрепление на факт другого вида или объекта игнорируется', () => {
+    const a = str('1945-04-16', 6000, 'A', 0);
+    const other = ref(1, { kind: 'strength', subject: 'su_other', at: '1945-04-16', personnel: 1 }, 'C');
+    const pins = { [pinKey('strength', 'su_61a', '1945-04-16')]: { entry: 'e1', index: 1 } };
+    const r = resolve([a, other], 'strength', 'su_61a', '1945-04-16', pins);
+    expect(r.chosen).toBe(a);
+    expect(r.pinMissing).toBe(true);
+  });
+  it('порядок ключей в значении не создаёт расхождения', () => {
+    const mk = (i: number, extra: object) => ref(i, { kind: 'position', subject: 's', at: '1945-04-16', ...extra } as Claim, 'B');
+    const r = resolve([mk(0, { place: 'x', lngLat: [1, 2] }), mk(1, { lngLat: [1, 2], place: 'x' })], 'position', 's', '1945-04-16', {});
+    expect(r.conflict).toBe(false);
+  });
   it('claimFacts собирает только факты с claim', () => {
     const claim: Claim = { kind: 'enter', subject: 's', at: '1945-04-16' };
     const facts: Fact[] = [{ key: 'a', value: '1' }, { key: 'b', value: '2', claim }];

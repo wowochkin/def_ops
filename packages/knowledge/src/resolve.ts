@@ -36,7 +36,11 @@ const isState = (k: Claim['kind']) => k === 'parent' || k === 'crossing';
 const NUMS: (keyof Extract<Claim, { kind: 'losses' }> | 'personnel' | 'guns')[] = ['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing'];
 const isNumeric = (k: Claim['kind']) => k === 'strength' || k === 'reinforce' || k === 'losses';
 
-const deepEqual = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
+/** Нормализованная запись значения: порядок ключей объекта не влияет. */
+const norm = (v: unknown): string => Array.isArray(v) ? `[${v.map(norm).join(',')}]`
+  : v && typeof v === 'object' ? `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${norm((v as Record<string, unknown>)[k])}`).join(',')}}`
+  : JSON.stringify(v) ?? 'null';
+const deepEqual = (a: unknown, b: unknown): boolean => norm(a) === norm(b);
 
 /** Различаются ли значения двух утверждений (числа — больше чем на 5 %, остальное — не равно). */
 function differ(a: Claim, b: Claim): boolean {
@@ -66,16 +70,23 @@ export function resolve(
     if (state || window === 0) return d <= t;
     return Math.abs(d - t) <= window * DAY;
   });
-  let conflict = false;
-  for (let i = 0; i < candidates.length && !conflict; i++)
-    for (let j = i + 1; j < candidates.length; j++) if (differ(candidates[i].fact.claim!, candidates[j].fact.claim!)) { conflict = true; break; }
+  // расхождение — среди кандидатов на тот же момент, что и выбранный; надёжность не фильтрует
+  const conflictOf = (chosen: FactRef | null): boolean => {
+    const group = window > 0 ? candidates
+      : chosen ? candidates.filter((f) => time(dateOf(f.fact.claim!)) === time(dateOf(chosen.fact.claim!))) : [];
+    for (let i = 0; i < group.length; i++)
+      for (let j = i + 1; j < group.length; j++) if (differ(group[i].fact.claim!, group[j].fact.claim!)) return true;
+    return false;
+  };
 
   const pin = pins[pinKey(kind, subject, moment)];
-  if (pin === 'none') return { chosen: null, candidates, conflict };
+  if (pin === 'none') return { chosen: null, candidates, conflict: window > 0 && conflictOf(null) };
   let pinMissing: true | undefined;
   if (pin) {
-    const hit = facts.find((f) => f.fact.claim && f.entry === pin.entry && f.index === pin.index);
-    if (hit) return { chosen: hit, candidates, conflict };
+    // закрепление действует, только если факт того же вида и о том же
+    const hit = facts.find((f) => f.fact.claim && f.entry === pin.entry && f.index === pin.index
+      && f.fact.claim.kind === kind && subjectOf(f.fact.claim) === subject);
+    if (hit) return { chosen: hit, candidates, conflict: conflictOf(hit) };
     pinMissing = true;
   }
   const d = (f: FactRef) => time(dateOf(f.fact.claim!));
@@ -84,5 +95,6 @@ export function resolve(
     // состояние: последнее действующее; прочее: ближайшее к моменту
     || (state ? d(b) - d(a) : Math.abs(d(a) - t) - Math.abs(d(b) - t))
     || (a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0));
-  return { chosen: sorted[0] ?? null, candidates, conflict, ...(pinMissing ? { pinMissing } : {}) };
+  const chosen = sorted[0] ?? null;
+  return { chosen, candidates, conflict: conflictOf(chosen), ...(pinMissing ? { pinMissing } : {}) };
 }
