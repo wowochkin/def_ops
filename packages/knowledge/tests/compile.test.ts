@@ -270,6 +270,12 @@ for (const o of OPS) describe(`воспроизводимость: сид → н
     expect(bad).toEqual([]);
   });
 
+  if (o.scenario === 'berlin-1945-tasks') it('перечень состава без даты не перебивает подчинённость, датированную раньше начала', () => {
+    // «Боевой состав» на 1.04 (A): 3 гв. тк — 2 БФ, 8 гв. тк — 2 уд. А; перечень Le Tissier без даты — 1 БФ
+    expect(r.edits.formations.su_3gtk?.parent).toBe('su_2bf');
+    expect(r.edits.formations.su_8gtk?.parent).toBe('su_2ua');
+  });
+
   it('по каждому формированию сценария есть provenance численности и подчинённости', () => {
     for (const f of [...input.formations, ...input.divisions!]) {
       expect(r.provenance.some((p) => p.input === `${f.id}.personnel`), f.id).toBe(true);

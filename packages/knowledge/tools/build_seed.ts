@@ -29,7 +29,16 @@ const put = (e: Entry) => {
   old.aliases = [...new Set([...(old.aliases ?? []), ...(e.aliases ?? [])])];
   if (!old.summary && e.summary) old.summary = e.summary;
 };
-const dedupeFacts = (l: Fact[]) => l.filter((f, i) => l.findIndex((g) => g.key === f.key && g.value === f.value && g.source === f.source) === i);
+/** Повторы по тексту убираются; формальная часть повтора (и её надёжность) переходит к оставшемуся факту без неё. */
+const dedupeFacts = (l: Fact[]) => {
+  const out: Fact[] = [];
+  for (const f of l) {
+    const i = out.findIndex((g) => g.key === f.key && g.value === f.value && g.source === f.source);
+    if (i < 0) out.push(f);
+    else if (f.claim && !out[i].claim) out[i] = { ...out[i], claim: f.claim, ...(f.reliability ? { reliability: f.reliability } : {}) };
+  }
+  return out;
+};
 const dedupeRel = (l: Relation[]) => l.filter((r, i) => l.findIndex((g) => g.type === r.type && g.target === r.target) === i);
 const rel = (v: unknown): Reliability | undefined => (v === 'A' || v === 'B' || v === 'C' ? v : undefined);
 const slug = (s: string) => s.toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 60);
@@ -260,6 +269,11 @@ function parsePersons(raw: string, side?: string): { id: string; name: string; r
   }
   return out;
 }
+// у кого в реестре дивизий подчинённость датирована раньше начала операции, перечень набора без даты её не перебивает:
+// иначе он, отнесённый к началу, оказался бы «позже» и вытеснил датированный факт; на одну дату — решает надёжность
+const datedParent = new Set<string>();
+for (const d of ((): { id: string; subordination?: { date?: string; front?: string; army?: string; corps?: string }[] }[] => { try { return read('docs/sources/berlin-1945-divisions.json').divisions ?? []; } catch { return []; } })())
+  if ((d.subordination ?? []).some((r) => r.date && r.date.slice(0, 10) < OP_START.berlin && [r.corps, r.army, r.front].some(inScenario))) datedParent.add(d.id);
 for (const { f, file } of allF) {
   const facts: Fact[] = [];
   const src = srcId(f.source as string) ?? undefined;
@@ -267,7 +281,7 @@ for (const { f, file } of allF) {
   if (f.echelon) facts.push({ key: 'echelon', value: ECH[f.echelon] ?? f.echelon, source: src });
   if (f.parent) {
     // подчинённость в наборе формирований действует с начала операции
-    const claim: Claim | undefined = inScenario(f.id) && inScenario(f.parent) ? { kind: 'parent', subject: f.id, from: OP_START[opOfFile(file)], parent: f.parent } : undefined;
+    const claim: Claim | undefined = inScenario(f.id) && inScenario(f.parent) && !(opOfFile(file) === 'berlin' && datedParent.has(f.id)) ? { kind: 'parent', subject: f.id, from: OP_START[opOfFile(file)], parent: f.parent } : undefined;
     facts.push({ key: 'parent', value: fname.get(f.parent) ?? f.parent, source: src, ...(claim ? { claim } : {}) });
   }
   if (f.commander) facts.push({ key: 'commander', value: f.commander, source: src });
