@@ -140,13 +140,13 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
 async function start(s: { scenario: string; rules: string; seed: number; takeover: string; agents?: AgentGameSpec }, record: GameRecord | undefined, l: LlmSettings, en: EnemyMode) {
   llm = l; enemy = en;
   post({ kind: 'progress', text: 'загрузка данных…' });
-  // данные из базы: записанные в игре при начале (восстановление — на тех же данных), иначе нынешние
-  const kb = gameKbData(record as { kb?: GameKb } | undefined, record?.kb ? { compiled: null, core: null } : await gameKbNow(s.scenario, !!(record?.agents ?? s.agents)));
+  // данные из базы: записанные в игре при начале (восстановление — на тех же данных; запись без них — без данных базы), новой игре — нынешние
+  const kb = gameKbData(record as { kb?: GameKb } | undefined, record ? { compiled: null, core: null } : await gameKbNow(s.scenario, !!s.agents));
   // состояние соединений при передаче по фактам базы: новой игре — по нынешней базе (считается один раз и пишется
   // в запись), записанной — то, с которым она начата (нет в записи — без него). База недоступна — игра начинается
   // без состояния по фактам (как прежде), а не падает
   if (!record) {
-    try { kb.takeoverState = (await takeoverNow(s.scenario, s.takeover, !!s.agents)).state; }
+    try { kb.takeoverState = (await takeoverNow(s.scenario, s.takeover, !!s.agents, kb)).state; }
     catch (e) { console.warn('состояние при передаче по фактам базы не получено:', e); }
   }
   const get = (kind: string, file: string) => getData(kind as DataKind, file, kb.compiled);
@@ -176,7 +176,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
       // поправки сценария из базы знаний (дивизии) — те, с которыми игра началась
       edits: kb.core ?? undefined,
       // состояние дивизий при передаче по фактам базы (game::TakeoverIn)
-      takeoverState: kb.takeoverState ? (await coreTakeoverFor(s.scenario, kb.takeoverState)) ?? undefined : undefined,
+      takeoverState: kb.takeoverState ? (await coreTakeoverFor(s.scenario, kb.takeoverState, kb.core, record?.takeover ?? s.takeover)) ?? undefined : undefined,
     }));
     // тыл — под управлением штаба: базы снабжения стороны; будущие наводки переправ сняты (ядру — с первым ходом);
     // директивы с этого момента — по обстановке

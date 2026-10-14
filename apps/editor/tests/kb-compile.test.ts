@@ -138,12 +138,26 @@ describe('toCoreEdits: подчинение старшему штабу над �
   });
 });
 
+describe('toCoreEdits: переподчинение по дате старшему над нынешним штабом — не изменение', () => {
+  it('дивизия у армии, смена на фронт над ней — отброшена; на другую армию — остаётся, дальше от неё', () => {
+    const hqs = new Map<string, string | null>([['su_33a', 'su_1bf'], ['su_69a', 'su_1bf'], ['su_1bf', null]]);
+    const divs = new Map([['su_3gkd', 'su_33a']]);
+    const c = withF({}, { changes: [
+      { at: '1945-04-17', formation: 'su_3gkd', kind: 'resubordinate', parent: 'su_1bf' },
+      { at: '1945-04-18', formation: 'su_3gkd', kind: 'resubordinate', parent: 'su_69a' },
+      { at: '1945-04-19', formation: 'su_3gkd', kind: 'resubordinate', parent: 'su_1bf' },
+    ] });
+    expect(toCoreEdits(c, divs, hqs).changes).toEqual([{ at: '1945-04-18', formation: 'su_3gkd', kind: 'resubordinate', parent: 'su_69a' }]);
+  });
+});
+
 describe('выбор данных игры: записанные при начале важнее нынешних', () => {
-  it('в записи есть — берутся из записи; нет (старая запись, новая игра) — нынешние', () => {
+  it('в записи есть — берутся из записи; старая запись — без данных базы; новая игра — нынешние', () => {
     const now = { compiled: withF({ a: { personnel: 2 } }), core: null };
     const was = { compiled: withF({ a: { personnel: 1 } }), core: { divisions: {}, changes: [] } };
     expect(gameKbData({ kb: was }, now)).toBe(was);
-    expect(gameKbData({}, now)).toBe(now);
+    // запись, сохранённая до данных базы, — без них (как была начата), а не на нынешней базе
+    expect(gameKbData({}, now)).toEqual({ compiled: null, core: null });
     expect(gameKbData(undefined, now)).toBe(now);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pinKey, type Claim, type Entry } from '@def-ops/knowledge';
-import { takeoverText, takeoverState, toCoreTakeover } from '../src/sim/takeover-state';
+import { parentsAt, takeoverText, takeoverState, toCoreTakeover } from '../src/sim/takeover-state';
 
 const moment = '1945-04-17T12:00';
 const entry = (id: string, claims: [Claim, 'A' | 'B' | 'C'][], updatedAt = '2026-01-01'): Entry => ({
@@ -66,8 +66,56 @@ describe('takeoverState: состояние при передаче команд
   });
 
   it('для ядра: только дивизии, parent → hq (если такой штаб есть)', () => {
-    const core = toCoreTakeover({ su_d1: { personnel: 9000, position: [14, 52], parent: 'su_c1' }, su_d2: { parent: 'nope' }, su_8ga: { personnel: 1 } }, new Set(['su_d1', 'su_d2']), new Set(['su_c1']));
+    const core = toCoreTakeover({ su_d1: { personnel: 9000, position: [14, 52], parent: 'su_c1' }, su_d2: { parent: 'nope' }, su_8ga: { personnel: 1 } },
+      new Map([['su_d1', 'su_c2'], ['su_d2', 'su_c2']]), new Map([['su_c1', null], ['su_c2', null]]));
     expect(core).toEqual({ divisions: { su_d1: { personnel: 9000, pos: [14, 52], hq: 'su_c1' } } });
+  });
+
+  it('для ядра: штаб выше нынешнего (фронт над армией) — не поправка', () => {
+    // кавалерийская дивизия у 33 А; факт — у 1 БФ, фронта над 33 А
+    const hqs = new Map<string, string | null>([['su_33a', 'su_1bf'], ['su_69a', 'su_1bf'], ['su_1bf', null]]);
+    const core = toCoreTakeover({ su_3gkd: { parent: 'su_1bf', personnel: 4000 }, su_x: { parent: 'su_69a' } }, new Map([['su_3gkd', 'su_33a'], ['su_x', 'su_33a']]), hqs);
+    expect(core).toEqual({ divisions: { su_3gkd: { personnel: 4000 }, su_x: { hq: 'su_69a' } } });
+  });
+
+  it('подчинённость: та же, что сейчас, — не поправка и не считается', () => {
+    const fs = [entry('e1', [[{ kind: 'parent', subject: 'su_d1', from: '1945-04-01', parent: 'su_c1' }, 'A']])];
+    const r = takeoverState(fs, {}, [{ id: 'su_d1', echelon: 'division', parent: 'su_c1' }], moment);
+    expect(r.state).toEqual({});
+    expect(r.summary).toMatchObject({ parent: 0, corrected: 0, assumed: 1 });
+    const r2 = takeoverState(fs, {}, [{ id: 'su_d1', echelon: 'division', parent: 'su_c9' }], moment);
+    expect(r2.state).toEqual({ su_d1: { parent: 'su_c1' } });
+    expect(r2.summary.parent).toBe(1);
+  });
+
+  it('подчинённость: старший над нынешним штабом — не поправка', () => {
+    const fs = [entry('e1', [[{ kind: 'parent', subject: 'su_d1', from: '1945-04-01', parent: 'su_f' }, 'A']])];
+    const hqs = new Map<string, string | null>([['su_c1', 'su_a'], ['su_a', 'su_f'], ['su_f', null]]);
+    const r = takeoverState(fs, {}, [{ id: 'su_d1', echelon: 'division', parent: 'su_c1' }], moment, hqs);
+    expect(r.state).toEqual({});
+    expect(r.summary.parent).toBe(0);
+  });
+
+  it('численность и положение, совпадающие с нынешними, — не поправка', () => {
+    const fs = [entry('e1', [
+      [{ kind: 'strength', subject: 'su_d1', at: '1945-04-17T06:00', personnel: 9000, tanks: 10 }, 'A'],
+      [{ kind: 'position', subject: 'su_d1', at: '1945-04-17T06:00', lngLat: [14.6, 52.4], uncertaintyKm: 4 }, 'B'],
+    ])];
+    const same = takeoverState(fs, {}, [{ id: 'su_d1', echelon: 'division', personnel: 9000, tanks: 10, position: [14.6, 52.4] }], moment);
+    expect(same.state).toEqual({});
+    expect(same.summary).toMatchObject({ strength: 0, position: 0, corrected: 0 });
+    const part = takeoverState(fs, {}, [{ id: 'su_d1', echelon: 'division', personnel: 9000, tanks: 12 }], moment);
+    expect(part.state).toEqual({ su_d1: { tanks: 10, position: [14.6, 52.4] } });
+    expect(part.summary).toMatchObject({ strength: 1, position: 1, corrected: 1 });
+  });
+
+  it('нынешняя подчинённость на момент: исходная и переподчинения не позже момента', () => {
+    const p = parentsAt(new Map([['d1', 'a1'], ['d2', 'a1']]), [
+      { at: '1945-04-17', formation: 'd1', kind: 'resubordinate', parent: 'a2' },
+      { at: '1945-04-18', formation: 'd2', kind: 'resubordinate', parent: 'a3' },
+      { at: '1945-04-17', formation: 'd2', kind: 'reinforce', personnel: 1 },
+    ], moment);
+    expect(Object.fromEntries(p)).toEqual({ d1: 'a2', d2: 'a1' });
   });
 
   it('текст сводки', () => {

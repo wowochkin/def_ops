@@ -116,16 +116,22 @@ export type CoreEdits = {
   changes: CompiledEdits['changes'];
 };
 
+/** Штаб a — выше штаба b по цепочке вышестоящих hqs (штаб → вышестоящий). */
+export function isAbove(hqs: Map<string, string | null>, a: string, b: string): boolean {
+  for (let x = hqs.get(b), n = 0; x && n < 20; x = hqs.get(x), n++) if (x === a) return true;
+  return false;
+}
+
 /**
  * Собранное — в поправки ядра: формирования-дивизии (parent → hq); изменения о дивизиях, а у штабов —
  * переподчинение (пополнение штаба в ядре смысла не имеет). Прочее (армии нынешней модели) не передаётся.
  * divisions — дивизия → её штаб в агентном сценарии, hqs — штаб → вышестоящий: подчинение из базы старшему
- * над нынешним штабом (фронту вместо армии) менее точно — не поправка.
+ * над нынешним штабом (фронту вместо армии) менее точно — не поправка; то же у переподчинения дивизии по дате
+ * (старшему над её штабом на тот момент).
  */
 export function toCoreEdits(c: CompiledEdits, divisions: Map<string, string>, hqs: Map<string, string | null> = new Map()): CoreEdits {
   const out: CoreEdits['divisions'] = {};
-  /** Штаб a — выше штаба b (по цепочке вышестоящих). */
-  const above = (a: string, b: string) => { for (let x = hqs.get(b), n = 0; x && n < 20; x = hqs.get(x), n++) if (x === a) return true; return false; };
+  const above = (a: string, b: string) => isAbove(hqs, a, b);
   for (const [id, p] of Object.entries(c.formations)) {
     const hq = divisions.get(id);
     if (hq === undefined) continue;
@@ -135,7 +141,14 @@ export function toCoreEdits(c: CompiledEdits, divisions: Map<string, string>, hq
     if (p.enterAt) d.enterAt = p.enterAt;
     if (Object.keys(d).length) out[id] = d;
   }
-  const changes = c.changes.filter((x) => divisions.has(x.formation) || (hqs.has(x.formation) && x.kind === 'resubordinate'));
+  // штаб дивизии по ходу изменений (по времени): исходный с поправкой, затем принятые переподчинения
+  const cur = new Map([...divisions].map(([id, hq]) => [id, out[id]?.hq ?? hq]));
+  const drop = new Set<CompiledEdits['changes'][number]>();
+  for (const x of [...c.changes].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))) {
+    if (x.kind !== 'resubordinate' || !divisions.has(x.formation)) continue;
+    if (above(x.parent, cur.get(x.formation)!)) drop.add(x); else cur.set(x.formation, x.parent);
+  }
+  const changes = c.changes.filter((x) => !drop.has(x) && (divisions.has(x.formation) || (hqs.has(x.formation) && x.kind === 'resubordinate')));
   return { divisions: out, changes };
 }
 
@@ -146,8 +159,12 @@ export function toCoreEdits(c: CompiledEdits, divisions: Map<string, string>, hq
  * соединений при передаче командования по фактам (takeover-state.ts). Пишутся в запись игры при начале — восстановление идёт на тех же данных.
  */
 export interface GameKb { compiled: CompiledEdits | null; core: CoreEdits | null; takeoverState?: TakeoverState }
-/** Записанные в игре данные важнее нынешних; в записи нет (новая игра, старая запись) — нынешние. */
-export const gameKbData = (record: { kb?: GameKb } | undefined, current: GameKb): GameKb => record?.kb ?? current;
+/**
+ * Записанные в игре данные важнее нынешних; новая игра (записи нет) — нынешние; запись, сохранённая до данных базы
+ * (без kb), — без них: игра восстанавливается так, как была начата.
+ */
+export const gameKbData = (record: { kb?: GameKb } | undefined, current: GameKb): GameKb =>
+  record ? record.kb ?? { compiled: null, core: null } : current;
 
 /* ───────────── перенос прежней сверки в закрепления ───────────── */
 

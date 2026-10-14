@@ -10,9 +10,9 @@ import { compileOperation, type CompileInput, type CompiledEdits } from '@def-op
 import type { Scenario, TakeoverState } from '@def-ops/sim';
 import * as kbStore from '../kb/store';
 import { AGENT_SCENARIOS } from './agent-scenarios';
-import { diffCompiled, migratePins, norm, toCoreEdits, type CoreEdits, type GameKb } from './kb-compile';
+import { applyCompiled, diffCompiled, migratePins, norm, toCoreEdits, type CoreEdits, type GameKb } from './kb-compile';
 import { fullCatalog, getEdits, rawData, updateEdits } from './userdata';
-import { takeoverState, toCoreTakeover, type CoreTakeover, type TakeoverSummary } from './takeover-state';
+import { parentsAt, takeoverState, toCoreTakeover, type CoreTakeover, type TakeoverSummary, type TakeoverUnit } from './takeover-state';
 
 export interface AgentScenarioFile {
   hqs: { id: string; name: string; side: string; echelon: string; parent?: string | null }[];
@@ -120,21 +120,48 @@ export async function gameKbNow(opId: string, agents: boolean): Promise<GameKb> 
 }
 
 /**
- * Состояние соединений при передаче командования по нынешней базе (записи и закрепления) на момент moment:
- * нынешняя модель — действующие формирования сценария (с типом), агентная — дивизии агентного сценария.
+ * Подчинённость агентного сценария на момент: дивизия → штаб (исходный с поправкой ядра и переподчинения по датам),
+ * штаб → вышестоящий (с переподчинениями штабов).
  */
-export async function takeoverNow(opId: string, moment: string, agents: boolean): Promise<{ state: TakeoverState; summary: TakeoverSummary }> {
-  const [entries, pins] = await Promise.all([kbStore.entries(), kbStore.pins()]);
-  let ids: { id: string; echelon: string }[];
-  if (agents) ids = ((await agentScenario(opId))?.divisions ?? []).map((d) => ({ id: d.id, echelon: 'division' }));
-  else ids = ((await rawData('scenarios', `${opId}.json`)) as Scenario).formations.filter((f) => f.type).map((f) => ({ id: f.id, echelon: f.echelon }));
-  return takeoverState(entries, pins, ids, moment);
+function agentParentsAt(a: AgentScenarioFile, core: CoreEdits | null | undefined, moment: string) {
+  const changes = core?.changes ?? [];
+  const divisions = parentsAt(new Map(a.divisions.map((d) => [d.id, core?.divisions[d.id]?.hq ?? d.hq])), changes, moment) as Map<string, string>;
+  const hqs = parentsAt(new Map(a.hqs.map((h) => [h.id, h.parent ?? null])), changes, moment);
+  return { divisions, hqs };
 }
 
-/** Состояние при передаче — для ядра агентной модели (дивизии, штабы агентного сценария); нечего передать — undefined. */
-export async function coreTakeoverFor(opId: string, s: TakeoverState): Promise<CoreTakeover | undefined> {
+/**
+ * Состояние соединений при передаче командования по нынешней базе (записи и закрепления) на момент moment:
+ * нынешняя модель — действующие формирования сценария (с типом), агентная — дивизии агентного сценария. Нынешняя
+ * подчинённость — по сценарию с данными базы игры (kb; нет — нынешние) и переподчинениям не позже момента: факт,
+ * совпадающий с ней или указывающий старшего над нынешним штабом, — не поправка.
+ */
+export async function takeoverNow(opId: string, moment: string, agents: boolean, kb?: GameKb): Promise<{ state: TakeoverState; summary: TakeoverSummary }> {
+  const [entries, pins] = await Promise.all([kbStore.entries(), kbStore.pins()]);
+  const data = kb ?? await gameKbNow(opId, agents);
+  let ids: TakeoverUnit[];
+  let hqs: Map<string, string | null>;
+  const a = agents ? await agentScenario(opId) : undefined;
+  if (a) {
+    const p = agentParentsAt(a, data.core, moment);
+    hqs = p.hqs;
+    ids = a.divisions.map((d) => ({ id: d.id, echelon: 'division', parent: p.divisions.get(d.id) }));
+  } else {
+    const sc = applyCompiled((await rawData('scenarios', `${opId}.json`)) as Scenario, data.compiled ?? undefined);
+    hqs = parentsAt(new Map(sc.formations.map((f) => [f.id, f.parent ?? null])), (sc.changes ?? []) as CompiledEdits['changes'], moment);
+    ids = sc.formations.filter((f) => f.type).map((f) => ({ id: f.id, echelon: f.echelon, parent: hqs.get(f.id) }));
+  }
+  return takeoverState(entries, pins, ids, moment, hqs);
+}
+
+/**
+ * Состояние при передаче — для ядра агентной модели (дивизии, штабы агентного сценария; подчинённость на момент —
+ * с поправками ядра core); нечего передать — undefined.
+ */
+export async function coreTakeoverFor(opId: string, s: TakeoverState, core: CoreEdits | null | undefined, moment: string): Promise<CoreTakeover | undefined> {
   const a = await agentScenario(opId);
   if (!a) return undefined;
-  const r = toCoreTakeover(s, new Set(a.divisions.map((d) => d.id)), new Set(a.hqs.map((h) => h.id)));
+  const p = agentParentsAt(a, core, moment);
+  const r = toCoreTakeover(s, p.divisions, p.hqs);
   return Object.keys(r.divisions).length ? r : undefined;
 }
