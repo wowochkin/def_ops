@@ -4,7 +4,7 @@
  * «Переигровке» (agentsToRun → compareWithHistory, checkEvents), без карты.
  */
 import { agentsHistory, agentsToRun, type AgentHistory, type AgentTrace } from './agents';
-import { checkEvents, compareWithHistory, summarize, type History } from './history';
+import { checkEvents, compareStrength, compareWithHistory, summarize, type History } from './history';
 import type { SimContext } from './step';
 
 export interface AgentsScore {
@@ -13,7 +13,9 @@ export interface AgentsScore {
   events: { id: string; title: string; days: number | null }[];
   /** По объединениям (армиям и корпусам по подчинению дивизий): доля в допуске и число положений. */
   byGroup: { id: string; within: number; n: number }[];
-  /** Итог для калибровки: положения и события поровну (0…1). */
+  /** Сверка численности и потерь с документами (есть, когда в истории есть контрольные точки). */
+  strength?: { n: number; within: number };
+  /** Итог для калибровки: положения и события поровну (0…1); при ≥ 10 контрольных точках — на 25% сверка численности. */
   score: number;
 }
 
@@ -37,10 +39,13 @@ export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentH
     x.n++; if (d.excessKm <= toleranceKm) x.ok++;
     groups.set(g, x);
   }
+  const st = compareStrength(ctx, run, h);
+  const posEv = (s.within + (ev.length ? hit / ev.length : s.within)) / 2;
   return {
     within: s.within, n: s.n, medianExcessKm: s.medianExcessKm, eventsHit: hit, eventsTotal: ev.length,
     events: ev.map((e) => ({ id: e.id, title: e.title, days: e.days })),
     byGroup: [...groups].map(([id, x]) => ({ id: name.get(id) ?? id, within: +(x.ok / x.n).toFixed(2), n: x.n })).sort((a, b) => b.n - a.n),
-    score: +((s.within + (ev.length ? hit / ev.length : s.within)) / 2).toFixed(3),
+    ...(st.n > 0 ? { strength: { n: st.n, within: st.within } } : {}),
+    score: +(st.n >= 10 ? posEv * 0.75 + st.within * 0.25 : posEv).toFixed(3),
   };
 }

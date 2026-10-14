@@ -31,10 +31,11 @@ export function deleteAgentVariant(id: string) {
   window.dispatchEvent(new Event('def_ops.agents.variants'));
 }
 
-export interface AgentRunOptions { seed: number; params?: Record<string, unknown>; de?: 'script' | 'doctrine'; su?: 'script' | 'doctrine'; withoutFires?: boolean; withoutWithdrawals?: boolean }
+export interface AgentRunOptions { seed: number; params?: Record<string, unknown>; edits?: Record<string, unknown>; de?: 'script' | 'doctrine'; su?: 'script' | 'doctrine'; withoutFires?: boolean; withoutWithdrawals?: boolean }
 /** Прогон сценария ядром: ход по часам. */
 export const runAgents = (scenario: string, o: AgentRunOptions) => invoke<AgentTrace>('run_scenario', {
   scenario: AGENT_SCENARIOS[scenario].path, seed: o.seed, ...(o.params && Object.keys(o.params).length ? { params: o.params } : {}),
+  ...(o.edits && Object.keys(o.edits).length ? { edits: o.edits } : {}),
   ...(o.de && o.de !== 'script' ? { de: o.de } : {}), ...(o.su && o.su !== 'script' ? { su: o.su } : {}),
   ...(o.withoutFires ? { withoutFires: true } : {}), ...(o.withoutWithdrawals ? { withoutWithdrawals: true } : {}),
 });

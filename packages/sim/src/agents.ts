@@ -181,5 +181,7 @@ export function agentsHistory(h: AgentHistory, base?: History | null): History {
     ],
     frontline: base?.frontline ?? [],
     events: h.events ?? [],
+    // сверка численности и потерь с документами — те же контрольные точки, что у базовой истории
+    ...(base?.checkpoints?.length ? { checkpoints: base.checkpoints } : {}),
   };
 }
