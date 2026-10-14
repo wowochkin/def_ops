@@ -230,10 +230,22 @@ function checkPlausible(c: Candidate, ctx: CheckCtx): CheckResult | null {
   return whys.length ? res('plausible', 'doubt', whys.join('; ')) : ok('plausible');
 }
 
+const claimFp = (c: Claim) => fingerprint({ key: '', value: '', claim: c });
+/**
+ * Тот же факт по формальной части: кандидат (как извлечён) и факт базы (как записан). Положение по названию места
+ * при приёме получает координаты с театра — у кандидата без координат они при сравнении не учитываются.
+ */
+export function sameClaim(cand: Claim, stored: Claim): boolean {
+  if (cand.kind === 'position' && stored.kind === 'position' && !cand.lngLat) {
+    const { lngLat: _l, ...rest } = stored;
+    return claimFp(cand) === claimFp(rest);
+  }
+  return claimFp(cand) === claimFp(stored);
+}
+
 /** 7. Повтор: тот же claim от того же источника уже в базе. */
 function checkDuplicate(c: Candidate, ctx: CheckCtx): CheckResult {
-  const fp = fingerprint({ key: '', value: '', claim: c.claim });
-  const dup = ctx.existing.some((f) => f.claim && f.source === c.source && fingerprint({ key: '', value: '', claim: f.claim }) === fp);
+  const dup = ctx.existing.some((f) => f.claim && f.source === c.source && sameClaim(c.claim, f.claim));
   return dup ? res('duplicate', 'fail', 'тот же факт из того же источника уже в базе') : ok('duplicate');
 }
 

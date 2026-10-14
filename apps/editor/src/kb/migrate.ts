@@ -46,8 +46,9 @@ async function runV7(ctx: MigrateCtx): Promise<{ facts: number; candidates: numb
   const [proposals, infra, positions, boundaries] = await Promise.all([
     store.all<Proposal>('proposals'), store.all<InfraProposal>('infra'), store.all<PositionProposal>('positions'), store.all<BoundaryProposal>('boundaries'),
   ]);
-  const r = await migrateLegacy({ proposals, infra, positions, boundaries }, ctx);
-  await store.put('pins', { id: MIGRATED_V7, at: new Date().toISOString(), ...r });
+  const { missing, ...r } = await migrateLegacy({ proposals, infra, positions, boundaries }, ctx);
+  // операция (сценарий или театр) не прочиталась — метки нет: при следующем открытии перенос повторится (без повторов)
+  if (!missing?.length) await store.put('pins', { id: MIGRATED_V7, at: new Date().toISOString(), ...r });
   return r;
 }
 
@@ -65,18 +66,25 @@ function crossingClaim(it: InfraItem): Extract<Claim, { kind: 'crossing' }> | nu
 const human = (at: string) => ({ by: 'human' as const, at, results: [] });
 const quoteEv = (doc: string, chunk: number, quote: string) => ({ kind: 'quote' as const, doc, chunk, quote });
 
-/** Перенести очереди: принятое — фактами, ждущее и отклонённое — кандидатами. Идемпотентно. */
-export async function migrateLegacy(data: Legacy, ctx: MigrateCtx = defaultCtx): Promise<{ facts: number; candidates: number }> {
+/**
+ * Перенести очереди: принятое — фактами, ждущее и отклонённое — кандидатами. Идемпотентно. missing — операции, чьи
+ * сценарий или театр не прочитались (их положения и линии перенесены не полностью).
+ */
+export async function migrateLegacy(data: Legacy, ctx: MigrateCtx = defaultCtx): Promise<{ facts: number; candidates: number; missing?: string[] }> {
   const at = new Date().toISOString();
   const w = await work();
   const have = new Set((await store.all<StoredCandidate>('candidates')).map((c) => c.id));
   const cands: StoredCandidate[] = [];
   let facts = 0;
+  const missing = new Set<string>();
   const addCand = (c: StoredCandidate) => { if (!have.has(c.id)) { have.add(c.id); cands.push(c); } };
 
   const ops = new Map<string, Promise<{ od: Awaited<ReturnType<MigrateCtx['operation']>>; T: Theatre | null }>>();
   const opData = (op: string) => {
-    if (!ops.has(op)) ops.set(op, ctx.operation(op).catch(() => null).then((od) => ({ od, T: od?.theatre ? new Theatre(od.theatre) : null })));
+    if (!ops.has(op)) ops.set(op, ctx.operation(op).catch(() => null).then((od) => {
+      if (!od?.theatre) missing.add(op);
+      return { od, T: od?.theatre ? new Theatre(od.theatre) : null };
+    }));
     return ops.get(op)!;
   };
 
@@ -111,6 +119,8 @@ export async function migrateLegacy(data: Legacy, ctx: MigrateCtx = defaultCtx):
 
   for (const p of data.positions ?? []) {
     const { od, T } = await opData(p.operation);
+    // операция не прочиталась — перенос её очереди при следующем запуске (метки нет), а не кандидатом без соединения
+    if (!od || !T) continue;
     const r: PositionResolution = od ? resolvePosition(p, od.input, T, w.entries) : {};
     const claim = positionClaim(p, r);
     if (p.status === 'accepted') {
@@ -131,6 +141,8 @@ export async function migrateLegacy(data: Legacy, ctx: MigrateCtx = defaultCtx):
 
   for (const p of data.boundaries ?? []) {
     const { od, T } = await opData(p.operation);
+    // операция не прочиталась — перенос её очереди при следующем запуске (метки нет), а не кандидатом без соединения
+    if (!od || !T) continue;
     const r: BoundaryResolution = od ? resolveBoundary(p, od.input, T, w.entries) : { points: [], missing: [], entries: [] };
     const claim = boundaryClaim(p, r);
     const it = p.item;
@@ -184,6 +196,6 @@ export async function migrateLegacy(data: Legacy, ctx: MigrateCtx = defaultCtx):
 
   await w.save();
   if (cands.length) await store.put('candidates', ...cands);
-  return { facts, candidates: cands.length };
+  return { facts, candidates: cands.length, ...(missing.size ? { missing: [...missing] } : {}) };
 }
 

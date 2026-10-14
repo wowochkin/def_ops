@@ -5,7 +5,7 @@
  * сборщик пересобирает операции (факты в модель идут только через compileOperation).
  */
 import {
-  applyProposal, fingerprint, formationEntries, formationEntry, matchEntry, matchFormation, pinKey,
+  applyProposal, fingerprint, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey,
   type Candidate, type Claim, type Entry, type Fact, type FactRef, type Pins, type Proposal, type Reliability,
 } from '@def-ops/knowledge';
 import { claimText } from '../modeling/basis';
@@ -27,8 +27,8 @@ const SUBJECT_MISSING = 'соединение не найдено: указат�
 
 /** Отпечаток формальной части (как у проверки повтора). */
 const claimFp = (c: Claim) => fingerprint({ key: '', value: '', claim: c });
-/** Тот же факт: та же формальная часть и тот же источник. */
-const sameFact = (f: Fact, claim: Claim, source: string) => !!f.claim && f.source === source && claimFp(f.claim) === claimFp(claim);
+/** Тот же факт: та же формальная часть (координаты, добавленные при приёме, не мешают) и тот же источник. */
+const sameFact = (f: Fact, claim: Claim, source: string) => !!f.claim && f.source === source && sameClaim(claim, f.claim);
 /** Ключ кандидата в очереди (повторная загрузка того же — не новый кандидат). */
 const queueKey = (c: StoredCandidate) => JSON.stringify([c.claim ? claimFp(c.claim) : null, c.names, c.key, c.value, c.source]);
 /** Кандидат отброшен как повтор (проверка duplicate). */
@@ -105,8 +105,10 @@ function factOf(c: Candidate, by: 'auto' | 'human', ctx: AcceptCtx): Fact {
 
 type Placed = { entry: string; index: number; duplicate: boolean } | { pending: 'no-entry' };
 
-/** Записать факт кандидата в рабочий набор: тот же факт уже в записи — его адрес (повтор). */
-function place(c: Candidate, by: 'auto' | 'human', ctx: AcceptCtx, w: Work): Placed {
+/** Записать факт кандидата в рабочий набор: тот же факт уже в записи — его адрес (повтор). Кандидат не меняется. */
+function place(c0: Candidate, by: 'auto' | 'human', ctx: AcceptCtx, w: Work): Placed {
+  // targetOf заполняет subject по названию — в копии формальной части
+  const c: Candidate = { ...c0, claim: { ...c0.claim } as Claim };
   const target = targetOf(c, w, ctx);
   if (!target) return { pending: 'no-entry' };
   const facts = target.facts ?? [];

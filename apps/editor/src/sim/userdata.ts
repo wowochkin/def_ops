@@ -5,10 +5,10 @@
  */
 import type { Boundary, CatalogEntry, DataKind, History, InfraRecord, OperationPackage, Rules, Scenario, TheatreData } from '@def-ops/sim';
 import type { CompileConflict, CompiledEdits, FactRef, KbOperation, OperationHint, Provenance } from '@def-ops/knowledge';
-import { applyCompiled, applyCompiledHistory } from './kb-compile';
+import { applyCompiled, applyCompiledBoundaries, applyCompiledCrossings, applyCompiledHistory } from './kb-compile';
 import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 import type { SimResult } from './protocol';
-import { defaultCatalog, defaultLive } from '@def-ops/sim';
+import { defaultCatalog, defaultLive, Theatre } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 
 const DB = 'def_ops_sim', VER = 5;
@@ -206,12 +206,30 @@ export async function getData(kind: DataKind, file: string, compiled?: CompiledE
     const e = await one<OperationEdits>('edits', file.replace(hist ? /\.history\.json$/ : /\.json$/, ''));
     const kb = compiled === undefined ? e?.kb?.compiled : compiled ?? undefined;
     // сначала ручные правки, затем собранное из базы (база важнее)
-    if (!hist) return applyCompiled(applyScenarioEdits(d as Scenario, e), kb);
+    if (!hist) {
+      const sc = applyCompiled(applyScenarioEdits(d as Scenario, e), kb);
+      // линии из базы — на театре операции (пункты, стороны); театр читается, только если линии есть
+      return kb?.boundaries.length ? applyCompiledBoundaries(sc, kb, await theatreOf(sc.theatre)) : sc;
+    }
     // положения из базы — только формирований сценария (дивизии агентной модели — в её истории)
     const ids = kb ? new Set(((await rawData(kind, file.replace(/\.history\.json$/, '.json'))) as Scenario).formations.map((f) => f.id)) : undefined;
     return applyCompiledHistory(applyHistoryEdits(d as History, e), kb, ids);
   }
+  if (kind === 'infrastructure') {
+    const base = (await rawData(kind, file)) as OperationInfra | null;
+    const id = file.replace(/\.json$/, '');
+    const e = await one<OperationEdits>('edits', id);
+    const kb = compiled === undefined ? e?.kb?.compiled : compiled ?? undefined;
+    if (!kb?.crossings.length) return base;
+    // переправы из базы — сведениями поверх театра (мост театра — по названию или у пункта)
+    const sc = (await rawData('scenarios', `${id}.json`).catch(() => null)) as Scenario | null;
+    return { id, records: applyCompiledCrossings(base?.records ?? [], kb, sc ? await theatreOf(sc.theatre) : null) };
+  }
   return rawData(kind, file);
+}
+/** Театр для привязки линий и переправ из базы (нет — null). */
+async function theatreOf(id: string): Promise<Theatre | null> {
+  try { return new Theatre((await rawData('theatres', `${id}.json`)) as TheatreData); } catch { return null; }
 }
 /** Данные без правок операции. */
 export async function rawData(kind: DataKind, file: string): Promise<unknown> {

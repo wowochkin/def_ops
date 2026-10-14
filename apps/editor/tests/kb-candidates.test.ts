@@ -68,6 +68,24 @@ describe('saveCandidates: маршрут по итогу проверок', () =
   });
 });
 
+describe('положение по названию места', () => {
+  const located = { ...ctx, theatre: { locate: (n: string) => (n === 'Зелов' ? { at: [14.37, 52.59] as [number, number] } : null) } };
+  it('повторная загрузка — повтор, хотя записанный факт получил координаты', async () => {
+    const c = () => cand('p', { kind: 'position', subject: 'su_99a', at: '1945-04-17', place: 'Зелов' }, 'auto');
+    expect(await saveCandidates([c()], located)).toMatchObject({ auto: 1 });
+    const f = (await userEntry(ENTRY))!.facts!.find((x) => x.claim?.kind === 'position');
+    expect(f?.claim).toMatchObject({ lngLat: [14.37, 52.59] });
+    expect(await saveCandidates([c()], located)).toEqual({ auto: 0, review: 0, drop: 0, duplicate: 1 });
+    expect((await userEntry(ENTRY))!.facts!.filter((x) => x.claim?.kind === 'position')).toHaveLength(1);
+  });
+  it('приём не меняет кандидата вызывающего (subject заполняется в копии)', async () => {
+    const c = cand('s', { kind: 'enter', subject: '', at: '1945-04-17' }, 'auto');
+    await saveCandidates([c], ctx);
+    expect((c.claim as { subject: string }).subject).toBe('');
+    expect((await userEntry(ENTRY))!.facts!.find((x) => x.claim?.kind === 'enter')?.claim).toMatchObject({ subject: 'su_99a' });
+  });
+});
+
 describe('decideCandidates и rollbackDocument', () => {
   it('принятие человеком с правкой; откат снимает auto, оставляет human с пометкой', async () => {
     await saveCandidates(list(), ctx);

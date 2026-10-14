@@ -188,6 +188,13 @@ describe('duplicate', () => {
   it('тот же claim, другой источник — ok', () => {
     expect(lvl(cand(claim, q('x'), { source: 'doc:d2' }), ctx({ existing }), 'duplicate')?.level).toBe('ok');
   });
+  it('положение по названию места: у записанного факта координаты с театра — всё равно повтор', () => {
+    const pos: Claim = { kind: 'position', subject: 's', at: '1945-04-17', place: 'Зелов' };
+    const stored = [{ key: 'k', value: 'v', source: 'doc:d1', claim: { ...pos, lngLat: [14.37, 52.59] } as Claim }];
+    expect(lvl(cand(pos, q('x')), ctx({ existing: stored }), 'duplicate')?.level).toBe('fail');
+    // другое место — не повтор
+    expect(lvl(cand({ ...pos, place: 'Дольгелин' }, q('x')), ctx({ existing: stored }), 'duplicate')?.level).toBe('ok');
+  });
 });
 
 describe('verdictOf', () => {

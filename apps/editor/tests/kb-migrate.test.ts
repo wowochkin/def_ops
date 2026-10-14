@@ -126,6 +126,16 @@ describe('перенос базы версии 6', () => {
     expect(again.cands).toHaveLength(3);
   });
 
+  it('операция не прочиталась — метки переноса нет, следующий запуск переносит без повторов', async () => {
+    await makeV6();
+    const broken: MigrateCtx = { operation: async () => null };
+    expect(await migrateV7(broken)).toEqual({ facts: 0, candidates: 1 });
+    expect(await store.one('pins', 'migrated:v7')).toBeUndefined();
+    expect(await migrateV7(ctx)).toEqual({ facts: 2, candidates: 2 });
+    expect(await store.one('pins', 'migrated:v7')).toBeTruthy();
+    expectMigrated(await result());
+  });
+
   it('положение, у которого место не найдено, остаётся текстовым фактом', async () => {
     const p = pos('p-x', 'accepted', 'Нигдебург');
     const r = await migrateLegacy({ positions: [p] }, ctx);

@@ -3,8 +3,8 @@
  * наложение собранного на сценарий и историю (getData), поправки для ядра агентной модели (дивизии), перенос
  * прежних ручных «принять» и «отклонить» сверки в закрепления. Сама сборка с чтением базы — kb-recompile.ts.
  */
-import { fingerprint, pinKey, type CompiledEdits, type Entry, type Pins } from '@def-ops/knowledge';
-import type { History, Scenario, ScenarioChange, StrengthCheckpoint, TakeoverState } from '@def-ops/sim';
+import { fingerprint, matchFormation, pinKey, type Claim, type CompiledEdits, type Entry, type Pins } from '@def-ops/knowledge';
+import { groupOf, locatePlace, resolveInfra, sideOf, type Boundary, type History, type InfraRecord, type InfraState, type Scenario, type ScenarioChange, type StrengthCheckpoint, type TakeoverState, type Theatre } from '@def-ops/sim';
 
 const day = (s: string) => s.slice(0, 10);
 const ddmm = (s: string) => `${s.slice(8, 10)}.${s.slice(5, 7)}`;
@@ -106,6 +106,102 @@ export function applyCompiledHistory(h: History, c: CompiledEdits | undefined, f
   const events = h.events?.map((e) => (kbEvents.has(e.id) ? { ...e, date: day(kbEvents.get(e.id)!) } : e));
   const checkpoints = uniq([...(h.checkpoints ?? []), ...(c.checkpoints as StrengthCheckpoint[])]);
   return { ...h, positions: [...h.positions, ...add], ...(events ? { events } : {}), ...(checkpoints.length ? { checkpoints } : {}) };
+}
+
+/* ───────────── линии и переправы из базы ───────────── */
+
+/** Пункты линии на театре (по порядку) и не найденные; «оз.», «ст.», «г.», «р.» перед названием не мешают. */
+export function locatePoints(T: Theatre | null, names: string[]): { points: { name: string; title: string; at: [number, number] }[]; missing: string[] } {
+  const points: { name: string; title: string; at: [number, number] }[] = [], missing: string[] = [];
+  for (const n of names) {
+    const pl = T ? locatePlace(T, n.replace(/^(оз\.|ст\.|г\.|р\.)\s*/i, '')) : null;
+    if (pl) points.push({ name: n, title: pl.title, at: pl.at as [number, number] }); else missing.push(n);
+  }
+  return { points, missing };
+}
+
+/**
+ * Кто справа и слева по ходу линии: по средней точке войск каждого объединения в начале операции. null — не понять
+ * (нет войск с положением, оба по одну сторону).
+ */
+export function orientBoundary(sc: Scenario, T: Theatre, a: string, b: string, line: [number, number][]): { right: string; left: string } | null {
+  const groups = groupOf(sc, sc.formations.find((x) => x.id === a)?.echelon === 'army' ? 'army' : 'front');
+  const xy = line.map((x) => T.proj.toXY(x));
+  const sideOfGroup = (g: string) => {
+    const at = sc.formations.filter((x) => x.position && (groups.get(x.id) === g || x.id === g)).map((x) => T.proj.toXY(x.position!));
+    if (!at.length) return 0;
+    return sideOf(xy, [at.reduce((s, q) => s + q[0], 0) / at.length, at.reduce((s, q) => s + q[1], 0) / at.length], true);
+  };
+  const sa = sideOfGroup(a), sb = sideOfGroup(b);
+  const aRight = sa > 0 || (sa === 0 && sb < 0) ? true : sa < 0 || sb > 0 ? false : null;
+  if (aRight === null) return null;
+  return aRight ? { right: a, left: b } : { right: b, left: a };
+}
+
+/** Момент линии для сравнения: день → полночь. */
+const atMoment = (s: string) => (s.length === 10 ? `${s}T00:00` : s.slice(0, 16));
+const samePair = (x: Boundary, a: string, b: string) => (x.right === a && x.left === b) || (x.right === b && x.left === a);
+
+/**
+ * Линии из базы — в сценарий (полосы в расчёте обеих моделей): пункты — на театре, стороны — по войскам в начале.
+ * Не собирается (пунктов меньше двух, стороны не понять) — пропускается (видна в «Основе модели»). Линия той же пары
+ * с тем же началом в сценарии уже есть (своя или принятая раньше в правки операции) — не повторяется.
+ */
+export function applyCompiledBoundaries(sc: Scenario, c: CompiledEdits | undefined, T: Theatre | null): Scenario {
+  if (!c?.boundaries.length || !T) return sc;
+  const have = [...(sc.boundaries ?? [])];
+  const add: Boundary[] = [];
+  for (const raw of c.boundaries as Extract<Claim, { kind: 'boundary' }>[]) {
+    const [a, b] = raw.between;
+    const from = atMoment(raw.from);
+    if (a === b || [...have, ...add].some((x) => samePair(x, a, b) && atMoment(x.from) === from)) continue;
+    const { points, missing } = locatePoints(T, raw.points);
+    if (points.length < 2) continue;
+    const o = orientBoundary(sc, T, a, b, points.map((x) => x.at));
+    if (!o) continue;
+    const right = sc.formations.find((x) => x.id === o.right), left = sc.formations.find((x) => x.id === o.left);
+    if (!right || !left) continue;
+    add.push({
+      id: `kb-${a}-${b}-${raw.from}`.replace(/[^a-z0-9-]/gi, '-'), kind: right.echelon === 'army' ? 'army' : 'front', side: right.side,
+      right: right.id, left: left.id, title: `${right.name} / ${left.name} с ${ddmm(raw.from)}`,
+      from, until: raw.to ? atMoment(raw.to) : null, line: points.map((x) => x.at), places: points.map((x) => x.title),
+      inclusive: raw.inclusive ? matchFormation(raw.inclusive, sc.formations, []) : null,
+      ...(missing.length ? { note: `не найдены на театре: ${missing.join(', ')}` } : {}), source: 'база знаний',
+    });
+  }
+  if (!add.length) return sc;
+  return { ...sc, boundaries: [...have, ...add].sort((x, y) => x.from.localeCompare(y.from)) };
+}
+
+/** Состояние сведения об инфраструктуре → состояние переправы базы (нет — не переправа или не читается). */
+const CROSSING_OF: Partial<Record<InfraState, Extract<Claim, { kind: 'crossing' }>['state']>> = {
+  intact: 'open', built: 'built', repaired: 'built', destroyed: 'destroyed', impassable: 'destroyed',
+};
+const RECORD_OF: Record<Extract<Claim, { kind: 'crossing' }>['state'], InfraState> = { open: 'intact', destroyed: 'destroyed', built: 'built' };
+const normTitle = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/[«»"“”„'’`]/g, '').replace(/\s+/g, ' ').trim();
+
+/**
+ * Переправы из базы — в сведения об инфраструктуре операции (поверх театра в обеих моделях): мост театра — по
+ * названию или у пункта («… у Фюрстенвальде», река — «через …»). Сведение о том же (название, начало, состояние)
+ * уже есть (принятое раньше в разделе «Операции») — не повторяется.
+ */
+export function applyCompiledCrossings(records: InfraRecord[], c: CompiledEdits | undefined, T: Theatre | null): InfraRecord[] {
+  if (!c?.crossings.length) return records;
+  const out = [...records];
+  for (const x of c.crossings as Extract<Claim, { kind: 'crossing' }>[]) {
+    const same = out.some((r) => (r.kind === 'bridge' || r.kind === 'crossing') && normTitle(r.title) === normTitle(x.subject)
+      && day(r.from ?? '') === day(x.from) && CROSSING_OF[r.state] === x.state);
+    if (same) continue;
+    const place = /(?:^|\s)у\s+(.+)$/i.exec(x.subject)?.[1]?.trim();
+    const river = /через\s+(?:р\.\s*)?([^\s,]+)/i.exec(x.subject)?.[1];
+    const rec: InfraRecord = {
+      id: `kb-${normTitle(x.subject).replace(/[^a-zа-я0-9]+/gi, '-')}-${x.from}`, kind: x.state === 'built' ? 'crossing' : 'bridge', state: RECORD_OF[x.state],
+      title: x.subject, ...(place ? { place } : {}), ...(river ? { river } : {}), from: x.from, until: null, origin: 'document', source: { docName: 'база знаний' },
+    };
+    const r = T ? resolveInfra(T, rec) : null;
+    out.push(r ? { ...rec, ...(r.bridge ? { bridge: r.bridge } : {}), ...(r.at ? { at: r.at } : {}), ...(r.radiusKm ? { radiusKm: r.radiusKm } : {}) } : rec);
+  }
+  return out;
 }
 
 /* ───────────── поправки для ядра агентной модели ───────────── */
