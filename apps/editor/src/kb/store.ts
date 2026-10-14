@@ -6,28 +6,40 @@
  */
 import type { Entry, InfraProposal, KbDocument, Pins, PositionProposal, Proposal } from '@def-ops/knowledge';
 
-const DB = 'def_ops_kb', VER = 6;
+const DB = 'def_ops_kb', VER = 7;
 /**
  * infra — сведения об инфраструктуре из документов операций (на проверку); positions — положения формирований из них;
- * boundaries — разграничительные линии; pins — закрепления выбора факта ({ id: ключ pinKey, pin: факт или 'none' }).
+ * boundaries — разграничительные линии (три прежние очереди и proposals — до версии 7, переносятся в candidates);
+ * pins — закрепления выбора факта ({ id: ключ pinKey, pin: факт или 'none' }; там же метки переноса);
+ * candidates — кандидаты-факты (очередь «На проверку» и отброшенные — для итогов документа); pages — картинки
+ * страниц сканов; transcripts — их расшифровки.
  */
-type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra' | 'positions' | 'boundaries' | 'pins';
+export type StoreName = 'entries' | 'documents' | 'proposals' | 'vectors' | 'infra' | 'positions' | 'boundaries' | 'pins' | 'candidates' | 'pages' | 'transcripts';
+const STORES: StoreName[] = ['entries', 'documents', 'proposals', 'vectors', 'infra', 'positions', 'boundaries', 'pins', 'candidates', 'pages', 'transcripts'];
 
 let dbp: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   dbp ??= new Promise((res, rej) => {
     const r = indexedDB.open(DB, VER);
-    r.onupgradeneeded = () => { for (const s of ['entries', 'documents', 'proposals', 'vectors', 'infra', 'positions', 'boundaries', 'pins']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
+    r.onupgradeneeded = () => { for (const s of STORES) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
   return dbp;
+}
+/** Только для тестов: закрыть базу и забыть соединение (следующее обращение откроет заново). */
+export async function resetForTests() {
+  if (dbp) { try { (await dbp).close(); } catch { /* не открылась */ } }
+  dbp = null;
 }
 const req = <T>(r: IDBRequest<T>) => new Promise<T>((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 
 export async function all<T = Entry | KbDocument | Proposal | InfraProposal | PositionProposal>(store: StoreName): Promise<T[]> {
   // vectors — кэш эмбеддингов: { id: модель|документ индекса, hash текста, v: Float32Array }
   try { return await req((await db()).transaction(store).objectStore(store).getAll()) as T[]; } catch { return []; }
+}
+export async function one<T>(store: StoreName, id: string): Promise<T | undefined> {
+  try { return await req((await db()).transaction(store).objectStore(store).get(id)) as T | undefined; } catch { return undefined; }
 }
 export async function put(store: StoreName, ...items: unknown[]) {
   const tx = (await db()).transaction(store, 'readwrite');
@@ -57,7 +69,8 @@ export async function entries(): Promise<Entry[]> {
 
 /** Закрепления выбора факта (слой пользователя; в сиде их нет). */
 export async function pins(): Promise<Pins> {
-  return Object.fromEntries((await all<{ id: string; pin: Pins[string] }>('pins')).map((p) => [p.id, p.pin]));
+  // метки переноса (migrated:…) лежат в том же хранилище — не закрепления
+  return Object.fromEntries((await all<{ id: string; pin: Pins[string] }>('pins')).filter((p) => !p.id.startsWith('migrated:')).map((p) => [p.id, p.pin]));
 }
 /** Записать закрепления; null — снять. */
 export async function putPins(list: Record<string, Pins[string] | null>) {

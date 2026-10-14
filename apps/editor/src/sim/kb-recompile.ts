@@ -88,6 +88,8 @@ export function watchKb() {
     if (running) { again = true; return; }
     running = true;
     try {
+      // база версии 6 — сначала перенос прежних очередей (один раз): принятые положения и линии — фактами базы
+      try { await (await import('../kb/migrate')).migrateV7(); } catch (e) { console.warn('перенос базы знаний (версия 7):', e); }
       // расчёты в фоновых потоках держат данные операции — сбросить
       if (await recompileAll()) (await import('../modeling/data')).resetPool();
     } finally {

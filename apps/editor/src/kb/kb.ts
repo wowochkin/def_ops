@@ -14,6 +14,7 @@ import * as store from './store';
 import normsFile from '../../../../packages/sim/data/rules/norms.json';
 import { fileText } from './text';
 import { Vectors, type VecState } from './vectors';
+import type { StoredCandidate } from './candidates';
 
 export interface KbState {
   ready: boolean;
@@ -27,6 +28,8 @@ export interface KbState {
   /** Положения формирований по дням из документов операций. */
   positions: PositionProposal[];
   boundaries: BoundaryProposal[];
+  /** Кандидаты-факты: очередь «На проверку» (pending), принятые и отклонённые (итоги документа). */
+  candidates: StoredCandidate[];
   /** Обработка документа: id, часть, всего, сообщение. */
   job: { doc: string; at: number; total: number; text: string } | null;
   /** Смысловой поиск (эмбеддинги). */
@@ -34,7 +37,7 @@ export interface KbState {
 }
 
 const vectors = new Vectors(() => { state.vec = vectors.state; emit(); });
-let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], infra: [], positions: [], boundaries: [], job: null, vec: vectors.state };
+let state: KbState = { ready: false, entries: [], byId: new Map(), index: null, documents: [], proposals: [], infra: [], positions: [], boundaries: [], candidates: [], job: null, vec: vectors.state };
 const subs = new Set<(s: KbState) => void>();
 const emit = () => { state = { ...state }; subs.forEach((f) => f(state)); };
 export const subscribe = (f: (s: KbState) => void) => { subs.add(f); f(state); return () => { subs.delete(f); }; };
@@ -49,11 +52,25 @@ function kbChanged() { if (typeof window !== 'undefined') window.dispatchEvent(n
 
 let loading: Promise<void> | null = null;
 export function load(): Promise<void> {
-  loading ??= reload();
+  loading ??= migrate().then(reload);
   return loading;
 }
+/**
+ * Перенос прежних очередей (версия 6) в кандидаты и факты — один раз, в окне (нужны сценарии и театры операций);
+ * в фоновом потоке не выполняется. Ошибка переноса не мешает открыть базу.
+ */
+async function migrate() {
+  if (typeof window === 'undefined') return;
+  try { await (await import('./migrate')).migrateV7(); } catch (e) { console.warn('перенос базы знаний (версия 7):', e); }
+}
+/** Перечитать базу и известить сборщик операций (после записи в хранилище в обход функций этого модуля). */
+export async function refresh() {
+  await reload();
+  kbChanged();
+}
 async function reload() {
-  const [entries, documents, proposals, infra, positions, boundaries] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals'), store.all<InfraProposal>('infra'), store.all<PositionProposal>('positions'), store.all<BoundaryProposal>('boundaries')]);
+  const [entries, documents, proposals, infra, positions, boundaries, candidates] = await Promise.all([store.entries(), store.all<KbDocument>('documents'), store.all<Proposal>('proposals'), store.all<InfraProposal>('infra'), store.all<PositionProposal>('positions'), store.all<BoundaryProposal>('boundaries'), store.all<StoredCandidate>('candidates')]);
+  state.candidates = candidates;
   state.infra = infra;
   state.positions = positions;
   state.boundaries = boundaries;
@@ -296,20 +313,32 @@ export async function recordCalibration(op: { id: string; title: string }, at: s
 
 /* ───────────── обмен ───────────── */
 
+/**
+ * Выгрузка материалов (версия 2): записи (факты с проверкой и доказательством), документы, кандидаты, прежние
+ * очереди, закрепления. Картинки страниц и расшифровки сканов не входят — документ загружается заново.
+ */
 export async function exportUser(): Promise<string> {
-  const [entries, documents, proposals, infra, positions, boundaries, pins] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra'), store.all('positions'), store.all('boundaries'), store.all('pins')]);
-  return JSON.stringify({ format: 'def-ops-knowledge', version: 1, exported: new Date().toISOString(), entries, documents, proposals, infra, positions, boundaries, pins });
+  const [entries, documents, proposals, infra, positions, boundaries, pins, candidates] = await Promise.all([store.all('entries'), store.all('documents'), store.all('proposals'), store.all('infra'), store.all('positions'), store.all('boundaries'), store.all('pins'), store.all('candidates')]);
+  return JSON.stringify({ format: 'def-ops-knowledge', version: 2, exported: new Date().toISOString(), entries, documents, proposals, infra, positions, boundaries, pins, candidates });
 }
-export async function importUser(json: string) {
-  const d = JSON.parse(json) as { format?: string; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[]; boundaries?: BoundaryProposal[]; pins?: { id: string; pin: Pins[string] }[] };
+/**
+ * Загрузка выгрузки. Версия 1 (до кандидатов) — с переносом: принятые положения, линии, переправы — фактами с
+ * формальной частью, ждущие и отклонённые — кандидатами (migrate.ts; повторная загрузка ничего не задваивает).
+ */
+export async function importUser(json: string, ctx?: import('./migrate').MigrateCtx) {
+  const d = JSON.parse(json) as { format?: string; version?: number; entries?: Entry[]; documents?: KbDocument[]; proposals?: Proposal[]; infra?: InfraProposal[]; positions?: PositionProposal[]; boundaries?: BoundaryProposal[]; pins?: { id: string; pin: Pins[string] }[]; candidates?: StoredCandidate[] };
   if (d.format !== 'def-ops-knowledge') throw new Error('это не выгрузка базы знаний');
+  if (d.candidates?.length) await store.put('candidates', ...d.candidates);
   if (d.entries?.length) await store.put('entries', ...d.entries);
   if (d.documents?.length) await store.put('documents', ...d.documents);
   if (d.proposals?.length) await store.put('proposals', ...d.proposals);
   if (d.infra?.length) await store.put('infra', ...d.infra);
   if (d.positions?.length) await store.put('positions', ...d.positions);
   if (d.boundaries?.length) await store.put('boundaries', ...d.boundaries);
-  if (d.pins?.length) await store.put('pins', ...d.pins);
+  // метки переноса — свои у этой базы, из файла не берутся
+  const pins = d.pins?.filter((p) => !p.id.startsWith('migrated:'));
+  if (pins?.length) await store.put('pins', ...pins);
+  if ((d.version ?? 1) < 2) await (await import('./migrate')).migrateLegacy({ proposals: d.proposals, infra: d.infra, positions: d.positions, boundaries: d.boundaries }, ctx);
   await reload();
   kbChanged();
 }
