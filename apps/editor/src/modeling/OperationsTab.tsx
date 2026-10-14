@@ -13,6 +13,7 @@ import { Materials } from './Materials';
 import { CoveragePanel, useCoverage } from './Coverage';
 import { SyncPanel } from './SyncPanel';
 import { RecalcPanel } from './RecalcPanel';
+import { BasisTab } from './BasisTab';
 import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { download, getPool, pct, type SimData } from './data';
 
@@ -53,14 +54,17 @@ async function readFiles(files: FileList): Promise<{ pkg: Partial<OperationPacka
 const LEVEL: Record<PackageIssue['level'], string> = { error: '✗', warning: '!', info: '·' };
 
 export function OperationsTab({ d, llm, onCompare, onCalibrate }: { d: SimData; llm: Llm; onCompare: (scenario: string, rules: string[]) => void; onCalibrate: (scenario: string) => void }) {
-  const [sel, setSel] = useState<string | null>(() => {
-    // переход из окна «Принять командование» («Основа модели»): выбрана та операция
+  // переход из окна «Принять командование» («Основа модели»): выбрана та операция, открыта её основа модели
+  const [arrived] = useState<string | null>(() => {
     let want: string | null = null;
     try { want = localStorage.getItem('def_ops.modeling.op'); localStorage.removeItem('def_ops.modeling.op'); } catch { /* */ }
-    return want ?? d.ops[0]?.id ?? BUILTIN_CATALOG[0]?.id ?? null;
+    return want;
   });
+  const [sel, setSel] = useState<string | null>(() => arrived ?? d.ops[0]?.id ?? BUILTIN_CATALOG[0]?.id ?? null);
+  // карточка операции: сама операция или «Основа модели»
+  const [view, setView] = useState<'card' | 'basis'>(arrived ? 'basis' : 'card');
   useEffect(() => {
-    const f = (e: Event) => { const op = (e as CustomEvent<{ op?: string }>).detail?.op; if (op) { setSel(op); try { localStorage.removeItem('def_ops.modeling.op'); } catch { /* */ } } };
+    const f = (e: Event) => { const op = (e as CustomEvent<{ op?: string }>).detail?.op; if (op) { setSel(op); setView('basis'); try { localStorage.removeItem('def_ops.modeling.op'); } catch { /* */ } } };
     window.addEventListener('def_ops.modeling.open', f);
     return () => window.removeEventListener('def_ops.modeling.open', f);
   }, []);
@@ -134,8 +138,12 @@ export function OperationsTab({ d, llm, onCompare, onCalibrate }: { d: SimData; 
           </div>
           <p className="muted">Не хватает частей — добавьте файлы. Черновик можно проверять, сравнивать и калибровать; в «Переигровке» он появится после подготовки.</p>
         </>}
-        {builtin && !upload && <BuiltinCard id={builtin.id} title={builtin.title} detail={builtin.detail} llm={llm} d={d} />}
-        {op && !upload && <OperationCard op={op} d={d} llm={llm} known={known} busy={busy} update={update} control={control} onCompare={onCompare} onCalibrate={onCalibrate}
+        {(builtin || op) && !upload && <nav className="mdl-tabs bs-view">
+          <button className={view === 'card' ? 'on' : ''} onClick={() => setView('card')}>Операция</button>
+          <button className={view === 'basis' ? 'on' : ''} onClick={() => setView('basis')} title="На каких фактах базы знаний держатся входы модели: источники, расхождения, допущения">Основа модели</button></nav>}
+        {(builtin || op) && !upload && view === 'basis' && <BasisTab op={(builtin ?? op)!.id} />}
+        {builtin && !upload && view === 'card' && <BuiltinCard id={builtin.id} title={builtin.title} detail={builtin.detail} llm={llm} d={d} />}
+        {op && !upload && view === 'card' && <OperationCard op={op} d={d} llm={llm} known={known} busy={busy} update={update} control={control} onCompare={onCompare} onCalibrate={onCalibrate}
           remove={() => { void confirmAsync(`Удалить операцию «${op.pkg.scenario.name}»?`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void deleteOperation(op.id).then(() => setSel(null)); }); }} />}
         {!op && !builtin && !upload && <div className="mdl-empty">
           <h3>Подготовка новой операции к переигровке</h3>

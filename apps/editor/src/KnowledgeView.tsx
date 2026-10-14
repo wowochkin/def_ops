@@ -6,8 +6,9 @@
  */
 import { confirmAsync } from './dialogs';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { category, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
-import { kbOperations, onDataChange } from './sim/userdata';
+import { category, entryOperations, inOperation, RELATION_RU, RELIABILITY, rubric, rubricPath, rubricsOf, RUBRICS, STATUS_RU, within, type Entry, type KbDocument, type KbOperation, type Proposal, type Reliability, type Rubric, type Source, type Hit } from '@def-ops/knowledge';
+import { getEdits, kbOperations, onDataChange, type OperationKb } from './sim/userdata';
+import { claimText, factUse, KIND_RU } from './modeling/basis';
 import { CoveragePanel } from './modeling/Coverage';
 import * as kb from './kb/kb';
 import { QWEN_EMBED } from './kb/vectors';
@@ -25,6 +26,14 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
   const [sel, setSel] = useState<string | null>('op:berlin');
   const [hist, setHist] = useState<string[]>([]);
   useEffect(() => { void kb.load(); return kb.subscribe(setS); }, []);
+  // переход к записи из «Моделирования» («Основа модели»)
+  useEffect(() => {
+    const go = (id: string) => { try { localStorage.removeItem('def_ops.kb.entry'); } catch { /* */ } open(id); };
+    try { const id = localStorage.getItem('def_ops.kb.entry'); if (id) go(id); } catch { /* */ }
+    const f = (e: Event) => { const id = (e as CustomEvent<{ id?: string }>).detail?.id; if (id) go(id); };
+    window.addEventListener('def_ops.kb.open', f);
+    return () => window.removeEventListener('def_ops.kb.open', f);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // операция: '' — все материалы, 'general' — общие (без операции), иначе id операции
   const [ops, setOps] = useState<KbOperation[]>([]);
   const [op, setOp] = useState<string>(() => { try { return localStorage.getItem('def_ops.kbOp') ?? ''; } catch { return ''; } });
@@ -223,6 +232,7 @@ function EntryCard({ e, s, open, back, goRubric }: { e: Entry; s: kb.KbState; op
             <td className="kb-src">{relBadge(f.reliability)}{f.source && (s.byId.has(f.source) ? <button className="link" title={s.byId.get(f.source)!.title} onClick={() => open(f.source!)}>{shortSrc(s.byId.get(f.source)!.title)}</button> : <span>{f.source}</span>)}{f.pages && <small> {f.pages}</small>}</td></tr>
         )))}
       </tbody></table>}
+      {facts.some((f) => f.claim) && <ModelFacts e={e} s={s} />}
       {c.fields.filter((f) => !facts.some((x) => x.key === f.key)).length > 0 && <div className="kb-gaps">Нет сведений: {c.fields.filter((f) => !facts.some((x) => x.key === f.key)).map((f) => f.title.toLowerCase()).join(', ')} — можно дополнить документами.</div>}
       {(e.sections ?? []).map((sec, i) => <section key={i} className="kb-sec"><h3>{sec.title}</h3><div dangerouslySetInnerHTML={{ __html: mdToHtml(sec.text) }} /></section>)}
       {doc && <section className="kb-sec"><h3>Текст документа</h3>{doc.chunks.slice(0, 3).map((ch) => <p key={ch.i} className="kb-chunk">{ch.text.slice(0, 1200)}{ch.text.length > 1200 ? '…' : ''}</p>)}{doc.chunks.length > 3 && <p className="muted">…ещё {doc.chunks.length - 3} частей (ищутся при ответах)</p>}</section>}
@@ -231,6 +241,51 @@ function EntryCard({ e, s, open, back, goRubric }: { e: Entry; s: kb.KbState; op
       {incoming.length > 0 && <section className="kb-sec"><h3>Упоминается в</h3><div className="kb-rels">{incoming.map((x) => <button key={x.id} className="kb-link" onClick={() => open(x.id)}>{x.title}</button>)}</div></section>}
     </article>
   );
+}
+
+/** Сборки операций из базы (входы модели и на чём держатся) — для пометок «в модели» у фактов записи. */
+function useOperationKbs(): { ops: KbOperation[]; kbs: Map<string, OperationKb> } {
+  const [r, setR] = useState<{ ops: KbOperation[]; kbs: Map<string, OperationKb> }>({ ops: [], kbs: new Map() });
+  useEffect(() => {
+    let alive = true;
+    const run = () => void kbOperations().then(async (ops) => {
+      const kbs = new Map<string, OperationKb>();
+      for (const o of ops) { const k = (await getEdits(o.id)).kb; if (k) kbs.set(o.id, k); }
+      if (alive) setR({ ops, kbs });
+    });
+    run();
+    const off = onDataChange(run);
+    return () => { alive = false; off(); };
+  }, []);
+  return r;
+}
+
+/**
+ * Формальные факты записи (то, из чего собирается модель) и их использование в операциях: держит вход модели,
+ * перекрыт другим фактом расхождения или не используется. Операции — те, к которым относится запись, и те,
+ * где её факты в ходу.
+ */
+function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
+  const { ops, kbs } = useOperationKbs();
+  const typed = (e.facts ?? []).flatMap((f, index) => (f.claim ? [{ f, index }] : []));
+  const own = new Set(entryOperations(e, ops));
+  const list = ops.filter((o) => kbs.has(o.id) && (own.has(o.id) || typed.some(({ index }) => factUse(e.id, index, kbs.get(o.id)!) !== 'unused')));
+  const name = (id: string) => s.entries.find((x) => x.aliases?.includes(id))?.title ?? id;
+  const short = (t: string) => t.split(/[:,]/)[0].replace(/ операция$/, '');
+  return <section className="kb-sec"><h3>Формальные факты — входы модели</h3>
+    <table className="kb-facts kb-typed"><thead><tr><th>Вид</th><th>Значение</th><th />{list.map((o) => <th key={o.id} title={o.title}>{short(o.title)}</th>)}</tr></thead><tbody>
+      {typed.map(({ f, index }) => <tr key={index}>
+        <th>{KIND_RU[f.claim!.kind] ?? f.claim!.kind}</th>
+        <td>{claimText(f.claim!, name)}</td>
+        <td className="kb-src">{relBadge(f.reliability)}</td>
+        {list.map((o) => { const u = factUse(e.id, index, kbs.get(o.id)!); return <td key={o.id} className="kb-use">
+          {u === 'used' ? <span className="ok" title="держит вход модели операции">✓ в модели</span>
+            : u === 'unused' ? <span className="muted">—</span>
+            : <span className="warn" title={`выбран факт записи «${s.byId.get(u.overriddenBy.entry)?.title ?? u.overriddenBy.entry}»: ${u.overriddenBy.fact.value}`}>перекрыт</span>}</td>; })}
+      </tr>)}
+    </tbody></table>
+    {!list.length && <p className="muted small">Запись не относится ни к одной операции, и её факты сборками не используются.</p>}
+  </section>;
 }
 
 function EditEntry({ e, done }: { e: Entry; done: () => void }) {

@@ -14,14 +14,14 @@ import { diffCompiled, migratePins, norm, toCoreEdits, type CoreEdits, type Game
 import { fullCatalog, getEdits, rawData, updateEdits } from './userdata';
 import { takeoverState, toCoreTakeover, type CoreTakeover, type TakeoverSummary } from './takeover-state';
 
-interface AgentScenarioFile {
+export interface AgentScenarioFile {
   hqs: { id: string; name: string; side: string; echelon: string; parent?: string | null }[];
   divisions: { id: string; name: string; side: string; hq: string; personnel?: number; tanks?: number; guns?: number; enterAt?: string | null }[];
 }
 const agentFiles = import.meta.glob('../../../../packages/sim/data/scenarios/agents/*.json', { import: 'default' });
 
 /** Агентный сценарий операции (дивизии и штабы); нет — undefined. */
-async function agentScenario(opId: string): Promise<AgentScenarioFile | undefined> {
+export async function agentScenario(opId: string): Promise<AgentScenarioFile | undefined> {
   const a = AGENT_SCENARIOS[opId];
   const load = a && agentFiles[`../../../../${a.path}`];
   return load ? (await load()) as AgentScenarioFile : undefined;
