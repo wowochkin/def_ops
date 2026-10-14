@@ -143,3 +143,28 @@ describe('выбор факта из нескольких', () => {
     expect(resolve([l(0, { total: 3000 }), l(1, { total: 4000 })], 'losses', 'd', '1945-04-18', {}).conflict).toBe(true);
   });
 });
+
+describe('последнее звено: проверка', () => {
+  const withCheck = (r: FactRef, by?: 'auto' | 'human'): FactRef =>
+    by ? { ...r, fact: { ...r.fact, check: { by, at: '2026-10-14', results: [] } } } : r;
+  const pick = (a: FactRef, b: FactRef) => resolve([a, b], 'strength', 'su_61a', '1945-04-16', {}).chosen;
+  it('человек побеждает авто', () => {
+    const auto = withCheck(str('1945-04-16', 6000, 'B', 0), 'auto'), human = withCheck(str('1945-04-16', 6100, 'B', 1), 'human');
+    expect(pick(auto, human)).toBe(human);
+    expect(pick(human, auto)).toBe(human);
+  });
+  it('факт без проверки (сид, прежний пользовательский) побеждает авто', () => {
+    const auto = withCheck(str('1945-04-16', 6000, 'B', 0), 'auto'), plain = str('1945-04-16', 6100, 'B', 1);
+    expect(pick(auto, plain)).toBe(plain);
+    expect(pick(plain, auto)).toBe(plain);
+  });
+  it('человек и факт без проверки равны — порядок прежний', () => {
+    const human = withCheck(str('1945-04-16', 6000, 'B', 0), 'human'), plain = str('1945-04-16', 6100, 'B', 1);
+    expect(pick(human, plain)).toBe(human);
+    expect(pick(plain, human)).toBe(plain);
+  });
+  it('звено последнее: свежее авто-факт побеждает старый человеческий', () => {
+    const human = withCheck(str('1945-04-16', 6000, 'B', 0, '2026-01'), 'human'), auto = withCheck(str('1945-04-16', 6100, 'B', 1, '2026-05'), 'auto');
+    expect(pick(human, auto)).toBe(auto);
+  });
+});

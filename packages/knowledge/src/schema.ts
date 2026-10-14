@@ -5,6 +5,8 @@
  * (справка для штаба и советника), и обучению (раздел «Знания»).
  */
 
+import type { CheckResult, Evidence } from './candidate';
+
 export type CategoryId = 'operations' | 'battles' | 'formations' | 'commanders' | 'organization' | 'equipment' | 'terrain' | 'chronology' | 'sources';
 
 /** Поле записи категории: ключ факта, подпись, подсказка (для извлечения из документов). */
@@ -88,6 +90,12 @@ export interface Fact {
   quote?: string;
   /** Формальная часть (нет — факт только справка). */
   claim?: Claim;
+  /** Проверка при приёме: кто (авто — по правилам, человек — вручную), когда, итоги проверок. Нет — факт сида или прежний пользовательский. */
+  check?: { by: 'auto' | 'human'; at: string; results: CheckResult[]; docRolledBack?: true };
+  /** Подтверждение факта (откуда взят): цитата, скан, строка таблицы, выписка агента. */
+  evidence?: Evidence;
+  /** Ключ встроенного факта (запись#номер + отпечаток), который этот факт исправляет. */
+  corrects?: string;
 }
 
 export type RelationType = 'part_of' | 'includes' | 'participant' | 'commanded_by' | 'commands' | 'located' | 'opponent' | 'related' | 'source';

@@ -1,6 +1,6 @@
 /**
  * Выбор одного факта из нескольких об одном: закрепление → надёжность (A > B > C) → близость даты
- * к нужному моменту → более свежий документ. У состояния (подчинённость, переправа) — сначала последнее
+ * к нужному моменту → более свежий документ → проверка (человек и факт без проверки выше авто). У состояния (подчинённость, переправа) — сначала последнее
  * действующее на момент (позднее начало), надёжность — только среди фактов с тем же началом.
  * Чистая функция, без обращения к хранилищу.
  */
@@ -28,6 +28,8 @@ export function claimFacts(entries: Entry[]): FactRef[] {
 const DAY = 86400000;
 const RANK = { A: 0, B: 1, C: 2 } as const;
 const rank = (r: FactRef) => RANK[r.fact.reliability ?? 'C'];
+/** Только проверенный автоматически факт проигрывает при прочем равном. */
+const autoRank = (r: FactRef) => r.fact.check?.by === 'auto' ? 1 : 0;
 const time = (s: string) => Date.parse(s);
 
 /** О ком факт: subject, id события или пара объединений линии. */
@@ -114,7 +116,9 @@ export function resolve(
     || rank(a) - rank(b)
     // прочее: ближайшее к моменту
     || (state ? 0 : Math.abs(d(a) - t) - Math.abs(d(b) - t))
-    || (a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0));
+    || (a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0)
+    // последнее звено: проверенное автоматически уступает проверенному человеком и факту без проверки (сид, прежний пользовательский)
+    || autoRank(a) - autoRank(b));
   const chosen = sorted[0] ?? null;
   return { chosen, candidates, conflict: conflictOf(chosen), ...(pinMissing ? { pinMissing, pin: 'missing' as const } : {}) };
 }

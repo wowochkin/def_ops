@@ -616,6 +616,101 @@
       ]
     },
     {
+      "id": "assume-plausible-strength",
+      "title": "Правдоподобие численности по ступени при приёме фактов из документов: дивизия до 20 000 (корпус 60 000, армия 150 000, фронт и группа армий 1 200 000)",
+      "kb": "model:сравнение-с-историей",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "plausible.division",
+        "why": "пороги проверки «правдоподобие» кандидата-факта: выше — факт идёт в очередь на проверку человеком, а не в базу сам; норматива предельной численности по ступеням в источниках базы нет"
+      },
+      "unit": "чел",
+      "rules": [],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "assume-plausible-losses",
+      "title": "Правдоподобие потерь: за период не больше численности соединения",
+      "kb": "model:сравнение-с-историей",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "plausible.lossesShare%",
+        "why": "порог проверки «правдоподобие»: потери, превышающие численность соединения (последний факт численности или сценарий), идут в очередь; допущение без опоры"
+      },
+      "unit": "%",
+      "rules": [],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "assume-plausible-daily",
+      "title": "Правдоподобие потерь за сутки: не больше трети численности соединения",
+      "kb": "model:сравнение-с-историей",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "plausible.dailyLossShare%",
+        "why": "порог проверки «правдоподобие»: больше трети численности за сутки — в очередь на проверку; допущение без опоры, нужны сводки потерь по суткам"
+      },
+      "unit": "%",
+      "rules": [],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "assume-plausible-parent",
+      "title": "Правдоподобие подчинённости: вышестоящий выше по ступени, чем соединение",
+      "kb": "model:сравнение-с-историей",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "plausible.parentSteps",
+        "why": "проверка «правдоподобие»: вышестоящий той же или низшей ступени — в очередь (бригада < дивизия < корпус < армия < фронт); допущение без опоры"
+      },
+      "unit": "ступень",
+      "rules": [],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "assume-plausible-reinforce",
+      "title": "Правдоподобие пополнения: не больше половины численности соединения",
+      "kb": "model:сравнение-с-историей",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "plausible.reinforceShare%",
+        "why": "порог проверки «правдоподобие»: пополнение больше половины численности — в очередь на проверку; допущение без опоры"
+      },
+      "unit": "%",
+      "rules": [],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
       "id": "truck-cycle",
       "title": "Подвоз автотранспортом: один рейс в сутки — до какого удаления от базы подвоз полный",
       "kb": "org:su-supply",

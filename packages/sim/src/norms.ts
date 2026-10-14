@@ -78,6 +78,12 @@ export function measureParam(ctx: SimContext, expr: string): number {
     case 'strength.tolerance%': return STRENGTH_TOL * 100;
     case 'strength.weight%': return STRENGTH_WEIGHT * 100;
     case 'supplyFlow.fuelPer100km': return R.supplyFlow ? R.supplyFlow.fuelPer100km ?? 1 : NaN;
+    // пороги правдоподобия проверок базы знаний (packages/knowledge/src/checks.ts, PLAUSIBLE) — допущения без опоры
+    case 'plausible.division': return 20000;
+    case 'plausible.lossesShare%': return 100;
+    case 'plausible.dailyLossShare%': return 100 / 3;
+    case 'plausible.parentSteps': return 1;
+    case 'plausible.reinforceShare%': return 50;
     case 'advanceMax': return interp(R.advance, 10);
     case 'riverCrossHours': return R.riverCrossHours;
     case 'riverCrossHours/3': return R.riverCrossHours / 3;
