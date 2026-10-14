@@ -26,6 +26,7 @@
     "sim:scenario": "tsx packages/sim/tools/scenario/build_scenario.ts",
     "sim:sectors": "tsx packages/sim/tools/scenario/build_sectors.ts",
     "kb:seed": "tsx packages/knowledge/tools/build_seed.ts",
+    "model:index": "tsx packages/knowledge/tools/build_model_index.ts",
     "theatre:sample": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_sample.ts",
     "sim:norms": "tsx packages/sim/tools/run/norms.ts",
     "sim:census": "tsx packages/sim/tools/agents/census.ts",
