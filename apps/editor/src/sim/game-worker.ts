@@ -236,6 +236,9 @@ function exclusive<T>(who: string, f: () => Promise<T>): Promise<T> {
   return r;
 }
 
+/** Краткость ответа штаба противника в игре. */
+const BRIEF = 'Игра идёт в реальном времени — отвечайте коротко: assessment — 3–4 предложения, enemyIntent и intent — по 1–2 предложения, details приказа — одно предложение, risks и requests — не больше трёх коротких пунктов. Приказы отдавайте объединениям (армиям, корпусам) — они доводятся до всех их соединений; отдельным дивизиям — только тем, у кого задача иная, чем у их объединения.';
+
 function startAi() {
   ai?.abort.abort();
   ai = null;
@@ -246,13 +249,22 @@ function startAi() {
   const prevAi = [...rec.turns].reverse().find((t) => (t.ai as AiTurn | undefined)?.decision);
   const previous = prevAi ? { time: prevAi.time, intent: (prevAi.ai as AiTurn).decision!.intent } : null;
   const sit = buildSituation(ctx, g, cfg, { system: systemTpl, user: liveTpl, profile: profileMd }, previous, !!rec.aiStaff);
+  // в игре ход ждёт штаб противника: ответ — коротко (на локальной модели каждое слово — время; длинная оценка
+  // обстановки шла минутами)
+  const lastMsg = sit.messages[sit.messages.length - 1];
+  lastMsg.content += `\n\n${BRIEF}`;
   const gAt = g;
   const abort = new AbortController();
   const client = enemyClient();
   status({ state: 'thinking', time, since: Date.now() });
   post({ kind: 'ai-stream', text: '', reset: true });
-  let buf = '', last = 0, phase = '';
-  const setPhase = (t: string) => { if (t !== phase) { phase = t; post({ kind: 'ai-phase', text: t }); } };
+  let buf = '', last = 0, phase = '', got = 0, t0 = 0;
+  let phaseAt = 0;
+  const setPhase = (t: string) => {
+    // скорость меняется с каждым куском — не чаще раза в секунду
+    if (t === phase || (t.split(' · ')[0] === phase.split(' · ')[0] && Date.now() - phaseAt < 1000)) return;
+    phase = t; phaseAt = Date.now(); post({ kind: 'ai-phase', text: t });
+  };
   const tokens = Math.round(sit.messages.reduce((a, m) => a + m.content.length, 0) / 3.2);
   setPhase(llmBusy ? `ждёт очереди: модель занята (${llmBusy})` : 'отправка запроса…');
   const promise = exclusive('решение штаба противника', () => {
@@ -261,7 +273,12 @@ function startAi() {
     return decideTurn(client, sit, {
     signal: abort.signal,
     onDelta: (k, t) => {
-      setPhase(k === 'reasoning' ? 'размышляет…' : 'пишет решение…');
+      got += t.length;
+      if (!t0) t0 = Date.now();
+      const sec = (Date.now() - t0) / 1000;
+      // скорость — примерно: токен ≈ 3,2 символа
+      const speed = sec > 3 ? ` · ≈ ${Math.round(got / 3.2 / sec)} ток/с, ${got} симв.` : '';
+      setPhase((k === 'reasoning' ? 'размышляет…' : 'пишет решение…') + speed);
       buf += t;
       const now = Date.now();
       if (now - last > 250) { post({ kind: 'ai-stream', text: buf }); buf = ''; last = now; }
