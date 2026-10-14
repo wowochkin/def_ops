@@ -138,6 +138,12 @@ export function reconcile(input: SyncInput, entries: Entry[]): SyncItem[] {
   return out;
 }
 
+/**
+ * Соединение сценария записи формирования: её синоним вида id сценария (su_1bf, de_9a); нет — ''. Соединение в
+ * формальной части факта — всегда id сценария, а не id записи (f:su_1bf): по нему сборщик и проверки находят формирование.
+ */
+export const scenarioIdOf = (e: Pick<Entry, 'aliases'>): string => (e.aliases ?? []).find((a) => /^[a-z]+_/.test(a)) ?? '';
+
 /** Новая запись формирования для фактов из сценария (если в базе её нет). */
 export function formationEntry(op: { id: string }, f: Pick<SyncFormation, 'id' | 'name' | 'side' | 'echelon'>): Entry {
   return {

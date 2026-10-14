@@ -86,6 +86,13 @@ describe('quote и numbers', () => {
     // факт за 16.04 с числом ячейки 17.04 — ошибка
     expect(lvl(cand(day(640), ev('16.04.1945'), { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('fail');
   });
+  it('дни в столбцах, несколько чисел за день: сверка с ячейками этого дня', () => {
+    const cells = { 'Соединение': '2-я гв. танковая армия', '16.04#2': '310', '16.04#3': '640', '17.04#4': '120', '17.04#5': '450' };
+    const ev = (cell: string[]): Evidence => ({ kind: 'row', doc: 'd1', row: 2, cells, cell, dayCells: ['16.04#2', '16.04#3', '17.04#4', '17.04#5'] });
+    const day = (killed: number, wounded: number): Claim => ({ kind: 'losses', subject: 'su_2gta', from: '1945-04-16', to: '1945-04-16', killed, wounded });
+    expect(lvl(cand(day(310, 640), ev(['16.04#2', '16.04#3']), { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
+    expect(lvl(cand(day(310, 450), ev(['16.04#2', '16.04#3']), { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('fail');
+  });
   it('ручная правка не проходит проверки 1–2', () => {
     const c = cand(losses, { kind: 'manual' }, { origin: 'manual' });
     const r = runChecks(c, ctx());
@@ -139,21 +146,50 @@ describe('subject', () => {
     expect((c.claim as { subject: string }).subject).toBe('');
     expect(matchEntry(entries, 'formations', 'Неизвестный корпус', [])).toBeNull();
   });
-  it('сопоставлено только по сходству основ — id ставится, но doubt', () => {
-    const entries = [mk('f:x', 'Боевая группа Хартманн (Kampfgruppe)')];
+  it('сопоставлено только по сходству основ — id сценария ставится, но doubt', () => {
+    const entries = [mk('f:x', 'Боевая группа Хартманн (Kampfgruppe)', ['de_kg_hartmann'])];
     const c = cand({ ...base }, q('x'), { names: { subject: 'группа Хартманн' } });
     const r = lvl(c, ctx({ entries }), 'subject');
-    expect((c.claim as { subject: string }).subject).toBe('f:x');
+    expect((c.claim as { subject: string }).subject).toBe('de_kg_hartmann');
     expect(r?.level).toBe('doubt');
     expect(r?.why).toContain('по сходству');
   });
-  it('точное название или синоним записи — ok', () => {
-    const entries = [mk('f:x', 'Боевая группа Хартманн', ['KG Hartmann'])];
+  it('точное название или синоним записи — ok, соединение — id сценария, а не id записи', () => {
+    const entries = [mk('f:x', 'Боевая группа Хартманн', ['KG Hartmann', 'de_kg_hartmann'])];
     for (const name of ['Боевая группа Хартманн', 'KG Hartmann']) {
       const c = cand({ ...base }, q('x'), { names: { subject: name } });
       expect(lvl(c, ctx({ entries }), 'subject')?.level).toBe('ok');
-      expect((c.claim as { subject: string }).subject).toBe('f:x');
+      expect((c.claim as { subject: string }).subject).toBe('de_kg_hartmann');
     }
+  });
+  it('запись базы без соединения сценария — соединение пусто, сомнение', () => {
+    const entries = [mk('f:x', 'Боевая группа Хартманн', ['KG Hartmann'])];
+    const c = cand({ ...base }, q('x'), { names: { subject: 'KG Hartmann' } });
+    const r = lvl(c, ctx({ entries }), 'subject');
+    expect((c.claim as { subject: string }).subject).toBe('');
+    expect(r?.level).toBe('doubt');
+    expect(r?.why).toContain('без соединения сценария');
+  });
+  it('соединение по записи базы (f:su_1bf) — id сценария su_1bf; правдоподобие проверяется', () => {
+    const entries = [mk('f:su_1bf', '1-й Белорусский фронт', ['1-й Белорусский', 'su_1bf'])];
+    const formations = [{ id: 'su_1bf', name: '1 БФ', echelon: 'front' }];
+    const c = cand({ kind: 'strength', subject: '', at: '1945-04-16', personnel: 5_000_000 }, q('x'), { names: { subject: '1-й Белорусский' } });
+    const rs = runChecks(c, ctx({ entries, formations }));
+    expect((c.claim as { subject: string }).subject).toBe('su_1bf');
+    expect(rs.find((r) => r.check === 'plausible')?.level).toBe('doubt');
+  });
+  it('переправа: соединение не сопоставляется, subject — название переправы', () => {
+    const cross: Claim = { kind: 'crossing', subject: '', from: '1945-04-20', state: 'destroyed' };
+    const c = cand({ ...cross }, q('x'), { names: { subject: 'мост через Одер у Франкфурта' } });
+    const r = lvl(c, ctx({ formations }), 'subject');
+    expect(r?.level).toBe('ok');
+    expect((c.claim as { subject: string }).subject).toBe('мост через Одер у Франкфурта');
+    const none = cand({ ...cross }, q('x'));
+    expect(lvl(none, ctx({ formations }), 'subject')).toMatchObject({ level: 'doubt', why: 'не названа переправа' });
+  });
+  it('событие: проверки соединения нет', () => {
+    const c = cand({ kind: 'event', id: 'e1', at: '1945-04-20', title: 'взят город' }, q('x'));
+    expect(lvl(c, ctx({ formations }), 'subject')).toBeUndefined();
   });
 });
 

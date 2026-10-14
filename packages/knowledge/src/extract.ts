@@ -358,7 +358,7 @@ export function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; valu
   const nums = Object.fromEntries(['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing', 'total'].map((k) => [k, num((x as unknown as Record<string, unknown>)[k])]).filter(([, v]) => v != null)) as Record<string, number>;
   const numText = NUM_RU.filter(([k]) => nums[k] != null).map(([k, ru]) => `${ru} ${nums[k]}`).join(', ');
   const date = iso(x.date), dateTo = iso(x.dateTo) || date;
-  const subject = ''; // сопоставляется проверкой (names.subject)
+  const subject = ''; // сопоставляется проверкой (names.subject); у переправы — название
   const place = str(x.place) || undefined;
   let claim: Claim, value: string;
   switch (x.kind) {
@@ -376,9 +376,12 @@ export function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; valu
       claim = { kind: 'boundary', between: ['', ''], from: date, ...(dateTo && dateTo !== date ? { to: dateTo } : {}), points, ...(str(x.inclusive) ? { inclusive: str(x.inclusive) } : {}) };
       value = `${points.join(' — ')}${date ? `, с ${date}` : ''}`; break;
     }
-    case 'crossing':
+    case 'crossing': {
+      // переправа — о мосте, а не о соединении: subject — её название из источника (мост театра находит сборщик)
       if (!x.state || !(x.state in STATE_RU)) return null;
-      claim = { kind: 'crossing', subject, from: date, state: x.state }; value = `${STATE_RU[x.state]} с ${date}`; break;
+      const name = str(x.subject);
+      claim = { kind: 'crossing', subject: name, from: date, state: x.state }; value = `${name ? `${name}: ` : ''}${STATE_RU[x.state]} с ${date}`; break;
+    }
     case 'event': claim = { kind: 'event', id: '', at: date, title: str(x.title) || str(x.quote).slice(0, 80), ...(place ? { place } : {}) }; value = `${(claim as { title: string }).title}, ${date}`; break;
     case 'losses': claim = { kind: 'losses', subject, from: date, to: dateTo, ...pickNums(nums, ['killed', 'wounded', 'missing', 'total', 'tanks']) }; value = `${numText}, ${date} — ${dateTo}`; break;
     default: return null;
@@ -389,7 +392,8 @@ const pickNums = (n: Record<string, number>, keys: string[]) => Object.fromEntri
 
 /**
  * Формальные факты из ответа модели → кандидаты (без проверок: их делает поток разбора, verdict пока 'review').
- * Названия остаются в names, claim.subject и прочие id пусты — их заполняет проверка соединения.
+ * Названия остаются в names, claim.subject и прочие id пусты — их заполняет проверка соединения (у переправы
+ * subject — сразу её название).
  * Факт, из которого claim не собрать (неизвестный вид, переправа без состояния), пропускается.
  */
 export function toCandidates(

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { parseCsv, decodeTable, isTemplate, templateMapping, rowsToCandidates, parseFactsJson, normalizeMapping, mappingMessages, MAPPING_SCHEMA, TEMPLATE_COLUMNS, type TableMapping } from '../src';
+import { parseCsv, decodeTable, isTemplate, templateMapping, rowsToCandidates, parseFactsJson, normalizeMapping, mappingMessages, MAPPING_SCHEMA, TEMPLATE_COLUMNS, type Evidence, type TableMapping } from '../src';
 
 const doc = { id: 'd5', name: 'Таблица', reliability: 'B' as const, operation: 'berlin' };
 const sample = (n: string) => readFileSync(new URL(`../../../apps/editor/public/samples/${n}`, import.meta.url));
@@ -53,6 +53,24 @@ describe('таблицы', () => {
     // доказательство помнит ячейку своего дня
     expect(r.candidates[1].evidence).toMatchObject({ kind: 'row', cell: '16.04.1945', dayCells: ['16.04.1945', '17.04.1945'] });
     expect(r.candidates[2].evidence).toMatchObject({ cell: '17.04.1945' });
+  });
+
+  it('дни в столбцах, убито и ранено за день (повторяющиеся заголовки) — один кандидат на день со всеми числами', () => {
+    const rows = parseCsv('Соединение;16.04.1945;16.04.1945;17.04.1945;17.04.1945\n1-я армия;310;640;120;\n');
+    const mapping: TableMapping = { kind: 'losses', columns: ['subject',
+      { day: '1945-04-16', field: 'killed' }, { day: '1945-04-16', field: 'wounded' }, { day: '1945-04-17', field: 'killed' }, { day: '1945-04-17', field: 'wounded' }] };
+    const r = rowsToCandidates(rows, mapping, doc);
+    expect(r.errors).toEqual([]);
+    expect(r.candidates).toHaveLength(2);
+    expect(r.candidates[0].claim).toMatchObject({ kind: 'losses', from: '1945-04-16', to: '1945-04-16', killed: 310, wounded: 640 });
+    expect(r.candidates[1].claim).toMatchObject({ kind: 'losses', from: '1945-04-17', killed: 120 });
+    expect((r.candidates[1].claim as { wounded?: number }).wounded).toBeUndefined();
+    // ячейки с одинаковым заголовком не сливаются: ключ — заголовок и номер столбца
+    const ev = r.candidates[0].evidence as Extract<Evidence, { kind: 'row' }>;
+    expect(ev.cells).toEqual({ 'Соединение': '1-я армия', '16.04.1945#2': '310', '16.04.1945#3': '640', '17.04.1945#4': '120' });
+    expect(ev.cell).toEqual(['16.04.1945#2', '16.04.1945#3']);
+    expect(ev.dayCells).toEqual(['16.04.1945#2', '16.04.1945#3', '17.04.1945#4']);
+    expect(r.candidates[1].evidence).toMatchObject({ cell: '17.04.1945#4' });
   });
 
   it('дата 32.04.1945 — ошибка строки 2; 16.04.1945 и 1945-04-16 равны', () => {

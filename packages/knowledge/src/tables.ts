@@ -205,8 +205,8 @@ function build(f: Fields, kind: ClaimKind, day: string | null, nums: Partial<Rec
 
 /**
  * Строки таблицы (первая — заголовок) → кандидаты. Номер строки в errors — как в файле (заголовок — 1).
- * Столбец kind (если есть) задаёт вид по строке, иначе вид — mapping.kind. «Дни в столбцах»: на каждую
- * непустую ячейку-день — кандидат с date = день столбца.
+ * Столбец kind (если есть) задаёт вид по строке, иначе вид — mapping.kind. «Дни в столбцах»: на каждый день строки
+ * с непустыми ячейками — один кандидат с date = день столбца и всеми числами этого дня (убито, ранено …).
  */
 export function rowsToCandidates(rows: string[][], mapping: TableMapping, doc: DocInfo): { candidates: Candidate[]; errors: RowError[]; skipped: string[] } {
   const header = rows[0] ?? [];
@@ -214,13 +214,16 @@ export function rowsToCandidates(rows: string[][], mapping: TableMapping, doc: D
   const errors: RowError[] = [];
   const hasKind = mapping.columns.includes('kind');
   const skipped = header.filter((_, i) => (mapping.columns[i] ?? 'skip') === 'skip' && header[i].trim());
+  // ключ ячейки в доказательстве: заголовок; повторяется («16.04 | 16.04» — убито, ранено) — с номером столбца
+  const times = new Map<string, number>();
+  for (const h of header) times.set(h.trim(), (times.get(h.trim()) ?? 0) + 1);
+  const keyOf = (i: number) => { const h = header[i]?.trim() ?? ''; return !h ? `#${i + 1}` : (times.get(h) ?? 0) > 1 ? `${h}#${i + 1}` : h; };
   for (let r = 1; r < rows.length; r++) {
     const cells = rows[r];
     if (!cells.some((c) => c.trim())) continue;
     const row = r + 1;
     const f: Fields = {};
     const days: { day: string; field: NumberField; text: string; key: string }[] = [];
-    const keyOf = (i: number) => header[i]?.trim() || `#${i + 1}`;
     mapping.columns.forEach((m, i) => {
       const v = (cells[i] ?? '').trim();
       if (m === 'skip') return;
@@ -237,14 +240,25 @@ export function rowsToCandidates(rows: string[][], mapping: TableMapping, doc: D
     for (const k of NUMBER_FIELDS) if (f[k]) { const n = parseWholeCount(f[k]!); if ('err' in n) bad = `${n.err} (столбец ${k})`; else nums[k] = n.n; }
     if (bad) { errors.push({ row, why: bad }); continue; }
     if (days.length) {
-      for (const d of days) {
-        const n = parseWholeCount(d.text);
-        const dayIso = parseDate(d.day);
-        if ('err' in n) { errors.push({ row, why: `${n.err} (столбец ${d.day})` }); continue; }
-        if (!dayIso) { errors.push({ row, why: `дата столбца «${d.day}» не распознана` }); continue; }
-        // доказательство — строка с отметкой ячейки этого дня: числа сверяются с ней, а не с соседними днями
-        const ev: Candidate['evidence'] = { ...evidence, cell: d.key, dayCells } as Candidate['evidence'];
-        const c = build(f, kind, dayIso, { ...nums, [d.field]: n.n }, doc, `${doc.id}:r${row}:${candidates.length}`, ev, 'table', row);
+      // один кандидат на день строки: все числа этого дня (убито и ранено за 16.04 — один факт потерь, не два)
+      const byDay = new Map<string, typeof days>();
+      for (const d of days) { const g = byDay.get(d.day); if (g) g.push(d); else byDay.set(d.day, [d]); }
+      for (const [day, cellsOfDay] of byDay) {
+        const dayIso = parseDate(day);
+        if (!dayIso) { errors.push({ row, why: `дата столбца «${day}» не распознана` }); continue; }
+        const dayNums: Partial<Record<NumberField, number>> = {};
+        let why = '';
+        for (const d of cellsOfDay) {
+          const n = parseWholeCount(d.text);
+          if ('err' in n) { why = `${n.err} (столбец ${d.key})`; break; }
+          if (dayNums[d.field] != null) { why = `два столбца «${d.field}» за ${day}`; break; }
+          dayNums[d.field] = n.n;
+        }
+        if (why) { errors.push({ row, why }); continue; }
+        // доказательство — строка с отметкой ячеек этого дня: числа сверяются с ними, а не с соседними днями
+        const own = cellsOfDay.map((d) => d.key);
+        const ev: Candidate['evidence'] = { ...evidence, cell: own.length === 1 ? own[0] : own, dayCells } as Candidate['evidence'];
+        const c = build(f, kind, dayIso, { ...nums, ...dayNums }, doc, `${doc.id}:r${row}:${candidates.length}`, ev, 'table', row);
         if (typeof c === 'string') errors.push({ row, why: c }); else candidates.push(c);
       }
     } else {

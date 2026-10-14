@@ -237,15 +237,19 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
     }
   }
 
-  // переправы: состояние на начало и смены по ходу операции
-  const crossings = groupBy(facts.filter((x) => x.fact.claim!.kind === 'crossing' && ms(claimOf<'crossing'>(x).from) <= tEnd), (x) => subjectOf(x.fact.claim!));
+  // переправы: состояние на начало и смены по ходу операции. subject — название переправы (из документа) или id объекта
+  // встроенной базы (запись obj:<id>): тогда к переправе — названия объекта (names), по ним сборка находит мост театра.
+  // Без названия переправа ни к чему не привязывается — не собирается.
+  const crossings = groupBy(facts.filter((x) => x.fact.claim!.kind === 'crossing' && claimOf<'crossing'>(x).subject.trim() && ms(claimOf<'crossing'>(x).from) <= tEnd), (x) => subjectOf(x.fact.claim!));
+  const objNames = (subject: string) => { const e = entries.find((x) => x.id === `obj:${subject}`); return e ? { names: [e.title, ...(e.aliases ?? [])] } : {}; };
   for (const [subject, g] of crossings) {
+    const names = objNames(subject);
     const c0 = pick(g, 'crossing', subject, op.start);
-    if (c0) { prov(`crossing:${edits.crossings.length}`, c0); edits.crossings.push({ ...c0.fact.claim! }); }
+    if (c0) { prov(`crossing:${edits.crossings.length}`, c0); edits.crossings.push({ ...c0.fact.claim!, ...names }); }
     const later = g.filter((x) => ms(claimOf<'crossing'>(x).from) > tStart);
     for (const { chosen } of atMoments(later, 'crossing', subject, (x) => claimOf<'crossing'>(x).from)) {
       prov(`crossing:${edits.crossings.length}`, chosen);
-      edits.crossings.push({ ...chosen.fact.claim! });
+      edits.crossings.push({ ...chosen.fact.claim!, ...names });
     }
   }
 

@@ -4,7 +4,7 @@
  */
 import type { Claim, Entry, Fact } from './schema';
 import type { Candidate, CheckResult } from './candidate';
-import { matchFormation } from './sync';
+import { matchFormation, scenarioIdOf } from './sync';
 import { matchEntryHow, quoteFound, stemSimilarity } from './extract';
 import { fingerprint } from './resolve';
 
@@ -92,8 +92,9 @@ function checkNumbers(c: Candidate): CheckResult {
   if (e.kind === 'agent' && !e.quote) return res('numbers', 'doubt', 'выписки нет — числа не сверены');
   // строка таблицы: числа — по ячейкам (соседние ячейки «310», «640» в одной строке не разряды одного числа);
   // день в столбцах — только ячейка этого дня и столбцы не-дни, а не числа соседних дней
+  const own = e.kind === 'row' && e.cell != null ? [e.cell].flat() : null;
   const rowCells = e.kind === 'row'
-    ? Object.entries(e.cells).filter(([k]) => !e.cell || k === e.cell || !(e.dayCells ?? []).includes(k)).map(([, v]) => v)
+    ? Object.entries(e.cells).filter(([k]) => !own || own.includes(k) || !(e.dayCells ?? []).includes(k)).map(([, v]) => v)
     : null;
   const have = new Set(rowCells ? rowCells.flatMap(numbersIn) : numbersIn(evidenceText(c)));
   const miss = claimNumbers(c.claim).filter((n) => !have.has(n));
@@ -103,8 +104,10 @@ function checkNumbers(c: Candidate): CheckResult {
 }
 
 /**
- * Сопоставить название с соединением сценария или записью базы: id или причина сомнения. loose — найдено только по
- * сходству основ слов (не точное название, синоним или номер): id ставится, но проверка — сомнение.
+ * Сопоставить название с соединением сценария или записью базы: id соединения сценария или причина сомнения. loose —
+ * найдено только по сходству основ слов (не точное название, синоним или номер): id ставится, но проверка — сомнение.
+ * Соединение — всегда id сценария (su_1bf), а не id записи (f:su_1bf): найдена запись — берётся её синоним-id
+ * сценария; у записи его нет — соединение не ставится (сомнение «запись базы без соединения сценария»).
  */
 function matchName(name: string, ctx: CheckCtx): { id: string; loose?: string } | { why: string } {
   const f = matchFormation(name, ctx.formations, ctx.entries);
@@ -117,17 +120,23 @@ function matchName(name: string, ctx: CheckCtx): { id: string; loose?: string } 
   if (titles.length > 1) return { why: `«${name}» подходит к нескольким: ${titles.join('; ')}` };
   const one = matchEntryHow(ctx.entries, 'formations', name, []);
   const loose = (title: string) => `сопоставлено по сходству названия: «${name}» → «${title}» — проверьте`;
+  const noScenario = (e: Entry) => ({ why: `«${name}» → запись базы «${e.title}» без соединения сценария — укажите соединение` });
   if (one) {
-    const id = ctx.formations.find((x) => (one.entry.aliases ?? []).includes(x.id))?.id ?? one.entry.id;
+    const id = ctx.formations.find((x) => (one.entry.aliases ?? []).includes(x.id))?.id ?? scenarioIdOf(one.entry);
+    if (!id) return noScenario(one.entry);
     return one.exact ? { id } : { id, loose: loose(one.entry.title) };
   }
   const exactName = (t: string) => normName(t) === n;
-  if (hitEntries.length === 1) { const e = hitEntries[0]; return [e.title, ...(e.aliases ?? [])].some(exactName) ? { id: e.id } : { id: e.id, loose: loose(e.title) }; }
+  if (hitEntries.length === 1) {
+    const e = hitEntries[0], id = scenarioIdOf(e);
+    if (!id) return noScenario(e);
+    return [e.title, ...(e.aliases ?? [])].some(exactName) ? { id } : { id, loose: loose(e.title) };
+  }
   if (hitForms.length === 1) { const x = hitForms[0]; return exactName(x.name) ? { id: x.id } : { id: x.id, loose: loose(x.name) }; }
   return { why: `«${name}» не найдено среди соединений` };
 }
 
-/** 3. Соединение сопоставлено ровно с одним; id записывается в claim. */
+/** 3. Соединение сопоставлено ровно с одним; id записывается в claim (у переправы — её название, у события — нет). */
 function checkSubject(c: Candidate, ctx: CheckCtx): CheckResult | null {
   const cl = c.claim as Record<string, unknown>;
   const whys: string[] = [];
@@ -137,7 +146,14 @@ function checkSubject(c: Candidate, ctx: CheckCtx): CheckResult | null {
       if ('id' in m) { cl[field] = m.id; if (m.loose) whys.push(m.loose); } else whys.push(m.why);
     } else if (!cl[field]) whys.push(`не указано: ${field === 'parent' ? 'вышестоящий' : 'соединение'}`);
   };
+  // событие — не о соединении: сопоставление не выполняется
   if (c.claim.kind === 'event') return null;
+  // переправа — о мосте, не о соединении: claim.subject — её название (мост театра находит сборщик по названию)
+  if (c.claim.kind === 'crossing') {
+    const name = (c.names.subject ?? '').trim() || c.claim.subject.trim();
+    c.claim.subject = name;
+    return name ? ok('subject') : res('subject', 'doubt', 'не названа переправа');
+  }
   if (c.claim.kind === 'boundary') {
     const b = c.claim.between;
     [0, 1].forEach((i) => {
