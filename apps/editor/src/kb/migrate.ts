@@ -11,7 +11,7 @@
 import type { BoundaryProposal, Claim, Entry, Fact, InfraItem, InfraProposal, PositionProposal, Proposal, SyncInput } from '@def-ops/knowledge';
 import { Theatre, type Scenario, type TheatreData } from '@def-ops/sim';
 import { boundaryClaim, boundaryTargets, boundaryText, positionClaim, positionFact, positionTarget, resolveBoundary, resolvePosition, syncInput, type BoundaryResolution, type PositionResolution } from '../modeling/sync';
-import { work, type StoredCandidate, type TextCandidate } from './candidates';
+import { textCandidateOf, work, type StoredCandidate } from './candidates';
 import * as store from './store';
 
 /** Данные операции для переноса: сценарий (формирования) и театр; null — операции нет. */
@@ -185,12 +185,7 @@ export async function migrateLegacy(data: Legacy, ctx: MigrateCtx = defaultCtx):
 
   for (const p of data.proposals ?? []) {
     if (p.status === 'accepted') continue; // принятые уже в записях
-    const c: TextCandidate = {
-      id: `v6:prop:${p.id}`, names: { subject: p.entry.title }, key: p.kind === 'new' ? 'новая запись' : 'дополнение записи', value: p.entry.title,
-      source: `doc:${p.doc}`, pages: `часть ${p.chunk + 1}`, ...(p.facts[0]?.reliability ? { reliability: p.facts[0].reliability } : {}), origin: 'text',
-      evidence: quoteEv(p.doc, p.chunk, p.facts.find((f) => f.quote)?.quote ?? ''), ...(p.operation ? { op: p.operation } : {}),
-      checks: [], verdict: 'review', state: p.status, proposal: p,
-    };
+    const c = textCandidateOf(p, { id: `v6:prop:${p.id}`, state: p.status });
     addCand(c);
   }
 

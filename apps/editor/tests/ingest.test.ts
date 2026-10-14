@@ -6,8 +6,8 @@ import { stripes, type KbDocument } from '@def-ops/knowledge';
 import type { ChatRequest, ChatResult } from '@def-ops/staff-service/llm';
 import * as store from '../src/kb/store';
 import * as kb from '../src/kb/kb';
-import { deps, ingest, type IngestProgress } from '../src/kb/ingest';
-import type { StoredCandidate } from '../src/kb/candidates';
+import { deps, ingest, opContext, type IngestProgress } from '../src/kb/ingest';
+import { decideCandidates, type StoredCandidate } from '../src/kb/candidates';
 import type { ReadDoc } from '../src/kb/text';
 import type { LlmSettings } from '../src/sim/game-protocol';
 
@@ -59,6 +59,7 @@ beforeEach(async () => {
     hint: { id: OP, title: 'Тестовая операция', start: '1945-04-16', end: '1945-05-08', sides: [{ id: 'su', name: 'СССР' }, { id: 'de', name: 'Германия' }] },
   });
   deps.crop = async (url, s) => `${url}#${s.y}`;
+  deps.hint = async () => undefined;
 });
 
 /** Загрузить документ через addFile с подменённым чтением файла. */
@@ -210,5 +211,63 @@ describe('ingest: скан', () => {
     expect(c.verdict).toBe('drop');
     const h = stripes(1000, 3000)[0].h;
     expect((c.evidence as { box: number[] }).box[1]).toBeCloseTo((0.12 * h) / 3000, 5);
+  });
+});
+
+describe('ingest: правки первого круга', () => {
+  it('сценарий не прочитался — подсказка операции из operationHint (сроки, стороны)', async () => {
+    deps.context = opContext;
+    deps.hint = async (op) => ({ id: op, title: 'Запасная операция', start: '1945-04-16', end: '1945-05-08', sides: [{ id: 'su', name: 'СССР' }] });
+    const d = await upload({ kind: 'text', text: PARA_A });
+    const log = fakeClient(normal);
+    await ingest(d.id, LLM, { onProgress: () => {} });
+    const ex = extracts(log);
+    expect(ex[0].schema).toBe('kb_operation_extract');
+    expect(ex[0].text).toContain('Запасная операция');
+  });
+
+  it('остановка во время зациклившегося ответа — остановка, часть не отмечена ни разобранной, ни неудачной', async () => {
+    const d = await upload({ kind: 'text', text: TEXT });
+    const ac = new AbortController();
+    const log = fakeClient(() => { ac.abort(); return { degenerate: 'пробелы' }; });
+    const r = await ingest(d.id, LLM, { signal: ac.signal, onProgress: () => {} });
+    expect(r.stopped).toBe('остановлено');
+    expect(r.failedParts).toEqual([]);
+    expect(log).toHaveLength(1);
+    expect(await doc(d.id)).toMatchObject({ status: 'new', processed: 0, error: 'остановлено' });
+  });
+
+  it('остановка во время запроса сопоставления — остановка, а не предложение «всё пропустить»', async () => {
+    const d = await upload({ kind: 'table', rows: [['Соединение', 'Убито'], ['8 гв. А', '1200']] }, 'потери.csv');
+    const ac = new AbortController();
+    fakeClient(() => { ac.abort(); return new Error('This operation was aborted'); });
+    const r = await ingest(d.id, LLM, { signal: ac.signal, onProgress: () => {} });
+    expect(r.stopped).toBe('остановлено');
+    expect(r.needsMapping).toBeUndefined();
+  });
+
+  it('дороги и рубежи — текстовые кандидаты; принятое остаётся принятым при повторном разборе части', async () => {
+    const ROAD = 'Сводка. Дорога Зелов — Мюнхеберг разрушена и непроходима для колёсного транспорта с 18 апреля. ' + FILL.repeat(3);
+    const d = await upload({ kind: 'text', text: ROAD });
+    const answer = { items: [], claims: [], infrastructure: [{ kind: 'road', state: 'impassable', title: 'Дорога Зелов — Мюнхеберг', place: 'Зелов', river: null, date: '1945-04-18', dateTo: null, side: null, note: null, quote: 'Дорога Зелов — Мюнхеберг разрушена и непроходима для колёсного транспорта' }] };
+    fakeClient((req) => (req.schema?.name === 'kb_operation_extract' ? { json: answer } : new Error('не то')));
+    const r1 = await ingest(d.id, LLM, { onProgress: () => {} });
+    expect(r1.review).toBe(1);
+    expect(await store.all('infra')).toEqual([]);
+    const [c] = await queue();
+    expect(c).toMatchObject({ key: 'инфраструктура', state: 'pending' });
+    expect(c.value).toContain('Дорога Зелов — Мюнхеберг: ');
+    await decideCandidates([c.id], true);
+    const entry = async () => (await store.all<{ id: string; facts?: { key: string; value: string; quote?: string; source?: string }[] }>('entries')).find((e) => e.id === `u:${OP}:infrastructure`);
+    expect((await entry())?.facts).toEqual([expect.objectContaining({ key: 'features', value: c.value, quote: answer.infrastructure[0].quote, source: `doc:${d.id}` })]);
+
+    // повторный разбор той же части
+    await store.put('documents', { ...(await doc(d.id)), done: [], processed: 0 });
+    const r2 = await ingest(d.id, LLM, { onProgress: () => {} });
+    expect(r2.review).toBe(0);
+    const q = await queue();
+    expect(q).toHaveLength(1);
+    expect(q[0].state).toBe('accepted');
+    expect((await entry())?.facts).toHaveLength(1);
   });
 });

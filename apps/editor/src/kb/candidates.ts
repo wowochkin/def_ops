@@ -14,6 +14,19 @@ import * as store from './store';
 
 /** Кандидат из прежней очереди записей (proposals): без формальной части, принимается как прежде (applyProposal). */
 export type TextCandidate = Omit<Candidate, 'claim'> & { claim?: undefined; proposal: Proposal };
+/**
+ * Текстовый кандидат из предложения записи (новая запись или дополнение — принимается applyProposal). key и value —
+ * для карточки очереди (по умолчанию — «новая запись» / «дополнение записи» и название записи).
+ */
+export function textCandidateOf(p: Proposal, o: { id: string; state: Candidate['state']; key?: string; value?: string }): TextCandidate {
+  return {
+    id: o.id, names: { subject: p.entry.title }, key: o.key ?? (p.kind === 'new' ? 'новая запись' : 'дополнение записи'), value: o.value ?? p.entry.title,
+    source: `doc:${p.doc}`, pages: `часть ${p.chunk + 1}`, ...(p.facts[0]?.reliability ? { reliability: p.facts[0].reliability } : {}), origin: 'text',
+    evidence: { kind: 'quote', doc: p.doc, chunk: p.chunk, quote: p.facts.find((f) => f.quote)?.quote ?? '' }, ...(p.operation ? { op: p.operation } : {}),
+    checks: [], verdict: 'review', state: o.state, proposal: p,
+  };
+}
+
 /** Кандидат в хранилище: с формальной частью или текстовый; принятый — с адресом факта. */
 export type StoredCandidate = (Candidate | TextCandidate) & { accepted?: { entry: string; index: number } };
 
@@ -193,7 +206,10 @@ export async function decideCandidates(ids: string[], accept: boolean, edits: Re
     if ('proposal' in c && c.proposal) {
       const p = c.proposal;
       const key = p.kind === 'new' ? p.entry.id : p.target!;
-      w.set(applyProposal(p, w.get(key)));
+      const cur = w.get(key);
+      // факт с тем же ключом и значением уже в записи (принят прежде или вручную) — не задваивается
+      const fresh = p.kind === 'update' ? { ...p, facts: p.facts.filter((f) => !(cur?.facts ?? []).some((g) => g.key === f.key && g.value === f.value)) } : p;
+      w.set(applyProposal(fresh, cur));
       out.push({ ...c, state: 'accepted', proposal: { ...p, status: 'accepted' } });
       accepted++;
       continue;

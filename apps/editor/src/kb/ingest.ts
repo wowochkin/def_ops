@@ -17,7 +17,7 @@ import {
 } from '@def-ops/knowledge';
 import type { ChatMessage, LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
-import { saveCandidates, type StoredCandidate, type TextCandidate } from './candidates';
+import { saveCandidates, textCandidateOf, type StoredCandidate, type TextCandidate } from './candidates';
 import { crossLlm, kbLlm, llmClient, scanLlm } from './kb';
 import * as store from './store';
 import { cropImage, renderPdfPage, type PageImage } from './text';
@@ -57,7 +57,7 @@ export interface OpContext {
 type Chat = Pick<LlmClient, 'chat'>;
 
 /** Сценарий и театр операции документа (нет операции или не прочиталась — пусто). */
-async function opContext(doc: KbDocument, hint?: OperationHint): Promise<OpContext> {
+export async function opContext(doc: KbDocument, hint?: OperationHint): Promise<OpContext> {
   if (!doc.operation) return { formations: [] };
   try {
     const { syncInput } = await import('../modeling/sync');
@@ -74,7 +74,9 @@ async function opContext(doc: KbDocument, hint?: OperationHint): Promise<OpConte
       ...(T ? { theatre: { locate: (n: string) => { const p = locatePlace(T, n); return p ? { at: p.at as [number, number] } : null; } } } : {}),
     };
   } catch {
-    return { formations: [], ...(hint ? { hint, op: { start: hint.start, end: hint.end } } : {}) };
+    // сценарий не прочитался — подсказка операции (сроки, стороны) как в прежнем разборе
+    const h = hint ?? await deps.hint(doc.operation);
+    return { formations: [], ...(h ? { hint: h, op: { start: h.start, end: h.end } } : {}) };
   }
 }
 
@@ -89,6 +91,8 @@ async function renderPage(docId: string, page: number): Promise<PageImage> {
 export const deps = {
   client: (llm: LlmSettings): Chat => llmClient(llm, 'off'),
   context: opContext,
+  /** Подсказка операции из сценария (сроки, стороны) — запасной путь, если сценарий для проверок не прочитался. */
+  hint: async (op: string): Promise<OperationHint | undefined> => (await import('../sim/userdata')).operationHint(op),
   render: renderPage,
   crop: cropImage,
 };
@@ -116,9 +120,13 @@ function withJsonHint(messages: ChatMessage[]): ChatMessage[] {
  * null — и повтор не дал JSON. Недоступность сервера и остановка — исключение.
  */
 async function ask<T>(client: Chat, messages: ChatMessage[], schema: { name: string; schema: object }, signal?: AbortSignal): Promise<T | null> {
+  const stopped = () => { if (signal?.aborted) throw new Error('остановлено'); };
   let r = await client.chat({ messages, schema, signal });
-  if ((r.degenerate || r.json == null || typeof r.json !== 'object') && !signal?.aborted) {
+  // остановка во время ответа (зациклившегося или оборванного) — не неудача части, а остановка разбора
+  stopped();
+  if (r.degenerate || r.json == null || typeof r.json !== 'object') {
     r = await client.chat({ messages: withJsonHint(messages), schema, schemaLoose: true, signal });
+    stopped();
   }
   return r.json != null && typeof r.json === 'object' ? (r.json as T) : null;
 }
@@ -141,13 +149,31 @@ function strengthFrom(facts: Fact[]) {
   };
 }
 
-/** Прежнее предложение записи (items) → текстовый кандидат очереди (принимается как прежде). */
-const textCandidate = (p: Proposal): TextCandidate => ({
-  id: p.id, names: { subject: p.entry.title }, key: p.kind === 'new' ? 'новая запись' : 'дополнение записи', value: p.entry.title,
-  source: `doc:${p.doc}`, pages: `часть ${p.chunk + 1}`, ...(p.facts[0]?.reliability ? { reliability: p.facts[0].reliability } : {}), origin: 'text',
-  evidence: { kind: 'quote', doc: p.doc, chunk: p.chunk, quote: p.facts.find((f) => f.quote)?.quote ?? '' }, ...(p.operation ? { op: p.operation } : {}),
-  checks: [], verdict: 'review', state: 'pending', proposal: p,
-});
+const ddmm = (d?: string | null) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : '');
+
+/**
+ * Дороги, рубежи и прочая инфраструктура (не переправы — они в claims) → текстовые кандидаты: принятие пишет тот же
+ * факт, что прежде addInfraFact (запись «Состояние инфраструктуры» операции, ключ features, с цитатой и источником).
+ * id — как у прежнего сведения (документ, часть, номер): повторный разбор части не задваивает и не сбрасывает принятое.
+ */
+async function infraCandidates(items: InfraItem[], text: string, doc: KbDocument, chunk: number, op: { id: string; title: string }): Promise<TextCandidate[]> {
+  const { INFRA_STATE_RU } = await import('@def-ops/sim');
+  const inf = toInfraProposals(items.filter((x) => x.kind !== 'bridge' && x.kind !== 'crossing'), text, { ...doc, operation: op.id }, chunk);
+  const id = `u:${op.id}:infrastructure`;
+  const entry: Entry = {
+    id, category: 'terrain', group: 'rivers', title: `Состояние инфраструктуры: ${op.title.split(':')[0]}`, operations: [op.id], rubrics: ['5.3', '5.2'],
+    summary: 'Мосты, переправы, дороги и железные дороги операции — по документам и сведениям, принятым в разделе «Операции».', facts: [], status: 'extracted', origin: 'document',
+  };
+  return inf.proposals.map((x) => {
+    const it = x.item;
+    const value = `${it.title}: ${INFRA_STATE_RU[it.state]}${it.date ? ` с ${ddmm(it.date)}` : ''}${it.dateTo ? ` до ${ddmm(it.dateTo)}` : ''}${it.note ? ` (${it.note})` : ''}`;
+    const p: Proposal = {
+      id: x.id, doc: doc.id, chunk, kind: 'update', target: id, entry, relations: [], operation: op.id, status: 'pending',
+      facts: [{ key: 'features', value, quote: it.quote, source: `doc:${doc.id}`, reliability: doc.reliability }],
+    };
+    return textCandidateOf(p, { id: x.id, state: 'pending', key: 'инфраструктура', value });
+  });
+}
 
 type Counts = { auto: number; review: number; drop: number; duplicate: number };
 
@@ -170,7 +196,10 @@ export async function ingest(docId: string, llm: LlmSettings, o: IngestOptions):
     mapping = o.mapping ?? doc.mapping ?? (isTemplate(header) ? templateMapping(header) : null);
     if (!mapping) {
       let proposed: TableMapping | null = null;
-      try { proposed = normalizeMapping(await ask(kbChat, mappingMessages(header, rows.slice(1, 11)), { name: 'kb_table_mapping', schema: MAPPING_SCHEMA }, o.signal), header.length); } catch { /* сервер недоступен — сопоставит человек */ }
+      try { proposed = normalizeMapping(await ask(kbChat, mappingMessages(header, rows.slice(1, 11)), { name: 'kb_table_mapping', schema: MAPPING_SCHEMA }, o.signal), header.length); } catch {
+        // остановлено — не предложение «всё пропустить», а остановка; сервер недоступен — сопоставит человек
+        if (o.signal?.aborted) return { ...res, stopped: 'остановлено' };
+      }
       return { ...res, needsMapping: { header, sample: rows.slice(1, 4), proposed: proposed ?? { kind: 'strength', columns: header.map(() => 'skip') } } };
     }
     if (o.mapping) await save({ mapping: o.mapping });
@@ -232,12 +261,10 @@ export async function ingest(docId: string, llm: LlmSettings, o: IngestOptions):
       if (!j) return { cands: [], text: [], failed: true };
       const cands = await check(toCandidates(j.claims, doc, { chunk: p.i }, 'text'), { text }, entries);
       const props = toProposals(j.items ?? [], text, entries, doc, p.i).proposals;
-      // дороги, рубежи и прочее (не переправы — они в claims) — сведения операции, как прежде
-      if (hint && doc.operation) {
-        const inf = toInfraProposals((j.infrastructure ?? []).filter((x) => x.kind !== 'bridge' && x.kind !== 'crossing'), text, { ...doc, operation: doc.operation }, p.i);
-        if (inf.proposals.length) await store.put('infra', ...inf.proposals);
-      }
-      return { cands, text: props.map(textCandidate) };
+      const textC = props.map((x) => textCandidateOf(x, { id: x.id, state: 'pending' }));
+      // дороги, рубежи и прочее (не переправы — они в claims) — текстовые кандидаты записи инфраструктуры операции
+      if (hint && doc.operation) textC.push(...await infraCandidates(j.infrastructure ?? [], text, doc, p.i, { id: doc.operation, title: hint.title }));
+      return { cands, text: textC };
     }
     if (p.kind === 'scan') {
       let img = await store.one<PageImage>('pages', `${doc.id}:${p.page}`);
