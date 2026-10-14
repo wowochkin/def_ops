@@ -20,7 +20,8 @@ import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
 import { LlmClient } from '@def-ops/staff-service/llm';
 import { gameEndOf, getData, liveOf } from './userdata';
-import { coreEditsFor } from './kb-recompile';
+import { gameKbNow } from './kb-recompile';
+import { gameKbData, type GameKb } from './kb-compile';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
@@ -31,7 +32,6 @@ import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, Gam
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
 const liveCfg = import.meta.glob('../../../../services/staff/live/*.json', { import: 'default' });
 // встроенные данные и свои (правила, загруженные операции)
-const get = (kind: string, file: string) => getData(kind as DataKind, file);
 
 const post = (m: GameResponse) => (self as unknown as Worker).postMessage(m);
 
@@ -140,6 +140,9 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
 async function start(s: { scenario: string; rules: string; seed: number; takeover: string; agents?: AgentGameSpec }, record: GameRecord | undefined, l: LlmSettings, en: EnemyMode) {
   llm = l; enemy = en;
   post({ kind: 'progress', text: 'загрузка данных…' });
+  // данные из базы: записанные в игре при начале (восстановление — на тех же данных), иначе нынешние
+  const kb = gameKbData(record as { kb?: GameKb } | undefined, record?.kb ? { compiled: null, core: null } : await gameKbNow(s.scenario, !!(record?.agents ?? s.agents)));
+  const get = (kind: string, file: string) => getData(kind as DataKind, file, kb.compiled);
   ({ ctx, history } = await contextFrom(get as never, s.scenario, s.rules));
   const cfgLoad = (liveCfg as Record<string, (() => Promise<unknown>) | undefined>)[`../../../../services/staff/live/${s.scenario}.json`];
   const own = cfgLoad ? null : await liveOf(s.scenario);
@@ -163,8 +166,8 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     setAgent(await agentsCall<AgentGameTrace>('game_start', {
       scenario: agents.path, seed: s.seed, takeover: hourAt(ctx.scenario.start, takeover), player: human,
       enemy: en === 'llm' ? 'llm' : 'script', until: hourAt(ctx.scenario.start, end.defeat.deadline),
-      // поправки сценария из базы знаний (дивизии): id операции = ключ агентного сценария
-      edits: await coreEditsFor(s.scenario),
+      // поправки сценария из базы знаний (дивизии) — те, с которыми игра началась
+      edits: kb.core ?? undefined,
     }));
     // тыл — под управлением штаба: базы снабжения стороны; будущие наводки переправ сняты (ядру — с первым ходом);
     // директивы с этого момента — по обстановке
@@ -180,7 +183,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   }
   baseStrength = sideStrength(g.state, human);
   outcome = null;
-  rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, aiStaff, turns: [], ...(agents ? { agents } : {}) };
+  rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, aiStaff, turns: [], ...(agents ? { agents } : {}), kb };
   journal = [];
   for (const [k, t] of rec.turns.entries()) {
     if (outcome) break;

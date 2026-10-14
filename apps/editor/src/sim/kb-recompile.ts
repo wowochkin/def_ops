@@ -6,11 +6,11 @@
  * Агентный сценарий операции: ключ AGENT_SCENARIOS совпадает с id операции каталога (berlin-1945-tasks,
  * vistula-oder-1945) — его дивизии и штабы входят в сборку (divisions).
  */
-import { compileOperation, type CompileInput } from '@def-ops/knowledge';
+import { compileOperation, type CompileInput, type CompiledEdits } from '@def-ops/knowledge';
 import type { Scenario } from '@def-ops/sim';
 import * as kbStore from '../kb/store';
 import { AGENT_SCENARIOS } from './agent-scenarios';
-import { diffCompiled, migratePins, toCoreEdits, type CoreEdits } from './kb-compile';
+import { diffCompiled, migratePins, norm, toCoreEdits, type CoreEdits, type GameKb } from './kb-compile';
 import { fullCatalog, getEdits, rawData, updateEdits } from './userdata';
 
 interface AgentScenarioFile {
@@ -31,11 +31,6 @@ const divisionsIn = (a: AgentScenarioFile): NonNullable<CompileInput['divisions'
   ...a.hqs.map((h) => ({ id: h.id, name: h.name, side: h.side, echelon: h.echelon, parent: h.parent ?? null })),
   ...a.divisions.map((d) => ({ id: d.id, name: d.name, side: d.side, echelon: 'division', parent: d.hq, personnel: d.personnel, tanks: d.tanks, guns: d.guns, enterAt: d.enterAt ?? null })),
 ];
-
-/** Нормализованная запись для сравнения сборок (порядок ключей не влияет). */
-const norm = (v: unknown): string => Array.isArray(v) ? `[${v.map(norm).join(',')}]`
-  : v && typeof v === 'object' ? `{${Object.keys(v).sort().filter((k) => (v as Record<string, unknown>)[k] !== undefined).map((k) => `${JSON.stringify(k)}:${norm((v as Record<string, unknown>)[k])}`).join(',')}}`
-  : JSON.stringify(v) ?? 'null';
 
 /**
  * Пересобрать поправки операции из базы: записи и закрепления, сценарий (без правок) и агентный сценарий. При первой
@@ -106,12 +101,19 @@ export function watchKb() {
 }
 
 /**
- * Поправки ядра агентной модели для операции (id операции = ключ AGENT_SCENARIOS): дивизионные поправки из сборки.
- * Нет сборки или нечего передать — undefined (ядро считает сценарий как есть).
+ * Поправки ядра агентной модели для операции (id операции = ключ AGENT_SCENARIOS): дивизионные поправки из сборки
+ * (нынешней или переданной). Нет сборки или нечего передать — undefined (ядро считает сценарий как есть).
  */
-export async function coreEditsFor(opId: string): Promise<CoreEdits | undefined> {
-  const [e, a] = await Promise.all([getEdits(opId), agentScenario(opId)]);
-  if (!e.kb || !a) return undefined;
-  const r = toCoreEdits(e.kb.compiled, new Set(a.divisions.map((d) => d.id)), new Set(a.hqs.map((h) => h.id)));
+export async function coreEditsFor(opId: string, compiled?: CompiledEdits | null): Promise<CoreEdits | undefined> {
+  const [e, a] = await Promise.all([compiled === undefined ? getEdits(opId) : null, agentScenario(opId)]);
+  const c = compiled === undefined ? e?.kb?.compiled : compiled;
+  if (!c || !a) return undefined;
+  const r = toCoreEdits(c, new Map(a.divisions.map((d) => [d.id, d.hq])), new Map(a.hqs.map((h) => [h.id, h.parent ?? null])));
   return Object.keys(r.divisions).length || r.changes.length ? r : undefined;
+}
+
+/** Данные из базы для новой игры: нынешнее собранное и поправки ядра (для агентной модели). */
+export async function gameKbNow(opId: string, agents: boolean): Promise<GameKb> {
+  const compiled = (await getEdits(opId)).kb?.compiled ?? null;
+  return { compiled, core: agents ? (await coreEditsFor(opId, compiled)) ?? null : null };
 }

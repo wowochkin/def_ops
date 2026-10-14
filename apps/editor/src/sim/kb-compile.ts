@@ -10,8 +10,8 @@ const day = (s: string) => s.slice(0, 10);
 const ddmm = (s: string) => `${s.slice(8, 10)}.${s.slice(5, 7)}`;
 const moment = (s: string) => (s.length > 10 ? `${ddmm(s)} ${s.slice(11, 16)}` : ddmm(s));
 
-/** Нормализованная запись значения: порядок ключей объекта не влияет. */
-const norm = (v: unknown): string => Array.isArray(v) ? `[${v.map(norm).join(',')}]`
+/** Нормализованная запись значения (для сравнения): порядок ключей объекта и пустые поля не влияют. */
+export const norm = (v: unknown): string => Array.isArray(v) ? `[${v.map(norm).join(',')}]`
   : v && typeof v === 'object' ? `{${Object.keys(v).sort().filter((k) => (v as Record<string, unknown>)[k] !== undefined).map((k) => `${JSON.stringify(k)}:${norm((v as Record<string, unknown>)[k])}`).join(',')}}`
   : JSON.stringify(v) ?? 'null';
 const uniq = <T>(xs: T[]): T[] => { const seen = new Set<string>(); return xs.filter((x) => { const k = norm(x); if (seen.has(k)) return false; seen.add(k); return true; }); };
@@ -66,8 +66,8 @@ export function diffCompiled(a: CompiledEdits | undefined, b: CompiledEdits): st
 /* ───────────── наложение на сценарий и историю ───────────── */
 
 /**
- * Собранное из базы — поверх сценария (после ручных правок; база важнее): численность, подчинение и ввод
- * формирований сценария; изменения по датам — о формированиях сценария (к своим изменениям сценария, без повторов).
+ * Собранное из базы — поверх сценария (после ручных правок; база важнее): численность (формированиям с типом),
+ * подчинение и ввод формирований сценария; изменения по датам — о формированиях сценария (к своим изменениям сценария, без повторов).
  * Формирования, которых в сценарии нет (дивизии агентной модели), пропускаются.
  */
 export function applyCompiled(sc: Scenario, c: CompiledEdits | undefined): Scenario {
@@ -77,7 +77,8 @@ export function applyCompiled(sc: Scenario, c: CompiledEdits | undefined): Scena
     const p = c.formations[f.id];
     if (!p) return f;
     const n = { ...f };
-    for (const k of ['personnel', 'tanks', 'guns'] as const) if (typeof p[k] === 'number') n[k] = p[k];
+    // численность — только действующим формированиям (с типом), не штабам и фронтам
+    if (f.type) for (const k of ['personnel', 'tanks', 'guns'] as const) if (typeof p[k] === 'number') n[k] = p[k];
     if (p.parent && ids.has(p.parent)) n.parent = p.parent;
     if (p.enterAt) n.enterAt = p.enterAt;
     return n;
@@ -118,20 +119,35 @@ export type CoreEdits = {
 /**
  * Собранное — в поправки ядра: формирования-дивизии (parent → hq); изменения о дивизиях, а у штабов —
  * переподчинение (пополнение штаба в ядре смысла не имеет). Прочее (армии нынешней модели) не передаётся.
+ * divisions — дивизия → её штаб в агентном сценарии, hqs — штаб → вышестоящий: подчинение из базы старшему
+ * над нынешним штабом (фронту вместо армии) менее точно — не поправка.
  */
-export function toCoreEdits(c: CompiledEdits, divisionIds: Set<string>, hqIds: Set<string> = new Set()): CoreEdits {
-  const divisions: CoreEdits['divisions'] = {};
+export function toCoreEdits(c: CompiledEdits, divisions: Map<string, string>, hqs: Map<string, string | null> = new Map()): CoreEdits {
+  const out: CoreEdits['divisions'] = {};
+  /** Штаб a — выше штаба b (по цепочке вышестоящих). */
+  const above = (a: string, b: string) => { for (let x = hqs.get(b), n = 0; x && n < 20; x = hqs.get(x), n++) if (x === a) return true; return false; };
   for (const [id, p] of Object.entries(c.formations)) {
-    if (!divisionIds.has(id)) continue;
+    const hq = divisions.get(id);
+    if (hq === undefined) continue;
     const d: CoreEdits['divisions'][string] = {};
     for (const k of ['personnel', 'tanks', 'guns'] as const) if (typeof p[k] === 'number') d[k] = p[k];
-    if (p.parent) d.hq = p.parent;
+    if (p.parent && !above(p.parent, hq)) d.hq = p.parent;
     if (p.enterAt) d.enterAt = p.enterAt;
-    if (Object.keys(d).length) divisions[id] = d;
+    if (Object.keys(d).length) out[id] = d;
   }
-  const changes = c.changes.filter((x) => divisionIds.has(x.formation) || (hqIds.has(x.formation) && x.kind === 'resubordinate'));
-  return { divisions, changes };
+  const changes = c.changes.filter((x) => divisions.has(x.formation) || (hqs.has(x.formation) && x.kind === 'resubordinate'));
+  return { divisions: out, changes };
 }
+
+/* ───────────── данные игры ───────────── */
+
+/**
+ * Данные из базы, на которых идёт игра: собранное для нынешней модели и поправки ядра; takeoverState — место для
+ * состояния при передаче командования. Пишутся в запись игры при начале — восстановление идёт на тех же данных.
+ */
+export interface GameKb { compiled: CompiledEdits | null; core: CoreEdits | null; takeoverState?: unknown }
+/** Записанные в игре данные важнее нынешних; в записи нет (новая игра, старая запись) — нынешние. */
+export const gameKbData = (record: { kb?: GameKb } | undefined, current: GameKb): GameKb => record?.kb ?? current;
 
 /* ───────────── перенос прежней сверки в закрепления ───────────── */
 

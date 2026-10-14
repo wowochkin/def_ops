@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CompiledEdits } from '@def-ops/knowledge';
 import type { History, Scenario } from '@def-ops/sim';
-import { applyCompiled, applyCompiledHistory, diffCompiled, migratePins, toCoreEdits } from '../src/sim/kb-compile';
+import { applyCompiled, applyCompiledHistory, diffCompiled, gameKbData, migratePins, toCoreEdits } from '../src/sim/kb-compile';
 
 const empty = (): CompiledEdits => ({ formations: {}, changes: [], checkpoints: [], positions: [], boundaries: [], crossings: [], events: [] });
 const withF = (f: CompiledEdits['formations'], rest: Partial<CompiledEdits> = {}): CompiledEdits => ({ ...empty(), formations: f, ...rest });
@@ -41,7 +41,7 @@ describe('diffCompiled: перечень изменённых входов', () 
 const sc = (): Scenario => ({
   id: 'op', name: 'op', start: '1945-04-16T05:00', end: '1945-05-02T00:00', turnHours: 24, theatre: 't', rules: 'r', sides: [], orders: [],
   formations: [
-    { id: 'su_61a', name: '61 А', side: 'su', echelon: 'army', parent: 'su_1bf', personnel: 54000, tanks: 10, guns: 100 },
+    { id: 'su_61a', name: '61 А', side: 'su', echelon: 'army', type: 'combined_arms_army', parent: 'su_1bf', personnel: 54000, tanks: 10, guns: 100 },
     { id: 'su_1bf', name: '1 БФ', side: 'su', echelon: 'front' },
     { id: 'su_1uf', name: '1 УФ', side: 'su', echelon: 'front' },
   ],
@@ -51,6 +51,13 @@ describe('applyCompiled: наложение собранного на сцена
   it('без собранного — сценарий как есть', () => {
     const s = sc();
     expect(applyCompiled(s, undefined)).toBe(s);
+  });
+  it('численность — только формированиям с типом (не штабам и фронтам)', () => {
+    const s = sc();
+    const r = applyCompiled(s, withF({ su_61a: { personnel: 52000 }, su_1bf: { personnel: 900000, parent: 'su_1uf' } }));
+    expect(r.formations.find((x) => x.id === 'su_61a')!.personnel).toBe(52000);
+    expect(r.formations.find((x) => x.id === 'su_1bf')).toMatchObject({ parent: 'su_1uf' });
+    expect(r.formations.find((x) => x.id === 'su_1bf')!.personnel).toBeUndefined();
   });
   it('численность, подчинение, ввод; изменения по датам — только о формированиях сценария', () => {
     const c = withF({ su_61a: { personnel: 52000, parent: 'su_1uf', enterAt: '1945-04-17T05:00' }, su_12gsd: { personnel: 5000 } }, {
@@ -112,13 +119,32 @@ describe('toCoreEdits: поправки для ядра (дивизии)', () =>
         { at: '1945-04-19', formation: 'other', kind: 'reinforce', personnel: 1 },
       ],
     });
-    expect(toCoreEdits(c, new Set(['su_12gsd']), new Set(['su_61a', 'su_1uf']))).toEqual({
+    expect(toCoreEdits(c, new Map([['su_12gsd', 'su_61a']]), new Map([['su_61a', 'su_1bf'], ['su_1uf', null], ['su_1bf', null]]))).toEqual({
       divisions: { su_12gsd: { personnel: 5200, hq: 'su_61a', enterAt: '1945-04-17T05:00' } },
       changes: [
         { at: '1945-04-18', formation: 'su_12gsd', kind: 'reinforce', personnel: 500 },
         { at: '1945-04-19', formation: 'su_61a', kind: 'resubordinate', parent: 'su_1uf' },
       ],
     });
+  });
+});
+
+describe('toCoreEdits: подчинение старшему штабу над нынешним — не поправка', () => {
+  it('su_3gkd у su_33a, в базе — su_1bf (фронт над армией): hq не меняется; другой штаб — меняется', () => {
+    const hqs = new Map<string, string | null>([['su_33a', 'su_1bf'], ['su_69a', 'su_1bf'], ['su_1bf', null]]);
+    const divs = new Map([['su_3gkd', 'su_33a'], ['su_x', 'su_33a']]);
+    const c = withF({ su_3gkd: { parent: 'su_1bf', personnel: 4000 }, su_x: { parent: 'su_69a' } });
+    expect(toCoreEdits(c, divs, hqs).divisions).toEqual({ su_3gkd: { personnel: 4000 }, su_x: { hq: 'su_69a' } });
+  });
+});
+
+describe('выбор данных игры: записанные при начале важнее нынешних', () => {
+  it('в записи есть — берутся из записи; нет (старая запись, новая игра) — нынешние', () => {
+    const now = { compiled: withF({ a: { personnel: 2 } }), core: null };
+    const was = { compiled: withF({ a: { personnel: 1 } }), core: { divisions: {}, changes: [] } };
+    expect(gameKbData({ kb: was }, now)).toBe(was);
+    expect(gameKbData({}, now)).toBe(now);
+    expect(gameKbData(undefined, now)).toBe(now);
   });
 });
 

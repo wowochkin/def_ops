@@ -91,7 +91,10 @@ export function reconcile(input: SyncInput, entries: Entry[]): SyncItem[] {
 
     for (const key of ['personnel', 'tanks', 'guns'] as const) {
       const cur = f[key];
-      let cand = bestFact(facts(key), op.start);
+      // факты с формальной частью идут в модель только через сборщик (compileOperation): сверка их не берёт и,
+      // если формальная численность в базе есть, не предлагает и цифру сценария «в базу»
+      const claimed = found.some((e) => (e.facts ?? []).some((x) => x.claim?.kind === 'strength' && typeof x.claim[key] === 'number'));
+      let cand = bestFact(facts(key).filter((x) => !x.claim), op.start);
       // танки: «САУ: …» отдельным фактом — в сценарии танки и САУ вместе
       let kbN: number | null = null, how = '', basis: (Fact & { entry: string }) | undefined;
       if (key === 'tanks') {
@@ -109,7 +112,7 @@ export function reconcile(input: SyncInput, entries: Entry[]): SyncItem[] {
         if (cur != null && differs(key, cur, value)) {
           out.push({ id: `toScenario|${f.id}|${key}`, dir: 'toScenario', formation: f.id, name: f.name, side: f.side, key, scenario: cur, kb: kbN, value, how, fact: basis });
         }
-      } else if (cur != null && cur > 0) {
+      } else if (cur != null && cur > 0 && !claimed) {
         out.push({ id: `toKb|${f.id}|${key}`, dir: 'toKb', formation: f.id, name: f.name, side: f.side, key, scenario: cur, how: estimate, entry: main,
           facts: [{ key, value: `${fmt(cur)}${key === 'personnel' ? ' — боевая численность' : ''} на ${ddmm(op.start)} (${estimate})`, source: scenarioSrc, reliability: 'C' }] });
       }

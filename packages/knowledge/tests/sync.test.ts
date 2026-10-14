@@ -37,6 +37,16 @@ describe('сверка базы со сценарием', () => {
     expect(neg.some((i) => i.dir === 'toScenario')).toBe(false);
   });
 
+  it('факты с формальной частью сверка не берёт: в модель они идут через сборщик', () => {
+    const kb = [entry('f:t', '1-я гв. танковая армия', [
+      { key: 'personnel', value: 'на 16.04: людей 77 293', reliability: 'A', claim: { kind: 'strength', subject: 'su_1gta', at: '1945-04-16', personnel: 77293 } },
+      { key: 'tanks', value: 'на 16.04: танков 709', reliability: 'A', claim: { kind: 'strength', subject: 'su_1gta', at: '1945-04-16', tanks: 709 } },
+    ], ['su_1gta'])];
+    const items = reconcile({ operation: op, formations: [{ id: 'su_1gta', name: '1 гв. ТА', side: 'su', echelon: 'army', personnel: 40000, tanks: 10 }] }, kb);
+    // ни «в сценарий» (16 из «16.04»), ни «в базу» (в базе цифра есть — формальная)
+    expect(items.filter((i) => i.key === 'personnel' || i.key === 'tanks')).toEqual([]);
+  });
+
   it('сценарий → база: подчинённость и боевой путь из истории', () => {
     const items = reconcile({ operation: op, formations: [{ id: 'x', name: 'X корпус', side: 'su', echelon: 'corps', parentName: 'Y армия',
       positions: [{ time: '1945-04-16T00:00', place: 'Зелов', source: 'Z p.1', reliability: 'A' }, { time: '1945-04-20T00:00', place: 'Бернау', source: 'Z p.2', reliability: 'B' }] }] }, []);

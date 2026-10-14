@@ -195,17 +195,21 @@ export const BUILTIN = {
 };
 export const BUILTIN_CATALOG = (catalogFile as unknown as { scenarios: CatalogEntry[] }).scenarios;
 
-/** Получение данных для движка: встроенные файлы, затем свои правила и операции. */
-export async function getData(kind: DataKind, file: string): Promise<unknown> {
+/**
+ * Получение данных для движка: встроенные файлы, затем свои правила и операции. compiled — собранное из базы
+ * вместо нынешнего (восстановление игры на данных её начала; null — без собранного).
+ */
+export async function getData(kind: DataKind, file: string, compiled?: CompiledEdits | null): Promise<unknown> {
   if (kind === 'scenarios' && !file.endsWith('.sectors.json')) {
     const d = await rawData(kind, file);
     const hist = file.endsWith('.history.json');
     const e = await one<OperationEdits>('edits', file.replace(hist ? /\.history\.json$/ : /\.json$/, ''));
+    const kb = compiled === undefined ? e?.kb?.compiled : compiled ?? undefined;
     // сначала ручные правки, затем собранное из базы (база важнее)
-    if (!hist) return applyCompiled(applyScenarioEdits(d as Scenario, e), e?.kb?.compiled);
+    if (!hist) return applyCompiled(applyScenarioEdits(d as Scenario, e), kb);
     // положения из базы — только формирований сценария (дивизии агентной модели — в её истории)
-    const ids = e?.kb ? new Set(((await rawData(kind, file.replace(/\.history\.json$/, '.json'))) as Scenario).formations.map((f) => f.id)) : undefined;
-    return applyCompiledHistory(applyHistoryEdits(d as History, e), e?.kb?.compiled, ids);
+    const ids = kb ? new Set(((await rawData(kind, file.replace(/\.history\.json$/, '.json'))) as Scenario).formations.map((f) => f.id)) : undefined;
+    return applyCompiledHistory(applyHistoryEdits(d as History, e), kb, ids);
   }
   return rawData(kind, file);
 }

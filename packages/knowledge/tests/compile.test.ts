@@ -159,10 +159,28 @@ describe('сборщик «база → модель»', () => {
   });
 });
 
-describe('воспроизводимость: сид → начальное состояние Берлинской операции', () => {
+/** Операции каталога (и исходный сценарий Берлина): сценарий нынешней модели, агентный (дивизии), известные расхождения. */
+/** Сравнений численности не меньше compared; потери в базе есть — losses; положений из базы не меньше positions. */
+const NORDLAND = 'в базе — подчинённость III тк СС по ведомости (berlin-1945-divisions); в сценарии — оперативная, у корпуса на Зееловском направлении; база важнее (решение)';
+const OPS: { scenario: string; agents: string; allowed: Record<string, string>; compared: number; losses: boolean; positions: number }[] = [
+  { scenario: 'berlin-1945', agents: 'berlin-1945', compared: 6, losses: true, positions: 50, allowed: {
+    'de_lvi.personnel': 'ru-wiki: «вместе с тыловыми частями до 50 000» (оценка без ссылки); сценарий делит 112 143 чел. 9 А по дивизиям корпусов — 27 186',
+  } },
+  { scenario: 'berlin-1945-tasks', agents: 'berlin-1945', compared: 6, losses: true, positions: 50, allowed: {
+    'de_lvi.personnel': 'ru-wiki: «вместе с тыловыми частями до 50 000» (оценка без ссылки); сценарий делит 112 143 чел. 9 А по дивизиям корпусов — 27 186',
+    'de_nordland.parent': NORDLAND,
+    'de_nederland.parent': NORDLAND,
+  } },
+  // Висла — Одер: фактов численности в базе мало (две цифры), потерь по формированиям нет
+  { scenario: 'vistula-oder-1945', agents: 'vistula-oder-1945', compared: 1, losses: false, positions: 10, allowed: {
+    'de_festung_posen_vo.personnel': 'сценарий: «свыше 30 000» с ополчением; в базе 17 500 — база важнее (решение)',
+  } },
+];
+
+for (const o of OPS) describe(`воспроизводимость: сид → начальное состояние, ${o.scenario}`, () => {
   const seed = json<{ entries: Entry[] }>('packages/knowledge/data/seed.json');
-  const sc = json<{ id: string; start: string; end: string; formations: (CompileInput['formations'][number] & { note?: string })[] }>('packages/sim/data/scenarios/berlin-1945.json');
-  const ag = json<{ divisions: { id: string; name: string; side: string; hq: string; personnel?: number; tanks?: number; guns?: number; enterAt?: string }[] }>('packages/sim/data/scenarios/agents/berlin-1945.json');
+  const sc = json<{ id: string; start: string; end: string; formations: (CompileInput['formations'][number] & { note?: string })[] }>(`packages/sim/data/scenarios/${o.scenario}.json`);
+  const ag = json<{ divisions: { id: string; name: string; side: string; hq: string; personnel?: number; tanks?: number; guns?: number; enterAt?: string }[] }>(`packages/sim/data/scenarios/agents/${o.agents}.json`);
   const input: CompileInput = {
     id: sc.id, start: sc.start, end: sc.end,
     formations: sc.formations.map(({ id, name, side, echelon, parent, personnel, tanks, guns, enterAt }) => ({ id, name, side, echelon, parent, personnel, tanks, guns, enterAt })),
@@ -171,13 +189,10 @@ describe('воспроизводимость: сид → начальное со
   const r = compileOperation(seed.entries, input, {});
 
   /**
-   * Известные расхождения источника и сценария (не ошибки формальных частей): id → почему.
+   * Известные расхождения источника и сценария (не ошибки формальных частей): id.поле → почему.
    * Сценарий делит численность армии между корпусами по числу дивизий, а у факта — своя оценка.
    */
-  const ALLOWED: Record<string, string> = {
-    'de_lvi.personnel': 'ru-wiki: «вместе с тыловыми частями до 50 000» (оценка без ссылки); сценарий делит 112 143 чел. 9 А по дивизиям корпусов — 27 186',
-  };
-
+  const ALLOWED = o.allowed;
   it('численность, танки, орудия на начало совпадают со сценарием там, где у формирования есть факт', () => {
     const bad: string[] = [];
     let compared = 0;
@@ -190,13 +205,13 @@ describe('воспроизводимость: сид → начальное со
         if (e[k] !== f[k] && !ALLOWED[`${f.id}.${k}`]) bad.push(`${f.id}.${k}: база ${e[k]}, сценарий ${f[k]}`);
       }
     }
-    for (const key of Object.keys(ALLOWED)) {
+    for (const key of Object.keys(ALLOWED).filter((x) => !x.endsWith('.parent'))) {
       const [id, k] = key.split('.') as [string, 'personnel' | 'tanks' | 'guns'];
       const f = sc.formations.find((x) => x.id === id)!;
       if (r.edits.formations[id]?.[k] === f[k]) bad.push(`${key}: в списке известных расхождений, но совпадает — убрать из списка`);
     }
     if (bad.length) console.log('расхождения сида и сценария:\n' + bad.join('\n'));
-    expect(compared).toBeGreaterThan(5);
+    expect(compared).toBeGreaterThanOrEqual(o.compared);
     expect(bad).toEqual([]);
   });
 
@@ -204,7 +219,7 @@ describe('воспроизводимость: сид → начальное со
     const bad: string[] = [];
     for (const f of sc.formations) {
       const p = r.edits.formations[f.id]?.parent;
-      if (p !== undefined && p !== (f.parent ?? undefined)) bad.push(`${f.id}: база ${p}, сценарий ${f.parent}`);
+      if (p !== undefined && p !== (f.parent ?? undefined) && !ALLOWED[`${f.id}.parent`]) bad.push(`${f.id}: база ${p}, сценарий ${f.parent}`);
     }
     if (bad.length) console.log('подчинённость:\n' + bad.join('\n'));
     expect(bad).toEqual([]);
@@ -215,7 +230,7 @@ describe('воспроизводимость: сид → начальное со
       expect(r.provenance.some((p) => p.input === `${f.id}.personnel`), f.id).toBe(true);
       expect(r.provenance.some((p) => p.input === `${f.id}.parent`), f.id).toBe(true);
     }
-    expect(r.edits.checkpoints.some((c) => c.kind === 'losses')).toBe(true);
-    expect(r.edits.positions.length).toBeGreaterThan(50);
+    expect(r.edits.checkpoints.some((c) => c.kind === 'losses')).toBe(o.losses);
+    expect(r.edits.positions.length).toBeGreaterThan(o.positions);
   });
 });

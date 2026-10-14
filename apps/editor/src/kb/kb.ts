@@ -203,7 +203,7 @@ export async function process(id: string, llm: LlmSettings, hint?: OperationHint
     state.job = null;
     abort = null;
     await reload();
-  kbChanged();
+    kbChanged();
   }
   return { made, dropped };
 }
