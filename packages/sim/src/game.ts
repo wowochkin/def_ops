@@ -61,13 +61,14 @@ export type TakeoverState = Record<string, { personnel?: number; tanks?: number;
 
 /**
  * Наложить состояние при передаче на рассчитанное: численность — как есть; положение — только формированию на
- * карте (маршрут пересчитывается); вышестоящий — только существующий в сценарии. Неизвестные id пропускаются.
+ * карте (маршрут пересчитывается); вышестоящий — только существующий в сценарии. Неизвестные id и уничтоженные
+ * соединения пропускаются (факт о численности выбывшего соединения его не возрождает).
  */
 export function applyTakeoverState(s: SimState, ts: TakeoverState): SimState {
   const ids = new Set(s.formations.map((f) => f.id));
   const formations = s.formations.map((f) => {
     const t = ts[f.id];
-    if (!t) return f;
+    if (!t || f.destroyed) return f;
     const n = { ...f };
     for (const k of ['personnel', 'tanks', 'guns'] as const) if (typeof t[k] === 'number') n[k] = Math.max(0, t[k]!);
     if (t.position && onMap(f, s.time)) { n.position = [t.position[0], t.position[1]]; n.route = null; }

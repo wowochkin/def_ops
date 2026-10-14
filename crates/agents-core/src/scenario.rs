@@ -269,13 +269,15 @@ pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serd
         let ed = edits.and_then(|e| e.divisions.get(&d.id));
         if let Some(h) = ed.and_then(|e| e.hq.as_deref()) {
             match hq_idx.get(h) {
-                Some(&k) => hq = k,
+                Some(&k) if hqs[k as usize].side == d.side => hq = k,
+                Some(_) => notes.push(Event { tick: 0, agent: i as u32, text: format!("поправка пропущена: {} — штаб {h} другой стороны", d.id) }),
                 None => notes.push(Event { tick: 0, agent: i as u32, text: format!("поправка пропущена: {} — нет штаба {h}", d.id) }),
             }
         }
-        let personnel = ed.and_then(|e| e.personnel).unwrap_or(d.personnel);
-        let tanks = ed.and_then(|e| e.tanks).unwrap_or(d.tanks);
-        let guns = ed.and_then(|e| e.guns).unwrap_or(d.guns);
+        // цифры поправки — не меньше 0
+        let personnel = ed.and_then(|e| e.personnel).map_or(d.personnel, |x| x.max(0.0));
+        let tanks = ed.and_then(|e| e.tanks).map_or(d.tanks, |x| x.max(0.0));
+        let guns = ed.and_then(|e| e.guns).map_or(d.guns, |x| x.max(0.0));
         let enter_at = ed.and_then(|e| e.enter_at.as_ref()).or(d.enter_at.as_ref());
         let params = Params { kind: d.kind.clone(), mobility: d.mobility, size: d.size, quality: d.quality };
         let mut div = new_division(d.id.clone(), d.name.clone(), d.side, hq, params, personnel, tanks, guns, d.ammo, d.fuel, theatre.proj.to_xy(d.pos), &rules);
@@ -475,6 +477,19 @@ pub(crate) mod tests {
         assert!(sim.journal.iter().any(|e| e.text.contains("поправка пропущена") && e.text.contains("нет_дивизии")));
         // без поправок — как раньше: журнал пуст
         assert!(base.journal.is_empty());
+    }
+
+    #[test]
+    fn edits_initial_side_and_negative() {
+        // штаб другой стороны — поправка штаба пропущена (с записью); отрицательные цифры — 0
+        let e = edits(serde_json::json!({ "divisions": {
+            "su_1": { "hq": "de_a", "personnel": -100, "tanks": -5, "guns": -1 }
+        } }));
+        let (sim, _) = tiny("edits-side", Some(&e));
+        let d = div(&sim, "su_1");
+        assert_eq!(sim.world.hqs[d.hq as usize].id, "su_a");
+        assert_eq!((d.vars.personnel, d.vars.tanks, d.vars.guns), (0.0, 0.0, 0.0));
+        assert!(sim.journal.iter().any(|e| e.text.contains("поправка пропущена") && e.text.contains("de_a") && e.text.contains("другой стороны")));
     }
 
     #[test]

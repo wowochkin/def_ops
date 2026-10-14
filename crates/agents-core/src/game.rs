@@ -127,6 +127,8 @@ impl Game {
             let proj = &sim.theatre.proj;
             for d in w.divisions.iter_mut() {
                 let Some(s) = st.divisions.get(&d.id) else { continue };
+                // выбывшая (рассеяна, сведена) — факт о численности её не возвращает
+                if matches!(d.state, crate::model::State::Destroyed | crate::model::State::Merged) { continue; }
                 if let Some(p) = s.personnel { d.vars.personnel = p.max(0.0); }
                 if let Some(t) = s.tanks { d.vars.tanks = t.max(0.0); }
                 if let Some(g) = s.guns { d.vars.guns = g.max(0.0); }
@@ -273,5 +275,24 @@ mod tests {
         let e = w.divisions.iter().find(|d| d.id == "de_1").unwrap();
         assert_eq!(e.vars.personnel, 1500.0);
         assert_eq!(w.hqs[e.hq as usize].id, "de_a");
+    }
+
+    #[test]
+    fn takeover_state_skips_out() {
+        // выбывшей дивизии (рассеяна, сведена) факт о численности не возвращает её в строй
+        let (mut sim, meta) = crate::scenario::tests::tiny("takeover-out", None);
+        let i = sim.world.divisions.iter().position(|d| d.id == "su_1").unwrap();
+        sim.world.divisions[i].state = crate::model::State::Destroyed;
+        sim.world.divisions[i].vars.personnel = 0.0;
+        let pos = sim.world.divisions[i].vars.pos;
+        let st: TakeoverIn = serde_json::from_value(serde_json::json!({ "divisions": {
+            "su_1": { "personnel": 4321, "tanks": 3, "pos": [15.0, 52.45], "hq": "su_b" }
+        } })).unwrap();
+        let g = Game::start_free(sim, meta, 2, Side::Su, &[Side::Su], Some(&st));
+        let d = g.sim.world.divisions.iter().find(|d| d.id == "su_1").unwrap();
+        assert_eq!(d.state, crate::model::State::Destroyed);
+        assert_eq!(d.vars.personnel, 0.0);
+        assert!(d.vars.pos.dist(pos) < 1e-9);
+        assert_eq!(g.sim.world.hqs[d.hq as usize].id, "su_a");
     }
 }
