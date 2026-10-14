@@ -61,6 +61,22 @@ export const category = (id: string) => CATEGORIES.find((c) => c.id === id);
 export type Reliability = 'A' | 'B' | 'C';
 export const RELIABILITY: Record<Reliability, string> = { A: 'официальный справочник, исследование', B: 'надёжный вторичный источник', C: 'оценка, черновик — требует проверки' };
 
+/**
+ * Формальная часть факта: вид, о ком, когда, значение. Из неё сборщик «база → модель» берёт входы модели.
+ * subject — id формирования сценария (su_61a, de_9fjd) или объекта театра; даты — ISO (день или момент).
+ * strength — состояние на дату; reinforce — прибавка на дату; parent действует с from; losses — потери за период.
+ */
+export type Claim =
+  | { kind: 'strength'; subject: string; at: string; personnel?: number; tanks?: number; guns?: number }
+  | { kind: 'reinforce'; subject: string; at: string; personnel?: number; tanks?: number; guns?: number }
+  | { kind: 'parent'; subject: string; from: string; parent: string }
+  | { kind: 'enter'; subject: string; at: string }
+  | { kind: 'position'; subject: string; at: string; place?: string; lngLat?: [number, number]; uncertaintyKm?: number }
+  | { kind: 'boundary'; between: [string, string]; from: string; to?: string; points: string[]; inclusive?: string }
+  | { kind: 'crossing'; subject: string; from: string; state: 'open' | 'destroyed' | 'built' }
+  | { kind: 'event'; id: string; at: string; title: string; place?: string }
+  | { kind: 'losses'; subject: string; from: string; to: string; killed?: number; wounded?: number; missing?: number; tanks?: number };
+
 export interface Fact {
   key: string;
   value: string;
@@ -70,6 +86,8 @@ export interface Fact {
   reliability?: Reliability;
   /** Цитата из документа, на которой основан факт (для извлечённых). */
   quote?: string;
+  /** Формальная часть (нет — факт только справка). */
+  claim?: Claim;
 }
 
 export type RelationType = 'part_of' | 'includes' | 'participant' | 'commanded_by' | 'commands' | 'located' | 'opponent' | 'related' | 'source';
