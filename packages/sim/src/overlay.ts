@@ -8,6 +8,7 @@
 import type { LngLat } from '@def-ops/core';
 import { decodeGrid, encodeGrid } from './theatre';
 import { cutAbsent, type NetworkCheck, type WaterCheck } from './overlay-network';
+import { hatchMask, hatchPx } from './overlay-hatch';
 import { TERRAIN_CLASSES, type TerrainClass, type TerrainGrid, type TheatreData } from './types';
 
 type Range = [number, number];
@@ -18,6 +19,11 @@ export interface OverlayLegend {
   pixels: Record<string, LegendRule[]>;
   /** Класс клетки: доля пикселей класса (или суммы классов) не меньше порога. */
   cells: { cls: string; of: string[]; min: number }[];
+  /**
+   * Классы, считаемые по штриховке (болота): чернила — пиксели, подходящие к правилам класса (независимо от порядка
+   * классов), клетке засчитываются пиксели окон, прошедших isHatch, а не отдельные пиксели класса.
+   */
+  hatch?: string[];
 }
 export interface OverlayResult {
   legend: string; name: string; source: string; zoom: number;
@@ -38,13 +44,17 @@ export function hsv(r: number, g: number, b: number): [number, number, number] {
   return [(h * 60 + 360) % 360, mx > 0 ? d / mx : 0, mx / 255];
 }
 const inR = (x: number, r?: Range) => !r || (r[0] <= r[1] ? x >= r[0] && x <= r[1] : x >= r[0] || x <= r[1]);
+const fits = (rules: LegendRule[], h: number, s: number, v: number) => rules.some((x) => inR(h, x.h) && inR(s, x.s) && inR(v, x.v));
 export const pixelClass = (legend: OverlayLegend, names: string[], r: number, g: number, b: number) => {
   const [h, s, v] = hsv(r, g, b);
-  return names.findIndex((n) => legend.pixels[n].some((x) => inR(h, x.h) && inR(s, x.s) && inR(v, x.v)));
+  return names.findIndex((n) => fits(legend.pixels[n], h, s, v));
 };
 
-/** Легенда по образцам цвета, снятым с карты: на каждый образец — окно тона, насыщенности и яркости. */
-export function legendFromSamples(samples: Record<string, [number, number, number][]>, tol = 1, mins: Record<string, number> = {}): OverlayLegend {
+/**
+ * Легенда по образцам цвета, снятым с карты: на каждый образец — окно тона, насыщенности и яркости. hatch — классы,
+ * считаемые по штриховке (в легенду попадают только классы с образцами).
+ */
+export function legendFromSamples(samples: Record<string, [number, number, number][]>, tol = 1, mins: Record<string, number> = {}, hatch: string[] = []): OverlayLegend {
   const pixels: Record<string, LegendRule[]> = {};
   const clamp = (a: number, b: number): Range => [Math.max(0, +a.toFixed(3)), Math.min(1, +b.toFixed(3))];
   for (const [cls, list] of Object.entries(samples)) {
@@ -59,7 +69,26 @@ export function legendFromSamples(samples: Record<string, [number, number, numbe
     });
   }
   const DEF: Record<string, number> = { road: 0.06, highway: 0.06, rail: 0.06, water: 0.3, urban: 0.35, forest: 0.35, marsh: 0.3 };
-  return { id: 'samples', name: 'по образцам цвета', pixels, cells: Object.keys(pixels).map((c) => ({ cls: c, of: [c], min: mins[c] ?? DEF[c] ?? 0.2 })) };
+  const legend: OverlayLegend = { id: 'samples', name: 'по образцам цвета', pixels, cells: Object.keys(pixels).map((c) => ({ cls: c, of: [c], min: mins[c] ?? DEF[c] ?? 0.2 })) };
+  const h = hatch.filter((c) => pixels[c]);
+  if (h.length) legend.hatch = h;
+  return legend;
+}
+
+/** Слить легенды: классы пикселей и клеток — у первой легенды, где они есть; hatch — объединение; id и имя — первой. */
+export function combineLegends(...ls: OverlayLegend[]): OverlayLegend {
+  const pixels: Record<string, LegendRule[]> = {};
+  const cells: OverlayLegend['cells'] = [];
+  const hatch: string[] = [];
+  for (const l of ls) {
+    for (const [k, r] of Object.entries(l.pixels)) if (!(k in pixels)) pixels[k] = r;
+    for (const c of l.cells) if (!cells.some((x) => x.cls === c.cls)) cells.push(c);
+    for (const k of l.hatch ?? []) if (!hatch.includes(k)) hatch.push(k);
+  }
+  const out: OverlayLegend = { id: ls[0]?.id ?? 'combined', name: ls[0]?.name ?? '', pixels, cells };
+  if (ls[0]?.note) out.note = ls[0].note;
+  if (hatch.length) out.hatch = hatch;
+  return out;
 }
 
 const lon2x = (lon: number, z: number) => ((lon + 180) / 360) * 2 ** z;
@@ -118,6 +147,19 @@ export class OverlayAccumulator {
     const cellPx = Math.max(4, (size * Math.abs(lat2y(n, z) - lat2y(n - dLat, z))));
     const minExtent = Math.max(14, Math.round(cellPx * 1.5)), maxWidth = Math.max(4, cellPx * 0.35);
     for (let k = 0; k < this.names.length; k++) if (LINEAR.includes(this.names[k])) dropBlobs(cls, size, k, minExtent, maxWidth);
+    // классы по штриховке: чернила — по правилам класса независимо от порядка (вода того же цвета остаётся водой),
+    // клетке засчитываются пиксели окон-болот, а пиксели класса вне окон — нет
+    const hatched = (this.legend.hatch ?? []).map((nm) => this.names.indexOf(nm)).filter((k) => k >= 0);
+    const hatchWin = hatched.map((k) => {
+      const ink = new Int8Array(size * size), rules = this.legend.pixels[this.names[k]];
+      for (let i = 0; i < size * size; i++) {
+        const o = i * 4;
+        if (rgba[o + 3] < 128) { ink[i] = -2; continue; }
+        const [h, s, v] = hsv(rgba[o], rgba[o + 1], rgba[o + 2]);
+        ink[i] = fits(rules, h, s, v) ? 1 : 0;
+      }
+      return hatchMask(ink, size, hatchPx(y2lat(y + 0.5, z), z), 1);
+    });
     for (let py = 0; py < size; py++) {
       const lat = y2lat(y + (py + 0.5) / size, z);
       const r = Math.floor((n - lat) / dLat);
@@ -131,7 +173,10 @@ export class OverlayAccumulator {
         const cell = r * cols + c;
         this.total[cell]++;
         const k = cls[i];
-        if (k >= 0) { this.counts[k][cell]++; if (preview) { const col = PREVIEW[this.names[k]] ?? [200, 0, 200]; preview[o] = col[0]; preview[o + 1] = col[1]; preview[o + 2] = col[2]; preview[o + 3] = 255; } }
+        let mark = k >= 0 && !hatched.includes(k) ? k : -1;
+        if (mark >= 0) this.counts[k][cell]++;
+        for (let j = 0; j < hatched.length; j++) if (hatchWin[j][i]) { this.counts[hatched[j]][cell]++; if (mark < 0) mark = hatched[j]; }
+        if (mark >= 0 && preview) { const col = PREVIEW[this.names[mark]] ?? [200, 0, 200]; preview[o] = col[0]; preview[o + 1] = col[1]; preview[o + 2] = col[2]; preview[o + 3] = 255; }
       }
     }
   }
@@ -255,7 +300,7 @@ export function thinMask(m: Uint8Array, cols: number, rows: number): number {
   return removed;
 }
 
-export const PREVIEW: Record<string, [number, number, number]> = { urban: [210, 80, 70], built: [210, 80, 70], suburb: [230, 150, 130], dark: [40, 40, 40], road: [240, 140, 40], highway: [200, 40, 40], rail: [60, 60, 60], forest: [60, 140, 70], water: [50, 100, 220], marsh: [120, 180, 170], 'net-present': [70, 70, 70], 'net-absent': [70, 120, 220], 'wnet-present': [20, 120, 150], 'wnet-absent': [200, 40, 170], 'water-gone': [200, 40, 170], 'water-new': [60, 170, 240] };
+export const PREVIEW: Record<string, [number, number, number]> = { urban: [210, 80, 70], built: [210, 80, 70], suburb: [230, 150, 130], dark: [40, 40, 40], road: [240, 140, 40], highway: [200, 40, 40], rail: [60, 60, 60], forest: [60, 140, 70], water: [50, 100, 220], marsh: [120, 180, 170], 'net-present': [70, 70, 70], 'net-absent': [70, 120, 220], 'wnet-present': [20, 120, 150], 'wnet-absent': [200, 40, 170], 'water-gone': [200, 40, 170], 'water-new': [60, 170, 240], 'marsh-present': [70, 130, 120], 'marsh-new': [40, 200, 160], 'marsh-gone': [190, 120, 40] };
 
 export function maskRle(m: Uint8Array): string {
   const out: string[] = [];
