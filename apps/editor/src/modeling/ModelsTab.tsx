@@ -52,7 +52,7 @@ export function ModelsTab({ d, llm, onTune, onCompare }: { d: SimData; llm: Llm;
         <h4>Профили сторон</h4>
         {d.profiles.map((p) => <button key={p.id} className={sel === `profile:${p.id}` ? 'on' : ''} onClick={() => setSel(`profile:${p.id}`)}><b>{p.name}</b><small>{p.id}</small></button>)}
         <h4>Языковые модели</h4>
-        <button className={kind === 'llm' ? 'on' : ''} onClick={() => setSel('llm:roles')}><b>Модели по ролям</b><small>штаб противника, советник, разбор, знания</small></button>
+        <button className={kind === 'llm' ? 'on' : ''} onClick={() => setSel('llm:roles')}><b>Модели по ролям</b><small>штаб противника, советник, разбор, знания, сканы, перекрёстная проверка</small></button>
       </aside>
       <main className="mdl-main">
         {item && origin && <>

@@ -87,7 +87,8 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
         : tab === 'browse' ? <Browse s={scoped} sel={sel} open={open} jump={jump} back={hist.length ? () => { setSel(hist[hist.length - 1]); setHist((h) => h.slice(0, -1)); } : null} llm={llm} />
         : tab === 'coverage' ? <div className="kb-cov">{op && op !== 'general' ? <CoveragePanel op={op} title={ops.find((o) => o.id === op)?.title ?? op} />
           : <GeneralCoverage s={scoped} all={!op} onRubric={(code) => { setJump({ code, n: Date.now() }); setTab('browse'); }} open={open} />}</div>
-        : tab === 'queue' ? <ReviewQueue s={scoped} llm={llm} open={open} filter={qf} setFilter={setQf} />
+        // очередь — кандидаты операции, а сопоставление и выбор соединения — по всей базе (как при разборе документа)
+        : tab === 'queue' ? <ReviewQueue s={{ ...scoped, entries: s.entries }} llm={llm} open={open} filter={qf} setFilter={setQf} />
         : <Docs s={scoped} llm={llm} open={open} op={op && op !== 'general' ? ops.find((o) => o.id === op) ?? null : null} ops={ops} onQueue={toQueue} />}
     </div>
   );

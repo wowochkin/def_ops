@@ -71,6 +71,13 @@ describe('quote и numbers', () => {
     expect(lvl(c, ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
     expect(lvl(c, ctx({ rowExists: false }), 'quote')?.level).toBe('fail');
   });
+  it('таблица «дни в столбцах»: соседние ячейки не склеиваются в разряды', () => {
+    const e: Evidence = { kind: 'row', doc: 'd1', row: 2, cells: { 'Соединение': '2-я гв. танковая армия', '16.04.1945': '310', '17.04.1945': '640', '18.04.1945': '1 120' } };
+    const day = (total: number): Claim => ({ kind: 'losses', subject: 'su_2gta', from: '1945-04-16', to: '1945-04-16', total });
+    expect(lvl(cand(day(310), e, { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
+    expect(lvl(cand(day(640), e, { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
+    expect(lvl(cand(day(1120), e, { origin: 'table' }), ctx({ rowExists: true }), 'numbers')?.level).toBe('ok');
+  });
   it('ручная правка не проходит проверки 1–2', () => {
     const c = cand(losses, { kind: 'manual' }, { origin: 'manual' });
     const r = runChecks(c, ctx());

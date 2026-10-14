@@ -295,8 +295,12 @@ function EvidenceView({ c }: { c: StoredCandidate }) {
       {e.kind === 'quote' && <><small className="muted">цитата, часть {e.chunk + 1}</small><blockquote>«{marked(e.quote)}»</blockquote></>}
       {e.kind === 'scan' && <>
         <small className="muted">страница {e.page} скана</small>
-        {img ? <div className="rq-page"><img src={img.url} alt={`страница ${e.page}`} />
-          {e.box && <i style={{ left: `${e.box[0] * 100}%`, top: `${e.box[1] * 100}%`, width: `${(e.box[2] - e.box[0]) * 100}%`, height: `${(e.box[3] - e.box[1]) * 100}%` }} />}</div>
+        {/* рамка — в долях картинки (внутренний блок во всю её высоту); окно прокручивается к выделенному месту */}
+        {img ? <div className="rq-page"><div className="rq-page-in"><img src={img.url} alt={`страница ${e.page}`} onLoad={(ev) => {
+          const box = ev.currentTarget.parentElement?.querySelector('i'), pane = ev.currentTarget.parentElement?.parentElement;
+          if (box && pane) pane.scrollTop = Math.max(0, box.offsetTop - 40);
+        }} />
+          {e.box && <i style={{ left: `${e.box[0] * 100}%`, top: `${e.box[1] * 100}%`, width: `${(e.box[2] - e.box[0]) * 100}%`, height: `${(e.box[3] - e.box[1]) * 100}%` }} />}</div></div>
           : <p className="muted">картинки страницы нет (документ загружен в другом браузере или удалён)</p>}
         <blockquote>«{marked(e.quote)}»</blockquote>
         {tr && <details><summary>расшифровка страницы</summary><div className="rq-tr">{marked(tr)}</div></details>}
