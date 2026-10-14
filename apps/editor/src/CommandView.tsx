@@ -327,6 +327,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     ...draftList.map((d) => `Приказ: ${unit(d.formation)?.name} — ${TASK_RU[d.task]} — ${d.targetText || 'на месте'}`),
     ...acts.map((a) => `Распоряжение: ${a.label} — ${a.text}`),
   ].filter(Boolean).map((x) => `- ${x}`).join('\n');
+  /** Сколько вариантов просить у советника (общая настройка вкладки «Решение» и советника, запоминается). */
+  const [planN, setPlanNRaw] = useState<number>(() => { try { const n = Number(localStorage.getItem('def_ops.planVariants')); return n >= 1 && n <= 3 ? n : 3; } catch { return 3; } });
+  const setPlanN = (n: number) => { setPlanNRaw(n); try { localStorage.setItem('def_ops.planVariants', String(n)); } catch { /* */ } };
   /** Попросить советника о вариантах решения на ход. */
   const askPlan = (count: number) => {
     if (!view) return;
@@ -427,7 +430,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" checked={focusOnly} onChange={(e) => setFocusOnly(e.target.checked)} /> только он в списках</label><button className="x" title="Снять фокус" onClick={() => setFocus(null)}>×</button></div>}
             {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
             {tab === 'intel' && <Intel v={fv!} onGo={(at) => goTo(at)} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
-            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} onPlan={() => askPlan(3)} planBusy={!!plan && !plan.done} />}
+            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} onPlan={() => askPlan(planN)} planN={planN} setPlanN={setPlanN} stopPlan={() => send({ kind: 'plan-stop' })} planBusy={!!plan && !plan.done} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
                 {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
@@ -510,7 +513,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         dyn={advDyn} focus={focus}
         accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
         drafted={(f) => !!drafts[f]}
-        plan={plan} planStale={!!plan && plan.time !== view.time} askPlan={askPlan} stopPlan={() => send({ kind: 'plan-stop' })} acceptPlan={(v, i) => void acceptPlan(v, i)}
+        plan={plan} planStale={!!plan && plan.time !== view.time} askPlan={askPlan} planN={planN} setPlanN={setPlanN} stopPlan={() => send({ kind: 'plan-stop' })} acceptPlan={(v, i) => void acceptPlan(v, i)}
         takeDecision={(v) => { setDecision({ ...v.decision }); setTab('decision'); setNotice(`Решение из варианта «${v.title}» — во вкладке «Решение»; приказы не менялись.`); }}
         takeAct={(a) => { if (a.action) void addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {}).then((ok) => ok && setNotice(`В распоряжение: ${a.label} — ${a.text}`)); }}
         hasAct={(k) => acts.some((a) => a.key === k)} stop={() => send({ kind: 'advise-stop' })} />}
@@ -738,13 +741,12 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus, stop, plan, planStale, askPlan, stopPlan, acceptPlan, takeDecision, takeAct, hasAct }: {
+function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus, stop, plan, planStale, askPlan, planN, setPlanN, stopPlan, acceptPlan, takeDecision, takeAct, hasAct }: {
   llm: Llm; msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
   onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn; focus: Sector | null;
-  plan: PlanState | null; planStale: boolean; askPlan: (count: number) => void; stopPlan: () => void; acceptPlan: (v: PlanVariantView, i: number) => void;
+  plan: PlanState | null; planStale: boolean; askPlan: (count: number) => void; planN: number; setPlanN: (n: number) => void; stopPlan: () => void; acceptPlan: (v: PlanVariantView, i: number) => void;
   takeDecision: (v: PlanVariantView) => void; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean; stop: () => void;
 }) {
-  const [planN, setPlanN] = useState(3);
   /** Путь по дереву: индексы узлов (пусто — категории). */
   const [path, setPath] = useState<AdviceNode[]>([]);
   const [find, setFind] = useState('');
@@ -910,7 +912,7 @@ export function decisionMissing(d: HumanDecision): string[] {
 }
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
-function Decision({ v, d, set, onPlan, planBusy }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; onPlan: () => void; planBusy: boolean }) {
+function Decision({ v, d, set, onPlan, planN, setPlanN, stopPlan, planBusy }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; onPlan: () => void; planN: number; setPlanN: (n: number) => void; stopPlan: () => void; planBusy: boolean }) {
   const last = v.lastDecision;
   const draftReport = () => {
     const active = v.own.filter((u) => u.status === 'active');
@@ -932,8 +934,11 @@ function Decision({ v, d, set, onPlan, planBusy }: { v: TurnView; d: HumanDecisi
   return (
     <div className="cmd-sec">
       <h3>Решение на {ddmm(v.time)} {hhmm(v.time)}</h3>
-      <div className="plan-cta"><span>Не знаете, с чего начать? Советник предложит три полных варианта — решение, приказы, тыл, переправы, резервы; выберите, примите и поправьте.</span>
-        <button className="primary" disabled={planBusy} onClick={onPlan}>{planBusy ? <><i className="spinner" /> готовит…</> : 'Варианты от советника'}</button></div>
+      <div className="plan-cta"><span>Не знаете, с чего начать? Советник предложит полные варианты — решение, приказы, тыл, переправы, резервы; выберите, примите и поправьте. Сколько вариантов — выберите рядом (один готовится быстрее).</span>
+        <div className="plan-cta-act">
+          <select value={planN} disabled={planBusy} onChange={(e) => setPlanN(+e.target.value)} title="Сколько вариантов просить (запоминается)">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
+          {planBusy ? <button onClick={stopPlan}><i className="spinner" /> Стоп</button> : <button className="primary" onClick={onPlan}>Варианты от советника</button>}
+        </div></div>
       <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их; оценку обстановки и донесение пишут заново на каждый ход (обстановка изменилась), прошлые можно взять кнопкой и поправить. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
       {F({ k: 'enemyIntent', label: 'Замысел противника', hint: 'Что противник, по-видимому, намерен делать: где держит, куда отходит, где готовит контрудар…', rows: 3 })}
