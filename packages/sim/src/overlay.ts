@@ -339,6 +339,12 @@ export interface OverlayApply {
    * (маска water-new) — водой.
    */
   waterNet?: boolean;
+  /**
+   * Убрать болота, которых нет на карте (маска marsh-gone): клетка растра «болото» становится открытой местностью или
+   * лесом — самым частым среди соседей (до 3 клеток), иначе открытой. Болото только из OSM в растре не болото — его
+   * нечего снимать. По умолчанию выключено.
+   */
+  marshGone?: boolean;
   /** Только внутри рамки (поля листа с легендой не трогать). */
   clip?: [number, number, number, number];
 }
@@ -380,10 +386,13 @@ export function applyOverlay(T: TheatreData, ov: OverlayResult, o: OverlayApply)
     const i = r * g.cols + c;
     if (k) {
       const before = k[i];
-      const set = ([['water', o.water], ['urban', o.urban], ['forest', o.forest], ['marsh', o.marsh]] as [TerrainClass, string | undefined][]).find(([, m]) => on1(m, j));
-      if (set && !(set[0] !== 'water' && k[i] === I('water'))) k[i] = I(set[0]);
+      // порядок: вода, застройка, болото, лес (болото в лесу — болото); болото карты не ложится на воду и застройку
+      const set = ([['water', o.water], ['urban', o.urban], ['marsh', o.marsh], ['forest', o.forest]] as [TerrainClass, string | undefined][]).find(([, m]) => on1(m, j));
+      const blocked = !!set && ((set[0] !== 'water' && k[i] === I('water')) || (set[0] === 'marsh' && k[i] === I('urban')));
+      if (set && !blocked) k[i] = I(set[0]);
       else if (o.waterNet && on1('water-new', j)) k[i] = I('water');
-      else if (o.waterNet && on1('water-gone', j) && k[i] === I('water')) k[i] = landAround(k, g.cols, g.rows, i, I('water'));
+      else if (o.waterNet && on1('water-gone', j) && k[i] === I('water')) k[i] = landAround(k, g.cols, g.rows, i, [I('water')]);
+      else if (o.marshGone && on1('marsh-gone', j) && k[i] === I('marsh')) k[i] = landAround(k, g.cols, g.rows, i, [I('water'), I('marsh')], [I('open'), I('forest')]);
       else if (!set && o.demoteModernUrban && k[i] === I('urban') && !on1(o.keepUrban, j)) k[i] = I(o.demoteModernUrban);
       if (k[i] !== before) { const key = `${TERRAIN_CLASSES[before]}→${TERRAIN_CLASSES[k[i]]}`; changes[key] = (changes[key] ?? 0) + 1; }
     }
@@ -440,15 +449,18 @@ export function applyOverlay(T: TheatreData, ov: OverlayResult, o: OverlayApply)
   return { theatre, changes };
 }
 
-/** Класс суши для клетки бывшей воды: самый частый среди соседей (не вода), иначе открытая местность. */
-function landAround(k: Uint8Array | number[], cols: number, rows: number, i: number, water: number): number {
+/**
+ * Класс суши для снятой клетки (бывшей воды или болота): самый частый среди соседей в радиусе до 3 клеток — кроме
+ * классов skip и, если задан only, только из only; иначе открытая местность.
+ */
+function landAround(k: Uint8Array | number[], cols: number, rows: number, i: number, skip: number[], only?: number[]): number {
   const c = i % cols, r = (i - c) / cols, count = new Map<number, number>();
   for (let rad = 1; rad <= 3 && !count.size; rad++)
     for (let dr = -rad; dr <= rad; dr++) for (let dc = -rad; dc <= rad; dc++) {
       const cc = c + dc, rr = r + dr;
       if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
       const v = k[rr * cols + cc];
-      if (v !== water) count.set(v, (count.get(v) ?? 0) + 1);
+      if (!skip.includes(v) && (!only || only.includes(v))) count.set(v, (count.get(v) ?? 0) + 1);
     }
   return count.size ? [...count].sort((a, b) => b[1] - a[1])[0][0] : TERRAIN_CLASSES.indexOf('open');
 }

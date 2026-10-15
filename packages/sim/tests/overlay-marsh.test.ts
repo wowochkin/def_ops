@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
-import { OverlayAccumulator, TERRAIN_CLASSES, WetlandLearner, colorBin, decodeMask, encodeGrid, inWetland, maskRle, mergeMarsh, modernMarsh, osmNetworkQuery, osmToRivers, osmToRoads, osmToWetlands, overlayGrid, tileXY, tilesFor, type OsmJson, type TheatreData } from '../src';
+import { OverlayAccumulator, TERRAIN_CLASSES, TERRAIN_CODES, Theatre, WetlandLearner, applyOverlay, colorBin, decodeGrid, decodeMask, encodeGrid, inWetland, maskRle, mergeMarsh, modernMarsh, osmNetworkQuery, osmToRivers, osmToRoads, osmToWetlands, overlayGrid, tileXY, tilesFor, type OsmJson, type OverlayResult, type TheatreData } from '../src';
+import { loadTheatre } from '../src/data';
 
 const box: [number, number, number, number] = [13.6, 52.3, 14.4, 52.7];
 const ll = (lon: number, lat: number) => ({ lon, lat });
@@ -216,5 +217,116 @@ describe('правка 1: ответ Overpass, растеризация, цве�
     const s = mergeMarsh(ov, T, [], { source: 'samples', colors: [], windows: { inside: 0, outside: 0 } });
     expect(s.marsh!.areas.gone).toBe(1);
     expect(s.marsh!.unknown).toBeUndefined();
+  });
+});
+
+describe('запись болот в местность театра', () => {
+  const O = (code: string) => TERRAIN_CLASSES.indexOf(TERRAIN_CODES[code]);
+  const codes = (s: string) => [...s].map(O);
+  /** Театр-растр и поправка на той же сетке; маски — списки номеров клеток. */
+  function setup(cs: number, rs: number, cells: string, ms: Record<string, number[]>) {
+    const bb: [number, number, number, number] = [13, 52, 13 + cs * 0.01, 52 + rs * 0.01];
+    const T = { id: 't', name: 't', bbox: bb, cellKm: 1, roads: [], rivers: [], terrainGrid: { bbox: bb, cols: cs, rows: rs, rle: encodeGrid(codes(cells)) } } as unknown as TheatreData;
+    const m = (ix: number[]) => { const a = new Uint8Array(cs * rs); for (const i of ix) a[i] = 1; return maskRle(a); };
+    const ov: OverlayResult = { legend: 'l', name: 'n', source: 's', zoom: 12, bbox: bb, cols: cs, rows: rs, covered: maskRle(new Uint8Array(cs * rs).fill(1)), masks: Object.fromEntries(Object.entries(ms).map(([k, v]) => [k, m(v)])), stats: {} };
+    return { T, ov, bb };
+  }
+  const cls = (t: TheatreData) => [...decodeGrid(t.terrainGrid!)].map((v) => Object.entries(TERRAIN_CODES).find(([, c]) => c === TERRAIN_CLASSES[v])![0]).join('');
+  const { T, ov } = setup(6, 3, 'ofuwmm' + 'oooomm' + 'ooofmm', { marsh: [0, 1, 2, 3], forest: [1], 'marsh-gone': [4, 5, 10, 11, 16, 17] });
+
+  it('запись с приоритетом: вода и застройка не перезаписываются, лес — да; без флажка болота не снимаются', () => {
+    const { theatre, changes } = applyOverlay(T, ov, { marsh: 'marsh', forest: 'forest' });
+    expect(cls(theatre).slice(0, 6)).toBe('mmuwmm');
+    expect(changes).toEqual({ 'open→marsh': 1, 'forest→marsh': 1 });
+    expect(Object.keys(changes).some((k) => k.startsWith('marsh→'))).toBe(false);
+  });
+  it('флажок «убрать»: болота, которых нет на карте, — открытая или лес по соседям', () => {
+    const { theatre, changes } = applyOverlay(T, ov, { marsh: 'marsh', forest: 'forest', marshGone: true });
+    const s = cls(theatre);
+    for (const r of [0, 1, 2]) for (const c of [4, 5]) expect('of').toContain(s[r * 6 + c]);
+    expect(s[4]).toBe('o');
+    expect(changes['marsh→open'] + (changes['marsh→forest'] ?? 0)).toBe(6);
+  });
+  it('сплошной массив болот: соседи — тоже болото → открытая; за рамкой не меняется', () => {
+    const all = Array.from({ length: 81 }, (_, i) => i);
+    const { T, ov, bb } = setup(9, 9, 'm'.repeat(81), { 'marsh-gone': all });
+    const r1 = applyOverlay(T, ov, { marshGone: true });
+    expect(cls(r1.theatre)).toBe('o'.repeat(81));
+    expect(r1.changes).toEqual({ 'marsh→open': 81 });
+    const r2 = applyOverlay(T, ov, { marshGone: true, clip: [bb[0] + 0.01, bb[1], bb[2], bb[3]] });
+    const s = cls(r2.theatre);
+    for (let r = 0; r < 9; r++) {
+      expect(s[r * 9]).toBe('m');
+      expect(s.slice(r * 9 + 1, r * 9 + 9)).toBe('o'.repeat(8));
+    }
+    expect(r2.changes).toEqual({ 'marsh→open': 72 });
+    expect(applyOverlay(T, ov, {}).changes).toEqual({});
+  });
+});
+
+describe('сквозной прогон: болота карты у Кюстрина → местность театра', () => {
+  const data = loadTheatre('oder-berlin-1945');
+  const area: [number, number, number, number] = [14.60, 52.50, 14.85, 52.62];
+  const z = 13;
+  const A: [number, number, number, number] = [14.655, 52.535, 14.805, 52.59]; // болота растра у Кюстрина
+  const B: [number, number, number, number] = [14.60, 52.50, 14.64, 52.52]; // болот растра нет
+  const C: [number, number, number, number] = [14.82, 52.50, 14.85, 52.52]; // заливка тем же цветом
+  const osm = [{ outer: [[14.61, 52.60], [14.64, 52.60], [14.64, 52.615], [14.61, 52.615], [14.61, 52.60]] as LngLat[], holes: [] }];
+  const inB = (lon: number, lat: number, b: number[]) => lon >= b[0] && lon <= b[2] && lat >= b[1] && lat <= b[3];
+  const tiles = new Map<string, Uint8ClampedArray>();
+  const get = (tx: number, ty: number) => {
+    const key = `${tx},${ty}`;
+    if (tiles.has(key)) return tiles.get(key)!;
+    const img = new Uint8ClampedArray(256 * 256 * 4);
+    for (let py = 0; py < 256; py++) for (let px = 0; px < 256; px++) {
+      const gx = tx * 256 + px, gy = ty * 256 + py;
+      const lon = tileXY.x2lon((gx + 0.5) / 256, z), lat = tileXY.y2lat((gy + 0.5) / 256, z);
+      let c = [242, 234, 210];
+      if (inB(lon, lat, C)) c = BLUE;
+      if (hatch(gx, gy) && (inB(lon, lat, A) || inB(lon, lat, B))) c = BLUE;
+      img.set([...c, 255], (py * 256 + px) * 4);
+    }
+    tiles.set(key, img);
+    return img;
+  };
+  const grid = overlayGrid(data, area);
+  const W = new WetlandLearner(data, osm, grid, z);
+  for (const t of W.tileList()) W.addTile(get(t.x, t.y), 256, t.x, t.y);
+  const acc = new OverlayAccumulator(W.legend(), grid);
+  for (const t of tilesFor(grid.bbox, z)) acc.addTile(get(t.x, t.y), 256, t.x, t.y, z);
+  const ov = W.mergeMarsh(acc.result({ source: 'синтетика', zoom: z }));
+  const N = grid.cols * grid.rows, mask = (k: string) => decodeMask(ov.masks[k], N);
+  const [gw, , ge, gn] = grid.bbox, gs = grid.bbox[1];
+  const cellsIn = (b: number[]) => {
+    const out: number[] = [];
+    for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
+      const lon = gw + ((c + 0.5) / grid.cols) * (ge - gw), lat = gn - ((r + 0.5) / grid.rows) * (gn - gs);
+      if (inB(lon, lat, b)) out.push(r * grid.cols + c);
+    }
+    return out;
+  };
+  const modern = modernMarsh(data, [], grid).marsh;
+
+  it('цвет узнан; на карте и сейчас, только на карте, только сейчас', () => {
+    expect(W.colors().map((c) => c.bin)).toContain(colorBin(40, 90, 170));
+    const inA = cellsIn(A).filter((i) => modern[i]);
+    expect(inA.length).toBeGreaterThan(10);
+    const present = mask('marsh-present');
+    expect(inA.filter((i) => present[i]).length).toBeGreaterThanOrEqual(0.7 * inA.length);
+    const fresh = mask('marsh-new');
+    expect(cellsIn(B).filter((i) => fresh[i]).length).toBeGreaterThan(0);
+    const gone = mask('marsh-gone'), poly = cellsIn([14.61, 52.60, 14.64, 52.615]);
+    expect(poly.length).toBeGreaterThan(0);
+    for (const i of poly) expect(gone[i]).toBe(1);
+  });
+  it('запись: болото поверх открытой, не поверх воды и застройки; «убрать» не трогает болото только из OSM', () => {
+    const r1 = applyOverlay(data, ov, { marsh: 'marsh' });
+    expect(r1.changes['open→marsh']).toBeGreaterThan(0);
+    expect(r1.changes['water→marsh']).toBeUndefined();
+    expect(r1.changes['urban→marsh']).toBeUndefined();
+    expect(() => new Theatre(r1.theatre)).not.toThrow();
+    const r2 = applyOverlay(data, ov, { marsh: 'marsh', marshGone: true });
+    expect(Object.keys(r2.changes).filter((k) => k.startsWith('marsh→'))).toEqual([]);
+    expect(() => new Theatre(r2.theatre)).not.toThrow();
   });
 });
