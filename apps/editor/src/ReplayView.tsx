@@ -29,7 +29,7 @@ import { agentHqCard, formationCard } from './formation-card';
 import { FormationPanel, useEsc } from './FormationCard';
 
 import { AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentVariant } from './sim/agent-scenarios';
-import { coreEditsFor, takeoverNow } from './sim/kb-recompile';
+import { coreEditsFor, kbSettled, takeoverNow } from './sim/kb-recompile';
 import type { TakeoverSummary } from './sim/takeover-state';
 /** Ход игры на агентной модели, ч. */
 const AGENT_GAME_HOURS = 12;
@@ -215,6 +215,11 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   };
   const run = () => {
     const token = ++runId.current;
+    // данные операции — после сборки из базы знаний (при запуске она идёт несколько секунд): иначе тот же seed даст другой итог
+    setBusy('сборка данных из базы знаний…'); setError(null);
+    void kbSettled().then(() => { if (token === runId.current) calc(token); });
+  };
+  const calc = (token: number) => {
     const q: SimRequest = { scenario, rules, seed, runs, toleranceKm: entry.toleranceKm };
     if (!useAgents) { startWorker(q); return; }
     // агентная модель: ход по часам считает ядро приложения, карту — фоновый поток, как у нынешней модели

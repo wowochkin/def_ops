@@ -89,6 +89,16 @@ export async function recompileAll(): Promise<number> {
 }
 
 let watching = false;
+/** Сборка запланирована или идёт; ждущие её окончания (kbSettled). */
+let pending = false;
+let waiters: (() => void)[] = [];
+const settle = () => { pending = false; const w = waiters; waiters = []; for (const f of w) f(); };
+/**
+ * Сборка из базы закончена (не запланирована и не идёт): расчёт, начатый раньше, прочёл бы данные операции без
+ * поправок базы (при первом запуске) или с прежними — и тот же seed дал бы другой итог.
+ */
+export const kbSettled = (): Promise<void> => (pending ? new Promise((res) => waiters.push(res)) : Promise.resolve());
+
 /** Подписка (один раз, из окна редактора): изменения базы — пересборка всех операций через 1 с; и при запуске. */
 export function watchKb() {
   if (watching || typeof window === 'undefined') return;
@@ -96,6 +106,7 @@ export function watchKb() {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let running = false, again = false;
   const run = async () => {
+    timer = undefined;
     if (running) { again = true; return; }
     running = true;
     try {
@@ -105,10 +116,11 @@ export function watchKb() {
       if (await recompileAll()) (await import('../modeling/data')).resetPool();
     } finally {
       running = false;
-      if (again) { again = false; schedule(); }
+      // новое изменение базы во время сборки — ещё одна сборка; до неё расчёт ждёт
+      if (again) { again = false; schedule(); } else if (timer === undefined) settle();
     }
   };
-  const schedule = () => { clearTimeout(timer); timer = setTimeout(() => void run(), 1000); };
+  const schedule = () => { pending = true; clearTimeout(timer); timer = setTimeout(() => void run(), 1000); };
   window.addEventListener('def_ops.kb-changed', schedule);
   // база могла измениться и без события: новая сборка приложения (сид), правки в другом окне
   schedule();
