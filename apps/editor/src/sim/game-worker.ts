@@ -14,8 +14,9 @@ import {
   activeBoundaries, commandTerms, groupOf, runToDocument, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { stavkaNeed, stavkaTurn, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig, type UmpireRef } from '@def-ops/staff-service/live';
-import { category, gather, Index, type Entry } from '@def-ops/knowledge';
+import { stavkaNeed, stavkaTurn, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
+import type { Entry } from '@def-ops/knowledge';
+import { KB_REF_TIMEOUT_MS, kbRefClient, seedAnswer, umpireRefs } from './kb-ref';
 import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
 import { LlmClient } from '@def-ops/staff-service/llm';
@@ -114,7 +115,8 @@ const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16
 self.onmessage = async (e: MessageEvent<GameRequest>) => {
   const m = e.data;
   try {
-    if (m.kind === 'agents-reply') { const c = calls.get(m.id); calls.delete(m.id); if (c) { if (m.ok) c.res(m.result); else c.rej(new Error(m.error ?? 'ошибка ядра агентной модели')); } }
+    if (m.kind === 'kbRefResult') kbc.receive(m);
+    else if (m.kind === 'agents-reply') { const c = calls.get(m.id); calls.delete(m.id); if (c) { if (m.ok) c.res(m.result); else c.rej(new Error(m.error ?? 'ошибка ядра агентной модели')); } }
     else if (m.kind === 'start') await start(m.start, m.record, m.llm, m.enemy);
     else if (m.kind === 'turn') { queued = { orders: m.orders, actions: m.actions, decision: m.decision }; await advance(); }
     else if (m.kind === 'check') post({ kind: 'check', id: m.id, result: checkAction(ctx, g.state, { ...m.action, issuedAt: g.state.time }, m.pendingBridges) });
@@ -443,9 +445,11 @@ async function advance() {
     const orders = [...humanOrders, ...aiOrders];
     // посредник: нюансы к ожидаемым боям (по справкам из базы знаний); ошибка модели — ход без поправок
     let ump: Awaited<ReturnType<typeof umpireTurn>> | null = null;
+    let kbFallback = false;
     if (llm.umpire && !agents) {
       post({ kind: 'progress', text: 'посредник оценивает ожидаемые бои…' });
-      ump = await exclusive('посредник', () => umpireTurn(llmClient(), ctx, g.state, umpireRefs, { system: umpireSystemTpl, user: umpireUserTpl }, { thinking: 'off' }));
+      const refsFor = umpireRefs(kbc, rec.scenario, () => { kbFallback = true; });
+      ump = await exclusive('посредник', () => umpireTurn(llmClient(), ctx, g.state, refsFor, { system: umpireSystemTpl, user: umpireUserTpl }, { thinking: 'off' }));
     }
     // Ставка: разграничительные линии между фронтами — если есть повод (обстановка разошлась с историей, войска в
     // полосе соседа, ходатайство); директивы — распоряжения хода, ответ — в журнал
@@ -476,6 +480,7 @@ async function advance() {
       g = r;
       journal.push(day(before.time, orders, before, r.results, queued.decision, stavka.filter((x) => x.side === rec.human)));
     }
+    if (kbFallback) journal[journal.length - 1].events.push(KB_FALLBACK_NOTE);
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
     queued = null;
     postView();
@@ -543,19 +548,15 @@ async function reviewSection(m: Extract<GameRequest, { kind: 'review-section' }>
   }
 }
 
-/** Справки посреднику: начальное наполнение базы знаний (доктрина, нормативы, техника — без хода боёв). */
-let kbIndex: Promise<{ index: Index; byId: Map<string, Entry> }> | null = null;
-async function umpireRefs(queries: string[]): Promise<UmpireRef[]> {
-  kbIndex ??= import('../../../../packages/knowledge/data/seed.json').then((m) => {
-    const entries = (m.default as unknown as { entries: Entry[] }).entries;
-    return { index: new Index(entries), byId: new Map(entries.map((e) => [e.id, e])) };
-  });
-  const { index, byId } = await kbIndex;
-  const out = new Map<string, UmpireRef>();
-  for (const q of queries) for (const s of gather(index, byId, q, { limit: 3, pool: 400, filter: (e) => !!e && e.group !== 'model' && e.category !== 'sources' && !!category(e.category)?.gameSafe }))
-    if (!out.has(s.ref)) out.set(s.ref, { id: s.ref, title: s.title, text: s.text.slice(0, 900) });
-  return [...out.values()];
-}
+/**
+ * Справка из базы знаний: просит окно (слой пользователя, закрепления, смысловой поиск), ждёт до 8 с; иначе — по
+ * встроенному сиду (без слоя пользователя).
+ */
+let seedEntries: Promise<Entry[]> | null = null;
+const seedKb = () => (seedEntries ??= import('../../../../packages/knowledge/data/seed.json').then((m) => (m.default as unknown as { entries: Entry[] }).entries));
+const kbc = kbRefClient(post, async (req) => seedAnswer(await seedKb(), req));
+/** Заметка в события хода: справка посчитана по сиду. */
+const KB_FALLBACK_NOTE = `Справка из базы знаний без слоя пользователя: окно не ответило за ${KB_REF_TIMEOUT_MS / 1000} с`;
 
 /** Решение модели для записи игры: без длинного размышления. */
 const slim = (t: AiTurn): AiTurn => ({ ...t, reasoningTail: t.reasoningTail?.slice(-1500) });

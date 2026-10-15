@@ -5,7 +5,8 @@
  */
 import { stripMeta } from '../markdown';
 import {
-  chunkText, gameReference, gather, hybridHits, Index, type Hit, qaMessages,
+  chunkText, doctrineFor, gather, hybridHits, Index, type Hit, qaMessages, roleReference,
+  type DoctrineClaim, type DoctrineRule, type DoctrineTrigger, type RoleRef, type RoleScope,
   type Entry, type Fact, type BoundaryProposal, type InfraProposal, type KbDocument, type OperationHint, type Pins, type PositionProposal, type Proposal, type Reliability, type Source, type TableMapping,
 } from '@def-ops/knowledge';
 import { LlmClient } from '@def-ops/staff-service/llm';
@@ -373,12 +374,22 @@ export function searchMode(): string {
   return `поиск: только по словам — ${why}`;
 }
 
-/** Справка из базы для советника в игре: доктрина, техника, местность, источники; ход боёв — только в вопросах истории. */
-export async function reference(query: string, historyAllowed: boolean, operation?: string): Promise<string> {
-  try { await load(); } catch { return ''; }
-  if (!state.index) return '';
-  // справка отбирается фильтром (доктрина, техника) — нужна широкая выдача
-  return gameReference(state.index, state.byId, query, historyAllowed, 5, await search(query, 300).catch(() => undefined), operation);
+/**
+ * Справка по роли (советник, посредник, штаб противника, Ставка, разбор): по каждому запросу — гибридная выдача
+ * (слова + смысл, широкий пул — справка отбирается фильтром роли), всего не больше limit записей по chars знаков.
+ * База недоступна — пустая справка.
+ */
+export async function roleRef(queries: string[], scope: RoleScope, o: { limit?: number; chars?: number } = {}): Promise<{ refs: RoleRef[]; text: string }> {
+  try { await load(); } catch { return { refs: [], text: '' }; }
+  if (!state.index) return { refs: [], text: '' };
+  const hits = await Promise.all(queries.map((q) => search(q, 300).catch(() => undefined)));
+  return roleReference(state.index, state.byId, queries, scope, { limit: o.limit ?? 5, chars: o.chars ?? 700, hits });
+}
+
+/** Доктрина стороны к обстановке — по всей базе (сид и слой пользователя) с закреплениями. */
+export async function doctrine(side: 'su' | 'de', triggers: DoctrineTrigger[], query: string, levels?: DoctrineClaim['level'][]): Promise<{ rules: DoctrineRule[]; text: string }> {
+  await load();
+  return doctrineFor(state.entries, await getPins(), side, triggers, query, levels ? { levels } : {});
 }
 
 /**

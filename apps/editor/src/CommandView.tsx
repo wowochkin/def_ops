@@ -24,6 +24,7 @@ import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
+import type { RoleScope } from '@def-ops/knowledge';
 import { ModelPicker } from './ModelPicker';
 import { ReviewView } from './ReviewView';
 import { mdToHtml } from './markdown';
@@ -47,6 +48,10 @@ const dayLong = (t: string) => { const d = new Date(toMs(t)); return `${d.getUTC
 const pct = (x: number) => `${Math.round(x * 100)} %`;
 const num = (x: number) => x.toFixed(1).replace('.', ',');
 const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+/** Справка советнику: операция игры, сторона игрока (пометка «своя сторона»/«противник»), история — только в вопросах истории. */
+const advisorScope = (v: TurnView, history: boolean): RoleScope => ({
+  role: 'advisor', operation: v.scenario, history, ...(v.human.id === 'su' || v.human.id === 'de' ? { side: v.human.id } : {}),
+});
 
 interface Draft { formation: string; task: Task; target: Target; targetText: string; at: LngLat | null; note: string }
 type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire';
@@ -172,6 +177,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         void import('@tauri-apps/api/core').then(({ invoke }) => invoke(m.cmd, m.args))
           .then((result) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: true, result } satisfies GameRequest))
           .catch((err) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: false, error: String((err as Error)?.message ?? err) } satisfies GameRequest));
+      } else if (m.kind === 'kbRef') {
+        // справка по роли из базы окна (слой пользователя, закрепления, смысловой поиск); ошибка — поток считает по сиду
+        const q = m.req;
+        void Promise.all([kb.roleRef(q.queries, q.scope, { limit: q.limit, chars: q.chars }), q.doctrine ? kb.doctrine(q.doctrine.side, q.doctrine.triggers, q.doctrine.query, q.doctrine.levels) : undefined])
+          .then(([r, d]) => w.postMessage({ kind: 'kbRefResult', id: m.id, ok: true, answer: { ...r, ...(d ? { doctrine: d } : {}) } } satisfies GameRequest))
+          .catch((err) => w.postMessage({ kind: 'kbRefResult', id: m.id, ok: false, error: String((err as Error)?.message ?? err) } satisfies GameRequest));
       } else if (m.kind === 'record') {
         setRecord(m.record);
         try { localStorage.setItem(SAVE_KEY, JSON.stringify({ record: m.record, enemy: enemyRef.current, title: titleRef.current, turn: m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover } satisfies SavedGame)); } catch { /* */ }
@@ -375,7 +386,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setPlan({ id, time: view.time, count, variants: [], progress: 'подготовка…', done: false });
     setAdvOpen(true); setAdvMin(false);
     const draft = draftText();
-    void kb.reference(`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`, false, view.scenario).then((reference) => send({ kind: 'plan', id, count, draft, reference }));
+    void kb.roleRef([`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`], advisorScope(view, false)).then((r) => send({ kind: 'plan', id, count, draft, reference: r.text }));
   };
   const planDraft = (o: PlanVariantView['orders'][number]): Draft => ({ formation: o.formation, task: o.task, target: o.target, targetText: o.targetText, at: o.at, note: o.why });
   /** Принять вариант в проект целиком: решение, приказы, распоряжения (текущий проект заменяется). */
@@ -551,7 +562,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
           setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
           const draft = draftText();
-          void kb.reference(`${topic} ${q}`, cat === 'history', view.scenario).then((reference) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference }));
+          void kb.roleRef([`${topic} ${q}`], advisorScope(view, cat === 'history')).then((r) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference: r.text }));
         }}
         dyn={advDyn} focus={focus}
         accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}

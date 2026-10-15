@@ -2,6 +2,7 @@ import type { CommandTerms } from '@def-ops/sim';
 import type { LngLat, MapDocument } from '@def-ops/core';
 import type { ActionCheck, AgentGameSpec, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
+import type { KbRefAnswer, KbRefRequest } from './kb-ref';
 
 export type Thinking = 'off' | 'low' | 'medium' | 'high';
 
@@ -77,7 +78,9 @@ export type GameRequest =
   /** Посредник: показать на карте всех (без тумана войны). */
   | { kind: 'reveal'; on: boolean }
   /** Ответ основного окна на вызов ядра агентной модели. */
-  | { kind: 'agents-reply'; id: number; ok: boolean; result?: unknown; error?: string };
+  | { kind: 'agents-reply'; id: number; ok: boolean; result?: unknown; error?: string }
+  /** Справка из базы знаний окна (ответ на kbRef); ошибка — ok: false, поток считает по сиду. */
+  | { kind: 'kbRefResult'; id: number; ok: boolean; answer?: KbRefAnswer; error?: string };
 
 export interface Place { id: string; title: string; at: LngLat }
 
@@ -198,7 +201,9 @@ export type GameResponse =
   | { kind: 'plan-done'; id: number; ok: boolean; error?: string; warning?: string; model?: string; seconds?: number }
   | { kind: 'error'; message: string }
   /** Вызов команды ядра агентной модели (Tauri) — поток сам её вызвать не может, вызывает основное окно. */
-  | { kind: 'agents-call'; id: number; cmd: string; args: Record<string, unknown> };
+  | { kind: 'agents-call'; id: number; cmd: string; args: Record<string, unknown> }
+  /** Справка по роли (и доктрина) из базы знаний окна — со слоем пользователя, закреплениями, смысловым поиском. */
+  | { kind: 'kbRef'; id: number; req: KbRefRequest };
 
 /** Ответ советника для интерфейса: текст, предложенные приказы (готовые к включению в распоряжение), следующие вопросы. */
 export interface AdviceView {

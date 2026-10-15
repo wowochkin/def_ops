@@ -5,13 +5,15 @@
  * подготовленная оборона, укрепления, усталость, снабжение уже посчитаны им. Поправки записываются в игру
  * (переигровка точна) и видны в журнале боя.
  *
- * Модуль не зависит от базы знаний: справки (refs) подбирает вызывающий — по запросам umpireQueries.
+ * Справки (refs) подбирает вызывающий — по запросам umpireQueries на момент хода (справка роли «посредник»: без хода
+ * операции и без будущего).
  */
 import { describePlace, onMap, POSTURE_RU, TASK_RU, UMPIRE_FACTORS, UMPIRE_FACTOR_RU, UMPIRE_LIMITS, type Formation, type SimContext, type SimState, type UmpireFactor, type UmpireMod } from '@def-ops/sim';
 import { fill } from '../fill';
 import type { LlmClient } from '../llm/client';
 import type { Thinking } from '../llm/config';
 import { momentRu } from './situation';
+import type { RoleRef } from '@def-ops/knowledge';
 
 export interface Engagement {
   n: number;
@@ -22,7 +24,8 @@ export interface Engagement {
   fort: number;
   river: string | null;
 }
-export interface UmpireRef { id: string; title: string; text: string }
+/** Справка посреднику — справка роли из базы знаний. */
+export type UmpireRef = RoleRef;
 
 const TERRAIN_RU: Record<string, string> = { open: 'открытая местность', forest: 'лес', marsh: 'болото', urban: 'город', hills: 'высоты', water: 'вода' };
 const ATTACK_TASKS = new Set(['attack', 'counterattack', 'breakout']);
@@ -54,18 +57,20 @@ export function predictEngagements(ctx: SimContext, s: SimState, limit = 10): En
   });
 }
 
-/** Запросы к базе знаний по условиям боёв (для справок посреднику). */
+/** Запросы к базе знаний по условиям боёв (для справок посреднику): шаблоны по условиям и группы доктрины по бою. */
 export function umpireQueries(es: Engagement[]): string[] {
   const q = new Set<string>();
   for (const e of es) {
     const tanks = [...e.attackers, ...e.defenders].reduce((x, f) => x + f.tanks, 0);
     if (e.terrain === 'urban') q.add('бой в городе штурмовые группы танки фаустпатрон уличный бой');
-    if (e.fort) q.add('прорыв укреплённой полосы обороны артподготовка темп');
+    if (e.fort) { q.add('прорыв укреплённой полосы обороны артподготовка темп'); q.add('доктрина построение обороны первая позиция отвод'); }
     if (e.river) q.add('форсирование реки переправа мост под огнём');
     if (e.terrain === 'forest' || e.terrain === 'marsh') q.add('бой в лесу ночной марш по одной дороге');
-    if (tanks > 300) q.add('танковая армия ввод в прорыв потери танков');
+    if (tanks > 300) { q.add('танковая армия ввод в прорыв потери танков'); q.add('доктрина ввод подвижной группы в прорыв'); }
     if (e.defenders.some((d) => /volkssturm|фольксштурм|hj|гитлерюгенд/i.test(`${d.type} ${d.name}`))) q.add('фольксштурм боеспособность');
     if (e.attackers.concat(e.defenders).some((f) => f.cutOff)) q.add('окружённая группировка прорыв из окружения');
+    if (e.defenders.some((f) => f.cutOff)) q.add('доктрина окружение прорыв к своим');
+    if (e.attackers.some((f) => f.order?.task === 'counterattack')) q.add('доктрина контратака во фланг резерв');
   }
   if (!q.size) q.add('наступление оборона потери темп');
   return [...q];
@@ -174,15 +179,15 @@ export function umpireMods(raw: UmpireRaw, es: Engagement[], refs: UmpireRef[]):
 export interface UmpireTurn { time: string; ok: boolean; error?: string; assessment?: string; mods: UmpireMod[]; issues: UmpireIssue[]; engagements: number; refs: UmpireRef[]; seconds?: number; /** Сколько поправок предложила модель (до проверки). */ proposed?: number }
 
 /**
- * Посредник на ход: ожидаемые бои → справки из базы (refsFor — по запросам) → модель → проверенные поправки.
+ * Посредник на ход: ожидаемые бои → справки из базы (refsFor — по запросам на момент хода s.time) → модель → проверенные поправки.
  * Нет боёв — модель не вызывается. Ошибка модели — ход без поправок (арбитр считает сам).
  */
-export async function umpireTurn(client: LlmClient, ctx: SimContext, s: SimState, refsFor: (queries: string[]) => Promise<UmpireRef[]>, tpl: { system: string; user: string },
+export async function umpireTurn(client: LlmClient, ctx: SimContext, s: SimState, refsFor: (queries: string[], moment: string) => Promise<UmpireRef[]>, tpl: { system: string; user: string },
   opts: { thinking?: Thinking; signal?: AbortSignal; limit?: number } = {}): Promise<UmpireTurn> {
   const t0 = Date.now();
   const es = predictEngagements(ctx, s, opts.limit ?? 10);
   if (!es.length) return { time: s.time, ok: true, mods: [], issues: [], engagements: 0, refs: [] };
-  const refs = (await refsFor(umpireQueries(es)).catch(() => [])).slice(0, 8);
+  const refs = (await refsFor(umpireQueries(es), s.time).catch(() => [])).slice(0, 8);
   try {
     const r = await client.chat({ messages: umpireMessages(ctx, s, es, refs, tpl), schema: { name: 'umpire', schema: UMPIRE_SCHEMA }, thinking: opts.thinking ?? 'off', signal: opts.signal });
     if (r.jsonError) return { time: s.time, ok: false, error: `ответ не разобран: ${r.jsonError}`, mods: [], issues: [], engagements: es.length, refs };

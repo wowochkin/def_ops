@@ -296,6 +296,32 @@ describe('посредник на модели', () => {
     const factors = r.final.journal.filter((j) => j.kind === 'combat').flatMap((j) => j.factors.map((f) => f.name));
     expect(factors.some((n) => n.startsWith('посредник:'))).toBe(true);
   }, 120000);
+
+  it('запросы доктрины по бою; справка — на момент хода', async () => {
+    const { predictEngagements, umpireQueries, umpireTurn } = await import('../src/live');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-17T05:00');
+    const es = predictEngagements(ctx, g.state);
+    const q = umpireQueries(es);
+    expect(q).toContain('прорыв укреплённой полосы обороны артподготовка темп');
+    expect(q).toContain('доктрина построение обороны первая позиция отвод');
+    const one = es[0];
+    const f0 = one.attackers[0], d0 = one.defenders[0];
+    expect(umpireQueries([{ ...one, fort: 0, attackers: [{ ...f0, tanks: 301 }], defenders: [{ ...d0, tanks: 0 }] }])).toContain('доктрина ввод подвижной группы в прорыв');
+    expect(umpireQueries([{ ...one, fort: 0, attackers: [{ ...f0, tanks: 0 }], defenders: [{ ...d0, tanks: 0 }] }])).not.toContain('доктрина ввод подвижной группы в прорыв');
+    expect(umpireQueries([{ ...one, defenders: [{ ...d0, cutOff: true }] }])).toContain('доктрина окружение прорыв к своим');
+    expect(umpireQueries([{ ...one, attackers: [{ ...f0, cutOff: true }], defenders: [{ ...d0, cutOff: false }] }])).not.toContain('доктрина окружение прорыв к своим');
+    expect(umpireQueries([{ ...one, attackers: [{ ...f0, order: { ...(f0.order ?? {}), task: 'counterattack' } as typeof f0.order }] }])).toContain('доктрина контратака во фланг резерв');
+    const refs = [{ id: 'org:su-other', title: 'Прочие нормативы', text: 'туман в пойме Одера 15–16.04' }];
+    let seen = '', asked: string[] = [];
+    const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
+    const tplU = { system: read('prompts/umpire.system.md'), user: read('prompts/umpire.user.md') };
+    const r = await umpireTurn(client, ctx, g.state, async (qs, moment) => { seen = moment; asked = qs; return refs; }, tplU);
+    expect(seen).toBe(g.state.time);
+    expect(seen).toBe('1945-04-17T05:00');
+    expect(asked).toEqual(q);
+    expect(r.refs).toEqual(refs);
+  }, 60000);
 });
 
 describe('выключение размышления', () => {

@@ -14,7 +14,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkEvents, compareWithHistory, evaluateNorms, fmtNorm, NORM_MARK, runScenario, runScenarioWith, summarize, UMPIRE_FACTOR_RU, type NormTable, type RunResult, type SimContext, type UmpireMod } from '@def-ops/sim';
 import { loadContext, loadHistory, loadNorms } from '@def-ops/sim/data';
-import { category, gather, Index, type Entry } from '@def-ops/knowledge';
+import { Index, roleReference, type Entry } from '@def-ops/knowledge';
 import { LlmClient } from '../llm/client';
 import { configFromEnv, type Thinking } from '../llm/config';
 import { umpireTurn, type UmpireRef, type UmpireTurn } from '../live/umpire';
@@ -28,16 +28,12 @@ const thinking = opt('thinking', 'off') as Thinking;
 const out = resolve(opt('out', `evals-out/umpire/${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}`)!);
 const TOL: Record<string, number> = { 'berlin-city-1945': 2 };
 
-// база знаний: начальное наполнение (слой пользователя — в браузере)
+// база знаний: начальное наполнение (слой пользователя — в браузере); справка роли «посредник» на момент хода
 const entries = (JSON.parse(readFileSync(join(ROOT, 'packages/knowledge/data/seed.json'), 'utf8')) as { entries: Entry[] }).entries;
 const byId = new Map(entries.map((e) => [e.id, e]));
 const index = new Index(entries);
-const safe = (e: Entry | null) => !!e && e.group !== 'model' && e.category !== 'sources' && !!category(e.category)?.gameSafe;
-async function refsFor(queries: string[]): Promise<UmpireRef[]> {
-  const out = new Map<string, UmpireRef>();
-  for (const q of queries) for (const s of gather(index, byId, q, { limit: 3, pool: 400, filter: (e) => safe(e) })) if (!out.has(s.ref)) out.set(s.ref, { id: s.ref, title: s.title, text: s.text.slice(0, 900) });
-  return [...out.values()];
-}
+const refsFor = (operation: string) => async (queries: string[], moment: string): Promise<UmpireRef[]> =>
+  roleReference(index, byId, queries, { role: 'umpire', operation, moment }, { limit: 8, chars: 900 }).refs;
 
 const tpl = { system: readFileSync(join(ROOT, 'services/staff/prompts/umpire.system.md'), 'utf8'), user: readFileSync(join(ROOT, 'services/staff/prompts/umpire.user.md'), 'utf8') };
 const client = new LlmClient({ ...configFromEnv(process.env), thinking });
@@ -56,7 +52,7 @@ for (const id of scenarios) {
   const ump: Variant = { runs: [], turns: [], sec: 0 };
   for (let k = 1; k <= seeds; k++) {
     const r = await runScenarioWith(ctx, k, async (s) => {
-      const t = await umpireTurn(client, ctx, s, refsFor, tpl, { thinking });
+      const t = await umpireTurn(client, ctx, s, refsFor(id), tpl, { thinking });
       ump.turns.push(t);
       process.stdout.write(`\r  ${id} seed ${k}: ${s.time.slice(5, 16)} боёв ${t.engagements}, поправок ${t.mods.length}${t.ok ? '' : ` (ошибка: ${t.error?.slice(0, 60)})`}        `);
       return t.mods;
