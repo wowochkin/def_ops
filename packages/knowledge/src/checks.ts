@@ -293,7 +293,8 @@ function checkDoctrine(c: Candidate): CheckResult | null {
   if (!(DOCTRINE_LEVELS as readonly string[]).includes(cl.level)) return res('doctrine', 'fail', `ступень не из перечня: «${cl.level ?? ''}»`);
   const manual = c.origin === 'manual' || c.evidence.kind === 'manual';
   if (!cl.action?.trim() || (!manual && !cl.condition?.trim())) return res('doctrine', 'fail', 'пустое условие или действие');
-  if (!(cl.group in DOCTRINE_GROUPS)) return res('doctrine', 'doubt', `неизвестная группа: «${cl.group}»`);
+  if (!/^[a-z][a-z0-9-]*$/.test(cl.group ?? '')) return res('doctrine', 'fail', `группа не задана или не латиницей: «${cl.group ?? ''}»`);
+  if (!Object.hasOwn(DOCTRINE_GROUPS, cl.group)) return res('doctrine', 'doubt', `неизвестная группа: «${cl.group}»`);
   return ok('doctrine');
 }
 

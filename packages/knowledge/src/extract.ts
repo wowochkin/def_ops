@@ -453,7 +453,7 @@ export function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; valu
       const side = x.side, level = DOCTRINE_LEVELS.find((l) => l === x.level), action = str(x.action);
       if ((side !== 'su' && side !== 'de') || !level) return null;
       const values = doctrineValues(Object.fromEntries((x.values ?? []).filter((v) => str(v?.name)).map((v) => [str(v.name), v.value ?? v.range])));
-      claim = { kind: 'doctrine', side, level, group: str(x.group), rule: str(x.rule) || `doc-${latin(action)}`, condition: str(x.condition), action, ...(values ? { values } : {}) };
+      claim = { kind: 'doctrine', side, level, group: str(x.group), rule: str(x.rule) || `doc-${latin(action)}-${shortHash(action)}`, condition: str(x.condition), action, ...(values ? { values } : {}) };
       return { claim, key: DOCTRINE_KEY, value: doctrineWords(claim) };
     }
     default: return null;
@@ -467,6 +467,8 @@ const LAT: Record<string, string> = {
   с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
 };
 /** id правила из действия: латиницей (кириллица — транслитом), цифры, через дефис, не длиннее 32 знаков. */
+/** Короткая метка текста (4 знака): разные действия с одинаковым началом не сливаются в одно правило. */
+const shortHash = (t: string) => { let h = 5381; for (const ch of t) h = ((h * 33) ^ ch.codePointAt(0)!) >>> 0; return h.toString(36).slice(-4).padStart(4, '0'); };
 const latin = (t: string) => [...t.toLowerCase()].map((ch) => LAT[ch] ?? ch).join('').replace(/[^a-z0-9]+/g, '-').replace(/^-+/, '').slice(0, 32).replace(/-+$/, '');
 
 /** Диапазон [от, до] из ответа модели: два числа, иначе undefined (порядок проверяет проверка «норматив»). */

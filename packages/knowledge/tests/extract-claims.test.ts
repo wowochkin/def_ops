@@ -133,7 +133,7 @@ describe('доктрина из документов: вид doctrine', () => {
   it('неизвестная группа — сомнение, итог review; пустой rule — из действия латиницей', () => {
     expect(level(1, 'doctrine')).toEqual({ check: 'doctrine', level: 'doubt', why: 'неизвестная группа: «night-raid»' });
     expect(verdictOf(runChecks(cs[1], dctx))).toBe('review');
-    expect((cs[1].claim as { rule: string }).rule).toBe('doc-nochnoy-nalet-melkimi-gruppami');
+    expect((cs[1].claim as { rule: string }).rule).toMatch(/^doc-nochnoy-nalet-melkimi-gruppami-[0-9a-z]{4}$/);
     expect(cs[1].claim).not.toHaveProperty('values');
   });
   it('числа нет в цитате — отбой', () => {
@@ -149,7 +149,9 @@ describe('доктрина из документов: вид doctrine', () => {
     const [c] = toCandidates([{ ...x, rule: null, action: 'Контратака корпусным резервом во фланг вклинившейся группировки', values: [{ name: 'km', value: null, range: [2, 4] }, { name: 'bad', value: null, range: [4, 2] }] }], doc, { chunk: 0 }, 'text');
     const rule = (c.claim as { rule: string }).rule;
     expect(rule.startsWith('doc-kontrataka-korpusnym')).toBe(true);
-    expect(rule.length).toBeLessThanOrEqual(36);
+    expect(rule.length).toBeLessThanOrEqual(41);
+    const [d] = toCandidates([{ ...x, rule: null, action: 'Контратака корпусным резервом во фланг и тыл вклинившейся группировки' }], doc, { chunk: 0 }, 'text');
+    expect((d.claim as { rule: string }).rule).not.toBe(rule);
     expect(rule).not.toMatch(/-$/);
     expect((c.claim as { values?: unknown }).values).toEqual({ km: [2, 4] });
   });

@@ -363,6 +363,11 @@ describe('доктрина: правило «условие → действие
     expect(lvl(manual({ ...rule, side: 'ru' as 'su' }), ctx(), 'doctrine')?.level).toBe('fail');
     expect(lvl(manual({ ...rule, level: 'regiment' as 'corps' }), ctx(), 'doctrine')).toEqual({ check: 'doctrine', level: 'fail', why: 'ступень не из перечня: «regiment»' });
   });
+  it('пустая группа или не латиницей — отказ; имена свойств объекта не группы', () => {
+    expect(lvl(manual({ ...rule, group: '' }), ctx(), 'doctrine')?.level).toBe('fail');
+    expect(lvl(manual({ ...rule, group: 'Night raid' }), ctx(), 'doctrine')?.level).toBe('fail');
+    expect(lvl(manual({ ...rule, group: 'constructor' }), ctx(), 'doctrine')?.level).toBe('doubt');
+  });
   it('неизвестная группа — сомнение', () => {
     expect(lvl(manual({ ...rule, group: 'night-raid' }), ctx(), 'doctrine')).toEqual({ check: 'doctrine', level: 'doubt', why: 'неизвестная группа: «night-raid»' });
   });
