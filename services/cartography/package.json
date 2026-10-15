@@ -15,7 +15,8 @@
     "@maplibre/geojson-vt": "6.1.1",
     "@maplibre/vt-pbf": "4.3.2",
     "sharp": "^0.34.0",
-    "tar-stream": "^3.1.7"
+    "tar-stream": "^3.1.7",
+    "undici": "7.29.1"
   },
   "devDependencies": {
     "@mapbox/vector-tile": "3.0.0",

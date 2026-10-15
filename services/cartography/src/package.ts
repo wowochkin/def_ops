@@ -3,18 +3,27 @@
  *   map.json                 — описание карты (MapSource);
  *   tiles/{z}/{x}/{y}.{ext}  — тайлы пирамиды как есть (без обрезки по границе:
  *                              граница переносится в map.json).
+ * Векторная карта (OpenHistoricalMap) вместо тайлов несёт
+ *   ohm.mbtiles                          — векторные тайлы одним файлом;
+ *   assets/fonts/{стек}/{диапазон}.pbf   — шрифты стиля;
+ *   assets/sprites/{имя}                 — значки стиля.
  * Выгрузка и загрузка идут потоком — архив не собирается целиком ни в памяти, ни
- * на диске. Загружаемый пакет становится новой картой (новый id, kind 'package').
+ * на диске. Загружаемый пакет становится новой картой (новый id, kind 'package';
+ * векторная остаётся 'vector').
  */
 import { once } from 'node:events';
-import { promises as fs } from 'node:fs';
+import { promises as fs, createReadStream, createWriteStream, existsSync } from 'node:fs';
+import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import type http from 'node:http';
+import { DatabaseSync } from 'node:sqlite';
 import tar from 'tar-stream';
-import type { MapSource } from '@def-ops/core';
+import { validBBox, type MapSource } from '@def-ops/core';
 import { HttpError } from '@def-ops/service-kit';
 import type { JobContext } from './jobs';
-import { detectFormat, type TileStore } from './tiles';
+import { detectFormat, writeAtomic, type TileStore } from './tiles';
 import { asObject, buildMap, rasterRequest, WORLD } from './validate';
+import { OHM_FONTS, OHM_RANGES, OHM_SPRITES, ohmAssetsDir, ohmFile } from './ohm';
 
 /** Не больше этого на один тайл в пакете. */
 const MAX_TILE_BYTES = 8 * 1024 * 1024;
@@ -28,6 +37,10 @@ export function packageMeta(m: MapSource): MapSource {
 /** Выгрузить пакет карты в ответ (поток). */
 export async function exportPackage(res: http.ServerResponse, store: TileStore, tenant: string, map: MapSource, filename: string): Promise<void> {
   const ascii = filename.replace(/[^a-zA-Z0-9._-]+/g, '_') || 'map';
+  const vector = map.kind === 'vector';
+  const mbtiles = vector ? ohmFile(store, tenant, map.id) : '';
+  const st = vector ? await fs.stat(mbtiles).catch(() => null) : null;
+  if (vector && !st) throw new HttpError(409, 'conflict', 'Карта ещё не загружена: нет векторных тайлов');
   res.writeHead(200, {
     'Content-Type': 'application/x-tar',
     'Content-Disposition': `attachment; filename="${ascii}.tar"; filename*=UTF-8''${encodeURIComponent(filename)}.tar`,
@@ -41,7 +54,20 @@ export async function exportPackage(res: http.ServerResponse, store: TileStore, 
     pack.entry({ name, size: data.length, mtime, mode: 0o644 }, data, (e) => (e ? reject(e) : resolve())));
   // время в заголовках — от данных, а не от момента выгрузки: пакет одной карты всегда одинаков байт в байт
   await add('map.json', Buffer.from(JSON.stringify(packageMeta(map), null, 2)), new Date(map.updatedAt ?? 0));
-  for await (const t of store.walk(tenant, map.id)) {
+  if (vector) {
+    // MBTiles — потоком, размер — из stat
+    await new Promise<void>((resolve, reject) => {
+      const entry = pack.entry({ name: 'ohm.mbtiles', size: st!.size, mtime: new Date(Math.floor(st!.mtimeMs)), mode: 0o644 }, (e) => (e ? reject(e) : resolve()));
+      pipeline(createReadStream(mbtiles, { end: st!.size - 1 }), entry).catch(reject);
+    });
+    for (const [name, file] of assetFiles(ohmAssetsDir(store))) {
+      if (closed) break;
+      let data: Buffer;
+      try { data = await fs.readFile(file); } catch { continue; }
+      await add(name, data, new Date(0));
+    }
+  }
+  for await (const t of (vector ? [] : store.walk(tenant, map.id))) {
     if (closed) break;
     let data: Buffer;
     try { data = await fs.readFile(t.file); } catch { continue; }
@@ -52,15 +78,39 @@ export async function exportPackage(res: http.ServerResponse, store: TileStore, 
   if (!closed) await Promise.race([once(res, 'finish'), once(res, 'close')]);
 }
 
+/** Шрифты и значки стиля OHM: имя в пакете → файл. */
+function assetFiles(dir: string): [string, string][] {
+  const out: [string, string][] = [];
+  for (const stack of OHM_FONTS) for (const range of OHM_RANGES) out.push([`assets/fonts/${stack}/${range}.pbf`, path.join(dir, 'fonts', stack, `${range}.pbf`)]);
+  for (const name of OHM_SPRITES) out.push([`assets/sprites/${name}`, path.join(dir, 'sprites', name)]);
+  return out;
+}
+
+/** Сведения OHM карты из пакета (проверка формы); не годятся — null. */
+function ohmMeta(v: unknown): MapSource['ohm'] {
+  const o = v as NonNullable<MapSource['ohm']>;
+  if (!o || typeof o !== 'object' || !validBBox(o.bbox) || !Number.isInteger(o.cells) || !Number.isInteger(o.features)
+    || !o.layers || typeof o.layers !== 'object' || typeof o.fetchedAt !== 'string' || o.fetchedAt.length > 64) return null;
+  const layers: Record<string, number> = {};
+  for (const [k, n] of Object.entries(o.layers)) if (/^[a-z_]{1,32}$/.test(k) && Number.isInteger(n)) layers[k] = n;
+  return { bbox: [...o.bbox], cells: o.cells, features: o.features, layers, fetchedAt: o.fetchedAt };
+}
+
 /** Описание карты из пакета → новая карта организации (проверяется как при создании). */
 export function mapFromPackage(raw: unknown, id: string, now: string): MapSource {
   const b = asObject(raw);
+  const vector = b.kind === 'vector';
   const m = buildMap(b, {
-    id, kind: 'package', format: 'png', tileSize: 256, minzoom: 0, maxzoom: 18, bounds: WORLD, coverage: null, opacity: 1,
+    id, kind: vector ? 'vector' : 'package', format: vector ? 'pbf' : 'png', tileSize: vector ? 512 : 256, minzoom: 0, maxzoom: vector ? 16 : 18,
+    bounds: WORLD, coverage: null, opacity: 1,
     sourceUrl: null, controlPoints: null, stats: { tiles: 0, bytes: 0 }, createdAt: now, updatedAt: now,
   });
   m.id = id;
   m.kind = 'package';
+  if (vector) {
+    // векторная карта: свой вид и формат, без границы; сведения OHM — как в пакете
+    Object.assign(m, { kind: 'vector', format: 'pbf', tileSize: 512, coverage: null, ohm: ohmMeta(b.ohm) });
+  }
   m.createdAt = now;
   m.updatedAt = now;
   if (typeof b.sourceUrl === 'string' && b.sourceUrl.length <= 2000) m.sourceUrl = b.sourceUrl;
@@ -96,6 +146,9 @@ export async function importPackage(
 
   let map: MapSource | null = null;
   let tiles = 0, bytes = 0;
+  let mbtiles = false;
+  const mbFile = ohmFile(store, ctx.tenant, mapId);
+  const assets = new Map(assetFiles(ohmAssetsDir(store)));
   try {
     for await (const entry of extract) {
       const h = entry.header;
@@ -118,7 +171,28 @@ export async function importPackage(
         if (Number.isInteger(declared) && declared! > 0) ctx.progress({ total: declared });
         continue;
       }
-      const m = h.type === 'file' ? TILE_RE.exec(name) : null;
+      if (h.type === 'file' && name === 'ohm.mbtiles' && (!map || map.kind === 'vector')) {
+        if (mbtiles) throw new HttpError(422, 'invalid', 'В пакете два ohm.mbtiles');
+        // векторные тайлы — потоком в папку карты (под общим пределом размера пакета)
+        const tmp = `${mbFile}.import`;
+        await fs.mkdir(path.dirname(mbFile), { recursive: true });
+        try {
+          await pipeline(entry, createWriteStream(tmp));
+          const n = checkMbtiles(tmp);
+          await fs.rename(tmp, mbFile);
+          tiles = n;
+          bytes = (await fs.stat(mbFile)).size;
+        } finally { await fs.rm(tmp, { force: true }); }
+        mbtiles = true;
+        continue;
+      }
+      const asset = h.type === 'file' ? assets.get(name) : undefined;
+      if (asset) {
+        const data = await read(MAX_TILE_BYTES);
+        if (!existsSync(asset)) await writeAtomic(asset, data); // общие для всех карт: есть — не трогаются
+        continue;
+      }
+      const m = h.type === 'file' && map?.kind !== 'vector' ? TILE_RE.exec(name) : null;
       if (!m) { entry.resume(); continue; } // посторонние файлы и каталоги пропускаются
       const z = Number(m[1]), x = Number(m[2]), y = Number(m[3]);
       const data = await read(MAX_TILE_BYTES);
@@ -139,5 +213,24 @@ export async function importPackage(
   }
   ctx.check();
   if (!map) throw new HttpError(422, 'invalid', 'В пакете нет map.json — это не пакет карты');
+  if (map.kind === 'vector') {
+    if (!mbtiles) throw new HttpError(422, 'invalid', 'В пакете векторной карты нет ohm.mbtiles');
+    ctx.progress({ done: tiles, total: tiles });
+  }
   return { map, tiles, bytes };
+}
+
+/** MBTiles векторных тайлов (format = pbf, таблица tiles): число тайлов; иначе — 422. */
+function checkMbtiles(file: string): number {
+  let db: DatabaseSync | null = null;
+  try {
+    db = new DatabaseSync(file, { readOnly: true });
+    const f = db.prepare("select value from metadata where name = 'format'").get() as { value: string } | undefined;
+    if (f?.value !== 'pbf') throw new Error('format');
+    return (db.prepare('select count(*) as n from tiles').get() as { n: number }).n;
+  } catch {
+    throw new HttpError(422, 'invalid', 'ohm.mbtiles: не MBTiles с векторными тайлами');
+  } finally {
+    db?.close();
+  }
 }

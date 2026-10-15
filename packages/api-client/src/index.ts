@@ -306,6 +306,14 @@ export class DefOpsClient {
     /** Загрузить пакет карты из другой установки → новая карта. */
     importPackage: (tarball: BinaryBody) =>
       this.send<{ map: MapSource; job: MapJob }>('POST', '/cartography/maps/import-package', tarball, { 'Content-Type': 'application/x-tar' }),
+    /**
+     * Карта OpenHistoricalMap: create — новая векторная карта района и задание загрузки (участки Overpass,
+     * нарезка); update — «продолжить» (скачанные участки берутся из кэша) или «обновить» (refresh — заново).
+     */
+    ohm: {
+      create: (r: { name: string; bbox: BBox }) => this.req<{ map: MapSource; job: MapJob }>('POST', '/cartography/maps/ohm', r),
+      update: (id: string, o: { refresh?: boolean } = {}) => this.req<MapJob>('POST', `/cartography/maps/${enc(id)}/ohm`, o),
+    },
     jobs: {
       list: (mapId?: string) => this.req<MapJob[]>('GET', `/cartography/jobs${mapId ? `?mapId=${enc(mapId)}` : ''}`),
       get: (id: string) => this.req<MapJob>('GET', `/cartography/jobs/${enc(id)}`),

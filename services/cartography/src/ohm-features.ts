@@ -111,6 +111,16 @@ function props(cls: Cls, id: string, t: Tags): OhmProps {
 const coords = (w: OverpassElement): LngLat[] => (w.geometry ?? []).filter(Boolean).map((g) => [g.lon, g.lat] as LngLat);
 const byId = (a: OverpassElement, b: OverpassElement) => a.id - b.id;
 
+/** Только нужные поля объекта: ответ Overpass несёт ещё `nodes` и `bounds` путей (память на театр). */
+function slim(el: OverpassElement): OverpassElement {
+  const out: OverpassElement = { type: el.type, id: el.id };
+  if (el.tags) out.tags = el.tags;
+  if (el.type === 'node') { out.lat = el.lat; out.lon = el.lon; }
+  else if (el.type === 'way') { if (el.geometry) out.geometry = el.geometry; }
+  else if (el.members) out.members = el.members;
+  return out;
+}
+
 /** Объекты всех участков по id; признаки — после загрузки всех участков. */
 export class OhmCollector {
   private nodes = new Map<number, OverpassElement>();
@@ -123,7 +133,7 @@ export class OhmCollector {
     for (const el of json.elements ?? []) {
       const m = el.type === 'node' ? this.nodes : el.type === 'way' ? this.ways : el.type === 'relation' ? this.rels : null;
       if (!m || m.has(el.id)) continue;
-      m.set(el.id, el);
+      m.set(el.id, slim(el));
       n++;
     }
     return n;

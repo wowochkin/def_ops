@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { ohmCells, type BBox, type MapJob, type OverpassElement, type OverpassJson } from '@def-ops/core';
+import { ohmCells, type BBox, type MapJob, type OverpassJson } from '@def-ops/core';
 import { CancelledError, type JobContext } from '../src/jobs';
 import { USER_AGENT } from '../src/xyz';
 import {
@@ -10,7 +10,7 @@ import {
 } from '../src/ohm';
 import { classify, isArea, OhmCollector, OHM_LAYERS, type OhmFeature } from '../src/ohm-features';
 import type { Polygon } from 'geojson';
-import { fakeAsset, fakeOverpass, tempDir, type FakeOverpass } from './helpers';
+import { A, B, fakeAsset, fakeOverpass, tempDir, type FakeOverpass } from './helpers';
 
 function ctx(): { ctx: JobContext; ac: AbortController } {
   const ac = new AbortController();
@@ -135,6 +135,21 @@ describe('downloadCells', () => {
     expect(await cache.has(1)).toBe(false);
   });
 
+  it('повреждённый участок в кэше удаляется и скачивается заново; ответы участков — в onCell по порядку', async () => {
+    const cache = await openCache();
+    await cache.write(0, fake.cells(CELLS[0]));
+    await fs.mkdir(path.join(dir, '_ohm', 'cells'), { recursive: true });
+    await fs.writeFile(path.join(dir, '_ohm', 'cells', '1.json.gz'), Buffer.from('не gzip'));
+    const seen: [number, number][] = [];
+    const { ctx: c } = ctx();
+    const r = await downloadCells(c, CELLS, cache, opts, (i, json: OverpassJson) => seen.push([i, json.elements?.length ?? 0]));
+    expect(fake.hits.map((h) => cellOf(h.query))).toEqual([1, 2]);
+    expect(r).toMatchObject({ fetched: 2, cached: 1, elements: 6 });
+    expect(c.job.skipped).toBe(1);
+    expect((await cache.read(1)).elements).toHaveLength(2);
+    expect(seen).toEqual([[0, 2], [1, 2], [2, 2]]);
+  });
+
   it('кэш другой рамки очищается', async () => {
     const cache = await openCache();
     await cache.write(0, { elements: [] });
@@ -161,32 +176,6 @@ describe('ensureAssets', () => {
 });
 
 /* ------------------------------- объекты ------------------------------- */
-
-const pt = (lon: number, lat: number) => ({ lon, lat });
-const square = (w: number, s: number, e: number, n: number) => [pt(w, s), pt(e, s), pt(e, n), pt(w, n), pt(w, s)];
-const BOUNDARY = { type: 'boundary', boundary: 'administrative', admin_level: '2', start_date: '1938-03-13', end_date: '1945-05-08' };
-
-const A: OverpassJson = { elements: [
-  { type: 'node', id: 1, lat: 52.52, lon: 13.40, tags: { place: 'city', name: 'Berlin', start_date: '1237' } },
-  { type: 'node', id: 3, lat: 52.5195, lon: 13.4085, tags: { amenity: 'place_of_worship', name: 'Marienkirche', start_date: '1294' } },
-  { type: 'way', id: 10, tags: { highway: 'primary', name: 'Unter den Linden', bridge: 'yes', start_date: '1647' }, geometry: [pt(13.45, 52.52), pt(13.55, 52.52)] },
-  { type: 'way', id: 11, tags: { building: 'yes', start_date: '1706', end_date: '1945' }, geometry: square(13.3925, 52.5165, 13.3935, 52.517) },
-  { type: 'way', id: 12, geometry: [pt(13.40, 52.50), pt(13.42, 52.50), pt(13.42, 52.51)] },
-  { type: 'way', id: 13, geometry: [pt(13.40, 52.50), pt(13.40, 52.51), pt(13.42, 52.51)] }, // обратный ход
-  { type: 'way', id: 14, geometry: square(13.405, 52.503, 13.415, 52.507) },
-  { type: 'way', id: 16, geometry: [pt(13.30, 52.45), pt(13.35, 52.47)] },
-  { type: 'relation', id: 100, tags: { type: 'multipolygon', landuse: 'forest', start_date: '1900-05' }, members: [{ type: 'way', ref: 12, role: 'outer' }, { type: 'way', ref: 13, role: 'outer' }, { type: 'way', ref: 14, role: 'inner' }] },
-  { type: 'relation', id: 101, tags: { type: 'multipolygon', natural: 'water', name: 'Rummelsburger See' }, members: [{ type: 'way', ref: 15, role: 'outer' }] }, // путь 15 — только в B
-  { type: 'relation', id: 102, tags: BOUNDARY, members: [{ type: 'way', ref: 16, role: 'outer' }, { type: 'way', ref: 17, role: 'outer' }] }, // 17 нет нигде
-  { type: 'relation', id: 103, tags: BOUNDARY, members: [{ type: 'way', ref: 16, role: 'outer' }] },
-] };
-const B: OverpassJson = { elements: [
-  A.elements![2], A.elements![9],
-  { type: 'way', id: 15, geometry: square(13.60, 52.45, 13.62, 52.46) },
-  { type: 'way', id: 18, tags: { highway: 'footway' }, geometry: [pt(13.60, 52.50), pt(13.61, 52.505)] },
-  { type: 'way', id: 19, tags: { highway: 'residential' }, geometry: [pt(13.62, 52.50), pt(13.64, 52.51)] },
-  { type: 'way', id: 20, tags: { railway: 'rail', start_date: '1842' }, geometry: [pt(13.55, 52.40), pt(13.70, 52.60)] },
-] satisfies OverpassElement[] };
 
 function check(list: OhmFeature[]) {
   expect(list).toHaveLength(10);
@@ -249,6 +238,16 @@ describe('OhmCollector', () => {
     c.add(B); c.add(A);
     expect(c.counts).toEqual({ nodes: 2, ways: 10, relations: 4 });
     check(c.features());
+  });
+
+  it('хранит только нужное: у путей нет nodes и bounds (память)', () => {
+    const c = new OhmCollector();
+    const way = { type: 'way', id: 7, tags: { highway: 'track' }, nodes: [1, 2], bounds: { minlat: 52, minlon: 13, maxlat: 52.1, maxlon: 13.1 },
+      geometry: [{ lat: 52, lon: 13 }, { lat: 52.1, lon: 13.1 }] };
+    c.add({ elements: [way] } as unknown as OverpassJson);
+    const kept = (c as unknown as { ways: Map<number, Record<string, unknown>> }).ways.get(7)!;
+    expect(Object.keys(kept).sort()).toEqual(['geometry', 'id', 'tags', 'type']);
+    expect(c.features()).toHaveLength(1);
   });
 
   it('значимое место — только с именем', () => {

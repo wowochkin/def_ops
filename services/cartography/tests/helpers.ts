@@ -6,7 +6,7 @@ import { promises as fs } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import sharp from 'sharp';
 import { createService } from '@def-ops/service-kit';
-import type { BBox, MapJob, OverpassJson } from '@def-ops/core';
+import type { BBox, MapJob, OverpassElement, OverpassJson } from '@def-ops/core';
 import type { MapRepo } from '../src/repo';
 import { EventBus } from '../src/events';
 import { JobRunner } from '../src/jobs';
@@ -87,6 +87,34 @@ export function defaultCell(b: BBox): OverpassJson {
     { type: 'way', id, tags: { highway: 'track' }, geometry: [{ lat: b[1], lon: b[0] }, { lat: b[1], lon: b[2] }] },
   ] };
 }
+
+/* ---------- участки A и B (центр Берлина): ---------- */
+const pt = (lon: number, lat: number) => ({ lon, lat });
+const square = (w: number, s: number, e: number, n: number) => [pt(w, s), pt(e, s), pt(e, n), pt(w, n), pt(w, s)];
+const BOUNDARY = { type: 'boundary', boundary: 'administrative', admin_level: '2', start_date: '1938-03-13', end_date: '1945-05-08' };
+
+/** Участки A и B: отношения из путей обоих участков, недостающий член, дубликаты на стыке (10 признаков). */
+export const A: OverpassJson = { elements: [
+  { type: 'node', id: 1, lat: 52.52, lon: 13.40, tags: { place: 'city', name: 'Berlin', start_date: '1237' } },
+  { type: 'node', id: 3, lat: 52.5195, lon: 13.4085, tags: { amenity: 'place_of_worship', name: 'Marienkirche', start_date: '1294' } },
+  { type: 'way', id: 10, tags: { highway: 'primary', name: 'Unter den Linden', bridge: 'yes', start_date: '1647' }, geometry: [pt(13.45, 52.52), pt(13.55, 52.52)] },
+  { type: 'way', id: 11, tags: { building: 'yes', start_date: '1706', end_date: '1945' }, geometry: square(13.3925, 52.5165, 13.3935, 52.517) },
+  { type: 'way', id: 12, geometry: [pt(13.40, 52.50), pt(13.42, 52.50), pt(13.42, 52.51)] },
+  { type: 'way', id: 13, geometry: [pt(13.40, 52.50), pt(13.40, 52.51), pt(13.42, 52.51)] }, // обратный ход
+  { type: 'way', id: 14, geometry: square(13.405, 52.503, 13.415, 52.507) },
+  { type: 'way', id: 16, geometry: [pt(13.30, 52.45), pt(13.35, 52.47)] },
+  { type: 'relation', id: 100, tags: { type: 'multipolygon', landuse: 'forest', start_date: '1900-05' }, members: [{ type: 'way', ref: 12, role: 'outer' }, { type: 'way', ref: 13, role: 'outer' }, { type: 'way', ref: 14, role: 'inner' }] },
+  { type: 'relation', id: 101, tags: { type: 'multipolygon', natural: 'water', name: 'Rummelsburger See' }, members: [{ type: 'way', ref: 15, role: 'outer' }] }, // путь 15 — только в B
+  { type: 'relation', id: 102, tags: BOUNDARY, members: [{ type: 'way', ref: 16, role: 'outer' }, { type: 'way', ref: 17, role: 'outer' }] }, // 17 нет нигде
+  { type: 'relation', id: 103, tags: BOUNDARY, members: [{ type: 'way', ref: 16, role: 'outer' }] },
+] };
+export const B: OverpassJson = { elements: [
+  A.elements![2], A.elements![9],
+  { type: 'way', id: 15, geometry: square(13.60, 52.45, 13.62, 52.46) },
+  { type: 'way', id: 18, tags: { highway: 'footway' }, geometry: [pt(13.60, 52.50), pt(13.61, 52.505)] },
+  { type: 'way', id: 19, tags: { highway: 'residential' }, geometry: [pt(13.62, 52.50), pt(13.64, 52.51)] },
+  { type: 'way', id: 20, tags: { railway: 'rail', start_date: '1842' }, geometry: [pt(13.55, 52.40), pt(13.70, 52.60)] },
+] satisfies OverpassElement[] };
 
 /** Поддельные Overpass OHM (POST /api/interpreter) и файлы стиля (/map-styles/...). */
 export async function fakeOverpass(): Promise<FakeOverpass> {
@@ -183,9 +211,9 @@ export interface Running {
   close(): Promise<void>;
 }
 
-/** Запустить сервис картографии на случайном порту с временным TILES_DIR. */
-export async function startService(repo: MapRepo, options: Partial<CartographyOptions> = {}): Promise<Running> {
-  const tilesDir = await tempDir();
+/** Запустить сервис картографии на случайном порту с временным TILES_DIR (или своим — dir; удаляется при close). */
+export async function startService(repo: MapRepo, options: Partial<CartographyOptions> = {}, dir?: string): Promise<Running> {
+  const tilesDir = dir ?? await tempDir();
   const bus = new EventBus();
   const jobs = new JobRunner(repo, bus, { progressMs: 50 });
   const store = new TileStore(tilesDir);

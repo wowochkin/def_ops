@@ -3,7 +3,7 @@
  * Ошибки содержания — 422 с понятным сообщением, ошибки формы запроса — 400.
  */
 import type { BBox, ControlPoint, LngLat, MapSource, RasterTileRequest, XyzDownloadRequest } from '@def-ops/core';
-import { validBBox } from '@def-ops/core';
+import { ohmCells, validBBox } from '@def-ops/core';
 import { HttpError } from '@def-ops/service-kit';
 
 export const MAX_ZOOM = 22;
@@ -84,6 +84,8 @@ export function buildMap(b: Record<string, unknown>, base: Omit<MapSource, 'name
     attribution: pick('attribution', (v) => str(v, 'attribution', 1000), base.attribution),
     date: pick('date', (v) => (v === null ? null : str(v, 'date', 64) ?? null), base.date ?? null),
     format: pick('format', (v) => {
+      // pbf — только у векторной карты (она создаётся заданием OHM или пакетом, не через POST /maps)
+      if (v === 'pbf' && base.kind === 'vector') return v;
       if (!FORMATS.includes(v as never)) throw bad('«format»: png, jpg или webp');
       return v as MapSource['format'];
     }, base.format),
@@ -172,6 +174,19 @@ export function rasterRequest(raw: unknown): RasterTileRequest {
   if (b.maxzoom !== undefined) out.maxzoom = zoom(b.maxzoom, 'maxzoom');
   if (out.minzoom !== undefined && out.maxzoom !== undefined && out.minzoom > out.maxzoom) throw bad('minzoom не может быть больше maxzoom');
   return out;
+}
+
+/** Больше участков OHM в одной карте нельзя. */
+export const MAX_OHM_CELLS = 1000;
+
+/** Запрос карты OpenHistoricalMap: имя и рамка (не больше MAX_OHM_CELLS участков). */
+export function ohmRequest(raw: unknown): { name: string; bbox: BBox } {
+  const b = asObject(raw);
+  const name = str(b.name, 'name', 200, true)!;
+  const box = bbox(b.bbox, 'bbox');
+  const n = ohmCells(box).length;
+  if (n > MAX_OHM_CELLS) throw bad(`Район — ${n.toLocaleString('ru-RU')} участков загрузки, больше предела ${MAX_OHM_CELLS} (по 0,25°); уменьшите район`);
+  return { name, bbox: box };
 }
 
 /** Целое из строки запроса. */

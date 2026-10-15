@@ -11,6 +11,7 @@ import type { MapSource, XyzDownloadRequest } from '@def-ops/core';
 import { tileRange, tileUrl } from '@def-ops/core';
 import { CancelledError, type JobContext } from './jobs';
 import { detectFormat, formatFromMime, type TileExt, type TileStore } from './tiles';
+import { http, netMessage } from './net';
 
 export const USER_AGENT = 'def-ops-cartography/0.2 (+offline archive)';
 
@@ -72,10 +73,10 @@ export async function downloadXyz(
       await slot();
       let r: Response;
       try {
-        r = await fetch(url, { headers, redirect: 'follow', signal: AbortSignal.any([ctx.signal, AbortSignal.timeout(timeout)]) });
+        r = await http.fetch(url, { headers, redirect: 'follow', signal: AbortSignal.any([ctx.signal, AbortSignal.timeout(timeout)]) });
       } catch (e) {
         ctx.check();
-        message = `${url}: ${(e as Error).name === 'TimeoutError' ? 'нет ответа' : (e as Error).message}`;
+        message = `${url}: ${(e as Error).name === 'TimeoutError' ? 'нет ответа' : netMessage(e)}`;
         continue;
       }
       if (r.status === 404 || r.status === 410 || r.status === 204) { await r.body?.cancel(); return { kind: 'missing' }; }
@@ -90,7 +91,7 @@ export async function downloadXyz(
       let buf: Buffer;
       try { buf = Buffer.from(await r.arrayBuffer()); } catch (e) {
         ctx.check();
-        message = `${url}: ${(e as Error).message}`;
+        message = `${url}: ${netMessage(e)}`;
         continue;
       }
       // формат — по сигнатуре: Content-Type источников часто неточен (image/jpeg у PNG и т.п.)

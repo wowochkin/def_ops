@@ -1,9 +1,10 @@
 /** Маршруты сервиса картографии (см. docs/cartography.md). */
 import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 import type { MapJob, MapSource } from '@def-ops/core';
-import { formatScale, metersPerPixel, parseOziMap, scaleBar, scaleDenominator, tileCount } from '@def-ops/core';
+import { formatScale, metersPerPixel, ohmCells, parseOziMap, scaleBar, scaleDenominator, tileCount, tileRange, type BBox } from '@def-ops/core';
 import { Router, HttpError, reply, type Ctx } from '@def-ops/service-kit';
 import type { MapRepo } from './repo';
 import type { EventBus } from './events';
@@ -15,7 +16,12 @@ import { coverageKey, maskedTile, tileRelation, transparentPng } from './coverag
 import { exportPackage, importPackage, mapFromPackage } from './package';
 import { importArchive, mapFromArchive } from './archive';
 import type { TheatreBuilder } from './theatre';
-import { PATCHABLE, WORLD, asObject, buildMap, intParam, isUuid, rasterRequest, xyzRequest } from './validate';
+import { PATCHABLE, WORLD, asObject, buildMap, intParam, isUuid, ohmRequest, rasterRequest, xyzRequest } from './validate';
+import {
+  buildOhm, ohmAssetsDir, ohmFile, OHM_ATTRIBUTION, OHM_DEFAULTS, OHM_FONTS, OHM_RANGES, OHM_SPRITES, type OhmOptions,
+} from './ohm';
+import { ohmStyle } from './ohm-style';
+import { OHM_MAXZOOM, VectorTiles } from './vector';
 
 export interface CartographyOptions {
   /** Предел тайлов в одном задании (MAX_TILES_PER_JOB). */
@@ -29,6 +35,8 @@ export interface CartographyOptions {
   /** Разрешённые источники XYZ (пусто — любые). */
   allowedHosts: string[];
   xyz: XyzOptions;
+  /** Карта OpenHistoricalMap: Overpass, файлы стиля, вежливость к серверу (userAgent — по умолчанию как у XYZ). */
+  ohm: OhmOptions;
 }
 
 export const DEFAULT_OPTIONS: CartographyOptions = {
@@ -38,6 +46,7 @@ export const DEFAULT_OPTIONS: CartographyOptions = {
   rasterMemoryBytes: 256 * 1024 * 1024,
   allowedHosts: [],
   xyz: {},
+  ohm: OHM_DEFAULTS,
 };
 
 export interface Deps {
@@ -47,6 +56,8 @@ export interface Deps {
   jobs: JobRunner;
   /** Сборка театров для переигровки (Python-сборщик); нет — маршруты отвечают 503. */
   theatre?: TheatreBuilder;
+  /** Чтение векторных тайлов (MBTiles); нет — создаётся свой. */
+  vectors?: VectorTiles;
   options?: Partial<CartographyOptions>;
 }
 
@@ -66,7 +77,9 @@ const version = (m: MapSource) => Date.parse(m.updatedAt ?? m.createdAt ?? '0').
 
 export function buildRouter(d: Deps): Router {
   const { repo, store, bus, jobs } = d;
+  const vectors = d.vectors ?? new VectorTiles();
   const o: CartographyOptions = { ...DEFAULT_OPTIONS, ...d.options };
+  o.ohm = { ...OHM_DEFAULTS, ...d.options?.ohm, userAgent: d.options?.ohm?.userAgent ?? o.xyz.userAgent };
   const r = new Router();
 
   const load = async (c: Ctx): Promise<MapSource> => {
@@ -77,12 +90,18 @@ export function buildRouter(d: Deps): Router {
   };
   const changed = (tenant: string, m: MapSource, type: 'map.created' | 'map.updated' | 'map.deleted') => bus.publish({ type, tenant, mapId: m.id });
 
-  /** После задания: пересчитать объём, сбросить кэш обрезки, обновить описание. */
+  /**
+   * После задания: пересчитать объём, сбросить кэш обрезки, обновить описание. У векторной
+   * карты объём — из итога нарезки (patch.stats) или, если его нет, один раз из MBTiles.
+   */
   const refreshMap = async (tenant: string, mapId: string, patch: (m: MapSource) => Partial<MapSource> = () => ({})) => {
     const cur = await repo.getMap(tenant, mapId);
     if (!cur) return null;
     await store.clearMasked(tenant, mapId);
-    const next: MapSource = { ...cur, ...patch(cur), stats: await store.stats(tenant, mapId), updatedAt: stamp(cur.updatedAt) };
+    const p = patch(cur);
+    const merged = { ...cur, ...p };
+    const stats = merged.kind === 'vector' ? p.stats ?? vectors.stats(ohmFile(store, tenant, mapId)) : await store.stats(tenant, mapId);
+    const next: MapSource = { ...merged, stats, updatedAt: stamp(cur.updatedAt) };
     const out = await repo.updateMap(tenant, next);
     if (out) changed(tenant, out, 'map.updated');
     return out;
@@ -106,7 +125,7 @@ export function buildRouter(d: Deps): Router {
     const b = asObject(await c.json());
     const now = stamp();
     const kind = b.kind === undefined ? 'xyz' : b.kind;
-    if (kind !== 'xyz' && kind !== 'raster') throw new HttpError(422, 'invalid', '«kind»: xyz или raster (package — только импортом пакета)');
+    if (kind !== 'xyz' && kind !== 'raster') throw new HttpError(422, 'invalid', '«kind»: xyz или raster (package — только импортом пакета, vector — через /cartography/maps/ohm или пакет)');
     const m = buildMap(b, {
       id: crypto.randomUUID(), kind, format: 'png', tileSize: 256, minzoom: 0, maxzoom: 18, bounds: WORLD,
       coverage: null, opacity: 1, sourceUrl: null, controlPoints: null, stats: { tiles: 0, bytes: 0 }, createdAt: now, updatedAt: now,
@@ -114,6 +133,66 @@ export function buildRouter(d: Deps): Router {
     const out = await repo.createMap(c.tenant, m);
     changed(c.tenant, out, 'map.created');
     return reply(201, out);
+  });
+
+  /* ------------------------------- OpenHistoricalMap ------------------------------- */
+  /** Задание карты OHM в очереди организации: загрузка участков, нарезка, замена тайлов. */
+  const startOhm = async (tenant: string, m: MapSource, bbox: BBox, refresh: boolean): Promise<MapJob> => {
+    const total = ohmCells(bbox).length + tileRange(bbox, 10).count + 1;
+    const job = await jobs.create(tenant, m.id, 'ohm-download', total);
+    jobs.enqueue(tenant, job, async (ctx) => {
+      const cur = await repo.getMap(ctx.tenant, m.id);
+      if (!cur) throw new Error('Карта удалена');
+      const out = await buildOhm(ctx, store, vectors, cur, bbox, { ...o.ohm, refresh });
+      await refreshMap(ctx.tenant, m.id, () => out.patch);
+      return { message: out.message };
+    });
+    return job;
+  };
+
+  /** Новая карта OpenHistoricalMap района: пустая векторная карта и задание загрузки. */
+  r.post('/cartography/maps/ohm', async (c) => {
+    const req = ohmRequest(await c.json());
+    const now = stamp();
+    const m = await repo.createMap(c.tenant, {
+      id: crypto.randomUUID(), name: req.name, kind: 'vector', format: 'pbf', tileSize: 512, minzoom: 0, maxzoom: OHM_MAXZOOM,
+      bounds: req.bbox, coverage: null, opacity: 1, attribution: OHM_ATTRIBUTION, date: null, sourceUrl: null, controlPoints: null,
+      stats: { tiles: 0, bytes: 0 }, ohm: null, createdAt: now, updatedAt: now,
+    });
+    changed(c.tenant, m, 'map.created');
+    const job = await startOhm(c.tenant, m, req.bbox, false);
+    return reply(202, { map: m, job });
+  });
+
+  /** Продолжить (участки из кэша) или обновить (refresh — заново) загрузку карты OHM. */
+  r.post('/cartography/maps/:id/ohm', async (c) => {
+    const m = await load(c);
+    const b = asObject((await c.json()) ?? {});
+    if (b.refresh !== undefined && typeof b.refresh !== 'boolean') throw new HttpError(422, 'invalid', '«refresh»: true или false');
+    if (m.kind !== 'vector') throw new HttpError(422, 'invalid', 'Загрузка OpenHistoricalMap — только у векторной карты (создайте её через «+ OpenHistoricalMap»)');
+    const active = (await repo.listJobs(c.tenant, m.id)).map((j) => fresh(c.tenant, j)).find((j) => j.status === 'queued' || j.status === 'running');
+    if (active) throw new HttpError(409, 'conflict', 'У карты уже идёт задание');
+    return reply(202, await startOhm(c.tenant, m, m.ohm?.bbox ?? m.bounds, b.refresh === true));
+  });
+
+  /** Шрифт стиля OHM (общий): известный стек, диапазон из 256 знаков; не скачанный диапазон — пустой ответ. */
+  r.get('/cartography/fonts/:stack/:range.pbf', async (c) => {
+    const stack = c.params.stack, rg = /^(\d{1,5})-(\d{1,5})$/.exec(c.params.range);
+    if (!OHM_FONTS.includes(stack) || !rg || Number(rg[2]) !== Number(rg[1]) + 255)
+      throw new HttpError(404, 'not_found', 'Нет такого шрифта');
+    const headers = { 'Content-Type': 'application/x-protobuf', 'Cache-Control': 'public, max-age=86400' };
+    if (!OHM_RANGES.includes(c.params.range)) return reply(200, Buffer.alloc(0), headers);
+    const data = await fs.readFile(path.join(ohmAssetsDir(store), 'fonts', stack, `${c.params.range}.pbf`)).catch(() => Buffer.alloc(0));
+    return reply(200, data, headers);
+  });
+
+  /** Значки стиля OHM (общие): ohm.json, ohm.png, ohm@2x.json, ohm@2x.png. */
+  r.get('/cartography/sprites/:name', async (c) => {
+    const name = c.params.name;
+    if (!OHM_SPRITES.includes(name)) throw new HttpError(404, 'not_found', 'Нет таких значков');
+    const data = await fs.readFile(path.join(ohmAssetsDir(store), 'sprites', name)).catch(() => null);
+    if (!data) throw new HttpError(404, 'not_found', 'Значки ещё не загружены');
+    return reply(200, data, { 'Content-Type': name.endsWith('.png') ? 'image/png' : 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=86400' });
   });
 
   /** Пакет карты (tar) из другой установки → новая карта. Тело — сам архив, читается потоком. */
@@ -220,6 +299,7 @@ export function buildRouter(d: Deps): Router {
     const unknown = Object.keys(b).filter((k) => !PATCHABLE.includes(k) && !READ_ONLY.includes(k));
     if (unknown.length) throw new HttpError(422, 'invalid', `Нельзя изменить: ${unknown.join(', ')} (можно: ${PATCHABLE.join(', ')})`);
     const patch = Object.fromEntries(Object.entries(b).filter(([k]) => PATCHABLE.includes(k)));
+    if (cur.kind === 'vector' && 'coverage' in patch) throw new HttpError(422, 'invalid', 'Граница карты (coverage) у векторной карты не применяется');
     const next = buildMap(patch, cur);
     next.updatedAt = stamp(cur.updatedAt);
     const covChanged = JSON.stringify(cur.coverage ?? null) !== JSON.stringify(next.coverage ?? null);
@@ -234,6 +314,7 @@ export function buildRouter(d: Deps): Router {
     const m = await load(c);
     await jobs.cancelMap(c.tenant, m.id);
     if (!(await repo.deleteMap(c.tenant, m.id))) throw new HttpError(404, 'not_found', 'Карта не найдена');
+    vectors.close(ohmFile(store, c.tenant, m.id)); // читатель — до удаления файла
     await store.removeMap(c.tenant, m.id);
     changed(c.tenant, m, 'map.deleted');
     return reply(204, null);
@@ -247,9 +328,19 @@ export function buildRouter(d: Deps): Router {
    */
   r.get('/cartography/maps/:id/tiles/:z/:x/:y', async (c) => {
     const m = await load(c);
-    const yy = /^(\d+)\.(png|jpg|jpeg|webp)$/.exec(c.params.y);
-    if (!yy) throw new HttpError(404, 'not_found', 'Адрес тайла: tiles/{z}/{x}/{y}.png|jpg|webp');
+    const vector = m.kind === 'vector';
+    const yy = (vector ? /^(\d+)\.(pbf)$/ : /^(\d+)\.(png|jpg|jpeg|webp)$/).exec(c.params.y);
+    if (!yy) throw new HttpError(404, 'not_found', vector ? 'Адрес тайла векторной карты: tiles/{z}/{x}/{y}.pbf' : 'Адрес тайла: tiles/{z}/{x}/{y}.png|jpg|webp');
     const z = intParam(c.params.z, 'z', 0, 22), x = intParam(c.params.x, 'x', 0, 2 ** z - 1), y = intParam(yy[1], 'y', 0, 2 ** z - 1);
+    if (vector) {
+      // векторный тайл — из MBTiles как хранится (gzip)
+      const data = vectors.get(ohmFile(store, c.tenant, m.id), z, x, y);
+      if (!data) return reply(204, null, { 'Cache-Control': 'public, max-age=60' });
+      return reply(200, data, {
+        'Content-Type': 'application/x-protobuf', 'Content-Encoding': 'gzip',
+        'Cache-Control': c.query.has('v') ? 'public, max-age=31536000, immutable' : 'public, max-age=3600',
+      });
+    }
     const t = await store.find(c.tenant, m.id, z, x, y, m.format);
     if (!t) return reply(204, null, { 'Cache-Control': 'public, max-age=60' });
     const cache = c.query.has('v') ? 'public, max-age=31536000, immutable' : 'public, max-age=3600';
@@ -287,6 +378,13 @@ export function buildRouter(d: Deps): Router {
   /** Минимальный стиль MapLibre: один растровый источник, без шрифтов и спрайтов (офлайн). */
   r.get('/cartography/maps/:id/style', async (c) => {
     const m = await load(c);
+    if (m.kind === 'vector') {
+      const prefix = publicPrefix(c);
+      return ohmStyle({
+        name: m.name, tiles: tilesUrl(c, m), bounds: m.bounds, attribution: m.attribution ?? OHM_ATTRIBUTION,
+        glyphs: `${prefix}/cartography/fonts/{fontstack}/{range}.pbf`, sprite: `${prefix}/cartography/sprites/ohm`,
+      });
+    }
     const src = `map-${m.id}`;
     return {
       version: 8, name: m.name, center: center(m), zoom: m.minzoom,

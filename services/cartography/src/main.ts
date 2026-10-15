@@ -8,6 +8,9 @@ import { TileStore } from './tiles';
 import { buildRouter } from './app';
 import { USER_AGENT } from './xyz';
 import { TheatreBuilder } from './theatre';
+import { OHM_DEFAULTS } from './ohm';
+import { VectorTiles } from './vector';
+import { OHM_OVERPASS } from '@def-ops/core';
 
 // STORAGE=postgres (по умолчанию при DATABASE_URL) — описания карт в PostgreSQL/PostGIS; memory — в памяти;
 // file — в памяти с записью в DATA_DIR/cartography.json (приложение на одной машине). Тайлы — на диске, в TILES_DIR.
@@ -29,12 +32,15 @@ const store = new TileStore(env('TILES_DIR', './data/tiles'));
 // сборка театров: THEATRE_BUILD=off — выключить; THEATRE_PYTHON, THEATRE_CACHE — свои пути
 const theatre = env('THEATRE_BUILD', 'on') === 'off' ? undefined : new TheatreBuilder({ python: process.env.THEATRE_PYTHON, cache: process.env.THEATRE_CACHE });
 
+// векторные карты OpenHistoricalMap: открытые MBTiles закрываются при остановке
+const vectors = new VectorTiles();
+
 const svc = createService({
   name: 'cartography',
   version: '0.2.0',
   port: Number(env('PORT', '8104')),
   router: buildRouter({
-    repo, store, bus, jobs, theatre,
+    repo, store, bus, jobs, theatre, vectors,
     options: {
       maxTilesPerJob: Number(env('MAX_TILES_PER_JOB', '50000')),
       maxUploadBytes: Number(env('MAX_UPLOAD_MB', '200')) * MB,
@@ -42,6 +48,13 @@ const svc = createService({
       rasterMemoryBytes: Number(env('RASTER_MEMORY_MB', '256')) * MB,
       allowedHosts: env('XYZ_ALLOWED_HOSTS', '').split(',').map((s) => s.trim()).filter(Boolean),
       xyz: { userAgent: env('XYZ_USER_AGENT', USER_AGENT), concurrency: Number(env('XYZ_CONCURRENCY', '3')) },
+      ohm: {
+        ...OHM_DEFAULTS,
+        overpassUrl: env('OHM_OVERPASS_URL', OHM_OVERPASS),
+        assetsUrl: env('OHM_ASSETS_URL', OHM_DEFAULTS.assetsUrl),
+        pauseMs: Number(env('OHM_PAUSE_MS', '1000')),
+        userAgent: env('XYZ_USER_AGENT', USER_AGENT),
+      },
     },
   }),
   bodyLimit: 5 * MB,
@@ -50,4 +63,4 @@ const svc = createService({
 // загрузка большого скана или пакета по медленной сети может идти дольше стандартных 5 минут
 svc.server.requestTimeout = Number(env('REQUEST_TIMEOUT_MS', '3600000'));
 await svc.listen();
-onShutdown(async () => { theatre?.stop(); await jobs.stop(); await svc.close(); await repo.close(); });
+onShutdown(async () => { theatre?.stop(); await jobs.stop(); vectors.closeAll(); await svc.close(); await repo.close(); });

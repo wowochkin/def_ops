@@ -12,10 +12,14 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { gunzipSync, gzipSync } from 'node:zlib';
-import { OHM_OVERPASS, type BBox, type OverpassJson } from '@def-ops/core';
+import { renameSync } from 'node:fs';
+import { OHM_CELL_DEG, OHM_OVERPASS, ohmCells, type BBox, type MapSource, type OverpassJson } from '@def-ops/core';
 import { CancelledError, type JobContext } from './jobs';
-import { writeAtomic } from './tiles';
+import { writeAtomic, type TileStore } from './tiles';
 import { USER_AGENT } from './xyz';
+import { http, netMessage } from './net';
+import { OhmCollector, type OhmFeature } from './ohm-features';
+import { tileFeatures, type VectorTiles } from './vector';
 
 export interface OhmOptions {
   /** Адрес интерпретатора Overpass OHM. */
@@ -100,6 +104,18 @@ export class OhmCellCache {
     return JSON.parse(gunzipSync(await fs.readFile(this.file(i))).toString('utf8')) as OverpassJson;
   }
 
+  /** Участок из кэша; нет — null; повреждён (gzip, JSON) — файл удаляется, null: участок скачается заново. */
+  async load(i: number): Promise<OverpassJson | null> {
+    let data: Buffer;
+    try { data = await fs.readFile(this.file(i)); } catch { return null; }
+    try {
+      const json = JSON.parse(gunzipSync(data).toString('utf8')) as OverpassJson;
+      if (json && typeof json === 'object' && Array.isArray(json.elements)) return json;
+    } catch { /* повреждён */ }
+    await fs.rm(this.file(i), { force: true });
+    return null;
+  }
+
   async write(i: number, json: OverpassJson): Promise<void> {
     await writeAtomic(this.file(i), gzipSync(Buffer.from(JSON.stringify(json))));
   }
@@ -118,12 +134,14 @@ const sleep = (ms: number, signal: AbortSignal) => new Promise<void>((resolve, r
 });
 
 /**
- * Скачать участки по порядку (участки из кэша не запрашиваются). После каждого участка —
- * ход задания `{ done, skipped, message }`. Участок не скачан после всех повторов (или ответ
- * 4xx) — ошибка «участок N из M: …»; уже скачанные остаются в кэше.
+ * Скачать участки по порядку (участки из кэша не запрашиваются; повреждённый в кэше —
+ * удаляется и скачивается заново). Ответ каждого участка (из кэша или сети) — в onCell,
+ * по порядку участков. После каждого участка — ход задания `{ done, skipped, message }`.
+ * Участок не скачан после всех повторов (или ответ 4xx) — ошибка «участок N из M: …»;
+ * уже скачанные остаются в кэше.
  */
 export async function downloadCells(
-  ctx: JobContext, cells: BBox[], cache: OhmCellCache, o: OhmOptions,
+  ctx: JobContext, cells: BBox[], cache: OhmCellCache, o: OhmOptions, onCell?: (i: number, json: OverpassJson) => void,
 ): Promise<{ fetched: number; cached: number; elements: number }> {
   const headers = { 'User-Agent': o.userAgent ?? USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' };
   const total = cells.length;
@@ -134,9 +152,11 @@ export async function downloadCells(
 
   for (let i = 0; i < total; i++) {
     ctx.check();
-    if (await cache.has(i)) {
+    const hit = await cache.load(i);
+    if (hit) {
       cached++;
-      elements += (await cache.read(i)).elements?.length ?? 0;
+      elements += hit.elements?.length ?? 0;
+      onCell?.(i, hit);
       ctx.progress({ done: ctx.job.done + 1, skipped: ctx.job.skipped + 1, message: `участок ${i + 1} из ${total}, объектов ${elements}` });
       continue;
     }
@@ -147,14 +167,14 @@ export async function downloadCells(
       await sleep(Math.max(last + o.pauseMs, Date.now() + wait) - Date.now(), ctx.signal);
       let status: number, text: string, retryAfter = 0;
       try {
-        const r = await fetch(o.overpassUrl, { method: 'POST', headers, body, signal: AbortSignal.any([ctx.signal, AbortSignal.timeout(o.timeoutMs)]) });
+        const r = await http.fetch(o.overpassUrl, { method: 'POST', headers, body, signal: AbortSignal.any([ctx.signal, AbortSignal.timeout(o.timeoutMs)]) });
         status = r.status;
         retryAfter = Number(r.headers.get('retry-after')) || 0;
         text = await r.text();
       } catch (e) {
         last = Date.now();
         ctx.check();
-        message = (e as Error).name === 'TimeoutError' ? `нет ответа за ${Math.round(o.timeoutMs / 1000)} с` : (e as Error).message;
+        message = (e as Error).name === 'TimeoutError' ? `нет ответа за ${Math.round(o.timeoutMs / 1000)} с` : netMessage(e);
         wait = o.backoffMs * 2 ** attempt;
         continue;
       }
@@ -170,6 +190,7 @@ export async function downloadCells(
     await cache.write(i, json);
     fetched++;
     elements += json.elements?.length ?? 0;
+    onCell?.(i, json);
     report(i);
   }
   return { fetched, cached, elements };
@@ -199,14 +220,14 @@ export async function ensureAssets(dir: string, o: OhmOptions, signal: AbortSign
     for (let attempt = 0; attempt <= o.retries && !data; attempt++) {
       if (attempt) await sleep(o.backoffMs * 2 ** (attempt - 1), signal);
       try {
-        const r = await fetch(url, { headers: { 'User-Agent': o.userAgent ?? USER_AGENT }, signal: AbortSignal.any([signal, AbortSignal.timeout(o.timeoutMs)]) });
+        const r = await http.fetch(url, { headers: { 'User-Agent': o.userAgent ?? USER_AGENT }, signal: AbortSignal.any([signal, AbortSignal.timeout(o.timeoutMs)]) });
         if (r.ok) { data = Buffer.from(await r.arrayBuffer()); break; }
         await r.body?.cancel();
         message = `HTTP ${r.status}`;
         if (r.status !== 429 && r.status < 500) break;
       } catch (e) {
         if (signal.aborted) throw new CancelledError();
-        message = (e as Error).name === 'TimeoutError' ? 'нет ответа' : (e as Error).message;
+        message = (e as Error).name === 'TimeoutError' ? 'нет ответа' : netMessage(e);
       }
     }
     if (!data) throw new Error(`Шрифты и значки OpenHistoricalMap: ${url}: ${message}`);
@@ -214,4 +235,69 @@ export async function ensureAssets(dir: string, o: OhmOptions, signal: AbortSign
     fetched++;
   }
   return { fetched };
+}
+
+/** Подпись векторной карты OHM. */
+export const OHM_ATTRIBUTION = '© участники OpenHistoricalMap, CC0';
+
+/** Шрифты и значки стиля OHM — общие для всех организаций (`{TILES_DIR}/.ohm-assets`). */
+export const ohmAssetsDir = (store: TileStore) => path.join(store.root, '.ohm-assets');
+/** Файл MBTiles векторной карты. */
+export const ohmFile = (store: TileStore, tenant: string, mapId: string) => path.join(store.mapDir(tenant, mapId), 'ohm.mbtiles');
+
+const mb = (bytes: number) => (bytes / 1048576).toFixed(1).replace('.', ',');
+
+/**
+ * Задание карты OHM: шрифты и значки → участки (кэш `_ohm`; refresh — кэш очищается в начале)
+ * → объекты → нарезка в `ohm.mbtiles.tmp` → читатель прежнего файла закрывается, файл заменяется
+ * → кэш удаляется. До замены показывается прежняя карта (отмена и сбой её не трогают).
+ * Итог — поля карты (patch) и сообщение задания.
+ */
+export async function buildOhm(
+  ctx: JobContext, store: TileStore, vectors: VectorTiles, map: MapSource, bbox: BBox, o: OhmOptions & { refresh?: boolean },
+): Promise<{ patch: Partial<MapSource>; message: string }> {
+  ctx.progress({ message: 'шрифты и значки' });
+  await ensureAssets(ohmAssetsDir(store), o, ctx.signal);
+  ctx.check();
+
+  const cells = ohmCells(bbox);
+  const cache = new OhmCellCache(path.join(store.mapDir(ctx.tenant, map.id), '_ohm'));
+  if (o.refresh) await cache.clear();
+  await cache.open(bbox, OHM_CELL_DEG, cells.length);
+
+  // сырые ответы участков не копятся: объекты сразу уходят в сборщик (без лишних полей)
+  let collector: OhmCollector | null = new OhmCollector();
+  await downloadCells(ctx, cells, cache, o, (_i, json) => collector!.add(json));
+  const fetchedAt = new Date().toISOString();
+
+  ctx.progress({ message: 'сборка объектов' });
+  const features: OhmFeature[] = collector.features();
+  collector = null; // объекты участков отпускаются до нарезки
+  const count = features.length;
+  ctx.progress({ message: `сборка объектов: ${count}` });
+  const description = `OpenHistoricalMap: ${count} объектов, участков ${cells.length}`;
+
+  const file = ohmFile(store, ctx.tenant, map.id);
+  const tmp = `${file}.tmp`;
+  let out: Awaited<ReturnType<typeof tileFeatures>>;
+  try {
+    out = await tileFeatures(ctx, features, bbox, tmp, { name: map.name, description });
+    ctx.check();
+  } catch (e) {
+    await fs.rm(tmp, { force: true });
+    throw e;
+  }
+  // замена: читатель прежнего файла закрывается и файл заменяется без уступки циклу событий
+  vectors.close(file);
+  renameSync(tmp, file);
+  await cache.clear();
+
+  return {
+    patch: {
+      kind: 'vector', format: 'pbf', tileSize: 512, minzoom: 0, maxzoom: 16, bounds: [...bbox] as BBox,
+      attribution: OHM_ATTRIBUTION, description, stats: { tiles: out.tiles, bytes: out.bytes },
+      ohm: { bbox: [...bbox] as BBox, cells: cells.length, features: count, layers: out.layers, fetchedAt },
+    },
+    message: `Объектов ${count}, тайлов ${out.tiles}, ${mb(out.bytes)} МБ`,
+  };
 }

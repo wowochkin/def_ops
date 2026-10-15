@@ -45,7 +45,10 @@ const services = [
   { name: 'render', env: { DOCUMENTS_URL: url('documents') } },
   { name: 'registry', env: { STORAGE: 'file', DATA_DIR: data } },
   // сборка театров требует Python с GDAL — в приложении выключена
-  { name: 'cartography', env: { STORAGE: 'file', DATA_DIR: data, TILES_DIR: join(data, 'tiles'), THEATRE_BUILD: 'off' } },
+  // нарезка карты OpenHistoricalMap всего театра держит в памяти объекты района (≈ 1 ГБ на пике):
+  // куча — с запасом, иначе предел V8 по умолчанию на машинах с 8 ГБ
+  { name: 'cartography', env: { STORAGE: 'file', DATA_DIR: data, TILES_DIR: join(data, 'tiles'), THEATRE_BUILD: 'off',
+    NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
   { name: 'gateway', env: {
     DOCUMENTS_URL: url('documents'), RENDER_URL: url('render'), REGISTRY_URL: url('registry'), CARTOGRAPHY_URL: url('cartography'),
     AUTH: 'open', LLM_URL: opt('llm', process.env.DEFOPS_LLM_URL || 'http://localhost:1234/v1'),
