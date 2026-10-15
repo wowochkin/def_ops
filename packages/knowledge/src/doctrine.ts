@@ -2,8 +2,9 @@
  * Доктрина в базе: правила «условие → действие» с числами (вид факта `doctrine`) — группы, ступени, числа правила,
  * правило словами и ключ закрепления.
  */
-import type { Claim } from './schema';
-import { pinKey } from './resolve';
+import type { Claim, Entry, Reliability } from './schema';
+import { claimFacts, pinKey, resolve, subjectOf, type Pins } from './resolve';
+import { stems } from './search';
 
 export type DoctrineClaim = Extract<Claim, { kind: 'doctrine' }>;
 
@@ -58,3 +59,72 @@ export function doctrineWords(c: DoctrineClaim): string {
 
 /** Ключ закрепления правила доктрины: doctrine|сторона:правило| (без даты). */
 export const doctrineKey = (side: 'su' | 'de', rule: string): string => pinKey('doctrine', `${side}:${rule}`, '');
+
+/** Триггеры обстановки для отбора доктрины: окружение своих, вклинение противника, давление, свой удар, резервы в тылу. */
+export type DoctrineTrigger = 'encircled' | 'penetration' | 'pressure' | 'attack' | 'reserves';
+/** Группы доктрины по триггеру и стороне (в порядке важности). */
+export const TRIGGER_GROUPS: Record<DoctrineTrigger, Record<'su' | 'de', string[]>> = {
+  encircled: { de: ['withdrawal', 'counterattack'], su: ['bypass'] },
+  penetration: { de: ['counterattack', 'reserves'], su: ['reserve', 'stop'] },
+  pressure: { de: ['withdrawal', 'layout'], su: ['stop', 'regroup'] },
+  attack: { de: ['counterattack'], su: ['echelons', 'commit', 'tempo', 'depth'] },
+  reserves: { de: ['reserves'], su: ['reserve', 'commit'] },
+};
+/** Группы без триггеров: построение обороны / ширина полос и эшелоны. */
+export const DEFAULT_GROUPS: Record<'su' | 'de', string[]> = { de: ['layout'], su: ['frontage', 'echelons'] };
+
+/** Правило доктрины для промпта: адрес факта, ключ закрепления, правило, надёжность, заголовок записи, строка. */
+export interface DoctrineRule { entry: string; index: number; key: string; claim: DoctrineClaim; reliability?: Reliability; title: string; line: string }
+
+const REL = { A: 0, B: 1, C: 2 } as const;
+
+/**
+ * Доктрина стороны к обстановке: по каждому правилу — один факт (закрепление → надёжность → свежесть; 'none' — правила
+ * нет), отбор по ступеням; сначала правила групп триггеров (по порядку групп, затем по числу общих с запросом основ,
+ * надёжности, имени правила), затем — правила других групп, у которых есть общие с запросом основы. Берутся по порядку,
+ * пока правил не больше max и текст не длиннее chars; первое правило длиннее предела обрезается с «…».
+ */
+export function doctrineFor(entries: Entry[], pins: Pins, side: 'su' | 'de', triggers: DoctrineTrigger[], query: string,
+  o: { levels?: DoctrineClaim['level'][]; max?: number; chars?: number } = {}): { rules: DoctrineRule[]; text: string } {
+  const max = o.max ?? 8, chars = o.chars ?? 4000;
+  const facts = claimFacts(entries).filter((f) => f.fact.claim!.kind === 'doctrine' && (f.fact.claim as DoctrineClaim).side === side);
+  const titles = new Map(entries.map((e) => [e.id, e.title]));
+  const q = new Set(stems(query));
+  const groups = triggers.length ? [...new Set(triggers.flatMap((t) => TRIGGER_GROUPS[t][side]))] : DEFAULT_GROUPS[side];
+
+  const picked: (DoctrineRule & { g: number; common: number })[] = [];
+  for (const subject of new Set(facts.map((f) => subjectOf(f.fact.claim!)))) {
+    const chosen = resolve(facts, 'doctrine', subject, '', pins).chosen;
+    if (!chosen) continue;
+    const claim = chosen.fact.claim as DoctrineClaim;
+    if (o.levels && !o.levels.includes(claim.level)) continue;
+    const g = groups.indexOf(claim.group);
+    const common = new Set(stems(`${claim.condition} ${claim.action}`).filter((w) => q.has(w))).size;
+    if (g < 0 && common === 0) continue;
+    const reliability = chosen.fact.reliability;
+    picked.push({
+      entry: chosen.entry, index: chosen.index, key: pinKey('doctrine', subject, ''), claim, ...(reliability ? { reliability } : {}),
+      title: titles.get(chosen.entry) ?? chosen.entry, line: `${doctrineWords(claim)}${reliability ? ` [${reliability}]` : ''}`, g, common,
+    });
+  }
+  const order = (x: { g: number }) => x.g < 0 ? groups.length : x.g;
+  picked.sort((a, b) => order(a) - order(b) || b.common - a.common
+    || (a.reliability ? REL[a.reliability] : 3) - (b.reliability ? REL[b.reliability] : 3)
+    || (a.claim.rule < b.claim.rule ? -1 : a.claim.rule > b.claim.rule ? 1 : 0));
+
+  const rules: DoctrineRule[] = [];
+  let len = 0;
+  for (const { g: _g, common: _c, ...r } of picked) {
+    if (rules.length >= max) break;
+    const item = `- ${r.line}`;
+    const add = (rules.length ? 1 : 0) + item.length;
+    if (len + add > chars) {
+      // первое правило длиннее предела — обрезается, чтобы доктрина не пропала совсем
+      if (!rules.length) rules.push({ ...r, line: `${item.slice(0, chars - 1)}…`.slice(2) });
+      break;
+    }
+    rules.push(r);
+    len += add;
+  }
+  return { rules, text: rules.map((r) => `- ${r.line}`).join('\n') };
+}
