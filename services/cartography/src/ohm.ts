@@ -136,7 +136,8 @@ const sleep = (ms: number, signal: AbortSignal) => new Promise<void>((resolve, r
 /**
  * Скачать участки по порядку (участки из кэша не запрашиваются; повреждённый в кэше —
  * удаляется и скачивается заново). Ответ каждого участка (из кэша или сети) — в onCell,
- * по порядку участков. После каждого участка — ход задания `{ done, skipped, message }`.
+ * по порядку участков. После каждого участка — ход задания: скачанный — done + 1, из кэша —
+ * skipped + 1 (done + skipped не больше total), и сообщение.
  * Участок не скачан после всех повторов (или ответ 4xx) — ошибка «участок N из M: …»;
  * уже скачанные остаются в кэше.
  */
@@ -157,7 +158,7 @@ export async function downloadCells(
       cached++;
       elements += hit.elements?.length ?? 0;
       onCell?.(i, hit);
-      ctx.progress({ done: ctx.job.done + 1, skipped: ctx.job.skipped + 1, message: `участок ${i + 1} из ${total}, объектов ${elements}` });
+      ctx.progress({ skipped: ctx.job.skipped + 1, message: `участок ${i + 1} из ${total}, объектов ${elements}` });
       continue;
     }
     const body = new URLSearchParams({ data: cellQuery(cells[i]) }).toString();
@@ -250,7 +251,7 @@ const mb = (bytes: number) => (bytes / 1048576).toFixed(1).replace('.', ',');
 /**
  * Задание карты OHM: шрифты и значки → участки (кэш `_ohm`; refresh — кэш очищается в начале)
  * → объекты → нарезка в `ohm.mbtiles.tmp` → читатель прежнего файла закрывается, файл заменяется
- * → кэш удаляется. До замены показывается прежняя карта (отмена и сбой её не трогают).
+ * (не вышло — временный файл удаляется, ошибка; кэш участков остаётся) → кэш удаляется. До замены показывается прежняя карта (отмена и сбой её не трогают).
  * Итог — поля карты (patch) и сообщение задания.
  */
 export async function buildOhm(
@@ -287,9 +288,17 @@ export async function buildOhm(
     await fs.rm(tmp, { force: true });
     throw e;
   }
-  // замена: читатель прежнего файла закрывается и файл заменяется без уступки циклу событий
+  // замена: читатель прежнего файла закрывается и файл заменяется без уступки циклу событий;
+  // не вышло (Windows: файл открыт выгрузкой пакета — EPERM) — временный файл удаляется, кэш
+  // участков остаётся: «продолжить» нарежет заново без загрузки
   vectors.close(file);
-  renameSync(tmp, file);
+  try {
+    renameSync(tmp, file);
+  } catch (e) {
+    await fs.rm(tmp, { force: true });
+    const code = (e as NodeJS.ErrnoException).code;
+    throw new Error(`Не удалось заменить файл карты${code ? ` (${code})` : ''}: он занят — например, идёт выгрузка пакета. Нажмите «продолжить», когда выгрузка закончится: участки возьмутся из кэша`);
+  }
   await cache.clear();
 
   return {

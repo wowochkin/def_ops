@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  OHM_OVERPASS, OHM_CELL_DEG, OHM_SEC_PER_CELL, OHM_MB_PER_SQDEG,
-  ohmDate, ohmYear, ohmCells, ohmEstimate, ringClosed, stitchRings, type LngLat, type BBox,
+  OHM_OVERPASS, OHM_CELL_DEG, OHM_SEC_PER_CELL, OHM_MB_PER_SQDEG, OHM_MAX_CELLS,
+  ohmDate, ohmTooLarge, ohmYear, ohmCells, ohmEstimate, ringClosed, stitchRings, type LngLat, type BBox,
 } from '../src/index';
 
 describe('ohmYear — десятичный год даты OHM', () => {
@@ -48,6 +48,17 @@ describe('ohmCells — участки 0,25°', () => {
   });
   it('рамка меньше участка — один участок, равный рамке', () => {
     expect(ohmCells([13, 52, 13.1, 52.1])).toEqual([[13, 52, 13.1, 52.1]]);
+  });
+});
+
+describe('предел района', () => {
+  it('не больше 400 участков; больше — сообщение с числом', () => {
+    expect(OHM_MAX_CELLS).toBe(400);
+    expect(ohmTooLarge(400)).toBeNull();
+    expect(ohmTooLarge(401)).toBe('район слишком велик: 401 участок, не больше 400 — разделите на части');
+    expect(ohmTooLarge(402)).toMatch(/: 402 участка,/);
+    expect(ohmTooLarge(411)).toMatch(/: 411 участков,/);
+    expect(ohmTooLarge(ohmCells([11.0, 50.9, 15.6, 54.45]).length)).toBeNull();
   });
 });
 

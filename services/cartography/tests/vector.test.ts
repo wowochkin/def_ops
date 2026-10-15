@@ -183,6 +183,16 @@ describe('нарезка в MBTiles', () => {
     vt.closeAll();
   });
 
+  it('пишет прямо в указанный файл (временный файл — у вызывающего): нет «<file>.tmp»', async () => {
+    const f = path.join(dir, 'direct.mbtiles.tmp');
+    const seen: [boolean, boolean][] = [];
+    const cc = ctx(() => seen.push([existsSync(f), existsSync(f + '.tmp')]));
+    await tileFeatures(cc, FEATURES, AREA, f, { name: 'x', description: 'x' });
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every(([own, tmp]) => own && !tmp)).toBe(true);
+    expect(existsSync(f)).toBe(true);
+  });
+
   it('отмена после первого блока — файл не создан', async () => {
     const f = path.join(dir, 'cancel.mbtiles');
     const cc = ctx((n) => { if (n >= 1) throw new CancelledError(); });

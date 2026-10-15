@@ -16,7 +16,7 @@ import { coverageKey, maskedTile, tileRelation, transparentPng } from './coverag
 import { exportPackage, importPackage, mapFromPackage } from './package';
 import { importArchive, mapFromArchive } from './archive';
 import type { TheatreBuilder } from './theatre';
-import { PATCHABLE, WORLD, asObject, buildMap, intParam, isUuid, ohmRequest, rasterRequest, xyzRequest } from './validate';
+import { PATCHABLE, WORLD, asObject, buildMap, intParam, isUuid, ohmCellsLimit, ohmRequest, rasterRequest, xyzRequest } from './validate';
 import {
   buildOhm, ohmAssetsDir, ohmFile, OHM_ATTRIBUTION, OHM_DEFAULTS, OHM_FONTS, OHM_RANGES, OHM_SPRITES, type OhmOptions,
 } from './ohm';
@@ -177,6 +177,8 @@ export function buildRouter(d: Deps): Router {
     const b = asObject((await c.json()) ?? {});
     if (b.refresh !== undefined && typeof b.refresh !== 'boolean') throw new HttpError(422, 'invalid', '«refresh»: true или false');
     if (m.kind !== 'vector') throw new HttpError(422, 'invalid', 'Загрузка OpenHistoricalMap — только у векторной карты (создайте её через «+ OpenHistoricalMap»)');
+    const bbox = m.ohm?.bbox ?? m.bounds;
+    ohmCellsLimit(bbox); // карта из пакета: район мог прийти любым
     // проверка «уже идёт» и постановка задания — под замком карты (два быстрых нажатия — одно задание)
     const key = `${c.tenant}/${m.id}`;
     if (starting.has(key)) throw new HttpError(409, 'conflict', 'У карты уже идёт задание');
@@ -184,7 +186,7 @@ export function buildRouter(d: Deps): Router {
     try {
       const active = (await repo.listJobs(c.tenant, m.id)).map((j) => fresh(c.tenant, j)).find((j) => j.status === 'queued' || j.status === 'running');
       if (active) throw new HttpError(409, 'conflict', 'У карты уже идёт задание');
-      return reply(202, await startOhm(c.tenant, m, m.ohm?.bbox ?? m.bounds, b.refresh === true));
+      return reply(202, await startOhm(c.tenant, m, bbox, b.refresh === true));
     } finally {
       starting.delete(key);
     }

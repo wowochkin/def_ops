@@ -10,7 +10,8 @@
  * (@maplibre/vt-pbf), тайл сжимается gzip; тайл без признаков не пишется.
  *
  * MBTiles 1.3: metadata(name, value), tiles(zoom_level, tile_column, tile_row, tile_data),
- * tile_row по TMS. Файл пишется во временный `<file>.tmp` и заменяет прежний в конце.
+ * tile_row по TMS. Файл пишется прямо по указанному пути (прежний удаляется в начале, при сбое
+ * и отмене — тоже); временное имя и замена готовой карты — у вызывающего (buildOhm).
  */
 import { promises as fs, statSync } from 'node:fs';
 import { DatabaseSync, type StatementSync } from 'node:sqlite';
@@ -104,9 +105,8 @@ export async function tileFeatures(
   const layers = Object.fromEntries(OHM_LAYERS.map((l) => [l, 0])) as Record<OhmLayer, number>;
   for (const f of features) layers[f.properties.layer] = (layers[f.properties.layer] ?? 0) + 1;
 
-  const tmp = `${file}.tmp`;
-  await fs.rm(tmp, { force: true });
-  const db = createMbtiles(tmp, bbox, meta);
+  await fs.rm(file, { force: true });
+  const db = createMbtiles(file, bbox, meta);
   let tiles = 0;
   try {
     const ins = db.prepare('insert or replace into tiles (zoom_level, tile_column, tile_row, tile_data) values (?, ?, ?, ?)');
@@ -182,10 +182,9 @@ export async function tileFeatures(
       await new Promise((r) => setImmediate(r)); // служба остаётся отзывчивой
     }
     db.close();
-    await fs.rename(tmp, file);
   } catch (e) {
     if (db.isOpen) db.close();
-    await fs.rm(tmp, { force: true });
+    await fs.rm(file, { force: true });
     throw e;
   }
   return { tiles, bytes: statSync(file).size, layers };

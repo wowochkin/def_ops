@@ -3,7 +3,7 @@
  * Ошибки содержания — 422 с понятным сообщением, ошибки формы запроса — 400.
  */
 import type { BBox, ControlPoint, LngLat, MapSource, RasterTileRequest, XyzDownloadRequest } from '@def-ops/core';
-import { ohmCells, validBBox } from '@def-ops/core';
+import { OHM_MAX_CELLS, ohmCells, ohmTooLarge, validBBox } from '@def-ops/core';
 import { HttpError } from '@def-ops/service-kit';
 
 export const MAX_ZOOM = 22;
@@ -176,16 +176,21 @@ export function rasterRequest(raw: unknown): RasterTileRequest {
   return out;
 }
 
-/** Больше участков OHM в одной карте нельзя. */
-export const MAX_OHM_CELLS = 1000;
+/** Больше участков OHM в одной карте нельзя (память службы на нарезку). */
+export const MAX_OHM_CELLS = OHM_MAX_CELLS;
+
+/** Район карты OHM не больше предела, иначе 422 «Район слишком велик: …». */
+export function ohmCellsLimit(box: BBox): void {
+  const msg = ohmTooLarge(ohmCells(box).length);
+  if (msg) throw bad(msg[0].toUpperCase() + msg.slice(1));
+}
 
 /** Запрос карты OpenHistoricalMap: имя и рамка (не больше MAX_OHM_CELLS участков). */
 export function ohmRequest(raw: unknown): { name: string; bbox: BBox } {
   const b = asObject(raw);
   const name = str(b.name, 'name', 200, true)!;
   const box = bbox(b.bbox, 'bbox');
-  const n = ohmCells(box).length;
-  if (n > MAX_OHM_CELLS) throw bad(`Район — ${n.toLocaleString('ru-RU')} участков загрузки, больше предела ${MAX_OHM_CELLS} (по 0,25°); уменьшите район`);
+  ohmCellsLimit(box);
   return { name, bbox: box };
 }
 

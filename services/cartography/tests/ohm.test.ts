@@ -120,8 +120,10 @@ describe('downloadCells', () => {
     const r = await downloadCells(c, CELLS, again, opts);
     expect(fake.hits.map((h) => cellOf(h.query))).toEqual([1, 2]);
     expect(r).toMatchObject({ fetched: 2, cached: 1, elements: 6 });
+    // участок из кэша — пропущен, а не сделан: ход done + skipped не больше числа участков
     expect(c.job.skipped).toBe(1);
-    expect(c.job.done).toBe(3);
+    expect(c.job.done).toBe(2);
+    expect(c.job.done + c.job.skipped).toBe(CELLS.length);
   });
 
   it('отмена во время паузы — CancelledError, участка нет', async () => {
@@ -213,7 +215,7 @@ function check(list: OhmFeature[]) {
 
   const bnd = list.filter((f) => f.properties.layer === 'boundaries')[0];
   expect(bnd.geometry.type).toBe('LineString');
-  expect(bnd.properties.id).toMatch(/^r10[23]\/w16$/);
+  expect(bnd.properties.id).toBe('w16/0');
   expect(bnd.properties).toMatchObject({ class: 'country', admin_level: 2, minzoom: 0 });
   expect(bnd.properties.from).toBeCloseTo(1938.1945, 4);
   expect(bnd.properties.to).toBeCloseTo(1945.3479, 4);
@@ -248,6 +250,49 @@ describe('OhmCollector', () => {
     const kept = (c as unknown as { ways: Map<number, Record<string, unknown>> }).ways.get(7)!;
     expect(Object.keys(kept).sort()).toEqual(['geometry', 'id', 'tags', 'type']);
     expect(c.features()).toHaveLength(1);
+  });
+
+  it('границы: путь в отношениях разных лет — один признак на слитый промежуток, геометрия общая', () => {
+    const c = new OhmCollector();
+    const rel = (id: number, from: string, to: string, ways = [16]) => ({
+      type: 'relation' as const, id, tags: { type: 'boundary', boundary: 'administrative', admin_level: '2', name: `Г${id}`, start_date: from, end_date: to },
+      members: ways.map((ref) => ({ type: 'way' as const, ref, role: 'outer' })),
+    });
+    c.add({ elements: [
+      { type: 'way', id: 16, geometry: [{ lon: 13.30, lat: 52.45 }, { lon: 13.35, lat: 52.47 }] },
+      { type: 'way', id: 17, geometry: [{ lon: 13.35, lat: 52.47 }, { lon: 13.40, lat: 52.48 }] },
+      rel(200, '1900', '1918', [16, 17]), rel(201, '1918', '1937'), rel(202, '1945', '1990'),
+      // другой уровень — свой признак
+      { type: 'relation', id: 203, tags: { type: 'boundary', boundary: 'administrative', admin_level: '6', start_date: '1920', end_date: '1950' }, members: [{ type: 'way', ref: 16, role: 'outer' }] },
+    ] });
+    const bnd = c.features().filter((f) => f.properties.layer === 'boundaries');
+    const w16 = bnd.filter((f) => f.properties.id.startsWith('w16') && f.properties.admin_level === 2);
+    expect(w16).toHaveLength(2);
+    expect(w16[0].properties.from).toBeCloseTo(1900, 4);
+    expect(w16[0].properties.to).toBeCloseTo(1937.989, 3);
+    expect(w16[1].properties.from).toBeCloseTo(1945, 4);
+    expect(w16[1].properties.to).toBeCloseTo(1990.989, 3);
+    expect(w16[0].geometry).toBe(w16[1].geometry); // координаты не копируются
+    expect(w16[0].properties.name).toBeUndefined(); // имена отношений разные
+    expect(bnd.filter((f) => f.properties.id.startsWith('w16') && f.properties.admin_level === 6)).toHaveLength(1);
+    expect(bnd.filter((f) => f.properties.id.startsWith('w17'))).toHaveLength(1);
+    expect(bnd.find((f) => f.properties.id.startsWith('w17'))!.properties.name).toBe('Г200');
+    expect(bnd).toHaveLength(4);
+  });
+
+  it('границы: открытый конец поглощает промежутки', () => {
+    const c = new OhmCollector();
+    const rel = (id: number, tags: Record<string, string>) => ({
+      type: 'relation' as const, id, tags: { type: 'boundary', boundary: 'administrative', admin_level: '4', ...tags }, members: [{ type: 'way' as const, ref: 1, role: 'outer' }],
+    });
+    c.add({ elements: [
+      { type: 'way', id: 1, geometry: [{ lon: 13, lat: 52 }, { lon: 13.1, lat: 52.1 }] },
+      rel(1, { start_date: '1900', end_date: '1910' }), rel(2, { end_date: '1880' }), rel(3, { start_date: '1950' }), rel(4, { start_date: '1870', end_date: '1960' }),
+    ] });
+    const bnd = c.features().filter((f) => f.properties.layer === 'boundaries');
+    expect(bnd).toHaveLength(1);
+    expect(bnd[0].properties.from).toBeUndefined();
+    expect(bnd[0].properties.to).toBeUndefined();
   });
 
   it('значимое место — только с именем', () => {

@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import http from 'node:http';
 import path from 'node:path';
 import { promises as fs, existsSync, readdirSync, readlinkSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import type { AddressInfo } from 'node:net';
 import tar from 'tar-stream';
 import { PbfReader } from 'pbf';
@@ -197,7 +198,10 @@ describe('карта OHM: задание', { timeout: 60_000 }, () => {
     expect((await post('/cartography/maps/ohm', { name: 'В', bbox: [13.75, 52.4, 13.25, 52.65] })).status).toBe(422);
     const big = await post('/cartography/maps/ohm', { name: 'В', bbox: [0, 0, 10, 30] });
     expect(big.status).toBe(422);
-    expect(big.body.error.message).toContain('1000');
+    expect(big.body.error.message).toMatch(/^Район слишком велик: [\d\s\u00a0]+ участк(а|ов)?, не больше 400 — разделите на части$/);
+    const over = await post('/cartography/maps/ohm', { name: 'В', bbox: [0, 0, 100.25, 0.25] }); // 401 участок
+    expect(over.status).toBe(422);
+    expect(over.body.error.message).toBe('Район слишком велик: 401 участок, не больше 400 — разделите на части');
     expect((await get('/cartography/maps')).body).toEqual([]);
 
     const { map } = await ready();
@@ -226,7 +230,7 @@ describe('карта OHM: задание', { timeout: 60_000 }, () => {
     expect(c.status).toBe(202);
     expect(c.body).toMatchObject({ type: 'ohm-download', total: TOTAL });
     const j2 = await job(c.body.id);
-    expect(j2).toMatchObject({ status: 'done', skipped: 1 });
+    expect(j2).toMatchObject({ status: 'done', skipped: 1, done: TOTAL - 1, total: TOTAL });
     expect(overpassHits().map((h) => cellOf(h.query))).toEqual([1]);
     expect((await get(`/cartography/maps/${r.body.map.id}`)).body.ohm.features).toBe(10);
   });
@@ -258,7 +262,7 @@ describe('карта OHM: задание', { timeout: 60_000 }, () => {
     fake.hits.length = 0;
     const c = await post(`/cartography/maps/${map.id}/ohm`, {});
     const j = await job(c.body.id);
-    expect(j).toMatchObject({ status: 'done', skipped: 1 });
+    expect(j).toMatchObject({ status: 'done', skipped: 1, done: TOTAL - 1, total: TOTAL });
     expect(overpassHits().map((h) => cellOf(h.query))).toEqual([1]);
     const after = (await get(`/cartography/maps/${map.id}`)).body as MapSource;
     expect(Date.parse(after.ohm!.fetchedAt)).toBeGreaterThan(Date.parse(fetchedAt));
@@ -301,9 +305,24 @@ describe('карта OHM: задание', { timeout: 60_000 }, () => {
     const c = await post(`/cartography/maps/${id}/ohm`, {}, 'orgA', run2);
     expect(c.status).toBe(202);
     const j = await job(c.body.id, 'orgA', run2);
-    expect(j).toMatchObject({ status: 'done', skipped: 1 });
+    expect(j).toMatchObject({ status: 'done', skipped: 1, done: TOTAL - 1, total: TOTAL });
     expect(overpassHits().map((h) => cellOf(h.query))).toEqual([1]);
     expect((await tile(id, BUILDING, 13, 'orgA', 'pbf', run2)).status).toBe(200);
+  });
+
+  it('файл карты не заменить (занят) — задание failed с понятным сообщением, временный файл удалён, кэш участков цел', async () => {
+    const { map } = await ready();
+    const file = path.join(mapDir(map.id), 'ohm.mbtiles');
+    // замена не удаётся: на месте файла — непустая папка (как файл, открытый выгрузкой пакета в Windows)
+    await fs.rm(file);
+    await fs.mkdir(path.join(file, 'x'), { recursive: true });
+    const r = await post(`/cartography/maps/${map.id}/ohm`, {});
+    const j = await job(r.body.id);
+    expect(j.status).toBe('failed');
+    expect(j.message).toMatch(/^Не удалось заменить файл карты/);
+    const left = (await files(mapDir(map.id))).map((f) => path.relative(mapDir(map.id), f));
+    expect(left.filter((f) => f.endsWith('.tmp'))).toEqual([]);
+    expect(left.filter((f) => f.startsWith(path.join('_ohm', 'cells')))).toHaveLength(2);
   });
 
   it('пакет: map.json, ohm.mbtiles, шрифты и значки → другая организация байт в байт', async () => {
@@ -429,6 +448,43 @@ describe('карта OHM: границы векторной карты', { timeo
     await until(() => logged.some((l) => l.includes('/package') && l.includes('"level":"info"')), 5000); // обработчик завершился
     expect(logged.filter((l) => l.includes('"level":"error"'))).toEqual([]);
     expect((await get(`/cartography/maps/${map.id}`)).status).toBe(200);
+  });
+
+  it('пакет: район OHM больше предела — 422, карта не остаётся; tiles — не таблица — 422', async () => {
+    const { map } = await ready();
+    const entries = await untar(Buffer.from(await (await raw(`/cartography/maps/${map.id}/package`)).arrayBuffer()));
+    const meta = JSON.parse(entries.get('map.json')!.toString('utf8'));
+    meta.ohm.bbox = [0, 0, 100.25, 0.25]; // 401 участок
+    const big = await pack([['map.json', Buffer.from(JSON.stringify(meta))], ['ohm.mbtiles', entries.get('ohm.mbtiles')!]]);
+    const r = await raw('/cartography/maps/import-package', { method: 'POST', body: bin(big) }, 'orgB');
+    expect(r.status).toBe(422);
+    expect((await r.json()).error.message).toMatch(/Район слишком велик: 401 участок/);
+    expect((await get('/cartography/maps', 'orgB')).body).toEqual([]);
+
+    // без сведений OHM, рамка карты велика: «продолжить» и «обновить» — 422, задание не ставится
+    const loose = { ...meta, ohm: undefined, bounds: [0, 0, 100.25, 0.25] };
+    const lr = await raw('/cartography/maps/import-package', { method: 'POST', body: bin(await pack([['map.json', Buffer.from(JSON.stringify(loose))], ['ohm.mbtiles', entries.get('ohm.mbtiles')!]])) }, 'orgB');
+    expect(lr.status).toBe(201);
+    const lm = ((await lr.json()) as { map: MapSource }).map;
+    const cont = await post(`/cartography/maps/${lm.id}/ohm`, { refresh: true }, 'orgB');
+    expect(cont.status).toBe(422);
+    expect(cont.body.error.message).toMatch(/Район слишком велик/);
+    expect((await get(`/cartography/jobs?mapId=${lm.id}`, 'orgB')).body.filter((j: MapJob) => j.type === 'ohm-download')).toEqual([]);
+    expect((await call('DELETE', `/cartography/maps/${lm.id}`, undefined, 'orgB')).status).toBe(204);
+
+    // tiles и metadata — представления (view), а не таблицы
+    const dir = await tempDir();
+    const file = path.join(dir, 'view.mbtiles');
+    const db = new DatabaseSync(file);
+    db.exec(`create table t (zoom_level integer, tile_column integer, tile_row integer, tile_data blob);
+      create table m (name text, value text); insert into m values ('format', 'pbf');
+      create view tiles as select * from t; create view metadata as select * from m;`);
+    db.close();
+    const views = await pack([['map.json', entries.get('map.json')!], ['ohm.mbtiles', await fs.readFile(file)]]);
+    const v = await raw('/cartography/maps/import-package', { method: 'POST', body: bin(views) }, 'orgB');
+    expect(v.status).toBe(422);
+    expect((await v.json()).error.message).toContain('ohm.mbtiles');
+    expect((await get('/cartography/maps', 'orgB')).body).toEqual([]);
   });
 
   it('пакет: ohm.mbtiles до map.json — 422, файлы не пишутся; негодные шрифты и значки не пишутся', async () => {

@@ -22,7 +22,7 @@ import { validBBox, type MapSource } from '@def-ops/core';
 import { HttpError } from '@def-ops/service-kit';
 import type { JobContext } from './jobs';
 import { detectFormat, writeAtomic, type TileStore } from './tiles';
-import { asObject, buildMap, rasterRequest, WORLD } from './validate';
+import { asObject, buildMap, ohmCellsLimit, rasterRequest, WORLD } from './validate';
 import { OHM_FONTS, OHM_RANGES, OHM_SPRITES, ohmAssetsDir, ohmFile } from './ohm';
 
 /** Не больше этого на один тайл в пакете. */
@@ -97,11 +97,15 @@ function assetFiles(dir: string): [string, string][] {
   return out;
 }
 
-/** Сведения OHM карты из пакета (проверка формы); не годятся — null. */
+/**
+ * Сведения OHM карты из пакета (проверка формы); не годятся — null. Район больше предела участков
+ * (по нему пойдут «продолжить» и «обновить») — 422.
+ */
 function ohmMeta(v: unknown): MapSource['ohm'] {
   const o = v as NonNullable<MapSource['ohm']>;
   if (!o || typeof o !== 'object' || !validBBox(o.bbox) || !Number.isInteger(o.cells) || !Number.isInteger(o.features)
     || !o.layers || typeof o.layers !== 'object' || typeof o.fetchedAt !== 'string' || o.fetchedAt.length > 64) return null;
+  ohmCellsLimit(o.bbox);
   const layers: Record<string, number> = {};
   for (const [k, n] of Object.entries(o.layers)) if (/^[a-z_]{1,32}$/.test(k) && Number.isInteger(n)) layers[k] = n;
   return { bbox: [...o.bbox], cells: o.cells, features: o.features, layers, fetchedAt: o.fetchedAt };
@@ -262,11 +266,16 @@ export function validAsset(name: string, data: Buffer): boolean {
   } catch { return false; }
 }
 
-/** MBTiles векторных тайлов (format = pbf, таблица tiles): число тайлов; иначе — 422. */
+/**
+ * MBTiles векторных тайлов (format = pbf; metadata и tiles — таблицы, а не представления, триггеры
+ * или виртуальные таблицы): число тайлов; иначе — 422.
+ */
 function checkMbtiles(file: string): number {
   let db: DatabaseSync | null = null;
   try {
     db = new DatabaseSync(file, { readOnly: true });
+    const tables = db.prepare("select name from sqlite_master where type = 'table' and name in ('metadata', 'tiles') and sql not like 'create virtual%' collate nocase").all() as { name: string }[];
+    if (tables.length !== 2) throw new Error('tables');
     const f = db.prepare("select value from metadata where name = 'format'").get() as { value: string } | undefined;
     if (f?.value !== 'pbf') throw new Error('format');
     return (db.prepare('select count(*) as n from tiles').get() as { n: number }).n;

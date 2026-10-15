@@ -5,6 +5,11 @@
  * строятся после загрузки всех участков: кольца мультиполигонов и линии границ — из путей,
  * пришедших в любом участке (отношения в ответе — только ссылки на членов). Отношение,
  * чьё кольцо не замкнулось (член за краем района), пропускается.
+ *
+ * Границы: один путь входит в отношения-границы разных лет (у театра — до ~40 отношений на путь).
+ * Признак строится не на каждое отношение, а на путь и уровень (admin_level): промежутки
+ * действия отношений сливаются (пересекающиеся и смежные — до суток; открытый конец поглощает
+ * всё с его стороны), на каждый слитый промежуток — один признак с общими координатами пути.
  */
 import type { Feature, LineString, Point, Polygon } from 'geojson';
 import { ohmYear, pointInRing, ringClosed, stitchRings, type LngLat, type OverpassElement, type OverpassJson } from '@def-ops/core';
@@ -17,7 +22,7 @@ export interface OhmProps {
   class: string;
   /** Уровень, с которого признак попадает в тайлы. */
   minzoom: 0 | 8 | 10 | 13;
-  /** `n1`, `w10`, `r100/0` (номер внешнего кольца), `r102/w16` (член границы). */
+  /** `n1`, `w10`, `r100/0` (номер внешнего кольца), `w16/0` (граница по пути: номер слитого промежутка). */
   id: string;
   name?: string;
   /** Начало и конец, десятичный год (4 знака); нет — «всегда». */
@@ -108,6 +113,25 @@ function props(cls: Cls, id: string, t: Tags): OhmProps {
   return p;
 }
 
+/** Промежуток действия границы (без даты — бесконечность) и имя (разные имена — без имени). */
+interface Span { from: number; to: number; name?: string }
+/** Смежные промежутки (зазор не больше суток) сливаются. */
+const SPAN_GAP = 1.5 / 365;
+
+/** Слить пересекающиеся и смежные промежутки; по возрастанию начала. */
+export function mergeSpans(spans: Span[]): Span[] {
+  const sorted = [...spans].sort((a, b) => a.from - b.from || a.to - b.to);
+  const out: Span[] = [];
+  for (const s of sorted) {
+    const last = out[out.length - 1];
+    if (last && s.from <= last.to + SPAN_GAP) {
+      if (s.to > last.to) last.to = s.to;
+      if (last.name !== s.name) last.name = undefined;
+    } else out.push({ ...s });
+  }
+  return out;
+}
+
 const coords = (w: OverpassElement): LngLat[] => (w.geometry ?? []).filter(Boolean).map((g) => [g.lon, g.lat] as LngLat);
 const byId = (a: OverpassElement, b: OverpassElement) => a.id - b.id;
 
@@ -145,8 +169,15 @@ export class OhmCollector {
 
   features(): OhmFeature[] {
     const out: OhmFeature[] = [];
-    const boundarySeen = new Set<string>();
-    const boundaryKey = (wayId: number, p: OhmProps) => `${wayId}|${p.admin_level ?? ''}|${p.from ?? ''}|${p.to ?? ''}`;
+    /** Границы по пути и уровню: геометрия, класс, промежутки (с именем). */
+    const bounds = new Map<string, { way: number; c: LngLat[]; cls: Cls; level?: number; spans: Span[] }>();
+    const boundary = (wayId: number, c: LngLat[], cls: Cls, t: Tags) => {
+      const p = props(cls, '', t);
+      const k = `${wayId}|${p.admin_level ?? ''}`;
+      let b = bounds.get(k);
+      if (!b) bounds.set(k, b = { way: wayId, c, cls, level: p.admin_level, spans: [] });
+      b.spans.push({ from: p.from ?? -Infinity, to: p.to ?? Infinity, name: p.name });
+    };
 
     for (const n of [...this.nodes.values()].sort(byId)) {
       const t = n.tags ?? {};
@@ -168,13 +199,8 @@ export class OhmCollector {
       }
       const line = classify(t, 'line');
       if (!line) continue;
-      const p = props(line, `w${w.id}`, t);
-      if (line.layer === 'boundaries') {
-        const k = boundaryKey(w.id, p);
-        if (boundarySeen.has(k)) continue;
-        boundarySeen.add(k);
-      }
-      out.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: c }, properties: p });
+      if (line.layer === 'boundaries') { boundary(w.id, c, line, t); continue; }
+      out.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: c }, properties: props(line, `w${w.id}`, t) });
     }
 
     for (const r of [...this.rels.values()].sort(byId)) {
@@ -203,13 +229,22 @@ export class OhmCollector {
           const w = this.ways.get(m.ref);
           const c = w ? coords(w) : [];
           if (c.length < 2) continue;
-          const p = props(cls, `r${r.id}/w${m.ref}`, t);
-          const k = boundaryKey(m.ref, p);
-          if (boundarySeen.has(k)) continue;
-          boundarySeen.add(k);
-          out.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: c }, properties: p });
+          boundary(m.ref, c, cls, t);
         }
       }
+    }
+
+    // границы: по пути (по id) и уровню — признак на слитый промежуток, координаты пути общие
+    for (const b of [...bounds.values()].sort((x, y) => x.way - y.way || (x.level ?? -1) - (y.level ?? -1))) {
+      const geometry: LineString = { type: 'LineString', coordinates: b.c };
+      mergeSpans(b.spans).forEach((s, k) => {
+        const p: OhmProps = { ...b.cls, id: `w${b.way}/${k}` };
+        if (s.name) p.name = s.name;
+        if (s.from !== -Infinity) p.from = s.from;
+        if (s.to !== Infinity) p.to = s.to;
+        if (b.level !== undefined) p.admin_level = b.level;
+        out.push({ type: 'Feature', geometry, properties: p });
+      });
     }
     return out;
   }

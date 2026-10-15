@@ -7,11 +7,12 @@
 import { SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ohmEstimate, parseOziMap, tileCount, validBBox, type BBox, type ControlPoint, type Feature, type ImageOverlay, type LngLat, type MapDocument, type MapJob, type MapSource,
+  ohmEstimate, ohmTooLarge, parseOziMap, tileCount, validBBox, type BBox, type ControlPoint, type Feature, type ImageOverlay, type LngLat, type MapDocument, type MapJob, type MapSource,
 } from '@def-ops/core';
 import type { MapEngine } from './engine/types';
 import { ask } from './dialogs';
 import { BUILTIN, getData } from './sim/userdata';
+import { packageBlocked } from './map-actions';
 
 const API = '/api/cartography';
 
@@ -193,7 +194,9 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMap
               граница = контур
             </button>}
             {!vector && m.coverage && <button onClick={async () => { await cartography.update(m.id, { coverage: null }); reload(); }}>снять границу</button>}
-            <a className="btnlink" href={cartography.packageUrl(m.id)} title="Выгрузить пакет для переноса в закрытый контур">пакет ↓</a>
+            {packageBlocked(m)
+              ? <button disabled title={packageBlocked(m)!}>пакет ↓</button>
+              : <a className="btnlink" href={cartography.packageUrl(m.id)} title="Выгрузить пакет для переноса в закрытый контур">пакет ↓</a>}
             <button className="danger" onClick={async () => { if (!(await ask(`Удалить карту «${m.name}» со всеми тайлами?`))) return; try { await cartography.remove(m.id); } catch (e) { setErr((e as Error).message); } reload(); }}>✕</button>
           </div>
         </div>
@@ -279,7 +282,7 @@ function OhmForm({ engine, onDone, onError }: { engine: MapEngine | null; onDone
   const areaName = sel === VIEW ? 'текущий вид' : theatre?.name ?? '';
   useEffect(() => { if (!named) setName(`OpenHistoricalMap — ${areaName}`); }, [areaName, named]);
   const est = useMemo(() => (bbox && validBBox(bbox) ? ohmEstimate(bbox) : null), [bbox]);
-  const tooMany = (est?.cells ?? 0) > 1000;
+  const tooMany = est ? ohmTooLarge(est.cells) : null;
   return (
     <div className="xyzform">
       <div className="row"><span className="lbl">Район</span><span className="ctl">
@@ -294,10 +297,10 @@ function OhmForm({ engine, onDone, onError }: { engine: MapEngine | null; onDone
       </div>
       <label className="row"><span className="lbl">Название</span><span className="ctl"><input value={name} onChange={(e) => { setName(e.target.value); setNamed(true); }} /></span></label>
       {est && <div className={tooMany ? 'err' : 'muted'}>
-        Участков {est.cells.toLocaleString('ru-RU')} · ≈ {est.minutes} мин · ≈ {est.mb} МБ{tooMany ? ' — больше 1000 участков, уменьшите район' : ''}
+        Участков {est.cells.toLocaleString('ru-RU')} · ≈ {est.minutes} мин · ≈ {est.mb} МБ{tooMany ? ` — ${tooMany}` : ''}
       </div>}
       <div className="btns">
-        <button disabled={!bbox || !est || tooMany || !name.trim() || busy} onClick={async () => {
+        <button disabled={!bbox || !est || !!tooMany || !name.trim() || busy} onClick={async () => {
           setBusy(true);
           try {
             const r = await cartography.createOhm({ name: name.trim(), bbox: bbox! });
