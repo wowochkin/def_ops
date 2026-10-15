@@ -9,10 +9,13 @@ import type { BBox } from './cartography';
 export const OHM_OVERPASS = 'https://overpass-api.openhistoricalmap.org/api/interpreter';
 /** Шаг участка загрузки, градусы. */
 export const OHM_CELL_DEG = 0.25;
-/** Оценка: секунд на участок. */
-export const OHM_SEC_PER_CELL = 6;
-/** Оценка: мегабайт на квадратный градус. */
-export const OHM_MB_PER_SQDEG = 25;
+/**
+ * Оценка: секунд на участок — всё задание (участки с паузой 1 с, сборка, нарезка), делённое на число
+ * участков; замер по театру «Одер — Берлин — Эльба»: 285 участков, 641 с (участки — 497 с, сборка и нарезка — 144 с).
+ */
+export const OHM_SEC_PER_CELL = 2.25;
+/** Оценка: мегабайт (10⁶ байт) на квадратный градус; тот же замер: 261,0 МБ на 16,33 кв. градуса. */
+export const OHM_MB_PER_SQDEG = 16;
 
 /** Элемент ответа Overpass (`out body geom`). */
 export type OverpassElement = {
