@@ -464,8 +464,15 @@ function simplify(pts: LngLat[], tol: number): LngLat[] {
   return pts.filter((_, i) => keep[i]);
 }
 
-/** Ответ Overpass на `out tags geom`: у путей — геометрия, у отношений — у членов. */
-export type OsmJson = { elements?: { type: string; id?: number; tags?: Record<string, string>; geometry?: { lat: number; lon: number }[]; members?: { type: string; ref: number; role: string; geometry?: { lat: number; lon: number }[] }[] }[] };
+/**
+ * Ответ Overpass: пути — `out tags geom` (геометрия у пути), отношения — `out body geom` (члены с геометрией; член-узел —
+ * с lat/lon; bounds — рамка элемента).
+ */
+export type OsmJson = { elements?: {
+  type: string; id?: number; tags?: Record<string, string>; geometry?: { lat: number; lon: number }[]; nodes?: number[];
+  bounds?: { minlat: number; minlon: number; maxlat: number; maxlon: number };
+  members?: { type: string; ref: number; role: string; geometry?: { lat: number; lon: number }[]; lat?: number; lon?: number }[];
+}[] };
 /** Линия OSM → куски внутри рамки, упрощённые (~10 м). */
 function clipRuns(geom: { lat: number; lon: number }[], b: [number, number, number, number]): LngLat[][] {
   const inB = (p: LngLat) => p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3];
@@ -495,10 +502,13 @@ export function osmToRoads(json: OsmJson, b: [number, number, number, number]): 
 
 /** Классы водотоков OSM для сверки: реки и каналы (ручьи — нет: на картах 1:100 000 их почти не видно). */
 export const OSM_WATERWAY = ['river', 'canal'];
-/** Запрос Overpass: дороги, водотоки и болота (пути и мультиполигоны) в рамке — одним запросом. */
+/**
+ * Запрос Overpass: дороги, водотоки и болота в рамке — одним запросом. Пути — `out tags geom`; мультиполигоны болот —
+ * отдельно `out body geom` (`out tags` не выводит членов отношения). Ответ — не больше 256 МБ.
+ */
 export function osmNetworkQuery(b: [number, number, number, number]): string {
   const bb = `${b[1]},${b[0]},${b[3]},${b[2]}`;
-  return `[out:json][timeout:180];(way["highway"~"^(${[...OSM_HIGHWAY, ...OSM_ROAD].join('|')})$"](${bb});way["waterway"~"^(${OSM_WATERWAY.join('|')})$"](${bb});way["natural"="wetland"](${bb});relation["natural"="wetland"](${bb}););out tags geom;`;
+  return `[out:json][timeout:180][maxsize:268435456];(way["highway"~"^(${[...OSM_HIGHWAY, ...OSM_ROAD].join('|')})$"](${bb});way["waterway"~"^(${OSM_WATERWAY.join('|')})$"](${bb});way["natural"="wetland"](${bb}););out tags geom;relation["natural"="wetland"](${bb});out body geom;`;
 }
 /** Ответ Overpass → реки и каналы в формате театра (major — нет: большие реки театра остаются свои). */
 export function osmToRivers(json: OsmJson, b: [number, number, number, number]): { name: string; line: LngLat[]; major: boolean }[] {
@@ -692,23 +702,26 @@ const boxesMeet = (a: [number, number, number, number], b: [number, number, numb
 
 /**
  * Ответ Overpass → болота (natural=wetland): замкнутый путь — кольцо без дыр; отношение — внешние кольца из склеенных
- * членов outer, дыры (inner) — к внешнему кольцу, содержащему их первую точку. Незамкнутый путь, член без геометрии,
- * незамкнувшееся кольцо, кольцо вне рамки — пропуск. Без обрезки рамкой.
+ * членов outer (и с пустой ролью — старая схема мультиполигонов), дыры (inner) — к внешнему кольцу, содержащему их первую
+ * точку. Незамкнутый путь, член без геометрии, незамкнувшееся кольцо, кольцо вне рамки — пропуск. Кольца упрощаются с
+ * допуском tol, градусы (для сетки поправки — около четверти клетки); кольцо, где после упрощения меньше четырёх точек,
+ * — пропуск. Без обрезки рамкой.
  */
-export function osmToWetlands(json: OsmJson, b: [number, number, number, number]): Wetland[] {
+export function osmToWetlands(json: OsmJson, b: [number, number, number, number], tol = 0.0001): Wetland[] {
   const out: Wetland[] = [];
   const pts = (g: { lat: number; lon: number }[]) => g.map((q) => [q.lon, q.lat] as LngLat);
   const keep = (r: LngLat[]) => boxesMeet(ringBox(r), b);
+  const simp = (r: LngLat[]) => { const x = simplifyRing(r, tol); return x.length >= 4 ? x : null; };
   for (const el of json.elements ?? []) {
     if (el.tags?.natural !== 'wetland') continue;
     if (el.type === 'way') {
       if (!el.geometry) continue;
-      const r = pts(el.geometry);
-      if (closed(r) && keep(r)) out.push({ outer: simplifyRing(r, 0.0001), holes: [] });
+      const r = pts(el.geometry), x = closed(r) && keep(r) ? simp(r) : null;
+      if (x) out.push({ outer: x, holes: [] });
     } else if (el.type === 'relation') {
-      const of = (role: string) => stitch((el.members ?? []).filter((m) => m.type === 'way' && m.role === role && m.geometry).map((m) => pts(m.geometry!)));
-      const outers = of('outer').filter(keep).map((r) => ({ raw: r, w: { outer: simplifyRing(r, 0.0001), holes: [] as LngLat[][] } }));
-      for (const h of of('inner')) outers.find((o) => inRing(h[0], o.raw))?.w.holes.push(simplifyRing(h, 0.0001));
+      const of = (roles: string[]) => stitch((el.members ?? []).filter((m) => m.type === 'way' && roles.includes(m.role) && m.geometry).map((m) => pts(m.geometry!)));
+      const outers = of(['outer', '']).filter(keep).flatMap((r) => { const x = simp(r); return x ? [{ raw: r, w: { outer: x, holes: [] as LngLat[][] } }] : []; });
+      for (const h of of(['inner'])) { const x = simp(h); if (x) outers.find((o) => inRing(h[0], o.raw))?.w.holes.push(x); }
       out.push(...outers.map((o) => o.w));
     }
   }
@@ -739,19 +752,48 @@ export function modernMarsh(T: Pick<TheatreData, 'terrainGrid'>, wetlands: Wetla
   const mi = TERRAIN_CLASSES.indexOf('marsh'), wi = TERRAIN_CLASSES.indexOf('water');
   const marsh = new Uint8Array(N), water = new Uint8Array(N);
   for (let i = 0; i < N; i++) { if (k[i] === mi) marsh[i] = 1; if (k[i] === wi) water[i] = 1; }
-  const [w, s, e, n] = grid.bbox, dl = (e - w) / grid.cols, da = (n - s) / grid.rows;
-  let osmCells = 0;
+  const osmCells = rasterWetlands(wetlands, grid, marsh);
+  return { marsh, water, osmCells };
+}
+
+/**
+ * Болота на сетку построчно (по центрам клеток, чёт-нечет по всем кольцам болота, включая дыры — как inWetland):
+ * пересечения рёбер со строками центров, клетки между парами пересечений. Каждое болото — отдельно (перекрытие двух
+ * болот — болото). Отмечает в into, возвращает число новых клеток. O(рёбер + пересечений + клеток).
+ */
+function rasterWetlands(wetlands: Wetland[], grid: Grid, into: Uint8Array): number {
+  const { cols, rows, bbox: [w, s, e, n] } = grid, dl = (e - w) / cols, da = (n - s) / rows;
+  const cy = (r: number) => n - (r + 0.5) * da, cx = (c: number) => w + (c + 0.5) * dl;
+  let added = 0;
+  const xs = new Map<number, number[]>();
   for (const wl of wetlands) {
-    const [x0, y0, x1, y1] = ringBox(wl.outer);
-    const c0 = Math.max(0, Math.floor((x0 - w) / dl)), c1 = Math.min(grid.cols - 1, Math.floor((x1 - w) / dl));
-    const r0 = Math.max(0, Math.floor((n - y1) / da)), r1 = Math.min(grid.rows - 1, Math.floor((n - y0) / da));
-    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
-      const i = r * grid.cols + c;
-      if (marsh[i] || !inWetland([w + (c + 0.5) * dl, n - (r + 0.5) * da], wl)) continue;
-      marsh[i] = 1; osmCells++;
+    xs.clear();
+    for (const ring of [wl.outer, ...wl.holes]) for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i], [xj, yj] = ring[j];
+      if (yi === yj) continue;
+      // строки, центр которых py: (yi > py) !== (yj > py), т. е. min ≤ py < max
+      const lo = Math.min(yi, yj), hi = Math.max(yi, yj);
+      const r0 = Math.max(0, Math.floor((n - hi) / da - 0.5)), r1 = Math.min(rows - 1, Math.ceil((n - lo) / da - 0.5));
+      for (let r = r0; r <= r1; r++) {
+        const py = cy(r);
+        if (!(yi > py !== yj > py)) continue;
+        (xs.get(r) ?? xs.set(r, []).get(r)!).push(((xj - xi) * (py - yi)) / (yj - yi) + xi);
+      }
+    }
+    for (const [r, list] of xs) {
+      list.sort((a, b) => a - b);
+      // внутри — нечётное число пересечений правее центра: a ≤ x < b для пары (a, b)
+      for (let k = 0; k + 1 < list.length; k += 2) {
+        const a = list[k], b = list[k + 1];
+        for (let c = Math.max(0, Math.floor((a - w) / dl - 0.5)); c < cols && cx(c) < b; c++) {
+          if (cx(c) < a) continue;
+          const i = r * cols + c;
+          if (!into[i]) { into[i] = 1; added++; }
+        }
+      }
     }
   }
-  return { marsh, water, osmCells };
+  return added;
 }
 
 /** Сводка болот: откуда цвет, узнанные цвета штриховки (road/side — доля окон внутри/снаружи), окна, клетки, области. */
@@ -765,15 +807,20 @@ export interface MarshCheck {
   cells: { present: number; added: number; gone: number };
   /** Современные болота (связные клетки) в охвате: всего, есть на карте, нет на карте (< 10 % клеток). */
   areas: { total: number; present: number; gone: number };
+  /** Цвет штриховки по сети не узнан: болот карты нет, «нет на карте» не отмечается. */
+  unknown?: true;
 }
 
 /**
  * Сверка болот карты с современными: маски marsh-present (болото карты ∧ современное), marsh-new (карты ∧ ¬современное),
- * marsh-gone (клетки в охвате у современных областей, где болото карты < 10 %); маска marsh остаётся.
+ * marsh-gone (клетки в охвате у современных областей, где болото карты < 10 %); маска marsh остаётся. Цвет по сети не
+ * узнан (source «network», цветов нет) — «нет на карте» не отмечается (маски marsh-gone нет), сводка — unknown.
+ * modern — современные болота той же сетки, если уже посчитаны.
  */
-export function mergeMarsh(ov: OverlayResult, T: Pick<TheatreData, 'terrainGrid'>, wetlands: Wetland[], info: Pick<MarshCheck, 'source' | 'colors' | 'windows'>): OverlayResult {
+export function mergeMarsh(ov: OverlayResult, T: Pick<TheatreData, 'terrainGrid'>, wetlands: Wetland[], info: Pick<MarshCheck, 'source' | 'colors' | 'windows'>, modern0?: { marsh: Uint8Array; osmCells: number }): OverlayResult {
   const N = ov.cols * ov.rows;
-  const { marsh: modern, osmCells } = modernMarsh(T, wetlands, ov);
+  const { marsh: modern, osmCells } = modern0 && modern0.marsh.length === N ? modern0 : modernMarsh(T, wetlands, ov);
+  const unknown = info.source === 'network' && !info.colors.length;
   const map = ov.masks.marsh ? decodeMask(ov.masks.marsh, N) : new Uint8Array(N);
   const cov = decodeMask(ov.covered, N);
   const present = new Uint8Array(N), added = new Uint8Array(N), gone = new Uint8Array(N);
@@ -783,14 +830,15 @@ export function mergeMarsh(ov: OverlayResult, T: Pick<TheatreData, 'terrainGrid'
     const seen = comp.filter((i) => cov[i]);
     if (!seen.length) continue;
     areas.total++;
-    if (seen.filter((i) => map[i]).length / seen.length < 0.1) { areas.gone++; for (const i of seen) gone[i] = 1; }
-    else areas.present++;
+    if (seen.filter((i) => map[i]).length / seen.length >= 0.1) areas.present++;
+    else if (!unknown) { areas.gone++; for (const i of seen) gone[i] = 1; }
   }
   const masks: Record<string, string> = { ...ov.masks }, stats: Record<string, number> = { ...ov.stats };
   const sum = (m: Uint8Array) => m.reduce((a, x) => a + x, 0);
   const put = (k: string, m: Uint8Array) => { masks[k] = maskRle(m); stats[k] = sum(m); };
-  put('marsh-present', present); put('marsh-new', added); put('marsh-gone', gone);
-  const marsh: MarshCheck = { ...info, osm: osmCells, cells: { present: sum(present), added: sum(added), gone: sum(gone) }, areas };
+  put('marsh-present', present); put('marsh-new', added);
+  if (!unknown) put('marsh-gone', gone);
+  const marsh: MarshCheck = { ...info, osm: osmCells, cells: { present: sum(present), added: sum(added), gone: sum(gone) }, areas, ...(unknown ? { unknown: true as const } : {}) };
   return { ...ov, masks, stats, marsh };
 }
 
@@ -806,6 +854,8 @@ export class WetlandLearner {
   outside = 0;
   tiles = 0;
   private readonly marsh: Uint8Array;
+  /** Современные болота на сетке обучения (для mergeMarsh на той же сетке — без пересчёта). */
+  private readonly modern: { marsh: Uint8Array; osmCells: number };
   private readonly far: Uint8Array;
   private readonly tileSet: Set<string>;
   private readonly inn = new Float64Array(BINS);
@@ -817,6 +867,7 @@ export class WetlandLearner {
     this.w = hatchPx((s + n) / 2, z);
     const m = modernMarsh(T, wetlands, grid);
     this.marsh = m.marsh;
+    this.modern = m;
     const near = dilate(m.marsh, cols, rows);
     this.far = new Uint8Array(near.length).map((_, i) => (near[i] || m.water[i] ? 0 : 1));
     // тайлы под болотами, расширенными на три клетки
@@ -895,6 +946,7 @@ export class WetlandLearner {
   }
   /** Сверка болот карты (mergeMarsh) со своими цветами и окнами. */
   mergeMarsh(ov: OverlayResult): OverlayResult {
-    return mergeMarsh(ov, this.T, this.wetlands, { source: 'network', colors: this.colors(), windows: { inside: this.inside, outside: this.outside } });
+    const g = this.grid, same = ov.cols === g.cols && ov.rows === g.rows && ov.bbox.every((v, i) => v === g.bbox[i]);
+    return mergeMarsh(ov, this.T, this.wetlands, { source: 'network', colors: this.colors(), windows: { inside: this.inside, outside: this.outside } }, same ? this.modern : undefined);
   }
 }

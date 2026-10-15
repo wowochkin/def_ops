@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
-import { OverlayAccumulator, TERRAIN_CLASSES, WetlandLearner, colorBin, decodeMask, encodeGrid, inWetland, modernMarsh, osmNetworkQuery, osmToRivers, osmToRoads, osmToWetlands, overlayGrid, tileXY, tilesFor, type OsmJson, type TheatreData } from '../src';
+import { OverlayAccumulator, TERRAIN_CLASSES, WetlandLearner, colorBin, decodeMask, encodeGrid, inWetland, maskRle, mergeMarsh, modernMarsh, osmNetworkQuery, osmToRivers, osmToRoads, osmToWetlands, overlayGrid, tileXY, tilesFor, type OsmJson, type TheatreData } from '../src';
 
 const box: [number, number, number, number] = [13.6, 52.3, 14.4, 52.7];
 const ll = (lon: number, lat: number) => ({ lon, lat });
@@ -154,5 +154,67 @@ describe('болот нет или мало — цвет не узнан', () =>
     expect(W.inside).toBeLessThan(20);
     expect(W.colors()).toEqual([]);
     expect(W.legend().pixels.marsh).toBeUndefined();
+  });
+});
+
+describe('правка 1: ответ Overpass, растеризация, цвет не узнан', () => {
+  // ответ `out body geom`: у отношения — bounds и members с type, ref, role, geometry; член-узел — с lat/lon
+  const real: OsmJson = { elements: [
+    { type: 'relation', id: 5551, bounds: { minlat: 52.4, minlon: 13.8, maxlat: 52.46, maxlon: 13.88 }, members: [
+      { type: 'way', ref: 9001, role: 'outer', geometry: [ll(13.8, 52.4), ll(13.88, 52.4), ll(13.88, 52.46)] },
+      { type: 'way', ref: 9002, role: '', geometry: [ll(13.88, 52.46), ll(13.8, 52.46), ll(13.8, 52.4)] }, // старая схема: роль пустая — внешнее
+      { type: 'way', ref: 9003, role: 'inner', geometry: square(13.82, 52.42, 13.86, 52.44) },
+      { type: 'node', ref: 77, role: 'label', lat: 52.43, lon: 13.84 },
+    ], tags: { type: 'multipolygon', natural: 'wetland', wetland: 'bog' } },
+  ] };
+  it('отношение из ответа `out body geom` → болото с дырой; пустая роль — внешнее кольцо', () => {
+    const ws = osmToWetlands(real, box);
+    expect(ws.length).toBe(1);
+    expect(ws[0].outer.length).toBe(5);
+    expect(ws[0].holes.length).toBe(1);
+  });
+  it('запрос: отношения выводятся с членами (out body geom), ограничение размера', () => {
+    const q = osmNetworkQuery(box);
+    expect(q).toMatch(/relation\["natural"="wetland"\]\([^)]*\);\s*out body geom;/);
+    expect(q).toContain('[maxsize:');
+    expect(q).toContain('way["natural"="wetland"]');
+  });
+  it('упрощение с допуском: кольцо мельче допуска (< 4 точек) — пропуск', () => {
+    const tiny: OsmJson = { elements: [
+      { type: 'way', id: 1, tags: { natural: 'wetland' }, geometry: [ll(13.7, 52.4), ll(13.7005, 52.4), ll(13.7005, 52.4005), ll(13.7, 52.4005), ll(13.7, 52.4)] },
+      { type: 'way', id: 2, tags: { natural: 'wetland' }, geometry: square(13.8, 52.4, 13.82, 52.42) },
+    ] };
+    expect(osmToWetlands(tiny, box, 0.0025).length).toBe(1);
+    expect(osmToWetlands(tiny, box).length).toBe(2);
+  });
+  it('растеризация совпадает с проверкой точки в полигоне (кольца, дыры, вогнутость)', () => {
+    const concave: LngLat[] = [[13.9, 52.35], [14.05, 52.35], [14.05, 52.5], [13.98, 52.5], [13.98, 52.4], [13.95, 52.4], [13.95, 52.5], [13.9, 52.5], [13.9, 52.35]];
+    const holed = { outer: [[14.1, 52.32], [14.3, 52.33], [14.28, 52.55], [14.12, 52.5], [14.1, 52.32]] as LngLat[], holes: [[[14.15, 52.38], [14.24, 52.38], [14.24, 52.46], [14.15, 52.46], [14.15, 52.38]] as LngLat[]] };
+    const ws = [...osmToWetlands(real, box), { outer: concave, holes: [] }, holed, { outer: concave, holes: [] }]; // повтор — объединение, не чёт-нечет между болотами
+    const grid = { bbox: box, cols: 80, rows: 40 };
+    const m = modernMarsh({}, ws, grid);
+    let n = 0;
+    for (let r = 0; r < 40; r++) for (let c = 0; c < 80; c++) {
+      const p: LngLat = [box[0] + (c + 0.5) * d, box[3] - (r + 0.5) * d];
+      const want = ws.some((w) => inWetland(p, w)) ? 1 : 0;
+      expect(m.marsh[r * 80 + c], `${c},${r}`).toBe(want);
+      n += want;
+    }
+    expect(n).toBeGreaterThan(100);
+    expect(m.osmCells).toBe(n);
+  });
+  it('цвет по сети не узнан: «нет на карте» не отмечается', () => {
+    const T = makeTheatre([[10, 5, 17, 10]]);
+    const N = cols * rows;
+    const ov = { legend: 'network', name: 'n', source: 's', zoom: Z, bbox: box, cols, rows, covered: maskRle(new Uint8Array(N).fill(1)), masks: {}, stats: {} };
+    const r = mergeMarsh(ov, T, [], { source: 'network', colors: [], windows: { inside: 5, outside: 100 } });
+    expect(r.marsh!.unknown).toBe(true);
+    expect(r.marsh!.areas.gone).toBe(0);
+    expect(r.marsh!.cells.gone).toBe(0);
+    expect(r.masks['marsh-gone']).toBeUndefined();
+    // по образцам — отмечается, как раньше
+    const s = mergeMarsh(ov, T, [], { source: 'samples', colors: [], windows: { inside: 0, outside: 0 } });
+    expect(s.marsh!.areas.gone).toBe(1);
+    expect(s.marsh!.unknown).toBeUndefined();
   });
 });
