@@ -88,6 +88,11 @@ export function buildRouter(d: Deps): Router {
     if (!m) throw new HttpError(404, 'not_found', 'Карта не найдена');
     return m;
   };
+  /** Векторную карту меняет только задание OHM: загрузка XYZ и скана в неё — 422. */
+  const notVector = (m: MapSource): MapSource => {
+    if (m.kind === 'vector') throw new HttpError(422, 'invalid', 'Карта OpenHistoricalMap обновляется только своей загрузкой («продолжить» или «обновить»), тайлы XYZ и сканы в неё не загружаются');
+    return m;
+  };
   const changed = (tenant: string, m: MapSource, type: 'map.created' | 'map.updated' | 'map.deleted') => bus.publish({ type, tenant, mapId: m.id });
 
   /**
@@ -136,6 +141,8 @@ export function buildRouter(d: Deps): Router {
   });
 
   /* ------------------------------- OpenHistoricalMap ------------------------------- */
+  /** Карты, у которых сейчас ставится задание OHM (организация/карта). */
+  const starting = new Set<string>();
   /** Задание карты OHM в очереди организации: загрузка участков, нарезка, замена тайлов. */
   const startOhm = async (tenant: string, m: MapSource, bbox: BBox, refresh: boolean): Promise<MapJob> => {
     const total = ohmCells(bbox).length + tileRange(bbox, 10).count + 1;
@@ -170,9 +177,17 @@ export function buildRouter(d: Deps): Router {
     const b = asObject((await c.json()) ?? {});
     if (b.refresh !== undefined && typeof b.refresh !== 'boolean') throw new HttpError(422, 'invalid', '«refresh»: true или false');
     if (m.kind !== 'vector') throw new HttpError(422, 'invalid', 'Загрузка OpenHistoricalMap — только у векторной карты (создайте её через «+ OpenHistoricalMap»)');
-    const active = (await repo.listJobs(c.tenant, m.id)).map((j) => fresh(c.tenant, j)).find((j) => j.status === 'queued' || j.status === 'running');
-    if (active) throw new HttpError(409, 'conflict', 'У карты уже идёт задание');
-    return reply(202, await startOhm(c.tenant, m, m.ohm?.bbox ?? m.bounds, b.refresh === true));
+    // проверка «уже идёт» и постановка задания — под замком карты (два быстрых нажатия — одно задание)
+    const key = `${c.tenant}/${m.id}`;
+    if (starting.has(key)) throw new HttpError(409, 'conflict', 'У карты уже идёт задание');
+    starting.add(key);
+    try {
+      const active = (await repo.listJobs(c.tenant, m.id)).map((j) => fresh(c.tenant, j)).find((j) => j.status === 'queued' || j.status === 'running');
+      if (active) throw new HttpError(409, 'conflict', 'У карты уже идёт задание');
+      return reply(202, await startOhm(c.tenant, m, m.ohm?.bbox ?? m.bounds, b.refresh === true));
+    } finally {
+      starting.delete(key);
+    }
   });
 
   /** Шрифт стиля OHM (общий): известный стек, диапазон из 256 знаков; не скачанный диапазон — пустой ответ. */
@@ -300,6 +315,9 @@ export function buildRouter(d: Deps): Router {
     if (unknown.length) throw new HttpError(422, 'invalid', `Нельзя изменить: ${unknown.join(', ')} (можно: ${PATCHABLE.join(', ')})`);
     const patch = Object.fromEntries(Object.entries(b).filter(([k]) => PATCHABLE.includes(k)));
     if (cur.kind === 'vector' && 'coverage' in patch) throw new HttpError(422, 'invalid', 'Граница карты (coverage) у векторной карты не применяется');
+    const fixed = ['bounds', 'minzoom', 'maxzoom'].filter((k) => k in patch);
+    if (cur.kind === 'vector' && fixed.length)
+      throw new HttpError(422, 'invalid', `У карты OpenHistoricalMap нельзя изменить ${fixed.join(', ')}: район и уровни задаёт загрузка`);
     const next = buildMap(patch, cur);
     next.updatedAt = stamp(cur.updatedAt);
     const covChanged = JSON.stringify(cur.coverage ?? null) !== JSON.stringify(next.coverage ?? null);
@@ -396,7 +414,7 @@ export function buildRouter(d: Deps): Router {
 
   /* ------------------------------------ импорт ------------------------------------ */
   r.post('/cartography/maps/:id/import/xyz', async (c) => {
-    const m = await load(c);
+    const m = notVector(await load(c));
     const req = xyzRequest(await c.json(), o.allowedHosts);
     const total = tileCount(req.bounds, req.minzoom, req.maxzoom);
     if (total > o.maxTilesPerJob) return tooMany(total);
@@ -425,7 +443,7 @@ export function buildRouter(d: Deps): Router {
    * привязки (невязки видны сразу, до нарезки).
    */
   r.post('/cartography/maps/:id/import/raster', async (c) => {
-    const m = await load(c);
+    const m = notVector(await load(c));
     const g = c.query.get('georef');
     if (!g) throw new HttpError(400, 'bad_request', 'Нужна привязка: ?georef=<JSON с controlPoints или corners>');
     let parsed: unknown;

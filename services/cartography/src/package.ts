@@ -47,19 +47,29 @@ export async function exportPackage(res: http.ServerResponse, store: TileStore, 
     'Cache-Control': 'no-store',
   });
   const pack = tar.pack();
+  pack.on('error', () => { /* обрыв клиента: архив бросается, ошибкой службы это не считается */ });
   pack.pipe(res);
   let closed = false;
-  res.on('close', () => { closed = true; });
-  const add = (name: string, data: Buffer, mtime = new Date()) => new Promise<void>((resolve, reject) =>
-    pack.entry({ name, size: data.length, mtime, mode: 0o644 }, data, (e) => (e ? reject(e) : resolve())));
+  // клиент оборвал выгрузку: поток файла и архив уничтожаются, ожидания завершаются
+  const aborted = new Promise<void>((resolve) => res.once('close', () => {
+    closed = !res.writableFinished;
+    if (closed) pack.destroy();
+    resolve();
+  }));
+  const settle = (p: Promise<void>) => Promise.race([p.catch((e) => { if (!closed) throw e; }), aborted.then(() => { if (!closed) return p; })]);
+  const add = (name: string, data: Buffer, mtime = new Date()) => settle(new Promise<void>((resolve, reject) =>
+    pack.entry({ name, size: data.length, mtime, mode: 0o644 }, data, (e) => (e ? reject(e) : resolve()))));
   // время в заголовках — от данных, а не от момента выгрузки: пакет одной карты всегда одинаков байт в байт
   await add('map.json', Buffer.from(JSON.stringify(packageMeta(map), null, 2)), new Date(map.updatedAt ?? 0));
-  if (vector) {
-    // MBTiles — потоком, размер — из stat
-    await new Promise<void>((resolve, reject) => {
+  if (vector && !closed) {
+    // MBTiles — потоком, размер — из stat; обрыв — поток файла закрывается сразу
+    const rs = createReadStream(mbtiles, { end: st!.size - 1 });
+    void aborted.then(() => { if (closed) rs.destroy(); });
+    await settle(new Promise<void>((resolve, reject) => {
       const entry = pack.entry({ name: 'ohm.mbtiles', size: st!.size, mtime: new Date(Math.floor(st!.mtimeMs)), mode: 0o644 }, (e) => (e ? reject(e) : resolve()));
-      pipeline(createReadStream(mbtiles, { end: st!.size - 1 }), entry).catch(reject);
-    });
+      pipeline(rs, entry).catch(reject);
+    }));
+    rs.destroy();
     for (const [name, file] of assetFiles(ohmAssetsDir(store))) {
       if (closed) break;
       let data: Buffer;
@@ -74,6 +84,7 @@ export async function exportPackage(res: http.ServerResponse, store: TileStore, 
     await add(`tiles/${t.z}/${t.x}/${t.y}.${t.ext}`, data, new Date(Math.floor(t.mtimeMs)));
     if (res.writableNeedDrain) await Promise.race([once(res, 'drain'), once(res, 'close')]);
   }
+  if (closed) return;
   pack.finalize();
   if (!closed) await Promise.race([once(res, 'finish'), once(res, 'close')]);
 }
@@ -171,7 +182,9 @@ export async function importPackage(
         if (Number.isInteger(declared) && declared! > 0) ctx.progress({ total: declared });
         continue;
       }
-      if (h.type === 'file' && name === 'ohm.mbtiles' && (!map || map.kind === 'vector')) {
+      if (h.type === 'file' && name === 'ohm.mbtiles' && !map)
+        throw new HttpError(422, 'invalid', 'В пакете ohm.mbtiles идёт раньше map.json: map.json должен быть первым');
+      if (h.type === 'file' && name === 'ohm.mbtiles' && map?.kind === 'vector') {
         if (mbtiles) throw new HttpError(422, 'invalid', 'В пакете два ohm.mbtiles');
         // векторные тайлы — потоком в папку карты (под общим пределом размера пакета)
         const tmp = `${mbFile}.import`;
@@ -186,10 +199,13 @@ export async function importPackage(
         mbtiles = true;
         continue;
       }
-      const asset = h.type === 'file' ? assets.get(name) : undefined;
+      const asset = h.type === 'file' && map?.kind === 'vector' ? assets.get(name) : undefined;
       if (asset) {
-        const data = await read(MAX_TILE_BYTES);
-        if (!existsSync(asset)) await writeAtomic(asset, data); // общие для всех карт: есть — не трогаются
+        // общие для всех карт и организаций: есть — не трогаются; негодный файл не пишется
+        if ((h.size ?? 0) > MAX_ASSET_BYTES) { entry.resume(); ctx.progress({ errors: ctx.job.errors + 1 }); continue; }
+        const data = await read(MAX_ASSET_BYTES);
+        if (!validAsset(name, data)) { ctx.progress({ errors: ctx.job.errors + 1 }); continue; }
+        if (!existsSync(asset)) await writeAtomic(asset, data);
         continue;
       }
       const m = h.type === 'file' && map?.kind !== 'vector' ? TILE_RE.exec(name) : null;
@@ -218,6 +234,32 @@ export async function importPackage(
     ctx.progress({ done: tiles, total: tiles });
   }
   return { map, tiles, bytes };
+}
+
+/** Шрифт или значки из пакета — не больше этого. */
+const MAX_ASSET_BYTES = 4 * 1024 * 1024;
+
+/**
+ * Файл стиля из пакета годен по форме: шрифт — сообщение PBF из одного поля 1 (набор глифов
+ * стека) на весь файл, значки — PNG (сигнатура) или объект JSON.
+ */
+export function validAsset(name: string, data: Buffer): boolean {
+  if (!data.length || data.length > MAX_ASSET_BYTES) return false;
+  if (name.endsWith('.pbf')) {
+    if (data[0] !== 0x0a) return false;
+    let len = 0, shift = 0, i = 1;
+    for (; i < data.length && i <= 5; i++) {
+      len += (data[i] & 0x7f) * 2 ** shift;
+      shift += 7;
+      if (!(data[i] & 0x80)) { i++; break; }
+    }
+    return i + len === data.length;
+  }
+  if (name.endsWith('.png')) return detectFormat(data) === 'png';
+  try {
+    const v = JSON.parse(data.toString('utf8'));
+    return !!v && typeof v === 'object' && !Array.isArray(v);
+  } catch { return false; }
 }
 
 /** MBTiles векторных тайлов (format = pbf, таблица tiles): число тайлов; иначе — 422. */

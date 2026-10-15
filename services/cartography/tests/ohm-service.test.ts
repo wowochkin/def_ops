@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import http from 'node:http';
 import path from 'node:path';
-import { promises as fs, existsSync } from 'node:fs';
+import { promises as fs, existsSync, readdirSync, readlinkSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import tar from 'tar-stream';
 import { PbfReader } from 'pbf';
@@ -355,6 +355,112 @@ describe('карта OHM: задание', { timeout: 60_000 }, () => {
   });
 });
 
+/* ------------------------------ исправления ревью ------------------------------ */
+/** Открытые процессом дескрипторы файла (Linux, /proc/self/fd). */
+function openFds(file: string): number {
+  let n = 0;
+  for (const fd of readdirSync('/proc/self/fd')) {
+    try { if (readlinkSync(`/proc/self/fd/${fd}`) === file) n++; } catch { /* закрыт */ }
+  }
+  return n;
+}
+
+describe('карта OHM: границы векторной карты', { timeout: 60_000 }, () => {
+  it('загрузка XYZ и скана в векторную карту — 422, карта не меняется', async () => {
+    const { map } = await ready();
+    const xyz = await post(`/cartography/maps/${map.id}/import/xyz`, { url: `${fake.url}/tiles/{z}/{x}/{y}.png`, bounds: BBOX, minzoom: 10, maxzoom: 10 });
+    expect(xyz.status).toBe(422);
+    const georef = encodeURIComponent(JSON.stringify({ corners: [[13.3, 52.55], [13.5, 52.55], [13.5, 52.45], [13.3, 52.45]] }));
+    const ras = await raw(`/cartography/maps/${map.id}/import/raster?georef=${georef}`, { method: 'POST', body: bin(Buffer.from([0x89, 0x50, 0x4e, 0x47])), headers: { 'Content-Type': 'image/png' } });
+    expect(ras.status).toBe(422);
+    const after = (await get(`/cartography/maps/${map.id}`)).body as MapSource;
+    expect(after).toMatchObject({ kind: 'vector', format: 'pbf' });
+    expect((await get(`/cartography/jobs?mapId=${map.id}`)).body).toHaveLength(1);
+  });
+
+  it('PATCH векторной карты: рамка и уровни не меняются (422), имя — можно', async () => {
+    const { map } = await ready();
+    for (const p of [{ bounds: [13.3, 52.45, 13.5, 52.55] }, { minzoom: 2 }, { maxzoom: 12 }])
+      expect((await call('PATCH', `/cartography/maps/${map.id}`, p)).status, JSON.stringify(p)).toBe(422);
+    expect((await call('PATCH', `/cartography/maps/${map.id}`, { name: 'Берлин', opacity: 0.5 })).status).toBe(200);
+    expect((await get(`/cartography/maps/${map.id}`)).body).toMatchObject({ bounds: BBOX, minzoom: 0, maxzoom: 16 });
+  });
+
+  it('несколько запросов «продолжить» сразу — одно задание, остальные — 409', async () => {
+    // хранилище с медленным чтением заданий: проверки двух запросов перекрываются
+    class SlowRepo extends MemoryRepo {
+      override async listJobs(tenant: string, mapId?: string) {
+        const out = await super.listJobs(tenant, mapId);
+        await new Promise((r) => setTimeout(r, 50)); // ответ запаздывает: другой запрос успевает прочитать то же
+        return out;
+      }
+    }
+    const slow = await startService(new SlowRepo(), { ohm: opts });
+    extra.push(() => slow.close());
+    const r0 = await post('/cartography/maps/ohm', { name: 'Берлин OHM', bbox: BBOX }, 'orgA', slow);
+    expect((await job(r0.body.job.id, 'orgA', slow)).status).toBe('done');
+    const id = r0.body.map.id as string;
+    fake.delay = 200;
+    const rs = await Promise.all(Array.from({ length: 3 }, () => post(`/cartography/maps/${id}/ohm`, {}, 'orgA', slow)));
+    expect(rs.map((r) => r.status).sort()).toEqual([202, 409, 409]);
+    const started = rs.find((r) => r.status === 202)!;
+    expect((await job(started.body.id, 'orgA', slow)).status).toBe('done');
+    expect((await get(`/cartography/jobs?mapId=${id}`, 'orgA', slow)).body).toHaveLength(2);
+  });
+
+  it.skipIf(process.platform !== 'linux')('прерванная выгрузка пакета: файл MBTiles закрыт, служба отвечает', async () => {
+    const { map } = await ready();
+    const file = path.join(mapDir(map.id), 'ohm.mbtiles');
+    // большой файл, чтобы выгрузка не успела закончиться до обрыва
+    await fs.appendFile(file, Buffer.alloc(64 * 1024 * 1024, 1));
+    // журнал службы: обрыв клиента — не ошибка службы, выгрузка завершается тихо
+    const logged: string[] = [];
+    const write = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((s: string | Uint8Array, ...rest: unknown[]) => { logged.push(String(s)); return (write as (...a: unknown[]) => boolean)(s, ...rest); }) as typeof process.stdout.write;
+    extra.push(async () => { process.stdout.write = write; });
+    const ac = new AbortController();
+    const res = await raw(`/cartography/maps/${map.id}/package`, { signal: ac.signal });
+    expect(res.status).toBe(200);
+    const reader = res.body!.getReader();
+    await reader.read();
+    ac.abort();
+    await reader.cancel().catch(() => undefined);
+    await until(() => openFds(file) === 0, 5000);
+    await until(() => logged.some((l) => l.includes('/package') && l.includes('"level":"info"')), 5000); // обработчик завершился
+    expect(logged.filter((l) => l.includes('"level":"error"'))).toEqual([]);
+    expect((await get(`/cartography/maps/${map.id}`)).status).toBe(200);
+  });
+
+  it('пакет: ohm.mbtiles до map.json — 422, файлы не пишутся; негодные шрифты и значки не пишутся', async () => {
+    const { map } = await ready();
+    const entries = await untar(Buffer.from(await (await raw(`/cartography/maps/${map.id}/package`)).arrayBuffer()));
+    const before = await pack([['ohm.mbtiles', entries.get('ohm.mbtiles')!], ['map.json', entries.get('map.json')!]]);
+    const bad = await raw('/cartography/maps/import-package', { method: 'POST', body: bin(before) }, 'orgB');
+    expect(bad.status).toBe(422);
+    expect((await bad.json()).error.message).toContain('map.json');
+    expect((await get('/cartography/maps', 'orgB')).body).toEqual([]);
+    expect(await fs.readdir(path.join(run.tilesDir, 'orgB')).catch(() => [])).toEqual([]);
+
+    await fs.rm(path.join(run.tilesDir, '.ohm-assets'), { recursive: true, force: true });
+    const junk = await pack([
+      ['map.json', entries.get('map.json')!], ['ohm.mbtiles', entries.get('ohm.mbtiles')!],
+      ['assets/fonts/OpenHistorical/0-255.pbf', Buffer.from('<html>не шрифт</html>')],
+      ['assets/fonts/OpenHistorical/256-511.pbf', entries.get('assets/fonts/OpenHistorical/256-511.pbf')!],
+      ['assets/sprites/ohm.png', Buffer.from('не PNG')],
+      ['assets/sprites/ohm.json', Buffer.from('{не JSON')],
+      ['assets/sprites/ohm@2x.json', entries.get('assets/sprites/ohm@2x.json')!],
+    ]);
+    const ok = await raw('/cartography/maps/import-package', { method: 'POST', body: bin(junk) }, 'orgB');
+    expect(ok.status).toBe(201);
+    const assets = path.join(run.tilesDir, '.ohm-assets');
+    expect(existsSync(path.join(assets, 'fonts', 'OpenHistorical', '0-255.pbf'))).toBe(false);
+    expect(existsSync(path.join(assets, 'sprites', 'ohm.png'))).toBe(false);
+    expect(existsSync(path.join(assets, 'sprites', 'ohm.json'))).toBe(false);
+    expect(await fs.readFile(path.join(assets, 'fonts', 'OpenHistorical', '256-511.pbf'))).toEqual(fakeAsset('OpenHistorical/256-511.pbf'));
+    expect(await fs.readFile(path.join(assets, 'sprites', 'ohm@2x.json'))).toEqual(fakeAsset('ohm@2x.json'));
+  });
+});
+
 /* ---------------------------------- прокси ---------------------------------- */
 describe('запросы к источникам через прокси', () => {
   it('HTTP_PROXY: запрос идёт через прокси; NO_PROXY — напрямую', async () => {
@@ -380,6 +486,9 @@ describe('запросы к источникам через прокси', () =>
       expect(seen).toHaveLength(3);
       expect(seen[2]).toMatch(/^127\.0\.0\.1:\d+ \/x$/);
       expect(httpClient({}).proxy).toBeNull();
+      // пустой NO_PROXY не прячет no_proxy
+      const lower = httpClient({ HTTP_PROXY: 'http://127.0.0.1:1', NO_PROXY: '', no_proxy: '127.0.0.1' });
+      expect(await (await lower.fetch(`${purl}/y`)).text()).toBe('через прокси');
     } finally {
       await new Promise<void>((r) => proxy.close(() => r()));
     }

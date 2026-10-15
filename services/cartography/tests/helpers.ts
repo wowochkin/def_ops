@@ -76,8 +76,14 @@ export interface FakeOverpass {
   close(): Promise<void>;
 }
 
-/** Небольшой буфер, зависящий от имени файла (шрифты и значки OHM). */
-export const fakeAsset = (name: string) => Buffer.from(`asset:${name}`);
+/** Небольшой файл, зависящий от имени (шрифты и значки OHM; имя — до 120 знаков). */
+export const fakeAsset = (name: string): Buffer => {
+  const text = Buffer.from(`asset:${name}`);
+  // по форме — как настоящие: шрифт — сообщение PBF из одного поля 1, значки — PNG и JSON
+  if (name.endsWith('.pbf')) return Buffer.concat([Buffer.from([0x0a, text.length]), text]);
+  if (name.endsWith('.png')) return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), text]);
+  return Buffer.from(JSON.stringify({ asset: name }));
+};
 
 /** Два объекта на участок: пункт в центре и путь вдоль южного края. */
 export function defaultCell(b: BBox): OverpassJson {

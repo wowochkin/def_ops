@@ -32,7 +32,7 @@ export function httpClient(env: Env = process.env): HttpClient {
   const dispatcher = new EnvHttpProxyAgent({
     httpProxy: env.HTTP_PROXY || env.http_proxy || undefined,
     httpsProxy: env.HTTPS_PROXY || env.https_proxy || undefined,
-    noProxy: env.NO_PROXY ?? env.no_proxy ?? '',
+    noProxy: env.NO_PROXY || env.no_proxy || '', // пустой NO_PROXY не прячет no_proxy
   });
   const f = (input: Parameters<typeof fetch>[0], init?: RequestInit) =>
     undiciFetch(input as Parameters<typeof undiciFetch>[0], { ...(init as Parameters<typeof undiciFetch>[1]), dispatcher }) as unknown as Promise<Response>;
