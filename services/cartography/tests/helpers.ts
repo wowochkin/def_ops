@@ -6,7 +6,7 @@ import { promises as fs } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import sharp from 'sharp';
 import { createService } from '@def-ops/service-kit';
-import type { MapJob } from '@def-ops/core';
+import type { BBox, MapJob, OverpassJson } from '@def-ops/core';
 import type { MapRepo } from '../src/repo';
 import { EventBus } from '../src/events';
 import { JobRunner } from '../src/jobs';
@@ -59,6 +59,82 @@ export async function fakeTileServer(): Promise<FakeTileServer> {
     url,
     close: () => new Promise<void>((r) => { server.closeAllConnections(); server.close(() => r()); }),
   }) as FakeTileServer;
+}
+
+export type OverpassFault = '429' | '500' | 'remark' | 'html' | '400';
+
+export interface FakeOverpass {
+  url: string;
+  /** Запросы: путь, время, User-Agent, текст запроса Overpass (из поля data). */
+  hits: { path: string; t: number; ua?: string; query?: string }[];
+  /** Ответ на участок (рамка — из node(s,w,n,e) запроса). */
+  cells: (b: BBox) => OverpassJson;
+  /** Сбои по номеру участка (порядок первого запроса его рамки): по одному на запрос, затем — нормальный ответ. */
+  script: Map<number, OverpassFault[]>;
+  /** Задержка ответа, мс. */
+  delay: number;
+  close(): Promise<void>;
+}
+
+/** Небольшой буфер, зависящий от имени файла (шрифты и значки OHM). */
+export const fakeAsset = (name: string) => Buffer.from(`asset:${name}`);
+
+/** Два объекта на участок: пункт в центре и путь вдоль южного края. */
+export function defaultCell(b: BBox): OverpassJson {
+  const id = Math.round(b[0] * 1000) * 100_000 + Math.round(b[1] * 1000);
+  return { elements: [
+    { type: 'node', id, lat: (b[1] + b[3]) / 2, lon: (b[0] + b[2]) / 2, tags: { place: 'village', name: `П${id}` } },
+    { type: 'way', id, tags: { highway: 'track' }, geometry: [{ lat: b[1], lon: b[0] }, { lat: b[1], lon: b[2] }] },
+  ] };
+}
+
+/** Поддельные Overpass OHM (POST /api/interpreter) и файлы стиля (/map-styles/...). */
+export async function fakeOverpass(): Promise<FakeOverpass> {
+  const s: Omit<FakeOverpass, 'url' | 'close'> = { hits: [], cells: defaultCell, script: new Map(), delay: 0 };
+  const seen: string[] = [];
+  const server = http.createServer(async (req, res) => {
+    const hit: FakeOverpass['hits'][number] = { path: req.url ?? '', t: Date.now(), ua: req.headers['user-agent'] };
+    s.hits.push(hit);
+    const chunks: Buffer[] = [];
+    for await (const c of req) chunks.push(c as Buffer);
+    if (s.delay) await new Promise((r) => setTimeout(r, s.delay));
+    const u = req.url ?? '';
+    if (req.method === 'POST' && u === '/api/interpreter') {
+      const query = new URLSearchParams(Buffer.concat(chunks).toString('utf8')).get('data') ?? '';
+      hit.query = query;
+      const m = /node\(([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+)\)/.exec(query);
+      if (!m) { res.writeHead(400).end('Error: line 1: parse error'); return; }
+      const b: BBox = [Number(m[2]), Number(m[1]), Number(m[4]), Number(m[3])];
+      const key = b.join(',');
+      if (!seen.includes(key)) seen.push(key);
+      const fault = s.script.get(seen.indexOf(key))?.shift();
+      const json = s.cells(b);
+      switch (fault) {
+        case '429': res.writeHead(429, { 'Retry-After': '0' }).end(); return;
+        case '500': res.writeHead(500).end('сбой'); return;
+        case '400': res.writeHead(400, { 'Content-Type': 'text/html' }).end('Error: line 1: parse error'); return;
+        case 'html': res.writeHead(200, { 'Content-Type': 'text/html' }).end('<html><body>The server is probably too busy</body></html>'); return;
+        case 'remark':
+          res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({
+            remark: 'runtime error: Query timed out in "query" at line 1 after 181 seconds.', elements: (json.elements ?? []).slice(0, 1),
+          }));
+          return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(json));
+      return;
+    }
+    const f = /^\/map-styles\/fonts\/([^/]+)\/(\d+-\d+)\.pbf$/.exec(u);
+    if (req.method === 'GET' && f) { res.writeHead(200).end(fakeAsset(`${decodeURIComponent(f[1])}/${f[2]}.pbf`)); return; }
+    const sp = /^\/map-styles\/historical\/historical_spritesheet(@2x)?\.(json|png)$/.exec(u);
+    if (req.method === 'GET' && sp) { res.writeHead(200).end(fakeAsset(`ohm${sp[1] ?? ''}.${sp[2]}`)); return; }
+    res.writeHead(404).end();
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  return Object.assign(s, {
+    url,
+    close: () => new Promise<void>((r) => { server.closeAllConnections(); server.close(() => r()); }),
+  }) as FakeOverpass;
 }
 
 /** Цвета четвертей синтетического скана: ЛВ, ПВ, ЛН, ПН. */
