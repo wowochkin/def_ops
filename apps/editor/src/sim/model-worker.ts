@@ -39,7 +39,7 @@ self.onmessage = async (e: MessageEvent<ModelRequest>) => {
     const { ctx, history, get } = await load(q);
     let rules: Rules = typeof q.rules === 'string' ? await rulesFrom(get, q.rules) : q.rules;
     if (q.params) rules = rulesWith(rules, q.params);
-    const r = evaluateRules(ctx, rules, history, { seeds: q.seeds, seed0: q.seed0, trainUntil: q.trainUntil, toleranceKm: q.toleranceKm });
+    const r = evaluateRules(ctx, rules, history, { seeds: q.seeds, seed0: q.seed0, trainUntil: q.trainUntil, toleranceKm: q.toleranceKm, outcomes: q.outcomes });
     post({ id: q.id, ok: true, result: r });
   } catch (err) {
     post({ id: q.id, ok: false, error: (err as Error).message ?? String(err) });

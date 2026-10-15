@@ -6,6 +6,7 @@
  * Подбор пошаговый (next → report): кандидатов можно считать параллельно в нескольких потоках.
  */
 import { checkEvents, compareStrength, compareWithHistory, runScenario, STRENGTH_MIN_POINTS, STRENGTH_WEIGHT, type History } from './history';
+import { CORRIDOR_TOL, edgeOf, evaluateNorms, outcomesScore, OUTCOME_WEIGHT, type Norm } from './norms';
 import { createRng } from './rng';
 import type { SimContext } from './step';
 import type { Rules } from './types';
@@ -87,7 +88,17 @@ export interface CalibScore {
    * в пределах ±25 %. От 10 точек входит в total: total × 0,75 + (1 − within) × 50 × 0,25. Нет точек — поля нет.
    */
   strength?: { n: number; within: number };
+  /**
+   * Нормативы-итоги операции (пункт «итоги» сборщика «база → правила»): измеримых итогов, доля в допуске и каждый итог.
+   * От OUTCOME_MIN (3) измеримых входит в total: total × 7/8 + (1 − within) × 50 × 1/8 (withOutcomes). Нет итогов — поля нет.
+   */
+  outcomes?: { n: number; within: number; items: OutcomeItem[] };
 }
+/** Норматив-итог в мериле: значение модели (среднее по прогонам), ожидаемое, в допуске ли. */
+export interface OutcomeItem { id: string; title: string; mean: number | null; expect?: [number, number]; unit?: string; ok: boolean }
+
+/** Мерило с нормативами-итогами: 7/8 × нынешнее + 1/8 × (1 − доля в допуске) × 50; доли нет (итогов < 3) — прежнее. */
+export const withOutcomes = (total: number, share: number | null) => (share == null ? total : total * (1 - OUTCOME_WEIGHT) + (1 - share) * 50 * OUTCOME_WEIGHT);
 
 /** Итог прогонов набора правил: мерило калибровки и всё для сравнения с историей и другими моделями. */
 export interface RulesEvaluation {
@@ -104,7 +115,7 @@ export interface RulesEvaluation {
 }
 
 /** Прогнать правила seeds раз и сравнить с историей. */
-export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o: { seeds?: number; trainUntil?: string; seed0?: number; toleranceKm?: number } = {}): RulesEvaluation {
+export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o: { seeds?: number; trainUntil?: string; seed0?: number; toleranceKm?: number; outcomes?: Norm[] } = {}): RulesEvaluation {
   const c: SimContext = { ...ctx, rules };
   const seeds = o.seeds ?? 2, trainUntil = o.trainUntil ?? defaultTrainUntil(ctx), tol = o.toleranceKm ?? 10;
   let tr = 0, te = 0, ntr = 0, nte = 0, ev = 0, nev = 0, within10 = 0, n = 0;
@@ -115,9 +126,13 @@ export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o
   // контрольные точки численности и потерь обучения
   const cpTrain = (history.checkpoints ?? []).filter((c) => c.at <= trainUntil);
   let cpN = 0, cpWithin = 0;
+  // нормативы-итоги этой операции (итоги других операций прогоном этой не измерить)
+  const outs = (o.outcomes ?? []).filter((n) => 'scenario' in n.measure && n.measure.scenario === ctx.scenario.id);
+  const runs: ReturnType<typeof runScenario>[] = [];
   const t0 = Date.now();
   for (let s = 0; s < seeds; s++) {
     const run = runScenario(c, (o.seed0 ?? 101) + s);
+    if (outs.length) runs.push(run);
     for (const d of compareWithHistory(c, run, history)) {
       const v = Math.min(d.excessKm, 50);
       if (d.time <= trainUntil) { tr += v; ntr++; } else { te += v; nte++; }
@@ -146,9 +161,19 @@ export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o
   const sorted = [...all].sort((a, b) => a - b);
   const strength = cpN ? { n: Math.round(cpN / seeds), within: +(cpWithin / cpN).toFixed(3) } : undefined;
   const base = train + 3 * evd;
-  const total = strength && strength.n >= STRENGTH_MIN_POINTS ? base * (1 - STRENGTH_WEIGHT) + (1 - strength.within) * 50 * STRENGTH_WEIGHT : base;
+  const withStrength = strength && strength.n >= STRENGTH_MIN_POINTS ? base * (1 - STRENGTH_WEIGHT) + (1 - strength.within) * 50 * STRENGTH_WEIGHT : base;
+  let outcomes: CalibScore['outcomes'];
+  let share: number | null = null;
+  if (outs.length) {
+    const res = evaluateNorms({ norms: outs }, () => c, () => runs);
+    share = outcomesScore(res);
+    const items: OutcomeItem[] = res.filter((r) => r.verdict === 'ok' || r.verdict === 'low' || r.verdict === 'high')
+      .map((r) => ({ id: r.norm.id, title: r.norm.title, mean: r.mean == null ? null : +r.mean.toFixed(2), ...(r.norm.expect ? { expect: r.norm.expect } : {}), ...(r.norm.unit ? { unit: r.norm.unit } : {}), ok: r.verdict === 'ok' }));
+    outcomes = { n: items.length, within: +(items.length ? items.filter((x) => x.ok).length / items.length : 0).toFixed(3), items };
+  }
+  const total = withOutcomes(withStrength, share);
   return {
-    score: { total: +total.toFixed(3), train: +train.toFixed(2), test: +test.toFixed(2), within: +(within10 / Math.max(1, n)).toFixed(3), events: +evd.toFixed(2), detail, ...(strength ? { strength } : {}) },
+    score: { total: +total.toFixed(3), train: +train.toFixed(2), test: +test.toFixed(2), within: +(within10 / Math.max(1, n)).toFixed(3), events: +evd.toFixed(2), detail, ...(strength ? { strength } : {}), ...(outcomes ? { outcomes } : {}) },
     within: +(all.filter((x) => x <= tol).length / Math.max(1, all.length)).toFixed(3),
     medianExcessKm: sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0,
     n: all.length,
@@ -159,7 +184,7 @@ export function evaluateRules(ctx: SimContext, rules: Rules, history: History, o
 }
 
 /** Оценить правила по истории (мерило калибровки): seeds прогонов. */
-export function scoreRules(ctx: SimContext, rules: Rules, history: History, o: { seeds?: number; trainUntil?: string; seed0?: number } = {}): CalibScore {
+export function scoreRules(ctx: SimContext, rules: Rules, history: History, o: { seeds?: number; trainUntil?: string; seed0?: number; outcomes?: Norm[] } = {}): CalibScore {
   return evaluateRules(ctx, rules, history, o).score;
 }
 
@@ -173,13 +198,23 @@ export class Calibrator {
   best: { p: CalibParams; s: CalibScore } | null = null;
   /** Границы поиска: коридоры нормативов (сборщик «база → правила»), где их нет — CALIB_SPACE. */
   readonly space: Record<CalibKey, readonly [number, number]>;
-  constructor(readonly start: CalibParams, readonly evals: number, seed = 2026, readonly keys: CalibKey[] = CALIB_KEYS, space?: Partial<Record<CalibKey, [number, number]>>) {
+  /**
+   * Исходная точка подбора: подбираемые множители, лежащие вне коридора (набор старше норматива), перенесены к его
+   * ближнему краю; прочие — как были. Если она отличается от переданной, её нужно оценить и сообщить (report) —
+   * точка вне коридора лучшей не становится.
+   */
+  readonly start: CalibParams;
+  constructor(start: CalibParams, readonly evals: number, seed = 2026, readonly keys: CalibKey[] = CALIB_KEYS, space?: Partial<Record<CalibKey, readonly [number, number]>>) {
     this.rng = createRng(seed);
     this.space = { ...CALIB_SPACE, ...(space ?? {}) };
+    this.start = { ...start };
+    for (const k of keys) this.start[k] = this.clamp(k, start[k]);
   }
   get done() { return this.issued >= this.evals; }
   get progress() { return this.issued; }
   private clamp(k: CalibKey, v: number) { return Math.min(this.space[k][1], Math.max(this.space[k][0], v)); }
+  /** Подбираемые множители точки — в коридорах (с запасом на округление). */
+  inside(p: CalibParams) { return this.keys.every((k) => p[k] >= this.space[k][0] - 1e-9 && p[k] <= this.space[k][1] + 1e-9); }
   next(k: number): CalibParams[] {
     const out: CalibParams[] = [];
     const explore = Math.floor(this.evals * 0.4);
@@ -197,6 +232,7 @@ export class Calibrator {
   }
   /** Учесть результат; true — новый лучший. */
   report(p: CalibParams, s: CalibScore): boolean {
+    if (!this.inside(p)) return false;
     if (this.best && s.total >= this.best.s.total) return false;
     this.best = { p, s };
     return true;
@@ -204,7 +240,8 @@ export class Calibrator {
 }
 
 /** Правила-итог калибровки с блоком calibration (откуда, множители, мерило до и после). */
-export function calibratedRules(base: Rules, p: CalibParams, o: { id: string; scenario: string; evals: number; seeds: number; trainUntil: string; before: CalibScore; after: CalibScore; note?: string }): Rules {
+export function calibratedRules(base: Rules, p: CalibParams, o: { id: string; scenario: string; evals: number; seeds: number; trainUntil: string; before: CalibScore; after: CalibScore; note?: string; corridors?: Partial<Record<CalibKey, CalibCorridor>> }): Rules {
+  const outc = (s: CalibScore) => (s.outcomes ? { n: s.outcomes.n, within: s.outcomes.within } : undefined);
   return {
     ...rulesWith(base, p, `откалибровано по ${o.scenario} (блок calibration: исходные правила, множители, мерило до и после)`),
     id: o.id,
@@ -214,6 +251,8 @@ export function calibratedRules(base: Rules, p: CalibParams, o: { id: string; sc
       before: { trainKm: o.before.train, testKm: o.before.test, eventsDays: o.before.events, within: o.before.within },
       after: { trainKm: o.after.train, testKm: o.after.test, eventsDays: o.after.events, within: o.after.within },
       events: o.after.detail,
+      ...(o.corridors ? { corridors: o.corridors } : {}),
+      ...(o.before.outcomes || o.after.outcomes ? { outcomes: { before: outc(o.before), after: outc(o.after) } } : {}),
       note: o.note ?? 'Подобрано по одной операции: обязательна проверка на контрольной операции. Мерило — среднее превышение отклонения над неопределённостью исторического положения (до 50 км) + 3 × средняя ошибка дат событий (сут).',
     },
   };
@@ -231,8 +270,9 @@ export function mergeEvaluations(list: RulesEvaluation[]): RulesEvaluation {
   const st = list.filter((e) => e.score.strength?.n);
   const stN = st.reduce((a, e) => a + e.score.strength!.n, 0);
   const strength = st.length ? { n: Math.round(stN / st.length), within: +(st.reduce((a, e) => a + e.score.strength!.within * e.score.strength!.n, 0) / stN).toFixed(3) } : undefined;
+  const outcomes = mergeOutcomes(list.map((e) => e.score.outcomes));
   return {
-    score: { total: +avg((e) => e.score.total).toFixed(3), train: +avg((e) => e.score.train).toFixed(2), test: +avg((e) => e.score.test).toFixed(2), within: +avg((e) => e.score.within).toFixed(3), events: +avg((e) => e.score.events).toFixed(2), detail: list[0].score.detail, ...(strength ? { strength } : {}) },
+    score: { total: +avg((e) => e.score.total).toFixed(3), train: +avg((e) => e.score.train).toFixed(2), test: +avg((e) => e.score.test).toFixed(2), within: +avg((e) => e.score.within).toFixed(3), events: +avg((e) => e.score.events).toFixed(2), detail: list[0].score.detail, ...(strength ? { strength } : {}), ...(outcomes ? { outcomes } : {}) },
     within: +w((e) => e.within).toFixed(3),
     medianExcessKm: meds[Math.floor(meds.length / 2)],
     n: list.reduce((a, e) => a + e.n, 0),
@@ -240,4 +280,68 @@ export function mergeEvaluations(list: RulesEvaluation[]): RulesEvaluation {
     events,
     ms: list.reduce((a, e) => a + e.ms, 0),
   };
+}
+
+/** Итоги по прогонам из разных потоков: значение — среднее, в допуске — по среднему. */
+function mergeOutcomes(list: (CalibScore['outcomes'] | undefined)[]): CalibScore['outcomes'] {
+  const have = list.filter((x): x is NonNullable<CalibScore['outcomes']> => !!x);
+  if (!have.length) return undefined;
+  const byId = new Map<string, OutcomeItem[]>();
+  for (const o of have) for (const it of o.items) byId.set(it.id, [...(byId.get(it.id) ?? []), it]);
+  const items = [...byId.values()].map((l) => {
+    const ms = l.map((x) => x.mean).filter((x): x is number => x != null);
+    const mean = ms.length ? +(ms.reduce((a, b) => a + b, 0) / ms.length).toFixed(2) : null;
+    const e = l[0].expect;
+    return { ...l[0], mean, ok: mean != null && (e ? mean >= e[0] && mean <= e[1] : l.every((x) => x.ok)) };
+  });
+  return { n: items.length, within: +(items.length ? items.filter((x) => x.ok).length / items.length : 0).toFixed(3), items };
+}
+
+/** Коридор, по которому подбирался множитель (блок calibration.corridors откалиброванного набора). */
+export interface CalibCorridor {
+  range: [number, number];
+  /** Факт-норматив базы: запись#номер; norm — строка norms.json (у фактов сида). Нет — прежние границы (допущение). */
+  fact?: string; norm?: string;
+  /** Источник норматива (запись-источник базы) и надёжность; допуск коридора по надёжности. */
+  source?: string; reliability?: string; tolerance?: number;
+  /** Коридор источника шире прежних границ; норматив есть, но пересчитать в множитель нельзя. */
+  wider?: true; tableMissing?: true;
+}
+
+/** Коридоры множителей сборщика «база → правила» (форма CompiledRules.corridors из packages/knowledge) → границы калибратора. */
+export function spaceOf(corridors: Record<string, { range: [number, number] }>): Partial<Record<CalibKey, [number, number]>> {
+  const out: Partial<Record<CalibKey, [number, number]>> = {};
+  for (const k of CALIB_KEYS) { const c = corridors[k]; if (c && c.range.every(Number.isFinite)) out[k] = [Math.min(...c.range), Math.max(...c.range)]; }
+  return out;
+}
+
+/** Коридоры сборщика → запись в откалиброванный набор: коридор, факт-норматив, источник, надёжность и её допуск. */
+export function calibCorridors(corridors: Record<string, { range: [number, number]; fact: { entry: string; index: number; fact: { source?: string; reliability?: string; norm?: { id: string } } } | null; wider?: true; tableMissing?: true }>): Partial<Record<CalibKey, CalibCorridor>> {
+  const out: Partial<Record<CalibKey, CalibCorridor>> = {};
+  for (const k of CALIB_KEYS) {
+    const c = corridors[k];
+    if (!c) continue;
+    const f = c.fact, rel = f?.fact.reliability;
+    out[k] = {
+      range: [c.range[0], c.range[1]],
+      ...(f ? { fact: `${f.entry}#${f.index}` } : {}), ...(f?.fact.norm ? { norm: f.fact.norm.id } : {}), ...(f?.fact.source ? { source: f.fact.source } : {}),
+      ...(rel ? { reliability: rel } : {}), ...(rel && rel in CORRIDOR_TOL ? { tolerance: CORRIDOR_TOL[rel as keyof typeof CORRIDOR_TOL] } : {}),
+      ...(c.wider ? { wider: true as const } : {}), ...(c.tableMissing ? { tableMissing: true as const } : {}),
+    };
+  }
+  return out;
+}
+
+/** Строка отчёта калибровки по множителю: значение, коридор (нет записи — прежние границы), источник, упирается ли в край. */
+export interface CorridorRow { key: CalibKey; title: string; value: number; range: [number, number]; source?: string; reliability?: string; fact?: string; wider?: true; edge: 'low' | 'high' | null }
+export function corridorReport(p: CalibParams, corridors: Partial<Record<CalibKey, CalibCorridor>> | undefined, keys: CalibKey[] = CALIB_KEYS): CorridorRow[] {
+  return keys.map((k) => {
+    const c = corridors?.[k];
+    const range: [number, number] = c ? c.range : [CALIB_SPACE[k][0], CALIB_SPACE[k][1]];
+    return {
+      key: k, title: CALIB_INFO[k].title, value: p[k], range,
+      ...(c?.source ? { source: c.source } : {}), ...(c?.reliability ? { reliability: c.reliability } : {}), ...(c?.fact ? { fact: c.fact } : {}), ...(c?.wider ? { wider: true as const } : {}),
+      edge: edgeOf(p[k], range),
+    };
+  });
 }

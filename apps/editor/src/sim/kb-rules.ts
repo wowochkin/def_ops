@@ -7,21 +7,13 @@
  * Коридор множителя считается от исходного набора (у откалиброванного — calibration.from): множители калибровки
  * применяются к исходным правилам, и коридор норматива пересчитывается в множитель относительно них же.
  */
-import { compileRules, type CompiledRules, type Entry, type Pins, type RuleInputRef } from '@def-ops/knowledge';
-import { CALIB_SPACE, corridorOf, RULE_INPUTS, rulesFrom, toMultiplier, type CalibKey, type DataKind, type Rules, type SideProfile } from '@def-ops/sim';
+import { compileRules, normRowOf, type CompiledRules, type Entry, type Pins, type RuleInputRef } from '@def-ops/knowledge';
+import { CALIB_SPACE, corridorOf, inputSide, outcomeNorm, ruleInputRefs, rulesFrom, toMultiplier, type CalibKey, type DataKind, type Norm, type Rules, type SideProfile } from '@def-ops/sim';
 import * as kbStore from '../kb/store';
 import { BUILTIN, getData } from './userdata';
 
-/**
- * Сторона входа: профиль советской стороны (марш, переправы, задержка приказа) — su, крепость и профиль вермахта — de;
- * иначе — по сегменту пути «.su» / «.de» (agents.doctrine.su.…, agents.combat.attackFrontageKm.de).
- */
-export function inputSide(path: string): 'su' | 'de' | undefined {
-  const seg = path.split('.');
-  if (path.startsWith('profiles.su.') || seg.includes('su') || path.startsWith('orderDelay.') || ['foot.road', 'foot.open', 'bridgeHoursMajor', 'bridgeHoursMinor'].includes(path)) return 'su';
-  if (path.startsWith('profiles.de.') || seg.includes('de') || path === 'stockDays.fortress') return 'de';
-  return undefined;
-}
+/** Сторона входа — из перечня входов модели (packages/sim, rule-inputs). */
+export { inputSide };
 
 /** Исходный набор откалиброванного (calibration.from); у неоткалиброванного — null. */
 export const baseRulesId = (r: Rules): string | null => (r as Rules & { calibration?: { from?: string } }).calibration?.from ?? null;
@@ -31,10 +23,7 @@ export const baseRulesId = (r: Rules): string | null => (r as Rules & { calibrat
  * коридора в множитель), profiles — профили сторон по id или по стороне.
  */
 export function basisFrom(entries: Entry[], pins: Pins, rules: Rules, base: Rules, profiles: Record<string, SideProfile>, agents: unknown): CompiledRules {
-  const inputs: RuleInputRef[] = RULE_INPUTS.map((i) => {
-    const side = inputSide(i.path);
-    return { path: i.path, engine: i.engine, value: i.read(rules, profiles, agents), ...(i.calib ? { calib: i.calib } : {}), ...(side ? { side } : {}) };
-  });
+  const inputs: RuleInputRef[] = ruleInputRefs(rules, profiles, agents);
   return compileRules(entries, inputs, pins, {
     corridorOf,
     toMultiplier: (key, c, path) => toMultiplier(key as CalibKey, c, base, profiles, path),
@@ -49,10 +38,27 @@ export async function rulesBasis(rulesId: string, have?: { entries: Entry[]; pin
   const rules = await rulesFrom(get, rulesId);
   const from = baseRulesId(rules);
   const base = from ? await rulesFrom(get, from).catch(() => rules) : rules;
+  return basisOf(rules, base, have);
+}
+
+/**
+ * Основа правил для калибровки от набора rules: множители применяются к нему самому, поэтому и коридоры
+ * пересчитываются относительно него (base = rules) — в отличие от rulesBasis, где у откалиброванного набора
+ * знаменатели — исходный набор.
+ */
+export async function basisOf(rules: Rules, base: Rules = rules, have?: { entries: Entry[]; pins: Pins }): Promise<CompiledRules> {
   const profiles: Record<string, SideProfile> = {};
   for (const id of BUILTIN.profiles) profiles[id] = (await getData('profiles', `${id}.json`)) as SideProfile;
   const [agents, entries, pins] = await Promise.all([getData('rules', 'agents-v0.json'), have?.entries ?? kbStore.entries(), have?.pins ?? kbStore.pins()]);
   return basisFrom(entries, pins, rules, base, profiles, agents);
+}
+
+/** Нормативы-итоги операции — строками нормативов для мерила (у факта сида — строка norms.json целиком). */
+export function outcomeNorms(b: Pick<CompiledRules, 'outcomes'>, scenario: string): Norm[] {
+  return b.outcomes.filter((o) => o.claim.scenario === scenario).map((o) => {
+    const row = normRowOf(o.fact.fact);
+    return row ? (row as unknown as Norm) : outcomeNorm(o.claim, { id: `${o.fact.entry}#${o.fact.index}`, kb: o.fact.entry, source: o.fact.fact.source, reliability: o.fact.fact.reliability });
+  });
 }
 
 /** Отпечаток основы правил для операции: коридоры множителей и нормативы-итоги операции — для «изменилось». */

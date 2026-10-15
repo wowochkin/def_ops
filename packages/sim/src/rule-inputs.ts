@@ -191,6 +191,27 @@ const BY_PATH = new Map(RULE_INPUTS.map((x) => [x.path, x]));
 export const ruleInput = (path: string): RuleInput | undefined => BY_PATH.get(path);
 
 /**
+ * Сторона входа: профиль советской стороны (марш, переправы, задержка приказа) — su, крепость и профиль вермахта — de;
+ * иначе — по сегменту пути «.su» / «.de» (agents.doctrine.su.…, agents.combat.attackFrontageKm.de).
+ */
+export function inputSide(path: string): 'su' | 'de' | undefined {
+  const seg = path.split('.');
+  if (path.startsWith('profiles.su.') || seg.includes('su') || path.startsWith('orderDelay.') || ['foot.road', 'foot.open', 'bridgeHoursMajor', 'bridgeHoursMinor'].includes(path)) return 'su';
+  if (path.startsWith('profiles.de.') || seg.includes('de') || path === 'stockDays.fortress') return 'de';
+  return undefined;
+}
+
+/** Вход с его значением в наборе правил — то, что получает сборщик «база → правила» (RuleInputRef в packages/knowledge). */
+export interface RuleInputValue { path: string; engine: RuleInput['engine']; value: number | null; calib?: CalibKey; side?: 'su' | 'de' }
+/** Весь перечень входов со значениями набора правил, профилей и агентной модели. */
+export function ruleInputRefs(rules: Rules, profiles: Record<string, SideProfile>, agents?: unknown): RuleInputValue[] {
+  return RULE_INPUTS.map((i) => {
+    const s = inputSide(i.path);
+    return { path: i.path, engine: i.engine, value: i.read(rules, profiles, agents), ...(i.calib ? { calib: i.calib } : {}), ...(s ? { side: s } : {}) };
+  });
+}
+
+/**
  * Коридор норматива: значение v → [v(1−t), v(1+t)], диапазон [a, b] → [a(1−t), b(1+t)], t — допуск надёжности.
  * Допущение (без надёжности) или факт без числа — null (остаются прежние границы).
  */

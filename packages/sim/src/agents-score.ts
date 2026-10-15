@@ -5,6 +5,7 @@
  */
 import { agentsHistory, agentsToRun, type AgentHistory, type AgentTrace } from './agents';
 import { checkEvents, compareStrength, compareWithHistory, STRENGTH_MIN_POINTS, STRENGTH_WEIGHT, summarize, type History } from './history';
+import { evaluateNorms, outcomesScore, OUTCOME_WEIGHT, type Norm } from './norms';
 import type { SimContext } from './step';
 
 export interface AgentsScore {
@@ -15,11 +16,16 @@ export interface AgentsScore {
   byGroup: { id: string; within: number; n: number }[];
   /** Сверка численности и потерь с документами (есть, когда в истории есть контрольные точки). */
   strength?: { n: number; within: number };
-  /** Итог для калибровки: положения и события поровну (0…1); при ≥ 10 контрольных точках — на 25% сверка численности. */
+  /** Нормативы-итоги операции, измеримые в прогоне: сколько, доля в допуске, каждый (id, значение, в допуске ли). */
+  outcomes?: { n: number; within: number; items: { id: string; mean: number | null; ok: boolean }[] };
+  /**
+   * Итог для калибровки: положения и события поровну (0…1); при ≥ 10 контрольных точках — на 25% сверка численности;
+   * при ≥ 3 измеримых нормативах-итогах операции — на 1/8 доля итогов в допуске (тот же вес и порог, что у нынешней модели).
+   */
   score: number;
 }
 
-export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null, toleranceKm = 10, stepHours = 6): AgentsScore {
+export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null, toleranceKm = 10, stepHours = 6, outcomes: Norm[] = []): AgentsScore {
   const { ctx, run } = agentsToRun(base, trace, stepHours);
   const h = agentsHistory(history, baseHistory);
   const devs = compareWithHistory(ctx, run, h);
@@ -41,11 +47,18 @@ export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentH
   }
   const st = compareStrength(ctx, run, h);
   const posEv = (s.within + (ev.length ? hit / ev.length : s.within)) / 2;
+  const withStrength = st.n >= STRENGTH_MIN_POINTS ? posEv * (1 - STRENGTH_WEIGHT) + st.within * STRENGTH_WEIGHT : posEv;
+  // нормативы-итоги этой операции: темп и потери — по прогону ядра, ширина полос — по профилям
+  const outs = outcomes.filter((n) => 'scenario' in n.measure && n.measure.scenario === base.scenario.id);
+  const res = outs.length ? evaluateNorms({ norms: outs }, () => ctx, () => [run]) : [];
+  const share = outcomesScore(res);
+  const items = res.filter((r) => r.verdict === 'ok' || r.verdict === 'low' || r.verdict === 'high').map((r) => ({ id: r.norm.id, mean: r.mean == null ? null : +r.mean.toFixed(2), ok: r.verdict === 'ok' }));
   return {
     within: s.within, n: s.n, medianExcessKm: s.medianExcessKm, eventsHit: hit, eventsTotal: ev.length,
     events: ev.map((e) => ({ id: e.id, title: e.title, days: e.days })),
     byGroup: [...groups].map(([id, x]) => ({ id: name.get(id) ?? id, within: +(x.ok / x.n).toFixed(2), n: x.n })).sort((a, b) => b.n - a.n),
     ...(st.n > 0 ? { strength: { n: st.n, within: st.within } } : {}),
-    score: +(st.n >= STRENGTH_MIN_POINTS ? posEv * (1 - STRENGTH_WEIGHT) + st.within * STRENGTH_WEIGHT : posEv).toFixed(3),
+    ...(outs.length ? { outcomes: { n: items.length, within: +(items.length ? items.filter((x) => x.ok).length / items.length : 0).toFixed(3), items } } : {}),
+    score: +(share == null ? withStrength : withStrength * (1 - OUTCOME_WEIGHT) + share * OUTCOME_WEIGHT).toFixed(3),
   };
 }

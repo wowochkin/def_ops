@@ -144,5 +144,40 @@ export function evaluateNorms(t: NormTable, ctxOf: (scenario: string) => SimCont
   return out;
 }
 
+/**
+ * Множитель упирается в границу коридора: в пределах CORRIDOR_EDGE (2 %) ширины от края — 'low' / 'high'
+ * («упирается в границу — проверьте источник»); вырожденный коридор (нулевой ширины) — null.
+ */
+export function edgeOf(v: number, c: [number, number]): 'low' | 'high' | null {
+  const lo = Math.min(c[0], c[1]), hi = Math.max(c[0], c[1]), w = hi - lo;
+  if (!(w > 0) || !Number.isFinite(v)) return null;
+  const e = CORRIDOR_EDGE * w + 1e-12;
+  return v - lo <= e ? 'low' : hi - v <= e ? 'high' : null;
+}
+
+/**
+ * Доля нормативов-итогов в допуске (0…1) — по измеримым (в пределах, ниже, выше); «не моделируется», допущения и
+ * «нет данных» не считаются. Измеримых меньше OUTCOME_MIN (3) — null: итоги в мерило не входят, только проверка.
+ */
+export function outcomesScore(results: NormResult[]): number | null {
+  const m = results.filter((r) => r.verdict === 'ok' || r.verdict === 'low' || r.verdict === 'high');
+  return m.length < OUTCOME_MIN ? null : m.filter((r) => r.verdict === 'ok').length / m.length;
+}
+
+/** Норматив-итог базы знаний (факт outcome; форма — как в packages/knowledge, без зависимости от неё). */
+export interface OutcomeClaim { measure: string; scenario: string; subject?: string; from: string; to: string; range: [number, number]; unit: string; side?: string; echelon?: string; near?: string }
+
+/** Строка нормативов по нормативу-итогу базы (у фактов из документов и ручных нет строки norms.json). */
+export function outcomeNorm(c: OutcomeClaim, o: { id: string; title?: string; kb?: string; source?: string; reliability?: string; historical?: string }): Norm {
+  const measure: Norm['measure'] = c.measure === 'pace' ? { kind: 'pace', scenario: c.scenario, formation: c.subject ?? '', from: c.from, to: c.to }
+    : c.measure === 'loss' ? { kind: 'loss', scenario: c.scenario, parent: c.subject ?? '', from: c.from, to: c.to }
+    : c.measure === 'frontage' ? { kind: 'frontage', scenario: c.scenario, side: c.side ?? '', echelon: c.echelon ?? '' }
+    : { kind: 'unmodelled', why: `мера «${c.measure}» в прогоне не замеряется` };
+  return {
+    id: o.id, title: o.title ?? `${c.measure} ${c.subject ?? [c.side, c.echelon].filter(Boolean).join(' ')}`.trim(), kb: o.kb ?? '', source: o.source ?? '',
+    reliability: o.reliability ?? '', historical: o.historical ?? '', measure, expect: [Math.min(...c.range), Math.max(...c.range)], unit: c.unit, rules: [],
+  };
+}
+
 export const NORM_MARK: Record<NormVerdict, string> = { ok: '✓ в пределах', low: '↓ ниже опыта', high: '↑ выше опыта', none: '— не моделируется', assumed: '◇ допущение, опоры нет', error: '? нет данных' };
 export const fmtNorm = fmt;

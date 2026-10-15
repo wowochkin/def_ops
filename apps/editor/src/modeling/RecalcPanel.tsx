@@ -7,8 +7,9 @@
  */
 import { confirmAsync } from '../dialogs';
 import { useEffect, useRef, useState } from 'react';
-import { baseParams, CALIB_INFO, CALIB_KEYS, calibratedRules, Calibrator, mergeEvaluations, type CalibParams, type Rules, type RulesEvaluation, type Scenario } from '@def-ops/sim';
+import { baseParams, CALIB_INFO, CALIB_KEYS, calibCorridors, calibratedRules, Calibrator, mergeEvaluations, spaceOf, type CalibParams, type Rules, type RulesEvaluation, type Scenario } from '@def-ops/sim';
 import * as kb from '../kb/kb';
+import { basisOf, outcomeNorms } from '../sim/kb-rules';
 import { BUILTIN_CATALOG, changesSince, getData, getEdits, onDataChange, saveRules, updateEdits, type ChangeLog, type OperationEdits, type Recalibration } from '../sim/userdata';
 import { download, getPool, pct, type SimData } from './data';
 
@@ -49,16 +50,20 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
     const st: { stage: Stage; done: number; evals: number; text: string; error?: string } = { stage: 'before', done: 0, evals, text: '' };
     const upd = (x: Partial<typeof st>) => { Object.assign(st, x); setRun({ ...st }); };
     try {
+      // коридоры множителей и нормативы-итоги операции — по базе знаний (как в «Калибровке»)
+      const basis = await basisOf(base.rules).catch(() => null);
+      const outcomes = basis ? outcomeNorms(basis, op) : [];
       upd({ stage: 'before', text: '5 прогонов' });
-      const before = await pool.run({ scenario: op, rules: base.id, seeds: 5, seed0: 1, trainUntil, toleranceKm: tol });
+      const before = await pool.run({ scenario: op, rules: base.id, seeds: 5, seed0: 1, trainUntil, toleranceKm: tol, outcomes });
       upd({ stage: 'calib', text: '' });
       const keys = CALIB_KEYS.filter((k) => !(k.startsWith('terr') && !base.rules.territory));
       const p0 = baseParams(base.rules);
-      const cal = new Calibrator(p0, evals, Date.now() % 100000, keys);
+      const cal = new Calibrator(p0, evals, Date.now() % 100000, keys, basis ? spaceOf(basis.corridors) : undefined);
       // вариант — по двум прогонам (seed 101, 102): по одному подбор подстраивается под случайность
-      const evalP = (params?: CalibParams) => Promise.all([101, 102].map((seed0) => pool.run({ scenario: op, rules: base.id, params, seeds: 1, seed0, trainUntil, toleranceKm: tol }))).then((l) => mergeEvaluations(l).score);
+      const evalP = (params?: CalibParams) => Promise.all([101, 102].map((seed0) => pool.run({ scenario: op, rules: base.id, params, seeds: 1, seed0, trainUntil, toleranceKm: tol, outcomes }))).then((l) => mergeEvaluations(l).score);
       const tried: { p: CalibParams; s: number }[] = [];
-      cal.report(p0, await evalP());
+      // исходные множители вне коридоров — старт у края коридора
+      cal.report(cal.start, await evalP(keys.some((k) => Math.abs(cal.start[k] - p0[k]) > 1e-9) ? cal.start : undefined));
       while (!cal.done && !stopRef.current) {
         await Promise.all(cal.next(Math.max(1, Math.floor(pool.size / 2))).map(async (p) => {
           const sc = await evalP(p);
@@ -70,7 +75,7 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
       // перепроверка: три лучших варианта — на тех же 5 прогонах, что и «до»; берётся лучший по мерилу
       upd({ stage: 'after', text: 'перепроверка трёх лучших вариантов на 5 прогонах' });
       const top = tried.sort((a, b) => a.s - b.s).slice(0, 3);
-      const checked = await Promise.all(top.map(async (t) => ({ p: t.p, r: await pool.run({ scenario: op, rules: base.id, params: t.p, seeds: 5, seed0: 1, trainUntil, toleranceKm: tol }) })));
+      const checked = await Promise.all(top.map(async (t) => ({ p: t.p, r: await pool.run({ scenario: op, rules: base.id, params: t.p, seeds: 5, seed0: 1, trainUntil, toleranceKm: tol, outcomes }) })));
       const winner = checked.sort((a, b) => a.r.score.total - b.r.score.total)[0];
       const better = !!winner && winner.r.score.total < before.score.total;
       const best = { p: better ? winner.p : p0, s: better ? winner.r.score : before.score };
@@ -87,7 +92,7 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
       // сохранить набор правил (свой), записать итог — в операцию и в базу знаний
       const at = new Date().toISOString();
       const id = `user-recal-${op}-${Date.now().toString(36)}`;
-      const rules = calibratedRules(base.rules, best.p, { id, scenario: op, evals: st.done + 1, seeds: 1, trainUntil, before: before.score, after: best.s, note: `пересчёт после уточнения данных (${changes.length} изменений)` }) as Rules;
+      const rules = calibratedRules(base.rules, best.p, { id, scenario: op, evals: st.done + 1, seeds: 1, trainUntil, before: before.score, after: best.s, note: `пересчёт после уточнения данных (${changes.length} изменений)`, ...(basis ? { corridors: calibCorridors(basis.corridors) } : {}) }) as Rules;
       const rtitle = `пересчёт ${ddmmyyyy(at)} (${title.split(',')[0]})`;
       if (better) await saveRules({ id, title: rtitle, base: base.id, scenario: op, created: at, note: `пересчёт после уточнения данных: ${changes.length} изменений`, rules });
       const moved = keys.filter((k) => Math.abs(best.p[k] - p0[k]) > 1e-3).map((k) => `${CALIB_INFO[k].title}: ${p0[k].toFixed(2)} → ${best.p[k].toFixed(2)}`);

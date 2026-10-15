@@ -1,4 +1,4 @@
-import type { CalibParams, OperationPackage, Rules, RulesEvaluation } from '@def-ops/sim';
+import type { CalibParams, Norm, OperationPackage, Rules, RulesEvaluation } from '@def-ops/sim';
 
 export interface ModelRequest {
   id: number;
@@ -13,5 +13,7 @@ export interface ModelRequest {
   seed0?: number;
   trainUntil?: string;
   toleranceKm?: number;
+  /** Нормативы-итоги операции (из базы знаний): от трёх измеримых входят в мерило калибровки с весом 1/8. */
+  outcomes?: Norm[];
 }
 export type ModelResponse = { id: number; ok: true; result: RulesEvaluation } | { id: number; ok: false; error: string };

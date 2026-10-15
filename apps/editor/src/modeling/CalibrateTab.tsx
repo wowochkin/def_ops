@@ -5,12 +5,17 @@
  * свой набор правил с блоком калибровки (до и после, множители).
  */
 import { useEffect, useRef, useState } from 'react';
-import { baseParams, CALIB_INFO, CALIB_KEYS, calibratedRules, Calibrator, mergeEvaluations, type CalibKey, type CalibParams, type CalibScore, type Rules, type Scenario } from '@def-ops/sim';
+import { baseParams, CALIB_INFO, CALIB_KEYS, calibCorridors, calibratedRules, Calibrator, mergeEvaluations, spaceOf, type CalibCorridor, type CalibKey, type CalibParams, type CalibScore, type Rules, type Scenario } from '@def-ops/sim';
+import { basisOf, outcomeNorms } from '../sim/kb-rules';
 import { getData, saveRules } from '../sim/userdata';
 import { LineChart } from './LineChart';
 import { getPool, pct, resetPool, type SimData } from './data';
 
-interface Run { scenario: string; baseId: string; before: CalibScore; start: CalibParams; history: { i: number; best: number; cur: number }[]; best: { p: CalibParams; s: CalibScore } | null; done: number; evals: number; seeds: number; trainUntil: string; finished: boolean; error?: string }
+/**
+ * start — исходная точка подбора (множители вне коридоров нормативов перенесены к краю), moved — какие перенесены;
+ * corridors — коридоры, по которым идёт подбор (записываются в сохранённый набор).
+ */
+interface Run { scenario: string; baseId: string; before: CalibScore; start: CalibParams; moved: CalibKey[]; corridors?: Partial<Record<CalibKey, CalibCorridor>>; history: { i: number; best: number; cur: number }[]; best: { p: CalibParams; s: CalibScore } | null; done: number; evals: number; seeds: number; trainUntil: string; finished: boolean; error?: string }
 
 export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; onCompare: (scenario: string, rules: string[]) => void; initialScenario?: string | null }) {
   const [scenario, setScenario] = useState(initialScenario ?? d.catalog[0]?.id ?? '');
@@ -40,14 +45,21 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
     stopRef.current = false; setSavedId(null);
     const tu = `${trainUntil}T23:59`;
     const pool = getPool();
-    const evalP = (params: CalibParams | undefined) => Promise.all(Array.from({ length: seeds }, (_, k) => pool.run({ scenario, rules: base.id, params, seeds: 1, seed0: 101 + k, trainUntil: tu, toleranceKm: entry?.toleranceKm }))).then((l) => mergeEvaluations(l).score);
     const p0 = baseParams(base.rules);
-    const st: Run = { scenario, baseId, before: null as unknown as CalibScore, start: p0, history: [], best: null, done: 0, evals, seeds, trainUntil: tu, finished: false };
+    const st: Run = { scenario, baseId, before: null as unknown as CalibScore, start: p0, moved: [], history: [], best: null, done: 0, evals, seeds, trainUntil: tu, finished: false };
     setRun({ ...st });
     try {
+      // основа правил по базе знаний: коридоры множителей (относительно этого набора) и нормативы-итоги операции
+      const basis = await basisOf(base.rules).catch(() => null);
+      const outcomes = basis ? outcomeNorms(basis, scenario) : [];
+      st.corridors = basis ? calibCorridors(basis.corridors) : undefined;
+      const evalP = (params: CalibParams | undefined) => Promise.all(Array.from({ length: seeds }, (_, k) => pool.run({ scenario, rules: base.id, params, seeds: 1, seed0: 101 + k, trainUntil: tu, toleranceKm: entry?.toleranceKm, outcomes }))).then((l) => mergeEvaluations(l).score);
       st.before = await evalP(undefined);
-      const cal = new Calibrator(p0, evals, Date.now() % 100000, keys);
-      cal.report(p0, st.before);
+      const cal = new Calibrator(p0, evals, Date.now() % 100000, keys, basis ? spaceOf(basis.corridors) : undefined);
+      // исходные множители вне коридоров — старт у края коридора; его мерило считается отдельно
+      st.start = cal.start;
+      st.moved = keys.filter((k) => Math.abs(cal.start[k] - p0[k]) > 1e-9);
+      cal.report(cal.start, st.moved.length ? await evalP(cal.start) : st.before);
       st.best = cal.best;
       setRun({ ...st });
       // партиями по числу потоков: широкий поиск, потом уточнение вокруг лучшего
@@ -75,7 +87,7 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
   const save = async () => {
     if (!run?.best || !base) return;
     const id = `user-cal-${Date.now().toString(36)}`;
-    const rules = calibratedRules(base.rules, run.best.p, { id, scenario: run.scenario, evals: run.done, seeds: run.seeds, trainUntil: run.trainUntil, before: run.before, after: run.best.s }) as Rules;
+    const rules = calibratedRules(base.rules, run.best.p, { id, scenario: run.scenario, evals: run.done, seeds: run.seeds, trainUntil: run.trainUntil, before: run.before, after: run.best.s, corridors: run.corridors }) as Rules;
     await saveRules({ id, title: title.trim() || id, base: base.id, scenario: run.scenario, created: new Date().toISOString(), note: `калибровка в браузере: ${run.done} вариантов, обучение до ${run.trainUntil.slice(0, 10)}`, rules });
     setSavedId(id);
   };
@@ -115,6 +127,7 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
             <tr><td>Ошибка дат событий, сут</td><td>{run.before.events}</td><td><b>{b.s.events}</b></td></tr>
             <tr><td>Положений в пределах 10 км</td><td>{pct(run.before.within)}</td><td><b>{pct(b.s.within)}</b></td></tr>
           </tbody></table>}
+          {run.moved.length > 0 && <p className="muted small">Исходные множители вне коридоров нормативов базы — подбор начат от края коридора: {run.moved.map((k) => `${CALIB_INFO[k].title} ${p0Text(run, k)}`).join('; ')}.</p>}
           {b && <div className="mdl-mult">{keys.map((k) => <span key={k} title={CALIB_INFO[k].hint} className={Math.abs(b.p[k] - run.start[k]) > 1e-3 ? 'ch' : ''}>{CALIB_INFO[k].title}: {run.start[k].toFixed(2)} → <b>{b.p[k].toFixed(2)}</b></span>)}</div>}
           {b && b.s.test > run.before.test && <p className="warn">Проверка (вторая половина операции) стала хуже исходной — похоже на подгонку под первую половину. Сократите число подбираемых множителей или увеличьте прогонов на вариант.</p>}
           {run.finished && b && b.s.total < run.before.total && <div className="row">
@@ -128,3 +141,9 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
     </div>
   );
 }
+
+/** Перенесённый множитель: из набора → край коридора. */
+const p0Text = (run: { start: CalibParams; corridors?: Partial<Record<CalibKey, CalibCorridor>> }, k: CalibKey) => {
+  const c = run.corridors?.[k]?.range;
+  return c ? `→ ${run.start[k].toFixed(2)} (коридор ${c[0].toFixed(2)}–${c[1].toFixed(2)})` : `→ ${run.start[k].toFixed(2)}`;
+};

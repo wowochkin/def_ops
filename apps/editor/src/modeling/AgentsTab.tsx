@@ -5,7 +5,9 @@
  * выбранных параметров вокруг лучшего; итог сохраняется вариантом — его можно выбрать в «Переигровке».
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AgentsScore } from '@def-ops/sim';
+import type { AgentsScore, Norm } from '@def-ops/sim';
+import { agentRanges, startMultipliers, trialMultipliers, type MultRange } from '../sim/agents-corridor';
+import { outcomeNorms, rulesBasis } from '../sim/kb-rules';
 import { getData } from '../sim/userdata';
 import { coreEditsFor } from '../sim/kb-recompile';
 import { AGENT_SCENARIOS, agentHistory, agentVariants, deleteAgentVariant, DESKTOP, runAgents, saveAgentVariant, type AgentVariant } from '../sim/agent-scenarios';
@@ -42,18 +44,18 @@ const show = (v: Val) => (typeof v === 'number' ? String(v) : `кривая: ${v
 /** Сверка в фоновом потоке. */
 let worker: Worker | null = null, seq = 0;
 const waiting = new Map<number, (r: ScoreResponse) => void>();
-function score(scenario: string, trace: ScoreRequest['trace'], history: ScoreRequest['history']): Promise<AgentsScore> {
+function score(scenario: string, trace: ScoreRequest['trace'], history: ScoreRequest['history'], outcomes: Norm[]): Promise<AgentsScore> {
   if (!worker) {
     worker = new Worker(new URL('../sim/agents-score-worker.ts', import.meta.url), { type: 'module' });
     worker.onmessage = (e: MessageEvent<ScoreResponse>) => { waiting.get(e.data.id)?.(e.data); waiting.delete(e.data.id); };
   }
   const id = ++seq;
-  return new Promise((res, rej) => { waiting.set(id, (r) => (r.ok ? res(r.score) : rej(new Error(r.error)))); worker!.postMessage({ id, scenario, trace, history } satisfies ScoreRequest); });
+  return new Promise((res, rej) => { waiting.set(id, (r) => (r.ok ? res(r.score) : rej(new Error(r.error)))); worker!.postMessage({ id, scenario, trace, history, outcomes } satisfies ScoreRequest); });
 }
 
 interface Eval { score: number; within: number; medianExcessKm: number; eventsHit: number; eventsTotal: number; events: { title: string; days: (number | null)[] }[]; byGroup: { id: string; within: number }[]; seeds: number }
 /** Вариант параметров на нескольких seed: средние по прогонам. */
-async function evaluate(scenario: string, params: Record<string, unknown>, seeds: number, opts: { de: 'script' | 'doctrine'; su: 'script' | 'doctrine' }, stop: () => boolean): Promise<Eval | null> {
+async function evaluate(scenario: string, params: Record<string, unknown>, seeds: number, opts: { de: 'script' | 'doctrine'; su: 'script' | 'doctrine' }, stop: () => boolean, outcomes: Norm[] = []): Promise<Eval | null> {
   const history = await agentHistory(scenario);
   // поправки сценария из базы знаний (дивизии): id операции = ключ агентного сценария
   const edits = await coreEditsFor(scenario);
@@ -61,7 +63,7 @@ async function evaluate(scenario: string, params: Record<string, unknown>, seeds
   for (let k = 0; k < seeds; k++) {
     if (stop()) return null;
     const trace = await runAgents(scenario, { seed: 101 + k, params, edits, ...opts });
-    list.push(await score(scenario, trace, history));
+    list.push(await score(scenario, trace, history, outcomes));
   }
   const avg = (f: (s: AgentsScore) => number) => +(list.reduce((a, s) => a + f(s), 0) / list.length).toFixed(3);
   const groups = new Map<string, number[]>();
@@ -73,6 +75,14 @@ async function evaluate(scenario: string, params: Record<string, unknown>, seeds
     byGroup: [...groups].map(([id, l]) => ({ id, within: +(l.reduce((a, x) => a + x, 0) / l.length).toFixed(2) })),
     seeds,
   };
+}
+/**
+ * Основа правил по базе знаний для агентной модели: коридоры множителей параметров (норматив / исходное значение) и
+ * нормативы-итоги операции. Коридоры входов agents.* от набора правил не зависят — берётся исходный набор.
+ */
+async function agentsBasis(scenario: string, paths: string[]): Promise<{ ranges: Record<string, MultRange>; outcomes: Norm[] }> {
+  const b = await rulesBasis('ww2-draft').catch(() => null);
+  return b ? { ranges: agentRanges(paths, b), outcomes: outcomeNorms(b, scenario) } : { ranges: {}, outcomes: [] };
 }
 const daysText = (l: (number | null)[]) => l.map((d) => (d == null ? '—' : d > 0 ? `+${d}` : String(d))).join(' / ');
 
@@ -96,10 +106,11 @@ export function AgentsTab() {
   const varOf = (id: string): { title: string; params: Record<string, unknown> } => (id === 'base' ? { title: 'базовые (agents-v0)', params: {} } : mine.find((v) => v.id === id) ?? { title: id, params: {} });
   const compare = async () => {
     stopRef.current = false; setCmp({});
+    const { outcomes } = await agentsBasis(scenario, []);
     for (const id of pick) {
       if (stopRef.current) break;
       setBusy(`сравнение: ${varOf(id).title}…`); setCmp((c) => ({ ...c, [id]: 'run' }));
-      try { const r = await evaluate(scenario, varOf(id).params, seeds, { de, su }, () => stopRef.current); if (r) setCmp((c) => ({ ...c, [id]: r })); }
+      try { const r = await evaluate(scenario, varOf(id).params, seeds, { de, su }, () => stopRef.current, outcomes); if (r) setCmp((c) => ({ ...c, [id]: r })); }
       catch (e) { setCmp((c) => ({ ...c, [id]: String(e) })); }
     }
     setBusy(null);
@@ -108,28 +119,44 @@ export function AgentsTab() {
 
   // ── калибровка ──
   const [keys, setKeys] = useState<string[]>(['combat.advance.prepared', 'combat.penetrationKmDay', 'march.kmh.foot']);
-  const [cal, setCal] = useState<{ base: Eval | null; best: { mul: Record<string, number>; e: Eval } | null; tried: { key: string; m: number; score: number; ok: boolean }[]; n: number; total: number; error?: string; finished: boolean } | null>(null);
+  const [cal, setCal] = useState<{ base: Eval | null; best: { mul: Record<string, number>; e: Eval } | null; tried: { key: string; m: number; score: number; ok: boolean }[]; skipped: { key: string; m: number }[]; moved: Record<string, number>; n: number; total: number; error?: string; finished: boolean } | null>(null);
+  // коридоры множителей параметров по нормативам базы (для подписи у параметра)
+  const [ranges, setRanges] = useState<Record<string, MultRange>>({});
+  useEffect(() => { void agentsBasis(scenario, PARAMS.map((p) => p.path)).then((b) => setRanges(b.ranges)); }, [scenario]);
   const [title, setTitle] = useState('');
   const paramsOf = (mul: Record<string, number>) => Object.fromEntries(Object.entries(mul).filter(([, m]) => m !== 1).map(([k, m]) => [k, scaled(valueAt(ag, k)!, m)]));
   const calibrate = async () => {
     if (!ag) return;
     stopRef.current = false;
-    const total = 1 + keys.length * MULTS.length;
-    const st = { base: null as Eval | null, best: null as { mul: Record<string, number>; e: Eval } | null, tried: [] as { key: string; m: number; score: number; ok: boolean }[], n: 0, total, finished: false };
+    const st = { base: null as Eval | null, best: null as { mul: Record<string, number>; e: Eval } | null, tried: [] as { key: string; m: number; score: number; ok: boolean }[], skipped: [] as { key: string; m: number }[], moved: {} as Record<string, number>, n: 0, total: 1 + keys.length * MULTS.length, finished: false };
     setCal({ ...st });
     try {
+      // коридоры нормативов: множители вне коридора не пробуются; исходное значение вне коридора — старт у края
+      const { ranges: rg, outcomes } = await agentsBasis(scenario, keys);
+      st.moved = startMultipliers(keys, rg);
+      const moved = Object.keys(st.moved).length > 0;
+      if (moved) st.total++;
       setBusy('калибровка: исходные параметры…');
-      st.base = await evaluate(scenario, {}, seeds, { de, su }, () => stopRef.current);
+      st.base = await evaluate(scenario, {}, seeds, { de, su }, () => stopRef.current, outcomes);
       if (!st.base) { setBusy(null); return; }
       st.n = 1; st.best = { mul: {}, e: st.base }; setCal({ ...st });
-      // по параметру: множители вокруг лучшего, принимается лучший, если он лучше
+      if (moved) {
+        setBusy('калибровка: старт у края коридоров…');
+        const e = await evaluate(scenario, paramsOf(st.moved), seeds, { de, su }, () => stopRef.current, outcomes);
+        if (!e) { setBusy(null); return; }
+        st.n++; st.best = { mul: { ...st.moved }, e }; setCal({ ...st });
+      }
+      // по параметру: множители вокруг лучшего (в коридоре), принимается лучший, если он лучше
       for (const k of keys) {
         let bestHere: { m: number; e: Eval } | null = null;
-        for (const m of MULTS) {
+        const { tries, skipped } = trialMultipliers(st.best!.mul[k] ?? 1, MULTS, rg[k]);
+        st.skipped.push(...skipped.map((m) => ({ key: k, m })));
+        st.total -= skipped.length;
+        for (const m of tries) {
           if (stopRef.current) break;
           setBusy(`калибровка: ${PARAMS.find((p) => p.path === k)?.title} ×${m}…`);
-          const mul: Record<string, number> = { ...st.best!.mul, [k]: +((st.best!.mul[k] ?? 1) * m).toFixed(3) };
-          const e = await evaluate(scenario, paramsOf(mul), seeds, { de, su }, () => stopRef.current);
+          const mul: Record<string, number> = { ...st.best!.mul, [k]: m };
+          const e = await evaluate(scenario, paramsOf(mul), seeds, { de, su }, () => stopRef.current, outcomes);
           if (!e) break;
           st.n++;
           st.tried.push({ key: k, m: mul[k], score: e.score, ok: false });
@@ -195,8 +222,8 @@ export function AgentsTab() {
 
       <section className="mdl-card">
         <h3>Калибровка по истории</h3>
-        <p className="muted small">Для каждого выбранного параметра пробуются множители {MULTS.map((m) => `×${m}`).join(', ')} вокруг лучшего найденного; принимается лучший, если итог вырос. Прогонов: 1 + {keys.length} × {MULTS.length} = {1 + keys.length * MULTS.length}, на каждый — {seeds} seed.</p>
-        <div className="mdl-pick ag-params">{PARAMS.map((p) => { const v = valueAt(ag, p.path); return <label key={p.path} title={p.path}><input type="checkbox" checked={keys.includes(p.path)} disabled={!v} onChange={(e) => setKeys(e.target.checked ? [...keys, p.path] : keys.filter((k) => k !== p.path))} /> {p.title} <span className="muted small">{v ? show(v) : 'нет'}</span></label>; })}</div>
+        <p className="muted small">Для каждого выбранного параметра пробуются множители {MULTS.map((m) => `×${m}`).join(', ')} вокруг лучшего найденного — кроме выходящих за коридор норматива базы (если он есть); принимается лучший, если итог вырос. Нормативы-итоги операции (от трёх) входят в итог с весом 1/8. Прогонов: 1 + {keys.length} × {MULTS.length} = {1 + keys.length * MULTS.length}, на каждый — {seeds} seed.</p>
+        <div className="mdl-pick ag-params">{PARAMS.map((p) => { const v = valueAt(ag, p.path); return <label key={p.path} title={p.path}><input type="checkbox" checked={keys.includes(p.path)} disabled={!v} onChange={(e) => setKeys(e.target.checked ? [...keys, p.path] : keys.filter((k) => k !== p.path))} /> {p.title} <span className="muted small">{v ? show(v) : 'нет'}{ranges[p.path] ? ` · коридор норматива ×${+ranges[p.path][0].toFixed(2)}–${+ranges[p.path][1].toFixed(2)}` : ''}</span></label>; })}</div>
         <button className="primary" disabled={!!busy || !keys.length || !ag} onClick={() => void calibrate()}>Калибровать</button>
         {cal && <>
           <div className="muted small">Прогонов: {cal.n} из {cal.total}{cal.error ? ` — ошибка: ${cal.error}` : cal.finished ? ' — готово' : ''}</div>
@@ -204,6 +231,8 @@ export function AgentsTab() {
             <tr><td>исходные</td><td>{pct(cal.base.within)}</td><td>{cal.base.medianExcessKm}</td><td>{cal.base.eventsHit} / {cal.base.eventsTotal}</td><td>{cal.base.score}</td></tr>
             <tr><td><b>лучшие</b> {Object.entries(cal.best.mul).map(([k, m]) => `${PARAMS.find((p) => p.path === k)?.title ?? k} ×${m}`).join('; ') || '(без изменений)'}</td><td>{pct(cal.best.e.within)}</td><td>{cal.best.e.medianExcessKm}</td><td>{cal.best.e.eventsHit} / {cal.best.e.eventsTotal}</td><td><b>{cal.best.e.score}</b></td></tr>
           </tbody></table>}
+          {Object.keys(cal.moved).length > 0 && <div className="muted small">Исходное значение вне коридора норматива — старт у края: {Object.entries(cal.moved).map(([k, m]) => `${PARAMS.find((p) => p.path === k)?.title ?? k} ×${+m.toFixed(3)}`).join('; ')}</div>}
+          {cal.skipped.length > 0 && <div className="muted small">Вне коридора норматива — не пробовались: {cal.skipped.map((x) => `${PARAMS.find((p) => p.path === x.key)?.title ?? x.key} ×${x.m}`).join('; ')}</div>}
           {cal.tried.length > 0 && <table className="mdl-tbl"><thead><tr><th>Параметр</th><th>Множитель</th><th>Итог</th></tr></thead><tbody>
             {cal.tried.map((t, i) => <tr key={i} className={t.ok ? 'on' : ''}><td>{PARAMS.find((p) => p.path === t.key)?.title}</td><td>×{t.m}</td><td>{t.score}{t.ok ? ' ✓ принят' : ''}</td></tr>)}</tbody></table>}
           {cal.best && cal.finished && <div className="row"><input placeholder="Название варианта" value={title} onChange={(e) => setTitle(e.target.value)} /><button className="primary" onClick={saveVariant}>Сохранить вариант</button>
