@@ -268,8 +268,8 @@ export interface MapSource {
   attribution?: string;
   /** Дата состояния местности на карте (год издания / съёмки), если известна. */
   date?: string | null;
-  kind: 'xyz' | 'raster' | 'package';
-  format: 'png' | 'jpg' | 'webp';
+  kind: 'xyz' | 'raster' | 'package' | 'vector';
+  format: 'png' | 'jpg' | 'webp' | 'pbf';
   tileSize: 256 | 512;
   minzoom: number;
   maxzoom: number;
@@ -289,6 +289,8 @@ export interface MapSource {
   /** Для растра: итог привязки — вид преобразования, размер скана, невязки (м). */
   georef?: GeorefSummary | null;
   stats?: { tiles: number; bytes: number };
+  /** Для векторной карты OpenHistoricalMap: рамка загрузки, участков, объектов (всего и по слоям), когда скачана. */
+  ohm?: { bbox: BBox; cells: number; features: number; layers: Record<string, number>; fetchedAt: string } | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -311,7 +313,7 @@ export interface GeorefSummary {
 export interface MapJob {
   id: string;
   mapId: string;
-  type: 'xyz-download' | 'raster-tile' | 'package-import';
+  type: 'xyz-download' | 'raster-tile' | 'package-import' | 'ohm-download';
   status: 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
   /** Сделано / всего (тайлов). */
   done: number;

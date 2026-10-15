@@ -13,6 +13,7 @@ export * from './geojson';
 export * from './temporal';
 export * from './registry';
 export * from './cartography';
+export * from './ohm';
 export * from './ozi';
 export * from './scaling';
 export { renderDocument, renderFeature, createContext, exportSVG, createRenderCache } from './render/index';

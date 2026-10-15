@@ -9,7 +9,7 @@
  * 3) Второй проход распознаёт карту узнанными цветами (как образцы): длинные линии этого цвета вдали от дорог
  *    театра — дороги того времени, которых в театре нет; они ложатся в растр дорог.
  */
-import type { LngLat } from '@def-ops/core';
+import { ohmDate, ringClosed, stitchRings, type LngLat } from '@def-ops/core';
 import { decodeMask, hsv, maskRle, tileXY, type LegendRule, type OverlayLegend, type OverlayResult } from './overlay';
 import { hatchScale, hatchStarts, hatchWindow, isHatch } from './overlay-hatch';
 import { decodeGrid } from './theatre';
@@ -546,16 +546,9 @@ export function absentLines(roads: TheatreData['roads'], absent: NetworkCheck['a
 
 /* ------------------------- OpenHistoricalMap: линии на дату ------------------------- */
 
-/** Сервер Overpass OpenHistoricalMap (данные OSM с датами start_date / end_date; лицензия CC0). */
-export const OHM_OVERPASS = 'https://overpass-api.openhistoricalmap.org/api/interpreter';
+// дата OHM и адрес Overpass — общие с службой картографии (ядро)
+export { ohmDate, OHM_OVERPASS } from '@def-ops/core';
 
-/** Дата OHM («1936», «1936-09», «1936-09-27», «~1930») → ISO-день или null, если не разобрать. */
-export function ohmDate(v: string | undefined, end = false): string | null {
-  const m = v && /(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(v);
-  if (!m) return null;
-  // неполная дата: начало — с первого дня периода, конец — по последний
-  return `${m[1]}-${m[2] ?? (end ? '12' : '01')}-${m[3] ?? (end ? '28' : '01')}`;
-}
 /** Линия OHM на дату: существует, построена позже, уже не существует; без дат — undated. */
 export function ohmAt(tags: Record<string, string>, date: string): 'valid' | 'later' | 'ended' | 'undated' {
   const s = ohmDate(tags.start_date), e = ohmDate(tags.end_date, true);
@@ -658,30 +651,12 @@ export type Grid = { bbox: [number, number, number, number]; cols: number; rows:
 /** Болото OSM: внешнее кольцо и дыры; кольца замкнуты (первая точка = последней). */
 export interface Wetland { outer: LngLat[]; holes: LngLat[][] }
 
-const samePt = (a: LngLat, b: LngLat) => Math.abs(a[0] - b[0]) < 1e-9 && Math.abs(a[1] - b[1]) < 1e-9;
-const closed = (r: LngLat[]) => r.length >= 4 && samePt(r[0], r[r.length - 1]);
 /** Упрощение замкнутого кольца: две половины от первой точки до самой дальней от неё (у кольца концы совпадают). */
 function simplifyRing(r: LngLat[], tol: number): LngLat[] {
   let m = 1, md = -1;
   for (let i = 1; i < r.length - 1; i++) { const dd = Math.hypot(r[i][0] - r[0][0], r[i][1] - r[0][1]); if (dd > md) { md = dd; m = i; } }
   const out = [...simplify(r.slice(0, m + 1), tol), ...simplify(r.slice(m), tol).slice(1)];
   return out.map(([x, y]) => [+x.toFixed(6), +y.toFixed(6)] as LngLat);
-}
-/** Куски путей → замкнутые кольца: склейка по совпадающим концам (с разворотом куска); незамкнувшееся — пропуск. */
-function stitch(parts: LngLat[][]): LngLat[][] {
-  const pool = parts.filter((p) => p.length >= 2), out: LngLat[][] = [];
-  while (pool.length) {
-    const ring = [...pool.shift()!];
-    while (!closed(ring)) {
-      const end = ring[ring.length - 1];
-      const k = pool.findIndex((p) => samePt(p[0], end) || samePt(p[p.length - 1], end));
-      if (k < 0) break;
-      const p = pool.splice(k, 1)[0];
-      ring.push(...(samePt(p[0], end) ? p : [...p].reverse()).slice(1));
-    }
-    if (closed(ring)) out.push(ring);
-  }
-  return out;
 }
 /** Точка внутри кольца (чёт-нечет). */
 function inRing(p: LngLat, r: LngLat[]): boolean {
@@ -716,10 +691,10 @@ export function osmToWetlands(json: OsmJson, b: [number, number, number, number]
     if (el.tags?.natural !== 'wetland') continue;
     if (el.type === 'way') {
       if (!el.geometry) continue;
-      const r = pts(el.geometry), x = closed(r) && keep(r) ? simp(r) : null;
+      const r = pts(el.geometry), x = ringClosed(r) && keep(r) ? simp(r) : null;
       if (x) out.push({ outer: x, holes: [] });
     } else if (el.type === 'relation') {
-      const of = (roles: string[]) => stitch((el.members ?? []).filter((m) => m.type === 'way' && roles.includes(m.role) && m.geometry).map((m) => pts(m.geometry!)));
+      const of = (roles: string[]) => stitchRings((el.members ?? []).filter((m) => m.type === 'way' && roles.includes(m.role) && m.geometry).map((m) => pts(m.geometry!)));
       const outers = of(['outer', '']).filter(keep).flatMap((r) => { const x = simp(r); return x ? [{ raw: r, w: { outer: x, holes: [] as LngLat[][] } }] : []; });
       for (const h of of(['inner'])) { const x = simp(h); if (x) outers.find((o) => inRing(h[0], o.raw))?.w.holes.push(x); }
       out.push(...outers.map((o) => o.w));

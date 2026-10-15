@@ -70,9 +70,9 @@ export class TileStore {
   }
   uploadsDir() { return path.join(this.root, '.uploads'); }
 
-  /** Найти тайл (prefer — какой формат проверить первым). */
-  async find(tenant: string, mapId: string, z: number, x: number, y: number, prefer?: TileExt): Promise<TileFile | null> {
-    const order = prefer ? [prefer, ...EXTS.filter((e) => e !== prefer)] : EXTS;
+  /** Найти тайл (prefer — какой формат проверить первым; pbf — векторная карта, файлов-тайлов у неё нет: как без предпочтения). */
+  async find(tenant: string, mapId: string, z: number, x: number, y: number, prefer?: TileExt | 'pbf'): Promise<TileFile | null> {
+    const order = prefer && prefer !== 'pbf' ? [prefer, ...EXTS.filter((e) => e !== prefer)] : EXTS;
     for (const ext of order) {
       const file = this.tilePath(tenant, mapId, z, x, y, ext);
       try {
@@ -83,7 +83,7 @@ export class TileStore {
     return null;
   }
 
-  async has(tenant: string, mapId: string, z: number, x: number, y: number, prefer?: TileExt) {
+  async has(tenant: string, mapId: string, z: number, x: number, y: number, prefer?: TileExt | 'pbf') {
     return !!(await this.find(tenant, mapId, z, x, y, prefer));
   }
 
