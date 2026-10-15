@@ -92,7 +92,10 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
 
   const restyle = () => {
     map.setStyle(compose());
-    map.once('styledata', () => syncOverlays(map, overlays));
+    // первый styledata приходит, пока тайлы, значки и шрифты нового стиля ещё грузятся (стиль «не загружен») —
+    // тогда наложения (сканы) добавить ещё нельзя: повторить, когда карта успокоится
+    const resync = () => { if (!alive) return; if (map.isStyleLoaded()) syncOverlays(map, overlays); else map.once('idle', resync); };
+    map.once('styledata', resync);
   };
   const info = (e: maplibregl.MapMouseEvent): PointerInfo => ({
     lngLat: [e.lngLat.lng, e.lngLat.lat],
