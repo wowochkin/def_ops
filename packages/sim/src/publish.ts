@@ -7,7 +7,7 @@
 import { createFeature, emptyDocument, type AreaFeature, type ArrowFeature, type Feature, type LabelFeature, type Layer, type LineFeature, type LngLat, type MapDocument, type Side, type SymbolFeature, type TextStyle } from '@def-ops/core';
 import { frontLine, territoryLine } from './front';
 import { TERRAIN_CLASSES } from './types';
-import { dist } from './geo';
+import { dist, type XY } from './geo';
 import { checkEvents, type History, type RunResult, type Snapshot } from './history';
 import { power } from './rules';
 import { addHours, onMap, profileOf, type SimContext } from './step';
@@ -96,6 +96,38 @@ export function teethToward(line: LngLat[], foes: LngLat[]): LngLat[] {
   return side < 0 ? [...line].reverse() : line;
 }
 
+/**
+ * Укреплённая полоса по ходам: участки полосы и номер снимка, с которого участок взят (null — держится до конца).
+ * Линия (в км) уже развёрнута зубцами к противнику (слева по ходу). Точка полосы взята, когда за ней — глубже
+ * полосы (не меньше 2 км) и не дальше 8 км вдоль неё — стоит соединение противника; взятая точка больше не
+ * возвращается. Участок между точками держится, пока не взяты обе.
+ */
+export function beltHold(line: XY[], foesBySnap: XY[][], depthKm: number, stepKm = 1): { points: XY[]; until: number | null }[] {
+  const pts: XY[] = [line[0]];
+  for (let i = 1; i < line.length; i++) {
+    const [a, b] = [line[i - 1], line[i]], n = Math.max(1, Math.ceil(dist(a, b) / stepKm));
+    for (let k = 1; k <= n; k++) pts.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]);
+  }
+  const behind = Math.max(depthKm, 2);
+  const taken = pts.map((p, i) => {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], L = dist(a, b) || 1;
+    const t: XY = [(b[0] - a[0]) / L, (b[1] - a[1]) / L], nrm: XY = [-t[1], t[0]];
+    const s = foesBySnap.findIndex((foes) => foes.some((f) => {
+      const v: XY = [f[0] - p[0], f[1] - p[1]];
+      return v[0] * nrm[0] + v[1] * nrm[1] <= -behind && Math.abs(v[0] * t[0] + v[1] * t[1]) <= 8;
+    }));
+    return s < 0 ? Infinity : s;
+  });
+  const out: { points: XY[]; until: number | null }[] = [];
+  for (let j = 0; j + 1 < pts.length; j++) {
+    const end = Math.min(taken[j], taken[j + 1]), until = end === Infinity ? null : end;
+    const last = out[out.length - 1];
+    if (last && last.until === until) last.points.push(pts[j + 1]);
+    else out.push({ points: [pts[j], pts[j + 1]], until });
+  }
+  return out.filter((x) => x.until !== 0);
+}
+
 export function runToDocument(ctx: SimContext, run: RunResult, history?: History | null, o: PublishOptions = {}): MapDocument {
   o = { frontReachKm: 50, minArrowKm: 25, ...o };
   const own = o.ownSide ?? ctx.scenario.sides[0].id;
@@ -150,13 +182,19 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   // укреплённые полосы театра — знаком оборонительного рубежа (зубцы к противнику), цвет стороны
   const sideById = new Map(run.final.formations.map((f) => [f.id, f.side]));
   const opening = (run.snapshots[0]?.units ?? []).filter((u) => !u.destroyed);
+  const foesBy = (side: string | undefined) => run.snapshots.map((sn) => sn.units.filter((u) => !u.destroyed && side && sideById.get(u.id) !== side).map((u) => T.proj.toXY(u.at)));
   for (const l of T.data.lines) {
     const foes = opening.filter((u) => l.side && sideById.get(u.id) !== l.side).map((u) => u.at);
     const mine = l.side === own;
-    const f = createFeature('line', 'atlas.defense', { points: teethToward(l.line, foes), layerId: 'theatre' }, 1, mine ? 'own' : 'enemy') as LineFeature;
-    f.style = { ...f.style, layers: f.style.layers.map((ly) => ({ ...ly, color: mine ? '#d43834' : '#2f6fae' })) };
-    f.name = `${l.name}: укреплённая полоса${l.fortification ? `, укреплённость ${l.fortification}` : ''}${l.depthKm ? `, глубина ${l.depthKm} км` : ''}`;
-    features.push(f);
+    const line = teethToward(l.line, foes).map((p) => T.proj.toXY(p));
+    // участок полосы уходит с карты, когда его взял противник (как стрелки — по окончании своего окна)
+    for (const piece of beltHold(line, foesBy(l.side), l.depthKm ?? T.cellKm)) {
+      const f = createFeature('line', 'atlas.defense', { points: piece.points.map((p) => T.proj.toLL(p)), layerId: 'theatre' }, 1, mine ? 'own' : 'enemy') as LineFeature;
+      f.style = { ...f.style, layers: f.style.layers.map((ly) => ({ ...ly, color: mine ? '#d43834' : '#2f6fae' })) };
+      f.name = `${l.name}: укреплённая полоса${l.fortification ? `, укреплённость ${l.fortification}` : ''}${l.depthKm ? `, глубина ${l.depthKm} км` : ''}`;
+      f.time = { from: ctx.scenario.start, to: piece.until == null ? null : run.snapshots[piece.until].time };
+      features.push(f);
+    }
   }
   // переправы театра
   for (const b of T.data.bridges) {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadContext, loadHistory } from '../src/data';
 import { compareWithHistory, createState, onMap, runScenario, runToDocument, shortName, step, summarize, summaryToDocument, teethToward } from '../src';
+import { beltHold } from '../src/publish';
 
 describe('сценарий «Берлин-1945»', () => {
   const ctx = loadContext('berlin-1945');
@@ -50,10 +51,28 @@ describe('сценарий «Берлин-1945»', () => {
     const run = runScenario(ctx, 1, 1);
     const doc = runToDocument(ctx, run, null);
     const belts = doc.features.filter((f) => f.layerId === 'theatre');
-    expect(belts.length).toBe(ctx.theatre.data.lines.length);
+    // за первые сутки ни одна полоса не взята целиком
+    expect(ctx.theatre.data.lines.every((l) => belts.some((f) => f.name!.startsWith(l.name)))).toBe(true);
     expect(belts.every((f) => f.preset === 'atlas.defense')).toBe(true);
     const hkl = belts.find((f) => /Hauptkampflinie/.test(f.name ?? '')) as { points: [number, number][] };
     expect(hkl.points[0][1]).toBeGreaterThan(hkl.points[hkl.points.length - 1][1]);
+  });
+
+  it('участок полосы уходит с карты, когда противник за ним', () => {
+    // полоса с севера на юг (зубцы — на восток), противник перед ней не берёт её, за ней (западнее) — берёт
+    const line: [number, number][] = [[0, 30], [0, 0]];
+    const pieces = beltHold(line, [[[5, 5]], [[5, 5]], [[-3, 5]], [[-3, 22]]], 2);
+    expect(pieces.map((x) => x.until)).toEqual([3, 2]);
+    expect(pieces[0].points[0]).toEqual([0, 30]);
+    expect(pieces[1].points[pieces[1].points.length - 1]).toEqual([0, 0]);
+    expect(beltHold(line, [[[5, 5]], [[1, 5]]], 2).map((x) => x.until)).toEqual([null]);
+    // на прогоне Берлинской: главная полоса на Одере держится в начале и прорывается по ходу операции
+    const tctx = loadContext('berlin-1945-tasks');
+    const run = runScenario(tctx, 1, 8);
+    const hkl = runToDocument(tctx, run, null).features.filter((f) => f.layerId === 'theatre' && /Hauptkampflinie/.test(f.name ?? ''));
+    expect(hkl.length).toBeGreaterThan(0);
+    expect(hkl.some((f) => f.time?.to != null)).toBe(true);
+    expect(hkl.every((f) => f.time?.from === tctx.scenario.start && (f.time.to == null || f.time.to > tctx.scenario.start))).toBe(true);
   });
 
   it('графика атласа: исходный и вчерашний фронт, оси танковых армий с датами, черта и дата у остановленных ударов', () => {
