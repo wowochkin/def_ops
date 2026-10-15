@@ -31,6 +31,8 @@ interface Props {
   activeLayer: string | null;
   basemap: BasemapSpec | null;
   basemapOpacity: number;
+  /** Дата показа подложки «на дату» (OpenHistoricalMap): ISO; null — без фильтра по дате. */
+  basemapDate?: string | null;
   /** Картографический движок из реестра (по умолчанию MapLibre). */
   engineId?: string;
   onEngineReady?: (e: MapEngine) => void;
@@ -88,7 +90,7 @@ export function MapView(props: Props) {
   useEffect(() => {
     const v = doc.view ?? { center: doc.origin, zoom: doc.refZoom, bearing: 0 };
     const factory = ENGINES[props.engineId ?? DEFAULT_ENGINE] ?? ENGINES[DEFAULT_ENGINE];
-    const engine = factory.create(container.current!, { view: v, paper: doc.paper, basemap: props.basemap, basemapOpacity: props.basemapOpacity });
+    const engine = factory.create(container.current!, { view: v, paper: doc.paper, basemap: props.basemap, basemapOpacity: props.basemapOpacity, basemapDate: props.basemapDate });
     mapRef.current = engine;
     engine.setOverlays(live.current.doc.overlays);
     const bump = () => setTick((t) => t + 1);
@@ -100,6 +102,8 @@ export function MapView(props: Props) {
 
   // ---------- подложка и растровые наложения
   useEffect(() => { mapRef.current?.setPaper(doc.paper); }, [doc.paper]);
+  // дата — до подложки: новая подложка сразу строится на новую дату
+  useEffect(() => { mapRef.current?.setBasemapDate(props.basemapDate ?? null); }, [props.basemapDate]);
   useEffect(() => { mapRef.current?.setBasemap(props.basemap, props.basemapOpacity); }, [props.basemap, props.basemapOpacity]);
   useEffect(() => { mapRef.current?.setOverlays(doc.overlays); }, [doc.overlays]);
 

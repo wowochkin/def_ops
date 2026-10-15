@@ -4,30 +4,79 @@ import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 // воркер MapLibre собирается Vite отдельным модулем (относительный путь из пакета ломается при сборке)
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import type { ImageOverlay } from '@def-ops/core';
+import { ohmYear, type ImageOverlay } from '@def-ops/core';
 import type { BasemapSpec, EngineOptions, MapEngine, MapEngineEvents, PointerInfo } from './types';
+import { vectorBase, withDate } from './vector-basemap';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
-function buildStyle(paper: string, basemap: BasemapSpec | null, opacity: number): StyleSpecification {
+type Vector = ReturnType<typeof vectorBase>;
+
+/** Стиль движка: бумага, над ней подложка (растровая или слои векторной карты); наложения добавляются потом. */
+function buildStyle(paper: string, basemap: BasemapSpec | null, opacity: number, vector: Vector | null): StyleSpecification {
   const style: StyleSpecification = {
     version: 8,
     sources: {},
     layers: [{ id: 'paper', type: 'background', paint: { 'background-color': paper } }],
   };
-  if (basemap) {
+  if (basemap?.style) {
+    if (vector) {
+      Object.assign(style.sources, vector.sources);
+      style.layers.push(...vector.layers);
+      if (vector.glyphs) style.glyphs = vector.glyphs;
+      if (vector.sprite) style.sprite = vector.sprite;
+    }
+  } else if (basemap) {
     style.sources.base = { type: 'raster', tiles: basemap.tiles, tileSize: basemap.tileSize ?? 256, attribution: basemap.attribution, maxzoom: basemap.maxzoom ?? 18 };
     style.layers.push({ id: 'base', type: 'raster', source: 'base', paint: { 'raster-opacity': opacity, 'raster-saturation': -0.35 } });
   }
   return style;
 }
 
+/** Стили векторных карт по адресу (в адресе — версия карты): запрос — один на адрес, неудачный забывается. */
+const styles = new Map<string, Promise<StyleSpecification>>();
+const loadedStyles = new Map<string, StyleSpecification>();
+function loadStyle(url: string): Promise<StyleSpecification> {
+  let p = styles.get(url);
+  if (!p) {
+    p = fetch(url).then(async (r) => {
+      if (!r.ok) throw new Error(`Стиль подложки ${url}: ${r.status}`);
+      const st = (await r.json()) as StyleSpecification;
+      loadedStyles.set(url, st);
+      return st;
+    });
+    p.catch(() => styles.delete(url));
+    styles.set(url, p);
+  }
+  return p;
+}
+
 export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions): MapEngine {
   let paper = opts.paper, basemap = opts.basemap, opacity = opts.basemapOpacity;
+  let year = opts.basemapDate ? ohmYear(opts.basemapDate) : null;
   let overlays: ImageOverlay[] = [];
+  let alive = true;
+  /** Исходные фильтры слоёв векторной подложки (для смены даты без перестройки стиля). */
+  let filters: Record<string, maplibregl.FilterSpecification | undefined> = {};
+  /** Стиль движка; у векторной подложки — когда её стиль уже получен (до того — одна бумага). */
+  const compose = (): StyleSpecification => {
+    filters = {};
+    if (!basemap?.style) return buildStyle(paper, basemap, opacity, null);
+    const url = basemap.style;
+    const cached = loadedStyles.get(url);
+    if (!cached) {
+      loadStyle(url).then(() => {
+        if (alive && basemap?.style === url) restyle(); // ответ на сменённую подложку не нужен
+      }).catch((e) => console.warn(e));
+      return buildStyle(paper, basemap, opacity, null);
+    }
+    const v = vectorBase(cached, { opacity, year, base: url });
+    filters = v.filters;
+    return buildStyle(paper, basemap, opacity, v);
+  };
   const map = new maplibregl.Map({
     container,
-    style: buildStyle(paper, basemap, opacity),
+    style: compose(),
     center: opts.view.center,
     zoom: opts.view.zoom,
     bearing: opts.view.bearing,
@@ -42,7 +91,7 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
   // масштаб (линейка и численный) рисует редактор — ScaleBar
 
   const restyle = () => {
-    map.setStyle(buildStyle(paper, basemap, opacity));
+    map.setStyle(compose());
     map.once('styledata', () => syncOverlays(map, overlays));
   };
   const info = (e: maplibregl.MapMouseEvent): PointerInfo => ({
@@ -66,6 +115,13 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
       if (spec?.id === basemap?.id && JSON.stringify(spec) === JSON.stringify(basemap) && op === opacity) return;
       basemap = spec; opacity = op; restyle();
     },
+    setBasemapDate(iso) {
+      const y = iso ? ohmYear(iso) : null;
+      if (y === year) return;
+      year = y;
+      // фильтры слоёв подложки — без перестройки стиля; стиль ещё грузится — собрать заново с новым годом
+      try { for (const [id, f] of Object.entries(filters)) if (map.getLayer(id)) map.setFilter(id, withDate(f, year)); } catch { restyle(); }
+    },
     setOverlays(list) { overlays = list; if (map.isStyleLoaded()) syncOverlays(map, list); },
     setPanEnabled(on) { if (on) map.dragPan.enable(); else map.dragPan.disable(); },
     on<K extends keyof MapEngineEvents>(ev: K, cb: MapEngineEvents[K]) {
@@ -84,7 +140,7 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
       map.on(type as 'click', f);
       return () => map.off(type as 'click', f);
     },
-    destroy() { map.remove(); },
+    destroy() { alive = false; map.remove(); },
   };
 }
 

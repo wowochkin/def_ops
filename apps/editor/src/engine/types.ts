@@ -27,11 +27,18 @@ export interface PointerInfo {
   preventDefault(): void;
 }
 
-/** Растровая подложка из тайлов XYZ (в т. ч. WMS через шаблон {bbox-epsg-3857}). */
+/**
+ * Подложка: растровая из тайлов XYZ (в т. ч. WMS через шаблон {bbox-epsg-3857}) или векторная по стилю
+ * MapLibre (`style`, у неё `tiles: []`).
+ */
 export interface BasemapSpec {
   id: string;
   name: string;
   tiles: string[];
+  /** Адрес стиля векторной карты (абсолютный): её слои ложатся над бумагой, под знаками. */
+  style?: string;
+  /** Карта «на дату» (OpenHistoricalMap): объекты показываются по датам начала и конца. */
+  dated?: boolean;
   tileSize?: number;
   attribution?: string;
   maxzoom?: number;
@@ -56,6 +63,8 @@ export interface MapEngine {
   getContainer(): HTMLElement;
   setPaper(color: string): void;
   setBasemap(spec: BasemapSpec | null, opacity: number): void;
+  /** Дата показа подложки «на дату» (ISO; null — все объекты, без фильтра по дате). */
+  setBasemapDate(iso: string | null): void;
   setOverlays(list: ImageOverlay[]): void;
   /** Включить/выключить перетаскивание карты мышью (на время правки знаков). */
   setPanEnabled(on: boolean): void;
@@ -68,6 +77,8 @@ export interface EngineOptions {
   paper: string;
   basemap: BasemapSpec | null;
   basemapOpacity: number;
+  /** Дата показа подложки «на дату». */
+  basemapDate?: string | null;
 }
 
 export type EngineFactory = (container: HTMLElement, opts: EngineOptions) => MapEngine;

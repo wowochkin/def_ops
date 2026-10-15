@@ -11,6 +11,7 @@ import { cropGrid, cropTheatre, decodeGrid, decodeHeights, layerCounts, layerGeo
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, Popover } from './ui';
+import { basemapDate } from './engine/basemaps';
 import type { Basemaps } from './shared';
 import { MapHover } from './MapHover';
 import { HistLayer } from './HistLayer';
@@ -350,7 +351,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
       </aside>
       <main className="rp-main">
         {doc && <MapView key={mapKey} doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null}
-          basemap={bm.current} basemapOpacity={bm.opacity} onEngineReady={(e) => setEng(e)} onStatus={() => {}} time={null} newFromNow={false} />}
+          basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, null, bm.year)} onEngineReady={(e) => setEng(e)} onStatus={() => {}} time={null} newFromNow={false} />}
         {doc && <MapHover engine={eng} doc={doc} time={null} />}
         {cursor && <div className="th-cursor">{cursor.at[1].toFixed(4)}° с.ш., {cursor.at[0].toFixed(4)}° в.д.{cursor.h != null ? ` · высота ${Math.round(cursor.h)} м` : ''}</div>}
         {picking && <div className="pick-hint">{picking === 'first' ? 'Щёлкните по карте — первый угол области' : 'Щёлкните — противоположный угол'}<button onClick={() => setPicking(null)}>Отмена</button></div>}

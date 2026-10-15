@@ -25,8 +25,11 @@ export function Popover({ label, title, children, align = 'left', className = ''
   );
 }
 
-/** Подложка: выбор, прозрачность, офлайн, своя XYZ/WMS. */
-export function BasemapControls({ bm }: { bm: Basemaps }) {
+/**
+ * Подложка: выбор, прозрачность, офлайн, своя XYZ/WMS. У подложки «на дату» (OpenHistoricalMap) — откуда дата
+ * (`dateNote`: «шкалы времени, 16.04.1945») или, без неё, поле «Год карты».
+ */
+export function BasemapControls({ bm, dateNote }: { bm: Basemaps; dateNote?: string | null }) {
   return (
     <div className="bm">
       <div className="pop-title">Подложка</div>
@@ -37,6 +40,9 @@ export function BasemapControls({ bm }: { bm: Basemaps }) {
         {!bm.offline && <div className="pop-sub">Интернет</div>}
         {!bm.offline && bm.all.filter((b) => !b.id.startsWith('local-')).map((b) => <label key={b.id} className={`bm-item${bm.id === b.id ? ' on' : ''}`}><input type="radio" checked={bm.id === b.id} onChange={() => bm.setId(b.id)} /> {b.name}</label>)}
       </div>
+      {bm.current?.dated && (dateNote
+        ? <div className="bm-row muted" title="Объекты OpenHistoricalMap показаны по датам начала и конца">Карта на дату: {dateNote}</div>
+        : <YearField bm={bm} />)}
       {bm.current && <label className="bm-row">Прозрачность <input type="range" min={0} max={1} step={0.05} value={bm.opacity} onChange={(e) => bm.setOpacity(+e.target.value)} /></label>}
       <div className="bm-row">
         <label title="Только локальные карты, без обращений в интернет"><input type="checkbox" checked={bm.offline} onChange={(e) => bm.setOffline(e.target.checked)} /> офлайн</label>
@@ -50,6 +56,25 @@ export function BasemapControls({ bm }: { bm: Basemaps }) {
       </div>
     </div>
   );
+}
+
+/** Год показа подложки «на дату», когда нет даты шкалы или операции. */
+function YearField({ bm }: { bm: Basemaps }) {
+  const [v, setV] = useState(String(bm.year));
+  useEffect(() => setV(String(bm.year)), [bm.year]);
+  return (
+    <label className="bm-row" title="Объекты OpenHistoricalMap показаны на 1 января этого года (по датам начала и конца)">Год карты{' '}
+      <input type="number" min={1000} max={2100} step={1} value={v} style={{ width: '6em' }}
+        onChange={(e) => { setV(e.target.value); const y = Number(e.target.value); if (Number.isInteger(y) && y >= 1000 && y <= 2100) bm.setYear(y); }}
+        onBlur={() => setV(String(bm.year))} />
+    </label>
+  );
+}
+
+/** Дата для подписи: дд.мм.гггг (по дате в строке, без пересчёта пояса). */
+export function dmy(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : iso;
 }
 
 /** Значки разделов (линейные, 20×20). */

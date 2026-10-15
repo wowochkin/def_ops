@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { MapSource } from '@def-ops/core';
 import { DefOpsClient } from '@def-ops/api-client';
 import type { BasemapSpec } from './engine/types';
-import { BUILTIN_BASEMAPS, loadCustomBasemaps, saveCustomBasemaps } from './engine/basemaps';
+import { BUILTIN_BASEMAPS, loadCustomBasemaps, localBasemapSpec, saveCustomBasemaps } from './engine/basemaps';
 import { cartography } from './MapsPanel';
 import type { LlmSettings } from './sim/game-protocol';
 
@@ -40,6 +40,13 @@ export interface Basemaps {
   localMeta: MapSource[];
   /** Доступные сейчас (локальные + интернет, если не офлайн) и выбранная. */
   all: BasemapSpec[]; current: BasemapSpec | null;
+  /** Год показа подложки «на дату», когда нет даты шкалы или операции (поле «Год карты»). */
+  year: number; setYear: (y: number) => void;
+}
+
+const YEAR_KEY = 'def_ops.basemap.year';
+function loadYear(): number {
+  try { const y = Number(localStorage.getItem(YEAR_KEY)); return Number.isInteger(y) && y >= 1000 && y <= 2100 ? y : 1945; } catch { return 1945; }
 }
 
 export function useBasemaps(): Basemaps {
@@ -48,10 +55,8 @@ export function useBasemaps(): Basemaps {
   const [opacity, setOpacity] = useState(0.55);
   const [offline, setOfflineState] = useState(() => localStorage.getItem('def_ops.offline') === '1');
   const [localMaps, setLocalMaps] = useState<MapSource[]>([]);
-  const local: BasemapSpec[] = useMemo(() => localMaps.map((m) => ({
-    id: `local-${m.id}`, name: `${m.name}${m.date ? ` (${m.date})` : ''}`, tiles: [cartography.tileTemplate(m)], tileSize: m.tileSize,
-    attribution: m.attribution, maxzoom: m.maxzoom,
-  })), [localMaps]);
+  const [year, setYearState] = useState(loadYear);
+  const local: BasemapSpec[] = useMemo(() => localMaps.map((m) => localBasemapSpec(m, { tiles: cartography.tileTemplate(m), style: cartography.styleUrl(m) })), [localMaps]);
   const all = useMemo(() => [...local, ...(offline ? [] : [...BUILTIN_BASEMAPS, ...custom])], [local, custom, offline]);
   useEffect(() => { try { localStorage.setItem('def_ops.basemap', id); } catch { /* */ } }, [id]);
   // локальные карты подгружаются из сервиса картографии (если он есть)
@@ -61,6 +66,7 @@ export function useBasemaps(): Basemaps {
     setOffline: (v) => { setOfflineState(v); try { localStorage.setItem('def_ops.offline', v ? '1' : '0'); } catch { /* */ } if (v && !id.startsWith('local-')) setId('none'); },
     custom, addCustom: (b) => { const l = [...custom, b]; setCustom(l); saveCustomBasemaps(l); setId(b.id); },
     local, setLocalMaps, localMeta: localMaps, all, current: all.find((b) => b.id === id) ?? null,
+    year, setYear: (y) => { if (!Number.isInteger(y) || y < 1000 || y > 2100) return; setYearState(y); try { localStorage.setItem(YEAR_KEY, String(y)); } catch { /* */ } },
   };
 }
 

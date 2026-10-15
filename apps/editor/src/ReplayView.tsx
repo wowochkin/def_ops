@@ -9,7 +9,8 @@ import { documentAt, migrateDocument, type LngLat, type MapDocument, type Symbol
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
-import { BasemapControls, Popover } from './ui';
+import { BasemapControls, dmy, Popover } from './ui';
+import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
 import { CommandView, loadSaved, SAVE_KEY, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
@@ -460,12 +461,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <LevelSwitch level={level} setLevel={setLevel} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
-            <Popover label="Подложка" align="right"><BasemapControls bm={bm} /></Popover>
+            <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={result ? `начала операции, ${dmy(result.start)}` : null} /></Popover>
           </div>
           </div>
           <div className="rp-map">
           <MapView key={mapKey} doc={mapDoc!} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
-            tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity}
+            tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, result?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __replayEngine: MapEngine }).__replayEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}

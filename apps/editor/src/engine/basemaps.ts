@@ -1,4 +1,5 @@
 /** Каталог подложек: встроенные и пользовательские (XYZ/WMS) — подключение других карт без кода. */
+import type { MapSource } from '@def-ops/core';
 import type { BasemapSpec } from './types';
 
 export const BUILTIN_BASEMAPS: BasemapSpec[] = [
@@ -20,4 +21,19 @@ export function saveCustomBasemaps(list: BasemapSpec[]) {
 /** Проверка шаблона: XYZ ({z}/{x}/{y}), квадродерево ({quadkey}) или WMS ({bbox-epsg-3857}). */
 export function isValidTemplate(url: string): boolean {
   return /^https?:\/\//.test(url) && (/\{z\}/.test(url) && /\{x\}/.test(url) && /\{y\}/.test(url) || /\{quadkey\}|\{bbox-epsg-3857\}/.test(url));
+}
+
+/**
+ * Подложка из локальной карты службы картографии: векторная (OpenHistoricalMap) — по стилю карты и «на дату»,
+ * прочие — растровые тайлы.
+ */
+export function localBasemapSpec(m: MapSource, urls: { tiles: string; style: string }): BasemapSpec {
+  if (m.kind === 'vector') return { id: `local-${m.id}`, name: m.name, tiles: [], style: urls.style, dated: true, attribution: m.attribution, maxzoom: 19 };
+  return { id: `local-${m.id}`, name: `${m.name}${m.date ? ` (${m.date})` : ''}`, tiles: [urls.tiles], tileSize: m.tileSize, attribution: m.attribution, maxzoom: m.maxzoom };
+}
+
+/** Дата показа подложки «на дату»: время шкалы, без него — 1 января года; у прочих подложек — null. */
+export function basemapDate(spec: BasemapSpec | null, time: string | null | undefined, year: number): string | null {
+  if (!spec?.dated) return null;
+  return time || `${String(year).padStart(4, '0')}-01-01`;
 }

@@ -19,6 +19,7 @@ import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import type { MapSource } from '@def-ops/core';
 import { BasemapControls, Icon, ModelSelect } from './ui';
+import { basemapDate } from './engine/basemaps';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
 
 type Section = 'editor' | 'replay' | 'modeling' | 'maps' | 'library' | 'knowledge' | 'staff';
@@ -113,7 +114,7 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
         </aside>
         <main className="maps-base-map">
           <MapView doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null}
-            basemap={bm.current} basemapOpacity={bm.current ? 1 : bm.opacity} onEngineReady={setEng} onStatus={() => {}} time={null} newFromNow={false} />
+            basemap={bm.current} basemapOpacity={bm.current ? 1 : bm.opacity} basemapDate={basemapDate(bm.current, null, bm.year)} onEngineReady={setEng} onStatus={() => {}} time={null} newFromNow={false} />
           {!bm.current && <div className="maps-base-hint">Подложка не выбрана — выберите слева или нажмите «подложить» у локальной карты.</div>}
         </main>
         {notice && <div className="toast" onClick={() => setNotice(null)}>{notice}</div>}

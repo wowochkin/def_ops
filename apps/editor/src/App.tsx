@@ -11,7 +11,8 @@ import { Inspector } from './Inspector';
 import { LayersPanel } from './LayersPanel';
 import { Timeline } from './Timeline';
 import { api, type Basemaps, type ServerState } from './shared';
-import { BasemapControls, Icon, Popover } from './ui';
+import { BasemapControls, dmy, Icon, Popover } from './ui';
+import { basemapDate } from './engine/basemaps';
 import { ZonesContext, zoneAt, type InputZone, type Zones } from './time';
 import { EntityPanel, type RegistryApi } from './EntityPanel';
 import { translateFeature } from './geometry';
@@ -226,7 +227,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
           </div>
         )}</Popover>
         <Popover label="Вид" title="Подложка, бумага, размер знаков">
-          <BasemapControls bm={bm} />
+          <BasemapControls bm={bm} dateNote={time && bm.current?.dated ? `шкалы времени, ${dmy(time)}` : null} />
           <div className="pop-title">Карта</div>
           <label className="bm-row">Цвет бумаги <input type="color" value={doc.paper} onChange={(e) => set({ ...doc, paper: e.target.value }, 'paper')} /></label>
           <label className="bm-row" title="Размер знаков при приближении и отдалении карты. Положение и линии всегда на местности; экспорт и печать — в размере, с которым нарисовано.">Знаки при зуме
@@ -243,6 +244,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
       <main>
         <MapView key={mapKey} doc={doc} setDoc={set} selected={selected} setSelected={setSelected} selectedOverlay={selectedOverlay}
           tool={tool} setTool={setTool} activeLayer={activeLayer} basemap={bm.current} basemapOpacity={bm.opacity}
+          basemapDate={basemapDate(bm.current, time, bm.year)}
           onEngineReady={(m) => { setEngine(m); (window as unknown as { __engine: MapEngine }).__engine = m; }} onStatus={setStatus}
           time={time} newFromNow={newFromNow} />
         <Timeline doc={doc} setDoc={set} time={time} setTime={setTime} newFromNow={newFromNow} setNewFromNow={setNewFromNow} autoZone={autoZone} />
@@ -303,7 +305,7 @@ function Help() {
         <li><b>Стрелки</b> строятся по оси от хвоста к острию; начатая у линии фронта стрелка крепится к ней хвостом.</li>
         <li>В режиме выбора: тяните объект, его узлы, «+» на серединах — новый узел, двойной щелчок по узлу — удалить.</li>
         <li><b>Время</b>: шкала под картой. Знаки появляются по своим периодам и движутся между положениями. Время — московское и местное.</li>
-        <li><b>Вид</b> (в шапке): подложка, цвет бумаги, размер знаков при зуме.</li>
+        <li><b>Вид</b> (в шапке): подложка, цвет бумаги, размер знаков при зуме. OpenHistoricalMap — на дату шкалы или год (поле «Год карты», когда шкалы нет).</li>
         <li>Ctrl+Z / Ctrl+Shift+Z, Ctrl+D — дублировать, Del — удалить, Ctrl+S — на сервер.</li>
       </ul>
     </div>
