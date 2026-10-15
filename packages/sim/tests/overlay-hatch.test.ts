@@ -54,7 +54,25 @@ describe('признаки окна штриховки', () => {
   it('пороги — параметры: при minInk = 0,2 разреженная штриховка не проходит', () => {
     const s = hatchWindow(grid(S, (x, y) => hatch(x, y)), S, 0, 0, 24, 0);
     expect(isHatch(s, { minInk: 0.2 })).toBe(false);
-    expect(HATCH.rowsShare).toBeCloseTo(1 / 6, 9);
+    expect(HATCH).toMatchObject({ minStrokes: 2, strokesShare: 1 / 8, maxThick: 2, maxRunShare: 0.75 });
+  });
+  it('толстая горизонтальная линия 4 px при w = 21 — не болото', () => {
+    const s = hatchWindow(grid(S, (_, y) => y >= 8 && y < 12), S, 0, 0, 21, 0);
+    expect(s.strokes).toBe(1);
+    expect(isHatch(s)).toBe(false);
+  });
+  it('линия 2–4 px и двойная дорога (y = 4 и 7) при w = 12 — не болото', () => {
+    for (const t of [2, 3, 4]) expect(isHatch(hatchWindow(grid(S, (_, y) => y >= 4 && y < 4 + t), S, 0, 0, 12, 0))).toBe(false);
+    const road = hatchWindow(grid(S, (_, y) => y === 4 || y === 7), S, 0, 0, 12, 0);
+    expect(road.strokes).toBe(2);
+    expect(isHatch(road)).toBe(false);
+  });
+  it('штриховка 6×1 с шагом 5 — болото при w = 12, 21, 24, 48 (и в каждом окне маски)', () => {
+    for (const w of [12, 21, 24, 48]) {
+      expect(isHatch(hatchWindow(grid(S, hatch), S, 0, 0, w, 0))).toBe(true);
+      const m = hatchMask(grid(256, hatch), 256, w, 0);
+      expect(m.reduce((a, x) => a + x, 0)).toBe(65536);
+    }
   });
   it('сторона окна ≈ 120 м, зажата в 12…48 px', () => {
     expect(hatchPx(52.5, 12)).toBe(12);
@@ -120,6 +138,11 @@ describe('накопитель: классы по штриховке', () => {
   });
   it('болото того же цвета, что вода: штриховка — болото, заливка — вода', () => {
     const ov = run(legendFromSamples({ water: [[40, 90, 170]], marsh: [[40, 90, 170]] }, 1, {}, ['marsh']));
+    expect([...decodeMask(ov.masks.marsh, 4)]).toEqual([1, 0, 0, 0]);
+    expect([...decodeMask(ov.masks.water, 4)]).toEqual([0, 1, 0, 0]);
+  });
+  it('класс-штриховка раньше заливки того же цвета не забирает её: заливка — вода, штриховка — болото', () => {
+    const ov = run(legendFromSamples({ marsh: [[40, 90, 170]], water: [[40, 90, 170]] }, 1, {}, ['marsh']));
     expect([...decodeMask(ov.masks.marsh, 4)]).toEqual([1, 0, 0, 0]);
     expect([...decodeMask(ov.masks.water, 4)]).toEqual([0, 1, 0, 0]);
   });

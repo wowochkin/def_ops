@@ -137,10 +137,16 @@ export class OverlayAccumulator {
     const dLng = (e - w) / cols, dLat = (n - s) / rows;
     this.tiles++;
     // класс каждого пикселя тайла (−1 — ни один, −2 — прозрачно: карты нет)
+    // классы по штриховке в этот выбор не входят: их чернила считаются отдельно, иначе штриховой класс раньше
+    // заливки того же цвета забирал бы заливку
+    const hatchNames = this.legend.hatch ?? [];
+    const plain = this.names.filter((nm) => !hatchNames.includes(nm)), plainIdx = plain.map((nm) => this.names.indexOf(nm));
     const cls = new Int8Array(size * size);
     for (let i = 0; i < size * size; i++) {
       const o = i * 4;
-      cls[i] = rgba[o + 3] < 128 ? -2 : pixelClass(this.legend, this.names, rgba[o], rgba[o + 1], rgba[o + 2]);
+      if (rgba[o + 3] < 128) { cls[i] = -2; continue; }
+      const p = pixelClass(this.legend, plain, rgba[o], rgba[o + 1], rgba[o + 2]);
+      cls[i] = p < 0 ? -1 : plainIdx[p];
     }
     // линейные классы — только длинные тонкие линии: отдельные буквы надписей, цифры, значки и пятна того же цвета
     // отбрасываются (иначе тёмные образцы дорог собирают все надписи карты)
