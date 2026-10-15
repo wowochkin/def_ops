@@ -1,7 +1,8 @@
 /**
  * «Модели»: наборы правил арбитра (встроенные и свои), профили сторон, языковые модели по ролям. У набора —
- * откуда он (базовый, калибровка: по какой операции, мерило до и после, множители), параметры по группам
- * словами, где используется; свои — скачать, удалить, взять в настройку.
+ * откуда он (базовый, калибровка: по какой операции, мерило до и после, множители), «Основа правил» (на каких
+ * нормативах базы держатся числа, коридоры множителей, итоги — RulesBasis), параметры по группам словами, где
+ * используется; свои — скачать, удалить, взять в настройку.
  */
 import { confirmAsync } from '../dialogs';
 import { useMemo, useState } from 'react';
@@ -11,6 +12,7 @@ import { ModelPicker } from '../ModelPicker';
 import { ModelSelect } from '../ui';
 import type { Llm } from '../shared';
 import { download, pct, type SimData } from './data';
+import { RulesBasis } from './RulesBasis';
 
 function Params({ rows }: { rows: ParamRow[] }) {
   const groups = [...new Set(rows.map((r) => r.group))];
@@ -77,6 +79,7 @@ export function ModelsTab({ d, llm, onTune, onCompare }: { d: SimData; llm: Llm;
             <div className="mdl-mult">{Object.entries(origin.calibration.multipliers).map(([k, v]) => <span key={k} title={CALIB_INFO[k as CalibKey]?.hint}>{CALIB_INFO[k as CalibKey]?.title ?? k}: <b>{v}</b></span>)}</div>
           </section>}
           <p className="muted">Используется в переигровке: {usedIn.length ? usedIn.map((c) => c.title).join('; ') : 'нигде (только в сравнении и настройке)'}.</p>
+          <RulesBasis key={item.id} item={item} d={d} />
           <Params rows={describeRules(item.rules)} />
         </>}
         {profile && <>

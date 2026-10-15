@@ -83,6 +83,18 @@ describe('claimText: формальная часть по-русски', () => {
     expect(claimText({ kind: 'strength', subject: 'su_61a', at: '1945-04-16', personnel: 54000, tanks: 10 })).toBe('численность на 16.04.1945: людей 54000, танков 10');
     expect(claimText({ kind: 'parent', subject: 'su_3gta', from: '1945-04-20T06:00', parent: 'su_1uf' }, (id) => (id === 'su_1uf' ? '1-й Украинский фронт' : id))).toBe('подчинён 1-й Украинский фронт с 20.04.1945 06:00');
   });
+  it('значение правила — названием входа, с путём, стороной, масштабом; допущение', () => {
+    expect(claimText({ kind: 'param', param: 'defense.prepared', range: [1.3, 1.5], unit: '×' })).toBe('значение правила «Подготовленная оборона» (defense.prepared): 1,3–1,5 ×');
+    expect(claimText({ kind: 'param', param: 'stockDays.fortress', value: 30, unit: 'сут', side: 'de' })).toBe('значение правила «Запасы крепости» (stockDays.fortress), Германия: 30 сут');
+    expect(claimText({ kind: 'param', param: 'riverCrossHours', value: 2, unit: 'ч', scale: 3 })).toBe('значение правила «Река без моста для пехоты» (riverCrossHours): 2 ч на 1/3');
+    expect(claimText({ kind: 'param', param: 'x.unknown', why: 'нет данных' })).toBe('значение правила x.unknown: допущение — нет данных');
+  });
+  it('итог прогона — мерой по-русски, соединением, операцией', () => {
+    expect(claimText({ kind: 'outcome', measure: 'pace', scenario: 'berlin-1945-tasks', subject: 'su_1gta', from: '1945-04-17', to: '1945-04-18', range: [1, 5], unit: 'км/сут' }, (id) => (id === 'su_1gta' ? '1 гв. ТА' : id)))
+      .toBe('итог прогона: темп 1 гв. ТА, berlin-1945-tasks, 17.04.1945 — 18.04.1945: 1–5 км/сут');
+    expect(claimText({ kind: 'outcome', measure: 'frontage', scenario: 'berlin-1945-tasks', from: '1945-04-16', to: '1945-04-16', range: [4, 8], unit: 'км', side: 'su', echelon: 'division' }))
+      .toBe('итог прогона: ширина полосы (СССР, дивизия), berlin-1945-tasks, 16.04.1945 — 16.04.1945: 4–8 км');
+  });
 });
 
 describe('originOf: как принят факт', () => {

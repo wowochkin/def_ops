@@ -6,6 +6,7 @@
  * claimText — формальная часть факта по-русски.
  */
 import { doctrineWords, type Claim, type CompileConflict, type Entry, type FactRef, type Provenance } from '@def-ops/knowledge';
+import { ruleInput } from '@def-ops/sim';
 import { originOf } from '../kb/fact-form';
 
 export type BasisKind = 'strength' | 'parent' | 'position' | 'boundary' | 'crossing';
@@ -79,6 +80,13 @@ const nums = (c: { personnel?: number; tanks?: number; guns?: number }, sign = '
   [['людей', c.personnel], ['танков', c.tanks], ['орудий', c.guns]].filter(([, v]) => typeof v === 'number').map(([t, v]) => `${t} ${sign}${v}`).join(', ');
 const CROSSING: Record<Extract<Claim, { kind: 'crossing' }>['state'], string> = { open: 'действует', destroyed: 'разрушена', built: 'наведена' };
 
+/** Мера норматива-итога по-русски. */
+export const MEASURE_RU: Record<string, string> = { pace: 'темп', loss: 'потери', frontage: 'ширина полосы' };
+const SIDE_RU: Record<string, string> = { su: 'СССР', de: 'Германия' };
+const ECHELON_RU: Record<string, string> = { front: 'фронт', army: 'армия', corps: 'корпус', division: 'дивизия', brigade: 'бригада', regiment: 'полк' };
+/** Число по-русски: десятичная запятая, без группировки разрядов. */
+const ruNum = (x: number) => String(x).replace('.', ',');
+
 /** Формальная часть факта одной строкой; name — название формирования по id. */
 export function claimText(c: Claim, name: (id: string) => string = (id) => id): string {
   switch (c.kind) {
@@ -95,11 +103,17 @@ export function claimText(c: Claim, name: (id: string) => string = (id) => id): 
       return `потери ${ruDate(c.from)} — ${ruDate(c.to)}: ${parts.join(', ')}`;
     }
     case 'param': {
-      const v = c.range ? `${c.range[0]}–${c.range[1]}` : c.value != null ? String(c.value) : c.why ? 'допущение' : '—';
-      return `параметр ${c.param}${c.side ? ` (${c.side === 'su' ? 'СССР' : 'Германия'})` : ''}: ${v}${c.unit ? ` ${c.unit}` : ''}`;
+      const i = ruleInput(c.param);
+      const v = c.range ? `${ruNum(c.range[0])}–${ruNum(c.range[1])}` : c.value != null ? ruNum(c.value) : c.why != null ? '' : '—';
+      const head = `значение правила ${i ? `«${i.title}» (${c.param})` : c.param}${c.side ? `, ${SIDE_RU[c.side]}` : ''}`;
+      if (!v) return `${head}: допущение${c.why ? ` — ${c.why}` : ''}`;
+      return `${head}: ${v}${c.unit ? ` ${c.unit}` : ''}${c.scale && c.scale !== 1 ? ` на 1/${c.scale}` : ''}${c.why ? ` — допущение: ${c.why}` : ''}`;
     }
     case 'doctrine': return doctrineWords(c);
-    case 'outcome': return `итог ${c.measure}${c.subject ? ` ${name(c.subject)}` : ''}, ${c.scenario}, ${ruDate(c.from)} — ${ruDate(c.to)}: ${c.range[0]}–${c.range[1]} ${c.unit}`;
+    case 'outcome': {
+      const where = [c.side ? SIDE_RU[c.side] ?? c.side : '', c.echelon ? ECHELON_RU[c.echelon] ?? c.echelon : '', c.near ?? ''].filter(Boolean).join(', ');
+      return `итог прогона: ${MEASURE_RU[c.measure] ?? c.measure}${c.subject ? ` ${name(c.subject)}` : ''}${where ? ` (${where})` : ''}, ${c.scenario}, ${ruDate(c.from)} — ${ruDate(c.to)}: ${ruNum(c.range[0])}–${ruNum(c.range[1])} ${c.unit}`;
+    }
   }
 }
 

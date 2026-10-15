@@ -2,12 +2,15 @@
  * «Калибровка»: подбор множителей правил по истории операции — в браузере, параллельно в пуле потоков.
  * Мерило — как у npm run sim:calibrate: отклонение положений до середины операции («обучение») + 3 × ошибка
  * дат событий; вторая половина («проверка») в подборе не участвует и показывает, не подогнано ли. Итог —
- * свой набор правил с блоком калибровки (до и после, множители).
+ * свой набор правил с блоком калибровки (до и после, множители). У каждого множителя — коридор, в котором он
+ * подбирается (норматив базы знаний с источником и надёжностью или прежние границы), у итога — пометка «упирается в
+ * границу» (в пределах 2 % ширины коридора от края).
  */
 import { useEffect, useRef, useState } from 'react';
-import { baseParams, CALIB_INFO, CALIB_KEYS, calibCorridors, calibratedRules, Calibrator, mergeEvaluations, spaceOf, type CalibCorridor, type CalibKey, type CalibParams, type CalibScore, type Rules, type Scenario } from '@def-ops/sim';
+import { baseParams, CALIB_INFO, CALIB_KEYS, calibCorridors, calibratedRules, Calibrator, corridorReport, mergeEvaluations, spaceOf, type CalibCorridor, type CalibKey, type CalibParams, type CalibScore, type Rules, type Scenario } from '@def-ops/sim';
 import { basisOf, outcomeNorms } from '../sim/kb-rules';
-import { getData, saveRules } from '../sim/userdata';
+import { getData, onDataChange, saveRules } from '../sim/userdata';
+import * as kb from '../kb/kb';
 import { LineChart } from './LineChart';
 import { getPool, pct, resetPool, type SimData } from './data';
 
@@ -30,6 +33,19 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
   const [savedId, setSavedId] = useState<string | null>(null);
   const stopRef = useRef(false);
   const base = d.rules.find((r) => r.id === baseId);
+  // коридоры множителей от выбранного набора — до запуска (пересобираются при изменении базы знаний)
+  const [preview, setPreview] = useState<Partial<Record<CalibKey, CalibCorridor>> | null>(null);
+  const [kbs, setKbs] = useState<kb.KbState>(kb.current());
+  useEffect(() => { void kb.load(); return kb.subscribe(setKbs); }, []);
+  useEffect(() => {
+    let alive = true;
+    const load = () => { if (base) void basisOf(base.rules).then((b) => { if (alive) setPreview(calibCorridors(b.corridors)); }).catch(() => { if (alive) setPreview(null); }); };
+    load();
+    const off = onDataChange(load);
+    window.addEventListener(kb.KB_CHANGED, load);
+    return () => { alive = false; off(); window.removeEventListener(kb.KB_CHANGED, load); };
+  }, [base]);
+  const srcOf = (c?: CalibCorridor) => (c?.source ? kbs.byId.get(c.source)?.title ?? c.source.replace(/^src:/, '') : '');
   const entry = d.catalog.find((c) => c.id === scenario);
 
   // сроки операции — граница «обучения» по умолчанию — середина
@@ -105,7 +121,9 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
           <label>Обучение до <input type="date" value={trainUntil} min={period?.start.slice(0, 10)} max={period?.end.slice(0, 10)} disabled={busy} onChange={(e) => setTrainUntil(e.target.value)} /></label>
         </div>
         <div className="mdl-pick"><span>Что подбирать:</span>{CALIB_KEYS.filter((k) => !(k.startsWith('terr') && !base?.rules.territory)).map((k) => <label key={k} className={keys.includes(k) ? 'on' : ''} title={CALIB_INFO[k].hint}>
-          <input type="checkbox" disabled={busy} checked={keys.includes(k)} onChange={() => setKeys((x) => (x.includes(k) ? x.filter((y) => y !== k) : [...x, k]))} />{CALIB_INFO[k].title}</label>)}</div>
+          <input type="checkbox" disabled={busy} checked={keys.includes(k)} onChange={() => setKeys((x) => (x.includes(k) ? x.filter((y) => y !== k) : [...x, k]))} />{CALIB_INFO[k].title}
+          {preview && <Corr c={preview[k]} k={k} src={srcOf(preview[k])} />}</label>)}</div>
+        <p className="muted small">Рядом с множителем — коридор подбора: норматив базы знаний (надёжность, источник) с допуском A ±10 %, B ±20 %, C ±35 %; «доп.» — норматива нет, прежние границы.</p>
         <div className="row">
           {busy ? <><button onClick={stop} title="Доделать текущую партию и остановиться (лучший вариант сохраняется)">Остановить</button><button onClick={abort}>Прервать сразу</button></>
             : <button className="primary" disabled={!base || !keys.length || !trainUntil} onClick={() => void start()}>Начать калибровку</button>}
@@ -128,7 +146,15 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
             <tr><td>Положений в пределах 10 км</td><td>{pct(run.before.within)}</td><td><b>{pct(b.s.within)}</b></td></tr>
           </tbody></table>}
           {run.moved.length > 0 && <p className="muted small">Исходные множители вне коридоров нормативов базы — подбор начат от края коридора: {run.moved.map((k) => `${CALIB_INFO[k].title} ${p0Text(run, k)}`).join('; ')}.</p>}
-          {b && <div className="mdl-mult">{keys.map((k) => <span key={k} title={CALIB_INFO[k].hint} className={Math.abs(b.p[k] - run.start[k]) > 1e-3 ? 'ch' : ''}>{CALIB_INFO[k].title}: {run.start[k].toFixed(2)} → <b>{b.p[k].toFixed(2)}</b></span>)}</div>}
+          {b && <table className="mdl-tbl rb-keys"><thead><tr><th>Множитель</th><th>коридор</th><th>основа</th><th>исходный → лучший</th></tr></thead><tbody>
+            {corridorReport(b.p, run.corridors, keys).map((r) => <tr key={r.key} className={r.edge ? 'rb-edge' : ''}>
+              <td title={CALIB_INFO[r.key].hint}>{r.title}</td>
+              <td className="num">{r.range[0].toFixed(2)}–{r.range[1].toFixed(2)}{r.wider && <small className="rb-wide" title="коридор источника шире прежних границ подбора"> шире прежних</small>}</td>
+              <td>{r.reliability ? <><i className={`kb-rel r${r.reliability}`}>{r.reliability}</i>{srcOf(run.corridors?.[r.key])}</> : <span className="muted"><i className="bs-asm">доп.</i> прежние границы</span>}</td>
+              <td className={`num${Math.abs(b.p[r.key] - run.start[r.key]) > 1e-3 ? ' ch' : ''}`}>{run.start[r.key].toFixed(2)} → <b>{b.p[r.key].toFixed(2)}</b>
+                {r.edge && <span className="rb-edge-mark" title="итог в пределах 2 % ширины коридора от края"> упирается в {r.edge === 'low' ? 'нижнюю' : 'верхнюю'} границу — проверьте источник</span>}</td>
+            </tr>)}
+          </tbody></table>}
           {b && b.s.test > run.before.test && <p className="warn">Проверка (вторая половина операции) стала хуже исходной — похоже на подгонку под первую половину. Сократите число подбираемых множителей или увеличьте прогонов на вариант.</p>}
           {run.finished && b && b.s.total < run.before.total && <div className="row">
             <input className="grow" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название набора" />
@@ -147,3 +173,11 @@ const p0Text = (run: { start: CalibParams; corridors?: Partial<Record<CalibKey, 
   const c = run.corridors?.[k]?.range;
   return c ? `→ ${run.start[k].toFixed(2)} (коридор ${c[0].toFixed(2)}–${c[1].toFixed(2)})` : `→ ${run.start[k].toFixed(2)}`;
 };
+
+/** Коридор множителя у флажка: границы, надёжность и источник (или «доп.» — прежние границы). */
+function Corr({ c, k, src }: { c?: CalibCorridor; k: CalibKey; src: string }) {
+  if (!c) return null;
+  const r = `${+c.range[0].toPrecision(3)}–${+c.range[1].toPrecision(3)}`.replace(/\./g, ',');
+  return <small className="rb-corr" title={c.reliability ? `коридор из норматива базы знаний: ${src}${c.wider ? ' (шире прежних границ)' : ''}` : `норматива нет — прежние границы «${CALIB_INFO[k].title}»`}>
+    {r}{c.reliability ? <i className={`kb-rel r${c.reliability}`}>{c.reliability}</i> : <i className="bs-asm">доп.</i>}</small>;
+}

@@ -1542,3 +1542,27 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .as-code { white-space: pre; overflow-x: auto; font-size: 11.5px; line-height: 1.35; max-height: 420px; margin: 6px 0; }
 .as-text { white-space: pre-wrap; font-size: 13px; line-height: 1.45; max-height: 420px; overflow-y: auto; margin: 6px 0; }
 @media (max-width: 900px) { .as-page { grid-template-columns: 1fr; height: auto; } .as-src { border-left: 0; padding-left: 0; } }
+
+/* «Основа правил» набора («Модели») и коридоры множителей в «Калибровке» */
+.rb h5.rb-h { margin: 6px 0 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.rb-group h6 { margin: 6px 0 2px; font-size: 12.5px; font-weight: 700; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.rb-group h6 small { font-weight: 400; }
+.rb-check { margin-left: auto; padding: 1px 10px; font-size: 12px; }
+.rb-tbl td.num, .rb-keys td.num, .rb td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rb-tbl td small, .rb-keys td small { color: var(--muted); }
+.rb-row { cursor: pointer; } .rb-row:hover td { background: #faf7f0; } .rb-row.on td { background: var(--accent-bg); }
+.rb-detail > td { padding: 0 8px 6px; border-bottom: 1px solid #f0ece3; }
+.rb-detail .bs-detail { margin: 2px 0 2px; }
+.rb-keys td .kb-rel { margin-right: 4px; }
+.rb-keys td.ch b { color: var(--accent); }
+.rb-keys tr.rb-edge td { background: #fff6e5; }
+.rb-edge-mark { color: #9a6a00; font-size: 11.5px; font-weight: 600; }
+.rb-wide { color: #9a6a00; }
+.rb-corr { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.rb-corr .kb-rel { margin: 0; }
+.mdl-pick label .rb-corr i { width: auto; height: auto; margin: 0; vertical-align: baseline; padding: 0 3px; }
+.rb-tbl { table-layout: fixed; }
+.rb-tbl th:nth-child(1) { width: 44%; } .rb-tbl th:nth-child(2) { width: 15%; } .rb-tbl th:nth-child(3) { width: 9%; } .rb-tbl th:nth-child(4) { width: 15%; }
+.rb-tbl td:first-child { width: auto; }
+.rb-out { table-layout: fixed; }
+.rb-out th:nth-child(2) { width: 9%; } .rb-out th:nth-child(3) { width: 15%; } .rb-out th:nth-child(4) { width: 16%; }
