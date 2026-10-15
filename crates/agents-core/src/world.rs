@@ -138,6 +138,8 @@ pub struct Sim {
     pub sources: [crate::staff::Source; 2],
     /// Направления «в тыл» дивизий по исходной обстановке (для штабов по доктрине).
     pub rear_dir: std::sync::OnceLock<Vec<(XY, f64)>>,
+    /// Текст доктрины из базы знаний для штабов на модели: [советская сторона, немецкая]; нет — зашитое предложение.
+    pub doctrine_text: [Option<String>; 2],
     /// Языковая модель для штабов на модели.
     pub llm: Option<crate::llm::LlmConfig>,
     /// Запросы к модели и ответы (для разбора и записи прогона).
@@ -221,7 +223,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None, staff: StaffFx::default() };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), doctrine_text: [None, None], llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None, staff: StaffFx::default() };
         s.script.sort_by_key(|o| o.at);
         s
     }

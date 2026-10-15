@@ -235,11 +235,18 @@ impl Sim {
             format!("Ты — начальник штаба соединения «{}» ({}) в Берлинской операции, апрель 1945 года. Раз в {} ч ты решаешь, что приказать подчинённым дивизиям.",
                 hq.name, match hq.echelon { Echelon::Corps => "корпус", Echelon::Army => "армия", Echelon::Front => "группа армий" }, doc.cycle_hours)
         };
+        // доктрина: правила из базы знаний (текст из окна), иначе — зашитое предложение
+        let doctrine = match self.doctrine_text[side_idx(hq.side)].as_deref().filter(|t| !t.trim().is_empty()) {
+            Some(t) => format!("Действуй по немецкой доктрине обороны 1944–1945 гг. — правила из базы знаний:\n{t}{}",
+                if doc.hold_orders { "\nДействует приказ «держаться» — отход запрещён." } else { "" }),
+            None => format!("Действуй по немецкой доктрине обороны 1944–1945 гг.: вклинение противника — немедленная контратака резервом во фланг (силы не меньше 1/3 прорвавшегося), если сил мало — закрыть направление рубежом; обойдённой или разбитой дивизии — отход на следующий рубеж; общий отход армии без приказа сверху запрещён{}; окружённой дивизии (encircled_hours — сколько часов нет пути к своим, own_lines_km — до своих) — прорыв к своим, пока есть боеприпасы.",
+                if doc.hold_orders { "; действует приказ «держаться» — отход запрещён" } else { "" }),
+        };
         let system = format!(
-            "{who} Действуй по немецкой доктрине обороны 1944–1945 гг.: вклинение противника — немедленная контратака резервом во фланг (силы не меньше 1/3 прорвавшегося), если сил мало — закрыть направление рубежом; обойдённой или разбитой дивизии — отход на следующий рубеж; общий отход армии без приказа сверху запрещён{}; окружённой дивизии (encircled_hours — сколько часов нет пути к своим, own_lines_km — до своих) — прорыв к своим, пока есть боеприпасы.
+            "{who} {doctrine}
 Доступные действия: hold — держаться на месте, не отходить; defend — оборонять текущий район; withdraw — отойти на следующий рубеж позади; counterattack — контратаковать дивизию противника (target — её id); block — занять рубеж за своей дивизией (target — её id); breakout — окружённой дивизии прорываться к ближайшим своим.
 Ответь только JSON без пояснений вокруг: {}. По дивизии, которой приказ не меняешь, приказ не давай.",
-            if doc.hold_orders { "; действует приказ «держаться» — отход запрещён" } else { "" }, REPLY_FORMAT);
+            REPLY_FORMAT);
         let situation = if joint {
             json!({ "corps": groups.iter().map(|(h, subs)| json!({ "corps": w.hqs[*h].name, "divisions": self.situation(w, subs)["divisions"] })).collect::<Vec<_>>() })
         } else { self.situation(w, &groups[0].1) };
@@ -288,7 +295,7 @@ impl Sim {
             cb(json!({ "hq": hq.id, "name": hq.name, "time": time, "phase": phase, "think": tail(think, 700), "text": tail(text, 400), "parts": n, "secs": (t0.elapsed().as_secs_f64() * 10.0).round() / 10.0 }));
         };
         send("wait", "", "", 0);
-        let reply = llm::complete_stream(cfg, &[("system".into(), system), ("user".into(), user.clone())], &mut |p, s| {
+        let reply = llm::complete_stream(cfg, &[("system".into(), system.clone()), ("user".into(), user.clone())], &mut |p, s| {
             match p { llm::Part::Think => think.push_str(s), llm::Part::Text => text.push_str(s) }
             n += 1;
             let now = t0.elapsed().as_secs_f64();
@@ -297,7 +304,7 @@ impl Sim {
         send(if reply.is_ok() { "done" } else { "error" }, &think, &text, n);
         let log = |ok: bool, text: &str, r: Option<&llm::Reply>| {
             if let Ok(mut l) = self.llm_log.lock() {
-                l.push(json!({ "tick": tick, "time": time, "hq": hq.id, "model": cfg.model, "request": user, "reply": text, "ok": ok,
+                l.push(json!({ "tick": tick, "time": time, "hq": hq.id, "model": cfg.model, "system": system, "request": user, "reply": text, "ok": ok,
                     "reasoning": r.map(|r| r.reasoning.as_str()).unwrap_or(""), "tokens": r.and_then(|r| r.tokens), "secs": r.map(|r| (r.secs * 10.0).round() / 10.0), "truncated": r.map(|r| r.truncated) }));
             }
         };

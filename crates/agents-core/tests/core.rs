@@ -327,6 +327,58 @@ fn soviet_staff_on_language_model() {
     assert!(sim.journal.iter().any(|e| e.text.contains("решение штаба (модель)") && e.text.contains("наступать")));
 }
 
+/// Штабы на модели с доктриной из базы знаний: текст из окна заменяет зашитое предложение доктрины в промпте;
+/// без текста — прежний промпт.
+#[test]
+fn staff_doctrine_text_from_kb() {
+    let url = mock_llm();
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
+    let run = |text: Option<&str>| {
+        let (mut sim, _) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+        sim.sources[1] = agents_core::staff::Source::Llm;
+        sim.doctrine_text[1] = text.map(String::from);
+        sim.llm = Some(agents_core::llm::LlmConfig::new(&url, "qwen-test"));
+        for _ in 0..2 { sim.step(); }
+        let log = sim.llm_log.lock().unwrap().clone();
+        log
+    };
+    let log = run(Some("ПРАВИЛО ИЗ БАЗЫ: контратака во фланг силами не меньше 1/3"));
+    assert!(!log.is_empty() && log.iter().all(|e| e["ok"] == true), "{log:?}");
+    for e in &log {
+        let s = e["system"].as_str().expect("system в журнале");
+        assert!(s.contains("ПРАВИЛО ИЗ БАЗЫ") && s.contains("правила из базы знаний"), "{s}");
+        assert!(!s.contains("немедленная контратака резервом во фланг"), "{s}");
+    }
+    let log = run(None);
+    assert!(!log.is_empty());
+    for e in &log {
+        let s = e["system"].as_str().expect("system в журнале");
+        assert!(s.contains("немедленная контратака резервом во фланг") && !s.contains("правила из базы знаний"), "{s}");
+    }
+}
+
+/// Советские штабы на модели с доктриной из базы: текст в промпте, слова «советской доктрине» остаются.
+#[test]
+fn soviet_staff_doctrine_text_from_kb() {
+    let url = mock_llm();
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json");
+    let (mut sim, _) = agents_core::scenario::load(&path, &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    sim.sources[0] = agents_core::staff::Source::Llm;
+    sim.doctrine_text[0] = Some("ПРАВИЛО ИЗ БАЗЫ: второй эшелон — на третий день".into());
+    sim.llm = Some(agents_core::llm::LlmConfig::new(&url, "qwen-test"));
+    for _ in 0..6 { sim.step(); }
+    let log = sim.llm_log.lock().unwrap().clone();
+    assert!(!log.is_empty() && log.iter().all(|e| e["ok"] == true), "{log:?}");
+    for e in &log {
+        let s = e["system"].as_str().expect("system в журнале");
+        assert!(s.contains("ПРАВИЛО ИЗ БАЗЫ: второй эшелон — на третий день") && s.contains("советской доктрине"), "{s}");
+        assert!(!s.contains("стрелковые дивизии — в два эшелона"), "{s}");
+    }
+    assert!(sim.journal.iter().any(|e| e.text.contains("решение штаба (модель)") && e.text.contains("наступать")));
+}
+
 #[test]
 fn staff_pontoon_and_sector_preference() {
     let (t, r) = setup();

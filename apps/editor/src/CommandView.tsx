@@ -176,8 +176,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'plan-done') setPlan((p) => (p?.id === m.id ? { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model } : p));
       else if (m.kind === 'advice') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
       else if (m.kind === 'agents-call') {
-        // ход агентной модели считает ядро приложения: поток вызывает команду через окно
-        void import('@tauri-apps/api/core').then(({ invoke }) => invoke(m.cmd, m.args))
+        // ход агентной модели считает ядро приложения: поток вызывает команду через окно; к ходу — доктрина из базы
+        // окна для штабов на модели (базы нет — без поля, ядро берёт зашитый текст)
+        void Promise.all([import('@tauri-apps/api/core'), m.cmd === 'game_turn' ? import('./sim/kb-doctrine').then((d) => d.agentDoctrineText()) : undefined])
+          .then(([{ invoke }, doctrineText]) => invoke(m.cmd, doctrineText ? { ...m.args, doctrineText } : m.args))
           .then((result) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: true, result } satisfies GameRequest))
           .catch((err) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: false, error: String((err as Error)?.message ?? err) } satisfies GameRequest));
       } else if (m.kind === 'kbRef') {

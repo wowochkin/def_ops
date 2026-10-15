@@ -32,6 +32,23 @@ fn inside(rel: &str) -> Result<PathBuf, String> {
     Ok(root().join(p))
 }
 
+/// Текст доктрины из базы знаний для штабов на модели (по сторонам), его готовит окно.
+#[derive(serde::Deserialize, Default)]
+pub struct DoctrineIn {
+    #[serde(default)]
+    su: Option<String>,
+    #[serde(default)]
+    de: Option<String>,
+}
+
+impl DoctrineIn {
+    /// [советская сторона, немецкая]; пустой текст — нет текста.
+    fn texts(self) -> [Option<String>; 2] {
+        let f = |t: Option<String>| t.filter(|t| !t.trim().is_empty());
+        [f(self.su), f(self.de)]
+    }
+}
+
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LlmIn {
@@ -74,7 +91,7 @@ pub mod commands {
     use super::*;
 
     #[tauri::command]
-    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>, params: Option<serde_json::Value>, edits: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
+    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>, params: Option<serde_json::Value>, edits: Option<serde_json::Value>, doctrine_text: Option<DoctrineIn>) -> Result<serde_json::Value, String> {
         // расчёт — в отдельном потоке, окно не замирает
         tauri::async_runtime::spawn_blocking(move || {
             let r = root();
@@ -89,6 +106,8 @@ pub mod commands {
             // советские штабы: по доктрине (staff_su.rs), на модели (штаб армии) или исторические приказы
             sim.sources[0] = match su.as_deref() { Some("doctrine") => Source::Doctrine, Some("llm") => Source::Llm, _ => Source::Script };
             if let Some(l) = llm { sim.llm = Some(l.config()); }
+            // доктрина из базы знаний — в промпт штабов на модели (без неё — зашитый текст)
+            sim.doctrine_text = doctrine_text.unwrap_or_default().texts();
             // варианты для сравнения: без артподготовки, без отвода с первой позиции
             if without_fires.unwrap_or(false) { sim.fires.clear(); }
             if without_withdrawals.unwrap_or(false) { sim.withdrawals.clear(); }
@@ -175,10 +194,12 @@ pub mod commands {
 
     /// Ход игры: распоряжения штаба, приказы штабам и дивизиям, затем `hours` часов расчёта. Возвращает ход с начала сценария и итог по приказам.
     #[tauri::command]
-    pub async fn game_turn(orders: Vec<agents_core::game::PlayerOrder>, hours: u32, staff: Option<agents_core::game::StaffIn>) -> Result<serde_json::Value, String> {
+    pub async fn game_turn(orders: Vec<agents_core::game::PlayerOrder>, hours: u32, staff: Option<agents_core::game::StaffIn>, doctrine_text: Option<DoctrineIn>) -> Result<serde_json::Value, String> {
         tauri::async_runtime::spawn_blocking(move || {
             let mut lock = GAME.lock().map_err(|e| e.to_string())?;
             let g = lock.as_mut().ok_or("игра не начата")?;
+            // доктрина из базы знаний на этот ход (нет — прежняя)
+            if let Some(d) = doctrine_text { g.sim.doctrine_text = d.texts(); }
             // распоряжения штаба (подвоз, переправы, подрыв, резервы, полосы) — до приказов хода
             let staff_bad = staff.map(|s| g.staff(&s)).unwrap_or_default();
             let applied: Vec<serde_json::Value> = orders.iter().map(|o| match g.order(o) {
