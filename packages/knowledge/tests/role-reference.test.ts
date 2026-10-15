@@ -19,6 +19,12 @@ const set: Entry[] = [
   E('doc-position', 'terrain', { origin: 'document', operations: ['berlin'], facts: [{ key: 'defense', value: 'позиция', claim: { kind: 'position', subject: 'de_9a', at: '1945-04-20' } }] }),
   E('future', 'organization', { group: 'de', period: { from: '1945-04-25' } }),
   E('foreign', 'organization', { group: 'su', origin: 'document', operations: ['vistula'] }),
+  // туман войны: текстовые факты из документа операции — обстановка, не доктрина
+  E('doc-text', 'organization', { group: 'de', origin: 'document', operations: ['berlin'], facts: [{ key: 'principles', value: 'дивизия отошла на вторую позицию' }] }),
+  E('u:berlin:infrastructure', 'terrain', { origin: 'document', operations: ['berlin'], facts: [{ key: 'features', value: 'мост взорван 20 апреля', source: 'doc:d1' }] }),
+  E('user-doc-fact', 'terrain', { origin: 'user', facts: [{ key: 'defense', value: 'гарнизон 2 батальона', source: 'doc:d2' }] }),
+  E('user-evidence-fact', 'equipment', { origin: 'user', facts: [{ key: 'armament', value: 'x', evidence: { kind: 'quote', doc: 'd3', chunk: 0, quote: 'x' } }] }),
+  E('user-doc-param', 'organization', { group: 'su', origin: 'user', facts: [{ key: 'numbers', value: '4 км', source: 'doc:d4', claim: { kind: 'param', param: 'frontage.km', value: 4 } }] }),
 ];
 
 const pass = (scope: RoleScope) => set.filter(roleFilter(scope)).map((e) => e.id).sort();
@@ -26,8 +32,17 @@ const pass = (scope: RoleScope) => set.filter(roleFilter(scope)).map((e) => e.id
 describe('справка по роли: фильтр', () => {
   it('штаб, Ставка, посредник: организация, техника, местность, документ только с доктриной; без хода операции, будущего, чужой операции', () => {
     for (const role of ['staff', 'stavka', 'umpire'] as const) {
-      expect(pass({ role, operation: 'berlin', moment: '1945-04-19T05:00' }), role).toEqual(['doc-doctrine', 'eq', 'org-de', 'org-su', 'terrain'].sort());
+      expect(pass({ role, operation: 'berlin', moment: '1945-04-19T05:00' }), role).toEqual(['doc-doctrine', 'eq', 'org-de', 'org-su', 'terrain', 'user-doc-param'].sort());
     }
+  });
+
+  it('туман войны: любой текстовый факт из документа исключает запись для штаба; доктрина из документа проходит', () => {
+    for (const role of ['staff', 'stavka', 'umpire'] as const) {
+      const ids = pass({ role, operation: 'berlin', moment: '1945-04-19T05:00' });
+      for (const id of ['doc-text', 'u:berlin:infrastructure', 'user-doc-fact', 'user-evidence-fact']) expect(ids, `${role} ${id}`).not.toContain(id);
+      expect(ids).toContain('doc-doctrine');
+    }
+    expect(pass({ role: 'review', operation: 'berlin' })).toContain('user-doc-fact');
   });
 
   it('советник: без истории — только безопасные категории, с историей — и сражения', () => {
@@ -71,6 +86,16 @@ describe('справка по роли: по сиду', () => {
     expect(own?.title).toMatch(/ — своя сторона$/);
     const enemy = refs.find((r) => byId.get(r.id)!.category === 'organization' && byId.get(r.id)!.group === 'su');
     if (enemy) expect(enemy.title).toMatch(/ — противник$/);
+  });
+
+  it('советник с историей: пометка «, история» у записей истории, у доктрины — нет', () => {
+    const { refs } = roleReference(index, byId, ['Зееловские высоты оборона'], { role: 'advisor', history: true, operation: 'berlin' }, { limit: 8, chars: 500 });
+    const hist = refs.filter((r) => byId.get(r.id)!.category === 'battles' || byId.get(r.id)!.category === 'terrain');
+    expect(hist.length).toBeGreaterThan(0);
+    for (const r of hist) expect(r.title, r.id).toMatch(/, история$/);
+    for (const r of refs.filter((x) => ['organization', 'equipment'].includes(byId.get(x.id)!.category))) expect(r.title).not.toMatch(/история/);
+    const plain = roleReference(index, byId, ['Зееловские высоты оборона'], { role: 'review', operation: 'berlin' }, { limit: 8, chars: 500 });
+    expect(plain.refs.some((r) => /история$/.test(r.title))).toBe(false);
   });
 
   it('готовая выдача и пустой результат', () => {
