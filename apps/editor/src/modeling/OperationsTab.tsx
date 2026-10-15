@@ -16,6 +16,8 @@ import { RecalcPanel } from './RecalcPanel';
 import { BasisTab } from './BasisTab';
 import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { download, getPool, pct, type SimData } from './data';
+import { KB_WAIT, kbBuilding, kbReady } from '../sim/kb-recompile';
+import { KbStampNote } from '../KbStampNote';
 
 const liveFiles = import.meta.glob('../../../../services/staff/live/*.json', { import: 'default' });
 const sectorFiles = import.meta.glob('../../../../packages/sim/data/scenarios/*.sectors.json', { import: 'default' });
@@ -96,13 +98,16 @@ export function OperationsTab({ d, llm, onCompare, onCalibrate }: { d: SimData; 
   const update = (o: UserOperation, p: Partial<OperationPackage>, extra: Partial<UserOperation> = {}) => saveOperation({ ...o, ...extra, pkg: { ...o.pkg, ...p } });
 
   const control = async (o: UserOperation) => {
-    setBusy('контрольный прогон…'); setError(null);
+    setBusy(kbBuilding() ? KB_WAIT : 'контрольный прогон…'); setError(null);
     try {
+      // данные операции — после сборки из базы знаний
+      const kb = await kbReady(o.id);
+      setBusy('контрольный прогон…');
       const pool = getPool();
       const t0 = Date.now();
       const r = mergeEvaluations(await Promise.all([0, 1, 2].map((k) => pool.run({ scenario: o.id, rules: o.pkg.scenario.rules, seeds: 1, seed0: 101 + k, toleranceKm: (o.pkg.catalog ?? defaultCatalog(o.pkg)).toleranceKm }))));
       const ev = r.events.flatMap((e) => e.days);
-      await saveOperation({ ...o, check: { at: new Date().toISOString(), within: r.within, medianExcessKm: r.medianExcessKm, eventsHit: ev.filter((x) => x != null && Math.abs(x) <= 2).length, eventsTotal: ev.length, ms: Date.now() - t0 } });
+      await saveOperation({ ...o, check: { at: new Date().toISOString(), within: r.within, medianExcessKm: r.medianExcessKm, eventsHit: ev.filter((x) => x != null && Math.abs(x) <= 2).length, eventsTotal: ev.length, ms: Date.now() - t0, kb } });
     } catch (e) { setError(`Прогон не удался: ${(e as Error).message}`); }
     setBusy(null);
   };
@@ -243,6 +248,7 @@ function OperationCard({ op, d, llm, known, busy, update, control, onCompare, on
       <h4>Контрольный прогон и подготовка</h4>
       {op.check ? <p>Прогон {op.check.at.slice(0, 10)} (3 × правила сценария «{S.rules}»): положений в допуске <b>{pct(op.check.within)}</b>, медиана превышения <b>{op.check.medianExcessKm} км</b>, события в ±2 сут: <b>{op.check.eventsHit} из {op.check.eventsTotal}</b>.</p>
         : <p className="muted">Ещё не было: прогон с историческими приказами покажет, насколько расчёт повторяет историю.</p>}
+      {op.check && <KbStampNote s={op.check.kb} />}
       <div className="row">
         <button disabled={!!busy || errors > 0} onClick={() => void control(op)}>{busy ? <><span className="spinner" /> {busy}</> : 'Контрольный прогон'}</button>
         <button disabled={errors > 0} onClick={() => onCalibrate(op.id)}>Калибровать правила по ней →</button>

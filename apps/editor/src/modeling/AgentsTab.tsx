@@ -9,7 +9,9 @@ import type { AgentsScore, Norm } from '@def-ops/sim';
 import { agentRanges, startMultipliers, trialMultipliers, type MultRange } from '../sim/agents-corridor';
 import { outcomeNorms, rulesBasis } from '../sim/kb-rules';
 import { getData } from '../sim/userdata';
-import { coreEditsFor } from '../sim/kb-recompile';
+import { coreEditsFor, KB_WAIT, kbBuilding, kbReady } from '../sim/kb-recompile';
+import { kbStampText, type KbStamp } from '../sim/kb-stamp';
+import { KbStampNote } from '../KbStampNote';
 import { AGENT_SCENARIOS, agentHistory, agentVariants, deleteAgentVariant, DESKTOP, runAgents, saveAgentVariant, type AgentVariant } from '../sim/agent-scenarios';
 import type { ScoreRequest, ScoreResponse } from '../sim/agents-score-worker';
 import { pct, SERIES } from './data';
@@ -44,6 +46,13 @@ const show = (v: Val) => (typeof v === 'number' ? String(v) : `кривая: ${v
 /** Сверка в фоновом потоке. */
 let worker: Worker | null = null, seq = 0;
 const waiting = new Map<number, (r: ScoreResponse) => void>();
+/** Сборка из базы, на данных которой поток держит сценарий; другая — поток заново (данные операции перечитываются). */
+let workerKb: string | null = null;
+function scorerFor(kb: KbStamp | null) {
+  const id = kb?.id ?? null;
+  if (worker && workerKb !== id) { worker.terminate(); worker = null; for (const [i, f] of waiting) f({ id: i, ok: false, error: 'данные базы знаний изменились' } as ScoreResponse); waiting.clear(); }
+  workerKb = id;
+}
 function score(scenario: string, trace: ScoreRequest['trace'], history: ScoreRequest['history'], outcomes: Norm[]): Promise<AgentsScore> {
   if (!worker) {
     worker = new Worker(new URL('../sim/agents-score-worker.ts', import.meta.url), { type: 'module' });
@@ -102,10 +111,16 @@ export function AgentsTab() {
   const [pick, setPick] = useState<string[]>(['base']);
   const [cmp, setCmp] = useState<Record<string, Eval | 'run' | string>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [cmpKb, setCmpKb] = useState<KbStamp | null | undefined>(undefined);
   const stopRef = useRef(false);
   const varOf = (id: string): { title: string; params: Record<string, unknown> } => (id === 'base' ? { title: 'базовые (agents-v0)', params: {} } : mine.find((v) => v.id === id) ?? { title: id, params: {} });
   const compare = async () => {
-    stopRef.current = false; setCmp({});
+    stopRef.current = false; setCmp({}); setCmpKb(undefined);
+    // данные операции (поправки дивизий, история для сверки) — после сборки из базы знаний
+    if (kbBuilding()) setBusy(KB_WAIT);
+    const kbs = await kbReady(scenario);
+    if (stopRef.current) { setBusy(null); return; }
+    scorerFor(kbs); setCmpKb(kbs);
     const { outcomes } = await agentsBasis(scenario, []);
     for (const id of pick) {
       if (stopRef.current) break;
@@ -119,7 +134,7 @@ export function AgentsTab() {
 
   // ── калибровка ──
   const [keys, setKeys] = useState<string[]>(['combat.advance.prepared', 'combat.penetrationKmDay', 'march.kmh.foot']);
-  const [cal, setCal] = useState<{ base: Eval | null; best: { mul: Record<string, number>; e: Eval } | null; tried: { key: string; m: number; score: number; ok: boolean }[]; skipped: { key: string; m: number }[]; moved: Record<string, number>; n: number; total: number; error?: string; finished: boolean } | null>(null);
+  const [cal, setCal] = useState<{ base: Eval | null; best: { mul: Record<string, number>; e: Eval } | null; tried: { key: string; m: number; score: number; ok: boolean }[]; skipped: { key: string; m: number }[]; moved: Record<string, number>; n: number; total: number; error?: string; finished: boolean; kb?: KbStamp | null } | null>(null);
   // коридоры множителей параметров по нормативам базы (для подписи у параметра)
   const [ranges, setRanges] = useState<Record<string, MultRange>>({});
   useEffect(() => { void agentsBasis(scenario, PARAMS.map((p) => p.path)).then((b) => setRanges(b.ranges)); }, [scenario]);
@@ -128,9 +143,14 @@ export function AgentsTab() {
   const calibrate = async () => {
     if (!ag) return;
     stopRef.current = false;
-    const st = { base: null as Eval | null, best: null as { mul: Record<string, number>; e: Eval } | null, tried: [] as { key: string; m: number; score: number; ok: boolean }[], skipped: [] as { key: string; m: number }[], moved: {} as Record<string, number>, n: 0, total: 1 + keys.length * MULTS.length, finished: false };
+    const st = { base: null as Eval | null, best: null as { mul: Record<string, number>; e: Eval } | null, tried: [] as { key: string; m: number; score: number; ok: boolean }[], skipped: [] as { key: string; m: number }[], moved: {} as Record<string, number>, n: 0, total: 1 + keys.length * MULTS.length, finished: false, kb: undefined as KbStamp | null | undefined };
     setCal({ ...st });
     try {
+      // данные операции — после сборки из базы знаний; сборка — в итог калибровки
+      if (kbBuilding()) setBusy(KB_WAIT);
+      st.kb = await kbReady(scenario);
+      if (stopRef.current) { setBusy(null); setCal(null); return; }
+      scorerFor(st.kb);
       // коридоры нормативов: множители вне коридора не пробуются; исходное значение вне коридора — старт у края
       const { ranges: rg, outcomes } = await agentsBasis(scenario, keys);
       st.moved = startMultipliers(keys, rg);
@@ -178,7 +198,7 @@ export function AgentsTab() {
     if (!cal?.best) return;
     const now = new Date();
     const id = `av_${now.getTime().toString(36)}`;
-    saveAgentVariant({ id, title: title.trim() || `калибровка ${now.toLocaleDateString('ru')}: ${Object.entries(cal.best.mul).map(([k, m]) => `${k.split('.').pop()} ×${m}`).join(', ') || 'без изменений'}`, params: paramsOf(cal.best.mul), scenario, note: `итог ${cal.best.e.score} против ${cal.base?.score}`, created: now.toISOString() });
+    saveAgentVariant({ id, title: title.trim() || `калибровка ${now.toLocaleDateString('ru')}: ${Object.entries(cal.best.mul).map(([k, m]) => `${k.split('.').pop()} ×${m}`).join(', ') || 'без изменений'}`, params: paramsOf(cal.best.mul), scenario, note: `итог ${cal.best.e.score} против ${cal.base?.score}${cal.kb !== undefined ? `; ${kbStampText(cal.kb)}` : ''}`, created: now.toISOString() });
     setTitle('');
   };
   const evRows = useMemo(() => (done.length ? (cmp[done[0]] as Eval).events.map((e, i) => ({ title: e.title, cells: done.map((id) => (cmp[id] as Eval).events[i]?.days ?? []) })) : []), [cmp, done.join()]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -212,6 +232,7 @@ export function AgentsTab() {
             {r === 'run' ? <td colSpan={4}><span className="spinner" /></td> : typeof r === 'string' ? <td colSpan={4} className="err">{r}</td>
               : <><td>{pct(r.within)}</td><td>{r.medianExcessKm}</td><td>{r.eventsHit} / {r.eventsTotal}</td><td><b>{r.score}</b></td></>}</tr>; })}
         </tbody></table>}
+        {pick.some((id) => cmp[id]) && <KbStampNote s={cmpKb} />}
         {evRows.length > 0 && <><h4 className="cmd-h4">События: расхождение с историей, сут (по прогонам)</h4>
           <table className="mdl-tbl ev"><thead><tr><th>Событие</th>{done.map((id, i) => <th key={id}><i className="sw" style={{ background: SERIES[pick.indexOf(id)] ?? SERIES[i] }} />{varOf(id).title}</th>)}</tr></thead>
             <tbody>{evRows.map((r) => <tr key={r.title}><td>{r.title}</td>{r.cells.map((c, j) => <td key={j}>{daysText(c)}</td>)}</tr>)}</tbody></table></>}
@@ -227,6 +248,7 @@ export function AgentsTab() {
         <button className="primary" disabled={!!busy || !keys.length || !ag} onClick={() => void calibrate()}>Калибровать</button>
         {cal && <>
           <div className="muted small">Прогонов: {cal.n} из {cal.total}{cal.error ? ` — ошибка: ${cal.error}` : cal.finished ? ' — готово' : ''}</div>
+          <KbStampNote s={cal.kb} />
           {cal.base && cal.best && <table className="mdl-tbl"><thead><tr><th></th><th>В допуске</th><th>Медиана, км</th><th>События ±2 сут</th><th>Итог</th></tr></thead><tbody>
             <tr><td>исходные</td><td>{pct(cal.base.within)}</td><td>{cal.base.medianExcessKm}</td><td>{cal.base.eventsHit} / {cal.base.eventsTotal}</td><td>{cal.base.score}</td></tr>
             <tr><td><b>лучшие</b> {Object.entries(cal.best.mul).map(([k, m]) => `${PARAMS.find((p) => p.path === k)?.title ?? k} ×${m}`).join('; ') || '(без изменений)'}</td><td>{pct(cal.best.e.within)}</td><td>{cal.best.e.medianExcessKm}</td><td>{cal.best.e.eventsHit} / {cal.best.e.eventsTotal}</td><td><b>{cal.best.e.score}</b></td></tr>

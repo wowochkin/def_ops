@@ -7,6 +7,7 @@ import { agentsHistory, agentsToRun, analyze, checkEvents, compareWithHistory, c
 import type { SimRequest, SimResponse } from './protocol';
 import { getData } from './userdata';
 import { replayUnits } from '../formation-card';
+import { kbStamp, withKbStamp, type KbStamp } from './kb-stamp';
 
 // встроенные данные и свои (правила, загруженные операции)
 const get = (kind: DataKind, file: string) => getData(kind, file);
@@ -17,8 +18,9 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
   const q = e.data;
   try {
     post({ kind: 'progress', text: 'загрузка данных…' });
-    const { ctx, history } = await contextFrom(get, q.scenario, q.rules);
-    if (q.agents) return agents(q, ctx, history);
+    // отметка сборки из базы — по тем же правкам операции, что и данные (окно дождалось сборки до запуска)
+    const [{ ctx, history }, kb] = await Promise.all([contextFrom(get, q.scenario, q.rules), kbStamp(q.scenario)]);
+    if (q.agents) return agents(q, ctx, history, kb);
     const a = analyze(ctx, history, {
       seed: q.seed, runs: q.runs, toleranceKm: q.toleranceKm,
       onRun: (k, n) => post({ kind: 'progress', text: n > 1 ? `прогон ${k} из ${n}…` : 'расчёт…' }),
@@ -41,7 +43,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
           return { title: x.title, historical: x.historical, simulated: first?.simulated ?? null, days: x.days, at: first?.at ?? null, place, marker: !!ev?.marker };
         }),
         eventsHit: all.filter((d) => d != null && Math.abs(d) <= 2).length, eventsTotal: all.length,
-        report: reportMarkdown(ctx, a), doc, summary, units: replayUnits(ctx, a.run),
+        report: withKbStamp(reportMarkdown(ctx, a), kb), doc, summary, units: replayUnits(ctx, a.run), kb,
       },
     });
   } catch (err) {
@@ -53,7 +55,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
  * Агентная модель: ход по часам уже посчитан ядром (команда run_scenario настольного приложения); здесь — снимки
  * через stepHours, сверка с историей дивизий и та же карта, что у нынешней модели.
  */
-function agents(q: SimRequest, base: SimContext, baseHistory: History) {
+function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbStamp | null) {
   const A = q.agents!;
   const t0 = Date.now();
   post({ kind: 'progress', text: 'сверка с историей…' });
@@ -86,7 +88,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History) {
         return { title: e.title, historical: e.historical, simulated: e.simulated, days: [e.days], at: e.at, place, marker: !!h?.marker };
       }),
       eventsHit: events.filter((e) => e.days != null && Math.abs(e.days) <= 2).length, eventsTotal: events.length,
-      report, doc, summary, units: replayUnits(ctx, run),
+      report: withKbStamp(report, kb), doc, summary, units: replayUnits(ctx, run), kb,
     },
   });
 }

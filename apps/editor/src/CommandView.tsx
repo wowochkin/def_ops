@@ -26,6 +26,7 @@ import { AgentMark } from './AgentCard';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
 import { windowAnswer } from './sim/kb-ref';
+import { KB_WAIT, kbBuilding, kbSettled } from './sim/kb-recompile';
 import { openKbEntry } from './modeling/BasisTab';
 import type { RoleScope } from '@def-ops/knowledge';
 import { ModelPicker } from './ModelPicker';
@@ -195,8 +196,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     };
     w.onerror = (e) => { setProgress(null); setError(e.message || 'ошибка игры'); };
     const st: GameStart = saved ? { scenario: saved.record.scenario, rules: saved.record.rules, seed: saved.record.seed, takeover: saved.record.takeover } : start!;
-    w.postMessage({ kind: 'start', start: st, record: saved?.record, llm: llm.settings, enemy } satisfies GameRequest);
-    return () => w.terminate();
+    // новая игра берёт данные операции и состояние при передаче из нынешней сборки базы знаний — сначала дождаться
+    // её (идёт после запуска и после правки базы); сохранённая игра восстанавливается на данных своего начала
+    let live = true;
+    if (!saved && kbBuilding()) setProgress(KB_WAIT);
+    void (saved ? Promise.resolve() : kbSettled()).then(() => { if (live) w.postMessage({ kind: 'start', start: st, record: saved?.record, llm: llm.settings, enemy } satisfies GameRequest); });
+    return () => { live = false; w.terminate(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const enemyRef = useRef(enemy); enemyRef.current = enemy;
   const titleRef = useRef(''); titleRef.current = view?.scenarioName ?? saved?.title ?? '';

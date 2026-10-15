@@ -7,6 +7,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { baseParams, CALIB_INFO, CALIB_KEYS, CALIB_SPACE, diffRules, mergeEvaluations, rulesWith, type CalibParams, type Rules, type RulesEvaluation } from '@def-ops/sim';
 import { saveRules } from '../sim/userdata';
 import { getPool, pct, type SimData } from './data';
+import { KB_WAIT, kbBuilding, kbReady } from '../sim/kb-recompile';
+import type { KbStamp } from '../sim/kb-stamp';
+import { KbStampNote } from '../KbStampNote';
 
 const DIRECT: { key: string; title: string; hint: string; min: number; max: number; step: number; get: (r: Rules) => number; set: (r: Rules, v: number) => Rules }[] = [
   { key: 'contactKm', title: 'Соприкосновение, км', hint: 'ближе — бой', min: 0.5, max: 15, step: 0.5, get: (r) => r.contactKm, set: (r, v) => ({ ...r, contactKm: v }) },
@@ -27,7 +30,8 @@ export function TuneTab({ d, preset }: { d: SimData; preset: string | null }) {
   const [p, setP] = useState<CalibParams | null>(null);
   const [direct, setDirect] = useState<Record<string, number>>({});
   const [scenario, setScenario] = useState(d.catalog[0]?.id ?? '');
-  const [check, setCheck] = useState<{ before?: RulesEvaluation; after?: RulesEvaluation; busy?: boolean; error?: string }>({});
+  const [check, setCheck] = useState<{ before?: RulesEvaluation; after?: RulesEvaluation; busy?: boolean; waitKb?: boolean; error?: string; kb?: KbStamp | null }>({});
+  const checkId = useRef(0);
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [bind, setBind] = useState(true);
@@ -55,12 +59,17 @@ export function TuneTab({ d, preset }: { d: SimData; preset: string | null }) {
 
   const runCheck = async () => {
     if (!base || !edited) return;
+    const my = ++checkId.current;
+    // данные операции — после сборки из базы знаний
+    setCheck({ busy: true, waitKb: kbBuilding() });
+    const kb = await kbReady(scenario);
+    if (my !== checkId.current) return;
     setCheck({ busy: true });
     const pool = getPool();
     const seeds = 3;
     const go = (rules: string | Rules) => Promise.all(Array.from({ length: seeds }, (_, k) => pool.run({ scenario, rules, seeds: 1, seed0: 101 + k, toleranceKm: entry?.toleranceKm }))).then(mergeEvaluations);
-    try { const [before, after] = await Promise.all([go(base.id), go(edited)]); setCheck({ before, after }); }
-    catch (e) { setCheck({ error: (e as Error).message }); }
+    try { const [before, after] = await Promise.all([go(base.id), go(edited)]); if (my === checkId.current) setCheck({ before, after, kb }); }
+    catch (e) { if (my === checkId.current) setCheck({ error: (e as Error).message }); }
   };
   const save = async (overwrite: boolean) => {
     if (!base || !edited || !title.trim()) return;
@@ -99,8 +108,8 @@ export function TuneTab({ d, preset }: { d: SimData; preset: string | null }) {
           <h4>Изменения ({diff.length})</h4>
           {diff.length ? <table className="mdl-tbl"><tbody>{diff.map((r) => <tr key={r.key}><td>{r.title}</td><td className="muted">{r.a}</td><td>→ <b>{r.b}</b></td></tr>)}</tbody></table> : <p className="muted">Пока как в основе.</p>}
           <h4>Проверка на операции</h4>
-          <div className="row"><select value={scenario} onChange={(e) => { setScenario(e.target.value); setCheck({}); }}>{d.catalog.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
-            <button disabled={check.busy || !diff.length} onClick={() => void runCheck()}>{check.busy ? <><span className="spinner" /> 2 × 3 прогона…</> : 'Проверить: было — стало'}</button></div>
+          <div className="row"><select value={scenario} onChange={(e) => { checkId.current++; setScenario(e.target.value); setCheck({}); }}>{d.catalog.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
+            <button disabled={check.busy || !diff.length} onClick={() => void runCheck()}>{check.busy ? <><span className="spinner" /> {check.waitKb ? KB_WAIT : '2 × 3 прогона…'}</> : 'Проверить: было — стало'}</button></div>
           {check.error && <div className="err">{check.error}</div>}
           {check.before && check.after && <table className="mdl-tbl"><thead><tr><th /><th>основа</th><th>мой вариант</th></tr></thead><tbody>
             <tr><td>В допуске</td><td>{pct(check.before.within)}</td><td className={cmp(check.before.within, check.after.within, false)}><b>{pct(check.after.within)}</b></td></tr>
@@ -108,6 +117,7 @@ export function TuneTab({ d, preset }: { d: SimData; preset: string | null }) {
             <tr><td>Обучение / проверка, км</td><td>{check.before.score.train} / {check.before.score.test}</td><td className={cmp(check.before.score.train + check.before.score.test, check.after.score.train + check.after.score.test)}><b>{check.after.score.train} / {check.after.score.test}</b></td></tr>
             <tr><td>Ошибка дат событий, сут</td><td>{check.before.score.events}</td><td className={cmp(check.before.score.events, check.after.score.events)}><b>{check.after.score.events}</b></td></tr>
           </tbody></table>}
+          {check.before && check.after && <KbStampNote s={check.kb} />}
           <h4>Сохранить</h4>
           <label>Название <input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
           <label>Пояснение <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="что и почему изменено" /></label>

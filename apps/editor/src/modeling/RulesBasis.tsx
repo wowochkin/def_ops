@@ -15,6 +15,9 @@ import { openKbEntry } from './BasisTab';
 import { claimText, type Rel } from './basis';
 import { conflictTitle, relShare, rulesBasisSummary, type RelTally, type RulesBasisRow } from './rules-basis';
 import { getPool, pct, type RulesItem, type SimData } from './data';
+import { KB_WAIT, kbBuilding, kbReady } from '../sim/kb-recompile';
+import type { KbStamp } from '../sim/kb-stamp';
+import { KbStampNote } from '../KbStampNote';
 
 const REL_RU: Record<Rel, string> = { A: 'A — справочник, устав, исследование', B: 'B — надёжный вторичный', C: 'C — оценка', assumption: 'допущение (без источника)' };
 const RELS = ['A', 'B', 'C', 'assumption'] as const;
@@ -28,7 +31,7 @@ const same = (a: { entry: string; index: number }, b: { entry: string; index: nu
 const pinKeyOf = (f: FactRef) => { const c = f.fact.claim!; return pinKey(c.kind, subjectOf(c), c.kind === 'outcome' ? c.to : ''); };
 
 /** Последняя проверка итогов набора на операции — в этом браузере. */
-interface OutcomeCheck { at: string; n: number; within: number; items: OutcomeItem[] }
+interface OutcomeCheck { at: string; n: number; within: number; items: OutcomeItem[]; kb?: KbStamp | null }
 /** Отпечаток набора правил (FNV-1a по JSON): изменился набор с тем же id — прежняя проверка к нему не относится. */
 function rulesHash(r: Rules): string {
   const t = JSON.stringify(r);
@@ -64,6 +67,7 @@ export function RulesBasis({ item, d }: { item: RulesItem; d: SimData }) {
   const [open, setOpen] = useState<string | null>(null);
   const [agentsOpen, setAgentsOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [waitKb, setWaitKb] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [checks, setChecks] = useState<Record<string, OutcomeCheck | null>>({});
   const from = baseRulesId(item.rules);
@@ -116,14 +120,18 @@ export function RulesBasis({ item, d }: { item: RulesItem; d: SimData }) {
   const check = async (op: string) => {
     setBusy(`check:${op}`); setErr(null);
     try {
+      // данные операции — после сборки из базы знаний
+      setWaitKb(kbBuilding());
+      const kbs = await kbReady(op);
+      setWaitKb(false);
       const outcomes = outcomeNorms(basis, op);
       const ev = await getPool().run({ scenario: op, rules: item.id, seeds: 1, seed0: 101, outcomes });
       const o = ev.score.outcomes;
-      const c: OutcomeCheck = { at: new Date().toISOString(), n: o?.n ?? 0, within: o?.within ?? 0, items: o?.items ?? [] };
+      const c: OutcomeCheck = { at: new Date().toISOString(), n: o?.n ?? 0, within: o?.within ?? 0, items: o?.items ?? [], kb: kbs };
       writeCheck(item.id, hash, op, c);
       setChecks((x) => ({ ...x, [op]: c }));
     } catch (e) { setErr(`Проверка не удалась: ${(e as Error).message}`); }
-    finally { setBusy(null); }
+    finally { setBusy(null); setWaitKb(false); }
   };
 
   /** Факт-норматив: формальная часть, надёжность, источник со страницами, цитата, переход к записи. */
@@ -234,7 +242,8 @@ export function RulesBasis({ item, d }: { item: RulesItem; d: SimData }) {
       const inCatalog = d.catalog.some((c) => c.id === o.scenario);
       return <div key={o.scenario} className="rb-group">
         <h6>{opTitle(o.scenario)} <small className="muted">· {o.items.length} {o.items.length === 1 ? 'итог' : 'итогов'}{ch ? ` · последняя проверка ${whenRu(ch.at)}: в допуске ${ch.n ? pct(ch.within) : '—'}` : ' · не проверялись'}</small>
-          {inCatalog && <button className="rb-check" disabled={!!busy} onClick={() => void check(o.scenario)} title="один прогон набора на операции с историческими приказами и замер итогов">{busy === `check:${o.scenario}` ? 'проверяю…' : 'Проверить'}</button>}</h6>
+          {inCatalog && <button className="rb-check" disabled={!!busy} onClick={() => void check(o.scenario)} title="один прогон набора на операции с историческими приказами и замер итогов">{busy === `check:${o.scenario}` ? (waitKb ? KB_WAIT : 'проверяю…') : 'Проверить'}</button>}</h6>
+        {ch && <KbStampNote s={ch.kb} />}
         <table className="mdl-tbl rb-out"><thead><tr><th>Итог</th><th>надёжн.</th><th>ожидается</th><th>последняя проверка</th></tr></thead><tbody>
           {o.items.map((x) => {
             const it = ch?.items.find((y) => y.id === outcomeId(x.fact));

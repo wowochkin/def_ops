@@ -12,6 +12,9 @@ import * as kb from '../kb/kb';
 import { basisOf, outcomeNorms } from '../sim/kb-rules';
 import { BUILTIN_CATALOG, changesSince, getData, getEdits, onDataChange, saveRules, updateEdits, type ChangeLog, type OperationEdits, type Recalibration } from '../sim/userdata';
 import { download, getPool, pct, type SimData } from './data';
+import { KB_WAIT, kbReady } from '../sim/kb-recompile';
+import { kbStampText } from '../sim/kb-stamp';
+import { KbStampNote } from '../KbStampNote';
 
 const KIND_RU: Record<ChangeLog['kind'], string> = { scenario: 'сценарий', history: 'история', infra: 'инфраструктура', kb: 'база знаний' };
 const ddmmyyyy = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`;
@@ -19,8 +22,8 @@ const hits = (r: RulesEvaluation) => r.events.reduce((a, e) => a + e.days.filter
 const total = (r: RulesEvaluation) => r.events.reduce((a, e) => a + e.days.length, 0);
 const sum = (r: RulesEvaluation) => ({ within: r.within, eventsHit: hits(r), eventsTotal: total(r), score: r.score.total });
 
-type Stage = 'before' | 'calib' | 'after' | 'control' | 'done';
-const STAGE_RU: Record<Stage, string> = { before: 'прогон на текущих правилах', calib: 'калибровка', after: 'прогон с новыми правилами', control: 'контрольная операция', done: 'готово' };
+type Stage = 'kb' | 'before' | 'calib' | 'after' | 'control' | 'done';
+const STAGE_RU: Record<Stage, string> = { kb: KB_WAIT, before: 'прогон на текущих правилах', calib: 'калибровка', after: 'прогон с новыми правилами', control: 'контрольная операция', done: 'готово' };
 
 export function RecalcPanel({ op, title, d }: { op: string; title: string; d: SimData }) {
   const [edits, setEdits] = useState<OperationEdits | null>(null);
@@ -43,6 +46,10 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
   const start = async () => {
     if (!base || !entry) return;
     stopRef.current = false; setResult(null);
+    // данные операции (и контрольной) — после сборки из базы знаний; сборка, на которой идёт пересчёт, — в итог
+    setRun({ stage: 'kb', done: 0, evals, text: '' });
+    const kbs = await kbReady(op);
+    if (stopRef.current) { setRun(null); return; }
     const pool = getPool();
     const sc = (await getData('scenarios', `${op}.json`)) as Scenario;
     const trainUntil = `${new Date((Date.parse(sc.start + 'Z') + Date.parse(sc.end + 'Z')) / 2).toISOString().slice(0, 10)}T23:59`;
@@ -96,7 +103,7 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
       const rtitle = `пересчёт ${ddmmyyyy(at)} (${title.split(',')[0]})`;
       if (better) await saveRules({ id, title: rtitle, base: base.id, scenario: op, created: at, note: `пересчёт после уточнения данных: ${changes.length} изменений`, rules });
       const moved = keys.filter((k) => Math.abs(best.p[k] - p0[k]) > 1e-3).map((k) => `${CALIB_INFO[k].title}: ${p0[k].toFixed(2)} → ${best.p[k].toFixed(2)}`);
-      const rec: Recalibration = { at, rules: id, base: base.id, title: rtitle, before: sum(before), after: sum(after), control, changes: changes.length, report: '', better };
+      const rec: Recalibration = { at, rules: id, base: base.id, title: rtitle, before: sum(before), after: sum(after), control, changes: changes.length, report: '', better, kb: kbs };
       rec.report = report(title, rec, changes, moved, base.title, trainUntil);
       await updateEdits(op, (e) => { e.recalibrations.push(rec); });
       await kb.recordCalibration({ id: op, title }, at, rtitle, rec.report.split('\n').slice(2).join('\n'), [
@@ -126,7 +133,7 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
         <label className="muted small">вариантов <select value={evals} disabled={busy} onChange={(e) => setEvals(+e.target.value)}>{[32, 64, 128].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
         <span className="muted small">от правил: {base?.title ?? '—'} · потоков {getPool().size}</span>
       </div>
-      {run && !run.error && run.stage !== 'done' && <div className="kb-prog"><i style={{ width: `${run.stage === 'calib' ? (run.done / run.evals) * 100 : run.stage === 'before' ? 3 : run.stage === 'after' ? 96 : 99}%` }} />
+      {run && !run.error && run.stage !== 'done' && <div className="kb-prog"><i style={{ width: `${run.stage === 'calib' ? (run.done / run.evals) * 100 : run.stage === 'kb' ? 1 : run.stage === 'before' ? 3 : run.stage === 'after' ? 96 : 99}%` }} />
         <span><span className="spinner" /> {STAGE_RU[run.stage]}{run.stage === 'calib' ? `: ${run.done} из ${run.evals}` : run.text ? `: ${run.text}` : ''}</span></div>}
       {run?.error && <div className="err">Пересчёт прерван: {run.error}</div>}
       {shown && <div className="recalc-res">
@@ -135,6 +142,7 @@ export function RecalcPanel({ op, title, d }: { op: string; title: string; d: Si
           <tr><td>События в пределах ±2 сут</td><td>{shown.before.eventsHit} из {shown.before.eventsTotal}</td><td className={shown.after.eventsHit >= shown.before.eventsHit ? 'better' : 'worse'}><b>{shown.after.eventsHit} из {shown.after.eventsTotal}</b></td></tr>
           {shown.control?.map((c) => <tr key={c.scenario}><td>Контрольная: {c.title}</td><td>{pct(c.before)}, {c.eventsBefore} из {c.eventsTotal}</td><td className={c.after >= c.before - 0.02 ? 'better' : 'worse'}><b>{pct(c.after)}, {c.eventsAfter} из {c.eventsTotal}</b></td></tr>)}
         </tbody></table>
+        <KbStampNote s={shown.kb} />
         {shown.better === false && <p className="warn small">Лучше текущих правил подбор не нашёл (перепроверка на 5 прогонах): правила остаются прежними. Можно повторить с большим числом вариантов.</p>}
         {shown.control?.some((c) => c.after < c.before - 0.02) && <p className="warn small">На контрольной операции стало хуже — похоже на подгонку под эту операцию. Основными такие правила делать не стоит.</p>}
         <div className="row">
@@ -152,6 +160,7 @@ function report(title: string, r: Recalibration, changes: ChangeLog[], moved: st
   const L: string[] = [];
   L.push(`# Пересчёт модели: ${title}`, '');
   L.push(`${ddmmyyyy(r.at)} · от правил «${baseTitle}» · обучение до ${ddmmyyyy(trainUntil)}, после — проверка · новый набор \`${r.rules}\``, '');
+  if (r.kb !== undefined) L.push(`_${kbStampText(r.kb)}._`, '');
   L.push('## Что изменилось в данных', '');
   if (!changes.length) L.push('Изменений после прошлого пересчёта нет — пересчёт по тем же данным.');
   for (const c of changes) L.push(`- ${ddmmyyyy(c.at)}, ${KIND_RU[c.kind]}: ${c.text}`);

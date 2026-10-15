@@ -17,6 +17,7 @@ import { AGENT_SCENARIOS } from './agent-scenarios';
 import { diffDigest, rulesBasis, rulesDigest, type RulesDigest } from './kb-rules';
 import { applyCompiled, diffCompiled, migratePins, norm, toCoreEdits, type CoreEdits, type GameKb } from './kb-compile';
 import { fullCatalog, getEdits, rawData, updateEdits } from './userdata';
+import { kbStamp, type KbStamp } from './kb-stamp';
 import { parentsAt, takeoverState, toCoreTakeover, type CoreTakeover, type TakeoverSummary, type TakeoverUnit } from './takeover-state';
 
 export interface AgentScenarioFile {
@@ -98,6 +99,18 @@ const settle = () => { pending = false; const w = waiters; waiters = []; for (co
  * поправок базы (при первом запуске) или с прежними — и тот же seed дал бы другой итог.
  */
 export const kbSettled = (): Promise<void> => (pending ? new Promise((res) => waiters.push(res)) : Promise.resolve());
+/** Сборка запланирована или идёт: расчёт подождёт её (подпись «сборка данных из базы знаний…»). */
+export const kbBuilding = (): boolean => pending;
+/** Подпись ожидания сборки — у кнопки или хода расчёта. */
+export const KB_WAIT = 'сборка данных из базы знаний…';
+/**
+ * Перед расчётом по данным операции: дождаться сборки из базы и взять её отметку (на каких поправках посчитан итог).
+ * Отмена — у вызывающего (проверить свой номер расчёта после await).
+ */
+export async function kbReady(opId: string): Promise<KbStamp | null> {
+  await kbSettled();
+  return kbStamp(opId);
+}
 
 /** Подписка (один раз, из окна редактора): изменения базы — пересборка всех операций через 1 с; и при запуске. */
 export function watchKb() {

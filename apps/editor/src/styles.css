@@ -316,6 +316,9 @@ button.ic { font-size: 15px; padding: 1px 7px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .err { color: #b3261e; font-size: 12px; }
 .rp-res { border-top: 1px solid var(--line); padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+/* отметка сборки данных из базы знаний под итогом расчёта (KbStampNote) */
+.kb-stamp { margin: 4px 0; line-height: 1.35; }
+.rp-res .kb-stamp { margin: -2px 0 0; }
 .kpis { display: flex; gap: 8px; }
 .kpis > div { flex: 1; background: var(--soft); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
 .kpis b { font: 700 22px/1.1 'PT Serif', Georgia, serif; } .kpis b small { font-size: 14px; color: var(--muted); }

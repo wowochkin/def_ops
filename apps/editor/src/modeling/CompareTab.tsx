@@ -8,6 +8,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { diffRules, mergeEvaluations, type RulesEvaluation } from '@def-ops/sim';
 import { LineChart } from './LineChart';
 import { dayClass, ddmm, download, fmtDays, getPool, MAX_SERIES, medianDays, pct, resetPool, SERIES, type SimData } from './data';
+import { KB_WAIT, kbBuilding, kbReady } from '../sim/kb-recompile';
+import { kbStampText, type KbStamp } from '../sim/kb-stamp';
+import { KbStampNote } from '../KbStampNote';
 
 type Res = { state: 'run'; done: number } | { state: 'ok'; r: RulesEvaluation } | { state: 'error'; error: string };
 
@@ -18,6 +21,9 @@ export function CompareTab({ d, preset }: { d: SimData; preset: { scenario: stri
   const [seeds, setSeeds] = useState(4);
   const [res, setRes] = useState<Record<string, Res>>({});
   const [busy, setBusy] = useState(false);
+  // ожидание сборки данных из базы знаний и сборка, на которой посчитано сравнение
+  const [waitKb, setWaitKb] = useState(false);
+  const [kbs, setKbs] = useState<KbStamp | null | undefined>(undefined);
   const gen = useRef(0);
   useEffect(() => { if (preset) { setScenario(preset.scenario); setPick(preset.rules); setRes({}); } }, [preset]);
   const title = (id: string) => d.rules.find((r) => r.id === id)?.title ?? id;
@@ -27,6 +33,12 @@ export function CompareTab({ d, preset }: { d: SimData; preset: { scenario: stri
     const my = ++gen.current;
     setBusy(true);
     setRes(Object.fromEntries(pick.map((id) => [id, { state: 'run', done: 0 }])));
+    // данные операции — после сборки из базы знаний (иначе тот же seed дал бы другой итог)
+    setWaitKb(kbBuilding()); setKbs(undefined);
+    const stamp = await kbReady(scenario);
+    setWaitKb(false);
+    if (my !== gen.current) return;
+    setKbs(stamp);
     const pool = getPool();
     await Promise.all(pick.map(async (id) => {
       try {
@@ -39,7 +51,7 @@ export function CompareTab({ d, preset }: { d: SimData; preset: { scenario: stri
     }));
     if (my === gen.current) setBusy(false);
   };
-  const stop = () => { gen.current++; resetPool(); setBusy(false); setRes({}); };
+  const stop = () => { gen.current++; resetPool(); setBusy(false); setWaitKb(false); setRes({}); };
 
   const ok = pick.map((id) => ({ id, r: res[id]?.state === 'ok' ? (res[id] as { r: RulesEvaluation }).r : null }));
   const done = ok.filter((x) => x.r) as { id: string; r: RulesEvaluation }[];
@@ -50,7 +62,7 @@ export function CompareTab({ d, preset }: { d: SimData; preset: { scenario: stri
   }, [pick, d.rules]);
 
   const report = () => {
-    const L = [`# Сравнение моделей: ${entry?.title ?? scenario}`, '', `Прогонов на набор: ${seeds}. Допуск: ${entry?.toleranceKm ?? 10} км сверх неопределённости исторического положения.`, '',
+    const L = [`# Сравнение моделей: ${entry?.title ?? scenario}`, '', `Прогонов на набор: ${seeds}. Допуск: ${entry?.toleranceKm ?? 10} км сверх неопределённости исторического положения.`, '', ...(kbs !== undefined ? [`_${kbStampText(kbs)}._`, ''] : []),
       '| Набор правил | В допуске | Медиана превышения, км | Обучение, км | Проверка, км | Ошибка дат, сут |', '|---|---|---|---|---|---|',
       ...done.map(({ id, r }) => `| ${title(id)} | ${pct(r.within)} | ${r.medianExcessKm} | ${r.score.train} | ${r.score.test} | ${r.score.events} |`), '',
       '## Ключевые события (расхождение с историей, медиана по прогонам, сут)', '', `| Событие | В истории | ${done.map(({ id }) => title(id)).join(' | ')} |`, `|---|---|${done.map(() => '---').join('|')}|`,
@@ -79,11 +91,12 @@ export function CompareTab({ d, preset }: { d: SimData; preset: { scenario: stri
         <table className="mdl-tbl"><thead><tr><th>Набор правил</th><th title="Доля исторических положений, где расчёт в пределах допуска сверх неопределённости">В допуске</th><th title="Медиана превышения отклонения над неопределённостью исторического положения">Медиана, км</th><th title="Среднее превышение до середины операции (по ней подбирается калибровка)">Обучение, км</th><th title="Среднее превышение после середины (проверка: не подгонялось)">Проверка, км</th><th title="Средняя ошибка дат событий первой половины, сут">Ошибка дат, сут</th><th>События ±2 сут</th><th>Расчёт</th></tr></thead>
           <tbody>{pick.map((id, k) => { const x = res[id]; const r = x?.state === 'ok' ? x.r : null; const ev = r?.events.flatMap((e) => e.days) ?? [];
             return <tr key={id}><td><i className="sw" style={{ background: SERIES[k] }} />{title(id)}</td>
-              {x?.state === 'run' ? <td colSpan={7} className="muted"><span className="spinner" /> прогонов {x.done} из {seeds}</td>
+              {x?.state === 'run' ? <td colSpan={7} className="muted"><span className="spinner" /> {waitKb ? KB_WAIT : `прогонов ${x.done} из ${seeds}`}</td>
                 : x?.state === 'error' ? <td colSpan={7} className="err">{x.error}</td>
                 : r ? <><td><b>{pct(r.within)}</b></td><td>{r.medianExcessKm}</td><td>{r.score.train}</td><td>{r.score.test}</td><td>{r.score.events}</td>
                   <td>{ev.filter((v) => v != null && Math.abs(v) <= 2).length} из {ev.length}</td><td className="muted">{(r.ms / 1000).toFixed(0)} с</td></> : <td colSpan={7} />}
             </tr>; })}</tbody></table>
+        <KbStampNote s={kbs} />
       </section>}
 
       {done.length > 0 && <section className="mdl-card">

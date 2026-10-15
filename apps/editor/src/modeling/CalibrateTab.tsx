@@ -13,12 +13,17 @@ import { getData, onDataChange, saveRules } from '../sim/userdata';
 import * as kb from '../kb/kb';
 import { LineChart } from './LineChart';
 import { getPool, pct, resetPool, type SimData } from './data';
+import { KB_WAIT, kbBuilding, kbReady } from '../sim/kb-recompile';
+import { kbStampText, type KbStamp } from '../sim/kb-stamp';
+import { KbStampNote } from '../KbStampNote';
 
 /**
  * start — исходная точка подбора (множители вне коридоров нормативов перенесены к краю), moved — какие перенесены;
  * corridors — коридоры, по которым идёт подбор (записываются в сохранённый набор).
  */
-interface Run { scenario: string; baseId: string; before: CalibScore; start: CalibParams; moved: CalibKey[]; corridors?: Partial<Record<CalibKey, CalibCorridor>>; history: { i: number; best: number; cur: number }[]; best: { p: CalibParams; s: CalibScore } | null; done: number; evals: number; seeds: number; trainUntil: string; finished: boolean; error?: string }
+interface Run { scenario: string; baseId: string; before: CalibScore; start: CalibParams; moved: CalibKey[]; corridors?: Partial<Record<CalibKey, CalibCorridor>>; history: { i: number; best: number; cur: number }[]; best: { p: CalibParams; s: CalibScore } | null; done: number; evals: number; seeds: number; trainUntil: string; finished: boolean; error?: string;
+  /** Ожидание сборки данных из базы знаний; сборка, на которой идёт подбор. */
+  waitKb?: boolean; kb?: KbStamp | null }
 
 export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; onCompare: (scenario: string, rules: string[]) => void; initialScenario?: string | null }) {
   const [scenario, setScenario] = useState(initialScenario ?? d.catalog[0]?.id ?? '');
@@ -62,9 +67,14 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
     const tu = `${trainUntil}T23:59`;
     const pool = getPool();
     const p0 = baseParams(base.rules);
-    const st: Run = { scenario, baseId, before: null as unknown as CalibScore, start: p0, moved: [], history: [], best: null, done: 0, evals, seeds, trainUntil: tu, finished: false };
+    const st: Run = { scenario, baseId, before: null as unknown as CalibScore, start: p0, moved: [], history: [], best: null, done: 0, evals, seeds, trainUntil: tu, finished: false, waitKb: kbBuilding() };
     setRun({ ...st });
     try {
+      // данные операции — после сборки из базы знаний (иначе подбор шёл бы по другим данным, чем переигровка)
+      st.kb = await kbReady(scenario);
+      st.waitKb = false;
+      if (stopRef.current) { setRun(null); return; }
+      setRun({ ...st });
       // основа правил по базе знаний: коридоры множителей (относительно этого набора) и нормативы-итоги операции
       const basis = await basisOf(base.rules).catch(() => null);
       const outcomes = basis ? outcomeNorms(basis, scenario) : [];
@@ -104,7 +114,7 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
     if (!run?.best || !base) return;
     const id = `user-cal-${Date.now().toString(36)}`;
     const rules = calibratedRules(base.rules, run.best.p, { id, scenario: run.scenario, evals: run.done, seeds: run.seeds, trainUntil: run.trainUntil, before: run.before, after: run.best.s, corridors: run.corridors }) as Rules;
-    await saveRules({ id, title: title.trim() || id, base: base.id, scenario: run.scenario, created: new Date().toISOString(), note: `калибровка в браузере: ${run.done} вариантов, обучение до ${run.trainUntil.slice(0, 10)}`, rules });
+    await saveRules({ id, title: title.trim() || id, base: base.id, scenario: run.scenario, created: new Date().toISOString(), note: `калибровка в браузере: ${run.done} вариантов, обучение до ${run.trainUntil.slice(0, 10)}${run.kb !== undefined ? `; ${kbStampText(run.kb)}` : ''}`, rules });
     setSavedId(id);
   };
   const busy = !!run && !run.finished;
@@ -134,7 +144,8 @@ export function CalibrateTab({ d, onCompare, initialScenario }: { d: SimData; on
       {run && <section className="mdl-card">
         <h4>{run.finished ? (run.error ? 'Калибровка прервана' : 'Калибровка завершена') : 'Идёт калибровка…'}</h4>
         {run.error && <div className="err">{run.error}</div>}
-        {!run.before ? <p className="muted"><span className="spinner" /> исходные правила: прогон для точки отсчёта…</p> : <>
+        {!run.before ? <p className="muted"><span className="spinner" /> {run.waitKb ? KB_WAIT : 'исходные правила: прогон для точки отсчёта…'}</p> : <>
+          <KbStampNote s={run.kb} />
           <div className="kb-prog"><i style={{ width: `${(run.done / run.evals) * 100}%` }} /><span>вариантов {run.done} из {run.evals}</span></div>
           {run.history.length > 1 && <LineChart height={180} unit="мерило" yLabel="Мерило лучшего варианта по ходу подбора" xFmt={(x) => String(+x)}
             series={[{ name: 'лучший вариант', points: run.history.map((h) => ({ x: String(h.i).padStart(4, '0'), y: +h.best.toFixed(2) })) }]} />}

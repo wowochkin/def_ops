@@ -1,6 +1,7 @@
 import type { MapDocument } from '@def-ops/core';
 import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 import type { ReplayUnits } from '../formation-card';
+import type { KbStamp } from './kb-stamp';
 
 export interface SimRequest {
   scenario: string; rules: string; seed: number; runs: number; toleranceKm: number;
@@ -28,6 +29,8 @@ export interface SimResult {
   summary: MapDocument;
   /** Формирования и снимки первого прогона — для карточки по щелчку на знаке (в старых сохранениях нет). */
   units?: ReplayUnits;
+  /** Сборка данных из базы знаний, на которой посчитан итог (null — без поправок базы; в старых сохранениях нет). */
+  kb?: KbStamp | null;
 }
 
 export type SimResponse =

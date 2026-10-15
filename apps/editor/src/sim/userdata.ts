@@ -8,6 +8,7 @@ import type { CompileConflict, CompiledEdits, FactRef, KbOperation, OperationHin
 import { applyCompiled, applyCompiledBoundaries, applyCompiledCrossings, applyCompiledHistory } from './kb-compile';
 import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 import type { SimResult } from './protocol';
+import type { KbStamp } from './kb-stamp';
 import { defaultCatalog, defaultLive, Theatre } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 
@@ -24,7 +25,7 @@ export interface UserOperation {
   pkg: OperationPackage;
   /** Подготовлена к переигровке (опубликована в «Переигровку»). */
   ready: boolean;
-  check?: { at: string; within: number; medianExcessKm: number; eventsHit: number; eventsTotal: number; ms: number };
+  check?: { at: string; within: number; medianExcessKm: number; eventsHit: number; eventsTotal: number; ms: number; kb?: KbStamp | null };
 }
 
 let dbp: Promise<IDBDatabase> | null = null;
@@ -69,6 +70,8 @@ export interface SavedReplay {
   eventsTotal: number;
   start: string;
   end: string;
+  /** Сборка данных из базы знаний, на которой посчитан итог (в старых сохранениях нет). */
+  kb?: KbStamp | null;
 }
 export interface SavedReplayData { id: string; result: SimResult; agents?: { trace: AgentTrace; history: AgentHistory } }
 export const listReplays = async () => (await all<SavedReplay>('replays')).sort((a, b) => b.created.localeCompare(a.created));
@@ -113,6 +116,8 @@ export interface Recalibration {
   after: { within: number; eventsHit: number; eventsTotal: number; score: number };
   control?: { scenario: string; title: string; before: number; after: number; eventsBefore: number; eventsAfter: number; eventsTotal: number }[];
   changes: number; report: string;
+  /** Сборка данных из базы знаний, на которой шёл пересчёт (в прежних записях нет). */
+  kb?: KbStamp | null;
   /** Нашлись ли правила лучше текущих (по мерилу на 5 прогонах); нет — новый набор не сохранён. */
   better?: boolean;
 }

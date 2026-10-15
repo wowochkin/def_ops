@@ -29,7 +29,9 @@ import { agentHqCard, formationCard } from './formation-card';
 import { FormationPanel, useEsc } from './FormationCard';
 
 import { AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentVariant } from './sim/agent-scenarios';
-import { coreEditsFor, kbSettled, takeoverNow } from './sim/kb-recompile';
+import { coreEditsFor, KB_WAIT, kbSettled, takeoverNow } from './sim/kb-recompile';
+import { kbStamp, type KbStamp } from './sim/kb-stamp';
+import { KbStampNote } from './KbStampNote';
 import type { TakeoverSummary } from './sim/takeover-state';
 /** Ход игры на агентной модели, ч. */
 const AGENT_GAME_HOURS = 12;
@@ -179,9 +181,22 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     setTakeKb(null);
     if (!take || !result) return;
     let live = true;
-    takeoverNow(result.scenario, take, result.engine === 'agents' && !!agentOp).then((r) => { if (live) setTakeKb(r.summary); }).catch(() => { /* без сводки */ });
+    // состояние при передаче — по собранным данным базы: сборка идёт — сначала дождаться её
+    kbSettled().then(() => (live ? takeoverNow(result.scenario, take, result.engine === 'agents' && !!agentOp) : null))
+      .then((r) => { if (live && r) setTakeKb(r.summary); }).catch(() => { /* без сводки */ });
     return () => { live = false; };
   }, [take, result, agentOp]);
+  // нынешняя сборка операции открытого результата: другая, чем у результата, — пометка под итогом
+  const [kbNow, setKbNow] = useState<KbStamp | null | undefined>(undefined);
+  useEffect(() => {
+    setKbNow(undefined);
+    if (!result) return;
+    let live = true;
+    const load = () => void kbSettled().then(() => kbStamp(result.scenario)).then((s) => { if (live) setKbNow(s); }).catch(() => undefined);
+    load();
+    const off = onDataChange(load);
+    return () => { live = false; off(); };
+  }, [result]);
   const worker = useRef<Worker | null>(null);
   const runId = useRef(0);
   // ход агентной модели последнего расчёта (для карточки агента) и выбранная дивизия
@@ -216,7 +231,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const run = () => {
     const token = ++runId.current;
     // данные операции — после сборки из базы знаний (при запуске она идёт несколько секунд): иначе тот же seed даст другой итог
-    setBusy('сборка данных из базы знаний…'); setError(null);
+    setBusy(KB_WAIT); setError(null);
     void kbSettled().then(() => { if (token === runId.current) calc(token); });
   };
   const calc = (token: number) => {
@@ -248,6 +263,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       id, title, created: `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}T${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`,
       scenario: result.scenario, scenarioName: result.scenarioName, engine, rules: result.rules, seed: result.seed, runs: result.runs,
       within: result.within, eventsHit: result.eventsHit, eventsTotal: result.eventsTotal, start: result.start, end: result.end,
+      ...(result.kb !== undefined ? { kb: result.kb } : {}),
     };
     setSaving(true);
     try {
@@ -454,7 +470,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             : <button className="rp-go primary" onClick={run}>Рассчитать</button>}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
-        {result && !busy && <Results r={result} tol={tol} {...resultsAct} saved={!!savedId} saving={saving} />}
+        {result && !busy && <Results r={result} tol={tol} {...resultsAct} saved={!!savedId} saving={saving} kbNow={kbNow} />}
         </>}
       </aside>
       <main className="rp-main">
@@ -509,7 +525,7 @@ function Empty({ busy, saved }: { busy: boolean; saved?: boolean }) {
 }
 
 const Results = memo(ResultsPanel);
-function ResultsPanel({ r, tol, onReport, onOpen, onSummary, onEvent, saved, saving, onSave }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void; saved: boolean; saving: boolean; onSave: () => void }) {
+function ResultsPanel({ r, tol, onReport, onOpen, onSummary, onEvent, saved, saving, onSave, kbNow }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void; saved: boolean; saving: boolean; onSave: () => void; kbNow?: KbStamp | null }) {
   const lo = Math.min(...r.spread), hi = Math.max(...r.spread);
   return (
     <div className="rp-res">
@@ -517,6 +533,7 @@ function ResultsPanel({ r, tol, onReport, onOpen, onSummary, onEvent, saved, sav
         <div><b>{r.runs > 1 && lo !== hi ? `${pct(lo)}–${pct(hi)}` : pct(r.within)}</b><span>положений в пределах ±{tol} км от исторических</span></div>
         <div><b>{r.eventsHit}<small> / {r.eventsTotal}</small></b><span>событий с точностью ±2 сут{r.runs > 1 ? `, ${r.runs} прогонов` : ''}</span></div>
       </div>
+      <KbStampNote s={r.kb} now={kbNow} />
       <div className="rp-events">
         {r.events.map((e) => (
           <div key={e.title} className={`ev${e.at ? ' go' : ''}`} title={e.at ? `${e.title}\nЩёлкните — показать на карте` : `${e.title}\nВ расчёте не случилось`} onClick={() => e.at && onEvent(e)}>
@@ -552,6 +569,7 @@ function SavedList({ list, current, busy, onOpen, onRename, onDelete }: { list: 
             : <b>{m.title}</b>}
           <span className="muted small">{m.engine === 'agents' ? 'агентная модель — дивизии' : `нынешняя модель · правила ${m.rules}${m.runs > 1 ? ` · ${m.runs} прогонов` : ''}`} · seed {m.seed} · сохранено {dt(m.created)}</span>
           <span className="small">{Math.round(m.within * 100)} % положений в допуске · событий {m.eventsHit} из {m.eventsTotal} (±2 сут)</span>
+          <KbStampNote s={m.kb} />
           <div className="rp-sv-b">
             <button className="primary" disabled={busy} onClick={() => onOpen(m)}>Открыть</button>
             <button className="link" onClick={() => { setEdit(m.id); setText(m.title); }}>переименовать</button>
