@@ -231,4 +231,6 @@ export interface PlanVariantView {
   decision: HumanDecision;
   orders: AdviceView['suggestions'];
   acts: PlanActView[];
+  /** Исправление неисполнимых приказов по подсказке: сколько было отброшено и сколько исправлено. */
+  fix?: { failed: number; fixed: number; error?: string };
 }

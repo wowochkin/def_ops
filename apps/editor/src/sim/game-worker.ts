@@ -14,7 +14,7 @@ import {
   activeBoundaries, commandTerms, groupOf, runToDocument, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
+import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, planOrdersApplied, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
 import type { DoctrineRule, Entry, RoleRef } from '@def-ops/knowledge';
 import { KB_FALLBACK_NOTE, KB_REF_CHARS, KB_REF_LIMIT, kbRefClient, seedAnswer, umpireRefs } from './kb-ref';
 import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
@@ -272,7 +272,7 @@ function startAi() {
   status({ state: 'thinking', time, since: Date.now() });
   post({ kind: 'ai-stream', text: '', reset: true });
   let buf = '', last = 0, phase = '', got = 0, t0 = 0;
-  let phaseAt = 0;
+  let phaseAt = 0, fixing = false;
   const setPhase = (t: string) => {
     // скорость меняется с каждым куском — не чаще раза в секунду
     if (t === phase || (t.split(' · ')[0] === phase.split(' · ')[0] && Date.now() - phaseAt < 1000)) return;
@@ -303,12 +303,14 @@ function startAi() {
           const sec = (Date.now() - t0) / 1000;
           // скорость — примерно: токен ≈ 3,2 символа
           const speed = sec > 3 ? ` · ≈ ${Math.round(got / 3.2 / sec)} ток/с, ${got} симв.` : '';
-          setPhase((k === 'reasoning' ? 'размышляет…' : 'пишет решение…') + speed);
+          setPhase((fixing ? 'исправляет приказы…' : k === 'reasoning' ? 'размышляет…' : 'пишет решение…') + speed);
           buf += t;
           const now = Date.now();
           if (now - last > 250) { post({ kind: 'ai-stream', text: buf }); buf = ''; last = now; }
         },
         onRetry: (why) => { buf = ''; post({ kind: 'ai-stream', text: '', reset: true }); post({ kind: 'ai-stream', text: `[${why}]\n` }); setPhase('повтор запроса без схемы…'); },
+        // приказы, которых не исполнить, — одна просьба исправить их по подсказке
+        onRepair: (n) => { fixing = true; t0 = 0; got = 0; post({ kind: 'ai-stream', text: `${buf}\n\n[${n === 1 ? 'приказ не исполнить' : `приказов не исполнить: ${n}`} — исправляет по подсказке]\n` }); buf = ''; setPhase('исправляет приказы…'); },
       });
     });
     if (abort.signal.aborted) return null;
@@ -421,7 +423,7 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
   const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...st.formations.map((f) => [f.id, f.name] as const)]);
   const KIND = { base: 'база', priority: 'приоритет подвоза', bridge: 'переправа', demolish: 'подрыв моста', commit: 'ввод резерва', line: 'разграничительная линия' } as const;
   const view = (v: PlanVariantRaw): PlanVariantView => {
-    const conv = decisionToOrders({ orders: v.orders.map((x) => ({ formation: x.formation, task: x.task, area: x.area, toArea: x.toArea, deadline: '', details: x.why })) }, sit, 'human');
+    const conv = planOrdersApplied(v.orders, sit);
     const staff = actionsToStaff(ctx, gAt, sit, v.actions);
     const acts: PlanActView[] = staff.applied.map((x, i) => {
       const a = x.action, gv = x.given;
@@ -444,6 +446,7 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
         at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: v.orders[i].why, issue: x.issue, ok: !!x.order,
       })),
       acts,
+      ...(v.fix ? { fix: v.fix } : {}),
     };
   };
   planAbort?.abort();
@@ -455,6 +458,8 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
     return planVariants(advisorClient(), gAt, built, m.count, {
       thinking: llm.advThinking ?? llm.thinking, signal: abort.signal,
       onVariant: (v, index) => post({ kind: 'plan-variant', id: m.id, index, variant: view(v) }),
+      // приказы варианта, которых не исполнить, — одна просьба исправить их по подсказке; затем вариант заново
+      sit, onRepair: (v) => post({ kind: 'plan-progress', id: m.id, text: `исправляет приказы варианта «${v.title}» по подсказке…` }),
       onProgress: (p) => {
         const now = Date.now();
         if (now - last < 300) return;

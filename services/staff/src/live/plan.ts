@@ -5,7 +5,9 @@
  *
  * Обстановка и правила — те же, что у советника (buildAdvice); меняется только формат ответа. Варианты
  * выдаются по мере генерации (каждый — как только закрыт его объект), названия сопоставляются со
- * списками обстановки так же, как приказы штаба модели.
+ * списками обстановки так же, как приказы штаба модели. Вариант с приказами, которых не исполнить (формирования
+ * нет среди своих сил, цель не опознана), — одна просьба исправить их по подсказке (repair.ts), затем вариант
+ * выдаётся заново.
  */
 import type { GameState } from '@def-ops/sim';
 import { LlmClient, textOf, type ChatMessage, type ChatResult } from '../llm/client';
@@ -13,6 +15,9 @@ import type { Thinking } from '../llm/config';
 import { ArrayItemStream } from '../stream-json';
 import { STAFF_ACTION_KINDS, TASKS, type StaffActionGiven } from '../decision';
 import { leakedNames, type AdviceSuggestion, type buildAdvice } from './advisor';
+import { decisionToOrders } from './apply';
+import { failedOrders, repairHint, repairOrders, type RepairInfo } from './repair';
+import type { Situation } from './situation';
 
 export interface PlanVariantRaw {
   title: string;
@@ -24,6 +29,8 @@ export interface PlanVariantRaw {
   report: string;
   orders: AdviceSuggestion[];
   actions: StaffActionGiven[];
+  /** Исправление неисполнимых приказов по подсказке: сколько было отброшено и сколько исправлено. */
+  fix?: RepairInfo;
 }
 
 const str = { type: 'string' };
@@ -79,14 +86,28 @@ export function planMessages(built: ReturnType<typeof buildAdvice>, n: number): 
 }
 
 const s = (x: unknown) => (typeof x === 'string' ? x.trim() : '');
+/** Приказ варианта из ответа модели (null — не по форме). */
+function planOrder(o: unknown): AdviceSuggestion | null {
+  if (!o || typeof o !== 'object') return null;
+  const x = o as AdviceSuggestion;
+  if (typeof x.formation !== 'string' || !(TASKS as readonly string[]).includes(x.task)) return null;
+  return { ...x, toArea: x.toArea ?? null, why: s(x.why), area: s(x.area) };
+}
+
+/** Приказы варианта, сопоставленные с обстановкой (как в игре — приказы человека). */
+export function planOrdersApplied(orders: AdviceSuggestion[], sit: Situation) {
+  const given = orders.map((x) => ({ formation: x.formation, task: x.task, area: x.area, toArea: x.toArea, deadline: '', details: x.why }));
+  return { ...decisionToOrders({ orders: given }, sit, 'human'), given };
+}
+
 /** Вариант из ответа модели — терпимо к неполному (пустые поля, не массивы). */
 export function planVariant(x: unknown): PlanVariantRaw | null {
   if (!x || typeof x !== 'object') return null;
   const v = x as Record<string, unknown>;
-  const orders = (Array.isArray(v.orders) ? v.orders : []).filter((o): o is AdviceSuggestion => !!o && typeof o === 'object' && typeof (o as AdviceSuggestion).formation === 'string' && (TASKS as readonly string[]).includes((o as AdviceSuggestion).task));
+  const orders = (Array.isArray(v.orders) ? v.orders : []).map(planOrder).filter((o): o is AdviceSuggestion => !!o);
   const actions = (Array.isArray(v.actions) ? v.actions : []).filter((a): a is StaffActionGiven => !!a && typeof a === 'object' && (STAFF_ACTION_KINDS as readonly string[]).includes((a as StaffActionGiven).kind))
     .map((a) => ({ kind: a.kind, subject: a.subject ?? null, area: a.area ?? null, formations: Array.isArray(a.formations) ? a.formations : [] }));
-  const r = { title: s(v.title), idea: s(v.idea), assessment: s(v.assessment), enemyIntent: s(v.enemyIntent), intent: s(v.intent), risks: s(v.risks), report: s(v.report), orders: orders.map((o) => ({ ...o, toArea: o.toArea ?? null, why: s(o.why), area: s(o.area) })), actions };
+  const r = { title: s(v.title), idea: s(v.idea), assessment: s(v.assessment), enemyIntent: s(v.enemyIntent), intent: s(v.intent), risks: s(v.risks), report: s(v.report), orders, actions };
   return r.intent || r.orders.length ? { ...r, title: r.title || 'Вариант' } : null;
 }
 
@@ -101,11 +122,14 @@ export interface PlanResult {
 }
 
 /**
- * Запросить варианты. onVariant — каждый вариант, как только модель его дописала (до конца ответа);
- * onProgress — сколько знаков ответа и размышления получено (для индикатора).
+ * Запросить варианты. onVariant — каждый вариант, как только модель его дописала (до конца ответа), и ещё раз —
+ * после исправления его приказов; onProgress — сколько знаков ответа и размышления получено (для индикатора).
+ * sit — обстановка для сопоставления приказов: с ней варианты с неисполнимыми приказами исправляются по подсказке
+ * (onRepair — перед запросом на исправление варианта).
  */
 export async function planVariants(client: LlmClient, _g: GameState, built: ReturnType<typeof buildAdvice>, n: number,
-  opts: { thinking?: Thinking; signal?: AbortSignal; onVariant?: (v: PlanVariantRaw, i: number) => void; onProgress?: (p: { content: number; reasoning: number; tail: string }) => void } = {}): Promise<PlanResult> {
+  opts: { thinking?: Thinking; signal?: AbortSignal; onVariant?: (v: PlanVariantRaw, i: number) => void; onProgress?: (p: { content: number; reasoning: number; tail: string }) => void;
+    sit?: Situation; onRepair?: (v: PlanVariantRaw, i: number) => void } = {}): Promise<PlanResult> {
   const got: PlanVariantRaw[] = [];
   const stream = new ArrayItemStream<unknown>('variants', (item) => { const v = planVariant(item); if (v) { got.push(v); opts.onVariant?.(v, got.length - 1); } });
   let content = 0, reasoning = 0, tail = '';
@@ -125,6 +149,26 @@ export async function planVariants(client: LlmClient, _g: GameState, built: Retu
     ? ((res.json as { variants: unknown[] }).variants.map(planVariant).filter(Boolean) as PlanVariantRaw[]) : got;
   // дописать варианты, которых не было в потоке (поток мог не распознать элемент)
   for (let i = got.length; i < all.length; i++) opts.onVariant?.(all[i], i);
+  // приказы, которых не исполнить, — одна просьба исправить на вариант
+  const sit = opts.sit;
+  if (sit) {
+    const messages = planMessages(built, n);
+    const item = PLAN_SCHEMA.properties.variants.items.properties.orders.items;
+    for (const [i, v] of all.entries()) {
+      if (opts.signal?.aborted) break;
+      const conv = planOrdersApplied(v.orders, sit);
+      const failed = failedOrders(conv.given, conv.applied);
+      if (!failed.length) continue;
+      opts.onRepair?.(v, i);
+      const fx = await repairOrders(client, {
+        messages, answer: JSON.stringify({ variants: [v] }), orders: v.orders, failed, item,
+        hint: repairHint(failed, sit, 'formation, task, area, toArea, why', `варианте «${v.title}»`),
+        normalize: planOrder, ok: (o) => !!planOrdersApplied([o], sit).applied[0]?.order, signal: opts.signal,
+      });
+      all[i] = { ...v, orders: fx.orders, fix: fx.info };
+      opts.onVariant?.(all[i], i);
+    }
+  }
   const text = all.map((v) => [v.assessment, v.enemyIntent, v.intent, v.risks, v.report, ...v.orders.map((o) => `${o.area} ${o.toArea ?? ''} ${o.why}`)].join('\n')).join('\n');
   const leak = leakedNames(text, built.hidden);
   return {

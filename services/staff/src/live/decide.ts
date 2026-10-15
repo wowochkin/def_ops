@@ -2,14 +2,16 @@
  * Ход штаба модели в игре: обстановка → решение (оценка, замысел противника,
  * свой замысел, приказы, доклады наверх, риски) → приказы арбитру. Если модель
  * ответила не по схеме — одна просьба переписать решение в JSON без нового
- * размышления (как в проверке на контрольных обстановках).
+ * размышления (как в проверке на контрольных обстановках). Если часть приказов не исполнить (формирования нет
+ * среди своих сил, цель не опознана) — одна просьба исправить только их по подсказке (repair.ts).
  */
 import type { Order, StaffAction } from '@def-ops/sim';
 import { LlmClient, textOf, type ChatResult } from '../llm/client';
 import type { Thinking } from '../llm/config';
-import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, withBasis, type Decision, type Issue } from '../decision';
+import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, TASK_RU, withBasis, type Decision, type Issue } from '../decision';
 import { parseRefs } from './kb-blocks';
 import { decisionToOrders, type AppliedOrder } from './apply';
+import { failedOrders, repairHint, repairOrders, type RepairInfo } from './repair';
 import type { Situation } from './situation';
 
 export interface AiTurn {
@@ -32,6 +34,8 @@ export interface AiTurn {
   basis?: string[];
   /** Записи базы под номерами R1… — без текста (для записи игры и «по базе» у решения). */
   refs?: { id: string; title: string }[];
+  /** Исправление неисполнимых приказов по подсказке (один запрос): сколько было отброшено и сколько исправлено. */
+  fix?: RepairInfo;
 }
 
 /** Схема ответа: с распоряжениями — когда штаб ведёт тыл; с basis — когда дана справка или доктрина. */
@@ -42,7 +46,9 @@ function schemaOf(sit: Situation) {
 
 export async function decideTurn(client: LlmClient, sit: Situation, opts: { thinking?: Thinking; signal?: AbortSignal; onDelta?: (kind: 'reasoning' | 'content', text: string) => void;
   /** Повтор запроса (после зацикливания): почему — для показа. */
-  onRetry?: (why: string) => void } = {}): Promise<AiTurn> {
+  onRetry?: (why: string) => void;
+  /** Запрос на исправление неисполнимых приказов: сколько их. */
+  onRepair?: (failed: number) => void } = {}): Promise<AiTurn> {
   const out: AiTurn = { time: sit.time, model: client.config.model, ok: false, applied: [], orders: [], issues: [] };
   let res: ChatResult;
   try {
@@ -87,7 +93,26 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
   if (!d || !Array.isArray(d.orders)) { out.error = 'в ответе нет приказов'; return out; }
   out.decision = d;
   if (sit.refs?.length) { out.basis = parseRefs(d.basis, sit.refs); out.refs = sit.refs.map(({ id, title }) => ({ id, title })); }
-  const r = decisionToOrders(d, sit);
+  let r = decisionToOrders(d, sit);
+  const failed = failedOrders(d.orders, r.applied);
+  if (failed.length && !opts.signal?.aborted) {
+    opts.onRepair?.(failed.length);
+    const item = DECISION_SCHEMA.properties.orders.items;
+    const fx = await repairOrders(client, {
+      messages: sit.messages, answer: JSON.stringify(d), orders: d.orders, failed, item,
+      hint: repairHint(failed, sit, 'formation, task, area, toArea, deadline, details'),
+      normalize: (x) => (typeof x.formation === 'string' && typeof x.task === 'string' && x.task in TASK_RU
+        ? { formation: x.formation, task: x.task as Decision['orders'][number]['task'], area: typeof x.area === 'string' ? x.area : '', toArea: typeof x.toArea === 'string' ? x.toArea : null, deadline: typeof x.deadline === 'string' ? x.deadline : '', details: typeof x.details === 'string' ? x.details : '' }
+        : null),
+      ok: (o) => !!decisionToOrders({ orders: [o] }, sit).applied[0]?.order,
+      signal: opts.signal, onDelta: opts.onDelta,
+    });
+    out.fix = fx.info;
+    if (fx.info.fixed) {
+      out.decision = { ...d, orders: fx.orders };
+      r = decisionToOrders(out.decision, sit);
+    }
+  }
   out.applied = r.applied;
   out.orders = r.orders;
   out.issues = r.issues;

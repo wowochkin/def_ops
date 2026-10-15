@@ -90,7 +90,6 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [ai, setAi] = useState<AiStatus>({ state: 'off' });
   const [stream, setStream] = useState('');
   // сколько символов ответа штаба противника получено всего (на экране — только хвост потока)
-  const [streamN, setStreamN] = useState(0);
   const [aiPhase, setAiPhase] = useState('');
   const [blocked, setBlocked] = useState<string | null>(null);
   const [record, setRecord] = useState<GameRecord | null>(saved?.record ?? null);
@@ -165,7 +164,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         // новый ход — новая оценка и новое донесение; замысел, замысел противника и риски — от прошлого решения, для правки
         setDecision((d) => (liveView.current?.time === m.view.time ? d : { ...EMPTY, enemyIntent: last?.enemyIntent ?? '', intent: last?.intent ?? '', risks: last?.risks ?? '' }));
       } else if (m.kind === 'ai') setAi(m.status);
-      else if (m.kind === 'ai-stream') { setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000))); setStreamN((n) => (m.reset ? 0 : n + m.text.length)); }
+      else if (m.kind === 'ai-stream') { setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000))); }
       else if (m.kind === 'ai-phase') setAiPhase(m.text);
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); }
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
@@ -502,7 +501,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
                 onOrder={(id) => { setSel(id); setSub('units'); goTo(unit(id)?.at ?? null, false); }} />}
             </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
-            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} streamN={streamN} phase={aiPhase} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
+            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
               enemy={enemy} setEnemy={setEnemy} llm={llm} onRetry={() => send({ kind: 'retry-ai' })} />}
           </>}
         </div>
@@ -935,7 +934,7 @@ function PlanBlock({ plan, stale, accept, takeDecision, takeOrder, drafted, take
             <b>{i + 1}. {v.title}</b>{plan.accepted === i && <i className="plan-ok">принят</i>}<span className="muted">{open === i ? '▾' : '▸'}</span>
           </div>
           <div className="plan-idea">{v.idea}</div>
-          <div className="plan-sum muted">приказов {v.orders.filter((o) => o.ok).length}{v.orders.some((o) => !o.ok) ? ` (+${v.orders.filter((o) => !o.ok).length} не сопоставлено)` : ''} · распоряжений {v.acts.filter((a) => a.ok).length}</div>
+          <div className="plan-sum muted">приказов {v.orders.filter((o) => o.ok).length}{v.orders.some((o) => !o.ok) ? ` (+${v.orders.filter((o) => !o.ok).length} не сопоставлено)` : ''} · распоряжений {v.acts.filter((a) => a.ok).length}{v.fix ? ` · исправление по подсказке: ${v.fix.fixed} из ${v.fix.failed} ${v.fix.failed === 1 ? 'приказа' : 'приказов'} исправлено` : ''}</div>
           {open === i && <div className="plan-body">
             {D.filter(([k]) => v.decision[k]).map(([k, t]) => <div key={k} className="plan-f"><small>{t}</small><div>{v.decision[k]}</div></div>)}
             {v.orders.length > 0 && <div className="plan-f"><small>Приказы войскам</small>
@@ -1289,8 +1288,8 @@ function Journal({ v, onDownload }: { v: TurnView; onDownload: () => void }) {
   );
 }
 
-function Umpire({ record, ai, turns, current, stream, streamN, phase, reveal, setReveal, enemy, setEnemy, llm, onRetry }: {
-  record: GameRecord | null; ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; streamN: number; phase: string; reveal: boolean; setReveal: (b: boolean) => void;
+function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, enemy, setEnemy, llm, onRetry }: {
+  record: GameRecord | null; ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; phase: string; reveal: boolean; setReveal: (b: boolean) => void;
   enemy: EnemyMode; setEnemy: (e: EnemyMode) => void; llm: Llm; onRetry: () => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -1323,7 +1322,7 @@ function Umpire({ record, ai, turns, current, stream, streamN, phase, reveal, se
       <p className="muted">Решения штаба противника по ходам: оценка, замысел, приказы и распоряжения (откройте ход). Где его войска сейчас — «Показать на карте всех» выше.</p>
       {ai.state === 'thinking' && <div className="ai-live"><div className="jsub">Штаб противника думает над решением на {ddmm(ai.time)} {hhmm(ai.time)}…</div>
         {phase && <div className="ai-phase"><i className="spinner" /> {phase}</div>}<pre>{stream.trimEnd().slice(-1500) || '…'}</pre>
-        {stream.length > 0 && <small className="muted">получено символов: {streamN.toLocaleString('ru')}{stream.length - stream.trimEnd().length > 50 ? ` · в конце ${stream.length - stream.trimEnd().length} пробелов подряд — модель, похоже, зациклилась; запрос повторится без схемы` : ''}</small>}</div>}
+        {stream.length - stream.trimEnd().length > 50 && <small className="muted">модель, похоже, зациклилась; запрос повторится без схемы</small>}</div>}
       {ai.state === 'error' && <div className="cmd-blocked"><b>Нет решения на {ddmm(ai.time)}</b><span>{ai.error}</span><div><button onClick={onRetry}>Повторить запрос</button></div></div>}
       {!list.length && <p className="muted">Решений пока нет.</p>}
       {list.map((t) => {
@@ -1333,11 +1332,12 @@ function Umpire({ record, ai, turns, current, stream, streamN, phase, reveal, se
             <button className="aiturn-h" onClick={() => setOpen(open === k ? null : k)}>
               <b>{ddmm(t.time)} {hhmm(t.time)}</b>
               <span>{t.ok ? d!.intent : `ошибка: ${t.error}`}</span>
-              <small>{t.model}{t.timings ? ` · ${Math.round(t.timings.totalMs / 1000)} с` : ''}{t.repaired ? ' · переписан в JSON' : ''}</small>
+              <small>{t.model}{t.timings ? ` · ${Math.round(t.timings.totalMs / 1000)} с` : ''}{t.repaired ? ' · переписан в JSON' : ''}{t.fix ? ` · приказы исправлены по подсказке: ${t.fix.fixed} из ${t.fix.failed}` : ''}</small>
             </button>
             {open === k && t.ok && d && <div className="aiturn-b">
               {t.basis && t.basis.length > 0 && <KbBasis basis={t.basis} refs={t.refs ?? []} />}
               <div className="jsub">Приказы</div>
+              {t.fix && <div className="muted small">исправление по подсказке: {t.fix.fixed} из {t.fix.failed} {t.fix.failed === 1 ? 'приказа' : 'приказов'} исправлено{t.fix.error ? ` (${t.fix.error})` : ''}</div>}
               <ul>{t.applied.map((a, i) => <li key={i} className={a.order ? '' : 'rej'}><b>{short(a.formation ?? a.given.formation)}</b>: {TASK_RU[a.given.task]} — {a.target ?? a.given.toArea ?? a.given.area}{a.given.details ? <span className="muted">. {a.given.details}</span> : null}{a.issue && <div className="iss">{a.issue}</div>}</li>)}</ul>
               {t.staff && t.staff.length > 0 && <><div className="jsub">Тыл, переправы, резервы</div>
                 <ul>{t.staff.map((x, i) => { const gv = x.given as { kind: string; subject: string | null; area: string | null; formations: string[] };
