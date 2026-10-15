@@ -322,6 +322,8 @@ function startAi() {
     cur.result = t;
     return t;
   })();
+  // ошибка до запроса (сборка обстановки, справка) — не молчаливое «думает»: статус «ошибка», ход узнает при ожидании
+  cur.promise.catch((e) => { if (!abort.signal.aborted) status({ state: 'error', time, error: `обстановка для штаба не собрана: ${(e as Error).message ?? e}` }); });
   ai = cur;
 }
 
