@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import type { CompiledRules, Entry, FactRef } from '@def-ops/knowledge';
 import { CALIB_SPACE, mergeRules, RULE_INPUTS, ruleInputRefs, type Rules, type SideProfile } from '@def-ops/sim';
 import { basisFrom } from '../src/sim/kb-rules';
-import { calibMode, conflictTitle, relShare, rulesBasisSummary } from '../src/modeling/rules-basis';
+import { calibMode, conflictTitle, edgeState, relShare, rulesBasisSummary } from '../src/modeling/rules-basis';
 
 const read = <T>(p: string) => JSON.parse(readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8')) as T;
 const seed = read<{ entries: Entry[] } | Entry[]>('packages/knowledge/data/seed.json');
@@ -80,10 +80,32 @@ describe('сводка «Основа правил»', () => {
     const s = rulesBasisSummary(tiny(), { multipliers: { prepared: 1.5 }, fitted: { prepared: { range: [1.0, 1.5] } } });
     expect(s.keys.find((x) => x.key === 'prepared')).toMatchObject({ range: [1.0, 1.5], edge: 'high', fitted: true });
   });
-  it('название расхождения: вход, множитель или итог', () => {
+  it('название расхождения: вход, множитель или итог (операция — названием)', () => {
     expect(conflictTitle('defense.prepared')).toBe('Подготовленная оборона');
     expect(conflictTitle('terrainExp')).toMatch(/Влияние местности/);
-    expect(conflictTitle('outcome:berlin-1945-tasks:pace:1gta::1945-04-16–1945-04-18')).toMatch(/^итог/);
+    const t = conflictTitle('outcome:berlin-1945-tasks:pace:1gta::1945-04-16–1945-04-18');
+    expect(t).toMatch(/^итог/);
+    expect(t).toContain('Берлинская операция');
+    expect(t).not.toContain('berlin-1945-tasks');
+  });
+  it('вне коридора — отдельно от «упирается в границу» (только внутри, в пределах 2 %)', () => {
+    const s = rulesBasisSummary(tiny(), { multipliers: { prepared: 2.0, advance: 0.2, attackerLoss: 1.0, fortPerLevel: 0.795 } });
+    expect(s.keys.find((x) => x.key === 'prepared')).toMatchObject({ edge: null, outside: 'high' });
+    expect(s.keys.find((x) => x.key === 'advance')).toMatchObject({ edge: null, outside: 'low' });
+    expect(s.keys.find((x) => x.key === 'attackerLoss')!.outside).toBeUndefined();
+    expect(s.keys.find((x) => x.key === 'fortPerLevel')).toMatchObject({ edge: 'high' });
+    expect(s.keys.find((x) => x.key === 'fortPerLevel')!.outside).toBeUndefined();
+    expect(edgeState(1.8, [1.2, 1.8])).toEqual({ edge: 'high' });
+    expect(edgeState(1.81, [1.2, 1.8])).toEqual({ edge: null, outside: 'high' });
+  });
+  it('таблица темпа (advance) у откалиброванного — исходное значение и множитель «Темп продвижения»', () => {
+    const b = tiny();
+    b.provenance.push({ path: 'advance', fact: null, reliability: 'assumption', value: 8 });
+    const s = rulesBasisSummary(b, { baseValues: { advance: 6.9 }, multipliers: { advance: 1.159 } });
+    const row = s.groups[0].rows.find((r) => r.path === 'advance')!;
+    expect(row).toMatchObject({ base: 6.9, multiplier: 1.159, mode: 'scale', mult: 'advance' });
+    // в итог «подбираемых» таблица не входит (её коридор — у наибольшего темпа)
+    expect(s.calib.total).toBe(2);
   });
 });
 
@@ -102,6 +124,16 @@ describe('сводка по встроенной базе', () => {
   it('все множители калибровки — с коридором и множителем набора', () => {
     expect(s.keys.map((k) => k.key).sort()).toEqual(Object.keys(CALIB_SPACE).sort());
     for (const k of s.keys) expect(typeof k.multiplier).toBe('number');
+  });
+  it('марш у городского набора: значение профиля без масштаба набора × множитель (movementScale задаётся, не умножается)', () => {
+    const city = rules('ww2-berlin-city-cal'), cbase = rules('ww2-berlin-city');
+    const m = (city as Rules & { calibration: { multipliers: Record<string, number> } }).calibration.multipliers;
+    const cb = basisFrom(entries, {}, city, cbase, profiles, agents);
+    const cs = rulesBasisSummary(cb, { baseValues: Object.fromEntries(ruleInputRefs(cbase, profiles, agents).map((r) => [r.path, r.value])), baseMovementScale: cbase.movementScale ?? 1, multipliers: m });
+    const road = cs.groups.flatMap((g) => g.rows).find((r) => r.path === 'foot.road')!;
+    expect(road.mode).toBe('movement');
+    expect(road.base).toBe(profiles['rkka-1945'].road.foot);
+    expect(road.base! * road.multiplier!).toBeCloseTo(road.value!, 6);
   });
   it('итоги — по операциям', () => {
     const berlin = s.outcomes.find((o) => o.scenario === 'berlin-1945-tasks');

@@ -1566,3 +1566,5 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .rb-tbl td:first-child { width: auto; }
 .rb-out { table-layout: fixed; }
 .rb-out th:nth-child(2) { width: 9%; } .rb-out th:nth-child(3) { width: 15%; } .rb-out th:nth-child(4) { width: 16%; }
+.rb-keys tr.rb-out-row td { background: #fdeeee; }
+.rb-outside-mark { color: var(--danger); font-size: 11.5px; font-weight: 600; }

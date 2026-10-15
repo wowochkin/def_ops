@@ -7,7 +7,7 @@
  */
 import type { CompiledRules, FactRef } from '@def-ops/knowledge';
 import { CALIB_INFO, CALIB_KEYS, CALIB_SPACE, edgeOf, RULE_INPUTS, ruleInput, type CalibKey, type RuleGroup } from '@def-ops/sim';
-import { MEASURE_RU, type Rel } from './basis';
+import { MEASURE_RU, opTitle, type Rel } from './basis';
 
 export interface RelTally { A: number; B: number; C: number; assumption: number; total: number }
 const tally = (): RelTally => ({ A: 0, B: 0, C: 0, assumption: 0, total: 0 });
@@ -17,12 +17,23 @@ export const relShare = (t: RelTally): number | null => (t.total ? Math.round(((
 
 /**
  * Как множитель калибровки меняет вход: set — подбирается само значение (подготовленная оборона, укрепления, темп в
- * городе, темпы по чужой территории), scale — множитель к исходному (таблицы, марш, прогрызание), power — степень к
- * поправке местности.
+ * городе, темпы по чужой территории), scale — множитель к исходному (таблицы, прогрызание), power — степень к
+ * поправке местности, movement — подбирается масштаб марша набора (movementScale): значение профиля × множитель.
  */
-export type CalibMode = 'set' | 'scale' | 'power';
+export type CalibMode = 'set' | 'scale' | 'power' | 'movement';
 const SET_KEYS: CalibKey[] = ['prepared', 'fortPerLevel', 'urbanAdvance', 'terrFoot', 'terrMobile'];
-export const calibMode = (k: CalibKey): CalibMode => (k === 'terrainExp' ? 'power' : SET_KEYS.includes(k) ? 'set' : 'scale');
+export const calibMode = (k: CalibKey): CalibMode => (k === 'terrainExp' ? 'power' : k === 'movement' ? 'movement' : SET_KEYS.includes(k) ? 'set' : 'scale');
+
+/**
+ * Множитель против коридора: edge — «упирается» (внутри коридора, в пределах 2 % ширины от края, edgeOf), outside — вне
+ * коридора (ниже или выше; у старых наборов коридор — нынешний из базы, по нему набор не подбирался).
+ */
+export function edgeState(v: number, range: [number, number]): { edge: 'low' | 'high' | null; outside?: 'low' | 'high' } {
+  const lo = Math.min(range[0], range[1]), hi = Math.max(range[0], range[1]), eps = 1e-9 * Math.max(1, Math.abs(hi));
+  if (v < lo - eps) return { edge: null, outside: 'low' };
+  if (v > hi + eps) return { edge: null, outside: 'high' };
+  return { edge: edgeOf(v, range) };
+}
 
 export interface RulesBasisRow {
   path: string; title: string; unit?: string; group: RuleGroup; table?: true; calib?: CalibKey; engine: 'army' | 'agents';
@@ -33,13 +44,15 @@ export interface RulesBasisRow {
   corridor?: [number, number];
   /** Откалиброванный набор: значение в исходном наборе и множитель калибровки этого входа. */
   base?: number | null; multiplier?: number; mode?: CalibMode;
+  /** Множитель калибровки, который меняет вход (у таблицы темпа — «Темп продвижения», хотя коридор — у наибольшего темпа). */
+  mult?: CalibKey;
 }
 
 export interface CalibKeyRow {
   key: CalibKey; title: string; unit?: string;
   /** Коридор множителя: по которому подбирался набор (fitted) или нынешний из базы; нет норматива — прежние границы. */
   range: [number, number]; fact: FactRef | null; fitted?: true; wider?: true; tableMissing?: true;
-  multiplier?: number; edge?: 'low' | 'high' | null;
+  multiplier?: number; edge?: 'low' | 'high' | null; outside?: 'low' | 'high';
 }
 
 export interface RulesBasisSummary {
@@ -56,6 +69,8 @@ export interface SummaryOptions {
   multipliers?: Partial<Record<CalibKey, number>>;
   /** calibration.corridors: коридоры, по которым подбирался набор. */
   fitted?: Partial<Record<CalibKey, { range: [number, number] }>>;
+  /** movementScale исходного набора: значения марша исходного набора делятся на него (множитель movement его заменяет). */
+  baseMovementScale?: number;
 }
 
 export function rulesBasisSummary(b: CompiledRules, o: SummaryOptions = {}): RulesBasisSummary {
@@ -74,10 +89,16 @@ export function rulesBasisSummary(b: CompiledRules, o: SummaryOptions = {}): Rul
       ...(inp.unit ? { unit: inp.unit } : {}), ...(inp.table ? { table: true as const } : {}), ...(inp.calib ? { calib: inp.calib } : {}),
       ...(p.corridor ? { corridor: p.corridor } : {}),
     };
-    if (o.multipliers && inp.calib && o.multipliers[inp.calib] != null) {
-      row.multiplier = o.multipliers[inp.calib];
-      row.mode = calibMode(inp.calib);
-      if (o.baseValues && inp.path in o.baseValues) row.base = o.baseValues[inp.path];
+    const mk = inp.calib ?? (inp.table && inp.path in CALIB_INFO ? inp.path as CalibKey : undefined);
+    if (mk) row.mult = mk;
+    if (o.multipliers && mk && o.multipliers[mk] != null) {
+      row.multiplier = o.multipliers[mk];
+      row.mode = calibMode(mk);
+      if (o.baseValues && inp.path in o.baseValues) {
+        const bv = o.baseValues[inp.path];
+        // марш: значение профиля без масштаба исходного набора — множитель калибровки заменяет масштаб, а не умножает его
+        row.base = row.mode === 'movement' && bv != null ? +(bv / (o.baseMovementScale || 1)).toPrecision(12) : bv;
+      }
     }
     let g = groups.find((x) => x.group === inp.group);
     if (!g) groups.push(g = { group: inp.group, rows: [] });
@@ -90,7 +111,7 @@ export function rulesBasisSummary(b: CompiledRules, o: SummaryOptions = {}): Rul
     return {
       key, title: CALIB_INFO[key].title, ...(CALIB_INFO[key].unit ? { unit: CALIB_INFO[key].unit } : {}), range, fact: c?.fact ?? null,
       ...(f ? { fitted: true as const } : {}), ...(c?.wider ? { wider: true as const } : {}), ...(c?.tableMissing ? { tableMissing: true as const } : {}),
-      ...(m != null ? { multiplier: m, edge: edgeOf(m, range) } : {}),
+      ...(m != null ? { multiplier: m, ...edgeState(m, range) } : {}),
     };
   });
   const scen = [...new Set(b.outcomes.map((x) => x.claim.scenario))];
@@ -98,11 +119,14 @@ export function rulesBasisSummary(b: CompiledRules, o: SummaryOptions = {}): Rul
   return { total, calib, agents, groups, keys, outcomes };
 }
 
-/** Расхождение по-русски: путь входа → название входа, ключ множителя → название множителя, ключ итога → «итог …». */
-export function conflictTitle(path: string): string {
+/**
+ * Расхождение по-русски: путь входа → название входа, ключ множителя → название множителя, ключ итога → «итог …» с
+ * названием операции (op — своя операция; встроенные — из каталога).
+ */
+export function conflictTitle(path: string, op?: (id: string) => string | undefined): string {
   if (path.startsWith('outcome:')) {
     const [, scenario, measure, subject] = path.split(':');
-    return `итог: ${MEASURE_RU[measure] ?? measure}${subject ? ` ${subject}` : ''} (${scenario})`;
+    return `итог: ${MEASURE_RU[measure] ?? measure}${subject ? ` ${subject}` : ''} (${op?.(scenario) ?? opTitle(scenario)})`;
   }
   const i = ruleInput(path);
   if (i) return i.title;

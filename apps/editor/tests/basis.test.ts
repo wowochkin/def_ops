@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fingerprint, type CompileConflict, type Entry, type FactRef, type Provenance } from '@def-ops/knowledge';
-import { basisSummary, claimText, factUse } from '../src/modeling/basis';
+import { basisSummary, claimText, factUse, opTitle } from '../src/modeling/basis';
 import { originOf } from '../src/kb/fact-form';
 
 const ref = (entry: string, index: number, reliability: 'A' | 'B' | 'C' = 'B', kind: 'strength' | 'parent' = 'strength'): FactRef => ({
@@ -83,17 +83,21 @@ describe('claimText: формальная часть по-русски', () => {
     expect(claimText({ kind: 'strength', subject: 'su_61a', at: '1945-04-16', personnel: 54000, tanks: 10 })).toBe('численность на 16.04.1945: людей 54000, танков 10');
     expect(claimText({ kind: 'parent', subject: 'su_3gta', from: '1945-04-20T06:00', parent: 'su_1uf' }, (id) => (id === 'su_1uf' ? '1-й Украинский фронт' : id))).toBe('подчинён 1-й Украинский фронт с 20.04.1945 06:00');
   });
-  it('значение правила — названием входа, с путём, стороной, масштабом; допущение', () => {
-    expect(claimText({ kind: 'param', param: 'defense.prepared', range: [1.3, 1.5], unit: '×' })).toBe('значение правила «Подготовленная оборона» (defense.prepared): 1,3–1,5 ×');
-    expect(claimText({ kind: 'param', param: 'stockDays.fortress', value: 30, unit: 'сут', side: 'de' })).toBe('значение правила «Запасы крепости» (stockDays.fortress), Германия: 30 сут');
-    expect(claimText({ kind: 'param', param: 'riverCrossHours', value: 2, unit: 'ч', scale: 3 })).toBe('значение правила «Река без моста для пехоты» (riverCrossHours): 2 ч на 1/3');
+  it('значение правила — названием входа (без пути), стороной, масштабом; допущение', () => {
+    expect(claimText({ kind: 'param', param: 'defense.prepared', range: [1.3, 1.5], unit: '×' })).toBe('значение правила «Подготовленная оборона»: 1,3–1,5 ×');
+    expect(claimText({ kind: 'param', param: 'stockDays.fortress', value: 30, unit: 'сут', side: 'de' })).toBe('значение правила «Запасы крепости», Германия: 30 сут');
+    expect(claimText({ kind: 'param', param: 'riverCrossHours', value: 2, unit: 'ч', scale: 3 })).toBe('значение правила «Река без моста для пехоты»: 2 ч на 1/3');
     expect(claimText({ kind: 'param', param: 'x.unknown', why: 'нет данных' })).toBe('значение правила x.unknown: допущение — нет данных');
   });
-  it('итог прогона — мерой по-русски, соединением, операцией', () => {
+  it('итог прогона — мерой по-русски, соединением, названием операции', () => {
     expect(claimText({ kind: 'outcome', measure: 'pace', scenario: 'berlin-1945-tasks', subject: 'su_1gta', from: '1945-04-17', to: '1945-04-18', range: [1, 5], unit: 'км/сут' }, (id) => (id === 'su_1gta' ? '1 гв. ТА' : id)))
-      .toBe('итог прогона: темп 1 гв. ТА, berlin-1945-tasks, 17.04.1945 — 18.04.1945: 1–5 км/сут');
+      .toBe('итог прогона: темп 1 гв. ТА, Берлинская операция, 17.04.1945 — 18.04.1945: 1–5 км/сут');
     expect(claimText({ kind: 'outcome', measure: 'frontage', scenario: 'berlin-1945-tasks', from: '1945-04-16', to: '1945-04-16', range: [4, 8], unit: 'км', side: 'su', echelon: 'division' }))
-      .toBe('итог прогона: ширина полосы (СССР, дивизия), berlin-1945-tasks, 16.04.1945 — 16.04.1945: 4–8 км');
+      .toBe('итог прогона: ширина полосы (СССР, дивизия), Берлинская операция, 16.04.1945 — 16.04.1945: 4–8 км');
+    // своя операция — названием из переданного каталога, неизвестная — как есть
+    expect(claimText({ kind: 'outcome', measure: 'loss', scenario: 'user-op', from: '1945-04-16', to: '1945-04-16', range: [1, 2], unit: '%' }, undefined, (id) => (id === 'user-op' ? 'Моя операция' : undefined)))
+      .toBe('итог прогона: потери, Моя операция, 16.04.1945 — 16.04.1945: 1–2 %');
+    expect(opTitle('нет-такой')).toBe('нет-такой');
   });
 });
 
