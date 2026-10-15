@@ -9,7 +9,7 @@ import { DOCTRINE_GROUPS, DOCTRINE_LEVELS, LEVEL_RU, RELIABILITY, runChecks, typ
 import { claimText, KIND_RU } from '../modeling/basis';
 import { addManual, correctBuiltin, editFact } from './candidates';
 import { claimToForm, FACT_KEY, FORM_FIELDS, formToClaim, formWarnings, manualCandidate, PARAM_OPTIONS, type FormMeta } from './fact-form';
-import { KNOWN_PARAMS, strengthFrom, type OpContext } from './ingest';
+import { KNOWN_PARAMS, PARAM_INFO, paramInfo, strengthFrom, type OpContext } from './ingest';
 import { opCtx } from './ReviewQueue';
 import * as kb from './kb';
 import * as store from './store';
@@ -58,6 +58,9 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
   const [cx, setCx] = useState<OpContext | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  /** Единицы и нынешние значения входов правил — проверке «норматив»; пока не прочитаны — только единицы. */
+  const [pInfo, setPInfo] = useState(PARAM_INFO);
+  useEffect(() => { let alive = true; void paramInfo().then((x) => { if (alive) setPInfo(x); }); return () => { alive = false; }; }, []);
   const opsKey = ops.join(',');
   useEffect(() => { let alive = true; void checkContext(ops).then((x) => { if (alive) setCx(x); }); return () => { alive = false; }; }, [opsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -100,7 +103,7 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
     if ('error' in built || !cx) return null;
     const existing = s.entries.flatMap((e) => (e.facts ?? []).filter((f, i) => f.claim && !(mode.kind === 'edit' && e.id === mode.entry.id && i === mode.index)));
     const c = manualCandidate(structuredClone(built.claim), meta, { id: `manual:${Date.now().toString(36)}`, names: built.names, value: '', ...(ops.length === 1 ? { op: ops[0] } : {}) });
-    const ctx: CheckCtx = { formations: cx.formations, entries: s.entries, ...(cx.theatre ? { theatre: cx.theatre } : {}), ...(cx.op ? { op: cx.op } : {}), strengthOf: strengthFrom(existing), existing, knownParams: KNOWN_PARAMS };
+    const ctx: CheckCtx = { formations: cx.formations, entries: s.entries, ...(cx.theatre ? { theatre: cx.theatre } : {}), ...(cx.op ? { op: cx.op } : {}), strengthOf: strengthFrom(existing), existing, knownParams: KNOWN_PARAMS, paramInfo: pInfo };
     c.checks = runChecks(c, ctx);
     // не сопоставлено — остаётся введённое название (факт попадёт в «Не сопоставлено» сборки, а не потеряет соединение)
     const cl = c.claim as Claim & Record<string, unknown>;
@@ -111,7 +114,7 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
     }
     c.value = claimText(c.claim, name);
     return c;
-  }, [built, meta, cx, s.entries]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [built, meta, cx, s.entries, pInfo]); // eslint-disable-line react-hooks/exhaustive-deps
   const warnings = checked ? formWarnings(checked.checks, meta) : [];
 
   const save = async () => {

@@ -9,7 +9,9 @@
  * уступает нормативу с источником. Коридор входа — значение или диапазон источника с допуском надёжности; факт со
  * scale дан на 1/scale входа — коридор умножается на scale. Коридор множителя — пересечение пересчитанных коридоров
  * всех входов множителя (у показателя местности — по видам местности); пусто — расхождение, коридор — у норматива,
- * выбранного по правилу. Без норматива, у допущения или когда пересчитать нельзя — прежние границы (space).
+ * выбранного по правилу (закреплённый — всегда он). Без норматива, у допущения или когда пересчитать нельзя — прежние
+ * границы (space). Не берутся (и отмечаются в conflicts с why): норматив с коридором ≤ 0 или с отрицательной нижней
+ * границей (вырожденный [0, 0] тоже) и норматив одной стороны (side) на вход без стороны.
  */
 import type { Claim, Entry } from './schema';
 import { claimFacts, pinKey, resolve, subjectOf, type FactRef, type Pins } from './resolve';
@@ -45,9 +47,10 @@ export interface CompiledRules {
   outcomes: { fact: FactRef; claim: Extract<Claim, { kind: 'outcome' }> }[];
   /**
    * Несколько нормативов с непересекающимися коридорами: path — путь входа, у пересечения по нескольким входам
-   * (виды местности) — ключ множителя, у итога — ключ итога; pinned — выбор закреплён.
+   * (виды местности) — ключ множителя, у итога — ключ итога; pinned — выбор закреплён. why — не расхождение, а
+   * норматив, отброшенный сборщиком (коридор ≤ 0, норматив одной стороны на общий вход): почему он не берётся.
    */
-  conflicts: { path: string; facts: FactRef[]; pinned?: true }[];
+  conflicts: { path: string; facts: FactRef[]; pinned?: true; why?: string }[];
 }
 
 type ParamClaim = Extract<Claim, { kind: 'param' }>;
@@ -99,17 +102,29 @@ export function compileRules(entries: Entry[], inputs: RuleInputRef[], pins: Pin
 
   // входы: выбранный норматив, коридор в единицах входа
   const provenance: RuleProvenance[] = [];
-  const perInput = new Map<string, { fact: FactRef; corridor: Corridor }>();
+  const perInput = new Map<string, { fact: FactRef; corridor: Corridor; pinned: boolean }>();
   for (const inp of inputs) {
-    const cands = params.filter((f) => {
+    const cands: FactRef[] = [];
+    for (const f of params) {
       const c = f.fact.claim as ParamClaim;
-      return c.param === inp.path && (!inp.side || !c.side || c.side === inp.side);
-    });
+      if (c.param !== inp.path) continue;
+      if (inp.side && c.side && c.side !== inp.side) continue;
+      if (!inp.side && c.side) {
+        conflicts.push({ path: inp.path, facts: [f], why: `норматив одной стороны (${c.side}) на общий для сторон вход — не берётся` });
+        continue;
+      }
+      const k = corridorOfFact(f, o);
+      if (k && (k[1] <= 0 || k[0] < 0)) {
+        conflicts.push({ path: inp.path, facts: [f], why: `коридор норматива ${k[0]}–${k[1]} ≤ 0 или с отрицательной границей — не берётся` });
+        continue;
+      }
+      cands.push(f);
+    }
     const { chosen, pool, pinned } = choose(cands, 'param', '', pins);
     const withCorr = pool.map((f) => ({ f, c: corridorOfFact(f, o) })).filter((x): x is { f: FactRef; c: Corridor } => !!x.c);
     if (withCorr.length > 1 && anyDisjoint(withCorr.map((x) => x.c))) conflicts.push({ path: inp.path, facts: withCorr.map((x) => x.f), ...(pinned ? { pinned: true as const } : {}) });
     const corridor = chosen ? corridorOfFact(chosen, o) : null;
-    if (chosen && corridor) perInput.set(inp.path, { fact: chosen, corridor });
+    if (chosen && corridor) perInput.set(inp.path, { fact: chosen, corridor, pinned });
     provenance.push({
       path: inp.path, fact: chosen, reliability: chosen?.fact.reliability ?? 'assumption', value: inp.value, ...(corridor ? { corridor } : {}),
     });
@@ -121,19 +136,20 @@ export function compileRules(entries: Entry[], inputs: RuleInputRef[], pins: Pin
     const space: Corridor = [sp[0], sp[1]];
     const ins = inputs.filter((i) => i.calib === key && perInput.has(i.path));
     if (!ins.length) { corridors[key] = { range: space, fact: null }; continue; }
-    const mapped: { fact: FactRef; range: Corridor }[] = [];
+    const mapped: { fact: FactRef; range: Corridor; pinned: boolean }[] = [];
     let missing: FactRef | null = null;
     for (const i of ins) {
       const p = perInput.get(i.path)!;
       const m = o.toMultiplier(key, p.corridor, i.path);
-      if (m && m.every(Number.isFinite)) mapped.push({ fact: p.fact, range: [Math.min(m[0], m[1]), Math.max(m[0], m[1])] });
+      if (m && m.every(Number.isFinite)) mapped.push({ fact: p.fact, range: [Math.min(m[0], m[1]), Math.max(m[0], m[1])], pinned: p.pinned });
       else missing ??= p.fact;
     }
     if (!mapped.length) { corridors[key] = { range: space, fact: missing, tableMissing: true }; continue; }
-    const best = [...mapped].sort((a, b) => better(a.fact, b.fact))[0];
+    // закреплённый норматив входа берёт верх над порядком выбора, как и на самом входе
+    const best = mapped.find((m) => m.pinned) ?? [...mapped].sort((a, b) => better(a.fact, b.fact))[0];
     let range: Corridor = [Math.max(...mapped.map((m) => m.range[0])), Math.min(...mapped.map((m) => m.range[1]))];
     if (range[0] > range[1]) {
-      conflicts.push({ path: key, facts: mapped.map((m) => m.fact) });
+      conflicts.push({ path: key, facts: mapped.map((m) => m.fact), ...(best.pinned ? { pinned: true as const } : {}) });
       range = best.range;
     }
     const wider = range[0] < space[0] || range[1] > space[1];

@@ -33,6 +33,31 @@ export interface CheckCtx {
   existing: Fact[];
   /** Пути входов правил и профилей (перечень входов модели): норматив на другой путь — сомнение «неизвестный параметр». */
   knownParams?: Set<string>;
+  /**
+   * Сведения о входах правил по пути: единица (как в перечне входов модели) и нынешнее значение в наборе правил.
+   * Есть — проверка «норматив» сверяет с ними единицу, знак и порядок величины норматива.
+   */
+  paramInfo?: Record<string, ParamInfo>;
+}
+
+/** Вход правил для проверки норматива: единица и нынешнее значение (null — в наборе нет). */
+export interface ParamInfo { unit?: string; value?: number | null }
+
+/**
+ * Единицы входов, у которых ноль допустим: прибавка (+), доля, доля в сутки, разброс (σ), проценты (%). У прочих входов
+ * (множители ×, темпы, часы, километры, потери в %/сут, подвоз…) ноль и меньше обнуляют или переворачивают правило —
+ * норматив ≤ 0 на них отбрасывается. Отрицательное значение не допустимо ни у одного входа.
+ */
+export const ZERO_OK_UNITS: ReadonlySet<string> = new Set(['+', 'доля', 'доля/сут', 'σ', '%']);
+/** Во сколько раз коридор норматива может отстоять от нынешнего значения входа без сомнения. */
+export const SCALE_DOUBT = 5;
+
+/** Единица к общему виду: регистр, пробелы, «сутки»/«в сутки» → «/сут», «раз»/x → ×, «час(ов)» → ч. */
+export function normUnit(u: string): string {
+  let s = u.toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, '').replace(/\.+$/, '');
+  s = s.replace(/(сутки|суток|сут\.?)/g, 'сут').replace(/в(?=сут$)/, '/').replace(/^(часа|часов|час)/, 'ч');
+  if (['раз', 'раза', 'x', 'х', '×', 'крат'].includes(s)) return '×';
+  return s;
 }
 
 const DAY = 86400000;
@@ -103,7 +128,11 @@ function checkNumbers(c: Candidate): CheckResult {
     ? Object.entries(e.cells).filter(([k]) => !own || own.includes(k) || !(e.dayCells ?? []).includes(k)).map(([, v]) => v)
     : null;
   const have = new Set(rowCells ? rowCells.flatMap(numbersIn) : numbersIn(evidenceText(c)));
-  const miss = claimNumbers(c.claim).filter((n) => !have.has(n));
+  // множитель (×), пересчитанный из процента прироста или снижения («на 35 %» → 1,35; «на 30 %» меньше → 0,7)
+  const pct = c.claim.kind === 'param' && c.claim.unit != null && normUnit(c.claim.unit) === '×'
+    ? (n: number) => have.has(+((n - 1) * 100).toPrecision(12)) || have.has(+((1 - n) * 100).toPrecision(12))
+    : () => false;
+  const miss = claimNumbers(c.claim).filter((n) => !have.has(n) && !pct(n));
   // скан: «?» у цифры — цифры неразборчивы, число не найдено не из-за ошибки извлечения, а из-за плохого чтения
   if (miss.length && e.kind === 'scan' && /\d\s?\?|\?\s?\d/.test(e.quote)) return res('numbers', 'doubt', 'цифры помечены как неразборчивые');
   return miss.length ? res('numbers', 'fail', `в цитате нет числа: ${miss.join(', ')}`) : ok('numbers');
@@ -278,7 +307,17 @@ function checkNorm(c: Candidate, ctx: CheckCtx): CheckResult | null {
   if (cl.kind === 'outcome') return cl.scenario ? ok('param') : res('param', 'doubt', 'не указана операция итога');
   if (cl.value == null && !r && cl.why == null) return res('param', 'fail', 'нет ни значения, ни диапазона');
   if (ctx.knownParams && !ctx.knownParams.has(cl.param)) return res('param', 'doubt', `неизвестный параметр: «${cl.param}» нет среди входов правил`);
-  return ok('param');
+  const info = ctx.paramInfo?.[cl.param];
+  const nums = [cl.value, ...(r ?? [])].filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  if (!info || !nums.length) return ok('param');
+  const lo = Math.min(...nums), hi = Math.max(...nums);
+  const zeroOk = info.unit != null && ZERO_OK_UNITS.has(normUnit(info.unit));
+  if (lo < 0 || (!zeroOk && lo <= 0)) return res('param', 'fail', `${zeroOk ? 'отрицательное' : 'неположительное'} значение у входа «${cl.param}»${info.unit ? ` (${info.unit})` : ''}: ${r ? r.join('–') : cl.value}`);
+  const doubts: string[] = [];
+  if (cl.unit && info.unit && normUnit(cl.unit) !== normUnit(info.unit)) doubts.push(`единица «${cl.unit}» не та, что у входа («${info.unit}»)`);
+  const s = cl.scale && cl.scale > 0 ? cl.scale : 1, cur = info.value;
+  if (cur != null && cur > 0 && (hi * s < cur / SCALE_DOUBT || lo * s > cur * SCALE_DOUBT)) doubts.push(`значение больше чем в ${SCALE_DOUBT} раз отличается от нынешнего (${cur}${info.unit ? ` ${info.unit}` : ''}) — проверьте порядок величины`);
+  return doubts.length ? res('param', 'doubt', doubts.join('; ')) : ok('param');
 }
 
 /**

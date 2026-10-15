@@ -201,10 +201,15 @@ export function RulesBasis({ item, d }: { item: RulesItem; d: SimData }) {
     <h5 className="rb-h">Расхождения нормативов: {basis.conflicts.length}</h5>
     {!basis.conflicts.length && <p className="ok small">Нормативы на один вход не расходятся.</p>}
     {basis.conflicts.length > 0 && <div className="bs-list">
-      <p className="muted small">Несколько нормативов с непересекающимися коридорами: модель берёт лучший по надёжности и свежести; закрепите нужный — основа правил пересоберётся.</p>
-      {basis.conflicts.map((c) => {
+      <p className="muted small">Несколько нормативов с непересекающимися коридорами: модель берёт лучший по надёжности и свежести; закрепите нужный — основа правил пересоберётся. Норматив с пометкой «не берётся» отброшен сборщиком — исправьте его в базе.</p>
+      {basis.conflicts.map((c, ci) => {
+        if (c.why) return <div key={`${c.path}:${ci}`} className="bs-conf">
+          <div className="bs-conf-h"><b title={c.path}>{conflictTitle(c.path, opName)}</b></div>
+          <p className="warn small">{c.why}</p>
+          {c.facts.map((f) => <div key={`${f.entry}#${f.index}`} className="bs-cand"><span className="bs-mark" />{factView(f)}</div>)}
+        </div>;
         const chosen = sum.groups.flatMap((g) => g.rows).find((r) => r.path === c.path)?.fact ?? sum.keys.find((k) => k.key === c.path)?.fact ?? basis.outcomes.find((o) => c.facts.some((f) => same(f, o.fact)))?.fact ?? null;
-        return <div key={c.path} className="bs-conf">
+        return <div key={`${c.path}:${ci}`} className="bs-conf">
           <div className="bs-conf-h"><b title={c.path}>{conflictTitle(c.path, opName)}</b>{c.pinned && <span className="bs-pin">закреплено</span>}</div>
           {c.facts.map((f) => {
             const key = pinKeyOf(f), pin = pins[key];

@@ -375,3 +375,61 @@ describe('доктрина: правило «условие → действие
     expect(lvl(manual({ kind: 'enter', subject: 's', at: '1945-04-16' }), ctx(), 'doctrine')).toBeUndefined();
   });
 });
+
+describe('норматив: единица, знак и порядок величины против входа правил', () => {
+  const pc = (p: string, v: { value?: number; range?: [number, number]; unit?: string; scale?: number; why?: string }): Claim => ({ kind: 'param', param: p, ...v });
+  const cand = (claim: Claim, quote: string): Candidate => ({
+    id: 'c1', claim, names: {}, key: 'numbers', value: 'v', source: 'doc:d1', origin: 'text', evidence: { kind: 'quote', doc: 'd1', chunk: 0, quote },
+    checks: [], verdict: 'auto', state: 'pending',
+  });
+  const paramInfo = {
+    'defense.prepared': { unit: '×', value: 1.35 },
+    'advanceMax': { unit: 'км/сут', value: 30 },
+    'defense.fortificationPerLevel': { unit: '+', value: 0.25 },
+    'pocket.breakoutKeep': { unit: '%', value: 30 },
+    'riverCrossHours': { unit: 'ч', value: 12 },
+  };
+  const known = new Set(Object.keys(paramInfo));
+  const chk = (claim: Claim, quote: string) => runChecks(cand(claim, quote), { formations: [], entries: [], strengthOf: () => null, existing: [], knownParams: known, paramInfo, text: quote });
+  const lv = (claim: Claim, quote: string) => chk(claim, quote).find((r) => r.check === 'param');
+
+  it('«повышает устойчивость на 35 %» как 35 % на множитель × — сомнение (единица и порядок величины)', () => {
+    const r = lv(pc('defense.prepared', { value: 35, unit: '%' }), 'подготовленная оборона повышает устойчивость на 35 %');
+    expect(r?.level).toBe('doubt');
+    expect(r?.why).toMatch(/единиц/);
+    expect(r?.why).toMatch(/5 раз|порядок/);
+  });
+  it('единица синонимом входа — не сомнение: «км в сутки» = км/сут, «раз» = ×', () => {
+    expect(lv(pc('advanceMax', { range: [25, 45], unit: 'км в сутки' }), 'темп 25–45 км в сутки')?.level).toBe('ok');
+    expect(lv(pc('defense.prepared', { value: 1.5, unit: 'раз' }), 'сильнее в 1,5 раза')?.level).toBe('ok');
+  });
+  it('ноль и отрицательное у множителя — отбой; у доли и прибавки ноль допустим, отрицательное — нет', () => {
+    expect(lv(pc('defense.prepared', { value: 0, unit: '×' }), 'поправка 0')?.level).toBe('fail');
+    expect(lv(pc('advanceMax', { range: [0, 40], unit: 'км/сут' }), 'темп 0–40 км/сут')?.level).toBe('fail');
+    expect(lv(pc('pocket.breakoutKeep', { range: [0, 10], unit: '%' }), 'выносят 0–10 %')?.level).toBe('ok');
+    // ноль у прибавки не отбой (сомнение — от порядка величины: нынешнее 0,25)
+    expect(lv(pc('defense.fortificationPerLevel', { value: 0, unit: '+' }), 'прибавка 0')?.level).not.toBe('fail');
+    expect(lv(pc('defense.fortificationPerLevel', { range: [-1, 0.3], unit: '+' }), 'прибавка -1–0,3')?.level).toBe('fail');
+  });
+  it('коридор дальше чем в 5 раз от нынешнего значения — сомнение; с масштабом — по значению входа', () => {
+    expect(lv(pc('advanceMax', { value: 300, unit: 'км/сут' }), 'темп 300 км/сут')?.level).toBe('doubt');
+    expect(lv(pc('advanceMax', { value: 5, unit: 'км/сут' }), 'темп 5 км/сут')?.level).toBe('doubt');
+    expect(lv(pc('advanceMax', { range: [7, 140], unit: 'км/сут' }), 'темп 7–140 км/сут')?.level).toBe('ok');
+    // 2 ч на 1/3 входа → 6 ч при нынешних 12 — в пределах
+    expect(lv(pc('riverCrossHours', { value: 2, unit: 'ч', scale: 3 }), 'за 2 ч')?.level).toBe('ok');
+    expect(lv(pc('riverCrossHours', { value: 1, unit: 'ч' }), 'за 1 ч')?.level).toBe('doubt');
+  });
+  it('без сведений о входах (paramInfo) — прежнее поведение', () => {
+    const r = runChecks(cand(pc('defense.prepared', { value: 35, unit: '%' }), 'на 35 %'), { formations: [], entries: [], strengthOf: () => null, existing: [], knownParams: known, text: 'на 35 %' });
+    expect(r.find((x) => x.check === 'param')?.level).toBe('ok');
+  });
+  it('прирост в процентах, пересчитанный в множитель (+35 % → 1,35 ×), — число в цитате найдено', () => {
+    const r = chk(pc('defense.prepared', { value: 1.35, unit: '×' }), 'подготовленная оборона повышает устойчивость на 35 %');
+    expect(r.find((x) => x.check === 'numbers')?.level).toBe('ok');
+    expect(r.find((x) => x.check === 'param')?.level).toBe('ok');
+    // снижение на 30 % → 0,7 ×
+    expect(chk(pc('defense.prepared', { value: 0.7, unit: '×' }), 'снижает на 30 %').find((x) => x.check === 'numbers')?.level).toBe('ok');
+    // без единицы × пересчёт не принимается
+    expect(chk(pc('defense.prepared', { value: 1.35 }), 'на 35 %').find((x) => x.check === 'numbers')?.level).toBe('fail');
+  });
+});

@@ -271,3 +271,21 @@ describe('ingest: правки первого круга', () => {
     expect((await entry())?.facts).toHaveLength(1);
   });
 });
+
+describe('проверка «норматив»: единица и нынешнее значение входов правил', () => {
+  it('paramInfo — единица каждого входа и значение исходного набора; ставится в проверки', async () => {
+    const { paramInfo, PARAM_INFO } = await import('../src/kb/ingest');
+    const { runChecks } = await import('@def-ops/knowledge');
+    expect(PARAM_INFO['defense.prepared'].unit).toBe('×');
+    const info = await paramInfo();
+    expect(info['defense.prepared'].unit).toBe('×');
+    expect(info['defense.prepared'].value).toBeGreaterThan(1);
+    expect(info['advanceMax'].value).toBeGreaterThan(0);
+    const c = {
+      id: 'c1', claim: { kind: 'param' as const, param: 'defense.prepared', value: 35, unit: '%' }, names: {}, key: 'numbers', value: 'v', source: 'doc:d1',
+      origin: 'text' as const, evidence: { kind: 'quote' as const, doc: 'd1', chunk: 0, quote: 'на 35 %' }, checks: [], verdict: 'auto' as const, state: 'pending' as const,
+    };
+    const r = runChecks(c, { formations: [], entries: [], strengthOf: () => null, existing: [], paramInfo: info, text: 'на 35 %' });
+    expect(r.find((x) => x.check === 'param')?.level).toBe('doubt');
+  });
+});

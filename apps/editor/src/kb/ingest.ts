@@ -13,9 +13,10 @@ import {
   normalizeMapping, OPERATION_EXTRACT_SCHEMA, parseFactsJson, rowsToCandidates, runChecks, SCAN_SCHEMA, scanMessages, stripes, templateMapping,
   toCandidates, toInfraProposals, toProposals, verdictOf,
   type Candidate, type CheckCtx, type CheckResult, type CrossAnswer, type Entry, type ExtractedClaim, type ExtractedItem, type Fact, type InfraItem,
-  type KbDocument, type OperationHint, type RowError, type TableMapping,
+  type KbDocument, type OperationHint, type ParamInfo, type RowError, type TableMapping,
 } from '@def-ops/knowledge';
-import { RULE_INPUTS } from '@def-ops/sim';
+import { RULE_INPUTS, ruleInputRefs, rulesFrom, type SideProfile } from '@def-ops/sim';
+import { BUILTIN, getData } from '../sim/userdata';
 import type { ChatMessage, LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from '../sim/game-protocol';
 import { infraTextCandidate, saveCandidates, textCandidateOf, type StoredCandidate, type TextCandidate } from './candidates';
@@ -26,6 +27,27 @@ import { cropImage, renderPdfPage, type PageImage } from './text';
 /** Перечень входов правил — подсказка извлечению нормативов (param) и проверке «норматив» (неизвестный параметр). */
 const PARAM_HINTS = RULE_INPUTS.map((i) => ({ path: i.path, title: i.title, ...(i.unit ? { unit: i.unit } : {}) }));
 export const KNOWN_PARAMS = new Set(RULE_INPUTS.map((i) => i.path));
+/** Единицы входов правил — проверке «норматив» (единица и знак норматива); значений нет. */
+export const PARAM_INFO: Record<string, ParamInfo> = Object.fromEntries(RULE_INPUTS.map((i) => [i.path, i.unit ? { unit: i.unit } : {}]));
+
+/** Исходный набор правил: нынешние значения входов для проверки «норматив» (порядок величины). */
+const BASE_RULES = 'ww2-draft';
+let paramInfoP: Promise<Record<string, ParamInfo>> | null = null;
+/**
+ * Единицы и нынешние значения входов правил (исходный набор, профили сторон, агентная модель) — проверке «норматив».
+ * Прочитать данные не удалось — только единицы (PARAM_INFO).
+ */
+export function paramInfo(): Promise<Record<string, ParamInfo>> {
+  paramInfoP ??= (async () => {
+    const rules = await rulesFrom((kind, file) => getData(kind, file), BASE_RULES);
+    const profiles: Record<string, SideProfile> = {};
+    for (const id of BUILTIN.profiles) profiles[id] = (await getData('profiles', `${id}.json`)) as SideProfile;
+    const agents = await getData('rules', 'agents-v0.json');
+    const values = new Map(ruleInputRefs(rules, profiles, agents).map((x) => [x.path, x.value]));
+    return Object.fromEntries(Object.entries(PARAM_INFO).map(([k, v]) => [k, { ...v, value: values.get(k) ?? null }]));
+  })().catch((e) => { console.warn('входы правил для проверки «норматив»:', e); paramInfoP = null; return PARAM_INFO; });
+  return paramInfoP;
+}
 
 export interface IngestProgress { done: number; total: number; auto: number; review: number; drop: number; stage: string }
 
@@ -215,7 +237,7 @@ export async function ingest(docId: string, llm: LlmSettings, o: IngestOptions):
   /** Проверки 1–7, перекрёстное прочтение (текст и скан), итог. */
   const check = async (cands: Candidate[], extra: Partial<CheckCtx>, entries: Entry[]): Promise<Candidate[]> => {
     const existing = entries.flatMap((e) => (e.facts ?? []).filter((f) => f.claim));
-    const ctx: CheckCtx = { formations: cx.formations, entries, theatre: cx.theatre, op: cx.op, strengthOf: strengthFrom(existing), existing, knownParams: KNOWN_PARAMS, ...extra };
+    const ctx: CheckCtx = { formations: cx.formations, entries, theatre: cx.theatre, op: cx.op, strengthOf: strengthFrom(existing), existing, knownParams: KNOWN_PARAMS, paramInfo: await paramInfo(), ...extra };
     const match = (name: string) => matchFormation(name, cx.formations, entries);
     for (const c of cands) {
       const checks: CheckResult[] = runChecks(c, ctx);

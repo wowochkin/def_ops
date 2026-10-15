@@ -165,3 +165,39 @@ describe('compileRules: происхождение и итоги', () => {
     expect(r.outcomes.filter((o) => o.claim.scenario === 'op-b')).toHaveLength(1);
   });
 });
+
+describe('compileRules: нормативы, которые не должны доходить до калибровки', () => {
+  it('коридор ≤ 0 или вырожденный [0, 0] — норматив не берётся, отмечен в расхождениях', () => {
+    const zero = compileRules([entry('e1', [fact(param('defense.prepared', { value: 0 }), 'A')])], INPUTS, {}, O);
+    expect(zero.corridors.prepared).toEqual({ range: [1.0, 2.2], fact: null });
+    expect(zero.provenance.find((p) => p.path === 'defense.prepared')).toMatchObject({ fact: null, reliability: 'assumption' });
+    expect(zero.conflicts).toHaveLength(1);
+    expect(zero.conflicts[0]).toMatchObject({ path: 'defense.prepared', facts: [{ entry: 'e1', index: 0 }] });
+    expect(zero.conflicts[0].why).toMatch(/≤ 0|не берётся/);
+    const neg = compileRules([entry('e1', [fact(param('advanceMax', { range: [-5, 10] }), 'B')])], INPUTS, {}, O);
+    expect(neg.corridors.advance.fact).toBeNull();
+    // рядом годный норматив — берётся он
+    const both = compileRules([entry('e1', [fact(param('defense.prepared', { value: 0 }), 'A'), fact(param('defense.prepared', { value: 1.5 }), 'C')])], INPUTS, {}, O);
+    expect(both.corridors.prepared.fact?.index).toBe(1);
+  });
+  it('норматив одной стороны на общий вход — не берётся, отмечен в расхождениях', () => {
+    const r = compileRules([entry('e1', [fact(param('defense.prepared', { value: 1.5, side: 'de' }), 'A')])], INPUTS, {}, O);
+    expect(r.corridors.prepared).toEqual({ range: [1.0, 2.2], fact: null });
+    expect(r.provenance.find((p) => p.path === 'defense.prepared')).toMatchObject({ fact: null });
+    expect(r.conflicts).toHaveLength(1);
+    expect(r.conflicts[0].why).toMatch(/сторон/);
+    const s = compileRules([entry('e1', [fact(param('advanceMax', { range: [25, 45], side: 'su' }), 'B')])], INPUTS, {}, O);
+    expect(s.corridors.advance.fact).toBeNull();
+  });
+  it('местность: пересечение пусто — закреплённый норматив задаёт коридор, а не лучший по надёжности', () => {
+    const es = [entry('e1', [fact(param('defense.terrain.forest', { value: 1.2 }), 'A'), fact(param('defense.terrain.urban', { value: 4 }), 'B')])];
+    const urban = es[0].facts![1];
+    const r = compileRules(es, INPUTS, { [pinKey('param', 'defense.terrain.urban', '')]: pinOf({ entry: 'e1', index: 1, fact: urban, updated: '' }) }, O);
+    const c = r.conflicts.find((x) => x.path === 'terrainExp')!;
+    expect(c).toBeDefined();
+    expect(c.pinned).toBe(true);
+    expect(r.corridors.terrainExp.fact?.index).toBe(1);
+    expect(r.corridors.terrainExp.range[0]).toBeCloseTo(Math.log(3.2) / Math.log(2), 9);
+    expect(r.corridors.terrainExp.range[1]).toBeCloseTo(Math.log(4.8) / Math.log(2), 9);
+  });
+});

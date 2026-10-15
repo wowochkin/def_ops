@@ -99,6 +99,14 @@ describe('промпт нормативов: правила и перечень 
     expect(plain).not.toContain('advanceMax — Наибольший темп');
     expect(plain).toContain('param');
   });
+  it('param: значение — в единице входа из перечня; процент прироста → множитель только у входа ×, иначе — как в тексте', () => {
+    const r = claimRules(undefined, [...P, { path: 'defense.prepared', title: 'Подготовленная оборона', unit: '×' }]);
+    expect(r).toContain('defense.prepared — Подготовленная оборона, ×');
+    expect(r).toMatch(/в единице (входа|параметра) из перечня/);
+    expect(r).toMatch(/\+35 % → 1,35/);
+    expect(r).toMatch(/только (если|когда) единица (входа|параметра) — ×/);
+    expect(r).toMatch(/иначе[^\n]*как в тексте/);
+  });
   it('признаки норматива', () => {
     expect(isNormative('поправка обороны 1,5')).toBe(true);
     expect(isNormative('потери 12 % численности')).toBe(true);
