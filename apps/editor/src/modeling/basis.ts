@@ -5,7 +5,7 @@
  * factUse — используется ли факт записи в сборке операции (держит вход, перекрыт другим кандидатом, не нужен);
  * claimText — формальная часть факта по-русски.
  */
-import type { Claim, CompileConflict, Entry, FactRef, Provenance } from '@def-ops/knowledge';
+import { doctrineWords, type Claim, type CompileConflict, type Entry, type FactRef, type Provenance } from '@def-ops/knowledge';
 import { originOf } from '../kb/fact-form';
 
 export type BasisKind = 'strength' | 'parent' | 'position' | 'boundary' | 'crossing';
@@ -20,7 +20,7 @@ export const BASIS_KINDS: [BasisKind, string][] = [
 ];
 
 /** Вид формальной части по-русски. */
-export const KIND_RU: Record<Claim['kind'] | string, string> = { strength: 'численность', reinforce: 'пополнение', parent: 'подчинённость', enter: 'ввод', position: 'положение', boundary: 'линия', crossing: 'переправа', event: 'событие', losses: 'потери' };
+export const KIND_RU: Record<Claim['kind'] | string, string> = { strength: 'численность', reinforce: 'пополнение', parent: 'подчинённость', enter: 'ввод', position: 'положение', boundary: 'линия', crossing: 'переправа', event: 'событие', losses: 'потери', doctrine: 'доктрина' };
 
 /** Вид входа по его имени ('su_61a.personnel', 'change:3', …); не считается в сводке — null. */
 export function basisKindOf(p: Provenance): BasisKind | null {
@@ -98,6 +98,7 @@ export function claimText(c: Claim, name: (id: string) => string = (id) => id): 
       const v = c.range ? `${c.range[0]}–${c.range[1]}` : c.value != null ? String(c.value) : c.why ? 'допущение' : '—';
       return `параметр ${c.param}${c.side ? ` (${c.side === 'su' ? 'СССР' : 'Германия'})` : ''}: ${v}${c.unit ? ` ${c.unit}` : ''}`;
     }
+    case 'doctrine': return doctrineWords(c);
     case 'outcome': return `итог ${c.measure}${c.subject ? ` ${name(c.subject)}` : ''}, ${c.scenario}, ${ruDate(c.from)} — ${ruDate(c.to)}: ${c.range[0]}–${c.range[1]} ${c.unit}`;
   }
 }

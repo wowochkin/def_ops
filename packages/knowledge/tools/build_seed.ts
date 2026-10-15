@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import type { Claim, Entry, Fact, Reliability, Relation } from '../src/schema';
 import { defaultRubrics, RUBRIC_CODES } from '../src/rubrics';
+import { DOCTRINE_GROUPS, DOCTRINE_LEVELS, doctrineValues, type DoctrineClaim } from '../src/doctrine';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = join(ROOT, 'docs/sources');
@@ -678,22 +679,28 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     stop: ['3.2.2', '3.1.4'], bypass: ['3.1.3', '3.2.1'], regroup: ['3.1.4', '7.3'], reserve: ['3.1.4'], artillery: ['3.3.1'], air: ['3.3.3'],
     layout: ['3.2.2', '6.4'], counterattack: ['3.1.4', '3.2.2'], withdrawal: ['3.2.2'], reserves: ['3.1.4', '3.2.2'], timing: ['3.4.4', '7.3'],
   };
-  const GROUP_RU: Record<string, string> = { frontage: 'ширина полос и участков прорыва', echelons: 'построение в эшелоны', depth: 'глубина задач', tempo: 'темп наступления', commit: 'ввод вторых эшелонов и подвижных групп', stop: 'остановка и переход к обороне', bypass: 'обход узлов обороны', regroup: 'перегруппировка', reserve: 'резервы', artillery: 'артиллерийское наступление', air: 'авиационное обеспечение', layout: 'построение обороны', counterattack: 'контратаки и контрудары', withdrawal: 'отход и отвод с первой позиции', reserves: 'резервы обороны', timing: 'сроки' };
   const LEVEL_RU: Record<string, string> = { front: 'фронт', army: 'армия', corps: 'корпус', division: 'дивизия' };
+  const isLevel = (l: unknown): l is DoctrineClaim['level'] => (DOCTRINE_LEVELS as readonly unknown[]).includes(l);
+  const doctrineClaim = (side: 'su' | 'de', level: DoctrineClaim['level'], r: { id: string; group: string; condition?: string; action: string; values?: unknown }): DoctrineClaim => {
+    const values = doctrineValues(r.values);
+    return { kind: 'doctrine', side, level, group: r.group, rule: r.id, condition: r.condition ?? '', action: r.action, ...(values ? { values } : {}) };
+  };
   for (const file of ['soviet-offensive-doctrine-1945.json', 'soviet-offensive-doctrine-1945-tsamo.json', 'german-defence-doctrine-1945.json']) {
     const d = opt<{ meta?: { title?: string }; sources?: Record<string, { ref: string }>; rules: { id: string; group: string; level?: string; condition?: string; action: string; values?: unknown; source?: string; page?: string; reliability?: string; note?: string }[]; examples?: Record<string, unknown>[]; gaps?: unknown[] }>(file);
     if (!d) continue;
     regSources(file, d.sources);
-    const side = file.startsWith('german') ? 'de' : 'su';
+    const side: 'su' | 'de' = file.startsWith('german') ? 'de' : 'su';
     const tsamo = file.includes('tsamo');
     const groups = [...new Set(d.rules.map((r) => r.group))];
     for (const g of groups) {
       const rs = d.rules.filter((r) => r.group === g);
       const id = `org:${side}-doctrine-${g}`;
-      put({ id, category: 'organization', group: side, rubrics: DOCTRINE_RUBRICS[g] ?? ['3.1'], title: `${side === 'su' ? 'Наступление Красной армии, 1945' : 'Оборона вермахта, 1945'}: ${GROUP_RU[g] ?? g}`, status: 'checked',
+      put({ id, category: 'organization', group: side, rubrics: DOCTRINE_RUBRICS[g] ?? ['3.1'], title: `${side === 'su' ? 'Наступление Красной армии, 1945' : 'Оборона вермахта, 1945'}: ${DOCTRINE_GROUPS[g] ?? g}`, status: 'checked',
         summary: `Положения доктрины и практики ${side === 'su' ? 'наступления фронтов, армий, корпусов и дивизий' : 'обороны армий, корпусов и дивизий'} с нормативами — по уставам, исследованиям${tsamo ? ' и документам ЦАМО' : ''}; на них опираются штабы агентной модели.`,
-        facts: [{ key: 'side', value: SIDE[side] }, { key: 'topic', value: GROUP_RU[g] ?? g },
-          ...rs.map((r) => ({ key: 'principles', value: cutx(`${r.level ? `[${LEVEL_RU[r.level] ?? r.level}] ` : ''}${r.condition ? `${r.condition} → ` : ''}${r.action}${r.values ? ` (${normValue(r.values)})` : ''}${r.note ? `. ${r.note}` : ''}`), source: sref(file, r.source), pages: r.page, reliability: rel(r.reliability) })),
+        facts: [{ key: 'side', value: SIDE[side] }, { key: 'topic', value: DOCTRINE_GROUPS[g] ?? g },
+          ...rs.map((r) => ({ key: 'principles', value: cutx(`${r.level ? `[${LEVEL_RU[r.level] ?? r.level}] ` : ''}${r.condition ? `${r.condition} → ` : ''}${r.action}${r.values ? ` (${normValue(r.values)})` : ''}${r.note ? `. ${r.note}` : ''}`), source: sref(file, r.source), pages: r.page, reliability: rel(r.reliability),
+            // формальная часть правила: из неё штабы берут правила своей стороны (doctrineFor), числа — только числа и пары
+            ...(isLevel(r.level) ? { claim: doctrineClaim(side, r.level, r) } : {}) })),
           ...(tsamo ? [{ key: 'covers', value: 'практика 1-го Белорусского фронта по документам ЦАМО' }] : [])],
         relations: [...new Set(rs.map((r) => sref(file, r.source)).filter(Boolean) as string[])].map((t) => ({ type: 'source' as const, target: t })) });
     }

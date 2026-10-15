@@ -82,7 +82,9 @@ export type Claim =
   /** Значение входа правил или профиля (путь param): число или диапазон; без value/range и без надёжности — допущение (why — почему и чего не хватает). side — норматив одной стороны. */
   | { kind: 'param'; param: string; value?: number; range?: [number, number]; unit?: string; side?: 'su' | 'de'; why?: string; /** значение дано на 1/scale входа (riverCrossHours/3 — scale 3) */ scale?: number }
   /** Ожидаемый итог прогона (темп, потери, ширина полосы…): что мерить, в каком сценарии, у кого, за какой период и в каких пределах. */
-  | { kind: 'outcome'; measure: 'pace' | 'loss' | 'frontage' | string; scenario: string; subject?: string; from: string; to: string; range: [number, number]; unit: string; /** для ширины полосы: сторона, ступень, район */ side?: string; echelon?: string; near?: string };
+  | { kind: 'outcome'; measure: 'pace' | 'loss' | 'frontage' | string; scenario: string; subject?: string; from: string; to: string; range: [number, number]; unit: string; /** для ширины полосы: сторона, ступень, район */ side?: string; echelon?: string; near?: string }
+  /** Правило доктрины «условие → действие» (rule — id правила): сторона, ступень, группа (DOCTRINE_GROUPS); values — числа и диапазоны правила. */
+  | { kind: 'doctrine'; side: 'su' | 'de'; level: 'front' | 'army' | 'corps' | 'division'; group: string; rule: string; condition: string; action: string; values?: Record<string, number | [number, number]> };
 
 /**
  * Сведения норматива модели, не помещающиеся в формальную часть (строка norms.json): по ним собирается прежняя

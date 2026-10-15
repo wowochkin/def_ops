@@ -3,12 +3,12 @@
  * кандидат ручного ввода (manualCandidate: проверки 3–7, без источника — допущение) и замечания формы (formWarnings).
  * Чистые функции — форма (FactForm.tsx) и тесты.
  */
-import { fingerprint, type Candidate, type CheckResult, type Claim, type Entry, type Evidence, type Fact, type Reliability } from '@def-ops/knowledge';
+import { DOCTRINE_LEVELS, doctrineValueRu, fingerprint, type Candidate, type CheckResult, type Claim, type Entry, type Evidence, type Fact, type Reliability } from '@def-ops/knowledge';
 import { RULE_INPUTS } from '@def-ops/sim';
 import { parseCount } from './queue';
 
-/** param — путь из перечня входов правил; side — сторона (su, de). */
-export type FormFieldType = 'subject' | 'date' | 'number' | 'text' | 'list' | 'state' | 'param' | 'side';
+/** param — путь из перечня входов правил; side — сторона (su, de); level — ступень правила доктрины; values — числа правила «имя=число; имя=от–до». */
+export type FormFieldType = 'subject' | 'date' | 'number' | 'text' | 'list' | 'state' | 'param' | 'side' | 'level' | 'values';
 export interface FormField { key: string; title: string; type: FormFieldType; required?: boolean }
 
 const F = (key: string, title: string, type: FormFieldType, required = false): FormField => ({ key, title, type, required });
@@ -38,11 +38,14 @@ export const FORM_FIELDS: Record<Claim['kind'], FormField[]> = {
     F('scale', 'дано на 1/n входа', 'number'), F('why', 'почему допущение', 'text')],
   outcome: [SUBJ_OPT, F('measure', 'мера (pace, loss, frontage)', 'text', true), F('scenario', 'операция', 'text', true), F('from', 'с', 'date', true), F('to', 'по', 'date', true),
     ...RANGE(true), F('unit', 'единица', 'text', true), F('side', 'сторона', 'side'), F('echelon', 'ступень', 'text'), F('near', 'район', 'text')],
+  // правило доктрины «условие → действие» с числами
+  doctrine: [F('side', 'сторона', 'side', true), F('level', 'уровень', 'level', true), F('group', 'группа', 'text', true), F('rule', 'id правила', 'text', true),
+    F('condition', 'условие', 'text', true), F('action', 'действие', 'text', true), F('values', 'числа (имя=число; имя=от–до)', 'values')],
 };
 
 /** Ключ текстового факта по виду (как у фактов встроенной базы). */
 export const FACT_KEY: Record<Claim['kind'], string> = {
-  strength: 'personnel', reinforce: 'reinforce', parent: 'parent', enter: 'enter', position: 'path', boundary: 'boundary', crossing: 'crossings', event: 'event', losses: 'losses', param: 'numbers', outcome: 'numbers',
+  strength: 'personnel', reinforce: 'reinforce', parent: 'parent', enter: 'enter', position: 'path', boundary: 'boundary', crossing: 'crossings', event: 'event', losses: 'losses', param: 'numbers', outcome: 'numbers', doctrine: 'principles',
 };
 
 /** Дата из ввода: ГГГГ-ММ-ДД[ЧЧ:ММ] или ДД.ММ.ГГГГ [ЧЧ:ММ] → ISO; пусто — ''; не дата — null. */
@@ -79,7 +82,7 @@ export function formToClaim(kind: Claim['kind'], fields: Record<string, string>)
   const out: Record<string, unknown> = {};
   for (const f of spec) {
     const raw = (fields[f.key] ?? '').trim();
-    if (!raw) { if (f.required) return { error: `не заполнено: ${f.title}` }; continue; }
+    if (!raw) { if (f.required) return { error: kind === 'doctrine' ? `${f.title}: обязательное поле` : `не заполнено: ${f.title}` }; continue; }
     if (f.type === 'date') {
       const d = parseDate(raw);
       if (!d) return { error: `${f.title}: «${raw}» — не дата (ГГГГ-ММ-ДД или ДД.ММ.ГГГГ)` };
@@ -101,6 +104,13 @@ export function formToClaim(kind: Claim['kind'], fields: Record<string, string>)
       const sd = ({ su: 'su', de: 'de', ссср: 'su', германия: 'de' } as Record<string, 'su' | 'de'>)[raw.toLowerCase()];
       if (!sd) return { error: `${f.title}: «${raw}» — su или de` };
       out[f.key] = sd;
+    } else if (f.type === 'level') {
+      if (!(DOCTRINE_LEVELS as readonly string[]).includes(raw)) return { error: `${f.title}: front, army, corps или division` };
+      out[f.key] = raw;
+    } else if (f.type === 'values') {
+      const v = parseValues(raw);
+      if ('error' in v) return v;
+      if (Object.keys(v.values).length) out[f.key] = v.values;
     } else out[f.key] = raw;
   }
   const nums = (keys: string[]) => keys.some((k) => typeof out[k] === 'number');
@@ -147,7 +157,29 @@ export function formToClaim(kind: Claim['kind'], fields: Record<string, string>)
       return { claim: { kind, measure: out.measure as string, scenario: out.scenario as string, ...pick(out, ['subject']), from: out.from as string, to: out.to as string,
         range, unit: out.unit as string, ...pick(out, ['side', 'echelon', 'near']) } as Claim };
     }
+    case 'doctrine':
+      return { claim: { kind, side: out.side as 'su' | 'de', level: out.level as 'front', group: out.group as string, rule: out.rule as string,
+        condition: out.condition as string, action: out.action as string, ...pick(out, ['values']) } };
   }
+}
+
+const NUM = String.raw`-?\d+(?:[.,]\d+)?`;
+const toNum = (s: string) => Number(s.replace(',', '.'));
+/** Числа правила доктрины из строки «имя=число; имя=от–до» (десятичная точка или запятая; тире, минус или дефис между границами). */
+export function parseValues(raw: string): { values: Record<string, number | [number, number]> } | { error: string } {
+  const values: Record<string, number | [number, number]> = {};
+  for (const part of raw.split(';').map((x) => x.trim()).filter(Boolean)) {
+    const m = /^([^=]+?)\s*=\s*(.+)$/.exec(part);
+    if (!m) return { error: `числа: «${part}» — нужно имя=число или имя=от–до` };
+    const [, name, v] = m;
+    if (new RegExp(`^${NUM}$`).test(v)) { values[name] = toNum(v); continue; }
+    const r = new RegExp(`^(${NUM})\\s*[–—−-]\\s*(${NUM})$`).exec(v);
+    if (!r) return { error: `${name}: «${v}» — не число и не «от–до»` };
+    const lo = toNum(r[1]), hi = toNum(r[2]);
+    if (hi < lo) return { error: `${name}: «до» меньше, чем «от»` };
+    values[name] = [lo, hi];
+  }
+  return { values };
 }
 
 const pick = (o: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.filter((k) => o[k] != null).map((k) => [k, o[k]]));
@@ -164,6 +196,7 @@ export function claimToForm(c: Claim): Record<string, string> {
   if (c.kind === 'position' && c.lngLat) { out.lon = String(c.lngLat[0]); out.lat = String(c.lngLat[1]); }
   if (c.kind === 'event') out.id = c.id;
   if ((c.kind === 'param' || c.kind === 'outcome') && c.range) { out.rangeFrom = String(c.range[0]); out.rangeTo = String(c.range[1]); }
+  if (c.kind === 'doctrine') { if (c.values) out.values = Object.entries(c.values).map(([k, v]) => `${k}=${doctrineValueRu(v)}`).join('; '); else delete out.values; }
   return out;
 }
 

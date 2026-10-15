@@ -34,17 +34,20 @@ const time = (s: string) => Date.parse(s);
 
 /**
  * О ком факт: subject, id события или пара объединений линии; у значения правила — путь параметра (с '@su'/'@de',
- * если норматив одной стороны); у итога — 'outcome:сценарий:мера:соединение[:сторона/ступень/район]:с–по'.
+ * если норматив одной стороны); у правила доктрины — 'сторона:правило'; у итога — 'outcome:сценарий:мера:соединение[:сторона/ступень/район]:с–по'.
  */
 export const subjectOf = (c: Claim): string => c.kind === 'boundary' ? c.between.join('|') : c.kind === 'event' ? c.id
   : c.kind === 'param' ? (c.side ? `${c.param}@${c.side}` : c.param)
+  : c.kind === 'doctrine' ? `${c.side}:${c.rule}`
   : c.kind === 'outcome' ? `outcome:${c.scenario}:${c.measure}:${c.subject ?? ''}${c.side || c.echelon || c.near ? `:${c.side ?? ''}/${c.echelon ?? ''}/${c.near ?? ''}` : ''}:${c.from}–${c.to}` : c.subject;
 
-/** Дата факта для близости к моменту: at, иначе from; у потерь и итога — конец периода; у значения правила даты нет (''). */
-export const dateOf = (c: Claim): string => c.kind === 'losses' || c.kind === 'outcome' ? c.to : c.kind === 'param' ? '' : 'at' in c ? c.at : c.from;
+/** Дата факта для близости к моменту: at, иначе from; у потерь и итога — конец периода; у значения правила и правила доктрины даты нет (''). */
+export const dateOf = (c: Claim): string => c.kind === 'losses' || c.kind === 'outcome' ? c.to : c.kind === 'param' || c.kind === 'doctrine' ? '' : 'at' in c ? c.at : c.from;
 
-/** Состояние, действующее с from до смены: берётся последнее действующее на момент. Значение правила без даты — тоже «всегда». */
-const isState = (k: Claim['kind']) => k === 'parent' || k === 'crossing' || k === 'param';
+/** Состояние, действующее с from до смены: берётся последнее действующее на момент. Значение правила и правило доктрины без даты — тоже «всегда». */
+const isState = (k: Claim['kind']) => k === 'parent' || k === 'crossing' || k === 'param' || k === 'doctrine';
+/** Без даты: кандидаты — все факты по ключу. */
+const undated = (k: Claim['kind']) => k === 'param' || k === 'doctrine';
 
 /** Порог существенного расхождения чисел по полю (как в сверке, sync.ts): люди 500, танки 5, орудия 20. */
 const FLOOR: Record<string, number> = { personnel: 500, killed: 500, wounded: 500, missing: 500, total: 500, tanks: 5, guns: 20 };
@@ -70,6 +73,8 @@ function differ(a: Claim, b: Claim): boolean {
   // значение правила и итог — по числам: единица, пояснение и сведения норматива не различают
   if (a.kind === 'param' && b.kind === 'param') return !deepEqual([a.value, a.range], [b.value, b.range]);
   if (a.kind === 'outcome' && b.kind === 'outcome') return !deepEqual(a.range, b.range);
+  // правило доктрины — по условию, действию и числам: ступень и группа не различают
+  if (a.kind === 'doctrine' && b.kind === 'doctrine') return !deepEqual([a.condition, a.action, a.values ?? null], [b.condition, b.action, b.values ?? null]);
   if (isNumeric(a.kind)) {
     const x = a as Record<string, unknown>, y = b as Record<string, unknown>;
     for (const f of NUMS) {
@@ -95,13 +100,13 @@ export function resolve(
   const state = isState(kind);
   const candidates = same.filter((f) => {
     const d = time(dateOf(f.fact.claim!));
-    if (kind === 'param') return true;
+    if (undated(kind)) return true;
     if (state || window === 0) return d <= t;
     return Math.abs(d - t) <= window * DAY;
   });
   // расхождение — среди кандидатов на тот же момент, что и выбранный; надёжность не фильтрует
   const conflictOf = (chosen: FactRef | null): boolean => {
-    const group = window > 0 || kind === 'param' ? candidates
+    const group = window > 0 || undated(kind) ? candidates
       : chosen ? candidates.filter((f) => time(dateOf(f.fact.claim!)) === time(dateOf(chosen.fact.claim!))) : [];
     for (let i = 0; i < group.length; i++)
       for (let j = i + 1; j < group.length; j++) if (differ(group[i].fact.claim!, group[j].fact.claim!)) return true;

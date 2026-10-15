@@ -20,3 +20,4 @@ export * from './model-index';
 export * from './model-assistant';
 export * from './norm-facts';
 export * from './compile-rules';
+export * from './doctrine';

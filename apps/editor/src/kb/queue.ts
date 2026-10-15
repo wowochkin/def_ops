@@ -34,14 +34,14 @@ export const failKinds = (c: AnyCand): CheckId[] => [...new Set(c.checks.filter(
 /** О ком кандидат: id соединения (subject, оба в линии) и названия из источника. */
 export function candSubjects(c: AnyCand): string[] {
   const cl = c.claim;
-  const ids = !cl ? [] : cl.kind === 'boundary' ? cl.between : cl.kind === 'event' || cl.kind === 'param' || cl.kind === 'outcome' ? [] : [cl.subject];
+  const ids = !cl ? [] : cl.kind === 'boundary' ? cl.between : cl.kind === 'event' || cl.kind === 'param' || cl.kind === 'outcome' || cl.kind === 'doctrine' ? [] : [cl.subject];
   return [...ids, c.names.subject, ...(c.names.between ?? [])].filter((x): x is string => !!x);
 }
 
 /** Соединения кандидата для списка фильтра: id, а где не сопоставлено — название из источника. */
 export function subjectKeys(c: AnyCand): string[] {
   const cl = c.claim;
-  if (!cl || cl.kind === 'event' || cl.kind === 'param') return [];
+  if (!cl || cl.kind === 'event' || cl.kind === 'param' || cl.kind === 'doctrine') return [];
   if (cl.kind === 'boundary') return cl.between.map((x, i) => x || c.names.between?.[i] || '').filter(Boolean);
   return [cl.subject || c.names.subject || ''].filter(Boolean);
 }
@@ -95,6 +95,8 @@ export const CLAIM_FIELDS: Record<Claim['kind'], ClaimField[]> = {
   // нормативы модели: полная форма — в задаче 3 части 3
   param: [F('param', 'параметр', 'text'), F('value', 'значение', 'number'), F('unit', 'единица', 'text'), F('why', 'почему допущение', 'text')],
   outcome: [F('measure', 'мера', 'text'), F('scenario', 'сценарий', 'text'), F('from', 'с', 'date'), F('to', 'по', 'date'), F('unit', 'единица', 'text')],
+  // правило доктрины: числа — в полной форме (FactForm)
+  doctrine: [F('side', 'сторона', 'text'), F('level', 'уровень', 'text'), F('group', 'группа', 'text'), F('rule', 'id правила', 'text'), F('condition', 'условие', 'text'), F('action', 'действие', 'text')],
 };
 
 export const CROSSING_STATE_RU: Record<Extract<Claim, { kind: 'crossing' }>['state'], string> = { open: 'действует', destroyed: 'разрушена', built: 'наведена' };
@@ -134,7 +136,7 @@ export function setClaimField(claim: Claim, key: string, raw: string): Claim {
 /** Соединение кандидата (между — i-й из пары). */
 export function setSubject(claim: Claim, id: string, i = 0): Claim {
   if (claim.kind === 'boundary') { const b: [string, string] = [...claim.between]; b[i] = id; return { ...claim, between: b }; }
-  if (claim.kind === 'event' || claim.kind === 'param' || (claim.kind === 'outcome' && claim.measure === 'frontage')) return claim;
+  if (claim.kind === 'event' || claim.kind === 'param' || claim.kind === 'doctrine' || (claim.kind === 'outcome' && claim.measure === 'frontage')) return claim;
   return { ...claim, subject: id };
 }
 

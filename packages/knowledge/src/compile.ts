@@ -264,7 +264,7 @@ export function compileOperation(entries: Entry[], op: CompileInput, pins: Pins)
   const from = tStart - UNMATCHED_BEFORE * DAY;
   for (const x of facts) {
     const c = x.fact.claim!;
-    if (c.kind === 'crossing' || c.kind === 'event' || c.kind === 'param' || c.kind === 'outcome') continue;
+    if (c.kind === 'crossing' || c.kind === 'event' || c.kind === 'param' || c.kind === 'outcome' || c.kind === 'doctrine') continue;
     const ids = c.kind === 'boundary' ? c.between : [c.subject];
     if (ids.every((i) => known.has(i))) continue;
     const t = ms(dateOf(c));

@@ -48,11 +48,12 @@ export function numbersIn(text: string): number[] {
   return out;
 }
 
-/** Числа формальной части: численность, техника, потери; у норматива — значение и границы диапазона. */
+/** Числа формальной части: численность, техника, потери; у норматива — значение и границы диапазона; у правила доктрины — его числа и границы. */
 export function claimNumbers(c: Claim): number[] {
   const r = c as Record<string, unknown>;
   if (c.kind === 'param') return [c.value, ...(c.range ?? [])].filter((v): v is number => typeof v === 'number');
   if (c.kind === 'outcome') return (c.range ?? []).filter((v): v is number => typeof v === 'number');
+  if (c.kind === 'doctrine') return Object.values(c.values ?? {}).flat().filter((v): v is number => typeof v === 'number');
   return ['personnel', 'tanks', 'guns', 'killed', 'wounded', 'missing', 'total'].map((k) => r[k]).filter((v): v is number => typeof v === 'number');
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { subjectOf, resolve, pinKey, pinOf, claimFacts, type FactRef, type Fact, type Entry, type Claim } from '../src';
+import { subjectOf, resolve, pinKey, pinOf, claimFacts, doctrineKey, type FactRef, type Fact, type Entry, type Claim } from '../src';
 
 const ref = (index: number, claim: Claim, reliability: 'A' | 'B' | 'C' | undefined, updated = '', entry = 'e1'): FactRef => ({
   entry, index, updated, fact: { key: 'k', value: 'v', reliability, claim },
@@ -203,5 +203,35 @@ describe('итоги за разные периоды', () => {
     expect(r.chosen).toBe(a);
     expect(r.conflict).toBe(false);
     expect(subjectOf(a.fact.claim!)).not.toBe(subjectOf(b.fact.claim!));
+  });
+});
+
+describe('правила доктрины (doctrine)', () => {
+  const doc = (i: number, rel: 'A' | 'B' | 'C', side: 'su' | 'de', action: string): FactRef =>
+    ref(i, { kind: 'doctrine', side, level: 'corps', group: 'counterattack', rule: 'x', condition: 'Вклинение', action }, rel);
+  const a = doc(0, 'A', 'de', 'Контратака'), c = doc(1, 'C', 'de', 'Отход'), s = doc(2, 'A', 'su', 'Удар');
+  it('о ком — сторона:правило, даты нет; A побеждает C', () => {
+    expect(subjectOf(a.fact.claim!)).toBe('de:x');
+    const r = resolve([c, a, s], 'doctrine', 'de:x', '', {});
+    expect(r.chosen).toBe(a);
+    expect(r.conflict).toBe(true);
+    expect(r.candidates).not.toContain(s);
+    expect(r.candidates.length).toBe(2);
+  });
+  it('закрепление по doctrineKey действует; none — ничего', () => {
+    expect(doctrineKey('de', 'x')).toBe(pinKey('doctrine', 'de:x', ''));
+    expect(resolve([a, c], 'doctrine', 'de:x', '', { [doctrineKey('de', 'x')]: { entry: 'e1', index: 1 } }).chosen).toBe(c);
+    expect(resolve([a, c], 'doctrine', 'de:x', '', { [doctrineKey('de', 'x')]: 'none' }).chosen).toBeNull();
+  });
+  it('факт другой стороны в кандидаты не попадает; закрепление на него не действует', () => {
+    expect(resolve([s], 'doctrine', 'de:x', '', {}).chosen).toBeNull();
+    expect(resolve([a, s], 'doctrine', 'de:x', '', { [doctrineKey('de', 'x')]: { entry: 'e1', index: 2 } }).chosen).toBe(a);
+  });
+  it('различие — по условию, действию и числам', () => {
+    const v1 = ref(0, { kind: 'doctrine', side: 'de', level: 'corps', group: 'g', rule: 'x', condition: 'у', action: 'д', values: { k: 1 } }, 'A');
+    const v2 = ref(1, { kind: 'doctrine', side: 'de', level: 'army', group: 'h', rule: 'x', condition: 'у', action: 'д', values: { k: 1 } }, 'B');
+    expect(resolve([v1, v2], 'doctrine', 'de:x', '', {}).conflict).toBe(false);
+    const v3 = ref(2, { kind: 'doctrine', side: 'de', level: 'corps', group: 'g', rule: 'x', condition: 'у', action: 'д', values: { k: 2 } }, 'B');
+    expect(resolve([v1, v3], 'doctrine', 'de:x', '', {}).conflict).toBe(true);
   });
 });

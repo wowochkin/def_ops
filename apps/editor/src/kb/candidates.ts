@@ -130,6 +130,8 @@ function targetOf(c: Candidate, w: Work, ctx: AcceptCtx): Entry | null {
   if (cl.kind === 'event') return opEntry(c.op, 'event', w);
   // нормативы модели (значение правила, итог прогона): записи пока нет — приём в части 3, задача 3
   if (cl.kind === 'param' || cl.kind === 'outcome') return null;
+  // правило доктрины: приём в запись доктрины — вместе с извлечением правил из документов
+  if (cl.kind === 'doctrine') return null;
   if (cl.kind === 'crossing') {
     if (!cl.subject.trim() && c.names.subject?.trim()) cl.subject = c.names.subject.trim();
     if (!cl.subject.trim()) return null;

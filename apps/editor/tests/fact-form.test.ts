@@ -140,3 +140,23 @@ describe('нормативы модели в форме: param и outcome', () =
     expect(PARAM_OPTIONS.some((o) => o.path.startsWith('agents.'))).toBe(true);
   });
 });
+
+describe('formToClaim: правило доктрины', () => {
+  const base = { side: 'de', level: 'corps', group: 'counterattack', rule: 'r1', condition: 'Вклинение', action: 'Контратака', values: 'force_share=0,33; km=2–4' };
+  it('числа: «имя=число; имя=от–до», десятичная запятая', () => {
+    expect(ok('doctrine', base)).toEqual({ kind: 'doctrine', side: 'de', level: 'corps', group: 'counterattack', rule: 'r1', condition: 'Вклинение', action: 'Контратака', values: { force_share: 0.33, km: [2, 4] } });
+    expect(ok('doctrine', { ...base, values: '' })).not.toHaveProperty('values');
+  });
+  it('ошибки: пустое действие, «до» меньше «от», неизвестный уровень', () => {
+    expect(err('doctrine', { ...base, action: '' })).toBe('действие: обязательное поле');
+    expect(err('doctrine', { ...base, values: 'km=4–2' })).toBe('km: «до» меньше, чем «от»');
+    expect(err('doctrine', { ...base, level: 'полк' })).toBe('уровень: front, army, corps или division');
+    expect(err('doctrine', { ...base, values: 'km=много' })).toMatch(/^km: /);
+  });
+  it('claimToForm → formToClaim — тот же claim', () => {
+    const c: Claim = { kind: 'doctrine', side: 'su', level: 'front', group: 'frontage', rule: 'r2', condition: 'Прорыв', action: 'Сосредоточить', values: { pct: [5, 12], share: 0.75, 'km.su_47a': 4.3 } };
+    expect(ok('doctrine', claimToForm(c))).toEqual(c);
+    const d: Claim = { kind: 'doctrine', side: 'de', level: 'division', group: 'layout', rule: 'r3', condition: 'Оборона', action: 'Две позиции' };
+    expect(ok('doctrine', claimToForm(d))).toEqual(d);
+  });
+});

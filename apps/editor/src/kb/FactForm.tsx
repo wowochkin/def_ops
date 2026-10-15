@@ -5,7 +5,7 @@
  * сохранить можно.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { RELIABILITY, runChecks, type CheckCtx, type Claim, type Entry, type Fact, type FactRef, type Reliability } from '@def-ops/knowledge';
+import { DOCTRINE_GROUPS, DOCTRINE_LEVELS, LEVEL_RU, RELIABILITY, runChecks, type CheckCtx, type Claim, type Entry, type Fact, type FactRef, type Reliability } from '@def-ops/knowledge';
 import { claimText, KIND_RU } from '../modeling/basis';
 import { addManual, correctBuiltin, editFact } from './candidates';
 import { claimToForm, FACT_KEY, FORM_FIELDS, formToClaim, formWarnings, manualCandidate, PARAM_OPTIONS, type FormMeta } from './fact-form';
@@ -23,8 +23,12 @@ const KINDS = Object.keys(FORM_FIELDS) as Claim['kind'][];
 const STATE_OPTS: [string, string][] = [['open', 'действует'], ['destroyed', 'разрушена'], ['built', 'наведена']];
 const SIDE_OPTS: [string, string][] = [['su', 'советская'], ['de', 'германская']];
 
+/** Запись доктрины org:<сторона>-doctrine-<группа>: сторона и группа. */
+const doctrineOf = (e: Entry) => /^org:(su|de)-doctrine-(.+)$/.exec(e.id);
 /** Вид нового факта по категории записи. */
-const defaultKind = (e: Entry): Claim['kind'] => (e.category === 'terrain' ? 'crossing' : e.category === 'operations' || e.category === 'chronology' ? 'event' : 'strength');
+const defaultKind = (e: Entry): Claim['kind'] => (doctrineOf(e) ? 'doctrine' : e.category === 'terrain' ? 'crossing' : e.category === 'operations' || e.category === 'chronology' ? 'event' : 'strength');
+/** Начальные поля нового факта: соединение записи; у записи доктрины — сторона и группа. */
+const initialFields = (e: Entry): Record<string, string> => { const d = doctrineOf(e); return d ? { side: d[1], group: d[2] } : { subject: formationId(e) }; };
 /** id формирования записи (su_61a, de_9a). */
 const formationId = (e: Entry) => (e.aliases ?? []).find((a) => /^[a-z]+_/.test(a)) ?? '';
 
@@ -47,7 +51,7 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
   const entry = mode.kind === 'correct' ? null : mode.entry;
   const base: Fact | null = mode.kind === 'correct' ? mode.ref.fact : mode.kind === 'edit' ? mode.entry.facts?.[mode.index] ?? null : null;
   const [kind, setKind] = useState<Claim['kind']>(base?.claim?.kind ?? (entry ? defaultKind(entry) : 'strength'));
-  const [fields, setFields] = useState<Record<string, string>>(() => (base?.claim ? claimToForm(base.claim) : entry ? { subject: formationId(entry) } : {}));
+  const [fields, setFields] = useState<Record<string, string>>(() => (base?.claim ? claimToForm(base.claim) : entry ? initialFields(entry) : {}));
   const [meta, setMeta] = useState<FormMeta>(() => mode.kind === 'edit' && base
     ? { source: base.source ?? '', pages: base.pages ?? '', reliability: base.reliability, note: base.evidence?.kind === 'manual' ? base.evidence.note ?? '' : '' }
     : { source: '', pages: '', reliability: 'B', note: '' });
@@ -84,7 +88,7 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
     } else if (c.kind === 'outcome') {
       // итог: соединение необязательно (у ширины полосы его нет)
       if (c.subject && unknownName(c.subject)) { names.subject = c.subject; c.subject = ''; }
-    } else if (c.kind !== 'event' && c.kind !== 'crossing' && c.kind !== 'param') {
+    } else if (c.kind !== 'event' && c.kind !== 'crossing' && c.kind !== 'param' && c.kind !== 'doctrine') {
       if (unknownName(c.subject)) { names.subject = c.subject; c.subject = ''; }
       if (c.kind === 'parent' && unknownName(c.parent)) { names.parent = c.parent; c.parent = ''; }
     }
@@ -146,18 +150,20 @@ export function FactForm({ mode, ops, starts, allStarts = [], onDone }: { mode: 
       <label>Вид <select value={kind} disabled={mode.kind !== 'add'} onChange={(e) => { const k = e.target.value as Claim['kind']; setKind(k); if (k === 'outcome' && ops.length === 1) setFields((x) => ({ ...x, scenario: x.scenario || ops[0] })); }}>
         {KINDS.map((k) => <option key={k} value={k}>{KIND_RU[k] ?? k}</option>)}</select></label>
     </div>
+    <datalist id="kb-ff-groups">{Object.entries(DOCTRINE_GROUPS).map(([id, t]) => <option key={id} value={id}>{t}</option>)}</datalist>
     <datalist id="kb-ff-formations">{[...known].map(([id, n]) => <option key={id} value={id}>{n}</option>)}</datalist>
     <div className="kb-ff-fields">
       {FORM_FIELDS[kind].map((f) => <label key={f.key}>{f.title}{f.required ? ' *' : ''}
         {f.type === 'state' || f.type === 'side' ? <select value={fields[f.key] ?? ''} onChange={(e) => set(f.key, e.target.value)}><option value="">—</option>{(f.type === 'side' ? SIDE_OPTS : STATE_OPTS).map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>
+          : f.type === 'level' ? <select value={fields[f.key] ?? ''} onChange={(e) => set(f.key, e.target.value)}><option value="">—</option>{DOCTRINE_LEVELS.map((v) => <option key={v} value={v}>{LEVEL_RU[v]}</option>)}</select>
           : f.type === 'param' ? <select value={fields[f.key] ?? ''} onChange={(e) => { const p = PARAM_OPTIONS.find((x) => x.path === e.target.value); setFields((x) => ({ ...x, [f.key]: e.target.value, ...(p?.unit && !x.unit ? { unit: p.unit } : {}) })); }}>
             <option value="">— параметр модели —</option>
             {/* норматив на путь вне перечня (из документа) остаётся выбранным — проверка «норматив» отметит его */}
             {fields[f.key] && !KNOWN_PARAMS.has(fields[f.key]) && <option value={fields[f.key]}>{fields[f.key]} (нет в перечне)</option>}
             {[...new Set(PARAM_OPTIONS.map((x) => x.group))].map((g) => <optgroup key={g} label={g}>{PARAM_OPTIONS.filter((x) => x.group === g).map((x) => <option key={x.path} value={x.path}>{x.title} — {x.path}</option>)}</optgroup>)}
           </select>
-          : <input type="text" value={fields[f.key] ?? ''} list={f.type === 'subject' ? 'kb-ff-formations' : undefined}
-            placeholder={f.type === 'date' ? 'ГГГГ-ММ-ДД' : f.type === 'subject' ? 'id или название' : f.type === 'list' ? 'пункт — пункт' : ''}
+          : <input type="text" value={fields[f.key] ?? ''} list={f.type === 'subject' ? 'kb-ff-formations' : kind === 'doctrine' && f.key === 'group' ? 'kb-ff-groups' : undefined}
+            placeholder={f.type === 'date' ? 'ГГГГ-ММ-ДД' : f.type === 'subject' ? 'id или название' : f.type === 'list' ? 'пункт — пункт' : f.type === 'values' ? 'force_share=0,33; km=2–4' : ''}
             title={f.type === 'subject' && fields[f.key] ? name(fields[f.key]) : undefined} onChange={(e) => set(f.key, e.target.value)} />}</label>)}
     </div>
     <div className="kb-ff-fields">
