@@ -9,7 +9,9 @@ import {
   areaTitle, dayEvents, places, detectKm, describePlace, dist, hqReports, intelReport, nearbyPlaces, orderDelay, rumb, unitReports,
   commandTerms, groupOf, onMap, profileOf, sectorText, shortName, supplyHoursOf, withBoundaries, type GameState, type SimContext,
 } from '@def-ops/sim';
+import type { DoctrineRule, RoleRef } from '@def-ops/knowledge';
 import { fill } from '../fill';
+import { kbBlocks } from './kb-blocks';
 
 /** Настройки штаба модели для сценария (services/staff/live/<сценарий>.json). */
 export interface LiveConfig {
@@ -46,6 +48,8 @@ export interface Situation {
   time: string;
   /** Штаб ведёт тыл, переправы, резервы: базы снабжения и резервы своей стороны (для распоряжений). */
   staff?: { side: string; bases: { id: string; name: string }[]; reserves: { id: string; name: string }[] };
+  /** Справки и правила доктрины под номерами R1… (есть, когда база дала хоть одну справку или правило). */
+  refs?: RoleRef[];
 }
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -175,8 +179,15 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
   };
 }
 
-export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, tpl: Templates, previous?: { time: string; intent: string } | null, staffOn = false): Situation {
+/**
+ * Обстановка штаба модели на ход. kb — справка роли «штаб» и доктрина своей стороны из базы знаний: одна нумерация
+ * [R1]… (справки, затем правила), в ответе — поле basis; без kb (или пусто) — «(правил нет)», «(справок нет)», без basis.
+ */
+export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, tpl: Templates, previous?: { time: string; intent: string } | null, staffOn = false,
+  kb?: { refs: RoleRef[]; rules: DoctrineRule[] }): Situation {
   const s = g.state;
+  const blocks = kbBlocks(kb?.refs ?? [], kb?.rules ?? []);
+  const withKb = blocks.refs.length > 0;
   const p = situationParts(ctx, g, cfg);
   const hours = ctx.scenario.turnHours;
   const terms = commandTerms(ctx, cfg.side);
@@ -191,6 +202,8 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
     role: cfg.role,
     higher: cfg.higher,
     constraints: cfg.constraints.map((c) => `- ${c}`).join('\n'),
+    doctrine: blocks.doctrine,
+    reference: blocks.reference,
     previous: previous ? `(${momentRu(previous.time)}) ${previous.intent}` : 'нет — это первое решение в игре; до сих пор войска действовали по прежним приказам.',
     ...p.vars,
     question: `Примите решение на ${hours === 24 ? 'сутки' : `${hours} ч`} — до ${momentRu(addH(s.time, hours))}. Приказы доходят до войск не сразу: ${p.delays}. `
@@ -206,7 +219,9 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
         + `(formations — две армии${armies.length ? ` из: ${armies.join('; ')}` : ''}; area — пункты линии по порядку через « — », от тыла к переднему краю, от 2 до 6; вступает в силу через задержку доведения армиям; `
         + `линию, разделяющую ${terms.group === 'фронт' ? 'фронты' : 'группы армий'}, устанавливает ${terms.top}). `
         + 'В полях subject, area, formations — названия точно как в обстановке; в неиспользуемых — null или пустой список.'
-        : ' Тыл, переправы и резервы ведёт вышестоящее командование: поле actions оставьте пустым.'),
+        : ' Тыл, переправы и резервы ведёт вышестоящее командование: поле actions оставьте пустым.')
+      + (withKb ? ' В поле basis перечислите номера правил и справок ([R1]…), на которые опирается решение; нет таких — пустой список.'
+        + ' Номера [R1]… — служебные метки только для поля basis: в оценке, замысле, приказах и докладах называйте правило или справку словами, по названию, без номера.' : ''),
     rear: staffOn ? rearText(ctx, g, cfg.side) : '- Ведёт вышестоящее командование (по плану).',
   }, 'staff.live.md');
   return {
@@ -218,6 +233,7 @@ export function buildSituation(ctx: SimContext, g: GameState, cfg: LiveConfig, t
       bases: (s.logistics?.[cfg.side]?.bases ?? []).map((b) => ({ id: b.id, name: b.name })),
       reserves: s.formations.filter((f) => f.side === cfg.side && f.reserveFrom && !f.destroyed).map((f) => ({ id: f.id, name: f.name })),
     } } : {}),
+    ...(withKb ? { refs: blocks.refs } : {}),
   };
 }
 

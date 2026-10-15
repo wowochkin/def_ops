@@ -14,9 +14,9 @@ import {
   activeBoundaries, commandTerms, groupOf, runToDocument, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
-import { stavkaNeed, stavkaTurn, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
-import type { Entry } from '@def-ops/knowledge';
-import { KB_REF_TIMEOUT_MS, kbRefClient, seedAnswer, umpireRefs } from './kb-ref';
+import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, decisionToOrders, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
+import type { DoctrineRule, Entry, RoleRef } from '@def-ops/knowledge';
+import { KB_FALLBACK_NOTE, KB_REF_CHARS, KB_REF_LIMIT, kbRefClient, seedAnswer, umpireRefs } from './kb-ref';
 import umpireSystemTpl from '../../../../services/staff/prompts/umpire.system.md?raw';
 import umpireUserTpl from '../../../../services/staff/prompts/umpire.user.md?raw';
 import { LlmClient } from '@def-ops/staff-service/llm';
@@ -48,7 +48,8 @@ let enemy: EnemyMode = 'llm';
 let reveal = false;
 let journal: JournalDay[] = [];
 /** Решение модели на текущий ход. */
-let ai: { time: string; promise: Promise<AiTurn | null>; abort: AbortController; result?: AiTurn | null } | null = null;
+interface AiRun { time: string; promise: Promise<AiTurn | null>; abort: AbortController; result?: AiTurn | null; /** Справка штабу посчитана по сиду. */ kbFallback?: boolean }
+let ai: AiRun | null = null;
 let skipAi = false;
 /** Приказы, распоряжения и решение человека, ждущие решения модели. */
 let queued: { orders: Order[]; actions: StaffAction[]; decision: HumanDecision } | null = null;
@@ -265,11 +266,6 @@ function startAi() {
   const time = g.state.time;
   const prevAi = [...rec.turns].reverse().find((t) => (t.ai as AiTurn | undefined)?.decision);
   const previous = prevAi ? { time: prevAi.time, intent: (prevAi.ai as AiTurn).decision!.intent } : null;
-  const sit = buildSituation(ctx, g, cfg, { system: systemTpl, user: liveTpl, profile: profileMd }, previous, !!rec.aiStaff);
-  // в игре ход ждёт штаб противника: ответ — коротко (на локальной модели каждое слово — время; длинная оценка
-  // обстановки шла минутами)
-  const lastMsg = sit.messages[sit.messages.length - 1];
-  lastMsg.content += `\n\n${BRIEF}`;
   const gAt = g;
   const abort = new AbortController();
   const client = enemyClient();
@@ -282,27 +278,39 @@ function startAi() {
     if (t === phase || (t.split(' · ')[0] === phase.split(' · ')[0] && Date.now() - phaseAt < 1000)) return;
     phase = t; phaseAt = Date.now(); post({ kind: 'ai-phase', text: t });
   };
-  const tokens = Math.round(sit.messages.reduce((a, m) => a + m.content.length, 0) / 3.2);
-  setPhase(llmBusy ? `ждёт очереди: модель занята (${llmBusy})` : 'отправка запроса…');
-  const promise = exclusive('решение штаба противника', () => {
-    // до первого токена модель читает обстановку: на локальной модели длинный запрос — минута и больше
-    setPhase(`модель читает обстановку: запрос ≈ ${Math.round(tokens / 100) / 10} тыс. токенов — на локальной модели это может занять минуту-две; ответ появится здесь по мере генерации`);
-    return decideTurn(client, sit, {
-    signal: abort.signal,
-    onDelta: (k, t) => {
-      got += t.length;
-      if (!t0) t0 = Date.now();
-      const sec = (Date.now() - t0) / 1000;
-      // скорость — примерно: токен ≈ 3,2 символа
-      const speed = sec > 3 ? ` · ≈ ${Math.round(got / 3.2 / sec)} ток/с, ${got} симв.` : '';
-      setPhase((k === 'reasoning' ? 'размышляет…' : 'пишет решение…') + speed);
-      buf += t;
-      const now = Date.now();
-      if (now - last > 250) { post({ kind: 'ai-stream', text: buf }); buf = ''; last = now; }
-    },
-    onRetry: (why) => { buf = ''; post({ kind: 'ai-stream', text: '', reset: true }); post({ kind: 'ai-stream', text: `[${why}]\n` }); setPhase('повтор запроса без схемы…'); },
-  });
-  }).then((t) => {
+  const cur: AiRun = { time, abort, promise: Promise.resolve(null) };
+  cur.promise = (async () => {
+    // справка и доктрина штабу — из базы окна (до 8 с), иначе по сиду; startAi остаётся синхронной
+    setPhase('справка из базы знаний…');
+    const kbIn = await staffKb(gAt);
+    if (kbIn?.fallback) cur.kbFallback = true;
+    if (abort.signal.aborted) return null;
+    const sit = buildSituation(ctx, gAt, cfg, { system: systemTpl, user: liveTpl, profile: profileMd }, previous, !!rec.aiStaff, kbIn);
+    // в игре ход ждёт штаб противника: ответ — коротко (на локальной модели каждое слово — время; длинная оценка
+    // обстановки шла минутами)
+    const lastMsg = sit.messages[sit.messages.length - 1];
+    lastMsg.content += `\n\n${BRIEF}`;
+    const tokens = Math.round(sit.messages.reduce((a, m) => a + m.content.length, 0) / 3.2);
+    setPhase(llmBusy ? `ждёт очереди: модель занята (${llmBusy})` : 'отправка запроса…');
+    const t = await exclusive('решение штаба противника', () => {
+      // до первого токена модель читает обстановку: на локальной модели длинный запрос — минута и больше
+      setPhase(`модель читает обстановку: запрос ≈ ${Math.round(tokens / 100) / 10} тыс. токенов — на локальной модели это может занять минуту-две; ответ появится здесь по мере генерации`);
+      return decideTurn(client, sit, {
+        signal: abort.signal,
+        onDelta: (k, t) => {
+          got += t.length;
+          if (!t0) t0 = Date.now();
+          const sec = (Date.now() - t0) / 1000;
+          // скорость — примерно: токен ≈ 3,2 символа
+          const speed = sec > 3 ? ` · ≈ ${Math.round(got / 3.2 / sec)} ток/с, ${got} симв.` : '';
+          setPhase((k === 'reasoning' ? 'размышляет…' : 'пишет решение…') + speed);
+          buf += t;
+          const now = Date.now();
+          if (now - last > 250) { post({ kind: 'ai-stream', text: buf }); buf = ''; last = now; }
+        },
+        onRetry: (why) => { buf = ''; post({ kind: 'ai-stream', text: '', reset: true }); post({ kind: 'ai-stream', text: `[${why}]\n` }); setPhase('повтор запроса без схемы…'); },
+      });
+    });
     if (abort.signal.aborted) return null;
     if (buf) post({ kind: 'ai-stream', text: buf });
     if (t.ok && t.decision) {
@@ -311,10 +319,42 @@ function startAi() {
       t.staffActions = conv.actions;
     }
     status(t.ok ? { state: 'done', time, turn: t } : { state: 'error', time, error: t.error ?? 'нет решения', turn: t });
-    if (ai) ai.result = t;
+    cur.result = t;
     return t;
-  });
-  ai = { time, promise, abort };
+  })();
+  ai = cur;
+}
+
+/**
+ * Справка роли «штаб» и доктрина своей стороны к обстановке (триггеры — по журналу за ход и состоянию войск): запросы
+ * по триггерам и местность у ориентира; не больше 5 записей по 700 знаков. Сторона не su/de или ошибка — без базы.
+ */
+async function staffKb(gAt: GameState): Promise<{ refs: RoleRef[]; rules: DoctrineRule[]; fallback?: boolean } | undefined> {
+  const side = cfg.side;
+  if (side !== 'su' && side !== 'de') return undefined;
+  try {
+    const triggers = situationTriggers(ctx, gAt, side);
+    const queries = staffQueries(triggers, cfg.anchorName);
+    const a = await kbc.request({ queries, scope: { role: 'staff', side, operation: rec.scenario, moment: gAt.state.time }, limit: KB_REF_LIMIT, chars: KB_REF_CHARS,
+      doctrine: { side, triggers, query: queries.join(' ') } });
+    return { refs: a.refs, rules: a.doctrine?.rules ?? [], ...(a.fallback ? { fallback: true } : {}) };
+  } catch (e) {
+    console.warn('справка штабу противника:', e);
+    return undefined;
+  }
+}
+
+/** Доктрина стороны уровней фронта и армии — Ставке (ОКХ): по поводу обращения; ошибка — без доктрины. */
+async function stavkaKb(side: string, need: StavkaNeed): Promise<{ rules: DoctrineRule[]; fallback?: boolean } | undefined> {
+  if (side !== 'su' && side !== 'de') return undefined;
+  try {
+    const a = await kbc.request({ queries: [], scope: { role: 'stavka', side, operation: rec.scenario, moment: g.state.time },
+      doctrine: { side, triggers: [], query: need.reasons.join(' '), levels: ['front', 'army'] } });
+    return { rules: a.doctrine?.rules ?? [], ...(a.fallback ? { fallback: true } : {}) };
+  } catch (e) {
+    console.warn('доктрина Ставке:', e);
+    return undefined;
+  }
 }
 
 const llmClient = () => new LlmClient({ url: absolute(llm.url), model: llm.model, thinking: llm.thinking, timeoutMs: 15 * 60_000, maxTokens: 16000 }, fetch.bind(globalThis));
@@ -433,9 +473,12 @@ async function advance() {
   busy = true;
   try {
     let t: AiTurn | null = null;
+    let kbFallback = false;
     if (ai && enemy === 'llm') {
       post({ kind: 'progress', text: 'штаб противника заканчивает решение…' });
-      t = await ai.promise;
+      const cur = ai;
+      t = await cur.promise;
+      if (cur.kbFallback) kbFallback = true;
       if (!t) return; // решение отменено (смена настроек) — ход ждёт нового
       if (!t.ok && !skipAi) { post({ kind: 'blocked', error: t.error ?? 'модель не дала решения' }); return; }
     }
@@ -445,7 +488,6 @@ async function advance() {
     const orders = [...humanOrders, ...aiOrders];
     // посредник: нюансы к ожидаемым боям (по справкам из базы знаний); ошибка модели — ход без поправок
     let ump: Awaited<ReturnType<typeof umpireTurn>> | null = null;
-    let kbFallback = false;
     if (llm.umpire && !agents) {
       post({ kind: 'progress', text: 'посредник оценивает ожидаемые бои…' });
       const refsFor = umpireRefs(kbc, rec.scenario, () => { kbFallback = true; });
@@ -460,7 +502,9 @@ async function advance() {
         if (!need) continue;
         const top = commandTerms(ctx, side).top;
         post({ kind: 'progress', text: `${top} — разграничительные линии…` });
-        const r = await exclusive(top, () => stavkaTurn(llmClient(), ctx, g, side, need));
+        const kbIn = await stavkaKb(side, need);
+        if (kbIn?.fallback) kbFallback = true;
+        const r = await exclusive(top, () => stavkaTurn(llmClient(), ctx, g, side, need, kbIn ? { kb: { rules: kbIn.rules } } : {}));
         stavka.push({ ...r, side });
         actions.push(...r.actions);
       }
@@ -555,8 +599,6 @@ async function reviewSection(m: Extract<GameRequest, { kind: 'review-section' }>
 let seedEntries: Promise<Entry[]> | null = null;
 const seedKb = () => (seedEntries ??= import('../../../../packages/knowledge/data/seed.json').then((m) => (m.default as unknown as { entries: Entry[] }).entries));
 const kbc = kbRefClient(post, async (req) => seedAnswer(await seedKb(), req));
-/** Заметка в события хода: справка посчитана по сиду. */
-const KB_FALLBACK_NOTE = `Справка из базы знаний без слоя пользователя: окно не ответило за ${KB_REF_TIMEOUT_MS / 1000} с`;
 
 /** Решение модели для записи игры: без длинного размышления. */
 const slim = (t: AiTurn): AiTurn => ({ ...t, reasoningTail: t.reasoningTail?.slice(-1500) });

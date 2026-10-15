@@ -7,7 +7,8 @@
 import type { Order, StaffAction } from '@def-ops/sim';
 import { LlmClient, textOf, type ChatResult } from '../llm/client';
 import type { Thinking } from '../llm/config';
-import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, type Decision, type Issue } from '../decision';
+import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, withBasis, type Decision, type Issue } from '../decision';
+import { parseRefs } from './kb-blocks';
 import { decisionToOrders, type AppliedOrder } from './apply';
 import type { Situation } from './situation';
 
@@ -27,6 +28,16 @@ export interface AiTurn {
   repaired?: boolean;
   /** Конец размышления — для разбора посредником. */
   reasoningTail?: string;
+  /** Ссылки решения на базу знаний: номера R1… (только существующие), когда штабу дана справка или доктрина. */
+  basis?: string[];
+  /** Записи базы под номерами R1… — без текста (для записи игры и «по базе» у решения). */
+  refs?: { id: string; title: string }[];
+}
+
+/** Схема ответа: с распоряжениями — когда штаб ведёт тыл; с basis — когда дана справка или доктрина. */
+function schemaOf(sit: Situation) {
+  const base = sit.staff ? LIVE_DECISION_SCHEMA : DECISION_SCHEMA;
+  return sit.refs?.length ? withBasis(base) : base;
 }
 
 export async function decideTurn(client: LlmClient, sit: Situation, opts: { thinking?: Thinking; signal?: AbortSignal; onDelta?: (kind: 'reasoning' | 'content', text: string) => void;
@@ -35,7 +46,7 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
   const out: AiTurn = { time: sit.time, model: client.config.model, ok: false, applied: [], orders: [], issues: [] };
   let res: ChatResult;
   try {
-    const schema = { name: 'staff_decision', schema: sit.staff ? LIVE_DECISION_SCHEMA : DECISION_SCHEMA };
+    const schema = { name: 'staff_decision', schema: schemaOf(sit) };
     res = await client.chat({ messages: sit.messages, schema, thinking: opts.thinking, signal: opts.signal, onDelta: opts.onDelta });
     // зацикливание на схеме (бесконечные пробелы после первых слов) — повтор без схемы на сервере: тот же
     // запрос с просьбой ответить одним JSON-объектом, разбор — по схеме у нас
@@ -60,7 +71,7 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
       const fix = await client.chat({
         messages: [...sit.messages, { role: 'assistant', content: res.content.trim() || res.reasoning.slice(-12000) },
           { role: 'user', content: 'Ответ должен быть одним JSON-объектом по схеме, без текста вокруг. Перепиши своё решение в этот формат, ничего не меняя по существу.' }],
-        schema: { name: 'staff_decision', schema: sit.staff ? LIVE_DECISION_SCHEMA : DECISION_SCHEMA }, thinking: 'off', signal: opts.signal,
+        schema: { name: 'staff_decision', schema: schemaOf(sit) }, thinking: 'off', signal: opts.signal,
       });
       if (!fix.jsonError) { res = { ...res, json: fix.json, jsonError: undefined }; out.repaired = true; }
     } catch { /* остаётся исходная ошибка */ }
@@ -75,6 +86,7 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
   const d = res.json as Decision;
   if (!d || !Array.isArray(d.orders)) { out.error = 'в ответе нет приказов'; return out; }
   out.decision = d;
+  if (sit.refs?.length) { out.basis = parseRefs(d.basis, sit.refs); out.refs = sit.refs.map(({ id, title }) => ({ id, title })); }
   const r = decisionToOrders(d, sit);
   out.applied = r.applied;
   out.orders = r.orders;

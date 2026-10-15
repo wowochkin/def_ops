@@ -12,7 +12,9 @@ import {
   checkAction, commandTerms, effectiveBoundaries, groupOf, nearbyPlaces, onMap, places, sectorText, sectorViolations, shortName, withBoundaries,
   type Boundary, type CommandTerms, type GameState, type SimContext, type StaffAction,
 } from '@def-ops/sim';
+import type { DoctrineRule, RoleRef } from '@def-ops/knowledge';
 import type { LlmClient } from '../llm/client';
+import { kbBlocks, parseRefs } from './kb-blocks';
 import { momentRu } from './situation';
 
 export interface StavkaNeed { reasons: string[]; pending: Boundary[]; request: string }
@@ -45,7 +47,7 @@ export function stavkaNeed(ctx: SimContext, g: GameState, side: string, request 
 }
 
 export const STAVKA_SCHEMA = {
-  type: 'object', additionalProperties: false, required: ['assessment', 'decision', 'lines', 'reply'],
+  type: 'object', additionalProperties: false, required: ['assessment', 'decision', 'lines', 'reply', 'basis'],
   properties: {
     assessment: { type: 'string' },
     decision: { type: 'string', enum: ['keep', 'issue'] },
@@ -57,11 +59,16 @@ export const STAVKA_SCHEMA = {
       },
     },
     reply: { type: 'string' },
+    basis: { type: 'array', items: { type: 'string' } },
   },
 } as const;
-export interface StavkaRaw { assessment: string; decision: 'keep' | 'issue'; lines: { between: string[]; points: string[]; delayHours: number; reason: string }[]; reply: string }
+export interface StavkaRaw { assessment: string; decision: 'keep' | 'issue'; lines: { between: string[]; points: string[]; delayHours: number; reason: string }[]; reply: string; basis?: string[] }
 
-export interface StavkaBuilt { messages: { role: 'system' | 'user'; content: string }[]; fronts: { id: string; name: string; short: string }[]; places: { id: string; title: string; at: [number, number] }[] }
+export interface StavkaBuilt {
+  messages: { role: 'system' | 'user'; content: string }[]; fronts: { id: string; name: string; short: string }[]; places: { id: string; title: string; at: [number, number] }[];
+  /** Правила доктрины под номерами R1… (пусто — доктрины в запросе нет). */
+  refs: RoleRef[];
+}
 
 /** Системный текст высшего командования стороны: Ставка ВГК (фронты) или ОКХ (группы армий). */
 const system = (t: CommandTerms) => {
@@ -78,11 +85,12 @@ const system = (t: CommandTerms) => {
 3. delayHours — через сколько часов линия вступает в силу (на отдачу и доведение ${german ? 'приказа' : 'директивы'}): обычно 4–8.
 4. Исторические ${german ? 'приказы' : 'директивы'} — образец: так ${t.top} ${german ? 'решало' : 'решала'} в похожей обстановке. Не копируйте их, если обстановка другая.
 5. reply — короткий текст ${german ? 'приказа' : 'директивы'} или ответ на ходатайство, как его получит командующий.
+6. basis — номера правил доктрины ([R1]…), на которые опирается решение; нет таких — пустой список. Номера — служебные метки только для basis: в assessment и reply называйте правило словами, по названию, без номера.
 Ответ — один JSON-объект по схеме.`;
 };
 
-/** Обстановка для Ставки: фронты и их армии, действующие линии, поводы, образцы, пункты. */
-export function buildStavka(ctx: SimContext, g: GameState, side: string, need: StavkaNeed): StavkaBuilt {
+/** Обстановка для Ставки: фронты и их армии, действующие линии, поводы, образцы, доктрина своей стороны (kb), пункты. */
+export function buildStavka(ctx: SimContext, g: GameState, side: string, need: StavkaNeed, kb?: { rules: DoctrineRule[] }): StavkaBuilt {
   const s = g.state, T = ctx.theatre;
   const scen = withBoundaries(ctx.scenario, s);
   const groups = groupOf(ctx.scenario, 'front');
@@ -101,16 +109,18 @@ export function buildStavka(ctx: SimContext, g: GameState, side: string, need: S
   const lines = sectorText(T, scen, units, side, s.time, (id) => shortName(defs.get(id)?.name ?? id));
   const pattern = need.pending.map((b) => `- ${defs.get(b.right)?.name} / ${defs.get(b.left)?.name}: ${(b.places ?? []).join(' — ')} (в истории — с ${ddmm(b.from)}; вызвало: ${b.trigger?.text ?? '—'})`);
   const t = commandTerms(ctx, side), german = t.top === 'ОКХ';
+  const doctrine = kbBlocks([], kb?.rules ?? []);
   const user = [
     `Обстановка на ${momentRu(s.time)}.`, '',
     `${german ? 'Группы армий' : 'Фронты'} и их войска:`, ...frontLines, '',
     'Действующие разграничительные линии:', ...(lines.length ? lines.map((x) => `- ${x}`) : ['- нет']), '',
     `Повод обратиться ${german ? 'к ОКХ' : 'к Ставке'}:`, ...need.reasons.map((x) => `- ${x}`), '',
     ...(pattern.length ? [`Образец — исторические ${german ? 'приказы' : 'директивы'}:`, ...pattern, ''] : []),
+    ...(kb?.rules.length ? ['Доктрина вашей стороны (уровень фронта и армии, из базы знаний):', doctrine.doctrine, ''] : []),
     'Пункты (в линиях — точно эти названия):', ...near.map((a) => `- ${a.title}`), '',
     'Решение: оставить линии или установить новую линию.',
   ].join('\n');
-  return { messages: [{ role: 'system', content: system(t) }, { role: 'user', content: user }], fronts, places: near };
+  return { messages: [{ role: 'system', content: system(t) }, { role: 'user', content: user }], fronts, places: near, refs: doctrine.refs };
 }
 
 export interface StavkaResult {
@@ -122,6 +132,10 @@ export interface StavkaResult {
   issues: string[];
   /** Директивы словами — для журнала. */
   text: string[];
+  /** Номера правил доктрины (R1…), на которые опирается решение; только существующие. */
+  basis?: string[];
+  /** Правила под номерами R1… — без текста (для записи игры). */
+  refs?: { id: string; title: string }[];
 }
 
 const norm = (x: string) => x.toLowerCase().replace(/ё/g, 'е').replace(/[«»"']/g, '').replace(/\s+/g, ' ').trim();
@@ -147,16 +161,18 @@ export function stavkaActions(ctx: SimContext, g: GameState, side: string, built
 }
 
 /** Обращение к Ставке: модель решает, оставить линии или установить новую. Ошибка модели — линии остаются. */
-export async function stavkaTurn(client: LlmClient, ctx: SimContext, g: GameState, side: string, need: StavkaNeed, opts: { signal?: AbortSignal } = {}): Promise<StavkaResult> {
+export async function stavkaTurn(client: LlmClient, ctx: SimContext, g: GameState, side: string, need: StavkaNeed,
+  opts: { signal?: AbortSignal; kb?: { rules: DoctrineRule[] } } = {}): Promise<StavkaResult> {
   const out: StavkaResult = { ok: false, reasons: need.reasons, request: need.request, actions: [], issues: [], text: [] };
-  const built = buildStavka(ctx, g, side, need);
+  const built = buildStavka(ctx, g, side, need, opts.kb);
   try {
     const r = await client.chat({ messages: built.messages, schema: { name: 'stavka_boundaries', schema: STAVKA_SCHEMA }, thinking: 'off', signal: opts.signal });
     out.model = r.model;
     if (r.jsonError) { out.error = `ответ не разобран: ${r.jsonError}`; return out; }
     const raw = r.json as StavkaRaw;
     const a = stavkaActions(ctx, g, side, built, raw);
-    return { ...out, ok: true, assessment: raw.assessment, reply: raw.reply, ...a };
+    return { ...out, ok: true, assessment: raw.assessment, reply: raw.reply, ...a,
+      basis: parseRefs(raw.basis, built.refs), refs: built.refs.map(({ id, title }) => ({ id, title })) };
   } catch (e) {
     out.error = (e as Error).message;
     return out;

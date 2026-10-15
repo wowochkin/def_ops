@@ -17,6 +17,8 @@ export interface KbRefAnswer { refs: RoleRef[]; text: string; doctrine?: { rules
 
 /** Сколько поток ждёт справку от окна. */
 export const KB_REF_TIMEOUT_MS = 8000;
+/** Заметка в события хода: справка посчитана по сиду — окно не ответило в срок или ответило ошибкой. */
+export const KB_FALLBACK_NOTE = 'Справка из базы знаний без слоя пользователя: окно не дало справку — справка по встроенной базе';
 /** Пределы справки по умолчанию: 5 записей по 700 знаков. */
 export const KB_REF_LIMIT = 5;
 export const KB_REF_CHARS = 700;

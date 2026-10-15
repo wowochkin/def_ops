@@ -43,6 +43,8 @@ export interface Decision {
   risks: string[];
   /** Распоряжения по тылу, переправам, резервам (в игре, если штаб их ведёт). */
   actions?: StaffActionGiven[];
+  /** Номера правил доктрины и справок ([R1]…), на которые опирается решение (только когда штабу дана база). */
+  basis?: string[];
 }
 
 const str = { type: 'string' };
@@ -106,6 +108,14 @@ export const LIVE_DECISION_SCHEMA = {
     },
   },
 } as const;
+
+/**
+ * Та же схема с обязательным полем basis — номерами правил и справок из базы знаний ([R1]…). Только когда штабу дана
+ * справка или доктрина: схема для контрольных обстановок не меняется.
+ */
+export function withBasis<S extends { required: readonly string[]; properties: Record<string, unknown> }>(s: S) {
+  return { ...s, required: [...s.required, 'basis'], properties: { ...s.properties, basis: { type: 'array', items: { type: 'string' } } } };
+}
 
 /**
  * Быстрое решение — первая часть ответа по частям: замысел и приказы, коротко,

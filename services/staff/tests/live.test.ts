@@ -4,7 +4,9 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { loadContext } from '@def-ops/sim/data';
 import { playTurn, startGame } from '@def-ops/sim';
-import { buildSituation, decideTurn, decisionToOrders, type LiveConfig } from '../src/live';
+import { buildSituation, decideTurn, decisionToOrders, parseRefs, type LiveConfig } from '../src/live';
+import { doctrineFor, type Entry, type RoleRef } from '@def-ops/knowledge';
+import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, withBasis } from '../src/decision';
 import { mockDecision, startMockServer } from '../src/live/mock';
 import { LlmClient } from '../src/llm/client';
 import { configFromEnv } from '../src/llm/config';
@@ -94,6 +96,75 @@ describe('штаб модели в игре', () => {
     const got = next.state.formations.filter((f) => f.order?.source === 'llm');
     expect(got.length).toBe(t.orders.length);
   }, 60000);
+});
+
+describe('штаб модели на доктрине и справке из базы', () => {
+  const ctx = loadContext('berlin-1945-tasks');
+  const g = startGame(ctx, 1, '1945-04-19T05:00');
+  const entries = (JSON.parse(readFileSync(new URL('../../../packages/knowledge/data/seed.json', import.meta.url), 'utf8')) as { entries: Entry[] }).entries;
+  const rules = doctrineFor(entries, {}, 'de', ['penetration'], '').rules.slice(0, 3);
+  const refs: RoleRef[] = [
+    { id: 'org:test-a', title: 'Справка А', text: 'Текст справки А.' },
+    { id: 'org:test-b', title: 'Справка Б', text: 'Текст справки Б.' },
+  ];
+  const five: RoleRef[] = [...refs, ...[3, 4, 5].map((i) => ({ id: `x${i}`, title: `З${i}`, text: '' }))];
+
+  it('без базы: оба слота заполнены «(правил нет)» и «(справок нет)», ссылок и basis нет', () => {
+    const sit = buildSituation(ctx, g, cfg, tpl);
+    const u = sit.messages[1].content;
+    expect(u).toContain('(правил нет)');
+    expect(u).toContain('(справок нет)');
+    expect(u).not.toContain('поле basis');
+    expect(sit.refs).toBeUndefined();
+  });
+
+  it('с базой: справки [R1]–[R2], правила продолжают нумерацию, вопрос о basis; ход — basis без несуществующих ссылок', async () => {
+    expect(rules).toHaveLength(3);
+    const sit = buildSituation(ctx, g, cfg, tpl, null, false, { refs, rules });
+    const u = sit.messages[1].content;
+    expect(u).toContain('[R1] Справка А\nТекст справки А.');
+    expect(u).toContain('[R3] Доктрина (нем.,');
+    expect(u).toContain('[R5] ');
+    expect(u).not.toContain('[R6]');
+    expect(u).toContain('В поле basis перечислите номера правил и справок ([R1]…), на которые опирается решение; нет таких — пустой список.');
+    expect(u.indexOf('Действующие приказы и ограничения')).toBeLessThan(u.indexOf('[R3]'));
+    // номера — служебные: в тексте решения — по названию
+    expect(u).toContain('Номера [R1]… — служебные метки только для поля basis');
+    expect(sit.refs).toHaveLength(5);
+    expect(sit.refs![2]).toEqual({ id: rules[0].entry, title: rules[0].title, text: rules[0].line });
+    const client = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
+    const t = await decideTurn(client, sit);
+    expect(t.ok).toBe(true);
+    expect(t.basis).toEqual(['R1']);
+    expect(t.refs).toEqual(sit.refs!.map(({ id, title }) => ({ id, title })));
+  }, 60000);
+
+  it('базе нечего дать — запрос как без базы', () => {
+    const sit = buildSituation(ctx, g, cfg, tpl, null, false, { refs: [], rules: [] });
+    expect(sit.refs).toBeUndefined();
+    expect(sit.messages[1].content).toContain('(правил нет)');
+    expect(sit.messages[1].content).not.toContain('поле basis');
+  });
+
+  it('разбор basis: номера в любом виде, только существующие, без повторов, в порядке упоминания', () => {
+    expect(parseRefs(['[R1]', 'R 2', 'Р3', 'R1', 'R0', 'R12', 'по обстановке'], five)).toEqual(['R1', 'R2', 'R3']);
+    expect(parseRefs('R2; R1', five)).toEqual(['R2', 'R1']);
+    expect(parseRefs(null, five)).toEqual([]);
+    expect(parseRefs(['R1'], [])).toEqual([]);
+  });
+
+  it('советнику: номера справки служебные, командующему — заголовок записи', () => {
+    expect(read('prompts/advisor.system.md')).toContain('называйте запись по её заголовку — номера [R1]… в справке служебные');
+  });
+
+  it('схема решения для контрольных обстановок не меняется', () => {
+    expect(DECISION_SCHEMA.required).not.toContain('basis');
+    const w = withBasis(LIVE_DECISION_SCHEMA);
+    expect(w.required).toEqual([...LIVE_DECISION_SCHEMA.required, 'basis']);
+    expect(w.properties.basis).toEqual({ type: 'array', items: { type: 'string' } });
+    expect(w.properties.actions).toBe(LIVE_DECISION_SCHEMA.properties.actions);
+    expect(LIVE_DECISION_SCHEMA.required).not.toContain('basis');
+  });
 });
 
 describe('советник штаба человека', () => {

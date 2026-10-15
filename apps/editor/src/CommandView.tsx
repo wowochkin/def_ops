@@ -24,6 +24,7 @@ import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
+import { openKbEntry } from './modeling/BasisTab';
 import type { RoleScope } from '@def-ops/knowledge';
 import { ModelPicker } from './ModelPicker';
 import { ReviewView } from './ReviewView';
@@ -139,6 +140,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const send = (m: GameRequest) => worker.current?.postMessage(m);
 
   useEffect(() => {
+    // база знаний окна — заранее: первая справка посреднику и штабу противника не ждёт загрузки базы до срока потока
+    void kb.load().catch(() => undefined);
     const w = new Worker(new URL('./sim/game-worker.ts', import.meta.url), { type: 'module' });
     worker.current = w;
     w.onmessage = (e: MessageEvent<GameResponse>) => {
@@ -1330,6 +1333,7 @@ function Umpire({ record, ai, turns, current, stream, streamN, phase, reveal, se
               <small>{t.model}{t.timings ? ` · ${Math.round(t.timings.totalMs / 1000)} с` : ''}{t.repaired ? ' · переписан в JSON' : ''}</small>
             </button>
             {open === k && t.ok && d && <div className="aiturn-b">
+              {t.basis && t.basis.length > 0 && <KbBasis basis={t.basis} refs={t.refs ?? []} />}
               <div className="jsub">Приказы</div>
               <ul>{t.applied.map((a, i) => <li key={i} className={a.order ? '' : 'rej'}><b>{short(a.formation ?? a.given.formation)}</b>: {TASK_RU[a.given.task]} — {a.target ?? a.given.toArea ?? a.given.area}{a.given.details ? <span className="muted">. {a.given.details}</span> : null}{a.issue && <div className="iss">{a.issue}</div>}</li>)}</ul>
               {t.staff && t.staff.length > 0 && <><div className="jsub">Тыл, переправы, резервы</div>
@@ -1345,6 +1349,16 @@ function Umpire({ record, ai, turns, current, stream, streamN, phase, reveal, se
       })}
       </>}
     </div>
+  );
+}
+
+/** «по базе: R1, R3» у решения штаба: у номера — заголовок записи, щелчок — запись в «Знаниях». */
+function KbBasis({ basis, refs }: { basis: string[]; refs: { id: string; title: string }[] }) {
+  return (
+    <div className="muted small">по базе: {basis.map((b, i) => {
+      const r = refs[Number(b.slice(1)) - 1];
+      return <span key={b}>{i ? ', ' : ''}{r ? <button className="link" title={r.title} onClick={() => openKbEntry(r.id)}>{b}</button> : b}</span>;
+    })}</div>
   );
 }
 

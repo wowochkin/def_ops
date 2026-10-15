@@ -50,12 +50,15 @@ export function mockDecision(prompt: string): Decision {
     ...(/поле actions \(может быть пустым\)/.test(prompt) ? { actions: own.length >= 2 ? [{ kind: 'priority' as const, subject: null, area: null, formations: own.slice(0, 2).map(name) }] : [] } : { actions: [] }),
     requests: ['Прошу разрешения на отвод обескровленных частей на тыловой рубеж.'],
     risks: ['Контрудар без поддержки авиации может не достичь цели.', 'Отвод частей может открыть фланг соседа.'],
+    // справка из базы дана — ссылка на первую запись и несуществующая (её отбрасывает разбор basis)
+    ...(/\[R1\]/.test(prompt) ? { basis: ['[R1]', 'R99'] } : {}),
   };
 }
 
 /**
  * Ставка (проверка стенда): если есть образец — историческая директива — линия по её пунктам, которые есть в
  * списке пунктов; если образца нет, а есть ходатайство — линия по первым двум пунктам списка; иначе — оставить.
+ * basis — всегда R1 (без правил доктрины разбор ссылок его отбрасывает).
  */
 export function mockStavka(prompt: string) {
   const places = section(prompt, /^Пункты \(в линиях/m);
@@ -68,10 +71,10 @@ export function mockStavka(prompt: string) {
     const base = (x: string) => lc(x.replace(/\s*\(.*\)\s*$/, ''));
     const pts = (rest ?? '').replace(/ \(в истории.*$/, '').split(' — ').map((p) => places.find((q) => base(q) === base(p))).filter((x): x is string => !!x);
     const use = pts.length >= 2 ? pts : places.slice(0, 2);
-    return { assessment: 'Подставная Ставка (проверка стенда): обстановка разошлась с историей.', decision: 'issue', lines: [{ between: pairText.split(' / '), points: use, delayHours: 6, reason: 'по образцу исторической директивы' }], reply: `Установить разграничительную линию: ${use.join(', ')}.` };
+    return { assessment: 'Подставная Ставка (проверка стенда): обстановка разошлась с историей.', basis: ['R1'], decision: 'issue', lines: [{ between: pairText.split(' / '), points: use, delayHours: 6, reason: 'по образцу исторической директивы' }], reply: `Установить разграничительную линию: ${use.join(', ')}.` };
   }
-  if (request && fronts.length >= 2 && places.length >= 2) return { assessment: 'Подставная Ставка: ходатайство рассмотрено.', decision: 'issue', lines: [{ between: fronts.slice(0, 2), points: places.slice(0, 2), delayHours: 6, reason: 'по ходатайству' }], reply: `По ходатайству: линия ${places.slice(0, 2).join(', ')}.` };
-  return { assessment: 'Подставная Ставка: оснований менять линии нет.', decision: 'keep', lines: [], reply: 'Разграничительные линии оставить прежние.' };
+  if (request && fronts.length >= 2 && places.length >= 2) return { assessment: 'Подставная Ставка: ходатайство рассмотрено.', basis: ['R1'], decision: 'issue', lines: [{ between: fronts.slice(0, 2), points: places.slice(0, 2), delayHours: 6, reason: 'по ходатайству' }], reply: `По ходатайству: линия ${places.slice(0, 2).join(', ')}.` };
+  return { assessment: 'Подставная Ставка: оснований менять линии нет.', basis: ['R1'], decision: 'keep', lines: [], reply: 'Разграничительные линии оставить прежние.' };
 }
 
 /** Ответ советника (проверка стенда): эхо вопроса, сводка по обстановке, одно предложение приказа и следующие вопросы. */

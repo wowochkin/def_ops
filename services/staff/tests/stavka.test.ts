@@ -6,6 +6,8 @@ import { playTurn, replayGame, startGame, withBoundaries, activeBoundaries, type
 import { buildStavka, stavkaNeed, stavkaTurn } from '../src/live';
 import { startMockServer } from '../src/live/mock';
 import { LlmClient } from '../src/llm/client';
+import { readFileSync } from 'node:fs';
+import { doctrineFor, type Entry } from '@def-ops/knowledge';
 
 let server: Server;
 let url = '';
@@ -74,5 +76,39 @@ describe('директивы в игре и модель-Ставка', () => {
     const again = replayGame(ctx2, rec);
     expect(again.state.time).toBe(g2.state.time);
     expect(again.state.boundaries).toEqual(g2.state.boundaries);
+  }, 60000);
+
+  it('Ставка на доктрине своей стороны: блок правил перед пунктами, правило 6 о basis; без правил — блока нет', async () => {
+    const ctx = loadContext('berlin-1945-tasks');
+    let g = startGame(ctx, 1, '1945-04-19T05:00', 'su');
+    g = playTurn(ctx, g, []);
+    const need = stavkaNeed(ctx, g, 'su', 'Прошу установить линию с 1-м Украинским фронтом.')!;
+    const entries = (JSON.parse(readFileSync(new URL('../../../packages/knowledge/data/seed.json', import.meta.url), 'utf8')) as { entries: Entry[] }).entries;
+    const rules = doctrineFor(entries, {}, 'su', [], '', { levels: ['front', 'army'] }).rules.slice(0, 2);
+    expect(rules).toHaveLength(2);
+    const built = buildStavka(ctx, g, 'su', need, { rules });
+    const u = built.messages[1].content;
+    expect(u).toContain('Доктрина вашей стороны (уровень фронта и армии, из базы знаний):');
+    expect(u).toContain('[R1] Доктрина (сов.,');
+    expect(u).toContain('[R2] ');
+    expect(u.indexOf('Доктрина вашей стороны')).toBeLessThan(u.indexOf('Пункты (в линиях'));
+    expect(built.messages[0].content).toContain('6. basis — номера правил доктрины ([R1]…), на которые опирается решение; нет таких — пустой список.');
+    expect(built.refs.map((r) => r.id)).toEqual(rules.map((r) => r.entry));
+    // свой сервер: соединение к общему могло простоять дольше keep-alive сервера (под нагрузкой — «fetch failed»)
+    const own = await startMockServer(0, '127.0.0.1', 0);
+    const client = new LlmClient({ url: `http://127.0.0.1:${(own.address() as AddressInfo).port}/v1`, model: 'mock', thinking: 'off', timeoutMs: 20_000, maxTokens: 4000 }, fetch);
+    try {
+      const r = await stavkaTurn(client, ctx, g, 'su', need, { kb: { rules } });
+      expect(r.error).toBeUndefined();
+      expect(r.basis).toEqual(['R1']);
+      expect(r.refs).toEqual(rules.map((x) => ({ id: x.entry, title: x.title })));
+
+      const bare = buildStavka(ctx, g, 'su', need);
+      expect(bare.messages[1].content).not.toContain('Доктрина вашей стороны');
+      expect(bare.refs).toEqual([]);
+      const r0 = await stavkaTurn(client, ctx, g, 'su', need);
+      expect(r0.error).toBeUndefined();
+      expect(r0.basis).toEqual([]);
+    } finally { own.close(); }
   }, 60000);
 });

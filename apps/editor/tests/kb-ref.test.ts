@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import type { Entry } from '@def-ops/knowledge';
-import { KB_REF_TIMEOUT_MS, kbRefClient, seedAnswer, umpireRefs, type KbRefAnswer, type KbRefRequest } from '../src/sim/kb-ref';
+import { KB_FALLBACK_NOTE, KB_REF_TIMEOUT_MS, kbRefClient, seedAnswer, umpireRefs, type KbRefAnswer, type KbRefRequest } from '../src/sim/kb-ref';
 
 const read = <T>(p: string) => JSON.parse(readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8')) as T;
 const seed = read<{ entries: Entry[] } | Entry[]>('packages/knowledge/data/seed.json');
@@ -132,5 +132,12 @@ describe('справка по сиду (запасной путь)', () => {
     expect(a.refs.length).toBeGreaterThan(5);
     expect(a.refs.length).toBeLessThanOrEqual(8);
     expect(a.refs.every((r) => r.text.length <= 900)).toBe(true);
+  });
+});
+
+describe('заметка о запасном пути', () => {
+  it('без срока: запасной путь — и по сроку, и по ошибке окна', () => {
+    expect(KB_FALLBACK_NOTE).toBe('Справка из базы знаний без слоя пользователя: окно не дало справку — справка по встроенной базе');
+    expect(KB_FALLBACK_NOTE).not.toMatch(/\d+ с\b/);
   });
 });
