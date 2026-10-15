@@ -4,6 +4,7 @@
  */
 import type { LngLat } from './geo';
 import type { BBox } from './cartography';
+import { countRu } from './plural';
 
 /** Сервер Overpass OpenHistoricalMap (данные OSM с датами start_date / end_date; лицензия CC0). */
 export const OHM_OVERPASS = 'https://overpass-api.openhistoricalmap.org/api/interpreter';
@@ -24,15 +25,10 @@ export const OHM_MB_PER_SQDEG = 8.4;
  */
 export const OHM_MAX_CELLS = 400;
 
-const cellsWord = (n: number) => {
-  const d = n % 10, h = n % 100;
-  return d === 1 && h !== 11 ? 'участок' : d >= 2 && d <= 4 && (h < 12 || h > 14) ? 'участка' : 'участков';
-};
-
 /** Район больше предела — сообщение («район слишком велик: …»), иначе null. */
 export function ohmTooLarge(cells: number): string | null {
   return cells > OHM_MAX_CELLS
-    ? `район слишком велик: ${cells.toLocaleString('ru-RU')} ${cellsWord(cells)}, не больше ${OHM_MAX_CELLS} — разделите на части`
+    ? `район слишком велик: ${countRu(cells, 'участок', 'участка', 'участков')}, не больше ${OHM_MAX_CELLS} — разделите на части`
     : null;
 }
 

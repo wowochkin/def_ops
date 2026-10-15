@@ -73,6 +73,8 @@ export interface FakeOverpass {
   script: Map<number, OverpassFault[]>;
   /** Задержка ответа, мс. */
   delay: number;
+  /** Ответ участка — кусками по 1 КБ без Content-Length (как потоковый ответ Overpass). */
+  chunked: boolean;
   close(): Promise<void>;
 }
 
@@ -124,7 +126,7 @@ export const B: OverpassJson = { elements: [
 
 /** Поддельные Overpass OHM (POST /api/interpreter) и файлы стиля (/map-styles/...). */
 export async function fakeOverpass(): Promise<FakeOverpass> {
-  const s: Omit<FakeOverpass, 'url' | 'close'> = { hits: [], cells: defaultCell, script: new Map(), delay: 0 };
+  const s: Omit<FakeOverpass, 'url' | 'close'> = { hits: [], cells: defaultCell, script: new Map(), delay: 0, chunked: false };
   const seen: string[] = [];
   const server = http.createServer(async (req, res) => {
     const hit: FakeOverpass['hits'][number] = { path: req.url ?? '', t: Date.now(), ua: req.headers['user-agent'] };
@@ -154,7 +156,14 @@ export async function fakeOverpass(): Promise<FakeOverpass> {
           }));
           return;
       }
-      res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(json));
+      const text = JSON.stringify(json);
+      if (!s.chunked) { res.writeHead(200, { 'Content-Type': 'application/json' }).end(text); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked' });
+      for (let i = 0; i < text.length && !res.destroyed; i += 1024) {
+        res.write(text.slice(i, i + 1024));
+        await new Promise((r) => setImmediate(r));
+      }
+      res.end();
       return;
     }
     const f = /^\/map-styles\/fonts\/([^/]+)\/(\d+-\d+)\.pbf$/.exec(u);

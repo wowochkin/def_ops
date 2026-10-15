@@ -384,6 +384,68 @@ function openFds(file: string): number {
   return n;
 }
 
+/** Участок с n главными дорогами (уровень появления 0) по 30 точек — тяжёлая сборка и нарезка. */
+function heavyCell(b: BBox, n: number): OverpassJson {
+  let seed = 1;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const elements: OverpassJson['elements'] = [];
+  for (let i = 0; i < n; i++) {
+    let lon = b[0] + rnd() * (b[2] - b[0]), lat = b[1] + rnd() * (b[3] - b[1]);
+    const geometry = [];
+    for (let k = 0; k < 30; k++) { geometry.push({ lat, lon }); lon += (rnd() - 0.5) * 0.004; lat += (rnd() - 0.5) * 0.004; }
+    elements!.push({ type: 'way', id: 1_000_000 + i, tags: { highway: 'primary' }, geometry });
+  }
+  return { elements };
+}
+
+/** Опрос /health каждые 10 мс, пока не остановлен: наибольшая задержка ответа, мс. */
+function healthProbe(r: Running = run) {
+  let stop = false, max = 0, n = 0;
+  const loop = (async () => {
+    while (!stop) {
+      const s = performance.now();
+      await (await fetch(r.base + '/health')).text();
+      max = Math.max(max, performance.now() - s);
+      n++;
+      await new Promise((q) => setTimeout(q, 10));
+    }
+  })();
+  return { async end() { stop = true; await loop; return { max, n }; } };
+}
+
+describe('карта OHM: служба отзывчива во время сборки и нарезки', { timeout: 120_000 }, () => {
+  const HEAVY = 8000;
+
+  it('сборка и нарезка не держат цикл событий: /health отвечает быстро, итог тот же', async () => {
+    fake.cells = (b) => (b[0] === 13.25 ? heavyCell(b, HEAVY) : B);
+    const probe = healthProbe();
+    const r = await post('/cartography/maps/ohm', { name: 'Тяжёлая', bbox: BBOX });
+    expect(r.status).toBe(202);
+    const j = await waitJob(async (id) => (await get(`/cartography/jobs/${id}`)).body as MapJob, r.body.job.id, 100_000);
+    const { max, n } = await probe.end();
+    expect(j.status, j.message).toBe('done');
+    expect(j).toMatchObject({ done: TOTAL, total: TOTAL });
+    const m = (await get(`/cartography/maps/${r.body.map.id}`)).body as MapSource;
+    expect(m.ohm!.layers.roads).toBe(HEAVY + 3); // дороги участка B: 3
+    expect(n).toBeGreaterThan(20);
+    expect(max).toBeLessThan(500);
+  });
+
+  it('отмена во время нарезки — в пределах секунды; временного файла нет', async () => {
+    fake.cells = (b) => (b[0] === 13.25 ? heavyCell(b, HEAVY) : B);
+    const r = await post('/cartography/maps/ohm', { name: 'Тяжёлая', bbox: BBOX });
+    const id = r.body.job.id as string;
+    await until(async () => /нарезка/.test(((await get(`/cartography/jobs/${id}`)).body as MapJob).message ?? ''), 60_000);
+    const t0 = performance.now();
+    expect((await post(`/cartography/jobs/${id}/cancel`, {})).status).toBe(202);
+    await until(async () => ((await get(`/cartography/jobs/${id}`)).body as MapJob).status === 'cancelled', 5_000);
+    expect(performance.now() - t0).toBeLessThan(1000);
+    await run.jobs.idle();
+    const left = (await files(mapDir(r.body.map.id))).filter((f) => f.endsWith('.tmp'));
+    expect(left).toEqual([]);
+  });
+});
+
 describe('карта OHM: границы векторной карты', { timeout: 60_000 }, () => {
   it('загрузка XYZ и скана в векторную карту — 422, карта не меняется', async () => {
     const { map } = await ready();

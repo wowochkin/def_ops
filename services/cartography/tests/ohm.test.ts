@@ -6,11 +6,11 @@ import { ohmCells, type BBox, type MapJob, type OverpassJson } from '@def-ops/co
 import { CancelledError, type JobContext } from '../src/jobs';
 import { USER_AGENT } from '../src/xyz';
 import {
-  cellQuery, downloadCells, ensureAssets, overpassCheck, OhmCellCache, OHM_FONTS, OHM_RANGES, OHM_SPRITES, type OhmOptions,
+  cellQuery, downloadCells, ensureAssets, overpassCheck, OhmCellCache, OHM_DEFAULTS, OHM_FONTS, OHM_RANGES, OHM_SPRITES, responseLimitText, type OhmOptions,
 } from '../src/ohm';
-import { classify, isArea, OhmCollector, OHM_LAYERS, type OhmFeature } from '../src/ohm-features';
+import { classify, isArea, ohmDescription, OhmCollector, OHM_LAYERS, type OhmFeature } from '../src/ohm-features';
 import type { Polygon } from 'geojson';
-import { A, B, fakeAsset, fakeOverpass, tempDir, type FakeOverpass } from './helpers';
+import { A, B, defaultCell, fakeAsset, fakeOverpass, tempDir, type FakeOverpass } from './helpers';
 
 function ctx(): { ctx: JobContext; ac: AbortController } {
   const ac = new AbortController();
@@ -124,6 +124,24 @@ describe('downloadCells', () => {
     expect(c.job.skipped).toBe(1);
     expect(c.job.done).toBe(2);
     expect(c.job.done + c.job.skipped).toBe(CELLS.length);
+  });
+
+  it.each([false, true])('ответ больше предела (потоком: %s) — участок не скачан, без повтора, понятное сообщение', async (chunked) => {
+    const big: OverpassJson = { elements: [{ type: 'node', id: 1, lat: 52.1, lon: 13.3, tags: { place: 'city', name: 'Б'.repeat(6000) } }] };
+    fake.cells = (b) => (b[0] === CELLS[1][0] ? big : defaultCell(b));
+    fake.chunked = chunked;
+    const cache = await openCache();
+    const err = await downloadCells(ctx().ctx, CELLS, cache, { ...opts, maxResponseBytes: 4096 }).catch((e: Error) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toMatch(/^участок 2 из 3: ответ Overpass больше 4 КиБ/);
+    expect(fake.hits.map((h) => cellOf(h.query))).toEqual([0, 1]);
+    expect(await cache.has(0)).toBe(true);
+    expect(await cache.has(1)).toBe(false);
+  });
+
+  it('предел ответа по умолчанию — 256 МиБ', () => {
+    expect(OHM_DEFAULTS.maxResponseBytes).toBe(256 * 1024 * 1024);
+    expect(responseLimitText(256 * 1024 * 1024)).toBe('256 МиБ');
   });
 
   it('отмена во время паузы — CancelledError, участка нет', async () => {
@@ -299,6 +317,13 @@ describe('OhmCollector', () => {
     const c = new OhmCollector();
     c.add({ elements: [{ type: 'node', id: 5, lat: 52, lon: 13, tags: { historic: 'castle' } }] });
     expect(c.features()).toEqual([]);
+  });
+});
+
+describe('описание карты', () => {
+  it('число объектов и участков со склонением', () => {
+    expect(ohmDescription(94373, 285)).toBe('OpenHistoricalMap: 94\u00a0373 объекта, 285 участков');
+    expect(ohmDescription(1, 1)).toBe('OpenHistoricalMap: 1 объект, 1 участок');
   });
 });
 

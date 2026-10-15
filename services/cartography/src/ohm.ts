@@ -7,19 +7,29 @@
  * `remark` о нехватке времени или памяти) с нарастающей паузой (учитывается Retry-After);
  * прочие 4xx — ошибка сразу. Скачанный участок ложится в кэш (`_ohm/cells/{i}.json.gz`) — только
  * годный ответ; прерванную загрузку можно продолжить: участки из кэша не запрашиваются.
+ * Ответ больше maxResponseBytes (256 МиБ) обрывается, участок — ошибка сразу (без повтора):
+ * память службы не должна зависеть от того, что пришлёт сервер.
  * Шрифты и значки стиля OHM — общие для всех карт, скачиваются один раз.
+ *
+ * Сборка объектов и нарезка идут в отдельном потоке (`ohm-worker`): они занимают процессор
+ * на минуту и дольше, а служба тем временем отдаёт тайлы и отвечает на запросы; отмена
+ * останавливает поток сразу.
  */
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { gunzipSync, gzipSync } from 'node:zlib';
+import { gunzipSync, gzip } from 'node:zlib';
+import { promisify } from 'node:util';
 import { renameSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import { Worker } from 'node:worker_threads';
 import { OHM_CELL_DEG, OHM_OVERPASS, ohmCells, type BBox, type MapSource, type OverpassJson } from '@def-ops/core';
 import { CancelledError, type JobContext } from './jobs';
 import { writeAtomic, type TileStore } from './tiles';
 import { USER_AGENT } from './xyz';
 import { http, netMessage } from './net';
-import { OhmCollector, type OhmFeature } from './ohm-features';
-import { tileFeatures, type VectorTiles } from './vector';
+import type { VectorTiles } from './vector';
+import type { WorkerIn, WorkerOut } from './ohm-worker';
 
 export interface OhmOptions {
   /** Адрес интерпретатора Overpass OHM. */
@@ -34,12 +44,14 @@ export interface OhmOptions {
   backoffMs: number;
   /** Ожидание ответа, мс. */
   timeoutMs: number;
+  /** Наибольший ответ Overpass на участок, байт (по умолчанию 256 МиБ); больше — участок не скачан. */
+  maxResponseBytes?: number;
   userAgent?: string;
 }
 
 export const OHM_DEFAULTS: OhmOptions = {
   overpassUrl: OHM_OVERPASS, assetsUrl: 'https://www.openhistoricalmap.org/map-styles',
-  pauseMs: 1000, retries: 4, backoffMs: 2000, timeoutMs: 300_000,
+  pauseMs: 1000, retries: 4, backoffMs: 2000, timeoutMs: 300_000, maxResponseBytes: 256 * 1024 * 1024,
 };
 
 /** Стеки шрифтов стиля OHM. */
@@ -53,6 +65,35 @@ export const OHM_ICONS = ['place_of_worship-18', 'railstation-18', 'capital-18',
 
 /** Повтор Retry-After — не дольше, с. */
 const MAX_RETRY_AFTER_S = 60;
+
+/** Предел ответа для сообщения: «256 МиБ», «4 КиБ». */
+export function responseLimitText(bytes: number): string {
+  const f = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1).replace('.', ','));
+  return bytes >= 1048576 ? `${f(bytes / 1048576)} МиБ` : bytes >= 1024 ? `${f(bytes / 1024)} КиБ` : `${bytes} Б`;
+}
+
+class TooLargeError extends Error {}
+
+/** Текст ответа не больше limit байт (по заголовку и по счёту байт потока); больше — поток обрывается, TooLargeError. */
+async function readCapped(r: Response, limit: number): Promise<string> {
+  const tooLarge = () => new TooLargeError(`ответ Overpass больше ${responseLimitText(limit)} — загрузка участка прервана, чтобы не переполнить память службы`);
+  const declared = Number(r.headers.get('content-length'));
+  if (declared > limit) { await r.body?.cancel().catch(() => {}); throw tooLarge(); }
+  if (!r.body) return '';
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  const parts: string[] = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    n += value.byteLength;
+    if (n > limit) { await reader.cancel().catch(() => {}); throw tooLarge(); }
+    parts.push(dec.decode(value, { stream: true }));
+  }
+  parts.push(dec.decode());
+  return parts.join('');
+}
 
 /** Запрос Overpass участка: узлы с тегами, пути с геометрией, отношения — только члены-ссылки. */
 export function cellQuery(b: BBox): string {
@@ -76,10 +117,11 @@ export function overpassCheck(status: number, text: string): { ok: true; json: O
 }
 
 type Plan = { bbox: BBox; step: number; cells: number };
+const gzipAsync = promisify(gzip);
 
 /** Кэш сырых участков в папке карты: `plan.json` и `cells/{i}.json.gz` (файл есть — участок скачан). */
 export class OhmCellCache {
-  constructor(private dir: string) {}
+  constructor(readonly dir: string) {}
 
   private file(i: number) {
     if (!Number.isInteger(i) || i < 0) throw new Error(`Недопустимый номер участка: ${i}`);
@@ -117,7 +159,7 @@ export class OhmCellCache {
   }
 
   async write(i: number, json: OverpassJson): Promise<void> {
-    await writeAtomic(this.file(i), gzipSync(Buffer.from(JSON.stringify(json))));
+    await writeAtomic(this.file(i), await gzipAsync(Buffer.from(JSON.stringify(json))));
   }
 
   async clear(): Promise<void> {
@@ -134,17 +176,36 @@ const sleep = (ms: number, signal: AbortSignal) => new Promise<void>((resolve, r
 });
 
 /**
+ * Куда идут участки при загрузке. cached — участок из кэша: число объектов; нет или повреждён
+ * (файл удалён) — null, участок скачается заново. fetched — участок скачан и уже лежит в кэше.
+ */
+export interface CellSink {
+  cached(i: number): Promise<number | null>;
+  fetched(i: number, json: OverpassJson): Promise<void> | void;
+}
+
+/**
  * Скачать участки по порядку (участки из кэша не запрашиваются; повреждённый в кэше —
- * удаляется и скачивается заново). Ответ каждого участка (из кэша или сети) — в onCell,
- * по порядку участков. После каждого участка — ход задания: скачанный — done + 1, из кэша —
- * skipped + 1 (done + skipped не больше total), и сообщение.
- * Участок не скачан после всех повторов (или ответ 4xx) — ошибка «участок N из M: …»;
- * уже скачанные остаются в кэше.
+ * удаляется и скачивается заново). Участки (из кэша или сети) — в sink по порядку; функция
+ * вместо sink — ответ каждого участка в неё (участок из кэша читается здесь же). После каждого
+ * участка — ход задания: скачанный — done + 1, из кэша — skipped + 1 (done + skipped не больше
+ * total), и сообщение. Участок не скачан после всех повторов (или ответ 4xx, или ответ больше
+ * maxResponseBytes) — ошибка «участок N из M: …»; уже скачанные остаются в кэше.
  */
 export async function downloadCells(
-  ctx: JobContext, cells: BBox[], cache: OhmCellCache, o: OhmOptions, onCell?: (i: number, json: OverpassJson) => void,
+  ctx: JobContext, cells: BBox[], cache: OhmCellCache, o: OhmOptions, sink?: CellSink | ((i: number, json: OverpassJson) => void),
 ): Promise<{ fetched: number; cached: number; elements: number }> {
   const headers = { 'User-Agent': o.userAgent ?? USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' };
+  const limit = o.maxResponseBytes ?? OHM_DEFAULTS.maxResponseBytes!;
+  const onCell = typeof sink === 'function' ? sink : undefined;
+  const to: CellSink = typeof sink === 'object' ? sink : {
+    async cached(i) {
+      const json = await cache.load(i);
+      if (json) onCell?.(i, json);
+      return json ? json.elements?.length ?? 0 : null;
+    },
+    fetched: (i, json) => onCell?.(i, json),
+  };
   const total = cells.length;
   let fetched = 0, cached = 0, elements = 0;
   let last = -Infinity; // окончание предыдущего запроса к Overpass
@@ -153,14 +214,14 @@ export async function downloadCells(
 
   for (let i = 0; i < total; i++) {
     ctx.check();
-    const hit = await cache.load(i);
-    if (hit) {
+    const hit = await to.cached(i);
+    if (hit !== null) {
       cached++;
-      elements += hit.elements?.length ?? 0;
-      onCell?.(i, hit);
+      elements += hit;
       ctx.progress({ skipped: ctx.job.skipped + 1, message: `участок ${i + 1} из ${total}, объектов ${elements}` });
       continue;
     }
+    ctx.check();
     const body = new URLSearchParams({ data: cellQuery(cells[i]) }).toString();
     let message = '', wait = 0;
     let json: OverpassJson | null = null;
@@ -171,10 +232,11 @@ export async function downloadCells(
         const r = await http.fetch(o.overpassUrl, { method: 'POST', headers, body, signal: AbortSignal.any([ctx.signal, AbortSignal.timeout(o.timeoutMs)]) });
         status = r.status;
         retryAfter = Number(r.headers.get('retry-after')) || 0;
-        text = await r.text();
+        text = await readCapped(r, limit);
       } catch (e) {
         last = Date.now();
         ctx.check();
+        if (e instanceof TooLargeError) { message = e.message; break; } // тот же участок пришлёт то же — без повтора
         message = (e as Error).name === 'TimeoutError' ? `нет ответа за ${Math.round(o.timeoutMs / 1000)} с` : netMessage(e);
         wait = o.backoffMs * 2 ** attempt;
         continue;
@@ -191,7 +253,7 @@ export async function downloadCells(
     await cache.write(i, json);
     fetched++;
     elements += json.elements?.length ?? 0;
-    onCell?.(i, json);
+    await to.fetched(i, json);
     report(i);
   }
   return { fetched, cached, elements };
@@ -248,11 +310,84 @@ export const ohmFile = (store: TileStore, tenant: string, mapId: string) => path
 
 const mb = (bytes: number) => (bytes / 1048576).toFixed(1).replace('.', ',');
 
+type Built = Extract<WorkerOut, { t: 'built' }>;
+
+/**
+ * Поток сборки и нарезки (`ohm-worker`): запросы по одному с ответом, ход — в onProgress.
+ * Поток упал (в том числе нехватка памяти) — все ожидающие запросы получают ошибку; stop() —
+ * поток останавливается (ожидающие — CancelledError), его файлы закрыты.
+ */
+export class OhmWorker {
+  private w: Worker;
+  private seq = 0;
+  private pending = new Map<number, { resolve: (m: WorkerOut) => void; reject: (e: Error) => void }>();
+  private dead: Error | null = null;
+
+  constructor(cacheDir: string, onProgress: (p: { done?: number; message?: string }) => void) {
+    this.w = spawnWorker({ cacheDir });
+    this.w.on('message', (m: WorkerOut) => {
+      if (m.t === 'progress') { onProgress(m.done === undefined ? { message: m.message } : m.message === undefined ? { done: m.done } : { done: m.done, message: m.message }); return; }
+      const p = m.id === undefined ? undefined : this.pending.get(m.id);
+      if (m.t === 'error') { const e = Object.assign(new Error(m.message), { stack: m.stack }); if (p) { this.pending.delete(m.id!); p.reject(e); } else this.fail(e); return; }
+      if (p) { this.pending.delete(m.id); p.resolve(m); }
+    });
+    this.w.on('error', (e: Error & { code?: string }) => this.fail(e.code === 'ERR_WORKER_OUT_OF_MEMORY'
+      ? new Error('Не хватило памяти на сборку и нарезку карты — разделите район на части') : e));
+    this.w.on('exit', (code) => this.fail(new Error(`Поток сборки и нарезки остановился (код ${code})`)));
+  }
+
+  private fail(e: Error) {
+    this.dead ??= e;
+    for (const p of this.pending.values()) p.reject(this.dead);
+    this.pending.clear();
+  }
+
+  private ask(m: Omit<Extract<WorkerIn, { t: 'cell' }>, 'id'> | Omit<Extract<WorkerIn, { t: 'build' }>, 'id'>): Promise<WorkerOut> {
+    if (this.dead) return Promise.reject(this.dead);
+    const id = ++this.seq;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.w.postMessage({ ...m, id });
+    });
+  }
+
+  /** Участок из кэша — в сборщик потока: число объектов; нет или повреждён (файл удалён) — null. */
+  async cell(i: number): Promise<number | null> {
+    return (await this.ask({ t: 'cell', i }) as Extract<WorkerOut, { t: 'cell' }>).elements;
+  }
+
+  /** Признаки и нарезка в file. */
+  async build(a: Omit<Extract<WorkerIn, { t: 'build' }>, 't' | 'id'>): Promise<Built> {
+    return await this.ask({ t: 'build', ...a }) as Built;
+  }
+
+  /** Остановить поток (отмена, конец задания); ждёт, пока поток закроет свои файлы. */
+  async stop(): Promise<void> {
+    this.fail(new CancelledError());
+    this.w.removeAllListeners('exit');
+    await this.w.terminate();
+  }
+}
+
+/**
+ * Поток из исходника рядом с этим файлом. В сборке настольного приложения — ohm-worker.mjs рядом
+ * со службой. В разработке (tsx, vitest) — ohm-worker.ts: загрузчик tsx службы в поток не
+ * переходит, поэтому поток начинается с регистрации tsx и уже затем загружает исходник.
+ */
+function spawnWorker(data: { cacheDir: string }): Worker {
+  if (!import.meta.url.endsWith('.ts')) return new Worker(new URL('./ohm-worker.mjs', import.meta.url), { workerData: data });
+  const tsx = path.join(path.dirname(createRequire(import.meta.url).resolve('tsx/package.json')), 'dist', 'esm', 'api', 'index.mjs');
+  const boot = `import { register } from ${JSON.stringify(pathToFileURL(tsx).href)}; register(); `
+    + `await import(${JSON.stringify(new URL('./ohm-worker.ts', import.meta.url).href)});`;
+  return new Worker(new URL(`data:text/javascript,${encodeURIComponent(boot)}`), { workerData: data });
+}
+
 /**
  * Задание карты OHM: шрифты и значки → участки (кэш `_ohm`; refresh — кэш очищается в начале)
- * → объекты → нарезка в `ohm.mbtiles.tmp` → читатель прежнего файла закрывается, файл заменяется
- * (не вышло — временный файл удаляется, ошибка; кэш участков остаётся) → кэш удаляется. До замены показывается прежняя карта (отмена и сбой её не трогают).
- * Итог — поля карты (patch) и сообщение задания.
+ * → объекты → нарезка в `ohm.mbtiles.tmp` (объекты и нарезка — в потоке `ohm-worker`) → читатель
+ * прежнего файла закрывается, файл заменяется (не вышло — временный файл удаляется, ошибка; кэш
+ * участков остаётся) → кэш удаляется. До замены показывается прежняя карта (отмена и сбой её не
+ * трогают). Итог — поля карты (patch) и сообщение задания.
  */
 export async function buildOhm(
   ctx: JobContext, store: TileStore, vectors: VectorTiles, map: MapSource, bbox: BBox, o: OhmOptions & { refresh?: boolean },
@@ -266,28 +401,29 @@ export async function buildOhm(
   if (o.refresh) await cache.clear();
   await cache.open(bbox, OHM_CELL_DEG, cells.length);
 
-  // сырые ответы участков не копятся: объекты сразу уходят в сборщик (без лишних полей)
-  let collector: OhmCollector | null = new OhmCollector();
-  await downloadCells(ctx, cells, cache, o, (_i, json) => collector!.add(json));
-  const fetchedAt = new Date().toISOString();
-
-  ctx.progress({ message: 'сборка объектов' });
-  const features: OhmFeature[] = collector.features();
-  collector = null; // объекты участков отпускаются до нарезки
-  const count = features.length;
-  ctx.progress({ message: `сборка объектов: ${count}` });
-  const description = `OpenHistoricalMap: ${count} объектов, участков ${cells.length}`;
-
   const file = ohmFile(store, ctx.tenant, map.id);
   const tmp = `${file}.tmp`;
-  let out: Awaited<ReturnType<typeof tileFeatures>>;
+  // сырые ответы участков не копятся: поток читает участок из кэша и сразу отдаёт объекты сборщику
+  const worker = new OhmWorker(cache.dir, (p) => ctx.progress(p));
+  const stop = () => { void worker.stop(); };
+  ctx.signal.addEventListener('abort', stop, { once: true });
+  let fetchedAt = '', out: Built | null = null;
   try {
-    out = await tileFeatures(ctx, features, bbox, tmp, { name: map.name, description });
-    ctx.check();
-  } catch (e) {
-    await fs.rm(tmp, { force: true });
-    throw e;
+    await downloadCells(ctx, cells, cache, o, {
+      cached: (i) => worker.cell(i),
+      async fetched(i) {
+        if ((await worker.cell(i)) === null) throw new Error(`участок ${i + 1} из ${cells.length}: не прочитан из кэша`);
+      },
+    });
+    fetchedAt = new Date().toISOString();
+    out = await worker.build({ bbox, file: tmp, name: map.name, cells: cells.length, done: ctx.job.done });
+  } finally {
+    ctx.signal.removeEventListener('abort', stop);
+    await worker.stop(); // поток закрыл файл нарезки — его можно удалить или заменить
+    if (!out || ctx.signal.aborted) await fs.rm(tmp, { force: true }); // сбой, отмена
   }
+  ctx.check();
+  const count = out.features;
   // замена: читатель прежнего файла закрывается и файл заменяется без уступки циклу событий;
   // не вышло (Windows: файл открыт выгрузкой пакета — EPERM) — временный файл удаляется, кэш
   // участков остаётся: «продолжить» нарежет заново без загрузки
@@ -304,7 +440,7 @@ export async function buildOhm(
   return {
     patch: {
       kind: 'vector', format: 'pbf', tileSize: 512, minzoom: 0, maxzoom: 16, bounds: [...bbox] as BBox,
-      attribution: OHM_ATTRIBUTION, description, stats: { tiles: out.tiles, bytes: out.bytes },
+      attribution: OHM_ATTRIBUTION, description: out.description, stats: { tiles: out.tiles, bytes: out.bytes },
       ohm: { bbox: [...bbox] as BBox, cells: cells.length, features: count, layers: out.layers, fetchedAt },
     },
     message: `Объектов ${count}, тайлов ${out.tiles}, ${mb(out.bytes)} МБ`,

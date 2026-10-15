@@ -6,7 +6,7 @@
 import { ask } from './dialogs';
 import { useState } from 'react';
 import type { ImageOverlay, LayerRole, MapDocument } from '@def-ops/core';
-import { newId, addLayer, updateLayer, removeLayer, moveLayer, setFeatureLayer, soloLayer, orderedFeatures, inScaleRange, hasScaleRange, scaleRangeLabel } from '@def-ops/core';
+import { countRu, newId, addLayer, updateLayer, removeLayer, moveLayer, setFeatureLayer, soloLayer, orderedFeatures, inScaleRange, hasScaleRange, scaleRangeLabel } from '@def-ops/core';
 import { ScaleRangeField } from './ScaleRange';
 import type { MapEngine } from './engine/types';
 
@@ -55,8 +55,8 @@ export function LayersPanel(p: Props) {
     if (!l || doc.layers.length < 2) return;
     const others = doc.layers.filter((x) => x.id !== id);
     const target = others[others.length - 1];
-    if (count > 0 && !(await ask(`Удалить слой «${l.name}» (${count} объект(ов))?`))) return;
-    const keep = count > 0 && await ask(`Перенести ${count} объект(ов) в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
+    if (count > 0 && !(await ask(`Удалить слой «${l.name}» (${countRu(count, 'объект', 'объекта', 'объектов')})?`))) return;
+    const keep = count > 0 && await ask(`Перенести ${countRu(count, 'объект', 'объекта', 'объектов')} в слой «${target.name}»?\nОтмена — удалить слой вместе с объектами.`);
     setDoc(removeLayer(doc, id, keep ? target.id : null));
     if (activeLayer === id) setActiveLayer(null);
   };

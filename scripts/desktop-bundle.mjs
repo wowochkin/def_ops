@@ -30,9 +30,14 @@ const dist = join(app, 'server/dist');
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
 const esbuild = join(root, 'node_modules/.bin', process.platform === 'win32' ? 'esbuild.cmd' : 'esbuild');
-for (const s of ['documents', 'render', 'registry', 'cartography', 'gateway']) {
-  run(esbuild, [`services/${s}/src/main.ts`, '--bundle', '--platform=node', '--format=esm', '--target=node22',
-    `--outfile=${join(dist, `${s}.mjs`)}`, '--external:sharp', '--external:pg-native',
+// поток сборки и нарезки карт OHM — отдельный файл рядом со службой (картография ищет ./ohm-worker.mjs)
+const entries = [
+  ...['documents', 'render', 'registry', 'cartography', 'gateway'].map((s) => [`services/${s}/src/main.ts`, `${s}.mjs`]),
+  ['services/cartography/src/ohm-worker.ts', 'ohm-worker.mjs'],
+];
+for (const [entry, out] of entries) {
+  run(esbuild, [entry, '--bundle', '--platform=node', '--format=esm', '--target=node22',
+    `--outfile=${join(dist, out)}`, '--external:sharp', '--external:pg-native',
     '--banner:js=import { createRequire as __cr } from "node:module"; const require = __cr(import.meta.url);']);
 }
 const nm = join(app, 'server/node_modules');

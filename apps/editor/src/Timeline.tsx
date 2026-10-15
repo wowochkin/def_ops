@@ -5,7 +5,7 @@
  * времени в секунду». Выключена — показаны все знаки сразу (как без времени).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MOSCOW_TZ, documentMoments, isDateOnly, timelineRange, toTime, type MapDocument, type TimeInstant } from '@def-ops/core';
+import { MOSCOW_TZ, plural, documentMoments, isDateOnly, timelineRange, toTime, type MapDocument, type TimeInstant } from '@def-ops/core';
 import { DAY, HOUR, ZONE_CHOICES, clock, fmtMoment, fromMs, useZones, zoneName, zoneOffsetLabel } from './time';
 import { MomentInput } from './MomentInput';
 
@@ -142,9 +142,4 @@ export function Timeline({ doc, setDoc, time, setTime, newFromNow, setNewFromNow
       )}
     </div>
   );
-}
-
-function plural(n: number, one: string, few: string, many: string) {
-  const a = n % 10, b = n % 100;
-  return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
 }

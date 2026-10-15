@@ -12,7 +12,7 @@
  * всё с его стороны), на каждый слитый промежуток — один признак с общими координатами пути.
  */
 import type { Feature, LineString, Point, Polygon } from 'geojson';
-import { ohmYear, pointInRing, ringClosed, stitchRings, type LngLat, type OverpassElement, type OverpassJson } from '@def-ops/core';
+import { countRu, ohmYear, pointInRing, ringClosed, stitchRings, type LngLat, type OverpassElement, type OverpassJson } from '@def-ops/core';
 
 export type OhmLayer = 'roads' | 'rail' | 'water' | 'landuse' | 'buildings' | 'boundaries' | 'places' | 'pois';
 export const OHM_LAYERS: OhmLayer[] = ['roads', 'rail', 'water', 'landuse', 'buildings', 'boundaries', 'places', 'pois'];
@@ -249,3 +249,7 @@ export class OhmCollector {
     return out;
   }
 }
+
+/** Описание векторной карты (карта и metadata MBTiles): «OpenHistoricalMap: 94 373 объекта, 285 участков». */
+export const ohmDescription = (features: number, cells: number) =>
+  `OpenHistoricalMap: ${countRu(features, 'объект', 'объекта', 'объектов')}, ${countRu(cells, 'участок', 'участка', 'участков')}`;

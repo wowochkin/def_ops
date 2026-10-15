@@ -12,7 +12,7 @@ import {
 import type { MapEngine } from './engine/types';
 import { ask } from './dialogs';
 import { BUILTIN, getData } from './sim/userdata';
-import { packageBlocked } from './map-actions';
+import { mapSummary, packageBlocked, tilesText } from './map-actions';
 
 const API = '/api/cartography';
 
@@ -81,8 +81,6 @@ interface Props {
 }
 
 /** Дата дд.мм.гггг (по местному времени). */
-const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('ru-RU');
-const fmtBytes = (b = 0) => (b > 1e9 ? `${(b / 1e9).toFixed(1)} ГБ` : b > 1e6 ? `${(b / 1e6).toFixed(1)} МБ` : `${Math.round(b / 1e3)} КБ`);
 
 /** Контур выделенного объекта (район или замкнутая линия) — как граница карты. */
 function ringOf(f: Feature | null): LngLat[] | null {
@@ -119,7 +117,7 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMap
         const j = (data as { job?: MapJob }).job;
         if (!j) return;
         setJobs((cur) => ({ ...cur, [j.id]: j }));
-        if (type !== 'job.progress') { reload(); notify(type === 'job.done' ? (j.type === 'ohm-download' ? `Карта готова: ${j.message ?? ''}` : `Карта готова: ${j.done} тайлов`) : j.status === 'cancelled' ? 'Задание остановлено' : `Задание не выполнено: ${j.message ?? ''}`); }
+        if (type !== 'job.progress') { reload(); notify(type === 'job.done' ? (j.type === 'ohm-download' ? `Карта готова: ${j.message ?? ''}` : `Карта готова: ${tilesText(j.done)}`) : j.status === 'cancelled' ? 'Задание остановлено' : `Задание не выполнено: ${j.message ?? ''}`); }
       } else reload();
     });
   }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -181,8 +179,8 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMap
           <div className="mi-h">
             <b className="link" title="Показать подложкой" onClick={() => onShow(m)}>{m.name}</b>
             {vector
-              ? <span className="muted">{m.ohm ? `${m.ohm.features.toLocaleString('ru-RU')} объектов · ${fmtBytes(m.stats?.bytes)} · данные на ${fmtDay(m.ohm.fetchedAt)}` : busy ? 'загружается…' : 'не загружена'}</span>
-              : <span className="muted">{m.date ? `${m.date} · ` : ''}z{m.minzoom}–{m.maxzoom} · {m.stats?.tiles ?? 0} тайлов · {fmtBytes(m.stats?.bytes)}</span>}
+              ? <span className="muted">{m.ohm ? mapSummary(m) : busy ? 'загружается…' : 'не загружена'}</span>
+              : <span className="muted">{mapSummary(m)}</span>}
           </div>
           <div className="mi-btns">
             <button disabled={vector && !m.ohm} title={vector && !m.ohm ? 'Карта ещё не загружена' : undefined} onClick={() => onShow(m)}>подложить</button>
@@ -246,7 +244,7 @@ function XyzForm({ engine, selectedRing, onDone, onError }: { engine: MapEngine 
           try {
             const m = await cartography.create({ name, date: date || null, attribution: attribution || undefined, format: /\.jpe?g/i.test(url) ? 'jpg' : 'png', tileSize: 256, minzoom, maxzoom, bounds: bounds!, sourceUrl: url });
             await cartography.downloadXyz(m.id, { url, bounds: bounds!, minzoom, maxzoom, headers: referer ? { Referer: referer } : undefined });
-            onDone(`Загрузка «${name}» начата: ${count} тайлов`);
+            onDone(`Загрузка «${name}» начата: ${tilesText(count)}`);
           } catch (e) { onError((e as Error).message); }
         }}>Скачать в локальное хранилище</button>
         <button className="link" onClick={() => onDone()}>отмена</button>
@@ -359,7 +357,7 @@ async function importFiles(files: File[]): Promise<string> {
     if (e === 'tar') { await cartography.importPackage(f); done.push(`пакет «${f.name}»`); }
     if (e === 'sqlitedb' || e === 'mbtiles') {
       const r = await cartography.importArchive(f, { file: f.name.replace(/\.[^.]+$/, '') });
-      done.push(`«${r.map.name}»: ${r.map.stats?.tiles ?? 0} тайлов, уровни ${r.map.minzoom}–${r.map.maxzoom}`);
+      done.push(`«${r.map.name}»: ${tilesText(r.map.stats?.tiles ?? 0)}, уровни ${r.map.minzoom}–${r.map.maxzoom}`);
     }
   }
   for (const mf of maps) {

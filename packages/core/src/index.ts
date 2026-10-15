@@ -16,6 +16,7 @@ export * from './cartography';
 export * from './ohm';
 export * from './ozi';
 export * from './scaling';
+export * from './plural';
 export { renderDocument, renderFeature, createContext, exportSVG, createRenderCache } from './render/index';
 export type { RenderResult, RenderedFeature, RenderedLayer, RenderOptions, RenderCache } from './render/index';
 export { arrowGeometry, arrowAxisPoints } from './render/arrow';

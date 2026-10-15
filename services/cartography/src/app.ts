@@ -4,7 +4,7 @@ import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 import type { MapJob, MapSource } from '@def-ops/core';
-import { formatScale, metersPerPixel, ohmCells, parseOziMap, scaleBar, scaleDenominator, tileCount, tileRange, type BBox } from '@def-ops/core';
+import { countRu, formatScale, metersPerPixel, ohmCells, parseOziMap, scaleBar, scaleDenominator, tileCount, tileRange, type BBox } from '@def-ops/core';
 import { Router, HttpError, reply, type Ctx } from '@def-ops/service-kit';
 import type { MapRepo } from './repo';
 import type { EventBus } from './events';
@@ -114,7 +114,7 @@ export function buildRouter(d: Deps): Router {
 
   const tooMany = (n: number) => reply(422, { error: {
     code: 'too_many_tiles',
-    message: `Получается ${n.toLocaleString('ru-RU')} тайлов — больше предела ${o.maxTilesPerJob.toLocaleString('ru-RU')} (MAX_TILES_PER_JOB). Уменьшите район или диапазон уровней`,
+    message: `Получается ${countRu(n, 'тайл', 'тайла', 'тайлов')} — больше предела ${o.maxTilesPerJob.toLocaleString('ru-RU')} (MAX_TILES_PER_JOB). Уменьшите район или диапазон уровней`,
     tiles: n, limit: o.maxTilesPerJob,
   } });
 
