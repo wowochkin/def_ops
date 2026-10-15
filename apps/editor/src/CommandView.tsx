@@ -89,7 +89,6 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [error, setError] = useState<string | null>(null);
   const [ai, setAi] = useState<AiStatus>({ state: 'off' });
   const [stream, setStream] = useState('');
-  // сколько символов ответа штаба противника получено всего (на экране — только хвост потока)
   const [aiPhase, setAiPhase] = useState('');
   const [blocked, setBlocked] = useState<string | null>(null);
   const [record, setRecord] = useState<GameRecord | null>(saved?.record ?? null);

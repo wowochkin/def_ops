@@ -5,9 +5,9 @@
  *
  * Обстановка и правила — те же, что у советника (buildAdvice); меняется только формат ответа. Варианты
  * выдаются по мере генерации (каждый — как только закрыт его объект), названия сопоставляются со
- * списками обстановки так же, как приказы штаба модели. Вариант с приказами, которых не исполнить (формирования
- * нет среди своих сил, цель не опознана), — одна просьба исправить их по подсказке (repair.ts), затем вариант
- * выдаётся заново.
+ * списками обстановки так же, как приказы штаба модели. Варианты с приказами, которых не исполнить (формирования
+ * нет среди своих сил, цель не опознана), — одна общая просьба исправить их по подсказке (repair.ts), затем
+ * исправленные варианты выдаются заново.
  */
 import type { GameState } from '@def-ops/sim';
 import { LlmClient, textOf, type ChatMessage, type ChatResult } from '../llm/client';
@@ -16,7 +16,7 @@ import { ArrayItemStream } from '../stream-json';
 import { STAFF_ACTION_KINDS, TASKS, type StaffActionGiven } from '../decision';
 import { leakedNames, type AdviceSuggestion, type buildAdvice } from './advisor';
 import { decisionToOrders } from './apply';
-import { failedOrders, repairHint, repairOrders, type RepairInfo } from './repair';
+import { failedOrders, ownFormation, repairHint, repairOrders, takenFormations, type RepairGroup, type RepairInfo } from './repair';
 import type { Situation } from './situation';
 
 export interface PlanVariantRaw {
@@ -91,7 +91,7 @@ function planOrder(o: unknown): AdviceSuggestion | null {
   if (!o || typeof o !== 'object') return null;
   const x = o as AdviceSuggestion;
   if (typeof x.formation !== 'string' || !(TASKS as readonly string[]).includes(x.task)) return null;
-  return { ...x, toArea: x.toArea ?? null, why: s(x.why), area: s(x.area) };
+  return { formation: x.formation, task: x.task, area: s(x.area), toArea: typeof x.toArea === 'string' ? x.toArea : null, why: s(x.why) };
 }
 
 /** Приказы варианта, сопоставленные с обстановкой (как в игре — приказы человека). */
@@ -125,11 +125,11 @@ export interface PlanResult {
  * Запросить варианты. onVariant — каждый вариант, как только модель его дописала (до конца ответа), и ещё раз —
  * после исправления его приказов; onProgress — сколько знаков ответа и размышления получено (для индикатора).
  * sit — обстановка для сопоставления приказов: с ней варианты с неисполнимыми приказами исправляются по подсказке
- * (onRepair — перед запросом на исправление варианта).
+ * одним общим запросом на все такие варианты (onRepair — перед ним, с номерами вариантов с 0).
  */
 export async function planVariants(client: LlmClient, _g: GameState, built: ReturnType<typeof buildAdvice>, n: number,
   opts: { thinking?: Thinking; signal?: AbortSignal; onVariant?: (v: PlanVariantRaw, i: number) => void; onProgress?: (p: { content: number; reasoning: number; tail: string }) => void;
-    sit?: Situation; onRepair?: (v: PlanVariantRaw, i: number) => void } = {}): Promise<PlanResult> {
+    sit?: Situation; onRepair?: (variants: number[]) => void } = {}): Promise<PlanResult> {
   const got: PlanVariantRaw[] = [];
   const stream = new ArrayItemStream<unknown>('variants', (item) => { const v = planVariant(item); if (v) { got.push(v); opts.onVariant?.(v, got.length - 1); } });
   let content = 0, reasoning = 0, tail = '';
@@ -149,24 +149,30 @@ export async function planVariants(client: LlmClient, _g: GameState, built: Retu
     ? ((res.json as { variants: unknown[] }).variants.map(planVariant).filter(Boolean) as PlanVariantRaw[]) : got;
   // дописать варианты, которых не было в потоке (поток мог не распознать элемент)
   for (let i = got.length; i < all.length; i++) opts.onVariant?.(all[i], i);
-  // приказы, которых не исполнить, — одна просьба исправить на вариант
+  // приказы, которых не исполнить, — одна общая просьба исправить на все варианты
   const sit = opts.sit;
-  if (sit) {
-    const messages = planMessages(built, n);
-    const item = PLAN_SCHEMA.properties.variants.items.properties.orders.items;
-    for (const [i, v] of all.entries()) {
-      if (opts.signal?.aborted) break;
+  if (sit && !opts.signal?.aborted) {
+    const groups: RepairGroup<AdviceSuggestion>[] = all.map((v) => {
       const conv = planOrdersApplied(v.orders, sit);
-      const failed = failedOrders(conv.given, conv.applied);
-      if (!failed.length) continue;
-      opts.onRepair?.(v, i);
+      return { orders: v.orders, failed: failedOrders(conv.given, conv.applied), taken: takenFormations(conv.applied, sit), title: v.title };
+    });
+    const bad = groups.flatMap((g, i) => (g.failed.length ? [i] : []));
+    if (bad.length) {
+      opts.onRepair?.(bad);
       const fx = await repairOrders(client, {
-        messages, answer: JSON.stringify({ variants: [v] }), orders: v.orders, failed, item,
-        hint: repairHint(failed, sit, 'formation, task, area, toArea, why', `варианте «${v.title}»`),
-        normalize: planOrder, ok: (o) => !!planOrdersApplied([o], sit).applied[0]?.order, signal: opts.signal,
+        messages: planMessages(built, n), answer: JSON.stringify({ variants: all.map(({ fix: _f, ...v }) => v) }), groups, variants: true,
+        item: PLAN_SCHEMA.properties.variants.items.properties.orders.items,
+        hint: repairHint(groups, sit, 'formation, task, area, toArea, why', true),
+        normalize: planOrder, task: (o) => o.task, formation: (o) => ownFormation(o.formation, sit),
+        ok: (o) => !!planOrdersApplied([o], sit).applied[0]?.order, signal: opts.signal,
       });
-      all[i] = { ...v, orders: fx.orders, fix: fx.info };
-      opts.onVariant?.(all[i], i);
+      // отменено — варианты остаются как были, заново не выдаются
+      if (!opts.signal?.aborted) {
+        for (const i of bad) {
+          all[i] = { ...all[i], orders: fx.groups[i].orders, fix: fx.groups[i].info };
+          opts.onVariant?.(all[i], i);
+        }
+      }
     }
   }
   const text = all.map((v) => [v.assessment, v.enemyIntent, v.intent, v.risks, v.report, ...v.orders.map((o) => `${o.area} ${o.toArea ?? ''} ${o.why}`)].join('\n')).join('\n');

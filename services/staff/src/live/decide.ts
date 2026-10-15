@@ -11,7 +11,7 @@ import type { Thinking } from '../llm/config';
 import { DECISION_SCHEMA, LIVE_DECISION_SCHEMA, TASK_RU, withBasis, type Decision, type Issue } from '../decision';
 import { parseRefs } from './kb-blocks';
 import { decisionToOrders, type AppliedOrder } from './apply';
-import { failedOrders, repairHint, repairOrders, type RepairInfo } from './repair';
+import { failedOrders, ownFormation, repairHint, repairOrders, takenFormations, type RepairInfo } from './repair';
 import type { Situation } from './situation';
 
 export interface AiTurn {
@@ -99,18 +99,26 @@ export async function decideTurn(client: LlmClient, sit: Situation, opts: { thin
     opts.onRepair?.(failed.length);
     const item = DECISION_SCHEMA.properties.orders.items;
     const fx = await repairOrders(client, {
-      messages: sit.messages, answer: JSON.stringify(d), orders: d.orders, failed, item,
-      hint: repairHint(failed, sit, 'formation, task, area, toArea, deadline, details'),
+      messages: sit.messages, answer: JSON.stringify(d), item,
+      groups: [{ orders: d.orders, failed, taken: takenFormations(r.applied, sit) }],
+      hint: repairHint([{ failed, taken: takenFormations(r.applied, sit) }], sit, 'formation, task, area, toArea, deadline, details'),
       normalize: (x) => (typeof x.formation === 'string' && typeof x.task === 'string' && x.task in TASK_RU
         ? { formation: x.formation, task: x.task as Decision['orders'][number]['task'], area: typeof x.area === 'string' ? x.area : '', toArea: typeof x.toArea === 'string' ? x.toArea : null, deadline: typeof x.deadline === 'string' ? x.deadline : '', details: typeof x.details === 'string' ? x.details : '' }
         : null),
+      task: (o) => o.task, formation: (o) => ownFormation(o.formation, sit),
       ok: (o) => !!decisionToOrders({ orders: [o] }, sit).applied[0]?.order,
       signal: opts.signal, onDelta: opts.onDelta,
     });
-    out.fix = fx.info;
-    if (fx.info.fixed) {
-      out.decision = { ...d, orders: fx.orders };
+    const fix = fx.groups[0];
+    out.fix = fix.info;
+    if (fix.info.fixed) {
+      out.decision = { ...d, orders: fix.orders };
       r = decisionToOrders(out.decision, sit);
+    }
+    // почему исправление отклонено — к замечанию отброшенного приказа
+    for (const nt of fix.info.notes ?? []) {
+      const ap = r.applied.find((x) => x.given === out.decision!.orders[nt.n - 1]);
+      if (ap) ap.issue = ap.issue ? `${ap.issue}; ${nt.text}` : nt.text;
     }
   }
   out.applied = r.applied;

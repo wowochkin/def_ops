@@ -9,4 +9,4 @@ export { PLAN_SCHEMA, planMessages, planOrdersApplied, planVariant, planVariants
 export { stavkaNeed, buildStavka, stavkaActions, stavkaTurn, stavkaLines, STAVKA_SCHEMA, type StavkaNeed, type StavkaResult, type StavkaRaw, type StavkaBuilt } from './stavka';
 export { situationTriggers, staffQueries } from './triggers';
 export { kbBlocks, parseRefs } from './kb-blocks';
-export { failedOrders, repairHint, repairOrders, repairSchema, type FailedOrder, type RepairInfo } from './repair';
+export { failedOrders, ownFormation, repairHint, repairOrders, repairSchema, takenFormations, type FailedOrder, type RepairGroup, type RepairInfo, type RepairNote } from './repair';

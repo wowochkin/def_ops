@@ -440,11 +440,14 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
     return {
       title: v.title, idea: v.idea,
       decision: { assessment: v.assessment, enemyIntent: v.enemyIntent, intent: v.intent, risks: v.risks, report: v.report },
-      orders: conv.applied.map((x, i) => ({
+      // номер приказа в варианте — по исходному приказу (приказы «всем» в сопоставлении идут последними)
+      orders: conv.applied.map((x) => conv.given.indexOf(x.given)).map((i, j) => { const x = conv.applied[j]; return {
         formation: x.order?.formation ?? '', name: x.order ? names.get(x.order.formation)! : v.orders[i].formation, task: v.orders[i].task,
         target: x.order?.target ?? null, targetText: x.target ?? describeTarget(ctx, x.order?.target, names),
-        at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: v.orders[i].why, issue: x.issue, ok: !!x.order,
-      })),
+        at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: v.orders[i].why, ok: !!x.order,
+        // почему исправление по подсказке отклонено — к замечанию приказа
+        issue: [x.issue, ...(v.fix?.notes ?? []).filter((nt) => nt.n === i + 1).map((nt) => nt.text)].filter(Boolean).join('; ') || undefined,
+      }; }),
       acts,
       ...(v.fix ? { fix: v.fix } : {}),
     };
@@ -458,8 +461,8 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
     return planVariants(advisorClient(), gAt, built, m.count, {
       thinking: llm.advThinking ?? llm.thinking, signal: abort.signal,
       onVariant: (v, index) => post({ kind: 'plan-variant', id: m.id, index, variant: view(v) }),
-      // приказы варианта, которых не исполнить, — одна просьба исправить их по подсказке; затем вариант заново
-      sit, onRepair: (v) => post({ kind: 'plan-progress', id: m.id, text: `исправляет приказы варианта «${v.title}» по подсказке…` }),
+      // приказы вариантов, которых не исполнить, — одна общая просьба исправить их по подсказке; затем исправленные варианты заново
+      sit, onRepair: (idx) => post({ kind: 'plan-progress', id: m.id, text: `исправляет приказы ${idx.length === 1 ? `варианта ${idx[0] + 1}` : `вариантов ${idx.map((i) => i + 1).join(', ')}`} по подсказке…` }),
       onProgress: (p) => {
         const now = Date.now();
         if (now - last < 300) return;
