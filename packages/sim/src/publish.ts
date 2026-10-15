@@ -79,6 +79,23 @@ const POSTURE_RU: Record<string, string> = { attack: 'наступает', defen
 
 const tankish = (f: Formation, ctx: SimContext) => profileOf(ctx, f.side).unitTypes[f.type]?.mobility !== 'foot';
 
+/**
+ * Линия рубежа, развёрнутая так, чтобы зубцы знака смотрели на противника: знак ставит их слева по ходу линии,
+ * поэтому линия разворачивается, если ближайший к отрезкам противник (`foes`) в основном справа.
+ */
+export function teethToward(line: LngLat[], foes: LngLat[]): LngLat[] {
+  if (!foes.length) return line;
+  let side = 0;
+  for (let i = 1; i < line.length; i++) {
+    const [a, b] = [line[i - 1], line[i]], k = Math.cos((((a[1] + b[1]) / 2) * Math.PI) / 180);
+    const m: LngLat = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const foe = foes.reduce((x, y) => (Math.hypot((y[0] - m[0]) * k, y[1] - m[1]) < Math.hypot((x[0] - m[0]) * k, x[1] - m[1]) ? y : x));
+    const d = [(b[0] - a[0]) * k, b[1] - a[1]], v = [(foe[0] - m[0]) * k, foe[1] - m[1]];
+    side += (d[0] * v[1] - d[1] * v[0]) / (Math.hypot(v[0], v[1]) || 1);
+  }
+  return side < 0 ? [...line].reverse() : line;
+}
+
 export function runToDocument(ctx: SimContext, run: RunResult, history?: History | null, o: PublishOptions = {}): MapDocument {
   o = { frontReachKm: 50, minArrowKm: 25, ...o };
   const own = o.ownSide ?? ctx.scenario.sides[0].id;
@@ -130,12 +147,18 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   const end = run.final.time;
   doc.timeline = { start: ctx.scenario.start, end, current: ctx.scenario.start, motion: 'smooth' };
 
-  // рубежи и переправы театра
+  // укреплённые полосы театра — знаком оборонительного рубежа (зубцы к противнику), цвет стороны
+  const sideById = new Map(run.final.formations.map((f) => [f.id, f.side]));
+  const opening = (run.snapshots[0]?.units ?? []).filter((u) => !u.destroyed);
   for (const l of T.data.lines) {
-    const f = createFeature('line', 'std.frontLine', { points: l.line, layerId: 'theatre' }, 1, l.side === own ? 'own' : 'enemy');
-    f.name = l.name;
+    const foes = opening.filter((u) => l.side && sideById.get(u.id) !== l.side).map((u) => u.at);
+    const mine = l.side === own;
+    const f = createFeature('line', 'atlas.defense', { points: teethToward(l.line, foes), layerId: 'theatre' }, 1, mine ? 'own' : 'enemy') as LineFeature;
+    f.style = { ...f.style, layers: f.style.layers.map((ly) => ({ ...ly, color: mine ? '#d43834' : '#2f6fae' })) };
+    f.name = `${l.name}: укреплённая полоса${l.fortification ? `, укреплённость ${l.fortification}` : ''}${l.depthKm ? `, глубина ${l.depthKm} км` : ''}`;
     features.push(f);
   }
+  // переправы театра
   for (const b of T.data.bridges) {
     if (!('openFrom' in b) || !b.openFrom) continue;
     const f = createFeature('symbol', 'std.pontoon', { at: b.at, layerId: 'theatre-crossings' }, 0.8, 'own') as SymbolFeature;
@@ -960,7 +983,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         const off = Math.min(minKm, d * 0.25);
         const ctr: [number, number] = [c.xy[0] + u[0] * off, c.xy[1] + u[1] * off];
         const pts: LngLat[] = [-1, -0.5, 0, 0.5, 1].map((t) => LL([ctr[0] + nrm[0] * half * t - u[0] * Math.abs(t) * half * 0.15, ctr[1] + nrm[1] * half * t - u[1] * Math.abs(t) * half * 0.15]));
-        const l = createFeature('line', 'atlas.defense', { points: pts, layerId: `${lay}-moves` }, level === 'army' ? 1.3 : 1.8, side) as LineFeature;
+        const l = createFeature('line', 'atlas.defense', { points: teethToward(pts, [LL(enemy)]), layerId: `${lay}-moves` }, level === 'army' ? 1.3 : 1.8, side) as LineFeature;
         l.style = { ...l.style, layers: l.style.layers.map((ly) => ({ ...ly, color: side === 'own' ? '#c0392b' : '#1f4e8c' })) };
         l.name = `${shortName(x.g.name)}: оборона`;
         l.time = { from, to: until };

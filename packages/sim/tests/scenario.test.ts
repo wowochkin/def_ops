@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadContext, loadHistory } from '../src/data';
-import { compareWithHistory, createState, onMap, runScenario, runToDocument, shortName, step, summarize, summaryToDocument } from '../src';
+import { compareWithHistory, createState, onMap, runScenario, runToDocument, shortName, step, summarize, summaryToDocument, teethToward } from '../src';
 
 describe('сценарий «Берлин-1945»', () => {
   const ctx = loadContext('berlin-1945');
@@ -39,6 +39,21 @@ describe('сценарий «Берлин-1945»', () => {
     expect(units.length).toBeGreaterThan(30);
     expect(units.every((f) => (f.keyframes?.length ?? 0) >= 1)).toBe(true);
     expect(doc.features.some((f) => f.layerId === 'hist-units')).toBe(true);
+  });
+
+  it('рубежи театра — знаком оборонительного рубежа, зубцы к противнику', () => {
+    // знак ставит зубцы слева по ходу линии: противник на востоке — линия идёт с севера на юг
+    expect(teethToward([[14, 52], [14, 53]], [[15, 52.5]])[0]).toEqual([14, 53]);
+    expect(teethToward([[14, 53], [14, 52]], [[15, 52.5]])[0]).toEqual([14, 53]);
+    // решает ближайший противник, а не дальние группировки
+    expect(teethToward([[14, 53], [14, 52]], [[13.9, 52.5], [20, 52.5], [20, 52.6]])[0]).toEqual([14, 52]);
+    const run = runScenario(ctx, 1, 1);
+    const doc = runToDocument(ctx, run, null);
+    const belts = doc.features.filter((f) => f.layerId === 'theatre');
+    expect(belts.length).toBe(ctx.theatre.data.lines.length);
+    expect(belts.every((f) => f.preset === 'atlas.defense')).toBe(true);
+    const hkl = belts.find((f) => /Hauptkampflinie/.test(f.name ?? '')) as { points: [number, number][] };
+    expect(hkl.points[0][1]).toBeGreaterThan(hkl.points[hkl.points.length - 1][1]);
   });
 
   it('графика атласа: исходный и вчерашний фронт, оси танковых армий с датами, черта и дата у остановленных ударов', () => {

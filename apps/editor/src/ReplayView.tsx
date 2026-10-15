@@ -677,6 +677,7 @@ function LegendPanel({ on, toggle, extra = [], combat = true }: LegendProps) {
     ...(combat ? [{ key: 'combat', cls: 'lg-arrow', text: 'бой за ход' }] : []),
     { key: 'pockets', cls: 'lg-pocket', text: 'котёл (окружённые)' },
     { key: 'fortress', cls: 'lg-fortline', text: 'крепость: обвод по застройке' },
+    { key: 'theatre', cls: 'lg-belt', text: 'укреплённая полоса (зубцы к противнику)' },
     { cls: 'lg-flag', text: 'Знамя Победы', mark: '⚑' },
     ...extra,
   ];
