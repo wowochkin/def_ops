@@ -6,6 +6,8 @@
  *   npm run sim:demo -- --only berlin        # только Берлинская операция
  *   npm run sim:demo -- --runs 1             # быстрее: один прогон на сценарий
  *   npm run sim:demo -- --publish http://localhost:8080   # ещё и сохранить карты в запущенную платформу
+ *   npm run sim:demo -- --rules ww2-berlin-cor --only berlin,vistula --out evals-out/demo-cor   # другой набор правил
+ *                                            (для Берлинской и Висло-Одерской; у боя в Берлине — свои городские правила)
  *
  * Результат — в evals-out/demo/<сценарий>/: report.md (сравнение с историей: события,
  * положения по дням и формированиям, бои) и map.json (карта для редактора:
@@ -20,6 +22,7 @@ const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i
 const runs = opt('runs', '5');
 const only = opt('only');
 const publish = opt('publish');
+const rules = opt('rules');
 const outRoot = resolve(opt('out', 'evals-out/demo'));
 
 const SCENARIOS = [
@@ -39,6 +42,7 @@ for (const s of SCENARIOS) {
   console.log(`\n▶ ${s.title}\n  ${s.note}`);
   const a = ['tsx', 'packages/sim/tools/run/history.ts', '--scenario', s.id, '--runs', runs, '--tolerance', s.tolerance, '--out', out];
   if (publish) a.push('--publish', publish);
+  if (rules && s.key !== 'city') a.push('--rules', rules);
   const t0 = Date.now();
   const r = spawnSync('npx', a, { encoding: 'utf8', shell: isWin, maxBuffer: 64 << 20 });
   if (r.status !== 0) { console.error(r.stdout, r.stderr); process.exit(r.status ?? 1); }

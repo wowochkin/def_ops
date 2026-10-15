@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fingerprint, type CompileConflict, type Entry, type FactRef, type Provenance } from '@def-ops/knowledge';
-import { basisSummary, claimText, factUse, opTitle } from '../src/modeling/basis';
+import { basisSummary, claimText, factUse, KIND_RU, opTitle } from '../src/modeling/basis';
 import { originOf } from '../src/kb/fact-form';
 
 const ref = (entry: string, index: number, reliability: 'A' | 'B' | 'C' = 'B', kind: 'strength' | 'parent' = 'strength'): FactRef => ({
@@ -117,5 +117,12 @@ describe('originOf: как принят факт', () => {
   it('basisSummary с сидом: ваш факт без проверки — legacy, встроенный — seed', () => {
     const s = basisSummary([p('su_61a.personnel', seedFact), p('su_61a.tanks', ref('u', 0, 'B'))], undefined, seed);
     expect(s.strength).toMatchObject({ seed: 1, legacy: 1, human: 0, auto: 0 });
+  });
+});
+
+describe('виды нормативов словами', () => {
+  it('значение правила и итог прогона — по-русски в таблице фактов, форме и очереди', () => {
+    expect(KIND_RU.param).toBe('значение правила');
+    expect(KIND_RU.outcome).toBe('итог прогона');
   });
 });

@@ -364,13 +364,17 @@ function ModelFacts({ e, s }: { e: Entry; s: kb.KbState }) {
           : seed && <><button className="link" onClick={() => setForm({ kind: 'edit', entry: e, index })}>изменить</button> <button className="link danger" onClick={() => void remove(f, index)}>удалить</button></>}</td>
       </tr>; })}
     </tbody></table>}
-    {typed.length > 0 && !list.length && <p className="muted small">Запись не относится ни к одной операции, и её факты сборками не используются.</p>}
+    {typed.some(({ f }) => isNormKind(f.claim!.kind)) && <p className="muted small">Нормативы модели (значения правил и итоги прогона) идут в основу правил: «Моделирование → Модели» → набор правил → «Основа правил».</p>}
+    {typed.some(({ f }) => !isNormKind(f.claim!.kind)) && !list.length && <p className="muted small">Запись не относится ни к одной операции, и её факты сборками не используются.</p>}
     {!typed.length && <p className="muted small">Формальных фактов в записи нет: модель берёт значения сценария. Добавьте факт с источником.</p>}
     {msg && <div className="muted small" onClick={() => setMsg(null)}>{msg}</div>}
     {form ? <FactForm key={JSON.stringify(form.kind === 'correct' ? [form.ref.entry, form.ref.index] : form.kind === 'edit' ? [form.kind, form.index] : form.kind)} mode={form} ops={checkOps} starts={formStarts} allStarts={allStarts} onDone={done} />
       : <div className="kb-actions"><button className="link" onClick={() => { setMsg(null); setForm({ kind: 'add', entry: e }); }}>+ Факт</button></div>}
   </section>;
 }
+
+/** Норматив модели: значение правила или итог прогона (сборщик «база → правила», а не «база → модель»). */
+const isNormKind = (k: string) => k === 'param' || k === 'outcome';
 
 function EditEntry({ e, done }: { e: Entry; done: () => void }) {
   const [summary, setSummary] = useState(e.summary);

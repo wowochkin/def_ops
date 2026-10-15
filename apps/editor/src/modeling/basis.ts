@@ -22,7 +22,7 @@ export const BASIS_KINDS: [BasisKind, string][] = [
 ];
 
 /** Вид формальной части по-русски. */
-export const KIND_RU: Record<Claim['kind'] | string, string> = { strength: 'численность', reinforce: 'пополнение', parent: 'подчинённость', enter: 'ввод', position: 'положение', boundary: 'линия', crossing: 'переправа', event: 'событие', losses: 'потери', doctrine: 'доктрина' };
+export const KIND_RU: Record<Claim['kind'] | string, string> = { strength: 'численность', reinforce: 'пополнение', parent: 'подчинённость', enter: 'ввод', position: 'положение', boundary: 'линия', crossing: 'переправа', event: 'событие', losses: 'потери', doctrine: 'доктрина', param: 'значение правила', outcome: 'итог прогона' };
 
 /** Вид входа по его имени ('su_61a.personnel', 'change:3', …); не считается в сводке — null. */
 export function basisKindOf(p: Provenance): BasisKind | null {

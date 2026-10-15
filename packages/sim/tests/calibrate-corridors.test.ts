@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadContext, loadHistory, loadRules } from '../src/data';
-import { baseParams, calibratedRules, Calibrator, CALIB_KEYS, CALIB_SPACE, corridorReport, evaluateRules, mergeEvaluations, spaceOf, withOutcomes, type CalibScore } from '../src/calibrate';
+import { baseParams, calibCorridors, calibratedRules, calibVerdict, Calibrator, CALIB_KEYS, CALIB_SPACE, corridorReport, evaluateRules, mergeEvaluations, spaceOf, withOutcomes, type CalibScore } from '../src/calibrate';
 import { edgeOf, measureFrontage, outcomeNorm, outcomesScore, OUTCOME_WEIGHT, type Norm, type NormResult } from '../src/norms';
 
 const sc = (total: number): CalibScore => ({ total, train: 0, test: 0, within: 0, events: 0, detail: [] });
@@ -114,5 +114,20 @@ describe('калибровка в коридорах', () => {
     expect(rows[0]).toMatchObject({ key: 'prepared', value: 1.4, range: [1.2, 1.4], source: 'kb:x#1', reliability: 'B', edge: 'high' });
     expect(rows[1]).toMatchObject({ key: 'advance', range: [...CALIB_SPACE.advance], edge: null });
     expect(rows[1].source).toBeUndefined();
+  });
+
+  it('итог не лучше исходных — набор не пишется (средство калибровки предупреждает)', () => {
+    expect(calibVerdict(sc(10), sc(8)).write).toBe(true);
+    const worse = calibVerdict(sc(10), sc(12));
+    expect(worse.write).toBe(false);
+    expect(worse.text).toMatch(/не лучше исходных/);
+    expect(calibVerdict(sc(10), sc(10)).write).toBe(false);
+    expect(calibVerdict(sc(10), null).write).toBe(false);
+  });
+
+  it('коридор в наборе: источник норматива сида — из norm.src', () => {
+    const c = calibCorridors({ movement: { range: [0.75, 1.28], fact: { entry: 'org:su-advance', index: 22, fact: { reliability: 'A', norm: { id: 'march-foot-normal', src: 'БУП-42, ч. 2, §817' } } } } });
+    expect(c.movement?.source).toBe('БУП-42, ч. 2, §817');
+    expect(c.movement?.norm).toBe('march-foot-normal');
   });
 });

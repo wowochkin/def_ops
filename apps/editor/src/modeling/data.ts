@@ -16,7 +16,7 @@ export const resetPool = () => { pool?.stop(); pool = null; };
 /** Название встроенного набора — как в каталоге переигровки. */
 function builtinTitle(id: string) {
   for (const c of BUILTIN_CATALOG) { const r = c.rules.find((x) => x.id === id); if (r) return `${r.title} (${c.title.split(',')[0]})`; }
-  return ({ 'ww2-berlin-terr': 'с ведением территории (опыт)', 'ww2-draft': 'исходные (до калибровки)' } as Record<string, string>)[id] ?? id;
+  return ({ 'ww2-berlin-terr': 'с ведением территории (опыт)', 'ww2-berlin-cor': 'откалиброванные в коридорах нормативов (Берлинская операция)', 'ww2-draft': 'исходные (до калибровки)' } as Record<string, string>)[id] ?? id;
 }
 
 export interface SimData {

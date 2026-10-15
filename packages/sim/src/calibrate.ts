@@ -239,6 +239,16 @@ export class Calibrator {
   }
 }
 
+/**
+ * Стоит ли записывать итог подбора: лучшее найденное должно быть лучше исходных правил по мерилу. В коридорах это не
+ * гарантировано — исходные множители могут лежать вне коридора (набор старше норматива), а лучшее ищется только внутри.
+ */
+export function calibVerdict(baseline: CalibScore, best: CalibScore | null | undefined): { write: boolean; text: string } {
+  if (!best) return { write: false, text: 'подбор не дал ни одной оценённой точки' };
+  if (best.total < baseline.total) return { write: true, text: `мерило ${baseline.total.toFixed(2)} → ${best.total.toFixed(2)}` };
+  return { write: false, text: `лучшее найденное (мерило ${best.total.toFixed(2)}) не лучше исходных правил (${baseline.total.toFixed(2)})` };
+}
+
 /** Правила-итог калибровки с блоком calibration (откуда, множители, мерило до и после). */
 export function calibratedRules(base: Rules, p: CalibParams, o: { id: string; scenario: string; evals: number; seeds: number; trainUntil: string; before: CalibScore; after: CalibScore; note?: string; corridors?: Partial<Record<CalibKey, CalibCorridor>> }): Rules {
   const outc = (s: CalibScore) => (s.outcomes ? { n: s.outcomes.n, within: s.outcomes.within } : undefined);
@@ -316,7 +326,7 @@ export function spaceOf(corridors: Record<string, { range: [number, number] }>):
 }
 
 /** Коридоры сборщика → запись в откалиброванный набор: коридор, факт-норматив, источник, надёжность и её допуск. */
-export function calibCorridors(corridors: Record<string, { range: [number, number]; fact: { entry: string; index: number; fact: { source?: string; reliability?: string; norm?: { id: string } } } | null; wider?: true; tableMissing?: true }>): Partial<Record<CalibKey, CalibCorridor>> {
+export function calibCorridors(corridors: Record<string, { range: [number, number]; fact: { entry: string; index: number; fact: { source?: string; reliability?: string; norm?: { id: string; src?: string } } } | null; wider?: true; tableMissing?: true }>): Partial<Record<CalibKey, CalibCorridor>> {
   const out: Partial<Record<CalibKey, CalibCorridor>> = {};
   for (const k of CALIB_KEYS) {
     const c = corridors[k];
@@ -324,7 +334,7 @@ export function calibCorridors(corridors: Record<string, { range: [number, numbe
     const f = c.fact, rel = f?.fact.reliability;
     out[k] = {
       range: [c.range[0], c.range[1]],
-      ...(f ? { fact: `${f.entry}#${f.index}` } : {}), ...(f?.fact.norm ? { norm: f.fact.norm.id } : {}), ...(f?.fact.source ? { source: f.fact.source } : {}),
+      ...(f ? { fact: `${f.entry}#${f.index}` } : {}), ...(f?.fact.norm ? { norm: f.fact.norm.id } : {}), ...(f?.fact.source ?? f?.fact.norm?.src ? { source: f!.fact.source ?? f!.fact.norm!.src } : {}), // у нормативов сида источник — в norm.src
       ...(rel ? { reliability: rel } : {}), ...(rel && rel in CORRIDOR_TOL ? { tolerance: CORRIDOR_TOL[rel as keyof typeof CORRIDOR_TOL] } : {}),
       ...(c.wider ? { wider: true as const } : {}), ...(c.tableMissing ? { tableMissing: true as const } : {}),
     };

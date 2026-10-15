@@ -7,16 +7,17 @@
  * Границы подбора — коридоры нормативов встроенной базы знаний (сборщик «база → правила»; без норматива — прежние
  * границы CALIB_SPACE; --corridors off — только прежние); нормативы-итоги операции (от трёх) входят в мерило с весом
  * 1/8. Набор записывает коридоры, по которым подбирался; отчёт — множитель, коридор, источник, «упирается в границу»,
- * итоги в допуске до и после.
+ * итоги в допуске до и после. Если лучшее найденное не лучше исходных правил по мерилу, набор не записывается
+ * (предупреждение; --force — записать всё равно).
  *
  *   npm run sim:calibrate -- [--scenario berlin-1945-tasks] [--base ww2-draft] [--evals 120] [--seeds 2] [--train-until 1945-04-25]
- *                            [--patch '{"orderPartialTurn":true}'] [--corridors on|off] [--id ww2-berlin-cor]
+ *                            [--patch '{"orderPartialTurn":true}'] [--corridors on|off] [--id ww2-berlin-cor] [--force]
  *                            [--out packages/sim/data/rules/ww2-berlin-cal.json]
  */
 import { writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { loadContext, loadHistory, DATA_DIR } from '../../src/data';
-import { baseParams, calibCorridors, calibratedRules, Calibrator, CALIB_KEYS, corridorReport, rulesWith, scoreRules, spaceOf, type CalibScore } from '../../src/calibrate';
+import { baseParams, calibCorridors, calibVerdict, calibratedRules, Calibrator, CALIB_KEYS, corridorReport, rulesWith, scoreRules, spaceOf, type CalibScore } from '../../src/calibrate';
 import { seedBasis, seedOutcomeNorms } from './kb-seed';
 
 const args = process.argv.slice(2);
@@ -28,6 +29,8 @@ const trainUntil = opt('train-until', '1945-04-25T23:59');
 const out = opt('out', join(DATA_DIR, 'rules', 'ww2-berlin-cal.json'));
 const id = opt('id', basename(out, '.json'));
 const useCorridors = opt('corridors', 'on') !== 'off';
+// записать набор, даже если лучшее найденное не лучше исходных правил
+const force = args.includes('--force');
 
 // подбор — от исходных (некалиброванных) правил, а не от тех, что у сценария по умолчанию (там — уже откалиброванные)
 const base = loadContext(scenarioId, opt('base', 'ww2-draft'));
@@ -59,9 +62,16 @@ while (!cal.done) {
   if (cal.progress % 20 === 0) console.log(`  … ${cal.progress}/${evals}, ${((Date.now() - t0) / 1000).toFixed(0)} с`);
 }
 const best = cal.best!;
-const rules = calibratedRules(base.rules, best.p, { id, scenario: scenarioId, evals, seeds, trainUntil, before: baseline, after: best.s, ...(corridors ? { corridors } : {}) });
-writeFileSync(out, JSON.stringify(rules, null, 2));
-console.log(`\nлучшее: обучение ${baseline.train} → ${best.s.train} км, проверка ${baseline.test} → ${best.s.test} км, события ${baseline.events} → ${best.s.events} сут${baseline.outcomes ? `; итоги в допуске ${baseline.outcomes.items.filter((x) => x.ok).length} → ${best.s.outcomes?.items.filter((x) => x.ok).length ?? 0} из ${baseline.outcomes.n}` : ''}; ${((Date.now() - t0) / 60000).toFixed(1)} мин\nправила: ${out}`);
+// лучшее не лучше исходных (в коридорах так бывает: исходные множители вне коридора) — набор не пишется без --force
+const verdict = calibVerdict(baseline, best.s);
+const write = verdict.write || force;
+if (write) {
+  const rules = calibratedRules(base.rules, best.p, { id, scenario: scenarioId, evals, seeds, trainUntil, before: baseline, after: best.s, ...(corridors ? { corridors } : {}) });
+  writeFileSync(out, JSON.stringify(rules, null, 2));
+}
+console.log(`\nлучшее: обучение ${baseline.train} → ${best.s.train} км, проверка ${baseline.test} → ${best.s.test} км, события ${baseline.events} → ${best.s.events} сут, мерило ${baseline.total.toFixed(2)} → ${best.s.total.toFixed(2)}${baseline.outcomes ? `; итоги в допуске ${baseline.outcomes.items.filter((x) => x.ok).length} → ${best.s.outcomes?.items.filter((x) => x.ok).length ?? 0} из ${baseline.outcomes.n}` : ''}; ${((Date.now() - t0) / 60000).toFixed(1)} мин`);
+if (!verdict.write) console.warn(`\n⚠ ВНИМАНИЕ: ${verdict.text}. ${force ? `Набор всё же записан (--force): ${out}` : `Набор НЕ записан (${out} не тронут); записать всё равно — --force.`}`);
+else console.log(`правила: ${out}`);
 console.log('\nмножители (коридор; источник или допущение; ⚠ — упирается в границу: проверьте источник):');
 for (const r of corridorReport(best.p, corridors)) {
   const src = r.fact ? `${r.source ?? r.fact}, ${r.reliability ?? '—'}${r.wider ? ', шире прежних границ' : ''}` : 'допущение (прежние границы)';
