@@ -11,7 +11,7 @@
  */
 import type { LngLat } from '@def-ops/core';
 import { decodeMask, hsv, maskRle, tileXY, type LegendRule, type OverlayLegend, type OverlayResult } from './overlay';
-import { hatchPx, hatchWindow, isHatch } from './overlay-hatch';
+import { hatchScale, hatchStarts, hatchWindow, isHatch } from './overlay-hatch';
 import { decodeGrid } from './theatre';
 import { TERRAIN_CLASSES, type TheatreData } from './types';
 
@@ -504,11 +504,11 @@ export function osmToRoads(json: OsmJson, b: [number, number, number, number]): 
 export const OSM_WATERWAY = ['river', 'canal'];
 /**
  * Запрос Overpass: дороги, водотоки и болота в рамке — одним запросом. Пути — `out tags geom`; мультиполигоны болот —
- * отдельно `out body geom` (`out tags` не выводит членов отношения). Ответ — не больше 256 МБ.
+ * отдельно `out body geom` (`out tags` не выводит членов отношения). Предел размера ответа — по умолчанию Overpass.
  */
 export function osmNetworkQuery(b: [number, number, number, number]): string {
   const bb = `${b[1]},${b[0]},${b[3]},${b[2]}`;
-  return `[out:json][timeout:180][maxsize:268435456];(way["highway"~"^(${[...OSM_HIGHWAY, ...OSM_ROAD].join('|')})$"](${bb});way["waterway"~"^(${OSM_WATERWAY.join('|')})$"](${bb});way["natural"="wetland"](${bb}););out tags geom;relation["natural"="wetland"](${bb});out body geom;`;
+  return `[out:json][timeout:180];(way["highway"~"^(${[...OSM_HIGHWAY, ...OSM_ROAD].join('|')})$"](${bb});way["waterway"~"^(${OSM_WATERWAY.join('|')})$"](${bb});way["natural"="wetland"](${bb}););out tags geom;relation["natural"="wetland"](${bb});out body geom;`;
 }
 /** Ответ Overpass → реки и каналы в формате театра (major — нет: большие реки театра остаются свои). */
 export function osmToRivers(json: OsmJson, b: [number, number, number, number]): { name: string; line: LngLat[]; major: boolean }[] {
@@ -800,7 +800,8 @@ function rasterWetlands(wetlands: Wetland[], grid: Grid, into: Uint8Array): numb
 export interface MarshCheck {
   source: 'network' | 'samples';
   colors: NetColor[];
-  windows: { inside: number; outside: number };
+  /** Окна внутри современных болот, снаружи и сколько окон внутри прошли проверку штриховки (isHatch). */
+  windows: { inside: number; outside: number; hatched: number };
   /** Клеток современного болота только из OSM (в растре театра не болото). */
   osm: number;
   /** Клетки: болото на карте и сейчас, только на карте, только сейчас (области «нет на карте»). */
@@ -848,9 +849,12 @@ export function mergeMarsh(ov: OverlayResult, T: Pick<TheatreData, 'terrainGrid'
  * Цвет узнан, если он чаще внутри (как у воды и дорог) и окна внутри с ним — штриховка (isHatch).
  */
 export class WetlandLearner {
-  /** Сторона окна, px (по широте середины сетки). */
+  /** Сторона окна в пикселях уменьшенной маски и множитель уменьшения f (по широте середины сетки). */
   readonly w: number;
+  readonly f: number;
   inside = 0;
+  /** Окон внутри современных болот, где хоть один цвет прошёл isHatch. */
+  insideHatch = 0;
   outside = 0;
   tiles = 0;
   private readonly marsh: Uint8Array;
@@ -864,7 +868,7 @@ export class WetlandLearner {
 
   constructor(private readonly T: Pick<TheatreData, 'terrainGrid'>, private readonly wetlands: Wetland[], private readonly grid: Grid, private readonly z: number) {
     const { cols, rows, bbox: [w, s, e, n] } = grid;
-    this.w = hatchPx((s + n) / 2, z);
+    ({ w: this.w, f: this.f } = hatchScale((s + n) / 2, z));
     const m = modernMarsh(T, wetlands, grid);
     this.marsh = m.marsh;
     this.modern = m;
@@ -894,35 +898,46 @@ export class WetlandLearner {
     // корзина цвета каждого пикселя (−1 — прозрачно)
     const bin = new Int16Array(size * size);
     for (let i = 0; i < size * size; i++) { const o = i * 4; bin[i] = rgba[o + 3] < 128 ? -1 : colorBin(rgba[o], rgba[o + 1], rgba[o + 2]); }
-    // окна — как hatchMask: шаг w от левого верхнего угла, последнее прижато к краю
-    const ww = Math.min(hatchPx(tileXY.y2lat(y + 0.5, z), z), size);
-    const starts: number[] = [];
-    for (let p = 0; p + ww < size; p += ww) starts.push(p);
-    starts.push(size - ww);
+    // окна — как hatchMask: на маске, уменьшенной в f раз, шаг w от левого верхнего угла, последнее прижато к краю;
+    // в пикселях тайла окно — блоки f×f (крайние у правого и нижнего края тайла могут быть неполными)
+    const { f, w } = hatchScale(tileXY.y2lat(y + 0.5, z), z);
+    const n = Math.ceil(size / f), ww = Math.min(w, n);
+    const starts = hatchStarts(n, ww);
     const hist = new Map<number, number>(), win = new Int8Array(ww * ww);
-    for (const y0 of starts) for (const x0 of starts) {
+    for (const v0 of starts) for (const u0 of starts) {
+      const y0 = v0 * f, x0 = u0 * f, y1 = Math.min(size, (v0 + ww) * f), x1 = Math.min(size, (u0 + ww) * f);
       hist.clear();
       let px = 0;
-      for (let yy = y0; yy < y0 + ww; yy++) for (let xx = x0; xx < x0 + ww; xx++) {
+      for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) {
         const b = bin[yy * size + xx];
         if (b < 0) continue;
         px++; hist.set(b, (hist.get(b) ?? 0) + 1);
       }
-      if (px < 0.5 * ww * ww) continue; // карты здесь нет
-      const lng = tileXY.x2lon(x + (x0 + ww / 2) / size, z), lat = tileXY.y2lat(y + (y0 + ww / 2) / size, z);
+      if (px < 0.5 * (y1 - y0) * (x1 - x0)) continue; // карты здесь нет
+      const lng = tileXY.x2lon(x + (x0 + x1) / 2 / size, z), lat = tileXY.y2lat(y + (y0 + y1) / 2 / size, z);
       const c = Math.floor((lng - gw) / dl), r = Math.floor((gn - lat) / da);
       if (c < 0 || r < 0 || c >= cols || r >= rows) continue;
       const cell = r * cols + c, inside = !!this.marsh[cell];
       if (!inside && !this.far[cell]) continue;
       if (inside) this.inside++; else this.outside++;
+      let hatched = false;
       for (const [b, cnt] of hist) {
         if (cnt < 0.03 * px) continue;
         if (!inside) { this.out[b]++; continue; }
         this.inn[b]++;
-        // чернила — пиксели этой корзины (0), прочие −1, прозрачные −2
-        for (let yy = 0; yy < ww; yy++) for (let xx = 0; xx < ww; xx++) { const v = bin[(y0 + yy) * size + x0 + xx]; win[yy * ww + xx] = v < 0 ? -2 : v === b ? 0 : -1; }
-        if (isHatch(hatchWindow(win, ww, 0, 0, ww, 0))) this.hatch[b]++;
+        // маска окна: блок f×f — чернила (0), если в нём есть пиксель этой корзины; −2 — весь прозрачен; иначе −1
+        for (let v = 0; v < ww; v++) for (let u = 0; u < ww; u++) {
+          let k = -2;
+          for (let yy = y0 + v * f; yy < Math.min(y1, y0 + (v + 1) * f) && k !== 0; yy++) for (let xx = x0 + u * f; xx < Math.min(x1, x0 + (u + 1) * f); xx++) {
+            const q = bin[yy * size + xx];
+            if (q === b) { k = 0; break; }
+            if (q >= 0) k = -1;
+          }
+          win[v * ww + u] = k;
+        }
+        if (isHatch(hatchWindow(win, ww, 0, 0, ww, 0))) { this.hatch[b]++; hatched = true; }
       }
+      if (hatched) this.insideHatch++;
     }
   }
   /**
@@ -947,6 +962,6 @@ export class WetlandLearner {
   /** Сверка болот карты (mergeMarsh) со своими цветами и окнами. */
   mergeMarsh(ov: OverlayResult): OverlayResult {
     const g = this.grid, same = ov.cols === g.cols && ov.rows === g.rows && ov.bbox.every((v, i) => v === g.bbox[i]);
-    return mergeMarsh(ov, this.T, this.wetlands, { source: 'network', colors: this.colors(), windows: { inside: this.inside, outside: this.outside } }, same ? this.modern : undefined);
+    return mergeMarsh(ov, this.T, this.wetlands, { source: 'network', colors: this.colors(), windows: { inside: this.inside, outside: this.outside, hatched: this.insideHatch } }, same ? this.modern : undefined);
   }
 }

@@ -14,6 +14,7 @@ import type { Basemaps } from './shared';
 import { cartography } from './MapsPanel';
 import { BUILTIN, saveTheatre } from './sim/userdata';
 import type { OverlayRequest, OverlayResponse } from './sim/overlay-worker';
+import { marshHeader, marshToTerrainDefault, marshWindowsText, netMarshApply, networkTiles } from './hist-marsh';
 
 const LEGENDS = import.meta.glob('../../../packages/sim/tools/theatre/legends/*.json', { eager: true, import: 'default' }) as Record<string, OverlayLegend>;
 const PRESETS = Object.values(LEGENDS);
@@ -129,11 +130,11 @@ const rgbOf = (k: string) => `rgb(${(OVERLAY_COLORS[k] ?? [200, 0, 200]).join(',
 function MarshSummary({ m }: { m: MarshCheck }) {
   return (
     <div className="hist-roads">
-      <div className="row"><b>Болота: {m.unknown ? 'цвет штриховки не узнан' : `цвет штриховки узнан ${m.source === 'network' ? 'по болотам театра и OSM' : 'по образцу'}`}</b><span className="grow" />
+      <div className="row"><b>Болота: {marshHeader(m)}</b><span className="grow" />
         {m.colors.length > 0 ? <span className="hist-sw">{m.colors.map((c) => <i key={c.bin} title={`в болотах — ${Math.round(c.road * 100)} % окон, в стороне — ${Math.round(c.side * 100)} %`} style={{ background: `rgb(${c.rgb.join(',')})` }} />)}</span>
           : m.source === 'network' ? <span className="muted small">не узнан</span> : null}</div>
       <table className="hist-tab"><tbody>
-        {m.source === 'network' && <tr><td>Окон штриховки</td><td>{m.windows.inside}</td><td className="muted">в современных болотах; в стороне — {m.windows.outside}</td></tr>}
+        {m.source === 'network' && <tr><td>Окна проверки цвета</td><td>{m.windows.hatched} / {m.windows.inside}</td><td className="muted">{marshWindowsText(m)}</td></tr>}
         <tr><td><i className="sw" style={{ background: rgbOf('marsh-present') }} />на карте и сейчас</td><td>{m.cells.present} кл.</td><td className="muted">остаются болотом</td></tr>
         <tr><td><i className="sw" style={{ background: rgbOf('marsh-new') }} />только на карте</td><td>{m.cells.added} кл.</td><td className="muted">болота того времени, станут болотом</td></tr>
         <tr><td><i className="sw" style={{ background: rgbOf('marsh-gone') }} />только сейчас</td><td>{m.cells.gone} кл.</td><td className="muted">уберутся, если отмечено ниже</td></tr>
@@ -189,7 +190,6 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const [zoom, setZoom] = useState<number | null>(null);
   const autoZoom = useMemo(() => { if (!map || empty) return null; let z = map.minzoom; for (const k of zooms) if (tilesFor(box, k).length <= 1500) z = k; return z; }, [map, box, empty]); // eslint-disable-line react-hooks/exhaustive-deps
   const z = zoom != null && zooms.includes(zoom) ? zoom : autoZoom;
-  const nTiles = z != null && !empty ? tilesFor(box, z).length : 0;
   const net = legendId === 'network';
   // дороги для сверки: театра или OpenStreetMap для охвата карты (загружаются по кнопке)
   const [netSrc, setNetSrc] = useState<'theatre' | 'osm' | 'ohm'>('theatre');
@@ -202,6 +202,8 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const [hatch, setHatch] = useState(true);
   const [osmBusy, setOsmBusy] = useState<string | null>(null);
   const osmFresh = osm && osm.box.every((x, i) => Math.abs(x - box[i]) < 1e-9) ? osm : null;
+  // тайлов прогона: по сети с болотами — и тайлы у современных болот (первый проход)
+  const nTiles = useMemo(() => (z == null || empty ? 0 : net ? networkTiles(T, osmFresh?.wetlands ?? [], overlayGrid(T, box), z, netWhat) : tilesFor(box, z).length), [z, empty, net, T, osmFresh, box, netWhat]);
   const merged = useMemo(() => (osmFresh?.ohm && /^\d{4}-\d{2}-\d{2}$/.test(ohmDay) ? mergeOhm(osmFresh, osmFresh.ohm, ohmDay, box) : null), [osmFresh, ohmDay]); // eslint-disable-line react-hooks/exhaustive-deps
   const boxKm = [(box[2] - box[0]) * 111.32 * Math.cos((((box[1] + box[3]) / 2) * Math.PI) / 180), (box[3] - box[1]) * 110.57];
   const inBoxRivers = T.rivers.filter((r) => r.line.some((p) => p[0] >= box[0] && p[0] <= box[2] && p[1] >= box[1] && p[1] <= box[3])).length;
@@ -245,7 +247,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
 
   // как применять: по классам, которые есть в легенде
   const cls = net ? (res ? ['road', 'highway'].filter((k) => res.ov.masks[k]) : []) : legend ? legend.cells.map((c) => c.cls) : [];
-  const [opt, setOpt] = useState<{ roads: boolean; replace: 'road' | 'all' | false; terrain: boolean; demote: boolean; dropAbsent: boolean; waterNet: boolean; marshGone: boolean }>({ roads: true, replace: 'road', terrain: true, demote: false, dropAbsent: true, waterNet: true, marshGone: false });
+  const [opt, setOpt] = useState<{ roads: boolean; replace: 'road' | 'all' | false; terrain: boolean; demote: boolean; dropAbsent: boolean; waterNet: boolean; marshGone: boolean; marshNet: boolean }>({ roads: true, replace: 'road', terrain: true, demote: false, dropAbsent: true, waterNet: true, marshGone: false, marshNet: false });
   const [newId, setNewId] = useState('');
   const [view, setView] = useState<'classes' | 'roads'>('classes');
   const roadCls = cls.includes('road') || cls.includes('highway');
@@ -297,10 +299,11 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
     const w = new Worker(new URL('./sim/overlay-worker.ts', import.meta.url), { type: 'module' });
     worker.current = w;
     setRun({ done: 0, total: nTiles });
+    const what = netWhat;
     w.onmessage = (e: MessageEvent<OverlayResponse>) => {
       const m = e.data;
       if (m.kind === 'progress') setRun({ done: m.done, total: m.total, stage: m.stage });
-      else if (m.kind === 'done') { setRun(null); setRes({ ov: m.result, tiles: m.tiles, missing: m.missing }); onPreview({ url: preview(m.result), bbox: m.result.bbox }); w.terminate(); }
+      else if (m.kind === 'done') { setRun(null); setRes({ ov: m.result, tiles: m.tiles, missing: m.missing }); setOpt((o) => ({ ...o, marshNet: marshToTerrainDefault(what) })); onPreview({ url: preview(m.result), bbox: m.result.bbox }); w.terminate(); }
       else { setRun(null); setErr(m.error); w.terminate(); }
     };
     const grid = overlayGrid(T, box);
@@ -316,7 +319,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
   const apply = (): OverlayApply => net ? {
     road: opt.roads && cls.includes('road') ? 'road' : undefined, highway: opt.roads && cls.includes('highway') ? 'highway' : undefined,
     replaceModernRoads: false, dropAbsent: opt.dropAbsent, waterNet: opt.waterNet,
-    marsh: res?.ov.masks.marsh ? 'marsh' : undefined, marshGone: opt.marshGone,
+    marsh: netMarshApply(!!res?.ov.masks.marsh, opt.marshNet), marshGone: opt.marshGone,
   } : ({
     road: opt.roads && cls.includes('road') ? 'road' : undefined, highway: opt.roads && cls.includes('highway') ? 'highway' : undefined,
     replaceModernRoads: opt.roads && (cls.includes('road') || cls.includes('highway')) ? opt.replace : false,
@@ -389,6 +392,7 @@ export function HistLayer({ T, area, eng, bm, onPreview, onSaved, onNotice }: {
         {res.ov.water && <WaterSummary n={res.ov.water} />}
         {res.ov.marsh && <MarshSummary m={res.ov.marsh} />}
         {res.ov.water && <label title="При сохранении: реки и каналы, которых на карте нет (≥ 1 км подряд), вырезаются (реки OSM — заменяют малые реки театра в охвате, большие остаются); водоёмы, которых на карте нет, становятся сушей (класс — по соседним клеткам); новая вода карты — водой"><input type="checkbox" checked={opt.waterNet} onChange={(e) => setOpt({ ...opt, waterNet: e.target.checked })} /> воду театра — по карте: реки без {cutKm(res.ov.water)} км, водоёмов сушей {res.ov.water.areas.gone}, новой воды {res.ov.water.areas.added}</label>}
+        {net && res.ov.masks.marsh && <label title="При сохранении: клетки болот карты (на карте и сейчас, только на карте) становятся болотом поверх открытой местности и леса; вода и застройка не меняются"><input type="checkbox" checked={opt.marshNet} onChange={(e) => setOpt({ ...opt, marshNet: e.target.checked })} /> болота карты — в местность ({res.ov.stats.marsh ?? 0} кл.)</label>}
         {res.ov.marsh && !res.ov.marsh.unknown && res.ov.marsh.cells.gone > 0 && <label title="При сохранении: клетки растра театра «болото» в современных болотах, которых на карте нет, становятся открытой местностью или лесом (по соседним клеткам); болото только из OSM в растре не болото — его не снимать"><input type="checkbox" checked={opt.marshGone} onChange={(e) => setOpt({ ...opt, marshGone: e.target.checked })} /> убрать болота, которых нет на карте ({res.ov.marsh.cells.gone} кл.)</label>}
         {res.ov.network && !res.ov.network.roads && <label title="Отрезки дорог театра, которых на карте нет (≥ 1 км подряд), — послевоенные: вырезаются из линий дорог; остальные дороги театра остаются как есть"><input type="checkbox" checked={opt.dropAbsent} onChange={(e) => setOpt({ ...opt, dropAbsent: e.target.checked })} /> убрать отрезки дорог театра, которых на карте нет ({cutKm(res.ov.network)} км)</label>}
         {res.ov.network?.roads && <label title="При сохранении дороги театра в охвате карты (кроме железных) заменяются дорогами OSM; отрезки OSM, которых на карте нет (≥ 1 км подряд), — послевоенные — не берутся"><input type="checkbox" checked={opt.dropAbsent} onChange={(e) => setOpt({ ...opt, dropAbsent: e.target.checked })} /> убрать отрезки OSM, которых на карте нет ({cutKm(res.ov.network)} км); дороги театра в охвате заменятся дорогами OSM</label>}

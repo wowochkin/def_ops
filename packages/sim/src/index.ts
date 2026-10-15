@@ -24,7 +24,7 @@ export { THEATRE_LAYERS, layerCounts, cropGrid, cropTheatre, layerGeoJSON, recip
 export { applyInfrastructure, resolveInfra, locatePlace, infraEffect, INFRA_KIND_RU, INFRA_STATE_RU, type InfraRecord, type InfraKind, type InfraState, type InfraResolution } from './infrastructure';
 export { NetworkLearner, cutAbsent, colorBin, binRule, binColor, osmRoadsQuery, osmToRoads, osmNetworkQuery, osmToRivers, absentLines, roadLines, riverLines, OSM_HIGHWAY, OSM_ROAD, OSM_WATERWAY, OHM_OVERPASS, ohmDate, ohmAt, mergeOhm, osmToWetlands, inWetland, modernMarsh, mergeMarsh, WetlandLearner, type Wetland, type MarshCheck, type OsmJson, type OhmMerge, type NetworkCheck, type WaterCheck, type NetLine } from './overlay-network';
 export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, legendFromSamples, combineLegends, overlayGrid, tilesFor, tileXY, hsv, pixelClass, maskRle, decodeMask, PREVIEW as OVERLAY_COLORS, type OverlayLegend, type OverlayResult, type OverlayApply, type LegendRule } from './overlay';
-export { HATCH, hatchWindow, isHatch, hatchPx, hatchMask, type HatchStats } from './overlay-hatch';
+export { HATCH, hatchWindow, isHatch, hatchPx, hatchScale, hatchStarts, poolInk, hatchMask, type HatchStats } from './overlay-hatch';
 export { RoadNet, roadNet, visualPath } from './roadnet';
 export { groupOf, activeBoundaries, effectiveBoundaries, withBoundaries, checkTriggers, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';
 export { agentsScore, type AgentsScore } from './agents-score';

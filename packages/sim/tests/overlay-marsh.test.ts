@@ -122,6 +122,12 @@ describe('болота исторической карты по современ
     expect(W.outside).toBeGreaterThanOrEqual(20);
     expect(W.legend().hatch).toEqual(['marsh']);
   });
+  it('окна штриховки: внутри, снаружи и сколько окон внутри прошли проверку штриховки', () => {
+    const win = ov.marsh!.windows;
+    expect(win).toEqual({ inside: W.inside, outside: W.outside, hatched: W.insideHatch });
+    expect(win.hatched).toBeGreaterThan(0);
+    expect(win.hatched).toBeLessThan(win.inside); // болото 50–56 × 25–30 на карте не заштриховано
+  });
   it('сверка: на карте и сейчас, только на карте, только сейчас; заливка — не болото', () => {
     expect(ov.marsh!.areas).toEqual({ total: 3, present: 2, gone: 1 });
     expect(ov.marsh!.source).toBe('network');
@@ -174,10 +180,11 @@ describe('правка 1: ответ Overpass, растеризация, цве�
     expect(ws[0].outer.length).toBe(5);
     expect(ws[0].holes.length).toBe(1);
   });
-  it('запрос: отношения выводятся с членами (out body geom), ограничение размера', () => {
+  it('запрос: отношения выводятся с членами (out body geom), без ограничения размера, с тайм-аутом', () => {
     const q = osmNetworkQuery(box);
     expect(q).toMatch(/relation\["natural"="wetland"\]\([^)]*\);\s*out body geom;/);
-    expect(q).toContain('[maxsize:');
+    expect(q).not.toContain('maxsize'); // по умолчанию у Overpass предел больше
+    expect(q).toContain('[timeout:180]');
     expect(q).toContain('way["natural"="wetland"]');
   });
   it('упрощение с допуском: кольцо мельче допуска (< 4 точек) — пропуск', () => {
@@ -208,13 +215,13 @@ describe('правка 1: ответ Overpass, растеризация, цве�
     const T = makeTheatre([[10, 5, 17, 10]]);
     const N = cols * rows;
     const ov = { legend: 'network', name: 'n', source: 's', zoom: Z, bbox: box, cols, rows, covered: maskRle(new Uint8Array(N).fill(1)), masks: {}, stats: {} };
-    const r = mergeMarsh(ov, T, [], { source: 'network', colors: [], windows: { inside: 5, outside: 100 } });
+    const r = mergeMarsh(ov, T, [], { source: 'network', colors: [], windows: { inside: 5, outside: 100, hatched: 0 } });
     expect(r.marsh!.unknown).toBe(true);
     expect(r.marsh!.areas.gone).toBe(0);
     expect(r.marsh!.cells.gone).toBe(0);
     expect(r.masks['marsh-gone']).toBeUndefined();
     // по образцам — отмечается, как раньше
-    const s = mergeMarsh(ov, T, [], { source: 'samples', colors: [], windows: { inside: 0, outside: 0 } });
+    const s = mergeMarsh(ov, T, [], { source: 'samples', colors: [], windows: { inside: 0, outside: 0, hatched: 0 } });
     expect(s.marsh!.areas.gone).toBe(1);
     expect(s.marsh!.unknown).toBeUndefined();
   });
@@ -273,6 +280,8 @@ describe('сквозной прогон: болота карты у Кюстри
   const C: [number, number, number, number] = [14.82, 52.50, 14.85, 52.52]; // заливка тем же цветом
   const osm = [{ outer: [[14.61, 52.60], [14.64, 52.60], [14.64, 52.615], [14.61, 52.615], [14.61, 52.60]] as LngLat[], holes: [] }];
   const inB = (lon: number, lat: number, b: number[]) => lon >= b[0] && lon <= b[2] && lat >= b[1] && lat <= b[3];
+  // штриховка карты 1:100 000 на уровне 13 (≈ 11,6 м/px): чёрточки 12×1 px (≈ 140 м), строки через 10 px (≈ 115 м)
+  const hatch100k = (x: number, y: number) => y % 10 === 0 && (x + ((y / 10) % 2) * 10) % 20 < 12;
   const tiles = new Map<string, Uint8ClampedArray>();
   const get = (tx: number, ty: number) => {
     const key = `${tx},${ty}`;
@@ -283,7 +292,7 @@ describe('сквозной прогон: болота карты у Кюстри
       const lon = tileXY.x2lon((gx + 0.5) / 256, z), lat = tileXY.y2lat((gy + 0.5) / 256, z);
       let c = [242, 234, 210];
       if (inB(lon, lat, C)) c = BLUE;
-      if (hatch(gx, gy) && (inB(lon, lat, A) || inB(lon, lat, B))) c = BLUE;
+      if (hatch100k(gx, gy) && (inB(lon, lat, A) || inB(lon, lat, B))) c = BLUE;
       img.set([...c, 255], (py * 256 + px) * 4);
     }
     tiles.set(key, img);

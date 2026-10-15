@@ -61,7 +61,7 @@ self.onmessage = async (e: MessageEvent<OverlayRequest>) => {
     if (stopped) { post({ kind: 'error', error: 'остановлено' }); return; }
     if (!acc.tiles) { post({ kind: 'error', error: 'в области нет тайлов карты на этом уровне' }); return; }
     let ov = acc.result({ source: q.source, zoom: q.zoom });
-    if (q.marsh && q.legend.hatch?.includes('marsh')) ov = mergeMarsh(ov, { terrainGrid: q.marsh.terrainGrid }, q.marsh.wetlands, { source: 'samples', colors: [], windows: { inside: 0, outside: 0 } });
+    if (q.marsh && q.legend.hatch?.includes('marsh')) ov = mergeMarsh(ov, { terrainGrid: q.marsh.terrainGrid }, q.marsh.wetlands, { source: 'samples', colors: [], windows: { inside: 0, outside: 0, hatched: 0 } });
     post({ kind: 'done', result: ov, tiles: acc.tiles, missing });
   } catch (err) { post({ kind: 'error', error: (err as Error).message }); }
 };

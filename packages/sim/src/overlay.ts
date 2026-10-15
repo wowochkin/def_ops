@@ -8,7 +8,7 @@
 import type { LngLat } from '@def-ops/core';
 import { decodeGrid, encodeGrid } from './theatre';
 import { cutAbsent, type MarshCheck, type NetworkCheck, type WaterCheck } from './overlay-network';
-import { hatchMask, hatchPx } from './overlay-hatch';
+import { hatchMask, hatchScale } from './overlay-hatch';
 import { TERRAIN_CLASSES, type TerrainClass, type TerrainGrid, type TheatreData } from './types';
 
 type Range = [number, number];
@@ -166,7 +166,8 @@ export class OverlayAccumulator {
         const [h, s, v] = hsv(rgba[o], rgba[o + 1], rgba[o + 2]);
         ink[i] = fits(rules, h, s, v) ? 1 : 0;
       }
-      return hatchMask(ink, size, hatchPx(y2lat(y + 0.5, z), z), 1);
+      const { f, w: hw } = hatchScale(y2lat(y + 0.5, z), z);
+      return hatchMask(ink, size, hw, 1, f);
     });
     for (let py = 0; py < size; py++) {
       const lat = y2lat(y + (py + 0.5) / size, z);
