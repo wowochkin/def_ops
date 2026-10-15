@@ -40,7 +40,7 @@ export const FORM_FIELDS: Record<Claim['kind'], FormField[]> = {
     ...RANGE(true), F('unit', 'единица', 'text', true), F('side', 'сторона', 'side'), F('echelon', 'ступень', 'text'), F('near', 'район', 'text')],
   // правило доктрины «условие → действие» с числами
   doctrine: [F('side', 'сторона', 'side', true), F('level', 'уровень', 'level', true), F('group', 'группа', 'text', true), F('rule', 'id правила', 'text', true),
-    F('condition', 'условие', 'text', true), F('action', 'действие', 'text', true), F('values', 'числа (имя=число; имя=от–до)', 'values')],
+    F('condition', 'условие', 'text'), F('action', 'действие', 'text', true), F('values', 'числа (имя=число; имя=от–до)', 'values')],
 };
 
 /** Ключ текстового факта по виду (как у фактов встроенной базы). */
@@ -159,7 +159,7 @@ export function formToClaim(kind: Claim['kind'], fields: Record<string, string>)
     }
     case 'doctrine':
       return { claim: { kind, side: out.side as 'su' | 'de', level: out.level as 'front', group: out.group as string, rule: out.rule as string,
-        condition: out.condition as string, action: out.action as string, ...pick(out, ['values']) } };
+        condition: (out.condition as string | undefined) ?? '', action: out.action as string, ...pick(out, ['values']) } };
   }
 }
 

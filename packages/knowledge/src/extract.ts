@@ -10,6 +10,7 @@ import { CATEGORIES, type CategoryId, type Claim, type Entry, type Fact, type In
 import { foreignTo } from './operations';
 import { stems } from './search';
 import { defaultRubrics, RUBRIC_CODES, rubricPath } from './rubrics';
+import { DOCTRINE_GROUPS, DOCTRINE_LEVELS, doctrineValues, doctrineWords } from './doctrine';
 
 /** Разбить текст на части по абзацам (около size знаков, с перекрытием). */
 export function chunkText(text: string, size = 3000, overlap = 300): string[] {
@@ -63,10 +64,12 @@ export const CLAIM_KINDS = ['strength', 'reinforce', 'parent', 'enter', 'positio
 export type ClaimKind = (typeof CLAIM_KINDS)[number];
 /** Нормативы модели (часть 3): значение правила и итог прогона — извлекаются из документов вместе с прочими видами. */
 export const NORM_KINDS = ['param', 'outcome'] as const;
-export type ExtractKind = ClaimKind | (typeof NORM_KINDS)[number];
+/** Правило доктрины (часть 4): «условие → действие» с числами — из уставов и наставлений. */
+export const DOCTRINE_KIND = 'doctrine' as const;
+export type ExtractKind = ClaimKind | (typeof NORM_KINDS)[number] | typeof DOCTRINE_KIND;
 const nul = (type: string) => ({ type: [type, 'null'] });
 const CLAIM_PROPS = {
-  kind: { type: 'string', enum: [...CLAIM_KINDS, ...NORM_KINDS] },
+  kind: { type: 'string', enum: [...CLAIM_KINDS, ...NORM_KINDS, DOCTRINE_KIND] },
   subject: nul('string'), parent: nul('string'), place: nul('string'),
   between: { type: ['array', 'null'], items: s, minItems: 2, maxItems: 2 },
   points: { type: ['array', 'null'], items: s }, inclusive: nul('string'), title: nul('string'),
@@ -76,6 +79,11 @@ const CLAIM_PROPS = {
   lat: nul('number'), lon: nul('number'), approxKm: nul('number'),
   param: nul('string'), value: nul('number'), range: { type: ['array', 'null'], items: { type: 'number' }, minItems: 2, maxItems: 2 },
   unit: nul('string'), side: { type: ['string', 'null'], enum: ['su', 'de', null] }, measure: nul('string'),
+  level: { type: ['string', 'null'], enum: [...DOCTRINE_LEVELS, null] }, group: nul('string'), rule: nul('string'), condition: nul('string'), action: nul('string'),
+  values: {
+    type: ['array', 'null'],
+    items: { type: 'object', additionalProperties: false, required: ['name', 'value', 'range'], properties: { name: s, value: nul('number'), range: { type: ['array', 'null'], items: { type: 'number' }, minItems: 2, maxItems: 2 } } },
+  },
   quote: s,
 } as const;
 const CLAIM_REQUIRED = Object.keys(CLAIM_PROPS);
@@ -116,6 +124,9 @@ export interface ExtractedClaim {
   lat: number | null; lon: number | null; approxKm: number | null;
   /** Норматив: путь параметра, значение или диапазон, единица, сторона; у итога — мера (pace, loss, frontage). */
   param?: string | null; value?: number | null; range?: number[] | null; unit?: string | null; side?: 'su' | 'de' | null; measure?: string | null;
+  /** Правило доктрины: ступень, группа, короткий латинский id, условие и действие как в тексте, числа правила. */
+  level?: string | null; group?: string | null; rule?: string | null; condition?: string | null; action?: string | null;
+  values?: { name: string; value: number | null; range: number[] | null }[] | null;
   quote: string;
   /** Место на странице скана (доли). */
   box?: [number, number, number, number] | null;
@@ -143,6 +154,14 @@ export function isNormative(text: string): boolean {
   return /норматив|устав|наставлен|темп|км\/сут|поправк|коэффициент|%|процент|в сутки|за сутки|на 1 км|на один километр|плотност/i.test(text);
 }
 
+/**
+ * Признаки устава, наставления, инструкции (в тексте части или в названии документа): только тогда в промпт идёт
+ * строка вида doctrine — в журналах и сводках правил «условие → действие» нет. Вид doctrine в схеме есть всегда.
+ */
+export function isDoctrinal(text: string): boolean {
+  return /устав|наставлен|инструкци|указани[ея] по|руководств[оа] по|доктрин|vorschrift|merkblatt|richtlinie/i.test(text);
+}
+
 export function extractMessages(chunk: string, docName: string, op?: OperationHint, params?: ParamHint[]): { role: 'system' | 'user'; content: string }[] {
   const rubs = RUBRIC_CODES.filter((c) => c.split('.').length > 1).map((c) => `- ${c} ${rubricPath(c).map((x) => x.title).join(' › ')}`).join('\n');
   const cats = CATEGORIES.map((c) => `- ${c.id} — ${c.title}: ${c.description} Ключи фактов: ${c.fields.map((f) => `${f.key} (${f.title})`).join(', ')}.`).join('\n');
@@ -166,13 +185,13 @@ ${cats}
 Рубрикатор (о чём запись):
 ${rubs}
 
-${claimRules(op, isNormative(chunk) || isNormative(docName) ? params : undefined)}${op ? infraRules(op) : ''}Ответ — один JSON-объект по схеме.` },
+${claimRules(op, isNormative(chunk) || isNormative(docName) ? params : undefined, isDoctrinal(chunk) || isDoctrinal(docName))}${op ? infraRules(op) : ''}Ответ — один JSON-объект по схеме.` },
     { role: 'user', content: `Документ: «${docName}»${op ? ` (материал операции «${op.title}»)` : ''}. Фрагмент:\n\n${chunk}` },
   ];
 }
 
 /** Правила формальных фактов (claims): общие для текста и скана. */
-export function claimRules(op?: OperationHint, params?: ParamHint[]): string {
+export function claimRules(op?: OperationHint, params?: ParamHint[], doctrine = false): string {
   const year = op ? op.start.slice(0, 4) : '1945';
   // параметры агентной модели в перечень промпта не входят (их нормативы — из её описания, а не из документов)
   const ps = (params ?? []).filter((p) => !p.path.startsWith('agents.'));
@@ -188,15 +207,22 @@ export function claimRules(op?: OperationHint, params?: ParamHint[]): string {
 - event — событие (сражение, взятие города, удар): title, date, place;
 - losses — потери соединения за период: subject, date (начало), dateTo (конец, включительно), killed / wounded / missing / total (total — если разбивки нет), tanks;
 - param — норматив, задающий число правил модели (темп, поправка обороны, срок переправы): param — путь параметра, value — число или range — [от, до], unit — единица как в тексте, side — su (советский) / de (германский) / null;${list}
-- outcome — исторический итог, с которым сверяется расчёт: measure (pace — темп продвижения, loss — потери в % численности, frontage — ширина полосы), subject — соединение (у ширины полосы — null), date / dateTo — период, range — [от, до], unit.
+- outcome — исторический итог, с которым сверяется расчёт: measure (pace — темп продвижения, loss — потери в % численности, frontage — ширина полосы), subject — соединение (у ширины полосы — null), date / dateTo — период, range — [от, до], unit.${doctrine ? doctrineLine() : ''}
 Правила claims:
 1. Названия соединений (subject, parent, between) и мест — как в тексте, не расшифровывайте и не исправляйте («8 гв. А» так и остаётся).
 2. Даты — ГГГГ-ММ-ДД; если в тексте нет года, он ${year}. «С 16 по 19 апреля» — date 16-е, dateTo 19-е. Нет даты — null.
 3. Числа — как в тексте, без своих пересчётов; численность, техника, потери — целыми: «4 910» — 4910. Названо «до 1 200», «около» — берите названное число. У param и outcome числа дробные, как в тексте: «1,35» — 1.35, «0,5 км» — 0.5. Не называйте то, чего нет, — null.
 4. quote — дословная цитата (до 200 знаков), в которой есть все названные числа факта. Нет такой цитаты — нет факта.
-5. Только факты о фактическом положении дел; планы, приказы «наступать», потери противника, не относящиеся к названному соединению, — не выписывайте (кроме param и outcome: предписания уставов и наставлений, нормы и нормативы — «темп наступления должен быть 25–45 км в сутки» — выписываются как param). Нет таких сведений — claims пустой.
+5. Только факты о фактическом положении дел; планы, приказы «наступать», потери противника, не относящиеся к названному соединению, — не выписывайте (кроме param и outcome: предписания уставов и наставлений, нормы и нормативы — «темп наступления должен быть 25–45 км в сутки» — выписываются как param${doctrine ? '; правила действий «при … — …» — как doctrine' : ''}). Нет таких сведений — claims пустой.
 
 `;
+}
+
+/** Строка вида doctrine (только во фрагменте или документе с признаками устава). */
+function doctrineLine(): string {
+  const groups = Object.entries(DOCTRINE_GROUPS).map(([id, ru]) => `${id} — ${ru}`).join('; ');
+  return `
+- doctrine — правило устава или наставления «условие → действие»: side (su/de), level (front/army/corps/division), group (из перечня групп: ${groups}), rule — короткий латинский id, condition, action — как в тексте, values — числа правила [{ name, value | range }] (имя — латиницей, value — число или range — [от, до]; чисел нет — null).`;
 }
 
 function infraRules(op: OperationHint): string {
@@ -423,10 +449,26 @@ export function buildClaim(x: ExtractedClaim): { claim: Claim; key: string; valu
       claim = { kind: 'outcome', measure: m, scenario: '', subject, from: date, to: dateTo, range: r, unit };
       return { claim, key: NORM_KEY, value: `${m}: ${r.join('–')}${unit ? ` ${unit}` : ''}, ${date} — ${dateTo}` };
     }
+    case 'doctrine': {
+      const side = x.side, level = DOCTRINE_LEVELS.find((l) => l === x.level), action = str(x.action);
+      if ((side !== 'su' && side !== 'de') || !level) return null;
+      const values = doctrineValues(Object.fromEntries((x.values ?? []).filter((v) => str(v?.name)).map((v) => [str(v.name), v.value ?? v.range])));
+      claim = { kind: 'doctrine', side, level, group: str(x.group), rule: str(x.rule) || `doc-${latin(action)}`, condition: str(x.condition), action, ...(values ? { values } : {}) };
+      return { claim, key: DOCTRINE_KEY, value: doctrineWords(claim) };
+    }
     default: return null;
   }
-  return { claim, key: KIND_RU[x.kind], value: value.trim() };
+  return { claim, key: KIND_RU[x.kind as ClaimKind], value: value.trim() };
 }
+/** Ключ текстового факта правила доктрины — как у записей доктрины сида. */
+const DOCTRINE_KEY = 'principles';
+const LAT: Record<string, string> = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
+  с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
+};
+/** id правила из действия: латиницей (кириллица — транслитом), цифры, через дефис, не длиннее 32 знаков. */
+const latin = (t: string) => [...t.toLowerCase()].map((ch) => LAT[ch] ?? ch).join('').replace(/[^a-z0-9]+/g, '-').replace(/^-+/, '').slice(0, 32).replace(/-+$/, '');
+
 /** Диапазон [от, до] из ответа модели: два числа, иначе undefined (порядок проверяет проверка «норматив»). */
 const rangeOf = (v: unknown): [number, number] | undefined =>
   Array.isArray(v) && v.length === 2 && v.every((n) => num(n) != null) ? [v[0] as number, v[1] as number] : undefined;

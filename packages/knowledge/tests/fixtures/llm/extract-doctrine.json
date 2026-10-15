@@ -1,0 +1,38 @@
+{
+  "items": [],
+  "claims": [
+    {
+      "kind": "doctrine", "subject": null, "parent": null, "place": null, "between": null, "points": null, "inclusive": null, "title": null,
+      "date": null, "dateTo": null,
+      "personnel": null, "tanks": null, "guns": null, "killed": null, "wounded": null, "missing": null, "total": null,
+      "state": null, "lat": null, "lon": null, "approxKm": null,
+      "param": null, "value": null, "range": null, "unit": null, "side": "de", "measure": null,
+      "level": "corps", "group": "counterattack", "rule": "flank-counterattack-third",
+      "condition": "Противник вклинился в главную полосу", "action": "Контратака корпусным резервом во фланг вклинившейся группировки",
+      "values": [{ "name": "force_share", "value": 0.33, "range": null }],
+      "quote": "корпус контратакует во фланг вклинившейся группировки силами не менее 0,33 своего резерва"
+    },
+    {
+      "kind": "doctrine", "subject": null, "parent": null, "place": null, "between": null, "points": null, "inclusive": null, "title": null,
+      "date": null, "dateTo": null,
+      "personnel": null, "tanks": null, "guns": null, "killed": null, "wounded": null, "missing": null, "total": null,
+      "state": null, "lat": null, "lon": null, "approxKm": null,
+      "param": null, "value": null, "range": null, "unit": null, "side": "de", "measure": null,
+      "level": "division", "group": "night-raid", "rule": "",
+      "condition": "Ночь перед наступлением противника", "action": "Ночной налёт мелкими группами",
+      "values": null,
+      "quote": "в ночь перед наступлением противника дивизия высылает мелкие группы для налётов на его исходные позиции"
+    },
+    {
+      "kind": "doctrine", "subject": null, "parent": null, "place": null, "between": null, "points": null, "inclusive": null, "title": null,
+      "date": null, "dateTo": null,
+      "personnel": null, "tanks": null, "guns": null, "killed": null, "wounded": null, "missing": null, "total": null,
+      "state": null, "lat": null, "lon": null, "approxKm": null,
+      "param": null, "value": null, "range": null, "unit": null, "side": "de", "measure": null,
+      "level": "corps", "group": "layout", "rule": "second-position-distance",
+      "condition": "Оборона на главной полосе", "action": "Вторая позиция в глубине за главной полосой",
+      "values": [{ "name": "depth_m", "value": 500, "range": null }],
+      "quote": "вторая позиция оборудуется в глубине за главной полосой"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Candidate, Claim, Entry } from '@def-ops/knowledge';
 import {
-  applyFixes, assistMessages, docAccepted, docDropped, doubtKinds, filterQueue, numberParts, onlyDoubt, parseCount, reasonGroups, setClaimField, setSubject,
+  applyFixes, assistMessages, CHECK_RU, CLAIM_FIELDS, docAccepted, FIELD_OPTIONS, docDropped, doubtKinds, filterQueue, numberParts, onlyDoubt, parseCount, reasonGroups, setClaimField, setSubject,
 } from '../src/kb/queue';
 import { textCandidateOf } from '../src/kb/candidates';
 
@@ -85,6 +85,28 @@ describe('правка на месте', () => {
     expect(setClaimField(x, 'state', 'сломан')).toBe(x);
     expect(setSubject(b, 'su_3a', 1)).toMatchObject({ between: ['su_99a', 'su_3a'] });
     expect(setSubject(S(''), 'su_3a')).toMatchObject({ subject: 'su_3a' });
+  });
+});
+
+describe('правило доктрины в карточке очереди', () => {
+  const d: Claim = { kind: 'doctrine', side: 'de', level: 'corps', group: 'counterattack', rule: 'r1', condition: 'Вклинение', action: 'Контратака' };
+  it('сторона и ступень — выбор из перечня; иное значение не принимается', () => {
+    const t = (k: string) => CLAIM_FIELDS.doctrine.find((f) => f.key === k)?.type;
+    expect([t('side'), t('level')]).toEqual(['side', 'level']);
+    expect(FIELD_OPTIONS.side?.map(([v]) => v)).toEqual(['su', 'de']);
+    expect(FIELD_OPTIONS.level?.map(([v]) => v)).toEqual(['front', 'army', 'corps', 'division']);
+    expect(setClaimField(d, 'side', 'su')).toMatchObject({ side: 'su' });
+    expect(setClaimField(d, 'side', 'ru')).toBe(d);
+    expect(setClaimField(d, 'side', '')).toBe(d);
+    expect(setClaimField(d, 'level', 'army')).toMatchObject({ level: 'army' });
+    expect(setClaimField(d, 'level', 'полк')).toBe(d);
+  });
+  it('условие можно очистить; правки модели с негодной стороной пропускаются', () => {
+    expect(setClaimField(d, 'condition', '')).toMatchObject({ condition: '' });
+    expect(applyFixes(cand('x', d, []), [{ field: 'side', value: 'ru' }, { field: 'level', value: 'army' }], () => null).claim).toMatchObject({ side: 'de', level: 'army' });
+  });
+  it('проверка «доктрина» — по-русски', () => {
+    expect(CHECK_RU.doctrine).toBe('доктрина');
   });
 });
 

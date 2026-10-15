@@ -1,5 +1,5 @@
 /**
- * Проверки кандидата-факта 1–7 (и у нормативов модели — параметр и диапазон) (восьмая, перекрёстное прочтение цитаты моделью, — вне этого модуля).
+ * Проверки кандидата-факта 1–7 (и у нормативов модели — параметр и диапазон, у правил доктрины — сторона, ступень, условие и действие, группа) (восьмая, перекрёстное прочтение цитаты моделью, — вне этого модуля).
  * Чистые функции: всё нужное приходит в контексте CheckCtx.
  */
 import type { Claim, Entry, Fact } from './schema';
@@ -7,6 +7,7 @@ import type { Candidate, CheckResult } from './candidate';
 import { matchFormation, scenarioIdOf } from './sync';
 import { matchEntryHow, quoteFound, stemSimilarity } from './extract';
 import { fingerprint } from './resolve';
+import { DOCTRINE_GROUPS, DOCTRINE_LEVELS } from './doctrine';
 
 /** Пороги правдоподобия — допущения без опоры (norms.json: assume-plausible-*). */
 export const PLAUSIBLE = {
@@ -151,8 +152,8 @@ function checkSubject(c: Candidate, ctx: CheckCtx): CheckResult | null {
       if ('id' in m) { cl[field] = m.id; if (m.loose) whys.push(m.loose); } else whys.push(m.why);
     } else if (!cl[field]) whys.push(`не указано: ${field === 'parent' ? 'вышестоящий' : 'соединение'}`);
   };
-  // событие и значение правила — не о соединении: сопоставление не выполняется
-  if (c.claim.kind === 'event' || c.claim.kind === 'param') return null;
+  // событие, значение правила и правило доктрины — не о соединении: сопоставление не выполняется
+  if (c.claim.kind === 'event' || c.claim.kind === 'param' || c.claim.kind === 'doctrine') return null;
   // итог прогона: соединение — если названо (у ширины полосы его нет)
   if (c.claim.kind === 'outcome') {
     if (!c.names.subject && !c.claim.subject) return c.claim.measure === 'frontage' ? null : res('subject', 'doubt', 'не указано: соединение');
@@ -280,6 +281,22 @@ function checkNorm(c: Candidate, ctx: CheckCtx): CheckResult | null {
   return ok('param');
 }
 
+/**
+ * Правило доктрины: сторона su/de, ступень из перечня, действие названо (из документа — и условие: правило
+ * «условие → действие»; в ручном вводе условие необязательно), группа — из перечня (иная — сомнение).
+ * Числа правила сверяет проверка «числа».
+ */
+function checkDoctrine(c: Candidate): CheckResult | null {
+  const cl = c.claim;
+  if (cl.kind !== 'doctrine') return null;
+  if (cl.side !== 'su' && cl.side !== 'de') return res('doctrine', 'fail', 'не указана сторона');
+  if (!(DOCTRINE_LEVELS as readonly string[]).includes(cl.level)) return res('doctrine', 'fail', `ступень не из перечня: «${cl.level ?? ''}»`);
+  const manual = c.origin === 'manual' || c.evidence.kind === 'manual';
+  if (!cl.action?.trim() || (!manual && !cl.condition?.trim())) return res('doctrine', 'fail', 'пустое условие или действие');
+  if (!(cl.group in DOCTRINE_GROUPS)) return res('doctrine', 'doubt', `неизвестная группа: «${cl.group}»`);
+  return ok('doctrine');
+}
+
 const claimFp = (c: Claim) => fingerprint({ key: '', value: '', claim: c });
 /**
  * Тот же факт по формальной части: кандидат (как извлечён) и факт базы (как записан). Положение по названию места
@@ -309,7 +326,7 @@ export function runChecks(c: Candidate, ctx: CheckCtx): CheckResult[] {
   return [
     ...(manual ? [] : [checkQuote(c, ctx), checkNumbers(c)]),
     ...(subject ? [subject] : []),
-    ...[checkNorm(c, ctx), checkPlace(c, ctx), checkDate(c, ctx), checkPlausible(c, ctx)].filter((r): r is CheckResult => r != null),
+    ...[checkNorm(c, ctx), checkDoctrine(c), checkPlace(c, ctx), checkDate(c, ctx), checkPlausible(c, ctx)].filter((r): r is CheckResult => r != null),
     checkDuplicate(c, ctx),
   ];
 }

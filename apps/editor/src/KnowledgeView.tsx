@@ -18,6 +18,7 @@ import * as kb from './kb/kb';
 import { ColumnMapping } from './kb/ColumnMapping';
 import { DocumentResults } from './kb/DocumentResults';
 import { candDoc, docAccepted, type QueueFilter } from './kb/queue';
+import { doctrineUsers } from './kb/doctrine-use';
 import { ReviewQueue } from './kb/ReviewQueue';
 import { ACCEPT } from './kb/text';
 import { QWEN_EMBED } from './kb/vectors';
@@ -236,6 +237,8 @@ function EntryCard({ e, s, open, back, goRubric }: { e: Entry; s: kb.KbState; op
   const c = category(e.category)!;
   const [editing, setEditing] = useState(false);
   const facts = e.facts ?? [];
+  // правила доктрины записи: кому они идут в промпт
+  const users = doctrineUsers(e);
   const keys = [...new Set([...c.fields.map((f) => f.key), ...facts.map((f) => f.key)])];
   const relGroups = new Map<string, string[]>();
   for (const r of e.relations ?? []) relGroups.set(r.type, [...(relGroups.get(r.type) ?? []), r.target]);
@@ -262,6 +265,7 @@ function EntryCard({ e, s, open, back, goRubric }: { e: Entry; s: kb.KbState; op
         )))}
       </tbody></table>}
       {(facts.some((f) => f.claim) || TYPED_CATEGORIES.has(e.category)) && <ModelFacts e={e} s={s} />}
+      {users.length > 0 && <div className="kb-users">Кто использует: {users.join(', ')}</div>}
       {c.fields.filter((f) => !facts.some((x) => x.key === f.key)).length > 0 && <div className="kb-gaps">Нет сведений: {c.fields.filter((f) => !facts.some((x) => x.key === f.key)).map((f) => f.title.toLowerCase()).join(', ')} — можно дополнить документами.</div>}
       {(e.sections ?? []).map((sec, i) => <section key={i} className="kb-sec"><h3>{sec.title}</h3><div dangerouslySetInnerHTML={{ __html: mdToHtml(sec.text) }} /></section>)}
       {doc && <section className="kb-sec"><h3>Текст документа</h3>{doc.chunks.slice(0, 3).map((ch) => <p key={ch.i} className="kb-chunk">{ch.text.slice(0, 1200)}{ch.text.length > 1200 ? '…' : ''}</p>)}{doc.chunks.length > 3 && <p className="muted">…ещё {doc.chunks.length - 3} частей (ищутся при ответах)</p>}</section>}

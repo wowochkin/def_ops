@@ -3,12 +3,12 @@
  * («принять все, где сомнение только в …»), правка формальной части на месте, подсказка модели по кнопке
  * («Почему сомнение», «Предложи исправление»), принятое и отброшенное из документа.
  */
-import type { Candidate, CheckId, Claim, Entry, Fact } from '@def-ops/knowledge';
+import { DOCTRINE_LEVELS, LEVEL_RU, type Candidate, type CheckId, type Claim, type Entry, type Fact } from '@def-ops/knowledge';
 import type { StoredCandidate } from './candidates';
 
 /** Проверки по-русски (причины сомнения и отбоя). */
 export const CHECK_RU: Record<CheckId, string> = {
-  quote: 'цитата', numbers: 'числа', subject: 'соединение', param: 'норматив', place: 'место', date: 'дата', plausible: 'правдоподобие', duplicate: 'повтор', cross: 'перекрёстная проверка',
+  quote: 'цитата', numbers: 'числа', subject: 'соединение', param: 'норматив', doctrine: 'доктрина', place: 'место', date: 'дата', plausible: 'правдоподобие', duplicate: 'повтор', cross: 'перекрёстная проверка',
 };
 export const CHECK_IDS = Object.keys(CHECK_RU) as CheckId[];
 
@@ -76,7 +76,8 @@ export function reasonGroups(list: AnyCand[]): { reason: CheckId; n: number; onl
 
 /* ───────────── правка формальной части ───────────── */
 
-export type FieldType = 'text' | 'date' | 'number' | 'list' | 'state' | 'subject';
+/** state, side, level — выбор из перечня (FIELD_OPTIONS): иное значение не принимается. */
+export type FieldType = 'text' | 'date' | 'number' | 'list' | 'state' | 'side' | 'level' | 'subject';
 export interface ClaimField { key: string; title: string; type: FieldType }
 
 const F = (key: string, title: string, type: FieldType): ClaimField => ({ key, title, type });
@@ -96,10 +97,16 @@ export const CLAIM_FIELDS: Record<Claim['kind'], ClaimField[]> = {
   param: [F('param', 'параметр', 'text'), F('value', 'значение', 'number'), F('unit', 'единица', 'text'), F('why', 'почему допущение', 'text')],
   outcome: [F('measure', 'мера', 'text'), F('scenario', 'сценарий', 'text'), F('from', 'с', 'date'), F('to', 'по', 'date'), F('unit', 'единица', 'text')],
   // правило доктрины: числа — в полной форме (FactForm)
-  doctrine: [F('side', 'сторона', 'text'), F('level', 'уровень', 'text'), F('group', 'группа', 'text'), F('rule', 'id правила', 'text'), F('condition', 'условие', 'text'), F('action', 'действие', 'text')],
+  doctrine: [F('side', 'сторона', 'side'), F('level', 'уровень', 'level'), F('group', 'группа', 'text'), F('rule', 'id правила', 'text'), F('condition', 'условие', 'text'), F('action', 'действие', 'text')],
 };
 
 export const CROSSING_STATE_RU: Record<Extract<Claim, { kind: 'crossing' }>['state'], string> = { open: 'действует', destroyed: 'разрушена', built: 'наведена' };
+/** Значения полей-выборов (значение, подпись): состояние переправы, сторона и ступень правила доктрины. */
+export const FIELD_OPTIONS: Partial<Record<FieldType, [string, string][]>> = {
+  state: Object.entries(CROSSING_STATE_RU),
+  side: [['su', 'советская'], ['de', 'германская']],
+  level: DOCTRINE_LEVELS.map((l) => [l, LEVEL_RU[l]]),
+};
 
 /** Значение поля для поля ввода. */
 export function fieldText(claim: Claim, key: string): string {
@@ -127,7 +134,7 @@ export function setClaimField(claim: Claim, key: string, raw: string): Claim {
     if (n === null) return claim;
     if (n === undefined) delete out[key]; else out[key] = n;
   } else if (f.type === 'list') out[key] = raw.split(/\s*[—–]\s*|\s*;\s*/).map((x) => x.trim()).filter(Boolean);
-  else if (f.type === 'state') { if (!(raw in CROSSING_STATE_RU)) return claim; out[key] = raw; }
+  else if (FIELD_OPTIONS[f.type]) { if (!FIELD_OPTIONS[f.type]!.some(([v]) => v === raw)) return claim; out[key] = raw; }
   else if (!raw.trim() && (key === 'place' || key === 'to' || key === 'inclusive')) delete out[key];
   else out[key] = f.type === 'date' ? raw.trim().slice(0, 10) : raw.trim();
   return out as Claim;
@@ -175,7 +182,7 @@ export function assistMessages(c: AnyCand, mode: AssistMode, evidence: string): 
   return [
     { role: 'system', content: `Вы помогаете историку проверить факт, который модель выписала из документа о боевых действиях 1945 года, прежде чем он попадёт в базу знаний и в модель операции. Код проверил факт и высказал сомнения. Опирайтесь только на доказательство — ничего не выдумывайте.
 ${mode === 'why' ? 'Объясните простыми словами (2–4 предложения), почему возникло сомнение и что человеку проверить в источнике. Правки (fixes) — только если ошибка очевидна из доказательства, иначе пустой список.' : 'Предложите исправление: какие поля формальной части поменять, чтобы факт точно соответствовал доказательству. В explanation — коротко, что и почему исправлено; не нужно исправлять — пустой список fixes и объяснение почему.'}
-Поля для правки (field): ${[...subj, ...fields].join(', ') || 'нет'}. Значение (value) — строкой: даты ГГГГ-ММ-ДД, числа цифрами без пробелов, соединение — название как в источнике, пункты линии — через « — », состояние переправы — open, destroyed или built.
+Поля для правки (field): ${[...subj, ...fields].join(', ') || 'нет'}. Значение (value) — строкой: даты ГГГГ-ММ-ДД, числа цифрами без пробелов, соединение — название как в источнике, пункты линии — через « — », состояние переправы — open, destroyed или built, сторона правила доктрины — su или de, ступень — front, army, corps или division.
 Ответ — JSON: explanation, fixes.` },
     { role: 'user', content: `Факт: ${c.key} — ${c.value}
 Формальная часть: ${c.claim ? JSON.stringify(c.claim) : 'нет (предложение записи)'}

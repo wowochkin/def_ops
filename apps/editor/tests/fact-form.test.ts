@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runChecks, type Claim } from '@def-ops/knowledge';
-import { ASSUMPTION_WARNING, claimToForm, formToClaim, formWarnings, manualCandidate, PARAM_OPTIONS, parseDate } from '../src/kb/fact-form';
+import { ASSUMPTION_WARNING, claimToForm, FORM_FIELDS, formToClaim, formWarnings, manualCandidate, PARAM_OPTIONS, parseDate } from '../src/kb/fact-form';
 
 const ok = (kind: Claim['kind'], fields: Record<string, string>): Claim => {
   const r = formToClaim(kind, fields);
@@ -158,5 +158,10 @@ describe('formToClaim: правило доктрины', () => {
     expect(ok('doctrine', claimToForm(c))).toEqual(c);
     const d: Claim = { kind: 'doctrine', side: 'de', level: 'division', group: 'layout', rule: 'r3', condition: 'Оборона', action: 'Две позиции' };
     expect(ok('doctrine', claimToForm(d))).toEqual(d);
+  });  it('условие необязательно: пустое — пустая строка, как в сиде', () => {
+    expect(ok('doctrine', { ...base, condition: '' })).toMatchObject({ condition: '', action: 'Контратака' });
+    expect(FORM_FIELDS.doctrine.find((f) => f.key === 'condition')?.required).toBe(false);
+    const e: Claim = { kind: 'doctrine', side: 'de', level: 'army', group: 'timing', rule: 'r4', condition: '', action: 'Отвести' };
+    expect(ok('doctrine', claimToForm(e))).toEqual(e);
   });
 });

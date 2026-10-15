@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { toCandidates, runChecks, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, extractMessages, claimRules, isNormative, scanMessages, type ExtractedClaim, type CheckCtx } from '../src';
+import { toCandidates, runChecks, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, extractMessages, claimRules, isNormative, isDoctrinal, scanMessages, verdictOf, type ExtractedClaim, type CheckCtx } from '../src';
 
 const fx = <T>(n: string) => JSON.parse(readFileSync(new URL(`./fixtures/llm/${n}.json`, import.meta.url), 'utf8')) as T;
 const doc = { id: 'd1', name: 'Выписка', reliability: 'B' as const, operation: 'berlin' };
@@ -110,5 +110,69 @@ describe('промпт нормативов: правила и перечень 
     const txt = (m: ReturnType<typeof scanMessages>) => String(m[0].content);
     expect(txt(scanMessages('data:', 'Полевой устав 1944', undefined, P))).toContain('advanceMax — Наибольший темп');
     expect(txt(scanMessages('data:', 'Журнал боевых действий', undefined, P))).not.toContain('advanceMax — Наибольший темп');
+  });
+});
+
+describe('доктрина из документов: вид doctrine', () => {
+  const TXT = 'Наставление по ведению оборонительного боя (пересказ), п. 12: при вклинении противника в главную полосу корпус контратакует во фланг вклинившейся группировки силами не менее 0,33 своего резерва. П. 14: в ночь перед наступлением противника дивизия высылает мелкие группы для налётов на его исходные позиции. П. 15: вторая позиция оборудуется в глубине за главной полосой.';
+  const ans = fx<{ claims: ExtractedClaim[] }>('extract-doctrine');
+  const cs = toCandidates(ans.claims, { ...doc, name: 'Наставление по обороне' }, { chunk: 0 }, 'text');
+  const dctx = ctx({ text: TXT, formations: [] });
+  const level = (i: number, check: string) => runChecks(cs[i], dctx).find((r) => r.check === check);
+  it('три кандидата doctrine с ключом principles; формальная часть первого', () => {
+    expect(cs.map((c) => [c.claim.kind, c.key])).toEqual([['doctrine', 'principles'], ['doctrine', 'principles'], ['doctrine', 'principles']]);
+    expect(cs[0].claim).toMatchObject({ side: 'de', level: 'corps', group: 'counterattack', rule: 'flank-counterattack-third', values: { force_share: 0.33 } });
+    expect(cs[0].value).toBe('Доктрина (нем., корпус, контратаки и контрудары): Противник вклинился в главную полосу → Контратака корпусным резервом во фланг вклинившейся группировки; force_share 0,33');
+  });
+  it('правильный — цитата, числа, доктрина ok, итог auto; соединения не ищется', () => {
+    const r = runChecks(cs[0], dctx);
+    expect(['quote', 'numbers', 'doctrine'].map((k) => r.find((x) => x.check === k)?.level)).toEqual(['ok', 'ok', 'ok']);
+    expect(r.find((x) => x.check === 'subject')).toBeUndefined();
+    expect(verdictOf(r)).toBe('auto');
+  });
+  it('неизвестная группа — сомнение, итог review; пустой rule — из действия латиницей', () => {
+    expect(level(1, 'doctrine')).toEqual({ check: 'doctrine', level: 'doubt', why: 'неизвестная группа: «night-raid»' });
+    expect(verdictOf(runChecks(cs[1], dctx))).toBe('review');
+    expect((cs[1].claim as { rule: string }).rule).toBe('doc-nochnoy-nalet-melkimi-gruppami');
+    expect(cs[1].claim).not.toHaveProperty('values');
+  });
+  it('числа нет в цитате — отбой', () => {
+    expect(level(2, 'numbers')?.level).toBe('fail');
+    expect(verdictOf(runChecks(cs[2], dctx))).toBe('drop');
+  });
+  it('без стороны или со ступенью не из перечня — пропущен', () => {
+    const x = ans.claims[0];
+    expect(toCandidates([{ ...x, side: null }, { ...x, level: 'regiment' }, { ...x, level: null }], doc, { chunk: 0 }, 'text')).toEqual([]);
+  });
+  it('rule обрезается до 32 знаков; диапазон в values', () => {
+    const x = ans.claims[0];
+    const [c] = toCandidates([{ ...x, rule: null, action: 'Контратака корпусным резервом во фланг вклинившейся группировки', values: [{ name: 'km', value: null, range: [2, 4] }, { name: 'bad', value: null, range: [4, 2] }] }], doc, { chunk: 0 }, 'text');
+    const rule = (c.claim as { rule: string }).rule;
+    expect(rule.startsWith('doc-kontrataka-korpusnym')).toBe(true);
+    expect(rule.length).toBeLessThanOrEqual(36);
+    expect(rule).not.toMatch(/-$/);
+    expect((c.claim as { values?: unknown }).values).toEqual({ km: [2, 4] });
+  });
+  it('промпт: строка doctrine — только с признаками устава', () => {
+    expect(extractMessages('Наставление по обороне, п. 12: контратака во фланг.', 'Д')[0].content).toContain('doctrine — правило устава');
+    expect(extractMessages('Журнал боевых действий 8 гв. А за 16.04', 'Д')[0].content).not.toContain('doctrine — правило устава');
+    expect(extractMessages('8 гв. А заняла Зеелов', 'Боевой устав пехоты')[0].content).toContain('doctrine — правило устава');
+    expect(claimRules(undefined, undefined, true)).toContain('doctrine — правило устава');
+    expect(claimRules()).not.toContain('doctrine — правило устава');
+    const txt = (m: ReturnType<typeof scanMessages>) => String(m[0].content);
+    expect(txt(scanMessages('data:', 'Merkblatt für den Gegenstoß'))).toContain('doctrine — правило устава');
+    expect(txt(scanMessages('data:', 'Журнал боевых действий'))).not.toContain('doctrine — правило устава');
+  });
+  it('признаки устава', () => {
+    expect(isDoctrinal('Боевой устав пехоты, ст. 423')).toBe(true);
+    expect(isDoctrinal('Указания по прорыву обороны')).toBe(true);
+    expect(isDoctrinal('Richtlinie für die Abwehr')).toBe(true);
+    expect(isDoctrinal('Сводка потерь за сутки')).toBe(false);
+  });
+  it('схема знает doctrine и его поля', () => {
+    const p = EXTRACT_SCHEMA.properties.claims.items.properties;
+    expect(p.kind.enum).toContain('doctrine');
+    expect(Object.keys(p)).toEqual(expect.arrayContaining(['level', 'group', 'rule', 'condition', 'action', 'values']));
+    expect(EXTRACT_SCHEMA.properties.claims.items.required).toEqual(expect.arrayContaining(['condition', 'action', 'values']));
   });
 });

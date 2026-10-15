@@ -68,6 +68,28 @@ describe('saveCandidates: маршрут по итогу проверок', () =
   });
 });
 
+describe('правило доктрины из документа: приём в запись доктрины', () => {
+  const rule = (side: 'su' | 'de', group: string): Claim => ({ kind: 'doctrine', side, level: 'army', group, rule: `doc-${group}`, condition: 'Прорвана главная полоса', action: 'Ввести подвижную группу' });
+  const dcand = (id: string, claim: Claim): Candidate => ({ ...cand(id, claim, 'auto', [{ check: 'doctrine', level: 'ok' }], {}), key: 'principles' });
+  it('su, commit — в запись org:su-doctrine-commit сида; операции у записи не прибавляются', async () => {
+    expect(await saveCandidates([dcand('dc', rule('su', 'commit'))], ctx)).toMatchObject({ auto: 1 });
+    const e = await userEntry('org:su-doctrine-commit');
+    expect(e?.title).toMatch(/ввод вторых эшелонов/);
+    expect(e?.operations).toBeUndefined();
+    const f = e?.facts?.at(-1);
+    expect(f?.claim).toMatchObject({ kind: 'doctrine', side: 'su', group: 'commit', rule: 'doc-commit' });
+    expect(f?.key).toBe('principles');
+    expect(e!.facts!.length).toBeGreaterThan(1);
+  }, 20000);
+  it('неизвестная группа — новая запись org:de-doctrine-night-raid из документа, без операций', async () => {
+    expect(await saveCandidates([dcand('dn', rule('de', 'night-raid'))], ctx)).toMatchObject({ auto: 1 });
+    const e = await userEntry('org:de-doctrine-night-raid');
+    expect(e).toMatchObject({ category: 'organization', group: 'de', title: 'Доктрина вермахта: night-raid', summary: 'Правила доктрины из документов.', status: 'extracted', origin: 'document' });
+    expect(e).not.toHaveProperty('operations');
+    expect(e?.facts).toHaveLength(1);
+  });
+});
+
 describe('положение по названию места', () => {
   const located = { ...ctx, theatre: { locate: (n: string) => (n === 'Зелов' ? { at: [14.37, 52.59] as [number, number] } : null) } };
   it('повторная загрузка — повтор, хотя записанный факт получил координаты', async () => {

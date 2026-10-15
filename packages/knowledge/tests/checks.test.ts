@@ -341,3 +341,32 @@ describe('нормативы модели: param и outcome', () => {
     expect(lvl(c, ctx({ text: 'на 5–14 км' }), 'param')?.level).toBe('doubt');
   });
 });
+
+describe('доктрина: правило «условие → действие»', () => {
+  const rule: Claim = { kind: 'doctrine', side: 'de', level: 'corps', group: 'counterattack', rule: 'r1', condition: 'Вклинение', action: 'Контратака во фланг' };
+  const manual = (c: Claim) => cand(c, { kind: 'manual' }, { origin: 'manual' });
+  it('ручной ввод: правило ok, соединения у доктрины нет', () => {
+    const r = runChecks(manual(rule), ctx());
+    expect(r.find((x) => x.check === 'doctrine')).toEqual({ check: 'doctrine', level: 'ok' });
+    expect(r.find((x) => x.check === 'subject')).toBeUndefined();
+    expect(verdictOf(r)).toBe('auto');
+  });
+  it('пустое действие — отбой', () => {
+    expect(lvl(manual({ ...rule, action: ' ' }), ctx(), 'doctrine')).toEqual({ check: 'doctrine', level: 'fail', why: 'пустое условие или действие' });
+  });
+  it('пустое условие: из документа — отбой, ручной ввод — допустимо (условие необязательно)', () => {
+    expect(lvl(cand({ ...rule, condition: '' }, q('цитата правила')), ctx({ text: 'цитата правила' }), 'doctrine')?.level).toBe('fail');
+    expect(lvl(manual({ ...rule, condition: '' }), ctx(), 'doctrine')?.level).toBe('ok');
+  });
+  it('сторона пуста или не su/de — отбой; ступень не из перечня — отбой', () => {
+    expect(lvl(manual({ ...rule, side: '' as 'su' }), ctx(), 'doctrine')).toEqual({ check: 'doctrine', level: 'fail', why: 'не указана сторона' });
+    expect(lvl(manual({ ...rule, side: 'ru' as 'su' }), ctx(), 'doctrine')?.level).toBe('fail');
+    expect(lvl(manual({ ...rule, level: 'regiment' as 'corps' }), ctx(), 'doctrine')).toEqual({ check: 'doctrine', level: 'fail', why: 'ступень не из перечня: «regiment»' });
+  });
+  it('неизвестная группа — сомнение', () => {
+    expect(lvl(manual({ ...rule, group: 'night-raid' }), ctx(), 'doctrine')).toEqual({ check: 'doctrine', level: 'doubt', why: 'неизвестная группа: «night-raid»' });
+  });
+  it('у прочих видов проверки доктрины нет', () => {
+    expect(lvl(manual({ kind: 'enter', subject: 's', at: '1945-04-16' }), ctx(), 'doctrine')).toBeUndefined();
+  });
+});

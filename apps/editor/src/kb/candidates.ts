@@ -5,7 +5,7 @@
  * сборщик пересобирает операции (факты в модель идут только через compileOperation).
  */
 import {
-  applyProposal, dateOf, fingerprint, subjectOf, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey, scenarioIdOf,
+  applyProposal, dateOf, DOCTRINE_GROUPS, fingerprint, subjectOf, sameClaim, formationEntries, formationEntry, matchEntry, matchFormation, pinKey, scenarioIdOf,
   type Candidate, type Claim, type Entry, type Fact, type FactRef, type InfraProposal, type Pins, type Proposal, type Reliability,
 } from '@def-ops/knowledge';
 import { claimText } from '../modeling/basis';
@@ -114,6 +114,18 @@ function opEntry(op: string | undefined, kind: 'crossing' | 'event', w: Work): E
     : { id, category: 'chronology', group: 'other', title: op ? `События: ${op}` : 'События (без операции)', ...ops, summary: 'События по документам.', facts: [], status: 'extracted', origin: 'document' });
 }
 
+/**
+ * Запись доктрины стороны по группе правила (org:su-doctrine-commit); нет — новая запись из документа. Доктрина —
+ * общая для операций: записи без operations.
+ */
+function doctrineEntry(side: 'su' | 'de', group: string, w: Work): Entry {
+  const id = `org:${side}-doctrine-${group}`;
+  return w.get(id) ?? {
+    id, category: 'organization', group: side, title: `${side === 'su' ? 'Доктрина Красной армии' : 'Доктрина вермахта'}: ${DOCTRINE_GROUPS[group] ?? group}`,
+    summary: 'Правила доктрины из документов.', facts: [], status: 'extracted', origin: 'document',
+  };
+}
+
 /** Соединение в факте — id сценария: прежний id записи (f:su_1bf) — её синоним-id сценария (нет — пусто). */
 function subjectId(id: string, w: Work): string {
   if (!id) return id;
@@ -130,8 +142,7 @@ function targetOf(c: Candidate, w: Work, ctx: AcceptCtx): Entry | null {
   if (cl.kind === 'event') return opEntry(c.op, 'event', w);
   // нормативы модели (значение правила, итог прогона): записи пока нет — приём в части 3, задача 3
   if (cl.kind === 'param' || cl.kind === 'outcome') return null;
-  // правило доктрины: приём в запись доктрины — вместе с извлечением правил из документов
-  if (cl.kind === 'doctrine') return null;
+  if (cl.kind === 'doctrine') return doctrineEntry(cl.side, cl.group, w);
   if (cl.kind === 'crossing') {
     if (!cl.subject.trim() && c.names.subject?.trim()) cl.subject = c.names.subject.trim();
     if (!cl.subject.trim()) return null;
@@ -188,7 +199,8 @@ function place(c0: Candidate, by: 'auto' | 'human', ctx: AcceptCtx, w: Work, int
   const have = facts.findIndex((f) => sameFact(f, c.claim, c.source));
   if (have >= 0) return { entry: target.id, index: have, duplicate: true };
   const isNew = !w.get(target.id);
-  w.set({ ...target, ...(c.op && !isNew ? { operations: [...new Set([...(target.operations ?? []), c.op])] } : {}), facts: [...facts, factOf(c, by, ctx)] });
+  // доктрина — общая для операций: операция документа к её записи не прибавляется
+  w.set({ ...target, ...(c.op && !isNew && c.claim.kind !== 'doctrine' ? { operations: [...new Set([...(target.operations ?? []), c.op])] } : {}), facts: [...facts, factOf(c, by, ctx)] });
   return { entry: target.id, index: facts.length, duplicate: false };
 }
 

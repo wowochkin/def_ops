@@ -3,7 +3,7 @@ export * from './candidate';
 export * from './checks';
 export * from './rubrics';
 export { Index, stems, snippet, type Hit } from './search';
-export { chunkText, extractMessages, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, quoteFound, matchEntry, toProposals, toInfraProposals, toPositionProposals, toBoundaryProposals, toCandidates, claimRules, isNormative, CLAIM_KINDS, NORM_KINDS, applyProposal, type ExtractedItem, type ExtractedClaim, type ClaimKind, type ExtractKind, type OperationHint, type ParamHint } from './extract';
+export { chunkText, extractMessages, EXTRACT_SCHEMA, OPERATION_EXTRACT_SCHEMA, quoteFound, matchEntry, toProposals, toInfraProposals, toPositionProposals, toBoundaryProposals, toCandidates, claimRules, isNormative, isDoctrinal, CLAIM_KINDS, NORM_KINDS, applyProposal, type ExtractedItem, type ExtractedClaim, type ClaimKind, type ExtractKind, type OperationHint, type ParamHint } from './extract';
 export { gather, qaMessages, gameReference, type Source } from './qa';
 export * from './embed';
 export * from './operations';

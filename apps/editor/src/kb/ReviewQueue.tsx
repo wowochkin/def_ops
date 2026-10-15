@@ -15,7 +15,7 @@ import { decideCandidates, type AcceptCtx, type StoredCandidate } from './candid
 import { opContext, type OpContext } from './ingest';
 import * as kb from './kb';
 import {
-  applyFixes, ASSIST_SCHEMA, assistMessages, candDoc, candKind, CHECK_RU, CLAIM_FIELDS, CROSSING_STATE_RU, evidenceText, fieldText, filterQueue,
+  applyFixes, ASSIST_SCHEMA, assistMessages, candDoc, candKind, CHECK_RU, CLAIM_FIELDS, evidenceText, FIELD_OPTIONS, fieldText, filterQueue,
   numberParts, onlyDoubt, reasonGroups, subjectKeys, setClaimField, setSubject, type AssistAnswer, type AssistMode, type QueueFilter, type QueueKind,
 } from './queue';
 import * as store from './store';
@@ -203,7 +203,7 @@ function initialClaim(c: StoredCandidate): Claim | undefined {
   return cl?.kind === 'crossing' && !cl.subject.trim() && c.names.subject?.trim() ? { ...cl, subject: c.names.subject.trim() } : cl;
 }
 
-/** Поля формальной части: соединение (выбор), даты, числа, пункты, название и состояние переправы. */
+/** Поля формальной части: соединение (выбор), даты, числа, пункты, название и состояние переправы, сторона и ступень правила доктрины (выбор). */
 function ClaimEditor({ claim, names, cx, s, nameOf, match, onChange }: {
   claim: Claim; names: Candidate['names']; cx: OpContext | null; s: kb.KbState; nameOf: (id: string) => string; match: (n: string) => string | null;
   onChange: (c: Claim, n?: Candidate['names']) => void;
@@ -215,13 +215,14 @@ function ClaimEditor({ claim, names, cx, s, nameOf, match, onChange }: {
       : claim.kind === 'boundary' ? { ...names, between: (i ? [names.between?.[0] ?? '', title] : [title, names.between?.[1] ?? '']) as [string, string] } : { ...names, subject: title })} />;
   return (
     <div className="rq-fields">
-      {claim.kind === 'boundary' ? [pick(0), pick(1)] : claim.kind !== 'event' && claim.kind !== 'crossing' ? pick(0) : null}
+      {claim.kind === 'boundary' ? [pick(0), pick(1)] : claim.kind !== 'event' && claim.kind !== 'crossing' && claim.kind !== 'doctrine' ? pick(0) : null}
       {CLAIM_FIELDS[claim.kind].map((f) => f.type === 'subject'
         ? <SubjectPicker key={f.key} label={f.title} value={fieldText(claim, f.key)} name={names.parent} cx={cx} entries={s.entries} nameOf={nameOf} match={match}
           onChange={(id, title) => onChange({ ...claim, [f.key]: id } as Claim, title == null ? undefined : { ...names, parent: title })} />
         : <label key={f.key} className={`rq-f t-${f.type}`}><span>{f.title}</span>
-          {f.type === 'state' ? <select value={fieldText(claim, f.key)} onChange={(e) => onChange(setClaimField(claim, f.key, e.target.value))}>
-            {Object.entries(CROSSING_STATE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          {FIELD_OPTIONS[f.type] ? <select value={fieldText(claim, f.key)} onChange={(e) => onChange(setClaimField(claim, f.key, e.target.value))}>
+            {!FIELD_OPTIONS[f.type]!.some(([k]) => k === fieldText(claim, f.key)) && <option value={fieldText(claim, f.key)}>{fieldText(claim, f.key) || '—'}</option>}
+            {FIELD_OPTIONS[f.type]!.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
             // название переправы правится на месте и остаётся названием из источника (names.subject)
             : <FieldInput claim={claim} k={f.key} placeholder={f.type === 'date' ? 'ГГГГ-ММ-ДД' : claim.kind === 'crossing' && f.key === 'subject' ? 'название: мост через Шпрее у …' : ''}
               onChange={(x) => onChange(x, x.kind === 'crossing' && f.key === 'subject' ? { ...names, subject: x.subject } : undefined)} />}</label>)}
