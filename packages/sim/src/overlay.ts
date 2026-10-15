@@ -7,7 +7,7 @@
  */
 import type { LngLat } from '@def-ops/core';
 import { decodeGrid, encodeGrid } from './theatre';
-import { cutAbsent, type NetworkCheck, type WaterCheck } from './overlay-network';
+import { cutAbsent, type MarshCheck, type NetworkCheck, type WaterCheck } from './overlay-network';
 import { hatchMask, hatchPx } from './overlay-hatch';
 import { TERRAIN_CLASSES, type TerrainClass, type TerrainGrid, type TheatreData } from './types';
 
@@ -34,6 +34,8 @@ export interface OverlayResult {
   network?: NetworkCheck;
   /** Проверка воды театра по карте: реки линиями, водоёмы площадями. */
   water?: WaterCheck;
+  /** Сверка болот карты с современными (растр театра и OSM): цвет штриховки, клетки, области. */
+  marsh?: MarshCheck;
 }
 
 /** HSV: тон 0–360, насыщенность и яркость 0–1. */

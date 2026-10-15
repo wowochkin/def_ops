@@ -11,6 +11,7 @@
  */
 import type { LngLat } from '@def-ops/core';
 import { decodeMask, hsv, maskRle, tileXY, type LegendRule, type OverlayLegend, type OverlayResult } from './overlay';
+import { hatchPx, hatchWindow, isHatch } from './overlay-hatch';
 import { decodeGrid } from './theatre';
 import { TERRAIN_CLASSES, type TheatreData } from './types';
 
@@ -463,7 +464,8 @@ function simplify(pts: LngLat[], tol: number): LngLat[] {
   return pts.filter((_, i) => keep[i]);
 }
 
-type OsmJson = { elements?: { type: string; tags?: Record<string, string>; geometry?: { lat: number; lon: number }[] }[] };
+/** Ответ Overpass на `out tags geom`: у путей — геометрия, у отношений — у членов. */
+export type OsmJson = { elements?: { type: string; id?: number; tags?: Record<string, string>; geometry?: { lat: number; lon: number }[]; members?: { type: string; ref: number; role: string; geometry?: { lat: number; lon: number }[] }[] }[] };
 /** Линия OSM → куски внутри рамки, упрощённые (~10 м). */
 function clipRuns(geom: { lat: number; lon: number }[], b: [number, number, number, number]): LngLat[][] {
   const inB = (p: LngLat) => p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3];
@@ -493,10 +495,10 @@ export function osmToRoads(json: OsmJson, b: [number, number, number, number]): 
 
 /** Классы водотоков OSM для сверки: реки и каналы (ручьи — нет: на картах 1:100 000 их почти не видно). */
 export const OSM_WATERWAY = ['river', 'canal'];
-/** Запрос Overpass: дороги и водотоки в рамке — одним запросом. */
+/** Запрос Overpass: дороги, водотоки и болота (пути и мультиполигоны) в рамке — одним запросом. */
 export function osmNetworkQuery(b: [number, number, number, number]): string {
   const bb = `${b[1]},${b[0]},${b[3]},${b[2]}`;
-  return `[out:json][timeout:180];(way["highway"~"^(${[...OSM_HIGHWAY, ...OSM_ROAD].join('|')})$"](${bb});way["waterway"~"^(${OSM_WATERWAY.join('|')})$"](${bb}););out tags geom;`;
+  return `[out:json][timeout:180];(way["highway"~"^(${[...OSM_HIGHWAY, ...OSM_ROAD].join('|')})$"](${bb});way["waterway"~"^(${OSM_WATERWAY.join('|')})$"](${bb});way["natural"="wetland"](${bb});relation["natural"="wetland"](${bb}););out tags geom;`;
 }
 /** Ответ Overpass → реки и каналы в формате театра (major — нет: большие реки театра остаются свои). */
 export function osmToRivers(json: OsmJson, b: [number, number, number, number]): { name: string; line: LngLat[]; major: boolean }[] {
@@ -637,4 +639,262 @@ export function mergeOhm(osm: { roads: TheatreData['roads']; rivers: OhmMerge['r
     rivers: [...ohmRivers, ...pick(osm.rivers, 'water')],
     ohm, postwar, replaced,
   };
+}
+
+/* ------------------------- болота: современные (растр театра и OSM) и штриховка карты ------------------------- */
+
+/** Сетка поправки (overlayGrid). */
+export type Grid = { bbox: [number, number, number, number]; cols: number; rows: number };
+/** Болото OSM: внешнее кольцо и дыры; кольца замкнуты (первая точка = последней). */
+export interface Wetland { outer: LngLat[]; holes: LngLat[][] }
+
+const samePt = (a: LngLat, b: LngLat) => Math.abs(a[0] - b[0]) < 1e-9 && Math.abs(a[1] - b[1]) < 1e-9;
+const closed = (r: LngLat[]) => r.length >= 4 && samePt(r[0], r[r.length - 1]);
+/** Упрощение замкнутого кольца: две половины от первой точки до самой дальней от неё (у кольца концы совпадают). */
+function simplifyRing(r: LngLat[], tol: number): LngLat[] {
+  let m = 1, md = -1;
+  for (let i = 1; i < r.length - 1; i++) { const dd = Math.hypot(r[i][0] - r[0][0], r[i][1] - r[0][1]); if (dd > md) { md = dd; m = i; } }
+  const out = [...simplify(r.slice(0, m + 1), tol), ...simplify(r.slice(m), tol).slice(1)];
+  return out.map(([x, y]) => [+x.toFixed(6), +y.toFixed(6)] as LngLat);
+}
+/** Куски путей → замкнутые кольца: склейка по совпадающим концам (с разворотом куска); незамкнувшееся — пропуск. */
+function stitch(parts: LngLat[][]): LngLat[][] {
+  const pool = parts.filter((p) => p.length >= 2), out: LngLat[][] = [];
+  while (pool.length) {
+    const ring = [...pool.shift()!];
+    while (!closed(ring)) {
+      const end = ring[ring.length - 1];
+      const k = pool.findIndex((p) => samePt(p[0], end) || samePt(p[p.length - 1], end));
+      if (k < 0) break;
+      const p = pool.splice(k, 1)[0];
+      ring.push(...(samePt(p[0], end) ? p : [...p].reverse()).slice(1));
+    }
+    if (closed(ring)) out.push(ring);
+  }
+  return out;
+}
+/** Точка внутри кольца (чёт-нечет). */
+function inRing(p: LngLat, r: LngLat[]): boolean {
+  let inside = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [xi, yi] = r[i], [xj, yj] = r[j];
+    if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+/** Точка внутри болота: во внешнем кольце и не в дырах. */
+export function inWetland(p: LngLat, w: Wetland): boolean {
+  return inRing(p, w.outer) && !w.holes.some((h) => inRing(p, h));
+}
+const ringBox = (r: LngLat[]): [number, number, number, number] =>
+  r.reduce<[number, number, number, number]>((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [Infinity, Infinity, -Infinity, -Infinity]);
+const boxesMeet = (a: [number, number, number, number], b: [number, number, number, number]) => a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
+
+/**
+ * Ответ Overpass → болота (natural=wetland): замкнутый путь — кольцо без дыр; отношение — внешние кольца из склеенных
+ * членов outer, дыры (inner) — к внешнему кольцу, содержащему их первую точку. Незамкнутый путь, член без геометрии,
+ * незамкнувшееся кольцо, кольцо вне рамки — пропуск. Без обрезки рамкой.
+ */
+export function osmToWetlands(json: OsmJson, b: [number, number, number, number]): Wetland[] {
+  const out: Wetland[] = [];
+  const pts = (g: { lat: number; lon: number }[]) => g.map((q) => [q.lon, q.lat] as LngLat);
+  const keep = (r: LngLat[]) => boxesMeet(ringBox(r), b);
+  for (const el of json.elements ?? []) {
+    if (el.tags?.natural !== 'wetland') continue;
+    if (el.type === 'way') {
+      if (!el.geometry) continue;
+      const r = pts(el.geometry);
+      if (closed(r) && keep(r)) out.push({ outer: simplifyRing(r, 0.0001), holes: [] });
+    } else if (el.type === 'relation') {
+      const of = (role: string) => stitch((el.members ?? []).filter((m) => m.type === 'way' && m.role === role && m.geometry).map((m) => pts(m.geometry!)));
+      const outers = of('outer').filter(keep).map((r) => ({ raw: r, w: { outer: simplifyRing(r, 0.0001), holes: [] as LngLat[][] } }));
+      for (const h of of('inner')) outers.find((o) => inRing(h[0], o.raw))?.w.holes.push(simplifyRing(h, 0.0001));
+      out.push(...outers.map((o) => o.w));
+    }
+  }
+  return out;
+}
+
+/** Растр местности театра на сетке поправки: класс клетки театра под центром каждой клетки сетки (−1 — вне растра). */
+function gridClasses(T: Pick<TheatreData, 'terrainGrid'>, grid: Grid): Int16Array {
+  const out = new Int16Array(grid.cols * grid.rows).fill(-1);
+  const g = T.terrainGrid;
+  if (!g) return out;
+  const k = decodeGrid(g);
+  const [gw, , ge, gn] = g.bbox, gdl = (ge - gw) / g.cols, gda = (gn - g.bbox[1]) / g.rows;
+  const [w, s, e, n] = grid.bbox, dl = (e - w) / grid.cols, da = (n - s) / grid.rows;
+  for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
+    const gc = Math.floor((w + (c + 0.5) * dl - gw) / gdl), gr = Math.floor((gn - (n - (r + 0.5) * da)) / gda);
+    if (gc >= 0 && gr >= 0 && gc < g.cols && gr < g.rows) out[r * grid.cols + c] = k[gr * g.cols + gc];
+  }
+  return out;
+}
+
+/**
+ * Современные болота на сетке поправки (по центрам клеток): клетки «болото» растра театра ∪ полигоны OSM; вода растра;
+ * osmCells — клеток болота только из OSM (в растре не болото).
+ */
+export function modernMarsh(T: Pick<TheatreData, 'terrainGrid'>, wetlands: Wetland[], grid: Grid): { marsh: Uint8Array; water: Uint8Array; osmCells: number } {
+  const N = grid.cols * grid.rows, k = gridClasses(T, grid);
+  const mi = TERRAIN_CLASSES.indexOf('marsh'), wi = TERRAIN_CLASSES.indexOf('water');
+  const marsh = new Uint8Array(N), water = new Uint8Array(N);
+  for (let i = 0; i < N; i++) { if (k[i] === mi) marsh[i] = 1; if (k[i] === wi) water[i] = 1; }
+  const [w, s, e, n] = grid.bbox, dl = (e - w) / grid.cols, da = (n - s) / grid.rows;
+  let osmCells = 0;
+  for (const wl of wetlands) {
+    const [x0, y0, x1, y1] = ringBox(wl.outer);
+    const c0 = Math.max(0, Math.floor((x0 - w) / dl)), c1 = Math.min(grid.cols - 1, Math.floor((x1 - w) / dl));
+    const r0 = Math.max(0, Math.floor((n - y1) / da)), r1 = Math.min(grid.rows - 1, Math.floor((n - y0) / da));
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const i = r * grid.cols + c;
+      if (marsh[i] || !inWetland([w + (c + 0.5) * dl, n - (r + 0.5) * da], wl)) continue;
+      marsh[i] = 1; osmCells++;
+    }
+  }
+  return { marsh, water, osmCells };
+}
+
+/** Сводка болот: откуда цвет, узнанные цвета штриховки (road/side — доля окон внутри/снаружи), окна, клетки, области. */
+export interface MarshCheck {
+  source: 'network' | 'samples';
+  colors: NetColor[];
+  windows: { inside: number; outside: number };
+  /** Клеток современного болота только из OSM (в растре театра не болото). */
+  osm: number;
+  /** Клетки: болото на карте и сейчас, только на карте, только сейчас (области «нет на карте»). */
+  cells: { present: number; added: number; gone: number };
+  /** Современные болота (связные клетки) в охвате: всего, есть на карте, нет на карте (< 10 % клеток). */
+  areas: { total: number; present: number; gone: number };
+}
+
+/**
+ * Сверка болот карты с современными: маски marsh-present (болото карты ∧ современное), marsh-new (карты ∧ ¬современное),
+ * marsh-gone (клетки в охвате у современных областей, где болото карты < 10 %); маска marsh остаётся.
+ */
+export function mergeMarsh(ov: OverlayResult, T: Pick<TheatreData, 'terrainGrid'>, wetlands: Wetland[], info: Pick<MarshCheck, 'source' | 'colors' | 'windows'>): OverlayResult {
+  const N = ov.cols * ov.rows;
+  const { marsh: modern, osmCells } = modernMarsh(T, wetlands, ov);
+  const map = ov.masks.marsh ? decodeMask(ov.masks.marsh, N) : new Uint8Array(N);
+  const cov = decodeMask(ov.covered, N);
+  const present = new Uint8Array(N), added = new Uint8Array(N), gone = new Uint8Array(N);
+  for (let i = 0; i < N; i++) if (map[i]) (modern[i] ? present : added)[i] = 1;
+  const areas = { total: 0, present: 0, gone: 0 };
+  for (const comp of components(modern, ov.cols, ov.rows)) {
+    const seen = comp.filter((i) => cov[i]);
+    if (!seen.length) continue;
+    areas.total++;
+    if (seen.filter((i) => map[i]).length / seen.length < 0.1) { areas.gone++; for (const i of seen) gone[i] = 1; }
+    else areas.present++;
+  }
+  const masks: Record<string, string> = { ...ov.masks }, stats: Record<string, number> = { ...ov.stats };
+  const sum = (m: Uint8Array) => m.reduce((a, x) => a + x, 0);
+  const put = (k: string, m: Uint8Array) => { masks[k] = maskRle(m); stats[k] = sum(m); };
+  put('marsh-present', present); put('marsh-new', added); put('marsh-gone', gone);
+  const marsh: MarshCheck = { ...info, osm: osmCells, cells: { present: sum(present), added: sum(added), gone: sum(gone) }, areas };
+  return { ...ov, masks, stats, marsh };
+}
+
+/**
+ * Цвет штриховки болот по современным болотам: окна тайла (как hatchMask) с центром в клетке современного болота
+ * (растр ∪ OSM) — «внутри», с центром вне болот, расширенных на соседнюю клетку, и вне воды растра — «снаружи».
+ * Цвет узнан, если он чаще внутри (как у воды и дорог) и окна внутри с ним — штриховка (isHatch).
+ */
+export class WetlandLearner {
+  /** Сторона окна, px (по широте середины сетки). */
+  readonly w: number;
+  inside = 0;
+  outside = 0;
+  tiles = 0;
+  private readonly marsh: Uint8Array;
+  private readonly far: Uint8Array;
+  private readonly tileSet: Set<string>;
+  private readonly inn = new Float64Array(BINS);
+  private readonly out = new Float64Array(BINS);
+  private readonly hatch = new Float64Array(BINS);
+
+  constructor(private readonly T: Pick<TheatreData, 'terrainGrid'>, private readonly wetlands: Wetland[], private readonly grid: Grid, private readonly z: number) {
+    const { cols, rows, bbox: [w, s, e, n] } = grid;
+    this.w = hatchPx((s + n) / 2, z);
+    const m = modernMarsh(T, wetlands, grid);
+    this.marsh = m.marsh;
+    const near = dilate(m.marsh, cols, rows);
+    this.far = new Uint8Array(near.length).map((_, i) => (near[i] || m.water[i] ? 0 : 1));
+    // тайлы под болотами, расширенными на три клетки
+    let wide = m.marsh;
+    for (let k = 0; k < 3; k++) wide = dilate(wide, cols, rows);
+    const dl = (e - w) / cols, da = (n - s) / rows;
+    this.tileSet = new Set();
+    for (let i = 0; i < wide.length; i++) if (wide[i]) {
+      const c = i % cols, r = (i - c) / cols;
+      const x0 = Math.floor(tileXY.lon2x(w + c * dl, z)), x1 = Math.floor(tileXY.lon2x(w + (c + 1) * dl, z) - 1e-9);
+      const y0 = Math.floor(tileXY.lat2y(n - r * da, z)), y1 = Math.floor(tileXY.lat2y(n - (r + 1) * da, z) - 1e-9);
+      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) this.tileSet.add(`${x},${y}`);
+    }
+  }
+  /** Тайлы, задевающие клетки современных болот, расширенных на три клетки (пусто, если болот нет). */
+  tileList(): { x: number; y: number }[] {
+    return [...this.tileSet].map((k) => { const [x, y] = k.split(',').map(Number); return { x, y }; });
+  }
+  addTile(rgba: Uint8ClampedArray | Uint8Array, size: number, x: number, y: number) {
+    if (!this.tileSet.has(`${x},${y}`)) return;
+    this.tiles++;
+    const { cols, rows, bbox: [gw, gs, ge, gn] } = this.grid, z = this.z;
+    const dl = (ge - gw) / cols, da = (gn - gs) / rows;
+    // корзина цвета каждого пикселя (−1 — прозрачно)
+    const bin = new Int16Array(size * size);
+    for (let i = 0; i < size * size; i++) { const o = i * 4; bin[i] = rgba[o + 3] < 128 ? -1 : colorBin(rgba[o], rgba[o + 1], rgba[o + 2]); }
+    // окна — как hatchMask: шаг w от левого верхнего угла, последнее прижато к краю
+    const ww = Math.min(hatchPx(tileXY.y2lat(y + 0.5, z), z), size);
+    const starts: number[] = [];
+    for (let p = 0; p + ww < size; p += ww) starts.push(p);
+    starts.push(size - ww);
+    const hist = new Map<number, number>(), win = new Int8Array(ww * ww);
+    for (const y0 of starts) for (const x0 of starts) {
+      hist.clear();
+      let px = 0;
+      for (let yy = y0; yy < y0 + ww; yy++) for (let xx = x0; xx < x0 + ww; xx++) {
+        const b = bin[yy * size + xx];
+        if (b < 0) continue;
+        px++; hist.set(b, (hist.get(b) ?? 0) + 1);
+      }
+      if (px < 0.5 * ww * ww) continue; // карты здесь нет
+      const lng = tileXY.x2lon(x + (x0 + ww / 2) / size, z), lat = tileXY.y2lat(y + (y0 + ww / 2) / size, z);
+      const c = Math.floor((lng - gw) / dl), r = Math.floor((gn - lat) / da);
+      if (c < 0 || r < 0 || c >= cols || r >= rows) continue;
+      const cell = r * cols + c, inside = !!this.marsh[cell];
+      if (!inside && !this.far[cell]) continue;
+      if (inside) this.inside++; else this.outside++;
+      for (const [b, cnt] of hist) {
+        if (cnt < 0.03 * px) continue;
+        if (!inside) { this.out[b]++; continue; }
+        this.inn[b]++;
+        // чернила — пиксели этой корзины (0), прочие −1, прозрачные −2
+        for (let yy = 0; yy < ww; yy++) for (let xx = 0; xx < ww; xx++) { const v = bin[(y0 + yy) * size + x0 + xx]; win[yy * ww + xx] = v < 0 ? -2 : v === b ? 0 : -1; }
+        if (isHatch(hatchWindow(win, ww, 0, 0, ww, 0))) this.hatch[b]++;
+      }
+    }
+  }
+  /**
+   * Узнанные цвета штриховки: внутри ≥ 15 % окон и ≥ 2,5 × снаружи + 0,05, не меньше половины окон внутри с этим цветом —
+   * штриховка; нужно ≥ 20 окон внутри и снаружи; до трёх цветов.
+   */
+  colors(): NetColor[] {
+    if (this.inside < 20 || this.outside < 20) return [];
+    const out: NetColor[] = [];
+    for (let b = 0; b < BINS; b++) {
+      const r = this.inn[b] / this.inside, s = this.out[b] / this.outside;
+      if (r >= 0.15 && r >= 2.5 * s + 0.05 && this.hatch[b] >= 0.5 * this.inn[b]) out.push({ bin: b, rgb: binColor(b), road: +r.toFixed(3), side: +s.toFixed(3) });
+    }
+    return out.sort((a, b) => b.road - b.side - (a.road - a.side)).slice(0, 3);
+  }
+  /** Легенда второго прохода: болото по штриховке узнанными цветами (порог клетки 0,3); без болота, если цвет не узнан. */
+  legend(): OverlayLegend {
+    const list = this.colors();
+    if (!list.length) return { id: 'network', name: 'цвета по современной сети', pixels: {}, cells: [] };
+    return { id: 'network', name: 'цвета по современной сети', pixels: { marsh: list.map((c) => binRule(c.bin)) }, cells: [{ cls: 'marsh', of: ['marsh'], min: 0.3 }], hatch: ['marsh'] };
+  }
+  /** Сверка болот карты (mergeMarsh) со своими цветами и окнами. */
+  mergeMarsh(ov: OverlayResult): OverlayResult {
+    return mergeMarsh(ov, this.T, this.wetlands, { source: 'network', colors: this.colors(), windows: { inside: this.inside, outside: this.outside } });
+  }
 }
