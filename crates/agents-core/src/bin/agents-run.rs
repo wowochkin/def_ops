@@ -5,6 +5,7 @@
 //!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
 //!       [--llm-reasoning default|off|low|medium|high] [--llm-max-tokens N (0 — без потолка)] [--llm-parallel auto|N]
 //!       [--llm-sync] [--llm-by-army] [--llm-probe — только замер параллельных запросов]
+//!       [--params '{"pocket.breakoutKeep": 0.05}' | --params файл.json — поправки параметров agents-v0.json (путь → значение)]
 //!
 //! Мерило — как у нынешней модели: расстояние от расчётного положения до исторического, превышение над радиусом
 //! неопределённости источника; «в допуске» — превышение не больше допуска (10 км). Дивизии сверяются каждая со
@@ -140,8 +141,13 @@ fn main() {
     let mut first: Option<(Vec<Dev>, Vec<(Dev, Option<f64>)>, String, String, Vec<(String, String, String, Option<String>)>)> = None;
     // --seed N: первый прогон (отчёт и ход — по нему), дальше N+1…
     let seed0: u64 = arg(&args, "seed").and_then(|s| s.parse().ok()).unwrap_or(1);
+    // --params: поправки параметров агентной модели (rules::apply_overrides) — строкой JSON или файлом
+    let params: Option<serde_json::Value> = arg(&args, "params").map(|p| {
+        let t = if p.trim_start().starts_with('{') { p } else { std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("--params {p}: {e}")) };
+        serde_json::from_str(&t).unwrap_or_else(|e| panic!("--params: {e}"))
+    });
     for seed in seed0..seed0 + runs {
-        let (mut sim, meta) = scenario::load(&scen_path, &format!("{root}/{DATA_DIR}"), &root).unwrap_or_else(|e| panic!("{e}"));
+        let (mut sim, meta) = scenario::load_with(&scen_path, &format!("{root}/{DATA_DIR}"), &root, params.as_ref(), None).unwrap_or_else(|e| panic!("{e}"));
         sim.seed = seed;
         // вариант без отвода с первой позиции (отвод по источникам C — сравнение вариантов)
         if args.iter().any(|a| a == "--without-withdrawals") { sim.withdrawals.clear(); }

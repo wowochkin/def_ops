@@ -8,7 +8,7 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { loadContext } from '../../src/data';
+import { loadAgents, loadContext } from '../../src/data';
 import { runScenario, type RunResult } from '../../src/history';
 import { evaluateNorms, NORM_MARK, fmtNorm as fmt } from '../../src/norms';
 import type { SimContext } from '../../src/step';
@@ -35,7 +35,7 @@ function runsOf(id: string): RunResult[] {
 }
 
 console.log(`Нормативы против модели (${table.norms.length}), прогонов на сценарий: ${seeds}`);
-const rows = evaluateNorms(table, ctxOf, runsOf);
+const rows = evaluateNorms(table, ctxOf, runsOf, undefined, loadAgents());
 const L: string[] = [
   '# Нормативы опыта войны против модели',
   '',

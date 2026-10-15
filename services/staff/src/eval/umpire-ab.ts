@@ -13,7 +13,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkEvents, compareWithHistory, evaluateNorms, fmtNorm, NORM_MARK, runScenario, runScenarioWith, summarize, UMPIRE_FACTOR_RU, type NormTable, type RunResult, type SimContext, type UmpireMod } from '@def-ops/sim';
-import { loadContext, loadHistory, loadNorms } from '@def-ops/sim/data';
+import { loadAgents, loadContext, loadHistory, loadNorms } from '@def-ops/sim/data';
 import { Index, roleReference, type Entry } from '@def-ops/knowledge';
 import { LlmClient } from '../llm/client';
 import { configFromEnv, type Thinking } from '../llm/config';
@@ -76,7 +76,7 @@ const metrics = (id: string, v: Variant) => {
 };
 const table = loadNorms() as NormTable;
 const usable: NormTable = { norms: table.norms.filter((n) => !('scenario' in n.measure) || scenarios.includes(n.measure.scenario)) };
-const norms = (key: 'base' | 'ump') => evaluateNorms(usable, (s) => result.get(s)?.ctx ?? loadContext(s), (s) => result.get(s)?.[key].runs ?? []);
+const norms = (key: 'base' | 'ump') => evaluateNorms(usable, (s) => result.get(s)?.ctx ?? loadContext(s), (s) => result.get(s)?.[key].runs ?? [], undefined, loadAgents());
 const nb = norms('base'), nu = norms('ump');
 
 const pct = (x: number) => `${Math.round(x * 100)} %`;

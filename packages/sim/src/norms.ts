@@ -3,6 +3,7 @@
  * моментами, потери подчинённых соединений) или в правилах (число). Таблица — data/rules/norms.json
  * (loadNorms в data.ts); отчёт — tools/run/norms.ts; сравнение «с посредником и без» — services/staff.
  */
+import { agentNumber } from './agents-params';
 import { dist } from './geo';
 import { interp } from './rules';
 import { ENGINEERING } from './staff';
@@ -65,8 +66,15 @@ export function measureLoss(ctx: SimContext, r: RunResult, m: Extract<Norm['meas
   return start ? ((start - end) / start) * 100 : NaN;
 }
 
-/** Число из правил и профиля советской стороны (немецкой — где сказано). */
-export function measureParam(ctx: SimContext, expr: string): number {
+/**
+ * Число из правил и профиля советской стороны (немецкой — где сказано); путь с приставкой «agents.» — параметр
+ * агентной модели (agents — содержимое agents-v0.json, таблица — значение при 3:1).
+ */
+export function measureParam(ctx: SimContext, expr: string, agents?: unknown): number {
+  if (expr.startsWith('agents.')) {
+    if (agents === undefined) throw new Error('параметр агентной модели: не переданы параметры agents-v0.json');
+    return agentNumber(agents, expr.slice('agents.'.length)) ?? NaN;
+  }
   const R = ctx.rules, su = profileOf(ctx, 'su');
   const eng = su.engineering ?? ENGINEERING;
   const EN = R.engineers === false ? undefined : R.engineers;
@@ -119,20 +127,21 @@ const fmt = (x: number) => (Math.abs(x) >= 10 ? x.toFixed(0) : x.toFixed(1)).rep
 
 /**
  * Оценить нормативы. ctxOf — контекст сценария (для правил — любой, по умолчанию Берлинской операции);
- * runsOf — прогоны сценария (несколько seed — среднее и разброс).
+ * runsOf — прогоны сценария (несколько seed — среднее и разброс); agents — параметры агентной модели
+ * (agents-v0.json) для нормативов на пути «agents.…».
  */
-export function evaluateNorms(t: NormTable, ctxOf: (scenario: string) => SimContext, runsOf: (scenario: string) => RunResult[], paramScenario = 'berlin-1945-tasks'): NormResult[] {
+export function evaluateNorms(t: NormTable, ctxOf: (scenario: string) => SimContext, runsOf: (scenario: string) => RunResult[], paramScenario = 'berlin-1945-tasks', agents?: unknown): NormResult[] {
   const out: NormResult[] = [];
   for (const n of t.norms) {
     const m = n.measure;
     let values: number[] = [];
     try {
       if (m.kind === 'unmodelled') { out.push({ norm: n, values, mean: null, verdict: 'none', text: `не моделируется: ${m.why}` }); continue; }
-      if (m.kind === 'assumption') { const v = measureParam(ctxOf(paramScenario), m.expr); if (!Number.isFinite(v)) { out.push({ norm: n, values: [], mean: null, verdict: 'none', text: `не включено в правилах: ${m.why}` }); continue; } out.push({ norm: n, values: [v], mean: v, verdict: 'assumed', text: `${fmt(v)} ${n.unit ?? ''} — ${m.why}` }); continue; }
+      if (m.kind === 'assumption') { const v = measureParam(ctxOf(paramScenario), m.expr, agents); if (!Number.isFinite(v)) { out.push({ norm: n, values: [], mean: null, verdict: 'none', text: `не включено в правилах: ${m.why}` }); continue; } out.push({ norm: n, values: [v], mean: v, verdict: 'assumed', text: `${fmt(v)} ${n.unit ?? ''} — ${m.why}` }); continue; }
       values = m.kind === 'pace' ? runsOf(m.scenario).map((r) => measurePace(ctxOf(m.scenario), r, m))
         : m.kind === 'loss' ? runsOf(m.scenario).map((r) => measureLoss(ctxOf(m.scenario), r, m))
         : m.kind === 'frontage' ? measureFrontage(ctxOf(m.scenario), m)
-        : [measureParam(ctxOf(paramScenario), m.expr)];
+        : [measureParam(ctxOf(paramScenario), m.expr, agents)];
     } catch (e) { out.push({ norm: n, values, mean: null, verdict: 'error', text: (e as Error).message }); continue; }
     const ok = values.filter(Number.isFinite);
     if (!ok.length) { out.push({ norm: n, values, mean: null, verdict: 'error', text: 'нет данных (формирования нет на карте в эти дни)' }); continue; }

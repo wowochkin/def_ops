@@ -1,0 +1,708 @@
+{
+  "meta": {
+    "title": "Нормативы параметров агентной модели (36 входов «agents.…» перечня входов правил)",
+    "purpose": "Опора каждого из 36 параметров agents-v0.json, которые перечень входов правил (packages/sim/src/rule-inputs.ts) показывает в «Основе правил»: источник, место, достоверность, значение или диапазон в единицах входа и короткий пересказ. Строки нормативов — packages/sim/data/rules/norms.json (id agents-…), при сборке базы знаний они становятся фактами «значение правила».",
+    "conventions": "Достоверность: A — устав, наставление, официальный справочник или статистический свод; B — серьёзная вторичная работа или модельная норма с известным происхождением; C — оценка или перенос нормы с другой армии. Коридор — диапазон источника с допуском по достоверности (A ±10 %, B ±20 %, C ±35 %, допущение assume-corridor-tolerance). Таблица темпа — значение при соотношении 3:1. Цитат нет — только пересказ.",
+    "where_from": "Большая часть опор уже извлечена в docs/sources: division-combat-norms.json (Радзиевский 1976, БУП-42, TM-E 30-451, Дюпюи/HERO), infantry-mobility-1944-45/pursuit-norms.md (БУП-42, Русский архив т. 15), soviet-offensive-doctrine-1945.json (Радзиевский «Прорыв», Русский архив т. 15, сборник документов 8 гв. А), german-defence-doctrine-1945.json (DA Pam 20-233), berlin-1945-conquest.json и berlin-1945-halbe.json (Le Tissier). Новое по сети — разбор таблицы 8.6 «War by Numbers» (потери обороняющегося при прорыве) и подтверждение потери тяжёлого оружия при прорыве из Корсунского котла."
+  },
+  "sources": {
+    "DUP-WBN": {
+      "ref": "Dupuy Institute (C. Lawrence), разбор таблицы 8.6 книги «War by Numbers» (2017): потери в сутки по исходу боя, 195 дивизионных боёв (Италия 1943–44, Арденны 1944–45, Курск 1943)",
+      "url": "https://dupuyinstitute.org/category/combat-databases/duwar-databases",
+      "default_reliability": "B"
+    },
+    "WIKI_KORSUN": {
+      "ref": "Wikipedia, «Battle of Korsun–Cherkassy» (прорыв из котла, февраль 1944: окружённые бросили почти всё тяжёлое оружие)",
+      "url": "https://en.wikipedia.org/wiki/Battle_of_Korsun%E2%80%93Cherkassy",
+      "default_reliability": "C"
+    }
+  },
+  "source_keys": {
+    "BUP42": "БУП-42, ч. 2 — docs/sources/division-combat-norms.json, infantry-mobility-1944-45/pursuit-norms.md",
+    "RA15": "Русский архив: Великая Отечественная, т. 15 (4–5) — pursuit-norms.md, soviet-offensive-doctrine-1945.json",
+    "SBD25": "Сборник боевых документов, вып. 25 (плановая таблица боя 8 гв. А) — soviet-offensive-doctrine-1945.json",
+    "RAD76": "Тактика в боевых примерах (дивизия), под ред. А. И. Радзиевского, 1976 — division-combat-norms.json",
+    "RADZ79": "Радзиевский А. И., Прорыв, 1979 — soviet-offensive-doctrine-1945.json",
+    "TME30": "US War Dept TM-E 30-451, март 1945 — division-combat-norms.json",
+    "DUP-ADV": "Dupuy Institute, Advance Rates in Combat — division-combat-norms.json",
+    "DUP-LOSS43": "Dupuy Institute, Average Losses per Day … Eastern Front 1943 — division-combat-norms.json",
+    "DUP-QJM-TNDM": "Dupuy Institute, How Attrition is Calculated in the QJM vs the TNDM — division-combat-norms.json",
+    "DUP-VERITIES": "Dupuy Institute, Combat Attrition Verities — division-combat-norms.json",
+    "DUP-BRK": "Dupuy Institute, C-WAM 4 (Breakpoints), Clark 1954 — division-combat-norms.json",
+    "PAM233": "DA Pam 20-233 German Defense Tactics against Russian Break-throughs — german-defence-doctrine-1945.json",
+    "LT_CONQ": "Le Tissier, Soviet Conquest: Berlin 1945 — berlin-1945-conquest.json",
+    "LT_HALBE": "Le Tissier, Slaughter at Halbe — berlin-1945-halbe.json"
+  },
+  "params": [
+    {
+      "path": "agents.march.kmh.foot",
+      "value": 4,
+      "unit": "км/ч",
+      "norm": [
+        4,
+        5
+      ],
+      "source": "BUP42",
+      "place": "ч. 2, §816",
+      "reliability": "A",
+      "paraphrase": "средняя скорость пехоты на марше днём 4 км/ч, при облегчённой выкладке 5 км/ч",
+      "corridor": [
+        3.6,
+        5.5
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.march.kmh.motor",
+      "value": 25,
+      "unit": "км/ч",
+      "norm": [
+        20,
+        30
+      ],
+      "source": "BUP42",
+      "place": "ч. 2, гл. 19",
+      "reliability": "A",
+      "paraphrase": "автоколонна днём идёт 20–30 км/ч, ночью с затемнёнными фарами 10–15 км/ч",
+      "corridor": [
+        18.0,
+        33.0
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "ночное замедление задаёт march.nightFactor (допущение)"
+    },
+    {
+      "path": "agents.march.hoursPerDay.normal",
+      "value": 8,
+      "unit": "ч",
+      "norm": [
+        7,
+        8
+      ],
+      "source": "BUP42",
+      "place": "ч. 2, §817",
+      "reliability": "A",
+      "paraphrase": "нормальный суточный переход полка 30 км за 7–8 ч движения",
+      "corridor": [
+        6.3,
+        8.8
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.march.hoursPerDay.forced",
+      "value": 11,
+      "unit": "ч",
+      "norm": [
+        10,
+        12
+      ],
+      "source": "BUP42",
+      "place": "ч. 2, §817",
+      "reliability": "A",
+      "paraphrase": "форсированный переход 40–45 км за 10–12 ч движения с большим привалом 4 ч",
+      "corridor": [
+        9.0,
+        13.2
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.march.enemyTerritoryKmDay.foot",
+      "value": 14,
+      "unit": "км/сут",
+      "norm": [
+        8,
+        14
+      ],
+      "source": "RA15",
+      "place": "вводная статья",
+      "reliability": "B",
+      "paraphrase": "план Берлинской операции: общевойсковые армии 8–14 км/сут; по Исаеву 5 уд. А — 14–15 км/сут",
+      "corridor": [
+        6.4,
+        16.8
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.march.enemyTerritoryKmDay.motor",
+      "value": 37,
+      "unit": "км/сут",
+      "norm": [
+        30,
+        37
+      ],
+      "source": "RA15",
+      "place": "вводная статья",
+      "reliability": "B",
+      "paraphrase": "план Берлинской операции: танковые армии 30–37 км/сут (у Исаева 35–37)",
+      "corridor": [
+        24.0,
+        44.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.march.enemyTerritoryKmDay.tracked",
+      "value": 37,
+      "unit": "км/сут",
+      "norm": [
+        30,
+        37
+      ],
+      "source": "RA15",
+      "place": "вводная статья",
+      "reliability": "B",
+      "paraphrase": "тот же плановый темп танковых армий 30–37 км/сут; отдельной нормы для гусеничных нет",
+      "corridor": [
+        24.0,
+        44.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.advance.hasty",
+      "value": 10,
+      "unit": "км/сут",
+      "norm": 10,
+      "source": "DUP-ADV",
+      "place": "табл. «Standard rates»",
+      "reliability": "B",
+      "paraphrase": "стандартные темпы HERO/Дюпюи: при соотношении 2,26–3,0 против поспешной обороны 10 км/сут (модельные, не измеренные нормы)",
+      "corridor": [
+        8.0,
+        12.0
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "значение таблицы при 3:1; вся таблица по соотношениям — та же"
+    },
+    {
+      "path": "agents.combat.advance.prepared",
+      "value": 5,
+      "unit": "км/сут",
+      "norm": 5,
+      "source": "DUP-ADV",
+      "place": "табл. «Standard rates»",
+      "reliability": "B",
+      "paraphrase": "стандартные темпы HERO/Дюпюи: при соотношении 2,26–3,0 против подготовленной обороны 5 км/сут",
+      "corridor": [
+        4.0,
+        6.0
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "значение таблицы при 3:1"
+    },
+    {
+      "path": "agents.combat.advance.fortified",
+      "value": 2.5,
+      "unit": "км/сут",
+      "norm": 2.5,
+      "source": "DUP-ADV",
+      "place": "табл. «Standard rates»",
+      "reliability": "B",
+      "paraphrase": "стандартные темпы HERO/Дюпюи: при соотношении 2,26–3,0 против укреплённой обороны 2,5 км/сут",
+      "corridor": [
+        2.0,
+        3.0
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "значение таблицы при 3:1"
+    },
+    {
+      "path": "agents.combat.penetrationKmDay",
+      "value": 11.28,
+      "unit": "км/сут",
+      "norm": 11.28,
+      "source": "DUP-ADV",
+      "place": "табл. 1",
+      "reliability": "B",
+      "paraphrase": "база TDI, Восточный фронт 1943 (Курск, Харьков): при прорыве обороны средний темп 11,28 км/сут (19 случаев)",
+      "corridor": [
+        9.024,
+        13.536
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.armorFactor",
+      "value": 1.5,
+      "unit": "×",
+      "norm": [
+        1.5,
+        1.67
+      ],
+      "source": "DUP-ADV",
+      "place": "табл. «Standard rates»",
+      "reliability": "B",
+      "paraphrase": "у Дюпюи/HERO танковая дивизия идёт в 1,5–1,67 раза быстрее пехотной при том же соотношении (6/4 и 12/8 км/сут при 1,76–2,25; 10/6 и 20/12 при 3,01–4,25)",
+      "corridor": [
+        1.2,
+        2.004
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "отношение темпов перенесено на вес танков в боевой силе — допущение модели"
+    },
+    {
+      "path": "agents.combat.attackerLossDay",
+      "value": 0.028,
+      "unit": "доля/сут",
+      "norm": [
+        0.0218,
+        0.0325
+      ],
+      "source": "DUP-LOSS43",
+      "place": "таблица",
+      "reliability": "B",
+      "paraphrase": "база TDI: советские дивизии в наступлении под Харьковом и Курском в 1943 г. теряли 2,18–3,25 % в сутки; базовая норма QJM — 2,8 %",
+      "corridor": [
+        0.01744,
+        0.039
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.defenderLossDay",
+      "value": 0.015,
+      "unit": "доля/сут",
+      "norm": 0.015,
+      "source": "DUP-QJM-TNDM",
+      "place": null,
+      "reliability": "B",
+      "paraphrase": "базовая норма потерь обороняющегося в QJM — 1,5 % в сутки",
+      "corridor": [
+        0.012,
+        0.018
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "разброс по базам велик: немецкие дивизии в обороне 1943 г. — 0,64–0,68 %/сут (DUP-LOSS43), обороняющийся в 195 боях War by Numbers — 2,62–2,96 %/сут без прорыва (DUP-WBN)"
+    },
+    {
+      "path": "agents.combat.attackerLossMaxDay",
+      "value": 0.1344,
+      "unit": "доля/сут",
+      "norm": 0.1344,
+      "source": "DUP-QJM-TNDM",
+      "place": null,
+      "reliability": "B",
+      "paraphrase": "в QJM потолок потерь наступающего за сутки без особых условий — 13,44 % (обороняющегося — 5,76 %)",
+      "corridor": [
+        0.10752,
+        0.16128
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.defenderLossPenetrationDay",
+      "value": 0.064,
+      "unit": "доля/сут",
+      "norm": 0.064,
+      "source": "DUP-WBN",
+      "place": "табл. 8.6",
+      "reliability": "B",
+      "paraphrase": "War by Numbers, сводка 195 боёв (Италия, Арденны, Курск): обороняющийся, чья оборона прорвана, теряет 6,40 % в сутки, около половины — пленными; наступающий в этих боях — 0,83 %",
+      "corridor": [
+        0.0512,
+        0.0768
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "прежде — по выдержке поисковика (C); теперь — по разбору таблицы на сайте Института Дюпюи"
+    },
+    {
+      "path": "agents.combat.urban.citadel",
+      "value": 0.25,
+      "unit": "км/сут",
+      "norm": [
+        0.2,
+        0.25
+      ],
+      "source": "LT_CONQ",
+      "place": "гл. 1",
+      "reliability": "B",
+      "paraphrase": "27.04 8 гв. А и 1 гв. ТА отделял около 1 км от Тиргартена, к цели вышли 1–2.05 — 4–5 суток на километр",
+      "corridor": [
+        0.16,
+        0.3
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.tankLossFactor",
+      "value": 6,
+      "unit": "×",
+      "norm": [
+        5,
+        7
+      ],
+      "source": "DUP-VERITIES",
+      "place": "verity 25",
+      "reliability": "B",
+      "paraphrase": "доля потерь танков в 5–7 раз выше доли потерь личного состава",
+      "corridor": [
+        4.0,
+        8.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.gunLossFactor",
+      "value": 0.1,
+      "unit": "×",
+      "norm": 0.1,
+      "source": "DUP-VERITIES",
+      "place": "verity 27",
+      "reliability": "B",
+      "paraphrase": "доля потерь орудий — около десятой части доли потерь личного состава",
+      "corridor": [
+        0.08,
+        0.12
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.attackFrontageKm.suRifle",
+      "value": 2,
+      "unit": "км",
+      "norm": [
+        1.2,
+        3
+      ],
+      "source": "RAD76",
+      "place": "табл. 4 (pdf-стр. 11–12)",
+      "reliability": "A",
+      "paraphrase": "участок прорыва стрелковой дивизии 1944–45 гг. — 1,2–3 км, чаще 2 км (10 дивизий)",
+      "corridor": [
+        1.08,
+        3.3
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.attackFrontageKm.de",
+      "value": 4.5,
+      "unit": "км",
+      "norm": [
+        4,
+        5
+      ],
+      "source": "TME30",
+      "place": "гл. IV, разд. IV, п. 3b",
+      "reliability": "A",
+      "paraphrase": "американский справочник 1945 г.: полоса наступления немецкой пехотной дивизии 4400–5500 ярдов (4–5 км)",
+      "corridor": [
+        3.6,
+        5.5
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.defenseFrontageKm.su",
+      "value": 8,
+      "unit": "км",
+      "norm": [
+        3,
+        25
+      ],
+      "source": "RAD76",
+      "place": "pdf-стр. 96–115",
+      "reliability": "A",
+      "paraphrase": "фактические полосы обороны стрелковых дивизий 1943–44 гг. — от 3 до 25 км; на танкоопасных направлениях 6–8 км",
+      "corridor": [
+        2.7,
+        27.5
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.defenseFrontageKm.de",
+      "value": 8,
+      "unit": "км",
+      "norm": [
+        6,
+        10.1
+      ],
+      "source": "TME30",
+      "place": "гл. IV, разд. V, п. 2a",
+      "reliability": "A",
+      "paraphrase": "нормальная полоса обороны немецкой пехотной дивизии 6600–11 000 ярдов (6–10 км), примерно вдвое шире полосы наступления",
+      "corridor": [
+        5.4,
+        11.11
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.breakpointLoss",
+      "value": 0.4,
+      "unit": "доля",
+      "norm": 0.4,
+      "source": "DUP-BRK",
+      "place": "(Clark, 1954)",
+      "reliability": "B",
+      "paraphrase": "Clark, 43 батальона Второй мировой: к срыву атаки в среднем 40 % потерь (разброс 1–100 %); для дивизии порога у Дюпюи нет",
+      "corridor": [
+        0.32,
+        0.48
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "по FM 105-5 наступающий батальон останавливается уже при ≈20 %, обороняющийся прорван при ≈40 %"
+    },
+    {
+      "path": "agents.combat.artillery.normDensityPerKm",
+      "value": 225,
+      "unit": "ствол/км",
+      "norm": [
+        200,
+        250
+      ],
+      "source": "RAD76",
+      "place": "pdf-стр. 19",
+      "reliability": "A",
+      "paraphrase": "в 1944–45 гг. на участке прорыва — 200–250 орудий и миномётов на 1 км",
+      "corridor": [
+        180.0,
+        275.0
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.combat.artillery.normDurationMin",
+      "value": 85,
+      "unit": "мин",
+      "norm": 85,
+      "source": "RAD76",
+      "place": "pdf-стр. 29",
+      "reliability": "A",
+      "paraphrase": "артподготовка 44 гв. сд 14.01.1945 — 85 мин при 156 стволах на км (пример 1945 г.); у 27 гв. сд — 25 мин при успехе передовых батальонов и 105 при неуспехе",
+      "corridor": [
+        76.5,
+        93.5
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "в Берлинской операции 16.04 у 1 БФ — около 30 мин"
+    },
+    {
+      "path": "agents.combat.artillery.depthKm",
+      "value": 4,
+      "unit": "км",
+      "norm": [
+        1.8,
+        4
+      ],
+      "source": "RAD76",
+      "place": "pdf-стр. 29",
+      "reliability": "A",
+      "paraphrase": "огневой вал при поддержке атаки — на 1,8–4 км (обычно до 3, в Берлинской операции до 4)",
+      "corridor": [
+        1.62,
+        4.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.doctrine.de.counterattackRatio",
+      "value": 0.333,
+      "unit": "доля",
+      "norm": 0.333,
+      "source": "PAM233",
+      "place": "гл. 2, с. 9",
+      "reliability": "B",
+      "paraphrase": "для удара во фланг вклинения при устойчивом плече достаточно сил не больше трети прорвавшегося противника",
+      "corridor": [
+        0.2664,
+        0.3996
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.doctrine.de.withdrawStepKm",
+      "value": 10,
+      "unit": "км",
+      "norm": [
+        8,
+        10
+      ],
+      "source": "PAM233",
+      "place": "с. 29–30, 64–70",
+      "reliability": "B",
+      "paraphrase": "тыловые позиции — через каждые 6 миль (≈10 км); при отходе корпуса от Белгорода — 8 позиций через 5–6 миль (8–10 км)",
+      "corridor": [
+        6.4,
+        12.0
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.doctrine.de.penetrationDepthKm",
+      "value": 5.5,
+      "unit": "км",
+      "norm": [
+        5,
+        6
+      ],
+      "source": "BUP42",
+      "place": "гл. 15, §619",
+      "reliability": "C",
+      "paraphrase": "главная полоса обороны дивизии по советскому уставу — 5–6 км в глубину; немецкой нормы глубины главной полосы в доступных источниках нет",
+      "corridor": [
+        3.25,
+        8.1
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "перенос советской нормы на немецкую оборону — оценка (C); TM-E 30-451 даёт только вынос позиций охранения (1,8–4,6 км) и выдвинутой позиции (4,6–6,4 км) перед главной полосой"
+    },
+    {
+      "path": "agents.doctrine.su.firstEchelonShare",
+      "value": 0.667,
+      "unit": "доля",
+      "norm": [
+        0.55,
+        0.75
+      ],
+      "source": "RA15",
+      "place": "док. № 33, с. 74–76; SBD25, док. № 46",
+      "reliability": "B",
+      "paraphrase": "корпус — две дивизии в первом эшелоне и одна во втором; 5 уд. А — 5 дивизий в первой линии из 9, 8 гв. А — 5 из 8",
+      "corridor": [
+        0.44,
+        0.9
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.doctrine.su.commitDepthKm",
+      "value": 7,
+      "unit": "км",
+      "norm": [
+        6,
+        8
+      ],
+      "source": "RADZ79",
+      "place": "с. 112",
+      "reliability": "B",
+      "paraphrase": "ближайшая задача стрелкового корпуса — главная полоса глубиной 6–8 км; после её прорыва вводится второй эшелон",
+      "corridor": [
+        4.8,
+        9.6
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "в часах нормы ввода второго эшелона нет"
+    },
+    {
+      "path": "agents.doctrine.su.tankCommitDepthKm",
+      "value": 13,
+      "unit": "км",
+      "norm": [
+        13,
+        17
+      ],
+      "source": "RADZ79",
+      "place": "с. 112, 119",
+      "reliability": "B",
+      "paraphrase": "танковую армию вводить после прорыва тактической зоны глубиной 13–17 км",
+      "corridor": [
+        10.4,
+        20.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.pocket.breakoutKeep",
+      "value": 0.3,
+      "unit": "доля",
+      "norm": [
+        0,
+        0.1
+      ],
+      "source": "LT_HALBE",
+      "place": null,
+      "reliability": "B",
+      "paraphrase": "9-я армия вышла к 12-й без тяжёлого вооружения: артиллерию уничтожили перед прорывом, танки потеряны или затоплены; под Корсунем окружённые тоже бросили почти всё тяжёлое оружие",
+      "corridor": [
+        0.0,
+        0.12
+      ],
+      "inside_source": false,
+      "inside_corridor": false
+    },
+    {
+      "path": "agents.pocket.breakoutKmDay",
+      "value": 20,
+      "unit": "км/сут",
+      "norm": [
+        16,
+        22
+      ],
+      "source": "LT_HALBE",
+      "place": "гл. 10–13",
+      "reliability": "B",
+      "paraphrase": "9-я армия от Хальбе (вечер 28.04) до позиций 12-й армии у Эльсхольца (1.05) — около 50 км за 2,5–2,8 суток",
+      "corridor": [
+        12.8,
+        26.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
+      "path": "agents.pocket.breakoutLossDay",
+      "value": 0.15,
+      "unit": "доля/сут",
+      "norm": [
+        0.12,
+        0.18
+      ],
+      "source": "LT_HALBE",
+      "place": "гл. 13",
+      "reliability": "B",
+      "paraphrase": "из котла у Хальбе к 12-й армии дошли около 30 тыс. (с гражданскими), в плен попало около 13 тыс. и погибло больше 5 тыс. — около 40 % за 2,6 суток прорыва",
+      "corridor": [
+        0.096,
+        0.216
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    }
+  ],
+  "gaps": [
+    "Глубина вклинения до ввода немецких резервов (agents.doctrine.de.penetrationDepthKm): немецкой нормы глубины главной полосы (Hauptkampffeld) в TM-E 30-451 и DA Pam 20-233 нет; взята советская норма главной полосы БУП-42 §619 (5–6 км) — оценка C. Нужны HDv 300 «Truppenführung» или немецкие наставления по обороне 1944–45 гг.",
+    "Длительность артподготовки (agents.combat.artillery.normDurationMin): норматив «полного действия» подготовки как такового в источниках нет; взят пример 1945 г. (85 мин, 44 гв. сд). Варианты 1945 г. — 25–105 мин (27 гв. сд), в Берлинской операции у 1 БФ около 30 мин.",
+    "Вес танков в боевой силе (agents.combat.armorFactor): прямой нормы нет; взято отношение стандартных темпов танковой и пехотной дивизий у Дюпюи/HERO — перенос на силу остаётся допущением модели.",
+    "Потери обороняющегося в сутки (agents.combat.defenderLossDay): базы расходятся — QJM 1,5 %, немецкие дивизии в обороне 1943 г. 0,64–0,68 %, обороняющийся без прорыва в 195 боях 2,6–3,0 %; советских данных по 1944–45 гг. (Кривошеев, ВИЖ) по дням нет.",
+    "Темп прорыва из котла и потери (agents.pocket.breakoutKmDay, breakoutLossDay): единственный опорный случай — котёл у Хальбе; данные Корсуня и Каменец-Подольского (CMH Pub 104-15, бывш. DA Pam 20-234) по дням не выписаны.",
+    "По территории противника (agents.march.enemyTerritoryKmDay.*): опора — плановые темпы Берлинской операции; отдельной нормы для гусеничных и колёсных подвижных частей нет."
+  ]
+}

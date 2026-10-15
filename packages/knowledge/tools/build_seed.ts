@@ -724,6 +724,10 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     if (dn.gaps?.length) addSection(`org:norms-division-${dn.norms[0].group}`, 'Пробелы в нормативах', dn.gaps.map((x) => `- ${x}`));
   }
 
+  // нормативы параметров агентной модели: новые источники (строки нормативов — norms.json, id agents-…) и пробелы
+  const an = opt<{ sources?: Record<string, { ref: string }>; gaps?: string[] }>('agents-norms-1945.json');
+  if (an) regSources('agents-norms-1945.json', an.sources);
+
   // распад и остатки дивизий (пороги, сведение остатков)
   const rm = opt<{ rules: { id: string; side: string; topic: string; fact: string; value?: unknown; unit?: string; source?: string; url?: string; reliability?: string }[]; examples?: { division: string; side: string; date?: string; what: string; source?: string; reliability?: string }[] }>('division-remnants-1945.json');
   if (rm) for (const side of ['su', 'de']) {
@@ -752,6 +756,7 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     walk(ag, '');
     put({ id: 'org:model-agents-params', category: 'organization', group: 'model', title: 'Агентная модель: параметры, их источники и допущения', status: 'checked',
       summary: `Все числовые параметры агентной модели (packages/sim/data/rules/agents-v0.json): ${facts.length} значений; у каждого — источник с достоверностью или пометка «допущение» с обоснованием.`, facts });
+    addSection('org:model-agents-params', 'Пробелы в нормативах параметров (agents-norms-1945.json)', (an?.gaps ?? []).map((x) => `- ${x}`));
     const nm = read('packages/sim/data/rules/norms.json') as { norms: { id: string; title: string; source?: string; reliability?: string; historical?: string; expect?: [number, number]; unit?: string; rules?: string[]; note?: string }[]; findings?: string[] };
     put({ id: 'org:model-norms-check', category: 'organization', group: 'model', title: 'Модель: проверка нормативами (что должно получаться в расчёте)', status: 'checked',
       summary: 'Исторические нормативы и темпы, с которыми сверяется расчёт нынешней модели (npm run sim:norms): исторический показатель, ожидаемый диапазон результата модели и правила, которые он проверяет.',

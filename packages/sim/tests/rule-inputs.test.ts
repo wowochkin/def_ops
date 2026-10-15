@@ -47,8 +47,8 @@ describe('перечень входов правил и пересчёт кор�
       const scale = /\/(\d+)$/.exec(m.expr);
       const inp = ruleInput(path);
       expect(inp, n.id).toBeDefined();
-      const v = inp!.read(ctx.rules, prof);
-      const want = measureParam(ctx, m.expr);
+      const v = inp!.read(ctx.rules, prof, agentsV0);
+      const want = measureParam(ctx, m.expr, agentsV0);
       if (Number.isNaN(want)) expect(v, n.id).toBeNull();
       else expect(v! / (scale ? +scale[1] : 1), n.id).toBeCloseTo(want, 6);
     }

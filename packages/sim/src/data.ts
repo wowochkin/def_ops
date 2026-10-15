@@ -23,6 +23,8 @@ export const loadScenario = (id: string) => read<Scenario>('scenarios', `${id}.j
 export const loadHistory = (id: string) => read<History>('scenarios', `${id}.history.json`);
 /** Нормативы опыта войны (из базы знаний) и способ измерить их в модели. */
 export const loadNorms = () => read<NormTable>('rules', 'norms.json');
+/** Параметры агентной модели (ядро crates/agents-core) — для нормативов на пути «agents.…». */
+export const loadAgents = () => read<unknown>('rules', 'agents-v0.json');
 
 /** Всё, что нужно для прогона сценария: театр, профили сторон, правила. */
 export function loadContext(scenarioId: string, rulesId?: string): SimContext {

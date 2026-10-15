@@ -6,6 +6,7 @@
  * перечень и пересчёт параметром — пакеты друг от друга не зависят.
  */
 import type { CalibKey } from './calibrate';
+import { agentNumber } from './agents-params';
 import { CORRIDOR_TOL } from './norms';
 import { interp } from './rules';
 import { ENGINEERING } from './staff';
@@ -52,20 +53,6 @@ const meanQuality = (p?: SideProfile) => {
 /** Значение таблицы при соотношении 3:1 (как «при 3:1» в описании правил). */
 const at3 = (t?: Table) => (t?.length ? interp(t, 3) : null);
 
-/** Пройти по пути в объекте агентной модели; у параметра {value} — само значение. */
-function agentValue(agents: unknown, path: string): unknown {
-  let cur: unknown = agents;
-  for (const k of path.split('.')) cur = cur && typeof cur === 'object' ? (cur as Record<string, unknown>)[k] : undefined;
-  return cur && typeof cur === 'object' && !Array.isArray(cur) && 'value' in cur ? (cur as { value: unknown }).value : cur;
-}
-/** Ступенчатая таблица агентной модели ([нижняя граница соотношения, значение]) при 3:1. */
-function stepAt3(v: unknown): number | null {
-  if (!Array.isArray(v) || !v.length) return null;
-  let y: number | null = null;
-  for (const row of v as [number, number][]) if (row[0] <= 3) y = row[1];
-  return y ?? num((v as [number, number][])[0][1]);
-}
-
 const TERR_RU: Partial<Record<TerrainClass, string>> = { open: 'открытая местность', forest: 'лес', marsh: 'болото', urban: 'город', hills: 'высоты' };
 
 const army = (path: string, title: string, group: RuleGroup, read: RuleInput['read'], o: Partial<Pick<RuleInput, 'unit' | 'table' | 'calib'>> = {}): RuleInput =>
@@ -74,7 +61,7 @@ const army = (path: string, title: string, group: RuleGroup, read: RuleInput['re
 /** Параметр agents-v0.json с нормативом (источник и надёжность); таблица — значение при 3:1. */
 const agent = (path: string, title: string, unit?: string, table?: true): RuleInput => ({
   path: `agents.${path}`, title, group: 'агентная модель', engine: 'agents', ...(unit ? { unit } : {}), ...(table ? { table } : {}),
-  read: (_r, _p, a) => (a === undefined ? null : table ? stepAt3(agentValue(a, path)) : num(agentValue(a, path))),
+  read: (_r, _p, a) => (a === undefined ? null : agentNumber(a, path, !!table)),
 });
 
 export const RULE_INPUTS: RuleInput[] = [
@@ -165,7 +152,7 @@ export const RULE_INPUTS: RuleInput[] = [
   agent('combat.defenderLossDay', 'Потери обороняющегося в сутки', 'доля/сут'),
   agent('combat.attackerLossMaxDay', 'Наибольшие потери наступающего в сутки', 'доля/сут'),
   agent('combat.defenderLossPenetrationDay', 'Потери обороняющегося при прорыве', 'доля/сут'),
-  agent('combat.urban.citadel', 'Темп в цитадели города', '×'),
+  agent('combat.urban.citadel', 'Темп в цитадели города', 'км/сут'),
   agent('combat.tankLossFactor', 'Потери танков к потерям людей', '×'),
   agent('combat.gunLossFactor', 'Потери орудий к потерям людей', '×'),
   agent('combat.attackFrontageKm.suRifle', 'Фронт атаки советской стрелковой дивизии', 'км'),
