@@ -11,7 +11,8 @@ export interface KbRefRequest {
   scope: RoleScope;
   limit?: number;
   chars?: number;
-  doctrine?: { side: 'su' | 'de'; triggers: DoctrineTrigger[]; query: string; levels?: DoctrineClaim['level'][] };
+  /** Доктрина к обстановке; moment — момент хода (нет — момент справки scope.moment): правила с датой позже не берутся. */
+  doctrine?: { side: 'su' | 'de'; triggers: DoctrineTrigger[]; query: string; levels?: DoctrineClaim['level'][]; moment?: string };
 }
 export interface KbRefAnswer { refs: RoleRef[]; text: string; doctrine?: { rules: DoctrineRule[]; text: string } }
 
@@ -30,6 +31,27 @@ export const KB_REF_CHARS = 700;
 export function checkScope(scope: RoleScope): void {
   if ((scope.role === 'staff' || scope.role === 'stavka' || scope.role === 'umpire') && !scope.moment)
     throw new Error(`справка роли «${scope.role}» без момента хода`);
+}
+
+/** Область справки запроса: доктрина в запросе — роли она дана отдельным блоком (записи доктрины в справке не нужны). */
+export const refScope = (req: KbRefRequest): RoleScope => (req.doctrine ? { ...req.scope, doctrine: true } : req.scope);
+/** Момент доктрины запроса: свой или момент справки. */
+const doctrineMoment = (req: KbRefRequest) => req.doctrine?.moment ?? req.scope.moment;
+
+/** База окна для справки: справка роли и доктрина (kb.roleRef, kb.doctrine). Ошибка базы — отказ, не пустой ответ. */
+export interface WindowKb {
+  roleRef(queries: string[], scope: RoleScope, o: { limit?: number; chars?: number }): Promise<{ refs: RoleRef[]; text: string }>;
+  doctrine(side: 'su' | 'de', triggers: DoctrineTrigger[], query: string, levels: DoctrineClaim['level'][] | undefined, moment: string | undefined): Promise<{ rules: DoctrineRule[]; text: string }>;
+}
+/**
+ * Ответ окна на kbRef: справка роли по базе окна и доктрина на момент хода. Ошибка базы — отказ: окно отвечает
+ * ok: false, поток сразу считает по сиду и пишет заметку в журнал.
+ */
+export async function windowAnswer(kb: WindowKb, req: KbRefRequest): Promise<KbRefAnswer> {
+  const d = req.doctrine;
+  const [r, doctrine] = await Promise.all([kb.roleRef(req.queries, refScope(req), { limit: req.limit, chars: req.chars }),
+    d ? kb.doctrine(d.side, d.triggers, d.query, d.levels, doctrineMoment(req)) : undefined]);
+  return { ...r, ...(doctrine ? { doctrine } : {}) };
 }
 
 type Reply = { id: number; ok: boolean; answer?: KbRefAnswer; error?: string };
@@ -65,15 +87,15 @@ export function kbRefClient(post: (m: { kind: 'kbRef'; id: number; req: KbRefReq
 const indexes = new WeakMap<Entry[], { index: Index; byId: Map<string, Entry> }>();
 /**
  * Справка по сиду (запасной путь): справка роли по индексу записей без готовой выдачи поиска (только слова) и
- * доктрина без закреплений.
+ * доктрина без закреплений — с тем же фильтром роли и моментом хода, что у окна.
  */
 export function seedAnswer(entries: Entry[], req: KbRefRequest): KbRefAnswer {
   checkScope(req.scope);
   let ix = indexes.get(entries);
   if (!ix) { ix = { index: new Index(entries), byId: new Map(entries.map((e) => [e.id, e])) }; indexes.set(entries, ix); }
-  const r = roleReference(ix.index, ix.byId, req.queries, req.scope, { limit: req.limit ?? KB_REF_LIMIT, chars: req.chars ?? KB_REF_CHARS });
-  const d = req.doctrine;
-  return { ...r, ...(d ? { doctrine: doctrineFor(entries, {}, d.side, d.triggers, d.query, d.levels ? { levels: d.levels } : {}) } : {}) };
+  const r = roleReference(ix.index, ix.byId, req.queries, refScope(req), { limit: req.limit ?? KB_REF_LIMIT, chars: req.chars ?? KB_REF_CHARS });
+  const d = req.doctrine, moment = doctrineMoment(req);
+  return { ...r, ...(d ? { doctrine: doctrineFor(entries, {}, d.side, d.triggers, d.query, { ...(d.levels ? { levels: d.levels } : {}), ...(moment ? { moment } : {}) }) } : {}) };
 }
 
 /**

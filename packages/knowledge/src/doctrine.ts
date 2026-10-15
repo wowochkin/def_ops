@@ -2,7 +2,7 @@
  * Доктрина в базе: правила «условие → действие» с числами (вид факта `doctrine`) — группы, ступени, числа правила,
  * правило словами и ключ закрепления.
  */
-import type { Claim, Entry, Reliability } from './schema';
+import type { Claim, Entry, Fact, Reliability } from './schema';
 import { claimFacts, pinKey, resolve, subjectOf, type Pins } from './resolve';
 import { stems } from './search';
 
@@ -73,6 +73,53 @@ export const TRIGGER_GROUPS: Record<DoctrineTrigger, Record<'su' | 'de', string[
 /** Группы без триггеров: построение обороны / ширина полос и эшелоны. */
 export const DEFAULT_GROUPS: Record<'su' | 'de', string[]> = { de: ['layout'], su: ['frontage', 'echelons'] };
 
+const MONTHS_RU = ['январ', 'феврал', 'март', 'апрел', 'ма', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр'];
+const MONTHS_EN = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const iso = (y: number, m: number, d: number) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+/**
+ * Даты в тексте (ISO-дни): 1945-04-18; 18.04.1945 (и 18.04.45); 18.04; «18 апреля» (и с годом); 18-apr (как в id
+ * правил). Без года — год момента, прошлого или следующего, ближайший к моменту. Число не дата (день 0, месяц 00,
+ * десятичная дробь с одной цифрой после точки) — пропускается.
+ */
+export function datesIn(text: string, moment: string): string[] {
+  const day = moment.slice(0, 10), year = Number(moment.slice(0, 4));
+  const out: string[] = [];
+  const ok = (m: number, d: number) => m >= 1 && m <= 12 && d >= 1 && d <= 31;
+  const near = (m: number, d: number) => {
+    const t = Date.parse(day);
+    return [year - 1, year, year + 1].map((y) => iso(y, m, d)).sort((a, b) => Math.abs(Date.parse(a) - t) - Math.abs(Date.parse(b) - t))[0];
+  };
+  const push = (d: number, m: number, y?: number) => { if (ok(m, d)) out.push(y ? iso(y, m, d) : near(m, d)); };
+  for (const x of text.matchAll(/(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)/g)) push(+x[3], +x[2], +x[1]);
+  for (const x of text.matchAll(/(?<![\d.])(\d{1,2})\.(\d{2})(?:\.(\d{4}|\d{2}))?(?![\d]|\.\d)/g))
+    push(+x[1], +x[2], x[3] ? (x[3].length === 2 ? 1900 + +x[3] : +x[3]) : undefined);
+  for (const x of text.toLowerCase().matchAll(/(?<!\d)(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)(?:\s+(\d{4}))?/g))
+    push(+x[1], MONTHS_RU.findIndex((m) => x[2].startsWith(m)) + 1, x[3] ? +x[3] : undefined);
+  for (const x of text.toLowerCase().matchAll(/(?<![\da-z])(\d{1,2})-(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(?![a-z])/g))
+    push(+x[1], MONTHS_EN.indexOf(x[2]) + 1);
+  return out;
+}
+
+/**
+ * Факт доктрины написан позже момента хода: в условии, действии, id правила, тексте факта или страницах источника есть
+ * дата позже дня момента (правило — приказ или опыт после хода; штаб его знать не может). Без момента — false.
+ */
+export function doctrineAfter(f: Pick<Fact, 'value' | 'pages' | 'claim'>, moment?: string): boolean {
+  if (!moment || f.claim?.kind !== 'doctrine') return false;
+  const c = f.claim;
+  const day = moment.slice(0, 10);
+  return datesIn([c.rule, c.condition, c.action, f.value, f.pages ?? ''].join('\n'), moment).some((d) => d > day);
+}
+
+/** По кругу по группам 0…n-1 (в каждой — прежний порядок), затем элементы вне групп (g < 0). */
+function roundRobin<T extends { g: number }>(xs: T[], n: number): T[] {
+  const by = Array.from({ length: n }, (_, g) => xs.filter((x) => x.g === g));
+  const out: T[] = [];
+  for (let k = 0; by.some((l) => l.length > k); k++) for (const l of by) if (l[k]) out.push(l[k]);
+  return [...out, ...xs.filter((x) => x.g < 0)];
+}
+
 /** Правило доктрины для промпта: адрес факта, ключ закрепления, правило, надёжность, заголовок записи, строка. */
 export interface DoctrineRule { entry: string; index: number; key: string; claim: DoctrineClaim; reliability?: Reliability; title: string; line: string }
 
@@ -82,12 +129,13 @@ const REL = { A: 0, B: 1, C: 2 } as const;
  * Доктрина стороны к обстановке: по каждому правилу — один факт (закрепление → надёжность → свежесть; 'none' — правила
  * нет), отбор по ступеням; сначала правила групп триггеров (по порядку групп, затем по числу общих с запросом основ,
  * надёжности, имени правила), затем — правила других групп, у которых есть общие с запросом основы. Берутся по порядку,
- * пока правил не больше max и текст не длиннее chars; первое правило длиннее предела обрезается с «…».
+ * пока правил не больше max и текст не длиннее chars; первое правило длиннее предела обрезается с «…». moment — момент
+ * хода: правила с датой позже его дня не берутся (doctrineAfter); spread — группы триггеров по кругу.
  */
 export function doctrineFor(entries: Entry[], pins: Pins, side: 'su' | 'de', triggers: DoctrineTrigger[], query: string,
-  o: { levels?: DoctrineClaim['level'][]; max?: number; chars?: number } = {}): { rules: DoctrineRule[]; text: string } {
+  o: { levels?: DoctrineClaim['level'][]; max?: number; chars?: number; moment?: string; spread?: boolean } = {}): { rules: DoctrineRule[]; text: string } {
   const max = o.max ?? 8, chars = o.chars ?? 4000;
-  const facts = claimFacts(entries).filter((f) => f.fact.claim!.kind === 'doctrine' && (f.fact.claim as DoctrineClaim).side === side);
+  const facts = claimFacts(entries).filter((f) => f.fact.claim!.kind === 'doctrine' && (f.fact.claim as DoctrineClaim).side === side && !doctrineAfter(f.fact, o.moment));
   const titles = new Map(entries.map((e) => [e.id, e.title]));
   const q = new Set(stems(query));
   const groups = triggers.length ? [...new Set(triggers.flatMap((t) => TRIGGER_GROUPS[t][side]))] : DEFAULT_GROUPS[side];
@@ -111,10 +159,13 @@ export function doctrineFor(entries: Entry[], pins: Pins, side: 'su' | 'de', tri
   picked.sort((a, b) => order(a) - order(b) || b.common - a.common
     || (a.reliability ? REL[a.reliability] : 3) - (b.reliability ? REL[b.reliability] : 3)
     || (a.claim.rule < b.claim.rule ? -1 : a.claim.rule > b.claim.rule ? 1 : 0));
+  // spread: правила групп триггеров по кругу (первое каждой группы, второе каждой…), чтобы одна большая группа
+  // не заняла все места; правила других групп — после
+  const ordered = o.spread ? roundRobin(picked, groups.length) : picked;
 
   const rules: DoctrineRule[] = [];
   let len = 0;
-  for (const { g: _g, common: _c, ...r } of picked) {
+  for (const { g: _g, common: _c, ...r } of ordered) {
     if (rules.length >= max) break;
     const item = `- ${r.line}`;
     const add = (rules.length ? 1 : 0) + item.length;

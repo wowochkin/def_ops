@@ -10,10 +10,11 @@ import { agentDoctrineText } from './kb-doctrine';
 /** В настольном приложении (Tauri): там есть ядро агентной модели на Rust. */
 export const DESKTOP = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
-export const AGENT_SCENARIOS: Record<string, { path: string; history: string; title: string }> = {
-  'berlin-1945-tasks': { path: 'packages/sim/data/scenarios/agents/berlin-1945.json', history: 'packages/sim/data/scenarios/agents/berlin-1945.history.json', title: 'Берлинская операция' },
+/** start — начало сценария ядра (как в его файле): доктрина из базы — на этот момент. */
+export const AGENT_SCENARIOS: Record<string, { path: string; history: string; title: string; start: string }> = {
+  'berlin-1945-tasks': { path: 'packages/sim/data/scenarios/agents/berlin-1945.json', history: 'packages/sim/data/scenarios/agents/berlin-1945.history.json', title: 'Берлинская операция', start: '1945-04-16T05:00' },
   // советская сторона — из армий с допущениями (npm run agents:vistula-data)
-  'vistula-oder-1945': { path: 'packages/sim/data/scenarios/agents/vistula-oder-1945.json', history: 'packages/sim/data/scenarios/agents/vistula-oder-1945.history.json', title: 'Висло-Одерская операция (с допущениями)' },
+  'vistula-oder-1945': { path: 'packages/sim/data/scenarios/agents/vistula-oder-1945.json', history: 'packages/sim/data/scenarios/agents/vistula-oder-1945.history.json', title: 'Висло-Одерская операция (с допущениями)', start: '1945-01-12T05:00' },
 };
 
 /** Вариант параметров: поправки «путь → значение» (как в agents-v0.json). */
@@ -33,9 +34,12 @@ export function deleteAgentVariant(id: string) {
 }
 
 export interface AgentRunOptions { seed: number; params?: Record<string, unknown>; edits?: Record<string, unknown>; de?: 'script' | 'doctrine'; su?: 'script' | 'doctrine'; withoutFires?: boolean; withoutWithdrawals?: boolean }
-/** Прогон сценария ядром: ход по часам. Доктрина из базы знаний (doctrineText) — для штабов на модели; базы нет — без поля. */
+/**
+ * Прогон сценария ядром: ход по часам. Доктрина из базы знаний (doctrineText) на начало сценария — для штабов на
+ * модели; базы нет — без поля.
+ */
 export const runAgents = async (scenario: string, o: AgentRunOptions) => {
-  const doctrineText = await agentDoctrineText();
+  const doctrineText = await agentDoctrineText(AGENT_SCENARIOS[scenario].start);
   return invoke<AgentTrace>('run_scenario', {
     scenario: AGENT_SCENARIOS[scenario].path, seed: o.seed, ...(o.params && Object.keys(o.params).length ? { params: o.params } : {}),
     ...(o.edits && Object.keys(o.edits).length ? { edits: o.edits } : {}),

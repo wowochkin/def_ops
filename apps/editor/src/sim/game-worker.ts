@@ -73,9 +73,9 @@ let agentHuman = '';
 /** Вызов команды ядра через основное окно (у фонового потока нет доступа к командам приложения). */
 let callId = 0;
 const calls = new Map<number, { res: (v: unknown) => void; rej: (e: Error) => void }>();
-function agentsCall<T>(cmd: string, args: Record<string, unknown>): Promise<T> {
+function agentsCall<T>(cmd: string, args: Record<string, unknown>, moment?: string): Promise<T> {
   const id = ++callId;
-  post({ kind: 'agents-call', id, cmd, args });
+  post({ kind: 'agents-call', id, cmd, args, ...(moment ? { moment } : {}) });
   return new Promise<T>((res, rej) => calls.set(id, { res: res as (v: unknown) => void, rej }));
 }
 /** Новый ход ядра: контекст и состояние игры по нему. */
@@ -101,7 +101,7 @@ async function agentTurn(orders: Order[], actions: StaffAction[]): Promise<{ eve
   agentDropped = [];
   // полосы — на сетке ядра; нет территории ядра (другой театр) — без полос
   if (!agentTrace!.control || !territoryFromCore(ctx.theatre, agentTrace!.control)) fx.sectors = [];
-  const t = await agentsCall<AgentGameTrace>('game_turn', { orders: toAgentOrders(ctx, { ...g, state: a.state }, orders), hours: agents!.turnHours, staff: fx });
+  const t = await agentsCall<AgentGameTrace>('game_turn', { orders: toAgentOrders(ctx, { ...g, state: a.state }, orders), hours: agents!.turnHours, staff: fx }, before.time);
   setAgent(t);
   const names = new Map([...t.hqs.map((h) => [h.id, h.name] as const), ...t.divisions.map((d) => [d.id, d.name] as const)]);
   const bad = [
@@ -338,7 +338,7 @@ async function staffKb(gAt: GameState): Promise<{ refs: RoleRef[]; rules: Doctri
     const triggers = situationTriggers(ctx, gAt, side);
     const queries = staffQueries(triggers, cfg.anchorName);
     const a = await kbc.request({ queries, scope: { role: 'staff', side, operation: rec.scenario, moment: gAt.state.time }, limit: KB_REF_LIMIT, chars: KB_REF_CHARS,
-      doctrine: { side, triggers, query: queries.join(' ') } });
+      doctrine: { side, triggers, query: queries.join(' '), moment: gAt.state.time } });
     return { refs: a.refs, rules: a.doctrine?.rules ?? [], ...(a.fallback ? { fallback: true } : {}) };
   } catch (e) {
     console.warn('справка штабу противника:', e);
@@ -351,7 +351,7 @@ async function stavkaKb(side: string, need: StavkaNeed): Promise<{ rules: Doctri
   if (side !== 'su' && side !== 'de') return undefined;
   try {
     const a = await kbc.request({ queries: [], scope: { role: 'stavka', side, operation: rec.scenario, moment: g.state.time },
-      doctrine: { side, triggers: [], query: need.reasons.join(' '), levels: ['front', 'army'] } });
+      doctrine: { side, triggers: [], query: need.reasons.join(' '), levels: ['front', 'army'], moment: g.state.time } });
     return { rules: a.doctrine?.rules ?? [], ...(a.fallback ? { fallback: true } : {}) };
   } catch (e) {
     console.warn('доктрина Ставке:', e);

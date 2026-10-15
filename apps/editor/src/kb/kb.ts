@@ -377,19 +377,19 @@ export function searchMode(): string {
 /**
  * Справка по роли (советник, посредник, штаб противника, Ставка, разбор): по каждому запросу — гибридная выдача
  * (слова + смысл, широкий пул — справка отбирается фильтром роли), всего не больше limit записей по chars знаков.
- * База недоступна — пустая справка.
+ * База недоступна — ошибка (поток игры тогда считает справку по сиду и пишет об этом в журнал).
  */
 export async function roleRef(queries: string[], scope: RoleScope, o: { limit?: number; chars?: number } = {}): Promise<{ refs: RoleRef[]; text: string }> {
-  try { await load(); } catch { return { refs: [], text: '' }; }
-  if (!state.index) return { refs: [], text: '' };
+  await load();
+  if (!state.index) throw new Error('база знаний не открыта');
   const hits = await Promise.all(queries.map((q) => search(q, 300).catch(() => undefined)));
   return roleReference(state.index, state.byId, queries, scope, { limit: o.limit ?? 5, chars: o.chars ?? 700, hits });
 }
 
-/** Доктрина стороны к обстановке — по всей базе (сид и слой пользователя) с закреплениями. */
-export async function doctrine(side: 'su' | 'de', triggers: DoctrineTrigger[], query: string, levels?: DoctrineClaim['level'][]): Promise<{ rules: DoctrineRule[]; text: string }> {
+/** Доктрина стороны к обстановке — по всей базе (сид и слой пользователя) с закреплениями; moment — момент хода. */
+export async function doctrine(side: 'su' | 'de', triggers: DoctrineTrigger[], query: string, levels?: DoctrineClaim['level'][], moment?: string): Promise<{ rules: DoctrineRule[]; text: string }> {
   await load();
-  return doctrineFor(state.entries, await getPins(), side, triggers, query, levels ? { levels } : {});
+  return doctrineFor(state.entries, await getPins(), side, triggers, query, { ...(levels ? { levels } : {}), ...(moment ? { moment } : {}) });
 }
 
 /**

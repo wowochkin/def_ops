@@ -200,8 +200,8 @@ export type GameResponse =
   | { kind: 'plan-variant'; id: number; index: number; variant: PlanVariantView }
   | { kind: 'plan-done'; id: number; ok: boolean; error?: string; warning?: string; model?: string; seconds?: number }
   | { kind: 'error'; message: string }
-  /** Вызов команды ядра агентной модели (Tauri) — поток сам её вызвать не может, вызывает основное окно. */
-  | { kind: 'agents-call'; id: number; cmd: string; args: Record<string, unknown> }
+  /** Вызов команды ядра агентной модели (Tauri) — поток сам её вызвать не может, вызывает основное окно; moment — время игры (доктрина штабов на момент хода). */
+  | { kind: 'agents-call'; id: number; cmd: string; args: Record<string, unknown>; moment?: string }
   /** Справка по роли (и доктрина) из базы знаний окна — со слоем пользователя, закреплениями, смысловым поиском. */
   | { kind: 'kbRef'; id: number; req: KbRefRequest };
 

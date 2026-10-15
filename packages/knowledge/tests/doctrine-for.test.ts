@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import seed from '../data/seed.json';
-import { DEFAULT_GROUPS, TRIGGER_GROUPS, doctrineFor, doctrineKey, type DoctrineClaim, type DoctrineRule, type Entry, type Pins } from '../src';
+import { DEFAULT_GROUPS, TRIGGER_GROUPS, doctrineAfter, doctrineFor, doctrineKey, type DoctrineClaim, type DoctrineRule, type Entry, type Pins } from '../src';
 
 const entries = (seed as { entries: Entry[] }).entries;
 const groups = (rs: { claim: DoctrineClaim }[]) => rs.map((r) => r.claim.group);
@@ -115,5 +115,34 @@ describe('доктрина к обстановке', () => {
     const { text } = doctrineFor(entries, {}, 'su', ['attack'], '', { chars: 600 });
     expect(text.length).toBeLessThanOrEqual(600);
     expect(text.length).toBeGreaterThan(0);
+  });
+
+  describe('момент хода: правила с датой позже хода не берутся', () => {
+    const rule = (rs: DoctrineRule[], id: string) => rs.find((r) => r.claim.rule === id);
+    it('приказ № 00566 (18.04.1945 22:00): на 16.04 06:00 — нет, на 19.04 — есть', () => {
+      const at = (moment?: string) => doctrineFor(entries, {}, 'su', ['pressure'], '', { levels: ['front'], max: 40, chars: 100000, ...(moment ? { moment } : {}) }).rules;
+      expect(rule(at('1945-04-16T06:00'), 'stop-pause-front-dir-00566')).toBeUndefined();
+      expect(rule(at('1945-04-19T06:00'), 'stop-pause-front-dir-00566')).toBeDefined();
+      expect(rule(at(), 'stop-pause-front-dir-00566')).toBeDefined();
+      // дата в id правила (19-apr) и «19.04» без года — год по моменту
+      expect(rule(at('1945-04-18T23:00'), 'regroup-1bf-turn-19-apr-dir-00567')).toBeUndefined();
+      expect(rule(at('1945-04-19T06:00'), 'regroup-1bf-turn-19-apr-dir-00567')).toBeDefined();
+    });
+
+    it('даты: дд.мм.гггг, дд.мм (год по моменту ±1), ISO, «19 апреля», дд-mon; не даты — нет', () => {
+      const f = (text: string, pages = '') => ({ key: 'principles', value: '', pages, claim: { ...flankC, condition: text, action: '' } });
+      const m = '1945-04-16T06:00';
+      expect(doctrineAfter(f('приказ от 18.04.1945'), m)).toBe(true);
+      expect(doctrineAfter(f('приказ от 16.04.1945 22:00'), m)).toBe(false);
+      expect(doctrineAfter(f('к 20.04 выйти'), m)).toBe(true);
+      expect(doctrineAfter(f('с 27.02 по 15.04'), m)).toBe(false);
+      expect(doctrineAfter(f('на 1945-04-17'), m)).toBe(true);
+      expect(doctrineAfter(f('утром 17 апреля'), m)).toBe(true);
+      expect(doctrineAfter(f('опыт 1944 г., 14.01.1944'), m)).toBe(false);
+      expect(doctrineAfter(f('время 5.00, доля 0.33'), m)).toBe(false);
+      expect(doctrineAfter(f('x', 'приказ от 10.05.1945'), m)).toBe(true);
+      expect(doctrineAfter({ ...f('x'), claim: { ...flankC, rule: 'turn-19-apr', condition: '', action: '' } }, m)).toBe(true);
+      expect(doctrineAfter(f('приказ от 18.04.1945')), 'без момента').toBe(false);
+    });
   });
 });
