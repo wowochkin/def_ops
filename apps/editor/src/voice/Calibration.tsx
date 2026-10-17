@@ -127,7 +127,9 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
             <h3>Регуляторы выставлены</h3>
             <p>
               Чувствительность в тишине — {pct(1 - result.cfg.vad)}, когда говорит штаб — {pct(1 - result.cfg.barge_vad)};
-              перебить штаб можно, говоря дольше {result.cfg.barge_ms} мс. Значения запомнены; их можно подправить
+              {result.cfg.barge_mode === 'word'
+                ? ' перебить штаб — словом: скажите «Стоп» или «Штаб…».'
+                : ` перебить штаб можно, говоря дольше ${result.cfg.barge_ms} мс.`} Значения запомнены; их можно подправить
               в «Тонкой настройке».
             </p>
             {(result.warn ?? []).map((w) => <p key={w} className="vp-warn">{w}</p>)}

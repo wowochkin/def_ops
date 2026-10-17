@@ -2,6 +2,8 @@
 склейка реплик. Перенос со стенда scripts/voice-bench/talk_server.py без изменения найденных значений."""
 from __future__ import annotations
 
+import difflib
+import re
 from typing import Awaitable, Callable
 
 import numpy as np
@@ -12,6 +14,10 @@ FRAME_MS = 32
 TURN_RECHECK_MS = 96  # три кадра
 MERGE_GAP_S = 2.0  # новая речь не позже этого после конца прежней…
 MERGE_PLAYED_S = 1.5  # …и ответ не звучит или звучит меньше этого — реплики склеиваются
+LOUD_SPEAKERS = "Динамики слышно громко — чтобы перебить штаб, скажите «Стоп»."
+STOP_WORDS = {"стоп", "подождите", "подожди", "хватит", "отставить", "тихо"}
+ADDRESS = ("штаб", "штап")  # обращение — только в начале куска
+ECHO_WORDS = 0.6  # такая доля слов куска есть в текущей фразе штаба — кусок считается её эхом
 
 
 def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
@@ -20,8 +26,9 @@ def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
 
     Порог в тишине — посередине между фоном (98-й процентиль) и тихой частью речи (25-й). Порог перебивания —
     выше эха (98-й процентиль + 0,08) и ниже речи поверх модели (30-й процентиль − 0,05), ближе к эху; если
-    эхо громче речи поверх модели — посередине и совет надеть наушники. Длительность перебивания — самый
-    длинный всплеск эха выше порога + 150 мс (250–900 мс)."""
+    эхо громче речи поверх модели — посередине, и перебивание — словом (barge_mode "word": штаб останавливает
+    стоп-слово, а не громкость), иначе — голосом ("voice"). Длительность перебивания — самый длинный всплеск эха
+    выше порога + 150 мс (250–900 мс)."""
     q = lambda xs, p: float(np.percentile(xs, p))
     clip = lambda x, lo, hi: round(float(min(hi, max(lo, x))), 2)
     warn = []
@@ -41,10 +48,11 @@ def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
     lo, hi = max(vad, echo_hi + 0.08), (over_lo - 0.05) if over_lo is not None else 0.95
     if lo <= hi:
         barge = clip(lo + (hi - lo) * 0.3, 0.1, 0.95)
+        mode = "voice"
     else:
         barge = clip((echo_hi + (over_lo if over_lo is not None else 0.95)) / 2, 0.1, 0.95)
-        warn.append("Голос штаба из динамиков почти так же громок, как ваш, — наденьте наушники, иначе штаб будет "
-                    "перебивать сам себя или не услышит, как вы его перебиваете.")
+        mode = "word"
+        warn.append(LOUD_SPEAKERS)
     run = best = 0
     for x in echo:
         run = run + 1 if x >= barge else 0
@@ -55,7 +63,27 @@ def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
              "голос штаба в микрофоне": round(echo_hi, 2),
              "ваш голос поверх штаба": round(over_lo, 2) if over_lo is not None else None,
              "самый долгий отзвук штаба, мс": best * 32}
-    return {"vad": vad, "barge_vad": barge, "barge_ms": barge_ms, "end_ms": end_ms}, {"stats": stats, "warn": warn}
+    return ({"vad": vad, "barge_vad": barge, "barge_ms": barge_ms, "end_ms": end_ms, "barge_mode": mode},
+            {"stats": stats, "warn": warn})
+
+
+def _words(text: str) -> list[str]:
+    return re.sub(r"[^\w\s]|_", " ", text.lower().replace("ё", "е")).split()
+
+
+def is_stop_phrase(text: str, chief_text: str) -> bool:
+    """Кусок речи, услышанный, пока штаб говорит, — просьба замолчать: стоп-слово (STOP_WORDS) где угодно или
+    обращение «штаб…» в начале. Кусок, слова которого почти все (ECHO_WORDS) есть в текущей фразе штаба
+    chief_text, — её эхо из динамиков, даже со стоп-словом («Хватит ждать…» самого штаба). Слова сравниваются
+    с поправкой на огрехи распознавания."""
+    words = _words(text)
+    if not words or not (STOP_WORDS.intersection(words) or words[0] in ADDRESS):
+        return False
+    chief = set(_words(chief_text))
+    if not chief:
+        return True
+    near = lambda w: w in chief or any(difflib.SequenceMatcher(None, w, c).ratio() >= 0.75 for c in chief)
+    return sum(near(w) for w in words) / len(words) < ECHO_WORDS
 
 
 def should_merge(prev_end: float, speech_start: float, reply_audio_start: float | None) -> bool:
@@ -68,7 +96,8 @@ def should_merge(prev_end: float, speech_start: float, reply_audio_start: float 
 
 class Listener:
     """Кадры микрофона (по FRAME отсчётов, 16 кГц) → события. Логика Session.on_frame/end_turn стенда.
-    vad(frame) → уверенность речи 0–1, turn(audio) → вероятность законченной фразы (Smart Turn)."""
+    vad(frame) → уверенность речи 0–1, turn(audio) → вероятность законченной фразы (Smart Turn).
+    cfg["barge_mode"] == "word" — громкость не перебивает (решает распознанное стоп-слово, см. Session)."""
 
     def __init__(self, cfg: dict, vad: Callable[[np.ndarray], Awaitable[float]],
                  turn: Callable[[np.ndarray], Awaitable[float]], *,
@@ -81,6 +110,7 @@ class Listener:
     def reset(self):
         self.audio = np.zeros(0, np.float32)  # реплика: от начала речи (с запасом)
         self.pre = np.zeros(0, np.float32)  # последние 300 мс до начала речи
+        self.start_n = 0  # с какого отсчёта audio начинается сама речь (до него — запас)
         self.in_speech = False
         self.barged = False
         self.speech_ms = self.silence_ms = 0.0
@@ -100,6 +130,7 @@ class Listener:
                 self.in_speech, self.speech_ms, self.silence_ms, self.turn_next = True, float(FRAME_MS), 0.0, 0.0
                 self.barged = False
                 self.audio = np.concatenate([self.pre, frame])
+                self.start_n = len(self.pre)
                 ev.append(("speech_start",))
             return ev
         self.audio = np.concatenate([self.audio, frame])
@@ -108,7 +139,7 @@ class Listener:
             self.silence_ms = 0
             self.turn_next = 0.0
             # перебивание: человек говорит дольше порога, пока модель отвечает
-            if busy and not self.barged and self.speech_ms >= c["barge_ms"]:
+            if busy and not self.barged and self.speech_ms >= c["barge_ms"] and c.get("barge_mode") != "word":
                 self.barged = True
                 ev.append(("barge",))
             return ev
@@ -128,6 +159,10 @@ class Listener:
         if self.silence_ms >= self.max_silence_ms:
             ev += self._end_turn(None)
         return ev
+
+    def chunk_s(self) -> float:
+        """Сколько секунд идёт текущий кусок речи (без запаса до начала, с паузами внутри); речи нет — 0."""
+        return (len(self.audio) - self.start_n) / SR_IN if self.in_speech else 0.0
 
     def _end_turn(self, prob: float | None) -> list[tuple]:
         self.in_speech = False

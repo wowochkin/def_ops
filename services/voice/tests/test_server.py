@@ -209,7 +209,7 @@ def test_ws_calibration_flow(make_client):
     ws.send_text(json.dumps({"type": "calib", "step": "finish"}))
     r = until(ws, "calib_result")
     assert "error" not in r, r
-    assert set(r["cfg"]) == {"vad", "barge_vad", "barge_ms", "end_ms"}
+    assert set(r["cfg"]) == {"vad", "barge_vad", "barge_ms", "end_ms", "barge_mode"}
     s = until(ws, "settings")
     assert s["vad"] == r["cfg"]["vad"]
     ws.close()
@@ -516,4 +516,98 @@ def test_preview_then_discard_no_synth_error(make_client):
     until(ws, "voice_list", seen)
     assert not any(isinstance(m, dict) and m["type"] == "error" for m in seen), [m for m in seen if isinstance(m, dict)]
     assert {"type": "say-done", "id": 12, "stopped": True} in seen
+    ws.close()
+
+
+# ---------------------------------------------------------------- перебивание словом
+
+CHIEF_LONG = "Докладываю обстановку. " * 6
+
+
+def word_mode(ws):
+    assert until(ws, "settings")["barge_mode"] == "voice"  # при подключении
+    ws.send_text(json.dumps({"type": "settings", "barge_mode": "word"}))
+    assert until(ws, "settings")["barge_mode"] == "word"
+
+
+def chief_speaks(ws, text=CHIEF_LONG, jid=5):
+    ws.send_text(json.dumps({"type": "say", "id": jid, "role": "chief", "text": text}))
+    while not isinstance(recv(ws), bytes):  # звук пошёл
+        pass
+
+
+def test_barge_mode_setting(make_client):
+    ws, _ = connect(make_client())
+    assert until(ws, "settings")["barge_mode"] == "voice"
+    ws.send_text(json.dumps({"type": "hello", "settings": {"barge_mode": "word"}}))
+    assert until(ws, "settings")["barge_mode"] == "word"
+    ws.send_text(json.dumps({"type": "settings", "barge_mode": "громко"}))  # чужое значение не принимается
+    assert until(ws, "settings")["barge_mode"] == "word"
+    ws.send_text(json.dumps({"type": "settings", "barge_mode": "voice"}))
+    assert until(ws, "settings")["barge_mode"] == "voice"
+    ws.close()
+
+
+def test_word_mode_stop_barges_before_end_of_utterance(make_client):
+    """«Стоп» во время фразы штаба: кусок речи распознаётся по мере речи — штаб обрывается, не дожидаясь конца реплики;
+    дальше реплика обрабатывается как обычно («Стоп, открой карты»)."""
+    ws, _ = connect(make_client(["стоп, открой карты"] * 10))
+    word_mode(ws)
+    chief_speaks(ws)
+    send_audio(ws, tone(0.6))  # 0,6 с речи без паузы: конца реплики ещё нет
+    seen = []
+    b = until(ws, "barge", seen)
+    assert b["id"] == 5
+    assert not any(isinstance(m, dict) and m["type"] == "utterance" for m in seen)
+    send_audio(ws, np.concatenate([tone(0.3), silence(2.0)]))
+    seen = []
+    u = until(ws, "utterance", seen)
+    assert u["text"] == "стоп, открой карты"
+    assert not any(isinstance(m, dict) and m["type"] in ("echo", "barge") for m in seen)
+    ws.close()
+
+
+def test_word_mode_echo_with_stop_word_does_not_barge(make_client):
+    """Эхо фразы штаба, в которой есть «хватит», — не перебивание."""
+    c = make_client(["{эхо}"] * 20)
+    ws, _ = connect(c)
+    word_mode(ws)
+    chief_speaks(ws, "Хватит ждать наступаем на рассвете всеми силами армии и фронта.")  # одним куском синтеза
+    send_audio(ws, np.concatenate([tone(1.0), silence(2.0)]))
+    seen = []
+    e = until(ws, "echo", seen)
+    assert e["text"].startswith("Хватит ждать")
+    assert not any(isinstance(m, dict) and m["type"] in ("barge", "utterance") for m in seen)
+    assert c.app.state.service.models.transcribed >= 2  # куски распознавались и во время речи
+    ws.close()
+
+
+def test_word_mode_other_speech_does_not_barge(make_client):
+    c = make_client(["доложите потери за сутки"] * 20)
+    ws, _ = connect(c)
+    word_mode(ws)
+    chief_speaks(ws)
+    send_audio(ws, np.concatenate([tone(1.0), silence(2.0)]))
+    seen = []
+    u = until(ws, "utterance", seen)
+    assert u["text"] == "доложите потери за сутки"
+    assert not any(isinstance(m, dict) and m["type"] == "barge" for m in seen)
+    assert c.app.state.service.models.transcribed >= 2
+    # штаб говорит дальше: его можно перебить словом
+    c.app.state.service.models.script[:0] = ["стоп"] * 5
+    send_audio(ws, tone(0.6))
+    assert until(ws, "barge")["id"] == 5
+    ws.close()
+
+
+def test_word_mode_preview_not_barged(make_client):
+    ws, _ = connect(make_client(["стоп"] * 10))
+    word_mode(ws)
+    ws.send_text(json.dumps({"type": "voice", "op": "preview", "id": 21, "voice_id": "zhukov-10s"}))
+    seen = []
+    while not isinstance(m := recv(ws), bytes):
+        seen.append(m)
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
+    until(ws, "utterance", seen)
+    assert not any(isinstance(m, dict) and m["type"] == "barge" for m in seen)
     ws.close()

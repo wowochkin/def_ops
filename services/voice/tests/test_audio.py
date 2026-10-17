@@ -3,7 +3,7 @@ import asyncio
 import numpy as np
 import pytest
 
-from audio import FRAME, Listener, calibrate, should_merge
+from audio import FRAME, Listener, calibrate, is_stop_phrase, should_merge
 
 
 def synth(seed=0):
@@ -24,12 +24,20 @@ def test_calibrate_normal_room():
     assert rep["warn"] == []
 
 
-def test_calibrate_loud_echo_warns_headphones():
+def test_calibrate_loud_echo_word_mode():
+    """Динамики слышно громко — перебивание словом; совета про наушники нет, вместо него — про «Стоп»."""
     d = synth()
     d["echo"] = list(np.random.default_rng(1).uniform(0.7, 0.9, 120))
     d["over"] = list(np.random.default_rng(2).uniform(0.8, 0.95, 120))
-    _, rep = calibrate(d, 20)
-    assert any("наушники" in w for w in rep["warn"])
+    cfg, rep = calibrate(d, 20)
+    assert cfg["barge_mode"] == "word"
+    assert not any("наушник" in w for w in rep["warn"])
+    assert "Динамики слышно громко — чтобы перебить штаб, скажите «Стоп»." in rep["warn"]
+
+
+def test_calibrate_quiet_echo_voice_mode():
+    cfg, _ = calibrate(synth(), 20)
+    assert cfg["barge_mode"] == "voice"
 
 
 def test_calibrate_report_in_plain_words():
@@ -106,6 +114,29 @@ def test_listener_barge_only_when_busy():
     assert "barge" not in kinds(ev)
 
 
+def test_listener_word_mode_no_barge_by_loudness():
+    """Перебивание словом: громкая речь, пока штаб говорит, сама штаб не обрывает — решает распознанное слово."""
+    it = iter([0.9] * 20)
+
+    async def vad(_f):
+        return next(it)
+
+    async def turn(_a):
+        return 0.1
+
+    async def go():
+        ls = Listener(dict(CFG, barge_mode="word"), vad, turn)
+        ev = []
+        for _ in range(20):
+            ev += await ls.feed(F, True)
+        return ev, ls
+
+    ev, ls = asyncio.run(go())
+    assert "barge" not in kinds(ev)
+    # кусок от начала речи (без запаса до неё): 20 кадров
+    assert ls.chunk_s() == pytest.approx(20 * FRAME / 16000)
+
+
 def test_listener_click_is_dropped():
     ev, _ = run([0.9] * 2 + [0.0] * 12, [0.1])
     assert "utterance" not in kinds(ev) and "speech_end" in kinds(ev)
@@ -114,3 +145,27 @@ def test_listener_click_is_dropped():
 def test_should_merge():
     assert should_merge(10.0, 11.5, None) and should_merge(10.0, 11.5, 10.5)
     assert not should_merge(10.0, 12.5, None) and not should_merge(10.0, 11.9, 10.2)
+
+
+CHIEF = "Хватит ждать, наступаем на рассвете. Артиллерия готова, пехота на исходных."
+
+
+def test_stop_phrase_words():
+    for t in ("Стоп", "стоп, открой карты", "Подождите!", "подожди", "Ну хватит", "Отставить.", "тихо", "Штаб, открой карты",
+              "штаб доложи", "Стоп-стоп"):
+        assert is_stop_phrase(t, CHIEF), t
+
+
+def test_stop_phrase_other_speech():
+    for t in ("", "доложите потери за сутки", "передайте в штаб армии", "открой карты", "стопка бумаги"):
+        assert not is_stop_phrase(t, CHIEF), t
+
+
+def test_stop_phrase_echo_of_chief():
+    """Кусок, совпадающий по словам с текущей фразой штаба, — его эхо из динамиков, даже со стоп-словом."""
+    for t in ("Хватит", "хватит ждать", "Хватит ждать наступаем", "хватит ждат наступаем на рассвете",
+              "артиллерия готова пехота"):
+        assert not is_stop_phrase(t, CHIEF), t
+    # штаб молчит или говорит другое — стоп-слово останавливает
+    assert is_stop_phrase("хватит ждать", "")
+    assert is_stop_phrase("Стоп, подождите", CHIEF)

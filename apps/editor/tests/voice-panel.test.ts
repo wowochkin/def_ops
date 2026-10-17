@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ENABLED_KEY, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
+  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
 } from '../src/voice/panel-state';
 
 const base: PanelInput = { status: 'ready', speaking: false, listening: false, thinking: false, conversation: false };
@@ -58,6 +58,13 @@ describe('parseSettings', () => {
       .toEqual({ vad: 0.35, barge_vad: 0.9, barge_ms: 400, end_ms: 20 });
     expect(parseSettings(JSON.stringify({ vad: 7, barge_vad: '0.5', end_ms: 400 }))).toEqual({ end_ms: 400 });
   });
+  it('режим перебивания — «голосом» или «словом», чужое значение отбрасывается', () => {
+    expect(parseSettings(JSON.stringify({ barge_mode: 'word', vad: 0.4 }))).toEqual({ barge_mode: 'word', vad: 0.4 });
+    expect(parseSettings(JSON.stringify({ barge_mode: 'voice' }))).toEqual({ barge_mode: 'voice' });
+    expect(parseSettings(JSON.stringify({ barge_mode: 'громко' }))).toEqual({});
+    expect(parseSettings(JSON.stringify({ barge_mode: 1 }))).toEqual({});
+    expect(DEFAULT_SETTINGS.barge_mode).toBe('voice');
+  });
   it('пусто и мусор — пустой объект', () => {
     expect(parseSettings(null)).toEqual({});
     expect(parseSettings('{не json')).toEqual({});
@@ -106,5 +113,23 @@ describe('parseEnabled', () => {
     expect(parseEnabled('true')).toBe(true);
     expect(parseEnabled('false')).toBe(false);
     expect(parseEnabled('мусор')).toBe(true);
+  });
+});
+
+describe('перебивание словом', () => {
+  it('подсказка «Перебить: скажите «Стоп»» — только пока штаб говорит в режиме «словом»', () => {
+    expect(BARGE_WORD_HINT).toBe('Перебить: скажите «Стоп»');
+    expect(bargeHint(true, 'word')).toBe(BARGE_WORD_HINT);
+    expect(bargeHint(false, 'word')).toBeNull();
+    expect(bargeHint(true, 'voice')).toBeNull();
+  });
+});
+
+describe('поправка распознанного', () => {
+  it('«Услышано: … — понял: …» после реплики с поправками; без поправок — ничего', () => {
+    let f = feedUtterance([], { id: 3, text: 'штап открой пере игровку' });
+    f = feedCorrection(f, 3, 'штап открой пере игровку', { fixes: ['штап → штаб', 'пере игровку → переигровка'], understood: 'штаб открой переигровка' });
+    expect(f.at(-1)).toEqual({ key: 'f3', kind: 'fix', text: 'Услышано: «штап открой пере игровку» — понял: «штаб открой переигровка»' });
+    expect(feedCorrection(f, 4, 'штаб открой карты', { fixes: [], understood: 'штаб открой карты' })).toBe(f);
   });
 });

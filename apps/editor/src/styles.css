@@ -1618,6 +1618,10 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-item.chief { background: #f6ebe6; }
 .vp-item.notme, .vp-item.echo { background: none; color: #6f6c64; }
 .vp-item.note { background: #fde9e6; }
+.vp-item.fix { background: none; color: #4a4740; font-style: italic; }
+.vp-hint.stop { background: #f6ebe6; border-color: #a3271b; color: #7a1b16; font-size: 20px; }
+.vp-mode { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 2px; }
+.vp .vp-mode button.on { background: #7a1b16; border-color: #7a1b16; color: #fff; font-weight: 700; }
 .vp-who { font-weight: 700; }
 .vp-notme { margin-left: 8px; padding: 0 6px; border: 1px solid #8d887c; border-radius: 4px; font-size: 18px; }
 .vp-cans summary, .vp-tune summary, .vp-stats summary { cursor: pointer; font-weight: 700; padding: 4px 0; }

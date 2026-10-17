@@ -8,7 +8,8 @@
 //
 // Поддельное распознавание отдаёт строки --fake-script по очереди: «штаб, открой переигровку» →
 // раздел «Переигровка»; «передайте в штаб армии» — в ленте «не мне»; «штаб, что я могу сказать» → ответ
-// с примерами; дальше — текст для записи голоса (его же «распознаёт» проверка записи).
+// с примерами; дальше — текст для записи голоса (его же «распознаёт» проверка записи). Перебивание словом —
+// на перезапущенном сервисе: «штаб, что я могу сказать» (штаб отвечает), затем «стоп» (его обрывает).
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки и голосов. Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
@@ -114,6 +115,9 @@ writeFileSync(script, ['штаб, открой переигровку', 'пер�
 // после перезапуска сервиса (проверка обрыва связи) — только текст записи: команды уже проверены
 const script2 = join(tmp, 'script2.txt');
 writeFileSync(script2, Array(200).fill(RECORD_TEXT).join('\n') + '\n');
+// перебивание словом: штаб отвечает на «что я могу сказать», следующий кусок речи — «стоп»
+const script3 = join(tmp, 'script3.txt');
+writeFileSync(script3, ['штаб, что я могу сказать', ...Array(50).fill('стоп')].join('\n') + '\n');
 
 // встроенные образцы голоса — из scripts/voice-bench/ref (в репозиторий не входят); нет их — свой образец:
 // поддельный синтез, как и настоящий, без образца не говорит
@@ -561,6 +565,42 @@ await check('событие voice:power: false — выключает, true — 
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: true })));
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
   await micOn();
+});
+
+await check('тонкая настройка: «Перебивать: голосом / словом» переключается и запоминается', async () => {
+  await panel.getByText('Тонкая настройка').click();
+  const mode = panel.getByRole('group', { name: 'Перебивать' });
+  const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem('def_ops.voice.settings') || '{}').barge_mode);
+  const accepted = (m) => page.waitForFunction((x) => window.__e2e.msgs.some((s) => s.type === 'settings' && s.barge_mode === x), m, { timeout: 3000 })
+    .catch(() => { throw new Error(`сервис не принял режим ${m}`); });
+  await mode.getByRole('button', { name: 'голосом' }).click();
+  if ((await saved()) !== 'voice') throw new Error(`после «голосом» сохранено ${await saved()}`);
+  await accepted('voice');
+  await mode.getByRole('button', { name: 'словом' }).click();
+  if ((await saved()) !== 'word') throw new Error(`после «словом» сохранено ${await saved()}`);
+  await accepted('word');
+  await panel.getByText('Штаб замолкает, когда вы скажете «Стоп»').waitFor({ timeout: 2000 });
+  await page.reload();
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
+  await panel.getByText('Тонкая настройка').click();
+  const on = await panel.getByRole('group', { name: 'Перебивать' }).getByRole('button', { name: 'словом' }).getAttribute('aria-pressed');
+  if (on !== 'true') throw new Error('после перезагрузки режим не «словом»');
+  const hello = await page.evaluate(() => window.__e2e.sent.find((m) => m.type === 'hello')?.settings?.barge_mode);
+  if (hello !== 'word') throw new Error(`окно сообщило сервису режим ${hello}`);
+  await plainWords(panel.locator('.vp-card'), 'тонкая настройка');
+  await panel.getByText('Тонкая настройка').click();
+});
+
+await check('режим «словом»: пока штаб говорит — «Перебить: скажите «Стоп»», «стоп» его обрывает', async () => {
+  await stopVoice();
+  await startVoice(script3);
+  const hint = panel.locator('.vp-hint.stop', { hasText: 'Перебить: скажите «Стоп»' });
+  await hint.waitFor({ timeout: 40000 });
+  await panel.locator('.vp-state', { hasText: 'Говорит начальник штаба' }).waitFor({ timeout: 1000 });
+  await shot('voice-panel-stop.jpg');
+  await page.waitForFunction(() => window.__e2e.msgs.some((m) => m.type === 'barge'), null, { timeout: 20000 })
+    .catch(() => { throw new Error('«стоп» не оборвал штаб'); });
+  await hint.waitFor({ state: 'hidden', timeout: 2000 });
 });
 
 await check('в окне нет ошибок JavaScript', async () => {

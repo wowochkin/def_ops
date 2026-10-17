@@ -1,6 +1,6 @@
 // Чистая логика панели голоса: состояние словами, настройки в localStorage, лента реплик.
 // Без React и браузерных API — проверяется в vitest/node.
-import type { VoiceSettings, VoiceStatus } from './protocol';
+import type { BargeMode, VoiceSettings, VoiceStatus } from './protocol';
 
 export const SETTINGS_KEY = 'def_ops.voice.settings';
 /** Голос выключен человеком (кнопка или «Штаб, отбой»): 'false'; включён — 'true' или ключа нет. */
@@ -11,10 +11,13 @@ export function parseEnabled(raw: string | null): boolean {
   return raw !== 'false';
 }
 /** Значения сервиса по умолчанию (services/voice/server.py): «По умолчанию» в тонкой настройке. */
-export const DEFAULT_SETTINGS: VoiceSettings = { vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400 };
+export const DEFAULT_SETTINGS: VoiceSettings = { vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: 'voice' };
+
+type NumKey = Exclude<keyof VoiceSettings, 'barge_mode'>;
+const BARGE_MODES: BargeMode[] = ['voice', 'word'];
 
 /** Пределы регуляторов — как на стенде (talk.html). */
-const LIMITS: Record<keyof VoiceSettings, [number, number]> = {
+const LIMITS: Record<NumKey, [number, number]> = {
   vad: [0.05, 0.95], barge_vad: [0.05, 0.95], barge_ms: [50, 2000], end_ms: [20, 3000],
 };
 
@@ -24,12 +27,21 @@ export function parseSettings(raw: string | null): Partial<VoiceSettings> {
   try { v = JSON.parse(raw ?? 'null'); } catch { return {}; }
   if (!v || typeof v !== 'object') return {};
   const out: Partial<VoiceSettings> = {};
-  for (const k of Object.keys(LIMITS) as (keyof VoiceSettings)[]) {
+  for (const k of Object.keys(LIMITS) as NumKey[]) {
     const x = (v as Record<string, unknown>)[k];
     const [lo, hi] = LIMITS[k];
     if (typeof x === 'number' && Number.isFinite(x) && x >= lo && x <= hi) out[k] = x;
   }
+  const mode = (v as Record<string, unknown>).barge_mode;
+  if (BARGE_MODES.includes(mode as BargeMode)) out.barge_mode = mode as BargeMode;
   return out;
+}
+
+export const BARGE_WORD_HINT = 'Перебить: скажите «Стоп»';
+
+/** Подсказка, пока штаб говорит в режиме «словом» (громкость его не перебивает); иначе — null. */
+export function bargeHint(speaking: boolean, mode: BargeMode): string | null {
+  return speaking && mode === 'word' ? BARGE_WORD_HINT : null;
 }
 
 export type PanelKey = 'off' | 'unsupported' | 'disabled' | 'loading' | 'reconnecting' | 'error' | 'mic' | 'busy'
@@ -73,8 +85,11 @@ export function panelState(s: PanelInput): { key: PanelKey; text: string } {
 
 // ---------------------------------------------------------------- лента
 
-/** echo — микрофон, похоже, поймал голос штаба из динамиков: показывается, но не исполняется. */
-export type FeedKind = 'heard' | 'me' | 'notme' | 'chief' | 'note' | 'echo';
+/**
+ * echo — микрофон, похоже, поймал голос штаба из динамиков: показывается, но не исполняется;
+ * fix — как понята реплика с огрехами распознавания («Услышано: … — понял: …»).
+ */
+export type FeedKind = 'heard' | 'me' | 'notme' | 'chief' | 'note' | 'echo' | 'fix';
 export interface FeedItem {
   key: string;
   kind: FeedKind;
@@ -108,4 +123,10 @@ export function feedUtterance(feed: FeedItem[], u: { id: number; text: string; c
 /** Итог разбора реплики: «ignored» — не обращено к штабу («не мне»). */
 export function feedResolve(feed: FeedItem[], id: number, result: 'ignored' | 'done' | 'unknown'): FeedItem[] {
   return feed.map((x) => (x.utt === id ? { ...x, kind: result === 'ignored' ? 'notme' : 'me' } : x));
+}
+
+/** Реплику поправили при разборе (огрехи распознавания): «Услышано: «…» — понял: «…»»; без поправок — лента как была. */
+export function feedCorrection(feed: FeedItem[], id: number, heard: string, c: { fixes: string[]; understood: string }): FeedItem[] {
+  if (!c.fixes.length) return feed;
+  return feedAdd(feed, { key: `f${id}`, kind: 'fix', text: `Услышано: «${heard}» — понял: «${c.understood}»` });
 }

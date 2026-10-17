@@ -16,7 +16,8 @@ import { CONVERSATION_S, Dispatcher } from './dispatch';
 import { actions } from './registry';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
-  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem,
+  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings,
+  type FeedItem,
 } from './panel-state';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
@@ -126,14 +127,17 @@ export function VoicePanel({ section }: { section: string }) {
       client.on('ready', (m) => setReady({ voices: m.voices ?? [], roles: m.roles, recordText: m.record_text ?? '' })),
       client.on('level', (m) => setLevel({ p: m.p, busy: m.busy })),
       client.on('speech', (m) => setListening(m.state === 'start')),
-      client.on('settings', (m) => setCfg({ vad: m.vad, barge_vad: m.barge_vad, barge_ms: m.barge_ms, end_ms: m.end_ms })),
+      client.on('settings', (m) => setCfg({
+        vad: m.vad, barge_vad: m.barge_vad, barge_ms: m.barge_ms, end_ms: m.end_ms, barge_mode: m.barge_mode === 'word' ? 'word' : 'voice',
+      })),
       client.on('utterance', (m) => {
         setListening(false);
         if (!enabledRef.current) return;  // договорено до выключения — уже не исполняется
         setFeed((f) => feedUtterance(f, m));
         setThinking((n) => n + 1);
+        // реплику поправили при разборе (огрехи распознавания) — в ленте видно, как она понята
         dispatcher.utterance(m.text, m.id, m.continues)
-          .then((r) => setFeed((f) => feedResolve(f, m.id, r)))
+          .then((r) => setFeed((f) => feedCorrection(feedResolve(f, m.id, r), m.id, m.text, dispatcher.correction(m.id))))
           .catch(() => setFeed((f) => feedResolve(f, m.id, 'unknown')))
           .finally(() => setThinking((n) => n - 1));
       }),
@@ -207,6 +211,8 @@ export function VoicePanel({ section }: { section: string }) {
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
   const live = enabled && status === 'ready' && !micError;
+  const hint = live ? bargeHint(speaking, cfg.barge_mode) : null;
+  const word = cfg.barge_mode === 'word';
   const errorText = status === 'error' ? client.errorText : null;
   const can = actions(section).filter((a) => a.say?.length);
   const feedEnd = useRef<HTMLDivElement>(null);
@@ -246,13 +252,14 @@ export function VoicePanel({ section }: { section: string }) {
             </div>
           )}
           {enabled && <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />}
+          {hint && <p className="vp-hint stop" role="status">{hint}</p>}
           {enabled && <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
 
           <div className="vp-feed" aria-label="Что сказано">
             {!feed.length && <p className="vp-empty">Здесь будет видно, что я услышал и что ответил.</p>}
             {feed.map((x) => (
               <div key={x.key} className={`vp-item ${x.kind}`}>
-                <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'note' ? 'Сбой:' : x.kind === 'echo' ? 'Слышно:' : 'Вы:'}</span> {x.text}
+                {x.kind !== 'fix' && <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'note' ? 'Сбой:' : x.kind === 'echo' ? 'Слышно:' : 'Вы:'}</span>} {x.text}
                 {x.kind === 'notme' && <span className="vp-notme">не мне</span>}
                 {x.kind === 'echo' && <span className="vp-notme">похоже на мой же голос из динамиков</span>}
               </div>
@@ -283,12 +290,19 @@ export function VoicePanel({ section }: { section: string }) {
           <details className="vp-tune">
             <summary>Тонкая настройка</summary>
             <p className="vp-note">Обычно хватает калибровки. Правее — чутче.</p>
+            {/* режим выбирает калибровка; «словом» — когда динамики слышно громко */}
+            <div className="vp-mode" role="group" aria-label="Перебивать">
+              <span>Перебивать:</span>
+              <button className={word ? '' : 'on'} aria-pressed={!word} onClick={() => applySettings({ barge_mode: 'voice' })}>голосом</button>
+              <button className={word ? 'on' : ''} aria-pressed={word} onClick={() => applySettings({ barge_mode: 'word' })}>словом</button>
+            </div>
+            <p className="vp-note">{word ? 'Штаб замолкает, когда вы скажете «Стоп» или «Штаб…».' : 'Штаб замолкает, когда вы громко заговорите.'}</p>
             <Slider label="Чувствительность в тишине" value={1 - cfg.vad} min={0.1} max={0.85} step={0.05} show={pct(1 - cfg.vad)}
               onChange={(v) => applySettings({ vad: +(1 - v).toFixed(2) })} />
             <Slider label="Чувствительность, когда говорит штаб" value={1 - cfg.barge_vad} min={0.05} max={0.85} step={0.05} show={pct(1 - cfg.barge_vad)}
               onChange={(v) => applySettings({ barge_vad: +(1 - v).toFixed(2) })} />
-            <Slider label="Перебить штаб, если говорю дольше" value={cfg.barge_ms} min={100} max={1000} step={50} show={`${cfg.barge_ms} мс`}
-              onChange={(v) => applySettings({ barge_ms: v })} />
+            {!word && <Slider label="Перебить штаб, если говорю дольше" value={cfg.barge_ms} min={100} max={1000} step={50} show={`${cfg.barge_ms} мс`}
+              onChange={(v) => applySettings({ barge_ms: v })} />}
             <Slider label="Пауза до ответа" value={cfg.end_ms} min={20} max={1500} step={10} show={`${cfg.end_ms} мс`}
               onChange={(v) => applySettings({ end_ms: v })} />
             <button onClick={resetSettings}>По умолчанию</button>

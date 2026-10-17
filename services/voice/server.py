@@ -3,7 +3,7 @@
 распознанными репликами и звуком фраз (протокол — спецификация голосового управления, раздел 2).
 
   python server.py --port 47645 --data DIR [--seed-refs DIR] [--fake] [--fake-script FILE]
-                   [--vad 0.5 --barge-vad 0.8 --barge-ms 300 --end-ms 400]
+                   [--vad 0.5 --barge-vad 0.8 --barge-ms 300 --end-ms 400 --barge-mode voice|word]
 
 GET /health — {"state": "loading"|"ready"|"error", "error"?}; WS /ws — разговор. --fake — поддельные модели
 (fake.py) без MLX и torch: для тестов и сквозной проверки приложения."""
@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from audio import FRAME, SR_IN, Listener, calibrate, should_merge
+from audio import FRAME, SR_IN, Listener, calibrate, is_stop_phrase, should_merge
 from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, pause_after
 from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, trim_silence, write_wav
 
@@ -34,6 +34,9 @@ ECHO_RATIO = 0.6  # распознанное так похоже на сказа
 ECHO_AFTER_S = 1.5  # …если речь кончилась, пока штаб говорит, или не позже этого после конца его звука
 ASR_PIECE_S = 24  # распознавание берёт до 25 с звука (GigaAM) — длиннее режется на куски
 NO_REF = "нет образца голоса — запишите голос в окне «Голоса»"
+WORD_CHUNK_S = 0.5  # перебивание словом: кусок речи распознаётся, когда он не короче этого…
+WORD_STEP_S = 0.25  # …и снова — по мере роста куска на столько
+BARGE_MODES = ("voice", "word")
 
 
 def parse_args(argv=None):
@@ -48,6 +51,8 @@ def parse_args(argv=None):
     ap.add_argument("--vad", type=float, default=0.5, help="порог речи Silero, пока модель молчит")
     ap.add_argument("--barge-vad", dest="barge_vad", type=float, default=0.8, help="порог речи, пока модель говорит")
     ap.add_argument("--barge-ms", dest="barge_ms", type=int, default=300, help="сколько говорить, чтобы перебить")
+    ap.add_argument("--barge-mode", dest="barge_mode", choices=BARGE_MODES, default="voice",
+                    help="перебивание: voice — речью громче порога, word — стоп-словом («Стоп», «Штаб…»)")
     ap.add_argument("--end-ms", dest="end_ms", type=int, default=400, help="тишина до проверки конца реплики")
     ap.add_argument("--max-silence-ms", dest="max_silence_ms", type=int, default=1500)
     ap.add_argument("--turn", type=float, default=0.5, help="порог Smart Turn")
@@ -132,6 +137,7 @@ class Job:
         self.wake = asyncio.Event()
         self.task: asyncio.Task | None = None
         self.samples = 0
+        self.said = ""  # текст, отданный синтезу, — с ним сравнивается эхо при перебивании словом
 
     def push(self, text: str, more: bool):
         for s in self.sentences.push(text):
@@ -156,7 +162,8 @@ class Session:
         self.ws, self.svc, self.m = ws, svc, svc.models
         a = svc.args
         self.loop = asyncio.get_running_loop()
-        self.cfg = {"vad": a.vad, "barge_vad": a.barge_vad, "barge_ms": a.barge_ms, "end_ms": a.end_ms}
+        self.cfg = {"vad": a.vad, "barge_vad": a.barge_vad, "barge_ms": a.barge_ms, "end_ms": a.end_ms,
+                    "barge_mode": a.barge_mode}
         self.listener = Listener(self.cfg, self._vad, self._turn, max_silence_ms=a.max_silence_ms,
                                  turn_threshold=a.turn, min_speech_ms=a.min_speech_ms)
         self.buf = np.zeros(0, np.float32)
@@ -174,6 +181,11 @@ class Session:
         self.last_said = ""  # последняя фраза модели — чтобы не принять её эхо за реплику
         self.last_said_id: int | None = None
         self.echo_until = 0.0  # до какого времени (perf_counter) из динамиков мог звучать голос модели
+        # перебивание словом: кусок текущей речи распознаётся, пока штаб говорит
+        self.seg = 0  # номер куска речи (растёт с каждым началом речи)
+        self.word_task: asyncio.Task | None = None
+        self.word_next = WORD_CHUNK_S  # с какой длины куска (с) распознать его снова
+        self.word_barged = False  # текущий кусок уже остановил штаб стоп-словом
         # калибровка и запись голоса
         self.calib: dict | None = None
         self.calib_data: dict[str, list[float]] = {}
@@ -193,6 +205,14 @@ class Session:
     @property
     def busy(self) -> bool:
         return bool(self.jobs)
+
+    @property
+    def speaking(self) -> bool:
+        """Говорит штаб (не проба голоса: её не перебивают)."""
+        return any(not j.preview for j in self.jobs.values())
+
+    def chief_text(self) -> str:
+        return " ".join(j.said for j in self.jobs.values() if not j.preview)
 
     # ------------------------------------------------------------ микрофон
 
@@ -230,14 +250,40 @@ class Session:
             if kind == "level":
                 await self.send(type="level", p=ev[1], busy=busy)
             elif kind == "speech_start":
+                self.seg += 1
+                self.word_next, self.word_barged = WORD_CHUNK_S, False
                 self.merge = self.prev is not None and should_merge(self.prev["end"], self.t_mic, self.reply_start)
                 await self.send(type="speech", state="start")
             elif kind == "speech_end":
+                self.seg += 1  # кусок кончился: его распознавание по ходу речи больше не перебивает
                 await self.send(type="speech", state="end")
             elif kind == "barge":
                 await self.barge_all()
             elif kind == "utterance":
                 await self.on_utterance(ev[1])
+        self.word_check()
+
+    def word_check(self):
+        """Перебивание словом: пока штаб говорит, кусок текущей речи (от WORD_CHUNK_S, по мере роста — каждые
+        WORD_STEP_S) распознаётся в нити torch, не дожидаясь конца реплики; стоп-слово — штаб обрывается."""
+        ls = self.listener
+        if (self.cfg.get("barge_mode") != "word" or not ls.in_speech or self.word_barged or not self.speaking
+                or (self.word_task and not self.word_task.done()) or ls.chunk_s() < self.word_next):
+            return
+        self.word_next = ls.chunk_s() + WORD_STEP_S
+        self.word_task = asyncio.create_task(self._word_check(self.seg, ls.audio.copy()))
+
+    async def _word_check(self, seg: int, audio: np.ndarray):
+        try:
+            text = (await self.loop.run_in_executor(self.m.torch, self.m.transcribe, audio)).strip()
+        except Exception as e:  # noqa: BLE001 — кусок не распознался: штаб не обрывается, реплика распознается целиком
+            print("кусок не распознан:", f"{type(e).__name__}: {e}", flush=True)
+            return
+        if seg != self.seg or self.word_barged or not self.speaking:
+            return
+        if is_stop_phrase(text, self.chief_text()):
+            self.word_barged = True
+            await self.barge_all()
 
     async def transcribe(self, audio: np.ndarray) -> str:
         """Распознавание любой длины: длиннее ASR_PIECE_S — кусками, разрез — в самом тихом месте второй
@@ -264,14 +310,21 @@ class Session:
         merge = self.merge
         self.merge = False
         self.m.vad_reset()
-        if self.busy:  # договорил, пока модель отвечала (или склейка) — ответ обрывается
+        word = self.cfg.get("barge_mode") == "word"
+        word_barged = self.word_barged
+        if self.busy and not word:  # договорил, пока модель отвечала (или склейка) — ответ обрывается
             await self.barge_all()
         t0 = time.perf_counter()
         text = await self.transcribe(audio)
         stt_ms = round((time.perf_counter() - t0) * 1000)
         if not text:
             return
-        if echo_possible and self.last_said and difflib.SequenceMatcher(
+        # перебивание словом: штаб обрывает только стоп-слово (и успевшее по ходу речи — тоже); прочая речь, пока он
+        # говорит, его не останавливает — она либо его же эхо, либо обычная реплика
+        if word and not word_barged and self.speaking and is_stop_phrase(text, self.chief_text()):
+            word_barged = True
+            await self.barge_all()
+        if not word_barged and echo_possible and self.last_said and difflib.SequenceMatcher(
                 None, text.lower(), self.last_said.lower()[-len(text) * 2:]).ratio() > ECHO_RATIO:
             await self.send(type="echo", text=text)  # микрофон поймал голос модели
             return
@@ -329,6 +382,7 @@ class Session:
                     if self.last_said_id != job.id:
                         self.last_said_id, self.last_said = job.id, ""
                     self.last_said = (self.last_said + " " + piece)[-400:]
+                    job.said = (job.said + " " + piece).strip()
                 hold = await self._synth(job, piece, fade_n, np.zeros(int(gap * sr), np.float32))
                 if hold is None:  # ошибка синтеза — сообщена, фраза кончается
                     break
@@ -539,7 +593,10 @@ class Session:
         if t in ("hello", "settings"):
             src = d.get("settings") if t == "hello" else d
             for k in self.cfg:
-                if isinstance((src or {}).get(k), (int, float)) and not isinstance(src[k], bool):
+                if k == "barge_mode":
+                    if (src or {}).get(k) in BARGE_MODES:
+                        self.cfg[k] = src[k]
+                elif isinstance((src or {}).get(k), (int, float)) and not isinstance(src[k], bool):
                     self.cfg[k] = src[k]
             await self.send(type="settings", **self.cfg)
         elif t == "say":
@@ -564,6 +621,8 @@ class Session:
         self.m.forget_ref(self.pending_path)
 
     async def close(self):
+        if self.word_task and not self.word_task.done():
+            self.word_task.cancel()
         for job in list(self.jobs.values()):
             self._drop(job)
         self.recording = None
