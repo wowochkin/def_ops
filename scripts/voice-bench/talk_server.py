@@ -592,7 +592,7 @@ def main():
     ap.add_argument("--barge-vad", dest="barge_vad", type=float, default=0.8, help="порог речи, пока модель говорит (перебивание)")
     ap.add_argument("--asr", default="v3_e2e_rnnt",
                     help="модель GigaAM: v3_e2e_rnnt — с пунктуацией и заглавными, v3_rnnt — строчными без знаков")
-    ap.add_argument("--eos-extra", type=int, default=2,
+    ap.add_argument("--eos-extra", type=int, default=1,
                     help="кадров (по 80 мс) договаривания после «конца» синтеза, чтобы не глотался последний слог; 0 — как в mlx-audio")
     ap.add_argument("--end-ms", dest="end_ms", type=int, default=400, help="тишина до проверки конца реплики")
     ap.add_argument("--max-silence-ms", dest="max_silence_ms", type=int, default=1500, help="тишина — реплика кончилась в любом случае")
