@@ -24,10 +24,20 @@ def models(url):
         return [m["id"] for m in json.loads(r.read())["data"]]
 
 
-def ask(url, model, q, think):
-    body = {"model": model, "stream": True, "temperature": 0.6, "max_tokens": 400,
-            "messages": [{"role": "system", "content": PERSONA}, {"role": "user", "content": q}],
-            "chat_template_kwargs": {"enable_thinking": think}}
+# способы выключить размышление: LM Studio и шаблоны Qwen понимают разные — проверяются все
+MODES = {
+    "kwargs": lambda b: b.update(chat_template_kwargs={"enable_thinking": False}),
+    "no_think": lambda b: b["messages"][-1].update(content=b["messages"][-1]["content"] + " /no_think"),
+    "effort": lambda b: b.update(reasoning_effort="none"),
+    "все сразу": lambda b: [f(b) for k, f in MODES.items() if k != "все сразу"],
+}
+
+
+def ask(url, model, q, think, mode="все сразу"):
+    body = {"model": model, "stream": True, "temperature": 0.6, "max_tokens": 1500,
+            "messages": [{"role": "system", "content": PERSONA}, {"role": "user", "content": q}]}
+    if not think:
+        MODES[mode](body)
     req = urllib.request.Request(url + "/chat/completions", data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json"})
     t0 = time.perf_counter()
@@ -68,9 +78,21 @@ def main():
     model = args.model or next((m for m in ids if "qwen3.6" in m.lower()), ids[0])
     print(f"модель: {model}; размышление: {'вкл' if args.think else 'выкл'}")
     ask(args.url, model, "Скажи «готов».", args.think)  # прогрев: загрузка модели в память
+    mode = "все сразу"
+    if not args.think:  # какой способ выключить размышление работает у этой модели
+        print("\nспособ выключить размышление:")
+        for m in MODES:
+            try:
+                r = ask(args.url, model, "Сколько будет два плюс два? Ответь одним словом.", False, m)
+                print(f"  {m:10} размышление {r['reasoning_chars']} зн. · ответ «{r['text'].strip()[:40]}» · {r['total_s']:.1f} с")
+                if r["reasoning_chars"] == 0 and r["text"].strip() and mode == "все сразу" and m != "все сразу":
+                    mode = m
+            except Exception as e:
+                print(f"  {m:10} ошибка: {e}")
+        print(f"  → беру «{mode}»")
     rows = []
     for q in QUESTIONS:
-        r = ask(args.url, model, q, args.think)
+        r = ask(args.url, model, q, args.think, mode)
         rows.append(r)
         think = f" · размышление {r['reasoning_chars']} зн." if r["reasoning_chars"] else ""
         print(f"\n— {q}\n  первый токен {r['first_token_s']:.2f} с · первая фраза {r['first_sentence_s']:.2f} с · "
