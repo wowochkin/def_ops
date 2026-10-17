@@ -216,7 +216,8 @@ class Session:
         self.word_barged = False  # текущий кусок уже остановил штаб стоп-словом
         self.word_err_seg = -1  # кусок, сбой распознавания которого уже записан в журнал (раз на кусок)
         # калибровка и запись голоса
-        self.calib: dict | None = None
+        self.calib: dict | None = None  # шаг калибровки, который сейчас пишется
+        self.calib_on = False  # калибровка идёт: от первого шага до finish/cancel (и между шагами)
         self.calib_data: dict[str, list[float]] = {}
         self.recording: list[np.ndarray] | None = None
         self.pending: dict | None = None  # проверенная запись: audio, path (файл — только до сохранения, для пробы)
@@ -388,8 +389,13 @@ class Session:
         self.last_task = job.task
 
     async def on_say(self, d: dict):
+        """Фраза разговора. Во время калибровки и записи голоса не звучит (испортила бы замер или образец): say-done
+        stopped без звука. Проба голоса и звук калибровки (id 0) идут не через say — они звучат."""
         jid, role, more = int(d["id"]), d.get("role", "chief"), bool(d.get("more"))
         job = self.jobs.get(jid)
+        if job is None and (self.calib_on or self.recording is not None):
+            await self.send(type="say-done", id=jid, stopped=True)
+            return
         if job is None:
             if role not in ROLES:
                 raise ValueError(f"нет такой роли: {role}")
@@ -518,6 +524,7 @@ class Session:
     # ------------------------------------------------------------ калибровка
 
     async def calib_start(self, step: str, sec: float):
+        self.calib_on = True
         await self.stop()
         self.recording = None
         self.listener.reset()
@@ -535,7 +542,7 @@ class Session:
         await self.send(type="calib_rec", step=step, sec=round(sec, 1))
 
     async def calib_finish(self):
-        self.calib = None
+        self.calib, self.calib_on = None, False
         try:
             cfg, rep = calibrate(self.calib_data, self.cfg["end_ms"])
         except (ValueError, KeyError) as e:
@@ -550,7 +557,7 @@ class Session:
         if step == "finish":
             await self.calib_finish()
         elif step == "cancel":
-            self.calib = None
+            self.calib, self.calib_on = None, False
         elif step in ("noise", "speech", "echo", "over"):
             await self.calib_start(step, float(d.get("sec", 3)))
         else:
@@ -567,7 +574,7 @@ class Session:
             await self.voice_list()
         elif op == "record-start":
             await self.stop()
-            self.calib = None
+            self.calib, self.calib_on = None, False
             self.listener.reset()
             self.m.vad_reset()
             self.recording = []

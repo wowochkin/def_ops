@@ -1604,6 +1604,8 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-state { flex: 1; font-size: 22px; font-weight: 700; color: var(--vp-ink); }
 .vp-mic { background: #fde9e6; border: 1.5px solid #c0261b; border-radius: 8px; padding: 8px 10px; }
 .vp-mic p { margin: 0 0 8px; }
+/* подавление эха не то, что при калибровке: просьба пройти её заново — предупреждение, а не сбой */
+.vp-mic.vp-aec { background: #fff4d6; border-color: #c99a2e; }
 .vp-levelbox { display: flex; flex-direction: column; gap: 2px; }
 .vp-level { position: relative; height: 18px; background: #e3dfd5; border-radius: 4px; }
 .vp-level i { position: absolute; left: 0; top: 0; bottom: 0; background: #9bbf9b; border-radius: 4px; transition: width .08s; }

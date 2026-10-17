@@ -37,6 +37,109 @@ export function parseSettings(raw: string | null): Partial<VoiceSettings> {
   return out;
 }
 
+/**
+ * Что ещё хранится рядом с регуляторами: `aec` — при каком подавлении эха в сервисе они сняты (`ready.aec`),
+ * `calib_mode` — какой режим перебивания выбрала последняя калибровка (к нему возвращает «По умолчанию»).
+ */
+interface Stored { aec?: boolean; calib_mode?: BargeMode }
+
+function parseObj(raw: string | null): Record<string, unknown> | null {
+  try {
+    const v = JSON.parse(raw ?? 'null');
+    return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+  } catch { return null; }
+}
+function parseStored(raw: string | null): Stored {
+  const v = parseObj(raw) ?? {};
+  return {
+    ...(typeof v.aec === 'boolean' ? { aec: v.aec } : {}),
+    ...(BARGE_MODES.includes(v.calib_mode as BargeMode) ? { calib_mode: v.calib_mode as BargeMode } : {}),
+  };
+}
+
+/**
+ * Строка для SETTINGS_KEY: регуляторы и режим перебивания cfg. Калибровка (`calibrated`) запоминает подавление эха
+ * сервиса (`aec`) и свой режим; ручная правка их не трогает (нет их ещё — запоминается текущее подавление эха).
+ */
+export function storeSettings(raw: string | null, cfg: VoiceSettings, o: { aec?: boolean; calibrated?: boolean }): string {
+  const prev = parseStored(raw);
+  const aec = o.calibrated ? o.aec : prev.aec ?? o.aec;
+  const calib_mode = o.calibrated ? cfg.barge_mode : prev.calib_mode;
+  return JSON.stringify({ ...cfg, ...(aec !== undefined ? { aec } : {}), ...(calib_mode ? { calib_mode } : {}) });
+}
+
+/**
+ * Подавление эха в сервисе не то, при котором сняты сохранённые регуляторы: 'on' — теперь включено, 'off' — теперь
+ * выключено; null — совпадает, регуляторы не сохранялись или сервис ещё не ответил. Старые настройки без отметки
+ * сняты без подавления эха.
+ */
+export function aecChange(raw: string | null, readyAec: boolean | undefined): 'on' | 'off' | null {
+  if (readyAec === undefined || !Object.keys(parseSettings(raw)).length) return null;
+  const was = parseStored(raw).aec ?? false;
+  return was === readyAec ? null : readyAec ? 'on' : 'off';
+}
+
+/** Подсказка на панели при расхождении (aecChange). */
+export function aecHint(c: 'on' | 'off'): string {
+  return `Подавление эха ${c === 'on' ? 'включено' : 'выключено'} после настройки — пройдите калибровку заново.`;
+}
+
+/**
+ * «По умолчанию»: регуляторы — как у сервиса, а режим перебивания — тот, что выбрала калибровка (нет отметки, но
+ * сохранено «словом» — «словом»: безопасно при громких динамиках). stored — что сохранить (null — стереть).
+ */
+export function resetStored(raw: string | null): { cfg: VoiceSettings; stored: string | null } {
+  const prev = parseStored(raw);
+  const mode = prev.calib_mode ?? (parseSettings(raw).barge_mode === 'word' ? 'word' : undefined);
+  if (!mode) return { cfg: DEFAULT_SETTINGS, stored: null };
+  const cfg: VoiceSettings = { ...DEFAULT_SETTINGS, barge_mode: mode };
+  return { cfg, stored: JSON.stringify({ ...cfg, ...prev }) };
+}
+
+/** Сколько фраза штаба ждёт конца речи человека, если конца так и не пришло (сервис не прислал `speech end`). */
+export const HOLD_MAX_MS = 15_000;
+
+/**
+ * Фразы штаба не начинаются, пока человек говорит: сервис прислал `speech start` — фраза ждёт `speech end` (не дольше
+ * HOLD_MAX_MS), затем уходит; ждущие — по порядку. Если штаб уже говорит (busy), очередная фраза его ответа не ждёт:
+ * речь в микрофоне тогда — скорее его же голос из динамиков. Новая реплика снимает ждущие фразы (drop).
+ */
+export class SayGate {
+  private queue: { id: number; text: string }[] = [];
+  private since: number | null = null;
+  constructor(private send: (id: number, text: string) => void, private now: () => number, private busy: () => boolean) {}
+
+  say(id: number, text: string): void {
+    if (this.holding() && !this.busy()) this.queue.push({ id, text });
+    else this.send(id, text);
+  }
+  /** Речь человека началась / кончилась (сообщение сервиса `speech`). */
+  speech(on: boolean): void {
+    if (on) { this.since ??= this.now(); return; }
+    this.since = null;
+    this.flush();
+  }
+  /** Проверка по часам: речь «идёт» дольше HOLD_MAX_MS — фразы уходят. */
+  tick(): void {
+    if (this.since !== null && !this.holding()) { this.since = null; this.flush(); }
+  }
+  /** Снять ждущую фразу id или все; true — такая ждала. */
+  drop(id?: number): boolean {
+    const n = this.queue.length;
+    this.queue = id === undefined ? [] : this.queue.filter((x) => x.id !== id);
+    return this.queue.length < n;
+  }
+  /** Всё забыть: очередь и ожидание (выключение, обрыв связи, окно калибровки или голосов). */
+  clear(): void { this.queue = []; this.since = null; }
+
+  private holding(): boolean { return this.since !== null && this.now() - this.since < HOLD_MAX_MS; }
+  private flush(): void {
+    const q = this.queue;
+    this.queue = [];
+    q.forEach((x) => this.send(x.id, x.text));
+  }
+}
+
 export const BARGE_WORD_HINT = 'Перебить: скажите «Стоп»';
 
 /** Подсказка, пока штаб говорит в режиме «словом» (громкость его не перебивает); иначе — null. */

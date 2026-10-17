@@ -15,7 +15,9 @@
 // Перебивание словом проверяется на сервисе с --aec off: у поддельного микрофона нет эха, и AEC3, ещё не привязавшись
 // к опоре, глушит его «речь», пока штаб говорит; заодно окно должно взять микрофон заново — с обработкой браузера.
 // Модель за правилами — на поддельной LM Studio (/llm/…): свободная формулировка, выдуманное действие, «Думаю»,
-// отмена старого ответа новой репликой, «модель молчит».
+// отмена старого ответа новой репликой, модель «висит» (повтор), LM Studio не запущена (без повторов; следующая
+// непонятая фраза — сразу честный ответ, без «Думаю»). Подавление эха не то, при котором сняты регуляторы, —
+// подсказка «пройдите калибровку заново» и перебивание «словом».
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки, голосов и раздела «ИИ» (модель для голоса).
 // Python — $VOICE_PYTHON, services/voice/.venv или python3.
@@ -233,6 +235,9 @@ await ctx.addInitScript(() => {
     md.getUserMedia = async (c) => { e2e.gum++; e2e.gumAudio.push(c?.audio); const st = await gum(c); e2e.tracks.push(...st.getTracks()); return st; };
   }
   e2e.trackStates = () => e2e.tracks.map((t) => t.readyState);
+  /** Состояния панели по порядку (каждые 30 мс): было ли «Думаю». */
+  e2e.states = [];
+  setInterval(() => { const t = document.querySelector('.vp-state')?.textContent; if (t && t !== e2e.states.at(-1)) e2e.states.push(t); }, 30);
 });
 // шлюза нет — состояние голоса отвечаем за него; --no-stub — шлюз молчит (сервис как будто запущен вручную)
 if (STUB) await ctx.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
@@ -608,9 +613,9 @@ await check('событие voice:power: false — выключает, true — 
 //
 // Поддельная LM Studio отвечает за /llm/… (адрес модели по умолчанию) прямо в Playwright: /v1/models — список
 // моделей, /v1/chat/completions — по ключевым словам последней реплики: вызов инструмента, текст, текст с
-// задержкой, «молчит» (соединение обрывается сразу — как будто LM Studio не запущена) или «висит» (каждая попытка
-// обрывается через 3 с — модель ещё ждёт, когда приходит следующая реплика).
-const LM = { asked: [], settled: [] };
+// задержкой, «не запущена» (соединение отвергается сразу) или «висит» (каждая попытка кончается через 3 с ответом
+// 500 — сбой самой модели, повторяется; модель ещё ждёт, когда приходит следующая реплика).
+const LM = { asked: [], settled: [], models: 0 };
 const lmReply = (content, tool) => ({
   id: 'fake', object: 'chat.completion', model: 'fake-voice',
   choices: [{ index: 0, finish_reason: tool ? 'tool_calls' : 'stop', message: {
@@ -626,13 +631,15 @@ function lmAnswer(text) {
   if (/вальс/.test(t)) return { body: lmReply('Играю вальс.', { name: 'music__waltz', args: {} }) };
   if (/обстановк/.test(t)) return { body: lmReply('Обстановка спокойная, противник молчит.'), slow: LM_SLOW_MS };
   if (/соседей/.test(t)) return { fail: true };
-  if (/фланге/.test(t)) return { fail: true, hang: 3000 };
+  if (/фланге/.test(t)) return { status: 500, hang: 3000 };
+  if (/погод/.test(t)) return { body: lmReply('Солнечно.') };
   return { body: lmReply('Слушаю.') };
 }
 async function fakeLmStudio() {
   // только адрес модели (/llm/…), не модули окна с «llm» в пути
   await ctx.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
     const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/v1/models')) LM.models++;
     if (url.pathname.endsWith('/v1/models')) return route.fulfill({ json: { object: 'list', data: [{ id: 'fake-voice', object: 'model' }] } });
     if (!url.pathname.endsWith('/v1/chat/completions')) return route.fulfill({ status: 404, body: '' });
     const said = route.request().postDataJSON().messages.at(-1)?.content ?? '';
@@ -642,14 +649,15 @@ async function fakeLmStudio() {
     if (wait) await new Promise((r) => setTimeout(r, wait));
     // запрос могли отменить (новая реплика) — тогда ответить уже некому
     if (a.fail) await route.abort('connectionrefused').catch(() => {});
+    else if (a.status) await route.fulfill({ status: a.status, json: { error: 'сбой модели' } }).catch(() => {});
     else await route.fulfill({ json: a.body }).catch(() => {});
     LM.settled.push(said);
   });
 }
 const script4 = join(tmp, 'script4.txt');
 writeFileSync(script4, ['штаб, давай-ка перейдём к картам', 'штаб, а сыграй мне вальс', 'штаб, доложи обстановку',
-  'штаб, открой знания', 'штаб, как дела у соседей', 'штаб, что нового на фланге', 'штаб, открой переигровку',
-  ...Array(50).fill(RECORD_TEXT)].join('\n') + '\n');
+  'штаб, открой знания', 'штаб, что нового на фланге', 'штаб, открой переигровку', 'штаб, как дела у соседей',
+  'штаб, расскажи про погоду', ...Array(50).fill(RECORD_TEXT)].join('\n') + '\n');
 const chiefSaid = (re) => panel.locator('.vp-item.chief', { hasText: re });
 const RETRY = 'Связь с моделью прервалась';
 async function until(cond, ms, what) {
@@ -662,6 +670,11 @@ async function until(cond, ms, what) {
 
 async function llmChecks() {
   await fakeLmStudio();
+  // связь с моделью проверена при загрузке окна, до поддельной LM Studio, и не прошла — модель голосом не зовётся;
+  // человек запустил LM Studio и вернулся в окно — связь проверяется заново
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await until(() => LM.models > 0, 10000, 'связь с моделью не проверена заново');
+  await page.waitForTimeout(500);
   // режим «голосом»: в режиме «словом» поддельное распознавание проверяет куски речи поверх штаба (стоп-слово ли)
   // и на каждом снимает следующую строку сценария — строки «съедаются». Человек в режиме «словом» реплику
   // «Штаб, …» не теряет (обращение обрывает штаб), но сквозная проверка шла бы не по сценарию
@@ -693,22 +706,36 @@ async function llmChecks() {
     if (await chiefSaid('Обстановка спокойная').count()) throw new Error('отменённый ответ показан');
     return `ответ отдан через ${LM_SLOW_MS / 1000} с и не прозвучал`;
   });
-  await check('модель молчит: повтор один раз, затем «Связи с моделью нет»', async () => {
-    await chiefSaid('Связи с моделью нет').waitFor({ timeout: 30000 });
-    const retry = await chiefSaid(RETRY).count();
-    if (retry !== 1) throw new Error(`заготовленная фраза о повторе прозвучала ${retry} раз`);
-  });
   await check('правила работают, пока модель ещё ждёт: «Штаб, открой переигровку»', async () => {
-    // «что нового на фланге»: попытки висят по 3 с — модель ждёт; повтор прозвучал, «Связи нет» ещё нет
+    // «что нового на фланге»: попытки висят по 3 с и кончаются сбоем модели — повтор прозвучал, «Связи нет» нет
     await until(() => LM.asked.some((x) => /фланге/.test(x)), 30000, 'модель не спрошена о фланге');
-    await chiefSaid(RETRY).nth(1).waitFor({ timeout: 15000 });
+    await chiefSaid(RETRY).first().waitFor({ timeout: 15000 });
     await page.waitForFunction(() => location.hash === '#replay', null, { timeout: 30000 });
     const lost = await chiefSaid('Связи с моделью нет').count();
-    if (lost !== 1) throw new Error(`к переходу «Связи с моделью нет» прозвучало ${lost} раз — ожидание кончилось раньше`);
-    // отменённое ожидание не договаривается: «Связи с моделью нет» по «флангу» так и не звучит
-    await page.waitForTimeout(8000);
-    if ((await chiefSaid('Связи с моделью нет').count()) !== 1) throw new Error('отменённое ожидание сообщило «Связи с моделью нет»');
+    if (lost) throw new Error(`к переходу «Связи с моделью нет» прозвучало ${lost} раз — ожидание кончилось раньше`);
+  });
+  await check('LM Studio не запущена: без повторов — сразу «Связи с моделью нет»', async () => {
+    await chiefSaid('Связи с моделью нет').waitFor({ timeout: 30000 });
+    const retry = await chiefSaid(RETRY).count();
+    if (retry !== 1) throw new Error(`заготовленная фраза о повторе прозвучала ${retry} раз (ждали один — по «флангу»)`);
+    const asked = LM.asked.filter((x) => /соседей/.test(x)).length;
+    if (asked !== 1) throw new Error(`модель спрошена о соседях ${asked} раз`);
+  });
+  await check('без LM Studio вторая непонятая фраза — сразу честный ответ, без «Думаю» и без модели', async () => {
+    const k = await page.evaluate(() => window.__e2e.states.length);
+    const heard = panel.locator('.vp-item', { hasText: 'расскажи про погоду' });
+    await heard.waitFor({ timeout: 30000 });
+    const t0 = Date.now();
+    await chiefSaid('Языковая модель сейчас недоступна').waitFor({ timeout: 5000 });
+    const dt = Date.now() - t0;
+    if (dt > 1500) throw new Error(`ответ через ${dt} мс`);
+    if (LM.asked.some((x) => /погод/.test(x))) throw new Error('модель спрошена, хотя недоступна');
+    const states = await page.evaluate((i) => window.__e2e.states.slice(i), k);
+    if (states.includes('Думаю')) throw new Error(`было «Думаю»: ${states.join(' → ')}`);
+    if ((await chiefSaid('Связи с моделью нет').count()) !== 1) throw new Error('«Связи с моделью нет» — не один раз');
+    // отменённое ожидание по «флангу» так и не договорилось
     await plainWords(panel.locator('.vp-feed'), 'лента');
+    return `ответ через ${dt} мс`;
   });
   await stopVoice();
   await startVoice(script2);
@@ -776,6 +803,30 @@ await check('режим «словом»: пока штаб говорит — �
   const later = await page.evaluate(() => window.__e2e.frames);
   if (later.ref !== st.frames.ref || later.mono <= st.frames.mono) throw new Error(`кадры после перезапуска без подавления эха: ${JSON.stringify(later)}`);
   return st.gum > gum0 ? 'микрофон переоткрыт с обработкой браузера' : 'микрофон уже был с обработкой браузера';
+});
+
+await check('подавление эха не то, что при калибровке: подсказка «пройдите калибровку заново», перебивание «словом»', async () => {
+  const aec = await page.evaluate(() => window.__e2e.msgs.filter((m) => m.type === 'ready').at(-1)?.aec === true);
+  // регуляторы будто сняты при другом подавлении эха и с перебиванием «голосом»
+  await page.evaluate((a) => {
+    const s = JSON.parse(localStorage.getItem('def_ops.voice.settings') || '{}');
+    localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, ...s, barge_mode: 'voice', aec: !a, calib_mode: 'voice' }));
+  }, aec);
+  await page.reload();
+  const box = panel.locator('.vp-aec');
+  await box.getByText(`Подавление эха ${aec ? 'включено' : 'выключено'} после настройки — пройдите калибровку заново.`).waitFor({ timeout: T });
+  await page.waitForFunction(() => window.__e2e.sent.some((m) => m.type === 'settings' && m.barge_mode === 'word'), null, { timeout: 5000 })
+    .catch(() => { throw new Error('перебивание не переведено на «словом»'); });
+  await panel.getByText('Тонкая настройка').click();
+  const voiceBtn = panel.getByRole('group', { name: 'Перебивать' }).getByRole('button', { name: 'голосом' });
+  if (await voiceBtn.isEnabled()) throw new Error('«голосом» доступно до калибровки');
+  await panel.getByText('Тонкая настройка').click();
+  await shot('voice-panel-aec.jpg');
+  await box.getByRole('button', { name: 'Калибровать' }).click();
+  await calibDlg.waitFor({ state: 'visible', timeout: 3000 });
+  await calibDlg.getByRole('button', { name: 'Отмена' }).click();
+  await calibDlg.waitFor({ state: 'hidden', timeout: 3000 });
+  return aec ? 'сейчас включено' : 'сейчас выключено';
 });
 
 await check('в окне нет ошибок JavaScript', async () => {

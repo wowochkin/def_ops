@@ -6,6 +6,12 @@
  * в «Тонкую настройку», главный путь — калибровка. Панель создаёт связь с сервисом (VoiceClient) и разборщик
  * реплик (Dispatcher) с моделью за правилами (llm.ts: модель «Голос» из раздела «ИИ»; пока она отвечает — «Думаю»,
  * новая реплика отменяет её прежний ответ); событие окна `voice:open` (detail 'calibrate' | 'voices') открывает нужный экран.
+ * Модель недоступна (проверка связи в «ИИ» не прошла или запрос не удался) — разборщик её не зовёт и сразу отвечает честно.
+ *
+ * Фраза штаба не начинается, пока человек говорит (SayGate: ждёт конца речи); заготовленные фразы о модели окно
+ * разговора заново не открывают. Окно калибровки или голосов отменяет ожидание модели и глушит речь штаба.
+ * Регуляторы помнят, при каком подавлении эха сняты: сервис теперь другой — подсказка пройти калибровку, а перебивание
+ * до неё — «словом».
  *
  * Кнопка «Выключить голос» / «Включить голос» и событие окна `voice:power` (detail: boolean; «Штаб, отбой»)
  * выключают голос: микрофон закрыт и сам не открывается, звук штаба остановлен, связь с сервисом остаётся.
@@ -19,8 +25,8 @@ import { actions } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
-  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings,
-  type FeedItem,
+  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, SayGate, aecChange, aecHint, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
+  parseEnabled, parseSettings, resetStored, storeSettings, type FeedItem,
 } from './panel-state';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
@@ -32,10 +38,11 @@ const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { r
 const micText = (e: Error) => (/^(Микрофон|Браузер)/.test(e.message) ? e.message : `Микрофон не подключился: ${e.message}`);
 const lsSet = (k: string, v: string | null) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* */ } };
 
-/** Что сервис сообщил при подключении: голоса, роли, текст для записи нового голоса. */
-export interface VoiceReady { voices: VoiceInfo[]; roles: VoiceRoles; recordText: string }
+/** Что сервис сообщил при подключении: голоса, роли, текст для записи нового голоса, подавляет ли он эхо. */
+export interface VoiceReady { voices: VoiceInfo[]; roles: VoiceRoles; recordText: string; aec: boolean }
 
-export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings }) {
+/** llmCheck — итог проверки связи с моделью в «ИИ» ('fail' — модель голосом не зовётся). */
+export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: LlmSettings; llmCheck?: string }) {
   const [enabled, setEnabledState] = useState(() => parseEnabled(lsGet(ENABLED_KEY)));
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
@@ -48,16 +55,23 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
   sectionRef.current = section;
   const llmRef = useRef(llm);
   llmRef.current = llm;
+  const llmCheckRef = useRef(llmCheck);
+  llmCheckRef.current = llmCheck;
 
   const [status, setStatus] = useState<VoiceStatus>(client.status);
   const [open, setOpen] = useState(() => lsGet(OPEN_KEY) === 'open');
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [level, setLevel] = useState({ p: 0, busy: false });
   const [cfg, setCfg] = useState<VoiceSettings>(() => ({ ...DEFAULT_SETTINGS, ...parseSettings(lsGet(SETTINGS_KEY)) }));
+  /** Сохранённые регуляторы (строка SETTINGS_KEY): с ними сверяется подавление эха сервиса. */
+  const [saved, setSaved] = useState<string | null>(() => lsGet(SETTINGS_KEY));
+  const persist = (v: string | null) => { lsSet(SETTINGS_KEY, v); setSaved(v); };
   const [listening, setListening] = useState(false);
   const [thinking, setThinking] = useState(false);
   const speakingIds = useRef(new Set<number>());
   const previewIds = useRef(new Set<number>());
+  /** Заготовленные фразы о модели: доиграв, окно разговора заново не открывают. */
+  const quietIds = useRef(new Set<number>());
   const [speaking, setSpeaking] = useState(false);
   const [spokeAt, setSpokeAt] = useState(-Infinity);
   const [now, setNow] = useState(() => Date.now());
@@ -70,21 +84,52 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
   const started = useRef(false);
 
   const syncSpeaking = () => setSpeaking(speakingIds.current.size > 0);
+  // фраза штаба ждёт конца речи человека: не говорит поверх него и не обрывает себя его же репликой
+  const gate = useMemo(() => new SayGate((id, text) => {
+    speakingIds.current.add(id);
+    syncSpeaking();
+    client.say(id, 'chief', text);
+    setFeed((f) => feedAdd(f, { key: `s${id}`, kind: 'chief', text }));
+  }, () => Date.now(), () => speakingIds.current.size > 0), [client]); // eslint-disable-line react-hooks/exhaustive-deps
   const dispatcher = useMemo(() => new Dispatcher({
     now: () => Date.now(),
     section: () => sectionRef.current,
-    say: (text) => {
+    say: (text, o) => {
+      // окно калибровки или голосов: штаб по разговору молчит (испортил бы замер или запись)
+      if (dialogRef.current) return;
       const id = client.newSayId();
-      speakingIds.current.add(id);
-      syncSpeaking();
-      client.say(id, 'chief', text);
-      setFeed((f) => feedAdd(f, { key: `s${id}`, kind: 'chief', text }));
+      if (o?.quiet) quietIds.current.add(id);
+      gate.say(id, text);
+      return id;
     },
-    stop: () => { client.stop(); speakingIds.current.clear(); syncSpeaking(); },
-    // чего правила не поняли — модель «Голос» (настройки берутся в момент вопроса)
+    // фраза больше не нужна («повторяю запрос» после отмены): ждёт — снимается, звучит — гасится
+    unsay: (id) => {
+      quietIds.current.delete(id);
+      if (gate.drop(id)) return;
+      if (speakingIds.current.delete(id)) { client.stop(id); syncSpeaking(); }
+    },
+    supersede: () => gate.drop(),
+    stop: () => { gate.drop(); client.stop(); speakingIds.current.clear(); syncSpeaking(); },
+    // чего правила не поняли — модель «Голос» (настройки берутся в момент вопроса); проверка связи не прошла — не зовём
     model: createVoiceModel({ settings: () => llmRef.current }),
+    modelReady: () => llmCheckRef.current !== 'fail',
     thinking: setThinking,
-  }), [client]);
+  }), [client, gate]);
+
+  // связь с моделью проверена заново или настройки модели сменились — прежняя недоступность забыта
+  useEffect(() => { if (llmCheck === 'ok') dispatcher.modelBack(); }, [llmCheck, dispatcher]);
+  useEffect(() => { dispatcher.modelBack(); }, [llm.url, llm.model, llm.voiceModel, dispatcher]);
+
+  /** Окно калибровки или голосов: ожидание модели отменено, речь штаба по разговору заглушена. */
+  const openDialog = (d: 'calibrate' | 'voices') => {
+    dialogRef.current = d;
+    setDialog(d);
+    dispatcher.cancel();
+    gate.clear();
+    if (speakingIds.current.size) { client.stop(); speakingIds.current.clear(); syncSpeaking(); }
+  };
+  // сервис сбрасывает слушателя на шагах калибровки и записи — «речь кончилась» могло не прийти
+  const closeDialog = () => { setDialog(null); setBusy(null); setListening(false); gate.clear(); };
 
   const toggle = (v: boolean) => { setOpen(v); lsSet(OPEN_KEY, v ? 'open' : null); };
 
@@ -116,6 +161,7 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
     setMicError(null);
     if (!on) {
       dispatcher.cancel(); // ответ модели, пришедший после выключения, не звучит и не исполняется
+      gate.clear();
       setDialog(null);
       setBusy(null);
       setListening(false);
@@ -133,9 +179,9 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
   // сообщения сервиса
   useEffect(() => {
     const offs = [
-      client.on('ready', (m) => setReady({ voices: m.voices ?? [], roles: m.roles, recordText: m.record_text ?? '' })),
+      client.on('ready', (m) => setReady({ voices: m.voices ?? [], roles: m.roles, recordText: m.record_text ?? '', aec: m.aec === true })),
       client.on('level', (m) => setLevel({ p: m.p, busy: m.busy })),
-      client.on('speech', (m) => setListening(m.state === 'start')),
+      client.on('speech', (m) => { setListening(m.state === 'start'); gate.speech(m.state === 'start'); }),
       client.on('settings', (m) => setCfg({
         vad: m.vad, barge_vad: m.barge_vad, barge_ms: m.barge_ms, end_ms: m.end_ms, barge_mode: m.barge_mode === 'word' ? 'word' : 'voice',
       })),
@@ -164,6 +210,7 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
         if (previewIds.current.delete(id)) return;
         speakingIds.current.delete(id);
         syncSpeaking();
+        if (quietIds.current.delete(id)) return; // заготовленная фраза о модели окно разговора не открывает
         dispatcher.spoke();
         setSpokeAt(Date.now());
       }),
@@ -172,16 +219,17 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
   }, [client, dispatcher]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // обрыв связи: звук остановлен — штаб больше не говорит
-  useEffect(() => { if (status !== 'ready') { speakingIds.current.clear(); syncSpeaking(); setListening(false); } }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (status !== 'ready') { speakingIds.current.clear(); syncSpeaking(); setListening(false); gate.clear(); } }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // часы окна разговора и «что можно сказать» (доступность действий меняется без событий)
-  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  // часы окна разговора и «что можно сказать» (доступность действий меняется без событий); фразы штаба не ждут
+  // конца речи вечно
+  useEffect(() => { const t = setInterval(() => { setNow(Date.now()); gate.tick(); }, 1000); return () => clearInterval(t); }, [gate]);
 
   // голосовые действия «калибровка» и «голоса»; звук — после первого действия человека
   useEffect(() => {
     const onOpen = (e: Event) => {
       const d = (e as CustomEvent).detail;
-      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { setDialog(d); toggle(true); }
+      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { openDialog(d); toggle(true); }
     };
     // «Штаб, отбой» (разборщик) — выключение; ответ штаба договаривается
     const onPower = (e: Event) => {
@@ -201,17 +249,25 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
     };
   }, [client]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const applySettings = (p: Partial<VoiceSettings>) => {
+  /** Регуляторы: в сервис и в сохранённые; calibrated — итог калибровки (запоминает подавление эха сервиса). */
+  const applySettings = (p: Partial<VoiceSettings>, calibrated = false) => {
     const next = { ...cfg, ...p };
     setCfg(next);
-    lsSet(SETTINGS_KEY, JSON.stringify(next));
+    persist(storeSettings(lsGet(SETTINGS_KEY), next, { aec: ready?.aec, calibrated }));
     client.settings(p);
   };
+  /** «По умолчанию»: регуляторы сервиса, а режим перебивания — тот, что выбрала калибровка. */
   const resetSettings = () => {
-    lsSet(SETTINGS_KEY, null);
-    setCfg(DEFAULT_SETTINGS);
-    client.settings(DEFAULT_SETTINGS);
+    const r = resetStored(lsGet(SETTINGS_KEY));
+    persist(r.stored);
+    setCfg(r.cfg);
+    client.settings(r.cfg);
   };
+
+  // подавление эха в сервисе не то, при котором сняты регуляторы: до новой калибровки перебивание — «словом»
+  // (при громких динамиках «голосом» штаб перебивал бы сам себя); сохранённое не меняется
+  const aec = live0(enabled, status) ? aecChange(saved, ready?.aec) : null;
+  useEffect(() => { if (aec && cfg.barge_mode !== 'word') client.settings({ barge_mode: 'word' }); }, [aec, cfg.barge_mode, client]);
 
   const st = panelState({
     status, enabled, micError, busy, speaking, listening, thinking,
@@ -258,6 +314,12 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
               <button onClick={startMic}>Попробовать снова</button>
             </div>
           )}
+          {aec && (
+            <div className="vp-mic vp-aec" role="status">
+              <p>{aecHint(aec)}</p>
+              <button onClick={() => openDialog('calibrate')} disabled={!live}>Калибровать</button>
+            </div>
+          )}
           {enabled && <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />}
           {hint && <p className="vp-hint stop" role="status">{hint}</p>}
           {enabled && <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
@@ -290,8 +352,8 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
           </details>}
 
           <div className="vp-btns">
-            <button onClick={() => setDialog('calibrate')} disabled={!live}>Калибровка</button>
-            <button onClick={() => setDialog('voices')} disabled={!live}>Голоса</button>
+            <button onClick={() => openDialog('calibrate')} disabled={!live}>Калибровка</button>
+            <button onClick={() => openDialog('voices')} disabled={!live}>Голоса</button>
           </div>
 
           <details className="vp-tune">
@@ -300,7 +362,8 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
             {/* режим выбирает калибровка; «словом» — когда динамики слышно громко */}
             <div className="vp-mode" role="group" aria-label="Перебивать">
               <span>Перебивать:</span>
-              <button className={word ? '' : 'on'} aria-pressed={!word} onClick={() => applySettings({ barge_mode: 'voice' })}>голосом</button>
+              <button className={word ? '' : 'on'} aria-pressed={!word} disabled={!!aec} title={aec ? 'Сначала пройдите калибровку' : undefined}
+                onClick={() => applySettings({ barge_mode: 'voice' })}>голосом</button>
               <button className={word ? 'on' : ''} aria-pressed={word} onClick={() => applySettings({ barge_mode: 'word' })}>словом</button>
             </div>
             <p className="vp-note">{word ? 'Штаб замолкает, когда вы скажете «Стоп» или «Штаб…».' : 'Штаб замолкает, когда вы громко заговорите.'}</p>
@@ -318,11 +381,11 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
       )}
 
       {dialog === 'calibrate' && (
-        <Calibration client={client} setBusy={setBusy} onClose={() => { setDialog(null); setBusy(null); }}
-          onResult={(c) => applySettings(c)} />
+        <Calibration client={client} setBusy={setBusy} onClose={closeDialog}
+          onResult={(c) => applySettings(c, true)} />
       )}
       {dialog === 'voices' && (
-        <Voices client={client} ready={ready} setBusy={setBusy} onClose={() => { setDialog(null); setBusy(null); }}
+        <Voices client={client} ready={ready} setBusy={setBusy} onClose={closeDialog}
           previewId={() => { const id = client.newSayId(); previewIds.current.add(id); return id; }} />
       )}
     </div>
@@ -330,6 +393,8 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
 }
 
 const pct = (x: number) => `${Math.round(x * 100)} %`;
+/** Голос включён и сервис на связи (подсказка о подавлении эха — только тогда). */
+const live0 = (enabled: boolean, status: VoiceStatus) => enabled && status === 'ready';
 
 /** Уровень речи: заливка — насколько уверенно звучит речь; отметки — откуда слышу вас и откуда вы перебиваете штаб. */
 function Level({ p, busy, cfg }: { p: number; busy: boolean; cfg: VoiceSettings }) {

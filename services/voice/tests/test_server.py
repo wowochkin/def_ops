@@ -654,3 +654,51 @@ def test_word_mode_preview_not_barged(make_client):
     until(ws, "utterance", seen)
     assert not any(isinstance(m, dict) and m["type"] == "barge" for m in seen)
     ws.close()
+
+
+def test_say_refused_during_calibration(make_client):
+    # калибровка идёт (от первого шага до finish/cancel, и между шагами) — фразы разговора не звучат: say-done stopped
+    # без звука; звук калибровки (id 0) — как прежде
+    ws, _ = connect(make_client())
+    ws.send_text(json.dumps({"type": "calib", "step": "noise", "sec": 1}))
+    until(ws, "calib_rec")
+    ws.send_text(json.dumps({"type": "say", "id": 4, "role": "chief", "text": "Связь с моделью прервалась, повторяю запрос."}))
+    seen = []
+    assert until(ws, "say-done", seen) == {"type": "say-done", "id": 4, "stopped": True}
+    assert not any(isinstance(m, bytes) for m in seen)
+    send_audio(ws, silence(1.2))
+    until(ws, "calib_step")
+    # между шагами калибровка всё ещё идёт
+    ws.send_text(json.dumps({"type": "say", "id": 5, "role": "umpire", "text": "Итоги хода."}))
+    seen = []
+    assert until(ws, "say-done", seen) == {"type": "say-done", "id": 5, "stopped": True}
+    assert not any(isinstance(m, bytes) for m in seen)
+    ws.send_text(json.dumps({"type": "calib", "step": "echo"}))
+    seen = []
+    until(ws, "calib_rec", seen)
+    assert any(isinstance(m, bytes) and audio_header(m)[0] == 0 for m in seen)  # звук калибровки звучит
+    ws.send_text(json.dumps({"type": "calib", "step": "cancel"}))
+    # калибровку закрыли — фразы снова звучат
+    ws.send_text(json.dumps({"type": "say", "id": 6, "role": "chief", "text": "Есть."}))
+    seen = []
+    assert until(ws, "say-done", seen) == {"type": "say-done", "id": 6}
+    assert any(isinstance(m, bytes) and audio_header(m)[0] == 6 for m in seen)
+    ws.close()
+
+
+def test_say_refused_while_recording_voice(make_client):
+    ws, _ = connect(make_client([RECORD_TEXT]))
+    ws.send_text(json.dumps({"type": "voice", "op": "record-start"}))
+    until(ws, "voice_recording")
+    ws.send_text(json.dumps({"type": "say", "id": 8, "role": "chief", "text": "Открываю переигровку."}))
+    seen = []
+    assert until(ws, "say-done", seen) == {"type": "say-done", "id": 8, "stopped": True}
+    assert not any(isinstance(m, bytes) for m in seen)
+    ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
+    until(ws, "voice_discarded")
+    # проба голоса работает
+    ws.send_text(json.dumps({"type": "voice", "op": "preview", "id": 9, "voice_id": "zhukov-10s"}))
+    seen = []
+    until(ws, "say-done", seen)
+    assert any(isinstance(m, bytes) and audio_header(m)[0] == 9 for m in seen)
+    ws.close()
