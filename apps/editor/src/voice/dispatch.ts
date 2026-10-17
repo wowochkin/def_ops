@@ -110,7 +110,7 @@ export class Dispatcher {
       await act('shell.open', { section: sec });
       return true;
     }
-    if (/^что (?:я )?(?:могу|можно) (?:сказать|говорить)|^что умеешь|^помощь$/.test(rest)) {
+    if (/^(?:что (?:я )?(?:могу|можно) (?:сказать|говорить)|что (?:я )?(?:могу|можно)$|что (?:ты )?умеешь|помощь$)/.test(rest)) {
       this.opts.say(helpText(this.opts.section()));
       return true;
     }

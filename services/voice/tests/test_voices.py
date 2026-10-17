@@ -133,3 +133,10 @@ def test_check_recording_ok_trims_and_keeps_pause():
     # конец — тишина (естественная пауза), начало — уже речь
     assert np.max(np.abs(r["audio"][-int(0.3 * SR):])) < 1e-3
     assert np.max(np.abs(r["audio"][: int(0.1 * SR)])) > 0.05
+
+
+def test_seed_names_in_russian():
+    from voices import _seed_name
+    assert _seed_name("zhukov-10s") == "Жуков, 10 с"
+    assert _seed_name("zhukov-14s-raw") == "Жуков, 14 с (без обработки)"
+    assert _seed_name("zhukov-14s-dfn") == "Жуков, 14 с (с шумоподавлением)"

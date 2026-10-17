@@ -54,10 +54,15 @@ def _slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")[:40] or "golos"
 
 
+# варианты образцов стенда (prepare_ref.sh) — словами для интерфейса
+_SEED_VARIANT = {"raw": "без обработки", "dfn": "с шумоподавлением"}
+
+
 def _seed_name(vid: str) -> str:
     m = re.fullmatch(r"zhukov-(\d+)s(?:-(.+))?", vid)
     if m:
-        return f"Жуков, {m.group(1)} с" + (f" ({m.group(2)})" if m.group(2) else "")
+        v = m.group(2)
+        return f"Жуков, {m.group(1)} с" + (f" ({_SEED_VARIANT.get(v, v)})" if v else "")
     return vid
 
 

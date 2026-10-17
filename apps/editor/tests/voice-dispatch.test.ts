@@ -85,6 +85,14 @@ describe('разборщик', () => {
     expect((said[0].match(/фраза|ещё/g) ?? []).length).toBeLessThanOrEqual(7);
     expect(said[0]).toMatch(/фраза 0/);
   });
+  it('подсказка панели «Штаб, что я могу?» и другие слова справки', async () => {
+    reg({ id: 'e.x', section: 'editor', say: ['штаб, фраза икс'] });
+    const d = mk();
+    const phrases = ['Штаб, что я могу?', 'штаб, что ты умеешь?', 'штаб, что умеешь', 'штаб, что можно сказать?', 'штаб, помощь'];
+    for (const [i, p] of phrases.entries()) expect(await d.utterance(p, i + 1)).toBe('done');
+    expect(said).toHaveLength(phrases.length);
+    for (const t of said) expect(t).toMatch(/^Можно сказать: .*«штаб, фраза икс»/);
+  });
   it('не понял — подсказка с тремя примерами', async () => {
     const d = mk();
     expect(await d.utterance('штаб, абракадабра', 1)).toBe('unknown');
