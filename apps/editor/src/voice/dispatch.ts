@@ -63,12 +63,18 @@ function fuzzySection(w: string): { id: string; canon: string | null } | null {
   let best: { id: string; canon: string; d: number } | null = null;
   for (const [id, forms] of Object.entries(FORMS)) {
     for (const f of forms) {
+      if (w[0] !== f[0]) continue;
       const d = lev(w, f);
       if (d <= Math.min(tolerance(Math.max(w.length, f.length)), tolerance(f.length)) && (!best || d < best.d)) best = { id, canon: forms[0], d };
     }
   }
   return best;
 }
+
+/** Фраза, которую система умеет разбирать без реестра: нужна, чтобы нестрогое обращение не принимало обычные слова. */
+const isCommand = (rest: string) =>
+  (OPEN_VERB.test(rest.split(' ')[0]) && !!sectionByWord(rest.split(' ').slice(1).find((w) => !PREP.has(w)) ?? '')) || (rest.split(' ').length <= 2 && !!sectionByWord(rest.split(' ')[0])) ||
+  /^(?:отбой|(?:выключи|выключить|отключи|отключить) голос|что (?:я )?(?:могу|можно)|что (?:ты )?умеешь|помощь|калибровк\p{L}*|голоса?|стоп|тихо|хватит|замолчи)(?: |$)/u.test(rest);
 
 const OPEN_VERB = /^(?:открой|открыть|покажи|показать|перейди|перейти)$/;
 const PREP = new Set(['в', 'на', 'к']);
@@ -82,12 +88,14 @@ export function normalizeCommand(text: string): { text: string; fixes: string[] 
   const words = norm(text).split(' ').filter(Boolean);
   const fixes: string[] = [];
   let i = 0;
+  let fuzzy = false;
   if (words.length) {
     const w = words[0];
     if (w === 'штаб') i = 1;
     else if (words.length > 1 && w.length >= 3 && w.length <= 5 && lev(w, 'штаб') === 1 && !sectionByWord(w)) {
       fixes.push(`${w} → штаб`);
       words[0] = 'штаб';
+      fuzzy = true;
       i = 1;
     } else if (/^товарищ$/.test(w) && /^(?:полковник|генерал)$/.test(words[1] ?? '')) i = 2;
   }
@@ -113,6 +121,8 @@ export function normalizeCommand(text: string): { text: string; fixes: string[] 
       }
     }
   }
+  // нестрогое обращение засчитывается, только если остаток — команда; иначе это обычная речь
+  if (fuzzy && !isCommand(words.slice(i).join(' '))) return { text: norm(text), fixes: [] };
   return { text: words.join(' '), fixes };
 }
 
@@ -147,28 +157,35 @@ export class Dispatcher {
    */
   lastFixes: string[] = [];
   lastUnderstood = '';
+  private corrections = new Map<number, { fixes: string[]; understood: string }>();
+  /**
+   * Поправки реплики с номером id — без гонок между репликами (читать можно в любой момент после await).
+   * Пусто, если реплика проигнорирована или распознана точно. lastFixes/lastUnderstood — то же для последней реплики.
+   */
+  correction(id: number): { fixes: string[]; understood: string } { return this.corrections.get(id) ?? { fixes: [], understood: '' }; }
   constructor(private opts: { now(): number; say(text: string): void; section(): string; stop?(): void }) {}
 
   /** Штаб договорил (событие say-done) — открывается окно разговора. */
   spoke(): void { this.spokeAt = this.opts.now(); }
 
   async utterance(text: string, id: number, continues?: number): Promise<'ignored' | 'done' | 'unknown'> {
-    let full = text;
+    let raw = text;
     if (continues !== undefined) {
       const prev = this.memory.get(continues);
       this.memory.delete(continues);
       // исполненная реплика не повторяется: новая обрабатывается сама по себе
-      if (prev && !prev.ran && !norm(text).startsWith(norm(prev.text))) full = `${prev.text} ${text}`;
+      if (prev && !prev.ran && !norm(text).startsWith(norm(prev.text))) raw = `${prev.text} ${text}`;
     }
-    const fixed = normalizeCommand(full);
+    const fixed = normalizeCommand(raw);
+    const addr = addressed(fixed.text);
+    const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000;
+    if (!addr && !inWindow) { this.lastFixes = []; this.lastUnderstood = ''; return 'ignored'; }
     this.lastFixes = fixed.fixes;
     this.lastUnderstood = fixed.text;
-    full = fixed.text;
-    const addr = addressed(full);
-    const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000;
-    if (!addr && !inWindow) return 'ignored';
-    const rest = addr ? addr.rest : norm(full);
-    const rec = { text: full, ran: false };
+    this.corrections.set(id, { fixes: fixed.fixes, understood: fixed.text });
+    if (this.corrections.size > 20) this.corrections.delete(this.corrections.keys().next().value as number);
+    const rest = addr ? addr.rest : fixed.text;
+    const rec = { text: raw, ran: false };
     this.memory.set(id, rec);
     if (this.memory.size > 20) this.memory.delete(this.memory.keys().next().value as number);
     try {

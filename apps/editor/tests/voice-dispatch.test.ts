@@ -204,3 +204,36 @@ describe('отбой', () => {
     expect(said).toEqual(['Голос выключен. Включить — кнопкой на панели.']);
   });
 });
+
+describe('огрехи: исправление 1', () => {
+  it('нестрогое обращение без команды — не обращение', async () => {
+    const d = mk();
+    for (const [i, p] of ['Штат сотрудников увеличили', 'Штаба не будет до вечера', 'Штабс-капитан пришёл', 'Таб открой', 'Стаб, привет'].entries()) {
+      expect(await d.utterance(p, i + 1)).toBe('ignored');
+      expect(d.lastFixes).toEqual([]);
+      expect(d.correction(i + 1)).toEqual({ fixes: [], understood: '' });
+    }
+    expect(opened).toEqual([]);
+    expect(said).toEqual([]);
+  });
+  it('нестрогое обращение с командой работает', async () => {
+    const d = mk();
+    expect(await d.utterance('штап, переигровка', 1)).toBe('done');
+    expect(await d.utterance('шаб открой карты', 2)).toBe('done');
+    expect(await d.utterance('штап, что я могу?', 3)).toBe('done');
+    expect(opened).toEqual([{ section: 'replay' }, { section: 'maps' }]);
+    expect(d.correction(2).fixes).toEqual(['шаб → штаб']);
+    expect(d.correction(2).understood).toBe('штаб открой карты');
+  });
+  it('склейка с поправленной репликой не дублируется', async () => {
+    const d = mk();
+    expect(await d.utterance('штап открой', 1)).toBe('unknown');
+    expect(await d.utterance('штап открой знаки', 2, 1)).toBe('done');
+    expect(opened).toEqual([{ section: 'library' }]);
+  });
+  it('разделы: первая буква должна совпасть', async () => {
+    const d = mk();
+    for (const [i, p] of ['Штаб, парты', 'Штаб, карта местности', 'Штаб, знак', 'Штаб, 5'].entries()) await d.utterance(p, i + 1);
+    expect(opened).toEqual([]);
+  });
+});
