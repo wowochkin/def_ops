@@ -140,9 +140,13 @@ def stereo(mic: np.ndarray, ref: np.ndarray) -> list[bytes]:
 
 @pytest.fixture
 def client(tmp_path):
-    def make(*extra):
+    def make(*extra, script=None):
         args = ["--data", str(tmp_path / "data"), "--seed-refs", str(make_seed(tmp_path / "seed")), "--fake",
                 "--end-ms", "400", *extra]
+        if script is not None:
+            f = tmp_path / "script.txt"
+            f.write_text("\n".join(script) + "\n", encoding="utf-8")
+            args += ["--fake-script", str(f)]
         return TestClient(build_app(args))
     return make
 
@@ -260,4 +264,53 @@ def test_calibration_without_aec_word_mode(client):
     assert r["stats"][ECHO_STAT] > 0.9, r
     r = calibrate_over_speakers(ws, louder_db=6)
     assert r["cfg"]["barge_mode"] == "word", r
+    ws.close()
+
+
+# ------------------------------------------------------------ перебивание словом при подавлении эха
+
+CHIEF_STOPWORDS = "Хватит ждать, стоп машина на переправе, наступаем на рассвете всеми силами армии и фронта."
+
+
+def word_session(c, chief_text: str):
+    """Сессия в режиме «словом», штаб говорит (played не приходит — говорит до конца проверки)."""
+    ws, ready = session(c)
+    assert ready["aec"] is True
+    ws.send_text(json.dumps({"type": "settings", "barge_mode": "word"}))
+    assert until(ws, "settings")["barge_mode"] == "word"
+    ws.send_text(json.dumps({"type": "say", "id": 5, "role": "chief", "text": chief_text}))
+    while not isinstance(recv(ws), bytes):  # звук пошёл
+        pass
+    return ws
+
+
+@needs_aec
+def test_word_mode_aec_echo_with_stop_words_does_not_barge(client):
+    """Подавление эха не мешает режиму «словом»: эхо фразы штаба (в ней «хватит» и «стоп») — не перебивание и не
+    реплика, ни после подавления, ни если что-то из него всё же распозналось бы."""
+    c = client(script=["{эхо}"] * 50)
+    ws = word_session(c, CHIEF_STOPWORDS)
+    chief = voice(6, 120, 1)
+    for b in stereo(room(chief), chief):
+        ws.send_bytes(b)
+    seen = drain(ws, ("barge", "utterance", "echo"))
+    assert seen == []
+    ws.close()
+
+
+@needs_aec
+def test_word_mode_aec_stop_over_chief_barges(client):
+    """Человек говорит «стоп» поверх штаба: речь проходит подавление эха, кусок распознаётся — штаб обрывается."""
+    c = client(script=["стоп"] * 50)
+    ws = word_session(c, CHIEF_STOPWORDS)
+    chief = voice(6, 120, 1)
+    echo = room(chief)
+    for b in stereo(echo[: 3 * SR], chief[: 3 * SR]):  # сначала только эхо: подавление привязалось к опоре
+        ws.send_bytes(b)
+    assert drain(ws, ("barge", "utterance")) == []
+    human = np.concatenate([voice(1.2, 190, 11), np.zeros(int(1.8 * SR), np.float32)])
+    for b in stereo(echo[3 * SR:] + human, chief[3 * SR:]):
+        ws.send_bytes(b)
+    seen = drain(ws, ("barge", "utterance"))
+    assert {"type": "barge", "id": 5} in seen, seen
     ws.close()
