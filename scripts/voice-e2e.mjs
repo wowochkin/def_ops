@@ -1,7 +1,7 @@
 // Сквозная проверка панели голоса: поддельный голосовой сервис (--fake), сервер разработки окна (vite)
 // и Chromium с поддельным микрофоном (WAV с «речью» — всплесками звука — и паузами).
 //
-//   node scripts/voice-e2e.mjs [--shots DIR] [--python PATH] [--url http://localhost:5173] [--no-stub]
+//   node scripts/voice-e2e.mjs [--shots DIR] [--python PATH] [--url http://localhost:5173] [--no-stub] [--aec on|off]
 //
 // Шлюза нет: по умолчанию ответ /api/voice подставляется («ready»); --no-stub — без подстановки (шлюз молчит,
 // сервис «запущен вручную» — окно должно подключиться само).
@@ -10,6 +10,10 @@
 // раздел «Переигровка»; «передайте в штаб армии» — в ленте «не мне»; «штаб, что я могу сказать» → ответ
 // с примерами; дальше — текст для записи голоса (его же «распознаёт» проверка записи). Перебивание словом —
 // на перезапущенном сервисе: «штаб, что я могу сказать» (штаб отвечает), затем «стоп» (его обрывает).
+// Подавление эха — как решит сервис (--aec передаётся ему; по умолчанию — есть ли пакет livekit): с ним окно берёт
+// микрофон без обработки браузера и шлёт кадры с опорой (в ней — голос штаба), без него — кадры только микрофона.
+// Перебивание словом проверяется на сервисе с --aec off: у поддельного микрофона нет эха, и AEC3, ещё не привязавшись
+// к опоре, глушит его «речь», пока штаб говорит; заодно окно должно взять микрофон заново — с обработкой браузера.
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки и голосов. Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
@@ -24,6 +28,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const SHOTS = arg('--shots') ? resolve(arg('--shots')) : null;
 const STUB = !process.argv.includes('--no-stub');
+const AEC = arg('--aec');
 const CHROME = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const PY = arg('--python') || process.env.VOICE_PYTHON
   || (existsSync(join(ROOT, 'services/voice/.venv/bin/python')) ? join(ROOT, 'services/voice/.venv/bin/python') : 'python3');
@@ -136,8 +141,9 @@ if (!existsSync(join(BENCH, 'ref/zhukov-10s.wav'))) {
 
 const vport = await freePort();
 let voice = null;
-async function startVoice(lines = script) {
-  voice = run(PY, ['server.py', '--fake', '--fake-script', lines, '--port', String(vport), '--data', join(tmp, 'data'), '--seed-refs', seed],
+async function startVoice(lines = script, aec = AEC) {
+  voice = run(PY, ['server.py', '--fake', '--fake-script', lines, '--port', String(vport), '--data', join(tmp, 'data'), '--seed-refs', seed,
+    ...(aec ? ['--aec', aec] : [])],
     { cwd: join(ROOT, 'services/voice') });
   await waitHttp(`http://127.0.0.1:${vport}/health`, 30000, voice);
 }
@@ -176,7 +182,9 @@ await ctx.addInitScript((url) => {
 // наблюдение за окном (на каждой загрузке): сообщения сервиса, звук по номерам фраз (кусок звука сервиса →
 // источник звука окна), дорожки микрофона и сколько раз его просили
 await ctx.addInitScript(() => {
-  const e2e = { msgs: [], sent: [], sources: [], tracks: [], gum: 0 };
+  // frames — кадры микрофона: сколько каких (mono — только микрофон, ref — с опорой), refLoud — кадров, где в опоре
+  // громкий звук (голос штаба); gumAudio — что просили у браузера для микрофона
+  const e2e = { msgs: [], sent: [], sources: [], tracks: [], gum: 0, gumAudio: [], frames: { mono: 0, ref: 0, refLoud: 0 } };
   window.__e2e = e2e;
   let cur = null;
   const Ws = window.WebSocket;
@@ -191,6 +199,14 @@ await ctx.addInitScript(() => {
     get onmessage() { return super.onmessage; }
     send(d) {
       if (typeof d === 'string') { try { e2e.sent.push(JSON.parse(d)); } catch { /* */ } }
+      else if (d.byteLength % 2 === 0) e2e.frames.mono++;
+      else {
+        e2e.frames.ref++;
+        const v = new DataView(d), n = (d.byteLength - 1) / 4;
+        let peak = 0;
+        for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(v.getInt16(1 + 2 * n + 2 * i, true)));
+        if (peak > 3000) e2e.frames.refLoud++;
+      }
       return super.send(d);
     }
   };
@@ -211,7 +227,7 @@ await ctx.addInitScript(() => {
   const md = navigator.mediaDevices;
   if (md?.getUserMedia) {
     const gum = md.getUserMedia.bind(md);
-    md.getUserMedia = async (c) => { e2e.gum++; const st = await gum(c); e2e.tracks.push(...st.getTracks()); return st; };
+    md.getUserMedia = async (c) => { e2e.gum++; e2e.gumAudio.push(c?.audio); const st = await gum(c); e2e.tracks.push(...st.getTracks()); return st; };
   }
   e2e.trackStates = () => e2e.tracks.map((t) => t.readyState);
 });
@@ -289,6 +305,22 @@ await check('«штаб, что я могу сказать» → ответ с �
   await panel.locator('.vp-item.chief', { hasText: 'Можно сказать' }).waitFor({ timeout: 30000 });
 });
 
+await check('подавление эха: захват микрофона и кадры — по режиму сервиса', async () => {
+  const st = await page.evaluate(() => ({ ready: window.__e2e.msgs.find((m) => m.type === 'ready'), audio: window.__e2e.gumAudio.at(-1), frames: window.__e2e.frames }));
+  const aec = st.ready?.aec === true;
+  if (AEC && aec !== (AEC === 'on')) throw new Error(`сервис с --aec ${AEC} сказал aec: ${st.ready?.aec}`);
+  const raw = st.audio && st.audio.echoCancellation === false && st.audio.noiseSuppression === false && st.audio.autoGainControl === false;
+  const proc = st.audio && st.audio.echoCancellation === true;
+  if (aec ? !raw : !proc) throw new Error(`микрофон взят с ${JSON.stringify(st.audio)} при aec: ${aec}`);
+  if (aec) {
+    if (!st.frames.ref) throw new Error(`нет кадров с опорой: ${JSON.stringify(st.frames)}`);
+    await page.waitForFunction(() => window.__e2e.frames.refLoud > 0, null, { timeout: 20000, polling: 50 })
+      .catch(async () => { throw new Error(`в опоре нет голоса штаба, хотя он отвечал: ${JSON.stringify(await page.evaluate(() => window.__e2e.frames))}`); });
+    st.frames = await page.evaluate(() => window.__e2e.frames);
+  } else if (st.frames.ref || !st.frames.mono) throw new Error(`без подавления эха кадры ${JSON.stringify(st.frames)}`);
+  return aec ? `с подавлением: кадров с опорой ${st.frames.ref}, с голосом штаба ${st.frames.refLoud}` : `без подавления: кадров ${st.frames.mono}`;
+});
+
 await check('«Что можно сказать» свёрнуто, по щелчку — примеры из реестра', async () => {
   const ex = panel.locator('.vp-can', { hasText: 'штаб, открой переигровку' });
   if (await ex.isVisible()) throw new Error('раскрыто без щелчка');
@@ -358,7 +390,8 @@ await check('калибровка: обрыв связи посреди шага
 await check('калибровка: четыре шага → «Регуляторы выставлены»', async () => {
   const dlg = calibDlg;
   await calibSteps(1, 4);
-  await dlg.getByText('Регуляторы выставлены').waitFor({ timeout: 60000 });
+  await dlg.getByText('Регуляторы выставлены').waitFor({ timeout: 60000 })
+    .catch(async () => { throw new Error(`нет итога калибровки: «${(await dlg.innerText()).replace(/\s+/g, ' ').slice(0, 300)}»`); });
   await plainWords(dlg, 'окно калибровки');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('def_ops.voice.settings') || 'null'));
   if (!saved || typeof saved.vad !== 'number') throw new Error('регуляторы не сохранены в def_ops.voice.settings');
@@ -593,7 +626,8 @@ await check('тонкая настройка: «Перебивать: голос
 
 await check('режим «словом»: пока штаб говорит — «Перебить: скажите «Стоп»», «стоп» его обрывает', async () => {
   await stopVoice();
-  await startVoice(script3);
+  const gum0 = await page.evaluate(() => window.__e2e.gum);
+  await startVoice(script3, 'off');
   const hint = panel.locator('.vp-hint.stop', { hasText: 'Перебить: скажите «Стоп»' });
   await hint.waitFor({ timeout: 40000 });
   await panel.locator('.vp-state', { hasText: 'Говорит начальник штаба' }).waitFor({ timeout: 1000 });
@@ -601,6 +635,12 @@ await check('режим «словом»: пока штаб говорит — �
   await page.waitForFunction(() => window.__e2e.msgs.some((m) => m.type === 'barge'), null, { timeout: 20000 })
     .catch(() => { throw new Error('«стоп» не оборвал штаб'); });
   await hint.waitFor({ state: 'hidden', timeout: 2000 });
+  const st = await page.evaluate(() => ({ audio: window.__e2e.gumAudio.at(-1), gum: window.__e2e.gum, frames: { ...window.__e2e.frames } }));
+  if (st.audio?.echoCancellation !== true) throw new Error(`сервис без подавления эха, а микрофон взят с ${JSON.stringify(st.audio)}`);
+  await page.waitForTimeout(500);
+  const later = await page.evaluate(() => window.__e2e.frames);
+  if (later.ref !== st.frames.ref || later.mono <= st.frames.mono) throw new Error(`кадры после перезапуска без подавления эха: ${JSON.stringify(later)}`);
+  return st.gum > gum0 ? 'микрофон переоткрыт с обработкой браузера' : 'микрофон уже был с обработкой браузера';
 });
 
 await check('в окне нет ошибок JavaScript', async () => {

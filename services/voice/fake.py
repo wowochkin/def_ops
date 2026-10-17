@@ -5,6 +5,7 @@
 или с удалённым файлом образца — ошибка, как у настоящего)."""
 from __future__ import annotations
 
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Iterator
@@ -28,6 +29,7 @@ class FakeModels:
         if script is not None:
             self.script = [s.strip() for s in Path(script).read_text(encoding="utf-8").splitlines() if s.strip()]
         self.vad_resets = 0
+        self.vad_log: deque[float] = deque(maxlen=2000)  # уверенность по последним кадрам — что дошло до VAD
         self.transcribed = 0  # сколько раз распознавали (и куски по ходу речи)
         self.last_tts = ""
         self.forgotten: list[Path] = []
@@ -37,7 +39,9 @@ class FakeModels:
 
     def vad_prob(self, frame: np.ndarray) -> float:
         rms = float(np.sqrt(np.mean(np.square(frame)))) if len(frame) else 0.0
-        return round(min(1.0, rms * 10), 3)
+        p = round(min(1.0, rms * 10), 3)
+        self.vad_log.append(p)
+        return p
 
     def vad_reset(self):
         self.vad_resets += 1

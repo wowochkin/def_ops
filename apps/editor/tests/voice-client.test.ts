@@ -1,5 +1,5 @@
 /** VoiceClient без браузера: разбор сообщений сервиса (звук и связь подменены). */
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { VoiceClient } from '../src/voice/client';
 
 /** Клиент с «открытой» связью: что он шлёт сервису — в sent. */
@@ -40,5 +40,60 @@ describe('VoiceClient', () => {
     expect(x.sources).toEqual([]);
     expect(sent).toEqual([]);
     expect(played).toEqual([]);
+  });
+
+  describe('подавление эха в сервисе (ready aec)', () => {
+    afterEach(() => { vi.unstubAllGlobals(); });
+
+    /** Подменённый микрофон: что просили у браузера — в asked; дорожки — с отметкой остановки. */
+    function fakeMic() {
+      const asked: MediaTrackConstraints[] = [];
+      const tracks: { stopped: boolean }[] = [];
+      const getUserMedia = async (c: { audio: MediaTrackConstraints }) => {
+        asked.push(c.audio);
+        const t = { stopped: false, stop() { t.stopped = true; } };
+        tracks.push(t);
+        return { getTracks: () => [t] };
+      };
+      vi.stubGlobal('navigator', { mediaDevices: { getUserMedia } });
+      return { asked, tracks };
+    }
+    const node = () => ({ disconnect() {}, connect() {} });
+
+    it('сервис сказал aec: true — микрофон открывается заново без обработки браузера', async () => {
+      const { asked, tracks } = fakeMic();
+      const { c, x, msg } = mk();
+      const old = { stopped: false, stop() { old.stopped = true; } };
+      x.stream = { getTracks: () => [old] };
+      x.streamAec = false;
+      x.ctx = { createMediaStreamSource: node, createBiquadFilter: () => ({ ...node(), type: '', frequency: { value: 0 }, Q: { value: 0 } }) };
+      x.node = { ...node(), port: { postMessage() {} } };
+      msg({ type: 'ready', voices: [], roles: { chief: 'a', umpire: 'a' }, loaded: true, aec: true });
+      await vi.waitFor(() => expect(asked).toHaveLength(1));
+      expect(asked[0]).toMatchObject({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
+      await vi.waitFor(() => expect(old.stopped).toBe(true));
+      expect(tracks[0].stopped).toBe(false);
+      expect(x.streamAec).toBe(true);
+      expect(c.status).toBe('ready');
+    });
+
+    it('aec не изменился — микрофон не трогается', async () => {
+      const { asked } = fakeMic();
+      const { x, msg } = mk();
+      x.stream = { getTracks: () => [] };
+      x.streamAec = false;
+      msg({ type: 'ready', voices: [], roles: { chief: 'a', umpire: 'a' }, loaded: true });
+      await new Promise((r) => setTimeout(r, 10));
+      expect(asked).toEqual([]);
+    });
+
+    it('кадр ворклета: с опорой — двухканальный, без — только микрофон', () => {
+      const { x } = mk();
+      const sent: ArrayBuffer[] = [];
+      x.ws = { readyState: 1, send: (b: ArrayBuffer) => sent.push(b) };
+      x.onMic({ pcm: new Int16Array(512).buffer });
+      x.onMic({ pcm: new Int16Array(512).buffer, ref: new Int16Array(512).buffer });
+      expect(sent.map((b) => b.byteLength)).toEqual([1024, 2049]);
+    });
   });
 });

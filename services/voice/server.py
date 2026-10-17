@@ -3,10 +3,14 @@
 распознанными репликами и звуком фраз (протокол — спецификация голосового управления, раздел 2).
 
   python server.py --port 47645 --data DIR [--seed-refs DIR] [--fake] [--fake-script FILE]
-                   [--vad 0.5 --barge-vad 0.8 --barge-ms 300 --end-ms 400 --barge-mode voice|word]
+                   [--vad 0.5 --barge-vad 0.8 --barge-ms 300 --end-ms 400 --barge-mode voice|word] [--aec on|off]
 
 GET /health — {"state": "loading"|"ready"|"error", "error"?}; WS /ws — разговор. --fake — поддельные модели
-(fake.py) без MLX и torch: для тестов и сквозной проверки приложения."""
+(fake.py) без MLX и torch: для тестов и сквозной проверки приложения.
+
+Кадры микрофона (двоичные): int16 LE без заголовка — только микрофон; `[0x02][микрофон int16 × n][опора int16 × n]` —
+микрофон и звук, который окно в тот же миг отрисовало на вывод (опора подавления эха, aec.py). Окно шлёт второй
+вид, когда в `ready` сказано `aec: true`."""
 from __future__ import annotations
 
 import argparse
@@ -21,6 +25,7 @@ from pathlib import Path
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
+import aec
 from audio import FRAME, SR_IN, Listener, calibrate, is_stop_phrase, should_merge
 from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, pause_after
 from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, trim_silence, write_wav
@@ -38,6 +43,24 @@ WORD_CHUNK_S = 0.5  # перебивание словом: кусок речи �
 WORD_STEP_S = 0.25  # …и снова — по мере роста куска на столько
 WORD_WINDOW_S = 1.75  # распознаётся хвост куска не длиннее этого (стоп-слово — в новой речи, цена не растёт)
 BARGE_MODES = ("voice", "word")
+MIC_REF = 0x02  # первый байт кадра «микрофон + опора»; кадр только микрофона — чётной длины, без заголовка
+
+
+def aec_enabled(arg: str | None, available: bool) -> bool:
+    """--aec: не задан — подавление эха есть, если есть пакет; on без пакета — ошибка при запуске."""
+    if arg == "on" and not available:
+        raise SystemExit("--aec on: нет пакета livekit для подавления эха — поставьте его (setup.sh) или --aec off")
+    return available if arg is None else arg == "on"
+
+
+def parse_mic(b: bytes) -> tuple[np.ndarray, np.ndarray | None]:
+    """Кадр микрофона окна → (микрофон, опора или None), float32 −1…1."""
+    if len(b) % 2 == 0:
+        return np.frombuffer(b, "<i2").astype(np.float32) / 32768, None
+    if b[0] != MIC_REF or (len(b) - 1) % 4:
+        raise ValueError(f"непонятный кадр микрофона: {len(b)} байт, первый {b[0]}")
+    a = np.frombuffer(b, "<i2", offset=1).astype(np.float32) / 32768
+    return a[: len(a) // 2], a[len(a) // 2:]
 
 
 def parse_args(argv=None):
@@ -63,6 +86,8 @@ def parse_args(argv=None):
     ap.add_argument("--eos-extra", dest="eos_extra", type=int, default=1,
                     help="кадров (по 80 мс) договаривания после «конца» синтеза")
     ap.add_argument("--tail-fade-ms", dest="tail_fade_ms", type=int, default=10, help="затухание конца куска, мс")
+    ap.add_argument("--aec", choices=("on", "off"), default=None,
+                    help="подавление эха по звуку штаба (по умолчанию — on, если есть пакет livekit)")
     return ap.parse_args(argv)
 
 
@@ -71,6 +96,7 @@ class Service:
 
     def __init__(self, args):
         self.args = args
+        self.aec = aec_enabled(args.aec, aec.available())
         self.store = VoiceStore(Path(args.data), Path(args.seed_refs) if args.seed_refs else None)
         if args.fake:
             from fake import FakeModels
@@ -168,6 +194,7 @@ class Session:
         self.listener = Listener(self.cfg, self._vad, self._turn, max_silence_ms=a.max_silence_ms,
                                  turn_threshold=a.turn, min_speech_ms=a.min_speech_ms)
         self.buf = np.zeros(0, np.float32)
+        self.aec: aec.EchoCanceller | None = None  # одно на подключение — с первого кадра с опорой
         self.t_mic = 0.0  # часы микрофона, с: по числу пришедших отсчётов
         self.frames = 0
         # склейка реплик
@@ -218,8 +245,15 @@ class Session:
 
     # ------------------------------------------------------------ микрофон
 
-    async def on_audio(self, pcm: bytes):
-        self.buf = np.concatenate([self.buf, np.frombuffer(pcm, "<i2").astype(np.float32) / 32768])
+    async def on_audio(self, data: bytes):
+        """Кадр окна: с опорой и при включённом подавлении эха — микрофон без голоса штаба (и калибровка, и VAD, и
+        распознавание слышат уже его); без опоры или с --aec off — микрофон как есть."""
+        mic, ref = parse_mic(data)
+        if ref is not None and self.svc.aec:
+            if self.aec is None:
+                self.aec = aec.EchoCanceller(SR_IN)
+            mic = self.aec.process(mic, ref)
+        self.buf = np.concatenate([self.buf, mic])
         while len(self.buf) >= FRAME:
             frame, self.buf = self.buf[:FRAME], self.buf[FRAME:]
             self.t_mic += FRAME / SR_IN
@@ -663,7 +697,7 @@ def build_app(argv=None):
                 await s.send(type="error", text=f"модели не загрузились: {svc.error}")
             else:
                 await s.send(type="ready", voices=svc.store.list(), roles=svc.store.roles(), loaded=True,
-                             record_text=RECORD_TEXT, rate=svc.models.sample_rate)
+                             record_text=RECORD_TEXT, rate=svc.models.sample_rate, aec=svc.aec)
                 await s.send(type="settings", **s.cfg)
             while True:
                 msg = await sock.receive()

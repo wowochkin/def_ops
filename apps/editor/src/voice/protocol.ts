@@ -55,7 +55,7 @@ export interface VoiceCheck {
 
 /** Сервис → окно (JSON). */
 export type ServerMsg =
-  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number }
+  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number; aec?: boolean }
   | { type: 'level'; p: number; busy: boolean }
   | { type: 'speech'; state: 'start' | 'end' }
   | { type: 'utterance'; id: number; text: string; audio_s: number; stt_ms: number; continues?: number }
@@ -92,6 +92,35 @@ export function parseAudio(buf: ArrayBuffer): AudioChunk {
   const pcm = new Int16Array(n);
   for (let i = 0; i < n; i++) pcm[i] = v.getInt16(HEADER + i * 2, true);
   return { id, rate, pcm };
+}
+
+/** Первый байт кадра «микрофон + опора»: `[0x02][микрофон int16 LE][опора int16 LE]`, каналы одной длины. */
+export const MIC_REF = 0x02;
+
+/**
+ * Кадр микрофона окна → сервис. Без опоры — отсчёты int16 LE как есть (чётная длина, без заголовка). С опорой
+ * (сервис подавляет эхо, `ready.aec`) — `[MIC_REF][микрофон][опора]`: опора — звук, который в тот же миг ушёл
+ * в динамики, по отсчётам вровень с микрофоном.
+ */
+export function micFrame(mic: Int16Array, ref?: Int16Array): ArrayBuffer {
+  if (!ref) return mic.buffer.slice(mic.byteOffset, mic.byteOffset + mic.byteLength) as ArrayBuffer;
+  if (ref.length !== mic.length) throw new Error(`микрофон и опора разной длины: ${mic.length} и ${ref.length}`);
+  const buf = new ArrayBuffer(1 + mic.length * 4);
+  const v = new DataView(buf);
+  v.setUint8(0, MIC_REF);
+  for (let i = 0; i < mic.length; i++) v.setInt16(1 + i * 2, mic[i], true);
+  const o = 1 + mic.length * 2;
+  for (let i = 0; i < ref.length; i++) v.setInt16(o + i * 2, ref[i], true);
+  return buf;
+}
+
+/**
+ * Захват микрофона. Сервис подавляет эхо сам (`aec`) — обработка браузера выключена: его эхоподавление, шумоподавление
+ * и АРУ меняют эхо нелинейно, и подавление по опоре не сходится. Иначе — с обработкой браузера, как раньше.
+ */
+export function micConstraints(aec: boolean): MediaTrackConstraints {
+  const on = !aec;
+  return { echoCancellation: on, noiseSuppression: on, autoGainControl: on, channelCount: 1 };
 }
 
 export type WsState = 'open' | 'closed' | 'connecting';

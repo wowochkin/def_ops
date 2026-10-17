@@ -1,7 +1,7 @@
 // Связь окна с голосовым сервисом: микрофон (AudioWorklet), воспроизведение, WebSocket.
 // Все браузерные API — здесь; разбор протокола и состояние — в protocol.ts.
 import {
-  CancelledIds, VOICE_SAY_IDS, parseAudio, reconnectDelay, voiceStatus,
+  CancelledIds, VOICE_SAY_IDS, micConstraints, micFrame, parseAudio, reconnectDelay, voiceStatus,
   type CalibStep, type ClientMsg, type ServerMsg, type VoiceRole, type VoiceSettings, type VoiceStatus, type WsState,
 } from './protocol';
 
@@ -10,22 +10,56 @@ export { VOICE_SAY_IDS } from './protocol';
 const DEFAULT_URL = 'ws://127.0.0.1:47645/ws';
 const URL_KEY = 'def_ops.voice.url';
 
-/** Пересчёт микрофона в 16 кГц и кадры по 512 отсчётов (int16) — в AudioWorklet (как на стенде). */
+/**
+ * Пересчёт микрофона в 16 кГц и кадры по 512 отсчётов (int16) — в AudioWorklet (как на стенде). Вход 0 — микрофон,
+ * вход 1 — весь звук штаба, который в этот же миг уходит в динамики. В режиме `stereo` (сервис подавляет эхо) к кадру
+ * микрофона прикладывается опора — отсчёты этого звука с тех же мгновений; ничего не звучит — нули.
+ */
 const WORKLET = `
 class Mic extends AudioWorkletProcessor {
-  constructor() { super(); this.ratio = sampleRate / 16000; this.acc = 0; this.out = new Int16Array(512); this.n = 0; this.peak = 0; }
+  constructor() {
+    super(); this.ratio = sampleRate / 16000; this.acc = 0; this.out = new Int16Array(512); this.ref = new Int16Array(512);
+    this.n = 0; this.peak = 0; this.stereo = false;
+    this.port.onmessage = (e) => { this.stereo = !!e.data.stereo; this.n = 0; this.acc = 0; this.peak = 0; };
+  }
   process(inputs) {
     const ch = inputs[0][0]; if (!ch) return true;
+    const rf = this.stereo && inputs[1] ? inputs[1][0] : undefined;
     for (let i = 0; i < ch.length; i++) {
       this.acc += 1; this.peak = Math.max(this.peak, Math.abs(ch[i]));
       if (this.acc >= this.ratio) { this.acc -= this.ratio;
-        const v = Math.max(-1, Math.min(1, ch[i])); this.out[this.n++] = v * 32767;
-        if (this.n === 512) { this.port.postMessage({ pcm: this.out.buffer.slice(0), peak: this.peak }); this.n = 0; this.peak = 0; } }
+        const v = Math.max(-1, Math.min(1, ch[i])); this.out[this.n] = v * 32767;
+        if (this.stereo) this.ref[this.n] = rf ? Math.max(-1, Math.min(1, rf[i])) * 32767 : 0;
+        if (++this.n === 512) {
+          this.port.postMessage(this.stereo ? { pcm: this.out.buffer.slice(0), ref: this.ref.buffer.slice(0), peak: this.peak }
+            : { pcm: this.out.buffer.slice(0), peak: this.peak });
+          this.n = 0; this.peak = 0;
+        } }
     }
     return true;
   }
 }
 registerProcessor('mic', Mic);`;
+
+/**
+ * Фильтр нижних частот перед пересчётом в 16 кГц (4-й порядок, 7 кГц) — на микрофоне и на опоре одинаковый: путь
+ * эха «динамик → микрофон» для подавления остаётся линейным, а не складывается с отражениями частот выше 8 кГц.
+ */
+function lowpass(ctx: BaseAudioContext): BiquadFilterNode[] {
+  return [0, 1].map(() => {
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 7000;
+    f.Q.value = 0.707;
+    return f;
+  });
+}
+
+/** Соединить узлы цепочкой; вернуть последний. */
+function chain(nodes: AudioNode[]): AudioNode {
+  nodes.reduce((a, b) => { a.connect(b); return b; });
+  return nodes[nodes.length - 1];
+}
 
 type Handler<K extends ServerMsg['type']> = (m: Extract<ServerMsg, { type: K }>) => void;
 
@@ -73,9 +107,23 @@ export class VoiceClient {
   /** Звук калибровки (id 0) ждём: шаг «голос штаба» или «перебивание» начат и не отменён. */
   private calibSound = false;
 
-  private micCtx: AudioContext | null = null;
-  private playCtx: AudioContext | null = null;
+  /**
+   * Один звуковой граф на микрофон и звук штаба: весь звук штаба (ответы, пробы голоса, звук калибровки) идёт через
+   * `bus` в динамики и, вторым входом, в ворклет микрофона — опорой подавления эха, по отсчётам вровень с микрофоном.
+   * Выключение голоса закрывает только микрофон: граф остаётся, фразы договариваются.
+   */
+  private ctx: AudioContext | null = null;
+  private bus: GainNode | null = null;
+  private node: AudioWorkletNode | null = null;
+  private nodeReady: Promise<AudioWorkletNode> | null = null;
   private stream: MediaStream | null = null;
+  /** Источник микрофона и его фильтры — отсоединяются, когда микрофон закрывается или открывается заново. */
+  private micIn: AudioNode[] = [];
+  /** Сервис подавляет эхо (`ready.aec`): микрофон без обработки браузера, кадры с опорой. */
+  private aec = false;
+  /** Для какого режима взят нынешний микрофон. */
+  private streamAec = false;
+  private swapping = false;
   private nextT = 0;
   private sources: { src: AudioBufferSourceNode; id: number }[] = [];
   /** По фразам: `done` — сервис сказал, что кусков больше нет; сыграно — когда доиграли все. */
@@ -113,8 +161,7 @@ export class VoiceClient {
 
   /** Возобновить звук после действия человека (браузер может держать AudioContext приостановленным). */
   resume() {
-    void this.micCtx?.resume().catch(() => {});
-    void this.playCtx?.resume().catch(() => {});
+    void this.ctx?.resume().catch(() => {});
   }
 
   on<K extends ServerMsg['type']>(type: K, cb: Handler<K>): () => void {
@@ -147,7 +194,7 @@ export class VoiceClient {
     if (on === this.enabled) return Promise.resolve();
     this.enabled = on;
     if (!on) {
-      this.micBeforeOff = this.micCtx !== null || this.starting !== null;
+      this.micBeforeOff = this.stream !== null || this.starting !== null;
       this.calibSound = false;
       this.stopPlayback(0);
       if (!opts.finishSpeech) this.stop();
@@ -161,7 +208,7 @@ export class VoiceClient {
 
   /** Микрофон и подключение к сервису. Ошибка микрофона — с разбором причины. Голос выключен — без микрофона. */
   start(hello: Partial<VoiceSettings> = {}): Promise<void> {
-    if (this.micCtx || !this.enabled) return Promise.resolve();
+    if (this.stream || !this.enabled) return Promise.resolve();
     // одновременные вызовы делят одну попытку
     this.starting ??= this.doStart(hello).finally(() => { this.starting = null; });
     return this.starting;
@@ -171,40 +218,90 @@ export class VoiceClient {
     this.hello = hello;
     if (!navigator.mediaDevices?.getUserMedia)
       throw new Error(`Браузер не даёт микрофон этой странице: адрес ${location.origin} не считается защищённым.`);
+    const aec = this.aec;
+    let stream: MediaStream;
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
-      });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints(aec) });
     } catch (e) { throw await micDenied(e); }
-    if (!this.enabled) {  // выключили, пока браузер давал микрофон: не держим его
-      this.stream.getTracks().forEach((t) => t.stop());
-      this.stream = null;
-      return;
-    }
+    const drop = () => stream.getTracks().forEach((t) => t.stop());
+    if (!this.enabled) { drop(); return; }  // выключили, пока браузер давал микрофон: не держим его
     try {
-      const micCtx = new AudioContext();
-      this.micCtx = micCtx;
-      this.playCtx ??= new AudioContext();  // после выключения голоса звук штаба — в прежнем
-      const url = URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' }));
-      try { await micCtx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
-      // выключили, пока готовилась обработка звука: микрофон уже закрыт, связь с сервисом не трогаем;
-      // успели включить снова — эта попытка пропала, открываем микрофон заново
-      if (!this.enabled || this.micCtx !== micCtx) {
-        if (this.micCtx === micCtx) this.closeMic();
-        else void micCtx.close().catch(() => {});
-        return this.enabled ? this.doStart(hello) : undefined;
-      }
-      const node = new AudioWorkletNode(micCtx, 'mic');
-      micCtx.createMediaStreamSource(this.stream).connect(node);
-      node.port.onmessage = (e: MessageEvent<{ pcm: ArrayBuffer; peak: number }>) => {
-        if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(e.data.pcm);
-      };
+      const { ctx, bus } = this.audio();
+      await this.worklet(ctx, bus);
+      // выключили (или закрыли), пока готовилась обработка звука: микрофон не держим, связь с сервисом не трогаем
+      if (!this.enabled || this.ctx !== ctx) { drop(); return; }
+      this.attachMic(stream, aec);
     } catch (e) {
+      drop();
       this.close();  // не оставляем открытый микрофон и «занятое» состояние: повторный запуск должен работать
       throw e;
     }
     this.wanted = true;
     if (!this.ws && !this.timer) this.open();
+    void this.syncCapture();  // сервис ответил, пока открывался микрофон, — и режим другой
+  }
+
+  /** Звуковой граф: создаётся с первым микрофоном, звук штаба — через `bus`. */
+  private audio(): { ctx: AudioContext; bus: GainNode } {
+    if (!this.ctx || !this.bus) {
+      const ctx = new AudioContext();
+      const bus = ctx.createGain();
+      bus.connect(ctx.destination);
+      this.ctx = ctx;
+      this.bus = bus;
+    }
+    return { ctx: this.ctx, bus: this.bus };
+  }
+
+  /** Ворклет микрофона (один на граф): вход 0 — микрофон, вход 1 — звук штаба через фильтр. */
+  private worklet(ctx: AudioContext, bus: GainNode): Promise<AudioWorkletNode> {
+    this.nodeReady ??= (async () => {
+      const url = URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' }));
+      try { await ctx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+      const node = new AudioWorkletNode(ctx, 'mic', { numberOfInputs: 2, channelCount: 1, channelCountMode: 'explicit' });
+      chain([bus, ...lowpass(ctx)]).connect(node, 0, 1);
+      node.port.onmessage = (e: MessageEvent<{ pcm: ArrayBuffer; ref?: ArrayBuffer }>) => this.onMic(e.data);
+      if (this.ctx === ctx) this.node = node;
+      return node;
+    })().catch((e: unknown) => { this.nodeReady = null; throw e; });
+    return this.nodeReady;
+  }
+
+  /** Подключить микрофон к ворклету (прежний — закрыть). С подавлением эха — через тот же фильтр, что и опора. */
+  private attachMic(stream: MediaStream, aec: boolean) {
+    const ctx = this.ctx, node = this.node;
+    if (!ctx || !node) throw new Error('звук не готов');
+    this.closeMic();
+    const nodes: AudioNode[] = [ctx.createMediaStreamSource(stream), ...(aec ? lowpass(ctx) : [])];
+    chain(nodes).connect(node, 0, 0);
+    this.micIn = nodes;
+    this.stream = stream;
+    this.streamAec = aec;
+    node.port.postMessage({ stereo: aec });
+  }
+
+  /**
+   * Микрофон взят не для того режима, что сказал сервис (сервис перезапустили с подавлением эха или без): открыть
+   * его заново с нужной обработкой. Не вышло — остаётся прежний (кадры сервис примет и такие).
+   */
+  private async syncCapture() {
+    if (!this.stream || this.streamAec === this.aec || this.swapping) return;
+    this.swapping = true;
+    const aec = this.aec;
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: micConstraints(aec) });
+      if (!this.stream || !this.enabled || !this.node) { s.getTracks().forEach((t) => t.stop()); return; }
+      this.attachMic(s, aec);
+    } catch (e) {
+      console.warn('микрофон не переоткрылся для подавления эха — остаётся прежний', e);
+      return;
+    } finally { this.swapping = false; }
+    void this.syncCapture();  // режим успел смениться ещё раз
+  }
+
+  /** Кадр ворклета → сервису: микрофон, в режиме подавления эха — с опорой. */
+  private onMic(d: { pcm: ArrayBuffer; ref?: ArrayBuffer }) {
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(micFrame(new Int16Array(d.pcm), d.ref ? new Int16Array(d.ref) : undefined));
   }
 
   /** Отключение: микрофон, звук, переподключения. */
@@ -216,8 +313,9 @@ export class VoiceClient {
     if (old) { old.onopen = old.onmessage = old.onclose = old.onerror = null; old.close(); }
     this.stopPlayback();
     this.closeMic();
-    void this.playCtx?.close();
-    this.playCtx = null;
+    this.node?.disconnect();
+    void this.ctx?.close();
+    this.ctx = null; this.bus = null; this.node = null; this.nodeReady = null;
     this.ready = false;
     this.failed = false;
     this.fails = 0;
@@ -225,11 +323,12 @@ export class VoiceClient {
     this.setWs('closed');
   }
 
-  /** Закрыть микрофон: дорожки остановлены (система гасит значок микрофона), обработка звука закрыта. */
+  /** Закрыть микрофон: дорожки остановлены (система гасит значок микрофона), источник отсоединён от ворклета. */
   private closeMic() {
+    this.micIn.forEach((n) => n.disconnect());
+    this.micIn = [];
     this.stream?.getTracks().forEach((t) => t.stop());
-    void this.micCtx?.close();
-    this.stream = null; this.micCtx = null;
+    this.stream = null;
   }
 
   private url(): string {
@@ -288,7 +387,10 @@ export class VoiceClient {
   }
 
   private onMessage(m: ServerMsg) {
-    if (m.type === 'ready') { this.ready = true; this.serviceError = null; this.emitStatus(); }
+    if (m.type === 'ready') {
+      this.ready = true; this.serviceError = null; this.aec = m.aec === true; this.emitStatus();
+      void this.syncCapture();
+    }
     else if (m.type === 'error' && !this.ready) { this.serviceError = m.text; this.emitStatus(); }
     else if (m.type === 'barge') { this.cancelled.add(m.id); this.stopPlayback(m.id); }
     // остановил сервис (калибровка, запись голоса, отказ от записи): уже пришедший звук не доигрывается
@@ -335,8 +437,8 @@ export class VoiceClient {
   // --- воспроизведение ---
 
   private onAudio(buf: ArrayBuffer) {
-    const ctx = this.playCtx;
-    if (!ctx) return;
+    const ctx = this.ctx, bus = this.bus;
+    if (!ctx || !bus) return;
     let a;
     try { a = parseAudio(buf); } catch { return; }
     // id 0 — тестовая фраза калибровки: не фраза `say`, отмены и `played` её не касаются
@@ -347,7 +449,7 @@ export class VoiceClient {
     for (let i = 0; i < a.pcm.length; i++) ch[i] = a.pcm[i] / 32768;
     const src = ctx.createBufferSource();
     src.buffer = ab;
-    src.connect(ctx.destination);
+    src.connect(bus);  // в динамики и опорой — в ворклет микрофона
     // куски идут встык: каждый начинается там, где кончился предыдущий
     const t = Math.max(ctx.currentTime + 0.03, this.nextT);
     src.start(t);

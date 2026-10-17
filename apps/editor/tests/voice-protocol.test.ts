@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CancelledIds, parseAudio, reconnectDelay, voiceStatus } from '../src/voice/protocol';
+import { CancelledIds, MIC_REF, micConstraints, micFrame, parseAudio, reconnectDelay, voiceStatus } from '../src/voice/protocol';
 
 /** Собирает двоичное сообщение сервиса: [0x01][id u32 LE][rate u32 LE][pcm int16 LE]. */
 function frame(id: number, rate: number, pcm: number[]): ArrayBuffer {
@@ -117,5 +117,33 @@ describe('reconnectDelay', () => {
   });
   it('связь уже была (сервис перезапускается) — каждые 2 с', () => {
     expect([1, 5, 20].map((n) => reconnectDelay(n, true))).toEqual([2000, 2000, 2000]);
+  });
+});
+
+describe('micFrame', () => {
+  it('без опоры — отсчёты микрофона как есть (int16 LE, без заголовка)', () => {
+    const b = micFrame(Int16Array.from([1, -2, 300]));
+    expect(b.byteLength).toBe(6);
+    const v = new DataView(b);
+    expect([v.getInt16(0, true), v.getInt16(2, true), v.getInt16(4, true)]).toEqual([1, -2, 300]);
+  });
+  it('с опорой — [0x02][микрофон][опора], длина нечётная', () => {
+    const b = micFrame(Int16Array.from([1, -2]), Int16Array.from([-32768, 32767]));
+    expect(b.byteLength).toBe(9);
+    const v = new DataView(b);
+    expect(v.getUint8(0)).toBe(MIC_REF);
+    expect([1, 3, 5, 7].map((o) => v.getInt16(o, true))).toEqual([1, -2, -32768, 32767]);
+  });
+  it('каналы разной длины — ошибка', () => {
+    expect(() => micFrame(new Int16Array(4), new Int16Array(3))).toThrow();
+  });
+});
+
+describe('micConstraints', () => {
+  it('подавление эха в сервисе — микрофон без обработки браузера', () => {
+    expect(micConstraints(true)).toEqual({ echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 });
+  });
+  it('без него — как раньше, с обработкой браузера', () => {
+    expect(micConstraints(false)).toEqual({ echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 });
   });
 });
