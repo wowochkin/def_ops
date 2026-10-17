@@ -50,18 +50,25 @@ function phonOf(w: string): string {
     .replace(/[бвгдзж]$/, (c) => ({ б: 'п', в: 'ф', г: 'к', д: 'т', з: 'с', ж: 'ш' })[c]!);
 }
 
-/** Слова совпали: основы равны, звучат одинаково или отличаются на допустимую для длины ошибку. Число правок (0,5 — по звучанию) или null. */
+/**
+ * Слова совпали: основы равны, звучат одинаково или отличаются на допустимую для длины ошибку.
+ * Число правок (0,5 — по звучанию) или null. Строгость растёт с коротким словом: до 7 букв — та же первая
+ * согласная и близкая длина основы; звучание — только равенство ключей и только для слов от 5 букв.
+ */
 function wordDist(a: string, b: string): number | null {
   if (a === b) return 0;
   let best: number | null = null;
   const put = (d: number) => { if (best === null || d < best) best = d; };
   for (const x of stems(a)) for (const y of stems(b)) {
+    const n = Math.min(x.length, y.length);
+    if (x === y) { if (n >= 4) put(0); continue; }
+    const gap = Math.abs(x.length - y.length);
+    if (gap > 2) continue;
     const px = phon(x), py = phon(y);
-    if (x === y) put(0);
-    else if (px === py && px.length >= 3) put(0.5);
-    if (Math.abs(x.length - y.length) > 2) continue;
-    const d = Math.min(lev(x, y), lev(px, py));
-    if (d <= tolerance(Math.min(x.length, y.length) - 2)) put(d);
+    if (n <= 7 && px[0] !== py[0]) continue;
+    if (px === py && n >= 5 && gap <= 1) put(0.5);
+    const d = lev(x, y);
+    if (d <= (n <= 7 ? tolerance(n - 2) : n <= 11 ? 1 : 2)) put(d);
   }
   return best;
 }
@@ -146,13 +153,15 @@ const ascii = (s: string) => /^[\x00-\x7f]*$/.test(s);
 interface Keyed { place: Place; keys: string[][] }
 const keyCache = new WeakMap<Place[], Keyed[]>();
 const aliases = aliasFile as unknown as Record<string, string[]>;
-const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').replace(/ß/g, 'ss');
+/** Латиница без диакритики («ü» → «u»); кириллицу не трогает («й» не должна стать «и»). */
+const fold = (s: string) => s.replace(/[\u00c0-\u024f]+/g, (c) => c.normalize('NFD').replace(/\p{M}/gu, '')).replace(/ß/g, 'ss');
 
 /** Названия пункта: русское и исходное (из скобок), латинский идентификатор района, другие русские названия. */
 function keysOf(p: Place): string[][] {
   const out: string[] = [];
   const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(p.title);
   if (m) out.push(m[1], m[2]); else out.push(p.title);
+  if (/^Берлин, /.test(p.title)) out.push((m ? m[1] : p.title).replace(/^Берлин, /, ''));
   if (ascii(p.id)) out.push(p.id.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2'));
   if (p.title.startsWith('Берлин-')) out.push(p.title.slice(7));
   if (Array.isArray(aliases[p.id])) out.push(...aliases[p.id]);
@@ -165,7 +174,7 @@ const keyed = (places: Place[]): Keyed[] => {
   return k;
 };
 
-const oneEnding = (w: string) => { const x = w.replace(/(?:ами|ом|ем|ой|ей|ам|ям|ах|ях|а|я|у|ю|е|ы|и|о)$/, ''); return x.length >= 3 ? x : w; };
+const oneEnding = (w: string) => { const x = w.replace(/(?:ами|ом|ем|ой|ей|ам|ям|ах|ях|а|я|у|ю|е|ы|и|о)$/, ''); return x.length >= 4 ? x : w; };
 /** Доля слов запроса, совпавших с названием буква в букву (1) или с точностью до одного падежного окончания (0,6). */
 const rawEq = (q: string[], key: string[]) =>
   q.reduce((n, w, i) => n + (key[i] === w || key.includes(w) ? 1 : key.some((k) => oneEnding(k) === w || oneEnding(w) === k) ? 0.6 : 0), 0) / q.length;
@@ -182,12 +191,20 @@ function scoreKey(q: string[], key: string[]): number {
   }
   return partial(q, key);
 }
-/** Сказана часть длинного названия («Франкфурт» ↔ «Франкфурт-на-Одере»): слова по порядку, не короче четырёх букв. */
+/** Родовые слова: сами по себе не называют пункт («мост», «озеро», «часть»). */
+const COMMON = new Set(['мост', 'озеро', 'леса', 'лес', 'район', 'часть', 'станция', 'остров', 'река', 'аэродром', 'канал', 'шоссе', 'высота', 'высоты', 'плацдарм', 'гора', 'порт', 'вокзал', 'площадь', 'парк', 'кладбище', 'казармы', 'завод', 'город', 'деревня', 'станции']);
+const COMMON_STEMS = new Set([...COMMON].map(oneEnding));
+/** Слово запроса — то же слово названия буква в букву или с одним падежным окончанием. */
+const linked = (w: string, k: string) => w === k || oneEnding(k) === w || oneEnding(w) === k || oneEnding(w) === oneEnding(k);
+/**
+ * Сказана начальная часть длинного названия («Франкфурт» ↔ «Франкфурт-на-Одере»): слова по порядку с первого,
+ * не короче четырёх букв, без родовых слов и без опечаток (частичное совпадение строже полного).
+ */
 function partial(q: string[], key: string[]): number {
-  if (q.length >= key.length || q.some((w) => w.length < 4)) return 0;
+  if (q.length >= key.length || q.some((w) => w.length < 4 && !w.startsWith('#')) || q.every((w) => COMMON_STEMS.has(oneEnding(w)))) return 0;
   let j = 0;
   for (const w of q) {
-    while (j < key.length && wordDist(w, key[j]) === null) j++;
+    while (j < key.length && !linked(w, key[j])) { if (j === 0) return 0; j++; }
     if (j === key.length) return 0;
     j++;
   }
@@ -400,7 +417,8 @@ export function findUnit<U extends { id: string; name: string; side?: string }>(
   }
   if (!cands.length) return none;
   // тип назван («армия», «корпус») — берём самое полное совпадение; не назван — самый старший тип (армия), но не молча при нескольких
-  const key = (c: { extra: number; rank: number }) => (typed ? c.extra : c.rank);
+  // по одному имени («Берлин») без номера и типа предпочтений нет — все подходящие
+  const key = (c: { extra: number; rank: number }) => (typed ? c.extra : q.num === undefined ? 0 : c.rank);
   const lead = Math.min(...cands.map(key));
   const top = cands.filter((c) => key(c) === lead).sort((a, b) => a.extra - b.extra).map((c) => c.u);
   // одно название у двух сторон — не молча

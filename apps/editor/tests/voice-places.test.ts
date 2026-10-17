@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { places as simPlaces, Theatre, type Scenario, type TheatreData } from '@def-ops/sim';
 import type { Place } from '../src/sim/game-protocol';
@@ -176,6 +177,51 @@ describe('раунд 1: точные совпадения, дубли, напи�
     expect(name('сектор зет', C)).toBe('Гарнизон сектора обороны «Z»');
     expect(name('гарнизон сектора эф', C)).toBe('Гарнизон сектора обороны «F»');
     expect(name('группа армий А', V)).toMatch(/^Группа армий «А»/);
+  });
+});
+
+/** Слова описания, дающие место не по названию пункта, а по близкому написанию — известные и допустимые. */
+const KNOWN_NEAR: Record<string, string> = {
+  ангермюнде: 'в данных нет Ангермюнде, близкое по написанию — Тангермюнде',
+  зеелова: 'другое написание «Зелов»',
+  коттбуса: 'другое написание «Котбус»',
+  губин: 'польское название «Губен (восточная часть)»',
+  бромберг: 'немецкое название Быдгощи (place-aliases.json)',
+  глейвиц: 'другое написание «Гляйвиц»',
+};
+describe('обычные слова не дают мест', () => {
+  it('ни одно слово docs/system.md не даёт место, если оно не похоже на слово его названия', () => {
+    const text = readFileSync(new URL('../../../docs/system.md', import.meta.url), 'utf8').toLowerCase().replace(/ё/g, 'е');
+    const words = [...new Set(text.match(/[а-я]{4,}/g) ?? [])];
+    const wrong: string[] = [];
+    for (const ps of [P, PV, PC]) for (const w of words) {
+      const r = findPlace(w, ps);
+      const hit = [...(r.place ? [r.place] : []), ...r.options];
+      if (!hit.length || w in KNOWN_NEAR) continue;
+      // законно, если начало слова совпадает с началом слова в названии (падежи, написание) — иначе это ложное место
+      const ok = hit.every((h) => h.title.toLowerCase().replace(/ё/g, 'е').split(/[^а-я]+/).some((t) => t.length >= 4 && w.slice(0, 4) === t.slice(0, 4)));
+      if (!ok) wrong.push(`${w} → ${hit.map((h) => h.title).join(' | ')}`);
+    }
+    expect(wrong).toEqual([]);
+  }, 120_000);
+  it('слова из рецензии: ни места, ни чужого пункта', () => {
+    for (const w of ['временные', 'введённые', 'луга', 'лишний', 'вектора', 'зелёный', 'зелёная', 'лесенкой', 'радио', 'ради', 'дало', 'далее', 'озёра', 'новый', 'старый', 'часть', 'мост', 'район', 'высоты', 'плацдарм'])
+      for (const ps of [P, PV, PC]) expect(findPlace(w, ps), w).toEqual({ options: [], labels: [] });
+  });
+  it('«хеннигсдорф» — Хеннигсдорф; где его нет, не Хеллерсдорф', () => {
+    expect(findPlace('хеннигсдорф', P).place?.title).toMatch(/^Хеннигсдорф/);
+    const r = findPlace('хеннигсдорф', PC);
+    expect([...(r.place ? [r.place] : []), ...r.options].map((x) => x.title).join(' ')).not.toMatch(/Хеллерсдорф/);
+  });
+  it('«сектор А» / «сектор Z» для мест — короткая форма', () => {
+    expect(findPlace('сектор А', PC).place?.title).toBe('Сектор обороны «A»');
+    expect(findPlace('сектор зет', PC).place?.title).toBe('Сектор обороны «Z»');
+  });
+  it('«берлин» среди соединений — варианты, а не молча дивизия «Берлин»', () => {
+    const r = findUnit('берлин', U);
+    expect(r.unit).toBeUndefined();
+    expect(r.options.length).toBeGreaterThanOrEqual(2);
+    expect(r.options.map((u) => u.name).join(' ')).toMatch(/309-я пехотная дивизия «Берлин»/);
   });
 });
 
