@@ -16,6 +16,7 @@ import asyncio
 import difflib
 import json
 import re
+import sys
 import tempfile
 import threading
 import time
@@ -28,8 +29,12 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-SR_IN = 16000
-FRAME = 512  # Silero: 32 мс на 16 кГц
+sys.path.insert(0, str(ROOT / "services" / "voice"))  # общий код стенда и сервиса голоса
+
+from audio import FRAME, SR_IN, TURN_RECHECK_MS, calibrate  # noqa: E402
+from tts import (CALIB_PHRASE, PAUSE_AFTER, PIECE_LEAD_S, PIECE_MAX_CHARS, SHORT_CHARS,  # noqa: E402
+                 SHORT_WAIT_S, Sentences)
+from tts_tail import extend_eos  # noqa: E402
 
 # ---------------------------------------------------------------- текст для синтеза
 
@@ -54,37 +59,6 @@ def speakable(text: str) -> str:
     t = re.sub(r"(\d+)-(?:й|я|е|го|му|м|х)\b", lambda m: num2words(int(m.group(1)), lang="ru", to="ordinal"), t)
     t = re.sub(r"\d+(?:[.,]\d+)?", lambda m: num2words(float(m.group(0).replace(",", ".")) if re.search(r"[.,]", m.group(0)) else int(m.group(0)), lang="ru"), t)
     return re.sub(r"\s+", " ", t).strip()
-
-
-class Sentences:
-    """Режет поток токенов на фразы для синтеза: по концу предложения или переносу строки; первую — короче
-    (по запятой после 50 знаков), чтобы голос начинался раньше."""
-
-    def __init__(self):
-        self.buf, self.first = "", True
-
-    def push(self, piece: str) -> list[str]:
-        self.buf += piece
-        out = []
-        while True:
-            # конец предложения — знак и пробел после него (иначе «3.5» и «20.04» резались бы); перенос строки
-            m = re.search(r"[.!?…]+[»\")]?\s+|\n+", self.buf)
-            if not m and self.first and len(self.buf) > 50:
-                m = re.search(r",\s+", self.buf[30:])
-                if m:
-                    cut = 30 + m.end()
-                    out.append(self.buf[:cut])
-                    self.buf, self.first = self.buf[cut:], False
-                    continue
-            if not m:
-                break
-            out.append(self.buf[:m.end()])
-            self.buf, self.first = self.buf[m.end():], False
-        return [s for s in (x.strip() for x in out) if re.search(r"\w", s)]
-
-    def rest(self) -> list[str]:
-        s, self.buf = self.buf.strip(), ""
-        return [s] if re.search(r"\w", s) else []
 
 
 # ---------------------------------------------------------------- названия театра
@@ -129,59 +103,6 @@ def fix_names(text: str, names: list[str]) -> tuple[str, list[str]]:
         return new
 
     return re.sub(r"[А-Яа-яЁё]+(?:-[А-Яа-яЁё]+)*", one, text), fixes
-
-
-# ---------------------------------------------------------------- калибровка
-
-CALIB_PHRASE = ("Докладываю обстановку. Восьмая гвардейская армия ведёт бой за вторую полосу обороны у Зелова, "
-                "противник контратакует резервами из глубины.")
-
-
-TURN_RECHECK_MS = 96  # три кадра
-PIECE_LEAD_S = 1.0  # синтез следующего куска — когда звука в запасе меньше этого
-PIECE_MAX_CHARS = 300  # кусок не длиннее (2–3 предложения)
-SHORT_CHARS = 30  # первая фраза короче — ждём следующую и синтезируем вместе
-SHORT_WAIT_S = 0.4  # но не дольше
-PAUSE_AFTER = {".": 0.2, "…": 0.25, "!": 0.3, "?": 0.3, ",": 0.1, ";": 0.15, ":": 0.15}  # пауза между кусками, с
-
-
-def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
-    """Пороги по замерам уверенности VAD (0–1) на четырёх шагах: noise — тишина, speech — голос человека,
-    echo — голос модели из динамиков (человек молчит), over — модель говорит, человек её перебивает.
-
-    Порог в тишине — посередине между фоном (98-й процентиль) и тихой частью речи (25-й). Порог перебивания —
-    выше эха (98-й процентиль + 0,08) и ниже речи поверх модели (30-й процентиль − 0,05), ближе к эху; если
-    эхо громче речи поверх модели — посередине и совет надеть наушники. Длительность перебивания — самый
-    длинный всплеск эха выше порога + 150 мс (250–900 мс)."""
-    q = lambda xs, p: float(np.percentile(xs, p))
-    clip = lambda x, lo, hi: round(float(min(hi, max(lo, x))), 2)
-    warn = []
-    noise_hi = q(d["noise"], 98)
-    sp = [x for x in d["speech"] if x > noise_hi + 0.05]
-    if len(sp) < 15:
-        raise ValueError("речь не услышана — говорите громче или ближе к микрофону и повторите калибровку")
-    speech_lo = q(sp, 25)
-    vad = clip((noise_hi + speech_lo) / 2, 0.15, 0.85)
-    echo = d.get("echo") or [0.0]
-    echo_hi = q(echo, 98)
-    over = [x for x in d.get("over") or [] if x > echo_hi + 0.05]
-    over_lo = q(over, 30) if len(over) >= 10 else None
-    if over_lo is None:
-        warn.append("перебивание не услышано — порог перебивания выставлен только по эху")
-    lo, hi = max(vad, echo_hi + 0.08), (over_lo - 0.05) if over_lo is not None else 0.95
-    if lo <= hi:
-        barge = clip(lo + (hi - lo) * 0.3, 0.1, 0.95)
-    else:
-        barge = clip((echo_hi + (over_lo if over_lo is not None else 0.95)) / 2, 0.1, 0.95)
-        warn.append("голос модели из динамиков почти так же громок, как ваш, — наденьте наушники, иначе перебивания будут ложными или пропущенными")
-    run = best = 0
-    for x in echo:
-        run = run + 1 if x >= barge else 0
-        best = max(best, run)
-    barge_ms = int(clip(max(250, best * 32 + 150), 250, 900))
-    stats = {"фон": round(noise_hi, 2), "речь": round(speech_lo, 2), "эхо": round(echo_hi, 2),
-             "речь поверх модели": round(over_lo, 2) if over_lo is not None else None, "всплеск эха, мс": best * 32}
-    return {"vad": vad, "barge_vad": barge, "barge_ms": barge_ms, "end_ms": end_ms}, {"stats": stats, "warn": warn}
 
 
 # ---------------------------------------------------------------- модели
@@ -232,7 +153,6 @@ class Models:
         self.turn = load_vad("mlx-community/smart-turn-v3")
         self.tts = load_model(self.args.tts)
         self.tts_sr = int(self.tts.sample_rate)
-        from tts_tail import extend_eos
         self.eos_reset = extend_eos(self.tts, self.args.eos_extra)
         self.ref_audio = load_audio(str(HERE / self.ref["file"]), sample_rate=self.tts_sr)
 
