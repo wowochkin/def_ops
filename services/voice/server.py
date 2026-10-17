@@ -36,6 +36,7 @@ ASR_PIECE_S = 24  # распознавание берёт до 25 с звука 
 NO_REF = "нет образца голоса — запишите голос в окне «Голоса»"
 WORD_CHUNK_S = 0.5  # перебивание словом: кусок речи распознаётся, когда он не короче этого…
 WORD_STEP_S = 0.25  # …и снова — по мере роста куска на столько
+WORD_WINDOW_S = 1.75  # распознаётся хвост куска не длиннее этого (стоп-слово — в новой речи, цена не растёт)
 BARGE_MODES = ("voice", "word")
 
 
@@ -137,7 +138,7 @@ class Job:
         self.wake = asyncio.Event()
         self.task: asyncio.Task | None = None
         self.samples = 0
-        self.said = ""  # текст, отданный синтезу, — с ним сравнивается эхо при перебивании словом
+        self.said = ""  # текст кусков, звук которых уже пошёл в окно, — с ним сравнивается эхо при перебивании словом
 
     def push(self, text: str, more: bool):
         for s in self.sentences.push(text):
@@ -186,6 +187,7 @@ class Session:
         self.word_task: asyncio.Task | None = None
         self.word_next = WORD_CHUNK_S  # с какой длины куска (с) распознать его снова
         self.word_barged = False  # текущий кусок уже остановил штаб стоп-словом
+        self.word_err_seg = -1  # кусок, сбой распознавания которого уже записан в журнал (раз на кусок)
         # калибровка и запись голоса
         self.calib: dict | None = None
         self.calib_data: dict[str, list[float]] = {}
@@ -265,19 +267,22 @@ class Session:
 
     def word_check(self):
         """Перебивание словом: пока штаб говорит, кусок текущей речи (от WORD_CHUNK_S, по мере роста — каждые
-        WORD_STEP_S) распознаётся в нити torch, не дожидаясь конца реплики; стоп-слово — штаб обрывается."""
+        WORD_STEP_S) распознаётся в нити torch, не дожидаясь конца реплики, — его хвост не длиннее WORD_WINDOW_S;
+        стоп-слово — штаб обрывается."""
         ls = self.listener
         if (self.cfg.get("barge_mode") != "word" or not ls.in_speech or self.word_barged or not self.speaking
                 or (self.word_task and not self.word_task.done()) or ls.chunk_s() < self.word_next):
             return
         self.word_next = ls.chunk_s() + WORD_STEP_S
-        self.word_task = asyncio.create_task(self._word_check(self.seg, ls.audio.copy()))
+        self.word_task = asyncio.create_task(self._word_check(self.seg, ls.audio[-int(WORD_WINDOW_S * SR_IN):].copy()))
 
     async def _word_check(self, seg: int, audio: np.ndarray):
         try:
             text = (await self.loop.run_in_executor(self.m.torch, self.m.transcribe, audio)).strip()
         except Exception as e:  # noqa: BLE001 — кусок не распознался: штаб не обрывается, реплика распознается целиком
-            print("кусок не распознан:", f"{type(e).__name__}: {e}", flush=True)
+            if self.word_err_seg != seg:
+                self.word_err_seg = seg
+                print("кусок не распознан:", f"{type(e).__name__}: {e}", flush=True)
             return
         if seg != self.seg or self.word_barged or not self.speaking:
             return
@@ -320,8 +325,10 @@ class Session:
         if not text:
             return
         # перебивание словом: штаб обрывает только стоп-слово (и успевшее по ходу речи — тоже); прочая речь, пока он
-        # говорит, его не останавливает — она либо его же эхо, либо обычная реплика
-        if word and not word_barged and self.speaking and is_stop_phrase(text, self.chief_text()):
+        # говорит, — не реплика: без подавления эха её не отличить от его же голоса из динамиков; штаб договаривает
+        if word and not word_barged and self.speaking:
+            if not is_stop_phrase(text, self.chief_text()):
+                return
             word_barged = True
             await self.barge_all()
         if not word_barged and echo_possible and self.last_said and difflib.SequenceMatcher(
@@ -382,7 +389,6 @@ class Session:
                     if self.last_said_id != job.id:
                         self.last_said_id, self.last_said = job.id, ""
                     self.last_said = (self.last_said + " " + piece)[-400:]
-                    job.said = (job.said + " " + piece).strip()
                 hold = await self._synth(job, piece, fade_n, np.zeros(int(gap * sr), np.float32))
                 if hold is None:  # ошибка синтеза — сообщена, фраза кончается
                     break
@@ -414,6 +420,7 @@ class Session:
         fut = self.loop.run_in_executor(self.m.mlx, synth)
         hold = lead  # последние fade_n отсчётов: на конце куска их плавно гасим; вначале — пауза до куска
         err = None
+        sent = False
         while (a := await q.get()) is not None:
             if isinstance(a, Exception):
                 err = a
@@ -421,6 +428,9 @@ class Session:
             a = np.concatenate([hold, a])
             n = max(0, len(a) - fade_n)
             a, hold = a[:n], a[n:]
+            if len(a) and not sent and not job.preview:  # звук куска пошёл в окно — его слова могут вернуться эхом
+                sent = True
+                job.said = (job.said + " " + text).strip()
             await self.send_audio(job, a)
         await fut
         if err is not None:

@@ -17,7 +17,6 @@ MERGE_PLAYED_S = 1.5  # …и ответ не звучит или звучит �
 LOUD_SPEAKERS = "Динамики слышно громко — чтобы перебить штаб, скажите «Стоп»."
 STOP_WORDS = {"стоп", "подождите", "подожди", "хватит", "отставить", "тихо"}
 ADDRESS = ("штаб", "штап")  # обращение — только в начале куска
-ECHO_WORDS = 0.6  # такая доля слов куска есть в текущей фразе штаба — кусок считается её эхом
 
 
 def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
@@ -71,19 +70,54 @@ def _words(text: str) -> list[str]:
     return re.sub(r"[^\w\s]|_", " ", text.lower().replace("ё", "е")).split()
 
 
+def _near(a: str, b: str) -> bool:
+    """Одно и то же слово с поправкой на огрехи распознавания."""
+    return a == b or (min(len(a), len(b)) > 2 and difflib.SequenceMatcher(None, a, b).ratio() >= 0.75)
+
+
+def _echo_runs(words: list[str], chief: list[str]) -> list[tuple[int, int]]:
+    """Для каждого слова куска — самая длинная цепочка (начало, конец включительно) соседних слов куска, идущих
+    подряд и в том же порядке во фразе штаба и включающих это слово; слова нет во фразе — (i, i - 1)."""
+    n = len(words)
+    hits = [[j for j, c in enumerate(chief) if _near(w, c)] for w in words]
+    best = [(i, i - 1) for i in range(n)]
+    for i in range(n):
+        for j in hits[i]:
+            k = 0  # вправо от пары (i, j)
+            while i + k + 1 < n and j + k + 1 < len(chief) and _near(words[i + k + 1], chief[j + k + 1]):
+                k += 1
+            for t in range(i, i + k + 1):
+                if k + 1 > best[t][1] - best[t][0] + 1:
+                    best[t] = (i, i + k)
+    return best
+
+
 def is_stop_phrase(text: str, chief_text: str) -> bool:
-    """Кусок речи, услышанный, пока штаб говорит, — просьба замолчать: стоп-слово (STOP_WORDS) где угодно или
-    обращение «штаб…» в начале. Кусок, слова которого почти все (ECHO_WORDS) есть в текущей фразе штаба
-    chief_text, — её эхо из динамиков, даже со стоп-словом («Хватит ждать…» самого штаба). Слова сравниваются
-    с поправкой на огрехи распознавания."""
+    """Кусок речи, услышанный, пока штаб говорит, — просьба замолчать. Каждое стоп-слово (STOP_WORDS) и обращение
+    «штаб…» судятся сами по себе: в кусок может попасть и эхо штаба из динамиков, и речь человека.
+
+    Слово — эхо, только если оно стоит в цепочке из соседних слов фразы штаба chief_text, идущих в том же порядке
+    (не меньше двух слов; если цепочку обрывает чужое слово — не меньше трёх): «Хватит ждать…» самого штаба — эхо,
+    одно «хватит» или «стоп» после его слов — нет. Обращение засчитывается в начале новой речи: до него в куске —
+    только слова фразы штаба (эхо) или ничего. Слова сравниваются с поправкой на огрехи распознавания."""
     words = _words(text)
-    if not words or not (STOP_WORDS.intersection(words) or words[0] in ADDRESS):
+    if not words:
         return False
-    chief = set(_words(chief_text))
-    if not chief:
-        return True
-    near = lambda w: w in chief or any(difflib.SequenceMatcher(None, w, c).ratio() >= 0.75 for c in chief)
-    return sum(near(w) for w in words) / len(words) < ECHO_WORDS
+    chief = _words(chief_text)
+    runs = _echo_runs(words, chief) if chief else [(i, i - 1) for i in range(len(words))]
+    in_chief = [bool(chief) and any(_near(w, c) for c in chief) for w in words]
+
+    def echo(i: int) -> bool:
+        a, b = runs[i]
+        size = b - a + 1
+        return size >= 3 or (size == 2 and b == len(words) - 1)
+
+    for i, w in enumerate(words):
+        if w in STOP_WORDS and not echo(i):
+            return True
+        if w in ADDRESS and all(in_chief[:i]) and not echo(i):
+            return True
+    return False
 
 
 def should_merge(prev_end: float, speech_start: float, reply_audio_start: float | None) -> bool:

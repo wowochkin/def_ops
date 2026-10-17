@@ -1,7 +1,7 @@
 """Поддельные модели (--fake): тот же интерфейс, что models.Models, без MLX и torch — для тестов и сквозной
 проверки приложения без Mac. Речь — громкость кадра, конец реплики — сразу, распознавание — строки из файла
-по очереди (длиннее 25 с — ошибка, как у GigaAM; строка «{эхо}» — «распознан» текст, который поддельный синтез
-говорил последним: эхо штаба из динамиков), синтез — тон длиной ~15 знаков в секунду (без образца
+по очереди (длиннее 25 с — ошибка, как у GigaAM; «{эхо}» в строке заменяется текстом, который поддельный синтез
+говорил последним: эхо штаба из динамиков, «{эхо} стоп» — эхо и «стоп» человека), синтез — тон длиной ~15 знаков в секунду (без образца
 или с удалённым файлом образца — ошибка, как у настоящего)."""
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from typing import Iterator
 import numpy as np
 
 DEFAULT_TEXT = "штаб, открой переигровку"
-ECHO = "{эхо}"  # строка сценария: распознано то, что синтез говорил последним (эхо из динамиков)
+ECHO = "{эхо}"  # в строке сценария: то, что синтез говорил последним (эхо из динамиков)
 CHARS_PER_S = 15
 ASR_MAX_S = 25  # как у GigaAM: transcribe длиннее не берёт (ValueError)
 CHUNK_S = 0.32  # как streaming_interval настоящего синтеза
@@ -50,7 +50,7 @@ class FakeModels:
             raise ValueError("Too long wav file, use 'transcribe_longform' method.")
         self.transcribed += 1
         text = self.script.pop(0) if self.script else DEFAULT_TEXT
-        return self.last_tts if text == ECHO else text
+        return text.replace(ECHO, self.last_tts).strip()
 
     def forget_ref(self, path: Path):
         self.forgotten.append(Path(path))

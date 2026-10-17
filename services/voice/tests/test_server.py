@@ -567,36 +567,79 @@ def test_word_mode_stop_barges_before_end_of_utterance(make_client):
     ws.close()
 
 
+def flush(ws, seen):
+    """Всё присланное раньше обработано: сервис ответил на settings."""
+    ws.send_text(json.dumps({"type": "settings"}))
+    until(ws, "settings", seen)
+
+
 def test_word_mode_echo_with_stop_word_does_not_barge(make_client):
-    """Эхо фразы штаба, в которой есть «хватит», — не перебивание."""
+    """Эхо фразы штаба, в которой есть «хватит», — не перебивание и не реплика."""
     c = make_client(["{эхо}"] * 20)
     ws, _ = connect(c)
     word_mode(ws)
     chief_speaks(ws, "Хватит ждать наступаем на рассвете всеми силами армии и фронта.")  # одним куском синтеза
     send_audio(ws, np.concatenate([tone(1.0), silence(2.0)]))
     seen = []
-    e = until(ws, "echo", seen)
-    assert e["text"].startswith("Хватит ждать")
+    until(ws, "speech", seen)
+    until(ws, "speech", seen)  # конец речи
+    flush(ws, seen)
     assert not any(isinstance(m, dict) and m["type"] in ("barge", "utterance") for m in seen)
     assert c.app.state.service.models.transcribed >= 2  # куски распознавались и во время речи
     ws.close()
 
 
-def test_word_mode_other_speech_does_not_barge(make_client):
+def test_word_mode_stop_inside_echo_barges(make_client):
+    """В кусок попали эхо штаба и «стоп» человека — штаб обрывается."""
+    ws, _ = connect(make_client(["{эхо} стоп"] * 20))
+    word_mode(ws)
+    chief_speaks(ws, "Докладываю обстановку на участке армии без изменений.")
+    send_audio(ws, tone(0.6))
+    assert until(ws, "barge")["id"] == 5
+    ws.close()
+
+
+def test_word_mode_chunk_window_is_short(make_client):
+    """По ходу речи распознаётся хвост куска (не длиннее ~2 с), а не весь кусок от начала."""
+    c = make_client(["доложите потери за сутки"] * 200)
+    m = c.app.state.service.models
+    lens = []
+    orig = m.transcribe
+    m.transcribe = lambda a: (lens.append(len(a) / SR), orig(a))[1]
+    ws, _ = connect(c)
+    word_mode(ws)
+    chief_speaks(ws, "Докладываю обстановку. " * 20)
+    send_audio(ws, tone(4.0))
+    ws.send_text(json.dumps({"type": "settings"}))
+    until(ws, "settings")
+    assert len(lens) >= 3 and max(lens) <= 2.0, lens
+    ws.close()
+
+
+def test_word_mode_other_speech_dropped_while_chief_speaks(make_client):
+    """Речь без стоп-слова, пока штаб говорит, — не реплика (её не отличить от эха): штаб договаривает; потом —
+    слушаю как обычно."""
     c = make_client(["доложите потери за сутки"] * 20)
     ws, _ = connect(c)
     word_mode(ws)
     chief_speaks(ws)
     send_audio(ws, np.concatenate([tone(1.0), silence(2.0)]))
     seen = []
-    u = until(ws, "utterance", seen)
-    assert u["text"] == "доложите потери за сутки"
-    assert not any(isinstance(m, dict) and m["type"] == "barge" for m in seen)
+    until(ws, "speech", seen)
+    until(ws, "speech", seen)
+    flush(ws, seen)
+    assert not any(isinstance(m, dict) and m["type"] in ("barge", "utterance", "echo") for m in seen)
     assert c.app.state.service.models.transcribed >= 2
     # штаб говорит дальше: его можно перебить словом
     c.app.state.service.models.script[:0] = ["стоп"] * 5
     send_audio(ws, tone(0.6))
     assert until(ws, "barge")["id"] == 5
+    send_audio(ws, silence(3.0))  # пауза длиннее склейки реплик
+    until(ws, "utterance")
+    # штаб замолчал — обычная речь снова реплика
+    c.app.state.service.models.script[:0] = ["доложите потери за сутки"]
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
+    assert until(ws, "utterance")["text"] == "доложите потери за сутки"
     ws.close()
 
 
