@@ -9,14 +9,22 @@
 import type { LngLat } from '@def-ops/core';
 import type { Place } from '../sim/game-protocol';
 import { lev, norm, tolerance } from './fuzzy';
+import aliasFile from './place-aliases.json';
 import { cardinalGen, numberWords, ordinalWords } from './speech';
 
 // ---------------------------------------------------------------- слова и основы
 
 /** Основы слова для сравнения: без окончаний (падежей), «ё» → «е», латиница без диакритики. */
+const stemMemo = new Map<string, string[]>();
 function stems(w: string): string[] {
-  const base = w.normalize('NFD').replace(/\p{M}/gu, '').replace(/ß/g, 'ss');
+  let r = stemMemo.get(w);
+  if (!r) stemMemo.set(w, (r = stemsOf(w)));
+  return r;
+}
+function stemsOf(w: string): string[] {
+  let base = w.normalize('NFD').replace(/\p{M}/gu, '').replace(/ß/g, 'ss');
   if (!/\p{Script=Cyrillic}/u.test(base)) return [base];
+  base = base.replace(/оу$/, 'ов'); // «Зелоу» как слышится — «Зелов»
   const cut = (x: string) => (x.replace(/[аеиоуыэюяйь]+$/u, '').length >= 2 ? x.replace(/[аеиоуыэюяйь]+$/u, '') : x);
   const out = new Set([cut(base)]);
   const noCase = base.replace(/(?:ами|ями|ыми|ими|ого|его|ому|ему|ом|ем|ах|ях|ам|ям|ой|ей|ою|ею|ых|их|ым|им|ую|юю)$/u, '');
@@ -24,15 +32,57 @@ function stems(w: string): string[] {
   return [...out];
 }
 
-/** Слова совпали: основы равны или отличаются на допустимую для длины ошибку распознавания. Возвращает число правок или null. */
+/**
+ * Фонетический ключ слова для сравнения написаний: «Коттбус» = «Котбус», «Леччин» = «Лечин», «Зеелов» = «Зелов»,
+ * «Губин» = «Губен». Двойные буквы — одна, е/э/и/ы/й сходятся, на конце слова звонкие оглушаются, «оу» — «ов».
+ */
+const phonMemo = new Map<string, string>();
+export function phon(w: string): string {
+  let r = phonMemo.get(w);
+  if (r === undefined) phonMemo.set(w, (r = phonOf(w)));
+  return r;
+}
+function phonOf(w: string): string {
+  if (!/\p{Script=Cyrillic}/u.test(w)) return w;
+  return w
+    .replace(/ё/g, 'е').replace(/[ьъ]/g, '').replace(/[эеыйи]/g, 'и').replace(/оу$/, 'ов')
+    .replace(/(.)\1+/g, '$1')
+    .replace(/[бвгдзж]$/, (c) => ({ б: 'п', в: 'ф', г: 'к', д: 'т', з: 'с', ж: 'ш' })[c]!);
+}
+
+/** Слова совпали: основы равны, звучат одинаково или отличаются на допустимую для длины ошибку. Число правок (0,5 — по звучанию) или null. */
 function wordDist(a: string, b: string): number | null {
   if (a === b) return 0;
   let best: number | null = null;
+  const put = (d: number) => { if (best === null || d < best) best = d; };
   for (const x of stems(a)) for (const y of stems(b)) {
-    const d = lev(x, y);
-    if (d <= tolerance(Math.min(x.length, y.length) - 2) && (best === null || d < best)) best = d;
+    const px = phon(x), py = phon(y);
+    if (x === y) put(0);
+    else if (px === py && px.length >= 3) put(0.5);
+    if (Math.abs(x.length - y.length) > 2) continue;
+    const d = Math.min(lev(x, y), lev(px, py));
+    if (d <= tolerance(Math.min(x.length, y.length) - 2)) put(d);
   }
   return best;
+}
+
+// ---------------------------------------------------------------- буквы вслух
+
+/** Как говорят буквы обозначений («сектор А», «группа армий А», «зет»): слово → латинская буква. */
+const LETTER: Record<string, string> = {
+  а: 'a', бэ: 'b', бе: 'b', цэ: 'c', це: 'c', дэ: 'd', де: 'd', е: 'e', э: 'e', эф: 'f', еф: 'f', гэ: 'g', ге: 'g', ха: 'h', аш: 'h', хэ: 'h',
+  и: 'i', йот: 'j', жи: 'j', ка: 'k', эль: 'l', эл: 'l', эм: 'm', эн: 'n', о: 'o', пэ: 'p', пе: 'p', ку: 'q', эр: 'r', эс: 's', тэ: 't', те: 't',
+  у: 'u', вэ: 'v', ве: 'v', икс: 'x', игрек: 'y', зет: 'z', зэт: 'z',
+};
+/** Слова, после которых одиночная буква — обозначение, а не союз или сокращение. */
+const BEFORE_LETTER = new Set(['сектор', 'сектора', 'секторе', 'участок', 'участка', 'участке', 'армий', 'группа', 'группы', 'группе', 'обороны', 'оборону', 'буква', 'литера']);
+/** Буквы-обозначения в «#x»: латинская буква или сказанная вслух — после слов-признаков («сектор обороны А»). */
+export function lettered(t: string[]): string[] {
+  return t.map((w, i) => {
+    if (!BEFORE_LETTER.has(t[i - 1] ?? '')) return w;
+    if (/^[a-z]$/.test(w)) return '#' + w;
+    return LETTER[w] ? '#' + LETTER[w] : w;
+  });
 }
 
 // ---------------------------------------------------------------- числа словами
@@ -95,16 +145,19 @@ const ascii = (s: string) => /^[\x00-\x7f]*$/.test(s);
 
 interface Keyed { place: Place; keys: string[][] }
 const keyCache = new WeakMap<Place[], Keyed[]>();
+const aliases = aliasFile as unknown as Record<string, string[]>;
+const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').replace(/ß/g, 'ss');
 
-/** Названия пункта: русское и исходное (из скобок), а также латинский идентификатор района. */
+/** Названия пункта: русское и исходное (из скобок), латинский идентификатор района, другие русские названия. */
 function keysOf(p: Place): string[][] {
   const out: string[] = [];
   const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(p.title);
   if (m) out.push(m[1], m[2]); else out.push(p.title);
   if (ascii(p.id)) out.push(p.id.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2'));
   if (p.title.startsWith('Берлин-')) out.push(p.title.slice(7));
+  if (Array.isArray(aliases[p.id])) out.push(...aliases[p.id]);
   const seen = new Set<string>();
-  return out.map((s) => norm(s.normalize('NFD').replace(/\p{M}/gu, '')).split(' ').filter(Boolean)).filter((k) => k.length && !seen.has(k.join(' ')) && seen.add(k.join(' ')));
+  return out.map((s) => lettered(norm(fold(s)).split(' ').filter(Boolean))).filter((k) => k.length && !seen.has(k.join(' ')) && seen.add(k.join(' ')));
 }
 const keyed = (places: Place[]): Keyed[] => {
   let k = keyCache.get(places);
@@ -112,12 +165,20 @@ const keyed = (places: Place[]): Keyed[] => {
   return k;
 };
 
-/** Оценка совпадения названия: больше — лучше; 0 — не совпало. Целиком (3 − правки/10), часть названия (1). */
+const oneEnding = (w: string) => { const x = w.replace(/(?:ами|ом|ем|ой|ей|ам|ям|ах|ях|а|я|у|ю|е|ы|и|о)$/, ''); return x.length >= 3 ? x : w; };
+/** Доля слов запроса, совпавших с названием буква в букву (1) или с точностью до одного падежного окончания (0,6). */
+const rawEq = (q: string[], key: string[]) =>
+  q.reduce((n, w, i) => n + (key[i] === w || key.includes(w) ? 1 : key.some((k) => oneEnding(k) === w || oneEnding(w) === k) ? 0.6 : 0), 0) / q.length;
+
+/**
+ * Оценка совпадения названия: больше — лучше; 0 — не совпало. Целиком (3 минус правки/10), часть названия (1);
+ * слова, совпавшие буква в букву, прибавляют до 0,5 — точное название побеждает однокоренное длинное.
+ */
 function scoreKey(q: string[], key: string[]): number {
   if (q.length === key.length) {
     let d = 0;
     for (let i = 0; i < q.length; i++) { const x = wordDist(q[i], key[i]); if (x === null) return partial(q, key); d += x; }
-    return 3 - d / 10;
+    return 3 - d / 10 + rawEq(q, key) / 2;
   }
   return partial(q, key);
 }
@@ -130,29 +191,50 @@ function partial(q: string[], key: string[]): number {
     if (j === key.length) return 0;
     j++;
   }
-  return 1;
+  return 1 + rawEq(q, key) / 2;
 }
 
 const MAX_OPTIONS = 3;
+const coreTitle = (t: string) => t.replace(/^Берлин(?:, |-)\s*/, '').replace(/\s*\([^()]*\)\s*$/, '').toLowerCase();
+const geoKm = (a: LngLat, b: LngLat) => Math.sqrt(km2(a, b));
+
+/** «Берлин, X» и «X» в одном месте — один пункт: остаётся тот, что без «Берлин, ». */
+function collapse(ps: Place[]): Place[] {
+  const out: Place[] = [];
+  for (const p of ps) {
+    const i = out.findIndex((q) => coreTitle(q.title) === coreTitle(p.title) && geoKm(q.at, p.at) < 3);
+    if (i < 0) out.push(p);
+    else if (/^Берлин(?:, |-)/.test(out[i].title) && !/^Берлин(?:, |-)/.test(p.title)) out[i] = p;
+  }
+  return out;
+}
+/** Подписи вариантов для переспроса: названия; если совпадают — с идентификатором района. */
+function labelsOf<T>(items: T[], name: (x: T) => string, extra: (x: T) => string): string[] {
+  const names = items.map(name);
+  return items.map((x, i) => (names.filter((n) => n === names[i]).length > 1 ? `${names[i]} (${extra(x)})` : names[i]));
+}
 
 /**
- * Место по названию. Однозначно — place (options пусты); несколько похожих — 2–3 options без place;
- * нет такого — пусто. Понимает русское и исходное название, падежи, «ё», дефисы, огрехи распознавания.
+ * Место по названию. Однозначно — place (options пусты); несколько похожих — 2–3 options без place и labels —
+ * подписи для переспроса; нет такого — пусто. Понимает русское и исходное название, другие русские названия
+ * (place-aliases.json), падежи, «ё», дефисы, огрехи распознавания и разное написание.
  */
-export function findPlace(text: string, places: Place[]): { place?: Place; options: Place[] } {
-  let q = norm(text.normalize('NFD').replace(/\p{M}/gu, '')).split(' ').filter(Boolean);
+export function findPlace(text: string, places: Place[]): { place?: Place; options: Place[]; labels: string[] } {
+  let q = lettered(norm(fold(text)).split(' ').filter(Boolean));
   while (q.length > 1 && PREP.has(q[0])) q = q.slice(1);
-  if (!q.length || (q.length === 1 && PREP.has(q[0]))) return { options: [] };
+  if (!q.length || (q.length === 1 && PREP.has(q[0]))) return { options: [], labels: [] };
   const scored: { place: Place; s: number }[] = [];
   for (const { place, keys } of keyed(places)) {
     const s = Math.max(...keys.map((k) => scoreKey(q, k)));
     if (s > 0) scored.push({ place, s });
   }
-  if (!scored.length) return { options: [] };
+  if (!scored.length) return { options: [], labels: [] };
   scored.sort((a, b) => b.s - a.s);
-  if (scored.length === 1 || scored[0].s - scored[1].s > 0.05) return { place: scored[0].place, options: [] };
   const top = scored[0].s;
-  return { options: scored.filter((x) => top - x.s <= 0.05).slice(0, MAX_OPTIONS).map((x) => x.place) };
+  const near = collapse(scored.filter((x) => top - x.s <= 0.05).map((x) => x.place));
+  if (near.length === 1) return { place: near[0], options: [], labels: [] };
+  const options = near.slice(0, MAX_OPTIONS);
+  return { options, labels: labelsOf(options, (p) => p.title, (p) => p.id) };
 }
 
 // ---------------------------------------------------------------- «N км <сторона> от …»
@@ -170,12 +252,18 @@ const FILLER = new Set(['в', 'на', 'примерно', 'около', 'поч�
  * места (ref — как сказано). Не похоже на такую фразу — null.
  */
 export function parseRelative(text: string): { km: number; dir: Rumb; ref: string } | null {
-  const t = norm(text).replace(/(?<=^|\s)(северо|юго) /gu, '$1').split(' ').filter(Boolean);
+  const t = norm(text.replace(/(\d)[.,](\d)/g, '$1д$2')).replace(/(?<=^|\s)(северо|юго) /gu, '$1').split(' ').filter(Boolean);
   let i = 0;
   while (FILLER.has(t[i])) i++;
-  const num = numberAt(t, i);
-  if (!num || num.ordinal) return null;
-  i += num.len;
+  let km: number;
+  if (/^\d+д\d+$/.test(t[i] ?? '')) { km = +t[i].replace('д', '.'); i++; }
+  else if (t[i] === 'полтора' || t[i] === 'полторы') { km = 1.5; i++; }
+  else {
+    const num = numberAt(t, i);
+    if (!num || num.ordinal) return null;
+    km = num.n; i += num.len;
+    if (t[i] === 'с' && /^половин/.test(t[i + 1] ?? '')) { km += 0.5; i += 2; }
+  }
   if (!/^(?:км|километр\p{L}*)$/u.test(t[i] ?? '')) return null;
   i++;
   if (t[i] === 'к' || t[i] === 'на' || t[i] === 'в') i++;
@@ -184,7 +272,7 @@ export function parseRelative(text: string): { km: number; dir: Rumb; ref: strin
   i++;
   if (t[i] === 'от') i++;
   const ref = t.slice(i).join(' ');
-  return ref ? { km: num.n, dir, ref } : null;
+  return ref ? { km, dir, ref } : null;
 }
 
 const KM_LAT = 110.574, KM_LNG = 111.32;
@@ -211,12 +299,12 @@ export function nearestPlace(at: LngLat, places: Place[]): Place {
  * Полная фраза «N км <сторона> от <места>» → ближайший к этой точке названный пункт. Опорное место неясно —
  * его варианты (options); фраза не такая — пусто.
  */
-export function resolveRelative(text: string, places: Place[]): { place?: Place; options: Place[]; from?: Place } {
+export function resolveRelative(text: string, places: Place[]): { place?: Place; options: Place[]; labels: string[]; from?: Place } {
   const rel = parseRelative(text);
-  if (!rel) return { options: [] };
+  if (!rel) return { options: [], labels: [] };
   const ref = findPlace(rel.ref, places);
-  if (!ref.place) return { options: ref.options };
-  return { place: nearestPlace(offsetPoint(ref.place.at, rel.km, rel.dir), places), options: [], from: ref.place };
+  if (!ref.place) return { options: ref.options, labels: ref.labels };
+  return { place: nearestPlace(offsetPoint(ref.place.at, rel.km, rel.dir), places), options: [], labels: [], from: ref.place };
 }
 
 // ---------------------------------------------------------------- соединения
@@ -233,15 +321,18 @@ const GENERIC = new Set(['гвардейск', 'ударн', 'танков', 'с
 const STOP = new Set(['и', 'в', 'на', 'по', 'с', 'со', 'к', 'о', 'об', 'про', 'то', 'ой']);
 const TYPE_STEM: [RegExp, string][] = [[/^арм/, 'армия'], [/^корпус/, 'корпус'], [/^дивиз/, 'дивизия'], [/^фронт/, 'фронт'], [/^групп/, 'группа']];
 
-/** Номер и значимые слова названия (без скобок, с раскрытыми сокращениями). */
-function parts(name: string): { num?: number; words: string[] } {
-  const raw = name.replace(/\(.*?\)/g, ' ').split(/[\s\-«»"“”.,/;:]+/).filter(Boolean);
-  const t = raw.map((w) => norm(w));
+interface Desc { num?: number; words: string[] }
+
+/** Номер и значимые слова фразы (с раскрытыми сокращениями и буквами-обозначениями). */
+function describeText(text: string): Desc {
+  const raw = text.split(/[\s\-«»"“”.,/;:]+/).filter(Boolean);
+  const t = lettered(raw.map((w) => norm(w)));
   let num: number | undefined;
   const words: string[] = [];
   for (let i = 0; i < raw.length; i++) {
+    if (t[i].startsWith('#')) { words.push(t[i]); continue; }
     const r = roman(raw[i]);
-    if (r !== null && raw[i].length >= 1 && !/^\p{Script=Cyrillic}/u.test(raw[i])) { num ??= r; continue; }
+    if (r !== null && !/^\p{Script=Cyrillic}/u.test(raw[i])) { num ??= r; continue; }
     const n = numberAt(t, i);
     if (n) { num ??= n.n; i += n.len - 1; continue; }
     const abbr = ABBR[t[i]];
@@ -252,37 +343,70 @@ function parts(name: string): { num?: number; words: string[] } {
   }
   return { num, words };
 }
+
+/** Название соединения: основное (без скобок) и прозвища из скобок («армия Венка», «группа Неринга», «Герман Геринг»). */
+function describeName(name: string): { main: Desc; aliases: Desc[] } {
+  const aliases: Desc[] = [];
+  for (const m of name.matchAll(/\(([^()]*)\)/g)) {
+    for (const seg of m[1].split(',')) {
+      const quoted = [...seg.matchAll(/«([^»]*)»/g)].map((x) => x[1]);
+      const texts = /\d/.test(seg) ? quoted : [seg.replace(/[«»]/g, ' ')];
+      for (const x of texts) if (/\p{Script=Cyrillic}/u.test(x)) { const d = describeText(x); if (d.words.length) aliases.push({ words: d.words }); }
+    }
+  }
+  return { main: describeText(name.replace(/\(.*?\)/g, ' ')), aliases };
+}
 const wordMatch = (a: string, b: string) => a === b || (Math.min(a.length, b.length) >= 4 && (a.startsWith(b) || b.startsWith(a))) || wordDist(a, b) !== null;
+const plainName = (n: string) => norm(n.replace(/\(.*?\)/g, ' '));
+const SIDE_RU: Record<string, string> = { su: 'СССР', de: 'Германия' };
 
 /**
- * Соединение по названию: номер словами или цифрами («восьмая», «8-я», «29-й»), порядок слов любой,
- * сокращения («гв.», «ск», «ТА»). Одно подходящее — unit; несколько — 2–3 options; нет — пусто.
- * Номер без уточнения читается как армия («восьмая гвардейская» — 8-я гвардейская армия).
+ * Соединение по названию: номер словами или цифрами («восьмая», «8-я», «29-й»), порядок слов любой, сокращения
+ * («гв.», «ск», «ТА»), прозвища из скобок, буквы («группа армий А»). Одно подходящее — unit; несколько — 2–3 options
+ * с подписями labels (при одинаковых названиях у разных сторон — со стороной); нет — пусто.
+ * Номер без типа читается как армия, но если армий с этим номером несколько («третья» при 3-й, 3-й гв., 3-й уд.) —
+ * переспрос. opts.side оставляет только соединения этой стороны (поле side).
  */
-export function findUnit<U extends { id: string; name: string }>(text: string, units: U[]): { unit?: U; options: U[] } {
-  const q = parts(text);
-  if (q.num === undefined && q.words.every((w) => GENERIC.has(w))) return { options: [] };
-  const exact = norm(text);
-  const scored: { u: U; s: number }[] = [];
-  for (const u of units) {
-    if (norm(u.name.replace(/\(.*?\)/g, ' ')) === exact) return { unit: u, options: [] };
-    const d = parts(u.name);
-    if (q.num !== undefined && d.num !== q.num) continue;
-    const used = new Set<number>();
-    let ok = true;
-    for (const w of q.words) {
-      const j = d.words.findIndex((x, k) => !used.has(k) && wordMatch(w, x));
-      if (j < 0) { ok = false; break; }
-      used.add(j);
+export function findUnit<U extends { id: string; name: string; side?: string }>(
+  text: string, units: U[], opts: { side?: string; sideNames?: Record<string, string> } = {},
+): { unit?: U; options: U[]; labels: string[] } {
+  const none = { options: [] as U[], labels: [] as string[] };
+  const q = describeText(text);
+  if (q.num === undefined && q.words.every((w) => GENERIC.has(w)) && q.words.length < 2) return none;
+  const pool = opts.side ? units.filter((u) => u.side === undefined || u.side === opts.side) : units;
+  const sideName = (s: string) => opts.sideNames?.[s] ?? SIDE_RU[s] ?? s;
+  const result = (found: U[]) => {
+    if (found.length === 1) return { unit: found[0], options: [] as U[], labels: [] as string[] };
+    const options = found.slice(0, MAX_OPTIONS);
+    return { options, labels: labelsOf(options, (u) => u.name, (u) => (u.side ? sideName(u.side) : u.id)) };
+  };
+  const exact = plainName(text);
+  const same = pool.filter((u) => plainName(u.name) === exact);
+  if (same.length) return result(same);
+  const typed = q.words.some((w) => w in TYPE_RANK);
+  const cands: { u: U; extra: number; rank: number }[] = [];
+  for (const u of pool) {
+    const { main, aliases } = describeName(u.name);
+    let best: { extra: number; rank: number } | null = null;
+    for (const [k, d] of [main, ...aliases].entries()) {
+      if (k === 0 ? q.num !== undefined && d.num !== q.num : q.num !== undefined) continue;
+      const used = new Set<number>();
+      if (!q.words.every((w) => { const j = d.words.findIndex((x, n) => !used.has(n) && wordMatch(w, x)); if (j >= 0) used.add(j); return j >= 0; })) continue;
+      const extra = d.words.filter((w, n) => !used.has(n) && !(w in TYPE_RANK)).length;
+      const rank = Math.min(5, ...d.words.filter((w) => w in TYPE_RANK).map((w) => TYPE_RANK[w]));
+      if (!best || extra < best.extra) best = { extra, rank };
     }
-    if (!ok) continue;
-    let s = q.words.length;
-    d.words.forEach((w, k) => { if (!used.has(k)) s -= w in TYPE_RANK ? (q.words.some((x) => x in TYPE_RANK) ? 0.5 : TYPE_RANK[w]) : 0.25; });
-    scored.push({ u, s });
+    if (best) cands.push({ u, ...best });
   }
-  if (!scored.length) return { options: [] };
-  scored.sort((a, b) => b.s - a.s);
-  if (scored.length === 1 || scored[0].s - scored[1].s >= 0.15) return { unit: scored[0].u, options: [] };
-  const top = scored[0].s;
-  return { options: scored.filter((x) => top - x.s < 0.15).slice(0, MAX_OPTIONS).map((x) => x.u) };
+  if (!cands.length) return none;
+  // тип назван («армия», «корпус») — берём самое полное совпадение; не назван — самый старший тип (армия), но не молча при нескольких
+  const key = (c: { extra: number; rank: number }) => (typed ? c.extra : c.rank);
+  const lead = Math.min(...cands.map(key));
+  const top = cands.filter((c) => key(c) === lead).sort((a, b) => a.extra - b.extra).map((c) => c.u);
+  // одно название у двух сторон — не молча
+  if (top.length === 1) {
+    const twins = cands.filter((c) => c.u !== top[0] && plainName(c.u.name) === plainName(top[0].name)).map((c) => c.u);
+    return result(twins.length ? [top[0], ...twins] : top);
+  }
+  return result(top);
 }

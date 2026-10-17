@@ -4,14 +4,20 @@ import type { Place } from '../src/sim/game-protocol';
 import { findPlace, findUnit, nearestPlace, offsetPoint, parseRelative, resolveRelative } from '../src/voice/places';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
 import scenarioFile from '../../../packages/sim/data/scenarios/berlin-1945-tasks.json';
+import vistulaFile from '../../../packages/sim/data/theatres/vistula-oder-1945.json';
+import cityFile from '../../../packages/sim/data/theatres/berlin-city-1945.json';
 import cityScenario from '../../../packages/sim/data/scenarios/berlin-city-1945.json';
 import vistulaScenario from '../../../packages/sim/data/scenarios/vistula-oder-1945.json';
 
 const T = new Theatre(theatreFile as unknown as TheatreData);
 /** То же, что game-worker.ts кладёт в TurnView.places. */
 const P: Place[] = simPlaces(T).map((p) => ({ id: p.id, title: p.title, at: p.at }));
-const names = (s: unknown) => (s as Scenario).formations.map((f) => ({ id: f.id, name: f.name }));
+const placesOf = (f: unknown): Place[] => simPlaces(new Theatre(f as TheatreData)).map((p) => ({ id: p.id, title: p.title, at: p.at }));
+const PV = placesOf(vistulaFile);
+const PC = placesOf(cityFile);
+const names = (s: unknown) => (s as Scenario).formations.map((f) => ({ id: f.id, name: f.name, side: f.side as string }));
 const U = names(scenarioFile);
+const name = (q: string, us: { id: string; name: string; side?: string }[] = U) => findUnit(q, us).unit?.name;
 
 describe('места по названию', () => {
   const title = (q: string) => findPlace(q, P).place?.title;
@@ -44,7 +50,7 @@ describe('места по названию', () => {
   });
   it('обычное слово не даёт места', () => {
     for (const w of ['привет', 'обстановка', 'доложи', 'погода', 'наступать', 'карта', 'танковый', 'в', ''])
-      expect(findPlace(w, P), w).toEqual({ options: [] });
+      expect(findPlace(w, P), w).toEqual({ options: [], labels: [] });
   });
 });
 
@@ -83,12 +89,123 @@ describe('«N километров <сторона> от …»', () => {
     const r = resolveRelative('пять километров севернее Гросса', P);
     expect(r.place).toBeUndefined();
     expect(r.options.length).toBeGreaterThanOrEqual(2);
-    expect(resolveRelative('открой приказы', P)).toEqual({ options: [] });
+    expect(resolveRelative('открой приказы', P)).toEqual({ options: [], labels: [] });
+  });
+});
+
+describe('раунд 1: точные совпадения, дубли, написания', () => {
+  const id = (q: string, ps = P) => findPlace(q, ps).place?.id;
+  it('точное слово побеждает однокоренное длинное (Люббен ↔ Люббенау)', () => {
+    expect(id('Люббен')).toBe('Luebben');
+    expect(id('Люббенау')).toBe('Luebbenau');
+    expect(id('в Люббене')).toBe('Luebben');
+  });
+  it('«Берлин, X» и «X» — один пункт: переспроса нет', () => {
+    expect(id('Britz', PC)).toBe('Britz');
+    expect(id('Reichskanzlei', PC)).toBe('Reichskanzlei');
+    expect(id('Берлин Рейхсканцелярия', PC)).toBeDefined();
+    expect(findPlace('Siemensstadt', PC).options).toEqual([]);
+  });
+  it('подписи вариантов различимы', () => {
+    const r = findPlace('Гросс', P);
+    expect(new Set(r.labels).size).toBe(r.options.length);
+  });
+  it('буквы секторов', () => {
+    expect(findPlace('сектор обороны А', PC).place?.title).toBe('Сектор обороны «A»');
+    expect(findPlace('сектор обороны бэ', PC).place?.title).toBe('Сектор обороны «B»');
+    expect(findPlace('сектор обороны зет', PC).place?.title).toBe('Сектор обороны «Z»');
+    expect(findPlace('сектор обороны цэ', PC).place?.title).toBe('Сектор обороны «C»');
+  });
+  it('разные написания: двойные согласные, е/и, синонимы', () => {
+    expect(id('Коттбус')).toBe('Cottbus');
+    expect(id('Леччин')).toBe('Letschin');
+    expect(id('Зеелов')).toBe('Seelow');
+    expect(id('Зелоу')).toBe('Seelow');
+    expect(id('Губин')).toBe('Gubin');
+    expect(id('Губен')).toBe('Guben');
+    expect(id('Щецин')).toBe('Szczecin');
+    expect(id('Вроцлав', PV)).toBe('Wroclaw');
+    expect(id('Бреслау', PV)).toBe('Wroclaw');
+    expect(id('Пила', PV)).toBe('Pila');
+    expect(id('Бромберг', PV)).toBe('Bydgoszcz');
+    expect(id('Гожув', PV)).toBe('Gorzow');
+    expect(findPlace('танковый', P)).toEqual({ options: [], labels: [] });
+  });
+  it('parseRelative: дроби и «полтора»', () => {
+    expect(parseRelative('1,5 км севернее Зелова')).toEqual({ km: 1.5, dir: 'С', ref: 'зелова' });
+    expect(parseRelative('полтора километра к западу от Зелова')).toEqual({ km: 1.5, dir: 'З', ref: 'зелова' });
+    expect(parseRelative('два с половиной километра южнее Зелова')).toEqual({ km: 2.5, dir: 'Ю', ref: 'зелова' });
+  });
+  const V = names(vistulaScenario);
+  const C = names(cityScenario);
+  it('номер без типа при нескольких армиях — переспрос', () => {
+    for (const q of ['третья', 'третья гвардейская', '3-я']) {
+      const r = findUnit(q, U);
+      expect(r.unit, q).toBeUndefined();
+      expect(r.options.length, q).toBeGreaterThanOrEqual(2);
+      expect(r.options.length, q).toBeLessThanOrEqual(3);
+    }
+    expect(findUnit('третья гвардейская', U).options.map((u) => u.name)).toEqual(expect.arrayContaining(['3-я гвардейская армия', '3-я гвардейская танковая армия']));
+    expect(name('третья гвардейская армия')).toBe('3-я гвардейская армия');
+    expect(name('третья армия')).toBe('3-я армия');
+    const S = [{ id: 'a', name: '8-я армия' }, { id: 'b', name: '8-я гвардейская армия' }];
+    expect(findUnit('восьмая', S).unit).toBeUndefined();
+    expect(findUnit('восьмая', S).options).toHaveLength(2);
+    expect(name('восьмая гвардейская', S)).toBe('8-я гвардейская армия');
+    expect(name('восьмая гвардейская')).toBe('8-я гвардейская армия');
+  });
+  it('сторона: одно имя у обеих сторон', () => {
+    const q = 'четвёртая танковая армия';
+    const both = findUnit(q, V);
+    expect(both.unit).toBeUndefined();
+    expect(both.options).toHaveLength(2);
+    expect(new Set(both.labels).size).toBe(2);
+    expect(both.labels.join(' ')).toMatch(/СССР|сов|Красн/i);
+    expect(findUnit(q, V, { side: 'de' }).unit?.side).toBe('de');
+    expect(findUnit(q, V, { side: 'su' }).unit?.side).toBe('su');
+  });
+  it('названия в скобках: позывные групп', () => {
+    expect(name('армия Венка')).toBe('12-я армия («армия Венка»)');
+    expect(name('группа Неринга', V)).toBe('XXIV танковый корпус (группа Неринга)');
+    expect(name('группа Заукена', V)).toBe('Танковый корпус «Великая Германия» (группа Заукена)');
+    expect(name('Герман Геринг', V)).toMatch(/Группа у Гурау/);
+    expect(name('восьмая гвардейская', V)).toBe('8-я гвардейская армия');
+  });
+  it('буквы секторов и групп армий', () => {
+    expect(name('сектор А', C)).toBe('Гарнизон сектора обороны «A»');
+    expect(name('сектор зет', C)).toBe('Гарнизон сектора обороны «Z»');
+    expect(name('гарнизон сектора эф', C)).toBe('Гарнизон сектора обороны «F»');
+    expect(name('группа армий А', V)).toMatch(/^Группа армий «А»/);
+  });
+});
+
+describe('самопроверка на всех данных', () => {
+  it('каждый пункт трёх театров не находится как чужой по своему русскому и исходному названию', () => {
+    const wrong: string[] = [];
+    for (const ps of [P, PV, PC]) for (const p of ps) {
+      const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(p.title);
+      for (const q of m ? [m[1], m[2]] : [p.title]) {
+        const r = findPlace(q, ps);
+        const near = [...(r.place ? [r.place] : []), ...r.options];
+        if (r.place ? r.place.id !== p.id && !(r.place.title.replace(/^Берлин, /, '') === p.title.replace(/^Берлин, /, '')) : !near.some((o) => o.id === p.id)) wrong.push(`${q} → ${near.map((o) => o.title).join(' | ')}`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  }, 60_000);
+  it('каждое соединение находит себя или попадает в варианты', () => {
+    const wrong: string[] = [];
+    for (const sc of [scenarioFile, vistulaScenario, cityScenario]) {
+      const us = names(sc);
+      for (const u of us) {
+        const r = findUnit(u.name, us);
+        if (!(r.unit?.id === u.id || r.options.some((o) => o.id === u.id))) wrong.push(`${u.name} → ${r.unit?.name ?? r.options.map((o) => o.name).join(' | ')}`);
+      }
+    }
+    expect(wrong).toEqual([]);
   });
 });
 
 describe('соединения по названию', () => {
-  const name = (q: string, us = U) => findUnit(q, us).unit?.name;
   it('порядковые словами и цифрами', () => {
     expect(name('восьмая гвардейская')).toBe('8-я гвардейская армия');
     expect(name('восьмая гвардейская армия')).toBe('8-я гвардейская армия');
@@ -98,7 +215,6 @@ describe('соединения по названию', () => {
     expect(name('первый гвардейский танковый')).toBe('1-я гвардейская танковая армия');
     expect(name('первая гвардейская танковая армия')).toBe('1-я гвардейская танковая армия');
     expect(name('пятая ударная')).toBe('5-я ударная армия');
-    expect(name('третья гвардейская')).toBe('3-я гвардейская армия');
     expect(name('третья гвардейская танковая')).toBe('3-я гвардейская танковая армия');
   });
   it('корпуса и дивизии: цифры, сокращения, составные числа', () => {
@@ -126,7 +242,7 @@ describe('соединения по названию', () => {
     expect(r.unit).toBeUndefined();
     expect(r.options.length).toBeGreaterThanOrEqual(2);
     expect(r.options.length).toBeLessThanOrEqual(3);
-    for (const w of ['доложи обстановку', 'погода', 'армия', 'танковый', '']) expect(findUnit(w, U), w).toEqual({ options: [] });
-    expect(findUnit('сто пятая гвардейская', U)).toEqual({ options: [] });
+    for (const w of ['доложи обстановку', 'погода', 'армия', 'танковый', '']) expect(findUnit(w, U), w).toEqual({ options: [], labels: [] });
+    expect(findUnit('сто пятая гвардейская', U)).toEqual({ options: [], labels: [] });
   });
 });
