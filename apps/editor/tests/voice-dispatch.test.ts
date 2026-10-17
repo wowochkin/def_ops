@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, actions, register, type Action } from '../src/voice/registry';
-import { addressed, CONVERSATION_S, Dispatcher } from '../src/voice/dispatch';
+import { addressed, CONVERSATION_S, Dispatcher, normalizeCommand } from '../src/voice/dispatch';
 
 let offs: (() => void)[] = [];
 let opened: unknown[] = [];
@@ -151,5 +151,56 @@ describe('разборщик', () => {
     expect(await d.utterance('штаб открой', 3)).toBe('unknown');
     expect(await d.utterance('штаб открой знаки', 4, 3)).toBe('done');
     expect(opened).toEqual([{ section: 'maps' }, { section: 'library' }]);
+  });
+});
+
+describe('огрехи распознавания', () => {
+  it('точные команды — без поправок', async () => {
+    const d = mk();
+    expect(await d.utterance('Штаб, переигровка', 1)).toBe('done');
+    expect(d.lastFixes).toEqual([]);
+    expect(await d.utterance('Штаб, карты', 2)).toBe('done');
+    expect(opened).toEqual([{ section: 'replay' }, { section: 'maps' }]);
+  });
+  it.each([
+    'штап переигровку', 'шаб, переигровка', 'штаб пере игровку', 'штаб переигровк', 'штаб, переиграть',
+    'Штат, переигровка', 'штап открой пере игровку',
+  ])('«%s» → replay с поправкой', async (phrase) => {
+    const d = mk();
+    expect(await d.utterance(phrase, 1)).toBe('done');
+    expect(opened).toEqual([{ section: 'replay' }]);
+    expect(d.lastFixes.length).toBeGreaterThan(0);
+    expect(d.lastUnderstood).toMatch(/^штаб /);
+  });
+  it('нормализация возвращает исправленный текст и поправки', () => {
+    const r = normalizeCommand('Шаб, пере игровку');
+    expect(r.text).toBe('штаб переигровку');
+    expect(r.fixes).toHaveLength(2);
+    expect(normalizeCommand('Штаб, карты')).toEqual({ text: 'штаб карты', fixes: [] });
+  });
+  it('ложные срабатывания не открывают ничего', async () => {
+    const d = mk();
+    for (const [i, p] of ['Штаб, картинку', 'Штаб, знакомый', 'передайте в штат армии', 'Передайте в штаб армии', 'штаб, открой картинку'].entries())
+      await d.utterance(p, i + 1);
+    expect(opened).toEqual([]);
+  });
+  it('«штат» посреди фразы — не обращение', () => {
+    expect(normalizeCommand('передайте в штат армии').text).toBe('передайте в штат армии');
+    expect(addressed(normalizeCommand('передайте в штат армии').text)).toBeNull();
+  });
+});
+
+describe('отбой', () => {
+  const sent: unknown[] = [];
+  beforeEach(() => {
+    sent.length = 0;
+    (globalThis as any).window = { dispatchEvent: (e: CustomEvent) => { sent.push([e.type, e.detail]); return true; } };
+  });
+  afterEach(() => { delete (globalThis as any).window; });
+  it.each(['Штаб, отбой', 'Штаб, выключи голос.', 'штаб отбой!'])('«%s» → voice:power false', async (phrase) => {
+    const d = mk();
+    expect(await d.utterance(phrase, 1)).toBe('done');
+    expect(sent).toEqual([['voice:power', false]]);
+    expect(said).toEqual(['Голос выключен. Включить — кнопкой на панели.']);
   });
 });

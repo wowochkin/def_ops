@@ -38,6 +38,84 @@ const sectionByWord = (w: string): string | null => {
   return SECTIONS.find((s) => norm(s.title) === w)?.id ?? null;
 };
 
+/** Родственные слова, которыми раздел тоже называют: понимаются, но в ответе поправляются на название. */
+const RELATED: Record<string, string> = { переиграть: 'replay', переиграй: 'replay', переиграйте: 'replay', переиграем: 'replay' };
+
+/** Расстояние Левенштейна между словами. */
+function lev(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+/** Допуск на ошибку распознавания: короткие слова — только точно, длинные — до двух правок. */
+const tolerance = (len: number) => (len <= 4 ? 0 : len <= 7 ? 1 : 2);
+
+/** Раздел по слову с поправкой на огрехи; word — как сказано, canon — каноничное написание (null, если сказано точно). */
+function fuzzySection(w: string): { id: string; canon: string | null } | null {
+  if (RELATED[w]) return { id: RELATED[w], canon: FORMS[RELATED[w]][0] };
+  const exact = sectionByWord(w);
+  if (exact) return { id: exact, canon: null };
+  if (w.length < 5) return null;
+  let best: { id: string; canon: string; d: number } | null = null;
+  for (const [id, forms] of Object.entries(FORMS)) {
+    for (const f of forms) {
+      const d = lev(w, f);
+      if (d <= Math.min(tolerance(Math.max(w.length, f.length)), tolerance(f.length)) && (!best || d < best.d)) best = { id, canon: forms[0], d };
+    }
+  }
+  return best;
+}
+
+const OPEN_VERB = /^(?:открой|открыть|покажи|показать|перейди|перейти)$/;
+const PREP = new Set(['в', 'на', 'к']);
+
+/**
+ * Нестрогая поправка огрехов распознавания: обращение («штап», «шаб», «штат» → «штаб», только в начале фразы)
+ * и название раздела после глагола или голое («пере игровку», «переигровк», «переиграть» → «переигровка»).
+ * text — нормализованная фраза с исправлениями; fixes — «услышано → понял» по каждой поправке (пусто, если всё точно).
+ */
+export function normalizeCommand(text: string): { text: string; fixes: string[] } {
+  const words = norm(text).split(' ').filter(Boolean);
+  const fixes: string[] = [];
+  let i = 0;
+  if (words.length) {
+    const w = words[0];
+    if (w === 'штаб') i = 1;
+    else if (words.length > 1 && w.length >= 3 && w.length <= 5 && lev(w, 'штаб') === 1 && !sectionByWord(w)) {
+      fixes.push(`${w} → штаб`);
+      words[0] = 'штаб';
+      i = 1;
+    } else if (/^товарищ$/.test(w) && /^(?:полковник|генерал)$/.test(words[1] ?? '')) i = 2;
+  }
+  const hasAddr = i > 0;
+  let j = i;
+  const verb = OPEN_VERB.test(words[j] ?? '');
+  if (verb) { j++; if (PREP.has(words[j] ?? '')) j++; }
+  const tail = words.length - j;
+  // голое название раздела — одно слово или два (склейка), с глаголом — любой хвост
+  if (tail >= 1 && (verb || hasAddr) && (verb || tail <= 2)) {
+    let r = fuzzySection(words[j]);
+    let span = 1;
+    if ((!r || r.canon) && tail >= 2 && (verb || tail === 2)) {
+      const joined = fuzzySection(words[j] + words[j + 1]);
+      if (joined) { r = joined; span = 2; }
+    }
+    if (r && (verb || tail <= span)) {
+      const said = words.slice(j, j + span).join(' ');
+      const canon = r.canon ?? (span === 2 ? words[j] + words[j + 1] : null);
+      if (canon) {
+        fixes.push(`${said} → ${canon}`);
+        words.splice(j, span, canon);
+      }
+    }
+  }
+  return { text: words.join(' '), fixes };
+}
+
 const OPEN = /^(?:открой|открыть|покажи|показать|перейди|перейти)(?: в| на| к)? (.+)$/;
 const ASK = /^(?:а )?(?:можешь|умеешь|можете|умеете|можно ли|можно)(?: (.*))?$/;
 const DEFAULT_SAY = ['штаб, открой переигровку', 'штаб, что я могу?', 'штаб, калибровка'];
@@ -63,6 +141,12 @@ export class Dispatcher {
   private spokeAt = -Infinity;
   /** Что говорили и исполнялось ли это (склеивать можно только неисполненное). */
   private memory = new Map<number, { text: string; ran: boolean }>();
+  /**
+   * Поправки последней реплики для ленты: «Услышано: «{heard}» — понял: «{lastUnderstood}»», когда lastFixes не пуст.
+   * lastFixes — «услышано → понял» по каждому слову; lastUnderstood — исправленная фраза.
+   */
+  lastFixes: string[] = [];
+  lastUnderstood = '';
   constructor(private opts: { now(): number; say(text: string): void; section(): string; stop?(): void }) {}
 
   /** Штаб договорил (событие say-done) — открывается окно разговора. */
@@ -76,6 +160,10 @@ export class Dispatcher {
       // исполненная реплика не повторяется: новая обрабатывается сама по себе
       if (prev && !prev.ran && !norm(text).startsWith(norm(prev.text))) full = `${prev.text} ${text}`;
     }
+    const fixed = normalizeCommand(full);
+    this.lastFixes = fixed.fixes;
+    this.lastUnderstood = fixed.text;
+    full = fixed.text;
     const addr = addressed(full);
     const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000;
     if (!addr && !inWindow) return 'ignored';
@@ -96,6 +184,11 @@ export class Dispatcher {
   private async rules(rest: string): Promise<boolean> {
     // одно обращение без просьбы — отозваться; ответ откроет окно разговора, дальше можно без «штаб»
     if (!rest) { this.opts.say('Слушаю.'); return true; }
+    if (/^(?:отбой|(?:выключи|выключить|отключи|отключить) голос)$/.test(rest)) {
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('voice:power', { detail: false }));
+      this.opts.say('Голос выключен. Включить — кнопкой на панели.');
+      return true;
+    }
     const q = ASK.exec(rest);
     if (q) {
       const words = stems(q[1] ?? "");
@@ -105,7 +198,7 @@ export class Dispatcher {
       else this.opts.say(`Этого система пока не предусматривает. Могу: ${quote(closest(this.opts.section(), '', 3))}.`);
       return true;
     }
-    const m = OPEN.exec(rest);
+    const m = OPEN.exec(rest) ?? (rest.split(' ').length <= 2 && sectionByWord(rest.split(' ')[0]) ? [rest, rest] : null);
     if (m) {
       const sec = sectionByWord(m[1].split(' ')[0]);
       if (!sec) return false;
