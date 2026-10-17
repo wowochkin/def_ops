@@ -15,6 +15,7 @@ import difflib
 import json
 import threading
 import time
+import uuid
 from pathlib import Path
 
 import numpy as np
@@ -73,6 +74,8 @@ class Service:
         self.state, self.error = "loading", None
         self.loaded = threading.Event()
         self.calib_cache: dict[str, np.ndarray] = {}
+        for f in Path(args.data).glob("pending-*.wav"):  # непрошедшие в образцы записи прошлого запуска
+            f.unlink(missing_ok=True)
 
     def start(self):
         if self.args.fake:
@@ -168,7 +171,8 @@ class Session:
         self.calib: dict | None = None
         self.calib_data: dict[str, list[float]] = {}
         self.recording: list[np.ndarray] | None = None
-        self.pending: dict | None = None  # проверенная запись: audio, path
+        self.pending: dict | None = None  # проверенная запись: audio, path (файл — только до сохранения, для пробы)
+        self.pending_path = Path(svc.args.data) / f"pending-{uuid.uuid4().hex[:8]}.wav"
 
     async def _vad(self, frame):
         return self.m.vad_prob(frame)
@@ -276,11 +280,12 @@ class Session:
 
     async def run_job(self, job: Job, prev: asyncio.Task | None):
         """Как Session.respond стенда, без языковой модели: куски по PiecePlanner, потоковый синтез в нити MLX,
-        затухание конца куска, пауза по знаку (после последнего куска — без паузы)."""
+        затухание конца куска, пауза по знаку — перед следующим куском (после последнего паузы нет)."""
         if prev is not None and not prev.done():
             await asyncio.wait([prev])  # фразы звучат по очереди; отмена этой не отменяет прежнюю
         sr = self.m.sample_rate
         fade_n = int(self.svc.args.tail_fade_ms / 1000 * sr)
+        gap = 0.0  # пауза после прежнего куска — уходит перед звуком следующего
         try:
             while True:
                 piece = job.planner.next_piece(time.perf_counter(), self.play_until)
@@ -295,12 +300,11 @@ class Session:
                     continue
                 if not job.preview:
                     self.last_said = (self.last_said + " " + piece)[-400:]
-                hold = await self._synth(job, piece, fade_n)
+                hold = await self._synth(job, piece, fade_n, np.zeros(int(gap * sr), np.float32))
                 if hold is None:  # ошибка синтеза — сообщена, фраза кончается
                     break
-                pause = 0.0 if job.planner.done else pause_after(piece)
-                await self.send_audio(job, np.concatenate([fade_tail(hold, sr, self.svc.args.tail_fade_ms),
-                                                           np.zeros(int(pause * sr), np.float32)]))
+                await self.send_audio(job, fade_tail(hold, sr, self.svc.args.tail_fade_ms))
+                gap = pause_after(piece)
             job.sent_all = True
             if self.jobs.get(job.id) is job:
                 await self.send(type="say-done", id=job.id)
@@ -309,7 +313,7 @@ class Session:
         except asyncio.CancelledError:
             job.cancel.set()
 
-    async def _synth(self, job: Job, text: str, fade_n: int) -> np.ndarray | None:
+    async def _synth(self, job: Job, text: str, fade_n: int, lead: np.ndarray) -> np.ndarray | None:
         q: asyncio.Queue = asyncio.Queue()
         cancel = job.cancel
 
@@ -325,7 +329,7 @@ class Session:
                 self.loop.call_soon_threadsafe(q.put_nowait, None)
 
         fut = self.loop.run_in_executor(self.m.mlx, synth)
-        hold = np.zeros(0, np.float32)  # последние fade_n отсчётов: на конце куска их плавно гасим
+        hold = lead  # последние fade_n отсчётов: на конце куска их плавно гасим; вначале — пауза до куска
         err = None
         while (a := await q.get()) is not None:
             if isinstance(a, Exception):
@@ -432,8 +436,15 @@ class Session:
             self.calib = None
             self.listener.reset()
             self.m.vad_reset()
-            self.recording, self.pending = [], None
+            self.recording = []
+            self.drop_pending()
             await self.send(type="voice_recording", text=RECORD_TEXT)
+        elif op == "discard":  # отказ от записи: запись и проверенный образец стираются
+            self.recording = None
+            self.drop_pending()
+            self.listener.reset()
+            self.m.vad_reset()
+            await self.send(type="voice_discarded")
         elif op == "record-stop":
             if self.recording is None:
                 raise ValueError("запись не идёт")
@@ -441,12 +452,12 @@ class Session:
             self.recording = None
             self.listener.reset()
             self.m.vad_reset()
+            self.drop_pending()
             heard = (await self.loop.run_in_executor(self.m.torch, self.m.transcribe, audio)).strip() if len(audio) else ""
             r = check_recording(audio, SR_IN, RECORD_TEXT, heard)
             if r["ok"]:
-                path = Path(self.svc.args.data) / "pending.wav"
-                write_wav(path, r["audio"], SR_IN)
-                self.pending = {"audio": r["audio"], "path": path}
+                write_wav(self.pending_path, r["audio"], SR_IN)
+                self.pending = {"audio": r["audio"], "path": self.pending_path}
             await self.send(type="voice_check", heard=heard, **{k: v for k, v in r.items() if k != "audio"})
         elif op == "preview":
             vid = d.get("voice_id")
@@ -456,7 +467,10 @@ class Session:
                 ref = (self.pending["path"], RECORD_TEXT)
             else:
                 raise ValueError("нет записи для пробы — запишите голос")
-            job = Job(int(d.get("id", 0)), ref, preview=True)
+            jid = d.get("id")
+            if not isinstance(jid, int) or isinstance(jid, bool) or jid < 1:
+                raise ValueError("проба голоса: нужен id фразы (от 1; 0 — звук калибровки)")
+            job = Job(jid, ref, preview=True)
             if job.id in self.jobs:
                 raise ValueError(f"фраза {job.id} уже звучит")
             self._start_job(job)
@@ -465,14 +479,18 @@ class Session:
             if not self.pending:
                 raise ValueError("нет записи, прошедшей проверку — запишите голос заново")
             vid = store.save(str(d.get("name", "")), self.pending["audio"], SR_IN, RECORD_TEXT, "микрофон")
-            self.pending = None
+            self.drop_pending()
             await self.send(type="voice_saved", id=vid)
             await self.voice_list()
         elif op == "assign":
             store.assign(str(d.get("role")), str(d.get("voice_id")))
             await self.voice_list()
         elif op == "delete":
-            store.delete(str(d.get("voice_id")))
+            vid = str(d.get("voice_id"))
+            path = store.ref(vid)[0] if any(v["id"] == vid for v in store.list()) else None
+            store.delete(vid)
+            if path is not None:
+                self.m.forget_ref(path)  # звук образца не остаётся и в памяти синтеза
             await self.voice_list()
         else:
             raise ValueError(f"нет такой операции с голосами: {op}")
@@ -500,9 +518,15 @@ class Session:
         else:
             raise ValueError(f"неизвестное сообщение: {t}")
 
+    def drop_pending(self):
+        self.pending = None
+        self.pending_path.unlink(missing_ok=True)
+
     async def close(self):
         for job in list(self.jobs.values()):
             self._drop(job)
+        self.recording = None
+        self.drop_pending()
 
 
 def build_app(argv=None):
@@ -540,6 +564,9 @@ def build_app(argv=None):
                         await s.on_audio(msg["bytes"])
                     elif msg.get("text"):
                         await s.on_text(json.loads(msg["text"]))
+                except OSError as e:  # диск полон, нет прав — сессия продолжается
+                    await s.send(type="error", text=f"не удалось записать или прочитать файл голоса "
+                                                    f"(место на диске, права доступа): {e.strerror or e}")
                 except (ValueError, KeyError, TypeError) as e:
                     await s.send(type="error", text=str(e) if not isinstance(e, KeyError) else f"нет поля или образца: {e}")
         except WebSocketDisconnect:

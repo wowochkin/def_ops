@@ -164,6 +164,12 @@ def test_ws_barge_stops_phrase(make_client):
     send_audio(ws, tone(0.6))
     b = until(ws, "barge")
     assert b["id"] == 5
+    # после barge звука оборванной фразы нет: следующая фраза доходит до say-done без кадров id 5
+    ws.send_text(json.dumps({"type": "say", "id": 6, "role": "chief", "text": "Есть."}))
+    seen = []
+    until(ws, "say-done", seen)
+    ids = [audio_header(m)[0] for m in seen if isinstance(m, bytes)]
+    assert ids and set(ids) == {6}
     ws.close()
 
 
@@ -236,3 +242,96 @@ def test_ws_stop_unfinished_phrase(make_client):
     ws.send_text(json.dumps({"type": "say", "id": 10, "role": "повар", "text": "Есть."}))
     assert "роли" in until(ws, "error")["text"]
     ws.close()
+
+
+def record(ws, script_ok=True):
+    ws.send_text(json.dumps({"type": "voice", "op": "record-start"}))
+    until(ws, "voice_recording")
+    send_audio(ws, np.concatenate([silence(1.0), tone(9.0), silence(1.0)]))
+    ws.send_text(json.dumps({"type": "voice", "op": "record-stop"}))
+    return until(ws, "voice_check")
+
+
+def wavs(root):
+    return sorted(str(p.relative_to(root)) for p in root.rglob("*.wav"))
+
+
+def test_recording_leaves_no_files(make_client, tmp_path):
+    data = tmp_path / "data"
+    c = make_client([RECORD_TEXT] * 4)
+    ws, _ = connect(c)
+    assert record(ws)["ok"] is True
+    assert any("pending" in w for w in wavs(data))  # проверенная запись — до сохранения, для пробы
+    ws.send_text(json.dumps({"type": "voice", "op": "save", "name": "Гость"}))
+    vid = until(ws, "voice_saved")["id"]
+    assert wavs(data) == sorted(["voices/zhukov-10s/ref.wav", f"voices/{vid}/ref.wav"])
+    ws.send_text(json.dumps({"type": "voice", "op": "delete", "voice_id": vid}))
+    until(ws, "voice_list")
+    assert wavs(data) == ["voices/zhukov-10s/ref.wav"] and not (data / "voices" / vid).exists()
+    # новая запись поверх проверенной и отказ от записи стирают её
+    assert record(ws)["ok"] is True
+    ws.send_text(json.dumps({"type": "voice", "op": "record-start"}))
+    until(ws, "voice_recording")
+    assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
+    ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
+    until(ws, "voice_discarded")
+    assert record(ws)["ok"] is True
+    ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
+    until(ws, "voice_discarded")
+    assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
+    # закрытие окна стирает непрошедшую в образцы запись
+    assert record(ws)["ok"] is True
+    ws.close()
+    c.close()
+    assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
+
+
+def test_preview_requires_id(make_client):
+    ws, _ = connect(make_client())
+    ws.send_text(json.dumps({"type": "voice", "op": "preview", "voice_id": "zhukov-10s"}))
+    assert "id" in until(ws, "error")["text"]
+    ws.send_text(json.dumps({"type": "voice", "op": "preview", "voice_id": "zhukov-10s", "id": 0}))
+    assert "id" in until(ws, "error")["text"]
+    ws.close()
+
+
+def test_store_oserror_reported_session_continues(make_client):
+    c = make_client([RECORD_TEXT])
+    ws, _ = connect(c)
+    assert record(ws)["ok"] is True
+
+    def full(*a, **k):
+        raise OSError(28, "No space left on device")
+
+    c.app.state.service.store.save = full
+    ws.send_text(json.dumps({"type": "voice", "op": "save", "name": "Гость"}))
+    err = until(ws, "error")["text"]
+    assert "диск" in err or "файл" in err
+    ws.send_text(json.dumps({"type": "voice", "op": "list"}))
+    assert until(ws, "voice_list")["roles"]["chief"] == "zhukov-10s"
+    ws.close()
+
+
+class _Asr:
+    def __init__(self):
+        self.paths = []
+
+    def transcribe(self, path):
+        from pathlib import Path
+        assert Path(path).is_file()
+        self.paths.append(path)
+        return "текст"
+
+
+def test_models_transcribe_removes_temp_file():
+    from pathlib import Path
+
+    from models import Models
+
+    m = Models()
+    m.asr = _Asr()
+    assert m.transcribe(tone(1.0)) == "текст"
+    assert m.asr.paths and not Path(m.asr.paths[0]).exists()
+    m._refs = {("/x/voices/a/ref.wav", 1): 1, ("/x/voices/b/ref.wav", 2): 2}
+    m.forget_ref(Path("/x/voices/a/ref.wav"))
+    assert list(m._refs) == [("/x/voices/b/ref.wav", 2)]

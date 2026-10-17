@@ -41,6 +41,9 @@ class FakeModels:
     def transcribe(self, audio: np.ndarray) -> str:
         return self.script.pop(0) if self.script else DEFAULT_TEXT
 
+    def forget_ref(self, path: Path):
+        pass
+
     def tts_stream(self, text: str, ref) -> Iterator[np.ndarray]:
         sr = self.sample_rate
         n = int(max(0.3, len(text) / CHARS_PER_S) * sr)

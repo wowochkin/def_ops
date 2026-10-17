@@ -90,8 +90,15 @@ class Models:
 
     def transcribe(self, audio: np.ndarray) -> str:  # в нити torch
         f = self._tmp / f"voice-turn-{os.getpid()}.wav"
-        write_wav(f, audio, SR_IN)
-        return self._asr_file(f)
+        try:
+            write_wav(f, audio, SR_IN)
+            return self._asr_file(f)
+        finally:  # реплика и запись голоса не остаются на диске
+            f.unlink(missing_ok=True)
+
+    def forget_ref(self, path: Path):
+        """Образец удалён — его звук не держится и в памяти."""
+        self._refs = {k: v for k, v in self._refs.items() if k[0] != str(path)}
 
     def _ref_audio(self, path: Path):  # в нити mlx; образец грузится один раз (новая запись — новый mtime)
         from mlx_audio.utils import load_audio
