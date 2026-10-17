@@ -37,7 +37,8 @@ cd scripts/voice-bench
 
 # 3. языковые модели: LM Studio запущен (сервер, JIT-загрузка моделей включена)
 python3 llm_compare.py run --models <id1>,<id2>   # id — из `curl -s localhost:1234/v1/models`
-python3 llm_compare.py page                       # out/llm-read.html — читать вслепую и оценивать
+.venv-tts/bin/python llm_voice.py                 # озвучить ответы голосом (Qwen3-TTS 1.7B, образец Жукова)
+python3 llm_compare.py page                       # out/llm-read.html — слушать/читать вслепую и оценивать
 python3 llm_compare.py score                      # out/llm.md
 ```
 

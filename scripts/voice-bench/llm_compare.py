@@ -151,6 +151,11 @@ def run(args):
     print(f"\nзамеры: {RES}\nдальше: python3 llm_compare.py page")
 
 
+def audio_path(model: str, prompt: str) -> Path:
+    """Озвучка ответа (llm_voice.py): out/llm/audio/<модель>/<вопрос>.wav."""
+    return OUT / "llm" / "audio" / re.sub(r"[^\w.-]+", "_", model) / f"{prompt}.wav"
+
+
 def page(args):
     rows = [r for r in json.loads(RES.read_text()) if r.get("text")]
     rnd = random.Random(args.seed)
@@ -163,8 +168,10 @@ def page(args):
         for i, r in enumerate(cand):
             sid = f"{p['id']}-{chr(65 + i)}"
             key[sid] = {"model": r["model"], "prompt": p["id"]}
-            items.append(f"<div class=\"s\" data-id=\"{sid}\"><b>{chr(65 + i)}</b><p>{html.escape(r['text'])}</p>"
-                         f"<label>язык {sel('lang')}</label><label>суть {sel('sense')}</label><label>голос роли {sel('voice')}</label></div>")
+            wav = audio_path(r["model"], p["id"])
+            audio = f"<audio controls preload=\"none\" src=\"{html.escape(str(wav.relative_to(OUT)))}\"></audio>" if wav.exists() else ""
+            items.append(f"<div class=\"s\" data-id=\"{sid}\"><b>{chr(65 + i)}</b> {audio}<p>{html.escape(r['text'])}</p>"
+                         f"<label>язык {sel('lang')}</label><label>суть {sel('sense')}</label><label>в образе {sel('voice')}</label></div>")
         blocks.append(f"<section><h2>{p['id']} · {p['role']}</h2><p class=\"q\">{html.escape(p['text'])}</p>{''.join(items)}</section>")
     doc = f"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Ответы моделей</title><style>
 body {{ font: 15px/1.45 -apple-system, system-ui, sans-serif; max-width: 900px; margin: 24px auto; padding: 0 16px; color: #222; }}
@@ -173,7 +180,7 @@ header {{ position: sticky; top: 0; background: #fff; padding: 8px 0; border-bot
 label {{ margin-right: 14px; font-size: 13px; color: #444; }}
 </style></head><body><header><button id="save">Сохранить оценки</button> <span id="cnt"></span>
 <div style="color:#666;font-size:13px">Модели под буквами перемешаны. Язык: 5 — естественная русская речь, без канцелярита и ошибок; суть: 5 — верно и по делу;
-голос роли: 5 — так бы и сказал этот человек. Читайте как будто слышите — длинное и с цифрами для голоса плохо.</div></header>
+в образе: 5 — так бы и сказал этот человек. Ответы озвучены одним и тем же синтезом (llm_voice.py) — слушайте: длинное, с цифрами и сокращениями для голоса плохо.</div></header>
 {''.join(blocks)}
 <script>
 const KEY = 'llm-read'; let st = {{}}; try {{ st = JSON.parse(localStorage.getItem(KEY) || '{{}}'); }} catch (e) {{}}
@@ -221,7 +228,7 @@ def score(args):
     med = lambda xs: round(st.median([x for x in xs if x is not None]), 2) if [x for x in xs if x is not None] else "—"
     avg = lambda xs: round(st.mean(xs), 2) if xs else "—"
     lines = ["# Языковые модели для голосового режима", "",
-             "| Модель | Язык | Суть | Голос роли | Первая фраза, с | Ток/с | Цифры (всего) | Разметка/латиница | Фраз в ответе | Команды | Размышляла |",
+             "| Модель | Язык | Суть | В образе | Первая фраза, с | Ток/с | Цифры (всего) | Разметка/латиница | Фраз в ответе | Команды | Размышляла |",
              "|---|---|---|---|---|---|---|---|---|---|---|"]
     for m in sorted(by, key=lambda m: -sum(avg(by[m][f]) if by[m][f] else 0 for f in ("lang", "sense", "voice"))):
         e = by[m]
