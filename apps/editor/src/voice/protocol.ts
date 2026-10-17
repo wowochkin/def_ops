@@ -23,19 +23,47 @@ export type ClientMsg =
   | { type: 'calib'; step: CalibStep; sec?: number }
   | { type: 'voice'; op: string; [k: string]: unknown };
 
-/** Сервис → окно (JSON). Поля `voice_*` описаны отдельно, здесь — свободно. */
+/** Образец голоса в хранилище сервиса. */
+export interface VoiceInfo {
+  id: string;
+  name: string;
+  text: string;
+  source: string;
+  builtin: boolean;
+  date: string;
+}
+
+export type VoiceRoles = Record<VoiceRole, string>;
+
+/** Проверка записи нового голоса: причины — коротко, для «перечитайте». */
+export interface VoiceCheck {
+  ok: boolean;
+  reasons: string[];
+  heard: string;
+  audio_s?: number;
+  peak_db?: number;
+  snr_db?: number;
+  wer?: number;
+}
+
+/** Сервис → окно (JSON). */
 export type ServerMsg =
-  | { type: 'ready'; voices?: unknown; roles?: unknown; loaded?: unknown; [k: string]: unknown }
+  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number }
   | { type: 'level'; p: number; busy: boolean }
   | { type: 'speech'; state: 'start' | 'end' }
   | { type: 'utterance'; id: number; text: string; audio_s: number; stt_ms: number; continues?: number }
-  | { type: 'say-done'; id: number }
+  | { type: 'echo'; text: string }
+  | { type: 'say-done'; id: number; stopped?: boolean }
   | { type: 'barge'; id: number }
-  | { type: 'settings'; [k: string]: unknown }
-  | { type: 'calib_rec'; sec: number }
-  | { type: 'calib_step'; [k: string]: unknown }
-  | { type: 'calib_result'; [k: string]: unknown }
-  | { type: `voice_${string}`; [k: string]: unknown }
+  | ({ type: 'settings' } & VoiceSettings)
+  | { type: 'calib_rec'; step: CalibStep; sec: number }
+  | { type: 'calib_step'; step: CalibStep; frames: number }
+  | { type: 'calib_result'; error?: string; cfg?: VoiceSettings; stats?: Record<string, number | null>; warn?: string[] }
+  | { type: 'voice_list'; voices: VoiceInfo[]; roles: VoiceRoles }
+  | { type: 'voice_recording'; text: string }
+  | ({ type: 'voice_check' } & VoiceCheck)
+  | { type: 'voice_saved'; id: string }
+  | { type: 'voice_discarded' }
   | { type: 'error'; text: string };
 
 /** Звук фразы: `[0x01][id u32 LE][rate u32 LE][pcm int16 LE]`. */

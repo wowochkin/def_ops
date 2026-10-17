@@ -57,6 +57,7 @@ export class VoiceClient {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private handlers = new Map<string, Set<(m: never) => void>>();
   private statusCbs = new Set<(s: VoiceStatus) => void>();
+  private playedCbs = new Set<(id: number) => void>();
   private lastStatus: VoiceStatus | null = null;
   private hello: Partial<VoiceSettings> = {};
   private nextId: number = VOICE_SAY_IDS.first;
@@ -87,6 +88,18 @@ export class VoiceClient {
   onStatus(cb: (s: VoiceStatus) => void): () => void {
     this.statusCbs.add(cb);
     return () => { this.statusCbs.delete(cb); };
+  }
+
+  /** Окно доиграло фразу (после `say-done` и всего её звука; остановленные и перебитые не считаются). */
+  onPlayed(cb: (id: number) => void): () => void {
+    this.playedCbs.add(cb);
+    return () => { this.playedCbs.delete(cb); };
+  }
+
+  /** Возобновить звук после действия человека (браузер может держать AudioContext приостановленным). */
+  resume() {
+    void this.micCtx?.resume().catch(() => {});
+    void this.playCtx?.resume().catch(() => {});
   }
 
   on<K extends ServerMsg['type']>(type: K, cb: Handler<K>): () => void {
@@ -245,7 +258,8 @@ export class VoiceClient {
     if (!ctx) return;
     let a;
     try { a = parseAudio(buf); } catch { return; }
-    if (!a.pcm.length || this.cancelled.has(a.id)) return;
+    // id 0 — тестовая фраза калибровки: не фраза `say`, отмены и `played` её не касаются
+    if (!a.pcm.length || (a.id !== 0 && this.cancelled.has(a.id))) return;
     void ctx.resume();
     const ab = ctx.createBuffer(1, a.pcm.length, a.rate);
     const ch = ab.getChannelData(0);
@@ -259,10 +273,10 @@ export class VoiceClient {
     this.nextT = t + ab.duration;
     const entry = { src, id: a.id };
     this.sources.push(entry);
-    if (!this.phrases.has(a.id)) this.phrases.set(a.id, { done: false });
+    if (a.id !== 0 && !this.phrases.has(a.id)) this.phrases.set(a.id, { done: false });
     src.onended = () => {
       this.sources = this.sources.filter((x) => x !== entry);
-      this.checkPlayed(a.id);
+      if (a.id !== 0) this.checkPlayed(a.id);
     };
   }
 
@@ -280,6 +294,7 @@ export class VoiceClient {
     if (!p || !p.done || this.sources.some((x) => x.id === id)) return;
     this.phrases.delete(id);
     this.send({ type: 'played', id });
+    this.playedCbs.forEach((cb) => cb(id));
   }
 
   /** Остановить звук: одной фразы или всего. Для остановленных `played` не шлётся. */
