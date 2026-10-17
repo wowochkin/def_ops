@@ -10,7 +10,7 @@ export interface Action<P = any> {
   section: string;                     // раздел или 'global'
   title: string;                       // для подсказок и тура
   describe: string;                    // для модели
-  params?: Record<string, unknown>;    // JSON-схема параметров
+  params?: Record<string, unknown>;    // JSON-схема параметров; она же — параметры инструмента модели (llm.ts toTools)
   say?: string[];                      // примеры фраз: «штаб, делай ход»
   irreversible?: boolean;
   confirm?(p: P): string;              // текст подтверждения

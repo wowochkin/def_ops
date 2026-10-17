@@ -1,9 +1,12 @@
 /**
- * Разборщик реплик на правилах (без языковой модели): обращение к штабу, окно разговора,
- * переходы между разделами, «что я могу сказать», калибровка, голоса, «стоп».
+ * Разборщик реплик: сначала правила (мгновенно, без модели) — обращение к штабу, окно разговора,
+ * переходы между разделами, «что я могу сказать», калибровка, голоса, «стоп». Чего правила не поняли в обращённой
+ * реплике — разбирает модель (опция model), если она подключена; её вызов действия проверяется по реестру.
  */
 import { SECTIONS } from '../sections';
-import { act, actions } from './registry';
+import type { ModelReply } from './llm';
+import { act, actions, type Action } from './registry';
+import { speakable } from './speech';
 
 export const CONVERSATION_S = 12;
 export const HELP_MAX = 7;
@@ -147,6 +150,10 @@ function closest(section: string, said: string, n = 3): string[] {
 }
 const quote = (xs: string[]) => xs.map((e) => `«${e}»`).join(', ');
 
+/** Крючок модели: реплика и действия раздела → ответ (signal — отмена новой репликой, onRetry — перед повтором запроса). */
+export type ModelHook = (text: string, actions: Action[], ctx: { signal: AbortSignal; onRetry(n: number): void; section: string }) => Promise<ModelReply>;
+export const RETRY_SAY = 'Связь с моделью прервалась, повторяю запрос.';
+
 export class Dispatcher {
   private spokeAt = -Infinity;
   /** Что говорили и исполнялось ли это (склеивать можно только неисполненное). */
@@ -163,7 +170,13 @@ export class Dispatcher {
    * Пусто, если реплика проигнорирована или распознана точно. lastFixes/lastUnderstood — то же для последней реплики.
    */
   correction(id: number): { fixes: string[]; understood: string } { return this.corrections.get(id) ?? { fixes: [], understood: '' }; }
-  constructor(private opts: { now(): number; say(text: string): void; section(): string; stop?(): void }) {}
+  /** Ожидание ответа модели: новая обращённая реплика его отменяет. */
+  private pending: AbortController | null = null;
+  /**
+   * model — модель за правилами (нет — честный ответ правил); thinking(true/false) — модель думает / ответила
+   * (для состояния «Думаю» на панели; после отмены новой репликой — false сразу).
+   */
+  constructor(private opts: { now(): number; say(text: string): void; section(): string; stop?(): void; model?: ModelHook; thinking?(on: boolean): void }) {}
 
   /** Штаб договорил (событие say-done) — открывается окно разговора. */
   spoke(): void { this.spokeAt = this.opts.now(); }
@@ -185,6 +198,7 @@ export class Dispatcher {
     this.corrections.set(id, { fixes: fixed.fixes, understood: fixed.text });
     if (this.corrections.size > 20) this.corrections.delete(this.corrections.keys().next().value as number);
     const rest = addr ? addr.rest : fixed.text;
+    this.cancelModel(); // новая обращённая реплика — старый ответ модели уже не нужен
     const rec = { text: raw, ran: false };
     this.memory.set(id, rec);
     if (this.memory.size > 20) this.memory.delete(this.memory.keys().next().value as number);
@@ -194,8 +208,80 @@ export class Dispatcher {
       this.opts.say('Не удалось выполнить это сейчас.');
       return 'unknown';
     }
+    if (this.opts.model) {
+      const r = await this.viaModel(raw, rest);
+      if (r === 'done') rec.ran = true;
+      if (r !== 'fallback') return r;
+    }
     this.opts.say(`Не понял вас. Можно сказать, например: ${quote(closest(this.opts.section(), rest))}.`);
     return 'unknown';
+  }
+
+  private cancelModel(): void {
+    if (!this.pending) return;
+    this.pending.abort(new Error('новая реплика'));
+    this.pending = null;
+    this.opts.thinking?.(false);
+  }
+
+  /** Модель за правилами. 'fallback' — модель ничего не сказала: честный ответ правил. Отменённый ответ не звучит. */
+  private async viaModel(raw: string, rest: string): Promise<'done' | 'unknown' | 'fallback'> {
+    const ac = new AbortController();
+    this.pending = ac;
+    const live = () => this.pending === ac && !ac.signal.aborted;
+    const section = this.opts.section();
+    const list = actions(section);
+    this.opts.thinking?.(true);
+    let reply: ModelReply;
+    let warned = false; // заготовленная фраза — один раз за запрос
+    const onRetry = () => { if (live() && !warned) { warned = true; this.opts.say(RETRY_SAY); } };
+    try {
+      reply = await this.opts.model!(raw, list, { signal: ac.signal, section, onRetry });
+    } catch (e) {
+      if (!live()) return 'unknown';
+      this.done(ac);
+      if ((e as Error)?.name === 'ModelUnavailable') {
+        this.opts.say(`Связи с моделью нет. Можно сказать, например: ${quote(closest(section, rest))}.`);
+        return 'unknown';
+      }
+      return 'fallback';
+    }
+    if (!live()) return 'unknown';
+    this.done(ac);
+    const say = speakable(reply.say ?? '');
+    if (!reply.call) {
+      if (!say) return 'fallback';
+      this.opts.say(say);
+      return 'done';
+    }
+    // вызов проверяется по реестру: действие этого раздела (или общее) и доступно сейчас
+    const a = list.find((x) => x.id === reply.call!.id);
+    const av = a ? a.available() : null;
+    if (!a || av === null) {
+      this.opts.say(`Этого система пока не предусматривает. Могу: ${quote(closest(section, rest))}.`);
+      return 'unknown';
+    }
+    if (av !== true) {
+      this.opts.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}. Могу: ${quote(closest(section, rest))}.`);
+      return 'unknown';
+    }
+    if (say) this.opts.say(say);
+    let report: string | void;
+    try {
+      report = await act(a.id, reply.call.params);
+    } catch {
+      this.opts.say('Не удалось выполнить это сейчас.');
+      return 'unknown';
+    }
+    if (report) this.opts.say(speakable(report));
+    else if (!say) this.opts.say('Сделано.');
+    return 'done';
+  }
+
+  private done(ac: AbortController): void {
+    if (this.pending !== ac) return;
+    this.pending = null;
+    this.opts.thinking?.(false);
   }
 
   private async rules(rest: string): Promise<boolean> {
