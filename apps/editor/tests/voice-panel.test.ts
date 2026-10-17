@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  FEED_MAX, NOT_INSTALLED, feedAdd, feedResolve, feedUtterance, panelState, parseSettings, type FeedItem, type PanelInput,
+  FEED_MAX, NOT_INSTALLED, UNSUPPORTED, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseSettings, type FeedItem, type PanelInput,
 } from '../src/voice/panel-state';
 
 const base: PanelInput = { status: 'ready', speaking: false, listening: false, thinking: false, conversation: false };
@@ -12,6 +12,9 @@ describe('panelState', () => {
     expect(panelState({ ...base, status: 'connecting' }).text).toBe('Голос загружается');
     expect(panelState({ ...base, status: 'reconnecting' }).text).toBe('Переподключаюсь');
     expect(panelState({ ...base, status: 'error' }).key).toBe('error');
+    expect(panelState({ ...base, status: 'error' }).text).toBe('Голос не запустился — перезапустите программу');
+    expect(panelState({ ...base, status: 'unsupported' })).toEqual({ key: 'unsupported', text: UNSUPPORTED });
+    expect(UNSUPPORTED).toBe('Голос в этой версии недоступен');
   });
 
   it('готов: говорит важнее слушает, слушает важнее думает, дальше — разговор и ожидание', () => {
@@ -30,7 +33,7 @@ describe('panelState', () => {
   });
 
   it('в словах состояния нет технических терминов', () => {
-    const keys: Partial<PanelInput>[] = [{ status: 'off' }, { status: 'error' }, { status: 'loading' }, { status: 'reconnecting' },
+    const keys: Partial<PanelInput>[] = [{ status: 'off' }, { status: 'unsupported' }, { status: 'error' }, { status: 'loading' }, { status: 'reconnecting' },
       { speaking: true }, { listening: true }, { thinking: true }, { conversation: true }, {}];
     for (const k of keys) expect(panelState({ ...base, ...k }).text).not.toMatch(/VAD|Smart Turn|порог|WebSocket/i);
   });
@@ -67,6 +70,12 @@ describe('лента', () => {
     f = feedUtterance(f, { id: 2, text: 'штаб, открой переигровку', continues: 1 });
     expect(f.map((x) => x.text)).toEqual(['Слушаю.', 'штаб, открой переигровку']);
     expect(f[1].utt).toBe(2);
+  });
+
+  it('эхо — в ленте с пояснением, что это похоже на голос штаба из динамиков', () => {
+    const f = feedEcho([], 'штаб, открой переигровку', 7);
+    expect(f).toEqual([{ key: 'x7', kind: 'echo', text: 'штаб, открой переигровку' }]);
+    expect(feedEcho(f, 'ещё', 8)).toHaveLength(2);
   });
 
   it(`не длиннее ${FEED_MAX} записей`, () => {

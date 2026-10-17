@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CancelledIds, parseAudio, voiceStatus } from '../src/voice/protocol';
+import { CancelledIds, parseAudio, reconnectDelay, voiceStatus } from '../src/voice/protocol';
 
 /** Собирает двоичное сообщение сервиса: [0x01][id u32 LE][rate u32 LE][pcm int16 LE]. */
 function frame(id: number, rate: number, pcm: number[]): ArrayBuffer {
@@ -90,11 +90,32 @@ describe('voiceStatus', () => {
   it('ws открыт, но ready не пришёл — connecting', () => {
     expect(voiceStatus({ state: 'ready' }, 'open', false)).toBe('connecting');
   });
+  it('ws открыт, вместо ready пришла ошибка сервиса (модели не загрузились) — error, а не вечное «загружается»', () => {
+    expect(voiceStatus({ state: 'ready' }, 'open', false, false, true)).toBe('error');
+    expect(voiceStatus(null, 'open', false, false, true)).toBe('error');
+    // после ready ошибки отдельных действий состояние не меняют
+    expect(voiceStatus(null, 'open', true, false, true)).toBe('ready');
+  });
+  it('голос в этой версии недоступен (не Mac на Apple Silicon, установленная программа, браузер) — unsupported', () => {
+    expect(voiceStatus({ state: 'unsupported' }, 'closed', false, true)).toBe('unsupported');
+    expect(voiceStatus({ state: 'unsupported' }, 'connecting', false)).toBe('unsupported');
+    // сервис всё же запущен вручную — работает
+    expect(voiceStatus({ state: 'unsupported' }, 'open', true)).toBe('ready');
+  });
   it('ws открыт и ready — ready', () => {
     expect(voiceStatus({ state: 'ready' }, 'open', true)).toBe('ready');
   });
   it('был ready, ws закрыт — reconnecting', () => {
     expect(voiceStatus({ state: 'ready' }, 'closed', true)).toBe('reconnecting');
     expect(voiceStatus({ state: 'ready' }, 'connecting', true)).toBe('reconnecting');
+  });
+});
+
+describe('reconnectDelay', () => {
+  it('пока ни разу не подключились — пауза растёт до 30 с', () => {
+    expect([1, 2, 3, 4, 5, 6, 10].map((n) => reconnectDelay(n, false))).toEqual([2000, 4000, 8000, 16000, 30000, 30000, 30000]);
+  });
+  it('связь уже была (сервис перезапускается) — каждые 2 с', () => {
+    expect([1, 5, 20].map((n) => reconnectDelay(n, true))).toEqual([2000, 2000, 2000]);
   });
 });

@@ -115,10 +115,21 @@ writeFileSync(script, ['штаб, открой переигровку', 'пер�
 const script2 = join(tmp, 'script2.txt');
 writeFileSync(script2, Array(200).fill(RECORD_TEXT).join('\n') + '\n');
 
+// встроенные образцы голоса — из scripts/voice-bench/ref (в репозиторий не входят); нет их — свой образец:
+// поддельный синтез, как и настоящий, без образца не говорит
+const BENCH = join(ROOT, 'scripts/voice-bench');
+let seed = BENCH;
+if (!existsSync(join(BENCH, 'ref/zhukov-10s.wav'))) {
+  seed = join(tmp, 'seed');
+  mkdirSync(join(seed, 'ref'), { recursive: true });
+  speechWav(join(seed, 'ref/zhukov-10s.wav'));
+  writeFileSync(join(seed, 'refs.json'), JSON.stringify({ refs: { 'zhukov-10s': { file: 'ref/zhukov-10s.wav', text: 'Образец для проверки.' } } }));
+}
+
 const vport = await freePort();
 let voice = null;
 async function startVoice(lines = script) {
-  voice = run(PY, ['server.py', '--fake', '--fake-script', lines, '--port', String(vport), '--data', join(tmp, 'data')],
+  voice = run(PY, ['server.py', '--fake', '--fake-script', lines, '--port', String(vport), '--data', join(tmp, 'data'), '--seed-refs', seed],
     { cwd: join(ROOT, 'services/voice') });
   await waitHttp(`http://127.0.0.1:${vport}/health`, 30000, voice);
 }
@@ -282,17 +293,16 @@ async function plainWords(loc, where) {
   for (const w of TECH) if (t.includes(w)) throw new Error(`${where}: техническое слово «${w}»`);
 }
 
-await check('калибровка: обрыв связи посреди шага — понятная причина и кнопка, не зависает', async () => {
+await check('калибровка: обрыв связи посреди шага — понятная причина, калибровка с первого шага, не зависает', async () => {
   await calibSteps(1, 1);
   await calibDlg.getByText('шаг 2 из 4').waitFor({ timeout: 20000 });
   await calibDlg.getByRole('button', { name: 'Записать' }).click();
   await stopVoice();
-  await calibDlg.getByText('связь с голосом прервалась').waitFor({ timeout: 10000 });
+  // замеры прежних шагов были только у голоса и пропали с обрывом — калибровка заново, с первого шага
+  await calibDlg.getByText('начнём калибровку сначала').waitFor({ timeout: 10000 });
+  await calibDlg.getByText('шаг 1 из 4').waitFor({ timeout: 2000 });
   await startVoice(script2);
-  const again = calibDlg.getByRole('button', { name: 'Заново' });
-  await again.waitFor({ timeout: 5000 });
-  await calibDlg.getByRole('button', { name: 'Записать' }).and(page.locator(':enabled')).waitFor({ timeout: 20000 });
-  await again.click();
+  await calibDlg.getByRole('button', { name: 'Записать' }).and(page.locator(':enabled')).waitFor({ timeout: 40000 });
 });
 
 await check('калибровка: четыре шага → «Регуляторы выставлены»', async () => {
@@ -316,6 +326,18 @@ await check('голоса: окно, предупреждение и текст 
   await dlg.getByRole('button', { name: 'Записать новый голос' }).click();
   await dlg.getByText('хранится только на этом компьютере').waitFor({ timeout: 3000 });
   await dlg.getByText('Докладываю обстановку на утро').waitFor({ timeout: 3000 });
+});
+
+await check('голоса: обрыв связи посреди записи — запись сброшена с понятной причиной, можно записать заново', async () => {
+  const dlg = page.locator('.vp-dialog.voices');
+  await dlg.getByRole('button', { name: 'Начать запись' }).click();
+  await dlg.getByRole('button', { name: 'Закончить запись' }).waitFor({ timeout: 5000 });
+  await stopVoice();
+  await dlg.getByText('запись не сохранилась').waitFor({ timeout: 10000 });
+  await startVoice(script2);
+  await panel.locator('.vp-state', { hasText: /Жду обращения|Слушаю|Думаю|Говорит|Разговор/ }).waitFor({ timeout: 40000 });
+  await dlg.getByRole('button', { name: 'Записать новый голос' }).click();
+  await dlg.getByRole('button', { name: 'Начать запись' }).waitFor({ timeout: 3000 });
 });
 
 let passed = false;

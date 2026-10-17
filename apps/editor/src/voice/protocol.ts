@@ -88,26 +88,37 @@ export function parseAudio(buf: ArrayBuffer): AudioChunk {
 }
 
 export type WsState = 'open' | 'closed' | 'connecting';
-export type VoiceStatus = 'off' | 'loading' | 'connecting' | 'ready' | 'error' | 'reconnecting';
+export type VoiceStatus = 'off' | 'unsupported' | 'loading' | 'connecting' | 'ready' | 'error' | 'reconnecting';
 
 /**
  * Состояние голоса для панели. `api` — ответ шлюза `/api/voice` (null — шлюз не ответил: состояние неизвестно),
  * `ready` — сервис присылал `ready` (и связь с тех пор не сбрасывали намеренно), `failed` — последняя попытка
  * подключиться к сервису не удалась (связь так и не открылась).
  *
+ * `serviceError` — сервис ответил ошибкой вместо `ready` (модели не загрузились).
+ *
  * Открытая связь важнее шлюза: сервис, запущенный вручную (шлюза нет или он о сервисе не знает), — работает,
  * пропущенный опрос шлюза не «выключает» живой голос. «Не установлен» — только когда и шлюз не знает о
- * сервисе, и подключиться не удалось.
+ * сервисе, и подключиться не удалось; «недоступен» (`unsupported`) — шлюз говорит, что голоса в этой версии нет.
  */
-export function voiceStatus(api: { state: string } | null, ws: WsState, ready: boolean, failed = false): VoiceStatus {
-  if (ws === 'open') return ready ? 'ready' : 'connecting';
+export function voiceStatus(api: { state: string } | null, ws: WsState, ready: boolean, failed = false, serviceError = false): VoiceStatus {
+  if (ws === 'open') return ready ? 'ready' : serviceError ? 'error' : 'connecting';
   if (ready) return 'reconnecting';
   const state = api?.state ?? 'unknown';
+  if (state === 'unsupported') return 'unsupported';
   if (state === 'error') return 'error';
   if (state === 'loading') return 'loading';
   if (state === 'ready') return 'connecting';
   // шлюз молчит или о сервисе не знает: решает попытка подключиться
   return failed ? 'off' : 'connecting';
+}
+
+/**
+ * Пауза перед очередной попыткой подключиться. `fails` — неудачных попыток подряд (от 1), `everOpened` — связь в
+ * этот раз уже была: тогда сервис перезапускается, ждём его часто; не было ни разу — пауза растёт до 30 с.
+ */
+export function reconnectDelay(fails: number, everOpened: boolean): number {
+  return everOpened ? 2000 : Math.min(30000, 2000 * 2 ** Math.max(0, fails - 1));
 }
 
 /** Идентификаторы фраз `say` растут с этого числа (0 в протоколе — «без фразы»). */

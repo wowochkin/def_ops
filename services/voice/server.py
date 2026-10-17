@@ -23,14 +23,17 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from audio import FRAME, SR_IN, Listener, calibrate, should_merge
 from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, pause_after
-from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, write_wav
+from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, trim_silence, write_wav
 
 HERE = Path(__file__).resolve().parent
 SEED_DEFAULT = HERE.parent.parent / "scripts" / "voice-bench"
 PREVIEW_TEXT = ("Слушаю вас. Докладываю: на участке армии без изменений, противник активности не проявляет, "
                 "части готовы к выполнению задачи.")
 RECORD_MAX_S = 60  # запись голоса дольше не копится
-ECHO_RATIO = 0.6  # распознанное так похоже на сказанное моделью — это эхо из динамиков, не реплика
+ECHO_RATIO = 0.6  # распознанное так похоже на сказанное моделью — это эхо из динамиков, не реплика…
+ECHO_AFTER_S = 1.5  # …если речь кончилась, пока штаб говорит, или не позже этого после конца его звука
+ASR_PIECE_S = 24  # распознавание берёт до 25 с звука (GigaAM) — длиннее режется на куски
+NO_REF = "нет образца голоса — запишите голос в окне «Голоса»"
 
 
 def parse_args(argv=None):
@@ -108,6 +111,8 @@ class Service:
 
     def calib_audio(self) -> np.ndarray:  # в нити mlx: тестовая фраза голосом начальника штаба, один раз на образец
         ref = self.ref_for("chief")
+        if ref is None:
+            raise ValueError(NO_REF)
         key = str(ref[0]) if ref else ""
         if key not in self.calib_cache:
             self.calib_cache[key] = np.concatenate(list(self.models.tts_stream(CALIB_PHRASE, ref)))
@@ -166,7 +171,9 @@ class Session:
         self.jobs: dict[int, Job] = {}
         self.last_task: asyncio.Task | None = None
         self.play_until = 0.0  # когда (perf_counter) окно доиграет всё отправленное
-        self.last_said = ""  # последние фразы модели — чтобы не принять их эхо за реплику
+        self.last_said = ""  # последняя фраза модели — чтобы не принять её эхо за реплику
+        self.last_said_id: int | None = None
+        self.echo_until = 0.0  # до какого времени (perf_counter) из динамиков мог звучать голос модели
         # калибровка и запись голоса
         self.calib: dict | None = None
         self.calib_data: dict[str, list[float]] = {}
@@ -232,19 +239,39 @@ class Session:
             elif kind == "utterance":
                 await self.on_utterance(ev[1])
 
+    async def transcribe(self, audio: np.ndarray) -> str:
+        """Распознавание любой длины: длиннее ASR_PIECE_S — кусками, разрез — в самом тихом месте второй
+        половины куска (между словами)."""
+        n, sr = ASR_PIECE_S * SR_IN, SR_IN
+        parts = []
+        while len(audio) > n:
+            win = int(0.02 * sr)
+            seg = audio[n // 2: n]
+            k = len(seg) // win
+            rms = np.sqrt(np.mean(seg[: k * win].reshape(k, win) ** 2, axis=1))
+            cut = n // 2 + int(np.argmin(rms)) * win + win // 2
+            parts.append(audio[:cut])
+            audio = audio[cut:]
+        parts.append(audio)
+        texts = [(await self.loop.run_in_executor(self.m.torch, self.m.transcribe, p)).strip() for p in parts if len(p)]
+        return " ".join(t for t in texts if t)
+
     async def on_utterance(self, audio: np.ndarray):
         end = self.t_mic - self.listener.silence_ms / 1000
+        # эхо возможно, только если речь кончилась, пока модель говорила, или вскоре после конца её звука
+        spoke_end = time.perf_counter() - self.listener.silence_ms / 1000
+        echo_possible = self.busy or spoke_end <= self.echo_until + ECHO_AFTER_S
         merge = self.merge
         self.merge = False
         self.m.vad_reset()
         if self.busy:  # договорил, пока модель отвечала (или склейка) — ответ обрывается
             await self.barge_all()
         t0 = time.perf_counter()
-        text = (await self.loop.run_in_executor(self.m.torch, self.m.transcribe, audio)).strip()
+        text = await self.transcribe(audio)
         stt_ms = round((time.perf_counter() - t0) * 1000)
         if not text:
             return
-        if self.last_said and difflib.SequenceMatcher(
+        if echo_possible and self.last_said and difflib.SequenceMatcher(
                 None, text.lower(), self.last_said.lower()[-len(text) * 2:]).ratio() > ECHO_RATIO:
             await self.send(type="echo", text=text)  # микрофон поймал голос модели
             return
@@ -298,7 +325,9 @@ class Session:
                     except asyncio.TimeoutError:
                         pass
                     continue
-                if not job.preview:
+                if not job.preview:  # эхо сравнивается только с последней фразой
+                    if self.last_said_id != job.id:
+                        self.last_said_id, self.last_said = job.id, ""
                     self.last_said = (self.last_said + " " + piece)[-400:]
                 hold = await self._synth(job, piece, fade_n, np.zeros(int(gap * sr), np.float32))
                 if hold is None:  # ошибка синтеза — сообщена, фраза кончается
@@ -350,6 +379,8 @@ class Session:
             return
         sr = self.m.sample_rate
         self.play_until = max(self.play_until, time.perf_counter() + 0.03) + len(a) / sr
+        if not job.preview:
+            self.echo_until = max(self.echo_until, self.play_until)
         if not job.preview and self.reply_start is None:
             self.reply_start = self.t_mic
         job.samples += len(a)
@@ -367,14 +398,17 @@ class Session:
             self._drop(job)
             await self.send(type="barge", id=job.id)
         self.play_until = 0.0
+        self.echo_until = min(self.echo_until, time.perf_counter())
 
-    async def stop(self, jid: int | None = None):
-        for job in [j for j in self.jobs.values() if jid is None or j.id == jid]:
+    async def stop(self, jid: int | None = None, only=None):
+        """Остановить фразы (все, jid или подходящие под only): say-done stopped — и для фразы, звук которой уже
+        весь отправлен: окно гасит её звук и played не шлёт."""
+        for job in [j for j in self.jobs.values() if (jid is None or j.id == jid) and (only is None or only(j))]:
             self._drop(job)
-            if not job.sent_all:
-                await self.send(type="say-done", id=job.id, stopped=True)
+            await self.send(type="say-done", id=job.id, stopped=True)
         if not self.jobs:
             self.play_until = 0.0
+            self.echo_until = min(self.echo_until, time.perf_counter())
 
     def played(self, jid: int):
         job = self.jobs.get(jid)
@@ -437,11 +471,11 @@ class Session:
             self.listener.reset()
             self.m.vad_reset()
             self.recording = []
-            self.drop_pending()
+            await self.drop_pending()
             await self.send(type="voice_recording", text=RECORD_TEXT)
         elif op == "discard":  # отказ от записи: запись и проверенный образец стираются
             self.recording = None
-            self.drop_pending()
+            await self.drop_pending()
             self.listener.reset()
             self.m.vad_reset()
             await self.send(type="voice_discarded")
@@ -452,8 +486,9 @@ class Session:
             self.recording = None
             self.listener.reset()
             self.m.vad_reset()
-            self.drop_pending()
-            heard = (await self.loop.run_in_executor(self.m.torch, self.m.transcribe, audio)).strip() if len(audio) else ""
+            await self.drop_pending()
+            trimmed = trim_silence(audio, SR_IN)  # распознаётся речь без тишины по краям
+            heard = await self.transcribe(trimmed) if len(trimmed) else ""
             r = check_recording(audio, SR_IN, RECORD_TEXT, heard)
             if r["ok"]:
                 write_wav(self.pending_path, r["audio"], SR_IN)
@@ -479,7 +514,7 @@ class Session:
             if not self.pending:
                 raise ValueError("нет записи, прошедшей проверку — запишите голос заново")
             vid = store.save(str(d.get("name", "")), self.pending["audio"], SR_IN, RECORD_TEXT, "микрофон")
-            self.drop_pending()
+            await self.drop_pending()
             await self.send(type="voice_saved", id=vid)
             await self.voice_list()
         elif op == "assign":
@@ -518,15 +553,21 @@ class Session:
         else:
             raise ValueError(f"неизвестное сообщение: {t}")
 
-    def drop_pending(self):
+    async def drop_pending(self):
+        """Проверенная запись больше не нужна: проба ею обрывается (её файла сейчас не станет), звук записи
+        не остаётся ни на диске, ни в памяти синтеза."""
+        await self.stop(only=lambda j: j.preview and j.ref is not None and j.ref[0] == self.pending_path)
         self.pending = None
         self.pending_path.unlink(missing_ok=True)
+        self.m.forget_ref(self.pending_path)
 
     async def close(self):
         for job in list(self.jobs.values()):
             self._drop(job)
         self.recording = None
-        self.drop_pending()
+        self.pending = None
+        self.pending_path.unlink(missing_ok=True)
+        self.m.forget_ref(self.pending_path)
 
 
 def build_app(argv=None):
@@ -569,6 +610,11 @@ def build_app(argv=None):
                                                     f"(место на диске, права доступа): {e.strerror or e}")
                 except (ValueError, KeyError, TypeError) as e:
                     await s.send(type="error", text=str(e) if not isinstance(e, KeyError) else f"нет поля или образца: {e}")
+                except WebSocketDisconnect:
+                    raise
+                except Exception as e:  # noqa: BLE001 — любой другой сбой: сказать и продолжать сессию
+                    print("сбой:", f"{type(e).__name__}: {e}", flush=True)
+                    await s.send(type="error", text=f"сбой голоса: {e}" if str(e) else f"сбой голоса ({type(e).__name__})")
         except WebSocketDisconnect:
             pass
         finally:

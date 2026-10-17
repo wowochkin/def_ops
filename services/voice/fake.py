@@ -1,6 +1,7 @@
 """Поддельные модели (--fake): тот же интерфейс, что models.Models, без MLX и torch — для тестов и сквозной
 проверки приложения без Mac. Речь — громкость кадра, конец реплики — сразу, распознавание — строки из файла
-по очереди, синтез — тон длиной ~15 знаков в секунду."""
+по очереди (длиннее 25 с — ошибка, как у GigaAM), синтез — тон длиной ~15 знаков в секунду (без образца
+или с удалённым файлом образца — ошибка, как у настоящего)."""
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
@@ -11,6 +12,7 @@ import numpy as np
 
 DEFAULT_TEXT = "штаб, открой переигровку"
 CHARS_PER_S = 15
+ASR_MAX_S = 25  # как у GigaAM: transcribe длиннее не берёт (ValueError)
 CHUNK_S = 0.32  # как streaming_interval настоящего синтеза
 
 
@@ -24,6 +26,7 @@ class FakeModels:
         if script is not None:
             self.script = [s.strip() for s in Path(script).read_text(encoding="utf-8").splitlines() if s.strip()]
         self.vad_resets = 0
+        self.forgotten: list[Path] = []
 
     def load(self, warm_ref=None):
         pass
@@ -39,12 +42,19 @@ class FakeModels:
         return 1.0
 
     def transcribe(self, audio: np.ndarray) -> str:
+        if len(audio) > ASR_MAX_S * 16000:
+            raise ValueError("Too long wav file, use 'transcribe_longform' method.")
         return self.script.pop(0) if self.script else DEFAULT_TEXT
 
     def forget_ref(self, path: Path):
-        pass
+        self.forgotten.append(Path(path))
 
     def tts_stream(self, text: str, ref) -> Iterator[np.ndarray]:
+        # как настоящий синтез: без образца или с удалённым файлом образца — ошибка
+        if ref is None:
+            raise RuntimeError("нет образца голоса — запишите голос в окне «Голоса»")
+        if not Path(ref[0]).is_file():
+            raise FileNotFoundError(2, "No such file or directory", str(ref[0]))
         sr = self.sample_rate
         n = int(max(0.3, len(text) / CHARS_PER_S) * sr)
         t = np.arange(n) / sr

@@ -10,9 +10,13 @@ const HEALTH_WAIT_MS = 5 * 60_000;
 const RESTART_MS = 5000;
 const RESTARTS_MAX = 3;
 
-/** Что делать с голосом: порт уже отвечает — подключиться; есть Python окружения — запустить; иначе выключено. */
-export function voicePlan({ python, portAnswers }) {
+/**
+ * Что делать с голосом: порт уже отвечает — подключиться; нет папки сервиса (установленная программа) или не Mac на
+ * Apple Silicon — голоса в этой версии нет (unsupported); есть Python окружения — запустить; иначе не установлен (off).
+ */
+export function voicePlan({ python, portAnswers, installed, supported }) {
   if (portAnswers) return 'attach';
+  if (!installed || !supported) return 'unsupported';
   return python ? 'spawn' : 'off';
 }
 
@@ -44,7 +48,10 @@ export async function startVoice({ repo, data, voiceDir, log = () => {}, isStopp
     try { writeFileSync(stateFile + '.tmp', body); renameSync(stateFile + '.tmp', stateFile); } catch (e) { log(`не записать состояние: ${e.message}`); }
   };
   const python = join(voiceDir, '.venv', 'bin', 'python');
-  const plan = voicePlan({ python: existsSync(python), portAnswers: (await health()) !== null });
+  const plan = voicePlan({
+    python: existsSync(python), portAnswers: (await health()) !== null,
+    installed: existsSync(join(voiceDir, 'server.py')), supported: process.platform === 'darwin' && process.arch === 'arm64',
+  });
   let stopped = false, child = null;
   const stopping = () => stopped || isStopping();
   const stop = () => {
@@ -56,6 +63,7 @@ export async function startVoice({ repo, data, voiceDir, log = () => {}, isStopp
     setTimeout(() => { if (c.exitCode === null && c.signalCode === null) c.kill('SIGKILL'); }, 300);
   };
   if (stopping()) return { stop }; // приложение уже останавливается — ничего не запускаем
+  if (plan === 'unsupported') { write('unsupported'); log('голоса в этой версии нет: нужен запуск из исходников на Mac с Apple Silicon'); return { stop }; }
   if (plan === 'off') { write('off'); log('голос выключен: нет окружения'); return { stop }; }
 
   // опрос /health раз в секунду, пока не ready/error или пока жив запущенный процесс (не дольше 5 мин)

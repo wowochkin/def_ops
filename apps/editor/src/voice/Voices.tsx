@@ -13,7 +13,8 @@ const ROLE_NAME: Record<VoiceRole, string> = { chief: 'Начальник шта
 const ROLE_OF: Record<VoiceRole, string> = { chief: 'голос начальника штаба', umpire: 'голос посредника' };
 const ROLES = Object.keys(ROLE_NAME) as VoiceRole[];
 
-type Rec = 'none' | 'intro' | 'rec' | 'checking' | 'checked';
+/** failed — сбой во время записи или проверки: причина вверху окна, кнопки «Отмена» и «Записать заново». */
+type Rec = 'none' | 'intro' | 'rec' | 'checking' | 'checked' | 'failed';
 
 export function Voices({ client, ready, onClose, setBusy, previewId }: {
   client: VoiceClient;
@@ -39,7 +40,18 @@ export function Voices({ client, ready, onClose, setBusy, previewId }: {
       client.on('voice_recording', (m) => { setText(m.text); setRec('rec'); setSecs(0); }),
       client.on('voice_check', (m) => { setCheck(m); setRec('checked'); }),
       client.on('voice_saved', () => { unsaved.current = false; setRec('none'); setCheck(null); setName(''); }),
-      client.on('error', (m) => setError(m.text)),
+      client.on('error', (m) => { setError(m.text); setRec((r) => (r === 'rec' || r === 'checking' ? 'failed' : r)); }),
+      // связь оборвалась: сервис стёр запись этого подключения — начать заново, а не ждать «Проверяю запись…»
+      client.onStatus((st) => {
+        if (st === 'ready') return;
+        setRec((r) => {
+          if (r === 'none' || r === 'intro') return r;
+          unsaved.current = false;
+          setCheck(null);
+          setError('Связь с голосом прервалась — запись не сохранилась. Запишите голос заново.');
+          return 'none';
+        });
+      }),
     ];
     client.voice('list');
     return () => {
@@ -126,6 +138,12 @@ export function Voices({ client, ready, onClose, setBusy, previewId }: {
               </div>
             )}
             {rec === 'checking' && <p className="vp-note">Проверяю запись…</p>}
+            {rec === 'failed' && (
+              <div className="vp-row">
+                <button onClick={discard}>Отмена</button>
+                <button className="primary" onClick={start}>Записать заново</button>
+              </div>
+            )}
             {rec === 'checked' && check && (
               <div className="vp-check">
                 {check.ok ? (

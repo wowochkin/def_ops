@@ -1,7 +1,7 @@
 // Связь окна с голосовым сервисом: микрофон (AudioWorklet), воспроизведение, WebSocket.
 // Все браузерные API — здесь; разбор протокола и состояние — в protocol.ts.
 import {
-  CancelledIds, VOICE_SAY_IDS, parseAudio, voiceStatus,
+  CancelledIds, VOICE_SAY_IDS, parseAudio, reconnectDelay, voiceStatus,
   type CalibStep, type ClientMsg, type ServerMsg, type VoiceRole, type VoiceSettings, type VoiceStatus, type WsState,
 } from './protocol';
 
@@ -9,7 +9,6 @@ export { VOICE_SAY_IDS } from './protocol';
 
 const DEFAULT_URL = 'ws://127.0.0.1:47645/ws';
 const URL_KEY = 'def_ops.voice.url';
-const RECONNECT_MS = 2000;
 
 /** Пересчёт микрофона в 16 кГц и кадры по 512 отсчётов (int16) — в AudioWorklet (как на стенде). */
 const WORKLET = `
@@ -54,6 +53,9 @@ export class VoiceClient {
   private api: { state: string } | null = null;
   private ready = false;
   private failed = false;  // последняя попытка подключиться не удалась
+  private fails = 0;  // неудачных попыток подряд
+  private everOpened = false;  // связь уже была (сервис перезапускается — переподключаться часто)
+  private serviceError: string | null = null;  // ошибка сервиса до `ready` (модели не загрузились)
   private wanted = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private handlers = new Map<string, Set<(m: never) => void>>();
@@ -73,7 +75,13 @@ export class VoiceClient {
   /** По фразам: `done` — сервис сказал, что кусков больше нет; сыграно — когда доиграли все. */
   private phrases = new Map<number, { done: boolean }>();
 
-  get status(): VoiceStatus { return voiceStatus(this.api, this.wsState, this.ready, this.failed); }
+  get status(): VoiceStatus { return voiceStatus(this.api, this.wsState, this.ready, this.failed, this.serviceError !== null); }
+
+  /** Почему голос не запустился: ошибка сервиса до `ready` или ошибка из состояния шлюза; нет — null. */
+  get errorText(): string | null {
+    if (this.ready) return null;
+    return this.serviceError ?? (this.api as { error?: string } | null)?.error ?? null;
+  }
 
   /** Ответ шлюза `/api/voice` (null — шлюз не ответил). */
   setApi(api: { state: string } | null) { this.api = api; this.emitStatus(); }
@@ -173,6 +181,8 @@ export class VoiceClient {
     this.stream = null; this.micCtx = null; this.playCtx = null;
     this.ready = false;
     this.failed = false;
+    this.fails = 0;
+    this.serviceError = null;
     this.setWs('closed');
   }
 
@@ -184,13 +194,16 @@ export class VoiceClient {
     if (!this.wanted || this.ws) return;
     this.setWs('connecting');
     let ws: WebSocket;
-    try { ws = new WebSocket(this.url()); } catch { this.failed = true; this.setWs('closed'); this.scheduleReconnect(); return; }
+    try { ws = new WebSocket(this.url()); } catch { this.failed = true; this.fails++; this.setWs('closed'); this.scheduleReconnect(); return; }
     ws.binaryType = 'arraybuffer';
     this.ws = ws;
     ws.onopen = () => {
       if (this.ws !== ws) return;
       this.ready = false;  // до нового `ready` сервис не считается готовым
       this.failed = false;
+      this.fails = 0;
+      this.everOpened = true;
+      this.serviceError = null;
       this.setWs('open');
       this.send({ type: 'hello', settings: this.hello });
     };
@@ -206,7 +219,7 @@ export class VoiceClient {
     ws.onclose = () => {
       if (this.ws !== ws) return;
       this.ws = null;
-      if (!opened) this.failed = true;
+      if (!opened) { this.failed = true; this.fails++; }
       this.stopPlayback();  // обрыв: договаривать некому
       this.setWs('closed');
       this.scheduleReconnect();
@@ -216,7 +229,7 @@ export class VoiceClient {
 
   private scheduleReconnect() {
     if (!this.wanted || this.timer) return;
-    this.timer = setTimeout(() => { this.timer = null; this.open(); }, RECONNECT_MS);
+    this.timer = setTimeout(() => { this.timer = null; this.open(); }, reconnectDelay(Math.max(1, this.fails), this.everOpened));
   }
 
   private setWs(s: WsState) { this.wsState = s; this.emitStatus(); }
@@ -229,8 +242,11 @@ export class VoiceClient {
   }
 
   private onMessage(m: ServerMsg) {
-    if (m.type === 'ready') { this.ready = true; this.emitStatus(); }
+    if (m.type === 'ready') { this.ready = true; this.serviceError = null; this.emitStatus(); }
+    else if (m.type === 'error' && !this.ready) { this.serviceError = m.text; this.emitStatus(); }
     else if (m.type === 'barge') { this.cancelled.add(m.id); this.stopPlayback(m.id); }
+    // остановил сервис (калибровка, запись голоса, отказ от записи): уже пришедший звук не доигрывается
+    else if (m.type === 'say-done' && m.stopped) { this.cancelled.add(m.id); this.stopPlayback(m.id); }
     else if (m.type === 'say-done') this.phraseDone(m.id);
     this.handlers.get(m.type)?.forEach((cb) => cb(m as never));
   }

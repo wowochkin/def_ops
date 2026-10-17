@@ -12,7 +12,7 @@ import { CONVERSATION_S, Dispatcher } from './dispatch';
 import { actions } from './registry';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
-  DEFAULT_SETTINGS, SETTINGS_KEY, feedAdd, feedResolve, feedUtterance, panelState, parseSettings, type FeedItem,
+  DEFAULT_SETTINGS, SETTINGS_KEY, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseSettings, type FeedItem,
 } from './panel-state';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
@@ -44,6 +44,8 @@ export function VoicePanel({ section }: { section: string }) {
   const [now, setNow] = useState(() => Date.now());
   const [micError, setMicError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<null | 'calibrate' | 'voices'>(null);
+  const dialogRef = useRef(dialog);
+  dialogRef.current = dialog;
   const [busy, setBusy] = useState<string | null>(null);
   const [ready, setReady] = useState<VoiceReady | null>(null);
   const started = useRef(false);
@@ -96,9 +98,18 @@ export function VoicePanel({ section }: { section: string }) {
           .catch(() => setFeed((f) => feedResolve(f, m.id, 'unknown')))
           .finally(() => setThinking((n) => n - 1));
       }),
-      client.on('barge', (m) => { speakingIds.current.delete(m.id); syncSpeaking(); }),
-      client.on('say-done', (m) => { if (m.stopped) { speakingIds.current.delete(m.id); syncSpeaking(); } }),
-      client.on('error', (m) => setFeed((f) => feedAdd(f, { key: `e${Date.now()}`, kind: 'note', text: m.text }))),
+      client.on('echo', (m) => setFeed((f) => feedEcho(f, m.text, Date.now()))),
+      // перебили штаб: дальше человек говорит с ним — окно разговора, реплика без «штаб» не уходит в «не мне»
+      client.on('barge', (m) => {
+        if (previewIds.current.delete(m.id)) return;
+        speakingIds.current.delete(m.id);
+        syncSpeaking();
+        dispatcher.spoke();
+        setSpokeAt(Date.now());
+      }),
+      client.on('say-done', (m) => { if (m.stopped) { previewIds.current.delete(m.id); speakingIds.current.delete(m.id); syncSpeaking(); } }),
+      // открытое окно калибровки или голосов показывает ошибку само — в ленте не дублируем
+      client.on('error', (m) => { if (!dialogRef.current) setFeed((f) => feedAdd(f, { key: `e${Date.now()}`, kind: 'note', text: m.text })); }),
       client.onPlayed((id) => {
         if (previewIds.current.delete(id)) return;
         speakingIds.current.delete(id);
@@ -150,9 +161,13 @@ export function VoicePanel({ section }: { section: string }) {
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
   const live = status === 'ready' && !micError;
+  const errorText = status === 'error' ? client.errorText : null;
   const can = actions(section).filter((a) => a.say?.length);
   const feedEnd = useRef<HTMLDivElement>(null);
   useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.length]);
+
+  // голоса в этой версии нет (установленная программа, браузер, не Mac на Apple Silicon) — панели нет
+  if (status === 'unsupported') return null;
 
   return (
     <div className={`vp ${st.key}`}>
@@ -167,6 +182,12 @@ export function VoicePanel({ section }: { section: string }) {
             <span className="vp-state" role="status">{st.text}</span>
             <button className="vp-close" onClick={() => toggle(false)} title="Свернуть панель голоса">Свернуть</button>
           </div>
+          {errorText && (
+            <div className="vp-mic">
+              <p>Причина: {errorText}</p>
+              <p>Если перезапуск не помог, покажите это сообщение тому, кто устанавливал программу.</p>
+            </div>
+          )}
           {micError && (
             <div className="vp-mic">
               <p>{micError}</p>
@@ -180,8 +201,9 @@ export function VoicePanel({ section }: { section: string }) {
             {!feed.length && <p className="vp-empty">Здесь будет видно, что я услышал и что ответил.</p>}
             {feed.map((x) => (
               <div key={x.key} className={`vp-item ${x.kind}`}>
-                <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'note' ? 'Сбой:' : 'Вы:'}</span> {x.text}
+                <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'note' ? 'Сбой:' : x.kind === 'echo' ? 'Слышно:' : 'Вы:'}</span> {x.text}
                 {x.kind === 'notme' && <span className="vp-notme">не мне</span>}
+                {x.kind === 'echo' && <span className="vp-notme">похоже на мой же голос из динамиков</span>}
               </div>
             ))}
             <div ref={feedEnd} />

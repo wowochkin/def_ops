@@ -25,7 +25,7 @@ export function parseSettings(raw: string | null): Partial<VoiceSettings> {
   return out;
 }
 
-export type PanelKey = 'off' | 'loading' | 'reconnecting' | 'error' | 'mic' | 'busy'
+export type PanelKey = 'off' | 'unsupported' | 'loading' | 'reconnecting' | 'error' | 'mic' | 'busy'
   | 'speaking' | 'listening' | 'thinking' | 'conversation' | 'idle';
 
 export interface PanelInput {
@@ -40,11 +40,14 @@ export interface PanelInput {
 }
 
 export const NOT_INSTALLED = 'Голос не установлен: services/voice/setup.sh';
+/** Установленная программа, браузер, не Mac на Apple Silicon: голоса в этой версии нет — значок не показывается. */
+export const UNSUPPORTED = 'Голос в этой версии недоступен';
 
 /** Состояние панели простыми словами (цвет значка — по `key`). */
 export function panelState(s: PanelInput): { key: PanelKey; text: string } {
+  if (s.status === 'unsupported') return { key: 'unsupported', text: UNSUPPORTED };
   if (s.status === 'off') return { key: 'off', text: NOT_INSTALLED };
-  if (s.status === 'error') return { key: 'error', text: 'Голос не работает — перезапустите приложение' };
+  if (s.status === 'error') return { key: 'error', text: 'Голос не запустился — перезапустите программу' };
   if (s.micError) return { key: 'mic', text: 'Микрофон не подключился' };
   if (s.status === 'reconnecting') return { key: 'reconnecting', text: 'Переподключаюсь' };
   if (s.status !== 'ready') return { key: 'loading', text: 'Голос загружается' };
@@ -58,7 +61,8 @@ export function panelState(s: PanelInput): { key: PanelKey; text: string } {
 
 // ---------------------------------------------------------------- лента
 
-export type FeedKind = 'heard' | 'me' | 'notme' | 'chief' | 'note';
+/** echo — микрофон, похоже, поймал голос штаба из динамиков: показывается, но не исполняется. */
+export type FeedKind = 'heard' | 'me' | 'notme' | 'chief' | 'note' | 'echo';
 export interface FeedItem {
   key: string;
   kind: FeedKind;
@@ -74,6 +78,11 @@ const cap = (xs: FeedItem[]) => (xs.length > FEED_MAX ? xs.slice(xs.length - FEE
 /** Новая запись в конец ленты (старые уходят за FEED_MAX). */
 export function feedAdd(feed: FeedItem[], item: FeedItem): FeedItem[] {
   return cap([...feed, item]);
+}
+
+/** Услышанное, похожее на голос самого штаба из динамиков (сообщение сервиса `echo`); n — номер для ключа. */
+export function feedEcho(feed: FeedItem[], text: string, n: number): FeedItem[] {
+  return feedAdd(feed, { key: `x${n}`, kind: 'echo', text });
 }
 
 /** Распознанная реплика: склеенная (`continues`) заменяет прежнюю, иначе — новая запись «услышано». */

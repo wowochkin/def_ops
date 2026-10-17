@@ -93,6 +93,11 @@ describe('разборщик', () => {
     expect(said).toHaveLength(phrases.length);
     for (const t of said) expect(t).toMatch(/^Можно сказать: .*«штаб, фраза икс»/);
   });
+  it('голое «Штаб.» — короткое «Слушаю.», а не «Не понял вас»', async () => {
+    const d = mk();
+    expect(await d.utterance('Штаб.', 1)).toBe('done');
+    expect(said).toEqual(['Слушаю.']);
+  });
   it('не понял — подсказка с тремя примерами', async () => {
     const d = mk();
     expect(await d.utterance('штаб, абракадабра', 1)).toBe('unknown');

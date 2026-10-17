@@ -192,26 +192,39 @@ def _db(x: float) -> float:
     return 20 * np.log10(max(x, 1e-6))
 
 
-def check_recording(audio: np.ndarray, sr: int, expected: str, heard: str) -> dict:
-    """Проверка записи образца: обрезка тишины по краям (остаётся 0,4 с паузы в конце), громкость, сигнал/шум,
-    длина, распознанное против текста. {ok, reasons, audio, …}: причины — коротко, для «перечитайте»."""
-    a = np.asarray(audio, np.float32).reshape(-1)
+def _windows(a: np.ndarray, sr: int) -> tuple[int, np.ndarray]:
     win = max(1, int(0.02 * sr))
     n = len(a) // win
-    rms = np.sqrt(np.mean(a[: n * win].reshape(n, win) ** 2, axis=1)) if n else np.zeros(0)
+    return win, (np.sqrt(np.mean(a[: n * win].reshape(n, win) ** 2, axis=1)) if n else np.zeros(0))
+
+
+def trim_silence(audio: np.ndarray, sr: int) -> np.ndarray:
+    """Запись без тишины по краям: речь — окна по 20 мс не тише 35 дБ от самого громкого; 0,05 с запаса перед
+    речью, 0,4 с естественной паузы в конце. Пустая запись — пустой массив."""
+    a = np.asarray(audio, np.float32).reshape(-1)
+    win, rms = _windows(a, sr)
+    if not len(rms) or float(np.max(rms)) <= 0:
+        return np.zeros(0, np.float32)
+    voiced = np.nonzero(rms >= float(np.max(rms)) * 10 ** (-35 / 20))[0]
+    start = max(0, voiced[0] * win - int(REC_LEAD_S * sr))
+    end = (voiced[-1] + 1) * win
+    tail = a[end: end + int(REC_TAIL_S * sr)]
+    return np.concatenate([a[start:end], tail, np.zeros(int(REC_TAIL_S * sr) - len(tail), np.float32)])
+
+
+def check_recording(audio: np.ndarray, sr: int, expected: str, heard: str) -> dict:
+    """Проверка записи образца: обрезка тишины по краям (trim_silence), громкость, сигнал/шум, длина,
+    распознанное против текста. {ok, reasons, audio, …}: причины — коротко, для «перечитайте»."""
+    a = np.asarray(audio, np.float32).reshape(-1)
+    win, rms = _windows(a, sr)
+    n = len(rms)
     peak = float(np.max(np.abs(a))) if len(a) else 0.0
     reasons = []
     info = {"peak_db": round(_db(peak), 1)}
     if n == 0 or peak < 10 ** (REC_PEAK_DB / 20):
         reasons.append(f"тихо: пик {_db(peak):.0f} дБ, нужно не ниже {REC_PEAK_DB:.0f} дБ — говорите ближе к микрофону")
         return {"ok": False, "reasons": reasons, "audio": np.zeros(0, np.float32), "audio_s": 0.0, **info}
-    # речь — окна не тише 35 дБ от самого громкого окна; края до первой и после последней — тишина
-    loud = float(np.max(rms))
-    voiced = np.nonzero(rms >= loud * 10 ** (-35 / 20))[0]
-    start = max(0, voiced[0] * win - int(REC_LEAD_S * sr))
-    end = (voiced[-1] + 1) * win
-    tail = a[end: end + int(REC_TAIL_S * sr)]
-    out = np.concatenate([a[start:end], tail, np.zeros(int(REC_TAIL_S * sr) - len(tail), np.float32)])
+    out = trim_silence(a, sr)
     dur = len(out) / sr
     info["audio_s"] = round(dur, 2)
     # сигнал/шум: громкая часть (90-й процентиль окон) против фона (10-й) по всей записи

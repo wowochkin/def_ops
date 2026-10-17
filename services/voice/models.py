@@ -113,7 +113,7 @@ class Models:
         """Потоковый синтез с клонированием голоса образца ref = (ref.wav, его текст). Перед каждым синтезом
         сбрасывается счётчик договаривания (extend_eos). Отмена — перестать читать итератор."""
         if ref is None:
-            raise RuntimeError("нет образца голоса")
+            raise RuntimeError("нет образца голоса — запишите голос в окне «Голоса»")
         path, ref_text = ref
         ref_audio = self._ref_audio(path)
         self.eos_reset()

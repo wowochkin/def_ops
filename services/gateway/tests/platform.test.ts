@@ -353,7 +353,7 @@ describe('шлюз: состояние голоса', () => {
     return { g, url: `http://127.0.0.1:${(g.address() as AddressInfo).port}` };
   };
 
-  it('/api/voice — файл состояния как есть, без ключа; нет файла — off', async () => {
+  it('/api/voice — файл состояния как есть, без ключа; нет файла — off; шлюз не в приложении — unsupported', async () => {
     const dir = await fs.mkdtemp(join(tmpdir(), 'voice-gw-'));
     const file = join(dir, 'state.json');
     const a = await start(file);
@@ -367,6 +367,7 @@ describe('шлюз: состояние голоса', () => {
       expect(await (await fetch(a.url + '/api/voice')).json()).toEqual({ state: 'off' });
     } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
     const b = await start();
-    try { expect(await (await fetch(b.url + '/api/voice')).json()).toEqual({ state: 'off' }); } finally { b.g.close(); }
+    // шлюз не настольного приложения (браузер, сервер): голоса в этой версии нет
+    try { expect(await (await fetch(b.url + '/api/voice')).json()).toEqual({ state: 'unsupported' }); } finally { b.g.close(); }
   });
 });

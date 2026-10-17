@@ -29,6 +29,7 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
   const [sec, setSec] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [restart, setRestart] = useState<string | null>(null);
   const [up, setUp] = useState(client.status === 'ready');
   const iRef = useRef(i);
   iRef.current = i;
@@ -51,8 +52,17 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
       }),
       // сбой сервиса посреди шага: шаг не записан — показать причину и вернуть кнопку
       client.on('error', (m) => { fail(m.text); }),
-      // связь оборвалась: сервис потерял замеры этого подключения — шаг повторить, лучше — заново
-      client.onStatus((st) => { setUp(st === 'ready'); if (st !== 'ready') fail('связь с голосом прервалась'); }),
+      // связь оборвалась: замеры прежних шагов были только у голоса и пропали — на первом шаге просто повторить,
+      // дальше — калибровка с первого шага (иначе в конце «нет шага»)
+      client.onStatus((st) => {
+        setUp(st === 'ready');
+        if (st === 'ready') return;
+        if (iRef.current === 0) { fail('связь с голосом прервалась'); return; }
+        fail('');
+        setErr(null);
+        setI(0);
+        setRestart('Связь с голосом прервалась, и прежние шаги потерялись — начнём калибровку сначала.');
+      }),
       client.on('calib_result', (m) => {
         setResult(m);
         setPhase('wait');
@@ -65,6 +75,7 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
   const go = () => {
     const s = STEPS[i];
     setErr(null);
+    setRestart(null);
     setPhase(s.sec ? 'rec' : 'prep');
     setSec(s.sec ?? 0);
     client.calib(s.step, s.sec ?? 0);
@@ -74,7 +85,7 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
     client.stopPlayback();
     onClose();
   };
-  const again = () => { setResult(null); setErr(null); setI(0); setPhase('wait'); };
+  const again = () => { setResult(null); setErr(null); setRestart(null); setI(0); setPhase('wait'); };
 
   const s = STEPS[i];
   return (
@@ -86,6 +97,7 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
             <h3>{s.title}</h3>
             <p>{s.txt}</p>
             {s.say && <p className="vp-say">{s.say}</p>}
+            {restart && <p className="vp-error" role="alert">{restart}</p>}
             {err && <p className="vp-error" role="alert">Этот шаг не записался: {err}. Попробуйте ещё раз.</p>}
             <div className="vp-prog">
               <i key={`${i}-${phase}`} className={phase === 'rec' ? 'run' : ''} style={phase === 'rec' ? { animationDuration: `${sec}s` } : undefined} />

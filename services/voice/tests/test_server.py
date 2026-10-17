@@ -335,3 +335,164 @@ def test_models_transcribe_removes_temp_file():
     m._refs = {("/x/voices/a/ref.wav", 1): 1, ("/x/voices/b/ref.wav", 2): 2}
     m.forget_ref(Path("/x/voices/a/ref.wav"))
     assert list(m._refs) == [("/x/voices/b/ref.wav", 2)]
+
+
+# ---------------------------------------------------------------- итоговое ревью ступени 1
+
+
+def test_echo_only_right_after_speech(make_client, monkeypatch):
+    """Эхо — только пока штаб говорит или вскоре после конца звука: пример, предложенный штабом, человек
+    может повторить через пару секунд — это обычная реплика."""
+    import time
+
+    import fake
+    monkeypatch.setattr(fake, "CHARS_PER_S", 1000)  # фраза звучит 0,3 с
+    ws, _ = connect(make_client(["штаб, открой переигровку"]))
+    ws.send_text(json.dumps({"type": "say", "id": 1, "role": "chief", "text": "Скажите: «штаб, открой переигровку»."}))
+    until(ws, "say-done")
+    ws.send_text(json.dumps({"type": "played", "id": 1}))
+    time.sleep(2.5)
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
+    seen = []
+    u = until(ws, "utterance", seen)
+    assert u["text"] == "штаб, открой переигровку"
+    assert not any(isinstance(m, dict) and m["type"] == "echo" for m in seen)
+    ws.close()
+
+
+def test_echo_while_speaking(make_client):
+    # микрофон поймал голос штаба, пока тот говорит, — эхо, не реплика
+    text = "Докладываю обстановку: противник отошёл за реку, наши части заняли переправу."
+    ws, _ = connect(make_client([text]))
+    ws.send_text(json.dumps({"type": "say", "id": 2, "role": "chief", "text": text}))
+    while not isinstance(recv(ws), bytes):
+        pass
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
+    seen = []
+    e = until(ws, "echo", seen)
+    assert e["text"] == text
+    assert not any(isinstance(m, dict) and m["type"] == "utterance" for m in seen)
+    ws.close()
+
+
+def test_echo_compares_only_last_phrase(make_client, monkeypatch):
+    import fake
+    monkeypatch.setattr(fake, "CHARS_PER_S", 1000)
+    ws, _ = connect(make_client(["штаб, открой переигровку"]))
+    ws.send_text(json.dumps({"type": "say", "id": 1, "role": "chief", "text": "Скажите: штаб, открой переигровку."}))
+    until(ws, "say-done")
+    ws.send_text(json.dumps({"type": "played", "id": 1}))
+    ws.send_text(json.dumps({"type": "say", "id": 2, "role": "chief", "text": "Есть."}))
+    until(ws, "say-done")
+    ws.send_text(json.dumps({"type": "played", "id": 2}))
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
+    seen = []
+    u = until(ws, "utterance", seen)
+    assert u["text"] == "штаб, открой переигровку"
+    ws.close()
+
+
+def test_long_recording_checked_in_russian(make_client):
+    # запись длиннее 25 с: распознавание кусками, проверка — по-русски, а не ошибка «use transcribe_longform»
+    ws, _ = connect(make_client([RECORD_TEXT] * 4))
+    ws.send_text(json.dumps({"type": "voice", "op": "record-start"}))
+    until(ws, "voice_recording")
+    send_audio(ws, np.concatenate([silence(1.0), tone(27.0), silence(1.0)]))
+    ws.send_text(json.dumps({"type": "voice", "op": "record-stop"}))
+    seen = []
+    chk = until(ws, "voice_check", seen)
+    assert not any(isinstance(m, dict) and m["type"] == "error" for m in seen), seen
+    assert chk["heard"] and not any("длинн" in r or "коротк" in r for r in chk["reasons"])
+    ws.close()
+
+
+def test_long_utterance_transcribed(make_client):
+    ws, _ = connect(make_client(["раз", "два"]))
+    send_audio(ws, np.concatenate([tone(30.0), silence(2.0)]))
+    seen = []
+    u = until(ws, "utterance", seen)
+    assert u["text"] == "раз два"
+    assert not any(isinstance(m, dict) and m["type"] == "error" for m in seen)
+    ws.close()
+
+
+def test_recording_silence_trimmed_before_asr(make_client):
+    # тишина по краям не мешает: 10 с тишины + 20 с речи + 10 с тишины распознаются одним куском
+    ws, _ = connect(make_client([RECORD_TEXT, "лишнее"]))
+    ws.send_text(json.dumps({"type": "voice", "op": "record-start"}))
+    until(ws, "voice_recording")
+    send_audio(ws, np.concatenate([silence(10.0), tone(20.0), silence(10.0)]))
+    ws.send_text(json.dumps({"type": "voice", "op": "record-stop"}))
+    chk = until(ws, "voice_check")
+    assert chk["heard"] == RECORD_TEXT and chk["ok"] is True, chk
+    ws.close()
+
+
+def test_calibration_without_voice_sample(make_client, tmp_path):
+    """Нет образца голоса — шаг калибровки с голосом штаба отвечает понятной ошибкой, сессия продолжается."""
+    ws, _ = connect(make_client())
+    import shutil
+    shutil.rmtree(tmp_path / "data" / "voices" / "zhukov-10s")
+    ws.send_text(json.dumps({"type": "calib", "step": "echo"}))
+    err = until(ws, "error")["text"]
+    assert "нет образца голоса" in err and "Голоса" in err
+    ws.send_text(json.dumps({"type": "voice", "op": "list"}))
+    assert until(ws, "voice_list")["voices"] == []
+    ws.close()
+
+
+def test_unexpected_error_keeps_session(make_client):
+    c = make_client()
+    ws, _ = connect(c)
+
+    def boom():
+        raise RuntimeError("сбой")
+
+    c.app.state.service.store.list = boom
+    ws.send_text(json.dumps({"type": "voice", "op": "list"}))
+    assert "сбой" in until(ws, "error")["text"]
+    ws.send_text(json.dumps({"type": "say", "id": 4, "role": "chief", "text": "Есть."}))
+    assert until(ws, "say-done")["id"] == 4
+    ws.close()
+
+
+def test_discard_forgets_pending_sound(make_client, tmp_path):
+    c = make_client([RECORD_TEXT])
+    ws, _ = connect(c)
+    assert record(ws)["ok"] is True
+    ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
+    until(ws, "voice_discarded")
+    forgotten = c.app.state.service.models.forgotten
+    assert forgotten and all(p.name.startswith("pending-") for p in forgotten)
+    ws.close()
+
+
+def test_service_stop_stops_sent_phrase(make_client):
+    # калибровка останавливает и фразу, звук которой уже весь отправлен: окно гасит её, played не нужен
+    ws, _ = connect(make_client())
+    ws.send_text(json.dumps({"type": "say", "id": 7, "role": "chief", "text": "Есть."}))
+    assert until(ws, "say-done") == {"type": "say-done", "id": 7}
+    ws.send_text(json.dumps({"type": "calib", "step": "noise", "sec": 1}))
+    seen = []
+    until(ws, "calib_rec", seen)
+    assert {"type": "say-done", "id": 7, "stopped": True} in seen
+    ws.close()
+
+
+def test_preview_then_discard_no_synth_error(make_client):
+    # «Прослушать пробу» и сразу «Не сохранять»: проба обрывается молча, без «синтез: [Errno 2]…»
+    ws, _ = connect(make_client([RECORD_TEXT]))
+    assert record(ws)["ok"] is True
+    ws.send_text(json.dumps({"type": "voice", "op": "preview", "id": 12}))
+    while not isinstance(recv(ws), bytes):
+        pass
+    ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
+    seen = []
+    until(ws, "voice_discarded", seen)
+    import time
+    time.sleep(1.5)
+    ws.send_text(json.dumps({"type": "voice", "op": "list"}))
+    until(ws, "voice_list", seen)
+    assert not any(isinstance(m, dict) and m["type"] == "error" for m in seen), [m for m in seen if isinstance(m, dict)]
+    assert {"type": "say-done", "id": 12, "stopped": True} in seen
+    ws.close()

@@ -1612,7 +1612,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-empty, .vp-note { margin: 0; color: var(--vp-mute); font-size: 18px; }
 .vp-item { padding: 4px 8px; border-radius: 6px; background: #eef3fa; }
 .vp-item.chief { background: #f6ebe6; }
-.vp-item.notme { background: none; color: #6f6c64; }
+.vp-item.notme, .vp-item.echo { background: none; color: #6f6c64; }
 .vp-item.note { background: #fde9e6; }
 .vp-who { font-weight: 700; }
 .vp-notme { margin-left: 8px; padding: 0 6px; border: 1px solid #8d887c; border-radius: 4px; font-size: 18px; }
