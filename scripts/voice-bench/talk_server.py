@@ -131,6 +131,51 @@ def fix_names(text: str, names: list[str]) -> tuple[str, list[str]]:
     return re.sub(r"[А-Яа-яЁё]+(?:-[А-Яа-яЁё]+)*", one, text), fixes
 
 
+# ---------------------------------------------------------------- калибровка
+
+CALIB_PHRASE = ("Докладываю обстановку. Восьмая гвардейская армия ведёт бой за вторую полосу обороны у Зелова, "
+                "противник контратакует резервами из глубины.")
+
+
+def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
+    """Пороги по замерам уверенности VAD (0–1) на четырёх шагах: noise — тишина, speech — голос человека,
+    echo — голос модели из динамиков (человек молчит), over — модель говорит, человек её перебивает.
+
+    Порог в тишине — посередине между фоном (98-й процентиль) и тихой частью речи (25-й). Порог перебивания —
+    выше эха (98-й процентиль + 0,08) и ниже речи поверх модели (30-й процентиль − 0,05), ближе к эху; если
+    эхо громче речи поверх модели — посередине и совет надеть наушники. Длительность перебивания — самый
+    длинный всплеск эха выше порога + 150 мс (250–900 мс)."""
+    q = lambda xs, p: float(np.percentile(xs, p))
+    clip = lambda x, lo, hi: round(float(min(hi, max(lo, x))), 2)
+    warn = []
+    noise_hi = q(d["noise"], 98)
+    sp = [x for x in d["speech"] if x > noise_hi + 0.05]
+    if len(sp) < 15:
+        raise ValueError("речь не услышана — говорите громче или ближе к микрофону и повторите калибровку")
+    speech_lo = q(sp, 25)
+    vad = clip((noise_hi + speech_lo) / 2, 0.15, 0.85)
+    echo = d.get("echo") or [0.0]
+    echo_hi = q(echo, 98)
+    over = [x for x in d.get("over") or [] if x > echo_hi + 0.05]
+    over_lo = q(over, 30) if len(over) >= 10 else None
+    if over_lo is None:
+        warn.append("перебивание не услышано — порог перебивания выставлен только по эху")
+    lo, hi = max(vad, echo_hi + 0.08), (over_lo - 0.05) if over_lo is not None else 0.95
+    if lo <= hi:
+        barge = clip(lo + (hi - lo) * 0.3, 0.1, 0.95)
+    else:
+        barge = clip((echo_hi + (over_lo if over_lo is not None else 0.95)) / 2, 0.1, 0.95)
+        warn.append("голос модели из динамиков почти так же громок, как ваш, — наденьте наушники, иначе перебивания будут ложными или пропущенными")
+    run = best = 0
+    for x in echo:
+        run = run + 1 if x >= barge else 0
+        best = max(best, run)
+    barge_ms = int(clip(max(250, best * 32 + 150), 250, 900))
+    stats = {"фон": round(noise_hi, 2), "речь": round(speech_lo, 2), "эхо": round(echo_hi, 2),
+             "речь поверх модели": round(over_lo, 2) if over_lo is not None else None, "всплеск эха, мс": best * 32}
+    return {"vad": vad, "barge_vad": barge, "barge_ms": barge_ms, "end_ms": end_ms}, {"stats": stats, "warn": warn}
+
+
 # ---------------------------------------------------------------- модели
 
 class Models:
@@ -201,6 +246,11 @@ class Models:
         write_wav(f, audio, SR_IN)
         return self._asr_file(f)
 
+    def calib_audio(self) -> np.ndarray:  # в MLX-нити: тестовая фраза модели для калибровки, один раз
+        if getattr(self, "_calib", None) is None:
+            self._calib = np.concatenate(list(self._tts_iter(CALIB_PHRASE, threading.Event())))
+        return self._calib
+
     def _tts_iter(self, text: str, cancel: threading.Event):
         for r in self.tts.generate(text=text, ref_audio=self.ref_audio, ref_text=self.ref["text"], lang_code="russian",
                                    stream=True, streaming_interval=0.32, verbose=False):
@@ -239,6 +289,8 @@ class Session:
         # перебивания (пока модель говорит, микрофон слышит и её — порог строже), пауза до проверки конца реплики
         self.cfg = {"vad": args.vad, "barge_vad": args.barge_vad, "barge_ms": args.barge_ms, "end_ms": args.end_ms}
         self.frames = 0
+        self.calib = None  # идёт шаг калибровки: {"step", "left" — кадров осталось}
+        self.calib_data = {}
 
     async def send(self, **msg):
         await self.ws.send_text(json.dumps(msg, ensure_ascii=False))
@@ -261,6 +313,13 @@ class Session:
         self.frames += 1
         if self.frames % 3 == 0:  # индикатор на странице: ~10 раз в секунду
             await self.send(type="level", p=round(p, 2), busy=busy)
+        if self.calib:  # калибровка: только копим уверенность VAD, разговор стоит
+            self.calib_data.setdefault(self.calib["step"], []).append(p)
+            self.calib["left"] -= 1
+            if self.calib["left"] <= 0:
+                step, self.calib = self.calib["step"], None
+                await self.send(type="calib_step", step=step, frames=len(self.calib_data[step]))
+            return
         if not self.in_speech:
             self.pre = np.concatenate([self.pre, frame])[-int(0.3 * SR_IN):]
             if speech:
@@ -293,6 +352,32 @@ class Session:
                 return
         if self.silence_ms >= a.max_silence_ms:
             await self.end_turn(None)
+
+    async def calib_start(self, step: str, sec: float):
+        if self.response and not self.response.done():
+            self.cancel.set()
+            self.response.cancel()
+        self.in_speech, self.playing = False, False
+        self.m.vad_reset()
+        self.calib_data.pop(step, None)
+        if step in ("echo", "over"):  # модель говорит тестовую фразу; копим всё время звучания
+            a = await self.loop.run_in_executor(self.m.mlx, self.m.calib_audio)
+            await self.send(type="stop")
+            for i in range(0, len(a), self.m.tts_sr // 2):
+                await self.ws.send_bytes(b"\x01" + struct_rate(self.m.tts_sr) + (np.clip(a[i:i + self.m.tts_sr // 2], -1, 1) * 32767).astype("<i2").tobytes())
+            sec = len(a) / self.m.tts_sr + 0.3
+        self.calib = {"step": step, "left": int(sec * 1000 / 32)}
+        await self.send(type="calib_rec", step=step, sec=round(sec, 1))
+
+    async def calib_finish(self):
+        try:
+            cfg, rep = calibrate(self.calib_data, self.cfg["end_ms"])
+        except ValueError as e:
+            await self.send(type="calib_result", error=str(e))
+            return
+        self.cfg.update(cfg)
+        await self.send(type="calib_result", cfg=cfg, **rep)
+        await self.send(type="settings", **self.cfg)
 
     async def barge_in(self):
         if self.response and not self.response.done():
@@ -463,6 +548,15 @@ def main():
                             if isinstance(d.get(k), (int, float)):
                                 s.cfg[k] = d[k]
                         await s.send(type="settings", **s.cfg)
+                    elif d.get("type") == "calib":
+                        if d.get("step") == "finish":
+                            await s.calib_finish()
+                        elif d.get("step") == "cancel":
+                            s.calib = None
+                            await s.send(type="stop")
+                        else:
+                            s.calib_data = {} if d.get("step") == "noise" else s.calib_data
+                            await s.calib_start(d["step"], float(d.get("sec", 3)))
                     elif d.get("type") == "reset":
                         s.history.clear()
                 if msg.get("type") == "websocket.disconnect":

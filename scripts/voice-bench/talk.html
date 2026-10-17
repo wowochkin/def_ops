@@ -35,12 +35,23 @@ main { max-width: 860px; margin: 0 auto; padding: 12px 16px 80px; }
 .msg .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .msg.cut { opacity: .6; }
 .sys { color: var(--muted); font-size: 13px; margin: 6px 0; }
+#calibBox { display: none; position: fixed; inset: 0; background: #0006; z-index: 5; align-items: center; justify-content: center; padding: 16px; }
+#calibBox .card { background: #fff; border-radius: 10px; padding: 18px 20px; max-width: 520px; width: 100%; box-shadow: 0 10px 40px #0004; }
+#calibBox h3 { margin: 0 0 4px; font-size: 16px; }
+#calibBox .stepn { color: var(--muted); font-size: 13px; }
+#calibBox .say { margin: 10px 0; padding: 8px 12px; background: var(--user); border-radius: 6px; font-size: 16px; }
+#calibBox .prog { height: 8px; background: #e5e2da; border-radius: 4px; overflow: hidden; margin: 12px 0; }
+#calibBox .prog i { display: block; height: 100%; width: 0; background: var(--accent); }
+#calibBox .btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+#calibBox table { border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+#calibBox td { padding: 2px 10px 2px 0; } #calibBox .warn { color: var(--accent); font-size: 13px; }
 </style>
 </head>
 <body>
 <header>
   <button id="start" class="primary">Начать</button>
   <button id="reset" disabled>Новый разговор</button>
+  <button id="calib" disabled title="подобрать регуляторы под ваш микрофон, голос и комнату">Калибровка</button>
   <span id="state"><span id="dot"></span><span id="stateText">не подключено</span></span>
   <span id="meter"><i></i></span>
   <span id="info"></span>
@@ -54,6 +65,11 @@ main { max-width: 860px; margin: 0 auto; padding: 12px 16px 80px; }
   <label>пауза до ответа: <b id="endV"></b><input id="end" type="range" min="200" max="1500" step="50"></label>
   <button id="defaults" title="вернуть значения сервера">по умолчанию</button>
 </div>
+<div id="calibBox"><div class="card">
+  <div class="stepn"></div><h3></h3><div class="txt"></div><div class="say"></div>
+  <div class="prog"><i></i></div><div class="res"></div>
+  <div class="btns"><button id="calibCancel">Отмена</button><button id="calibGo" class="primary">Записать</button></div>
+</div></div>
 <main id="log">
   <p class="sys">Нажмите «Начать» и разрешите микрофон. Говорите свободно: модель сама поймёт, что вы закончили, и ответит голосом.
   Её можно перебить — просто заговорите. Подавление эха включено; если модель перебивает сама себя, наденьте наушники.</p>
@@ -81,6 +97,63 @@ function pushCfg() {
 for (const [id, key, inv] of [['vad', 'vad', 1], ['bvad', 'barge_vad', 1], ['bms', 'barge_ms', 0], ['end', 'end_ms', 0]])
   $(id).addEventListener('input', (e) => { const v = +e.target.value; cfg[key] = inv ? +(1 - v).toFixed(2) : v; pushCfg(); });
 $('defaults').onclick = () => { try { localStorage.removeItem(CFG_KEY); } catch (e) {} cfg = { ...serverCfg }; pushCfg(); };
+
+// калибровка: четыре замера уверенности VAD, пороги считает сервер
+const CALIB = [
+  { step: 'noise', sec: 3, title: 'Тишина', txt: 'Помолчите 3 секунды — запишем фон комнаты.' },
+  { step: 'speech', sec: 6, title: 'Ваш голос', txt: 'Прочитайте вслух обычным голосом, как будете говорить с моделью:',
+    say: 'Товарищ маршал, доложите обстановку на участке восьмой гвардейской армии и что нужно для прорыва второй полосы.' },
+  { step: 'echo', title: 'Голос модели', txt: 'Модель произнесёт фразу через динамики — молчите, пока она говорит. Так узнаем, насколько её слышит микрофон.' },
+  { step: 'over', title: 'Перебивание', txt: 'Модель снова заговорит — перебейте её: говорите громко всё время, пока она звучит, например:',
+    say: 'Стоп, стоп, подождите. Доложите сначала о потерях за сутки.' },
+];
+let calibI = -1, calibRec = false;
+const cb = (sel) => document.querySelector('#calibBox ' + sel);
+function calibShow(i) {
+  calibI = i; calibRec = false; const c = CALIB[i];
+  $('calibBox').style.display = 'flex';
+  cb('.stepn').textContent = `Калибровка · шаг ${i + 1} из ${CALIB.length}`;
+  cb('h3').textContent = c.title; cb('.txt').textContent = c.txt;
+  cb('.say').textContent = c.say || ''; cb('.say').style.display = c.say ? '' : 'none';
+  cb('.prog i').style.transition = 'none'; cb('.prog i').style.width = '0';
+  cb('.res').innerHTML = ''; $('calibCancel').style.display = ''; $('calibGo').textContent = 'Записать'; $('calibGo').disabled = false; $('calibGo').style.display = '';
+}
+function calibClose() { calibI = -1; calibRec = false; $('calibBox').style.display = 'none'; }
+$('calib').onclick = () => { stopPlayback(); calibShow(0); };
+$('calibGo').onclick = () => {
+  if (calibI === -2) return calibShow(0);
+  if (calibI < 0) return calibClose();
+  const c = CALIB[calibI]; calibRec = true; $('calibGo').disabled = true;
+  $('calibGo').textContent = c.sec ? 'Записываю…' : 'Готовлю голос модели…';
+  ws.send(JSON.stringify({ type: 'calib', step: c.step, sec: c.sec || 0 }));
+};
+$('calibCancel').onclick = () => { if (calibRec) ws?.send(JSON.stringify({ type: 'calib', step: 'cancel' })); stopPlayback(); calibClose(); };
+function onCalib(m) {
+  if (m.type === 'calib_rec') {
+    $('calibGo').textContent = 'Записываю…';
+    const bar = cb('.prog i'); bar.style.transition = 'none'; bar.style.width = '0'; void bar.offsetWidth;
+    bar.style.transition = `width ${m.sec}s linear`; bar.style.width = '100%';
+  } else if (m.type === 'calib_step') {
+    if (calibI < CALIB.length - 1) calibShow(calibI + 1);
+    else { calibRec = false; $('calibGo').textContent = 'Считаю…'; ws.send(JSON.stringify({ type: 'calib', step: 'finish' })); }
+  } else if (m.type === 'calib_result') {
+    calibI = -1; calibRec = false; cb('.say').style.display = 'none';
+    cb('.prog i').style.transition = 'none'; cb('.prog i').style.width = '0';
+    cb('.stepn').textContent = 'Калибровка'; $('calibCancel').style.display = m.error ? '' : 'none';
+    $('calibGo').disabled = false; $('calibGo').textContent = 'Готово';
+    if (m.error) {
+      cb('h3').textContent = 'Не получилось'; cb('.txt').textContent = m.error;
+      calibI = -2; $('calibGo').textContent = 'Заново';
+      return;
+    }
+    cfg = { ...cfg, ...m.cfg }; pushCfg();
+    cb('h3').textContent = 'Регуляторы выставлены';
+    cb('.txt').textContent = `чувствительность в тишине ${pct(1 - cfg.vad)}, перебивания ${pct(1 - cfg.barge_vad)}, перебить через ${cfg.barge_ms} мс. Их можно подправить вручную; значения запомнены в браузере.`;
+    const rows = Object.entries(m.stats).map(([k, v]) => `<tr><td>${k}</td><td><b>${v ?? '—'}</b></td></tr>`).join('');
+    cb('.res').innerHTML = `<div class="stepn">замеры: уверенность, что звучит речь (0–1); всплеск — самое долгое срабатывание на эхо</div><table>${rows}</table>`
+      + m.warn.map((w) => `<div class="warn">⚠ ${w}</div>`).join('');
+  }
+}
 
 function setState(cls, text) { $('dot').className = cls; $('stateText').textContent = text; }
 function add(cls, who, text) {
@@ -140,7 +213,7 @@ $('start').onclick = async () => {
     if (ws.readyState === 1) ws.send(e.data.pcm);
     $('meter').firstElementChild.style.width = Math.min(100, e.data.peak * 250) + '%';
   };
-  ws.onopen = () => { setState('listen', 'слушаю'); $('reset').disabled = false; };
+  ws.onopen = () => { setState('listen', 'слушаю'); $('reset').disabled = false; $('calib').disabled = false; };
   ws.onclose = () => { setState('', 'отключено'); sys('Соединение закрыто — перезапустите сервер и обновите страницу.'); };
   ws.onmessage = (e) => {
     if (typeof e.data !== 'string') return playChunk(e.data);
@@ -157,6 +230,8 @@ $('start').onclick = async () => {
       $('vadnote').textContent = m.busy ? 'модель говорит — действует порог перебивания' : 'модель молчит — действует порог в тишине';
       return;
     }
+    if (m.type.startsWith('calib_')) return onCalib(m);
+    if (m.type === 'stop' && $('calibBox').style.display === 'flex') return stopPlayback();
     if (m.type === 'ready') $('info').textContent = `роль: ${m.persona} · модель: ${m.model} · словарь названий: ${m.names}`;
     else if (m.type === 'vad') { if (m.state === 'speech') setState('speech', 'вы говорите'); else if (!sources.length) setState('listen', 'слушаю'); }
     else if (m.type === 'turn') {}
