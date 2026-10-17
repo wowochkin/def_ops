@@ -153,6 +153,21 @@ const quote = (xs: string[]) => xs.map((e) => `«${e}»`).join(', ');
 /** Крючок модели: реплика и действия раздела → ответ (signal — отмена новой репликой, onRetry — перед повтором запроса). */
 export type ModelHook = (text: string, actions: Action[], ctx: { signal: AbortSignal; onRetry(n: number): void; section: string }) => Promise<ModelReply>;
 export const RETRY_SAY = 'Связь с моделью прервалась, повторяю запрос.';
+/** Необратимое действие (удаление и т. п.) модель голосом не исполняет: подтверждение — в следующей ступени. */
+export const CONFIRM_SAY = 'Это нужно подтвердить, а голосом я пока такого не делаю. Сделайте это на экране.';
+
+/** Слова, которыми перебивают штаб; в начале реплики со словами после них — снимаются: «Стоп, открой карты». */
+const STOP_LEAD = /^(?:стоп|тихо|хватит|замолчи)(?: |$)/;
+
+/** Параметры вызова модели годятся для действия: объект, если у действия есть схема, и все обязательные поля на месте. */
+export function paramsFit(a: Action, p: unknown): boolean {
+  const schema = a.params as { type?: string; properties?: object; required?: unknown } | undefined;
+  if (!schema) return true;
+  if (p === undefined && !Array.isArray(schema.required)) return true;
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
+  const req = Array.isArray(schema.required) ? (schema.required as string[]) : [];
+  return req.every((k) => { const v = (p as Record<string, unknown>)[k]; return v !== undefined && v !== null && v !== ''; });
+}
 
 export class Dispatcher {
   private spokeAt = -Infinity;
@@ -197,7 +212,12 @@ export class Dispatcher {
     this.lastUnderstood = fixed.text;
     this.corrections.set(id, { fixes: fixed.fixes, understood: fixed.text });
     if (this.corrections.size > 20) this.corrections.delete(this.corrections.keys().next().value as number);
-    const rest = addr ? addr.rest : fixed.text;
+    let rest = addr ? addr.rest : fixed.text;
+    // «Стоп, открой карты»: штаб замолкает, а просьба после «стоп» исполняется
+    if (STOP_LEAD.test(rest) && rest.includes(' ')) {
+      this.opts.stop?.();
+      rest = rest.replace(STOP_LEAD, '').replace(/^(?:штаб|штап)(?: |$)/, '');
+    }
     this.cancelModel(); // новая обращённая реплика — старый ответ модели уже не нужен
     const rec = { text: raw, ran: false };
     this.memory.set(id, rec);
@@ -265,6 +285,12 @@ export class Dispatcher {
       this.opts.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}. Могу: ${quote(closest(section, rest))}.`);
       return 'unknown';
     }
+    // параметры не разобрать или не хватает нужного — не гадаем, а переспрашиваем
+    if (reply.call.broken || !paramsFit(a, reply.call.params)) {
+      this.opts.say(`Не понял, что именно сделать. Можно сказать, например: ${quote(closest(section, rest))}.`);
+      return 'unknown';
+    }
+    if (a.irreversible) { this.opts.say(CONFIRM_SAY); return 'unknown'; }
     if (say) this.opts.say(say);
     let report: string | void;
     try {

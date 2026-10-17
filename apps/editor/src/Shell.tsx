@@ -22,6 +22,7 @@ import type { MapSource } from '@def-ops/core';
 import { SECTIONS, type Section } from './sections';
 import { registerShellActions } from './voice/actions/shell';
 import { VoicePanel } from './voice/VoicePanel';
+import { ModelPicker } from './ModelPicker';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { basemapDate } from './engine/basemaps';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
@@ -81,7 +82,7 @@ export function Shell() {
         {section === 'staff' && <StaffView llm={llm} />}
       </div>
       {/* голос — поверх любого раздела */}
-      <VoicePanel section={section} />
+      <VoicePanel section={section} llm={llm.settings} />
     </div>
   );
 }
@@ -156,6 +157,14 @@ function StaffView({ llm }: { llm: Llm }) {
           <div className="staff-st">
             <span className={`llm-st ${check.state}`}>{check.state === 'ok' ? `✓ на связи · моделей: ${check.models.length}` : check.state === 'fail' ? `✗ ${check.error}` : 'проверка…'}</span>
             <button onClick={recheck}>Проверить связь</button>
+          </div>
+        </section>
+        <section className="card staff-cfg staff-voice">
+          <h3>Голос</h3>
+          <div className="staff-voice-row" role="group" aria-label="Модель для голоса">
+            <span>Модель для голоса и размышление</span>
+            <ModelPicker llm={llm} who="voice" purpose="голоса" />
+            <small>Что начальник штаба не понял по готовым правилам, разбирает эта модель: выбирает подходящее действие или честно отвечает, что такого нет. Ответ нужен быстро — подойдёт небольшая модель без размышления.</small>
           </div>
         </section>
         <section className="card staff-help">

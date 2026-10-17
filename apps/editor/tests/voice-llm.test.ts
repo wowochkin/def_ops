@@ -53,6 +53,26 @@ describe('speakable', () => {
   it('без разметки и английских вставок в скобках', () => {
     expect(speakable('**Открываю** раздел (replay).')).toBe('Открываю раздел.');
   });
+  it('английские слова вне скобок — выпадают', () => {
+    expect(speakable('Открываю replay раздел.')).toBe('Открываю раздел.');
+    expect(speakable('Вызываю shell__open.')).toBe('Вызываю.');
+  });
+  it('род числа по существительному: женский и средний', () => {
+    expect(speakable('Вводим 1 дивизию.')).toBe('Вводим одну дивизию.');
+    expect(speakable('В резерве 1 дивизия и 2 армии.')).toBe('В резерве одна дивизия и две армии.');
+    expect(speakable('Подошли 2 танковые бригады.')).toBe('Подошли две танковые бригады.');
+    expect(speakable('Осталось 1 орудие.')).toBe('Осталось одно орудие.');
+    expect(speakable('Осталось 2 орудия и 21 рота.')).toBe('Осталось два орудия и двадцать одна рота.');
+    expect(speakable('Пришёл 1 полк.')).toBe('Пришёл один полк.');
+  });
+  it('круглый год — «двухтысячном»', () => {
+    expect(speakable('Это было в 2000 году.')).toBe('Это было в двухтысячном году.');
+    expect(speakable('С 3000 года.')).toBe('С трёхтысячного года.');
+  });
+  it('дробь с единицей — не дата', () => {
+    expect(speakable('Прошли 3.05 км.')).toBe('Прошли три целых пять сотых километра.');
+    expect(speakable('Атака 16.04 захлебнулась.')).toBe('Атака шестнадцатого апреля захлебнулась.');
+  });
   it('длинный ответ укорачивается: до двух предложений и 300 знаков', () => {
     expect(speakable('Первое. Второе! Третье? Четвёртое.')).toBe('Первое. Второе!');
     const long = speakable(`${'очень длинное слово '.repeat(40)}конец.`);
@@ -97,9 +117,21 @@ describe('askModel', () => {
     expect(calls[0].body.model).toBe('small');
     expect(calls[0].body.reasoning_effort).toBe('low');
   });
-  it('ответ с цифрами — словами; размышление в тексте вырезается', async () => {
+  it('размышление в тексте вырезается; озвучка — не здесь (в разборщике, один раз)', async () => {
     const { f } = fake([msg('<think>хм</think>Сбор в 5 часов.')]);
-    expect((await askModel('когда сбор', ctx(f))).say).toBe('Сбор в пять часов.');
+    expect((await askModel('когда сбор', ctx(f))).say).toBe('Сбор в 5 часов.');
+  });
+  it('пустой content, ответ в reasoning_content — берётся он', async () => {
+    const { f } = fake([{ choices: [{ message: { role: 'assistant', content: '', reasoning_content: 'Слушаю вас.' } }] }]);
+    expect((await askModel('штаб', ctx(f))).say).toBe('Слушаю вас.');
+  });
+  it('аргументы инструмента объектом — принимаются как есть', async () => {
+    const { f } = fake([{ choices: [{ message: { role: 'assistant', content: '', tool_calls: [{ type: 'function', function: { name: 'shell__open', arguments: { section: 'replay' } } }] } }] }]);
+    expect((await askModel('штаб, к переигровке', ctx(f))).call).toEqual({ id: 'shell.open', params: { section: 'replay' } });
+  });
+  it('нечитаемые аргументы — вызов помечен испорченным', async () => {
+    const { f } = fake([msg('', { name: 'shell__open', args: '{section: replay' })]);
+    expect((await askModel('штаб, к переигровке', ctx(f))).call).toEqual({ id: 'shell.open', params: undefined, broken: true });
   });
   it('сбой ×2, затем ответ: onRetry вызван, итог получен', async () => {
     const { f, calls } = fake([new Error('сеть'), msg('', undefined), msg('Есть.', { name: 'shell__open', args: '{"section":"editor"}' })]);
@@ -132,5 +164,18 @@ describe('askModel', () => {
     expect(calls[1].body.messages.slice(1)).toEqual([
       { role: 'user', content: 'штаб, ты тут?' }, { role: 'assistant', content: 'Слушаю.' }, { role: 'user', content: 'штаб, хорошо' },
     ]);
+  });
+});
+
+describe('настройки модели голоса', () => {
+  it('loadLlm: вариант через @ снимается и у модели голоса', async () => {
+    const store: Record<string, string> = { 'def_ops.llm': JSON.stringify({ voiceModel: 'qwen/qwen3@8bit', model: 'a@4bit' }) };
+    (globalThis as any).localStorage = { getItem: (k: string) => store[k] ?? null, setItem: () => {}, removeItem: () => {} };
+    try {
+      const { loadLlm } = await import('../src/shared');
+      const s = loadLlm();
+      expect(s.voiceModel).toBe('qwen/qwen3');
+      expect(s.model).toBe('a');
+    } finally { delete (globalThis as any).localStorage; }
   });
 });

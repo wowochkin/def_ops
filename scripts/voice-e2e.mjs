@@ -14,6 +14,8 @@
 // микрофон без обработки браузера и шлёт кадры с опорой (в ней — голос штаба), без него — кадры только микрофона.
 // Перебивание словом проверяется на сервисе с --aec off: у поддельного микрофона нет эха, и AEC3, ещё не привязавшись
 // к опоре, глушит его «речь», пока штаб говорит; заодно окно должно взять микрофон заново — с обработкой браузера.
+// Модель за правилами — на поддельной LM Studio (/llm/…): свободная формулировка, выдуманное действие, «Думаю»,
+// отмена старого ответа новой репликой, «модель молчит».
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки и голосов. Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
@@ -599,6 +601,94 @@ await check('событие voice:power: false — выключает, true — 
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
   await micOn();
 });
+
+
+// ---------------------------------------------------------------- модель за правилами (поддельная LM Studio)
+//
+// Поддельная LM Studio отвечает за /llm/… (адрес модели по умолчанию) прямо в Playwright: /v1/models — список
+// моделей, /v1/chat/completions — вызов инструмента или текст по ключевым словам последней реплики. «Молчит» —
+// соединение обрывается (как будто LM Studio не запущена): три попытки, затем «Связи с моделью нет».
+const LM = { mode: 'ok', delayMs: 0, asked: [] };
+const lmReply = (content, tool) => ({
+  id: 'fake', object: 'chat.completion', model: 'fake-voice',
+  choices: [{ index: 0, finish_reason: tool ? 'tool_calls' : 'stop', message: {
+    role: 'assistant', content,
+    ...(tool ? { tool_calls: [{ id: 'call_1', type: 'function', function: { name: tool.name, arguments: JSON.stringify(tool.args) } }] } : {}),
+  } }],
+});
+/** Ответ по ключевым словам; slow — ответ с задержкой (проверка «Думаю» и отмены новой репликой). */
+function lmAnswer(text) {
+  const t = text.toLowerCase();
+  if (/карт/.test(t)) return { body: lmReply('Перехожу к картам.', { name: 'shell__open', args: { section: 'maps' } }) };
+  if (/вальс/.test(t)) return { body: lmReply('Играю вальс.', { name: 'music__waltz', args: {} }) };
+  if (/обстановк/.test(t)) return { body: lmReply('Обстановка спокойная, противник молчит.'), slow: 9000 };
+  return { body: lmReply('Слушаю.') };
+}
+async function fakeLmStudio() {
+  // только адрес модели (/llm/…), не модули окна с «llm» в пути
+  await ctx.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
+    const url = new URL(route.request().url());
+    if (LM.mode === 'silent') return route.abort('connectionrefused').catch(() => {});
+    if (url.pathname.endsWith('/v1/models')) return route.fulfill({ json: { object: 'list', data: [{ id: 'fake-voice', object: 'model' }] } });
+    if (!url.pathname.endsWith('/v1/chat/completions')) return route.fulfill({ status: 404, body: '' });
+    const body = route.request().postDataJSON();
+    const said = body.messages.at(-1)?.content ?? '';
+    LM.asked.push(said);
+    const a = lmAnswer(said);
+    if (a.slow) await new Promise((r) => setTimeout(r, a.slow));
+    // запрос могли отменить (новая реплика) — тогда ответить уже некому
+    await route.fulfill({ json: a.body }).catch(() => {});
+  });
+}
+const script4 = join(tmp, 'script4.txt');
+writeFileSync(script4, ['штаб, давай-ка перейдём к картам', 'штаб, а сыграй мне вальс', 'штаб, доложи обстановку',
+  'штаб, открой знания', 'штаб, как дела у соседей', 'штаб, открой переигровку', ...Array(50).fill(RECORD_TEXT)].join('\n') + '\n');
+const chiefSaid = (re) => panel.locator('.vp-item.chief', { hasText: re });
+
+async function llmChecks() {
+  await fakeLmStudio();
+  // калибровка могла выбрать «словом»: тогда речь, пока штаб говорит, — не реплика; здесь реплики идут подряд
+  await panel.getByText('Тонкая настройка').click();
+  await panel.getByRole('group', { name: 'Перебивать' }).getByRole('button', { name: 'голосом' }).click();
+  await panel.getByText('Тонкая настройка').click();
+  await stopVoice();
+  await startVoice(script4);
+  await check('модель: «Штаб, давай-ка перейдём к картам» → раздел «Карты» и ответ штаба', async () => {
+    await page.waitForFunction(() => location.hash === '#maps', null, { timeout: 60000 });
+    await chiefSaid('Перехожу к картам').waitFor({ timeout: 10000 });
+    if (!LM.asked.some((x) => /картам/.test(x))) throw new Error('модель не спрошена');
+  });
+  await check('модель: «Штаб, а сыграй мне вальс» → «Этого система пока не предусматривает…»', async () => {
+    await chiefSaid('Этого система пока не предусматривает').waitFor({ timeout: 30000 });
+    if (await chiefSaid('Играю вальс').count()) throw new Error('выдуманное действие озвучено');
+  });
+  await check('модель: пока отвечает — «Думаю»', async () => {
+    await panel.locator('.vp-item', { hasText: 'доложи обстановку' }).waitFor({ timeout: 30000 });
+    await panel.locator('.vp-state', { hasText: 'Думаю' }).waitFor({ timeout: 5000 });
+    await shot('voice-panel-thinking.jpg');
+  });
+  await check('модель: новая реплика во время ожидания — старый ответ не звучит', async () => {
+    await page.waitForFunction(() => location.hash === '#knowledge', null, { timeout: 30000 });
+    LM.mode = 'silent'; // дальше LM Studio «молчит»
+    await page.waitForTimeout(6000); // ответ на «обстановку» пришёл бы к этому времени
+    if (!LM.asked.some((x) => /обстановк/.test(x))) throw new Error('модель не спрошена об обстановке');
+    if (await chiefSaid('Обстановка спокойная').count()) throw new Error('отменённый ответ показан');
+  });
+  await check('модель молчит: «Связи с моделью нет», а «Штаб, открой переигровку» работает', async () => {
+    await chiefSaid('Связи с моделью нет').waitFor({ timeout: 30000 });
+    const retry = await chiefSaid('Связь с моделью прервалась').count();
+    if (retry !== 1) throw new Error(`заготовленная фраза о повторе прозвучала ${retry} раз`);
+    await page.waitForFunction(() => location.hash === '#replay', null, { timeout: 30000 });
+    await plainWords(panel.locator('.vp-feed'), 'лента');
+  });
+  LM.mode = 'ok';
+  await stopVoice();
+  await startVoice(script2);
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 40000 });
+}
+// ---------------------------------------------------------------- конец: модель за правилами
+
+await llmChecks();
 
 await check('тонкая настройка: «Перебивать: голосом / словом» переключается и запоминается', async () => {
   await panel.getByText('Тонкая настройка').click();

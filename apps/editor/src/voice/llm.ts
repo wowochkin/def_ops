@@ -9,14 +9,17 @@
  */
 import type { LlmSettings, Thinking } from '../sim/game-protocol';
 import type { Action } from './registry';
-import { speakable } from './speech';
 import { SECTIONS } from '../sections';
 
 export interface OpenAITool {
   type: 'function';
   function: { name: string; description: string; parameters: Record<string, unknown> };
 }
-export interface ModelReply { say: string; call?: { id: string; params: unknown } }
+/**
+ * Ответ модели: say — текст как есть (к озвучке готовит разборщик), call — вызов действия;
+ * broken — аргументы не разобрать (такой вызов не исполняется).
+ */
+export interface ModelReply { say: string; call?: { id: string; params: unknown; broken?: true } }
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
 /** Модель недоступна после всех попыток. */
@@ -75,15 +78,23 @@ async function once(body: object, url: string, f: typeof fetch, signal?: AbortSi
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ac.signal,
     });
     if (!r.ok) throw new Error(`LM Studio: ${r.status}`);
-    const j = (await r.json()) as { choices?: { message?: { content?: string | null; tool_calls?: { function?: { name?: string; arguments?: string } }[] } }[] };
+    type Msg = { content?: string | null; reasoning_content?: string | null; tool_calls?: { function?: { name?: string; arguments?: unknown } }[] };
+    const j = (await r.json()) as { choices?: { message?: Msg }[] };
     const m = j.choices?.[0]?.message;
     const fn = m?.tool_calls?.[0]?.function;
-    const say = speakable(m?.content ?? '');
+    const clean = (x?: string | null) => (x ?? '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    // размышление не выключилось и ответ ушёл в reasoning_content — берётся он
+    const say = clean(m?.content) || (fn?.name ? '' : clean(m?.reasoning_content));
     if (!say && !fn?.name) throw new Error('пустой ответ');
     if (!fn?.name) return { say };
-    let params: unknown = {};
-    try { params = fn.arguments ? JSON.parse(fn.arguments) : {}; } catch { params = {}; }
-    return { say, call: { id: fromToolName(fn.name), params } };
+    const args = fn.arguments;
+    if (args && typeof args === 'object') return { say, call: { id: fromToolName(fn.name), params: args } };
+    if (args === undefined || args === null || (typeof args === 'string' && !args.trim())) return { say, call: { id: fromToolName(fn.name), params: {} } };
+    try {
+      return { say, call: { id: fromToolName(fn.name), params: JSON.parse(String(args)) } };
+    } catch {
+      return { say, call: { id: fromToolName(fn.name), params: undefined, broken: true } };
+    }
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener('abort', stop);

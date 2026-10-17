@@ -337,6 +337,50 @@ describe('модель за правилами', () => {
     expect(said).toEqual([]);
     expect(thinking).toEqual([true, false]);
   });
+  it('испорченные аргументы — действие не исполняется, честный ответ', async () => {
+    const d = mkm(reply({ say: 'Открываю.', call: { id: 'shell.open', params: undefined, broken: true } }));
+    expect(await d.utterance('штаб, давай-ка туда', 1)).toBe('unknown');
+    expect(opened).toEqual([]);
+    expect(said).toHaveLength(1);
+    expect(said[0]).toMatch(/^Не понял, что именно сделать\. Можно сказать, например: «/);
+  });
+  it('нет обязательного параметра — действие не исполняется', async () => {
+    offs.push(register({ id: 'shell.open', section: 'global', title: 'Открыть', describe: '', available: () => true,
+      params: { type: 'object', properties: { section: { type: 'string' } }, required: ['section'] },
+      run: async (p: unknown) => { opened.push(p); } } as Action));
+    const d = mkm(reply({ say: 'Открываю.', call: { id: 'shell.open', params: {} } }));
+    expect(await d.utterance('штаб, давай-ка туда', 1)).toBe('unknown');
+    expect(opened).toEqual([]);
+    expect(said[0]).toMatch(/^Не понял, что именно сделать/);
+    const d2 = mkm(reply({ say: '', call: { id: 'shell.open', params: 'replay' } }));
+    expect(await d2.utterance('штаб, давай-ка туда', 2)).toBe('unknown');
+    expect(opened).toEqual([]);
+  });
+  it('необратимое действие голосом через модель — не исполняется', async () => {
+    const run = vi.fn(async () => undefined);
+    reg({ id: 'doc.delete', section: 'editor', irreversible: true, run });
+    const d = mkm(reply({ say: 'Удаляю.', call: { id: 'doc.delete', params: {} } }));
+    expect(await d.utterance('штаб, сотри всё', 1)).toBe('unknown');
+    expect(run).not.toHaveBeenCalled();
+    expect(said).toEqual(['Это нужно подтвердить, а голосом я пока такого не делаю. Сделайте это на экране.']);
+  });
+  it('ответ готовится к озвучке в разборщике', async () => {
+    const d = mkm(reply({ say: 'В резерве 2 дивизии (reserve).' }));
+    await d.utterance('штаб, что в резерве', 1);
+    expect(said).toEqual(['В резерве две дивизии.']);
+  });
+  it('«Стоп, открой карты» — штаб замолкает, команда исполняется', async () => {
+    let stops = 0;
+    const d = new Dispatcher({ now: () => t, say: (s) => said.push(s), section: () => section, stop: () => { stops++; } });
+    d.spoke();
+    expect(await d.utterance('Стоп, открой карты', 1)).toBe('done');
+    expect(opened).toEqual([{ section: 'maps' }]);
+    expect(stops).toBe(1);
+    expect(await d.utterance('Штаб, стоп, открой переигровку', 2)).toBe('done');
+    expect(opened).toEqual([{ section: 'maps' }, { section: 'replay' }]);
+    expect(await d.utterance('Стоп', 3)).toBe('done');
+    expect(stops).toBe(3);
+  });
   it('отменённый запрос, завершившийся ошибкой, ничего не говорит', async () => {
     const d = mkm((_t, _a, c) => new Promise((_res, rej) => c.signal.addEventListener('abort', () => rej(new Error('aborted')))));
     const first = d.utterance('штаб, давай-ка к переигровке', 1);

@@ -5,6 +5,10 @@
 
 const ONES_M = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
 const ONES_F = ['', 'одна', 'две', ...ONES_M.slice(3)];
+const ONES_N = ['', 'одно', ...ONES_M.slice(2)];
+/** Род числа: мужской, женский, средний. true — женский (как прежде). */
+export type Gender = 'm' | 'f' | 'n';
+const gOf = (g: Gender | boolean): Gender => (g === true ? 'f' : g === false ? 'm' : g);
 const TEENS = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
 const TENS = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
 const HUNDREDS = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'];
@@ -16,24 +20,25 @@ export function plural(n: number, [one, few, many]: [string, string, string]): s
   return b === 1 ? one : b >= 2 && b <= 4 ? few : many;
 }
 
-function triad(n: number, fem: boolean): string[] {
+function triad(n: number, g: Gender): string[] {
   const out = [HUNDREDS[Math.floor(n / 100)]];
   const r = n % 100;
   if (r >= 10 && r < 20) out.push(TEENS[r - 10]);
-  else out.push(TENS[Math.floor(r / 10)], (fem ? ONES_F : ONES_M)[r % 10]);
+  else out.push(TENS[Math.floor(r / 10)], (g === 'f' ? ONES_F : g === 'n' ? ONES_N : ONES_M)[r % 10]);
   return out.filter(Boolean);
 }
 
-/** Целое число словами (именительный падеж); fem — женский род («одна», «две»). До миллиарда, больше — по цифрам. */
-export function numberWords(n: number, fem = false): string {
+/** Целое число словами (именительный падеж); род — «одна», «две» / «одно». До миллиарда, больше — по цифрам. */
+export function numberWords(n: number, gender: Gender | boolean = 'm'): string {
+  const g = gOf(gender);
   if (!Number.isInteger(n) || n < 0) return String(n);
   if (n === 0) return 'ноль';
   if (n >= 1e9) return String(n).split('').map((d) => numberWords(+d)).join(' ');
   const mil = Math.floor(n / 1e6), th = Math.floor(n / 1000) % 1000, rest = n % 1000;
   const out: string[] = [];
-  if (mil) out.push(...(mil === 1 ? [] : triad(mil, false)), plural(mil, ['миллион', 'миллиона', 'миллионов']));
-  if (th) out.push(...(th === 1 ? [] : triad(th, true)), plural(th, ['тысяча', 'тысячи', 'тысяч']));
-  out.push(...triad(rest, fem));
+  if (mil) out.push(...(mil === 1 ? [] : triad(mil, 'm')), plural(mil, ['миллион', 'миллиона', 'миллионов']));
+  if (th) out.push(...(th === 1 ? [] : triad(th, 'f')), plural(th, ['тысяча', 'тысячи', 'тысяч']));
+  out.push(...triad(rest, g));
   return out.join(' ');
 }
 
@@ -54,6 +59,7 @@ const ORD_ONES: [string, Kind][] = [['', 'h'], ['перв', 'h'], ['втор', '
 const ORD_TEENS = ['десят', 'одиннадцат', 'двенадцат', 'тринадцат', 'четырнадцат', 'пятнадцат', 'шестнадцат', 'семнадцат', 'восемнадцат', 'девятнадцат'];
 const ORD_TENS: [string, Kind][] = [['', 'h'], ['', 'h'], ['двадцат', 'h'], ['тридцат', 'h'], ['сороков', 'o'], ['пятидесят', 'h'], ['шестидесят', 'h'], ['семидесят', 'h'], ['восьмидесят', 'h'], ['девяност', 'h']];
 const ORD_HUNDREDS = ['', 'сот', 'двухсот', 'трёхсот', 'четырёхсот', 'пятисот', 'шестисот', 'семисот', 'восьмисот', 'девятисот'];
+const THOUSANDS_GEN = ['', '', 'двух', 'трёх', 'четырёх', 'пяти', 'шести', 'семи', 'восьми', 'девяти'];
 const ENDINGS: Record<Kind, Record<string, string>> = {
   h: { й: 'ый', я: 'ая', е: 'ое', го: 'ого', му: 'ому', м: 'ом', ым: 'ым', х: 'ых', ю: 'ую', ми: 'ыми' },
   o: { й: 'ой', я: 'ая', е: 'ое', го: 'ого', му: 'ому', м: 'ом', ым: 'ым', х: 'ых', ю: 'ую', ми: 'ыми' },
@@ -72,6 +78,7 @@ export function ordinalWords(n: number, suf = 'й'): string {
   else if (r) { [stem, kind] = ORD_TENS[r / 10]; head = n - r; }
   else if (n % 1000) { stem = ORD_HUNDREDS[Math.floor(n / 100) % 10]; head = n - (n % 1000); }
   else if (n === 1000) { stem = 'тысячн'; head = 0; }
+  else if (n < 10000 && n % 1000 === 0) { stem = `${THOUSANDS_GEN[n / 1000]}тысячн`; head = 0; } // «двухтысячный»
   else return numberWords(n);
   const end = ENDINGS[kind][key] ?? ENDINGS[kind]['й'];
   return `${head ? numberWords(head) + ' ' : ''}${stem}${end}`;
@@ -98,6 +105,19 @@ const ABBR: [RegExp, string][] = [
 ];
 const minutes = (mm: string) => (mm === '00' ? 'ноль-ноль' : mm[0] === '0' ? `ноль ${numberWords(+mm[1])}` : numberWords(+mm));
 
+/** Основы существительных женского и среднего рода, которые встречаются в докладах. */
+const FEM = /^(?:дивизи|арми|бригад|рот[аыеу]?$|батаре|пушк|пушек|машин|недел|минут|секунд|позици|лини|колонн|групп|част[ьиея]|верст|тонн|атак|высот|деревн|переправ|единиц|операци|карт[аыеу]?$|ноч[ьиея]|сотн|танкетк|бомб|мин[аыеу]?$|флотили|эскадрили)/;
+const NEU = /^(?:оруди|сражени|направлени|соединени|подразделени|отделени|учреждени|судн|сел[оаеу]?$|сёл|озер|мест[оа]?$|звен|крыл|утр[оа]?$|окн)/;
+/** Род и само существительное после числа (прилагательные пропускаются); не узнан — мужской. */
+function nounGender(tail: string): [Gender, string] {
+  for (const w of tail.trim().toLowerCase().split(/\s+/)) {
+    if (FEM.test(w)) return ['f', w];
+    if (NEU.test(w)) return ['n', w];
+    if (!/(?:ая|ые|ых|ое|ой|ую|ий|ый|ие|их|ым|ыми|ими|ого|его|ому|ему)$/.test(w)) return ['m', w]; // не прилагательное — дальше не смотрим
+  }
+  return ['m', ''];
+}
+
 export const SPEAK_MAX_CHARS = 300;
 export const SPEAK_MAX_SENTENCES = 2;
 
@@ -105,9 +125,10 @@ export const SPEAK_MAX_SENTENCES = 2;
 export function speakable(text: string): string {
   let t = text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/[*#`_]+/g, '');
   t = t.replace(/\s*\([^)]*[A-Za-z][^)]*\)/g, ''); // английские пояснения в скобках
+  t = t.replace(/(?<![\p{L}\d])[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\p{L}\d])[A-Za-z](?![\p{L}\d])/gu, ''); // и без скобок
   t = t.replace(/(\d)[\s ](?=\d{3}(?!\d))/g, '$1'); // «1 250»
   // даты: «16.04», «16.04.1945», «16 апреля»
-  t = t.replace(/(?<![\d.,])(\d{1,2})\.(\d{2})(?:\.(\d{4}))?(?![\d.,]\d)/g, (m, d, mo, y) =>
+  t = t.replace(/(?<![\d.,])(\d{1,2})\.(\d{2})(?:\.(\d{4}))?(?![\d.,]\d)(?!\s*(?:(?:км|м|кг|т|л|ч|мин|раз)(?!\p{L})|%|чел\.|тыс\.|метр|километр|процент|тонн|час|минут))/gu, (m, d, mo, y) =>
     +mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31 ? `${ordinalWords(+d, 'го')} ${MONTHS[+mo - 1]}${y ? ` ${ordinalWords(+y, 'го')} года` : ''}` : m);
   t = t.replace(new RegExp(`(?<!\\d)(\\d{1,2})\\s+(${MONTHS.join('|')})(?!${L})`, 'gu'), (_m, d, mo) => `${ordinalWords(+d, 'го')} ${mo}`);
   // годы: «в 1945 году», «1945 года», «1945 г.»
@@ -124,6 +145,14 @@ export function speakable(text: string): string {
     return `${frac ? decimalWords(n) : numberWords(+n, fem)} ${frac ? forms[1] : plural(+n, forms)}`;
   });
   t = t.replace(/\d+[.,]\d+/g, (m) => decimalWords(m));
+  // род по существительному после числа (через одно-два прилагательных): «одна дивизия», «две армии», «одно орудие»
+  t = t.replace(new RegExp(`(?<![\\d.,])(\\d+)((?:\\s+${L}+){1,3})`, 'gu'), (m, n: string, tail: string) => {
+    const [g, noun] = nounGender(tail);
+    if (g === 'm') return m;
+    const w = numberWords(+n, g);
+    // винительный: «одну дивизию»
+    return (g === 'f' && /[ую]$/.test(noun) ? w.replace(/одна$/, 'одну') : w) + tail;
+  });
   t = t.replace(/\d+/g, (m) => numberWords(+m));
   for (const [re, rep] of ABBR) t = t.replace(re, rep);
   t = t.replace(/\s+/g, ' ').replace(/\s+([.,!?…:;])/g, '$1').trim();

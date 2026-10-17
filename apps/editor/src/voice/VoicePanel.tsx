@@ -4,7 +4,8 @@
  *
  * Пользователи — люди старшего возраста: крупный шрифт (не меньше 18 px), простые слова, регуляторы спрятаны
  * в «Тонкую настройку», главный путь — калибровка. Панель создаёт связь с сервисом (VoiceClient) и разборщик
- * реплик (Dispatcher); событие окна `voice:open` (detail 'calibrate' | 'voices') открывает нужный экран.
+ * реплик (Dispatcher) с моделью за правилами (llm.ts: модель «Голос» из раздела «ИИ»; пока она отвечает — «Думаю»,
+ * новая реплика отменяет её прежний ответ); событие окна `voice:open` (detail 'calibrate' | 'voices') открывает нужный экран.
  *
  * Кнопка «Выключить голос» / «Включить голос» и событие окна `voice:power` (detail: boolean; «Штаб, отбой»)
  * выключают голос: микрофон закрыт и сам не открывается, звук штаба остановлен, связь с сервисом остаётся.
@@ -13,7 +14,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher } from './dispatch';
+import { createVoiceModel } from './llm';
 import { actions } from './registry';
+import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
   DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings,
@@ -32,7 +35,7 @@ const lsSet = (k: string, v: string | null) => { try { if (v === null) localStor
 /** Что сервис сообщил при подключении: голоса, роли, текст для записи нового голоса. */
 export interface VoiceReady { voices: VoiceInfo[]; roles: VoiceRoles; recordText: string }
 
-export function VoicePanel({ section }: { section: string }) {
+export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings }) {
   const [enabled, setEnabledState] = useState(() => parseEnabled(lsGet(ENABLED_KEY)));
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
@@ -43,6 +46,8 @@ export function VoicePanel({ section }: { section: string }) {
   }, []);
   const sectionRef = useRef(section);
   sectionRef.current = section;
+  const llmRef = useRef(llm);
+  llmRef.current = llm;
 
   const [status, setStatus] = useState<VoiceStatus>(client.status);
   const [open, setOpen] = useState(() => lsGet(OPEN_KEY) === 'open');
@@ -50,7 +55,7 @@ export function VoicePanel({ section }: { section: string }) {
   const [level, setLevel] = useState({ p: 0, busy: false });
   const [cfg, setCfg] = useState<VoiceSettings>(() => ({ ...DEFAULT_SETTINGS, ...parseSettings(lsGet(SETTINGS_KEY)) }));
   const [listening, setListening] = useState(false);
-  const [thinking, setThinking] = useState(0);
+  const [thinking, setThinking] = useState(false);
   const speakingIds = useRef(new Set<number>());
   const previewIds = useRef(new Set<number>());
   const [speaking, setSpeaking] = useState(false);
@@ -76,6 +81,9 @@ export function VoicePanel({ section }: { section: string }) {
       setFeed((f) => feedAdd(f, { key: `s${id}`, kind: 'chief', text }));
     },
     stop: () => { client.stop(); speakingIds.current.clear(); syncSpeaking(); },
+    // чего правила не поняли — модель «Голос» (настройки берутся в момент вопроса)
+    model: createVoiceModel({ settings: () => llmRef.current }),
+    thinking: setThinking,
   }), [client]);
 
   const toggle = (v: boolean) => { setOpen(v); lsSet(OPEN_KEY, v ? 'open' : null); };
@@ -134,12 +142,10 @@ export function VoicePanel({ section }: { section: string }) {
         setListening(false);
         if (!enabledRef.current) return;  // договорено до выключения — уже не исполняется
         setFeed((f) => feedUtterance(f, m));
-        setThinking((n) => n + 1);
         // реплику поправили при разборе (огрехи распознавания) — в ленте видно, как она понята
         dispatcher.utterance(m.text, m.id, m.continues)
           .then((r) => setFeed((f) => feedCorrection(feedResolve(f, m.id, r), m.id, m.text, dispatcher.correction(m.id))))
-          .catch(() => setFeed((f) => feedResolve(f, m.id, 'unknown')))
-          .finally(() => setThinking((n) => n - 1));
+          .catch(() => setFeed((f) => feedResolve(f, m.id, 'unknown')));
       }),
       client.on('echo', (m) => setFeed((f) => feedEcho(f, m.text, Date.now()))),
       // перебили штаб: дальше человек говорит с ним — окно разговора, реплика без «штаб» не уходит в «не мне»
@@ -207,7 +213,7 @@ export function VoicePanel({ section }: { section: string }) {
   };
 
   const st = panelState({
-    status, enabled, micError, busy, speaking, listening, thinking: thinking > 0,
+    status, enabled, micError, busy, speaking, listening, thinking,
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
   const live = enabled && status === 'ready' && !micError;
