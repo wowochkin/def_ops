@@ -17,7 +17,8 @@
 // Модель за правилами — на поддельной LM Studio (/llm/…): свободная формулировка, выдуманное действие, «Думаю»,
 // отмена старого ответа новой репликой, «модель молчит».
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
-// панели, калибровки и голосов. Python — $VOICE_PYTHON, services/voice/.venv или python3.
+// панели, калибровки, голосов и раздела «ИИ» (модель для голоса).
+// Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
@@ -716,6 +717,23 @@ async function llmChecks() {
 // ---------------------------------------------------------------- конец: модель за правилами
 
 await llmChecks();
+
+// снимок для описания: раздел «ИИ», карточка «Голос» (модель для голоса) — только с --shots, проверок нет
+if (SHOTS) {
+  await panel.getByRole('button', { name: 'Свернуть' }).click();
+  await page.evaluate(() => { location.hash = '#staff'; });
+  const card = page.locator('.staff-voice');
+  await card.waitFor({ state: 'visible', timeout: 10000 });
+  // связь проверена при загрузке окна, до поддельной LM Studio, — проверить заново
+  await page.getByRole('button', { name: 'Проверить связь' }).click();
+  await page.getByText('моделей: 1').first().waitFor({ timeout: 10000 }).catch(() => {});
+  await card.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1000);
+  await shot('ai-voice-model.jpg');
+  await page.evaluate(() => { location.hash = '#replay'; });
+  await page.locator('.vp-icon').click();
+  await panel.locator('.vp-card').waitFor({ state: 'visible', timeout: 5000 });
+}
 
 await check('тонкая настройка: «Перебивать: голосом / словом» переключается и запоминается', async () => {
   await panel.getByText('Тонкая настройка').click();
