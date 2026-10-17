@@ -13,24 +13,30 @@
  * Регуляторы помнят, при каком подавлении эха сняты: сервис теперь другой — подсказка пройти калибровку, а перебивание
  * до неё — «словом».
  *
- * Кнопка «Выключить голос» / «Включить голос» и событие окна `voice:power` (detail: boolean; «Штаб, отбой»)
- * выключают голос: микрофон закрыт и сам не открывается, звук штаба остановлен, связь с сервисом остаётся.
- * Выбор запоминается между запусками (ENABLED_KEY).
+ * Кнопка «Выключить голос» / «Включить голос» и событие окна `voice:power` (detail: boolean)
+ * выключают голос: микрофон закрыт и сам не открывается (включить голосом тогда нельзя), звук штаба остановлен, связь
+ * с сервисом остаётся. Выбор запоминается между запусками (ENABLED_KEY); по умолчанию голос включён.
  *
- * Тур (voice/tour.tsx) говорит тем же путём, что ответы штаба (useTourVoice); голос впервые готов — событие окна
- * `voice:ready-first` (вступление); `voice:open` с detail 'panel' разворачивает панель (подготовка тура по ней).
- * Элементы панели помечены `data-tour` для подсветки.
+ * Без рук: «Штаб, отбой» — дежурный режим (событие окна `voice:standby`, detail: boolean): микрофон открыт, штаб ждёт
+ * только «Штаб, на связь». Необратимое голосом — после «да»: вопрос крупно с кнопками «Да» / «Нет» (действия
+ * `voice.yes` / `voice.no`). Окна, ждущие ответа (registry.openModal: вопросы dialogs.ts, калибровка, «Голоса»),
+ * зачитываются штабом (registry.speak — через эту панель). Событие окна `voice:propose` (detail: {text, action,
+ * params?}) — штаб спрашивает «да / нет» и на «да» исполняет действие. Голос впервые готов за запуск — событие
+ * `voice:ready-first` (detail: {calibrated}, отменяемое): не отменили и калибровки не было — штаб предлагает её.
+ *
+ * Тур (voice/tour.tsx) говорит тем же путём, что ответы штаба (useTourVoice); `voice:open` с detail 'panel'
+ * разворачивает панель (подготовка тура по ней). Элементы панели помечены `data-tour` для подсветки.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
-import { CONVERSATION_S, Dispatcher } from './dispatch';
+import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
-import { act, actions } from './registry';
+import { ActButton, act, actions, onModal, setSpeaker, useAction } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
-  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, SayGate, aecChange, aecHint, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
-  parseEnabled, parseSettings, resetStored, storeSettings, type FeedItem,
+  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
+  parseEnabled, parseSettings, resetStored, settleAec, storeSettings, wasCalibrated, type FeedItem,
 } from './panel-state';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
@@ -46,8 +52,15 @@ const lsSet = (k: string, v: string | null) => { try { if (v === null) localStor
 /** Что сервис сообщил при подключении: голоса, роли, текст для записи нового голоса, подавляет ли он эхо. */
 export interface VoiceReady { voices: VoiceInfo[]; roles: VoiceRoles; recordText: string; aec: boolean }
 
-/** llmCheck — итог проверки связи с моделью в «ИИ» ('fail' — модель голосом не зовётся). */
-export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: LlmSettings; llmCheck?: string }) {
+const OFFER_CALIBRATION = 'Голос готов. Калибровки ещё не было — провести её сейчас?';
+
+/**
+ * llmCheck — итог проверки связи с моделью в «ИИ» ('fail' — модель голосом не зовётся); recheck — проверить связь
+ * заново (голос перепроверяет её при обращении, если модель «недоступна»).
+ */
+export function VoicePanel({ section, llm, llmCheck, recheck }: {
+  section: string; llm: LlmSettings; llmCheck?: string; recheck?: () => Promise<{ state: string }>;
+}) {
   const [enabled, setEnabledState] = useState(() => parseEnabled(lsGet(ENABLED_KEY)));
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
@@ -62,6 +75,8 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
   llmRef.current = llm;
   const llmCheckRef = useRef(llmCheck);
   llmCheckRef.current = llmCheck;
+  const recheckRef = useRef(recheck);
+  recheckRef.current = recheck;
 
   const [status, setStatus] = useState<VoiceStatus>(client.status);
   const [open, setOpen] = useState(() => lsGet(OPEN_KEY) === 'open');
@@ -84,6 +99,15 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
   const [dialog, setDialog] = useState<null | 'calibrate' | 'voices'>(null);
   const dialogRef = useRef(dialog);
   dialogRef.current = dialog;
+  /** калибровка открыта голосом — шаги идут сами */
+  const [autoCalib, setAutoCalib] = useState(false);
+  const [standby, setStandby] = useState(false);
+  const [pending, setPending] = useState<Pending | null>(null);
+  /** Фразы, окончания которых ждут (калибровка и «Голоса» говорят, потом действуют). */
+  const waiters = useRef(new Map<number, () => void>());
+  const settle = (id: number) => { const w = waiters.current.get(id); if (w) { waiters.current.delete(id); w(); } };
+  const settleAll = () => { const ws = [...waiters.current.values()]; waiters.current.clear(); ws.forEach((w) => w()); };
+  const readyFirst = useRef(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [ready, setReady] = useState<VoiceReady | null>(null);
   const started = useRef(false);
@@ -95,13 +119,14 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     syncSpeaking();
     client.say(id, 'chief', text);
     setFeed((f) => feedAdd(f, { key: `s${id}`, kind: 'chief', text }));
-  }, () => Date.now(), () => speakingIds.current.size > 0, (ids) => ids.forEach((id) => settleSpeech(id, 'stopped'))), [client]); // eslint-disable-line react-hooks/exhaustive-deps
+  // «штаб говорит» — только настоящей фразой: пока звучит лишь «повторяю запрос», ответ модели ждёт конца речи человека;
+  // снятые ждущие фразы — тур узнаёт, что они не прозвучат
+  }, () => Date.now(), () => chiefTalking(speakingIds.current, quietIds.current), (ids) => ids.forEach((id) => settleSpeech(id, 'stopped'))), [client]); // eslint-disable-line react-hooks/exhaustive-deps
   const dispatcher = useMemo(() => new Dispatcher({
     now: () => Date.now(),
     section: () => sectionRef.current,
+    // во время шага калибровки и записи голоса сервис фраз не произносит (say-done stopped) — замер не испортится
     say: (text, o) => {
-      // окно калибровки или голосов: штаб по разговору молчит (испортил бы замер или запись)
-      if (dialogRef.current) return;
       const id = client.newSayId();
       if (o?.quiet) quietIds.current.add(id);
       gate.say(id, text);
@@ -118,8 +143,37 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     // чего правила не поняли — модель «Голос» (настройки берутся в момент вопроса); проверка связи не прошла — не зовём
     model: createVoiceModel({ settings: () => llmRef.current }),
     modelReady: () => llmCheckRef.current !== 'fail',
+    // «недоступна» — перепроверить связь (не дожидаясь возврата в окно): итог сразу виден разборщику
+    recheck: async () => {
+      const r = await recheckRef.current?.();
+      if (r) llmCheckRef.current = r.state;
+      return r?.state === 'ok';
+    },
     thinking: setThinking,
-  }), [client, gate]);
+    onPending: (p) => { setPending(p ? { ...p } : null); if (p) toggle(true); },
+    onStandby: setStandby,
+  }), [client, gate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Фраза штаба от окна (калибровка, «Голоса»); промис — когда договорил, фразу сняли или голос не говорит. */
+  const sayAndWait = (text: string) => new Promise<void>((resolve) => {
+    const id = dispatcher.announce(text);
+    if (id === undefined) { resolve(); return; }
+    const t = setTimeout(() => settle(id), 6000 + text.length * 120); // фразу могли снять, не сыграв
+    waiters.current.set(id, () => { clearTimeout(t); resolve(); });
+  });
+
+  // кнопки «Да» / «Нет» подтверждения — те же действия, что и голосом
+  useAction({ id: 'voice.yes', section: 'global', title: 'Да', describe: 'Подтверждает то, о чём спросил штаб.',
+    available: () => (dispatcher.pending ? true : 'подтверждать нечего'), run: async () => { await dispatcher.answer(true); } });
+  useAction({ id: 'voice.no', section: 'global', title: 'Нет', describe: 'Отказ от того, о чём спросил штаб.',
+    available: () => (dispatcher.pending ? true : 'подтверждать нечего'), run: async () => { await dispatcher.answer(false); } });
+
+  // окна и модули говорят через штаб (в дежурном — молчат); открылось окно — прежний ответ модели уже не нужен
+  useEffect(() => {
+    setSpeaker((t) => { dispatcher.announce(t); });
+    const off = onModal((_m, opened) => { if (opened) { dispatcher.cancel(); gate.clear(); } });
+    return () => { setSpeaker(null); off(); };
+  }, [dispatcher, gate]);
   // тур говорит голосом начальника штаба: та же очередь фраз, та же лента
   useTourVoice({
     client,
@@ -128,15 +182,15 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     live: () => enabledRef.current && !dialogRef.current && client.status === 'ready',
   });
   const [intro] = useIntroSetting();
-  const readyOnce = useRef(false);
 
   // связь с моделью проверена заново или настройки модели сменились — прежняя недоступность забыта
   useEffect(() => { if (llmCheck === 'ok') dispatcher.modelBack(); }, [llmCheck, dispatcher]);
   useEffect(() => { dispatcher.modelBack(); }, [llm.url, llm.model, llm.voiceModel, dispatcher]);
 
-  /** Окно калибровки или голосов: ожидание модели отменено, речь штаба по разговору заглушена. */
-  const openDialog = (d: 'calibrate' | 'voices') => {
+  /** Окно калибровки или голосов (auto — открыто голосом): ожидание модели отменено, речь штаба по разговору заглушена. */
+  const openDialog = (d: 'calibrate' | 'voices', auto = false) => {
     dialogRef.current = d;
+    setAutoCalib(auto && d === 'calibrate');
     setDialog(d);
     dispatcher.cancel();
     gate.clear();
@@ -173,9 +227,11 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     setEnabledState(on);
     lsSet(ENABLED_KEY, on ? 'true' : 'false');
     setMicError(null);
+    dispatcher.setStandby(false, { quiet: true }); // выключили или включили кнопкой — дежурства больше нет
     if (!on) {
       dispatcher.cancel(); // ответ модели, пришедший после выключения, не звучит и не исполняется
       gate.clear();
+      settleAll();
       setDialog(null);
       setBusy(null);
       setListening(false);
@@ -195,9 +251,6 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     const offs = [
       client.on('ready', (m) => {
         setReady({ voices: m.voices ?? [], roles: m.roles, recordText: m.record_text ?? '', aec: m.aec === true });
-        // голос впервые готов за этот запуск — вступление (voice/tour.tsx)
-        // (временно, до слияния с «без рук»: там событие шлёт и обрабатывает панель — отменяемое, с voice:propose)
-        if (!readyOnce.current && enabledRef.current) { readyOnce.current = true; window.dispatchEvent(new CustomEvent('voice:ready-first', { cancelable: true })); }
       }),
       client.on('level', (m) => setLevel({ p: m.p, busy: m.busy })),
       client.on('speech', (m) => { setListening(m.state === 'start'); gate.speech(m.state === 'start'); }),
@@ -206,29 +259,33 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
       })),
       client.on('utterance', (m) => {
         setListening(false);
-        if (!enabledRef.current) return;  // договорено до выключения — уже не исполняется
+        if (!enabledRef.current) { gate.utterance(); return; }  // договорено до выключения — уже не исполняется
         setFeed((f) => feedUtterance(f, m));
         // реплику поправили при разборе (огрехи распознавания) — в ленте видно, как она понята
         dispatcher.utterance(m.text, m.id, m.continues)
           .then((r) => setFeed((f) => feedCorrection(feedResolve(f, m.id, r), m.id, m.text, dispatcher.correction(m.id))))
           .catch(() => setFeed((f) => feedResolve(f, m.id, 'unknown')));
+        // синхронная часть разбора уже сняла старые ответы, если это новая просьба (supersede) — ждущие фразы уходят
+        gate.utterance();
       }),
-      client.on('echo', (m) => setFeed((f) => feedEcho(f, m.text, Date.now()))),
+      client.on('echo', (m) => { gate.utterance(); setFeed((f) => feedEcho(f, m.text, Date.now())); }),
       // перебили штаб: дальше человек говорит с ним — окно разговора, реплика без «штаб» не уходит в «не мне»
       client.on('barge', (m) => {
         if (previewIds.current.delete(m.id)) return;
         speakingIds.current.delete(m.id);
         syncSpeaking();
+        settle(m.id);
         dispatcher.spoke();
         setSpokeAt(Date.now());
       }),
-      client.on('say-done', (m) => { if (m.stopped) { previewIds.current.delete(m.id); speakingIds.current.delete(m.id); syncSpeaking(); } }),
+      client.on('say-done', (m) => { if (m.stopped) { previewIds.current.delete(m.id); speakingIds.current.delete(m.id); syncSpeaking(); settle(m.id); } }),
       // открытое окно калибровки или голосов показывает ошибку само — в ленте не дублируем
       client.on('error', (m) => { if (!dialogRef.current) setFeed((f) => feedAdd(f, { key: `e${Date.now()}`, kind: 'note', text: m.text })); }),
       client.onPlayed((id) => {
         if (previewIds.current.delete(id)) return;
         speakingIds.current.delete(id);
         syncSpeaking();
+        settle(id);
         if (quietIds.current.delete(id)) return; // заготовленная фраза о модели окно разговора не открывает
         dispatcher.spoke();
         setSpokeAt(Date.now());
@@ -238,32 +295,64 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
   }, [client, dispatcher]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // обрыв связи: звук остановлен — штаб больше не говорит
-  useEffect(() => { if (status !== 'ready') { speakingIds.current.clear(); syncSpeaking(); setListening(false); gate.clear(); } }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (status !== 'ready') { speakingIds.current.clear(); syncSpeaking(); setListening(false); gate.clear(); settleAll(); } }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // часы окна разговора и «что можно сказать» (доступность действий меняется без событий); фразы штаба не ждут
-  // конца речи вечно
-  useEffect(() => { const t = setInterval(() => { setNow(Date.now()); gate.tick(); }, 1000); return () => clearInterval(t); }, [gate]);
+  // конца речи вечно; подтверждение ждёт не дольше 15 с
+  useEffect(() => { const t = setInterval(() => { setNow(Date.now()); gate.tick(); dispatcher.tick(); }, 1000); return () => clearInterval(t); }, [gate, dispatcher]);
+
+  // голос впервые за запуск готов: калибровки не было — штаб предлагает её (тур вступления может отменить и предложить сам)
+  useEffect(() => {
+    if (readyFirst.current || !enabled || status !== 'ready') return;
+    readyFirst.current = true;
+    const calibrated = wasCalibrated(lsGet(SETTINGS_KEY));
+    const ev = new CustomEvent('voice:ready-first', { detail: { calibrated }, cancelable: true });
+    window.dispatchEvent(ev);
+    if (ev.defaultPrevented || calibrated) return;
+    const t = setTimeout(() => { if (!dialogRef.current && !dispatcher.standby && !dispatcher.pending) dispatcher.propose(OFFER_CALIBRATION, 'shell.calibrate'); }, 1000);
+    return () => clearTimeout(t);
+  }, [status, enabled, dispatcher]);
+
+  // регуляторы правили руками до ответа сервиса — дописать, при каком подавлении эха (иначе ложная рамка «калибровка»)
+  useEffect(() => { const s = settleAec(lsGet(SETTINGS_KEY), ready?.aec); if (s) persist(s); }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // голосовые действия «калибровка» и «голоса»; звук — после первого действия человека
   useEffect(() => {
+    // открыто голосом («Штаб, калибровка») — и ведётся голосом: шаги калибровки идут сами
     const onOpen = (e: Event) => {
       const d = (e as CustomEvent).detail;
-      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { openDialog(d); toggle(true); }
+      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { openDialog(d, true); toggle(true); }
       if (d === 'panel') toggle(true);
     };
-    // «Штаб, отбой» (разборщик) — выключение; ответ штаба договаривается
     const onPower = (e: Event) => {
       const d = (e as CustomEvent).detail;
       if (typeof d === 'boolean') power(d, !d);
     };
+    // «Штаб, отбой» / «Штаб, на связь» (действия shell.standby / shell.wake)
+    const onStandby = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (typeof d === 'boolean' && enabledRef.current) dispatcher.setStandby(d);
+    };
+    // предложение штаба «да / нет» от других модулей; без подробностей — калибровка (тур после вступления)
+    const onPropose = (e: Event) => {
+      const d = (e as CustomEvent).detail as { text?: string; action?: string; params?: unknown } | null;
+      if (!enabledRef.current || dispatcher.standby) return;
+      if (d?.text && d.action) dispatcher.propose(d.text, d.action, d.params);
+      // без подробностей (тур после вступления) — предложение калибровки, если её не было
+      else if (!wasCalibrated(lsGet(SETTINGS_KEY)) && !dialogRef.current && !dispatcher.pending) dispatcher.propose(OFFER_CALIBRATION, 'shell.calibrate');
+    };
     const resume = () => client.resume();
     window.addEventListener('voice:open', onOpen);
     window.addEventListener('voice:power', onPower);
+    window.addEventListener('voice:standby', onStandby);
+    window.addEventListener('voice:propose', onPropose);
     window.addEventListener('pointerdown', resume);
     window.addEventListener('keydown', resume);
     return () => {
       window.removeEventListener('voice:open', onOpen);
       window.removeEventListener('voice:power', onPower);
+      window.removeEventListener('voice:standby', onStandby);
+      window.removeEventListener('voice:propose', onPropose);
       window.removeEventListener('pointerdown', resume);
       window.removeEventListener('keydown', resume);
     };
@@ -290,7 +379,7 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
   useEffect(() => { if (aec && cfg.barge_mode !== 'word') client.settings({ barge_mode: 'word' }); }, [aec, cfg.barge_mode, client]);
 
   const st = panelState({
-    status, enabled, micError, busy, speaking, listening, thinking,
+    status, enabled, micError, busy, speaking, listening, thinking, standby,
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
   const live = enabled && status === 'ready' && !micError;
@@ -308,8 +397,8 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     <div className={`vp ${st.key}`}>
       {!open ? (
         <button className="vp-icon" data-tour="voice" onClick={() => toggle(true)} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
-          <MicGlyph off={!enabled} />
-          {!enabled && <span className="vp-icon-cap">{st.text}</span>}
+          <MicGlyph off={!enabled} sleep={enabled && standby} />
+          {(!enabled || standby) && <span className="vp-icon-cap">{st.text}</span>}
         </button>
       ) : (
         <section className="vp-card" aria-label="Голос" data-tour="voice">
@@ -318,9 +407,19 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
             <span className="vp-state" role="status">{st.text}</span>
             <button className="vp-close" onClick={() => toggle(false)} title="Свернуть панель голоса">Свернуть</button>
           </div>
+          {pending && live && (
+            <div className="vp-confirm" role="alertdialog" aria-label="Подтверждение">
+              <p className="vp-q">{pending.text}</p>
+              <div className="vp-row">
+                <ActButton action="voice.no">Нет</ActButton>
+                <ActButton action="voice.yes" className="primary">Да</ActButton>
+              </div>
+            </div>
+          )}
           <button className={`vp-power${enabled ? '' : ' primary'}`} data-tour="voice-power" onClick={() => power(!enabled)}>
             <MicGlyph off={enabled} /> {enabled ? 'Выключить голос' : 'Включить голос'}
           </button>
+          {enabled && <p className="vp-note">Выключить — микрофон закроется: включить голосом будет нельзя, только этой кнопкой. Чтобы штаб просто замолчал, скажите: «Штаб, отбой».</p>}
           {!enabled && <p className="vp-note">Микрофон выключен: штаб вас не слышит и не говорит.</p>}
           {enabled && errorText && (
             <div className="vp-mic">
@@ -404,11 +503,11 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
       )}
 
       {dialog === 'calibrate' && (
-        <Calibration client={client} setBusy={setBusy} onClose={closeDialog}
+        <Calibration client={client} setBusy={setBusy} onClose={closeDialog} auto={autoCalib} say={sayAndWait}
           onResult={(c) => applySettings(c, true)} />
       )}
       {dialog === 'voices' && (
-        <Voices client={client} ready={ready} setBusy={setBusy} onClose={closeDialog}
+        <Voices client={client} ready={ready} setBusy={setBusy} onClose={closeDialog} say={sayAndWait}
           previewId={() => { const id = client.newSayId(); previewIds.current.add(id); return id; }} />
       )}
     </div>
@@ -445,13 +544,16 @@ function Slider({ label, value, min, max, step, show, onChange }: {
   );
 }
 
-/** Микрофон; off — перечёркнутый (голос выключен). */
-function MicGlyph({ off = false }: { off?: boolean }) {
+/** Микрофон; off — перечёркнутый (голос выключен); sleep — дежурит («zz»). */
+function MicGlyph({ off = false, sleep = false }: { off?: boolean; sleep?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
+      <g opacity={sleep ? 0.45 : 1}>
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
+      </g>
       {off && <path className="vp-cross" d="M3.5 3.5l17 17" strokeWidth="2.4" />}
+      {sleep && <text className="vp-zz" x="15.5" y="7.5" fill="currentColor" stroke="none" fontSize="8" fontWeight="700">zz</text>}
     </svg>
   );
 }

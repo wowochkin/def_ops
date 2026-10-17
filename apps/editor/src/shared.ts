@@ -137,13 +137,14 @@ export async function checkLlm(url: string): Promise<LlmCheck> {
   }
 }
 
-export interface Llm { settings: LlmSettings; set: (p: Partial<LlmSettings>) => void; check: LlmCheck; recheck: () => void }
+export interface Llm { settings: LlmSettings; set: (p: Partial<LlmSettings>) => void; check: LlmCheck; recheck: () => Promise<LlmCheck> }
 
 export function useLlm(): Llm {
   const [settings, setSettings] = useState<LlmSettings>(loadLlm);
   const [check, setCheck] = useState<LlmCheck>({ state: 'unknown' });
-  const recheck = () => { setCheck({ state: 'checking' }); checkLlm(settings.url).then(setCheck); };
-  useEffect(recheck, [settings.url]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Проверить связь заново; промис — итог (голос перепроверяет связь при обращении, без возврата в окно). */
+  const recheck = () => { setCheck({ state: 'checking' }); return checkLlm(settings.url).then((r) => { setCheck(r); return r; }); };
+  useEffect(() => { void recheck(); }, [settings.url]); // eslint-disable-line react-hooks/exhaustive-deps
   // модели загружают в другом приложении — список перечитывается при возврате в окно
   useEffect(() => { const f = () => checkLlm(settings.url).then(setCheck); window.addEventListener('focus', f); return () => window.removeEventListener('focus', f); }, [settings.url]);
   return {

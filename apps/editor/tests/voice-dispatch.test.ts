@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, actions, register, type Action } from '../src/voice/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { addressed, CONVERSATION_S, Dispatcher, MODEL_DOWN_MS, normalizeCommand, STOP_WORDS } from '../src/voice/dispatch';
+import { addressed, CONVERSATION_S, Dispatcher, normalizeCommand, RECHECK_MS, STANDBY_SAY, STOP_WORDS } from '../src/voice/dispatch';
 import { ModelUnavailable, type ModelReply } from '../src/voice/llm';
 
 let offs: (() => void)[] = [];
@@ -200,11 +200,11 @@ describe('отбой', () => {
     (globalThis as any).window = { dispatchEvent: (e: CustomEvent) => { sent.push([e.type, e.detail]); return true; } };
   });
   afterEach(() => { delete (globalThis as any).window; });
-  it.each(['Штаб, отбой', 'Штаб, выключи голос.', 'штаб отбой!'])('«%s» → voice:power false', async (phrase) => {
+  it.each(['Штаб, отбой', 'Штаб, выключи голос.', 'штаб отбой!'])('«%s» → дежурный режим (voice:standby true), микрофон не выключается', async (phrase) => {
     const d = mk();
     expect(await d.utterance(phrase, 1)).toBe('done');
-    expect(sent).toEqual([['voice:power', false]]);
-    expect(said).toEqual(['Голос выключен. Включить — кнопкой на панели.']);
+    expect(sent).toEqual([['voice:standby', true]]);
+    expect(said).toEqual([STANDBY_SAY]);
   });
 });
 
@@ -358,13 +358,13 @@ describe('модель за правилами', () => {
     expect(await d2.utterance('штаб, давай-ка туда', 2)).toBe('unknown');
     expect(opened).toEqual([]);
   });
-  it('необратимое действие голосом через модель — не исполняется', async () => {
+  it('необратимое действие голосом через модель — не исполняется сразу, а спрашивается подтверждение', async () => {
     const run = vi.fn(async () => undefined);
-    reg({ id: 'doc.delete', section: 'editor', irreversible: true, run });
+    reg({ id: 'doc.delete', section: 'editor', title: 'Удалить документ', irreversible: true, run });
     const d = mkm(reply({ say: 'Удаляю.', call: { id: 'doc.delete', params: {} } }));
-    expect(await d.utterance('штаб, сотри всё', 1)).toBe('unknown');
+    expect(await d.utterance('штаб, сотри всё', 1)).toBe('done');
     expect(run).not.toHaveBeenCalled();
-    expect(said).toEqual(['Это нужно подтвердить, а голосом я пока такого не делаю. Сделайте это на экране.']);
+    expect(said).toEqual(['Удалить документ? Скажите «да» или «нет».']);
   });
   it('ответ готовится к озвучке в разборщике', async () => {
     const d = mkm(reply({ say: 'В резерве 2 дивизии (reserve).' }));
@@ -439,14 +439,14 @@ describe('без LM Studio', () => {
   });
   const DOWN = /^Не понял вас\. Языковая модель сейчас недоступна — говорите готовыми командами, например: «[^»]+», «[^»]+»\.$/;
 
-  it('модель недоступна — помнит 3 минуты: следующая непонятая фраза сразу, без модели и «Думаю»', async () => {
+  it('модель недоступна — помнится до перепроверки: следующая непонятая фраза сразу, без модели и «Думаю»', async () => {
     const m = vi.fn(async () => { throw new ModelUnavailable(); }) as unknown as Hook;
     const d = mkd(m);
     expect(await d.utterance('штаб, как дела у соседей', 1)).toBe('unknown');
     expect(said).toHaveLength(1);
     expect(said[0]).toMatch(/^Связи с моделью нет\. Можно сказать, например: «/);
     expect(thinking).toEqual([true, false]);
-    t += 60_000;
+    t += 20_000;
     expect(await d.utterance('штаб, расскажи про погоду', 2)).toBe('unknown');
     expect(m).toHaveBeenCalledTimes(1);
     expect(said).toHaveLength(2);
@@ -456,10 +456,10 @@ describe('без LM Studio', () => {
     expect(said.filter((s) => s.startsWith('Связи с моделью нет'))).toHaveLength(1);
     // правила работают как всегда
     expect(await d.utterance('штаб, открой карты', 3)).toBe('done');
-    // прошло 3 минуты — модель спрашивается снова
-    t += MODEL_DOWN_MS;
+    // перепроверить нечем (нет recheck) — модель не зовётся и позже; с recheck — см. voice-handsfree (N1)
+    t += RECHECK_MS * 10;
     await d.utterance('штаб, а что у соседей', 4);
-    expect(m).toHaveBeenCalledTimes(2);
+    expect(m).toHaveBeenCalledTimes(1);
   });
   it('проверка связи в «ИИ» неуспешна — модель не зовётся, честный ответ сразу', async () => {
     const m = vi.fn(async () => ({ say: 'x' })) as unknown as Hook;
@@ -502,7 +502,7 @@ describe('без LM Studio', () => {
     expect(said).toEqual(['Связь с моделью прервалась, повторяю запрос.']);
     expect(await d.utterance('Штаб, отбой', 2)).toBe('done');
     expect(unsaid).toEqual([1]);
-    expect(said.at(-1)).toBe('Голос выключен. Включить — кнопкой на панели.');
+    expect(said.at(-1)).toBe(STANDBY_SAY);
   });
   it('выключение голоса (cancel) гасит «повторяю запрос»', async () => {
     const d = mkd((_t, _a, c) => { c.onRetry(2); return new Promise(() => {}); });
@@ -550,8 +550,10 @@ describe('стоп-слова — общие с сервисом', () => {
     expect(opened).toEqual([{ section: 'maps' }]);
     expect(stops).toBe(1);
     expect(m).not.toHaveBeenCalled();
+    // «отставить» с остатком — остаток правилами не исполняется (N3): фраза целиком — в модель
     expect(await d.utterance('Штаб, отставить, открой переигровку', 2)).toBe('done');
-    expect(opened).toEqual([{ section: 'maps' }, { section: 'replay' }]);
+    expect(opened).toEqual([{ section: 'maps' }]);
+    expect(m).toHaveBeenCalledTimes(1);
   });
   it('стоп-слово не в начале — обычная речь (в модель), штаб не останавливается', async () => {
     const d = mks();

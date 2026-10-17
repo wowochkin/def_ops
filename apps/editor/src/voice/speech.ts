@@ -289,8 +289,11 @@ function nounGender(tail: string): [Gender, string] {
 export const SPEAK_MAX_CHARS = 300;
 export const SPEAK_MAX_SENTENCES = 2;
 
-/** Готовит ответ к озвучке: числа словами, сокращения целиком, без разметки; не больше двух предложений и 300 знаков. */
-export function speakable(text: string): string {
+/**
+ * Готовит ответ к озвучке: числа словами, сокращения целиком, без разметки; не больше двух предложений и 300 знаков
+ * (full — без этого предела: доклады действий и чтение по частям, где длину держит вызывающий).
+ */
+export function speakable(text: string, o: { full?: boolean } = {}): string {
   let t = text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/[*#`_]+/g, '');
   t = t.replace(/\s*\([^)]*[A-Za-z][^)]*\)/g, ''); // английские пояснения в скобках
   // марки техники: «T-34», «КВ-1», «Pz IV» — буквы и число словами («Т тридцать четыре»)
@@ -357,7 +360,7 @@ export function speakable(text: string): string {
   t = t.replace(/(?<!\p{L})(гв|уд)\.\s*(\p{L}+)/giu, (m, k: string, next: string) => m.replace(/^\p{L}+\./u, guardsBeforeWord(k, next)));
   for (const [re, rep] of ABBR) t = t.replace(re, rep);
   t = t.replace(/\s+/g, ' ').replace(/\s+([.,!?…:;])/g, '$1').replace(/[,;:]+(?=[.!?…]|$)/g, '').trim();
-  return shorten(t);
+  return o.full ? t : shorten(t);
 }
 
 /** Не больше двух предложений и 300 знаков; обрезка — по слову, с точкой в конце. */

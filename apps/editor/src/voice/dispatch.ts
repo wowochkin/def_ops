@@ -1,20 +1,39 @@
 /**
  * Разборщик реплик: сначала правила (мгновенно, без модели) — обращение к штабу, окно разговора,
- * переходы между разделами, «что я могу сказать», калибровка, голоса, стоп-слова (общий с сервисом голоса список
- * services/voice/stop_words.json), дословные примеры (`say`) доступных действий. Чего правила не поняли в обращённой
- * реплике — разбирает модель (опция model), если она подключена; её вызов действия проверяется по реестру. Модель
- * недоступна — это помнится MODEL_DOWN_MS, и пока непонятая реплика сразу получает честный ответ без модели.
+ * переходы между разделами, «что я могу сказать», калибровка, голоса, диктовка, стоп-слова (общий с сервисом голоса
+ * список services/voice/stop_words.json), дословные примеры (`say`) доступных действий. Чего правила не поняли в обращённой реплике — разбирает модель (опция model),
+ * если она подключена; её вызов действия проверяется по реестру. Модель недоступна — непонятая реплика сразу получает
+ * честный ответ без модели; не чаще раза в RECHECK_MS при обращении связь перепроверяется (recheck).
+ *
+ * Без рук:
+ * - необратимое (irreversible) голосом — только после «да»: штаб спрашивает confirm(p) и «Скажите да или нет»
+ *   (pending); «нет», «отмена», молчание CONFIRM_MS, новая просьба — отмена с короткой фразой;
+ * - «Штаб, отбой» — дежурный режим (standby): микрофон открыт, исполняется только «Штаб, на связь» (shell.wake);
+ *   эхо собственной фразы штаба не будит;
+ * - открыто окно, ждущее ответа (registry.openModal), — исполняются только его ответы, стоп-слова, «отбой» и
+ *   «повтори»; прочее — «Сначала ответьте на вопрос: …».
  */
 import stopFile from '../../../../services/voice/stop_words.json';
 import { SECTIONS } from '../sections';
+import { yesNo } from './answers';
+import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, type Action } from './registry';
+import { act, actions, getAction, topModal, type Action, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
 export const CONVERSATION_S = 12;
-/** Сколько помнится, что модель недоступна: всё это время она не зовётся. */
-export const MODEL_DOWN_MS = 3 * 60_000;
+/** Модель недоступна — при обращении связь перепроверяется не чаще этого. */
+export const RECHECK_MS = 30_000;
+/** Перепроверка связи ждёт ответа не дольше этого. */
+export const RECHECK_TIMEOUT_MS = 5_000;
+/** Подтверждение ждёт ответа столько после того, как вопрос договорён. */
+export const CONFIRM_MS = 15_000;
+/** Сколько после фразы штаба микрофон ещё может ловить её эхо. */
+export const ECHO_MS = 3_000;
+export const STANDBY_SAY = 'Дежурю. Скажите: «Штаб, на связь».';
+export const WAKE_SAY = 'На связи.';
+export const YES_NO_SAY = 'Скажите «да» или «нет».';
 
 /** Стоп-слова — ими перебивают штаб; тот же список проверяет сервис голоса (audio.py). */
 export const STOP_WORDS: string[] = stopFile.stop;
@@ -71,7 +90,7 @@ function fuzzySection(w: string): { id: string; canon: string | null } | null {
 /** Фраза, которую система умеет разбирать без реестра: нужна, чтобы нестрогое обращение не принимало обычные слова. */
 const isCommand = (rest: string) =>
   (OPEN_VERB.test(rest.split(' ')[0]) && !!sectionByWord(rest.split(' ').slice(1).find((w) => !PREP.has(w)) ?? '')) || (rest.split(' ').length <= 2 && !!sectionByWord(rest.split(' ')[0])) ||
-  /^(?:отбой|(?:выключи|выключить|отключи|отключить) голос|что (?:я )?(?:могу|можно)|что (?:ты )?умеешь|помощь|калибровк\p{L}*|голоса?)(?: |$)/u.test(rest) || STOP_SET.has(rest.split(' ')[0]);
+  /^(?:отбой|на связь|подъем|включись|(?:выключи|выключить|отключи|отключить) голос|что (?:я )?(?:могу|можно)|что (?:ты )?умеешь|помощь|калибровк\p{L}*|голоса?)(?: |$)/u.test(rest) || STOP_SET.has(rest.split(' ')[0]);
 
 const OPEN_VERB = /^(?:открой|открыть|покажи|показать|перейди|перейти)$/;
 const PREP = new Set(['в', 'на', 'к']);
@@ -147,10 +166,16 @@ const quote = (xs: string[]) => xs.map((e) => `«${e}»`).join(', ');
 /** Крючок модели: реплика и действия раздела → ответ (signal — отмена новой репликой, onRetry — перед повтором запроса). */
 export type ModelHook = (text: string, actions: Action[], ctx: { signal: AbortSignal; onRetry(n: number): void; section: string }) => Promise<ModelReply>;
 export const RETRY_SAY = 'Связь с моделью прервалась, повторяю запрос.';
-/** Модель недоступна (помнится MODEL_DOWN_MS или проверка связи в «ИИ» не прошла): ответ сразу, без модели. */
+/** Модель недоступна (сбой запроса или проверка связи в «ИИ» не прошла): ответ сразу, без модели. */
 export const MODEL_DOWN_SAY = 'Не понял вас. Языковая модель сейчас недоступна — говорите готовыми командами, например:';
-/** Необратимое действие (удаление и т. п.) модель голосом не исполняет: подтверждение — в следующей ступени. */
-export const CONFIRM_SAY = 'Это нужно подтвердить, а голосом я пока такого не делаю. Сделайте это на экране.';
+
+const OFF = /^(?:отбой|(?:выключи|выключить|отключи|отключить) голос)$/;
+const WAKE = /^(?:на связь|на связи|подъем|включись|проснись|включи голос)$/;
+const REPEAT = /^(?:повтори|повторите|повтори еще раз|повторите еще раз|еще раз)$/;
+const MORE = /^(?:дальше|далее|продолжай|продолжайте|читай дальше)$/;
+
+/** Ждущее подтверждения: что исполнить на «да», вопрос и до какого времени (now) ждать. */
+export interface Pending { action: string; params: unknown; text: string; until: number }
 
 /**
  * Стоп-слова (и обращение между ними) в начале реплики: сколько слов снять. 0 — реплика не начинается со стоп-слова.
@@ -201,33 +226,130 @@ export class Dispatcher {
    */
   correction(id: number): { fixes: string[]; understood: string } { return this.corrections.get(id) ?? { fixes: [], understood: '' }; }
   /** Ожидание ответа модели: новая обращённая реплика его отменяет. */
-  private pending: AbortController | null = null;
+  private waiting: AbortController | null = null;
   /** Номер заготовленной фразы «повторяю запрос» текущего ожидания: при отмене она гасится. */
   private retryId: number | undefined;
-  /** До какого времени (now) модель считается недоступной. */
-  private downUntil = -Infinity;
+  /** Запрос к модели не удался: модель недоступна до перепроверки связи. */
+  private down = false;
+  /** Когда (now) связь проверялась последний раз. */
+  private checkedAt = -Infinity;
+  /** Номер обращённой реплики: перепроверка связи, обогнанная новой репликой, молчит. */
+  private seq = 0;
+  /** Ждёт подтверждения (null — ничего). */
+  pending: Pending | null = null;
+  /** Дежурный режим: исполняется только «Штаб, на связь». */
+  standby = false;
+  /** Последняя фраза штаба и когда сказана (now): «повтори» и эхо в дежурном режиме. */
+  private last: { text: string; at: number } | null = null;
   /**
    * say — фраза штаба (quiet — заготовленная фраза о модели: окно разговора она заново не открывает); вернуть может
    * номер фразы — им unsay гасит фразу (звучащую или ждущую очереди). stop — штаб замолкает (стоп-слово).
    * supersede — новая реплика разобрана: ждущие очереди старые ответы больше не нужны.
    * model — модель за правилами (нет — честный ответ правил); modelReady — false, если проверка связи в «ИИ» не прошла
-   * (модель не зовётся); thinking(true/false) — модель думает / ответила (для «Думаю»; после отмены — false сразу).
+   * (модель не зовётся); recheck — проверить связь заново (true — есть); thinking(true/false) — модель думает /
+   * ответила (для «Думаю»; после отмены — false сразу). onPending — подтверждение ждёт ответа / снято (для панели);
+   * onStandby — дежурный режим включён / снят.
    */
   constructor(private opts: {
     now(): number; say(text: string, o?: { quiet?: boolean }): number | void; section(): string; stop?(): void;
     unsay?(id: number): void; supersede?(): void;
-    model?: ModelHook; modelReady?(): boolean; thinking?(on: boolean): void;
+    model?: ModelHook; modelReady?(): boolean; recheck?(): Promise<boolean>; thinking?(on: boolean): void;
+    onPending?(p: Pending | null): void; onStandby?(on: boolean): void;
   }) {}
 
   /** Связь с моделью проверена заново (настройки сменились или проверка прошла): недоступность забыта. */
-  modelBack(): void { this.downUntil = -Infinity; }
+  modelBack(): void { this.down = false; this.checkedAt = this.opts.now(); }
 
   private modelDown(): boolean {
-    return this.opts.now() < this.downUntil || this.opts.modelReady?.() === false;
+    return this.down || this.opts.modelReady?.() === false;
   }
 
-  /** Штаб договорил (событие say-done) — открывается окно разговора. */
-  spoke(): void { this.spokeAt = this.opts.now(); }
+  /** Фраза штаба: запоминается для «повтори» и для распознавания эха. */
+  private say(text: string, o?: { quiet?: boolean }): number | void {
+    if (!o?.quiet) this.last = { text, at: this.opts.now() };
+    return this.opts.say(text, o);
+  }
+
+  /** Фраза для других модулей (окно зачитывает вопрос, чтение по частям): в дежурном режиме штаб молчит. Номер фразы. */
+  announce(text: string): number | void { if (!this.standby && text) return this.say(text); }
+
+  /** Штаб договорил (событие say-done) — открывается окно разговора; ожидание подтверждения — 15 с от этого. */
+  spoke(): void {
+    this.spokeAt = this.opts.now();
+    if (this.pending) this.pending.until = Math.max(this.pending.until, this.spokeAt + CONFIRM_MS);
+  }
+
+  /** Часы (раз в секунду): подтверждения не было CONFIRM_MS — отмена. */
+  tick(): void {
+    if (this.pending && this.opts.now() > this.pending.until) {
+      this.setPending(null);
+      this.say('Отменяю — подтверждения не было.');
+    }
+  }
+
+  private setPending(p: Pending | null): void {
+    this.pending = p;
+    this.opts.onPending?.(p);
+  }
+
+  /** Спросить «да / нет»; на «да» — действие id с params (предложение штаба или подтверждение необратимого). */
+  propose(text: string, id: string, params?: unknown): void {
+    this.setPending({ action: id, params, text, until: this.opts.now() + CONFIRM_MS });
+    this.say(`${text} ${YES_NO_SAY}`);
+  }
+
+  /** Ответ на подтверждение (голосом или кнопкой «Да» / «Нет»). Ждать нечего — ничего. */
+  async answer(yes: boolean): Promise<void> {
+    const p = this.pending;
+    if (!p) return;
+    this.setPending(null);
+    if (!yes) { this.say('Отменено.'); return; }
+    const a = getAction(p.action);
+    const av = a ? a.available() : 'этого действия уже нет';
+    if (av !== true) { this.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}.`); return; }
+    let report: string | void;
+    try {
+      report = await act(p.action, p.params);
+    } catch {
+      this.say('Не удалось выполнить это сейчас.');
+      return;
+    }
+    this.say(report ? speakable(report, { full: true }) : 'Выполнено.');
+  }
+
+  /**
+   * Дежурный режим: включить — ожидание модели и подтверждения сняты, «Дежурю…»; снять — «На связи.» (и вопрос
+   * открытого окна — заново). Повторно — без фраз.
+   */
+  setStandby(on: boolean, o: { quiet?: boolean } = {}): void {
+    if (this.standby === on) return;
+    if (o.quiet) { this.standby = on; if (on && this.pending) this.setPending(null); this.opts.onStandby?.(on); return; }
+    if (on) {
+      this.cancelModel();
+      this.opts.supersede?.();
+      if (this.pending) this.setPending(null);
+      stopReading();
+      this.say(STANDBY_SAY);
+      this.standby = true;
+    } else {
+      this.standby = false;
+      const m = topModal();
+      this.say(m ? `${WAKE_SAY} ${m.read ?? m.question}` : WAKE_SAY);
+    }
+    this.opts.onStandby?.(on);
+  }
+
+  /**
+   * Реплика — эхо последней фразы штаба: целиком в ней, и фраза ещё звучит (не дольше, чем её можно произнести) или
+   * договорена только что (ECHO_MS).
+   */
+  private echo(n: string): boolean {
+    const l = this.last;
+    if (!l || !n) return false;
+    const now = this.opts.now();
+    const playing = this.spokeAt < l.at && now - l.at <= ECHO_MS + l.text.length * 100;
+    return norm(l.text).includes(n) && (playing || now - this.spokeAt <= ECHO_MS);
+  }
 
   async utterance(text: string, id: number, continues?: number): Promise<'ignored' | 'done' | 'unknown'> {
     let raw = text;
@@ -239,44 +361,82 @@ export class Dispatcher {
     }
     const fixed = normalizeCommand(raw);
     const addr = addressed(fixed.text);
-    const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000;
+    // дежурный режим: только «Штаб, на связь» (не эхо собственной фразы штаба); прочее — не исполняется и без ответа
+    if (this.standby) {
+      this.lastFixes = []; this.lastUnderstood = '';
+      if (!addr || !WAKE.test(addr.rest) || this.echo(fixed.text)) return 'ignored';
+      this.opts.supersede?.();
+      try { if (getAction('shell.wake')) await act('shell.wake'); } catch { /* разбудить — важнее */ }
+      if (typeof window !== 'undefined' && !getAction('shell.wake')) window.dispatchEvent(new CustomEvent('voice:standby', { detail: false }));
+      this.setStandby(false);
+      return 'done';
+    }
+    // подтверждение ждёт ответа — истекло без часов: отмена (без фразы — её скажет новый ответ)
+    if (this.pending && this.opts.now() > this.pending.until) this.setPending(null);
+    const pending = this.pending;
+    const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000 || !!pending;
     if (!addr && !inWindow) { this.lastFixes = []; this.lastUnderstood = ''; return 'ignored'; }
     this.lastFixes = fixed.fixes;
     this.lastUnderstood = fixed.text;
     this.corrections.set(id, { fixes: fixed.fixes, understood: fixed.text });
     if (this.corrections.size > 20) this.corrections.delete(this.corrections.keys().next().value as number);
+    const seq = ++this.seq;
     let rest = addr ? addr.rest : fixed.text;
-    // стоп-слова в начале: штаб замолкает; «Подождите», «Штаб, подожди», «Стоп, штаб» — и только (без модели и без
-    // ответа), «Стоп, открой карты» — просьба после них исполняется
     const words = rest.split(' ').filter(Boolean);
-    const lead = stopLead(words);
+    // «отставить» в ответ на вопрос (подтверждение, окно) — это «нет», а не стоп-слово
+    const lead = (pending || topModal()) && yesNo(rest) ? 0 : stopLead(words);
+    // ждёт подтверждения: «да» — исполнить, «нет / отмена / отставить» — отменить; новая просьба — прежнее отменено
+    if (pending) {
+      const yn = yesNo(rest);
+      if (yn) {
+        this.opts.stop?.();
+        this.cancelModel();
+        this.opts.supersede?.();
+        await this.answer(yn === 'yes');
+        return 'done';
+      }
+      if (lead && lead === words.length) { this.opts.stop?.(); return 'done'; } // «стоп» — штаб замолкает, вопрос ждёт
+      this.setPending(null);
+      this.say('Прежнее отменено.');
+    }
+    // стоп-слова в начале: штаб замолкает; «Подождите», «Штаб, подожди», «Стоп, штаб» — и только (без модели и без
+    // ответа), «Стоп, открой карты» — просьба после них исполняется; «Отставить …» — остаток правилами не исполняется
     if (lead) {
       this.opts.stop?.();
       rest = words.slice(lead).join(' ');
       if (!rest) {
         this.cancelModel();
         this.opts.supersede?.();
+        if (getAction('read.stop')) await act('read.stop').catch(() => undefined);
         // стоп-слово, которое само — пример доступного сейчас действия («хватит» в туре, и в «стоп, хватит»), ещё и
         // исполняет его
         const a = words.slice(0, lead).reverse().map((w) => this.bySay(w)).find(Boolean);
         if (a) try { await this.runSay(a); } catch { /* штаб уже замолчал — этого достаточно */ }
         return 'done';
       }
+      if (words.slice(0, lead).includes('отставить')) return this.countermand(raw);
     }
     this.cancelModel(); // новая обращённая реплика — старый ответ модели уже не нужен
     this.opts.supersede?.(); // и ждущие очереди старые ответы — тоже
     const rec = { text: raw, ran: false };
     this.memory.set(id, rec);
     if (this.memory.size > 20) this.memory.delete(this.memory.keys().next().value as number);
+    const modal = topModal();
+    if (modal) {
+      const r = await this.inModal(modal, rest);
+      if (r === 'done') rec.ran = true;
+      return r;
+    }
     try {
-      if (await this.rules(rest)) { rec.ran = true; return 'done'; }
+      if (await this.rules(rest, raw)) { rec.ran = true; return 'done'; }
     } catch {
-      this.opts.say('Не удалось выполнить это сейчас.');
+      this.say('Не удалось выполнить это сейчас.');
       return 'unknown';
     }
-    if (this.opts.model && this.modelDown()) {
+    if (this.opts.model && this.modelDown() && !(await this.recheckModel())) {
+      if (this.seq !== seq) return 'unknown'; // перепроверку обогнала новая реплика
       // модель недоступна — не ждать её: честный ответ сразу, без «Думаю»
-      this.opts.say(`${MODEL_DOWN_SAY} ${quote(closest(this.opts.section(), rest, 2))}.`, { quiet: true });
+      this.say(`${MODEL_DOWN_SAY} ${quote(closest(this.opts.section(), rest, 2))}.`, { quiet: true });
       return 'unknown';
     }
     if (this.opts.model) {
@@ -284,8 +444,85 @@ export class Dispatcher {
       if (r === 'done') rec.ran = true;
       if (r !== 'fallback') return r;
     }
-    this.opts.say(`Не понял вас. Можно сказать, например: ${quote(closest(this.opts.section(), rest))}.`);
+    this.say(`Не понял вас. Можно сказать, например: ${quote(closest(this.opts.section(), rest))}.`);
     return 'unknown';
+  }
+
+  /**
+   * «Отставить …» с остатком: по-военному — отменить сказанное, а не исполнить остаток. Штаб уже замолк; фраза
+   * целиком — модели (если она на связи), иначе «Отставлено».
+   */
+  private async countermand(raw: string): Promise<'done' | 'unknown'> {
+    this.cancelModel();
+    this.opts.supersede?.();
+    if (this.opts.model && !this.modelDown()) {
+      const r = await this.viaModel(raw, '');
+      if (r !== 'fallback') return r;
+    }
+    this.say('Отставлено.');
+    return 'done';
+  }
+
+  /** Открыто окно, ждущее ответа: его ответы, «отбой», «повтори»; прочее — «Сначала ответьте на вопрос». */
+  private async inModal(m: VoiceModal, rest: string): Promise<'done' | 'unknown'> {
+    if (OFF.test(rest)) { await this.standbyByVoice(); return 'done'; }
+    if (REPEAT.test(rest)) { this.say(m.read ?? m.question); return 'done'; }
+    const hit = m.parse(rest);
+    if (!hit) {
+      this.say(`Сначала ответьте на вопрос: ${m.question}`);
+      return 'unknown';
+    }
+    return this.execute(hit.id, hit.params);
+  }
+
+  /** Исполнить действие реестра голосом: недоступное — причина; необратимое — сначала «да»; доклад — словами. */
+  private async execute(id: string, params?: unknown): Promise<'done' | 'unknown'> {
+    const a = getAction(id);
+    if (!a) { this.say('Этого сейчас сделать нельзя.'); return 'unknown'; }
+    const av = a.available();
+    if (av !== true) { this.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}.`); return 'unknown'; }
+    if (a.irreversible) {
+      this.propose(a.confirm?.(params as never) ?? `${a.title}?`, a.id, params);
+      return 'done';
+    }
+    let report: string | void;
+    try {
+      report = await act(a.id, params);
+    } catch {
+      this.say('Не удалось выполнить это сейчас.');
+      return 'unknown';
+    }
+    if (report) this.say(speakable(report, { full: true }));
+    return 'done';
+  }
+
+  /** «Отбой» голосом: действие shell.standby (событие окна), дежурный режим — в любом случае. */
+  private async standbyByVoice(): Promise<void> {
+    try { if (getAction('shell.standby')) await act('shell.standby'); } catch { /* дежурить — важнее */ }
+    if (typeof window !== 'undefined' && !getAction('shell.standby')) window.dispatchEvent(new CustomEvent('voice:standby', { detail: true }));
+    this.setStandby(true);
+  }
+
+  /**
+   * Модель «недоступна»: не чаще раза в RECHECK_MS при обращении — перепроверить связь (не дольше RECHECK_TIMEOUT_MS,
+   * «Думаю»). true — связь есть, модель можно звать.
+   */
+  private async recheckModel(): Promise<boolean> {
+    const now = this.opts.now();
+    if (!this.opts.recheck || now - this.checkedAt <= RECHECK_MS) return false;
+    this.checkedAt = now;
+    this.opts.thinking?.(true);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let ok = false;
+    try {
+      ok = await Promise.race([
+        this.opts.recheck(),
+        new Promise<boolean>((r) => { timer = setTimeout(() => r(false), RECHECK_TIMEOUT_MS); }),
+      ]);
+    } catch { ok = false; } finally { clearTimeout(timer); }
+    this.opts.thinking?.(false);
+    if (ok) this.down = false;
+    return ok;
   }
 
   /**
@@ -295,9 +532,9 @@ export class Dispatcher {
   cancel(): void { this.cancelModel(); }
 
   private cancelModel(): void {
-    if (!this.pending) return;
-    this.pending.abort(new Error('новая реплика'));
-    this.pending = null;
+    if (!this.waiting) return;
+    this.waiting.abort(new Error('новая реплика'));
+    this.waiting = null;
     if (this.retryId !== undefined) this.opts.unsay?.(this.retryId);
     this.retryId = undefined;
     this.opts.thinking?.(false);
@@ -306,15 +543,15 @@ export class Dispatcher {
   /** Модель за правилами. 'fallback' — модель ничего не сказала: честный ответ правил. Отменённый ответ не звучит. */
   private async viaModel(raw: string, rest: string): Promise<'done' | 'unknown' | 'fallback'> {
     const ac = new AbortController();
-    this.pending = ac;
-    const live = () => this.pending === ac && !ac.signal.aborted;
+    this.waiting = ac;
+    const live = () => this.waiting === ac && !ac.signal.aborted;
     const section = this.opts.section();
     const list = actions(section);
     this.opts.thinking?.(true);
     let reply: ModelReply;
     let warned = false; // заготовленная фраза — один раз за запрос
     const onRetry = () => {
-      if (live() && !warned) { warned = true; this.retryId = this.opts.say(RETRY_SAY, { quiet: true }) ?? undefined; }
+      if (live() && !warned) { warned = true; this.retryId = this.say(RETRY_SAY, { quiet: true }) ?? undefined; }
     };
     try {
       reply = await this.opts.model!(raw, list, { signal: ac.signal, section, onRetry });
@@ -322,9 +559,10 @@ export class Dispatcher {
       if (!live()) return 'unknown';
       this.done(ac);
       if ((e as Error)?.name === 'ModelUnavailable') {
-        // помнится MODEL_DOWN_MS: дальше непонятое — сразу честный ответ, и эта фраза — один раз за сбой
-        this.downUntil = this.opts.now() + MODEL_DOWN_MS;
-        this.opts.say(`Связи с моделью нет. Можно сказать, например: ${quote(closest(section, rest))}.`, { quiet: true });
+        // помнится до перепроверки связи (RECHECK_MS): дальше непонятое — сразу честный ответ, эта фраза — раз за сбой
+        this.down = true;
+        this.checkedAt = this.opts.now();
+        this.say(`Связи с моделью нет. Можно сказать, например: ${quote(closest(section, rest))}.`, { quiet: true });
         return 'unknown';
       }
       return 'fallback';
@@ -334,61 +572,71 @@ export class Dispatcher {
     const say = speakable(reply.say ?? '');
     if (!reply.call) {
       if (!say) return 'fallback';
-      this.opts.say(say);
+      this.say(say);
       return 'done';
     }
     // вызов проверяется по реестру: действие этого раздела (или общее) и доступно сейчас
     const a = list.find((x) => x.id === reply.call!.id);
     const av = a ? a.available() : null;
     if (!a || av === null) {
-      this.opts.say(`Этого система пока не предусматривает. Могу: ${quote(closest(section, rest))}.`);
+      this.say(`Этого система пока не предусматривает. Могу: ${quote(closest(section, rest))}.`);
       return 'unknown';
     }
     if (av !== true) {
-      this.opts.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}. Могу: ${quote(closest(section, rest))}.`);
+      this.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}. Могу: ${quote(closest(section, rest))}.`);
       return 'unknown';
     }
     // параметры не разобрать или не хватает нужного — не гадаем, а переспрашиваем
     if (reply.call.broken || !paramsFit(a, reply.call.params)) {
-      this.opts.say(`Не понял, что именно сделать. Можно сказать, например: ${quote(closest(section, rest))}.`);
+      this.say(`Не понял, что именно сделать. Можно сказать, например: ${quote(closest(section, rest))}.`);
       return 'unknown';
     }
-    if (a.irreversible) { this.opts.say(CONFIRM_SAY); return 'unknown'; }
-    if (say) this.opts.say(say);
+    // необратимое — как и словами: сначала «да» (ответ модели «Удаляю» не звучит — ещё ничего не сделано)
+    if (a.irreversible) return this.execute(a.id, reply.call.params);
+    if (say) this.say(say);
     let report: string | void;
     try {
       report = await act(a.id, reply.call.params);
     } catch {
-      this.opts.say('Не удалось выполнить это сейчас.');
+      this.say('Не удалось выполнить это сейчас.');
       return 'unknown';
     }
-    if (report) this.opts.say(speakable(report));
-    else if (!say) this.opts.say('Сделано.');
+    if (report) this.say(speakable(report, { full: true }));
+    else if (!say) this.say('Сделано.');
     return 'done';
   }
 
   private done(ac: AbortController): void {
-    if (this.pending !== ac) return;
-    this.pending = null;
+    if (this.waiting !== ac) return;
+    this.waiting = null;
     this.retryId = undefined;
     this.opts.thinking?.(false);
   }
 
-  private async rules(rest: string): Promise<boolean> {
+  private async rules(rest: string, raw = rest): Promise<boolean> {
     // одно обращение без просьбы — отозваться; ответ откроет окно разговора, дальше можно без «штаб»
-    if (!rest) { this.opts.say('Слушаю.'); return true; }
-    if (/^(?:отбой|(?:выключи|выключить|отключи|отключить) голос)$/.test(rest)) {
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('voice:power', { detail: false }));
-      this.opts.say('Голос выключен. Включить — кнопкой на панели.');
+    if (!rest) { this.say('Слушаю.'); return true; }
+    // «отбой» — дежурный режим: микрофон открыт, штаб ждёт «Штаб, на связь» (выключить микрофон — кнопкой)
+    if (OFF.test(rest)) { await this.standbyByVoice(); return true; }
+    if (WAKE.test(rest)) { this.say('На связи.'); return true; }
+    if (REPEAT.test(rest)) { this.say(this.last?.text ?? 'Я ещё ничего не говорил.'); return true; }
+    const yn = yesNo(rest);
+    if (yn) {
+      // штаб только что предложил (тур: «Показать раздел?») — «да» в любых словах соглашается
+      if (yn === 'yes' && getAction('tour.yes')?.available() === true) { await this.execute('tour.yes'); return true; }
+      this.say(yn === 'no' && getAction('tour.yes')?.available() === true ? 'Хорошо.' : 'Подтверждать сейчас нечего.');
       return true;
     }
+    if (MORE.test(rest) && getAction('read.next')) { await this.execute('read.next'); return true; }
+    const dict = parseDictation(rest, raw);
+    if (dict) { await this.execute(dict.id, dict.params); return true; }
     const q = ASK.exec(rest);
     if (q) {
       const words = stems(q[1] ?? "");
       const hit = words.length ? actions(this.opts.section()).filter((a) => a.available() === true && a.say?.length)
         .map((a) => ({ a, sc: overlap(words, `${a.title} ${a.say!.join(' ')}`) })).sort((x, y) => y.sc - x.sc)[0] : undefined;
-      if (hit && hit.sc > 0) this.opts.say(`Да, скажите: «${hit.a.say![0]}».`);
-      else this.opts.say(`Этого система пока не предусматривает. Могу: ${quote(closest(this.opts.section(), '', 3))}.`);
+      if (hit && hit.sc > 0) this.say(`Да, скажите: «${hit.a.say![0]}».`);
+      else this.say(`Этого система пока не предусматривает. Могу: ${quote(closest(this.opts.section(), '', 3))}.`);
       return true;
     }
     const m = OPEN.exec(rest) ?? (rest.split(' ').length <= 2 && sectionByWord(rest.split(' ')[0]) ? [rest, rest] : null);
@@ -398,7 +646,7 @@ export class Dispatcher {
       if (sec) { await act('shell.open', { section: sec }); return true; }
     }
     if (/^(?:что (?:я )?(?:могу|можно) (?:сказать|говорить)|что (?:я )?(?:могу|можно)$|что (?:ты )?умеешь|помощь$)/.test(rest)) {
-      this.opts.say(helpText(this.opts.section()));
+      this.say(helpText(this.opts.section()));
       return true;
     }
     if (/^калибровк/.test(rest)) { await act('shell.calibrate'); return true; }

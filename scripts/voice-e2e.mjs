@@ -21,6 +21,11 @@
 // Тур: вступление при запуске (новое окно, калибровки не было) — подсветка колонки разделов, «Штаб, дальше» —
 // рамка на кнопке колонки, «назад» без обращения, «Штаб, хватит» снимает притемнение; voice:ready-first отменён
 // вступлением, после него — voice:propose; флажок «Вступление при запуске» в «Тонкой настройке».
+// Без рук (ни одного щелчка — только поддельный микрофон): дежурный режим («отбой» — дежурю, «открой карты» не
+// исполняется, «на связь» будит), вопросы dialogs.ts голосом (confirmAsync — «да», команда при открытом окне не
+// исполняется; chooseAsync — «второй»; askText — диктовка и «готово»), окно «Голоса» (прослушать, назначить, записать
+// новый голос, удалить — с подтверждением «да»), калибровка голосом (шаги идут сами, «готово»), предложение калибровки
+// при первом запуске («нет»).
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и тура (voice-tour.jpg).
 // Python — $VOICE_PYTHON, services/voice/.venv или python3.
@@ -61,6 +66,9 @@ for (const s of ['SIGINT', 'SIGTERM']) process.on(s, () => { cleanup(); process.
 const ok = (what) => console.log(`ok ${what}`);
 async function fail(what) {
   console.log(`FAIL ${what}`);
+  // что было в ленте панели — чтобы понять провал без повторного прогона
+  try { console.log(`лента: ${(await page.locator('.vp-feed').innerText({ timeout: 1000 })).replace(/\s*\n\s*/g, ' | ').slice(-1500)}`); } catch { /* */ }
+  if (process.env.E2E_DEBUG) try { console.log(JSON.stringify(await page.evaluate(() => window.__e2e.msgs.filter((m) => m.type !== 'level').slice(-40)))); console.log(voice?.log().slice(-3000)); } catch { /* */ }
   try { await browser?.close(); } catch { /* */ }
   cleanup();
   process.exit(1);
@@ -239,6 +247,8 @@ await ctx.addInitScript(() => {
     md.getUserMedia = async (c) => { e2e.gum++; e2e.gumAudio.push(c?.audio); const st = await gum(c); e2e.tracks.push(...st.getTracks()); return st; };
   }
   e2e.trackStates = () => e2e.tracks.map((t) => t.readyState);
+  // предложение калибровки при первом запуске — только в своей проверке (иначе вопрос штаба вмешался бы в сценарии)
+  window.addEventListener('voice:ready-first', (e) => { if (!sessionStorage.getItem('e2e.offer')) e.preventDefault(); });
   /** Состояния панели по порядку (каждые 30 мс): было ли «Думаю». */
   e2e.states = [];
   setInterval(() => { const t = document.querySelector('.vp-state')?.textContent; if (t && t !== e2e.states.at(-1)) e2e.states.push(t); }, 30);
@@ -363,8 +373,8 @@ await check('открытая панель не закрывает раздел:
 });
 await shot('voice-panel.jpg');
 
-await check('событие voice:open открывает калибровку', async () => {
-  await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:open', { detail: 'calibrate' })));
+await check('кнопка «Калибровка» открывает калибровку (шаги — кнопкой «Записать»)', async () => {
+  await panel.getByRole('button', { name: 'Калибровка' }).click();
   await page.locator('.vp-dialog.calib').waitFor({ state: 'visible', timeout: 3000 });
 });
 
@@ -831,6 +841,149 @@ await check('подавление эха не то, что при калибро
   await calibDlg.getByRole('button', { name: 'Отмена' }).click();
   await calibDlg.waitFor({ state: 'hidden', timeout: 3000 });
   return aec ? 'сейчас включено' : 'сейчас выключено';
+});
+
+// ---------------------------------------------------------------- без рук: ни одного щелчка
+//
+// Сервис — без подавления эха и с перебиванием «голосом» (как в проверках модели): строки сценария идут по одной на
+// каждый «слог» поддельного микрофона. «{тишина}» — заполнитель (реплики нет).
+const QUIET = Array(80).fill('{тишина}');
+async function handsFree(lines, { reload = true } = {}) {
+  await stopVoice();
+  if (reload) {
+    await page.evaluate(() => {
+      // регуляторы — «голосом»; при каком подавлении эха — допишет ответ сервиса
+      localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: 'voice', aec_unknown: true }));
+      localStorage.setItem('def_ops.section', 'replay');
+      localStorage.setItem('def_ops.voice.panel', 'open');
+    });
+  }
+  const f = join(tmp, `hands-${Date.now()}.txt`);
+  writeFileSync(f, lines.join('\n') + '\n');
+  await startVoice(f, 'off');
+  // настоящая перезагрузка (переход на тот же адрес с другим #… страницу не перезагружает — связь помнила бы прежние
+  // регуляторы)
+  if (reload) { await page.evaluate(() => { location.hash = '#replay'; }); await page.reload(); }
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 40000 });
+}
+const feedHas = (re, kind = 'chief') => panel.locator(`.vp-item.${kind}`, { hasText: re });
+// щелчки считаются: без рук их быть не должно
+await ctx.addInitScript(() => { window.__clicks = 0; window.addEventListener('pointerdown', () => { window.__clicks++; }, true); });
+
+await check('без рук: «Штаб, отбой» — дежурю, микрофон открыт; «открой карты» не исполняется; «на связь» будит', async () => {
+  await handsFree(['штаб, отбой', 'штаб, открой карты', 'штаб, на связь', 'штаб, открой карты', ...QUIET]);
+  await panel.locator('.vp-state', { hasText: 'Дежурю. Скажите: «Штаб, на связь»' }).waitFor({ timeout: 30000 });
+  if (!(await page.evaluate(() => window.__e2e.trackStates().includes('live')))) throw new Error('микрофон закрыт в дежурном режиме');
+  await shot('voice-standby.jpg');
+  await feedHas('открой карты', 'notme').waitFor({ timeout: 30000 });
+  if (await page.evaluate(() => location.hash) === '#maps') throw new Error('в дежурном режиме команда исполнена');
+  await feedHas('На связи').waitFor({ timeout: 30000 });
+  await page.waitForFunction(() => location.hash === '#maps', null, { timeout: 30000 });
+  const clicks = await page.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+});
+
+/** Окно dialogs.ts — открывает его сама проверка (как открыл бы раздел); ответ — только голосом. */
+async function openDialog(kind, ...args) {
+  await page.evaluate(([k, a]) => { window.__dlgOut = undefined; import('/src/dialogs.ts').then((m) => m[k](...a).then((v) => { window.__dlgOut = v; })); }, [kind, args]);
+  await page.locator('.confirm-box').waitFor({ timeout: 5000 });
+}
+const dlgOut = (ms) => page.waitForFunction(() => window.__dlgOut !== undefined, null, { timeout: ms }).then(() => page.evaluate(() => window.__dlgOut));
+
+await check('без рук: вопрос (confirmAsync) зачитан; команда при открытом окне не исполняется; «да» нажимает «Удалить»', async () => {
+  await handsFree(QUIET, { reload: false });
+  await page.evaluate(() => { location.hash = '#replay'; });
+  await openDialog('confirmAsync', 'Удалить слой «Рубежи»?', { ok: 'Удалить', danger: true });
+  await feedHas('Удалить слой «Рубежи»? Скажите «да» — «Удалить», или «нет».').waitFor({ timeout: 5000 });
+  await handsFree(['штаб, открой карты', 'штаб, да', ...QUIET], { reload: false });
+  await feedHas('Сначала ответьте на вопрос').waitFor({ timeout: 30000 });
+  if (await page.evaluate(() => location.hash) !== '#replay') throw new Error('команда исполнена при открытом вопросе');
+  const v = await dlgOut(30000);
+  if (v !== true) throw new Error(`окно вернуло ${JSON.stringify(v)}`);
+  await page.locator('.confirm-box').waitFor({ state: 'detached', timeout: 2000 });
+});
+
+await check('без рук: выбор (chooseAsync) — «второй»', async () => {
+  await openDialog('chooseAsync', 'Что сделать с игрой?', [{ label: 'Сохранить' }, { label: 'Удалить' }, { label: 'Продолжить' }]);
+  await handsFree(['штаб, второй', ...QUIET], { reload: false });
+  const v = await dlgOut(30000);
+  if (v !== 1) throw new Error(`выбран ${JSON.stringify(v)}`);
+});
+
+await check('без рук: строка (askText) — диктовка и «готово»', async () => {
+  await openDialog('askText', 'Название участка:', 'Участок');
+  await handsFree(['штаб, напиши Зеловские высоты', 'штаб, готово', ...QUIET], { reload: false });
+  const v = await dlgOut(40000);
+  if (v !== 'Зеловские высоты') throw new Error(`введено ${JSON.stringify(v)}`);
+});
+
+await check('без рук: «Голоса» — открыть, прослушать второй, назначить первый посреднику, закрыть', async () => {
+  await handsFree(['штаб, голоса', 'штаб, прослушай второй голос', 'штаб, назначь первый голос посреднику', 'штаб, закрой', ...QUIET], { reload: false });
+  const dlg = page.locator('.vp-dialog.voices');
+  await dlg.waitFor({ state: 'visible', timeout: 30000 });
+  const ids = await page.waitForFunction(() => window.__e2e.msgs.filter((m) => m.type === 'voice_list').at(-1)?.voices.map((v) => v.id), null, { timeout: 10000 }).then((h) => h.jsonValue());
+  await page.waitForFunction((id) => window.__e2e.sent.some((m) => m.op === 'preview' && m.voice_id === id), ids[1], { timeout: 30000 })
+    .catch(() => { throw new Error(`не прослушан второй голос ${ids[1]}`); });
+  await page.waitForFunction((id) => window.__e2e.sent.some((m) => m.op === 'assign' && m.role === 'umpire' && m.voice_id === id), ids[0], { timeout: 30000 })
+    .catch(() => { throw new Error(`первый голос ${ids[0]} не назначен посреднику`); });
+  await dlg.waitFor({ state: 'hidden', timeout: 30000 });
+});
+
+await check('без рук: «запиши новый голос гость» — текст зачитан, запись сама началась и кончилась, голос сохранён', async () => {
+  await handsFree(['штаб, голоса', 'штаб, запиши новый голос гость', ...Array(60).fill(RECORD_TEXT)], { reload: false });
+  const dlg = page.locator('.vp-dialog.voices');
+  await dlg.waitFor({ state: 'visible', timeout: 30000 });
+  await feedHas('Прочитайте вслух текст с экрана').waitFor({ timeout: 30000 });
+  await dlg.locator('.vp-recdot').waitFor({ timeout: 40000 }).catch(() => { throw new Error('запись не началась сама'); });
+  await dlg.locator('.vp-recdot').waitFor({ state: 'detached', timeout: 60000 }).catch(() => { throw new Error('запись не кончилась сама'); });
+  await dlg.locator('.vp-voice', { hasText: 'Гость' }).waitFor({ timeout: 30000 })
+    .catch(async () => { throw new Error(`голос не сохранён: ${(await dlg.innerText()).replace(/\s+/g, ' ').slice(0, 300)}`); });
+  await feedHas('Голос «Гость» сохранён').waitFor({ timeout: 10000 });
+});
+
+await check('без рук: «удали голос гость» — вопрос крупно с «Да» / «Нет», «да» — удалён; «закрой»', async () => {
+  await handsFree(['штаб, удали голос гость', '{тишина}', 'штаб, да', 'штаб, закрой', ...QUIET], { reload: false });
+  const q = panel.locator('.vp-confirm');
+  await q.getByText('Удалить голос «Гость»?').waitFor({ timeout: 30000 });
+  const size = await q.locator('.vp-q').evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  if (size < 22) throw new Error(`вопрос шрифтом ${size} px`);
+  for (const b of ['Да', 'Нет']) if (!(await q.getByRole('button', { name: b }).isVisible())) throw new Error(`нет кнопки «${b}»`);
+  await shot('voice-confirm.jpg');
+  const dlg = page.locator('.vp-dialog.voices');
+  await dlg.locator('.vp-voice', { hasText: 'Гость' }).waitFor({ state: 'detached', timeout: 30000 });
+  await q.waitFor({ state: 'detached', timeout: 2000 });
+  await dlg.waitFor({ state: 'hidden', timeout: 30000 });
+  return `вопрос ${size} px`;
+});
+
+await check('без рук: «Штаб, калибровка» — шаги идут сами, итог словами, «готово» закрывает', async () => {
+  await handsFree(['штаб, калибровка', ...Array(60).fill('штаб, готово')], { reload: false });
+  await calibDlg.waitFor({ state: 'visible', timeout: 30000 });
+  await feedHas('Калибровка: четыре шага').waitFor({ timeout: 10000 });
+  await calibDlg.getByText('шаг 4 из 4').waitFor({ timeout: 90000 }).catch(async () => { throw new Error(`шаги не идут сами: «${(await calibDlg.innerText()).replace(/\s+/g, ' ').slice(0, 200)}»`); });
+  await calibDlg.getByText('Регуляторы выставлены').waitFor({ timeout: 60000 })
+    .catch(async () => { throw new Error(`нет итога: «${(await calibDlg.innerText()).replace(/\s+/g, ' ').slice(0, 300)}»`); });
+  await feedHas('Калибровка закончена, регуляторы выставлены').waitFor({ timeout: 10000 });
+  await calibDlg.waitFor({ state: 'hidden', timeout: 30000 });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('def_ops.voice.settings') || 'null'));
+  if (!saved?.calib_mode) throw new Error('итог калибровки не сохранён');
+  const clicks = await page.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+});
+
+await check('первый запуск без калибровки: штаб предлагает её («да / нет»), «нет» — отменено', async () => {
+  await stopVoice();
+  await page.evaluate(() => { sessionStorage.setItem('e2e.offer', '1'); localStorage.removeItem('def_ops.voice.settings'); });
+  const f = join(tmp, 'offer.txt');
+  writeFileSync(f, ['{тишина}', 'штаб, нет', 'штаб, нет', ...QUIET].join('\n') + '\n');
+  await startVoice(f, 'off');
+  await page.reload();
+  const q = panel.locator('.vp-confirm');
+  await q.getByText('Калибровки ещё не было').waitFor({ timeout: 40000 });
+  await feedHas('Отменено.').waitFor({ timeout: 40000 });
+  await q.waitFor({ state: 'detached', timeout: 2000 });
+  if (await calibDlg.isVisible()) throw new Error('калибровка открылась после «нет»');
+  await page.evaluate(() => sessionStorage.removeItem('e2e.offer'));
 });
 
 await check('флажок «Вступление при запуске» в «Тонкой настройке» — запоминается', async () => {

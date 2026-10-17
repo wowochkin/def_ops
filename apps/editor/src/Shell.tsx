@@ -83,7 +83,7 @@ export function Shell() {
         {section === 'staff' && <StaffView llm={llm} />}
       </div>
       {/* голос — поверх любого раздела */}
-      <VoicePanel section={section} llm={llm.settings} llmCheck={llm.check.state} />
+      <VoicePanel section={section} llm={llm.settings} llmCheck={llm.check.state} recheck={llm.recheck} />
       <TourLayer section={section} />
     </div>
   );

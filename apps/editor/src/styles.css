@@ -1586,6 +1586,11 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp.idle { --vp-st: #2f7d3b; } .vp.conversation { --vp-st: #1f9a3a; } .vp.listening { --vp-st: #c98a00; }
 .vp.thinking { --vp-st: #2a62b0; } .vp.speaking { --vp-st: #a3271b; } .vp.reconnecting, .vp.loading, .vp.busy { --vp-st: #b06a00; }
 .vp.error, .vp.mic { --vp-st: #c0261b; } .vp.off, .vp.disabled { --vp-st: #77756e; }
+.vp.standby { --vp-st: #4a5a8a; }
+/* подтверждение необратимого: вопрос крупно, «Да» / «Нет» — тоже голосом */
+.vp-confirm { background: #fff4d6; border: 2px solid #7a1b16; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.vp-confirm .vp-q { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.3; }
+.vp .vp-confirm button { font-size: 22px; padding: 8px 24px; font-weight: 700; }
 .vp button { font-size: 18px; padding: 6px 14px; border-radius: 8px; border: 1.5px solid #8d887c; background: #fff; color: var(--vp-ink); }
 .vp button.primary { background: #7a1b16; border-color: #7a1b16; color: #fff; }
 .vp button.danger { color: #a3271b; border-color: #a3271b; }
