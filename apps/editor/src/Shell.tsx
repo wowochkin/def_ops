@@ -6,7 +6,7 @@
  * ИИ (связь с моделями: штаб противника в игре, советник, база знаний). Раздел запоминается в адресе (#editor, #replay…).
  */
 import { IN_APP, SERVICES_HINT } from './dialogs';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
@@ -18,20 +18,17 @@ import { MapsPanel } from './MapsPanel';
 import { MapView } from './MapView';
 import type { MapEngine } from './engine/types';
 import type { MapSource } from '@def-ops/core';
+import { SECTIONS, type Section } from './sections';
+import { registerShellActions } from './voice/actions/shell';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { basemapDate } from './engine/basemaps';
 import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerState } from './shared';
 
-type Section = 'editor' | 'replay' | 'modeling' | 'maps' | 'library' | 'knowledge' | 'staff';
-const SECTIONS: { id: Section; title: string; icon: ReactNode; soon?: boolean }[] = [
-  { id: 'editor', title: 'Редактор', icon: Icon.editor },
-  { id: 'replay', title: 'Переигровка', icon: Icon.replay },
-  { id: 'modeling', title: 'Моделирование', icon: Icon.modeling },
-  { id: 'maps', title: 'Карты', icon: Icon.maps },
-  { id: 'library', title: 'Знаки', icon: Icon.library },
-  { id: 'knowledge', title: 'Знания', icon: Icon.knowledge },
-  { id: 'staff', title: 'ИИ', icon: Icon.staff },
-];
+export { SECTIONS };
+const ICONS: Record<Section, ReactNode> = {
+  editor: Icon.editor, replay: Icon.replay, modeling: Icon.modeling, maps: Icon.maps,
+  library: Icon.library, knowledge: Icon.knowledge, staff: Icon.staff,
+};
 const fromHash = (): Section => {
   const h = location.hash.replace('#', '') as Section;
   return SECTIONS.some((s) => s.id === h) ? h : ((localStorage.getItem('def_ops.section') as Section) || 'editor');
@@ -53,6 +50,10 @@ export function Shell() {
     try { localStorage.setItem('def_ops.section', section); } catch { /* */ }
     if (location.hash !== `#${section}`) history.replaceState(null, '', `#${section}`);
   }, [section]);
+  // голосовые действия оболочки (переход — через адрес, его слушает hashchange)
+  const sectionRef = useRef(section);
+  sectionRef.current = section;
+  useEffect(() => registerShellActions({ section: () => sectionRef.current }), []);
   useEffect(() => { const h = () => setSection(fromHash()); window.addEventListener('hashchange', h); return () => window.removeEventListener('hashchange', h); }, []);
 
   const toEditor = (doc: MapDocument) => { setIncoming({ doc, key: Date.now() }); setSection('editor'); };
@@ -63,7 +64,7 @@ export function Shell() {
         <div className="rail-logo" title="Тактическая карта">ТК</div>
         {SECTIONS.map((s) => (
           <button key={s.id} className={`rail-btn${section === s.id ? ' on' : ''}`} onClick={() => setSection(s.id)} title={s.soon ? `${s.title} — в работе` : s.title}>
-            {s.icon}<span>{s.id === 'modeling' ? 'Модели\u00adрование' : s.title}</span>{s.soon && <i className="rail-soon" />}
+            {ICONS[s.id]}<span>{s.id === 'modeling' ? 'Модели\u00adрование' : s.title}</span>{s.soon && <i className="rail-soon" />}
           </button>
         ))}
         <span className={`rail-srv ${server.status}`} title={server.status === 'online' ? 'Сервер доступен' : server.status === 'offline' ? 'Сервер недоступен — работа в браузере' : 'Проверка сервера…'} />
