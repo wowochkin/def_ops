@@ -212,9 +212,15 @@ $('start').onclick = async () => {
     stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
   } catch (e) {
     $('start').disabled = false;
+    let perm = null;  // где сохранён запрет: в браузере (denied) или в macOS (браузер готов спросить, но система не даёт)
+    try { perm = (await navigator.permissions.query({ name: 'microphone' })).state; } catch (_) {}
     const why = {
-      NotAllowedError: 'доступ запрещён. Разрешите микрофон для этого адреса: значок слева в адресной строке (в Arc — «Site Controls», ⌘⇧C, или настройки сайтов: arc://settings/content/microphone). '
-        + 'Если запроса не было вовсе — запрет на уровне macOS: Системные настройки → Конфиденциальность и безопасность → Микрофон → включите браузер и перезапустите его.',
+      NotAllowedError: perm === 'denied'
+        ? 'запрет сохранён в самом браузере, поэтому он не спрашивает. Нажмите значок слева от адреса и разрешите микрофон '
+          + '(в Arc ещё проверьте arc://settings/content/microphone: «Сайты могут запрашивать доступ» и нет ли localhost в «Запрещено»), затем обновите страницу.'
+        : 'браузер готов спросить, но macOS не даёт ему микрофон (система спрашивает приложение один раз; после отказа молчит). '
+          + 'Системные настройки → Конфиденциальность и безопасность → Микрофон → включите браузер и перезапустите его (⌘Q). '
+          + 'Если браузера нет в списке — в Терминале: tccutil reset Microphone company.thebrowser.Browser (для Chrome — com.google.Chrome), перезапустите браузер: macOS спросит снова.',
       NotFoundError: 'микрофон не найден — проверьте устройство ввода в настройках звука macOS и в настройках сайтов браузера.',
       NotReadableError: 'микрофон занят другой программой или недоступен системе — закройте её или перезапустите браузер.',
       OverconstrainedError: 'выбранный микрофон не поддерживает нужные настройки — выберите другой в настройках сайтов браузера.',
