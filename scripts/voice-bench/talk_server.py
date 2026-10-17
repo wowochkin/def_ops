@@ -140,7 +140,7 @@ CALIB_PHRASE = ("Докладываю обстановку. Восьмая гв�
 TURN_RECHECK_MS = 96  # три кадра
 PIECE_LEAD_S = 1.0  # синтез следующего куска — когда звука в запасе меньше этого
 PIECE_MAX_CHARS = 300  # кусок не длиннее (2–3 предложения)
-TAIL_FADE_S = 0.04  # затухание в конце куска синтеза
+TAIL_FADE_S = 0.01  # затухание в конце куска синтеза — только против щелчка
 PAUSE_AFTER = {".": 0.2, "…": 0.25, "!": 0.3, "?": 0.3, ",": 0.1, ";": 0.15, ":": 0.15}  # пауза между кусками, с
 
 
@@ -442,18 +442,23 @@ class Session:
             req = urllib.request.Request(self.args.llm + "/chat/completions", data=json.dumps(body).encode(),
                                          headers={"Content-Type": "application/json"})
             cut = Sentences()
-            info = {"content": 0, "reasoning": 0, "finish": None}
-            t_req = time.perf_counter()
-            try:
+
+            def attempt(n):  # один запрос; возвращает сводку для лога и диагностики
+                info = {"content": 0, "reasoning": 0, "finish": None, "other": []}
+                t_req = time.perf_counter()
                 with urllib.request.urlopen(req, timeout=120) as r:
                     info["headers_ms"] = round((time.perf_counter() - t_req) * 1000)
                     for line in r:
                         if cancel.is_set():
-                            return
+                            return info
                         line = line.decode().strip()
-                        if not line.startswith("data:") or line == "data: [DONE]":
+                        if not line or line == "data: [DONE]":
                             continue
-                        ch = (json.loads(line[5:]).get("choices") or [{}])[0]
+                        d = json.loads(line[5:]) if line.startswith("data:") else None
+                        if not d or not d.get("choices"):  # ошибка LM Studio или иное не по формату — в диагностику
+                            info["other"].append(line[:200])
+                            continue
+                        ch = d["choices"][0]
                         delta = ch.get("delta") or {}
                         piece = delta.get("content") or ""
                         info["content"] += len(piece)
@@ -468,12 +473,23 @@ class Session:
                     times.setdefault("sentence", time.perf_counter())
                     self.loop.call_soon_threadsafe(q.put_nowait, s)
                 first = round((times["llm_first"] - t_req) * 1000) if "llm_first" in times else None
-                print(f"LLM: ответ {info['content']} зн., рассуждение {info['reasoning']} зн., finish={info['finish']}, "
-                      f"заголовки {info.get('headers_ms')} мс, первый текст {first} мс, всего {round((time.perf_counter() - t_req) * 1000)} мс")
+                print(f"LLM{' (повтор)' if n else ''}: ответ {info['content']} зн., рассуждение {info['reasoning']} зн., "
+                      f"finish={info['finish']}, заголовки {info.get('headers_ms')} мс, первый текст {first} мс, "
+                      f"всего {round((time.perf_counter() - t_req) * 1000)} мс" + (f", прочее: {info['other'][:3]}" if info["other"] else ""))
+                return info
+
+            try:
+                for n in range(2):
+                    info = attempt(n)
+                    # пустой поток без рассуждения и без причины — LM Studio не дал ответа (бывает сразу после
+                    # перебитого запроса); один раз повторяем, иначе сообщаем
+                    if "sentence" in times or cancel.is_set() or info["reasoning"] or info["finish"]:
+                        break
                 if "sentence" not in times and not cancel.is_set():  # ни одной фразы — сказать нечего
                     why = (f"модель только рассуждала ({info['reasoning']} зн.) и не дошла до ответа" if info["reasoning"]
-                           else "модель вернула пустой ответ")
-                    self.loop.call_soon_threadsafe(q.put_nowait, RuntimeError(f"{why}, finish={info['finish']} — повторите вопрос"))
+                           else "модель вернула пустой ответ" + (" дважды" if n else ""))
+                    extra = f"; LM Studio прислал: {' | '.join(info['other'][:2])}" if info["other"] else ""
+                    self.loop.call_soon_threadsafe(q.put_nowait, RuntimeError(f"{why}, finish={info['finish']}{extra} — повторите вопрос"))
             except Exception as e:
                 self.loop.call_soon_threadsafe(q.put_nowait, RuntimeError(str(e)))
             finally:
