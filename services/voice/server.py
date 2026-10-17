@@ -393,11 +393,13 @@ class Session:
         self.jobs.pop(job.id, None)
 
     async def barge_all(self):
-        """Человек перебил: все фразы обрываются, окно гасит звук по barge {id}."""
-        for job in list(self.jobs.values()):
+        """Человек перебил: фразы штаба обрываются, окно гасит звук по barge {id}. Проба голоса не перебивается —
+        её останавливают только stop, новая проба, отказ от записи и закрытие окна."""
+        for job in [j for j in self.jobs.values() if not j.preview]:
             self._drop(job)
             await self.send(type="barge", id=job.id)
-        self.play_until = 0.0
+        if not self.jobs:
+            self.play_until = 0.0
         self.echo_until = min(self.echo_until, time.perf_counter())
 
     async def stop(self, jid: int | None = None, only=None):

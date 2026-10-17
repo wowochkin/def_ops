@@ -173,6 +173,27 @@ def test_ws_barge_stops_phrase(make_client):
     ws.close()
 
 
+def test_ws_speech_does_not_cut_preview(make_client):
+    # проба голоса не перебивается звуком в микрофоне: её останавливают только stop, новая проба, отказ, закрытие окна
+    ws, _ = connect(make_client(["Штаб, повтори."]))
+    ws.send_text(json.dumps({"type": "voice", "op": "preview", "id": 21, "voice_id": "zhukov-10s"}))
+    seen = []
+    while not isinstance(m := recv(ws), bytes):  # звук пробы пошёл
+        seen.append(m)
+    seen.append(m)
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))  # речь дольше barge_ms и конец реплики
+    until(ws, "utterance", seen)
+    assert not any(isinstance(m, dict) and m["type"] == "barge" for m in seen)
+    if not any(isinstance(m, dict) and m["type"] == "say-done" for m in seen):
+        until(ws, "say-done", seen)
+    done = [m for m in seen if isinstance(m, dict) and m["type"] == "say-done"]
+    assert done == [{"type": "say-done", "id": 21}]  # весь звук пробы отправлен, не оборван
+    # проба ещё звучит у окна (played не пришёл) — её останавливает только stop
+    ws.send_text(json.dumps({"type": "stop", "id": 21}))
+    assert until(ws, "say-done") == {"type": "say-done", "id": 21, "stopped": True}
+    ws.close()
+
+
 def test_ws_calibration_flow(make_client):
     ws, _ = connect(make_client())
     steps = [("noise", silence(1.0)), ("speech", tone(1.0)), ("echo", None), ("over", None)]

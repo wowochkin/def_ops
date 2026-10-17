@@ -425,30 +425,22 @@ if (passed) {
 }
 
 const previews = () => page.evaluate(() => window.__e2e.previews());
-/**
- * Прослушать (btn) и дождаться, что проба звучит; вернуть её номер. Поддельный микрофон «говорит» каждые 5,5 с —
- * сервис может принять это за перебивание и оборвать пробу сразу: тогда пробуем ещё раз.
- */
+/** Прослушать (btn) и дождаться, что проба звучит; вернуть её номер. */
 async function playPreview(btn) {
-  for (let i = 0; i < 4; i++) {
-    await btn.click();
-    const id = await page.evaluate(() => window.__e2e.sent.filter((m) => m.op === 'preview').at(-1)?.id);
-    try {
-      await page.waitForFunction((x) => window.__e2e.previews().includes(x), id, { timeout: 5000, polling: 20 });
-      await page.waitForTimeout(100);
-      if (await page.evaluate((x) => window.__e2e.previews().includes(x), id)) return id;
-    } catch { /* перебита или не пришла — ещё раз */ }
-  }
-  throw new Error('проба не звучит');
+  await btn.click();
+  const id = await page.evaluate(() => window.__e2e.sent.filter((m) => m.op === 'preview').at(-1)?.id);
+  await page.waitForFunction((x) => window.__e2e.previews().includes(x), id, { timeout: 15000, polling: 20 })
+    .catch(() => { throw new Error(`проба ${id} не звучит`); });
+  return id;
 }
 async function silentWithin(ms, what) {
   try {
     await page.waitForFunction(() => !window.__e2e.previews().length, null, { timeout: ms, polling: 20 });
   } catch { throw new Error(`${what}: звук не прекратился за ${ms} мс (звучат пробы ${JSON.stringify(await previews())})`); }
 }
-/** Сервис остановил фразу: `say-done stopped` (или перебивание — тоже остановка). */
+/** Сервис остановил фразу: `say-done stopped`. */
 const serviceStopped = (id) => page.waitForFunction(
-  (x) => window.__e2e.msgs.some((m) => m.id === x && ((m.type === 'say-done' && m.stopped) || m.type === 'barge')), id, { timeout: 3000 },
+  (x) => window.__e2e.msgs.some((m) => m.id === x && m.type === 'say-done' && m.stopped), id, { timeout: 3000 },
 ).catch(() => { throw new Error(`сервис не остановил пробу ${id} (нет say-done stopped)`); });
 
 await check('голоса: проба одного голоса, затем другого — звучит только вторая', async () => {
@@ -507,13 +499,14 @@ await check('калибровка: закрыть окно, пока голос 
   await panel.getByRole('button', { name: 'Калибровка' }).click();
   await calibSteps(1, 2);
   await calibDlg.getByText('шаг 3 из 4').waitFor({ timeout: 40000 });
-  const n = await page.evaluate(() => window.__e2e.sources.length);
   await calibDlg.getByRole('button', { name: 'Записать' }).click();
   await calibDlg.getByRole('button', { name: 'Отмена' }).click();
+  // отсюда ни один кусок звука калибровки не должен начаться (даже на миг)
+  const n = await page.evaluate(() => window.__e2e.sources.length);
   await calibDlg.waitFor({ state: 'hidden', timeout: 3000 });
   await page.waitForTimeout(2000);
-  const late = await page.evaluate((k) => window.__e2e.sources.slice(k).filter((s) => s.id === 0 && s.on).length, n);
-  if (late) throw new Error(`после закрытия звучит кусков калибровки: ${late}`);
+  const late = await page.evaluate((k) => window.__e2e.sources.slice(k).filter((s) => s.id === 0).length, n);
+  if (late) throw new Error(`после закрытия начато кусков звука калибровки: ${late}`);
 });
 
 const micOff = async (what) => {

@@ -24,6 +24,8 @@ import { Voices } from './Voices';
 const OPEN_KEY = 'def_ops.voice.panel';
 const API_POLL_MS = 5000;
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+/** Отказ микрофона простыми словами: разобранные причины — как есть, прочие — с пояснением, что случилось. */
+const micText = (e: Error) => (/^(Микрофон|Браузер)/.test(e.message) ? e.message : `Микрофон не подключился: ${e.message}`);
 const lsSet = (k: string, v: string | null) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* */ } };
 
 /** Что сервис сообщил при подключении: голоса, роли, текст для записи нового голоса. */
@@ -89,7 +91,7 @@ export function VoicePanel({ section }: { section: string }) {
   const startMic = () => {
     started.current = true;
     setMicError(null);
-    client.start(parseSettings(lsGet(SETTINGS_KEY))).catch((e: Error) => { started.current = false; setMicError(e.message); });
+    client.start(parseSettings(lsGet(SETTINGS_KEY))).catch((e: Error) => { started.current = false; setMicError(micText(e)); });
   };
   useEffect(() => { if (enabled && status === 'ready' && !started.current && !micError) startMic(); }, [status, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -113,8 +115,9 @@ export function VoicePanel({ section }: { section: string }) {
       void client.setEnabled(false, { finishSpeech });
       return;
     }
-    // микрофон откроет startMic (эффект выше), когда сервис готов
-    void client.setEnabled(true).catch(() => { /* причину покажет startMic */ });
+    // микрофон откроет startMic (эффект выше), когда сервис готов; был открыт до выключения — открывается сразу,
+    // и отказ показывается простыми словами, даже если попытка уже закончилась
+    client.setEnabled(true).catch((e: Error) => { started.current = false; setMicError(micText(e)); });
   };
 
   // сообщения сервиса
