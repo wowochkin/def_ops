@@ -259,7 +259,8 @@ class Models:
         return self._calib
 
     def _tts_iter(self, text: str, cancel: threading.Event):
-        for r in self.tts.generate(text=text, ref_audio=self.ref_audio, ref_text=self.ref["text"], lang_code="russian",
+        # хвост после последней точки: без него Qwen3-TTS проглатывает последний слог (QwenLM/Qwen3-TTS, обсуждение 161)
+        for r in self.tts.generate(text=text + self.args.tail_suffix, ref_audio=self.ref_audio, ref_text=self.ref["text"], lang_code="russian",
                                    stream=True, streaming_interval=0.32, verbose=False):
             if cancel.is_set():
                 break
@@ -589,6 +590,8 @@ def main():
     ap.add_argument("--barge-vad", dest="barge_vad", type=float, default=0.8, help="порог речи, пока модель говорит (перебивание)")
     ap.add_argument("--asr", default="v3_e2e_rnnt",
                     help="модель GigaAM: v3_e2e_rnnt — с пунктуацией и заглавными, v3_rnnt — строчными без знаков")
+    ap.add_argument("--tail-suffix", default=" ^.",
+                    help="добавка к тексту синтеза, чтобы не глотался последний слог; пустая строка — без неё")
     ap.add_argument("--end-ms", dest="end_ms", type=int, default=400, help="тишина до проверки конца реплики")
     ap.add_argument("--max-silence-ms", dest="max_silence_ms", type=int, default=1500, help="тишина — реплика кончилась в любом случае")
     ap.add_argument("--turn", type=float, default=0.5, help="порог Smart Turn")

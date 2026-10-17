@@ -1,7 +1,8 @@
 """Почему синтез «проглатывает» конец фразы: одни и те же короткие фразы в нескольких вариантах синтеза.
 
-Варианты: как в talk_server (поток), без потока, штраф за повторы 1,2 и 1,05 вместо навязанных mlx-audio 1,5
-(штраф давит затухающие коды конца слова), многоточие в конце текста. Для каждого — out/tail/<вариант>.wav (фразы
+Варианты: как было, с хвостом « ^.» после последней точки (так в talk_server; приём из QwenLM/Qwen3-TTS,
+обсуждение 161 — для русского), с двойным хвостом, с хвостом без потока. Прежний прогон показал, что ни поток,
+ни штраф за повторы, ни многоточие не влияют. Для каждого — out/tail/<вариант>.wav (фразы
 через паузу; слушать подряд) и таблица: уровень последних 30 мс относительно громкой части фразы (дБ). Обрыв на
 звуке — около −10 дБ и выше; естественное затухание — −30 дБ и ниже.
   .venv-tts/bin/python tail_test.py [--takes 2]"""
@@ -46,12 +47,12 @@ def main():
     def run(gen):
         return np.concatenate([np.asarray(r.audio, np.float32).reshape(-1) for r in gen])
 
+    stream = dict(lang_code="russian", stream=True, streaming_interval=0.32, **common)
     variants = {
-        "1-поток-как-сейчас": lambda t: run(tts.generate(text=t, lang_code="russian", stream=True, streaming_interval=0.32, **common)),
-        "2-без-потока": lambda t: run(tts.generate(text=t, lang_code="russian", **common)),
-        "3-штраф-1.2": lambda t: run(tts._generate_icl(text=t, language="russian", repetition_penalty=1.2, stream=True, streaming_interval=0.32, **common)),
-        "4-штраф-1.05": lambda t: run(tts._generate_icl(text=t, language="russian", repetition_penalty=1.05, stream=True, streaming_interval=0.32, **common)),
-        "5-многоточие": lambda t: run(tts.generate(text=t.rstrip(".") + "…", lang_code="russian", stream=True, streaming_interval=0.32, **common)),
+        "1-как-было": lambda t: run(tts.generate(text=t, **stream)),
+        "2-хвост-^.": lambda t: run(tts.generate(text=t + " ^.", **stream)),
+        "3-хвост-^.^.": lambda t: run(tts.generate(text=t + " ^. ^.", **stream)),
+        "4-хвост-^.-без-потока": lambda t: run(tts.generate(text=t + " ^.", lang_code="russian", **common)),
     }
     out = HERE / "out" / "tail"
     out.mkdir(parents=True, exist_ok=True)
