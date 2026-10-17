@@ -16,6 +16,8 @@ import numpy as np
 
 DEFAULT_VOICE = "zhukov-10s"
 ROLES = ("chief", "umpire")  # начальник штаба, посредник
+# голос роли по умолчанию, если такой образец есть; иначе — DEFAULT_VOICE
+ROLE_DEFAULTS = {"chief": "chief-10s", "umpire": DEFAULT_VOICE}
 
 # Текст для записи нового голоса: штабной доклад без цифр, 15–20 с чтения вслух
 RECORD_TEXT = ("Докладываю обстановку на утро. Противник за ночь подтянул к переднему краю свежие резервы "
@@ -58,11 +60,14 @@ def _slug(name: str) -> str:
 _SEED_VARIANT = {"raw": "без обработки", "dfn": "с шумоподавлением"}
 
 
+_SEED_SPEAKER = {"zhukov": "Жуков", "chief": "Начальник штаба"}
+
+
 def _seed_name(vid: str) -> str:
-    m = re.fullmatch(r"zhukov-(\d+)s(?:-(.+))?", vid)
+    m = re.fullmatch(r"(zhukov|chief)-(\d+)s(?:-(.+))?", vid)
     if m:
-        v = m.group(2)
-        return f"Жуков, {m.group(1)} с" + (f" ({_SEED_VARIANT.get(v, v)})" if v else "")
+        v = m.group(3)
+        return f"{_SEED_SPEAKER[m.group(1)]}, {m.group(2)} с" + (f" ({_SEED_VARIANT.get(v, v)})" if v else "")
     return vid
 
 
@@ -118,8 +123,12 @@ class VoiceStore:
             saved = json.loads(self._roles_file().read_text(encoding="utf-8"))
         except (OSError, ValueError):
             saved = {}
-        return {r: saved[r] if isinstance(saved.get(r), str) and self._meta(saved[r]) else DEFAULT_VOICE
+        return {r: saved[r] if isinstance(saved.get(r), str) and self._meta(saved[r]) else self._default(r)
                 for r in ROLES}
+
+    def _default(self, role: str) -> str:
+        vid = ROLE_DEFAULTS.get(role, DEFAULT_VOICE)
+        return vid if self._meta(vid) else DEFAULT_VOICE
 
     def _write_roles(self, roles: dict[str, str]):
         self._roles_file().write_text(json.dumps(roles, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -157,7 +166,7 @@ class VoiceStore:
             raise ValueError("встроенный образец не удаляется")
         roles = self.roles()
         shutil.rmtree(self.dir / voice_id)
-        self._write_roles({r: DEFAULT_VOICE if v == voice_id else v for r, v in roles.items()})
+        self._write_roles({r: self._default(r) if v == voice_id else v for r, v in roles.items()})
 
     def ref(self, voice_id: str) -> tuple[Path, str]:
         m = self._meta(voice_id)

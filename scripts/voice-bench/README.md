@@ -22,7 +22,8 @@
 ```bash
 cd scripts/voice-bench
 ./setup.sh                                  # окружения (uv, ffmpeg); с T-one — ./setup.sh --tone
-./prepare_ref.sh ~/Downloads/<запись>.mp3   # образцы в ref/
+./prepare_ref.sh ~/Downloads/<запись>.mp3   # образцы Жукова в ref/
+./prepare_chief.sh ~/Downloads/<запись голоса штаба>.mp3   # образцы начальника штаба в ref/
 
 # 1. синтез: все движки (около 15–30 мин, первый раз дольше — скачивание моделей, ~40 ГБ)
 .venv-tts/bin/python tts_bench.py

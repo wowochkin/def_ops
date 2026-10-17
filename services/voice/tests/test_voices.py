@@ -47,6 +47,22 @@ def test_seed_and_default_roles(tmp_path):
     assert [v["id"] for v in VoiceStore(tmp_path / "data", tmp_path / "seed").list()] == ids
 
 
+def test_chief_voice_by_default_when_seeded(tmp_path):
+    seed = make_seed(tmp_path / "seed")
+    write_wav(seed / "ref" / "chief-10s.wav", speech(1.0))
+    refs = json.loads((seed / "refs.json").read_text(encoding="utf-8"))
+    refs["refs"]["chief-10s"] = {"file": "ref/chief-10s.wav", "text": "Замысел состоял в том."}
+    (seed / "refs.json").write_text(json.dumps(refs, ensure_ascii=False), encoding="utf-8")
+    s = VoiceStore(tmp_path / "data", seed)
+    assert next(v for v in s.list() if v["id"] == "chief-10s")["name"] == "Начальник штаба, 10 с"
+    assert s.roles() == {"chief": "chief-10s", "umpire": "zhukov-10s"}
+    # свой голос у начальника штаба удалён — роль возвращается к своему образцу по умолчанию, не к Жукову
+    vid = s.save("Гость", speech(9.0), SR, RECORD_TEXT, "микрофон")
+    s.assign("chief", vid)
+    s.delete(vid)
+    assert s.roles() == {"chief": "chief-10s", "umpire": "zhukov-10s"}
+
+
 def test_seed_dir_missing_is_tolerated(tmp_path):
     s = VoiceStore(tmp_path / "data", tmp_path / "нет")
     assert s.list() == []
