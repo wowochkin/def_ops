@@ -16,6 +16,17 @@ button.primary { background: var(--accent); color: #fff; border-color: var(--acc
 #dot.thinking { background: #3a6fb0; } #dot.speaking { background: var(--accent); box-shadow: 0 0 0 4px #e0a09066; }
 #meter { width: 90px; height: 6px; background: #e5e2da; border-radius: 3px; overflow: hidden; }
 #meter i { display: block; height: 100%; width: 0; background: #3a8f3a; }
+#panel { display: none; gap: 18px; align-items: center; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--line); background: #fbfaf6; font-size: 13px; position: sticky; top: 53px; z-index: 1; }
+#panel label { display: inline-flex; flex-direction: column; gap: 2px; color: #444; }
+#panel input[type=range] { width: 150px; }
+#panel b { font-weight: 600; color: var(--fg); }
+#vadbar { display: block; margin: 4px 0; position: relative; width: 220px; height: 14px; background: #e5e2da; border-radius: 3px; }
+#vadbar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #9bbf9b; border-radius: 3px; }
+#vadbar i.over { background: #3a8f3a; }
+#vadbar i.barge { background: #c98a7e; } #vadbar i.barge.over { background: var(--accent); }
+#vadbar .mk { position: absolute; top: -3px; bottom: -3px; width: 2px; }
+#vadbar .mk.in { background: #3a8f3a; } #vadbar .mk.br { background: var(--accent); }
+#vadnote { color: var(--muted); min-width: 230px; }
 #info { color: var(--muted); font-size: 13px; }
 main { max-width: 860px; margin: 0 auto; padding: 12px 16px 80px; }
 .msg { margin: 10px 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); }
@@ -34,6 +45,15 @@ main { max-width: 860px; margin: 0 auto; padding: 12px 16px 80px; }
   <span id="meter"><i></i></span>
   <span id="info"></span>
 </header>
+<div id="panel">
+  <span><span id="vadbar"><i></i><span class="mk in" title="порог в тишине"></span><span class="mk br" title="порог перебивания"></span></span>
+    <div id="vadnote">уверенность, что звучит речь</div></span>
+  <label>чувствительность в тишине: <b id="vadV"></b><input id="vad" type="range" min="0.1" max="0.8" step="0.05"></label>
+  <label>чувствительность перебивания: <b id="bvadV"></b><input id="bvad" type="range" min="0.05" max="0.8" step="0.05"></label>
+  <label>перебить, если говорю дольше: <b id="bmsV"></b><input id="bms" type="range" min="100" max="1000" step="50"></label>
+  <label>пауза до ответа: <b id="endV"></b><input id="end" type="range" min="200" max="1500" step="50"></label>
+  <button id="defaults" title="вернуть значения сервера">по умолчанию</button>
+</div>
 <main id="log">
   <p class="sys">Нажмите «Начать» и разрешите микрофон. Говорите свободно: модель сама поймёт, что вы закончили, и ответит голосом.
   Её можно перебить — просто заговорите. Подавление эха включено; если модель перебивает сама себя, наденьте наушники.</p>
@@ -42,6 +62,25 @@ main { max-width: 860px; margin: 0 auto; padding: 12px 16px 80px; }
 const $ = (id) => document.getElementById(id);
 const log = $('log');
 let ws, micCtx, playCtx, nextT = 0, sources = [], botEl = null, turnMeta = {};
+
+// регуляторы: «чувствительность» = 1 − порог уверенности VAD (правее — ловит тише)
+const CFG_KEY = 'talk-settings'; let serverCfg = null, cfg = {};
+const pct = (x) => Math.round(x * 100) + ' %';
+function showCfg() {
+  $('vad').value = 1 - cfg.vad; $('vadV').textContent = pct(1 - cfg.vad);
+  $('bvad').value = 1 - cfg.barge_vad; $('bvadV').textContent = pct(1 - cfg.barge_vad);
+  $('bms').value = cfg.barge_ms; $('bmsV').textContent = cfg.barge_ms + ' мс';
+  $('end').value = cfg.end_ms; $('endV').textContent = cfg.end_ms + ' мс';
+  document.querySelector('#vadbar .mk.in').style.left = (cfg.vad * 100) + '%';
+  document.querySelector('#vadbar .mk.br').style.left = (cfg.barge_vad * 100) + '%';
+}
+function pushCfg() {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+  ws?.readyState === 1 && ws.send(JSON.stringify({ type: 'settings', ...cfg })); showCfg();
+}
+for (const [id, key, inv] of [['vad', 'vad', 1], ['bvad', 'barge_vad', 1], ['bms', 'barge_ms', 0], ['end', 'end_ms', 0]])
+  $(id).addEventListener('input', (e) => { const v = +e.target.value; cfg[key] = inv ? +(1 - v).toFixed(2) : v; pushCfg(); });
+$('defaults').onclick = () => { try { localStorage.removeItem(CFG_KEY); } catch (e) {} cfg = { ...serverCfg }; pushCfg(); };
 
 function setState(cls, text) { $('dot').className = cls; $('stateText').textContent = text; }
 function add(cls, who, text) {
@@ -106,6 +145,18 @@ $('start').onclick = async () => {
   ws.onmessage = (e) => {
     if (typeof e.data !== 'string') return playChunk(e.data);
     const m = JSON.parse(e.data);
+    if (m.type === 'settings') {
+      if (!serverCfg) { serverCfg = { ...m }; delete serverCfg.type;
+        let saved = null; try { saved = JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch (e) {}
+        cfg = { ...serverCfg, ...(saved || {}) }; $('panel').style.display = 'flex'; if (saved) pushCfg(); else showCfg(); }
+      return;
+    }
+    if (m.type === 'level') {
+      const bar = document.querySelector('#vadbar i'), thr = m.busy ? cfg.barge_vad : cfg.vad;
+      bar.style.width = (m.p * 100) + '%'; bar.className = (m.busy ? 'barge' : '') + (m.p >= thr ? ' over' : '');
+      $('vadnote').textContent = m.busy ? 'модель говорит — действует порог перебивания' : 'модель молчит — действует порог в тишине';
+      return;
+    }
     if (m.type === 'ready') $('info').textContent = `роль: ${m.persona} · модель: ${m.model} · словарь названий: ${m.names}`;
     else if (m.type === 'vad') { if (m.state === 'speech') setState('speech', 'вы говорите'); else if (!sources.length) setState('listen', 'слушаю'); }
     else if (m.type === 'turn') {}

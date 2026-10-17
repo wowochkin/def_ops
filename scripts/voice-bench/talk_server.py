@@ -235,6 +235,10 @@ class Session:
         self.playing = False  # браузер ещё играет ответ
         self.barged = False
         self.last_said = ""  # последние фразы модели — чтобы не принять их эхо за реплику
+        # настройки, которые меняются со страницы на ходу: порог речи в тишине, порог и длительность
+        # перебивания (пока модель говорит, микрофон слышит и её — порог строже), пауза до проверки конца реплики
+        self.cfg = {"vad": args.vad, "barge_vad": args.barge_vad, "barge_ms": args.barge_ms, "end_ms": args.end_ms}
+        self.frames = 0
 
     async def send(self, **msg):
         await self.ws.send_text(json.dumps(msg, ensure_ascii=False))
@@ -250,9 +254,13 @@ class Session:
             await self.on_frame(frame)
 
     async def on_frame(self, frame):
-        a = self.args
+        a, c = self.args, self.cfg
         p = self.m.vad_prob(frame)
-        speech = p >= a.vad
+        busy = self.busy
+        speech = p >= (c["barge_vad"] if busy else c["vad"])
+        self.frames += 1
+        if self.frames % 3 == 0:  # индикатор на странице: ~10 раз в секунду
+            await self.send(type="level", p=round(p, 2), busy=busy)
         if not self.in_speech:
             self.pre = np.concatenate([self.pre, frame])[-int(0.3 * SR_IN):]
             if speech:
@@ -267,7 +275,7 @@ class Session:
             self.silence_ms = 0
             self.turn_checked = False
             # перебивание: человек говорит дольше порога, пока модель отвечает
-            if self.busy and not self.barged and self.speech_ms >= a.barge_ms:
+            if busy and not self.barged and self.speech_ms >= c["barge_ms"]:
                 self.barged = True
                 await self.barge_in()
             return
@@ -276,7 +284,7 @@ class Session:
             self.in_speech = False
             await self.send(type="vad", state="silence")
             return
-        if self.silence_ms >= a.end_ms and not self.turn_checked:
+        if self.silence_ms >= c["end_ms"] and not self.turn_checked:
             self.turn_checked = True
             prob = await self.loop.run_in_executor(self.m.mlx, self.m.turn_complete, self.audio)
             await self.send(type="turn", prob=round(prob, 2))
@@ -408,11 +416,12 @@ def main():
     ap.add_argument("--persona", default="zhukov", choices=["zhukov", "staff"])
     ap.add_argument("--tts", default="mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16")
     ap.add_argument("--ref", help="образец из refs.json")
-    ap.add_argument("--vad", type=float, default=0.5, help="порог речи Silero")
+    ap.add_argument("--vad", type=float, default=0.5, help="порог речи Silero, пока модель молчит")
+    ap.add_argument("--barge-vad", dest="barge_vad", type=float, default=0.8, help="порог речи, пока модель говорит (перебивание)")
     ap.add_argument("--end-ms", dest="end_ms", type=int, default=400, help="тишина до проверки конца реплики")
     ap.add_argument("--max-silence-ms", dest="max_silence_ms", type=int, default=1500, help="тишина — реплика кончилась в любом случае")
     ap.add_argument("--turn", type=float, default=0.5, help="порог Smart Turn")
-    ap.add_argument("--barge-ms", dest="barge_ms", type=int, default=250, help="сколько говорить, чтобы перебить")
+    ap.add_argument("--barge-ms", dest="barge_ms", type=int, default=300, help="сколько говорить, чтобы перебить")
     ap.add_argument("--min-speech-ms", dest="min_speech_ms", type=int, default=200)
     args = ap.parse_args()
 
@@ -439,6 +448,7 @@ def main():
         await sock.accept()
         s = Session(sock, models, args)
         await s.send(type="ready", persona=args.persona, model=args.model, names=len(models.names))
+        await s.send(type="settings", **s.cfg)
         try:
             while True:
                 msg = await sock.receive()
@@ -448,6 +458,11 @@ def main():
                     d = json.loads(msg["text"])
                     if d.get("type") == "played":  # браузер доиграл ответ
                         s.playing = False
+                    elif d.get("type") == "settings":
+                        for k in s.cfg:
+                            if isinstance(d.get(k), (int, float)):
+                                s.cfg[k] = d[k]
+                        await s.send(type="settings", **s.cfg)
                     elif d.get("type") == "reset":
                         s.history.clear()
                 if msg.get("type") == "websocket.disconnect":
