@@ -18,8 +18,11 @@
 // отмена старого ответа новой репликой, модель «висит» (повтор), LM Studio не запущена (без повторов; следующая
 // непонятая фраза — сразу честный ответ, без «Думаю»). Подавление эха не то, при котором сняты регуляторы, —
 // подсказка «пройдите калибровку заново» и перебивание «словом».
+// Тур: вступление при запуске (новое окно, калибровки не было) — подсветка колонки разделов, «Штаб, дальше» —
+// рамка на кнопке колонки, «назад» без обращения, «Штаб, хватит» снимает притемнение; voice:ready-first отменён
+// вступлением, после него — voice:propose; флажок «Вступление при запуске» в «Тонкой настройке».
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
-// панели, калибровки, голосов и раздела «ИИ» (модель для голоса).
+// панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и тура (voice-tour.jpg).
 // Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -183,6 +186,7 @@ await ctx.addInitScript((url) => {
   localStorage.clear();
   localStorage.setItem('def_ops.voice.url', url);
   localStorage.setItem('def_ops.section', 'editor');
+  localStorage.setItem('def_ops.voice.intro', 'off');  // вступление — в своей проверке в конце
 }, `ws://127.0.0.1:${vport}/ws`);
 // наблюдение за окном (на каждой загрузке): сообщения сервиса, звук по номерам фраз (кусок звука сервиса →
 // источник звука окна), дорожки микрофона и сколько раз его просили
@@ -828,6 +832,124 @@ await check('подавление эха не то, что при калибро
   await calibDlg.waitFor({ state: 'hidden', timeout: 3000 });
   return aec ? 'сейчас включено' : 'сейчас выключено';
 });
+
+await check('флажок «Вступление при запуске» в «Тонкой настройке» — запоминается', async () => {
+  await panel.getByText('Тонкая настройка').click();
+  const box = panel.getByLabel('Вступление при запуске');
+  if (await box.isChecked()) throw new Error('выключенное вступление показано включённым');
+  await box.click();
+  await page.waitForFunction(() => localStorage.getItem('def_ops.voice.intro') === 'on', null, { timeout: 2000 });
+  await box.click();
+  await page.waitForFunction(() => localStorage.getItem('def_ops.voice.intro') === 'off', null, { timeout: 2000 });
+  await panel.getByText('Тонкая настройка').click();
+});
+
+// ---------------------------------------------------------------- тур: вступление при запуске
+// новое окно (калибровки не было), сервис с репликами тура; каждый «слог» микрофона — следующая реплика
+const scriptTour = join(tmp, 'script-tour.txt');
+writeFileSync(scriptTour, ['штаб, дальше', 'назад', 'штаб, хватит', ...Array(60).fill('передайте в штаб армии')].join('\n') + '\n');
+await ctx.close();  // прежнее окно тоже подключено к сервису — оно забрало бы реплики тура
+await stopVoice();
+await startVoice(scriptTour);
+const ctx2 = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone'] });
+await ctx2.addInitScript((url) => {
+  if (sessionStorage.getItem('e2e.init')) return;
+  sessionStorage.setItem('e2e.init', '1');
+  localStorage.clear();
+  localStorage.setItem('def_ops.voice.url', url);
+  localStorage.setItem('def_ops.section', 'editor');
+  localStorage.setItem('def_ops.voice.panel', 'open');  // лента реплик видна
+}, `ws://127.0.0.1:${vport}/ws`);
+// события панели голоса: отменено ли voice:ready-first и пришло ли voice:propose
+await ctx2.addInitScript(() => {
+  window.__tour = { ready: null, propose: 0 };
+  window.addEventListener('voice:ready-first', (e) => { setTimeout(() => { window.__tour.ready = e.defaultPrevented; }, 0); });
+  window.addEventListener('voice:propose', () => { window.__tour.propose++; });
+});
+if (STUB) await ctx2.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
+const page2 = await ctx2.newPage();
+page2.on('pageerror', (e) => errors.push(e.message));
+await page2.goto(app + '/#editor');
+const tourLayer = page2.locator('.tour');
+const feed2 = async () => (await page2.locator('.vp-feed').innerText().catch(() => '')).replace(/\s+/g, ' ');
+const tourTitle = (t) => ({ waitFor: (o) => tourLayer.locator('.tour-cap h2', { hasText: t }).waitFor(o)
+  .catch(async () => { throw new Error(`нет шага «${t}»; лента: ${await feed2()}`); }) });
+/** Рамка тура (с отступом 8 px) — вокруг видимого элемента data-tour и доехала до него. */
+const frameOn = (target) => page2.waitForFunction((t) => {
+  const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
+  const el = [...document.querySelectorAll(`[data-tour="${t}"]`)].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
+  return !!f && !!el && [f.left + 8 - el.left, f.top + 8 - el.top, f.width - 16 - el.width, f.height - 16 - el.height].every((d) => Math.abs(d) < 1.5);
+}, target, { timeout: 15000, polling: 50 }).catch(() => { throw new Error(`рамка не вокруг [data-tour="${target}"]`); });
+
+await check('вступление при запуске: притемнение, рамка вокруг колонки разделов, подпись крупно', async () => {
+  await tourTitle('Штабные игры').waitFor({ timeout: T });
+  await frameOn('rail');
+  await page2.waitForTimeout(700);  // полосы доехали (переезд — полсекунды)
+  const st = await page2.evaluate(() => {
+    let m = Infinity;
+    for (const el of document.querySelectorAll('.tour-cap, .tour-cap *')) {
+      if ([...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) m = Math.min(m, parseFloat(getComputedStyle(el).fontSize));
+    }
+    // притемнение: полосы вокруг проёма закрывают весь экран, кроме рамки
+    const dims = [...document.querySelectorAll('.tour-dim')];
+    // площадь в пределах окна (рамка колонки выходит за край на отступ)
+    const vis = (r) => Math.max(0, Math.min(innerWidth, r.right) - Math.max(0, r.left)) * Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top));
+    const area = dims.reduce((a, d) => a + vis(d.getBoundingClientRect()), 0);
+    const rest = innerWidth * innerHeight - vis(document.querySelector('.tour-frame').getBoundingClientRect());
+    return { min: m, dim: dims.length === 4 && dims.every((d) => getComputedStyle(d).backgroundColor === 'rgba(12, 12, 14, 0.62)') && Math.abs(area - rest) < innerWidth * innerHeight * 0.005,
+      say: document.querySelector('.tour-cap')?.textContent ?? '' };
+  });
+  if (!(st.min >= 20)) throw new Error(`самый мелкий текст подписи — ${st.min} px`);
+  if (!st.dim) throw new Error('экран вокруг рамки не притемнён');
+  if (!st.say.includes('искусственного интеллекта')) throw new Error('в подписи нет текста шага');
+  return `подпись не мельче ${st.min} px`;
+});
+
+/** Номер шага в подписи («шаг N из M»). */
+const stepNo = async () => +(/шаг (\d+) из/.exec(await tourLayer.locator('.tour-count').innerText())?.[1] ?? NaN);
+/** Сказанное появилось в ленте («Вы: …»). */
+const heard = (t) => page2.locator('.vp-item', { hasText: t }).first().waitFor({ timeout: 40000 })
+  .catch(async () => { throw new Error(`в ленте нет «${t}»: ${await feed2()}`); });
+let afterNext = 0;
+await check('«Штаб, дальше» → следующий шаг, рамка переехала на кнопку колонки', async () => {
+  // шаги, договорённые до первой реплики, листаются сами — сравниваем с номером на момент «дальше»
+  await heard('штаб, дальше');
+  await page2.waitForTimeout(400);
+  afterNext = await stepNo();
+  const target = await page2.locator('.tour-frame').getAttribute('data-target');
+  if (!/^rail-/.test(target ?? '')) throw new Error(`подсвечено «${target}», а не кнопка колонки (шаг ${afterNext})`);
+  await frameOn(target);
+  await page2.waitForTimeout(300);
+  if (SHOTS) await page2.screenshot({ path: join(SHOTS, 'voice-tour.jpg'), type: 'jpeg', quality: 88 });
+  return `шаг ${afterNext}, ${target}`;
+});
+
+await check('«назад» без обращения (разговор) → шаг назад', async () => {
+  await heard('Вы: назад');
+  await page2.waitForFunction((n) => /шаг (\d+) из/.exec(document.querySelector('.tour-count')?.textContent ?? '')?.[1] === String(n), afterNext - 1, { timeout: 5000 })
+    .catch(async () => { throw new Error(`после «назад» шаг ${await stepNo()}, ждали ${afterNext - 1}`); });
+  const target = await page2.locator('.tour-frame').getAttribute('data-target');
+  await frameOn(target);
+  return `шаг ${afterNext - 1}, ${target}`;
+});
+
+await check('«Штаб, хватит» → тура нет, притемнение снято полностью', async () => {
+  await tourLayer.waitFor({ state: 'detached', timeout: 30000 });
+  const left = await page2.evaluate(() => document.querySelectorAll('.tour, .tour-dim, .tour-frame, .tour-cap').length);
+  if (left) throw new Error(`осталось элементов тура: ${left}`);
+  const free = await page2.evaluate(() => {
+    const r = document.querySelector('[data-tour="rail-replay"]').getBoundingClientRect();
+    return !!document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest('[data-tour="rail-replay"]');
+  });
+  if (!free) throw new Error('кнопка колонки закрыта');
+});
+
+await check('voice:ready-first отменён вступлением, после «хватит» — voice:propose (калибровку предлагает панель)', async () => {
+  await page2.waitForFunction(() => window.__tour.propose === 1, null, { timeout: 5000 })
+    .catch(async () => { throw new Error(`события: ${JSON.stringify(await page2.evaluate(() => window.__tour))}`); });
+  if ((await page2.evaluate(() => window.__tour.ready)) !== true) throw new Error('voice:ready-first не отменён');
+});
+await ctx2.close();
 
 await check('в окне нет ошибок JavaScript', async () => {
   if (errors.length) throw new Error(errors.join('; '));

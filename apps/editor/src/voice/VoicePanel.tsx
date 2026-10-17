@@ -16,12 +16,16 @@
  * Кнопка «Выключить голос» / «Включить голос» и событие окна `voice:power` (detail: boolean; «Штаб, отбой»)
  * выключают голос: микрофон закрыт и сам не открывается, звук штаба остановлен, связь с сервисом остаётся.
  * Выбор запоминается между запусками (ENABLED_KEY).
+ *
+ * Тур (voice/tour.tsx) говорит тем же путём, что ответы штаба (useTourVoice); голос впервые готов — событие окна
+ * `voice:ready-first` (вступление); `voice:open` с detail 'panel' разворачивает панель (подготовка тура по ней).
+ * Элементы панели помечены `data-tour` для подсветки.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher } from './dispatch';
 import { createVoiceModel } from './llm';
-import { actions } from './registry';
+import { act, actions } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
@@ -30,6 +34,7 @@ import {
 } from './panel-state';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
+import { useIntroSetting, useTourVoice } from './tour';
 
 const OPEN_KEY = 'def_ops.voice.panel';
 const API_POLL_MS = 5000;
@@ -115,6 +120,15 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     modelReady: () => llmCheckRef.current !== 'fail',
     thinking: setThinking,
   }), [client, gate]);
+  // тур говорит голосом начальника штаба: та же очередь фраз, та же лента
+  useTourVoice({
+    client,
+    send: (id, text) => gate.say(id, text),
+    stop: (id) => { if (!gate.drop(id) && speakingIds.current.delete(id)) { client.stop(id); syncSpeaking(); } },
+    live: () => enabledRef.current && !dialogRef.current && client.status === 'ready',
+  });
+  const [intro] = useIntroSetting();
+  const readyOnce = useRef(false);
 
   // связь с моделью проверена заново или настройки модели сменились — прежняя недоступность забыта
   useEffect(() => { if (llmCheck === 'ok') dispatcher.modelBack(); }, [llmCheck, dispatcher]);
@@ -179,7 +193,12 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
   // сообщения сервиса
   useEffect(() => {
     const offs = [
-      client.on('ready', (m) => setReady({ voices: m.voices ?? [], roles: m.roles, recordText: m.record_text ?? '', aec: m.aec === true })),
+      client.on('ready', (m) => {
+        setReady({ voices: m.voices ?? [], roles: m.roles, recordText: m.record_text ?? '', aec: m.aec === true });
+        // голос впервые готов за этот запуск — вступление (voice/tour.tsx)
+        // (временно, до слияния с «без рук»: там событие шлёт и обрабатывает панель — отменяемое, с voice:propose)
+        if (!readyOnce.current && enabledRef.current) { readyOnce.current = true; window.dispatchEvent(new CustomEvent('voice:ready-first', { cancelable: true })); }
+      }),
       client.on('level', (m) => setLevel({ p: m.p, busy: m.busy })),
       client.on('speech', (m) => { setListening(m.state === 'start'); gate.speech(m.state === 'start'); }),
       client.on('settings', (m) => setCfg({
@@ -230,6 +249,7 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     const onOpen = (e: Event) => {
       const d = (e as CustomEvent).detail;
       if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { openDialog(d); toggle(true); }
+      if (d === 'panel') toggle(true);
     };
     // «Штаб, отбой» (разборщик) — выключение; ответ штаба договаривается
     const onPower = (e: Event) => {
@@ -287,18 +307,18 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
   return (
     <div className={`vp ${st.key}`}>
       {!open ? (
-        <button className="vp-icon" onClick={() => toggle(true)} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
+        <button className="vp-icon" data-tour="voice" onClick={() => toggle(true)} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
           <MicGlyph off={!enabled} />
           {!enabled && <span className="vp-icon-cap">{st.text}</span>}
         </button>
       ) : (
-        <section className="vp-card" aria-label="Голос">
-          <div className="vp-head">
+        <section className="vp-card" aria-label="Голос" data-tour="voice">
+          <div className="vp-head" data-tour="voice-state">
             <span className="vp-dot" />
             <span className="vp-state" role="status">{st.text}</span>
             <button className="vp-close" onClick={() => toggle(false)} title="Свернуть панель голоса">Свернуть</button>
           </div>
-          <button className={`vp-power${enabled ? '' : ' primary'}`} onClick={() => power(!enabled)}>
+          <button className={`vp-power${enabled ? '' : ' primary'}`} data-tour="voice-power" onClick={() => power(!enabled)}>
             <MicGlyph off={enabled} /> {enabled ? 'Выключить голос' : 'Включить голос'}
           </button>
           {!enabled && <p className="vp-note">Микрофон выключен: штаб вас не слышит и не говорит.</p>}
@@ -324,7 +344,7 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
           {hint && <p className="vp-hint stop" role="status">{hint}</p>}
           {enabled && <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
 
-          <div className="vp-feed" aria-label="Что сказано">
+          <div className="vp-feed" aria-label="Что сказано" data-tour="voice-feed">
             {!feed.length && <p className="vp-empty">Здесь будет видно, что я услышал и что ответил.</p>}
             {feed.map((x) => (
               <div key={x.key} className={`vp-item ${x.kind}`}>
@@ -336,7 +356,7 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
             <div ref={feedEnd} />
           </div>
 
-          {enabled && <details className="vp-cans">
+          {enabled && <details className="vp-cans" data-tour="voice-cans">
             <summary>Что можно сказать</summary>
             <ul>
               {can.map((a) => {
@@ -351,12 +371,12 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
             </ul>
           </details>}
 
-          <div className="vp-btns">
+          <div className="vp-btns" data-tour="voice-btns">
             <button onClick={() => openDialog('calibrate')} disabled={!live}>Калибровка</button>
             <button onClick={() => openDialog('voices')} disabled={!live}>Голоса</button>
           </div>
 
-          <details className="vp-tune">
+          <details className="vp-tune" data-tour="voice-tune">
             <summary>Тонкая настройка</summary>
             <p className="vp-note">Обычно хватает калибровки. Правее — чутче.</p>
             {/* режим выбирает калибровка; «словом» — когда динамики слышно громко */}
@@ -376,6 +396,9 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
             <Slider label="Пауза до ответа" value={cfg.end_ms} min={20} max={1500} step={10} show={`${cfg.end_ms} мс`}
               onChange={(v) => applySettings({ end_ms: v })} />
             <button onClick={resetSettings}>По умолчанию</button>
+            <label className="vp-check-intro">
+              <input type="checkbox" checked={intro} onChange={(e) => { void act(e.target.checked ? 'tour.introOn' : 'tour.introOff'); }} /> Вступление при запуске
+            </label>
           </details>
         </section>
       )}
@@ -400,7 +423,7 @@ const live0 = (enabled: boolean, status: VoiceStatus) => enabled && status === '
 function Level({ p, busy, cfg }: { p: number; busy: boolean; cfg: VoiceSettings }) {
   const thr = busy ? cfg.barge_vad : cfg.vad;
   return (
-    <div className="vp-levelbox">
+    <div className="vp-levelbox" data-tour="voice-level">
       <div className={`vp-level${p >= thr ? ' over' : ''}`} data-p={p} role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={p} aria-label="Слышу речь">
         <i style={{ width: `${Math.round(p * 100)}%` }} />
         <span className="mk in" style={{ left: `${cfg.vad * 100}%` }} title="Отсюда слышу вас" />

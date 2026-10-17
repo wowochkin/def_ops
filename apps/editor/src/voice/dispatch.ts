@@ -1,9 +1,9 @@
 /**
  * Разборщик реплик: сначала правила (мгновенно, без модели) — обращение к штабу, окно разговора,
  * переходы между разделами, «что я могу сказать», калибровка, голоса, стоп-слова (общий с сервисом голоса список
- * services/voice/stop_words.json). Чего правила не поняли в обращённой реплике — разбирает модель (опция model), если
- * она подключена; её вызов действия проверяется по реестру. Модель недоступна — это помнится MODEL_DOWN_MS, и пока
- * непонятая реплика сразу получает честный ответ без модели.
+ * services/voice/stop_words.json), дословные примеры (`say`) доступных действий. Чего правила не поняли в обращённой
+ * реплике — разбирает модель (опция model), если она подключена; её вызов действия проверяется по реестру. Модель
+ * недоступна — это помнится MODEL_DOWN_MS, и пока непонятая реплика сразу получает честный ответ без модели.
  */
 import stopFile from '../../../../services/voice/stop_words.json';
 import { SECTIONS } from '../sections';
@@ -253,7 +253,14 @@ export class Dispatcher {
     if (lead) {
       this.opts.stop?.();
       rest = words.slice(lead).join(' ');
-      if (!rest) { this.cancelModel(); this.opts.supersede?.(); return 'done'; }
+      if (!rest) {
+        this.cancelModel();
+        this.opts.supersede?.();
+        // стоп-слово, которое само — пример доступного сейчас действия («хватит» в туре), ещё и исполняет его
+        const a = this.bySay(words.slice(0, lead).join(' '));
+        if (a) try { await this.runSay(a); } catch { /* штаб уже замолчал — этого достаточно */ }
+        return 'done';
+      }
     }
     this.cancelModel(); // новая обращённая реплика — старый ответ модели уже не нужен
     this.opts.supersede?.(); // и ждущие очереди старые ответы — тоже
@@ -386,9 +393,8 @@ export class Dispatcher {
     const m = OPEN.exec(rest) ?? (rest.split(' ').length <= 2 && sectionByWord(rest.split(' ')[0]) ? [rest, rest] : null);
     if (m) {
       const sec = sectionByWord(m[1].split(' ')[0]);
-      if (!sec) return false;
-      await act('shell.open', { section: sec });
-      return true;
+      // «покажи раздел», «открой панель голоса» — не название раздела: дальше, к примерам действий
+      if (sec) { await act('shell.open', { section: sec }); return true; }
     }
     if (/^(?:что (?:я )?(?:могу|можно) (?:сказать|говорить)|что (?:я )?(?:могу|можно)$|что (?:ты )?умеешь|помощь$)/.test(rest)) {
       this.opts.say(helpText(this.opts.section()));
@@ -396,7 +402,25 @@ export class Dispatcher {
     }
     if (/^калибровк/.test(rest)) { await act('shell.calibrate'); return true; }
     if (/^голос/.test(rest)) { await act('shell.voices'); return true; }
-    return false;
+    const a = this.bySay(rest);
+    if (!a) return false;
+    await this.runSay(a);
+    return true;
+  }
+
+  /**
+   * Реплика дословно (без обращения) совпадает с примером `say` действия, доступного сейчас, — оно исполняется
+   * без модели: «дальше», «назад» в туре. Только действия без обязательных параметров и не необратимые.
+   */
+  private bySay(rest: string): Action | undefined {
+    if (!rest) return undefined;
+    return actions(this.opts.section()).find((x) => !x.irreversible && !(x.params as { required?: unknown[] } | undefined)?.required?.length
+      && x.say?.some((s) => { const n = norm(s); return (addressed(n)?.rest ?? n) === rest; }) && x.available() === true);
+  }
+
+  private async runSay(a: Action): Promise<void> {
+    const report = await act(a.id);
+    if (report) this.opts.say(speakable(report));
   }
 }
 

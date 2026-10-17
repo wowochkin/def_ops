@@ -4,7 +4,7 @@
  * подготовка операций), карты-подложки, справочник знаков,
  * база знаний (материалы, загрузка документов, вопросы к модели),
  * ИИ (связь с моделями: штаб противника в игре, советник, база знаний). Раздел запоминается в адресе (#editor, #replay…).
- * Поверх разделов — панель голоса (voice/VoicePanel).
+ * Поверх разделов — панель голоса (voice/VoicePanel) и тур с подсветкой (voice/tour; элементы — `data-tour="…"`).
  */
 import { IN_APP, SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -22,6 +22,7 @@ import type { MapSource } from '@def-ops/core';
 import { SECTIONS, type Section } from './sections';
 import { registerShellActions } from './voice/actions/shell';
 import { VoicePanel } from './voice/VoicePanel';
+import { TourLayer } from './voice/tour';
 import { ModelPicker } from './ModelPicker';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -63,26 +64,27 @@ export function Shell() {
 
   return (
     <div className="shell">
-      <nav className="rail">
+      <nav className="rail" data-tour="rail">
         <div className="rail-logo" title="Тактическая карта">ТК</div>
         {SECTIONS.map((s) => (
-          <button key={s.id} className={`rail-btn${section === s.id ? ' on' : ''}`} onClick={() => setSection(s.id)} title={s.soon ? `${s.title} — в работе` : s.title}>
+          <button key={s.id} className={`rail-btn${section === s.id ? ' on' : ''}`} data-tour={`rail-${s.id}`} onClick={() => setSection(s.id)} title={s.soon ? `${s.title} — в работе` : s.title}>
             {ICONS[s.id]}<span>{s.id === 'modeling' ? 'Модели\u00adрование' : s.title}</span>{s.soon && <i className="rail-soon" />}
           </button>
         ))}
-        <span className={`rail-srv ${server.status}`} title={server.status === 'online' ? 'Сервер доступен' : server.status === 'offline' ? 'Сервер недоступен — работа в браузере' : 'Проверка сервера…'} />
+        <span className={`rail-srv ${server.status}`} data-tour="rail-srv" title={server.status === 'online' ? 'Сервер доступен' : server.status === 'offline' ? 'Сервер недоступен — работа в браузере' : 'Проверка сервера…'} />
       </nav>
       <div className="stage">
-        {mounted.has('editor') && <div className="pane" hidden={section !== 'editor'}><EditorView bm={bm} server={server} incoming={incoming} /></div>}
-        {mounted.has('replay') && <div className="pane" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
-        {mounted.has('modeling') && <div className="pane" hidden={section !== 'modeling'}><ModelingView llm={llm} /></div>}
+        {mounted.has('editor') && <div className="pane" data-tour="section-editor" hidden={section !== 'editor'}><EditorView bm={bm} server={server} incoming={incoming} /></div>}
+        {mounted.has('replay') && <div className="pane" data-tour="section-replay" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
+        {mounted.has('modeling') && <div className="pane" data-tour="section-modeling" hidden={section !== 'modeling'}><ModelingView llm={llm} /></div>}
         {section === 'maps' && <MapsView bm={bm} server={server} onOpenInEditor={toEditor} />}
-        {section === 'library' && <iframe className="pane lib" src="/library.html" title="Справочник знаков" />}
-        {mounted.has('knowledge') && <div className="pane" hidden={section !== 'knowledge'}><KnowledgeView llm={llm} /></div>}
+        {section === 'library' && <iframe className="pane lib" data-tour="section-library" src="/library.html" title="Справочник знаков" />}
+        {mounted.has('knowledge') && <div className="pane" data-tour="section-knowledge" hidden={section !== 'knowledge'}><KnowledgeView llm={llm} /></div>}
         {section === 'staff' && <StaffView llm={llm} />}
       </div>
       {/* голос — поверх любого раздела */}
       <VoicePanel section={section} llm={llm.settings} llmCheck={llm.check.state} />
+      <TourLayer section={section} />
     </div>
   );
 }
@@ -103,9 +105,9 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
     const fit = Math.min(Math.log2((360 * width) / (512 * Math.max(1e-6, e - w))), Math.log2((360 * height * k) / (512 * Math.max(1e-6, n - s))));
     eng.setView({ center: [(w + e) / 2, (s + n) / 2], zoom: Math.min(m.maxzoom - 1, Math.max(m.minzoom - 0.7, fit - 0.2)) });
   };
-  if (tab === 'theatres') return <div className="pane maps-pane">{tabs}<div className="maps-body"><TheatreView bm={bm} onOpenInEditor={onOpenInEditor} /></div></div>;
+  if (tab === 'theatres') return <div className="pane maps-pane" data-tour="section-maps">{tabs}<div className="maps-body"><TheatreView bm={bm} onOpenInEditor={onOpenInEditor} /></div></div>;
   return (
-    <div className="pane maps-pane">
+    <div className="pane maps-pane" data-tour="section-maps">
       {tabs}
       <div className="maps-base">
         <aside className="maps-base-side">
@@ -132,7 +134,7 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
 function StaffView({ llm }: { llm: Llm }) {
   const { settings, set, check, recheck } = llm;
   return (
-    <div className="page">
+    <div className="page" data-tour="section-staff">
       <div className="page-in narrow">
         <h2>ИИ</h2>
         <p className="lead">Немецкой стороной в игре командует языковая модель на этом компьютере (LM Studio). Игра начинается в «Переигровке»: выберите момент на шкале времени и нажмите «Принять командование». С этого хода советской стороной командуете вы, немецкой — модель, до конца операции. На каждом ходу модель получает обстановку, которую мог знать немецкий штаб: свои войска, противника в пределах разведки, итоги суток. Она отдаёт приказы, а арбитр считает их последствия так же, как исторические.</p>
