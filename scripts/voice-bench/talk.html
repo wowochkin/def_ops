@@ -265,7 +265,10 @@ $('start').onclick = async () => {
       d.querySelector('.meta').textContent = `речь ${m.audio_s} с · распознавание ${m.stt_ms} мс` + (m.turn != null ? ` · конец реплики ${m.turn}` : ' · конец по паузе') + (m.fixes.length ? ` · поправлено: ${m.fixes.join(', ')}` : '');
       botEl = null; turnMeta = { t0: performance.now() };
     }
-    else if (m.type === 'state') { if (m.state === 'thinking') setState('thinking', 'думает'); }
+    else if (m.type === 'state') {
+      if (m.state === 'thinking') setState('thinking', 'думает');
+      else if (m.state === 'done' && $('dot').className === 'thinking') setState('listen', 'слушаю');
+    }
     else if (m.type === 'assistant') {
       if (!botEl) botEl = add('bot', 'Модель', '');
       const t = botEl.querySelector('.text'); t.textContent = (t.textContent + ' ' + m.text).trim();

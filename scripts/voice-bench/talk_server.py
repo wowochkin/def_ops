@@ -140,6 +140,8 @@ CALIB_PHRASE = ("Докладываю обстановку. Восьмая гв�
 TURN_RECHECK_MS = 96  # три кадра
 PIECE_LEAD_S = 1.0  # синтез следующего куска — когда звука в запасе меньше этого
 PIECE_MAX_CHARS = 300  # кусок не длиннее (2–3 предложения)
+TAIL_FADE_S = 0.04  # затухание в конце куска синтеза
+PAUSE_AFTER = {".": 0.2, "…": 0.25, "!": 0.3, "?": 0.3, ",": 0.1, ";": 0.15, ":": 0.15}  # пауза между кусками, с
 
 
 def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
@@ -211,10 +213,10 @@ class Models:
         torch.set_num_threads(2)
         self.vad = load_silero_vad()
         try:
-            self.asr = gigaam.load_model("v3_rnnt", device="mps")
+            self.asr = gigaam.load_model(self.args.asr, device="mps")
             self._asr_file(self._silence_wav())
         except Exception:
-            self.asr = gigaam.load_model("v3_rnnt", device="cpu")
+            self.asr = gigaam.load_model(self.args.asr, device="cpu")
 
     def _silence_wav(self):
         f = Path(tempfile.gettempdir()) / "talk-warm.wav"
@@ -387,6 +389,14 @@ class Session:
         await self.send(type="calib_result", cfg=cfg, **rep)
         await self.send(type="settings", **self.cfg)
 
+    async def send_audio(self, a: np.ndarray):
+        if not len(a):
+            return
+        self.playing = True
+        sr = self.m.tts_sr
+        self.play_until = max(self.play_until, time.perf_counter() + 0.03) + len(a) / sr
+        await self.ws.send_bytes(b"\x01" + struct_rate(sr) + (np.clip(a, -1, 1) * 32767).astype("<i2").tobytes())
+
     async def barge_in(self):
         if self.response and not self.response.done():
             self.cancel.set()
@@ -432,15 +442,23 @@ class Session:
             req = urllib.request.Request(self.args.llm + "/chat/completions", data=json.dumps(body).encode(),
                                          headers={"Content-Type": "application/json"})
             cut = Sentences()
+            info = {"content": 0, "reasoning": 0, "finish": None}
+            t_req = time.perf_counter()
             try:
                 with urllib.request.urlopen(req, timeout=120) as r:
+                    info["headers_ms"] = round((time.perf_counter() - t_req) * 1000)
                     for line in r:
                         if cancel.is_set():
                             return
                         line = line.decode().strip()
                         if not line.startswith("data:") or line == "data: [DONE]":
                             continue
-                        piece = (json.loads(line[5:]).get("choices") or [{}])[0].get("delta", {}).get("content") or ""
+                        ch = (json.loads(line[5:]).get("choices") or [{}])[0]
+                        delta = ch.get("delta") or {}
+                        piece = delta.get("content") or ""
+                        info["content"] += len(piece)
+                        info["reasoning"] += len(delta.get("reasoning_content") or delta.get("reasoning") or "")
+                        info["finish"] = ch.get("finish_reason") or info["finish"]
                         if piece and "llm_first" not in times:
                             times["llm_first"] = time.perf_counter()
                         for s in cut.push(piece):
@@ -449,6 +467,13 @@ class Session:
                 for s in cut.rest():
                     times.setdefault("sentence", time.perf_counter())
                     self.loop.call_soon_threadsafe(q.put_nowait, s)
+                first = round((times["llm_first"] - t_req) * 1000) if "llm_first" in times else None
+                print(f"LLM: ответ {info['content']} зн., рассуждение {info['reasoning']} зн., finish={info['finish']}, "
+                      f"заголовки {info.get('headers_ms')} мс, первый текст {first} мс, всего {round((time.perf_counter() - t_req) * 1000)} мс")
+                if "sentence" not in times and not cancel.is_set():  # ни одной фразы — сказать нечего
+                    why = (f"модель только рассуждала ({info['reasoning']} зн.) и не дошла до ответа" if info["reasoning"]
+                           else "модель вернула пустой ответ")
+                    self.loop.call_soon_threadsafe(q.put_nowait, RuntimeError(f"{why}, finish={info['finish']} — повторите вопрос"))
             except Exception as e:
                 self.loop.call_soon_threadsafe(q.put_nowait, RuntimeError(str(e)))
             finally:
@@ -501,17 +526,25 @@ class Session:
                         self.loop.call_soon_threadsafe(chunks.put_nowait, None)
 
                 fut = self.loop.run_in_executor(self.m.mlx, tts)
+                sr = self.m.tts_sr
+                hold = np.zeros(0, np.float32)  # последние TAIL_FADE_S куска: на конце куска их плавно гасим
                 while (a := await chunks.get()) is not None:
                     if "audio" not in times:
                         times["audio"] = time.perf_counter()
                         ms = lambda k: round((times[k] - t_end) * 1000) if k in times else None
                         await self.send(type="latency", stt_llm_first=ms("llm_first"), first_sentence=ms("sentence"),
                                         first_audio=ms("audio"))
-                    self.playing = True
-                    now = time.perf_counter()
-                    self.play_until = max(self.play_until, now + 0.03) + len(a) / self.m.tts_sr
-                    await self.ws.send_bytes(b"\x01" + struct_rate(self.m.tts_sr) + (np.clip(a, -1, 1) * 32767).astype("<i2").tobytes())
+                    a = np.concatenate([hold, a])
+                    n = max(0, len(a) - int(TAIL_FADE_S * sr))
+                    a, hold = a[:n], a[n:]
+                    await self.send_audio(a)
                 await fut
+                # конец куска: синтез обрывает последний звук резко — гасим его и ставим паузу по знаку в конце
+                if len(hold):
+                    hold = hold * (0.5 + 0.5 * np.cos(np.linspace(0, np.pi, len(hold)))).astype(np.float32)
+                last = not pending and done
+                pause = 0.0 if last else PAUSE_AFTER.get(s.rstrip("»\")) ")[-1:], PAUSE_AFTER["."])
+                await self.send_audio(np.concatenate([hold, np.zeros(int(pause * sr), np.float32)]))
                 spoken.append(s)
         except asyncio.CancelledError:
             cancel.set()
@@ -538,6 +571,8 @@ def main():
     ap.add_argument("--ref", help="образец из refs.json")
     ap.add_argument("--vad", type=float, default=0.5, help="порог речи Silero, пока модель молчит")
     ap.add_argument("--barge-vad", dest="barge_vad", type=float, default=0.8, help="порог речи, пока модель говорит (перебивание)")
+    ap.add_argument("--asr", default="v3_e2e_rnnt",
+                    help="модель GigaAM: v3_e2e_rnnt — с пунктуацией и заглавными, v3_rnnt — строчными без знаков")
     ap.add_argument("--end-ms", dest="end_ms", type=int, default=400, help="тишина до проверки конца реплики")
     ap.add_argument("--max-silence-ms", dest="max_silence_ms", type=int, default=1500, help="тишина — реплика кончилась в любом случае")
     ap.add_argument("--turn", type=float, default=0.5, help="порог Smart Turn")
