@@ -215,7 +215,7 @@ $('start').onclick = async () => {
     let perm = null;  // где сохранён запрет: в браузере (denied) или в macOS (браузер готов спросить, но система не даёт)
     try { perm = (await navigator.permissions.query({ name: 'microphone' })).state; } catch (_) {}
     const why = {
-      NotAllowedError: perm === 'denied'
+      NotAllowedError: perm === 'denied' && !/system/i.test(e.message)
         ? 'запрет сохранён в самом браузере, поэтому он не спрашивает. Нажмите значок слева от адреса и разрешите микрофон '
           + '(в Arc ещё проверьте arc://settings/content/microphone: «Сайты могут запрашивать доступ» и нет ли localhost в «Запрещено»), затем обновите страницу.'
         : 'браузер готов спросить, но macOS не даёт ему микрофон (система спрашивает приложение один раз; после отказа молчит). '
@@ -225,7 +225,7 @@ $('start').onclick = async () => {
       NotReadableError: 'микрофон занят другой программой или недоступен системе — закройте её или перезапустите браузер.',
       OverconstrainedError: 'выбранный микрофон не поддерживает нужные настройки — выберите другой в настройках сайтов браузера.',
     }[e.name] || e.message;
-    return sys(`Микрофон не подключился (${e.name}): ${why}`);
+    return sys(`Микрофон не подключился (${e.name}: «${e.message}», разрешение сайта: ${perm ?? 'неизвестно'}): ${why}`);
   }
   micCtx = new AudioContext(); playCtx = new AudioContext();
   await micCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([worklet], { type: 'text/javascript' })));
