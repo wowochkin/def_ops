@@ -73,7 +73,7 @@ let stopping = false, ready = false;
 // Голос (Python) — после остальных сервисов и необязателен: нет окружения или сервис упал — приложение работает без него;
 // запуск не ждём, готовность шлюза от него не зависит. Папка сервиса: --voice-dir, DEFOPS_VOICE_DIR, иначе services/voice.
 let voice = null;
-startVoice({ repo, data, voiceDir: resolve(opt('voice-dir', process.env.DEFOPS_VOICE_DIR || join(repo, 'services/voice'))), log: (s) => process.stderr.write(s + '\n') })
+startVoice({ repo, data, voiceDir: resolve(opt('voice-dir', process.env.DEFOPS_VOICE_DIR || join(repo, 'services/voice'))), log: (s) => process.stderr.write(s + '\n'), isStopping: () => stopping })
   .then((v) => { voice = v; if (stopping) v.stop(); })
   .catch((e) => process.stderr.write(`[voice] не запущен: ${e.message}\n`));
 function stop(code = 0) { if (stopping) return; stopping = true; procs.forEach((p) => p.kill('SIGTERM')); voice?.stop(); setTimeout(() => process.exit(code), 500); }

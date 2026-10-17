@@ -32,10 +32,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Запуск голоса. Возвращает управление сразу после выбора плана — дальше сервис опрашивается в фоне.
- * @param {{ repo: string, data: string, voiceDir: string, log?: (s: string) => void }} o
+ * @param {{ repo: string, data: string, voiceDir: string, log?: (s: string) => void, isStopping?: () => boolean }} o
  * @returns {Promise<{ stop: () => void }>}
  */
-export async function startVoice({ repo, data, voiceDir, log = () => {} }) {
+export async function startVoice({ repo, data, voiceDir, log = () => {}, isStopping = () => false }) {
   const dir = join(data, 'voice');
   mkdirSync(dir, { recursive: true });
   const stateFile = join(dir, 'state.json');
@@ -45,27 +45,29 @@ export async function startVoice({ repo, data, voiceDir, log = () => {} }) {
   };
   const python = join(voiceDir, '.venv', 'bin', 'python');
   const plan = voicePlan({ python: existsSync(python), portAnswers: (await health()) !== null });
-  let stopping = false, child = null;
+  let stopped = false, child = null;
+  const stopping = () => stopped || isStopping();
   const stop = () => {
-    stopping = true;
+    stopped = true;
     const c = child;
     if (!c) return;
     c.kill('SIGTERM');
     // не вышел за 300 мс (родитель выходит через 500) — добиваем, чтобы Python не остался сиротой
     setTimeout(() => { if (c.exitCode === null && c.signalCode === null) c.kill('SIGKILL'); }, 300);
   };
+  if (stopping()) return { stop }; // приложение уже останавливается — ничего не запускаем
   if (plan === 'off') { write('off'); log('голос выключен: нет окружения'); return { stop }; }
 
   // опрос /health раз в секунду, пока не ready/error или пока жив запущенный процесс (не дольше 5 мин)
   const poll = async (alive) => {
     const until = Date.now() + HEALTH_WAIT_MS;
-    while (!stopping && alive() && Date.now() < until) {
+    while (!stopping() && alive() && Date.now() < until) {
       const h = await health();
       if (h?.state === 'ready') { write('ready'); return true; }
       if (h?.state === 'error') { write('error', h.error ?? 'голос не запустился'); return false; }
       await sleep(1000);
     }
-    if (!stopping && alive()) write('error', 'голос не ответил за 5 минут');
+    if (!stopping() && alive()) write('error', 'голос не ответил за 5 минут');
     return false;
   };
 
@@ -87,14 +89,14 @@ export async function startVoice({ repo, data, voiceDir, log = () => {} }) {
       if (gone) return;
       gone = true;
       alive = false;
-      if (stopping) return;
+      if (stopping()) return;
       // сервис, дошедший до ready, начинает счёт перезапусков заново
       const n = becameReady ? 0 : restarts;
       const delay = restartDelay(n);
       if (delay === null) { write('error', `голос остановился (код ${code})`); log(`[voice] остановился (код ${code}), перезапуски исчерпаны`); return; }
       write('loading', 'голос остановился, перезапускаю');
       log(`[voice] остановился (код ${code}), перезапуск через ${delay / 1000} с`);
-      setTimeout(() => { if (!stopping) run(n + 1); }, delay);
+      setTimeout(() => { if (!stopping()) run(n + 1); }, delay);
     };
     void poll(() => alive).then((ok) => { if (ok && alive) becameReady = true; });
   };
