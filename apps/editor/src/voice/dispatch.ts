@@ -9,6 +9,7 @@ import stopFile from '../../../../services/voice/stop_words.json';
 import { SECTIONS } from '../sections';
 import type { ModelReply } from './llm';
 import { act, actions, type Action } from './registry';
+import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
 export const CONVERSATION_S = 12;
@@ -19,9 +20,6 @@ export const MODEL_DOWN_MS = 3 * 60_000;
 export const STOP_WORDS: string[] = stopFile.stop;
 const STOP_SET = new Set(STOP_WORDS);
 export const HELP_MAX = 7;
-
-/** Нижний регистр, без знаков препинания, «ё» → «е», пробелы сжаты. */
-const norm = (s: string) => s.toLowerCase().replace(/ё/g, 'е').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 
 const ADDRESS = ['товарищ полковник', 'товарищ генерал', 'штаб', 'штап'];
 
@@ -52,19 +50,6 @@ const sectionByWord = (w: string): string | null => {
 
 /** Родственные слова, которыми раздел тоже называют: понимаются, но в ответе поправляются на название. */
 const RELATED: Record<string, string> = { переиграть: 'replay', переиграй: 'replay', переиграйте: 'replay', переиграем: 'replay' };
-
-/** Расстояние Левенштейна между словами. */
-function lev(a: string, b: string): number {
-  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= a.length; i++) {
-    const cur = [i];
-    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    prev = cur;
-  }
-  return prev[b.length];
-}
-/** Допуск на ошибку распознавания: короткие слова — только точно, длинные — до двух правок. */
-const tolerance = (len: number) => (len <= 4 ? 0 : len <= 7 ? 1 : 2);
 
 /** Раздел по слову с поправкой на огрехи; word — как сказано, canon — каноничное написание (null, если сказано точно). */
 function fuzzySection(w: string): { id: string; canon: string | null } | null {
