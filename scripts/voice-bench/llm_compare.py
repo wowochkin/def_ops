@@ -97,7 +97,8 @@ def checks(prompt, r):
         "thinking": r["reasoning"] > 0,
     }
     if prompt.get("expect_tool"):
-        ok = any(x["name"] == prompt["expect_tool"] and prompt["expect_arg"].lower() in x["args"].lower() for x in r["calls"])
+        want = prompt["expect_arg"] if isinstance(prompt["expect_arg"], list) else [prompt["expect_arg"]]
+        ok = any(x["name"] == prompt["expect_tool"] and any(w.lower() in x["args"].lower() for w in want) for x in r["calls"])
         c["tool_ok"] = ok
     return c
 
