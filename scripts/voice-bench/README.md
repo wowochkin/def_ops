@@ -21,7 +21,7 @@
 
 ```bash
 cd scripts/voice-bench
-./setup.sh                                  # окружения (uv, ffmpeg)
+./setup.sh                                  # окружения (uv, ffmpeg); с T-one — ./setup.sh --tone
 ./prepare_ref.sh ~/Downloads/<запись>.mp3   # образцы в ref/
 
 # 1. синтез: все движки (около 15–30 мин, первый раз дольше — скачивание моделей, ~40 ГБ)
