@@ -137,6 +137,9 @@ CALIB_PHRASE = ("Докладываю обстановку. Восьмая гв�
                 "противник контратакует резервами из глубины.")
 
 
+TURN_RECHECK_MS = 96  # три кадра
+
+
 def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
     """Пороги по замерам уверенности VAD (0–1) на четырёх шагах: noise — тишина, speech — голос человека,
     echo — голос модели из динамиков (человек молчит), over — модель говорит, человек её перебивает.
@@ -279,7 +282,7 @@ class Session:
         self.buf = np.zeros(0, np.float32)
         self.in_speech = False
         self.speech_ms = self.silence_ms = 0.0
-        self.turn_checked = False
+        self.turn_next = 0.0  # тишина (мс), с которой снова спросить Smart Turn
         self.response: asyncio.Task | None = None
         self.cancel = threading.Event()
         self.playing = False  # браузер ещё играет ответ
@@ -323,7 +326,7 @@ class Session:
         if not self.in_speech:
             self.pre = np.concatenate([self.pre, frame])[-int(0.3 * SR_IN):]
             if speech:
-                self.in_speech, self.speech_ms, self.silence_ms, self.turn_checked = True, 32.0, 0.0, False
+                self.in_speech, self.speech_ms, self.silence_ms, self.turn_next = True, 32.0, 0.0, 0.0
                 self.barged = False
                 self.audio = np.concatenate([self.pre, frame])
                 await self.send(type="vad", state="speech")
@@ -332,7 +335,7 @@ class Session:
         if speech:
             self.speech_ms += 32
             self.silence_ms = 0
-            self.turn_checked = False
+            self.turn_next = 0.0
             # перебивание: человек говорит дольше порога, пока модель отвечает
             if busy and not self.barged and self.speech_ms >= c["barge_ms"]:
                 self.barged = True
@@ -343,8 +346,10 @@ class Session:
             self.in_speech = False
             await self.send(type="vad", state="silence")
             return
-        if self.silence_ms >= c["end_ms"] and not self.turn_checked:
-            self.turn_checked = True
+        # конец реплики: после паузы end_ms спрашиваем Smart Turn и, пока он считает фразу незаконченной,
+        # переспрашиваем каждые ~0,1 с (иначе при короткой паузе ответ ждал бы max_silence_ms)
+        if self.silence_ms >= max(c["end_ms"], self.turn_next):
+            self.turn_next = self.silence_ms + TURN_RECHECK_MS
             prob = await self.loop.run_in_executor(self.m.mlx, self.m.turn_complete, self.audio)
             await self.send(type="turn", prob=round(prob, 2))
             if prob >= a.turn:
