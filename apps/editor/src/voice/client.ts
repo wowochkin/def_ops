@@ -66,6 +66,12 @@ export class VoiceClient {
   private nextId: number = VOICE_SAY_IDS.first;
   private starting: Promise<void> | null = null;
   private cancelled = new CancelledIds();
+  /** Голос включён человеком; выключен — микрофон закрыт и сам не открывается. */
+  private enabled = true;
+  /** Микрофон был открыт к выключению — включение открывает его снова. */
+  private micBeforeOff = false;
+  /** Звук калибровки (id 0) ждём: шаг «голос штаба» или «перебивание» начат и не отменён. */
+  private calibSound = false;
 
   private micCtx: AudioContext | null = null;
   private playCtx: AudioContext | null = null;
@@ -131,9 +137,31 @@ export class VoiceClient {
     if (!this.ws && !this.timer) this.open();
   }
 
-  /** Микрофон и подключение к сервису. Ошибка микрофона — с разбором причины. */
+  /**
+   * Выключить или включить голос. Выключение: микрофон закрыт (дорожки остановлены) и сам не переподключается,
+   * звук штаба и все фразы остановлены (`finishSpeech` — фразы договариваются: ответ на «Штаб, отбой»);
+   * связь с сервисом остаётся — он не выгружается, включение мгновенное. Включение: снова микрофон, если он был
+   * открыт к выключению (иначе его откроет `start()`, когда сервис ответит).
+   */
+  setEnabled(on: boolean, opts: { finishSpeech?: boolean } = {}): Promise<void> {
+    if (on === this.enabled) return Promise.resolve();
+    this.enabled = on;
+    if (!on) {
+      this.micBeforeOff = this.micCtx !== null || this.starting !== null;
+      this.calibSound = false;
+      this.stopPlayback(0);
+      if (!opts.finishSpeech) this.stop();
+      this.closeMic();
+      return Promise.resolve();
+    }
+    const again = this.micBeforeOff;
+    this.micBeforeOff = false;
+    return again ? this.start(this.hello) : Promise.resolve();
+  }
+
+  /** Микрофон и подключение к сервису. Ошибка микрофона — с разбором причины. Голос выключен — без микрофона. */
   start(hello: Partial<VoiceSettings> = {}): Promise<void> {
-    if (this.micCtx) return Promise.resolve();
+    if (this.micCtx || !this.enabled) return Promise.resolve();
     // одновременные вызовы делят одну попытку
     this.starting ??= this.doStart(hello).finally(() => { this.starting = null; });
     return this.starting;
@@ -148,12 +176,24 @@ export class VoiceClient {
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
       });
     } catch (e) { throw await micDenied(e); }
+    if (!this.enabled) {  // выключили, пока браузер давал микрофон: не держим его
+      this.stream.getTracks().forEach((t) => t.stop());
+      this.stream = null;
+      return;
+    }
     try {
       const micCtx = new AudioContext();
       this.micCtx = micCtx;
-      this.playCtx = new AudioContext();
+      this.playCtx ??= new AudioContext();  // после выключения голоса звук штаба — в прежнем
       const url = URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' }));
       try { await micCtx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+      // выключили, пока готовилась обработка звука: микрофон уже закрыт, связь с сервисом не трогаем;
+      // успели включить снова — эта попытка пропала, открываем микрофон заново
+      if (!this.enabled || this.micCtx !== micCtx) {
+        if (this.micCtx === micCtx) this.closeMic();
+        else void micCtx.close().catch(() => {});
+        return this.enabled ? this.doStart(hello) : undefined;
+      }
       const node = new AudioWorkletNode(micCtx, 'mic');
       micCtx.createMediaStreamSource(this.stream).connect(node);
       node.port.onmessage = (e: MessageEvent<{ pcm: ArrayBuffer; peak: number }>) => {
@@ -175,15 +215,21 @@ export class VoiceClient {
     this.ws = null;
     if (old) { old.onopen = old.onmessage = old.onclose = old.onerror = null; old.close(); }
     this.stopPlayback();
-    this.stream?.getTracks().forEach((t) => t.stop());
-    void this.micCtx?.close();
+    this.closeMic();
     void this.playCtx?.close();
-    this.stream = null; this.micCtx = null; this.playCtx = null;
+    this.playCtx = null;
     this.ready = false;
     this.failed = false;
     this.fails = 0;
     this.serviceError = null;
     this.setWs('closed');
+  }
+
+  /** Закрыть микрофон: дорожки остановлены (система гасит значок микрофона), обработка звука закрыта. */
+  private closeMic() {
+    this.stream?.getTracks().forEach((t) => t.stop());
+    void this.micCtx?.close();
+    this.stream = null; this.micCtx = null;
   }
 
   private url(): string {
@@ -275,7 +321,10 @@ export class VoiceClient {
     this.send({ type: 'settings', ...cfg });
   }
 
+  /** Шаг калибровки. Отмена гасит звук калибровки — и тот, что придёт позже (сервис мог ещё готовить его). */
   calib(step: CalibStep, sec?: number) {
+    this.calibSound = step === 'echo' || step === 'over';
+    if (step === 'cancel') this.stopPlayback(0);
     this.send(sec === undefined ? { type: 'calib', step } : { type: 'calib', step, sec });
   }
 
@@ -291,7 +340,7 @@ export class VoiceClient {
     let a;
     try { a = parseAudio(buf); } catch { return; }
     // id 0 — тестовая фраза калибровки: не фраза `say`, отмены и `played` её не касаются
-    if (!a.pcm.length || (a.id !== 0 && this.cancelled.has(a.id))) return;
+    if (!a.pcm.length || (a.id !== 0 && this.cancelled.has(a.id)) || (a.id === 0 && !this.calibSound)) return;
     void ctx.resume();
     const ab = ctx.createBuffer(1, a.pcm.length, a.rate);
     const ch = ab.getChannelData(0);

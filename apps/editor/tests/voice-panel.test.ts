@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  FEED_MAX, NOT_INSTALLED, UNSUPPORTED, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseSettings, type FeedItem, type PanelInput,
+  ENABLED_KEY, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
 } from '../src/voice/panel-state';
 
 const base: PanelInput = { status: 'ready', speaking: false, listening: false, thinking: false, conversation: false };
@@ -32,9 +32,22 @@ describe('panelState', () => {
     expect(panelState({ ...base, status: 'off', micError: 'нет' }).key).toBe('off');
   });
 
+  it('голос выключен человеком — «Голос выключен», что бы ни было с сервисом и микрофоном', () => {
+    expect(VOICE_DISABLED).toBe('Голос выключен');
+    expect(panelState({ ...base, enabled: false })).toEqual({ key: 'disabled', text: 'Голос выключен' });
+    for (const k of [{ status: 'off' }, { status: 'error' }, { status: 'loading' }, { status: 'reconnecting' }, { micError: 'нет' },
+      { busy: 'Калибровка' }, { speaking: true }, { listening: true }, { thinking: true }, { conversation: true }] as Partial<PanelInput>[])
+      expect(panelState({ ...base, ...k, enabled: false }).key).toBe('disabled');
+    // голоса в этой версии нет — панели нет вовсе, выключать нечего
+    expect(panelState({ ...base, status: 'unsupported', enabled: false }).key).toBe('unsupported');
+    // по умолчанию — включён
+    expect(panelState(base).key).toBe('idle');
+    expect(panelState({ ...base, enabled: true }).key).toBe('idle');
+  });
+
   it('в словах состояния нет технических терминов', () => {
     const keys: Partial<PanelInput>[] = [{ status: 'off' }, { status: 'unsupported' }, { status: 'error' }, { status: 'loading' }, { status: 'reconnecting' },
-      { speaking: true }, { listening: true }, { thinking: true }, { conversation: true }, {}];
+      { speaking: true }, { listening: true }, { thinking: true }, { conversation: true }, { enabled: false }, {}];
     for (const k of keys) expect(panelState({ ...base, ...k }).text).not.toMatch(/VAD|Smart Turn|порог|WebSocket/i);
   });
 });
@@ -83,5 +96,15 @@ describe('лента', () => {
     for (let i = 0; i < FEED_MAX + 5; i++) f = feedAdd(f, { key: `n${i}`, kind: 'note', text: String(i) });
     expect(f).toHaveLength(FEED_MAX);
     expect(f[0].text).toBe('5');
+  });
+});
+
+describe('parseEnabled', () => {
+  it('включён, пока человек не выключил; выключение — только «false»', () => {
+    expect(ENABLED_KEY).toBe('def_ops.voice.enabled');
+    expect(parseEnabled(null)).toBe(true);
+    expect(parseEnabled('true')).toBe(true);
+    expect(parseEnabled('false')).toBe(false);
+    expect(parseEnabled('мусор')).toBe(true);
   });
 });

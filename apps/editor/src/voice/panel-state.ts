@@ -3,6 +3,13 @@
 import type { VoiceSettings, VoiceStatus } from './protocol';
 
 export const SETTINGS_KEY = 'def_ops.voice.settings';
+/** Голос выключен человеком (кнопка или «Штаб, отбой»): 'false'; включён — 'true' или ключа нет. */
+export const ENABLED_KEY = 'def_ops.voice.enabled';
+
+/** Сохранённое «голос включён»: выключен только явным 'false' — мусор и пусто считаются «включён». */
+export function parseEnabled(raw: string | null): boolean {
+  return raw !== 'false';
+}
 /** Значения сервиса по умолчанию (services/voice/server.py): «По умолчанию» в тонкой настройке. */
 export const DEFAULT_SETTINGS: VoiceSettings = { vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400 };
 
@@ -25,11 +32,13 @@ export function parseSettings(raw: string | null): Partial<VoiceSettings> {
   return out;
 }
 
-export type PanelKey = 'off' | 'unsupported' | 'loading' | 'reconnecting' | 'error' | 'mic' | 'busy'
+export type PanelKey = 'off' | 'unsupported' | 'disabled' | 'loading' | 'reconnecting' | 'error' | 'mic' | 'busy'
   | 'speaking' | 'listening' | 'thinking' | 'conversation' | 'idle';
 
 export interface PanelInput {
   status: VoiceStatus;
+  /** false — человек выключил голос (микрофон закрыт); по умолчанию включён */
+  enabled?: boolean;
   micError?: string | null;
   /** калибровка или запись голоса — разговор стоит */
   busy?: string | null;
@@ -42,10 +51,13 @@ export interface PanelInput {
 export const NOT_INSTALLED = 'Голос не установлен: services/voice/setup.sh';
 /** Установленная программа, браузер, не Mac на Apple Silicon: голоса в этой версии нет — значок не показывается. */
 export const UNSUPPORTED = 'Голос в этой версии недоступен';
+export const VOICE_DISABLED = 'Голос выключен';
 
 /** Состояние панели простыми словами (цвет значка — по `key`). */
 export function panelState(s: PanelInput): { key: PanelKey; text: string } {
   if (s.status === 'unsupported') return { key: 'unsupported', text: UNSUPPORTED };
+  // выключил сам человек — важнее любых сбоев: микрофон и не нужен
+  if (s.enabled === false) return { key: 'disabled', text: VOICE_DISABLED };
   if (s.status === 'off') return { key: 'off', text: NOT_INSTALLED };
   if (s.status === 'error') return { key: 'error', text: 'Голос не запустился — перезапустите программу' };
   if (s.micError) return { key: 'mic', text: 'Микрофон не подключился' };

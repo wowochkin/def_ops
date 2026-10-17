@@ -123,7 +123,11 @@ if (!existsSync(join(BENCH, 'ref/zhukov-10s.wav'))) {
   seed = join(tmp, 'seed');
   mkdirSync(join(seed, 'ref'), { recursive: true });
   speechWav(join(seed, 'ref/zhukov-10s.wav'));
-  writeFileSync(join(seed, 'refs.json'), JSON.stringify({ refs: { 'zhukov-10s': { file: 'ref/zhukov-10s.wav', text: 'Образец для проверки.' } } }));
+  speechWav(join(seed, 'ref/zhukov-14s.wav'));  // второй образец — проба одного голоса, затем другого
+  writeFileSync(join(seed, 'refs.json'), JSON.stringify({ refs: {
+    'zhukov-10s': { file: 'ref/zhukov-10s.wav', text: 'Образец для проверки.' },
+    'zhukov-14s': { file: 'ref/zhukov-14s.wav', text: 'Второй образец для проверки.' },
+  } }));
 }
 
 const vport = await freePort();
@@ -165,6 +169,48 @@ await ctx.addInitScript((url) => {
   localStorage.setItem('def_ops.voice.url', url);
   localStorage.setItem('def_ops.section', 'editor');
 }, `ws://127.0.0.1:${vport}/ws`);
+// наблюдение за окном (на каждой загрузке): сообщения сервиса, звук по номерам фраз (кусок звука сервиса →
+// источник звука окна), дорожки микрофона и сколько раз его просили
+await ctx.addInitScript(() => {
+  const e2e = { msgs: [], sent: [], sources: [], tracks: [], gum: 0 };
+  window.__e2e = e2e;
+  let cur = null;
+  const Ws = window.WebSocket;
+  window.WebSocket = class extends Ws {
+    set onmessage(f) {
+      super.onmessage = f && ((e) => {
+        if (typeof e.data === 'string') { try { e2e.msgs.push(JSON.parse(e.data)); } catch { /* */ } }
+        else if (e.data.byteLength >= 5) cur = new DataView(e.data).getUint32(1, true);
+        try { return f.call(this, e); } finally { cur = null; }
+      });
+    }
+    get onmessage() { return super.onmessage; }
+    send(d) {
+      if (typeof d === 'string') { try { e2e.sent.push(JSON.parse(d)); } catch { /* */ } }
+      return super.send(d);
+    }
+  };
+  const start = AudioBufferSourceNode.prototype.start;
+  const stop = AudioBufferSourceNode.prototype.stop;
+  AudioBufferSourceNode.prototype.start = function (...a) {
+    const rec = { id: cur, on: true };
+    this.__rec = rec;
+    e2e.sources.push(rec);
+    this.addEventListener('ended', () => { rec.on = false; });
+    return start.apply(this, a);
+  };
+  AudioBufferSourceNode.prototype.stop = function (...a) { if (this.__rec) this.__rec.on = false; return stop.apply(this, a); };
+  /** Номера фраз, звук которых играет или ждёт очереди (0 — звук калибровки). */
+  e2e.playing = () => [...new Set(e2e.sources.filter((s) => s.on).map((s) => s.id))];
+  /** Звучащие пробы голоса (номера из отправленных `voice preview`). */
+  e2e.previews = () => { const ids = e2e.sent.filter((m) => m.op === 'preview').map((m) => m.id); return e2e.playing().filter((id) => ids.includes(id)); };
+  const md = navigator.mediaDevices;
+  if (md?.getUserMedia) {
+    const gum = md.getUserMedia.bind(md);
+    md.getUserMedia = async (c) => { e2e.gum++; const st = await gum(c); e2e.tracks.push(...st.getTracks()); return st; };
+  }
+  e2e.trackStates = () => e2e.tracks.map((t) => t.readyState);
+});
 // шлюза нет — состояние голоса отвечаем за него; --no-stub — шлюз молчит (сервис как будто запущен вручную)
 if (STUB) await ctx.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
 ok(STUB ? 'ответ шлюза /api/voice подставлен' : 'шлюза нет (/api/voice не отвечает)');
@@ -377,6 +423,152 @@ if (passed) {
   await shot('voice-voices.jpg');
   await fail('запись по --fake не прошла проверку — проба и сохранение не проверены');
 }
+
+const previews = () => page.evaluate(() => window.__e2e.previews());
+/**
+ * Прослушать (btn) и дождаться, что проба звучит; вернуть её номер. Поддельный микрофон «говорит» каждые 5,5 с —
+ * сервис может принять это за перебивание и оборвать пробу сразу: тогда пробуем ещё раз.
+ */
+async function playPreview(btn) {
+  for (let i = 0; i < 4; i++) {
+    await btn.click();
+    const id = await page.evaluate(() => window.__e2e.sent.filter((m) => m.op === 'preview').at(-1)?.id);
+    try {
+      await page.waitForFunction((x) => window.__e2e.previews().includes(x), id, { timeout: 5000, polling: 20 });
+      await page.waitForTimeout(100);
+      if (await page.evaluate((x) => window.__e2e.previews().includes(x), id)) return id;
+    } catch { /* перебита или не пришла — ещё раз */ }
+  }
+  throw new Error('проба не звучит');
+}
+async function silentWithin(ms, what) {
+  try {
+    await page.waitForFunction(() => !window.__e2e.previews().length, null, { timeout: ms, polling: 20 });
+  } catch { throw new Error(`${what}: звук не прекратился за ${ms} мс (звучат пробы ${JSON.stringify(await previews())})`); }
+}
+/** Сервис остановил фразу: `say-done stopped` (или перебивание — тоже остановка). */
+const serviceStopped = (id) => page.waitForFunction(
+  (x) => window.__e2e.msgs.some((m) => m.id === x && ((m.type === 'say-done' && m.stopped) || m.type === 'barge')), id, { timeout: 3000 },
+).catch(() => { throw new Error(`сервис не остановил пробу ${id} (нет say-done stopped)`); });
+
+await check('голоса: проба одного голоса, затем другого — звучит только вторая', async () => {
+  const dlg = page.locator('.vp-dialog.voices');
+  const rows = dlg.locator('.vp-voice');
+  if ((await rows.count()) < 2) throw new Error(`образцов меньше двух: ${await rows.count()}`);
+  const a = await playPreview(rows.nth(0).getByRole('button', { name: 'Прослушать' }));
+  const b = await playPreview(rows.nth(1).getByRole('button', { name: 'Прослушать' }));
+  try {
+    await page.waitForFunction((x) => !window.__e2e.previews().includes(x), a, { timeout: 1000, polling: 20 });
+  } catch { throw new Error(`проба ${a} звучит вместе с новой ${b}`); }
+  await serviceStopped(a);
+  const p = await previews();
+  if (p.some((id) => id !== b)) throw new Error(`звучат пробы ${JSON.stringify(p)}, а должна только ${b}`);
+  return `прервана ${a}, звучит ${b}`;
+});
+
+await check('голоса: закрыть окно во время пробы — звук прекращён', async () => {
+  const dlg = page.locator('.vp-dialog.voices');
+  const a = await playPreview(dlg.locator('.vp-voice').nth(0).getByRole('button', { name: 'Прослушать' }));
+  await dlg.getByRole('button', { name: 'Закрыть' }).click();
+  await dlg.waitFor({ state: 'hidden', timeout: 3000 });
+  await silentWithin(1000, 'окно закрыто');
+  await serviceStopped(a);
+});
+
+await check('голоса: начать запись нового голоса — проба остановлена', async () => {
+  await panel.getByRole('button', { name: 'Голоса' }).click();
+  const dlg = page.locator('.vp-dialog.voices');
+  await dlg.waitFor({ state: 'visible', timeout: 3000 });
+  await playPreview(dlg.locator('.vp-voice').nth(0).getByRole('button', { name: 'Прослушать' }));
+  await dlg.getByRole('button', { name: 'Записать новый голос' }).click();
+  await dlg.getByRole('button', { name: 'Начать запись' }).click();
+  await silentWithin(1000, 'запись началась');
+  await dlg.getByRole('button', { name: 'Закончить запись' }).click();
+  await dlg.locator('.vp-check').waitFor({ timeout: 20000 });
+  await dlg.getByRole('button', { name: /Не сохранять|Отмена/ }).click();
+  await dlg.getByRole('button', { name: 'Закрыть' }).click();
+  await dlg.waitFor({ state: 'hidden', timeout: 3000 });
+});
+
+await check('калибровка: закрыть окно во время голоса штаба — звук прекращён', async () => {
+  await panel.getByRole('button', { name: 'Калибровка' }).click();
+  await calibSteps(1, 2);
+  await calibDlg.getByText('шаг 3 из 4').waitFor({ timeout: 40000 });
+  await calibDlg.getByRole('button', { name: 'Записать' }).click();
+  await page.waitForFunction(() => window.__e2e.playing().includes(0), null, { timeout: 15000, polling: 20 });
+  await calibDlg.getByRole('button', { name: 'Отмена' }).click();
+  await calibDlg.waitFor({ state: 'hidden', timeout: 3000 });
+  try {
+    await page.waitForFunction(() => !window.__e2e.playing().includes(0), null, { timeout: 1000, polling: 20 });
+  } catch { throw new Error('звук калибровки не прекратился за 1000 мс'); }
+});
+
+await check('калибровка: закрыть окно, пока голос штаба готовится, — он не зазвучит потом', async () => {
+  await panel.getByRole('button', { name: 'Калибровка' }).click();
+  await calibSteps(1, 2);
+  await calibDlg.getByText('шаг 3 из 4').waitFor({ timeout: 40000 });
+  const n = await page.evaluate(() => window.__e2e.sources.length);
+  await calibDlg.getByRole('button', { name: 'Записать' }).click();
+  await calibDlg.getByRole('button', { name: 'Отмена' }).click();
+  await calibDlg.waitFor({ state: 'hidden', timeout: 3000 });
+  await page.waitForTimeout(2000);
+  const late = await page.evaluate((k) => window.__e2e.sources.slice(k).filter((s) => s.id === 0 && s.on).length, n);
+  if (late) throw new Error(`после закрытия звучит кусков калибровки: ${late}`);
+});
+
+const micOff = async (what) => {
+  try {
+    await page.waitForFunction(() => { const t = window.__e2e.trackStates(); return t.length > 0 && t.every((s) => s === 'ended'); }, null, { timeout: 3000 });
+  } catch { throw new Error(`${what}: дорожки микрофона ${JSON.stringify(await page.evaluate(() => window.__e2e.trackStates()))}`); }
+};
+const micOn = () => page.waitForFunction(() => window.__e2e.trackStates().includes('live'), null, { timeout: 15000 });
+const LIVE = /Жду обращения|Слушаю|Думаю|Говорит|Разговор/;
+
+await check('кнопка «Выключить голос»: микрофон освобождён, «Голос выключен»', async () => {
+  await panel.getByRole('button', { name: 'Выключить голос' }).click();
+  await panel.locator('.vp-state', { hasText: 'Голос выключен' }).waitFor({ timeout: 3000 });
+  await micOff('после выключения');
+  const saved = await page.evaluate(() => localStorage.getItem('def_ops.voice.enabled'));
+  if (saved !== 'false') throw new Error(`def_ops.voice.enabled = ${saved}`);
+  await page.waitForTimeout(2500);
+  const gum = await page.evaluate(() => window.__e2e.gum);
+  await micOff('через 2,5 с');
+  if (await panel.getByRole('button', { name: 'Калибровка' }).isEnabled()) throw new Error('калибровка доступна при выключенном голосе');
+  await plainWords(panel.locator('.vp-card'), 'панель при выключенном голосе');
+  await shot('voice-panel-off.jpg');
+  return `микрофон просили ${gum} раз`;
+});
+
+await check('перезагрузка: голос остаётся выключенным, микрофон не спрашивается', async () => {
+  await page.reload();
+  await panel.locator('.vp-state', { hasText: 'Голос выключен' }).waitFor({ timeout: T });
+  await page.waitForTimeout(3000);
+  const gum = await page.evaluate(() => window.__e2e.gum);
+  if (gum) throw new Error(`микрофон спрошен ${gum} раз`);
+  await panel.getByRole('button', { name: 'Свернуть' }).click();
+  const icon = page.locator('.vp-icon');
+  await icon.getByText('Голос выключен').waitFor({ state: 'visible', timeout: 2000 });
+  if (!(await icon.locator('.vp-cross').count())) throw new Error('значок не перечёркнут');
+  await shot('voice-icon-off.jpg');
+  await icon.click();
+});
+
+await check('«Включить голос» → «Жду обращения», микрофон снова открыт', async () => {
+  await panel.getByRole('button', { name: 'Включить голос' }).click();
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
+  await micOn();
+  const saved = await page.evaluate(() => localStorage.getItem('def_ops.voice.enabled'));
+  if (saved === 'false') throw new Error('выключение осталось записанным');
+});
+
+await check('событие voice:power: false — выключает, true — включает', async () => {
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: false })));
+  await panel.locator('.vp-state', { hasText: 'Голос выключен' }).waitFor({ timeout: 3000 });
+  await micOff('после voice:power false');
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: true })));
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
+  await micOn();
+});
 
 await check('в окне нет ошибок JavaScript', async () => {
   if (errors.length) throw new Error(errors.join('; '));

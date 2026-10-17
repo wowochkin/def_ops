@@ -5,6 +5,10 @@
  * Пользователи — люди старшего возраста: крупный шрифт (не меньше 18 px), простые слова, регуляторы спрятаны
  * в «Тонкую настройку», главный путь — калибровка. Панель создаёт связь с сервисом (VoiceClient) и разборщик
  * реплик (Dispatcher); событие окна `voice:open` (detail 'calibrate' | 'voices') открывает нужный экран.
+ *
+ * Кнопка «Выключить голос» / «Включить голос» и событие окна `voice:power` (detail: boolean; «Штаб, отбой»)
+ * выключают голос: микрофон закрыт и сам не открывается, звук штаба остановлен, связь с сервисом остаётся.
+ * Выбор запоминается между запусками (ENABLED_KEY).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
@@ -12,7 +16,7 @@ import { CONVERSATION_S, Dispatcher } from './dispatch';
 import { actions } from './registry';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
-  DEFAULT_SETTINGS, SETTINGS_KEY, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseSettings, type FeedItem,
+  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, feedAdd, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem,
 } from './panel-state';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
@@ -26,7 +30,14 @@ const lsSet = (k: string, v: string | null) => { try { if (v === null) localStor
 export interface VoiceReady { voices: VoiceInfo[]; roles: VoiceRoles; recordText: string }
 
 export function VoicePanel({ section }: { section: string }) {
-  const client = useMemo(() => new VoiceClient(), []);
+  const [enabled, setEnabledState] = useState(() => parseEnabled(lsGet(ENABLED_KEY)));
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+  const client = useMemo(() => {
+    const c = new VoiceClient();
+    if (!enabledRef.current) void c.setEnabled(false);
+    return c;
+  }, []);
   const sectionRef = useRef(section);
   sectionRef.current = section;
 
@@ -80,7 +91,31 @@ export function VoicePanel({ section }: { section: string }) {
     setMicError(null);
     client.start(parseSettings(lsGet(SETTINGS_KEY))).catch((e: Error) => { started.current = false; setMicError(e.message); });
   };
-  useEffect(() => { if (status === 'ready' && !started.current && !micError) startMic(); }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (enabled && status === 'ready' && !started.current && !micError) startMic(); }, [status, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Выключить / включить голос. Выключение закрывает окна калибровки и голосов (их шаги и пробы останавливаются),
+   * микрофон и звук штаба; `finishSpeech` — ответ штаба на «отбой» договаривается.
+   */
+  const power = (on: boolean, finishSpeech = false) => {
+    if (on === enabledRef.current) return;
+    enabledRef.current = on;
+    setEnabledState(on);
+    lsSet(ENABLED_KEY, on ? 'true' : 'false');
+    setMicError(null);
+    if (!on) {
+      setDialog(null);
+      setBusy(null);
+      setListening(false);
+      setLevel({ p: 0, busy: false });
+      if (!finishSpeech) { speakingIds.current.clear(); syncSpeaking(); }
+      started.current = false;
+      void client.setEnabled(false, { finishSpeech });
+      return;
+    }
+    // микрофон откроет startMic (эффект выше), когда сервис готов
+    void client.setEnabled(true).catch(() => { /* причину покажет startMic */ });
+  };
 
   // сообщения сервиса
   useEffect(() => {
@@ -91,6 +126,7 @@ export function VoicePanel({ section }: { section: string }) {
       client.on('settings', (m) => setCfg({ vad: m.vad, barge_vad: m.barge_vad, barge_ms: m.barge_ms, end_ms: m.end_ms })),
       client.on('utterance', (m) => {
         setListening(false);
+        if (!enabledRef.current) return;  // договорено до выключения — уже не исполняется
         setFeed((f) => feedUtterance(f, m));
         setThinking((n) => n + 1);
         dispatcher.utterance(m.text, m.id, m.continues)
@@ -131,14 +167,21 @@ export function VoicePanel({ section }: { section: string }) {
   useEffect(() => {
     const onOpen = (e: Event) => {
       const d = (e as CustomEvent).detail;
-      if (d === 'calibrate' || d === 'voices') { setDialog(d); toggle(true); }
+      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { setDialog(d); toggle(true); }
+    };
+    // «Штаб, отбой» (разборщик) — выключение; ответ штаба договаривается
+    const onPower = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (typeof d === 'boolean') power(d, !d);
     };
     const resume = () => client.resume();
     window.addEventListener('voice:open', onOpen);
+    window.addEventListener('voice:power', onPower);
     window.addEventListener('pointerdown', resume);
     window.addEventListener('keydown', resume);
     return () => {
       window.removeEventListener('voice:open', onOpen);
+      window.removeEventListener('voice:power', onPower);
       window.removeEventListener('pointerdown', resume);
       window.removeEventListener('keydown', resume);
     };
@@ -157,10 +200,10 @@ export function VoicePanel({ section }: { section: string }) {
   };
 
   const st = panelState({
-    status, micError, busy, speaking, listening, thinking: thinking > 0,
+    status, enabled, micError, busy, speaking, listening, thinking: thinking > 0,
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
-  const live = status === 'ready' && !micError;
+  const live = enabled && status === 'ready' && !micError;
   const errorText = status === 'error' ? client.errorText : null;
   const can = actions(section).filter((a) => a.say?.length);
   const feedEnd = useRef<HTMLDivElement>(null);
@@ -173,7 +216,8 @@ export function VoicePanel({ section }: { section: string }) {
     <div className={`vp ${st.key}`}>
       {!open ? (
         <button className="vp-icon" onClick={() => toggle(true)} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
-          <MicGlyph />
+          <MicGlyph off={!enabled} />
+          {!enabled && <span className="vp-icon-cap">{st.text}</span>}
         </button>
       ) : (
         <section className="vp-card" aria-label="Голос">
@@ -182,20 +226,24 @@ export function VoicePanel({ section }: { section: string }) {
             <span className="vp-state" role="status">{st.text}</span>
             <button className="vp-close" onClick={() => toggle(false)} title="Свернуть панель голоса">Свернуть</button>
           </div>
-          {errorText && (
+          <button className={`vp-power${enabled ? '' : ' primary'}`} onClick={() => power(!enabled)}>
+            <MicGlyph off={enabled} /> {enabled ? 'Выключить голос' : 'Включить голос'}
+          </button>
+          {!enabled && <p className="vp-note">Микрофон выключен: штаб вас не слышит и не говорит.</p>}
+          {enabled && errorText && (
             <div className="vp-mic">
               <p>Причина: {errorText}</p>
               <p>Если перезапуск не помог, покажите это сообщение тому, кто устанавливал программу.</p>
             </div>
           )}
-          {micError && (
+          {enabled && micError && (
             <div className="vp-mic">
               <p>{micError}</p>
               <button onClick={startMic}>Попробовать снова</button>
             </div>
           )}
-          <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />
-          <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>
+          {enabled && <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />}
+          {enabled && <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
 
           <div className="vp-feed" aria-label="Что сказано">
             {!feed.length && <p className="vp-empty">Здесь будет видно, что я услышал и что ответил.</p>}
@@ -209,7 +257,7 @@ export function VoicePanel({ section }: { section: string }) {
             <div ref={feedEnd} />
           </div>
 
-          <details className="vp-cans">
+          {enabled && <details className="vp-cans">
             <summary>Что можно сказать</summary>
             <ul>
               {can.map((a) => {
@@ -222,7 +270,7 @@ export function VoicePanel({ section }: { section: string }) {
                 );
               })}
             </ul>
-          </details>
+          </details>}
 
           <div className="vp-btns">
             <button onClick={() => setDialog('calibrate')} disabled={!live}>Калибровка</button>
@@ -285,11 +333,13 @@ function Slider({ label, value, min, max, step, show, onChange }: {
   );
 }
 
-function MicGlyph() {
+/** Микрофон; off — перечёркнутый (голос выключен). */
+function MicGlyph({ off = false }: { off?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
       <rect x="9" y="3" width="6" height="11" rx="3" />
       <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
+      {off && <path className="vp-cross" d="M3.5 3.5l17 17" strokeWidth="2.4" />}
     </svg>
   );
 }

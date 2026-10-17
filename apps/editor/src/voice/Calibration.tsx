@@ -69,7 +69,8 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
         if (m.cfg) onResultRef.current(m.cfg);
       }),
     ];
-    return () => { offs.forEach((o) => o()); setBusy(null); };
+    // окно закрыто как угодно (кнопка, выключение голоса): шаг отменён, звук калибровки погашен — и не зазвучит позже
+    return () => { offs.forEach((o) => o()); client.calib('cancel'); setBusy(null); };
   }, [client]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = () => {
@@ -81,7 +82,7 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
     client.calib(s.step, s.sec ?? 0);
   };
   const cancel = () => {
-    if (phase !== 'wait') client.calib('cancel');
+    client.calib('cancel');
     client.stopPlayback();
     onClose();
   };

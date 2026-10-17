@@ -2,6 +2,7 @@
  * Голоса: образцы с ролями (начальник штаба, посредник), прослушать, назначить роль, удалить;
  * запись нового голоса с микрофона — предупреждение, текст для чтения, запись, проверка с причинами,
  * проба новым голосом, сохранение с именем. Закрыли без сохранения — сервис стирает запись (`discard`).
+ * Проба звучит одна: новая проба, закрытие окна и начало записи останавливают прежнюю (звук в окне и синтез).
  */
 import { useEffect, useRef, useState } from 'react';
 import { confirmAsync } from '../dialogs';
@@ -33,9 +34,19 @@ export function Voices({ client, ready, onClose, setBusy, previewId }: {
   const [error, setError] = useState<string | null>(null);
   const [secs, setSecs] = useState(0);
   const unsaved = useRef(false);  // на сервисе есть запись, не ставшая образцом
+  const preview = useRef<number | null>(null);  // звучащая проба
+
+  /** Остановить звучащую пробу: звук в окне — сразу, синтез в сервисе — `stop {id}`. */
+  const stopPreview = () => {
+    if (preview.current !== null) client.stop(preview.current);
+    preview.current = null;
+  };
 
   useEffect(() => {
     const offs = [
+      client.onPlayed((id) => { if (id === preview.current) preview.current = null; }),
+      client.on('say-done', (m) => { if (m.stopped && m.id === preview.current) preview.current = null; }),
+      client.on('barge', (m) => { if (m.id === preview.current) preview.current = null; }),
       client.on('voice_list', (m) => { setVoices(m.voices); setRoles(m.roles); }),
       client.on('voice_recording', (m) => { setText(m.text); setRec('rec'); setSecs(0); }),
       client.on('voice_check', (m) => { setCheck(m); setRec('checked'); }),
@@ -56,6 +67,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId }: {
     client.voice('list');
     return () => {
       offs.forEach((o) => o());
+      stopPreview();
       if (unsaved.current) client.voice('discard');
       setBusy(null);
     };
@@ -69,7 +81,13 @@ export function Voices({ client, ready, onClose, setBusy, previewId }: {
   }, [rec]);
 
   const send = (op: string, args: Record<string, unknown> = {}) => { setError(null); client.voice(op, args); };
-  const start = () => { unsaved.current = true; setCheck(null); send('record-start'); };
+  const listen = (args: Record<string, unknown> = {}) => {
+    stopPreview();
+    const id = previewId();
+    preview.current = id;
+    send('preview', { ...args, id });
+  };
+  const start = () => { stopPreview(); unsaved.current = true; setCheck(null); send('record-start'); };
   const stop = () => { setRec('checking'); send('record-stop'); };
   const discard = () => {
     if (unsaved.current) client.voice('discard');
@@ -101,7 +119,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId }: {
                   {has.map((r) => <span key={r} className="vp-tag role">{ROLE_OF[r]}</span>)}
                 </div>
                 <div className="vp-row left">
-                  <button onClick={() => send('preview', { id: previewId(), voice_id: v.id })}>Прослушать</button>
+                  <button onClick={() => listen({ voice_id: v.id })}>Прослушать</button>
                   <span className="vp-note">Назначить:</span>
                   {ROLES.map((r) => (
                     <button key={r} disabled={roles[r] === v.id} onClick={() => send('assign', { role: r, voice_id: v.id })}>{ROLE_NAME[r]}</button>
@@ -150,7 +168,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId }: {
                   <>
                     <p className="vp-good">Запись подходит{check.audio_s ? ` (${check.audio_s.toFixed(1)} с)` : ''}.</p>
                     <div className="vp-row left">
-                      <button onClick={() => send('preview', { id: previewId() })}>Прослушать пробу</button>
+                      <button onClick={() => listen()}>Прослушать пробу</button>
                     </div>
                     <label className="vp-name">Имя голоса
                       <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="например, Гость" />
