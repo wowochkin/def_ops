@@ -140,7 +140,6 @@ CALIB_PHRASE = ("Докладываю обстановку. Восьмая гв�
 TURN_RECHECK_MS = 96  # три кадра
 PIECE_LEAD_S = 1.0  # синтез следующего куска — когда звука в запасе меньше этого
 PIECE_MAX_CHARS = 300  # кусок не длиннее (2–3 предложения)
-TAIL_FADE_S = 0.01  # затухание в конце куска синтеза — только против щелчка
 PAUSE_AFTER = {".": 0.2, "…": 0.25, "!": 0.3, "?": 0.3, ",": 0.1, ";": 0.15, ":": 0.15}  # пауза между кусками, с
 
 
@@ -546,7 +545,8 @@ class Session:
 
                 fut = self.loop.run_in_executor(self.m.mlx, tts)
                 sr = self.m.tts_sr
-                hold = np.zeros(0, np.float32)  # последние TAIL_FADE_S куска: на конце куска их плавно гасим
+                fade_s = self.args.tail_fade_ms / 1000
+                hold = np.zeros(0, np.float32)  # последние fade_s куска: на конце куска их плавно гасим
                 while (a := await chunks.get()) is not None:
                     if "audio" not in times:
                         times["audio"] = time.perf_counter()
@@ -554,7 +554,7 @@ class Session:
                         await self.send(type="latency", stt_llm_first=ms("llm_first"), first_sentence=ms("sentence"),
                                         first_audio=ms("audio"))
                     a = np.concatenate([hold, a])
-                    n = max(0, len(a) - int(TAIL_FADE_S * sr))
+                    n = max(0, len(a) - int(fade_s * sr))
                     a, hold = a[:n], a[n:]
                     await self.send_audio(a)
                 await fut
@@ -594,6 +594,8 @@ def main():
                     help="модель GigaAM: v3_e2e_rnnt — с пунктуацией и заглавными, v3_rnnt — строчными без знаков")
     ap.add_argument("--eos-extra", type=int, default=1,
                     help="кадров (по 80 мс) договаривания после «конца» синтеза, чтобы не глотался последний слог; 0 — как в mlx-audio")
+    ap.add_argument("--tail-fade-ms", type=int, default=10,
+                    help="плавное затухание в конце каждого куска синтеза, мс (80 — ровно на кадр договаривания)")
     ap.add_argument("--end-ms", dest="end_ms", type=int, default=400, help="тишина до проверки конца реплики")
     ap.add_argument("--max-silence-ms", dest="max_silence_ms", type=int, default=1500, help="тишина — реплика кончилась в любом случае")
     ap.add_argument("--turn", type=float, default=0.5, help="порог Smart Turn")
