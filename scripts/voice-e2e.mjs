@@ -729,7 +729,7 @@ if (SHOTS) {
   await page.getByText('моделей: 1').first().waitFor({ timeout: 10000 }).catch(() => {});
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(1000);
-  await shot('ai-voice-model.jpg');
+  await shot('ai-settings.jpg');
   await page.evaluate(() => { location.hash = '#replay'; });
   await page.locator('.vp-icon').click();
   await panel.locator('.vp-card').waitFor({ state: 'visible', timeout: 5000 });
