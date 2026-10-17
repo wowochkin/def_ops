@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseAudio, voiceStatus } from '../src/voice/protocol';
+import { CancelledIds, parseAudio, voiceStatus } from '../src/voice/protocol';
 
 /** Собирает двоичное сообщение сервиса: [0x01][id u32 LE][rate u32 LE][pcm int16 LE]. */
 function frame(id: number, rate: number, pcm: number[]): ArrayBuffer {
@@ -31,6 +31,28 @@ describe('parseAudio', () => {
 
   it('слишком короткое сообщение — ошибка', () => {
     expect(() => parseAudio(new ArrayBuffer(4))).toThrow();
+  });
+});
+
+describe('CancelledIds', () => {
+  it('отменяет отдельную фразу', () => {
+    const c = new CancelledIds();
+    c.add(3);
+    expect(c.has(3)).toBe(true);
+    expect(c.has(4)).toBe(false);
+  });
+  it('отмена «всего» накрывает прежние номера, но не новые', () => {
+    const c = new CancelledIds();
+    c.addUpTo(5);
+    expect(c.has(2)).toBe(true);
+    expect(c.has(5)).toBe(true);
+    expect(c.has(6)).toBe(false);
+  });
+  it('новая фраза с тем же номером снимает отмену', () => {
+    const c = new CancelledIds();
+    c.add(3);
+    c.revive(3);
+    expect(c.has(3)).toBe(false);
   });
 });
 

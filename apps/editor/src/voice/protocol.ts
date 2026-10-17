@@ -76,3 +76,18 @@ export function voiceStatus(api: { state: string } | null, ws: WsState, ready: b
 
 /** Идентификаторы фраз `say` растут с этого числа (0 в протоколе — «без фразы»). */
 export const VOICE_SAY_IDS = { first: 1 } as const;
+
+/**
+ * Отменённые фразы: звук, пришедший после `stop`/`barge`, не должен снова зазвучать.
+ * Идентификаторы растут, поэтому «остановить всё» = отменить всё до последнего отправленного.
+ */
+export class CancelledIds {
+  private ids = new Set<number>();
+  private floor = 0;
+  add(id: number) { this.ids.add(id); }
+  /** Отменить все фразы с номерами до `last` включительно. */
+  addUpTo(last: number) { this.floor = Math.max(this.floor, last); this.ids.clear(); }
+  /** Новая фраза с этим номером: прежняя отмена не касается. */
+  revive(id: number) { this.ids.delete(id); if (id <= this.floor) this.floor = id - 1; }
+  has(id: number): boolean { return id <= this.floor || this.ids.has(id); }
+}

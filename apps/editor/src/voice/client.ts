@@ -1,7 +1,7 @@
 // Связь окна с голосовым сервисом: микрофон (AudioWorklet), воспроизведение, WebSocket.
 // Все браузерные API — здесь; разбор протокола и состояние — в protocol.ts.
 import {
-  VOICE_SAY_IDS, parseAudio, voiceStatus,
+  CancelledIds, VOICE_SAY_IDS, parseAudio, voiceStatus,
   type CalibStep, type ClientMsg, type ServerMsg, type VoiceRole, type VoiceSettings, type VoiceStatus, type WsState,
 } from './protocol';
 
@@ -60,6 +60,8 @@ export class VoiceClient {
   private lastStatus: VoiceStatus | null = null;
   private hello: Partial<VoiceSettings> = {};
   private nextId: number = VOICE_SAY_IDS.first;
+  private starting: Promise<void> | null = null;
+  private cancelled = new CancelledIds();
 
   private micCtx: AudioContext | null = null;
   private playCtx: AudioContext | null = null;
@@ -98,8 +100,14 @@ export class VoiceClient {
   newSayId(): number { return this.nextId++; }
 
   /** Микрофон и подключение к сервису. Ошибка микрофона — с разбором причины. */
-  async start(hello: Partial<VoiceSettings> = {}): Promise<void> {
-    if (this.micCtx) return;
+  start(hello: Partial<VoiceSettings> = {}): Promise<void> {
+    if (this.micCtx) return Promise.resolve();
+    // одновременные вызовы делят одну попытку
+    this.starting ??= this.doStart(hello).finally(() => { this.starting = null; });
+    return this.starting;
+  }
+
+  private async doStart(hello: Partial<VoiceSettings>): Promise<void> {
     this.hello = hello;
     if (!navigator.mediaDevices?.getUserMedia)
       throw new Error(`Браузер не даёт микрофон этой странице: адрес ${location.origin} не считается защищённым.`);
@@ -108,16 +116,21 @@ export class VoiceClient {
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
       });
     } catch (e) { throw await micDenied(e); }
-    const micCtx = new AudioContext();
-    this.micCtx = micCtx;
-    this.playCtx = new AudioContext();
-    const url = URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' }));
-    try { await micCtx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
-    const node = new AudioWorkletNode(micCtx, 'mic');
-    micCtx.createMediaStreamSource(this.stream).connect(node);
-    node.port.onmessage = (e: MessageEvent<{ pcm: ArrayBuffer; peak: number }>) => {
-      if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(e.data.pcm);
-    };
+    try {
+      const micCtx = new AudioContext();
+      this.micCtx = micCtx;
+      this.playCtx = new AudioContext();
+      const url = URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' }));
+      try { await micCtx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+      const node = new AudioWorkletNode(micCtx, 'mic');
+      micCtx.createMediaStreamSource(this.stream).connect(node);
+      node.port.onmessage = (e: MessageEvent<{ pcm: ArrayBuffer; peak: number }>) => {
+        if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(e.data.pcm);
+      };
+    } catch (e) {
+      this.close();  // не оставляем открытый микрофон и «занятое» состояние: повторный запуск должен работать
+      throw e;
+    }
     this.wanted = true;
     this.connect();
   }
@@ -126,7 +139,9 @@ export class VoiceClient {
   close() {
     this.wanted = false;
     if (this.timer) { clearTimeout(this.timer); this.timer = null; }
-    this.ws?.close();
+    const old = this.ws;
+    this.ws = null;
+    if (old) { old.onopen = old.onmessage = old.onclose = old.onerror = null; old.close(); }
     this.stopPlayback();
     this.stream?.getTracks().forEach((t) => t.stop());
     void this.micCtx?.close();
@@ -148,10 +163,13 @@ export class VoiceClient {
     ws.binaryType = 'arraybuffer';
     this.ws = ws;
     ws.onopen = () => {
+      if (this.ws !== ws) return;
+      this.ready = false;  // до нового `ready` сервис не считается готовым
       this.setWs('open');
       this.send({ type: 'hello', settings: this.hello });
     };
     ws.onmessage = (e) => {
+      if (this.ws !== ws) return;
       if (typeof e.data !== 'string') return this.onAudio(e.data as ArrayBuffer);
       let m: ServerMsg;
       try { m = JSON.parse(e.data) as ServerMsg; } catch { return; }
@@ -183,7 +201,7 @@ export class VoiceClient {
 
   private onMessage(m: ServerMsg) {
     if (m.type === 'ready') { this.ready = true; this.emitStatus(); }
-    else if (m.type === 'barge') this.stopPlayback(m.id);
+    else if (m.type === 'barge') { this.cancelled.add(m.id); this.stopPlayback(m.id); }
     else if (m.type === 'say-done') this.phraseDone(m.id);
     this.handlers.get(m.type)?.forEach((cb) => cb(m as never));
   }
@@ -195,11 +213,14 @@ export class VoiceClient {
   }
 
   say(id: number, role: VoiceRole, text: string, more?: boolean) {
+    this.cancelled.revive(id);
     this.send(more === undefined ? { type: 'say', id, role, text } : { type: 'say', id, role, text, more });
   }
 
   /** Замолчать: фраза `id` или всё; локальный звук гасится сразу. */
   stop(id?: number) {
+    if (id === undefined) this.cancelled.addUpTo(this.nextId - 1);
+    else this.cancelled.add(id);
     this.stopPlayback(id);
     this.send(id === undefined ? { type: 'stop' } : { type: 'stop', id });
   }
@@ -224,7 +245,7 @@ export class VoiceClient {
     if (!ctx) return;
     let a;
     try { a = parseAudio(buf); } catch { return; }
-    if (!a.pcm.length) return;
+    if (!a.pcm.length || this.cancelled.has(a.id)) return;
     void ctx.resume();
     const ab = ctx.createBuffer(1, a.pcm.length, a.rate);
     const ch = ab.getChannelData(0);
@@ -246,6 +267,7 @@ export class VoiceClient {
   }
 
   private phraseDone(id: number) {
+    if (this.cancelled.has(id)) return;  // остановленную фразу не «доигрываем»
     const p = this.phrases.get(id);
     if (p) p.done = true;
     else this.phrases.set(id, { done: true });
