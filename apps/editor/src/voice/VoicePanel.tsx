@@ -64,9 +64,11 @@ export function VoicePanel({ section }: { section: string }) {
 
   const toggle = (v: boolean) => { setOpen(v); lsSet(OPEN_KEY, v ? 'open' : null); };
 
-  // связь с сервисом: состояние шлюза — раз в 5 с; запуск микрофона, когда голос установлен
+  // связь с сервисом: подключение сразу (шлюз может молчать — сервис запущен вручную), состояние шлюза —
+  // раз в 5 с; микрофон — когда сервис ответил (без сервиса микрофон не спрашиваем)
   useEffect(() => {
     const offStatus = client.onStatus(setStatus);
+    client.connect(parseSettings(lsGet(SETTINGS_KEY)));
     void client.refreshApi();
     const t = setInterval(() => { void client.refreshApi(); }, API_POLL_MS);
     return () => { offStatus(); clearInterval(t); client.close(); started.current = false; };
@@ -76,7 +78,7 @@ export function VoicePanel({ section }: { section: string }) {
     setMicError(null);
     client.start(parseSettings(lsGet(SETTINGS_KEY))).catch((e: Error) => { started.current = false; setMicError(e.message); });
   };
-  useEffect(() => { if (status !== 'off' && !started.current && !micError) startMic(); }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (status === 'ready' && !started.current && !micError) startMic(); }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // сообщения сервиса
   useEffect(() => {
@@ -185,7 +187,7 @@ export function VoicePanel({ section }: { section: string }) {
             <div ref={feedEnd} />
           </div>
 
-          <details className="vp-cans" open>
+          <details className="vp-cans">
             <summary>Что можно сказать</summary>
             <ul>
               {can.map((a) => {

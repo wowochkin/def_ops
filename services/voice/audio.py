@@ -36,20 +36,25 @@ def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
     over = [x for x in d.get("over") or [] if x > echo_hi + 0.05]
     over_lo = q(over, 30) if len(over) >= 10 else None
     if over_lo is None:
-        warn.append("перебивание не услышано — порог перебивания выставлен только по эху")
+        warn.append("Не удалось услышать, как вы перебиваете штаб, — перебивание настроено приблизительно. "
+                    "Повторите калибровку и на последнем шаге говорите громче.")
     lo, hi = max(vad, echo_hi + 0.08), (over_lo - 0.05) if over_lo is not None else 0.95
     if lo <= hi:
         barge = clip(lo + (hi - lo) * 0.3, 0.1, 0.95)
     else:
         barge = clip((echo_hi + (over_lo if over_lo is not None else 0.95)) / 2, 0.1, 0.95)
-        warn.append("голос модели из динамиков почти так же громок, как ваш, — наденьте наушники, иначе перебивания будут ложными или пропущенными")
+        warn.append("Голос штаба из динамиков почти так же громок, как ваш, — наденьте наушники, иначе штаб будет "
+                    "перебивать сам себя или не услышит, как вы его перебиваете.")
     run = best = 0
     for x in echo:
         run = run + 1 if x >= barge else 0
         best = max(best, run)
     barge_ms = int(clip(max(250, best * 32 + 150), 250, 900))
-    stats = {"фон": round(noise_hi, 2), "речь": round(speech_lo, 2), "эхо": round(echo_hi, 2),
-             "речь поверх модели": round(over_lo, 2) if over_lo is not None else None, "всплеск эха, мс": best * 32}
+    # замеры — для человека в окне калибровки: простые слова
+    stats = {"тишина в комнате": round(noise_hi, 2), "ваш голос": round(speech_lo, 2),
+             "голос штаба в микрофоне": round(echo_hi, 2),
+             "ваш голос поверх штаба": round(over_lo, 2) if over_lo is not None else None,
+             "самый долгий отзвук штаба, мс": best * 32}
     return {"vad": vad, "barge_vad": barge, "barge_ms": barge_ms, "end_ms": end_ms}, {"stats": stats, "warn": warn}
 
 

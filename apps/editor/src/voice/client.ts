@@ -53,6 +53,7 @@ export class VoiceClient {
   private wsState: WsState = 'closed';
   private api: { state: string } | null = null;
   private ready = false;
+  private failed = false;  // последняя попытка подключиться не удалась
   private wanted = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private handlers = new Map<string, Set<(m: never) => void>>();
@@ -72,7 +73,7 @@ export class VoiceClient {
   /** По фразам: `done` — сервис сказал, что кусков больше нет; сыграно — когда доиграли все. */
   private phrases = new Map<number, { done: boolean }>();
 
-  get status(): VoiceStatus { return voiceStatus(this.api, this.wsState, this.ready); }
+  get status(): VoiceStatus { return voiceStatus(this.api, this.wsState, this.ready, this.failed); }
 
   /** Ответ шлюза `/api/voice` (null — шлюз не ответил). */
   setApi(api: { state: string } | null) { this.api = api; this.emitStatus(); }
@@ -112,6 +113,16 @@ export class VoiceClient {
   /** Следующий номер фразы для `say`. */
   newSayId(): number { return this.nextId++; }
 
+  /**
+   * Только подключение к сервису (без микрофона): узнать, есть ли сервис, не спрашивая микрофон.
+   * Микрофон — `start()`, когда сервис ответил.
+   */
+  connect(hello: Partial<VoiceSettings> = {}) {
+    this.hello = { ...hello, ...this.hello };
+    this.wanted = true;
+    if (!this.ws && !this.timer) this.open();
+  }
+
   /** Микрофон и подключение к сервису. Ошибка микрофона — с разбором причины. */
   start(hello: Partial<VoiceSettings> = {}): Promise<void> {
     if (this.micCtx) return Promise.resolve();
@@ -145,7 +156,7 @@ export class VoiceClient {
       throw e;
     }
     this.wanted = true;
-    this.connect();
+    if (!this.ws && !this.timer) this.open();
   }
 
   /** Отключение: микрофон, звук, переподключения. */
@@ -161,6 +172,7 @@ export class VoiceClient {
     void this.playCtx?.close();
     this.stream = null; this.micCtx = null; this.playCtx = null;
     this.ready = false;
+    this.failed = false;
     this.setWs('closed');
   }
 
@@ -168,16 +180,17 @@ export class VoiceClient {
     try { return localStorage.getItem(URL_KEY) || DEFAULT_URL; } catch { return DEFAULT_URL; }
   }
 
-  private connect() {
-    if (!this.wanted) return;
+  private open() {
+    if (!this.wanted || this.ws) return;
     this.setWs('connecting');
     let ws: WebSocket;
-    try { ws = new WebSocket(this.url()); } catch { this.scheduleReconnect(); return; }
+    try { ws = new WebSocket(this.url()); } catch { this.failed = true; this.setWs('closed'); this.scheduleReconnect(); return; }
     ws.binaryType = 'arraybuffer';
     this.ws = ws;
     ws.onopen = () => {
       if (this.ws !== ws) return;
       this.ready = false;  // до нового `ready` сервис не считается готовым
+      this.failed = false;
       this.setWs('open');
       this.send({ type: 'hello', settings: this.hello });
     };
@@ -188,9 +201,12 @@ export class VoiceClient {
       try { m = JSON.parse(e.data) as ServerMsg; } catch { return; }
       this.onMessage(m);
     };
+    let opened = false;
+    ws.addEventListener('open', () => { opened = true; });
     ws.onclose = () => {
       if (this.ws !== ws) return;
       this.ws = null;
+      if (!opened) this.failed = true;
       this.stopPlayback();  // обрыв: договаривать некому
       this.setWs('closed');
       this.scheduleReconnect();
@@ -200,7 +216,7 @@ export class VoiceClient {
 
   private scheduleReconnect() {
     if (!this.wanted || this.timer) return;
-    this.timer = setTimeout(() => { this.timer = null; this.connect(); }, RECONNECT_MS);
+    this.timer = setTimeout(() => { this.timer = null; this.open(); }, RECONNECT_MS);
   }
 
   private setWs(s: WsState) { this.wsState = s; this.emitStatus(); }

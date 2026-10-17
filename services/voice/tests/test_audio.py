@@ -32,6 +32,18 @@ def test_calibrate_loud_echo_warns_headphones():
     assert any("наушники" in w for w in rep["warn"])
 
 
+def test_calibrate_report_in_plain_words():
+    """Предупреждения и замеры видит человек в окне калибровки — без технических слов."""
+    d = synth()
+    d["echo"] = list(np.random.default_rng(1).uniform(0.7, 0.9, 120))
+    d["over"] = []
+    _, rep = calibrate(d, 20)
+    assert len(rep["warn"]) == 2
+    for text in [*rep["warn"], *rep["stats"]]:
+        for word in ("порог", "модел", "эхо", "эха", "VAD"):
+            assert word not in text, (word, text)
+
+
 def test_calibrate_no_speech_raises():
     d = synth()
     d["speech"] = [0.05] * 120

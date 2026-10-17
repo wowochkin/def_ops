@@ -91,15 +91,23 @@ export type WsState = 'open' | 'closed' | 'connecting';
 export type VoiceStatus = 'off' | 'loading' | 'connecting' | 'ready' | 'error' | 'reconnecting';
 
 /**
- * Состояние голоса для панели. `api` — ответ шлюза `/api/voice` (null — шлюз не ответил),
- * `ready` — сервис присылал `ready` (и связь с тех пор не сбрасывали намеренно).
+ * Состояние голоса для панели. `api` — ответ шлюза `/api/voice` (null — шлюз не ответил: состояние неизвестно),
+ * `ready` — сервис присылал `ready` (и связь с тех пор не сбрасывали намеренно), `failed` — последняя попытка
+ * подключиться к сервису не удалась (связь так и не открылась).
+ *
+ * Открытая связь важнее шлюза: сервис, запущенный вручную (шлюза нет или он о сервисе не знает), — работает,
+ * пропущенный опрос шлюза не «выключает» живой голос. «Не установлен» — только когда и шлюз не знает о
+ * сервисе, и подключиться не удалось.
  */
-export function voiceStatus(api: { state: string } | null, ws: WsState, ready: boolean): VoiceStatus {
-  if (!api || api.state === 'off') return 'off';
-  if (api.state === 'error') return 'error';
+export function voiceStatus(api: { state: string } | null, ws: WsState, ready: boolean, failed = false): VoiceStatus {
   if (ws === 'open') return ready ? 'ready' : 'connecting';
   if (ready) return 'reconnecting';
-  return api.state === 'loading' ? 'loading' : 'connecting';
+  const state = api?.state ?? 'unknown';
+  if (state === 'error') return 'error';
+  if (state === 'loading') return 'loading';
+  if (state === 'ready') return 'connecting';
+  // шлюз молчит или о сервисе не знает: решает попытка подключиться
+  return failed ? 'off' : 'connecting';
 }
 
 /** Идентификаторы фраз `say` растут с этого числа (0 в протоколе — «без фразы»). */

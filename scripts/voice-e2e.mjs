@@ -1,7 +1,10 @@
 // Сквозная проверка панели голоса: поддельный голосовой сервис (--fake), сервер разработки окна (vite)
 // и Chromium с поддельным микрофоном (WAV с «речью» — всплесками звука — и паузами).
 //
-//   node scripts/voice-e2e.mjs [--shots DIR] [--python PATH] [--url http://localhost:5173]
+//   node scripts/voice-e2e.mjs [--shots DIR] [--python PATH] [--url http://localhost:5173] [--no-stub]
+//
+// Шлюза нет: по умолчанию ответ /api/voice подставляется («ready»); --no-stub — без подстановки (шлюз молчит,
+// сервис «запущен вручную» — окно должно подключиться само).
 //
 // Поддельное распознавание отдаёт строки --fake-script по очереди: «штаб, открой переигровку» →
 // раздел «Переигровка»; «передайте в штаб армии» — в ленте «не мне»; «штаб, что я могу сказать» → ответ
@@ -19,6 +22,7 @@ import { chromium } from 'playwright';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const SHOTS = arg('--shots') ? resolve(arg('--shots')) : null;
+const STUB = !process.argv.includes('--no-stub');
 const CHROME = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const PY = arg('--python') || process.env.VOICE_PYTHON
   || (existsSync(join(ROOT, 'services/voice/.venv/bin/python')) ? join(ROOT, 'services/voice/.venv/bin/python') : 'python3');
@@ -107,11 +111,24 @@ speechWav(wav);
 const script = join(tmp, 'script.txt');
 writeFileSync(script, ['штаб, открой переигровку', 'передайте в штаб армии', 'штаб, что я могу сказать',
   ...Array(200).fill(RECORD_TEXT)].join('\n') + '\n');
+// после перезапуска сервиса (проверка обрыва связи) — только текст записи: команды уже проверены
+const script2 = join(tmp, 'script2.txt');
+writeFileSync(script2, Array(200).fill(RECORD_TEXT).join('\n') + '\n');
 
 const vport = await freePort();
-const voice = run(PY, ['server.py', '--fake', '--fake-script', script, '--port', String(vport), '--data', join(tmp, 'data')],
-  { cwd: join(ROOT, 'services/voice') });
-try { await waitHttp(`http://127.0.0.1:${vport}/health`, 30000, voice); } catch (e) { await fail(`голосовой сервис: ${e.message}`); }
+let voice = null;
+async function startVoice(lines = script) {
+  voice = run(PY, ['server.py', '--fake', '--fake-script', lines, '--port', String(vport), '--data', join(tmp, 'data')],
+    { cwd: join(ROOT, 'services/voice') });
+  await waitHttp(`http://127.0.0.1:${vport}/health`, 30000, voice);
+}
+function stopVoice() {
+  const c = voice;
+  children.splice(children.indexOf(c), 1);
+  try { process.kill(-c.pid, 'SIGKILL'); } catch { c.kill('SIGKILL'); }
+  return new Promise((r) => (c.exitCode !== null ? r() : c.once('exit', r)));
+}
+try { await startVoice(); } catch (e) { await fail(`голосовой сервис: ${e.message}`); }
 ok(`голосовой сервис (--fake) на порту ${vport}`);
 
 let app = arg('--url');
@@ -137,8 +154,9 @@ await ctx.addInitScript((url) => {
   localStorage.setItem('def_ops.voice.url', url);
   localStorage.setItem('def_ops.section', 'editor');
 }, `ws://127.0.0.1:${vport}/ws`);
-// шлюза нет — состояние голоса отвечаем за него
-await ctx.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
+// шлюза нет — состояние голоса отвечаем за него; --no-stub — шлюз молчит (сервис как будто запущен вручную)
+if (STUB) await ctx.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
+ok(STUB ? 'ответ шлюза /api/voice подставлен' : 'шлюза нет (/api/voice не отвечает)');
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
@@ -190,7 +208,8 @@ await check('регуляторы скрыты до «Тонкой настро�
   await sliders.first().waitFor({ state: 'visible', timeout: 2000 });
   const n = await visible();
   if (n !== 4) throw new Error(`после раскрытия видно регуляторов: ${n}`);
-  for (const w of ['VAD', 'Smart Turn']) if ((await panel.locator('.vp-card').innerText()).includes(w)) throw new Error(`техническое слово: ${w}`);
+  const t = await panel.locator('.vp-card').evaluate((e) => e.textContent ?? '');
+  for (const w of ['VAD', 'Smart Turn', 'порог', 'голос модели', 'эхо']) if (t.includes(w)) throw new Error(`техническое слово: ${w}`);
   await panel.getByText('Тонкая настройка').click();
   return 'после раскрытия — 4';
 });
@@ -209,8 +228,33 @@ await check('«штаб, что я могу сказать» → ответ с �
   await panel.locator('.vp-item.chief', { hasText: 'Можно сказать' }).waitFor({ timeout: 30000 });
 });
 
-await check('«Что можно сказать» — примеры из реестра', async () => {
-  await panel.locator('.vp-can', { hasText: 'штаб, открой переигровку' }).waitFor({ timeout: 2000 });
+await check('«Что можно сказать» свёрнуто, по щелчку — примеры из реестра', async () => {
+  const ex = panel.locator('.vp-can', { hasText: 'штаб, открой переигровку' });
+  if (await ex.isVisible()) throw new Error('раскрыто без щелчка');
+  await panel.getByText('Что можно сказать', { exact: true }).click();
+  await ex.waitFor({ timeout: 2000 });
+  await shot('voice-panel-hints.jpg');
+  await panel.getByText('Что можно сказать', { exact: true }).click();
+});
+
+await check('открытая панель не закрывает раздел: «Рассчитать» и список сценариев доступны', async () => {
+  const go = page.locator('.rp-go');
+  await go.waitFor({ state: 'visible', timeout: 5000 });
+  const covered = await page.evaluate(() => {
+    const card = document.querySelector('.vp-card').getBoundingClientRect();
+    const btn = document.querySelector('.rp-go');
+    const r = btn.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    const side = btn.closest('aside, .rp-side, .rp-left') ?? btn.parentElement;
+    const s = side.getBoundingClientRect();
+    const overlap = !(card.left >= s.right || card.right <= s.left || card.top >= s.bottom || card.bottom <= s.top);
+    return { onBtn: !!hit && btn.contains(hit), overlap };
+  });
+  if (!covered.onBtn) throw new Error('кнопка «Рассчитать» под панелью');
+  if (covered.overlap) throw new Error('панель заходит на колонку раздела');
+  const h = await panel.locator('.vp-card').evaluate((c) => c.getBoundingClientRect().height);
+  if (h > 660) throw new Error(`карточка высотой ${h} px`);
+  return `высота карточки ${Math.round(h)} px`;
 });
 await shot('voice-panel.jpg');
 
@@ -219,19 +263,43 @@ await check('событие voice:open открывает калибровку',
   await page.locator('.vp-dialog.calib').waitFor({ state: 'visible', timeout: 3000 });
 });
 
-await check('калибровка: четыре шага → «Регуляторы выставлены»', async () => {
-  const dlg = page.locator('.vp-dialog.calib');
-  for (let i = 1; i <= 4; i++) {
-    await dlg.getByText(`шаг ${i} из 4`).waitFor({ timeout: 40000 });
+const calibDlg = page.locator('.vp-dialog.calib');
+/** Шаги калибровки с first по last; шаг тишины — сразу после «слога» поддельного микрофона. */
+async function calibSteps(first, last) {
+  for (let i = first; i <= last; i++) {
+    await calibDlg.getByText(`шаг ${i} из 4`).waitFor({ timeout: 40000 });
     if (i === 1) {
-      // тишина: начинаем сразу после «слога» поддельного микрофона, чтобы в замер не попал звук
       await page.waitForFunction(() => Number(document.querySelector('.vp-level')?.getAttribute('data-p')) > 0.3, null, { timeout: 15000, polling: 20 });
       await page.waitForFunction(() => Number(document.querySelector('.vp-level')?.getAttribute('data-p')) < 0.05, null, { timeout: 15000, polling: 20 });
+      await shot('voice-calibration.jpg');
     }
-    if (i === 1) await shot('voice-calibration.jpg');
-    await dlg.getByRole('button', { name: 'Записать' }).click();
+    await calibDlg.getByRole('button', { name: 'Записать' }).click();
   }
+}
+const TECH = ['VAD', 'Smart Turn', 'порог', 'голос модели', 'поверх модели', 'эхо', 'эха'];
+async function plainWords(loc, where) {
+  const t = await loc.evaluate((e) => e.textContent ?? '');
+  for (const w of TECH) if (t.includes(w)) throw new Error(`${where}: техническое слово «${w}»`);
+}
+
+await check('калибровка: обрыв связи посреди шага — понятная причина и кнопка, не зависает', async () => {
+  await calibSteps(1, 1);
+  await calibDlg.getByText('шаг 2 из 4').waitFor({ timeout: 20000 });
+  await calibDlg.getByRole('button', { name: 'Записать' }).click();
+  await stopVoice();
+  await calibDlg.getByText('связь с голосом прервалась').waitFor({ timeout: 10000 });
+  await startVoice(script2);
+  const again = calibDlg.getByRole('button', { name: 'Заново' });
+  await again.waitFor({ timeout: 5000 });
+  await calibDlg.getByRole('button', { name: 'Записать' }).and(page.locator(':enabled')).waitFor({ timeout: 20000 });
+  await again.click();
+});
+
+await check('калибровка: четыре шага → «Регуляторы выставлены»', async () => {
+  const dlg = calibDlg;
+  await calibSteps(1, 4);
   await dlg.getByText('Регуляторы выставлены').waitFor({ timeout: 60000 });
+  await plainWords(dlg, 'окно калибровки');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('def_ops.voice.settings') || 'null'));
   if (!saved || typeof saved.vad !== 'number') throw new Error('регуляторы не сохранены в def_ops.voice.settings');
   await shot('voice-calibration-done.jpg');
@@ -261,6 +329,7 @@ await check('запись голоса → результат проверки',
   await res.waitFor({ timeout: 20000 });
   const text = await res.innerText();
   passed = /Запись подходит/.test(text);
+  await plainWords(dlg, 'окно голосов');
   return passed ? 'запись подходит' : `перечитать: ${text.replace(/\s+/g, ' ').slice(0, 120)}`;
 });
 

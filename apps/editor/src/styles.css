@@ -1591,7 +1591,8 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-icon { position: fixed; left: 10px; bottom: 34px; z-index: 900; width: 56px; height: 56px; border-radius: 50% !important; padding: 0 !important;
   display: flex; align-items: center; justify-content: center; background: var(--vp-st) !important; color: #fff !important; border: 3px solid #fff !important; box-shadow: 0 3px 12px rgba(0,0,0,.35); }
 .vp.listening .vp-icon, .vp.speaking .vp-icon { box-shadow: 0 0 0 6px color-mix(in srgb, var(--vp-st) 35%, transparent), 0 3px 12px rgba(0,0,0,.35); }
-.vp-card { position: fixed; left: 84px; bottom: 12px; z-index: 900; width: 460px; max-width: calc(100vw - 96px); max-height: calc(100vh - 24px); overflow-y: auto;
+/* карточка — у правого края, над полосой проигрывателя: левая колонка раздела (сценарии, «Рассчитать») остаётся свободной */
+.vp-card { position: fixed; right: 14px; bottom: 96px; z-index: 900; width: 440px; max-width: calc(100vw - 110px); max-height: min(640px, calc(100vh - 110px)); overflow-y: auto;
   background: #fffefb; border: 2px solid #3b3a36; border-radius: 12px; box-shadow: 0 10px 34px rgba(0,0,0,.3); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .vp-head { display: flex; align-items: center; gap: 10px; }
 .vp-dot { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-st); }
@@ -1607,7 +1608,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-level .mk.br { background: #a3271b; } .vp-legend .br { color: #a3271b; }
 .vp-legend { font-size: 18px; color: var(--vp-mute); }
 .vp-hint { margin: 0; padding: 8px 10px; background: #fff4d6; border: 1.5px solid #c99a2e; border-radius: 8px; font-weight: 700; }
-.vp-feed { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #d6d1c4; border-bottom: 1px solid #d6d1c4; padding: 8px 0; }
+.vp-feed { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #d6d1c4; border-bottom: 1px solid #d6d1c4; padding: 8px 0; }
 .vp-empty, .vp-note { margin: 0; color: var(--vp-mute); font-size: 18px; }
 .vp-item { padding: 4px 8px; border-radius: 6px; background: #eef3fa; }
 .vp-item.chief { background: #f6ebe6; }

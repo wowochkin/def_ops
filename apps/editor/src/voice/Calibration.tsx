@@ -28,10 +28,18 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
   const [phase, setPhase] = useState<'wait' | 'prep' | 'rec' | 'count'>('wait');
   const [sec, setSec] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [up, setUp] = useState(client.status === 'ready');
   const iRef = useRef(i);
   iRef.current = i;
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
+
+  const fail = (why: string) => {
+    setErr(why.replace(/[.\s]+$/, ''));
+    setPhase('wait');
+    client.stopPlayback();
+  };
 
   useEffect(() => {
     setBusy('Калибровка');
@@ -41,6 +49,10 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
         if (iRef.current < STEPS.length - 1) { setI(iRef.current + 1); setPhase('wait'); }
         else { setPhase('count'); client.calib('finish'); }
       }),
+      // сбой сервиса посреди шага: шаг не записан — показать причину и вернуть кнопку
+      client.on('error', (m) => { fail(m.text); }),
+      // связь оборвалась: сервис потерял замеры этого подключения — шаг повторить, лучше — заново
+      client.onStatus((st) => { setUp(st === 'ready'); if (st !== 'ready') fail('связь с голосом прервалась'); }),
       client.on('calib_result', (m) => {
         setResult(m);
         setPhase('wait');
@@ -52,6 +64,7 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
 
   const go = () => {
     const s = STEPS[i];
+    setErr(null);
     setPhase(s.sec ? 'rec' : 'prep');
     setSec(s.sec ?? 0);
     client.calib(s.step, s.sec ?? 0);
@@ -61,7 +74,7 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
     client.stopPlayback();
     onClose();
   };
-  const again = () => { setResult(null); setI(0); setPhase('wait'); };
+  const again = () => { setResult(null); setErr(null); setI(0); setPhase('wait'); };
 
   const s = STEPS[i];
   return (
@@ -73,12 +86,14 @@ export function Calibration({ client, onClose, onResult, setBusy }: {
             <h3>{s.title}</h3>
             <p>{s.txt}</p>
             {s.say && <p className="vp-say">{s.say}</p>}
+            {err && <p className="vp-error" role="alert">Этот шаг не записался: {err}. Попробуйте ещё раз.</p>}
             <div className="vp-prog">
               <i key={`${i}-${phase}`} className={phase === 'rec' ? 'run' : ''} style={phase === 'rec' ? { animationDuration: `${sec}s` } : undefined} />
             </div>
             <div className="vp-row">
               <button onClick={cancel}>Отмена</button>
-              <button className="primary" onClick={go} disabled={phase !== 'wait'}>
+              {err && i > 0 && <button onClick={again}>Заново</button>}
+              <button className="primary" onClick={go} disabled={phase !== 'wait' || !up}>
                 {phase === 'wait' ? 'Записать' : phase === 'prep' ? 'Готовлю голос штаба…' : phase === 'count' ? 'Считаю…' : 'Записываю…'}
               </button>
             </div>

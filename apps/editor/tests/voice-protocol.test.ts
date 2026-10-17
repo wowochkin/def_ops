@@ -57,9 +57,25 @@ describe('CancelledIds', () => {
 });
 
 describe('voiceStatus', () => {
-  it('шлюз off или недоступен — off', () => {
-    expect(voiceStatus({ state: 'off' }, 'closed', false)).toBe('off');
-    expect(voiceStatus(null, 'closed', false)).toBe('off');
+  it('шлюз off или недоступен и подключиться не удалось — off', () => {
+    expect(voiceStatus({ state: 'off' }, 'closed', false, true)).toBe('off');
+    expect(voiceStatus(null, 'closed', false, true)).toBe('off');
+    // повторная попытка после неудачи — по-прежнему off, без мигания
+    expect(voiceStatus(null, 'connecting', false, true)).toBe('off');
+  });
+  it('шлюз не ответил — состояние неизвестно, пока идёт первая попытка подключиться', () => {
+    expect(voiceStatus(null, 'connecting', false)).toBe('connecting');
+    expect(voiceStatus({ state: 'off' }, 'closed', false)).toBe('connecting');
+  });
+  it('шлюза нет, сервис запущен вручную и связь открыта — ready', () => {
+    expect(voiceStatus(null, 'open', true)).toBe('ready');
+    expect(voiceStatus({ state: 'off' }, 'open', true)).toBe('ready');
+    expect(voiceStatus(null, 'open', false)).toBe('connecting');
+  });
+  it('живая связь и пропущенный опрос шлюза — остаётся ready', () => {
+    expect(voiceStatus({ state: 'ready' }, 'open', true)).toBe('ready');
+    expect(voiceStatus(null, 'open', true)).toBe('ready');
+    expect(voiceStatus({ state: 'error' }, 'open', true)).toBe('ready');
   });
   it('шлюз loading и ws закрыт — loading', () => {
     expect(voiceStatus({ state: 'loading' }, 'closed', false)).toBe('loading');
