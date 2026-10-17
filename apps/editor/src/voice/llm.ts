@@ -5,7 +5,10 @@
  *
  * Модель голоса — `voiceModel` (пусто — как в «ИИ»), размышление — `voiceThinking` (пусто — выключено:
  * `reasoning_effort: 'none'` — единственный способ, который выключает размышление Qwen3.6 в LM Studio).
- * Сбой (ошибка, пустой ответ, нет ответа 20 с) — ещё две попытки через 1 и 3 с; после третьей — ModelUnavailable.
+ * Сбой, который может пройти сам (нет ответа 20 с — модель зависла или грузится; пустой ответ; 5xx самой модели, кроме
+ * 502), — ещё две попытки через 1 и 3 с; после третьей — ModelUnavailable. Связи нет вовсе (отказ соединения, сеть,
+ * 502 шлюза `llm_unavailable` — LM Studio не запущена) или запрос не подходит (4xx) — повтор не поможет:
+ * ModelUnavailable сразу, без попыток и без заготовленной фразы о повторе.
  */
 import type { LlmSettings, Thinking } from '../sim/game-protocol';
 import type { Action } from './registry';
@@ -22,7 +25,7 @@ export interface OpenAITool {
 export interface ModelReply { say: string; call?: { id: string; params: unknown; broken?: true } }
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
-/** Модель недоступна после всех попыток. */
+/** Модель недоступна: после всех попыток или сразу, если связи нет вовсе. */
 export class ModelUnavailable extends Error {
   constructor(cause?: unknown) { super('Связи с моделью нет'); this.name = 'ModelUnavailable'; this.cause = cause; }
 }
@@ -61,22 +64,35 @@ export function systemText(actions: Action[], section?: string): string {
   ].filter(Boolean).join('\n');
 }
 
+/** Сбой, который повтором не исправить: связи нет (сеть, 502 шлюза) или запрос модели не подходит (4xx). */
+class NoRetry extends Error {
+  constructor(message: string, cause?: unknown) { super(message); this.name = 'NoRetry'; this.cause = cause; }
+}
+
 const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((res, rej) => {
   if (signal?.aborted) return rej(signal.reason);
   const t = setTimeout(res, ms);
   signal?.addEventListener('abort', () => { clearTimeout(t); rej(signal.reason); }, { once: true });
 });
 
-/** Один запрос к модели; пустой ответ — ошибка (повторяется). */
+/** Один запрос к модели; пустой ответ, нет ответа 20 с, 5xx (кроме 502) — ошибка, повторяется; прочее — NoRetry. */
 async function once(body: object, url: string, f: typeof fetch, signal?: AbortSignal, ids: Map<string, string> = new Map()): Promise<ModelReply> {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(new Error('нет ответа 20 с')), MODEL_TIMEOUT_MS);
   const stop = () => ac.abort(signal?.reason);
   signal?.addEventListener('abort', stop, { once: true });
   try {
-    const r = await f(`${url.replace(/\/+$/, '')}/chat/completions`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ac.signal,
-    });
+    let r: Response;
+    try {
+      r = await f(`${url.replace(/\/+$/, '')}/chat/completions`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ac.signal,
+      });
+    } catch (e) {
+      if (ac.signal.aborted) throw e; // нет ответа 20 с (повтор) или отмена
+      throw new NoRetry('нет связи с LM Studio', e); // отказ соединения, сеть
+    }
+    // 502 — шлюз не достучался до LM Studio (llm_unavailable); 4xx — запрос не подходит: повтор не поможет
+    if (r.status === 502 || (r.status >= 400 && r.status < 500)) throw new NoRetry(`LM Studio: ${r.status}`);
     if (!r.ok) throw new Error(`LM Studio: ${r.status}`);
     type Msg = { content?: string | null; reasoning_content?: string | null; tool_calls?: { function?: { name?: string; arguments?: unknown } }[] };
     const j = (await r.json()) as { choices?: { message?: Msg }[] };
@@ -105,7 +121,8 @@ async function once(body: object, url: string, f: typeof fetch, signal?: AbortSi
 
 /**
  * Спрашивает модель о реплике. Инструменты — доступные действия; недоступные — в системном тексте с причиной.
- * Сбой — до трёх попыток (onRetry(n) — перед попыткой n = 2, 3); после — ModelUnavailable. Отмена (signal) — сразу.
+ * Сбой — до трёх попыток (onRetry(n) — перед попыткой n = 2, 3); после — ModelUnavailable. Связи нет вовсе — ModelUnavailable
+ * сразу, без onRetry. Отмена (signal) — сразу.
  */
 export async function askModel(text: string, ctx: {
   actions: Action[]; settings: LlmSettings; history: ChatMessage[]; fetch?: typeof fetch; signal?: AbortSignal;
@@ -137,6 +154,7 @@ export async function askModel(text: string, ctx: {
       return await once(body, s.url, f, ctx.signal, ids);
     } catch (e) {
       if (ctx.signal?.aborted) throw e;
+      if (e instanceof NoRetry) throw new ModelUnavailable(e);
       last = e;
     }
   }

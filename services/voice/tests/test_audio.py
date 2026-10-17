@@ -196,3 +196,17 @@ def test_stop_phrase_address_during_help_list():
     assert is_stop_phrase("Штаб, доложи обстановку", HELP)
     for t in ("штаб открой переигровку", "штаб калибровка штаб голоса", "сказать штаб открой переигровку"):
         assert not is_stop_phrase(t, HELP), t
+
+
+def test_stop_words_shared_with_window():
+    # один список стоп-слов на сервис и разборщик реплик окна (apps/editor/src/voice/dispatch.ts)
+    import json
+    from pathlib import Path
+
+    import audio
+
+    shared = json.loads((Path(audio.__file__).parent / "stop_words.json").read_text(encoding="utf-8"))["stop"]
+    assert audio.STOP_WORDS == set(shared)
+    assert {"стоп", "подождите", "подожди", "хватит", "отставить", "тихо"} <= audio.STOP_WORDS
+    for w in shared:
+        assert audio.is_stop_phrase(w.capitalize() + ".", "Докладываю обстановку на участке армии.")

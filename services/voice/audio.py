@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import difflib
+import json
 import re
+from pathlib import Path
 from typing import Awaitable, Callable
 
 import numpy as np
@@ -15,7 +17,8 @@ TURN_RECHECK_MS = 96  # три кадра
 MERGE_GAP_S = 2.0  # новая речь не позже этого после конца прежней…
 MERGE_PLAYED_S = 1.5  # …и ответ не звучит или звучит меньше этого — реплики склеиваются
 LOUD_SPEAKERS = "Динамики слышно громко — чтобы перебить штаб, скажите «Стоп»."
-STOP_WORDS = {"стоп", "подождите", "подожди", "хватит", "отставить", "тихо"}
+# стоп-слова — общий список с разборщиком реплик окна (apps/editor/src/voice/dispatch.ts)
+STOP_WORDS = set(json.loads((Path(__file__).resolve().parent / "stop_words.json").read_text(encoding="utf-8"))["stop"])
 ADDRESS = ("штаб", "штап")  # обращение — только в начале куска
 
 

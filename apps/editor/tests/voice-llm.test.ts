@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Action } from '../src/voice/registry';
-import { askModel, createVoiceModel, ModelUnavailable, systemText, toTools } from '../src/voice/llm';
+import { askModel, createVoiceModel, MODEL_TIMEOUT_MS, ModelUnavailable, systemText, toTools } from '../src/voice/llm';
 import { numberWords, speakable } from '../src/voice/speech';
 import type { LlmSettings } from '../src/sim/game-protocol';
 
@@ -165,7 +165,7 @@ describe('askModel', () => {
     expect((await askModel('штаб, к переигровке', ctx(f))).call).toEqual({ id: 'shell.open', params: undefined, broken: true });
   });
   it('сбой ×2, затем ответ: onRetry вызван, итог получен', async () => {
-    const { f, calls } = fake([new Error('сеть'), msg('', undefined), msg('Есть.', { name: 'shell__open', args: '{"section":"editor"}' })]);
+    const { f, calls } = fake([500, msg('', undefined), msg('Есть.', { name: 'shell__open', args: '{"section":"editor"}' })]);
     const retries: number[] = [];
     const r = await askModel('штаб, в редактор', ctx(f, { onRetry: (n: number) => retries.push(n) }));
     expect(retries).toEqual([2, 3]);
@@ -173,11 +173,40 @@ describe('askModel', () => {
     expect(r.call).toEqual({ id: 'shell.open', params: { section: 'editor' } });
   });
   it('сбой ×3 — «Связи с моделью нет»', async () => {
-    const { f, calls } = fake([500, new Error('сеть'), new Error('сеть')]);
+    const { f, calls } = fake([500, 503, msg(null)]);
     const p = askModel('штаб, что-нибудь', ctx(f));
     await expect(p).rejects.toBeInstanceOf(ModelUnavailable);
     await expect(p).rejects.toThrow('Связи с моделью нет');
     expect(calls).toHaveLength(3);
+  });
+  // LM Studio не запущена: повтор не поможет, а человек ждёт — сразу «Связи с моделью нет»
+  it.each([
+    ['отказ соединения', new TypeError('Failed to fetch')],
+    ['502 шлюза (llm_unavailable)', 502],
+    ['400 — запрос не подходит модели', 400],
+  ])('%s — сразу ModelUnavailable, без повторов', async (_w, r) => {
+    const { f, calls } = fake([r as Error | number, msg('Есть.')]);
+    const retries: number[] = [];
+    await expect(askModel('штаб, что-нибудь', ctx(f, { onRetry: (n: number) => retries.push(n) }))).rejects.toBeInstanceOf(ModelUnavailable);
+    expect(calls).toHaveLength(1);
+    expect(retries).toEqual([]);
+  });
+  it('нет ответа 20 с — повтор (модель зависла или грузится)', async () => {
+    vi.useFakeTimers();
+    try {
+      let n = 0;
+      const f = ((_u: string, init: RequestInit) => {
+        n++;
+        if (n === 2) return Promise.resolve(new Response(JSON.stringify(msg('Есть.')), { status: 200 }));
+        return new Promise((_res, rej) => init.signal!.addEventListener('abort', () => rej(init.signal!.reason)));
+      }) as unknown as typeof fetch;
+      const retries: number[] = [];
+      const p = askModel('штаб', ctx(f, { onRetry: (k: number) => retries.push(k) }));
+      await vi.advanceTimersByTimeAsync(MODEL_TIMEOUT_MS + 10);
+      expect((await p).say).toBe('Есть.');
+      expect(n).toBe(2);
+      expect(retries).toEqual([2]);
+    } finally { vi.useRealTimers(); }
   });
   it('отмена — без повторов', async () => {
     const ac = new AbortController();

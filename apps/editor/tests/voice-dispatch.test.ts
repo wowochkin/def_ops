@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, actions, register, type Action } from '../src/voice/registry';
-import { addressed, CONVERSATION_S, Dispatcher, normalizeCommand } from '../src/voice/dispatch';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { addressed, CONVERSATION_S, Dispatcher, MODEL_DOWN_MS, normalizeCommand, STOP_WORDS } from '../src/voice/dispatch';
 import { ModelUnavailable, type ModelReply } from '../src/voice/llm';
 
 let offs: (() => void)[] = [];
@@ -418,5 +420,154 @@ describe('модель за правилами', () => {
     await d.utterance('штаб, тихо', 2);
     expect(await first).toBe('unknown');
     expect(said).toEqual([]);
+  });
+});
+
+describe('без LM Studio', () => {
+  type Opts = ConstructorParameters<typeof Dispatcher>[0];
+  type Hook = NonNullable<Opts['model']>;
+  let thinking: boolean[] = [];
+  let quiet: boolean[] = [];
+  let unsaid: number[] = [];
+  let ids = 0;
+  beforeEach(() => { thinking = []; quiet = []; unsaid = []; ids = 0; });
+  const mkd = (model: Hook, extra: Partial<Opts> = {}) => new Dispatcher({
+    now: () => t, section: () => section, model, thinking: (on) => thinking.push(on),
+    say: (s, o) => { said.push(s); quiet.push(!!o?.quiet); return ++ids; },
+    unsay: (id) => { unsaid.push(id); },
+    ...extra,
+  });
+  const DOWN = /^Не понял вас\. Языковая модель сейчас недоступна — говорите готовыми командами, например: «[^»]+», «[^»]+»\.$/;
+
+  it('модель недоступна — помнит 3 минуты: следующая непонятая фраза сразу, без модели и «Думаю»', async () => {
+    const m = vi.fn(async () => { throw new ModelUnavailable(); }) as unknown as Hook;
+    const d = mkd(m);
+    expect(await d.utterance('штаб, как дела у соседей', 1)).toBe('unknown');
+    expect(said).toHaveLength(1);
+    expect(said[0]).toMatch(/^Связи с моделью нет\. Можно сказать, например: «/);
+    expect(thinking).toEqual([true, false]);
+    t += 60_000;
+    expect(await d.utterance('штаб, расскажи про погоду', 2)).toBe('unknown');
+    expect(m).toHaveBeenCalledTimes(1);
+    expect(said).toHaveLength(2);
+    expect(said[1]).toMatch(DOWN);
+    expect(thinking).toEqual([true, false]); // «Думаю» не было
+    // «Связи с моделью нет» — один раз за сбой
+    expect(said.filter((s) => s.startsWith('Связи с моделью нет'))).toHaveLength(1);
+    // правила работают как всегда
+    expect(await d.utterance('штаб, открой карты', 3)).toBe('done');
+    // прошло 3 минуты — модель спрашивается снова
+    t += MODEL_DOWN_MS;
+    await d.utterance('штаб, а что у соседей', 4);
+    expect(m).toHaveBeenCalledTimes(2);
+  });
+  it('проверка связи в «ИИ» неуспешна — модель не зовётся, честный ответ сразу', async () => {
+    const m = vi.fn(async () => ({ say: 'x' })) as unknown as Hook;
+    let ready = false;
+    const d = mkd(m, { modelReady: () => ready });
+    expect(await d.utterance('штаб, расскажи про погоду', 1)).toBe('unknown');
+    expect(m).not.toHaveBeenCalled();
+    expect(said).toHaveLength(1);
+    expect(said[0]).toMatch(DOWN);
+    expect(thinking).toEqual([]);
+    ready = true;
+    await d.utterance('штаб, расскажи про погоду', 2);
+    expect(m).toHaveBeenCalledTimes(1);
+  });
+  it('связь проверена заново (modelBack) — недоступность забыта', async () => {
+    let fail = true;
+    const m = vi.fn(async () => { if (fail) throw new ModelUnavailable(); return { say: 'Ясно.' }; }) as unknown as Hook;
+    const d = mkd(m);
+    await d.utterance('штаб, как дела у соседей', 1);
+    fail = false;
+    d.modelBack();
+    expect(await d.utterance('штаб, как дела у соседей', 2)).toBe('done');
+    expect(said.at(-1)).toBe('Ясно.');
+  });
+  it('заготовленные фразы о модели — тихие: не открывают окно разговора заново', async () => {
+    const d = mkd(async (_t, _a, c) => { c.onRetry(2); throw new ModelUnavailable(); });
+    await d.utterance('штаб, как дела у соседей', 1);
+    await d.utterance('штаб, расскажи про погоду', 2);
+    expect(said[0]).toBe('Связь с моделью прервалась, повторяю запрос.');
+    expect(quiet).toEqual([true, true, true]);
+    // обычный ответ — открывает окно, как прежде
+    await d.utterance('штаб', 3);
+    expect(said.at(-1)).toBe('Слушаю.');
+    expect(quiet.at(-1)).toBe(false);
+  });
+  it('«отбой» после «повторяю запрос» — эта фраза гасится, запрос отменён', async () => {
+    const d = mkd((_t, _a, c) => { c.onRetry(2); return new Promise(() => {}); });
+    void d.utterance('штаб, что нового на фланге', 1);
+    await Promise.resolve();
+    expect(said).toEqual(['Связь с моделью прервалась, повторяю запрос.']);
+    expect(await d.utterance('Штаб, отбой', 2)).toBe('done');
+    expect(unsaid).toEqual([1]);
+    expect(said.at(-1)).toBe('Голос выключен. Включить — кнопкой на панели.');
+  });
+  it('выключение голоса (cancel) гасит «повторяю запрос»', async () => {
+    const d = mkd((_t, _a, c) => { c.onRetry(2); return new Promise(() => {}); });
+    void d.utterance('штаб, что нового на фланге', 1);
+    await Promise.resolve();
+    d.cancel();
+    expect(unsaid).toEqual([1]);
+    d.cancel();
+    expect(unsaid).toEqual([1]);
+  });
+});
+
+describe('стоп-слова — общие с сервисом', () => {
+  let stops = 0;
+  const m = vi.fn(async () => ({ say: 'Слушаю.' }));
+  const mks = () => new Dispatcher({ now: () => t, say: (s) => said.push(s), section: () => section, stop: () => { stops++; }, model: m as never });
+  beforeEach(() => { stops = 0; m.mockClear(); });
+
+  it('список — тот же, что у сервиса (services/voice/stop_words.json)', () => {
+    const file = JSON.parse(readFileSync(resolve(__dirname, '../../../services/voice/stop_words.json'), 'utf8'));
+    expect(STOP_WORDS).toEqual(file.stop);
+    for (const w of ['стоп', 'подождите', 'подожди', 'хватит', 'отставить', 'тихо']) expect(STOP_WORDS).toContain(w);
+  });
+  it.each(['Подождите', 'Отставить', 'Штаб, подожди', 'Хватит', 'Стоп, стоп, подождите', 'Тихо!'])('«%s» — штаб замолкает и молчит, модель не зовётся', async (phrase) => {
+    const d = mks();
+    d.spoke();
+    expect(await d.utterance(phrase, 1)).toBe('done');
+    expect(m).not.toHaveBeenCalled();
+    expect(said).toEqual([]);
+    expect(stops).toBe(1);
+  });
+  it('каждое стоп-слово сервиса останавливает штаб', async () => {
+    for (const [i, w] of STOP_WORDS.entries()) {
+      const d = mks();
+      expect(await d.utterance(`Штаб, ${w}`, i)).toBe('done');
+    }
+    expect(stops).toBe(STOP_WORDS.length);
+    expect(m).not.toHaveBeenCalled();
+    expect(said).toEqual([]);
+  });
+  it('«Подождите, открой карты» — штаб замолкает, просьба исполняется правилами', async () => {
+    const d = mks();
+    d.spoke();
+    expect(await d.utterance('Подождите, открой карты', 1)).toBe('done');
+    expect(opened).toEqual([{ section: 'maps' }]);
+    expect(stops).toBe(1);
+    expect(m).not.toHaveBeenCalled();
+    expect(await d.utterance('Штаб, отставить, открой переигровку', 2)).toBe('done');
+    expect(opened).toEqual([{ section: 'maps' }, { section: 'replay' }]);
+  });
+  it('стоп-слово не в начале — обычная речь (в модель), штаб не останавливается', async () => {
+    const d = mks();
+    expect(await d.utterance('Штаб, а хватит ли нам снарядов', 1)).toBe('done');
+    expect(m).toHaveBeenCalledTimes(1);
+    expect(stops).toBe(0);
+  });
+});
+
+describe('старый ответ и новая реплика', () => {
+  it('новая разобранная реплика снимает ждущие фразы (supersede); «не мне» — нет', async () => {
+    let n = 0;
+    const d = new Dispatcher({ now: () => t, say: (s) => said.push(s), section: () => section, supersede: () => { n++; } });
+    expect(await d.utterance('передайте в штаб армии', 1)).toBe('ignored');
+    expect(n).toBe(0);
+    expect(await d.utterance('Штаб, открой карты', 2)).toBe('done');
+    expect(n).toBe(1);
   });
 });
