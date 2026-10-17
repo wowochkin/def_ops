@@ -140,6 +140,8 @@ CALIB_PHRASE = ("Докладываю обстановку. Восьмая гв�
 TURN_RECHECK_MS = 96  # три кадра
 PIECE_LEAD_S = 1.0  # синтез следующего куска — когда звука в запасе меньше этого
 PIECE_MAX_CHARS = 300  # кусок не длиннее (2–3 предложения)
+SHORT_CHARS = 30  # первая фраза короче — ждём следующую и синтезируем вместе
+SHORT_WAIT_S = 0.4  # но не дольше
 PAUSE_AFTER = {".": 0.2, "…": 0.25, "!": 0.3, "?": 0.3, ",": 0.1, ";": 0.15, ":": 0.15}  # пауза между кусками, с
 
 
@@ -500,7 +502,7 @@ class Session:
         threading.Thread(target=llm, daemon=True).start()
         await self.send(type="state", state="thinking")
         try:
-            pending, done, first = [], False, True
+            pending, done, first, t_first = [], False, True, None
             while True:
                 # копим готовые фразы; первая — сразу (начало ответа без задержки), следующие — одним куском,
                 # когда звука в запасе остаётся меньше PIECE_LEAD_S, текста набралось PIECE_MAX_CHARS или ответ кончился
@@ -518,8 +520,15 @@ class Session:
                         pending.append(item)
                 if not pending:
                     break
-                ready = (first or done or len(" ".join(pending)) >= PIECE_MAX_CHARS
-                         or self.play_until - time.perf_counter() < PIECE_LEAD_S)
+                if first:
+                    # короткую первую фразу («Принято.») синтез произносит отдельно плохо — глотает конец слова;
+                    # ждём следующую (не дольше SHORT_WAIT_S) и озвучиваем вместе
+                    t_first = t_first or time.perf_counter()
+                    ready = (done or len(pending) > 1 or len(pending[0]) >= SHORT_CHARS
+                             or time.perf_counter() - t_first >= SHORT_WAIT_S)
+                else:
+                    ready = (done or len(" ".join(pending)) >= PIECE_MAX_CHARS
+                             or self.play_until - time.perf_counter() < PIECE_LEAD_S)
                 if not ready:
                     try:
                         item = await asyncio.wait_for(q.get(), 0.05)
@@ -528,7 +537,8 @@ class Session:
                     q.put_nowait(item)  # разберём на следующем круге (порядок сохраняется: очередь пуста)
                     continue
                 if first:
-                    s, pending, first = pending[0], pending[1:], False
+                    k = 2 if len(pending[0]) < SHORT_CHARS and len(pending) > 1 else 1
+                    s, pending, first = " ".join(pending[:k]), pending[k:], False
                 else:
                     s, pending = " ".join(pending), []
                 say = speakable(s)
