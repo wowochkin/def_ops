@@ -35,8 +35,10 @@ cd scripts/voice-bench
 .venv-stt/bin/python record.py
 .venv-stt/bin/python stt_bench.py           # out/stt.md
 
-# 3. языковая модель: LM Studio запущен, модель загружена
-python3 llm_bench.py                        # время до первой фразы ответа
+# 3. языковые модели: LM Studio запущен (сервер, JIT-загрузка моделей включена)
+python3 llm_compare.py run --models <id1>,<id2>   # id — из `curl -s localhost:1234/v1/models`
+python3 llm_compare.py page                       # out/llm-read.html — читать вслепую и оценивать
+python3 llm_compare.py score                      # out/llm.md
 ```
 
 **Voicebox.** Установите приложение (voicebox.sh), создайте профиль голоса «Жуков» из `ref/zhukov-14s.wav`
