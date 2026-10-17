@@ -19,6 +19,8 @@ import { buildRouter as cartographyRouter } from '../../cartography/src/app';
 import { quadrantImage, pixel, near, QUADRANTS, tempDir } from '../../cartography/tests/helpers';
 import { georefFromCorners, mercator, pixelToLngLat, tileOf, type LngLat, type MapJob } from '@def-ops/core';
 import { promises as fs } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import tar from 'tar-stream';
@@ -341,5 +343,30 @@ describe('шлюз: языковая модель', () => {
     expect(down.status).toBe(502);
     expect((await down.json()).error.code).toBe('llm_unavailable');
     await new Promise<void>((r2) => g.close(() => r2()));
+  });
+});
+
+describe('шлюз: состояние голоса', () => {
+  const start = async (voiceState?: string) => {
+    const g = createGateway({ port: 0, services: {}, routes: [], auth: 'keys', apiKeys: parseKeys('keyA:orgA'), corsOrigin: '*', voiceState });
+    await new Promise<void>((r) => g.listen(0, () => r()));
+    return { g, url: `http://127.0.0.1:${(g.address() as AddressInfo).port}` };
+  };
+
+  it('/api/voice — файл состояния как есть, без ключа; нет файла — off', async () => {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'voice-gw-'));
+    const file = join(dir, 'state.json');
+    const a = await start(file);
+    try {
+      expect(await (await fetch(a.url + '/api/voice')).json()).toEqual({ state: 'off' });
+      await fs.writeFile(file, JSON.stringify({ state: 'ready', port: 47645 }));
+      const r = await fetch(a.url + '/api/voice');
+      expect(r.status).toBe(200);
+      expect(await r.json()).toEqual({ state: 'ready', port: 47645 });
+      await fs.writeFile(file, '{битый');
+      expect(await (await fetch(a.url + '/api/voice')).json()).toEqual({ state: 'off' });
+    } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
+    const b = await start();
+    try { expect(await (await fetch(b.url + '/api/voice')).json()).toEqual({ state: 'off' }); } finally { b.g.close(); }
   });
 });

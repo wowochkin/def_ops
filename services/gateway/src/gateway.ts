@@ -30,6 +30,8 @@ export interface GatewayConfig {
   /** Языковая модель для /llm/… (OpenAI-совместимый сервер, например http://localhost:1234/v1). */
   llmUrl?: string;
   corsOrigin: string;
+  /** Файл состояния голосового сервиса (state.json) для GET /api/voice; без него — всегда {"state":"off"}. */
+  voiceState?: string;
   /** Предел времени на запрос целиком, мс (долгая загрузка скана; 0 — без предела). По умолчанию 1 ч. */
   requestTimeoutMs?: number;
 }
@@ -83,6 +85,16 @@ export function createGateway(cfg: GatewayConfig) {
       const services = Object.fromEntries(checks);
       const ok = checks.every(([, s]) => s === 'up');
       res.writeHead(ok ? 200 : 503, { 'Content-Type': 'application/json' }).end(JSON.stringify({ status: ok ? 'ok' : 'degraded', services, auth: cfg.auth }));
+      return;
+    }
+
+    // --- состояние голосового сервиса (файл, который пишет запускающий процесс); нет файла — «off»; ключ не нужен
+    if (url.pathname === '/api/voice') {
+      let body = '{"state":"off"}';
+      if (cfg.voiceState) {
+        try { const t = await fs.readFile(cfg.voiceState, 'utf8'); JSON.parse(t); body = t; } catch { /* нет файла или он битый */ }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(body);
       return;
     }
 

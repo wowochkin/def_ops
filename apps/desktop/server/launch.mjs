@@ -8,6 +8,7 @@ import { createServer } from 'node:net';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { startVoice } from './voice.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
@@ -51,10 +52,17 @@ const services = [
     NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
   { name: 'gateway', env: {
     DOCUMENTS_URL: url('documents'), RENDER_URL: url('render'), REGISTRY_URL: url('registry'), CARTOGRAPHY_URL: url('cartography'),
+    VOICE_STATE: join(data, 'voice', 'state.json'),
     AUTH: 'open', LLM_URL: opt('llm', process.env.DEFOPS_LLM_URL || 'http://localhost:1234/v1'),
     ...(opt('static') ? { STATIC_DIR: resolve(opt('static')) } : {}),
   } },
 ];
+// Голос (Python) — необязателен: нет окружения или сервис упал — приложение работает без него. Папка сервиса:
+// --voice-dir, DEFOPS_VOICE_DIR, иначе services/voice.
+let voice = null;
+try {
+  voice = await startVoice({ repo, data, voiceDir: resolve(opt('voice-dir', process.env.DEFOPS_VOICE_DIR || join(repo, 'services/voice'))), log: (s) => process.stderr.write(s + '\n') });
+} catch (e) { process.stderr.write(`[voice] не запущен: ${e.message}\n`); }
 const procs = services.map((s) => {
   const env = { ...process.env, ...s.env, PORT: String(ports[s.name]), HOST: '127.0.0.1' };
   const p = dev
@@ -67,7 +75,7 @@ const procs = services.map((s) => {
   return p;
 });
 let stopping = false, ready = false;
-function stop(code = 0) { if (stopping) return; stopping = true; procs.forEach((p) => p.kill('SIGTERM')); setTimeout(() => process.exit(code), 500); }
+function stop(code = 0) { if (stopping) return; stopping = true; procs.forEach((p) => p.kill('SIGTERM')); voice?.stop(); setTimeout(() => process.exit(code), 500); }
 process.on('SIGINT', () => stop()); process.on('SIGTERM', () => stop());
 // --watch-stdin: приложение держит вход открытым; закрылось приложение — закрылся вход — сервисы не переживают окно
 if (args.includes('--watch-stdin')) { process.stdin.on('end', () => stop()); process.stdin.resume(); }

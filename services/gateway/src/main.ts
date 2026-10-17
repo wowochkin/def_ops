@@ -24,6 +24,7 @@ const server = createGateway({
   apiKeys: parseKeys(env('API_KEYS', '')),
   staticDir: process.env.STATIC_DIR,
   llmUrl: process.env.LLM_URL,
+  voiceState: process.env.VOICE_STATE,
   corsOrigin: env('CORS_ORIGIN', '*'),
   requestTimeoutMs: Number(env('REQUEST_TIMEOUT_MS', '3600000')),
 });
