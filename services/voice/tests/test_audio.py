@@ -1,0 +1,104 @@
+import asyncio
+
+import numpy as np
+import pytest
+
+from audio import FRAME, Listener, calibrate, should_merge
+
+
+def synth(seed=0):
+    r = np.random.default_rng(seed)
+    return {
+        "noise": list(r.uniform(0.0, 0.1, 120)),
+        "speech": list(r.uniform(0.7, 1.0, 120)),
+        "echo": list(r.uniform(0.1, 0.3, 120)),
+        "over": list(r.uniform(0.75, 1.0, 120)),
+    }
+
+
+def test_calibrate_normal_room():
+    cfg, rep = calibrate(synth(), 20)
+    assert 0.3 < cfg["vad"] < 0.6
+    assert 0.43 < cfg["barge_vad"] < 0.65
+    assert cfg["end_ms"] == 20
+    assert rep["warn"] == []
+
+
+def test_calibrate_loud_echo_warns_headphones():
+    d = synth()
+    d["echo"] = list(np.random.default_rng(1).uniform(0.7, 0.9, 120))
+    d["over"] = list(np.random.default_rng(2).uniform(0.8, 0.95, 120))
+    _, rep = calibrate(d, 20)
+    assert any("наушники" in w for w in rep["warn"])
+
+
+def test_calibrate_no_speech_raises():
+    d = synth()
+    d["speech"] = [0.05] * 120
+    with pytest.raises(ValueError):
+        calibrate(d, 20)
+
+
+CFG = {"vad": 0.5, "barge_vad": 0.7, "barge_ms": 256, "end_ms": 20}
+F = np.zeros(FRAME, np.float32)
+
+
+def run(frames, turn_probs, busy=False, **kw):
+    """frames: список уверенностей VAD на кадр; turn_probs — ответы Smart Turn по очереди (последний повторяется)."""
+    it = iter(frames)
+    calls = {"turn": 0}
+
+    async def vad(_f):
+        return next(it)
+
+    async def turn(_a):
+        i = min(calls["turn"], len(turn_probs) - 1)
+        calls["turn"] += 1
+        return turn_probs[i]
+
+    async def go():
+        ls = Listener(dict(CFG), vad, turn, **kw)
+        ev = []
+        for _ in frames:
+            ev += await ls.feed(F, busy)
+        return ev
+
+    return asyncio.run(go()), calls
+
+
+def kinds(ev):
+    return [e[0] for e in ev if e[0] != "level"]
+
+
+def test_listener_utterance_after_pause():
+    speech = [0.9] * 19  # ~0,6 с
+    # пауза 1 кадр (32 мс >= end_ms 20) → спрос; потом через 3 кадра; потом через 3
+    sil = [0.0] * 7
+    ev, calls = run(speech + sil, [0.2, 0.2, 0.9])
+    utt = [e for e in ev if e[0] == "utterance"]
+    assert len(utt) == 1 and utt[0][2] == 0.9
+    assert calls["turn"] == 3
+    assert kinds(ev)[:1] == ["speech_start"]
+
+
+def test_listener_max_silence_ends_without_turn():
+    ev, _ = run([0.9] * 10 + [0.0] * 60, [0.1])
+    utt = [e for e in ev if e[0] == "utterance"]
+    assert len(utt) == 1 and utt[0][2] is None
+
+
+def test_listener_barge_only_when_busy():
+    ev, _ = run([0.9] * 20, [0.1], busy=True)
+    assert kinds(ev).count("barge") == 1
+    ev, _ = run([0.9] * 20, [0.1], busy=False)
+    assert "barge" not in kinds(ev)
+
+
+def test_listener_click_is_dropped():
+    ev, _ = run([0.9] * 2 + [0.0] * 12, [0.1])
+    assert "utterance" not in kinds(ev) and "speech_end" in kinds(ev)
+
+
+def test_should_merge():
+    assert should_merge(10.0, 11.5, None) and should_merge(10.0, 11.5, 10.5)
+    assert not should_merge(10.0, 12.5, None) and not should_merge(10.0, 11.9, 10.2)

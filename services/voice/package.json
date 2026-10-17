@@ -1,0 +1,9 @@
+{
+  "name": "@def-ops/voice",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Сервис голоса: VAD, конец реплики, распознавание и синтез речи",
+  "scripts": {
+    "test": "sh tests/run.sh"
+  }
+}
