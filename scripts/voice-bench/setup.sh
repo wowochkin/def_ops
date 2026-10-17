@@ -14,6 +14,8 @@ step "1/4 окружение синтеза .venv-tts (Python 3.12)"
 uv venv --allow-existing --python 3.12 .venv-tts
 step "2/4 mlx-audio со всеми моделями синтеза (~1–3 мин)"
 uv pip install --python .venv-tts/bin/python "mlx-audio[all]==0.5.9"
+step "2b/4 стенд разговора: GigaAM, Silero VAD, числа словами (в то же окружение)"
+uv pip install --python .venv-tts/bin/python "gigaam[torch] @ git+https://github.com/salute-developers/GigaAM" silero-vad num2words
 
 step "3/4 окружение распознавания .venv-stt: mlx-audio, GigaAM и PyTorch (PyTorch ~1 ГБ, 2–5 мин)"
 uv venv --allow-existing --python 3.12 .venv-stt

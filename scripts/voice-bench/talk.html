@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Разговор голосом</title>
+<style>
+:root { --bg: #f6f4ef; --fg: #222; --muted: #777; --line: #ddd; --user: #e8eef7; --bot: #fff; --accent: #8a2b1e; }
+body { margin: 0; font: 15px/1.45 -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+header { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; z-index: 1; }
+button { font: inherit; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+#state { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+#dot { width: 12px; height: 12px; border-radius: 50%; background: #bbb; transition: background .15s; }
+#dot.listen { background: #3a8f3a; } #dot.speech { background: #d0a020; box-shadow: 0 0 0 4px #f0d27a66; }
+#dot.thinking { background: #3a6fb0; } #dot.speaking { background: var(--accent); box-shadow: 0 0 0 4px #e0a09066; }
+#meter { width: 90px; height: 6px; background: #e5e2da; border-radius: 3px; overflow: hidden; }
+#meter i { display: block; height: 100%; width: 0; background: #3a8f3a; }
+#info { color: var(--muted); font-size: 13px; }
+main { max-width: 860px; margin: 0 auto; padding: 12px 16px 80px; }
+.msg { margin: 10px 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); }
+.msg.user { background: var(--user); } .msg.bot { background: var(--bot); }
+.msg .who { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.msg .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.msg.cut { opacity: .6; }
+.sys { color: var(--muted); font-size: 13px; margin: 6px 0; }
+</style>
+</head>
+<body>
+<header>
+  <button id="start" class="primary">Начать</button>
+  <button id="reset" disabled>Новый разговор</button>
+  <span id="state"><span id="dot"></span><span id="stateText">не подключено</span></span>
+  <span id="meter"><i></i></span>
+  <span id="info"></span>
+</header>
+<main id="log">
+  <p class="sys">Нажмите «Начать» и разрешите микрофон. Говорите свободно: модель сама поймёт, что вы закончили, и ответит голосом.
+  Её можно перебить — просто заговорите. Подавление эха включено; если модель перебивает сама себя, наденьте наушники.</p>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const log = $('log');
+let ws, micCtx, playCtx, nextT = 0, sources = [], botEl = null, turnMeta = {};
+
+function setState(cls, text) { $('dot').className = cls; $('stateText').textContent = text; }
+function add(cls, who, text) {
+  const d = document.createElement('div'); d.className = 'msg ' + cls;
+  d.innerHTML = `<div class="who"></div><div class="text"></div><div class="meta"></div>`;
+  d.querySelector('.who').textContent = who; d.querySelector('.text').textContent = text;
+  log.appendChild(d); d.scrollIntoView({ block: 'end' }); return d;
+}
+function sys(text) { const p = document.createElement('p'); p.className = 'sys'; p.textContent = text; log.appendChild(p); p.scrollIntoView({ block: 'end' }); }
+
+// пересчёт микрофона в 16 кГц и кадры по 512 отсчётов (int16) — в AudioWorklet
+const worklet = `
+class Mic extends AudioWorkletProcessor {
+  constructor() { super(); this.ratio = sampleRate / 16000; this.acc = 0; this.out = new Int16Array(512); this.n = 0; this.peak = 0; }
+  process(inputs) {
+    const ch = inputs[0][0]; if (!ch) return true;
+    for (let i = 0; i < ch.length; i++) {
+      this.acc += 1; this.peak = Math.max(this.peak, Math.abs(ch[i]));
+      if (this.acc >= this.ratio) { this.acc -= this.ratio;
+        const v = Math.max(-1, Math.min(1, ch[i])); this.out[this.n++] = v * 32767;
+        if (this.n === 512) { this.port.postMessage({ pcm: this.out.buffer.slice(0), peak: this.peak }); this.n = 0; this.peak = 0; } }
+    }
+    return true;
+  }
+}
+registerProcessor('mic', Mic);`;
+
+function stopPlayback() {
+  for (const s of sources) { try { s.stop(); } catch (e) {} }
+  sources = []; nextT = 0;
+}
+function playChunk(buf) {
+  const v = new DataView(buf); const rate = v.getUint32(1, true);
+  const pcm = new Int16Array(buf.slice(5)); if (!pcm.length) return;
+  const ab = playCtx.createBuffer(1, pcm.length, rate); const ch = ab.getChannelData(0);
+  for (let i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
+  const src = playCtx.createBufferSource(); src.buffer = ab; src.connect(playCtx.destination);
+  const t = Math.max(playCtx.currentTime + 0.03, nextT); src.start(t); nextT = t + ab.duration;
+  sources.push(src);
+  if (turnMeta.t0 && !turnMeta.heard) { turnMeta.heard = true; }
+  setState('speaking', 'говорит');
+  src.onended = () => {
+    sources = sources.filter((x) => x !== src);
+    if (!sources.length) { ws?.send(JSON.stringify({ type: 'played' })); setState('listen', 'слушаю'); }
+  };
+}
+
+$('start').onclick = async () => {
+  $('start').disabled = true;
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+  micCtx = new AudioContext(); playCtx = new AudioContext();
+  await micCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([worklet], { type: 'text/javascript' })));
+  const node = new AudioWorkletNode(micCtx, 'mic');
+  micCtx.createMediaStreamSource(stream).connect(node);
+  ws = new WebSocket(`ws://${location.host}/ws`); ws.binaryType = 'arraybuffer';
+  node.port.onmessage = (e) => {
+    if (ws.readyState === 1) ws.send(e.data.pcm);
+    $('meter').firstElementChild.style.width = Math.min(100, e.data.peak * 250) + '%';
+  };
+  ws.onopen = () => { setState('listen', 'слушаю'); $('reset').disabled = false; };
+  ws.onclose = () => { setState('', 'отключено'); sys('Соединение закрыто — перезапустите сервер и обновите страницу.'); };
+  ws.onmessage = (e) => {
+    if (typeof e.data !== 'string') return playChunk(e.data);
+    const m = JSON.parse(e.data);
+    if (m.type === 'ready') $('info').textContent = `роль: ${m.persona} · модель: ${m.model} · словарь названий: ${m.names}`;
+    else if (m.type === 'vad') { if (m.state === 'speech') setState('speech', 'вы говорите'); else if (!sources.length) setState('listen', 'слушаю'); }
+    else if (m.type === 'turn') {}
+    else if (m.type === 'stop') { stopPlayback(); if (botEl) botEl.classList.add('cut'); sys('— перебили'); setState('speech', 'вы говорите'); }
+    else if (m.type === 'echo') sys(`(отброшено как эхо: «${m.text}»)`);
+    else if (m.type === 'user') {
+      const d = add('user', 'Вы', m.text);
+      d.querySelector('.meta').textContent = `речь ${m.audio_s} с · распознавание ${m.stt_ms} мс` + (m.turn != null ? ` · конец реплики ${m.turn}` : ' · конец по паузе') + (m.fixes.length ? ` · поправлено: ${m.fixes.join(', ')}` : '');
+      botEl = null; turnMeta = { t0: performance.now() };
+    }
+    else if (m.type === 'state') { if (m.state === 'thinking') setState('thinking', 'думает'); }
+    else if (m.type === 'assistant') {
+      if (!botEl) botEl = add('bot', 'Модель', '');
+      const t = botEl.querySelector('.text'); t.textContent = (t.textContent + ' ' + m.text).trim();
+    }
+    else if (m.type === 'latency' && botEl) {
+      botEl.querySelector('.meta').textContent = `от конца вашей речи: первое слово модели ${m.stt_llm_first} мс · первая фраза ${m.first_sentence} мс · первый звук ${m.first_audio} мс`;
+    }
+    else if (m.type === 'error') sys('Ошибка: ' + m.text);
+  };
+};
+$('reset').onclick = () => { ws?.send(JSON.stringify({ type: 'reset' })); stopPlayback(); log.innerHTML = ''; sys('Новый разговор.'); };
+</script>
+</body>
+</html>
