@@ -39,9 +39,10 @@ export function parseSettings(raw: string | null): Partial<VoiceSettings> {
 
 /**
  * Что ещё хранится рядом с регуляторами: `aec` — при каком подавлении эха в сервисе они сняты (`ready.aec`),
- * `calib_mode` — какой режим перебивания выбрала последняя калибровка (к нему возвращает «По умолчанию»).
+ * `calib_mode` — какой режим перебивания выбрала последняя калибровка (к нему возвращает «По умолчанию»),
+ * `aec_unknown` — регуляторы правили руками до ответа сервиса: подавление эха допишет его ответ (settleAec).
  */
-interface Stored { aec?: boolean; calib_mode?: BargeMode }
+interface Stored { aec?: boolean; calib_mode?: BargeMode; aec_unknown?: true }
 
 function parseObj(raw: string | null): Record<string, unknown> | null {
   try {
@@ -54,18 +55,36 @@ function parseStored(raw: string | null): Stored {
   return {
     ...(typeof v.aec === 'boolean' ? { aec: v.aec } : {}),
     ...(BARGE_MODES.includes(v.calib_mode as BargeMode) ? { calib_mode: v.calib_mode as BargeMode } : {}),
+    ...(v.aec_unknown === true && typeof v.aec !== 'boolean' ? { aec_unknown: true as const } : {}),
   };
 }
 
 /**
  * Строка для SETTINGS_KEY: регуляторы и режим перебивания cfg. Калибровка (`calibrated`) запоминает подавление эха
- * сервиса (`aec`) и свой режим; ручная правка их не трогает (нет их ещё — запоминается текущее подавление эха).
+ * сервиса (`aec`) и свой режим; ручная правка их не трогает (нет их ещё — запоминается текущее подавление эха; сервис
+ * ещё не ответил — отметка `aec_unknown`, подавление эха допишет его ответ).
  */
 export function storeSettings(raw: string | null, cfg: VoiceSettings, o: { aec?: boolean; calibrated?: boolean }): string {
   const prev = parseStored(raw);
   const aec = o.calibrated ? o.aec : prev.aec ?? o.aec;
   const calib_mode = o.calibrated ? cfg.barge_mode : prev.calib_mode;
-  return JSON.stringify({ ...cfg, ...(aec !== undefined ? { aec } : {}), ...(calib_mode ? { calib_mode } : {}) });
+  const unknown = aec === undefined && (!raw || prev.aec_unknown);
+  return JSON.stringify({ ...cfg, ...(aec !== undefined ? { aec } : {}), ...(calib_mode ? { calib_mode } : {}), ...(unknown ? { aec_unknown: true } : {}) });
+}
+
+/**
+ * Регуляторы правили до ответа сервиса (`aec_unknown`): ответ пришёл — дописать, при каком подавлении эха они сняты.
+ * Что сохранить заново; null — дописывать нечего.
+ */
+export function settleAec(raw: string | null, readyAec: boolean | undefined): string | null {
+  if (readyAec === undefined || !parseStored(raw).aec_unknown) return null;
+  const { aec_unknown: _, ...rest } = parseObj(raw) ?? {};
+  return JSON.stringify({ ...rest, aec: readyAec });
+}
+
+/** Голос уже настраивали (калибровка или регуляторы руками): предлагать калибровку при запуске не нужно. */
+export function wasCalibrated(raw: string | null): boolean {
+  return Object.keys(parseSettings(raw)).length > 0;
 }
 
 /**
@@ -75,7 +94,9 @@ export function storeSettings(raw: string | null, cfg: VoiceSettings, o: { aec?:
  */
 export function aecChange(raw: string | null, readyAec: boolean | undefined): 'on' | 'off' | null {
   if (readyAec === undefined || !Object.keys(parseSettings(raw)).length) return null;
-  const was = parseStored(raw).aec ?? false;
+  const st = parseStored(raw);
+  if (st.aec_unknown) return null; // сняты до ответа сервиса — при нынешнем подавлении эха
+  const was = st.aec ?? false;
   return was === readyAec ? null : readyAec ? 'on' : 'off';
 }
 
@@ -97,16 +118,21 @@ export function resetStored(raw: string | null): { cfg: VoiceSettings; stored: s
 }
 
 /** Сколько фраза штаба ждёт конца речи человека, если конца так и не пришло (сервис не прислал `speech end`). */
-export const HOLD_MAX_MS = 15_000;
+export const HOLD_MAX_MS = 8_000;
+/** Сколько после конца речи фраза ждёт реплику (распознавание): после кашля реплики не будет. */
+export const UTT_WAIT_MS = 2_000;
 
 /**
  * Фразы штаба не начинаются, пока человек говорит: сервис прислал `speech start` — фраза ждёт `speech end` (не дольше
- * HOLD_MAX_MS), затем уходит; ждущие — по порядку. Если штаб уже говорит (busy), очередная фраза его ответа не ждёт:
- * речь в микрофоне тогда — скорее его же голос из динамиков. Новая реплика снимает ждущие фразы (drop).
+ * HOLD_MAX_MS), а после него — реплику (`utterance`, не дольше UTT_WAIT_MS): реплика может оказаться новой просьбой,
+ * и тогда разборщик снимет старый ответ (drop), не дав ему прозвучать. Ждущие — по порядку. Если штаб уже говорит
+ * (busy), очередная фраза его ответа не ждёт: речь в микрофоне тогда — скорее его же голос из динамиков.
  */
 export class SayGate {
   private queue: { id: number; text: string }[] = [];
   private since: number | null = null;
+  /** Речь кончилась в это время, реплики ещё нет. */
+  private ended: number | null = null;
   /** onDrop — номера снятых ждущих фраз (drop, clear): кто ждал их конца (тур), узнаёт, что они не прозвучат. */
   constructor(private send: (id: number, text: string) => void, private now: () => number, private busy: () => boolean,
     private onDrop?: (ids: number[]) => void) {}
@@ -117,13 +143,20 @@ export class SayGate {
   }
   /** Речь человека началась / кончилась (сообщение сервиса `speech`). */
   speech(on: boolean): void {
-    if (on) { this.since ??= this.now(); return; }
+    if (on) { this.since ??= this.now(); this.ended = null; return; }
+    if (this.since === null) return;
     this.since = null;
-    this.flush();
+    this.ended = this.now();
   }
-  /** Проверка по часам: речь «идёт» дольше HOLD_MAX_MS — фразы уходят. */
+  /** Реплика пришла и разобрана (после supersede) — или это «не мне», эхо: ждущие фразы уходят. */
+  utterance(): void {
+    this.ended = null;
+    if (this.since === null) this.flush();
+  }
+  /** Проверка по часам: речь «идёт» дольше HOLD_MAX_MS или реплики нет дольше UTT_WAIT_MS — фразы уходят. */
   tick(): void {
-    if (this.since !== null && !this.holding()) { this.since = null; this.flush(); }
+    if (this.since !== null && this.now() - this.since >= HOLD_MAX_MS) { this.since = null; this.ended = null; this.flush(); }
+    if (this.ended !== null && this.now() - this.ended >= UTT_WAIT_MS) { this.ended = null; this.flush(); }
   }
   /** Снять ждущую фразу id или все; true — такая ждала. */
   drop(id?: number): boolean {
@@ -133,14 +166,25 @@ export class SayGate {
     return gone.length > 0;
   }
   /** Всё забыть: очередь и ожидание (выключение, обрыв связи, окно калибровки или голосов). */
-  clear(): void { this.drop(); this.since = null; }
+  clear(): void { this.drop(); this.since = null; this.ended = null; }
 
-  private holding(): boolean { return this.since !== null && this.now() - this.since < HOLD_MAX_MS; }
+  private holding(): boolean {
+    return (this.since !== null && this.now() - this.since < HOLD_MAX_MS) || (this.ended !== null && this.now() - this.ended < UTT_WAIT_MS);
+  }
   private flush(): void {
     const q = this.queue;
     this.queue = [];
     q.forEach((x) => this.send(x.id, x.text));
   }
+}
+
+/**
+ * Штаб говорит по-настоящему: звучит хоть одна фраза, кроме тихих (заготовленные фразы о модели — «повторяю запрос»).
+ * Пока звучит только тихая, ответ модели ждёт конца речи человека, как всякий другой.
+ */
+export function chiefTalking(speaking: Set<number>, quiet: Set<number>): boolean {
+  for (const id of speaking) if (!quiet.has(id)) return true;
+  return false;
 }
 
 export const BARGE_WORD_HINT = 'Перебить: скажите «Стоп»';
@@ -151,7 +195,7 @@ export function bargeHint(speaking: boolean, mode: BargeMode): string | null {
 }
 
 export type PanelKey = 'off' | 'unsupported' | 'disabled' | 'loading' | 'reconnecting' | 'error' | 'mic' | 'busy'
-  | 'speaking' | 'listening' | 'thinking' | 'conversation' | 'idle';
+  | 'standby' | 'speaking' | 'listening' | 'thinking' | 'conversation' | 'idle';
 
 export interface PanelInput {
   status: VoiceStatus;
@@ -160,6 +204,8 @@ export interface PanelInput {
   micError?: string | null;
   /** калибровка или запись голоса — разговор стоит */
   busy?: string | null;
+  /** дежурный режим («Штаб, отбой»): микрофон открыт, штаб ждёт только «Штаб, на связь» */
+  standby?: boolean;
   speaking: boolean;
   listening: boolean;
   thinking: boolean;
@@ -170,6 +216,7 @@ export const NOT_INSTALLED = 'Голос не установлен: services/voi
 /** Установленная программа, браузер, не Mac на Apple Silicon: голоса в этой версии нет — значок не показывается. */
 export const UNSUPPORTED = 'Голос в этой версии недоступен';
 export const VOICE_DISABLED = 'Голос выключен';
+export const STANDBY_TEXT = 'Дежурю. Скажите: «Штаб, на связь»';
 
 /** Состояние панели простыми словами (цвет значка — по `key`). */
 export function panelState(s: PanelInput): { key: PanelKey; text: string } {
@@ -181,6 +228,7 @@ export function panelState(s: PanelInput): { key: PanelKey; text: string } {
   if (s.micError) return { key: 'mic', text: 'Микрофон не подключился' };
   if (s.status === 'reconnecting') return { key: 'reconnecting', text: 'Переподключаюсь' };
   if (s.status !== 'ready') return { key: 'loading', text: 'Голос загружается' };
+  if (s.standby) return { key: 'standby', text: STANDBY_TEXT };
   if (s.busy) return { key: 'busy', text: s.busy };
   if (s.speaking) return { key: 'speaking', text: 'Говорит начальник штаба' };
   if (s.listening) return { key: 'listening', text: 'Слушаю' };

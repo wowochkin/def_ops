@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, SayGate, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
+  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
 } from '../src/voice/panel-state';
 
 const base: PanelInput = { status: 'ready', speaking: false, listening: false, thinking: false, conversation: false };
@@ -155,6 +155,7 @@ describe('фраза штаба ждёт конца реплики (SayGate)', (
     g.say(2, 'Сделано.');
     expect(sent).toEqual([]);
     g.speech(false);
+    g.utterance(); // реплика пришла и разобрана (или «не мне»)
     expect(sent).toEqual(['1:Открываю.', '2:Сделано.']);
   });
   it('штаб уже говорит — следующая фраза его ответа не ждёт (речь в микрофоне — скорее эхо)', () => {
@@ -247,5 +248,93 @@ describe('«По умолчанию» в тонкой настройке', () =>
   });
   it('старые настройки без отметки калибровки с «словом» — «словом» остаётся (безопасно)', () => {
     expect(resetStored(JSON.stringify({ vad: 0.3, barge_mode: 'word' })).cfg.barge_mode).toBe('word');
+  });
+});
+
+describe('голос без рук: состояние панели', () => {
+  it('дежурю — «Дежурю. Скажите: «Штаб, на связь»»; выключенный голос важнее дежурства', () => {
+    expect(STANDBY_TEXT).toBe('Дежурю. Скажите: «Штаб, на связь»');
+    expect(panelState({ ...base, standby: true })).toEqual({ key: 'standby', text: STANDBY_TEXT });
+    expect(panelState({ ...base, standby: true, listening: true, speaking: true }).key).toBe('standby');
+    expect(panelState({ ...base, standby: true, enabled: false }).key).toBe('disabled');
+    expect(panelState({ ...base, standby: true, status: 'reconnecting' }).key).toBe('reconnecting');
+  });
+});
+
+describe('ответ ждёт реплику после конца речи (N2)', () => {
+  let sent: string[] = [];
+  let now = 0;
+  const mk = () => new SayGate((id, text) => sent.push(`${id}:${text}`), () => now, () => false);
+  it('ожидание конца речи — 8 с, а не 15', () => {
+    expect(HOLD_MAX_MS).toBe(8000);
+    expect(UTT_WAIT_MS).toBe(2000);
+  });
+  it('настоящий порядок протокола: речь → ответ готов → конец речи → реплика → старый ответ снят', () => {
+    sent = []; now = 1000;
+    const g = mk();
+    g.speech(true);
+    g.say(1, 'Обстановка спокойная.');
+    g.speech(false);
+    expect(sent).toEqual([]); // ждёт реплику: может быть новая просьба
+    g.drop(); // разборщик: новая реплика — supersede
+    g.utterance();
+    expect(sent).toEqual([]);
+    g.say(2, 'Открываю карты.');
+    expect(sent).toEqual(['2:Открываю карты.']);
+  });
+  it('реплика «не мне» или эхо — ответ отпускается сразу', () => {
+    sent = []; now = 1000;
+    const g = mk();
+    g.speech(true);
+    g.say(1, 'Обстановка спокойная.');
+    g.speech(false);
+    g.utterance();
+    expect(sent).toEqual(['1:Обстановка спокойная.']);
+  });
+  it('реплики нет (кашель) — не дольше 2 с', () => {
+    sent = []; now = 1000;
+    const g = mk();
+    g.speech(true);
+    g.say(1, 'Есть.');
+    g.speech(false);
+    now += UTT_WAIT_MS - 1;
+    g.tick();
+    expect(sent).toEqual([]);
+    now += 2;
+    g.tick();
+    expect(sent).toEqual(['1:Есть.']);
+  });
+});
+
+describe('ответ модели во время «повторяю запрос» ждёт конца речи (N5)', () => {
+  it('звучат только тихие фразы о модели — штаб «не говорит», ворота держат ответ', () => {
+    expect(chiefTalking(new Set([5]), new Set([5]))).toBe(false);
+    expect(chiefTalking(new Set([5, 6]), new Set([5]))).toBe(true);
+    expect(chiefTalking(new Set(), new Set())).toBe(false);
+    const sent: string[] = [];
+    const speaking = new Set([5]);
+    const quiet = new Set([5]);
+    const g = new SayGate((id, text) => sent.push(`${id}:${text}`), () => 1000, () => chiefTalking(speaking, quiet));
+    g.speech(true);
+    g.say(7, 'Обстановка спокойная.');
+    expect(sent).toEqual([]);
+  });
+});
+
+describe('ручная правка до ответа сервиса (N5)', () => {
+  const cfg = { vad: 0.4, barge_vad: 0.6, barge_ms: 300, end_ms: 400, barge_mode: 'voice' as const };
+  it('подавление эха ещё неизвестно — ложной рамки «пройдите калибровку» нет; ответ сервиса его дописывает', () => {
+    const raw = storeSettings(null, cfg, { aec: undefined });
+    expect(aecChange(raw, true)).toBeNull();
+    expect(aecChange(raw, false)).toBeNull();
+    const settled = settleAec(raw, true)!;
+    expect(JSON.parse(settled)).toMatchObject({ ...cfg, aec: true });
+    expect(JSON.parse(settled).aec_unknown).toBeUndefined();
+    expect(aecChange(settled, true)).toBeNull();
+    expect(aecChange(settled, false)).toBe('off');
+    // отмеченное — не трогается; старые без отметки — тоже (как прежде)
+    expect(settleAec(storeSettings(null, cfg, { aec: false, calibrated: true }), true)).toBeNull();
+    expect(settleAec(JSON.stringify(cfg), true)).toBeNull();
+    expect(settleAec(raw, undefined)).toBeNull();
   });
 });
