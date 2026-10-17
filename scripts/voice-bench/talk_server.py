@@ -597,7 +597,8 @@ def main():
     ap.add_argument("--model", default="qwen/qwen3.6-35b-a3b")
     ap.add_argument("--persona", default="zhukov", choices=["zhukov", "staff"])
     ap.add_argument("--tts", default="mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16")
-    ap.add_argument("--ref", help="образец из refs.json")
+    ap.add_argument("--ref", default="zhukov-10s",
+                    help="образец из refs.json; 10 с — концы фраз почти не глотаются (tail_test), у 14 и 22 с — заметно")
     ap.add_argument("--vad", type=float, default=0.5, help="порог речи Silero, пока модель молчит")
     ap.add_argument("--barge-vad", dest="barge_vad", type=float, default=0.8, help="порог речи, пока модель говорит (перебивание)")
     ap.add_argument("--asr", default="v3_e2e_rnnt",
