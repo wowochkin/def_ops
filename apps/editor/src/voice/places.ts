@@ -334,41 +334,48 @@ const ABBR: Record<string, string[]> = {
   сд: ['стрелков', 'дивизия'], пд: ['пехотн', 'дивизия'], тд: ['танков', 'дивизия'], мд: ['моторизованн', 'дивизия'],
 };
 const TYPE_RANK: Record<string, number> = { армия: 0, фронт: 0.05, группа: 0.1, корпус: 0.2, дивизия: 0.3 };
-const GENERIC = new Set(['гвардейск', 'ударн', 'танков', 'стрелков', 'армейск', 'пехотн', 'моторизованн', 'механизированн', 'кавалерийск', 'общевойсков', ...Object.keys(TYPE_RANK)]);
+const GENERIC = new Set(['гвардейск', 'ударн', 'танков', 'стрелков', 'армейск', 'пехотн', 'моторизованн', 'механизированн', 'кавалерийск', 'общевойсков', 'гарнизон', 'крепост', 'отряд', 'оборонительн', ...Object.keys(TYPE_RANK)]);
 const STOP = new Set(['и', 'в', 'на', 'по', 'с', 'со', 'к', 'о', 'об', 'про', 'то', 'ой']);
 const TYPE_STEM: [RegExp, string][] = [[/^арм/, 'армия'], [/^корпус/, 'корпус'], [/^дивиз/, 'дивизия'], [/^фронт/, 'фронт'], [/^групп/, 'группа']];
 
-interface Desc { num?: number; words: string[] }
+interface Desc { num?: number; words: string[]; cardinal?: boolean }
 
 /** Номер и значимые слова фразы (с раскрытыми сокращениями и буквами-обозначениями). */
 function describeText(text: string): Desc {
   const raw = text.split(/[\s\-«»"“”.,/;:]+/).filter(Boolean);
   const t = lettered(raw.map((w) => norm(w)));
-  let num: number | undefined;
+  let num: number | undefined, cardinal = false;
   const words: string[] = [];
   for (let i = 0; i < raw.length; i++) {
     if (t[i].startsWith('#')) { words.push(t[i]); continue; }
     const r = roman(raw[i]);
     if (r !== null && !/^\p{Script=Cyrillic}/u.test(raw[i])) { num ??= r; continue; }
     const n = numberAt(t, i);
-    if (n) { num ??= n.n; i += n.len - 1; continue; }
+    if (n) { if (num === undefined) { num = n.n; cardinal = !n.ordinal && !/^\d/.test(t[i]); } i += n.len - 1; continue; }
     const abbr = ABBR[t[i]];
     if (abbr && (t[i] !== 'а' || i === raw.length - 1 || /^[А-Я]+$/.test(raw[i]))) { words.push(...abbr); continue; }
     if (!t[i] || STOP.has(t[i]) || /^\d+$/.test(t[i])) continue;
     const stem = stems(t[i])[0];
     words.push(TYPE_STEM.find(([re]) => re.test(stem))?.[1] ?? stem);
   }
-  return { num, words };
+  return { num, words, cardinal };
 }
 
-/** Название соединения: основное (без скобок) и прозвища из скобок («армия Венка», «группа Неринга», «Герман Геринг»). */
+/**
+ * Название соединения: основное (без скобок) и прозвища из скобок. Прозвище — то, что в «…» («армия Венка»,
+ * «Герман Геринг»), «группа/армия + Фамилия» («группа Неринга») и, если в скобках перечислены составные части
+ * с кавычками, их номера («603 пд»). Описательные скобки («части», «штурмовая», «Верховное командование») — нет.
+ */
 function describeName(name: string): { main: Desc; aliases: Desc[] } {
   const aliases: Desc[] = [];
   for (const m of name.matchAll(/\(([^()]*)\)/g)) {
+    const composite = /«/.test(m[1]);
     for (const seg of m[1].split(',')) {
       const quoted = [...seg.matchAll(/«([^»]*)»/g)].map((x) => x[1]);
-      const texts = /\d/.test(seg) ? quoted : [seg.replace(/[«»]/g, ' ')];
-      for (const x of texts) if (/\p{Script=Cyrillic}/u.test(x)) { const d = describeText(x); if (d.words.length) aliases.push({ words: d.words }); }
+      for (const x of quoted) { const d = describeText(x); if (d.words.length && /\p{Script=Cyrillic}/u.test(x)) aliases.push({ words: d.words }); }
+      const plain = seg.replace(/«[^»]*»/g, ' ').trim();
+      if (!quoted.length && composite && /\d/.test(plain)) { const d = describeText(plain); if (d.num !== undefined && d.words.length) aliases.push(d); }
+      else if (!quoted.length && /^(?:группа|армия|корпус)\s+\p{Lu}\p{L}+$/u.test(plain)) aliases.push({ words: describeText(plain).words });
     }
   }
   return { main: describeText(name.replace(/\(.*?\)/g, ' ')), aliases };
@@ -390,6 +397,7 @@ export function findUnit<U extends { id: string; name: string; side?: string }>(
   const none = { options: [] as U[], labels: [] as string[] };
   const q = describeText(text);
   if (q.num === undefined && q.words.every((w) => GENERIC.has(w)) && q.words.length < 2) return none;
+  if (q.cardinal && !q.words.length) return none; // «шесть» — не «шестая»
   const pool = opts.side ? units.filter((u) => u.side === undefined || u.side === opts.side) : units;
   const sideName = (s: string) => opts.sideNames?.[s] ?? SIDE_RU[s] ?? s;
   const result = (found: U[]) => {
@@ -405,8 +413,8 @@ export function findUnit<U extends { id: string; name: string; side?: string }>(
   for (const u of pool) {
     const { main, aliases } = describeName(u.name);
     let best: { extra: number; rank: number } | null = null;
-    for (const [k, d] of [main, ...aliases].entries()) {
-      if (k === 0 ? q.num !== undefined && d.num !== q.num : q.num !== undefined) continue;
+    for (const d of [main, ...aliases]) {
+      if (q.num !== undefined && d.num !== q.num) continue;
       const used = new Set<number>();
       if (!q.words.every((w) => { const j = d.words.findIndex((x, n) => !used.has(n) && wordMatch(w, x)); if (j >= 0) used.add(j); return j >= 0; })) continue;
       const extra = d.words.filter((w, n) => !used.has(n) && !(w in TYPE_RANK)).length;

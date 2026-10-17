@@ -225,6 +225,39 @@ describe('обычные слова не дают мест', () => {
   });
 });
 
+describe('обычные слова не дают соединений', () => {
+  /** Слова, которые законно дают соединение не по началу слова его названия. */
+  const KNOWN_UNIT: Record<string, string> = {};
+  it('ни одно слово docs/system.md не даёт unit, если не похоже на слово названия', () => {
+    const text = readFileSync(new URL('../../../docs/system.md', import.meta.url), 'utf8').toLowerCase().replace(/ё/g, 'е');
+    const words = [...new Set(text.match(/[а-я]{4,}/g) ?? [])];
+    const wrong: string[] = [];
+    for (const sc of [scenarioFile, vistulaScenario, cityScenario]) {
+      const us = names(sc);
+      for (const w of words) {
+        const u = findUnit(w, us).unit;
+        // порядковые («восьмая», «первый») законно называют армию по номеру
+        if (!u || w in KNOWN_UNIT || /^(?:перв|втор|трет|четверт|пят|шест|седьм|восьм|девят|десят)/.test(w)) continue;
+        const ok = u.name.toLowerCase().replace(/ё/g, 'е').split(/[^а-я]+/).some((x) => x.length >= 4 && x.slice(0, 4) === w.slice(0, 4));
+        if (!ok) wrong.push(`${w} → ${u.name}`);
+      }
+    }
+    expect([...new Set(wrong)]).toEqual([]);
+  }, 120_000);
+  it('слова приказов не дают соединение по описательным скобкам', () => {
+    const V = names(vistulaScenario);
+    for (const w of ['часть', 'части', 'командование', 'командовать', 'штурм', 'штурмовая', 'вермахт', 'гарнизон'])
+      for (const us of [U, V, names(cityScenario)]) expect(findUnit(w, us).unit, w).toBeUndefined();
+    expect(findUnit('штурмовая', V).unit).toBeUndefined();
+  });
+  it('составные скобки: «Герман Геринг» двумя словами, номер «603 пд»', () => {
+    const V = names(vistulaScenario);
+    expect(name('герман геринг', V)).toMatch(/Группа у Гурау/);
+    expect(name('шестьсот третья пехотная дивизия', V)).toMatch(/Группа у Гурау/);
+    expect(name('восьмая гвардейская', V)).toBe('8-я гвардейская армия');
+  });
+});
+
 describe('самопроверка на всех данных', () => {
   it('каждый пункт трёх театров не находится как чужой по своему русскому и исходному названию', () => {
     const wrong: string[] = [];
