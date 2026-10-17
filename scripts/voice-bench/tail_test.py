@@ -1,6 +1,9 @@
 """Почему синтез «проглатывает» конец фразы: одни и те же короткие фразы в нескольких вариантах синтеза.
 
-Варианты: как было, с договариванием 1 и 2 кадров (по 80 мс) после «конца» (tts_tail.py; в talk_server —
+По умолчанию (--compare refs) сравниваются образцы голоса: модель при клонировании продолжает образец и может
+перенимать его обрыв в конце — 14 с как есть, он же с 0,6 с тишины в конце, 10 с, 22 с, с шумоподавлением; для
+каждого печатается и уровень конца самого образца. --compare eos — прежнее сравнение на одном образце:
+как было, с договариванием 1 и 2 кадров (по 80 мс) после «конца» (tts_tail.py; в talk_server —
 --eos-extra) и те же 1 и 2 кадра с плавным затуханием на них (--tail-fade-ms). Прошлый прогон: лучше 1 кадр, 2–3 — артефакты. Прошлые прогоны: поток, штраф за повторы, многоточие не влияют, хвост « ^.» в тексте даёт бормотание.
 Для каждого — out/tail/<вариант>.wav (фразы
 через паузу; слушать подряд) и таблица: уровень последних 30 мс относительно громкой части фразы (дБ). Обрыв на
@@ -33,6 +36,8 @@ def main():
     ap.add_argument("--tts", default="mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16")
     ap.add_argument("--ref")
     ap.add_argument("--takes", type=int, default=2, help="дублей каждой фразы (синтез случаен)")
+    ap.add_argument("--compare", choices=["refs", "eos"], default="refs",
+                    help="refs — образцы голоса (договаривание 1 кадр); eos — договаривание и затухание на одном образце")
     args = ap.parse_args()
     from mlx_audio.tts.utils import load_model
     from mlx_audio.utils import load_audio
@@ -65,8 +70,29 @@ def main():
             return a
         return f
 
-    variants = {"1-как-было": extra(0), "2-плюс-1-кадр": extra(1), "3-плюс-2-кадра": extra(2),
-                "5-плюс-1-кадр-затухание": faded(1), "6-плюс-2-кадра-затухание": faded(2)}
+    def with_ref(key, pad_s=0.0):  # другой образец голоса (и тишина после его последнего слова)
+        r = refs["refs"][key]
+        ra = load_audio(str(HERE / r["file"]), sample_rate=sr)
+        if pad_s:
+            import mlx.core as mx
+            ra = mx.concatenate([ra, mx.zeros(int(pad_s * sr), dtype=ra.dtype)])
+        print(f"образец {key}{f' + {pad_s} с тишины' if pad_s else ''}: конец записи {tail_db(np.array(ra), sr)} дБ")
+
+        def f(t):
+            extend_eos(tts, 1)()
+            return run(tts.generate(text=t, lang_code="russian", stream=True, streaming_interval=0.32,
+                                    ref_audio=ra, ref_text=r["text"], max_tokens=300))
+        return f
+
+    if args.compare == "eos":
+        variants = {"1-как-было": extra(0), "2-плюс-1-кадр": extra(1), "3-плюс-2-кадра": extra(2),
+                    "5-плюс-1-кадр-затухание": faded(1), "6-плюс-2-кадра-затухание": faded(2)}
+    else:
+        variants = {"r1-14с": with_ref("zhukov-14s"), "r2-14с-плюс-тишина": with_ref("zhukov-14s", 0.6),
+                    "r3-10с": with_ref("zhukov-10s"), "r4-22с": with_ref("zhukov-22s")}
+        if (HERE / refs["refs"]["zhukov-14s-dfn"]["file"]).exists():
+            variants["r5-14с-шумодав"] = with_ref("zhukov-14s-dfn")
+    print()
     out = HERE / "out" / "tail"
     out.mkdir(parents=True, exist_ok=True)
     print(f"{'вариант':22} | " + " | ".join(p[:12] for p in PHRASES) + " | среднее, дБ | длина, с")
