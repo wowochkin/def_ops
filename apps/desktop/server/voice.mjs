@@ -46,7 +46,14 @@ export async function startVoice({ repo, data, voiceDir, log = () => {} }) {
   const python = join(voiceDir, '.venv', 'bin', 'python');
   const plan = voicePlan({ python: existsSync(python), portAnswers: (await health()) !== null });
   let stopping = false, child = null;
-  const stop = () => { stopping = true; child?.kill('SIGTERM'); };
+  const stop = () => {
+    stopping = true;
+    const c = child;
+    if (!c) return;
+    c.kill('SIGTERM');
+    // не вышел за 300 мс (родитель выходит через 500) — добиваем, чтобы Python не остался сиротой
+    setTimeout(() => { if (c.exitCode === null && c.signalCode === null) c.kill('SIGKILL'); }, 300);
+  };
   if (plan === 'off') { write('off'); log('голос выключен: нет окружения'); return { stop }; }
 
   // опрос /health раз в секунду, пока не ready/error или пока жив запущенный процесс (не дольше 5 мин)
@@ -72,8 +79,13 @@ export async function startVoice({ repo, data, voiceDir, log = () => {} }) {
     let alive = true, becameReady = false;
     const out = (d) => log(d.toString().split('\n').filter(Boolean).map((l) => `[voice] ${l}`).join('\n'));
     me.stdout.on('data', out); me.stderr.on('data', out);
-    me.on('error', (e) => { log(`[voice] не запустился: ${e.message}`); });
-    me.on('exit', (code) => {
+    let gone = false;
+    // ошибка запуска (ENOENT и т. п.) может не сопровождаться exit — считаем её выходом, один раз
+    me.on('error', (e) => { log(`[voice] не запустился: ${e.message}`); onGone(e.code ?? 'ошибка запуска'); });
+    me.on('exit', (code) => onGone(code));
+    const onGone = (code) => {
+      if (gone) return;
+      gone = true;
       alive = false;
       if (stopping) return;
       // сервис, дошедший до ready, начинает счёт перезапусков заново
@@ -83,7 +95,7 @@ export async function startVoice({ repo, data, voiceDir, log = () => {} }) {
       write('loading', 'голос остановился, перезапускаю');
       log(`[voice] остановился (код ${code}), перезапуск через ${delay / 1000} с`);
       setTimeout(() => { if (!stopping) run(n + 1); }, delay);
-    });
+    };
     void poll(() => alive).then((ok) => { if (ok && alive) becameReady = true; });
   };
   run(0);

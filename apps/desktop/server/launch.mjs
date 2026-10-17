@@ -1,7 +1,8 @@
 // Сервисы платформы внутри настольного приложения: документы, рендер, реестр, картография и шлюз — фоновыми
 // процессами на свободных портах (шлюз — на постоянном), данные — в папке пользователя (без СУБД и Docker), редактор и API — с одного адреса
 // шлюза. Когда шлюз готов, в stdout — строка «DEFOPS_READY <адрес>»; приложение открывает этот адрес в окне.
-//   node launch.mjs --data <папка данных> [--static <собранный редактор>] [--dev] [--port N] [--llm http://localhost:1234/v1] [--watch-stdin]
+//   node launch.mjs --data <папка данных> [--static <собранный редактор>] [--dev] [--port N] [--llm http://localhost:1234/v1] [--voice-dir <папка голосового сервиса>] [--watch-stdin]
+// Голосовой сервис (Python, services/voice) запускается необязательным, после остальных; состояние — <данные>/voice/state.json.
 // --dev — сервисы из исходников (npx tsx), иначе — собранные файлы рядом (server/dist/<сервис>.mjs).
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
@@ -57,12 +58,6 @@ const services = [
     ...(opt('static') ? { STATIC_DIR: resolve(opt('static')) } : {}),
   } },
 ];
-// Голос (Python) — необязателен: нет окружения или сервис упал — приложение работает без него. Папка сервиса:
-// --voice-dir, DEFOPS_VOICE_DIR, иначе services/voice.
-let voice = null;
-try {
-  voice = await startVoice({ repo, data, voiceDir: resolve(opt('voice-dir', process.env.DEFOPS_VOICE_DIR || join(repo, 'services/voice'))), log: (s) => process.stderr.write(s + '\n') });
-} catch (e) { process.stderr.write(`[voice] не запущен: ${e.message}\n`); }
 const procs = services.map((s) => {
   const env = { ...process.env, ...s.env, PORT: String(ports[s.name]), HOST: '127.0.0.1' };
   const p = dev
@@ -75,6 +70,12 @@ const procs = services.map((s) => {
   return p;
 });
 let stopping = false, ready = false;
+// Голос (Python) — после остальных сервисов и необязателен: нет окружения или сервис упал — приложение работает без него;
+// запуск не ждём, готовность шлюза от него не зависит. Папка сервиса: --voice-dir, DEFOPS_VOICE_DIR, иначе services/voice.
+let voice = null;
+startVoice({ repo, data, voiceDir: resolve(opt('voice-dir', process.env.DEFOPS_VOICE_DIR || join(repo, 'services/voice'))), log: (s) => process.stderr.write(s + '\n') })
+  .then((v) => { voice = v; if (stopping) v.stop(); })
+  .catch((e) => process.stderr.write(`[voice] не запущен: ${e.message}\n`));
 function stop(code = 0) { if (stopping) return; stopping = true; procs.forEach((p) => p.kill('SIGTERM')); voice?.stop(); setTimeout(() => process.exit(code), 500); }
 process.on('SIGINT', () => stop()); process.on('SIGTERM', () => stop());
 // --watch-stdin: приложение держит вход открытым; закрылось приложение — закрылся вход — сервисы не переживают окно
