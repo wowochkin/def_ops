@@ -138,6 +138,8 @@ CALIB_PHRASE = ("Докладываю обстановку. Восьмая гв�
 
 
 TURN_RECHECK_MS = 96  # три кадра
+PIECE_LEAD_S = 1.0  # синтез следующего куска — когда звука в запасе меньше этого
+PIECE_MAX_CHARS = 300  # кусок не длиннее (2–3 предложения)
 
 
 def calibrate(d: dict, end_ms: int) -> tuple[dict, dict]:
@@ -286,6 +288,7 @@ class Session:
         self.response: asyncio.Task | None = None
         self.cancel = threading.Event()
         self.playing = False  # браузер ещё играет ответ
+        self.play_until = 0.0  # когда (perf_counter) браузер доиграет всё отправленное
         self.barged = False
         self.last_said = ""  # последние фразы модели — чтобы не принять их эхо за реплику
         # настройки, которые меняются со страницы на ходу: порог речи в тишине, порог и длительность
@@ -418,6 +421,7 @@ class Session:
     async def respond(self, text, t_end):
         self.history.append({"role": "user", "content": text})
         cancel = self.cancel
+        self.play_until = 0.0
         q: asyncio.Queue = asyncio.Queue()
         times = {}
         spoken = []
@@ -453,13 +457,37 @@ class Session:
         threading.Thread(target=llm, daemon=True).start()
         await self.send(type="state", state="thinking")
         try:
+            pending, done, first = [], False, True
             while True:
-                s = await q.get()
-                if s is None:
+                # копим готовые фразы; первая — сразу (начало ответа без задержки), следующие — одним куском,
+                # когда звука в запасе остаётся меньше PIECE_LEAD_S, текста набралось PIECE_MAX_CHARS или ответ кончился
+                while not done:
+                    try:
+                        item = q.get_nowait() if pending else await q.get()
+                    except asyncio.QueueEmpty:
+                        break
+                    if item is None:
+                        done = True
+                    elif isinstance(item, Exception):
+                        await self.send(type="error", text=f"языковая модель: {item}")
+                        done = True
+                    else:
+                        pending.append(item)
+                if not pending:
                     break
-                if isinstance(s, Exception):
-                    await self.send(type="error", text=f"языковая модель: {s}")
-                    break
+                ready = (first or done or len(" ".join(pending)) >= PIECE_MAX_CHARS
+                         or self.play_until - time.perf_counter() < PIECE_LEAD_S)
+                if not ready:
+                    try:
+                        item = await asyncio.wait_for(q.get(), 0.05)
+                    except asyncio.TimeoutError:
+                        continue
+                    q.put_nowait(item)  # разберём на следующем круге (порядок сохраняется: очередь пуста)
+                    continue
+                if first:
+                    s, pending, first = pending[0], pending[1:], False
+                else:
+                    s, pending = " ".join(pending), []
                 say = speakable(s)
                 await self.send(type="assistant", text=s, say=say if say != s else None)
                 self.last_said = (self.last_said + " " + say)[-400:]
@@ -480,6 +508,8 @@ class Session:
                         await self.send(type="latency", stt_llm_first=ms("llm_first"), first_sentence=ms("sentence"),
                                         first_audio=ms("audio"))
                     self.playing = True
+                    now = time.perf_counter()
+                    self.play_until = max(self.play_until, now + 0.03) + len(a) / self.m.tts_sr
                     await self.ws.send_bytes(b"\x01" + struct_rate(self.m.tts_sr) + (np.clip(a, -1, 1) * 32767).astype("<i2").tobytes())
                 await fut
                 spoken.append(s)
