@@ -1,0 +1,15 @@
+{
+  "_about": "Движки синтеза с клонированием. type: mlx — модель через mlx-audio (repo — первый доступный из списка); voicebox — приложение Voicebox по его API (профиль голоса создаётся в Voicebox из ref/zhukov-14s.wav с расшифровкой из refs.json). ref_text — передавать расшифровку образца; stream — потоковый вывод (замер времени до первого звука); kwargs — параметры языка и прочее. license — для решения о встраивании.",
+  "engines": [
+    { "id": "qwen3-1.7b", "type": "mlx", "repo": ["mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16", "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"], "ref_text": true, "stream": true, "kwargs": { "lang_code": "russian", "streaming_interval": 0.32 }, "license": "Apache-2.0" },
+    { "id": "qwen3-0.6b", "type": "mlx", "repo": ["mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16", "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit"], "ref_text": true, "stream": true, "kwargs": { "lang_code": "russian", "streaming_interval": 0.32 }, "license": "Apache-2.0" },
+    { "id": "fish-s2-pro", "type": "mlx", "repo": ["mlx-community/fish-audio-s2-pro"], "ref_text": true, "stream": true, "kwargs": { "streaming_interval": 0.5 }, "license": "Fish Audio Research (некоммерческая)" },
+    { "id": "voxcpm2", "type": "mlx", "repo": ["mlx-community/VoxCPM2-bf16", "mlx-community/VoxCPM2-8bit"], "ref_text": true, "stream": false, "kwargs": {}, "license": "Apache-2.0" },
+    { "id": "omnivoice", "type": "mlx", "repo": ["mlx-community/OmniVoice-bf16", "mlx-community/OmniVoice-bfloat16"], "ref_text": true, "stream": false, "ref": "zhukov-10s", "kwargs": { "language": "ru" }, "license": "см. карточку k2-fsa/OmniVoice" },
+    { "id": "chatterbox-v3", "type": "mlx", "repo": ["mlx-community/chatterbox-multilingual-v3"], "ref_text": false, "stream": true, "kwargs": { "lang_code": "ru", "streaming_interval": 0.5 }, "license": "MIT" },
+    { "id": "higgs-v3", "type": "mlx", "repo": ["bosonai/higgs-audio-v3-tts-4b"], "ref_text": true, "stream": true, "kwargs": {}, "license": "Boson Research (некоммерческая)", "optional": true },
+    { "id": "voicebox-qwen", "type": "voicebox", "engine": "qwen", "model_size": "1.7B", "profile": "Жуков", "license": "MIT (приложение), Apache-2.0 (модель)" },
+    { "id": "voicebox-chatterbox", "type": "voicebox", "engine": "chatterbox", "profile": "Жуков", "license": "MIT" },
+    { "id": "voicebox-omnivoice", "type": "voicebox", "engine": "omnivoice", "profile": "Жуков", "license": "см. карточку k2-fsa/OmniVoice" }
+  ]
+}
