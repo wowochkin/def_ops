@@ -88,8 +88,46 @@ describe('разборщик', () => {
   it('не понял — подсказка с тремя примерами', async () => {
     const d = mk();
     expect(await d.utterance('штаб, абракадабра', 1)).toBe('unknown');
-    expect(said[0]).toMatch(/^Пока понимаю команды: /);
+    expect(said[0]).toMatch(/^Не понял вас\. Можно сказать, например: /);
     expect((said[0].match(/«/g) ?? []).length).toBe(3);
+  });
+  it('не понял — примеры ближайшие по словам', async () => {
+    reg({ id: 'm.zoom', section: 'editor', say: ['штаб, приблизь карту'] });
+    reg({ id: 'm.turn', section: 'editor', say: ['штаб, делай ход'] });
+    reg({ id: 'm.x', section: 'editor', say: ['штаб, сохрани документ'] });
+    reg({ id: 'm.y', section: 'editor', say: ['штаб, отмени приказ'] });
+    const d = mk();
+    await d.utterance('штаб, сделай документ', 1);
+    expect(said[0]).toContain('сохрани документ');
+    expect((said[0].match(/«/g) ?? []).length).toBe(3);
+  });
+  it('а можешь …? — есть действие / нет действия', async () => {
+    reg({ id: 'm.zoom', section: 'editor', title: 'Приблизить карту', say: ['штаб, приблизь карту'] });
+    const d = mk();
+    expect(await d.utterance('штаб, а можешь приблизить карту?', 1)).toBe('done');
+    expect(said[0]).toBe('Да, скажите: «штаб, приблизь карту».');
+    expect(await d.utterance('штаб, можешь спеть песню?', 2)).toBe('done');
+    expect(said[1]).toMatch(/^Этого система пока не предусматривает\. Могу: «/);
+  });
+  it('continues после исполненной — не склеивается и не повторяется', async () => {
+    const d = mk();
+    expect(await d.utterance('штаб открой карты', 1)).toBe('done');
+    d.spoke();
+    await d.utterance('и знаки', 2, 1);
+    expect(opened).toEqual([{ section: 'maps' }]);
+    expect(said[0]).toMatch(/^Не понял вас/);
+  });
+  it('ошибка действия не выходит из utterance', async () => {
+    offs.forEach((o) => o()); offs = [];
+    const d = mk();
+    expect(await d.utterance('штаб открой карты', 1)).toBe('unknown');
+    expect(said[0]).toMatch(/^Не удалось/);
+  });
+  it('разделы — слова целиком', async () => {
+    const d = mk();
+    expect(await d.utterance('штаб открой картинку', 1)).toBe('unknown');
+    expect(await d.utterance('штаб открой знакомый', 2)).toBe('unknown');
+    expect(opened).toEqual([]);
   });
   it('continues — прежняя реплика не исполняется', async () => {
     const d = mk();

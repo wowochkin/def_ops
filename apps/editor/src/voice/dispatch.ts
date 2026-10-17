@@ -23,22 +23,46 @@ export function addressed(text: string): { rest: string } | null {
   return null;
 }
 
-/** Основы названий разделов в падежах: «переигровку», «моделирование», «знаки»… */
-const STEMS: [string, string][] = [
-  ['редактор', 'editor'], ['переигровк', 'replay'], ['моделирован', 'modeling'], ['карт', 'maps'],
-  ['знак', 'library'], ['знани', 'knowledge'], ['ии', 'staff'],
-];
+/** Названия разделов во всех падежах, которые говорят вслух: слово целиком, а не начало слова. */
+const FORMS: Record<string, string[]> = {
+  editor: ['редактор', 'редактора', 'редактору', 'редакторе'],
+  replay: ['переигровка', 'переигровку', 'переигровки', 'переигровке', 'переигровкой'],
+  modeling: ['моделирование', 'моделирования', 'моделированию', 'моделированием', 'моделировании'],
+  maps: ['карты', 'карту', 'карт', 'карте', 'картам', 'картами'],
+  library: ['знаки', 'знаков', 'знакам', 'знаками', 'знаках'],
+  knowledge: ['знания', 'знаний', 'знанию', 'знаниям', 'знаниями', 'знаниях'],
+  staff: ['ии'],
+};
 const sectionByWord = (w: string): string | null => {
-  for (const [stem, id] of STEMS) if (w === stem || (stem.length > 2 && w.startsWith(stem))) return id;
+  for (const [id, forms] of Object.entries(FORMS)) if (forms.includes(w)) return id;
   return SECTIONS.find((s) => norm(s.title) === w)?.id ?? null;
 };
 
 const OPEN = /^(?:открой|открыть|покажи|показать|перейди|перейти)(?: в| на| к)? (.+)$/;
-const HINT = 'Пока понимаю команды: «открой переигровку», «что я могу сказать», «калибровка».';
+const ASK = /^(?:а )?(?:можешь|умеешь|можете|умеете|можно ли|можно)(?: (.*))?$/;
+const DEFAULT_SAY = ['штаб, открой переигровку', 'штаб, что я могу сказать', 'штаб, калибровка'];
+
+/** Общие слова не считаются совпадением. */
+const STOP = new Set(['штаб', 'пожалуйста', 'что', 'как', 'мне', 'это', 'ли', 'и', 'в', 'на', 'ты', 'вы']);
+/** Слова реплики по основам (первые 5 букв) — падежи и окончания не мешают. */
+const stems = (t: string) => norm(t).split(' ').filter((w) => w.length > 2 && !STOP.has(w)).map((w) => w.slice(0, 5));
+const overlap = (q: string[], t: string) => { const ts = new Set(stems(t)); return q.filter((w) => ts.has(w)).length; };
+
+/** Примеры доступных действий раздела. */
+const examples = (section: string) => actions(section).flatMap((a) => (a.available() === true ? a.say ?? [] : []));
+
+/** Три примера, ближайших по словам к сказанному; не хватает — добираются первые по списку. */
+function closest(section: string, said: string, n = 3): string[] {
+  const q = stems(said);
+  const ex = [...new Set([...examples(section), ...DEFAULT_SAY])];
+  return ex.map((e, i) => ({ e, i, sc: overlap(q, e) })).sort((x, y) => y.sc - x.sc || x.i - y.i).slice(0, n).map((x) => x.e);
+}
+const quote = (xs: string[]) => xs.map((e) => `«${e}»`).join(', ');
 
 export class Dispatcher {
   private spokeAt = -Infinity;
-  private memory = new Map<number, string>();
+  /** Что говорили и исполнялось ли это (склеивать можно только неисполненное). */
+  private memory = new Map<number, { text: string; ran: boolean }>();
   constructor(private opts: { now(): number; say(text: string): void; section(): string; stop?(): void }) {}
 
   /** Штаб договорил (событие say-done) — открывается окно разговора. */
@@ -47,23 +71,38 @@ export class Dispatcher {
   async utterance(text: string, id: number, continues?: number): Promise<'ignored' | 'done' | 'unknown'> {
     let full = text;
     if (continues !== undefined) {
-      // прежняя реплика забыта, обрабатывается склеенная
       const prev = this.memory.get(continues);
       this.memory.delete(continues);
-      if (prev && !norm(text).startsWith(norm(prev))) full = `${prev} ${text}`;
+      // исполненная реплика не повторяется: новая обрабатывается сама по себе
+      if (prev && !prev.ran && !norm(text).startsWith(norm(prev.text))) full = `${prev.text} ${text}`;
     }
     const addr = addressed(full);
     const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000;
     if (!addr && !inWindow) return 'ignored';
     const rest = addr ? addr.rest : norm(full);
-    this.memory.set(id, full);
+    const rec = { text: full, ran: false };
+    this.memory.set(id, rec);
     if (this.memory.size > 20) this.memory.delete(this.memory.keys().next().value as number);
-    if (await this.rules(rest)) return 'done';
-    this.opts.say(HINT);
+    try {
+      if (await this.rules(rest)) { rec.ran = true; return 'done'; }
+    } catch {
+      this.opts.say('Не удалось выполнить это сейчас.');
+      return 'unknown';
+    }
+    this.opts.say(`Не понял вас. Можно сказать, например: ${quote(closest(this.opts.section(), rest))}.`);
     return 'unknown';
   }
 
   private async rules(rest: string): Promise<boolean> {
+    const q = ASK.exec(rest);
+    if (q) {
+      const words = stems(q[1] ?? "");
+      const hit = words.length ? actions(this.opts.section()).filter((a) => a.available() === true && a.say?.length)
+        .map((a) => ({ a, sc: overlap(words, `${a.title} ${a.say!.join(' ')}`) })).sort((x, y) => y.sc - x.sc)[0] : undefined;
+      if (hit && hit.sc > 0) this.opts.say(`Да, скажите: «${hit.a.say![0]}».`);
+      else this.opts.say(`Этого система пока не предусматривает. Могу: ${quote(closest(this.opts.section(), '', 3))}.`);
+      return true;
+    }
     const m = OPEN.exec(rest);
     if (m) {
       const sec = sectionByWord(m[1].split(' ')[0]);
@@ -84,6 +123,6 @@ export class Dispatcher {
 
 /** Что можно сказать в разделе: не больше HELP_MAX примеров из реестра. */
 export function helpText(section: string): string {
-  const ex = actions(section).flatMap((a) => (a.available() === true ? a.say ?? [] : [])).slice(0, HELP_MAX);
+  const ex = examples(section).slice(0, HELP_MAX);
   return ex.length ? `Можно сказать: ${ex.map((e) => `«${e}»`).join(', ')}.` : 'В этом разделе голосом пока только переходы между разделами.';
 }
