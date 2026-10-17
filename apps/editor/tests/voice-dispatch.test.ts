@@ -381,6 +381,36 @@ describe('модель за правилами', () => {
     expect(await d.utterance('Стоп', 3)).toBe('done');
     expect(stops).toBe(3);
   });
+  it('cancel() без новой реплики — поздний ответ не звучит, действие не исполняется', async () => {
+    let release!: (r: ModelReply) => void;
+    const d = mkm(() => new Promise((res) => { release = res; }));
+    const first = d.utterance('штаб, давай-ка к переигровке', 1);
+    await Promise.resolve();
+    d.cancel();
+    release({ say: 'Открываю переигровку.', call: { id: 'shell.open', params: { section: 'replay' } } });
+    expect(await first).toBe('unknown');
+    expect(opened).toEqual([]);
+    expect(said).toEqual([]);
+    expect(thinking).toEqual([true, false]);
+  });
+  it('значение не из перечня — одна честная фраза, без «Открываю…»', async () => {
+    offs.push(register({ id: 'shell.open', section: 'global', title: 'Открыть', describe: '', available: () => true,
+      params: { type: 'object', properties: { section: { enum: ['editor', 'replay', 'maps'] } }, required: ['section'] },
+      run: async (p: unknown) => { opened.push(p); return 'Нет такого раздела.'; } } as Action));
+    const d = mkm(reply({ say: 'Перехожу к музыке.', call: { id: 'shell.open', params: { section: 'music' } } }));
+    expect(await d.utterance('штаб, давай-ка к музыке', 1)).toBe('unknown');
+    expect(opened).toEqual([]);
+    expect(said).toHaveLength(1);
+    expect(said[0]).toMatch(/^Не понял, что именно сделать/);
+  });
+  it('«Стоп, штаб» — только замолчать, без «Слушаю»', async () => {
+    let stops = 0;
+    const d = new Dispatcher({ now: () => t, say: (s) => said.push(s), section: () => section, stop: () => { stops++; } });
+    d.spoke();
+    expect(await d.utterance('Стоп, штаб', 1)).toBe('done');
+    expect(stops).toBe(1);
+    expect(said).toEqual([]);
+  });
   it('отменённый запрос, завершившийся ошибкой, ничего не говорит', async () => {
     const d = mkm((_t, _a, c) => new Promise((_res, rej) => c.signal.addEventListener('abort', () => rej(new Error('aborted')))));
     const first = d.utterance('штаб, давай-ка к переигровке', 1);

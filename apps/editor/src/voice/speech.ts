@@ -61,12 +61,12 @@ const ORD_TENS: [string, Kind][] = [['', 'h'], ['', 'h'], ['двадцат', 'h'
 const ORD_HUNDREDS = ['', 'сот', 'двухсот', 'трёхсот', 'четырёхсот', 'пятисот', 'шестисот', 'семисот', 'восьмисот', 'девятисот'];
 const THOUSANDS_GEN = ['', '', 'двух', 'трёх', 'четырёх', 'пяти', 'шести', 'семи', 'восьми', 'девяти'];
 const ENDINGS: Record<Kind, Record<string, string>> = {
-  h: { й: 'ый', я: 'ая', е: 'ое', го: 'ого', му: 'ому', м: 'ом', ым: 'ым', х: 'ых', ю: 'ую', ми: 'ыми' },
-  o: { й: 'ой', я: 'ая', е: 'ое', го: 'ого', му: 'ому', м: 'ом', ым: 'ым', х: 'ых', ю: 'ую', ми: 'ыми' },
-  t: { й: 'ий', я: 'ья', е: 'ье', го: 'ьего', му: 'ьему', м: 'ьем', ым: 'ьим', х: 'ьих', ю: 'ью', ми: 'ьими' },
+  h: { й: 'ый', я: 'ая', е: 'ое', го: 'ого', му: 'ому', м: 'ом', ым: 'ым', х: 'ых', ю: 'ую', ми: 'ыми', fg: 'ой' },
+  o: { й: 'ой', я: 'ая', е: 'ое', го: 'ого', му: 'ому', м: 'ом', ым: 'ым', х: 'ых', ю: 'ую', ми: 'ыми', fg: 'ой' },
+  t: { й: 'ий', я: 'ья', е: 'ье', го: 'ьего', му: 'ьему', м: 'ьем', ым: 'ьим', х: 'ьих', ю: 'ью', ми: 'ьими', fg: 'ьей' },
 };
-/** Наращение после дефиса («-го», «-ая», «-му») → ключ окончания. */
-const caseKey = (suf: string) => (/(го|му|ми)$/.exec(suf)?.[1] ?? (/[ыи]м$/.test(suf) ? 'ым' : suf.slice(-1)));
+/** Наращение после дефиса («-го», «-ая», «-му») → ключ окончания; 'fg' — женский род, косвенный падеж («второй линии»). */
+const caseKey = (suf: string) => (suf === 'fg' ? 'fg' : /(го|му|ми)$/.exec(suf)?.[1] ?? (/[ыи]м$/.test(suf) ? 'ым' : suf.slice(-1)));
 
 /** Порядковое числительное: suf — наращение («й», «го», «му», «ю», …), задаёт род и падеж. */
 export function ordinalWords(n: number, suf = 'й'): string {
@@ -95,11 +95,59 @@ const UNITS: [RegExp, [string, string, string], boolean][] = [
   [/^%$/, ['процент', 'процента', 'процентов'], false],
   [/^чел\.$/, ['человек', 'человека', 'человек'], false],
   [/^тыс\.$/, ['тысяча', 'тысячи', 'тысяч'], true],
+  [/^мин/, ['минута', 'минуты', 'минут'], true],
+  [/^сек/, ['секунда', 'секунды', 'секунд'], true],
+  [/^ч/, ['час', 'часа', 'часов'], false],
+  [/^кг/, ['килограмм', 'килограмма', 'килограммов'], false],
+  [/^м/, ['метр', 'метра', 'метров'], false],
 ];
+/** Предлоги с родительным падежом: «до 2 линии» — это «до второй линии», «до 2 рот» — «до двух рот». */
+const GEN_PREP = 'до|от|из|у|без|для|около|после|против|возле';
+/** Единица при числе в тексте: сокращение целиком; точка после «мин.»/«ч.» съедается, только если фраза идёт дальше.
+ * Предлог перед числом задаёт падеж: «до пяти километров», «через одну минуту». */
+const anyCase = (ws: string) => ws.split('|').map((w) => `[${w[0].toUpperCase()}${w[0]}]${w.slice(1)}`).join('|');
+const UNIT_RE = new RegExp(String.raw`((?<!\p{L})(?:${anyCase(`${GEN_PREP}|через|на|за|в`)})\s+)?(\d+(?:[.,]\d+)?)\s*(км(?!\p{L})|%|чел\.|тыс\.|(?:мин|сек|ч|кг|м)(?!\p{L})(?:\.(?=\s+[а-яё]))?)`, 'gu');
+
+// римские номера соединений: «LVI танковый корпус» → «пятьдесят шестой танковый корпус»
+const ROMAN = /^(?=[IVXLC])(X{0,3}|XL|L|LX{1,3}|XC|C{1,3})?(IX|IV|V?I{0,3})$/;
+const ROMAN_VAL: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 };
+function romanValue(r: string): number | null {
+  if (!ROMAN.test(r)) return null;
+  let n = 0;
+  for (let i = 0; i < r.length; i++) {
+    const v = ROMAN_VAL[r[i]], next = ROMAN_VAL[r[i + 1]] ?? 0;
+    n += v < next ? -v : v;
+  }
+  return n || null;
+}
+/** Слово после номера, по которому видно, что это соединение. */
+const FORMATION = /^(?:танков|армейск|моторизованн|механизированн|горн|пехотн|кавалерийск|резервн|стрелков|воздушн|корпус|арми|дивизи|тк$|ак$|мк$|ск$)/;
+/** Наращение порядкового по слову после него: род и падеж. */
+function caseOfNext(w: string): string {
+  if (/^(?:тк|ак|мк|ск|корпус)$/.test(w) || /(?:ый|ий)$/.test(w)) return 'й';
+  if (/(?:ая|ия)$/.test(w)) return 'я';
+  if (/(?:ого|его|корпуса)$/.test(w)) return 'го';
+  if (/(?:ому|ему|корпусу)$/.test(w)) return 'му';
+  if (/(?:ым|им|корпусом)$/.test(w)) return 'ым';
+  if (/(?:ом|ем|корпусе)$/.test(w)) return 'м';
+  if (/(?:ой|ии|ией)$/.test(w)) return 'fg';
+  if (/ую$/.test(w) || /ию$/.test(w)) return 'ю';
+  return 'й';
+}
+const GEN_ONES = ['', 'одного', 'двух', 'трёх', 'четырёх', 'пяти', 'шести', 'семи', 'восьми', 'девяти'];
+const GEN_TENS = ['', '', 'двадцати', 'тридцати', 'сорока', 'пятидесяти', 'шестидесяти', 'семидесяти', 'восьмидесяти', 'девяноста'];
+/** Количественное в родительном падеже («двух», «пяти», «двадцати одной»), до 99; больше — null. */
+export function cardinalGen(n: number, fem = false): string | null {
+  if (!Number.isInteger(n) || n < 1 || n > 99) return null;
+  const one = (d: number) => (d === 1 && fem ? 'одной' : GEN_ONES[d]);
+  if (n < 10) return one(n);
+  if (n < 20) return TEENS[n - 10].replace(/ь$/, 'и');
+  return [GEN_TENS[Math.floor(n / 10)], n % 10 ? one(n % 10) : ''].filter(Boolean).join(' ');
+}
 /** Сокращения без числа. */
 const ABBR: [RegExp, string][] = [
   [word('гв\\.'), 'гвардейская'], [word('уд\\.'), 'ударная'], [/(?<!\p{L})ТА(?!\p{L})/gu, 'танковая армия'],
-  [word('сд'), 'стрелковая дивизия'], [word('ск'), 'стрелковый корпус'], [word('тк'), 'танковый корпус'],
+  [word('сд'), 'стрелковая дивизия'], [word('ак'), 'армейский корпус'], [word('ск'), 'стрелковый корпус'], [word('тк'), 'танковый корпус'],
   [word('км'), 'километров'], [word('т\\.\\s?е\\.'), 'то есть'], [word('т\\.\\s?д\\.'), 'так далее'],
   [word('тыс\\.'), 'тысяч'], [word('чел\\.'), 'человек'], [/№\s*/g, 'номер '],
 ];
@@ -125,7 +173,14 @@ export const SPEAK_MAX_SENTENCES = 2;
 export function speakable(text: string): string {
   let t = text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/[*#`_]+/g, '');
   t = t.replace(/\s*\([^)]*[A-Za-z][^)]*\)/g, ''); // английские пояснения в скобках
-  t = t.replace(/(?<![\p{L}\d])[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\p{L}\d])[A-Za-z](?![\p{L}\d])/gu, ''); // и без скобок
+  // марки техники: «T-34», «КВ-1», «Pz IV» — буквы и число словами («Т тридцать четыре»)
+  t = t.replace(/(?<![\p{L}\d])Pz\.?\s?(?:Kpfw\.?\s?)?(I{1,3}|IV|VI?)(?![\p{L}\d])/gu, (_m, r: string) => `Т ${numberWords(romanValue(r) ?? 0)}`);
+  t = t.replace(/(?<![\p{L}\d])(T|[А-ЯЁ][А-ЯЁа-яё]{0,2})-(\d{1,3})(?![\d\p{L}])/gu, (_m, l: string, n: string) => `${l === 'T' ? 'Т' : l} ${numberWords(+n)}`);
+  t = t.replace(/(?<![\p{L}\d])([IVXLC]+)(\s+)(\p{L}+)/gu, (m, r: string, sp: string, w: string) => {
+    const n = romanValue(r);
+    return n && FORMATION.test(w.toLowerCase()) ? `${ordinalWords(n, caseOfNext(w.toLowerCase()))}${sp}${w}` : m;
+  });
+  t = t.replace(/(?<![\p{L}\d])[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\p{L}\d])[A-Za-z](?![\p{L}\d])/gu, ''); // прочая латиница
   t = t.replace(/(\d)[\s ](?=\d{3}(?!\d))/g, '$1'); // «1 250»
   // даты: «16.04», «16.04.1945», «16 апреля»
   t = t.replace(/(?<![\d.,])(\d{1,2})\.(\d{2})(?:\.(\d{4}))?(?![\d.,]\d)(?!\s*(?:(?:км|м|кг|т|л|ч|мин|раз)(?!\p{L})|%|чел\.|тыс\.|метр|километр|процент|тонн|час|минут))/gu, (m, d, mo, y) =>
@@ -139,12 +194,31 @@ export function speakable(text: string): string {
   t = t.replace(/(?<![\d:])(\d{1,2}):(\d{2})(?![\d:])/g, (_m, h, mm) => `${numberWords(+h)} ${minutes(mm)}`); // время
   t = t.replace(new RegExp(`(\\d+)-(ый|ий|ой|ая|ое|ье|ья|ого|его|ому|ему|ым|ом|ем|ых|их|ую|ыми|й|я|е|го|му|м|х|ю|ми)(?!${L})`, 'gu'), (_m, n, s) => ordinalWords(+n, s));
   // число с единицей: «10 км», «30%», «5 тыс.»
-  t = t.replace(/(\d+(?:[.,]\d+)?)\s*(км(?![\p{L}])|%|чел\.|тыс\.)/gu, (_m, n: string, u: string) => {
+  t = t.replace(UNIT_RE, (_m, prep: string | undefined, n: string, u: string) => {
     const [, forms, fem] = UNITS.find(([re]) => re.test(u))!;
     const frac = /[.,]/.test(n);
-    return `${frac ? decimalWords(n) : numberWords(+n, fem)} ${frac ? forms[1] : plural(+n, forms)}`;
+    const p = prep ?? '';
+    const pw = p.trim().toLowerCase();
+    const one = +n % 10 === 1 && +n % 100 !== 11;
+    if (!frac && new RegExp(`^(?:${GEN_PREP})$`).test(pw)) {
+      const g = cardinalGen(+n, fem);
+      if (g) return `${p}${g} ${one ? forms[1] : forms[2]}`;
+    }
+    // винительный после «через/на/за/в»: «через одну минуту»
+    if (!frac && fem && one && /^(?:через|на|за|в)$/.test(pw)) return `${p}${numberWords(+n, fem).replace(/одна$/, 'одну')} ${forms[0].replace(/а$/, 'у')}`;
+    return `${p}${frac ? decimalWords(n) : numberWords(+n, fem)} ${frac ? forms[1] : plural(+n, forms)}`;
   });
   t = t.replace(/\d+[.,]\d+/g, (m) => decimalWords(m));
+  // «до 2 линии», «до 3 рубежа»: после предлога с родительным существительное в единственном числе — порядковое
+  t = t.replace(new RegExp(`(?<!${L})(${GEN_PREP})\\s+(\\d{1,3})\\s+(${L}+)`, 'giu'), (m, p: string, n: string, w: string) => {
+    const lw = w.toLowerCase();
+    const [g] = nounGender(` ${lw}`);
+    if (g === 'f' && /[иы]$/.test(lw)) return `${p} ${ordinalWords(+n, 'fg')} ${w}`;
+    if (g !== 'f' && /[ая]$/.test(lw) && !/(?:ая|яя)$/.test(lw)) return `${p} ${ordinalWords(+n, 'го')} ${w}`;
+    // множественное число: «до двух рот», «от пяти дивизий»
+    const cg = /[^аеёиоуыэюя]$/.test(lw) ? cardinalGen(+n, g === 'f') : null;
+    return cg ? `${p} ${cg} ${w}` : m;
+  });
   // род по существительному после числа (через одно-два прилагательных): «одна дивизия», «две армии», «одно орудие»
   t = t.replace(new RegExp(`(?<![\\d.,])(\\d+)((?:\\s+${L}+){1,3})`, 'gu'), (m, n: string, tail: string) => {
     const [g, noun] = nounGender(tail);
@@ -155,7 +229,7 @@ export function speakable(text: string): string {
   });
   t = t.replace(/\d+/g, (m) => numberWords(+m));
   for (const [re, rep] of ABBR) t = t.replace(re, rep);
-  t = t.replace(/\s+/g, ' ').replace(/\s+([.,!?…:;])/g, '$1').trim();
+  t = t.replace(/\s+/g, ' ').replace(/\s+([.,!?…:;])/g, '$1').replace(/[,;:]+(?=[.!?…]|$)/g, '').trim();
   return shorten(t);
 }
 

@@ -65,6 +65,32 @@ describe('speakable', () => {
     expect(speakable('Осталось 2 орудия и 21 рота.')).toBe('Осталось два орудия и двадцать одна рота.');
     expect(speakable('Пришёл 1 полк.')).toBe('Пришёл один полк.');
   });
+  it('римские номера соединений — порядковыми словами, не стираются', () => {
+    expect(speakable('Против нас LVI танковый корпус.')).toBe('Против нас пятьдесят шестой танковый корпус.');
+    expect(speakable('Отходит XI армейский корпус, за ним IX армия.')).toBe('Отходит одиннадцатый армейский корпус, за ним девятая армия.');
+    expect(speakable('Против нас LVI тк.')).toBe('Против нас пятьдесят шестой танковый корпус.');
+    expect(speakable('Штаб XXXIX корпуса.')).toBe('Штаб тридцать девятого корпуса.');
+  });
+  it('марки техники остаются читаемыми', () => {
+    expect(speakable('Подошли T-34.')).toBe('Подошли Т тридцать четыре.');
+    expect(speakable('Подошли Т-34 и КВ-1.')).toBe('Подошли Т тридцать четыре и КВ один.');
+    expect(speakable('Против нас Pz IV.')).toBe('Против нас Т четыре.');
+  });
+  it('сокращения единиц раскрываются', () => {
+    expect(speakable('Ушли 2 мин назад.')).toBe('Ушли две минуты назад.');
+    expect(speakable('Через 5 мин.')).toBe('Через пять минут.');
+    expect(speakable('Ещё 1 ч.')).toBe('Ещё один час.');
+    expect(speakable('Через 1 мин. начнём.')).toBe('Через одну минуту начнём.');
+    expect(speakable('Осталось до 5 км.')).toBe('Осталось до пяти километров.');
+    expect(speakable('Против нас XI ак.')).toBe('Против нас одиннадцатый армейский корпус.');
+  });
+  it('после «до/от» с существительным в единственном числе — порядковое', () => {
+    expect(speakable('Отошли до 2 линии.')).toBe('Отошли до второй линии.');
+    expect(speakable('Отошли до 3 рубежа.')).toBe('Отошли до третьего рубежа.');
+    expect(speakable('Отошли до 2 линии обороны.')).not.toMatch(/до две/);
+    expect(speakable('Дошли до 2 рот.')).toBe('Дошли до двух рот.');
+    expect(speakable('Встреча в 5 часов, I think.')).toBe('Встреча в пять часов.');
+  });
   it('круглый год — «двухтысячном»', () => {
     expect(speakable('Это было в 2000 году.')).toBe('Это было в двухтысячном году.');
     expect(speakable('С 3000 года.')).toBe('С трёхтысячного года.');
@@ -129,6 +155,11 @@ describe('askModel', () => {
     const { f } = fake([{ choices: [{ message: { role: 'assistant', content: '', tool_calls: [{ type: 'function', function: { name: 'shell__open', arguments: { section: 'replay' } } }] } }] }]);
     expect((await askModel('штаб, к переигровке', ctx(f))).call).toEqual({ id: 'shell.open', params: { section: 'replay' } });
   });
+  it('id с «__» внутри — вызов находит своё действие', async () => {
+    const Z = A({ id: 'maps.zoom__in', describe: 'Приближает.' });
+    const { f } = fake([msg('', { name: 'maps__zoom__in', args: '{}' })]);
+    expect((await askModel('штаб, ближе', ctx(f, { actions: [OPEN, Z] }))).call).toEqual({ id: 'maps.zoom__in', params: {} });
+  });
   it('нечитаемые аргументы — вызов помечен испорченным', async () => {
     const { f } = fake([msg('', { name: 'shell__open', args: '{section: replay' })]);
     expect((await askModel('штаб, к переигровке', ctx(f))).call).toEqual({ id: 'shell.open', params: undefined, broken: true });
@@ -176,6 +207,8 @@ describe('настройки модели голоса', () => {
       const s = loadLlm();
       expect(s.voiceModel).toBe('qwen/qwen3');
       expect(s.model).toBe('a');
+      store['def_ops.llm'] = JSON.stringify({ enemyModel: 'qwen/qwen3@4bit' });
+      expect(loadLlm().enemyModel).toBe('qwen/qwen3');
     } finally { delete (globalThis as any).localStorage; }
   });
 });

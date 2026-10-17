@@ -68,7 +68,7 @@ const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((res, rej)
 });
 
 /** Один запрос к модели; пустой ответ — ошибка (повторяется). */
-async function once(body: object, url: string, f: typeof fetch, signal?: AbortSignal): Promise<ModelReply> {
+async function once(body: object, url: string, f: typeof fetch, signal?: AbortSignal, ids: Map<string, string> = new Map()): Promise<ModelReply> {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(new Error('нет ответа 20 с')), MODEL_TIMEOUT_MS);
   const stop = () => ac.abort(signal?.reason);
@@ -87,13 +87,15 @@ async function once(body: object, url: string, f: typeof fetch, signal?: AbortSi
     const say = clean(m?.content) || (fn?.name ? '' : clean(m?.reasoning_content));
     if (!say && !fn?.name) throw new Error('пустой ответ');
     if (!fn?.name) return { say };
+    // имя инструмента → id по списку действий (id может содержать «__»); незнакомое — обратной заменой
+    const id = ids.get(fn.name) ?? fromToolName(fn.name);
     const args = fn.arguments;
-    if (args && typeof args === 'object') return { say, call: { id: fromToolName(fn.name), params: args } };
-    if (args === undefined || args === null || (typeof args === 'string' && !args.trim())) return { say, call: { id: fromToolName(fn.name), params: {} } };
+    if (args && typeof args === 'object') return { say, call: { id, params: args } };
+    if (args === undefined || args === null || (typeof args === 'string' && !args.trim())) return { say, call: { id, params: {} } };
     try {
-      return { say, call: { id: fromToolName(fn.name), params: JSON.parse(String(args)) } };
+      return { say, call: { id, params: JSON.parse(String(args)) } };
     } catch {
-      return { say, call: { id: fromToolName(fn.name), params: undefined, broken: true } };
+      return { say, call: { id, params: undefined, broken: true } };
     }
   } finally {
     clearTimeout(timer);
@@ -121,6 +123,7 @@ export async function askModel(text: string, ctx: {
     stream: false,
     reasoning_effort: thinking === 'off' ? 'none' : thinking,
   };
+  const ids = new Map(ctx.actions.map((a) => [toolName(a.id), a.id]));
   const f = ctx.fetch ?? fetch;
   const delays = ctx.delays ?? RETRY_DELAYS_MS;
   let last: unknown;
@@ -131,7 +134,7 @@ export async function askModel(text: string, ctx: {
       await sleep(delays[n - 2], ctx.signal);
     }
     try {
-      return await once(body, s.url, f, ctx.signal);
+      return await once(body, s.url, f, ctx.signal, ids);
     } catch (e) {
       if (ctx.signal?.aborted) throw e;
       last = e;

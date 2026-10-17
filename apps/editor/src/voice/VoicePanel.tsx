@@ -115,6 +115,7 @@ export function VoicePanel({ section, llm }: { section: string; llm: LlmSettings
     lsSet(ENABLED_KEY, on ? 'true' : 'false');
     setMicError(null);
     if (!on) {
+      dispatcher.cancel(); // ответ модели, пришедший после выключения, не звучит и не исполняется
       setDialog(null);
       setBusy(null);
       setListening(false);

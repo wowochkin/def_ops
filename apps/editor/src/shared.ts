@@ -78,7 +78,7 @@ export function loadLlm(): LlmSettings {
   try {
     const v = { ...LLM_DEFAULTS, ...JSON.parse(localStorage.getItem('def_ops.llm') || '{}') } as LlmSettings;
     // имена с вариантом через @ (qwen/…@8bit) LM Studio по API не принимает — сохранённые раньше заменяются базовым именем
-    for (const k of ['model', 'kbModel', 'advModel', 'revModel', 'scanModel', 'crossModel', 'voiceModel'] as const) if (typeof v[k] === 'string' && /@/.test(v[k] as string)) (v as unknown as Record<string, string>)[k] = (v[k] as string).replace(/@[^/]*$/, '');
+    for (const k of ['model', 'kbModel', 'advModel', 'revModel', 'scanModel', 'crossModel', 'voiceModel', 'enemyModel'] as const) if (typeof v[k] === 'string' && /@/.test(v[k] as string)) (v as unknown as Record<string, string>)[k] = (v[k] as string).replace(/@[^/]*$/, '');
     return v;
   } catch { return LLM_DEFAULTS; }
 }

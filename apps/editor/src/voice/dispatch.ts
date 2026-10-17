@@ -166,7 +166,19 @@ export function paramsFit(a: Action, p: unknown): boolean {
   if (p === undefined && !Array.isArray(schema.required)) return true;
   if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
   const req = Array.isArray(schema.required) ? (schema.required as string[]) : [];
-  return req.every((k) => { const v = (p as Record<string, unknown>)[k]; return v !== undefined && v !== null && v !== ''; });
+  const o = p as Record<string, unknown>;
+  if (!req.every((k) => o[k] !== undefined && o[k] !== null && o[k] !== '')) return false;
+  // значения из перечня и простые типы — по схеме: «раздел music» не исполняется
+  const props = (schema.properties ?? {}) as Record<string, { enum?: unknown[]; type?: string }>;
+  return Object.entries(props).every(([k, d]) => {
+    const v = o[k];
+    if (v === undefined || !d) return true;
+    if (Array.isArray(d.enum) && !d.enum.includes(v)) return false;
+    if (d.type === 'string' && typeof v !== 'string') return false;
+    if ((d.type === 'number' || d.type === 'integer') && typeof v !== 'number') return false;
+    if (d.type === 'boolean' && typeof v !== 'boolean') return false;
+    return true;
+  });
 }
 
 export class Dispatcher {
@@ -217,6 +229,8 @@ export class Dispatcher {
     if (STOP_LEAD.test(rest) && rest.includes(' ')) {
       this.opts.stop?.();
       rest = rest.replace(STOP_LEAD, '').replace(/^(?:штаб|штап)(?: |$)/, '');
+      // «Стоп, штаб» — просили замолчать, а не отозваться
+      if (!rest) { this.cancelModel(); return 'done'; }
     }
     this.cancelModel(); // новая обращённая реплика — старый ответ модели уже не нужен
     const rec = { text: raw, ran: false };
@@ -236,6 +250,9 @@ export class Dispatcher {
     this.opts.say(`Не понял вас. Можно сказать, например: ${quote(closest(this.opts.section(), rest))}.`);
     return 'unknown';
   }
+
+  /** Отменить ожидание ответа модели (голос выключили): поздний ответ не звучит, действие не исполняется. */
+  cancel(): void { this.cancelModel(); }
 
   private cancelModel(): void {
     if (!this.pending) return;
