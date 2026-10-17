@@ -12,17 +12,21 @@ WebRTC AEC3 из пакета livekit (`rtc.AudioProcessingModule`) кадрам
   ERLE, дБ          — ослабление эха на отрезках «только штаб» с 5-й секунды (окна 0,25 с, где эхо есть);
   схождение, с      — от начала эха до окна, начиная с которого ERLE держится ≥ 20 дБ;
   восстановление, с — после начала каждой фразы до первого окна с ERLE ≥ 20 дБ (медиана);
-  ослабление речи   — на отрезках «оба говорят» и «только человек», по модулю спектра (выше 100 Гц)
-                      в ячейках, где человек громче эха с шумом на 6 дБ и больше;
+  потеря речи       — на «оба-1» (человек вступает посреди ответа), «стоп» (через 0,3 с после начала
+                      ответа), «стоп-1,5» (первые 1,5 с стоп-слова) и «человек» (штаб молчит):
+                      МНК-проекция выхода на чистую речь по всем активным ячейкам спектра (от 100 Гц);
+                      в скобках — только по ячейкам, где человек громче эха (нижняя граница);
   спектральное SNR  — речь человека к ошибке модуля спектра выхода (и, для сравнения, микрофона);
   эхо при «оба»     — ослабление эха в ячейках, где эхо громче человека на 6 дБ и больше.
 
-Случаи: задержка эха 50/150/300 мс с подсказкой задержки и без, опора 16 кГц, постоянный сдвиг
-+30 мс, сдвиг ±20–40 мс на каждый ответ штаба и на каждую фразу, ±5–10 мс на каждую фразу.
+Случаи: обязательные — задержка эха 50/150/300 мс с подсказкой задержки и без, опора 16 кГц,
+постоянный сдвиг +30 мс; риска — сдвиг ±20–40 мс на каждый ответ штаба и на каждую фразу,
+±5–10 мс на каждую фразу.
 
-Запуск (речь не хранится в репозитории — пути к любым WAV с русской речью):
-  python aec_probe.py --ref штаб.wav [--ref ещё.wav] --human человек.wav [--seed 1] [--save-dir каталог]
-Код возврата 0 — все случаи прошли пороги, 1 — хотя бы один нет (случаи с джиттером на фразу — нет).
+Запуск (речь не хранится в репозитории — пути к любым WAV PCM16 с русской речью):
+  python aec_probe.py --ref штаб.wav [--ref ещё.wav] --human человек.wav [--seed 1] [--delays=-40,0,150]
+                      [--save-dir каталог]
+Код возврата 0 — все обязательные случаи прошли оба порога, 1 — нет; случаи риска на него не влияют.
 
 Нужны numpy, scipy, livekit (pip install numpy scipy livekit).
 """
@@ -46,14 +50,15 @@ ATTEN_OK_DB = 3.0
 
 # Разметка сцены, секунды: (начало, конец).
 CHIEF = [(0.0, 30.0), (37.0, 52.0)]  # штаб говорит
-HUMAN = [(15.0, 21.0), (30.5, 36.5), (38.0, 44.0)]  # человек говорит
+HUMAN = [(15.0, 21.0), (30.5, 36.5), (37.3, 43.3)]  # человек говорит; третий раз — через 0,3 с после начала ответа
 SCENE_LEN = 54.0
 SEGMENTS = [  # (метка, начало, конец) — участки для мер
     ("эхо-1", 0.0, 14.5),
     ("оба-1", 15.0, 21.0),
     ("эхо-2", 22.0, 30.0),
     ("человек", 30.5, 36.5),
-    ("оба-2", 38.0, 44.0),
+    ("стоп", 37.3, 43.3),  # стоп-слово: человек перебивает ответ штаба через 0,3 с после его начала
+    ("стоп-1,5", 37.3, 38.8),  # первые 1,5 с перебивания — там само стоп-слово
     ("эхо-3", 45.0, 52.0),
 ]
 
@@ -291,59 +296,95 @@ def convergence_s(scene: Scene, out: np.ndarray) -> float:
 SPEECH_LO_HZ = 100  # ниже — не речь; AEC3 сам срезает этот диапазон (встроенный ФВЧ ~80–100 Гц)
 
 
-def spec(x: np.ndarray) -> np.ndarray:
+def spec_c(x: np.ndarray) -> np.ndarray:
+    """Комплексный STFT (32 мс, шаг 16 мс) в полосе речи от 100 Гц."""
     f, _, z = signal.stft(x, fs=MIC_SR, nperseg=512, noverlap=256)
-    return np.abs(z[f >= SPEECH_LO_HZ]) ** 2
+    return z[f >= SPEECH_LO_HZ]
 
 
-def human_measures(scene: Scene, out: np.ndarray, a: float, b: float) -> tuple[float, float, float, float]:
-    """(ослабление речи, дБ; спектральное SNR выхода, дБ; то же для микрофона, дБ; ослабление эха, дБ).
+def spec(x: np.ndarray) -> np.ndarray:
+    return np.abs(spec_c(x)) ** 2
 
-    Все меры — в полосе речи от 100 Гц. Ослабление — по ячейкам «время × частота», где человек громче эха с шумом на 6 дБ и больше:
-    10·lg(Σ|H|² / Σ|Y|²). Спектральное SNR — 10·lg(Σ|H|² / Σ(|Y| − |H|)²) по всем ячейкам:
-    в ошибку входят и остаток эха, и искажение речи. Ослабление эха при двойном разговоре —
-    10·lg(Σ|X|² / Σ|Y|²) по ячейкам, где эхо громче человека на 6 дБ и больше (X — микрофон).
+
+def coherent_loss(H: np.ndarray, Z: np.ndarray, act: np.ndarray) -> float:
+    """Потеря речи по всем ячейкам, где человек говорит (без условия на эхо), дБ.
+
+    Для каждой частоты — комплексный коэффициент a_f = Σ Z·H* / Σ |H|² по активным ячейкам
+    (МНК-проекция выхода на чистую речь). Остаток эха с речью не коррелирует и a_f не завышает,
+    в отличие от сравнения энергий. Потеря = 10·lg(Σ|H|² / Σ|a_f|²·|H|²). Колебания усиления
+    подавителя во времени уменьшают |a_f|, так что оценка скорее строгая (с запасом), чем мягкая.
+    """
+    Hm = np.where(act, H, 0)
+    p = (np.abs(Hm) ** 2).sum(axis=1)
+    keep = p > 0
+    a = (Z * Hm.conj()).sum(axis=1)[keep] / p[keep]
+    return db(p.sum()) - db((np.abs(a) ** 2 * p[keep]).sum())
+
+
+def human_measures(scene: Scene, out: np.ndarray, a: float, b: float) -> dict[str, float]:
+    """Меры речи человека на отрезке (все — в полосе от 100 Гц):
+
+    all     — потеря речи по всем активным ячейкам (coherent_loss), основная мера для порога 3 дБ;
+    masked  — 10·lg(Σ|H|² / Σ|Y|²) только по ячейкам, где человек громче эха с шумом на 6 дБ:
+              нижняя граница потери (там подавитель мягче, а остаток эха добавляет энергии в Y);
+    snr/snr_mic — спектральное SNR 10·lg(Σ|H|² / Σ(|Y| − |H|)²) выхода и микрофона;
+    echo    — ослабление эха 10·lg(Σ|X|² / Σ|Y|²) по ячейкам, где эхо громче человека на 6 дБ.
     """
     s = sl(a, b)
-    H = spec(scene.human[s])
+    Hc, Yc = spec_c(scene.human[s]), spec_c(out[s])
+    H, Y = np.abs(Hc) ** 2, np.abs(Yc) ** 2
     D = spec(scene.mic[s] - scene.human[s])
-    Y = spec(out[s])
     X = spec(scene.mic[s])
-    dom = (H > 4 * D) & (H > H.max() * 1e-5)
-    atten = db(H[dom].sum()) - db(Y[dom].sum())
+    act = H > H.max() * 1e-4  # ячейки, где человек говорит (не тише −40 дБ от максимума)
+    dom = (H > 4 * D) & act
     edom = (D > 4 * H) & (D > D.max() * 1e-5)
-    echo_sup = db(X[edom].sum()) - db(Y[edom].sum()) if edom.any() else float("nan")
 
     def msnr(Z: np.ndarray) -> float:
         return db(H.sum()) - db(((np.sqrt(Z) - np.sqrt(H)) ** 2).sum())
 
-    return atten, msnr(Y), msnr(X), echo_sup
+    return {
+        "all": coherent_loss(Hc, Yc, act),
+        "masked": db(H[dom].sum()) - db(Y[dom].sum()) if dom.any() else float("nan"),
+        "snr": msnr(Y),
+        "snr_mic": msnr(X),
+        "echo": db(X[edom].sum()) - db(Y[edom].sum()) if edom.any() else float("nan"),
+    }
 
 
-def lag_samples(clean: np.ndarray, y: np.ndarray, max_lag: int = 400) -> int:
-    c = signal.correlate(y, clean, mode="full", method="fft")
-    mid = len(clean) - 1
-    seg = c[mid - max_lag : mid + max_lag + 1]
-    return int(np.argmax(seg) - max_lag)
+def output_lag(scene: Scene, out: np.ndarray, max_lag: int = 240) -> int:
+    """Задержка выхода AEC3 относительно микрофона, отсчёты (у livekit 1.1.21 — около 125, ≈ 8 мс).
+
+    Ищется только сдвиг выхода назад (0…max_lag): модуль причинный, выход не может опережать вход.
+    Мера — когерентное усиление речи на отрезке «только человек» (где эха нет).
+    """
+    a, b = next((x, y) for lb, x, y in SEGMENTS if lb == "человек")
+    s = sl(a, b)
+    Hc = spec_c(scene.human[s])
+    act = np.abs(Hc) ** 2 > (np.abs(Hc) ** 2).max() * 1e-4
+    best, best_loss = 0, np.inf
+    for lag in range(0, max_lag + 1, 1):
+        y = out[s.start + lag : s.stop + lag]
+        loss = coherent_loss(Hc, spec_c(y), act)
+        if loss < best_loss:
+            best, best_loss = lag, loss
+    return best
 
 
 @dataclass
 class Result:
     name: str
+    required: bool  # обязательный случай (стабильная привязка опоры) или случай риска (джиттер)
     erle: dict[str, float]
     share: float  # доля окон с эхом после 5-й секунды, где ERLE ≥ 20 дБ
     conv: float
-    atten: dict[str, float]
-    snr: dict[str, float]
-    snr_mic: dict[str, float]
-    dt_echo: dict[str, float]  # ослабление эха при двойном разговоре, дБ
     recover: float  # медиана: от начала фразы до первого окна с ERLE ≥ 20 дБ, с
+    hm: dict[str, dict[str, float]]  # меры речи по отрезкам «оба-1», «человек», «стоп», «стоп-1,5»
 
 
-def measure(name: str, scene: Scene, out: np.ndarray, lag: int) -> Result:
+def measure(name: str, required: bool, scene: Scene, out: np.ndarray, lag: int) -> Result:
     if lag > 0:
         out = np.concatenate([out[lag:], np.zeros(lag)])
-    er, at, sn, snm, de = {}, {}, {}, {}, {}
+    er, hm = {}, {}
     wins = []
     for label, a, b in SEGMENTS:
         if label.startswith("эхо"):
@@ -351,7 +392,7 @@ def measure(name: str, scene: Scene, out: np.ndarray, lag: int) -> Result:
             er[label] = erle(scene, out, a2, b)
             wins += erle_windows(scene, out, a2, b)
         else:
-            at[label], sn[label], snm[label], de[label] = human_measures(scene, out, a, b)
+            hm[label] = human_measures(scene, out, a, b)
     share = float(np.mean([w[1] >= ERLE_OK_DB for w in wins]))
     rec = []
     for t0 in scene.phrase_starts_s:
@@ -361,11 +402,14 @@ def measure(name: str, scene: Scene, out: np.ndarray, lag: int) -> Result:
         ok = [x[0] for x in w if x[1] >= ERLE_OK_DB]
         rec.append((ok[0] - t0) if ok else 3.0)
     recover = float(np.median(rec)) if rec else float("nan")
-    return Result(name, er, share, convergence_s(scene, out), at, sn, snm, de, recover)
+    return Result(name, required, er, share, convergence_s(scene, out), recover, hm)
+
+
+SPEECH_KEYS = ("оба-1", "стоп", "стоп-1,5", "человек")
 
 
 def verdict(r: Result) -> bool:
-    return min(r.erle.values()) >= ERLE_OK_DB and max(r.atten.values()) <= ATTEN_OK_DB
+    return min(r.erle.values()) >= ERLE_OK_DB and max(r.hm[k]["all"] for k in SPEECH_KEYS) <= ATTEN_OK_DB
 
 
 def fmt_s(x: float) -> str:
@@ -374,24 +418,25 @@ def fmt_s(x: float) -> str:
 
 def print_table(results: list[Result]) -> None:
     cols = [
-        ("случай", 40),
-        ("ERLE эхо-1/2/3, дБ", 20),
-        ("≥20 дБ", 7),
-        ("сход., с", 8),
-        ("восст., с", 9),
-        ("ослабл. оба-1/оба-2/чел., дБ", 28),
-        ("спектр. SNR выход (микрофон), дБ", 36),
-        ("эхо при «оба», дБ", 17),
+        ("случай", 34),
+        ("ERLE эхо-1/2/3, дБ", 18),
+        ("≥20 дБ", 6),
+        ("сход.,с", 7),
+        ("восст.,с", 8),
+        ("потеря речи оба-1/стоп/стоп-1,5/чел.: все (маска), дБ", 52),
+        ("SNR оба-1/стоп: вых (мкф)", 26),
+        ("эхо оба-1/стоп/стоп-1,5", 23),
     ]
     print(" ".join(f"{c:<{w}}" if i == 0 else f"{c:>{w}}" for i, (c, w) in enumerate(cols)) + "  итог")
     print("-" * (sum(w for _, w in cols) + len(cols) + 10))
     for r in results:
         e = "/".join(f"{r.erle[k]:.1f}" for k in ("эхо-1", "эхо-2", "эхо-3"))
-        a = "/".join(f"{r.atten[k]:+.1f}" for k in ("оба-1", "оба-2", "человек"))
-        s = "/".join(f"{r.snr[k]:.1f}" for k in ("оба-1", "оба-2", "человек"))
-        sm = "/".join(f"{r.snr_mic[k]:.1f}" for k in ("оба-1", "оба-2", "человек"))
-        de = "/".join(f"{r.dt_echo[k]:.1f}" for k in ("оба-1", "оба-2"))
-        vals = [r.name, e, f"{r.share * 100:.0f}%", fmt_s(r.conv), fmt_s(r.recover), a, f"{s} ({sm})", de]
+        a_all = "/".join(f"{r.hm[k]['all']:.1f}" for k in SPEECH_KEYS)
+        a_m = "/".join(f"{r.hm[k]['masked']:.1f}" for k in SPEECH_KEYS)
+        s = "/".join(f"{r.hm[k]['snr']:.1f}" for k in ("оба-1", "стоп"))
+        sm = "/".join(f"{r.hm[k]['snr_mic']:.1f}" for k in ("оба-1", "стоп"))
+        de = "/".join(f"{r.hm[k]['echo']:.1f}" for k in ("оба-1", "стоп", "стоп-1,5"))
+        vals = [r.name, e, f"{r.share * 100:.0f}%", fmt_s(r.conv), fmt_s(r.recover), f"{a_all} ({a_m})", f"{s} ({sm})", de]
         print(
             " ".join(f"{v:<{w}}" if i == 0 else f"{v:>{w}}" for i, (v, (_, w)) in enumerate(zip(vals, cols)))
             + f"  {'годится' if verdict(r) else 'НЕ годится'}"
@@ -405,7 +450,7 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--ref", action="append", required=True, help="WAV с речью штаба (можно несколько)")
     p.add_argument("--human", required=True, help="WAV с речью человека (другой голос)")
-    p.add_argument("--delays", default="50,150,300", help="задержки эха, мс")
+    p.add_argument("--delays", default="50,150,300", help="задержки эха, мс; с минусом — --delays=-40,0,20")
     p.add_argument("--seed", type=int, default=1)
     p.add_argument("--save-dir", help="сохранить микрофон/выход каждого случая в WAV (только для прослушивания)")
     args = p.parse_args()
@@ -417,25 +462,25 @@ def main() -> int:
     delays = [int(x) for x in args.delays.split(",")]
     mid = delays[len(delays) // 2]
 
-    # (название, задержка, джиттер, на что джиттер, подсказка задержки, частота опоры)
+    # (название, обязательный, задержка, джиттер, на что джиттер, подсказка задержки, частота опоры)
     cases = []
     for d in delays:
-        cases.append((f"{d} мс, подсказка {d}", d, None, "phrase", d, REF_SR))
-        cases.append((f"{d} мс, подсказка 0", d, None, "phrase", 0, REF_SR))
-    cases.append((f"{mid} мс, опора 16 кГц", mid, None, "phrase", mid, MIC_SR))
-    cases.append((f"{mid}+30 мс постоянно, подсказка {mid}", mid + 30, None, "phrase", mid, REF_SR))
+        cases.append((f"{d} мс, подсказка {d}", True, d, None, "phrase", d, REF_SR))
+        cases.append((f"{d} мс, подсказка 0", True, d, None, "phrase", 0, REF_SR))
+    cases.append((f"{mid} мс, опора 16 кГц", True, mid, None, "phrase", mid, MIC_SR))
+    cases.append((f"{mid}+30 мс постоянно, подск. {mid}", True, mid + 30, None, "phrase", mid, REF_SR))
     for d in delays:
-        cases.append((f"{d} мс ±20–40 на ответ", d, (20.0, 40.0), "utterance", d, REF_SR))
+        cases.append((f"{d} мс ±20–40 на ответ", False, d, (20.0, 40.0), "utterance", d, REF_SR))
     for d in delays:
-        cases.append((f"{d} мс ±20–40 на каждую фразу", d, (20.0, 40.0), "phrase", d, REF_SR))
-    cases.append((f"{mid} мс ±5–10 на каждую фразу", mid, (5.0, 10.0), "phrase", mid, REF_SR))
+        cases.append((f"{d} мс ±20–40 на фразу", False, d, (20.0, 40.0), "phrase", d, REF_SR))
+    cases.append((f"{mid} мс ±5–10 на фразу", False, mid, (5.0, 10.0), "phrase", mid, REF_SR))
 
     results = []
-    for name, d, jit, per, hint, rr in cases:
+    for name, req, d, jit, per, hint, rr in cases:
         sc = build_scene(ref_src, human_src, d, jit, args.seed, per)
         out = run_livekit(sc, hint, rr)
-        lag = lag_samples(sc.human[sl(30.5, 36.5)], out[sl(30.5, 36.5)])
-        results.append(measure(name, sc, out, lag))
+        lag = output_lag(sc, out)
+        results.append(measure(name, req, sc, out, lag))
         if args.save_dir:
             dd = Path(args.save_dir)
             dd.mkdir(parents=True, exist_ok=True)
@@ -444,15 +489,22 @@ def main() -> int:
             write_wav(dd / f"{tag}-out.wav", out, MIC_SR)
         print(f"  готово: {name} (сдвиг выхода {lag} отсч.)", file=sys.stderr)
     print()
-    print(f"Пороги: ERLE ≥ {ERLE_OK_DB:.0f} дБ после схождения; речь человека ослаблена не больше {ATTEN_OK_DB:.0f} дБ.")
+    print(f"Пороги: ERLE ≥ {ERLE_OK_DB:.0f} дБ после схождения; потеря речи человека (все ячейки) ≤ {ATTEN_OK_DB:.0f} дБ.")
     print("ERLE и «≥20 дБ» (доля окон 0,25 с) — с 5-й секунды; «сход.» — от начала эха до устойчивых 20 дБ")
-    print("(«нет» — устойчивых 20 дБ на первом отрезке так и не было).")
-    print("«восст.» — медиана по фразам: от начала фразы до первого окна с ERLE ≥ 20 дБ (шаг 0,25 с).")
-    print("Ослабление «+» — речь тише, «−» — громче. Спектральное SNR в скобках — микрофон до обработки.")
-    print("«эхо при «оба»» — насколько ослаблено эхо в тех ячейках спектра, где оно громче человека.")
+    print("(«нет» — устойчивых 20 дБ на первом отрезке так и не было); «восст.» — медиана по фразам: от начала")
+    print("фразы до первого окна с ERLE ≥ 20 дБ. «стоп» — человек вступает через 0,3 с после начала ответа")
+    print("штаба (37,3–43,3 с), «стоп-1,5» — первые 1,5 с этого. Потеря речи: все активные ячейки (в скобках —")
+    print("только ячейки, где человек громче эха, нижняя граница). SNR — спектральное, в скобках — микрофон.")
+    print("«эхо» — ослабление эха в ячейках, где оно громче человека на 6 дБ.")
     print()
-    print_table(results)
-    return 0 if all(verdict(r) for r in results) else 1
+    req = [r for r in results if r.required]
+    risk = [r for r in results if not r.required]
+    print("Обязательные случаи (опора привязана стабильно):")
+    print_table(req)
+    print()
+    print("Случаи риска (опора скачет относительно эха) — на код возврата не влияют:")
+    print_table(risk)
+    return 0 if all(verdict(r) for r in req) else 1
 
 
 if __name__ == "__main__":
