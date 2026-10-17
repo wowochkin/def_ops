@@ -203,7 +203,24 @@ function playChunk(buf) {
 
 $('start').onclick = async () => {
   $('start').disabled = true;
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+  if (!navigator.mediaDevices?.getUserMedia) {
+    $('start').disabled = false;
+    return sys(`Браузер не даёт микрофон этой странице: адрес ${location.origin} не считается защищённым. Откройте http://localhost:${location.port}`);
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+  } catch (e) {
+    $('start').disabled = false;
+    const why = {
+      NotAllowedError: 'доступ запрещён. Разрешите микрофон для этого адреса: значок слева в адресной строке (в Arc — «Site Controls», ⌘⇧C, или настройки сайтов: arc://settings/content/microphone). '
+        + 'Если запроса не было вовсе — запрет на уровне macOS: Системные настройки → Конфиденциальность и безопасность → Микрофон → включите браузер и перезапустите его.',
+      NotFoundError: 'микрофон не найден — проверьте устройство ввода в настройках звука macOS и в настройках сайтов браузера.',
+      NotReadableError: 'микрофон занят другой программой или недоступен системе — закройте её или перезапустите браузер.',
+      OverconstrainedError: 'выбранный микрофон не поддерживает нужные настройки — выберите другой в настройках сайтов браузера.',
+    }[e.name] || e.message;
+    return sys(`Микрофон не подключился (${e.name}): ${why}`);
+  }
   micCtx = new AudioContext(); playCtx = new AudioContext();
   await micCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([worklet], { type: 'text/javascript' })));
   const node = new AudioWorkletNode(micCtx, 'mic');
