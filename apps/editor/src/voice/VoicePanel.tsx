@@ -31,7 +31,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
-import { ActButton, act, actions, onModal, setSpeaker, useAction } from './registry';
+import { ActButton, act, actions, listed, onModal, setSpeaker, useAction } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
@@ -386,7 +386,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const hint = live ? bargeHint(speaking, cfg.barge_mode) : null;
   const word = cfg.barge_mode === 'word';
   const errorText = status === 'error' ? client.errorText : null;
-  const can = actions(section).filter((a) => a.say?.length);
+  const can = listed(actions(section)).filter((a) => a.say?.length);
   const feedEnd = useRef<HTMLDivElement>(null);
   useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.length]);
 

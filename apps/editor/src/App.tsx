@@ -276,7 +276,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
           </div>
         )}
       </main>
-      <aside className="right">
+      <aside className="right" data-tour="editor-right">
         {sel && <Inspector doc={doc} setDoc={set} feature={sel} onDeselect={() => setSelected(null)} time={time} setTime={setTime} viewScale={viewScale}
           extra={<EntityPanel api={server.status === 'online' && server.services?.registry === 'up' ? registryApi : null} doc={doc} setDoc={set} feature={sel} time={time} />} />}
         <LayersPanel doc={doc} setDoc={set} selected={selected} setSelected={setSelected}

@@ -7,7 +7,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ActButton } from './registry';
 import { registerTourActions } from './actions/tour';
-import { findTarget, onVoiceReady, READY_FIRST, tourControl, tourEngine, tourSection } from './tour';
+import { findTarget, onVoiceReady, READY_FIRST, stepCaption, tourControl, tourEngine, tourSection } from './tour';
 
 export type Rect = { top: number; left: number; width: number; height: number };
 
@@ -78,7 +78,7 @@ export function TourLayer({ section }: { section: string }) {
 
   if (!st || !step) return null;
   const n = st.tour.steps.length;
-  const text = st.extra && step.more ? step.more : st.missing && step.unavailable ? step.unavailable : step.text;
+  const text = st.extra && step.more ? step.more : stepCaption(step, st.missing);
   const bottom = hole.top + hole.height;
   const right = hole.left + hole.width;
   const paused = st.phase === 'paused';

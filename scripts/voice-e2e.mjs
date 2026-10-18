@@ -1247,8 +1247,12 @@ await check('«Штаб, тур по моделированию» — тур и�
   if (!say.includes('четырёх наборов правил')) throw new Error(`подпись: ${say}`);
 });
 
-await check('«Штаб, хватит» — тур по моделированию окончен', async () => {
+await check('«Штаб, хватит» — тур по моделированию окончен, открыта и запомнена вкладка, что была до тура', async () => {
   await layer3.waitFor({ state: 'detached', timeout: 40000 });
+  await page3.locator('[data-tour="modeling-tab-calibrate"].on').waitFor({ timeout: 5000 })
+    .catch(() => { throw new Error('после тура открыта не «Калибровка»'); });
+  const kept = await page3.evaluate(() => localStorage.getItem('def_ops.modeling.tab'));
+  if (kept !== 'calibrate') throw new Error(`запомнена вкладка ${kept}`);
 });
 
 await check('«Штаб, тур по знакам» — раздел «Знаки», подсветка внутри страницы справочника (iframe)', async () => {

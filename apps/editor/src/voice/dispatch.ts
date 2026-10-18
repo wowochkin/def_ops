@@ -19,7 +19,7 @@ import { SECTIONS } from '../sections';
 import { yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, getAction, markVoice, parsePhrase, topModal, type Action, type VoiceModal } from './registry';
+import { act, actions, getAction, listed, markVoice, parsePhrase, topModal, type Action, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
@@ -165,9 +165,9 @@ const overlap = (q: string[], t: string) => { const ts = new Set(stems(t)); retu
 
 /** Общих примеров среди примеров раздела — не больше. */
 const GLOBAL_EXAMPLES = 2;
-/** Примеры доступных сейчас действий: сначала раздела (по состоянию — available), затем общие (их не больше двух, если у раздела свои есть). */
+/** Примеры доступных сейчас действий (без ярлыков): сначала раздела (по состоянию — available), затем общие (их не больше двух, если у раздела свои есть). */
 function examples(section: string): string[] {
-  const live = actions(section).filter((a) => a.available() === true);
+  const live = listed(actions(section)).filter((a) => a.available() === true);
   const own = live.filter((a) => a.section !== 'global').flatMap((a) => a.say ?? []);
   const common = live.filter((a) => a.section === 'global').flatMap((a) => a.say ?? []);
   return own.length ? [...own.slice(0, HELP_MAX - Math.min(GLOBAL_EXAMPLES, common.length)), ...common.slice(0, GLOBAL_EXAMPLES)] : common;

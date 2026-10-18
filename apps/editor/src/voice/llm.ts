@@ -11,7 +11,7 @@
  * ModelUnavailable сразу, без попыток и без заготовленной фразы о повторе.
  */
 import type { LlmSettings, Thinking } from '../sim/game-protocol';
-import type { Action } from './registry';
+import { listed, type Action } from './registry';
 import { SECTIONS } from '../sections';
 
 export interface OpenAITool {
@@ -40,14 +40,15 @@ const fromToolName = (name: string) => name.replace(/__/g, '.');
 
 /** Действия реестра → инструменты модели: имя — id с «__» вместо точек, описание — describe, параметры — params. */
 export function toTools(actions: Action[]): OpenAITool[] {
-  return actions.map((a) => ({
+  return listed(actions).map((a) => ({
     type: 'function',
     function: { name: toolName(a.id), description: a.describe, parameters: a.params ?? { type: 'object', properties: {} } },
   }));
 }
 
 /** Системный текст: роль, правила речи, что можно и чего сейчас нельзя. */
-export function systemText(actions: Action[], section?: string): string {
+export function systemText(all: Action[], section?: string): string {
+  const actions = listed(all); // ярлыки — для разборщика, у модели есть действие с параметром
   const ok = actions.filter((a) => a.available() === true);
   const off = actions.filter((a) => a.available() !== true);
   const examples = ok.flatMap((a) => a.say ?? []).slice(0, 3).map((e) => `«${e}»`).join(', ');

@@ -7,33 +7,37 @@
  *   при уходе и при входе читает запомненную).
  *
  * Без модели параметр из фразы не разобрать (разборщик сопоставляет примеры `say` дословно), поэтому у каждой вкладки —
- * ещё своё действие без параметров (`modeling.tab.calibrate` …) с фразами «Штаб, открой вкладку Калибровка»; оно
- * вызывает общее. Действия — раздела: «открой вкладку Театры» понимается, когда открыт раздел «Карты».
+ * ещё ярлык без параметров (`modeling.tab.calibrate` …, `shortcut`) с фразами «Штаб, открой вкладку Калибровка»,
+ * «Штаб, вкладка Калибровка», «Штаб, открой калибровку»; он вызывает общее. Модели ярлыки не видны, в «Что можно
+ * сказать» вкладки — одной строкой общего действия. Действия — раздела: «открой театры» понимается, когда открыт
+ * раздел «Карты».
  */
 import { register, type Action } from '../registry';
 
-export interface Tab { id: string; title: string; hint?: string }
+/** acc — как вкладку называют после «открой» (винительный); note — продолжение ответа «Открыта вкладка «…» — …». */
+export interface Tab { id: string; title: string; acc: string; hint?: string; note?: string }
 
 /** Вкладки разделов: id — как в состоянии раздела, title — надпись на кнопке. */
 export const TABS = {
   modeling: [
-    { id: 'models', title: 'Модели', hint: 'описание правил, профилей, языковых моделей' },
-    { id: 'compare', title: 'Сравнение', hint: 'модели между собой и с историей' },
-    { id: 'tune', title: 'Настройка', hint: 'свой вариант правил' },
-    { id: 'calibrate', title: 'Калибровка', hint: 'подбор по истории операции' },
-    { id: 'agents', title: 'Агентная модель', hint: 'сравнение вариантов параметров с историей и калибровка (ядро приложения)' },
-    { id: 'ops', title: 'Операции', hint: 'загрузка и подготовка к переигровке' },
-    { id: 'assistant', title: 'Ассистент', hint: 'вопросы об устройстве модели' },
+    { id: 'models', title: 'Модели', acc: 'модели', hint: 'описание правил, профилей, языковых моделей' },
+    { id: 'compare', title: 'Сравнение', acc: 'сравнение', hint: 'модели между собой и с историей' },
+    { id: 'tune', title: 'Настройка', acc: 'настройку', hint: 'свой вариант правил' },
+    { id: 'calibrate', title: 'Калибровка', acc: 'калибровку', hint: 'подбор по истории операции',
+      note: 'подбор правил по истории. Микрофон калибруют словами «Штаб, калибровка».' },
+    { id: 'agents', title: 'Агентная модель', acc: 'агентную модель', hint: 'сравнение вариантов параметров с историей и калибровка (ядро приложения)' },
+    { id: 'ops', title: 'Операции', acc: 'операции', hint: 'загрузка и подготовка к переигровке' },
+    { id: 'assistant', title: 'Ассистент', acc: 'ассистента', hint: 'вопросы об устройстве модели' },
   ],
   knowledge: [
-    { id: 'browse', title: 'Материалы' },
-    { id: 'queue', title: 'На проверку', hint: 'Кандидаты-факты, которые проверки не пропустили в базу сразу: решает человек' },
-    { id: 'docs', title: 'Документы' },
-    { id: 'coverage', title: 'Полнота', hint: 'Полнота материалов операции по каркасу' },
+    { id: 'browse', title: 'Материалы', acc: 'материалы' },
+    { id: 'queue', title: 'На проверку', acc: 'очередь на проверку', hint: 'Кандидаты-факты, которые проверки не пропустили в базу сразу: решает человек' },
+    { id: 'docs', title: 'Документы', acc: 'документы' },
+    { id: 'coverage', title: 'Полнота', acc: 'полноту', hint: 'Полнота материалов операции по каркасу' },
   ],
   maps: [
-    { id: 'base', title: 'Подложки' },
-    { id: 'theatres', title: 'Театры' },
+    { id: 'base', title: 'Подложки', acc: 'подложки' },
+    { id: 'theatres', title: 'Театры', acc: 'театры' },
   ],
 } as const satisfies Record<string, readonly Tab[]>;
 
@@ -57,8 +61,25 @@ const SWITCH: Record<TabSection, (tab: string) => void> = {
   maps: (tab) => { lsSet(MAPS_TAB, tab); emit(MAPS_TAB, tab); },
 };
 
-/** Фразы для вкладки: «штаб, открой вкладку калибровка», «штаб, вкладка калибровка». */
-export const tabSay = (title: string) => { const t = title.toLowerCase(); return [`штаб, открой вкладку ${t}`, `штаб, вкладка ${t}`]; };
+/** Фразы для вкладки: «штаб, открой вкладку калибровка», «штаб, вкладка калибровка», «штаб, открой калибровку». */
+export const tabSay = (t: Tab) => { const n = t.title.toLowerCase(); return [`штаб, открой вкладку ${n}`, `штаб, вкладка ${n}`, `штаб, открой ${t.acc}`]; };
+
+/**
+ * Открытая сейчас вкладка раздела: запомненная (Моделирование и Карты пишут её при каждом переключении), у Знаний —
+ * по кнопке `.on` на экране; иначе — первая. Тур запоминает её перед тем, как листать вкладки, и возвращает в конце.
+ */
+export function currentTab(sec: TabSection): string {
+  const tabs: readonly Tab[] = TABS[sec];
+  const ok = (t: string | null | undefined) => (t && tabs.some((x) => x.id === t) ? t : null);
+  let shown: string | null = null;
+  if (typeof document !== 'undefined') {
+    const on = document.querySelector(`[data-tour^="${sec}-tab-"].on`)?.getAttribute('data-tour');
+    shown = ok(on?.slice(`${sec}-tab-`.length));
+  }
+  let kept: string | null = null;
+  if (sec !== 'knowledge') { try { kept = ok(localStorage.getItem(sec === 'modeling' ? 'def_ops.modeling.tab' : MAPS_TAB)); } catch { /* */ } }
+  return kept ?? shown ?? tabs[0].id;
+}
 
 export function tabActions(): Action[] {
   const out: Action[] = [];
@@ -68,18 +89,20 @@ export function tabActions(): Action[] {
       const t = tabs.find((x) => x.id === p?.tab);
       if (!t) return 'Нет такой вкладки.';
       SWITCH[sec](t.id);
-      return `Открыта вкладка «${t.title}».`;
+      return `Открыта вкладка «${t.title}»${t.note ? ` — ${t.note}` : '.'}`;
     };
     out.push({
       id: `${sec}.tab`, section: sec, title: 'Открыть вкладку',
       describe: `Открывает вкладку раздела «${SECTION_TITLE[sec]}»: ${tabs.map((t) => `${t.id} — «${t.title}»`).join(', ')}.`,
       params: { type: 'object', properties: { tab: { enum: tabs.map((t) => t.id) } }, required: ['tab'] },
+      // одной строкой в «Что можно сказать» (дословно её не говорят: у действия обязательный параметр)
+      say: [`штаб, открой вкладку …: ${tabs.map((t) => t.title).join(', ')}`],
       available: () => true, run,
     });
     for (const t of tabs) {
       out.push({
         id: `${sec}.tab.${t.id}`, section: sec, title: `Вкладка «${t.title}»`, describe: `Открывает вкладку «${t.title}».`,
-        say: tabSay(t.title), available: () => true, run: () => run({ tab: t.id }),
+        shortcut: true, say: tabSay(t), available: () => true, run: () => run({ tab: t.id }),
       });
     }
   }

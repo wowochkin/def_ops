@@ -20,6 +20,7 @@ import { SECTIONS } from '../sections';
 import type { VoiceClient } from './client';
 import { act, register } from './registry';
 import { findTour, TOURS, type Tour, type TourStep } from './tours';
+import { currentTab, TABS, type TabSection } from './actions/tabs';
 
 export type { Tour, TourStep };
 /** Чем кончилась фраза шага: доиграна, остановлена (перебили, «стоп») или не звучала (голоса нет). */
@@ -46,7 +47,20 @@ export interface TourDeps {
   exists(target: string): boolean;
   speak(text: string): Speech;
   sleep(ms: number): Promise<void>;
+  /**
+   * Открытая сейчас вкладка для действия вкладки (`modeling.tab` …); null — не вкладка. Тур запоминает её перед первым
+   * своим переключением и возвращает тем же действием, когда кончится (дошёл до конца, «хватит», ушли из раздела).
+   */
+  tabOf?(action: string): string | null;
 }
+
+/** Что говорит штаб на шаге: текст для речи, а если элемента нет — с добавкой, почему его не видно. */
+export const stepSpeech = (s: TourStep, missing: boolean) => {
+  const t = s.speech ?? s.text;
+  return missing && s.unavailable ? `${t} ${s.unavailable}` : t;
+};
+/** Что написано в подписи шага. */
+export const stepCaption = (s: TourStep, missing: boolean) => (missing && s.unavailable ? `${s.text} ${s.unavailable}` : s.text);
 
 const REAL = new Set<string>(SECTIONS.map((s) => s.id));
 export const INTRO_STOPPED = 'Вступление остановлено. Продолжить — «Штаб, расскажи о приложении».';
@@ -61,6 +75,8 @@ export class TourEngine {
   /** Раздел, в котором идёт тур; null — тур поверх любого раздела (вступление, панель голоса). */
   private where: string | null = null;
   private onEnd: ((r: TourEnd) => void) | undefined;
+  /** Вкладки, открытые до тура: действие → вкладка; возвращаются в конце тура. */
+  private tabs = new Map<string, string>();
   private subs = new Set<() => void>();
 
   constructor(private d: TourDeps) {}
@@ -148,6 +164,9 @@ export class TourEngine {
     this.onEnd = undefined;
     this.hush();
     this.where = null;
+    // вкладки — как были до тура (и запомненные разделом — тоже)
+    for (const [action, tab] of this.tabs) void this.d.act(action, { tab }).catch(() => {});
+    this.tabs.clear();
     this.set(null);
     cb?.(r);
   }
@@ -162,6 +181,7 @@ export class TourEngine {
       // шаг тура сам открывает раздел — это не уход из тура
       const sec = p.action === 'shell.open' ? (p.params as { section?: string } | undefined)?.section : undefined;
       if (sec && REAL.has(sec)) this.where = sec;
+      if (!this.tabs.has(p.action)) { const was = this.d.tabOf?.(p.action); if (was) this.tabs.set(p.action, was); }
       try { await this.d.act(p.action, p.params); } catch { /* элемента не будет — шаг скажет, когда он появится */ }
       if (my !== this.seq) return;
     }
@@ -173,7 +193,7 @@ export class TourEngine {
     }
     if (!this.state) return;
     this.set({ ...this.state, missing: !found });
-    this.say(my, !found && step.unavailable ? step.unavailable : step.text);
+    this.say(my, stepSpeech(step, !found));
   }
 
   private say(my: number, text: string): void {
@@ -298,6 +318,7 @@ export const tourEngine = new TourEngine({
   exists: (t) => !!findTarget(t),
   speak: speakChief,
   sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  tabOf: (action) => { const sec = /^(\w+)\.tab$/.exec(action)?.[1]; return sec && sec in TABS ? currentTab(sec as TabSection) : null; },
 });
 export const startTour = (id: string) => tourEngine.start(id);
 export const stopTour = () => tourEngine.stop();

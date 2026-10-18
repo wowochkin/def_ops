@@ -4,10 +4,11 @@ import { join, resolve } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SECTIONS } from '../src/sections';
-import { act, actions, register } from '../src/voice/registry';
+import { act, actions, listed, register } from '../src/voice/registry';
+import { systemText, toTools } from '../src/voice/llm';
 import { shellActions } from '../src/voice/actions/shell';
 import { tourActions, type TourControl } from '../src/voice/actions/tour';
-import { TABS, tabActions, type TabSection } from '../src/voice/actions/tabs';
+import { currentTab, TABS, tabActions, type TabSection } from '../src/voice/actions/tabs';
 import { Dispatcher, paramsFit } from '../src/voice/dispatch';
 import { TOURS, type Tour } from '../src/voice/tours';
 import {
@@ -65,10 +66,11 @@ describe('описания туров', () => {
     }
   });
 
-  it('тексты звучат как есть: без цифр и латиницы; вступление — две-три минуты речи', () => {
-    for (const t of TOURS) for (const s of t.steps) for (const x of [s.text, s.more, s.unavailable]) {
+  it('тексты звучат как есть: без цифр и латиницы (что пишется иначе, чем звучит, — в speech); вступление — две-три минуты речи', () => {
+    for (const t of TOURS) for (const s of t.steps) for (const x of [s.speech ?? s.text, s.more, s.unavailable]) {
       if (x) expect(x, `${t.id}: ${s.title}`).not.toMatch(/[0-9A-Za-z]/);
     }
+    for (const t of TOURS) for (const s of t.steps) if (s.speech) expect(s.text, `${t.id}: ${s.title}`).not.toBe(s.speech);
     const intro = TOURS.find((t) => t.id === 'intro')!;
     const words = intro.steps.map((s) => s.text).join(' ').split(/\s+/).length;
     // ≈ 2 слова в секунду: от двух до трёх минут
@@ -138,14 +140,14 @@ describe('движок тура', () => {
     expect(ends).toEqual(['done']);
   });
 
-  it('элемента нет — подсказка, когда он появится (unavailable), шаг помечен missing', async () => {
+  it('элемента нет — к тексту шага добавлено, почему его не видно (unavailable), шаг помечен missing', async () => {
     const { e, said } = rig([T], { present: (t) => t !== 'b' });
     await e.start('t');
     await flush();
     e.next();
     await flush();
     expect(e.state).toMatchObject({ index: 1, missing: true });
-    expect(said.at(-1)!.text).toBe('появится после расчёта');
+    expect(said.at(-1)!.text).toBe('второй появится после расчёта');
   });
 
   it('перебили — пауза, «дальше» и «назад» листают, «подробнее» — свой текст', async () => {
@@ -516,6 +518,7 @@ describe('вкладки и туры разделов голосом', () => {
   let said: string[] = [];
   let started: string[] = [];
   let events: { name: string; tab: string }[] = [];
+  let cur = 'editor';
   const store = new Map<string, string>();
   beforeEach(() => {
     said = []; started = []; events = []; store.clear();
@@ -525,7 +528,8 @@ describe('вкладки и туры разделов голосом', () => {
     }
     vi.stubGlobal('window', w);
     vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); }, removeItem: (k: string) => { store.delete(k); } });
-    const c: TourControl = { ...fakeControl(), has: (s) => TOURS.some((x) => x.section === s), start: async (s) => { started.push(s); } };
+    cur = 'editor';
+    const c: TourControl = { ...fakeControl(), section: () => cur, has: (s) => TOURS.some((x) => x.section === s), start: async (s) => { started.push(s); } };
     offs = [...tabActions(), ...tourActions(c), ...shellActions({ section: () => 'editor', open: () => {} })].map(register);
   });
   afterEach(() => { offs.forEach((o) => o()); vi.unstubAllGlobals(); });
@@ -535,7 +539,22 @@ describe('вкладки и туры разделов голосом', () => {
     expect(await mk('modeling').utterance('Штаб, открой вкладку Калибровка.', 1)).toBe('done');
     expect(events).toEqual([{ name: 'def_ops.modeling.open', tab: 'calibrate' }]);
     expect(store.get('def_ops.modeling.tab')).toBe('calibrate');
-    expect(said.at(-1)).toBe('Открыта вкладка «Калибровка».');
+    expect(said.at(-1)).toBe('Открыта вкладка «Калибровка» — подбор правил по истории. Микрофон калибруют словами «Штаб, калибровка».');
+  });
+
+  it('короткие формы в своём разделе: «Штаб, открой калибровку / настройку / полноту / театры / документы / очередь на проверку»', async () => {
+    expect(await mk('modeling').utterance('Штаб, открой калибровку', 1)).toBe('done');
+    expect(await mk('modeling').utterance('Штаб, открой настройку', 2)).toBe('done');
+    expect(await mk('modeling').utterance('Штаб, открой модели', 3)).toBe('done');
+    expect(await mk('knowledge').utterance('Штаб, открой полноту', 4)).toBe('done');
+    expect(await mk('knowledge').utterance('Штаб, открой документы', 5)).toBe('done');
+    expect(await mk('knowledge').utterance('Штаб, открой очередь на проверку', 6)).toBe('done');
+    expect(await mk('maps').utterance('Штаб, открой театры', 7)).toBe('done');
+    expect(events.map((e) => e.tab)).toEqual(['calibrate', 'tune', 'models', 'coverage', 'docs', 'queue', 'theatres']);
+    // «открой модели» не стало «открой моделирование», в другом разделе «открой калибровку» вкладку не трогает
+    events = [];
+    expect(await mk('editor').utterance('Штаб, открой калибровку', 8)).not.toBe('done');
+    expect(events).toEqual([]);
   });
 
   it('вкладки знаний и карт; «вкладка …» без глагола; вкладки из двух слов', async () => {
@@ -567,16 +586,80 @@ describe('вкладки и туры разделов голосом', () => {
     expect(actions('modeling').find((a) => a.id === 'maps.tab')).toBeUndefined();
   });
 
-  it('«Штаб, тур по картам», «Штаб, покажи раздел Знания», «Штаб, тур по ИИ» — тур раздела; по переигровке — честно', async () => {
+  it('«Штаб, тур по картам / знаниям / ИИ / знакам / моделированию» — тур раздела; «покажи раздел» — текущего; по переигровке тура нет — ярлык недоступен', async () => {
     const d = mk('editor');
     expect(await d.utterance('Штаб, тур по картам', 1)).toBe('done');
-    expect(await d.utterance('Штаб, покажи раздел Знания', 2)).toBe('done');
+    expect(await d.utterance('Штаб, тур по знаниям', 2)).toBe('done');
     expect(await d.utterance('Штаб, тур по ИИ', 3)).toBe('done');
     expect(await d.utterance('Штаб, тур по знакам', 4)).toBe('done');
     expect(await d.utterance('Штаб, тур по моделированию', 5)).toBe('done');
-    expect(started).toEqual(['maps', 'knowledge', 'staff', 'library', 'modeling']);
-    expect(await d.utterance('Штаб, тур по переигровке', 6)).toBe('done');
-    expect(started).toHaveLength(5);
-    expect(said.at(-1)).toMatch(/По разделу «Переигровка» тура пока нет/);
+    expect(await d.utterance('Штаб, покажи раздел', 6)).toBe('done');
+    expect(started).toEqual(['maps', 'knowledge', 'staff', 'library', 'modeling', 'editor']);
+    expect(actions('editor').find((a) => a.id === 'tour.of.replay')!.available()).toMatch(/тура пока нет/);
+    expect(await d.utterance('Штаб, тур по переигровке', 7)).not.toBe('done');
+    expect(started).toHaveLength(6);
+  });
+
+  it('модели ярлыки не видны: в Моделировании инструменты без дублей', () => {
+    const tools = toTools(actions('modeling')).map((t) => t.function.name);
+    expect(tools).toContain('modeling__tab');
+    expect(tools).toContain('tour__start');
+    expect(tools.filter((n) => /^tour__of__|^modeling__tab__/.test(n))).toEqual([]);
+    expect(new Set(tools).size).toBe(tools.length);
+    const sys = systemText(actions('modeling'), 'modeling');
+    expect(sys).not.toMatch(/tour__of__|modeling__tab__/);
+    expect(sys).toMatch(/тур по картам/);
+  });
+
+  it('«Что можно сказать»: вкладки одной строкой, из «тур по …» — только текущий раздел; не длиннее прежнего + две строки', () => {
+    const lines = (sec: string) => listed(actions(sec)).filter((a) => a.say?.length);
+    const phrases = (sec: string) => lines(sec).flatMap((a) => a.say!);
+    // прежний список (до туров разделов и вкладок): действия оболочки и тура без ярлыков и вкладок
+    const before = lines('modeling').filter((a) => !/\.tab$/.test(a.id)).length;
+    expect(lines('modeling').length).toBeLessThanOrEqual(before + 2);
+    expect(phrases('modeling')).toContain('штаб, открой вкладку …: Модели, Сравнение, Настройка, Калибровка, Агентная модель, Операции, Ассистент');
+    expect(phrases('editor').filter((p) => /тур по/.test(p))).toEqual(['штаб, тур по редактору']);
+    cur = 'modeling';
+    expect(phrases('modeling').filter((p) => /тур по/.test(p))).toEqual(['штаб, тур по моделированию']);
+    cur = 'replay'; // тура по переигровке пока нет — и фразы нет
+    expect(phrases('replay').filter((p) => /тур по/.test(p))).toEqual([]);
+    expect(phrases('editor').some((p) => /вкладк/.test(p))).toBe(false);
+  });
+});
+
+describe('тур возвращает вкладку, открытую до него', () => {
+  const store = new Map<string, string>();
+  let offs: (() => void)[] = [];
+  beforeEach(() => {
+    store.clear();
+    vi.stubGlobal('window', new EventTarget());
+    vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); }, removeItem: (k: string) => { store.delete(k); } });
+    offs = [...tabActions(), ...shellActions({ section: () => 'modeling', open: () => {} })].map(register);
+  });
+  afterEach(() => { offs.forEach((o) => o()); vi.unstubAllGlobals(); });
+  const engine = (speak: TourDeps['speak']) => new TourEngine({
+    tours: TOURS, section: () => 'modeling', act, exists: () => true, speak, sleep: () => Promise.resolve(),
+    tabOf: (a) => (a === 'modeling.tab' ? currentTab('modeling') : a === 'maps.tab' ? currentTab('maps') : a === 'knowledge.tab' ? currentTab('knowledge') : null),
+  });
+
+  it('тур по моделированию прошёл все вкладки — открыта и запомнена прежняя', async () => {
+    store.set('def_ops.modeling.tab', 'compare');
+    const e = engine(() => ({ done: Promise.resolve('played'), cancel() {} }));
+    await e.start('modeling');
+    for (let i = 0; i < 20 && e.state; i++) await flush();
+    expect(e.state).toBeNull();
+    expect(store.get('def_ops.modeling.tab')).toBe('compare');
+  });
+
+  it('«хватит» посреди тура — прежняя вкладка; тур по картам — тоже', async () => {
+    store.set('def_ops.maps.tab', 'base');
+    const e = engine(() => ({ done: new Promise<SpeechEnd>(() => {}), cancel() {} }));
+    await e.start('maps');
+    await flush();
+    for (let i = 0; i < 6; i++) { e.next(); await flush(); }
+    expect(store.get('def_ops.maps.tab')).toBe('theatres');
+    e.stop();
+    await flush();
+    expect(store.get('def_ops.maps.tab')).toBe('base');
   });
 });

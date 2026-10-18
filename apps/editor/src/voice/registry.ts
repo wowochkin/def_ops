@@ -16,6 +16,12 @@ export interface Action<P = any> {
   params?: Record<string, unknown>;    // JSON-схема параметров; она же — параметры инструмента модели (llm.ts toTools)
   say?: string[];                      // примеры фраз: «штаб, делай ход»
   irreversible?: boolean;
+  /**
+   * Ярлык: другая запись того же, что умеет действие с параметром (`tour.of.maps` — `tour.start {section: maps}`), —
+   * только чтобы разборщик понял фразу без модели. Модели в инструменты не попадает, в «Что можно сказать» не
+   * показывается.
+   */
+  shortcut?: boolean;
   confirm?(p: P): string;              // текст подтверждения
   check?(p: P): true | string;         // параметры годятся сейчас (до подтверждения); строка — что сказать («Какой голос: …»)
   available(): true | string;          // строка — почему недоступно
@@ -87,6 +93,9 @@ export function getAction(id: string): Action | undefined { return byId.get(id);
 export function actions(section: string): Action[] {
   return [...byId.values()].filter((a) => a.section === 'global' || a.section === section);
 }
+
+/** Действия без ярлыков — для модели и списков «что можно сказать». */
+export const listed = (list: Action[]): Action[] => list.filter((a) => !a.shortcut);
 
 /** Кнопка, вызывающая действие реестра. data-action — для тура и проверки. */
 export function ActButton({ action, params, children, ...rest }: { action: string; params?: unknown; children?: ReactNode } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>) {

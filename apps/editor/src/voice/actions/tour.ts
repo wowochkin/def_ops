@@ -34,17 +34,16 @@ const title = (id: string) => SECTIONS.find((s) => s.id === id)?.title ?? id;
 
 /**
  * «Тур по …» — название раздела в дательном падеже. Без модели параметр из фразы не разобрать (разборщик
- * сопоставляет `say` дословно), поэтому у каждого раздела — своё действие `tour.of.<раздел>` с фразами
- * «Штаб, тур по картам», «Штаб, покажи раздел Карты».
+ * сопоставляет `say` дословно), поэтому у каждого раздела — ярлык `tour.of.<раздел>` («Штаб, тур по картам»;
+ * `shortcut` — модели не виден, у неё есть `tour.start {section}`). Тура по разделу нет — ярлык недоступен.
+ * «Штаб, покажи раздел» — тур текущего раздела; «Штаб, покажи <раздел>» — переход (правило разборщика); фразы
+ * «покажи раздел <название>» нет: она отличалась бы от перехода одним словом.
  */
 const DATIVE: Record<string, string[]> = {
   editor: ['редактору'], replay: ['переигровке'], modeling: ['моделированию'], maps: ['картам'],
   library: ['знакам'], knowledge: ['знаниям'], staff: ['разделу ии', 'ии'],
 };
-export const tourSay = (id: string) => [
-  ...(DATIVE[id] ?? []).map((d) => `штаб, тур по ${d}`),
-  `штаб, покажи раздел ${title(id).toLowerCase()}`,
-];
+export const tourSay = (id: string) => (DATIVE[id] ?? []).map((d) => `штаб, тур по ${d}`);
 
 export function tourActions(c: TourControl): Action[] {
   const always = { section: 'global', available: () => true as const };
@@ -56,15 +55,17 @@ export function tourActions(c: TourControl): Action[] {
       say: ['штаб, расскажи о приложении'], run: async () => c.start('intro') },
     {
       ...always, id: 'tour.start', title: 'Тур по разделу',
-      describe: 'Показывает раздел с подсветкой: что в нём есть и что сказать. Без параметра — текущий раздел; intro — о приложении, voice — панель голоса.',
+      describe: 'Показывает раздел с подсветкой: что в нём есть и что сказать («Штаб, тур по картам» — section: maps). Без параметра — текущий раздел; intro — о приложении, voice — панель голоса.',
       params: { type: 'object', properties: { section: { enum: [...SECTIONS.map((s) => s.id), 'intro', 'voice'] } } },
-      say: ['штаб, покажи раздел'],
+      // в «Что можно сказать» — и «тур по» текущему разделу, если тур по нему есть
+      get say() { const s = c.section(); return ['штаб, покажи раздел', ...(c.has(s) ? tourSay(s).slice(0, 1) : [])]; },
       run: async (p?: { section?: string }) => startSection(p?.section ?? c.section()),
     },
     ...SECTIONS.map((sec): Action => ({
-      ...always, id: `tour.of.${sec.id}`, title: `Тур по разделу «${sec.title}»`,
+      id: `tour.of.${sec.id}`, section: 'global', title: `Тур по разделу «${sec.title}»`, shortcut: true,
       describe: `Показывает раздел «${sec.title}» с подсветкой: что в нём есть и что сказать.`,
       say: tourSay(sec.id),
+      available: () => (c.has(sec.id) ? true : `по разделу «${sec.title}» тура пока нет`),
       run: async () => startSection(sec.id),
     })),
     { ...always, id: 'tour.voice', title: 'Рассказать о панели голоса', describe: 'Тур по панели голоса.',
