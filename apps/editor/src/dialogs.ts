@@ -8,7 +8,7 @@
  * в реестре временные действия `dialog.answer {choice}` («да» / «нет» / вариант по номеру или названию) и
  * `dialog.text {text}` (поле ввода — диктовкой); кнопки окна вызывают те же действия.
  */
-import { ordinalIndex, pickByName, yesNo } from './voice/answers';
+import { ordinalIndex, pickByName, strictYes, yesNo } from './voice/answers';
 import { queueReading, readParts, stopReading } from './voice/dictation';
 import { REMIND_YES_NO, WAIT_SAY } from './voice/dispatch';
 import { act, openModal, register } from './voice/registry';
@@ -184,6 +184,8 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
         if (i !== null && i >= 0 && i < labels.length) return end(i);
         return `Такого варианта нет. ${options}`;
       }
+      // опасное «да» (удалить, стереть) — только явное: «хорошо», «верно», «конечно» — не приказ
+      if (yn === 'yes' && d.danger && !d.input && !strictYes(choice)) return `Скажите «да» или «нет». ${WAIT_SAY}`;
       if (yn === 'yes' || /^(?:готово|все|записывай|сохрани)$/.test(choice)) return end(d.input ? d.input.get() : true);
       return `${d.input ? 'Скажите «готово» или «отмена».' : 'Скажите «да» или «нет».'} ${WAIT_SAY}`;
     },

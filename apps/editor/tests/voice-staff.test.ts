@@ -641,13 +641,18 @@ describe('раунд 1: мелкие', () => {
   it('«очищен / очищена / очищены / очищено» — по роду поля', async () => {
     staff({ decision: { ...LAST } });
     const disp = mk();
+    // непустое поле стирается после «да»
     await disp.utterance('Штаб, очисти замысел противника', 1);
+    await disp.utterance('да', 11);
     expect(said.at(-1)).toBe('«Замысел противника» очищен.');
     await disp.utterance('Штаб, очисти оценку обстановки', 2);
+    await disp.utterance('да', 12);
     expect(said.at(-1)).toBe('«Оценка обстановки» очищена.');
     await disp.utterance('Штаб, очисти риски', 3);
+    await disp.utterance('да', 13);
     expect(said.at(-1)).toBe('«Риски» очищены.');
     await disp.utterance('Штаб, очисти донесение', 4);
+    await disp.utterance('да', 14);
     expect(said.at(-1)).toBe('«Донесение» очищено.');
   });
   it('отменить переправу, приоритет, линию — голосом', async () => {

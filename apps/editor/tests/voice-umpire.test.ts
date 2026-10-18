@@ -123,16 +123,52 @@ describe('ход голосом: «проводи ход»', () => {
     expect(d.sendTurn).toHaveBeenCalledTimes(1);
     expect(last()).toMatch(/^Считаю ход/);
   });
+  it('необратимое — только явное «да»: «хорошо / верно / принято / давай / конечно / ок» ход не проводят, штаб переспрашивает', async () => {
+    const d = turn();
+    for (const [i, w] of ['хорошо', 'верно', 'принято', 'давай', 'конечно', 'ок', 'Штаб, хорошо', 'да конечно'].entries()) {
+      await disp.utterance('Штаб, проводи ход', 100 + i * 2);
+      expect(disp.pending?.action, w).toBe('command.turn');
+      await disp.utterance(w, 101 + i * 2);
+      expect(d.sendTurn, w).not.toHaveBeenCalled();
+      expect(last(), w).toBe('Скажите «да», чтобы провести ход, или «нет». Жду ответа.');
+      expect(disp.pending?.action, w).toBe('command.turn'); // вопрос ждёт дальше
+      await disp.utterance('нет', 200 + i);
+    }
+  });
+  it('необратимое: «да», «так точно», «подтверждаю», «провожу» — исполняют', async () => {
+    const d = turn();
+    for (const [i, w] of ['да', 'так точно', 'подтверждаю', 'провожу'].entries()) {
+      await disp.utterance('Штаб, проводи ход', 300 + i * 2);
+      await disp.utterance(w, 301 + i * 2);
+      expect(d.sendTurn, w).toHaveBeenCalledTimes(i + 1);
+    }
+  });
+  it('мягкое «хорошо» остаётся ответом на предложение (не необратимое): «Составить черновик донесения?»', async () => {
+    const st = staff({ view: view(), decision: { ...READY, report: '' } });
+    turn({}, st);
+    await disp.utterance('Штаб, проводи ход', 1);
+    await disp.utterance('хорошо', 2);
+    expect(st.setDecision).toHaveBeenCalledWith(expect.objectContaining({ report: expect.stringContaining('в строю') }));
+  });
   it('без приказов и распоряжений — так и сказано, без цифр', async () => {
     turn();
     await disp.utterance('Штаб, сделай ход', 1);
     expect(last()).toMatch(/^Провожу ход: решение готово, новых приказов нет, распоряжений нет\./);
     expect(last()).not.toMatch(/\d/);
   });
-  it('«можно проводить ход», «давай ход», «сделай ход», «проведи ход» — действие хода, а не «не предусматривает»', () => {
-    turn();
+  it('«можно проводить ход», «давай ход», «сделай ход», «проведи ход» — действие хода, а не «не предусматривает»', async () => {
+    const d = turn();
     for (const s of ['можно проводить ход', 'давай ход', 'сделай ход', 'проведи ход', 'проводи ход', 'давай следующий ход', 'можно делать ход', 'проводи ход пожалуйста', 'пожалуйста проводи ход'])
       expect(parsePhrase(s, 'replay'), s).toEqual({ id: 'command.turn' });
+    // и через разборщик: «можно …» (вопрос «можно ли») не перехватывает фразу хода
+    for (const [i, s] of ['Штаб, можно проводить ход', 'Штаб, можно делать ход'].entries()) {
+      said.length = 0;
+      await disp.utterance(s, 10 + i);
+      expect(disp.pending?.action, s).toBe('command.turn');
+      expect(last(), s).toMatch(/^Провожу ход:/);
+      await disp.utterance('нет', 20 + i);
+    }
+    expect(d.sendTurn).not.toHaveBeenCalled();
   });
   it('похожие фразы и вопросы — не ход (их разбирает модель)', () => {
     turn();

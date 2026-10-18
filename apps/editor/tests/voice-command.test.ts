@@ -174,6 +174,25 @@ describe('командование голосом', () => {
     expect(d.engine!.setView).toHaveBeenCalledTimes(1);
     expect(said.at(-1)).toMatch(/^Показываю: Зееловские высоты\./);
   });
+  it('«Штаб, покажи карту» / «открой карту» в игре — карта командования (весь театр), а не раздел «Карты»', async () => {
+    cmd();
+    const sector = vi.fn(async () => 'Весь театр.');
+    offs.push(register({ id: 'map.sector', section: 'replay', title: 'Участок', describe: '', available: () => true, run: sector }));
+    const opens: unknown[] = [];
+    offs.push(register({ id: 'shell.open', section: 'global', title: '', describe: '', available: () => true, run: async (p: unknown) => { opens.push(p); } }));
+    for (const [i, w] of ['Штаб, покажи карту', 'Штаб, открой карту'].entries()) {
+      expect(await mk().utterance(w, i + 1), w).toBe('done');
+    }
+    expect(sector).toHaveBeenCalledTimes(2);
+    expect(sector).toHaveBeenCalledWith({ name: '' });
+    expect(opens).toEqual([]);
+  });
+  it('«Штаб, покажи карту» без карты операции — раздел «Карты», как прежде', async () => {
+    const opens: unknown[] = [];
+    offs.push(register({ id: 'shell.open', section: 'global', title: '', describe: '', available: () => true, run: async (p: unknown) => { opens.push(p); } }));
+    await mk().utterance('Штаб, покажи карту', 1);
+    expect(opens).toEqual([{ section: 'maps' }]);
+  });
   it('«Штаб, доложи о восьмой гвардейской» — доклад и карточка армии', async () => {
     const d = cmd();
     await mk().utterance('Штаб, доложи о восьмой гвардейской', 1);

@@ -149,6 +149,24 @@ describe('фраза штаба ждёт конца реплики (SayGate)', (
     g.say(1, 'Слушаю.');
     expect(sent).toEqual(['1:Слушаю.']);
   });
+  it('окно открыто или закрыто (clear с keep) — keep-фразы остаются и уходят по часам; без keep — всё забыто', () => {
+    reset();
+    const g = mk();
+    g.speech(true);
+    g.say(1, 'Обычная.');
+    g.say(2, 'Готов ответ советника.', true);
+    g.clear({ keep: true });
+    expect(sent).toEqual([]);
+    now += 1000;
+    g.tick();
+    expect(sent).toEqual(['2:Готов ответ советника.']);
+    g.speech(true);
+    g.say(3, 'Ещё.', true);
+    g.clear(); // выключение голоса, обрыв связи: забыто всё
+    now += 20_000;
+    g.tick();
+    expect(sent).toEqual(['2:Готов ответ советника.']);
+  });
   it('человек говорит — фразы ждут конца речи и уходят по порядку', () => {
     reset();
     const g = mk();

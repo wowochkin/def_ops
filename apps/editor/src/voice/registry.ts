@@ -50,7 +50,11 @@ export interface Action<P = any> {
 export interface ActOpts { by?: 'voice' | 'mouse' }
 
 /** Предложение штаба вместо исполнения: offer — вопрос («…Составить черновик донесения?»), на «да» — действие id. */
-export interface Offer { offer: string; id: string; params?: unknown }
+export interface Offer {
+  offer: string; id: string; params?: unknown;
+  /** Предложение стирает или необратимо меняет: «да» — только явное (не «хорошо», «верно», «конечно»). */
+  strict?: boolean;
+}
 
 const byId = new Map<string, Action>();
 

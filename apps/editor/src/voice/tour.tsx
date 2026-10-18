@@ -18,6 +18,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { SECTIONS } from '../sections';
 import type { VoiceClient } from './client';
+import { stopReading } from './dictation';
 import { act, onVoiceCommand, register, type SpeakRole } from './registry';
 import { findTour, TOURS, type Tour, type TourMap, type TourStep } from './tours';
 import { currentTab, TABS, type TabSection } from './actions/tabs';
@@ -109,6 +110,7 @@ export class TourEngine {
     if (!tour) return 'Такого тура нет.';
     const prev = this.onEnd;
     this.onEnd = undefined;
+    stopReading(); // остаток чтения по частям не перехватывает «дальше» у тура
     if (this.state) this.finish('stopped');
     this.onEnd = prev && o.onEnd ? (r) => { o.onEnd!(r); prev(r); } : o.onEnd ?? prev;
     this.where = REAL.has(tour.section) ? tour.section : null;
@@ -263,6 +265,8 @@ const waiting = new Map<number, (r: SpeechEnd) => void>();
 export const settleSpeech = (id: number, r: SpeechEnd) => { const f = waiting.get(id); if (f) { waiting.delete(id); f(r); } };
 /** Вся речь штаба остановлена («стоп», выключение, окно калибровки): ждущие шаги — на паузу. */
 export const stopTourSpeech = () => { [...waiting.keys()].forEach((id) => settleSpeech(id, 'stopped')); };
+/** Дежурный режим («Штаб, отбой»): штаб молчит — и тур, и предложения. */
+let standbyOn = false;
 /** Как часто проверять, что голос ещё жив (выключили, открыли калибровку, обрыв связи), пока шаг ждёт конца фразы. */
 const LIVE_POLL_MS = 500;
 
@@ -272,7 +276,7 @@ const LIVE_POLL_MS = 500;
  */
 export function speakChief(text: string, role?: SpeakRole): Speech {
   const v = voice;
-  if (!v || !v.live()) return { done: Promise.resolve('silent'), cancel: () => {} };
+  if (!v || standbyOn || !v.live()) return { done: Promise.resolve('silent'), cancel: () => {} };
   const id = v.client.newSayId();
   const done = new Promise<SpeechEnd>((res) => waiting.set(id, res));
   if (role) v.send(id, text, role); else v.send(id, text);
@@ -430,9 +434,10 @@ let offerSeq = 0;
 export async function offer(text: string, yes: () => unknown, speak: (t: string) => Speech = speakChief): Promise<boolean> {
   offerOff?.();
   const my = ++offerSeq;
+  if (standbyOn) return false; // дежурит: не предлагает
   const end = await speak(text).done;
-  // голоса нет или штаб уже предлагает другое — это предложение снято
-  if (end === 'silent' || my !== offerSeq) return false;
+  // голоса нет, фраза снята («стоп», новая реплика) или штаб уже предлагает другое — это предложение снято
+  if (end !== 'played' || my !== offerSeq || standbyOn) return false;
   const until = Date.now() + OFFER_MS;
   /** Предложение живо: не истекло и не открыто окно — тогда «да» и «нет» относятся к окну, а предложение снимается. */
   const alive = (): true | string => {
@@ -451,10 +456,27 @@ export async function offer(text: string, yes: () => unknown, speak: (t: string)
     // ответ действия (или причина, почему нельзя) штаб говорит вслух — после «да» не тишина
     run: async () => { clear(); const r = await yes(); return typeof r === 'string' ? r : undefined; },
   });
+  // «повтори» сразу после предложения — оно же снова (его фраза идёт мимо разборщика)
+  const offAgain = register({
+    id: 'tour.offer.repeat', section: 'global', title: 'Повторить предложение', describe: 'Повторяет то, что штаб только что предложил.', model: false,
+    available: alive,
+    run: async () => text,
+  });
   const t = setTimeout(() => clear(), OFFER_MS);
-  const clear = () => { clearTimeout(t); offYes(); offNo(); if (offerOff === clear) offerOff = null; };
+  const clear = () => { clearTimeout(t); offYes(); offNo(); offAgain(); if (offerOff === clear) offerOff = null; };
   offerOff = clear;
   return true;
+}
+
+/**
+ * Дежурный режим включён / снят. Включён: тур на паузе и молчит (его фраза обрывается), предложение снято, новых нет
+ * (и «Тур остановлен…» не звучит). Снят: тур остаётся на паузе — «Штаб, продолжай» возобновляет.
+ */
+export function tourStandby(on: boolean): void {
+  standbyOn = on;
+  if (!on) return;
+  offerOff?.();
+  if (tourEngine.state && tourEngine.state.phase !== 'paused') tourEngine.pause();
 }
 
 // фраза не кончается словом «да»: ответ сразу после неё сервис счёл бы эхом своей же фразы (server.py, ECHO_RATIO)

@@ -4,7 +4,8 @@ import { join, resolve } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SECTIONS } from '../src/sections';
-import { act, actions, listed, register } from '../src/voice/registry';
+import { act, actions, getAction, listed, register } from '../src/voice/registry';
+import { readAloud, stopReading } from '../src/voice/dictation';
 import { systemText, toTools } from '../src/voice/llm';
 import { shellActions } from '../src/voice/actions/shell';
 import { tourActions, IN_GAME, type TourControl } from '../src/voice/actions/tour';
@@ -17,7 +18,7 @@ import { currentTab, TABS, tabActions, type TabSection } from '../src/voice/acti
 import { Dispatcher, helpText, paramsFit } from '../src/voice/dispatch';
 import { TOURS, type Tour } from '../src/voice/tours';
 import {
-  bindTourVoice, settleSpeech, GAME_ENDED, GAME_STARTED, INTRO_HOW_OFF, setReplaySource, startTourFor, INTRO_KEY, INTRO_STOPPED, OFFER_MS, offer, onVoiceReady, PROPOSE, READY_FIRST, speakChief, TourEngine, tourControl, tourEngine,
+  bindTourVoice, tourStandby, settleSpeech, GAME_ENDED, GAME_STARTED, INTRO_HOW_OFF, setReplaySource, startTourFor, INTRO_KEY, INTRO_STOPPED, OFFER_MS, offer, onVoiceReady, PROPOSE, READY_FIRST, speakChief, TourEngine, tourControl, tourEngine,
   type SpeechEnd, type TourDeps,
 } from '../src/voice/tour';
 import { padFor, placeCaption, TourLayer, type Rect } from '../src/voice/TourLayer';
@@ -313,6 +314,19 @@ describe('предложение штаба', () => {
     const silent = await offer('…', () => { yes++; }, () => ({ done: Promise.resolve('silent' as SpeechEnd), cancel() {} }));
     expect(silent).toBe(false);
     await expect(act('tour.yes')).rejects.toThrow();
+  });
+});
+
+describe('предложение штаба: фраза снята — «да» ничего не запускает', () => {
+  afterEach(() => vi.useRealTimers());
+  it('фраза остановлена («стоп», новая реплика) — tour.yes не регистрируется, как и без голоса', async () => {
+    let yes = 0;
+    const ok = await offer('Показать раздел? Скажите «да».', () => { yes++; }, () => ({ done: Promise.resolve('stopped' as SpeechEnd), cancel() {} }));
+    expect(ok).toBe(false);
+    expect(getAction('tour.yes')).toBeUndefined();
+    expect(getAction('tour.no')).toBeUndefined();
+    expect(getAction('tour.offer.repeat')).toBeUndefined();
+    expect(yes).toBe(0);
   });
 });
 
@@ -937,5 +951,144 @@ describe('игра в «Переигровке» и туры', () => {
       await flush();
       expect(spoken.map((s) => s.text).join(' ')).not.toMatch(/Скажите «да»/);
     });
+  });
+});
+
+describe('итоговый проход: «повтори» в туре, чтение по частям, дежурный режим', () => {
+  let offs: (() => void)[] = [];
+  let said: string[] = [];
+  let t = 0;
+  let run: ReturnType<typeof rig>;
+  const LONG = 'Первое предложение. Второе предложение. Третье предложение. Четвёртое предложение. Пятое предложение.';
+  const played = () => ({ done: Promise.resolve('played' as SpeechEnd), cancel() {} });
+  beforeEach(() => {
+    said = []; t = 1_000_000;
+    run = rig([T]);
+    const e = run.e;
+    const c: TourControl = {
+      active: () => !!e.state, hasMore: () => !!e.step?.more, paused: () => e.state?.phase === 'paused', section: () => 'editor',
+      has: (s) => e.has(s), start: (s) => e.start(s), next: () => e.next(), back: () => e.back(), repeat: () => e.repeat(),
+      more: () => e.more(), pause: () => e.pause(), resume: () => e.resume(), stop: () => e.stop(), introOn() {}, introOff() {},
+    };
+    offs = [...tourActions(c), ...shellActions({ section: () => 'editor', open: () => {} })].map(register);
+  });
+  afterEach(() => { offs.forEach((o) => o()); run.e.stop(); stopReading(); tourStandby(false); vi.useRealTimers(); });
+  const mk = () => new Dispatcher({ now: () => t, say: (s) => { said.push(s); }, section: () => 'editor' });
+
+  it('«Штаб, повтори» при идущем туре — шаг говорится снова (а не «Я ещё ничего не говорил»)', async () => {
+    const d = mk();
+    await run.e.start('t');
+    await flush();
+    expect(run.said.map((x) => x.text)).toEqual(['первый']);
+    expect(await d.utterance('Штаб, повтори', 1)).toBe('done');
+    await flush();
+    expect(run.said.map((x) => x.text)).toEqual(['первый', 'первый']);
+    expect(run.e.state?.index).toBe(0);
+    expect(said).toEqual([]);
+    for (const w of ['Штаб, ещё раз', 'Штаб, повторите']) await d.utterance(w, 2);
+    await flush();
+    expect(run.said).toHaveLength(4);
+    expect(said).not.toContain('Я ещё ничего не говорил.');
+  });
+
+  it('штаб предложил тур — «повтори» повторяет предложение', async () => {
+    const d = mk();
+    await offer('Показать, что есть в разделе «Редактор»? Скажите «да» — и покажу.', () => {}, played);
+    expect(await d.utterance('Штаб, повтори', 1)).toBe('done');
+    expect(said.at(-1)).toMatch(/^Показать, что есть в разделе «Редактор»\?/);
+    expect(said).toHaveLength(1);
+    // предложение снято — действия «повторить предложение» больше нет
+    await act('tour.no');
+    expect(getAction('tour.offer.repeat')).toBeUndefined();
+  });
+
+  it('фраза тура, сказанная мимо разборщика («Тур остановлен…»), — последняя фраза штаба для «повтори»', async () => {
+    const d = mk();
+    d.noted('Тур остановлен: открыт другой раздел.');
+    await d.utterance('Штаб, повтори', 1);
+    expect(said.at(-1)).toBe('Тур остановлен: открыт другой раздел.');
+  });
+
+  it('начало тура снимает остаток чтения по частям: «дальше» — шаг тура, а не старый текст', async () => {
+    readAloud(LONG);
+    expect(getAction('read.next')).toBeDefined();
+    await run.e.start('t');
+    await flush();
+    expect(getAction('read.next')).toBeUndefined();
+    const d = mk();
+    d.spoke();
+    expect(await d.utterance('дальше', 1)).toBe('done');
+    await flush();
+    expect(run.e.state?.index).toBe(1);
+    expect(said.join(' ')).not.toMatch(/Третье/);
+  });
+
+  it('чтение начато во время тура — «дальше» и «хватит» всё равно тура', async () => {
+    await run.e.start('t');
+    await flush();
+    readAloud(LONG);
+    const d = mk();
+    d.spoke();
+    await d.utterance('дальше', 1);
+    await flush();
+    expect(run.e.state?.index).toBe(1);
+    await d.utterance('хватит', 2);
+    expect(run.e.state).toBeNull();
+  });
+
+  it('дежурный режим: после «Штаб, отбой» тур на паузе и молчит; пробуждение — пауза остаётся, «продолжай» возобновляет', async () => {
+    vi.useFakeTimers();
+    const spoken: string[] = [];
+    const unbind = bindTourVoice({ client: { newSayId: () => spoken.length + 1 }, send: (_i, tx) => { spoken.push(tx); }, stop() {}, live: () => true });
+    run.e.stop();
+    offs.push(...tourActions(tourControl).map(register)); // действия — на движок окна
+    const TG: Tour = { ...T, game: false };
+    const d = new Dispatcher({ now: () => t, say: (s) => { said.push(s); }, section: () => 'editor', onStandby: (on) => tourStandby(on) });
+    void tourEngine.start(TG);
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(spoken).toEqual(['первый']);
+    expect(await d.utterance('Штаб, отбой', 1)).toBe('done');
+    expect(d.standby).toBe(true);
+    expect(tourEngine.state?.phase).toBe('paused');
+    // между шагами не говорит, предложений нет, «Тур остановлен» не звучит
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(spoken).toEqual(['первый']);
+    expect(tourEngine.state).toMatchObject({ index: 0, phase: 'paused' });
+    const spy = vi.fn(() => played());
+    expect(await offer('Показать раздел? Скажите «да».', () => {}, spy)).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+    expect(getAction('tour.yes')).toBeUndefined();
+    speakChief('Хватит.');
+    expect(spoken).toEqual(['первый']);
+    // «хватит»/прочее в дежурном не исполняется
+    expect(await d.utterance('Штаб, хватит', 2)).toBe('ignored');
+    expect(tourEngine.state).not.toBeNull();
+    // пробуждение: тур остаётся на паузе
+    t += 20_000; // эхо «Дежурю…» кончилось
+    expect(await d.utterance('Штаб, на связь', 3)).toBe('done');
+    expect(d.standby).toBe(false);
+    expect(tourEngine.state).toMatchObject({ index: 0, phase: 'paused' });
+    expect(spoken).toEqual(['первый']);
+    // «продолжай» — с того же шага
+    await d.utterance('Штаб, продолжай', 4);
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(spoken).toEqual(['первый', 'первый']);
+    expect(tourEngine.state?.phase).toBe('speaking');
+    unbind();
+    tourEngine.stop();
+  });
+
+  it('дежурный режим: смена раздела по туру с игрой не пишет «Тур остановлен»', async () => {
+    vi.useFakeTimers();
+    const spoken: string[] = [];
+    const unbind = bindTourVoice({ client: { newSayId: () => spoken.length + 1 }, send: (_i, tx) => { spoken.push(tx); }, stop() {}, live: () => true });
+    run.e.stop();
+    void tourEngine.start({ ...T, game: false });
+    await vi.advanceTimersByTimeAsync(1200);
+    tourStandby(true);
+    tourEngine.onGame(true);
+    expect(tourEngine.state).toBeNull();
+    expect(spoken).toEqual(['первый']);
+    unbind();
   });
 });

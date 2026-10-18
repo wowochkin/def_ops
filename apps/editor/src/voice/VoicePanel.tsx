@@ -48,7 +48,7 @@ import {
 import { confirmAsync } from '../dialogs';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
-import { settleSpeech, stopTourSpeech, useIntroSetting, useTourVoice } from './tour';
+import { settleSpeech, stopTourSpeech, tourStandby, useIntroSetting, useTourVoice } from './tour';
 
 const OPEN_KEY = 'def_ops.voice.panel';
 const API_POLL_MS = 5000;
@@ -174,7 +174,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     },
     thinking: setThinking,
     onPending: (p) => { setPending(p ? { ...p } : null); size.update({ speaking: speakingIds.current.size > 0, pending: !!p }); },
-    onStandby: setStandby,
+    // дежурит — и тур молчит: на паузе, предложений нет
+    onStandby: (on) => { setStandby(on); tourStandby(on); },
   }), [client, gate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Фраза штаба от окна (калибровка, «Голоса»); промис — когда договорил, фразу сняли или голос не говорит. */
@@ -228,7 +229,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     // окно открылось — его вопрос читается, но панель от этого не разворачивается (и сворачивается, когда окно закрыто)
     const off = onModal((m, opened) => {
       regModal.current = !!m; size.setModal(regModal.current || domModal.current); redraw();
-      if (opened) { dispatcher.cancel(); gate.clear(); return; }
+      if (opened) { dispatcher.cancel(); gate.clear({ keep: true }); return; }
       if (m) return; // закрыто верхнее, ниже ещё окно
       for (const id of modalIds) if (!gate.drop(id) && speakingIds.current.delete(id)) client.stop(id);
       modalIds.clear();
@@ -239,9 +240,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   // тур говорит голосом начальника штаба (разбор хода — посредника): та же очередь фраз, та же лента
   useTourVoice({
     client,
-    send: (id, text, role) => gate.say(id, text, false, role),
+    send: (id, text, role) => { dispatcher.noted(text, role); gate.say(id, text, false, role); },
     stop: (id) => { if (!gate.drop(id) && speakingIds.current.delete(id)) { client.stop(id); syncSpeaking(); } },
-    live: () => enabledRef.current && !dialogRef.current && client.status === 'ready',
+    live: () => enabledRef.current && !dialogRef.current && !dispatcher.standby && client.status === 'ready',
   });
   const [intro] = useIntroSetting();
 
@@ -255,11 +256,11 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     setAutoCalib(auto && d === 'calibrate');
     setDialog(d);
     dispatcher.cancel();
-    gate.clear();
+    gate.clear({ keep: true });
     if (speakingIds.current.size) { client.stop(); speakingIds.current.clear(); syncSpeaking(); }
   };
   // сервис сбрасывает слушателя на шагах калибровки и записи — «речь кончилась» могло не прийти
-  const closeDialog = () => { setDialog(null); setBusy(null); setListening(false); gate.clear(); };
+  const closeDialog = () => { setDialog(null); setBusy(null); setListening(false); gate.clear({ keep: true }); };
 
 
   // связь с сервисом: подключение сразу (шлюз может молчать — сервис запущен вручную), состояние шлюза —

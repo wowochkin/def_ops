@@ -324,6 +324,25 @@ describe('окна dialogs.ts голосом', () => {
     await mk().utterance('штаб, отставить', 2);
     expect(out).toEqual([false, false]);
   });
+  it('опасное окно (danger): «хорошо / верно / принято / давай / конечно / ок» не подтверждают, «да» и «так точно» — да; обычное окно — как было', async () => {
+    for (const w of ['хорошо', 'верно', 'принято', 'давай', 'конечно', 'ок']) {
+      const out: unknown[] = [];
+      const off = voiceDialog({ message: 'Удалить слой Б?', ok: 'Удалить', danger: true }, (o) => out.push(o));
+      said.length = 0;
+      expect(await mk().utterance(`штаб, ${w}`, 1), w).toBe('done');
+      expect(out, w).toEqual([]);
+      expect(said.at(-1), w).toBe('Скажите «да» или «нет». Жду ответа.');
+      expect(topModal(), w).not.toBeNull();
+      await mk().utterance('штаб, так точно', 2);
+      expect(out, w).toEqual([true]);
+      off();
+    }
+    // обычное окно с одним безопасным вариантом: «хорошо» — согласие, как прежде
+    const out: unknown[] = [];
+    voiceDialog({ message: 'Закрыть окно?', ok: 'Закрыть' }, (o) => out.push(o));
+    await mk().utterance('штаб, хорошо', 3);
+    expect(out).toEqual([true]);
+  });
   it('chooseAsync: «второй» — второй вариант, по названию — тот, что назван', async () => {
     const out: unknown[] = [];
     voiceDialog({ message: 'Что сделать с игрой?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
@@ -395,7 +414,25 @@ describe('диктовка в поле и чтение по частям', () =>
     await d.utterance('Штаб, прочитай замысел', 3);
     expect(said.at(-1)).toBe('Прорвать оборону противника к исходу дня');
     await d.utterance('Штаб, очисти замысел', 4);
+    // диктовку стирают только после «да»
+    expect(text).toBe('Прорвать оборону противника к исходу дня');
+    expect(said.at(-1)).toMatch(/^Очистить «Замысел»\?.*Жду ответа\.$/);
+    await d.utterance('хорошо', 5);
+    expect(text).toBe('Прорвать оборону противника к исходу дня');
+    await d.utterance('да', 6);
     expect(text).toBe('');
+  });
+  it('«очисти замысел»: «нет» — текст остаётся; поле пусто — без вопроса', async () => {
+    text = 'Прорвать оборону';
+    const d = mk();
+    await d.utterance('Штаб, очисти замысел', 1);
+    await d.utterance('нет', 2);
+    expect(text).toBe('Прорвать оборону');
+    text = '';
+    said.length = 0;
+    await d.utterance('Штаб, очисти замысел', 3);
+    expect(said.at(-1)).toBe('«Замысел» очищено.');
+    expect(d.pending).toBeNull();
   });
   it('длинное читается частями: «дальше» — следующая часть, «хватит» — конец чтения', async () => {
     text = 'Первое предложение. Второе предложение. Третье предложение. Четвёртое предложение. Пятое предложение.';
@@ -410,6 +447,34 @@ describe('диктовка в поле и чтение по частям', () =>
     said.length = 0;
     await d.utterance('штаб, дальше', 3);
     expect(said.join(' ')).not.toMatch(/Пятое/);
+  });
+  const LONG = 'Первое предложение. Второе предложение. Третье предложение. Четвёртое предложение. Пятое предложение.';
+  it('новая обращённая реплика, не продолжающая чтение, снимает остаток: «дальше» потом не читает старый текст', async () => {
+    readAloud(LONG);
+    const d = mk({ stop: () => {} });
+    expect(await d.utterance('Штаб, открой карты', 1)).toBe('done');
+    said.length = 0;
+    await d.utterance('Штаб, дальше', 2);
+    expect(said.join(' ')).not.toMatch(/Третье/);
+    expect(said.at(-1)).not.toMatch(/Читать дальше/);
+  });
+  it('«дальше» / «продолжай» при идущем туре — только тур, а не остаток чтения', async () => {
+    readAloud(LONG);
+    const next = vi.fn();
+    reg({ id: 'tour.next', say: ['дальше', 'далее'], run: async () => { next(); } });
+    const d = mk({ stop: () => {} });
+    d.spoke();
+    expect(await d.utterance('дальше', 1)).toBe('done');
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(said.join(' ')).not.toMatch(/Третье/);
+  });
+  it('чтение продолжается: «дальше», «повтори», «хватит» остаток не снимают до своего ответа', async () => {
+    readAloud(LONG);
+    const d = mk({ stop: () => {} });
+    d.spoke();
+    await d.utterance('Штаб, повтори', 1);
+    await d.utterance('Штаб, дальше', 2);
+    expect(said.at(-1)).toBe('Третье предложение. Четвёртое предложение. Читать дальше? Жду ответа.');
   });
   it('последняя часть — без «Дальше?»; длинное предложение режется по словам', () => {
     expect(readAloud('Одно. Два.')).toBe('Одно. Два.');

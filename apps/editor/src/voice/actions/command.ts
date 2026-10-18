@@ -539,6 +539,8 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
     return hit('map.level', { level: { тактическ: 'tac', оперативн: 'op', стратегическ: 'st' }[m[1]] }, NO_MAP);
   if (/^(?:приблизь|приблизить|приблизь карту|ближе|крупнее|увеличь|увеличь карту)$/.test(t)) return hit('map.zoomIn');
   if (/^(?:отдали|отдалить|отдали карту|мельче|уменьши|уменьши карту)$/.test(t)) return hit('map.zoomOut');
+  // «покажи карту» в игре — карта командования (весь театр), а не раздел «Карты»; карты нет — раздел
+  if (/^(?:покажи|покажите|показать|открой) карту$/.test(t)) return getAction('map.sector') ? { id: 'map.sector', params: { name: '' } } : null;
   if (/^(?:покажи |открой |прочитай )?(?:легенд\p{L}*|условные обозначения)$|^что значат знаки$/u.test(t)) return hit('map.legend', undefined, NO_MAP);
   if (/^(?:(?:покажи|открой) )?(?:весь театр|весь фронт)$|^(?:сними|убери) (?:участок|фокус)$/.test(t)) return hit('map.sector', { name: '' }, NO_MAP);
   if ((m = /^(?:(?:покажи|открой|перейди к|перейди на|к) )?участ\p{L}* (.+)$/u.exec(t))) return hit('map.sector', { name: m[1] }, NO_MAP);

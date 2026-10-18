@@ -159,6 +159,8 @@ export class SayGate {
   tick(): void {
     if (this.since !== null && this.now() - this.since >= HOLD_MAX_MS) { this.since = null; this.ended = null; this.flush(); }
     if (this.ended !== null && this.now() - this.ended >= UTT_WAIT_MS) { this.ended = null; this.flush(); }
+    // ждать больше нечего (clear с keep, истёкшее ожидание) — оставшиеся фразы уходят, не отстают от новых
+    if (this.queue.length && !this.holding()) this.flush();
   }
   /** Снять ждущую фразу id или все; true — такая ждала. */
   drop(id?: number): boolean {
@@ -174,8 +176,16 @@ export class SayGate {
     if (gone.length) this.onDrop?.(gone);
     return gone.length > 0;
   }
-  /** Всё забыть: очередь и ожидание (выключение, обрыв связи, окно калибровки или голосов). */
-  clear(): void { this.drop(); this.since = null; this.ended = null; }
+  /**
+   * Всё забыть: очередь и ожидание (выключение, обрыв связи, окно калибровки или голосов). keep — открытие и закрытие
+   * окна: фразы, не устаревающие от новой реплики (готов ответ советника, «Разбор готов»), остаются в очереди и уходят
+   * по часам (tick).
+   */
+  clear(o: { keep?: boolean } = {}): void {
+    if (o.keep) this.dropStale(); else this.drop();
+    this.since = null;
+    this.ended = null;
+  }
 
   private holding(): boolean {
     return (this.since !== null && this.now() - this.since < HOLD_MAX_MS) || (this.ended !== null && this.now() - this.ended < UTT_WAIT_MS);

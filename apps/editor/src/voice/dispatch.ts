@@ -8,9 +8,11 @@
  *
  * Без рук:
  * - необратимое (irreversible) голосом — только после «да»: штаб спрашивает confirm(p) и «Скажите да или нет»
- *   (pending); «нет», «отмена», молчание CONFIRM_MS, новая просьба — отмена с короткой фразой;
+ *   (pending); «нет», «отмена», молчание CONFIRM_MS, новая просьба — отмена с короткой фразой; «да» — только явное
+ *   (да, так точно, подтверждаю, провожу): «хорошо», «верно», «принято», «давай», «конечно», «ок» штаб переспрашивает;
+ *   предложения (тур, калибровка) принимают и мягкие слова;
  * - «Штаб, отбой» — дежурный режим (standby): микрофон открыт, исполняется только «Штаб, на связь» (shell.wake);
- *   эхо собственной фразы штаба не будит;
+ *   эхо собственной фразы штаба не будит; тур в дежурном на паузе и молчит (tourStandby);
  * - открыто окно, ждущее ответа (registry.openModal), — исполняются только его ответы, стоп-слова, «отбой» и
  *   «повтори»; прочее — «Сначала ответьте на вопрос: …»;
  * - ответ на вопрос поверх его чтения: перебивание «голосом» — как всякая реплика (сервис сам обрывает штаб);
@@ -19,7 +21,7 @@
  */
 import stopFile from '../../../../services/voice/stop_words.json';
 import { SECTIONS } from '../sections';
-import { yesNo } from './answers';
+import { strictYes, yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
 import { act, actions, forModel, getAction, hasSpeaker, speak, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
@@ -216,7 +218,11 @@ const REPEAT = /^(?:повтори|повторите|повтори еще ра
 const MORE = /^(?:дальше|далее|продолжай|продолжайте|читай дальше)$/;
 
 /** Ждущее подтверждения: что исполнить на «да», вопрос и до какого времени (now) ждать. */
-export interface Pending { action: string; params: unknown; text: string; until: number }
+export interface Pending {
+  action: string; params: unknown; text: string; until: number;
+  /** Необратимое: «да» — только явное (strictYes); мягкое «хорошо» переспрашивается. */
+  strict?: boolean;
+}
 
 /**
  * Стоп-слова (и обращение между ними) в начале реплики: сколько слов снять. 0 — реплика не начинается со стоп-слова.
@@ -314,6 +320,9 @@ export class Dispatcher {
     return this.opts.say(text, o);
   }
 
+  /** Фраза штаба, сказанная мимо разборщика (тур, предложение тура, «Тур остановлен»): «повтори» повторит её. */
+  noted(text: string, role?: SpeakRole): void { this.last = { text, at: this.opts.now(), ...(role ? { role } : {}) }; }
+
   /** Повторить (кнопка «Повторить» полосы — то же, что «повтори»): вопрос открытого окна или последняя фраза. */
   repeat(): void {
     const m = topModal();
@@ -392,9 +401,17 @@ export class Dispatcher {
   }
 
   /** Спросить «да / нет»; на «да» — действие id с params (предложение штаба или подтверждение необратимого). */
-  propose(text: string, id: string, params?: unknown): void {
-    this.setPending({ action: id, params, text, until: this.opts.now() + CONFIRM_MS });
+  propose(text: string, id: string, params?: unknown, o: { strict?: boolean } = {}): void {
+    const strict = o.strict === true || getAction(id)?.irreversible === true;
+    this.setPending({ action: id, params, text, until: this.opts.now() + CONFIRM_MS, ...(strict ? { strict } : {}) });
     this.say(`${text} ${YES_NO_SAY}`);
+  }
+
+  /** Переспрос мягкого «да» на необратимое: что именно подтверждается и как ответить. */
+  private reaskStrict(p: Pending): void {
+    const title = getAction(p.action)?.title;
+    const what = title ? title.charAt(0).toLowerCase() + title.slice(1) : 'подтвердить';
+    this.say(`Скажите «да», чтобы ${what}, или «нет». ${WAIT_SAY}`);
   }
 
   /** Ответ на подтверждение (голосом или кнопкой «Да» / «Нет»). Ждать нечего — ничего. */
@@ -508,6 +525,8 @@ export class Dispatcher {
       if (yn) {
         this.opts.stop?.();
         clear();
+        // необратимое — только явное «да»: «хорошо», «верно», «конечно» — не приказ, вопрос ждёт дальше
+        if (yn === 'yes' && pending.strict && !strictYes(rest)) { this.reaskStrict(pending); return 'done'; }
         await this.answer(yn === 'yes');
         return 'done';
       }
@@ -534,6 +553,8 @@ export class Dispatcher {
       if (words.slice(0, lead).includes('отставить')) { clear(); return this.countermand(raw); }
     }
     clear(); // новая обращённая реплика — старый ответ модели и ждущие очереди старые ответы уже не нужны
+    // остаток чтения по частям живёт, пока человек его продолжает («дальше», «хватит», «повтори»); иное — чтение брошено
+    if (!asked && !MORE.test(rest) && !REPEAT.test(rest)) stopReading();
     const rec = { text: raw, ran: false };
     this.memory.set(id, rec);
     if (this.memory.size > 20) this.memory.delete(this.memory.keys().next().value as number);
@@ -601,7 +622,7 @@ export class Dispatcher {
     const ok = a.check ? a.check(params as never) : true;
     if (typeof ok === 'string') { this.say(ok); return 'unknown'; }
     // вместо исполнения — предложение («Ход проводить рано: … Составить черновик донесения?»): на «да» — его действие
-    if (ok !== true) { this.propose(ok.offer, ok.id, ok.params); return 'done'; }
+    if (ok !== true) { this.propose(ok.offer, ok.id, ok.params, { strict: ok.strict }); return 'done'; }
     if (a.irreversible) {
       this.propose(a.confirm?.(params as never) ?? `${a.title}?`, a.id, params);
       return 'done';
@@ -741,7 +762,15 @@ export class Dispatcher {
     if (OFF.test(rest)) { await this.standbyByVoice(); return true; }
     if (WAKE.test(rest)) { this.say('На связи.'); return true; }
     // переспрос — вопрос ждёт; повторяется тем же голосом (доклад посредника — посредником)
-    if (REPEAT.test(rest)) { repeatTurn(); this.say(this.last?.text ?? 'Я ещё ничего не говорил.', this.last?.role ? { role: this.last.role } : undefined); return true; }
+    if (REPEAT.test(rest)) {
+      repeatTurn();
+      // идёт тур — повторяется его шаг; штаб только что предложил тур — предложение (их фразы идут мимо Dispatcher)
+      if (getAction('tour.repeat')?.available() === true) { await this.execute('tour.repeat'); return true; }
+      const offered = getAction('tour.offer.repeat');
+      if (offered?.available() === true) { await this.execute('tour.offer.repeat'); return true; }
+      this.say(this.last?.text ?? 'Я ещё ничего не говорил.', this.last?.role ? { role: this.last.role } : undefined);
+      return true;
+    }
     const yn = yesNo(rest);
     if (yn) {
       // штаб только что предложил (тур: «Показать раздел?») — «да» в любых словах соглашается
@@ -753,10 +782,13 @@ export class Dispatcher {
       this.say('Подтверждать сейчас нечего.');
       return true;
     }
-    if (MORE.test(rest) && getAction('read.next')) { await this.execute('read.next'); return true; }
+    // «дальше» / «продолжай» при идущем туре — тур; остаток чтения — только пока тура нет
+    if (MORE.test(rest) && getAction('read.next') && getAction('tour.next')?.available() !== true) { await this.execute('read.next'); return true; }
     const dict = parseDictation(rest, raw);
     if (dict) { await this.execute(dict.id, dict.params); return true; }
-    const q = ASK.exec(rest);
+    const phrase = parsePhrase(rest, this.opts.section(), raw);
+    // «можно проводить ход» — сама просьба, а не вопрос «можно ли …»: фразы разделов раньше вопроса
+    const q = phrase ? null : ASK.exec(rest);
     if (q) {
       const words = stems(q[1] ?? "");
       const hit = words.length ? actions(this.opts.section()).filter((a) => a.available() === true && a.say?.length)
@@ -768,8 +800,8 @@ export class Dispatcher {
     const m = OPEN.exec(rest) ?? (rest.split(' ').length <= 2 && sectionByWord(rest.split(' ')[0]) ? [rest, rest] : null);
     const sec = m ? sectionByWord(m[1].split(' ')[0]) : null;
     // фразы разделов с параметрами («покажи на карте Зелов», «открой приказы»); раздел одним словом — переход
-    const phrase = parsePhrase(rest, this.opts.section(), raw);
-    if (sec && !(phrase && m![1].split(' ').length > 1)) {
+    // «покажи карту» в игре — карта командования (map.*), а не раздел «Карты»: человек не покидает игру
+    if (sec && !(phrase && (m![1].split(' ').length > 1 || (sec === 'maps' && 'id' in phrase && phrase.id.startsWith('map.'))))) {
       await act('shell.open', { section: sec });
       return true;
     }
@@ -803,7 +835,9 @@ export class Dispatcher {
    */
   private bySay(rest: string): Action | undefined {
     if (!rest) return undefined;
-    return actions(this.opts.section()).find((x) => !x.irreversible && !(x.params as { required?: unknown[] } | undefined)?.required?.length
+    // идёт тур — «дальше», «хватит» его, а не остатка чтения по частям
+    const tour = getAction('tour.next')?.available() === true;
+    return actions(this.opts.section()).find((x) => !x.irreversible && !(tour && x.id.startsWith('read.')) && !(x.params as { required?: unknown[] } | undefined)?.required?.length
       && x.say?.some((s) => { const n = norm(s); return (addressed(n)?.rest ?? n) === rest; }) && x.available() === true);
   }
 

@@ -39,7 +39,10 @@ export function fieldActions(id: string, title: string, get: () => string, set: 
         return 'Дописал.';
       } },
     { ...base, id: `${id}.clear`, title: `Очистить «${title}»`, describe: `Стирает текст поля «${title}».`,
-      say: [`штаб, очисти ${low}`], run: async () => { set(''); return `«${title}» ${CLEARED[o.gender ?? 'n']}.`; } },
+      say: [`штаб, очисти ${low}`],
+      // голосом диктовку стирают только после «да» (кнопка и пустое поле — сразу)
+      check: () => (get().trim() ? { offer: `Очистить «${title}»? Продиктованный текст будет стёрт.`, id: `${id}.clear`, strict: true } : true),
+      run: async () => { set(''); return `«${title}» ${CLEARED[o.gender ?? 'n']}.`; } },
     { ...base, id: `${id}.read`, title: `Прочитать «${title}»`, describe: `Читает вслух текст поля «${title}» (длинный — частями).`,
       say: [`штаб, прочитай ${low}`], run: async () => (get().trim() ? readAloud(get()) : `«${title}» пусто.`) },
   ];
