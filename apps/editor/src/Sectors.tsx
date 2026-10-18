@@ -9,6 +9,8 @@ import type { MapEngine } from './engine/types';
 import { Popover } from './ui';
 import { askText } from './dialogs';
 import { pickBasemap, type Basemaps } from './shared';
+import { act, useAction } from './voice/registry';
+import { inReplay, pickTitle } from './voice/actions/command';
 
 export interface Sector { id: string; title: string; note?: string; bbox: [number, number, number, number]; custom?: boolean }
 
@@ -64,6 +66,24 @@ export function SectorPicker({ scenario, engine, bm, focus, setFocus, opYear, on
       if (p.id !== bm.id) { bm.setId(p.id); onNotice?.(`Подложка: ${p.why}`); }
     }
   };
+  // участок голосом и кнопками меню: по id (кнопка) или названию (нестрого); пусто — весь театр
+  useAction({
+    id: 'map.sector', section: 'replay', title: 'Участок', describe: 'Приближает карту к участку операции по названию; пустое название — весь театр.',
+    params: { type: 'object', properties: { name: { type: 'string' }, id: { type: 'string' } } }, say: ['штаб, участок Зееловские высоты', 'штаб, весь театр'],
+    available: inReplay,
+    run: async (p: { name?: string; id?: string }) => {
+      const byId = p?.id ? list.find((x) => x.id === p.id) : undefined;
+      if (!byId && !String(p?.name ?? '').trim()) { go(null); return 'Весь театр.'; }
+      let s = byId;
+      if (!s) {
+        const r = pickTitle(String(p!.name), list.map((x) => x.title), 'Какой участок', `Участка «${p!.name}» нет`);
+        if ('say' in r) return r.say;
+        s = list[r.index];
+      }
+      go(s);
+      return `Участок: ${s.title}.`;
+    },
+  });
   // свой участок: два щелчка по карте — углы прямоугольника
   useEffect(() => {
     if (!engine || !drawing) return;
@@ -89,10 +109,10 @@ export function SectorPicker({ scenario, engine, bm, focus, setFocus, opYear, on
       <Popover label={<span className="sec-chip">{focus ? `Участок: ${focus.title}` : 'Участки'}</span>} align="right" className="sec-pop">{(close) => (
         <div className="sec-menu">
           <div className="pop-title">Участки</div>
-          <button className={!focus ? 'on' : ''} onClick={() => { close(); go(null); }}>Весь театр</button>
+          <button className={!focus ? 'on' : ''} data-action="map.sector" onClick={() => { close(); void act('map.sector', { name: '' }); }}>Весь театр</button>
           {list.map((s) => (
             <div key={s.id} className="sec-row">
-              <button className={focus?.id === s.id ? 'on' : ''} onClick={() => { close(); go(s); }} title={s.note}>{s.title}{s.note ? <small>{s.note}</small> : null}</button>
+              <button className={focus?.id === s.id ? 'on' : ''} data-action="map.sector" onClick={() => { close(); void act('map.sector', { id: s.id }); }} title={s.note}>{s.title}{s.note ? <small>{s.note}</small> : null}</button>
               {s.custom && <button className="link" title="Удалить свой участок" onClick={() => { const next = custom.filter((x) => x.id !== s.id); setCustom(next); try { localStorage.setItem(KEY(scenario), JSON.stringify(next)); } catch { /* */ } if (focus?.id === s.id) go(null); }}>×</button>}
             </div>
           ))}

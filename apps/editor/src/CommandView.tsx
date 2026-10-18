@@ -33,6 +33,10 @@ import { ModelPicker } from './ModelPicker';
 import { ReviewView } from './ReviewView';
 import { mdToHtml } from './markdown';
 import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
+import { act, ActButton, openModal, register, speak, useAction } from './voice/registry';
+import { commandActions, takeoverParse, type CommandDeps } from './voice/actions/command';
+import { dayMonth } from './voice/report';
+import { speakable } from './voice/speech';
 
 export const SAVE_KEY = 'def_ops.game';
 export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
@@ -150,6 +154,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       if (m.kind === 'progress') setProgress(m.text);
       else if (m.kind === 'error') { setProgress(null); setError(m.message); }
       else if (m.kind === 'view') {
+        // первая обстановка игры — голосом: можно спрашивать
+        if (!liveView.current) speak(speakable(`Обстановка готова, ход ${m.view.turn}. Скажите, например: «Штаб, доложи обстановку».`, { full: true }));
         setProgress(null); setBlocked(null);
         setView({ ...m.view, doc: migrateDocument(m.view.doc) });
         setTime(m.view.time);
@@ -449,6 +455,14 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const goals = view?.goals ?? [];
   const playerEvents = goals.map((g) => ({ title: g.title, historical: g.historical, simulated: g.simulated, days: [g.days], at: g.at, place: g.place, marker: false }));
 
+  // голос и кнопки: вкладки, доклады, карта, туман войны, выход — одни действия реестра
+  const voice = useRef<CommandDeps>(null!);
+  voice.current = {
+    view, engine: eng, setTab, showUnit, showEnemy: (id) => setIntelSel(id), enemy, setEnemy,
+    reveal, setReveal: (on) => { setReveal(on); send({ kind: 'reveal', on }); }, exit: (discard) => onExit({ discard }),
+  };
+  useEffect(() => { const offs = commandActions(() => voice.current).map(register); return () => offs.forEach((o) => o()); }, []);
+
   if (error && !view) return <div className="rp-empty"><div><b>Игра не запустилась</b><p className="err">{error}</p><button onClick={() => onExit({ discard: false })}>Назад к переигровке</button></div></div>;
 
   return (
@@ -466,8 +480,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
                 <button onClick={() => { close(); if (record) download(`${record.scenario}-игра.json`, JSON.stringify(record, null, 1), 'application/json'); }}>Скачать запись игры (.json)</button>
                 <button onClick={() => { close(); if (doc) onOpenInEditor(doc); }}>Открыть карту в редакторе</button>
                 <hr />
-                <button onClick={() => { close(); onExit({ discard: false }); }}>Выйти (игра сохранена)</button>
-                <button className="danger" onClick={() => { close(); void confirmAsync('Завершить игру и удалить её запись?', { ok: 'Завершить и удалить', danger: true }).then((ok) => { if (ok) onExit({ discard: true }); }); }}>Завершить и удалить игру</button>
+                <button data-action="command.exit" onClick={() => { close(); void act('command.exit'); }}>Выйти (игра сохранена)</button>
+                <button data-action="command.discard" className="danger" onClick={() => { close(); void confirmAsync('Завершить игру и удалить её запись?', { ok: 'Завершить и удалить', danger: true }).then((ok) => { if (ok) void act('command.discard'); }); }}>Завершить и удалить игру</button>
               </div>
             )}</Popover>
           </div>
@@ -481,14 +495,14 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         </div>
         <nav className="cmd-tabs">
           {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
-            <button key={k} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`} onClick={() => setTab(k)}>{t}</button>
+            <ActButton key={k} action="command.tab" params={{ tab: k }} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`}>{t}</ActButton>
           ))}
         </nav>
         <div className="cmd-body">
           {!view ? <div className="cmd-wait"><span className="spinner" /> {progress}</div> : <>
             {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" checked={focusOnly} onChange={(e) => setFocusOnly(e.target.checked)} /> только он в списках</label><button className="x" title="Снять фокус" onClick={() => setFocus(null)}>×</button></div>}
-            {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
-            {tab === 'intel' && <Intel v={fv!} onGo={(at) => goTo(at)} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
+            {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { if (id) void act('command.unit.show', { name: id }); else setSel(id); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
+            {tab === 'intel' && <Intel v={fv!} onGo={(id) => void act('map.show', { name: id })} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
             {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} onPlan={() => askPlan(planN)} planN={planN} setPlanN={setPlanN} stopPlan={() => send({ kind: 'plan-stop' })} planBusy={!!plan && !plan.done} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
@@ -506,8 +520,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
                 onOrder={(id) => { setSel(id); setSub('units'); goTo(unit(id)?.at ?? null, false); }} />}
             </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
-            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => { setReveal(on); send({ kind: 'reveal', on }); }}
-              enemy={enemy} setEnemy={setEnemy} llm={llm} onRetry={() => send({ kind: 'retry-ai' })} />}
+            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => void act('command.reveal', { on })}
+              enemy={enemy} setEnemy={(mode) => void act('command.enemyMode', { mode })} llm={llm} onRetry={() => send({ kind: 'retry-ai' })} />}
           </>}
         </div>
         {view && !view.over && <div className="cmd-foot">
@@ -615,7 +629,7 @@ function UnitCard({ u, open, onToggle, onOrder, draft, topGen = 'Ставки' }
   if (draft) chips.push(['plan', 'новый приказ']);
   return (
     <div className={`ucard${open ? ' open' : ''}${u.status !== 'active' ? ' dim' : ''}`}>
-      <button className="ucard-h" onClick={onToggle}>
+      <button className="ucard-h" data-action="command.unit.show" onClick={onToggle}>
         <span className="ucard-n">{short(u.name)}</span>
         <span className="ucard-bars"><Bar v={u.strength} label={`укомплектованность ${pct(u.strength)}`} /><Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></span>
         <span className="ucard-p">{u.status === 'active' ? `${u.posture}, ${u.place}` : u.status === 'reserve' ? `резерв ${topGen}, готова к вводу с ${ddmm(u.reserveFrom!)} — ввести: «Приказы» → «Резервы»` : u.status === 'arriving' ? `вводится в сражение, сосредоточится ${ddmm(u.arrives!)} ${hhmm(u.arrives!)}` : 'уничтожена'}</span>
@@ -672,14 +686,14 @@ function Reports({ v, drafts, onUnit, onOrder, sel }: { v: TurnView; drafts: Rec
   );
 }
 
-function Intel({ v, onGo, onAttack }: { v: TurnView; onGo: (at: LngLat) => void; onAttack: (id: string, name: string) => void }) {
+function Intel({ v, onGo, onAttack }: { v: TurnView; onGo: (id: string) => void; onAttack: (id: string, name: string) => void }) {
   return (
     <div className="cmd-sec">
       <h3>Разведсводка к {hhmm(v.time)} {ddmm(v.time)}</h3>
       <p className="note">Противник виден в пределах {v.detectKm} км от наших войск (войсковая и авиационная разведка). Силы — оценка, округлённо. Что дальше — неизвестно.</p>
       {!v.intel.length && <p className="muted">Противник в пределах разведки не обнаружен.</p>}
       {v.intel.map((e) => (
-        <div key={e.id} className="intel" onClick={() => onGo(e.at)}>
+        <div key={e.id} className="intel" data-action="map.show" onClick={() => onGo(e.id)}>
           <div className="intel-h"><b>{short(e.name)}</b>{e.fresh && <i className="fresh">новое</i>}<span className="muted">{e.posture}</span></div>
           <div>{e.place}{e.nearest ? ` · ${Math.round(e.nearest.km)} км от: ${short(e.nearest.name)}` : ''}</div>
           <div className="muted">{e.estimate}</div>
@@ -1304,10 +1318,10 @@ function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, 
   return (
     <div className="cmd-sec">
       <p className="note warnbox">Посредник видит решения штаба противника и может снять туман войны. Если играете честно — заглядывайте сюда после игры.</p>
-      <label className="switch"><input type="checkbox" checked={reveal} onChange={(e) => setReveal(e.target.checked)} /><span /> Показать на карте всех (снять туман войны)</label>
+      <label className="switch"><input type="checkbox" data-action="command.reveal" checked={reveal} onChange={(e) => setReveal(e.target.checked)} /><span /> Показать на карте всех (снять туман войны)</label>
       <div className="umpire-cfg">
         <label>Противник
-          <select value={enemy} onChange={(e) => setEnemy(e.target.value as EnemyMode)}>
+          <select value={enemy} data-action="command.enemyMode" onChange={(e) => setEnemy(e.target.value as EnemyMode)}>
             <option value="llm">штаб на модели (LM Studio)</option>
             <option value="passive">без штаба — держится прежних приказов</option>
           </select>
@@ -1409,11 +1423,35 @@ export function openModelBasis(op: string) {
   location.hash = '#modeling';
 }
 
-export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, kbSummary, llm, onStart, onCancel }: {
-  at: string; end: string; turnHours: number; start: string; scenarioName: string; scenario: string; kbSummary: TakeoverSummary | null; llm: Llm; onStart: (enemy: EnemyMode) => void; onCancel: () => void;
+export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, kbSummary, llm, hasSaved = false, onStart, onCancel }: {
+  at: string; end: string; turnHours: number; start: string; scenarioName: string; scenario: string; kbSummary: TakeoverSummary | null; llm: Llm;
+  /** Есть незавершённая игра: новая её заменит (голосом — после «да»). */
+  hasSaved?: boolean;
+  onStart: (enemy: EnemyMode) => void; onCancel: () => void;
 }) {
   const [enemy, setEnemy] = useState<EnemyMode>(llm.check.state === 'fail' ? 'passive' : 'llm');
   const turn = Math.round((toMs(at) - toMs(start)) / (turnHours * 3600_000)) + 1;
+  // голосом: окно зачитывается коротко и ждёт ответа — «принимаю», «без штаба» / «штаб на модели», «отмена»
+  const st = useRef({ enemy, hasSaved, down: llm.check.state === 'fail' });
+  st.current = { enemy, hasSaved, down: llm.check.state === 'fail' };
+  useEffect(() => openModal({
+    question: 'Принять командование? Скажите «принимаю» или «отмена».',
+    get read() {
+      const s = st.current;
+      return speakable(`Принять командование с ${dayMonth(at)}, ход ${turn}? Противник — ${s.enemy === 'llm' ? 'штаб на модели' : 'без штаба'}${s.down ? '; модель сейчас не на связи' : ''}. `
+        + `${s.hasSaved ? 'Незавершённая игра будет заменена. ' : ''}Скажите: «принимаю», «без штаба» или «штаб на модели», или «отмена».`, { full: true });
+    },
+    parse: (rest) => takeoverParse(rest, { saved: st.current.hasSaved, enemy: st.current.enemy }),
+  }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useAction({
+    id: 'command.enemyMode', section: 'replay', title: 'Противник', describe: 'Кто командует противником: штаб на модели или без штаба.',
+    params: { type: 'object', properties: { mode: { enum: ['llm', 'passive'] } }, required: ['mode'] }, say: ['без штаба'], available: () => true,
+    run: async (p: { mode: EnemyMode }) => {
+      if (p?.mode !== 'llm' && p?.mode !== 'passive') return 'Скажите: «штаб на модели» или «без штаба».';
+      setEnemy(p.mode);
+      return p.mode === 'llm' ? `Противник — штаб на модели.${llm.check.state === 'fail' ? ' Но модель сейчас не на связи.' : ''} Скажите «принимаю».` : 'Противник — без штаба. Скажите «принимаю».';
+    },
+  });
     useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onCancel]);
   return (
     <div className="modal-bg" onClick={onCancel}>
@@ -1429,16 +1467,16 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
             <button className="link" onClick={() => { onCancel(); openModelBasis(scenario); }} title="Моделирование → Операции: факты базы, из которых собраны входы модели">Основа модели</button></li>
         </ul>
         <div className="take-enemy">
-          <label className={enemy === 'llm' ? 'on' : ''}><input type="radio" checked={enemy === 'llm'} onChange={() => setEnemy('llm')} />
+          <label className={enemy === 'llm' ? 'on' : ''}><input type="radio" data-action="command.enemyMode" checked={enemy === 'llm'} onChange={() => void act('command.enemyMode', { mode: 'llm' })} />
             <span><b>Штаб на модели</b> — LM Studio на этом компьютере<small className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `✓ на связи: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `✗ ${llm.check.error} — запустите сервер в LM Studio (настройки — раздел «ИИ»)` : 'проверка связи…'}</small></span></label>
-          <label className={enemy === 'passive' ? 'on' : ''}><input type="radio" checked={enemy === 'passive'} onChange={() => setEnemy('passive')} />
+          <label className={enemy === 'passive' ? 'on' : ''}><input type="radio" data-action="command.enemyMode" checked={enemy === 'passive'} onChange={() => void act('command.enemyMode', { mode: 'passive' })} />
             <span><b>Без штаба</b> — противник держится прежних приказов<small>для пробы без модели; переключить можно в ходе игры (вкладка «Посредник»)</small></span></label>
         </div>
         <div className="take-f">
           {llm.check.state === 'fail' && <button className="link" onClick={llm.recheck}>Проверить связь ещё раз</button>}
           <span style={{ flex: 1 }} />
-          <button onClick={onCancel}>Отмена</button>
-          <button className="primary" onClick={() => onStart(enemy)} title={scenarioName}>Принять командование с {ddmm(at)}</button>
+          <ActButton action="replay.takeCommand.cancel">Отмена</ActButton>
+          <button className="primary" data-action={hasSaved ? 'replay.startOver' : 'replay.start'} onClick={() => onStart(enemy)} title={scenarioName}>Принять командование с {ddmm(at)}</button>
         </div>
       </div>
     </div>

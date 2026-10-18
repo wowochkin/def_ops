@@ -25,7 +25,8 @@
 // исполняется, «на связь» будит), вопросы dialogs.ts голосом (confirmAsync — «да», команда при открытом окне не
 // исполняется; chooseAsync — «второй»; askText — диктовка и «готово»), окно «Голоса» (прослушать, назначить, записать
 // новый голос, удалить — с подтверждением «да»), калибровка голосом (шаги идут сами, «готово»), предложение калибровки
-// при первом запуске («нет»).
+// при первом запуске («нет»), вход в командование и обстановка («открой переигровку» → «рассчитай операцию» →
+// «прими командование» → «без штаба» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»).
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и тура (voice-tour.jpg).
 // Python — $VOICE_PYTHON, services/voice/.venv или python3.
@@ -673,7 +674,7 @@ async function fakeLmStudio() {
   });
 }
 const script4 = join(tmp, 'script4.txt');
-writeFileSync(script4, ['штаб, давай-ка перейдём к картам', 'штаб, а сыграй мне вальс', 'штаб, доложи обстановку',
+writeFileSync(script4, ['штаб, давай-ка перейдём к картам', 'штаб, а сыграй мне вальс', 'штаб, что там с обстановкой',
   'штаб, открой знания', 'штаб, что нового на фланге', 'штаб, открой переигровку', 'штаб, как дела у соседей',
   'штаб, расскажи про погоду', ...Array(50).fill(RECORD_TEXT)].join('\n') + '\n');
 const chiefSaid = (re) => panel.locator('.vp-item.chief', { hasText: re });
@@ -711,7 +712,7 @@ async function llmChecks() {
     if (await chiefSaid('Играю вальс').count()) throw new Error('выдуманное действие озвучено');
   });
   await check('модель: пока отвечает — «Думаю»', async () => {
-    await panel.locator('.vp-item', { hasText: 'доложи обстановку' }).waitFor({ timeout: 30000 });
+    await panel.locator('.vp-item', { hasText: 'что там с обстановкой' }).waitFor({ timeout: 30000 });
     await panel.locator('.vp-state', { hasText: 'Думаю' }).waitFor({ timeout: 5000 });
     await shot('voice-panel-thinking.jpg');
   });
@@ -979,6 +980,47 @@ await check('без рук: «Штаб, калибровка» — шаги ид
   if (!saved?.calib_mode) throw new Error('итог калибровки не сохранён');
   const clicks = await page.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
+});
+
+await check('без рук: переигровка → «рассчитай операцию» → «прими командование» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»', async () => {
+  await page.evaluate(() => { localStorage.removeItem('def_ops.mapLevel'); location.hash = '#editor'; });
+  await handsFree(['штаб, открой переигровку', 'штаб, рассчитай операцию', ...QUIET], { reload: false });
+  await page.waitForFunction(() => location.hash === '#replay', null, { timeout: 30000 });
+  await feedHas('Считаю: Берлинская операция').waitFor({ timeout: 30000 });
+  const t0 = Date.now();
+  await page.locator('.take-btn').waitFor({ timeout: 240000 }).catch(() => { throw new Error('расчёт не закончился'); });
+  await feedHas('Расчёт готов').waitFor({ timeout: 30000 });
+  const calcS = Math.round((Date.now() - t0) / 1000);
+  // окно «Принять командование» зачитывается и ждёт ответа; противник — голосом
+  await handsFree(['штаб, прими командование', ...QUIET], { reload: false });
+  const dlg = page.locator('.modal.take');
+  await dlg.waitFor({ timeout: 30000 });
+  await feedHas('Принять командование с шестнадцатого апреля').waitFor({ timeout: 10000 });
+  await shot('voice-takeover.jpg');
+  // ответы — по одному, когда штаб дочитал окно (сервис перезапускается — это и есть пауза)
+  await handsFree(['штаб, без штаба', ...QUIET], { reload: false });
+  await feedHas('Противник — без штаба').waitFor({ timeout: 40000 });
+  if (!(await dlg.locator('.take-enemy label.on', { hasText: 'Без штаба' }).count())) throw new Error('в окне не выбран «Без штаба»');
+  await handsFree(['штаб, принимаю', ...QUIET], { reload: false });
+  await dlg.waitFor({ state: 'detached', timeout: 40000 }).catch(() => { throw new Error('«принимаю» не начал игру'); });
+  await page.locator('.cmd-date').waitFor({ timeout: 120000 });
+  await feedHas('Скажите, например: «Штаб, доложи обстановку»').waitFor({ timeout: 30000 });
+  await handsFree(['штаб, доложи обстановку', ...QUIET], { reload: false });
+  const rep = feedHas('Цель — ');
+  await rep.waitFor({ timeout: 30000 });
+  const text = (await rep.last().innerText()).replace(/^\s*Штаб:\s*/, '');
+  if (/\d/.test(text)) throw new Error(`в докладе цифры: ${text}`);
+  const n = text.match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
+  if (n < 5 || n > 7) throw new Error(`в докладе ${n} фраз: ${text}`);
+  await handsFree(['штаб, покажи Зелов', '{тишина}', 'штаб, оперативный уровень', ...QUIET], { reload: false });
+  await feedHas('Показываю: Зелов').waitFor({ timeout: 30000 });
+  const v = await page.evaluate(() => window.__cmdEngine.getView());
+  if (Math.abs(v.center[0] - 14.38) > 0.1 || Math.abs(v.center[1] - 52.53) > 0.1 || v.zoom < 10) throw new Error(`карта не у Зелова: ${JSON.stringify(v)}`);
+  await page.locator('.lvl-sw button.on', { hasText: 'Оперативный' }).waitFor({ timeout: 30000 });
+  await shot('voice-command.jpg');
+  const clicks = await page.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+  return `расчёт ${calcS} с`;
 });
 
 await check('первый запуск без калибровки: штаб предлагает её («да / нет»), «нет» — отменено', async () => {

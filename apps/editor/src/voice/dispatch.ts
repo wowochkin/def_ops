@@ -1,6 +1,7 @@
 /**
  * Разборщик реплик: сначала правила (мгновенно, без модели) — обращение к штабу, окно разговора,
- * переходы между разделами, «что я могу сказать», калибровка, голоса, диктовка, стоп-слова (общий с сервисом голоса
+ * переходы между разделами, «что я могу сказать», калибровка, голоса, диктовка, фразы разделов с параметрами
+ * (registry.registerParser: «покажи Зелов», «доложи о восьмой гвардейской»), стоп-слова (общий с сервисом голоса
  * список services/voice/stop_words.json), дословные примеры (`say`) доступных действий. Чего правила не поняли в обращённой реплике — разбирает модель (опция model),
  * если она подключена; её вызов действия проверяется по реестру. Модель недоступна — непонятая реплика сразу получает
  * честный ответ без модели; не чаще раза в RECHECK_MS при обращении связь перепроверяется (recheck).
@@ -18,7 +19,7 @@ import { SECTIONS } from '../sections';
 import { yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, getAction, topModal, type Action, type VoiceModal } from './registry';
+import { act, actions, getAction, parsePhrase, topModal, type Action, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
@@ -665,10 +666,17 @@ export class Dispatcher {
       return true;
     }
     const m = OPEN.exec(rest) ?? (rest.split(' ').length <= 2 && sectionByWord(rest.split(' ')[0]) ? [rest, rest] : null);
-    if (m) {
-      const sec = sectionByWord(m[1].split(' ')[0]);
-      // «покажи раздел», «открой панель голоса» — не название раздела: дальше, к примерам действий
-      if (sec) { await act('shell.open', { section: sec }); return true; }
+    const sec = m ? sectionByWord(m[1].split(' ')[0]) : null;
+    // фразы разделов с параметрами («покажи на карте Зелов», «открой приказы»); раздел одним словом — переход
+    const phrase = parsePhrase(rest);
+    if (sec && !(phrase && m![1].split(' ').length > 1)) {
+      await act('shell.open', { section: sec });
+      return true;
+    }
+    if (phrase) {
+      if ('say' in phrase) this.say(speakable(phrase.say, { full: true }));
+      else await this.execute(phrase.id, phrase.params);
+      return true;
     }
     if (/^(?:что (?:я )?(?:могу|можно) (?:сказать|говорить)|что (?:я )?(?:могу|можно)$|что (?:ты )?умеешь|помощь$)/.test(rest)) {
       this.say(helpText(this.opts.section()));

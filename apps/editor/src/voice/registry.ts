@@ -52,6 +52,25 @@ export async function act(id: string, p?: unknown): Promise<string | void> {
   return a.run(p);
 }
 
+/**
+ * Разбор фраз с параметрами без модели («покажи Зелов», «доложи о восьмой гвардейской»): модуль раздела регистрирует
+ * разборщик; реплика (без обращения, нормализованная) → действие с параметрами или готовый ответ say (например,
+ * почему сейчас нельзя: действия нет, игра не идёт). Разборщики спрашиваются по порядку регистрации.
+ */
+export type PhraseHit = { id: string; params?: unknown } | { say: string };
+export type PhraseParser = (rest: string) => PhraseHit | null;
+const parsers: PhraseParser[] = [];
+/** Добавить разборщик фраз; возвращает снятие. */
+export function registerParser(p: PhraseParser): () => void {
+  parsers.push(p);
+  return () => { const i = parsers.indexOf(p); if (i >= 0) parsers.splice(i, 1); };
+}
+/** Первое, что поняли разборщики (нет — null). */
+export function parsePhrase(rest: string): PhraseHit | null {
+  for (const p of parsers) { const h = p(rest); if (h) return h; }
+  return null;
+}
+
 /** Действие по id (нет — undefined). */
 export function getAction(id: string): Action | undefined { return byId.get(id); }
 

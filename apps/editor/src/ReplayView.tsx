@@ -33,6 +33,10 @@ import { coreEditsFor, KB_WAIT, kbSettled, takeoverNow } from './sim/kb-recompil
 import { kbStamp, type KbStamp } from './sim/kb-stamp';
 import { KbStampNote } from './KbStampNote';
 import type { TakeoverSummary } from './sim/takeover-state';
+import { act, ActButton, register, speak, useAction } from './voice/registry';
+import { findLayer, inReplay, replayActions, type ReplayDeps } from './voice/actions/command';
+import { readAloud } from './voice/dictation';
+import { speakable } from './voice/speech';
 /** Ход игры на агентной модели, ч. */
 const AGENT_GAME_HOURS = 12;
 /** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
@@ -102,6 +106,20 @@ export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
  * Над картой остаются только масштаб, «Слои», «Участки» и «Подложка»: панель помещается в строку на любом экране.
  */
 export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: boolean; toggleLabels: () => void; items: { key: string; title: string; on: boolean; toggle: () => void }[]; setAll: (on: boolean) => void }) {
+  useAction({
+    id: 'map.layer', section: 'replay', title: 'Слой карты', describe: 'Показывает или скрывает слой карты (реки, фронт, бои, тыл, полосы, подписи…).',
+    params: { type: 'object', properties: { layer: { type: 'string' }, on: { type: 'boolean' } }, required: ['layer'] }, say: ['штаб, покажи реки', 'штаб, скрой подписи'],
+    available: inReplay,
+    run: async (p: { layer: string; on?: boolean }) => {
+      const keys = [...items.map((x) => x.key), 'labels'];
+      const key = keys.includes(p?.layer) ? p.layer : findLayer(String(p?.layer ?? ''), keys);
+      if (!key) return `Такого слоя на этой карте нет. Есть: ${items.map((x) => `«${x.title}»`).join(', ')}, «Подписи знаков».`;
+      const it = key === 'labels' ? { title: 'Подписи знаков', on: labels, toggle: toggleLabels } : items.find((x) => x.key === key)!;
+      const on = p.on ?? !it.on;
+      if (on !== it.on) it.toggle();
+      return `${on ? 'Показываю' : 'Скрыл'}: ${it.title.toLowerCase()}.`;
+    },
+  });
   const n = items.filter((x) => x.on).length + (labels ? 1 : 0);
   const all = (on: boolean) => { setAll(on); if (labels !== on) toggleLabels(); };
   return (
@@ -111,14 +129,25 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
         <button disabled={n === items.length + 1} onClick={() => all(true)} title="Включить все слои и подписи">Показать все</button>
         <button disabled={n === 0} onClick={() => all(false)} title="Выключить все слои и подписи — остаются войска и подложка">Скрыть все</button>
       </div>
-      <label className="lyr-row" title="Выключено — подписи только при наведении на знак"><input type="checkbox" checked={labels} onChange={toggleLabels} /> Подписи знаков</label>
-      {items.map((x) => <label key={x.key} className="lyr-row"><input type="checkbox" checked={x.on} onChange={x.toggle} /> {x.title}</label>)}
+      <label className="lyr-row" title="Выключено — подписи только при наведении на знак"><input type="checkbox" data-action="map.layer" checked={labels} onChange={() => void act('map.layer', { layer: 'labels', on: !labels })} /> Подписи знаков</label>
+      {items.map((x) => <label key={x.key} className="lyr-row"><input type="checkbox" data-action="map.layer" checked={x.on} onChange={() => void act('map.layer', { layer: x.key, on: !x.on })} /> {x.title}</label>)}
     </Popover>
   );
 }
 
 export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l: MapLevel) => void }) {
-  return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <button key={x.id} className={level === x.id ? 'on' : ''} title={x.hint} onClick={() => setLevel(x.id)}>{x.title}</button>)}</div>;
+  useAction({
+    id: 'map.level', section: 'replay', title: 'Уровень карты', describe: 'Уровень карты: тактический (соединения и бои), оперативный (армии), стратегический (фронты).',
+    params: { type: 'object', properties: { level: { enum: MAP_LEVELS.map((x) => x.id) } }, required: ['level'] }, say: ['штаб, оперативный уровень'],
+    available: inReplay,
+    run: async (p: { level: MapLevel }) => {
+      const x = MAP_LEVELS.find((l) => l.id === p?.level);
+      if (!x) return 'Скажите: тактический, оперативный или стратегический уровень.';
+      setLevel(x.id);
+      return `${x.title} уровень: ${x.hint}.`;
+    },
+  });
+  return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <ActButton key={x.id} action="map.level" params={{ level: x.id }} className={level === x.id ? 'on' : ''} title={x.hint}>{x.title}</ActButton>)}</div>;
 }
 export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string; mark?: string }[]> = {
   tac: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
@@ -223,26 +252,31 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         setAgentRun(m.result.engine === 'agents' ? pendingAgent.current : null); setAgentSel(null);
         setSavedId(null);
         setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
+        // голосом — без взгляда на экран: расчёт готов
+        speak(speakable(`Расчёт готов: ${m.result.scenarioName.split(/[,:(]/)[0].trim()}. Чтобы командовать самому, скажите: «Штаб, прими командование».`, { full: true }));
       }
+      if (m.kind === 'error') speak('Расчёт не удался — причина на экране.');
     };
     w.onerror = (e) => { setBusy(null); setError(e.message || 'ошибка расчёта'); };
     w.postMessage(q);
   };
-  const run = () => {
+  /** Расчёт операции sc (по умолчанию — выбранной): правила — выбранные, если они есть у этой операции. */
+  const run = (sc = scenario) => {
     const token = ++runId.current;
     // данные операции — после сборки из базы знаний (при запуске она идёт несколько секунд): иначе тот же seed даст другой итог
     setBusy(KB_WAIT); setError(null);
-    void kbSettled().then(() => { if (token === runId.current) calc(token); });
+    void kbSettled().then(() => { if (token === runId.current) calc(token, sc); });
   };
-  const calc = (token: number) => {
-    const q: SimRequest = { scenario, rules, seed, runs, toleranceKm: entry.toleranceKm };
-    if (!useAgents) { startWorker(q); return; }
+  const calc = (token: number, sc: string) => {
+    const e = CATALOG.find((c) => c.id === sc) ?? entry;
+    const q: SimRequest = { scenario: sc, rules: e.rules.some((x) => x.id === rules) ? rules : e.rules[0].id, seed, runs, toleranceKm: e.toleranceKm };
+    const op = DESKTOP ? AGENT_SCENARIOS[sc] : undefined;
+    if (!(model === 'agents' && op)) { startWorker(q); return; }
     // агентная модель: ход по часам считает ядро приложения, карту — фоновый поток, как у нынешней модели
-    const op = agentOp!;
     worker.current?.terminate();
     setBusy('расчёт агентной модели…'); setError(null);
     const params = variants.find((v) => v.id === variantId)?.params;
-    Promise.all([coreEditsFor(scenario).then((edits) => runAgents(scenario, { seed, params, edits })), invoke<string>('read_text', { path: op.history })])
+    Promise.all([coreEditsFor(sc).then((edits) => runAgents(sc, { seed, params, edits })), invoke<string>('read_text', { path: op.history })])
       .then(([trace, h]) => {
         if (token !== runId.current) return;
         const history = JSON.parse(h) as AgentHistory;
@@ -384,32 +418,46 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   };
   const tol = CATALOG.find((c) => c.id === result?.scenario)?.toleranceKm ?? entry.toleranceKm;
   // действия панели итогов — через ссылку на свежие значения: сама панель не перерисовывается каждый кадр проигрывания
-  const act = useRef({ report: () => {}, open: () => {}, summary: () => {}, event: goEvent, save: () => {} });
-  act.current = {
+  const panel = useRef({ report: () => {}, open: () => {}, summary: () => {}, event: goEvent, save: () => {} });
+  panel.current = {
     report: () => setReport(true), open: () => doc && onOpenInEditor(doc), summary: () => result?.summary && onOpenInEditor(result.summary),
     event: goEvent, save: () => void saveCurrent(),
   };
   const resultsAct = useMemo(() => ({
-    onReport: () => act.current.report(), onOpen: () => act.current.open(), onSummary: () => act.current.summary(),
-    onEvent: (e: SimResult['events'][number]) => act.current.event(e), onSave: () => act.current.save(),
+    onReport: () => panel.current.report(), onOpen: () => panel.current.open(), onSummary: () => panel.current.summary(),
+    onEvent: (e: SimResult['events'][number]) => panel.current.event(e), onSave: () => panel.current.save(),
   }), []);
 
   // документ для карты — тот же объект, пока не изменились документ, уровень, участок и подписи
   // (иначе каждый кадр проигрывания давал бы новые знаки и перерисовку всей карты)
   const mapDoc = useMemo(() => (doc ? withoutLabels(withFocus(withLevel(doc, level), focus), labels) : null), [doc, level, focus, labels]);
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
-  if (game) {
-    return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} onOpenInEditor={onOpenInEditor}
-      onExit={({ discard }) => { if (discard) try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(loadSaved()); setGame(null); }} />;
-  }
-  const startGame = async (enemy: EnemyMode) => {
+  /** Начать игру с момента окна «Принять командование» (подтверждение замены незавершённой — до этого). */
+  const beginGame = (enemy: EnemyMode) => {
     if (!result || !take) return;
-    if (saved && !(await confirmAsync('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', { ok: 'Начать новую' }))) return;
     setTake(null);
     // агентная модель: ход игры — AGENT_GAME_HOURS, считает ядро приложения
     const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS } : undefined;
     setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take, ...(agents ? { agents } : {}) }, saved: null, enemy });
   };
+  /** Кнопка окна: поверх незавершённой игры — сначала вопрос. */
+  const startGame = async (enemy: EnemyMode) => {
+    if (!saved) { void act('replay.start', { enemy }); return; }
+    if (await confirmAsync('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', { ok: 'Начать новую' })) void act('replay.startOver', { enemy });
+  };
+  // голос и кнопки: расчёт, вход в командование, продолжение игры
+  const voice = useRef<ReplayDeps>(null!);
+  voice.current = {
+    catalog: CATALOG, scenario, busy, game: !!game, calc: (id) => { setScenario(id); run(id); },
+    result, time, takeAt: (t) => turnStart(t, result!.start, result!.end, result!.turnHours), setTime,
+    openTake: setTake, closeTake: () => setTake(null), take, saved,
+    begin: beginGame, continueGame: () => { if (saved) setGame({ start: null, saved, enemy: saved.enemy }); },
+  };
+  useEffect(() => { const offs = replayActions(() => voice.current).map(register); return () => offs.forEach((o) => o()); }, []);
+  if (game) {
+    return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} onOpenInEditor={onOpenInEditor}
+      onExit={({ discard }) => { if (discard) try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(loadSaved()); setGame(null); }} />;
+  }
   const takeAt = result && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
   return (
     <ZonesContext.Provider value={zones}>
@@ -422,7 +470,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         {saved && !busy && <div className="rp-saved">
           <div><b>Незавершённая игра</b><span>{saved.title} · командование с {saved.record.takeover.slice(8, 10)}.{saved.record.takeover.slice(5, 7)}, сыграно ходов: {saved.record.turns.length}</span></div>
           <div className="rp-saved-b">
-            <button className="primary" onClick={() => setGame({ start: null, saved, enemy: saved.enemy })}>Продолжить</button>
+            <ActButton className="primary" action="replay.continue">Продолжить</ActButton>
             <button onClick={() => { void confirmAsync('Удалить запись незавершённой игры?', { ok: 'Удалить', danger: true }).then((ok) => { if (!ok) return; try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); }); }}>Удалить</button>
           </div>
         </div>}
@@ -467,7 +515,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
           {busy
             ? <button className="rp-go" onClick={stop}><span className="spinner" /> {busy} <small>остановить</small></button>
-            : <button className="rp-go primary" onClick={run}>Рассчитать</button>}
+            : <ActButton className="rp-go primary" action="replay.calc">Рассчитать</ActButton>}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
         {result && !busy && <Results r={result} tol={tol} {...resultsAct} saved={!!savedId} saving={saving} kbNow={kbNow} />}
@@ -476,8 +524,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       <main className="rp-main">
         {doc ? <>
           <div className="rp-bar">
-          {takeAt && <button className="take-btn" onClick={() => setTake(takeAt)} title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
-            <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></button>}
+          {takeAt && <ActButton className="take-btn" action="replay.takeCommand" title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
+            <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></ActButton>}
           <div className="rp-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
@@ -504,7 +552,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
         </> : <Empty busy={!!busy} saved={tab === 'saved'} />}
       </main>
-      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} scenario={result.scenario} kbSummary={takeKb} llm={llm} onStart={startGame} onCancel={() => setTake(null)} />}
+      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} scenario={result.scenario} kbSummary={takeKb} llm={llm} hasSaved={!!saved} onStart={(e) => void startGame(e)} onCancel={() => setTake(null)} />}
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
         onDownload={() => download(`${result.scenario}-seed${result.seed}-report.md`, result.report, 'text/markdown')} />}
     </div>
@@ -664,6 +712,16 @@ type LegendProps = { on: (key: string) => boolean; toggle: (key: string) => void
 export const Legend = memo(LegendPanel, (a, b) => a.sig != null && a.sig === b.sig && a.extra === b.extra && a.combat === b.combat);
 function LegendPanel({ on, toggle, extra = [], combat = true }: LegendProps) {
   const [open, setOpen] = useState(true);
+  useAction({
+    id: 'map.legend', section: 'replay', title: 'Легенда карты', describe: 'Открывает условные обозначения карты и читает их вслух.', say: ['штаб, легенда'],
+    available: inReplay,
+    run: async () => {
+      setOpen(true);
+      const t = rows.map((r) => r.text);
+      const parts = Array.from({ length: Math.ceil(t.length / 4) }, (_, i) => t.slice(i * 4, i * 4 + 4).join(', '));
+      return readAloud(`Условные обозначения. ${parts.map((x) => `${x.charAt(0).toUpperCase()}${x.slice(1)}.`).join(' ')}`);
+    },
+  });
   const rows: { key?: string; cls: string; text: string; mark?: string }[] = [
     { cls: 'lg-own', text: 'советские войска' },
     { cls: 'lg-enemy', text: 'немецкие войска' },
