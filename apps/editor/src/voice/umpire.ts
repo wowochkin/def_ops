@@ -1,7 +1,8 @@
 /**
  * Доклад посредника после хода — голосом посредника (роль голоса umpire), 3–5 фраз: что изменилось, главные события,
- * продвижение к целям; в конце игры — исход. С моделью (настройки «ИИ», модель голоса, без инструментов) — её короткий
- * текст по тем же данным; без модели, при сбое или слишком коротком ответе — по правилам (umpireReport). Чистый модуль
+ * продвижение к целям, оценка посредника; в конце игры — исход. С моделью (настройки «ИИ», модель голоса, без
+ * инструментов) — её короткий текст по тем же данным; пока модель готовит — посредник так и говорит; без модели, при
+ * сбое или ответе не докладом — честно, почему, и доклад по данным расчёта (umpireReport). Чистый модуль
  * (без React): CommandView зовёт announceTurn, когда ход посчитан.
  *
  * Поздний ответ модели о прошлом ходе не звучит (пришёл новый ход). Раздел «Переигровка» в фоне — посредник говорит
@@ -11,7 +12,7 @@
 import type { GameRecord } from '@def-ops/sim';
 import type { AiStatus, TurnView } from '../sim/game-protocol';
 import { inReplay } from './actions/command';
-import { propose, speak, voiceRecent } from './registry';
+import { propose, setVoiceNote, speak, voiceRecent } from './registry';
 import { dayMonth, sentence } from './report';
 import { plural, speakable } from './speech';
 
@@ -27,7 +28,17 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** Предложения текста (после озвучки). */
 const split = (t: string) => (t.match(/[^.!?…]+[.!?…]+["»]?/g) ?? []).map((x) => x.trim()).filter(Boolean);
 
-type UmpireMod = { reason?: string };
+/** Что посредник записал о ходе (GameTurn.umpire, umpireNote — unknown в записи): только то, что годится. */
+interface UmpireTurn { mods: string[]; note: string | null }
+function umpireTurn(record: GameRecord | null): UmpireTurn {
+  const t = record?.turns[record.turns.length - 1] as { umpire?: unknown; umpireNote?: unknown } | undefined;
+  const mods = Array.isArray(t?.umpire) ? t.umpire.map((m) => (m && typeof m === 'object' && typeof (m as { reason?: unknown }).reason === 'string' ? (m as { reason: string }).reason : '')).filter(Boolean) : [];
+  const n = t?.umpireNote;
+  const note = n && typeof n === 'object' && (n as { ok?: unknown }).ok === true && typeof (n as { assessment?: unknown }).assessment === 'string' && (n as { assessment: string }).assessment.trim()
+    ? (n as { assessment: string }).assessment : null;
+  return { mods, note };
+}
+const low = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /** Контрольные события, достигнутые за этот ход (после хода prev). */
 function reachedNow(v: TurnView, prev?: TurnView | null): string[] {
@@ -51,9 +62,9 @@ export function umpireReport(v: TurnView, record: GameRecord | null, _ai: AiStat
     : now.length ? `Достигнуто: ${list(now)}.`
       : next ? `Следующая цель — ${goalName(next.title)}; в истории — ${dayMonth(next.historical)}.` : '';
   const strength = `В строю ${pct(v.strength)} исходной численности${prev && Math.round((prev.strength - v.strength) * 100) >= 1 ? `, за ход потеряно ${pct(prev.strength - v.strength)}` : ''}.`;
-  const turn = record?.turns[record.turns.length - 1] as { umpire?: UmpireMod[] } | undefined;
-  const mod = turn?.umpire?.find((m) => m.reason)?.reason;
-  const umpire = mod ? `Поправка посредника: ${mod.replace(/[.\s]+$/, '')}.` : '';
+  // посредник о ходе: его оценка боёв (umpireNote), иначе — первая поправка
+  const u = umpireTurn(record);
+  const umpire = u.note ? `Оценка посредника: ${low(sentence(u.note))}` : u.mods[0] ? `Поправка посредника: ${u.mods[0].replace(/[.\s]+$/, '')}.` : '';
   // обязательное — исход или итоги, главное событие, цели, численность; затем поправка и ещё события, пока есть место
   const parts = [...head, events[0] ?? 'За ход существенных событий нет.'];
   const tail = [goal, strength].filter(Boolean);
@@ -74,7 +85,7 @@ export const UMPIRE_SYSTEM = [
 
 /** Данные хода для модели — то же, из чего строится доклад по правилам. */
 export function umpireInput(v: TurnView, record: GameRecord | null, prev?: TurnView | null): string {
-  const turn = record?.turns[record.turns.length - 1] as { umpire?: UmpireMod[]; umpireNote?: { ok?: boolean; assessment?: string } } | undefined;
+  const u = umpireTurn(record);
   return [
     `Операция: ${v.scenarioName}. Ход ${v.turn - 1} закончен, время ${v.time.replace('T', ' ')}. Сторона командующего: ${v.human.name}.`,
     v.over && v.outcome ? `Игра окончена: ${v.outcome.result === 'victory' ? 'победа' : 'поражение'} — ${v.outcome.text}` : '',
@@ -82,8 +93,8 @@ export function umpireInput(v: TurnView, record: GameRecord | null, prev?: TurnV
     `В строю ${pct(v.strength)} исходной численности${prev ? ` (ход назад — ${pct(prev.strength)})` : ''}.`,
     'Донесения за ход:', ...(v.events.length ? v.events.map((e) => `- ${e}`) : ['- существенных событий нет']),
     'Контрольные события операции:', ...v.goals.map((g) => `- ${g.title}: ${g.simulated ? `достигнуто ${g.simulated.slice(0, 10)}` : 'ещё нет'} (в истории ${g.historical.slice(0, 10)})`),
-    turn?.umpireNote?.ok && turn.umpireNote.assessment ? `Оценка посредника по ожидаемым боям: ${turn.umpireNote.assessment}` : '',
-    ...(turn?.umpire ?? []).filter((m) => m.reason).slice(0, 3).map((m) => `Поправка посредника: ${m.reason}`),
+    u.note ? `Оценка посредника по ожидаемым боям: ${u.note}` : '',
+    ...u.mods.slice(0, 3).map((m) => `Поправка посредника: ${m}`),
   ].filter(Boolean).join('\n');
 }
 
@@ -93,7 +104,7 @@ export function umpireFromModel(text: string): string | null {
   return ss.length >= UMPIRE_MIN ? ss.slice(0, UMPIRE_MAX).join(' ') : null;
 }
 
-/** Модель посредника: системный текст, данные, отмена. */
+/** Модель посредника: системный текст, данные, отмена (обычный срок и повторы llm.ts). */
 export type UmpireModel = (system: string, text: string, o: { signal: AbortSignal }) => Promise<string>;
 
 let seq = 0;
@@ -102,38 +113,62 @@ let pending: AbortController | null = null;
 /** Последний доклад посредника (для «повтори доклад»; null — докладов не было). */
 export function lastUmpire(): string | null { return lastText; }
 /** Забыть доклады (новая игра, выход). Ждущий ответ модели отменяется. */
-export function resetUmpire(): void { seq++; lastText = null; pending?.abort(); pending = null; }
+export function resetUmpire(): void { seq++; lastText = null; pending?.abort(); pending = null; setVoiceNote(null); }
 
+export const UMPIRE_WAIT_SAY = 'Сведения о ходе готовятся, прошу подождать.';
+export const UMPIRE_STILL_SAY = 'Сведения ещё готовятся.';
+/** Пока модель готовит доклад — напоминать не чаще этого. */
+export const UMPIRE_REMIND_MS = 20_000;
+export const UMPIRE_NOTE = 'Посредник готовит доклад';
+export const UMPIRE_NO_MODEL = 'Модель недоступна — докладываю по данным расчёта.';
+export const UMPIRE_FAILED = 'Модель не ответила — докладываю по данным расчёта.';
+export const UMPIRE_UNFIT = 'Ответ модели не годится для доклада — докладываю по данным расчёта.';
 export const UMPIRE_AWAY = 'Ход посчитан. Доклад посредника — в разделе «Переигровка»: скажите «повтори доклад».';
 export const NEXT_TURN_SAY = 'Решение на следующий ход: скажите «дай варианты» или «доложи обстановку».';
 export const REVIEW_OFFER = 'Составить разбор операции?';
 
+const say = (text: string) => speak(text, { role: 'umpire', keep: true });
+
 /**
- * Ход посчитан: доклад посредника его голосом (с моделью, если дана; иначе или при сбое — по правилам), затем — штаб:
- * что дальше (если голосом пользовались недавно); в конце игры — предложение разбора.
+ * Ход посчитан. С моделью: посредник сразу говорит, что сведения готовятся (на панели — «Посредник готовит доклад»),
+ * ждёт её ответа (обычный срок и повторы llm.ts), пока ждёт — не чаще раза в UMPIRE_REMIND_MS «Сведения ещё
+ * готовятся»; ответила — её доклад. Доклад по данным расчёта (правила) — только если модель недоступна, не ответила или
+ * ответила не докладом, и тогда — честно, почему. Все фразы не устаревают от реплик человека (keep): доклад звучит после
+ * команды. Затем — штаб: что дальше (если голосом пользовались недавно); в конце игры — предложение разбора.
+ * onDone — доклад закончен или снят (штаб противника ждёт его, чтобы не занимать модель раньше посредника).
  */
-export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; record: GameRecord | null; ai: AiStatus | null; model?: UmpireModel | null }): Promise<void> {
+export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; record: GameRecord | null; ai: AiStatus | null; model?: UmpireModel | null; onDone?(): void }): Promise<void> {
   const my = ++seq;
   pending?.abort();
   pending = null;
-  let text = umpireReport(a.view, a.record, a.ai, a.prev);
-  if (a.model) {
-    const ac = new AbortController();
-    pending = ac;
-    try {
-      const m = umpireFromModel(await a.model(UMPIRE_SYSTEM, umpireInput(a.view, a.record, a.prev), { signal: ac.signal }));
-      if (m) text = m;
-    } catch { /* модель недоступна — по правилам */ }
-    if (pending === ac) pending = null;
-  }
-  if (my !== seq) return; // пришёл новый ход или игра закончена — поздний доклад не звучит
-  lastText = text;
-  // «Переигровка» в фоне: доклад звучит там (подсказки фраз здесь не исполнятся)
-  if (inReplay() !== true) { speak(UMPIRE_AWAY, { role: 'umpire', keep: true }); return; }
-  speak(text, { role: 'umpire', keep: true });
-  if (!voiceRecent()) return;
-  if (a.view.over) propose(REVIEW_OFFER, 'command.review.compose', {});
-  else speak(NEXT_TURN_SAY, { keep: true });
+  setVoiceNote(null);
+  try {
+    const rules = umpireReport(a.view, a.record, a.ai, a.prev);
+    let text = rules, why: string | null = UMPIRE_NO_MODEL;
+    if (a.model) {
+      const ac = new AbortController();
+      pending = ac;
+      say(UMPIRE_WAIT_SAY);
+      setVoiceNote(UMPIRE_NOTE);
+      const remind = setInterval(() => { if (pending === ac) say(UMPIRE_STILL_SAY); }, UMPIRE_REMIND_MS);
+      try {
+        const m = umpireFromModel(await a.model(UMPIRE_SYSTEM, umpireInput(a.view, a.record, a.prev), { signal: ac.signal }));
+        if (m) { text = m; why = null; } else why = UMPIRE_UNFIT;
+      } catch { why = UMPIRE_FAILED; } finally {
+        clearInterval(remind);
+        if (pending === ac) { pending = null; setVoiceNote(null); }
+      }
+    }
+    if (my !== seq) return; // пришёл новый ход или игра закончена — поздний доклад не звучит
+    lastText = text;
+    // «Переигровка» в фоне: доклад звучит там (подсказки фраз здесь не исполнятся)
+    if (inReplay() !== true) { say(UMPIRE_AWAY); return; }
+    if (why) say(why);
+    say(text);
+    if (!voiceRecent()) return;
+    if (a.view.over) propose(REVIEW_OFFER, 'command.review.compose', {});
+    else speak(NEXT_TURN_SAY, { keep: true });
+  } finally { a.onDone?.(); }
 }
 
 /** Повторить последний доклад голосом посредника. */

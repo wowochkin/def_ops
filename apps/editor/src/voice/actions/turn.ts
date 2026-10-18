@@ -124,7 +124,6 @@ export function turnActions(get: () => TurnDeps): Action[] {
   /** Не готово — что именно и что предложить (вместо подтверждения хода). */
   const notReady = (m: Missing): string | Offer => {
     const d = get(), v = d.view!;
-    d.showMissing(m);
     if (m.targets.length) {
       const o = d.drafts[m.targets[0]];
       const head = speakable(`Ход проводить рано: у приказа нет цели — ${unitName(o.formation)} — ${TASK_RU[o.task]}.`, { full: true });
@@ -253,7 +252,10 @@ export function turnActions(get: () => TurnDeps): Action[] {
       run: async () => { get().review.ctl!.stop(); return 'Разбор остановлен, написанное сохранено.'; } },
     { ...base, id: 'command.review.save', title: 'Сохранить разбор', describe: 'Сохраняет разбор операции в файл: PDF (по умолчанию) или текст .md; в настольном приложении — в папку «Загрузки».',
       params: { type: 'object', properties: { format: { enum: ['pdf', 'md'] } } }, say: ['штаб, сохрани разбор'], available: played,
-      run: async (p?: { format?: 'pdf' | 'md' }) => {
+      // формат, которого нет («в ворд»), — честно и предложение PDF, а не молча PDF
+      check: (p?: { format?: string }) => (!p?.format || p.format === 'pdf' || p.format === 'md' ? true
+        : { offer: `В ${/^(?:ворд|word|док\p{L}*|doc\p{L}*)$/u.test(p.format) ? 'Word' : `«${p.format}»`} не умею. Сохранить разбор в PDF?`, id: 'command.review.save', params: { format: 'pdf' } }),
+      run: async (p?: { format?: string }) => {
         const ctl = await reviewCtl();
         if (!ctl) return 'Окно разбора не открылось.';
         if (!ctl.sections().some((s) => s.done)) return 'Разбор ещё не составлен. Скажите «составь разбор».';
@@ -289,7 +291,8 @@ const TURN = /^(?:(?:можно|пора|давай|давайте|теперь)
 /** Фразы хода, посредника и разбора (см. шапку модуля); только в «Переигровке». */
 export function parseTurn(rest: string, section: string): PhraseHit | null {
   if (section !== 'replay') return null;
-  const t = norm(rest);
+  // «пожалуйста» — вежливость, не часть команды: «проводи ход, пожалуйста»
+  const t = norm(rest).split(' ').filter((w) => w !== 'пожалуйста').join(' ');
   let m: RegExpExecArray | null;
   if (TURN.test(t)) return hit('command.turn');
   if (/^(?:повтори|повторить|повторите|повтори еще раз) запрос(?: штабу противника| противнику)?$|^запроси (?:штаб )?противника (?:снова|еще раз)$/.test(t)) return hit('command.ai.retry');
@@ -297,12 +300,13 @@ export function parseTurn(rest: string, section: string): PhraseHit | null {
   if (/^(?:повтори|повторите)(?: еще раз)? доклад(?: посредника)?$|^что сказал посредник$/.test(t)) return hit('command.umpire.repeat');
   if (/^(?:как|что) (?:действовал|делал|предпринял|сделал|решил) (?:штаб )?противник(?:а)?(?: за ход)?$|^(?:какое |прочитай |доложи )?решение (?:штаба )?противника$/.test(t)) return hit('command.enemy.read');
   // разбор операции
-  if (/^(?:составь|составить|составьте|напиши|написать|сделай|подготовь|начни|начинай|пиши|допиши)(?: мне)? разбор(?: операции| игры)?$|^разбор операции$/.test(t)) return hit('command.review.compose', {});
-  if (/^(?:открой|покажи) разбор(?: операции)?$/.test(t)) return hit('command.review.open');
+  if (/^(?:составь|составить|составьте|напиши|написать|сделай|подготовь|начни|начинай|пиши|допиши)(?: мне)? разбор(?: операции| игры)?$/.test(t)) return hit('command.review.compose', {});
+  // голое «разбор операции» — открыть окно (составление долгое — только по просьбе)
+  if (/^(?:открой|покажи) разбор(?: операции)?$|^разбор операции$/.test(t)) return hit('command.review.open');
   if (/^(?:закрой|скрой|убери) разбор(?: операции)?$/.test(t)) return hit('command.review.close');
   if (/^(?:останови|остановить|прерви|прекрати) (?:разбор|писать разбор)$/.test(t)) return hit('command.review.stop');
   if ((m = /^(?:сохрани|сохранить|скачай|скачать) разбор(?: операции)?(?: (?:в|как|в виде) (\p{L}+))?$/u.exec(t)))
-    return hit('command.review.save', m[1] && /^(?:маркдаун|markdown|md|текст\p{L}*)$/u.test(m[1]) ? { format: 'md' } : {});
+    return hit('command.review.save', !m[1] || /^(?:pdf|пдф)$/.test(m[1]) ? {} : /^(?:маркдаун|markdown|md|текст\p{L}*)$/u.test(m[1]) ? { format: 'md' } : { format: m[1] });
   if (/^(?:сохрани|сохранить|скачай|скачать) журнал(?: боевых действий)?$/.test(t)) return hit('command.journal.save');
   if (/^(?:сохрани|сохранить|скачай|скачать) запись игры$/.test(t)) return hit('command.record.save');
   // раздел разбора — только если разбор открыт и такой раздел есть (иначе «прочитай …» — чужая фраза)

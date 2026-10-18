@@ -130,7 +130,7 @@ export function ReviewView({ view, llm, send, listen, ctl }: {
     ctl.current = c;
     return () => { if (ctl.current === c) ctl.current = null; };
   }, [ctl]);
-  useAction({ id: 'command.review.pick', section: 'replay', title: 'Отметить раздел разбора', describe: 'Отмечает раздел разбора (section — id) для написания или снимает отметку (on).',
+  useAction({ id: 'command.review.pick', model: false, section: 'replay', title: 'Отметить раздел разбора', describe: 'Отмечает раздел разбора (section — id) для написания или снимает отметку (on).',
     params: { type: 'object', properties: { section: { type: 'string' }, on: { type: 'boolean' } }, required: ['section'] },
     available: () => (runningRef.current ? 'разбор пишется — отметки после него' : true),
     run: async (p: { section: string; on?: boolean }) => {

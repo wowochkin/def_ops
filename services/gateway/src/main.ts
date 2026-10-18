@@ -26,6 +26,7 @@ const server = createGateway({
   llmUrl: process.env.LLM_URL,
   voiceState: process.env.VOICE_STATE,
   downloadsDir: process.env.DOWNLOADS_DIR,
+  downloadsDev: process.env.DEFOPS_DEV === '1',
   corsOrigin: env('CORS_ORIGIN', '*'),
   requestTimeoutMs: Number(env('REQUEST_TIMEOUT_MS', '3600000')),
 });

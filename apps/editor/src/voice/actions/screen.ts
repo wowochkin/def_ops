@@ -28,6 +28,8 @@ export interface ScreenDeps {
   setTab(t: CmdTab): void;
   /** Подвкладка «Приказов» (выбор точки на карте при этом снимается). */
   setSub(s: OrdersSub): void;
+  /** Закрыть карточку противника на карте (разведданные). */
+  closeCard(): void;
   /** Выбранное объединение (доклад, приказ); null — снять выбор. */
   select(id: string | null): void;
   sel: string | null;
@@ -38,6 +40,8 @@ export interface ScreenDeps {
   advisor: { open: boolean; min: boolean };
   setAdvisor(open: boolean, min: boolean): void;
   clearAdvisor(): void;
+  /** Сколько вопросов в беседе с советником. */
+  talk: number;
   setPlanN(n: number): void;
   plan: PlanState | null;
   planOpen: number | null;
@@ -78,6 +82,8 @@ export function screenActions(get: () => ScreenDeps): Action[] {
   const base = { section: 'replay', available: ready };
   const variant = (n: unknown) => get().plan?.variants[Math.round(Number(n)) - 1] ?? null;
   return [
+    { ...base, id: 'command.card.close', title: 'Закрыть карточку', describe: 'Закрывает карточку соединения противника на карте.', say: ['штаб, закрой карточку'],
+      run: async () => { get().closeCard(); } },
     { ...base, id: 'command.unit.close', title: 'Закрыть доклад', describe: 'Закрывает раскрытый доклад объединения.', say: ['штаб, закрой доклад'],
       run: async () => { get().select(null); } },
     { ...base, id: 'command.order.open', title: 'Приказ объединению', describe: 'Выбирает своё объединение во вкладке «Приказы», чтобы отдать или изменить приказ.',
@@ -93,7 +99,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
       } },
     { ...base, id: 'command.order.close', title: 'Закрыть приказ', describe: 'Закрывает редактор приказа (приказ остаётся в проекте).', say: ['штаб, закрой приказ'],
       run: async () => { get().select(null); } },
-    { ...base, id: 'command.order.set', title: 'Правка приказа', describe: 'Правит приказ объединения в редакторе: задача (task), цель — пункт (place, id) или противник (enemy, id), указания (note); clear — убрать цель.',
+    { ...base, id: 'command.order.set', model: false, title: 'Правка приказа', describe: 'Правит приказ объединения в редакторе: задача (task), цель — пункт (place, id) или противник (enemy, id), указания (note); clear — убрать цель.',
       params: { type: 'object', properties: { unit: { type: 'string' }, task: { enum: TASKS }, place: { type: 'string' }, enemy: { type: 'string' }, clear: { type: 'boolean' }, note: { type: 'string' } }, required: ['unit'] },
       available: play,
       run: async (p: { unit: string; task?: Task; place?: string; enemy?: string; clear?: boolean; note?: string }) => {
@@ -125,6 +131,10 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         return 'Скажите: «покажи советника» или «скрой советника».';
       } },
     { ...base, id: 'command.advisor.clear', title: 'Очистить беседу с советником', describe: 'Стирает беседу с советником и его варианты (запросы останавливаются).', say: ['штаб, очисти беседу с советником'],
+      params: { type: 'object', properties: { sure: { type: 'boolean' } } },
+      // голосом: варианты и ответы — минуты работы модели; стереть — после «да» (кнопка «очистить» — как прежде)
+      check: (p?: { sure?: boolean }) => (p?.sure || (!get().talk && !get().plan?.variants.some(Boolean)) ? true
+        : { offer: 'Стереть беседу с советником и его варианты?', id: 'command.advisor.clear', params: { sure: true } }),
       run: async () => { get().clearAdvisor(); return 'Беседа с советником очищена.'; } },
     { ...base, id: 'command.variants.count', title: 'Сколько вариантов просить', describe: 'Сколько вариантов решения просить у советника по умолчанию (1–3).',
       params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 } }, required: ['n'] },
@@ -153,7 +163,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         if (!a || !a.ok || !a.action) return 'Такого распоряжения в варианте нет.';
         return (await get().addAct(a)) ? `В проекте: ${a.label}.` : `Не выйдет: ${a.label}.`;
       } },
-    { ...base, id: 'command.suggestion.take', title: 'Приказ советника — в распоряжение', describe: 'Берёт в проект приказ, предложенный советником в ответе msg (i — номер).',
+    { ...base, id: 'command.suggestion.take', model: false, title: 'Приказ советника — в распоряжение', describe: 'Берёт в проект приказ, предложенный советником в ответе msg (i — номер).',
       params: { type: 'object', properties: { msg: { type: 'integer' }, i: { type: 'integer' } }, required: ['msg', 'i'] }, available: play,
       run: async (p: { msg: number; i: number }) => {
         const s = get().suggestion(p?.msg, p?.i);
@@ -161,11 +171,11 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         get().takeSuggestion(s);
         return `В распоряжение: ${short(s.name)} — ${TASK_RU[s.task]}.`;
       } },
-    { ...base, id: 'command.act.drop', title: 'Убрать распоряжение', describe: 'Убирает распоряжение из проекта по его ключу (кнопка «×» у распоряжения).',
+    { ...base, id: 'command.act.drop', model: false, title: 'Убрать распоряжение', describe: 'Убирает распоряжение из проекта по его ключу (кнопка «×» у распоряжения).',
       params: { type: 'object', properties: { key: { type: 'string' } }, required: ['key'] }, available: play,
       run: async (p: { key: string }) => { const a = get().acts.find((x) => x.key === p?.key); if (!a) return 'Такого распоряжения нет.'; get().dropAct(a.key); return `Отменено: ${a.label}.`; } },
     // ---- карта
-    { ...base, id: 'map.center', title: 'Показать точку на карте', describe: 'Показывает на карте точку (база, переправа, район резерва, армия).',
+    { ...base, id: 'map.center', model: false, title: 'Показать точку на карте', describe: 'Показывает на карте точку (база, переправа, район резерва, армия).',
       params: { type: 'object', properties: { at: { type: 'array', items: { type: 'number' } }, zoom: { type: 'boolean' } }, required: ['at'] },
       run: async (p: { at: LngLat; zoom?: boolean }) => { if (!Array.isArray(p?.at) || p.at.length !== 2) return 'Не знаю, где это.'; get().goTo(p.at, p.zoom !== false); } },
     { ...base, id: 'map.event', title: 'Показать событие операции', describe: 'Переводит карту к контрольному событию операции (по названию): время и место.',
@@ -194,7 +204,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         get().setTab('umpire'); get().setUmpirePart(p.part);
         return p.part === 'umpire' ? 'Поправки посредника — на экране.' : 'Решения штаба противника — на экране.';
       } },
-    { ...base, id: 'command.bounds.select', title: 'Армии для линии', describe: 'Вкладка «Полосы»: фронт и две армии, между которыми намечается линия.',
+    { ...base, id: 'command.bounds.select', model: false, title: 'Армии для линии', describe: 'Вкладка «Полосы»: фронт и две армии, между которыми намечается линия.',
       params: { type: 'object', properties: { front: { type: 'string' }, a: { type: 'string' }, b: { type: 'string' } } }, available: play,
       run: async (p: { front?: string; a?: string; b?: string }) => { get().setBounds(p ?? {}); } },
   ];
@@ -218,6 +228,7 @@ export function parseScreen(rest: string, section: string): PhraseHit | null {
   }
   if (/^(?:закрой|закрыть) (?:приказ|редактор приказа)$/.test(t)) return hit('command.order.close');
   if (/^(?:закрой|закрыть|сверни) доклад$/.test(t)) return hit('command.unit.close');
+  if (/^(?:закрой|закрыть|убери) карточку(?: противника)?$/.test(t)) return hit('command.card.close');
   if ((m = /^(?:открой|перейди на|переключись на|переключи на)(?: вкладку| подвкладку)? (\p{L}+)$/u.exec(t))) {
     const sub = SUB_WORD.find(([re]) => re.test(m![1]))?.[1];
     if (sub) return hit('command.orders.sub', { sub });

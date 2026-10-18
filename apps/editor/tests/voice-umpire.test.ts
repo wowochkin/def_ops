@@ -5,12 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameRecord, IntelReport, UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { HumanDecision, PlanVariantView, TurnView } from '../src/sim/game-protocol';
-import { getAction, markVoice, parsePhrase, register, setProposer, setSpeaker, type Action, type SpeakOpts } from '../src/voice/registry';
+import { getAction, markVoice, parsePhrase, register, setProposer, setSpeaker, voiceNote, type Action, type SpeakOpts } from '../src/voice/registry';
 import { CONFIRM_MS, Dispatcher } from '../src/voice/dispatch';
 import { setSectionSource } from '../src/voice/actions/command';
 import { releaseStaff, staffActions, type OrderDraft, type PlanState, type StaffAct, type StaffDeps } from '../src/voice/actions/staff';
 import { blockedArrived, releaseTurn, turnActions, turnMissing, type ReviewCtl, type TurnDeps } from '../src/voice/actions/turn';
-import { announceTurn, lastUmpire, resetUmpire, UMPIRE_SYSTEM, umpireReport } from '../src/voice/umpire';
+import { announceTurn, lastUmpire, NEXT_TURN_SAY, resetUmpire, UMPIRE_REMIND_MS, UMPIRE_STILL_SAY, UMPIRE_SYSTEM, UMPIRE_WAIT_SAY, umpireReport } from '../src/voice/umpire';
+import { askText, systemText, toTools } from '../src/voice/llm';
+import { actions } from '../src/voice/registry';
 import { saveFile, setSaver } from '../src/voice/files';
 import { releaseScreen, screenActions, type ScreenDeps } from '../src/voice/actions/screen';
 import { stopReading } from '../src/voice/dictation';
@@ -125,7 +127,7 @@ describe('ход голосом: «проводи ход»', () => {
   });
   it('«можно проводить ход», «давай ход», «сделай ход», «проведи ход» — действие хода, а не «не предусматривает»', () => {
     turn();
-    for (const s of ['можно проводить ход', 'давай ход', 'сделай ход', 'проведи ход', 'проводи ход', 'давай следующий ход', 'можно делать ход'])
+    for (const s of ['можно проводить ход', 'давай ход', 'сделай ход', 'проведи ход', 'проводи ход', 'давай следующий ход', 'можно делать ход', 'проводи ход пожалуйста', 'пожалуйста проводи ход'])
       expect(parsePhrase(s, 'replay'), s).toEqual({ id: 'command.turn' });
   });
   it('похожие фразы и вопросы — не ход (их разбирает модель)', () => {
@@ -189,6 +191,12 @@ describe('ход голосом: «проводи ход»', () => {
     expect(getAction('command.turn')!.available()).toMatch(/^считаю ход/);
     expect(d.sendTurn).not.toHaveBeenCalled();
   });
+  it('проверка «не готово» вкладку не переключает (переключает исполнение)', async () => {
+    const d = turn({ decision: { ...EMPTY } });
+    expect(getAction('command.turn')!.check!({})).not.toBe(true);
+    expect(d.showMissing).not.toHaveBeenCalled();
+    expect(d.setTab).not.toHaveBeenCalled();
+  });
   it('кнопка — то же действие: без вопроса, не готово — показывает, чего нет', async () => {
     const d = turn({ decision: { ...EMPTY } });
     await getAction('command.turn')!.run({});
@@ -251,8 +259,12 @@ describe('доклад посредника по правилам', () => {
     expect(sentences(r)).toBeGreaterThanOrEqual(3);
     expect(r).toMatch(/существенных событий нет/i);
   });
-  it('поправки посредника в ходе — одной фразой', () => {
-    expect(umpireReport(view(), RECORD, { state: 'off' }, prev)).toMatch(/Поправка посредника: крутые склоны высот\./);
+  it('оценка посредника (umpireNote) — одной фразой; без неё — поправка', () => {
+    expect(umpireReport(view(), RECORD, { state: 'off' }, prev)).toMatch(/Оценка посредника: бои за высоты тяжёлые: оборона подготовлена, взаимодействие с артиллерией налажено плохо\./);
+    const noNote = { ...RECORD, turns: [{ ...RECORD.turns[0], umpireNote: { ok: false, error: 'x' } }] } as unknown as GameRecord;
+    expect(umpireReport(view(), noNote, { state: 'off' }, prev)).toMatch(/Поправка посредника: крутые склоны высот\./);
+    const bad = { ...RECORD, turns: [{ ...RECORD.turns[0], umpireNote: 'строка', umpire: 'не список' }] } as unknown as GameRecord;
+    expect(sentences(umpireReport(view(), bad, { state: 'off' }, prev))).toBeGreaterThanOrEqual(3);
   });
   it('конец игры — исход первой фразой', () => {
     const r = umpireReport(view({ over: true, outcome: { result: 'victory', text: 'Знамя Победы над рейхстагом 30 апреля.', at: null } }), RECORD, { state: 'off' }, prev);
@@ -262,65 +274,110 @@ describe('доклад посредника по правилам', () => {
 });
 
 describe('доклад посредника после хода — голосом посредника', () => {
-  it('без модели — по правилам, роль umpire; затем штаб — одной фразой, если голосом пользовались', async () => {
+  const report = () => umpireReport(view(), RECORD, { state: 'off' }, prev);
+  const MODEL_SAYS = 'Ход прошёл успешно. 8-я гв. армия прорвала оборону у Зелова. До окружения Берлина ещё далеко. Противник подтягивает резервы.';
+  const ump = () => said.filter((x) => x.role === 'umpire').map((x) => x.text);
+
+  it('с моделью: сразу — «Сведения о ходе готовятся», на панели «Посредник готовит доклад»; ответ — доклад модели (3–5 фраз, словами)', async () => {
     markVoice();
-    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' } });
-    const ump = said.find((x) => x.role === 'umpire')!;
-    expect(ump.text).toBe(umpireReport(view(), RECORD, { state: 'off' }, prev));
-    expect(ump.keep).toBe(true);
-    expect(said.at(-1)).toMatchObject({ text: 'Решение на следующий ход: скажите «дай варианты» или «доложи обстановку».' });
+    let release!: (s: string) => void;
+    const model = vi.fn(() => new Promise<string>((r) => { release = r; }));
+    const done = vi.fn();
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model, onDone: done });
+    await Promise.resolve();
+    expect(said[0]).toMatchObject({ role: 'umpire', keep: true, text: UMPIRE_WAIT_SAY });
+    expect(UMPIRE_WAIT_SAY).toBe('Сведения о ходе готовятся, прошу подождать.');
+    expect(voiceNote()).toBe('Посредник готовит доклад');
+    expect(model).toHaveBeenCalledWith(UMPIRE_SYSTEM, expect.stringContaining('прорвала первую полосу'), expect.anything());
+    expect(done).not.toHaveBeenCalled();
+    release(MODEL_SAYS);
+    await p;
+    expect(ump()[1]).toMatch(/^Ход прошёл успешно\. Восьмая гвардейская армия прорвала оборону у Зелова\./);
+    expect(ump()[1]).not.toMatch(/\d/);
+    expect(voiceNote()).toBeNull();
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(said.at(-1)).toMatchObject({ text: NEXT_TURN_SAY });
     expect(said.at(-1)!.role).toBeUndefined();
   });
-  it('голосом давно не пользовались — только доклад посредника, без подсказки штаба', async () => {
-    markVoice(Date.now() - 10 * 60_000);
-    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' } });
-    expect(said).toHaveLength(1);
-    expect(said[0].role).toBe('umpire');
+  it('модель думает долго — не чаще раза в 20 с «Сведения ещё готовятся», доклад не подменяется', async () => {
+    vi.useFakeTimers();
+    let release!: (s: string) => void;
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: () => new Promise<string>((r) => { release = r; }) });
+    await vi.advanceTimersByTimeAsync(UMPIRE_REMIND_MS - 100);
+    expect(ump()).toEqual([UMPIRE_WAIT_SAY]);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(ump()).toEqual([UMPIRE_WAIT_SAY, UMPIRE_STILL_SAY]);
+    expect(UMPIRE_STILL_SAY).toBe('Сведения ещё готовятся.');
+    await vi.advanceTimersByTimeAsync(UMPIRE_REMIND_MS * 2);
+    expect(ump()).toHaveLength(4);
+    release(MODEL_SAYS);
+    await p;
+    expect(ump().at(-1)).toMatch(/^Ход прошёл успешно\./);
+    await vi.advanceTimersByTimeAsync(UMPIRE_REMIND_MS * 2);
+    expect(ump()).toHaveLength(5); // после доклада напоминаний нет
   });
-  it('с моделью — её текст (3–5 фраз, числа словами); системный текст — от лица посредника', async () => {
-    const model = vi.fn(async () => 'Ход прошёл успешно. 8-я гв. армия прорвала оборону у Зелова. До окружения Берлина ещё далеко. Противник подтягивает резервы.');
-    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model });
-    expect(model).toHaveBeenCalledWith(UMPIRE_SYSTEM, expect.stringContaining('прорвала первую полосу'), expect.anything());
-    expect(UMPIRE_SYSTEM).toMatch(/посредник/i);
-    const ump = said.find((x) => x.role === 'umpire')!;
-    expect(ump.text).toMatch(/^Ход прошёл успешно\. Восьмая гвардейская армия прорвала оборону у Зелова\./);
-    expect(ump.text).not.toMatch(/\d/);
+  it('модель не ответила после всех попыток — честно, затем доклад по данным расчёта', async () => {
+    const done = vi.fn();
+    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => { throw new Error('нет связи'); }, onDone: done });
+    expect(ump()).toEqual([UMPIRE_WAIT_SAY, 'Модель не ответила — докладываю по данным расчёта.', report()]);
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(voiceNote()).toBeNull();
   });
-  it('модель недоступна или ответила одной фразой — по правилам', async () => {
-    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => { throw new Error('нет связи'); } });
-    expect(said[0]).toMatchObject({ role: 'umpire', text: umpireReport(view(), RECORD, { state: 'off' }, prev) });
-    said = [];
+  it('модель ответила не докладом (одна фраза) — честно, по данным расчёта', async () => {
     await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => 'Хорошо.' });
-    expect(said[0].text).toBe(umpireReport(view(), RECORD, { state: 'off' }, prev));
+    expect(ump()).toEqual([UMPIRE_WAIT_SAY, 'Ответ модели не годится для доклада — докладываю по данным расчёта.', report()]);
+  });
+  it('модель недоступна (проверка связи не прошла) — честно и по данным расчёта, без ожидания', async () => {
+    markVoice(Date.now() - 10 * 60_000);
+    const done = vi.fn();
+    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, onDone: done });
+    expect(ump()).toEqual(['Модель недоступна — докладываю по данным расчёта.', report()]);
+    expect(said.filter((x) => x.role === 'umpire').every((x) => x.keep)).toBe(true);
+    expect(said).toHaveLength(2); // голосом давно не пользовались — без подсказки штаба
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+  it('человек дал команду, пока посредник ждёт модель, — доклад не теряется (keep) и звучит после', async () => {
+    let release!: (s: string) => void;
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: () => new Promise<string>((r) => { release = r; }) });
+    await disp.utterance('Штаб, что я могу?', 1);
+    release(MODEL_SAYS);
+    await p;
+    const i = said.findIndex((x) => /^Ход прошёл успешно/.test(x.text));
+    expect(i).toBeGreaterThan(said.findIndex((x) => /^Можно сказать/.test(x.text)));
+    expect(said[i].keep).toBe(true);
+  });
+  it('askText: пустой ответ — ошибка, размышление модели вслух не берётся', async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '', reasoning_content: 'Думаю: надо сказать про Зелов. Ещё. И ещё.' } }] })));
+    await expect(askText('с', 'т', { settings: { url: 'http://x/v1' } as never, fetch: f as unknown as typeof fetch })).rejects.toThrow();
   });
   it('модель ответила поздно, а ход уже новый — старый доклад не звучит', async () => {
     let release!: (s: string) => void;
-    const slow = () => new Promise<string>((r) => { release = r; });
-    const p1 = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: slow });
+    const done1 = vi.fn();
+    const p1 = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: () => new Promise<string>((r) => { release = r; }), onDone: done1 });
     const v3 = view({ time: '1945-04-18T05:00', turn: 3, events: ['Третий ход: бои за Мюнхеберг.'] });
-    const p2 = announceTurn({ view: v3, prev: view(), record: RECORD, ai: { state: 'off' } });
-    await p2;
+    await announceTurn({ view: v3, prev: view(), record: RECORD, ai: { state: 'off' } });
     release('Старый доклад. Он устарел. Совсем.');
     await p1;
     expect(texts().join(' ')).not.toMatch(/Старый доклад/);
-    expect(said.filter((x) => x.role === 'umpire')).toHaveLength(1);
+    expect(done1).toHaveBeenCalledTimes(1); // штаб противника не ждёт снятого доклада
   });
   it('раздел «Переигровка» в фоне — коротко, где доклад; «повтори доклад» там — целиком', async () => {
     section = 'knowledge';
-    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' } });
-    expect(said[0]).toMatchObject({ role: 'umpire', text: 'Ход посчитан. Доклад посредника — в разделе «Переигровка»: скажите «повтори доклад».' });
+    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => MODEL_SAYS });
+    expect(said.at(-1)).toMatchObject({ role: 'umpire', text: 'Ход посчитан. Доклад посредника — в разделе «Переигровка»: скажите «повтори доклад».' });
     section = 'replay';
     turn();
     said = [];
     await disp.utterance('Штаб, повтори доклад', 1);
     expect(said[0]).toMatchObject({ role: 'umpire', text: lastUmpire() });
+    expect(lastUmpire()).toMatch(/^Ход прошёл успешно/);
   });
   it('«повтори» после доклада — голосом посредника; «стоп» его обрывает', async () => {
     const stop = vi.fn();
     disp = new Dispatcher({ now: () => t, say: (s, o) => { said.push({ text: s, ...o }); }, section: () => section, stop });
     setSpeaker((text: string, o?: SpeakOpts) => disp.announce(text, o));
     markVoice(Date.now() - 10 * 60_000);
-    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' } });
+    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => MODEL_SAYS });
     disp.spoke();
     said = [];
     await disp.utterance('Штаб, повтори', 1);
@@ -334,7 +391,7 @@ describe('доклад посредника после хода — голосо
     const ctl = fakeReview();
     turn({ view: over, review: { open: true, ctl, show: vi.fn() } });
     await announceTurn({ view: over, prev, record: RECORD, ai: { state: 'off' } });
-    expect(said.find((x) => x.role === 'umpire')!.text).toMatch(/^Игра окончена: поражение\. Предельный срок вышел\./);
+    expect(ump().at(-1)).toMatch(/^Игра окончена: поражение\. Предельный срок вышел\./);
     expect(disp.pending).toMatchObject({ action: 'command.review.compose' });
     expect(last()).toMatch(/^Составить разбор операции\?/);
     await disp.utterance('да', 1);
@@ -402,6 +459,20 @@ describe('разбор операции голосом', () => {
     expect(parsePhrase('составь план', 'replay')).toBeNull();
     expect(parsePhrase('сохрани', 'replay')).toBeNull();
   });
+  it('«сохрани разбор в ворд» — честно: в Word не умею, предлагает PDF; «да» — сохраняет PDF', async () => {
+    const saver = vi.fn(async () => ({ path: '/x' }));
+    setSaver(saver);
+    turn({ review: { open: true, ctl: fakeReview(), show: vi.fn() } });
+    await disp.utterance('Штаб, сохрани разбор в ворд', 1);
+    expect(saver).not.toHaveBeenCalled();
+    expect(last()).toMatch(/^В Word не умею\. Сохранить разбор в PDF\? Скажите «да».*Жду ответа\.$/);
+    await disp.utterance('да', 2);
+    expect(saver).toHaveBeenCalledWith('razbor-berlin.pdf', expect.any(Blob));
+  });
+  it('голое «разбор операции» — открыть разбор, не составлять', () => {
+    turn();
+    expect(parsePhrase('разбор операции', 'replay')).toEqual({ id: 'command.review.open', params: undefined });
+  });
   it('«сохрани разбор» — в настольном приложении в «Загрузки» без окна, штаб говорит куда', async () => {
     const saver = vi.fn(async (name: string) => ({ path: `/Users/x/Downloads/${name}` }));
     setSaver(saver);
@@ -412,6 +483,15 @@ describe('разбор операции голосом', () => {
     await disp.utterance('Штаб, сохрани журнал', 2);
     expect(saver).toHaveBeenLastCalledWith('berlin-журнал.md', expect.any(Blob));
     expect(last()).toMatch(/^Журнал сохранён в папку «Загрузки»/);
+  });
+  it('в приложении без адреса сохранения (шлюз не из запускателя) — через браузер, честно, а не «сбой записи»', async () => {
+    const download = vi.fn();
+    const f = vi.fn(async () => new Response(JSON.stringify({ error: { message: 'Неизвестный адрес API' } }), { status: 404 }));
+    expect(await saveFile('x.md', new Blob(['a']), { inApp: true, download, fetch: f as unknown as typeof fetch })).toEqual({ ok: true, where: 'browser' });
+    expect(download).toHaveBeenCalled();
+    // своё окно приложения: шлюз отказал (403) — честно, что не сохранено
+    const g = vi.fn(async () => new Response(JSON.stringify({ error: { message: 'сохранять может только окно приложения' } }), { status: 403 }));
+    expect(await saveFile('x.md', new Blob(['a']), { inApp: true, download, fetch: g as unknown as typeof fetch })).toEqual({ ok: false, error: 'сохранять может только окно приложения' });
   });
   it('в браузере — честно: браузер спросит, куда сохранить', async () => {
     const r = await saveFile('x.md', new Blob(['a']), { inApp: false, download: vi.fn() });
@@ -427,8 +507,8 @@ describe('разбор операции голосом', () => {
 
 function screen(over: Partial<ScreenDeps> = {}): ScreenDeps {
   const d = {
-    view: view(), busy: null, setTab: vi.fn(), setSub: vi.fn(), select: vi.fn(), sel: null, goTo: vi.fn(), drafts: {}, setDraft: vi.fn(),
-    advisor: { open: false, min: false }, setAdvisor: vi.fn(), clearAdvisor: vi.fn(), setPlanN: vi.fn(), plan: null, planOpen: null, setPlanOpen: vi.fn(),
+    view: view(), busy: null, closeCard: vi.fn(), setTab: vi.fn(), setSub: vi.fn(), select: vi.fn(), sel: null, goTo: vi.fn(), drafts: {}, setDraft: vi.fn(),
+    advisor: { open: false, min: false }, setAdvisor: vi.fn(), clearAdvisor: vi.fn(), talk: 0, setPlanN: vi.fn(), plan: null, planOpen: null, setPlanOpen: vi.fn(),
     takeSuggestion: vi.fn(), suggestion: () => null, hasAct: () => false, addAct: vi.fn(async () => true), dropAct: vi.fn(), acts: [],
     focus: true, focusOnly: true, setFocusOnly: vi.fn(), setTime: vi.fn(), toEditor: vi.fn(() => true), setUmpirePart: vi.fn(), setBounds: vi.fn(), ...over,
   } as unknown as ScreenDeps;
@@ -451,7 +531,20 @@ describe('экранные действия голосом', () => {
     expect(parsePhrase('в списках весь театр', 'replay')).toEqual({ id: 'map.focusOnly', params: { on: false } });
     expect(parsePhrase('открой карту в редакторе', 'replay')).toEqual({ id: 'command.toEditor', params: undefined });
     expect(parsePhrase('покажи поправки посредника', 'replay')).toEqual({ id: 'command.umpire.part', params: { part: 'umpire' } });
+    expect(parsePhrase('закрой карточку', 'replay')).toEqual({ id: 'command.card.close', params: undefined });
     expect(parsePhrase('покажи событие зееловские высоты', 'replay')).toEqual({ id: 'map.event', params: { name: 'зееловские высоты' } });
+  });
+  it('«очисти беседу с советником» — есть варианты или беседа: сначала вопрос; «да» — стирает', async () => {
+    const d = screen({ plan: { id: 1, time: '', count: 1, variants: [{ title: 'Удар' } as never], progress: '', done: true } as PlanState });
+    expect(parsePhrase('сотри советника', 'replay')).toMatchObject({ id: 'command.advisor.clear' });
+    await disp.utterance('Штаб, очисти беседу', 1);
+    expect(d.clearAdvisor).not.toHaveBeenCalled();
+    expect(last()).toMatch(/^Стереть беседу с советником и его варианты\?/);
+    await disp.utterance('да', 2);
+    expect(d.clearAdvisor).toHaveBeenCalledTimes(1);
+    // кнопка «очистить» — как прежде, без вопроса
+    await getAction('command.advisor.clear')!.run({});
+    expect(d.clearAdvisor).toHaveBeenCalledTimes(2);
   });
   it('ложные перехваты: похожие фразы — не экранные действия', () => {
     screen();
@@ -475,6 +568,15 @@ describe('экранные действия голосом', () => {
     expect(d.setDraft).toHaveBeenLastCalledWith('su_8gva', expect.objectContaining({ target: { formation: 'de_56tk' }, targetText: 'против: LVI танковый корпус' }));
     await getAction('command.order.set')!.run({ unit: 'su_8gva', clear: true, note: 'Обойти с севера' });
     expect(d.setDraft).toHaveBeenLastCalledWith('su_8gva', expect.objectContaining({ target: null, at: null, note: 'Обойти с севера' }));
+  });
+  it('экранные действия без фраз модели не видны (инструменты и системный текст); число вариантов — видно', () => {
+    screen(); turn();
+    const tools = toTools(actions('replay')).map((t) => t.function.name);
+    for (const id of ['map.center', 'command.act.drop', 'command.order.set', 'command.suggestion.take', 'command.bounds.select'])
+      expect(tools, id).not.toContain(id.replace(/\./g, '__'));
+    expect(tools).toContain('command__variants__count');
+    expect(tools).toContain('command__order__open');
+    expect(systemText(actions('replay'), 'replay')).not.toMatch(/map__center|Показать точку на карте/);
   });
   it('игра окончена, идёт расчёт хода — приказы недоступны с причиной', () => {
     const d = screen({ view: view({ over: true }) });

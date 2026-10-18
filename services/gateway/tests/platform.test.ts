@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { AddressInfo } from 'node:net';
 import type http from 'node:http';
+import { request as httpRequest } from 'node:http';
 import { createService } from '@def-ops/service-kit';
 import { emptyDocument, createFeature, makeProjection } from '@def-ops/core';
 import { MemoryStore } from '../../documents/src/store';
@@ -373,39 +374,73 @@ describe('шлюз: состояние голоса', () => {
 });
 
 describe('шлюз: сохранение файла в «Загрузки» (настольное приложение)', () => {
-  const start = async (downloadsDir?: string) => {
-    const g = createGateway({ port: 0, services: {}, routes: [], auth: 'open', apiKeys: new Map(), corsOrigin: '*', downloadsDir });
-    await new Promise<void>((r) => g.listen(0, () => r()));
-    return { g, url: `http://127.0.0.1:${(g.address() as AddressInfo).port}` };
+  const start = async (downloadsDir?: string, dev = false) => {
+    const g = createGateway({ port: 0, services: {}, routes: [], auth: 'open', apiKeys: new Map(), corsOrigin: '*', downloadsDir, downloadsDev: dev });
+    await new Promise<void>((r) => g.listen(0, '127.0.0.1', () => r()));
+    const port = (g.address() as AddressInfo).port;
+    return { g, port, url: `http://127.0.0.1:${port}` };
   };
-  const save = (url: string, name: string, body: string, origin?: string) =>
-    fetch(`${url}/api/save?name=${encodeURIComponent(name)}`, { method: 'POST', body, headers: { 'Content-Type': 'text/markdown', ...(origin ? { Origin: origin } : {}) } });
+  /** Сырой запрос: Host и Origin — какие угодно (как у страницы после DNS rebinding). */
+  const raw = (port: number, name: string, body: string, headers: Record<string, string>) => new Promise<{ status: number; json: { path?: string } }>((res, rej) => {
+    const r = httpRequest({ host: '127.0.0.1', port, method: 'POST', path: `/api/save?name=${encodeURIComponent(name)}`, headers: { 'Content-Type': 'text/markdown', ...headers } }, (x) => {
+      let t = ''; x.setEncoding('utf8'); x.on('data', (c) => { t += c; }); x.on('end', () => res({ status: x.statusCode ?? 0, json: t ? JSON.parse(t) : {} }));
+    });
+    r.on('error', rej); r.end(body);
+  });
+  const own = (port: number) => ({ Host: `127.0.0.1:${port}`, Origin: `http://127.0.0.1:${port}` });
 
-  it('пишет файл в папку, занятое имя — «имя (2)», отвечает путём', async () => {
+  it('своё окно: пишет файл в папку, занятое имя — «имя (2)», отвечает путём', async () => {
     const dir = await fs.mkdtemp(join(tmpdir(), 'save-gw-'));
     const a = await start(dir);
     try {
-      const r1 = await save(a.url, 'разбор.md', '# Разбор');
+      const r1 = await raw(a.port, 'разбор.md', '# Разбор', own(a.port));
       expect(r1.status).toBe(200);
-      const j1 = await r1.json();
-      expect(j1.path).toBe(join(dir, 'разбор.md'));
-      expect(await fs.readFile(j1.path, 'utf8')).toBe('# Разбор');
-      const j2 = await (await save(a.url, 'разбор.md', 'второй')).json();
-      expect(j2.path).toBe(join(dir, 'разбор (2).md'));
-      // своё окно (тот же адрес) — можно
-      expect((await save(a.url, 'журнал.md', 'x', a.url)).status).toBe(200);
+      expect(r1.json.path).toBe(join(dir, 'разбор.md'));
+      expect(await fs.readFile(r1.json.path!, 'utf8')).toBe('# Разбор');
+      expect((await raw(a.port, 'разбор.md', 'второй', own(a.port))).json.path).toBe(join(dir, 'разбор (2).md'));
+      // localhost — тот же компьютер
+      expect((await raw(a.port, 'журнал.md', 'x', { Host: `localhost:${a.port}`, Origin: `http://localhost:${a.port}` })).status).toBe(200);
     } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
   });
-  it('чужая страница, путь в имени, чужое расширение — отказ; вне приложения — нет такого адреса', async () => {
+  it('DNS rebinding, без Origin, чужой Origin, окно разработки без флага — 403, файла нет', async () => {
     const dir = await fs.mkdtemp(join(tmpdir(), 'save-gw-'));
     const a = await start(dir);
     try {
-      expect((await save(a.url, 'x.md', 'x', 'https://evil.example')).status).toBe(403);
-      expect((await save(a.url, '../x.md', 'x')).status).toBe(400);
-      expect((await save(a.url, 'x.sh', 'x')).status).toBe(400);
+      expect((await raw(a.port, 'rebind.md', 'x', { Host: `evil.test:${a.port}`, Origin: `http://evil.test:${a.port}` })).status).toBe(403);
+      expect((await raw(a.port, 'noorigin.md', 'x', { Host: `127.0.0.1:${a.port}` })).status).toBe(403);
+      expect((await raw(a.port, 'evil.md', 'x', { Host: `127.0.0.1:${a.port}`, Origin: 'https://evil.example' })).status).toBe(403);
+      expect((await raw(a.port, 'null.md', 'x', { Host: `127.0.0.1:${a.port}`, Origin: 'null' })).status).toBe(403);
+      // Origin — адрес окна, а не Host запроса: чужой порт того же компьютера — не своё окно
+      expect((await raw(a.port, 'port.md', 'x', { Host: `127.0.0.1:${a.port}`, Origin: `http://127.0.0.1:${a.port + 1}` })).status).toBe(403);
+      expect((await raw(a.port, 'dev.md', 'x', { Host: `127.0.0.1:${a.port}`, Origin: 'http://localhost:5173' })).status).toBe(403);
       expect(await fs.readdir(dir)).toEqual([]);
     } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
+  });
+  it('разработка (флаг): окно vite :5173 через прокси — можно', async () => {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'save-gw-'));
+    const a = await start(dir, true);
+    try {
+      expect((await raw(a.port, 'dev.md', 'x', { Host: `localhost:${a.port}`, Origin: 'http://localhost:5173' })).status).toBe(200);
+    } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
+  });
+  it('имена: путь и чужое расширение — 400; управляющие символы — заменены; длинное — обрезано по байтам (не 500)', async () => {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'save-gw-'));
+    const a = await start(dir);
+    try {
+      expect((await raw(a.port, '../x.md', 'x', own(a.port))).status).toBe(400);
+      expect((await raw(a.port, 'x.sh', 'x', own(a.port))).status).toBe(400);
+      const c = await raw(a.port, 'раз\nбор\u0000:*.md', 'x', own(a.port));
+      expect(c.status).toBe(200);
+      expect(c.json.path).toBe(join(dir, 'раз_бор___.md'));
+      const long = await raw(a.port, `${'ж'.repeat(200)}.md`, 'x', own(a.port));
+      expect(long.status).toBe(200);
+      const base = long.json.path!.slice(dir.length + 1);
+      expect(Buffer.byteLength(base)).toBeLessThanOrEqual(240);
+      expect(base.endsWith('.md')).toBe(true);
+    } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
+  });
+  it('вне приложения — нет такого адреса', async () => {
     const b = await start();
-    try { expect((await save(b.url, 'x.md', 'x')).status).toBe(404); } finally { b.g.close(); }
+    try { expect((await raw(b.port, 'x.md', 'x', own(b.port))).status).toBe(404); } finally { b.g.close(); }
   });
 });

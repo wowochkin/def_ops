@@ -32,7 +32,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
-import { ActButton, act, actions, listed, onModal, setProposer, setRetractor, setSpeaker, useAction } from './registry';
+import { ActButton, act, actions, listed, onModal, onVoiceNote, setProposer, setRetractor, setSpeaker, useAction, voiceNote } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
@@ -110,6 +110,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const settleAll = () => { const ws = [...waiters.current.values()]; waiters.current.clear(); ws.forEach((w) => w()); };
   const readyFirst = useRef(false);
   const [busy, setBusy] = useState<string | null>(null);
+  /** Что готовят модули («Посредник готовит доклад»). */
+  const [note, setNote] = useState<string | null>(voiceNote);
+  useEffect(() => onVoiceNote(setNote), []);
   const [ready, setReady] = useState<VoiceReady | null>(null);
   const started = useRef(false);
 
@@ -453,6 +456,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           )}
           {enabled && <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />}
           {hint && <p className="vp-hint stop" role="status">{hint}</p>}
+          {note && <p className="vp-hint" role="status">{note}…</p>}
           {enabled && <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
 
           <div className="vp-feed" aria-label="Что сказано" data-tour="voice-feed">

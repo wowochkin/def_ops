@@ -54,6 +54,14 @@ let skipAi = false;
 /** Приказы, распоряжения и решение человека, ждущие решения модели. */
 let queued: { orders: Order[]; actions: StaffAction[]; decision: HumanDecision } | null = null;
 let busy = false;
+/**
+ * После хода штаб противника ждёт доклада посредника голосом (окно шлёт umpire-done): иначе его запрос встал бы к
+ * модели первым, и посредник ждал бы за ним. Не дольше UMPIRE_HOLD_MS; новый ход — сразу.
+ */
+let aiHold: ReturnType<typeof setTimeout> | null = null;
+const UMPIRE_HOLD_MS = 120_000;
+function holdAi(): void { if (aiHold) clearTimeout(aiHold); aiHold = setTimeout(releaseAi, UMPIRE_HOLD_MS); if (enemy === 'llm' && !isOver()) status({ state: 'off' }); }
+function releaseAi(): void { if (!aiHold) return; clearTimeout(aiHold); aiHold = null; startAi(); }
 /** Условия окончания игры и численность стороны человека при передаче командования. */
 let end: GameEnd;
 let baseStrength = 0;
@@ -124,11 +132,12 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
     else if (m.kind === 'settings') {
       const was = enemy;
       llm = m.llm; enemy = m.enemy;
-      if (was !== enemy) startAi();
+      if (was !== enemy) { if (aiHold) { clearTimeout(aiHold); aiHold = null; } startAi(); }
     } else if (m.kind === 'review-section') void reviewSection(m);
     else if (m.kind === 'review-stop') reviewAbort?.abort();
-    else if (m.kind === 'retry-ai') { startAi(); if (queued) await advance(); }
+    else if (m.kind === 'retry-ai') { if (aiHold) { clearTimeout(aiHold); aiHold = null; } startAi(); if (queued) await advance(); }
     else if (m.kind === 'skip-ai') { skipAi = true; if (queued) await advance(); }
+    else if (m.kind === 'umpire-done') releaseAi();
     else if (m.kind === 'advise') void adviseReq(m);
     else if (m.kind === 'plan') void planReq(m);
     else if (m.kind === 'plan-stop') planAbort?.abort();
@@ -480,6 +489,7 @@ const status = (s: AiStatus) => post({ kind: 'ai', status: s });
 
 async function advance() {
   if (busy || !queued || isOver()) return;
+  releaseAi(); // ход отдан раньше, чем посредник договорил, — штабу противника решать сейчас
   busy = true;
   try {
     let t: AiTurn | null = null;
@@ -539,7 +549,7 @@ async function advance() {
     queued = null;
     postView();
     post({ kind: 'record', record: rec });
-    startAi();
+    holdAi(); // штаб противника — после доклада посредника (umpire-done) или через UMPIRE_HOLD_MS
   } finally {
     busy = false;
   }

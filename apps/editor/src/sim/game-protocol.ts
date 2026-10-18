@@ -68,6 +68,8 @@ export type GameRequest =
   | { kind: 'retry-ai' }
   /** Ход без новых приказов противника (модель не ответила). */
   | { kind: 'skip-ai' }
+  /** Доклад посредника голосом закончен (или снят): штаб противника может занимать модель. */
+  | { kind: 'umpire-done' }
   /** Вопрос советнику: категория, вопрос, проект решения словами, предыдущие вопросы и ответы. */
   | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string }
   /** Советник: варианты решения на ход (count — сколько), проект решения словами, справка из базы знаний; остановить. */

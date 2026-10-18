@@ -19,7 +19,7 @@ import { SECTIONS } from '../sections';
 import { yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, getAction, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
+import { act, actions, forModel, getAction, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
@@ -621,7 +621,7 @@ export class Dispatcher {
       return 'done';
     }
     // вызов проверяется по реестру: действие этого раздела (или общее) и доступно сейчас
-    const a = list.find((x) => x.id === reply.call!.id);
+    const a = forModel(list).find((x) => x.id === reply.call!.id); // кнопки экрана (model: false) модели не даны
     const av = a ? a.available() : null;
     if (!a || av === null) {
       this.say(`Этого система пока не предусматривает. Могу: ${quote(closest(section, rest))}.`);

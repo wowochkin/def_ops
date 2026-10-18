@@ -22,6 +22,11 @@ export interface Action<P = any> {
    * показывается.
    */
   shortcut?: boolean;
+  /**
+   * false — действие кнопки экрана (координаты, ключи, номера сообщений): модели в инструменты не попадает, у голоса
+   * для этого есть другое действие («покажи …», «отмени переправу»).
+   */
+  model?: false;
   /** Строка для панели «Что можно сказать» вместо фраз `say` (перечень: «штаб, открой вкладку …: Модели, …»); не для речи. */
   hint?: string;
   confirm?(p: P): string;              // текст подтверждения
@@ -116,6 +121,8 @@ export function actions(section: string): Action[] {
 
 /** Действия без ярлыков — для модели и списков «что можно сказать». */
 export const listed = (list: Action[]): Action[] => list.filter((a) => !a.shortcut);
+/** Действия для модели: без ярлыков и без кнопок экрана (model: false). */
+export const forModel = (list: Action[]): Action[] => listed(list).filter((a) => a.model !== false);
 
 /** Кнопка, вызывающая действие реестра. data-action — для тура и проверки. */
 export function ActButton({ action, params, children, ...rest }: { action: string; params?: unknown; children?: ReactNode } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>) {
@@ -141,6 +148,14 @@ export function setRetractor(fn: ((id: number) => void) | null): void { retracto
 export function speak(text: string, o?: SpeakOpts): number | void { if (text) return speaker?.(text, o); }
 /** Фраза больше не нужна (новая просьба о том же). */
 export function retract(id: number): void { retractor?.(id); }
+
+let note: string | null = null;
+const noteCbs = new Set<(t: string | null) => void>();
+/** Что идёт сейчас, словами для панели голоса («Посредник готовит доклад»; null — ничего). */
+export function setVoiceNote(t: string | null): void { note = t; noteCbs.forEach((cb) => cb(t)); }
+export function voiceNote(): string | null { return note; }
+/** Панель голоса следит за строкой состояния модулей; возвращает отписку. */
+export function onVoiceNote(cb: (t: string | null) => void): () => void { noteCbs.add(cb); return () => { noteCbs.delete(cb); }; }
 
 let proposer: ((text: string, id: string, params?: unknown) => void) | null = null;
 /** Панель голоса подключает предложения штаба («да / нет»; null — голоса нет: propose молчит). */

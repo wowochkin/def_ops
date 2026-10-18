@@ -2,7 +2,7 @@
 // onSubmit, onKeyDown) в исходниках командования, разбора, входа в командование, окон голоса, вопросов dialogs.ts и тура
 // вызывает действие реестра (act, ActButton, tap/press — обёртки act). Обработчик может звать свою вспомогательную
 // функцию или свойство-обработчик компонента: тогда проверяется она (и то, что передано в свойство там, где компонент
-// используется). Исключения — короткий список с причиной; каждое исключение должно что-то покрывать.
+// используется). Исключения — короткий список с причиной, обработчики в нём — дословно; каждое должно что-то покрывать.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -20,39 +20,59 @@ const FILES: { file: string; part?: [string, string] }[] = [
   { file: 'voice/tour.tsx' },
   { file: 'voice/TourLayer.tsx' },
 ];
-/** Компоненты «Переигровки», которыми пользуется командование (карта): проверяются целиком. */
-const REPLAY_SHARED = ['LayersMenu', 'LevelSwitch', 'LegendPanel'];
+/** Компоненты из других файлов, которые видны в «Командовании» (карта, карточки, меню): проверяются целиком. */
+const SHARED: { file: string; names: string[] }[] = [
+  { file: 'ReplayView.tsx', names: ['LayersMenu', 'LevelSwitch', 'LegendPanel', 'Player'] },
+  { file: 'Sectors.tsx', names: ['SectorPicker'] },
+  { file: 'ui.tsx', names: ['Popover', 'BasemapControls'] },
+  { file: 'FormationCard.tsx', names: ['IntelPanel'] },
+  { file: 'ModelPicker.tsx', names: ['ModelPicker'] },
+];
 
-/** Исключения: где (файл), что в обработчике или рядом с ним (подстрока), почему. */
-const EXCEPTIONS: { file: string; has: string; why: string }[] = [
-  { file: 'CommandView.tsx', has: "setMob('", why: 'переключатель «Штаб / Карта / Советник» на телефоне — служебный элемент узкого экрана' },
-  { file: 'CommandView.tsx', has: 'setPickMode(', why: 'выбор точки на карте мышью (цель, база, переправа, район, отмена выбора) — у голоса свой путь через названное место' },
-  { file: 'CommandView.tsx', has: 'setPick(', why: 'точка цели на карте мышью — голосом цель называется пунктом или соединением' },
-  { file: 'CommandView.tsx', has: 'onMap', why: 'точка на карте вместо пункта из списка — голосом пункт называется' },
-  { file: 'CommandView.tsx', has: 'setPicking(', why: 'точки разграничительной линии на карте мышью — голосом «предложи линию между …»' },
-  { file: 'CommandView.tsx', has: 'setPts(', why: 'сбросить точки линии на карте — часть рисования линии мышью' },
-  { file: 'CommandView.tsx', has: 'setQ(', why: 'поиск пункта по буквам — голосом пункт называется сразу' },
-  { file: 'CommandView.tsx', has: 'setFind(', why: 'поиск вопроса в темах советника — голосом вопрос задаётся своими словами' },
-  { file: 'CommandView.tsx', has: 'setPath(', why: 'дерево тем советника (разделы, «все», хлебные крошки) — голосом вопрос задаётся своими словами: «спроси советника: …»' },
-  { file: 'CommandView.tsx', has: 'setNavOpen(', why: 'свернуть / показать темы советника — вид экрана' },
-  { file: 'CommandView.tsx', has: 'setMode(', why: 'вид списка целей в редакторе приказа (пункт / противник / точка) — голосом цель называется сразу' },
-  { file: 'CommandView.tsx', has: 'setOpen(open', why: 'раскрыть список пунктов («перенести…», «ввести…») — голосом пункт называется сразу: «перенеси базу … в …», «введи … в районе …»' },
-  { file: 'CommandView.tsx', has: 'setMore(', why: 'показать ещё / свернуть список резервов — вид экрана' },
-  { file: 'CommandView.tsx', has: 'setText(', why: 'набор вопроса советнику с клавиатуры — голосом «спроси советника: …»' },
-  { file: 'CommandView.tsx', has: 'e.target.value })', why: 'набор текста решения и указаний с клавиатуры — голосом диктовка («запиши в замысел: …», «указания: …»)' },
-  { file: 'CommandView.tsx', has: 'setNotice(null)', why: 'закрыть уведомление щелчком — подсказка на экране; штаб говорит то же голосом' },
-  { file: 'CommandView.tsx', has: 'openModelBasis(', why: '«Основа модели» уводит в другой раздел («Моделирование»); голосом — «открой моделирование»' },
-  { file: 'CommandView.tsx', has: 'llm.recheck', why: 'проверить связь с моделью — голос перепроверяет связь сам, когда к модели обращаются' },
-  { file: 'CommandView.tsx', has: 'openKbEntry(', why: 'ссылка «по базе: R1» уводит в «Знания» — голосом «открой знания»' },
-  { file: 'CommandView.tsx', has: 'llm.set(', why: 'настройки моделей посредника и Ставки — раздел настройки модели, не командование; голосом — «открой ИИ»' },
-  { file: 'ReviewView.tsx', has: 'onClick={pdf}', why: 'печать — открывается окно печати системы, оно управляется только мышью; голосом — «сохрани разбор» (PDF в «Загрузки»)' },
-  { file: 'voice/VoicePanel.tsx', has: 'power(!enabled)', why: '«Выключить голос» — только рукой: голосом микрофон не закрывается (дежурный режим «Штаб, отбой»), включить голосом выключенный нельзя' },
-  { file: 'voice/VoicePanel.tsx', has: 'startMic', why: 'микрофон не открылся — голосом сказать нечем' },
-  { file: 'voice/VoicePanel.tsx', has: 'applySettings(', why: 'тонкая настройка (регуляторы, «перебивать голосом / словом») — главный путь голосом: «Штаб, калибровка»' },
-  { file: 'voice/VoicePanel.tsx', has: 'resetSettings', why: '«По умолчанию» тонкой настройки — главный путь голосом: «Штаб, калибровка»' },
-  { file: 'voice/VoicePanel.tsx', has: 'onChange(+e.target.value)', why: 'регуляторы тонкой настройки — главный путь голосом: «Штаб, калибровка»' },
-  { file: 'voice/VoicePanel.tsx', has: 'resume', why: 'звук окна включается после первого действия человека (правило браузера) — не элемент управления' },
-  { file: 'voice/Voices.tsx', has: 'setName(', why: 'имя нового голоса с клавиатуры — голосом имя называется в «запиши новый голос гость»' },
+/**
+ * Исключения: файл, обработчики — точно, как написаны (пробелы схлопнуты; имя — если обработчик задан именем), почему.
+ * Обработчик, которого нет в списке дословно, должен идти через реестр.
+ */
+const EXCEPTIONS: { file: string; exact: string[]; why: string }[] = [
+  { file: 'CommandView.tsx', exact: ["() => setMob('staff')", "() => setMob('map')"], why: 'переключатель «Штаб / Карта» на телефоне — служебный элемент узкого экрана' },
+  { file: 'CommandView.tsx', exact: ['() => setPickMode(null)', "() => setPickMode(pickMode?.kind === 'bridge' ? null : { kind: 'bridge' })", 'onMap', '() => setPick(!pick)'],
+    why: 'выбор точки на карте мышью (цель, переправа, база, район, отмена выбора) — у голоса свой путь через названное место' },
+  { file: 'CommandView.tsx', exact: ['() => setPicking(!picking)', '() => setPts(() => [])'], why: 'точки разграничительной линии на карте мышью — голосом «предложи линию между …»' },
+  { file: 'CommandView.tsx', exact: ['(e) => setQ(e.target.value)', '(e) => setFind(e.target.value)'], why: 'поиск по буквам (пункт, вопрос советника) — голосом пункт и вопрос называются сразу' },
+  { file: 'CommandView.tsx', exact: ['() => setPath([])', '() => setPath(path.slice(0, i + 1))', '() => setPath([c])', '() => setPath([...path, c])', '() => setNavOpen(!navOpen)'],
+    why: 'дерево тем советника (разделы, хлебные крошки, «Темы») — голосом вопрос задаётся своими словами: «спроси советника: …»' },
+  { file: 'CommandView.tsx', exact: ['() => setMode(k)'], why: 'вид списка целей в редакторе приказа (пункт / противник / точка) — голосом цель называется сразу' },
+  { file: 'CommandView.tsx', exact: ['(e) => { e.stopPropagation(); setOpen(open === b.id ? null : b.id); }', '() => setOpen(open === g.id ? null : g.id)', '() => setOpen(open === u.id ? null : u.id)', '() => setMore(!more)'],
+    why: 'раскрыть список пунктов («перенести…», «ввести…») или «ещё N» — голосом пункт называется сразу: «перенеси базу … в …», «введи … в районе …»' },
+  { file: 'CommandView.tsx', exact: ['(e) => setText(e.target.value)', '(e) => set({ [k]: e.target.value })', '(e) => set({ report: e.target.value })', '(e) => set({ request: e.target.value })'],
+    why: 'набор текста с клавиатуры (решение, вопрос советнику) — голосом диктовка («запиши в замысел: …») и «спроси советника: …»' },
+  { file: 'CommandView.tsx', exact: ['() => setNotice(null)'], why: 'закрыть уведомление щелчком — подсказка на экране; штаб говорит то же голосом' },
+  { file: 'CommandView.tsx', exact: ['() => { onCancel(); openModelBasis(scenario); }', '() => openKbEntry(r.id)'], why: '«Основа модели», «по базе: R…» уводят в другие разделы («Моделирование», «Знания»); голосом — «открой …»' },
+  { file: 'CommandView.tsx', exact: ['llm.recheck'], why: 'проверить связь с моделью — голос перепроверяет связь сам, когда к модели обращаются' },
+  { file: 'CommandView.tsx', exact: ['(e) => llm.set({ umpire: e.target.checked })', '(e) => llm.set({ stavka: e.target.checked })'], why: 'настройки моделей посредника и Ставки — раздел «ИИ», не командование; голосом — «открой ИИ»' },
+  { file: 'ReviewView.tsx', exact: ['pdf'], why: 'печать — окно печати системы, оно только мышью; голосом — «сохрани разбор» (PDF в «Загрузки»)' },
+  { file: 'voice/VoicePanel.tsx', exact: ['() => power(!enabled)'], why: '«Выключить голос» — только рукой: голосом микрофон не закрывается (дежурный режим «Штаб, отбой»)' },
+  { file: 'voice/VoicePanel.tsx', exact: ['startMic'], why: 'микрофон не открылся — голосом сказать нечем' },
+  { file: 'voice/VoicePanel.tsx', exact: ["() => applySettings({ barge_mode: 'voice' })", "() => applySettings({ barge_mode: 'word' })", '(v) => applySettings({ vad: +(1 - v).toFixed(2) })',
+    '(v) => applySettings({ barge_vad: +(1 - v).toFixed(2) })', '(v) => applySettings({ barge_ms: v })', '(v) => applySettings({ end_ms: v })', 'resetSettings', '(e) => onChange(+e.target.value)'],
+    why: 'тонкая настройка (регуляторы, «перебивать голосом / словом», «По умолчанию») — главный путь голосом: «Штаб, калибровка»' },
+  { file: 'voice/VoicePanel.tsx', exact: ['resume'], why: 'звук окна включается после первого действия человека (правило браузера) — не элемент управления' },
+  { file: 'voice/Voices.tsx', exact: ['(e) => setName(e.target.value)'], why: 'имя нового голоса с клавиатуры — голосом имя называется в «запиши новый голос гость»' },
+  { file: 'ReplayView.tsx', exact: ['() => step(-24)', '() => { if (!playing && cur >= t1) setTime(start); setPlaying(!playing); }', '() => step(24)', '(e) => setSpeed(+e.target.value)',
+    '(e) => { setPlaying(false); setTime(fromMs(t0 + +e.target.value * H)); }', 'k'],
+    why: 'проигрывание шкалы времени (назад, пуск, скорость, ползунок, пробел) — просмотр мышью; голосом — «покажи событие …»' },
+  { file: 'Sectors.tsx', exact: ["() => { close(); setDrawing('wait'); }", '() => setDrawing(null)',
+    '() => { const next = custom.filter((x) => x.id !== s.id); setCustom(next); try { localStorage.setItem(KEY(scenario), JSON.stringify(next)); } catch { /* */ } if (focus?.id === s.id) go(null); }'],
+    why: 'свой участок рисуется и удаляется мышью — голосом участки не рисуются (выбор готового — «участок …»)' },
+  { file: 'Sectors.tsx', exact: ["(e) => { setAuto(e.target.checked); try { localStorage.setItem('def_ops.autoBasemap', e.target.checked ? '1' : '0'); } catch { /* */ } }"],
+    why: 'подложка под участок — оформление карты, не командование' },
+  { file: 'ui.tsx', exact: ["() => bm.setId('none')", '() => bm.setId(b.id)', '(e) => bm.setOpacity(+e.target.value)', '(e) => bm.setOffline(e.target.checked)'],
+    why: 'подложка карты (выбор, прозрачность, без интернета) — оформление карты, не командование' },
+  { file: 'ui.tsx', exact: ["async () => { const name = await askText('Название подложки:', 'Моя карта'); if (!name) return; const url = await askText('Шаблон адреса тайлов XYZ, например https://server/{z}/{x}/{y}.png\\n(или WMS с {bbox-epsg-3857}):', ''); if (!url || !isValidTemplate(url)) { if (url) void say('Нужен адрес с {z}/{x}/{y}, {quadkey} или {bbox-epsg-3857}'); return; } bm.addCustom({ id: 'custom-' + newId('b'), name, tiles: [url], tileSize: 256 }); }"],
+    why: 'своя подложка по адресу тайлов — настройка карты с клавиатуры, не командование' },
+  { file: 'ui.tsx', exact: ['() => setOpen(!open)', 'esc'], why: 'раскрыть меню («⋯», «Подложка») мышью — голосом пункты меню вызываются прямо («открой разбор», «сохрани журнал»)' },
+  { file: 'ModelPicker.tsx', exact: ['(v) => llm.set({ [mk]: v || undefined })', '(e) => llm.set({ [tk]: (e.target.value || undefined) as typeof llm.settings.thinking })'],
+    why: 'выбор модели и размышления — настройка (раздел «ИИ»), не командование' },
 ];
 
 // ---------------------------------------------------------------- разбор исходника
@@ -108,13 +128,13 @@ const SOURCES: Src[] = FILES.flatMap(({ file, part }) => {
   if (!out.length) throw new Error(`${file}: нет пометок входа в командование ${part.join(' … ')}`);
   return out;
 });
-// общие с командованием компоненты карты из «Переигровки» — целиком
-{
-  const text = read('ReplayView.tsx');
-  for (const name of REPLAY_SHARED) {
+// компоненты из других файлов, видимые в командовании, — целиком
+for (const { file, names } of SHARED) {
+  const text = read(file);
+  for (const name of names) {
     const a = text.indexOf(`function ${name}(`);
-    if (a < 0) throw new Error(`ReplayView.tsx: нет компонента ${name}`);
-    SOURCES.push({ file: 'ReplayView.tsx', text, from: a, to: text.indexOf('\n}\n', a) });
+    if (a < 0) throw new Error(`${file}: нет компонента ${name}`);
+    SOURCES.push({ file, text, from: a, to: text.indexOf('\n}\n', a) });
   }
 }
 
@@ -224,7 +244,8 @@ const routed = (h: Handler) => {
   const at = src.text.split('\n').slice(0, h.line - 1).join('\n').length + 1;
   return routes(h.expr, src.text, at);
 };
-const excused = (h: Handler) => EXCEPTIONS.find((x) => x.file === h.file && (h.expr.includes(x.has) || h.near.includes(x.has)));
+const flat = (x: string) => x.replace(/\s+/g, ' ').trim();
+const excused = (h: Handler) => EXCEPTIONS.find((x) => x.file === h.file && x.exact.includes(flat(h.expr)));
 
 describe('полнота голоса в «Командовании» (3.7)', () => {
   it('обработчики найдены во всех файлах', () => {
@@ -236,11 +257,11 @@ describe('полнота голоса в «Командовании» (3.7)', ()
     expect(bad, `мимо реестра:\n${bad.join('\n')}`).toEqual([]);
   });
   it('исключения не устарели: каждое покрывает обработчик, который сам мимо реестра', () => {
-    const unused = EXCEPTIONS.filter((x) => !ALL.some((h) => h.file === x.file && (h.expr.includes(x.has) || h.near.includes(x.has)) && !routed(h)));
-    expect(unused.map((x) => `${x.file}: ${x.has}`)).toEqual([]);
+    const unused = EXCEPTIONS.flatMap((x) => x.exact.filter((e) => !ALL.some((h) => h.file === x.file && flat(h.expr) === e && !routed(h))).map((e) => `${x.file}: ${e}`));
+    expect(unused).toEqual([]);
   });
   it('исключения — с причиной', () => {
-    for (const x of EXCEPTIONS) expect(x.why.length, x.has).toBeGreaterThan(20);
+    for (const x of EXCEPTIONS) expect(x.why.length, x.exact[0]).toBeGreaterThan(20);
   });
   it('проверка ловит обработчик мимо реестра', () => {
     const text = 'function A({ onPick }: { onPick: () => void }) {\n  const go = () => setX(1);\n  return <button onClick={go}>x</button>;\n}\n';

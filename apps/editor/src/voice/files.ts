@@ -28,21 +28,23 @@ function browserDownload(name: string, data: Blob): void {
   setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
 }
 
-/** Настольное приложение: файл — шлюзу, он пишет его в «Загрузки». */
-async function toDownloads(name: string, data: Blob): Promise<{ path: string }> {
-  const r = await fetch(`/api/save?name=${encodeURIComponent(name)}`, { method: 'POST', body: data, headers: { 'Content-Type': data.type || 'application/octet-stream' } });
+/** Настольное приложение: файл — шлюзу, он пишет его в «Загрузки»; адреса нет (шлюз не из запускателя) — null. */
+async function toDownloads(name: string, data: Blob, f: typeof fetch): Promise<{ path: string } | null> {
+  const r = await f(`/api/save?name=${encodeURIComponent(name)}`, { method: 'POST', body: data, headers: { 'Content-Type': data.type || 'application/octet-stream' } });
+  if (r.status === 404) return null;
   const j = (await r.json().catch(() => ({}))) as { path?: string; error?: { message?: string } };
   if (!r.ok || !j.path) throw new Error(j.error?.message ?? `шлюз ответил ${r.status}`);
   return { path: j.path };
 }
 
 /** Сохранить файл: в приложении — в «Загрузки», в браузере — через браузер. Не вышло — причина. */
-export async function saveFile(name: string, data: Blob, o: { inApp?: boolean; download?: (name: string, data: Blob) => void } = {}): Promise<Saved> {
+export async function saveFile(name: string, data: Blob, o: { inApp?: boolean; download?: (name: string, data: Blob) => void; fetch?: typeof fetch } = {}): Promise<Saved> {
   try {
-    let r: { path: string } | 'browser';
+    let r: { path: string } | 'browser' | null = null;
     if (saver) r = await saver(name, data);
-    else if (o.inApp ?? inApp()) r = await toDownloads(name, data);
-    else { (o.download ?? browserDownload)(name, data); r = 'browser'; }
+    else if (o.inApp ?? inApp()) r = await toDownloads(name, data, o.fetch ?? fetch);
+    // браузер (или приложение без адреса сохранения): файл — браузеру, место выбирает он
+    if (!r) { (o.download ?? browserDownload)(name, data); r = 'browser'; }
     return r === 'browser' ? { ok: true, where: 'browser' } : { ok: true, where: 'downloads', path: r.path };
   } catch (e) {
     return { ok: false, error: String((e as Error)?.message ?? e) };

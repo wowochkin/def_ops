@@ -11,7 +11,7 @@
  * ModelUnavailable сразу, без попыток и без заготовленной фразы о повторе.
  */
 import type { LlmSettings, Thinking } from '../sim/game-protocol';
-import { listed, type Action } from './registry';
+import { forModel, type Action } from './registry';
 import { SECTIONS } from '../sections';
 
 export interface OpenAITool {
@@ -40,7 +40,7 @@ const fromToolName = (name: string) => name.replace(/__/g, '.');
 
 /** Действия реестра → инструменты модели: имя — id с «__» вместо точек, описание — describe, параметры — params. */
 export function toTools(actions: Action[]): OpenAITool[] {
-  return listed(actions).map((a) => ({
+  return forModel(actions).map((a) => ({
     type: 'function',
     function: { name: toolName(a.id), description: a.describe, parameters: a.params ?? { type: 'object', properties: {} } },
   }));
@@ -48,7 +48,7 @@ export function toTools(actions: Action[]): OpenAITool[] {
 
 /** Системный текст: роль, правила речи, что можно и чего сейчас нельзя. */
 export function systemText(all: Action[], section?: string): string {
-  const actions = listed(all); // ярлыки — для разборщика, у модели есть действие с параметром
+  const actions = forModel(all); // ярлыки — для разборщика (у модели есть действие с параметром), кнопки экрана — не для модели
   const ok = actions.filter((a) => a.available() === true);
   const off = actions.filter((a) => a.available() !== true);
   const examples = ok.flatMap((a) => a.say ?? []).slice(0, 3).map((e) => `«${e}»`).join(', ');
@@ -77,7 +77,7 @@ const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((res, rej)
 });
 
 /** Один запрос к модели; пустой ответ, нет ответа 20 с, 5xx (кроме 502) — ошибка, повторяется; прочее — NoRetry. */
-async function once(body: object, url: string, f: typeof fetch, signal?: AbortSignal, ids: Map<string, string> = new Map()): Promise<ModelReply> {
+async function once(body: object, url: string, f: typeof fetch, signal?: AbortSignal, ids: Map<string, string> = new Map(), contentOnly = false): Promise<ModelReply> {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(new Error('нет ответа 20 с')), MODEL_TIMEOUT_MS);
   const stop = () => ac.abort(signal?.reason);
@@ -101,7 +101,8 @@ async function once(body: object, url: string, f: typeof fetch, signal?: AbortSi
     const fn = m?.tool_calls?.[0]?.function;
     const clean = (x?: string | null) => (x ?? '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
     // размышление не выключилось и ответ ушёл в reasoning_content — берётся он
-    const say = clean(m?.content) || (fn?.name ? '' : clean(m?.reasoning_content));
+    // contentOnly (доклад вслух) — размышление модели не берётся никогда
+    const say = clean(m?.content) || (fn?.name || contentOnly ? '' : clean(m?.reasoning_content));
     if (!say && !fn?.name) throw new Error('пустой ответ');
     if (!fn?.name) return { say };
     // имя инструмента → id по списку действий (id может содержать «__»); незнакомое — обратной заменой
@@ -164,7 +165,8 @@ export async function askModel(text: string, ctx: {
 
 /**
  * Короткий текст от модели без инструментов (доклад посредника): системный текст и запрос — как есть, размышление
- * выключено. По умолчанию одна попытка (delays — паузы перед повторами); сбой — ModelUnavailable.
+ * выключено; пустой ответ — сбой (текст размышления вслух не берётся). По умолчанию одна попытка (delays — паузы
+ * перед повторами); сбой — ModelUnavailable.
  */
 export async function askText(system: string, text: string, ctx: {
   settings: LlmSettings; fetch?: typeof fetch; signal?: AbortSignal; delays?: number[]; maxTokens?: number;
@@ -182,7 +184,7 @@ export async function askText(system: string, text: string, ctx: {
     if (ctx.signal?.aborted) throw ctx.signal.reason ?? new Error('отменено');
     if (n > 1) await sleep(delays[n - 2], ctx.signal);
     try {
-      return (await once(body, s.url, ctx.fetch ?? fetch, ctx.signal)).say;
+      return (await once(body, s.url, ctx.fetch ?? fetch, ctx.signal, undefined, true)).say;
     } catch (e) {
       if (ctx.signal?.aborted) throw e;
       if (e instanceof NoRetry) throw new ModelUnavailable(e);

@@ -37,7 +37,7 @@ import { act, ActButton, openModal, register, speak, useAction, voiceRecent } fr
 import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl, type TurnDeps } from './voice/actions/turn';
 import { releaseScreen, screenActions, type ScreenDeps } from './voice/actions/screen';
 import { announceTurn, resetUmpire, type UmpireModel } from './voice/umpire';
-import { askText } from './voice/llm';
+import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import { commandActions, releaseCommand, takeoverParse, type CommandDeps } from './voice/actions/command';
 import {
   adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, projectHas, releaseStaff, staffActions, TASKS,
@@ -247,7 +247,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         // ход посчитан (запись стала длиннее): доклад посредника его голосом — по обстановке, что пришла перед записью
         const n = m.record.turns.length;
         if (turnsSeen.current !== null && n > turnsSeen.current && viewNow.current.cur) {
-          void announceTurn({ view: viewNow.current.cur, prev: viewNow.current.prev, record: m.record, ai: aiRef.current, model: umpireModel() });
+          // штаб противника ждёт доклада посредника (umpire-done): не занимает модель раньше него
+          void announceTurn({ view: viewNow.current.cur, prev: viewNow.current.prev, record: m.record, ai: aiRef.current, model: umpireModel(),
+            onDone: () => w.postMessage({ kind: 'umpire-done' } satisfies GameRequest) });
         }
         turnsSeen.current = n;
         try { localStorage.setItem(SAVE_KEY, JSON.stringify({ record: m.record, enemy: enemyRef.current, title: titleRef.current, turn: m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover } satisfies SavedGame)); } catch { /* */ }
@@ -262,9 +264,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     void (saved ? Promise.resolve() : kbSettled()).then(() => { if (live) w.postMessage({ kind: 'start', start: st, record: saved?.record, llm: llm.settings, enemy } satisfies GameRequest); });
     return () => { live = false; w.terminate(); resetUmpire(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  /** Модель посредника для доклада (связь с моделью не прошла проверку — без неё, по правилам). */
+  /** Модель посредника для доклада: обычный срок и повторы (связь с моделью не прошла проверку — без неё, честно). */
   const umpireModel = (): UmpireModel | null => (llmRef.current.check.state === 'fail' ? null
-    : (system, text, o) => askText(system, text, { settings: llmRef.current.settings, signal: o.signal }));
+    : (system, text, o) => askText(system, text, { settings: llmRef.current.settings, signal: o.signal, delays: RETRY_DELAYS_MS }));
   const enemyRef = useRef(enemy); enemyRef.current = enemy;
   const titleRef = useRef(''); titleRef.current = view?.scenarioName ?? saved?.title ?? '';
 
@@ -598,10 +600,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   // экранные действия: выбор объединения, правка приказа, подвкладки, окно советника, «на карте», события
   const screen = useRef<ScreenDeps>(null!);
   screen.current = {
-    view, busy: view ? progress : null, setTab, setSub: (x) => { setSub(x); setPickMode(null); }, select: setSel, sel, goTo: (at, z) => goTo(at, z !== false),
+    view, busy: view ? progress : null, setTab, setSub: (x) => { setSub(x); setPickMode(null); }, closeCard: closeIntel, select: setSel, sel, goTo: (at, z) => goTo(at, z !== false),
     drafts, setDraft: staff.current.setDraft,
     advisor: { open: advOpen, min: advMin }, setAdvisor: (o, mn) => { setAdvOpen(o); setAdvMin(mn); if (!mn) setAdvSeen(adv.length); },
-    clearAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); setAdv([]); setPlan(null); },
+    clearAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); setAdv([]); setPlan(null); }, talk: adv.length,
     setPlanN, plan, planOpen, setPlanOpen, takeSuggestion,
     suggestion: (msg, i) => adv.find((x) => x.id === msg)?.result?.suggestions[i] ?? null,
     hasAct: (k) => acts.some((a) => a.key === k), acts, dropAct,
@@ -718,7 +720,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {intelE && eng && <AgentMark engine={eng} at={intelE.at} />}
-          {intelE && view && <IntelPanel e={intelE} time={view.time} first={view.turn === 1} onClose={closeIntel}
+          {intelE && view && <IntelPanel e={intelE} time={view.time} first={view.turn === 1} onClose={() => tap('command.card.close')}
             actions={<><button data-action="command.tab" onClick={() => { tap('command.tab', { tab: 'intel' }); setMob('staff'); }}>Разведсводка →</button>
               {unit(sel) && unit(sel)!.status !== 'destroyed' && <button data-action="command.order.set" onClick={() => targetEnemy(intelE.id)}
                 title="Цель удара для выбранного объединения — во вкладке «Приказы»">Целью удара для «{short(unit(sel)!.name)}»</button>}</>} />}
@@ -1412,7 +1414,7 @@ function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, 
 }) {
   const [open, setOpen] = useState<string | null>(null);
   // решение штаба противника за ход — раскрыть (голосом прочитать последнее — «как действовал противник»)
-  useAction({ id: 'command.enemy.turn', section: 'replay', title: 'Раскрыть решение противника', describe: 'Вкладка «Посредник»: раскрывает решение штаба противника за ход (time).',
+  useAction({ id: 'command.enemy.turn', model: false, section: 'replay', title: 'Раскрыть решение противника', describe: 'Вкладка «Посредник»: раскрывает решение штаба противника за ход (time).',
     params: { type: 'object', properties: { time: { type: 'string' } }, required: ['time'] }, available: () => true,
     run: async (p: { time: string }) => { setOpen((o) => (o === p?.time ? null : p?.time ?? null)); } });
   const list = current && !turns.some((t) => t.time === current.time) ? [current, ...turns] : turns;

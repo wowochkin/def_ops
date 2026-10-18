@@ -1090,17 +1090,20 @@ await check('без рук: «проводи ход» — чего нет и п�
   await feedHas('Считаю ход').waitFor({ timeout: 30000 });
   // доклад посредника — голосом посредника (роль umpire в фразе сервису), в ленте — «Посредник:»
   await panel.locator('.vp-item.umpire').first().waitFor({ timeout: 180000 }).catch(() => { throw new Error('доклада посредника нет'); });
+  // сначала посредник объявляет, что сведения готовятся, затем — доклад (модели или, честно, по данным расчёта)
+  await feedHas('Решение на следующий ход').waitFor({ timeout: 120000 });
   const ump = await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
   if (!ump.length) throw new Error('доклад посредника не голосом посредника');
-  if (/\d/.test(ump[0])) throw new Error(`в докладе посредника цифры: ${ump[0]}`);
-  const n = ump[0].match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
-  if (n < 3 || n > 5) throw new Error(`в докладе посредника ${n} фраз: ${ump[0]}`);
-  await feedHas('Решение на следующий ход').waitFor({ timeout: 30000 });
+  if (ump[0] !== 'Сведения о ходе готовятся, прошу подождать.' && !/докладываю по данным расчёта/.test(ump[0])) throw new Error(`посредник начал не с объявления: ${ump[0]}`);
+  const rep = ump.at(-1);
+  if (/\d/.test(rep)) throw new Error(`в докладе посредника цифры: ${rep}`);
+  const n = rep.match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
+  if (n < 3 || n > 5) throw new Error(`в докладе посредника ${n} фраз: ${rep}`);
   await page.locator('.cmd-date', { hasText: 'ход 2' }).waitFor({ timeout: 10000 });
   await shot('voice-umpire.jpg');
   const clicks = await page.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `доклад: ${ump[0].slice(0, 80)}…`;
+  return `доклад: ${rep.slice(0, 80)}…`;
 });
 
 await check('первый запуск без калибровки: штаб предлагает её («да / нет»), «нет» — отменено', async () => {
@@ -1376,7 +1379,7 @@ await ctx4.addInitScript(() => {
   const Ws = window.WebSocket;
   window.WebSocket = class extends Ws { send(d) { if (typeof d === 'string') { try { window.__said.push(JSON.parse(d)); } catch { /* */ } } return super.send(d); } };
 });
-const LM4 = { plans: 0, enemy: 0, umpire: 0 };
+const LM4 = { plans: 0, enemy: 0, umpire: 0, log: [] };
 await ctx4.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
   const url = new URL(route.request().url());
   if (url.pathname.endsWith('/v1/models')) return route.fulfill({ json: { object: 'list', data: [{ id: 'fake-voice', object: 'model' }] } });
@@ -1385,9 +1388,9 @@ await ctx4.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
   const schema = body.response_format?.json_schema?.name;
   const reply = (content) => (body.stream ? route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream' }, body: sse(content) }) : route.fulfill({ json: lmReply(content) }));
   if (schema === 'staff_plan') { LM4.plans++; return reply(JSON.stringify(PLAN_FULL)).catch(() => {}); }
-  if (schema === 'staff_decision') { LM4.enemy++; return reply(JSON.stringify(DECISION_DE)).catch(() => {}); }
+  if (schema === 'staff_decision') { LM4.enemy++; LM4.log.push('enemy'); return reply(JSON.stringify(DECISION_DE)).catch(() => {}); }
   if (schema) return reply('{}').catch(() => {});
-  if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM4.umpire++; return reply(UMPIRE_SAYS).catch(() => {}); }
+  if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM4.umpire++; LM4.log.push('umpire'); return reply(UMPIRE_SAYS).catch(() => {}); }
   return reply('Слушаю.').catch(() => {});
 });
 if (STUB) await ctx4.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
@@ -1440,12 +1443,16 @@ await check('без рук от запуска до доклада посред�
   await step4(`доклада посредника нет (штаб противника: ${LM4.enemy}, посредник: ${LM4.umpire})`, panel4.locator('.vp-item.umpire').first(), 240000);
   const ump = await page4.evaluate(() => window.__said.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
   if (!ump.length) throw new Error('доклад посредника не голосом посредника (role umpire)');
-  if (!/^Ход прошёл без перелома\. Восьмая гвардейская армия ведёт бой у Зелова\./.test(ump[0])) throw new Error(`доклад посредника не с модели или цифрами: ${ump[0]}`);
-  await step4('штаб не подсказал, что дальше', said4('Решение на следующий ход'));
+  await step4('штаб не подсказал, что дальше', said4('Решение на следующий ход'), 120000);
+  const ump4 = await page4.evaluate(() => window.__said.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
+  if (ump4[0] !== 'Сведения о ходе готовятся, прошу подождать.') throw new Error(`посредник не объявил, что сведения готовятся: ${ump4[0]}`);
+  if (!ump4.some((x) => /^Ход прошёл без перелома\. Восьмая гвардейская армия ведёт бой у Зелова\./.test(x))) throw new Error(`доклад посредника не с модели или цифрами: ${ump4.join(' | ')}`);
+  // штаб противника — после посредника: его запрос к модели идёт, когда доклад готов (сначала — справка из базы)
+  await until(() => LM4.log.lastIndexOf('enemy') > LM4.log.indexOf('umpire'), 60000, `после доклада штаб противника не спрошен: ${LM4.log.join(', ')}`);
   if (SHOTS) await page4.screenshot({ path: join(SHOTS, 'voice-handsfree-umpire.jpg'), type: 'jpeg', quality: 88 });
   const clicks = await page4.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `щелчков 0, ${Math.round((Date.now() - t0) / 1000)} с, штаб противника: ${LM4.enemy}`;
+  return `щелчков 0, ${Math.round((Date.now() - t0) / 1000)} с, запросы к модели: ${LM4.log.join(" → ")}`;
 });
 await ctx4.close();
 
