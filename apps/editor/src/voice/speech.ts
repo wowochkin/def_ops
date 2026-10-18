@@ -102,7 +102,9 @@ const UNITS: [RegExp, [string, string, string], boolean][] = [
   [/^м/, ['метр', 'метра', 'метров'], false],
 ];
 /** Предлоги с родительным падежом: «до 2 линии» — это «до второй линии», «до 2 рот» — «до двух рот». */
-const GEN_PREP = 'до|от|из|у|без|для|около|после|против|возле';
+const GEN_PREP = 'до|от|из|у|без|для|около|после|против|возле|более|менее|свыше|порядка';
+/** Остальные предлоги, которые однозначно задают падеж соединения: «к 3 тбр», «при 5 УА», «с 4 УФ». */
+const DAT_PREP = 'к|ко|по', PREP_PREP = 'о|об|обо|при', INS_PREP = 'с|со|перед|между';
 /** Единица при числе в тексте: сокращение целиком; точка после «мин.»/«ч.» съедается, только если фраза идёт дальше.
  * Предлог перед числом задаёт падеж: «до пяти километров», «через одну минуту». */
 const anyCase = (ws: string) => ws.split('|').map((w) => `[${w[0].toUpperCase()}${w[0]}]${w.slice(1)}`).join('|');
@@ -136,18 +138,125 @@ function caseOfNext(w: string): string {
 }
 const GEN_ONES = ['', 'одного', 'двух', 'трёх', 'четырёх', 'пяти', 'шести', 'семи', 'восьми', 'девяти'];
 const GEN_TENS = ['', '', 'двадцати', 'тридцати', 'сорока', 'пятидесяти', 'шестидесяти', 'семидесяти', 'восьмидесяти', 'девяноста'];
-/** Количественное в родительном падеже («двух», «пяти», «двадцати одной»), до 99; больше — null. */
+const GEN_HUNDREDS = ['', 'ста', 'двухсот', 'трёхсот', 'четырёхсот', 'пятисот', 'шестисот', 'семисот', 'восьмисот', 'девятисот'];
+/** Три разряда в родительном падеже («двухсот двадцати одной»). */
+function genTriad(n: number, fem: boolean): string[] {
+  const r = n % 100, d = r % 10;
+  const tail = r >= 10 && r < 20 ? [TEENS[r - 10].replace(/ь$/, 'и')] : [GEN_TENS[Math.floor(r / 10)], d === 1 && fem ? 'одной' : GEN_ONES[d]];
+  return [GEN_HUNDREDS[Math.floor(n / 100)], ...tail].filter(Boolean);
+}
+/** Количественное в родительном падеже («двух», «пяти», «двухсот», «тысячи пятисот», «двадцати одной»), от 1 до 999 999; иначе null. */
 export function cardinalGen(n: number, fem = false): string | null {
-  if (!Number.isInteger(n) || n < 1 || n > 99) return null;
-  const one = (d: number) => (d === 1 && fem ? 'одной' : GEN_ONES[d]);
-  if (n < 10) return one(n);
-  if (n < 20) return TEENS[n - 10].replace(/ь$/, 'и');
-  return [GEN_TENS[Math.floor(n / 10)], n % 10 ? one(n % 10) : ''].filter(Boolean).join(' ');
+  if (!Number.isInteger(n) || n < 1 || n > 999999) return null;
+  const th = Math.floor(n / 1000), rest = n % 1000;
+  const out: string[] = [];
+  if (th === 1) out.push('тысячи');
+  else if (th) out.push(...genTriad(th, true), th % 10 === 1 && th % 100 !== 11 ? 'тысячи' : 'тысяч');
+  if (rest) out.push(...genTriad(rest, fem));
+  return out.join(' ');
+}
+
+// ---------------------------------------------------------------- соединения: сокращения, род и падеж
+
+type Cls = 'nom' | 'gen' | 'dat' | 'prep' | 'ins' | 'acc';
+const CLASSES: Cls[] = ['nom', 'gen', 'dat', 'prep', 'ins', 'acc'];
+/** Существительные соединений: формы по падежам (именительный, родительный, дательный, предложный, творительный, винительный). */
+const NOUNS: Record<string, { g: Gender; forms: string[] }> = {
+  корпус: { g: 'm', forms: ['корпус', 'корпуса', 'корпусу', 'корпусе', 'корпусом', 'корпус'] },
+  полк: { g: 'm', forms: ['полк', 'полка', 'полку', 'полке', 'полком', 'полк'] },
+  батальон: { g: 'm', forms: ['батальон', 'батальона', 'батальону', 'батальоне', 'батальоном', 'батальон'] },
+  фронт: { g: 'm', forms: ['фронт', 'фронта', 'фронту', 'фронте', 'фронтом', 'фронт'] },
+  дивизия: { g: 'f', forms: ['дивизия', 'дивизии', 'дивизии', 'дивизии', 'дивизией', 'дивизию'] },
+  армия: { g: 'f', forms: ['армия', 'армии', 'армии', 'армии', 'армией', 'армию'] },
+  бригада: { g: 'f', forms: ['бригада', 'бригады', 'бригаде', 'бригаде', 'бригадой', 'бригаду'] },
+};
+/** Слово → род и падеж (для «гв.» перед полным словом). */
+const NOUN_FORM = new Map<string, [Gender, Cls]>();
+for (const { g, forms } of Object.values(NOUNS)) forms.forEach((w, i) => { if (!NOUN_FORM.has(w)) NOUN_FORM.set(w, [g, CLASSES[i]]); });
+
+/** Прилагательное по роду и падежу; hard — «-ый» (стрелковый), иначе «-ий» (гвардейский). */
+function adjective(stem: string, hard: boolean, g: Gender, c: Cls): string {
+  const f = g === 'f';
+  if (c === 'nom' || (c === 'acc' && !f)) return stem + (f ? 'ая' : g === 'n' ? 'ое' : hard ? 'ый' : 'ий');
+  if (c === 'acc') return `${stem}ую`;
+  if (f) return `${stem}ой`;
+  return stem + { gen: 'ого', dat: 'ому', prep: 'ом', ins: hard ? 'ым' : 'им' }[c];
+}
+/** Наращение порядкового (ключ для ordinalWords) по роду и падежу. */
+function ordKey(g: Gender, c: Cls): string {
+  if (g === 'f') return { nom: 'я', acc: 'ю' }[c as 'nom'] ?? 'fg';
+  if (c === 'nom' || c === 'acc') return g === 'n' ? 'е' : 'й';
+  return { gen: 'го', dat: 'му', prep: 'м', ins: 'ым' }[c];
+}
+const GV: Record<string, [string, boolean]> = { гв: ['гвардейск', false], уд: ['ударн', true] };
+
+/** Сокращения соединений: прилагательные (основа, твёрдое ли) и существительное. */
+const FORMS: Record<string, { adj: [string, boolean][]; noun: string }> = {
+  ск: { adj: [['стрелков', true]], noun: 'корпус' }, тк: { adj: [['танков', true]], noun: 'корпус' }, мк: { adj: [['механизированн', true]], noun: 'корпус' },
+  кк: { adj: [['кавалерийск', false]], noun: 'корпус' }, ак: { adj: [['армейск', false]], noun: 'корпус' },
+  сд: { adj: [['стрелков', true]], noun: 'дивизия' }, пд: { adj: [['пехотн', true]], noun: 'дивизия' }, тд: { adj: [['танков', true]], noun: 'дивизия' },
+  мд: { adj: [['моторизованн', true]], noun: 'дивизия' }, мсд: { adj: [['мотострелков', true]], noun: 'дивизия' }, кд: { adj: [['кавалерийск', false]], noun: 'дивизия' },
+  пгд: { adj: [['панцергренадёрск', false]], noun: 'дивизия' }, нгд: { adj: [['народно-гренадёрск', false]], noun: 'дивизия' },
+  а: { adj: [], noun: 'армия' }, та: { adj: [['танков', true]], noun: 'армия' }, уа: { adj: [['ударн', true]], noun: 'армия' }, ва: { adj: [['воздушн', true]], noun: 'армия' },
+  бр: { adj: [], noun: 'бригада' }, тбр: { adj: [['танков', true]], noun: 'бригада' }, сбр: { adj: [['стрелков', true]], noun: 'бригада' }, мбр: { adj: [['механизированн', true]], noun: 'бригада' },
+  сп: { adj: [['стрелков', true]], noun: 'полк' }, тп: { adj: [['танков', true]], noun: 'полк' }, пп: { adj: [['пехотн', true]], noun: 'полк' }, ап: { adj: [['артиллерийск', false]], noun: 'полк' },
+  отсап: { adj: [['отдельн', true], ['сапёрн', true]], noun: 'батальон' },
+  бф: { adj: [['Белорусск', false]], noun: 'фронт' }, уф: { adj: [['Украинск', false]], noun: 'фронт' },
+};
+/** Без числа и без «гв.» раскрываются только эти строчные сокращения (прочие — лишь заглавными: «ТА», «УА»). */
+const SAFE_LOWER = new Set(['ск', 'тк', 'мк', 'кк', 'ак', 'сд', 'пд', 'тд', 'мд', 'мсд', 'кд', 'пгд', 'нгд', 'тбр', 'сбр', 'мбр', 'отсап']);
+const PREPS = `${GEN_PREP}|${DAT_PREP}|${PREP_PREP}|${INS_PREP}`;
+/** [предлог] [номер[-наращение]] [гв./уд.] сокращение: «из 29 гв. ск», «к 3-й тбр», «ТА». */
+const FORM_RE = new RegExp(String.raw`(?<![\p{L}\d])(?:(${PREPS})\s+)?(?:(\d+)(?:-([а-яё]{1,4}))?\s*)?((?:(?:гв|уд)\.\s*)*)(\p{L}{1,5})(?!\p{L})`, 'giu');
+const SUFFIX_CLS: Record<string, Cls> = { й: 'nom', я: 'nom', е: 'nom', го: 'gen', му: 'dat', м: 'prep', ым: 'ins', ю: 'acc' };
+
+function prepClass(p: string | undefined): Cls | null {
+  if (!p) return null;
+  const w = p.toLowerCase();
+  const has = (list: string) => list.split('|').includes(w);
+  return has(GEN_PREP) ? 'gen' : has(DAT_PREP) ? 'dat' : has(PREP_PREP) ? 'prep' : has(INS_PREP) ? 'ins' : null;
+}
+
+/** Раскрывает сокращение соединения с порядковым и «гвардейским» в роде и падеже существительного; не узнано — исходный текст. */
+function formationText(m: string, prep: string | undefined, num: string | undefined, suf: string | undefined, gv: string, abbr: string): string {
+  const key = abbr.toLowerCase().replace(/^a$/, 'а'); // латинская «A» после номера — армия
+  const def = FORMS[key];
+  if (!def) return m;
+  if (key === 'а' && (num === undefined || !/^[АA]$/.test(abbr))) return m;
+  if (num === undefined && !gv && !(SAFE_LOWER.has(key) ? true : abbr.length > 1 && abbr === abbr.toUpperCase())) return m;
+  const noun = NOUNS[def.noun];
+  const pc = prepClass(prep);
+  let c: Cls = pc ?? 'nom';
+  if (suf !== undefined) {
+    const k = caseKey(suf);
+    const sc = SUFFIX_CLS[k];
+    if (!sc && k !== 'fg') return m; // множественное («2-х ск») — не трогаем
+    if (k === 'fg' || (k === 'й' && noun.g === 'f')) c = pc && pc !== 'nom' ? pc : 'gen'; // «3-й тбр» — «третьей бригады» (падеж — по предлогу)
+    else c = k === 'м' && pc === 'ins' ? 'ins' : sc;
+  }
+  const words = [
+    ...(num !== undefined ? [ordinalWords(+num, ordKey(noun.g, c))] : []),
+    ...(gv.match(/гв|уд/gi) ?? []).map((k) => adjective(...GV[k.toLowerCase()], noun.g, c)),
+    ...def.adj.map(([stem, hard]) => adjective(stem, hard, noun.g, c)),
+    noun.forms[CLASSES.indexOf(c)],
+  ];
+  return `${prep ? `${prep} ` : ''}${words.join(' ')}`;
+}
+
+/** «гв.»/«уд.» перед полным словом: род и падеж — по следующему слову («гв. армия» — «гвардейская», «гв. корпуса» — «гвардейского»). */
+function guardsBeforeWord(k: string, next: string): string {
+  const w = next.toLowerCase();
+  let form: [Gender, Cls] | undefined = NOUN_FORM.get(w);
+  if (!form) {
+    const e = /(ая|ой|ую|ое|ого|его|ому|ему|ым|им|ом|ем|ый|ий)$/.exec(w)?.[1];
+    form = e ? ({ ая: ['f', 'nom'], ой: ['f', 'gen'], ую: ['f', 'acc'], ое: ['n', 'nom'], ого: ['m', 'gen'], его: ['m', 'gen'], ому: ['m', 'dat'], ему: ['m', 'dat'], ым: ['m', 'ins'], им: ['m', 'ins'], ом: ['m', 'prep'], ем: ['m', 'prep'], ый: ['m', 'nom'], ий: ['m', 'nom'] } as Record<string, [Gender, Cls]>)[e] : undefined;
+  }
+  const [g, c] = form ?? ['f', 'nom'];
+  const a = adjective(...GV[k.toLowerCase()], g, c);
+  return k[0] === k[0].toUpperCase() ? a[0].toUpperCase() + a.slice(1) : a;
 }
 /** Сокращения без числа. */
 const ABBR: [RegExp, string][] = [
-  [word('гв\\.'), 'гвардейская'], [word('уд\\.'), 'ударная'], [/(?<!\p{L})ТА(?!\p{L})/gu, 'танковая армия'],
-  [word('сд'), 'стрелковая дивизия'], [word('ак'), 'армейский корпус'], [word('ск'), 'стрелковый корпус'], [word('тк'), 'танковый корпус'],
   [word('км'), 'километров'], [word('т\\.\\s?е\\.'), 'то есть'], [word('т\\.\\s?д\\.'), 'так далее'],
   [word('тыс\\.'), 'тысяч'], [word('чел\\.'), 'человек'], [/№\s*/g, 'номер '],
 ];
@@ -178,8 +287,10 @@ export function speakable(text: string): string {
   t = t.replace(/(?<![\p{L}\d])(T|[А-ЯЁ][А-ЯЁа-яё]{0,2})-(\d{1,3})(?![\d\p{L}])/gu, (_m, l: string, n: string) => `${l === 'T' ? 'Т' : l} ${numberWords(+n)}`);
   t = t.replace(/(?<![\p{L}\d])([IVXLC]+)(\s+)(\p{L}+)/gu, (m, r: string, sp: string, w: string) => {
     const n = romanValue(r);
+    if (n && FORMS[w.toLowerCase()] && w.length > 1) return `${n}${sp}${w}`; // «LVI тк» — дальше как «56 тк»
     return n && FORMATION.test(w.toLowerCase()) ? `${ordinalWords(n, caseOfNext(w.toLowerCase()))}${sp}${w}` : m;
   });
+  t = t.replace(FORM_RE, formationText);
   t = t.replace(/(?<![\p{L}\d])[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\p{L}\d])[A-Za-z](?![\p{L}\d])/gu, ''); // прочая латиница
   t = t.replace(/(\d)[\s ](?=\d{3}(?!\d))/g, '$1'); // «1 250»
   // даты: «16.04», «16.04.1945», «16 апреля»
@@ -210,12 +321,16 @@ export function speakable(text: string): string {
   });
   t = t.replace(/\d+[.,]\d+/g, (m) => decimalWords(m));
   // «до 2 линии», «до 3 рубежа»: после предлога с родительным существительное в единственном числе — порядковое
-  t = t.replace(new RegExp(`(?<!${L})(${GEN_PREP})\\s+(\\d{1,3})\\s+(${L}+)`, 'giu'), (m, p: string, n: string, w: string) => {
+  t = t.replace(new RegExp(`(?<!${L})(${GEN_PREP})\\s+(\\d{1,6})\\s+(${L}+)`, 'giu'), (m, p: string, n: string, w: string) => {
     const lw = w.toLowerCase();
     const [g] = nounGender(` ${lw}`);
-    if (g === 'f' && /[иы]$/.test(lw)) return `${p} ${ordinalWords(+n, 'fg')} ${w}`;
-    if (g !== 'f' && /[ая]$/.test(lw) && !/(?:ая|яя)$/.test(lw)) return `${p} ${ordinalWords(+n, 'го')} ${w}`;
-    // множественное число: «до двух рот», «от пяти дивизий»
+    if (p.toLowerCase() === 'около') { // «около 21 пушки», «около 200 танков» — только количество
+      const cg = cardinalGen(+n, g === 'f');
+      return cg ? `${p} ${cg} ${w}` : m;
+    }
+    if (+n < 1000 && g === 'f' && /[иы]$/.test(lw)) return `${p} ${ordinalWords(+n, 'fg')} ${w}`;
+    if (+n < 1000 && g !== 'f' && /[ая]$/.test(lw) && !/(?:ая|яя)$/.test(lw)) return `${p} ${ordinalWords(+n, 'го')} ${w}`;
+    // множественное число: «до двух рот», «от пяти дивизий», «более двухсот танков»
     const cg = /[^аеёиоуыэюя]$/.test(lw) ? cardinalGen(+n, g === 'f') : null;
     return cg ? `${p} ${cg} ${w}` : m;
   });
@@ -228,6 +343,7 @@ export function speakable(text: string): string {
     return (g === 'f' && /[ую]$/.test(noun) ? w.replace(/одна$/, 'одну') : w) + tail;
   });
   t = t.replace(/\d+/g, (m) => numberWords(+m));
+  t = t.replace(/(?<!\p{L})(гв|уд)\.\s*(\p{L}+)/giu, (m, k: string, next: string) => m.replace(/^\p{L}+\./u, guardsBeforeWord(k, next)));
   for (const [re, rep] of ABBR) t = t.replace(re, rep);
   t = t.replace(/\s+/g, ' ').replace(/\s+([.,!?…:;])/g, '$1').replace(/[,;:]+(?=[.!?…]|$)/g, '').trim();
   return shorten(t);
