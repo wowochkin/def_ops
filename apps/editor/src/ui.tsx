@@ -6,7 +6,7 @@ import { isValidTemplate } from './engine/basemaps';
 import type { Basemaps } from './shared';
 
 /** Кнопка со всплывающей панелью (закрывается щелчком вне её и Esc). */
-export function Popover({ label, title, children, align = 'left', className = '' }: { label: ReactNode; title?: string; children: ReactNode | ((close: () => void) => ReactNode); align?: 'left' | 'right'; className?: string }) {
+export function Popover({ label, title, children, align = 'left', className = '', 'data-tour': tour }: { label: ReactNode; title?: string; children: ReactNode | ((close: () => void) => ReactNode); align?: 'left' | 'right'; className?: string; /** для тура голосом */ 'data-tour'?: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -18,7 +18,7 @@ export function Popover({ label, title, children, align = 'left', className = ''
   }, [open]);
   const close = () => setOpen(false);
   return (
-    <div className={`pop ${className}`} ref={ref}>
+    <div className={`pop ${className}`} ref={ref} data-tour={tour}>
       <button className={`pop-btn${open ? ' on' : ''}`} title={title} onClick={() => setOpen(!open)}>{label}</button>
       {open && <div className={`pop-body ${align}`}>{typeof children === 'function' ? children(close) : children}</div>}
     </div>

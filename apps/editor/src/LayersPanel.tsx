@@ -62,7 +62,7 @@ export function LayersPanel(p: Props) {
   };
 
   return (
-    <div className="layers">
+    <div className="layers" data-tour="editor-layers">
       <div className="sec-h">
         <span>Слои</span>
         <button className="link" title="Показать все слои" disabled={doc.layers.every((l) => l.visible)}

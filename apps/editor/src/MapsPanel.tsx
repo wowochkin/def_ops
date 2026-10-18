@@ -133,7 +133,7 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMap
 
   if (!online) {
     return (
-      <div className="maps">
+      <div className="maps" data-tour="maps-local">
         <div className="sec-h"><span>Локальные карты</span></div>
         <div className="muted pad">Сервис картографии недоступен: {SERVICES_HINT}.</div>
       </div>
@@ -141,12 +141,12 @@ export function MapsPanel({ online, doc, selected, engine, onShow, onArea, onMap
   }
 
   return (
-    <div className="maps">
+    <div className="maps" data-tour="maps-local">
       <div className="sec-h">
         <span>Локальные карты <span className="muted" title="Хранятся на сервере платформы, работают без интернета">(офлайн)</span></span>
         <span className="row-btns">
           <button onClick={() => setForm(form === 'xyz' ? null : 'xyz')} title="Скачать тайлы карты из интернет-источника в локальное хранилище">+ скачать</button>
-          <button onClick={() => setForm(form === 'ohm' ? null : 'ohm')} title="Скачать данные OpenHistoricalMap района (театра операции) и показывать карту на дату без интернета">+ OpenHistoricalMap</button>
+          <button data-tour="maps-ohm" onClick={() => setForm(form === 'ohm' ? null : 'ohm')} title="Скачать данные OpenHistoricalMap района (театра операции) и показывать карту на дату без интернета">+ OpenHistoricalMap</button>
           <label className="filebtn" title="Загрузить карту из файла: пакет платформы (.tar), Locus / RMaps / OsmAnd (.sqlitedb), MBTiles (.mbtiles) или OziExplorer — файл привязки .map вместе с изображением карты (выберите оба)">из файла
             <input type="file" multiple accept=".tar,.sqlitedb,.mbtiles,.map,.jpg,.jpeg,.png,.tif,.tiff,.webp" onChange={async (e) => {
               const files = [...(e.target.files ?? [])]; e.target.value = '';

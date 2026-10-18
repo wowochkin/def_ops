@@ -73,7 +73,7 @@ export function Timeline({ doc, setDoc, time, setTime, newFromNow, setNewFromNow
 
   if (!on) {
     return (
-      <div className="timeline off">
+      <div className="timeline off" data-tour="editor-time">
         <button onClick={() => setTime(range ? (doc.timeline?.current ?? range.start) : '1945-04-16')}
           title="Показывать обстановку на выбранный момент: знаки появляются и перемещаются по датам">
           ⏱ Обстановка на дату
@@ -86,7 +86,7 @@ export function Timeline({ doc, setDoc, time, setTime, newFromNow, setNewFromNow
   const motion = doc.timeline?.motion ?? 'smooth';
   const dateOnly = isDateOnly(time!);
   return (
-    <div className="timeline">
+    <div className="timeline" data-tour="editor-time">
       <div className="tl-row">
         <button className="link" title="Выключить время — показать все знаки" onClick={() => { setPlaying(false); setTime(null); }}>✕</button>
         <div className="tl-now">

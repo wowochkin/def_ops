@@ -32,9 +32,25 @@ export interface TourControl {
 const NO_TOUR = 'Тур сейчас не идёт.';
 const title = (id: string) => SECTIONS.find((s) => s.id === id)?.title ?? id;
 
+/**
+ * «Тур по …» — название раздела в дательном падеже. Без модели параметр из фразы не разобрать (разборщик
+ * сопоставляет `say` дословно), поэтому у каждого раздела — своё действие `tour.of.<раздел>` с фразами
+ * «Штаб, тур по картам», «Штаб, покажи раздел Карты».
+ */
+const DATIVE: Record<string, string[]> = {
+  editor: ['редактору'], replay: ['переигровке'], modeling: ['моделированию'], maps: ['картам'],
+  library: ['знакам'], knowledge: ['знаниям'], staff: ['разделу ии', 'ии'],
+};
+export const tourSay = (id: string) => [
+  ...(DATIVE[id] ?? []).map((d) => `штаб, тур по ${d}`),
+  `штаб, покажи раздел ${title(id).toLowerCase()}`,
+];
+
 export function tourActions(c: TourControl): Action[] {
   const always = { section: 'global', available: () => true as const };
   const during = { section: 'global', available: () => (c.active() ? true as const : NO_TOUR) };
+  const startSection = async (s: string) => (c.has(s) ? c.start(s)
+    : `По разделу «${title(s)}» тура пока нет. Могу рассказать о приложении: скажите «Штаб, расскажи о приложении».`);
   return [
     { ...always, id: 'tour.intro', title: 'Рассказать о приложении', describe: 'Вступление: что это за приложение, его разделы, как говорить со штабом.',
       say: ['штаб, расскажи о приложении'], run: async () => c.start('intro') },
@@ -43,12 +59,14 @@ export function tourActions(c: TourControl): Action[] {
       describe: 'Показывает раздел с подсветкой: что в нём есть и что сказать. Без параметра — текущий раздел; intro — о приложении, voice — панель голоса.',
       params: { type: 'object', properties: { section: { enum: [...SECTIONS.map((s) => s.id), 'intro', 'voice'] } } },
       say: ['штаб, покажи раздел'],
-      run: async (p?: { section?: string }) => {
-        const s = p?.section ?? c.section();
-        if (!c.has(s)) return `По разделу «${title(s)}» тура пока нет. Могу рассказать о приложении: скажите «Штаб, расскажи о приложении».`;
-        return c.start(s);
-      },
+      run: async (p?: { section?: string }) => startSection(p?.section ?? c.section()),
     },
+    ...SECTIONS.map((sec): Action => ({
+      ...always, id: `tour.of.${sec.id}`, title: `Тур по разделу «${sec.title}»`,
+      describe: `Показывает раздел «${sec.title}» с подсветкой: что в нём есть и что сказать.`,
+      say: tourSay(sec.id),
+      run: async () => startSection(sec.id),
+    })),
     { ...always, id: 'tour.voice', title: 'Рассказать о панели голоса', describe: 'Тур по панели голоса.',
       say: ['штаб, расскажи о панели голоса'], run: async () => c.start('voice') },
     {

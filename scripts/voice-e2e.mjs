@@ -20,7 +20,9 @@
 // подсказка «пройдите калибровку заново» и перебивание «словом».
 // Тур: вступление при запуске (новое окно, калибровки не было) — подсветка колонки разделов, «Штаб, дальше» —
 // рамка на кнопке колонки, «назад» без обращения, «Штаб, хватит» снимает притемнение; voice:ready-first отменён
-// вступлением, после него — voice:propose; флажок «Вступление при запуске» в «Тонкой настройке».
+// вступлением, после него — voice:propose; флажок «Вступление при запуске» в «Тонкой настройке». Туры разделов:
+// «Штаб, открой моделирование» — предложение тура; «Штаб, открой вкладку Калибровка»; «Штаб, тур по моделированию» —
+// шаги открывают вкладки; «Штаб, тур по знакам» — подсветка внутри страницы справочника (iframe).
 // Без рук (ни одного щелчка — только поддельный микрофон): дежурный режим («отбой» — дежурю, «открой карты» не
 // исполняется, «на связь» будит), вопросы dialogs.ts голосом (confirmAsync — «да», команда при открытом окне не
 // исполняется; chooseAsync — «второй»; askText — диктовка и «готово»), окно «Голоса» (прослушать, назначить, записать
@@ -28,7 +30,8 @@
 // при первом запуске («нет»), вход в командование и обстановка («открой переигровку» → «рассчитай операцию» →
 // «прими командование» → «без штаба» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»).
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
-// панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и тура (voice-tour.jpg).
+// панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и туров (voice-tour.jpg, voice-tour-modeling.jpg,
+// voice-tour-library.jpg).
 // Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -1164,6 +1167,109 @@ await check('voice:ready-first отменён вступлением, после
   if ((await page2.evaluate(() => window.__tour.ready)) !== true) throw new Error('voice:ready-first не отменён');
 });
 await ctx2.close();
+
+// ---------------------------------------------------------------- туры разделов и вкладки голосом
+// новое окно (вступление выключено), сервис с репликами: раздел, вкладка, тур по моделированию с переключением
+// вкладок, тур по знакам — подсветка внутри страницы справочника (iframe)
+const scriptSections = join(tmp, 'script-sections.txt');
+writeFileSync(scriptSections, ['штаб, открой моделирование', 'штаб, открой вкладку калибровка', 'штаб, тур по моделированию',
+  'штаб, дальше', 'штаб, дальше', 'штаб, дальше', 'штаб, хватит', 'штаб, тур по знакам', 'штаб, дальше', 'штаб, дальше', 'штаб, хватит',
+  ...Array(60).fill('передайте в штаб армии')].join('\n') + '\n');
+await stopVoice();
+await startVoice(scriptSections);
+const ctx3 = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone'] });
+await ctx3.addInitScript((url) => {
+  if (sessionStorage.getItem('e2e.init')) return;
+  sessionStorage.setItem('e2e.init', '1');
+  localStorage.clear();
+  localStorage.setItem('def_ops.voice.url', url);
+  localStorage.setItem('def_ops.section', 'editor');
+  localStorage.setItem('def_ops.voice.intro', 'off');
+  localStorage.setItem('def_ops.voice.panel', 'open');
+}, `ws://127.0.0.1:${vport}/ws`);
+if (STUB) await ctx3.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
+const page3 = await ctx3.newPage();
+page3.on('pageerror', (e) => errors.push(e.message));
+await page3.goto(app + '/#editor');
+const layer3 = page3.locator('.tour');
+const feed3 = async () => (await page3.locator('.vp-feed').innerText().catch(() => '')).replace(/\s+/g, ' ');
+const heard3 = (t) => page3.locator('.vp-item', { hasText: t }).first().waitFor({ timeout: 40000 })
+  .catch(async () => { throw new Error(`в ленте нет «${t}»: ${await feed3()}`); });
+const title3 = (t) => layer3.locator('.tour-cap h2', { hasText: t }).waitFor({ timeout: T })
+  .catch(async () => { throw new Error(`нет шага «${t}»; лента: ${await feed3()}`); });
+/**
+ * Рамка тура — вокруг [data-tour=target] в окне или в странице во врезке (iframe; координаты — со сдвигом врезки);
+ * capFree — подпись не на рамке и не на панели голоса.
+ */
+const frame3 = (target, capFree = true) => page3.waitForFunction(([t, free]) => {
+  const pad = /^rail-/.test(t) ? 1 : 8;
+  const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
+  const sel = `[data-tour="${t}"]`;
+  let el = [...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
+  if (!el) {
+    for (const fr of document.querySelectorAll('iframe')) {
+      const o = fr.getBoundingClientRect();
+      const r = [...(fr.contentDocument?.querySelectorAll(sel) ?? [])].map((e) => e.getBoundingClientRect()).find((x) => x.width > 0);
+      if (r) { el = new DOMRect(o.left + r.left, o.top + r.top, r.width, r.height); break; }
+    }
+  }
+  const cap = document.querySelector('.tour-cap')?.getBoundingClientRect();
+  const card = document.querySelector('.vp-card')?.getBoundingClientRect();
+  const cross = (a, b) => !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  return !!f && !!el && [f.left + pad - el.left, f.top + pad - el.top, f.width - 2 * pad - el.width, f.height - 2 * pad - el.height].every((d) => Math.abs(d) < 1.5)
+    && (!free || (!cross(cap, f) && !cross(cap, card)));
+}, [target, capFree], { timeout: 15000, polling: 50 }).catch(() => { throw new Error(`рамка не вокруг [data-tour="${target}"]${capFree ? ' или подпись на ней / на панели' : ''}`); });
+
+await check('«Штаб, открой моделирование» — раздел открыт, штаб предлагает тур по нему (первый вход)', async () => {
+  await page3.locator('[data-tour="section-modeling"]').waitFor({ state: 'visible', timeout: 40000 });
+  await page3.locator('.vp-item', { hasText: 'Показать, что есть в разделе «Моделирование»' }).first().waitFor({ timeout: T })
+    .catch(async () => { throw new Error(`предложения тура нет: ${await feed3()}`); });
+});
+
+await check('«Штаб, открой вкладку Калибровка» — вкладка открыта и запомнена', async () => {
+  await heard3('открой вкладку калибровка');
+  await page3.locator('[data-tour="modeling-tab-calibrate"].on').waitFor({ timeout: 10000 });
+  const kept = await page3.evaluate(() => localStorage.getItem('def_ops.modeling.tab'));
+  if (kept !== 'calibrate') throw new Error(`запомнена вкладка ${kept}`);
+  await page3.locator('.vp-item', { hasText: 'Открыта вкладка «Калибровка»' }).first().waitFor({ timeout: 10000 });
+});
+
+await check('«Штаб, тур по моделированию» — тур идёт по вкладкам: «дальше» открывает следующую, рамка на ней', async () => {
+  await heard3('тур по моделированию');
+  await title3('Моделирование');
+  await frame3('modeling-tabs');
+  await title3('Сравнение');
+  await page3.locator('[data-tour="modeling-tab-compare"].on').waitFor({ timeout: 5000 });
+  await frame3('modeling-tab-compare');
+  await page3.waitForTimeout(300);
+  if (SHOTS) await page3.screenshot({ path: join(SHOTS, 'voice-tour-modeling.jpg'), type: 'jpeg', quality: 88 });
+  const say = await layer3.locator('.tour-cap').innerText();
+  if (!say.includes('четырёх наборов правил')) throw new Error(`подпись: ${say}`);
+});
+
+await check('«Штаб, хватит» — тур по моделированию окончен', async () => {
+  await layer3.waitFor({ state: 'detached', timeout: 40000 });
+});
+
+await check('«Штаб, тур по знакам» — раздел «Знаки», подсветка внутри страницы справочника (iframe)', async () => {
+  await heard3('тур по знакам');
+  await title3('Справочник знаков');
+  await frame3('section-library', false);
+  await title3('Оформление');
+  await frame3('lib-styles');
+  await page3.waitForTimeout(300);
+  if (SHOTS) await page3.screenshot({ path: join(SHOTS, 'voice-tour-library.jpg'), type: 'jpeg', quality: 88 });
+  await title3('Поиск');
+  await frame3('lib-search');
+  return 'lib-styles, lib-search';
+});
+
+await check('«Штаб, хватит» — тур по знакам окончен, притемнения нет', async () => {
+  await layer3.waitFor({ state: 'detached', timeout: 40000 });
+  const left = await page3.evaluate(() => document.querySelectorAll('.tour, .tour-dim, .tour-frame, .tour-cap').length);
+  if (left) throw new Error(`осталось элементов тура: ${left}`);
+});
+await ctx3.close();
 
 await check('в окне нет ошибок JavaScript', async () => {
   if (errors.length) throw new Error(errors.join('; '));

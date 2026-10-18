@@ -20,7 +20,7 @@ const byId = new Map(LIBRARY.map((e) => [e.id, e]));
 function DesignSection({ style, setStyle }: { style: StyleId; setStyle: (s: StyleId) => void }) {
   // описание длинное — по умолчанию свёрнуто, чтобы под переключателем сразу были знаки (в печати — развёрнуто)
   return (
-    <details className="design" id="design" open={PRINT}>
+    <details className="design" id="design" data-tour="lib-design" open={PRINT}>
       <summary><h2>Оформление знаков</h2><span className="muted">что это и чем отличаются варианты — развернуть</span></summary>
       <p className="cdesc">
         Система знаков в библиотеке одна: каждый элемент — это смысл (что обозначается), привязка к местности,
@@ -118,14 +118,14 @@ function LibraryPage() {
           источниками не подтверждены.
         </p>
         <div className="ctl">
-          {STYLES.map((s) => (
+          <span className="ctl-styles" data-tour="lib-styles">{STYLES.map((s) => (
             <button key={s.id} className={s.id === style ? 'on' : ''} title={s.description} onClick={() => setStyle(s.id)}>{s.name}</button>
-          ))}
-          <input placeholder="Поиск: танк, мост, котёл, катюша…" value={q} onChange={(e) => setQ(e.target.value)} />
+          ))}</span>
+          <input data-tour="lib-search" placeholder="Поиск: танк, мост, котёл, катюша…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <p className="ctl-note">Знаки ниже показаны в оформлении «{STYLES.find((s) => s.id === style)!.name}»: {LIBRARY.filter((e) => e.variants[style]).length} из {LIBRARY.length} есть в нём, остальные — в ближайшем (отмечены бледнее).</p>
       </header>
-      <nav><a href="#design">Оформление знаков</a>{CATEGORIES.map((c) => <a key={c.id} href={`#${c.id}`}>{c.name}</a>)}</nav>
+      <nav data-tour="lib-nav"><a href="#design">Оформление знаков</a>{CATEGORIES.map((c) => <a key={c.id} href={`#${c.id}`}>{c.name}</a>)}</nav>
       {!q && <DesignSection style={style} setStyle={setStyle} />}
       {CATEGORIES.map((c) => {
         const items = LIBRARY.filter((e) => e.category === c.id && found.has(e.id));
@@ -139,7 +139,7 @@ function LibraryPage() {
                 const v = variantFor(e, style);
                 const paper = paperFor(v.preset);
                 return (
-                  <div key={e.id} className={`card${v.style !== style ? ' other' : ''}`}>
+                  <div key={e.id} className={`card${v.style !== style ? ' other' : ''}`} data-tour="lib-card">
                     <div className="pv">
                       <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paper, e.sideAware ? 'own' : undefined, true) }} />
                       {e.sideAware && <span dangerouslySetInnerHTML={{ __html: presetPreview(e.kind, v.preset, paper, 'enemy', true) }} />}

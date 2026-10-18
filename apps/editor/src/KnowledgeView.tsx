@@ -26,8 +26,10 @@ import type { Llm } from './shared';
 import { ModelPicker } from './ModelPicker';
 import { mdToHtml } from './markdown';
 import { download } from './ReplayView';
+import { ActButton } from './voice/registry';
+import { KB_TAB, TABS, type TabOf } from './voice/actions/tabs';
 
-type Tab = 'browse' | 'queue' | 'docs' | 'coverage';
+type Tab = TabOf<'knowledge'>;
 interface QA { id: number; mode: 'ask' | 'lecture'; q: string; text: string; thinking: string; model?: string; seconds?: number; search?: string; stage?: 'search' | 'model'; sources: Source[]; done: boolean; error?: string }
 
 export function KnowledgeView({ llm }: { llm: Llm }) {
@@ -59,6 +61,14 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
     return () => window.removeEventListener('def_ops.kb.queue', f);
   }, []);
   const toQueue = (doc?: string) => { setQf(doc ? { doc } : {}); setTab('queue'); };
+  // вкладка голосом или кнопкой (knowledge.tab): событие; раздел ещё не был открыт — разовая запись
+  useEffect(() => {
+    const go = (t: unknown) => { try { localStorage.removeItem(KB_TAB); } catch { /* */ } if (TABS.knowledge.some((x) => x.id === t)) setTab(t as Tab); };
+    try { const t = localStorage.getItem(KB_TAB); if (t) go(t); } catch { /* */ }
+    const f = (e: Event) => go((e as CustomEvent<{ tab?: string }>).detail?.tab);
+    window.addEventListener(KB_TAB, f);
+    return () => window.removeEventListener(KB_TAB, f);
+  }, []);
   // операция: '' — все материалы, 'general' — общие (без операции), иначе id операции
   const [ops, setOps] = useState<KbOperation[]>([]);
   const [op, setOp] = useState<string>(() => { try { return localStorage.getItem('def_ops.kbOp') ?? ''; } catch { return ''; } });
@@ -73,13 +83,12 @@ export function KnowledgeView({ llm }: { llm: Llm }) {
     <div className="kb">
       <div className="kb-top">
         <h2>Знания</h2>
-        <nav className="kb-tabs">
-          <button className={tab === 'browse' ? 'on' : ''} onClick={() => setTab('browse')}>Материалы</button>
-          <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')} title="Кандидаты-факты, которые проверки не пропустили в базу сразу: решает человек">На проверку{pending ? <i className="kb-badge">{pending}</i> : null}</button>
-          <button className={tab === 'docs' ? 'on' : ''} onClick={() => setTab('docs')}>Документы</button>
-          <button className={tab === 'coverage' ? 'on' : ''} onClick={() => setTab('coverage')} title="Полнота материалов операции по каркасу">Полнота</button>
-        </nav>
-        <label className="kb-op" title="Материалы операции: записи из разбора её документов и относящиеся к ней по периоду и рубрикам">Операция
+        <nav className="kb-tabs" data-tour="knowledge-tabs">{TABS.knowledge.map((t) => (
+          <ActButton key={t.id} action="knowledge.tab" params={{ tab: t.id }} className={tab === t.id ? 'on' : ''} title={'hint' in t ? t.hint : undefined} data-tour={`knowledge-tab-${t.id}`}>
+            {t.title}{t.id === 'queue' && pending ? <i className="kb-badge">{pending}</i> : null}
+          </ActButton>
+        ))}</nav>
+        <label className="kb-op" data-tour="knowledge-op" title="Материалы операции: записи из разбора её документов и относящиеся к ней по периоду и рубрикам">Операция
           <select value={op} onChange={(e) => setOp(e.target.value)}><option value="">все материалы</option><option value="general">общие (без операции)</option>
             {ops.map((o) => <option key={o.id} value={o.id}>{o.title.split(':')[0]}</option>)}</select></label>
         <span className="muted">{s.ready ? `${scoped.entries.length} записей, ${scoped.documents.length} документов` : 'загрузка…'}</span>
@@ -414,7 +423,7 @@ function Ask({ llm, s, open, topic }: { llm: Llm; s: kb.KbState; open: (id: stri
     }
   };
   return (
-    <aside className="kb-ask">
+    <aside className="kb-ask" data-tour="knowledge-ask">
       <div className="kb-ask-h"><b>Спросить</b><span className="muted">модель отвечает только по материалам базы, со ссылками</span>{msgs.length > 0 && <button className="link" onClick={() => { ctl.current.abort(); setMsgs([]); }}>очистить</button>}</div>
       <ModelPicker llm={llm} who="kb" purpose="ответов и разбора документов" />
       <div className="kb-ask-body">

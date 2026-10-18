@@ -5,6 +5,7 @@ body { margin: 0; background: #f4f4f2; font: 14px/1.4 'Roboto Condensed', 'PT Sa
 .lib h1 { margin: 0 0 4px; font-size: 26px; }
 .lead { margin: 0 0 10px; color: #444; max-width: 900px; }
 .ctl { display: flex; gap: 6px; flex-wrap: wrap; }
+.ctl-styles { display: flex; gap: 6px; flex-wrap: wrap; }
 .ctl button { border: 1px solid #ccc; background: #fff; border-radius: 4px; padding: 4px 10px; cursor: pointer; font: inherit; }
 .ctl button.on { background: #1f6fd1; color: #fff; border-color: #1f6fd1; }
 .ctl input { flex: 1; min-width: 220px; font: inherit; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; }

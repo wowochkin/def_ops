@@ -207,7 +207,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
         <button className="ic" disabled={!canUndo} onClick={undo} title="Отменить (Ctrl+Z)">↶</button>
         <button className="ic" disabled={!canRedo} onClick={redo} title="Повторить (Ctrl+Shift+Z)">↷</button>
         <span className="sep" />
-        <Popover label="Файл" title="Открыть, сохранить, экспорт, примеры">{(close) => (
+        <Popover label="Файл" title="Открыть, сохранить, экспорт, примеры" data-tour="editor-file">{(close) => (
           <div className="menu">
             <button onClick={async () => { close(); if (await ask('Создать пустую карту? Несохранённые изменения будут потеряны.')) { const vw = engine?.getView(); loadDoc(emptyDocument(vw?.center, vw?.zoom)); } }}>Новая пустая карта</button>
             <label className="menu-file">Открыть / импорт JSON, GeoJSON…<input type="file" accept=".json,.geojson,application/json,application/geo+json" onChange={(e) => { const f = e.target.files?.[0]; if (f) openFile(f); e.target.value = ''; close(); }} /></label>
@@ -226,7 +226,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
             {SCENES.map((x) => <button key={x.id} onClick={async () => { close(); if (await ask(`Открыть пример «${x.name}»? Текущая карта будет заменена.`)) loadDoc(x.build()); }}>{x.name}</button>)}
           </div>
         )}</Popover>
-        <Popover label="Вид" title="Подложка, бумага, размер знаков">
+        <Popover label="Вид" title="Подложка, бумага, размер знаков" data-tour="editor-view">
           <BasemapControls bm={bm} dateNote={time && bm.current?.dated ? `шкалы времени, ${dmy(time)}` : null} />
           <div className="pop-title">Карта</div>
           <label className="bm-row">Цвет бумаги <input type="color" value={doc.paper} onChange={(e) => set({ ...doc, paper: e.target.value }, 'paper')} /></label>
@@ -238,10 +238,10 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
           </label>
         </Popover>
         <span className="status">{status}</span>
-        <Popover label={Icon.help} title="Как работать" align="right" className="help-pop"><Help /></Popover>
+        <Popover label={Icon.help} title="Как работать" align="right" className="help-pop" data-tour="editor-help"><Help /></Popover>
       </header>
       <aside className="left"><Palette tool={tool} setTool={(t) => { setTool(t); if (t.mode === 'draw') setSelected(null); }} /></aside>
-      <main>
+      <main data-tour="editor-map">
         <MapView key={mapKey} doc={doc} setDoc={set} selected={selected} setSelected={setSelected} selectedOverlay={selectedOverlay}
           tool={tool} setTool={setTool} activeLayer={activeLayer} basemap={bm.current} basemapOpacity={bm.opacity}
           basemapDate={basemapDate(bm.current, time, bm.year)}

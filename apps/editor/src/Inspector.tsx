@@ -33,7 +33,7 @@ export function Inspector({ doc, setDoc, feature: f, onDeselect, time = null, se
   const presetTable = PRESETS[f.kind] as Record<string, { name: string; group: string }>;
 
   return (
-    <div className="inspector">
+    <div className="inspector" data-tour="editor-inspector">
       <Section title={kindName(f.kind)} right={<button className="link" onClick={onDeselect}>✕</button>}>
         <Text label="Имя" value={f.name ?? ''} onChange={(v) => set((x) => ({ ...x, name: v }), 'name')} />
         <Select label="Слой" value={f.layerId} options={[...doc.layers].reverse().map((l) => [l.id, l.locked ? `${l.name} (заблокирован)` : l.name] as [string, string])}

@@ -285,7 +285,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
   return (
     <div className="replay th">
       <aside className="rp-side th-side">
-        <div className="rp-head"><h2>Театры</h2><p>Местность, дороги, реки, мосты, районы и рубежи, на которых считает арбитр. Выберите область — и выгрузите по ней слои или заготовку для сборки нового театра.</p></div>
+        <div className="rp-head" data-tour="maps-theatre"><h2>Театры</h2><p>Местность, дороги, реки, мосты, районы и рубежи, на которых считает арбитр. Выберите область — и выгрузите по ней слои или заготовку для сборки нового театра.</p></div>
         <label className="th-f">Театр <select value={sel} onChange={(e) => setSel(e.target.value)}>
           {list.map((x) => <option key={x.id} value={x.id}>{x.title}{x.src === 'user' ? ' · загружен' : ''}</option>)}</select></label>
         <div className="row"><input ref={input} type="file" accept=".json" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ''; }} />
@@ -294,7 +294,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
         {T && <p className="muted th-info">{T.id} · клетка {T.cellKm} км{T.terrainGrid ? ` · растр ${T.terrainGrid.cols}×${T.terrainGrid.rows}` : ''} · районов {T.areas.length}{T.frozen ? ` · ледостав ${T.frozen.from.slice(5, 10)}–${T.frozen.until.slice(5, 10)}` : ''}</p>}
 
         <h4>Слои {area && <small className="muted">— в области</small>}</h4>
-        <div className="th-layers">{THEATRE_LAYERS.map((l) => counts && <label key={l.id} className={counts[l.id as TheatreLayerId] ? '' : 'empty'}>
+        <div className="th-layers" data-tour="maps-theatre-layers">{THEATRE_LAYERS.map((l) => counts && <label key={l.id} className={counts[l.id as TheatreLayerId] ? '' : 'empty'}>
           <input type="checkbox" checked={vis[l.id] ?? !['terrainShapes', 'height'].includes(l.id)} onChange={(e) => setVis((v) => ({ ...v, [l.id]: e.target.checked }))} />
           <span>{l.title}{l.id === 'roads' && T?.roadGrid ? <small className="muted"> + растр по карте</small> : null}</span><small>{l.id === 'terrain' ? (counts.terrain ? 'есть' : 'нет') : l.id === 'height' ? (relief ? `${Math.round(relief.min)}…${Math.round(relief.max)} м` : 'нет') : counts[l.id as TheatreLayerId]}</small>
           {l.geo && counts[l.id as TheatreLayerId] > 0 && <button className="link" title="Скачать слой (GeoJSON) по области" onClick={() => save(`${T!.id}-${l.id}.geojson`, JSON.stringify(layerGeoJSON(T!, l.id as TheatreLayerId, b!)), 'application/geo+json')}>↓</button>}
@@ -320,7 +320,7 @@ export function TheatreView({ bm, onOpenInEditor }: { bm: Basemaps; onOpenInEdit
         </div>
 
         <h4>Исторический слой по карте</h4>
-        <p className="muted small">Дороги, вода, застройка, лес — по исторической карте, которую вы подложили (скан или тайловый архив): распознавание по цвету сводит её на сетку театра; дороги карты заменяют современные в её охвате.</p>
+        <p className="muted small" data-tour="maps-hist">Дороги, вода, застройка, лес — по исторической карте, которую вы подложили (скан или тайловый архив): распознавание по цвету сводит её на сетку театра; дороги карты заменяют современные в её охвате.</p>
         {T && <HistLayer T={T} area={area} eng={eng} bm={bm} onPreview={setHist} onSaved={(id) => setSel(id)} onNotice={setNotice} />}
 
         <h4>Новый театр по области</h4>

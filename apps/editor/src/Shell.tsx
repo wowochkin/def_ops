@@ -21,6 +21,8 @@ import type { MapEngine } from './engine/types';
 import type { MapSource } from '@def-ops/core';
 import { SECTIONS, type Section } from './sections';
 import { registerShellActions } from './voice/actions/shell';
+import { registerTabActions, MAPS_TAB, TABS, type TabOf } from './voice/actions/tabs';
+import { ActButton } from './voice/registry';
 import { VoicePanel } from './voice/VoicePanel';
 import { TourLayer } from './voice/TourLayer';
 import { ModelPicker } from './ModelPicker';
@@ -58,6 +60,8 @@ export function Shell() {
   const sectionRef = useRef(section);
   sectionRef.current = section;
   useEffect(() => registerShellActions({ section: () => sectionRef.current }), []);
+  // вкладки разделов голосом и кнопками (modeling.tab, knowledge.tab, maps.tab)
+  useEffect(() => registerTabActions(), []);
   useEffect(() => { const h = () => setSection(fromHash()); window.addEventListener('hashchange', h); return () => window.removeEventListener('hashchange', h); }, []);
 
   const toEditor = (doc: MapDocument) => { setIncoming({ doc, key: Date.now() }); setSection('editor'); };
@@ -93,9 +97,16 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
   const doc = useMemo(() => emptyDocument(), []);
   const [notice, setNotice] = useState<string | null>(null);
   const [eng, setEng] = useState<MapEngine | null>(null);
-  const [tab, setTab] = useState<'base' | 'theatres'>(() => (localStorage.getItem('def_ops.maps.tab') as 'base' | 'theatres') || 'base');
-  const go = (t: 'base' | 'theatres') => { setTab(t); try { localStorage.setItem('def_ops.maps.tab', t); } catch { /* */ } };
-  const tabs = <nav className="maps-tabs"><button className={tab === 'base' ? 'on' : ''} onClick={() => go('base')}>Подложки</button><button className={tab === 'theatres' ? 'on' : ''} onClick={() => go('theatres')}>Театры</button></nav>;
+  // вкладка запоминается (maps.tab пишет её же); голосом или кнопкой — событие MAPS_TAB
+  const [tab, setTab] = useState<TabOf<'maps'>>(() => (localStorage.getItem(MAPS_TAB) as TabOf<'maps'>) || 'base');
+  useEffect(() => {
+    const f = (e: Event) => { const t = (e as CustomEvent<{ tab?: string }>).detail?.tab; if (TABS.maps.some((x) => x.id === t)) setTab(t as TabOf<'maps'>); };
+    window.addEventListener(MAPS_TAB, f);
+    return () => window.removeEventListener(MAPS_TAB, f);
+  }, []);
+  const tabs = <nav className="maps-tabs" data-tour="maps-tabs">{TABS.maps.map((t) => (
+    <ActButton key={t.id} action="maps.tab" params={{ tab: t.id }} className={tab === t.id ? 'on' : ''} data-tour={`maps-tab-${t.id}`}>{t.title}</ActButton>
+  ))}</nav>;
   /** Вид — на охват карты: целиком в окне, не мельче её наименьшего уровня (тайлы 256 px видны с уровня движка minzoom − 1). */
   const showArea = (m: MapSource) => {
     if (!eng) return;
@@ -110,7 +121,7 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
     <div className="pane maps-pane" data-tour="section-maps">
       {tabs}
       <div className="maps-base">
-        <aside className="maps-base-side">
+        <aside className="maps-base-side" data-tour="maps-base-side">
           <h2>Карты-подложки</h2>
           <p className="muted small">Под знаками — современная карта из интернета или своя: историческая карта, скан, тайловый архив. Локальные карты хранятся на сервере и работают без интернета. Справа — как выглядит выбранная подложка.</p>
           <section className="card"><BasemapControls bm={bm} /></section>
@@ -120,7 +131,7 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
             {server.status !== 'online' && <p className="muted">Локальные карты требуют сервисов: {SERVICES_HINT}.</p>}
           </section>
         </aside>
-        <main className="maps-base-map">
+        <main className="maps-base-map" data-tour="maps-base-map">
           <MapView doc={doc} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null}
             basemap={bm.current} basemapOpacity={bm.current ? 1 : bm.opacity} basemapDate={basemapDate(bm.current, null, bm.year)} onEngineReady={setEng} onStatus={() => {}} time={null} newFromNow={false} />
           {!bm.current && <div className="maps-base-hint">Подложка не выбрана — выберите слева или нажмите «подложить» у локальной карты.</div>}
@@ -137,18 +148,18 @@ function StaffView({ llm }: { llm: Llm }) {
     <div className="page" data-tour="section-staff">
       <div className="page-in narrow">
         <h2>ИИ</h2>
-        <p className="lead">Немецкой стороной в игре командует языковая модель на этом компьютере (LM Studio). Игра начинается в «Переигровке»: выберите момент на шкале времени и нажмите «Принять командование». С этого хода советской стороной командуете вы, немецкой — модель, до конца операции. На каждом ходу модель получает обстановку, которую мог знать немецкий штаб: свои войска, противника в пределах разведки, итоги суток. Она отдаёт приказы, а арбитр считает их последствия так же, как исторические.</p>
+        <p className="lead" data-tour="staff-lead">Немецкой стороной в игре командует языковая модель на этом компьютере (LM Studio). Игра начинается в «Переигровке»: выберите момент на шкале времени и нажмите «Принять командование». С этого хода советской стороной командуете вы, немецкой — модель, до конца операции. На каждом ходу модель получает обстановку, которую мог знать немецкий штаб: свои войска, противника в пределах разведки, итоги суток. Она отдаёт приказы, а арбитр считает их последствия так же, как исторические.</p>
         <section className="card staff-cfg">
           <h3>Связь с моделью</h3>
-          <label>Адрес сервера
+          <label data-tour="staff-url">Адрес сервера
             <input value={settings.url} onChange={(e) => set({ url: e.target.value })} spellCheck={false} />
             <small>По умолчанию <code>/llm/v1</code> — к LM Studio на этом компьютере (<code>localhost:1234</code>) через {IN_APP ? 'сервисы приложения' : 'сервер разработки'}; другой сервер — полным адресом здесь, например <code>http://192.168.1.10:1234/v1</code>.</small>
           </label>
-          <label>Модель
+          <label data-tour="staff-model">Модель
             <ModelSelect value={settings.model} onChange={(model) => set({ model })} check={check} empty={`первая загруженная${check.state === 'ok' ? ` (${check.models[0]})` : ''}`} />
             <small>Варианты одной модели (4bit, 8bit) загрузите в LM Studio под своими именами (например, qwen-4bit и qwen-8bit) — они появятся в списке среди загруженных. Модели по всем ролям — и в разделе «Моделирование».</small>
           </label>
-          <label>Размышление перед ответом
+          <label data-tour="staff-think">Размышление перед ответом
             <select value={settings.thinking} onChange={(e) => set({ thinking: e.target.value as typeof settings.thinking })}>
               <option value="off">нет — быстрее, решение за 1–2 минуты</option>
               <option value="low">короткое</option>
@@ -156,12 +167,12 @@ function StaffView({ llm }: { llm: Llm }) {
               <option value="high">глубокое</option>
             </select>
           </label>
-          <div className="staff-st">
+          <div className="staff-st" data-tour="staff-check">
             <span className={`llm-st ${check.state}`}>{check.state === 'ok' ? `✓ на связи · моделей: ${check.models.length}` : check.state === 'fail' ? `✗ ${check.error}` : 'проверка…'}</span>
             <button onClick={recheck}>Проверить связь</button>
           </div>
         </section>
-        <section className="card staff-cfg staff-voice">
+        <section className="card staff-cfg staff-voice" data-tour="staff-voice">
           <h3>Голос</h3>
           <div className="staff-voice-row" role="group" aria-label="Модель для голоса">
             <span>Модель для голоса и размышление</span>
@@ -169,7 +180,7 @@ function StaffView({ llm }: { llm: Llm }) {
             <small>Что начальник штаба не понял по готовым правилам, разбирает эта модель: выбирает подходящее действие или честно отвечает, что такого нет. Ответ нужен быстро — подойдёт небольшая модель без размышления.</small>
           </div>
         </section>
-        <section className="card staff-help">
+        <section className="card staff-help" data-tour="staff-help">
           <h3>Как подготовить</h3>
           <ol className="steps">
             <li>LM Studio → загрузите модель (Qwen 27B, 4 бит) → вкладка Developer → <b>Start Server</b>. Длина контекста — не меньше 16 000 токенов.</li>

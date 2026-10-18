@@ -7,7 +7,8 @@ import { SECTIONS } from '../src/sections';
 import { act, actions, register } from '../src/voice/registry';
 import { shellActions } from '../src/voice/actions/shell';
 import { tourActions, type TourControl } from '../src/voice/actions/tour';
-import { Dispatcher } from '../src/voice/dispatch';
+import { TABS, tabActions, type TabSection } from '../src/voice/actions/tabs';
+import { Dispatcher, paramsFit } from '../src/voice/dispatch';
 import { TOURS, type Tour } from '../src/voice/tours';
 import {
   bindTourVoice, settleSpeech, INTRO_HOW_OFF, INTRO_KEY, INTRO_STOPPED, OFFER_MS, offer, onVoiceReady, PROPOSE, READY_FIRST, speakChief, TourEngine, tourControl, tourEngine,
@@ -22,13 +23,20 @@ const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => {
   return statSync(p).isDirectory() ? files(p) : /\.tsx?$/.test(f) ? [p] : [];
 });
 
-/** Все значения data-tour в исходниках: буквальные и по шаблону `префикс-${…}` (по разделам). */
+/**
+ * Все значения data-tour в исходниках: буквальные и по шаблону `префикс-${…}` — `<раздел>-tab-${…}` по вкладкам
+ * раздела (voice/actions/tabs.ts), остальные — по разделам.
+ */
 function tourTargets(): Set<string> {
   const out = new Set<string>();
   for (const f of files(SRC)) {
     const t = readFileSync(f, 'utf-8');
     for (const m of t.matchAll(/data-tour="([^"]+)"/g)) out.add(m[1]);
-    for (const m of t.matchAll(/data-tour=\{`([^`$]*)\$\{[^}]+\}`\}/g)) SECTIONS.forEach((s) => out.add(m[1] + s.id));
+    for (const m of t.matchAll(/data-tour=\{`([^`$]*)\$\{[^}]+\}`\}/g)) {
+      const tab = /^(\w+)-tab-$/.exec(m[1])?.[1];
+      const ids = tab ? (TABS[tab as TabSection] ?? []).map((x) => x.id) : SECTIONS.map((s) => s.id);
+      ids.forEach((id) => out.add(m[1] + id));
+    }
   }
   return out;
 }
@@ -46,13 +54,14 @@ describe('описания туров', () => {
     expect(have.has('rail-replay')).toBe(true);
   });
 
-  it('каждое prepare — существующее обратимое действие реестра', () => {
-    const all = [...shellActions(), ...tourActions(fakeControl())];
+  it('каждое prepare — существующее обратимое действие реестра с подходящими параметрами', () => {
+    const all = [...shellActions(), ...tourActions(fakeControl()), ...tabActions()];
     for (const t of TOURS) for (const s of t.steps) {
       if (!s.prepare) continue;
       const a = all.find((x) => x.id === s.prepare!.action);
       expect(a, `${t.id}: ${s.prepare.action}`).toBeDefined();
       expect(a!.irreversible).toBeFalsy();
+      expect(paramsFit(a!, s.prepare.params), `${t.id}: ${s.prepare.action} ${JSON.stringify(s.prepare.params)}`).toBe(true);
     }
   });
 
@@ -450,5 +459,124 @@ describe('«хватит» во вступлении и выключение г�
     tourEngine.pause();
     html = renderToStaticMarkup(createElement(TourLayer, { section: 'editor' }));
     expect(html).toContain('tour-hint');
+  });
+});
+
+describe('туры разделов', () => {
+  const SECTION_TOURS = ['editor', 'modeling', 'maps', 'library', 'knowledge', 'staff'];
+
+  it('у разделов есть туры: от шести до двенадцати шагов, шаг — одна-три фразы, честный шаг о голосе', () => {
+    for (const id of SECTION_TOURS) {
+      const t = TOURS.find((x) => x.section === id);
+      expect(t, id).toBeDefined();
+      expect(t!.steps.length, id).toBeGreaterThanOrEqual(6);
+      expect(t!.steps.length, id).toBeLessThanOrEqual(12);
+      for (const s of t!.steps) {
+        // фразы — по концу предложения (кавычки с вопросом внутри — не конец)
+        const n = s.text.split(/(?<=[.!?…])\s+(?=[А-ЯЁ«])/).length;
+        expect(n, `${id}: ${s.title}`).toBeLessThanOrEqual(3);
+      }
+      const honest = t!.steps.filter((s) => /Здесь голосом можно: перейти в другой раздел.*пройти этот тур.*остальное — мышью/.test(s.text));
+      expect(honest.length, id).toBe(1);
+      // в разделах с вкладками — и переключить вкладку
+      if (id in TABS) expect(honest[0].text, id).toMatch(/переключить вкладку/);
+      expect(t!.steps.some((s) => s.example), id).toBe(true);
+    }
+  });
+
+  it('туры разделов с вкладками проходят все вкладки, переключая их сами (обратимо)', () => {
+    for (const sec of Object.keys(TABS) as TabSection[]) {
+      const t = TOURS.find((x) => x.section === sec)!;
+      const opened = t.steps.filter((s) => s.prepare?.action === `${sec}.tab`).map((s) => (s.prepare!.params as { tab: string }).tab);
+      // моделирование и знания — каждая вкладка; карты — обе
+      expect(new Set(opened), sec).toEqual(new Set(TABS[sec].map((x) => x.id)));
+    }
+  });
+
+  it('элементы, которых может не быть (инспектор, кнопки загрузки карт, вопросы к модели), — с объяснением и тем, что к ним ведёт', () => {
+    const need = ['editor-inspector', 'maps-ohm', 'knowledge-ask', 'lib-design'];
+    for (const target of need) {
+      const s = TOURS.flatMap((t) => t.steps).find((x) => x.target === target)!;
+      expect(s, target).toBeDefined();
+      expect(s.unavailable, target).toBeTruthy();
+      expect(s.via, target).toBeTruthy();
+    }
+  });
+
+  it('подсветка «Знаков» — внутри страницы справочника (iframe того же источника)', () => {
+    const lib = readFileSync(join(SRC, 'library-page.tsx'), 'utf-8');
+    const t = TOURS.find((x) => x.section === 'library')!;
+    const inside = t.steps.filter((s) => lib.includes(`data-tour="${s.target}"`)).map((s) => s.target);
+    expect(inside.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('вкладки и туры разделов голосом', () => {
+  let offs: (() => void)[] = [];
+  let said: string[] = [];
+  let started: string[] = [];
+  let events: { name: string; tab: string }[] = [];
+  const store = new Map<string, string>();
+  beforeEach(() => {
+    said = []; started = []; events = []; store.clear();
+    const w = new EventTarget();
+    for (const n of ['def_ops.modeling.open', 'def_ops.kb.tab', 'def_ops.maps.tab']) {
+      w.addEventListener(n, (e) => events.push({ name: n, tab: (e as CustomEvent<{ tab: string }>).detail.tab }));
+    }
+    vi.stubGlobal('window', w);
+    vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); }, removeItem: (k: string) => { store.delete(k); } });
+    const c: TourControl = { ...fakeControl(), has: (s) => TOURS.some((x) => x.section === s), start: async (s) => { started.push(s); } };
+    offs = [...tabActions(), ...tourActions(c), ...shellActions({ section: () => 'editor', open: () => {} })].map(register);
+  });
+  afterEach(() => { offs.forEach((o) => o()); vi.unstubAllGlobals(); });
+  const mk = (section: string) => new Dispatcher({ now: () => 0, say: (s) => { said.push(s); }, section: () => section });
+
+  it('«Штаб, открой вкладку Калибровка» в моделировании — вкладка открыта, запомнена, штаб докладывает', async () => {
+    expect(await mk('modeling').utterance('Штаб, открой вкладку Калибровка.', 1)).toBe('done');
+    expect(events).toEqual([{ name: 'def_ops.modeling.open', tab: 'calibrate' }]);
+    expect(store.get('def_ops.modeling.tab')).toBe('calibrate');
+    expect(said.at(-1)).toBe('Открыта вкладка «Калибровка».');
+  });
+
+  it('вкладки знаний и карт; «вкладка …» без глагола; вкладки из двух слов', async () => {
+    expect(await mk('knowledge').utterance('Штаб, вкладка документы', 1)).toBe('done');
+    expect(await mk('knowledge').utterance('Штаб, открой вкладку «На проверку»', 2)).toBe('done');
+    expect(await mk('maps').utterance('Штаб, открой вкладку Театры', 3)).toBe('done');
+    expect(await mk('modeling').utterance('Штаб, открой вкладку агентная модель', 4)).toBe('done');
+    expect(events).toEqual([
+      { name: 'def_ops.kb.tab', tab: 'docs' }, { name: 'def_ops.kb.tab', tab: 'queue' },
+      { name: 'def_ops.maps.tab', tab: 'theatres' }, { name: 'def_ops.modeling.open', tab: 'agents' },
+    ]);
+    expect(store.get('def_ops.maps.tab')).toBe('theatres');
+  });
+
+  it('вкладка другого раздела голосом не открывается; «Штаб, калибровка» — по-прежнему калибровка микрофона', async () => {
+    expect(await mk('editor').utterance('Штаб, открой вкладку Калибровка', 1)).not.toBe('done');
+    expect(events).toEqual([]);
+    const calib: string[] = [];
+    (window as unknown as EventTarget).addEventListener('voice:open', (e) => calib.push((e as CustomEvent<string>).detail));
+    expect(await mk('modeling').utterance('Штаб, калибровка', 2)).toBe('done');
+    expect(calib).toEqual(['calibrate']);
+    expect(events).toEqual([]);
+  });
+
+  it('кнопка вкладки и модель — общее действие с параметром; неизвестная вкладка не открывается', async () => {
+    await act('knowledge.tab', { tab: 'coverage' });
+    expect(events.at(-1)).toEqual({ name: 'def_ops.kb.tab', tab: 'coverage' });
+    expect(await act('maps.tab', { tab: 'nope' })).toBe('Нет такой вкладки.');
+    expect(actions('modeling').find((a) => a.id === 'maps.tab')).toBeUndefined();
+  });
+
+  it('«Штаб, тур по картам», «Штаб, покажи раздел Знания», «Штаб, тур по ИИ» — тур раздела; по переигровке — честно', async () => {
+    const d = mk('editor');
+    expect(await d.utterance('Штаб, тур по картам', 1)).toBe('done');
+    expect(await d.utterance('Штаб, покажи раздел Знания', 2)).toBe('done');
+    expect(await d.utterance('Штаб, тур по ИИ', 3)).toBe('done');
+    expect(await d.utterance('Штаб, тур по знакам', 4)).toBe('done');
+    expect(await d.utterance('Штаб, тур по моделированию', 5)).toBe('done');
+    expect(started).toEqual(['maps', 'knowledge', 'staff', 'library', 'modeling']);
+    expect(await d.utterance('Штаб, тур по переигровке', 6)).toBe('done');
+    expect(started).toHaveLength(5);
+    expect(said.at(-1)).toMatch(/По разделу «Переигровка» тура пока нет/);
   });
 });

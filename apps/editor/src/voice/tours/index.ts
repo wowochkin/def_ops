@@ -5,6 +5,12 @@
 import type { Section } from '../../sections';
 import { INTRO } from './intro';
 import { VOICE_PANEL } from './voice-panel';
+import { EDITOR } from './editor';
+import { MODELING } from './modeling';
+import { MAPS } from './maps';
+import { LIBRARY } from './library';
+import { KNOWLEDGE } from './knowledge';
+import { STAFF } from './staff';
 
 export interface TourStep {
   /** Значение `data-tour` подсвечиваемого элемента. */
@@ -32,7 +38,7 @@ export interface Tour {
   steps: TourStep[];
 }
 
-export const TOURS: Tour[] = [INTRO, VOICE_PANEL];
+export const TOURS: Tour[] = [INTRO, VOICE_PANEL, EDITOR, MODELING, MAPS, LIBRARY, KNOWLEDGE, STAFF];
 
 /** Тур по идентификатору или по разделу. */
 export const findTour = (idOrSection: string, tours: Tour[] = TOURS): Tour | undefined =>

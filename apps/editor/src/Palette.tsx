@@ -61,7 +61,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
   };
 
   return (
-    <div className="palette">
+    <div className="palette" data-tour="editor-palette">
       <div className="pal-top">
         <div className="seg" title="Оформление знаков: уставное (по таблице РККА) или по образцу карты">
           {STYLES.map((s) => (
@@ -79,7 +79,7 @@ export function Palette({ tool, setTool }: { tool: Tool; setTool: (t: Tool) => v
         </div>
         <label className="pal-search-w">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /></svg>
-          <input className="pal-search" placeholder="Поиск: танк, мост, котёл…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="pal-search" data-tour="editor-search" placeholder="Поиск: танк, мост, котёл…" value={q} onChange={(e) => setQ(e.target.value)} />
           {q && <button className="link" onClick={() => setQ('')} title="Очистить">✕</button>}
         </label>
         <div className={`pal-mode${tool.mode === 'draw' ? ' drawing' : ''}`}>
