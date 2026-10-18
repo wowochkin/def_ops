@@ -647,7 +647,7 @@ function ReportModal({ md, onClose, onDownload }: { md: string; onClose: () => v
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
   return (
     <div className="modal-bg" onClick={onClose}>
-      <div className="modal report" onClick={(e) => e.stopPropagation()}>
+      <div className="modal report" data-modal onClick={(e) => e.stopPropagation()}>
         <div className="modal-h"><b>Отчёт о сравнении с историей</b><span style={{ flex: 1 }} /><button onClick={onDownload}>Скачать .md</button><button onClick={onClose}>Закрыть</button></div>
         <div className="modal-body" dangerouslySetInnerHTML={{ __html: html }} />
       </div>

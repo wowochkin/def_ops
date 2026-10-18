@@ -60,6 +60,7 @@ function dialog(message: string, o: { ok?: string; cancel?: string; danger?: boo
     const box = document.createElement('div');
     box.className = 'confirm-box';
     box.setAttribute('role', 'dialog');
+    box.setAttribute('data-modal', ''); // окно: панель голоса его не закрывает
     const p = document.createElement('p');
     p.textContent = message;
     const row = document.createElement('div');
@@ -101,7 +102,7 @@ function dialog(message: string, o: { ok?: string; cancel?: string; danger?: boo
     window.addEventListener('keydown', key, true);
     document.body.append(back);
     offVoice = voiceDialog({
-      message, ok: o.ok, cancel: o.cancel, alone: o.alone, labels: o.actions?.map((a) => a.label),
+      message, ok: o.ok, cancel: o.cancel, alone: o.alone, labels: o.actions?.map((a) => a.label), dangers: o.actions?.map((a) => !!a.danger), danger: o.danger,
       input: inp ? { get: () => inp.value, set: (v) => { inp.value = v; } } : undefined,
     }, (out) => finish(out));
     if (inp) { inp.focus(); inp.select(); } else (extra[extra.length - 1] ?? yes).focus();
@@ -115,6 +116,9 @@ export interface DialogVoice {
   cancel?: string;
   alone?: boolean;
   labels?: string[];
+  /** Опасные варианты (по номеру labels) и опасное «да» (danger у confirmAsync): поверх речи — только переспрос. */
+  dangers?: boolean[];
+  danger?: boolean;
   input?: { get(): string; set(s: string): void };
 }
 
@@ -131,11 +135,13 @@ function questionRead(message: string, options: string): string {
   const all = readParts(message).join(' ');
   const sentences = (all.match(/[^.!?…]+[.!?…]+["»]?|[^.!?…]+$/g) ?? []).map((x) => x.trim()).filter(Boolean);
   const q = sentences.findIndex((x) => /\?["»]?$/.test(x));
-  const lead = sentences.slice(0, q >= 0 ? q + 1 : 1).map((x) => (/[.!?…:]["»]?$/.test(x) ? x : `${x}.`));
-  const rest = sentences.slice(lead.length);
+  // вступление (первая фраза) и сам вопрос — где бы он ни стоял; прочее — пояснения
+  const head = q > 0 ? [0, q] : [0];
+  const lead = head.filter((i) => i < sentences.length).map((i) => sentences[i]).map((x) => (/[.!?…:]["»]?$/.test(x) ? x : `${x}.`));
+  const rest = sentences.filter((_, i) => !head.includes(i));
   const warn = rest.filter((x) => WARN.test(x));
   const other = rest.filter((x) => !WARN.test(x));
-  if (sentences.length <= 4) return [...lead, ...warn, options, ...other, WAIT_SAY].join(' ');
+  if (sentences.length <= 4 || !other.length) return [...lead, ...warn, options, ...other, WAIT_SAY].join(' ');
   queueReading(other.join(' ')); // «дальше» — пояснения частями (read.next)
   return [...lead, ...warn, options, 'Подробнее — скажите «дальше».', WAIT_SAY].join(' ');
 }
@@ -211,6 +217,18 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
     ];
     offActions = () => offs.forEach((o) => o());
   }
+  /** Номер варианта, названного ответом (нет — null). */
+  const choiceOf = (rest: string): number | null => {
+    const i = ordinalIndex(rest, labels.length);
+    if (i !== null) return i;
+    const hit = pickByName(rest, labels);
+    return hit.length === 1 ? hit[0] : null;
+  };
+  const danger = (rest: string): boolean => {
+    if (yesNo(rest) === 'no') return false;
+    if (labels.length) { const i = choiceOf(rest); return i !== null && !!d.dangers?.[i]; }
+    return !!d.danger && !d.input && !d.alone && yesNo(rest) === 'yes';
+  };
   const isAnswer = (rest: string): boolean => {
     if (d.alone) return ACK.test(rest);
     if (d.input) return yesNo(rest) !== null || /^(?:готово|все|записывай|сохрани)$/.test(rest);
@@ -222,6 +240,7 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
     read: questionRead(d.message, how),
     ...(remind ? { remind } : {}),
     isAnswer,
+    danger,
     // сообщение с одной кнопкой: посторонняя команда закрывает его и исполняется (не теряется)
     ...(d.alone ? { dismiss: () => end(true) } : {}),
     parse: (rest) => {

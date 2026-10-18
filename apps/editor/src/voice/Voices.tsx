@@ -300,7 +300,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
 
   return (
     <div className="vp-back" onClick={(e) => { if (e.target === e.currentTarget && rec !== 'rec') void act('voices.close'); }}>
-      <div className="vp-dialog voices" role="dialog" aria-label="Голоса">
+      <div className="vp-dialog voices" data-modal role="dialog" aria-label="Голоса">
         <h3>Голоса</h3>
         <p className="vp-roles">
           {ROLES.map((r) => <span key={r}>{ROLE_NAME[r]} — <b>{voices.find((v) => v.id === roles[r])?.name ?? 'образец по умолчанию'}</b></span>)}

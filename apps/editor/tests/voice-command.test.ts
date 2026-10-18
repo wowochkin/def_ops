@@ -6,7 +6,7 @@ import type { TurnView } from '../src/sim/game-protocol';
 import { act, markVoice, parsePhrase, register, setSpeaker, voiceRecent, type Action } from '../src/voice/registry';
 import { Dispatcher, helpText, YES_NO_SAY } from '../src/voice/dispatch';
 import {
-  calcDoneText, calcFailText, commandActions, findLayer, findWho, releaseCommand, releaseReplay, NO_GAME, NOT_IN_REPLAY, parseCommand, parseDay, replayActions, resolveTarget, setSectionSource, takeoverParse,
+  calcDoneText, calcFailText, commandActions, findLayer, findWho, releaseCommand, releaseReplay, NO_GAME, NOT_IN_REPLAY, parseCommand, parseDay, replayActions, resolveTarget, setSectionSource, takeoverParse, takeoverRead, takeoverIsAnswer, TAKEOVER_REMIND,
   type CommandDeps, type ReplayDeps,
 } from '../src/voice/actions/command';
 import { stopReading } from '../src/voice/dictation';
@@ -106,6 +106,17 @@ describe('разбор фраз', () => {
     expect(findLayer('котлы на карте')).toBe('pockets');
     expect(findLayer('Зелов')).toBeNull();
     expect(findLayer('реки', ['front'])).toBeNull();
+  });
+  it('окно «Принять командование» (Task 1b): сначала вопрос и как отвечать, потом подробности; кончается «Жду ответа.»; напоминание; ответы без «штаб»', () => {
+    const r = takeoverRead({ day: 'шестнадцатого апреля', turn: 1, enemy: 'llm', down: false, saved: false });
+    expect(r).toBe('Принять командование с шестнадцатого апреля? Скажите: «принимаю», «без штаба» или «штаб на модели», или «отмена». Противник — штаб на модели. Ход 1. Жду ответа.');
+    const r2 = takeoverRead({ day: 'шестнадцатого апреля', turn: 3, enemy: 'passive', down: true, saved: true });
+    // предупреждение — до вариантов
+    expect(r2).toMatch(/^Принять командование с шестнадцатого апреля\? Незавершённая игра будет заменена\. Скажите: /);
+    expect(r2).toMatch(/Противник — без штаба; модель сейчас не на связи\. Ход 3\. Жду ответа\.$/);
+    expect(TAKEOVER_REMIND).toMatch(/Жду ответа\.$/);
+    for (const x of ['принимаю', 'без штаба', 'штаб на модели', 'отмена']) expect(takeoverIsAnswer(x)).toBe(true);
+    expect(takeoverIsAnswer('открой карты')).toBe(false);
   });
   it('окно «Принять командование»: принимаю, противник, отмена', () => {
     expect(takeoverParse('принимаю', { saved: false, enemy: 'llm' })).toEqual({ id: 'replay.start', params: { enemy: 'llm' } });

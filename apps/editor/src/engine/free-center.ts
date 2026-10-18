@@ -38,9 +38,10 @@ const COVERS = '[data-tour="voice"], .legend';
  * Поставить место at в середину свободной части карты (zoom — масштаб, не задан — прежний). Закрытия ищутся в окне
  * (панель голоса — одна на окно, легенда — в контейнере карты или рядом).
  */
-export function showAt(en: Pick<MapEngine, 'getView' | 'setView' | 'project' | 'unproject' | 'getContainer'>, at: LngLat, zoom?: number): void {
+export function showAt(en: Pick<MapEngine, 'getView' | 'setView'> & Partial<Pick<MapEngine, 'project' | 'unproject' | 'getContainer'>>, at: LngLat, zoom?: number): void {
   en.setView({ center: at, zoom: zoom ?? en.getView().zoom });
-  if (typeof document === 'undefined') return;
+  // движок без перевода координат (проверки в node) или окна нет — просто в центр
+  if (typeof document === 'undefined' || !en.project || !en.unproject || !en.getContainer) return;
   const box = en.getContainer().getBoundingClientRect();
   const covers = [...document.querySelectorAll(COVERS)].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
   const { dx, dy } = freeOffset({ left: box.left, top: box.top, width: box.width, height: box.height }, covers);

@@ -135,9 +135,9 @@ export function ActButton({ action, params, children, ...rest }: { action: strin
 export type SpeakRole = 'chief' | 'umpire';
 /**
  * keep — фраза не устаревает от новой реплики человека (поздний ответ советника): ждёт конца реплики и звучит;
- * role — чьим голосом.
+ * role — чьим голосом; modal — фраза окна (вопрос, его повтор): окно закрыли — она гасится (панель голоса).
  */
-export interface SpeakOpts { keep?: boolean; role?: SpeakRole }
+export interface SpeakOpts { keep?: boolean; role?: SpeakRole; modal?: boolean }
 let speaker: ((text: string, o?: SpeakOpts) => number | void) | null = null;
 let retractor: ((id: number) => void) | null = null;
 /** Панель голоса подключает речь штаба (null — голоса нет: speak молчит). */
@@ -194,6 +194,8 @@ export interface VoiceModal {
    * напоминает (калибровка и «Голоса» ведут разговор сами). Кончается «Жду ответа.», а не словом-ответом.
    */
   remind?: string;
+  /** Ответ опасен (удаление, необратимое): поверх речи штаба не исполняется — только переспрос (dispatch.ts, over). */
+  danger?(rest: string): boolean;
 }
 
 const modals: VoiceModal[] = [];
@@ -203,7 +205,7 @@ const modalCbs = new Set<(m: VoiceModal | null, opened: boolean) => void>();
 export function openModal(m: VoiceModal): () => void {
   modals.push(m);
   modalCbs.forEach((cb) => cb(m, true));
-  if (!m.quiet) speak(m.read ?? m.question);
+  if (!m.quiet) speak(m.read ?? m.question, { modal: true });
   return () => {
     const i = modals.lastIndexOf(m);
     if (i < 0) return;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
-  COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, placePanel,
+  COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, placePanel, crowded, stripCut, stripLines, STRIP_LINE_CHARS, STRIP_OVER_CHARS,
 } from '../src/voice/panel-state';
 import { freeOffset } from '../src/engine/free-center';
 
@@ -473,5 +473,38 @@ describe('карта: центр — в свободной части (freeOffse
     const o = freeOffset(map, [{ left: 420, top: 60, width: 1020, height: 840 }]);
     expect(Math.abs(o.dx)).toBeLessThanOrEqual(map.width / 3);
     expect(Math.abs(o.dy)).toBeLessThanOrEqual(map.height / 3);
+  });
+});
+
+describe('раунд 1 (Task 1b): окно и полоса', () => {
+  it('M-2: фраза штаба при открытом окне (чтение вопроса) не разворачивает панель; закрыли окно — полоса сразу', () => {
+    let now = 0;
+    const s = new PanelSize('compact', () => now);
+    s.setModal(true);
+    s.chief('x'.repeat(300)); // окно читает длинный вопрос
+    expect(s.view(true)).toBe('compact');
+    s.setModal(false);
+    expect(s.view(false)).toBe('compact');
+    // развернулась сама до окна — после окна тоже не выскакивает
+    s.chief('x'.repeat(300));
+    expect(s.view(false)).toBe('full');
+    s.setModal(true);
+    s.setModal(false);
+    expect(s.view(false)).toBe('compact');
+    // вопрос «да / нет» после окна — разворачивает, как прежде
+    s.update({ speaking: false, pending: true });
+    expect(s.view(false)).toBe('full');
+  });
+  it('M-4: при открытом окне фраза — до трёх строк; длиннее — обрезана, и это видно (повторить)', () => {
+    expect(stripLines(false)).toBe(2);
+    expect(stripLines(true)).toBe(3);
+    expect(stripCut('Скажите «готово».', true)).toBe(false);
+    expect(stripCut('x'.repeat(STRIP_OVER_CHARS * 3), true)).toBe(false);
+    expect(stripCut('x'.repeat(STRIP_OVER_CHARS * 3 + 1), true)).toBe(true);
+    expect(stripCut('x'.repeat(STRIP_LINE_CHARS * 2 + 1), false)).toBe(true);
+  });
+  it('M-3: окно почти во весь экран — полоса не находит свободного места (crowded) и становится строкой состояния', () => {
+    expect(crowded([{ left: 30, top: 40, width: 1380, height: 830 }], 1440, 900)).toBe(true);
+    expect(crowded([{ left: 500, top: 394, width: 440, height: 112 }], 1440, 900)).toBe(false);
   });
 });

@@ -30,7 +30,7 @@ export function ColumnMapping({ name, header, sample, proposed, onRun, onClose }
   const used = cols.filter((c) => c !== 'skip').length;
   return (
     <div className="confirm-back" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="confirm-box cm" role="dialog" aria-label="Сопоставление столбцов">
+      <div className="confirm-box cm" data-modal role="dialog" aria-label="Сопоставление столбцов">
         <h3>Сопоставление столбцов: {name}</h3>
         <p className="muted">Таблица не по шаблону. Модель предложила смысл каждого столбца — проверьте; ненужные столбцы — «не нужен» (они будут перечислены в итогах). Если заголовки — даты (дни в столбцах), выберите «день» и укажите дату и что за число.</p>
         <label className="cm-kind">Вид фактов <select value={kind} onChange={(e) => setKind(e.target.value as Claim['kind'])}>

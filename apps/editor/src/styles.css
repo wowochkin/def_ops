@@ -1388,11 +1388,15 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 /* подтверждение внутри страницы (confirmAsync) */
 .confirm-back { position: fixed; inset: 0; z-index: 10000; background: rgba(20, 18, 14, 0.35); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .confirm-box { background: var(--panel, #fff); color: var(--ink, #222); border-radius: 10px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); padding: 16px 18px; max-width: 440px; width: 100%; }
-.confirm-box p { margin: 0 0 14px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
+.confirm-box p { margin: 0 0 14px; font-size: 18px; line-height: 1.45; white-space: pre-wrap; }
+/* вопрос штаба окном — крупно (пожилые пользователи): не мельче 18 px */
+.confirm-back > .confirm-box:not(.cm) { max-width: 520px; }
+.confirm-box:not(.cm) .confirm-row button { font-size: 18px; padding: 6px 16px; }
+.confirm-box.cm p { font-size: 14px; }
 .confirm-row { display: flex; justify-content: flex-end; gap: 8px; }
 .confirm-row .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .confirm-row .danger { background: #b3261e; color: #fff; border-color: #b3261e; }
-.confirm-input { width: 100%; box-sizing: border-box; margin: -6px 0 14px; padding: 6px 8px; font: inherit; font-size: 13px; }
+.confirm-input { width: 100%; box-sizing: border-box; margin: -6px 0 14px; padding: 6px 8px; font: inherit; font-size: 18px; }
 .ai-phase { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted, #777); margin: 2px 0; }
 .hist-net-src { display: flex; flex-direction: column; gap: 3px; margin: 4px 0 6px; padding: 6px 8px; border: 1px solid var(--line, #ddd); border-radius: 6px; }
 .hist-date { font-size: 12px; padding: 1px 4px; margin: 0 2px; }
@@ -1594,11 +1598,12 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp button { font-size: 18px; padding: 6px 14px; border-radius: 8px; border: 1.5px solid #8d887c; background: #fff; color: var(--vp-ink); }
 .vp button.primary { background: #7a1b16; border-color: #7a1b16; color: #fff; }
 .vp button.danger { color: #a3271b; border-color: #a3271b; }
-.vp-icon { position: fixed; left: 10px; bottom: 34px; z-index: 900; width: 56px; height: 56px; border-radius: 50% !important; padding: 0 !important;
+/* значок — в том же углу, что полоса (справа внизу, левее кнопок масштаба карты): свернул — не потерял */
+.vp-icon { position: fixed; right: 56px; bottom: 96px; z-index: 900; width: 56px; height: 56px; border-radius: 50% !important; padding: 0 !important;
   display: flex; align-items: center; justify-content: center; background: var(--vp-st) !important; color: #fff !important; border: 3px solid #fff !important; box-shadow: 0 3px 12px rgba(0,0,0,.35); }
 .vp.listening .vp-icon, .vp.speaking .vp-icon { box-shadow: 0 0 0 6px color-mix(in srgb, var(--vp-st) 35%, transparent), 0 3px 12px rgba(0,0,0,.35); }
 /* голос выключен: перечёркнутый микрофон и подпись рядом со значком */
-.vp-icon-cap { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 18px; font-weight: 700;
+.vp-icon-cap { position: absolute; right: 64px; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 18px; font-weight: 700;
   background: #fffefb; color: var(--vp-ink); border: 1.5px solid #8d887c; border-radius: 8px; padding: 4px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
 .vp .vp-power { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; font-size: 20px; font-weight: 700; padding: 10px 14px; }
 /* карточка — у правого края, над полосой проигрывателя: левая колонка раздела (сценарии, «Рассчитать») остаётся свободной */
@@ -1606,7 +1611,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
   background: #fffefb; border: 2px solid #3b3a36; border-radius: 12px; box-shadow: 0 10px 34px rgba(0,0,0,.3); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .vp-head { display: flex; align-items: center; gap: 10px; }
 /* полоса (вид по умолчанию): состояние, последняя фраза штаба до двух строк, «Развернуть» — не закрывает работу */
-.vp-card.strip { width: 500px; padding: 8px 12px; gap: 6px; overflow: hidden; }
+.vp-card.strip { width: 500px; right: 56px; padding: 8px 12px; gap: 6px; overflow: hidden; }
 /* при открытом окне — уже: встаёт сбоку от окна шириной до 640 px */
 .vp-card.strip.over { width: 380px; }
 .vp .vp-x { font-size: 24px; line-height: 1; padding: 4px 10px; }
@@ -1615,6 +1620,8 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-mic-st { flex: 0 0 auto; display: flex; width: 36px; height: 36px; border-radius: 50%; align-items: center; justify-content: center; background: var(--vp-st); color: #fff; }
 .vp-mic-st svg { width: 24px; height: 24px; }
 .vp-last { margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+.vp-last.l3 { -webkit-line-clamp: 3; }
+.vp-cut { display: flex; align-items: center; gap: 10px; color: var(--vp-mute); }
 /* открыто окно: панель над его затемнением, но не на нём (место — placePanel) */
 .vp-card.over { z-index: 10001; }
 .vp-powerbox { display: flex; flex-direction: column; gap: 4px; }

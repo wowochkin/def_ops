@@ -257,7 +257,7 @@ export function EditorView({ bm, server, incoming }: { bm: Basemaps; server: Ser
         {notice && <div className="notice" onClick={() => setNotice(null)}>{notice}</div>}
         {serverList && (
           <div className="modal-bg" onClick={() => setServerList(null)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal" data-modal onClick={(e) => e.stopPropagation()}>
               <div className="sec-h"><span>Карты на сервере</span><button className="link" onClick={() => setServerList(null)}>✕</button></div>
               {!serverList.length && <div className="muted">Пока пусто — сохраните текущую карту кнопкой «На сервер».</div>}
               {serverList.map((m) => (

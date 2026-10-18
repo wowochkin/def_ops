@@ -314,6 +314,14 @@ export const STRIP_LINES = 2;
 export function fitsStrip(text: string): boolean {
   return text.length <= STRIP_LINE_CHARS * STRIP_LINES;
 }
+/** Знаков в строке узкой полосы (при открытом окне — 380 px). */
+export const STRIP_OVER_CHARS = 36;
+/** Строк под фразу штаба: при открытом окне развернуть панель нельзя — фраза до трёх строк. */
+export function stripLines(modal: boolean): number { return modal ? 3 : STRIP_LINES; }
+/** Фраза в полосе обрезана (тогда — кнопка «Повторить» и «скажите «повтори»»). */
+export function stripCut(text: string, modal: boolean): boolean {
+  return text.length > (modal ? STRIP_OVER_CHARS : STRIP_LINE_CHARS) * stripLines(modal);
+}
 
 /**
  * Вид панели. Выбранный человеком (set) — как выбран; полоса сама разворачивается, когда штаб говорит длинное (chief)
@@ -323,6 +331,8 @@ export function fitsStrip(text: string): boolean {
 export class PanelSize {
   /** Развёрнута сама (не человеком). */
   private auto = false;
+  /** Открыто окно: его вопрос читает штаб — панель от этого не разворачивается. */
+  private modal = false;
   /** С какого времени тихо: штаб не говорит и вопроса нет (null — не тихо). */
   private quietAt: number | null = null;
   constructor(public mode: PanelMode, private now: () => number) {}
@@ -331,7 +341,12 @@ export class PanelSize {
   set(mode: PanelMode): void { this.mode = mode; this.auto = false; }
   /** Штаб сказал фразу: не помещается в полосу — развернуться (из значка — нет: значок выбрал человек). */
   chief(text: string): void {
-    if (!fitsStrip(text) && this.mode === 'compact') { this.auto = true; this.quietAt = null; }
+    if (!fitsStrip(text) && this.mode === 'compact' && !this.modal) { this.auto = true; this.quietAt = null; }
+  }
+  /** Окно открылось или закрылось; закрылось — развёрнутая сама сворачивается сразу (говорить уже не о чем). */
+  setModal(on: boolean): void {
+    if (this.modal && !on) this.auto = false;
+    this.modal = on;
   }
   /** Часы и события: говорит ли штаб и ждёт ли вопрос ответа. */
   update(s: { speaking: boolean; pending: boolean }): void {
@@ -353,6 +368,8 @@ const crossArea = (a: Box, b: Box) =>
   * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
 /** Отступы обычного места полосы (как в CSS .vp-card): справа и над полосой проигрывателя; слева — правее колонки разделов. */
 const EDGE = 14, ABOVE_PLAYER = 96, RAIL = 84;
+/** Справа полоса отступает от края на столбец кнопок масштаба карты (MapLibre, справа внизу). */
+export const STRIP_RIGHT = 56;
 
 /**
  * Где поставить панель размером size, чтобы не закрывать окна avoid: null — обычное место (справа внизу) свободно;
@@ -360,7 +377,7 @@ const EDGE = 14, ABOVE_PLAYER = 96, RAIL = 84;
  * где перекрытие меньше всего.
  */
 export function placePanel(size: { width: number; height: number }, avoid: Box[], vw: number, vh: number): { left: number; top: number } | null {
-  const right = Math.max(0, vw - EDGE - size.width), left = Math.min(RAIL, right);
+  const right = Math.max(0, vw - STRIP_RIGHT - size.width), left = Math.min(RAIL, right);
   const low = Math.max(0, vh - ABOVE_PLAYER - size.height), edge = Math.max(0, vh - EDGE - size.height);
   const cands = [
     { left: right, top: low }, { left, top: low }, { left: right, top: EDGE }, { left, top: EDGE },
@@ -369,4 +386,15 @@ export function placePanel(size: { width: number; height: number }, avoid: Box[]
   const hit = (c: { left: number; top: number }) => avoid.reduce((s, a) => s + crossArea({ ...c, ...size }, a), 0);
   if (hit(cands[0]) === 0) return null;
   return cands.find((c) => hit(c) === 0) ?? cands.reduce((a, b) => (hit(b) < hit(a) ? b : a));
+}
+
+/** Полоса при открытом окне — для решения, есть ли ей место (размер обычной полосы с фразой). */
+const NOMINAL = { width: 380, height: 110 };
+/**
+ * Полосе размером size (по умолчанию — обычной) без перекрытия окон места нет: она становится строкой состояния
+ * (значок и слова), чтобы закрывать как можно меньше.
+ */
+export function crowded(avoid: Box[], vw: number, vh: number, size: { width: number; height: number } = NOMINAL): boolean {
+  const p = placePanel(size, avoid, vw, vh);
+  return !!p && avoid.some((a) => crossArea({ ...p, ...size }, a) > 0);
 }

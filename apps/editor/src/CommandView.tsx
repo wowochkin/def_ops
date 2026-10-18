@@ -38,7 +38,7 @@ import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl,
 import { releaseScreen, screenActions, type ScreenDeps } from './voice/actions/screen';
 import { announceTurn, resetUmpire, type UmpireModel } from './voice/umpire';
 import { askText, RETRY_DELAYS_MS } from './voice/llm';
-import { commandActions, releaseCommand, takeoverParse, type CommandDeps } from './voice/actions/command';
+import { commandActions, releaseCommand, TAKEOVER_REMIND, takeoverIsAnswer, takeoverParse, takeoverRead, type CommandDeps } from './voice/actions/command';
 import {
   adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, projectHas, releaseStaff, staffActions, TASKS,
   type BoundsDraft, type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
@@ -1542,11 +1542,13 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
   st.current = { enemy, hasSaved, down: llm.check.state === 'fail' };
   useEffect(() => openModal({
     question: 'Принять командование? Скажите «принимаю» или «отмена».',
+    // сначала вопрос и как отвечать, потом подробности: отвечают, едва услышав варианты
     get read() {
       const s = st.current;
-      return speakable(`Принять командование с ${dayMonth(at)}, ход ${turn}? Противник — ${s.enemy === 'llm' ? 'штаб на модели' : 'без штаба'}${s.down ? '; модель сейчас не на связи' : ''}. `
-        + `${s.hasSaved ? 'Незавершённая игра будет заменена. ' : ''}Скажите: «принимаю», «без штаба» или «штаб на модели», или «отмена».`, { full: true });
+      return speakable(takeoverRead({ day: dayMonth(at), turn, enemy: s.enemy, down: s.down, saved: s.hasSaved }), { full: true });
     },
+    remind: TAKEOVER_REMIND,
+    isAnswer: takeoverIsAnswer,
     parse: (rest) => takeoverParse(rest, { saved: st.current.hasSaved, enemy: st.current.enemy }),
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
   useAction({
@@ -1562,7 +1564,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') void act('replay.takeCommand.cancel'); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
   return (
     <div className="modal-bg" onClick={() => { void act('replay.takeCommand.cancel'); }}>
-      <div className="modal take" onClick={(e) => e.stopPropagation()}>
+      <div className="modal take" data-modal onClick={(e) => e.stopPropagation()}>
         <h3>Принять командование</h3>
         <p className="take-when"><b>{dayLong(at)}, {hhmm(at)}</b> · ход {turn} · ход — {turnHours === 24 ? 'сутки' : `${turnHours} ч`}</p>
         <ul className="take-list">

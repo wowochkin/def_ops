@@ -15,6 +15,7 @@
  */
 import type { LngLat } from '@def-ops/core';
 import type { MapEngine } from '../../engine/types';
+import { showAt } from '../../engine/free-center';
 import type { EnemyMode, TurnView } from '../../sim/game-protocol';
 import { pickByName } from '../answers';
 import { readAloud } from '../dictation';
@@ -183,7 +184,7 @@ export function resolveTarget(name: string, v: TurnView): { at: LngLat; label: s
 
 export interface CommandDeps {
   view: TurnView | null;
-  engine: Pick<MapEngine, 'getView' | 'setView'> | null;
+  engine: (Pick<MapEngine, 'getView' | 'setView'> & Partial<Pick<MapEngine, 'project' | 'unproject' | 'getContainer'>>) | null;
   setTab(t: CmdTab): void;
   /** Своё объединение: выбрать, открыть доклад, показать на карте. */
   showUnit(id: string): void;
@@ -216,11 +217,12 @@ export function commandActions(get: () => CommandDeps): Action[] {
   const ready = (): true | string => { const r = inReplay(); return r !== true ? r : get().view ? true : 'обстановка ещё готовится — подождите немного'; };
   const view = () => get().view!;
   const base = { section: 'replay', available: ready };
+  // место — в свободной части карты: не под панелью голоса и легендой
   const center = (at: LngLat, zoom: number | null) => {
     const en = get().engine;
     if (!en) return;
     const z = en.getView().zoom;
-    en.setView({ center: at, zoom: zoom === null ? z : Math.max(z, zoom) });
+    showAt(en, at, zoom === null ? z : Math.max(z, zoom));
   };
   const zoomBy = (d: number) => {
     const en = get().engine;
@@ -429,6 +431,20 @@ export function replayActions(get: () => ReplayDeps): Action[] {
 }
 
 /** Разбор ответов окна «Принять командование» (реплика без обращения). */
+/**
+ * Чтение окна «Принять командование» (до озвучки — speakable): вопрос, предупреждение, как отвечать, потом подробности;
+ * в конце «Жду ответа.» (не слово-ответ). day — «16 апреля».
+ */
+export function takeoverRead(o: { day: string; turn: number; enemy: EnemyMode; down: boolean; saved: boolean }): string {
+  return `Принять командование с ${o.day}? ${o.saved ? 'Незавершённая игра будет заменена. ' : ''}`
+    + 'Скажите: «принимаю», «без штаба» или «штаб на модели», или «отмена». '
+    + `Противник — ${o.enemy === 'llm' ? 'штаб на модели' : 'без штаба'}${o.down ? '; модель сейчас не на связи' : ''}. Ход ${o.turn}. Жду ответа.`;
+}
+/** Напоминание окна «Принять командование», если ответа нет. */
+export const TAKEOVER_REMIND = 'Принимаете командование? Скажите «принимаю» или «отмена». Жду ответа.';
+/** Реплика целиком — ответ окну «Принять командование» (принимается и без «штаб», и поверх его речи). */
+export function takeoverIsAnswer(rest: string): boolean { return takeoverParse(rest, { saved: false, enemy: 'llm' }) !== null; }
+
 export function takeoverParse(rest: string, o: { saved: boolean; enemy: EnemyMode }): { id: string; params?: unknown } | null {
   const t = norm(rest);
   if (/^(?:принимаю|принять|прими|принимай|начать|начинай|начнем|начинаем|да|принимаю командование|прими командование|принять командование|в бой)$/.test(t))

@@ -52,6 +52,13 @@ export const YES_NO_SAY = `Скажите «да», чтобы подтверд�
 export const REMIND_MS = 8_000;
 /** Напоминание о «да / нет» (вопрос кончается «Жду ответа.», а не словом-ответом). */
 export const REMIND_YES_NO = `Да или нет? ${WAIT_SAY}`;
+/** Ответ поверх речи штаба, который нельзя исполнить сразу (мог быть эхом или опасен), — переспрос. */
+export const REASK_SAY = `Повторите ответ, пожалуйста. ${WAIT_SAY}`;
+/** Слова одного корня (формы): «второй» — «вторую», «отмена» — «отмени». */
+const sameWord = (a: string, b: string) => {
+  const k = Math.min(4, Math.min(a.length, b.length) - 1);
+  return a === b || (k >= 3 && a.slice(0, k) === b.slice(0, k));
+};
 /** Речь поверх штаба (перебивание «словом») — ответ, только если она не длиннее этого (слов). */
 const OVER_MAX_WORDS = 3;
 
@@ -302,6 +309,12 @@ export class Dispatcher {
     return this.opts.say(text, o);
   }
 
+  /** Повторить (кнопка «Повторить» полосы — то же, что «повтори»): вопрос открытого окна или последняя фраза. */
+  repeat(): void {
+    const m = topModal();
+    this.say(m ? m.read ?? m.question : this.last?.text ?? 'Я ещё ничего не говорил.');
+  }
+
   /** Фраза для других модулей (окно зачитывает вопрос, чтение по частям): в дежурном режиме штаб молчит. Номер фразы. */
   announce(text: string, o?: { keep?: boolean; role?: SpeakRole }): number | void { if (!this.standby && text) return this.say(text, o); }
   /** Снять фразу id (модуль: ответ больше не нужен): ждёт — снимается, звучит — гасится. */
@@ -342,12 +355,14 @@ export class Dispatcher {
 
   /**
    * Речь поверх штаба при перебивании «словом» (сервис штаб не оборвал: без подавления эха её не отличить от его же
-   * голоса). Ответ на вопрос (подтверждение «да / нет», ответ открытого окна) — не длиннее OVER_MAX_WORDS слов и не
-   * эхо — принимается: штаб замолкает, ответ исполняется. Эхо — слова, идущие подряд во фразе штаба chief (два и
-   * больше), и «да», если штаб сам его говорит (подтверждение необратимого не должно сработать от динамиков).
-   * Прочее — не реплика: без ответа и без следа.
+   * голоса). Короткий (до OVER_MAX_WORDS слов) ответ на вопрос — подтверждение «да / нет» или ответ открытого окна:
+   * - слово ответа (или его форма) есть в том, что штаб уже сказал (chief), — может быть эхом; ответ опасен — «да» на
+   *   подтверждение, опасный вариант или «да» окна (modal.danger), ответ, исполняющий необратимое действие: не
+   *   исполняется — штаб замолкает и переспрашивает (REASK_SAY, 'reask'); повтор придёт обычной репликой;
+   * - иначе штаб замолкает и ответ исполняется.
+   * Эхо цепочкой (два слова подряд из фразы штаба) и прочая речь — не реплика: без ответа и без следа ('ignored').
    */
-  async over(text: string, id: number, chief: string): Promise<'ignored' | 'done' | 'unknown'> {
+  async over(text: string, id: number, chief: string): Promise<'ignored' | 'done' | 'unknown' | 'reask'> {
     if (this.standby) return 'ignored';
     const whole = norm(text);
     const words = whole.split(' ').filter(Boolean);
@@ -358,9 +373,14 @@ export class Dispatcher {
     if (!answer) return 'ignored';
     const said = norm(chief).split(' ').filter(Boolean);
     const run = words.some((w, i) => i > 0 && said.some((c, j) => j > 0 && c === w && said[j - 1] === words[i - 1]));
-    if (run || (yn === 'yes' && words.some((w) => said.includes(w)))) return 'ignored';
+    if (run) return 'ignored';
+    const echo = words.some((w) => said.some((c) => sameWord(c, w)));
+    const hit = !this.pending && asked ? asked.parse(whole) : null;
+    const danger = this.pending ? yn === 'yes'
+      : !!asked && (asked.danger?.(whole) === true || (!!hit && getAction(hit.id)?.irreversible === true));
     this.opts.stop?.();
     this.spoke(); // перебил — дальше разговор
+    if (echo || danger) { this.say(REASK_SAY); return 'reask'; }
     return this.utterance(text, id);
   }
 

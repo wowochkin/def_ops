@@ -31,7 +31,8 @@
  * Тур (voice/tour.tsx) говорит тем же путём, что ответы штаба (useTourVoice); `voice:open` с detail 'panel'
  * разворачивает панель (подготовка тура по ней). Элементы панели помечены `data-tour` для подсветки.
  */
-import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type RefObject } from 'react';
+import { useAvoidModals } from './avoid-modals';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
@@ -40,7 +41,7 @@ import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
   DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
-  parseEnabled, parsePanelMode, parseSettings, placePanel, resetStored, settleAec, storeSettings, wasCalibrated, type FeedItem, type PanelMode,
+  parseEnabled, parsePanelMode, parseSettings, resetStored, stripCut, stripLines, settleAec, storeSettings, wasCalibrated, type FeedItem, type PanelMode,
 } from './panel-state';
 import { confirmAsync } from '../dialogs';
 import { Calibration } from './Calibration';
@@ -61,8 +62,6 @@ const OFFER_CALIBRATION = 'Голос готов. Калибровки ещё н
 /** Вопрос перед выключением голоса (кнопкой — окном, голосом — «да / нет»); рядом с кнопкой — короткая строка. */
 export const POWER_OFF_ASK = 'Выключить микрофон? Включить голос голосом будет нельзя — только этой кнопкой. Чтобы штаб просто замолчал, скажите: «Штаб, отбой».';
 export const POWER_OFF_NOTE = 'Включить снова — только этой кнопкой.';
-/** Окна, которые панель не закрывает: вопросы dialogs.ts, окна разделов (.modal), калибровка и «Голоса». */
-const MODALS = '.confirm-box, .modal, .vp-dialog';
 
 /**
  * llmCheck — итог проверки связи с моделью в «ИИ» ('fail' — модель голосом не зовётся); recheck — проверить связь
@@ -91,8 +90,12 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const [status, setStatus] = useState<VoiceStatus>(client.status);
   // вид: значок, полоса, развёрнута (выбор человека — в OPEN_KEY; сама разворачивается и сворачивается — PanelSize)
   const size = useMemo(() => new PanelSize(parsePanelMode(lsGet(OPEN_KEY)), () => Date.now()), []);
+  if (import.meta.env.DEV) (window as unknown as { __voiceSize: PanelSize }).__voiceSize = size;
   const [, redraw] = useReducer((x: number) => x + 1, 0);
   const setMode = (m: PanelMode) => { size.set(m); lsSet(OPEN_KEY, m === 'compact' ? null : m); redraw(); };
+  /** Открыто окно реестра (вопрос читается) / окно на экране (DOM). */
+  const regModal = useRef(false);
+  const domModal = useRef(false);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [level, setLevel] = useState({ p: 0, busy: false });
   const [cfg, setCfg] = useState<VoiceSettings>(() => ({ ...DEFAULT_SETTINGS, ...parseSettings(lsGet(SETTINGS_KEY)) }));
@@ -205,13 +208,27 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
 
   // окна и модули говорят через штаб (в дежурном — молчат); открылось окно — прежний ответ модели уже не нужен
   useEffect(() => {
-    setSpeaker((t, o) => dispatcher.announce(t, o));
+    // фразы окна (его вопрос, повтор вопроса): окно закрыли (ответили кнопкой) — их дочитывать незачем; чужие фразы — звучат
+    const modalIds = new Set<number>();
+    setSpeaker((t, o) => {
+      const id = dispatcher.announce(t, o ? { keep: o.keep, role: o.role } : undefined);
+      if (o?.modal && typeof id === 'number') modalIds.add(id);
+      return id;
+    });
     setRetractor((id) => dispatcher.retract(id));
     // предложения модулей («Составить разбор операции?»): в дежурном и при выключенном голосе — нет
     setProposer((text, id, params) => { if (enabledRef.current && !dispatcher.standby) dispatcher.propose(text, id, params); });
     // слышит ли голос: выключен, дежурит или сервис не на связи — модулям незачем готовить фразы моделью
     setVoiceLive(() => enabledRef.current && !dispatcher.standby && client.status === 'ready');
-    const off = onModal((_m, opened) => { if (opened) { dispatcher.cancel(); gate.clear(); } });
+    // окно открылось — его вопрос читается, но панель от этого не разворачивается (и сворачивается, когда окно закрыто)
+    const off = onModal((m, opened) => {
+      regModal.current = !!m; size.setModal(regModal.current || domModal.current); redraw();
+      if (opened) { dispatcher.cancel(); gate.clear(); return; }
+      if (m) return; // закрыто верхнее, ниже ещё окно
+      for (const id of modalIds) if (!gate.drop(id) && speakingIds.current.delete(id)) client.stop(id);
+      modalIds.clear();
+      syncSpeaking();
+    });
     return () => { setSpeaker(null); setRetractor(null); setProposer(null); setVoiceLive(null); off(); };
   }, [dispatcher, gate]);
   // тур говорит голосом начальника штаба: та же очередь фраз, та же лента
@@ -312,7 +329,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       client.on('over', (m) => {
         if (!enabledRef.current) { gate.utterance(); return; }
         void dispatcher.over(m.text, m.id, m.chief).then((r) => {
-          if (r !== 'ignored') setFeed((f) => feedResolve(feedUtterance(f, m), m.id, r));
+          // не исполнено (могло быть эхом, опасно) — видно, что услышано и что делать
+          if (r === 'reask') setFeed((f) => feedAdd(f, { key: `r${m.id}`, kind: 'fix', text: `Услышал «${m.text}» во время чтения — повторите после вопроса.` }));
+          else if (r !== 'ignored') setFeed((f) => feedResolve(feedUtterance(f, m), m.id, r));
         });
         gate.utterance();
       }),
@@ -447,9 +466,12 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const feedEnd = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLElement>(null);
   // открытые окна: панель не больше полосы и не на них
-  const { modal, pos } = useAvoidModals(card);
+  const { modal, pos, crowded } = useAvoidModals(card);
+  domModal.current = modal;
+  useEffect(() => { size.setModal(regModal.current || modal); redraw(); }, [modal, size]);
   const view = size.view(modal);
-  useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.length, view]);
+  // лента — к последней записи (длина ленты ограничена FEED_MAX — следить за последней, а не за длиной)
+  useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.at(-1)?.key, view]);
   const last = [...feed].reverse().find((x) => x.kind === 'chief');
 
   // голоса в этой версии нет (установленная программа, браузер, не Mac на Apple Silicon) — панели нет
@@ -490,7 +512,11 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           {hint && <p className="vp-hint stop" role="status">{hint}</p>}
           {/* голос выключен — включить можно прямо с полосы */}
           {!enabled && <button className="vp-power primary" onClick={() => power(true)}><MicGlyph off={false} /> Включить голос</button>}
-          {enabled && !confirm && last && <p className="vp-last" title={last.text}><span className="vp-who">Штаб:</span> {last.text}</p>}
+          {enabled && !confirm && !crowded && last && <>
+            <p className={`vp-last${stripLines(modal) === 3 ? ' l3' : ''}`} title={last.text}><span className="vp-who">Штаб:</span> {last.text}</p>
+            {/* обрезано — не молча: целиком повторит штаб */}
+            {stripCut(last.text, modal) && <div className="vp-cut"><span>Целиком — скажите «повтори»</span><button onClick={() => dispatcher.repeat()}>Повторить</button></div>}
+          </>}
         </section>
       )}
       {view === 'full' && (
@@ -599,31 +625,6 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       )}
     </div>
   );
-}
-
-/**
- * Открытые окна (MODALS, видимые): есть ли они и куда поставить панель card, чтобы их не закрывать (null — обычное
- * место). Окна появляются и закрываются без событий (dialogs.ts, окна разделов) — проверка раз в 300 мс.
- */
-function useAvoidModals(card: RefObject<HTMLElement | null>): { modal: boolean; pos: { left: number; top: number } | null } {
-  const [st, setSt] = useState<{ modal: boolean; pos: { left: number; top: number } | null }>({ modal: false, pos: null });
-  const last = useRef('');
-  const measure = () => {
-    const boxes = [...document.querySelectorAll(MODALS)].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0)
-      .map((r) => ({ left: r.left, top: r.top, width: r.width, height: r.height }));
-    const c = card.current?.getBoundingClientRect();
-    const pos = boxes.length && c ? placePanel({ width: c.width, height: c.height }, boxes, window.innerWidth, window.innerHeight) : null;
-    const next = { modal: boxes.length > 0, pos };
-    const key = JSON.stringify(next);
-    if (key !== last.current) { last.current = key; setSt(next); }
-  };
-  useLayoutEffect(measure);
-  useEffect(() => {
-    const t = setInterval(measure, 300);
-    window.addEventListener('resize', measure);
-    return () => { clearInterval(t); window.removeEventListener('resize', measure); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  return st;
 }
 
 const pct = (x: number) => `${Math.round(x * 100)} %`;

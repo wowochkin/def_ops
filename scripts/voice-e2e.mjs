@@ -1048,6 +1048,11 @@ const panelVs = (sel) => page.evaluate((q) => {
   return { cross, panel: a && [a.left, a.top, a.width, a.height].map(Math.round), win: b && [b.left, b.top, b.width, b.height].map(Math.round) };
 }, sel);
 
+/** Вопрос с длинными пояснениями: штаб читает его секунд двадцать (поддельный синтез — 15 знаков в секунду). */
+const LONG_Q = ['Что сделать с игрой?', 'Игра остановлена на третьем ходу, запись хранится на этом компьютере.',
+  'Если сохранить, к ней можно вернуться в разделе «Переигровка», кнопкой «Продолжить».',
+  'Если удалить, запись и журнал ходов пропадут, а разбор операции останется.'].join(' ');
+const LABELS = [{ label: 'Сохранить' }, { label: 'Удалить' }, { label: 'Продолжить' }];
 const ZELOW = [14.38, 52.53];
 /** Где Зелов на экране сейчас (без перемещения карты): в карте ли, под панелью голоса или легендой ли. */
 const zelowSeen = () => page.evaluate((at) => {
@@ -1078,6 +1083,8 @@ await check('без рук: переигровка → «рассчитай оп
   await page.waitForTimeout(400);
   const pv = await panelVs('.modal.take');
   if (pv.cross) throw new Error(`панель ${pv.panel} на окне ${pv.win}`);
+  // фраза штаба (вопрос окна) видна в полосе, а не только состояние
+  await panel.locator('.vp-card.strip .vp-last', { hasText: 'Принять командование' }).waitFor({ timeout: 3000 }).catch(() => { throw new Error('в полосе нет вопроса окна'); });
   const main = dlg.getByRole('button', { name: /^Принять командование с/ });
   if (!(await main.evaluate((b) => { const r = b.getBoundingClientRect(); return b.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); }))) throw new Error('главная кнопка окна закрыта');
   await shot('voice-takeover.jpg');
@@ -1119,10 +1126,73 @@ await check('командование: при полосе место тоже �
   return `Зелов в ${z.p}`;
 });
 
+await check('полоса не на кнопках масштаба карты; свёрнутая в значок — в том же углу', async () => {
+  const strip = panel.locator('.vp-card.strip');
+  await strip.waitFor({ timeout: 3000 });
+  const r = await page.evaluate(() => {
+    const a = document.querySelector('.vp-card.strip').getBoundingClientRect();
+    // кнопки масштаба, которые видно (карта под проигрывателем или другим окном не в счёт); полоса над ними — тоже «видно»
+    const strip = document.querySelector('.vp-card.strip');
+    const z = [...document.querySelectorAll('.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group')].filter((e) => {
+      const b = e.getBoundingClientRect();
+      const top = b.width > 0 && document.elementFromPoint(b.left + b.width / 2, b.top + 4);
+      return !!top && (e.contains(top) || strip.contains(top));
+    }).map((e) => e.getBoundingClientRect());
+    return { strip: a.toJSON(), zoom: z.map((b) => [b.left, b.top, b.width, b.height].map(Math.round)), cross: z.some((b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top), n: z.length };
+  });
+  if (!r.n) throw new Error('кнопок масштаба нет');
+  if (r.cross) throw new Error(`полоса ${[r.strip.left, r.strip.top, r.strip.width, r.strip.height].map(Math.round)} на кнопках масштаба ${JSON.stringify(r.zoom)}`);
+  await strip.getByRole('button', { name: 'Свернуть' }).click();
+  const icon = await page.locator('.vp-icon').evaluate((e) => e.getBoundingClientRect().toJSON());
+  if (Math.abs(icon.right - r.strip.right) > 4 || Math.abs(icon.bottom - r.strip.bottom) > 4) throw new Error(`значок ${Math.round(icon.right)},${Math.round(icon.bottom)}, полоса ${Math.round(r.strip.right)},${Math.round(r.strip.bottom)}`);
+  await page.locator('.vp-icon').click();
+  await strip.waitFor({ timeout: 3000 });
+});
+
+await check('окно с длинным вопросом: фраза в полосе — до трёх строк, обрезанная — «Повторить»; закрыли окно — полоса, не большая панель', async () => {
+  const strip = panel.locator('.vp-card.strip');
+  await openDialog('confirmAsync', LONG_Q, { ok: 'Сохранить' });
+  await strip.locator('.vp-last.l3').waitFor({ timeout: 5000 });
+  await strip.getByRole('button', { name: 'Повторить' }).waitFor({ timeout: 3000 }).catch(() => { throw new Error('обрезанная фраза без «Повторить»'); });
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => import('/src/voice/registry.ts').then((m) => m.act('dialog.answer', { choice: 'нет' })));
+  if ((await dlgOut(5000)) !== false) throw new Error('окно не закрылось');
+  for (let i = 0; i < 10; i++) {
+    if (await panel.locator('.vp-card:not(.strip)').isVisible()) throw new Error('после окна выскочила развёрнутая панель');
+    await page.waitForTimeout(150);
+  }
+});
+
+await check('«Разбор операции» (окно почти во весь экран): панель — строка состояния в углу, заголовок и кнопки окна открыты', async () => {
+  await page.locator('.cmd-top').getByRole('button', { name: '⋯' }).click();
+  // разбор — после первого хода; для снимка окна вызываем ту же кнопку (её обработчик) без хода
+  await page.locator('.menu button', { hasText: 'Разбор операции' }).evaluate((b) => b[Object.keys(b).find((k) => k.startsWith('__reactProps'))].onClick());
+  const rv = page.locator('.modal.review[data-modal]');
+  await rv.waitFor({ timeout: 5000 });
+  await page.waitForTimeout(500);
+  const strip = panel.locator('.vp-card.strip');
+  await strip.waitFor({ timeout: 2000 });
+  const r = await page.evaluate(() => {
+    const a = document.querySelector('[data-tour="voice"]').getBoundingClientRect();
+    const hit = (sel) => [...document.querySelectorAll(sel)].some((e) => { const b = e.getBoundingClientRect(); return b.width && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; });
+    const w = document.querySelector('.modal.review').getBoundingClientRect();
+    return { panel: [a.left, a.top, a.width, a.height].map(Math.round), win: [w.left, w.top, w.width, w.height].map(Math.round), on: hit('.modal.review'), head: hit('.rv-h'), ctl: hit('.rv-ctl button'), phrase: !!document.querySelector('.vp-card.strip .vp-last') };
+  });
+  // места рядом нет — панель только строкой состояния и не на заголовке и кнопках окна
+  if (r.on && r.phrase) throw new Error(`панель на окне и с фразой: ${JSON.stringify(r)}`);
+  if (r.head || r.ctl) throw new Error(`панель на заголовке или кнопках окна: ${JSON.stringify(r)}`);
+  await shot('voice-review.jpg');
+  await rv.locator('.rv-h button.x').click();
+  return `панель ${r.panel}, окно ${r.win}${r.on ? ', строкой состояния' : ''}`;
+});
+
 await check('полоса: короткая фраза штаба — в полосе; длинная — панель развернулась сама и свернулась через 10 с тишины', async () => {
   const strip = panel.locator('.vp-card.strip');
   await strip.waitFor({ timeout: 3000 });
   const say = (t) => page.evaluate((x) => import('/src/voice/registry.ts').then((m) => m.speak(x)), t);
+  /** Штаб договорил всё, что было в очереди звука. */
+  const silent = (ms) => page.waitForFunction(() => !window.__e2e.playing().length, null, { timeout: ms, polling: 100 });
+  await silent(60000);
   await say('Обстановка без изменений.');
   await strip.locator('.vp-last', { hasText: 'Обстановка без изменений.' }).waitFor({ timeout: 5000 });
   await panel.locator('.vp-state', { hasText: 'Говорит начальник штаба' }).waitFor({ timeout: 5000 }).catch(() => {});
@@ -1133,9 +1203,16 @@ await check('полоса: короткая фраза штаба — в пол�
   await full.waitFor({ timeout: 5000 }).catch(() => { throw new Error('длинная фраза — панель не развернулась'); });
   await shot('voice-auto-full.jpg');
   // договорил (поддельный синтез — 15 знаков в секунду) и 10 с тишины — снова полоса
+  await silent(60000);
   const t0 = Date.now();
-  await strip.waitFor({ timeout: 40000 }).catch(() => { throw new Error('развёрнутая сама панель не свернулась'); });
-  return `свернулась через ${Math.round((Date.now() - t0) / 1000)} с`;
+  await strip.waitFor({ timeout: 20000 }).catch(async () => {
+    const d = await page.evaluate(() => ({ size: JSON.stringify(window.__voiceSize), sending: window.__e2e.sent.filter((m) => m.type === 'say').slice(-3).map((m) => m.text.slice(0, 40)), state: document.querySelector('.vp-state')?.textContent, playing: window.__e2e.playing(), confirm: !!document.querySelector('.vp-confirm'),
+      modals: [...document.querySelectorAll('[data-modal]')].map((e) => `${e.className}:${Math.round(e.getBoundingClientRect().width)}`) }));
+    throw new Error(`развёрнутая сама панель не свернулась: ${JSON.stringify(d)}`);
+  });
+  const dt = (Date.now() - t0) / 1000;
+  if (dt < 8) throw new Error(`свернулась через ${dt} с тишины — раньше 10 с`);
+  return `свернулась через ${Math.round(dt)} с тишины`;
 });
 
 await check('открыто окно — панель полосой и не на окне; ответа нет 8 с — «Да или нет? Жду ответа.» (один раз); «нет»', async () => {
@@ -1145,6 +1222,8 @@ await check('открыто окно — панель полосой и не н�
   await page.waitForTimeout(400); // место панели пересчитывается раз в 300 мс
   const v = await panelVs('.confirm-box');
   if (v.cross) throw new Error(`панель ${v.panel} на окне ${v.win}`);
+  const fs = await page.locator('.confirm-box').evaluate((b) => Math.min(...[...b.querySelectorAll('p, button')].map((e) => parseFloat(getComputedStyle(e).fontSize))));
+  if (fs < 18) throw new Error(`шрифт окна ${fs} px`);
   await feedHas('Да или нет? Жду ответа.').waitFor({ timeout: 40000 });
   await shot('voice-dialog.jpg');
   await page.waitForTimeout(REMIND_WAIT);
@@ -1155,11 +1234,6 @@ await check('открыто окно — панель полосой и не н�
   return `панель ${v.panel}, окно ${v.win}`;
 });
 
-/** Вопрос с длинными пояснениями: штаб читает его секунд двадцать (поддельный синтез — 15 знаков в секунду). */
-const LONG_Q = ['Что сделать с игрой?', 'Игра остановлена на третьем ходу, запись хранится на этом компьютере.',
-  'Если сохранить, к ней можно вернуться в разделе «Переигровка», кнопкой «Продолжить».',
-  'Если удалить, запись и журнал ходов пропадут, а разбор операции останется.'].join(' ');
-const LABELS = [{ label: 'Сохранить' }, { label: 'Удалить' }, { label: 'Продолжить' }];
 /** Окно открыто и читается; ответ «второй» — посреди чтения: окно закрыто, чтение оборвано (stopped — как узнать). */
 async function answerOverReading(stopped) {
   const k = await page.evaluate(() => ({ msgs: window.__e2e.msgs.length, sent: window.__e2e.sent.length }));
@@ -1176,9 +1250,11 @@ async function answerOverReading(stopped) {
   if (!read.text.startsWith('Что сделать с игрой? Варианты: первый')) throw new Error(`сначала не варианты: ${read.text.slice(0, 80)}`);
   const cut = await page.evaluate(([i, j, id, how]) => (how === 'barge'
     ? window.__e2e.msgs.slice(i).some((m) => m.type === 'barge' && m.id === id)
-    : window.__e2e.msgs.slice(i).some((m) => m.type === 'over' && m.text === 'второй') && window.__e2e.sent.slice(j).some((m) => m.type === 'stop')), [k.msgs, k.sent, read.id, stopped]);
+    : window.__e2e.msgs.slice(i).some((m) => m.type === 'over' && m.text === 'второй') && window.__e2e.sent.slice(j).some((m) => m.type === 'stop')
+      && window.__e2e.sent.slice(j).some((m) => m.type === 'say' && m.text === 'Повторите ответ, пожалуйста. Жду ответа.')), [k.msgs, k.sent, read.id, stopped]);
   if (!cut) throw new Error(`чтение не оборвано (${stopped})`);
-  if (dt > read.text.length / 15 * 1000) throw new Error(`ответ принят через ${dt} мс — после чтения`);
+  // «голосом» ответ исполнен сразу; «словом» — слово было в сказанном (могло быть эхом): переспрос, повтор — исполнен
+  if (stopped === 'barge' && dt > read.text.length / 15 * 1000) throw new Error(`ответ принят через ${dt} мс — после чтения`);
   return `ответ принят через ${Math.round(dt / 100) / 10} с, вопрос читался бы ${Math.round(read.text.length / 15)} с`;
 }
 
@@ -1188,7 +1264,7 @@ await check('ответ посреди чтения окна, перебиван
   return answerOverReading('barge');
 });
 
-await check('ответ посреди чтения окна, перебивание «словом»: «второй» поверх штаба — штаб замолк, выбран второй', async () => {
+await check('ответ посреди чтения окна, перебивание «словом»: «второй» поверх штаба (есть в сказанном) — штаб замолк и переспросил; повтор — выбран второй', async () => {
   // по ходу речи поверх штаба куски распознаются (стоп-слово ли) и тоже снимают строки сценария
   await handsFree([...Array(10).fill('второй'), ...QUIET], { mode: 'word' });
   const r = await answerOverReading('stop');

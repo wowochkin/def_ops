@@ -258,7 +258,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
   const s = STEPS[i];
   return (
     <div className="vp-back" onClick={(e) => { if (e.target === e.currentTarget && !result) void act('voice.calibrate.close'); }}>
-      <div className="vp-dialog calib" role="dialog" aria-label="Калибровка">
+      <div className="vp-dialog calib" data-modal role="dialog" aria-label="Калибровка">
         {!result ? (
           <>
             <div className="vp-stepn">Калибровка · шаг {i + 1} из {STEPS.length}</div>

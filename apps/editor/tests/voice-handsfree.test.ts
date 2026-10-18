@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, openModal, register, setSpeaker, topModal, type Action } from '../src/voice/registry';
 import { SayGate } from '../src/voice/panel-state';
-import { CONFIRM_MS, Dispatcher, RECHECK_MS, REMIND_MS, REMIND_YES_NO, STANDBY_SAY } from '../src/voice/dispatch';
+import { CONFIRM_MS, Dispatcher, REASK_SAY, RECHECK_MS, REMIND_MS, REMIND_YES_NO, STANDBY_SAY } from '../src/voice/dispatch';
 import { ModelUnavailable, type ModelReply } from '../src/voice/llm';
 import { ordinalIndex, pickByName, yesNo } from '../src/voice/answers';
 import { fieldActions, readAloud } from '../src/voice/dictation';
@@ -783,6 +783,8 @@ describe('раунд 2: ответ окну без «штаб» — не дол�
 describe('Task 1b: ответ поверх чтения вопроса', () => {
   beforeEach(() => setSpeaker((s) => said.push(s)));
   const READ_CHOOSE = 'Что сделать с игрой? Варианты: первый — «Сохранить», второй — «Удалить», третий — «Продолжить». Или «отмена».';
+  /** Пояснения после вариантов: слов-ответов в них нет. */
+  const DETAILS = 'Игра остановлена на третьем ходу, запись хранится на этом компьютере.';
 
   it('«голосом»: сервис перебил штаб (barge → spoke) — ответ без «штаб» посреди чтения принят', async () => {
     const out: unknown[] = [];
@@ -795,20 +797,77 @@ describe('Task 1b: ответ поверх чтения вопроса', () => {
     off();
   });
 
-  it('«словом»: речь поверх штаба — ответ окну; штаб замолкает и исполняет ответ', async () => {
+  it('«словом»: ответ, которого в сказанном нет, — штаб замолкает и исполняет его', async () => {
     const out: unknown[] = [];
     const stop = vi.fn();
     voiceDialog({ message: 'Что сделать с игрой?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
     const d = mk({ stop });
     t += 10 * 60_000;
-    // «второй» есть во фразе штаба, но одно слово — не эхо (как стоп-слово)
-    expect(await d.over('второй', 7, READ_CHOOSE)).toBe('done');
+    expect(await d.over('второй', 7, DETAILS)).toBe('done');
     expect(stop).toHaveBeenCalled();
     expect(out).toEqual([1]);
     expect(topModal()).toBeNull();
   });
 
-  it('«словом»: эхо (цепочка слов фразы штаба), не ответ, ничего не ждёт ответа — не реплика: штаб не замолкает, молчит', async () => {
+  it('«словом»: слово ответа уже есть в сказанном (может быть эхом) — не исполняется: штаб замолкает и переспрашивает', async () => {
+    const out: unknown[] = [];
+    const stop = vi.fn();
+    const off = voiceDialog({ message: 'Что сделать с игрой?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
+    const d = mk({ stop });
+    said.length = 0;
+    expect(await d.over('второй', 1, READ_CHOOSE)).toBe('reask');
+    expect(await d.over('вторую', 2, READ_CHOOSE)).toBe('reask'); // форма слова
+    expect(await d.over('отмена', 3, READ_CHOOSE)).toBe('reask');
+    expect(out).toEqual([]);
+    expect(stop).toHaveBeenCalledTimes(3);
+    expect(said).toEqual([REASK_SAY, REASK_SAY, REASK_SAY]);
+    expect(REASK_SAY).toBe('Повторите ответ, пожалуйста. Жду ответа.');
+    // повтор, когда штаб молчит, — обычная реплика: принимается
+    d.spoke();
+    expect(await d.utterance('второй', 4)).toBe('done');
+    expect(out).toEqual([1]);
+    off();
+  });
+
+  it('«словом»: опасный вариант (как «Удалить из базы» в знаниях) поверх речи не выбирается никогда — только переспрос', async () => {
+    const out: unknown[] = [];
+    const stop = vi.fn();
+    // KnowledgeView: chooseAsync «Удалить «X» из базы?» — «Только удалить», «Откатить и удалить» (оба danger)
+    const off = voiceDialog({ message: 'Удалить «Жуков. Воспоминания» из базы?', labels: ['Только удалить', 'Откатить и удалить'], dangers: [true, true] }, (o) => out.push(o));
+    const read = said.at(-1)!;
+    const d = mk({ stop });
+    expect(await d.over('первый', 1, read)).toBe('reask'); // эхо «первый»
+    expect(await d.over('первый', 2, DETAILS)).toBe('reask'); // и не эхо — всё равно переспрос
+    expect(await d.over('второй', 3, DETAILS)).toBe('reask');
+    expect(out).toEqual([]);
+    expect(stop).toHaveBeenCalledTimes(3);
+    // «отмена» — не опасна: принимается, если её не было в сказанном
+    expect(await d.over('отмена', 4, DETAILS)).toBe('done');
+    expect(out).toEqual([false]);
+    off();
+  });
+
+  it('«словом»: опасное подтверждение (danger) — «да» поверх речи не исполняется; «нет», которого не было в сказанном, — исполняется', async () => {
+    const out: unknown[] = [];
+    voiceDialog({ message: 'Удалить слой?', ok: 'Удалить', danger: true }, (o) => out.push(o));
+    const d = mk();
+    expect(await d.over('да', 1, 'Слой «Рубежи» нарисован на прошлой неделе.')).toBe('reask');
+    expect(await d.over('нет', 2, 'Слой «Рубежи» нарисован на прошлой неделе.')).toBe('done');
+    expect(out).toEqual([false]);
+  });
+
+  it('«словом»: ответ окна, исполняющий необратимое действие, поверх речи — переспрос', async () => {
+    const run = vi.fn(async () => undefined);
+    reg({ id: 'game.over', irreversible: true, confirm: () => 'Заменить игру?', run });
+    const close = openModal({ question: 'Принять?', parse: (r) => (r === 'принимаю' ? { id: 'game.over' } : null), isAnswer: (r) => r === 'принимаю' });
+    const d = mk();
+    expect(await d.over('принимаю', 1, DETAILS)).toBe('reask');
+    expect(run).not.toHaveBeenCalled();
+    expect(d.pending).toBeNull();
+    close();
+  });
+
+  it('«словом»: эхо цепочкой, не ответ, ничего не ждёт ответа — не реплика: штаб не замолкает, молчит', async () => {
     const out: unknown[] = [];
     const stop = vi.fn();
     const d = mk({ stop });
@@ -824,32 +883,32 @@ describe('Task 1b: ответ поверх чтения вопроса', () => {
     off();
   });
 
-  it('«словом»: «да» поверх вопроса, где штаб сам говорит «да», — не принимается (не отличить от эха); «нет» — принимается', async () => {
-    const out: unknown[] = [];
-    voiceDialog({ message: 'Удалить слой?', ok: 'Удалить' }, (o) => out.push(o));
-    const chief = 'Удалить слой? Скажите «да» — «Удалить», или «нет». Жду ответа.';
-    const d = mk();
-    expect(await d.over('да', 1, chief)).toBe('ignored');
-    expect(out).toEqual([]);
-    expect(await d.over('нет', 2, chief)).toBe('done');
-    expect(out).toEqual([false]);
-    // «да» поверх пояснений, где «да» нет, — принимается
-    voiceDialog({ message: 'Удалить слой?', ok: 'Удалить' }, (o) => out.push(o));
-    expect(await d.over('да', 3, 'Слой «Рубежи» нарисован на прошлой неделе.')).toBe('done');
-    expect(out).toEqual([false, true]);
-  });
-
-  it('«словом»: подтверждение необратимого — «нет» поверх вопроса отменяет, «да» поверх — нет', async () => {
+  it('«словом»: подтверждение необратимого — «да» поверх вопроса никогда; «нет» из сказанного — переспрос', async () => {
     const del = vi.fn(async () => undefined);
     reg({ id: 'game.delete', section: 'editor', irreversible: true, confirm: () => 'Удалить игру?', run: del });
     const d = mk({ model: reply({ say: '', call: { id: 'game.delete', params: {} } }) });
     await d.utterance('штаб, удали игру', 1);
     const chief = said.at(-1)!;
-    expect(await d.over('да', 2, chief)).toBe('ignored');
+    expect(await d.over('да', 2, chief)).toBe('reask');
+    expect(await d.over('да', 3, DETAILS)).toBe('reask');
+    expect(await d.over('нет', 4, chief)).toBe('reask');
     expect(del).not.toHaveBeenCalled();
-    expect(await d.over('нет', 3, chief)).toBe('done');
+    expect(d.pending).not.toBeNull();
+    expect(await d.over('нет', 5, DETAILS)).toBe('done');
     expect(d.pending).toBeNull();
     expect(said.at(-1)).toBe('Отменено.');
+  });
+
+  it('кнопка «Повторить» (repeat): вопрос открытого окна целиком; без окна — последняя фраза', () => {
+    const d = mk();
+    const off = voiceDialog({ message: 'Удалить слой?' }, () => {});
+    said.length = 0;
+    d.repeat();
+    expect(said).toEqual(['Удалить слой? Скажите «да» или «нет». Жду ответа.']);
+    off();
+    d.propose('Провести калибровку?', 'shell.calibrate');
+    d.repeat();
+    expect(said.at(-1)).toMatch(/^Провести калибровку\?/);
   });
 
   it('в дежурном речь поверх штаба не принимается', async () => {
@@ -937,6 +996,20 @@ describe('Task 1b: в окне сначала вопрос и варианты, 
   it('выбор: вступление и вопрос, варианты, пояснения', () => {
     const off = voiceDialog({ message: 'Игра не завершена. Что сделать с ней? Запись хранится до конца хода.', labels: ['Сохранить', 'Удалить'] }, () => {});
     expect(said.at(-1)).toBe('Игра не завершена. Что сделать с ней? Варианты: первый — «Сохранить», второй — «Удалить». Или «отмена». Запись хранится до конца хода. Жду ответа.');
+    off();
+  });
+  it('вопрос в конце сообщения: первая фраза, вопрос, как отвечать — потом пояснения', () => {
+    const off = voiceDialog({ message: 'Игра не завершена. Ходов три. Журнал сохранён. Разбор не составлен. Начать новую?' }, () => {});
+    expect(said.at(-1)).toBe('Игра не завершена. Начать новую? Скажите «да» или «нет». Подробнее — скажите «дальше». Жду ответа.');
+    off();
+    const off2 = voiceDialog({ message: 'Игра не завершена. Журнал сохранён. Начать новую?' }, () => {});
+    expect(said.at(-1)).toBe('Игра не завершена. Начать новую? Скажите «да» или «нет». Журнал сохранён. Жду ответа.');
+    off2();
+  });
+  it('«Подробнее — скажите «дальше»» — только если дальше есть что читать', () => {
+    const off = voiceDialog({ message: 'Начать заново? Это нельзя отменить. Запись будет безвозвратно стёрта. Все ходы будут потеряны. Журнал будут удалены безвозвратно.' }, () => {});
+    expect(said.at(-1)).not.toMatch(/Подробнее/);
+    expect(said.at(-1)).toMatch(/Скажите «да» или «нет»\. Жду ответа\.$/);
     off();
   });
   it('длинное: вопрос и варианты сразу, пояснения — по «дальше»', async () => {
