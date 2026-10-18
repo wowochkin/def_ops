@@ -128,7 +128,7 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
       pending = ac;
       if (inReplay() === true) say(UMPIRE_WAIT_SAY);
       setVoiceNote(UMPIRE_NOTE);
-      let reminder: number | void;
+      let reminder: number | void = undefined;
       const remind = setInterval(() => {
         if (pending !== ac || inReplay() !== true) return;
         if (typeof reminder === 'number') retract(reminder); // не звучало — заменить, а не копить
@@ -139,6 +139,8 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
         why = texts ? null : UMPIRE_UNFIT;
       } catch { why = UMPIRE_FAILED; } finally {
         clearInterval(remind);
+        // ответ пришёл (или не пришёл) — «Сведения ещё готовятся», стоявшее в очереди, уже не нужно
+        if (typeof reminder === 'number') retract(reminder);
         if (pending === ac) { pending = null; setVoiceNote(null); }
       }
     }

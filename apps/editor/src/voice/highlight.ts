@@ -14,6 +14,13 @@ import type { MapEngine } from '../engine/types';
 export type HlTarget = string | { at: LngLat } | { box: LngLat[] };
 export type Highlight = HlTarget | HlTarget[] | null | undefined;
 export const FLASH_MS = 2500;
+/**
+ * Сколько после показа слой подсветки следит за целями (каждый кадр): вкладку, которую открыло действие, дорисует позже,
+ * карта ещё едет к месту. Дольше — рамка шага разбора (минуты) стоит на месте, а цикл по кадрам рядом с картой не нужен.
+ */
+export const TRACK_MS = 3000;
+/** Слой всё ещё следит за целями: с показа (at) прошло не больше TRACK_MS. */
+export const tracking = (at: number, now: number): boolean => now - at <= TRACK_MS;
 
 /** Элемент с `data-hl="name"`. */
 export const hl = (name: string) => `[data-hl="${name}"]`;

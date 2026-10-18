@@ -403,6 +403,21 @@ describe('разбор хода после хода — голосом поср�
     release(MODEL_SAYS());
     await p;
   });
+  it('ответ модели пришёл — ждущее напоминание «Сведения ещё готовятся» снимается', async () => {
+    vi.useFakeTimers();
+    const retracted: number[] = [];
+    setRetractor((id) => { retracted.push(id); });
+    setSpeaker((text: string, o?: SpeakOpts) => { disp.announce(text, o); return said.length; });
+    let release!: (s: string) => void;
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: () => new Promise<string>((r) => { release = r; }) });
+    await vi.advanceTimersByTimeAsync(UMPIRE_REMIND_MS + 10);
+    const reminder = said.length;
+    expect(last()).toBe(UMPIRE_STILL_SAY);
+    expect(retracted).toEqual([]);
+    release(MODEL_SAYS());
+    await p;
+    expect(retracted).toEqual([reminder]);
+  });
   it('голос не слышит (выключен, дежурит) — разбор сам не начинается, модель не спрашивается; «покажи ход» — разбор по данным расчёта', async () => {
     setVoiceLive(() => false);
     runTours();

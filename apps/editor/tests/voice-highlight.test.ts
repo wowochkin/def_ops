@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, register, type Action } from '../src/voice/registry';
-import { FLASH_MS, flash, flashMap, flashState, hl, note, noted, spotHidden } from '../src/voice/highlight';
+import { FLASH_MS, TRACK_MS, flash, flashMap, flashState, hl, note, noted, spotHidden, tracking } from '../src/voice/highlight';
 import { commandActions, replayActions } from '../src/voice/actions/command';
 import { staffActions } from '../src/voice/actions/staff';
 import { turnActions } from '../src/voice/actions/turn';
@@ -165,5 +165,17 @@ describe('метка на карте: видно ли её', () => {
   it('за краем карты (и у самого края) — не видно', () => {
     expect(spotHidden({ x: 300, y: 500 }, map, [])).toBe(true);
     expect(spotHidden({ x: 410, y: 500 }, map, [])).toBe(true);
+  });
+});
+
+describe('слой подсветки: цели меряются недолго', () => {
+  it('цикл по кадрам — не дольше TRACK_MS (≈3 с) после показа, а не весь шаг разбора (120 с)', () => {
+    flash([hl('x')], 120_000);
+    const st = flashState()!;
+    expect(TRACK_MS).toBeGreaterThanOrEqual(2500);
+    expect(TRACK_MS).toBeLessThanOrEqual(3500);
+    expect(tracking(st.at, st.at + 1000)).toBe(true);
+    expect(tracking(st.at, st.at + TRACK_MS + 1)).toBe(false);
+    expect(tracking(st.at, st.at + 60_000)).toBe(false);
   });
 });

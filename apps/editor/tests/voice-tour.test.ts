@@ -826,6 +826,16 @@ describe('туры переигровки и командования', () => {
     }
   });
 
+  it('тексты честны: вступление и тур командования — «почти всё», а не «всё»; расчёт — без обещанной длительности', () => {
+    const cmd = TOURS.find((t) => t.id === 'command')!.steps.map((s) => s.text).join(' ');
+    expect(cmd).toMatch(/почти всё, что нужно для игры/);
+    expect(cmd).not.toMatch(/(?<!почти )всё, что нужно для игры/);
+    expect(COMMAND_BY_VOICE).toMatch(/почти всё, что нужно для игры/);
+    const calc = tour('replay').steps.find((x) => x.target === 'replay-go')!;
+    expect(calc.text).not.toMatch(/меньше минуты|обычно/);
+    expect(calc.text).toMatch(/в фоне.*штаб скажет, когда/);
+  });
+
   it('вступление: в шаге «Как говорить» — что голосом можно в командовании, без рук от запуска до разбора', () => {
     expect(COMMAND_BY_VOICE).toMatch(/почти всё, что нужно для игры/);
     expect(COMMAND_BY_VOICE).not.toMatch(/всё командование/);

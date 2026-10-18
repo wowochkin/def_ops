@@ -7,7 +7,7 @@
  */
 import { useLayoutEffect, useState, useSyncExternalStore } from 'react';
 import { COVERS, showAt } from '../engine/free-center';
-import { flashMapView, flashState, onFlash, spotHidden, type HlRect } from './highlight';
+import { flashMapView, flashState, onFlash, spotHidden, tracking, type HlRect } from './highlight';
 
 const PAD = 6;
 /** Рамка на карте: поле вокруг точек и наименьший размер, px. */
@@ -71,10 +71,12 @@ export function FlashLayer() {
       const next = { frames, spots };
       const key = JSON.stringify(next);
       if (key !== last) { last = key; setView(next); }
-      raf = requestAnimationFrame(measure);
+      // следим недолго (вкладка дорисуется, карта доедет); дальше рамка стоит — перемеряем только при изменении окна
+      if (tracking(st.at, Date.now())) { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); }
     };
     measure();
-    return () => cancelAnimationFrame(raf);
+    window.addEventListener('resize', measure);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
   }, [st]);
 
   if (!st || !view) return null;
