@@ -39,8 +39,12 @@ export function voicesParse(rest: string): { id: string; params?: Record<string,
   return null;
 }
 
-/** Голос по имени или номеру в списке: найден — voice; несколько похожих или нет такого — что спросить. */
-export function voiceByName<V extends { id: string; name: string }>(name: string, list: V[]): { voice: V } | { ask: string } {
+/**
+ * Голос по имени или номеру в списке (кнопки окна передают voiceId — его и берём): найден — voice; несколько похожих
+ * или нет такого — что спросить.
+ */
+export function voiceByName<V extends { id: string; name: string }>(name: string, list: V[], voiceId?: string): { voice: V } | { ask: string } {
+  if (voiceId) { const v = list.find((x) => x.id === voiceId); return v ? { voice: v } : { ask: 'Этого голоса уже нет.' }; }
   const i = ordinalIndex(name, list.length);
   if (i !== null && list[i]) return { voice: list[i] };
   const hit = pickByName(name, list.map((v) => v.name));
@@ -161,6 +165,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
           + '«назначь первый голос посреднику», «запиши новый голос», «закрой».';
       },
       parse: voicesParse,
+      isAnswer: (rest) => voicesParse(rest) !== null,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -185,28 +190,30 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
   };
   const remove = async (v: VoiceInfo) => {
     if (await confirmAsync(`Удалить голос «${v.name}»? Файлы образца будут стёрты с этого компьютера.`, { ok: 'Удалить', danger: true }))
-      void act('voices.delete', { name: String(st.current.voices.findIndex((x) => x.id === v.id) + 1) });
+      void act('voices.delete', { voice_id: v.id });
   };
   /** Голос по сказанному имени или номеру (или ответ, что спросить). */
-  const find = (name: unknown) => voiceByName(String(name ?? ''), st.current.voices);
+  const find = (p: { name?: unknown; voice_id?: string } | undefined) => voiceByName(String(p?.name ?? ''), st.current.voices, p?.voice_id);
+  /** Параметры: имя или номер голоса (голосом) либо voice_id (кнопки окна). */
+  const WHO = { name: { type: 'string' }, voice_id: { type: 'string' } };
   const idle = () => (st.current.rec === 'rec' || st.current.rec === 'checking' ? 'сейчас идёт запись голоса' : true as const);
 
   useAction({
     id: 'voices.preview', section: 'global', title: 'Прослушать голос', describe: 'Проигрывает образец голоса (по имени или номеру в списке; «пробу» — проверенную запись).',
-    params: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] }, say: ['прослушай второй голос'], available: idle,
-    run: async (p: { name: string }) => {
+    params: { type: 'object', properties: WHO }, say: ['прослушай второй голос'], available: idle,
+    run: async (p: { name?: string; voice_id?: string }) => {
       if (/^проб/.test(String(p?.name ?? ''))) { if (st.current.rec === 'checked' && st.current.check?.ok) { listen(); return; } return 'Пробы пока нет — сначала запишите голос.'; }
-      const r = find(p?.name);
+      const r = find(p);
       if ('ask' in r) return r.ask;
       listen({ voice_id: r.voice.id });
     },
   });
   useAction({
     id: 'voices.assign', section: 'global', title: 'Назначить голос', describe: 'Назначает голос роли: начальник штаба или посредник.',
-    params: { type: 'object', properties: { name: { type: 'string' }, role: { enum: ROLES } }, required: ['name', 'role'] },
+    params: { type: 'object', properties: { ...WHO, role: { enum: ROLES } }, required: ['role'] },
     say: ['назначь первый голос посреднику'], available: () => true,
-    run: async (p: { name: string; role: VoiceRole }) => {
-      const r = find(p?.name);
+    run: async (p: { name?: string; voice_id?: string; role: VoiceRole }) => {
+      const r = find(p);
       if ('ask' in r) return r.ask;
       if (!ROLES.includes(p?.role)) return 'Кому назначить: начальнику штаба или посреднику?';
       send('assign', { role: p.role, voice_id: r.voice.id });
@@ -247,14 +254,20 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
   });
   useAction({
     id: 'voices.delete', section: 'global', title: 'Удалить голос', describe: 'Удаляет записанный голос (файлы образца стираются).',
-    params: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] }, say: ['удали голос Гость'], irreversible: true,
-    confirm: (p: { name: string }) => {
-      const r = find(p?.name);
+    params: { type: 'object', properties: WHO }, say: ['удали голос Гость'], irreversible: true,
+    // какой голос — выясняется до вопроса «да / нет»: несколько похожих — сначала «какой»
+    check: (p: { name?: string; voice_id?: string }) => {
+      const r = find(p);
+      if ('ask' in r) return r.ask;
+      return r.voice.builtin ? 'Встроенный голос удалить нельзя.' : true;
+    },
+    confirm: (p: { name?: string; voice_id?: string }) => {
+      const r = find(p);
       return `Удалить голос «${'voice' in r ? r.voice.name : p?.name}»? Файлы образца будут стёрты с этого компьютера.`;
     },
     available: () => true,
-    run: async (p: { name: string }) => {
-      const r = find(p?.name);
+    run: async (p: { name?: string; voice_id?: string }) => {
+      const r = find(p);
       if ('ask' in r) return r.ask;
       if (r.voice.builtin) return 'Встроенный голос удалить нельзя.';
       send('delete', { voice_id: r.voice.id });
@@ -287,10 +300,10 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
                   {has.map((r) => <span key={r} className="vp-tag role">{ROLE_OF[r]}</span>)}
                 </div>
                 <div className="vp-row left">
-                  <button onClick={() => { void act('voices.preview', { name: String(voices.indexOf(v) + 1) }); }}>Прослушать</button>
+                  <button onClick={() => { void act('voices.preview', { voice_id: v.id }); }}>Прослушать</button>
                   <span className="vp-note">Назначить:</span>
                   {ROLES.map((r) => (
-                    <button key={r} disabled={roles[r] === v.id} onClick={() => { void act('voices.assign', { name: String(voices.indexOf(v) + 1), role: r }); }}>{ROLE_NAME[r]}</button>
+                    <button key={r} disabled={roles[r] === v.id} onClick={() => { void act('voices.assign', { voice_id: v.id, role: r }); }}>{ROLE_NAME[r]}</button>
                   ))}
                   {!v.builtin && <button className="danger" onClick={() => { void remove(v); }}>Удалить</button>}
                 </div>

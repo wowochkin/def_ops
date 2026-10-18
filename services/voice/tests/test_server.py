@@ -702,3 +702,29 @@ def test_say_refused_while_recording_voice(make_client):
     until(ws, "say-done", seen)
     assert any(isinstance(m, bytes) and audio_header(m)[0] == 9 for m in seen)
     ws.close()
+
+
+@pytest.mark.parametrize("said,heard,echo", [
+    # вопрос штаба — человек отвечает сразу (в пределах ECHO_AFTER_S): ответ, а не эхо
+    ("Удалить игру? Скажите «да», чтобы подтвердить, или «нет» — чтобы отменить. Жду ответа.", "да", False),
+    ("Удалить игру? Скажите «да», чтобы подтвердить, или «нет» — чтобы отменить. Жду ответа.", "Нет.", False),
+    ("Калибровки ещё не было — провести её сейчас? Скажите: да.", "так точно", False),
+    # фраза штаба кончается этим словом — его хвост в микрофоне по-прежнему эхо: поэтому вопросы окна никогда не
+    # кончаются словом-ответом («… Жду ответа.»; тест окна — voice-handsfree, раунд 1)
+    ("Скажите: да.", "да", True),
+    ("Удалить игру? Скажите «да» или «нет».", "нет", True),
+])
+def test_answer_word_right_after_question_is_not_echo(make_client, monkeypatch, said, heard, echo):
+    """Ответ из одного слова сразу после вопроса штаба — реплика: эхо из него — только если фраза штаба этим словом
+    и кончается (сравнивается хвост фразы длиной в два ответа). Раунд 1: «да» после «…Скажите: да» отбрасывалось."""
+    import fake
+    monkeypatch.setattr(fake, "CHARS_PER_S", 1000)  # фраза звучит 0,3 с
+    ws, _ = connect(make_client([heard]))
+    ws.send_text(json.dumps({"type": "say", "id": 1, "role": "chief", "text": said}))
+    until(ws, "say-done")
+    ws.send_text(json.dumps({"type": "played", "id": 1}))
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
+    seen = []
+    m = until(ws, "echo" if echo else "utterance", seen)
+    assert m["text"] == heard
+    ws.close()

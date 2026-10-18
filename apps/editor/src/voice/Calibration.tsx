@@ -23,9 +23,34 @@ export function calibParse(rest: string): { id: string } | null {
 
 const INTRO = 'Калибровка: четыре шага, они пойдут сами, а подсказка будет крупно на экране. Сначала помолчите, потом прочитайте '
   + 'вслух текст с экрана, потом молчите, пока я говорю, и в конце перебейте меня — говорите громко, пока я говорю.';
+/** Итог калибровки словами — кончается не словом-ответом (быстрое «готово» сервис иначе принял бы за эхо). */
+export const CALIB_DONE_SAY = 'Калибровка закончена, регуляторы выставлены. Скажите «готово» или «заново». Жду ответа.';
+export const CALIB_FAIL_SAY = (why: string) => `Калибровка не получилась: ${why.replace(/[.\s]+$/, '')}. Скажите «заново» или «закрой». Жду ответа.`;
 const HINT_MANUAL = 'Калибровка. Нажимайте «Записать» на каждом шаге — или скажите «начать», и шаги пойдут сами.';
-/** Пауза перед шагом, когда шаги идут сами (чтобы прочитать подсказку). */
-const PAUSE_MS: Record<CalibStep, number> = { noise: 0, speech: 1500, echo: 800, over: 800, finish: 0, cancel: 0 };
+/** Пауза перед шагом, когда шаги идут сами (чтобы прочитать подсказку; на шаге «Ваш голос» — и найти текст глазами). */
+const PAUSE_MS: Record<CalibStep, number> = { noise: 0, speech: 2500, echo: 800, over: 800, finish: 0, cancel: 0 };
+/** Сигнал шага «Ваш голос»: высокий — «читайте», низкий — «хватит» (между шагами сервис фраз штаба не произносит). */
+const BEEP_GO = 880, BEEP_END = 520, BEEP_MS = 220;
+let beepCtx: AudioContext | null = null;
+/** Короткий тон, сыгранный окном (без сервиса); промис — когда отзвучал. */
+function beep(freq: number): Promise<void> {
+  try {
+    beepCtx ??= new AudioContext();
+    const c = beepCtx;
+    void c.resume();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.frequency.value = freq;
+    const t0 = c.currentTime;
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(0.25, t0 + 0.02);
+    g.gain.linearRampToValueAtTime(0, t0 + BEEP_MS / 1000);
+    o.connect(g).connect(c.destination);
+    o.start(t0);
+    o.stop(t0 + BEEP_MS / 1000 + 0.02);
+  } catch { /* звука нет — шаг всё равно идёт, подсказка на экране */ }
+  return new Promise((r) => setTimeout(r, BEEP_MS + 300));
+}
 /** Шаг тишины — когда человек замолчал: тихо столько после речи, или столько тихо вообще, или ждали уже столько. */
 const QUIET_AFTER_MS = 300, QUIET_LONG_MS = 4500, QUIET_MAX_MS = 15000, QUIET_P = 0.3;
 const STEPS: { step: CalibStep; sec?: number; title: string; txt: string; say?: string }[] = [
@@ -88,7 +113,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
       client.calib('cancel');
       iRef.current = 0;
       setI(0);
-      void sayRef.current?.(`Шаг не записался${why ? `: ${why.replace(/[.\s]+$/, '')}` : ''}. Скажите «заново» или «закрой».`);
+      void sayRef.current?.(`Шаг не записался${why ? `: ${why.replace(/[.\s]+$/, '')}` : ''}. Скажите «заново» или «закрой». Жду ответа.`);
     }
   };
 
@@ -105,6 +130,11 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
   const runStep = () => {
     if (!alive.current || !runRef.current) return;
     const s = STEPS[iRef.current];
+    if (s.step === 'speech') {
+      // «Ваш голос»: подсказка крупно, пауза, сигнал — и запись; после записи — второй сигнал
+      later(() => { if (runRef.current) void beep(BEEP_GO).then(() => { if (runRef.current && alive.current) go(); }); }, PAUSE_MS.speech);
+      return;
+    }
     if (s.step !== 'noise') { later(() => { if (runRef.current) go(); }, PAUSE_MS[s.step]); return; }
     const t0 = Date.now();
     let loud = false, quietSince = t0;
@@ -138,6 +168,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
     const offs = [
       client.on('calib_rec', (m) => { setSec(m.sec); setPhase('rec'); }),
       client.on('calib_step', () => {
+        if (runRef.current && STEPS[iRef.current].step === 'speech') void beep(BEEP_END);
         if (iRef.current < STEPS.length - 1) {
           iRef.current += 1;
           setI(iRef.current);
@@ -164,9 +195,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
         setPhase('wait');
         if (m.cfg) onResultRef.current(m.cfg);
         // калибровка закончена — сервис снова даёт штабу говорить: итог словами
-        void sayRef.current?.(m.error || !m.cfg
-          ? `Калибровка не получилась: ${(m.error ?? 'сервис не прислал результат').replace(/[.\s]+$/, '')}. Скажите «заново» или «закрой».`
-          : 'Калибровка закончена, регуляторы выставлены. Скажите «готово» — или «заново».');
+        void sayRef.current?.(m.error || !m.cfg ? CALIB_FAIL_SAY(m.error ?? 'сервис не прислал результат') : CALIB_DONE_SAY);
         setRunning(false);
       }),
     ];
@@ -186,6 +215,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
     read: auto ? INTRO : HINT_MANUAL,
     quiet: true,
     parse: calibParse,
+    isAnswer: (rest) => calibParse(rest) !== null,
   }), []);
 
   const cancel = () => {
@@ -235,7 +265,10 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
             {s.say && <p className="vp-say">{s.say}</p>}
             {restart && <p className="vp-error" role="alert">{restart}</p>}
             {err && <p className="vp-error" role="alert">Этот шаг не записался: {err}. Попробуйте ещё раз.</p>}
-            {running && <p className="vp-hint">Шаги идут сами{phase === 'wait' && s.step === 'noise' ? ' — помолчите' : ''}.</p>}
+            {running && s.step === 'speech' && (
+              <p className="vp-hint big">{phase === 'rec' ? 'Читайте вслух текст ниже — сейчас!' : 'После сигнала читайте вслух текст ниже.'}</p>
+            )}
+            {running && s.step !== 'speech' && <p className="vp-hint">Шаги идут сами{phase === 'wait' && s.step === 'noise' ? ' — помолчите' : ''}.</p>}
             <div className="vp-prog">
               <i key={`${i}-${phase}`} className={phase === 'rec' ? 'run' : ''} style={phase === 'rec' ? { animationDuration: `${sec}s` } : undefined} />
             </div>

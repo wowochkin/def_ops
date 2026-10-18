@@ -17,6 +17,7 @@ export interface Action<P = any> {
   say?: string[];                      // примеры фраз: «штаб, делай ход»
   irreversible?: boolean;
   confirm?(p: P): string;              // текст подтверждения
+  check?(p: P): true | string;         // параметры годятся сейчас (до подтверждения); строка — что сказать («Какой голос: …»)
   available(): true | string;          // строка — почему недоступно
   run(p: P): Promise<string | void>;   // строка — что доложить
 }
@@ -38,6 +39,7 @@ export function useAction<P>(a: Action<P>): void {
     available: () => ref.current.available(),
     run: (p) => ref.current.run(p),
     ...(a.confirm ? { confirm: (p: P) => ref.current.confirm!(p) } : {}),
+    ...(a.check ? { check: (p: P) => ref.current.check!(p) } : {}),
   }), [a.id, a.section]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
@@ -84,6 +86,13 @@ export interface VoiceModal {
   /** не зачитывать при открытии (окно говорит само — например, ждёт, когда штаб договорит) */
   quiet?: boolean;
   parse(rest: string): { id: string; params?: unknown } | null;
+  /**
+   * Реплика целиком — ответ окна («да», «второй», название варианта): такую принимают и без обращения, и после окна
+   * разговора (по умолчанию — «да» / «нет»).
+   */
+  isAnswer?(rest: string): boolean;
+  /** Сообщение с одной кнопкой: посторонняя команда закрывает его (dismiss) и исполняется как обычно. */
+  dismiss?(): void;
 }
 
 const modals: VoiceModal[] = [];

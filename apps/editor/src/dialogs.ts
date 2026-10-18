@@ -9,6 +9,8 @@
  * `dialog.text {text}` (поле ввода — диктовкой); кнопки окна вызывают те же действия.
  */
 import { ordinalIndex, pickByName, yesNo } from './voice/answers';
+import { readAloud, readParts, stopReading } from './voice/dictation';
+import { WAIT_SAY } from './voice/dispatch';
 import { act, openModal, register } from './voice/registry';
 import { speakable } from './voice/speech';
 export const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
@@ -116,10 +118,22 @@ export interface DialogVoice {
   input?: { get(): string; set(s: string): void };
 }
 
+/** Сообщение (одна кнопка) закрывают этими словами. */
+const ACK = /^(?:понятно|ясно|хорошо|понял|поняла|принято|ладно|да|ок|окей|дальше|закрой|закрыть|закрой окно)$/;
+/** Предупреждения, которые нельзя пропустить при чтении длинного вопроса частями. */
+const WARN = /нельзя отменить|отменить нельзя|не(?:льзя)? будет вернуть|безвозвратно|будут (?:стёрты|стерты|удалены|потеряны)/i;
+/** Вопрос окна для чтения: до четырёх фраз — целиком; длиннее — первой частью (дальше — «дальше»), предупреждения — всегда. */
+function questionText(message: string): string {
+  const parts = readParts(message);
+  const sentences = parts.join(' ').match(/[^.!?…]+[.!?…]+["»]?|[^.!?…]+$/g) ?? [];
+  if (sentences.length <= 4) { const t = parts.join(' '); return /[.!?…]["»]?$/.test(t) ? t : `${t}.`; }
+  const first = readAloud(message);
+  const warn = sentences.map((x) => x.trim()).filter((x) => WARN.test(x) && !first.includes(x));
+  return [first, ...warn].join(' ');
+}
+
 const ORDS = ['первый', 'второй', 'третий', 'четвёртый', 'пятый', 'шестой', 'седьмой', 'восьмой', 'девятый', 'десятый'];
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-/** Фраза для озвучки с точкой в конце: к ней дописываются варианты. */
-const sentence = (s: string) => { const t = speakable(s); return /[.!?…]["»]?$/.test(t) ? t : `${t}.`; };
 
 /** Окна, открытые голосу (стопкой: отвечает верхнее); временные действия — пока есть хоть одно. */
 const stack: { answer(choice: string): string | void; text(t: string): string }[] = [];
@@ -133,17 +147,18 @@ let offActions: (() => void) | null = null;
 export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | number) => void): () => void {
   const labels = d.labels ?? [];
   const cancel = (d.cancel ?? 'Отмена').toLowerCase();
-  const options = labels.length
+  // вопрос кончается «Жду ответа.», а не словом-ответом (иначе быстрый ответ сервис принял бы за эхо)
+  const options = `${labels.length
     ? `Варианты: ${labels.map((l, i) => `${ORDS[i] ?? `номер ${i + 1}`} — «${l}»`).join(', ')}. Или «${cancel}».`
     : d.input ? `${d.input.get() ? `Сейчас записано: «${d.input.get()}». ` : ''}Продиктуйте текст, затем скажите «готово».`
       : d.alone ? 'Скажите «понятно».'
-        : d.ok && !/^(?:да|ок)$/i.test(d.ok) ? `Скажите «да» — «${d.ok}», или «нет».` : 'Скажите «да» или «нет».';
+        : d.ok && !/^(?:да|ок)$/i.test(d.ok) ? `Скажите «да» — «${d.ok}», или «нет».` : 'Скажите «да» или «нет».'} ${WAIT_SAY}`;
   let closed = false;
   let closeModal = () => {};
   const self = {
     answer(choice: string): string | void {
       const yn = yesNo(choice);
-      if (d.alone) return end(true);
+      if (d.alone) return ACK.test(choice) || yn === 'yes' ? end(true) : `Скажите «понятно». ${WAIT_SAY}`;
       if (yn === 'no') return end(false);
       if (labels.length) {
         let i = ordinalIndex(choice, labels.length);
@@ -152,7 +167,7 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
         return `Такого варианта нет. ${options}`;
       }
       if (yn === 'yes' || /^(?:готово|все|записывай|сохрани)$/.test(choice)) return end(d.input ? d.input.get() : true);
-      return d.input ? 'Скажите «готово» или «отмена».' : 'Скажите «да» или «нет».';
+      return `${d.input ? 'Скажите «готово» или «отмена».' : 'Скажите «да» или «нет».'} ${WAIT_SAY}`;
     },
     text(t: string): string {
       if (!d.input) return 'Здесь нечего диктовать.';
@@ -164,6 +179,7 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
   function off(): void {
     if (closed) return;
     closed = true;
+    stopReading();
     const i = stack.lastIndexOf(self);
     if (i >= 0) stack.splice(i, 1);
     if (!stack.length) { offActions?.(); offActions = null; }
@@ -183,9 +199,18 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
     ];
     offActions = () => offs.forEach((o) => o());
   }
+  const isAnswer = (rest: string): boolean => {
+    if (d.alone) return ACK.test(rest);
+    if (d.input) return yesNo(rest) !== null || /^(?:готово|все|записывай|сохрани)$/.test(rest);
+    if (labels.length) return yesNo(rest) === 'no' || ordinalIndex(rest, labels.length) !== null || pickByName(rest, labels).length === 1;
+    return yesNo(rest) !== null;
+  };
   closeModal = openModal({
     question: speakable(d.message),
-    read: `${sentence(d.message)} ${options}`,
+    read: `${questionText(d.message)} ${options}`,
+    isAnswer,
+    // сообщение с одной кнопкой: посторонняя команда закрывает его и исполняется (не теряется)
+    ...(d.alone ? { dismiss: () => end(true) } : {}),
     parse: (rest) => {
       if (d.input) {
         if (yesNo(rest) || /^(?:готово|все|записывай|сохрани)$/.test(rest)) return { id: 'dialog.answer', params: { choice: rest } };
@@ -195,7 +220,8 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
         const w = /^(?:напиши|введи|запиши|впиши) (.+)$/.exec(rest);
         return { id: 'dialog.text', params: { text: cap(w ? w[1] : rest) } };
       }
-      if (labels.length || d.alone) return { id: 'dialog.answer', params: { choice: rest } };
+      if (d.alone) return ACK.test(rest) ? { id: 'dialog.answer', params: { choice: rest } } : null;
+      if (labels.length) return { id: 'dialog.answer', params: { choice: rest } };
       return yesNo(rest) ? { id: 'dialog.answer', params: { choice: rest } } : null;
     },
   });

@@ -1,6 +1,7 @@
 // Голос без рук: дежурный режим, подтверждение необратимого, окна и вопросы голосом, диктовка и чтение по частям.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, openModal, register, setSpeaker, topModal, type Action } from '../src/voice/registry';
+import { SayGate } from '../src/voice/panel-state';
 import { CONFIRM_MS, Dispatcher, RECHECK_MS, STANDBY_SAY } from '../src/voice/dispatch';
 import { ModelUnavailable, type ModelReply } from '../src/voice/llm';
 import { ordinalIndex, pickByName, yesNo } from '../src/voice/answers';
@@ -68,7 +69,7 @@ describe('подтверждение необратимого', () => {
     const d = mkm(ask, { onPending: (p) => pend.push(p) });
     expect(await d.utterance('штаб, удали игру', 1)).toBe('done');
     expect(del).not.toHaveBeenCalled();
-    expect(said).toEqual(['Завершить игру и удалить её запись? Скажите «да» или «нет».']);
+    expect(said).toEqual(['Завершить игру и удалить её запись? Скажите «да», чтобы подтвердить, или «нет» — чтобы отменить. Жду ответа.']);
     expect(d.pending).toMatchObject({ action: 'game.delete', params: {}, text: 'Завершить игру и удалить её запись?' });
     expect(pend).toHaveLength(1);
     // «да» — без обращения: подтверждение ждёт ответа
@@ -144,7 +145,7 @@ describe('подтверждение необратимого', () => {
   it('предложение (propose) — то же ожидание «да / нет»', async () => {
     const d = mk();
     d.propose('Калибровки ещё не было. Провести её?', 'shell.calibrate');
-    expect(said).toEqual(['Калибровки ещё не было. Провести её? Скажите «да» или «нет».']);
+    expect(said).toEqual(['Калибровки ещё не было. Провести её? Скажите «да», чтобы подтвердить, или «нет» — чтобы отменить. Жду ответа.']);
     await d.utterance('так точно', 1);
     expect(opened).toEqual(['calibrate']);
   });
@@ -208,13 +209,9 @@ describe('дежурный режим', () => {
     // фраза ещё звучит — микрофон поймал её хвост
     expect(await d.utterance('Штаб, на связь.', 2)).toBe('ignored');
     expect(d.standby).toBe(true);
-    // договорена только что — хвост эха ещё возможен
+    // договорена — дальше это человек (хвост эха после конца фразы отсекает сервис: сообщение echo)
     d.spoke();
-    t += 1000;
-    expect(await d.utterance('штаб на связь', 3)).toBe('ignored');
-    expect(d.standby).toBe(true);
-    // прошло время — это уже человек
-    t += 5000;
+    t += 500;
     expect(await d.utterance('Штаб, на связь', 4)).toBe('done');
     expect(d.standby).toBe(false);
   });
@@ -308,7 +305,7 @@ describe('окна dialogs.ts голосом', () => {
   it('confirmAsync: штаб зачитывает вопрос; «да» — нажимает «ОК»', async () => {
     const out: unknown[] = [];
     const off = voiceDialog({ message: 'Завершить игру и удалить её запись?', ok: 'Завершить и удалить' }, (o) => out.push(o));
-    expect(said[0]).toMatch(/^Завершить игру и удалить её запись\? Скажите «да» — «Завершить и удалить», или «нет»\.$/);
+    expect(said[0]).toMatch(/^Завершить игру и удалить её запись\? Скажите «да» — «Завершить и удалить», или «нет»\. Жду ответа\.$/);
     const d = mk();
     expect(await d.utterance('штаб, да', 1)).toBe('done');
     expect(out).toEqual([true]);
@@ -330,7 +327,7 @@ describe('окна dialogs.ts голосом', () => {
   it('chooseAsync: «второй» — второй вариант, по названию — тот, что назван', async () => {
     const out: unknown[] = [];
     voiceDialog({ message: 'Что сделать с игрой?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
-    expect(said[0]).toBe('Что сделать с игрой? Варианты: первый — «Сохранить», второй — «Удалить», третий — «Продолжить». Или «отмена».');
+    expect(said[0]).toBe('Что сделать с игрой? Варианты: первый — «Сохранить», второй — «Удалить», третий — «Продолжить». Или «отмена». Жду ответа.');
     await mk().utterance('штаб, второй', 1);
     expect(out).toEqual([1]);
     voiceDialog({ message: 'Что сделать?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
@@ -349,7 +346,7 @@ describe('окна dialogs.ts голосом', () => {
     let value = 'Участок';
     const out: unknown[] = [];
     voiceDialog({ message: 'Название участка:', input: { get: () => value, set: (s) => { value = s; } } }, (o) => out.push(o === false ? false : value));
-    expect(said[0]).toBe('Название участка. Сейчас записано: «Участок». Продиктуйте текст, затем скажите «готово».');
+    expect(said[0]).toBe('Название участка. Сейчас записано: «Участок». Продиктуйте текст, затем скажите «готово». Жду ответа.');
     const d = mk();
     d.spoke(); // вопрос зачитан — окно разговора открыто
     await d.utterance('штаб, напиши Зеловские высоты', 1);
@@ -367,7 +364,7 @@ describe('окна dialogs.ts голосом', () => {
   it('say: «понятно» закрывает сообщение', async () => {
     const out: unknown[] = [];
     voiceDialog({ message: 'Не удалось открыть файл.', alone: true }, (o) => out.push(o));
-    expect(said[0]).toBe('Не удалось открыть файл. Скажите «понятно».');
+    expect(said[0]).toBe('Не удалось открыть файл. Скажите «понятно». Жду ответа.');
     await mk().utterance('штаб, понятно', 1);
     expect(out).toEqual([true]);
   });
@@ -545,6 +542,12 @@ describe('калибровка и голоса голосом: разбор от
     expect(calibParse('отмена')).toEqual({ id: 'voice.calibrate.close' });
     expect(calibParse('открой карты')).toBeNull();
   });
+  it('окна калибровки и «Голоса»: их ответы — тоже без обращения (раунд 1, Important-2)', async () => {
+    const src = (await import('node:fs')).readFileSync(new URL('../src/voice/Calibration.tsx', import.meta.url), 'utf8')
+      + (await import('node:fs')).readFileSync(new URL('../src/voice/Voices.tsx', import.meta.url), 'utf8');
+    expect(src).toMatch(/isAnswer: \(rest\) => calibParse\(rest\) !== null/);
+    expect(src).toMatch(/isAnswer: \(rest\) => voicesParse\(rest\) !== null/);
+  });
   it('голоса: прослушай, назначь, запиши, удали, закрой', async () => {
     const { voicesParse } = await import('../src/voice/Voices');
     expect(voicesParse('прослушай второй голос')).toEqual({ id: 'voices.preview', params: { name: 'второй' } });
@@ -564,5 +567,143 @@ describe('калибровка и голоса голосом: разбор от
     expect(voiceByName('гость', list)).toEqual({ voice: list[2] });
     expect(voiceByName('жуков', list)).toEqual({ ask: 'Какой голос: первый — «Жуков, 10 с», второй — «Жуков, 14 с»? Скажите номер.' });
     expect(voiceByName('музыка', list)).toEqual({ ask: 'Голоса «музыка» нет. Есть: «Жуков, 10 с», «Жуков, 14 с», «Гость».' });
+  });
+});
+
+describe('раунд 1: поправки по рецензии', () => {
+  /** Разборщик с настоящими воротами: фраза уходит в «сервис» (sent) через SayGate, supersede — gate.drop(). */
+  function withGate(extra: Partial<Opts> = {}) {
+    const sent: string[] = [];
+    const gate = new SayGate((_id, text) => sent.push(text), () => t, () => false);
+    let n = 0;
+    const d = mk({ say: (s) => { said.push(s); const id = ++n; gate.say(id, s); return id; }, supersede: () => { gate.drop(); }, ...extra });
+    /** Реплика в настоящем порядке протокола: речь началась — кончилась — реплика (синхронная часть) — ворота отпущены. */
+    const speak = async (text: string, id: number) => {
+      gate.speech(true); gate.speech(false);
+      const r = d.utterance(text, id);
+      gate.utterance();
+      return r;
+    };
+    return { d, sent, gate, speak };
+  }
+
+  it('Important-1: новая обращённая просьба при ждущем подтверждении — «Прежнее отменено.» звучит (ворота)', async () => {
+    reg({ id: 'game.delete', section: 'editor', irreversible: true, confirm: () => 'Удалить игру?', run: async () => 'Удалено.' });
+    const { d, sent, speak } = withGate({ model: reply({ say: '', call: { id: 'game.delete', params: {} } }) });
+    await speak('штаб, удали игру', 1);
+    expect(d.pending).not.toBeNull();
+    expect(await speak('штаб, открой карты', 2)).toBe('done');
+    expect(sent).toContain('Прежнее отменено.');
+    expect(opened).toEqual([{ section: 'maps' }]);
+  });
+
+  it('Important-2: окно открыто, окно разговора прошло — «да» без «штаб» принимается; иное без обращения — игнор', async () => {
+    const out: unknown[] = [];
+    const off = voiceDialog({ message: 'Удалить слой?' }, (o) => out.push(o));
+    const d = mk();
+    d.spoke();
+    t += 13_000;
+    expect(await d.utterance('открой карты', 1)).toBe('ignored');
+    expect(opened).toEqual([]);
+    expect(out).toEqual([]);
+    expect(await d.utterance('да', 2)).toBe('done');
+    expect(out).toEqual([true]);
+    off();
+    // выбор: номер и название — тоже без обращения
+    voiceDialog({ message: 'Что сделать?', labels: ['Сохранить', 'Удалить'] }, (o) => out.push(o));
+    t += 60_000;
+    await d.utterance('второй', 3);
+    voiceDialog({ message: 'Что сделать?', labels: ['Сохранить', 'Удалить'] }, (o) => out.push(o));
+    t += 60_000;
+    await d.utterance('сохранить', 4);
+    expect(out).toEqual([true, 1, 0]);
+  });
+
+  it('Minor-9: посторонняя речь без обращения подтверждение не отменяет; «нет» без обращения — отменяет', async () => {
+    const del = vi.fn(async () => undefined);
+    reg({ id: 'game.delete', section: 'editor', irreversible: true, run: del });
+    const d = mk({ model: reply({ say: '', call: { id: 'game.delete', params: {} } }) });
+    await d.utterance('штаб, удали игру', 1);
+    said.length = 0;
+    expect(await d.utterance('передайте в штаб армии', 2)).toBe('ignored');
+    expect(await d.utterance('открой карты', 3)).toBe('ignored');
+    expect(d.pending).not.toBeNull();
+    expect(said).toEqual([]);
+    expect(opened).toEqual([]);
+    await d.utterance('да', 4);
+    expect(del).toHaveBeenCalledTimes(1);
+  });
+
+  it('Minor-2: сообщение (say) закрывают «ясно / хорошо / понял / дальше / закрой»; другая команда — закрыть сообщение и исполнить', async () => {
+    for (const [i, w] of ['ясно', 'хорошо', 'понял', 'дальше', 'закрой'].entries()) {
+      const out: unknown[] = [];
+      voiceDialog({ message: 'Файл сохранён.', alone: true }, (o) => out.push(o));
+      await mk().utterance(`штаб, ${w}`, i + 1);
+      expect(out).toEqual([true]);
+      expect(topModal()).toBeNull();
+    }
+    const out: unknown[] = [];
+    voiceDialog({ message: 'Файл сохранён.', alone: true }, (o) => out.push(o));
+    expect(await mk().utterance('Штаб, открой карты', 9)).toBe('done');
+    expect(out).toEqual([true]);
+    expect(opened).toEqual([{ section: 'maps' }]);
+    expect(topModal()).toBeNull();
+  });
+
+  it('Minor-8: вопрос окна зачитывается целиком (до 4 фраз); длинный — частями, «нельзя отменить» не теряется', () => {
+    setSpeaker((s) => said.push(s));
+    let off = voiceDialog({ message: 'Завершить игру? Запись будет удалена. Это нельзя отменить.' }, () => {});
+    expect(said.at(-1)).toBe('Завершить игру? Запись будет удалена. Это нельзя отменить. Скажите «да» или «нет». Жду ответа.');
+    off();
+    off = voiceDialog({ message: 'Первое. Второе. Третье. Четвёртое. Пятое. Шестое. Это нельзя отменить.' }, () => {});
+    expect(said.at(-1)).toMatch(/^Первое\. Второе\./);
+    expect(said.at(-1)).toMatch(/Это нельзя отменить\./);
+    expect(said.at(-1)).toMatch(/Скажите «да» или «нет»\. Жду ответа\.$/);
+    off();
+  });
+
+  it('Minor-4: «удали голос …» при нескольких похожих — сначала «какой», вопроса «да / нет» нет', async () => {
+    const del = vi.fn(async () => undefined);
+    reg({ id: 'v.delete', section: 'editor', irreversible: true, confirm: () => 'Удалить голос?', run: del,
+      check: (p: { name: string }) => (p?.name === 'жуков' ? 'Какой голос: первый — «Жуков, 10 с», второй — «Жуков, 14 с»? Скажите номер.' : true) });
+    const close = openModal({ question: 'Голоса', parse: (r) => (r.startsWith('удали ') ? { id: 'v.delete', params: { name: r.slice(6) } } : null) });
+    const d = mk();
+    await d.utterance('штаб, удали жуков', 1);
+    expect(d.pending).toBeNull();
+    expect(said.at(-1)).toMatch(/^Какой голос/);
+    await d.utterance('штаб, удали гость', 2);
+    expect(d.pending).not.toBeNull();
+    close();
+  });
+
+  it('Minor-3: голос по voice_id — и одиннадцатый, и дальше', async () => {
+    const { voiceByName } = await import('../src/voice/Voices');
+    const list = Array.from({ length: 12 }, (_, i) => ({ id: `v${i}`, name: `Голос ${i}` }));
+    expect(voiceByName('', list, 'v11')).toEqual({ voice: list[11] });
+    expect(voiceByName('второй', list, 'нет-такого')).toEqual({ ask: 'Этого голоса уже нет.' });
+  });
+});
+
+describe('раунд 1: вопрос штаба не кончается словом-ответом (иначе быстрый ответ сервис примет за эхо)', () => {
+  const ANSWER_END = /(?:да|нет|отмена|готово|заново|понятно|точно|отставить)[.!?»…\s]*$/i;
+  it('подтверждение и предложение; вопросы dialogs.ts — кончаются «Жду ответа.»', () => {
+    setSpeaker((s) => said.push(s));
+    mk().propose('Удалить игру?', 'shell.open');
+    const offs2 = [
+      voiceDialog({ message: 'Удалить слой?' }, () => {}),
+      voiceDialog({ message: 'Что сделать?', labels: ['Сохранить', 'Удалить'] }, () => {}),
+      voiceDialog({ message: 'Имя:', input: { get: () => '', set: () => {} } }, () => {}),
+      voiceDialog({ message: 'Файл сохранён.', alone: true }, () => {}),
+    ];
+    for (const s of said) {
+      expect(s).not.toMatch(ANSWER_END);
+      expect(s.endsWith('Жду ответа.')).toBe(true);
+    }
+    offs2.forEach((o) => o());
+  });
+  it('калибровка: итог словами не кончается словом-ответом', async () => {
+    const { CALIB_DONE_SAY, CALIB_FAIL_SAY } = await import('../src/voice/Calibration');
+    expect(CALIB_DONE_SAY).not.toMatch(ANSWER_END);
+    expect(CALIB_FAIL_SAY('нет шага')).not.toMatch(ANSWER_END);
   });
 });

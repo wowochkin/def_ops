@@ -247,6 +247,10 @@ await ctx.addInitScript(() => {
     md.getUserMedia = async (c) => { e2e.gum++; e2e.gumAudio.push(c?.audio); const st = await gum(c); e2e.tracks.push(...st.getTracks()); return st; };
   }
   e2e.trackStates = () => e2e.tracks.map((t) => t.readyState);
+  // звуковые сигналы окна (калибровка голосом: «читайте» и «хватит» на шаге «Ваш голос»)
+  e2e.beeps = 0;
+  const ostart = OscillatorNode.prototype.start;
+  OscillatorNode.prototype.start = function (...a) { e2e.beeps++; return ostart.apply(this, a); };
   // предложение калибровки при первом запуске — только в своей проверке (иначе вопрос штаба вмешался бы в сценарии)
   window.addEventListener('voice:ready-first', (e) => { if (!sessionStorage.getItem('e2e.offer')) e.preventDefault(); });
   /** Состояния панели по порядку (каждые 30 мс): было ли «Думаю». */
@@ -894,7 +898,7 @@ await check('без рук: вопрос (confirmAsync) зачитан; кома
   await handsFree(QUIET, { reload: false });
   await page.evaluate(() => { location.hash = '#replay'; });
   await openDialog('confirmAsync', 'Удалить слой «Рубежи»?', { ok: 'Удалить', danger: true });
-  await feedHas('Удалить слой «Рубежи»? Скажите «да» — «Удалить», или «нет».').waitFor({ timeout: 5000 });
+  await feedHas('Удалить слой «Рубежи»? Скажите «да» — «Удалить», или «нет». Жду ответа.').waitFor({ timeout: 5000 });
   await handsFree(['штаб, открой карты', 'штаб, да', ...QUIET], { reload: false });
   await feedHas('Сначала ответьте на вопрос').waitFor({ timeout: 30000 });
   if (await page.evaluate(() => location.hash) !== '#replay') throw new Error('команда исполнена при открытом вопросе');
@@ -960,10 +964,16 @@ await check('без рук: «Штаб, калибровка» — шаги ид
   await handsFree(['штаб, калибровка', ...Array(60).fill('штаб, готово')], { reload: false });
   await calibDlg.waitFor({ state: 'visible', timeout: 30000 });
   await feedHas('Калибровка: четыре шага').waitFor({ timeout: 10000 });
+  const beeps0 = await page.evaluate(() => window.__e2e.beeps);
+  // шаг «Ваш голос»: крупная подсказка и сигнал перед записью
+  await calibDlg.locator('.vp-hint.big', { hasText: 'После сигнала читайте' }).waitFor({ timeout: 60000 })
+    .catch(() => { throw new Error('нет крупной подсказки перед шагом «Ваш голос»'); });
   await calibDlg.getByText('шаг 4 из 4').waitFor({ timeout: 90000 }).catch(async () => { throw new Error(`шаги не идут сами: «${(await calibDlg.innerText()).replace(/\s+/g, ' ').slice(0, 200)}»`); });
   await calibDlg.getByText('Регуляторы выставлены').waitFor({ timeout: 60000 })
     .catch(async () => { throw new Error(`нет итога: «${(await calibDlg.innerText()).replace(/\s+/g, ' ').slice(0, 300)}»`); });
   await feedHas('Калибровка закончена, регуляторы выставлены').waitFor({ timeout: 10000 });
+  const beeps = await page.evaluate((b) => window.__e2e.beeps - b, beeps0);
+  if (beeps < 2) throw new Error(`сигналов на шаге «Ваш голос»: ${beeps} (нужны перед записью и после)`);
   await calibDlg.waitFor({ state: 'hidden', timeout: 30000 });
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('def_ops.voice.settings') || 'null'));
   if (!saved?.calib_mode) throw new Error('итог калибровки не сохранён');

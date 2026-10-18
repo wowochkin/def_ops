@@ -364,7 +364,7 @@ describe('модель за правилами', () => {
     const d = mkm(reply({ say: 'Удаляю.', call: { id: 'doc.delete', params: {} } }));
     expect(await d.utterance('штаб, сотри всё', 1)).toBe('done');
     expect(run).not.toHaveBeenCalled();
-    expect(said).toEqual(['Удалить документ? Скажите «да» или «нет».']);
+    expect(said).toEqual(['Удалить документ? Скажите «да», чтобы подтвердить, или «нет» — чтобы отменить. Жду ответа.']);
   });
   it('ответ готовится к озвучке в разборщике', async () => {
     const d = mkm(reply({ say: 'В резерве 2 дивизии (reserve).' }));
