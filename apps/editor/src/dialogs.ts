@@ -239,6 +239,7 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
     question: speakable(d.message),
     read: questionRead(d.message, how),
     ...(remind ? { remind } : {}),
+    ...(d.alone ? {} : { how: labels.length ? `номер варианта или «${cancel}»` : d.input ? 'продиктуйте текст или «готово»' : '«да» или «нет»' }),
     isAnswer,
     danger,
     // сообщение с одной кнопкой: посторонняя команда закрывает его и исполняется (не теряется)

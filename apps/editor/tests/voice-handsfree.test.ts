@@ -1,8 +1,8 @@
 // Голос без рук: дежурный режим, подтверждение необратимого, окна и вопросы голосом, диктовка и чтение по частям.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, openModal, register, setSpeaker, topModal, type Action } from '../src/voice/registry';
+import { act, openModal, register, setSpeaker, speak, topModal, type Action } from '../src/voice/registry';
 import { SayGate } from '../src/voice/panel-state';
-import { CONFIRM_MS, Dispatcher, REASK_SAY, RECHECK_MS, REMIND_MS, REMIND_YES_NO, STANDBY_SAY } from '../src/voice/dispatch';
+import { CONFIRM_MS, Dispatcher, reaskSay, RECHECK_MS, REMIND_MS, REMIND_YES_NO, STANDBY_SAY } from '../src/voice/dispatch';
 import { ModelUnavailable, type ModelReply } from '../src/voice/llm';
 import { ordinalIndex, pickByName, yesNo } from '../src/voice/answers';
 import { fieldActions, readAloud } from '../src/voice/dictation';
@@ -820,8 +820,10 @@ describe('Task 1b: ответ поверх чтения вопроса', () => {
     expect(await d.over('отмена', 3, READ_CHOOSE)).toBe('reask');
     expect(out).toEqual([]);
     expect(stop).toHaveBeenCalledTimes(3);
-    expect(said).toEqual([REASK_SAY, REASK_SAY, REASK_SAY]);
-    expect(REASK_SAY).toBe('Повторите ответ, пожалуйста. Жду ответа.');
+    // человек мог и не говорить (эхо) и не слышать вариантов: в переспросе — как отвечать
+    const R = 'Повторите ответ после вопроса: номер варианта или «отмена». Жду ответа.';
+    expect(said).toEqual([R, R, R]);
+    expect(reaskSay()).toBe('Повторите ответ после вопроса. Жду ответа.');
     // повтор, когда штаб молчит, — обычная реплика: принимается
     d.spoke();
     expect(await d.utterance('второй', 4)).toBe('done');
@@ -899,6 +901,24 @@ describe('Task 1b: ответ поверх чтения вопроса', () => {
     expect(said.at(-1)).toBe('Отменено.');
   });
 
+  it('переспрос подтверждения — с «да» или «нет»', async () => {
+    const del = vi.fn(async () => undefined);
+    reg({ id: 'game.delete', section: 'editor', irreversible: true, confirm: () => 'Удалить игру?', run: del });
+    const d = mk({ model: reply({ say: '', call: { id: 'game.delete', params: {} } }) });
+    await d.utterance('штаб, удали игру', 1);
+    expect(await d.over('да', 2, said.at(-1)!)).toBe('reask');
+    expect(said.at(-1)).toBe('Повторите ответ после вопроса: «да» или «нет». Жду ответа.');
+  });
+  it('повтор вопроса окна и сам вопрос — фразы окна (speak с modal): гасятся при закрытии; чужие фразы — нет', () => {
+    const flags: unknown[] = [];
+    setSpeaker((t, o) => { said.push(t); flags.push(o?.modal ?? false); });
+    const off = voiceDialog({ message: 'Удалить слой?' }, () => {});
+    const d = mk();
+    d.repeat();
+    speak('Обстановка готова.');
+    expect(flags).toEqual([true, true, false]);
+    off();
+  });
   it('кнопка «Повторить» (repeat): вопрос открытого окна целиком; без окна — последняя фраза', () => {
     const d = mk();
     const off = voiceDialog({ message: 'Удалить слой?' }, () => {});

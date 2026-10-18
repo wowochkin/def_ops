@@ -362,39 +362,25 @@ export class PanelSize {
   }
 }
 
-type Box = { left: number; top: number; width: number; height: number };
-const crossArea = (a: Box, b: Box) =>
-  Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left))
-  * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
-/** Отступы обычного места полосы (как в CSS .vp-card): справа и над полосой проигрывателя; слева — правее колонки разделов. */
-const EDGE = 14, ABOVE_PLAYER = 96, RAIL = 84;
-/** Справа полоса отступает от края на столбец кнопок масштаба карты (MapLibre, справа внизу). */
-export const STRIP_RIGHT = 56;
+/** Колонка разделов слева: панель — по центру свободной области правее неё. */
+export const RAIL_W = 84;
+/** Зазор под верхней полосой кнопок. */
+const GAP = 8;
 
 /**
- * Где поставить панель размером size, чтобы не закрывать окна avoid: null — обычное место (справа внизу) свободно;
- * иначе первое свободное из: слева внизу, справа вверху, слева вверху, у нижнего края справа и слева; свободного нет —
- * где перекрытие меньше всего.
+ * Место панели: сверху по центру свободной области справа от колонки разделов, сразу под верхней полосой кнопок
+ * (anchor — её нижний край, 0 — полосы нет). Полоса, значок и развёрнутая панель — отсюда же (развёрнутая — вниз).
  */
-export function placePanel(size: { width: number; height: number }, avoid: Box[], vw: number, vh: number): { left: number; top: number } | null {
-  const right = Math.max(0, vw - STRIP_RIGHT - size.width), left = Math.min(RAIL, right);
-  const low = Math.max(0, vh - ABOVE_PLAYER - size.height), edge = Math.max(0, vh - EDGE - size.height);
-  const cands = [
-    { left: right, top: low }, { left, top: low }, { left: right, top: EDGE }, { left, top: EDGE },
-    { left: right, top: edge }, { left, top: edge },
-  ];
-  const hit = (c: { left: number; top: number }) => avoid.reduce((s, a) => s + crossArea({ ...c, ...size }, a), 0);
-  if (hit(cands[0]) === 0) return null;
-  return cands.find((c) => hit(c) === 0) ?? cands.reduce((a, b) => (hit(b) < hit(a) ? b : a));
+export function topPlace(vw: number, width: number, anchor: number): { left: number; top: number } {
+  return { left: Math.max(RAIL_W, Math.round(RAIL_W + (vw - RAIL_W - width) / 2)), top: anchor + GAP };
 }
 
-/** Полоса при открытом окне — для решения, есть ли ей место (размер обычной полосы с фразой). */
-const NOMINAL = { width: 380, height: 110 };
-/**
- * Полосе размером size (по умолчанию — обычной) без перекрытия окон места нет: она становится строкой состояния
- * (значок и слова), чтобы закрывать как можно меньше.
- */
-export function crowded(avoid: Box[], vw: number, vh: number, size: { width: number; height: number } = NOMINAL): boolean {
-  const p = placePanel(size, avoid, vw, vh);
-  return !!p && avoid.some((a) => crossArea({ ...p, ...size }, a) > 0);
+/** Нижний край верхней полосы кнопок: видимые шапки, что начинаются у самого верха экрана (нет — 0). */
+export function anchorBottom(bars: { top: number; bottom: number; width: number }[]): number {
+  return bars.filter((b) => b.width > 0 && b.top < 24 && b.bottom < 160).reduce((m, b) => Math.max(m, Math.round(b.bottom)), 0);
+}
+
+/** Высота развёрнутой панели (не больше 640 px): низ экрана (~400 px) остаётся подписи тура и окнам. */
+export function fullHeight(vh: number, top: number): number {
+  return Math.min(640, Math.max(260, vh - top - 400));
 }

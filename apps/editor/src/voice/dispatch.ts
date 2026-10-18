@@ -22,7 +22,7 @@ import { SECTIONS } from '../sections';
 import { yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, forModel, getAction, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
+import { act, actions, forModel, getAction, hasSpeaker, speak, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
@@ -52,8 +52,11 @@ export const YES_NO_SAY = `Скажите «да», чтобы подтверд�
 export const REMIND_MS = 8_000;
 /** Напоминание о «да / нет» (вопрос кончается «Жду ответа.», а не словом-ответом). */
 export const REMIND_YES_NO = `Да или нет? ${WAIT_SAY}`;
-/** Ответ поверх речи штаба, который нельзя исполнить сразу (мог быть эхом или опасен), — переспрос. */
-export const REASK_SAY = `Повторите ответ, пожалуйста. ${WAIT_SAY}`;
+/**
+ * Ответ поверх речи штаба, который нельзя исполнить сразу (мог быть эхом или опасен), — переспрос с тем, как отвечать:
+ * человек мог и не говорить (эхо) и не дослушать вариантов.
+ */
+export const reaskSay = (how?: string) => `Повторите ответ после вопроса${how ? `: ${how}` : ''}. ${WAIT_SAY}`;
 /** Слова одного корня (формы): «второй» — «вторую», «отмена» — «отмени». */
 const sameWord = (a: string, b: string) => {
   const k = Math.min(4, Math.min(a.length, b.length) - 1);
@@ -312,7 +315,9 @@ export class Dispatcher {
   /** Повторить (кнопка «Повторить» полосы — то же, что «повтори»): вопрос открытого окна или последняя фраза. */
   repeat(): void {
     const m = topModal();
-    this.say(m ? m.read ?? m.question : this.last?.text ?? 'Я ещё ничего не говорил.');
+    // вопрос окна — фраза окна: окно закроют — повтор гасится
+    if (m && hasSpeaker()) speak(m.read ?? m.question, { modal: true });
+    else this.say(m ? m.read ?? m.question : this.last?.text ?? 'Я ещё ничего не говорил.');
   }
 
   /** Фраза для других модулей (окно зачитывает вопрос, чтение по частям): в дежурном режиме штаб молчит. Номер фразы. */
@@ -358,7 +363,7 @@ export class Dispatcher {
    * голоса). Короткий (до OVER_MAX_WORDS слов) ответ на вопрос — подтверждение «да / нет» или ответ открытого окна:
    * - слово ответа (или его форма) есть в том, что штаб уже сказал (chief), — может быть эхом; ответ опасен — «да» на
    *   подтверждение, опасный вариант или «да» окна (modal.danger), ответ, исполняющий необратимое действие: не
-   *   исполняется — штаб замолкает и переспрашивает (REASK_SAY, 'reask'); повтор придёт обычной репликой;
+   *   исполняется — штаб замолкает и переспрашивает (reaskSay, 'reask'); повтор придёт обычной репликой;
    * - иначе штаб замолкает и ответ исполняется.
    * Эхо цепочкой (два слова подряд из фразы штаба) и прочая речь — не реплика: без ответа и без следа ('ignored').
    */
@@ -380,7 +385,7 @@ export class Dispatcher {
       : !!asked && (asked.danger?.(whole) === true || (!!hit && getAction(hit.id)?.irreversible === true));
     this.opts.stop?.();
     this.spoke(); // перебил — дальше разговор
-    if (echo || danger) { this.say(REASK_SAY); return 'reask'; }
+    if (echo || danger) { this.say(reaskSay(this.pending ? '«да» или «нет»' : asked?.how)); return 'reask'; }
     return this.utterance(text, id);
   }
 
@@ -575,7 +580,7 @@ export class Dispatcher {
   /** Открыто окно, ждущее ответа: его ответы, «отбой», «повтори»; прочее — «Сначала ответьте на вопрос». */
   private async inModal(m: VoiceModal, rest: string): Promise<'done' | 'unknown'> {
     if (OFF.test(rest)) { await this.standbyByVoice(); return 'done'; }
-    if (REPEAT.test(rest)) { repeatTurn(); this.say(m.read ?? m.question); return 'done'; }
+    if (REPEAT.test(rest)) { repeatTurn(); this.repeat(); return 'done'; }
     if (MORE.test(rest) && getAction('read.next')) return this.execute('read.next'); // длинный вопрос — частями
     const hit = m.parse(rest);
     if (!hit) {

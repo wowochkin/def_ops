@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
-  COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, placePanel, crowded, stripCut, stripLines, STRIP_LINE_CHARS, STRIP_OVER_CHARS,
+  COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, topPlace, anchorBottom, fullHeight, RAIL_W, stripCut, stripLines, STRIP_LINE_CHARS, STRIP_OVER_CHARS,
 } from '../src/voice/panel-state';
 import { freeOffset } from '../src/engine/free-center';
 
@@ -426,28 +426,24 @@ describe('компактная панель: вид по умолчанию, с�
   });
 });
 
-describe('панель не перекрывает окно (placePanel)', () => {
-  const vw = 1440, vh = 900;
-  const panel = { width: 440, height: 110 };
-  const cross = (a: { left: number; top: number; width: number; height: number }, b: { left: number; top: number; width: number; height: number }) =>
-    a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
-  it('окна нет или оно не задевает обычное место (справа внизу) — обычное место (null)', () => {
-    expect(placePanel(panel, [], vw, vh)).toBeNull();
-    expect(placePanel(panel, [{ left: 440, top: 60, width: 560, height: 500 }], vw, vh)).toBeNull();
+describe('панель — сверху по центру, под верхней полосой кнопок (topPlace)', () => {
+  it('по центру свободной области справа от колонки разделов, сразу под верхней полосой', () => {
+    const p = topPlace(1440, 500, 38);
+    expect(p.left + 250).toBeCloseTo(RAIL_W + (1440 - RAIL_W) / 2, 5);
+    expect(p.top).toBe(46);
+    // узкое окно — не левее колонки разделов
+    expect(topPlace(600, 560, 0).left).toBeGreaterThanOrEqual(RAIL_W);
   });
-  it('окно задевает обычное место — панель встаёт туда, где окна нет', () => {
-    const modal = { left: 300, top: 150, width: 1000, height: 600 }; // широкое окно: задевает и правый низ, и левый
-    const p = placePanel(panel, [modal], vw, vh)!;
-    expect(p).not.toBeNull();
-    expect(cross({ ...p, ...panel }, modal)).toBe(false);
-    expect(p.left).toBeGreaterThanOrEqual(0);
-    expect(p.top).toBeGreaterThanOrEqual(0);
-    expect(p.left + panel.width).toBeLessThanOrEqual(vw);
-    expect(p.top + panel.height).toBeLessThanOrEqual(vh);
+  it('верхняя полоса — нижний край видимых шапок у верха экрана; шапок нет — от самого верха', () => {
+    expect(anchorBottom([{ top: 0, bottom: 38, width: 900 }, { top: 0, bottom: 52, width: 300 }])).toBe(52);
+    expect(anchorBottom([{ top: 400, bottom: 460, width: 300 }])).toBe(0); // не у верха — не шапка
+    expect(anchorBottom([{ top: 0, bottom: 40, width: 0 }])).toBe(0); // не видна
+    expect(anchorBottom([])).toBe(0);
   });
-  it('окно во весь экран — где перекрытие меньше всего', () => {
-    const p = placePanel(panel, [{ left: 0, top: 0, width: vw, height: 820 }], vw, vh)!;
-    expect(p.top + panel.height).toBeGreaterThan(820); // внизу, где окна нет хотя бы частично
+  it('развёрнутая панель раскрывается вниз и оставляет низ экрана подписи тура', () => {
+    expect(fullHeight(900, 46)).toBeLessThanOrEqual(900 - 46 - 400);
+    expect(fullHeight(900, 46)).toBeGreaterThanOrEqual(260);
+    expect(fullHeight(2000, 46)).toBe(640);
   });
 });
 
@@ -502,9 +498,5 @@ describe('раунд 1 (Task 1b): окно и полоса', () => {
     expect(stripCut('x'.repeat(STRIP_OVER_CHARS * 3), true)).toBe(false);
     expect(stripCut('x'.repeat(STRIP_OVER_CHARS * 3 + 1), true)).toBe(true);
     expect(stripCut('x'.repeat(STRIP_LINE_CHARS * 2 + 1), false)).toBe(true);
-  });
-  it('M-3: окно почти во весь экран — полоса не находит свободного места (crowded) и становится строкой состояния', () => {
-    expect(crowded([{ left: 30, top: 40, width: 1380, height: 830 }], 1440, 900)).toBe(true);
-    expect(crowded([{ left: 500, top: 394, width: 440, height: 112 }], 1440, 900)).toBe(false);
   });
 });

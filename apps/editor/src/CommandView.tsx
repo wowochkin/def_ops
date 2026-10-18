@@ -1548,6 +1548,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
       return speakable(takeoverRead({ day: dayMonth(at), turn, enemy: s.enemy, down: s.down, saved: s.hasSaved }), { full: true });
     },
     remind: TAKEOVER_REMIND,
+    how: '«принимаю» или «отмена»',
     isAnswer: takeoverIsAnswer,
     parse: (rest) => takeoverParse(rest, { saved: st.current.hasSaved, enemy: st.current.enemy }),
   }), []); // eslint-disable-line react-hooks/exhaustive-deps

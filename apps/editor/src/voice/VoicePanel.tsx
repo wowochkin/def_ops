@@ -2,8 +2,9 @@
  * Панель голоса поверх любого раздела, три вида (PanelSize): значок (цвет — состояние); полоса (по умолчанию) —
  * состояние словами, последняя фраза штаба (до двух строк), «Развернуть»; развёрнута — лента реплик, «Что можно
  * сказать», калибровка, голоса и тонкая настройка (в ней — уровень речи с отметками). Полоса сама разворачивается, когда
- * штаб говорит длинное или ждёт «да / нет», и сворачивается через 10 с тишины. Открыто окно (вопрос, «Принять
- * командование», калибровка…) — панель не больше полосы и встаёт туда, где окна нет (placePanel).
+ * штаб говорит длинное или ждёт «да / нет», и сворачивается через 10 с тишины. Место — сверху по центру, под верхней
+ * полосой кнопок раздела (usePanelPlace); развёрнутая раскрывается вниз. Открыто окно (вопрос, «Принять командование»,
+ * калибровка…) — панель не больше полосы, окно встаёт ниже неё (--vp-space).
  *
  * Пользователи — люди старшего возраста: крупный шрифт (не меньше 18 px), простые слова, регуляторы спрятаны
  * в «Тонкую настройку», главный путь — калибровка. Панель создаёт связь с сервисом (VoiceClient) и разборщик
@@ -32,7 +33,7 @@
  * разворачивает панель (подготовка тура по ней). Элементы панели помечены `data-tour` для подсветки.
  */
 import { useEffect, useMemo, useReducer, useRef, useState, type RefObject } from 'react';
-import { useAvoidModals } from './avoid-modals';
+import { usePanelPlace } from './avoid-modals';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
@@ -41,7 +42,7 @@ import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
   DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
-  parseEnabled, parsePanelMode, parseSettings, resetStored, stripCut, stripLines, settleAec, storeSettings, wasCalibrated, type FeedItem, type PanelMode,
+  fullHeight, parseEnabled, parsePanelMode, parseSettings, resetStored, stripCut, stripLines, settleAec, storeSettings, wasCalibrated, type FeedItem, type PanelMode,
 } from './panel-state';
 import { confirmAsync } from '../dialogs';
 import { Calibration } from './Calibration';
@@ -466,7 +467,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const feedEnd = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLElement>(null);
   // открытые окна: панель не больше полосы и не на них
-  const { modal, pos, crowded } = useAvoidModals(card);
+  const { modal, left, top } = usePanelPlace(card);
   domModal.current = modal;
   useEffect(() => { size.setModal(regModal.current || modal); redraw(); }, [modal, size]);
   const view = size.view(modal);
@@ -486,7 +487,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       </div>
     </div>
   );
-  const place = pos ? { left: pos.left, top: pos.top, right: 'auto', bottom: 'auto' } : undefined;
+  // сверху по центру, под верхней полосой кнопок; развёрнутая — вниз отсюда же
+  const place = { left, top };
   const cardCls = `vp-card${modal ? ' over' : ''}`;
 
   return (
@@ -512,7 +514,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           {hint && <p className="vp-hint stop" role="status">{hint}</p>}
           {/* голос выключен — включить можно прямо с полосы */}
           {!enabled && <button className="vp-power primary" onClick={() => power(true)}><MicGlyph off={false} /> Включить голос</button>}
-          {enabled && !confirm && !crowded && last && <>
+          {/* фраза штаба: до двух строк, при открытом окне — до трёх */}
+          {enabled && !confirm && last && <>
             <p className={`vp-last${stripLines(modal) === 3 ? ' l3' : ''}`} title={last.text}><span className="vp-who">Штаб:</span> {last.text}</p>
             {/* обрезано — не молча: целиком повторит штаб */}
             {stripCut(last.text, modal) && <div className="vp-cut"><span>Целиком — скажите «повтори»</span><button onClick={() => dispatcher.repeat()}>Повторить</button></div>}
@@ -520,13 +523,28 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
         </section>
       )}
       {view === 'full' && (
-        <section ref={card} className={cardCls} style={place} aria-label="Голос" data-tour="voice">
+        <section ref={card} className={cardCls} style={{ ...place, maxHeight: fullHeight(window.innerHeight, top) }} aria-label="Голос" data-tour="voice">
           <div className="vp-head" data-tour="voice-state">
             <span className="vp-dot" />
             <span className="vp-state" role="status">{st.text}</span>
             <ActButton className="vp-close" action="voice.panel.close" title="Свернуть панель голоса в полосу">Свернуть</ActButton>
           </div>
           {confirm}
+          {hint && <p className="vp-hint stop" role="status">{hint}</p>}
+          {note && <p className="vp-hint" role="status">{note}…</p>}
+          {/* лента — сразу под состоянием: развернулась сама на длинной фразе — фраза видна без прокрутки */}
+          <div className="vp-feed" aria-label="Что сказано" data-tour="voice-feed">
+            {!feed.length && <p className="vp-empty">Здесь будет видно, что я услышал и что ответил.</p>}
+            {feed.map((x) => (
+              <div key={x.key} className={`vp-item ${x.kind}`}>
+                {x.kind !== 'fix' && <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'umpire' ? 'Посредник:' : x.kind === 'note' ? 'Сбой:' : x.kind === 'echo' ? 'Слышно:' : 'Вы:'}</span>} {x.text}
+                {x.kind === 'notme' && <span className="vp-notme">не мне</span>}
+                {x.kind === 'echo' && <span className="vp-notme">похоже на мой же голос из динамиков</span>}
+              </div>
+            ))}
+            <div ref={feedEnd} />
+          </div>
+
           <div className="vp-powerbox" data-tour="voice-power">
             {enabled
               ? <ActButton className="vp-power" action="voice.off.ask" title={POWER_OFF_ASK}><MicGlyph off /> Выключить голос</ActButton>
@@ -551,21 +569,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
               <ActButton action="shell.calibrate" params={{ manual: true }} disabled={!live}>Калибровать</ActButton>
             </div>
           )}
-          {hint && <p className="vp-hint stop" role="status">{hint}</p>}
-          {note && <p className="vp-hint" role="status">{note}…</p>}
           {enabled && <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
-
-          <div className="vp-feed" aria-label="Что сказано" data-tour="voice-feed">
-            {!feed.length && <p className="vp-empty">Здесь будет видно, что я услышал и что ответил.</p>}
-            {feed.map((x) => (
-              <div key={x.key} className={`vp-item ${x.kind}`}>
-                {x.kind !== 'fix' && <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'umpire' ? 'Посредник:' : x.kind === 'note' ? 'Сбой:' : x.kind === 'echo' ? 'Слышно:' : 'Вы:'}</span>} {x.text}
-                {x.kind === 'notme' && <span className="vp-notme">не мне</span>}
-                {x.kind === 'echo' && <span className="vp-notme">похоже на мой же голос из динамиков</span>}
-              </div>
-            ))}
-            <div ref={feedEnd} />
-          </div>
 
           {enabled && <details className="vp-cans" data-tour="voice-cans">
             <summary>Что можно сказать</summary>

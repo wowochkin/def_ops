@@ -146,6 +146,8 @@ export function setSpeaker(fn: ((text: string, o?: SpeakOpts) => number | void) 
 export function setRetractor(fn: ((id: number) => void) | null): void { retractor = fn; }
 /** Штаб говорит фразу как есть (к озвучке её готовит вызывающий: speakable). Голоса нет или он дежурит — молчит. Номер фразы. */
 export function speak(text: string, o?: SpeakOpts): number | void { if (text) return speaker?.(text, o); }
+/** Речь штаба подключена (панель голоса есть). */
+export function hasSpeaker(): boolean { return speaker !== null; }
 /** Фраза больше не нужна (новая просьба о том же). */
 export function retract(id: number): void { retractor?.(id); }
 
@@ -194,6 +196,8 @@ export interface VoiceModal {
    * напоминает (калибровка и «Голоса» ведут разговор сами). Кончается «Жду ответа.», а не словом-ответом.
    */
   remind?: string;
+  /** Как отвечать — коротко, без «Жду ответа» («номер варианта или «отмена»»): для переспроса. */
+  how?: string;
   /** Ответ опасен (удаление, необратимое): поверх речи штаба не исполняется — только переспрос (dispatch.ts, over). */
   danger?(rest: string): boolean;
 }

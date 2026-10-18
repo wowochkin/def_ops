@@ -289,6 +289,7 @@ await check('по умолчанию — полоса: не выше двух с
   await strip.waitFor({ state: 'visible', timeout: T });
   const r = await strip.evaluate((e) => e.getBoundingClientRect().toJSON());
   if (r.height > 130 || r.width > 520) throw new Error(`полоса ${Math.round(r.width)}×${Math.round(r.height)} px`);
+  await placeAtTop('.vp-card.strip');
   await strip.getByRole('button', { name: 'Развернуть' }).click();
   await panel.locator('.vp-card:not(.strip)').waitFor({ state: 'visible', timeout: 5000 });
   return `${Math.round(r.width)}×${Math.round(r.height)} px`;
@@ -389,6 +390,7 @@ await check('открытая панель не закрывает раздел:
   if (covered.overlap) throw new Error('панель заходит на колонку раздела');
   const h = await panel.locator('.vp-card').evaluate((c) => c.getBoundingClientRect().height);
   if (h > 660) throw new Error(`карточка высотой ${h} px`);
+  await placeAtTop('.vp-card');
   return `высота карточки ${Math.round(h)} px`;
 });
 await shot('voice-panel.jpg');
@@ -396,6 +398,10 @@ await shot('voice-panel.jpg');
 await check('кнопка «Калибровка» открывает калибровку (шаги — кнопкой «Записать»)', async () => {
   await panel.getByRole('button', { name: 'Калибровка' }).click();
   await page.locator('.vp-dialog.calib').waitFor({ state: 'visible', timeout: 3000 });
+  // окно калибровки — ниже панели, панель его не закрывает
+  await page.waitForTimeout(400);
+  const pv = await panelVs('.vp-dialog.calib');
+  if (pv.cross) throw new Error(`панель ${pv.panel} на окне калибровки ${pv.win}`);
 });
 
 const calibDlg = page.locator('.vp-dialog.calib');
@@ -920,6 +926,33 @@ async function handsFree(lines, { reload = true, mode = 'voice' } = {}) {
   if (reload) { await page.evaluate(() => { location.hash = '#replay'; }); await page.reload(); }
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 40000 });
 }
+/** Прямоугольники панели голоса и окна sel; пересекаются ли. */
+function panelVs(sel) {
+  return page.evaluate((q) => {
+  const a = document.querySelector('[data-tour="voice"]')?.getBoundingClientRect();
+  const b = document.querySelector(q)?.getBoundingClientRect();
+  const cross = !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  return { cross, panel: a && [a.left, a.top, a.width, a.height].map(Math.round), win: b && [b.left, b.top, b.width, b.height].map(Math.round) };
+}, sel);
+}
+/**
+ * Панель sel — сверху по центру свободной области справа от колонки разделов, сразу под верхней полосой кнопок; не
+ * пересекает ни полосу кнопок (её кнопки), ни колонку разделов, ни вкладки раздела.
+ */
+async function placeAtTop(sel) {
+  const r = await page.evaluate((q) => {
+    const a = document.querySelector(q).getBoundingClientRect();
+    const cross = (b) => b.width > 0 && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const bars = [...document.querySelectorAll('[data-voice-top], .rp-bar, .app > header, .kb-top, .mdl-top')].map((e) => e.getBoundingClientRect()).filter((b) => b.width > 0 && b.top < 24);
+    const bar = Math.max(0, ...bars.map((b) => b.bottom));
+    const hit = [...document.querySelectorAll('.rp-bar button, .rp-tools button, .rail, nav button, .cmd-tabs button')].map((e) => e.getBoundingClientRect()).filter(cross).length;
+    return { box: [a.left, a.top, a.width, a.height].map(Math.round), center: a.left + a.width / 2, top: a.top, bar: Math.round(bar), hit, free: 84 + (innerWidth - 84) / 2 };
+  }, sel);
+  if (Math.abs(r.center - r.free) > 4) throw new Error(`не по центру: ${JSON.stringify(r)}`);
+  if (r.top < r.bar || r.top > r.bar + 20) throw new Error(`не под полосой кнопок: ${JSON.stringify(r)}`);
+  if (r.hit) throw new Error(`закрывает кнопки карты, вкладки или колонку разделов: ${JSON.stringify(r)}`);
+  return r;
+}
 /**
  * Сказанное в ленте. Штаб — по отправленным сервису фразам: при открытом окне панель — полоса, ленты на экране нет;
  * реплики человека (kind 'notme', 'me') — по ленте развёрнутой панели.
@@ -1009,6 +1042,10 @@ await check('без рук: «удали голос гость» — вопро�
   const size = await q.locator('.vp-q').evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
   if (size < 22) throw new Error(`вопрос шрифтом ${size} px`);
   for (const b of ['Да', 'Нет']) if (!(await q.getByRole('button', { name: b }).isVisible())) throw new Error(`нет кнопки «${b}»`);
+  // окно «Голоса» (640 px): полоса с вопросом — сбоку, не на нём
+  await page.waitForTimeout(400);
+  const pv = await panelVs('.vp-dialog.voices');
+  if (pv.cross) throw new Error(`панель ${pv.panel} на окне «Голоса» ${pv.win}`);
   await shot('voice-confirm.jpg');
   const dlg = page.locator('.vp-dialog.voices');
   await dlg.locator('.vp-voice', { hasText: 'Гость' }).waitFor({ state: 'detached', timeout: 30000 });
@@ -1040,13 +1077,6 @@ await check('без рук: «Штаб, калибровка» — шаги ид
 
 
 // ---------------------------------------------------------------- компактная панель и окна; ответ поверх чтения (Task 1b)
-/** Прямоугольники панели голоса и окна sel; пересекаются ли. */
-const panelVs = (sel) => page.evaluate((q) => {
-  const a = document.querySelector('[data-tour="voice"]')?.getBoundingClientRect();
-  const b = document.querySelector(q)?.getBoundingClientRect();
-  const cross = !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-  return { cross, panel: a && [a.left, a.top, a.width, a.height].map(Math.round), win: b && [b.left, b.top, b.width, b.height].map(Math.round) };
-}, sel);
 
 /** Вопрос с длинными пояснениями: штаб читает его секунд двадцать (поддельный синтез — 15 знаков в секунду). */
 const LONG_Q = ['Что сделать с игрой?', 'Игра остановлена на третьем ходу, запись хранится на этом компьютере.',
@@ -1115,7 +1145,38 @@ await check('без рук: переигровка → «рассчитай оп
   return `расчёт ${calcS} с; Зелов в ${z.p}`;
 });
 
+await check('без рук: «дай два варианта» → «подробнее о первом» → «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»', async () => {
+  // советник отвечает с поддельной LM Studio (поток окна игры ходит туда же)
+  await handsFree(['штаб, дай два варианта', ...QUIET], { reload: false });
+  await feedHas('Прошу у советника два варианта').waitFor({ timeout: 30000 });
+  await feedHas('Советник предложил два варианта').waitFor({ timeout: 90000 }).catch(() => { throw new Error(`варианты не готовы (запросов вариантов к модели: ${LM.plans})`); });
+  await handsFree(['штаб, подробнее о первом', ...QUIET], { reload: false });
+  await feedHas('Вариант первый: «Удар на Зелов»').waitFor({ timeout: 30000 });
+  await page.locator('.plan-var .plan-body').first().waitFor({ timeout: 10000 }).catch(() => { throw new Error('вариант не раскрыт на экране'); });
+  await handsFree(['штаб, выбираю первый', ...QUIET], { reload: false });
+  await feedHas('Вариант «Удар на Зелов» принят').waitFor({ timeout: 30000 });
+  await page.locator('.plan-var.on .plan-ok', { hasText: 'принят' }).waitFor({ timeout: 10000 });
+  await handsFree(['штаб, восьмой гвардейской наступать на Зелов', ...QUIET], { reload: false });
+  await feedHas('Приказ: восьмая гвардейская армия — наступать, цель — Зелов').waitFor({ timeout: 30000 });
+  await page.locator('.cmd-tabs button.on', { hasText: 'Приказы' }).waitFor({ timeout: 10000 });
+  await page.locator('.draft', { hasText: '8-я гвардейская армия' }).waitFor({ timeout: 10000 });
+  await shot('voice-orders.jpg');
+  await handsFree(['штаб, запиши в замысел: главный удар на Зелов, к вечеру выйти к Мюнхебергу', ...QUIET], { reload: false });
+  await feedHas('Записал в «Замысел»').waitFor({ timeout: 30000 });
+  const intent = await page.locator('.dfield textarea').nth(2).inputValue();
+  if (!/^Главный удар на Зелов, к вечеру выйти к Мюнхебергу/.test(intent)) throw new Error(`замысел: ${intent}`);
+  await handsFree(['штаб, что не готово?', ...QUIET], { reload: false });
+  await feedHas('Не готово: боевое донесение').waitFor({ timeout: 30000 });
+  await shot('voice-decision.jpg');
+  const clicks = await page.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+  return `запросов вариантов: ${LM.plans}`;
+});
+
 await check('командование: при полосе место тоже не под ней', async () => {
+  // советник (открыт проверкой советника) лежит справа поверх карты — скрыть: проверки ниже — о карте
+  const adv = page.locator('.advisor .adv-h button[title^="Скрыть советника"]');
+  if (await adv.isVisible().catch(() => false)) await adv.click();
   const full = panel.locator('.vp-card:not(.strip)');
   if (await full.isVisible()) await full.getByRole('button', { name: 'Свернуть' }).click();
   await panel.locator('.vp-card.strip').waitFor({ timeout: 3000 });
@@ -1126,27 +1187,17 @@ await check('командование: при полосе место тоже �
   return `Зелов в ${z.p}`;
 });
 
-await check('полоса не на кнопках масштаба карты; свёрнутая в значок — в том же углу', async () => {
+await check('полоса — сверху по центру под полосой кнопок карты: кнопки карты, вкладки и колонка разделов открыты; значок — там же', async () => {
   const strip = panel.locator('.vp-card.strip');
   await strip.waitFor({ timeout: 3000 });
-  const r = await page.evaluate(() => {
-    const a = document.querySelector('.vp-card.strip').getBoundingClientRect();
-    // кнопки масштаба, которые видно (карта под проигрывателем или другим окном не в счёт); полоса над ними — тоже «видно»
-    const strip = document.querySelector('.vp-card.strip');
-    const z = [...document.querySelectorAll('.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group')].filter((e) => {
-      const b = e.getBoundingClientRect();
-      const top = b.width > 0 && document.elementFromPoint(b.left + b.width / 2, b.top + 4);
-      return !!top && (e.contains(top) || strip.contains(top));
-    }).map((e) => e.getBoundingClientRect());
-    return { strip: a.toJSON(), zoom: z.map((b) => [b.left, b.top, b.width, b.height].map(Math.round)), cross: z.some((b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top), n: z.length };
-  });
-  if (!r.n) throw new Error('кнопок масштаба нет');
-  if (r.cross) throw new Error(`полоса ${[r.strip.left, r.strip.top, r.strip.width, r.strip.height].map(Math.round)} на кнопках масштаба ${JSON.stringify(r.zoom)}`);
+  const r = await placeAtTop('.vp-card.strip');
   await strip.getByRole('button', { name: 'Свернуть' }).click();
   const icon = await page.locator('.vp-icon').evaluate((e) => e.getBoundingClientRect().toJSON());
-  if (Math.abs(icon.right - r.strip.right) > 4 || Math.abs(icon.bottom - r.strip.bottom) > 4) throw new Error(`значок ${Math.round(icon.right)},${Math.round(icon.bottom)}, полоса ${Math.round(r.strip.right)},${Math.round(r.strip.bottom)}`);
+  const ic = icon.left + icon.width / 2;
+  if (Math.abs(ic - r.center) > 4 || Math.abs(icon.top - r.top) > 4) throw new Error(`значок ${Math.round(ic)},${Math.round(icon.top)}, полоса ${Math.round(r.center)},${Math.round(r.top)}`);
   await page.locator('.vp-icon').click();
   await strip.waitFor({ timeout: 3000 });
+  return `полоса ${r.box}, под полосой кнопок (низ ${r.bar})`;
 });
 
 await check('окно с длинным вопросом: фраза в полосе — до трёх строк, обрезанная — «Повторить»; закрыли окно — полоса, не большая панель', async () => {
@@ -1163,27 +1214,21 @@ await check('окно с длинным вопросом: фраза в поло
   }
 });
 
-await check('«Разбор операции» (окно почти во весь экран): панель — строка состояния в углу, заголовок и кнопки окна открыты', async () => {
+await check('«Разбор операции» (окно почти во весь экран): окно — ниже панели, панель с фразой, заголовок и кнопки окна открыты', async () => {
   await page.locator('.cmd-top').getByRole('button', { name: '⋯' }).click();
   // разбор — после первого хода; для снимка окна вызываем ту же кнопку (её обработчик) без хода
   await page.locator('.menu button', { hasText: 'Разбор операции' }).evaluate((b) => b[Object.keys(b).find((k) => k.startsWith('__reactProps'))].onClick());
   const rv = page.locator('.modal.review[data-modal]');
   await rv.waitFor({ timeout: 5000 });
-  await page.waitForTimeout(500);
-  const strip = panel.locator('.vp-card.strip');
-  await strip.waitFor({ timeout: 2000 });
-  const r = await page.evaluate(() => {
-    const a = document.querySelector('[data-tour="voice"]').getBoundingClientRect();
-    const hit = (sel) => [...document.querySelectorAll(sel)].some((e) => { const b = e.getBoundingClientRect(); return b.width && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; });
-    const w = document.querySelector('.modal.review').getBoundingClientRect();
-    return { panel: [a.left, a.top, a.width, a.height].map(Math.round), win: [w.left, w.top, w.width, w.height].map(Math.round), on: hit('.modal.review'), head: hit('.rv-h'), ctl: hit('.rv-ctl button'), phrase: !!document.querySelector('.vp-card.strip .vp-last') };
-  });
-  // места рядом нет — панель только строкой состояния и не на заголовке и кнопках окна
-  if (r.on && r.phrase) throw new Error(`панель на окне и с фразой: ${JSON.stringify(r)}`);
-  if (r.head || r.ctl) throw new Error(`панель на заголовке или кнопках окна: ${JSON.stringify(r)}`);
+  await page.waitForTimeout(700);
+  await panel.locator('.vp-card.strip').waitFor({ timeout: 2000 });
+  const v = await panelVs('.modal.review');
+  if (v.cross) throw new Error(`панель ${v.panel} на окне ${v.win}`);
+  const w = await rv.evaluate((e) => e.getBoundingClientRect().bottom);
+  if (w > 900) throw new Error(`окно ушло за низ экрана: ${w}`);
   await shot('voice-review.jpg');
   await rv.locator('.rv-h button.x').click();
-  return `панель ${r.panel}, окно ${r.win}${r.on ? ', строкой состояния' : ''}`;
+  return `панель ${v.panel}, окно ${v.win}`;
 });
 
 await check('полоса: короткая фраза штаба — в полосе; длинная — панель развернулась сама и свернулась через 10 с тишины', async () => {
@@ -1251,7 +1296,7 @@ async function answerOverReading(stopped) {
   const cut = await page.evaluate(([i, j, id, how]) => (how === 'barge'
     ? window.__e2e.msgs.slice(i).some((m) => m.type === 'barge' && m.id === id)
     : window.__e2e.msgs.slice(i).some((m) => m.type === 'over' && m.text === 'второй') && window.__e2e.sent.slice(j).some((m) => m.type === 'stop')
-      && window.__e2e.sent.slice(j).some((m) => m.type === 'say' && m.text === 'Повторите ответ, пожалуйста. Жду ответа.')), [k.msgs, k.sent, read.id, stopped]);
+      && window.__e2e.sent.slice(j).some((m) => m.type === 'say' && m.text === 'Повторите ответ после вопроса: номер варианта или «отмена». Жду ответа.')), [k.msgs, k.sent, read.id, stopped]);
   if (!cut) throw new Error(`чтение не оборвано (${stopped})`);
   // «голосом» ответ исполнен сразу; «словом» — слово было в сказанном (могло быть эхом): переспрос, повтор — исполнен
   if (stopped === 'barge' && dt > read.text.length / 15 * 1000) throw new Error(`ответ принят через ${dt} мс — после чтения`);
@@ -1266,39 +1311,12 @@ await check('ответ посреди чтения окна, перебиван
 
 await check('ответ посреди чтения окна, перебивание «словом»: «второй» поверх штаба (есть в сказанном) — штаб замолк и переспросил; повтор — выбран второй', async () => {
   // по ходу речи поверх штаба куски распознаются (стоп-слово ли) и тоже снимают строки сценария
-  await handsFree([...Array(10).fill('второй'), ...QUIET], { mode: 'word' });
+  await handsFree([...Array(30).fill('второй'), ...QUIET], { mode: 'word' });
   const r = await answerOverReading('stop');
   await page.locator('.vp-card').first().waitFor({ timeout: 2000 });
   return r;
 });
 
-await check('без рук: «дай два варианта» → «подробнее о первом» → «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»', async () => {
-  // советник отвечает с поддельной LM Studio (поток окна игры ходит туда же)
-  await handsFree(['штаб, дай два варианта', ...QUIET], { reload: false });
-  await feedHas('Прошу у советника два варианта').waitFor({ timeout: 30000 });
-  await feedHas('Советник предложил два варианта').waitFor({ timeout: 90000 }).catch(() => { throw new Error(`варианты не готовы (запросов вариантов к модели: ${LM.plans})`); });
-  await handsFree(['штаб, подробнее о первом', ...QUIET], { reload: false });
-  await feedHas('Вариант первый: «Удар на Зелов»').waitFor({ timeout: 30000 });
-  await page.locator('.plan-var .plan-body').first().waitFor({ timeout: 10000 }).catch(() => { throw new Error('вариант не раскрыт на экране'); });
-  await handsFree(['штаб, выбираю первый', ...QUIET], { reload: false });
-  await feedHas('Вариант «Удар на Зелов» принят').waitFor({ timeout: 30000 });
-  await page.locator('.plan-var.on .plan-ok', { hasText: 'принят' }).waitFor({ timeout: 10000 });
-  await handsFree(['штаб, восьмой гвардейской наступать на Зелов', ...QUIET], { reload: false });
-  await feedHas('Приказ: восьмая гвардейская армия — наступать, цель — Зелов').waitFor({ timeout: 30000 });
-  await page.locator('.cmd-tabs button.on', { hasText: 'Приказы' }).waitFor({ timeout: 10000 });
-  await page.locator('.draft', { hasText: '8-я гвардейская армия' }).waitFor({ timeout: 10000 });
-  await shot('voice-orders.jpg');
-  await handsFree(['штаб, запиши в замысел: главный удар на Зелов, к вечеру выйти к Мюнхебергу', ...QUIET], { reload: false });
-  await feedHas('Записал в «Замысел»').waitFor({ timeout: 30000 });
-  const intent = await page.locator('.dfield textarea').nth(2).inputValue();
-  if (!/^Главный удар на Зелов, к вечеру выйти к Мюнхебергу/.test(intent)) throw new Error(`замысел: ${intent}`);
-  await handsFree(['штаб, что не готово?', ...QUIET], { reload: false });
-  await feedHas('Не готово: боевое донесение').waitFor({ timeout: 30000 });
-  await shot('voice-decision.jpg');
-  const clicks = await page.evaluate(() => window.__clicks);
-  if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `запросов вариантов: ${LM.plans}`;
-});
 
 await check('без рук: «проводи ход» — чего нет и предложение («да» — черновик донесения) → «проводи ход» → «да» → доклад посредника его голосом', async () => {
   await handsFree(['штаб, проводи ход', ...QUIET], { reload: false });
