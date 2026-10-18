@@ -670,3 +670,88 @@ describe('раунд 1: мелкие', () => {
     expect(reasons).toEqual(['Идёт расчёт хода — подождите.']);
   });
 });
+
+// ---------------------------------------------------------------- раунд 2 (по повторной рецензии)
+
+describe('раунд 2: переспрос не съедает «Куда?»', () => {
+  for (const again of ['Штаб, повтори', 'Штаб, что?', 'Штаб, не расслышал', 'Штаб, подожди']) {
+    it(`«${again}» — вопрос остаётся, ответ местом принимается`, async () => {
+      const d = staff();
+      const disp = mk();
+      await disp.utterance('Штаб, восьмой гвардейской наступать', 1);
+      const asked = said.at(-1);
+      t += 1000;
+      await disp.utterance(again, 2);
+      if (!/подожди/.test(again)) expect(said.at(-1)).toBe(asked);
+      t += 1000;
+      await disp.utterance('Штаб, Зелов', 3);
+      expect(d.drafts.su_8gva).toMatchObject({ task: 'attack', target: zelov.id });
+    });
+  }
+});
+
+describe('раунд 2: «Приказ не отдан» — сразу, при снятии ожидания', () => {
+  it('после диктовки — сразу, а не при следующей команде', async () => {
+    staff();
+    const spoken: string[] = [];
+    setSpeaker((s) => { spoken.push(s); });
+    const disp = mk();
+    await disp.utterance('Штаб, восьмой гвардейской наступать', 1);
+    t += 1000;
+    await disp.utterance('Штаб, запиши в замысел: удар на Зелов', 2);
+    expect(spoken).toEqual(['Приказ не отдан: восьмая гвардейская армия.']);
+    t += 1000;
+    await disp.utterance('Штаб, что не готово', 3);
+    expect(spoken).toHaveLength(1);
+    setSpeaker(null);
+  });
+  it('ожидание истекло — снимается молча', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      staff();
+      const spoken: string[] = [];
+      setSpeaker((s) => { spoken.push(s); });
+      const disp = mk();
+      await disp.utterance('Штаб, восьмой гвардейской наступать', 1);
+      vi.setSystemTime(Date.now() + 31_000);
+      await disp.utterance('Штаб, что не готово', 2);
+      expect(spoken).toEqual([]);
+      setSpeaker(null);
+    } finally { vi.useRealTimers(); }
+  });
+});
+
+describe('раунд 2: двоеточие внутри диктуемого текста', () => {
+  it('название поля кончается у двоеточия — оно; иначе — как раньше, самое длинное', async () => {
+    const d = staff();
+    const disp = mk();
+    await disp.utterance('Штаб, запиши в замысел главный удар: на Зелов', 1);
+    expect(d.decision.intent).toBe('Главный удар: на Зелов');
+    await disp.utterance('Штаб, запиши в замысел противника удержать высоты: любой ценой', 2);
+    expect(d.decision.enemyIntent).toBe('Удержать высоты: любой ценой');
+    await disp.utterance('Штаб, запиши в замысел: противника сковать', 3);
+    expect(d.decision.intent).toBe('Противника сковать');
+  });
+});
+
+describe('раунд 2: вопрос — не приказ', () => {
+  it('«или нет», «как думаешь», «стоит ли», «можно ли», «?» — модели', () => {
+    staff();
+    for (const q of ['восьмой гвардейской наступать на берлин или нет', 'восьмой гвардейской наступать на зелов как думаешь',
+      'восьмой гвардейской стоит ли наступать на зелов', 'восьмой гвардейской можно ли наступать на зелов', 'восьмой гвардейской наступать ли на зелов'])
+      expect(parsePhrase(q, 'replay', q), q).toBeNull();
+    expect(parsePhrase('восьмой гвардейской наступать на зелов', 'replay', 'Восьмой гвардейской наступать на Зелов?')).toBeNull();
+    expect(parsePhrase('восьмой гвардейской наступать на зелов', 'replay', 'Восьмой гвардейской наступать на Зелов.')).toMatchObject({ id: 'command.order' });
+  });
+});
+
+describe('раунд 2: отмена распоряжения — хвост проверяется', () => {
+  it('непонятный хвост — не перехват; понятный — отмена', () => {
+    staff();
+    expect(parsePhrase('убери линию с карты', 'replay')).toBeNull();
+    expect(parsePhrase('отмени переправу у меня в голове', 'replay')).toBeNull();
+    expect(parsePhrase('отмени переправу у зелова', 'replay')).toMatchObject({ id: 'command.act.cancel', params: { kind: 'bridge', name: 'зелова' } });
+    expect(parsePhrase('отмени линию между восьмой гвардейской и пятой ударной', 'replay')).toMatchObject({ id: 'command.act.cancel', params: { kind: 'boundary' } });
+    expect(parsePhrase('отмени линию', 'replay')).toEqual({ id: 'command.act.cancel', params: { kind: 'boundary' } });
+  });
+});

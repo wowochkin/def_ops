@@ -19,7 +19,7 @@ import { SECTIONS } from '../sections';
 import { yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, getAction, listed, markVoice, parsePhrase, topModal, type Action, type VoiceModal } from './registry';
+import { act, actions, getAction, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
@@ -191,7 +191,7 @@ export const MODEL_DOWN_SAY = 'Не понял вас. Языковая моде
 
 const OFF = /^(?:отбой|(?:выключи|выключить|отключи|отключить) голос)$/;
 const WAKE = /^(?:на связь|на связи|подъем|включись|проснись|включи голос)$/;
-const REPEAT = /^(?:повтори|повторите|повтори еще раз|повторите еще раз|еще раз)$/;
+const REPEAT = /^(?:повтори|повторите|повтори еще раз|повторите еще раз|еще раз|что|что что|не расслышал|не расслышала|не расслышал повтори|повтори вопрос)$/;
 const MORE = /^(?:дальше|далее|продолжай|продолжайте|читай дальше)$/;
 
 /** Ждущее подтверждения: что исполнить на «да», вопрос и до какого времени (now) ждать. */
@@ -374,6 +374,11 @@ export class Dispatcher {
   }
 
   async utterance(text: string, id: number, continues?: number): Promise<'ignored' | 'done' | 'unknown'> {
+    // реплика разобрана целиком — модулям: вопрос, на который она не ответила, снимается (turnDone)
+    try { return await this.handle(text, id, continues); } finally { turnDone(); }
+  }
+
+  private async handle(text: string, id: number, continues?: number): Promise<'ignored' | 'done' | 'unknown'> {
     let raw = text;
     if (continues !== undefined) {
       const prev = this.memory.get(continues);
@@ -445,6 +450,7 @@ export class Dispatcher {
         // стоп-слово, которое само — пример доступного сейчас действия («хватит» в туре, и в «стоп, хватит»), ещё и
         // исполняет его
         const a = words.slice(0, lead).reverse().map((w) => this.bySay(w)).find(Boolean);
+        if (!a) repeatTurn(); // «подожди» — не ответ и не новая просьба: вопрос штаба ждёт дальше
         if (a) try { await this.runSay(a); } catch { /* штаб уже замолчал — этого достаточно */ }
         return 'done';
       }
@@ -499,7 +505,7 @@ export class Dispatcher {
   /** Открыто окно, ждущее ответа: его ответы, «отбой», «повтори»; прочее — «Сначала ответьте на вопрос». */
   private async inModal(m: VoiceModal, rest: string): Promise<'done' | 'unknown'> {
     if (OFF.test(rest)) { await this.standbyByVoice(); return 'done'; }
-    if (REPEAT.test(rest)) { this.say(m.read ?? m.question); return 'done'; }
+    if (REPEAT.test(rest)) { repeatTurn(); this.say(m.read ?? m.question); return 'done'; }
     if (MORE.test(rest) && getAction('read.next')) return this.execute('read.next'); // длинный вопрос — частями
     const hit = m.parse(rest);
     if (!hit) {
@@ -655,7 +661,7 @@ export class Dispatcher {
     // «отбой» — дежурный режим: микрофон открыт, штаб ждёт «Штаб, на связь» (выключить микрофон — кнопкой)
     if (OFF.test(rest)) { await this.standbyByVoice(); return true; }
     if (WAKE.test(rest)) { this.say('На связи.'); return true; }
-    if (REPEAT.test(rest)) { this.say(this.last?.text ?? 'Я ещё ничего не говорил.'); return true; }
+    if (REPEAT.test(rest)) { repeatTurn(); this.say(this.last?.text ?? 'Я ещё ничего не говорил.'); return true; } // переспрос — вопрос ждёт
     const yn = yesNo(rest);
     if (yn) {
       // штаб только что предложил (тур: «Показать раздел?») — «да» в любых словах соглашается

@@ -89,6 +89,13 @@ let turn = 0;
 export function markVoice(at = Date.now()): void { voiceAt = at; turn++; }
 /** Номер последней реплики штабу: «ответ на вопрос» — только следующая за вопросом. */
 export function voiceTurn(): number { return turn; }
+/** Реплика — переспрос («повтори», «подожди»): не новая, вопрос штаба ждёт ответа дальше. */
+export function repeatTurn(): void { turn--; }
+const turnCbs = new Set<() => void>();
+/** Реплика разобрана целиком (диспетчер); возвращает отписку. */
+export function onTurnDone(cb: () => void): () => void { turnCbs.add(cb); return () => { turnCbs.delete(cb); }; }
+/** Диспетчер: реплика разобрана. */
+export function turnDone(): void { turnCbs.forEach((cb) => cb()); }
 /** Голосом пользовались за последние ms. */
 export function voiceRecent(ms = VOICE_RECENT_MS): boolean { return Date.now() - voiceAt <= ms; }
 

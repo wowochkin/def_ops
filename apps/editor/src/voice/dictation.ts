@@ -75,13 +75,15 @@ export function parseDictation(rest: string, raw = rest): { id: string; params?:
   const count = (x: string) => norm(x).split(' ').filter(Boolean).length;
   // слов до двоеточия — в реплике без обращения (raw ещё с ним: «Штаб, …»)
   const head = colon >= 0 ? count(raw.slice(0, colon)) - (count(raw) - words.length) : -1;
-  let best: { id: string; span: number } | null = null;
+  let best: { id: string; span: number; atColon: boolean } | null = null;
   for (const [id, names] of fields) {
     if (!getAction(`${id}.${verb[1]}`)) continue;
     for (const name of names) {
       const span = titleSpan(words.slice(i), name);
-      if (!span || (head > i && i + span !== head)) continue;
-      if (!best || span > best.span) best = { id, span };
+      if (!span) continue;
+      // название, кончающееся ровно у двоеточия, важнее; двоеточие внутри текста («главный удар: на Зелов») — не мешает
+      const atColon = i + span === head;
+      if (!best || (atColon && !best.atColon) || (atColon === best.atColon && span > best.span)) best = { id, span, atColon };
     }
   }
   if (!best) return null;

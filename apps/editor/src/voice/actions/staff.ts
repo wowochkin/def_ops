@@ -22,7 +22,7 @@ import type { AdviceView, HumanDecision, Place, PlanVariantView, TurnView } from
 import { ordinalIndex, pickByName } from '../answers';
 import { fieldActions, rawTail, readAloud } from '../dictation';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
-import { act, getAction, registerParser, retract, speak, voiceRecent, voiceTurn, type Action, type PhraseHit } from '../registry';
+import { act, getAction, onTurnDone, registerParser, retract, speak, voiceRecent, voiceTurn, type Action, type PhraseHit } from '../registry';
 import { short } from '../report';
 import { nameCase, numberWords, plural, speakable } from '../speech';
 import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
@@ -102,6 +102,8 @@ const ordName = (i: number) => ORD[i] ?? numberWords(i + 1);
 const variantsWord = (n: number) => `${numberWords(n)} ${plural(n, ['вариант', 'варианта', 'вариантов'])}`;
 /** Начала вопросов, а не команд: «как наступать…», «почему…» — это модели. */
 const QUESTION = /^(?:как|что|чего|почему|зачем|когда|куда|кто|где|можно|может|могу|нужно|надо|стоит|лучше|если|ли)(?: |$)/;
+/** Вопрос внутри или в конце фразы: «…или нет», «…как думаешь», «стоит ли…», «наступать ли…» — это не приказ. */
+const QUESTION_IN = /(?:^| )(?:или нет|или как|как думаешь|как считаешь|как полагаешь|ли|верно|правильно)(?: |$)/;
 
 /** Текст проверки расчёта — вслух: «≈ 18.04 17:00» → «примерно …», «×1,5» — словами. */
 export function checkSpeech(text: string): string {
@@ -846,10 +848,24 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
   }
   if (/^подвоз поровну$/.test(t)) return hit('command.rear.priority', { armies: [] });
   // отменить распоряжение: переправу, перенос базы, приоритет подвоза, линию
-  if ((m = /^(?:отмени|отменить|убери|сними|не наводи|не наводить)(?: наведение| наводку)? переправ\p{L}*(?: (?:у|в|возле|около|под|на|к) (.+))?$/u.exec(t))) return hit('command.act.cancel', { kind: 'bridge', ...(m[1] ? { name: m[1] } : {}) });
-  if ((m = /^(?:отмени|отменить|убери|сними) (?:перенос базы|перенос|базу)(?: (.+))?$|^не переноси(?:ть)? базу(?: (.+))?$/.exec(t))) return hit('command.act.cancel', { kind: 'base', ...(m[1] ?? m[2] ? { name: m[1] ?? m[2] } : {}) });
+  // хвост («у Зелова», «Костшин», «между … и …») должен называть то, что есть; иначе («с карты») — фраза модели
+  if ((m = /^(?:отмени|отменить|убери|сними|не наводи|не наводить)(?: наведение| наводку)? переправ\p{L}*(?: (?:у|в|возле|около|под|на|к) (.+))?$/u.exec(t))) {
+    if (m[1] && !(v && placeOf(m[1], v))) return null;
+    return hit('command.act.cancel', { kind: 'bridge', ...(m[1] ? { name: m[1] } : {}) });
+  }
+  if ((m = /^(?:отмени|отменить|убери|сними) (?:перенос базы|перенос|базу)(?: (.+))?$|^не переноси(?:ть)? базу(?: (.+))?$/.exec(t))) {
+    const nm = m[1] ?? m[2];
+    if (nm && !(v && 'found' in baseOf(nm, v))) return null;
+    return hit('command.act.cancel', { kind: 'base', ...(nm ? { name: nm } : {}) });
+  }
   if (/^(?:сними|отмени|убери|отменить) приоритет(?: подвоза)?$/.test(t)) return hit('command.act.cancel', { kind: 'priority' });
-  if ((m = /^(?:отмени|отменить|убери|сними) (?:разграничительную )?линию(?: (?:между )?(.+))?$/.exec(t))) return hit('command.act.cancel', { kind: 'boundary', ...(m[1] ? { name: m[1] } : {}) });
+  if ((m = /^(?:отмени|отменить|убери|сними) (?:разграничительную )?линию(?: (.+))?$/.exec(t))) {
+    if (!m[1]) return hit('command.act.cancel', { kind: 'boundary' });
+    const pair = /^между (.+)$/.exec(m[1]);
+    const armies = v?.armies ?? [];
+    const ok = pair && splitAt(pair[1].split(' '), /^и$/, (a, b) => (findUnit(a, armies).unit && findUnit(b, armies).unit ? `${a} и ${b}` : null));
+    return ok ? hit('command.act.cancel', { kind: 'boundary', name: ok }) : null;
+  }
   if ((m = /^(?:наведи|навести|наводи|построй|построить|поставь|поставить)(?: понтонную| наплавную)? переправ\p{L}*(?: через \p{L}+)?(?: (?:у|в|возле|около|под|на|к|в районе|рядом с) (.+))?$/u.exec(t))) {
     if (!m[1]) return getAction('command.bridge') ? { say: 'Где навести переправу? Скажите, например: «наведи переправу у Кюстрина».' } : hit('command.bridge');
     return hit('command.bridge', { place: m[1] });
@@ -869,7 +885,7 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
   if (/^(?:в распоряжение|линию в распоряжение|включи линию(?: в распоряжение)?|утверди линию)$/.test(t)) return hit('command.bounds.put');
   // приказ: «<соединению> <задача> [<место | противник>] [обороты: любой ценой, к утру, через …, указания: …]» —
   // соединение должно найтись, иначе фраза модели
-  if (QUESTION.test(t) || !v || !getAction('command.order')) return null;
+  if (QUESTION.test(t) || QUESTION_IN.test(t) || /\?/.test(raw) || !v || !getAction('command.order')) return null; // вопрос — модели
   t = t.replace(/^приказ /, '');
   const ws = t.split(' ');
   if (/^(?:войск|всем$|все$|всех$|частям|армиям|подразделени)/.test(ws[0])) return null; // «войскам наступать» — не Войско Польское
@@ -907,10 +923,21 @@ export function parseAnswer(rest: string, section: string, raw = rest): PhraseHi
       return { id: 'command.order', params: { unit: a.unit, task: a.task, [tg.enemy ? 'enemy' : 'place']: tg.text, ...(notes ? { notes } : {}) } };
     }
   }
-  awaiting = null;
-  if (voiceTurn() > a.turn) speak(`Приказ не отдан: ${speakable(a.name, { full: true })}.`);
+  // новая просьба сразу после вопроса — приказ не отдан (сказать сейчас, до ответа на просьбу); прочее снимет turnDone
+  if (awaitingFresh()) { awaiting = null; speak(`Приказ не отдан: ${speakable(a.name, { full: true })}.`); }
   return null;
 }
+
+/**
+ * Реплика разобрана, а вопрос «Куда?» к ней остался (диктовка, «а можешь…», модель — мимо разбора фраз): ожидание
+ * снимается сразу — «Приказ не отдан»; истекло — молча. Переспрос («повтори», «подожди») реплики не меняет — вопрос ждёт.
+ */
+onTurnDone(() => {
+  const a = awaiting;
+  if (!a || a.turn >= voiceTurn()) return;
+  awaiting = null;
+  if (Date.now() <= a.until) speak(`Приказ не отдан: ${speakable(a.name, { full: true })}.`);
+});
 
 const LEAD = /^(?:в направлении|в сторону|по направлению (?:к|на)|в район|в районе|на|к|ко|до|против)$/;
 
