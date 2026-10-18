@@ -24,6 +24,7 @@ import { fieldActions, rawTail, readAloud } from '../dictation';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
 import { act, getAction, onTurnDone, registerParser, retract, speak, voiceRecent, voiceTurn, type Action, type PhraseHit } from '../registry';
 import { short } from '../report';
+import { hl, note as lit, noted, type HlTarget } from '../highlight';
 import { nameCase, numberWords, plural, speakable } from '../speech';
 import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
 
@@ -110,6 +111,8 @@ export function checkSpeech(text: string): string {
   return text.replace(/≈\s*/g, 'примерно ').replace(/подвоз ×1,5/g, 'подвоз в полтора раза больше').replace(/×0,75/g, 'на четверть меньше')
     .replace(/[.\s]+$/, '');
 }
+/** Место на карте — для подсветки (если известно). */
+const spot = (at: LngLat | null | undefined): HlTarget[] => (at ? [{ at }] : []);
 const actReply = (label: string, r: ActionCheck) => (r.ok ? `${label}: ${checkSpeech(r.text)}.` : `Не выйдет: ${checkSpeech(r.text)}.`);
 
 // ---------------------------------------------------------------- задачи
@@ -400,6 +403,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     const d = get();
     d.setDecision({ report: draftReportText(view(), d.decision) });
     d.setTab('decision');
+    lit(hl('field-report'));
     return 'Черновик донесения составлен по докладам. Прочитать — скажите «прочитай донесение».';
   };
   const planBusy = () => !!get().plan && !get().plan!.done;
@@ -425,7 +429,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
   /** Поле решения диктовкой; acc — название в примерах фраз («запиши в оценку: …»), gender — род названия. */
   const decisionField = (k: keyof HumanDecision, id: string, title: string, acc: string, gender: 'm' | 'f' | 'n' | 'pl', aliases: string[] = []) =>
     fieldActions(id, title, () => get().decision[k] ?? '', (s) => { get().setTab('decision'); get().setDecision({ [k]: s }); }, { section: 'replay', aliases, gender })
-      .map((a) => ({ ...a, available: ready, say: a.say?.map((x) => x.replace(title.toLowerCase(), acc)) }));
+      .map((a) => ({ ...a, available: ready, say: a.say?.map((x) => x.replace(title.toLowerCase(), acc)), highlight: () => hl(`field-${k}`) }));
 
   /** Приказ объединению: задача, цель (пункт или противник), указания. Нужна цель, а её нет — «Куда?». */
   const order = async (p: { unit: string; task?: string; place?: string; enemy?: string; notes?: string }): Promise<string> => {
@@ -465,6 +469,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     awaiting = null; lastUnit = unit.id;
     d.setDraft(unit.id, { formation: unit.id, task, target, targetText, at, note });
     d.select(unit.id); toOrders('units');
+    lit(hl(`order-${unit.id}`), ...spot(at));
     if (!p.task && p.notes !== undefined) return `Указания записаны: ${name}.`;
     const delay = v.delays[unit.echelon] ?? 0;
     return `Приказ: ${name} — ${TASK_RU[task]}${target ? spoken : ', на месте'}.${delay ? ` Дойдёт до войск через ${delay} ч.` : ''}`;
@@ -473,7 +478,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
   return [
     // ---- советник
     { ...base, id: 'command.variants', title: 'Варианты решения от советника', describe: 'Просит у советника от одного до трёх полных вариантов решения на ход (решение, приказы, тыл, переправы, резервы).',
-      params: { type: 'object', properties: { count: { type: 'integer', minimum: 1, maximum: 3 } } }, say: ['штаб, дай три варианта'],
+      params: { type: 'object', properties: { count: { type: 'integer', minimum: 1, maximum: 3 } } }, say: ['штаб, дай три варианта'], highlight: () => [hl('plan-cta'), hl('advisor')],
       available: () => { const r = ready(); return r !== true ? r : planBusy() ? 'советник уже готовит варианты — подождите или скажите «стоп»' : true; },
       run: async (p?: { count?: number }) => {
         const n = p?.count === undefined ? get().planN : Math.round(Number(p.count));
@@ -485,7 +490,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         return `Прошу у советника ${variantsWord(n)} решения. Это займёт время — скажу, когда будут готовы.`;
       } },
     { ...base, id: 'command.variants.list', title: 'Какие варианты', describe: 'Перечисляет готовые варианты решения от советника (новые не готовит).',
-      say: ['штаб, покажи варианты'], available: planHas,
+      say: ['штаб, покажи варианты'], available: planHas, highlight: () => hl('plan'),
       run: async () => {
         const p = get().plan!, vs = p.variants.filter(Boolean);
         get().openVariant(0);
@@ -496,24 +501,24 @@ export function staffActions(get: () => StaffDeps): Action[] {
       available: () => (awaitingFresh() ? true : 'штаб ни о чём не спрашивал'),
       run: async () => { const a = awaiting!; awaiting = null; return `Приказ не отдан: ${a.name}.`; } },
     { ...base, id: 'command.variant.more', title: 'Подробнее о варианте', describe: 'Читает вариант решения N: суть, замысел, главные приказы; раскрывает его на экране.',
-      params: N, say: ['штаб, подробнее о первом'], available: planHas,
+      params: N, say: ['штаб, подробнее о первом'], available: planHas, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
       run: async (p: { n: number }) => { const x = variant(p?.n); if (typeof x === 'string') return x; get().openVariant(x.i); return readAloud(variantText(x.v, x.i + 1)); } },
     { ...base, id: 'command.variant.pick', title: 'Принять вариант', describe: 'Принимает вариант решения N в пустой проект (only — только решение, без приказов).',
       params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 }, only: { type: 'boolean' } }, required: ['n'] }, say: ['штаб, выбираю первый'],
-      available: planReady,
+      available: planReady, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
       check: (p: { n: number; only?: boolean }) => {
         const x = variant(p?.n); if (typeof x === 'string') return x;
         return !p.only && has() ? 'В проекте уже есть решение или приказы — вариант их заменит. Скажите: «выбираю …» ещё раз, я переспрошу.' : true;
       },
       run: async (p: { n: number; only?: boolean }) => pick(p?.n, !!p?.only) },
     { ...base, id: 'command.variant.replace', title: 'Заменить проект вариантом', describe: 'Заменяет непустой проект (решение, приказы, распоряжения) вариантом N (необратимо).',
-      params: N, irreversible: true, available: planReady,
+      params: N, irreversible: true, available: planReady, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
       check: (p: { n: number }) => { const x = variant(p?.n); return typeof x === 'string' ? x : true; },
       confirm: (p: { n: number }) => { const x = variant(p?.n); return `Заменить проект вариантом «${typeof x === 'string' ? '' : x.v.title}»? Текущие решение, приказы и распоряжения будут заменены.`; },
       run: async (p: { n: number }) => pick(p?.n, false) },
     { ...base, id: 'command.advisor.ask', title: 'Спросить советника', describe: 'Задаёт советнику вопрос своими словами; ответ штаб зачитает, когда он будет готов.',
       // cat, topic — вопрос из дерева тем (кнопки советника): ответ — на экране, вслух не зачитывается
-      params: { type: 'object', properties: { text: TEXT, cat: TEXT, topic: TEXT }, required: ['text'] }, say: ['штаб, спроси советника: где лучше наступать?'],
+      params: { type: 'object', properties: { text: TEXT, cat: TEXT, topic: TEXT }, required: ['text'] }, say: ['штаб, спроси советника: где лучше наступать?'], highlight: () => hl('advisor'),
       available: () => { const r = ready(); return r !== true ? r : get().advisorBusy ? 'советник ещё отвечает на прошлый вопрос — подождите или скажите «стоп»' : true; },
       run: async (p: { text: string; cat?: string; topic?: string }) => {
         const q = String(p?.text ?? '').trim();
@@ -527,7 +532,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
       available: () => { const r = ready(); return r !== true ? r : adviceMore ? true : 'продолжения ответа нет'; },
       run: async () => { const t = adviceMore!; adviceMore = null; return readAloud(t); } },
     { ...base, id: 'command.advisor.take', title: 'Взять предложенный приказ', describe: 'Включает в проект приказ, предложенный советником в последнем ответе (n — номер, если их несколько).',
-      params: { type: 'object', properties: { n: { type: 'integer', minimum: 1 } } }, say: ['штаб, возьми приказ'],
+      params: { type: 'object', properties: { n: { type: 'integer', minimum: 1 } } }, say: ['штаб, возьми приказ'], highlight: noted,
       available: () => { const r = ready(); return r !== true ? r : get().suggestions.length ? true : 'советник не предлагал приказов. Спросите его: «Штаб, спроси советника: …»'; },
       run: async (p?: { n?: number }) => {
         const sg = get().suggestions;
@@ -536,6 +541,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (!s) return `Такого приказа нет: предложено ${numberWords(sg.length)}.`;
         get().takeSuggestion(s);
         lastUnit = s.formation;
+        lit(hl(`order-${s.formation}`), hl(`orow-${s.formation}`), ...spot(s.at));
         return `Взял в проект: ${sugText(s)}.`;
       } },
     { ...base, id: 'command.advisor.stop', title: 'Остановить советника', describe: 'Прерывает ответ советника и подготовку вариантов.', say: ['штаб, останови советника', 'стоп'],
@@ -549,7 +555,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     ...decisionField('report', 'decision.report', 'Донесение', 'донесение', 'n', ['боевое донесение']),
     ...decisionField('request', 'decision.request', 'Ходатайство', 'ходатайство', 'n'),
     { ...base, id: 'decision.fromLast', title: 'Взять с прошлого хода', describe: 'Берёт поле решения с прошлого хода (без поля — все пустые поля).',
-      params: { type: 'object', properties: { field: { enum: [...FIELD_KEYS] } } }, say: ['штаб, возьми с прошлого хода'],
+      params: { type: 'object', properties: { field: { enum: [...FIELD_KEYS] } } }, say: ['штаб, возьми с прошлого хода'], highlight: noted,
       run: async (p?: { field?: FieldKey }) => {
         const d = get(), last = view().lastDecision;
         if (!last) return 'Прошлого решения нет — это первый ход.';
@@ -557,18 +563,20 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (p?.field) {
           if (!last[p.field]) return `На прошлом ходу ${FIELD_ACC[p.field]} не писали.`;
           d.setDecision({ [p.field]: last[p.field] });
+          lit(hl(`field-${p.field}`));
           return `Взял с прошлого хода: ${FIELD_ACC[p.field]}.`;
         }
         const keys = FIELD_KEYS.filter((k) => last[k] && !d.decision[k].trim());
         if (!keys.length) return 'Все поля уже заполнены. Заменить одно — скажите, например: «возьми оценку с прошлого хода».';
         d.setDecision(Object.fromEntries(keys.map((k) => [k, last[k]])));
+        lit(...keys.map((k) => hl(`field-${k}`)));
         return `Взял с прошлого хода: ${keys.map((k) => FIELD_ACC[k]).join(', ')}.`;
       } },
-    { ...base, id: 'decision.draftReport', title: 'Черновик донесения', describe: 'Составляет черновик боевого донесения по докладам за ход (поле донесения пусто).', say: ['штаб, составь черновик донесения'],
+    { ...base, id: 'decision.draftReport', title: 'Черновик донесения', describe: 'Составляет черновик боевого донесения по докладам за ход (поле донесения пусто).', say: ['штаб, составь черновик донесения'], highlight: noted,
       check: () => (get().decision.report.trim() ? 'Донесение уже продиктовано. Скажите «составь черновик донесения» ещё раз — я переспрошу, заменить ли его.' : true),
       run: draftReport },
     { ...base, id: 'decision.draftReport.replace', title: 'Заменить донесение черновиком', describe: 'Заменяет продиктованное донесение черновиком по докладам (необратимо).',
-      irreversible: true, confirm: () => 'Заменить продиктованное донесение черновиком?', run: draftReport },
+      irreversible: true, confirm: () => 'Заменить продиктованное донесение черновиком?', run: draftReport, highlight: noted },
     { ...base, id: 'decision.missing', title: 'Что не готово', describe: 'Говорит, чего не хватает для хода: поля решения, цели приказов.', say: ['штаб, что не готово?'],
       run: async () => {
         const d = get(), v = view();
@@ -587,9 +595,9 @@ export function staffActions(get: () => StaffDeps): Action[] {
     // ---- приказы
     { ...base, id: 'command.order', title: 'Приказ соединению', describe: 'Приказ своему объединению: задача (наступать, оборонять, удерживать, сдерживать, перегруппироваться, в резерв, отходить, контратаковать, прорываться, деблокировать), цель — пункт (place) или противник (enemy), указания (notes).',
       params: { type: 'object', properties: { unit: TEXT, task: TEXT, place: TEXT, enemy: TEXT, notes: TEXT }, required: ['unit'] },
-      say: ['штаб, восьмой гвардейской наступать на Зелов'], run: order },
+      say: ['штаб, восьмой гвардейской наступать на Зелов'], run: order, highlight: noted },
     { ...base, id: 'command.order.cancel', title: 'Отменить приказ', describe: 'Отменяет новый приказ объединению (без названия — последний).',
-      params: { type: 'object', properties: { unit: TEXT } }, say: ['штаб, отмени приказ восьмой гвардейской'],
+      params: { type: 'object', properties: { unit: TEXT } }, say: ['штаб, отмени приказ восьмой гвардейской'], highlight: noted,
       run: async (p?: { unit?: string }) => {
         const d = get(), v = view();
         let id: string | null = null;
@@ -599,9 +607,10 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (!d.drafts[id]) return `Нового приказа нет: ${name}.`;
         d.setDraft(id, null);
         if (lastUnit === id) lastUnit = null;
+        lit(hl(`orow-${id}`));
         return `Приказ отменён: ${name}.`;
       } },
-    { ...base, id: 'command.orders.list', title: 'Какие приказы отданы', describe: 'Перечисляет новые приказы и распоряжения в проекте на этот ход.', say: ['штаб, какие приказы отданы?'],
+    { ...base, id: 'command.orders.list', title: 'Какие приказы отданы', describe: 'Перечисляет новые приказы и распоряжения в проекте на этот ход.', say: ['штаб, какие приказы отданы?'], highlight: () => [hl('drafts'), hl('tab-orders')],
       run: async () => {
         const d = get(), v = view();
         const list = Object.values(d.drafts).map((x) => `${short(v.own.find((u) => u.id === x.formation)?.name ?? x.formation)} — ${TASK_RU[x.task]}, ${x.targetText ? short(x.targetText) : 'на месте'}`);
@@ -611,7 +620,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
       } },
     // ---- тыл, переправы, резервы, полосы
     { ...base, id: 'command.rear.base', title: 'Перенести базу снабжения', describe: 'Переносит базу снабжения в пункт (army — название базы или армия: переносится ближайшая к ней база).',
-      params: { type: 'object', properties: { army: TEXT, place: TEXT }, required: ['army', 'place'] }, say: ['штаб, перенеси базу восьмой гвардейской в Зелов'],
+      params: { type: 'object', properties: { army: TEXT, place: TEXT }, required: ['army', 'place'] }, say: ['штаб, перенеси базу восьмой гвардейской в Зелов'], highlight: noted,
       run: async (p: { army: string; place: string }) => {
         const v = view();
         const b = baseOf(String(p?.army ?? ''), v);
@@ -621,34 +630,37 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if ('say' in pl) return pl.say;
         toOrders('rear');
         const r = await get().addAct(`base:${b.found.id}`, { kind: 'base', side: v.human.id, base: b.found.id, to: pl.found.at, toName: pl.found.title, issuedAt: v.time }, `База «${b.found.name}»`, { from: b.found.at });
+        if (r.ok) lit(hl(`act-base:${b.found.id}`), { at: pl.found.at });
         return actReply(`База «${short(b.found.name)}»`, r);
       } },
     { ...base, id: 'command.rear.priority', title: 'Приоритет подвоза', describe: 'Даёт приоритет подвоза армиям (пустой список — подвоз поровну).',
-      params: { type: 'object', properties: { armies: { type: 'array', items: TEXT } }, required: ['armies'] }, say: ['штаб, приоритет подвоза восьмой гвардейской'],
+      params: { type: 'object', properties: { armies: { type: 'array', items: TEXT } }, required: ['armies'] }, say: ['штаб, приоритет подвоза восьмой гвардейской'], highlight: noted,
       run: async (p: { armies: string[] | string }) => {
         const v = view(), d = get();
         const names = Array.isArray(p?.armies) ? p.armies : String(p?.armies ?? '').split(/,| и /).map((x) => x.trim()).filter(Boolean);
         const ids: string[] = [];
         for (const n of names) { const u = ownOf(n, v); if (!u) return `Не нашёл своего соединения «${n}».`; if ('say' in u) return u.say; if (!ids.includes(u.found.id)) ids.push(u.found.id); }
         toOrders('rear');
-        if (ids.length === v.priority.length && ids.every((x) => v.priority.includes(x))) { d.dropAct('priority'); return 'Приоритет подвоза — как был.'; }
+        if (ids.length === v.priority.length && ids.every((x) => v.priority.includes(x))) { d.dropAct('priority'); lit(hl('prio')); return 'Приоритет подвоза — как был.'; }
         const r = await d.addAct('priority', { kind: 'priority', side: v.human.id, formations: ids, issuedAt: v.time }, 'Приоритет подвоза');
+        if (r.ok) lit(hl('act-priority'), hl('prio'));
         return actReply('Приоритет подвоза', r);
       } },
     { ...base, id: 'command.bridge', title: 'Навести переправу', describe: 'Наводит понтонную переправу у пункта (у реки).',
-      params: { type: 'object', properties: { place: TEXT }, required: ['place'] }, say: ['штаб, наведи переправу у Кюстрина'],
+      params: { type: 'object', properties: { place: TEXT }, required: ['place'] }, say: ['штаб, наведи переправу у Кюстрина'], highlight: noted,
       run: async (p: { place: string }) => {
         const v = view();
         const pl = placeOf(String(p?.place ?? ''), v);
         if (!pl) return `Не нашёл пункта «${p?.place}».`;
         if ('say' in pl) return pl.say;
         toOrders('bridges');
-        const r = await get().addAct(`bridge:${Date.now()}`, { kind: 'bridge', side: v.human.id, at: pl.found.at, issuedAt: v.time }, 'Переправа');
-        if (r.ok) get().goTo(r.at ?? pl.found.at);
+        const key = `bridge:${Date.now()}`;
+        const r = await get().addAct(key, { kind: 'bridge', side: v.human.id, at: pl.found.at, issuedAt: v.time }, 'Переправа');
+        if (r.ok) { get().goTo(r.at ?? pl.found.at); lit(hl(`act-${key}`), { at: r.at ?? pl.found.at }); }
         return actReply('Переправа', r);
       } },
     { ...base, id: 'command.reserve.commit', title: 'Ввести резерв', describe: 'Вводит резерв (объединение целиком или соединение) в район пункта.',
-      params: { type: 'object', properties: { army: TEXT, place: TEXT }, required: ['army', 'place'] }, say: ['штаб, введи третью ударную в районе Зелова'],
+      params: { type: 'object', properties: { army: TEXT, place: TEXT }, required: ['army', 'place'] }, say: ['штаб, введи третью ударную в районе Зелова'], highlight: noted,
       run: async (p: { army: string; place: string }) => {
         const v = view();
         const g = reserveOf(String(p?.army ?? ''), v);
@@ -660,10 +672,11 @@ export function staffActions(get: () => StaffDeps): Action[] {
         toOrders('reserves');
         const free = g.found.members?.filter((m) => !get().acts.some((a) => a.key === `commit:${m.id}`));
         const r = await get().commit(free ? { ...g.found, members: free } : g.found, pl.found.at, pl.found.title);
+        if (r.ok) lit(hl(`res-${g.found.id}`), { at: pl.found.at });
         return actReply(short(g.found.name), r);
       } },
     { ...base, id: 'command.reserve.cancel', title: 'Не вводить резерв', describe: 'Отменяет ввод резерва (объединения или соединения).',
-      params: { type: 'object', properties: { army: TEXT }, required: ['army'] }, say: ['штаб, не вводи третью ударную'],
+      params: { type: 'object', properties: { army: TEXT }, required: ['army'] }, say: ['штаб, не вводи третью ударную'], highlight: noted,
       run: async (p: { army: string }) => {
         const v = view(), d = get();
         const g = reserveOf(String(p?.army ?? ''), v);
@@ -673,10 +686,11 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (!keys.length) return `Ввода нет в проекте: ${short(g.found.name)}.`;
         keys.forEach((k) => d.dropAct(k));
         toOrders('reserves');
+        lit(hl(`res-${g.found.id}`));
         return `Ввод отменён: ${short(g.found.name)}.`;
       } },
     { ...base, id: 'command.bounds.propose', title: 'Предложить разграничительную линию', describe: 'Намечает на карте линию между двумя армиями одного фронта (затем — «в распоряжение»).',
-      params: { type: 'object', properties: { army: TEXT, neighbor: TEXT }, required: ['army', 'neighbor'] }, say: ['штаб, предложи линию между восьмой гвардейской и пятой ударной'],
+      params: { type: 'object', properties: { army: TEXT, neighbor: TEXT }, required: ['army', 'neighbor'] }, say: ['штаб, предложи линию между восьмой гвардейской и пятой ударной'], highlight: noted,
       run: async (p: { army: string; neighbor: string }) => {
         const v = view(), armies = v.armies ?? [];
         const one = (t: string): Found<(typeof armies)[number]> => {
@@ -693,9 +707,10 @@ export function staffActions(get: () => StaffDeps): Action[] {
         get().setBounds({ front: a.group, a: a.id, b: b.id, pts });
         toOrders('bounds');
         get().goTo(pts[1]);
+        lit(hl('bounds-form'), { at: pts[1] });
         return `Линия между ${nameCase(short(a.name), 'ins')} и ${nameCase(short(b.name), 'ins')} намечена на карте. Включить — скажите «в распоряжение»; поправить — точками на карте.`;
       } },
-    { ...base, id: 'command.bounds.put', title: 'Линию — в распоряжение', describe: 'Включает намеченную разграничительную линию в распоряжения (после проверки).', say: ['штаб, в распоряжение'],
+    { ...base, id: 'command.bounds.put', title: 'Линию — в распоряжение', describe: 'Включает намеченную разграничительную линию в распоряжения (после проверки).', say: ['штаб, в распоряжение'], highlight: noted,
       run: async () => {
         const v = view(), d = get(), { front, a, b, pts } = d.bounds;
         if (!a || !b || a === b || pts.length < 2) return 'Линии ещё нет. Скажите, например: «предложи линию между восьмой гвардейской и пятой ударной».';
@@ -703,11 +718,11 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const label = `Линия ${nm(a)} / ${nm(b)}`;
         toOrders('bounds');
         const r = await d.addAct(`boundary:${[a, b].sort().join('|')}`, { kind: 'boundary', side: v.human.id, a, b, line: pts, issuedAt: v.time }, label, { at: pts[0] });
-        if (r.ok) d.setBounds({ front, a: '', b: '', pts: [] });
+        if (r.ok) { d.setBounds({ front, a: '', b: '', pts: [] }); lit(hl(`act-boundary:${[a, b].sort().join('|')}`), { at: pts[0] }); }
         return actReply(label, r);
       } },
     { ...base, id: 'command.act.cancel', title: 'Отменить распоряжение', describe: 'Отменяет распоряжение в проекте: переправу (name — пункт), перенос базы (name — база), приоритет подвоза, разграничительную линию (name — армии).',
-      params: { type: 'object', properties: { kind: { enum: ['bridge', 'base', 'priority', 'boundary'] }, name: TEXT }, required: ['kind'] }, say: ['штаб, отмени переправу'],
+      params: { type: 'object', properties: { kind: { enum: ['bridge', 'base', 'priority', 'boundary'] }, name: TEXT }, required: ['kind'] }, say: ['штаб, отмени переправу'], highlight: noted,
       run: async (p: { kind: 'bridge' | 'base' | 'priority' | 'boundary'; name?: string }) => {
         const d = get(), v = view();
         const WHAT = { bridge: 'переправы', base: 'переноса базы', priority: 'приоритета подвоза', boundary: 'разграничительной линии' } as const;
@@ -733,6 +748,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (list.length > 1) return `Какое отменить: ${list.slice(0, 3).map((a) => `«${label(a)}»`).join(', ')}? Назовите место или армии.`;
         d.dropAct(list[0].key);
         toOrders(SUB[p.kind]);
+        lit(hl(`sub-${SUB[p.kind]}`));
         return `Отменено: ${label(list[0])}.`;
       } },
   ];

@@ -17,6 +17,7 @@ import { pickByName } from '../answers';
 import { readAloud } from '../dictation';
 import { saveFile, savedText, textFile } from '../files';
 import { getAction, registerParser, speak, voiceRecent, type Action, type Offer, type PhraseHit } from '../registry';
+import { hl } from '../highlight';
 import { dayMonth, sentence, short } from '../report';
 import { numberWords, speakable } from '../speech';
 import { lastUmpire, repeatUmpire } from '../umpire';
@@ -162,7 +163,7 @@ export function turnActions(get: () => TurnDeps): Action[] {
   const base = { section: 'replay', available: game };
   return [
     // ---- ход
-    { ...base, id: 'command.turn', title: 'Провести ход', describe: 'Проводит ход: утверждает решение, отдаёт приказы и распоряжения, считает ход (необратимо). Решение не готово — скажет, чего нет.',
+    { ...base, id: 'command.turn', highlight: () => hl('foot'), title: 'Провести ход', describe: 'Проводит ход: утверждает решение, отдаёт приказы и распоряжения, считает ход (необратимо). Решение не готово — скажет, чего нет.',
       say: ['штаб, проводи ход'], irreversible: true, available: play, confirm,
       check: () => { const m = turnMissing(get()); return m.targets.length || m.decision.length ? notReady(m) : true; },
       run: async () => {
@@ -175,17 +176,17 @@ export function turnActions(get: () => TurnDeps): Action[] {
         d.sendTurn();
         return 'Считаю ход. Посредник доложит итоги.';
       } },
-    { ...base, id: 'command.ai.retry', title: 'Повторить запрос штабу противника', describe: 'Штаб противника не дал решения: спросить модель ещё раз.', say: ['штаб, повтори запрос'],
+    { ...base, id: 'command.ai.retry', highlight: () => hl('foot'), title: 'Повторить запрос штабу противника', describe: 'Штаб противника не дал решения: спросить модель ещё раз.', say: ['штаб, повтори запрос'],
       available: () => { const r = game(); if (r !== true) return r; const d = get(); return d.blocked || d.ai.state === 'error' ? true : 'штаб противника решение дал — повторять нечего'; },
       run: async () => { get().retryAi(); return 'Повторяю запрос штабу противника.'; } },
-    { ...base, id: 'command.ai.skip', title: 'Ход без новых приказов противника', describe: 'Штаб противника не дал решения: провести ход, противник держится прежних приказов.', say: ['штаб, ход без его приказов'],
+    { ...base, id: 'command.ai.skip', highlight: () => hl('foot'), title: 'Ход без новых приказов противника', describe: 'Штаб противника не дал решения: провести ход, противник держится прежних приказов.', say: ['штаб, ход без его приказов'],
       available: () => { const r = game(); return r !== true ? r : get().blocked ? true : 'штаб противника решение дал — ход идёт как обычно'; },
       run: async () => { get().skipAi(); return 'Провожу ход без новых приказов противника. Посредник доложит итоги.'; } },
     // ---- посредник
     { ...base, id: 'command.umpire.repeat', title: 'Повторить доклад посредника', describe: 'Повторяет доклад посредника о последнем ходе (его голосом).', say: ['штаб, повтори доклад'],
       available: () => { const r = game(); return r !== true ? r : lastUmpire() ? true : 'доклада посредника ещё не было — он звучит после хода'; },
       run: async () => { repeatUmpire(); } },
-    { ...base, id: 'command.enemy.read', title: 'Как действовал противник', describe: 'Посредник: решение штаба противника на прошлый ход — замысел, оценка, приказы.', say: ['штаб, как действовал противник'],
+    { ...base, id: 'command.enemy.read', highlight: () => [hl('ump-enemy'), hl('tab-umpire')], title: 'Как действовал противник', describe: 'Посредник: решение штаба противника на прошлый ход — замысел, оценка, приказы.', say: ['штаб, как действовал противник'],
       run: async () => {
         const d = get();
         d.setTab('umpire'); d.setUmpirePart('enemy');
@@ -203,12 +204,12 @@ export function turnActions(get: () => TurnDeps): Action[] {
         ].filter(Boolean).join(' '), { full: true }));
       } },
     // ---- разбор
-    { ...base, id: 'command.review.open', title: 'Открыть разбор операции', describe: 'Открывает окно «Разбор операции».', say: ['штаб, открой разбор'], available: played,
+    { ...base, id: 'command.review.open', highlight: () => hl('review'), title: 'Открыть разбор операции', describe: 'Открывает окно «Разбор операции».', say: ['штаб, открой разбор'], available: played,
       run: async () => { get().review.show(true); return 'Разбор операции открыт. Скажите «составь разбор».'; } },
     { ...base, id: 'command.review.close', title: 'Закрыть разбор', describe: 'Закрывает окно разбора (написанное сохраняется, разбор продолжает писаться).', say: ['штаб, закрой разбор'],
       available: () => { const r = game(); return r !== true ? r : get().review.open ? true : 'разбор не открыт'; },
       run: async () => { get().review.show(false); return 'Разбор закрыт — написанное сохранится.'; } },
-    { ...base, id: 'command.review.compose', title: 'Составить разбор', describe: 'Составляет разбор операции: разделы (sections — названия; нет — все ненаписанные) пишутся по очереди.',
+    { ...base, id: 'command.review.compose', highlight: () => hl('review'), title: 'Составить разбор', describe: 'Составляет разбор операции: разделы (sections — названия; нет — все ненаписанные) пишутся по очереди.',
       params: { type: 'object', properties: { sections: { type: 'array', items: { type: 'string' } } } }, say: ['штаб, составь разбор'], available: played,
       run: async (p?: { sections?: string[] }) => {
         const ctl = await reviewCtl();
@@ -230,7 +231,7 @@ export function turnActions(get: () => TurnDeps): Action[] {
         });
         return `Составляю разбор: разделов — ${numberWords(n)}, по очереди. Это займёт время — скажу, когда будет готов.`;
       } },
-    { ...base, id: 'command.review.read', title: 'Прочитать раздел разбора', describe: 'Читает вслух раздел разбора операции (section — название; «разбор» — все написанные).',
+    { ...base, id: 'command.review.read', highlight: () => hl('review'), title: 'Прочитать раздел разбора', describe: 'Читает вслух раздел разбора операции (section — название; «разбор» — все написанные).',
       params: SECTION, say: ['штаб, прочитай итоговую оценку'], available: played,
       run: async (p: { section: string }) => {
         const ctl = await reviewCtl();

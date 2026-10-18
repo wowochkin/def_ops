@@ -40,6 +40,8 @@
 // Компактная панель: по умолчанию полоса; открыто окно — полоса не на окне (вопрос dialogs.ts, «Принять командование»),
 // ответа нет 8 с — напоминание; ответ посреди чтения окна — перебиванием «голосом» и «словом»; в командовании легенда
 // свёрнута, место на карте — не под панелью и легендой; длинная фраза разворачивает полосу, 10 с тишины — сворачивают.
+// Подсветка исполненного голосом: «оперативный уровень» — рамка на переключателе, «выбираю первый» — на варианте,
+// «восьмой гвардейской наступать на Зелов» — на приказе и метка на карте; рамка гаснет через ~2,5 с; мышью — без рамки.
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки, голосов, раздела «ИИ» (модель для голоса), окон с полосой, командования и туров (voice-tour.jpg,
 // voice-tour-modeling.jpg, voice-tour-library.jpg, voice-tour-replay.jpg, voice-tour-command-entry.jpg, voice-tour-command.jpg).
@@ -1090,6 +1092,67 @@ const LONG_Q = ['Что сделать с игрой?', 'Игра останов
   'Если удалить, запись и журнал ходов пропадут, а разбор операции останется.'].join(' ');
 const LABELS = [{ label: 'Сохранить' }, { label: 'Удалить' }, { label: 'Продолжить' }];
 const ZELOW = [14.38, 52.53];
+/**
+ * Подсветка исполненного голосом: следить за рамками (.hl-frame, data-target — селектор цели) и меткой на карте
+ * (.hl-spot): когда появились и погасли, обведён ли элемент цели (рамка вокруг него), метка — внутри карты.
+ */
+const hlWatch = () => page.evaluate(() => {
+  if (window.__hl) return;
+  window.__hl = [];
+  const seen = new Map();
+  const around = (f, sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return false;
+    const a = f.getBoundingClientRect(), b = el.getBoundingClientRect();
+    return b.width > 0 && a.left <= b.left && a.top <= b.top && a.right >= b.right && a.bottom >= b.bottom;
+  };
+  new MutationObserver(() => {
+    const now = performance.now();
+    const cur = new Map();
+    for (const f of document.querySelectorAll('.hl-frame')) cur.set(f.dataset.target, f);
+    const spot = document.querySelector('.hl-spot');
+    if (spot) cur.set('spot', spot);
+    for (const [t, f] of cur) if (!seen.has(t)) {
+      seen.set(t, now);
+      let ok = true;
+      if (t === 'spot') {
+        const box = window.__cmdEngine?.getContainer().getBoundingClientRect(), r = f.getBoundingClientRect();
+        ok = !!box && r.left >= box.left && r.left <= box.right && r.top >= box.top && r.top <= box.bottom;
+      } else ok = around(f, t);
+      window.__hl.push({ t, on: now, ok });
+    }
+    for (const t of [...seen.keys()]) if (!cur.has(t)) { seen.delete(t); const e = window.__hl.findLast((x) => x.t === t && x.off === undefined); if (e) e.off = now; }
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-target', 'style'] });
+});
+/** Дождаться рамки на цели (селектор — точно или начало) после того, как наблюдение показало n записей. */
+const hlWait = async (target, from, timeout = 10000) => {
+  await page.waitForFunction(([t, n]) => window.__hl.slice(n).some((x) => x.t === t || (t.endsWith('*') && x.t.startsWith(t.slice(0, -1)))), [target, from], { timeout })
+    .catch(async () => { throw new Error(`нет подсветки ${target}; было: ${JSON.stringify(await page.evaluate((n) => window.__hl.slice(n), from))}`); });
+  return page.evaluate(([t, n]) => window.__hl.slice(n).find((x) => x.t === t || (t.endsWith('*') && x.t.startsWith(t.slice(0, -1)))), [target, from]);
+};
+const hlCount = () => page.evaluate(() => window.__hl.length);
+/** Метка на карте сейчас — не под панелью голоса, легендой и советником (карта сдвинута, как у «покажи …»). */
+const spotFree = async () => {
+  await page.waitForTimeout(500);
+  const r = await page.evaluate(() => {
+    const s = document.querySelector('.hl-spot');
+    if (!s) return 'метки нет';
+    const p = s.getBoundingClientRect();
+    const hit = [...document.querySelectorAll('[data-tour="voice"], .legend, .advisor')].map((e) => [e.className, e.getBoundingClientRect()])
+      .find(([, r]) => p.left >= r.left && p.left <= r.right && p.top >= r.top && p.top <= r.bottom);
+    return hit ? `метка под ${hit[0]}` : '';
+  });
+  if (r) throw new Error(r);
+};
+/** Погасла ли рамка через ~2,5 с (не раньше 2 с, не позже 3,5 с). */
+const hlGone = async (target, from) => {
+  await page.waitForFunction(([t, n]) => window.__hl.slice(n).some((x) => (x.t === t || (t.endsWith('*') && x.t.startsWith(t.slice(0, -1)))) && x.off !== undefined), [target, from], { timeout: 6000 })
+    .catch(() => { throw new Error(`подсветка ${target} не гаснет`); });
+  const e = await page.evaluate(([t, n]) => window.__hl.slice(n).find((x) => (x.t === t || (t.endsWith('*') && x.t.startsWith(t.slice(0, -1)))) && x.off !== undefined), [target, from]);
+  const ms = Math.round(e.off - e.on);
+  if (ms < 1500 || ms > 3500) throw new Error(`подсветка ${target} горела ${ms} мс`);
+  return ms;
+};
 /** Где Зелов на экране сейчас (без перемещения карты): в карте ли, под панелью голоса или легендой ли. */
 const zelowSeen = () => page.evaluate((at) => {
   const en = window.__cmdEngine;
@@ -1138,8 +1201,15 @@ await check('без рук: переигровка → «рассчитай оп
   if (/\d/.test(text)) throw new Error(`в докладе цифры: ${text}`);
   const n = text.match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
   if (n < 5 || n > 7) throw new Error(`в докладе ${n} фраз: ${text}`);
+  await hlWatch();
+  const hl0 = await hlCount();
   await handsFree(['штаб, покажи Зелов', '{тишина}', 'штаб, оперативный уровень', ...QUIET], { reload: false });
   await feedHas('Показываю: Зелов').waitFor({ timeout: 30000 });
+  // подсветка: метка на месте Зелова, рамка на переключателе уровня — вокруг кнопки «Оперативный»
+  if (!(await hlWait('spot', hl0)).ok) throw new Error('метка Зелова не на карте');
+  await page.locator('.lvl-sw button.on', { hasText: 'Оперативный' }).waitFor({ timeout: 30000 });
+  if (!(await hlWait('[data-hl="level-op"]', hl0)).ok) throw new Error('рамка не вокруг переключателя уровня');
+  const lvlMs = await hlGone('[data-hl="level-op"]', hl0);
   // Зелов — в карте и не под панелью и легендой (центр смещён к свободной части карты)
   const z = await zelowSeen();
   if (z.under || !z.onMap || z.zoom < 10) throw new Error(`Зелов в ${z.p}, масштаб ${z.zoom}: под панелью или легендой — ${z.under}`);
@@ -1148,7 +1218,7 @@ await check('без рук: переигровка → «рассчитай оп
   await shot('voice-command.jpg');
   const clicks = await page.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `расчёт ${calcS} с; Зелов в ${z.p}`;
+  return `расчёт ${calcS} с; Зелов в ${z.p}; рамка уровня ${lvlMs} мс`;
 });
 
 await check('без рук: «дай два варианта» → «подробнее о первом» → «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»', async () => {
@@ -1159,13 +1229,24 @@ await check('без рук: «дай два варианта» → «подро�
   await handsFree(['штаб, подробнее о первом', ...QUIET], { reload: false });
   await feedHas('Вариант первый: «Удар на Зелов»').waitFor({ timeout: 30000 });
   await page.locator('.plan-var .plan-body').first().waitFor({ timeout: 10000 }).catch(() => { throw new Error('вариант не раскрыт на экране'); });
+  await hlWatch();
+  let hl0 = await hlCount();
   await handsFree(['штаб, выбираю первый', ...QUIET], { reload: false });
   await feedHas('Вариант «Удар на Зелов» принят').waitFor({ timeout: 30000 });
   await page.locator('.plan-var.on .plan-ok', { hasText: 'принят' }).waitFor({ timeout: 10000 });
+  if (!(await hlWait('[data-hl="variant-1"]', hl0)).ok) throw new Error('рамка не вокруг варианта');
+  const varMs = await hlGone('[data-hl="variant-1"]', hl0);
+  hl0 = await hlCount();
   await handsFree(['штаб, восьмой гвардейской наступать на Зелов', ...QUIET], { reload: false });
   await feedHas('Приказ: восьмая гвардейская армия — наступать, цель — Зелов').waitFor({ timeout: 30000 });
   await page.locator('.cmd-tabs button.on', { hasText: 'Приказы' }).waitFor({ timeout: 10000 });
   await page.locator('.draft', { hasText: '8-я гвардейская армия' }).waitFor({ timeout: 10000 });
+  // рамка на новом приказе в списке и метка на месте цели — на карте
+  if (!(await hlWait('[data-hl="order-*', hl0)).ok) throw new Error('рамка не вокруг приказа');
+  if (!(await hlWait('spot', hl0)).ok) throw new Error('метка цели приказа не на карте');
+  await spotFree();
+  await shot('voice-highlight.jpg');
+  await hlGone('[data-hl="order-*', hl0);
   await shot('voice-orders.jpg');
   await handsFree(['штаб, запиши в замысел: главный удар на Зелов, к вечеру выйти к Мюнхебергу', ...QUIET], { reload: false });
   await feedHas('Записал в «Замысел»').waitFor({ timeout: 30000 });
@@ -1176,7 +1257,20 @@ await check('без рук: «дай два варианта» → «подро�
   await shot('voice-decision.jpg');
   const clicks = await page.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `запросов вариантов: ${LM.plans}`;
+  return `запросов вариантов: ${LM.plans}; рамка варианта ${varMs} мс`;
+});
+
+await check('подсветка: мышью — без рамки (вкладка «Решение», уровень «Тактический»)', async () => {
+  await hlWatch();
+  const hl0 = await hlCount();
+  await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
+  await page.locator('.lvl-sw button', { hasText: 'Тактический' }).click();
+  await page.locator('.cmd-tabs button.on', { hasText: 'Решение' }).waitFor({ timeout: 5000 });
+  await page.waitForTimeout(1200);
+  const extra = await page.evaluate((n) => window.__hl.slice(n), hl0);
+  if (extra.length) throw new Error(`мышью подсвечено: ${JSON.stringify(extra)}`);
+  await page.evaluate(() => { window.__clicks = 0; }); // дальше снова без рук
+  return 'без рамки';
 });
 
 await check('без рук: «проводи ход» — чего нет и предложение («да» — черновик донесения) → «проводи ход» → «да» → доклад посредника его голосом', async () => {

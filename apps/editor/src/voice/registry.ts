@@ -7,6 +7,7 @@
  * модулей без панели (speak: окно зачитывает вопрос, чтение по частям; панель голоса подключает его setSpeaker).
  */
 import { createElement, useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { clearNoted, flash, type Highlight } from './highlight';
 
 export interface Action<P = any> {
   id: string;                          // 'command.turn'
@@ -37,7 +38,16 @@ export interface Action<P = any> {
   check?(p: P): true | string | Offer;
   available(): true | string;          // строка — почему недоступно
   run(p: P): Promise<string | void>;   // строка — что доложить
+  /**
+   * Что подсветить на экране, когда действие исполнено голосом (highlight.ts): селекторы `data-hl` / `data-action` /
+   * `data-tour` и места на карте `{ at }`; result — что доложило исполнение. Цель известна только после исполнения
+   * (какое соединение нашлось) — `highlight: noted`, а исполнение отмечает её (note). null — нечего подсвечивать.
+   */
+  highlight?(p: P, result: string | void): Highlight;
 }
+
+/** Кто вызвал действие: голос (диспетчер, модель) — подсветка исполненного; мышь (кнопка) — без неё. */
+export interface ActOpts { by?: 'voice' | 'mouse' }
 
 /** Предложение штаба вместо исполнения: offer — вопрос («…Составить черновик донесения?»), на «да» — действие id. */
 export interface Offer { offer: string; id: string; params?: unknown }
@@ -60,16 +70,25 @@ export function useAction<P>(a: Action<P>): void {
     run: (p) => ref.current.run(p),
     ...(a.confirm ? { confirm: (p: P) => ref.current.confirm!(p) } : {}),
     ...(a.check ? { check: (p: P) => ref.current.check!(p) } : {}),
+    ...(a.highlight ? { highlight: (p: P, r: string | void) => ref.current.highlight?.(p, r) } : {}),
   }), [a.id, a.section]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
-/** Вызов действия. Недоступное не выполняется — возвращается причина. */
-export async function act(id: string, p?: unknown): Promise<string | void> {
+/**
+ * Вызов действия. Недоступное не выполняется — возвращается причина. Исполненное голосом (`by: 'voice'`) подсвечивает
+ * на экране то, что изменилось (поле highlight действия); мышью — нет.
+ */
+export async function act(id: string, p?: unknown, o: ActOpts = {}): Promise<string | void> {
   const a = byId.get(id);
   if (!a) throw new Error(`Нет действия «${id}»`);
   const av = a.available();
   if (av !== true) return av;
-  return a.run(p);
+  clearNoted();
+  const r = await a.run(p);
+  if (o.by === 'voice' && a.highlight) {
+    try { const t = a.highlight(p, r); if (t && (!Array.isArray(t) || t.length)) flash(t); } catch { /* подсветка — не главное */ }
+  }
+  return r;
 }
 
 /**
@@ -126,7 +145,7 @@ export const forModel = (list: Action[]): Action[] => listed(list).filter((a) =>
 
 /** Кнопка, вызывающая действие реестра. data-action — для тура и проверки. */
 export function ActButton({ action, params, children, ...rest }: { action: string; params?: unknown; children?: ReactNode } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>) {
-  return createElement('button', { ...rest, 'data-action': action, onClick: () => { void act(action, params); } }, children);
+  return createElement('button', { ...rest, 'data-action': action, onClick: () => { void act(action, params, { by: 'mouse' }); } }, children);
 }
 
 // ---------------------------------------------------------------- голос штаба для модулей

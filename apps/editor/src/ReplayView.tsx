@@ -34,6 +34,7 @@ import { kbStamp, type KbStamp } from './sim/kb-stamp';
 import { KbStampNote } from './KbStampNote';
 import type { TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, register, speak, useAction, voiceRecent } from './voice/registry';
+import { btn, hl, note, noted } from './voice/highlight';
 import { calcDoneText, calcFailText, findLayer, inReplay, releaseReplay, replayActions, type ReplayDeps } from './voice/actions/command';
 import { readAloud } from './voice/dictation';
 import { speakable } from './voice/speech';
@@ -109,7 +110,7 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
   useAction({
     id: 'map.layer', section: 'replay', title: 'Слой карты', describe: 'Показывает или скрывает слой карты (реки, фронт, бои, тыл, полосы, подписи…).',
     params: { type: 'object', properties: { layer: { type: 'string' }, on: { type: 'boolean' } }, required: ['layer'] }, say: ['штаб, покажи реки', 'штаб, скрой подписи'],
-    available: inReplay,
+    available: inReplay, highlight: noted,
     run: async (p: { layer: string; on?: boolean }) => {
       const keys = [...items.map((x) => x.key), 'labels'];
       const key = keys.includes(p?.layer) ? p.layer : findLayer(String(p?.layer ?? ''), keys);
@@ -117,6 +118,7 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
       const it = key === 'labels' ? { title: 'Подписи знаков', on: labels, toggle: toggleLabels } : items.find((x) => x.key === key)!;
       const on = p.on ?? !it.on;
       if (on !== it.on) it.toggle();
+      note(hl(`layer-${key}`), '.lyr-menu > .pop-btn');
       return `${on ? 'Показываю' : 'Скрыл'}: ${it.title.toLowerCase()}.`;
     },
   });
@@ -143,7 +145,7 @@ export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l
   useAction({
     id: 'map.level', section: 'replay', title: 'Уровень карты', describe: 'Уровень карты: тактический (соединения и бои), оперативный (армии), стратегический (фронты).',
     params: { type: 'object', properties: { level: { enum: MAP_LEVELS.map((x) => x.id) } }, required: ['level'] }, say: ['штаб, оперативный уровень'],
-    available: inReplay,
+    available: inReplay, highlight: (p: { level: MapLevel }) => hl(`level-${p?.level}`),
     run: async (p: { level: MapLevel }) => {
       const x = MAP_LEVELS.find((l) => l.id === p?.level);
       if (!x) return 'Скажите: тактический, оперативный или стратегический уровень.';
@@ -151,7 +153,7 @@ export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l
       return `${x.title} уровень: ${x.hint}.`;
     },
   });
-  return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <ActButton key={x.id} action="map.level" params={{ level: x.id }} className={level === x.id ? 'on' : ''} title={x.hint}>{x.title}</ActButton>)}</div>;
+  return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <ActButton key={x.id} action="map.level" params={{ level: x.id }} className={level === x.id ? 'on' : ''} title={x.hint} data-hl={`level-${x.id}`}>{x.title}</ActButton>)}</div>;
 }
 export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string; mark?: string }[]> = {
   tac: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
@@ -523,8 +525,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
           {/* voice-entry: начало */}
           {busy
-            ? <ActButton className="rp-go" action="replay.stop" data-tour="replay-go"><span className="spinner" /> {busy} <small>остановить</small></ActButton>
-            : <ActButton className="rp-go primary" action="replay.calc" data-tour="replay-go">Рассчитать</ActButton>}
+            ? <ActButton className="rp-go" action="replay.stop" data-tour="replay-go" data-hl="calc"><span className="spinner" /> {busy} <small>остановить</small></ActButton>
+            : <ActButton className="rp-go primary" action="replay.calc" data-tour="replay-go" data-hl="calc">Рассчитать</ActButton>}
           {/* voice-entry: конец */}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
@@ -730,7 +732,7 @@ function LegendPanel({ on, extra = [], combat = true, remember }: LegendProps) {
   const setOpen = (v: boolean) => { setOpenState(v); if (remember) try { localStorage.setItem(remember, v ? 'open' : 'closed'); } catch { /* */ } };
   useAction({
     id: 'map.legend', section: 'replay', title: 'Легенда карты', describe: 'Открывает условные обозначения карты и читает их вслух (open — только открыть или свернуть, без чтения).', say: ['штаб, легенда'],
-    params: { type: 'object', properties: { open: { type: 'boolean' } } }, available: inReplay,
+    params: { type: 'object', properties: { open: { type: 'boolean' } } }, available: inReplay, highlight: () => btn('map.legend'),
     run: async (p?: { open?: boolean }) => {
       if (typeof p?.open === 'boolean') { setOpen(p.open); return; }
       setOpen(true);
@@ -761,7 +763,7 @@ function LegendPanel({ on, extra = [], combat = true, remember }: LegendProps) {
       <ActButton className="lg-h" action="map.legend" params={{ open: !open }}>Условные обозначения {open ? '▾' : '▸'}</ActButton>
       {open && <div className={`lg-b${rows.length > 12 ? ' two' : ''}`}>
         {rows.map((r) => r.key
-          ? <button key={r.text} className={`lg-row${on(r.key) ? '' : ' off'}`} title={on(r.key) ? 'Скрыть на карте' : 'Показать на карте'} data-action="map.layer" onClick={() => { void act('map.layer', { layer: r.key!, on: !on(r.key!) }); }}><i className={r.cls}>{r.mark}</i>{r.text}{!on(r.key) && <span className="lg-eye">скрыто</span>}</button>
+          ? <button key={r.text} className={`lg-row${on(r.key) ? '' : ' off'}`} title={on(r.key) ? 'Скрыть на карте' : 'Показать на карте'} data-action="map.layer" data-hl={`layer-${r.key}`} onClick={() => { void act('map.layer', { layer: r.key!, on: !on(r.key!) }); }}><i className={r.cls}>{r.mark}</i>{r.text}{!on(r.key) && <span className="lg-eye">скрыто</span>}</button>
           : <div key={r.text} className="lg-row"><i className={r.cls}>{r.mark}</i>{r.text}</div>)}
       </div>}
     </div>

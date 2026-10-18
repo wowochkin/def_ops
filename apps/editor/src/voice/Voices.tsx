@@ -16,6 +16,7 @@ import { ordinalIndex, pickByName } from './answers';
 import type { VoiceClient } from './client';
 import type { VoiceCheck, VoiceInfo, VoiceRole, VoiceRoles } from './protocol';
 import { act, ActButton, openModal, useAction } from './registry';
+import { hl, note, noted } from './highlight';
 import type { VoiceReady } from './VoicePanel';
 
 const ORDS = ['первый', 'второй', 'третий', 'четвёртый', 'пятый', 'шестой', 'седьмой', 'восьмой', 'девятый', 'десятый'];
@@ -217,18 +218,19 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
   useAction({
     id: 'voices.assign', section: 'global', title: 'Назначить голос', describe: 'Назначает голос роли: начальник штаба или посредник.',
     params: { type: 'object', properties: { ...WHO, role: { enum: ROLES } }, required: ['role'] },
-    say: ['назначь первый голос посреднику'], available: () => true,
+    say: ['назначь первый голос посреднику'], available: () => true, highlight: noted,
     run: async (p: { name?: string; voice_id?: string; role: VoiceRole }) => {
       const r = find(p);
       if ('ask' in r) return r.ask;
       if (!ROLES.includes(p?.role)) return 'Кому назначить: начальнику штаба или посреднику?';
       send('assign', { role: p.role, voice_id: r.voice.id });
+      note(hl(`voice-${r.voice.id}`), hl('voice-roles'));
       return `«${r.voice.name}» — теперь ${ROLE_OF[p.role]}.`;
     },
   });
   useAction({
     id: 'voices.record', section: 'global', title: 'Записать новый голос', describe: 'Записывает новый голос с микрофона: текст зачитывается, запись идёт сама.',
-    params: { type: 'object', properties: { name: { type: 'string' }, manual: { type: 'boolean' } } }, say: ['запиши новый голос'], available: idle,
+    params: { type: 'object', properties: { name: { type: 'string' }, manual: { type: 'boolean' } } }, say: ['запиши новый голос'], available: idle, highlight: () => hl('voices-rec'),
     run: async (p?: { name?: string; manual?: boolean }) => {
       // кнопкой — текст на экране, запись — кнопками «Начать запись» / «Закончить запись»
       if (p?.manual) { byVoice.current = null; setCheck(null); setRec('intro'); return; }
@@ -256,7 +258,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
   });
   useAction({
     id: 'voices.save', section: 'global', title: 'Сохранить голос', describe: 'Сохраняет проверенную запись как новый голос с именем.',
-    params: { type: 'object', properties: { name: { type: 'string' } } }, say: ['сохрани как Гость'],
+    params: { type: 'object', properties: { name: { type: 'string' } } }, say: ['сохрани как Гость'], highlight: () => [hl('voices-list'), hl('voices-rec')],
     available: () => (st.current.rec === 'checked' && st.current.check?.ok ? true : 'сохранять нечего — сначала запишите голос'),
     run: async (p?: { name?: string }) => {
       const nm = (p?.name ? cap(String(p.name).trim()) : st.current.name.trim());
@@ -302,17 +304,17 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
     <div className="vp-back" onClick={(e) => { if (e.target === e.currentTarget && rec !== 'rec') void act('voices.close'); }}>
       <div className="vp-dialog voices" data-modal role="dialog" aria-label="Голоса">
         <h3>Голоса</h3>
-        <p className="vp-roles">
+        <p className="vp-roles" data-hl="voice-roles">
           {ROLES.map((r) => <span key={r}>{ROLE_NAME[r]} — <b>{voices.find((v) => v.id === roles[r])?.name ?? 'образец по умолчанию'}</b></span>)}
         </p>
         {error && <p className="vp-error" role="alert">{error}</p>}
 
-        <ul className="vp-voices">
+        <ul className="vp-voices" data-hl="voices-list">
           {!voices.length && <li className="vp-note">Образцов пока нет — запишите новый голос.</li>}
           {voices.map((v) => {
             const has = ROLES.filter((r) => roles[r] === v.id);
             return (
-              <li key={v.id} className="vp-voice">
+              <li key={v.id} className="vp-voice" data-hl={`voice-${v.id}`}>
                 <div className="vp-vname">
                   <b>{v.name}</b> {v.builtin ? <span className="vp-tag">встроенный</span> : <span className="vp-tag">{v.source}</span>}
                   {has.map((r) => <span key={r} className="vp-tag role">{ROLE_OF[r]}</span>)}
@@ -337,7 +339,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
           </div>
         )}
         {rec !== 'none' && (
-          <section className="vp-record">
+          <section className="vp-record" data-hl="voices-rec">
             <h4>Новый голос</h4>
             <p className="vp-warn">Голос будет использоваться системой, хранится только на этом компьютере.</p>
             <p>Прочитайте вслух спокойно, обычным голосом — это займёт 15–20 секунд:</p>

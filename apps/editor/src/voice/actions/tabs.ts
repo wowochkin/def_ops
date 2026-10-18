@@ -14,6 +14,7 @@
  * раздел «Карты».
  */
 import { register, type Action } from '../registry';
+import { tourEl } from '../highlight';
 
 /** acc — как вкладку называют после «открой» (винительный); note — продолжение ответа «Открыта вкладка «…» — …». */
 export interface Tab { id: string; title: string; acc: string; hint?: string; note?: string }
@@ -99,12 +100,12 @@ export function tabActions(): Action[] {
       // в панели — одной строкой-перечнем; в ответах штаба — фраза одной вкладки (а нужной — у ярлыка)
       hint: `штаб, открой вкладку …: ${tabs.map((t) => t.title).join(', ')}`,
       say: tabSay(tabs[0]).slice(0, 1),
-      available: () => true, run,
+      available: () => true, run, highlight: (p: { tab: string }) => tourEl(`${sec}-tab-${p?.tab}`),
     });
     for (const t of tabs) {
       out.push({
         id: `${sec}.tab.${t.id}`, section: sec, title: `Открыть вкладку «${t.title}»`, describe: `Открывает вкладку «${t.title}».`,
-        shortcut: true, say: tabSay(t), available: () => true, run: () => run({ tab: t.id }),
+        shortcut: true, say: tabSay(t), available: () => true, run: () => run({ tab: t.id }), highlight: () => tourEl(`${sec}-tab-${t.id}`),
       });
     }
   }

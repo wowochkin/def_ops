@@ -66,7 +66,7 @@ export function FormationPanel({ c, onClose, onPick, actions, note }: { c: Forma
 /** Карточка обнаруженного противника: что о нём известно по разведсводке хода. */
 export function IntelPanel({ e, time, first, onClose, actions }: { e: IntelReport; time: string; first: boolean; onClose: () => void; actions?: ReactNode }) {
   return (
-    <div className="ag-panel fc-panel">
+    <div className="ag-panel fc-panel" data-hl="enemy-card">
       <div className="ag-head">
         <div><b>{e.name}</b><span>противник · разведсводка к {when(time)} МСК</span></div>
         <button className="x" onClick={onClose} title="Закрыть (Esc)">×</button>

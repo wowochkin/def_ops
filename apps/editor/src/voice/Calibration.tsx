@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { VoiceClient } from './client';
 import type { CalibStep, ServerMsg, VoiceSettings } from './protocol';
 import { act, openModal, useAction } from './registry';
+import { hl } from './highlight';
 
 /** Ответы окна калибровки голосом (реплика без обращения) → действие окна. */
 export function calibParse(rest: string): { id: string } | null {
@@ -235,7 +236,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
   // действия окна — голосом и кнопками
   useAction({
     id: 'voice.calibrate.start', section: 'global', title: 'Начать калибровку', describe: 'Начинает шаги калибровки: дальше они идут сами.',
-    say: ['начать'], params: { type: 'object', properties: { one: { type: 'boolean' } } },
+    say: ['начать'], params: { type: 'object', properties: { one: { type: 'boolean' } } }, highlight: () => hl('calib'),
     available: () => (resultRef.current ? 'калибровка уже закончена — скажите «заново»' : phaseRef.current !== 'wait' || runRef.current ? 'шаг уже идёт' : !up ? 'голос не на связи' : true),
     run: async (p?: { one?: boolean }) => { if (p?.one) go(); else startRun(); },
   });
@@ -245,7 +246,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
     run: async () => { onClose(); },
   });
   useAction({
-    id: 'voice.calibrate.again', section: 'global', title: 'Калибровать заново', describe: 'Начинает калибровку с первого шага.', say: ['заново'],
+    id: 'voice.calibrate.again', section: 'global', title: 'Калибровать заново', describe: 'Начинает калибровку с первого шага.', say: ['заново'], highlight: () => hl('calib'),
     available: () => (resultRef.current || errRef.current || !runRef.current ? true : 'калибровка ещё идёт'),
     run: async () => { again(); if (byVoice.current) { setRunning(false); runRef.current = false; later(startRun, 300); } },
   });
@@ -258,7 +259,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
   const s = STEPS[i];
   return (
     <div className="vp-back" onClick={(e) => { if (e.target === e.currentTarget && !result) void act('voice.calibrate.close'); }}>
-      <div className="vp-dialog calib" data-modal role="dialog" aria-label="Калибровка">
+      <div className="vp-dialog calib" data-modal data-hl="calib" role="dialog" aria-label="Калибровка">
         {!result ? (
           <>
             <div className="vp-stepn">Калибровка · шаг {i + 1} из {STEPS.length}</div>

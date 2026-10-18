@@ -37,6 +37,7 @@ import { usePanelPlace } from './avoid-modals';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
+import { tourEl } from './highlight';
 import { ActButton, act, actions, listed, onModal, onVoiceNote, setProposer, setRetractor, setSpeaker, setVoiceLive, useAction, voiceNote } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
@@ -191,9 +192,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     available: () => (dispatcher.pending ? true : 'подтверждать нечего'), run: async () => { await dispatcher.answer(false); } });
   // панель: развернуть / свернуть — кнопками и голосом (вид: значок, полоса, развёрнута)
   useAction({ id: 'voice.panel.open', section: 'global', title: 'Открыть панель голоса', describe: 'Разворачивает панель голоса: состояние, лента реплик, что можно сказать.',
-    say: ['штаб, открой панель голоса'], available: () => true, run: async () => { setMode('full'); } });
+    say: ['штаб, открой панель голоса'], available: () => true, highlight: () => tourEl('voice'), run: async () => { setMode('full'); } });
   useAction({ id: 'voice.panel.close', section: 'global', title: 'Свернуть панель голоса', describe: 'Сворачивает панель голоса в полосу: состояние и последняя фраза штаба.',
-    say: ['штаб, сверни панель голоса'], available: () => true, run: async () => { setMode('compact'); } });
+    say: ['штаб, сверни панель голоса'], available: () => true, highlight: () => tourEl('voice'), run: async () => { setMode('compact'); } });
   useAction({ id: 'voice.panel.icon', section: 'global', title: 'Убрать панель голоса в значок', describe: 'Сворачивает панель голоса в значок.',
     available: () => true, run: async () => { setMode('icon'); } });
   useAction({ id: 'voice.panel.strip', section: 'global', title: 'Показать полосу голоса', describe: 'Из значка — полоса голоса: состояние и последняя фраза штаба.',

@@ -16,6 +16,7 @@ import { TASK_RU, type Task } from '@def-ops/sim';
 import type { Goal, PlanVariantView, TurnView } from '../../sim/game-protocol';
 import { ordinalIndex, pickByName } from '../answers';
 import { getAction, registerParser, type Action, type PhraseHit } from '../registry';
+import { btn, hl, note, noted } from '../highlight';
 import { short } from '../report';
 import { nameCase, numberWords } from '../speech';
 import { inReplay, NO_GAME, pickTitle, type CmdTab } from './command';
@@ -86,7 +87,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
       run: async () => { get().closeCard(); } },
     { ...base, id: 'command.unit.close', title: 'Закрыть доклад', describe: 'Закрывает раскрытый доклад объединения.', say: ['штаб, закрой доклад'],
       run: async () => { get().select(null); } },
-    { ...base, id: 'command.order.open', title: 'Приказ объединению', describe: 'Выбирает своё объединение во вкладке «Приказы», чтобы отдать или изменить приказ.',
+    { ...base, id: 'command.order.open', highlight: noted, title: 'Приказ объединению', describe: 'Выбирает своё объединение во вкладке «Приказы», чтобы отдать или изменить приказ.',
       params: NAME, say: ['штаб, приказ восьмой гвардейской'], available: play,
       run: async (p: { name: string }) => {
         const d = get();
@@ -94,6 +95,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         if (!r) return `Не нашёл своего объединения «${p?.name}».`;
         if ('say' in r) return r.say;
         d.select(r.found.id); d.setTab('orders'); d.setSub('units'); d.goTo(r.found.at, false);
+        note(hl('oedit'), { at: r.found.at });
         const name = short(r.found.name);
         return `Приказ ${nameCase(name, 'dat')} — во вкладке «Приказы». Скажите его целиком, например: «${nameCase(name, 'dat')} наступать на …».`;
       } },
@@ -116,11 +118,11 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         d.setDraft(u.id, next);
         return `${short(u.name)} — ${TASK_RU[next.task]}${next.targetText ? `, ${short(next.targetText)}` : ''}.`;
       } },
-    { ...base, id: 'command.orders.sub', title: 'Подвкладка приказов', describe: 'Открывает во вкладке «Приказы»: войска, тыл, переправы, резервы, полосы.',
+    { ...base, id: 'command.orders.sub', highlight: (p: { sub: OrdersSub }) => hl(`sub-${p?.sub}`), title: 'Подвкладка приказов', describe: 'Открывает во вкладке «Приказы»: войска, тыл, переправы, резервы, полосы.',
       params: { type: 'object', properties: { sub: { enum: Object.keys(SUB_TITLE) } }, required: ['sub'] }, say: ['штаб, открой тыл', 'штаб, открой резервы'],
       run: async (p: { sub: OrdersSub }) => { if (!SUB_TITLE[p?.sub]) return 'Такой подвкладки нет.'; get().setTab('orders'); get().setSub(p.sub); return `Приказы: «${SUB_TITLE[p.sub]}».`; } },
     // ---- советник: окно, беседа, варианты
-    { ...base, id: 'command.advisor.show', title: 'Окно советника', describe: 'Окно советника: показать, свернуть к краю карты, скрыть (беседа сохраняется).',
+    { ...base, id: 'command.advisor.show', highlight: (p: { mode: string }) => (p?.mode === 'close' ? null : p?.mode === 'min' ? hl('adv-tab') : [hl('advisor'), hl('adv-tab')]), title: 'Окно советника', describe: 'Окно советника: показать, свернуть к краю карты, скрыть (беседа сохраняется).',
       params: { type: 'object', properties: { mode: { enum: ['open', 'min', 'close', 'toggle'] } }, required: ['mode'] }, say: ['штаб, покажи советника', 'штаб, скрой советника'],
       run: async (p: { mode: 'open' | 'min' | 'close' | 'toggle' }) => {
         const d = get(), a = d.advisor;
@@ -130,7 +132,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         if (mode === 'close') { d.setAdvisor(false, false); return 'Советник скрыт, беседа сохранена.'; }
         return 'Скажите: «покажи советника» или «скрой советника».';
       } },
-    { ...base, id: 'command.advisor.clear', title: 'Очистить беседу с советником', describe: 'Стирает беседу с советником и его варианты (запросы останавливаются).', say: ['штаб, очисти беседу с советником'],
+    { ...base, id: 'command.advisor.clear', highlight: () => hl('advisor'), title: 'Очистить беседу с советником', describe: 'Стирает беседу с советником и его варианты (запросы останавливаются).', say: ['штаб, очисти беседу с советником'],
       params: { type: 'object', properties: { sure: { type: 'boolean' } } },
       // голосом: варианты и ответы — минуты работы модели; стереть — после «да» (кнопка «очистить» — как прежде)
       check: (p?: { sure?: boolean }) => (p?.sure || (!get().talk && !get().plan?.variants.some(Boolean)) ? true
@@ -139,7 +141,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
     { ...base, id: 'command.variants.count', title: 'Сколько вариантов просить', describe: 'Сколько вариантов решения просить у советника по умолчанию (1–3).',
       params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 } }, required: ['n'] },
       run: async (p: { n: number }) => { const n = Math.round(Number(p?.n)); if (!(n >= 1 && n <= 3)) return 'От одного до трёх.'; get().setPlanN(n); return `Просить вариантов: ${numberWords(n)}.`; } },
-    { ...base, id: 'command.variant.open', title: 'Раскрыть вариант', describe: 'Раскрывает вариант решения N на экране (без чтения); open: false — свернуть.',
+    { ...base, id: 'command.variant.open', highlight: (p: { n?: number; open?: boolean }) => (p?.n && p.open !== false ? hl(`variant-${p.n}`) : null), title: 'Раскрыть вариант', describe: 'Раскрывает вариант решения N на экране (без чтения); open: false — свернуть.',
       params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 }, open: { type: 'boolean' } } }, say: ['штаб, раскрой второй вариант'],
       available: () => { const r = ready(); return r !== true ? r : get().plan?.variants.some(Boolean) ? true : 'вариантов ещё нет. Скажите: «Штаб, дай три варианта»'; },
       run: async (p: { n?: number; open?: boolean }) => {
@@ -147,7 +149,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         if (!variant(p.n)) return 'Такого варианта нет.';
         get().setPlanOpen(p.n - 1); get().setAdvisor(true, false);
       } },
-    { ...base, id: 'command.variant.take', title: 'Взять из варианта', describe: 'Берёт в проект один приказ (order — номер) или распоряжение (act — номер) из варианта решения N.',
+    { ...base, id: 'command.variant.take', highlight: noted, title: 'Взять из варианта', describe: 'Берёт в проект один приказ (order — номер) или распоряжение (act — номер) из варианта решения N.',
       params: { type: 'object', properties: { n: { type: 'integer' }, order: { type: 'integer' }, act: { type: 'integer' } }, required: ['n'] },
       say: ['штаб, возьми из первого варианта второй приказ'], available: play,
       run: async (p: { n: number; order?: number; act?: number }) => {
@@ -157,11 +159,14 @@ export function screenActions(get: () => ScreenDeps): Action[] {
           const o = v.orders[p.order - 1];
           if (!o || !o.ok) return 'Такого приказа в варианте нет.';
           get().takeSuggestion(o);
+          note(hl(`order-${o.formation}`), hl(`orow-${o.formation}`), ...(o.at ? [{ at: o.at }] : []));
           return `В проекте: ${short(o.name)} — ${TASK_RU[o.task]}${o.targetText ? `, ${short(o.targetText)}` : ''}.`;
         }
         const a = v.acts[(p.act ?? 0) - 1];
         if (!a || !a.ok || !a.action) return 'Такого распоряжения в варианте нет.';
-        return (await get().addAct(a)) ? `В проекте: ${a.label}.` : `Не выйдет: ${a.label}.`;
+        if (!(await get().addAct(a))) return `Не выйдет: ${a.label}.`;
+        note(hl(`act-${a.key}`));
+        return `В проекте: ${a.label}.`;
       } },
     { ...base, id: 'command.suggestion.take', model: false, title: 'Приказ советника — в распоряжение', describe: 'Берёт в проект приказ, предложенный советником в ответе msg (i — номер).',
       params: { type: 'object', properties: { msg: { type: 'integer' }, i: { type: 'integer' } }, required: ['msg', 'i'] }, available: play,
@@ -178,7 +183,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
     { ...base, id: 'map.center', model: false, title: 'Показать точку на карте', describe: 'Показывает на карте точку (база, переправа, район резерва, армия).',
       params: { type: 'object', properties: { at: { type: 'array', items: { type: 'number' } }, zoom: { type: 'boolean' } }, required: ['at'] },
       run: async (p: { at: LngLat; zoom?: boolean }) => { if (!Array.isArray(p?.at) || p.at.length !== 2) return 'Не знаю, где это.'; get().goTo(p.at, p.zoom !== false); } },
-    { ...base, id: 'map.event', title: 'Показать событие операции', describe: 'Переводит карту к контрольному событию операции (по названию): время и место.',
+    { ...base, id: 'map.event', highlight: noted, title: 'Показать событие операции', describe: 'Переводит карту к контрольному событию операции (по названию): время и место.',
       params: NAME, say: ['штаб, покажи событие Зееловские высоты'],
       run: async (p: { name: string }) => {
         const gs = get().view!.goals.filter((g) => g.at);
@@ -187,17 +192,17 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         if ('say' in r) return r.say;
         const g: Goal = gs[r.index];
         get().setTime(g.at!);
-        if (g.place) get().goTo(g.place);
+        if (g.place) { get().goTo(g.place); note({ at: g.place }); }
         return `Событие: ${g.title.split(':')[0]}.`;
       } },
-    { ...base, id: 'map.focusOnly', title: 'Списки — только участок', describe: 'Доклады, разведка и приказы — только по участку в фокусе (on) или по всему театру.',
+    { ...base, id: 'map.focusOnly', highlight: () => btn('map.focusOnly'), title: 'Списки — только участок', describe: 'Доклады, разведка и приказы — только по участку в фокусе (on) или по всему театру.',
       params: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] }, say: ['штаб, в списках только участок', 'штаб, в списках весь театр'],
       available: () => { const r = ready(); return r !== true ? r : get().focus ? true : 'участок не выбран. Скажите: «участок …»'; },
       run: async (p: { on: boolean }) => { get().setFocusOnly(!!p?.on); return p?.on ? 'В списках — только участок.' : 'В списках — весь театр.'; } },
     { ...base, id: 'command.toEditor', title: 'Карта в редакторе', describe: 'Открывает карту игры в разделе «Редактор» (правка, экспорт).', say: ['штаб, открой карту в редакторе'],
       run: async () => (get().toEditor() ? 'Карта игры открыта в редакторе.' : 'Карта ещё не готова.') },
     // ---- посредник, полосы
-    { ...base, id: 'command.umpire.part', title: 'Посредник: что показать', describe: 'Вкладка «Посредник»: как действовал противник или поправки посредника.',
+    { ...base, id: 'command.umpire.part', highlight: (p: { part: string }) => hl(`ump-${p?.part}`), title: 'Посредник: что показать', describe: 'Вкладка «Посредник»: как действовал противник или поправки посредника.',
       params: { type: 'object', properties: { part: { enum: ['enemy', 'umpire'] } }, required: ['part'] }, say: ['штаб, покажи поправки посредника'],
       run: async (p: { part: 'enemy' | 'umpire' }) => {
         if (p?.part !== 'enemy' && p?.part !== 'umpire') return 'Скажите: «как действовал противник» или «покажи поправки посредника».';

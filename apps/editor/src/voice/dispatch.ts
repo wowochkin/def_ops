@@ -25,6 +25,8 @@ import type { ModelReply } from './llm';
 import { act, actions, forModel, getAction, hasSpeaker, speak, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
+/** Действие вызвано голосом: исполненное подсвечивается на экране. */
+const VOICE = { by: 'voice' } as const;
 
 export const CONVERSATION_S = 12;
 /** Модель недоступна — при обращении связь перепроверяется не чаще этого. */
@@ -406,7 +408,7 @@ export class Dispatcher {
     if (av !== true) { this.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}.`); return; }
     let report: string | void;
     try {
-      report = await act(p.action, p.params);
+      report = await act(p.action, p.params, VOICE);
     } catch {
       this.say('Не удалось выполнить это сейчас.');
       return;
@@ -606,7 +608,7 @@ export class Dispatcher {
     }
     let report: string | void;
     try {
-      report = await act(a.id, params);
+      report = await act(a.id, params, VOICE);
     } catch {
       this.say('Не удалось выполнить это сейчас.');
       return 'unknown';
@@ -715,7 +717,7 @@ export class Dispatcher {
     if (say) this.say(say);
     let report: string | void;
     try {
-      report = await act(a.id, reply.call.params);
+      report = await act(a.id, reply.call.params, VOICE);
     } catch {
       this.say('Не удалось выполнить это сейчас.');
       return 'unknown';
@@ -806,7 +808,7 @@ export class Dispatcher {
   }
 
   private async runSay(a: Action): Promise<void> {
-    const report = await act(a.id);
+    const report = await act(a.id, undefined, VOICE);
     if (report) this.say(speakable(report, { full: true }));
   }
 }

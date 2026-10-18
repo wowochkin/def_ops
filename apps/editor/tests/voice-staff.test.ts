@@ -13,6 +13,7 @@ import {
   type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from '../src/voice/actions/staff';
 import { parseDictation, stopReading } from '../src/voice/dictation';
+import { flash, flashState } from '../src/voice/highlight';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
 import scenarioFile from '../../../packages/sim/data/scenarios/berlin-1945-tasks.json';
 
@@ -753,5 +754,36 @@ describe('раунд 2: отмена распоряжения — хвост п�
     expect(parsePhrase('отмени переправу у зелова', 'replay')).toMatchObject({ id: 'command.act.cancel', params: { kind: 'bridge', name: 'зелова' } });
     expect(parsePhrase('отмени линию между восьмой гвардейской и пятой ударной', 'replay')).toMatchObject({ id: 'command.act.cancel', params: { kind: 'boundary' } });
     expect(parsePhrase('отмени линию', 'replay')).toEqual({ id: 'command.act.cancel', params: { kind: 'boundary' } });
+  });
+});
+
+// ---------------------------------------------------------------- подсветка исполненного голосом
+
+describe('подсветка исполненного голосом', () => {
+  beforeEach(() => flash(null));
+  it('«восьмой гвардейской наступать на …» — рамка на приказе и метка на карте', async () => {
+    staff();
+    await mk().utterance('Штаб, восьмой гвардейской наступать на Зеловские высоты', 1);
+    expect(flashState()).toMatchObject({ targets: ['[data-hl="order-su_8gva"]'], spots: [heights.at] });
+  });
+  it('приказ без цели («Куда?») — подсветки нет', async () => {
+    staff();
+    await mk().utterance('Штаб, восьмой гвардейской наступать', 1);
+    expect(flashState()).toBeNull();
+  });
+  it('«выбираю первый» — рамка на варианте', async () => {
+    staff({ plan: plan(), decision: { ...EMPTY }, drafts: {}, acts: [] });
+    await mk().utterance('Штаб, выбираю первый', 1);
+    expect(flashState()?.targets).toEqual(['[data-hl="variant-1"]']);
+  });
+  it('поле решения диктовкой — рамка на поле', async () => {
+    staff();
+    await mk().utterance('Штаб, запиши в замысел: главный удар на Зелов', 1);
+    expect(flashState()?.targets).toEqual(['[data-hl="field-intent"]']);
+  });
+  it('то же кнопкой (press) — без рамки', async () => {
+    staff({ plan: plan() });
+    await press('command.variant.pick', { n: 1 }, () => {});
+    expect(flashState()).toBeNull();
   });
 });

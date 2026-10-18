@@ -21,6 +21,7 @@ import { pickByName } from '../answers';
 import { readAloud } from '../dictation';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
 import { getAction, registerParser, type Action, type PhraseHit } from '../registry';
+import { hl, btn, note, noted } from '../highlight';
 import { dayMonth, enemyReport, groupReport, intelReport, journalDayText, moreText, short, situationReport, unitReport, whereText } from '../report';
 import { ordinalWords, speakable } from '../speech';
 
@@ -233,41 +234,41 @@ export function commandActions(get: () => CommandDeps): Action[] {
   // порядок — порядок примеров в «что я могу сказать»: главное первым
   return [
     { ...base, id: 'command.report', title: 'Доклад обстановки', describe: 'Коротко докладывает обстановку: дата и ход, цель, укомплектованность, главное из донесений.',
-      say: ['штаб, доложи обстановку'],
+      say: ['штаб, доложи обстановку'], highlight: () => hl('tab-reports'),
       run: async () => { get().setTab('reports'); const r = situationReport(view()); more = { at: view(), list: r.more }; claimMore('report'); return r.text; } },
     { ...base, id: 'command.report.more', title: 'Подробнее', describe: 'Читает остальные донесения за ход после краткого доклада.', say: ['подробнее'],
       available: () => { const r = ready(); return r !== true ? r : more && more.list.length && sameTurn(more.at, view()) ? true : 'сначала доклад: скажите «Штаб, доложи обстановку»'; },
       run: async () => { const t = moreText(more!.list); more = null; return readAloud(t); } },
     { ...base, id: 'command.intel', title: 'Разведсводка', describe: 'Докладывает разведсводку: сколько противника обнаружено, новое, ближайшее к нашим.',
-      say: ['штаб, что разведка?'], run: async () => { get().setTab('intel'); return intelReport(view()); } },
+      say: ['штаб, что разведка?'], highlight: () => hl('tab-intel'), run: async () => { get().setTab('intel'); return intelReport(view()); } },
     { ...base, id: 'command.unit.report', title: 'Доклад соединения', describe: 'Доклад своего объединения (или разведданные о противнике) по названию.',
-      params: NAME, say: ['штаб, доложи о восьмой гвардейской'],
+      params: NAME, say: ['штаб, доложи о восьмой гвардейской'], highlight: noted,
       run: async (p: { name: string }) => {
         const v = view();
         const r = findWho(String(p?.name ?? ''), v);
         if (!r) return `Не нашёл соединения «${p?.name}».`;
         if ('say' in r) return r.say;
         const w = r.who;
-        if (w.kind === 'own') { get().showUnit(w.id); return unitReport(v.own.find((u) => u.id === w.id)!); }
-        if (w.kind === 'enemy') { get().showEnemy(w.id); return enemyReport(v.intel.find((e) => e.id === w.id)!); }
-        get().setTab('reports');
+        if (w.kind === 'own') { get().showUnit(w.id); note(hl(`unit-${w.id}`)); return unitReport(v.own.find((u) => u.id === w.id)!); }
+        if (w.kind === 'enemy') { const e = v.intel.find((x) => x.id === w.id)!; get().showEnemy(w.id); note(hl('enemy-card'), { at: e.at }); return enemyReport(e); }
+        get().setTab('reports'); note(hl('tab-reports'));
         return groupReport(w, v);
       } },
     { ...base, id: 'command.unit.show', title: 'Где соединение', describe: 'Показывает объединение на карте и открывает его доклад.',
-      params: NAME, say: ['штаб, где восьмая гвардейская?'],
+      params: NAME, say: ['штаб, где восьмая гвардейская?'], highlight: noted,
       run: async (p: { name: string }) => {
         const v = view();
         const r = findWho(String(p?.name ?? ''), v);
         if (!r) return `Не нашёл соединения «${p?.name}».`;
         if ('say' in r) return r.say;
         const w = r.who;
-        if (w.kind === 'own') { const u = v.own.find((x) => x.id === w.id)!; get().showUnit(w.id); center(u.at, null); return whereText(u); }
-        if (w.kind === 'enemy') { const e = v.intel.find((x) => x.id === w.id)!; get().showEnemy(w.id); center(e.at, 9); return enemyReport(e); }
-        get().setTab('reports');
+        if (w.kind === 'own') { const u = v.own.find((x) => x.id === w.id)!; get().showUnit(w.id); center(u.at, null); note(hl(`unit-${w.id}`), { at: u.at }); return whereText(u); }
+        if (w.kind === 'enemy') { const e = v.intel.find((x) => x.id === w.id)!; get().showEnemy(w.id); center(e.at, 9); note(hl('enemy-card'), { at: e.at }); return enemyReport(e); }
+        get().setTab('reports'); note(hl('tab-reports'));
         return groupReport(w, v);
       } },
     { ...base, id: 'map.show', title: 'Показать на карте', describe: 'Показывает на карте место (пункт) или соединение по названию.',
-      params: NAME, say: ['штаб, покажи Зелов'],
+      params: NAME, say: ['штаб, покажи Зелов'], highlight: noted,
       run: async (p: { name: string }) => {
         const r = resolveTarget(String(p?.name ?? ''), view());
         if (!r) return `Не нашёл на карте «${p?.name}».`;
@@ -275,15 +276,17 @@ export function commandActions(get: () => CommandDeps): Action[] {
         if (r.who?.kind === 'own') get().showUnit(r.who.id);
         if (r.who?.kind === 'enemy') get().showEnemy(r.who.id);
         center(r.at, r.who ? 9 : 10);
+        note({ at: r.at }, ...(r.who?.kind === 'own' ? [hl(`unit-${r.who.id}`)] : r.who?.kind === 'enemy' ? [hl('enemy-card')] : []));
         return `Показываю: ${r.label}.`;
       } },
     { ...base, id: 'command.tab', title: 'Вкладка командования', describe: 'Открывает вкладку: доклады, разведка, решение, приказы, журнал, посредник.',
       params: { type: 'object', properties: { tab: { enum: Object.keys(TAB_TITLE) } }, required: ['tab'] }, say: ['штаб, открой приказы'],
+      highlight: (p: { tab: CmdTab }) => hl(`tab-${p?.tab}`),
       run: async (p: { tab: CmdTab }) => { if (!TAB_TITLE[p?.tab]) return 'Такой вкладки нет.'; get().setTab(p.tab); return `Вкладка «${TAB_TITLE[p.tab]}».`; } },
     { ...base, id: 'map.zoomIn', title: 'Приблизить карту', describe: 'Приближает карту на один шаг.', say: ['штаб, приблизь'], run: async () => zoomBy(1) },
     { ...base, id: 'map.zoomOut', title: 'Отдалить карту', describe: 'Отдаляет карту на один шаг.', say: ['штаб, отдали'], run: async () => zoomBy(-1) },
     { ...base, id: 'command.journal.read', title: 'Прочитать журнал', describe: 'Читает вслух журнал боевых действий за день (по умолчанию — последний).',
-      params: { type: 'object', properties: { day: { type: 'string' } } }, say: ['штаб, прочитай журнал'],
+      params: { type: 'object', properties: { day: { type: 'string' } } }, say: ['штаб, прочитай журнал'], highlight: () => hl('tab-journal'),
       run: async (p: { day?: string }) => {
         get().setTab('journal');
         const days = view().journal;
@@ -299,10 +302,11 @@ export function commandActions(get: () => CommandDeps): Action[] {
       } },
     { ...base, id: 'command.reveal', title: 'Туман войны', describe: 'Посредник: показать на карте всех (снять туман войны) или вернуть туман войны.',
       params: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] }, say: ['штаб, покажи всех', 'штаб, верни туман войны'],
+      highlight: () => [btn('command.reveal'), hl('tab-umpire')],
       run: async (p: { on: boolean }) => { get().setReveal(!!p?.on); return p?.on ? 'Туман войны снят: на карте все войска.' : 'Туман войны возвращён.'; } },
     { ...base, id: 'command.enemyMode', title: 'Противник', describe: 'Кто командует противником: штаб на модели или без штаба (держится прежних приказов).',
       params: { type: 'object', properties: { mode: { enum: ['llm', 'passive'] } }, required: ['mode'] }, say: ['штаб, противник без штаба'],
-      available: inReplay,
+      available: inReplay, highlight: () => [hl('enemy-mode'), hl('tab-umpire')],
       run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode]) return 'Скажите: «штаб на модели» или «без штаба».'; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
     { ...base, id: 'command.exit', title: 'Выйти из игры', describe: 'Выходит из игры к переигровке; игра сохранена, её можно продолжить.', say: ['штаб, выйди из игры'],
       available: inReplay,
@@ -380,7 +384,7 @@ export function replayActions(get: () => ReplayDeps): Action[] {
   return [
     { section: 'replay', id: 'replay.calc', title: 'Рассчитать операцию', describe: 'Рассчитывает операцию (по названию; без названия — выбранную).',
       params: { type: 'object', properties: { operation: { type: 'string' } } }, say: ['штаб, рассчитай операцию', 'штаб, рассчитай берлинскую операцию'],
-      available: idle,
+      available: idle, highlight: () => hl('calc'),
       run: async (p: { operation?: string }) => {
         const d = get();
         let id = d.scenario;
@@ -395,6 +399,7 @@ export function replayActions(get: () => ReplayDeps): Action[] {
       } },
     { section: 'replay', id: 'replay.takeCommand', title: 'Принять командование', describe: 'Открывает окно «Принять командование» с момента на карте или с названного дня.',
       params: { type: 'object', properties: { at: { type: 'string' } } }, say: ['штаб, прими командование', 'штаб, прими командование с восемнадцатого апреля'],
+      highlight: () => hl('take'),
       available: () => { const r = idle(); return r !== true ? r : get().result && get().time ? true : 'операция ещё не рассчитана. Скажите: «Штаб, рассчитай операцию»'; },
       run: async (p: { at?: string }) => {
         const d = get();

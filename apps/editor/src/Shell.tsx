@@ -4,7 +4,8 @@
  * подготовка операций), карты-подложки, справочник знаков,
  * база знаний (материалы, загрузка документов, вопросы к модели),
  * ИИ (связь с моделями: штаб противника в игре, советник, база знаний). Раздел запоминается в адресе (#editor, #replay…).
- * Поверх разделов — панель голоса (voice/VoicePanel) и тур с подсветкой (voice/tour, voice/TourLayer; элементы — `data-tour="…"`).
+ * Поверх разделов — панель голоса (voice/VoicePanel) и тур с подсветкой (voice/tour, voice/TourLayer; элементы — `data-tour="…"`),
+ * подсветка исполненного голосом (voice/FlashLayer).
  */
 import { IN_APP, SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -25,6 +26,7 @@ import { registerTabActions, MAPS_TAB, TABS, type TabOf } from './voice/actions/
 import { ActButton } from './voice/registry';
 import { VoicePanel } from './voice/VoicePanel';
 import { TourLayer } from './voice/TourLayer';
+import { FlashLayer } from './voice/FlashLayer';
 import { ModelPicker } from './ModelPicker';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -89,6 +91,7 @@ export function Shell() {
       {/* голос — поверх любого раздела */}
       <VoicePanel section={section} llm={llm.settings} llmCheck={llm.check.state} recheck={llm.recheck} />
       <TourLayer section={section} />
+      <FlashLayer />
     </div>
   );
 }

@@ -1720,5 +1720,18 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .tour-btns button.tour-off { border-color: transparent; text-decoration: underline; color: #5a5852; }
 .tour-hint { margin: 0; font-size: 20px; color: #5a5852; }
 @media (prefers-reduced-motion: reduce) { .tour-frame, .tour-dim, .tour-cap { transition: none; } .tour-frame::after { animation: none; } }
+/* подсветка исполненного голосом (voice/FlashLayer): рамка тура без притемнения и подписи, метка-пульс на карте */
+.hl-layer { position: fixed; inset: 0; z-index: 995; pointer-events: none; }
+.hl-frame, .hl-spot { position: fixed; pointer-events: none; animation: hl-fade var(--hl-ms, 2500ms) ease both; }
+.hl-frame { border-radius: 10px; border: 3px solid #f2c14e; box-shadow: 0 0 14px 2px rgba(242,193,78,.55);
+  transition: top .25s ease, left .25s ease, width .25s ease, height .25s ease; }
+.hl-frame::after { content: ''; position: absolute; inset: 0; border-radius: 8px; border: 2px solid rgba(242,193,78,.8); animation: tour-pulse 1.8s ease-out infinite; }
+.hl-spot { width: 0; height: 0; }
+.hl-spot::before, .hl-spot::after { content: ''; position: absolute; left: -20px; top: -20px; width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid #f2c14e; box-shadow: 0 0 12px 2px rgba(242,193,78,.6); }
+.hl-spot::after { animation: hl-ring 1.2s ease-out infinite; }
+@keyframes hl-fade { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes hl-ring { from { opacity: .9; transform: scale(.6); } to { opacity: 0; transform: scale(1.8); } }
+@media (prefers-reduced-motion: reduce) { .hl-frame, .hl-spot { animation: none; transition: none; } .hl-frame::after, .hl-spot::after { animation: none; } }
 .vp-check-intro { display: flex; align-items: center; gap: 10px; margin-top: 10px; cursor: pointer; }
 .vp-check-intro input { width: 22px; height: 22px; }
