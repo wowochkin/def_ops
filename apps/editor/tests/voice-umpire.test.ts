@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameRecord, IntelReport, UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { HumanDecision, PlanVariantView, TurnView } from '../src/sim/game-protocol';
-import { getAction, markVoice, parsePhrase, register, setProposer, setSpeaker, voiceNote, type Action, type SpeakOpts } from '../src/voice/registry';
+import { getAction, markVoice, parsePhrase, register, setProposer, setRetractor, setSpeaker, setVoiceLive, voiceNote, type Action, type SpeakOpts } from '../src/voice/registry';
 import { CONFIRM_MS, Dispatcher } from '../src/voice/dispatch';
 import { setSectionSource } from '../src/voice/actions/command';
 import { releaseStaff, staffActions, type OrderDraft, type PlanState, type StaffAct, type StaffDeps } from '../src/voice/actions/staff';
@@ -101,10 +101,11 @@ beforeEach(() => {
   disp = new Dispatcher({ now: () => t, say: (s, o) => { said.push({ text: s, ...o }); }, section: () => section });
   setSpeaker((text: string, o?: SpeakOpts) => disp.announce(text, o));
   setProposer((text, id, params) => disp.propose(text, id, params));
+  setVoiceLive(() => true);
   offs.push(register({ id: 'shell.open', section: 'global', title: '', describe: '', available: () => true, run: async () => undefined }));
   resetUmpire();
 });
-afterEach(() => { offs.forEach((o) => o()); stopReading(); setSpeaker(null); setProposer(null); setSaver(null); vi.useRealTimers(); });
+afterEach(() => { offs.forEach((o) => o()); stopReading(); setSpeaker(null); setProposer(null); setRetractor(null); setVoiceLive(null); setSaver(null); vi.useRealTimers(); });
 
 // ---------------------------------------------------------------- ход
 
@@ -316,6 +317,31 @@ describe('доклад посредника после хода — голосо
     await vi.advanceTimersByTimeAsync(UMPIRE_REMIND_MS * 2);
     expect(ump()).toHaveLength(5); // после доклада напоминаний нет
   });
+  it('напоминания не копятся: новое снимает прежнее, если оно ещё не прозвучало', async () => {
+    vi.useFakeTimers();
+    const retracted: number[] = [];
+    setRetractor((id) => { retracted.push(id); });
+    setSpeaker((text: string, o?: SpeakOpts) => { disp.announce(text, o); return said.length; }); // номер фразы — её место в ленте
+    let release!: (s: string) => void;
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: () => new Promise<string>((r) => { release = r; }) });
+    await vi.advanceTimersByTimeAsync(UMPIRE_REMIND_MS + 10);
+    expect(retracted).toEqual([]);
+    const first = said.length;
+    await vi.advanceTimersByTimeAsync(UMPIRE_REMIND_MS);
+    expect(retracted).toEqual([first]);
+    release(MODEL_SAYS);
+    await p;
+  });
+  it('голос не слышит (выключен, дежурит) — модель не спрашивается, доклад по правилам — для «повтори доклад», штаб противника не ждёт', async () => {
+    setVoiceLive(() => false);
+    const model = vi.fn(async () => MODEL_SAYS);
+    const done = vi.fn();
+    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model, onDone: done });
+    expect(model).not.toHaveBeenCalled();
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(lastUmpire()).toBe(report());
+    expect(voiceNote()).toBeNull();
+  });
   it('модель не ответила после всех попыток — честно, затем доклад по данным расчёта', async () => {
     const done = vi.fn();
     await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => { throw new Error('нет связи'); }, onDone: done });
@@ -359,12 +385,18 @@ describe('доклад посредника после хода — голосо
     release('Старый доклад. Он устарел. Совсем.');
     await p1;
     expect(texts().join(' ')).not.toMatch(/Старый доклад/);
-    expect(done1).toHaveBeenCalledTimes(1); // штаб противника не ждёт снятого доклада
+    expect(done1).not.toHaveBeenCalled(); // снятый доклад не снимает удержание штаба противника для нового хода
   });
-  it('раздел «Переигровка» в фоне — коротко, где доклад; «повтори доклад» там — целиком', async () => {
+  it('раздел «Переигровка» в фоне — без объявления об ожидании (только на панели), готово — одной фразой; «повтори доклад» там — целиком', async () => {
     section = 'knowledge';
-    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => MODEL_SAYS });
-    expect(said.at(-1)).toMatchObject({ role: 'umpire', text: 'Ход посчитан. Доклад посредника — в разделе «Переигровка»: скажите «повтори доклад».' });
+    let release!: (s: string) => void;
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: () => new Promise<string>((r) => { release = r; }) });
+    await Promise.resolve();
+    expect(said).toEqual([]);
+    expect(voiceNote()).toBe('Посредник готовит доклад');
+    release(MODEL_SAYS);
+    await p;
+    expect(said).toEqual([expect.objectContaining({ role: 'umpire', text: 'Доклад посредника готов — в разделе «Переигровка»: скажите «повтори доклад».' })]);
     section = 'replay';
     turn();
     said = [];

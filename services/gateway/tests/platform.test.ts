@@ -432,6 +432,8 @@ describe('шлюз: сохранение файла в «Загрузки» (н�
       const c = await raw(a.port, 'раз\nбор\u0000:*.md', 'x', own(a.port));
       expect(c.status).toBe(200);
       expect(c.json.path).toBe(join(dir, 'раз_бор___.md'));
+      // знаки направления письма убираются: имя на экране не обманывает («a‮dm.exe.md»)
+      expect((await raw(a.port, 'a\u202Edm.exe\u2066.md', 'x', own(a.port))).json.path).toBe(join(dir, 'adm.exe.md'));
       const long = await raw(a.port, `${'ж'.repeat(200)}.md`, 'x', own(a.port));
       expect(long.status).toBe(200);
       const base = long.json.path!.slice(dir.length + 1);

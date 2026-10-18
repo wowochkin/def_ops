@@ -12,7 +12,7 @@
 import type { GameRecord } from '@def-ops/sim';
 import type { AiStatus, TurnView } from '../sim/game-protocol';
 import { inReplay } from './actions/command';
-import { propose, setVoiceNote, speak, voiceRecent } from './registry';
+import { propose, retract, setVoiceNote, speak, voiceLive, voiceRecent } from './registry';
 import { dayMonth, sentence } from './report';
 import { plural, speakable } from './speech';
 
@@ -123,34 +123,43 @@ export const UMPIRE_NOTE = 'Посредник готовит доклад';
 export const UMPIRE_NO_MODEL = 'Модель недоступна — докладываю по данным расчёта.';
 export const UMPIRE_FAILED = 'Модель не ответила — докладываю по данным расчёта.';
 export const UMPIRE_UNFIT = 'Ответ модели не годится для доклада — докладываю по данным расчёта.';
-export const UMPIRE_AWAY = 'Ход посчитан. Доклад посредника — в разделе «Переигровка»: скажите «повтори доклад».';
+export const UMPIRE_AWAY = 'Доклад посредника готов — в разделе «Переигровка»: скажите «повтори доклад».';
 export const NEXT_TURN_SAY = 'Решение на следующий ход: скажите «дай варианты» или «доложи обстановку».';
 export const REVIEW_OFFER = 'Составить разбор операции?';
 
 const say = (text: string) => speak(text, { role: 'umpire', keep: true });
 
 /**
- * Ход посчитан. С моделью: посредник сразу говорит, что сведения готовятся (на панели — «Посредник готовит доклад»),
- * ждёт её ответа (обычный срок и повторы llm.ts), пока ждёт — не чаще раза в UMPIRE_REMIND_MS «Сведения ещё
- * готовятся»; ответила — её доклад. Доклад по данным расчёта (правила) — только если модель недоступна, не ответила или
- * ответила не докладом, и тогда — честно, почему. Все фразы не устаревают от реплик человека (keep): доклад звучит после
- * команды. Затем — штаб: что дальше (если голосом пользовались недавно); в конце игры — предложение разбора.
- * onDone — доклад закончен или снят (штаб противника ждёт его, чтобы не занимать модель раньше посредника).
+ * Ход посчитан. Голос не слышит (выключен, дежурит, сервис не на связи) — модель не спрашивается: доклад по данным
+ * расчёта готовится для «повтори доклад», штаб противника не ждёт. С моделью: посредник сразу говорит, что сведения
+ * готовятся (на панели — «Посредник готовит доклад»; «Переигровка» в фоне — только на панели), ждёт её ответа (обычный
+ * срок и повторы llm.ts), пока ждёт — не чаще раза в UMPIRE_REMIND_MS «Сведения ещё готовятся» (не копятся: новое
+ * снимает прежнее, если оно ещё не прозвучало); ответила — её доклад. Доклад по данным расчёта — только если модель
+ * недоступна, не ответила или ответила не докладом, и тогда — честно, почему. Фразы не устаревают от реплик человека
+ * (keep). Затем — штаб: что дальше (если голосом пользовались недавно); в конце игры — предложение разбора.
+ * onDone — доклад этого хода закончен (снятый новым ходом — нет: у нового свой): штаб противника ждёт его, чтобы не
+ * занимать модель раньше посредника.
  */
 export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; record: GameRecord | null; ai: AiStatus | null; model?: UmpireModel | null; onDone?(): void }): Promise<void> {
   const my = ++seq;
   pending?.abort();
   pending = null;
   setVoiceNote(null);
+  const rules = umpireReport(a.view, a.record, a.ai, a.prev);
+  if (!voiceLive()) { lastText = rules; a.onDone?.(); return; }
   try {
-    const rules = umpireReport(a.view, a.record, a.ai, a.prev);
     let text = rules, why: string | null = UMPIRE_NO_MODEL;
     if (a.model) {
       const ac = new AbortController();
       pending = ac;
-      say(UMPIRE_WAIT_SAY);
+      if (inReplay() === true) say(UMPIRE_WAIT_SAY);
       setVoiceNote(UMPIRE_NOTE);
-      const remind = setInterval(() => { if (pending === ac) say(UMPIRE_STILL_SAY); }, UMPIRE_REMIND_MS);
+      let reminder: number | void;
+      const remind = setInterval(() => {
+        if (pending !== ac || inReplay() !== true) return;
+        if (typeof reminder === 'number') retract(reminder); // не звучало — заменить, а не копить
+        reminder = say(UMPIRE_STILL_SAY);
+      }, UMPIRE_REMIND_MS);
       try {
         const m = umpireFromModel(await a.model(UMPIRE_SYSTEM, umpireInput(a.view, a.record, a.prev), { signal: ac.signal }));
         if (m) { text = m; why = null; } else why = UMPIRE_UNFIT;
@@ -161,14 +170,14 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
     }
     if (my !== seq) return; // пришёл новый ход или игра закончена — поздний доклад не звучит
     lastText = text;
-    // «Переигровка» в фоне: доклад звучит там (подсказки фраз здесь не исполнятся)
+    // «Переигровка» в фоне: одной фразой, где доклад (подсказки фраз здесь не исполнятся)
     if (inReplay() !== true) { say(UMPIRE_AWAY); return; }
     if (why) say(why);
     say(text);
     if (!voiceRecent()) return;
     if (a.view.over) propose(REVIEW_OFFER, 'command.review.compose', {});
     else speak(NEXT_TURN_SAY, { keep: true });
-  } finally { a.onDone?.(); }
+  } finally { if (my === seq) a.onDone?.(); }
 }
 
 /** Повторить последний доклад голосом посредника. */

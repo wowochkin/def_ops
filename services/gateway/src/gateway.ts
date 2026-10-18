@@ -61,7 +61,8 @@ export function saveName(raw: string): string | null {
   const name = raw.trim();
   const ext = path.extname(name).toLowerCase();
   if (!name || /[\\/]/.test(name) || name.startsWith('.') || name.includes('..') || !SAVE_EXT.has(ext)) return null;
-  let stem = name.slice(0, name.length - ext.length).replace(/[\u0000-\u001f\u007f:<>|?*"]/g, '_').trim();
+  // знаки направления письма (U+202A–202E, U+2066–2069) убираются: имя на экране не должно обманывать
+  let stem = name.slice(0, name.length - ext.length).replace(/[\u202a-\u202e\u2066-\u2069]/g, '').replace(/[\u0000-\u001f\u007f:<>|?*"]/g, '_').trim();
   if (!stem) return null;
   while (Buffer.byteLength(stem + ext) > NAME_MAX_BYTES) stem = [...stem].slice(0, -1).join('');
   return stem + ext;
@@ -109,6 +110,7 @@ async function saveDownload(dir: string, dev: boolean, url: URL, req: http.Incom
   return send(409, { error: { code: 'exists', message: 'слишком много файлов с таким именем' } });
 }
 
+/** Снятая шлюзом часть пути: префикс API без префикса на стороне сервиса. */
 export function forwardedPrefix(prefix: string, target: string): string {
   return target && prefix.endsWith(target) ? prefix.slice(0, -target.length) : prefix;
 }

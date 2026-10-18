@@ -32,7 +32,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
-import { ActButton, act, actions, listed, onModal, onVoiceNote, setProposer, setRetractor, setSpeaker, useAction, voiceNote } from './registry';
+import { ActButton, act, actions, listed, onModal, onVoiceNote, setProposer, setRetractor, setSpeaker, setVoiceLive, useAction, voiceNote } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
@@ -183,8 +183,10 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     setRetractor((id) => dispatcher.retract(id));
     // предложения модулей («Составить разбор операции?»): в дежурном и при выключенном голосе — нет
     setProposer((text, id, params) => { if (enabledRef.current && !dispatcher.standby) dispatcher.propose(text, id, params); });
+    // слышит ли голос: выключен, дежурит или сервис не на связи — модулям незачем готовить фразы моделью
+    setVoiceLive(() => enabledRef.current && !dispatcher.standby && client.status === 'ready');
     const off = onModal((_m, opened) => { if (opened) { dispatcher.cancel(); gate.clear(); } });
-    return () => { setSpeaker(null); setRetractor(null); setProposer(null); off(); };
+    return () => { setSpeaker(null); setRetractor(null); setProposer(null); setVoiceLive(null); off(); };
   }, [dispatcher, gate]);
   // тур говорит голосом начальника штаба: та же очередь фраз, та же лента
   useTourVoice({

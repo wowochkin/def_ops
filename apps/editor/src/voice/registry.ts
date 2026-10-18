@@ -149,6 +149,12 @@ export function speak(text: string, o?: SpeakOpts): number | void { if (text) re
 /** Фраза больше не нужна (новая просьба о том же). */
 export function retract(id: number): void { retractor?.(id); }
 
+let live: (() => boolean) | null = null;
+/** Панель голоса сообщает, слышит ли голос (включён, не дежурит, сервис на связи); null — панели нет. */
+export function setVoiceLive(fn: (() => boolean) | null): void { live = fn; }
+/** Голос слышит: фраза штаба прозвучит (иначе модулям незачем готовить её моделью). */
+export function voiceLive(): boolean { return live?.() ?? false; }
+
 let note: string | null = null;
 const noteCbs = new Set<(t: string | null) => void>();
 /** Что идёт сейчас, словами для панели голоса («Посредник готовит доклад»; null — ничего). */
