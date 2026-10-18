@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, openModal, register, setSpeaker, topModal, type Action } from '../src/voice/registry';
 import { SayGate } from '../src/voice/panel-state';
-import { CONFIRM_MS, Dispatcher, RECHECK_MS, STANDBY_SAY } from '../src/voice/dispatch';
+import { CONFIRM_MS, Dispatcher, RECHECK_MS, REMIND_MS, REMIND_YES_NO, STANDBY_SAY } from '../src/voice/dispatch';
 import { ModelUnavailable, type ModelReply } from '../src/voice/llm';
 import { ordinalIndex, pickByName, yesNo } from '../src/voice/answers';
 import { fieldActions, readAloud } from '../src/voice/dictation';
@@ -656,12 +656,12 @@ describe('раунд 1: поправки по рецензии', () => {
   it('Minor-8: вопрос окна зачитывается целиком (до 4 фраз); длинный — частями, «нельзя отменить» не теряется', () => {
     setSpeaker((s) => said.push(s));
     let off = voiceDialog({ message: 'Завершить игру? Запись будет удалена. Это нельзя отменить.' }, () => {});
-    expect(said.at(-1)).toBe('Завершить игру? Запись будет удалена. Это нельзя отменить. Скажите «да» или «нет». Жду ответа.');
+    expect(said.at(-1)).toBe('Завершить игру? Это нельзя отменить. Скажите «да» или «нет». Запись будет удалена. Жду ответа.');
     off();
     off = voiceDialog({ message: 'Первое. Второе. Третье. Четвёртое. Пятое. Шестое. Это нельзя отменить.' }, () => {});
-    expect(said.at(-1)).toMatch(/^Первое\. Второе\./);
-    expect(said.at(-1)).toMatch(/Это нельзя отменить\./);
-    expect(said.at(-1)).toMatch(/Скажите «да» или «нет»\. Жду ответа\.$/);
+    // сначала вопрос (первая фраза), предупреждение и как отвечать; пояснения — по «дальше» (Task 1b)
+    expect(said.at(-1)).toMatch(/^Первое\. Это нельзя отменить\. Скажите «да» или «нет»\./);
+    expect(said.at(-1)).toMatch(/Жду ответа\.$/);
     off();
   });
 
@@ -746,7 +746,8 @@ describe('раунд 2: ответ окну без «штаб» — не дол�
     const off = voiceDialog({ message: 'Завершить игру. Все ходы будут потеряны. Журнал сохранится. Разбор не составлен. Противник ждёт. Это нельзя отменить.', ok: 'Завершить' }, () => {});
     const s = said.at(-1)!;
     expect(s).not.toMatch(/Дальше\?/);
-    expect(s).toMatch(/^Завершить игру\. Все ходы будут потеряны\. Это нельзя отменить\. Подробнее — скажите «дальше»\. Скажите «да» — «Завершить», или «нет»\. Жду ответа\.$/);
+    // Task 1b: сначала вопрос, предупреждения и как отвечать; пояснения — по «дальше»
+    expect(s).toMatch(/^Завершить игру\. Все ходы будут потеряны\. Это нельзя отменить\. Скажите «да» — «Завершить», или «нет»\. Подробнее — скажите «дальше»\. Жду ответа\.$/);
     off();
   });
   it('чтение частями и итог записи голоса — кончаются «Жду ответа.», а не словом-ответом', async () => {
@@ -776,5 +777,174 @@ describe('раунд 2: ответ окну без «штаб» — не дол�
     t += 13_000;
     expect(await d.utterance('так точно', 3)).toBe('done');
     expect(yes).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Task 1b: ответ поверх чтения вопроса', () => {
+  beforeEach(() => setSpeaker((s) => said.push(s)));
+  const READ_CHOOSE = 'Что сделать с игрой? Варианты: первый — «Сохранить», второй — «Удалить», третий — «Продолжить». Или «отмена».';
+
+  it('«голосом»: сервис перебил штаб (barge → spoke) — ответ без «штаб» посреди чтения принят', async () => {
+    const out: unknown[] = [];
+    const off = voiceDialog({ message: 'Что сделать с игрой?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
+    const d = mk();
+    t += 10 * 60_000; // окно разговора давно прошло — вопрос ещё читается
+    d.spoke(); // перебили
+    expect(await d.utterance('второй', 1)).toBe('done');
+    expect(out).toEqual([1]);
+    off();
+  });
+
+  it('«словом»: речь поверх штаба — ответ окну; штаб замолкает и исполняет ответ', async () => {
+    const out: unknown[] = [];
+    const stop = vi.fn();
+    voiceDialog({ message: 'Что сделать с игрой?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
+    const d = mk({ stop });
+    t += 10 * 60_000;
+    // «второй» есть во фразе штаба, но одно слово — не эхо (как стоп-слово)
+    expect(await d.over('второй', 7, READ_CHOOSE)).toBe('done');
+    expect(stop).toHaveBeenCalled();
+    expect(out).toEqual([1]);
+    expect(topModal()).toBeNull();
+  });
+
+  it('«словом»: эхо (цепочка слов фразы штаба), не ответ, ничего не ждёт ответа — не реплика: штаб не замолкает, молчит', async () => {
+    const out: unknown[] = [];
+    const stop = vi.fn();
+    const d = mk({ stop });
+    expect(await d.over('второй', 1, READ_CHOOSE)).toBe('ignored'); // вопроса нет
+    const off = voiceDialog({ message: 'Что сделать с игрой?', labels: ['Сохранить', 'Удалить', 'Продолжить'] }, (o) => out.push(o));
+    said.length = 0;
+    expect(await d.over('второй удалить', 2, READ_CHOOSE)).toBe('ignored'); // эхо «второй — «Удалить»»
+    expect(await d.over('открой карты', 3, READ_CHOOSE)).toBe('ignored');
+    expect(await d.over('доложите потери за сутки по армии', 4, READ_CHOOSE)).toBe('ignored');
+    expect(stop).not.toHaveBeenCalled();
+    expect(out).toEqual([]);
+    expect(said).toEqual([]);
+    off();
+  });
+
+  it('«словом»: «да» поверх вопроса, где штаб сам говорит «да», — не принимается (не отличить от эха); «нет» — принимается', async () => {
+    const out: unknown[] = [];
+    voiceDialog({ message: 'Удалить слой?', ok: 'Удалить' }, (o) => out.push(o));
+    const chief = 'Удалить слой? Скажите «да» — «Удалить», или «нет». Жду ответа.';
+    const d = mk();
+    expect(await d.over('да', 1, chief)).toBe('ignored');
+    expect(out).toEqual([]);
+    expect(await d.over('нет', 2, chief)).toBe('done');
+    expect(out).toEqual([false]);
+    // «да» поверх пояснений, где «да» нет, — принимается
+    voiceDialog({ message: 'Удалить слой?', ok: 'Удалить' }, (o) => out.push(o));
+    expect(await d.over('да', 3, 'Слой «Рубежи» нарисован на прошлой неделе.')).toBe('done');
+    expect(out).toEqual([false, true]);
+  });
+
+  it('«словом»: подтверждение необратимого — «нет» поверх вопроса отменяет, «да» поверх — нет', async () => {
+    const del = vi.fn(async () => undefined);
+    reg({ id: 'game.delete', section: 'editor', irreversible: true, confirm: () => 'Удалить игру?', run: del });
+    const d = mk({ model: reply({ say: '', call: { id: 'game.delete', params: {} } }) });
+    await d.utterance('штаб, удали игру', 1);
+    const chief = said.at(-1)!;
+    expect(await d.over('да', 2, chief)).toBe('ignored');
+    expect(del).not.toHaveBeenCalled();
+    expect(await d.over('нет', 3, chief)).toBe('done');
+    expect(d.pending).toBeNull();
+    expect(said.at(-1)).toBe('Отменено.');
+  });
+
+  it('в дежурном речь поверх штаба не принимается', async () => {
+    const d = mk();
+    voiceDialog({ message: 'Удалить?' }, () => {});
+    d.setStandby(true);
+    expect(await d.over('нет', 1, STANDBY_SAY)).toBe('ignored');
+  });
+});
+
+describe('Task 1b: напоминание «Жду ответа» через 8 с после вопроса — один раз', () => {
+  beforeEach(() => setSpeaker((s) => said.push(s)));
+  it('подтверждение: 8 с тишины после вопроса — «Да или нет? Жду ответа.», один раз', () => {
+    const d = mk();
+    d.propose('Удалить игру?', 'shell.open');
+    t += 3000;
+    d.spoke(); // вопрос договорён
+    t += REMIND_MS - 1;
+    d.tick();
+    expect(said.at(-1)).not.toBe(REMIND_YES_NO);
+    t += 1;
+    d.tick();
+    expect(said.at(-1)).toBe(REMIND_YES_NO);
+    expect(REMIND_YES_NO).toBe('Да или нет? Жду ответа.');
+    d.spoke(); // напоминание договорено
+    t += REMIND_MS;
+    d.tick();
+    expect(said.filter((s) => s === REMIND_YES_NO)).toHaveLength(1);
+    expect(d.pending).not.toBeNull(); // ждёт ещё: 15 с от конца напоминания
+  });
+
+  it('пока вопрос не договорён — не напоминать', () => {
+    const d = mk();
+    d.spoke();
+    d.propose('Удалить игру?', 'shell.open');
+    t += REMIND_MS + 1000;
+    d.tick();
+    expect(said.filter((s) => s === REMIND_YES_NO)).toHaveLength(0);
+  });
+
+  it('окно dialogs.ts: напоминание окна; выбор — номер или «отмена»; новое окно — снова один раз', () => {
+    const d = mk();
+    const off1 = voiceDialog({ message: 'Удалить слой?' }, () => {});
+    d.tick();
+    t += 2000;
+    d.spoke();
+    t += REMIND_MS;
+    d.tick();
+    expect(said.at(-1)).toBe('Да или нет? Жду ответа.');
+    t += REMIND_MS * 3;
+    d.spoke();
+    t += REMIND_MS;
+    d.tick();
+    expect(said.filter((s) => s === 'Да или нет? Жду ответа.')).toHaveLength(1);
+    off1();
+    voiceDialog({ message: 'Что сделать?', labels: ['Сохранить', 'Удалить'] }, () => {});
+    d.tick();
+    t += 2000;
+    d.spoke();
+    t += REMIND_MS;
+    d.tick();
+    expect(said.at(-1)).toBe('Какой вариант? Скажите номер или «отмена». Жду ответа.');
+  });
+
+  it('окно без напоминания (калибровка, «Голоса») — не напоминать', () => {
+    const d = mk();
+    const close = openModal({ question: 'Голоса', quiet: true, parse: () => null });
+    d.tick();
+    t += 1000;
+    d.spoke();
+    t += REMIND_MS * 2;
+    d.tick();
+    expect(said).toEqual([]);
+    close();
+  });
+});
+
+describe('Task 1b: в окне сначала вопрос и варианты, потом пояснения', () => {
+  beforeEach(() => setSpeaker((s) => said.push(s)));
+  it('вопрос, предупреждение, как отвечать — потом пояснения, в конце «Жду ответа.»', () => {
+    const off = voiceDialog({ message: 'Завершить игру? Запись будет удалена. Это нельзя отменить.' }, () => {});
+    expect(said.at(-1)).toBe('Завершить игру? Это нельзя отменить. Скажите «да» или «нет». Запись будет удалена. Жду ответа.');
+    off();
+  });
+  it('выбор: вступление и вопрос, варианты, пояснения', () => {
+    const off = voiceDialog({ message: 'Игра не завершена. Что сделать с ней? Запись хранится до конца хода.', labels: ['Сохранить', 'Удалить'] }, () => {});
+    expect(said.at(-1)).toBe('Игра не завершена. Что сделать с ней? Варианты: первый — «Сохранить», второй — «Удалить». Или «отмена». Запись хранится до конца хода. Жду ответа.');
+    off();
+  });
+  it('длинное: вопрос и варианты сразу, пояснения — по «дальше»', async () => {
+    const off = voiceDialog({ message: 'Начать заново? Первое. Второе. Третье. Четвёртое. Пятое. Это нельзя отменить.' }, () => {});
+    expect(said.at(-1)).toBe('Начать заново? Это нельзя отменить. Скажите «да» или «нет». Подробнее — скажите «дальше». Жду ответа.');
+    const d = mk();
+    await d.utterance('штаб, дальше', 1);
+    expect(said.at(-1)).toMatch(/^Первое\. Второе\./);
+    off();
   });
 });

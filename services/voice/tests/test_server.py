@@ -617,7 +617,8 @@ def test_word_mode_chunk_window_is_short(make_client):
 
 
 def test_word_mode_other_speech_dropped_while_chief_speaks(make_client):
-    """Речь без стоп-слова, пока штаб говорит, — не реплика (её не отличить от эха): штаб договаривает; потом —
+    """Речь без стоп-слова, пока штаб говорит, — не реплика (её не отличить от эха): штаб договаривает; окну она
+    приходит отдельно — `over` с тем, что штаб уже сказал (окно примет её, только если это ответ на вопрос); потом —
     слушаю как обычно."""
     c = make_client(["доложите потери за сутки"] * 20)
     ws, _ = connect(c)
@@ -627,6 +628,9 @@ def test_word_mode_other_speech_dropped_while_chief_speaks(make_client):
     seen = []
     until(ws, "speech", seen)
     until(ws, "speech", seen)
+    over = until(ws, "over", seen)
+    assert over["text"] == "доложите потери за сутки" and isinstance(over["id"], int)
+    assert "Докладываю обстановку" in over["chief"]
     flush(ws, seen)
     assert not any(isinstance(m, dict) and m["type"] in ("barge", "utterance", "echo") for m in seen)
     assert c.app.state.service.models.transcribed >= 2
@@ -640,6 +644,21 @@ def test_word_mode_other_speech_dropped_while_chief_speaks(make_client):
     c.app.state.service.models.script[:0] = ["доложите потери за сутки"]
     send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
     assert until(ws, "utterance")["text"] == "доложите потери за сутки"
+    ws.close()
+
+
+def test_word_mode_over_not_merged_into_next_utterance(make_client):
+    """Речь поверх штаба (over) не склеивается со следующей репликой: это не реплика."""
+    c = make_client(["второй", "открой карты"] * 5)
+    ws, _ = connect(c)
+    word_mode(ws)
+    chief_speaks(ws, "Варианты: первый, второй. Жду ответа.")
+    send_audio(ws, np.concatenate([tone(0.6), silence(0.6)]))
+    assert until(ws, "over")["text"] == "второй"
+    ws.send_text(json.dumps({"type": "stop"}))  # окно приняло ответ — штаб замолкает
+    send_audio(ws, np.concatenate([tone(0.6), silence(2.0)]))
+    u = until(ws, "utterance")
+    assert u["text"] == "открой карты" and "continues" not in u
     ws.close()
 
 

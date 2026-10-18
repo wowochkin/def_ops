@@ -150,6 +150,25 @@ export function readAloud(text: string): string {
   reading = r;
   return parts[0] + MORE;
 }
+/**
+ * Отложить чтение: ничего не сказано, «дальше» читает первую часть text, потом следующие (read.next / read.stop) —
+ * пояснения длинного вопроса после вариантов ответа.
+ */
+export function queueReading(text: string): void {
+  stopReading();
+  const parts = readParts(text);
+  if (!parts.length) return;
+  const r = { parts, i: -1, off: () => {} };
+  const base = { section: 'global', available: () => true as const };
+  const offs = [
+    register({ ...base, id: 'read.next', title: 'Читать дальше', describe: 'Читает следующую часть текста.', say: ['дальше'],
+      run: async () => next(r) }),
+    register({ ...base, id: 'read.stop', title: 'Хватит читать', describe: 'Заканчивает чтение текста.', say: ['хватит'],
+      run: async () => { stopReading(); } }),
+  ];
+  r.off = () => offs.forEach((o) => o());
+  reading = r;
+}
 function next(r: NonNullable<typeof reading>): string {
   if (reading !== r) return '';
   r.i++;

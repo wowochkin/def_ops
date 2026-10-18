@@ -34,8 +34,11 @@
 // («проводи ход» — чего нет и «Составить черновик донесения?», «да»; «проводи ход» → «да» → доклад посредника голосом
 // посредника — роль umpire). В конце — отдельное окно «без рук от запуска до доклада посредника»: вступление («хватит»)
 // → переигровка → расчёт → командование → обстановка → варианты → «проводи ход» → «да» → посредник.
+// Компактная панель: по умолчанию полоса; открыто окно — полоса не на окне (вопрос dialogs.ts, «Принять командование»),
+// ответа нет 8 с — напоминание; ответ посреди чтения окна — перебиванием «голосом» и «словом»; в командовании легенда
+// свёрнута, место на карте — не под панелью и легендой; длинная фраза разворачивает полосу, 10 с тишины — сворачивают.
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
-// панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и туров (voice-tour.jpg, voice-tour-modeling.jpg,
+// панели, калибровки, голосов, раздела «ИИ» (модель для голоса), окон с полосой, командования и туров (voice-tour.jpg, voice-tour-modeling.jpg,
 // voice-tour-library.jpg).
 // Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
@@ -281,10 +284,14 @@ const panel = page.locator('.vp');
 
 // ---------------------------------------------------------------- проверки
 
-await check('панель свёрнута в значок и разворачивается', async () => {
-  await page.locator('.vp-icon').waitFor({ state: 'visible', timeout: T });
-  await page.locator('.vp-icon').click();
-  await panel.locator('.vp-card').waitFor({ state: 'visible', timeout: 5000 });
+await check('по умолчанию — полоса: не выше двух строк фразы, «Развернуть» разворачивает', async () => {
+  const strip = panel.locator('.vp-card.strip');
+  await strip.waitFor({ state: 'visible', timeout: T });
+  const r = await strip.evaluate((e) => e.getBoundingClientRect().toJSON());
+  if (r.height > 130 || r.width > 520) throw new Error(`полоса ${Math.round(r.width)}×${Math.round(r.height)} px`);
+  await strip.getByRole('button', { name: 'Развернуть' }).click();
+  await panel.locator('.vp-card:not(.strip)').waitFor({ state: 'visible', timeout: 5000 });
+  return `${Math.round(r.width)}×${Math.round(r.height)} px`;
 });
 
 await check('голос готов: «Жду обращения»', async () => {
@@ -589,8 +596,12 @@ const micOff = async (what) => {
 const micOn = () => page.waitForFunction(() => window.__e2e.trackStates().includes('live'), null, { timeout: 15000 });
 const LIVE = /Жду обращения|Слушаю|Думаю|Говорит|Разговор/;
 
-await check('кнопка «Выключить голос»: микрофон освобождён, «Голос выключен»', async () => {
+await check('кнопка «Выключить голос»: пояснение в одну строку, вопрос с полным текстом; «Выключить» — микрофон освобождён', async () => {
+  await panel.getByText('Включить снова — только этой кнопкой.').waitFor({ timeout: 2000 });
   await panel.getByRole('button', { name: 'Выключить голос' }).click();
+  const q = page.locator('.confirm-box');
+  await q.getByText('Включить голос голосом будет нельзя — только этой кнопкой').waitFor({ timeout: 3000 });
+  await q.getByRole('button', { name: 'Выключить' }).click();
   await panel.locator('.vp-state', { hasText: 'Голос выключен' }).waitFor({ timeout: 3000 });
   await micOff('после выключения');
   const saved = await page.evaluate(() => localStorage.getItem('def_ops.voice.enabled'));
@@ -610,7 +621,10 @@ await check('перезагрузка: голос остаётся выключ�
   await page.waitForTimeout(3000);
   const gum = await page.evaluate(() => window.__e2e.gum);
   if (gum) throw new Error(`микрофон спрошен ${gum} раз`);
-  await panel.getByRole('button', { name: 'Свернуть' }).click();
+  // полоса при выключенном голосе — с кнопкой «Включить голос»; «Свернуть» на полосе — в значок
+  await panel.locator('.vp-card:not(.strip)').getByRole('button', { name: 'Свернуть' }).click();
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Включить голос' }).waitFor({ timeout: 2000 });
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Свернуть' }).click();
   const icon = page.locator('.vp-icon');
   await icon.getByText('Голос выключен').waitFor({ state: 'visible', timeout: 2000 });
   if (!(await icon.locator('.vp-cross').count())) throw new Error('значок не перечёркнут');
@@ -618,8 +632,8 @@ await check('перезагрузка: голос остаётся выключ�
   await icon.click();
 });
 
-await check('«Включить голос» → «Жду обращения», микрофон снова открыт', async () => {
-  await panel.getByRole('button', { name: 'Включить голос' }).click();
+await check('«Включить голос» (с полосы) → «Жду обращения», микрофон снова открыт', async () => {
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Включить голос' }).click();
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
   await micOn();
   const saved = await page.evaluate(() => localStorage.getItem('def_ops.voice.enabled'));
@@ -634,6 +648,14 @@ await check('событие voice:power: false — выключает, true — 
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
   await micOn();
 });
+/** Развернуть панель (из значка или полосы): лента, тонкая настройка, кнопки. */
+async function expandPanel() {
+  if (await page.locator('.vp-icon').isVisible()) await page.locator('.vp-icon').click();
+  const strip = panel.locator('.vp-card.strip');
+  if (await strip.isVisible().catch(() => false)) await strip.getByRole('button', { name: 'Развернуть' }).click();
+  await panel.locator('.vp-card:not(.strip)').waitFor({ state: 'visible', timeout: 5000 });
+}
+await expandPanel();
 
 
 // ---------------------------------------------------------------- модель за правилами (поддельная LM Studio)
@@ -791,7 +813,8 @@ await llmChecks();
 
 // снимок для описания: раздел «ИИ», карточка «Голос» (модель для голоса) — только с --shots, проверок нет
 if (SHOTS) {
-  await panel.getByRole('button', { name: 'Свернуть' }).click();
+  await panel.getByRole('button', { name: 'Свернуть' }).click();  // в полосу
+  await panel.getByRole('button', { name: 'Свернуть' }).click();  // в значок
   await page.evaluate(() => { location.hash = '#staff'; });
   const card = page.locator('.staff-voice');
   await card.waitFor({ state: 'visible', timeout: 10000 });
@@ -802,8 +825,7 @@ if (SHOTS) {
   await page.waitForTimeout(1000);
   await shot('ai-settings.jpg');
   await page.evaluate(() => { location.hash = '#replay'; });
-  await page.locator('.vp-icon').click();
-  await panel.locator('.vp-card').waitFor({ state: 'visible', timeout: 5000 });
+  await expandPanel();
 }
 
 await check('тонкая настройка: «Перебивать: голосом / словом» переключается и запоминается', async () => {
@@ -878,15 +900,17 @@ await check('подавление эха не то, что при калибро
 // Сервис — без подавления эха и с перебиванием «голосом» (как в проверках модели): строки сценария идут по одной на
 // каждый «слог» поддельного микрофона. «{тишина}» — заполнитель (реплики нет).
 const QUIET = Array(80).fill('{тишина}');
-async function handsFree(lines, { reload = true } = {}) {
+/** Сколько ждать, что напоминание не повторится. */
+const REMIND_WAIT = 12000;
+async function handsFree(lines, { reload = true, mode = 'voice' } = {}) {
   await stopVoice();
   if (reload) {
-    await page.evaluate(() => {
-      // регуляторы — «голосом»; при каком подавлении эха — допишет ответ сервиса
-      localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: 'voice', aec_unknown: true }));
+    await page.evaluate((m) => {
+      // регуляторы — «голосом» (или как велено); при каком подавлении эха — допишет ответ сервиса
+      localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: m, aec_unknown: true }));
       localStorage.setItem('def_ops.section', 'replay');
-      localStorage.setItem('def_ops.voice.panel', 'open');
-    });
+      localStorage.setItem('def_ops.voice.panel', 'full');  // лента видна (при открытом окне — полоса)
+    }, mode);
   }
   const f = join(tmp, `hands-${Date.now()}.txt`);
   writeFileSync(f, lines.join('\n') + '\n');
@@ -896,7 +920,14 @@ async function handsFree(lines, { reload = true } = {}) {
   if (reload) { await page.evaluate(() => { location.hash = '#replay'; }); await page.reload(); }
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 40000 });
 }
-const feedHas = (re, kind = 'chief') => panel.locator(`.vp-item.${kind}`, { hasText: re });
+/**
+ * Сказанное в ленте. Штаб — по отправленным сервису фразам: при открытом окне панель — полоса, ленты на экране нет;
+ * реплики человека (kind 'notme', 'me') — по ленте развёрнутой панели.
+ */
+const feedHas = (re, kind = 'chief') => (kind !== 'chief' ? panel.locator(`.vp-item.${kind}`, { hasText: re }) : {
+  waitFor: ({ timeout }) => page.waitForFunction((t) => window.__e2e.sent.some((m) => m.type === 'say' && m.role === 'chief' && m.text.includes(t)), re, { timeout, polling: 50 })
+    .catch(async () => { throw new Error(`штаб не сказал «${re}»; сказано: ${JSON.stringify(await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say').slice(-4).map((m) => m.text)))}`); }),
+});
 // щелчки считаются: без рук их быть не должно
 await ctx.addInitScript(() => { window.__clicks = 0; window.addEventListener('pointerdown', () => { window.__clicks++; }, true); });
 
@@ -1007,6 +1038,27 @@ await check('без рук: «Штаб, калибровка» — шаги ид
   if (clicks) throw new Error(`щелчков: ${clicks}`);
 });
 
+
+// ---------------------------------------------------------------- компактная панель и окна; ответ поверх чтения (Task 1b)
+/** Прямоугольники панели голоса и окна sel; пересекаются ли. */
+const panelVs = (sel) => page.evaluate((q) => {
+  const a = document.querySelector('[data-tour="voice"]')?.getBoundingClientRect();
+  const b = document.querySelector(q)?.getBoundingClientRect();
+  const cross = !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  return { cross, panel: a && [a.left, a.top, a.width, a.height].map(Math.round), win: b && [b.left, b.top, b.width, b.height].map(Math.round) };
+}, sel);
+
+const ZELOW = [14.38, 52.53];
+/** Где Зелов на экране сейчас (без перемещения карты): в карте ли, под панелью голоса или легендой ли. */
+const zelowSeen = () => page.evaluate((at) => {
+  const en = window.__cmdEngine;
+  const box = en.getContainer().getBoundingClientRect();
+  const [x, y] = en.project(at);
+  const p = { x: box.left + x, y: box.top + y };
+  const inside = (r) => p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+  const under = [...document.querySelectorAll('[data-tour="voice"], .legend')].map((e) => e.getBoundingClientRect()).filter(inside).length;
+  return { p: [Math.round(p.x), Math.round(p.y)], under, onMap: inside(box), zoom: en.getView().zoom };
+}, ZELOW);
 await check('без рук: переигровка → «рассчитай операцию» → «прими командование» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»', async () => {
   await page.evaluate(() => { localStorage.removeItem('def_ops.mapLevel'); location.hash = '#editor'; });
   await handsFree(['штаб, открой переигровку', 'штаб, рассчитай операцию', ...QUIET], { reload: false });
@@ -1021,6 +1073,13 @@ await check('без рук: переигровка → «рассчитай оп
   const dlg = page.locator('.modal.take');
   await dlg.waitFor({ timeout: 30000 });
   await feedHas('Принять командование с шестнадцатого апреля').waitFor({ timeout: 10000 });
+  // панель — полосой и не на окне; главная кнопка окна открыта
+  await panel.locator('.vp-card.strip').waitFor({ timeout: 3000 });
+  await page.waitForTimeout(400);
+  const pv = await panelVs('.modal.take');
+  if (pv.cross) throw new Error(`панель ${pv.panel} на окне ${pv.win}`);
+  const main = dlg.getByRole('button', { name: /^Принять командование с/ });
+  if (!(await main.evaluate((b) => { const r = b.getBoundingClientRect(); return b.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); }))) throw new Error('главная кнопка окна закрыта');
   await shot('voice-takeover.jpg');
   // ответы — по одному, когда штаб дочитал окно (сервис перезапускается — это и есть пауза)
   await handsFree(['штаб, без штаба', ...QUIET], { reload: false });
@@ -1031,21 +1090,110 @@ await check('без рук: переигровка → «рассчитай оп
   await page.locator('.cmd-date').waitFor({ timeout: 120000 });
   await feedHas('Скажите, например: «Штаб, доложи обстановку»').waitFor({ timeout: 30000 });
   await handsFree(['штаб, доложи обстановку', ...QUIET], { reload: false });
-  const rep = feedHas('Цель — ');
-  await rep.waitFor({ timeout: 30000 });
-  const text = (await rep.last().innerText()).replace(/^\s*Штаб:\s*/, '');
+  await feedHas('Цель — ').waitFor({ timeout: 30000 });
+  const text = await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say' && m.text.includes('Цель — ')).at(-1).text);
   if (/\d/.test(text)) throw new Error(`в докладе цифры: ${text}`);
   const n = text.match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
   if (n < 5 || n > 7) throw new Error(`в докладе ${n} фраз: ${text}`);
   await handsFree(['штаб, покажи Зелов', '{тишина}', 'штаб, оперативный уровень', ...QUIET], { reload: false });
   await feedHas('Показываю: Зелов').waitFor({ timeout: 30000 });
-  const v = await page.evaluate(() => window.__cmdEngine.getView());
-  if (Math.abs(v.center[0] - 14.38) > 0.1 || Math.abs(v.center[1] - 52.53) > 0.1 || v.zoom < 10) throw new Error(`карта не у Зелова: ${JSON.stringify(v)}`);
+  // Зелов — в карте и не под панелью и легендой (центр смещён к свободной части карты)
+  const z = await zelowSeen();
+  if (z.under || !z.onMap || z.zoom < 10) throw new Error(`Зелов в ${z.p}, масштаб ${z.zoom}: под панелью или легендой — ${z.under}`);
+  if (!(await page.locator('.legend.closed').count())) throw new Error('легенда в командовании открыта');
   await page.locator('.lvl-sw button.on', { hasText: 'Оперативный' }).waitFor({ timeout: 30000 });
   await shot('voice-command.jpg');
   const clicks = await page.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `расчёт ${calcS} с`;
+  return `расчёт ${calcS} с; Зелов в ${z.p}`;
+});
+
+await check('командование: при полосе место тоже не под ней', async () => {
+  const full = panel.locator('.vp-card:not(.strip)');
+  if (await full.isVisible()) await full.getByRole('button', { name: 'Свернуть' }).click();
+  await panel.locator('.vp-card.strip').waitFor({ timeout: 3000 });
+  await page.evaluate(async (at) => { const { showAt } = await import('/src/engine/free-center.ts'); showAt(window.__cmdEngine, at, 10); }, ZELOW);
+  const z = await zelowSeen();
+  if (z.under || !z.onMap) throw new Error(`Зелов в ${z.p}: под панелью или легендой — ${z.under}`);
+  await shot('voice-strip.jpg');
+  return `Зелов в ${z.p}`;
+});
+
+await check('полоса: короткая фраза штаба — в полосе; длинная — панель развернулась сама и свернулась через 10 с тишины', async () => {
+  const strip = panel.locator('.vp-card.strip');
+  await strip.waitFor({ timeout: 3000 });
+  const say = (t) => page.evaluate((x) => import('/src/voice/registry.ts').then((m) => m.speak(x)), t);
+  await say('Обстановка без изменений.');
+  await strip.locator('.vp-last', { hasText: 'Обстановка без изменений.' }).waitFor({ timeout: 5000 });
+  await panel.locator('.vp-state', { hasText: 'Говорит начальник штаба' }).waitFor({ timeout: 5000 }).catch(() => {});
+  await shot('voice-strip-speaking.jpg');
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 15000 });
+  await say('Противник за ночь подтянул к переднему краю свежие резервы и ведёт разведку боем на левом фланге. Наши части удерживают рубеж.');
+  const full = panel.locator('.vp-card:not(.strip)');
+  await full.waitFor({ timeout: 5000 }).catch(() => { throw new Error('длинная фраза — панель не развернулась'); });
+  await shot('voice-auto-full.jpg');
+  // договорил (поддельный синтез — 15 знаков в секунду) и 10 с тишины — снова полоса
+  const t0 = Date.now();
+  await strip.waitFor({ timeout: 40000 }).catch(() => { throw new Error('развёрнутая сама панель не свернулась'); });
+  return `свернулась через ${Math.round((Date.now() - t0) / 1000)} с`;
+});
+
+await check('открыто окно — панель полосой и не на окне; ответа нет 8 с — «Да или нет? Жду ответа.» (один раз); «нет»', async () => {
+  await handsFree(QUIET, { reload: false });
+  await openDialog('confirmAsync', 'Удалить слой «Рубежи» вместе с подписями? Рубежи нарисованы по директиве, их можно взять снова из базы знаний.', { ok: 'Удалить', danger: true });
+  await panel.locator('.vp-card.strip').waitFor({ timeout: 3000 }).catch(() => { throw new Error('при открытом окне панель не полоса'); });
+  await page.waitForTimeout(400); // место панели пересчитывается раз в 300 мс
+  const v = await panelVs('.confirm-box');
+  if (v.cross) throw new Error(`панель ${v.panel} на окне ${v.win}`);
+  await feedHas('Да или нет? Жду ответа.').waitFor({ timeout: 40000 });
+  await shot('voice-dialog.jpg');
+  await page.waitForTimeout(REMIND_WAIT);
+  const n = await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say' && m.text === 'Да или нет? Жду ответа.').length);
+  if (n !== 1) throw new Error(`напоминаний: ${n}`);
+  await handsFree(['штаб, нет', ...QUIET], { reload: false });
+  if ((await dlgOut(30000)) !== false) throw new Error('«нет» не закрыло окно');
+  return `панель ${v.panel}, окно ${v.win}`;
+});
+
+/** Вопрос с длинными пояснениями: штаб читает его секунд двадцать (поддельный синтез — 15 знаков в секунду). */
+const LONG_Q = ['Что сделать с игрой?', 'Игра остановлена на третьем ходу, запись хранится на этом компьютере.',
+  'Если сохранить, к ней можно вернуться в разделе «Переигровка», кнопкой «Продолжить».',
+  'Если удалить, запись и журнал ходов пропадут, а разбор операции останется.'].join(' ');
+const LABELS = [{ label: 'Сохранить' }, { label: 'Удалить' }, { label: 'Продолжить' }];
+/** Окно открыто и читается; ответ «второй» — посреди чтения: окно закрыто, чтение оборвано (stopped — как узнать). */
+async function answerOverReading(stopped) {
+  const k = await page.evaluate(() => ({ msgs: window.__e2e.msgs.length, sent: window.__e2e.sent.length }));
+  await openDialog('chooseAsync', LONG_Q, LABELS);
+  const t0 = Date.now();
+  const v = await dlgOut(40000).catch(async (e) => {
+    const log = await page.evaluate(() => ({ msgs: window.__e2e.msgs.filter((m) => !['level', 'speech'].includes(m.type)).slice(-8), feed: document.querySelector('.vp-card')?.innerText }));
+    throw new Error(`${e.message.split('\n')[0]}; ${JSON.stringify(log)}`);
+  });
+  if (v !== 1) throw new Error(`выбран ${JSON.stringify(v)}`);
+  const dt = Date.now() - t0;
+  const read = await page.evaluate((i) => window.__e2e.sent.slice(i).find((m) => m.type === 'say' && m.text.startsWith('Что сделать с игрой?')), k.sent);
+  if (!read) throw new Error('вопрос не зачитан');
+  if (!read.text.startsWith('Что сделать с игрой? Варианты: первый')) throw new Error(`сначала не варианты: ${read.text.slice(0, 80)}`);
+  const cut = await page.evaluate(([i, j, id, how]) => (how === 'barge'
+    ? window.__e2e.msgs.slice(i).some((m) => m.type === 'barge' && m.id === id)
+    : window.__e2e.msgs.slice(i).some((m) => m.type === 'over' && m.text === 'второй') && window.__e2e.sent.slice(j).some((m) => m.type === 'stop')), [k.msgs, k.sent, read.id, stopped]);
+  if (!cut) throw new Error(`чтение не оборвано (${stopped})`);
+  if (dt > read.text.length / 15 * 1000) throw new Error(`ответ принят через ${dt} мс — после чтения`);
+  return `ответ принят через ${Math.round(dt / 100) / 10} с, вопрос читался бы ${Math.round(read.text.length / 15)} с`;
+}
+
+await check('ответ посреди чтения окна, перебивание «голосом»: «второй» — штаб оборван, выбран второй', async () => {
+  // каждый «слог» — «второй»: до окна — не мне, посреди чтения — перебивает штаб и отвечает
+  await handsFree(['второй', 'второй', ...QUIET]);
+  return answerOverReading('barge');
+});
+
+await check('ответ посреди чтения окна, перебивание «словом»: «второй» поверх штаба — штаб замолк, выбран второй', async () => {
+  // по ходу речи поверх штаба куски распознаются (стоп-слово ли) и тоже снимают строки сценария
+  await handsFree([...Array(10).fill('второй'), ...QUIET], { mode: 'word' });
+  const r = await answerOverReading('stop');
+  await page.locator('.vp-card').first().waitFor({ timeout: 2000 });
+  return r;
 });
 
 await check('без рук: «дай два варианта» → «подробнее о первом» → «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»', async () => {
@@ -1146,7 +1294,7 @@ await ctx2.addInitScript((url) => {
   localStorage.clear();
   localStorage.setItem('def_ops.voice.url', url);
   localStorage.setItem('def_ops.section', 'editor');
-  localStorage.setItem('def_ops.voice.panel', 'open');  // лента реплик видна
+  localStorage.setItem('def_ops.voice.panel', 'full');  // лента реплик видна
 }, `ws://127.0.0.1:${vport}/ws`);
 // события панели голоса: отменено ли voice:ready-first и пришло ли voice:propose
 await ctx2.addInitScript(() => {

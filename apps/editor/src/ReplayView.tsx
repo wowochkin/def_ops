@@ -720,11 +720,14 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
 
 type LegendProps = { on: (key: string) => boolean; extra?: { cls: string; text: string; mark?: string }[]; combat?: boolean;
   /** Подпись состояния слоёв: с ней легенда не перерисовывается, пока состояние то же (кадры проигрывания). */
-  sig?: string };
+  sig?: string;
+  /** Ключ localStorage: легенда открывается свёрнутой и помнит, что её развернули (командование — карта для работы). */
+  remember?: string };
 export const Legend = memo(LegendPanel, (a, b) => a.sig != null && a.sig === b.sig && a.extra === b.extra && a.combat === b.combat);
 /** Легенда: строка слоя — показать / скрыть его (map.layer, как голосом). */
-function LegendPanel({ on, extra = [], combat = true }: LegendProps) {
-  const [open, setOpen] = useState(true);
+function LegendPanel({ on, extra = [], combat = true, remember }: LegendProps) {
+  const [open, setOpenState] = useState(() => { if (!remember) return true; try { return localStorage.getItem(remember) === 'open'; } catch { return false; } });
+  const setOpen = (v: boolean) => { setOpenState(v); if (remember) try { localStorage.setItem(remember, v ? 'open' : 'closed'); } catch { /* */ } };
   useAction({
     id: 'map.legend', section: 'replay', title: 'Легенда карты', describe: 'Открывает условные обозначения карты и читает их вслух (open — только открыть или свернуть, без чтения).', say: ['штаб, легенда'],
     params: { type: 'object', properties: { open: { type: 'boolean' } } }, available: inReplay,

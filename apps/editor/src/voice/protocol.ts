@@ -60,6 +60,8 @@ export type ServerMsg =
   | { type: 'speech'; state: 'start' | 'end' }
   | { type: 'utterance'; id: number; text: string; audio_s: number; stt_ms: number; continues?: number }
   | { type: 'echo'; text: string }
+  /** Перебивание «словом»: речь поверх штаба (он не оборван); chief — что он уже сказал. Окно принимает только ответ на вопрос. */
+  | { type: 'over'; id: number; text: string; chief: string }
   | { type: 'say-done'; id: number; stopped?: boolean }
   | { type: 'barge'; id: number }
   | ({ type: 'settings' } & VoiceSettings)

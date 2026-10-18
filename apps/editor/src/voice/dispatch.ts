@@ -12,7 +12,10 @@
  * - «Штаб, отбой» — дежурный режим (standby): микрофон открыт, исполняется только «Штаб, на связь» (shell.wake);
  *   эхо собственной фразы штаба не будит;
  * - открыто окно, ждущее ответа (registry.openModal), — исполняются только его ответы, стоп-слова, «отбой» и
- *   «повтори»; прочее — «Сначала ответьте на вопрос: …».
+ *   «повтори»; прочее — «Сначала ответьте на вопрос: …»;
+ * - ответ на вопрос поверх его чтения: перебивание «голосом» — как всякая реплика (сервис сам обрывает штаб);
+ *   «словом» сервис присылает речь поверх штаба отдельно (over): ответ на вопрос — штаб замолкает и исполняет его;
+ * - ответа нет REMIND_MS после того, как вопрос договорён, — короткое напоминание (один раз на вопрос).
  */
 import stopFile from '../../../../services/voice/stop_words.json';
 import { SECTIONS } from '../sections';
@@ -45,6 +48,12 @@ export const WAKE_SAY = 'На связи.';
  */
 export const WAIT_SAY = 'Жду ответа.';
 export const YES_NO_SAY = `Скажите «да», чтобы подтвердить, или «нет» — чтобы отменить. ${WAIT_SAY}`;
+/** Ответа нет столько после конца вопроса — напомнить (один раз). */
+export const REMIND_MS = 8_000;
+/** Напоминание о «да / нет» (вопрос кончается «Жду ответа.», а не словом-ответом). */
+export const REMIND_YES_NO = `Да или нет? ${WAIT_SAY}`;
+/** Речь поверх штаба (перебивание «словом») — ответ, только если она не длиннее этого (слов). */
+const OVER_MAX_WORDS = 3;
 
 /** Стоп-слова — ими перебивают штаб; тот же список проверяет сервис голоса (audio.py). */
 export const STOP_WORDS: string[] = stopFile.stop;
@@ -261,6 +270,8 @@ export class Dispatcher {
   standby = false;
   /** Последняя фраза штаба (чьим голосом) и когда сказана (now): «повтори» и эхо в дежурном режиме. */
   private last: { text: string; at: number; role?: SpeakRole } | null = null;
+  /** Чего ждёт ответа (подтверждение или окно с напоминанием), с какого времени и напомнили ли уже. */
+  private awaiting: { what: object; since: number; reminded: boolean } | null = null;
   /**
    * say — фраза штаба (quiet — заготовленная фраза о модели: окно разговора она заново не открывает; role — чьим голосом:
    * посредник докладывает итоги хода); вернуть может
@@ -302,17 +313,55 @@ export class Dispatcher {
     if (this.pending) this.pending.until = Math.max(this.pending.until, this.spokeAt + CONFIRM_MS);
   }
 
-  /** Часы (раз в секунду): подтверждения не было CONFIRM_MS — отмена. */
+  /**
+   * Часы (раз в секунду): подтверждения не было CONFIRM_MS — отмена; ответа на вопрос нет REMIND_MS после того, как
+   * штаб договорил (и больше ничего не говорит), — напоминание, один раз на вопрос.
+   */
   tick(): void {
     if (this.pending && this.opts.now() > this.pending.until) {
       this.setPending(null);
       this.say('Отменяю — подтверждения не было.');
     }
+    const m = topModal();
+    const what = this.pending ?? (m?.remind ? m : null);
+    if (!what) { this.awaiting = null; return; }
+    if (this.awaiting?.what !== what) this.awaiting = { what, since: this.opts.now(), reminded: false };
+    const w = this.awaiting;
+    const now = this.opts.now();
+    const talking = !!this.last && this.last.at > this.spokeAt; // фраза сказана, но ещё не договорена
+    if (w.reminded || this.standby || talking || this.spokeAt <= w.since || now - this.spokeAt < REMIND_MS) return;
+    w.reminded = true;
+    this.say(this.pending ? REMIND_YES_NO : m!.remind!);
   }
 
   private setPending(p: Pending | null): void {
     this.pending = p;
+    if (p) this.awaiting = { what: p, since: this.opts.now(), reminded: false };
     this.opts.onPending?.(p);
+  }
+
+  /**
+   * Речь поверх штаба при перебивании «словом» (сервис штаб не оборвал: без подавления эха её не отличить от его же
+   * голоса). Ответ на вопрос (подтверждение «да / нет», ответ открытого окна) — не длиннее OVER_MAX_WORDS слов и не
+   * эхо — принимается: штаб замолкает, ответ исполняется. Эхо — слова, идущие подряд во фразе штаба chief (два и
+   * больше), и «да», если штаб сам его говорит (подтверждение необратимого не должно сработать от динамиков).
+   * Прочее — не реплика: без ответа и без следа.
+   */
+  async over(text: string, id: number, chief: string): Promise<'ignored' | 'done' | 'unknown'> {
+    if (this.standby) return 'ignored';
+    const whole = norm(text);
+    const words = whole.split(' ').filter(Boolean);
+    if (!words.length || words.length > OVER_MAX_WORDS) return 'ignored';
+    const asked = topModal();
+    const yn = yesNo(whole);
+    const answer = (this.pending && yn !== null) || (!!asked && (asked.isAnswer ? asked.isAnswer(whole) : yn !== null));
+    if (!answer) return 'ignored';
+    const said = norm(chief).split(' ').filter(Boolean);
+    const run = words.some((w, i) => i > 0 && said.some((c, j) => j > 0 && c === w && said[j - 1] === words[i - 1]));
+    if (run || (yn === 'yes' && words.some((w) => said.includes(w)))) return 'ignored';
+    this.opts.stop?.();
+    this.spoke(); // перебил — дальше разговор
+    return this.utterance(text, id);
   }
 
   /** Спросить «да / нет»; на «да» — действие id с params (предложение штаба или подтверждение необратимого). */

@@ -4,13 +4,13 @@
  * действие выполняется без вопроса (отменяется через Ctrl+Z), а для ввода текста
  * берётся значение по умолчанию (его можно поправить в инспекторе).
  *
- * Голосом (voiceDialog): открытое окно зачитывается штабом (вопрос и варианты) и ждёт ответа; пока оно открыто,
+ * Голосом (voiceDialog): открытое окно зачитывается штабом (вопрос, как отвечать, потом пояснения) и ждёт ответа; пока оно открыто,
  * в реестре временные действия `dialog.answer {choice}` («да» / «нет» / вариант по номеру или названию) и
  * `dialog.text {text}` (поле ввода — диктовкой); кнопки окна вызывают те же действия.
  */
 import { ordinalIndex, pickByName, yesNo } from './voice/answers';
-import { readAloud, readParts, stopReading } from './voice/dictation';
-import { WAIT_SAY } from './voice/dispatch';
+import { queueReading, readParts, stopReading } from './voice/dictation';
+import { REMIND_YES_NO, WAIT_SAY } from './voice/dispatch';
 import { act, openModal, register } from './voice/registry';
 import { speakable } from './voice/speech';
 export const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
@@ -122,15 +122,22 @@ export interface DialogVoice {
 const ACK = /^(?:понятно|ясно|хорошо|понял|поняла|принято|ладно|да|ок|окей|дальше|закрой|закрыть|закрой окно)$/;
 /** Предупреждения, которые нельзя пропустить при чтении длинного вопроса частями. */
 const WARN = /нельзя отменить|отменить нельзя|не(?:льзя)? будет вернуть|безвозвратно|будут (?:стёрты|стерты|удалены|потеряны)/i;
-/** Вопрос окна для чтения: до четырёх фраз — целиком; длиннее — первой частью (дальше — «дальше»), предупреждения — всегда. */
-function questionText(message: string): string {
-  const parts = readParts(message);
-  const sentences = parts.join(' ').match(/[^.!?…]+[.!?…]+["»]?|[^.!?…]+$/g) ?? [];
-  if (sentences.length <= 4) { const t = parts.join(' '); return /[.!?…]["»]?$/.test(t) ? t : `${t}.`; }
-  readAloud(message); // «дальше» — следующие части (read.next); первую часть — без «Читать дальше?» посреди вопроса
-  const first = parts[0];
-  const warn = sentences.map((x) => x.trim()).filter((x) => WARN.test(x) && !first.includes(x));
-  return [first, ...warn, 'Подробнее — скажите «дальше».'].join(' ');
+/**
+ * Чтение окна: сначала вопрос (фразы до первой с «?»; её нет — первая фраза) и предупреждения, потом как отвечать
+ * (options), потом пояснения, в конце — «Жду ответа.»: отвечают, едва услышав варианты, — пояснения можно перебить.
+ * Всего больше четырёх фраз — пояснения не читаются сразу, а по «дальше».
+ */
+function questionRead(message: string, options: string): string {
+  const all = readParts(message).join(' ');
+  const sentences = (all.match(/[^.!?…]+[.!?…]+["»]?|[^.!?…]+$/g) ?? []).map((x) => x.trim()).filter(Boolean);
+  const q = sentences.findIndex((x) => /\?["»]?$/.test(x));
+  const lead = sentences.slice(0, q >= 0 ? q + 1 : 1).map((x) => (/[.!?…:]["»]?$/.test(x) ? x : `${x}.`));
+  const rest = sentences.slice(lead.length);
+  const warn = rest.filter((x) => WARN.test(x));
+  const other = rest.filter((x) => !WARN.test(x));
+  if (sentences.length <= 4) return [...lead, ...warn, options, ...other, WAIT_SAY].join(' ');
+  queueReading(other.join(' ')); // «дальше» — пояснения частями (read.next)
+  return [...lead, ...warn, options, 'Подробнее — скажите «дальше».', WAIT_SAY].join(' ');
 }
 
 const ORDS = ['первый', 'второй', 'третий', 'четвёртый', 'пятый', 'шестой', 'седьмой', 'восьмой', 'девятый', 'десятый'];
@@ -148,12 +155,16 @@ let offActions: (() => void) | null = null;
 export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | number) => void): () => void {
   const labels = d.labels ?? [];
   const cancel = (d.cancel ?? 'Отмена').toLowerCase();
-  // вопрос кончается «Жду ответа.», а не словом-ответом (иначе быстрый ответ сервис принял бы за эхо)
-  const options = `${labels.length
+  // как отвечать; во фразах вопрос кончается «Жду ответа.», а не словом-ответом (иначе быстрый ответ сервис принял бы за эхо)
+  const how = labels.length
     ? `Варианты: ${labels.map((l, i) => `${ORDS[i] ?? `номер ${i + 1}`} — «${l}»`).join(', ')}. Или «${cancel}».`
     : d.input ? `${d.input.get() ? `Сейчас записано: «${d.input.get()}». ` : ''}Продиктуйте текст, затем скажите «готово».`
       : d.alone ? 'Скажите «понятно».'
-        : d.ok && !/^(?:да|ок)$/i.test(d.ok) ? `Скажите «да» — «${d.ok}», или «нет».` : 'Скажите «да» или «нет».'} ${WAIT_SAY}`;
+        : d.ok && !/^(?:да|ок)$/i.test(d.ok) ? `Скажите «да» — «${d.ok}», или «нет».` : 'Скажите «да» или «нет».';
+  const options = `${how} ${WAIT_SAY}`;
+  // напоминание, если ответа нет (сообщение с одной кнопкой не напоминает)
+  const remind = labels.length ? `Какой вариант? Скажите номер или «${cancel}». ${WAIT_SAY}`
+    : d.input ? `Продиктуйте текст или скажите «готово». ${WAIT_SAY}` : d.alone ? undefined : REMIND_YES_NO;
   let closed = false;
   let closeModal = () => {};
   const self = {
@@ -208,7 +219,8 @@ export function voiceDialog(d: DialogVoice, finish: (out: string | boolean | num
   };
   closeModal = openModal({
     question: speakable(d.message),
-    read: `${questionText(d.message)} ${options}`,
+    read: questionRead(d.message, how),
+    ...(remind ? { remind } : {}),
     isAnswer,
     // сообщение с одной кнопкой: посторонняя команда закрывает его и исполняется (не теряется)
     ...(d.alone ? { dismiss: () => end(true) } : {}),

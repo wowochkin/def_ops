@@ -7,7 +7,7 @@
  * Действия окна — в реестре (`voice.calibrate.start | done | again | close`); кнопки вызывают их же. Пока шаги идут,
  * сервис фраз штаба не произносит (испортили бы замер) — всё нужное написано в окне крупно.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { VoiceClient } from './client';
 import type { CalibStep, ServerMsg, VoiceSettings } from './protocol';
 import { act, openModal, useAction } from './registry';
@@ -65,8 +65,10 @@ const STEPS: { step: CalibStep; sec?: number; title: string; txt: string; say?: 
 type Result = Extract<ServerMsg, { type: 'calib_result' }>;
 const pct = (x: number) => `${Math.round(x * 100)} %`;
 
-export function Calibration({ client, onClose, onResult, setBusy, auto = false, say }: {
+export function Calibration({ client, onClose, onResult, setBusy, auto = false, say, meter }: {
   client: VoiceClient;
+  /** полоса «слышу вас / перебиваете» (из панели): видно, слышит ли штаб, пока идут шаги */
+  meter?: ReactNode;
   onClose(): void;
   onResult(cfg: VoiceSettings): void;
   setBusy(s: string | null): void;
@@ -262,6 +264,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
             <div className="vp-stepn">Калибровка · шаг {i + 1} из {STEPS.length}</div>
             <h3>{s.title}</h3>
             <p>{s.txt}</p>
+            {meter}
             {s.say && <p className="vp-say">{s.say}</p>}
             {restart && <p className="vp-error" role="alert">{restart}</p>}
             {err && <p className="vp-error" role="alert">Этот шаг не записался: {err}. Попробуйте ещё раз.</p>}

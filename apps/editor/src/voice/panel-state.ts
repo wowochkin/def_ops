@@ -293,3 +293,80 @@ export function feedCorrection(feed: FeedItem[], id: number, heard: string, c: {
   if (!c.fixes.length) return feed;
   return feedAdd(feed, { key: `f${id}`, kind: 'fix', text: `Услышано: «${heard}» — понял: «${c.understood}»` });
 }
+
+// ---------------------------------------------------------------- вид панели: значок, полоса, развёрнута
+
+/**
+ * icon — значок (свернул человек); compact — полоса: состояние словами, последняя фраза штаба, «Развернуть»;
+ * full — развёрнута: лента, кнопки, «Что можно сказать», тонкая настройка.
+ */
+export type PanelMode = 'icon' | 'compact' | 'full';
+/** Сохранённый вид: 'icon', 'full'; прочее (и прежнее 'open') — полоса. */
+export function parsePanelMode(raw: string | null): PanelMode {
+  return raw === 'icon' || raw === 'full' ? raw : 'compact';
+}
+/** Развёрнутая сама сворачивается в полосу через столько тишины (штаб договорил, вопроса нет). */
+export const COLLAPSE_MS = 10_000;
+/** Знаков в строке полосы (18 px, ширина полосы) и строк под фразу штаба. */
+export const STRIP_LINE_CHARS = 44;
+export const STRIP_LINES = 2;
+/** Фраза штаба помещается в полосу (две строки) целиком. */
+export function fitsStrip(text: string): boolean {
+  return text.length <= STRIP_LINE_CHARS * STRIP_LINES;
+}
+
+/**
+ * Вид панели. Выбранный человеком (set) — как выбран; полоса сама разворачивается, когда штаб говорит длинное (chief)
+ * или ждёт «да / нет» (update с pending — и из значка: нужны кнопки), и сворачивается обратно через COLLAPSE_MS тишины.
+ * Открыто окно (view(true)) — панель не больше полосы: окно не закрывается.
+ */
+export class PanelSize {
+  /** Развёрнута сама (не человеком). */
+  private auto = false;
+  /** С какого времени тихо: штаб не говорит и вопроса нет (null — не тихо). */
+  private quietAt: number | null = null;
+  constructor(public mode: PanelMode, private now: () => number) {}
+
+  /** Человек выбрал вид кнопкой: развёрнутая вручную сама не сворачивается, свёрнутая — сворачивается сразу. */
+  set(mode: PanelMode): void { this.mode = mode; this.auto = false; }
+  /** Штаб сказал фразу: не помещается в полосу — развернуться (из значка — нет: значок выбрал человек). */
+  chief(text: string): void {
+    if (!fitsStrip(text) && this.mode === 'compact') { this.auto = true; this.quietAt = null; }
+  }
+  /** Часы и события: говорит ли штаб и ждёт ли вопрос ответа. */
+  update(s: { speaking: boolean; pending: boolean }): void {
+    if (s.pending && this.mode !== 'full') this.auto = true;
+    if (s.speaking || s.pending) { this.quietAt = null; return; }
+    this.quietAt ??= this.now();
+    if (this.auto && this.now() - this.quietAt >= COLLAPSE_MS) this.auto = false;
+  }
+  /** Что показать; modal — открыто окно. */
+  view(modal: boolean): PanelMode {
+    const v: PanelMode = this.auto ? 'full' : this.mode;
+    return modal && v === 'full' ? 'compact' : v;
+  }
+}
+
+type Box = { left: number; top: number; width: number; height: number };
+const crossArea = (a: Box, b: Box) =>
+  Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left))
+  * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+/** Отступы обычного места полосы (как в CSS .vp-card): справа и над полосой проигрывателя; слева — правее колонки разделов. */
+const EDGE = 14, ABOVE_PLAYER = 96, RAIL = 84;
+
+/**
+ * Где поставить панель размером size, чтобы не закрывать окна avoid: null — обычное место (справа внизу) свободно;
+ * иначе первое свободное из: слева внизу, справа вверху, слева вверху, у нижнего края справа и слева; свободного нет —
+ * где перекрытие меньше всего.
+ */
+export function placePanel(size: { width: number; height: number }, avoid: Box[], vw: number, vh: number): { left: number; top: number } | null {
+  const right = Math.max(0, vw - EDGE - size.width), left = Math.min(RAIL, right);
+  const low = Math.max(0, vh - ABOVE_PLAYER - size.height), edge = Math.max(0, vh - EDGE - size.height);
+  const cands = [
+    { left: right, top: low }, { left, top: low }, { left: right, top: EDGE }, { left, top: EDGE },
+    { left: right, top: edge }, { left, top: edge },
+  ];
+  const hit = (c: { left: number; top: number }) => avoid.reduce((s, a) => s + crossArea({ ...c, ...size }, a), 0);
+  if (hit(cands[0]) === 0) return null;
+  return cands.find((c) => hit(c) === 0) ?? cands.reduce((a, b) => (hit(b) < hit(a) ? b : a));
+}

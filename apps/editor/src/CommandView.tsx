@@ -45,6 +45,7 @@ import {
 } from './voice/actions/staff';
 import { dayMonth } from './voice/report';
 import { speakable } from './voice/speech';
+import { showAt } from './engine/free-center';
 
 export const SAVE_KEY = 'def_ops.game';
 
@@ -423,11 +424,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   useEsc(!!intelE, closeIntel);
   const fv = useMemo(() => (!view || !focus || !focusOnly ? view : { ...view, own: view.own.filter((u) => u.status !== 'active' || inSector(focus, u.at)), intel: view.intel.filter((e) => inSector(focus, e.at)) }), [view, focus, focusOnly]);
 
+  // место — в свободной части карты, не под панелью голоса и легендой
   const goTo = (at: LngLat | null, zoomIn = true) => {
     const en = engine.current;
     if (!at || !en) return;
     const z = en.getView().zoom;
-    en.setView({ center: at, zoom: zoomIn ? Math.max(z, 9) : z });
+    showAt(en, at, zoomIn ? Math.max(z, 9) : z);
   };
   const draftList = Object.values(drafts);
   /** Ход — на расчёт (проверки готовности — в действии command.turn). */
@@ -724,7 +726,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             actions={<><button data-action="command.tab" onClick={() => { tap('command.tab', { tab: 'intel' }); setMob('staff'); }}>Разведсводка →</button>
               {unit(sel) && unit(sel)!.status !== 'destroyed' && <button data-action="command.order.set" onClick={() => targetEnemy(intelE.id)}
                 title="Цель удара для выбранного объединения — во вкладке «Приказы»">Целью удара для «{short(unit(sel)!.name)}»</button>}</>} />}
-          <Legend on={layerOn} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} />
+          <Legend on={layerOn} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} remember="def_ops.command.legend" />
           {view && <Player start={view.start} end={view.time > view.start ? view.time : addH(view.start, view.turnHours)} time={time} setTime={setTime} events={playerEvents}
             onEvent={(e) => { if (e.at) tap('map.event', { name: e.title.split(':')[0] }); else goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
           </div>

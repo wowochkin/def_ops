@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
+  COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, placePanel,
 } from '../src/voice/panel-state';
+import { freeOffset } from '../src/engine/free-center';
 
 const base: PanelInput = { status: 'ready', speaking: false, listening: false, thinking: false, conversation: false };
 
@@ -336,5 +338,140 @@ describe('ручная правка до ответа сервиса (N5)', () =
     expect(settleAec(storeSettings(null, cfg, { aec: false, calibrated: true }), true)).toBeNull();
     expect(settleAec(JSON.stringify(cfg), true)).toBeNull();
     expect(settleAec(raw, undefined)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------- компактная панель (Task 1b)
+
+describe('компактная панель: вид по умолчанию, сама разворачивается и сворачивается', () => {
+  let now = 0;
+  const quiet = { speaking: false, pending: false };
+  it('сохранённый вид: значок, развёрнута; прочее (и прежнее «open») — компактная полоса', () => {
+    expect(parsePanelMode('icon')).toBe('icon');
+    expect(parsePanelMode('full')).toBe('full');
+    expect(parsePanelMode('open')).toBe('compact');
+    expect(parsePanelMode(null)).toBe('compact');
+    expect(parsePanelMode('мусор')).toBe('compact');
+  });
+  it('фраза штаба в две строки полосы — полоса; длиннее — разворачивается сама', () => {
+    expect(fitsStrip('Слушаю.')).toBe(true);
+    expect(fitsStrip('Открываю переигровку. Скажите, что считать.')).toBe(true);
+    expect(fitsStrip('Можно сказать: «штаб, открой переигровку», «штаб, что я могу?», «штаб, калибровка», «штаб, голоса».')).toBe(false);
+    const s = new PanelSize('compact', () => now);
+    expect(s.view(false)).toBe('compact');
+    s.chief('Слушаю.');
+    expect(s.view(false)).toBe('compact');
+    s.chief('Можно сказать: «штаб, открой переигровку», «штаб, что я могу?», «штаб, калибровка», «штаб, голоса».');
+    expect(s.view(false)).toBe('full');
+  });
+  it('развёрнутая сама — сворачивается через 10 с тишины после конца речи (не раньше)', () => {
+    now = 1000;
+    const s = new PanelSize('compact', () => now);
+    s.chief('x'.repeat(200));
+    s.update({ speaking: true, pending: false });
+    now += 30_000; // штаб говорит долго — не сворачивается
+    s.update({ speaking: true, pending: false });
+    expect(s.view(false)).toBe('full');
+    s.update(quiet); // договорил
+    now += COLLAPSE_MS - 1;
+    s.update(quiet);
+    expect(s.view(false)).toBe('full');
+    now += 1;
+    s.update(quiet);
+    expect(s.view(false)).toBe('compact');
+    expect(COLLAPSE_MS).toBe(10_000);
+  });
+  it('вопрос «да / нет» разворачивает (и из значка); пока ждёт ответа — не сворачивается; ответили — через 10 с назад', () => {
+    now = 0;
+    const s = new PanelSize('icon', () => now);
+    s.update({ speaking: false, pending: true });
+    expect(s.view(false)).toBe('full');
+    now += 60_000;
+    s.update({ speaking: false, pending: true });
+    expect(s.view(false)).toBe('full');
+    s.update(quiet);
+    now += COLLAPSE_MS;
+    s.update(quiet);
+    expect(s.view(false)).toBe('icon');
+  });
+  it('из значка длинная фраза не разворачивает — значок выбран человеком', () => {
+    const s = new PanelSize('icon', () => now);
+    s.chief('x'.repeat(200));
+    expect(s.view(false)).toBe('icon');
+  });
+  it('развёрнутая вручную не сворачивается сама; «Свернуть» — полоса сразу, без 10 с', () => {
+    now = 0;
+    const s = new PanelSize('compact', () => now);
+    s.set('full');
+    s.update(quiet);
+    now += 10 * COLLAPSE_MS;
+    s.update(quiet);
+    expect(s.view(false)).toBe('full');
+    s.chief('x'.repeat(200)); // сама развернулась поверх ручной — неважно
+    s.set('compact');
+    expect(s.view(false)).toBe('compact');
+    // развернулась сама и её свернули кнопкой — полоса сразу
+    s.chief('x'.repeat(200));
+    expect(s.view(false)).toBe('full');
+    s.set('compact');
+    expect(s.view(false)).toBe('compact');
+  });
+  it('открыто окно — панель компактна (и развёрнутая вручную, и с вопросом); значок остаётся значком', () => {
+    const s = new PanelSize('full', () => now);
+    expect(s.view(true)).toBe('compact');
+    s.set('compact');
+    s.update({ speaking: false, pending: true });
+    expect(s.view(true)).toBe('compact');
+    expect(new PanelSize('icon', () => now).view(true)).toBe('icon');
+  });
+});
+
+describe('панель не перекрывает окно (placePanel)', () => {
+  const vw = 1440, vh = 900;
+  const panel = { width: 440, height: 110 };
+  const cross = (a: { left: number; top: number; width: number; height: number }, b: { left: number; top: number; width: number; height: number }) =>
+    a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
+  it('окна нет или оно не задевает обычное место (справа внизу) — обычное место (null)', () => {
+    expect(placePanel(panel, [], vw, vh)).toBeNull();
+    expect(placePanel(panel, [{ left: 440, top: 60, width: 560, height: 500 }], vw, vh)).toBeNull();
+  });
+  it('окно задевает обычное место — панель встаёт туда, где окна нет', () => {
+    const modal = { left: 300, top: 150, width: 1000, height: 600 }; // широкое окно: задевает и правый низ, и левый
+    const p = placePanel(panel, [modal], vw, vh)!;
+    expect(p).not.toBeNull();
+    expect(cross({ ...p, ...panel }, modal)).toBe(false);
+    expect(p.left).toBeGreaterThanOrEqual(0);
+    expect(p.top).toBeGreaterThanOrEqual(0);
+    expect(p.left + panel.width).toBeLessThanOrEqual(vw);
+    expect(p.top + panel.height).toBeLessThanOrEqual(vh);
+  });
+  it('окно во весь экран — где перекрытие меньше всего', () => {
+    const p = placePanel(panel, [{ left: 0, top: 0, width: vw, height: 820 }], vw, vh)!;
+    expect(p.top + panel.height).toBeGreaterThan(820); // внизу, где окна нет хотя бы частично
+  });
+});
+
+describe('карта: центр — в свободной части (freeOffset)', () => {
+  const map = { left: 400, top: 50, width: 1040, height: 850 };
+  it('ничего не закрывает — смещения нет', () => {
+    expect(freeOffset(map, [])).toEqual({ dx: 0, dy: 0 });
+    expect(freeOffset(map, [{ left: 0, top: 0, width: 300, height: 900 }])).toEqual({ dx: 0, dy: 0 }); // вне карты
+  });
+  it('развёрнутая панель справа — центр левее на половину её ширины', () => {
+    const o = freeOffset(map, [{ left: 986, top: 160, width: 440, height: 640 }]);
+    expect(o.dy).toBe(0);
+    expect(o.dx).toBeCloseTo(-(map.left + map.width - 986) / 2, 5);
+  });
+  it('полоса внизу справа — выше (по меньшей потере площади), легенда внизу слева — тоже выше', () => {
+    const strip = freeOffset(map, [{ left: 986, top: 694, width: 440, height: 110 }]);
+    expect(strip.dx).toBe(0);
+    expect(strip.dy).toBeCloseTo(-(map.top + map.height - 694) / 2, 5);
+    const both = freeOffset(map, [{ left: 986, top: 694, width: 440, height: 110 }, { left: 414, top: 760, width: 200, height: 48 }]);
+    expect(both.dy).toBeCloseTo(-(map.top + map.height - 694) / 2, 5);
+  });
+  it('закрыто почти всё — смещение не больше трети размера карты', () => {
+    const o = freeOffset(map, [{ left: 420, top: 60, width: 1020, height: 840 }]);
+    expect(Math.abs(o.dx)).toBeLessThanOrEqual(map.width / 3);
+    expect(Math.abs(o.dy)).toBeLessThanOrEqual(map.height / 3);
   });
 });
