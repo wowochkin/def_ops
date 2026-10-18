@@ -13,12 +13,15 @@ const norm = (s: string) => s.toLowerCase().replace(/ё/g, 'е').replace(/[^\p{L
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const TEXT = { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] };
 
-/** Поля, известные голосу: id → название (для «запиши в <название>»). */
-const fields = new Map<string, string>();
+/** Поля, известные голосу: id → названия (для «запиши в <название>»): первое — название поля, дальше — другие слова. */
+const fields = new Map<string, string[]>();
 
-/** Действия поля «title» (id — начало их имён). section — раздел действий (по умолчанию — общие). */
-export function fieldActions(id: string, title: string, get: () => string, set: (s: string) => void, section = 'global'): Action[] {
-  fields.set(id, title);
+/**
+ * Действия поля «title» (id — начало их имён). section — раздел действий (по умолчанию — общие); aliases — другие
+ * названия поля в речи («запиши в решение» — то же, что «в замысел»).
+ */
+export function fieldActions(id: string, title: string, get: () => string, set: (s: string) => void, section = 'global', aliases: string[] = []): Action[] {
+  fields.set(id, [title, ...aliases]);
   const low = title.toLowerCase();
   const base = { section, available: () => true as const };
   return [
@@ -62,15 +65,20 @@ export function parseDictation(rest: string, raw = rest): { id: string; params?:
   if (!verb) return null;
   let i = 1;
   while (PREPS.has(words[i] ?? '')) i++;
-  for (const [id, title] of fields) {
-    const span = titleSpan(words.slice(i), title);
-    if (!span || !getAction(`${id}.${verb[1]}`)) continue;
-    const tail = words.slice(i + span);
-    if (verb[1] === 'clear' || verb[1] === 'read') return tail.length ? null : { id: `${id}.${verb[1]}` };
-    if (!tail.length) return null;
-    return { id: `${id}.${verb[1]}`, params: { text: rawTail(raw, tail.length) ?? tail.join(' ') } };
+  // самое длинное подходящее название: «в замысел противника» — не «в замысел» с текстом «противника …»
+  let best: { id: string; span: number } | null = null;
+  for (const [id, names] of fields) {
+    if (!getAction(`${id}.${verb[1]}`)) continue;
+    for (const name of names) {
+      const span = titleSpan(words.slice(i), name);
+      if (span && (!best || span > best.span)) best = { id, span };
+    }
   }
-  return null;
+  if (!best) return null;
+  const tail = words.slice(i + best.span);
+  if (verb[1] === 'clear' || verb[1] === 'read') return tail.length ? null : { id: `${best.id}.${verb[1]}` };
+  if (!tail.length) return null;
+  return { id: `${best.id}.${verb[1]}`, params: { text: rawTail(raw, tail.length) ?? tail.join(' ') } };
 }
 
 /** Последние n слов фразы как сказано (со знаками внутри, без знаков по краям); не вышло — null. */

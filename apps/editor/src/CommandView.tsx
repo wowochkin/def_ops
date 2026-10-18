@@ -9,7 +9,7 @@
 import { confirmAsync, say } from './dialogs';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
-import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
+import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
 import type { AdviceView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
@@ -35,6 +35,10 @@ import { mdToHtml } from './markdown';
 import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, openModal, register, speak, useAction, voiceRecent } from './voice/registry';
 import { commandActions, releaseCommand, takeoverParse, type CommandDeps } from './voice/actions/command';
+import {
+  adviceArrived, decisionMissing, NEEDS_TARGET, planArrived, releaseStaff, staffActions, TASKS,
+  type BoundsDraft, type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
+} from './voice/actions/staff';
 import { dayMonth } from './voice/report';
 import { speakable } from './voice/speech';
 
@@ -44,9 +48,6 @@ export function loadSaved(): SavedGame | null {
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') as SavedGame | null; return s?.record?.version === 1 ? s : null; } catch { return null; }
 }
 
-const TASKS: Task[] = ['attack', 'counterattack', 'defend', 'hold', 'delay', 'regroup', 'reserve', 'withdraw', 'breakout', 'relieve'];
-/** Задачи, для которых цель обязательна. */
-const NEEDS_TARGET: Task[] = ['attack', 'counterattack', 'regroup', 'withdraw', 'breakout', 'relieve'];
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const toMs = (t: string) => Date.parse((t.length <= 16 ? t + ':00' : t) + 'Z');
 const addH = (t: string, h: number) => new Date(toMs(t) + h * 3600_000).toISOString().slice(0, 16);
@@ -61,14 +62,12 @@ const advisorScope = (v: TurnView, history: boolean): RoleScope => ({
   role: 'advisor', operation: v.scenario, history, ...(v.human.id === 'su' || v.human.id === 'de' ? { side: v.human.id } : {}),
 });
 
-interface Draft { formation: string; task: Task; target: Target; targetText: string; at: LngLat | null; note: string }
+type Draft = OrderDraft;
 type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire';
 type Sub = 'units' | 'rear' | 'bridges' | 'reserves' | 'bounds';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
-interface Act { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
+type Act = StaffAct;
 type Pick = { kind: 'order' } | { kind: 'line' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string; members?: { id: string; name: string }[] };
-/** Варианты решения на ход от советника (на ход time): по мере генерации, затем итог. */
-interface PlanState { id: number; time: string; count: number; variants: PlanVariantView[]; progress: string; done: boolean; error?: string; warning?: string; seconds?: number; model?: string; accepted?: number }
 interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; wait?: string; result?: AdviceView }
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 
@@ -127,7 +126,16 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [focusOnly, setFocusOnly] = useState(true);
   const [eng, setEng] = useState<MapEngine | null>(null);
   const [adv, setAdv] = useState<AdvMsg[]>([]);
-  const [plan, setPlan] = useState<PlanState | null>(null);
+  const [plan, setPlanState] = useState<PlanState | null>(null);
+  /** Варианты — и в ref: сообщения потока идут чаще отрисовки, итог («готово») говорится по самому свежему. */
+  const planLive = useRef<PlanState | null>(null);
+  const setPlan = (p: PlanState | null | ((p: PlanState | null) => PlanState | null)) => {
+    const n = typeof p === 'function' ? p(planLive.current) : p;
+    planLive.current = n;
+    setPlanState(n);
+  };
+  /** Вариант, раскрытый на экране (щелчком или «подробнее о …»). */
+  const [planOpen, setPlanOpen] = useState<number | null>(0);
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
   const [labels, toggleLabels] = useMapLabels();
@@ -180,8 +188,22 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       else if (m.kind === 'review-stream' || m.kind === 'review-wait' || m.kind === 'review-think' || m.kind === 'review-done') reviewListener.current?.(m);
       else if (m.kind === 'plan-progress') setPlan((p) => (p?.id === m.id ? { ...p, progress: m.text } : p));
       else if (m.kind === 'plan-variant') setPlan((p) => { if (p?.id !== m.id) return p; const v = [...p.variants]; v[m.index] = m.variant; return { ...p, variants: v }; });
-      else if (m.kind === 'plan-done') setPlan((p) => (p?.id === m.id ? { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model } : p));
-      else if (m.kind === 'advice') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
+      else if (m.kind === 'plan-done') {
+        const p = planLive.current;
+        if (p?.id === m.id) {
+          const n = { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model };
+          setPlan(n);
+          // просили голосом — штаб докладывает, что варианты готовы
+          const t = planArrived(n);
+          if (t) speak(t);
+        }
+      }
+      else if (m.kind === 'advice') {
+        setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
+        // спрашивали голосом — ответ коротко вслух
+        const t = adviceArrived(m.id, m.result);
+        if (t) speak(t);
+      }
       else if (m.kind === 'agents-call') {
         // ход агентной модели считает ядро приложения: поток вызывает команду через окно; к ходу — доктрина из базы
         // окна на время игры для штабов на модели (базы нет — без поля, ядро берёт зашитый текст)
@@ -225,7 +247,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     return en.on('click', (e) => {
       const pm = live.current.pickMode;
       if (pm?.kind === 'line') { setLinePts((l) => [...l, e.lngLat]); return; }
-      if (pm && pm.kind !== 'order') { pickAction(pm, e.lngLat, null); return; }
+      if (pm && pm.kind !== 'order') { void pickAction(pm, e.lngLat, null); return; }
       if (!pm || !live.current.sel) {
         // щелчок по знаку: своё объединение (дивизия на агентной модели) — выбрать и показать его доклад;
         // противник — карточка разведданных; штаб без своего доклада (фронт) — доклады его объединений
@@ -264,40 +286,45 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     send({ kind: 'check', id, action, pendingBridges });
   });
   const liveActs = useRef(acts); liveActs.current = acts;
-  /** Включить распоряжение в проект (после проверки); неисполнимое — сообщение. */
-  const addAct = async (key: string, action: StaffAction, label: string, extra: Partial<Act> = {}) => {
+  /** Включить распоряжение в проект (после проверки); неисполнимое — сообщение. Итог проверки — для голоса. */
+  const addActCheck = async (key: string, action: StaffAction, label: string, extra: Partial<Act> = {}): Promise<ActionCheck> => {
     const r = await check(action, action.kind === 'bridge' ? liveActs.current.filter((a) => a.action.kind === 'bridge').length : 0);
-    if (!r.ok) { setNotice(`${label}: ${r.text}`); return false; }
-    setActs((l) => [...l.filter((a) => a.key !== key), { key, action: action.kind === 'bridge' && r.at ? { ...action, at: r.at } : action, label, text: r.text, at: r.at ?? (action.kind === 'base' ? action.to : action.kind === 'commit' ? action.at : undefined), ...extra }]);
+    if (!r.ok) { setNotice(`${label}: ${r.text}`); return r; }
+    const next = [...liveActs.current.filter((a) => a.key !== key), { key, action: action.kind === 'bridge' && r.at ? { ...action, at: r.at } : action, label, text: r.text, at: r.at ?? (action.kind === 'base' ? action.to : action.kind === 'commit' ? action.at : undefined), ...extra }];
+    liveActs.current = next; // несколько подряд (вариант, резерв по соединениям) — до отрисовки
+    setActs(next);
     setNotice(null);
-    return true;
+    return r;
   };
-  const dropAct = (key: string) => setActs((l) => l.filter((a) => a.key !== key));
-  /** Место выбрано (на карте или из списка пунктов) для распоряжения, ожидающего места. */
-  const pickAction = (pm: Pick, at: LngLat, title: string | null) => {
+  const addAct = async (key: string, action: StaffAction, label: string, extra: Partial<Act> = {}) => (await addActCheck(key, action, label, extra)).ok;
+  const dropAct = (key: string) => { liveActs.current = liveActs.current.filter((a) => a.key !== key); setActs(liveActs.current); };
+  /** Место выбрано (на карте или из списка пунктов) для распоряжения, ожидающего места; итог проверки — для голоса. */
+  const pickAction = async (pm: Pick, at: LngLat, title: string | null): Promise<ActionCheck> => {
     const v = liveView.current;
-    if (!v) return;
+    if (!v) return { ok: false, text: 'обстановка ещё готовится' };
     const side = v.human.id, t = v.time;
     setPickMode(null);
-    if (pm.kind === 'bridge') void addAct(`bridge:${Date.now()}`, { kind: 'bridge', side, at, issuedAt: t }, 'Переправа');
-    else if (pm.kind === 'base') void addAct(`base:${pm.base}`, { kind: 'base', side, base: pm.base, to: at, toName: title ?? undefined, issuedAt: t }, `База «${pm.name}»`, { from: pm.from });
-    else if (pm.kind === 'commit' && pm.members?.length) {
+    if (pm.kind === 'bridge') return addActCheck(`bridge:${Date.now()}`, { kind: 'bridge', side, at, issuedAt: t }, 'Переправа');
+    if (pm.kind === 'base') return addActCheck(`base:${pm.base}`, { kind: 'base', side, base: pm.base, to: at, toName: title ?? undefined, issuedAt: t }, `База «${pm.name}»`, { from: pm.from });
+    if (pm.kind === 'commit' && pm.members?.length) {
       // объединение целиком: соединения — в один район, разнесены в 3–4 км (сам пункт, круги в 3,5 и 7 км), чтобы не стояли
       // в одной точке; точка за линией фронта пропускается — соединение встаёт в следующую
       const ms = pm.members, kx = 1 / Math.cos((at[1] * Math.PI) / 180);
       const ring = (km: number, n: number) => Array.from({ length: n }, (_, k): LngLat => [at[0] + (km / 111) * Math.cos((2 * Math.PI * k) / n) * kx, at[1] + (km / 111) * Math.sin((2 * Math.PI * k) / n)]);
       const spots = [at, ...ring(3.5, 8), ...ring(7, 12)];
-      void (async () => {
-        let k = 0;
-        for (const m of ms) {
-          let ok = false;
-          for (let tries = 0; tries < spots.length && !ok; tries++, k++) {
-            ok = await addAct(`commit:${m.id}`, { kind: 'commit', side, formation: m.id, at: spots[k % spots.length], atName: title ?? undefined, issuedAt: t }, `${short(pm.name)}: ${short(m.name)}`);
-          }
-          if (!ok) break; // во всём районе нет своей территории — остальным тоже некуда
+      let k = 0, first: ActionCheck | null = null, last: ActionCheck = { ok: false, text: 'нечего вводить' };
+      for (const m of ms) {
+        last = { ok: false, text: '' };
+        for (let tries = 0; tries < spots.length && !last.ok; tries++, k++) {
+          last = await addActCheck(`commit:${m.id}`, { kind: 'commit', side, formation: m.id, at: spots[k % spots.length], atName: title ?? undefined, issuedAt: t }, `${short(pm.name)}: ${short(m.name)}`);
         }
-      })();
-    } else if (pm.kind === 'commit') void addAct(`commit:${pm.formation}`, { kind: 'commit', side, formation: pm.formation, at, atName: title ?? undefined, issuedAt: t }, short(pm.name));
+        if (!last.ok) break; // во всём районе нет своей территории — остальным тоже некуда
+        first ??= last;
+      }
+      return first ?? last;
+    }
+    if (pm.kind === 'commit') return addActCheck(`commit:${pm.formation}`, { kind: 'commit', side, formation: pm.formation, at, atName: title ?? undefined, issuedAt: t }, short(pm.name));
+    return { ok: false, text: 'не то распоряжение' };
   };
 
   const unit = (id: string | null) => view?.own.find((u) => u.id === id) ?? null;
@@ -395,20 +422,35 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   /** Сколько вариантов просить у советника (общая настройка вкладки «Решение» и советника, запоминается). */
   const [planN, setPlanNRaw] = useState<number>(() => { try { const n = Number(localStorage.getItem('def_ops.planVariants')); return n >= 1 && n <= 3 ? n : 3; } catch { return 3; } });
   const setPlanN = (n: number) => { setPlanNRaw(n); try { localStorage.setItem('def_ops.planVariants', String(n)); } catch { /* */ } };
-  /** Попросить советника о вариантах решения на ход. */
-  const askPlan = (count: number) => {
-    if (!view) return;
+  /** Попросить советника о вариантах решения на ход; возвращает номер запроса. */
+  const askPlan = (count: number): number => {
+    if (!view) return 0;
     const id = ++checkId.current;
     setPlan({ id, time: view.time, count, variants: [], progress: 'подготовка…', done: false });
+    setPlanOpen(0);
     setAdvOpen(true); setAdvMin(false);
     const draft = draftText();
     void kb.roleRef([`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`], advisorScope(view, false)).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'plan', id, count, draft, reference: r.text }));
+    return id;
   };
   const planDraft = (o: PlanVariantView['orders'][number]): Draft => ({ formation: o.formation, task: o.task, target: o.target, targetText: o.targetText, at: o.at, note: o.why });
-  /** Принять вариант в проект целиком: решение, приказы, распоряжения (текущий проект заменяется). */
-  const acceptPlan = async (v: PlanVariantView, idx: number) => {
-    const has = draftList.length || acts.length || decision.assessment.trim() || decision.report.trim();
-    if (has && !(await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' }))) return;
+  /** В проекте уже что-то есть: принятие варианта его заменит. */
+  const projectHas = () => !!(draftList.length || acts.length || decision.assessment.trim() || decision.report.trim());
+  /** Кнопка «Принять вариант»: непустой проект — после вопроса (действие замены), пустой — сразу. */
+  const acceptByButton = async (v: PlanVariantView, idx: number) => {
+    if (!projectHas()) { void act('command.variant.pick', { n: idx + 1 }); return; }
+    if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) void act('command.variant.replace', { n: idx + 1 });
+  };
+  /** Принять вариант idx в проект без вопросов: целиком (решение, приказы, распоряжения) или только решение; итог словами. */
+  const applyPlan = async (idx: number, only: boolean): Promise<string> => {
+    const v = planLive.current?.variants[idx];
+    if (!v) return 'Такого варианта нет.';
+    if (only) {
+      setDecision({ ...v.decision }); setTab('decision');
+      const t = `Решение из варианта «${v.title}» — во вкладке «Решение»; приказы не менялись.`;
+      setNotice(t);
+      return t;
+    }
     setDecision({ ...v.decision });
     const orders = v.orders.filter((o) => o.ok);
     setDrafts(Object.fromEntries(orders.map((o) => [o.formation, planDraft(o)])));
@@ -421,7 +463,26 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     // телефон: советник закрывает экран — убрать, чтобы был виден проект (беседа и варианты сохраняются)
     if (window.matchMedia?.('(max-width: 760px)').matches) setAdvOpen(false);
     setNotice(`Вариант «${v.title}» принят в проект: решение, приказов ${orders.length}, распоряжений ${added}${failed.length ? ` (не исполнимы: ${failed.join(', ')})` : ''}. Проверьте и поправьте во вкладках «Решение» и «Приказы», затем завершите ход.`);
+    return `Вариант «${v.title}» принят: решение, приказов ${orders.length}, распоряжений ${added}${failed.length ? `; не исполнимы: ${failed.map(short).join(', ')}` : ''}. Проверить — скажите «что не готово?».`;
   };
+  /** Вопрос советнику (из дерева тем, своими словами, голосом); возвращает номер вопроса. */
+  const askAdvisor = (cat: string, topic: string, q: string): number => {
+    if (!view) return 0;
+    const id = ++checkId.current;
+    const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
+    setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
+    setAdvOpen(true); setAdvMin(false);
+    const draft = draftText();
+    void kb.roleRef([`${topic} ${q}`], advisorScope(view, cat === 'history')).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference: r.text }));
+    return id;
+  };
+  /** Предложенный советником приказ — в проект. */
+  const takeSuggestion = (sg: AdviceView['suggestions'][number]) => {
+    setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } }));
+    setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`);
+  };
+  /** Разграничительная линия, намечаемая во вкладке «Полосы»: фронт и две армии (точки — linePts). */
+  const [bnd, setBnd] = useState<Omit<BoundsDraft, 'pts'>>({ front: '', a: '', b: '' });
   const aiTurns = (record?.turns ?? []).filter((t) => t.ai).map((t) => t.ai as AiTurn).reverse();
   const current = ai.state === 'done' || ai.state === 'error' ? ai.turn : undefined;
 
@@ -462,6 +523,22 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     reveal, setReveal: (on) => { setReveal(on); send({ kind: 'reveal', on }); }, exit: (discard) => onExit({ discard }),
   };
   useEffect(() => { const get = () => voice.current; const offs = commandActions(get).map(register); return () => { offs.forEach((o) => o()); releaseCommand(get); }; }, []);
+  // штабная работа на ход: советник, решение, приказы, распоряжения — те же действия у кнопок
+  const staff = useRef<StaffDeps>(null!);
+  const lastAdvice = [...adv].reverse().find((x) => x.result?.ok);
+  staff.current = {
+    view, busy: view ? progress : null, setTab, setSub, goTo: (at) => goTo(at), select: setSel,
+    plan, planN, askPlan, stopAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); },
+    openVariant: (i) => { setPlanOpen(i); setAdvOpen(true); setAdvMin(false); }, applyPlan,
+    advisorBusy: adv.some((m) => !m.result), askAdvisor: (q) => askAdvisor('situation', 'свободный вопрос', q),
+    suggestions: lastAdvice?.result?.suggestions.filter((x) => x.ok) ?? [], takeSuggestion,
+    decision, setDecision: (p) => setDecision((d) => ({ ...d, ...p })),
+    drafts, setDraft: (id, d) => setDrafts((all) => { const n = { ...all }; if (d) n[id] = d; else delete n[id]; return n; }),
+    acts, addAct: addActCheck, dropAct,
+    commit: (g, at, title) => pickAction(g.members ? { kind: 'commit', formation: g.id, name: g.name, members: g.members } : { kind: 'commit', formation: g.id, name: g.name }, at, title),
+    bounds: { ...bnd, pts: linePts }, setBounds: ({ pts, ...b }) => { setBnd(b); setLinePts(pts); if (pickMode?.kind === 'line') setPickMode(null); },
+  };
+  useEffect(() => { const get = () => staff.current; const offs = staffActions(get).map(register); return () => { offs.forEach((o) => o()); releaseStaff(get); }; }, []);
 
   if (error && !view) return <div className="rp-empty"><div><b>Игра не запустилась</b><p className="err">{error}</p><button onClick={() => onExit({ discard: false })}>Назад к переигровке</button></div></div>;
 
@@ -503,7 +580,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" checked={focusOnly} onChange={(e) => setFocusOnly(e.target.checked)} /> только он в списках</label><button className="x" title="Снять фокус" onClick={() => setFocus(null)}>×</button></div>}
             {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { if (id) void act('command.unit.show', { name: id }); else setSel(id); }} onOrder={(id) => { setSel(id); setTab('orders'); }} sel={sel} />}
             {tab === 'intel' && <Intel v={fv!} onGo={(id) => void act('map.show', { name: id })} onAttack={(id, name) => { if (!sel) { setTab('orders'); return; } setDrafts((d) => ({ ...d, [sel]: { ...(d[sel] ?? blankDraft(sel)), task: 'attack', target: { formation: id }, at: view.intel.find((x) => x.id === id)?.at ?? null, targetText: `против: ${name}` } })); setTab('orders'); }} />}
-            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} onPlan={() => askPlan(planN)} planN={planN} setPlanN={setPlanN} stopPlan={() => send({ kind: 'plan-stop' })} planBusy={!!plan && !plan.done} />}
+            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} planN={planN} setPlanN={setPlanN} planBusy={!!plan && !plan.done} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
                 {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
@@ -511,12 +588,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
                   <button key={k} className={sub === k ? 'on' : ''} onClick={() => { setSub(k); setPickMode(null); }}>{t}{n ? ` · ${n}` : ''}</button>))}
               </div>
               {sub === 'units' && <Orders v={fv!} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}
-              {sub === 'rear' && <Rear v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} goTo={goTo}
-                setPriority={(ids) => { if (same(ids, view.priority)) dropAct('priority'); else void addAct('priority', { kind: 'priority', side: view.human.id, formations: ids, issuedAt: view.time }, 'Приоритет подвоза'); }} />}
+              {sub === 'rear' && <Rear v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo}
+                setPriority={(ids) => void act('command.rear.priority', { armies: ids })} />}
               {sub === 'bridges' && <Bridges v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo} />}
               {sub === 'bounds' && <Bounds v={view} acts={acts} drop={dropAct} goTo={goTo} picking={pickMode?.kind === 'line'} setPicking={(b) => setPickMode(b ? { kind: 'line' } : null)} pts={linePts} setPts={setLinePts}
-                add={(a, label) => addAct(`boundary:${[a.a, a.b].sort().join('|')}`, a, label, { at: a.line[0] })} />}
-              {sub === 'reserves' && <Reserves v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} pickAction={pickAction} goTo={goTo}
+                sel={bnd} setSel={setBnd} />}
+              {sub === 'reserves' && <Reserves v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo}
                 onOrder={(id) => { setSel(id); setSub('units'); goTo(unit(id)?.at ?? null, false); }} />}
             </>}
             {tab === 'journal' && <Journal v={view} onDownload={() => download(`${view.scenario}-журнал.md`, journalMd(), 'text/markdown')} />}
@@ -581,20 +658,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       {advOpen && view && advMin && <button className="adv-tab" onClick={() => { setAdvMin(false); setAdvSeen(adv.length); }} title="Развернуть советника">
         <span>Советник</span>{adv.some((m) => !m.result) ? <i className="spinner" /> : adv.length > advSeen ? <b className="adv-new">ответ</b> : null}</button>}
       {advOpen && view && !advMin && <Advisor llm={llm} msgs={adv} onClose={() => setAdvOpen(false)} onMinimize={() => { setAdvMin(true); setAdvSeen(adv.length); }} onClear={() => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); setAdv([]); setPlan(null); }}
-        ask={(cat, topic, q) => {
-          const id = ++checkId.current;
-          const thread = adv.filter((x) => x.result?.ok).slice(-3).map((x) => ({ q: x.q, a: x.result!.answer }));
-          setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
-          const draft = draftText();
-          void kb.roleRef([`${topic} ${q}`], advisorScope(view, cat === 'history')).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference: r.text }));
-        }}
+        ask={(cat, topic, q) => { askAdvisor(cat, topic, q); }}
         dyn={advDyn} focus={focus}
-        accept={(sg) => { setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } })); setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); }}
+        accept={takeSuggestion}
         drafted={(f) => !!drafts[f]}
-        plan={plan} planStale={!!plan && plan.time !== view.time} askPlan={askPlan} planN={planN} setPlanN={setPlanN} stopPlan={() => send({ kind: 'plan-stop' })} acceptPlan={(v, i) => void acceptPlan(v, i)}
-        takeDecision={(v) => { setDecision({ ...v.decision }); setTab('decision'); setNotice(`Решение из варианта «${v.title}» — во вкладке «Решение»; приказы не менялись.`); }}
+        plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} setPlanN={setPlanN} acceptPlan={(v, i) => void acceptByButton(v, i)}
+        planOpen={planOpen} setPlanOpen={setPlanOpen}
+        takeDecision={(i) => void act('command.variant.pick', { n: i + 1, only: true })}
         takeAct={(a) => { if (a.action) void addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {}).then((ok) => ok && setNotice(`В распоряжение: ${a.label} — ${a.text}`)); }}
-        hasAct={(k) => acts.some((a) => a.key === k)} stop={() => send({ kind: 'advise-stop' })} />}
+        hasAct={(k) => acts.some((a) => a.key === k)} />}
       {review !== 'closed' && view && <div hidden={review === 'hidden'}><ReviewView view={view} llm={llm} send={send} listen={(f) => { reviewListener.current = f; }} onClose={() => setReview('hidden')} /></div>}
     </div>
     </ZonesContext.Provider>
@@ -721,11 +793,11 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
         {list.map((x) => { const w = v.own.find((y) => y.id === x.formation)!; return (
           <div key={x.formation} className={`draft${x.formation === sel ? ' on' : ''}`} onClick={() => setSel(x.formation)}>
             <b>{short(w.name)}</b> — {TASK_RU[x.task]}{x.targetText ? `: ${x.targetText}` : ''}
-            <button className="x" title="Отменить приказ" onClick={(e) => { e.stopPropagation(); setDrafts((all) => { const n = { ...all }; delete n[x.formation]; return n; }); }}>×</button>
+            <button className="x" title="Отменить приказ" data-action="command.order.cancel" onClick={(e) => { e.stopPropagation(); void act('command.order.cancel', { unit: x.formation }); }}>×</button>
           </div>); })}
       </div>}
       {u ? <OrderEditor v={v} u={u} d={d ?? blank(u.id)} isNew={!d} pick={pick} setPick={setPick}
-        save={(nd) => setDrafts((all) => ({ ...all, [u.id]: nd }))} drop={() => setDrafts((all) => { const n = { ...all }; delete n[u.id]; return n; })} close={() => setSel(null)} />
+        save={(nd) => setDrafts((all) => ({ ...all, [u.id]: nd }))} drop={() => void act('command.order.cancel', { unit: u.id })} close={() => setSel(null)} />
         : <p className="muted">Выберите объединение — в списке ниже или щелчком по его знаку на карте.</p>}
       {(v.sectors?.length ?? 0) > 0 && <details className="sect-note"><summary>Полосы и разграничительные линии</summary><ul>{v.sectors.map((t) => <li key={t}>{t}</li>)}</ul>
         <p className="muted small">Объединения идут к цели своей полосой; выход в полосу соседа по директиве не запрещён, но отмечается в разборе.</p></details>}
@@ -797,7 +869,7 @@ function OrderEditor({ v, u, d, isNew, pick, setPick, save, drop, close }: { v: 
       <div className="muted small">Дойдёт до войск ≈ {hhmm(arrive)} {ddmm(arrive)} (через {delay} ч).</div>
       <div className="oedit-f">
         {isNew ? <span className="muted small">Приказ войдёт в распоряжение, как только вы выберете задачу или цель.</span>
-          : <button className="link danger" onClick={drop}>Отменить приказ</button>}
+          : <button className="link danger" data-action="command.order.cancel" onClick={drop}>Отменить приказ</button>}
       </div>
     </div>
   );
@@ -821,11 +893,12 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus, stop, plan, planStale, askPlan, planN, setPlanN, stopPlan, acceptPlan, takeDecision, takeAct, hasAct }: {
+function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear, dyn, focus, plan, planStale, planN, setPlanN, acceptPlan, planOpen, setPlanOpen, takeDecision, takeAct, hasAct }: {
   llm: Llm; msgs: AdvMsg[]; ask: (cat: string, topic: string, q: string) => void; accept: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean;
   onClose: () => void; onMinimize: () => void; onClear: () => void; dyn: Dyn; focus: Sector | null;
-  plan: PlanState | null; planStale: boolean; askPlan: (count: number) => void; planN: number; setPlanN: (n: number) => void; stopPlan: () => void; acceptPlan: (v: PlanVariantView, i: number) => void;
-  takeDecision: (v: PlanVariantView) => void; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean; stop: () => void;
+  plan: PlanState | null; planStale: boolean; planN: number; setPlanN: (n: number) => void; acceptPlan: (v: PlanVariantView, i: number) => void;
+  planOpen: number | null; setPlanOpen: (i: number | null) => void;
+  takeDecision: (i: number) => void; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean;
 }) {
   /** Путь по дереву: индексы узлов (пусто — категории). */
   const [path, setPath] = useState<AdviceNode[]>([]);
@@ -869,7 +942,7 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
       <div className="adv-plan-bar">
         <span><b>Варианты решения на ход</b><small>решение, приказы, тыл — принять целиком и поправить</small></span>
         <select value={planN} disabled={planBusy} onChange={(e) => setPlanN(+e.target.value)} title="Сколько вариантов">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
-        {planBusy ? <button onClick={stopPlan}>Стоп</button> : <button className="primary" onClick={() => askPlan(planN)}>Предложить</button>}
+        {planBusy ? <ActButton action="command.advisor.stop">Стоп</ActButton> : <ActButton className="primary" action="command.variants" params={{ count: planN }}>Предложить</ActButton>}
       </div>
       <div className="adv-body">
         {!msgs.length && <div className="adv-empty">
@@ -900,7 +973,7 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
             </div>
           </div>
         ))}
-        {plan && <PlanBlock plan={plan} stale={planStale} accept={acceptPlan} takeDecision={takeDecision} takeOrder={accept} drafted={drafted} takeAct={takeAct} hasAct={hasAct} retry={() => askPlan(plan.count)} />}
+        {plan && <PlanBlock plan={plan} stale={planStale} open={planOpen} setOpen={setPlanOpen} accept={acceptPlan} takeDecision={takeDecision} takeOrder={accept} drafted={drafted} takeAct={takeAct} hasAct={hasAct} />}
         <div ref={end} />
       </div>
       <div className={`adv-nav${navOpen ? '' : ' closed'}`}>
@@ -927,7 +1000,7 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
       <div className="adv-in">
         <textarea rows={2} value={text} placeholder={node ? `Свой вопрос (${topic})…` : 'Свой вопрос…'} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(text); } }} />
-        {busy ? <button onClick={stop} title="Прервать ответ (модель освобождается)">Остановить</button>
+        {busy ? <ActButton action="command.advisor.stop" title="Прервать ответ (модель освобождается)">Остановить</ActButton>
           : <button className="primary" disabled={!text.trim()} onClick={() => go(text)}>Спросить</button>}
       </div>
       <div className="adv-note">Вопросы читает только советник. Арбитр исполняет лишь утверждённые вами приказы в строгой форме — объединение, задача, цель.</div>
@@ -936,16 +1009,15 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
 }
 
 /** Варианты решения от советника: карточки по мере генерации; принять целиком, только решение или отдельные приказы и распоряжения. */
-function PlanBlock({ plan, stale, accept, takeDecision, takeOrder, drafted, takeAct, hasAct, retry }: {
-  plan: PlanState; stale: boolean; accept: (v: PlanVariantView, i: number) => void; takeDecision: (v: PlanVariantView) => void;
-  takeOrder: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean; retry: () => void;
+function PlanBlock({ plan, stale, open, setOpen, accept, takeDecision, takeOrder, drafted, takeAct, hasAct }: {
+  plan: PlanState; stale: boolean; open: number | null; setOpen: (i: number | null) => void; accept: (v: PlanVariantView, i: number) => void; takeDecision: (i: number) => void;
+  takeOrder: (s: AdviceView['suggestions'][number]) => void; drafted: (f: string) => boolean; takeAct: (a: PlanVariantView['acts'][number]) => void; hasAct: (key: string) => boolean;
 }) {
-  const [open, setOpen] = useState<number | null>(0);
   const D: [keyof HumanDecision, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение вышестоящему']];
   return (
     <div className="adv-msg plan">
       <div className="adv-q"><small>Решение › Варианты решения на ход · {ddmm(plan.time)} {hhmm(plan.time)}</small>Предложите {plan.count === 1 ? 'вариант' : `${plan.count} варианта`} решения на ход</div>
-      {stale && <div className="adv-warn">Ход сменился — эти варианты составлены для прошлой обстановки; принять их нельзя. <button className="link" onClick={retry}>предложить заново</button></div>}
+      {stale && <div className="adv-warn">Ход сменился — эти варианты составлены для прошлой обстановки; принять их нельзя. <ActButton className="link" action="command.variants" params={{ count: plan.count }}>предложить заново</ActButton></div>}
       {plan.warning && <div className="adv-warn">⚠ {plan.warning}</div>}
       {plan.variants.map((v, i) => v && (
         <div key={i} className={`plan-var${plan.accepted === i ? ' on' : ''}`}>
@@ -968,13 +1040,13 @@ function PlanBlock({ plan, stale, accept, takeDecision, takeOrder, drafted, take
               </div>)}</div>}
           </div>}
           {!stale && <div className="plan-act">
-            <button className="primary" disabled={!plan.done} title={plan.done ? '' : 'дождитесь всех вариантов'} onClick={() => accept(v, i)}>{plan.accepted === i ? 'Принять заново' : 'Принять вариант'}</button>
-            <button disabled={!plan.done} onClick={() => takeDecision(v)}>Только решение</button>
+            <button className="primary" data-action="command.variant.pick" disabled={!plan.done} title={plan.done ? '' : 'дождитесь всех вариантов'} onClick={() => accept(v, i)}>{plan.accepted === i ? 'Принять заново' : 'Принять вариант'}</button>
+            <button data-action="command.variant.pick" disabled={!plan.done} onClick={() => takeDecision(i)}>Только решение</button>
           </div>}
         </div>
       ))}
       {!plan.done && <div className="plan-wait"><span className="spinner" /> {plan.progress}{plan.variants.length ? ` · готово вариантов: ${plan.variants.filter(Boolean).length} из ${plan.count}` : ''}</div>}
-      {plan.done && plan.error && <div className={plan.variants.length ? 'muted' : 'err'}>{plan.variants.length ? `Не все варианты: ${plan.error}` : `Советник не дал вариантов: ${plan.error}`} <button className="link" onClick={retry}>ещё раз</button></div>}
+      {plan.done && plan.error && <div className={plan.variants.length ? 'muted' : 'err'}>{plan.variants.length ? `Не все варианты: ${plan.error}` : `Советник не дал вариантов: ${plan.error}`} <ActButton className="link" action="command.variants" params={{ count: plan.count }}>ещё раз</ActButton></div>}
       {plan.done && <small className="muted">{plan.seconds != null ? `${plan.seconds} с` : ''}{plan.model ? ` · ${plan.model}` : ''} · после принятия правьте решение и приказы как обычно — вариант лишь заполняет проект.</small>}
     </div>
   );
@@ -982,32 +1054,12 @@ function PlanBlock({ plan, stale, accept, takeDecision, takeOrder, drafted, take
 
 /* ───────────── решение на ход ───────────── */
 
-/** Чего не хватает в решении, чтобы провести ход. */
-export function decisionMissing(d: HumanDecision): string[] {
-  const out: string[] = [];
-  if (!d.assessment.trim()) out.push('оценка обстановки');
-  if (!d.intent.trim()) out.push('решение (замысел)');
-  if (!d.report.trim()) out.push('боевое донесение вышестоящему');
-  return out;
-}
-const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
-function Decision({ v, d, set, onPlan, planN, setPlanN, stopPlan, planBusy }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; onPlan: () => void; planN: number; setPlanN: (n: number) => void; stopPlan: () => void; planBusy: boolean }) {
+function Decision({ v, d, set, planN, setPlanN, planBusy }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; planN: number; setPlanN: (n: number) => void; planBusy: boolean }) {
   const last = v.lastDecision;
-  const draftReport = () => {
-    const active = v.own.filter((u) => u.status === 'active');
-    const cut = active.filter((u) => u.cutOff).map((u) => short(u.name));
-    const lines = [
-      `К ${hhmm(v.time)} ${ddmm(v.time)}: в строю ${active.length} объединений, средняя укомплектованность ${pct(active.reduce((a, u) => a + u.strength, 0) / Math.max(1, active.length))}.`,
-      ...v.events.slice(0, 8),
-      cut.length ? `Отрезаны от подвоза: ${cut.join(', ')}.` : '',
-      d.intent ? `Решение на ${ddmm(v.time)}: ${d.intent}` : '',
-    ].filter(Boolean);
-    set({ report: lines.join('\n') });
-  };
   const F = ({ k, label, hint, rows, req }: { k: Exclude<keyof HumanDecision, 'request'>; label: string; hint: string; rows: number; req?: boolean }) => (
     <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`}>
-      <span>{label}{req && <i> обязательно</i>}{last?.[k] && last[k] !== d[k] && <button className="link" title={last[k]} onClick={(e) => { e.preventDefault(); set({ [k]: last[k] }); }}>взять с прошлого хода</button>}</span>
+      <span>{label}{req && <i> обязательно</i>}{last?.[k] && last[k] !== d[k] && <button className="link" data-action="decision.fromLast" title={last[k]} onClick={(e) => { e.preventDefault(); void act('decision.fromLast', { field: k }); }}>взять с прошлого хода</button>}</span>
       <textarea rows={rows} value={d[k]} placeholder={hint} onChange={(e) => set({ [k]: e.target.value })} />
     </label>
   );
@@ -1017,7 +1069,7 @@ function Decision({ v, d, set, onPlan, planN, setPlanN, stopPlan, planBusy }: { 
       <div className="plan-cta"><span>Не знаете, с чего начать? Советник предложит полные варианты — решение, приказы, тыл, переправы, резервы; выберите, примите и поправьте. Сколько вариантов — выберите рядом (один готовится быстрее).</span>
         <div className="plan-cta-act">
           <select value={planN} disabled={planBusy} onChange={(e) => setPlanN(+e.target.value)} title="Сколько вариантов просить (запоминается)">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
-          {planBusy ? <button onClick={stopPlan}><i className="spinner" /> Стоп</button> : <button className="primary" onClick={onPlan}>Варианты от советника</button>}
+          {planBusy ? <ActButton action="command.advisor.stop"><i className="spinner" /> Стоп</ActButton> : <ActButton className="primary" action="command.variants" params={{ count: planN }}>Варианты от советника</ActButton>}
         </div></div>
       <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их; оценку обстановки и донесение пишут заново на каждый ход (обстановка изменилась), прошлые можно взять кнопкой и поправить. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
@@ -1025,7 +1077,7 @@ function Decision({ v, d, set, onPlan, planN, setPlanN, stopPlan, planBusy }: { 
       {F({ k: 'intent', label: 'Решение (замысел действий)', hint: 'Цель на сутки, главный удар, кто наступает, кто обеспечивает, куда вводятся резервы…', rows: 4, req: true })}
       {F({ k: 'risks', label: 'Риски', hint: 'Что может пойти не так и как парировать…', rows: 2 })}
       <label className={`dfield${!d.report.trim() ? ' need' : ''}`}>
-        <span>Боевое донесение {v.terms?.topTo ?? 'в Ставку'}<i> обязательно</i><button className="link" onClick={(e) => { e.preventDefault(); draftReport(); }}>черновик по докладам</button></span>
+        <span>Боевое донесение {v.terms?.topTo ?? 'в Ставку'}<i> обязательно</i><button className="link" data-action="decision.draftReport" onClick={(e) => { e.preventDefault(); void act('decision.draftReport'); }}>черновик по докладам</button></span>
         <textarea rows={5} value={d.report} placeholder="Положение войск к утру, итоги суток, решение на следующие сутки, просьбы…" onChange={(e) => set({ report: e.target.value })} />
       </label>
       <label className="dfield">
@@ -1058,9 +1110,9 @@ function ActLine({ a, drop }: { a: Act; drop: (k: string) => void }) {
   return <div className="draft"><b>{a.label}</b> — {a.text}<button className="x" title="Отменить распоряжение" onClick={() => drop(a.key)}>×</button></div>;
 }
 
-function Rear({ v, acts, drop, pickMode, setPickMode, pickAction, setPriority, goTo }: {
+function Rear({ v, acts, drop, pickMode, setPickMode, setPriority, goTo }: {
   v: TurnView; acts: Act[]; drop: (k: string) => void; pickMode: Pick | null; setPickMode: (p: Pick | null) => void;
-  pickAction: (pm: Pick, at: LngLat, title: string | null) => void; setPriority: (ids: string[]) => void; goTo: (at: LngLat) => void;
+  setPriority: (ids: string[]) => void; goTo: (at: LngLat) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const pa = acts.find((a) => a.action.kind === 'priority');
@@ -1084,7 +1136,7 @@ function Rear({ v, acts, drop, pickMode, setPickMode, pickAction, setPriority, g
             </div>
             {a && <ActLine a={a} drop={drop} />}
             {open === b.id && !a && <PlacePicker v={v} from={b.at} mapOn={pm} onMap={() => setPickMode(pm ? null : { kind: 'base', base: b.id, name: b.name, from: b.at })}
-              onPick={(p) => { setOpen(null); pickAction({ kind: 'base', base: b.id, name: b.name, from: b.at }, p.at, p.title); }} />}
+              onPick={(p) => { setOpen(null); void act('command.rear.base', { army: b.id, place: p.id }); }} />}
           </div>
         );
       })}
@@ -1095,7 +1147,7 @@ function Rear({ v, acts, drop, pickMode, setPickMode, pickAction, setPriority, g
         const bad = h == null || h > v.rangeHours;
         return (
           <label key={u.id} className={prio.includes(u.id) ? 'on' : ''}>
-            <input type="checkbox" checked={prio.includes(u.id)} disabled={!prio.includes(u.id) && prio.length >= v.priorityMax} onChange={() => toggle(u.id)} />
+            <input type="checkbox" data-action="command.rear.priority" checked={prio.includes(u.id)} disabled={!prio.includes(u.id) && prio.length >= v.priorityMax} onChange={() => toggle(u.id)} />
             <span className="prio-n">{short(u.name)}</span>
             <span className={`prio-h${bad ? ' bad' : ''}`} title="Время подвоза от ближайшей действующей базы">{h == null ? 'подвоз не доходит' : `${h} ч${bad ? ' — дальше предела' : ''}`}</span>
             <Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} />
@@ -1125,9 +1177,9 @@ function Bridges({ v, acts, drop, pickMode, setPickMode, goTo }: { v: TurnView; 
 }
 
 /** Резервы: ждущие ввода (по армиям — вводятся целиком или по соединению), прибывающие по плану и резервы на театре. */
-function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction, goTo, onOrder }: {
+function Reserves({ v, acts, drop, pickMode, setPickMode, goTo, onOrder }: {
   v: TurnView; acts: Act[]; drop: (k: string) => void; pickMode: Pick | null; setPickMode: (p: Pick | null) => void;
-  pickAction: (pm: Pick, at: LngLat, title: string | null) => void; goTo: (at: LngLat | null, zoom?: boolean) => void; onOrder: (id: string) => void;
+  goTo: (at: LngLat | null, zoom?: boolean) => void; onOrder: (id: string) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -1166,12 +1218,12 @@ function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction, goTo, onOr
                 const a = acts.find((x) => x.key === `commit:${done[0].id}`)!;
                 const where = a.action.kind === 'commit' && a.action.atName ? ` в район у ${a.action.atName}` : '';
                 return <div className="draft"><b>Ввод{where}</b> — {done.length === g.units.length ? 'всё объединение' : `${done.length} из ${g.units.length} соед.`}; {a.text}
-                  <button className="x" title="Отменить ввод" onClick={() => done.forEach((u) => drop(`commit:${u.id}`))}>×</button></div>;
+                  <button className="x" title="Отменить ввод" data-action="command.reserve.cancel" onClick={() => void act('command.reserve.cancel', { army: g.id })}>×</button></div>;
               })()}
             {free.length > 0 && <div className="row"><button onClick={() => setOpen(open === g.id ? null : g.id)}>{open === g.id ? 'Отмена' : one || free.length === 1 ? 'Ввести…' : `Ввести ${done.length ? 'остальные' : 'всё объединение'} (${free.length})…`}</button>
 </div>}
             {open === g.id && free.length > 0 && <PlacePicker v={v} from={center} mapOn={pm} onMap={() => setPickMode(pm ? null : pickOf())}
-              onPick={(p) => { setOpen(null); pickAction(pickOf(), p.at, p.title); }} />}
+              onPick={(p) => { setOpen(null); void act('command.reserve.commit', { army: g.id, place: p.id }); }} />}
             {!one && <details className="res-units"><summary>Соединения ({g.units.length})</summary>
               {g.units.map((u) => {
                 const a = acts.find((x) => x.key === `commit:${u.id}`);
@@ -1179,9 +1231,9 @@ function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction, goTo, onOr
                 return (
                   <div key={u.id} className="brow">
                     <div className="brow-h"><b title={u.name}>{short(u.name)}</b><span className="st">{u.personnel.toLocaleString('ru')} чел., танков {u.tanks}, орудий {u.guns}</span>
-                      {a ? <button className="link" onClick={() => drop(a.key)}>не вводить</button> : <button className="link" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? 'отмена' : 'ввести…'}</button>}</div>
+                      {a ? <button className="link" data-action="command.reserve.cancel" onClick={() => void act('command.reserve.cancel', { army: u.id })}>не вводить</button> : <button className="link" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? 'отмена' : 'ввести…'}</button>}</div>
                     {open === u.id && !a && <PlacePicker v={v} from={center} mapOn={upm} onMap={() => setPickMode(upm ? null : { kind: 'commit', formation: u.id, name: u.name })}
-                      onPick={(p) => { setOpen(null); pickAction({ kind: 'commit', formation: u.id, name: u.name }, p.at, p.title); }} />}
+                      onPick={(p) => { setOpen(null); void act('command.reserve.commit', { army: u.id, place: p.id }); }} />}
                   </div>
                 );
               })}
@@ -1212,15 +1264,17 @@ function Reserves({ v, acts, drop, pickMode, setPickMode, pickAction, goTo, onOr
 }
 
 /** Полосы: линии Ставки словами, линии армий — распоряжением игрока (две армии одного фронта, линия точками на карте). */
-function Bounds({ v, acts, drop, goTo, picking, setPicking, pts, setPts, add }: {
+function Bounds({ v, acts, drop, goTo, picking, setPicking, pts, setPts, sel, setSel }: {
   v: TurnView; acts: Act[]; drop: (k: string) => void; goTo: (at: LngLat | null, zoom?: boolean) => void; picking: boolean; setPicking: (b: boolean) => void;
-  pts: LngLat[]; setPts: (f: (l: LngLat[]) => LngLat[]) => void; add: (a: Extract<StaffAction, { kind: 'boundary' }>, label: string) => Promise<boolean>;
+  pts: LngLat[]; setPts: (f: (l: LngLat[]) => LngLat[]) => void; sel: Omit<BoundsDraft, 'pts'>; setSel: (s: Omit<BoundsDraft, 'pts'>) => void;
 }) {
   const armies = v.armies ?? [];
   const fronts = v.groups.filter((g) => armies.filter((u) => u.group === g.id).length >= 2);
-  const [front, setFront] = useState(fronts[0]?.id ?? '');
+  // фронт, армия и соседняя армия — в CommandView: их выбирает и голос («предложи линию между …»)
+  const front = sel.front || (fronts[0]?.id ?? '');
+  const { a, b } = sel;
+  const setB = (x: string) => setSel({ ...sel, front, b: x });
   const inFront = armies.filter((u) => u.group === front);
-  const [a, setA] = useState(''), [b, setB] = useState('');
   const mine = acts.filter((x) => x.action.kind === 'boundary');
   const ready = a && b && a !== b && pts.length >= 2;
   const km = (p: LngLat, q: LngLat) => Math.hypot((p[0] - q[0]) * Math.cos((p[1] * Math.PI) / 180), p[1] - q[1]) * 111;
@@ -1230,31 +1284,7 @@ function Bounds({ v, acts, drop, goTo, picking, setPicking, pts, setPts, add }: 
   const others = inFront.filter((u) => u.id !== a).sort((x, y) => (A0 ? km(A0.at, x.at) - km(A0.at, y.at) : 0));
   // действующие линии между армиями этого объединения: кто справа и слева у каждой армии
   const armyLines = (v.boundaries ?? []).filter((l) => inFront.some((u) => u.id === l.right) && inFront.some((u) => u.id === l.left));
-  /** Линия между двумя армиями: через середину между их войсками, поперёк направления от одной к другой, от тыла к противнику. */
-  const propose = () => {
-    const A = inFront.find((u) => u.id === a), B = inFront.find((u) => u.id === b);
-    if (!A || !B) return;
-    const m: LngLat = [(A.at[0] + B.at[0]) / 2, (A.at[1] + B.at[1]) / 2], c = Math.cos((m[1] * Math.PI) / 180);
-    // направление на противника — среднее направлений от своих соединений рядом (до 40 км) к ближайшему к каждому
-    // обнаруженному противнику, т. е. поперёк фронта; без разведки — поперёк направления между армиями
-    let nx = 0, ny = 0;
-    const near40 = v.own.filter((u) => u.status === 'active' && km(m, u.at) <= 40);
-    if (v.intel.length) for (const u of near40) {
-      const f = v.intel.reduce((b, x) => (km(u.at, x.at) < km(u.at, b.at) ? x : b));
-      const dx = (f.at[0] - u.at[0]) * c, dy = f.at[1] - u.at[1], d = Math.hypot(dx, dy) || 1;
-      nx += dx / d; ny += dy / d;
-    }
-    if (Math.hypot(nx, ny) < 0.3) { nx = -(B.at[1] - A.at[1]); ny = (B.at[0] - A.at[0]) * c; }
-    const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
-    const at = (k: number): LngLat => [+(m[0] + (nx * k) / 111 / c).toFixed(4), +(m[1] + (ny * k) / 111).toFixed(4)];
-    setPts(() => [at(-30), at(0), at(40)]);
-    setPicking(false);
-    goTo(m, false);
-  };
-  const put = async () => {
-    const A = inFront.find((u) => u.id === a)!, B = inFront.find((u) => u.id === b)!;
-    if (await add({ kind: 'boundary', side: v.human.id, a, b, line: pts, issuedAt: v.time }, `Линия ${short(A.name)} / ${short(B.name)}`)) { setPts(() => []); setPicking(false); setA(''); setB(''); }
-  };
+  // «Предложить линию» и «В распоряжение» — действия реестра (command.bounds.propose / put), как и голосом
   return (
     <div className="cmd-sec">
       <h3>Полосы и разграничительные линии</h3>
@@ -1262,7 +1292,7 @@ function Bounds({ v, acts, drop, goTo, picking, setPicking, pts, setPts, add }: 
       <p className="note">Линии между {v.terms?.groupsGen ?? 'фронтами'} устанавливает {v.terms?.top ?? 'Ставка'} — исторические {v.terms?.directive === 'приказ' ? 'приказы' : 'директивы'} вступают, когда обстановка совпала с той, что их вызвала, иначе по поводу или по вашему ходатайству (вкладка «Решение») решает модель высшего командования. Линии между армиями одного объединения — ваше распоряжение: вступает в силу с задержкой доведения армиям; армии идут к целям своей полосой, выход в полосу соседа отмечается в разборе.</p>
       {mine.map((x) => <ActLine key={x.key} a={x} drop={drop} />)}
       {fronts.length ? <div className="bnd-form">
-        <label>{v.terms?.group === 'группа армий' ? 'Группа армий' : 'Фронт'} <select value={front} onChange={(e) => { setFront(e.target.value); setA(''); setB(''); }}>{fronts.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>
+        <label>{v.terms?.group === 'группа армий' ? 'Группа армий' : 'Фронт'} <select value={front} onChange={(e) => setSel({ front: e.target.value, a: '', b: '' })}>{fronts.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>
         <h4 className="cmd-h4">Армии {v.terms?.group === 'группа армий' ? 'группы армий' : 'фронта'} — с севера на юг</h4>
         <table className="bnd-armies"><tbody>{[...inFront].sort((x, y) => y.at[1] - x.at[1]).map((u) => {
           const ls = armyLines.filter((l) => l.right === u.id || l.left === u.id).map((l) => (l.right === u.id ? `слева — ${short(l.leftName)}` : `справа — ${short(l.rightName)}`));
@@ -1270,14 +1300,14 @@ function Bounds({ v, acts, drop, goTo, picking, setPicking, pts, setPts, add }: 
             <td><b>{short(u.name)}</b>{ls.length > 0 && <div className="muted small">линии: {ls.join('; ')}</div>}</td><td className="muted">{near(u.at)}</td></tr>;
         })}</tbody></table>
         {armyLines.length === 0 && <p className="muted small">Действующих линий между армиями нет — армии идут к целям напрямую, полосы задают только линии между {v.terms?.groupsGen ?? 'фронтами'}.</p>}
-        <label>Армия <select value={a} onChange={(e) => { const id = e.target.value; setA(id); const A = inFront.find((u) => u.id === id); const tank = (n: string) => /танков/.test(n);
-          const nb = A && inFront.filter((u) => u.id !== id && (tank(A.name) || !tank(u.name))).sort((x, y) => km(A.at, x.at) - km(A.at, y.at))[0]; setB(nb?.id ?? ''); setPts(() => []); }}><option value="">—</option>{inFront.map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
+        <label>Армия <select value={a} onChange={(e) => { const id = e.target.value; const A = inFront.find((u) => u.id === id); const tank = (n: string) => /танков/.test(n);
+          const nb = A && inFront.filter((u) => u.id !== id && (tank(A.name) || !tank(u.name))).sort((x, y) => km(A.at, x.at) - km(A.at, y.at))[0]; setSel({ front, a: id, b: nb?.id ?? '' }); setPts(() => []); }}><option value="">—</option>{inFront.map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
         <label>Соседняя армия <select value={b} onChange={(e) => setB(e.target.value)}><option value="">—</option>{others.map((u) => <option key={u.id} value={u.id}>{short(u.name)}{A0 ? ` — ${Math.round(km(A0.at, u.at))} км` : ''}</option>)}</select></label>
         <div className="row">
-          <button disabled={!a || !b || a === b} onClick={propose} title="Линия через середину между войсками двух армий, поперёк, от тыла к противнику — её можно поправить, указав точки заново">Предложить линию</button>
+          <ActButton action="command.bounds.propose" params={{ army: a, neighbor: b }} disabled={!a || !b || a === b} title="Линия через середину между войсками двух армий, поперёк, от тыла к противнику — её можно поправить, указав точки заново">Предложить линию</ActButton>
           <button className={picking ? 'on' : ''} onClick={() => setPicking(!picking)}>{picking ? `Готово (${pts.length} точ.)` : pts.length ? `Продолжить линию (${pts.length} точ.)` : 'Указать линию на карте'}</button>
           {pts.length > 0 && <button className="link" onClick={() => setPts(() => [])}>сбросить точки</button>}
-          <button className="primary" disabled={!ready} onClick={() => void put()}>В распоряжение</button>
+          <ActButton className="primary" action="command.bounds.put" disabled={!ready}>В распоряжение</ActButton>
         </div>
         <p className="muted small">Линия — от тыла к переднему краю, хотя бы две точки: «Предложить линию» проводит её между войсками двух армий, «Указать линию на карте» — своими точками. Кто справа по ходу линии, стенд определит по положению армий.</p>
       </div> : <p className="muted">Ни в одном фронте нет двух действующих армий — линии армий не нужны.</p>}

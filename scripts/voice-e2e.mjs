@@ -28,7 +28,9 @@
 // исполняется; chooseAsync — «второй»; askText — диктовка и «готово»), окно «Голоса» (прослушать, назначить, записать
 // новый голос, удалить — с подтверждением «да»), калибровка голосом (шаги идут сами, «готово»), предложение калибровки
 // при первом запуске («нет»), вход в командование и обстановка («открой переигровку» → «рассчитай операцию» →
-// «прими командование» → «без штаба» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»).
+// «прими командование» → «без штаба» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»),
+// советник и решение («дай два варианта» — поддельная LM Studio отвечает вариантами → «подробнее о первом» →
+// «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»).
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и туров (voice-tour.jpg, voice-tour-modeling.jpg,
 // voice-tour-library.jpg).
@@ -637,7 +639,17 @@ await check('событие voice:power: false — выключает, true — 
 // моделей, /v1/chat/completions — по ключевым словам последней реплики: вызов инструмента, текст, текст с
 // задержкой, «не запущена» (соединение отвергается сразу) или «висит» (каждая попытка кончается через 3 с ответом
 // 500 — сбой самой модели, повторяется; модель ещё ждёт, когда приходит следующая реплика).
-const LM = { asked: [], settled: [], models: 0 };
+const LM = { asked: [], settled: [], models: 0, plans: 0 };
+/** Ответ потоком (stream: true): content кусками, затем [DONE]. */
+const sse = (content) => [...content.match(/[\s\S]{1,200}/g).map((c) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: c } }] })}\n\n`),
+  `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\n`, 'data: [DONE]\n\n'].join('');
+/** Варианты решения от «советника»: донесения в первом нет — «что не готово?» его назовёт. */
+const planVariant = (title, idea, formation) => ({
+  title, idea, assessment: 'Противник удерживает Зееловские высоты, подвоз доходит.', enemyIntent: 'Удержать высоты (предположение).',
+  intent: `${formation}: главный удар на Зелов.`, risks: 'Контрудар с юга.', report: '',
+  orders: [{ formation, task: 'attack', area: 'Зелов', toArea: null, why: 'главный удар' }], actions: [],
+});
+const PLAN = { variants: [planVariant('Удар на Зелов', 'Главный удар через Зелов.', '8-я гвардейская армия'), planVariant('Удар пятой ударной', 'Главный удар правее.', '5-я ударная армия')] };
 const lmReply = (content, tool) => ({
   id: 'fake', object: 'chat.completion', model: 'fake-voice',
   choices: [{ index: 0, finish_reason: tool ? 'tool_calls' : 'stop', message: {
@@ -664,7 +676,10 @@ async function fakeLmStudio() {
     if (url.pathname.endsWith('/v1/models')) LM.models++;
     if (url.pathname.endsWith('/v1/models')) return route.fulfill({ json: { object: 'list', data: [{ id: 'fake-voice', object: 'model' }] } });
     if (!url.pathname.endsWith('/v1/chat/completions')) return route.fulfill({ status: 404, body: '' });
-    const said = route.request().postDataJSON().messages.at(-1)?.content ?? '';
+    const body = route.request().postDataJSON();
+    // советник (поток окна игры): варианты решения на ход — потоком SSE, как LM Studio
+    if (body.response_format?.json_schema?.name === 'staff_plan') { LM.plans++; return route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream' }, body: sse(JSON.stringify(PLAN)) }).catch(() => {}); }
+    const said = body.messages.at(-1)?.content ?? '';
     LM.asked.push(said);
     const a = lmAnswer(said);
     const wait = a.slow ?? a.hang ?? 0;
@@ -1024,6 +1039,34 @@ await check('без рук: переигровка → «рассчитай оп
   const clicks = await page.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
   return `расчёт ${calcS} с`;
+});
+
+await check('без рук: «дай два варианта» → «подробнее о первом» → «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»', async () => {
+  // советник отвечает с поддельной LM Studio (поток окна игры ходит туда же)
+  await handsFree(['штаб, дай два варианта', ...QUIET], { reload: false });
+  await feedHas('Прошу у советника два варианта').waitFor({ timeout: 30000 });
+  await feedHas('Советник предложил два варианта').waitFor({ timeout: 90000 }).catch(() => { throw new Error(`варианты не готовы (запросов вариантов к модели: ${LM.plans})`); });
+  await handsFree(['штаб, подробнее о первом', ...QUIET], { reload: false });
+  await feedHas('Вариант первый: «Удар на Зелов»').waitFor({ timeout: 30000 });
+  await page.locator('.plan-var .plan-body').first().waitFor({ timeout: 10000 }).catch(() => { throw new Error('вариант не раскрыт на экране'); });
+  await handsFree(['штаб, выбираю первый', ...QUIET], { reload: false });
+  await feedHas('Вариант «Удар на Зелов» принят').waitFor({ timeout: 30000 });
+  await page.locator('.plan-var.on .plan-ok', { hasText: 'принят' }).waitFor({ timeout: 10000 });
+  await handsFree(['штаб, восьмой гвардейской наступать на Зелов', ...QUIET], { reload: false });
+  await feedHas('Приказ: восьмая гвардейская армия — наступать, цель — Зелов').waitFor({ timeout: 30000 });
+  await page.locator('.cmd-tabs button.on', { hasText: 'Приказы' }).waitFor({ timeout: 10000 });
+  await page.locator('.draft', { hasText: '8-я гвардейская армия' }).waitFor({ timeout: 10000 });
+  await shot('voice-orders.jpg');
+  await handsFree(['штаб, запиши в замысел: главный удар на Зелов, к вечеру выйти к Мюнхебергу', ...QUIET], { reload: false });
+  await feedHas('Записал в «Замысел»').waitFor({ timeout: 30000 });
+  const intent = await page.locator('.dfield textarea').nth(2).inputValue();
+  if (!/^Главный удар на Зелов, к вечеру выйти к Мюнхебергу/.test(intent)) throw new Error(`замысел: ${intent}`);
+  await handsFree(['штаб, что не готово?', ...QUIET], { reload: false });
+  await feedHas('Не готово: боевое донесение').waitFor({ timeout: 30000 });
+  await shot('voice-decision.jpg');
+  const clicks = await page.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+  return `запросов вариантов: ${LM.plans}`;
 });
 
 await check('первый запуск без калибровки: штаб предлагает её («да / нет»), «нет» — отменено', async () => {

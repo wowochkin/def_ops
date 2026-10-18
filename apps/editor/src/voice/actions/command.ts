@@ -194,6 +194,11 @@ export interface CommandDeps {
   exit(discard: boolean): void;
 }
 
+/** Чьё «подробнее»: последнее длинное, что сказал штаб, — доклад обстановки или ответ советника (staff.ts). */
+let moreOwner: 'report' | 'advice' | null = null;
+/** Последнее длинное сказанное — это (на него и «подробнее»). */
+export function claimMore(kind: 'report' | 'advice'): void { moreOwner = kind; }
+
 /** Остальные донесения после краткого доклада («подробнее») — к обстановке того хода (at), не позже. */
 let more: { at: TurnView; list: string[] } | null = null;
 const sameTurn = (a: TurnView, b: TurnView) => a.time === b.time && a.takeover === b.takeover && a.scenario === b.scenario;
@@ -227,7 +232,7 @@ export function commandActions(get: () => CommandDeps): Action[] {
   return [
     { ...base, id: 'command.report', title: 'Доклад обстановки', describe: 'Коротко докладывает обстановку: дата и ход, цель, укомплектованность, главное из донесений.',
       say: ['штаб, доложи обстановку'],
-      run: async () => { get().setTab('reports'); const r = situationReport(view()); more = { at: view(), list: r.more }; return r.text; } },
+      run: async () => { get().setTab('reports'); const r = situationReport(view()); more = { at: view(), list: r.more }; claimMore('report'); return r.text; } },
     { ...base, id: 'command.report.more', title: 'Подробнее', describe: 'Читает остальные донесения за ход после краткого доклада.', say: ['подробнее'],
       available: () => { const r = ready(); return r !== true ? r : more && more.list.length && sameTurn(more.at, view()) ? true : 'сначала доклад: скажите «Штаб, доложи обстановку»'; },
       run: async () => { const t = moreText(more!.list); more = null; return readAloud(t); } },
@@ -481,7 +486,7 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
   // доклады
   if (/^(?:(?:доложи|доложите|докладывай|дай|какая|как|что за)(?: мне)? )?обстановк\p{L}*$|^доложи$|^доклад$|^что нового$/u.test(t)) return hit('command.report');
   if (/^(?:подробнее|подробней|остальные донесения|еще донесения|какие еще донесения)$/.test(t))
-    return getAction('command.report.more')?.available() === true ? { id: 'command.report.more' } : null;
+    return moreOwner !== 'advice' && getAction('command.report.more')?.available() === true ? { id: 'command.report.more' } : null;
   if (/^(?:что|как)(?: там)? (?:разведка|с разведкой|противник|у противника)$|^(?:доложи |дай |прочитай )?разведсводк\p{L}*$|^разведка$|^доложи (?:разведку|о противнике|про противника)$/u.test(t)) return hit('command.intel');
   if ((m = /^(?:прочитай|прочти|зачитай|читай)(?: мне)? журнал(?: боевых действий)?(?: (?:за )?(.+))?$/.exec(t))) return hit('command.journal.read', m[1] ? { day: m[1] } : {});
   // карта
