@@ -371,3 +371,41 @@ describe('шлюз: состояние голоса', () => {
     try { expect(await (await fetch(b.url + '/api/voice')).json()).toEqual({ state: 'unsupported' }); } finally { b.g.close(); }
   });
 });
+
+describe('шлюз: сохранение файла в «Загрузки» (настольное приложение)', () => {
+  const start = async (downloadsDir?: string) => {
+    const g = createGateway({ port: 0, services: {}, routes: [], auth: 'open', apiKeys: new Map(), corsOrigin: '*', downloadsDir });
+    await new Promise<void>((r) => g.listen(0, () => r()));
+    return { g, url: `http://127.0.0.1:${(g.address() as AddressInfo).port}` };
+  };
+  const save = (url: string, name: string, body: string, origin?: string) =>
+    fetch(`${url}/api/save?name=${encodeURIComponent(name)}`, { method: 'POST', body, headers: { 'Content-Type': 'text/markdown', ...(origin ? { Origin: origin } : {}) } });
+
+  it('пишет файл в папку, занятое имя — «имя (2)», отвечает путём', async () => {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'save-gw-'));
+    const a = await start(dir);
+    try {
+      const r1 = await save(a.url, 'разбор.md', '# Разбор');
+      expect(r1.status).toBe(200);
+      const j1 = await r1.json();
+      expect(j1.path).toBe(join(dir, 'разбор.md'));
+      expect(await fs.readFile(j1.path, 'utf8')).toBe('# Разбор');
+      const j2 = await (await save(a.url, 'разбор.md', 'второй')).json();
+      expect(j2.path).toBe(join(dir, 'разбор (2).md'));
+      // своё окно (тот же адрес) — можно
+      expect((await save(a.url, 'журнал.md', 'x', a.url)).status).toBe(200);
+    } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
+  });
+  it('чужая страница, путь в имени, чужое расширение — отказ; вне приложения — нет такого адреса', async () => {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'save-gw-'));
+    const a = await start(dir);
+    try {
+      expect((await save(a.url, 'x.md', 'x', 'https://evil.example')).status).toBe(403);
+      expect((await save(a.url, '../x.md', 'x')).status).toBe(400);
+      expect((await save(a.url, 'x.sh', 'x')).status).toBe(400);
+      expect(await fs.readdir(dir)).toEqual([]);
+    } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }
+    const b = await start();
+    try { expect((await save(b.url, 'x.md', 'x')).status).toBe(404); } finally { b.g.close(); }
+  });
+});

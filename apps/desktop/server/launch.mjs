@@ -7,6 +7,7 @@
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startVoice } from './voice.mjs';
@@ -54,6 +55,8 @@ const services = [
   { name: 'gateway', env: {
     DOCUMENTS_URL: url('documents'), RENDER_URL: url('render'), REGISTRY_URL: url('registry'), CARTOGRAPHY_URL: url('cartography'),
     VOICE_STATE: join(data, 'voice', 'state.json'),
+    // файлы игры (журнал, разбор, запись) — в «Загрузки» без окна выбора: окно приложения шлёт их шлюзу
+    DOWNLOADS_DIR: process.env.DEFOPS_DOWNLOADS_DIR || join(homedir(), 'Downloads'),
     AUTH: 'open', LLM_URL: opt('llm', process.env.DEFOPS_LLM_URL || 'http://localhost:1234/v1'),
     ...(opt('static') ? { STATIC_DIR: resolve(opt('static')) } : {}),
   } },
