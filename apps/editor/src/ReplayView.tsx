@@ -34,7 +34,7 @@ import { kbStamp, type KbStamp } from './sim/kb-stamp';
 import { KbStampNote } from './KbStampNote';
 import type { TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, register, speak, useAction, voiceRecent } from './voice/registry';
-import { calcDoneText, calcFailText, findLayer, inReplay, replayActions, type ReplayDeps } from './voice/actions/command';
+import { calcDoneText, calcFailText, findLayer, inReplay, releaseReplay, replayActions, type ReplayDeps } from './voice/actions/command';
 import { readAloud } from './voice/dictation';
 import { speakable } from './voice/speech';
 /** Ход игры на агентной модели, ч. */
@@ -454,7 +454,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     openTake: setTake, closeTake: () => setTake(null), take, saved,
     begin: beginGame, continueGame: () => { if (saved) setGame({ start: null, saved, enemy: saved.enemy }); },
   };
-  useEffect(() => { const offs = replayActions(() => voice.current).map(register); return () => offs.forEach((o) => o()); }, []);
+  useEffect(() => { const get = () => voice.current; const offs = replayActions(get).map(register); return () => { offs.forEach((o) => o()); releaseReplay(get); }; }, []);
   if (game) {
     return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} onOpenInEditor={onOpenInEditor}
       onExit={({ discard }) => { if (discard) try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(loadSaved()); setGame(null); }} />;

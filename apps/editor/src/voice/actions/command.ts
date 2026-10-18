@@ -199,6 +199,8 @@ let more: { at: TurnView; list: string[] } | null = null;
 const sameTurn = (a: TurnView, b: TurnView) => a.time === b.time && a.takeover === b.takeover && a.scenario === b.scenario;
 /** Действия командования, зарегистрированные сейчас (для разбора «мягких» фраз: есть ли такое место или соединение). */
 let live: (() => CommandDeps) | null = null;
+/** Действия командования сняты (выход из игры): разбор больше не смотрит в их обстановку. */
+export function releaseCommand(get: () => CommandDeps): void { if (live === get) { live = null; more = null; } }
 
 const NAME = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
 const ENEMY_SAY: Record<EnemyMode, string> = { llm: 'штаб на модели', passive: 'без штаба — держится прежних приказов' };
@@ -339,10 +341,18 @@ export function calcDoneText(scenarioName: string, hint: boolean): string {
 }
 /** Сбой расчёта — причина словами (коротко), без взгляда на экран. */
 export function calcFailText(message: string): string {
+  // техническая ошибка (латиница) словами не пересказывается
+  if (/[A-Za-z]{3}/.test(message)) return 'Расчёт не удался: внутренняя ошибка, подробности на экране.';
   return speakable(`Расчёт не удался: ${message.trim().replace(/[.\s]+$/, '')}.`);
 }
 
+/** Действия переигровки, зарегистрированные сейчас (каталог операций для «рассчитай <название>»). */
+let liveReplay: (() => ReplayDeps) | null = null;
+/** Действия переигровки сняты. */
+export function releaseReplay(get: () => ReplayDeps): void { if (liveReplay === get) liveReplay = null; }
+
 export function replayActions(get: () => ReplayDeps): Action[] {
+  liveReplay = get;
   const idle = (): true | string => {
     const r = inReplay(); if (r !== true) return r;
     const d = get();
@@ -450,8 +460,11 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
   const entry = (id: string, params?: unknown) => (away ? { id, params, section: 'replay' } : hit(id, params, NOT_IN_REPLAY));
   // вход: расчёт, командование, продолжение
   if ((m = /^(?:рассчитай|рассчитать|расчитай|посчитай|посчитать|просчитай|пересчитай|пересчитать|сделай расчет)(?: (.+))?$/.exec(t))) {
-    const name = (m[1] ?? '').split(' ').filter((w) => !CALC_FILL.has(w)).join(' ');
-    return entry('replay.calc', name ? { operation: name } : {});
+    // название — только операция из каталога (или переспрос между ними); «рассчитай потери» — вопрос модели
+    const name = (m[1] ?? '').split(' ').filter((w) => !CALC_FILL.has(w) && !/^операци/.test(w)).join(' ');
+    if (!name) return entry('replay.calc', {});
+    const cat = liveReplay?.().catalog;
+    return cat && pickByName(name, cat.map((c) => opName(c.title))).length ? entry('replay.calc', { operation: name }) : null;
   }
   if ((m = /^(?:прими|принять|принимай|возьми|взять|принимаю) командование(?: (.+))?$/.exec(t)))
     return entry('replay.takeCommand', m[1] ? { at: m[1].replace(/^(?:с|со) /, '') } : {});

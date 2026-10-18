@@ -34,7 +34,7 @@ import { ReviewView } from './ReviewView';
 import { mdToHtml } from './markdown';
 import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, openModal, register, speak, useAction, voiceRecent } from './voice/registry';
-import { commandActions, takeoverParse, type CommandDeps } from './voice/actions/command';
+import { commandActions, releaseCommand, takeoverParse, type CommandDeps } from './voice/actions/command';
 import { dayMonth } from './voice/report';
 import { speakable } from './voice/speech';
 
@@ -461,7 +461,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     view, engine: eng, setTab, showUnit, showEnemy: (id) => setIntelSel(id), enemy, setEnemy,
     reveal, setReveal: (on) => { setReveal(on); send({ kind: 'reveal', on }); }, exit: (discard) => onExit({ discard }),
   };
-  useEffect(() => { const offs = commandActions(() => voice.current).map(register); return () => offs.forEach((o) => o()); }, []);
+  useEffect(() => { const get = () => voice.current; const offs = commandActions(get).map(register); return () => { offs.forEach((o) => o()); releaseCommand(get); }; }, []);
 
   if (error && !view) return <div className="rp-empty"><div><b>Игра не запустилась</b><p className="err">{error}</p><button onClick={() => onExit({ discard: false })}>Назад к переигровке</button></div></div>;
 

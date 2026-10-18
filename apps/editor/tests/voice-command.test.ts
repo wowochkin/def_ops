@@ -4,13 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { places as simPlaces, Theatre, type IntelReport, type Scenario, type TheatreData, type UnitReport } from '@def-ops/sim';
 import type { TurnView } from '../src/sim/game-protocol';
 import { act, markVoice, parsePhrase, register, setSpeaker, voiceRecent, type Action } from '../src/voice/registry';
-import { Dispatcher, helpText } from '../src/voice/dispatch';
+import { Dispatcher, helpText, YES_NO_SAY } from '../src/voice/dispatch';
 import {
-  calcDoneText, calcFailText, commandActions, findLayer, findWho, NO_GAME, NOT_IN_REPLAY, parseCommand, parseDay, replayActions, resolveTarget, setSectionSource, takeoverParse,
+  calcDoneText, calcFailText, commandActions, findLayer, findWho, releaseCommand, releaseReplay, NO_GAME, NOT_IN_REPLAY, parseCommand, parseDay, replayActions, resolveTarget, setSectionSource, takeoverParse,
   type CommandDeps, type ReplayDeps,
 } from '../src/voice/actions/command';
 import { stopReading } from '../src/voice/dictation';
-import { intelReport, journalDayText, situationReport, unitReport } from '../src/voice/report';
+import { enemyReport, intelReport, journalDayText, situationReport, unitReport, whereText } from '../src/voice/report';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
 import scenarioFile from '../../../packages/sim/data/scenarios/berlin-1945-tasks.json';
 
@@ -223,7 +223,7 @@ describe('командование голосом', () => {
     const d = cmd();
     const disp = mk();
     await disp.utterance('Штаб, заверши и удали игру', 1);
-    expect(said.at(-1)).toBe('Завершить игру и удалить её запись? Скажите «да» или «нет».');
+    expect(said.at(-1)).toBe(`Завершить игру и удалить её запись? ${YES_NO_SAY}`);
     expect(d.exit).not.toHaveBeenCalled();
     await disp.utterance('да', 2);
     expect(d.exit).toHaveBeenCalledWith(true);
@@ -315,7 +315,7 @@ describe('вход в командование голосом', () => {
     const disp = mk();
     // в окне ответы разбирает окно (takeoverParse) — здесь как его вызов
     await (disp as unknown as { execute(id: string, p?: unknown): Promise<string> }).execute('replay.startOver', { enemy: 'llm' });
-    expect(said.at(-1)).toBe('Есть незавершённая игра. Начать новую? Запись прежней будет заменена. Скажите «да» или «нет».');
+    expect(said.at(-1)).toBe(`Есть незавершённая игра. Начать новую? Запись прежней будет заменена. ${YES_NO_SAY}`);
     expect(d2.begin).not.toHaveBeenCalled();
     await disp.utterance('да', 2);
     expect(d2.begin).toHaveBeenCalledWith('llm');
@@ -454,5 +454,55 @@ describe('мелкие поправки', () => {
     expect(voiceRecent()).toBe(true);
     markVoice(Date.now() - 6 * 60_000);
     expect(voiceRecent()).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------- раунд 2: расчёт — только по названию операции
+
+describe('«рассчитай …» — только операция из каталога', () => {
+  const deps = (calc = vi.fn()): ReplayDeps => ({
+    catalog: [{ id: 'berlin-1945-tasks', title: 'Берлинская операция, 16.04–2.05.1945' }, { id: 'berlin-city-1945', title: 'Бой в Берлине, 24.04–2.05.1945' }],
+    scenario: 'berlin-1945-tasks', busy: null, game: false, calc, result: null, time: null,
+    takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(),
+  });
+  it('посторонний хвост — не команда (и раздел не переключается)', async () => {
+    const get = () => d;
+    const d = deps();
+    reg(replayActions(get));
+    expect(parsePhrase('посчитай сколько статей', 'knowledge')).toBeNull();
+    for (const q of ['рассчитай потери', 'посчитай потери противника', 'посчитай сколько дней осталось', 'рассчитай силы для удара'])
+      expect(parsePhrase(q, 'replay'), q).toBeNull();
+  });
+  it('операция по названию, заново, без названия — команда', () => {
+    reg(replayActions(() => deps()));
+    expect(parsePhrase('рассчитай операцию', 'replay')).toEqual({ id: 'replay.calc', params: {} });
+    expect(parsePhrase('рассчитай берлинскую', 'replay')).toEqual({ id: 'replay.calc', params: { operation: 'берлинскую' } });
+    expect(parsePhrase('рассчитай берлинскую операцию', 'knowledge')).toEqual({ id: 'replay.calc', params: { operation: 'берлинскую' }, section: 'replay' });
+    expect(parsePhrase('рассчитай заново', 'replay')).toEqual({ id: 'replay.calc', params: {} });
+    expect(parsePhrase('рассчитай берлин', 'replay')).toEqual({ id: 'replay.calc', params: { operation: 'берлин' } }); // переспрос — тоже ответ
+  });
+  it('ссылки на действия снимаются вместе с ними', () => {
+    const get = () => deps();
+    const off = replayActions(get).map(register);
+    expect(parsePhrase('рассчитай берлинскую', 'replay')).not.toBeNull();
+    off.forEach((o) => o());
+    releaseReplay(get);
+    expect(parsePhrase('рассчитай берлинскую', 'knowledge')).toBeNull();
+    const cget = () => ({ view: view() } as CommandDeps);
+    reg(commandActions(cget));
+    releaseCommand(cget);
+    expect(parsePhrase('покажи зелов', 'replay')).toBeNull();
+  });
+  it('техническая ошибка расчёта — «внутренняя ошибка, подробности на экране»', () => {
+    expect(calcFailText("TypeError: Cannot read properties of undefined (reading 'x')")).toBe('Расчёт не удался: внутренняя ошибка, подробности на экране.');
+    expect(calcFailText('нет данных театра')).toBe('Расчёт не удался: нет данных театра.');
+  });
+});
+
+describe('доклады — род и падеж (speech.ts)', () => {
+  it('«двадцать девятый гвардейский стрелковый корпус», «около двухсот танков»', () => {
+    expect(whereText(unitRep({ id: 'x', name: '29-й гв. ск (8 гв. А)', parent: null }))).toBe('двадцать девятый гвардейский стрелковый корпус: наступает, у Зелова.');
+    expect(enemyReport({ ...intel[0], name: '56-й тк', estimate: 'до 20 тыс. чел., около 200 танков и САУ', nearest: null }))
+      .toMatch(/до двадцати тысяч человек, около двухсот танков/);
   });
 });
