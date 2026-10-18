@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { estimate } from '@def-ops/sim';
-import { cardinalGen, speakable } from '../src/voice/speech';
+import { areaTitle, estimate } from '@def-ops/sim';
+import { cardinalGen, placeGen, speakable } from '../src/voice/speech';
+import oder from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
 import berlin from '../../../packages/sim/data/scenarios/berlin-1945.json';
 import city from '../../../packages/sim/data/scenarios/berlin-city-1945.json';
 import vistula from '../../../packages/sim/data/scenarios/vistula-oder-1945.json';
@@ -155,5 +156,24 @@ describe('speakable: раунд 1 — предлоги места и напра�
     const names = [...new Set([berlin, city, vistula].flatMap((s) => s.formations.map((f) => f.name)))].filter((n) => /^[IVXLC]+ /.test(n));
     expect(names.length).toBeGreaterThan(10);
     for (const n of names) expect(speakable(n).split(' ')[0], n).not.toBe(n.split(' ')[1].toLowerCase());
+  });
+});
+
+describe('placeGen: названия мест театра в родительном падеже', () => {
+  it.each([
+    ['Врицен', 'Врицена'], ['Гузов', 'Гузова'], ['Зелов', 'Зелова'], ['Альтлевин', 'Альтлевина'], ['Мюнхеберг', 'Мюнхеберга'],
+    ['Кюстрин', 'Кюстрина'], ['Лебус', 'Лебуса'], ['Ораниенбург', 'Ораниенбурга'], ['Берлин', 'Берлина'], ['Фридланд', 'Фридланда'],
+    ['Франкфурт-на-Одере', 'Франкфурта-на-Одере'], ['Гросс-Кёльциг', 'Гросс-Кёльцига'], ['Бад-Фрайенвальде', 'Бад-Фрайенвальде'],
+    ['Берлин, Шпандау', 'Берлина, Шпандау'], ['Берлин, Рейхсканцелярия', 'Берлина, Рейхсканцелярии'], ['Зееловские высоты', 'Зееловских высот'],
+    ['Кюстринский плацдарм', 'Кюстринского плацдарма'], ['озеро Мюггельзе', 'озера Мюггельзе'], ['Одербрух', 'Одербруха'], ['Шпревальд', 'Шпревальда'],
+    ['Диза', 'Дизы'], ['Огница', 'Огницы'], ['Галле', 'Галле'], ['Бернау', 'Бернау'],
+  ])('%s → %s', (n, g) => { expect(placeGen(n)).toBe(g); });
+  it('любое название театра oder-berlin-1945 — непустое, без «а» дважды подряд и без латиницы-мусора', () => {
+    for (const a of (oder as { areas: { name: string }[] }).areas) {
+      const t = areaTitle(a.name).replace(/\s*\([^)]*\)/g, '');
+      const g = placeGen(t);
+      expect(g, t).toBeTruthy();
+      expect(g, t).not.toMatch(/аа|ыы|яя|ьа$/);
+    }
   });
 });

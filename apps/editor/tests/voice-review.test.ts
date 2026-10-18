@@ -26,21 +26,21 @@ const OWN = [
   unit('su_3ua', '3-я ударная армия', [14.6, 52.7], { movedKm: 12 }),
 ];
 const INTEL: IntelReport[] = [
-  { id: 'de_56tk', name: 'LVI танковый корпус', at: [14.3, 52.5], place: 'у Мюнхеберга', posture: 'обороняется', estimate: 'до 20 тыс. чел.', fresh: false, nearest: { name: '8-я гвардейская армия', km: 6 } },
-  { id: 'de_11ss', name: 'XI танковый корпус СС', at: [14.2, 52.7], place: 'у Врицена', posture: 'обороняется', estimate: 'до 10 тыс. чел.', fresh: true, nearest: { name: '3-я ударная армия', km: 12 } },
+  { id: 'de_56tk', name: 'LVI танковый корпус', at: [14.3, 52.5], place: 'у Мюнхеберг', posture: 'обороняется', estimate: 'до 20 тыс. чел.', fresh: false, nearest: { name: '8-я гвардейская армия', km: 6 } },
+  { id: 'de_11ss', name: 'XI танковый корпус СС', at: [14.2, 52.7], place: 'у Врицен', posture: 'обороняется', estimate: 'до 10 тыс. чел.', fresh: true, nearest: { name: '3-я ударная армия', km: 12 } },
 ];
 /** Противник, которого разведка не видит: он есть в бою (соприкосновение), но его места мы не знаем. */
 const HIDDEN: LngLat = [13.9, 52.45];
 const battle = (over: Partial<TurnBattle>): TurnBattle => ({
-  time: '1945-04-16T11:00', at: SEELOW, place: 'у Зелова (Seelow)', role: 'attack', own: [{ id: 'su_8gva', name: '8-я гвардейская армия' }],
+  time: '1945-04-16T11:00', at: SEELOW, place: 'у Зелов (Seelow)', role: 'attack', own: [{ id: 'su_8gva', name: '8-я гвардейская армия' }],
   enemy: [{ id: 'de_56tk', name: 'LVI танковый корпус' }], outcome: 'breakthrough', outcomeText: 'прорыв', advanceKm: 6.5, ownLossPct: 4.2, ratio: 3.1, ...over,
 });
 const BATTLES = [
-  battle({ outcome: 'held', outcomeText: 'оборона удержана', advanceKm: 0, ownLossPct: 1, at: [14.52, 52.66], place: 'у Леччина', own: [{ id: 'su_5ua', name: '5-я ударная армия' }], enemy: [{ id: 'de_9pd', name: '9-я парашютная дивизия' }] }),
+  battle({ outcome: 'held', outcomeText: 'оборона удержана', advanceKm: 0, ownLossPct: 1, at: [14.52, 52.66], place: 'у Леччин', own: [{ id: 'su_5ua', name: '5-я ударная армия' }], enemy: [{ id: 'de_9pd', name: '9-я парашютная дивизия' }] }),
   battle({}),
-  battle({ role: 'defend', outcome: 'repelled', outcomeText: 'атака отбита', advanceKm: 0, ownLossPct: 2, at: [14.46, 52.41], place: 'у Лебуса', own: [{ id: 'su_69a', name: '69-я армия' }], enemy: [{ id: 'de_x', name: 'дивизия «Мюнхеберг»' }] }),
-  battle({ outcome: 'advance', outcomeText: 'продвижение', advanceKm: 3, ownLossPct: 3, at: [14.6, 52.71], place: 'у Врицена', own: [{ id: 'su_3ua', name: '3-я ударная армия' }], enemy: [{ id: 'de_11ss', name: 'XI танковый корпус СС' }] }),
-  battle({ outcome: 'repelled', outcomeText: 'атака отбита', advanceKm: 0, ownLossPct: 6, at: [14.7, 52.8], place: 'у Ораниенбурга', own: [{ id: 'su_3ua', name: '3-я ударная армия' }], enemy: [{ id: 'de_9pd', name: '9-я парашютная дивизия' }] }),
+  battle({ role: 'defend', outcome: 'repelled', outcomeText: 'атака отбита', advanceKm: 0, ownLossPct: 2, at: [14.46, 52.41], place: 'у Лебус', own: [{ id: 'su_69a', name: '69-я армия' }], enemy: [{ id: 'de_x', name: 'дивизия «Мюнхеберг»' }] }),
+  battle({ outcome: 'advance', outcomeText: 'продвижение', advanceKm: 3, ownLossPct: 3, at: [14.6, 52.71], place: 'у Врицен', own: [{ id: 'su_3ua', name: '3-я ударная армия' }], enemy: [{ id: 'de_11ss', name: 'XI танковый корпус СС' }] }),
+  battle({ outcome: 'repelled', outcomeText: 'атака отбита', advanceKm: 0, ownLossPct: 6, at: [14.7, 52.8], place: 'у Ораниенбург', own: [{ id: 'su_3ua', name: '3-я ударная армия' }], enemy: [{ id: 'de_9pd', name: '9-я парашютная дивизия' }] }),
 ];
 const view = (over: Partial<TurnView> = {}): TurnView => ({
   scenario: 'berlin-1945-tasks', scenarioName: 'Берлинская операция', rules: 'x', seed: 1, start: '1945-04-16T05:00', end: '1945-05-08T05:00',
@@ -83,8 +83,27 @@ describe('разбор хода: шаги из данных хода', () => {
     expect(b[0].map.zoom).toBeGreaterThanOrEqual(9);
     expect(b[0].map.fit).toEqual(b[0].map.box);
     expect(b[0].map.box).toEqual(expect.arrayContaining([SEELOW, [14.4, 52.55], [14.3, 52.5]]));
-    expect(b[0].text).toBe('У Зелова — наступление восьмой гвардейской армии против пятьдесят шестого танкового корпуса: прорыв на семь километров; наши потери — около четырёх процентов.');
+    expect(b[0].text).toBe('У Зелова — наступление восьмой гвардейской армии против пятьдесят шестого танкового корпуса: прорыв на семь километров; потери — около четырёх процентов участвовавших.');
     expect(b.some((s) => /противник атаковал шестьдесят девятую армию/.test(s.text))).toBe(true);
+  });
+  it('туман войны: в данных для модели нет соотношения сил — сведений о противнике сверх разведки', () => {
+    const inp = reviewInput(view(), steps);
+    expect(inp).not.toMatch(/соотношени|\d:1|ratio|3[.,]1/i);
+    for (const s of steps) expect(s.facts, s.title).not.toMatch(/соотношени|:1\b/);
+    expect(inp).toMatch(/потери — [\d.]+ % от участвовавших в бою/); // потери — доля участвовавших в бою
+  });
+  it('места — в родительном падеже (названия театра — именительный), «и ещё» — с существительным и падежом', () => {
+    const b = steps.filter((s) => s.kind === 'battle');
+    expect(b.map((s) => s.title)).toEqual(expect.arrayContaining(['Бой у Зелова']));
+    expect(steps.find((s) => s.kind === 'enemy')!.text).toMatch(/у Врицена/);
+    const many = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `de_x${i}`, name: `${i + 1}-я танковая дивизия` }));
+    const one = (n: number, role: 'attack' | 'defend') => turnReview(view({ battles: [battle({ role, enemy: many(n), own: many(n).map((x) => ({ ...x, id: x.id.replace('de', 'su') })) })] }), prev).find((s) => s.kind === 'battle')!.text;
+    expect(one(4, 'attack')).toMatch(/против первой танковой дивизии, второй танковой дивизии и ещё двух соединений:/);
+    expect(one(3, 'attack')).toMatch(/и ещё одного соединения:/);
+    expect(one(7, 'defend')).toMatch(/и ещё пять соединений;/);
+    expect(one(4, 'defend')).toMatch(/и ещё два соединения;/);
+    const fresh = view({ intel: [1, 2, 3, 4].map((i) => ({ ...INTEL[1], id: `de_${i}`, name: `${i}-я танковая дивизия`, fresh: true })) });
+    expect(turnReview(fresh, prev).find((s) => s.kind === 'enemy')!.text).toMatch(/и ещё два соединения\./);
   });
   it('туман войны: на карте нет мест противника, которого не видит разведка; о противнике — только разведка и его атаки', () => {
     const fog = view({ battles: [battle({ enemy: [{ id: 'de_hid', name: 'дивизия «Курмарк»' }] })] });
@@ -101,9 +120,9 @@ describe('разбор хода: шаги из данных хода', () => {
   });
   it('место словами: рядом с пунктом — «южнее …», дальше — «в … км к югу от …»', () => {
     const near = turnReview(view({ battles: [battle({ place: '6,3 км к Ю от Брисков (Briskow)' })] }), prev).find((s) => s.kind === 'battle')!;
-    expect(near.title).toBe('Бой южнее Брисков');
-    expect(near.text).toMatch(/^Южнее Брисков — наступление/);
-    const far = turnReview(view({ battles: [battle({ place: '15 км к СЗ от Зелова (Seelow)' })] }), prev).find((s) => s.kind === 'battle')!;
+    expect(near.title).toBe('Бой южнее Брискова');
+    expect(near.text).toMatch(/^Южнее Брискова — наступление/);
+    const far = turnReview(view({ battles: [battle({ place: '15 км к СЗ от Зелов (Seelow)' })] }), prev).find((s) => s.kind === 'battle')!;
     expect(far.title).toBe('Бой в 15 км к северо-западу от Зелова');
     expect(far.text).toMatch(/^Пятнадцать километров к северо-западу от Зелова — наступление/);
   });

@@ -2,7 +2,7 @@
 // знаков сторон; прозрачно), смена зон за ход — плавно по времени карты.
 import { describe, expect, it } from 'vitest';
 import type { ZoneGrid } from '@def-ops/sim';
-import { ZONE_ALPHA, ZONE_ENEMY, ZONE_OWN, zoneOverlays, zoneRgba } from '../src/zones-overlay';
+import { ZONE_ALPHA, ZONE_ALPHA_ENEMY, ZONE_ENEMY, ZONE_OWN, zoneOverlays, zoneRgba } from '../src/zones-overlay';
 
 const grid = (v: number[]): ZoneGrid => ({ bbox: [14, 52, 15, 53], cols: v.length, rows: 1, v });
 
@@ -15,6 +15,9 @@ describe('картинка зон влияния', () => {
     expect(px[7]).toBeLessThan(px[3]);
     expect(px[11]).toBe(0);
     expect([...px.slice(12, 15)]).toEqual(ZONE_ENEMY);
+    expect(px[15]).toBe(Math.round(255 * ZONE_ALPHA_ENEMY)); // голубой на пергаменте бледнее красного — противник заметнее
+    expect(ZONE_ALPHA_ENEMY).toBeGreaterThanOrEqual(0.22);
+    expect(ZONE_ALPHA_ENEMY).toBeLessThanOrEqual(0.25);
     expect(ZONE_ALPHA).toBeGreaterThanOrEqual(0.12);
     expect(ZONE_ALPHA).toBeLessThanOrEqual(0.18);
   });

@@ -297,6 +297,43 @@ describe('разбор хода после хода — голосом поср�
     expect(said.at(-1)).toMatchObject({ text: NEXT_TURN_SAY });
     expect(said.at(-1)!.role).toBeUndefined();
   });
+  it('голос выключили, пока ждали ответ модели, — тур не стартует; разбор сохранён для «покажи ход»', async () => {
+    markVoice();
+    runTours();
+    let live = true;
+    setVoiceLive(() => live);
+    let release!: (s: string) => void;
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: () => new Promise<string>((r) => { release = r; }) });
+    await Promise.resolve();
+    live = false;
+    release(MODEL_SAYS());
+    await p;
+    expect(tours).toHaveLength(0);
+    turn({ prev });
+    live = true;
+    await disp.utterance('Штаб, покажи ход', 1);
+    expect(tours).toHaveLength(1);
+    expect(tours[0].tour.steps[1].text).toMatch(/^Шаг два/); // тексты модели сохранились
+  });
+  it('«повтори доклад» — коротко (общий шаг и итог, 2–3 фразы), «подробнее» и «покажи ход» — весь разбор', async () => {
+    markVoice();
+    runTours();
+    await announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: null });
+    turn({ prev });
+    said = [];
+    await disp.utterance('Штаб, повтори доклад', 1);
+    const short = said.at(-1)!.text;
+    const full = steps().map((x) => x.text).join(' ');
+    const n = (x: string) => x.match(/[.!?]+(\s|$)/g)?.length ?? 0;
+    expect(said.at(-1)!.role).toBe('umpire');
+    expect(n(short)).toBeGreaterThanOrEqual(2);
+    expect(n(short)).toBeLessThanOrEqual(3);
+    expect(short.length).toBeLessThan(full.length / 2);
+    expect(tours.length).toBe(1);
+    await disp.utterance('Штаб, подробнее', 2);
+    expect(tours).toHaveLength(2); // весь разбор
+    expect(tours[1].tour.steps.length).toBe(steps().length);
+  });
   it('модель думает долго — не чаще раза в 20 с «Сведения ещё готовятся», разбор не подменяется', async () => {
     vi.useFakeTimers();
     let release!: (s: string) => void;
@@ -340,7 +377,8 @@ describe('разбор хода после хода — голосом поср�
     expect(done).toHaveBeenCalledTimes(1);
     expect(tours).toHaveLength(0);
     expect(said).toEqual([]);
-    expect(lastUmpire()).toBe(steps().map((x) => x.text).join(' '));
+    expect(lastUmpire()).toBeTruthy();
+    expect(lastUmpire()!.length).toBeLessThan(steps().map((x) => x.text).join(' ').length / 2); // коротко: общий шаг и итог
     expect(voiceNote()).toBeNull();
     turn({ prev });
     expect(await getAction('command.turn.show')!.run(undefined)).toBeUndefined();

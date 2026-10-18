@@ -294,6 +294,46 @@ export function nameCase(name: string, c: 'gen' | 'dat' | 'ins' | 'acc' | 'prep'
   out.push(head.forms[CLASSES.indexOf(c)]); // в середине фразы — строчными: «против группы армий «Центр»»
   return [...out, ...ws.slice(h + 1)].join(' ');
 }
+/** Родовые слова в начале названия места («озеро Мюггельзе», «мост Мольтке», «леса у Хальбе»): их родительный падеж. */
+const PLACE_HEAD: Record<string, string> = { озеро: 'озера', мост: 'моста', леса: 'лесов', казармы: 'казарм', район: 'района', форт: 'форта' };
+/** Родительный падеж слова названия места (русские названия из театров: «Врицен», «Гузов», «Рейхсканцелярия», «высоты»). */
+function wordGen(w: string): string {
+  const low = w.toLowerCase();
+  if (PLACE_HEAD[low]) return PLACE_HEAD[low];
+  if (/(?:ие|ые)$/.test(low)) return w.replace(/(?:ие|ые)$/, (e) => (e === 'ие' ? 'их' : 'ых'));
+  if (/(?:ский|ной)$/.test(low)) return w.replace(/(?:ский|ной)$/, (e) => (e === 'ский' ? 'ского' : 'ного'));
+  if (/(?:ская|ная)$/.test(low)) return w.replace(/(?:ская|ная)$/, (e) => (e === 'ская' ? 'ской' : 'ной'));
+  if (/ты$/.test(low)) return w.replace(/ты$/, 'т'); // «высоты» → «высот»
+  if (/ия$/.test(low)) return w.replace(/ия$/, 'ии');
+  if (/[жшчщгкх]а$/.test(low)) return w.replace(/а$/, 'и');
+  if (/а$/.test(low)) return w.replace(/а$/, 'ы');
+  if (/я$/.test(low)) return w.replace(/я$/, 'и');
+  if (/[ьй]$/.test(low)) return w.replace(/[ьй]$/, 'я');
+  if (/[бвгджзклмнпрстфхцчшщ]$/.test(low)) return `${w}а`;
+  return w; // гласная на конце («Галле», «Бернау», «Шпандау», «Бад-Фрайенвальде») — не склоняется
+}
+/**
+ * Название места из театра (именительный) в родительном падеже — после «у», «от», «севернее»: «Врицен» — «Врицена»,
+ * «Берлин, Шпандау» — «Берлина, Шпандау», «Франкфурт-на-Одере» — «Франкфурта-на-Одере», «Зееловские высоты» — «Зееловских высот».
+ * Склоняется главное слово: у слов через дефис — последняя часть («Гросс-Кёльциг»), у «…-на-…» — первая; в названии из
+ * нескольких слов — прилагательные и существительное до первого предлога; части через запятую — каждая.
+ */
+export function placeGen(name: string): string {
+  return name.split(/,\s*/).map((part) => {
+    const ws = part.trim().split(/\s+/);
+    if (ws.length === 1) {
+      const w = ws[0];
+      if (/-на-/i.test(w)) return w.replace(/^([^-]+)/, (a) => wordGen(a));
+      if (w.includes('-')) return w.replace(/[^-]+$/, (a) => wordGen(a));
+      return wordGen(w);
+    }
+    const stop = ws.findIndex((x, i) => i > 0 && /^(?:у|на|в|над|под|за|при)$/i.test(x));
+    const n = stop < 0 ? ws.length : stop;
+    // прилагательные подряд и существительное за ними; родовое слово («озеро») — одно, остальное как есть
+    if (PLACE_HEAD[ws[0].toLowerCase()]) return [wordGen(ws[0]), ...ws.slice(1)].join(' ');
+    return ws.map((x, i) => (i < n ? wordGen(x) : x)).join(' ');
+  }).join(', ');
+}
 const cap = (k: string, a: string) => (k[0] === k[0].toUpperCase() ? a[0].toUpperCase() + a.slice(1) : a);
 /** Сокращения без числа. */
 const ABBR: [RegExp, string][] = [

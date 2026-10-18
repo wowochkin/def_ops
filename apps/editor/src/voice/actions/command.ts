@@ -198,9 +198,9 @@ export interface CommandDeps {
 }
 
 /** Чьё «подробнее»: последнее длинное, что сказал штаб, — доклад обстановки или ответ советника (staff.ts). */
-let moreOwner: 'report' | 'advice' | null = null;
+let moreOwner: 'report' | 'advice' | 'umpire' | null = null;
 /** Последнее длинное сказанное — это (на него и «подробнее»). */
-export function claimMore(kind: 'report' | 'advice'): void { moreOwner = kind; }
+export function claimMore(kind: 'report' | 'advice' | 'umpire' | null): void { moreOwner = kind; }
 
 /** Остальные донесения после краткого доклада («подробнее») — к обстановке того хода (at), не позже. */
 let more: { at: TurnView; list: string[] } | null = null;
@@ -526,8 +526,11 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
   if (/^(?:(?:доложи|доложите|докладывай|дай|какая|как|что за)(?: мне)? )?обстановк\p{L}*$|^доложи$|^доклад$|^что нового$/u.test(t)) return hit('command.report');
   // разбор прошедшего хода на карте (действие — voice/actions/turn.ts); раньше «покажи …» — названия мест
   if (/^(?:покажи|покажите|показать)(?: мне)? (?:прошедший |прошлый |последний )?ход$|^(?:покажи |давай )?разбор хода$|^(?:покажи )?что было за ход$/.test(t)) return hit('command.turn.show');
-  if (/^(?:подробнее|подробней|остальные донесения|еще донесения|какие еще донесения)$/.test(t))
+  if (/^(?:подробнее|подробней|остальные донесения|еще донесения|какие еще донесения)$/.test(t)) {
+    // после краткого доклада посредника («повтори доклад») — весь разбор хода
+    if (moreOwner === 'umpire' && getAction('command.turn.show')?.available() === true) return { id: 'command.turn.show' };
     return moreOwner !== 'advice' && getAction('command.report.more')?.available() === true ? { id: 'command.report.more' } : null;
+  }
   if (/^(?:что|как)(?: там)? (?:разведка|с разведкой|противник|у противника)$|^(?:доложи |дай |прочитай )?разведсводк\p{L}*$|^разведка$|^доложи (?:разведку|о противнике|про противника)$/u.test(t)) return hit('command.intel');
   if ((m = /^(?:прочитай|прочти|зачитай|читай)(?: мне)? журнал(?: боевых действий)?(?: (?:за )?(.+))?$/.exec(t))) return hit('command.journal.read', m[1] ? { day: m[1] } : {});
   // карта

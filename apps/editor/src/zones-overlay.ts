@@ -1,7 +1,7 @@
 /**
  * Зоны влияния сторон на карте «Командования»: сетка из расчёта (TurnView.zones, packages/sim/src/zones.ts) —
  * картинкой поверх подложки, под знаками: свои — красноватые, противник — голубоватые (цвета знаков сторон),
- * прозрачно (не больше ZONE_ALPHA), спорное — без цвета. Картинка растягивается картой с плавной интерполяцией —
+ * прозрачно (не больше ZONE_ALPHA, у противника — ZONE_ALPHA_ENEMY), спорное — без цвета. Картинка растягивается картой с плавной интерполяцией —
  * края мягкие. За ход зоны меняются плавно: от начала хода к концу — переход от зон на начало к зонам на конец
  * (видно при проигрывании хода в разборе).
  */
@@ -13,16 +13,18 @@ export const ZONE_OWN = [212, 56, 52];
 export const ZONE_ENEMY = [47, 111, 174];
 /** Наибольшая непрозрачность зоны: слегка подкрашено, знаки читаются. */
 export const ZONE_ALPHA = 0.17;
+/** Зона противника: голубой на пергаменте бледнее красного — непрозрачность выше, чтобы читалась. */
+export const ZONE_ALPHA_ENEMY = 0.24;
 /** Кривая прозрачности: средние значения заметнее (бледное у края — всё же видно). */
 const CURVE = 0.6;
 
 /** Пиксели картинки (RGBA), строка за строкой с севера — как сетка. */
-export function zoneRgba(z: ZoneGrid, alpha = ZONE_ALPHA): Uint8ClampedArray {
+export function zoneRgba(z: ZoneGrid, alpha = ZONE_ALPHA, enemy = ZONE_ALPHA_ENEMY): Uint8ClampedArray {
   const px = new Uint8ClampedArray(z.cols * z.rows * 4);
   z.v.forEach((x, i) => {
     if (!x) return;
     const c = x > 0 ? ZONE_OWN : ZONE_ENEMY;
-    px.set([c[0], c[1], c[2], Math.round(255 * alpha * Math.min(1, Math.abs(x) / 100) ** CURVE)], i * 4);
+    px.set([c[0], c[1], c[2], Math.round(255 * (x > 0 ? alpha : enemy) * Math.min(1, Math.abs(x) / 100) ** CURVE)], i * 4);
   });
   return px;
 }

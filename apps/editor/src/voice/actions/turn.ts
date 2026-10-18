@@ -21,7 +21,7 @@ import { hl, tourEl } from '../highlight';
 import { dayMonth, sentence, short } from '../report';
 import { numberWords, speakable } from '../speech';
 import { lastUmpire, repeatUmpire, showTurnReview } from '../umpire';
-import { inReplay, NO_GAME, type CmdTab } from './command';
+import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
 import { askTarget, BUSY, decisionMissing, NEEDS_TARGET, projectHas, type OrderDraft, type PlanState, type StaffAct } from './staff';
 
 // ---------------------------------------------------------------- состояние
@@ -187,10 +187,10 @@ export function turnActions(get: () => TurnDeps): Action[] {
     // ---- посредник
     { ...base, id: 'command.turn.show', highlight: () => tourEl('cmd-map'), title: 'Разбор хода', describe: 'Посредник показывает прошедший ход на карте по шагам: общее (ход проигрывается), главные бои, цели, тыл, противник по разведке.',
       say: ['штаб, покажи ход'], available: played,
-      run: async () => { const d = get(); showTurnReview(d.view!, d.prev, d.record); } },
-    { ...base, id: 'command.umpire.repeat', title: 'Повторить доклад посредника', describe: 'Повторяет доклад посредника о последнем ходе (его голосом).', say: ['штаб, повтори доклад'],
+      run: async () => { const d = get(); claimMore(null); showTurnReview(d.view!, d.prev, d.record); } },
+    { ...base, id: 'command.umpire.repeat', title: 'Повторить доклад посредника', describe: 'Повторяет коротко доклад посредника о последнем ходе (его голосом): общий шаг и итог. Весь разбор — «подробнее» или «Штаб, покажи ход».', say: ['штаб, повтори доклад'],
       available: () => { const r = game(); return r !== true ? r : lastUmpire() ? true : 'доклада посредника ещё не было — он звучит после хода'; },
-      run: async () => { repeatUmpire(); } },
+      run: async () => { repeatUmpire(); claimMore('umpire'); } },
     { ...base, id: 'command.enemy.read', highlight: () => [hl('ump-enemy'), hl('tab-umpire')], title: 'Как действовал противник', describe: 'Посредник: решение штаба противника на прошлый ход — замысел, оценка, приказы.', say: ['штаб, как действовал противник'],
       run: async () => {
         const d = get();

@@ -53,7 +53,22 @@ let lastText: string | null = null;
 /** Последний разбор хода: время хода, шаги и тексты модели (null — по правилам). */
 let last: { time: string; steps: ReviewStep[]; texts: string[] | null } | null = null;
 let pending: AbortController | null = null;
-/** Текст последнего разбора подряд (для «повтори доклад»; null — разборов не было). */
+const sentences = (t: string) => t.match(/[^.!?…]+[.!?…]+["»]?/g)?.map((x) => x.trim()) ?? (t.trim() ? [t.trim()] : []);
+/**
+ * Краткий доклад: итог игры (если она окончена) и общий шаг — 2–3 фразы (длинный общий шаг: первая и две последние).
+ * Весь разбор — «подробнее», «покажи ход».
+ */
+export function briefReview(steps: ReviewStep[], texts: string[] | null): string {
+  const at = (i: number) => texts?.[i] ?? steps[i].text;
+  const out: string[] = [];
+  const end = steps.findIndex((x) => x.kind === 'outcome');
+  if (end >= 0) out.push(...sentences(at(end)).slice(0, 1));
+  const ov = steps.findIndex((x) => x.kind === 'overview');
+  const s = sentences(ov >= 0 ? at(ov) : steps.length ? at(0) : '');
+  out.push(...(s.length > 3 ? [s[0], ...s.slice(-2)] : s));
+  return out.join(' ');
+}
+/** Краткий доклад о последнем ходе (для «повтори доклад»: общий шаг и итог; null — разборов не было). */
 export function lastUmpire(): string | null { return lastText; }
 /** Забыть разборы (новая игра, выход). Ждущий ответ модели отменяется. */
 export function resetUmpire(): void { seq++; lastText = null; last = null; pending?.abort(); pending = null; setVoiceNote(null); }
@@ -105,8 +120,7 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
   pending = null;
   setVoiceNote(null);
   const steps = reviewSteps(a.view, a.prev ?? null, a.record);
-  const rules = steps.map((x) => x.text).join(' ');
-  if (!voiceLive()) { last = { time: a.view.time, steps, texts: null }; lastText = rules; a.onDone?.(); return; }
+  if (!voiceLive()) { last = { time: a.view.time, steps, texts: null }; lastText = briefReview(steps, null); a.onDone?.(); return; }
   try {
     let texts: string[] | null = null, why: string | null = UMPIRE_NO_MODEL;
     if (a.model) {
@@ -130,7 +144,9 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
     }
     if (my !== seq) return; // пришёл новый ход или игра закончена — поздний разбор не звучит
     last = { time: a.view.time, steps, texts };
-    lastText = texts ? texts.join(' ') : rules;
+    lastText = briefReview(steps, texts);
+    // голос выключили, пока ждали модель, — разбор сам не начинается (доклад сохранён: «покажи ход», «повтори доклад»)
+    if (!voiceLive()) return;
     // «Переигровка» в фоне: одной фразой, где разбор (карты там нет)
     if (inReplay() !== true) { say(UMPIRE_AWAY); return; }
     if (why) say(why);
@@ -152,7 +168,7 @@ export function showTurnReview(v: TurnView, prev: TurnView | null, record: GameR
   show(reviewTour(r.steps, r.texts));
 }
 
-/** Повторить последний разбор голосом посредника (текстом подряд). */
+/** Повторить краткий доклад о последнем ходе голосом посредника. */
 export function repeatUmpire(): string | null {
   if (!lastText) return null;
   speak(lastText, { role: 'umpire' });

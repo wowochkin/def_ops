@@ -13,7 +13,7 @@ import type { LngLat } from '@def-ops/core';
 import type { TurnBattle, UnitReport } from '@def-ops/sim';
 import type { TurnView } from '../../sim/game-protocol';
 import { dayMonth, sentence, short } from '../report';
-import { nameCase, plural, speakable } from '../speech';
+import { cardinalGen, nameCase, numberWords, placeGen, plural, speakable } from '../speech';
 import type { Tour, TourMap } from './index';
 
 export const REVIEW_TOUR = 'turn-review';
@@ -37,9 +37,14 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** Предложения после озвучки — каждое с заглавной («шестьдесят девятая армия…» в начале фразы). */
 const say = (t: string) => speakable(t, { full: true }).replace(/(^|[.!?…]\s+)(\p{Ll})/gu, (_m, a: string, b: string) => a + b.toUpperCase());
 const list = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} и ${xs[xs.length - 1]}`);
+/** «ещё двух соединений» (родительный) / «ещё два соединения» (именительный, винительный). */
+const more = (n: number, c?: 'gen' | 'acc') => {
+  const noun = plural(n, ['соединение', 'соединения', 'соединений']);
+  return c === 'gen' ? `${cardinalGen(n) ?? n} ${n % 10 === 1 && n % 100 !== 11 ? 'соединения' : 'соединений'}` : `${numberWords(n, 'n')} ${noun}`;
+};
 const names = (xs: { name: string }[], c?: 'gen' | 'acc') => {
   const n = xs.slice(0, 2).map((x) => (c ? nameCase(short(x.name), c) : short(x.name)));
-  return xs.length > 2 ? `${n.join(', ')} и ещё ${xs.length - 2}` : list(n);
+  return xs.length > 2 ? `${n.join(', ')} и ещё ${more(xs.length - 2, c)}` : list(n);
 };
 const RUMB: Record<string, [string, string]> = {
   С: ['северу', 'севернее'], СВ: ['северо-востоку', 'северо-восточнее'], В: ['востоку', 'восточнее'], ЮВ: ['юго-востоку', 'юго-восточнее'],
@@ -51,7 +56,7 @@ const NEAR_KM = 12;
  * «8,4 км к СВ от Зелова (Seelow)» → «северо-восточнее Зелова»; «15 км к Ю от …» → «в 15 км к югу от …» (для речи —
  * без «в»: озвучка не склоняет число после предлога — «пятнадцать километров к югу от …»).
  */
-const placeText = (p: string, prep = true) => p.replace(/\s*\([^)]*\)/g, '').replace(/^([\d,]+) км к (СВ|СЗ|ЮВ|ЮЗ|С|В|Ю|З) от /, (_m, km: string, r: string) => {
+const placeText = (p: string, prep = true) => p.replace(/\s*\([^)]*\)/g, '').replace(/^(у |[\d,]+ км к (?:СВ|СЗ|ЮВ|ЮЗ|С|В|Ю|З) от )(.+)$/, (_m, a: string, n: string) => a + placeGen(n)).replace(/^([\d,]+) км к (СВ|СЗ|ЮВ|ЮЗ|С|В|Ю|З) от /, (_m, km: string, r: string) => {
   const d = Math.round(+km.replace(',', '.'));
   return d < NEAR_KM ? `${RUMB[r][1]} ` : `${prep ? 'в ' : ''}${d} км к ${RUMB[r][0]} от `;
 });
@@ -83,7 +88,7 @@ function battleStep(v: TurnView, b: TurnBattle): ReviewStep {
   const km = Math.round(b.advanceKm);
   const gained = b.outcome === 'breakthrough' || b.outcome === 'advance';
   const res = b.role === 'attack' ? OUR_ATTACK[b.outcome] : THEIR_ATTACK[b.outcome];
-  const loss = b.ownLossPct < 0.5 ? 'наши потери незначительны' : `наши потери — около ${Math.round(b.ownLossPct)} %`;
+  const loss = b.ownLossPct < 0.5 ? 'потери участвовавших незначительны' : `потери — около ${Math.round(b.ownLossPct)} % участвовавших`;
   const raw = b.role === 'attack'
     ? `${where} — наступление ${names(b.own, 'gen')} против ${names(b.enemy, 'gen')}: ${res}${gained && km ? ` на ${km} км` : ''}; ${loss}.`
     : `${where} противник атаковал ${names(b.own, 'acc')} — ${names(b.enemy)}; ${res}${gained && km ? ` на ${km} км` : ''}; ${loss}.`;
@@ -92,7 +97,7 @@ function battleStep(v: TurnView, b: TurnBattle): ReviewStep {
     ...b.enemy.flatMap((x) => { const e = v.intel.find((o) => o.id === x.id); return e ? [e.at] : []; })];
   return {
     kind: 'battle', title: `Бой ${placeText(b.place)}`, text: say(raw), map: { at: b.at, zoom: BATTLE_ZOOM, fit: box, spot: b.at, box },
-    facts: `${b.role === 'attack' ? 'Наше наступление' : 'Атака противника'} ${placeText(b.place)} в ${hour(b.time)}: свои — ${b.own.map((x) => x.name).join(', ')}; противник — ${b.enemy.map((x) => x.name).join(', ')}; исход — ${res}${km ? `, ${km} км` : ''}; соотношение сил ${b.ratio}:1; наши потери ${b.ownLossPct} %.`,
+    facts: `${b.role === 'attack' ? 'Наше наступление' : 'Атака противника'} ${placeText(b.place)} в ${hour(b.time)}: свои — ${b.own.map((x) => x.name).join(', ')}; противник — ${b.enemy.map((x) => x.name).join(', ')}; исход — ${res}${km ? `, ${km} км` : ''}; потери — ${b.ownLossPct} % от участвовавших в бою.`,
   };
 }
 
@@ -162,7 +167,7 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
   const fresh = v.intel.filter((e) => e.fresh);
   if (fresh.length || def.length) {
     const t = [
-      fresh.length ? `Разведка обнаружила: ${fresh.slice(0, 2).map((e) => `${short(e.name)} ${placeText(e.place, false)} — ${e.estimate.split(',')[0]}`).join('; ')}${fresh.length > 2 ? `; и ещё ${fresh.length - 2}` : ''}.` : 'Новых сил противника разведка не обнаружила.',
+      fresh.length ? `Разведка обнаружила: ${fresh.slice(0, 2).map((e) => `${short(e.name)} ${placeText(e.place, false)} — ${e.estimate.split(',')[0]}`).join('; ')}${fresh.length > 2 ? `; и ещё ${more(fresh.length - 2)}` : ''}.` : 'Новых сил противника разведка не обнаружила.',
       def.length ? `Противник атаковал ${times(def.length)}${def.some((b) => b.outcome === 'breakthrough' || b.outcome === 'advance') ? ' и местами потеснил наши части' : def.length === 1 ? ', атака отбита' : ', атаки отбиты'}.` : 'Противник не атаковал.',
     ].join(' ');
     const at = [...fresh.map((e) => e.at), ...def.map((b) => b.at)];

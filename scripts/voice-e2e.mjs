@@ -683,7 +683,7 @@ const LM = { asked: [], settled: [], models: 0, plans: 0, umpire: 0 };
 const UMPIRE_FIRST = 'Ход прошёл без перелома. 8-я гв. армия ведёт бой у Зелова.';
 const umpireSays = (body) => {
   const n = +(/Шагов: (\d+)/.exec(body.messages.at(-1)?.content ?? '')?.[1] ?? 3);
-  return Array.from({ length: n }, (_, i) => `${i + 1}. ${i ? 'Здесь видно, как шёл бой; наши потери невелики.' : UMPIRE_FIRST}`).join('\n');
+  return Array.from({ length: n }, (_, i) => `${i + 1}. ${i ? 'Здесь видно, как шёл бой; потери участвовавших невелики.' : UMPIRE_FIRST}`).join('\n');
 };
 /** Ответ потоком (stream: true): content кусками, затем [DONE]. */
 const sse = (content) => [...content.match(/[\s\S]{1,200}/g).map((c) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: c } }] })}\n\n`),

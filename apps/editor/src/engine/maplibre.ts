@@ -7,6 +7,7 @@ import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&ur
 import { ohmYear, type ImageOverlay } from '@def-ops/core';
 import type { BasemapSpec, EngineOptions, MapEngine, MapEngineEvents, PointerInfo } from './types';
 import { vectorBase, withDate } from './vector-basemap';
+import { idleOnce } from './idle-once';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
@@ -90,6 +91,8 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
   map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: false }), 'bottom-right');
   // масштаб (линейка и численный) рисует редактор — ScaleBar
 
+  // наложения, заданные пока стиль грузится: один ожидающий обработчик, синхронизирует последние
+  const syncLater = idleOnce(map, () => { if (alive && map.isStyleLoaded()) syncOverlays(map, overlays); });
   const restyle = () => {
     map.setStyle(compose());
     // первый styledata приходит, пока тайлы, значки и шрифты нового стиля ещё грузятся (стиль «не загружен») —
@@ -129,7 +132,7 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
       overlays = list;
       // стиль ещё грузится (тайлы, шрифты) — наложения добавить нельзя: когда карта успокоится, последние
       if (map.isStyleLoaded()) syncOverlays(map, list);
-      else map.once('idle', () => { if (alive && map.isStyleLoaded()) syncOverlays(map, overlays); });
+      else syncLater();
     },
     setPanEnabled(on) { if (on) map.dragPan.enable(); else map.dragPan.disable(); },
     on<K extends keyof MapEngineEvents>(ev: K, cb: MapEngineEvents[K]) {
