@@ -36,13 +36,22 @@ import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, openModal, register, speak, useAction, voiceRecent } from './voice/registry';
 import { commandActions, releaseCommand, takeoverParse, type CommandDeps } from './voice/actions/command';
 import {
-  adviceArrived, decisionMissing, NEEDS_TARGET, planArrived, releaseStaff, staffActions, TASKS,
+  adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, projectHas, releaseStaff, staffActions, TASKS,
   type BoundsDraft, type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from './voice/actions/staff';
 import { dayMonth } from './voice/report';
 import { speakable } from './voice/speech';
 
 export const SAVE_KEY = 'def_ops.game';
+
+/** Куда кнопки штабной работы пишут причину, если действие сейчас недоступно (CommandView подключает уведомление). */
+let noticeSink: ((text: string) => void) | null = null;
+/** Кнопка → действие реестра; недоступно (идёт расчёт хода, игра окончена) — причина в уведомлении, а не молча. */
+const tap = (id: string, params?: unknown) => { void press(id, params, (r) => noticeSink?.(r)); };
+/** Кнопка действия штабной работы (как ActButton, но с причиной, если сейчас нельзя). */
+function StaffButton({ action, params, children, ...rest }: { action: string; params?: unknown; children?: ReactNode } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>) {
+  return <button {...rest} data-action={action} onClick={() => tap(action, params)}>{children}</button>;
+}
 export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
 export function loadSaved(): SavedGame | null {
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') as SavedGame | null; return s?.record?.version === 1 ? s : null; } catch { return null; }
@@ -113,6 +122,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [review, setReview] = useState<'closed' | 'open' | 'hidden'>('closed');
   const reviewListener = useRef<((m: Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-think' | 'review-done' }>) => void) | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => { noticeSink = setNotice; return () => { if (noticeSink === setNotice) noticeSink = null; }; }, []);
   const checks = useRef(new Map<number, (r: ActionCheck) => void>());
   const checkId = useRef(0);
   const [advOpen, setAdvOpen] = useState(false);
@@ -194,15 +204,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           const n = { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model };
           setPlan(n);
           // просили голосом — штаб докладывает, что варианты готовы
-          const t = planArrived(n);
-          if (t) speak(t);
+          planReady(n);
         }
       }
       else if (m.kind === 'advice') {
         setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: m.result.answer, result: m.result } : x)));
         // спрашивали голосом — ответ коротко вслух
-        const t = adviceArrived(m.id, m.result);
-        if (t) speak(t);
+        adviceReady(m.id, m.result);
       }
       else if (m.kind === 'agents-call') {
         // ход агентной модели считает ядро приложения: поток вызывает команду через окно; к ходу — доктрина из базы
@@ -435,11 +443,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   };
   const planDraft = (o: PlanVariantView['orders'][number]): Draft => ({ formation: o.formation, task: o.task, target: o.target, targetText: o.targetText, at: o.at, note: o.why });
   /** В проекте уже что-то есть: принятие варианта его заменит. */
-  const projectHas = () => !!(draftList.length || acts.length || decision.assessment.trim() || decision.report.trim());
   /** Кнопка «Принять вариант»: непустой проект — после вопроса (действие замены), пустой — сразу. */
   const acceptByButton = async (v: PlanVariantView, idx: number) => {
-    if (!projectHas()) { void act('command.variant.pick', { n: idx + 1 }); return; }
-    if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) void act('command.variant.replace', { n: idx + 1 });
+    if (!projectHas({ drafts, acts, decision }, view?.lastDecision ?? null)) { tap('command.variant.pick', { n: idx + 1 }); return; }
+    if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) tap('command.variant.replace', { n: idx + 1 });
   };
   /** Принять вариант idx в проект без вопросов: целиком (решение, приказы, распоряжения) или только решение; итог словами. */
   const applyPlan = async (idx: number, only: boolean): Promise<string> => {
@@ -589,7 +596,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               </div>
               {sub === 'units' && <Orders v={fv!} drafts={drafts} setDrafts={setDrafts} sel={sel} setSel={(id) => { setSel(id); goTo(unit(id)?.at ?? null, false); }} pick={pick} setPick={setPick} blank={blankDraft} />}
               {sub === 'rear' && <Rear v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo}
-                setPriority={(ids) => void act('command.rear.priority', { armies: ids })} />}
+                setPriority={(ids) => tap('command.rear.priority', { armies: ids })} />}
               {sub === 'bridges' && <Bridges v={view} acts={acts} drop={dropAct} pickMode={pickMode} setPickMode={setPickMode} goTo={goTo} />}
               {sub === 'bounds' && <Bounds v={view} acts={acts} drop={dropAct} goTo={goTo} picking={pickMode?.kind === 'line'} setPicking={(b) => setPickMode(b ? { kind: 'line' } : null)} pts={linePts} setPts={setLinePts}
                 sel={bnd} setSel={setBnd} />}
@@ -664,7 +671,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         drafted={(f) => !!drafts[f]}
         plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} setPlanN={setPlanN} acceptPlan={(v, i) => void acceptByButton(v, i)}
         planOpen={planOpen} setPlanOpen={setPlanOpen}
-        takeDecision={(i) => void act('command.variant.pick', { n: i + 1, only: true })}
+        takeDecision={(i) => tap('command.variant.pick', { n: i + 1, only: true })}
         takeAct={(a) => { if (a.action) void addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {}).then((ok) => ok && setNotice(`В распоряжение: ${a.label} — ${a.text}`)); }}
         hasAct={(k) => acts.some((a) => a.key === k)} />}
       {review !== 'closed' && view && <div hidden={review === 'hidden'}><ReviewView view={view} llm={llm} send={send} listen={(f) => { reviewListener.current = f; }} onClose={() => setReview('hidden')} /></div>}
@@ -793,11 +800,11 @@ function Orders({ v, drafts, setDrafts, sel, setSel, pick, setPick, blank }: {
         {list.map((x) => { const w = v.own.find((y) => y.id === x.formation)!; return (
           <div key={x.formation} className={`draft${x.formation === sel ? ' on' : ''}`} onClick={() => setSel(x.formation)}>
             <b>{short(w.name)}</b> — {TASK_RU[x.task]}{x.targetText ? `: ${x.targetText}` : ''}
-            <button className="x" title="Отменить приказ" data-action="command.order.cancel" onClick={(e) => { e.stopPropagation(); void act('command.order.cancel', { unit: x.formation }); }}>×</button>
+            <button className="x" title="Отменить приказ" data-action="command.order.cancel" onClick={(e) => { e.stopPropagation(); tap('command.order.cancel', { unit: x.formation }); }}>×</button>
           </div>); })}
       </div>}
       {u ? <OrderEditor v={v} u={u} d={d ?? blank(u.id)} isNew={!d} pick={pick} setPick={setPick}
-        save={(nd) => setDrafts((all) => ({ ...all, [u.id]: nd }))} drop={() => void act('command.order.cancel', { unit: u.id })} close={() => setSel(null)} />
+        save={(nd) => setDrafts((all) => ({ ...all, [u.id]: nd }))} drop={() => tap('command.order.cancel', { unit: u.id })} close={() => setSel(null)} />
         : <p className="muted">Выберите объединение — в списке ниже или щелчком по его знаку на карте.</p>}
       {(v.sectors?.length ?? 0) > 0 && <details className="sect-note"><summary>Полосы и разграничительные линии</summary><ul>{v.sectors.map((t) => <li key={t}>{t}</li>)}</ul>
         <p className="muted small">Объединения идут к цели своей полосой; выход в полосу соседа по директиве не запрещён, но отмечается в разборе.</p></details>}
@@ -942,7 +949,7 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
       <div className="adv-plan-bar">
         <span><b>Варианты решения на ход</b><small>решение, приказы, тыл — принять целиком и поправить</small></span>
         <select value={planN} disabled={planBusy} onChange={(e) => setPlanN(+e.target.value)} title="Сколько вариантов">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
-        {planBusy ? <ActButton action="command.advisor.stop">Стоп</ActButton> : <ActButton className="primary" action="command.variants" params={{ count: planN }}>Предложить</ActButton>}
+        {planBusy ? <StaffButton action="command.advisor.stop">Стоп</StaffButton> : <StaffButton className="primary" action="command.variants" params={{ count: planN }}>Предложить</StaffButton>}
       </div>
       <div className="adv-body">
         {!msgs.length && <div className="adv-empty">
@@ -1000,7 +1007,7 @@ function Advisor({ llm, msgs, ask, accept, drafted, onClose, onMinimize, onClear
       <div className="adv-in">
         <textarea rows={2} value={text} placeholder={node ? `Свой вопрос (${topic})…` : 'Свой вопрос…'} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(text); } }} />
-        {busy ? <ActButton action="command.advisor.stop" title="Прервать ответ (модель освобождается)">Остановить</ActButton>
+        {busy ? <StaffButton action="command.advisor.stop" title="Прервать ответ (модель освобождается)">Остановить</StaffButton>
           : <button className="primary" disabled={!text.trim()} onClick={() => go(text)}>Спросить</button>}
       </div>
       <div className="adv-note">Вопросы читает только советник. Арбитр исполняет лишь утверждённые вами приказы в строгой форме — объединение, задача, цель.</div>
@@ -1017,7 +1024,7 @@ function PlanBlock({ plan, stale, open, setOpen, accept, takeDecision, takeOrder
   return (
     <div className="adv-msg plan">
       <div className="adv-q"><small>Решение › Варианты решения на ход · {ddmm(plan.time)} {hhmm(plan.time)}</small>Предложите {plan.count === 1 ? 'вариант' : `${plan.count} варианта`} решения на ход</div>
-      {stale && <div className="adv-warn">Ход сменился — эти варианты составлены для прошлой обстановки; принять их нельзя. <ActButton className="link" action="command.variants" params={{ count: plan.count }}>предложить заново</ActButton></div>}
+      {stale && <div className="adv-warn">Ход сменился — эти варианты составлены для прошлой обстановки; принять их нельзя. <StaffButton className="link" action="command.variants" params={{ count: plan.count }}>предложить заново</StaffButton></div>}
       {plan.warning && <div className="adv-warn">⚠ {plan.warning}</div>}
       {plan.variants.map((v, i) => v && (
         <div key={i} className={`plan-var${plan.accepted === i ? ' on' : ''}`}>
@@ -1046,7 +1053,7 @@ function PlanBlock({ plan, stale, open, setOpen, accept, takeDecision, takeOrder
         </div>
       ))}
       {!plan.done && <div className="plan-wait"><span className="spinner" /> {plan.progress}{plan.variants.length ? ` · готово вариантов: ${plan.variants.filter(Boolean).length} из ${plan.count}` : ''}</div>}
-      {plan.done && plan.error && <div className={plan.variants.length ? 'muted' : 'err'}>{plan.variants.length ? `Не все варианты: ${plan.error}` : `Советник не дал вариантов: ${plan.error}`} <ActButton className="link" action="command.variants" params={{ count: plan.count }}>ещё раз</ActButton></div>}
+      {plan.done && plan.error && <div className={plan.variants.length ? 'muted' : 'err'}>{plan.variants.length ? `Не все варианты: ${plan.error}` : `Советник не дал вариантов: ${plan.error}`} <StaffButton className="link" action="command.variants" params={{ count: plan.count }}>ещё раз</StaffButton></div>}
       {plan.done && <small className="muted">{plan.seconds != null ? `${plan.seconds} с` : ''}{plan.model ? ` · ${plan.model}` : ''} · после принятия правьте решение и приказы как обычно — вариант лишь заполняет проект.</small>}
     </div>
   );
@@ -1059,7 +1066,7 @@ function Decision({ v, d, set, planN, setPlanN, planBusy }: { v: TurnView; d: Hu
   const last = v.lastDecision;
   const F = ({ k, label, hint, rows, req }: { k: Exclude<keyof HumanDecision, 'request'>; label: string; hint: string; rows: number; req?: boolean }) => (
     <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`}>
-      <span>{label}{req && <i> обязательно</i>}{last?.[k] && last[k] !== d[k] && <button className="link" data-action="decision.fromLast" title={last[k]} onClick={(e) => { e.preventDefault(); void act('decision.fromLast', { field: k }); }}>взять с прошлого хода</button>}</span>
+      <span>{label}{req && <i> обязательно</i>}{last?.[k] && last[k] !== d[k] && <button className="link" data-action="decision.fromLast" title={last[k]} onClick={(e) => { e.preventDefault(); tap('decision.fromLast', { field: k }); }}>взять с прошлого хода</button>}</span>
       <textarea rows={rows} value={d[k]} placeholder={hint} onChange={(e) => set({ [k]: e.target.value })} />
     </label>
   );
@@ -1069,7 +1076,7 @@ function Decision({ v, d, set, planN, setPlanN, planBusy }: { v: TurnView; d: Hu
       <div className="plan-cta"><span>Не знаете, с чего начать? Советник предложит полные варианты — решение, приказы, тыл, переправы, резервы; выберите, примите и поправьте. Сколько вариантов — выберите рядом (один готовится быстрее).</span>
         <div className="plan-cta-act">
           <select value={planN} disabled={planBusy} onChange={(e) => setPlanN(+e.target.value)} title="Сколько вариантов просить (запоминается)">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
-          {planBusy ? <ActButton action="command.advisor.stop"><i className="spinner" /> Стоп</ActButton> : <ActButton className="primary" action="command.variants" params={{ count: planN }}>Варианты от советника</ActButton>}
+          {planBusy ? <StaffButton action="command.advisor.stop"><i className="spinner" /> Стоп</StaffButton> : <StaffButton className="primary" action="command.variants" params={{ count: planN }}>Варианты от советника</StaffButton>}
         </div></div>
       <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их; оценку обстановки и донесение пишут заново на каждый ход (обстановка изменилась), прошлые можно взять кнопкой и поправить. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
@@ -1077,7 +1084,12 @@ function Decision({ v, d, set, planN, setPlanN, planBusy }: { v: TurnView; d: Hu
       {F({ k: 'intent', label: 'Решение (замысел действий)', hint: 'Цель на сутки, главный удар, кто наступает, кто обеспечивает, куда вводятся резервы…', rows: 4, req: true })}
       {F({ k: 'risks', label: 'Риски', hint: 'Что может пойти не так и как парировать…', rows: 2 })}
       <label className={`dfield${!d.report.trim() ? ' need' : ''}`}>
-        <span>Боевое донесение {v.terms?.topTo ?? 'в Ставку'}<i> обязательно</i><button className="link" data-action="decision.draftReport" onClick={(e) => { e.preventDefault(); void act('decision.draftReport'); }}>черновик по докладам</button></span>
+        <span>Боевое донесение {v.terms?.topTo ?? 'в Ставку'}<i> обязательно</i><button className="link" data-action="decision.draftReport" onClick={(e) => {
+          e.preventDefault();
+          // продиктованное донесение — заменить только после вопроса
+          if (!d.report.trim()) tap('decision.draftReport');
+          else void confirmAsync('Заменить продиктованное донесение черновиком по докладам?', { ok: 'Заменить' }).then((ok) => { if (ok) tap('decision.draftReport.replace'); });
+        }}>черновик по докладам</button></span>
         <textarea rows={5} value={d.report} placeholder="Положение войск к утру, итоги суток, решение на следующие сутки, просьбы…" onChange={(e) => set({ report: e.target.value })} />
       </label>
       <label className="dfield">
@@ -1136,7 +1148,7 @@ function Rear({ v, acts, drop, pickMode, setPickMode, setPriority, goTo }: {
             </div>
             {a && <ActLine a={a} drop={drop} />}
             {open === b.id && !a && <PlacePicker v={v} from={b.at} mapOn={pm} onMap={() => setPickMode(pm ? null : { kind: 'base', base: b.id, name: b.name, from: b.at })}
-              onPick={(p) => { setOpen(null); void act('command.rear.base', { army: b.id, place: p.id }); }} />}
+              onPick={(p) => { setOpen(null); tap('command.rear.base', { army: b.id, place: p.id }); }} />}
           </div>
         );
       })}
@@ -1218,12 +1230,12 @@ function Reserves({ v, acts, drop, pickMode, setPickMode, goTo, onOrder }: {
                 const a = acts.find((x) => x.key === `commit:${done[0].id}`)!;
                 const where = a.action.kind === 'commit' && a.action.atName ? ` в район у ${a.action.atName}` : '';
                 return <div className="draft"><b>Ввод{where}</b> — {done.length === g.units.length ? 'всё объединение' : `${done.length} из ${g.units.length} соед.`}; {a.text}
-                  <button className="x" title="Отменить ввод" data-action="command.reserve.cancel" onClick={() => void act('command.reserve.cancel', { army: g.id })}>×</button></div>;
+                  <button className="x" title="Отменить ввод" data-action="command.reserve.cancel" onClick={() => tap('command.reserve.cancel', { army: g.id })}>×</button></div>;
               })()}
             {free.length > 0 && <div className="row"><button onClick={() => setOpen(open === g.id ? null : g.id)}>{open === g.id ? 'Отмена' : one || free.length === 1 ? 'Ввести…' : `Ввести ${done.length ? 'остальные' : 'всё объединение'} (${free.length})…`}</button>
 </div>}
             {open === g.id && free.length > 0 && <PlacePicker v={v} from={center} mapOn={pm} onMap={() => setPickMode(pm ? null : pickOf())}
-              onPick={(p) => { setOpen(null); void act('command.reserve.commit', { army: g.id, place: p.id }); }} />}
+              onPick={(p) => { setOpen(null); tap('command.reserve.commit', { army: g.id, place: p.id }); }} />}
             {!one && <details className="res-units"><summary>Соединения ({g.units.length})</summary>
               {g.units.map((u) => {
                 const a = acts.find((x) => x.key === `commit:${u.id}`);
@@ -1231,9 +1243,9 @@ function Reserves({ v, acts, drop, pickMode, setPickMode, goTo, onOrder }: {
                 return (
                   <div key={u.id} className="brow">
                     <div className="brow-h"><b title={u.name}>{short(u.name)}</b><span className="st">{u.personnel.toLocaleString('ru')} чел., танков {u.tanks}, орудий {u.guns}</span>
-                      {a ? <button className="link" data-action="command.reserve.cancel" onClick={() => void act('command.reserve.cancel', { army: u.id })}>не вводить</button> : <button className="link" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? 'отмена' : 'ввести…'}</button>}</div>
+                      {a ? <button className="link" data-action="command.reserve.cancel" onClick={() => tap('command.reserve.cancel', { army: u.id })}>не вводить</button> : <button className="link" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? 'отмена' : 'ввести…'}</button>}</div>
                     {open === u.id && !a && <PlacePicker v={v} from={center} mapOn={upm} onMap={() => setPickMode(upm ? null : { kind: 'commit', formation: u.id, name: u.name })}
-                      onPick={(p) => { setOpen(null); void act('command.reserve.commit', { army: u.id, place: p.id }); }} />}
+                      onPick={(p) => { setOpen(null); tap('command.reserve.commit', { army: u.id, place: p.id }); }} />}
                   </div>
                 );
               })}
@@ -1304,10 +1316,10 @@ function Bounds({ v, acts, drop, goTo, picking, setPicking, pts, setPts, sel, se
           const nb = A && inFront.filter((u) => u.id !== id && (tank(A.name) || !tank(u.name))).sort((x, y) => km(A.at, x.at) - km(A.at, y.at))[0]; setSel({ front, a: id, b: nb?.id ?? '' }); setPts(() => []); }}><option value="">—</option>{inFront.map((u) => <option key={u.id} value={u.id}>{short(u.name)}</option>)}</select></label>
         <label>Соседняя армия <select value={b} onChange={(e) => setB(e.target.value)}><option value="">—</option>{others.map((u) => <option key={u.id} value={u.id}>{short(u.name)}{A0 ? ` — ${Math.round(km(A0.at, u.at))} км` : ''}</option>)}</select></label>
         <div className="row">
-          <ActButton action="command.bounds.propose" params={{ army: a, neighbor: b }} disabled={!a || !b || a === b} title="Линия через середину между войсками двух армий, поперёк, от тыла к противнику — её можно поправить, указав точки заново">Предложить линию</ActButton>
+          <StaffButton action="command.bounds.propose" params={{ army: a, neighbor: b }} disabled={!a || !b || a === b} title="Линия через середину между войсками двух армий, поперёк, от тыла к противнику — её можно поправить, указав точки заново">Предложить линию</StaffButton>
           <button className={picking ? 'on' : ''} onClick={() => setPicking(!picking)}>{picking ? `Готово (${pts.length} точ.)` : pts.length ? `Продолжить линию (${pts.length} точ.)` : 'Указать линию на карте'}</button>
           {pts.length > 0 && <button className="link" onClick={() => setPts(() => [])}>сбросить точки</button>}
-          <ActButton className="primary" action="command.bounds.put" disabled={!ready}>В распоряжение</ActButton>
+          <StaffButton className="primary" action="command.bounds.put" disabled={!ready}>В распоряжение</StaffButton>
         </div>
         <p className="muted small">Линия — от тыла к переднему краю, хотя бы две точки: «Предложить линию» проводит её между войсками двух армий, «Указать линию на карте» — своими точками. Кто справа по ходу линии, стенд определит по положению армий.</p>
       </div> : <p className="muted">Ни в одном фронте нет двух действующих армий — линии армий не нужны.</p>}

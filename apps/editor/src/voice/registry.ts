@@ -67,24 +67,28 @@ export async function act(id: string, p?: unknown): Promise<string | void> {
  * операцию» из «Знаний»). Не своё — null: фразу разбирают дальше (модель). Разборщики спрашиваются по порядку регистрации.
  */
 export type PhraseHit = { id: string; params?: unknown; section?: string } | { say: string };
-export type PhraseParser = (rest: string, section: string) => PhraseHit | null;
+/** raw — реплика как распознана (с регистром и знаками): из неё берут текст указаний. */
+export type PhraseParser = (rest: string, section: string, raw: string) => PhraseHit | null;
 const parsers: PhraseParser[] = [];
-/** Добавить разборщик фраз; возвращает снятие. */
-export function registerParser(p: PhraseParser): () => void {
-  parsers.push(p);
+/** Добавить разборщик фраз (first — раньше прочих: ответ на вопрос штаба); возвращает снятие. */
+export function registerParser(p: PhraseParser, o: { first?: boolean } = {}): () => void {
+  if (o.first) parsers.unshift(p); else parsers.push(p);
   return () => { const i = parsers.indexOf(p); if (i >= 0) parsers.splice(i, 1); };
 }
 /** Первое, что поняли разборщики (нет — null). */
-export function parsePhrase(rest: string, section: string): PhraseHit | null {
-  for (const p of parsers) { const h = p(rest, section); if (h) return h; }
+export function parsePhrase(rest: string, section: string, raw = rest): PhraseHit | null {
+  for (const p of parsers) { const h = p(rest, section, raw); if (h) return h; }
   return null;
 }
 
 /** Голосом пользовались недавно (подсказки «скажите: …» — только тогда): столько мс после последней реплики штабу. */
 export const VOICE_RECENT_MS = 5 * 60_000;
 let voiceAt = -Infinity;
+let turn = 0;
 /** Реплика штабу (разборщик отмечает каждую обращённую). */
-export function markVoice(at = Date.now()): void { voiceAt = at; }
+export function markVoice(at = Date.now()): void { voiceAt = at; turn++; }
+/** Номер последней реплики штабу: «ответ на вопрос» — только следующая за вопросом. */
+export function voiceTurn(): number { return turn; }
 /** Голосом пользовались за последние ms. */
 export function voiceRecent(ms = VOICE_RECENT_MS): boolean { return Date.now() - voiceAt <= ms; }
 
@@ -106,11 +110,18 @@ export function ActButton({ action, params, children, ...rest }: { action: strin
 
 // ---------------------------------------------------------------- голос штаба для модулей
 
-let speaker: ((text: string) => void) | null = null;
+/** keep — фраза не устаревает от новой реплики человека (поздний ответ советника): ждёт конца реплики и звучит. */
+export interface SpeakOpts { keep?: boolean }
+let speaker: ((text: string, o?: SpeakOpts) => number | void) | null = null;
+let retractor: ((id: number) => void) | null = null;
 /** Панель голоса подключает речь штаба (null — голоса нет: speak молчит). */
-export function setSpeaker(fn: ((text: string) => void) | null): void { speaker = fn; }
-/** Штаб говорит фразу как есть (к озвучке её готовит вызывающий: speakable). Голоса нет или он дежурит — молчит. */
-export function speak(text: string): void { if (text) speaker?.(text); }
+export function setSpeaker(fn: ((text: string, o?: SpeakOpts) => number | void) | null): void { speaker = fn; }
+/** Панель голоса подключает снятие фразы (ждёт — снимается, звучит — гасится). */
+export function setRetractor(fn: ((id: number) => void) | null): void { retractor = fn; }
+/** Штаб говорит фразу как есть (к озвучке её готовит вызывающий: speakable). Голоса нет или он дежурит — молчит. Номер фразы. */
+export function speak(text: string, o?: SpeakOpts): number | void { if (text) return speaker?.(text, o); }
+/** Фраза больше не нужна (новая просьба о том же). */
+export function retract(id: number): void { retractor?.(id); }
 
 // ---------------------------------------------------------------- окна, ждущие ответа
 

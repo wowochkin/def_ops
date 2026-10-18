@@ -20,11 +20,11 @@ import type { LngLat } from '@def-ops/core';
 import { TASK_RU, type ActionCheck, type IntelReport, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import type { AdviceView, HumanDecision, Place, PlanVariantView, TurnView } from '../../sim/game-protocol';
 import { ordinalIndex, pickByName } from '../answers';
-import { fieldActions, readAloud } from '../dictation';
+import { fieldActions, rawTail, readAloud } from '../dictation';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
-import { getAction, registerParser, voiceRecent, type Action, type PhraseHit } from '../registry';
+import { act, getAction, registerParser, retract, speak, voiceRecent, voiceTurn, type Action, type PhraseHit } from '../registry';
 import { short } from '../report';
-import { numberWords, plural, speakable } from '../speech';
+import { nameCase, numberWords, plural, speakable } from '../speech';
 import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
 
 // ---------------------------------------------------------------- типы состояния (общие с CommandView)
@@ -127,6 +127,12 @@ const TASK_PHRASES: [string, Task][] = ([
   ...['деблокировать', 'деблокируй', 'выручить', 'выручай'].map((w) => [w, 'relieve']),
 ] as [string, Task][]).sort((a, b) => b[0].split(' ').length - a[0].split(' ').length);
 
+/** Вопрос о цели по задаче: «Куда наступать?», «Что удерживать?». */
+const TARGET_Q: Record<Task, string> = {
+  attack: 'Куда наступать?', counterattack: 'Куда контратаковать?', defend: 'Что оборонять?', hold: 'Что удерживать?', delay: 'Где сдерживать?',
+  regroup: 'Куда перегруппироваться?', reserve: 'Куда отвести?', withdraw: 'Куда отходить?', breakout: 'Куда прорываться?', relieve: 'Кого деблокировать?',
+};
+
 /** Задача по слову («наступать», «атакуй», «занять оборону», «attack»); не задача — null. */
 export function taskOf(text: string): Task | null {
   const t = norm(text);
@@ -151,6 +157,17 @@ export function decisionMissing(d: HumanDecision): string[] {
   if (!d.intent.trim()) out.push('решение (замысел)');
   if (!d.report.trim()) out.push('боевое донесение вышестоящему');
   return out;
+}
+
+/**
+ * В проекте уже что-то есть — принятие варианта его заменит: приказы, распоряжения, оценка, донесение или поле решения,
+ * которое не просто перенесено с прошлого хода (замысел, замысел противника, риски переносятся сами), ходатайство.
+ */
+export function projectHas(p: { drafts: Record<string, unknown>; acts: unknown[]; decision: HumanDecision }, last: HumanDecision | null): boolean {
+  const d = p.decision;
+  const own = (k: 'enemyIntent' | 'intent' | 'risks') => !!d[k].trim() && d[k].trim() !== (last?.[k] ?? '').trim();
+  return Object.keys(p.drafts).length > 0 || p.acts.length > 0 || !!d.assessment.trim() || !!d.report.trim() || !!d.request?.trim()
+    || own('enemyIntent') || own('intent') || own('risks');
 }
 
 const hhmm = (t: string) => t.slice(11, 16);
@@ -214,6 +231,8 @@ const sugText = (s: Suggestion) => `${short(s.name)} — ${TASK_RU[s.task]}${s.t
 export function planArrived(p: PlanState): string | null {
   if (p.id !== voicePlan) return null;
   voicePlan = null;
+  // «Переигровка» в фоне: подсказки фраз здесь не исполнятся — только где варианты
+  if (inReplay() !== true) return /останов/.test(p.error ?? '') ? null : 'Советник подготовил варианты. Они — в разделе «Переигровка».';
   const vs = p.variants.filter(Boolean);
   if (!vs.length) return /останов/.test(p.error ?? '') ? null : speakable(`Советник не дал вариантов: ${failReason(p.error)}.`, { full: true });
   const list = vs.map((v, i) => `${ordName(i)} — «${v.title}»`).join(', ');
@@ -225,6 +244,8 @@ export function adviceArrived(id: number, r: AdviceView): string | null {
   if (!voiceAsk.delete(id)) return null;
   if (!r.ok) return r.error === 'остановлено' ? null : speakable(`Советник не ответил: ${failReason(r.error)}.`, { full: true });
   const plain = r.answer.replace(/[*_#>`]+/g, ' ').replace(/^\s*[-•]\s*/gm, '').replace(/\s+/g, ' ').trim();
+  // «Переигровка» в фоне: ответ целиком — на «подробнее» там; здесь — только где он
+  if (inReplay() !== true) { adviceMore = plain || null; if (adviceMore) claimMore('advice'); return 'Советник ответил. Ответ — в разделе «Переигровка».'; }
   const ss = plain.match(/[^.!?…]+[.!?…]+["»]?|[^.!?…]+$/g)?.map((x) => x.trim()).filter(Boolean) ?? [];
   let k = 0, len = 0;
   while (k < ss.length && k < 3 && (k === 0 || len + ss[k].length <= 350)) { len += ss[k].length; k++; }
@@ -235,6 +256,25 @@ export function adviceArrived(id: number, r: AdviceView): string | null {
   adviceMore = k < ss.length ? ss.slice(k).join(' ') : null;
   if (adviceMore) { parts.push('Остальное — скажите «подробнее».'); claimMore('advice'); }
   return speakable(parts.join(' '), { full: true });
+}
+
+/** Последний поздний ответ советника, ждущий в очереди штаба: новая просьба к советнику его снимает. */
+let lastAnnounce: number | null = null;
+const announce = (text: string | null) => { if (!text) return; const id = speak(text, { keep: true }); lastAnnounce = typeof id === 'number' ? id : null; };
+const retractAnnounce = () => { if (lastAnnounce !== null) retract(lastAnnounce); lastAnnounce = null; };
+/** Ответ советника пришёл (CommandView): сказать коротко, если спрашивали голосом; фраза не устаревает от новой реплики. */
+export function adviceReady(id: number, r: AdviceView): void { announce(adviceArrived(id, r)); }
+/** Варианты готовы (CommandView): доложить, если просили голосом. */
+export function planReady(p: PlanState): void { announce(planArrived(p)); }
+
+/**
+ * Кнопка — действие реестра; недоступно (идёт расчёт хода, игра окончена) — причина словами (onReason), а не молча.
+ */
+export async function press(id: string, params: unknown, onReason: (text: string) => void): Promise<void> {
+  const av = getAction(id)?.available();
+  if (av === undefined) return;
+  if (av !== true) { onReason(`${cap(av.trim().replace(/[.!\s]+$/, ''))}.`); return; }
+  await act(id, params);
 }
 
 // ---------------------------------------------------------------- места, соединения, полосы
@@ -314,7 +354,7 @@ function reserveOf(text: string, v: TurnView): Found<{ id: string; name: string;
 /** Состояние зарегистрированных действий (для разбора «мягких» фраз: есть ли такое соединение и место). */
 let live: (() => StaffDeps) | null = null;
 /** Приказ ждёт цели («Куда?»): кому, какая задача, до какого времени ответ принимается. */
-let awaiting: { unit: string; task: Task; note?: string; until: number } | null = null;
+let awaiting: { unit: string; name: string; task: Task; note?: string; until: number; turn: number } | null = null;
 /** Последнее объединение, которому отдан приказ голосом (для «указания: …»). */
 let lastUnit: string | null = null;
 const AWAIT_MS = 30_000;
@@ -340,7 +380,13 @@ export function staffActions(get: () => StaffDeps): Action[] {
   };
   const view = () => get().view!;
   const base = { section: 'replay', available: ready };
-  const has = () => { const d = get(); return Object.keys(d.drafts).length > 0 || d.acts.length > 0 || !!d.decision.assessment.trim() || !!d.decision.report.trim(); };
+  const has = () => projectHas(get(), view().lastDecision);
+  const draftReport = async () => {
+    const d = get();
+    d.setDecision({ report: draftReportText(view(), d.decision) });
+    d.setTab('decision');
+    return 'Черновик донесения составлен по докладам. Прочитать — скажите «прочитай донесение».';
+  };
   const planBusy = () => !!get().plan && !get().plan!.done;
   const planHas = (): true | string => {
     const r = ready(); if (r !== true) return r;
@@ -361,9 +407,9 @@ export function staffActions(get: () => StaffDeps): Action[] {
   };
   const pick = async (n: unknown, only: boolean) => { const x = variant(n); return typeof x === 'string' ? x : get().applyPlan(x.i, only); };
   const toOrders = (s: OrdersSub) => { get().setTab('orders'); get().setSub(s); };
-  /** Поле решения диктовкой; acc — название в примерах фраз («запиши в оценку: …»). */
-  const decisionField = (k: keyof HumanDecision, id: string, title: string, acc: string, aliases: string[] = []) =>
-    fieldActions(id, title, () => get().decision[k] ?? '', (s) => { get().setTab('decision'); get().setDecision({ [k]: s }); }, 'replay', aliases)
+  /** Поле решения диктовкой; acc — название в примерах фраз («запиши в оценку: …»), gender — род названия. */
+  const decisionField = (k: keyof HumanDecision, id: string, title: string, acc: string, gender: 'm' | 'f' | 'n' | 'pl', aliases: string[] = []) =>
+    fieldActions(id, title, () => get().decision[k] ?? '', (s) => { get().setTab('decision'); get().setDecision({ [k]: s }); }, { section: 'replay', aliases, gender })
       .map((a) => ({ ...a, available: ready, say: a.say?.map((x) => x.replace(title.toLowerCase(), acc)) }));
 
   /** Приказ объединению: задача, цель (пункт или противник), указания. Нужна цель, а её нет — «Куда?». */
@@ -386,18 +432,21 @@ export function staffActions(get: () => StaffDeps): Action[] {
       const first = p.enemy ? byEnemy() : byPlace();
       const r = first && 'found' in first ? first : (p.enemy ? byPlace() : byEnemy()) ?? first;
       if (!r || 'say' in r) {
-        awaiting = { unit: unit.id, task, note, until: Date.now() + AWAIT_MS };
-        return r ? r.say : `Не нашёл на карте «${said}». Куда ${TASK_RU[task]}? Назовите пункт или соединение противника.`;
+        awaiting = { unit: unit.id, name, task, note, until: Date.now() + AWAIT_MS, turn: voiceTurn() };
+        return r ? r.say : `Не нашёл на карте «${said}». ${TARGET_Q[task]} Назовите пункт или соединение противника.`;
       }
       const f = r.found;
       if ('title' in f) { target = f.id; at = f.at; targetText = f.title; spoken = `, цель — ${short(f.title)}`; }
-      else { target = { formation: f.id }; at = f.at; targetText = `против: ${short(f.name)}`; spoken = ` против ${short(f.name)}`; }
+      else { target = { formation: f.id }; at = f.at; targetText = `против: ${short(f.name)}`; spoken = ` против ${nameCase(short(f.name), 'gen')}`; }
     } else if (!p.task && cur) ({ target, targetText, at } = cur); // только указания — цель прежняя
     if (!target && NEEDS_TARGET.includes(task)) {
-      awaiting = { unit: unit.id, task, note, until: Date.now() + AWAIT_MS };
-      return `${name} — ${TASK_RU[task]}: куда? Назовите пункт или соединение противника.`;
+      awaiting = { unit: unit.id, name, task, note, until: Date.now() + AWAIT_MS, turn: voiceTurn() };
+      return `${name} — ${TASK_RU[task]}. ${TARGET_Q[task]} Назовите пункт или соединение противника.`;
     }
-    if (target && !spoken) spoken = typeof target === 'object' && !Array.isArray(target) ? ` ${targetText.replace(/^против: /, 'против ')}` : `, цель — ${short(targetText)}`;
+    if (target && !spoken) {
+      const enemy = typeof target === 'object' && !Array.isArray(target) ? v.intel.find((e) => e.id === (target as { formation: string }).formation) : undefined;
+      spoken = enemy ? ` против ${nameCase(short(enemy.name), 'gen')}` : `, цель — ${short(targetText)}`;
+    }
     awaiting = null; lastUnit = unit.id;
     d.setDraft(unit.id, { formation: unit.id, task, target, targetText, at, note });
     d.select(unit.id); toOrders('units');
@@ -414,11 +463,23 @@ export function staffActions(get: () => StaffDeps): Action[] {
       run: async (p?: { count?: number }) => {
         const n = p?.count === undefined ? get().planN : Math.round(Number(p.count));
         if (!(n >= 1 && n <= 3)) return 'Советник предлагает от одного до трёх вариантов.';
+        retractAnnounce(); // прежний поздний ответ советника ещё ждёт — новая просьба важнее
         const id = get().askPlan(n);
         // голосом пользуются (кнопка — тоже это действие) — штаб доложит, когда варианты будут готовы
         if (voiceRecent()) voicePlan = id;
         return `Прошу у советника ${variantsWord(n)} решения. Это займёт время — скажу, когда будут готовы.`;
       } },
+    { ...base, id: 'command.variants.list', title: 'Какие варианты', describe: 'Перечисляет готовые варианты решения от советника (новые не готовит).',
+      say: ['штаб, покажи варианты'], available: planHas,
+      run: async () => {
+        const p = get().plan!, vs = p.variants.filter(Boolean);
+        get().openVariant(0);
+        const notes = [!p.done && 'Советник ещё готовит остальные.', p.time !== view().time && 'Они составлены для прошлого хода.'].filter(Boolean).join(' ');
+        return `Готовы ${variantsWord(vs.length)}: ${vs.map((x, i) => `${ordName(i)} — «${x.title}»`).join(', ')}.${notes ? ` ${notes}` : ''} Скажите: «подробнее о первом» или «выбираю первый».`;
+      } },
+    { ...base, id: 'answer.no', title: 'Приказ не отдавать', describe: 'Отказ на вопрос штаба «Куда?»: приказ не отдаётся.', say: ['нет', 'отставить'],
+      available: () => (awaitingFresh() ? true : 'штаб ни о чём не спрашивал'),
+      run: async () => { const a = awaiting!; awaiting = null; return `Приказ не отдан: ${a.name}.`; } },
     { ...base, id: 'command.variant.more', title: 'Подробнее о варианте', describe: 'Читает вариант решения N: суть, замысел, главные приказы; раскрывает его на экране.',
       params: N, say: ['штаб, подробнее о первом'], available: planHas,
       run: async (p: { n: number }) => { const x = variant(p?.n); if (typeof x === 'string') return x; get().openVariant(x.i); return readAloud(variantText(x.v, x.i + 1)); } },
@@ -441,6 +502,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
       run: async (p: { text: string }) => {
         const q = String(p?.text ?? '').trim();
         if (!q) return 'О чём спросить советника?';
+        retractAnnounce();
         voiceAsk.add(get().askAdvisor(q));
         return 'Передал вопрос советнику. Доложу ответ, когда он будет готов.';
       } },
@@ -463,12 +525,12 @@ export function staffActions(get: () => StaffDeps): Action[] {
       available: () => { const r = ready(); return r !== true ? r : get().advisorBusy || planBusy() ? true : 'советник сейчас ничего не готовит'; },
       run: async () => { get().stopAdvisor(); voicePlan = null; return 'Советник остановлен.'; } },
     // ---- решение (поля — диктовкой: «запиши в замысел: …»)
-    ...decisionField('assessment', 'decision.assessment', 'Оценка обстановки', 'оценку', ['оценка']),
-    ...decisionField('enemyIntent', 'decision.enemy', 'Замысел противника', 'замысел противника'),
-    ...decisionField('intent', 'decision.intent', 'Замысел', 'замысел', ['решение']),
-    ...decisionField('risks', 'decision.risks', 'Риски', 'риски'),
-    ...decisionField('report', 'decision.report', 'Донесение', 'донесение', ['боевое донесение']),
-    ...decisionField('request', 'decision.request', 'Ходатайство', 'ходатайство'),
+    ...decisionField('assessment', 'decision.assessment', 'Оценка обстановки', 'оценку', 'f', ['оценка']),
+    ...decisionField('enemyIntent', 'decision.enemy', 'Замысел противника', 'замысел противника', 'm'),
+    ...decisionField('intent', 'decision.intent', 'Замысел', 'замысел', 'm', ['решение']),
+    ...decisionField('risks', 'decision.risks', 'Риски', 'риски', 'pl'),
+    ...decisionField('report', 'decision.report', 'Донесение', 'донесение', 'n', ['боевое донесение']),
+    ...decisionField('request', 'decision.request', 'Ходатайство', 'ходатайство', 'n'),
     { ...base, id: 'decision.fromLast', title: 'Взять с прошлого хода', describe: 'Берёт поле решения с прошлого хода (без поля — все пустые поля).',
       params: { type: 'object', properties: { field: { enum: [...FIELD_KEYS] } } }, say: ['штаб, возьми с прошлого хода'],
       run: async (p?: { field?: FieldKey }) => {
@@ -485,13 +547,11 @@ export function staffActions(get: () => StaffDeps): Action[] {
         d.setDecision(Object.fromEntries(keys.map((k) => [k, last[k]])));
         return `Взял с прошлого хода: ${keys.map((k) => FIELD_ACC[k]).join(', ')}.`;
       } },
-    { ...base, id: 'decision.draftReport', title: 'Черновик донесения', describe: 'Составляет черновик боевого донесения по докладам за ход.', say: ['штаб, составь черновик донесения'],
-      run: async () => {
-        const d = get();
-        d.setDecision({ report: draftReportText(view(), d.decision) });
-        d.setTab('decision');
-        return 'Черновик донесения составлен по докладам. Прочитать — скажите «прочитай донесение».';
-      } },
+    { ...base, id: 'decision.draftReport', title: 'Черновик донесения', describe: 'Составляет черновик боевого донесения по докладам за ход (поле донесения пусто).', say: ['штаб, составь черновик донесения'],
+      check: () => (get().decision.report.trim() ? 'Донесение уже продиктовано. Скажите «составь черновик донесения» ещё раз — я переспрошу, заменить ли его.' : true),
+      run: draftReport },
+    { ...base, id: 'decision.draftReport.replace', title: 'Заменить донесение черновиком', describe: 'Заменяет продиктованное донесение черновиком по докладам (необратимо).',
+      irreversible: true, confirm: () => 'Заменить продиктованное донесение черновиком?', run: draftReport },
     { ...base, id: 'decision.missing', title: 'Что не готово', describe: 'Говорит, чего не хватает для хода: поля решения, цели приказов.', say: ['штаб, что не готово?'],
       run: async () => {
         const d = get(), v = view();
@@ -504,7 +564,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         }
         if (miss.length) d.setTab('decision');
         const hints = [miss.includes('оценка обстановки') && '«запиши в оценку: …»', miss.includes('замысел') && '«запиши в замысел: …»',
-          miss.includes('боевое донесение') && '«составь черновик донесения»', noTarget.length && `«${noTarget[0]} наступать на …»`].filter(Boolean);
+          miss.includes('боевое донесение') && '«составь черновик донесения»', noTarget.length && `«${nameCase(noTarget[0], 'dat')} наступать на …»`].filter(Boolean);
         return `Не готово: ${[miss.join(', '), noTarget.length ? `нет цели у приказа: ${noTarget.join(', ')}` : ''].filter(Boolean).join('; ')}. Скажите, например: ${hints.join(', ')}.`;
       } },
     // ---- приказы
@@ -616,7 +676,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         get().setBounds({ front: a.group, a: a.id, b: b.id, pts });
         toOrders('bounds');
         get().goTo(pts[1]);
-        return `Линия между ${short(a.name)} и ${short(b.name)} намечена на карте. Включить — скажите «в распоряжение»; поправить — точками на карте.`;
+        return `Линия между ${nameCase(short(a.name), 'ins')} и ${nameCase(short(b.name), 'ins')} намечена на карте. Включить — скажите «в распоряжение»; поправить — точками на карте.`;
       } },
     { ...base, id: 'command.bounds.put', title: 'Линию — в распоряжение', describe: 'Включает намеченную разграничительную линию в распоряжения (после проверки).', say: ['штаб, в распоряжение'],
       run: async () => {
@@ -628,6 +688,35 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const r = await d.addAct(`boundary:${[a, b].sort().join('|')}`, { kind: 'boundary', side: v.human.id, a, b, line: pts, issuedAt: v.time }, label, { at: pts[0] });
         if (r.ok) d.setBounds({ front, a: '', b: '', pts: [] });
         return actReply(label, r);
+      } },
+    { ...base, id: 'command.act.cancel', title: 'Отменить распоряжение', describe: 'Отменяет распоряжение в проекте: переправу (name — пункт), перенос базы (name — база), приоритет подвоза, разграничительную линию (name — армии).',
+      params: { type: 'object', properties: { kind: { enum: ['bridge', 'base', 'priority', 'boundary'] }, name: TEXT }, required: ['kind'] }, say: ['штаб, отмени переправу'],
+      run: async (p: { kind: 'bridge' | 'base' | 'priority' | 'boundary'; name?: string }) => {
+        const d = get(), v = view();
+        const WHAT = { bridge: 'переправы', base: 'переноса базы', priority: 'приоритета подвоза', boundary: 'разграничительной линии' } as const;
+        const SUB = { bridge: 'bridges', base: 'rear', priority: 'rear', boundary: 'bounds' } as const;
+        if (!WHAT[p?.kind]) return 'Какое распоряжение отменить: переправу, перенос базы, приоритет подвоза или линию?';
+        let list = d.acts.filter((a) => (p.kind === 'boundary' ? a.action.kind === 'boundary' || a.action.kind === 'directive' : a.action.kind === p.kind));
+        if (!list.length) return `В проекте нет ${WHAT[p.kind]}.`;
+        const nm = String(p.name ?? '').trim();
+        if (nm && p.kind === 'bridge') {
+          const pl = placeOf(nm, v);
+          if (pl && 'say' in pl) return pl.say;
+          if (pl) { const at = pl.found.at; list = [list.reduce((m, a) => (km(a.at ?? at, at) < km(m.at ?? at, at) ? a : m))]; }
+        } else if (nm && p.kind === 'base') {
+          const b = baseOf(nm, v);
+          if ('say' in b) return b.say;
+          list = list.filter((a) => a.key === `base:${b.found.id}`);
+        } else if (nm && p.kind === 'boundary') {
+          const ids = nm.split(/ и /).map((x) => findUnit(x, v.armies ?? []).unit?.id).filter(Boolean);
+          list = list.filter((a) => a.action.kind === 'boundary' && ids.every((id) => id === (a.action as { a: string }).a || id === (a.action as { b: string }).b));
+        }
+        const label = (a: StaffAct) => { const x = a.label.replace(/\s*\([^)]*\)/g, ''); return x.charAt(0).toLowerCase() + x.slice(1); };
+        if (!list.length) return 'Такого распоряжения в проекте нет.';
+        if (list.length > 1) return `Какое отменить: ${list.slice(0, 3).map((a) => `«${label(a)}»`).join(', ')}? Назовите место или армии.`;
+        d.dropAct(list[0].key);
+        toOrders(SUB[p.kind]);
+        return `Отменено: ${label(list[0])}.`;
       } },
   ];
 }
@@ -675,7 +764,7 @@ function splitAt<T>(ws: string[], preps: RegExp, ok: (a: string, b: string) => T
 const found = (r: Found<unknown>) => !!r; // нашлось или есть что переспросить
 
 /** Фразы штабной работы (см. шапку модуля). rest — без обращения, section — открытый раздел. */
-export function parseStaff(rest: string, section: string): PhraseHit | null {
+export function parseStaff(rest: string, section: string, raw = rest): PhraseHit | null {
   if (section !== 'replay') return null;
   let t = norm(rest);
   let m: RegExpExecArray | null;
@@ -683,13 +772,13 @@ export function parseStaff(rest: string, section: string): PhraseHit | null {
   // к советнику по имени: «советник, дай два варианта», «советник, где лучше наступать»
   if ((m = /^советник\p{L}* (.+)$/u.exec(t))) {
     if (/^(?:стоп|хватит|остановись|замолчи)$/.test(m[1])) return hit('command.advisor.stop');
-    const own = parseStaff(m[1], section);
+    const own = parseStaff(m[1], section, raw);
     if (own) return own;
     return m[1].split(' ').length >= 2 ? hit('command.advisor.ask', { text: m[1] }) : null;
   }
-  // советник: варианты
-  if ((m = /^(?:дай|дайте|предложи|предложите|подготовь|подготовьте|составь|нужны|хочу|покажи)(?: мне| нам)? (?:(\S+) )?вариант\p{L}*(?: решения)?(?: на ход)?(?: от советника)?$/u.exec(t))
-    ?? (m = /^()варианты(?: решения)?(?: от советника)?$/.exec(t))) {
+  // советник: варианты — готовые показать («покажи варианты», «варианты»), новые — только «дай / подготовь / предложи»
+  if (/^(?:(?:покажи|прочитай|зачитай|какие|назови|перечисли)(?: мне)? )?варианты(?: решения)?(?: от советника)?$/.test(t)) return hit('command.variants.list');
+  if ((m = /^(?:дай|дайте|предложи|предложите|подготовь|подготовьте|составь|нужны|хочу)(?: мне| нам)? (?:(\S+) )?вариант\p{L}*(?: решения)?(?: на ход)?(?: от советника)?$/u.exec(t))) {
     if (m[1] && !(m[1] in COUNT)) return null;
     return hit('command.variants', m[1] ? { count: COUNT[m[1]] } : {});
   }
@@ -712,8 +801,7 @@ export function parseStaff(rest: string, section: string): PhraseHit | null {
       return hit('command.variant.pick', { n: 1 });
     }
     const d = live!();
-    const full = Object.keys(d.drafts).length > 0 || d.acts.length > 0 || !!d.decision.assessment.trim() || !!d.decision.report.trim();
-    return hit(full ? 'command.variant.replace' : 'command.variant.pick', { n });
+    return hit(d.view && projectHas(d, d.view.lastDecision) ? 'command.variant.replace' : 'command.variant.pick', { n });
   }
   // советник: вопрос, остановка, «подробнее», предложенный приказ
   if ((m = /^(?:спроси|спросите|задай вопрос|вопрос)(?: у)? советник\p{L}*(?: о| об| про)? (.+)$/u.exec(t))) return hit('command.advisor.ask', { text: m[1] });
@@ -731,8 +819,9 @@ export function parseStaff(rest: string, section: string): PhraseHit | null {
     if (f === null) return null;
     return hit('decision.fromLast', f ? { field: f } : {});
   }
-  if (/^(?:составь|подготовь|набросай|сделай|напиши|заполни)(?: мне)? (?:черновик )?(?:боевого |боевое )?донесени\p{L}*(?: по докладам)?$|^черновик(?: боевого)? донесени\p{L}*$/u.test(t)) return hit('decision.draftReport');
-  if (/^(?:что|чего)(?: еще)? не (?:готово|готов|хватает|заполнено|сделано)(?: для хода| к ходу| в решении)?$|^что осталось(?: сделать| заполнить)?$|^готово ли решение$|^можно (?:проводить|делать) ход$/.test(t)) return hit('decision.missing');
+  if (/^(?:составь|подготовь|набросай|сделай|напиши|заполни)(?: мне)? (?:черновик )?(?:боевого |боевое )?донесени\p{L}*(?: по докладам)?$|^черновик(?: боевого)? донесени\p{L}*$/u.test(t))
+    return hit(live?.().decision.report.trim() ? 'decision.draftReport.replace' : 'decision.draftReport'); // продиктованное — спросить
+  if (/^(?:что|чего)(?: еще)? не (?:готово|готов|хватает|заполнено|сделано)(?: для хода| к ходу| в решении)?$|^что осталось(?: сделать| заполнить)?$|^готово ли решение$/.test(t)) return hit('decision.missing');
   // приказы: перечень, отмена, указания
   if (/^(?:какие|что за) (?:приказы|распоряжения)(?: отданы| отдал| в проекте| есть)?$|^(?:перечисли|прочитай|зачитай|доложи) (?:приказы|распоряжения)$|^что приказано$/.test(t)) return hit('command.orders.list');
   if ((m = /^(?:отмени|отменить|сними|снять|убери)(?: новый)? приказ(?: для)?(?: (.+))?$/.exec(t))) {
@@ -741,7 +830,9 @@ export function parseStaff(rest: string, section: string): PhraseHit | null {
   }
   if ((m = /^указани\p{L}*(?: к приказу)? (.+)$/u.exec(t)) && m[1].split(' ').length >= 2) {
     const d = live?.();
-    return d && lastUnit && d.drafts[lastUnit] && getAction('command.order') ? { id: 'command.order', params: { unit: lastUnit, notes: cap(m[1]) } } : null;
+    // текст указаний — как сказан (регистр, «ё», знаки): он идёт в приказ, журнал и разбор
+    const notes = cap(rawTail(raw, m[1].split(' ').length) ?? m[1]);
+    return d && lastUnit && d.drafts[lastUnit] && getAction('command.order') ? { id: 'command.order', params: { unit: lastUnit, notes } } : null;
   }
   // тыл, переправы, резервы, полосы
   if ((m = /^(?:перенеси|перенести|перемести|переместить|передвинь)(?: базу| базы)(?: снабжения)? (.+)$/.exec(t))) {
@@ -753,7 +844,12 @@ export function parseStaff(rest: string, section: string): PhraseHit | null {
     const names = m[1].split(/ и |, /).map((x) => x.trim()).filter(Boolean);
     return names.every((n) => found(ownOf(n, v))) ? { id: 'command.rear.priority', params: { armies: names } } : null;
   }
-  if (/^(?:сними|отмени|убери) приоритет(?: подвоза)?$|^подвоз поровну$/.test(t)) return hit('command.rear.priority', { armies: [] });
+  if (/^подвоз поровну$/.test(t)) return hit('command.rear.priority', { armies: [] });
+  // отменить распоряжение: переправу, перенос базы, приоритет подвоза, линию
+  if ((m = /^(?:отмени|отменить|убери|сними|не наводи|не наводить)(?: наведение| наводку)? переправ\p{L}*(?: (?:у|в|возле|около|под|на|к) (.+))?$/u.exec(t))) return hit('command.act.cancel', { kind: 'bridge', ...(m[1] ? { name: m[1] } : {}) });
+  if ((m = /^(?:отмени|отменить|убери|сними) (?:перенос базы|перенос|базу)(?: (.+))?$|^не переноси(?:ть)? базу(?: (.+))?$/.exec(t))) return hit('command.act.cancel', { kind: 'base', ...(m[1] ?? m[2] ? { name: m[1] ?? m[2] } : {}) });
+  if (/^(?:сними|отмени|убери|отменить) приоритет(?: подвоза)?$/.test(t)) return hit('command.act.cancel', { kind: 'priority' });
+  if ((m = /^(?:отмени|отменить|убери|сними) (?:разграничительную )?линию(?: (?:между )?(.+))?$/.exec(t))) return hit('command.act.cancel', { kind: 'boundary', ...(m[1] ? { name: m[1] } : {}) });
   if ((m = /^(?:наведи|навести|наводи|построй|построить|поставь|поставить)(?: понтонную| наплавную)? переправ\p{L}*(?: через \p{L}+)?(?: (?:у|в|возле|около|под|на|к|в районе|рядом с) (.+))?$/u.exec(t))) {
     if (!m[1]) return getAction('command.bridge') ? { say: 'Где навести переправу? Скажите, например: «наведи переправу у Кюстрина».' } : hit('command.bridge');
     return hit('command.bridge', { place: m[1] });
@@ -771,28 +867,82 @@ export function parseStaff(rest: string, section: string): PhraseHit | null {
       ? { id: 'command.bounds.propose', params: { army: a, neighbor: b } } : null);
   }
   if (/^(?:в распоряжение|линию в распоряжение|включи линию(?: в распоряжение)?|утверди линию)$/.test(t)) return hit('command.bounds.put');
-  // приказ ждёт цели («Куда?»): ответ — пункт или противник
-  if (awaiting && Date.now() > awaiting.until) awaiting = null;
-  if (awaiting && v && getAction('command.order') && !QUESTION.test(t)) {
-    const a = awaiting;
-    const enemy = UNIT_WORD.test(t) && found(enemyOf(t, v));
-    if (enemy || found(placeOf(t, v))) return { id: 'command.order', params: { unit: a.unit, task: a.task, [enemy ? 'enemy' : 'place']: t, ...(a.note ? { notes: a.note } : {}) } };
-  }
-  // приказ: «<соединению> <задача> [<место | противник>]» — соединение должно найтись, иначе фраза модели
+  // приказ: «<соединению> <задача> [<место | противник>] [обороты: любой ценой, к утру, через …, указания: …]» —
+  // соединение должно найтись, иначе фраза модели
   if (QUESTION.test(t) || !v || !getAction('command.order')) return null;
   t = t.replace(/^приказ /, '');
   const ws = t.split(' ');
+  if (/^(?:войск|всем$|все$|всех$|частям|армиям|подразделени)/.test(ws[0])) return null; // «войскам наступать» — не Войско Польское
   for (let i = 1; i < ws.length; i++) {
     const k = taskAt(ws, i);
     if (!k) continue;
     const unit = ws.slice(0, i).join(' ');
     if (!found(ownOf(unit, v))) return null;
-    const target = ws.slice(i + k.len).join(' ');
-    if (!target) return { id: 'command.order', params: { unit, task: k.task } };
-    const enemy = UNIT_WORD.test(target) && found(enemyOf(target, v)) && !(placeOf(target, v) && 'found' in placeOf(target, v)!);
-    return { id: 'command.order', params: { unit, task: k.task, [enemy ? 'enemy' : 'place']: target } };
+    const tail = ws.slice(i + k.len);
+    if (!tail.length) return { id: 'command.order', params: { unit, task: k.task } };
+    const tg = targetOf(tail, v, k.task, raw);
+    return { id: 'command.order', params: { unit, task: k.task, [tg.enemy ? 'enemy' : 'place']: tg.text, ...(tg.notes ? { notes: tg.notes } : {}) } };
   }
   return null;
 }
 
+/** Ждёт ответа на «Куда?»: только следующая реплика и не позже AWAIT_MS. */
+function awaitingFresh(): boolean {
+  return !!awaiting && Date.now() <= awaiting.until && voiceTurn() === awaiting.turn + 1;
+}
+
+/**
+ * Ответ на «Куда?» (разборщик первым): следующая реплика — пункт или противник — дополняет приказ; что-то другое
+ * (новая просьба) — «Приказ не отдан», и реплику разбирают дальше как обычно.
+ */
+export function parseAnswer(rest: string, section: string, raw = rest): PhraseHit | null {
+  if (!awaiting) return null;
+  const a = awaiting;
+  const v = live?.().view ?? null;
+  const t = norm(rest);
+  if (section === 'replay' && awaitingFresh() && v && getAction('command.order') && !QUESTION.test(t)) {
+    const tg = targetOf(t.split(' '), v, a.task, raw);
+    if (tg.found) {
+      const notes = [a.note, tg.notes].filter(Boolean).join('; ');
+      return { id: 'command.order', params: { unit: a.unit, task: a.task, [tg.enemy ? 'enemy' : 'place']: tg.text, ...(notes ? { notes } : {}) } };
+    }
+  }
+  awaiting = null;
+  if (voiceTurn() > a.turn) speak(`Приказ не отдан: ${speakable(a.name, { full: true })}.`);
+  return null;
+}
+
+const LEAD = /^(?:в направлении|в сторону|по направлению (?:к|на)|в район|в районе|на|к|ко|до|против)$/;
+
+/**
+ * Цель приказа из слов после задачи: начала «в направлении», «на», «к» снимаются; «через …», «указания …» и
+ * неразобранный хвост — в указания (как сказаны, из raw); цель — самое длинное начало, которое нашлось (пункт или
+ * противник). Не нашлось — text целиком (штаб честно скажет «не нашёл» и спросит «Куда?»).
+ */
+function targetOf(words: string[], v: TurnView, task: Task, raw: string): { text: string; enemy: boolean; notes?: string; found: boolean } {
+  let ws = words.filter(Boolean);
+  for (let n = 3; n >= 1; n--) if (ws.length > n && LEAD.test(ws.slice(0, n).join(' '))) { ws = ws.slice(n); break; }
+  let cut = ws.findIndex((w, i) => i > 0 && (w === 'через' || /^указани/.test(w)));
+  if (cut < 0) cut = ws.length;
+  let hit: { k: number; enemy: boolean } | null = null;
+  for (let k = cut; k >= 1 && !hit; k--) {
+    const cand = ws.slice(0, k).join(' ');
+    const enemy = UNIT_WORD.test(cand) && found(enemyOf(cand, v));
+    const pl = placeOf(cand, v);
+    if (enemy && !(pl && 'found' in pl)) hit = { k, enemy: true };
+    else if (pl) hit = { k, enemy: false };
+  }
+  if (!hit) return { text: ws.slice(0, cut).join(' '), enemy: false, found: false, notes: notesOf(ws.slice(cut), raw, task) };
+  return { text: ws.slice(0, hit.k).join(' '), enemy: hit.enemy, found: true, notes: notesOf(ws.slice(hit.k), raw, task) };
+}
+/** Хвост фразы — указания, как сказаны: «через Зелов», «к утру», «обойти с севера» (слово «указания» снимается). */
+function notesOf(rest: string[], raw: string, task: Task): string | undefined {
+  let ws = rest;
+  if (task === 'hold' && ws.join(' ') === 'любой ценой') ws = []; // это и есть задача
+  if (!ws.length) return undefined;
+  const text = (rawTail(raw, ws.length) ?? ws.join(' ')).replace(/^указани\p{L}*\s*:?\s*/iu, '').replace(/,?\s*указани\p{L}*\s*:?\s*/iu, '; ').trim();
+  return text ? cap(text) : undefined;
+}
+
+registerParser(parseAnswer, { first: true });
 registerParser(parseStaff);

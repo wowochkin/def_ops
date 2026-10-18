@@ -265,6 +265,35 @@ function guardsBeforeWord(k: string, next: string): string {
   const a = adjective(...GV[k.toLowerCase()], g, c);
   return cap(k, a);
 }
+/** Головные существительные названий соединений (сверх NOUNS): «Группа армий «Центр»», «Гарнизон крепости …». */
+const HEADS: Record<string, { g: Gender; forms: string[] }> = {
+  ...NOUNS,
+  группа: { g: 'f', forms: ['группа', 'группы', 'группе', 'группе', 'группой', 'группу'] },
+  гарнизон: { g: 'm', forms: ['гарнизон', 'гарнизона', 'гарнизону', 'гарнизоне', 'гарнизоном', 'гарнизон'] },
+};
+/**
+ * Название соединения в падеже («против пятьдесят шестого танкового корпуса», «между восьмой гвардейской армией и …»):
+ * номер (цифрами с наращением или римский) и прилагательные до головного слова согласуются с ним, остальное («армий
+ * «Центр»», «Войска Польского») — как есть. Головного слова нет — название без изменений. Именительный — тоже без изменений.
+ */
+export function nameCase(name: string, c: 'gen' | 'dat' | 'ins' | 'acc' | 'prep'): string {
+  const ws = name.trim().split(/\s+/);
+  const h = ws.findIndex((w) => HEADS[w.toLowerCase()]);
+  if (h < 0) return name;
+  const head = HEADS[ws[h].toLowerCase()];
+  const out: string[] = [];
+  for (let i = 0; i < h; i++) {
+    const w = ws[i], low = w.toLowerCase();
+    const num = /^(\d+)(?:-[а-яё]{1,3})?$/.exec(w);
+    const rom = /^[IVXLC]+$/.test(w) ? romanValue(w) : null;
+    if (num || rom) { out.push(ordinalWords(num ? +num[1] : rom!, ordKey(head.g, c))); continue; }
+    const adj = /^(.*?)(\p{L}+?)(ая|ый|ий|ой)$/u.exec(low);
+    if (!adj) return name; // неизвестное слово перед головным — не трогать
+    out.push(adj[1] + adjective(adj[2], adj[3] !== 'ий', head.g, c));
+  }
+  out.push(head.forms[CLASSES.indexOf(c)]); // в середине фразы — строчными: «против группы армий «Центр»»
+  return [...out, ...ws.slice(h + 1)].join(' ');
+}
 const cap = (k: string, a: string) => (k[0] === k[0].toUpperCase() ? a[0].toUpperCase() + a.slice(1) : a);
 /** Сокращения без числа. */
 const ABBR: [RegExp, string][] = [

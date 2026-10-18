@@ -16,12 +16,16 @@ const TEXT = { type: 'object', properties: { text: { type: 'string' } }, require
 /** Поля, известные голосу: id → названия (для «запиши в <название>»): первое — название поля, дальше — другие слова. */
 const fields = new Map<string, string[]>();
 
+const CLEARED = { m: 'очищен', f: 'очищена', n: 'очищено', pl: 'очищены' } as const;
+
 /**
- * Действия поля «title» (id — начало их имён). section — раздел действий (по умолчанию — общие); aliases — другие
- * названия поля в речи («запиши в решение» — то же, что «в замысел»).
+ * Действия поля «title» (id — начало их имён). o.section — раздел действий (по умолчанию — общие); o.aliases — другие
+ * названия поля в речи («запиши в решение» — то же, что «в замысел»); o.gender — род названия («очищен / очищена»).
  */
-export function fieldActions(id: string, title: string, get: () => string, set: (s: string) => void, section = 'global', aliases: string[] = []): Action[] {
-  fields.set(id, [title, ...aliases]);
+export function fieldActions(id: string, title: string, get: () => string, set: (s: string) => void,
+  o: { section?: string; aliases?: string[]; gender?: keyof typeof CLEARED } = {}): Action[] {
+  const section = o.section ?? 'global';
+  fields.set(id, [title, ...(o.aliases ?? [])]);
   const low = title.toLowerCase();
   const base = { section, available: () => true as const };
   return [
@@ -35,7 +39,7 @@ export function fieldActions(id: string, title: string, get: () => string, set: 
         return 'Дописал.';
       } },
     { ...base, id: `${id}.clear`, title: `Очистить «${title}»`, describe: `Стирает текст поля «${title}».`,
-      say: [`штаб, очисти ${low}`], run: async () => { set(''); return `«${title}» очищено.`; } },
+      say: [`штаб, очисти ${low}`], run: async () => { set(''); return `«${title}» ${CLEARED[o.gender ?? 'n']}.`; } },
     { ...base, id: `${id}.read`, title: `Прочитать «${title}»`, describe: `Читает вслух текст поля «${title}» (длинный — частями).`,
       say: [`штаб, прочитай ${low}`], run: async () => (get().trim() ? readAloud(get()) : `«${title}» пусто.`) },
   ];
@@ -65,13 +69,19 @@ export function parseDictation(rest: string, raw = rest): { id: string; params?:
   if (!verb) return null;
   let i = 1;
   while (PREPS.has(words[i] ?? '')) i++;
-  // самое длинное подходящее название: «в замысел противника» — не «в замысел» с текстом «противника …»
+  // название поля — до двоеточия, если оно сказано («в замысел: противника сковать…» — «Замысел»); без двоеточия —
+  // самое длинное подходящее («в замысел противника …» — не «в замысел» с текстом «противника …»)
+  const colon = raw.indexOf(':');
+  const count = (x: string) => norm(x).split(' ').filter(Boolean).length;
+  // слов до двоеточия — в реплике без обращения (raw ещё с ним: «Штаб, …»)
+  const head = colon >= 0 ? count(raw.slice(0, colon)) - (count(raw) - words.length) : -1;
   let best: { id: string; span: number } | null = null;
   for (const [id, names] of fields) {
     if (!getAction(`${id}.${verb[1]}`)) continue;
     for (const name of names) {
       const span = titleSpan(words.slice(i), name);
-      if (span && (!best || span > best.span)) best = { id, span };
+      if (!span || (head > i && i + span !== head)) continue;
+      if (!best || span > best.span) best = { id, span };
     }
   }
   if (!best) return null;
@@ -82,7 +92,7 @@ export function parseDictation(rest: string, raw = rest): { id: string; params?:
 }
 
 /** Последние n слов фразы как сказано (со знаками внутри, без знаков по краям); не вышло — null. */
-function rawTail(raw: string, n: number): string | null {
+export function rawTail(raw: string, n: number): string | null {
   const parts = raw.trim().split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w));
   if (parts.length < n) return null;
   return parts.slice(parts.length - n).join(' ').replace(/^[^\p{L}\p{N}]+|[\s,;:—–-]+$/gu, '') || null;

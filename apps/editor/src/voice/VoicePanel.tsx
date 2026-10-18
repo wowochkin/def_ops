@@ -31,7 +31,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
-import { ActButton, act, actions, listed, onModal, setSpeaker, useAction } from './registry';
+import { ActButton, act, actions, listed, onModal, setRetractor, setSpeaker, useAction } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
@@ -129,7 +129,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     say: (text, o) => {
       const id = client.newSayId();
       if (o?.quiet) quietIds.current.add(id);
-      gate.say(id, text);
+      gate.say(id, text, o?.keep);
       return id;
     },
     // фраза больше не нужна («повторяю запрос» после отмены): ждёт — снимается, звучит — гасится
@@ -138,7 +138,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       if (gate.drop(id)) return;
       if (speakingIds.current.delete(id)) { client.stop(id); syncSpeaking(); }
     },
-    supersede: () => gate.drop(),
+    supersede: () => gate.dropStale(),
     stop: () => { gate.drop(); client.stop(); speakingIds.current.clear(); syncSpeaking(); stopTourSpeech(); },
     // чего правила не поняли — модель «Голос» (настройки берутся в момент вопроса); проверка связи не прошла — не зовём
     model: createVoiceModel({ settings: () => llmRef.current }),
@@ -170,9 +170,10 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
 
   // окна и модули говорят через штаб (в дежурном — молчат); открылось окно — прежний ответ модели уже не нужен
   useEffect(() => {
-    setSpeaker((t) => { dispatcher.announce(t); });
+    setSpeaker((t, o) => dispatcher.announce(t, o));
+    setRetractor((id) => dispatcher.retract(id));
     const off = onModal((_m, opened) => { if (opened) { dispatcher.cancel(); gate.clear(); } });
-    return () => { setSpeaker(null); off(); };
+    return () => { setSpeaker(null); setRetractor(null); off(); };
   }, [dispatcher, gate]);
   // тур говорит голосом начальника штаба: та же очередь фраз, та же лента
   useTourVoice({

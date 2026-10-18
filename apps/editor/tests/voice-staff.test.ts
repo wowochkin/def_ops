@@ -3,11 +3,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { places as simPlaces, Theatre, type ActionCheck, type IntelReport, type Scenario, type TheatreData, type UnitReport } from '@def-ops/sim';
 import type { AdviceView, HumanDecision, PlanVariantView, TurnView } from '../src/sim/game-protocol';
-import { act, getAction, parsePhrase, register, type Action } from '../src/voice/registry';
+import { act, getAction, parsePhrase, register, setRetractor, setSpeaker, type Action } from '../src/voice/registry';
+import { SayGate } from '../src/voice/panel-state';
+import { nameCase } from '../src/voice/speech';
 import { Dispatcher, YES_NO_SAY } from '../src/voice/dispatch';
 import { commandActions, setSectionSource, type CommandDeps } from '../src/voice/actions/command';
 import {
-  adviceArrived, decisionMissing, draftReportText, parseStaff, planArrived, releaseStaff, staffActions, taskOf, variantText,
+  adviceArrived, adviceReady, decisionMissing, draftReportText, parseStaff, planArrived, press, projectHas, releaseStaff, staffActions, taskOf, variantText,
   type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from '../src/voice/actions/staff';
 import { parseDictation, stopReading } from '../src/voice/dictation';
@@ -146,7 +148,7 @@ describe('приказы голосом', () => {
     const disp = mk();
     await disp.utterance('Штаб, восьмой гвардейской наступать', 1);
     expect(d.drafts.su_8gva).toBeUndefined();
-    expect(said.at(-1)).toMatch(/куда\?/i);
+    expect(said.at(-1)).toMatch(/Куда наступать\?/);
     disp.spoke();
     await disp.utterance('на Зелов', 2);
     expect(d.drafts.su_8gva).toMatchObject({ task: 'attack', target: zelov.id });
@@ -422,5 +424,249 @@ describe('когда нельзя', () => {
     expect(getAction('decision.intent.write')!.available()).toBe(true);
     section = 'maps';
     expect(getAction('decision.intent.write')!.available()).not.toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------- раунд 1 (по рецензии)
+
+describe('раунд 1: «Куда?» снимается отказом и новой просьбой', () => {
+  for (const no of ['Штаб, нет', 'Штаб, не надо', 'Штаб, отставить', 'Штаб, отмена']) {
+    it(`«${no}» — приказ не отдан; потом название — не приказ`, async () => {
+      const d = staff();
+      const disp = mk();
+      await disp.utterance('Штаб, пятой ударной наступать', 1);
+      expect(said.at(-1)).toMatch(/Куда наступать\?/);
+      t += 1000;
+      await disp.utterance(no, 2);
+      expect(said.at(-1)).toBe('Приказ не отдан: пятая ударная армия.');
+      t += 1000;
+      await disp.utterance('Штаб, Кюстрин', 3);
+      expect(d.drafts.su_5ua).toBeUndefined();
+    });
+  }
+  it('новая просьба — «Приказ не отдан», ответ после неё названием — не приказ', async () => {
+    const d = staff();
+    cmd(view());
+    const spoken: string[] = [];
+    setSpeaker((s) => { spoken.push(s); });
+    const disp = mk();
+    await disp.utterance('Штаб, восьмой гвардейской наступать', 1);
+    t += 1000;
+    await disp.utterance('Штаб, доложи обстановку', 2);
+    expect([...spoken, ...said].join(' ')).toMatch(/Приказ не отдан: восьмая гвардейская армия\./);
+    t += 1000;
+    await disp.utterance('Штаб, Зелов', 3);
+    expect(d.drafts.su_8gva).toBeUndefined();
+    setSpeaker(null);
+  });
+  it('ответ названием — только сразу и не позже 30 с', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const d = staff();
+      const disp = mk();
+      await disp.utterance('Штаб, восьмой гвардейской наступать', 1);
+      vi.setSystemTime(Date.now() + 31_000);
+      disp.spoke();
+      await disp.utterance('Зелов', 2);
+      expect(d.drafts.su_8gva).toBeUndefined();
+    } finally { vi.useRealTimers(); }
+  });
+});
+
+describe('раунд 1: падежи в ответах', () => {
+  it('nameCase: родительный, дательный, творительный — по названию соединения', () => {
+    expect(nameCase('LVI танковый корпус', 'gen')).toBe('пятьдесят шестого танкового корпуса');
+    expect(nameCase('Группа армий «Центр»', 'gen')).toBe('группы армий «Центр»');
+    expect(nameCase('8-я гвардейская армия', 'ins')).toBe('восьмой гвардейской армией');
+    expect(nameCase('5-я ударная армия', 'dat')).toBe('пятой ударной армии');
+    expect(nameCase('1-я армия Войска Польского', 'dat')).toBe('первой армии Войска Польского');
+    expect(nameCase('XXXII армейский корпус', 'ins')).toBe('тридцать вторым армейским корпусом');
+    expect(nameCase('Что-то непонятное', 'gen')).toBe('Что-то непонятное');
+  });
+  it('приказ против противника — родительный; линия — творительный; «Куда наступать?»', async () => {
+    const lvi = F.find((f) => f.name === 'LVI танковый корпус')!;
+    const v = view({ intel: [...intel, { ...intel[0], id: lvi.id, name: lvi.name }] });
+    const d = staff({ view: v });
+    const disp = mk();
+    await disp.utterance(`Штаб, восьмой гвардейской атаковать ${intel[1].name}`, 1);
+    expect(said.at(-1)).toMatch(/^Приказ: восьмая гвардейская армия — наступать против группы армий «Центр»\./);
+    await disp.utterance('Штаб, пятой ударной атаковать пятьдесят шестой танковый корпус', 2);
+    expect(d.drafts.su_5ua?.target).toEqual({ formation: lvi.id });
+    expect(said.at(-1)).toMatch(/наступать против пятьдесят шестого танкового корпуса\./);
+    await disp.utterance('Штаб, предложи линию между восьмой гвардейской и пятой ударной', 3);
+    expect(said.at(-1)).toMatch(/^Линия между восьмой гвардейской армией и пятой ударной армией намечена на карте/);
+    await disp.utterance('Штаб, восьмой гвардейской удерживать Москву', 4);
+    expect(said.at(-1)).not.toMatch(/Куда удерживать/);
+    expect(said.at(-1)).toMatch(/Что удерживать\?/);
+  });
+  it('подсказка «что не готово» — дательный', async () => {
+    staff({ decision: { ...LAST }, drafts: { su_8gva: { formation: 'su_8gva', task: 'attack', target: null, targetText: '', at: null, note: '' } } });
+    await mk().utterance('Штаб, что не готово', 1);
+    expect(said.at(-1)).toMatch(/«восьмой гвардейской армии наступать на ?…»/);
+  });
+});
+
+describe('раунд 1: диктовка — поле по словам до двоеточия', () => {
+  it('«запиши в замысел: противника сковать…» — в «Замысел»; «в замысел противника: …» — в него', async () => {
+    const d = staff();
+    const disp = mk();
+    await disp.utterance('Штаб, запиши в замысел: противника сковать с фронта, главными силами обойти Зелов с севера.', 1);
+    expect(d.decision.intent).toMatch(/^Противника сковать с фронта, главными силами обойти Зелов с севера/);
+    expect(d.decision.enemyIntent).toBe('');
+    await disp.utterance('Штаб, запиши в замысел противника: удержать высоты', 2);
+    expect(d.decision.enemyIntent).toBe('Удержать высоты');
+  });
+});
+
+describe('раунд 1: непустой проект — одна проверка', () => {
+  it('продиктованный замысел (не перенесённый с прошлого хода) — «выбираю второй» спрашивает', async () => {
+    const d = staff({ plan: plan(), decision: { ...EMPTY, intent: 'Своё.' } });
+    await mk().utterance('Штаб, выбираю второй', 1);
+    expect(d.applyPlan).not.toHaveBeenCalled();
+    expect(said.at(-1)).toMatch(/^Заменить проект вариантом «Обход с севера»\?/);
+  });
+  it('перенесённое с прошлого хода — не «непустой»', () => {
+    const base = { drafts: {}, acts: [] };
+    expect(projectHas({ ...base, decision: { ...EMPTY, intent: LAST.intent, enemyIntent: LAST.enemyIntent, risks: LAST.risks } }, LAST)).toBe(false);
+    expect(projectHas({ ...base, decision: { ...EMPTY, risks: 'Иное.' } }, LAST)).toBe(true);
+    expect(projectHas({ ...base, decision: { ...EMPTY, request: 'Прошу линию.' } }, LAST)).toBe(true);
+    expect(projectHas({ ...base, decision: { ...EMPTY, intent: 'Своё.' } }, null)).toBe(true);
+  });
+});
+
+describe('раунд 1: обороты цели', () => {
+  it('«любой ценой», «к утру», «в направлении», «через», «, указания: …», неизвестный хвост', async () => {
+    const d = staff();
+    const disp = mk();
+    const berlin = P.find((p) => p.title === 'Берлин')!;
+    const mb = place('Мюнхеберг');
+    await disp.utterance('Штаб, восьмой гвардейской удержать Зелов любой ценой', 1);
+    expect(d.drafts.su_8gva).toMatchObject({ task: 'hold', target: zelov.id });
+    await disp.utterance('Штаб, тридцать третьей армии взять Зелов к утру', 2);
+    expect(d.drafts.su_33a).toMatchObject({ task: 'attack', target: zelov.id, note: 'К утру' });
+    await disp.utterance('Штаб, шестьдесят девятой армии наступать в направлении Мюнхеберга', 3);
+    expect(d.drafts.su_69a).toMatchObject({ task: 'attack', target: mb.id });
+    await disp.utterance('Штаб, пятой ударной наступать на Берлин через Зелов', 4);
+    expect(d.drafts.su_5ua).toMatchObject({ task: 'attack', target: berlin.id, note: 'Через Зелов' });
+    await disp.utterance('Штаб, сорок седьмой армии наступать на Зелов, указания: обойти с севера', 5);
+    expect(d.drafts.su_47a).toMatchObject({ target: zelov.id, note: 'Обойти с севера' });
+    await disp.utterance('Штаб, третьей ударной наступать на Зелов вдоль шоссе', 6);
+    expect(d.drafts.su_3ua).toMatchObject({ target: zelov.id, note: 'Вдоль шоссе' });
+    expect(said.join(' ')).not.toMatch(/Не нашёл/);
+  });
+  it('«войскам наступать…» — не переспрос про Войско Польское', () => {
+    staff();
+    expect(parsePhrase('войскам наступать на зелов', 'replay')).toBeNull();
+    expect(parsePhrase('всем армиям наступать', 'replay')).toBeNull();
+  });
+});
+
+describe('раунд 1: «покажи варианты» не готовит новые', () => {
+  it('готовые — перечислить; новые — только «дай / подготовь / предложи»', async () => {
+    const d = staff({ plan: plan() });
+    const disp = mk();
+    await disp.utterance('Штаб, покажи варианты', 1);
+    expect(d.askPlan).not.toHaveBeenCalled();
+    expect(said.at(-1)).toMatch(/^Готовы два варианта: первый — «Удар на Зелов», второй — «Обход с севера»\./);
+    expect(d.openVariant).toHaveBeenCalled();
+    await disp.utterance('Штаб, варианты', 2);
+    expect(d.askPlan).not.toHaveBeenCalled();
+    expect(parsePhrase('какие варианты', 'replay')).toEqual({ id: 'command.variants.list' });
+    expect(parsePhrase('подготовь варианты', 'replay')).toEqual({ id: 'command.variants', params: {} });
+  });
+});
+
+describe('раунд 1: поздний ответ советника', () => {
+  it('вне «Переигровки» — без подсказок фраз, только где ответ', async () => {
+    staff();
+    const disp = mk();
+    await disp.utterance('Штаб, дай два варианта', 1);
+    await disp.utterance('Штаб, спроси советника: где лучше наступать?', 2);
+    section = 'knowledge';
+    expect(planArrived(plan())).toBe('Советник подготовил варианты. Они — в разделе «Переигровка».');
+    const r: AdviceView = { ok: true, answer: 'Лучше на Зелов.', basis: [], unknowns: [], followUps: [], suggestions: [sug('8-я гвардейская армия', 'su_8gva')] };
+    expect(adviceArrived(41, r)).toBe('Советник ответил. Ответ — в разделе «Переигровка».');
+  });
+  it('ответ, пришедший пока человек говорит, не снимается новой репликой (keep), но новая просьба к советнику его снимает', async () => {
+    const sent: string[] = [];
+    let now = 0;
+    const gate = new SayGate((_id, text) => sent.push(text), () => now, () => false);
+    gate.speech(true);
+    gate.say(1, 'Ответ советника.', true);
+    gate.say(2, 'Старый ответ.');
+    gate.dropStale();
+    gate.speech(false);
+    gate.utterance();
+    expect(sent).toEqual(['Ответ советника.']);
+    // штаб: ответ советника — фраза keep; новая просьба к советнику снимает ждущую
+    const spoken: { t: string; keep?: boolean }[] = [];
+    const retracted: number[] = [];
+    setSpeaker((s, o) => { spoken.push({ t: s, keep: o?.keep }); return 77; });
+    setRetractor((id) => retracted.push(id));
+    staff();
+    const disp = mk();
+    await disp.utterance('Штаб, спроси советника: где лучше наступать?', 1);
+    adviceReady(41, { ok: true, answer: 'Лучше на Зелов.', basis: [], unknowns: [], followUps: [], suggestions: [] });
+    expect(spoken.at(-1)).toEqual({ t: 'Советник: Лучше на Зелов.', keep: true });
+    await disp.utterance('Штаб, спроси советника: а резервы?', 2);
+    expect(retracted).toEqual([77]);
+    setSpeaker(null); setRetractor(null);
+  });
+  it('announce с keep передаёт пометку в say', () => {
+    const calls: unknown[] = [];
+    const disp = new Dispatcher({ now: () => t, say: (s, o) => { calls.push([s, o]); return 1; }, section: () => section });
+    disp.announce('Ответ.', { keep: true });
+    expect(calls).toEqual([['Ответ.', { keep: true }]]);
+  });
+});
+
+describe('раунд 1: указания и диктовка — как сказано', () => {
+  it('«указания: …» сохраняют регистр, «ё» и знаки', async () => {
+    const d = staff();
+    const disp = mk();
+    await disp.utterance('Штаб, восьмой гвардейской наступать на Зелов', 1);
+    await disp.utterance('Штаб, указания: не ввязываться в бои за Зелов, обходить; ёлки', 2);
+    expect(d.drafts.su_8gva.note).toBe('Не ввязываться в бои за Зелов, обходить; ёлки');
+  });
+});
+
+describe('раунд 1: мелкие', () => {
+  it('черновик поверх продиктованного донесения — вопрос', async () => {
+    const d = staff({ decision: { ...EMPTY, report: 'Своё донесение.' } });
+    await mk().utterance('Штаб, напиши донесение', 1);
+    expect(said.at(-1)).toBe(`Заменить продиктованное донесение черновиком? ${YES_NO_SAY}`);
+    expect(d.decision.report).toBe('Своё донесение.');
+  });
+  it('«очищен / очищена / очищены / очищено» — по роду поля', async () => {
+    staff({ decision: { ...LAST } });
+    const disp = mk();
+    await disp.utterance('Штаб, очисти замысел противника', 1);
+    expect(said.at(-1)).toBe('«Замысел противника» очищен.');
+    await disp.utterance('Штаб, очисти оценку обстановки', 2);
+    expect(said.at(-1)).toBe('«Оценка обстановки» очищена.');
+    await disp.utterance('Штаб, очисти риски', 3);
+    expect(said.at(-1)).toBe('«Риски» очищены.');
+    await disp.utterance('Штаб, очисти донесение', 4);
+    expect(said.at(-1)).toBe('«Донесение» очищено.');
+  });
+  it('отменить переправу, приоритет, линию — голосом', async () => {
+    const d = staff();
+    const disp = mk();
+    await disp.utterance('Штаб, наведи переправу у Зелова', 1);
+    await disp.utterance('Штаб, приоритет подвоза восьмой гвардейской', 2);
+    await disp.utterance('Штаб, предложи линию между восьмой гвардейской и пятой ударной', 3);
+    await disp.utterance('Штаб, в распоряжение', 4);
+    expect(d.acts.map((a) => a.action.kind).sort()).toEqual(['boundary', 'bridge', 'priority']);
+    await disp.utterance('Штаб, отмени переправу у Зелова', 5);
+    expect(said.at(-1)).toMatch(/^Отменено: переправа/);
+    await disp.utterance('Штаб, отмени приоритет подвоза', 6);
+    await disp.utterance('Штаб, отмени линию', 7);
+    expect(d.acts).toEqual([]);
+  });
+  it('кнопка во время расчёта хода — причина словами', async () => {
+    staff({ busy: 'расчёт хода…' });
+    const reasons: string[] = [];
+    await press('decision.draftReport', undefined, (r) => reasons.push(r));
+    expect(reasons).toEqual(['Идёт расчёт хода — подождите.']);
   });
 });

@@ -129,7 +129,7 @@ export const UTT_WAIT_MS = 2_000;
  * (busy), очередная фраза его ответа не ждёт: речь в микрофоне тогда — скорее его же голос из динамиков.
  */
 export class SayGate {
-  private queue: { id: number; text: string }[] = [];
+  private queue: { id: number; text: string; keep: boolean }[] = [];
   private since: number | null = null;
   /** Речь кончилась в это время, реплики ещё нет. */
   private ended: number | null = null;
@@ -137,8 +137,9 @@ export class SayGate {
   constructor(private send: (id: number, text: string) => void, private now: () => number, private busy: () => boolean,
     private onDrop?: (ids: number[]) => void) {}
 
-  say(id: number, text: string): void {
-    if (this.holding() && !this.busy()) this.queue.push({ id, text });
+  /** keep — фраза не устаревает от новой реплики (dropStale её оставляет): поздний ответ советника. */
+  say(id: number, text: string, keep = false): void {
+    if (this.holding() && !this.busy()) this.queue.push({ id, text, keep });
     else this.send(id, text);
   }
   /** Речь человека началась / кончилась (сообщение сервиса `speech`). */
@@ -162,6 +163,13 @@ export class SayGate {
   drop(id?: number): boolean {
     const gone = this.queue.filter((x) => id === undefined || x.id === id).map((x) => x.id);
     this.queue = this.queue.filter((x) => !gone.includes(x.id));
+    if (gone.length) this.onDrop?.(gone);
+    return gone.length > 0;
+  }
+  /** Новая просьба: ждущие ответы на прежние уходят, кроме несрочных, но не устаревающих (keep). */
+  dropStale(): boolean {
+    const gone = this.queue.filter((x) => !x.keep).map((x) => x.id);
+    this.queue = this.queue.filter((x) => x.keep);
     if (gone.length) this.onDrop?.(gone);
     return gone.length > 0;
   }

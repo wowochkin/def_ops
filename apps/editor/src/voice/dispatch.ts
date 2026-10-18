@@ -271,7 +271,7 @@ export class Dispatcher {
    * onStandby — дежурный режим включён / снят.
    */
   constructor(private opts: {
-    now(): number; say(text: string, o?: { quiet?: boolean }): number | void; section(): string; stop?(): void;
+    now(): number; say(text: string, o?: { quiet?: boolean; keep?: boolean }): number | void; section(): string; stop?(): void;
     unsay?(id: number): void; supersede?(): void;
     model?: ModelHook; modelReady?(): boolean; recheck?(): Promise<boolean>; thinking?(on: boolean): void;
     onPending?(p: Pending | null): void; onStandby?(on: boolean): void;
@@ -285,13 +285,15 @@ export class Dispatcher {
   }
 
   /** Фраза штаба: запоминается для «повтори» и для распознавания эха. */
-  private say(text: string, o?: { quiet?: boolean }): number | void {
+  private say(text: string, o?: { quiet?: boolean; keep?: boolean }): number | void {
     if (!o?.quiet) this.last = { text, at: this.opts.now() };
     return this.opts.say(text, o);
   }
 
   /** Фраза для других модулей (окно зачитывает вопрос, чтение по частям): в дежурном режиме штаб молчит. Номер фразы. */
-  announce(text: string): number | void { if (!this.standby && text) return this.say(text); }
+  announce(text: string, o?: { keep?: boolean }): number | void { if (!this.standby && text) return this.say(text, o); }
+  /** Снять фразу id (модуль: ответ больше не нужен): ждёт — снимается, звучит — гасится. */
+  retract(id: number): void { this.opts.unsay?.(id); }
 
   /** Штаб договорил (событие say-done) — открывается окно разговора; ожидание подтверждения — 15 с от этого. */
   spoke(): void {
@@ -660,6 +662,8 @@ export class Dispatcher {
       if (yn === 'yes' && getAction('tour.yes')?.available() === true) { await this.execute('tour.yes'); return true; }
       // «нет» на предложение тура — снять его (tour.no): потом «да» уже ничего не запустит
       if (yn === 'no' && getAction('tour.no')?.available() === true) { await this.execute('tour.no'); this.say('Хорошо.'); return true; }
+      // «нет» на вопрос действия раздела («Куда?» приказа) — его отказ (answer.no доступно, только пока вопрос ждёт)
+      if (yn === 'no' && getAction('answer.no')?.available() === true) { await this.execute('answer.no'); return true; }
       this.say('Подтверждать сейчас нечего.');
       return true;
     }
@@ -678,7 +682,7 @@ export class Dispatcher {
     const m = OPEN.exec(rest) ?? (rest.split(' ').length <= 2 && sectionByWord(rest.split(' ')[0]) ? [rest, rest] : null);
     const sec = m ? sectionByWord(m[1].split(' ')[0]) : null;
     // фразы разделов с параметрами («покажи на карте Зелов», «открой приказы»); раздел одним словом — переход
-    const phrase = parsePhrase(rest, this.opts.section());
+    const phrase = parsePhrase(rest, this.opts.section(), raw);
     if (sec && !(phrase && m![1].split(' ').length > 1)) {
       await act('shell.open', { section: sec });
       return true;
