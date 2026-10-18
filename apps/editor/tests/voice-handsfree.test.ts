@@ -400,11 +400,11 @@ describe('диктовка в поле и чтение по частям', () =>
   it('длинное читается частями: «дальше» — следующая часть, «хватит» — конец чтения', async () => {
     text = 'Первое предложение. Второе предложение. Третье предложение. Четвёртое предложение. Пятое предложение.';
     const first = readAloud(text);
-    expect(first).toBe('Первое предложение. Второе предложение. Дальше?');
+    expect(first).toBe('Первое предложение. Второе предложение. Читать дальше? Жду ответа.');
     const d = mk({ stop: () => {} });
     d.spoke();
     expect(await d.utterance('дальше', 1)).toBe('done');
-    expect(said.at(-1)).toBe('Третье предложение. Четвёртое предложение. Дальше?');
+    expect(said.at(-1)).toBe('Третье предложение. Четвёртое предложение. Читать дальше? Жду ответа.');
     expect(await d.utterance('хватит', 2)).toBe('done');
     // чтение окончено: «дальше» больше не читает
     said.length = 0;
@@ -415,8 +415,8 @@ describe('диктовка в поле и чтение по частям', () =>
     expect(readAloud('Одно. Два.')).toBe('Одно. Два.');
     const long = `${'слово '.repeat(120).trim()}.`;
     const p = readAloud(long);
-    expect(p.length).toBeLessThanOrEqual(320);
-    expect(p.endsWith('Дальше?')).toBe(true);
+    expect(p.length).toBeLessThanOrEqual(330);
+    expect(p.endsWith('Читать дальше? Жду ответа.')).toBe(true);
   });
 });
 
@@ -610,11 +610,14 @@ describe('раунд 1: поправки по рецензии', () => {
     expect(out).toEqual([true]);
     off();
     // выбор: номер и название — тоже без обращения
+    // выбор: номер и название — тоже без обращения (в пределах полуминуты после вопроса, раунд 2)
     voiceDialog({ message: 'Что сделать?', labels: ['Сохранить', 'Удалить'] }, (o) => out.push(o));
-    t += 60_000;
+    d.spoke();
+    t += 20_000;
     await d.utterance('второй', 3);
     voiceDialog({ message: 'Что сделать?', labels: ['Сохранить', 'Удалить'] }, (o) => out.push(o));
-    t += 60_000;
+    d.spoke();
+    t += 20_000;
     await d.utterance('сохранить', 4);
     expect(out).toEqual([true, 1, 0]);
   });
@@ -705,5 +708,73 @@ describe('раунд 1: вопрос штаба не кончается слов
     const { CALIB_DONE_SAY, CALIB_FAIL_SAY } = await import('../src/voice/Calibration');
     expect(CALIB_DONE_SAY).not.toMatch(ANSWER_END);
     expect(CALIB_FAIL_SAY('нет шага')).not.toMatch(ANSWER_END);
+  });
+});
+
+describe('раунд 2: ответ окну без «штаб» — не дольше полуминуты; фразы-вопросы', () => {
+  it('окно ждёт: «да» без обращения через 25 с — принято; через 10 мин — нет (только «Штаб, да»)', async () => {
+    const out: unknown[] = [];
+    voiceDialog({ message: 'Удалить слой Б?', ok: 'Удалить', danger: true } as never, (o) => out.push(o));
+    const d = mk();
+    d.spoke();
+    t += 10 * 60_000;
+    expect(await d.utterance('да', 1)).toBe('ignored');
+    expect(out).toEqual([]);
+    expect(await d.utterance('Штаб, да', 2)).toBe('done');
+    expect(out).toEqual([true]);
+    voiceDialog({ message: 'Удалить слой В?', ok: 'Удалить' }, (o) => out.push(o));
+    d.spoke(); // вопрос прозвучал
+    t += 25_000;
+    expect(await d.utterance('да', 3)).toBe('done');
+    expect(out).toEqual([true, true]);
+  });
+  it('«повтори» продлевает срок ответа без обращения', async () => {
+    const out: unknown[] = [];
+    const off = voiceDialog({ message: 'Удалить слой?' }, (o) => out.push(o));
+    const d = mk();
+    d.spoke();
+    t += 60_000;
+    await d.utterance('Штаб, повтори', 1);
+    d.spoke();
+    t += 20_000;
+    expect(await d.utterance('да', 2)).toBe('done');
+    expect(out).toEqual([true]);
+    off();
+  });
+  it('длинный вопрос окна: без «Дальше?» посредине; «Подробнее — скажите «дальше»», затем вопрос с «Жду ответа.»', () => {
+    setSpeaker((s) => said.push(s));
+    const off = voiceDialog({ message: 'Завершить игру. Все ходы будут потеряны. Журнал сохранится. Разбор не составлен. Противник ждёт. Это нельзя отменить.', ok: 'Завершить' }, () => {});
+    const s = said.at(-1)!;
+    expect(s).not.toMatch(/Дальше\?/);
+    expect(s).toMatch(/^Завершить игру\. Все ходы будут потеряны\. Это нельзя отменить\. Подробнее — скажите «дальше»\. Скажите «да» — «Завершить», или «нет»\. Жду ответа\.$/);
+    off();
+  });
+  it('чтение частями и итог записи голоса — кончаются «Жду ответа.», а не словом-ответом', async () => {
+    const ANSWER_END = /(?:да|нет|отмена|готово|заново|понятно|точно|отставить|закрой|дальше)[.!?»…\s]*$/i;
+    const first = readAloud('Первое. Второе. Третье. Четвёртое. Пятое.');
+    expect(first).not.toMatch(ANSWER_END);
+    expect(first.endsWith('Жду ответа.')).toBe(true);
+    const { CHECK_BAD_SAY, CHECK_OK_SAY } = await import('../src/voice/Voices');
+    for (const s of [CHECK_BAD_SAY('коротко'), CHECK_OK_SAY]) {
+      expect(s).not.toMatch(ANSWER_END);
+      expect(s.endsWith('Жду ответа.')).toBe(true);
+    }
+  });
+  it('тур: после «нет» предложение снято — «да» его не исполняет; ответ без «штаб» — как ответ окну (до 30 с)', async () => {
+    const { offer } = await import('../src/voice/tour');
+    const yes = vi.fn();
+    const played = () => ({ done: Promise.resolve('played' as const), cancel() {} });
+    const d = mk();
+    expect(await offer('Показать раздел?', yes, played)).toBe(true);
+    d.spoke();
+    t += 13_000; // окно разговора прошло — ответ предложению всё равно принимается
+    expect(await d.utterance('нет', 1)).toBe('done');
+    expect(await d.utterance('Штаб, да', 2)).toBe('done');
+    expect(yes).not.toHaveBeenCalled();
+    expect(await offer('Показать раздел?', yes, played)).toBe(true);
+    d.spoke();
+    t += 13_000;
+    expect(await d.utterance('так точно', 3)).toBe('done');
+    expect(yes).toHaveBeenCalledTimes(1);
   });
 });

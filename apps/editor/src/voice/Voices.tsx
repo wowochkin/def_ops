@@ -53,6 +53,10 @@ export function voiceByName<V extends { id: string; name: string }>(name: string
   return { ask: `Голоса «${name}» нет. Есть: ${list.map((v) => `«${v.name}»`).join(', ')}.` };
 }
 
+/** Итог проверки записи словами — кончается «Жду ответа.», а не словом-ответом (иначе быстрый ответ — «эхо»). */
+export const CHECK_BAD_SAY = (why: string) => `Запись не подошла: ${why.replace(/[.\s]+$/, '')}. Скажите «запиши заново» или «закрой». Жду ответа.`;
+export const CHECK_OK_SAY = 'Запись подходит. Скажите: «сохрани как …» и имя голоса — или «прослушай пробу», «запиши заново». Жду ответа.';
+
 /** Запись голосом кончается сама: не раньше этого, когда человек молчит столько; и не позже этого. */
 const REC_MIN_MS = 14_000, REC_QUIET_MS = 2_500, REC_MAX_MS = 40_000, REC_P = 0.3;
 
@@ -110,9 +114,9 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
         setRec('checked');
         const v = byVoice.current;
         if (!v) return;
-        if (!m.ok) { void talk(`Запись не подошла: ${(m.reasons[0] ?? 'перечитайте текст').replace(/[.\s]+$/, '')}. Скажите «запиши заново» или «закрой».`); return; }
+        if (!m.ok) { void talk(CHECK_BAD_SAY(m.reasons[0] ?? 'перечитайте текст')); return; }
         if (v.name) { void talk(`Запись подходит. Сохраняю голос «${v.name}».`); send('save', { name: v.name }); return; }
-        void talk('Запись подходит. Скажите: «сохрани как …» и имя голоса — или «прослушай пробу», «запиши заново».');
+        void talk(CHECK_OK_SAY);
       }),
       client.on('voice_saved', () => {
         unsaved.current = false; setRec('none'); setCheck(null); setName('');

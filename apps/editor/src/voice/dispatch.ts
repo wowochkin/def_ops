@@ -27,6 +27,11 @@ export const CONVERSATION_S = 12;
 export const RECHECK_MS = 30_000;
 /** Перепроверка связи ждёт ответа не дольше этого. */
 export const RECHECK_TIMEOUT_MS = 5_000;
+/**
+ * Ответ на вопрос окна или предложение штаба без «штаб» принимается столько после того, как штаб договорил (вопрос,
+ * «повтори»); позже — только «Штаб, …»: брошенное в разговоре «да» не нажмёт «Удалить».
+ */
+export const ANSWER_MS = 30_000;
 /** Подтверждение ждёт ответа столько после того, как вопрос договорён. */
 export const CONFIRM_MS = 15_000;
 /** Запас сверх длины фразы штаба (0,1 с на знак): пока она может звучать, её эхо в дежурном не будит. */
@@ -383,7 +388,10 @@ export class Dispatcher {
     // разговора; прочая речь без обращения — только в окне разговора, а при ждущем вопросе — не принимается вовсе
     const whole = addr ? addr.rest : fixed.text;
     const asked = topModal();
-    const answers = (pending && yesNo(whole) !== null) || (!!asked && (asked.isAnswer ? asked.isAnswer(whole) : yesNo(whole) !== null));
+    const offered = getAction('tour.yes')?.available() === true; // предложение тура («Показать раздел?»)
+    const answers = (pending && yesNo(whole) !== null)
+      || (this.opts.now() - this.spokeAt <= ANSWER_MS
+        && ((!!asked && (asked.isAnswer ? asked.isAnswer(whole) : yesNo(whole) !== null)) || (offered && yesNo(whole) !== null)));
     const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000;
     if (!addr && !inWindow && !answers) { this.lastFixes = []; this.lastUnderstood = ''; return 'ignored'; }
     if (!addr && pending && !answers && !stopLead(whole.split(' ').filter(Boolean))) { this.lastFixes = []; this.lastUnderstood = ''; return 'ignored'; }
@@ -639,7 +647,9 @@ export class Dispatcher {
     if (yn) {
       // штаб только что предложил (тур: «Показать раздел?») — «да» в любых словах соглашается
       if (yn === 'yes' && getAction('tour.yes')?.available() === true) { await this.execute('tour.yes'); return true; }
-      this.say(yn === 'no' && getAction('tour.yes')?.available() === true ? 'Хорошо.' : 'Подтверждать сейчас нечего.');
+      // «нет» на предложение тура — снять его (tour.no): потом «да» уже ничего не запустит
+      if (yn === 'no' && getAction('tour.no')?.available() === true) { await this.execute('tour.no'); this.say('Хорошо.'); return true; }
+      this.say('Подтверждать сейчас нечего.');
       return true;
     }
     if (MORE.test(rest) && getAction('read.next')) { await this.execute('read.next'); return true; }

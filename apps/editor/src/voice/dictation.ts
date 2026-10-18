@@ -110,7 +110,8 @@ function splitLong(s: string, max: number): string[] {
 }
 
 let reading: { parts: string[]; i: number; off: () => void } | null = null;
-const MORE = ' Дальше?';
+/** Конец части: вопрос не кончается словом-ответом (быстрое «дальше» сервис иначе принял бы за эхо). */
+const MORE = ' Читать дальше? Жду ответа.';
 
 /** Читать текст частями: первая часть (с «Дальше?», если есть ещё) — её и сказать; дальше — read.next / read.stop. */
 export function readAloud(text: string): string {

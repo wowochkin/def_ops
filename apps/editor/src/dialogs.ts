@@ -127,9 +127,10 @@ function questionText(message: string): string {
   const parts = readParts(message);
   const sentences = parts.join(' ').match(/[^.!?…]+[.!?…]+["»]?|[^.!?…]+$/g) ?? [];
   if (sentences.length <= 4) { const t = parts.join(' '); return /[.!?…]["»]?$/.test(t) ? t : `${t}.`; }
-  const first = readAloud(message);
+  readAloud(message); // «дальше» — следующие части (read.next); первую часть — без «Читать дальше?» посреди вопроса
+  const first = parts[0];
   const warn = sentences.map((x) => x.trim()).filter((x) => WARN.test(x) && !first.includes(x));
-  return [first, ...warn].join(' ');
+  return [first, ...warn, 'Подробнее — скажите «дальше».'].join(' ');
 }
 
 const ORDS = ['первый', 'второй', 'третий', 'четвёртый', 'пятый', 'шестой', 'седьмой', 'восьмой', 'девятый', 'десятый'];

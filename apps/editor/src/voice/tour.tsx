@@ -315,14 +315,19 @@ export async function offer(text: string, yes: () => unknown, speak: (t: string)
   // голоса нет или штаб уже предлагает другое — это предложение снято
   if (end === 'silent' || my !== offerSeq) return false;
   const until = Date.now() + OFFER_MS;
-  const off = register({
+  const offNo = register({
+    id: 'tour.no', section: 'global', title: 'Отказаться', describe: 'Отказ от того, что штаб только что предложил.',
+    available: () => (Date.now() <= until ? true : 'Штаб сейчас ничего не предлагает.'),
+    run: async () => { clear(); },
+  });
+  const offYes = register({
     id: 'tour.yes', section: 'global', title: 'Согласиться', describe: 'Согласие на то, что штаб только что предложил (тур, калибровка).',
     say: ['да', 'давай', 'хорошо'],
     available: () => (Date.now() <= until ? true : 'Штаб сейчас ничего не предлагает.'),
     run: async () => { clear(); await yes(); },
   });
   const t = setTimeout(() => clear(), OFFER_MS);
-  const clear = () => { clearTimeout(t); off(); if (offerOff === clear) offerOff = null; };
+  const clear = () => { clearTimeout(t); offYes(); offNo(); if (offerOff === clear) offerOff = null; };
   offerOff = clear;
   return true;
 }
