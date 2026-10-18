@@ -105,13 +105,16 @@ const UNITS: [RegExp, [string, string, string], boolean][] = [
 const GEN_PREP = 'до|от|из|у|без|для|около|после|против|возле|более|менее|свыше|порядка';
 /** Остальные предлоги, которые однозначно задают падеж соединения: «к 3 тбр», «при 5 УА», «с 4 УФ». */
 const DAT_PREP = 'к|ко|по', PREP_PREP = 'о|об|обо|при', INS_PREP = 'с|со|перед|между';
+/** Направление: винительный («за пятую армию», «через третью бригаду»). Место: «в/на» — предложный («в пятой армии»);
+ * направление и место здесь не различить, поэтому для женского рода выбран предложный (так чаще в донесениях), для мужского остаётся именительный = винительный. */
+const ACC_PREP = 'за|через|про', LOC_PREP = 'в|во|на';
 /** Единица при числе в тексте: сокращение целиком; точка после «мин.»/«ч.» съедается, только если фраза идёт дальше.
  * Предлог перед числом задаёт падеж: «до пяти километров», «через одну минуту». */
 const anyCase = (ws: string) => ws.split('|').map((w) => `[${w[0].toUpperCase()}${w[0]}]${w.slice(1)}`).join('|');
 const UNIT_RE = new RegExp(String.raw`((?<!\p{L})(?:${anyCase(`${GEN_PREP}|через|на|за|в`)})\s+)?(\d+(?:[.,]\d+)?)\s*(км(?!\p{L})|%|чел\.|тыс\.|(?:мин|сек|ч|кг|м)(?!\p{L})(?:\.(?=\s+[а-яё]))?)`, 'gu');
 
 // римские номера соединений: «LVI танковый корпус» → «пятьдесят шестой танковый корпус»
-const ROMAN = /^(?=[IVXLC])(X{0,3}|XL|L|LX{1,3}|XC|C{1,3})?(IX|IV|V?I{0,3})$/;
+const ROMAN = /^(?=[IVXLC])(X{0,4}|XL|L|LX{1,3}|XC|C{1,3})?(IX|IV|V?I{0,3})$/; // у вермахта корпуса до XXXXVIII
 const ROMAN_VAL: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 };
 function romanValue(r: string): number | null {
   if (!ROMAN.test(r)) return null;
@@ -204,29 +207,33 @@ const FORMS: Record<string, { adj: [string, boolean][]; noun: string }> = {
   бф: { adj: [['Белорусск', false]], noun: 'фронт' }, уф: { adj: [['Украинск', false]], noun: 'фронт' },
 };
 /** Без числа и без «гв.» раскрываются только эти строчные сокращения (прочие — лишь заглавными: «ТА», «УА»). */
-const SAFE_LOWER = new Set(['ск', 'тк', 'мк', 'кк', 'ак', 'сд', 'пд', 'тд', 'мд', 'мсд', 'кд', 'пгд', 'нгд', 'тбр', 'сбр', 'мбр', 'отсап']);
-const PREPS = `${GEN_PREP}|${DAT_PREP}|${PREP_PREP}|${INS_PREP}`;
+const SAFE_LOWER = new Set(['ск', 'мк', 'кк', 'сд', 'пд', 'тд', 'мд', 'мсд', 'кд', 'пгд', 'нгд', 'тбр', 'сбр', 'мбр', 'отсап']);
+const PREPS = `${GEN_PREP}|${DAT_PREP}|${PREP_PREP}|${INS_PREP}|${ACC_PREP}|${LOC_PREP}`;
 /** [предлог] [номер[-наращение]] [гв./уд.] сокращение: «из 29 гв. ск», «к 3-й тбр», «ТА». */
-const FORM_RE = new RegExp(String.raw`(?<![\p{L}\d])(?:(${PREPS})\s+)?(?:(\d+)(?:-([а-яё]{1,4}))?\s*)?((?:(?:гв|уд)\.\s*)*)(\p{L}{1,5})(?!\p{L})`, 'giu');
+const FORM_RE = new RegExp(String.raw`(?<![\p{L}\d])(?:(${PREPS})\s+)?(?:(\d+)(?:-([а-яё]{1,4}))?\s*)?((?:(?:гв|уд)\.\s*)*)(\p{L}{1,5})(?![\p{L}\d])`, 'giu');
 const SUFFIX_CLS: Record<string, Cls> = { й: 'nom', я: 'nom', е: 'nom', го: 'gen', му: 'dat', м: 'prep', ым: 'ins', ю: 'acc' };
 
-function prepClass(p: string | undefined): Cls | null {
+function prepClass(p: string | undefined, g: Gender): Cls | null {
   if (!p) return null;
   const w = p.toLowerCase();
   const has = (list: string) => list.split('|').includes(w);
-  return has(GEN_PREP) ? 'gen' : has(DAT_PREP) ? 'dat' : has(PREP_PREP) ? 'prep' : has(INS_PREP) ? 'ins' : null;
+  return has(GEN_PREP) ? 'gen' : has(DAT_PREP) ? 'dat' : has(PREP_PREP) ? 'prep' : has(INS_PREP) ? 'ins' : has(ACC_PREP) ? 'acc' : has(LOC_PREP) && g === 'f' ? 'prep' : null;
 }
 
 /** Раскрывает сокращение соединения с порядковым и «гвардейским» в роде и падеже существительного; не узнано — исходный текст. */
-function formationText(m: string, prep: string | undefined, num: string | undefined, suf: string | undefined, gv: string, abbr: string): string {
+function formationText(m: string, prep: string | undefined, num: string | undefined, suf: string | undefined, gv: string, abbr: string, before: string): string {
   const key = abbr.toLowerCase().replace(/^a$/, 'а'); // латинская «A» после номера — армия
   const def = FORMS[key];
   if (!def) return m;
   if (key === 'а' && (num === undefined || !/^[АA]$/.test(abbr))) return m;
   if (num === undefined && !gv && !(SAFE_LOWER.has(key) ? true : abbr.length > 1 && abbr === abbr.toUpperCase())) return m;
   const noun = NOUNS[def.noun];
-  const pc = prepClass(prep);
+  const pc = prepClass(prep, noun.g);
   let c: Cls = pc ?? 'nom';
+  // то же слово уже стоит перед сокращением («фронт 3 УФ») — не повторяем, падеж берём у него
+  const prev = !prep ? /(\p{L}+)\s+$/u.exec(before)?.[1].toLowerCase() : undefined;
+  const same = prev !== undefined && noun.forms.includes(prev);
+  if (same && suf === undefined) c = NOUN_FORM.get(prev!)![1];
   if (suf !== undefined) {
     const k = caseKey(suf);
     const sc = SUFFIX_CLS[k];
@@ -238,7 +245,7 @@ function formationText(m: string, prep: string | undefined, num: string | undefi
     ...(num !== undefined ? [ordinalWords(+num, ordKey(noun.g, c))] : []),
     ...(gv.match(/гв|уд/gi) ?? []).map((k) => adjective(...GV[k.toLowerCase()], noun.g, c)),
     ...def.adj.map(([stem, hard]) => adjective(stem, hard, noun.g, c)),
-    noun.forms[CLASSES.indexOf(c)],
+    ...(same ? [] : [noun.forms[CLASSES.indexOf(c)]]),
   ];
   return `${prep ? `${prep} ` : ''}${words.join(' ')}`;
 }
@@ -246,6 +253,9 @@ function formationText(m: string, prep: string | undefined, num: string | undefi
 /** «гв.»/«уд.» перед полным словом: род и падеж — по следующему слову («гв. армия» — «гвардейская», «гв. корпуса» — «гвардейского»). */
 function guardsBeforeWord(k: string, next: string): string {
   const w = next.toLowerCase();
+  const [stem, hard] = GV[k.toLowerCase()];
+  const plural = /(?:ые|ие)$/.exec(w) ? 'е' : /(?:ых|их)$/.exec(w) ? 'х' : '';
+  if (plural) return cap(k, stem + (hard ? 'ы' : 'и') + (plural === 'е' ? 'е' : 'х'));
   let form: [Gender, Cls] | undefined = NOUN_FORM.get(w);
   if (!form) {
     const e = /(ая|ой|ую|ое|ого|его|ому|ему|ым|им|ом|ем|ый|ий)$/.exec(w)?.[1];
@@ -253,8 +263,9 @@ function guardsBeforeWord(k: string, next: string): string {
   }
   const [g, c] = form ?? ['f', 'nom'];
   const a = adjective(...GV[k.toLowerCase()], g, c);
-  return k[0] === k[0].toUpperCase() ? a[0].toUpperCase() + a.slice(1) : a;
+  return cap(k, a);
 }
+const cap = (k: string, a: string) => (k[0] === k[0].toUpperCase() ? a[0].toUpperCase() + a.slice(1) : a);
 /** Сокращения без числа. */
 const ABBR: [RegExp, string][] = [
   [word('км'), 'километров'], [word('т\\.\\s?е\\.'), 'то есть'], [word('т\\.\\s?д\\.'), 'так далее'],
@@ -287,10 +298,10 @@ export function speakable(text: string): string {
   t = t.replace(/(?<![\p{L}\d])(T|[А-ЯЁ][А-ЯЁа-яё]{0,2})-(\d{1,3})(?![\d\p{L}])/gu, (_m, l: string, n: string) => `${l === 'T' ? 'Т' : l} ${numberWords(+n)}`);
   t = t.replace(/(?<![\p{L}\d])([IVXLC]+)(\s+)(\p{L}+)/gu, (m, r: string, sp: string, w: string) => {
     const n = romanValue(r);
-    if (n && FORMS[w.toLowerCase()] && w.length > 1) return `${n}${sp}${w}`; // «LVI тк» — дальше как «56 тк»
+    if (n && ((FORMS[w.toLowerCase()] && w.length > 1) || /^(?:гв|уд)$/i.test(w))) return `${n}${sp}${w}`; // «LVI тк», «XXIII гв. ск» — дальше как «56 тк»
     return n && FORMATION.test(w.toLowerCase()) ? `${ordinalWords(n, caseOfNext(w.toLowerCase()))}${sp}${w}` : m;
   });
-  t = t.replace(FORM_RE, formationText);
+  t = t.replace(FORM_RE, (...a) => formationText(a[0], a[1], a[2], a[3], a[4], a[5], (a[a.length - 1] as string).slice(0, a[a.length - 2] as number)));
   t = t.replace(/(?<![\p{L}\d])[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\p{L}\d])[A-Za-z](?![\p{L}\d])/gu, ''); // прочая латиница
   t = t.replace(/(\d)[\s ](?=\d{3}(?!\d))/g, '$1'); // «1 250»
   // даты: «16.04», «16.04.1945», «16 апреля»
