@@ -1277,6 +1277,14 @@ await check('полоса: короткая фраза штаба — в пол�
   const full = panel.locator('.vp-card:not(.strip)');
   await full.waitFor({ timeout: 5000 }).catch(() => { throw new Error('длинная фраза — панель не развернулась'); });
   await shot('voice-auto-full.jpg');
+  // под развёрнутой панелью карта — как без панели (прокручиваемая панель поверх карты оставляла серую полосу)
+  const box = await full.evaluate((e) => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.bottom) + 60, width: Math.round(r.width), height: Math.min(160, innerHeight - Math.round(r.bottom) - 70) }; });
+  const withPanel = await page.screenshot({ clip: box, type: 'png' });
+  await full.evaluate((e) => { e.style.visibility = 'hidden'; });
+  await page.waitForTimeout(300);
+  const without = await page.screenshot({ clip: box, type: 'png' });
+  await full.evaluate((e) => { e.style.visibility = ''; });
+  if (!withPanel.equals(without)) throw new Error(`под развёрнутой панелью карта не такая, как без неё (${JSON.stringify(box)})`);
   // договорил (поддельный синтез — 15 знаков в секунду) и 10 с тишины — снова полоса
   await silent(60000);
   const t0 = Date.now();

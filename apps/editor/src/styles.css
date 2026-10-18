@@ -1612,8 +1612,12 @@ button.kb-rub:hover { border-color: #2f5f8f; }
   background: #fffefb; border: 2px solid #3b3a36; border-radius: 12px; box-shadow: 0 10px 34px rgba(0,0,0,.3); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .vp-head { display: flex; align-items: center; gap: 10px; }
 /* полоса (вид по умолчанию): состояние, последняя фраза штаба до двух строк, «Развернуть» — не закрывает работу */
-/* панель прокручивается целиком: части не сжимаются (лента с прокруткой иначе сжалась бы до строки) */
+/* развёрнутая: сама не прокручивается (прокручиваемый слой поверх карты WebGL оставлял под собой серую полосу) —
+   прокручивается тело; части тела не сжимаются (лента с прокруткой иначе сжалась бы до строки) */
+.vp-card:not(.strip) { overflow: hidden; }
 .vp-card > * { flex-shrink: 0; }
+.vp-card > .vp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.vp-body > * { flex-shrink: 0; }
 .vp-card.strip { width: 500px; padding: 8px 12px; gap: 6px; overflow: hidden; }
 .vp .vp-x { font-size: 24px; line-height: 1; padding: 4px 10px; }
 .vp-card.strip .vp-state { font-size: 20px; line-height: 1.2; }

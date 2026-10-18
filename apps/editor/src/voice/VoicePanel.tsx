@@ -533,6 +533,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
             <span className="vp-state" role="status">{st.text}</span>
             <ActButton className="vp-close" action="voice.panel.close" title="Свернуть панель голоса в полосу">Свернуть</ActButton>
           </div>
+          {/* прокручивается тело, а не сама панель: прокручиваемая панель поверх карты (WebGL) оставляла под собой серую полосу */}
+          <div className="vp-body">
           {confirm}
           {hint && <p className="vp-hint stop" role="status">{hint}</p>}
           {note && <p className="vp-hint" role="status">{note}…</p>}
@@ -620,6 +622,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
               <input type="checkbox" checked={intro} onChange={(e) => { void act(e.target.checked ? 'tour.introOn' : 'tour.introOff'); }} /> Вступление при запуске
             </label>
           </details>
+          </div>
         </section>
       )}
 
