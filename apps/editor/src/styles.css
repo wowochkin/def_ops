@@ -1328,7 +1328,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lg-pocket { border: 1.5px solid #1f4e8c; background: #d6e8f2; border-radius: 6px; }
 /* зоны влияния: цвета знаков сторон, прозрачно (zones-overlay.ts) — мягкое пятно */
 .lg-zone-own { background: radial-gradient(circle, rgba(212,56,52,.42), rgba(212,56,52,.12)); border-radius: 6px; }
-.lg-zone-enemy { background: radial-gradient(circle, rgba(47,111,174,.42), rgba(47,111,174,.12)); border-radius: 6px; }
+.lg-zone-enemy { background: radial-gradient(circle, rgba(60,130,225,.5), rgba(60,130,225,.2)); border-radius: 6px; }
 .lg-belt { height: 6px !important; border-bottom: 1.5px solid #2f6fae; background: repeating-linear-gradient(90deg, #2f6fae 0 1px, transparent 1px 4.5px); background-size: 100% 3px; background-repeat: no-repeat; background-position: 0 100%; }
 .lg-fortline { border: 2px solid #1f4e8c; background: #d6e4f2; border-radius: 3px; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #1f4e8c; transform: scale(.75); }
 

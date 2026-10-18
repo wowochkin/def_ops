@@ -23,6 +23,15 @@ describe('картинка зон влияния', () => {
   });
 });
 
+describe('цвет зоны противника', () => {
+  it('явно голубой: синий преобладает над красным и зелёным с запасом (не серо-голубой)', () => {
+    const [r, g, b] = ZONE_ENEMY;
+    expect(b).toBeGreaterThanOrEqual(200);
+    expect(b - r).toBeGreaterThanOrEqual(120);
+    expect(b - g).toBeGreaterThanOrEqual(70);
+  });
+});
+
 describe('зоны на карте по времени', () => {
   const cur = grid([100]), prev = grid([-100]);
   const urls = { cur: 'data:cur', prev: 'data:prev' };
