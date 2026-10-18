@@ -77,6 +77,8 @@ export class TourEngine {
   private onEnd: ((r: TourEnd) => void) | undefined;
   /** Вкладки, открытые до тура: действие → вкладка; возвращаются в конце тура. */
   private tabs = new Map<string, string>();
+  /** Вкладка, которую открыл сам тур: сменил человек — его выбор в конце не перетирается. */
+  private opened = new Map<string, string>();
   private subs = new Set<() => void>();
 
   constructor(private d: TourDeps) {}
@@ -165,8 +167,11 @@ export class TourEngine {
     this.hush();
     this.where = null;
     // вкладки — как были до тура (и запомненные разделом — тоже)
-    for (const [action, tab] of this.tabs) void this.d.act(action, { tab }).catch(() => {});
+    for (const [action, tab] of this.tabs) {
+      if (this.d.tabOf?.(action) === this.opened.get(action)) void this.d.act(action, { tab }).catch(() => {});
+    }
     this.tabs.clear();
+    this.opened.clear();
     this.set(null);
     cb?.(r);
   }
@@ -183,6 +188,8 @@ export class TourEngine {
       if (sec && REAL.has(sec)) this.where = sec;
       if (!this.tabs.has(p.action)) { const was = this.d.tabOf?.(p.action); if (was) this.tabs.set(p.action, was); }
       try { await this.d.act(p.action, p.params); } catch { /* элемента не будет — шаг скажет, когда он появится */ }
+      const tab = (p.params as { tab?: string } | undefined)?.tab;
+      if (this.tabs.has(p.action) && tab) this.opened.set(p.action, tab);
       if (my !== this.seq) return;
     }
     let found = this.d.exists(step.target);

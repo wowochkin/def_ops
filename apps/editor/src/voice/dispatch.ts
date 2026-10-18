@@ -176,7 +176,9 @@ function examples(section: string): string[] {
 /** Три примера, ближайших по словам к сказанному; не хватает — добираются первые по списку. */
 function closest(section: string, said: string, n = 3): string[] {
   const q = stems(said);
-  const ex = [...new Set([...examples(section), ...DEFAULT_SAY])];
+  // и первые фразы ярлыков («штаб, открой вкладку калибровка»): в конце — подсказываются, только если близки по словам
+  const shortcuts = actions(section).filter((a) => a.shortcut && a.available() === true).flatMap((a) => a.say?.slice(0, 1) ?? []);
+  const ex = [...new Set([...examples(section), ...DEFAULT_SAY, ...shortcuts])];
   return ex.map((e, i) => ({ e, i, sc: overlap(q, e) })).sort((x, y) => y.sc - x.sc || x.i - y.i).slice(0, n).map((x) => x.e);
 }
 const quote = (xs: string[]) => xs.map((e) => `«${e}»`).join(', ');

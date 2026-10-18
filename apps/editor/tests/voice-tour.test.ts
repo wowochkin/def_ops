@@ -9,7 +9,7 @@ import { systemText, toTools } from '../src/voice/llm';
 import { shellActions } from '../src/voice/actions/shell';
 import { tourActions, type TourControl } from '../src/voice/actions/tour';
 import { currentTab, TABS, tabActions, type TabSection } from '../src/voice/actions/tabs';
-import { Dispatcher, paramsFit } from '../src/voice/dispatch';
+import { Dispatcher, helpText, paramsFit } from '../src/voice/dispatch';
 import { TOURS, type Tour } from '../src/voice/tours';
 import {
   bindTourVoice, settleSpeech, INTRO_HOW_OFF, INTRO_KEY, INTRO_STOPPED, OFFER_MS, offer, onVoiceReady, PROPOSE, READY_FIRST, speakChief, TourEngine, tourControl, tourEngine,
@@ -586,7 +586,7 @@ describe('вкладки и туры разделов голосом', () => {
     expect(actions('modeling').find((a) => a.id === 'maps.tab')).toBeUndefined();
   });
 
-  it('«Штаб, тур по картам / знаниям / ИИ / знакам / моделированию» — тур раздела; «покажи раздел» — текущего; по переигровке тура нет — ярлык недоступен', async () => {
+  it('«Штаб, тур по картам / знаниям / ИИ / знакам / моделированию» — тур раздела; «покажи раздел» — текущего; по переигровке тура нет — честный ответ', async () => {
     const d = mk('editor');
     expect(await d.utterance('Штаб, тур по картам', 1)).toBe('done');
     expect(await d.utterance('Штаб, тур по знаниям', 2)).toBe('done');
@@ -595,9 +595,20 @@ describe('вкладки и туры разделов голосом', () => {
     expect(await d.utterance('Штаб, тур по моделированию', 5)).toBe('done');
     expect(await d.utterance('Штаб, покажи раздел', 6)).toBe('done');
     expect(started).toEqual(['maps', 'knowledge', 'staff', 'library', 'modeling', 'editor']);
-    expect(actions('editor').find((a) => a.id === 'tour.of.replay')!.available()).toMatch(/тура пока нет/);
-    expect(await d.utterance('Штаб, тур по переигровке', 7)).not.toBe('done');
+    // тура по переигровке пока нет — честный ответ, а не «Не понял»
+    expect(await d.utterance('Штаб, тур по переигровке', 7)).toBe('done');
     expect(started).toHaveLength(6);
+    expect(said.at(-1)).toMatch(/По разделу «Переигровка» тура пока нет/);
+  });
+
+  it('в ответах штаба — фраза нужной вкладки, а не строка-перечень', async () => {
+    const d = mk('modeling');
+    expect(await d.utterance('Штаб, а можешь открыть вкладку калибровка?', 1)).toBe('done');
+    expect(said.at(-1)).toBe('Да, скажите: «штаб, открой вкладку калибровка».');
+    await d.utterance('Штаб, открой вкладку калибровко', 2);
+    expect(said.at(-1)).toMatch(/^Не понял вас\. Можно сказать.*«штаб, открой вкладку калибровка»/);
+    expect(said.join(' ')).not.toMatch(/…:/);
+    expect(helpText('modeling')).not.toMatch(/…/);
   });
 
   it('модели ярлыки не видны: в Моделировании инструменты без дублей', () => {
@@ -612,8 +623,9 @@ describe('вкладки и туры разделов голосом', () => {
   });
 
   it('«Что можно сказать»: вкладки одной строкой, из «тур по …» — только текущий раздел; не длиннее прежнего + две строки', () => {
-    const lines = (sec: string) => listed(actions(sec)).filter((a) => a.say?.length);
-    const phrases = (sec: string) => lines(sec).flatMap((a) => a.say!);
+    // как в панели голоса: строка действия — его подсказка (hint) или фразы
+    const lines = (sec: string) => listed(actions(sec)).filter((a) => a.hint || a.say?.length);
+    const phrases = (sec: string) => lines(sec).flatMap((a) => (a.hint ? [a.hint] : a.say!));
     // прежний список (до туров разделов и вкладок): действия оболочки и тура без ярлыков и вкладок
     const before = lines('modeling').filter((a) => !/\.tab$/.test(a.id)).length;
     expect(lines('modeling').length).toBeLessThanOrEqual(before + 2);
@@ -649,6 +661,20 @@ describe('тур возвращает вкладку, открытую до не
     for (let i = 0; i < 20 && e.state; i++) await flush();
     expect(e.state).toBeNull();
     expect(store.get('def_ops.modeling.tab')).toBe('compare');
+  });
+
+  it('человек сам сменил вкладку во время тура — после «хватит» она остаётся', async () => {
+    store.set('def_ops.modeling.tab', 'compare');
+    const e = engine(() => ({ done: new Promise<SpeechEnd>(() => {}), cancel() {} }));
+    await e.start('modeling');
+    await flush();
+    e.next();
+    await flush();
+    expect(store.get('def_ops.modeling.tab')).toBe('models');
+    await act('modeling.tab', { tab: 'ops' });
+    e.stop();
+    await flush();
+    expect(store.get('def_ops.modeling.tab')).toBe('ops');
   });
 
   it('«хватит» посреди тура — прежняя вкладка; тур по картам — тоже', async () => {

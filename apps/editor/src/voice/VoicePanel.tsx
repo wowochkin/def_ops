@@ -386,7 +386,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const hint = live ? bargeHint(speaking, cfg.barge_mode) : null;
   const word = cfg.barge_mode === 'word';
   const errorText = status === 'error' ? client.errorText : null;
-  const can = listed(actions(section)).filter((a) => a.say?.length);
+  const can = listed(actions(section)).filter((a) => a.hint || a.say?.length);
   const feedEnd = useRef<HTMLDivElement>(null);
   useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.length]);
 
@@ -462,7 +462,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
                 const av = a.available();
                 return (
                   <li key={a.id} className={av === true ? '' : 'off'}>
-                    {a.say!.map((s) => <span key={s} className="vp-can">«{s}»</span>)}
+                    {(a.hint ? [a.hint] : a.say!).map((s) => <span key={s} className="vp-can">«{s}»</span>)}
                     {av !== true && <span className="vp-why">сейчас нельзя: {av}</span>}
                   </li>
                 );
