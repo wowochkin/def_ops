@@ -51,7 +51,7 @@ const EXCEPTIONS: { file: string; exact: string[]; why: string }[] = [
   { file: 'CommandView.tsx', exact: ['llm.recheck'], why: 'проверить связь с моделью — голос перепроверяет связь сам, когда к модели обращаются' },
   { file: 'CommandView.tsx', exact: ['(e) => llm.set({ umpire: e.target.checked })', '(e) => llm.set({ stavka: e.target.checked })'], why: 'настройки моделей посредника и Ставки — раздел «ИИ», не командование; голосом — «открой ИИ»' },
   { file: 'ReviewView.tsx', exact: ['pdf'], why: 'печать — окно печати системы, оно только мышью; голосом — «сохрани разбор» (PDF в «Загрузки»)' },
-  { file: 'voice/VoicePanel.tsx', exact: ['() => power(!enabled)'], why: '«Выключить голос» — только рукой: голосом микрофон не закрывается (дежурный режим «Штаб, отбой»)' },
+  { file: 'voice/VoicePanel.tsx', exact: ['() => power(true)'], why: '«Включить голос» — только рукой: при выключенном голосе штаб не слышит (выключить — через реестр, voice.off.ask)' },
   { file: 'voice/VoicePanel.tsx', exact: ['startMic'], why: 'микрофон не открылся — голосом сказать нечем' },
   { file: 'voice/VoicePanel.tsx', exact: ["() => applySettings({ barge_mode: 'voice' })", "() => applySettings({ barge_mode: 'word' })", '(v) => applySettings({ vad: +(1 - v).toFixed(2) })',
     '(v) => applySettings({ barge_vad: +(1 - v).toFixed(2) })', '(v) => applySettings({ barge_ms: v })', '(v) => applySettings({ end_ms: v })', 'resetSettings', '(e) => onChange(+e.target.value)'],

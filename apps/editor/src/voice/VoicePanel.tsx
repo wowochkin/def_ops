@@ -198,6 +198,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     available: () => true, run: async () => { setMode('icon'); } });
   useAction({ id: 'voice.panel.strip', section: 'global', title: 'Показать полосу голоса', describe: 'Из значка — полоса голоса: состояние и последняя фраза штаба.',
     available: () => true, run: async () => { setMode('compact'); } });
+  // «Повторить» обрезанную фразу полосы — как «повтори»: вопрос окна или последняя фраза
+  useAction({ id: 'voice.repeat', section: 'global', title: 'Повторить', describe: 'Повторяет последнюю фразу штаба (при открытом окне — его вопрос).',
+    available: () => true, run: async () => { dispatcher.repeat(); } });
   // выключить голос: необратимо голосом (включить можно только кнопкой) — сначала вопрос; кнопка спрашивает окном
   useAction({ id: 'voice.off', section: 'global', title: 'Выключить голос', irreversible: true, confirm: () => POWER_OFF_ASK,
     describe: 'Закрывает микрофон: штаб не слышит и не говорит; включить голос можно только кнопкой.',
@@ -473,7 +476,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const view = size.view(modal);
   // лента — к последней записи (длина ленты ограничена FEED_MAX — следить за последней, а не за длиной)
   useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.at(-1)?.key, view]);
-  const last = [...feed].reverse().find((x) => x.kind === 'chief');
+  const last = [...feed].reverse().find((x) => x.kind === 'chief' || x.kind === 'umpire');
 
   // голоса в этой версии нет (установленная программа, браузер, не Mac на Apple Silicon) — панели нет
   if (status === 'unsupported') return null;
@@ -512,13 +515,14 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           </div>
           {confirm}
           {hint && <p className="vp-hint stop" role="status">{hint}</p>}
+          {note && <p className="vp-hint" role="status">{note}…</p>}
           {/* голос выключен — включить можно прямо с полосы */}
           {!enabled && <button className="vp-power primary" onClick={() => power(true)}><MicGlyph off={false} /> Включить голос</button>}
           {/* фраза штаба: до двух строк, при открытом окне — до трёх */}
           {enabled && !confirm && last && <>
-            <p className={`vp-last${stripLines(modal) === 3 ? ' l3' : ''}`} title={last.text}><span className="vp-who">Штаб:</span> {last.text}</p>
+            <p className={`vp-last${stripLines(modal) === 3 ? ' l3' : ''}`} title={last.text}><span className="vp-who">{last.kind === 'umpire' ? 'Посредник:' : 'Штаб:'}</span> {last.text}</p>
             {/* обрезано — не молча: целиком повторит штаб */}
-            {stripCut(last.text, modal) && <div className="vp-cut"><span>Целиком — скажите «повтори»</span><button onClick={() => dispatcher.repeat()}>Повторить</button></div>}
+            {stripCut(last.text, modal) && <div className="vp-cut"><span>Целиком — скажите «повтори»</span><ActButton action="voice.repeat">Повторить</ActButton></div>}
           </>}
         </section>
       )}

@@ -1173,6 +1173,36 @@ await check('без рук: «дай два варианта» → «подро�
   return `запросов вариантов: ${LM.plans}`;
 });
 
+await check('без рук: «проводи ход» — чего нет и предложение («да» — черновик донесения) → «проводи ход» → «да» → доклад посредника его голосом', async () => {
+  await handsFree(['штаб, проводи ход', ...QUIET], { reload: false });
+  await feedHas('Ход проводить рано: не готово — боевое донесение').waitFor({ timeout: 30000 });
+  await feedHas('Составить черновик донесения?').waitFor({ timeout: 10000 });
+  await handsFree(['штаб, да', ...QUIET], { reload: false });
+  await feedHas('Черновик донесения составлен').waitFor({ timeout: 30000 });
+  await handsFree(['штаб, проводи ход', ...QUIET], { reload: false });
+  await feedHas('Провожу ход: решение готово, приказов один').waitFor({ timeout: 30000 });
+  await panel.locator('.vp-confirm').waitFor({ timeout: 10000 });
+  await shot('voice-turn.jpg');
+  await handsFree(['штаб, да', ...QUIET], { reload: false });
+  await feedHas('Считаю ход').waitFor({ timeout: 30000 });
+  // доклад посредника — голосом посредника (роль umpire в фразе сервису), в ленте — «Посредник:»
+  await panel.locator('.vp-item.umpire').first().waitFor({ timeout: 180000 }).catch(() => { throw new Error('доклада посредника нет'); });
+  // сначала посредник объявляет, что сведения готовятся, затем — доклад (модели или, честно, по данным расчёта)
+  await feedHas('Решение на следующий ход').waitFor({ timeout: 120000 });
+  const ump = await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
+  if (!ump.length) throw new Error('доклад посредника не голосом посредника');
+  if (ump[0] !== 'Сведения о ходе готовятся, прошу подождать.' && !/докладываю по данным расчёта/.test(ump[0])) throw new Error(`посредник начал не с объявления: ${ump[0]}`);
+  const rep = ump.at(-1);
+  if (/\d/.test(rep)) throw new Error(`в докладе посредника цифры: ${rep}`);
+  const n = rep.match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
+  if (n < 3 || n > 5) throw new Error(`в докладе посредника ${n} фраз: ${rep}`);
+  await page.locator('.cmd-date', { hasText: 'ход 2' }).waitFor({ timeout: 10000 });
+  await shot('voice-umpire.jpg');
+  const clicks = await page.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+  return `доклад: ${rep.slice(0, 80)}…`;
+});
+
 await check('командование: при полосе место тоже не под ней', async () => {
   // советник (открыт проверкой советника) лежит справа поверх карты — скрыть: проверки ниже — о карте
   const adv = page.locator('.advisor .adv-h button[title^="Скрыть советника"]');
@@ -1215,9 +1245,9 @@ await check('окно с длинным вопросом: фраза в поло
 });
 
 await check('«Разбор операции» (окно почти во весь экран): окно — ниже панели, панель с фразой, заголовок и кнопки окна открыты', async () => {
+  // ход уже проведён (проверка «проводи ход») — разбор открывается из меню игры
   await page.locator('.cmd-top').getByRole('button', { name: '⋯' }).click();
-  // разбор — после первого хода; для снимка окна вызываем ту же кнопку (её обработчик) без хода
-  await page.locator('.menu button', { hasText: 'Разбор операции' }).evaluate((b) => b[Object.keys(b).find((k) => k.startsWith('__reactProps'))].onClick());
+  await page.locator('.menu button', { hasText: 'Разбор операции' }).click();
   const rv = page.locator('.modal.review[data-modal]');
   await rv.waitFor({ timeout: 5000 });
   await page.waitForTimeout(700);
@@ -1318,35 +1348,6 @@ await check('ответ посреди чтения окна, перебиван
 });
 
 
-await check('без рук: «проводи ход» — чего нет и предложение («да» — черновик донесения) → «проводи ход» → «да» → доклад посредника его голосом', async () => {
-  await handsFree(['штаб, проводи ход', ...QUIET], { reload: false });
-  await feedHas('Ход проводить рано: не готово — боевое донесение').waitFor({ timeout: 30000 });
-  await feedHas('Составить черновик донесения?').waitFor({ timeout: 10000 });
-  await handsFree(['штаб, да', ...QUIET], { reload: false });
-  await feedHas('Черновик донесения составлен').waitFor({ timeout: 30000 });
-  await handsFree(['штаб, проводи ход', ...QUIET], { reload: false });
-  await feedHas('Провожу ход: решение готово, приказов один').waitFor({ timeout: 30000 });
-  await panel.locator('.vp-confirm').waitFor({ timeout: 10000 });
-  await shot('voice-turn.jpg');
-  await handsFree(['штаб, да', ...QUIET], { reload: false });
-  await feedHas('Считаю ход').waitFor({ timeout: 30000 });
-  // доклад посредника — голосом посредника (роль umpire в фразе сервису), в ленте — «Посредник:»
-  await panel.locator('.vp-item.umpire').first().waitFor({ timeout: 180000 }).catch(() => { throw new Error('доклада посредника нет'); });
-  // сначала посредник объявляет, что сведения готовятся, затем — доклад (модели или, честно, по данным расчёта)
-  await feedHas('Решение на следующий ход').waitFor({ timeout: 120000 });
-  const ump = await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
-  if (!ump.length) throw new Error('доклад посредника не голосом посредника');
-  if (ump[0] !== 'Сведения о ходе готовятся, прошу подождать.' && !/докладываю по данным расчёта/.test(ump[0])) throw new Error(`посредник начал не с объявления: ${ump[0]}`);
-  const rep = ump.at(-1);
-  if (/\d/.test(rep)) throw new Error(`в докладе посредника цифры: ${rep}`);
-  const n = rep.match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
-  if (n < 3 || n > 5) throw new Error(`в докладе посредника ${n} фраз: ${rep}`);
-  await page.locator('.cmd-date', { hasText: 'ход 2' }).waitFor({ timeout: 10000 });
-  await shot('voice-umpire.jpg');
-  const clicks = await page.evaluate(() => window.__clicks);
-  if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `доклад: ${rep.slice(0, 80)}…`;
-});
 
 await check('первый запуск без калибровки: штаб предлагает её («да / нет»), «нет» — отменено', async () => {
   await stopVoice();
@@ -1507,7 +1508,7 @@ await ctx3.addInitScript((url) => {
   localStorage.setItem('def_ops.voice.url', url);
   localStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.intro', 'off');
-  localStorage.setItem('def_ops.voice.panel', 'open');
+  localStorage.setItem('def_ops.voice.panel', 'full');  // лента видна (при открытом окне — полоса)
 }, `ws://127.0.0.1:${vport}/ws`);
 if (STUB) await ctx3.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
 const page3 = await ctx3.newPage();
@@ -1612,7 +1613,7 @@ await ctx4.addInitScript((url) => {
   localStorage.clear();
   localStorage.setItem('def_ops.voice.url', url);
   localStorage.setItem('def_ops.section', 'editor');
-  localStorage.setItem('def_ops.voice.panel', 'open');
+  localStorage.setItem('def_ops.voice.panel', 'full');  // лента видна (при открытом окне — полоса)
   localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: 'voice', aec_unknown: true }));
 }, `ws://127.0.0.1:${vport}/ws`);
 await ctx4.addInitScript(() => {
@@ -1639,7 +1640,8 @@ if (STUB) await ctx4.route('**/api/voice', (r) => r.fulfill({ json: { state: 're
 const page4 = await ctx4.newPage();
 page4.on('pageerror', (e) => errors.push(e.message));
 const panel4 = page4.locator('.vp');
-const said4 = (re, kind = 'chief') => panel4.locator(`.vp-item.${kind}`, { hasText: re });
+// при открытом окне панель — полоса: фраза штаба — в ней (последняя), иначе — в ленте
+const said4 = (re, kind = 'chief') => panel4.locator(kind === 'chief' ? `.vp-item.${kind}, .vp-card.strip .vp-last` : `.vp-item.${kind}`, { hasText: re }).first();
 const feed4 = async () => (await page4.locator('.vp-feed').innerText().catch(() => '')).replace(/\s+/g, ' ');
 /** Следующие реплики «микрофона»: сервис перезапускается с ними (окно подключается само). */
 async function hands4(lines) {
