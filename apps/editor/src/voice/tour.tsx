@@ -29,7 +29,10 @@ export type SpeechEnd = 'played' | 'stopped' | 'silent';
 export interface Speech { done: Promise<SpeechEnd>; cancel(): void }
 /** speaking — штаб говорит шаг; waiting — договорил (или голоса нет), ждёт; paused — пауза. */
 export type Phase = 'speaking' | 'waiting' | 'paused';
-export interface TourState { tour: Tour; index: number; phase: Phase; missing: boolean; extra: boolean }
+/** alt — элемента шага нет, а его замена (`TourStep.alt`) на экране: показывается она. */
+export interface TourState { tour: Tour; index: number; phase: Phase; missing: boolean; extra: boolean; alt?: boolean }
+/** Шаг, который сейчас на экране: сам шаг или его замена. */
+export const stepOf = (s: TourState): TourStep => { const x = s.tour.steps[s.index]; return s.alt && x.alt ? x.alt : x; };
 /** done — шаги кончились; stopped — «хватит»; section — ушли в другой раздел. */
 export type TourEnd = 'done' | 'stopped' | 'section';
 
@@ -88,7 +91,7 @@ export class TourEngine {
   constructor(private d: TourDeps) {}
 
   subscribe = (f: () => void): (() => void) => { this.subs.add(f); return () => { this.subs.delete(f); }; };
-  get step(): TourStep | null { return this.state ? this.state.tour.steps[this.state.index] : null; }
+  get step(): TourStep | null { return this.state ? stepOf(this.state) : null; }
   has(idOrSection: string): boolean { return !!findTour(idOrSection, this.d.tours); }
 
   /**
@@ -197,7 +200,7 @@ export class TourEngine {
     if (!this.state) return;
     const my = this.hush();
     const step = this.state.tour.steps[i];
-    this.set({ ...this.state, index: i, phase: 'speaking', missing: false, extra: false });
+    this.set({ ...this.state, index: i, phase: 'speaking', missing: false, extra: false, alt: false });
     const p = step.prepare;
     if (p) {
       // шаг тура сам открывает раздел — это не уход из тура
@@ -216,6 +219,12 @@ export class TourEngine {
       found = this.d.exists(step.target);
     }
     if (!this.state) return;
+    // элемента нет, а его замена на экране (конец игры вместо кнопки хода) — шаг о ней
+    if (!found && step.alt && this.d.exists(step.alt.target)) {
+      this.set({ ...this.state, missing: false, alt: true });
+      this.say(my, stepSpeech(step.alt, false));
+      return;
+    }
     this.set({ ...this.state, missing: !found });
     this.say(my, stepSpeech(step, !found));
   }
@@ -385,6 +394,9 @@ export const startTour = (id: string) => startTourFor(id);
 export const stopTour = () => tourEngine.stop();
 
 let offerOff: (() => void) | null = null;
+const NOTHING_OFFERED = 'Штаб сейчас ничего не предлагает.';
+/** Открыто окно (вопрос, «Принять командование», разбор): ответы «да / нет» — его. */
+const modalOpen = () => typeof document !== 'undefined' && !!document.querySelector('.modal-bg, [data-modal]');
 let offerSeq = 0;
 /**
  * Предложение штаба: фраза и «Скажите: да» — пока OFFER_MS после того, как он договорил, «да» исполняет yes
@@ -397,16 +409,22 @@ export async function offer(text: string, yes: () => unknown, speak: (t: string)
   // голоса нет или штаб уже предлагает другое — это предложение снято
   if (end === 'silent' || my !== offerSeq) return false;
   const until = Date.now() + OFFER_MS;
+  /** Предложение живо: не истекло и не открыто окно — тогда «да» и «нет» относятся к окну, а предложение снимается. */
+  const alive = (): true | string => {
+    if (modalOpen()) { clear(); return NOTHING_OFFERED; }
+    return Date.now() <= until ? true : NOTHING_OFFERED;
+  };
   const offNo = register({
     id: 'tour.no', section: 'global', title: 'Отказаться', describe: 'Отказ от того, что штаб только что предложил.',
-    available: () => (Date.now() <= until ? true : 'Штаб сейчас ничего не предлагает.'),
+    available: alive,
     run: async () => { clear(); },
   });
   const offYes = register({
     id: 'tour.yes', section: 'global', title: 'Согласиться', describe: 'Согласие на то, что штаб только что предложил (тур, калибровка).',
     say: ['да', 'давай', 'хорошо'],
-    available: () => (Date.now() <= until ? true : 'Штаб сейчас ничего не предлагает.'),
-    run: async () => { clear(); await yes(); },
+    available: alive,
+    // ответ действия (или причина, почему нельзя) штаб говорит вслух — после «да» не тишина
+    run: async () => { clear(); const r = await yes(); return typeof r === 'string' ? r : undefined; },
   });
   const t = setTimeout(() => clear(), OFFER_MS);
   const clear = () => { clearTimeout(t); offYes(); offNo(); if (offerOff === clear) offerOff = null; };

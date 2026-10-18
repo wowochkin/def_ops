@@ -32,6 +32,8 @@ export interface TourStep {
   unavailable?: string;
   /** Что подсветить вместо отсутствующего элемента — то, что к нему ведёт. */
   via?: string;
+  /** Элемента нет, а этот на экране — шаг целиком заменяется им (например, итог игры вместо кнопки хода). */
+  alt?: Omit<TourStep, 'alt'>;
 }
 
 export interface Tour {

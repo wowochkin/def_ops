@@ -7,12 +7,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ActButton } from './registry';
 import { registerTourActions } from './actions/tour';
-import { findTarget, inGame, onVoiceReady, READY_FIRST, stepCaption, tourControl, tourEngine, tourSection } from './tour';
+import { findTarget, inGame, stepOf, onVoiceReady, READY_FIRST, stepCaption, tourControl, tourEngine, tourSection } from './tour';
 
 export type Rect = { top: number; left: number; width: number; height: number };
 
-/** Отступ проёма от элемента; у кнопок колонки (стоят через 2 px) — 1 px, чтобы рамка не легла на соседей. */
-export const padFor = (target: string) => (/^rail-/.test(target) ? 1 : 8);
+/** Отступ проёма от элемента; у кнопок колонки (стоят через 2 px) — 1 px, у вкладок командования (вплотную) — 2 px, чтобы рамка не легла на соседей. */
+export const padFor = (target: string) => (/^rail-/.test(target) ? 1 : /^cmd-tab-/.test(target) ? 2 : 8);
 const MARGIN = 16;
 /** Подпись — правее колонки разделов (68–76 px), на узком экране — от края. */
 const railRight = (vw: number) => (vw <= 760 ? MARGIN : 84);
@@ -63,7 +63,7 @@ export function TourLayer({ section }: { section: string }) {
     return () => clearInterval(t);
   }, [game]);
 
-  const step = st ? st.tour.steps[st.index] : null;
+  const step = st ? stepOf(st) : null;
   const target = step ? (st!.missing && step.via ? step.via : step.target) : null;
   const box = useTargetBox(target, st?.index ?? -1);
   const pad = target ? padFor(target) : 0;

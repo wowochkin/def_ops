@@ -695,7 +695,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               </StaffButton>
             </>}
         </div>}
-        {view?.over && <div className={`cmd-foot cmd-over ${view.outcome?.result ?? ''}`} data-tour="cmd-foot"><b>{view.outcome?.result === 'victory' ? 'Победа' : 'Поражение'}</b>
+        {view?.over && <div className={`cmd-foot cmd-over ${view.outcome?.result ?? ''}`} data-tour="cmd-over"><b>{view.outcome?.result === 'victory' ? 'Победа' : 'Поражение'}</b>
           <span>{view.outcome?.text}</span>
           <span className="muted">{goals.filter((g) => g.simulated).length} из {goals.length} контрольных событий случились. Журнал и запись игры — в меню «⋯».</span>
           <div className="row-btns"><StaffButton className="primary" action="command.review.open">Разбор операции</StaffButton><StaffButton action="command.journal.save">Сохранить журнал</StaffButton></div></div>}

@@ -76,7 +76,7 @@ const fakeControl = (): TourControl => ({
 describe('описания туров', () => {
   it('каждый target (и via) шага есть в исходниках как data-tour', () => {
     const have = tourTargets();
-    const missing = TOURS.flatMap((t) => t.steps.flatMap((s) => [s.target, s.via].filter((x): x is string => !!x && !have.has(x)).map((x) => `${t.id}: ${x}`)));
+    const missing = TOURS.flatMap((t) => t.steps.flatMap((s) => [s.target, s.via, s.alt?.target].filter((x): x is string => !!x && !have.has(x)).map((x) => `${t.id}: ${x}`)));
     expect(missing).toEqual([]);
     expect(have.has('rail-replay')).toBe(true);
   });
@@ -93,7 +93,7 @@ describe('описания туров', () => {
   });
 
   it('тексты звучат как есть: без цифр и латиницы (что пишется иначе, чем звучит, — в speech); вступление — две-три минуты речи', () => {
-    for (const t of TOURS) for (const s of t.steps) for (const x of [s.speech ?? s.text, s.more, s.unavailable]) {
+    for (const t of TOURS) for (const s of t.steps) for (const x of [s.speech ?? s.text, s.more, s.unavailable, s.alt?.text, s.alt?.more]) {
       if (x) expect(x, `${t.id}: ${s.title}`).not.toMatch(/[0-9A-Za-z]/);
     }
     for (const t of TOURS) for (const s of t.steps) if (s.speech) expect(s.text, `${t.id}: ${s.title}`).not.toBe(s.speech);
@@ -316,6 +316,27 @@ describe('предложение штаба', () => {
   });
 });
 
+describe('предложение штаба: ответ на «да» и открытое окно', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  const played = () => ({ done: Promise.resolve('played' as SpeechEnd), cancel() {} });
+
+  it('после «да» штаб говорит ответ действия (или причину, почему нельзя)', async () => {
+    await offer('Рассчитать операцию сейчас? Скажите «да» — и начну.', async () => 'Считаю: Берлинская операция.', played);
+    expect(await act('tour.yes')).toBe('Считаю: Берлинская операция.');
+  });
+
+  it('открыто окно (например, «Принять командование») — предложение снято, «да» идёт окну', async () => {
+    let yes = 0;
+    await offer('Показать раздел? Скажите «да» — и покажу.', () => { yes++; }, played);
+    vi.stubGlobal('document', { querySelector: (sel: string) => (/modal-bg/.test(sel) ? {} : null) });
+    expect(actions('replay').find((a) => a.id === 'tour.yes')?.available()).not.toBe(true);
+    vi.unstubAllGlobals();
+    // снято насовсем: окно закрыли — «да» уже не к предложению
+    expect(actions('replay').find((a) => a.id === 'tour.yes')).toBeUndefined();
+    expect(yes).toBe(0);
+  });
+});
+
 describe('слой тура', () => {
   it('идёт тур — притемнение, рамка и подпись с «Скажите: …»; «хватит» — слоя нет совсем', async () => {
     expect(renderToStaticMarkup(createElement(TourLayer, { section: 'editor' }))).toBe('');
@@ -444,6 +465,9 @@ describe('подпись тура', () => {
   it('у кнопок колонки проём почти по кнопке', () => {
     expect(padFor('rail-replay')).toBeLessThanOrEqual(1);
     expect(padFor('voice-feed')).toBe(8);
+    // вкладки командования стоят вплотную: рамка не должна задевать соседнюю
+    expect(padFor('cmd-tab-reports')).toBeGreaterThanOrEqual(2);
+    expect(padFor('cmd-tab-reports')).toBeLessThanOrEqual(3);
   });
 });
 
@@ -769,6 +793,16 @@ describe('туры переигровки и командования', () => {
     for (const t of ['cmd-head', 'cmd-map', 'cmd-advisor', 'cmd-foot', 'cmd-menu']) expect(cv, t).toContain(`data-tour="${t}"`);
   });
 
+  it('шаг «Ход»: при конце игры — итог (победа или поражение) и разбор, а не «проводи ход»; разбор — после первого хода', () => {
+    const s = tour('command').steps.find((x) => x.title === 'Ход')!;
+    expect(s.alt?.target).toBe('cmd-over');
+    expect(s.alt!.text).toMatch(/[Пп]обеда или поражение/);
+    expect(s.alt!.text).toMatch(/разбор/);
+    expect(`${s.alt!.text} ${s.alt!.example}`).not.toMatch(/проводи ход/);
+    expect(readFileSync(join(SRC, 'CommandView.tsx'), 'utf-8')).toContain('data-tour="cmd-over"');
+    expect(tour('command').steps.find((x) => x.target === 'cmd-menu')!.text).toMatch(/после первого хода/);
+  });
+
   it('элементы переигровки, которых до расчёта нет (итог, карта, «Принять командование»), — с объяснением и тем, что к ним ведёт', () => {
     for (const target of ['replay-results', 'replay-map', 'replay-tools', 'map-player', 'replay-take']) {
       const s = tour('replay').steps.find((x) => x.target === target)!;
@@ -779,7 +813,8 @@ describe('туры переигровки и командования', () => {
   });
 
   it('вступление: в шаге «Как говорить» — что голосом можно в командовании, без рук от запуска до разбора', () => {
-    expect(COMMAND_BY_VOICE).toMatch(/всё командование/);
+    expect(COMMAND_BY_VOICE).toMatch(/почти всё, что нужно для игры/);
+    expect(COMMAND_BY_VOICE).not.toMatch(/всё командование/);
     for (const w of ['доклад обстановки', 'советник', 'диктовкой', 'приказы', 'ход с подтверждением', 'посредника', 'разбор']) expect(COMMAND_BY_VOICE).toContain(w);
     const how = TOURS.find((t) => t.id === 'intro')!.steps.find((s) => s.title === 'Как говорить со штабом')!;
     expect(how.text).toContain(COMMAND_BY_VOICE);
@@ -810,6 +845,20 @@ describe('игра в «Переигровке» и туры', () => {
     expect(e.state?.tour.id).toBe('any');
   });
 
+  it('шага нет, а его замена (alt) на экране — показывается замена: подсветка, текст, «подробнее»', async () => {
+    const X: Tour = { id: 'x', section: 'intro', title: 'Х', steps: [
+      { target: 'foot', title: 'Ход', text: 'проводи ход', alt: { target: 'over', title: 'Итог', text: 'победа', more: 'о разборе' } },
+    ] };
+    const { e, said } = rig([X], { present: (t) => t === 'over' });
+    await e.start('x');
+    await flush(); await flush();
+    expect(e.state).toMatchObject({ alt: true, missing: false });
+    expect(e.step?.title).toBe('Итог');
+    expect(said.at(-1)!.text).toBe('победа');
+    e.more();
+    expect(said.at(-1)!.text).toBe('о разборе');
+  });
+
   it('вступление: на последнем шаге сделали предложенное («покажи переигровку») — вступление закончено, а не остановлено', async () => {
     const intro: Tour = { ...T, id: 'intro', section: 'intro' };
     const { e, said, setSection } = rig([intro]);
@@ -838,7 +887,7 @@ describe('игра в «Переигровке» и туры', () => {
       unbind = bindTourVoice({ client: { newSayId: () => ++id }, send: (i, t) => { spoken.push({ id: i, text: t }); }, stop() {}, live: () => true });
       offs = [
         ...shellActions({ section: () => 'replay', open: () => {} }),
-        ...['replay.calc', 'replay.continue', 'replay.takeCommand'].map((id) => ({ id, section: 'global', title: id, describe: id, available: () => true as const, run: async () => { ran.push(id); } })),
+        ...['replay.calc', 'replay.continue', 'replay.takeCommand'].map((id) => ({ id, section: 'global', title: id, describe: id, available: () => true as const, run: async () => { ran.push(id); return `исполнено: ${id}`; } })),
       ].map(register);
     });
     afterEach(() => { tourEngine.stop(); offs.forEach((o) => o()); unbind(); setReplaySource(() => null); });
@@ -858,7 +907,7 @@ describe('игра в «Переигровке» и туры', () => {
       expect(last.text).toBe('Рассчитать операцию сейчас? Скажите «да» — и начну.');
       settleSpeech(last.id, 'played');
       await flush();
-      await act('tour.yes');
+      expect(await act('tour.yes')).toBe('исполнено: replay.calc');
       expect(ran).toEqual(['replay.calc']);
     });
 

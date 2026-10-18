@@ -1424,7 +1424,7 @@ const tourTitle = (t) => ({ waitFor: (o) => tourLayer.locator('.tour-cap h2', { 
  * подпись не закрывает ни рамку, ни панель голоса.
  */
 const frameOn = (target) => page2.waitForFunction((t) => {
-  const pad = /^rail-/.test(t) ? 1 : 8;
+  const pad = /^rail-/.test(t) ? 1 : /^cmd-tab-/.test(t) ? 2 : 8; // как padFor в TourLayer.tsx
   const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
   const el = [...document.querySelectorAll(`[data-tour="${t}"]`)].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
   const cap = document.querySelector('.tour-cap')?.getBoundingClientRect();
@@ -1541,7 +1541,7 @@ const title3 = (t) => layer3.locator('.tour-cap h2', { hasText: t }).waitFor({ t
  * capFree — подпись не на рамке и не на панели голоса.
  */
 const frameIn = (pg) => (target, capFree = true) => pg.waitForFunction(([t, free]) => {
-  const pad = /^rail-/.test(t) ? 1 : 8;
+  const pad = /^rail-/.test(t) ? 1 : /^cmd-tab-/.test(t) ? 2 : 8; // как padFor в TourLayer.tsx
   const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
   const sel = `[data-tour="${t}"]`;
   let el = [...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
