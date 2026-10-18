@@ -19,7 +19,7 @@ import { SECTIONS } from '../sections';
 import { yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, getAction, parsePhrase, topModal, type Action, type VoiceModal } from './registry';
+import { act, actions, getAction, markVoice, parsePhrase, topModal, type Action, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
@@ -163,8 +163,15 @@ const STOP = new Set(['штаб', 'пожалуйста', 'что', 'как', '�
 const stems = (t: string) => norm(t).split(' ').filter((w) => w.length > 2 && !STOP.has(w)).map((w) => w.slice(0, 5));
 const overlap = (q: string[], t: string) => { const ts = new Set(stems(t)); return q.filter((w) => ts.has(w)).length; };
 
-/** Примеры доступных действий раздела. */
-const examples = (section: string) => actions(section).flatMap((a) => (a.available() === true ? a.say ?? [] : []));
+/** Общих примеров среди примеров раздела — не больше. */
+const GLOBAL_EXAMPLES = 2;
+/** Примеры доступных сейчас действий: сначала раздела (по состоянию — available), затем общие (их не больше двух, если у раздела свои есть). */
+function examples(section: string): string[] {
+  const live = actions(section).filter((a) => a.available() === true);
+  const own = live.filter((a) => a.section !== 'global').flatMap((a) => a.say ?? []);
+  const common = live.filter((a) => a.section === 'global').flatMap((a) => a.say ?? []);
+  return own.length ? [...own.slice(0, HELP_MAX - Math.min(GLOBAL_EXAMPLES, common.length)), ...common.slice(0, GLOBAL_EXAMPLES)] : common;
+}
 
 /** Три примера, ближайших по словам к сказанному; не хватает — добираются первые по списку. */
 function closest(section: string, said: string, n = 3): string[] {
@@ -396,6 +403,7 @@ export class Dispatcher {
     const inWindow = this.opts.now() - this.spokeAt <= CONVERSATION_S * 1000;
     if (!addr && !inWindow && !answers) { this.lastFixes = []; this.lastUnderstood = ''; return 'ignored'; }
     if (!addr && pending && !answers && !stopLead(whole.split(' ').filter(Boolean))) { this.lastFixes = []; this.lastUnderstood = ''; return 'ignored'; }
+    markVoice();
     this.lastFixes = fixed.fixes;
     this.lastUnderstood = fixed.text;
     this.corrections.set(id, { fixes: fixed.fixes, understood: fixed.text });
@@ -668,14 +676,21 @@ export class Dispatcher {
     const m = OPEN.exec(rest) ?? (rest.split(' ').length <= 2 && sectionByWord(rest.split(' ')[0]) ? [rest, rest] : null);
     const sec = m ? sectionByWord(m[1].split(' ')[0]) : null;
     // фразы разделов с параметрами («покажи на карте Зелов», «открой приказы»); раздел одним словом — переход
-    const phrase = parsePhrase(rest);
+    const phrase = parsePhrase(rest, this.opts.section());
     if (sec && !(phrase && m![1].split(' ').length > 1)) {
       await act('shell.open', { section: sec });
       return true;
     }
     if (phrase) {
       if ('say' in phrase) this.say(speakable(phrase.say, { full: true }));
-      else await this.execute(phrase.id, phrase.params);
+      else {
+        // действие другого раздела («рассчитай операцию» из «Знаний») — сначала туда; раздел мог ещё не открываться
+        if (phrase.section && phrase.section !== this.opts.section()) {
+          await act('shell.open', { section: phrase.section });
+          for (let i = 0; i < 30 && (this.opts.section() !== phrase.section || !getAction(phrase.id)); i++) await new Promise((r) => setTimeout(r, 100));
+        }
+        await this.execute(phrase.id, phrase.params);
+      }
       return true;
     }
     if (/^(?:что (?:я )?(?:могу|можно) (?:сказать|говорить)|что (?:я )?(?:могу|можно)$|что (?:ты )?умеешь|помощь$)/.test(rest)) {

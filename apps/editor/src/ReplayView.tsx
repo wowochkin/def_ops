@@ -33,8 +33,8 @@ import { coreEditsFor, KB_WAIT, kbSettled, takeoverNow } from './sim/kb-recompil
 import { kbStamp, type KbStamp } from './sim/kb-stamp';
 import { KbStampNote } from './KbStampNote';
 import type { TakeoverSummary } from './sim/takeover-state';
-import { act, ActButton, register, speak, useAction } from './voice/registry';
-import { findLayer, inReplay, replayActions, type ReplayDeps } from './voice/actions/command';
+import { act, ActButton, register, speak, useAction, voiceRecent } from './voice/registry';
+import { calcDoneText, calcFailText, findLayer, inReplay, replayActions, type ReplayDeps } from './voice/actions/command';
 import { readAloud } from './voice/dictation';
 import { speakable } from './voice/speech';
 /** Ход игры на агентной модели, ч. */
@@ -252,10 +252,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         setAgentRun(m.result.engine === 'agents' ? pendingAgent.current : null); setAgentSel(null);
         setSavedId(null);
         setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
-        // голосом — без взгляда на экран: расчёт готов
-        speak(speakable(`Расчёт готов: ${m.result.scenarioName.split(/[,:(]/)[0].trim()}. Чтобы командовать самому, скажите: «Штаб, прими командование».`, { full: true }));
+        // расчёт долгий: о готовности — коротко; что дальше — если голосом пользовались недавно
+        speak(speakable(calcDoneText(m.result.scenarioName, voiceRecent()), { full: true }));
       }
-      if (m.kind === 'error') speak('Расчёт не удался — причина на экране.');
+      if (m.kind === 'error') speak(calcFailText(m.message));
     };
     w.onerror = (e) => { setBusy(null); setError(e.message || 'ошибка расчёта'); };
     w.postMessage(q);
@@ -275,7 +275,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     // агентная модель: ход по часам считает ядро приложения, карту — фоновый поток, как у нынешней модели
     worker.current?.terminate();
     setBusy('расчёт агентной модели…'); setError(null);
-    const params = variants.find((v) => v.id === variantId)?.params;
+    // вариант параметров выбран для операции на экране; другая операция (названа голосом) — базовые параметры
+    const params = sc === scenario ? variants.find((v) => v.id === variantId)?.params : undefined;
     Promise.all([coreEditsFor(sc).then((edits) => runAgents(sc, { seed, params, edits })), invoke<string>('read_text', { path: op.history })])
       .then(([trace, h]) => {
         if (token !== runId.current) return;

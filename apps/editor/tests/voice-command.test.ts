@@ -3,12 +3,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { places as simPlaces, Theatre, type IntelReport, type Scenario, type TheatreData, type UnitReport } from '@def-ops/sim';
 import type { TurnView } from '../src/sim/game-protocol';
-import { act, register, setSpeaker, type Action } from '../src/voice/registry';
-import { Dispatcher } from '../src/voice/dispatch';
+import { act, markVoice, parsePhrase, register, setSpeaker, voiceRecent, type Action } from '../src/voice/registry';
+import { Dispatcher, helpText } from '../src/voice/dispatch';
 import {
-  commandActions, findLayer, NO_GAME, NOT_IN_REPLAY, parseCommand, parseDay, replayActions, resolveTarget, setSectionSource, takeoverParse,
+  calcDoneText, calcFailText, commandActions, findLayer, findWho, NO_GAME, NOT_IN_REPLAY, parseCommand, parseDay, replayActions, resolveTarget, setSectionSource, takeoverParse,
   type CommandDeps, type ReplayDeps,
 } from '../src/voice/actions/command';
+import { stopReading } from '../src/voice/dictation';
 import { intelReport, journalDayText, situationReport, unitReport } from '../src/voice/report';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
 import scenarioFile from '../../../packages/sim/data/scenarios/berlin-1945-tasks.json';
@@ -120,7 +121,7 @@ describe('разбор фраз', () => {
     expect(resolveTarget('восьмую гвардейскую', v)).toMatchObject({ who: { kind: 'own', id: 'su_8gva' } });
     expect(resolveTarget('пять километров севернее Зелова', v)).toHaveProperty('at');
     expect(resolveTarget('третью', v)).toHaveProperty('say'); // 3-я, 3-я ударная, 3-я гвардейская — переспрос
-    expect(resolveTarget('Москва', v)).toEqual({ say: 'Не нашёл на карте «Москва».' });
+    expect(resolveTarget('Москва', v)).toBeNull();
   });
 });
 
@@ -147,7 +148,7 @@ beforeEach(() => {
   setSectionSource(() => section);
   offs.push(register({ id: 'shell.open', section: 'global', title: '', describe: '', available: () => true, run: async () => undefined }));
 });
-afterEach(() => { offs.forEach((o) => o()); setSpeaker(null); });
+afterEach(() => { offs.forEach((o) => o()); setSpeaker(null); stopReading(); });
 
 describe('командование голосом', () => {
   it('«Штаб, покажи Зелов» — вид карты на Зелов', async () => {
@@ -210,13 +211,13 @@ describe('командование голосом', () => {
   });
   it('уровень карты, слой, участок — фразой в действие реестра', () => {
     for (const id of ['map.level', 'map.layer', 'map.sector', 'map.legend']) offs.push(register({ id, section: 'replay', title: id, describe: '', available: () => true, run: async () => undefined }));
-    expect(parseCommand('оперативный уровень')).toEqual({ id: 'map.level', params: { level: 'op' } });
-    expect(parseCommand('перейди на стратегический масштаб')).toEqual({ id: 'map.level', params: { level: 'st' } });
-    expect(parseCommand('скрой реки')).toEqual({ id: 'map.layer', params: { layer: 'rivers', on: false } });
-    expect(parseCommand('покажи исторический фронт')).toEqual({ id: 'map.layer', params: { layer: 'hfront', on: true } });
-    expect(parseCommand('участок зееловские высоты')).toEqual({ id: 'map.sector', params: { name: 'зееловские высоты' } });
-    expect(parseCommand('весь театр')).toEqual({ id: 'map.sector', params: { name: '' } });
-    expect(parseCommand('легенда')).toEqual({ id: 'map.legend' });
+    expect(parseCommand('оперативный уровень', 'replay')).toEqual({ id: 'map.level', params: { level: 'op' } });
+    expect(parseCommand('перейди на стратегический масштаб', 'replay')).toEqual({ id: 'map.level', params: { level: 'st' } });
+    expect(parseCommand('скрой реки', 'replay')).toEqual({ id: 'map.layer', params: { layer: 'rivers', on: false } });
+    expect(parseCommand('покажи исторический фронт', 'replay')).toEqual({ id: 'map.layer', params: { layer: 'hfront', on: true } });
+    expect(parseCommand('участок зееловские высоты', 'replay')).toEqual({ id: 'map.sector', params: { name: 'зееловские высоты' } });
+    expect(parseCommand('весь театр', 'replay')).toEqual({ id: 'map.sector', params: { name: '' } });
+    expect(parseCommand('легенда', 'replay')).toEqual({ id: 'map.legend' });
   });
   it('«заверши и удали игру» — только после «да»; «выйди из игры» — сразу', async () => {
     const d = cmd();
@@ -245,8 +246,8 @@ describe('командование голосом', () => {
   it('игра не идёт — «доложи обстановку» объясняет, как начать; «покажи Зелов» не перехватывается', async () => {
     await mk().utterance('Штаб, доложи обстановку', 1);
     expect(said.at(-1)).toBe(`Сейчас нельзя: ${NO_GAME}.`);
-    expect(parseCommand('покажи зелов')).toBeNull();
-    expect(parseCommand('доложи о восьмой гвардейской')).toBeNull();
+    expect(parseCommand('покажи зелов', 'replay')).toBeNull();
+    expect(parseCommand('доложи о восьмой гвардейской', 'replay')).toBeNull();
   });
 });
 
@@ -327,5 +328,131 @@ describe('вход в командование голосом', () => {
     await mk().utterance('Штаб, продолжи игру', 1);
     expect(d.continueGame).toHaveBeenCalled();
     expect(said.at(-1)).toBe('Продолжаю игру: Берлинская операция.');
+  });
+});
+
+// ---------------------------------------------------------------- раунд 1: поправки по рецензии
+
+describe('ложные перехваты: обычные вопросы — модели', () => {
+  const QUESTIONS = [
+    'где лучше наступать', 'что с подвозом', 'что у противника на флангах', 'как там с погодой', 'покажи как отдать приказ',
+    'к чему приведет удар', 'где настройки', 'где мои войска', 'что по снабжению', 'как там у соседей', 'покажи почему так вышло',
+    'доложи о погоде', 'где здесь ошибка', 'что с нашими потерями', 'покажи что изменилось', 'где сейчас лучше обороняться',
+  ];
+  it('в игре: обычные вопросы не перехватываются (фраза уходит модели)', () => {
+    cmd();
+    for (const q of QUESTIONS) expect(parsePhrase(q, 'replay'), q).toBeNull();
+  });
+  it('в игре: вопрос с моделью доходит до модели, а не «Не нашёл…»', async () => {
+    cmd();
+    const model = vi.fn(async () => ({ say: 'Подвоз идёт по плану.' }));
+    const disp = new Dispatcher({ now: () => t, say: (s) => said.push(s), section: () => 'replay', model });
+    await disp.utterance('Штаб, что с подвозом', 1);
+    expect(model).toHaveBeenCalled();
+    expect(said.join(' ')).not.toMatch(/Не нашёл/);
+  });
+  it('названия, которые есть, по-прежнему понимаются', () => {
+    cmd();
+    expect(parsePhrase('покажи зелов', 'replay')).toEqual({ id: 'map.show', params: { name: 'зелов' } });
+    expect(parsePhrase('где восьмая гвардейская', 'replay')).toEqual({ id: 'command.unit.show', params: { name: 'восьмая гвардейская' } });
+    expect(parsePhrase('что с третьей', 'replay')).toEqual({ id: 'command.unit.report', params: { name: 'третьей' } }); // переспрос — тоже ответ
+  });
+});
+
+describe('разборщик знает раздел', () => {
+  const MAP = ['map.level', 'map.layer', 'map.sector', 'map.legend'];
+  it('в «Знаниях» фразы командования не перехватываются, даже если игра идёт', () => {
+    cmd();
+    for (const id of MAP) offs.push(register({ id, section: 'replay', title: id, describe: '', available: () => true, run: async () => undefined }));
+    for (const q of ['покажи реки', 'легенда', 'журнал', 'приблизь', 'что нового', 'доложи обстановку', 'оперативный уровень', 'покажи зелов'])
+      expect(parsePhrase(q, 'knowledge'), q).toBeNull();
+  });
+  it('вне игры в «Редакторе» — тоже не перехватываются', () => {
+    for (const q of ['приблизь', 'легенда', 'что нового', 'доклад']) expect(parsePhrase(q, 'editor'), q).toBeNull();
+  });
+  it('вход — из любого раздела: переход в «Переигровку» и действие', async () => {
+    const calc = vi.fn();
+    let where = 'knowledge';
+    setSectionSource(() => where);
+    offs.forEach((o) => o()); offs = [];
+    offs.push(register({ id: 'shell.open', section: 'global', title: '', describe: '', available: () => true, run: async (p: { section: string }) => { where = p.section; } }));
+    reg(replayActions(() => ({
+      catalog: [{ id: 'berlin-1945-tasks', title: 'Берлинская операция' }], scenario: 'berlin-1945-tasks', busy: null, game: false, calc, result: null, time: null,
+      takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(),
+    })));
+    const disp = new Dispatcher({ now: () => t, say: (s) => said.push(s), section: () => where });
+    await disp.utterance('Штаб, рассчитай операцию', 1);
+    expect(where).toBe('replay');
+    expect(calc).toHaveBeenCalledWith('berlin-1945-tasks');
+  });
+});
+
+describe('«подробнее» — только к докладу этого хода', () => {
+  it('новый ход, выход и новая игра сбрасывают остальные донесения', async () => {
+    const d = cmd();
+    await act('command.report');
+    expect(parsePhrase('подробнее', 'replay')).toEqual({ id: 'command.report.more' });
+    d.view = view({ turn: 4, time: '1945-04-19T05:00' });
+    expect(parsePhrase('подробнее', 'replay')).toBeNull();
+    expect(await act('command.report.more')).toMatch(/сначала доклад/);
+    d.view = view();
+    await act('command.report');
+    await act('command.exit');
+    expect(await act('command.report.more')).toMatch(/сначала доклад/);
+    await act('command.report');
+    offs.forEach((o) => o()); offs = [];
+    cmd(); // новая игра — новые действия
+    expect(await act('command.report.more')).toMatch(/сначала доклад/);
+  });
+});
+
+describe('«что я могу сказать» — сначала раздел', () => {
+  it('в игре — примеры командования, общих не больше двух', () => {
+    for (const s of ['штаб, открой переигровку', 'штаб, калибровка', 'штаб, голоса', 'штаб, отбой'])
+      offs.push(register({ id: `g.${s}`, section: 'global', title: s, describe: '', say: [s], available: () => true, run: async () => undefined }));
+    cmd();
+    const ex = helpText('replay').match(/«[^»]+»/g)!;
+    expect(ex[0]).toBe('«штаб, доложи обстановку»');
+    expect(ex.filter((e) => /открой переигровку|калибровка|голоса|отбой/.test(e)).length).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('мелкие поправки', () => {
+  it('одинаковые номер и тип у своих и противника — переспрос; «наш» / «противника» — выбор', () => {
+    const v = view({
+      own: [...own, unitRep({ id: 'su_x56', name: '56-й танковый корпус', parent: null })],
+      intel: [...intel, { ...intel[0], id: 'de_56tk', name: '56-й танковый корпус (Вейдлинг)' }],
+    });
+    expect(findWho('пятьдесят шестой танковый корпус', v)).toEqual({ say: 'Наш «56-й танковый корпус» или противника «56-й танковый корпус»?' });
+    expect(findWho('наш пятьдесят шестой танковый корпус', v)).toMatchObject({ who: { id: 'su_x56' } });
+    expect(findWho('пятьдесят шестой танковый корпус противника', v)).toMatchObject({ who: { id: 'de_56tk' } });
+    expect(findWho('восьмая гвардейская', v)).toMatchObject({ who: { id: 'su_8gva' } });
+  });
+  it('«рассчитай заново / ещё раз» — текущая операция; «расчёт готов?» — не команда', async () => {
+    const calc = vi.fn();
+    reg(replayActions(() => ({
+      catalog: [{ id: 'a', title: 'Берлинская операция' }, { id: 'b', title: 'Бой в Берлине' }], scenario: 'b', busy: null, game: false, calc, result: null, time: null,
+      takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(),
+    })));
+    for (const q of ['рассчитай заново', 'рассчитай еще раз', 'рассчитай её снова', 'пересчитай']) {
+      const h = parsePhrase(q, 'replay');
+      expect(h, q).toMatchObject({ id: 'replay.calc' });
+      expect(await act('replay.calc', (h as { params?: unknown }).params), q).toMatch(/^Считаю: Бой в Берлине/);
+    }
+    expect(parsePhrase('расчет готов', 'replay')).toBeNull();
+    expect(calc).toHaveBeenCalledTimes(4);
+  });
+  it('«Расчёт готов.» — коротко; подсказка — если голосом пользовались недавно; сбой — причина словами', () => {
+    expect(calcDoneText('Берлинская операция, 16.04–2.05.1945', false)).toBe('Расчёт готов: Берлинская операция.');
+    expect(calcDoneText('Берлинская операция', true)).toBe('Расчёт готов: Берлинская операция. Чтобы командовать самому, скажите: «Штаб, прими командование».');
+    expect(calcFailText('нет данных театра: 12 районов без центра')).toBe('Расчёт не удался: нет данных театра: двенадцать районов без центра.');
+  });
+  it('реплика штабу отмечает, что голосом пользуются', async () => {
+    markVoice(-Infinity);
+    expect(voiceRecent()).toBe(false);
+    await mk().utterance('Штаб, слушай', 1);
+    expect(voiceRecent()).toBe(true);
+    markVoice(Date.now() - 6 * 60_000);
+    expect(voiceRecent()).toBe(false);
   });
 });

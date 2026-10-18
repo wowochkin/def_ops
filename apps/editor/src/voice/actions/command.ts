@@ -21,7 +21,7 @@ import { readAloud } from '../dictation';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
 import { getAction, registerParser, type Action, type PhraseHit } from '../registry';
 import { dayMonth, enemyReport, groupReport, intelReport, journalDayText, moreText, short, situationReport, unitReport, whereText } from '../report';
-import { ordinalWords } from '../speech';
+import { ordinalWords, speakable } from '../speech';
 
 // ---------------------------------------------------------------- раздел открыт?
 
@@ -115,7 +115,20 @@ export function pickTitle(said: string, titles: string[], ask: string, none: str
 // ---------------------------------------------------------------- места и соединения
 
 type Who = { kind: 'own' | 'enemy' | 'group'; id: string; name: string };
-/** Своё, противник или фронт по названию; переспрос — say. */
+/** Номер и род войск в названии («56|корпус»): совпали у своего и у противника — не выбирать молча. */
+function numType(n: string): string | null {
+  const num = /\d+/.exec(n)?.[0];
+  const kind = /(арми|корпус|дивизи|бригад|фронт|групп)/.exec(norm(n))?.[1];
+  return num && kind ? `${num}|${kind}` : null;
+}
+const OWN_MARK = /^(?:наш|сво[йеияю])/;
+const ENEMY_MARK = /^(?:противник|немецк|вражеск|чуж)/;
+
+/**
+ * Своё, противник или фронт по названию; переспрос — say; не нашлось — null. Свои — первыми («восьмая гвардейская» —
+ * наша армия), но одинаковые номер и род войск у своего и у противника — переспрос «Наш … или противника …?»;
+ * «наш …» / «… противника» выбирают сторону.
+ */
 export function findWho(name: string, v: TurnView): { who: Who } | { say: string } | null {
   const pool: (Who & { side: string })[] = [
     ...v.own.map((u) => ({ kind: 'own' as const, id: u.id, name: u.name, side: 'own' })),
@@ -124,9 +137,16 @@ export function findWho(name: string, v: TurnView): { who: Who } | { say: string
   ];
   const exact = pool.find((x) => x.id === name);
   if (exact) return { who: exact };
-  // свои — первыми: «восьмая гвардейская» — наша армия, даже если у противника есть похожее
-  for (const side of ['own', 'enemy']) {
-    const r = findUnit(name, pool, { side });
+  const ws = norm(name).split(' ').filter(Boolean);
+  const ownOnly = ws.some((w) => OWN_MARK.test(w)), enemyOnly = ws.some((w) => ENEMY_MARK.test(w));
+  const q = ws.filter((w) => !OWN_MARK.test(w) && !ENEMY_MARK.test(w)).join(' ');
+  if (!q) return null;
+  const sides = ownOnly && !enemyOnly ? ['own'] : enemyOnly && !ownOnly ? ['enemy'] : ['own', 'enemy'];
+  const found = sides.map((side) => findUnit(q, pool, { side }));
+  const [a, b] = found;
+  if (sides.length === 2 && a.unit && b.unit && numType(a.unit.name) && numType(a.unit.name) === numType(b.unit.name))
+    return { say: `Наш «${short(a.unit.name)}» или противника «${short(b.unit.name)}»?` };
+  for (const r of found) {
     if (r.unit) return { who: r.unit };
     if (r.options.length) return { say: `Какое соединение: ${r.labels.map((l) => `«${short(l)}»`).join(', ')}?` };
   }
@@ -136,14 +156,14 @@ export function findWho(name: string, v: TurnView): { who: Who } | { say: string
 /** Есть ли в сказанном признак соединения (номер, тип): тогда соединение важнее места. */
 const UNITISH = /\d|(?:^| )(?:перв|втор|трет|четв|пят|шест|седьм|восьм|девят|десят|\p{L}+надцат|двадцат|тридцат|сорок|армия|армии|армию|корпус|дивизи|фронт|гвардейск|ударн|танков|группа|групп)/u;
 
-/** Что показать на карте: соединение или место (в т. ч. «пять километров севернее Зелова»); переспрос — say. */
-export function resolveTarget(name: string, v: TurnView): { at: LngLat; label: string; who?: Who } | { say: string } {
+/** Что показать на карте: соединение или место (в т. ч. «пять километров севернее Зелова»); переспрос — say; нет — null. */
+export function resolveTarget(name: string, v: TurnView): { at: LngLat; label: string; who?: Who } | { say: string } | null {
   const rel = parseRelative(name);
   if (rel) {
     const r = resolveRelative(name, v.places);
     if (r.place) return { at: r.place.at, label: short(r.place.title) };
     if (r.options.length) return { say: `Какое место: ${r.labels.map((l) => `«${short(l)}»`).join(', ')}?` };
-    return { say: `Не нашёл места «${rel.ref}».` };
+    return null;
   }
   const who = findWho(name, v);
   const pl = findPlace(name, v.places);
@@ -156,7 +176,7 @@ export function resolveTarget(name: string, v: TurnView): { at: LngLat; label: s
   if (pl.place) return { at: pl.place.at, label: short(pl.place.title) };
   if (who && 'say' in who) return who;
   if (pl.options.length) return { say: `Какое место: ${pl.labels.map((l) => `«${short(l)}»`).join(', ')}?` };
-  return { say: `Не нашёл на карте «${name}».` };
+  return null;
 }
 
 // ---------------------------------------------------------------- действия командования
@@ -174,13 +194,18 @@ export interface CommandDeps {
   exit(discard: boolean): void;
 }
 
-/** Остальные донесения после краткого доклада («подробнее»). */
-let more: string[] = [];
+/** Остальные донесения после краткого доклада («подробнее») — к обстановке того хода (at), не позже. */
+let more: { at: TurnView; list: string[] } | null = null;
+const sameTurn = (a: TurnView, b: TurnView) => a.time === b.time && a.takeover === b.takeover && a.scenario === b.scenario;
+/** Действия командования, зарегистрированные сейчас (для разбора «мягких» фраз: есть ли такое место или соединение). */
+let live: (() => CommandDeps) | null = null;
 
 const NAME = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
 const ENEMY_SAY: Record<EnemyMode, string> = { llm: 'штаб на модели', passive: 'без штаба — держится прежних приказов' };
 
 export function commandActions(get: () => CommandDeps): Action[] {
+  more = null; // новая игра
+  live = get;
   const ready = (): true | string => { const r = inReplay(); return r !== true ? r : get().view ? true : 'обстановка ещё готовится — подождите немного'; };
   const view = () => get().view!;
   const base = { section: 'replay', available: ready };
@@ -196,16 +221,14 @@ export function commandActions(get: () => CommandDeps): Action[] {
     const v = en.getView();
     en.setView({ center: v.center, zoom: Math.min(17, Math.max(3, v.zoom + d)) });
   };
+  // порядок — порядок примеров в «что я могу сказать»: главное первым
   return [
-    { ...base, id: 'command.tab', title: 'Вкладка командования', describe: 'Открывает вкладку: доклады, разведка, решение, приказы, журнал, посредник.',
-      params: { type: 'object', properties: { tab: { enum: Object.keys(TAB_TITLE) } }, required: ['tab'] }, say: ['штаб, открой приказы'],
-      run: async (p: { tab: CmdTab }) => { if (!TAB_TITLE[p?.tab]) return 'Такой вкладки нет.'; get().setTab(p.tab); return `Вкладка «${TAB_TITLE[p.tab]}».`; } },
     { ...base, id: 'command.report', title: 'Доклад обстановки', describe: 'Коротко докладывает обстановку: дата и ход, цель, укомплектованность, главное из донесений.',
       say: ['штаб, доложи обстановку'],
-      run: async () => { get().setTab('reports'); const r = situationReport(view()); more = r.more; return r.text; } },
+      run: async () => { get().setTab('reports'); const r = situationReport(view()); more = { at: view(), list: r.more }; return r.text; } },
     { ...base, id: 'command.report.more', title: 'Подробнее', describe: 'Читает остальные донесения за ход после краткого доклада.', say: ['подробнее'],
-      available: () => { const r = ready(); return r !== true ? r : more.length ? true : 'сначала доклад: скажите «Штаб, доложи обстановку»'; },
-      run: async () => { const t = moreText(more); more = []; return readAloud(t); } },
+      available: () => { const r = ready(); return r !== true ? r : more && more.list.length && sameTurn(more.at, view()) ? true : 'сначала доклад: скажите «Штаб, доложи обстановку»'; },
+      run: async () => { const t = moreText(more!.list); more = null; return readAloud(t); } },
     { ...base, id: 'command.intel', title: 'Разведсводка', describe: 'Докладывает разведсводку: сколько противника обнаружено, новое, ближайшее к нашим.',
       say: ['штаб, что разведка?'], run: async () => { get().setTab('intel'); return intelReport(view()); } },
     { ...base, id: 'command.unit.report', title: 'Доклад соединения', describe: 'Доклад своего объединения (или разведданные о противнике) по названию.',
@@ -238,12 +261,16 @@ export function commandActions(get: () => CommandDeps): Action[] {
       params: NAME, say: ['штаб, покажи Зелов'],
       run: async (p: { name: string }) => {
         const r = resolveTarget(String(p?.name ?? ''), view());
+        if (!r) return `Не нашёл на карте «${p?.name}».`;
         if ('say' in r) return r.say;
         if (r.who?.kind === 'own') get().showUnit(r.who.id);
         if (r.who?.kind === 'enemy') get().showEnemy(r.who.id);
         center(r.at, r.who ? 9 : 10);
         return `Показываю: ${r.label}.`;
       } },
+    { ...base, id: 'command.tab', title: 'Вкладка командования', describe: 'Открывает вкладку: доклады, разведка, решение, приказы, журнал, посредник.',
+      params: { type: 'object', properties: { tab: { enum: Object.keys(TAB_TITLE) } }, required: ['tab'] }, say: ['штаб, открой приказы'],
+      run: async (p: { tab: CmdTab }) => { if (!TAB_TITLE[p?.tab]) return 'Такой вкладки нет.'; get().setTab(p.tab); return `Вкладка «${TAB_TITLE[p.tab]}».`; } },
     { ...base, id: 'map.zoomIn', title: 'Приблизить карту', describe: 'Приближает карту на один шаг.', say: ['штаб, приблизь'], run: async () => zoomBy(1) },
     { ...base, id: 'map.zoomOut', title: 'Отдалить карту', describe: 'Отдаляет карту на один шаг.', say: ['штаб, отдали'], run: async () => zoomBy(-1) },
     { ...base, id: 'command.journal.read', title: 'Прочитать журнал', describe: 'Читает вслух журнал боевых действий за день (по умолчанию — последний).',
@@ -270,10 +297,10 @@ export function commandActions(get: () => CommandDeps): Action[] {
       run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode]) return 'Скажите: «штаб на модели» или «без штаба».'; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
     { ...base, id: 'command.exit', title: 'Выйти из игры', describe: 'Выходит из игры к переигровке; игра сохранена, её можно продолжить.', say: ['штаб, выйди из игры'],
       available: inReplay,
-      run: async () => { get().exit(false); return 'Вышел из игры, она сохранена. Продолжить — скажите: «Штаб, продолжи игру».'; } },
+      run: async () => { more = null; get().exit(false); return 'Вышел из игры, она сохранена. Продолжить — скажите: «Штаб, продолжи игру».'; } },
     { ...base, id: 'command.discard', title: 'Завершить и удалить игру', describe: 'Завершает игру и удаляет её запись (необратимо).', say: ['штаб, заверши и удали игру'],
       irreversible: true, confirm: () => 'Завершить игру и удалить её запись?', available: inReplay,
-      run: async () => { get().exit(true); return 'Игра завершена, запись удалена.'; } },
+      run: async () => { more = null; get().exit(true); return 'Игра завершена, запись удалена.'; } },
   ];
 }
 
@@ -305,6 +332,15 @@ export interface ReplayDeps {
 }
 
 const opName = (t: string) => t.split(/[,:(]/)[0].trim();
+
+/** Расчёт готов — коротко; подсказка, что дальше, — только если голосом пользовались недавно (hint). */
+export function calcDoneText(scenarioName: string, hint: boolean): string {
+  return `Расчёт готов: ${opName(scenarioName)}.${hint ? ' Чтобы командовать самому, скажите: «Штаб, прими командование».' : ''}`;
+}
+/** Сбой расчёта — причина словами (коротко), без взгляда на экран. */
+export function calcFailText(message: string): string {
+  return speakable(`Расчёт не удался: ${message.trim().replace(/[.\s]+$/, '')}.`);
+}
 
 export function replayActions(get: () => ReplayDeps): Action[] {
   const idle = (): true | string => {
@@ -386,19 +422,43 @@ function hit(id: string, params?: unknown, missing: string | null = NO_GAME): Ph
   return missing === null ? null : { say: `Сейчас нельзя: ${missing}.` };
 }
 
-const SHOW = /^(?:покажи|показать|найди|найти|перейди к|к)(?: на карте)? (.+)$/;
+const SHOW = /^(?:покажи|показать|найди|найти|перейди к)(?: на карте)? (.+)$/;
+/** Начала вопросов, а не названий: «где лучше наступать», «покажи как отдать приказ» — это модели. */
+const QUESTION = /^(?:как|что|чего|чему|почему|зачем|когда|куда|кто|лучше|мои|мой|моих|здесь|тут|там|это|все|всё)(?: |$)/;
 
-/** Фразы «Переигровки» и «Командования» → действие с параметрами (см. шапку модуля). rest — без обращения. */
-export function parseCommand(rest: string): PhraseHit | null {
+/**
+ * Фраза с названием («покажи …», «где …», «доложи о …») — «мягкая»: исполняется, только если такое место или соединение
+ * есть (или есть что переспросить); иначе null — фразу разбирает модель. Нет игры — тоже null.
+ */
+function soft(id: string, name: string, probe: (v: TurnView, name: string) => unknown): PhraseHit | null {
+  if (QUESTION.test(name) || !getAction(id)) return null;
+  const v = live?.().view;
+  return v && probe(v, name) ? { id, params: { name } } : null;
+}
+
+/** Слова, которые в «рассчитай …» не называют операцию: «рассчитай заново», «рассчитай её ещё раз». */
+const CALC_FILL = new Set(['заново', 'снова', 'еще', 'раз', 'ее', 'эту', 'опять', 'повторно', 'текущую', 'ту', 'же', 'мне', 'пожалуйста']);
+
+/**
+ * Фразы «Переигровки» и «Командования» → действие с параметрами (см. шапку модуля). rest — без обращения, section —
+ * открытый раздел: вне «Переигровки» понимается только вход (расчёт, командование, продолжение — с переходом туда).
+ */
+export function parseCommand(rest: string, section: string): PhraseHit | null {
   const t = norm(rest);
   let m: RegExpExecArray | null;
+  const away = section !== 'replay';
+  const entry = (id: string, params?: unknown) => (away ? { id, params, section: 'replay' } : hit(id, params, NOT_IN_REPLAY));
   // вход: расчёт, командование, продолжение
-  if ((m = /^(?:рассчитай|рассчитать|расчитай|посчитай|посчитать|просчитай|сделай расчет|расчет)(?: (.+))?$/.exec(t)))
-    return hit('replay.calc', m[1] ? { operation: m[1] } : {}, NOT_IN_REPLAY);
+  if ((m = /^(?:рассчитай|рассчитать|расчитай|посчитай|посчитать|просчитай|пересчитай|пересчитать|сделай расчет)(?: (.+))?$/.exec(t))) {
+    const name = (m[1] ?? '').split(' ').filter((w) => !CALC_FILL.has(w)).join(' ');
+    return entry('replay.calc', name ? { operation: name } : {});
+  }
   if ((m = /^(?:прими|принять|принимай|возьми|взять|принимаю) командование(?: (.+))?$/.exec(t)))
-    return hit('replay.takeCommand', m[1] ? { at: m[1].replace(/^(?:с|со) /, '') } : {}, NOT_IN_REPLAY);
+    return entry('replay.takeCommand', m[1] ? { at: m[1].replace(/^(?:с|со) /, '') } : {});
   if (/^(?:продолжи|продолжить|продолжим|вернись к|вернуться к|вернемся к)(?: прежней| прежнюю| сохраненной| сохраненную| незавершенной| незавершенную)? игр[уеы]$/.test(t))
-    return hit('replay.continue', undefined, NOT_IN_REPLAY);
+    return entry('replay.continue');
+  // остальное — только в «Переигровке»: в других разделах «приблизь», «легенда», «журнал» — их собственные слова
+  if (away) return null;
   // выход
   if (/^(?:заверши|завершить|закончи) и (?:удали|удалить) игру$|^(?:удали|удалить|сотри) игру$/.test(t)) return hit('command.discard');
   if (/^(?:выйди|выйти|выходи|выходим)(?: из)? игр[уы]$/.test(t)) return hit('command.exit');
@@ -430,9 +490,9 @@ export function parseCommand(rest: string): PhraseHit | null {
     if (layer) return hit('map.layer', { layer, on: /^(?:покажи|показать|включи)$/.test(m[1]) }, NO_MAP);
   }
   // соединения и места по названию (что не нашлось — разберёт модель)
-  if ((m = /^(?:доложи|доложите|доклад|что|как там)(?: мне)? (?:о|об|про|по|с|у) (.+)$/.exec(t))) return hit('command.unit.report', { name: m[1] }, null);
-  if ((m = /^где(?: сейчас| находится| находятся| стоит| стоят)? (.+)$/.exec(t))) return hit('command.unit.show', { name: m[1] }, null);
-  if ((m = SHOW.exec(t))) return hit('map.show', { name: m[1].replace(/^на карте /, '') }, null);
+  if ((m = /^(?:доложи|доложите|доклад|что|как там)(?: мне)? (?:о|об|про|по|с|у) (.+)$/.exec(t))) return soft('command.unit.report', m[1], (v, n) => findWho(n, v));
+  if ((m = /^где(?: сейчас| находится| находятся| стоит| стоят)? (.+)$/.exec(t))) return soft('command.unit.show', m[1], (v, n) => findWho(n, v));
+  if ((m = SHOW.exec(t))) return soft('map.show', m[1].replace(/^на карте /, ''), (v, n) => resolveTarget(n, v));
   return null;
 }
 

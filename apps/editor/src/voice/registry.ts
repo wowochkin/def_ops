@@ -54,11 +54,12 @@ export async function act(id: string, p?: unknown): Promise<string | void> {
 
 /**
  * Разбор фраз с параметрами без модели («покажи Зелов», «доложи о восьмой гвардейской»): модуль раздела регистрирует
- * разборщик; реплика (без обращения, нормализованная) → действие с параметрами или готовый ответ say (например,
- * почему сейчас нельзя: действия нет, игра не идёт). Разборщики спрашиваются по порядку регистрации.
+ * разборщик; реплика (без обращения, нормализованная) и открытый раздел → действие с параметрами или готовый ответ say
+ * (например, почему сейчас нельзя: игра не идёт). section у действия — сначала перейти в этот раздел («рассчитай
+ * операцию» из «Знаний»). Не своё — null: фразу разбирают дальше (модель). Разборщики спрашиваются по порядку регистрации.
  */
-export type PhraseHit = { id: string; params?: unknown } | { say: string };
-export type PhraseParser = (rest: string) => PhraseHit | null;
+export type PhraseHit = { id: string; params?: unknown; section?: string } | { say: string };
+export type PhraseParser = (rest: string, section: string) => PhraseHit | null;
 const parsers: PhraseParser[] = [];
 /** Добавить разборщик фраз; возвращает снятие. */
 export function registerParser(p: PhraseParser): () => void {
@@ -66,10 +67,18 @@ export function registerParser(p: PhraseParser): () => void {
   return () => { const i = parsers.indexOf(p); if (i >= 0) parsers.splice(i, 1); };
 }
 /** Первое, что поняли разборщики (нет — null). */
-export function parsePhrase(rest: string): PhraseHit | null {
-  for (const p of parsers) { const h = p(rest); if (h) return h; }
+export function parsePhrase(rest: string, section: string): PhraseHit | null {
+  for (const p of parsers) { const h = p(rest, section); if (h) return h; }
   return null;
 }
+
+/** Голосом пользовались недавно (подсказки «скажите: …» — только тогда): столько мс после последней реплики штабу. */
+export const VOICE_RECENT_MS = 5 * 60_000;
+let voiceAt = -Infinity;
+/** Реплика штабу (разборщик отмечает каждую обращённую). */
+export function markVoice(at = Date.now()): void { voiceAt = at; }
+/** Голосом пользовались за последние ms. */
+export function voiceRecent(ms = VOICE_RECENT_MS): boolean { return Date.now() - voiceAt <= ms; }
 
 /** Действие по id (нет — undefined). */
 export function getAction(id: string): Action | undefined { return byId.get(id); }

@@ -33,7 +33,7 @@ import { ModelPicker } from './ModelPicker';
 import { ReviewView } from './ReviewView';
 import { mdToHtml } from './markdown';
 import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
-import { act, ActButton, openModal, register, speak, useAction } from './voice/registry';
+import { act, ActButton, openModal, register, speak, useAction, voiceRecent } from './voice/registry';
 import { commandActions, takeoverParse, type CommandDeps } from './voice/actions/command';
 import { dayMonth } from './voice/report';
 import { speakable } from './voice/speech';
@@ -154,8 +154,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       if (m.kind === 'progress') setProgress(m.text);
       else if (m.kind === 'error') { setProgress(null); setError(m.message); }
       else if (m.kind === 'view') {
-        // первая обстановка игры — голосом: можно спрашивать
-        if (!liveView.current) speak(speakable(`Обстановка готова, ход ${m.view.turn}. Скажите, например: «Штаб, доложи обстановку».`, { full: true }));
+        // первая обстановка игры — голосом (если голосом пользуются): можно спрашивать
+        if (!liveView.current && voiceRecent()) speak(speakable(`Обстановка готова, ход ${m.view.turn}. Скажите, например: «Штаб, доложи обстановку».`, { full: true }));
         setProgress(null); setBlocked(null);
         setView({ ...m.view, doc: migrateDocument(m.view.doc) });
         setTime(m.view.time);
