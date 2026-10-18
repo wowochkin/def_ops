@@ -256,8 +256,9 @@ export class Dispatcher {
       if (!rest) {
         this.cancelModel();
         this.opts.supersede?.();
-        // стоп-слово, которое само — пример доступного сейчас действия («хватит» в туре), ещё и исполняет его
-        const a = this.bySay(words.slice(0, lead).join(' '));
+        // стоп-слово, которое само — пример доступного сейчас действия («хватит» в туре, и в «стоп, хватит»), ещё и
+        // исполняет его
+        const a = words.slice(0, lead).reverse().map((w) => this.bySay(w)).find(Boolean);
         if (a) try { await this.runSay(a); } catch { /* штаб уже замолчал — этого достаточно */ }
         return 'done';
       }

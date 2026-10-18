@@ -1663,34 +1663,31 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-name { display: flex; flex-direction: column; gap: 4px; }
 .vp-name input { font-size: 18px; padding: 6px 8px; border: 1.5px solid #8d887c; border-radius: 6px; }
 
-/* тур с подсветкой (voice/tour.tsx): притемнение — четыре полосы вокруг проёма; рамка и полосы плавно переезжают к следующему элементу */
-.tour { position: fixed; inset: 0; z-index: 980; pointer-events: none; font: 21px/1.4 'PT Sans', system-ui, sans-serif; color: #141414; }
-.tour-frame { position: fixed; border-radius: 12px; border: 3px solid #f2c14e; pointer-events: none;
-  box-shadow: 0 0 0 4px rgba(242,193,78,.35), 0 0 30px 8px rgba(242,193,78,.6);
+/* тур с подсветкой (voice/TourLayer.tsx): притемнение — четыре полосы вокруг проёма; рамка — внутри проёма; рамка и полосы
+   плавно переезжают к следующему элементу */
+.tour { position: fixed; inset: 0; z-index: 980; pointer-events: none; font: 21px/1.35 'PT Sans', system-ui, sans-serif; color: #141414; }
+.tour-frame { position: fixed; border-radius: 10px; border: 3px solid #f2c14e; pointer-events: none; box-shadow: 0 0 14px 2px rgba(242,193,78,.55);
   transition: top .5s cubic-bezier(.4,0,.2,1), left .5s cubic-bezier(.4,0,.2,1), width .5s cubic-bezier(.4,0,.2,1), height .5s cubic-bezier(.4,0,.2,1), border-color .3s; }
 .tour-dim { position: fixed; background: rgba(12,12,14,.62); pointer-events: none;
   transition: top .5s cubic-bezier(.4,0,.2,1), left .5s cubic-bezier(.4,0,.2,1), width .5s cubic-bezier(.4,0,.2,1), height .5s cubic-bezier(.4,0,.2,1); }
-.tour-frame::after { content: ''; position: absolute; inset: -9px; border-radius: 16px; border: 2px solid rgba(242,193,78,.8); animation: tour-pulse 1.8s ease-out infinite; }
-@keyframes tour-pulse { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(1.06); } }
+.tour-frame::after { content: ''; position: absolute; inset: 0; border-radius: 8px; border: 2px solid rgba(242,193,78,.8); animation: tour-pulse 1.8s ease-out infinite; }
+@keyframes tour-pulse { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(1.03); } }
 /* элемента нет и вести не к чему — только притемнение */
 .tour-frame.none { border-color: transparent; box-shadow: none; }
 .tour-frame.none::after { display: none; }
-/* подпись — правее колонки разделов и левее панели голоса (она у правого края) */
-.tour-cap { position: fixed; left: 96px; bottom: 28px; width: min(780px, calc(100vw - 600px)); min-width: min(520px, calc(100vw - 112px)); pointer-events: auto;
-  background: #fffefb; border: 2px solid #3b3a36; border-top: 6px solid #7a1b16; border-radius: 14px; box-shadow: 0 16px 50px rgba(0,0,0,.45);
-  padding: 16px 24px 14px; display: flex; flex-direction: column; gap: 10px; }
-.tour-cap.top { top: 24px; bottom: auto; }
-.tour-count { font-size: 20px; color: #5a5852; letter-spacing: .3px; }
-.tour-cap h2 { margin: 0; font: 700 28px/1.2 'PT Serif', Georgia, serif; color: #141414; }
-.tour-text { margin: 0; font-size: 22px; }
-.tour-say { margin: 0; align-self: flex-start; padding: 6px 14px; border-radius: 8px; background: #f6ebe6; color: #7a1b16; font-weight: 700; font-size: 22px; }
-.tour-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-.tour-btns button { font-size: 20px; padding: 8px 18px; border-radius: 8px; border: 1.5px solid #8d887c; background: #fff; color: #141414; }
+/* место подписи выбирает слой (placeCaption): не на подсвеченном и не на панели голоса */
+.tour-cap { position: fixed; width: min(620px, calc(100vw - 32px)); pointer-events: auto;
+  background: #fffefb; border: 2px solid #3b3a36; border-top: 5px solid #7a1b16; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.45);
+  padding: 12px 18px 12px; display: flex; flex-direction: column; gap: 6px; transition: top .3s ease, left .3s ease; }
+.tour-count { font-size: 20px; color: #5a5852; }
+.tour-cap h2 { margin: 0; font: 700 24px/1.2 'PT Serif', Georgia, serif; color: #141414; }
+.tour-text { margin: 0; font-size: 21px; }
+.tour-say { margin: 0; align-self: flex-start; padding: 4px 12px; border-radius: 8px; background: #f6ebe6; color: #7a1b16; font-weight: 700; font-size: 21px; }
+.tour-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.tour-btns button { font-size: 20px; padding: 6px 14px; border-radius: 8px; border: 1.5px solid #8d887c; background: #fff; color: #141414; }
 .tour-btns button.primary { background: #7a1b16; border-color: #7a1b16; color: #fff; font-weight: 700; }
+.tour-btns button.tour-off { border-color: transparent; text-decoration: underline; color: #5a5852; }
 .tour-hint { margin: 0; font-size: 20px; color: #5a5852; }
-@media (max-width: 760px) {
-  .tour-cap { left: 8px; right: 8px; width: auto; min-width: 0; }
-}
-@media (prefers-reduced-motion: reduce) { .tour-frame, .tour-dim { transition: none; } .tour-frame::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tour-frame, .tour-dim, .tour-cap { transition: none; } .tour-frame::after { animation: none; } }
 .vp-check-intro { display: flex; align-items: center; gap: 10px; margin-top: 10px; cursor: pointer; }
 .vp-check-intro input { width: 22px; height: 22px; }

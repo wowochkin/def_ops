@@ -23,7 +23,8 @@ export interface TourControl {
   more(): void;
   pause(): void;
   resume(): void;
-  stop(): void;
+  /** Закончить тур; строка — что штаб уже сказал сам (после вступления — как его выключить), иначе ничего. */
+  stop(): string | void;
   introOn(): void;
   introOff(): void;
 }
@@ -52,12 +53,12 @@ export function tourActions(c: TourControl): Action[] {
       say: ['штаб, расскажи о панели голоса'], run: async () => c.start('voice') },
     {
       ...always, id: 'tour.introOn', title: 'Показывать вступление', describe: 'Вступление снова звучит при каждом запуске.',
-      say: ['штаб, показывай вступление при запуске'],
+      say: ['штаб, показывай вступление при запуске', 'штаб, включи вступление'],
       run: async () => { c.introOn(); return 'Хорошо, вступление будет звучать при каждом запуске.'; },
     },
     {
       ...always, id: 'tour.introOff', title: 'Не показывать вступление', describe: 'Вступление при запуске больше не звучит.',
-      say: ['штаб, больше не показывай вступление'],
+      say: ['штаб, без вступления', 'штаб, больше не показывай вступление', 'штаб, не показывай вступление', 'штаб, выключи вступление'],
       run: async () => {
         c.introOff();
         return 'Хорошо, при запуске вступления больше не будет. Включить его снова — флажок «Вступление при запуске» в тонкой настройке панели голоса.';
@@ -73,7 +74,7 @@ export function tourActions(c: TourControl): Action[] {
     },
     { ...during, id: 'tour.pause', title: 'Пауза', describe: 'Приостанавливает тур.', say: ['пауза', 'подожди', 'подождите', 'погоди'], run: async () => { c.pause(); } },
     { ...during, id: 'tour.resume', title: 'Продолжить', describe: 'Продолжает тур с текущего шага.', say: ['продолжай', 'продолжи', 'продолжим'], run: async () => { c.resume(); } },
-    { ...during, id: 'tour.stop', title: 'Хватит', describe: 'Заканчивает тур.', say: ['хватит', 'пропустить', 'пропусти', 'закончи тур'], run: async () => { c.stop(); return 'Хорошо.'; } },
+    { ...during, id: 'tour.stop', title: 'Хватит', describe: 'Заканчивает тур.', say: ['хватит', 'пропустить', 'пропусти', 'закончи тур'], run: async () => (c.stop() ? undefined : 'Хорошо.') },
     {
       ...always, id: 'voice.panel', title: 'Открыть панель голоса', describe: 'Разворачивает панель голоса.', say: ['штаб, открой панель голоса'],
       run: async () => { window.dispatchEvent(new CustomEvent('voice:open', { detail: 'panel' })); },

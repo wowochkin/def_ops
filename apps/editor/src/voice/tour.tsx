@@ -1,6 +1,6 @@
 /**
- * Голосовой тур поверх любого раздела: остальной экран притемнён (четыре полосы вокруг проёма), вокруг элемента (`data-tour="…"`) — светящаяся
- * рамка, плавно переезжающая к следующему; внизу (или вверху, если элемент внизу; правее колонки разделов, левее панели голоса) — подпись крупно и пример фразы.
+ * Голосовой тур поверх любого раздела: движок, голос штаба для шагов, поиск элемента (`data-tour="…"`), настройки и
+ * запуск. Слой (притемнение, рамка, подпись) — voice/TourLayer.tsx.
  * Штаб проговаривает шаг тем же путём, что и свои ответы (роль начальника штаба, панель голоса — useTourVoice);
  * договорил — через STEP_GAP_MS следующий шаг. Голосом и кнопками: «дальше», «назад», «повтори», «подробнее»,
  * «пауза» / «продолжай», «хватит» (действия реестра, voice/actions/tour.ts).
@@ -15,11 +15,10 @@
  * Вступление выключено — событие не отменяется, предложение — дело панели. При первом входе в раздел, у которого есть тур, штаб предлагает его
  * (`def_ops.tour.seen` — разделы, где уже предлагал).
  */
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { SECTIONS } from '../sections';
 import type { VoiceClient } from './client';
-import { act, ActButton, register } from './registry';
-import { registerTourActions } from './actions/tour';
+import { act, register } from './registry';
 import { findTour, TOURS, type Tour, type TourStep } from './tours';
 
 export type { Tour, TourStep };
@@ -50,6 +49,9 @@ export interface TourDeps {
 }
 
 const REAL = new Set<string>(SECTIONS.map((s) => s.id));
+export const INTRO_STOPPED = 'Вступление остановлено. Продолжить — «Штаб, расскажи о приложении».';
+/** После «хватит» во вступлении — один раз: как его выключить. */
+export const INTRO_HOW_OFF = 'Чтобы вступление больше не звучало при запуске, скажите: «Штаб, без вступления».';
 
 export class TourEngine {
   state: TourState | null = null;
@@ -67,13 +69,17 @@ export class TourEngine {
   get step(): TourStep | null { return this.state ? this.state.tour.steps[this.state.index] : null; }
   has(idOrSection: string): boolean { return !!findTour(idOrSection, this.d.tours); }
 
-  /** Начать тур (по идентификатору или разделу); идущий тур заканчивается без своего onEnd. */
+  /**
+   * Начать тур (по идентификатору или разделу). Идущий тур уступает новому, а его onEnd переходит к новому:
+   * калибровку после вступления предложат и тогда, когда посреди него попросили другой тур.
+   */
   async start(idOrSection: string, o: { onEnd?(r: TourEnd): void } = {}): Promise<string | void> {
     const tour = findTour(idOrSection, this.d.tours);
     if (!tour) return 'Такого тура нет.';
+    const prev = this.onEnd;
     this.onEnd = undefined;
     if (this.state) this.finish('stopped');
-    this.onEnd = o.onEnd;
+    this.onEnd = prev && o.onEnd ? (r) => { o.onEnd!(r); prev(r); } : o.onEnd ?? prev;
     this.where = REAL.has(tour.section) ? tour.section : null;
     this.set({ tour, index: 0, phase: 'speaking', missing: false, extra: false });
     const my = this.seq;
@@ -108,9 +114,19 @@ export class TourEngine {
   }
   stop(): void { if (this.state) this.finish('stopped'); }
 
-  /** Открыт раздел sec: тур раздела, ушедший не по своему шагу, останавливается. */
+  /**
+   * Открыт раздел sec: тур раздела, ушедший не по своему шагу, останавливается; вступление (шагов с переходом у
+   * него нет — раздел сменил человек) — тоже, чтобы не висеть поверх нового раздела. Тур по панели голоса идёт дальше.
+   */
   onSection(sec: string): void {
-    if (!this.state || !this.where || sec === this.where) return;
+    const s = this.state;
+    if (!s) return;
+    if (s.tour.section === 'intro') {
+      this.finish('section');
+      this.d.speak(INTRO_STOPPED);
+      return;
+    }
+    if (!this.where || sec === this.where) return;
     this.finish('section');
     this.d.speak('Тур остановлен: открыт другой раздел.');
   }
@@ -175,10 +191,15 @@ export class TourEngine {
 
 // ---------------------------------------------------------------- голос штаба
 
-interface VoiceOut { client: VoiceClient; send(id: number, text: string): void; stop(id: number): void; live(): boolean }
+export interface VoiceOut { client: Pick<VoiceClient, 'newSayId'>; send(id: number, text: string): void; stop(id: number): void; live(): boolean }
 let voice: VoiceOut | null = null;
 const waiting = new Map<number, (r: SpeechEnd) => void>();
-const settle = (id: number, r: SpeechEnd) => { const f = waiting.get(id); if (f) { waiting.delete(id); f(r); } };
+/** Фраза id кончилась: тот, кто ждал её (шаг тура), узнаёт как. Чужие номера ничего не делают. */
+export const settleSpeech = (id: number, r: SpeechEnd) => { const f = waiting.get(id); if (f) { waiting.delete(id); f(r); } };
+/** Вся речь штаба остановлена («стоп», выключение, окно калибровки): ждущие шаги — на паузу. */
+export const stopTourSpeech = () => { [...waiting.keys()].forEach((id) => settleSpeech(id, 'stopped')); };
+/** Как часто проверять, что голос ещё жив (выключили, открыли калибровку, обрыв связи), пока шаг ждёт конца фразы. */
+const LIVE_POLL_MS = 500;
 
 /** Сказать фразу голосом начальника штаба; голоса нет (выключен, не готов, открыто окно калибровки) — 'silent'. */
 export function speakChief(text: string): Speech {
@@ -187,29 +208,40 @@ export function speakChief(text: string): Speech {
   const id = v.client.newSayId();
   const done = new Promise<SpeechEnd>((res) => waiting.set(id, res));
   v.send(id, text);
-  return { done, cancel: () => { if (waiting.has(id)) { settle(id, 'stopped'); v.stop(id); } } };
+  return { done, cancel: () => { if (waiting.has(id)) { settleSpeech(id, 'stopped'); v.stop(id); } } };
+}
+
+/**
+ * Привязать путь речи (панель голоса или тест); возвращает отвязку. Пока шаг ждёт конца фразы, а голос перестал
+ * быть живым, — фраза считается остановленной: тур не висит в «говорит».
+ */
+export function bindTourVoice(v: VoiceOut): () => void {
+  voice = v;
+  const t = setInterval(() => { if (waiting.size && !v.live()) stopTourSpeech(); }, LIVE_POLL_MS);
+  return () => {
+    clearInterval(t);
+    if (voice === v) voice = null;
+    stopTourSpeech();
+  };
 }
 
 /**
  * Панель голоса отдаёт туру свой путь речи: send — фраза в очередь штаба (ждёт конца речи человека, видна в ленте),
- * stop — снять фразу, live — голос включён, сервис готов, окна калибровки и голосов нет.
+ * stop — снять фразу, live — голос включён, сервис готов, окна калибровки и голосов нет. Снятые из очереди фразы
+ * панель передаёт в settleSpeech (SayGate onDrop), остановку всей речи — в stopTourSpeech.
  */
-export function useTourVoice(o: VoiceOut): void {
+export function useTourVoice(o: VoiceOut & { client: VoiceClient }): void {
   const ref = useRef(o);
   ref.current = o;
   useEffect(() => {
     const c = o.client;
-    voice = { client: c, send: (id, t) => ref.current.send(id, t), stop: (id) => ref.current.stop(id), live: () => ref.current.live() };
+    const unbind = bindTourVoice({ client: c, send: (id, t) => ref.current.send(id, t), stop: (id) => ref.current.stop(id), live: () => ref.current.live() });
     const offs = [
-      c.onPlayed((id) => settle(id, 'played')),
-      c.on('say-done', (m) => { if (m.stopped) settle(m.id, 'stopped'); }),
-      c.on('barge', (m) => settle(m.id, 'stopped')),
+      c.onPlayed((id) => settleSpeech(id, 'played')),
+      c.on('say-done', (m) => { if (m.stopped) settleSpeech(m.id, 'stopped'); }),
+      c.on('barge', (m) => settleSpeech(m.id, 'stopped')),
     ];
-    return () => {
-      offs.forEach((f) => f());
-      voice = null;
-      [...waiting.keys()].forEach((id) => settle(id, 'stopped'));
-    };
+    return () => { offs.forEach((f) => f()); unbind(); };
   }, [o.client]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
@@ -314,7 +346,8 @@ export function onVoiceReady(e: Event, emit: (name: string) => void = (n) => win
   void tourEngine.start('intro', { onEnd: () => { setTimeout(() => emit(PROPOSE), 0); } });
 }
 
-const control = {
+/** Что действиям тура нужно от движка окна (voice/actions/tour.ts). */
+export const tourControl = {
   active: () => !!tourEngine.state,
   hasMore: () => !!tourEngine.step?.more,
   paused: () => tourEngine.state?.phase === 'paused',
@@ -327,99 +360,23 @@ const control = {
   more: () => tourEngine.more(),
   pause: () => tourEngine.pause(),
   resume: () => tourEngine.resume(),
-  stop: () => tourEngine.stop(),
+  stop: () => {
+    const intro = tourEngine.state?.tour.id === 'intro';
+    tourEngine.stop();
+    if (!intro) return;
+    speakChief(INTRO_HOW_OFF);
+    return INTRO_HOW_OFF;
+  },
   introOn: () => setIntroOn(true),
   introOff: () => { setIntroOn(false); if (tourEngine.state?.tour.id === 'intro') tourEngine.stop(); },
 };
 
-// ---------------------------------------------------------------- слой тура
-
-const FRAME_PAD = 8;
-const snapshot = () => tourEngine.state;
-type Box = { top: number; left: number; width: number; height: number };
-
-/** Слой тура и его действия; подключается в оболочке одной строкой: `<TourLayer section={section} />`. */
-export function TourLayer({ section }: { section: string }) {
+/** Раздел сменился (слой тура): тур раздела — только в своём; при первом входе в раздел с туром — предложение. */
+export function tourSection(section: string): void {
   currentSection = section;
-  const st = useSyncExternalStore(tourEngine.subscribe, snapshot, snapshot);
-
-  useEffect(() => registerTourActions(control), []);
-  // голос впервые готов: вступление, затем — предложение калибровки (панелью, voice:propose)
-  useEffect(() => {
-    const h = (e: Event) => onVoiceReady(e);
-    window.addEventListener(READY_FIRST, h);
-    return () => window.removeEventListener(READY_FIRST, h);
-  }, []);
-  // смена раздела: тур раздела — только в своём; при первом входе в раздел с туром — предложение
-  useEffect(() => {
-    tourEngine.onSection(section);
-    const t = TOURS.find((x) => x.section === section);
-    if (!t || !voiceReady || tourEngine.state || seen().includes(section)) return;
-    void offer(`Показать, что есть в разделе «${SECTIONS.find((s) => s.id === section)?.title ?? section}»? Скажите «да» — и покажу.`, () => tourEngine.start(t.id))
-      .then((spoken) => { if (spoken) lsSet(SEEN_KEY, JSON.stringify([...new Set([...seen(), section])])); });
-  }, [section]);
-
-  const step = st ? st.tour.steps[st.index] : null;
-  const target = step ? (st!.missing && step.via ? step.via : step.target) : null;
-  const box = useTargetBox(target, st?.index ?? -1);
-  if (!st || !step) return null;
-
-  const n = st.tour.steps.length;
-  const text = st.extra && step.more ? step.more : st.missing && step.unavailable ? step.unavailable : step.text;
-  const vw = typeof window === 'undefined' ? 1440 : window.innerWidth;
-  const vh = typeof window === 'undefined' ? 900 : window.innerHeight;
-  // подпись не закрывает элемент: элемент внизу (и не у правого края, где панель голоса) — подпись вверху
-  const low = box && box.top + box.height / 2 > vh * 0.55 && box.left < vw * 0.6;
-  // проём в притемнении — рамка с отступом; элемента нет — проём схлопнут в середину экрана (притемнено всё)
-  const hole: Box = box
-    ? { top: box.top - FRAME_PAD, left: box.left - FRAME_PAD, width: box.width + 2 * FRAME_PAD, height: box.height + 2 * FRAME_PAD }
-    : { top: vh / 2, left: vw / 2, width: 0, height: 0 };
-  const bottom = hole.top + hole.height;
-  const right = hole.left + hole.width;
-  return (
-    <div className="tour" data-phase={st.phase}>
-      <div className="tour-dim" style={{ top: 0, left: 0, right: 0, height: Math.max(0, hole.top) }} />
-      <div className="tour-dim" style={{ top: bottom, left: 0, right: 0, bottom: 0 }} />
-      <div className="tour-dim" style={{ top: hole.top, left: 0, width: Math.max(0, hole.left), height: hole.height }} />
-      <div className="tour-dim" style={{ top: hole.top, left: right, right: 0, height: hole.height }} />
-      <div className={`tour-frame${box ? '' : ' none'}`} data-target={box ? target ?? '' : ''} aria-hidden="true" style={hole} />
-      <section className={`tour-cap${low ? ' top' : ''}`} role="dialog" aria-label={`Тур: ${st.tour.title}`} aria-live="polite">
-        <div className="tour-count">{st.tour.title} · шаг {st.index + 1} из {n}{st.phase === 'paused' ? ' · пауза' : ''}</div>
-        <h2>{step.title}</h2>
-        <p className="tour-text">{text}</p>
-        {step.example && <p className="tour-say">Скажите: «{step.example}»</p>}
-        <div className="tour-btns">
-          <ActButton action="tour.back" disabled={st.index === 0}>Назад</ActButton>
-          {st.phase === 'paused'
-            ? <ActButton action="tour.resume">Продолжить</ActButton>
-            : <ActButton action="tour.pause">Пауза</ActButton>}
-          <ActButton action="tour.next" className="primary">{st.index + 1 < n ? 'Дальше' : 'Готово'}</ActButton>
-          <ActButton action="tour.stop">Хватит</ActButton>
-        </div>
-        <p className="tour-hint">{st.phase === 'paused' ? 'Пауза. Скажите: «продолжай» или «хватит».' : 'Голосом: «дальше», «назад», «повтори», «хватит».'}</p>
-      </section>
-    </div>
-  );
-}
-
-/** Прямоугольник элемента тура: пересчёт при прокрутке, смене размера окна и раз в 250 мс (раздел дорисовывается). */
-function useTargetBox(target: string | null, index: number): Box | null {
-  const [box, setBox] = useState<Box | null>(null);
-  useLayoutEffect(() => {
-    if (!target) { setBox(null); return; }
-    findTarget(target)?.el.scrollIntoView?.({ block: 'nearest' });
-    let last = '';
-    const measure = () => {
-      const r = findTarget(target)?.rect;
-      const b = r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null;
-      const key = JSON.stringify(b);
-      if (key !== last) { last = key; setBox(b); }
-    };
-    measure();
-    const t = setInterval(measure, 250);
-    window.addEventListener('resize', measure);
-    window.addEventListener('scroll', measure, true);
-    return () => { clearInterval(t); window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true); };
-  }, [target, index]);
-  return box;
+  tourEngine.onSection(section);
+  const t = TOURS.find((x) => x.section === section);
+  if (!t || !voiceReady || tourEngine.state || seen().includes(section)) return;
+  void offer(`Показать, что есть в разделе «${SECTIONS.find((s) => s.id === section)?.title ?? section}»? Скажите «да» — и покажу.`, () => tourEngine.start(t.id))
+    .then((spoken) => { if (spoken) lsSet(SEEN_KEY, JSON.stringify([...new Set([...seen(), section])])); });
 }

@@ -9,7 +9,12 @@ import { shellActions } from '../src/voice/actions/shell';
 import { tourActions, type TourControl } from '../src/voice/actions/tour';
 import { Dispatcher } from '../src/voice/dispatch';
 import { TOURS, type Tour } from '../src/voice/tours';
-import { INTRO_KEY, OFFER_MS, offer, onVoiceReady, PROPOSE, READY_FIRST, TourEngine, TourLayer, tourEngine, type SpeechEnd, type TourDeps } from '../src/voice/tour';
+import {
+  bindTourVoice, settleSpeech, INTRO_HOW_OFF, INTRO_KEY, INTRO_STOPPED, OFFER_MS, offer, onVoiceReady, PROPOSE, READY_FIRST, speakChief, TourEngine, tourControl, tourEngine,
+  type SpeechEnd, type TourDeps,
+} from '../src/voice/tour';
+import { padFor, placeCaption, TourLayer, type Rect } from '../src/voice/TourLayer';
+import { SayGate } from '../src/voice/panel-state';
 
 const SRC = resolve(__dirname, '../src');
 const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => {
@@ -200,8 +205,8 @@ describe('движок тура', () => {
     expect(q.said.at(-1)!.text).toMatch(/Тур остановлен/);
   });
 
-  it('вступление и панель голоса — поверх любого раздела: смена раздела их не прерывает', async () => {
-    const { e, setSection } = rig([T]);
+  it('тур по панели голоса — поверх любого раздела: смена раздела его не прерывает', async () => {
+    const { e, setSection } = rig([{ ...T, section: 'voice' }]);
     await e.start('t');
     await flush();
     setSection('maps');
@@ -317,5 +322,133 @@ describe('голос готов (voice:ready-first) — вступление', (
     expect(e.defaultPrevented).toBe(false);
     expect(tourEngine.state).toBeNull();
     expect(sent).toEqual([]);
+  });
+});
+
+describe('фраза шага снята из очереди панели — тур не висит', () => {
+  afterEach(() => vi.useRealTimers());
+  it('supersede (gate.drop) и выключение голоса переводят шаг на паузу', async () => {
+    vi.useFakeTimers();
+    const sent: number[] = [];
+    let live = true;
+    let id = 100;
+    const gate2 = new SayGate((i) => { sent.push(i); }, () => 0, () => false, (ids) => ids.forEach((i) => settleSpeech(i, 'stopped')));
+    const unbind = bindTourVoice({ client: { newSayId: () => ++id }, send: (i, t) => gate2.say(i, t), stop: (i) => { gate2.drop(i); }, live: () => live });
+    const e = new TourEngine({ tours: [T], section: () => 'editor', act: async () => {}, exists: () => true, speak: speakChief, sleep: () => Promise.resolve() });
+    gate2.speech(true); // человек говорит — фраза шага ждёт в очереди
+    await e.start('t');
+    await flush();
+    expect(e.state?.phase).toBe('speaking');
+    expect(sent).toEqual([]);
+    gate2.drop(); // новая обращённая реплика не про тур
+    await flush();
+    expect(e.state?.phase).toBe('paused');
+    expect(sent).toEqual([]);
+    // голос выключили, пока шаг звучал: проверка «жив ли голос» ставит паузу
+    gate2.speech(false);
+    e.next();
+    await flush();
+    expect(e.state).toMatchObject({ index: 1, phase: 'speaking' });
+    live = false;
+    vi.advanceTimersByTime(600);
+    await flush();
+    expect(e.state?.phase).toBe('paused');
+    unbind();
+  });
+});
+
+describe('вступление: уход и смена тура', () => {
+  it('сменился раздел — вступление остановлено с фразой, onEnd получает section', async () => {
+    const intro: Tour = { ...T, id: 'intro', section: 'intro' };
+    const { e, said, setSection } = rig([intro]);
+    const ends: string[] = [];
+    await e.start('intro', { onEnd: (r) => ends.push(r) });
+    await flush();
+    setSection('maps');
+    expect(e.state).toBeNull();
+    expect(ends).toEqual(['section']);
+    expect(said.at(-1)!.text).toBe(INTRO_STOPPED);
+  });
+  it('новый тур посреди вступления — onEnd вступления (предложение калибровки) после нового', async () => {
+    const intro: Tour = { ...T, id: 'intro', section: 'intro' };
+    const other: Tour = { ...T, id: 'voice', section: 'voice' };
+    const { e } = rig([intro, other]);
+    const ends: string[] = [];
+    await e.start('intro', { onEnd: (r) => ends.push(`intro:${r}`) });
+    await e.start('voice');
+    expect(ends).toEqual([]);
+    e.stop();
+    expect(ends).toEqual(['intro:stopped']);
+  });
+});
+
+describe('подпись тура', () => {
+  const vw = 1440, vh = 900, cap = { width: 620, height: 260 };
+  const panel: Rect = { left: 986, top: 164, width: 440, height: 640 };
+  const hits = (p: { left: number; top: number }, r: Rect) =>
+    p.left < r.left + r.width && p.left + cap.width > r.left && p.top < r.top + r.height && p.top + cap.height > r.top;
+  it('не закрывает элемент посередине экрана и панель голоса', () => {
+    const mid: Rect = { left: 300, top: 360, width: 400, height: 180 }; // 40–60 % высоты
+    const p = placeCaption(cap, [mid, panel], vw, vh, panel);
+    expect(hits(p, mid) || hits(p, panel)).toBe(false);
+  });
+  it('элемент внизу слева — подпись сверху; колонка — снизу слева', () => {
+    const low: Rect = { left: 100, top: 700, width: 500, height: 150 };
+    expect(placeCaption(cap, [low, panel], vw, vh, panel).top).toBe(16);
+    const rail: Rect = { left: -1, top: -1, width: 70, height: 902 };
+    expect(placeCaption(cap, [rail, panel], vw, vh, panel)).toEqual({ left: 84, top: vh - 16 - cap.height });
+  });
+  it('элемент на всю ширину слева внизу и сверху — правее, левее панели', () => {
+    const a: Rect = { left: 80, top: 0, width: 200, height: 900 };
+    const p = placeCaption(cap, [a, panel], vw, vh, panel);
+    expect(hits(p, a) || hits(p, panel)).toBe(false);
+    expect(p.left + cap.width).toBeLessThanOrEqual(panel.left);
+  });
+  it('у кнопок колонки проём почти по кнопке', () => {
+    expect(padFor('rail-replay')).toBeLessThanOrEqual(1);
+    expect(padFor('voice-feed')).toBe(8);
+  });
+});
+
+describe('«хватит» во вступлении и выключение голосом', () => {
+  let offs: (() => void)[] = [];
+  let said: string[] = [];
+  beforeEach(() => { said = []; offs = [...tourActions(tourControl), ...shellActions({ section: () => 'editor', open: () => {} })].map(register); });
+  afterEach(() => { offs.forEach((o) => o()); tourEngine.stop(); vi.unstubAllGlobals(); });
+  const mk = () => new Dispatcher({ now: () => 0, say: (s) => { said.push(s); }, section: () => 'editor' });
+
+  it('«Стоп, хватит» во вступлении — тур окончен, штаб говорит, как выключить вступление (а не «Хорошо.»)', async () => {
+    const spoken: string[] = [];
+    const unbind = bindTourVoice({ client: { newSayId: () => spoken.length + 1 }, send: (_i, t) => { spoken.push(t); }, stop() {}, live: () => true });
+    void tourEngine.start('intro');
+    await flush();
+    expect(await mk().utterance('Штаб, стоп, хватит', 1)).toBe('done');
+    expect(tourEngine.state).toBeNull();
+    expect(spoken.at(-1)).toBe(INTRO_HOW_OFF);
+    expect(said).toEqual([]);
+    unbind();
+  });
+
+  it('«Штаб, без вступления», «выключи вступление» — вступление выключено', async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); }, removeItem() {} });
+    expect(await mk().utterance('Штаб, без вступления', 1)).toBe('done');
+    expect(store.get(INTRO_KEY)).toBe('off');
+    store.clear();
+    expect(await mk().utterance('Штаб, выключи вступление', 2)).toBe('done');
+    expect(store.get(INTRO_KEY)).toBe('off');
+    expect(await mk().utterance('Штаб, включи вступление', 3)).toBe('done');
+    expect(store.get(INTRO_KEY)).toBe('on');
+  });
+
+  it('подпись вступления: «Больше не показывать»; строка-подсказка — только на паузе', () => {
+    void tourEngine.start('intro');
+    let html = renderToStaticMarkup(createElement(TourLayer, { section: 'editor' }));
+    expect(html).toMatch(/data-action="tour.introOff"[^>]*>Больше не показывать/);
+    expect(html).not.toContain('tour-hint');
+    expect(html).toContain('Пропустить вступление — скажите «хватит»');
+    tourEngine.pause();
+    html = renderToStaticMarkup(createElement(TourLayer, { section: 'editor' }));
+    expect(html).toContain('tour-hint');
   });
 });

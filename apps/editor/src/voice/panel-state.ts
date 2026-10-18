@@ -107,7 +107,9 @@ export const HOLD_MAX_MS = 15_000;
 export class SayGate {
   private queue: { id: number; text: string }[] = [];
   private since: number | null = null;
-  constructor(private send: (id: number, text: string) => void, private now: () => number, private busy: () => boolean) {}
+  /** onDrop — номера снятых ждущих фраз (drop, clear): кто ждал их конца (тур), узнаёт, что они не прозвучат. */
+  constructor(private send: (id: number, text: string) => void, private now: () => number, private busy: () => boolean,
+    private onDrop?: (ids: number[]) => void) {}
 
   say(id: number, text: string): void {
     if (this.holding() && !this.busy()) this.queue.push({ id, text });
@@ -125,12 +127,13 @@ export class SayGate {
   }
   /** Снять ждущую фразу id или все; true — такая ждала. */
   drop(id?: number): boolean {
-    const n = this.queue.length;
-    this.queue = id === undefined ? [] : this.queue.filter((x) => x.id !== id);
-    return this.queue.length < n;
+    const gone = this.queue.filter((x) => id === undefined || x.id === id).map((x) => x.id);
+    this.queue = this.queue.filter((x) => !gone.includes(x.id));
+    if (gone.length) this.onDrop?.(gone);
+    return gone.length > 0;
   }
   /** Всё забыть: очередь и ожидание (выключение, обрыв связи, окно калибровки или голосов). */
-  clear(): void { this.queue = []; this.since = null; }
+  clear(): void { this.drop(); this.since = null; }
 
   private holding(): boolean { return this.since !== null && this.now() - this.since < HOLD_MAX_MS; }
   private flush(): void {

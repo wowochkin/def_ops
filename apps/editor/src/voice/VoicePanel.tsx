@@ -34,7 +34,7 @@ import {
 } from './panel-state';
 import { Calibration } from './Calibration';
 import { Voices } from './Voices';
-import { useIntroSetting, useTourVoice } from './tour';
+import { settleSpeech, stopTourSpeech, useIntroSetting, useTourVoice } from './tour';
 
 const OPEN_KEY = 'def_ops.voice.panel';
 const API_POLL_MS = 5000;
@@ -95,7 +95,7 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
     syncSpeaking();
     client.say(id, 'chief', text);
     setFeed((f) => feedAdd(f, { key: `s${id}`, kind: 'chief', text }));
-  }, () => Date.now(), () => speakingIds.current.size > 0), [client]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, () => Date.now(), () => speakingIds.current.size > 0, (ids) => ids.forEach((id) => settleSpeech(id, 'stopped'))), [client]); // eslint-disable-line react-hooks/exhaustive-deps
   const dispatcher = useMemo(() => new Dispatcher({
     now: () => Date.now(),
     section: () => sectionRef.current,
@@ -114,7 +114,7 @@ export function VoicePanel({ section, llm, llmCheck }: { section: string; llm: L
       if (speakingIds.current.delete(id)) { client.stop(id); syncSpeaking(); }
     },
     supersede: () => gate.drop(),
-    stop: () => { gate.drop(); client.stop(); speakingIds.current.clear(); syncSpeaking(); },
+    stop: () => { gate.drop(); client.stop(); speakingIds.current.clear(); syncSpeaking(); stopTourSpeech(); },
     // чего правила не поняли — модель «Голос» (настройки берутся в момент вопроса); проверка связи не прошла — не зовём
     model: createVoiceModel({ settings: () => llmRef.current }),
     modelReady: () => llmCheckRef.current !== 'fail',

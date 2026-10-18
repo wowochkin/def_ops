@@ -4,7 +4,7 @@
  * подготовка операций), карты-подложки, справочник знаков,
  * база знаний (материалы, загрузка документов, вопросы к модели),
  * ИИ (связь с моделями: штаб противника в игре, советник, база знаний). Раздел запоминается в адресе (#editor, #replay…).
- * Поверх разделов — панель голоса (voice/VoicePanel) и тур с подсветкой (voice/tour; элементы — `data-tour="…"`).
+ * Поверх разделов — панель голоса (voice/VoicePanel) и тур с подсветкой (voice/tour, voice/TourLayer; элементы — `data-tour="…"`).
  */
 import { IN_APP, SERVICES_HINT } from './dialogs';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -22,7 +22,7 @@ import type { MapSource } from '@def-ops/core';
 import { SECTIONS, type Section } from './sections';
 import { registerShellActions } from './voice/actions/shell';
 import { VoicePanel } from './voice/VoicePanel';
-import { TourLayer } from './voice/tour';
+import { TourLayer } from './voice/TourLayer';
 import { ModelPicker } from './ModelPicker';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { basemapDate } from './engine/basemaps';

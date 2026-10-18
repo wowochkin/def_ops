@@ -874,12 +874,20 @@ const tourLayer = page2.locator('.tour');
 const feed2 = async () => (await page2.locator('.vp-feed').innerText().catch(() => '')).replace(/\s+/g, ' ');
 const tourTitle = (t) => ({ waitFor: (o) => tourLayer.locator('.tour-cap h2', { hasText: t }).waitFor(o)
   .catch(async () => { throw new Error(`нет шага «${t}»; лента: ${await feed2()}`); }) });
-/** Рамка тура (с отступом 8 px) — вокруг видимого элемента data-tour и доехала до него. */
+/**
+ * Рамка тура — вокруг видимого элемента data-tour и доехала до него (отступ: у кнопок колонки 1 px, иначе 8 px);
+ * подпись не закрывает ни рамку, ни панель голоса.
+ */
 const frameOn = (target) => page2.waitForFunction((t) => {
+  const pad = /^rail-/.test(t) ? 1 : 8;
   const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
   const el = [...document.querySelectorAll(`[data-tour="${t}"]`)].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
-  return !!f && !!el && [f.left + 8 - el.left, f.top + 8 - el.top, f.width - 16 - el.width, f.height - 16 - el.height].every((d) => Math.abs(d) < 1.5);
-}, target, { timeout: 15000, polling: 50 }).catch(() => { throw new Error(`рамка не вокруг [data-tour="${target}"]`); });
+  const cap = document.querySelector('.tour-cap')?.getBoundingClientRect();
+  const card = document.querySelector('.vp-card')?.getBoundingClientRect();
+  const cross = (a, b) => !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  return !!f && !!el && [f.left + pad - el.left, f.top + pad - el.top, f.width - 2 * pad - el.width, f.height - 2 * pad - el.height].every((d) => Math.abs(d) < 1.5)
+    && !cross(cap, f) && !cross(cap, card);
+}, target, { timeout: 15000, polling: 50 }).catch(() => { throw new Error(`рамка не вокруг [data-tour="${target}"] или подпись на ней / на панели`); });
 
 await check('вступление при запуске: притемнение, рамка вокруг колонки разделов, подпись крупно', async () => {
   await tourTitle('Штабные игры').waitFor({ timeout: T });
@@ -902,6 +910,7 @@ await check('вступление при запуске: притемнение,
   if (!(st.min >= 20)) throw new Error(`самый мелкий текст подписи — ${st.min} px`);
   if (!st.dim) throw new Error('экран вокруг рамки не притемнён');
   if (!st.say.includes('искусственного интеллекта')) throw new Error('в подписи нет текста шага');
+  if (!st.say.includes('Больше не показывать')) throw new Error('на подписи вступления нет «Больше не показывать»');
   return `подпись не мельче ${st.min} px`;
 });
 
