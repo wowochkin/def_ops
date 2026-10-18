@@ -18,12 +18,12 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { SECTIONS } from '../sections';
 import type { VoiceClient } from './client';
-import { act, register } from './registry';
-import { findTour, TOURS, type Tour, type TourStep } from './tours';
+import { act, onVoiceCommand, register, type SpeakRole } from './registry';
+import { findTour, TOURS, type Tour, type TourMap, type TourStep } from './tours';
 import { currentTab, TABS, type TabSection } from './actions/tabs';
 import { replayNow } from './actions/command';
 
-export type { Tour, TourStep };
+export type { Tour, TourMap, TourStep };
 /** Чем кончилась фраза шага: доиграна, остановлена (перебили, «стоп») или не звучала (голоса нет). */
 export type SpeechEnd = 'played' | 'stopped' | 'silent';
 export interface Speech { done: Promise<SpeechEnd>; cancel(): void }
@@ -49,14 +49,20 @@ export interface TourDeps {
   section(): string;
   act(id: string, p?: unknown): Promise<string | void>;
   exists(target: string): boolean;
-  speak(text: string): Speech;
+  /** Сказать фразу шага; role — чьим голосом (тур посредника — разбор хода), нет — начальник штаба. */
+  speak(text: string, role?: SpeakRole): Speech;
   sleep(ms: number): Promise<void>;
   /**
    * Открытая сейчас вкладка для действия вкладки (`modeling.tab` …); null — не вкладка. Тур запоминает её перед первым
    * своим переключением и возвращает тем же действием, когда кончится (дошёл до конца, «хватит», ушли из раздела).
    */
   tabOf?(action: string): string | null;
+  /** Карта шагов с `map` (разбор хода): переезд и проигрывание, пауза проигрывания, вернуть карту, как была. */
+  map?: TourMapControl;
 }
+
+/** Что делает с картой шаг тура (раздел с картой подключает — setTourMap). */
+export interface TourMapControl { show(m: TourMap): void; pause(): void; reset(): void }
 
 /** Что говорит штаб на шаге: текст для речи, а если элемента нет — с добавкой, почему его не видно. */
 export const stepSpeech = (s: TourStep, missing: boolean) => {
@@ -98,8 +104,8 @@ export class TourEngine {
    * Начать тур (по идентификатору или разделу). Идущий тур уступает новому, а его onEnd переходит к новому:
    * калибровку после вступления предложат и тогда, когда посреди него попросили другой тур.
    */
-  async start(idOrSection: string, o: { onEnd?(r: TourEnd): void } = {}): Promise<string | void> {
-    const tour = findTour(idOrSection, this.d.tours);
+  async start(idOrSection: string | Tour, o: { onEnd?(r: TourEnd): void } = {}): Promise<string | void> {
+    const tour = typeof idOrSection === 'string' ? findTour(idOrSection, this.d.tours) : idOrSection;
     if (!tour) return 'Такого тура нет.';
     const prev = this.onEnd;
     this.onEnd = undefined;
@@ -135,6 +141,7 @@ export class TourEngine {
   pause(): void {
     if (!this.state) return;
     this.hush();
+    if (this.step?.map) this.d.map?.pause();
     this.set({ ...this.state, phase: 'paused' });
   }
   stop(): void { if (this.state) this.finish('stopped'); }
@@ -184,8 +191,10 @@ export class TourEngine {
   private finish(r: TourEnd): void {
     const cb = this.onEnd;
     this.onEnd = undefined;
+    const mapped = this.state?.tour.steps.some((x) => x.map);
     this.hush();
     this.where = null;
+    if (mapped) this.d.map?.reset();
     // вкладки — как были до тура (и запомненные разделом — тоже)
     for (const [action, tab] of this.tabs) {
       if (this.d.tabOf?.(action) === this.opened.get(action)) void this.d.act(action, { tab }).catch(() => {});
@@ -212,6 +221,8 @@ export class TourEngine {
       if (this.tabs.has(p.action) && tab) this.opened.set(p.action, tab);
       if (my !== this.seq) return;
     }
+    // шаг с картой: переезд к месту, метка, проигрывание хода — сразу, пока ищется элемент и звучит фраза
+    if (step.map) this.d.map?.show(step.map);
     let found = this.d.exists(step.target);
     for (let t = 0; !found && t < FIND_WAIT_MS; t += POLL_MS) {
       await this.d.sleep(POLL_MS);
@@ -230,7 +241,8 @@ export class TourEngine {
   }
 
   private say(my: number, text: string): void {
-    const sp = this.d.speak(text);
+    const role = this.state?.tour.role;
+    const sp = role ? this.d.speak(text, role) : this.d.speak(text);
     this.speech = sp;
     void sp.done.then((r) => {
       if (my !== this.seq || !this.state) return;
@@ -244,7 +256,7 @@ export class TourEngine {
 
 // ---------------------------------------------------------------- голос штаба
 
-export interface VoiceOut { client: Pick<VoiceClient, 'newSayId'>; send(id: number, text: string): void; stop(id: number): void; live(): boolean }
+export interface VoiceOut { client: Pick<VoiceClient, 'newSayId'>; send(id: number, text: string, role?: SpeakRole): void; stop(id: number): void; live(): boolean }
 let voice: VoiceOut | null = null;
 const waiting = new Map<number, (r: SpeechEnd) => void>();
 /** Фраза id кончилась: тот, кто ждал её (шаг тура), узнаёт как. Чужие номера ничего не делают. */
@@ -254,13 +266,16 @@ export const stopTourSpeech = () => { [...waiting.keys()].forEach((id) => settle
 /** Как часто проверять, что голос ещё жив (выключили, открыли калибровку, обрыв связи), пока шаг ждёт конца фразы. */
 const LIVE_POLL_MS = 500;
 
-/** Сказать фразу голосом начальника штаба; голоса нет (выключен, не готов, открыто окно калибровки) — 'silent'. */
-export function speakChief(text: string): Speech {
+/**
+ * Сказать фразу голосом начальника штаба (role — другим: посредник в разборе хода); голоса нет (выключен, не готов,
+ * открыто окно калибровки) — 'silent'.
+ */
+export function speakChief(text: string, role?: SpeakRole): Speech {
   const v = voice;
   if (!v || !v.live()) return { done: Promise.resolve('silent'), cancel: () => {} };
   const id = v.client.newSayId();
   const done = new Promise<SpeechEnd>((res) => waiting.set(id, res));
-  v.send(id, text);
+  if (role) v.send(id, text, role); else v.send(id, text);
   return { done, cancel: () => { if (waiting.has(id)) { settleSpeech(id, 'stopped'); v.stop(id); } } };
 }
 
@@ -288,7 +303,7 @@ export function useTourVoice(o: VoiceOut & { client: VoiceClient }): void {
   ref.current = o;
   useEffect(() => {
     const c = o.client;
-    const unbind = bindTourVoice({ client: c, send: (id, t) => ref.current.send(id, t), stop: (id) => ref.current.stop(id), live: () => ref.current.live() });
+    const unbind = bindTourVoice({ client: c, send: (id, t, r) => ref.current.send(id, t, r), stop: (id) => ref.current.stop(id), live: () => ref.current.live() });
     const offs = [
       c.onPlayed((id) => settleSpeech(id, 'played')),
       c.on('say-done', (m) => { if (m.stopped) settleSpeech(m.id, 'stopped'); }),
@@ -344,6 +359,12 @@ const seen = (): string[] => { try { const v = JSON.parse(lsGet(SEEN_KEY) ?? '[]
 // ---------------------------------------------------------------- движок окна, предложения
 
 let currentSection = 'editor';
+let tourMap: TourMapControl | null = null;
+/** Раздел с картой подключает её для шагов тура с `map` (разбор хода); возвращает отключение (снимает только своё). */
+export function setTourMap(m: TourMapControl | null): () => void {
+  tourMap = m;
+  return () => { if (tourMap === m) tourMap = null; };
+}
 export const tourEngine = new TourEngine({
   tours: TOURS,
   section: () => currentSection,
@@ -351,6 +372,7 @@ export const tourEngine = new TourEngine({
   exists: (t) => !!findTarget(t),
   speak: speakChief,
   sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  map: { show: (m) => tourMap?.show(m), pause: () => tourMap?.pause(), reset: () => tourMap?.reset() },
   tabOf: (action) => {
     if (action === 'command.tab') return commandTab();
     const sec = /^(\w+)\.tab$/.exec(action)?.[1];
@@ -370,6 +392,9 @@ let replaySource: () => ReplayNow = replayNow;
 /** Откуда брать состояние «Переигровки» (тесты; по умолчанию — действия раздела, voice/actions/command.ts). */
 export function setReplaySource(f: () => ReplayNow): void { replaySource = f; }
 export const inGame = () => !!replaySource()?.game;
+// команда голосом посреди разбора хода исполняется, а разбор встаёт на паузу («продолжай» — с того же шага)
+onVoiceCommand(() => { if (tourEngine.state?.tour.pauseOnCommand && tourEngine.state.phase !== 'paused') tourEngine.pause(); });
+
 /** Тур, который показывает раздел сейчас: в «Переигровке» во время игры — командование. */
 export const sectionTour = (section: string) => (section === 'replay' && inGame() ? 'command' : section);
 

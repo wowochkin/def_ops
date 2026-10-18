@@ -125,7 +125,12 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
       // фильтры слоёв подложки — без перестройки стиля; стиль ещё грузится — собрать заново с новым годом
       try { for (const [id, f] of Object.entries(filters)) if (map.getLayer(id)) map.setFilter(id, withDate(f, year)); } catch { restyle(); }
     },
-    setOverlays(list) { overlays = list; if (map.isStyleLoaded()) syncOverlays(map, list); },
+    setOverlays(list) {
+      overlays = list;
+      // стиль ещё грузится (тайлы, шрифты) — наложения добавить нельзя: когда карта успокоится, последние
+      if (map.isStyleLoaded()) syncOverlays(map, list);
+      else map.once('idle', () => { if (alive && map.isStyleLoaded()) syncOverlays(map, overlays); });
+    },
     setPanEnabled(on) { if (on) map.dragPan.enable(); else map.dragPan.disable(); },
     on<K extends keyof MapEngineEvents>(ev: K, cb: MapEngineEvents[K]) {
       if (ev === 'view') {

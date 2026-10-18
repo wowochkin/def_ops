@@ -267,6 +267,44 @@ export function dayEvents(ctx: SimContext, state: SimState, side: string, prev: 
   return out;
 }
 
+/** Бой за ход для разбора на карте: где, кто с кем (названия — бой есть соприкосновение), исход, наши потери. */
+export interface TurnBattle {
+  time: string;
+  at: LngLat;
+  /** Место словами («у Зелова», «8 км к СВ от Зелова»). */
+  place: string;
+  /** attack — наступали свои, defend — атаковал противник. */
+  role: 'attack' | 'defend';
+  own: { id: string; name: string }[];
+  enemy: { id: string; name: string }[];
+  outcome: 'breakthrough' | 'advance' | 'held' | 'repelled';
+  outcomeText: string;
+  /** Продвижение наступающих, км. */
+  advanceKm: number;
+  /** Наши потери в бою, % численности участвовавших. */
+  ownLossPct: number;
+  /** Соотношение сил наступающих к обороняющимся. */
+  ratio: number;
+}
+
+/** Бои за ход (после prev) стороны side: место и участники из журнала расчёта. */
+export function turnBattles(ctx: SimContext, state: SimState, side: string, prev: SimState): TurnBattle[] {
+  const byId = new Map(state.formations.map((f) => [f.id, f]));
+  const who = (ids: string[]) => ids.map((id) => ({ id, name: byId.get(id)?.name ?? id }));
+  const out: TurnBattle[] = [];
+  for (const j of state.journal.slice(prev.journal.length)) {
+    if (j.kind !== 'combat') continue;
+    const ours = byId.get(j.attackers[0])?.side === side;
+    out.push({
+      time: j.time, at: j.at, place: describePlace(ctx.theatre, j.at), role: ours ? 'attack' : 'defend',
+      own: who(ours ? j.attackers : j.defenders), enemy: who(ours ? j.defenders : j.attackers),
+      outcome: j.outcome, outcomeText: OUTCOME_RU[j.outcome], advanceKm: +j.advanceKm.toFixed(1),
+      ownLossPct: Math.round((ours ? j.attackerLoss : j.defenderLoss) * 1000) / 10, ratio: +j.ratio.toFixed(1),
+    });
+  }
+  return out;
+}
+
 /** Задержка доведения приказа до формирования, часов (по ступени). */
 export function orderDelay(ctx: SimContext, f: Pick<Formation, 'side' | 'echelon'>): number {
   return profileOf(ctx, f.side).orderDelayHours[f.echelon as keyof ReturnType<typeof profileOf>['orderDelayHours']] ?? 0;

@@ -74,6 +74,10 @@ export function useAction<P>(a: Action<P>): void {
   }), [a.id, a.section]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
+const commandSubs = new Set<(id: string) => void>();
+/** Следить за командами голосом (не управлением туром): разбор хода встаёт на паузу. Возвращает отписку. */
+export function onVoiceCommand(f: (id: string) => void): () => void { commandSubs.add(f); return () => { commandSubs.delete(f); }; }
+
 /**
  * Вызов действия. Недоступное не выполняется — возвращается причина. Исполненное голосом (`by: 'voice'`) подсвечивает
  * на экране то, что изменилось (поле highlight действия); мышью — нет.
@@ -83,6 +87,7 @@ export async function act(id: string, p?: unknown, o: ActOpts = {}): Promise<str
   if (!a) throw new Error(`Нет действия «${id}»`);
   const av = a.available();
   if (av !== true) return av;
+  if (o.by === 'voice' && !id.startsWith('tour.')) commandSubs.forEach((f) => { try { f(id); } catch { /* */ } });
   clearNoted();
   const r = await a.run(p);
   if (o.by === 'voice' && a.highlight) {

@@ -10,7 +10,8 @@
 import type { LngLat } from '@def-ops/core';
 import type { MapEngine } from '../engine/types';
 
-export type HlTarget = string | { at: LngLat };
+/** Цель: селектор, место на карте (метка) или рамка на карте вокруг точек (место боя и его участники). */
+export type HlTarget = string | { at: LngLat } | { box: LngLat[] };
 export type Highlight = HlTarget | HlTarget[] | null | undefined;
 export const FLASH_MS = 2500;
 
@@ -22,7 +23,7 @@ export const btn = (action: string) => `[data-action="${action}"]`;
 export const tourEl = (name: string) => `[data-tour="${name}"]`;
 
 /** at — когда подсветка началась (цель, найденная позже, гаснет вместе с остальными). */
-export interface FlashState { seq: number; targets: string[]; spots: LngLat[]; ms: number; at: number }
+export interface FlashState { seq: number; targets: string[]; spots: LngLat[]; boxes: LngLat[][]; ms: number; at: number }
 let state: FlashState | null = null;
 let seq = 0;
 let timer: ReturnType<typeof setTimeout> | null = null;
@@ -36,12 +37,16 @@ export function onFlash(cb: () => void): () => void { subs.add(cb); return () =>
 
 const split = (t: Highlight) => {
   const list = (Array.isArray(t) ? t : t ? [t] : []);
-  return { targets: list.filter((x): x is string => typeof x === 'string'), spots: list.filter((x): x is { at: LngLat } => typeof x === 'object' && !!x).map((x) => x.at) };
+  return {
+    targets: list.filter((x): x is string => typeof x === 'string'),
+    spots: list.filter((x): x is { at: LngLat } => typeof x === 'object' && !!x && 'at' in x).map((x) => x.at),
+    boxes: list.filter((x): x is { box: LngLat[] } => typeof x === 'object' && !!x && 'box' in x && x.box.length > 0).map((x) => x.box),
+  };
 };
 function set(next: Omit<FlashState, 'seq' | 'at'> | null): void {
   if (timer) clearTimeout(timer);
   timer = null;
-  state = next && (next.targets.length || next.spots.length) && next.ms > 0 ? { ...next, seq: ++seq, at: Date.now() } : null;
+  state = next && (next.targets.length || next.spots.length || next.boxes.length) && next.ms > 0 ? { ...next, seq: ++seq, at: Date.now() } : null;
   if (state) { const my = state.seq; timer = setTimeout(() => { if (state?.seq === my) { state = null; timer = null; emit(); } }, state.ms); }
   emit();
 }
@@ -51,7 +56,7 @@ export function flash(targets: Highlight, ms = FLASH_MS): void { set({ ...split(
 
 /** Метка на карте в точке at — вместе с тем, что подсвечено сейчас (или одна). */
 export function flashMap(at: LngLat, ms = FLASH_MS): void {
-  set(state ? { targets: state.targets, spots: [...state.spots, at], ms } : { targets: [], spots: [at], ms });
+  set(state ? { targets: state.targets, spots: [...state.spots, at], boxes: state.boxes, ms } : { targets: [], spots: [at], boxes: [], ms });
 }
 
 // ---------------------------------------------------------------- что отметило исполнение

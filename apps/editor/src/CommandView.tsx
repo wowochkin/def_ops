@@ -35,6 +35,9 @@ import { mdToHtml } from './markdown';
 import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, openModal, register, speak, useAction, voiceRecent } from './voice/registry';
 import { hl, setFlashMapView } from './voice/highlight';
+import { setTourMap } from './voice/tour';
+import { createTourMap } from './voice/tour-map';
+import { zoneOverlays, zoneUrl } from './zones-overlay';
 import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl, type TurnDeps } from './voice/actions/turn';
 import { releaseScreen, screenActions, type ScreenDeps } from './voice/actions/screen';
 import { announceTurn, resetUmpire, type UmpireModel } from './voice/umpire';
@@ -98,7 +101,11 @@ const TOGGLES = [
   { key: 'fortress', title: 'Крепости', match: (id: string) => id === 'sim-fortress' },
   { key: 'hbounds', title: 'Ист. разгр. линии', match: (id: string) => id === 'hist-bounds' },
   { key: 'bounds', title: 'Полосы', match: (id: string) => id === 'sim-bounds' },
+  // зоны влияния сторон — не слой знаков, а картинка под ними (zones-overlay.ts)
+  { key: 'zones', title: 'Зоны влияния', match: () => false },
 ];
+/** Зоны влияния в легенде: щелчок — показать или скрыть, как слой. */
+const ZONES_LEGEND = [{ key: 'zones', cls: 'lg-zone-own', text: 'зона влияния своих войск' }, { key: 'zones', cls: 'lg-zone-enemy', text: 'зона влияния противника (по разведке)' }];
 
 export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOpenInEditor }: {
   bm: Basemaps; llm: Llm; start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode;
@@ -143,6 +150,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [eng, setEng] = useState<MapEngine | null>(null);
   // метка места на карте при подсветке исполненного голосом (voice/highlight)
   useEffect(() => (eng ? setFlashMapView(eng) : undefined), [eng]);
+  // карта шагов разбора хода (voice/tour-map): переезд к месту, метка и рамка, проигрывание хода
+  useEffect(() => (eng ? setTourMap(createTourMap({
+    engine: () => engine.current, setTime, now: () => liveView.current?.time ?? null,
+    frame: (cb) => requestAnimationFrame(cb), cancel: (id) => cancelAnimationFrame(id), clock: () => performance.now(),
+  })) : undefined), [eng]); // eslint-disable-line react-hooks/exhaustive-deps
   const [adv, setAdv] = useState<AdvMsg[]>([]);
   const [plan, setPlanState] = useState<PlanState | null>(null);
   /** Варианты — и в ref: сообщения потока идут чаще отрисовки, итог («готово») говорится по самому свежему. */
@@ -171,6 +183,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const aiRef = useRef(ai); aiRef.current = ai;
   /** Обстановка хода — сразу по сообщению (до отрисовки) и предыдущая: доклад посредника о только что посчитанном ходе. */
   const viewNow = useRef<{ cur: TurnView | null; prev: TurnView | null }>({ cur: null, prev: null });
+  /** Обстановка на начало прошедшего хода (последняя с другим временем) — разбор хода: откуда проигрывать. */
+  const turnStart = useRef<TurnView | null>(null);
   /** Сколько ходов было в записи игры, когда она пришла впервые (новый ход — запись длиннее: посредник докладывает). */
   const turnsSeen = useRef<number | null>(null);
   const live = useRef<{ pickMode: Pick | null; sel: string | null; mapDoc: MapDocument | null; time: string | null }>({ pickMode, sel, mapDoc: null, time: null });
@@ -193,6 +207,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         // первая обстановка игры — голосом (если голосом пользуются): можно спрашивать
         if (!liveView.current && voiceRecent()) speak(speakable(`Обстановка готова, ход ${m.view.turn}. Скажите, например: «Штаб, доложи обстановку».`, { full: true }));
         setProgress(null); setBlocked(null);
+        if (viewNow.current.cur && viewNow.current.cur.time !== m.view.time) turnStart.current = viewNow.current.cur;
         viewNow.current = { cur: m.view, prev: viewNow.current.cur };
         // новый ход — прежние уведомления («решение не готово») устарели
         if (viewNow.current.prev && viewNow.current.prev.time !== m.view.time) setNotice(null);
@@ -252,7 +267,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         const n = m.record.turns.length;
         if (turnsSeen.current !== null && n > turnsSeen.current && viewNow.current.cur) {
           // штаб противника ждёт доклада посредника (umpire-done): не занимает модель раньше него
-          void announceTurn({ view: viewNow.current.cur, prev: viewNow.current.prev, record: m.record, ai: aiRef.current, model: umpireModel(),
+          void announceTurn({ view: viewNow.current.cur, prev: turnStart.current, record: m.record, ai: aiRef.current, model: umpireModel(),
             onDone: () => w.postMessage({ kind: 'umpire-done' } satisfies GameRequest) });
         }
         turnsSeen.current = n;
@@ -418,6 +433,18 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     d.features = [...view.doc.features, ...plan];
     return withFocus(d, focus);
   }, [view, drafts, vis, acts, focus, linePts]); // eslint-disable-line react-hooks/exhaustive-deps
+  // зоны влияния сторон — картинкой под знаками; за ход — переход от зон на начало к зонам на конец (по времени карты)
+  const zoneUrls = useMemo(() => ({ cur: view?.zones ? zoneUrl(view.zones) : null, prev: view?.zonesPrev ? zoneUrl(view.zonesPrev) : null }), [view?.zones, view?.zonesPrev]);
+  const zonesOn = vis.zones ?? true;
+  const zoneTime = time && view ? (time >= view.time ? 'end' : time) : null;
+  const zoneOv = useMemo(() => (view && zoneTime ? zoneOverlays({ cur: view.zones, prev: view.zonesPrev, urls: zoneUrls, from: turnStart.current?.time ?? addH(view.time, -view.turnHours), to: view.time, time: zoneTime === 'end' ? view.time : zoneTime, on: zonesOn }) : []),
+    [view, zoneUrls, zoneTime, zonesOn]); // eslint-disable-line react-hooks/exhaustive-deps
+  const zoneKey = zoneOv.map((o) => `${o.id}:${o.opacity}`).join(',');
+  const shownDoc = useMemo(() => {
+    if (!doc) return null;
+    const d = withoutLabels(withLevel(doc, level), labels);
+    return zoneOv.length ? { ...d, overlays: [...d.overlays, ...zoneOv] } : d;
+  }, [doc, level, labels, zoneKey]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Обстановка для списков: при фокусе — только объединения и противник на участке. */
   /** Карта, как она нарисована (уровень обобщения) — для щелчка по знаку. */
   const pickDoc = useMemo(() => (doc ? withLevel(doc, level) : null), [doc, level]);
@@ -592,7 +619,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   // ход, штаб противника, посредник, разбор, файлы — те же действия у кнопок
   const turnDeps = useRef<TurnDeps>(null!);
   turnDeps.current = {
-    view, busy: view ? progress : null, blocked, enemy, ai, aiTurns, record, drafts, acts, decision, plan, planN,
+    view, prev: turnStart.current, busy: view ? progress : null, blocked, enemy, ai, aiTurns, record, drafts, acts, decision, plan, planN,
     sendTurn, showMissing, notice: setNotice, setTab, setUmpirePart: setUmpPart,
     retryAi: () => { setBlocked(null); setProgress('повторный запрос…'); send({ kind: 'retry-ai' }); },
     skipAi: () => { setBlocked(null); setProgress('расчёт хода…'); send({ kind: 'skip-ai' }); },
@@ -715,7 +742,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           </div>
           </div>
           <div className="rp-map" data-tour="cmd-map">
-          <MapView doc={doc ? withoutLabels(withLevel(doc, level), labels) : doc} setDoc={() => {}} selected={null} setSelected={() => {}}
+          <MapView doc={shownDoc ?? doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, view?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           {!pickMode && <MapHover engine={eng} doc={doc ? withLevel(doc, level) : null} time={time} />}
@@ -729,7 +756,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             actions={<><button data-action="command.tab" onClick={() => { tap('command.tab', { tab: 'intel' }); setMob('staff'); }}>Разведсводка →</button>
               {unit(sel) && unit(sel)!.status !== 'destroyed' && <button data-action="command.order.set" onClick={() => targetEnemy(intelE.id)}
                 title="Цель удара для выбранного объединения — во вкладке «Приказы»">Целью удара для «{short(unit(sel)!.name)}»</button>}</>} />}
-          <Legend on={layerOn} extra={LEVEL_LEGEND[level]} combat={level === 'tac'} remember="def_ops.command.legend" />
+          <Legend on={layerOn} extra={[...LEVEL_LEGEND[level], ...ZONES_LEGEND]} combat={level === 'tac'} remember="def_ops.command.legend" />
           {view && <Player start={view.start} end={view.time > view.start ? view.time : addH(view.start, view.turnHours)} time={time} setTime={setTime} events={playerEvents}
             onEvent={(e) => { if (e.at) tap('map.event', { name: e.title.split(':')[0] }); else goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
           </div>
@@ -823,7 +850,7 @@ function Reports({ v, drafts, onUnit, onOrder, sel }: { v: TurnView; drafts: Rec
         <div className={cut ? 'alarm' : ''}><b>{cut}</b><span>отрезано от подвоза</span></div>
       </div>
       {v.turn > 1 && <div className="dispatch">
-        <h4>Донесения за ход</h4>
+        <h4>Донесения за ход <ActButton className="turn-show" action="command.turn.show" data-hl="turn-show" title="Посредник покажет прошедший ход на карте: общее, главные бои, цели, тыл, противник">Разбор хода на карте ▸</ActButton></h4>
         {v.events.length ? <ul>{v.events.map((e, i) => <li key={i}>{e}</li>)}</ul> : <p className="muted">Существенных событий нет.</p>}
       </div>}
       {v.turn === 1 && <p className="note">Командование принято. Войска выполняют задачи, полученные до этого момента; исторические приказы дальше не поступают. Новые приказы — во вкладке «Приказы».</p>}

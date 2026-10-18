@@ -1,6 +1,6 @@
 import type { CommandTerms } from '@def-ops/sim';
 import type { LngLat, MapDocument } from '@def-ops/core';
-import type { ActionCheck, AgentGameSpec, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, UnitReport } from '@def-ops/sim';
+import type { ActionCheck, AgentGameSpec, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, TurnBattle, UnitReport, ZoneGrid } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { KbRefAnswer, KbRefRequest } from './kb-ref';
 
@@ -144,6 +144,14 @@ export interface TurnView {
   intel: IntelReport[];
   /** Донесения за прошедший ход. */
   events: string[];
+  /** Бои за прошедший ход: место, свои и противник (соприкосновение), исход, наши потери — для разбора хода на карте. */
+  battles: TurnBattle[];
+  /**
+   * Зоны влияния сторон на конец хода и на его начало (свои — красноватые, противник — голубоватые, только
+   * обнаруженный разведкой; спорное — без цвета); null — не считались (до первого хода нет начала).
+   */
+  zones: ZoneGrid | null;
+  zonesPrev: ZoneGrid | null;
   places: Place[];
   /** Задержка доведения приказов по ступеням, часов. */
   delays: Record<string, number>;

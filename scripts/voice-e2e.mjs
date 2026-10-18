@@ -679,8 +679,12 @@ await expandPanel();
 // задержкой, «не запущена» (соединение отвергается сразу) или «висит» (каждая попытка кончается через 3 с ответом
 // 500 — сбой самой модели, повторяется; модель ещё ждёт, когда приходит следующая реплика).
 const LM = { asked: [], settled: [], models: 0, plans: 0, umpire: 0 };
-/** Доклад посредника от поддельной модели: три фразы, число — цифрами (озвучка — словами). */
-const UMPIRE_SAYS = 'Ход прошёл без перелома. 8-я гв. армия ведёт бой у Зелова. До окружения Берлина ещё далеко.';
+/** Разбор хода от поддельной модели: по пункту на шаг («Шагов: N» в запросе), число — цифрами (озвучка — словами). */
+const UMPIRE_FIRST = 'Ход прошёл без перелома. 8-я гв. армия ведёт бой у Зелова.';
+const umpireSays = (body) => {
+  const n = +(/Шагов: (\d+)/.exec(body.messages.at(-1)?.content ?? '')?.[1] ?? 3);
+  return Array.from({ length: n }, (_, i) => `${i + 1}. ${i ? 'Здесь видно, как шёл бой; наши потери невелики.' : UMPIRE_FIRST}`).join('\n');
+};
 /** Ответ потоком (stream: true): content кусками, затем [DONE]. */
 const sse = (content) => [...content.match(/[\s\S]{1,200}/g).map((c) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: c } }] })}\n\n`),
   `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\n`, 'data: [DONE]\n\n'].join('');
@@ -720,8 +724,8 @@ async function fakeLmStudio() {
     const body = route.request().postDataJSON();
     // советник (поток окна игры): варианты решения на ход — потоком SSE, как LM Studio
     if (body.response_format?.json_schema?.name === 'staff_plan') { LM.plans++; return route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream' }, body: sse(JSON.stringify(PLAN)) }).catch(() => {}); }
-    // доклад посредника после хода — короткий текст от лица посредника
-    if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM.umpire++; return route.fulfill({ json: lmReply(UMPIRE_SAYS) }).catch(() => {}); }
+    // разбор хода посредником — тексты шагов от лица посредника
+    if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM.umpire++; return route.fulfill({ json: lmReply(umpireSays(body)) }).catch(() => {}); }
     const said = body.messages.at(-1)?.content ?? '';
     LM.asked.push(said);
     const a = lmAnswer(said);
@@ -1283,24 +1287,51 @@ await check('без рук: «проводи ход» — чего нет и п�
   await feedHas('Провожу ход: решение готово, приказов один').waitFor({ timeout: 30000 });
   await panel.locator('.vp-confirm').waitFor({ timeout: 10000 });
   await shot('voice-turn.jpg');
+  // советник (открыт проверкой советника) лежит справа поверх карты — скрыть: разбор хода — на карте
+  const advBtn = page.locator('.advisor .adv-h button[title^="Скрыть советника"]');
+  if (await advBtn.isVisible().catch(() => false)) { await advBtn.click(); await page.evaluate(() => { window.__clicks = 0; }); }
   await handsFree(['штаб, да', ...QUIET], { reload: false });
   await feedHas('Считаю ход').waitFor({ timeout: 30000 });
-  // доклад посредника — голосом посредника (роль umpire в фразе сервису), в ленте — «Посредник:»
-  await panel.locator('.vp-item.umpire').first().waitFor({ timeout: 180000 }).catch(() => { throw new Error('доклада посредника нет'); });
-  // сначала посредник объявляет, что сведения готовятся, затем — доклад (модели или, честно, по данным расчёта)
-  await feedHas('Решение на следующий ход').waitFor({ timeout: 120000 });
+  // посредник: сначала — «сведения готовятся» (его голосом, в ленте — «Посредник:»), затем разбор хода на карте
+  await panel.locator('.vp-item.umpire').first().waitFor({ timeout: 180000 }).catch(() => { throw new Error('посредник молчит'); });
+  const tour = page.locator('.tour');
+  await tour.locator('.tour-count', { hasText: /^Разбор хода · шаг 1 из \d/ }).waitFor({ timeout: 180000 }).catch(() => { throw new Error('разбора хода нет'); });
   const ump = await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
-  if (!ump.length) throw new Error('доклад посредника не голосом посредника');
-  if (ump[0] !== 'Сведения о ходе готовятся, прошу подождать.' && !/докладываю по данным расчёта/.test(ump[0])) throw new Error(`посредник начал не с объявления: ${ump[0]}`);
-  const rep = ump.at(-1);
-  if (/\d/.test(rep)) throw new Error(`в докладе посредника цифры: ${rep}`);
-  const n = rep.match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
-  if (n < 3 || n > 5) throw new Error(`в докладе посредника ${n} фраз: ${rep}`);
+  if (ump[0] !== 'Сведения о ходе готовятся, прошу подождать.' && !/по данным расчёта/.test(ump[0])) throw new Error(`посредник начал не с объявления: ${ump[0]}`);
+  const n = +(await tour.locator('.tour-count').innerText()).match(/из (\d+)/)[1];
+  if (n < 2 || n > 8) throw new Error(`шагов разбора: ${n}`);
+  // общий шаг — время карты идёт от начала хода к концу (движение войск, фронт, зоны влияния)
+  const hours = new Set();
+  for (let i = 0; i < 12; i++) { hours.add(await page.locator('.player .pl-date span').innerText()); await page.waitForTimeout(400); }
+  if (hours.size < 3) throw new Error(`ход не проигрывается: ${[...hours].join(', ')}`);
+  // шаг звучит голосом посредника — текстом модели, числа словами
+  await page.waitForFunction(() => window.__e2e.sent.some((m) => m.type === 'say' && m.role === 'umpire' && /^Ход прошёл без перелома\. Восьмая гвардейская армия ведёт бой у Зелова\./.test(m.text)), null, { timeout: 30000 })
+    .catch(async () => { throw new Error(`шаг не голосом посредника: ${JSON.stringify(await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say').slice(-3)))}`); });
+  // бой: карта переехала к месту, метка-пульс и рамка вокруг участников
+  const view0 = await page.evaluate(() => window.__cmdEngine.getView().center);
+  const battle = tour.locator('.tour-cap h2', { hasText: /^Бой / });
+  if (!await battle.waitFor({ timeout: 40000 }).then(() => true, () => false)) await handsFree(['штаб, дальше', ...QUIET], { reload: false });
+  await battle.waitFor({ timeout: 40000 }).catch(() => { throw new Error('шага с боем нет'); });
+  await page.locator('.hl-layer .hl-spot').waitFor({ state: 'attached', timeout: 10000 }).catch(() => { throw new Error('на месте боя нет метки'); });
+  await page.locator('.hl-layer .hl-frame.hl-box').waitFor({ timeout: 5000 }).catch(() => { throw new Error('вокруг места боя нет рамки'); });
+  const view1 = await page.evaluate(() => window.__cmdEngine.getView().center);
+  if (Math.hypot(view1[0] - view0[0], view1[1] - view0[1]) < 0.01) throw new Error('карта не переехала к месту боя');
+  const spot = await page.locator('.hl-layer .hl-spot').evaluate((e) => e.getBoundingClientRect().toJSON());
+  const cap = await tour.locator('.tour-cap').evaluate((e) => e.getBoundingClientRect().toJSON());
+  if (spot.x > cap.left - 20 && spot.x < cap.right + 20 && spot.y > cap.top - 20 && spot.y < cap.bottom + 20) throw new Error('метка под подписью разбора');
+  await page.waitForTimeout(600);
+  await shot('voice-turn-review.jpg');
+  const title = await battle.innerText();
+  // «хватит» — разбор закончен, время карты — снова конец хода; штаб подсказывает, что дальше
+  await handsFree(['штаб, хватит', ...QUIET], { reload: false });
+  await tour.waitFor({ state: 'detached', timeout: 40000 }).catch(() => { throw new Error('«хватит» не закончил разбор'); });
+  await page.locator('.hl-layer .hl-box').waitFor({ state: 'detached', timeout: 5000 }).catch(() => { throw new Error('рамка боя осталась после разбора'); });
+  await feedHas('Решение на следующий ход').waitFor({ timeout: 60000 });
   await page.locator('.cmd-date', { hasText: 'ход 2' }).waitFor({ timeout: 10000 });
-  await shot('voice-umpire.jpg');
+  const end = await page.locator('.player .pl-date span').innerText();
   const clicks = await page.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
-  return `доклад: ${rep.slice(0, 80)}…`;
+  return `шагов ${n}, «${title}», время после разбора ${end}`;
 });
 
 await check('командование: при полосе место тоже не под ней', async () => {
@@ -1315,6 +1346,27 @@ await check('командование: при полосе место тоже �
   if (z.under || !z.onMap) throw new Error(`Зелов в ${z.p}: под панелью или легендой — ${z.under}`);
   await shot('voice-strip.jpg');
   return `Зелов в ${z.p}`;
+});
+
+await check('зоны влияния сторон: карта подкрашена (свои — красноватые, противник — голубоватые); «скрой / покажи зоны влияния»', async () => {
+  await page.evaluate(() => window.__cmdEngine.setView({ center: [14.3, 52.55], zoom: 8.6 }));
+  await page.waitForTimeout(1500);
+  const r = await page.locator('.rp-map').evaluate((e) => e.getBoundingClientRect().toJSON());
+  const clip = { x: Math.round(r.left + 20), y: Math.round(r.top + 150), width: Math.round(r.width - 80), height: Math.round(r.height - 330) };
+  const on = await page.screenshot({ clip, type: 'png' });
+  await handsFree(['штаб, скрой зоны влияния', ...QUIET], { reload: false });
+  await feedHas('Скрыл: зоны влияния сторон').waitFor({ timeout: 30000 });
+  await page.waitForTimeout(1500);
+  const off = await page.screenshot({ clip, type: 'png' });
+  if (on.equals(off)) throw new Error('со слоем «Зоны влияния» и без него карта одинакова');
+  await handsFree(['штаб, покажи зоны влияния', ...QUIET], { reload: false });
+  await feedHas('Показываю: зоны влияния сторон').waitFor({ timeout: 30000 });
+  await page.evaluate(() => import('/src/voice/registry.ts').then((m) => m.act('map.legend', { open: true })));
+  await page.locator('.legend .lg-zone-own').waitFor({ timeout: 5000 }).catch(() => { throw new Error('в легенде нет зон влияния'); });
+  await page.waitForTimeout(1500);
+  await shot('voice-zones.jpg');
+  await page.evaluate(() => import('/src/voice/registry.ts').then((m) => m.act('map.legend', { open: false })));
+  return 'слой включается и выключается голосом';
 });
 
 await check('полоса — сверху по центру под полосой кнопок карты: кнопки карты, вкладки и колонка разделов открыты; значок — там же', async () => {
@@ -1768,7 +1820,7 @@ await ctx4.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
   if (schema === 'staff_plan') { LM4.plans++; return reply(JSON.stringify(PLAN_FULL)).catch(() => {}); }
   if (schema === 'staff_decision') { LM4.enemy++; LM4.log.push('enemy'); return reply(JSON.stringify(DECISION_DE)).catch(() => {}); }
   if (schema) return reply('{}').catch(() => {});
-  if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM4.umpire++; LM4.log.push('umpire'); return reply(UMPIRE_SAYS).catch(() => {}); }
+  if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM4.umpire++; LM4.log.push('umpire'); return reply(umpireSays(body)).catch(() => {}); }
   return reply('Слушаю.').catch(() => {});
 });
 if (STUB) await ctx4.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
@@ -1822,10 +1874,21 @@ await check('без рук от запуска до доклада посред�
   await step4(`доклада посредника нет (штаб противника: ${LM4.enemy}, посредник: ${LM4.umpire})`, panel4.locator('.vp-item.umpire').first(), 240000);
   const ump = await page4.evaluate(() => window.__said.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
   if (!ump.length) throw new Error('доклад посредника не голосом посредника (role umpire)');
-  await step4('штаб не подсказал, что дальше', said4('Решение на следующий ход'), 120000);
+  // разбор хода на карте — тур посредника; шаги может прервать перебивание (поддельный микрофон без подавления эха) —
+  // разбор встаёт на паузу; «хватит» — разбор закончен, штаб подсказывает, что дальше
+  await step4('разбора хода нет', page4.locator('.tour .tour-count', { hasText: /^Разбор хода · шаг 1 из \d/ }), 120000);
+  await page4.waitForFunction(() => window.__said.some((m) => m.type === 'say' && m.role === 'umpire' && /^Ход прошёл без перелома/.test(m.text)), null, { timeout: 60000 })
+    .catch(() => { throw new Error('первый шаг разбора не прозвучал голосом посредника'); });
+  await hands4(['штаб, хватит']);
+  await page4.locator('.tour').waitFor({ state: 'detached', timeout: 40000 }).catch(async () => { throw new Error(`«хватит» не закончил разбор; лента: ${(await feed4()).slice(-400)}`); });
+  await said4('Решение на следующий ход').waitFor({ timeout: 150000 }).catch(async () => {
+    const d = await page4.evaluate(() => ({ tour: document.querySelector('.tour-count')?.textContent, phase: document.querySelector('.tour')?.getAttribute('data-phase'),
+      says: window.__said.filter((m) => m.type === 'say' || m.type === 'stop' || m.op).slice(-8).map((m) => `${m.type ?? m.op}:${m.role ?? ''}:${String(m.text ?? m.id ?? '').slice(0, 30)}`) }));
+    throw new Error(`штаб не подсказал, что дальше: ${JSON.stringify(d)}; лента: ${(await feed4()).slice(-300)}`);
+  });
   const ump4 = await page4.evaluate(() => window.__said.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
   if (ump4[0] !== 'Сведения о ходе готовятся, прошу подождать.') throw new Error(`посредник не объявил, что сведения готовятся: ${ump4[0]}`);
-  if (!ump4.some((x) => /^Ход прошёл без перелома\. Восьмая гвардейская армия ведёт бой у Зелова\./.test(x))) throw new Error(`доклад посредника не с модели или цифрами: ${ump4.join(' | ')}`);
+  if (!ump4.some((x) => /^Ход прошёл без перелома\. Восьмая гвардейская армия ведёт бой у Зелова\./.test(x))) throw new Error(`разбор хода не с модели или цифрами: ${ump4.join(' | ')}`);
   // штаб противника — после посредника: его запрос к модели идёт, когда доклад готов (сначала — справка из базы)
   await until(() => LM4.log.lastIndexOf('enemy') > LM4.log.indexOf('umpire'), 60000, `после доклада штаб противника не спрошен: ${LM4.log.join(', ')}`);
   if (SHOTS) await page4.screenshot({ path: join(SHOTS, 'voice-handsfree-umpire.jpg'), type: 'jpeg', quality: 88 });

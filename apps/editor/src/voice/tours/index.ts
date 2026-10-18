@@ -2,7 +2,9 @@
  * Туры: шаги с подсветкой элемента (`data-tour="…"`), текстом, который проговаривает штаб, и примером фразы.
  * Движок — voice/tour.tsx; здесь — только описания туров (без React: проверяются в node).
  */
+import type { LngLat } from '@def-ops/core';
 import type { Section } from '../../sections';
+import type { SpeakRole } from '../registry';
 import { INTRO } from './intro';
 import { VOICE_PANEL } from './voice-panel';
 import { EDITOR } from './editor';
@@ -34,6 +36,22 @@ export interface TourStep {
   via?: string;
   /** Элемента нет, а этот на экране — шаг целиком заменяется им (например, итог игры вместо кнопки хода). */
   alt?: Omit<TourStep, 'alt'>;
+  /** Карта на шаге (разбор хода): куда переехать, проиграть ли время, где метка и рамка. */
+  map?: TourMap;
+}
+
+/**
+ * Карта на шаге тура: переезд к месту (at, zoom) или показ всех точек fit; play — проиграть время карты от начала
+ * хода до конца (движение войск, линия фронта, зоны влияния); spot — метка-пульс, box — рамка вокруг точек (место
+ * боя и его участники).
+ */
+export interface TourMap {
+  at?: LngLat;
+  zoom?: number;
+  fit?: LngLat[];
+  play?: [string, string];
+  spot?: LngLat;
+  box?: LngLat[];
 }
 
 export interface Tour {
@@ -47,6 +65,10 @@ export interface Tour {
   game?: boolean;
   title: string;
   steps: TourStep[];
+  /** Чьим голосом звучат шаги: по умолчанию — начальник штаба; разбор хода — посредник. */
+  role?: SpeakRole;
+  /** Команда голосом посреди тура исполняется, а тур встаёт на паузу (разбор хода). */
+  pauseOnCommand?: boolean;
 }
 
 // тур раздела «Переигровка» вне игры — первым из туров этого раздела (findTour по разделу)

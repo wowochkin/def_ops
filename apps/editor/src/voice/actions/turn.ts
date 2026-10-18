@@ -17,10 +17,10 @@ import { pickByName } from '../answers';
 import { readAloud } from '../dictation';
 import { saveFile, savedText, textFile } from '../files';
 import { getAction, registerParser, speak, voiceRecent, type Action, type Offer, type PhraseHit } from '../registry';
-import { hl } from '../highlight';
+import { hl, tourEl } from '../highlight';
 import { dayMonth, sentence, short } from '../report';
 import { numberWords, speakable } from '../speech';
-import { lastUmpire, repeatUmpire } from '../umpire';
+import { lastUmpire, repeatUmpire, showTurnReview } from '../umpire';
 import { inReplay, NO_GAME, type CmdTab } from './command';
 import { askTarget, BUSY, decisionMissing, NEEDS_TARGET, projectHas, type OrderDraft, type PlanState, type StaffAct } from './staff';
 
@@ -40,6 +40,8 @@ export interface ReviewCtl {
 
 export interface TurnDeps {
   view: TurnView | null;
+  /** Обстановка на начало прошедшего хода (разбор хода: откуда проигрывать); нет — после перезапуска игры. */
+  prev: TurnView | null;
   /** Идёт расчёт хода (текст). */
   busy: string | null;
   /** Штаб противника не дал решения (причина) — ход ждёт. */
@@ -183,6 +185,9 @@ export function turnActions(get: () => TurnDeps): Action[] {
       available: () => { const r = game(); return r !== true ? r : get().blocked ? true : 'штаб противника решение дал — ход идёт как обычно'; },
       run: async () => { get().skipAi(); return 'Провожу ход без новых приказов противника. Посредник доложит итоги.'; } },
     // ---- посредник
+    { ...base, id: 'command.turn.show', highlight: () => tourEl('cmd-map'), title: 'Разбор хода', describe: 'Посредник показывает прошедший ход на карте по шагам: общее (ход проигрывается), главные бои, цели, тыл, противник по разведке.',
+      say: ['штаб, покажи ход'], available: played,
+      run: async () => { const d = get(); showTurnReview(d.view!, d.prev, d.record); } },
     { ...base, id: 'command.umpire.repeat', title: 'Повторить доклад посредника', describe: 'Повторяет доклад посредника о последнем ходе (его голосом).', say: ['штаб, повтори доклад'],
       available: () => { const r = game(); return r !== true ? r : lastUmpire() ? true : 'доклада посредника ещё не было — он звучит после хода'; },
       run: async () => { repeatUmpire(); } },

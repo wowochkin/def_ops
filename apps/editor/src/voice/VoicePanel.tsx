@@ -236,10 +236,10 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     });
     return () => { setSpeaker(null); setRetractor(null); setProposer(null); setVoiceLive(null); off(); };
   }, [dispatcher, gate]);
-  // тур говорит голосом начальника штаба: та же очередь фраз, та же лента
+  // тур говорит голосом начальника штаба (разбор хода — посредника): та же очередь фраз, та же лента
   useTourVoice({
     client,
-    send: (id, text) => gate.say(id, text),
+    send: (id, text, role) => gate.say(id, text, false, role),
     stop: (id) => { if (!gate.drop(id) && speakingIds.current.delete(id)) { client.stop(id); syncSpeaking(); } },
     live: () => enabledRef.current && !dialogRef.current && client.status === 'ready',
   });

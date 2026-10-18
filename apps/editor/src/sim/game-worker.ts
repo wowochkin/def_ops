@@ -12,7 +12,7 @@ import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
   agentsHistory, type AgentGameSpec, type AgentHistory,
   addHours, applyActions, prepareTakeover,
-  activeBoundaries, commandTerms, groupOf, runToDocument, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  activeBoundaries, commandTerms, groupOf, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, planOrdersApplied, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
@@ -679,6 +679,7 @@ function postView() {
     own,
     intel: intelReport(ctx, s, human, g.prev),
     events: journal.length ? journal[journal.length - 1].events : [],
+    ...turnMapView(),
     places: places(ctx.theatre).map((p) => ({ id: p.id, title: p.title, at: p.at })),
     delays: prof.orderDelayHours as Record<string, number>,
     detectKm: Math.round(detectKm(ctx)),
@@ -689,6 +690,19 @@ function postView() {
     lastDecision: (([...rec.turns].reverse().find((t) => t.human)?.human) as HumanDecision | undefined) ?? null,
   };
   post({ kind: 'view', view });
+}
+
+/** Разбор хода на карте: бои хода с местом и зоны влияния сторон на конец и начало хода (с туманом войны, как карта). */
+function turnMapView(): Pick<TurnView, 'battles' | 'zones' | 'zonesPrev'> {
+  const s = g.state, prev = g.prev, human = rec.human;
+  const battles = prev ? turnBattles(ctx, s, human, prev) : [];
+  try {
+    return {
+      battles,
+      zones: sideZones(ctx, s, human, { reveal, contested: battles.map((b) => b.at) }),
+      zonesPrev: prev && rec.turns.length ? sideZones(ctx, prev, human, { reveal }) : null,
+    };
+  } catch { return { battles, zones: null, zonesPrev: null }; } // зоны — картинка: без неё игра идёт
 }
 
 /** Резервы и прибывающие войска стороны человека — по армиям (в агентной модели резерв — дивизии армии, вводятся вместе). */

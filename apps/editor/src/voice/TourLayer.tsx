@@ -7,6 +7,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ActButton } from './registry';
 import { registerTourActions } from './actions/tour';
+import { setReviewRunner } from './umpire';
 import { findTarget, inGame, stepOf, onVoiceReady, READY_FIRST, stepCaption, tourControl, tourEngine, tourSection } from './tour';
 
 export type Rect = { top: number; left: number; width: number; height: number };
@@ -46,6 +47,8 @@ export function TourLayer({ section }: { section: string }) {
   const [view, setView] = useState(() => (typeof window === 'undefined' ? { w: 1440, h: 900 } : { w: window.innerWidth, h: window.innerHeight }));
 
   useEffect(() => registerTourActions(tourControl), []);
+  // разбор хода посредника (voice/umpire): тур по шагам на карте
+  useEffect(() => setReviewRunner((tour, end) => { void tourEngine.start(tour, { onEnd: () => end() }); }), []);
   // голос впервые готов: вступление, затем — предложение калибровки (панелью, voice:propose)
   useEffect(() => {
     const h = (e: Event) => onVoiceReady(e);

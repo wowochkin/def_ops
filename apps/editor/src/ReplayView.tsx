@@ -64,7 +64,7 @@ const TOGGLES: { key: string; title: string; match: (id: string) => boolean }[] 
 const BOUND_LAYERS = ['sim-bounds', 'lvl-op-bounds', 'lvl-st-bounds'];
 
 /** Полные названия слоёв в меню «Слои» (на кнопках были сокращения). */
-export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)', hbounds: 'Разграничительные линии: директивы и распоряжения', bounds: 'Полосы фронтов и армий (расчёт)', pockets: 'Котлы (окружённые группировки)', fortress: 'Крепости: обводы по застройке' };
+export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)', hbounds: 'Разграничительные линии: директивы и распоряжения', bounds: 'Полосы фронтов и армий (расчёт)', pockets: 'Котлы (окружённые группировки)', fortress: 'Крепости: обводы по застройке', zones: 'Зоны влияния сторон' };
 
 /** Уровень обобщения карты: тактический — соединения и бои, оперативный — объединения (армии), стратегический — фронты. */
 export type MapLevel = 'tac' | 'op' | 'st';
@@ -720,7 +720,7 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
   );
 }
 
-type LegendProps = { on: (key: string) => boolean; extra?: { cls: string; text: string; mark?: string }[]; combat?: boolean;
+type LegendProps = { on: (key: string) => boolean; extra?: { key?: string; cls: string; text: string; mark?: string }[]; combat?: boolean;
   /** Подпись состояния слоёв: с ней легенда не перерисовывается, пока состояние то же (кадры проигрывания). */
   sig?: string;
   /** Ключ localStorage: легенда открывается свёрнутой и помнит, что её развернули (командование — карта для работы). */
