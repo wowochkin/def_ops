@@ -25,10 +25,17 @@ export interface Action<P = any> {
   /** Строка для панели «Что можно сказать» вместо фраз `say` (перечень: «штаб, открой вкладку …: Модели, …»); не для речи. */
   hint?: string;
   confirm?(p: P): string;              // текст подтверждения
-  check?(p: P): true | string;         // параметры годятся сейчас (до подтверждения); строка — что сказать («Какой голос: …»)
+  /**
+   * Параметры годятся сейчас (до подтверждения): строка — что сказать («Какой голос: …»); Offer — что сказать и
+   * предложить («Ход проводить рано: … Составить черновик донесения?» — на «да» исполняется предложенное действие).
+   */
+  check?(p: P): true | string | Offer;
   available(): true | string;          // строка — почему недоступно
   run(p: P): Promise<string | void>;   // строка — что доложить
 }
+
+/** Предложение штаба вместо исполнения: offer — вопрос («…Составить черновик донесения?»), на «да» — действие id. */
+export interface Offer { offer: string; id: string; params?: unknown }
 
 const byId = new Map<string, Action>();
 
@@ -117,8 +124,13 @@ export function ActButton({ action, params, children, ...rest }: { action: strin
 
 // ---------------------------------------------------------------- голос штаба для модулей
 
-/** keep — фраза не устаревает от новой реплики человека (поздний ответ советника): ждёт конца реплики и звучит. */
-export interface SpeakOpts { keep?: boolean }
+/** Чей голос: начальник штаба (по умолчанию) или посредник (доклад после хода). */
+export type SpeakRole = 'chief' | 'umpire';
+/**
+ * keep — фраза не устаревает от новой реплики человека (поздний ответ советника): ждёт конца реплики и звучит;
+ * role — чьим голосом.
+ */
+export interface SpeakOpts { keep?: boolean; role?: SpeakRole }
 let speaker: ((text: string, o?: SpeakOpts) => number | void) | null = null;
 let retractor: ((id: number) => void) | null = null;
 /** Панель голоса подключает речь штаба (null — голоса нет: speak молчит). */
@@ -129,6 +141,12 @@ export function setRetractor(fn: ((id: number) => void) | null): void { retracto
 export function speak(text: string, o?: SpeakOpts): number | void { if (text) return speaker?.(text, o); }
 /** Фраза больше не нужна (новая просьба о том же). */
 export function retract(id: number): void { retractor?.(id); }
+
+let proposer: ((text: string, id: string, params?: unknown) => void) | null = null;
+/** Панель голоса подключает предложения штаба («да / нет»; null — голоса нет: propose молчит). */
+export function setProposer(fn: ((text: string, id: string, params?: unknown) => void) | null): void { proposer = fn; }
+/** Штаб предлагает («Составить разбор операции?»): на «да» исполняется действие id. Голоса нет или он дежурит — ничего. */
+export function propose(text: string, id: string, params?: unknown): void { proposer?.(text, id, params); }
 
 // ---------------------------------------------------------------- окна, ждущие ответа
 

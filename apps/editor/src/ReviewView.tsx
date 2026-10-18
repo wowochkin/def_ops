@@ -2,17 +2,21 @@
  * Разбор операции: отчётный документ по сыгранной игре. Модель пишет разделы по очереди от лица экспертов
  * (командующий, разведка, тыл, инженерные войска, начальник штаба, Ставка, военный историк) и итог с оценкой;
  * текст виден по мере написания, любой раздел можно переписать. Документ сохраняется в браузере (для этой игры)
- * и скачивается в PDF (через печать) или Markdown.
+ * и сохраняется файлом PDF или Markdown (в настольном приложении — в «Загрузки»), печатается.
+ *
+ * Голосом и кнопками — одни действия (voice/actions/turn.ts): «составь разбор», «прочитай итоговую оценку», «останови
+ * разбор», «сохрани разбор», «закрой разбор»; окно отдаёт управление разбором через ctl, пока смонтировано.
  */
 import { say } from './dialogs';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { REVIEW_SECTIONS } from '@def-ops/staff-service/live';
 import type { GameRequest, GameResponse, TurnView } from './sim/game-protocol';
 import type { Llm } from './shared';
 import { ModelPicker } from './ModelPicker';
 import { mdToHtml, unfence } from './markdown';
-import { download } from './ReplayView';
-import { downloadReviewPdf } from './reviewPdf';
+import { reviewPdfBlob } from './reviewPdf';
+import { act, useAction } from './voice/registry';
+import type { ReviewCtl } from './voice/actions/turn';
 
 type Status = 'idle' | 'wait' | 'writing' | 'done' | 'error';
 interface Sec { text: string; status: Status; note?: string; thinking?: string; model?: string; seconds?: number }
@@ -22,12 +26,17 @@ const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}.${t.slice(0, 4)}`;
 const keyOf = (v: TurnView) => `def_ops.review:${v.scenario}:${v.takeover}:${v.seed}`;
 const load = (v: TurnView): Record<string, Sec> => { try { return JSON.parse(localStorage.getItem(keyOf(v)) || '{}'); } catch { return {}; } };
 
-export function ReviewView({ view, llm, send, listen, onClose }: {
-  view: TurnView; llm: Llm; send: (m: GameRequest) => void; listen: (f: ((m: ReviewMsg) => void) | null) => void; onClose: () => void;
+export function ReviewView({ view, llm, send, listen, ctl }: {
+  view: TurnView; llm: Llm; send: (m: GameRequest) => void; listen: (f: ((m: ReviewMsg) => void) | null) => void;
+  /** Управление разбором для голоса (пока окно смонтировано). */
+  ctl: MutableRefObject<ReviewCtl | null>;
 }) {
   const [secs, setSecs] = useState<Record<string, Sec>>(() => load(view));
   const [pick, setPick] = useState<Set<string>>(() => new Set(REVIEW_SECTIONS.map((s) => s.id)));
-  const [running, setRunning] = useState(false);
+  const [running, setRunningState] = useState(false);
+  const runningRef = useRef(false);
+  const setRunning = (on: boolean) => { runningRef.current = on; setRunningState(on); };
+  const pickRef = useRef(pick); pickRef.current = pick;
   const stopRef = useRef(false);
   const waiters = useRef(new Map<number, { section: string; resolve: (ok: boolean) => void }>());
   const idRef = useRef(0);
@@ -74,31 +83,61 @@ export function ReviewView({ view, llm, send, listen, onClose }: {
   const stop = () => { stopRef.current = true; send({ kind: 'review-stop' }); };
   const todo = REVIEW_SECTIONS.filter((s) => pick.has(s.id) && secs[s.id]?.status !== 'done').map((s) => s.id);
   const ready = REVIEW_SECTIONS.filter((s) => secs[s.id]?.status === 'done');
+  /** Отмеченные и ещё не написанные — по свежему состоянию (голосом зовут вне отрисовки). */
+  const todoNow = () => REVIEW_SECTIONS.filter((s) => pickRef.current.has(s.id) && secsRef.current[s.id]?.status !== 'done').map((s) => s.id);
 
-  const markdown = () => [
+  const markdown = (all = secsRef.current) => [
     `# Разбор операции: ${view.scenarioName}`, '',
     `Сторона: ${view.human.name}. Командование принято ${dm(view.takeover)}; разбор на ${dm(view.time)}.`,
     `Итог: ${view.outcome ? `${view.outcome.result === 'victory' ? 'победа' : 'поражение'} — ${view.outcome.text}` : 'игра не окончена'}.`, '',
-    ...ready.flatMap((s) => [`## ${s.title}`, `*${s.role}*`, '', unfence(secs[s.id].text), '']),
+    ...REVIEW_SECTIONS.filter((s) => all[s.id]?.status === 'done').flatMap((s) => [`## ${s.title}`, `*${s.role}*`, '', unfence(all[s.id].text), '']),
   ].join('\n');
 
   const [pdfBusy, setPdfBusy] = useState(false);
-  /** Скачать файл PDF (собирается в браузере). */
-  const pdfFile = async () => {
+  /** Файл PDF разбора (собирается в окне). */
+  const pdfFile = async (): Promise<Blob> => {
     setPdfBusy(true);
+    const all = secsRef.current;
+    const done = REVIEW_SECTIONS.filter((s) => all[s.id]?.status === 'done');
     try {
-      await downloadReviewPdf({
+      return await reviewPdfBlob({
         scenario: view.scenarioName, side: view.human.name, enemy: view.ai.name, takeover: dm(view.takeover), at: `${dm(view.time)}, ход ${view.turn - 1}`,
         outcome: view.outcome ? { result: view.outcome.result, text: view.outcome.text } : null,
         strength: `${Math.round(view.strength * 100)} % численности на момент принятия командования`,
         goals: view.goals.map((g) => ({ title: g.title, game: g.simulated ? dm(g.simulated).slice(0, 5) : '—', history: dm(g.historical).slice(0, 5) })),
-        sections: ready.map((s) => ({ title: s.title, role: s.role, text: secs[s.id].text })),
-        models: [...new Set(ready.map((s) => secs[s.id].model).filter(Boolean))].join(', '),
-      }, `razbor-${view.scenario}-${view.time.slice(0, 10)}.pdf`);
+        sections: done.map((s) => ({ title: s.title, role: s.role, text: all[s.id].text })),
+        models: [...new Set(done.map((s) => all[s.id].model).filter(Boolean))].join(', '),
+      });
     } catch (e) {
       void say(`Не удалось собрать PDF: ${(e as Error).message}`);
+      throw e;
     } finally { setPdfBusy(false); }
   };
+  // управление для голоса: составить, остановить, разделы, файлы
+  const api = useRef<ReviewCtl>(null!);
+  api.current = {
+    sections: () => REVIEW_SECTIONS.map((s) => ({ id: s.id, title: s.title, done: secsRef.current[s.id]?.status === 'done', text: secsRef.current[s.id]?.text ?? '' })),
+    running: () => runningRef.current,
+    compose: (ids) => run(ids ?? todoNow()),
+    stop, markdown: () => markdown(), pdf: pdfFile,
+    name: (ext) => (ext === 'pdf' ? `razbor-${view.scenario}-${view.time.slice(0, 10)}.pdf` : `razbor-${view.scenario}.md`),
+  };
+  useEffect(() => {
+    const c: ReviewCtl = {
+      sections: () => api.current.sections(), running: () => api.current.running(), compose: (ids) => api.current.compose(ids), stop: () => api.current.stop(),
+      markdown: () => api.current.markdown(), pdf: () => api.current.pdf(), name: (e) => api.current.name(e),
+    };
+    ctl.current = c;
+    return () => { if (ctl.current === c) ctl.current = null; };
+  }, [ctl]);
+  useAction({ id: 'command.review.pick', section: 'replay', title: 'Отметить раздел разбора', describe: 'Отмечает раздел разбора (section — id) для написания или снимает отметку (on).',
+    params: { type: 'object', properties: { section: { type: 'string' }, on: { type: 'boolean' } }, required: ['section'] },
+    available: () => (runningRef.current ? 'разбор пишется — отметки после него' : true),
+    run: async (p: { section: string; on?: boolean }) => {
+      const s = REVIEW_SECTIONS.find((x) => x.id === p?.section);
+      if (!s) return 'Такого раздела нет.';
+      setPick((cur) => { const n = new Set(cur); if (p.on ?? !cur.has(s.id)) n.add(s.id); else n.delete(s.id); return n; });
+    } });
   const pdf = () => {
     const w = window.open('', '_blank');
     if (!w) { void say('Окно печати не открылось — сохраните разбор кнопкой «Скачать PDF» (в браузере — или разрешите всплывающие окна для этой страницы).'); return; }
@@ -119,11 +158,11 @@ ${ready.map((s, i) => `<section class="sec"><h2>${i + 1}. ${esc(s.title)}</h2><d
   };
 
   return (
-    <div className="modal-bg" onClick={onClose}>
+    <div className="modal-bg" onClick={() => { void act('command.review.close'); }}>
       <div className="modal review" onClick={(e) => e.stopPropagation()}>
         <div className="rv-h">
           <div><h3>Разбор операции</h3><span className="muted">{view.scenarioName} · {view.outcome ? (view.outcome.result === 'victory' ? 'победа' : 'поражение') : `ход ${view.turn - 1}, игра не окончена`}</span></div>
-          <button className="x" onClick={onClose} title="Закрыть (разбор сохранится)">×</button>
+          <button className="x" data-action="command.review.close" onClick={() => { void act('command.review.close'); }} title="Закрыть (разбор сохранится)">×</button>
         </div>
         <ModelPicker llm={llm} who="rev" purpose="разбора операции" />
         <div className="rv-body">
@@ -133,18 +172,18 @@ ${ready.map((s, i) => `<section class="sec"><h2>${i + 1}. ${esc(s.title)}</h2><d
               const st = secs[s.id]?.status ?? 'idle';
               return (
                 <label key={s.id} className={`rv-item ${st}`}>
-                  <input type="checkbox" checked={pick.has(s.id)} disabled={running} onChange={(e) => setPick((p) => { const n = new Set(p); if (e.target.checked) n.add(s.id); else n.delete(s.id); return n; })} />
+                  <input type="checkbox" data-action="command.review.pick" checked={pick.has(s.id)} disabled={running} onChange={(e) => { void act('command.review.pick', { section: s.id, on: e.target.checked }); }} />
                   <span><b>{s.title}</b><small>{s.role}</small></span>
                   <i>{st === 'done' ? '✓' : st === 'writing' || st === 'wait' ? <span className="spinner" /> : st === 'error' ? '!' : ''}</i>
                 </label>
               );
             })}
             <div className="rv-ctl">
-              {running ? <button onClick={stop}>Остановить</button>
-                : <button className="primary" disabled={!todo.length} onClick={() => void run(todo)}>{ready.length ? `Дописать (${todo.length})` : 'Составить разбор'}</button>}
-              <button disabled={!ready.length || pdfBusy} onClick={() => void pdfFile()} title="Скачать файл PDF">{pdfBusy ? 'собираю PDF…' : 'Скачать PDF'}</button>
+              {running ? <button data-action="command.review.stop" onClick={() => { void act('command.review.stop'); }}>Остановить</button>
+                : <button className="primary" data-action="command.review.compose" disabled={!todo.length} onClick={() => { void act('command.review.compose', {}); }}>{ready.length ? `Дописать (${todo.length})` : 'Составить разбор'}</button>}
+              <button data-action="command.review.save" disabled={!ready.length || pdfBusy} onClick={() => { void act('command.review.save', { format: 'pdf' }); }} title="Сохранить файл PDF">{pdfBusy ? 'собираю PDF…' : 'Сохранить PDF'}</button>
               <button className="link" disabled={!ready.length} onClick={pdf} title="Открыть документ для печати">печать</button>
-              <button className="link" disabled={!ready.length} onClick={() => download(`razbor-${view.scenario}.md`, markdown(), 'text/markdown')}>.md</button>
+              <button className="link" data-action="command.review.save" disabled={!ready.length} onClick={() => { void act('command.review.save', { format: 'md' }); }}>.md</button>
             </div>
           </aside>
           <main className="rv-doc">
@@ -154,7 +193,7 @@ ${ready.map((s, i) => `<section class="sec"><h2>${i + 1}. ${esc(s.title)}</h2><d
               return (
                 <section key={s.id} className="rv-sec">
                   <h2>{i + 1}. {s.title}<small>{s.role}</small>
-                    {!running && x.status !== 'wait' && x.status !== 'writing' && <button className="link" onClick={() => void run([s.id])}>переписать</button>}</h2>
+                    {!running && x.status !== 'wait' && x.status !== 'writing' && <button className="link" data-action="command.review.compose" onClick={() => { void act('command.review.compose', { sections: [s.id] }); }}>переписать</button>}</h2>
                   {x.note && <div className="muted rv-note">{x.status === 'wait' && <span className="spinner" />} <span>{x.note}</span></div>}
                   {x.thinking && !x.text && x.status !== 'error' && <div className="rv-think">
                     <div className="rv-think-h"><span className="spinner" /> модель размышляет · {x.thinking.length.toLocaleString('ru')} знаков</div>

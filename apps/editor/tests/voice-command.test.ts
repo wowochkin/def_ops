@@ -261,7 +261,7 @@ describe('вход в командование голосом', () => {
     const d: ReplayDeps = {
       catalog: CATALOG, scenario: 'berlin-1945-tasks', busy: null, game: false, calc: vi.fn(), result: null, time: null,
       takeAt: (x) => `${x.slice(0, 10)}T05:00`, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null,
-      begin: vi.fn(), continueGame: vi.fn(), ...over,
+      begin: vi.fn(), continueGame: vi.fn(), stop: vi.fn(), discardSaved: vi.fn(), ...over,
     };
     reg(replayActions(() => d));
     return d;
@@ -378,7 +378,7 @@ describe('разборщик знает раздел', () => {
     offs.push(register({ id: 'shell.open', section: 'global', title: '', describe: '', available: () => true, run: async (p: { section: string }) => { where = p.section; } }));
     reg(replayActions(() => ({
       catalog: [{ id: 'berlin-1945-tasks', title: 'Берлинская операция' }], scenario: 'berlin-1945-tasks', busy: null, game: false, calc, result: null, time: null,
-      takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(),
+      takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(), stop: vi.fn(), discardSaved: vi.fn(),
     })));
     const disp = new Dispatcher({ now: () => t, say: (s) => said.push(s), section: () => where });
     await disp.utterance('Штаб, рассчитай операцию', 1);
@@ -432,7 +432,7 @@ describe('мелкие поправки', () => {
     const calc = vi.fn();
     reg(replayActions(() => ({
       catalog: [{ id: 'a', title: 'Берлинская операция' }, { id: 'b', title: 'Бой в Берлине' }], scenario: 'b', busy: null, game: false, calc, result: null, time: null,
-      takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(),
+      takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(), stop: vi.fn(), discardSaved: vi.fn(),
     })));
     for (const q of ['рассчитай заново', 'рассчитай еще раз', 'рассчитай её снова', 'пересчитай']) {
       const h = parsePhrase(q, 'replay');
@@ -463,7 +463,7 @@ describe('«рассчитай …» — только операция из ка
   const deps = (calc = vi.fn()): ReplayDeps => ({
     catalog: [{ id: 'berlin-1945-tasks', title: 'Берлинская операция, 16.04–2.05.1945' }, { id: 'berlin-city-1945', title: 'Бой в Берлине, 24.04–2.05.1945' }],
     scenario: 'berlin-1945-tasks', busy: null, game: false, calc, result: null, time: null,
-    takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(),
+    takeAt: (x) => x, setTime: vi.fn(), openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: null, begin: vi.fn(), continueGame: vi.fn(), stop: vi.fn(), discardSaved: vi.fn(),
   });
   it('посторонний хвост — не команда (и раздел не переключается)', async () => {
     const get = () => d;

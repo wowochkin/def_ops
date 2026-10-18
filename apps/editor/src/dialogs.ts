@@ -87,13 +87,13 @@ function dialog(message: string, o: { ok?: string; cancel?: string; danger?: boo
       back.remove();
       resolve(out);
     };
-    const done = (v: boolean) => finish(v && inp ? inp.value : v && extra.length ? extra.length - 1 : v);
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
-      else if (e.key === 'Enter' && !(e.shiftKey && inp)) { e.preventDefault(); e.stopPropagation(); done(true); }
-    };
-    // кнопки — те же действия, что голосом (dialog.answer)
+    // кнопки и клавиши — те же действия, что голосом (dialog.answer)
     const answer = (choice: string) => { void act('dialog.answer', { choice }); };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); answer(o.alone ? 'понятно' : 'нет'); }
+      // Enter — основная кнопка: «да» / последний вариант / поле ввода — «готово»
+      else if (e.key === 'Enter' && !(e.shiftKey && inp)) { e.preventDefault(); e.stopPropagation(); answer(inp ? 'готово' : extra.length ? String(extra.length) : 'да'); }
+    };
     no.onclick = () => answer('нет');
     yes.onclick = () => answer('да');
     extra.forEach((b, i) => { b.onclick = () => answer(String(i + 1)); });

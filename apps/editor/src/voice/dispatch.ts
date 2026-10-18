@@ -19,7 +19,7 @@ import { SECTIONS } from '../sections';
 import { yesNo } from './answers';
 import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
-import { act, actions, getAction, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type VoiceModal } from './registry';
+import { act, actions, getAction, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
 import { speakable } from './speech';
 
@@ -259,10 +259,11 @@ export class Dispatcher {
   pending: Pending | null = null;
   /** Дежурный режим: исполняется только «Штаб, на связь». */
   standby = false;
-  /** Последняя фраза штаба и когда сказана (now): «повтори» и эхо в дежурном режиме. */
-  private last: { text: string; at: number } | null = null;
+  /** Последняя фраза штаба (чьим голосом) и когда сказана (now): «повтори» и эхо в дежурном режиме. */
+  private last: { text: string; at: number; role?: SpeakRole } | null = null;
   /**
-   * say — фраза штаба (quiet — заготовленная фраза о модели: окно разговора она заново не открывает); вернуть может
+   * say — фраза штаба (quiet — заготовленная фраза о модели: окно разговора она заново не открывает; role — чьим голосом:
+   * посредник докладывает итоги хода); вернуть может
    * номер фразы — им unsay гасит фразу (звучащую или ждущую очереди). stop — штаб замолкает (стоп-слово).
    * supersede — новая реплика разобрана: ждущие очереди старые ответы больше не нужны.
    * model — модель за правилами (нет — честный ответ правил); modelReady — false, если проверка связи в «ИИ» не прошла
@@ -271,7 +272,7 @@ export class Dispatcher {
    * onStandby — дежурный режим включён / снят.
    */
   constructor(private opts: {
-    now(): number; say(text: string, o?: { quiet?: boolean; keep?: boolean }): number | void; section(): string; stop?(): void;
+    now(): number; say(text: string, o?: { quiet?: boolean; keep?: boolean; role?: SpeakRole }): number | void; section(): string; stop?(): void;
     unsay?(id: number): void; supersede?(): void;
     model?: ModelHook; modelReady?(): boolean; recheck?(): Promise<boolean>; thinking?(on: boolean): void;
     onPending?(p: Pending | null): void; onStandby?(on: boolean): void;
@@ -285,13 +286,13 @@ export class Dispatcher {
   }
 
   /** Фраза штаба: запоминается для «повтори» и для распознавания эха. */
-  private say(text: string, o?: { quiet?: boolean; keep?: boolean }): number | void {
-    if (!o?.quiet) this.last = { text, at: this.opts.now() };
+  private say(text: string, o?: { quiet?: boolean; keep?: boolean; role?: SpeakRole }): number | void {
+    if (!o?.quiet) this.last = { text, at: this.opts.now(), ...(o?.role ? { role: o.role } : {}) };
     return this.opts.say(text, o);
   }
 
   /** Фраза для других модулей (окно зачитывает вопрос, чтение по частям): в дежурном режиме штаб молчит. Номер фразы. */
-  announce(text: string, o?: { keep?: boolean }): number | void { if (!this.standby && text) return this.say(text, o); }
+  announce(text: string, o?: { keep?: boolean; role?: SpeakRole }): number | void { if (!this.standby && text) return this.say(text, o); }
   /** Снять фразу id (модуль: ответ больше не нужен): ждёт — снимается, звучит — гасится. */
   retract(id: number): void { this.opts.unsay?.(id); }
 
@@ -522,7 +523,9 @@ export class Dispatcher {
     const av = a.available();
     if (av !== true) { this.say(`Сейчас нельзя: ${av.replace(/[.!]+$/, '')}.`); return 'unknown'; }
     const ok = a.check ? a.check(params as never) : true;
-    if (ok !== true) { this.say(ok); return 'unknown'; }
+    if (typeof ok === 'string') { this.say(ok); return 'unknown'; }
+    // вместо исполнения — предложение («Ход проводить рано: … Составить черновик донесения?»): на «да» — его действие
+    if (ok !== true) { this.propose(ok.offer, ok.id, ok.params); return 'done'; }
     if (a.irreversible) {
       this.propose(a.confirm?.(params as never) ?? `${a.title}?`, a.id, params);
       return 'done';
@@ -661,7 +664,8 @@ export class Dispatcher {
     // «отбой» — дежурный режим: микрофон открыт, штаб ждёт «Штаб, на связь» (выключить микрофон — кнопкой)
     if (OFF.test(rest)) { await this.standbyByVoice(); return true; }
     if (WAKE.test(rest)) { this.say('На связи.'); return true; }
-    if (REPEAT.test(rest)) { repeatTurn(); this.say(this.last?.text ?? 'Я ещё ничего не говорил.'); return true; } // переспрос — вопрос ждёт
+    // переспрос — вопрос ждёт; повторяется тем же голосом (доклад посредника — посредником)
+    if (REPEAT.test(rest)) { repeatTurn(); this.say(this.last?.text ?? 'Я ещё ничего не говорил.', this.last?.role ? { role: this.last.role } : undefined); return true; }
     const yn = yesNo(rest);
     if (yn) {
       // штаб только что предложил (тур: «Показать раздел?») — «да» в любых словах соглашается

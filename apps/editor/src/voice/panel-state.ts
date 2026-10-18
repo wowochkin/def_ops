@@ -1,6 +1,7 @@
 // Чистая логика панели голоса: состояние словами, настройки в localStorage, лента реплик.
 // Без React и браузерных API — проверяется в vitest/node.
 import type { BargeMode, VoiceSettings, VoiceStatus } from './protocol';
+import type { SpeakRole } from './registry';
 
 export const SETTINGS_KEY = 'def_ops.voice.settings';
 /** Голос выключен человеком (кнопка или «Штаб, отбой»): 'false'; включён — 'true' или ключа нет. */
@@ -129,18 +130,18 @@ export const UTT_WAIT_MS = 2_000;
  * (busy), очередная фраза его ответа не ждёт: речь в микрофоне тогда — скорее его же голос из динамиков.
  */
 export class SayGate {
-  private queue: { id: number; text: string; keep: boolean }[] = [];
+  private queue: { id: number; text: string; keep: boolean; role?: SpeakRole }[] = [];
   private since: number | null = null;
   /** Речь кончилась в это время, реплики ещё нет. */
   private ended: number | null = null;
   /** onDrop — номера снятых ждущих фраз (drop, clear): кто ждал их конца (тур), узнаёт, что они не прозвучат. */
-  constructor(private send: (id: number, text: string) => void, private now: () => number, private busy: () => boolean,
+  constructor(private send: (id: number, text: string, role?: SpeakRole) => void, private now: () => number, private busy: () => boolean,
     private onDrop?: (ids: number[]) => void) {}
 
-  /** keep — фраза не устаревает от новой реплики (dropStale её оставляет): поздний ответ советника. */
-  say(id: number, text: string, keep = false): void {
-    if (this.holding() && !this.busy()) this.queue.push({ id, text, keep });
-    else this.send(id, text);
+  /** keep — фраза не устаревает от новой реплики (dropStale её оставляет): поздний ответ советника; role — чьим голосом. */
+  say(id: number, text: string, keep = false, role?: SpeakRole): void {
+    if (this.holding() && !this.busy()) this.queue.push({ id, text, keep, role });
+    else this.send(id, text, role);
   }
   /** Речь человека началась / кончилась (сообщение сервиса `speech`). */
   speech(on: boolean): void {
@@ -182,7 +183,7 @@ export class SayGate {
   private flush(): void {
     const q = this.queue;
     this.queue = [];
-    q.forEach((x) => this.send(x.id, x.text));
+    q.forEach((x) => this.send(x.id, x.text, x.role));
   }
 }
 
@@ -251,7 +252,7 @@ export function panelState(s: PanelInput): { key: PanelKey; text: string } {
  * echo — микрофон, похоже, поймал голос штаба из динамиков: показывается, но не исполняется;
  * fix — как понята реплика с огрехами распознавания («Услышано: … — понял: …»).
  */
-export type FeedKind = 'heard' | 'me' | 'notme' | 'chief' | 'note' | 'echo' | 'fix';
+export type FeedKind = 'heard' | 'me' | 'notme' | 'chief' | 'umpire' | 'note' | 'echo' | 'fix';
 export interface FeedItem {
   key: string;
   kind: FeedKind;

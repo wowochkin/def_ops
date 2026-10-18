@@ -128,20 +128,12 @@ export function reviewDoc(x: ReviewPdfInput): TDocumentDefinitions {
   };
 }
 
-/** Собрать и скачать PDF. */
-export async function downloadReviewPdf(x: ReviewPdfInput, fileName: string) {
+/** Собрать PDF разбора (файл; сохраняет его вызывающий — voice/files.ts). */
+export async function reviewPdfBlob(x: ReviewPdfInput): Promise<Blob> {
   const [{ default: pdfMake }, { default: vfs }] = await Promise.all([import('pdfmake/build/pdfmake'), import('pdfmake/build/vfs_fonts')]);
   const v = (vfs as unknown as { pdfMake?: { vfs: Record<string, string> }; vfs?: Record<string, string> });
   (pdfMake as unknown as { vfs: Record<string, string> }).vfs = v.pdfMake?.vfs ?? v.vfs ?? (vfs as unknown as Record<string, string>);
-  // свой «скачать» по ссылке: имя файла сохраняется во всех браузерах
   // pdfmake 0.2 отдаёт файл в обратный вызов, новые версии — обещанием
   const doc = pdfMake.createPdf(reviewDoc(x)) as unknown as { getBlob: (cb?: (b: Blob) => void) => Promise<Blob> | void };
-  const blob = await new Promise<Blob>((res, rej) => { const p = doc.getBlob(res); if (p && typeof p.then === 'function') p.then(res, rej); });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  return new Promise<Blob>((res, rej) => { const p = doc.getBlob(res); if (p && typeof p.then === 'function') p.then(res, rej); });
 }

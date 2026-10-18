@@ -30,7 +30,10 @@
 // при первом запуске («нет»), вход в командование и обстановка («открой переигровку» → «рассчитай операцию» →
 // «прими командование» → «без штаба» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»),
 // советник и решение («дай два варианта» — поддельная LM Studio отвечает вариантами → «подробнее о первом» →
-// «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»).
+// «выбираю первый» → «восьмой гвардейской наступать на Зелов» → «запиши в замысел: …» → «что не готово?»), ход
+// («проводи ход» — чего нет и «Составить черновик донесения?», «да»; «проводи ход» → «да» → доклад посредника голосом
+// посредника — роль umpire). В конце — отдельное окно «без рук от запуска до доклада посредника»: вступление («хватит»)
+// → переигровка → расчёт → командование → обстановка → варианты → «проводи ход» → «да» → посредник.
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
 // панели, калибровки, голосов, раздела «ИИ» (модель для голоса) и туров (voice-tour.jpg, voice-tour-modeling.jpg,
 // voice-tour-library.jpg).
@@ -639,7 +642,9 @@ await check('событие voice:power: false — выключает, true — 
 // моделей, /v1/chat/completions — по ключевым словам последней реплики: вызов инструмента, текст, текст с
 // задержкой, «не запущена» (соединение отвергается сразу) или «висит» (каждая попытка кончается через 3 с ответом
 // 500 — сбой самой модели, повторяется; модель ещё ждёт, когда приходит следующая реплика).
-const LM = { asked: [], settled: [], models: 0, plans: 0 };
+const LM = { asked: [], settled: [], models: 0, plans: 0, umpire: 0 };
+/** Доклад посредника от поддельной модели: три фразы, число — цифрами (озвучка — словами). */
+const UMPIRE_SAYS = 'Ход прошёл без перелома. 8-я гв. армия ведёт бой у Зелова. До окружения Берлина ещё далеко.';
 /** Ответ потоком (stream: true): content кусками, затем [DONE]. */
 const sse = (content) => [...content.match(/[\s\S]{1,200}/g).map((c) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: c } }] })}\n\n`),
   `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\n`, 'data: [DONE]\n\n'].join('');
@@ -679,6 +684,8 @@ async function fakeLmStudio() {
     const body = route.request().postDataJSON();
     // советник (поток окна игры): варианты решения на ход — потоком SSE, как LM Studio
     if (body.response_format?.json_schema?.name === 'staff_plan') { LM.plans++; return route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream' }, body: sse(JSON.stringify(PLAN)) }).catch(() => {}); }
+    // доклад посредника после хода — короткий текст от лица посредника
+    if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM.umpire++; return route.fulfill({ json: lmReply(UMPIRE_SAYS) }).catch(() => {}); }
     const said = body.messages.at(-1)?.content ?? '';
     LM.asked.push(said);
     const a = lmAnswer(said);
@@ -1069,6 +1076,33 @@ await check('без рук: «дай два варианта» → «подро�
   return `запросов вариантов: ${LM.plans}`;
 });
 
+await check('без рук: «проводи ход» — чего нет и предложение («да» — черновик донесения) → «проводи ход» → «да» → доклад посредника его голосом', async () => {
+  await handsFree(['штаб, проводи ход', ...QUIET], { reload: false });
+  await feedHas('Ход проводить рано: не готово — боевое донесение').waitFor({ timeout: 30000 });
+  await feedHas('Составить черновик донесения?').waitFor({ timeout: 10000 });
+  await handsFree(['штаб, да', ...QUIET], { reload: false });
+  await feedHas('Черновик донесения составлен').waitFor({ timeout: 30000 });
+  await handsFree(['штаб, проводи ход', ...QUIET], { reload: false });
+  await feedHas('Провожу ход: решение готово, приказов один').waitFor({ timeout: 30000 });
+  await panel.locator('.vp-confirm').waitFor({ timeout: 10000 });
+  await shot('voice-turn.jpg');
+  await handsFree(['штаб, да', ...QUIET], { reload: false });
+  await feedHas('Считаю ход').waitFor({ timeout: 30000 });
+  // доклад посредника — голосом посредника (роль umpire в фразе сервису), в ленте — «Посредник:»
+  await panel.locator('.vp-item.umpire').first().waitFor({ timeout: 180000 }).catch(() => { throw new Error('доклада посредника нет'); });
+  const ump = await page.evaluate(() => window.__e2e.sent.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
+  if (!ump.length) throw new Error('доклад посредника не голосом посредника');
+  if (/\d/.test(ump[0])) throw new Error(`в докладе посредника цифры: ${ump[0]}`);
+  const n = ump[0].match(/[.!?…]+(?=\s|$)/g)?.length ?? 0;
+  if (n < 3 || n > 5) throw new Error(`в докладе посредника ${n} фраз: ${ump[0]}`);
+  await feedHas('Решение на следующий ход').waitFor({ timeout: 30000 });
+  await page.locator('.cmd-date', { hasText: 'ход 2' }).waitFor({ timeout: 10000 });
+  await shot('voice-umpire.jpg');
+  const clicks = await page.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+  return `доклад: ${ump[0].slice(0, 80)}…`;
+});
+
 await check('первый запуск без калибровки: штаб предлагает её («да / нет»), «нет» — отменено', async () => {
   await stopVoice();
   await page.evaluate(() => { sessionStorage.setItem('e2e.offer', '1'); localStorage.removeItem('def_ops.voice.settings'); });
@@ -1317,6 +1351,103 @@ await check('«Штаб, хватит» — тур по знакам оконч�
   if (left) throw new Error(`осталось элементов тура: ${left}`);
 });
 await ctx3.close();
+
+// ---------------------------------------------------------------- без рук: от запуска до доклада посредника
+// Новое окно (калибровки не было, вступление включено), поддельная LM Studio: советник даёт полный вариант решения
+// (с донесением), штаб противника — решение, посредник — доклад. Ни одного щелчка: «хватит» (вступление) → «покажи
+// переигровку» → «рассчитай операцию» → «прими командование» → «принимаю» → «доложи обстановку» → «дай два варианта»
+// → «выбираю первый» → «проводи ход» → «да» → доклад посредника его голосом.
+const PLAN_FULL = { variants: PLAN.variants.map((v) => ({ ...v, report: 'Войска ведут бой за Зееловские высоты, подвоз доходит.' })) };
+const DECISION_DE = { assessment: 'Русские наступают на Зелов.', enemyIntent: 'Прорыв к Берлину.', intent: 'Удерживать вторую полосу.', orders: [], requests: [], risks: [], actions: [], basis: [] };
+await stopVoice();
+const ctx4 = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone'] });
+await ctx4.addInitScript((url) => {
+  if (sessionStorage.getItem('e2e.init')) return;
+  sessionStorage.setItem('e2e.init', '1');
+  localStorage.clear();
+  localStorage.setItem('def_ops.voice.url', url);
+  localStorage.setItem('def_ops.section', 'editor');
+  localStorage.setItem('def_ops.voice.panel', 'open');
+  localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: 'voice', aec_unknown: true }));
+}, `ws://127.0.0.1:${vport}/ws`);
+await ctx4.addInitScript(() => {
+  window.__clicks = 0; window.addEventListener('pointerdown', () => { window.__clicks++; }, true);
+  window.__said = [];
+  const Ws = window.WebSocket;
+  window.WebSocket = class extends Ws { send(d) { if (typeof d === 'string') { try { window.__said.push(JSON.parse(d)); } catch { /* */ } } return super.send(d); } };
+});
+const LM4 = { plans: 0, enemy: 0, umpire: 0 };
+await ctx4.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
+  const url = new URL(route.request().url());
+  if (url.pathname.endsWith('/v1/models')) return route.fulfill({ json: { object: 'list', data: [{ id: 'fake-voice', object: 'model' }] } });
+  if (!url.pathname.endsWith('/v1/chat/completions')) return route.fulfill({ status: 404, body: '' });
+  const body = route.request().postDataJSON();
+  const schema = body.response_format?.json_schema?.name;
+  const reply = (content) => (body.stream ? route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream' }, body: sse(content) }) : route.fulfill({ json: lmReply(content) }));
+  if (schema === 'staff_plan') { LM4.plans++; return reply(JSON.stringify(PLAN_FULL)).catch(() => {}); }
+  if (schema === 'staff_decision') { LM4.enemy++; return reply(JSON.stringify(DECISION_DE)).catch(() => {}); }
+  if (schema) return reply('{}').catch(() => {});
+  if (/посредник штабной игры/.test(body.messages[0]?.content ?? '')) { LM4.umpire++; return reply(UMPIRE_SAYS).catch(() => {}); }
+  return reply('Слушаю.').catch(() => {});
+});
+if (STUB) await ctx4.route('**/api/voice', (r) => r.fulfill({ json: { state: 'ready', port: vport } }));
+const page4 = await ctx4.newPage();
+page4.on('pageerror', (e) => errors.push(e.message));
+const panel4 = page4.locator('.vp');
+const said4 = (re, kind = 'chief') => panel4.locator(`.vp-item.${kind}`, { hasText: re });
+const feed4 = async () => (await page4.locator('.vp-feed').innerText().catch(() => '')).replace(/\s+/g, ' ');
+/** Следующие реплики «микрофона»: сервис перезапускается с ними (окно подключается само). */
+async function hands4(lines) {
+  await stopVoice();
+  const f = join(tmp, `hands4-${Date.now()}.txt`);
+  writeFileSync(f, [...lines, ...QUIET].join('\n') + '\n');
+  await startVoice(f, 'off');
+  await panel4.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 40000 });
+}
+const step4 = (what, loc, ms = 30000) => loc.waitFor({ timeout: ms }).catch(async () => { throw new Error(`${what}; лента: ${(await feed4()).slice(-600)}`); });
+
+await check('без рук от запуска до доклада посредника: вступление «хватит» → переигровка → расчёт → командование → обстановка → варианты → «проводи ход» → «да» → посредник', async () => {
+  const t0 = Date.now();
+  // запуск: вступление (калибровки не было) — «хватит»
+  const f0 = join(tmp, 'hands4-start.txt');
+  writeFileSync(f0, ['{тишина}', 'штаб, хватит', ...QUIET].join('\n') + '\n');
+  await startVoice(f0, 'off');
+  await page4.goto(app + '/#editor');
+  await step4('вступление не началось', page4.locator('.tour'), 60000);
+  await page4.locator('.tour').waitFor({ state: 'detached', timeout: 60000 }).catch(async () => { throw new Error(`«хватит» не закончил вступление; лента: ${await feed4()}`); });
+  await hands4(['штаб, покажи переигровку', 'штаб, рассчитай операцию']);
+  await page4.waitForFunction(() => location.hash === '#replay', null, { timeout: 30000 });
+  await step4('расчёт не начат', said4('Считаю: Берлинская операция'));
+  await step4('расчёт не закончился', page4.locator('.take-btn'), 240000);
+  await step4('о готовности расчёта не сказано', said4('Расчёт готов'));
+  await hands4(['штаб, прими командование']);
+  const dlg = page4.locator('.modal.take');
+  await step4('окно «Принять командование» не открылось', dlg);
+  await step4('окно не зачитано', said4('Принять командование с шестнадцатого апреля'));
+  await hands4(['штаб, принимаю']);
+  await dlg.waitFor({ state: 'detached', timeout: 40000 }).catch(() => { throw new Error('«принимаю» не начал игру'); });
+  await step4('игра не началась', page4.locator('.cmd-date'), 120000);
+  await hands4(['штаб, доложи обстановку']);
+  await step4('доклада обстановки нет', said4('Цель — '));
+  await hands4(['штаб, дай два варианта']);
+  await step4(`варианты не готовы (запросов: ${LM4.plans})`, said4('Советник предложил два варианта'), 90000);
+  await hands4(['штаб, выбираю первый']);
+  await step4('вариант не принят', said4('Вариант «Удар на Зелов» принят'));
+  await hands4(['штаб, проводи ход']);
+  await step4('подтверждения хода нет', said4('Провожу ход: решение готово, приказов один'));
+  await hands4(['штаб, да']);
+  await step4('ход не начат', said4('Считаю ход'));
+  await step4(`доклада посредника нет (штаб противника: ${LM4.enemy}, посредник: ${LM4.umpire})`, panel4.locator('.vp-item.umpire').first(), 240000);
+  const ump = await page4.evaluate(() => window.__said.filter((m) => m.type === 'say' && m.role === 'umpire').map((m) => m.text));
+  if (!ump.length) throw new Error('доклад посредника не голосом посредника (role umpire)');
+  if (!/^Ход прошёл без перелома\. Восьмая гвардейская армия ведёт бой у Зелова\./.test(ump[0])) throw new Error(`доклад посредника не с модели или цифрами: ${ump[0]}`);
+  await step4('штаб не подсказал, что дальше', said4('Решение на следующий ход'));
+  if (SHOTS) await page4.screenshot({ path: join(SHOTS, 'voice-handsfree-umpire.jpg'), type: 'jpeg', quality: 88 });
+  const clicks = await page4.evaluate(() => window.__clicks);
+  if (clicks) throw new Error(`щелчков: ${clicks}`);
+  return `щелчков 0, ${Math.round((Date.now() - t0) / 1000)} с, штаб противника: ${LM4.enemy}`;
+});
+await ctx4.close();
 
 await check('в окне нет ошибок JavaScript', async () => {
   if (errors.length) throw new Error(errors.join('; '));

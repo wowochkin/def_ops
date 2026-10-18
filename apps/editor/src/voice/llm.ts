@@ -162,6 +162,36 @@ export async function askModel(text: string, ctx: {
   throw new ModelUnavailable(last);
 }
 
+/**
+ * Короткий текст от модели без инструментов (доклад посредника): системный текст и запрос — как есть, размышление
+ * выключено. По умолчанию одна попытка (delays — паузы перед повторами); сбой — ModelUnavailable.
+ */
+export async function askText(system: string, text: string, ctx: {
+  settings: LlmSettings; fetch?: typeof fetch; signal?: AbortSignal; delays?: number[]; maxTokens?: number;
+}): Promise<string> {
+  const s = ctx.settings;
+  const model = s.voiceModel || s.model;
+  const body = {
+    ...(model ? { model } : {}),
+    messages: [{ role: 'system', content: system }, { role: 'user', content: text }],
+    temperature: 0.6, top_p: 0.8, max_tokens: ctx.maxTokens ?? 500, stream: false, reasoning_effort: 'none',
+  };
+  const delays = ctx.delays ?? [];
+  let last: unknown;
+  for (let n = 1; n <= delays.length + 1; n++) {
+    if (ctx.signal?.aborted) throw ctx.signal.reason ?? new Error('отменено');
+    if (n > 1) await sleep(delays[n - 2], ctx.signal);
+    try {
+      return (await once(body, s.url, ctx.fetch ?? fetch, ctx.signal)).say;
+    } catch (e) {
+      if (ctx.signal?.aborted) throw e;
+      if (e instanceof NoRetry) throw new ModelUnavailable(e);
+      last = e;
+    }
+  }
+  throw new ModelUnavailable(last);
+}
+
 /** Крючок модели для разборщика: держит разговор (последние реплики) и берёт настройки в момент вызова. */
 export function createVoiceModel(opts: { settings(): LlmSettings; fetch?: typeof fetch; delays?: number[] }) {
   const history: ChatMessage[] = [];

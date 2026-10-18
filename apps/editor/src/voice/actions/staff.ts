@@ -66,8 +66,8 @@ export interface StaffDeps {
   applyPlan(i: number, only: boolean): Promise<string>;
   /** Советник отвечает на вопрос. */
   advisorBusy: boolean;
-  /** Задать вопрос советнику (советник открывается); возвращает номер вопроса. */
-  askAdvisor(question: string): number;
+  /** Задать вопрос советнику (советник открывается; cat, topic — тема из дерева тем); возвращает номер вопроса. */
+  askAdvisor(question: string, cat?: string, topic?: string): number;
   /** Исполнимые приказы, предложенные в последнем ответе советника. */
   suggestions: Suggestion[];
   takeSuggestion(s: Suggestion): void;
@@ -368,6 +368,19 @@ export function releaseStaff(get: () => StaffDeps): void {
 }
 
 const TEXT = { type: 'string' };
+/** Причина «нельзя» во время расчёта хода (кнопки и голос). */
+export const BUSY = 'считаю ход — подождите, посредник доложит итоги';
+
+/**
+ * У приказа нет цели («проводи ход»): спросить её — «Куда наступать?»; ответ названием в следующей реплике дополнит
+ * приказ (как после «восьмой гвардейской наступать» без цели). Возвращает вопрос.
+ */
+export function askTarget(unit: string, name: string, task: Task, note = ''): string {
+  awaiting = { unit, name, task, note, until: Date.now() + AWAIT_MS, turn: voiceTurn() };
+  return `${TARGET_Q[task]} Назовите пункт или соединение противника.`;
+}
+/** Своё объединение (не уничтоженное) по названию или id; переспрос — say; нет — null. */
+export function findOwn(text: string, v: TurnView): { found: UnitReport } | { say: string } | null { return ownOf(text, v); }
 const N = { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 } }, required: ['n'] };
 
 export function staffActions(get: () => StaffDeps): Action[] {
@@ -377,7 +390,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     const d = get();
     if (!d.view) return 'обстановка ещё готовится — подождите немного';
     if (d.view.over) return 'игра окончена — новые приказы не нужны. Можно сказать: «Штаб, выйди из игры»';
-    if (d.busy) return 'идёт расчёт хода — подождите';
+    if (d.busy) return BUSY;
     return true;
   };
   const view = () => get().view!;
@@ -499,12 +512,14 @@ export function staffActions(get: () => StaffDeps): Action[] {
       confirm: (p: { n: number }) => { const x = variant(p?.n); return `Заменить проект вариантом «${typeof x === 'string' ? '' : x.v.title}»? Текущие решение, приказы и распоряжения будут заменены.`; },
       run: async (p: { n: number }) => pick(p?.n, false) },
     { ...base, id: 'command.advisor.ask', title: 'Спросить советника', describe: 'Задаёт советнику вопрос своими словами; ответ штаб зачитает, когда он будет готов.',
-      params: { type: 'object', properties: { text: TEXT }, required: ['text'] }, say: ['штаб, спроси советника: где лучше наступать?'],
+      // cat, topic — вопрос из дерева тем (кнопки советника): ответ — на экране, вслух не зачитывается
+      params: { type: 'object', properties: { text: TEXT, cat: TEXT, topic: TEXT }, required: ['text'] }, say: ['штаб, спроси советника: где лучше наступать?'],
       available: () => { const r = ready(); return r !== true ? r : get().advisorBusy ? 'советник ещё отвечает на прошлый вопрос — подождите или скажите «стоп»' : true; },
-      run: async (p: { text: string }) => {
+      run: async (p: { text: string; cat?: string; topic?: string }) => {
         const q = String(p?.text ?? '').trim();
         if (!q) return 'О чём спросить советника?';
         retractAnnounce();
+        if (p.cat) { get().askAdvisor(q, p.cat, p.topic); return; }
         voiceAsk.add(get().askAdvisor(q));
         return 'Передал вопрос советнику. Доложу ответ, когда он будет готов.';
       } },

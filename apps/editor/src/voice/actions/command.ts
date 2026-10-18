@@ -336,6 +336,9 @@ export interface ReplayDeps {
   /** Начать игру (без вопросов) и продолжить сохранённую. */
   begin(enemy: EnemyMode): void;
   continueGame(): void;
+  /** Остановить расчёт; удалить запись незавершённой игры. */
+  stop(): void;
+  discardSaved(): void;
 }
 
 const opName = (t: string) => t.split(/[,:(]/)[0].trim();
@@ -403,6 +406,13 @@ export function replayActions(get: () => ReplayDeps): Action[] {
         }
         d.openTake(d.takeAt(t));
       } },
+    { section: 'replay', id: 'replay.stop', title: 'Остановить расчёт', describe: 'Останавливает идущий расчёт операции.', say: ['штаб, останови расчёт'],
+      available: () => { const r = inReplay(); return r !== true ? r : get().busy ? true : 'расчёт не идёт'; },
+      run: async () => { get().stop(); return 'Расчёт остановлен.'; } },
+    { section: 'replay', id: 'replay.discardSaved', title: 'Удалить незавершённую игру', describe: 'Удаляет запись незавершённой игры (необратимо).',
+      say: ['штаб, удали незавершённую игру'], irreversible: true, confirm: () => 'Удалить запись незавершённой игры?',
+      available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
+      run: async () => { get().discardSaved(); return 'Запись незавершённой игры удалена.'; } },
     { section: 'replay', id: 'replay.continue', title: 'Продолжить игру', describe: 'Продолжает сохранённую незавершённую игру.', say: ['штаб, продолжи игру'],
       available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
       run: async () => { const s = get().saved!; get().continueGame(); return `Продолжаю игру: ${opName(s.title)}.`; } },
@@ -477,6 +487,8 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
     return entry('replay.continue');
   // остальное — только в «Переигровке»: в других разделах «приблизь», «легенда», «журнал» — их собственные слова
   if (away) return null;
+  if (/^(?:останови|остановить|прекрати|прерви) расчет$/.test(t)) return hit('replay.stop', undefined, NOT_IN_REPLAY);
+  if (/^(?:удали|удалить|сотри) (?:незавершенную|сохраненную|прежнюю) игру$/.test(t)) return hit('replay.discardSaved', undefined, NOT_IN_REPLAY);
   // выход
   if (/^(?:заверши|завершить|закончи) и (?:удали|удалить) игру$|^(?:удали|удалить|сотри) игру$/.test(t)) return hit('command.discard');
   if (/^(?:выйди|выйти|выходи|выходим)(?: из)? игр[уы]$/.test(t)) return hit('command.exit');

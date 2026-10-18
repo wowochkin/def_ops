@@ -16,7 +16,7 @@ const pct = (x: number) => `${Math.round(x * 100)} %`;
 /** Название без пояснений в скобках. */
 export const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 /** Первое предложение текста, с точкой. */
-function sentence(s: string): string {
+export function sentence(s: string): string {
   const t = s.trim().replace(/\s+/g, ' ');
   // конец предложения — знак и заглавная буква после; точка сокращения («гв. А», «8 км. Дальше») не в счёт
   for (const m of t.matchAll(/[.!?…](?=\s+[А-ЯЁA-Z«"]|$)/gu)) {

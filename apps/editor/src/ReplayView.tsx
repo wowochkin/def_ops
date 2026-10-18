@@ -121,13 +121,17 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
     },
   });
   const n = items.filter((x) => x.on).length + (labels ? 1 : 0);
-  const all = (on: boolean) => { setAll(on); if (labels !== on) toggleLabels(); };
+  useAction({
+    id: 'map.layers.all', section: 'replay', title: 'Все слои карты', describe: 'Показывает все слои и подписи (on) или скрывает их — остаются войска и подложка.',
+    params: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] }, say: ['штаб, покажи все слои', 'штаб, скрой все слои'], available: inReplay,
+    run: async (p: { on: boolean }) => { const on = !!p?.on; setAll(on); if (labels !== on) toggleLabels(); return on ? 'Показываю все слои.' : 'Слои скрыты: остаются войска и подложка.'; },
+  });
   return (
     <Popover label={<>Слои <small className="lyr-n">{n}</small></>} title="Что показать на карте" align="right" className="lyr-menu">
       <div className="pop-title">Показать на карте</div>
       <div className="lyr-all">
-        <button disabled={n === items.length + 1} onClick={() => all(true)} title="Включить все слои и подписи">Показать все</button>
-        <button disabled={n === 0} onClick={() => all(false)} title="Выключить все слои и подписи — остаются войска и подложка">Скрыть все</button>
+        <ActButton disabled={n === items.length + 1} action="map.layers.all" params={{ on: true }} title="Включить все слои и подписи">Показать все</ActButton>
+        <ActButton disabled={n === 0} action="map.layers.all" params={{ on: false }} title="Выключить все слои и подписи — остаются войска и подложка">Скрыть все</ActButton>
       </div>
       <label className="lyr-row" title="Выключено — подписи только при наведении на знак"><input type="checkbox" data-action="map.layer" checked={labels} onChange={() => void act('map.layer', { layer: 'labels', on: !labels })} /> Подписи знаков</label>
       {items.map((x) => <label key={x.key} className="lyr-row"><input type="checkbox" data-action="map.layer" checked={x.on} onChange={() => void act('map.layer', { layer: x.key, on: !x.on })} /> {x.title}</label>)}
@@ -453,6 +457,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     result, time, takeAt: (t) => turnStart(t, result!.start, result!.end, result!.turnHours), setTime,
     openTake: setTake, closeTake: () => setTake(null), take, saved,
     begin: beginGame, continueGame: () => { if (saved) setGame({ start: null, saved, enemy: saved.enemy }); },
+    stop, discardSaved: () => { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); },
   };
   useEffect(() => { const get = () => voice.current; const offs = replayActions(get).map(register); return () => { offs.forEach((o) => o()); releaseReplay(get); }; }, []);
   if (game) {
@@ -468,13 +473,15 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           <h2>Переигровка</h2>
           <p>Обе стороны получают исторические задачи; движение, бои, подвоз и окружения считает арбитр. Итог сравнивается с историей.</p>
         </div>
+        {/* voice-entry: начало */}
         {saved && !busy && <div className="rp-saved">
           <div><b>Незавершённая игра</b><span>{saved.title} · командование с {saved.record.takeover.slice(8, 10)}.{saved.record.takeover.slice(5, 7)}, сыграно ходов: {saved.record.turns.length}</span></div>
           <div className="rp-saved-b">
             <ActButton className="primary" action="replay.continue">Продолжить</ActButton>
-            <button onClick={() => { void confirmAsync('Удалить запись незавершённой игры?', { ok: 'Удалить', danger: true }).then((ok) => { if (!ok) return; try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); }); }}>Удалить</button>
+            <button data-action="replay.discardSaved" onClick={() => { void confirmAsync('Удалить запись незавершённой игры?', { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void act('replay.discardSaved'); }); }}>Удалить</button>
           </div>
         </div>}
+        {/* voice-entry: конец */}
         <div className="seg rp-tabs">
           <button className={tab === 'run' ? 'on' : ''} onClick={() => setTab('run')}>Расчёт</button>
           <button className={tab === 'saved' ? 'on' : ''} onClick={() => setTab('saved')}>Сохранённые{replays.length ? ` · ${replays.length}` : ''}</button>
@@ -514,9 +521,11 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
               <select value={runs} onChange={(e) => setRuns(+e.target.value)} disabled={!!busy}>{[1, 3, 5, 10].map((n) => <option key={n}>{n}</option>)}</select>
             </label>}
           </div>
+          {/* voice-entry: начало */}
           {busy
-            ? <button className="rp-go" onClick={stop}><span className="spinner" /> {busy} <small>остановить</small></button>
+            ? <ActButton className="rp-go" action="replay.stop"><span className="spinner" /> {busy} <small>остановить</small></ActButton>
             : <ActButton className="rp-go primary" action="replay.calc">Рассчитать</ActButton>}
+          {/* voice-entry: конец */}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
         {result && !busy && <Results r={result} tol={tol} {...resultsAct} saved={!!savedId} saving={saving} kbNow={kbNow} />}
@@ -525,8 +534,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       <main className="rp-main">
         {doc ? <>
           <div className="rp-bar">
+          {/* voice-entry: начало */}
           {takeAt && <ActButton className="take-btn" action="replay.takeCommand" title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></ActButton>}
+          {/* voice-entry: конец */}
           <div className="rp-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
@@ -546,7 +557,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             onPick={(id) => { if (agentRun?.trace.divisions.some((x) => x.id === id)) { setAgentSel(id); setCardSel(null); } else setCardSel(id); }}
             actions={agentRun ? <button onClick={showDivisions} title="Тактический масштаб с приближением к штабу">Показать дивизии</button> : undefined} />}
           {!agentSel && !card && <div className="ag-hint">{agentRun ? 'Щёлкните по дивизии — карточка агента и разговор с ним; по штабу — его карточка' : 'Щёлкните по знаку соединения — его карточка'}</div>}
-          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} toggle={(k) => { const t = TOGGLES.find((x) => x.key === k); if (t) toggle(t); }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'}
+          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'}
             sig={doc.layers.map((l) => (l.visible ? 1 : 0)).join('')} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
@@ -707,16 +718,18 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
   );
 }
 
-type LegendProps = { on: (key: string) => boolean; toggle: (key: string) => void; extra?: { cls: string; text: string; mark?: string }[]; combat?: boolean;
+type LegendProps = { on: (key: string) => boolean; extra?: { cls: string; text: string; mark?: string }[]; combat?: boolean;
   /** Подпись состояния слоёв: с ней легенда не перерисовывается, пока состояние то же (кадры проигрывания). */
   sig?: string };
 export const Legend = memo(LegendPanel, (a, b) => a.sig != null && a.sig === b.sig && a.extra === b.extra && a.combat === b.combat);
-function LegendPanel({ on, toggle, extra = [], combat = true }: LegendProps) {
+/** Легенда: строка слоя — показать / скрыть его (map.layer, как голосом). */
+function LegendPanel({ on, extra = [], combat = true }: LegendProps) {
   const [open, setOpen] = useState(true);
   useAction({
-    id: 'map.legend', section: 'replay', title: 'Легенда карты', describe: 'Открывает условные обозначения карты и читает их вслух.', say: ['штаб, легенда'],
-    available: inReplay,
-    run: async () => {
+    id: 'map.legend', section: 'replay', title: 'Легенда карты', describe: 'Открывает условные обозначения карты и читает их вслух (open — только открыть или свернуть, без чтения).', say: ['штаб, легенда'],
+    params: { type: 'object', properties: { open: { type: 'boolean' } } }, available: inReplay,
+    run: async (p?: { open?: boolean }) => {
+      if (typeof p?.open === 'boolean') { setOpen(p.open); return; }
       setOpen(true);
       const t = rows.map((r) => r.text);
       const parts = Array.from({ length: Math.ceil(t.length / 4) }, (_, i) => t.slice(i * 4, i * 4 + 4).join(', '));
@@ -742,10 +755,10 @@ function LegendPanel({ on, toggle, extra = [], combat = true }: LegendProps) {
   ];
   return (
     <div className={`legend${open ? '' : ' closed'}`}>
-      <button className="lg-h" onClick={() => setOpen(!open)}>Условные обозначения {open ? '▾' : '▸'}</button>
+      <ActButton className="lg-h" action="map.legend" params={{ open: !open }}>Условные обозначения {open ? '▾' : '▸'}</ActButton>
       {open && <div className={`lg-b${rows.length > 12 ? ' two' : ''}`}>
         {rows.map((r) => r.key
-          ? <button key={r.text} className={`lg-row${on(r.key) ? '' : ' off'}`} title={on(r.key) ? 'Скрыть на карте' : 'Показать на карте'} onClick={() => toggle(r.key!)}><i className={r.cls}>{r.mark}</i>{r.text}{!on(r.key) && <span className="lg-eye">скрыто</span>}</button>
+          ? <button key={r.text} className={`lg-row${on(r.key) ? '' : ' off'}`} title={on(r.key) ? 'Скрыть на карте' : 'Показать на карте'} data-action="map.layer" onClick={() => { void act('map.layer', { layer: r.key!, on: !on(r.key!) }); }}><i className={r.cls}>{r.mark}</i>{r.text}{!on(r.key) && <span className="lg-eye">скрыто</span>}</button>
           : <div key={r.text} className="lg-row"><i className={r.cls}>{r.mark}</i>{r.text}</div>)}
       </div>}
     </div>

@@ -376,7 +376,7 @@ describe('когда нельзя', () => {
   it('раздел в фоне, расчёт хода, игра окончена — не исполняется, причина простыми словами', async () => {
     const d = staff({ busy: 'расчёт хода…' });
     await mk().utterance('Штаб, восьмой гвардейской наступать на Зелов', 1);
-    expect(said.at(-1)).toMatch(/^Сейчас нельзя: идёт расчёт хода/);
+    expect(said.at(-1)).toMatch(/^Сейчас нельзя: считаю ход/);
     expect(d.drafts).toEqual({});
     d.busy = null;
     section = 'editor';
@@ -667,7 +667,7 @@ describe('раунд 1: мелкие', () => {
     staff({ busy: 'расчёт хода…' });
     const reasons: string[] = [];
     await press('decision.draftReport', undefined, (r) => reasons.push(r));
-    expect(reasons).toEqual(['Идёт расчёт хода — подождите.']);
+    expect(reasons).toEqual(['Считаю ход — подождите, посредник доложит итоги.']);
   });
 });
 

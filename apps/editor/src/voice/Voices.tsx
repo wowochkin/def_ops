@@ -15,7 +15,7 @@ import { confirmAsync } from '../dialogs';
 import { ordinalIndex, pickByName } from './answers';
 import type { VoiceClient } from './client';
 import type { VoiceCheck, VoiceInfo, VoiceRole, VoiceRoles } from './protocol';
-import { act, openModal, useAction } from './registry';
+import { act, ActButton, openModal, useAction } from './registry';
 import type { VoiceReady } from './VoicePanel';
 
 const ORDS = ['первый', 'второй', 'третий', 'четвёртый', 'пятый', 'шестой', 'седьмой', 'восьмой', 'девятый', 'десятый'];
@@ -35,6 +35,8 @@ export function voicesParse(rest: string): { id: string; params?: Record<string,
   m = /^(?:сохрани|сохранить)(?: голос)?(?: (?:как|под именем|с именем))?(?: (.+))?$/.exec(rest) ?? /^(?:имя|назови его|назови) (.+)$/.exec(rest);
   if (m) return { id: 'voices.save', params: m[1] ? { name: m[1] } : {} };
   if (/^(?:не сохраняй|не сохранять|отмена записи)$/.test(rest)) return { id: 'voices.discard' };
+  if (/^(?:начать|начни|начинай|начинаю)(?: запись)?$/.test(rest)) return { id: 'voices.rec.start' };
+  if (/^(?:закончи|закончить|заканчиваю|останови|остановить)(?: запись)?$/.test(rest)) return { id: 'voices.rec.stop' };
   if (/^(?:закрой|закрыть|выйди|отмена|готово)(?: окно)?$/.test(rest)) return { id: 'voices.close' };
   return null;
 }
@@ -226,8 +228,10 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
   });
   useAction({
     id: 'voices.record', section: 'global', title: 'Записать новый голос', describe: 'Записывает новый голос с микрофона: текст зачитывается, запись идёт сама.',
-    params: { type: 'object', properties: { name: { type: 'string' } } }, say: ['запиши новый голос'], available: idle,
-    run: async (p?: { name?: string }) => {
+    params: { type: 'object', properties: { name: { type: 'string' }, manual: { type: 'boolean' } } }, say: ['запиши новый голос'], available: idle,
+    run: async (p?: { name?: string; manual?: boolean }) => {
+      // кнопкой — текст на экране, запись — кнопками «Начать запись» / «Закончить запись»
+      if (p?.manual) { byVoice.current = null; setCheck(null); setRec('intro'); return; }
       // голосом: показать текст, зачитать его — и записывать, когда штаб договорил; кончится сама
       const nm = p?.name ? cap(String(p.name).trim()) : undefined;
       byVoice.current = { name: nm };
@@ -239,6 +243,16 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
         if (alive.current && byVoice.current) start();
       });
     },
+  });
+  useAction({
+    id: 'voices.rec.start', section: 'global', title: 'Начать запись голоса', describe: 'Начинает запись нового голоса (текст — на экране).', say: ['начать запись'],
+    available: () => (['intro', 'failed', 'checked'].includes(st.current.rec) ? true : 'сначала скажите «запиши новый голос»'),
+    run: async () => { start(); },
+  });
+  useAction({
+    id: 'voices.rec.stop', section: 'global', title: 'Закончить запись голоса', describe: 'Заканчивает запись нового голоса и проверяет её.', say: ['закончить запись'],
+    available: () => (st.current.rec === 'rec' ? true : 'запись не идёт'),
+    run: async () => { stop(); },
   });
   useAction({
     id: 'voices.save', section: 'global', title: 'Сохранить голос', describe: 'Сохраняет проверенную запись как новый голос с именем.',
@@ -319,7 +333,7 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
         {rec === 'none' && (
           <div className="vp-row">
             <button onClick={() => { void act('voices.close'); }}>Закрыть</button>
-            <button className="primary" onClick={() => setRec('intro')}>Записать новый голос</button>
+            <ActButton className="primary" action="voices.record" params={{ manual: true }}>Записать новый голос</ActButton>
           </div>
         )}
         {rec !== 'none' && (
@@ -330,21 +344,21 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
             <p className="vp-say">{text || 'Текст для чтения придёт от голосового сервиса.'}</p>
             {rec === 'intro' && (
               <div className="vp-row">
-                <button onClick={discard}>Отмена</button>
-                <button className="primary" onClick={start}>Начать запись</button>
+                <ActButton action="voices.discard">Отмена</ActButton>
+                <ActButton className="primary" action="voices.rec.start">Начать запись</ActButton>
               </div>
             )}
             {rec === 'rec' && (
               <div className="vp-row">
                 <span className="vp-recdot">Идёт запись: {secs} с</span>
-                <button className="primary" onClick={stop}>Закончить запись</button>
+                <ActButton className="primary" action="voices.rec.stop">Закончить запись</ActButton>
               </div>
             )}
             {rec === 'checking' && <p className="vp-note">Проверяю запись…</p>}
             {rec === 'failed' && (
               <div className="vp-row">
-                <button onClick={discard}>Отмена</button>
-                <button className="primary" onClick={start}>Записать заново</button>
+                <ActButton action="voices.discard">Отмена</ActButton>
+                <ActButton className="primary" action="voices.rec.start">Записать заново</ActButton>
               </div>
             )}
             {rec === 'checked' && check && (
@@ -353,15 +367,15 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
                   <>
                     <p className="vp-good">Запись подходит{check.audio_s ? ` (${check.audio_s.toFixed(1)} с)` : ''}.</p>
                     <div className="vp-row left">
-                      <button onClick={() => listen()}>Прослушать пробу</button>
+                      <ActButton action="voices.preview" params={{ name: 'пробу' }}>Прослушать пробу</ActButton>
                     </div>
                     <label className="vp-name">Имя голоса
                       <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="например, Гость" />
                     </label>
                     <div className="vp-row">
-                      <button onClick={discard}>Не сохранять</button>
-                      <button onClick={start}>Записать заново</button>
-                      <button className="primary" disabled={!name.trim()} onClick={() => send('save', { name: name.trim() })}>Сохранить</button>
+                      <ActButton action="voices.discard">Не сохранять</ActButton>
+                      <ActButton action="voices.rec.start">Записать заново</ActButton>
+                      <ActButton className="primary" disabled={!name.trim()} action="voices.save" params={{ name: name.trim() }}>Сохранить</ActButton>
                     </div>
                   </>
                 ) : (
@@ -369,8 +383,8 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
                     <p className="vp-bad">Перечитайте текст:</p>
                     <ul>{check.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
                     <div className="vp-row">
-                      <button onClick={discard}>Отмена</button>
-                      <button className="primary" onClick={start}>Записать заново</button>
+                      <ActButton action="voices.discard">Отмена</ActButton>
+                      <ActButton className="primary" action="voices.rec.start">Записать заново</ActButton>
                     </div>
                   </>
                 )}

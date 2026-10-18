@@ -5,7 +5,8 @@
  * Пользователи — люди старшего возраста: крупный шрифт (не меньше 18 px), простые слова, регуляторы спрятаны
  * в «Тонкую настройку», главный путь — калибровка. Панель создаёт связь с сервисом (VoiceClient) и разборщик
  * реплик (Dispatcher) с моделью за правилами (llm.ts: модель «Голос» из раздела «ИИ»; пока она отвечает — «Думаю»,
- * новая реплика отменяет её прежний ответ); событие окна `voice:open` (detail 'calibrate' | 'voices') открывает нужный экран.
+ * новая реплика отменяет её прежний ответ); событие окна `voice:open` (detail 'calibrate' | 'voices', кнопкой — {what, manual})
+ * открывает нужный экран.
  * Модель недоступна (проверка связи в «ИИ» не прошла или запрос не удался) — разборщик её не зовёт и сразу отвечает честно.
  *
  * Фраза штаба не начинается, пока человек говорит (SayGate: ждёт конца речи); заготовленные фразы о модели окно
@@ -31,7 +32,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
-import { ActButton, act, actions, listed, onModal, setRetractor, setSpeaker, useAction } from './registry';
+import { ActButton, act, actions, listed, onModal, setProposer, setRetractor, setSpeaker, useAction } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
@@ -114,11 +115,11 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
 
   const syncSpeaking = () => setSpeaking(speakingIds.current.size > 0);
   // фраза штаба ждёт конца речи человека: не говорит поверх него и не обрывает себя его же репликой
-  const gate = useMemo(() => new SayGate((id, text) => {
+  const gate = useMemo(() => new SayGate((id, text, role) => {
     speakingIds.current.add(id);
     syncSpeaking();
-    client.say(id, 'chief', text);
-    setFeed((f) => feedAdd(f, { key: `s${id}`, kind: 'chief', text }));
+    client.say(id, role ?? 'chief', text);
+    setFeed((f) => feedAdd(f, { key: `s${id}`, kind: role === 'umpire' ? 'umpire' : 'chief', text }));
   // «штаб говорит» — только настоящей фразой: пока звучит лишь «повторяю запрос», ответ модели ждёт конца речи человека;
   // снятые ждущие фразы — тур узнаёт, что они не прозвучат
   }, () => Date.now(), () => chiefTalking(speakingIds.current, quietIds.current), (ids) => ids.forEach((id) => settleSpeech(id, 'stopped'))), [client]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -129,7 +130,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     say: (text, o) => {
       const id = client.newSayId();
       if (o?.quiet) quietIds.current.add(id);
-      gate.say(id, text, o?.keep);
+      gate.say(id, text, o?.keep, o?.role);
       return id;
     },
     // фраза больше не нужна («повторяю запрос» после отмены): ждёт — снимается, звучит — гасится
@@ -167,13 +168,20 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     available: () => (dispatcher.pending ? true : 'подтверждать нечего'), run: async () => { await dispatcher.answer(true); } });
   useAction({ id: 'voice.no', section: 'global', title: 'Нет', describe: 'Отказ от того, о чём спросил штаб.',
     available: () => (dispatcher.pending ? true : 'подтверждать нечего'), run: async () => { await dispatcher.answer(false); } });
+  // панель: развернуть / свернуть — кнопками и голосом
+  useAction({ id: 'voice.panel.open', section: 'global', title: 'Открыть панель голоса', describe: 'Разворачивает панель голоса: состояние, лента реплик, что можно сказать.',
+    say: ['штаб, открой панель голоса'], available: () => true, run: async () => { toggle(true); } });
+  useAction({ id: 'voice.panel.close', section: 'global', title: 'Свернуть панель голоса', describe: 'Сворачивает панель голоса в значок.',
+    say: ['штаб, сверни панель голоса'], available: () => true, run: async () => { toggle(false); } });
 
   // окна и модули говорят через штаб (в дежурном — молчат); открылось окно — прежний ответ модели уже не нужен
   useEffect(() => {
     setSpeaker((t, o) => dispatcher.announce(t, o));
     setRetractor((id) => dispatcher.retract(id));
+    // предложения модулей («Составить разбор операции?»): в дежурном и при выключенном голосе — нет
+    setProposer((text, id, params) => { if (enabledRef.current && !dispatcher.standby) dispatcher.propose(text, id, params); });
     const off = onModal((_m, opened) => { if (opened) { dispatcher.cancel(); gate.clear(); } });
-    return () => { setSpeaker(null); setRetractor(null); off(); };
+    return () => { setSpeaker(null); setRetractor(null); setProposer(null); off(); };
   }, [dispatcher, gate]);
   // тур говорит голосом начальника штаба: та же очередь фраз, та же лента
   useTourVoice({
@@ -321,8 +329,11 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   useEffect(() => {
     // открыто голосом («Штаб, калибровка») — и ведётся голосом: шаги калибровки идут сами
     const onOpen = (e: Event) => {
-      const d = (e as CustomEvent).detail;
-      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { openDialog(d, true); toggle(true); }
+      const raw = (e as CustomEvent).detail as string | { what: string; manual?: boolean };
+      // кнопкой (manual) — как прежде: шаги калибровки по кнопке «Записать»; голосом — шаги идут сами
+      const d = typeof raw === 'string' ? raw : raw?.what;
+      const manual = typeof raw === 'object' && !!raw?.manual;
+      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { openDialog(d, !manual); toggle(true); }
       if (d === 'panel') toggle(true);
     };
     const onPower = (e: Event) => {
@@ -397,7 +408,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   return (
     <div className={`vp ${st.key}`}>
       {!open ? (
-        <button className="vp-icon" data-tour="voice" onClick={() => toggle(true)} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
+        <button className="vp-icon" data-tour="voice" data-action="voice.panel.open" onClick={() => { void act('voice.panel.open'); }} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
           <MicGlyph off={!enabled} sleep={enabled && standby} />
           {(!enabled || standby) && <span className="vp-icon-cap">{st.text}</span>}
         </button>
@@ -406,7 +417,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           <div className="vp-head" data-tour="voice-state">
             <span className="vp-dot" />
             <span className="vp-state" role="status">{st.text}</span>
-            <button className="vp-close" onClick={() => toggle(false)} title="Свернуть панель голоса">Свернуть</button>
+            <ActButton className="vp-close" action="voice.panel.close" title="Свернуть панель голоса">Свернуть</ActButton>
           </div>
           {pending && live && (
             <div className="vp-confirm" role="alertdialog" aria-label="Подтверждение">
@@ -437,7 +448,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           {aec && (
             <div className="vp-mic vp-aec" role="status">
               <p>{aecHint(aec)}</p>
-              <button onClick={() => openDialog('calibrate')} disabled={!live}>Калибровать</button>
+              <ActButton action="shell.calibrate" params={{ manual: true }} disabled={!live}>Калибровать</ActButton>
             </div>
           )}
           {enabled && <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />}
@@ -448,7 +459,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
             {!feed.length && <p className="vp-empty">Здесь будет видно, что я услышал и что ответил.</p>}
             {feed.map((x) => (
               <div key={x.key} className={`vp-item ${x.kind}`}>
-                {x.kind !== 'fix' && <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'note' ? 'Сбой:' : x.kind === 'echo' ? 'Слышно:' : 'Вы:'}</span>} {x.text}
+                {x.kind !== 'fix' && <span className="vp-who">{x.kind === 'chief' ? 'Штаб:' : x.kind === 'umpire' ? 'Посредник:' : x.kind === 'note' ? 'Сбой:' : x.kind === 'echo' ? 'Слышно:' : 'Вы:'}</span>} {x.text}
                 {x.kind === 'notme' && <span className="vp-notme">не мне</span>}
                 {x.kind === 'echo' && <span className="vp-notme">похоже на мой же голос из динамиков</span>}
               </div>
@@ -472,8 +483,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           </details>}
 
           <div className="vp-btns" data-tour="voice-btns">
-            <button onClick={() => openDialog('calibrate')} disabled={!live}>Калибровка</button>
-            <button onClick={() => openDialog('voices')} disabled={!live}>Голоса</button>
+            <ActButton action="shell.calibrate" params={{ manual: true }} disabled={!live}>Калибровка</ActButton>
+            <ActButton action="shell.voices" params={{ manual: true }} disabled={!live}>Голоса</ActButton>
           </div>
 
           <details className="vp-tune" data-tour="voice-tune">
