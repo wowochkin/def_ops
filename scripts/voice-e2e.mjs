@@ -22,7 +22,10 @@
 // рамка на кнопке колонки, «назад» без обращения, «Штаб, хватит» снимает притемнение; voice:ready-first отменён
 // вступлением, после него — voice:propose; флажок «Вступление при запуске» в «Тонкой настройке». Туры разделов:
 // «Штаб, открой моделирование» — предложение тура; «Штаб, открой вкладку Калибровка»; «Штаб, тур по моделированию» —
-// шаги открывают вкладки; «Штаб, тур по знакам» — подсветка внутри страницы справочника (iframe).
+// шаги открывают вкладки; «Штаб, тур по знакам» — подсветка внутри страницы справочника (iframe); «Штаб, тур по
+// переигровке»; «Штаб, тур по командованию» вне игры — как в неё попасть и предложение начать; в игре (окно «без рук»,
+// после доклада посредника) — тур по командованию: рамка на шапке игры, вкладку «Доклады» открывает тур, после
+// «хватит» — прежняя вкладка.
 // Без рук (ни одного щелчка — только поддельный микрофон): дежурный режим («отбой» — дежурю, «открой карты» не
 // исполняется, «на связь» будит), вопросы dialogs.ts голосом (confirmAsync — «да», команда при открытом окне не
 // исполняется; chooseAsync — «второй»; askText — диктовка и «готово»), окно «Голоса» (прослушать, назначить, записать
@@ -38,8 +41,8 @@
 // ответа нет 8 с — напоминание; ответ посреди чтения окна — перебиванием «голосом» и «словом»; в командовании легенда
 // свёрнута, место на карте — не под панелью и легендой; длинная фраза разворачивает полосу, 10 с тишины — сворачивают.
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
-// панели, калибровки, голосов, раздела «ИИ» (модель для голоса), окон с полосой, командования и туров (voice-tour.jpg, voice-tour-modeling.jpg,
-// voice-tour-library.jpg).
+// панели, калибровки, голосов, раздела «ИИ» (модель для голоса), окон с полосой, командования и туров (voice-tour.jpg,
+// voice-tour-modeling.jpg, voice-tour-library.jpg, voice-tour-replay.jpg, voice-tour-command-entry.jpg, voice-tour-command.jpg).
 // Python — $VOICE_PYTHON, services/voice/.venv или python3.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -207,6 +210,9 @@ await ctx.addInitScript((url) => {
   localStorage.setItem('def_ops.voice.url', url);
   localStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.intro', 'off');  // вступление — в своей проверке в конце
+  // туры разделов — в своих проверках: предложение тура при входе в «Переигровку» открыло бы окно разговора,
+  // и «передайте в штаб армии» стало бы обращением
+  localStorage.setItem('def_ops.tour.seen', JSON.stringify(['replay']));
 }, `ws://127.0.0.1:${vport}/ws`);
 // наблюдение за окном (на каждой загрузке): сообщения сервиса, звук по номерам фраз (кусок звука сервиса →
 // источник звука окна), дорожки микрофона и сколько раз его просили
@@ -1505,7 +1511,9 @@ await ctx2.close();
 const scriptSections = join(tmp, 'script-sections.txt');
 writeFileSync(scriptSections, ['штаб, открой моделирование', 'штаб, открой вкладку калибровка', 'штаб, тур по моделированию',
   'штаб, дальше', 'штаб, дальше', 'штаб, дальше', 'штаб, хватит', 'штаб, тур по знакам', 'штаб, дальше', 'штаб, дальше', 'штаб, хватит',
-  ...Array(60).fill('передайте в штаб армии')].join('\n') + '\n');
+  'штаб, тур по переигровке', 'штаб, хватит',
+  // поддельная «речь» поверх голоса штаба перебивает шаг (пауза) — тур вне игры листается «дальше» до конца
+  'штаб, тур по командованию', ...Array(5).fill('штаб, дальше'), ...QUIET].join('\n') + '\n');
 await stopVoice();
 await startVoice(scriptSections);
 const ctx3 = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone'] });
@@ -1532,7 +1540,7 @@ const title3 = (t) => layer3.locator('.tour-cap h2', { hasText: t }).waitFor({ t
  * Рамка тура — вокруг [data-tour=target] в окне или в странице во врезке (iframe; координаты — со сдвигом врезки);
  * capFree — подпись не на рамке и не на панели голоса.
  */
-const frame3 = (target, capFree = true) => page3.waitForFunction(([t, free]) => {
+const frameIn = (pg) => (target, capFree = true) => pg.waitForFunction(([t, free]) => {
   const pad = /^rail-/.test(t) ? 1 : 8;
   const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
   const sel = `[data-tour="${t}"]`;
@@ -1550,6 +1558,7 @@ const frame3 = (target, capFree = true) => page3.waitForFunction(([t, free]) => 
   return !!f && !!el && [f.left + pad - el.left, f.top + pad - el.top, f.width - 2 * pad - el.width, f.height - 2 * pad - el.height].every((d) => Math.abs(d) < 1.5)
     && (!free || (!cross(cap, f) && !cross(cap, card)));
 }, [target, capFree], { timeout: 15000, polling: 50 }).catch(() => { throw new Error(`рамка не вокруг [data-tour="${target}"]${capFree ? ' или подпись на ней / на панели' : ''}`); });
+const frame3 = frameIn(page3);
 
 await check('«Штаб, открой моделирование» — раздел открыт, штаб предлагает тур по нему (первый вход)', async () => {
   await page3.locator('[data-tour="section-modeling"]').waitFor({ state: 'visible', timeout: 40000 });
@@ -1603,6 +1612,30 @@ await check('«Штаб, хватит» — тур по знакам оконч�
   await layer3.waitFor({ state: 'detached', timeout: 40000 });
   const left = await page3.evaluate(() => document.querySelectorAll('.tour, .tour-dim, .tour-frame, .tour-cap').length);
   if (left) throw new Error(`осталось элементов тура: ${left}`);
+});
+
+await check('«Штаб, тур по переигровке» — раздел «Переигровка», рамка на шапке раздела; «хватит» — тур окончен', async () => {
+  await heard3('тур по переигровке');
+  await page3.locator('[data-tour="section-replay"]').waitFor({ state: 'visible', timeout: 20000 });
+  await title3('Переигровка');
+  await frame3('replay-head');
+  await page3.waitForTimeout(300);
+  if (SHOTS) await page3.screenshot({ path: join(SHOTS, 'voice-tour-replay.jpg'), type: 'jpeg', quality: 88 });
+  await layer3.waitFor({ state: 'detached', timeout: 40000 });
+});
+
+await check('«Штаб, тур по командованию» вне игры — как попасть в игру, рамка на «Рассчитать», в конце — предложение начать', async () => {
+  await heard3('тур по командованию');
+  await layer3.locator('.tour-count', { hasText: 'Командование · шаг 1 из 5' }).waitFor({ timeout: T })
+    .catch(async () => { throw new Error(`тура «Командование» вне игры нет; лента: ${await feed3()}`); });
+  await title3('Сначала расчёт');
+  await frame3('replay-go');
+  const say = await layer3.locator('.tour-cap').innerText();
+  if (!say.includes('Штаб, рассчитай операцию')) throw new Error(`подпись: ${say}`);
+  if (SHOTS) await page3.screenshot({ path: join(SHOTS, 'voice-tour-command-entry.jpg'), type: 'jpeg', quality: 88 });
+  await page3.locator('.vp-item.chief', { hasText: 'Рассчитать операцию сейчас? Скажите «да»' }).first().waitFor({ timeout: 90000 })
+    .catch(async () => { throw new Error(`предложения начать нет; лента: ${(await feed3()).slice(-800)}`); });
+  if (await layer3.count()) throw new Error('тур не закончился');
 });
 await ctx3.close();
 
@@ -1705,6 +1738,32 @@ await check('без рук от запуска до доклада посред�
   const clicks = await page4.evaluate(() => window.__clicks);
   if (clicks) throw new Error(`щелчков: ${clicks}`);
   return `щелчков 0, ${Math.round((Date.now() - t0) / 1000)} с, запросы к модели: ${LM4.log.join(" → ")}`;
+});
+
+await check('в игре «Штаб, тур по командованию» — рамка на шапке игры, затем вкладка «Доклады» открыта туром; «хватит» — вкладка прежняя', async () => {
+  const layer4 = page4.locator('.tour');
+  const frame4 = frameIn(page4);
+  const tabOn = () => page4.evaluate(() => document.querySelector('[data-tour^="cmd-tab-"].on')?.getAttribute('data-tour'));
+  // до тура — не «Доклады» (тур откроет их сам и вернёт прежнюю)
+  await hands4(['штаб, открой приказы']);
+  await step4('вкладка «Приказы» не открылась', page4.locator('[data-tour="cmd-tab-orders"].on'));
+  await hands4(['штаб, тур по командованию']);
+  await step4('тура по командованию нет', layer4.locator('.tour-count', { hasText: 'Командование · шаг 1 из 11' }));
+  await frame4('cmd-head');
+  // шаг листается сам, когда штаб договорил; перебила поддельная «речь» (пауза) — «дальше»
+  const reports = layer4.locator('.tour-cap h2', { hasText: 'Доклады' });
+  if (!await reports.waitFor({ timeout: 20000 }).then(() => true, () => false)) await hands4(['штаб, дальше']);
+  await step4('шаг «Доклады» не настал', reports);
+  await step4('тур не открыл «Доклады»', page4.locator('[data-tour="cmd-tab-reports"].on'));
+  await frame4('cmd-tab-reports');
+  await page4.waitForTimeout(300);
+  if (SHOTS) await page4.screenshot({ path: join(SHOTS, 'voice-tour-command.jpg'), type: 'jpeg', quality: 88 });
+  const say = await layer4.locator('.tour-cap').innerText();
+  if (!say.includes('Штаб, доложи о восьмой гвардейской')) throw new Error(`подпись: ${say}`);
+  await hands4(['штаб, хватит']);
+  await layer4.waitFor({ state: 'detached', timeout: 40000 }).catch(async () => { throw new Error(`«хватит» не закончил тур; лента: ${(await feed4()).slice(-600)}`); });
+  await page4.waitForFunction(() => document.querySelector('[data-tour="cmd-tab-orders"].on'), null, { timeout: 5000 })
+    .catch(async () => { throw new Error(`после тура открыта ${await tabOn()}, а не «Приказы»`); });
 });
 await ctx4.close();
 

@@ -159,7 +159,7 @@ ${ready.map((s, i) => `<section class="sec"><h2>${i + 1}. ${esc(s.title)}</h2><d
 
   return (
     <div className="modal-bg" onClick={() => { void act('command.review.close'); }}>
-      <div className="modal review" data-modal onClick={(e) => e.stopPropagation()}>
+      <div className="modal review" data-modal data-tour="review" onClick={(e) => e.stopPropagation()}>
         <div className="rv-h">
           <div><h3>Разбор операции</h3><span className="muted">{view.scenarioName} · {view.outcome ? (view.outcome.result === 'victory' ? 'победа' : 'поражение') : `ход ${view.turn - 1}, игра не окончена`}</span></div>
           <button className="x" data-action="command.review.close" onClick={() => { void act('command.review.close'); }} title="Закрыть (разбор сохранится)">×</button>

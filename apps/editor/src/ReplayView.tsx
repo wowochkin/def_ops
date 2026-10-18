@@ -469,12 +469,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     <ZonesContext.Provider value={zones}>
     <div className="replay">
       <aside className="rp-side">
-        <div className="rp-head">
+        <div className="rp-head" data-tour="replay-head">
           <h2>Переигровка</h2>
           <p>Обе стороны получают исторические задачи; движение, бои, подвоз и окружения считает арбитр. Итог сравнивается с историей.</p>
         </div>
         {/* voice-entry: начало */}
-        {saved && !busy && <div className="rp-saved">
+        {saved && !busy && <div className="rp-saved" data-tour="replay-saved">
           <div><b>Незавершённая игра</b><span>{saved.title} · командование с {saved.record.takeover.slice(8, 10)}.{saved.record.takeover.slice(5, 7)}, сыграно ходов: {saved.record.turns.length}</span></div>
           <div className="rp-saved-b">
             <ActButton className="primary" action="replay.continue">Продолжить</ActButton>
@@ -482,14 +482,14 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
         </div>}
         {/* voice-entry: конец */}
-        <div className="seg rp-tabs">
+        <div className="seg rp-tabs" data-tour="replay-tabs">
           <button className={tab === 'run' ? 'on' : ''} onClick={() => setTab('run')}>Расчёт</button>
           <button className={tab === 'saved' ? 'on' : ''} onClick={() => setTab('saved')}>Сохранённые{replays.length ? ` · ${replays.length}` : ''}</button>
         </div>
         {tab === 'saved' && <SavedList list={replays} current={savedId} busy={!!busy} onOpen={(m) => void openReplay(m)}
           onRename={(m, t) => void renameReplay(m.id, t)} onDelete={(m) => { void confirmAsync(`Удалить сохранённую переигровку «${m.title}»?`, { ok: 'Удалить', danger: true }).then((ok) => { if (!ok) return; void deleteReplay(m.id); if (savedId === m.id) setSavedId(null); }); }} />}
         {tab === 'run' && <>
-        <div className="rp-cards">
+        <div className="rp-cards" data-tour="replay-cards">
           {CATALOG.map((c) => (
             <button key={c.id} className={`rp-card${c.id === scenario ? ' on' : ''}`} disabled={!!busy} onClick={() => setScenario(c.id)}>
               <b>{c.title}{c.custom && <i className="rp-own">своя</i>}</b><span>{c.detail}</span>
@@ -497,7 +497,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           ))}
         </div>
         <ReplayCoverage op={scenario} />
-        <div className="rp-form">
+        <div className="rp-form" data-tour="replay-form">
           {agentOp && <label title="Нынешняя модель — армии и корпуса, ход сутки, считается в фоновых потоках окна. Агентная — каждая дивизия со своим состоянием и штабами, шаг час, считается ядром приложения">Модель
             <select value={model} onChange={(e) => setModel(e.target.value as 'army' | 'agents')} disabled={!!busy}>
               <option value="army">нынешняя — армии и корпуса</option>
@@ -523,29 +523,29 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
           {/* voice-entry: начало */}
           {busy
-            ? <ActButton className="rp-go" action="replay.stop"><span className="spinner" /> {busy} <small>остановить</small></ActButton>
-            : <ActButton className="rp-go primary" action="replay.calc">Рассчитать</ActButton>}
+            ? <ActButton className="rp-go" action="replay.stop" data-tour="replay-go"><span className="spinner" /> {busy} <small>остановить</small></ActButton>
+            : <ActButton className="rp-go primary" action="replay.calc" data-tour="replay-go">Рассчитать</ActButton>}
           {/* voice-entry: конец */}
           {error && <div className="err">Ошибка: {error}</div>}
         </div>
         {result && !busy && <Results r={result} tol={tol} {...resultsAct} saved={!!savedId} saving={saving} kbNow={kbNow} />}
         </>}
       </aside>
-      <main className="rp-main">
+      <main className="rp-main" data-tour="replay-main">
         {doc ? <>
           <div className="rp-bar">
           {/* voice-entry: начало */}
-          {takeAt && <ActButton className="take-btn" action="replay.takeCommand" title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
+          {takeAt && <ActButton className="take-btn" action="replay.takeCommand" data-tour="replay-take" title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></ActButton>}
           {/* voice-entry: конец */}
-          <div className="rp-tools">
+          <div className="rp-tools" data-tour="replay-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={result ? `начала операции, ${dmy(result.start)}` : null} /></Popover>
           </div>
           </div>
-          <div className="rp-map">
+          <div className="rp-map" data-tour="replay-map">
           <MapView key={mapKey} doc={mapDoc!} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, result?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __replayEngine: MapEngine }).__replayEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
@@ -588,7 +588,7 @@ const Results = memo(ResultsPanel);
 function ResultsPanel({ r, tol, onReport, onOpen, onSummary, onEvent, saved, saving, onSave, kbNow }: { r: SimResult; tol: number; onReport: () => void; onOpen: () => void; onSummary: () => void; onEvent: (e: SimResult['events'][number]) => void; saved: boolean; saving: boolean; onSave: () => void; kbNow?: KbStamp | null }) {
   const lo = Math.min(...r.spread), hi = Math.max(...r.spread);
   return (
-    <div className="rp-res">
+    <div className="rp-res" data-tour="replay-results">
       <div className="kpis">
         <div><b>{r.runs > 1 && lo !== hi ? `${pct(lo)}–${pct(hi)}` : pct(r.within)}</b><span>положений в пределах ±{tol} км от исторических</span></div>
         <div><b>{r.eventsHit}<small> / {r.eventsTotal}</small></b><span>событий с точностью ±2 сут{r.runs > 1 ? `, ${r.runs} прогонов` : ''}</span></div>
@@ -693,7 +693,7 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
   const { day, hour } = fmtLong(fromMs(cur));
   const step = (h: number) => setTime(fromMs(Math.min(t1, Math.max(t0, cur + h * H))));
   return (
-    <div className="player">
+    <div className="player" data-tour="map-player">
       <div className="pl-date"><b>{day}</b><span>{hour} мск · ход {Math.floor((cur - t0) / H / 24) + 1}</span></div>
       <div className="pl-ctl">
         <button className="ic" title="Назад на сутки" onClick={() => step(-24)}>⏮</button>

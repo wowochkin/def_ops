@@ -360,6 +360,11 @@ export function calcFailText(message: string): string {
 let liveReplay: (() => ReplayDeps) | null = null;
 /** Действия переигровки сняты. */
 export function releaseReplay(get: () => ReplayDeps): void { if (liveReplay === get) liveReplay = null; }
+/** Что в «Переигровке» сейчас (для туров): идёт ли игра, есть ли незавершённая, рассчитана ли операция; раздела ещё не было — null. */
+export function replayNow(): { game: boolean; saved: boolean; calculated: boolean } | null {
+  const d = liveReplay?.();
+  return d ? { game: d.game, saved: !!d.saved, calculated: !!(d.result && d.time) } : null;
+}
 
 export function replayActions(get: () => ReplayDeps): Action[] {
   liveReplay = get;

@@ -21,6 +21,7 @@ import type { VoiceClient } from './client';
 import { act, register } from './registry';
 import { findTour, TOURS, type Tour, type TourStep } from './tours';
 import { currentTab, TABS, type TabSection } from './actions/tabs';
+import { replayNow } from './actions/command';
 
 export type { Tour, TourStep };
 /** Чем кончилась фраза шага: доиграна, остановлена (перебили, «стоп») или не звучала (голоса нет). */
@@ -66,6 +67,9 @@ const REAL = new Set<string>(SECTIONS.map((s) => s.id));
 export const INTRO_STOPPED = 'Вступление остановлено. Продолжить — «Штаб, расскажи о приложении».';
 /** После «хватит» во вступлении — один раз: как его выключить. */
 export const INTRO_HOW_OFF = 'Чтобы вступление больше не звучало при запуске, скажите: «Штаб, без вступления».';
+/** Игра началась посреди тура «Переигровки» (или кончилась посреди тура по командованию). */
+export const GAME_STARTED = 'Тур остановлен: началась игра. Показать командование — «Штаб, тур по командованию».';
+export const GAME_ENDED = 'Тур остановлен: игра закончена.';
 
 export class TourEngine {
   state: TourState | null = null;
@@ -140,6 +144,8 @@ export class TourEngine {
     const s = this.state;
     if (!s) return;
     if (s.tour.section === 'intro') {
+      // последний шаг предлагает перейти («Штаб, покажи переигровку») — перешли: вступление закончено, а не прервано
+      if (s.index === s.tour.steps.length - 1) { this.finish('done'); return; }
       this.finish('section');
       this.d.speak(INTRO_STOPPED);
       return;
@@ -147,6 +153,17 @@ export class TourEngine {
     if (!this.where || sec === this.where) return;
     this.finish('section');
     this.d.speak('Тур остановлен: открыт другой раздел.');
+  }
+
+  /**
+   * Игра в «Переигровке» началась или кончилась: тур, который идёт только вне игры (или только в ней), остановлен —
+   * его элементов на экране больше нет.
+   */
+  onGame(game: boolean): void {
+    const g = this.state?.tour.game;
+    if (g === undefined || g === game) return;
+    this.finish('section');
+    this.d.speak(game ? GAME_STARTED : GAME_ENDED);
   }
 
   private set(s: TourState | null): void {
@@ -325,9 +342,46 @@ export const tourEngine = new TourEngine({
   exists: (t) => !!findTarget(t),
   speak: speakChief,
   sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
-  tabOf: (action) => { const sec = /^(\w+)\.tab$/.exec(action)?.[1]; return sec && sec in TABS ? currentTab(sec as TabSection) : null; },
+  tabOf: (action) => {
+    if (action === 'command.tab') return commandTab();
+    const sec = /^(\w+)\.tab$/.exec(action)?.[1];
+    return sec && sec in TABS ? currentTab(sec as TabSection) : null;
+  },
 });
-export const startTour = (id: string) => tourEngine.start(id);
+/** Открытая вкладка командования — по кнопке `.on` (`data-tour="cmd-tab-…"`); игры нет — null. */
+function commandTab(): string | null {
+  if (typeof document === 'undefined') return null;
+  return document.querySelector('[data-tour^="cmd-tab-"].on')?.getAttribute('data-tour')?.slice('cmd-tab-'.length) ?? null;
+}
+
+// ---------------------------------------------------------------- игра в «Переигровке»
+
+type ReplayNow = ReturnType<typeof replayNow>;
+let replaySource: () => ReplayNow = replayNow;
+/** Откуда брать состояние «Переигровки» (тесты; по умолчанию — действия раздела, voice/actions/command.ts). */
+export function setReplaySource(f: () => ReplayNow): void { replaySource = f; }
+export const inGame = () => !!replaySource()?.game;
+/** Тур, который показывает раздел сейчас: в «Переигровке» во время игры — командование. */
+export const sectionTour = (section: string) => (section === 'replay' && inGame() ? 'command' : section);
+
+/**
+ * Начать тур. «Командование» вне игры — тур о том, как в неё попасть; дослушали до конца — штаб предлагает начать
+ * (продолжить незавершённую, открыть «Принять командование» или рассчитать операцию).
+ */
+export function startTourFor(s: string): Promise<string | void> {
+  if (s === 'command' && !inGame()) return tourEngine.start('command-entry', { onEnd: (r) => { if (r === 'done') void proposeStart(); } });
+  return tourEngine.start(s);
+}
+
+/** Предложение начать игру — по тому, что есть в «Переигровке»; «да» исполняет то же действие, что и фраза. */
+export function proposeStart(speak?: (t: string) => Speech): Promise<boolean> {
+  const r = replaySource();
+  if (r?.game) return Promise.resolve(false);
+  if (r?.saved) return offer('Продолжить незавершённую игру? Скажите «да» — и продолжу.', () => act('replay.continue'), speak);
+  if (r?.calculated) return offer('Открыть окно «Принять командование»? Скажите «да» — и открою.', () => act('replay.takeCommand'), speak);
+  return offer('Рассчитать операцию сейчас? Скажите «да» — и начну.', () => act('replay.calc'), speak);
+}
+export const startTour = (id: string) => startTourFor(id);
 export const stopTour = () => tourEngine.stop();
 
 let offerOff: (() => void) | null = null;
@@ -386,7 +440,8 @@ export const tourControl = {
   paused: () => tourEngine.state?.phase === 'paused',
   section: () => currentSection,
   has: (s: string) => tourEngine.has(s),
-  start: (s: string) => tourEngine.start(s),
+  start: (s: string) => startTourFor(s),
+  inGame,
   next: () => tourEngine.next(),
   back: () => tourEngine.back(),
   repeat: () => tourEngine.repeat(),
@@ -408,7 +463,7 @@ export const tourControl = {
 export function tourSection(section: string): void {
   currentSection = section;
   tourEngine.onSection(section);
-  const t = TOURS.find((x) => x.section === section);
+  const t = findTour(sectionTour(section));
   if (!t || !voiceReady || tourEngine.state || seen().includes(section)) return;
   void offer(`Показать, что есть в разделе «${SECTIONS.find((s) => s.id === section)?.title ?? section}»? Скажите «да» — и покажу.`, () => tourEngine.start(t.id))
     .then((spoken) => { if (spoken) lsSet(SEEN_KEY, JSON.stringify([...new Set([...seen(), section])])); });

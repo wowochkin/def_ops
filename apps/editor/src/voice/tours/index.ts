@@ -11,6 +11,8 @@ import { MAPS } from './maps';
 import { LIBRARY } from './library';
 import { KNOWLEDGE } from './knowledge';
 import { STAFF } from './staff';
+import { REPLAY } from './replay';
+import { COMMAND, COMMAND_ENTRY } from './command';
 
 export interface TourStep {
   /** Значение `data-tour` подсвечиваемого элемента. */
@@ -36,11 +38,17 @@ export interface Tour {
   id: string;
   /** Раздел тура; 'intro' — вступление о приложении, 'voice' — панель голоса (поверх любого раздела). */
   section: Section | 'intro' | 'voice';
+  /**
+   * Для «Переигровки»: true — тур идёт только в игре (командование), false — только вне игры. Началась или кончилась
+   * игра посреди тура — тур остановлен (TourEngine.onGame).
+   */
+  game?: boolean;
   title: string;
   steps: TourStep[];
 }
 
-export const TOURS: Tour[] = [INTRO, VOICE_PANEL, EDITOR, MODELING, MAPS, LIBRARY, KNOWLEDGE, STAFF];
+// тур раздела «Переигровка» вне игры — первым из туров этого раздела (findTour по разделу)
+export const TOURS: Tour[] = [INTRO, VOICE_PANEL, EDITOR, REPLAY, COMMAND, COMMAND_ENTRY, MODELING, MAPS, LIBRARY, KNOWLEDGE, STAFF];
 
 /** Тур по идентификатору или по разделу. */
 export const findTour = (idOrSection: string, tours: Tour[] = TOURS): Tour | undefined =>

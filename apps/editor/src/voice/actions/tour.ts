@@ -27,6 +27,8 @@ export interface TourControl {
   stop(): string | void;
   introOn(): void;
   introOff(): void;
+  /** Идёт игра: раздел «Переигровка» показывает командование (его тур — 'command'). */
+  inGame?(): boolean;
 }
 
 const NO_TOUR = 'Тур сейчас не идёт.';
@@ -44,22 +46,28 @@ const DATIVE: Record<string, string[]> = {
   library: ['знакам'], knowledge: ['знаниям'], staff: ['разделу ии', 'ии'],
 };
 export const tourSay = (id: string) => (DATIVE[id] ?? []).map((d) => `штаб, тур по ${d}`);
+/** Тур по командованию (игре в «Переигровке»): в игре — по экрану игры, вне её — как в неё попасть. */
+export const COMMAND_SAY = ['штаб, тур по командованию', 'штаб, расскажи о командовании'];
+export const IN_GAME = 'Сейчас идёт игра, на экране — командование. Тур по нему — «Штаб, тур по командованию»; тур по переигровке — после выхода из игры: «Штаб, выйди из игры».';
 
 export function tourActions(c: TourControl): Action[] {
   const always = { section: 'global', available: () => true as const };
   const during = { section: 'global', available: () => (c.active() ? true as const : NO_TOUR) };
-  const startSection = async (s: string) => (c.has(s) ? c.start(s)
+  const game = () => !!c.inGame?.();
+  /** Тур текущего экрана: в «Переигровке» во время игры — командование. */
+  const here = () => (c.section() === 'replay' && game() ? 'command' : c.section());
+  const startSection = async (s: string) => (s === 'replay' && game() ? IN_GAME : c.has(s) ? c.start(s)
     : `По разделу «${title(s)}» тура пока нет. Могу рассказать о приложении: скажите «Штаб, расскажи о приложении».`);
   return [
     { ...always, id: 'tour.intro', title: 'Рассказать о приложении', describe: 'Вступление: что это за приложение, его разделы, как говорить со штабом.',
       say: ['штаб, расскажи о приложении'], run: async () => c.start('intro') },
     {
       ...always, id: 'tour.start', title: 'Тур по разделу',
-      describe: 'Показывает раздел с подсветкой: что в нём есть и что сказать («Штаб, тур по картам» — section: maps). Без параметра — текущий раздел; intro — о приложении, voice — панель голоса.',
-      params: { type: 'object', properties: { section: { enum: [...SECTIONS.map((s) => s.id), 'intro', 'voice'] } } },
-      // в «Что можно сказать» — и «тур по» текущему разделу, если тур по нему есть
-      get say() { const s = c.section(); return ['штаб, покажи раздел', ...(c.has(s) ? tourSay(s).slice(0, 1) : [])]; },
-      run: async (p?: { section?: string }) => startSection(p?.section ?? c.section()),
+      describe: 'Показывает раздел с подсветкой: что в нём есть и что сказать («Штаб, тур по картам» — section: maps; «тур по командованию» — command). Без параметра — текущий раздел; intro — о приложении, voice — панель голоса.',
+      params: { type: 'object', properties: { section: { enum: [...SECTIONS.map((s) => s.id), 'command', 'intro', 'voice'] } } },
+      // в «Что можно сказать» — и «тур по» текущему разделу (в игре — по командованию), если тур по нему есть
+      get say() { const s = here(); return ['штаб, покажи раздел', ...(s === 'command' ? COMMAND_SAY.slice(0, 1) : c.has(s) ? tourSay(s).slice(0, 1) : [])]; },
+      run: async (p?: { section?: string }) => startSection(p?.section ?? here()),
     },
     ...SECTIONS.map((sec): Action => ({
       id: `tour.of.${sec.id}`, section: 'global', title: `Тур по разделу «${sec.title}»`, shortcut: true,
@@ -69,6 +77,9 @@ export function tourActions(c: TourControl): Action[] {
       available: () => true,
       run: async () => startSection(sec.id),
     })),
+    { id: 'tour.of.command', section: 'global', title: 'Тур по командованию', shortcut: true,
+      describe: 'Показывает командование (игру в «Переигровке»): в игре — что на экране и что сказать, вне игры — как в неё попасть.',
+      say: COMMAND_SAY, available: () => true, run: async () => c.start('command') },
     { ...always, id: 'tour.voice', title: 'Рассказать о панели голоса', describe: 'Тур по панели голоса.',
       say: ['штаб, расскажи о панели голоса'], run: async () => c.start('voice') },
     {

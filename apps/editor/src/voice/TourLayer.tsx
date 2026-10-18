@@ -7,7 +7,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ActButton } from './registry';
 import { registerTourActions } from './actions/tour';
-import { findTarget, onVoiceReady, READY_FIRST, stepCaption, tourControl, tourEngine, tourSection } from './tour';
+import { findTarget, inGame, onVoiceReady, READY_FIRST, stepCaption, tourControl, tourEngine, tourSection } from './tour';
 
 export type Rect = { top: number; left: number; width: number; height: number };
 
@@ -55,6 +55,13 @@ export function TourLayer({ section }: { section: string }) {
     return () => { window.removeEventListener(READY_FIRST, h); window.removeEventListener('resize', rs); };
   }, []);
   useEffect(() => { tourSection(section); }, [section]);
+  // игра началась или кончилась посреди тура «Переигровки» / командования — тур, чьих элементов больше нет, остановлен
+  const game = st?.tour.game !== undefined;
+  useEffect(() => {
+    if (!game) return;
+    const t = setInterval(() => tourEngine.onGame(inGame()), 500);
+    return () => clearInterval(t);
+  }, [game]);
 
   const step = st ? st.tour.steps[st.index] : null;
   const target = step ? (st!.missing && step.via ? step.via : step.target) : null;

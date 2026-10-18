@@ -624,10 +624,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     <div className={`replay cmd mob-${mob}`}>
       <div className="mob-switch"><button className={mob === 'staff' ? 'on' : ''} onClick={() => setMob('staff')}>Штаб</button><button className={mob === 'map' ? 'on' : ''} onClick={() => setMob('map')}>Карта</button><ActButton className={advOpen ? 'on' : ''} action="command.advisor.show" params={{ mode: advOpen ? 'close' : 'open' }}>Советник</ActButton></div>
       <aside className="rp-side cmd-side">
-        <div className="cmd-head">
+        <div className="cmd-head" data-tour="cmd-head">
           <div className="cmd-top">
             <span className="cmd-kicker" title={view?.scenarioName}>Командование · {(view?.scenarioName ?? saved?.title ?? '').split(':')[0]}</span>
-            <Popover label="⋯" align="right" title="Игра">{(close) => (
+            <Popover label="⋯" align="right" title="Игра" data-tour="cmd-menu">{(close) => (
               <div className="menu">
                 <button data-action="command.review.open" onClick={() => { close(); tap('command.review.open'); }} disabled={!view || !record?.turns.length}>Разбор операции (отчёт, PDF)…</button>
                 <button data-action="command.journal.save" onClick={() => { close(); tap('command.journal.save'); }}>Сохранить журнал боевых действий (.md)</button>
@@ -645,14 +645,14 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <span className="cmd-goal" title={`Победа: ${view.victory}. Поражение: численность ниже ${Math.round(view.strengthBelow * 100)} % исходной или предельный срок ${ddmm(view.deadline)}`}>цель — {view.victory}; срок — {ddmm(view.deadline)}; в строю {pct(view.strength)}</span>
           </div>}
           <div className="cmd-chips"><AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.enemyModel || llm.settings.model} onClick={() => tap('command.tab', { tab: 'umpire' })} />
-            <ActButton className={`adv-btn${advOpen ? ' on' : ''}`} action="command.advisor.show" params={{ mode: 'toggle' }} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</ActButton></div>
+            <ActButton className={`adv-btn${advOpen ? ' on' : ''}`} data-tour="cmd-advisor" action="command.advisor.show" params={{ mode: 'toggle' }} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</ActButton></div>
         </div>
-        <nav className="cmd-tabs">
+        <nav className="cmd-tabs" data-tour="cmd-tabs">
           {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
-            <ActButton key={k} action="command.tab" params={{ tab: k }} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`}>{t}</ActButton>
+            <ActButton key={k} data-tour={`cmd-tab-${k}`} action="command.tab" params={{ tab: k }} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`}>{t}</ActButton>
           ))}
         </nav>
-        <div className="cmd-body">
+        <div className="cmd-body" data-tour="cmd-body">
           {!view ? <div className="cmd-wait"><span className="spinner" /> {progress}</div> : <>
             {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" data-action="map.focusOnly" checked={focusOnly} onChange={(e) => tap('map.focusOnly', { on: e.target.checked })} /> только он в списках</label><ActButton className="x" title="Снять фокус" action="map.sector" params={{ name: '' }}>×</ActButton></div>}
             {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { if (id) tap('command.unit.show', { name: id }); else tap('command.unit.close'); }} onOrder={(id) => tap('command.order.open', { name: id })} sel={sel} />}
@@ -678,7 +678,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               enemy={enemy} setEnemy={(mode) => tap('command.enemyMode', { mode })} llm={llm} part={umpPart} />}
           </>}
         </div>
-        {view && !view.over && <div className="cmd-foot">
+        {view && !view.over && <div className="cmd-foot" data-tour="cmd-foot">
           {blocked ? <div className="cmd-blocked">
             <b>Штаб противника не дал решения</b><span>{blocked}</span>
             <div><StaffButton action="command.ai.retry">Повторить запрос</StaffButton>
@@ -695,7 +695,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               </StaffButton>
             </>}
         </div>}
-        {view?.over && <div className={`cmd-foot cmd-over ${view.outcome?.result ?? ''}`}><b>{view.outcome?.result === 'victory' ? 'Победа' : 'Поражение'}</b>
+        {view?.over && <div className={`cmd-foot cmd-over ${view.outcome?.result ?? ''}`} data-tour="cmd-foot"><b>{view.outcome?.result === 'victory' ? 'Победа' : 'Поражение'}</b>
           <span>{view.outcome?.text}</span>
           <span className="muted">{goals.filter((g) => g.simulated).length} из {goals.length} контрольных событий случились. Журнал и запись игры — в меню «⋯».</span>
           <div className="row-btns"><StaffButton className="primary" action="command.review.open">Разбор операции</StaffButton><StaffButton action="command.journal.save">Сохранить журнал</StaffButton></div></div>}
@@ -703,7 +703,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       <main className={`rp-main${pickMode ? ' picking' : ''}`}>
         {doc && time ? <>
           <div className="rp-bar">
-          <div className="rp-tools">
+          <div className="rp-tools" data-tour="cmd-tools">
             <LevelSwitch level={level} setLevel={setLevel} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))}
               setAll={(on) => setVis((h) => ({ ...h, ...Object.fromEntries(TOGGLES.map((t) => [t.key, on])) }))} />
@@ -711,7 +711,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={view ? `начала операции, ${dmy(view.start)}` : null} /></Popover>
           </div>
           </div>
-          <div className="rp-map">
+          <div className="rp-map" data-tour="cmd-map">
           <MapView doc={doc ? withoutLabels(withLevel(doc, level), labels) : doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, view?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
@@ -1005,7 +1005,7 @@ function Advisor({ llm, msgs, drafted, dyn, focus, plan, planStale, planN, accep
   const questions = node ? [...(node.questions ?? []), ...(node.dyn ? dyn[node.dyn].map((x) => node.template!.replace('{name}', x.name)) : [])] : [];
   const dynEmpty = node?.dyn && !dyn[node.dyn].length;
   return (
-    <div className="advisor">
+    <div className="advisor" data-tour="cmd-advisor-panel">
       <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
         {msgs.length > 0 && <ActButton className="link" action="command.advisor.clear">очистить</ActButton>}<ActButton className="x adv-min" action="command.advisor.show" params={{ mode: 'min' }} title="Свернуть к краю карты (беседа сохранится)">–</ActButton><ActButton className="x" action="command.advisor.show" params={{ mode: 'close' }} title="Скрыть советника (беседа сохранится)">×</ActButton></div>
       <ModelPicker llm={llm} who="adv" purpose="ответов советника" />
@@ -1565,7 +1565,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') void act('replay.takeCommand.cancel'); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
   return (
     <div className="modal-bg" onClick={() => { void act('replay.takeCommand.cancel'); }}>
-      <div className="modal take" data-modal onClick={(e) => e.stopPropagation()}>
+      <div className="modal take" data-modal data-tour="take-dialog" onClick={(e) => e.stopPropagation()}>
         <h3>Принять командование</h3>
         <p className="take-when"><b>{dayLong(at)}, {hhmm(at)}</b> · ход {turn} · ход — {turnHours === 24 ? 'сутки' : `${turnHours} ч`}</p>
         <ul className="take-list">
