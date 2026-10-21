@@ -404,3 +404,68 @@ fn staff_pontoon_and_sector_preference() {
     let n = |p: &Vec<u32>| p.iter().filter(|&&c| north(c as usize)).count();
     assert!(n(&pref_path) < n(&plain_path), "{} → {}", n(&plain_path), n(&pref_path));
 }
+
+/// Сценарий для проверок марша по территории противника: танковый корпус у Котбуса, немецкая дивизия далеко (её
+/// территорию в 12 км не держат), приказ — выйти к Баруту. Начало в 01:00: первые 12 ч переходят через 06:00.
+fn deep_march(name: &str) -> agents_core::world::Sim {
+    let root = repo_root();
+    let s = serde_json::json!({
+        "id": "deep-march", "theatre": "packages/sim/data/theatres/oder-berlin-1945.json",
+        "start": "1945-04-20T01:00", "hours": 48, "seed": 1,
+        "hqs": [
+            { "id": "su_f", "name": "фронт", "side": "su", "echelon": "front", "parent": null, "pos": [14.4, 51.8] },
+            { "id": "su_a", "name": "танковая армия", "side": "su", "echelon": "army", "parent": "su_f", "pos": [14.3, 51.8] },
+            { "id": "de_a", "name": "немецкая армия", "side": "de", "echelon": "army", "parent": null, "pos": [12.6, 52.6] }
+        ],
+        "divisions": [
+            { "id": "su_t", "name": "танковый корпус", "side": "su", "hq": "su_a", "kind": "tk", "mobility": "tracked", "size": "tank", "personnel": 12000, "tanks": 180, "guns": 200, "pos": [14.30, 51.80] },
+            { "id": "de_1", "name": "1 пд", "side": "de", "hq": "de_a", "kind": "pd", "mobility": "foot", "size": "rifle", "personnel": 7000, "tanks": 10, "guns": 60, "pos": [12.6, 52.6] }
+        ],
+        "orders": [{ "at": 0, "hq": "su_a", "to": ["su_t"], "kind": "move", "target": [13.45, 52.12], "note": "выйти к Баруту" }]
+    });
+    let path = std::env::temp_dir().join(format!("agents-core-{name}-{}.json", std::process::id()));
+    std::fs::write(&path, s.to_string()).unwrap();
+    let (sim, _) = agents_core::scenario::load(&path.to_string_lossy(), &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    sim
+}
+
+/// По территории противника — не быстрее нормы за любые сутки (march.enemyTerritoryKmDay), и вдали от его войск, и в
+/// ход через 06:00; пройденные клетки маршрута — свои (за колонной не остаётся чужой разметки).
+#[test]
+fn enemy_territory_pace_everywhere() {
+    let mut sim = deep_march("deep-pace");
+    for c in sim.world.control.iter_mut() { *c = 2; }
+    let norm = sim.rules.enemy_territory_km_day[Mobility::Tracked as usize];
+    let p0 = sim.world.divisions[0].vars.pos;
+    let mut track = vec![p0];
+    for _ in 0..24 { sim.step(); track.push(sim.world.divisions[0].vars.pos); }
+    let path = |a: usize, b: usize| track[a..b].windows(2).map(|w| w[0].dist(w[1])).sum::<f64>();
+    // клетка ~2 км: допуск на одну клетку и неполный час
+    assert!(path(0, 13) <= norm + 4.0, "за 12 ч через 06:00: {:.1} км", path(0, 13));
+    assert!(path(0, 25) <= norm + 4.0, "за сутки: {:.1} км", path(0, 25));
+    assert!(path(0, 25) >= 0.6 * norm, "корпус шёл: {:.1} км", path(0, 25));
+    // пройденное за час между стоянками — своё
+    let mid = track[10].toward(track[11], 0.5 * track[10].dist(track[11]));
+    let c = sim.theatre.cell_of_xy(mid).unwrap();
+    assert_eq!(sim.world.control[c], 1);
+}
+
+/// Закрепление земли за фронтом: чужая клетка, окружённая своей землёй и далеко от войск противника, — своя; где
+/// войска противника есть, его земля остаётся его.
+#[test]
+fn consolidate_rear_between_columns() {
+    let mut sim = deep_march("deep-consolidate");
+    let t = sim.theatre.clone();
+    for c in sim.world.control.iter_mut() { *c = 1; }
+    let block = |sim: &mut agents_core::world::Sim, at: [f64; 2]| -> usize {
+        let c = t.cell_of_xy(t.proj.to_xy(at)).unwrap();
+        let (c0, r0) = (c % t.cols, c / t.cols);
+        for r in r0 - 4..=r0 + 4 { for k in c0 - 4..=c0 + 4 { sim.world.control[r * t.cols + k] = 2; } }
+        c
+    };
+    let rear = block(&mut sim, [13.9, 52.3]);
+    let held = block(&mut sim, [12.6, 52.6]);
+    sim.step();
+    assert_eq!(sim.world.control[rear], 1, "тыл между своими — свой");
+    assert_eq!(sim.world.control[held], 2, "у немецкой дивизии — немецкая");
+}

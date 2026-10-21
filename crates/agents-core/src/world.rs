@@ -107,14 +107,18 @@ pub struct World {
 
 /// Радиус начальной разметки территории вокруг войск, км.
 pub const CONTROL_INIT_KM: f64 = 40.0;
+/// Закрепление земли: на каком удалении искать свою землю по четырём сторонам, км (как в нынешней модели).
+pub const CONSOLIDATE_REACH_KM: f64 = 24.0;
 
 #[inline]
 pub fn side_code(s: Side) -> u8 { match s { Side::Su => 1, Side::De => 2 } }
 
 impl World {
-    /// Начальная разметка территории: клетка принадлежит стороне ближайшей дивизии (не дальше CONTROL_INIT_KM).
+    /// Начальная разметка территории: клетка принадлежит стороне ближайшей дивизии (не дальше CONTROL_INIT_KM). Не
+    /// введённые в операцию не считаются: их место в сценарии — район будущего ввода (28 А у Котбуса размечала бы
+    /// немецкий тыл Котбус — Люббен своим с первого часа).
     pub fn init_control(&mut self, t: &Theatre) {
-        let pts: Vec<(XY, u8)> = self.divisions.iter().map(|d| (d.vars.pos, side_code(d.side))).collect();
+        let pts: Vec<(XY, u8)> = self.divisions.iter().filter(|d| d.state != State::Pending && !d.state.out()).map(|d| (d.vars.pos, side_code(d.side))).collect();
         self.control = t.centers.par_iter().map(|c| {
             pts.iter().map(|&(p, s)| (p.dist(*c), s)).filter(|&(k, _)| k <= CONTROL_INIT_KM)
                 .min_by(|a, b| a.0.total_cmp(&b.0)).map_or(0, |(_, s)| s)
@@ -543,6 +547,10 @@ impl Sim {
         let mut left = 1.0f64;
         let night = self.night();
         let mut sub = MarchSub::Road;
+        // часы марша за 23 часа до этого: по территории противника норма — за любые сутки, а не за календарные (ход
+        // через 06:00 давал бы 4 ч до сброса суточных часов и ещё 8 после — полторы нормы темпа подряд)
+        let day_h: f64 = d.vars.march_h_log.iter().enumerate().filter(|&(k, _)| k != w.tick as usize % 24).map(|(_, h)| h).sum();
+        let mut deep_done = false;
         if rt.crossing_left_h > 0.0 {
             let used = rt.crossing_left_h.min(left);
             rt.crossing_left_h -= used;
@@ -580,10 +588,14 @@ impl Sim {
             if road == 0 && sub == MarchSub::Road { sub = MarchSub::OffRoad; }
             let mut v = r.speed_kmh(d.side, d.params.mobility, road, t.terrain[nb], night);
             // по территории противника — не марш, а наступление в глубине: темп не выше нормы за сутки
-            // (за часы марша в сутки, поэтому за сутки выходит не больше нормы)
-            // территория противника — там, где её держат его войска; пустая разметка за своими колоннами — свой тыл
-            let held = w.held[crate::staff::side_idx(d.side.enemy())].get(nb).copied().unwrap_or(true);
-            if held && w.control.get(nb).copied() == Some(side_code(d.side.enemy())) {
+            // (за часы марша в сутки, поэтому за сутки выходит не больше нормы). Всюду, а не только у его войск: в
+            // глубине — заслоны, гарнизоны, разрушения. Свой тыл с немецкой разметкой — след своих колонн — размечен
+            // своим при проходе (resolve); клетка рядом с дивизией своя по её же разметке, поэтому смотрим на две
+            // клетки маршрута вперёд — иначе голова колонны каждый час проходила бы её полным ходом
+            let enemy_code = side_code(d.side.enemy());
+            let enemy_land = (rt.next..(rt.next + 3).min(rt.cells.len())).any(|k| w.control.get(rt.cells[k] as usize).copied() == Some(enemy_code));
+            if enemy_land {
+                if day_h + 1.0 - left >= hours_limit { deep_done = true; break; }
                 v = v.min(r.enemy_territory_km_day[d.params.mobility as usize] / hours_limit);
                 // город противника — кварталами, даже без соприкосновения с его дивизиями: гарнизон рассредоточен
                 let city = t.city[nb] as usize;
@@ -608,6 +620,11 @@ impl Sim {
             }
         }
         let used_h = 1.0 - left;
+        if deep_done && used_h < 1e-9 {
+            if !matches!(d.state, State::March(MarchSub::Halt)) { out.state = Some((State::March(MarchSub::Halt), "суточная норма наступления по территории противника выполнена, привал".into())); }
+            out.activity = Some(Activity::Reserve);
+            return;
+        }
         if out.state.is_none() {
             let s = State::March(sub);
             if s != d.state { out.state = Some((s, if matches!(d.state, State::March(_)) { String::new() } else { "выступила маршем".into() })); }
@@ -631,6 +648,9 @@ impl Sim {
                 }
             }
         }
+        // часы марша этого часа суток — заново (скользящие сутки для темпа по территории противника)
+        let slot = tick as usize % 24;
+        for d in w.divisions.iter_mut() { d.vars.march_h_log[slot] = 0.0; }
         // движение и мосты: по порядку индексов, мост держит колонну, пока она не пройдёт
         for (i, it) in intents.iter().enumerate() {
             let Some(m) = it.moved else { continue };
@@ -666,7 +686,19 @@ impl Sim {
             let d = &mut w.divisions[i];
             d.vars.pos = final_pos;
             d.vars.march_h_today += used;
-            if let Some(rt) = d.route.as_mut() { rt.next = final_next; rt.crossing_left_h = m.crossing_left_h; rt.cleared = cleared; }
+            d.vars.march_h_log[slot] = used;
+            let code = side_code(d.side);
+            let mut passed: Vec<usize> = Vec::new();
+            if let Some(rt) = d.route.as_mut() {
+                passed = rt.cells[rt.next.saturating_sub(1).min(final_next)..final_next.min(rt.cells.len())].iter().map(|&c| c as usize).collect();
+                rt.next = final_next; rt.crossing_left_h = m.crossing_left_h; rt.cleared = cleared;
+            }
+            // пройденные за час клетки маршрута с соседними — её стороны (как клетка, где она стоит): за колонной не
+            // остаётся немецкой разметки, и идущие следом не замедляются темпом по территории противника
+            for c in passed {
+                if let Some(x) = w.control.get_mut(c) { *x = code; }
+                for k in 0..8 { if let Some(nb) = self.theatre.neighbor(c, k) { w.control[nb] = code; } }
+            }
         }
         // отступление
         for (i, it) in intents.iter().enumerate() {
@@ -906,6 +938,7 @@ impl Sim {
             for k in 0..8 { if let Some(nb) = t.neighbor(c, k) { w.control[nb] = code; } }
         }
         self.apply_pockets(w, journal);
+        self.consolidate(w);
         self.apply_breakout_losses(w);
         // потери в соприкосновении без боя: огонь, мины, поиски (contact_loss_day; 0 — нет)
         if r.combat.contact_loss_day > 0.0 {
@@ -929,6 +962,37 @@ impl Sim {
                 .or(o.control)
         }).collect();
         for (o, c) in w.objects.iter_mut().zip(control) { o.control = c; }
+    }
+
+    /// Закрепление земли за своим фронтом (как в нынешней модели, docs/system.md, «Территория — сплошная полоса»):
+    /// клетка противника становится своей, если его войск нет ближе pocket.hold_km (там его территорию не держат), а
+    /// своя земля — со всех четырёх сторон в пределах CONSOLIDATE_REACH_KM: полосы между коридорами своих армий — свой
+    /// тыл, и идущие следом не ползут по ним темпом наступления. Со всех четырёх, а не с трёх, как в нынешней модели:
+    /// клетки перед головой колонны между соседними корпусами иначе закреплялись бы раньше, чем она до них дошла.
+    /// Обойдённые узлы, где войска противника есть, остаются его.
+    fn consolidate(&self, w: &mut World) {
+        let t = &*self.theatre;
+        let n = w.control.len();
+        if n == 0 || w.held[0].len() != n || w.held[1].len() != n { return; }
+        let cell = if t.centers.len() > 1 { t.centers[0].dist(t.centers[1]).max(0.1) } else { 1.0 };
+        let reach = (CONSOLIDATE_REACH_KM / cell).round().max(1.0) as i64;
+        for _ in 0..3 {
+            let flips: Vec<(usize, u8)> = (0..n).into_par_iter().filter_map(|i| {
+                let o = w.control[i];
+                if o == 0 { return None; }
+                let own = if o == 1 { 2 } else { 1 };
+                // войска владельца ближе hold_km — его территорию держат
+                if w.held[(o - 1) as usize][i] { return None; }
+                let (c0, r0) = ((i % t.cols) as i64, (i / t.cols) as i64);
+                let all = [(1, 0), (-1, 0), (0, 1), (0, -1)].iter().all(|&(dc, dr)| (1..=reach).any(|k| {
+                    let (cc, rr) = (c0 + dc * k, r0 + dr * k);
+                    cc >= 0 && rr >= 0 && cc < t.cols as i64 && rr < t.rows as i64 && w.control[rr as usize * t.cols + cc as usize] == own
+                }));
+                all.then_some((i, own))
+            }).collect();
+            if flips.is_empty() { break; }
+            for (i, s) in flips { w.control[i] = s; }
+        }
     }
 
     /// Изменения по датам на шаге `tick`. Пополнение — к текущим силам и к начальным (personnel0, strength0 — на силу
