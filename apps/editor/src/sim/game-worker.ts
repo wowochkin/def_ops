@@ -30,6 +30,7 @@ import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
 import { agentEvents, agentGame, bridgesOf, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff } from './agents-game';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
+import { llmQueue } from './llm-queue';
 
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
 const liveCfg = import.meta.glob('../../../../services/staff/live/*.json', { import: 'default' });
@@ -135,6 +136,7 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
     else if (m.kind === 'retry-ai') { aiWait.drop(); startAi(); if (queued) await advance(); }
     else if (m.kind === 'skip-ai') { skipAi = true; if (queued) await advance(); }
     else if (m.kind === 'umpire-done') releaseAi();
+    else if (m.kind === 'llm-hold') modelQueue.hold(m.on);
     else if (m.kind === 'advise') void adviseReq(m);
     else if (m.kind === 'plan') void planReq(m);
     else if (m.kind === 'plan-stop') planAbort?.abort();
@@ -247,18 +249,10 @@ function day(time: string, orders: Order[], before: GameState['state'], results:
   };
 }
 
-/**
- * Запросы к модели — по очереди: локальный сервер (особенно MLX) параллельные запросы к одной модели часто не
- * держит (ошибка 500). Штаб противника, советник и посредник ждут друг друга; busy — кто сейчас у модели.
- */
-let llmQueue: Promise<unknown> = Promise.resolve();
-let llmBusy: string | null = null;
-function exclusive<T>(who: string, f: () => Promise<T>): Promise<T> {
-  const run = async () => { llmBusy = who; try { return await f(); } finally { llmBusy = null; } };
-  const r = llmQueue.then(run, run);
-  llmQueue = r.catch(() => undefined);
-  return r;
-}
+/** Очередь к модели (sim/llm-queue.ts): окну — чем занята, голос — первым. */
+const modelQueue = llmQueue((who) => post({ kind: 'llm-busy', who }));
+const exclusive = modelQueue.exclusive;
+const busyWho = modelQueue.busyWho;
 
 /** Краткость ответа штаба противника в игре. */
 const BRIEF = 'Игра идёт в реальном времени — отвечайте коротко: assessment — 3–4 предложения, enemyIntent и intent — по 1–2 предложения, details приказа — одно предложение, risks и requests — не больше трёх коротких пунктов. Приказы отдавайте объединениям (армиям, корпусам) — они доводятся до всех их соединений; отдельным дивизиям — только тем, у кого задача иная, чем у их объединения.';
@@ -297,7 +291,7 @@ function startAi() {
     const lastMsg = sit.messages[sit.messages.length - 1];
     lastMsg.content += `\n\n${BRIEF}`;
     const tokens = Math.round(sit.messages.reduce((a, m) => a + m.content.length, 0) / 3.2);
-    setPhase(llmBusy ? `ждёт очереди: модель занята (${llmBusy})` : 'отправка запроса…');
+    setPhase(busyWho() ? `ждёт очереди: модель занята (${busyWho()})` : 'отправка запроса…');
     const t = await exclusive('решение штаба противника', () => {
       // до первого токена модель читает обстановку: на локальной модели длинный запрос — минута и больше
       setPhase(`модель читает обстановку: запрос ≈ ${Math.round(tokens / 100) / 10} тыс. токенов — на локальной модели это может занять минуту-две; ответ появится здесь по мере генерации`);
@@ -383,7 +377,7 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
     { category: m.category, topic: m.topic, question: m.question, draft: m.draft, thread: m.thread, reference: m.reference,
       goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
   let buf = '', last = 0;
-  if (llmBusy) post({ kind: 'advice-wait', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
+  if (busyWho()) post({ kind: 'advice-wait', id: m.id, text: `ждёт очереди: модель занята (${busyWho()})…` });
   adviseAbort?.abort();
   const abort = adviseAbort = new AbortController();
   const r = await exclusive('вопрос советнику', () => abort.signal.aborted ? Promise.resolve({ ok: false, error: 'остановлено', answer: '', basis: [], unknowns: [], suggestions: [], followUps: [], issues: [] }) : advise(advisorClient(), g, built, {
@@ -460,7 +454,7 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
   };
   planAbort?.abort();
   const abort = planAbort = new AbortController();
-  if (llmBusy) post({ kind: 'plan-progress', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
+  if (busyWho()) post({ kind: 'plan-progress', id: m.id, text: `ждёт очереди: модель занята (${busyWho()})…` });
   let last = 0;
   const r = await exclusive('варианты решения', () => {
     post({ kind: 'plan-progress', id: m.id, text: 'советник готовит варианты…' });
@@ -593,7 +587,7 @@ async function reviewSection(m: Extract<GameRequest, { kind: 'review-section' }>
   const signal = reviewAbort.signal;
   const t0 = Date.now();
   const digest = reviewDigest(reviewInput());
-  if (llmBusy) post({ kind: 'review-wait', id: m.id, text: `ждёт очереди: модель занята (${llmBusy})…` });
+  if (busyWho()) post({ kind: 'review-wait', id: m.id, text: `ждёт очереди: модель занята (${busyWho()})…` });
   let buf = '', last = 0, rbuf = '', rlast = 0;
   try {
     const r = await exclusive('разбор операции', () => reviewClient().chat({

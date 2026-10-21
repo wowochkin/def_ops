@@ -14,6 +14,7 @@
 import type { GameRecord } from '@def-ops/sim';
 import type { AiStatus, TurnView } from '../sim/game-protocol';
 import { inReplay } from './actions/command';
+import { setModelBusy } from './model-queue';
 import { prepareSpeech, propose, retract, setVoiceNote, speak, voiceLive, voiceRecent } from './registry';
 import { sentence } from './report';
 import { speakable } from './speech';
@@ -141,10 +142,13 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
         if (typeof reminder === 'number') retract(reminder); // не звучало — заменить, а не копить
         reminder = say(UMPIRE_STILL_SAY);
       }, UMPIRE_REMIND_MS);
+      // модель занята разбором хода: реплика голосу, которую поймёт только модель, подождёт её (voice/model-queue.ts)
+      setModelBusy('umpire', 'разбор хода');
       try {
         texts = reviewFromModel(await a.model(REVIEW_SYSTEM, reviewInput(a.view, steps), { signal: ac.signal }), steps.length);
         why = texts ? null : UMPIRE_UNFIT;
       } catch { why = UMPIRE_FAILED; } finally {
+        setModelBusy('umpire', null);
         clearInterval(remind);
         // ответ пришёл (или не пришёл) — «Сведения ещё готовятся», стоявшее в очереди, уже не нужно
         if (typeof reminder === 'number') retract(reminder);

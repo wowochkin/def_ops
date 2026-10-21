@@ -26,6 +26,7 @@ import { parseDictation, stopReading } from './dictation';
 import type { ModelReply } from './llm';
 import { act, actions, forModel, getAction, hasSpeaker, speak, listed, markVoice, parsePhrase, repeatTurn, topModal, turnDone, type Action, type SpeakRole, type VoiceModal } from './registry';
 import { lev, norm, tolerance } from './fuzzy';
+import { busyWords, MODEL_FREE_SAY, ModelBusy, modelWaitSay, withModel } from './model-queue';
 import { speakable } from './speech';
 /** Действие вызвано голосом: исполненное подсвечивается на экране. */
 const VOICE = { by: 'voice' } as const;
@@ -696,10 +697,20 @@ export class Dispatcher {
       if (live() && !warned) { warned = true; this.retryId = this.say(RETRY_SAY, { quiet: true }) ?? undefined; }
     };
     try {
-      reply = await this.opts.model!(raw, list, { signal: ac.signal, section, onRetry });
+      // голос — первым в очереди к модели: занята штабом противника, советником, разбором — сказать и ждать её
+      reply = await withModel(() => this.opts.model!(raw, list, { signal: ac.signal, section, onRetry }), {
+        signal: ac.signal,
+        onWait: (who) => { if (live()) this.say(modelWaitSay(who), { quiet: true }); },
+        onFree: () => { if (live()) this.say(MODEL_FREE_SAY, { quiet: true }); },
+      });
     } catch (e) {
       if (!live()) return 'unknown';
       this.done(ac);
+      if (e instanceof ModelBusy) {
+        // модель жива, просто долго занята: «недоступной» её не считаем — следующая реплика снова её ждёт
+        this.say(`Модель всё ещё занята — ${busyWords(e.who)}. Пока можно сказать, например: ${quote(closest(section, rest))}.`, { quiet: true });
+        return 'unknown';
+      }
       if ((e as Error)?.name === 'ModelUnavailable') {
         // помнится до перепроверки связи (RECHECK_MS): дальше непонятое — сразу честный ответ, эта фраза — раз за сбой
         this.down = true;
