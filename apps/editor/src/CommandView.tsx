@@ -744,7 +744,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           <div className="rp-bar">
           <div className="rp-tools" data-tour="cmd-tools">
             <LevelSwitch level={level} setLevel={setLevel} engine={eng} />
-            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))}
+            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'division' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))}
               setAll={(on) => setVis((h) => ({ ...h, ...Object.fromEntries(TOGGLES.map((t) => [t.key, on])) }))} />
             {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={view ? `начала операции, ${dmy(view.start)}` : null} /></Popover>
@@ -765,7 +765,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             actions={<><button data-action="command.tab" onClick={() => { tap('command.tab', { tab: 'intel' }); setMob('staff'); }}>Разведсводка →</button>
               {unit(sel) && unit(sel)!.status !== 'destroyed' && <button data-action="command.order.set" onClick={() => targetEnemy(intelE.id)}
                 title="Цель удара для выбранного объединения — во вкладке «Приказы»">Целью удара для «{short(unit(sel)!.name)}»</button>}</>} />}
-          <Legend on={layerOn} extra={[...LEVEL_LEGEND[level], ...ZONES_LEGEND]} combat={level === 'tac'} remember="def_ops.command.legend" />
+          <Legend on={layerOn} extra={[...LEVEL_LEGEND[level], ...ZONES_LEGEND]} combat={level === 'division'} remember="def_ops.command.legend" />
           {view && <Player start={view.start} end={view.time > view.start ? view.time : addH(view.start, view.turnHours)} time={time} setTime={setTime} events={playerEvents}
             onEvent={(e) => { if (e.at) tap('map.event', { name: e.title.split(':')[0] }); else goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
           </div>

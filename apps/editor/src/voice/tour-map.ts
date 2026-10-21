@@ -54,22 +54,23 @@ function fitView(en: TourMapEngine, pts: LngLat[], free = false): { center: LngL
   return { center, zoom: Math.round(zoom * 4) / 4 };
 }
 
-const ORDER: LevelId[] = ['tac', 'op', 'st'];
+/** От крупного масштаба к мелкому. */
+const ORDER: LevelId[] = ['division', 'corps', 'army', 'front', 'stavka'];
 
 /**
- * Уровень и масштаб шага. want — желательный уровень (auto — начиная с оперативного); fitZoom — масштаб, при котором
+ * Уровень и масштаб шага. want — желательный уровень (auto — начиная с уровня армии); fitZoom — масштаб, при котором
  * все точки шага помещаются (null — одно место). Берётся первый уровень от желательного, на котором точки помещаются
  * в мелкой границе его интервала; масштаб — в интервале уровня (одно место — стандартный масштаб уровня: виден участок вокруг).
  */
 export function levelForStep(want: LevelId | 'auto', lat: number, fitZoom: number | null): { level: LevelId; zoom: number } {
-  const from = want === 'auto' ? 1 : ORDER.indexOf(want);  // обзор хода — не мельче оперативного уровня
+  const from = want === 'auto' ? 2 : ORDER.indexOf(want);  // обзор хода — не крупнее уровня армии
   for (const l of ORDER.slice(from)) {
     const r = LEVEL_SCALE[l];
     const zMin = zoomForScale(lat, r.coarse), zMax = zoomForScale(lat, r.from);
     if (fitZoom === null) return { level: l, zoom: zoomForScale(lat, r.def) };
     if (fitZoom >= zMin - 1e-6) return { level: l, zoom: Math.min(fitZoom, zMax) };
   }
-  return { level: 'st', zoom: zoomForScale(lat, LEVEL_SCALE.st.def) };
+  return { level: 'stavka', zoom: zoomForScale(lat, LEVEL_SCALE.stavka.def) };
 }
 
 export function createTourMap(d: TourMapDeps): TourMapControl {

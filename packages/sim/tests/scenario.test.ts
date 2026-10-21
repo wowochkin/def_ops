@@ -40,6 +40,12 @@ describe('сценарий «Берлин-1945»', () => {
     expect(units.length).toBeGreaterThan(30);
     expect(units.every((f) => (f.keyframes?.length ?? 0) >= 1)).toBe(true);
     expect(doc.features.some((f) => f.layerId === 'hist-units')).toBe(true);
+    // уровень «Армия»: знаки корпусов (соединения без корпуса — под армией), слой скрыт до выбора уровня
+    expect(doc.layers.find((l) => l.id === 'lvl-co-units')?.visible).toBe(false);
+    const co = doc.features.filter((f) => f.layerId === 'lvl-co-units' && f.kind === 'symbol' && (f as { ref?: string }).ref) as { ref?: string }[];
+    const ech = new Map(ctx.scenario.formations.map((f) => [f.id, f.echelon]));
+    expect(co.some((f) => ech.get(f.ref!) === 'corps')).toBe(true);
+    expect(co.every((f) => ['corps', 'army', 'front'].includes(ech.get(f.ref!) ?? ''))).toBe(true);
   }, 30_000);
 
   it('рубежи театра — знаком оборонительного рубежа, зубцы к противнику', () => {

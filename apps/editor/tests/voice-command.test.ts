@@ -241,8 +241,16 @@ describe('командование голосом', () => {
   });
   it('уровень карты, слой, участок — фразой в действие реестра', () => {
     for (const id of ['map.level', 'map.layer', 'map.sector', 'map.legend']) offs.push(register({ id, section: 'replay', title: id, describe: '', available: () => true, run: async () => undefined }));
-    expect(parseCommand('оперативный уровень', 'replay')).toEqual({ id: 'map.level', params: { level: 'op' } });
-    expect(parseCommand('перейди на стратегический масштаб', 'replay')).toEqual({ id: 'map.level', params: { level: 'st' } });
+    // прежние названия уровней — по содержанию карты
+    expect(parseCommand('оперативный уровень', 'replay')).toEqual({ id: 'map.level', params: { level: 'front' } });
+    expect(parseCommand('перейди на стратегический масштаб', 'replay')).toEqual({ id: 'map.level', params: { level: 'stavka' } });
+    expect(parseCommand('тактический уровень', 'replay')).toEqual({ id: 'map.level', params: { level: 'division' } });
+    // уровни по ступеням
+    expect(parseCommand('уровень армии', 'replay')).toEqual({ id: 'map.level', params: { level: 'army' } });
+    expect(parseCommand('перейди на уровень ставки', 'replay')).toEqual({ id: 'map.level', params: { level: 'stavka' } });
+    expect(parseCommand('корпусной уровень', 'replay')).toEqual({ id: 'map.level', params: { level: 'corps' } });
+    expect(parseCommand('уровень дивизии', 'replay')).toEqual({ id: 'map.level', params: { level: 'division' } });
+    expect(parseCommand('уровень фронта', 'replay')).toEqual({ id: 'map.level', params: { level: 'front' } });
     expect(parseCommand('скрой реки', 'replay')).toEqual({ id: 'map.layer', params: { layer: 'rivers', on: false } });
     expect(parseCommand('покажи исторический фронт', 'replay')).toEqual({ id: 'map.layer', params: { layer: 'hfront', on: true } });
     expect(parseCommand('участок зееловские высоты', 'replay')).toEqual({ id: 'map.sector', params: { name: 'зееловские высоты' } });

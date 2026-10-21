@@ -9,7 +9,7 @@ import { documentAt, formatScale, migrateDocument, zoomForScale, type LngLat, ty
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
 import { useViewScale } from './ScaleRange';
-import { levelDefaultScale, levelScaleLabel, scaleInLevel } from './map-level-scale';
+import { levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -68,14 +68,22 @@ const BOUND_LAYERS = ['sim-bounds', 'lvl-op-bounds', 'lvl-st-bounds'];
 /** Полные названия слоёв в меню «Слои» (на кнопках были сокращения). */
 export const LAYER_TITLE: Record<string, string> = { ghosts: 'Исторические положения', hfront: 'Линия фронта по истории', front: 'Линия фронта (расчёт)', combat: 'Бои за ход', theatre: 'Рубежи и укреплённые полосы', plan: 'Замысел (проект приказов)', rear: 'Тыл: базы и подвоз', rivers: 'Реки (для переправ)', hbounds: 'Разграничительные линии: директивы и распоряжения', bounds: 'Полосы фронтов и армий (расчёт)', pockets: 'Котлы (окружённые группировки)', fortress: 'Крепости: обводы по застройке', zones: 'Зоны влияния сторон' };
 
-/** Уровень обобщения карты: тактический — соединения и бои, оперативный — объединения (армии), стратегический — фронты. */
-export type MapLevel = 'tac' | 'op' | 'st';
+/** Уровень карты — по ступени командования: Ставка (фронты), фронт (армии), армия (корпуса), корпус и дивизия (дивизии). */
+export type MapLevel = LevelId;
 export const MAP_LEVELS: { id: MapLevel; title: string; hint: string }[] = [
-  { id: 'tac', title: 'Тактический', hint: 'соединения (дивизии, корпуса) и бои за ход' },
-  { id: 'op', title: 'Оперативный', hint: 'объединения (армии): положение, направления действий за сутки, рубежи обороны' },
-  { id: 'st', title: 'Стратегический', hint: 'фронты и группы армий: направления главных ударов за двое суток, оборона' },
+  { id: 'stavka', title: 'Ставка', hint: 'фронты и группы армий: направления главных ударов за двое суток, оборона; армии — подписями' },
+  { id: 'front', title: 'Фронт', hint: 'армии: положение, направления действий за сутки, рубежи обороны' },
+  { id: 'army', title: 'Армия', hint: 'корпуса: положение, направления действий за сутки, рубежи обороны' },
+  { id: 'corps', title: 'Корпус', hint: 'дивизии и полосы' },
+  { id: 'division', title: 'Дивизия', hint: 'дивизии и выделенные части, бои за ход, переправы' },
 ];
-const LEVEL_LAYERS: Record<MapLevel, string[]> = { tac: ['sim-own', 'sim-enemy', 'sim-combat', 'sim-bounds'], op: ['lvl-op-units', 'lvl-op-moves', 'lvl-op-bounds'], st: ['lvl-st-units', 'lvl-st-moves', 'lvl-st-bounds'] };
+const LEVEL_LAYERS: Record<MapLevel, string[]> = {
+  stavka: ['lvl-st-units', 'lvl-st-moves', 'lvl-st-bounds'],
+  front: ['lvl-op-units', 'lvl-op-moves', 'lvl-op-bounds'],
+  army: ['lvl-co-units', 'lvl-co-moves', 'lvl-op-bounds'],
+  corps: ['sim-own', 'sim-enemy', 'sim-bounds'],
+  division: ['sim-own', 'sim-enemy', 'sim-combat', 'sim-bounds'],
+};
 const ALL_LEVEL_LAYERS = new Set(Object.values(LEVEL_LAYERS).flat());
 /** Слои уровня со своим переключателем: показываются, только если он включён. */
 const SWITCHED = new Set(['sim-combat', ...BOUND_LAYERS]);
@@ -83,17 +91,17 @@ const SWITCHED = new Set(['sim-combat', ...BOUND_LAYERS]);
 export function withLevel(doc: MapDocument, level: MapLevel): MapDocument {
   const boundsOff = doc.layers.some((l) => l.id === 'sim-bounds' && !l.visible);
   const on = (l: MapDocument['layers'][number]) => !SWITCHED.has(l.id) || (BOUND_LAYERS.includes(l.id) ? !boundsOff : l.visible);
-  // линия фронта на стратегическом — в манере атласа (свой слой), наведённые переправы — только на тактическом
+  // линия фронта у Ставки — в манере атласа (свой слой), наведённые переправы — только на уровне дивизии
   const frontOn = doc.layers.some((l) => l.id === 'sim-front' && l.visible);
   const theatreOn = doc.layers.some((l) => l.id === 'theatre' && l.visible);
-  // исторические положения — своего масштаба: соединения на тактическом, армии на оперативном, на стратегическом — нет
+  // исторические положения — своего масштаба: соединения у корпуса и дивизии, армии у фронта, у Ставки и армии — нет
   const ghostsOn = doc.layers.some((l) => l.id === 'hist-units' && l.visible);
-  return { ...doc, layers: doc.layers.map((l) => (l.id === 'hist-units' ? { ...l, visible: level === 'tac' && ghostsOn }
-    : l.id === 'lvl-op-hist' ? { ...l, visible: level === 'op' && ghostsOn }
+  return { ...doc, layers: doc.layers.map((l) => (l.id === 'hist-units' ? { ...l, visible: (level === 'corps' || level === 'division') && ghostsOn }
+    : l.id === 'lvl-op-hist' ? { ...l, visible: level === 'front' && ghostsOn }
     : ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && on(l) }
-    : l.id === 'lvl-st-front' ? { ...l, visible: level === 'st' && frontOn }
-    : l.id === 'sim-front' && level === 'st' ? { ...l, visible: false }
-    : l.id === 'theatre-crossings' ? { ...l, visible: level === 'tac' && theatreOn } : l)) };
+    : l.id === 'lvl-st-front' ? { ...l, visible: level === 'stavka' && frontOn }
+    : l.id === 'sim-front' && level === 'stavka' ? { ...l, visible: false }
+    : l.id === 'theatre-crossings' ? { ...l, visible: level === 'division' && theatreOn } : l)) };
 }
 /** Подписи знаков: на карте или только при наведении (запоминается). */
 export function useMapLabels(): [boolean, () => void] {
@@ -101,7 +109,7 @@ export function useMapLabels(): [boolean, () => void] {
   return [on, () => set((x) => { try { localStorage.setItem('def_ops.mapLabels', x ? 'hover' : 'on'); } catch { /* */ } return !x; })];
 }
 export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
-  const [l, set] = useState<MapLevel>(() => { try { return (localStorage.getItem('def_ops.mapLevel') as MapLevel) || 'tac'; } catch { return 'tac'; } });
+  const [l, set] = useState<MapLevel>(() => { try { return migrateLevel(localStorage.getItem('def_ops.mapLevel')); } catch { return 'division'; } });
   return [l, (x) => { set(x); try { localStorage.setItem('def_ops.mapLevel', x); } catch { /* */ } }];
 }
 /**
@@ -143,7 +151,7 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
   );
 }
 
-/** Поставить масштаб карты, стандартный для уровня (тактический 1:50 000, оперативный 1:150 000, стратегический 1:300 000); возвращает его. */
+/** Поставить масштаб карты, стандартный для уровня (Ставка 1:1 000 000 … дивизия 1:50 000); возвращает его. */
 function fitLevelScale(engine: MapEngine | null, level: MapLevel): number | null {
   if (!engine) return null;
   const lat = engine.getView().center[1], t = levelDefaultScale(level);
@@ -155,19 +163,19 @@ export function LevelSwitch({ level, setLevel, engine = null }: { level: MapLeve
   const denom = useViewScale(engine);
   const off = denom != null && !scaleInLevel(level, denom);
   useAction({
-    id: 'map.level', section: 'replay', title: 'Уровень карты', describe: 'Уровень карты: тактический (соединения и бои), оперативный (армии), стратегический (фронты).',
-    params: { type: 'object', properties: { level: { enum: MAP_LEVELS.map((x) => x.id) } }, required: ['level'] }, say: ['штаб, оперативный уровень'],
-    available: inReplay, highlight: (p: { level: MapLevel }) => hl(`level-${p?.level}`),
-    run: async (p: { level: MapLevel }) => {
-      const x = MAP_LEVELS.find((l) => l.id === p?.level);
-      if (!x) return 'Скажите: тактический, оперативный или стратегический уровень.';
+    id: 'map.level', section: 'replay', title: 'Уровень карты', describe: 'Уровень карты по ступени командования: Ставка (фронты), фронт (армии), армия (корпуса), корпус (дивизии), дивизия (дивизии и бои). Прежние названия: тактический — дивизия, оперативный — фронт, стратегический — Ставка.',
+    params: { type: 'object', properties: { level: { enum: [...MAP_LEVELS.map((x) => x.id), 'tac', 'op', 'st'] } }, required: ['level'] }, say: ['штаб, уровень армии', 'штаб, оперативный уровень'],
+    available: inReplay, highlight: (p: { level: string }) => hl(`level-${p?.level ? migrateLevel(p.level) : ''}`),
+    run: async (p: { level: string }) => {
+      const x = p?.level ? MAP_LEVELS.find((l) => l.id === migrateLevel(p.level) && (l.id === p.level || ['tac', 'op', 'st'].includes(p.level))) : undefined;
+      if (!x) return 'Скажите уровень: Ставка, фронт, армия, корпус или дивизия.';
       setLevel(x.id);
       const to = fitLevelScale(engine, x.id);
-      return `${x.title} уровень: ${x.hint}.${to ? ` Масштаб карты — ${formatScale(to)}.` : ''}`;
+      return `Уровень «${x.title}»: ${x.hint}.${to ? ` Масштаб карты — ${formatScale(to)}.` : ''}`;
     },
   });
   useAction({
-    id: 'map.level.fit', section: 'replay', title: 'Масштаб по уровню', describe: 'Ставит масштаб карты, стандартный для выбранного уровня: тактический 1:50 000, оперативный 1:150 000, стратегический 1:300 000.',
+    id: 'map.level.fit', section: 'replay', title: 'Масштаб по уровню', describe: 'Ставит масштаб карты, стандартный для выбранного уровня: Ставка 1:1 000 000, фронт 1:500 000, армия 1:200 000, корпус 1:100 000, дивизия 1:50 000.',
     say: ['штаб, подгони масштаб'], highlight: () => hl('level-fit'), available: () => (inReplay() === true ? (off ? true : 'масштаб уже в рекомендуемом интервале') : inReplay()),
     run: async () => { const to = fitLevelScale(engine, level); return to ? `Масштаб карты — ${formatScale(to)}, как для этого уровня.` : 'Не вышло: карта ещё не открыта.'; },
   });
@@ -177,9 +185,11 @@ export function LevelSwitch({ level, setLevel, engine = null }: { level: MapLeve
   </>;
 }
 export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string; mark?: string }[]> = {
-  tac: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
-  op: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-axis', text: 'ось танковой армии, даты по суткам', mark: '◆' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-reserve', text: 'на марше или в резерве' }, { cls: 'lg-routed', text: 'разгромлено' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
-  st: [{ cls: 'lg-atlas', text: 'главный удар фронта (за двое суток)' }, { cls: 'lg-atlas-de', text: 'удар противника' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-town', text: 'пункт — место события' }, { cls: 'lg-fork', text: 'расходящиеся удары', mark: 'Y' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'оборона' }],
+  stavka: [{ cls: 'lg-atlas', text: 'главный удар фронта (за двое суток)' }, { cls: 'lg-atlas-de', text: 'удар противника' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-town', text: 'пункт — место события' }, { cls: 'lg-fork', text: 'расходящиеся удары', mark: 'Y' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'оборона' }],
+  front: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-axis', text: 'ось танковой армии, даты по суткам', mark: '◆' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-reserve', text: 'на марше или в резерве' }, { cls: 'lg-routed', text: 'разгромлено' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
+  army: [{ cls: 'lg-arrow', text: 'удар корпуса (за сутки)' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-axis', text: 'ось танкового корпуса, даты по суткам', mark: '◆' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-reserve', text: 'на марше или в резерве' }, { cls: 'lg-routed', text: 'разгромлено' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
+  corps: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
+  division: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
 };
 
 export function download(name: string, text: string, type: string) {
@@ -408,25 +418,25 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const agentSelAt = useMemo((): LngLat | null => {
     const sel = agentSel ?? cardSel;
     if (!sel || !doc || !time) return null;
-    const lv = agentSel ? 'tac' as const : level;
+    const lv = agentSel ? 'division' as const : level;
     const at = unitPlace(shownFeatures(withLevel(doc, lv), time), sel) ?? (agentSel ? null : MAP_LEVELS.map((x) => unitPlace(shownFeatures(withLevel(doc, x.id), time), sel)).find(Boolean) ?? null);
     if (at) return at;
     if (agentRun && agentSel) {
       const i = agentRun.trace.divisions.findIndex((x) => x.id === agentSel);
       const name = agentRun.trace.divisions[i]?.name;
-      const f = name ? documentAt(withLevel(doc, 'tac'), time, { visibleOnly: true }).features.find((x) => x.kind === 'symbol' && x.name === name && !x.layerId.startsWith('hist')) : undefined;
+      const f = name ? documentAt(withLevel(doc, 'division'), time, { visibleOnly: true }).features.find((x) => x.kind === 'symbol' && x.name === name && !x.layerId.startsWith('hist')) : undefined;
       if (f) return (f as SymbolFeature).at;
       return i >= 0 ? posAt(agentRun.trace, i, agentHour) : null;
     }
     return null;
   }, [agentRun, agentSel, cardSel, doc, time, agentHour, level]);
-  /** Штаб агентной модели: тактический масштаб с приближением к нему — щёлкать по его дивизиям. */
+  /** Штаб агентной модели: уровень корпуса с приближением к нему — щёлкать по его дивизиям. */
   const showDivisions = () => {
     if (!eng || !card) return;
     const at = agentSelAt;
-    setLevel('tac');
+    setLevel('corps');
     if (at) eng.setView({ center: at, zoom: Math.max(eng.getView().zoom + 1.5, 9.5) });
-    setNotice(`${card.name}: тактический масштаб — щёлкните по дивизии`);
+    setNotice(`${card.name}: уровень корпуса — щёлкните по дивизии`);
   };
   const agentToHour = (h: number) => agentRun && setTime(addHours(agentRun.trace.start, Math.max(0, Math.min(agentRun.trace.frames.length - 1, Math.round(h)))));
 
@@ -563,7 +573,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {/* voice-entry: конец */}
           <div className="rp-tools" data-tour="replay-tools">
             <LevelSwitch level={level} setLevel={setLevel} engine={eng} />
-            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
+            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'division' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={result ? `начала операции, ${dmy(result.start)}` : null} /></Popover>
           </div>
@@ -578,9 +588,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
           {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)}
             onPick={(id) => { if (agentRun?.trace.divisions.some((x) => x.id === id)) { setAgentSel(id); setCardSel(null); } else setCardSel(id); }}
-            actions={agentRun ? <button onClick={showDivisions} title="Тактический масштаб с приближением к штабу">Показать дивизии</button> : undefined} />}
+            actions={agentRun ? <button onClick={showDivisions} title="Уровень корпуса с приближением к штабу">Показать дивизии</button> : undefined} />}
           {!agentSel && !card && <div className="ag-hint">{agentRun ? 'Щёлкните по дивизии — карточка агента и разговор с ним; по штабу — его карточка' : 'Щёлкните по знаку соединения — его карточка'}</div>}
-          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} extra={LEVEL_LEGEND[level]} combat={level === 'tac'}
+          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} extra={LEVEL_LEGEND[level]} combat={level === 'division'}
             sig={doc.layers.map((l) => (l.visible ? 1 : 0)).join('')} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}

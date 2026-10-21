@@ -189,6 +189,8 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('hist-bounds', 'Разграничительные линии: директивы и распоряжения', 'custom', 0.75),
     mk('sim-bounds', 'Переигровка: разграничительные линии фронтов', 'custom', 0.85),
     // уровни обобщения (переключаются в переигровке): оперативный — объединения, стратегический — фронты
+    mk('lvl-co-units', 'Уровень «Армия»: корпуса', 'custom', 1, false),
+    mk('lvl-co-moves', 'Уровень «Армия»: направления действий корпусов', 'custom', 0.85, false),
     mk('lvl-op-units', 'Оперативный уровень: объединения', 'custom', 1, false),
     mk('lvl-op-moves', 'Оперативный уровень: направления действий', 'custom', 0.85, false),
     mk('lvl-op-bounds', 'Оперативный уровень: полосы фронтов и армий', 'custom', 0.85, false),
@@ -380,7 +382,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
 
   // уровни обобщения: объединения и фронты — по своим соединениям, со стрелками направлений и рубежами обороны
   const labelK = Math.pow(2, doc.refZoom - zoom);
-  features.push(...levelFeatures(ctx, run, sideOf, 'army', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'front', o.visible, labelK, frontsByTurn));
+  features.push(...levelFeatures(ctx, run, sideOf, 'corps', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'army', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'front', o.visible, labelK, frontsByTurn));
   features.push(...pocketFeatures(ctx, run, sideOf, o.visible), ...fortressFeatures(ctx, run, sideOf, o.visible, labelK));
 
   // ключевые пункты на обзорных масштабах — как в атласе: кружок и название (места событий истории)
@@ -395,7 +397,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     const xy = T.proj.toXY(a.center) as [number, number];
     if (placed.some((q) => q.title === title || Math.hypot(q.xy[0] - xy[0], q.xy[1] - xy[1]) < T.cellKm * 6)) continue;
     placed.push({ xy, title });
-    for (const lay of ['lvl-op-units', 'lvl-st-units']) {
+    for (const lay of ['lvl-co-units', 'lvl-op-units', 'lvl-st-units']) {
       const dot = createFeature('symbol', 'atlas.town', { at: a.center, layerId: lay }, 0.8 * labelK, 'neutral') as SymbolFeature;
       dot.name = title;
       dot.labelRank = 2;
@@ -640,7 +642,7 @@ function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
       a.time = { from: all[0].sn.time, to: gone ? gone.sn.time : null };
       out.push(a);
     }
-    for (const lay of ['lvl-op-units', 'lvl-st-units']) {
+    for (const lay of ['lvl-co-units', 'lvl-op-units', 'lvl-st-units']) {
       const sym = createFeature('symbol', 'atlas.fortCity', { at: all[0].u!.at, layerId: lay }, (ring ? 0.9 : 1.3) * labelK, side) as SymbolFeature;
       sym.style = { ...sym.style, color: colour, text: shortName(f.name), textStyle: { font: 'PT Sans Narrow', size: 11 * labelK, weight: 700, italic: false, color: colour, halo: { color: '#ffffff', width: 2 * labelK }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 } };
       sym.name = `${f.name}${gone ? ` (пала ${dm(gone.sn.time)})` : ''}`;
@@ -772,7 +774,7 @@ function frontName(name: string): string {
   return name.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 }
 
-const RANK: Record<string, number> = { regiment: 0, brigade: 1, division: 2, corps: 3, army: 4, front: 5 };
+const RANK: Record<string, number> = { regiment: 0, brigade: 1, division: 2, corps: 3, army: 4, front: 5, high_command: 6 };
 
 /** Объединение уровня level, в которое входит формирование: ближайший вышестоящий (или сам) не ниже уровня. */
 type Node = { id: string; name: string; side: string; echelon: string; parent?: string | null };
@@ -788,7 +790,7 @@ function underFront(front: Node, members: string[], byId: Map<string, Node>): No
   return first?.find((a) => rest.every((c) => c.some((b) => b.id === a.id))) ?? front;
 }
 
-function groupOf(f: Node, byId: Map<string, Node>, level: 'army' | 'front'): Node {
+function groupOf(f: Node, byId: Map<string, Node>, level: 'corps' | 'army' | 'front'): Node {
   let x: Node = f;
   for (;;) {
     if (RANK[x.echelon] >= RANK[level]) return x;
@@ -837,7 +839,7 @@ function nearestOnFront(lines: { id: string; xy: [number, number][] }[] | undefi
   return best && { id: best.id, t: best.t, at: best.at };
 }
 
-function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, level: 'army' | 'front', visible: PublishOptions['visible'] | undefined, labelK: number, fronts: FrontsByTurn): Feature[] {
+function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, level: 'corps' | 'army' | 'front', visible: PublishOptions['visible'] | undefined, labelK: number, fronts: FrontsByTurn): Feature[] {
   const T = ctx.theatre, out: Feature[] = [];
   const byId = new Map(run.final.formations.map((f) => [f.id, f]));
   // иерархия — из сценария: штабы фронтов и армий без своих войск в расчёте не участвуют
@@ -847,12 +849,14 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
   const groups = new Map<string, { g: Node; members: string[] }>();
   for (const f of acting) { const g = groupOf(f, tree, level); const x = groups.get(g.id) ?? { g, members: [] }; x.members.push(f.id); groups.set(g.id, x); }
   // на оперативном масштабе соединения в прямом подчинении фронта — под именем их общего старшего, а не фронта
-  if (level === 'army') for (const x of groups.values()) x.g = underFront(x.g, x.members, tree);
+  if (level !== 'front') for (const x of groups.values()) x.g = underFront(x.g, x.members, tree);
   const P = (p: LngLat) => T.proj.toXY(p), LL = (p: [number, number]) => T.proj.toLL(p);
-  const lay = level === 'army' ? 'lvl-op' : 'lvl-st';
+  // корпус — как армия, своим слоем
+  const sub = level !== 'front';
+  const lay = level === 'corps' ? 'lvl-co' : level === 'army' ? 'lvl-op' : 'lvl-st';
   const turnsPerDay = Math.max(1, Math.round(24 / ctx.scenario.turnHours));
-  const win = level === 'army' ? turnsPerDay : 2 * turnsPerDay;
-  const minKm = Math.max(T.cellKm * (level === 'army' ? 3 : 5), level === 'army' ? 0.6 : 1.2);
+  const win = sub ? turnsPerDay : 2 * turnsPerDay;
+  const minKm = Math.max(T.cellKm * (sub ? 3 : 5), sub ? 0.6 : 1.2);
   // центр группы в снимке (видимые члены, по численности)
   // ax — точка оси танковой армии: взвешенная медиана, а не среднее (отставший корпус не тянет ось назад зигзагом)
   type C = { xy: [number, number]; ax: [number, number]; pers: number; tanks: number; n: number; attack: number; defend: number; withdraw: number; cut: number; units: { xy: [number, number]; w: number }[] };
@@ -904,7 +908,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
     const note = (c: C) => `${c.n} соед., ${Math.round(c.pers).toLocaleString('ru')} чел., танков ${c.tanks}; ${posture(c)}`;
     const last = frames[frames.length - 1];
     const to = last.i === run.snapshots.length - 1 ? null : run.snapshots[last.i + 1].time;
-    if (level === 'army') {
+    if (sub) {
       // состояние объединения, как на картах атласа: на марше или в резерве — половина знака заштрихована,
       // разгромлено (осталось меньше половины наибольшей численности или большая часть отрезана и потеряла
       // 45 %) — перечёркнуто; смена — не чаще, чем раз в сутки
@@ -921,7 +925,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       states.forEach((st, k) => { const g = segs[segs.length - 1]; if (g && g.st === st) g.b = k; else segs.push({ st, a: k, b: k }); });
       for (const [n, sg] of segs.entries()) {
         const fs = frames.slice(sg.a, sg.b + 1);
-        const sym = createFeature('symbol', tank ? 'std.mechCorps' : 'std.unitOval', { at: LL(fs[0].c!.xy), layerId: `${lay}-units` }, 1.6, side) as SymbolFeature;
+        const sym = createFeature('symbol', tank ? 'std.mechCorps' : 'std.unitOval', { at: LL(fs[0].c!.xy), layerId: `${lay}-units` }, level === 'corps' ? 1.3 : 1.6, side) as SymbolFeature;
         sym.ref = x.g.id;
         sym.name = x.g.name + (sg.st === 'routed' ? ' — разгромлено' : sg.st === 'reserve' ? ' — на марше / в резерве' : '');
         sym.labelRank = 20 + (RANK[x.g.echelon] ?? 0);
@@ -990,7 +994,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         return { c0: a0.xy, c: a.xy, len, u, retreat: !forward, w: Math.max(1, a.pers), who: [who] };
       };
       let moves: Move[] = [];
-      if (level === 'army') {
+      if (sub) {
         const m = moveOf(c, c0, x.g.name);
         if (m && m.len >= minKm) moves = [m];
       } else {
@@ -1006,7 +1010,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         moves = [...moves.filter((m) => !m.retreat).slice(0, 3), ...moves.filter((m) => m.retreat).slice(0, 2)].filter((m) => m.len >= minKm * 0.6);
       }
       // танковая армия идёт осью с ромбами (весь пройденный путь), а не стрелкой за сутки
-      const axis = level === 'army' && tank, moved = moves.length > 0;
+      const axis = sub && tank, moved = moves.length > 0;
       if (axis) moves = moves.filter((m) => m.retreat);
       // остановка: за следующие сутки центр почти не сместился — на острие черта «рубеж достигнут»
       const ahead = cs[Math.min(run.snapshots.length - 1, i + turnsPerDay)];
@@ -1015,7 +1019,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       const geos: Geo[] = moves.map((m) => {
         const { u, len, retreat } = m;
         // хвост — на линии фронта хода (стрелка крепится к ней), остриё — в глубину на пройденное за окно; линии рядом нет — от прежнего положения
-        const at = nearestOnFront(fronts.get(i), m.c, level === 'army' ? 20 : 35);
+        const at = nearestOnFront(fronts.get(i), m.c, sub ? 20 : 35);
         const reach = Math.max(len, minKm * 1.2) * (retreat ? 0.8 : 1);
         const tail: [number, number] = at ? at.at : m.c0;
         const head: [number, number] = at ? [tail[0] + u[0] * reach, tail[1] + u[1] * reach] : [m.c[0] + u[0] * len * 0.35, m.c[1] + u[1] * len * 0.35];
@@ -1055,7 +1059,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         // противник — сине-жёлтые), отход — тонкой стрелкой; оперативный — стрелки инфографики
         const atlas = level === 'front';
         const preset = atlas ? (retreat ? 'atlas.thin' : side === 'own' ? 'atlas.p2' : 'atlas.german') : retreat ? 'inf.retreat' : side === 'own' ? 'inf.attackFade' : 'inf.counter';
-        const k = level === 'army' ? (retreat ? 0.8 : 0.55) : (retreat ? 1.2 : 1.3);
+        const k = sub ? (retreat ? 0.8 : 0.55) : (retreat ? 1.2 : 1.3);
         const a = createFeature('arrow', preset, { points: [LL(tail), LL(mid), LL(head)], layerId: `${lay}-moves` }, k, side) as ArrowFeature;
         if (at && !br) a.anchor = { featureId: at.id, t: at.t };
         if (atlas ? retreat && side !== 'own' : retreat || (side !== 'own' && preset !== 'inf.counter')) recolor(a, side === 'own' ? '#c0392b' : '#1f4e8c');
@@ -1123,7 +1127,7 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         const off = Math.min(fw ? fwd.reduce((acc, q) => acc + q.p * q.w, 0) / fw : 0, minKm, d * 0.5);
         const ctr: [number, number] = [a.xy[0] + u[0] * off, a.xy[1] + u[1] * off];
         const pts: LngLat[] = [-1, -0.5, 0, 0.5, 1].map((t) => LL([ctr[0] + nrm[0] * half * t - u[0] * Math.abs(t) * half * 0.15, ctr[1] + nrm[1] * half * t - u[1] * Math.abs(t) * half * 0.15]));
-        const l = createFeature('line', 'atlas.defense', { points: teethToward(pts, [LL(toward)]), layerId: `${lay}-moves` }, level === 'army' ? 1.3 : 1.8, side) as LineFeature;
+        const l = createFeature('line', 'atlas.defense', { points: teethToward(pts, [LL(toward)]), layerId: `${lay}-moves` }, sub ? 1.3 : 1.8, side) as LineFeature;
         l.style = { ...l.style, layers: l.style.layers.map((ly) => ({ ...ly, color: side === 'own' ? '#c0392b' : '#1f4e8c' })) };
         l.name = `${shortName(name)}: оборона`;
         l.time = { from, to: until };
@@ -1133,10 +1137,10 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       // центр ближайшего объединения противника может лежать в стороне (у 5 УА на Зееловских высотах — центр 9 А
       // южнее, хотя её противник — к западу); линии рядом нет или войска на ней — к центру противника
       const frontward = (a: C, fallback: [number, number] | null): [number, number] | null => {
-        const at = nearestOnFront(fronts.get(i), a.xy, level === 'army' ? 20 : 35);
+        const at = nearestOnFront(fronts.get(i), a.xy, sub ? 20 : 35);
         return at && Math.hypot(at.at[0] - a.xy[0], at.at[1] - a.xy[1]) >= armyMinKm ? at.at : fallback;
       };
-      if (level === 'army') {
+      if (sub) {
         const toward = !moved && c.defend >= 0.5 && c.units.length ? frontward(c, enemy) : null;
         if (toward) defense(c, toward, x.g.name);
         continue;
