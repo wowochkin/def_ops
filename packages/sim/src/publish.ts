@@ -778,6 +778,18 @@ const RANK: Record<string, number> = { regiment: 0, brigade: 1, division: 2, cor
 
 /** Объединение уровня level, в которое входит формирование: ближайший вышестоящий (или сам) не ниже уровня. */
 type Node = { id: string; name: string; side: string; echelon: string; parent?: string | null };
+/**
+ * Соединения в прямом подчинении фронта (без армии) на оперативном масштабе и на сводной карте — под именем их общего
+ * старшего ниже фронта (Берлинский оборонительный район у группы армий «Висла»), одно соединение — под своим; общего
+ * старшего ниже фронта нет — под именем фронта, как раньше.
+ */
+function underFront(front: Node, members: string[], byId: Map<string, Node>): Node {
+  if (RANK[front.echelon] < RANK.front) return front;
+  const chain = (id: string) => { const out: Node[] = []; for (let x = byId.get(id); x && x.id !== front.id; x = x.parent ? byId.get(x.parent) : undefined) out.push(x); return out; };
+  const [first, ...rest] = members.map(chain);
+  return first?.find((a) => rest.every((c) => c.some((b) => b.id === a.id))) ?? front;
+}
+
 function groupOf(f: Node, byId: Map<string, Node>, level: 'army' | 'front'): Node {
   let x: Node = f;
   for (;;) {
@@ -836,9 +848,8 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
   const acting = run.final.formations.filter((f) => f.type);
   const groups = new Map<string, { g: Node; members: string[] }>();
   for (const f of acting) { const g = groupOf(f, tree, level); const x = groups.get(g.id) ?? { g, members: [] }; x.members.push(f.id); groups.set(g.id, x); }
-  // на оперативном масштабе одно соединение в прямом подчинении фронта (Берлинский оборонительный район у группы
-  // армий «Висла») — под своим именем, а не под именем фронта
-  if (level === 'army') for (const x of groups.values()) if (RANK[x.g.echelon] >= RANK.front && x.members.length === 1) x.g = tree.get(x.members[0])!;
+  // на оперативном масштабе соединения в прямом подчинении фронта — под именем их общего старшего, а не фронта
+  if (level === 'army') for (const x of groups.values()) x.g = underFront(x.g, x.members, tree);
   const P = (p: LngLat) => T.proj.toXY(p), LL = (p: [number, number]) => T.proj.toLL(p);
   const lay = level === 'army' ? 'lvl-op' : 'lvl-st';
   const turnsPerDay = Math.max(1, Math.round(24 / ctx.scenario.turnHours));
@@ -1143,8 +1154,8 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
           for (const o of arms) { const q = o.cs[i]; if (!q) continue; const dd = Math.hypot(q.xy[0] - ac.xy[0], q.xy[1] - ac.xy[1]); if (dd < best) { best = dd; near = q.xy; } }
         }
         const toward = frontward(ac, near);
-        // соединения в прямом подчинении фронта (без армии) — под своим именем, если оно одно, а не под именем фронта
-        if (toward) defense(ac, toward, a.g.id === x.g.id && a.members.length === 1 ? tree.get(a.members[0])!.name : a.g.name);
+        // соединения в прямом подчинении фронта (без армии) — под именем их общего старшего, а не фронта
+        if (toward) defense(ac, toward, a.g.id === x.g.id ? underFront(a.g, a.members, tree).name : a.g.name);
       }
     }
   }
@@ -1252,8 +1263,8 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
   const groupsAt = (level: 'army' | 'front') => {
     const g = new Map<string, { g: Node; members: string[] }>();
     for (const f of acting) { const x = groupOf(f, tree, level); const y = g.get(x.id) ?? { g: x, members: [] }; y.members.push(f.id); g.set(x.id, y); }
-    // одно соединение в прямом подчинении фронта — объединением под своим именем, а не под именем фронта
-    if (level === 'army') for (const y of g.values()) if (RANK[y.g.echelon] >= RANK.front && y.members.length === 1) y.g = tree.get(y.members[0])!;
+    // соединения в прямом подчинении фронта — под именем их общего старшего, а не фронта
+    if (level === 'army') for (const y of g.values()) y.g = underFront(y.g, y.members, tree);
     return g;
   };
   const last = snaps.length - 1;
