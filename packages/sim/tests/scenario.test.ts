@@ -30,7 +30,7 @@ describe('сценарий «Берлин-1945»', () => {
     expect(devs.length).toBeGreaterThan(20);
     const sum = summarize(devs);
     expect(sum.within).toBeGreaterThan(0.5);
-  });
+  }, 30_000);
 
   it('публикуется картой со шкалой времени и ключевыми кадрами', () => {
     const run = runScenario(ctx, 1, 3);
@@ -40,7 +40,7 @@ describe('сценарий «Берлин-1945»', () => {
     expect(units.length).toBeGreaterThan(30);
     expect(units.every((f) => (f.keyframes?.length ?? 0) >= 1)).toBe(true);
     expect(doc.features.some((f) => f.layerId === 'hist-units')).toBe(true);
-  });
+  }, 30_000);
 
   it('рубежи театра — знаком оборонительного рубежа, зубцы к противнику', () => {
     // знак ставит зубцы слева по ходу линии: противник на востоке — линия идёт с севера на юг

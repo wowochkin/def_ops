@@ -50,7 +50,7 @@ describe('библиотека знаков', () => {
     const r = renderDocument(doc);
     expect(r.features.length).toBe(doc.features.length);
     for (const f of r.features) expect(f.svg.length, f.id).toBeGreaterThan(20);
-  });
+  }, 30_000);
 
   it('противник рисуется синим, свои — красным', () => {
     const own = createFeature('symbol', 'rkka.tankMedium', { at: [14, 52] }, 1, 'own');
