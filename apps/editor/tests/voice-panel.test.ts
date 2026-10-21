@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, CONTROL_DISABLED, SOUND_KEY, parseSound, ICON_POS_KEY, DRAG_PX, clampIcon, iconCapLeft, parseIconPos, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
+  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, CONTROL_DISABLED, SOUND_KEY, parseSound, ICON_POS_KEY, CARD_SIZE_KEY, clampSize, parseCardSize, DRAG_PX, clampIcon, iconCapLeft, parseIconPos, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
   COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, topPlace, anchorBottom, fullHeight, RAIL_W, stripCut, stripLines, STRIP_LINE_CHARS, STRIP_OVER_CHARS,
 } from '../src/voice/panel-state';
 import { freeOffset } from '../src/engine/free-center';
@@ -391,12 +391,13 @@ describe('ручная правка до ответа сервиса (N5)', () =
 describe('компактная панель: вид по умолчанию, сама разворачивается и сворачивается', () => {
   let now = 0;
   const quiet = { speaking: false, pending: false };
-  it('сохранённый вид: значок, развёрнута; прочее (и прежнее «open») — компактная полоса', () => {
+  it('сохранённый вид: значок, полоса, развёрнута; прочее (и прежнее «open») — значок: панель при запуске свёрнута', () => {
     expect(parsePanelMode('icon')).toBe('icon');
     expect(parsePanelMode('full')).toBe('full');
-    expect(parsePanelMode('open')).toBe('compact');
-    expect(parsePanelMode(null)).toBe('compact');
-    expect(parsePanelMode('мусор')).toBe('compact');
+    expect(parsePanelMode('compact')).toBe('compact');
+    expect(parsePanelMode('open')).toBe('icon');
+    expect(parsePanelMode(null)).toBe('icon');
+    expect(parsePanelMode('мусор')).toBe('icon');
   });
   it('фраза штаба в две строки полосы — полоса; длиннее — та же полоса, но фраза целиком (панель не разворачивается)', () => {
     expect(fitsStrip('Слушаю.')).toBe(true);
@@ -550,5 +551,16 @@ describe('раунд 1 (Task 1b): окно и полоса', () => {
     expect(stripCut('x'.repeat(STRIP_OVER_CHARS * 3), true)).toBe(false);
     expect(stripCut('x'.repeat(STRIP_OVER_CHARS * 3 + 1), true)).toBe(true);
     expect(stripCut('x'.repeat(STRIP_LINE_CHARS * 2 + 1), false)).toBe(true);
+  });
+});
+
+describe('размер панели, заданный мышью', () => {
+  it('не меньше минимума и не за край окна; мусор в записи — обычный размер', () => {
+    expect(clampSize({ w: 100, h: 100 }, 1440, 900, 500, 50)).toEqual({ w: 320, h: 260 });
+    expect(clampSize({ w: 5000, h: 5000 }, 1440, 900, 500, 50)).toEqual({ w: 932, h: 842 });
+    expect(parseCardSize(JSON.stringify({ w: 500, h: 400 }))).toEqual({ w: 500, h: 400 });
+    expect(parseCardSize('{"w":10,"h":10}')).toBeNull();
+    expect(parseCardSize(null)).toBeNull();
+    expect(CARD_SIZE_KEY).not.toBe(ICON_POS_KEY);
   });
 });

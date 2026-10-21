@@ -306,7 +306,13 @@ const panel = page.locator('.vp');
 
 // ---------------------------------------------------------------- проверки
 
-await check('по умолчанию — полоса: не выше двух строк фразы, «Развернуть» разворачивает', async () => {
+await check('при запуске панель свёрнута в значок; запись о виде «полоса» — полоса', async () => {
+  await panel.locator('.vp-icon').waitFor({ state: 'visible', timeout: T });
+  await page.evaluate(() => localStorage.setItem('def_ops.voice.panel', 'compact'));
+  await page.reload();
+});
+
+await check('полоса: не выше двух строк фразы, «Развернуть» разворачивает', async () => {
   const strip = panel.locator('.vp-card.strip');
   await strip.waitFor({ state: 'visible', timeout: T });
   const r = await strip.evaluate((e) => e.getBoundingClientRect().toJSON());
@@ -525,7 +531,7 @@ if (passed) {
     const dlg = page.locator('.vp-dialog.voices');
     const row = dlg.locator('.vp-voice', { hasText: 'Гость' });
     await row.getByRole('button', { name: 'Начальник штаба' }).click();
-    await row.getByText('голос начальника штаба').waitFor({ timeout: 5000 });
+    await row.locator('.vp-seg button.on', { hasText: 'Начальник штаба' }).waitFor({ timeout: 5000 });
     await row.getByRole('button', { name: 'Удалить' }).click();
     await page.locator('.confirm-box').getByRole('button', { name: 'Удалить' }).click();
     await row.waitFor({ state: 'detached', timeout: 5000 });
@@ -690,20 +696,20 @@ async function expandPanel() {
 }
 await expandPanel();
 
-await check('кнопка «Выключить звук»: озвучка молчит, микрофон открыт; «Включить звук» — снова говорит; выбор запоминается', async () => {
+await check('кнопка «Выключить звук»: озвучка молчит, микрофон открыт; «Включить звук» — снова говорит; выбор держится до перезапуска', async () => {
   await panel.getByRole('button', { name: 'Выключить звук' }).click();
   await panel.locator('.vp-state', { hasText: 'звук выключен' }).waitFor({ timeout: 3000 });
-  const off = await page.evaluate(() => localStorage.getItem('def_ops.voice.sound'));
+  const off = await page.evaluate(() => sessionStorage.getItem('def_ops.voice.sound'));
   if (off !== 'off') throw new Error(`def_ops.voice.sound = ${off}`);
   await micOn(); // микрофон не затронут
   if (await panel.getByRole('button', { name: 'Калибровка' }).isEnabled()) throw new Error('калибровка доступна без звука');
   await page.reload();
-  await panel.locator('.vp-state', { hasText: 'звук выключен' }).waitFor({ timeout: T });  // после перезапуска звук остаётся выключенным
+  await panel.locator('.vp-state', { hasText: 'звук выключен' }).waitFor({ timeout: T });  // обновление окна звук не включает
   await expandPanel();
   await panel.getByRole('button', { name: 'Включить звук' }).click();
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
   if ((await panel.locator('.vp-state').first().innerText()).includes('звук выключен')) throw new Error('пометка «звук выключен» осталась');
-  const on = await page.evaluate(() => localStorage.getItem('def_ops.voice.sound'));
+  const on = await page.evaluate(() => sessionStorage.getItem('def_ops.voice.sound'));
   if (on !== null) throw new Error(`выключение звука осталось записанным: ${on}`);
 });
 
@@ -750,7 +756,7 @@ await check('управление выключено, звук включён: �
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: false })));
   await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: 3000 });
   await micOff('при выключенном управлении');
-  const sound = await page.evaluate(() => localStorage.getItem('def_ops.voice.sound'));
+  const sound = await page.evaluate(() => sessionStorage.getItem('def_ops.voice.sound'));
   if (sound === 'off') throw new Error('звук выключился вместе с управлением');
   await panel.getByRole('button', { name: 'Выключить звук' }).waitFor({ timeout: 2000 });
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: true })));
@@ -947,7 +953,7 @@ await check('раздел «ИИ»: модель озвучки — по умо�
   await page.evaluate(() => { location.hash = '#replay'; });
 });
 
-await check('размер панели «крупный»: шрифт не меньше 18 px, выбор запоминается', async () => {
+await check('размер панели «крупный»: шрифт не меньше 18 px, выбор держится до перезапуска', async () => {
   const det = panel.locator('details.vp-tune');
   const wasOpen = await det.evaluate((d) => d.open);
   if (!wasOpen) await panel.getByText('Тонкая настройка').click();
@@ -1695,6 +1701,7 @@ await ctx2.addInitScript((url) => {
   localStorage.setItem('def_ops.voice.url', url);
   sessionStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.panel', 'full');  // лента реплик видна
+  localStorage.setItem('def_ops.voice.intro', 'on');  // по умолчанию вступление не идёт — здесь проверяется оно при запуске
 }, `ws://127.0.0.1:${vport}/ws`);
 // события панели голоса: отменено ли voice:ready-first и пришло ли voice:propose
 await ctx2.addInitScript(() => {
@@ -1760,6 +1767,8 @@ await check('«Штаб, дальше» → следующий шаг, рамк�
   // шаги, договорённые до первой реплики, листаются сами — сравниваем с номером на момент «дальше»
   await heard('штаб, дальше');
   await page2.waitForTimeout(400);
+  // звук шагов заготовлен заранее, и «дальше» может прийти на шаге «колонка целиком» — дальше тур сам доходит до кнопок колонки
+  await page2.waitForFunction(() => /^rail-/.test(document.querySelector('.tour-frame')?.getAttribute('data-target') ?? ''), null, { timeout: 15000 }).catch(() => {});
   afterNext = await stepNo();
   const target = await page2.locator('.tour-frame').getAttribute('data-target');
   if (!/^rail-/.test(target ?? '')) throw new Error(`подсвечено «${target}», а не кнопка колонки (шаг ${afterNext})`);
@@ -1930,6 +1939,7 @@ await ctx4.addInitScript((url) => {
   localStorage.setItem('def_ops.voice.url', url);
   sessionStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.panel', 'full');  // лента видна (при открытом окне — полоса)
+  localStorage.setItem('def_ops.voice.intro', 'on');  // вступление при запуске включено — оно и есть начало «без рук»
   localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: 'voice', aec_unknown: true }));
 }, `ws://127.0.0.1:${vport}/ws`);
 await ctx4.addInitScript(() => {

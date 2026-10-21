@@ -26,21 +26,18 @@ class Engine:
 _QWEN = {"lang_code": "russian", "streaming_interval": 0.32}
 
 ENGINES: tuple[Engine, ...] = (
-    Engine("qwen3-1.7b", "Qwen3-TTS 1.7B", "по умолчанию: лучший по прослушиванию; занимает около 4 ГБ памяти",
+    Engine("qwen3-1.7b", "Qwen3-TTS 1.7B", "по умолчанию: стабильный; занимает около 4 ГБ памяти; ударения иногда ошибочны",
            ("mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16", "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"),
            eos_patch=True, kwargs=_QWEN, license="Apache-2.0"),
-    Engine("qwen3-0.6b", "Qwen3-TTS 0.6B", "быстрее и легче (около 1,5 ГБ), голос беднее",
+    Engine("qwen3-0.6b", "Qwen3-TTS 0.6B", "быстрее и легче (около 1,5 ГБ), голос беднее; чаще ошибается в ударениях",
            ("mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16", "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit"),
            eos_patch=True, kwargs=_QWEN, license="Apache-2.0"),
-    Engine("chatterbox-v3", "Chatterbox Multilingual v3", "расшифровка образца не нужна; ударения и концы фраз — проверьте на слух",
-           ("mlx-community/chatterbox-multilingual-v3",), ref_text=False,
-           kwargs={"lang_code": "ru", "streaming_interval": 0.5}, license="MIT"),
     Engine("omnivoice", "OmniVoice", "звук отдаётся целой фразой после синтеза, начало фразы позже",
            ("mlx-community/OmniVoice-bf16", "mlx-community/OmniVoice-bfloat16"), stream=False,
            kwargs={"language": "ru"}, license="см. карточку k2-fsa/OmniVoice"),
     Engine("voxcpm2", "VoxCPM2", "звук отдаётся целой фразой после синтеза, начало фразы позже",
            ("mlx-community/VoxCPM2-bf16", "mlx-community/VoxCPM2-8bit"), stream=False, license="Apache-2.0"),
-    Engine("fish-s2-pro", "Fish S2 Pro", "только для некоммерческого использования; тяжёлая модель",
+    Engine("fish-s2-pro", "Fish S2 Pro", "звучит лучше всех, но тяжёлая: речь идёт с подтормаживаниями; только для некоммерческого использования",
            ("mlx-community/fish-audio-s2-pro",), kwargs={"streaming_interval": 0.5},
            license="Fish Audio Research (некоммерческая)", commercial=False),
 )

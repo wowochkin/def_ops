@@ -314,19 +314,18 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
           {voices.map((v) => {
             const has = ROLES.filter((r) => roles[r] === v.id);
             return (
-              <li key={v.id} className="vp-voice" data-hl={`voice-${v.id}`}>
+              <li key={v.id} className={`vp-voice${has.length ? ' used' : ''}`} data-hl={`voice-${v.id}`}>
+                <button className="vp-play" title="Прослушать" aria-label="Прослушать" onClick={() => { void act('voices.preview', { voice_id: v.id }); }}>▶</button>
                 <div className="vp-vname">
-                  <b>{v.name}</b> {v.builtin ? <span className="vp-tag">встроенный</span> : <span className="vp-tag">{v.source}</span>}
-                  {has.map((r) => <span key={r} className="vp-tag role">{ROLE_OF[r]}</span>)}
+                  <b>{v.name}</b>
+                  <span className="vp-vsub">{v.builtin ? 'встроенный' : v.source}</span>
                 </div>
-                <div className="vp-row left">
-                  <button onClick={() => { void act('voices.preview', { voice_id: v.id }); }}>Прослушать</button>
-                  <span className="vp-note">Назначить:</span>
+                <div className="vp-seg" role="group" aria-label="Назначить роли">
                   {ROLES.map((r) => (
-                    <button key={r} disabled={roles[r] === v.id} onClick={() => { void act('voices.assign', { voice_id: v.id, role: r }); }}>{ROLE_NAME[r]}</button>
+                    <button key={r} className={roles[r] === v.id ? 'on' : ''} disabled={roles[r] === v.id} onClick={() => { void act('voices.assign', { voice_id: v.id, role: r }); }}>{ROLE_NAME[r]}</button>
                   ))}
-                  {!v.builtin && <button className="danger" onClick={() => { void remove(v); }}>Удалить</button>}
                 </div>
+                {!v.builtin && <button className="danger vp-del" onClick={() => { void remove(v); }}>Удалить</button>}
               </li>
             );
           })}

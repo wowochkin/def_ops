@@ -376,6 +376,7 @@ describe('голос готов (voice:ready-first) — вступление', (
 
   it('вступление включено: событие отменено, идёт вступление, после него — voice:propose', () => {
     vi.useFakeTimers();
+    store.set('def_ops.voice.intro', 'on');
     const sent: string[] = [];
     const e = new CustomEvent(READY_FIRST, { cancelable: true });
     onVoiceReady(e, (n) => sent.push(n));
@@ -384,6 +385,13 @@ describe('голос готов (voice:ready-first) — вступление', (
     tourEngine.stop();
     vi.runAllTimers();
     expect(sent).toEqual([PROPOSE]);
+  });
+
+  it('вступление по умолчанию не идёт: запись не сделана — событие не отменено, тура нет', () => {
+    const e = new CustomEvent(READY_FIRST, { cancelable: true });
+    onVoiceReady(e, () => {});
+    expect(e.defaultPrevented).toBe(false);
+    expect(tourEngine.state).toBeFalsy();
   });
 
   it('вступление выключено: событие не отменено (калибровку предлагает панель), тура нет', () => {

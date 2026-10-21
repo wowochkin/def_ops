@@ -3,6 +3,8 @@
  * (то же действие, что «Штаб, расскажи о приложении»), переходы по разделам с короткими пояснениями, состояние
  * языковой модели и флажок «Вступление при запуске». Всё — через действия реестра: кнопки и голос делают одно и то же.
  */
+import type { ReactNode } from 'react';
+import { Icon } from './ui';
 import { ActButton } from './voice/registry';
 import { useIntroSetting } from './voice/tour';
 import { act } from './voice/registry';
@@ -18,6 +20,15 @@ const WHAT: { id: Exclude<Section, 'start'>; text: string }[] = [
   { id: 'knowledge', text: 'База знаний по операциям: материалы, документы, очередь на проверку' },
   { id: 'staff', text: 'Связь с языковой моделью на этом компьютере (немецкий штаб, советник)' },
 ];
+const PILLARS = [
+  { n: '01', title: 'Противник — искусственный интеллект', text: 'Не сценарий и не набор триггеров: немецкий штаб — языковая модель. Оценивает обстановку, строит замысел, отдаёт приказы. О ваших войсках знает лишь то, что дала ей разведка.' },
+  { n: '02', title: 'Исход считает арбитр', text: 'Бои, движение, подвоз, окружения — по правилам, а не по вдохновению. У норматива есть источник; нет опоры — так и написано: «допущение». Спорную цифру можно открыть и поправить.' },
+  { n: '03', title: 'История рядом', text: 'Расчётный фронт идёт вровень с историческим: видно, где игра разошлась с реальностью и в какие сутки. Приказы доходят до войск с той же задержкой, что и тогда.' },
+  { n: '04', title: 'Всё на вашем компьютере', text: 'Без интернета и облака: карты, база знаний, модель. Ничего не уходит наружу, а база знаний — ваша: свои документы, свои проверки, свои выводы.' },
+];
+const ICON: Record<string, ReactNode> = {
+  replay: Icon.replay, editor: Icon.editor, modeling: Icon.modeling, maps: Icon.maps, library: Icon.library, knowledge: Icon.knowledge, staff: Icon.staff,
+};
 const TITLE: Record<string, string> = { replay: 'Переигровка', editor: 'Редактор', modeling: 'Моделирование', maps: 'Карты', library: 'Знаки', knowledge: 'Знания', staff: 'ИИ' };
 
 /** Анимированная карта в шапке: рубеж, реки, стрелки наступления к Берлину, пульсирующая отметка. Только рисунок. */
@@ -66,38 +77,48 @@ export function StartView({ llm }: { llm: Llm }) {
       </header>
       <div className="page-in start">
         <div className="start-pillars" data-tour="start-pillars">
-          <div className="card rv" style={{ ['--i' as string]: 4 }}><b>Противником командует искусственный интеллект</b><span>Не сценарий и не набор триггеров: немецкий штаб — языковая модель. Она оценивает обстановку, строит замысел и отдаёт приказы. О ваших войсках знает лишь то, что дала ей разведка.</span></div>
-          <div className="card rv" style={{ ['--i' as string]: 5 }}><b>Исход считает арбитр</b><span>Бои, движение, подвоз, окружения — по правилам, а не по вдохновению. У норматива есть источник; нет опоры — так и написано: «допущение». Спорную цифру можно открыть, проверить и поправить.</span></div>
-          <div className="card rv" style={{ ['--i' as string]: 6 }}><b>История рядом</b><span>Расчётный фронт идёт вровень с историческим: видно, где игра разошлась с реальностью и в какие сутки. Приказы доходят до войск с той же задержкой, что и тогда.</span></div>
-          <div className="card rv" style={{ ['--i' as string]: 7 }}><b>Всё у вас на компьютере</b><span>Без интернета и без облака: карты, база знаний, модель. Ничего не уходит наружу, а база знаний — ваша: свои документы, свои проверки, свои выводы.</span></div>
+          {PILLARS.map((p, i) => (
+            <div key={p.n} className="start-pillar rv" style={{ ['--i' as string]: 4 + i }}>
+              <i>{p.n}</i><b>{p.title}</b><span>{p.text}</span>
+            </div>
+          ))}
         </div>
-        <p className="start-cta">Две минуты — и вы увидите, как это устроено.</p>
-        <section className="card start-tour" data-tour="start-tour">
-          <ActButton className="primary start-go" action="tour.intro">Начать экскурсию</ActButton>
-          <div>
-            <b>Экскурсия «О приложении»</b>
-            <p>Около двух минут: что это за программа, откуда данные, что в каждом разделе. Шаг за шагом, с подсветкой; голос штаба рассказывает, подписи можно читать. В любой момент — «Хватит».</p>
-            <label className="start-intro">
-              <input type="checkbox" checked={intro} onChange={(e) => { void act(e.target.checked ? 'tour.introOn' : 'tour.introOff'); }} /> Показывать вступление при запуске
-            </label>
+        <section className="start-tour rv" style={{ ['--i' as string]: 8 }} data-tour="start-tour">
+          <svg className="start-tour-bg" viewBox="0 0 600 160" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+            <path className="sm-front" d="M470 0C450 50 500 90 480 160" /><path className="sm-enemy-l" d="M120 130C260 120 380 100 470 70" />
+          </svg>
+          <div className="start-tour-in">
+            <p className="start-kicker">Две минуты — и вы увидите, как это устроено</p>
+            <h3>Экскурсия «О приложении»</h3>
+            <p>Что это за программа, откуда данные, что в каждом разделе. Шаг за шагом, с подсветкой; голос штаба рассказывает, подписи можно читать. В любой момент — «Хватит».</p>
+            <div className="start-tour-act">
+              <ActButton className="primary start-go" action="tour.intro">Начать экскурсию</ActButton>
+              <label className="start-intro">
+                <input type="checkbox" checked={intro} onChange={(e) => { void act(e.target.checked ? 'tour.introOn' : 'tour.introOff'); }} /> Показывать вступление при запуске
+              </label>
+            </div>
           </div>
         </section>
-        <h3>Разделы</h3>
+        <h3 className="start-h">Разделы</h3>
         <div className="start-grid" data-tour="start-sections">
-          {WHAT.map((w) => (
-            <ActButton key={w.id} className="card start-card" action="shell.open" params={{ section: w.id }} data-tour={`start-${w.id}`}>
-              <b>{TITLE[w.id]}</b>
-              <span>{w.text}</span>
+          {WHAT.map((w, i) => (
+            <ActButton key={w.id} className="start-card rv" style={{ ['--i' as string]: 9 + i }} action="shell.open" params={{ section: w.id }} data-tour={`start-${w.id}`}>
+              <span className="start-card-ic">{ICON[w.id]}</span>
+              <b>{TITLE[w.id]}<em aria-hidden="true">→</em></b>
+              <span className="start-card-t">{w.text}</span>
             </ActButton>
           ))}
         </div>
-        <section className="card start-llm" data-tour="start-llm">
-          <b>Языковая модель</b>
-          <span className={`llm-st ${st}`}>{st === 'ok' ? `✓ на связи · моделей: ${llm.check.models.length}` : st === 'fail' ? `✗ ${llm.check.error}` : 'проверка…'}</span>
+        <section className="start-llm" data-tour="start-llm">
+          <span className={`start-dot ${st}`} aria-hidden="true" />
+          <div>
+            <b>Языковая модель — {st === 'ok' ? `на связи, моделей: ${llm.check.models.length}` : st === 'fail' ? 'нет связи' : 'проверяю…'}</b>
+            {st === 'fail' && <span className="start-llm-err">{llm.check.error}</span>}
+            <small>Без неё немецкий штаб, советник и свободные фразы голосом не работают; расчёты и справочники — работают.</small>
+          </div>
           {st === 'fail' && <ActButton action="shell.open" params={{ section: 'staff' }}>Открыть «ИИ»</ActButton>}
-          <small>Без неё немецкий штаб, советник и свободные фразы голосом не работают; расчёты и справочники — работают.</small>
         </section>
-        <p className="note">Голос (только Mac с Apple Silicon, настольное приложение): панель голоса — вверху по центру. Скажите «Штаб, расскажи о приложении» или «Штаб, что я могу?».</p>
+        <p className="note">Голос (только Mac с Apple Silicon, настольное приложение): значок микрофона — вверху по центру, его можно перетащить. Скажите «Штаб, расскажи о приложении» или «Штаб, что я могу?».</p>
       </div>
     </div>
   );

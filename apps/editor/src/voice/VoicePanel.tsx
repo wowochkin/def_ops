@@ -23,7 +23,7 @@
  * окна `voice:power` (detail: boolean): микрофон закрыт и сам не открывается (включить голосом тогда нельзя), штаб вас не
  * слышит; звук не затронут — посредник, экскурсии и подсказки говорят. Кнопка «Выключить звук» / «Включить звук»
  * (действия `voice.sound.off` / `voice.sound.on`, голосом тоже) глушит всю озвучку, микрофон и команды работают, ответы —
- * текстом. Связь с сервисом остаётся. Оба выбора запоминаются (ENABLED_KEY, SOUND_KEY); по умолчанию всё включено.
+ * текстом. Связь с сервисом остаётся. Управление запоминается (ENABLED_KEY), выключение звука — только на сеанс (SOUND_KEY в sessionStorage): после перезапуска звук включён.
  *
  * Без рук: «Штаб, отбой» — дежурный режим (событие окна `voice:standby`, detail: boolean): микрофон открыт, штаб ждёт
  * только «Штаб, на связь». Необратимое голосом — после «да»: вопрос крупно с кнопками «Да» / «Нет» (действия
@@ -35,7 +35,7 @@
  * Тур (voice/tour.tsx) говорит тем же путём, что ответы штаба (useTourVoice); `voice:open` с detail 'panel'
  * разворачивает панель (подготовка тура по ней). Элементы панели помечены `data-tour` для подсветки.
  */
-import { useEffect, useMemo, useReducer, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type RefObject } from 'react';
 import { usePanelPlace } from './avoid-modals';
 import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
@@ -47,7 +47,7 @@ import { ttsStore } from './tts-store';
 import { AudioDevices } from './AudioDevices';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
-  DEFAULT_SETTINGS, DRAG_PX, ENABLED_KEY, ICON_POS_KEY, SETTINGS_KEY, SOUND_KEY, clampIcon, iconCapLeft, parseIconPos, parseSound, type IconPos, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
+  DEFAULT_SETTINGS, DRAG_PX, ENABLED_KEY, ICON_POS_KEY, SETTINGS_KEY, SOUND_KEY, CARD_SIZE_KEY, clampPanel, clampSize, parseCardSize, type CardSize, iconCapLeft, parseIconPos, parseSound, type IconPos, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
   fullHeight, parseEnabled, parsePanelMode, parseSettings, resetStored, stripCut, stripLines, settleAec, storeSettings, wasCalibrated, type FeedItem, type PanelMode,
 } from './panel-state';
 import { confirmAsync } from '../dialogs';
@@ -62,6 +62,8 @@ const API_POLL_MS = 5000;
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 /** Отказ микрофона простыми словами: разобранные причины — как есть, прочие — с пояснением, что случилось. */
 const micText = (e: Error) => (/^(Микрофон|Браузер)/.test(e.message) ? e.message : `Микрофон не подключился: ${e.message}`);
+const ssGet = (k: string) => { try { return sessionStorage.getItem(k); } catch { return null; } };
+const ssSet = (k: string, v: string | null) => { try { if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch { /* */ } };
 const lsSet = (k: string, v: string | null) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* */ } };
 
 /** Что сервис сообщил при подключении: голоса, роли, текст для записи нового голоса, подавляет ли он эхо. */
@@ -83,7 +85,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
   // звук (вся озвучка) — отдельно от управления голосом (микрофон и команды)
-  const [sound, setSoundState] = useState(() => parseSound(lsGet(SOUND_KEY)));
+  // звук выключают на время сеанса: после перезапуска он всегда включён (старая запись о выключении стирается)
+  const [sound, setSoundState] = useState(() => { lsSet(SOUND_KEY, null); return parseSound(ssGet(SOUND_KEY)); });
   const soundRef = useRef(sound);
   soundRef.current = sound;
   const client = useMemo(() => {
@@ -107,16 +110,28 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   if (import.meta.env.DEV) (window as unknown as { __voiceSize: PanelSize }).__voiceSize = size;
   // значок микрофона можно перетащить мышью; место запоминается, окно уменьшили — значок остаётся в окне
   const [iconPos, setIconPos] = useState<IconPos | null>(() => parseIconPos(lsGet(ICON_POS_KEY)));
-  const drag = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
+  const drag = useRef<{ x: number; y: number; left: number; top: number; w: number; h: number; moved: boolean } | null>(null);
   const justDragged = useRef(false);
+  // размер, заданный человеком: за угол «потянуть» (сбрасывается двойным щелчком по углу)
+  const [cardSize, setCardSize] = useState<CardSize | null>(() => parseCardSize(lsGet(CARD_SIZE_KEY)));
+  const resizeFrom = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const gripDown = (e: React.PointerEvent<HTMLElement>) => {
+    const r = card.current?.getBoundingClientRect();
+    if (!r) return;
+    resizeFrom.current = { x: e.clientX, y: e.clientY, w: r.width, h: r.height };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.stopPropagation();
+  };
+  const gripMove = (e: React.PointerEvent<HTMLElement>) => {
+    const f = resizeFrom.current, r = card.current?.getBoundingClientRect();
+    if (!f || !r) return;
+    setCardSize(clampSize({ w: f.w + e.clientX - f.x, h: f.h + e.clientY - f.y }, window.innerWidth, window.innerHeight, r.left, r.top));
+  };
+  const gripUp = () => { if (resizeFrom.current) { resizeFrom.current = null; setCardSize((c) => { lsSet(CARD_SIZE_KEY, c ? JSON.stringify(c) : null); return c; }); } };
+  const gripReset = () => { setCardSize(null); lsSet(CARD_SIZE_KEY, null); };
+  const grip = <span className="vp-grip" title="Потянуть — изменить размер (двойной щелчок — обычный)" onPointerDown={gripDown} onPointerMove={gripMove} onPointerUp={gripUp} onPointerCancel={gripUp} onDoubleClick={gripReset} />;
   const iconPosRef = useRef(iconPos);
   iconPosRef.current = iconPos;
-  const iconSize = () => (lsGet(SIZE_KEY) === 'big' ? 56 : 44);
-  useEffect(() => {
-    const fit = () => setIconPos((p) => (p ? clampIcon(p, window.innerWidth, window.innerHeight, iconSize()) : p));
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
-  }, []);
   const [big, setBigState] = useState(() => lsGet(SIZE_KEY) === 'big');
   const setBig = (v: boolean) => { setBigState(v); lsSet(SIZE_KEY, v ? 'big' : null); };
   const [, redraw] = useReducer((x: number) => x + 1, 0);
@@ -350,7 +365,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     if (on === soundRef.current) return;
     soundRef.current = on;
     setSoundState(on);
-    lsSet(SOUND_KEY, on ? null : 'off');
+    ssSet(SOUND_KEY, on ? null : 'off');
     if (!on) {
       gate.clear();
       settleAll();
@@ -518,20 +533,22 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     status, enabled, muted: !sound, micError, busy, speaking, listening, thinking, standby,
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
-  const iconDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    drag.current = { x: e.clientX, y: e.clientY, left: r.left, top: r.top, moved: false };
+  // панель (значок, полоса, развёрнутая) переносится мышью: значок — за себя, полоса и развёрнутая — за заголовок
+  const dragDown = (e: React.PointerEvent<HTMLElement>) => {
+    if (e.button !== 0 || !card.current) return;
+    if (e.currentTarget !== card.current && (e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+    const r = card.current.getBoundingClientRect();
+    drag.current = { x: e.clientX, y: e.clientY, left: r.left, top: r.top, w: r.width, h: r.height, moved: false };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
-  const iconMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const dragMove = (e: React.PointerEvent<HTMLElement>) => {
     const d = drag.current;
     if (!d) return;
     if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < DRAG_PX) return;
     d.moved = true;
-    setIconPos(clampIcon({ left: d.left + e.clientX - d.x, top: d.top + e.clientY - d.y }, window.innerWidth, window.innerHeight, iconSize()));
+    setIconPos(clampPanel({ left: d.left + e.clientX - d.x, top: d.top + e.clientY - d.y }, window.innerWidth, window.innerHeight, d.w, d.h));
   };
-  const iconUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const dragUp = (e: React.PointerEvent<HTMLElement>) => {
     const d = drag.current;
     drag.current = null;
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* */ }
@@ -540,6 +557,19 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     setTimeout(() => { justDragged.current = false; }, 0);
     setIconPos((p) => { lsSet(ICON_POS_KEY, p ? JSON.stringify(p) : null); return p; });
   };
+  const dragProps = { onPointerDown: dragDown, onPointerMove: dragMove, onPointerUp: dragUp, onPointerCancel: dragUp };
+  // другой вид или окно стало меньше — панель остаётся в окне (запомненное место не портится); с открытым окном — на своём месте
+  useLayoutEffect(() => {
+    const fit = () => {
+      const el = card.current;
+      if (!el || !iconPosRef.current || domModal.current) return;
+      const r = el.getBoundingClientRect();
+      setIconPos((p) => { if (!p) return p; const c = clampPanel(p, window.innerWidth, window.innerHeight, r.width, r.height); return c.left === p.left && c.top === p.top ? p : c; });
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  });
   // раздел «ИИ» показывает, почему нельзя выбрать модель озвучки
   useEffect(() => { ttsStore.setReason(status === 'ready' ? null : st.text); }, [status, st.text]);
   const live = enabled && status === 'ready' && !micError;
@@ -574,19 +604,20 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   );
   // сверху по центру, под верхней полосой кнопок; развёрнутая — вниз отсюда же
   const place = { left, top };
+  const pos = !modal ? iconPos : null;  // с открытым окном панель на своём месте (не закрывает окно)
   const cardCls = `vp-card${modal ? ' over' : ''}`;
 
   return (
     <div className={`vp ${st.key}${big ? ' big' : ''}`}>
       {view === 'icon' && (
-        <button ref={card as RefObject<HTMLButtonElement>} className={`vp-icon${iconCapLeft(iconPos, window.innerWidth) ? ' cap-left' : ''}`} style={iconPos ?? place} data-tour="voice" data-action="voice.panel.strip" onPointerDown={iconDown} onPointerMove={iconMove} onPointerUp={iconUp} onPointerCancel={iconUp} onClick={() => { if (justDragged.current) return; void act('voice.panel.strip'); }} title={`Голос: ${st.text}. Значок можно перетащить мышью; вернуть на место — «Штаб, верни значок на место».`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
+        <button ref={card as RefObject<HTMLButtonElement>} className={`vp-icon${iconCapLeft(pos, window.innerWidth) ? ' cap-left' : ''}`} style={pos ?? place} data-tour="voice" data-action="voice.panel.strip" {...dragProps} onClick={() => { if (justDragged.current) return; void act('voice.panel.strip'); }} title={`Голос: ${st.text}. Значок можно перетащить мышью; вернуть на место — «Штаб, верни значок на место».`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
           <MicGlyph off={!enabled} sleep={enabled && standby} />
           {(!enabled || standby || !sound) && <span className="vp-icon-cap">{st.text}</span>}
         </button>
       )}
       {view === 'compact' && (
-        <section ref={card} className={`${cardCls} strip`} style={place} aria-label="Голос" data-tour="voice">
-          <div className="vp-head" data-tour="voice-state">
+        <section ref={card} className={`${cardCls} strip`} style={{ ...(pos ?? place), ...(cardSize ? { width: cardSize.w } : {}) }} aria-label="Голос" data-tour="voice">
+          <div className="vp-head" data-tour="voice-state" {...dragProps}>
             <span className="vp-mic-st" aria-hidden="true"><MicGlyph off={!enabled} sleep={enabled && standby} /></span>
             <span className="vp-state" role="status">{st.text}</span>
             {/* при открытом окне панель всё равно полоса — кнопки вида не нужны, место — тексту */}
@@ -606,11 +637,12 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
             {/* обрезано — не молча: целиком повторит штаб */}
             {!whole && stripCut(last.text, modal) && <div className="vp-cut"><span>Целиком — скажите «повтори»</span><ActButton action="voice.repeat">Повторить</ActButton></div>}
           </>}
+          {grip}
         </section>
       )}
       {view === 'full' && (
-        <section ref={card} className={cardCls} style={{ ...place, maxHeight: fullHeight(window.innerHeight, top) }} aria-label="Голос" data-tour="voice">
-          <div className="vp-head" data-tour="voice-state">
+        <section ref={card} className={cardCls} style={{ ...(pos ?? place), ...(cardSize ? { width: cardSize.w, height: cardSize.h, maxHeight: 'none' } : { maxHeight: fullHeight(window.innerHeight, (pos ?? place).top) }) }} aria-label="Голос" data-tour="voice">
+          <div className="vp-head" data-tour="voice-state" {...dragProps}>
             <span className="vp-dot" />
             <span className="vp-state" role="status">{st.text}</span>
             <ActButton className="vp-close" action="voice.panel.close" title="Свернуть панель голоса в полосу">Свернуть</ActButton>
@@ -718,6 +750,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
             </label>
           </details>
           </div>
+          {grip}
         </section>
       )}
 

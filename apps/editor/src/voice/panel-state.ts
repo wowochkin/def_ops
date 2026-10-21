@@ -321,7 +321,7 @@ export function feedCorrection(feed: FeedItem[], id: number, heard: string, c: {
 export type PanelMode = 'icon' | 'compact' | 'full';
 /** Сохранённый вид: 'icon', 'full'; прочее (и прежнее 'open') — полоса. */
 export function parsePanelMode(raw: string | null): PanelMode {
-  return raw === 'icon' || raw === 'full' ? raw : 'compact';
+  return raw === 'compact' || raw === 'full' ? raw : 'icon';  // по умолчанию — значок: панель разворачивается по просьбе человека или по вопросу штаба
 }
 /** Полоса, раскрытая сама, снова обрезает фразу через столько тишины (штаб договорил, вопроса нет). */
 export const COLLAPSE_MS = 10_000;
@@ -409,7 +409,7 @@ export function fullHeight(vh: number, top: number): number {
 
 // ---------------------------------------------------------------- значок: перетаскивание мышью
 
-/** Куда человек перетащил значок микрофона (JSON {left, top}); нет — значок на своём месте (сверху по центру). */
+/** Куда человек перетащил панель голоса (значок, полосу или развёрнутую; JSON {left, top}); нет — сверху по центру. */
 export const ICON_POS_KEY = 'def_ops.voice.iconPos';
 export interface IconPos { left: number; top: number }
 /** Сдвиг, меньше которого нажатие — щелчок, а не перетаскивание. */
@@ -422,14 +422,33 @@ export function parseIconPos(raw: string | null): IconPos | null {
   } catch { return null; }
 }
 
-/** Значок размером size целиком в окне vw × vh (с полем 4 px): за край не уйдёт и не потеряется после уменьшения окна. */
-export function clampIcon(p: IconPos, vw: number, vh: number, size: number): IconPos {
+/** Прямоугольник w × h целиком в окне vw × vh (с полем 4 px): за край не уйдёт и не потеряется после уменьшения окна. */
+export function clampPanel(p: IconPos, vw: number, vh: number, w: number, h: number): IconPos {
   const m = 4;
   return {
-    left: Math.round(Math.min(Math.max(p.left, m), Math.max(m, vw - size - m))),
-    top: Math.round(Math.min(Math.max(p.top, m), Math.max(m, vh - size - m))),
+    left: Math.round(Math.min(Math.max(p.left, m), Math.max(m, vw - w - m))),
+    top: Math.round(Math.min(Math.max(p.top, m), Math.max(m, vh - h - m))),
   };
 }
+/** Размер панели, который задал человек (угол «потянуть»; JSON {w, h}); нет — обычный. */
+export const CARD_SIZE_KEY = 'def_ops.voice.cardSize';
+export interface CardSize { w: number; h: number }
+export const CARD_MIN: CardSize = { w: 320, h: 260 };
+export function clampSize(sz: CardSize, vw: number, vh: number, left: number, top: number): CardSize {
+  return {
+    w: Math.round(Math.min(Math.max(sz.w, CARD_MIN.w), Math.max(CARD_MIN.w, vw - left - 8))),
+    h: Math.round(Math.min(Math.max(sz.h, CARD_MIN.h), Math.max(CARD_MIN.h, vh - top - 8))),
+  };
+}
+export function parseCardSize(raw: string | null): CardSize | null {
+  try {
+    const v = JSON.parse(raw ?? 'null') as Partial<CardSize> | null;
+    return v && Number.isFinite(v.w) && Number.isFinite(v.h) && (v.w as number) >= CARD_MIN.w && (v.h as number) >= CARD_MIN.h ? { w: v.w as number, h: v.h as number } : null;
+  } catch { return null; }
+}
+
+/** Значок размером size — то же для квадрата. */
+export const clampIcon = (p: IconPos, vw: number, vh: number, size: number): IconPos => clampPanel(p, vw, vh, size, size);
 
 /** Подпись значка («Голос выключен», «Дежурю») — слева от него, если он в правой половине окна, иначе справа. */
 export const iconCapLeft = (p: IconPos | null, vw: number): boolean => !!p && p.left + 28 > vw / 2;

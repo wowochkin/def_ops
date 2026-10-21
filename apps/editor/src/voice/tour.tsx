@@ -19,7 +19,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { SECTIONS } from '../sections';
 import type { VoiceClient } from './client';
 import { stopReading } from './dictation';
-import { act, onVoiceCommand, register, type SpeakRole } from './registry';
+import { act, onVoiceCommand, prepareSpeech, register, type SpeakRole } from './registry';
 import { findTour, TOURS, type Tour, type TourMap, type TourStep } from './tours';
 import { currentTab, TABS, type TabSection } from './actions/tabs';
 import { replayNow } from './actions/command';
@@ -211,6 +211,9 @@ export class TourEngine {
     if (!this.state) return;
     const my = this.hush();
     const step = this.state.tour.steps[i];
+    // звук этого шага и двух следующих синтезируется заранее, пока идут переход и поиск элемента: без ожидания и без паузы после первого предложения
+    const ahead = this.state.tour.steps.slice(i, i + 3).flatMap((x) => [stepSpeech(x, false)]);
+    void prepareSpeech(ahead, this.state.tour.role).catch(() => {});
     this.set({ ...this.state, index: i, phase: 'speaking', missing: false, extra: false, alt: false });
     const p = step.prepare;
     if (p) {
@@ -351,7 +354,8 @@ export const INTRO_KEY = 'def_ops.voice.intro';
 export const SEEN_KEY = 'def_ops.tour.seen';
 const introSubs = new Set<() => void>();
 /** Вступление при запуске: по умолчанию включено. */
-export const introOn = () => lsGet(INTRO_KEY) !== 'off';
+/** Вступление при запуске — только если человек его включил (по умолчанию экскурсия идёт по кнопке «Начать экскурсию» на странице «Начало»). */
+export const introOn = () => lsGet(INTRO_KEY) === 'on';
 export function setIntroOn(on: boolean): void { lsSet(INTRO_KEY, on ? 'on' : 'off'); introSubs.forEach((f) => f()); }
 /** Флажок «Вступление при запуске» (и голосом — «Штаб, больше не показывай вступление»). */
 export function useIntroSetting(): [boolean, (on: boolean) => void] {
