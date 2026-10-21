@@ -564,3 +564,12 @@ describe('размер панели, заданный мышью', () => {
     expect(CARD_SIZE_KEY).not.toBe(ICON_POS_KEY);
   });
 });
+
+describe('голоса: записи одного человека — один голос', () => {
+  it('«Жуков, 10 с», «Жуков, 14 с» — одна группа; «Начальник штаба, 10 с» — другая; свой голос — своя', async () => {
+    const { groupVoices } = await import('../src/voice/Voices');
+    const v = (name: string) => ({ id: name, name, builtin: true, source: '', seconds: 0 }) as never;
+    const g = groupVoices([v('Начальник штаба, 10 с'), v('Жуков, 10 с'), v('Жуков, 14 с (без обработки)'), v('Гость')]);
+    expect(g.map((x) => [x.who, x.items.length])).toEqual([['Начальник штаба', 1], ['Жуков', 2], ['Гость', 1]]);
+  });
+});

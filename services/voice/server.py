@@ -219,6 +219,7 @@ class Job:
         self.sentences = Sentences()
         self.planner = PiecePlanner()
         self.closed = False  # весь текст получен
+        self.role = "chief"
         self.sent_all = False  # весь звук отправлен (say-done)
         self.cancel = threading.Event()
         self.wake = asyncio.Event()
@@ -304,6 +305,14 @@ class Session:
         """Говорит штаб (не проба голоса: её не перебивают)."""
         return any(not j.preview for j in self.jobs.values())
 
+    def word_mode(self) -> bool:
+        """Перебивание словом: так настроено, а пока рассказывает посредник — всегда (его долгий голос из динамиков
+        громкостью от человека не отличить; остановить его можно словом «стоп»)."""
+        return self.cfg.get("barge_mode") == "word" or self.listener.force_word
+
+    def sync_roles(self):
+        self.listener.force_word = any(j.role == "umpire" and not j.preview for j in self.jobs.values())
+
     def chief_text(self) -> str:
         return " ".join(j.said for j in self.jobs.values() if not j.preview)
 
@@ -368,7 +377,7 @@ class Session:
         WORD_STEP_S) распознаётся в нити torch, не дожидаясь конца реплики, — его хвост не длиннее WORD_WINDOW_S;
         стоп-слово — штаб обрывается."""
         ls = self.listener
-        if (self.cfg.get("barge_mode") != "word" or not ls.in_speech or self.word_barged or not self.speaking
+        if (not self.word_mode() or not ls.in_speech or self.word_barged or not self.speaking
                 or (self.word_task and not self.word_task.done()) or ls.chunk_s() < self.word_next):
             return
         self.word_next = ls.chunk_s() + WORD_STEP_S
@@ -413,7 +422,7 @@ class Session:
         merge = self.merge
         self.merge = False
         self.m.vad_reset()
-        word = self.cfg.get("barge_mode") == "word"
+        word = self.word_mode()
         word_barged = self.word_barged
         if self.busy and not word:  # договорил, пока модель отвечала (или склейка) — ответ обрывается
             await self.barge_all()
@@ -451,6 +460,7 @@ class Session:
 
     def _start_job(self, job: Job):
         self.jobs[job.id] = job
+        self.sync_roles()
         prev = self.last_task
         job.task = asyncio.create_task(self.run_job(job, prev))
         self.last_task = job.task
@@ -467,6 +477,7 @@ class Session:
             if role not in ROLES:
                 raise ValueError(f"нет такой роли: {role}")
             job = Job(jid, self.svc.ref_for(role))
+            job.role = role
             if not more:
                 job.whole = str(d.get("text", ""))
             self._start_job(job)
@@ -512,6 +523,7 @@ class Session:
                 await self.send(type="say-done", id=job.id)
                 if job.samples == 0:  # звука не было — играть нечего, played не придёт
                     self.jobs.pop(job.id, None)
+                    self.sync_roles()
         except asyncio.CancelledError:
             job.cancel.set()
 
@@ -644,6 +656,7 @@ class Session:
         if job.task and not job.task.done():
             job.task.cancel()
         self.jobs.pop(job.id, None)
+        self.sync_roles()
 
     async def barge_all(self):
         """Человек перебил: фразы штаба обрываются, окно гасит звук по barge {id}. Проба голоса не перебивается —
@@ -669,6 +682,7 @@ class Session:
         job = self.jobs.get(jid)
         if job is not None and job.sent_all:  # окно доиграло фразу — модель больше не говорит
             self.jobs.pop(jid, None)
+            self.sync_roles()
 
     # ------------------------------------------------------------ калибровка
 

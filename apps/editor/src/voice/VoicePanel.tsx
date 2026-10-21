@@ -46,8 +46,9 @@ import type { LlmSettings } from '../sim/game-protocol';
 import { ttsStore } from './tts-store';
 import { AudioDevices } from './AudioDevices';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
+import { modelBusy } from './model-queue';
 import {
-  DEFAULT_SETTINGS, DRAG_PX, ENABLED_KEY, ICON_POS_KEY, SETTINGS_KEY, SOUND_KEY, CARD_SIZE_KEY, clampPanel, clampSize, parseCardSize, type CardSize, iconCapLeft, parseIconPos, parseSound, type IconPos, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
+  DEFAULT_SETTINGS, DRAG_PX, ENABLED_KEY, ICON_POS_KEY, SETTINGS_KEY, SOUND_KEY, CARD_MIN, CARD_SIZE_KEY, clampPanel, clampSize, parseCardSize, type CardSize, iconCapLeft, parseIconPos, parseSound, type IconPos, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
   fullHeight, parseEnabled, parsePanelMode, parseSettings, resetStored, stripCut, stripLines, settleAec, storeSettings, wasCalibrated, type FeedItem, type PanelMode,
 } from './panel-state';
 import { confirmAsync } from '../dialogs';
@@ -114,22 +115,46 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const justDragged = useRef(false);
   // размер, заданный человеком: за угол «потянуть» (сбрасывается двойным щелчком по углу)
   const [cardSize, setCardSize] = useState<CardSize | null>(() => parseCardSize(lsGet(CARD_SIZE_KEY)));
-  const resizeFrom = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
-  const gripDown = (e: React.PointerEvent<HTMLElement>) => {
+  type Edge = 'e' | 's' | 'w' | 'se' | 'sw';
+  const resizeFrom = useRef<{ edge: Edge; x: number; y: number; w: number; h: number; left: number; top: number } | null>(null);
+  /** Пока тянут (размер или перенос), текст в окне не выделяется: без этого страница мигает выделением. */
+  const noSelect = (on: boolean) => document.body.classList.toggle('vp-dragging', on);
+  const edgeDown = (edge: Edge) => (e: React.PointerEvent<HTMLElement>) => {
     const r = card.current?.getBoundingClientRect();
-    if (!r) return;
-    resizeFrom.current = { x: e.clientX, y: e.clientY, w: r.width, h: r.height };
+    if (!r || e.button !== 0) return;
+    e.preventDefault();
+    resizeFrom.current = { edge, x: e.clientX, y: e.clientY, w: r.width, h: r.height, left: r.left, top: r.top };
     e.currentTarget.setPointerCapture(e.pointerId);
     e.stopPropagation();
+    noSelect(true);
   };
-  const gripMove = (e: React.PointerEvent<HTMLElement>) => {
-    const f = resizeFrom.current, r = card.current?.getBoundingClientRect();
-    if (!f || !r) return;
-    setCardSize(clampSize({ w: f.w + e.clientX - f.x, h: f.h + e.clientY - f.y }, window.innerWidth, window.innerHeight, r.left, r.top));
+  const edgeMove = (e: React.PointerEvent<HTMLElement>) => {
+    const f = resizeFrom.current;
+    if (!f) return;
+    const dx = e.clientX - f.x, dy = e.clientY - f.y;
+    const west = f.edge === 'w' || f.edge === 'sw';
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const right = f.left + f.w;  // у левого края правая сторона стоит на месте: сдвигается левая
+    const w = west ? Math.min(Math.max(f.w - dx, CARD_MIN.w), right - 4) : f.edge === 's' ? f.w : f.w + dx;
+    const left = west ? right - w : f.left;
+    const h = f.edge === 'e' || f.edge === 'w' ? f.h : f.h + dy;
+    const sz = clampSize({ w, h }, vw, vh, left, f.top);
+    // полоса меняет только ширину; высота у неё по тексту
+    setCardSize({ w: sz.w, h: view === 'full' ? sz.h : (cardSize?.h ?? 420) });
+    if (west) setIconPos({ left, top: f.top });
   };
-  const gripUp = () => { if (resizeFrom.current) { resizeFrom.current = null; setCardSize((c) => { lsSet(CARD_SIZE_KEY, c ? JSON.stringify(c) : null); return c; }); } };
+  const edgeUp = (e: React.PointerEvent<HTMLElement>) => {
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* */ }
+    noSelect(false);
+    if (!resizeFrom.current) return;
+    resizeFrom.current = null;
+    setCardSize((c) => { lsSet(CARD_SIZE_KEY, c ? JSON.stringify(c) : null); return c; });
+    setIconPos((p) => { if (p) lsSet(ICON_POS_KEY, JSON.stringify(p)); return p; });
+  };
   const gripReset = () => { setCardSize(null); lsSet(CARD_SIZE_KEY, null); };
-  const grip = <span className="vp-grip" title="Потянуть — изменить размер (двойной щелчок — обычный)" onPointerDown={gripDown} onPointerMove={gripMove} onPointerUp={gripUp} onPointerCancel={gripUp} onDoubleClick={gripReset} />;
+  const edge = (k: Edge) => <span key={k} className={`vp-edge ${k}`} title="Потянуть — изменить размер (двойной щелчок — обычный)"
+    onPointerDown={edgeDown(k)} onPointerMove={edgeMove} onPointerUp={edgeUp} onPointerCancel={edgeUp} onDoubleClick={gripReset} />;
+  const grip = <>{(['e', 's', 'w', 'se', 'sw'] as Edge[]).map(edge)}</>;
   const iconPosRef = useRef(iconPos);
   iconPosRef.current = iconPos;
   const [big, setBigState] = useState(() => lsGet(SIZE_KEY) === 'big');
@@ -179,7 +204,10 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const gate = useMemo(() => new SayGate((id, text, role) => {
     speakingIds.current.add(id);
     syncSpeaking();
-    client.say(id, role ?? 'chief', text);
+    // языковая модель занята (штаб противника, советник): голос и модель делят одну машину, живой синтез запинается —
+    // фраза сначала готовится целиком, потом звучит ровно (начало — чуть позже)
+    if (modelBusy()) void client.prepare(role ?? 'chief', text).then(() => { if (speakingIds.current.has(id)) client.say(id, role ?? 'chief', text); });
+    else client.say(id, role ?? 'chief', text);
     setFeed((f) => feedAdd(f, { key: `s${id}`, kind: role === 'umpire' ? 'umpire' : 'chief', text }));
     size.chief(text); // длинное — полоса показывает фразу целиком
   // «штаб говорит» — только настоящей фразой: пока звучит лишь «повторяю запрос», ответ модели ждёт конца речи человека;
@@ -540,6 +568,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     const r = card.current.getBoundingClientRect();
     drag.current = { x: e.clientX, y: e.clientY, left: r.left, top: r.top, w: r.width, h: r.height, moved: false };
     e.currentTarget.setPointerCapture(e.pointerId);
+    noSelect(true);
   };
   const dragMove = (e: React.PointerEvent<HTMLElement>) => {
     const d = drag.current;
@@ -552,6 +581,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     const d = drag.current;
     drag.current = null;
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* */ }
+    noSelect(false);
     if (!d?.moved) return;
     justDragged.current = true;  // следом придёт щелчок — это не «развернуть»
     setTimeout(() => { justDragged.current = false; }, 0);
@@ -562,7 +592,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   useLayoutEffect(() => {
     const fit = () => {
       const el = card.current;
-      if (!el || !iconPosRef.current || domModal.current) return;
+      if (!el || !iconPosRef.current) return;
       const r = el.getBoundingClientRect();
       setIconPos((p) => { if (!p) return p; const c = clampPanel(p, window.innerWidth, window.innerHeight, r.width, r.height); return c.left === p.left && c.top === p.top ? p : c; });
     };
@@ -604,8 +634,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   );
   // сверху по центру, под верхней полосой кнопок; развёрнутая — вниз отсюда же
   const place = { left, top };
-  const pos = !modal ? iconPos : null;  // с открытым окном панель на своём месте (не закрывает окно)
-  const cardCls = `vp-card${modal ? ' over' : ''}`;
+  const pos = iconPos;  // панель стоит там, куда её поставил человек, и при открытом окне (перетащить её можно и поверх окна)
+  const cardCls = `vp-card${modal ? ' over' : ''}${cardSize ? ' sized' : ''}`;
 
   return (
     <div className={`vp ${st.key}${big ? ' big' : ''}`}>

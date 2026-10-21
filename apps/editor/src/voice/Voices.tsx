@@ -24,6 +24,18 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const trimVoice = (s: string) => s.replace(/^голос /, '').replace(/ голос$/, '').trim();
 
 /** Ответы окна «Голоса» голосом (реплика без обращения) → действие окна. */
+/** Записи одного человека («Жуков, 10 с», «Жуков, 14 с») — один голос с выбором записи. */
+export function groupVoices(vs: VoiceInfo[]): { who: string; items: VoiceInfo[] }[] {
+  const out: { who: string; items: VoiceInfo[] }[] = [];
+  for (const v of vs) {
+    const who = v.name.includes(', ') ? v.name.slice(0, v.name.indexOf(', ')) : v.name;
+    const g = out.find((x) => x.who === who);
+    if (g) g.items.push(v); else out.push({ who, items: [v] });
+  }
+  return out;
+}
+const sampleLabel = (v: VoiceInfo) => (v.name.includes(', ') ? v.name.slice(v.name.indexOf(', ') + 2) : v.name);
+
 export function voicesParse(rest: string): { id: string; params?: Record<string, unknown> } | null {
   let m = /^(?:прослушай|послушай|прослушать|послушать|проиграй|включи)(?: голос)? (.+)$/.exec(rest);
   if (m) return { id: 'voices.preview', params: { name: trimVoice(m[1]) } };
@@ -83,6 +95,8 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
   const [voices, setVoices] = useState<VoiceInfo[]>(ready?.voices ?? []);
   const [roles, setRoles] = useState<Partial<VoiceRoles>>(ready?.roles ?? {});
   const [rec, setRec] = useState<Rec>('none');
+  /** Какая запись выбрана у человека с несколькими записями (имя → id). */
+  const [pickId, setPickId] = useState<Record<string, string>>({});
   const [text, setText] = useState(ready?.recordText ?? '');
   const [check, setCheck] = useState<VoiceCheck | null>(null);
   const [name, setName] = useState('');
@@ -311,21 +325,26 @@ export function Voices({ client, ready, onClose, setBusy, previewId, say }: {
 
         <ul className="vp-voices" data-hl="voices-list">
           {!voices.length && <li className="vp-note">Образцов пока нет — запишите новый голос.</li>}
-          {voices.map((v) => {
-            const has = ROLES.filter((r) => roles[r] === v.id);
+          {groupVoices(voices).map((g) => {
+            const sel = g.items.find((v) => v.id === pickId[g.who]) ?? g.items.find((v) => ROLES.some((r) => roles[r] === v.id)) ?? g.items[0];
+            const has = ROLES.filter((r) => g.items.some((v) => roles[r] === v.id));
             return (
-              <li key={v.id} className={`vp-voice${has.length ? ' used' : ''}`} data-hl={`voice-${v.id}`}>
-                <button className="vp-play" title="Прослушать" aria-label="Прослушать" onClick={() => { void act('voices.preview', { voice_id: v.id }); }}>▶</button>
+              <li key={g.who} className={`vp-voice${has.length ? ' used' : ''}`} data-hl={`voice-${sel.id}`}>
+                <button className="vp-play" title="Прослушать" aria-label="Прослушать" onClick={() => { void act('voices.preview', { voice_id: sel.id }); }}>▶</button>
                 <div className="vp-vname">
-                  <b>{v.name}</b>
-                  <span className="vp-vsub">{v.builtin ? 'встроенный' : v.source}</span>
+                  <b>{g.items.length > 1 ? g.who : sel.name}</b>
+                  {g.items.length > 1
+                    ? <select aria-label={`Запись голоса «${g.who}»`} value={sel.id} onChange={(e) => setPickId((m) => ({ ...m, [g.who]: e.target.value }))}>
+                        {g.items.map((v) => <option key={v.id} value={v.id}>{sampleLabel(v)}{ROLES.some((r) => roles[r] === v.id) ? ' ✓' : ''}</option>)}
+                      </select>
+                    : <span className="vp-vsub">{sel.builtin ? 'встроенный' : sel.source}</span>}
                 </div>
                 <div className="vp-seg" role="group" aria-label="Назначить роли">
                   {ROLES.map((r) => (
-                    <button key={r} className={roles[r] === v.id ? 'on' : ''} disabled={roles[r] === v.id} onClick={() => { void act('voices.assign', { voice_id: v.id, role: r }); }}>{ROLE_NAME[r]}</button>
+                    <button key={r} className={roles[r] === sel.id ? 'on' : g.items.some((v) => roles[r] === v.id) ? 'other' : ''} disabled={roles[r] === sel.id} onClick={() => { void act('voices.assign', { voice_id: sel.id, role: r }); }}>{ROLE_NAME[r]}</button>
                   ))}
                 </div>
-                {!v.builtin && <button className="danger vp-del" onClick={() => { void remove(v); }}>Удалить</button>}
+                {!sel.builtin && <button className="danger vp-del" onClick={() => { void remove(sel); }}>Удалить</button>}
               </li>
             );
           })}

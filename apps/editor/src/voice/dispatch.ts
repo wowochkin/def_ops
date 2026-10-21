@@ -555,7 +555,7 @@ export class Dispatcher {
     }
     clear(); // новая обращённая реплика — старый ответ модели и ждущие очереди старые ответы уже не нужны
     // остаток чтения по частям живёт, пока человек его продолжает («дальше», «хватит», «повтори»); иное — чтение брошено
-    if (!asked && !MORE.test(rest) && !REPEAT.test(rest)) stopReading();
+    if (!asked && !MORE.test(rest) && !REPEAT.test(rest) && !yesNo(rest)) stopReading();
     const rec = { text: raw, ran: false };
     this.memory.set(id, rec);
     if (this.memory.size > 20) this.memory.delete(this.memory.keys().next().value as number);
@@ -786,6 +786,9 @@ export class Dispatcher {
     if (yn) {
       // штаб только что предложил (тур: «Показать раздел?») — «да» в любых словах соглашается
       if (yn === 'yes' && getAction('tour.yes')?.available() === true) { await this.execute('tour.yes'); return true; }
+      // «Читать дальше?» — «да» читает следующую часть, «нет» заканчивает чтение (идёт тур — «да» не про чтение)
+      if (yn === 'yes' && getAction('read.next') && getAction('tour.next')?.available() !== true) { await this.execute('read.next'); return true; }
+      if (yn === 'no' && getAction('read.stop') && getAction('tour.next')?.available() !== true && getAction('tour.no')?.available() !== true && getAction('answer.no')?.available() !== true) { await this.execute('read.stop'); this.say('Хорошо.'); return true; }
       // «нет» на предложение тура — снять его (tour.no): потом «да» уже ничего не запустит
       if (yn === 'no' && getAction('tour.no')?.available() === true) { await this.execute('tour.no'); this.say('Хорошо.'); return true; }
       // «нет» на вопрос действия раздела («Куда?» приказа) — его отказ (answer.no доступно, только пока вопрос ждёт)

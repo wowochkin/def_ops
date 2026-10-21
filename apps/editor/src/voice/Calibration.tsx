@@ -55,6 +55,10 @@ function beep(freq: number): Promise<void> {
 }
 /** Шаг тишины — когда человек замолчал: тихо столько после речи, или столько тихо вообще, или ждали уже столько. */
 const QUIET_AFTER_MS = 300, QUIET_LONG_MS = 4500, QUIET_MAX_MS = 15000, QUIET_P = 0.3;
+/** Сколько ждать конца инструкции шага, чтобы не застрять, если голос не ответил. */
+const SAY_WAIT_MS = 25_000;
+/** Что штаб говорит перед шагом: то же, что на экране, без примера фразы (его читают с экрана). */
+export const stepSpeech = (s: { title: string; txt: string; say?: string }) => `${s.title}. ${s.txt.replace(/:\s*$/, '.')}${s.say ? ' Фраза — на экране.' : ''}`;
 const STEPS: { step: CalibStep; sec?: number; title: string; txt: string; say?: string }[] = [
   { step: 'noise', sec: 3, title: 'Тишина', txt: 'Помолчите 3 секунды — запишем, как звучит комната.' },
   { step: 'speech', sec: 6, title: 'Ваш голос', txt: 'Прочитайте вслух обычным голосом, как будете говорить со штабом:',
@@ -132,6 +136,19 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
   };
   /** Шаги сами: шаг тишины — когда человек замолчал, остальные — после короткой паузы. */
   const runStep = () => {
+    if (!alive.current || !runRef.current) return;
+    const s = STEPS[iRef.current];
+    // инструкция шага звучит до записи (и читается на экране); не прозвучала — шаг идёт дальше сам
+    const say = sayRef.current;
+    if (!say) { runBody(); return; }
+    const k = iRef.current;
+    let went = false;
+    const go1 = () => { if (!went && alive.current && runRef.current && iRef.current === k) { went = true; runBody(); } };
+    const fallback = setTimeout(go1, SAY_WAIT_MS);
+    timers.current.push(() => clearTimeout(fallback));
+    void say(stepSpeech(s)).then(() => { clearTimeout(fallback); go1(); }, go1);
+  };
+  const runBody = () => {
     if (!alive.current || !runRef.current) return;
     const s = STEPS[iRef.current];
     if (s.step === 'speech') {

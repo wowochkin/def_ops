@@ -458,6 +458,19 @@ describe('диктовка в поле и чтение по частям', () =>
     expect(said.join(' ')).not.toMatch(/Третье/);
     expect(said.at(-1)).not.toMatch(/Читать дальше/);
   });
+  it('«Читать дальше?» — «да» читает следующую часть, «нет» заканчивает чтение; идёт тур — «да» не про чтение', async () => {
+    readAloud(LONG);
+    const d = mk({ stop: () => {} });
+    d.spoke();
+    await d.utterance('Штаб, да', 1);
+    expect(said.join(' ')).toMatch(/Третье/);
+    expect(said.at(-1)).not.toBe('Подтверждать сейчас нечего.');
+    await d.utterance('Штаб, нет', 2);
+    expect(said.at(-1)).toBe('Хорошо.');
+    said.length = 0;
+    await d.utterance('Штаб, дальше', 3);
+    expect(said.join(' ')).not.toMatch(/Пятое/);
+  });
   it('«дальше» / «продолжай» при идущем туре — только тур, а не остаток чтения', async () => {
     readAloud(LONG);
     const next = vi.fn();

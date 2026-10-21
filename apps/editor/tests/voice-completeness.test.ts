@@ -57,6 +57,7 @@ const EXCEPTIONS: { file: string; exact: string[]; why: string }[] = [
     '(v) => applySettings({ barge_vad: +(1 - v).toFixed(2) })', '(v) => applySettings({ barge_ms: v })', '(v) => applySettings({ end_ms: v })', 'resetSettings', '(e) => onChange(+e.target.value)', '() => setBig(false)', '() => setBig(true)'],
     why: 'тонкая настройка (регуляторы, «перебивать голосом / словом», размер панели, «По умолчанию») — главный путь голосом: «Штаб, калибровка»' },
   { file: 'voice/VoicePanel.tsx', exact: ['resume'], why: 'звук окна включается после первого действия человека (правило браузера) — не элемент управления' },
+  { file: 'voice/Voices.tsx', exact: ['(e) => setPickId((m) => ({ ...m, [g.who]: e.target.value }))'], why: 'выбор записи голоса в строке с несколькими записями: голосом записи называются в «послушай голос Жуков, четырнадцать секунд» (voices.preview) и «назначь …» — список лишь выбирает, какую запись слушать и назначать' },
   { file: 'voice/Voices.tsx', exact: ['(e) => setName(e.target.value)'], why: 'имя нового голоса с клавиатуры — голосом имя называется в «запиши новый голос гость»' },
   { file: 'ReplayView.tsx', exact: ['() => step(-24)', '() => { if (!playing && cur >= t1) setTime(start); setPlaying(!playing); }', '() => step(24)', '(e) => setSpeed(+e.target.value)',
     '(e) => { setPlaying(false); setTime(fromMs(t0 + +e.target.value * H)); }', 'k'],

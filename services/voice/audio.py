@@ -140,6 +140,7 @@ class Listener:
                  turn: Callable[[np.ndarray], Awaitable[float]], *,
                  max_silence_ms: int = 1500, turn_threshold: float = 0.5, min_speech_ms: int = 200):
         self.cfg, self.vad, self.turn = cfg, vad, turn
+        self.force_word = False  # говорит посредник (длинный разбор): перебивает только стоп-слово, голос из динамиков — нет
         self.max_silence_ms, self.turn_threshold, self.min_speech_ms = max_silence_ms, turn_threshold, min_speech_ms
         self.frames = 0
         self.reset()
@@ -176,7 +177,7 @@ class Listener:
             self.silence_ms = 0
             self.turn_next = 0.0
             # перебивание: человек говорит дольше порога, пока модель отвечает
-            if busy and not self.barged and self.speech_ms >= c["barge_ms"] and c.get("barge_mode") != "word":
+            if busy and not self.barged and self.speech_ms >= c["barge_ms"] and c.get("barge_mode") != "word" and not self.force_word:
                 self.barged = True
                 ev.append(("barge",))
             return ev
