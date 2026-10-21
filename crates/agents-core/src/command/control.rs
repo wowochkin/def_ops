@@ -56,6 +56,17 @@ impl CommandState {
     }
 }
 
+impl CommandState {
+    /// Место подчинённого в построении старшего.
+    pub fn role(&self, t: crate::command::directive::Target) -> Role { match t { crate::command::directive::Target::Hq(h) => self.role_hq[h as usize], crate::command::directive::Target::Division(i) => self.role_div[i as usize] } }
+    pub fn set_role(&mut self, t: crate::command::directive::Target, r: Role) { match t { crate::command::directive::Target::Hq(h) => self.role_hq[h as usize] = r, crate::command::directive::Target::Division(i) => self.role_div[i as usize] = r } }
+    pub fn start(&self, t: crate::command::directive::Target) -> Option<crate::geo::XY> { match t { crate::command::directive::Target::Hq(h) => self.start_hq[h as usize], crate::command::directive::Target::Division(i) => self.start_div[i as usize] } }
+    pub fn mark(&mut self, t: crate::command::directive::Target, pos: crate::geo::XY, tick: u32) { match t { crate::command::directive::Target::Hq(h) => { self.start_hq[h as usize] = Some(pos); self.since_hq[h as usize] = tick; } crate::command::directive::Target::Division(i) => { self.start_div[i as usize] = Some(pos); self.since_div[i as usize] = tick; } } }
+    pub fn since(&self, t: crate::command::directive::Target) -> u32 { match t { crate::command::directive::Target::Hq(h) => self.since_hq[h as usize], crate::command::directive::Target::Division(i) => self.since_div[i as usize] } }
+    pub fn replaced_of(&self, t: crate::command::directive::Target) -> bool { match t { crate::command::directive::Target::Hq(h) => self.replaced_hq[h as usize], crate::command::directive::Target::Division(i) => self.replaced[i as usize] } }
+    pub fn set_replaced(&mut self, t: crate::command::directive::Target) { match t { crate::command::directive::Target::Hq(h) => self.replaced_hq[h as usize] = true, crate::command::directive::Target::Division(i) => self.replaced[i as usize] = true } }
+}
+
 /// Вид документа журнала штабов.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -80,7 +91,9 @@ pub struct Document {
 pub fn active_subs(sim: &Sim, h: u32) -> (Vec<u32>, Vec<u32>) {
     let w = &sim.world;
     let c = &sim.command;
-    let hqs = (0..w.hqs.len() as u32).filter(|&k| w.hqs[k as usize].parent == Some(h) && !c.led_hq.get(k as usize).copied().unwrap_or(false)).collect();
+    // штаб без действующих дивизий в поддереве — не подчинённый для задачи
+    let alive = |k: u32| w.divisions.iter().any(|d| !d.state.out() && d.state != State::Remnant && { let mut x = d.hq; let mut ok = false; for _ in 0..8 { if x == k { ok = true; break; } match w.hqs[x as usize].parent { Some(p) => x = p, None => break } } ok });
+    let hqs = (0..w.hqs.len() as u32).filter(|&k| w.hqs[k as usize].parent == Some(h) && !c.led_hq.get(k as usize).copied().unwrap_or(false) && alive(k)).collect();
     let divs = (0..w.divisions.len() as u32).filter(|&i| {
         let d = &w.divisions[i as usize];
         d.hq == h && !c.led_div.get(i as usize).copied().unwrap_or(false) && !d.state.out() && d.state != State::Remnant

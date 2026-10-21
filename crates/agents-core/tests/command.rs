@@ -130,7 +130,7 @@ fn to_front(sim: &agents_core::world::Sim, form: Form) -> Directive {
     Directive {
         id: "проба".into(), from: hq(sim, "su_stavka"), to: Target::Hq(hq(sim, "su_1bf")), form, task: Task::Attack,
         axis: vec![c, berlin], immediate: Some(Line { pts: vec![XY::new(at.x - uy * 25.0, at.y + ux * 25.0), XY::new(at.x + uy * 25.0, at.y - ux * 25.0)], by: None }),
-        subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: false, rule: None, note: "проба".into(),
+        subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: false, rule: None, issued: 0, note: "проба".into(),
     }
 }
 
@@ -144,7 +144,11 @@ fn active_su(sim: &agents_core::world::Sim) -> Vec<usize> {
 fn directive_reaches_divisions_through_agents() {
     let mut sim = load("seelow-1945");
     agents_su(&mut sim);
-    let d = to_front(&sim, Form::Order);
+    // время прохождения — на задаче «оборонять»: у наступления фронт по циклу уточняет задачи распоряжениями (этап 2б)
+    let mut d = to_front(&sim, Form::Order);
+    d.task = Task::Defend;
+    // без перепланирования по циклу — только прохождение
+    sim.rules.command.cycle_h = [1000.0; 3];
     agents_core::command::passing::issue(&mut sim, d, 0);
     for _ in 0..91 { sim.step(); }
     // за час до прибытия к дивизиям под корпусами приказов от корпусов ещё нет
@@ -152,12 +156,12 @@ fn directive_reaches_divisions_through_agents() {
     assert_eq!(from_corps(&sim), 0);
     for _ in 0..2 { sim.step(); }
     let act = active_su(&sim);
-    let ok = act.iter().filter(|&&i| { let dv = &sim.world.divisions[i]; dv.order.as_ref().is_some_and(|o| o.from == dv.hq && matches!(o.kind, OrderKind::Attack | OrderKind::Move)) }).count();
+    let ok = act.iter().filter(|&&i| { let dv = &sim.world.divisions[i]; dv.order.as_ref().is_some_and(|o| o.from == dv.hq && o.kind == OrderKind::Defend) }).count();
     assert!(ok * 10 >= act.len() * 9, "{ok} из {}", act.len());
     for k in [DocKind::Directive, DocKind::Order] { assert!(sim.documents.iter().any(|x| x.kind == k), "{k:?}"); }
     // цели соседей по корпусу разнесены
     for (h, _) in sim.world.hqs.iter().enumerate().filter(|(_, h)| h.side == Side::Su && h.echelon == Echelon::Corps) {
-        let ts: Vec<XY> = act.iter().filter(|&&i| sim.world.divisions[i].hq as usize == h).filter_map(|&i| sim.world.divisions[i].order.as_ref().filter(|o| o.kind == OrderKind::Attack).map(|o| o.target)).collect();
+        let ts: Vec<XY> = act.iter().filter(|&&i| sim.world.divisions[i].hq as usize == h).filter_map(|&i| sim.world.divisions[i].order.as_ref().filter(|o| o.kind == OrderKind::Defend).map(|o| o.target)).collect();
         for a in 0..ts.len() { for b in a + 1..ts.len() { assert!(ts[a].dist(ts[b]) >= 0.05, "корпус {h}: {:?} {:?}", ts[a], ts[b]); } }
     }
 }
@@ -237,7 +241,7 @@ fn to_corps(sim: &agents_core::world::Sim, corps: &str, half: f64) -> Directive 
         id: "корпусу".into(), from: sim.world.hqs[k as usize].parent.unwrap(), to: Target::Hq(k), form: Form::Order, task: Task::Attack,
         axis: vec![c, berlin], immediate: Some(Line { pts: vec![XY::new(at.x - uy * 10.0, at.y + ux * 10.0), XY::new(at.x + uy * 10.0, at.y - ux * 10.0)], by: None }),
         subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![(None, side(half)), (None, side(-half))], main_blow: vec![], reserve: vec![], junction: None,
-        hasty: false, ready: true, rule: None, note: "проба".into(),
+        hasty: false, ready: true, rule: None, issued: 0, note: "проба".into(),
     }
 }
 
@@ -290,3 +294,66 @@ fn second_echelon_commits_by_fallback() {
     for _ in 0..4 { sim.step(); }
     assert!(second.iter().all(|&i| sim.world.divisions[i].order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack)));
 }
+
+// ---------- этап 2б: советские армия и фронт ----------
+
+/// Армия 8 гв. из 3 корпусов: 2 в первом эшелоне, 1 во втором — его дивизии выдвигаются за первым.
+#[test]
+fn army_echelons_corps() {
+    let mut sim = load("seelow-1945");
+    agents_su(&mut sim);
+    let mut d = to_corps(&sim, "su_4gsk", 6.0);
+    let a = hq(&sim, "su_8gva");
+    d.from = sim.world.hqs[a as usize].parent.unwrap();
+    d.to = Target::Hq(a);
+    agents_core::command::passing::issue(&mut sim, d, 0);
+    sim.step();
+    let corps: Vec<usize> = (0..sim.world.hqs.len()).filter(|&k| sim.world.hqs[k].parent == Some(a)).collect();
+    let roles: Vec<Role> = corps.iter().map(|&k| sim.command.role_hq[k]).collect();
+    assert_eq!(roles.iter().filter(|r| **r == Role::First).count(), 2, "{roles:?}");
+    let second = corps[roles.iter().position(|r| *r == Role::Second).expect("второй эшелон")];
+    let ds: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].hq as usize == second).collect();
+    assert!(ds.iter().all(|&i| sim.world.divisions[i].order.as_ref().is_some_and(|o| o.kind == OrderKind::Move)));
+}
+
+/// Танковые армии фронта — подвижная группа: сначала выдвигаются, через 48 ч без прорыва — наступают.
+#[test]
+fn front_holds_tank_armies() {
+    let mut sim = load("seelow-1945");
+    agents_su(&mut sim);
+    sim.rules.doctrine_su.tank_commit_depth_km = 1000.0;
+    let mut d = to_front(&sim, Form::Order);
+    d.ready = true;
+    agents_core::command::passing::issue(&mut sim, d, 0);
+    sim.step();
+    let tank = |sim: &agents_core::world::Sim| -> Vec<usize> { ["su_1gta", "su_2gta"].iter().map(|id| hq(sim, id)).flat_map(|t| (0..sim.world.divisions.len()).filter(move |&i| sim.world.divisions[i].hq == t || sim.world.hqs[sim.world.divisions[i].hq as usize].parent == Some(t))).collect() };
+    let ts = tank(&sim);
+    assert!(!ts.is_empty());
+    assert_eq!(sim.command.role_hq[hq(&sim, "su_1gta") as usize], Role::Mobile);
+    assert!(ts.iter().all(|&i| sim.world.divisions[i].order.as_ref().is_none_or(|o| o.kind != OrderKind::Attack)), "до прорыва не наступают");
+    for _ in 0..60 { sim.step(); }
+    assert_eq!(sim.command.role_hq[hq(&sim, "su_1gta") as usize], Role::Committed);
+    assert!(ts.iter().any(|&i| sim.world.divisions[i].order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack)));
+}
+
+/// Первый эшелон армии выбыл — второй эшелон вводится в следующий цикл.
+#[test]
+fn all_second_echelon_commit() {
+    let mut sim = load("seelow-1945");
+    agents_su(&mut sim);
+    sim.rules.doctrine_su.commit_depth_km = 1000.0;
+    let mut d = to_corps(&sim, "su_4gsk", 6.0);
+    let a = hq(&sim, "su_8gva");
+    d.from = sim.world.hqs[a as usize].parent.unwrap();
+    d.to = Target::Hq(a);
+    agents_core::command::passing::issue(&mut sim, d, 0);
+    sim.step();
+    let corps: Vec<usize> = (0..sim.world.hqs.len()).filter(|&k| sim.world.hqs[k].parent == Some(a)).collect();
+    for &k in corps.iter().filter(|&&k| sim.command.role_hq[k] == Role::First) {
+        for dv in sim.world.divisions.iter_mut().filter(|dv| dv.hq as usize == k) { dv.state = State::Destroyed; }
+    }
+    for _ in 0..8 { sim.step(); }
+    let second = corps.iter().copied().find(|&k| sim.world.divisions.iter().any(|dv| dv.hq as usize == k && !dv.state.out())).unwrap();
+    assert_eq!(sim.command.role_hq[second], Role::Committed);
+}
+

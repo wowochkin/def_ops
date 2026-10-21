@@ -51,6 +51,8 @@ pub struct Directive {
     pub ready: bool,
     /// Правило, по которому штаб принял решение (статья устава или id норматива) — в документ.
     pub rule: Option<String>,
+    /// Час отдачи (ставит passing::issue): пришедшая позже, но отданная раньше директива того же штаба не действует.
+    pub issued: u32,
     pub note: String,
 }
 
@@ -98,7 +100,7 @@ impl DirectiveIn {
         self.to.iter().map(|t| Ok((at, Directive {
             id: self.id.clone(), from, to: Target::Hq(h(t)?), form: self.form, task: self.task,
             axis: self.axis.iter().map(|&p| xy(p)).collect(), immediate: line(&self.immediate), subsequent: line(&self.subsequent),
-            boundaries: boundaries.clone(), main_blow: main_blow.clone(), reserve: reserve.clone(), junction: None, hasty: false, ready: false, rule: None, note: self.note.clone(),
+            boundaries: boundaries.clone(), main_blow: main_blow.clone(), reserve: reserve.clone(), junction: None, hasty: false, ready: false, rule: None, issued: 0, note: self.note.clone(),
         }))).collect()
     }
 }

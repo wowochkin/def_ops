@@ -102,7 +102,7 @@ pub fn generic(sim: &Sim, h: u32, intent: &Directive, replan: bool, subs: &[Targ
             immediate: intent.immediate.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             subsequent: intent.subsequent.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             boundaries: vec![(None, b.left.clone()), (None, b.right.clone())],
-            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready && !replan, rule: None, note: intent.note.clone(),
+            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready && !replan, rule: None, issued: 0, note: intent.note.clone(),
         }
     }).collect()
 }
@@ -133,6 +133,8 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
         match d.to {
             Target::Hq(h) => {
                 let hu = h as usize;
+                // отданная раньше уже действующей директивы того же штаба — устарела
+                if sim.command.intent[hu].as_ref().is_some_and(|o| o.from == d.from && o.issued > d.issued) { continue; }
                 // изъятый через голову штаб директива старшего больше не задаёт (кроме директивы игрока)
                 if sim.command.led_hq[hu] && sim.command.control[d.from as usize] != Control::Player { continue; }
                 // директива без оси не заменяет замысел с осью: без геометрии — только документ, с границами — новые границы
@@ -151,6 +153,7 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
                 let iu = i as usize;
                 // изъятую через голову дивизию директива старшего больше не задаёт (кроме директивы игрока ей самой)
                 if sim.command.led_div.get(iu).copied().unwrap_or(false) && sim.command.control[d.from as usize] != Control::Player { continue; }
+                if sim.command.div_task[iu].as_ref().is_some_and(|o| o.from == d.from && o.issued > d.issued) { continue; }
                 let div = &mut next.divisions[iu];
                 if d.hasty { div.vars.coord = div.vars.coord.min(sim.rules.command.hasty_coord); }
                 let target = div_target(&d, div.vars.pos);

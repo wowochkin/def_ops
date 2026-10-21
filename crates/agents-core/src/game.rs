@@ -352,7 +352,7 @@ impl Game {
             axis: p.axis.iter().map(xy).collect(),
             immediate: p.immediate.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: None }),
             subsequent: p.subsequent.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: None }),
-            boundaries: Vec::new(), main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: false, ready: false, rule: None,
+            boundaries: Vec::new(), main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: false, ready: false, rule: None, issued: 0,
             note: if p.note.is_empty() { "директива игрока".into() } else { p.note.clone() },
         };
         crate::command::passing::issue(&mut self.sim, d, tick);

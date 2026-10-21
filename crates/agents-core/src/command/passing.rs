@@ -23,6 +23,7 @@ pub fn target_id(sim: &Sim, t: Target) -> String {
 pub fn issue(sim: &mut Sim, mut d: Directive, tick: u32) {
     let to = match d.to { Target::Hq(h) => Some(sim.world.hqs[h as usize].echelon), Target::Division(_) => None };
     d.hasty |= d.form == Form::Instruction;
+    d.issued = tick;
     let arrives = if d.ready { tick } else { tick + passing_hours(&sim.rules.command, to, d.form).round() as u32 };
     let kind = match (d.form, sim.world.hqs[d.from as usize].echelon) {
         (Form::Instruction, _) => DocKind::Instruction,
