@@ -153,7 +153,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   useEffect(() => (eng ? setFlashMapView(eng) : undefined), [eng]);
   // карта шагов разбора хода (voice/tour-map): переезд к месту, метка и рамка, проигрывание хода
   useEffect(() => (eng ? setTourMap(createTourMap({
-    engine: () => engine.current, setTime, now: () => liveView.current?.time ?? null,
+    engine: () => engine.current, setTime, now: () => liveView.current?.time ?? null, level: () => levelRef.current, setLevel,
     frame: (cb) => requestAnimationFrame(cb), cancel: (id) => cancelAnimationFrame(id), clock: () => performance.now(),
   })) : undefined), [eng]); // eslint-disable-line react-hooks/exhaustive-deps
   const [adv, setAdv] = useState<AdvMsg[]>([]);
@@ -169,6 +169,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [planOpen, setPlanOpen] = useState<number | null>(0);
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  const levelRef = useRef(level);
+  levelRef.current = level;
   const [labels, toggleLabels] = useMapLabels();
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true, hbounds: true, bounds: true });
   const [reveal, setReveal] = useState(false);

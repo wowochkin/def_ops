@@ -5,10 +5,11 @@
  * разбора — время карты снова «сейчас», подсветка снята. Чистый модуль (без React): CommandView подключает его к
  * своей карте (tour.tsx, setTourMap); кадры и часы — снаружи (в окне — requestAnimationFrame).
  */
-import type { LngLat } from '@def-ops/core';
+import { zoomForScale, type LngLat } from '@def-ops/core';
 import type { MapEngine } from '../engine/types';
 import { showAt } from '../engine/free-center';
 import { flash, flashState } from './highlight';
+import { LEVEL_SCALE, type LevelId } from '../map-level-scale';
 import type { TourMapControl } from './tour';
 
 /** Переезд карты к месту шага, мс. */
@@ -28,6 +29,9 @@ export interface TourMapDeps {
   setTime(t: string): void;
   /** Время карты «сейчас» (конец хода): к нему карта возвращается. */
   now(): string | null;
+  /** Уровень карты (тактический / оперативный / стратегический): текущий и переключение; нет — шаги не меняют уровень. */
+  level?(): LevelId;
+  setLevel?(l: LevelId): void;
   frame(cb: () => void): number;
   cancel(id: number): void;
   clock(): number;
@@ -38,7 +42,7 @@ const iso = (n: number) => new Date(n).toISOString().slice(0, 16);
 const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 
 /** Масштаб, при котором точки pts занимают долю карты FIT_SHARE (одна точка — без изменения). */
-function fitView(en: TourMapEngine, pts: LngLat[]): { center: LngLat; zoom: number } {
+function fitView(en: TourMapEngine, pts: LngLat[], free = false): { center: LngLat; zoom: number } {
   const lng = pts.map((p) => p[0]), lat = pts.map((p) => p[1]);
   const center: LngLat = [(Math.min(...lng) + Math.max(...lng)) / 2, (Math.min(...lat) + Math.max(...lat)) / 2];
   const z0 = en.getView().zoom;
@@ -46,11 +50,31 @@ function fitView(en: TourMapEngine, pts: LngLat[]): { center: LngLat; zoom: numb
   const w = Math.max(...px.map((p) => p[0])) - Math.min(...px.map((p) => p[0])), h = Math.max(...px.map((p) => p[1])) - Math.min(...px.map((p) => p[1]));
   const { width, height } = en.size();
   const k = Math.min((width * FIT_SHARE) / Math.max(w, 1), (height * FIT_SHARE) / Math.max(h, 1));
-  const zoom = pts.length < 2 ? z0 : Math.min(FIT_MAX, Math.max(FIT_MIN, z0 + Math.log2(k)));
+  const zoom = pts.length < 2 ? z0 : free ? z0 + Math.log2(k) : Math.min(FIT_MAX, Math.max(FIT_MIN, z0 + Math.log2(k)));  // free — границы по уровню шага, не по умолчанию
   return { center, zoom: Math.round(zoom * 4) / 4 };
 }
 
+const ORDER: LevelId[] = ['tac', 'op', 'st'];
+
+/**
+ * Уровень и масштаб шага. want — желательный уровень (auto — начиная с оперативного); fitZoom — масштаб, при котором
+ * все точки шага помещаются (null — одно место). Берётся первый уровень от желательного, на котором точки помещаются
+ * в мелкой границе его интервала; масштаб — в интервале уровня (одно место — край «обзорнее»: виден участок вокруг).
+ */
+export function levelForStep(want: LevelId | 'auto', lat: number, fitZoom: number | null): { level: LevelId; zoom: number } {
+  const from = want === 'auto' ? 1 : ORDER.indexOf(want);  // обзор хода — не мельче оперативного уровня
+  for (const l of ORDER.slice(from)) {
+    const r = LEVEL_SCALE[l];
+    const zMin = zoomForScale(lat, r.setTo), zMax = zoomForScale(lat, r.from);
+    if (fitZoom === null) return { level: l, zoom: zMin };
+    if (fitZoom >= zMin - 1e-6) return { level: l, zoom: Math.min(fitZoom, zMax) };
+  }
+  return { level: 'st', zoom: zoomForScale(lat, LEVEL_SCALE.st.setTo) };
+}
+
 export function createTourMap(d: TourMapDeps): TourMapControl {
+  /** Уровень карты до разбора: к нему карта возвращается в конце. */
+  let savedLevel: LevelId | null = null;
   let anim: number | null = null;
   let seq = 0;
   /** Подсветка, которую поставил разбор (чужую — подсветку команды — не снимать). */
@@ -88,9 +112,16 @@ export function createTourMap(d: TourMapDeps): TourMapControl {
       if (!en) { play(); return; }
       // куда: место (свободная часть карты, не под панелью и легендой) или все точки шага
       // fit с zoom — показать точки целиком, но не крупнее zoom (место боя: участники рядом — виден участок вокруг)
-      const fit = m.fit && m.fit.length > 1 ? fitView(en, m.fit) : null;
-      const target = fit ? { center: fit.center, zoom: m.zoom !== undefined ? Math.min(fit.zoom, m.zoom) : fit.zoom }
+      const fit = m.fit && m.fit.length > 1 ? fitView(en, m.fit, !!m.level) : null;
+      let target = fit ? { center: fit.center, zoom: m.zoom !== undefined ? Math.min(fit.zoom, m.zoom) : fit.zoom }
         : m.at ?? m.fit?.[0] ? { center: (m.at ?? m.fit![0]), zoom: m.zoom ?? en.getView().zoom } : null;
+      // уровень шага: переключить уровень карты и взять масштаб из его рекомендуемого интервала
+      if (m.level && target && d.setLevel) {
+        const lv = levelForStep(m.level, target.center[1], fit ? fit.zoom : null);
+        if (savedLevel === null && d.level) savedLevel = d.level();
+        d.setLevel(lv.level);
+        target = { center: target.center, zoom: lv.zoom };
+      }
       if (!target) { play(); return; }
       const from = en.getView();
       showAt(en, target.center, target.zoom);
@@ -105,6 +136,7 @@ export function createTourMap(d: TourMapDeps): TourMapControl {
     reset() {
       stop(); seq++;
       unflash();
+      if (savedLevel !== null) { d.setLevel?.(savedLevel); savedLevel = null; }
       const now = d.now();
       if (now) d.setTime(now);
     },
