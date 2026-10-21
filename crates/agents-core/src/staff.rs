@@ -147,7 +147,7 @@ impl Sim {
         dec.orders.push(ScriptOrder { at: tick, hq: h as u32, to: vec![i as u32], kind, target: Some(target), forced: false, note: format!("решение штаба ({src}): {note}"), follow: None, offset: XY::default() });
     }
 
-    fn doctrine_hq(&self, w: &World, tick: u32, h: usize, subs: &[usize]) -> Decision {
+    pub(crate) fn doctrine_hq(&self, w: &World, tick: u32, h: usize, subs: &[usize]) -> Decision {
         let doc = &self.rules.doctrine;
         let mut dec = Decision { orders: Vec::new(), why: Vec::new() };
         let a: Vec<Assess> = subs.iter().map(|&i| self.assess(w, i)).collect();
@@ -389,7 +389,7 @@ impl Sim {
     }
 
     /// Следующий свой рубеж (укреплённая полоса театра) за дивизией; если его нет — точка в withdraw_step_km за ней.
-    fn line_behind(&self, w: &World, i: usize) -> XY {
+    pub(crate) fn line_behind(&self, w: &World, i: usize) -> XY {
         let d = &w.divisions[i];
         let t = &*self.theatre;
         let side = match d.side { Side::Su => "su", Side::De => "de" };

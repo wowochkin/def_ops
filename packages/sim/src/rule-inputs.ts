@@ -172,6 +172,8 @@ export const RULE_INPUTS: RuleInput[] = [
   agent('command.preparedHours.corps', 'Подготовленный приказ корпуса', 'ч'),
   agent('command.preparedHours.division', 'Подготовленный приказ дивизии', 'ч'),
   agent('command.su.divisionBandKm', 'Участок прорыва дивизии', 'км'),
+  agent('command.de.pullbackKm', 'Оттяжка перед артподготовкой', 'км'),
+  agent('command.de.permissionHours', 'Ответ ставки на запрос отхода', 'ч'),
   agent('pocket.breakoutKeep', 'Прорвавшиеся выносят техники', 'доля'),
   agent('pocket.breakoutKmDay', 'Темп прорыва из котла', 'км/сут'),
   agent('pocket.breakoutLossDay', 'Потери при прорыве из котла', 'доля/сут'),

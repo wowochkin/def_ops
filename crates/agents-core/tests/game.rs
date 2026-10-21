@@ -291,3 +291,60 @@ fn hybrid_historical_only_before_first_turn() {
     h.advance(1);
     assert!(h.issue_historical("stavka-11059").is_err());
 }
+
+// ---------- этап 2б: немецкие армия и корпус ----------
+
+fn de_game() -> Game {
+    let root = repo_root();
+    let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json"), &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    Game::start_mode(sim, meta, 0, Side::De, &[Side::De], None, Mode::Agents)
+}
+
+/// Корпус под давлением просит разрешения на отход: до ответа дивизия держится, запрос один; разрешили — отходит.
+#[test]
+fn de_corps_requests_withdraw() {
+    let mut g = de_game();
+    // ослабленная дивизия: доктрина решает «отход»
+    let i = g.sim.world.divisions.iter().position(|d| d.side == Side::De && !d.state.out()).unwrap();
+    g.sim.world.divisions[i].vars.personnel *= 0.3;
+    g.sim.world.divisions[i].vars.cohesion = 0.25;
+    let k = g.sim.world.divisions[i].hq;
+    g.advance(8);
+    let name = g.sim.world.divisions[i].name.clone();
+    let req = |g: &Game| g.sim.documents.iter().filter(|d| d.hq == k && d.kind == DocKind::Report && d.text.contains("запрос на отход") && d.text.contains(&name)).count();
+    assert_eq!(req(&g), 1, "запрос");
+    assert!(g.sim.world.divisions[i].order.as_ref().is_none_or(|o| o.kind != OrderKind::Withdraw), "до ответа — держится");
+    g.advance(48);
+    assert_eq!(req(&g), 1, "повторно не запрашивает");
+    let corps = g.sim.world.hqs[k as usize].id.clone();
+    g.permit(&corps, true).expect("разрешение");
+    g.advance(4);
+    assert_eq!(g.sim.world.divisions[i].order.as_ref().map(|o| o.kind), Some(OrderKind::Withdraw));
+}
+
+/// Противник развёртывается для атаки — немецкая армия оттягивает первую линию на 1–2 км, один раз.
+#[test]
+fn de_army_pulls_back_once() {
+    let mut g = de_game();
+    g.advance(1);
+    let de: Vec<usize> = (0..g.sim.world.divisions.len()).filter(|&i| g.sim.world.divisions[i].side == Side::De && !g.sim.world.divisions[i].state.out()).collect();
+    // три советские дивизии рядом с немецкой — развёртываются
+    let p = g.sim.world.divisions[de[0]].vars.pos;
+    let su: Vec<usize> = { let w = &g.sim.world; let mut v: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].side == Side::Su && !w.divisions[i].state.out()).collect(); v.sort_by(|&a, &b| w.divisions[a].vars.pos.dist(p).total_cmp(&w.divisions[b].vars.pos.dist(p))); v.truncate(3); v };
+    for &i in &su { g.sim.world.divisions[i].vars.pos = agents_core::geo::XY::new(p.x + 4.0, p.y); g.sim.world.divisions[i].state = agents_core::model::State::Deploy { left_h: 6.0 }; }
+    // у Зеелова советские дивизии развёртываются с начала — первая оттяжка уже была; угроза — новая
+    for x in g.sim.command.pulled.iter_mut() { *x = None; }
+    let before: Vec<_> = de.iter().map(|&i| g.sim.world.divisions[i].vars.pos).collect();
+    // распоряжение армии дивизии — 1 ч в пути
+    g.advance(2);
+    let pulled: Vec<usize> = de.iter().copied().filter(|&i| g.sim.world.divisions[i].order.as_ref().is_some_and(|o| o.kind == OrderKind::Withdraw)).collect();
+    assert!(pulled.contains(&de[0]), "первая линия отходит");
+    for &i in &pulled {
+        let k = de.iter().position(|&x| x == i).unwrap();
+        let km = g.sim.world.divisions[i].order.as_ref().unwrap().target.dist(before[k]);
+        assert!((1.0..=2.0).contains(&km), "оттяжка на {km:.2} км");
+    }
+    let n = g.sim.documents.iter().filter(|d| d.rule.as_deref().is_some_and(|r| r.contains("оттяжка"))).count();
+    g.advance(12);
+    assert_eq!(g.sim.documents.iter().filter(|d| d.rule.as_deref().is_some_and(|r| r.contains("оттяжка"))).count(), n, "второй оттяжки нет");
+}

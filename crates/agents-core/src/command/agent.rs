@@ -173,6 +173,28 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
         journal.push(Event { tick, agent: i as u32, text: "ближайшая задача выполнена — к последующей".into() });
         sim.command.div_task[i] = Some(d);
     }
+    // немецкие штабы-агенты без директивы — оборона полосы (замысел по умолчанию); армии каждый час следят за
+    // развёртыванием противника (оттяжка перед артподготовкой); верхняя инстанция не игрок — отвечает на запросы отхода
+    for h in 0..sim.world.hqs.len() {
+        if sim.command.control[h] != Control::Agent || sim.world.hqs[h].side != crate::model::Side::De { continue; }
+        if sim.command.intent[h].is_none() {
+            sim.command.intent[h] = Some(Directive { id: "оборона".into(), from: h as u32, to: Target::Hq(h as u32), form: Form::Order, task: Task::Defend, axis: Vec::new(), immediate: None, subsequent: None,
+                boundaries: Vec::new(), main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: false, ready: true, rule: None, issued: tick, note: "оборона полосы".into() });
+            sim.command.fresh[h] = true;
+        }
+        if sim.world.hqs[h].echelon == Echelon::Army { for d in crate::command::de::watch(sim, h as u32) { issue(sim, d, tick); } }
+    }
+    let wait = sim.rules.command.de.permission_hours as u32;
+    for k in 0..sim.command.requests.len() {
+        let r = sim.command.requests[k].clone();
+        if r.answer.is_some() || tick < r.tick + wait { continue; }
+        let side = sim.world.hqs[r.hq as usize].side;
+        let top = sim.world.hqs.iter().position(|x| x.side == side && x.echelon == Echelon::HighCommand);
+        if top.is_some_and(|t| sim.command.control[t] == Control::Player) { continue; }
+        sim.command.requests[k].answer = Some(false);
+        let name = sim.world.divisions[r.division as usize].name.clone();
+        sim.documents.push(Document { tick, hq: top.unwrap_or(r.hq as usize) as u32, kind: DocKind::Notice, to: vec![sim.world.hqs[r.hq as usize].id.clone()], text: format!("на запрос об отходе ({name}): держать"), rule: Some("приказ Гитлера от 15.04.1945: держать".into()) });
+    }
     // решения штабов-агентов: новый замысел — сразу, иначе раз в цикл своей ступени
     for h in 0..sim.world.hqs.len() {
         if sim.command.control[h] != Control::Agent { continue; }

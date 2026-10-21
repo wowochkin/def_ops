@@ -1693,6 +1693,46 @@
       "rules": [
         "agents.command.su.divisionBandKm"
       ]
+    },
+    {
+      "id": "agents-command-de-pullback",
+      "title": "Оттяжка переднего края перед артподготовкой (агентная модель)",
+      "kb": "org:model-agents-params",
+      "source": "PAM20-201, с. 27–34",
+      "reliability": "B",
+      "historical": "Львов 1944, Восточная Пруссия 12.01.1945: передовые войска отводились к переднему краю главной позиции на 0,8–2 км",
+      "measure": {
+        "kind": "param",
+        "expr": "agents.command.de.pullbackKm"
+      },
+      "expect": [
+        0.8,
+        2
+      ],
+      "unit": "км",
+      "rules": [
+        "agents.command.de.pullbackKm"
+      ]
+    },
+    {
+      "id": "agents-command-de-permission",
+      "title": "Ответ ставки на запрос отхода (агентная модель)",
+      "kb": "org:model-agents-params",
+      "source": "PAM20-234",
+      "reliability": "B",
+      "historical": "разрешение на отход XLII корпуса давал только Гитлер, раньше чем за 24 ч его получить было нельзя",
+      "measure": {
+        "kind": "param",
+        "expr": "agents.command.de.permissionHours"
+      },
+      "expect": [
+        24,
+        48
+      ],
+      "unit": "ч",
+      "rules": [
+        "agents.command.de.permissionHours"
+      ]
     }
   ],
   "findings": [

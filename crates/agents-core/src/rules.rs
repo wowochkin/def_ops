@@ -192,6 +192,18 @@ pub struct Command {
     pub coord_effect: f64,
     pub cycle_h: [f64; 3],
     pub su: CommandSu,
+    pub de: CommandDe,
+}
+
+/// Немецкие штабы-агенты (command.de).
+#[derive(Clone, Debug)]
+pub struct CommandDe {
+    /// Оттяжка переднего края к главной позиции перед артподготовкой, км.
+    pub pullback_km: f64,
+    /// Ответ ставки на запрос отхода — не раньше, ч.
+    pub permission_hours: f64,
+    /// Противник готовит атаку: столько его дивизий развёртываются у полосы армии.
+    pub attack_sign_divisions: f64,
 }
 
 /// Советские штабы-агенты (command.su).
@@ -421,6 +433,11 @@ impl Rules {
                 division_band_km: num(&ag, "command.su.divisionBandKm")?,
                 second_echelon_behind_km: num(&ag, "command.su.secondEchelonBehindKm")?,
                 main_blow_share: num(&ag, "command.su.mainBlowShare")?,
+            },
+            de: CommandDe {
+                pullback_km: num(&ag, "command.de.pullbackKm")?,
+                permission_hours: num(&ag, "command.de.permissionHours")?,
+                attack_sign_divisions: num(&ag, "command.de.attackSignDivisions")?,
             },
         };
         Ok(Rules {

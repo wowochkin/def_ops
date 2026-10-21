@@ -373,6 +373,26 @@ impl Game {
         Ok(())
     }
 
+    /// Ответ игрока (верхней инстанции) на запросы отхода корпуса `hq`: да — дивизии отходят на следующий рубеж.
+    pub fn permit(&mut self, hq: &str, yes: bool) -> Result<(), String> {
+        use crate::command::directive::{Directive, Form, Line, Target, Task};
+        let h = self.sim.world.hqs.iter().position(|x| x.id == hq && x.side == self.player).ok_or_else(|| format!("нет штаба {hq} стороны игрока"))? as u32;
+        let tick = self.hour();
+        let open: Vec<usize> = (0..self.sim.command.requests.len()).filter(|&k| self.sim.command.requests[k].hq == h && self.sim.command.requests[k].answer.is_none()).collect();
+        if open.is_empty() { return Err(format!("у {hq} нет запросов на отход")); }
+        for k in open {
+            self.sim.command.requests[k].answer = Some(yes);
+            if !yes { continue; }
+            let i = self.sim.command.requests[k].division;
+            let at = self.sim.line_behind(&self.sim.world, i as usize);
+            let d = Directive { id: format!("отход:{i}"), from: h, to: Target::Division(i), form: Form::Instruction, task: Task::Withdraw, axis: Vec::new(),
+                immediate: Some(Line { pts: vec![at], by: None }), subsequent: None, boundaries: Vec::new(), main_blow: Vec::new(), reserve: Vec::new(), junction: None,
+                hasty: true, ready: false, rule: Some("разрешение верхней инстанции на отход".into()), issued: 0, note: "отход разрешён".into() };
+            crate::command::passing::issue(&mut self.sim, d, tick);
+        }
+        Ok(())
+    }
+
     /// Взять штаб под своё управление: его замысел старшего остаётся, сам он больше не решает.
     pub fn take(&mut self, hq: &str) -> Result<(), String> {
         use crate::command::control::{Control, DocKind, Document};

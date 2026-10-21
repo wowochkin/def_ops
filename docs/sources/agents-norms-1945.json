@@ -32,7 +32,9 @@
     "PAM233": "DA Pam 20-233 German Defense Tactics against Russian Break-throughs — german-defence-doctrine-1945.json",
     "LT_CONQ": "Le Tissier, Soviet Conquest: Berlin 1945 — berlin-1945-conquest.json",
     "LT_HALBE": "Le Tissier, Slaughter at Halbe — berlin-1945-halbe.json",
-    "MATS": "Мацуленко, «Эволюция оперативного искусства» (rkka.ru/analys/nast), вторичный; ВЭС-1986"
+    "MATS": "Мацуленко, «Эволюция оперативного искусства» (rkka.ru/analys/nast), вторичный; ВЭС-1986",
+    "PAM20-201": "DA Pam 20-201, Military Improvisations during the Russian Campaign (archive.org)",
+    "PAM20-234": "DA Pam 20-234, Operations of Encircled Forces (archive.org)"
   },
   "params": [
     {
@@ -756,6 +758,46 @@
       "inside_source": true,
       "inside_corridor": true,
       "note": "полоса наступления дивизии — 2–4 км"
+    },
+    {
+      "path": "agents.command.de.pullbackKm",
+      "value": 1.5,
+      "unit": "км",
+      "norm": [
+        0.8,
+        2
+      ],
+      "source": "PAM20-201",
+      "place": "с. 27–34",
+      "reliability": "B",
+      "paraphrase": "оттяжка передовых войск к главной позиции на 0,8–2 км перед советской артподготовкой",
+      "corridor": [
+        0.64,
+        2.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "кодовое слово давал командующий армией"
+    },
+    {
+      "path": "agents.command.de.permissionHours",
+      "value": 24,
+      "unit": "ч",
+      "norm": [
+        24,
+        48
+      ],
+      "source": "PAM20-234",
+      "place": "глава о корсунском котле",
+      "reliability": "B",
+      "paraphrase": "разрешение на отход давал только Гитлер, не раньше чем через сутки",
+      "corridor": [
+        19.2,
+        57.6
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "приказ от 21.01.1945 — доклад о любом отходе заранее"
     }
   ],
   "gaps": [
