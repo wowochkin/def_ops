@@ -27,3 +27,7 @@ apps/desktop/src-tauri/binaries/
 apps/desktop/server/dist/
 apps/desktop/server/node_modules/
 apps/desktop/src-tauri/gen/
+
+# выгрузка «Памяти народа»
+pn-out/
+.pn-profile/
