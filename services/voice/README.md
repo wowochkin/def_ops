@@ -45,7 +45,7 @@ services/voice/setup.sh      # окружение services/voice/.venv (Python 3
 .venv/bin/python server.py --data /tmp/voice --fake \
     [--fake-script реплики.txt]                                   # поддельные модели, без MLX и torch
 npm run test:voice  # тесты (без .venv — берётся $VOICE_PYTHON, иначе пропуск)
-node scripts/voice-e2e.mjs [--no-stub] [--shots DIR]   # сквозная проверка панели на --fake
+node scripts/voice-e2e.mjs [--no-stub] [--shots DIR] [--only panel,handsfree]   # сквозная проверка панели на --fake (--only — только эти части)
 ```
 
 `--fake` нужен для тестов и сквозной проверки без Mac: речь определяется по громкости кадров, «распознанные»

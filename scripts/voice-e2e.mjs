@@ -2,6 +2,12 @@
 // и Chromium с поддельным микрофоном (WAV с «речью» — всплесками звука — и паузами).
 //
 //   node scripts/voice-e2e.mjs [--shots DIR] [--python PATH] [--url http://localhost:5173] [--no-stub] [--aec on|off]
+//                              [--only panel,model,handsfree,intro,tours,game]
+//
+// --only — только эти части (без флага — все): panel — панель, калибровка, голоса, выключение, тонкая настройка;
+// model — модель за правилами; handsfree — без рук, полоса и окна, подсветка, командование; intro — вступление при
+// запуске; tours — туры разделов; game — без рук от запуска до доклада посредника. intro, tours и game — каждая
+// в своём окне и пропускаются целиком; в первом окне пропускаются проверки, а подготовка между ними идёт как обычно.
 //
 // Шлюза нет: по умолчанию ответ /api/voice подставляется («ready»); --no-stub — без подстановки (шлюз молчит,
 // сервис «запущен вручную» — окно должно подключиться само).
@@ -39,7 +45,8 @@
 // → переигровка → расчёт → командование → обстановка → варианты → «проводи ход» → «да» → посредник.
 // Компактная панель: по умолчанию полоса; открыто окно — полоса не на окне (вопрос dialogs.ts, «Принять командование»),
 // ответа нет 8 с — напоминание; ответ посреди чтения окна — перебиванием «голосом» и «словом»; в командовании легенда
-// свёрнута, место на карте — не под панелью и легендой; длинная фраза разворачивает полосу, 10 с тишины — сворачивают.
+// свёрнута, место на карте — не под панелью и легендой; длинная фраза — в полосе целиком (панель не разворачивается),
+// 10 с тишины — снова до двух строк.
 // Подсветка исполненного голосом: «оперативный уровень» — рамка на переключателе, «выбираю первый» — на варианте,
 // «восьмой гвардейской наступать на Зелов» — на приказе и метка на карте; рамка гаснет через ~2,5 с; мышью — без рамки.
 // По каждому пункту печатается «ok …»; первый провал — код выхода 1. --shots DIR — снимки 1440×900 (JPEG)
@@ -57,6 +64,12 @@ import { chromium } from 'playwright';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const SHOTS = arg('--shots') ? resolve(arg('--shots')) : null;
+const PARTS = ['panel', 'model', 'handsfree', 'intro', 'tours', 'game'];
+const ONLY = arg('--only')?.split(',') ?? null;
+for (const p of ONLY ?? []) if (!PARTS.includes(p)) { console.error(`--only: нет части «${p}», есть: ${PARTS.join(', ')}`); process.exit(2); }
+/** Часть, к которой относятся следующие проверки (null — всегда). */
+let part = 'panel';
+const want = (p) => !ONLY || ONLY.includes(p);
 const STUB = !process.argv.includes('--no-stub');
 const AEC = arg('--aec');
 const CHROME = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
@@ -91,6 +104,7 @@ async function fail(what) {
   process.exit(1);
 }
 async function check(what, fn) {
+  if (part && !want(part)) return;
   try { const extra = await fn(); ok(extra ? `${what} (${extra})` : what); } catch (e) { await fail(`${what}: ${e?.message?.split('\n')[0] ?? e}`); }
 }
 
@@ -512,7 +526,7 @@ if (passed) {
     await page.locator('.confirm-box').getByRole('button', { name: 'Удалить' }).click();
     await row.waitFor({ state: 'detached', timeout: 5000 });
   });
-} else {
+} else if (want('panel')) { // часть panel пропущена (--only) — записи и не было
   await shot('voice-voices.jpg');
   await fail('запись по --fake не прошла проверку — проба и сохранение не проверены');
 }
@@ -673,6 +687,7 @@ await expandPanel();
 
 
 // ---------------------------------------------------------------- модель за правилами (поддельная LM Studio)
+part = 'model';
 //
 // Поддельная LM Studio отвечает за /llm/… (адрес модели по умолчанию) прямо в Playwright: /v1/models — список
 // моделей, /v1/chat/completions — по ключевым словам последней реплики: вызов инструмента, текст, текст с
@@ -826,6 +841,7 @@ async function llmChecks() {
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 40000 });
 }
 // ---------------------------------------------------------------- конец: модель за правилами
+part = 'panel';
 
 await llmChecks();
 
@@ -914,6 +930,7 @@ await check('подавление эха не то, что при калибро
 });
 
 // ---------------------------------------------------------------- без рук: ни одного щелчка
+part = 'handsfree';
 //
 // Сервис — без подавления эха и с перебиванием «голосом» (как в проверках модели): строки сценария идут по одной на
 // каждый «слог» поддельного микрофона. «{тишина}» — заполнитель (реплики нет).
@@ -1413,7 +1430,7 @@ await check('«Разбор операции» (окно почти во вес�
   return `панель ${v.panel}, окно ${v.win}`;
 });
 
-await check('полоса: короткая фраза штаба — в полосе; длинная — панель развернулась сама и свернулась через 10 с тишины', async () => {
+await check('полоса: короткая фраза штаба — в полосе; длинная — в полосе целиком (не развёрнутая панель), через 10 с тишины снова обрезана', async () => {
   const strip = panel.locator('.vp-card.strip');
   await strip.waitFor({ timeout: 3000 });
   const say = (t) => page.evaluate((x) => import('/src/voice/registry.ts').then((m) => m.speak(x)), t);
@@ -1425,29 +1442,28 @@ await check('полоса: короткая фраза штаба — в пол�
   await panel.locator('.vp-state', { hasText: 'Говорит начальник штаба' }).waitFor({ timeout: 5000 }).catch(() => {});
   await shot('voice-strip-speaking.jpg');
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: 15000 });
-  await say('Противник за ночь подтянул к переднему краю свежие резервы и ведёт разведку боем на левом фланге. Наши части удерживают рубеж.');
-  const full = panel.locator('.vp-card:not(.strip)');
-  await full.waitFor({ timeout: 5000 }).catch(() => { throw new Error('длинная фраза — панель не развернулась'); });
-  await shot('voice-auto-full.jpg');
-  // под развёрнутой панелью карта — как без панели (прокручиваемая панель поверх карты оставляла серую полосу)
-  const box = await full.evaluate((e) => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.bottom) + 60, width: Math.round(r.width), height: Math.min(160, innerHeight - Math.round(r.bottom) - 70) }; });
-  const withPanel = await page.screenshot({ clip: box, type: 'png' });
-  await full.evaluate((e) => { e.style.visibility = 'hidden'; });
-  await page.waitForTimeout(300);
-  const without = await page.screenshot({ clip: box, type: 'png' });
-  await full.evaluate((e) => { e.style.visibility = ''; });
-  if (!withPanel.equals(without)) throw new Error(`под развёрнутой панелью карта не такая, как без неё (${JSON.stringify(box)})`);
-  // договорил (поддельный синтез — 15 знаков в секунду) и 10 с тишины — снова полоса
+  const LONG = 'Противник за ночь подтянул к переднему краю свежие резервы и ведёт разведку боем на левом фланге. Наши части удерживают рубеж.';
+  await say(LONG);
+  const whole = strip.locator('.vp-last.whole', { hasText: 'Наши части удерживают рубеж.' });
+  await whole.waitFor({ timeout: 5000 }).catch(() => { throw new Error('длинная фраза — в полосе не целиком'); });
+  if (await panel.locator('.vp-card:not(.strip)').isVisible()) throw new Error('длинная фраза развернула панель');
+  // фраза видна вся: не обрезана и без «Повторить»
+  const cut = await whole.evaluate((e) => e.scrollHeight > e.clientHeight + 1);
+  if (cut) throw new Error('фраза в полосе обрезана');
+  if (await strip.locator('.vp-cut').isVisible()) throw new Error('при целой фразе — «Повторить»');
+  const h = await strip.evaluate((e) => Math.round(e.getBoundingClientRect().height));
+  await shot('voice-strip-whole.jpg');
+  // договорил (поддельный синтез — 15 знаков в секунду) и 10 с тишины — снова две строки
   await silent(60000);
   const t0 = Date.now();
-  await strip.waitFor({ timeout: 20000 }).catch(async () => {
-    const d = await page.evaluate(() => ({ size: JSON.stringify(window.__voiceSize), sending: window.__e2e.sent.filter((m) => m.type === 'say').slice(-3).map((m) => m.text.slice(0, 40)), state: document.querySelector('.vp-state')?.textContent, playing: window.__e2e.playing(), confirm: !!document.querySelector('.vp-confirm'),
-      modals: [...document.querySelectorAll('[data-modal]')].map((e) => `${e.className}:${Math.round(e.getBoundingClientRect().width)}`) }));
-    throw new Error(`развёрнутая сама панель не свернулась: ${JSON.stringify(d)}`);
+  await strip.locator('.vp-last:not(.whole)').waitFor({ timeout: 20000 }).catch(async () => {
+    const d = await page.evaluate(() => ({ size: JSON.stringify(window.__voiceSize), state: document.querySelector('.vp-state')?.textContent, playing: window.__e2e.playing(), confirm: !!document.querySelector('.vp-confirm') }));
+    throw new Error(`фраза не обрезалась после тишины: ${JSON.stringify(d)}`);
   });
   const dt = (Date.now() - t0) / 1000;
-  if (dt < 8) throw new Error(`свернулась через ${dt} с тишины — раньше 10 с`);
-  return `свернулась через ${Math.round(dt)} с тишины`;
+  if (dt < 8) throw new Error(`обрезалась через ${dt} с тишины — раньше 10 с`);
+  await strip.locator('.vp-cut').waitFor({ timeout: 2000 }).catch(() => { throw new Error('обрезанная фраза без «Повторить»'); });
+  return `полоса с целой фразой ${h} px; обрезана через ${Math.round(dt)} с тишины`;
 });
 
 await check('открыто окно — панель полосой и не на окне; ответа нет 8 с — «Да или нет? Жду ответа.» (один раз); «нет»', async () => {
@@ -1537,9 +1553,34 @@ await check('флажок «Вступление при запуске» в «Т
 
 // ---------------------------------------------------------------- тур: вступление при запуске
 // новое окно (калибровки не было), сервис с репликами тура; каждый «слог» микрофона — следующая реплика
+await ctx.close();  // прежнее окно тоже подключено к сервису — оно забрало бы реплики следующих частей
+// рамка тура — нужна турам разделов и игре (части tours и game)
+/**
+ * Рамка тура — вокруг [data-tour=target] в окне или в странице во врезке (iframe; координаты — со сдвигом врезки);
+ * capFree — подпись не на рамке и не на панели голоса.
+ */
+const frameIn = (pg) => (target, capFree = true) => pg.waitForFunction(([t, free]) => {
+  const pad = /^rail-/.test(t) ? 1 : /^cmd-tab-/.test(t) ? 2 : 8; // как padFor в TourLayer.tsx
+  const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
+  const sel = `[data-tour="${t}"]`;
+  let el = [...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
+  if (!el) {
+    for (const fr of document.querySelectorAll('iframe')) {
+      const o = fr.getBoundingClientRect();
+      const r = [...(fr.contentDocument?.querySelectorAll(sel) ?? [])].map((e) => e.getBoundingClientRect()).find((x) => x.width > 0);
+      if (r) { el = new DOMRect(o.left + r.left, o.top + r.top, r.width, r.height); break; }
+    }
+  }
+  const cap = document.querySelector('.tour-cap')?.getBoundingClientRect();
+  const card = document.querySelector('.vp-card')?.getBoundingClientRect();
+  const cross = (a, b) => !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  return !!f && !!el && [f.left + pad - el.left, f.top + pad - el.top, f.width - 2 * pad - el.width, f.height - 2 * pad - el.height].every((d) => Math.abs(d) < 1.5)
+    && (!free || (!cross(cap, f) && !cross(cap, card)));
+}, [target, capFree], { timeout: 15000, polling: 50 }).catch(() => { throw new Error(`рамка не вокруг [data-tour="${target}"]${capFree ? ' или подпись на ней / на панели' : ''}`); });
+part = 'intro';
+if (want('intro')) { // часть intro (--only) — до ctx2.close()
 const scriptTour = join(tmp, 'script-tour.txt');
 writeFileSync(scriptTour, ['штаб, дальше', 'назад', 'штаб, хватит', ...Array(60).fill('передайте в штаб армии')].join('\n') + '\n');
-await ctx.close();  // прежнее окно тоже подключено к сервису — оно забрало бы реплики тура
 await stopVoice();
 await startVoice(scriptTour);
 const ctx2 = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone'] });
@@ -1650,8 +1691,11 @@ await check('voice:ready-first отменён вступлением, после
   if ((await page2.evaluate(() => window.__tour.ready)) !== true) throw new Error('voice:ready-first не отменён');
 });
 await ctx2.close();
+}
 
 // ---------------------------------------------------------------- туры разделов и вкладки голосом
+part = 'tours';
+if (want('tours')) { // часть tours (--only) — до ctx3.close()
 // новое окно (вступление выключено), сервис с репликами: раздел, вкладка, тур по моделированию с переключением
 // вкладок, тур по знакам — подсветка внутри страницы справочника (iframe)
 const scriptSections = join(tmp, 'script-sections.txt');
@@ -1682,28 +1726,6 @@ const heard3 = (t) => page3.locator('.vp-item', { hasText: t }).first().waitFor(
   .catch(async () => { throw new Error(`в ленте нет «${t}»: ${await feed3()}`); });
 const title3 = (t) => layer3.locator('.tour-cap h2', { hasText: t }).waitFor({ timeout: T })
   .catch(async () => { throw new Error(`нет шага «${t}»; лента: ${await feed3()}`); });
-/**
- * Рамка тура — вокруг [data-tour=target] в окне или в странице во врезке (iframe; координаты — со сдвигом врезки);
- * capFree — подпись не на рамке и не на панели голоса.
- */
-const frameIn = (pg) => (target, capFree = true) => pg.waitForFunction(([t, free]) => {
-  const pad = /^rail-/.test(t) ? 1 : /^cmd-tab-/.test(t) ? 2 : 8; // как padFor в TourLayer.tsx
-  const f = document.querySelector('.tour-frame:not(.none)')?.getBoundingClientRect();
-  const sel = `[data-tour="${t}"]`;
-  let el = [...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
-  if (!el) {
-    for (const fr of document.querySelectorAll('iframe')) {
-      const o = fr.getBoundingClientRect();
-      const r = [...(fr.contentDocument?.querySelectorAll(sel) ?? [])].map((e) => e.getBoundingClientRect()).find((x) => x.width > 0);
-      if (r) { el = new DOMRect(o.left + r.left, o.top + r.top, r.width, r.height); break; }
-    }
-  }
-  const cap = document.querySelector('.tour-cap')?.getBoundingClientRect();
-  const card = document.querySelector('.vp-card')?.getBoundingClientRect();
-  const cross = (a, b) => !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-  return !!f && !!el && [f.left + pad - el.left, f.top + pad - el.top, f.width - 2 * pad - el.width, f.height - 2 * pad - el.height].every((d) => Math.abs(d) < 1.5)
-    && (!free || (!cross(cap, f) && !cross(cap, card)));
-}, [target, capFree], { timeout: 15000, polling: 50 }).catch(() => { throw new Error(`рамка не вокруг [data-tour="${target}"]${capFree ? ' или подпись на ней / на панели' : ''}`); });
 const frame3 = frameIn(page3);
 
 await check('«Штаб, открой моделирование» — раздел открыт, штаб предлагает тур по нему (первый вход)', async () => {
@@ -1784,8 +1806,11 @@ await check('«Штаб, тур по командованию» вне игры 
   if (await layer3.count()) throw new Error('тур не закончился');
 });
 await ctx3.close();
+}
 
 // ---------------------------------------------------------------- без рук: от запуска до доклада посредника
+part = 'game';
+if (want('game')) { // часть game (--only) — до ctx4.close()
 // Новое окно (калибровки не было, вступление включено), поддельная LM Studio: советник даёт полный вариант решения
 // (с донесением), штаб противника — решение, посредник — доклад. Ни одного щелчка: «хватит» (вступление) → «покажи
 // переигровку» → «рассчитай операцию» → «прими командование» → «принимаю» → «доложи обстановку» → «дай два варианта»
@@ -1923,6 +1948,8 @@ await check('в игре «Штаб, тур по командованию» — 
     .catch(async () => { throw new Error(`после тура открыта ${await tabOn()}, а не «Приказы»`); });
 });
 await ctx4.close();
+}
+part = null;
 
 await check('в окне нет ошибок JavaScript', async () => {
   if (errors.length) throw new Error(errors.join('; '));

@@ -1611,16 +1611,23 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-icon-cap { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 18px; font-weight: 700;
   background: #fffefb; color: var(--vp-ink); border: 1.5px solid #8d887c; border-radius: 8px; padding: 4px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
 .vp .vp-power { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; font-size: 20px; font-weight: 700; padding: 10px 14px; }
+/* развёрнутая: «Выключить голос» — обычная кнопка в строке с калибровкой и голосами */
+.vp-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vp-tools .vp-btns { flex-wrap: nowrap; gap: 8px; }
+.vp-tools .vp-powerbox { margin-left: auto; }
+.vp .vp-tools button { padding: 6px 10px; }
+.vp .vp-tools .vp-power { width: auto; gap: 4px; font-size: 18px; }
+.vp-tools .vp-power svg { width: 22px; height: 22px; }
 /* карточка — сверху по центру под верхней полосой кнопок (left/top — из панели), развёрнутая — вниз; окна — ниже неё */
 .vp-card { position: fixed; z-index: 900; width: 440px; max-width: calc(100vw - 110px); overflow-y: auto;
-  background: #fffefb; border: 2px solid #3b3a36; border-radius: 12px; box-shadow: 0 10px 34px rgba(0,0,0,.3); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  background: #fffefb; border: 2px solid #3b3a36; border-radius: 12px; box-shadow: 0 10px 34px rgba(0,0,0,.3); padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
 .vp-head { display: flex; align-items: center; gap: 10px; }
 /* полоса (вид по умолчанию): состояние, последняя фраза штаба до двух строк, «Развернуть» — не закрывает работу */
 /* развёрнутая: сама не прокручивается (прокручиваемый слой поверх карты WebGL оставлял под собой серую полосу) —
    прокручивается тело; части тела не сжимаются (лента с прокруткой иначе сжалась бы до строки) */
 .vp-card:not(.strip) { overflow: hidden; }
 .vp-card > * { flex-shrink: 0; }
-.vp-card > .vp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.vp-card > .vp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
 .vp-body > * { flex-shrink: 0; }
 .vp-card.strip { width: 500px; padding: 8px 12px; gap: 6px; overflow: hidden; }
 .vp .vp-x { font-size: 24px; line-height: 1; padding: 4px 10px; }
@@ -1630,16 +1637,18 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-mic-st svg { width: 24px; height: 24px; }
 .vp-last { margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
 .vp-last.l3 { -webkit-line-clamp: 3; }
+/* длинная фраза, пока штаб говорит, — целиком; очень длинная (доклад) — прокручивается внутри полосы */
+.vp-last.whole { display: block; -webkit-line-clamp: none; max-height: 40vh; overflow-y: auto; }
 .vp-cut { display: flex; align-items: center; gap: 10px; color: var(--vp-mute); }
 /* открыто окно: панель над его затемнением, окно — ниже панели (--vp-space) */
 .vp-card.over { z-index: 10001; }
-.vp-powerbox { display: flex; flex-direction: column; gap: 4px; }
 .vp-dot { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-st); }
 .vp-state { flex: 1; font-size: 22px; font-weight: 700; color: var(--vp-ink); }
 .vp-mic { background: #fde9e6; border: 1.5px solid #c0261b; border-radius: 8px; padding: 8px 10px; }
 .vp-mic p { margin: 0 0 8px; }
 /* подавление эха не то, что при калибровке: просьба пройти её заново — предупреждение, а не сбой */
-.vp-mic.vp-aec { background: #fff4d6; border-color: #c99a2e; }
+.vp-mic.vp-aec { background: #fff4d6; border-color: #c99a2e; display: flex; align-items: center; gap: 10px; }
+.vp-mic.vp-aec p { margin: 0; flex: 1; }
 .vp-levelbox { display: flex; flex-direction: column; gap: 2px; }
 .vp-level { position: relative; height: 18px; background: #e3dfd5; border-radius: 4px; }
 .vp-level i { position: absolute; left: 0; top: 0; bottom: 0; background: #9bbf9b; border-radius: 4px; transition: width .08s; }
@@ -1649,9 +1658,9 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-level .mk.br { background: #a3271b; } .vp-legend .br { color: #a3271b; }
 .vp-legend { font-size: 18px; color: var(--vp-mute); }
 .vp-hint { margin: 0; padding: 8px 10px; background: #fff4d6; border: 1.5px solid #c99a2e; border-radius: 8px; font-weight: 700; }
-.vp-feed { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #d6d1c4; border-bottom: 1px solid #d6d1c4; padding: 8px 0; }
+.vp-feed { max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #d6d1c4; border-bottom: 1px solid #d6d1c4; padding: 6px 0; }
 .vp-empty, .vp-note { margin: 0; color: var(--vp-mute); font-size: 18px; }
-.vp-item { padding: 4px 8px; border-radius: 6px; background: #eef3fa; }
+.vp-item { padding: 2px 8px; border-radius: 6px; background: #eef3fa; }
 .vp-item.chief { background: #f6ebe6; }
 .vp-item.notme, .vp-item.echo { background: none; color: #6f6c64; }
 .vp-item.note { background: #fde9e6; }
@@ -1662,7 +1671,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp .vp-mode button.on { background: #7a1b16; border-color: #7a1b16; color: #fff; font-weight: 700; }
 .vp-who { font-weight: 700; }
 .vp-notme { margin-left: 8px; padding: 0 6px; border: 1px solid #8d887c; border-radius: 4px; font-size: 18px; }
-.vp-cans summary, .vp-tune summary, .vp-stats summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.vp-cans summary, .vp-tune summary, .vp-stats summary { cursor: pointer; font-weight: 700; padding: 2px 0; }
 .vp-cans ul { margin: 4px 0; padding-left: 4px; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .vp-can { margin-right: 8px; }
 .vp-cans li.off { color: #77756e; }

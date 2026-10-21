@@ -1,8 +1,9 @@
 /**
  * Панель голоса поверх любого раздела, три вида (PanelSize): значок (цвет — состояние); полоса (по умолчанию) —
  * состояние словами, последняя фраза штаба (до двух строк), «Развернуть»; развёрнута — лента реплик, «Что можно
- * сказать», калибровка, голоса и тонкая настройка (в ней — уровень речи с отметками). Полоса сама разворачивается, когда
- * штаб говорит длинное или ждёт «да / нет», и сворачивается через 10 с тишины. Место — сверху по центру, под верхней
+ * сказать», калибровка, голоса и тонкая настройка (в ней — уровень речи с отметками). Сама панель не разворачивается:
+ * длинная фраза штаба — в полосе целиком, вопрос «да / нет» — в полосе с кнопками (и из значка); через 10 с тишины фраза
+ * снова до двух строк. Место — сверху по центру, под верхней
  * полосой кнопок раздела (usePanelPlace); развёрнутая раскрывается вниз. Открыто окно (вопрос, «Принять командование»,
  * калибровка…) — панель не больше полосы, окно встаёт ниже неё (--vp-space).
  *
@@ -140,7 +141,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     syncSpeaking();
     client.say(id, role ?? 'chief', text);
     setFeed((f) => feedAdd(f, { key: `s${id}`, kind: role === 'umpire' ? 'umpire' : 'chief', text }));
-    size.chief(text); // длинное — полоса разворачивается
+    size.chief(text); // длинное — полоса показывает фразу целиком
   // «штаб говорит» — только настоящей фразой: пока звучит лишь «повторяю запрос», ответ модели ждёт конца речи человека;
   // снятые ждущие фразы — тур узнаёт, что они не прозвучат
   }, () => Date.now(), () => chiefTalking(speakingIds.current, quietIds.current), (ids) => ids.forEach((id) => settleSpeech(id, 'stopped'))), [client]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -476,6 +477,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   domModal.current = modal;
   useEffect(() => { size.setModal(regModal.current || modal); redraw(); }, [modal, size]);
   const view = size.view(modal);
+  const whole = size.whole(modal);
   // лента — к последней записи (длина ленты ограничена FEED_MAX — следить за последней, а не за длиной)
   useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.at(-1)?.key, view]);
   const last = [...feed].reverse().find((x) => x.kind === 'chief' || x.kind === 'umpire');
@@ -520,11 +522,11 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           {note && <p className="vp-hint" role="status">{note}…</p>}
           {/* голос выключен — включить можно прямо с полосы */}
           {!enabled && <button className="vp-power primary" onClick={() => power(true)}><MicGlyph off={false} /> Включить голос</button>}
-          {/* фраза штаба: до двух строк, при открытом окне — до трёх */}
+          {/* фраза штаба: до двух строк, при открытом окне — до трёх; длинная, пока штаб говорит, — целиком */}
           {enabled && !confirm && last && <>
-            <p className={`vp-last${stripLines(modal) === 3 ? ' l3' : ''}`} title={last.text}><span className="vp-who">{last.kind === 'umpire' ? 'Посредник:' : 'Штаб:'}</span> {last.text}</p>
+            <p className={`vp-last${whole ? ' whole' : stripLines(modal) === 3 ? ' l3' : ''}`} title={last.text}><span className="vp-who">{last.kind === 'umpire' ? 'Посредник:' : 'Штаб:'}</span> {last.text}</p>
             {/* обрезано — не молча: целиком повторит штаб */}
-            {stripCut(last.text, modal) && <div className="vp-cut"><span>Целиком — скажите «повтори»</span><ActButton action="voice.repeat">Повторить</ActButton></div>}
+            {!whole && stripCut(last.text, modal) && <div className="vp-cut"><span>Целиком — скажите «повтори»</span><ActButton action="voice.repeat">Повторить</ActButton></div>}
           </>}
         </section>
       )}
@@ -553,12 +555,6 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
             <div ref={feedEnd} />
           </div>
 
-          <div className="vp-powerbox" data-tour="voice-power">
-            {enabled
-              ? <ActButton className="vp-power" action="voice.off.ask" title={POWER_OFF_ASK}><MicGlyph off /> Выключить голос</ActButton>
-              : <button className="vp-power primary" onClick={() => power(true)}><MicGlyph off={false} /> Включить голос</button>}
-            <p className="vp-note">{enabled ? POWER_OFF_NOTE : 'Микрофон выключен: штаб вас не слышит и не говорит.'}</p>
-          </div>
           {enabled && errorText && (
             <div className="vp-mic">
               <p>Причина: {errorText}</p>
@@ -577,9 +573,24 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
               <ActButton action="shell.calibrate" params={{ manual: true }} disabled={!live}>Калибровать</ActButton>
             </div>
           )}
-          {enabled && <p className="vp-hint">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
 
-          {enabled && <details className="vp-cans" data-tour="voice-cans">
+          {/* кнопки — одной строкой: калибровка, голоса, выключить голос; пояснения — строками под ней */}
+          <div className="vp-tools">
+            <div className="vp-btns" data-tour="voice-btns">
+              <ActButton action="shell.calibrate" params={{ manual: true }} disabled={!live}>Калибровка</ActButton>
+              <ActButton action="shell.voices" params={{ manual: true }} disabled={!live}>Голоса</ActButton>
+            </div>
+            <span className="vp-powerbox" data-tour="voice-power">
+              {enabled
+                ? <ActButton className="vp-power" action="voice.off.ask" title={POWER_OFF_ASK}><MicGlyph off /> Выключить голос</ActButton>
+                : <button className="vp-power primary" onClick={() => power(true)}><MicGlyph off={false} /> Включить голос</button>}
+            </span>
+          </div>
+          <p className="vp-note">{enabled ? POWER_OFF_NOTE : 'Микрофон выключен: штаб вас не слышит и не говорит.'}</p>
+          {enabled && <p className="vp-note">Не знаете, что сказать? Скажите: Штаб, что я могу?</p>}
+
+          {/* раскрывается одно из двух: открыли другое — прежнее сворачивается */}
+          {enabled && <details className="vp-cans" name="vp-more" data-tour="voice-cans">
             <summary>Что можно сказать</summary>
             <ul>
               {can.map((a) => {
@@ -594,12 +605,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
             </ul>
           </details>}
 
-          <div className="vp-btns" data-tour="voice-btns">
-            <ActButton action="shell.calibrate" params={{ manual: true }} disabled={!live}>Калибровка</ActButton>
-            <ActButton action="shell.voices" params={{ manual: true }} disabled={!live}>Голоса</ActButton>
-          </div>
-
-          <details className="vp-tune" data-tour="voice-tune">
+          <details className="vp-tune" name="vp-more" data-tour="voice-tune">
             <summary>Тонкая настройка</summary>
             {enabled && <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />}
             <p className="vp-note">Обычно хватает калибровки. Правее — чутче.</p>
