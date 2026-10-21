@@ -639,6 +639,40 @@ function pathFrames(T: Theatre, path: LngLat[], t0: string, t1: string): { t: st
   return out;
 }
 
+/**
+ * Где подписать фронт — в основной массе его войск на фронте, а не в центре тяжести: у растянутой группировки
+ * (группа армий «Висла» от Штеттина до Одербруха и Берлина) центр тяжести лежит между флангами, нередко в чужом тылу.
+ * Берутся соединения не дальше 30 км от линии фронта хода (линии нет или рядом никого — все): иначе надпись уходит
+ * на гарнизон в тылу. Опора — соединение с наименьшей суммой расстояний до остальных (по численности); надпись —
+ * в центре тяжести соединений не дальше r км от него. У компактного объединения это и есть центр тяжести.
+ */
+function massPoint(all: { xy: [number, number]; w: number }[], front?: { id: string; xy: [number, number][] }[], r = 30): [number, number] {
+  const atFront = front?.length ? all.filter((u) => nearestOnFront(front, u.xy, 30)) : [];
+  const us = atFront.length ? atFront : all;
+  let best = us[0], bs = Infinity;
+  for (const a of us) {
+    const s = us.reduce((acc, b) => acc + b.w * Math.hypot(a.xy[0] - b.xy[0], a.xy[1] - b.xy[1]), 0);
+    if (s < bs) { bs = s; best = a; }
+  }
+  const near = us.filter((b) => Math.hypot(b.xy[0] - best.xy[0], b.xy[1] - best.xy[1]) <= r);
+  const W = near.reduce((a, b) => a + b.w, 0);
+  return near.reduce<[number, number]>((a, b) => [a[0] + (b.xy[0] * b.w) / W, a[1] + (b.xy[1] * b.w) / W], [0, 0]);
+}
+
+/**
+ * Надписи противостоящих фронтов ближе gap км друг к другу расходятся каждая в свою сторону, до gap: основные
+ * силы сторон часто стоят друг против друга (1 БФ и 9 А под Зееловом), и надписи легли бы одна на другую.
+ */
+function apart(pts: { side: Side; xy: [number, number] }[], gap = 24): [number, number][] {
+  return pts.map((a) => {
+    let near: [number, number] | null = null, nd = gap;
+    for (const b of pts) { if (b.side === a.side) continue; const d = Math.hypot(a.xy[0] - b.xy[0], a.xy[1] - b.xy[1]); if (d < nd) { nd = d; near = b.xy; } }
+    if (!near || nd < 0.1) return a.xy;
+    const k = (gap - nd) / 2 / nd;
+    return [a.xy[0] + (a.xy[0] - near[0]) * k, a.xy[1] + (a.xy[1] - near[1]) * k];
+  });
+}
+
 function frontName(name: string): string {
   return name.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 }
@@ -705,32 +739,44 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
   const acting = run.final.formations.filter((f) => f.type);
   const groups = new Map<string, { g: Node; members: string[] }>();
   for (const f of acting) { const g = groupOf(f, tree, level); const x = groups.get(g.id) ?? { g, members: [] }; x.members.push(f.id); groups.set(g.id, x); }
+  // на оперативном масштабе одно соединение в прямом подчинении фронта (Берлинский оборонительный район у группы
+  // армий «Висла») — под своим именем, а не под именем фронта
+  if (level === 'army') for (const x of groups.values()) if (RANK[x.g.echelon] >= RANK.front && x.members.length === 1) x.g = tree.get(x.members[0])!;
   const P = (p: LngLat) => T.proj.toXY(p), LL = (p: [number, number]) => T.proj.toLL(p);
   const lay = level === 'army' ? 'lvl-op' : 'lvl-st';
   const turnsPerDay = Math.max(1, Math.round(24 / ctx.scenario.turnHours));
   const win = level === 'army' ? turnsPerDay : 2 * turnsPerDay;
   const minKm = Math.max(T.cellKm * (level === 'army' ? 3 : 5), level === 'army' ? 0.6 : 1.2);
   // центр группы в снимке (видимые члены, по численности)
-  type C = { xy: [number, number]; pers: number; tanks: number; n: number; attack: number; defend: number; withdraw: number; cut: number; units: { xy: [number, number] }[] };
+  type C = { xy: [number, number]; pers: number; tanks: number; n: number; attack: number; defend: number; withdraw: number; cut: number; units: { xy: [number, number]; w: number }[] };
   const centre = (sn: Snapshot, members: string[], side: Side): C | null => {
     const us = sn.units.filter((u) => members.includes(u.id) && !u.destroyed && (side === 'own' || !visible || visible(u.id, sn)) && onMap({ ...byId.get(u.id)!, position: u.at }, sn.time));
     if (!us.length) return null;
     const w = us.reduce((a, u) => a + Math.max(1, u.personnel), 0);
     const xy = us.reduce<[number, number]>((a, u) => { const p = P(u.at), k = Math.max(1, u.personnel) / w; return [a[0] + p[0] * k, a[1] + p[1] * k]; }, [0, 0]);
     const by = (k: string) => us.filter((u) => u.posture === k).reduce((a, u) => a + u.personnel, 0) / w;
-    return { xy, pers: us.reduce((a, u) => a + u.personnel, 0), tanks: us.reduce((a, u) => a + u.tanks, 0), n: us.length, attack: by('attack'), defend: by('defend'), withdraw: by('withdraw'), cut: us.filter((u) => u.cutOff).reduce((a, u) => a + u.personnel, 0) / w, units: us.map((u) => ({ xy: P(u.at) })) };
+    return { xy, pers: us.reduce((a, u) => a + u.personnel, 0), tanks: us.reduce((a, u) => a + u.tanks, 0), n: us.length, attack: by('attack'), defend: by('defend'), withdraw: by('withdraw'), cut: us.filter((u) => u.cutOff).reduce((a, u) => a + u.personnel, 0) / w, units: us.map((u) => ({ xy: P(u.at), w: Math.max(1, u.personnel) })) };
   };
   const cents = new Map<string, (C | null)[]>();
   for (const [id, x] of groups) cents.set(id, run.snapshots.map((sn) => centre(sn, x.members, sideOf(x.g.side))));
   // для фронтов — их армии (центры по ходам): главные удары собираются из ударов армий
   const armyMinKm = Math.max(T.cellKm * 3, 0.6);
-  const armiesOf = new Map<string, { g: Node; cs: (C | null)[] }[]>();
+  const armiesOf = new Map<string, { g: Node; members: string[]; cs: (C | null)[] }[]>();
   if (level === 'front') {
     const am = new Map<string, { g: Node; members: string[]; front: string }>();
     for (const f of acting) { const a = groupOf(f, tree, 'army'), fr = groupOf(f, tree, 'front'); const y = am.get(a.id) ?? { g: a, members: [], front: fr.id }; y.members.push(f.id); am.set(a.id, y); }
-    for (const y of am.values()) armiesOf.set(y.front, [...(armiesOf.get(y.front) ?? []), { g: y.g, cs: run.snapshots.map((sn) => centre(sn, y.members, sideOf(y.g.side))) }]);
+    for (const y of am.values()) armiesOf.set(y.front, [...(armiesOf.get(y.front) ?? []), { g: y.g, members: y.members, cs: run.snapshots.map((sn) => centre(sn, y.members, sideOf(y.g.side))) }]);
   }
   const sideById = (id: string) => sideOf(groups.get(id)!.g.side);
+  // надписи фронтов по ходам: в основной массе войск на фронте, надписи противостоящих фронтов — врозь
+  const labelAt = new Map<string, [number, number][]>();
+  if (level === 'front') {
+    for (const id of groups.keys()) labelAt.set(id, []);
+    run.snapshots.forEach((_, i) => {
+      const here = [...groups.keys()].filter((id) => cents.get(id)![i]).map((id) => ({ id, side: sideById(id), xy: massPoint(cents.get(id)![i]!.units, fronts.get(i)) }));
+      apart(here).forEach((xy, k) => { labelAt.get(here[k].id)![i] = xy; });
+    });
+  }
 
   for (const [id, x] of groups) {
     const side = sideOf(x.g.side), cs = cents.get(id)!;
@@ -769,11 +815,12 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         out.push(sym);
       }
     } else {
-      // фронт — надпись, как на оперативной карте; размер — под исходный масштаб карты (надпись масштабируется с картой)
-      const lb = createFeature('label', 'atlas.front', { at: LL(frames[0].c!.xy), text: frontName(x.g.name), layerId: `${lay}-units` }, labelK, side) as LabelFeature;
+      // фронт — надпись, как на оперативной карте, в основной массе его войск; размер — под исходный масштаб карты
+      // (надпись масштабируется с картой)
+      const lb = createFeature('label', 'atlas.front', { at: LL(labelAt.get(id)![frames[0].i]), text: frontName(x.g.name), layerId: `${lay}-units` }, labelK, side) as LabelFeature;
       lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 3 * labelK }, uppercase: true, letterSpacing: 0.5 * labelK };
       lb.name = x.g.name;
-      lb.keyframes = frames.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy), note: note(q.c!) }));
+      lb.keyframes = frames.map((q) => ({ t: q.sn.time, at: LL(labelAt.get(id)![q.i]), note: note(q.c!) }));
       lb.time = { from: frames[0].sn.time, to };
       out.push(lb);
       // армии фронта — подписью, как в атласе («8 гв. А»); танковые — овалом с ромбом и номером под ним
@@ -934,21 +981,56 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
           out.push(a);
         }
       }
-      if (moved) continue;
-      if (enemy && c.defend >= 0.5 && c.units.length) {
-        // рубеж обороны: поперёк направления на противника, по ширине расположения соединений, чуть впереди центра
-        const d = Math.hypot(enemy[0] - c.xy[0], enemy[1] - c.xy[1]) || 1;
-        const u: [number, number] = [(enemy[0] - c.xy[0]) / d, (enemy[1] - c.xy[1]) / d], nrm: [number, number] = [-u[1], u[0]];
-        const proj = c.units.map((m) => (m.xy[0] - c.xy[0]) * nrm[0] + (m.xy[1] - c.xy[1]) * nrm[1]);
-        const half = Math.max(minKm * 1.5, (Math.max(...proj) - Math.min(...proj)) / 2 + minKm);
-        const off = Math.min(minKm, d * 0.25);
-        const ctr: [number, number] = [c.xy[0] + u[0] * off, c.xy[1] + u[1] * off];
+      // рубеж обороны: поперёк направления на противника, по ширине основной массы соединений (без крайних 10 % людей
+      // с каждой стороны — отставшие и отрезанные соединения растянули бы рубеж через чужие позиции), на переднем крае —
+      // средний вынос вперёд соединений, стоящих впереди центра (по численности), но не дальше порога и середины
+      // пути до линии фронта: у растянутой армии самое выдвинутое соединение увело бы рубеж от неё
+      const defense = (a: C, toward: [number, number], name: string) => {
+        const d = Math.hypot(toward[0] - a.xy[0], toward[1] - a.xy[1]) || 1;
+        const u: [number, number] = [(toward[0] - a.xy[0]) / d, (toward[1] - a.xy[1]) / d], nrm: [number, number] = [-u[1], u[0]];
+        const proj = a.units.map((m) => ({ p: (m.xy[0] - a.xy[0]) * nrm[0] + (m.xy[1] - a.xy[1]) * nrm[1], w: m.w })).sort((p, q) => p.p - q.p);
+        const tw = proj.reduce((acc, q) => acc + q.w, 0);
+        const pct = (f: number) => { let acc = 0; for (const q of proj) { acc += q.w; if (acc >= f * tw) return q.p; } return proj[proj.length - 1].p; };
+        const half = Math.max(minKm * 1.5, (pct(0.9) - pct(0.1)) / 2 + minKm);
+        const fwd = a.units.map((m) => ({ p: (m.xy[0] - a.xy[0]) * u[0] + (m.xy[1] - a.xy[1]) * u[1], w: m.w })).filter((q) => q.p > 0);
+        const fw = fwd.reduce((acc, q) => acc + q.w, 0);
+        const off = Math.min(fw ? fwd.reduce((acc, q) => acc + q.p * q.w, 0) / fw : 0, minKm, d * 0.5);
+        const ctr: [number, number] = [a.xy[0] + u[0] * off, a.xy[1] + u[1] * off];
         const pts: LngLat[] = [-1, -0.5, 0, 0.5, 1].map((t) => LL([ctr[0] + nrm[0] * half * t - u[0] * Math.abs(t) * half * 0.15, ctr[1] + nrm[1] * half * t - u[1] * Math.abs(t) * half * 0.15]));
         const l = createFeature('line', 'atlas.defense', { points: pts, layerId: `${lay}-moves` }, level === 'army' ? 1.3 : 1.8, side) as LineFeature;
         l.style = { ...l.style, layers: l.style.layers.map((ly) => ({ ...ly, color: side === 'own' ? '#c0392b' : '#1f4e8c' })) };
-        l.name = `${shortName(x.g.name)}: оборона`;
+        l.name = `${shortName(name)}: оборона`;
         l.time = { from, to: until };
         out.push(l);
+      };
+      // направление на противника — к ближайшей точке линии фронта хода (армия — не дальше 20 км, фронт — 35 км):
+      // центр ближайшего объединения противника может лежать в стороне (у 5 УА на Зееловских высотах — центр 9 А
+      // южнее, хотя её противник — к западу); линии рядом нет или войска на ней — к центру противника
+      const frontward = (a: C, fallback: [number, number] | null): [number, number] | null => {
+        const at = nearestOnFront(fronts.get(i), a.xy, level === 'army' ? 20 : 35);
+        return at && Math.hypot(at.at[0] - a.xy[0], at.at[1] - a.xy[1]) >= armyMinKm ? at.at : fallback;
+      };
+      if (level === 'army') {
+        const toward = !moved && c.defend >= 0.5 && c.units.length ? frontward(c, enemy) : null;
+        if (toward) defense(c, toward, x.g.name);
+        continue;
+      }
+      // фронт (группа армий) — рубеж у каждой стоящей в обороне армии, а не по центру всего объединения: центр
+      // растянутой группы лежит в тылу, и общий рубеж шёл бы поперёк тыла; линии фронта рядом нет — к ближайшей
+      // армии противника
+      for (const a of armiesOf.get(id) ?? []) {
+        const ac = a.cs[i];
+        if (!ac || ac.defend < 0.5 || !ac.units.length) continue;
+        const m = moveOf(ac, a.cs[Math.max(0, i - win)], a.g.name);
+        if (m && m.len >= minKm * 0.6) continue;
+        let near: [number, number] | null = null, best = Infinity;
+        for (const [oid, arms] of armiesOf) {
+          if (sideById(oid) === side) continue;
+          for (const o of arms) { const q = o.cs[i]; if (!q) continue; const dd = Math.hypot(q.xy[0] - ac.xy[0], q.xy[1] - ac.xy[1]); if (dd < best) { best = dd; near = q.xy; } }
+        }
+        const toward = frontward(ac, near);
+        // соединения в прямом подчинении фронта (без армии) — под своим именем, если оно одно, а не под именем фронта
+        if (toward) defense(ac, toward, a.g.id === x.g.id && a.members.length === 1 ? tree.get(a.members[0])!.name : a.g.name);
       }
     }
   }
@@ -1043,7 +1125,7 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
   for (const f of run.final.formations) if (!tree.has(f.id)) tree.set(f.id, f);
   const byId = new Map(run.final.formations.map((f) => [f.id, f]));
   const acting = run.final.formations.filter((f) => f.type);
-  type C = { xy: [number, number]; pers: number; attack: number; withdraw: number; cut: number; units: { xy: [number, number]; cut: boolean }[] };
+  type C = { xy: [number, number]; pers: number; attack: number; withdraw: number; cut: number; units: { xy: [number, number]; cut: boolean; w: number }[] };
   const centre = (i: number, members: string[]): C | null => {
     const sn = snaps[i];
     const us = sn.units.filter((u) => members.includes(u.id) && !u.destroyed && onMap({ ...byId.get(u.id)!, position: u.at }, sn.time));
@@ -1051,11 +1133,13 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     const w = us.reduce((a, u) => a + Math.max(1, u.personnel), 0);
     const xy = us.reduce<[number, number]>((a, u) => { const p = P(u.at), k = Math.max(1, u.personnel) / w; return [a[0] + p[0] * k, a[1] + p[1] * k]; }, [0, 0]);
     const by = (pred: (u: (typeof us)[number]) => boolean) => us.filter(pred).reduce((a, u) => a + u.personnel, 0) / w;
-    return { xy, pers: us.reduce((a, u) => a + u.personnel, 0), attack: by((u) => u.posture === 'attack'), withdraw: by((u) => u.posture === 'withdraw'), cut: by((u) => !!u.cutOff), units: us.map((u) => ({ xy: P(u.at), cut: !!u.cutOff })) };
+    return { xy, pers: us.reduce((a, u) => a + u.personnel, 0), attack: by((u) => u.posture === 'attack'), withdraw: by((u) => u.posture === 'withdraw'), cut: by((u) => !!u.cutOff), units: us.map((u) => ({ xy: P(u.at), cut: !!u.cutOff, w: Math.max(1, u.personnel) })) };
   };
   const groupsAt = (level: 'army' | 'front') => {
     const g = new Map<string, { g: Node; members: string[] }>();
     for (const f of acting) { const x = groupOf(f, tree, level); const y = g.get(x.id) ?? { g: x, members: [] }; y.members.push(f.id); g.set(x.id, y); }
+    // одно соединение в прямом подчинении фронта — объединением под своим именем, а не под именем фронта
+    if (level === 'army') for (const y of g.values()) if (RANK[y.g.echelon] >= RANK.front && y.members.length === 1) y.g = tree.get(y.members[0])!;
     return g;
   };
   const last = snaps.length - 1;
@@ -1139,17 +1223,18 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
     out.push(area);
   }
 
-  // фронты — крупной надписью у исходного положения
-  for (const [, x] of groupsAt('front')) {
-    if (RANK[x.g.echelon] < RANK.front) continue;
+  // фронты — крупной надписью у исходного положения, в основной массе войск; надписи противостоящих — врозь
+  const fl = [...groupsAt('front').values()].filter((x) => RANK[x.g.echelon] >= RANK.front).flatMap((x) => {
     const c = centre(0, x.members) ?? centre(snaps.findIndex((_, i) => centre(i, x.members)), x.members);
-    if (!c) continue;
-    const side = sideOf(x.g.side);
-    const lb = createFeature('label', 'atlas.front', { at: LL(c.xy), text: frontName(x.g.name), layerId: 'sum-units' }, 1, side) as LabelFeature;
+    return c ? [{ x, side: sideOf(x.g.side), xy: massPoint(c.units, fronts.get(0)) }] : [];
+  });
+  apart(fl).forEach((xy, k) => {
+    const { x, side } = fl[k];
+    const lb = createFeature('label', 'atlas.front', { at: LL(xy), text: frontName(x.g.name), layerId: 'sum-units' }, 1, side) as LabelFeature;
     lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 3 } };
     lb.name = x.g.name;
     out.push(lb);
-  }
+  });
 
   // заголовок и условные обозначения — в углах охвата карты
   const all = out.flatMap((f) => ('points' in f && f.points ? f.points : 'at' in f && f.at ? [f.at] : [])) as LngLat[];
