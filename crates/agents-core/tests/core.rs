@@ -498,3 +498,32 @@ fn high_command_hq_loads_and_does_not_decide() {
     }
     assert_eq!(plain.digest(), hc.digest());
 }
+
+/// Советский штаб по доктрине решает за все дивизии армии и тогда, когда между армией и дивизиями — корпуса.
+#[test]
+fn su_doctrine_same_with_corps() {
+    let mut plain = seelow_with("su-plain", |_| {});
+    let mut corps = seelow_with("su-corps", |s| {
+        let armies: Vec<String> = s["hqs"].as_array().unwrap().iter().filter(|h| h["side"] == "su" && h["echelon"] == "army").map(|h| h["id"].as_str().unwrap().to_string()).collect();
+        let mut n = std::collections::HashMap::<String, usize>::new();
+        for d in s["divisions"].as_array_mut().unwrap() {
+            let Some(a) = d["hq"].as_str().map(str::to_string) else { continue };
+            if !armies.contains(&a) { continue; }
+            let k = n.entry(a.clone()).or_default();
+            d["hq"] = format!("{a}_k{}", *k % 2).into();
+            *k += 1;
+        }
+        let hqs = s["hqs"].as_array_mut().unwrap();
+        for a in &armies { for k in 0..2 {
+            hqs.push(serde_json::json!({ "id": format!("{a}_k{k}"), "name": format!("корпус {k}"), "side": "su", "echelon": "corps", "parent": a, "pos": [14.6, 52.6] }));
+        } }
+    });
+    for sim in [&mut plain, &mut corps] {
+        sim.sources[0] = agents_core::staff::Source::Doctrine;
+        for _ in 0..72 { sim.step(); }
+    }
+    let staff = |sim: &agents_core::world::Sim| sim.journal.iter().filter(|e| e.text.contains("по доктрине")).count();
+    assert!(staff(&plain) > 0);
+    assert_eq!(staff(&plain), staff(&corps));
+    assert_eq!(plain.digest(), corps.digest());
+}

@@ -1077,7 +1077,9 @@ impl Sim {
         // цель → (огонь, расстояние до ближайшей дивизии стреляющей армии)
         let mut pick: BTreeMap<usize, (usize, f64)> = BTreeMap::new();
         for (fi, f) in now.iter().enumerate() {
-            let own: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].hq == f.hq && !w.divisions[i].state.out()).collect();
+            // дивизии стреляющего штаба, и под его корпусами
+            let under = |mut k: usize| { for _ in 0..8 { if k == f.hq as usize { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+            let own: Vec<usize> = (0..w.divisions.len()).filter(|&i| under(w.divisions[i].hq as usize) && !w.divisions[i].state.out()).collect();
             let Some(&first) = own.first() else { continue };
             let side = w.divisions[first].side;
             for j in 0..w.divisions.len() {

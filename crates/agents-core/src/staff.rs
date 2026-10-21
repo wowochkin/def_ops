@@ -48,6 +48,8 @@ impl Sim {
         // цикл управления; штабы разнесены по часам, чтобы не решать все разом (на модели — по выбору: в один час)
         let due = |key: usize, sync: bool| if sync { tick % cycle == 0 } else { (tick + key as u32) % cycle == 0 || tick == 0 };
         let subs_of = |h: usize| -> Vec<usize> { (0..w.divisions.len()).filter(|&i| w.divisions[i].hq as usize == h && !w.divisions[i].state.out() && w.divisions[i].state != State::Remnant).collect() };
+        // дивизии, за которые решает советский штаб: те, чья армия (ближайший штаб-армия вверх по цепочке) — он
+        let su_subs_of = |h: usize| -> Vec<usize> { (0..w.divisions.len()).filter(|&i| army_of(w, w.divisions[i].hq as usize) == h && !w.divisions[i].state.out() && w.divisions[i].state != State::Remnant).collect() };
         let mut decided: Vec<(usize, Decision, String)> = Vec::new();
         // запросы к модели: ведущий штаб (корпус или армия при объединении) и его корпуса с дивизиями
         let mut asks: Vec<(usize, Vec<(usize, Vec<usize>)>)> = Vec::new();
@@ -55,17 +57,19 @@ impl Sim {
         for (h, hq) in w.hqs.iter().enumerate() {
             let src = self.sources[side_idx(hq.side)];
             if src == Source::Script { continue; }
-            let subs = subs_of(h);
-            if subs.is_empty() { continue; }
-            // советская сторона — по своей доктрине (staff_su.rs); на модели решает штаб армии за все её дивизии
+            // советская сторона — по своей доктрине (staff_su.rs): решает штаб армии за все её дивизии, и за те, что
+            // стоят под её корпусами; на модели — так же
             if hq.side == Side::Su {
-                if tick % su_cycle != 0 { continue; }
+                let subs = su_subs_of(h);
+                if subs.is_empty() || tick % su_cycle != 0 { continue; }
                 match (src, &self.llm) {
                     (Source::Llm, Some(_)) => { let lead = army_of(w, h); match asks.iter_mut().find(|a| a.0 == lead) { Some(a) => a.1.push((h, subs)), None => asks.push((lead, vec![(h, subs)])) } }
                     _ => decided.push((h, self.su_doctrine_hq(w, tick, h, &subs), "по доктрине".into())),
                 }
                 continue;
             }
+            let subs = subs_of(h);
+            if subs.is_empty() { continue; }
             match (src, &self.llm) {
                 (Source::Llm, Some(cfg)) => {
                     let lead = if cfg.by_army { army_of(w, h) } else { h };
