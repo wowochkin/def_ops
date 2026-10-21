@@ -1,5 +1,530 @@
 {
-  "meta": { "source": "«Боевой состав Советской армии», ч. V, на 1.01.1945", "date": "1945-01-01", "note": "заготовка: состав корпусов армий ещё собирается; армия без записи — 3 условных корпуса по 3 дивизии (C)" },
-  "armies": [],
-  "gaps": ["состав стрелковых корпусов армий 1 БФ и 1 УФ на 1.01.1945 — собирается"]
+ "meta": {
+  "source": "«Боевой состав Советской армии», ч. V (январь–сентябрь 1945), «Боевой состав войск на 1 января 1945 года», с. 16–20 (soldat.ru/files/f/boevoj_sostav_sa_1945.pdf)",
+  "date": "1945-01-01",
+  "note": "корпуса и число дивизий — по первоисточнику; в скобках у источника — номера дивизий корпуса. Не включены: танковые корпуса, приданные армиям (12 гв. тк — 8 гв. А, 11 тк — 69 А, 25 тк — 3 гв. А) и фронтам (9 тк — 1 БФ; 4 гв. тк, 31 тк, 7 гв. мк — 1 УФ); отдельные дивизии вне корпусов (355 сд — 13 А, 359 сд — 6 А, 245 сд — 59 А); укрепрайоны (115 УР — 69 А, 77 УР — 6 А). directDivisions — дивизии армии без корпусов."
+ },
+ "armies": [
+  {
+   "army": "su_47a_vo",
+   "corps": [
+    {
+     "id": "su_77sk_vo",
+     "name": "77 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (185, 234, 328 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_125sk_vo",
+     "name": "125 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (60, 76, 175 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_129sk_vo",
+     "name": "129 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (132, 143, 260 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_1pa_vo",
+   "corps": [],
+   "directDivisions": 5,
+   "note": "корпусов нет: 1, 2, 3, 4, 6 пд (Боевой состав СА, ч. V, на 1.01.45)"
+  },
+  {
+   "army": "su_3ua_vo",
+   "corps": [
+    {
+     "id": "su_7sk_vo",
+     "name": "7 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (146, 265, 364 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_12gsk_vo",
+     "name": "12 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (23, 52 гв., 33 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_79sk_vo",
+     "name": "79 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (150, 171, 207 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_61a_vo",
+   "corps": [
+    {
+     "id": "su_9gsk_vo",
+     "name": "9 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (12, 75 гв., 415 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_80sk_vo",
+     "name": "80 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (82, 212, 356 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_89sk_vo",
+     "name": "89 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (23, 311, 397 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_5ua_vo",
+   "corps": [
+    {
+     "id": "su_9sk_vo",
+     "name": "9 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (230, 248, 301 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_26gsk_vo",
+     "name": "26 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (89, 94 гв., 266 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_32sk_vo",
+     "name": "32 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (60 гв., 295, 416 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_8gva_vo",
+   "corps": [
+    {
+     "id": "su_4gsk_vo",
+     "name": "4 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (35, 47, 57 гв. сд); ru.wikipedia «8-я гвардейская армия (СССР)»",
+     "reliability": "A"
+    },
+    {
+     "id": "su_28gsk_vo",
+     "name": "28 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (39, 79, 88 гв. сд); ru.wikipedia «8-я гвардейская армия (СССР)»",
+     "reliability": "A"
+    },
+    {
+     "id": "su_29gsk_vo",
+     "name": "29 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (27, 74, 82 гв. сд); ru.wikipedia «8-я гвардейская армия (СССР)»",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_69a_vo",
+   "corps": [
+    {
+     "id": "su_25sk_vo",
+     "name": "25 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (77 гв., 4, 64 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_61sk_vo",
+     "name": "61 ск",
+     "kind": "rifle",
+     "divisions": 4,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (41, 134, 247, 274 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_91sk_vo",
+     "name": "91 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (117, 312, 370 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_33a_vo",
+   "corps": [
+    {
+     "id": "su_16sk_vo",
+     "name": "16 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (89, 339, 383 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_38sk_vo",
+     "name": "38 ск",
+     "kind": "rifle",
+     "divisions": 2,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (95, 323 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_62sk_vo",
+     "name": "62 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (49, 222, 362 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_1gta_vo",
+   "corps": [
+    {
+     "id": "su_8gmk_vo",
+     "name": "8 гв. мк",
+     "kind": "mech",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    },
+    {
+     "id": "su_11gtk_vo",
+     "name": "11 гв. тк",
+     "kind": "tank",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_2gta_vo",
+   "corps": [
+    {
+     "id": "su_9gtk_vo",
+     "name": "9 гв. тк",
+     "kind": "tank",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    },
+    {
+     "id": "su_1mk_vo",
+     "name": "1 мк",
+     "kind": "mech",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_6a_vo",
+   "corps": [
+    {
+     "id": "su_22sk_vo",
+     "name": "22 ск",
+     "kind": "rifle",
+     "divisions": 2,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (218, 273 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_74sk_vo",
+     "name": "74 ск",
+     "kind": "rifle",
+     "divisions": 2,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (181, 309 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_3gva_vo",
+   "corps": [
+    {
+     "id": "su_21sk_vo",
+     "name": "21 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (58, 253, 329 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_76sk_vo",
+     "name": "76 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (127, 287, 359 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_120sk_vo",
+     "name": "120 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (106, 149, 197 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_13a_vo",
+   "corps": [
+    {
+     "id": "su_24sk_vo",
+     "name": "24 ск",
+     "kind": "rifle",
+     "divisions": 2,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (147, 350 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_27sk_vo",
+     "name": "27 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (6 гв., 112, 280 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_102sk_vo",
+     "name": "102 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (117, 121 гв., 172 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_52a_vo",
+   "corps": [
+    {
+     "id": "su_48sk_vo",
+     "name": "48 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (111, 116, 213 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_73sk_vo",
+     "name": "73 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (50, 254, 294 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_78sk_vo",
+     "name": "78 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (31, 214, 373 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_5gva_vo",
+   "corps": [
+    {
+     "id": "su_32gsk_vo",
+     "name": "32 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (13, 95, 97 гв. сд); rkka.wiki, на 1.03.45",
+     "reliability": "A"
+    },
+    {
+     "id": "su_33gsk_vo",
+     "name": "33 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (9 гв. вдд, 14, 78 гв. сд); rkka.wiki, на 1.03.45",
+     "reliability": "A"
+    },
+    {
+     "id": "su_34gsk_vo",
+     "name": "34 гв. ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (15, 58 гв., 118 сд); rkka.wiki, на 1.03.45",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_60a_vo",
+   "corps": [
+    {
+     "id": "su_15sk_vo",
+     "name": "15 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (9 пласт., 107, 336 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_28sk_vo",
+     "name": "28 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (246, 302, 322 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_106sk_vo",
+     "name": "106 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (100, 148, 304 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_59a_vo",
+   "corps": [
+    {
+     "id": "su_43sk_vo",
+     "name": "43 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (80, 135, 314 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_115sk_vo",
+     "name": "115 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (13, 92, 286 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_21a_vo",
+   "corps": [
+    {
+     "id": "su_55sk_vo",
+     "name": "55 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (225, 229, 285 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_117sk_vo",
+     "name": "117 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (72, 120, 125 сд)",
+     "reliability": "A"
+    },
+    {
+     "id": "su_118sk_vo",
+     "name": "118 ск",
+     "kind": "rifle",
+     "divisions": 3,
+     "source": "Боевой состав СА, ч. V, на 1.01.45 (128, 282, 291 сд)",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_3gta_vo",
+   "corps": [
+    {
+     "id": "su_6gtk_vo",
+     "name": "6 гв. тк",
+     "kind": "tank",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    },
+    {
+     "id": "su_7gtk_vo",
+     "name": "7 гв. тк",
+     "kind": "tank",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    },
+    {
+     "id": "su_9mk_vo",
+     "name": "9 мк",
+     "kind": "mech",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    }
+   ]
+  },
+  {
+   "army": "su_4ta_vo",
+   "corps": [
+    {
+     "id": "su_10gtk_vo",
+     "name": "10 гв. тк",
+     "kind": "tank",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    },
+    {
+     "id": "su_6gmk_vo",
+     "name": "6 гв. мк",
+     "kind": "mech",
+     "divisions": null,
+     "source": "Боевой состав СА, ч. V, на 1.01.45",
+     "reliability": "A"
+    }
+   ]
+  }
+ ],
+ "gaps": [
+  "состав на 12–14.01.1945 отдельно не сверялся; к 1.02.45 перестановки (47 А: в 77 ск 260 сд вместо 234; 21 А: в 55 ск 291 сд вместо 285; к 21 А придан 31 тк)",
+  "для большинства корпусов независимого второго источника на 1.01.45 нет; оценка A — по самому «Боевому составу»"
+ ]
 }

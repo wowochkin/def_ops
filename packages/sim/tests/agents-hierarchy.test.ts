@@ -75,3 +75,27 @@ describe('сценарии агентной модели: цепочка шта�
   it('Берлинская операция', () => { checkRegistryCorps(checkChain('packages/sim/data/scenarios/agents/berlin-1945.json')); });
   it('Зееловская операция', () => { checkRegistryCorps(checkChain('packages/sim/data/scenarios/agents/seelow-1945.json')); });
 });
+
+describe('Висло-Одерская операция: корпуса по «Боевому составу» на 1.01.1945', () => {
+  const file = 'packages/sim/data/scenarios/agents/vistula-oder-1945.json';
+  const s = rd<Scen & { divisions: { personnel: number }[] }>(file);
+  it('цепочка штабов', () => { checkChain(file); });
+  const comp = rd<{ armies: { army: string; corps: { id: string; kind: string }[]; directDivisions?: number }[] }>('docs/sources/vistula-oder-1945-su-corps.json');
+  const ts = rd<{ formations: { id: string; echelon: string; side: string; type?: string; personnel?: number }[] }>('packages/sim/data/scenarios/vistula-oder-1945.json');
+  const by = new Map(s.hqs.map((h) => [h.id, h]));
+  it('стрелковые корпуса армии — из источника, под своей армией', () => {
+    for (const a of comp.armies) {
+      const rifle = a.corps.filter((c) => c.kind === 'rifle').map((c) => c.id);
+      for (const c of rifle) { expect(by.get(c)?.echelon, c).toBe('corps'); expect(by.get(c)?.parent, c).toBe(a.army); }
+      if (a.directDivisions) expect(s.divisions.filter((d) => d.hq === a.army && d.kind === 'sd').length, a.army).toBe(a.directDivisions);
+    }
+  });
+  it('численность общевойсковой армии — как в сценарии нынешней модели', () => {
+    const under = (hq: string, army: string) => { for (let x: string | null | undefined = hq, n = 0; x && n < 8; x = by.get(x)?.parent, n++) if (x === army) return true; return false; };
+    for (const a of ts.formations.filter((f) => f.side === 'su' && f.echelon === 'army' && f.type !== 'tank_army' && f.personnel)) {
+      const own = s.divisions.filter((d) => d.kind === 'sd' && under(d.hq, a.id) && d.id.startsWith(`${a.id}_d`));
+      const sum = own.reduce((x, d) => x + d.personnel, 0);
+      expect(Math.abs(sum - a.personnel!), a.id).toBeLessThanOrEqual(own.length);
+    }
+  });
+});

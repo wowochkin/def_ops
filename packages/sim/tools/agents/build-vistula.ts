@@ -54,7 +54,8 @@ const KIND: Record<string, string> = { attack: 'attack', counterattack: 'attack'
 const DEF = { sd: { personnel: 5500, tanks: 0, guns: 120 }, tk: { personnel: 8000, tanks: 150, guns: 60 } };
 /** Корпуса советских армий на 1.01.1945 (docs/sources/vistula-oder-1945-su-corps.json). */
 interface SuCorps { id: string; name: string; kind: 'rifle' | 'tank' | 'mech'; divisions: number | null; source: string; reliability: string }
-const suCorps = new Map(rd<{ armies: { army: string; corps: SuCorps[] }[] }>('docs/sources/vistula-oder-1945-su-corps.json').armies.map((a) => [a.army, a.corps]));
+const suArmyComp = new Map(rd<{ armies: { army: string; corps: SuCorps[]; directDivisions?: number; note?: string }[] }>('docs/sources/vistula-oder-1945-su-corps.json').armies.map((a) => [a.army, a]));
+const suCorps = new Map([...suArmyComp].map(([k, a]) => [k, a.corps]));
 const newCorps: { id: string; name: string; army: string; src: string | null }[] = [];
 
 interface Agent { id: string; name: string; side: 'su' | 'de'; hq: string; corps?: string; kind: string; mobility: 'foot' | 'motor' | 'tracked'; size: 'rifle' | 'tank' | 'other'; quality: number; personnel: number; tanks: number; guns: number; ammo: number; fuel: number; pos: LngLat; enterAt?: string; deployed?: boolean; notes: string[] }
@@ -98,18 +99,22 @@ for (const a of suArmies) {
   }
   // стрелковые корпуса армии — по «Боевому составу» на 1.01.1945 (файл корпусов), иначе 3 условных по 3 дивизии (C);
   // корпуса, которые есть в сценарии нынешней модели (вводятся позже), — своими дивизиями ниже
-  const corpsList = known?.length
-    ? known.filter((c) => c.kind === 'rifle' && !tsF.has(c.id)).map((c) => ({ id: c.id, name: c.name, n: c.divisions ?? 3, src: c.source }))
+  // армия без корпусов (1 А Войска Польского) — дивизии прямо под армией (id корпуса пустой)
+  const direct = suArmyComp.get(a.id)?.directDivisions;
+  const corpsList = direct
+    ? [{ id: '', name: a.name, n: direct, src: suArmyComp.get(a.id)?.note ?? null }]
+    : known?.length
+    ? known.filter((c) => c.kind === 'rifle' && !tsF.has(c.id)).map((c) => ({ id: c.id, name: c.name, n: c.divisions ?? 3, src: c.source as string | null }))
     : [1, 2, 3].map((k) => ({ id: `${a.id}_sk${k}`, name: `${a.name.replace(/ армия.*$/, ' А')}: стрелковый корпус ${k} (условный)`, n: 3, src: null as string | null }));
   const N = corpsList.reduce((x, c) => x + c.n, 0), first = Math.round((N * 2) / 3), ps = slots(p, dir, N, first);
   let i = 0;
   for (const c of corpsList) for (let j = 0; j < c.n; j++, i++) out.push({
-    id: `${a.id}_d${i + 1}`, name: `${c.name}: стрелковая дивизия ${j + 1}`, side: 'su', hq: a.id, corps: c.id, kind: 'sd', mobility: 'foot', size: 'rifle', quality: q,
+    id: `${a.id}_d${i + 1}`, name: `${c.name}: стрелковая дивизия ${j + 1}`, side: 'su', hq: a.id, ...(c.id ? { corps: c.id } : {}), kind: 'sd', mobility: 'foot', size: 'rifle', quality: q,
     personnel: Math.round((a.personnel ?? 9 * DEF.sd.personnel) / N), tanks: Math.round((a.tanks ?? 0) / N), guns: Math.round((a.guns ?? 9 * DEF.sd.guns) / N), ammo: a.ammo ?? 3, fuel: a.fuel ?? 2, pos: r4(ps[i]),
     ...(i < first && opens ? { deployed: true } : {}),
     notes: [c.src ? `армия — ${N} стрелковых дивизий по корпусам (${c.src}), силы армии поровну (C)` : 'армия — 9 стрелковых дивизий (3 корпуса по 3), силы армии поровну (C)', `положение: ${i < first ? 'первый' : 'второй'} эшелон поперёк направления удара армии (C)`],
   });
-  for (const c of corpsList) newCorps.push({ id: c.id, name: c.name, army: a.id, src: c.src });
+  for (const c of corpsList) if (c.id) newCorps.push({ id: c.id, name: c.name, army: a.id, src: c.src });
 }
 for (const c of ts.formations.filter((f) => f.side === 'su' && f.echelon === 'corps')) {
   const parent = c.parent ?? '';
