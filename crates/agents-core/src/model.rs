@@ -195,7 +195,14 @@ pub struct Division {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Echelon { Front, Army, Corps }
+pub enum Echelon {
+    /// Верховное командование: Ставка ВГК, ОКХ/ОКВ.
+    #[serde(rename = "high_command")]
+    HighCommand,
+    Front,
+    Army,
+    Corps,
+}
 
 /// Штаб: получает задачу, доводит приказы подчинённым с задержкой.
 #[derive(Clone, Debug)]

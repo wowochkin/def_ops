@@ -233,7 +233,7 @@ impl Sim {
                 hq.name, doc.cycle_hours, groups.iter().map(|g| w.hqs[g.0].name.as_str()).collect::<Vec<_>>().join(", "))
         } else {
             format!("Ты — начальник штаба соединения «{}» ({}) в Берлинской операции, апрель 1945 года. Раз в {} ч ты решаешь, что приказать подчинённым дивизиям.",
-                hq.name, match hq.echelon { Echelon::Corps => "корпус", Echelon::Army => "армия", Echelon::Front => "группа армий" }, doc.cycle_hours)
+                hq.name, match hq.echelon { Echelon::Corps => "корпус", Echelon::Army => "армия", Echelon::Front => "группа армий", Echelon::HighCommand => "верховное командование" }, doc.cycle_hours)
         };
         // доктрина: правила из базы знаний (текст из окна) заменяют только зашитые правила (контратака, отход);
         // жёсткие ограничения и словарь полей обстановки (encircled_hours, own_lines_km) остаются всегда

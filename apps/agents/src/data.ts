@@ -9,7 +9,7 @@ export type LngLat = [number, number];
 export type Side = 'su' | 'de';
 
 export interface DivisionInfo { id: string; name: string; side: Side; hq: string; kind: string; mobility: string; size: string; quality: number; note: string }
-export interface HqInfo { id: string; name: string; side: Side; echelon: 'front' | 'army' | 'corps'; parent: string | null }
+export interface HqInfo { id: string; name: string; side: Side; echelon: 'high_command' | 'front' | 'army' | 'corps'; parent: string | null }
 export interface JournalEvent { tick: number; time: string; agent: string | null; text: string }
 /** Кадр дивизии: lng, lat, состояние, люди, танки, орудия, боекомплекты, заправки, усталость, организованность. */
 /** Кадр дивизии: положение, состояние, численность, запасы, усталость, организованность, часов в окружении (в старых ходах нет). */

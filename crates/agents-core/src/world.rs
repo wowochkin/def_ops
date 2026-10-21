@@ -311,7 +311,7 @@ impl Sim {
         for o in due {
             let hq = &next.hqs[o.hq as usize];
             let sr = self.rules.side(hq.side);
-            let delay = match hq.echelon { Echelon::Front => sr.delay_army, Echelon::Army => sr.delay_corps, Echelon::Corps => sr.delay_division };
+            let delay = match hq.echelon { Echelon::HighCommand | Echelon::Front => sr.delay_army, Echelon::Army => sr.delay_corps, Echelon::Corps => sr.delay_division };
             let follow_at = o.follow.as_deref().and_then(|f| self.place_of(&next, f));
             for &d in &o.to {
                 let target = match follow_at {

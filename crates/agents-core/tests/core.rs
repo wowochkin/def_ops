@@ -469,3 +469,32 @@ fn consolidate_rear_between_columns() {
     assert_eq!(sim.world.control[rear], 1, "тыл между своими — свой");
     assert_eq!(sim.world.control[held], 2, "у немецкой дивизии — немецкая");
 }
+
+/// Зееловский сценарий, изменённый правкой `edit` (JSON), — во временном файле.
+fn seelow_with(name: &str, edit: impl Fn(&mut serde_json::Value)) -> agents_core::world::Sim {
+    let root = repo_root();
+    let src = std::fs::read_to_string(format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json")).unwrap();
+    let mut s: serde_json::Value = serde_json::from_str(&src).unwrap();
+    edit(&mut s);
+    let path = std::env::temp_dir().join(format!("agents-core-{name}-{}.json", std::process::id()));
+    std::fs::write(&path, s.to_string()).unwrap();
+    let (sim, _) = agents_core::scenario::load(&path.to_string_lossy(), &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    sim
+}
+
+/// Ступень верховного командования: штаб загружается, сам не решает и ничего не меняет в ходе операции.
+#[test]
+fn high_command_hq_loads_and_does_not_decide() {
+    let mut plain = seelow_with("hc-plain", |_| {});
+    let mut hc = seelow_with("hc-top", |s| {
+        let hqs = s["hqs"].as_array_mut().unwrap();
+        for h in hqs.iter_mut() { if h["id"] == "su_1bf" { h["parent"] = "su_stavka".into(); } }
+        hqs.push(serde_json::json!({ "id": "su_stavka", "name": "Ставка ВГК", "side": "su", "echelon": "high_command", "parent": null, "pos": [14.6, 52.6] }));
+    });
+    assert!(hc.world.hqs.iter().any(|h| h.echelon == agents_core::model::Echelon::HighCommand));
+    for sim in [&mut plain, &mut hc] {
+        sim.sources[0] = agents_core::staff::Source::Doctrine;
+        for _ in 0..48 { sim.step(); }
+    }
+    assert_eq!(plain.digest(), hc.digest());
+}
