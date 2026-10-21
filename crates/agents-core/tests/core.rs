@@ -491,6 +491,8 @@ fn high_command_hq_loads_and_does_not_decide() {
         let hqs = s["hqs"].as_array_mut().unwrap();
         hqs.retain(|h| h["echelon"] != "high_command");
         for h in hqs.iter_mut() { if h["parent"] == "su_stavka" || h["parent"] == "de_hc" { h["parent"] = serde_json::Value::Null; } }
+        // директивы ссылаются на верхние инстанции
+        s["directives"] = serde_json::json!([]);
     });
     assert!(hc.world.hqs.iter().any(|h| h.echelon == agents_core::model::Echelon::HighCommand));
     for sim in [&mut plain, &mut hc] {
