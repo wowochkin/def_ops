@@ -343,7 +343,8 @@ describe('разбор хода: карта шага', () => {
   it('уровень шага: одно место — край интервала; точки не помещаются — следующий уровень', () => {
     expect(levelForStep('tac', 52, null).level).toBe('tac');
     expect(scaleDenominator(52, levelForStep('tac', 52, null).zoom)).toBeCloseTo(50_000, -2);
-    expect(scaleDenominator(52, levelForStep('op', 52, null).zoom)).toBeCloseTo(190_000, -3);
+    expect(scaleDenominator(52, levelForStep('op', 52, null).zoom)).toBeCloseTo(150_000, -3);
+    expect(scaleDenominator(52, levelForStep('st', 52, null).zoom)).toBeCloseTo(300_000, -3);
     // точки помещаются только на 1:300 000 — тактический не подходит, оперативный тоже, нужен стратегический
     const wide = zoomForScale(52, 300_000);
     expect(levelForStep('tac', 52, wide).level).toBe('st');

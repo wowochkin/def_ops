@@ -5,11 +5,11 @@
  */
 import { confirmAsync } from './dialogs';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { documentAt, formatScale, migrateDocument, viewDenominator, zoomForScale, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
+import { documentAt, formatScale, migrateDocument, zoomForScale, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
 import { useViewScale } from './ScaleRange';
-import { levelScaleLabel, scaleInLevel, scaleTarget } from './map-level-scale';
+import { levelDefaultScale, levelScaleLabel, scaleInLevel } from './map-level-scale';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -143,12 +143,11 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
   );
 }
 
-/** Привести масштаб карты к рекомендуемому для уровня (ближайший край интервала); возвращает новый масштаб 1:N или null — уже внутри. */
+/** Поставить масштаб карты, стандартный для уровня (тактический 1:50 000, оперативный 1:150 000, стратегический 1:300 000); возвращает его. */
 function fitLevelScale(engine: MapEngine | null, level: MapLevel): number | null {
   if (!engine) return null;
-  const v = engine.getView(), lat = v.center[1];
-  const t = scaleTarget(level, viewDenominator(lat, v.zoom));
-  if (t) engine.setView({ zoom: zoomForScale(lat, t) });
+  const lat = engine.getView().center[1], t = levelDefaultScale(level);
+  engine.setView({ zoom: zoomForScale(lat, t) });
   return t;
 }
 
@@ -168,9 +167,9 @@ export function LevelSwitch({ level, setLevel, engine = null }: { level: MapLeve
     },
   });
   useAction({
-    id: 'map.level.fit', section: 'replay', title: 'Масштаб по уровню', describe: 'Приводит масштаб карты к рекомендуемому для выбранного уровня (тактический 1:25 000 – 1:50 000, оперативный 1:100 000 – 1:200 000, стратегический 1:200 000 – 1:500 000).',
+    id: 'map.level.fit', section: 'replay', title: 'Масштаб по уровню', describe: 'Ставит масштаб карты, стандартный для выбранного уровня: тактический 1:50 000, оперативный 1:150 000, стратегический 1:300 000.',
     say: ['штаб, подгони масштаб'], highlight: () => hl('level-fit'), available: () => (inReplay() === true ? (off ? true : 'масштаб уже в рекомендуемом интервале') : inReplay()),
-    run: async () => { const to = fitLevelScale(engine, level); return to ? `Масштаб карты — ${formatScale(to)}, как рекомендовано для уровня.` : 'Масштаб уже в рекомендуемом интервале.'; },
+    run: async () => { const to = fitLevelScale(engine, level); return to ? `Масштаб карты — ${formatScale(to)}, как для этого уровня.` : 'Не вышло: карта ещё не открыта.'; },
   });
   return <>
     <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <ActButton key={x.id} action="map.level" params={{ level: x.id }} className={level === x.id ? 'on' : ''} title={`${x.hint}. Рекомендуемый масштаб ${levelScaleLabel(x.id)}`} data-hl={`level-${x.id}`}>{x.title}</ActButton>)}</div>

@@ -59,17 +59,17 @@ const ORDER: LevelId[] = ['tac', 'op', 'st'];
 /**
  * Уровень и масштаб шага. want — желательный уровень (auto — начиная с оперативного); fitZoom — масштаб, при котором
  * все точки шага помещаются (null — одно место). Берётся первый уровень от желательного, на котором точки помещаются
- * в мелкой границе его интервала; масштаб — в интервале уровня (одно место — край «обзорнее»: виден участок вокруг).
+ * в мелкой границе его интервала; масштаб — в интервале уровня (одно место — стандартный масштаб уровня: виден участок вокруг).
  */
 export function levelForStep(want: LevelId | 'auto', lat: number, fitZoom: number | null): { level: LevelId; zoom: number } {
   const from = want === 'auto' ? 1 : ORDER.indexOf(want);  // обзор хода — не мельче оперативного уровня
   for (const l of ORDER.slice(from)) {
     const r = LEVEL_SCALE[l];
-    const zMin = zoomForScale(lat, r.setTo), zMax = zoomForScale(lat, r.from);
-    if (fitZoom === null) return { level: l, zoom: zMin };
+    const zMin = zoomForScale(lat, r.coarse), zMax = zoomForScale(lat, r.from);
+    if (fitZoom === null) return { level: l, zoom: zoomForScale(lat, r.def) };
     if (fitZoom >= zMin - 1e-6) return { level: l, zoom: Math.min(fitZoom, zMax) };
   }
-  return { level: 'st', zoom: zoomForScale(lat, LEVEL_SCALE.st.setTo) };
+  return { level: 'st', zoom: zoomForScale(lat, LEVEL_SCALE.st.def) };
 }
 
 export function createTourMap(d: TourMapDeps): TourMapControl {

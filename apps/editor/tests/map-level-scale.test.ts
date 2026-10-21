@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { levelOfScale, levelScaleLabel, LEVEL_SCALE, scaleInLevel, scaleTarget } from '../src/map-level-scale';
+import { levelDefaultScale, levelOfScale, levelScaleLabel, scaleInLevel } from '../src/map-level-scale';
 
 describe('рекомендуемые масштабы по уровням', () => {
   it('интервалы заказчика', () => {
@@ -20,14 +20,9 @@ describe('рекомендуемые масштабы по уровням', () =
     expect(levelOfScale(2_000_000)).toBeNull();
     expect(levelOfScale(10_000)).toBeNull();
   });
-  it('переход — к ближайшему краю; внутри — не двигаться', () => {
-    expect(scaleTarget('op', 150_000)).toBeNull();
-    expect(scaleTarget('op', 30_000)).toBe(100_000);
-    expect(scaleTarget('op', 400_000)).toBe(LEVEL_SCALE.op.setTo);
-    expect(levelOfScale(LEVEL_SCALE.op.setTo)).toBe('op');
-    expect(scaleTarget('tac', 1_000_000)).toBe(50_000);
-    expect(scaleTarget('st', 100_000)).toBe(200_000);
-    expect(scaleTarget('st', 5_000_000)).toBe(500_000);
+  it('при переключении уровня — 1:50 000, 1:150 000, 1:300 000; каждый внутри своего интервала', () => {
+    expect([levelDefaultScale('tac'), levelDefaultScale('op'), levelDefaultScale('st')]).toEqual([50_000, 150_000, 300_000]);
+    for (const l of ['tac', 'op', 'st'] as const) expect(levelOfScale(levelDefaultScale(l)), l).toBe(l);
   });
   it('граница оперативного и стратегического не пересекается', () => {
     for (let d = 100_000; d <= 500_000; d += 1_000) expect([scaleInLevel('op', d), scaleInLevel('st', d)].filter(Boolean).length, String(d)).toBeLessThanOrEqual(1);

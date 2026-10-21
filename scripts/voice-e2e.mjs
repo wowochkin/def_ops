@@ -633,6 +633,7 @@ await check('кнопка «Выключить управление»: пояс�
   await panel.getByRole('button', { name: 'Выключить управление' }).click();
   const q = page.locator('.confirm-box');
   await q.getByText('включить управление голосом можно будет только кнопкой').waitFor({ timeout: 3000 });
+  await q.locator('button.danger', { hasText: 'Выключить' }).waitFor({ timeout: 2000 });  // голосом подтверждается только строгим «да»
   await q.getByRole('button', { name: 'Выключить' }).click();
   await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: 3000 });
   await micOff('после выключения');

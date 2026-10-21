@@ -1,15 +1,17 @@
 /**
- * Рекомендуемые масштабы карты по уровням (рекомендация заказчика): тактический 1:25 000 – 1:50 000,
- * оперативный 1:100 000 – 1:200 000, стратегический 1:200 000 – 1:500 000. Точка 1:200 000 — у стратегического:
- * оперативному — всё, что крупнее неё (граница с допуском на округление масштаба на экране, 2 %).
+ * Масштабы карты по уровням. Рекомендуемые интервалы (рекомендация заказчика): тактический 1:25 000 – 1:50 000,
+ * оперативный 1:100 000 – 1:200 000, стратегический 1:200 000 – 1:500 000; точка 1:200 000 — у стратегического
+ * (оперативному — всё, что крупнее неё; граница с допуском на округление масштаба на экране, 2 %).
+ * При переключении уровня масштаб ставится на 1:50 000 / 1:150 000 / 1:300 000 (`def`).
  */
 export type LevelId = 'tac' | 'op' | 'st';
 
 const TOL = 0.02;
-export const LEVEL_SCALE: Record<LevelId, { from: number; to: number; setTo: number }> = {
-  tac: { from: 25_000, to: 50_000, setTo: 50_000 },
-  op: { from: 100_000, to: 200_000, setTo: 190_000 },  // 200 000 — уже стратегический: оперативный ставится с запасом
-  st: { from: 200_000, to: 500_000, setTo: 500_000 },
+/** from — крупнее границы интервала, to — мельче; def — масштаб при переключении уровня; coarse — самый мелкий масштаб, который ещё считается уровнем. */
+export const LEVEL_SCALE: Record<LevelId, { from: number; to: number; def: number; coarse: number }> = {
+  tac: { from: 25_000, to: 50_000, def: 50_000, coarse: 50_000 },
+  op: { from: 100_000, to: 200_000, def: 150_000, coarse: 195_000 },  // 200 000 — уже стратегический
+  st: { from: 200_000, to: 500_000, def: 300_000, coarse: 500_000 },
 };
 
 const fmt = (n: number) => `1:${n.toLocaleString('ru-RU').replace(/\s/g, ' ')}`;
@@ -28,8 +30,5 @@ export function levelOfScale(d: number): LevelId | null {
   return (['tac', 'op', 'st'] as const).find((l) => scaleInLevel(l, d)) ?? null;
 }
 
-/** Масштаб, на который перейти, чтобы попасть в интервал уровня (ближайший край); null — уже внутри. */
-export function scaleTarget(l: LevelId, d: number): number | null {
-  if (scaleInLevel(l, d)) return null;
-  return d < LEVEL_SCALE[l].from ? LEVEL_SCALE[l].from : LEVEL_SCALE[l].setTo;
-}
+/** Масштаб, который ставится при переключении на уровень. */
+export const levelDefaultScale = (l: LevelId): number => LEVEL_SCALE[l].def;

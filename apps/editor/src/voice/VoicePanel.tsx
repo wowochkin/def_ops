@@ -227,10 +227,10 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   useAction({ id: 'voice.sound.on', section: 'global', title: 'Включить звук', describe: 'Снова включает озвучку: штаб, посредник и экскурсии говорят.',
     say: ['штаб, включи звук'], highlight: () => hl('voice-sound'),
     available: () => (soundRef.current ? 'звук уже включён' : true), run: async () => { setSound(true); return 'Звук включён.'; } });
-  // кнопка «Выключить управление»: сначала вопрос окном (полный текст), на «Выключить» — voice.off
+  // кнопка «Выключить управление»: сначала вопрос окном (полный текст; голосом — только строгое «да»), на «Выключить» — voice.off
   useAction({ id: 'voice.off.ask', section: 'global', title: 'Выключить управление голосом (с вопросом)', describe: 'Спрашивает, выключить ли микрофон; на «Выключить» — выключает.',
     available: () => (enabledRef.current ? true : 'управление голосом уже выключено'),
-    run: async () => { if (await confirmAsync(POWER_OFF_ASK, { ok: 'Выключить', cancel: 'Отмена' })) await act('voice.off'); } });
+    run: async () => { if (await confirmAsync(POWER_OFF_ASK, { ok: 'Выключить', cancel: 'Отмена', danger: true })) await act('voice.off'); } });
 
   // окна и модули говорят через штаб (в дежурном — молчат); открылось окно — прежний ответ модели уже не нужен
   useEffect(() => {
