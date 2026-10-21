@@ -737,36 +737,34 @@ function pathFrames(T: Theatre, path: LngLat[], t0: string, t1: string): { t: st
 }
 
 /**
- * Где подписать фронт — в основной массе его войск на фронте, а не в центре тяжести: у растянутой группировки
- * (группа армий «Висла» от Штеттина до Одербруха и Берлина) центр тяжести лежит между флангами, нередко в чужом тылу.
- * Берутся соединения не дальше 30 км от линии фронта хода (линии нет или рядом никого — все): иначе надпись уходит
- * на гарнизон в тылу. Опора — соединение с наименьшей суммой расстояний до остальных (по численности); надпись —
- * в центре тяжести соединений не дальше r км от него. У компактного объединения это и есть центр тяжести.
+ * Где подписать фронт — в центре тяжести его войск на фронте: соединений не дальше 30 км от ближайшего соединения
+ * противника (рядом никого — всех), по численности. Гарнизон в тылу надпись не оттягивает. Опорное скопление не
+ * выбирается, и линия фронта хода не берётся: при выборе скопления надпись растянутой группировки (группа армий
+ * «Висла»: 3-я танковая армия на нижнем Одере, 9-я армия и Берлин) перескакивала за ход от крыла к крылу, а расчётная
+ * линия бывает рваной (в агентной модели 21.04 у «Вислы» в 30 км от неё оставались две дивизии у Свинемюнде).
  */
-function massPoint(all: { xy: [number, number]; w: number }[], front?: { id: string; xy: [number, number][] }[], r = 30): [number, number] {
-  const atFront = front?.length ? all.filter((u) => nearestOnFront(front, u.xy, 30)) : [];
+function massPoint(all: { xy: [number, number]; w: number }[], enemy: [number, number][], km = 30): [number, number] {
+  const atFront = all.filter((u) => enemy.some((e) => Math.abs(e[0] - u.xy[0]) <= km && Math.abs(e[1] - u.xy[1]) <= km && Math.hypot(e[0] - u.xy[0], e[1] - u.xy[1]) <= km));
   const us = atFront.length ? atFront : all;
-  let best = us[0], bs = Infinity;
-  for (const a of us) {
-    const s = us.reduce((acc, b) => acc + b.w * Math.hypot(a.xy[0] - b.xy[0], a.xy[1] - b.xy[1]), 0);
-    if (s < bs) { bs = s; best = a; }
-  }
-  const near = us.filter((b) => Math.hypot(b.xy[0] - best.xy[0], b.xy[1] - best.xy[1]) <= r);
-  const W = near.reduce((a, b) => a + b.w, 0);
-  return near.reduce<[number, number]>((a, b) => [a[0] + (b.xy[0] * b.w) / W, a[1] + (b.xy[1] * b.w) / W], [0, 0]);
+  const W = us.reduce((a, b) => a + b.w, 0);
+  return us.reduce<[number, number]>((a, b) => [a[0] + (b.xy[0] * b.w) / W, a[1] + (b.xy[1] * b.w) / W], [0, 0]);
 }
 
 /**
- * Надписи противостоящих фронтов ближе gap км друг к другу расходятся каждая в свою сторону, до gap: основные
- * силы сторон часто стоят друг против друга (1 БФ и 9 А на Зееловских высотах), и надписи легли бы одна на другую.
+ * Надписи противостоящих фронтов ближе gap км друг к другу расходятся каждая в свою сторону по вертикали, до gap:
+ * основные силы сторон часто стоят друг против друга (1 БФ и 9 А на Зееловских высотах), и надписи легли бы одна на
+ * другую. Надпись вытянута по горизонтали, поэтому близость по горизонтали весит меньше (×0,4), а расходятся они
+ * вверх и вниз: стоящие рядом на одной высоте («Группа армий „Центр“» и «1-й Украинский фронт») иначе налезают.
  */
 function apart(pts: { side: Side; xy: [number, number] }[], gap = 24): [number, number][] {
+  const eff = (a: [number, number], b: [number, number]) => Math.hypot((a[0] - b[0]) * 0.4, a[1] - b[1]);
   return pts.map((a) => {
     let near: [number, number] | null = null, nd = gap;
-    for (const b of pts) { if (b.side === a.side) continue; const d = Math.hypot(a.xy[0] - b.xy[0], a.xy[1] - b.xy[1]); if (d < nd) { nd = d; near = b.xy; } }
-    if (!near || nd < 0.1) return a.xy;
-    const k = (gap - nd) / 2 / nd;
-    return [a.xy[0] + (a.xy[0] - near[0]) * k, a.xy[1] + (a.xy[1] - near[1]) * k];
+    for (const b of pts) { if (b.side === a.side) continue; const d = eff(a.xy, b.xy); if (d < nd) { nd = d; near = b.xy; } }
+    if (!near) return a.xy;
+    // одна высота — свои вверх, противник вниз
+    const up = a.xy[1] !== near[1] ? Math.sign(a.xy[1] - near[1]) : a.side === 'own' ? 1 : -1;
+    return [a.xy[0], a.xy[1] + up * (gap - nd) / 2];
   });
 }
 
@@ -883,7 +881,10 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
   if (level === 'front') {
     for (const id of groups.keys()) labelAt.set(id, []);
     run.snapshots.forEach((_, i) => {
-      const here = [...groups.keys()].filter((id) => cents.get(id)![i]).map((id) => ({ id, side: sideById(id), xy: massPoint(cents.get(id)![i]!.units, fronts.get(i)) }));
+      const sn = run.snapshots[i];
+      // противник — как его видит сторона: при тумане войны только обнаруженные соединения
+      const enemyOf = (sd: string) => sn.units.filter((u) => { const f = byId.get(u.id); return f && f.side !== sd && !u.destroyed && onMap({ ...f, position: u.at }, sn.time) && (sideOf(f.side) === 'own' || !visible || visible(u.id, sn)); }).map((u) => P(u.at) as [number, number]);
+      const here = [...groups.keys()].filter((id) => cents.get(id)![i]).map((id) => ({ id, side: sideById(id), xy: massPoint(cents.get(id)![i]!.units, enemyOf(groups.get(id)!.g.side)) }));
       apart(here).forEach((xy, k) => { labelAt.get(here[k].id)![i] = xy; });
     });
   }
@@ -1350,8 +1351,10 @@ export function summaryToDocument(ctx: SimContext, run: RunResult, history?: His
 
   // фронты — крупной надписью у исходного положения, в основной массе войск; надписи противостоящих — врозь
   const fl = [...groupsAt('front').values()].filter((x) => RANK[x.g.echelon] >= RANK.front).flatMap((x) => {
-    const c = centre(0, x.members) ?? centre(snaps.findIndex((_, i) => centre(i, x.members)), x.members);
-    return c ? [{ x, side: sideOf(x.g.side), xy: massPoint(c.units, fronts.get(0)) }] : [];
+    const i0 = centre(0, x.members) ? 0 : snaps.findIndex((_, i) => centre(i, x.members));
+    const c = i0 >= 0 ? centre(i0, x.members) : null;
+    const enemy = c ? snaps[i0].units.filter((u) => { const f = byId.get(u.id); return f && f.side !== x.g.side && !u.destroyed && onMap({ ...f, position: u.at }, snaps[i0].time); }).map((u) => P(u.at) as [number, number]) : [];
+    return c ? [{ x, side: sideOf(x.g.side), xy: massPoint(c.units, enemy) }] : [];
   });
   // сводная карта мельче — надписи разводятся шире
   apart(fl, 45).forEach((xy, k) => {

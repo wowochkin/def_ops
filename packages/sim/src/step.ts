@@ -483,7 +483,7 @@ export function step(prev: SimState, ctx: SimContext): SimState {
   }
 
   const { umpire: _used, ...rest } = prev;
-  return { ...rest, ...(directives ? { directives } : {}), time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}), ...(crossings.length ? { crossings } : {}), ...(changesDone ? { changesDone } : {}) };
+  return { ...rest, ...(directives ? { directives } : {}), time: end, turn: prev.turn + 1, formations: fs, pending, rngState: rng.state(), journal: [...prev.journal, ...journal], journalFrom: prev.journal.length, breached: [...breached], ...(terr ? { territory: Array.from(terr) } : {}), ...(crossings.length ? { crossings } : {}), ...(changesDone ? { changesDone } : {}) };
 }
 
 /**
