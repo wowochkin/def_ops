@@ -29,7 +29,8 @@ pub fn band_of(axis: &[XY], boundaries: &[(Option<u32>, Vec<XY>)], subs_pos: &[X
     };
     let n = XY::new(-dir.y, dir.x); // влево от направления
     let side = |l: &Vec<XY>| cross(dir, sub(mean(l), base));
-    let near = |left: bool| boundaries.iter().map(|(_, l)| l).filter(|l| l.len() >= 2 && (side(l) > 0.0) == left)
+    // граница точно на оси — левая
+    let near = |left: bool| boundaries.iter().map(|(_, l)| l).filter(|l| l.len() >= 2 && (side(l) >= 0.0) == left)
         .min_by(|a, b| side(a).abs().total_cmp(&side(b).abs())).cloned();
     let reach = |s: f64| subs_pos.iter().map(|p| s * dot(sub(*p, base), n)).fold(0.0, f64::max);
     let parallel = |s: f64| {

@@ -357,3 +357,48 @@ fn all_second_echelon_commit() {
     assert_eq!(sim.command.role_hq[second], Role::Committed);
 }
 
+
+// ---------- этап 2б: мелочи этапа 2а ----------
+
+/// Штаб без действующих дивизий — не подчинённый для задачи.
+#[test]
+fn active_subs_skip_empty_hqs() {
+    use agents_core::command::control::active_subs;
+    let mut sim = load("seelow-1945");
+    let a = hq(&sim, "su_8gva");
+    let k = hq(&sim, "su_4gsk");
+    for d in sim.world.divisions.iter_mut().filter(|d| d.hq == k) { d.state = State::Destroyed; }
+    assert!(!active_subs(&sim, a).0.contains(&k));
+}
+
+/// Дивизия, ушедшая к последующей задаче, при новой директиве с той же последующей задачей не возвращается к ближайшей.
+#[test]
+fn fresh_keeps_subsequent() {
+    let mut sim = load("seelow-1945");
+    let i = sim.world.divisions.iter().position(|d| d.side == Side::Su && !d.state.out()).unwrap();
+    let k = sim.world.divisions[i].hq;
+    let p = sim.world.divisions[i].vars.pos;
+    let sub = XY::new(p.x - 30.0, p.y);
+    let mk = |near: XY| Directive { id: "д".into(), from: k, to: Target::Division(i as u32), form: Form::Instruction, task: Task::Attack, axis: vec![], immediate: Some(Line { pts: vec![near], by: None }),
+        subsequent: Some(Line { pts: vec![sub], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: true, rule: None, issued: 0, note: "проба".into() };
+    agents_core::command::passing::issue(&mut sim, mk(p), 0);
+    sim.step();
+    sim.step();
+    assert_eq!(sim.world.divisions[i].order.as_ref().unwrap().target, sub, "к последующей");
+    let mut d2 = mk(XY::new(p.x - 10.0, p.y));
+    d2.issued = 0;
+    let now = sim.world.tick;
+    agents_core::command::passing::issue(&mut sim, d2, now);
+    sim.step();
+    assert_eq!(sim.world.divisions[i].order.as_ref().unwrap().target, sub, "осталась последующая");
+}
+
+/// Граница точно на оси считается левой, если другой левой нет.
+#[test]
+fn boundary_on_axis_is_deterministic() {
+    use agents_core::command::band::band_of;
+    let axis = [XY::new(0.0, 0.0), XY::new(20.0, 0.0)];
+    let on = vec![XY::new(0.0, 0.0), XY::new(20.0, 0.0)];
+    let b = band_of(&axis, &[(None, on.clone())], &[XY::new(0.0, -3.0)], 4.0);
+    assert_eq!(b.left, on);
+}

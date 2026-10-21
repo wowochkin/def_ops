@@ -154,6 +154,10 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
                 // изъятую через голову дивизию директива старшего больше не задаёт (кроме директивы игрока ей самой)
                 if sim.command.led_div.get(iu).copied().unwrap_or(false) && sim.command.control[d.from as usize] != Control::Player { continue; }
                 if sim.command.div_task[iu].as_ref().is_some_and(|o| o.from == d.from && o.issued > d.issued) { continue; }
+                // уже у последующей задачи, а она та же — к ближайшей не возвращаться
+                let mut d = d;
+                let same_sub = |a: &Option<Line>, b: &Option<Line>| match (a.as_ref().and_then(|l| mid(&l.pts)), b.as_ref().and_then(|l| mid(&l.pts))) { (Some(x), Some(y)) => x.dist(y) <= REACHED_KM, _ => false };
+                if sim.command.div_task[iu].as_ref().is_some_and(|o| o.immediate.is_none() && same_sub(&o.subsequent, &d.subsequent)) { d.immediate = None; }
                 let div = &mut next.divisions[iu];
                 if d.hasty { div.vars.coord = div.vars.coord.min(sim.rules.command.hasty_coord); }
                 let target = div_target(&d, div.vars.pos);

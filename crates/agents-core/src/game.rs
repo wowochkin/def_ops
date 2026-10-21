@@ -40,6 +40,8 @@ pub struct PlayerDirective {
 
 pub struct Game {
     pub mode: Mode,
+    /// Поданные исторические директивы (id).
+    pub issued: std::collections::HashSet<String>,
     /// Исторические директивы игрока, поданные на будущий час: (час, директива).
     pub pending: Vec<(u32, crate::command::directive::Directive)>,
     pub sim: Sim,
@@ -175,7 +177,7 @@ impl Game {
             crate::command::control::agents_side(&mut sim, player);
             for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
             let limit = meta.hours;
-            return Game { mode, pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new() };
+            return Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new() };
         }
         let mine = |hq: u32, sim: &Sim| free.contains(&sim.world.hqs[hq as usize].side);
         let keep: Vec<bool> = sim.script.iter().map(|o| !mine(o.hq, &sim)).collect();
@@ -195,7 +197,7 @@ impl Game {
             }
         }
         let limit = meta.hours;
-        Game { mode: Mode::Legacy, pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves }
+        Game { mode: Mode::Legacy, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves }
     }
 
     /// Час прогона (сколько шагов сделано).
@@ -332,6 +334,7 @@ impl Game {
             if w.divisions[i].state.out() && w.divisions[i].state != crate::model::State::Pending { return Err(format!("{} выбыла", w.divisions[i].name)); }
             (Target::Division(i as u32), Some(w.divisions[i].hq))
         } else { return Err(format!("нет штаба или дивизии {}", p.to)); };
+        if let Target::Hq(h) = to { if self.sim.command.control[h as usize] == crate::command::control::Control::Script { return Err(format!("{} ведёт сценарий («гибрид»)", p.to)); } }
         let tick = self.hour();
         // через голову: пропущенные штабы — от непосредственного начальника до штаба под верхней инстанцией
         if parent != Some(top) {
@@ -366,6 +369,7 @@ impl Game {
         if !self.sim.historical.iter().any(|(_, d)| d.id == id) { return Err(format!("нет исторической директивы {id} стороны игрока")); }
         // приказы сценария, прошедшие до перевода поддерева на сценарий, не вернуть — в «гибриде» только до первого хода
         if self.mode == Mode::Hybrid && self.hour() > self.takeover { return Err("в «гибриде» исторические директивы подаются до первого хода".into()); }
+        if !self.issued.insert(id.to_string()) { return Err(format!("директива {id} уже подана")); }
         let now = self.hour();
         for (at, d) in crate::command::control::historical_for(&mut self.sim, self.player, Some(id), self.mode == Mode::Hybrid) {
             if at <= now { crate::command::passing::issue(&mut self.sim, d, now); } else { self.pending.push((at, d)); }

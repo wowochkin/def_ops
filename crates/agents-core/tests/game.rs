@@ -348,3 +348,15 @@ fn de_army_pulls_back_once() {
     g.advance(12);
     assert_eq!(g.sim.documents.iter().filter(|d| d.rule.as_deref().is_some_and(|r| r.contains("оттяжка"))).count(), n, "второй оттяжки нет");
 }
+
+/// В «гибриде» директива игрока штабу под сценарием — ошибка; историческую директиву дважды не подать.
+#[test]
+fn directive_errors_hybrid_and_twice() {
+    let mut h = seelow_game(Mode::Hybrid, 0);
+    h.issue_historical("stavka-11059").expect("директива");
+    let e = h.directive(&PlayerDirective { to: "su_8gva".into(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: String::new() }).unwrap_err();
+    assert!(e.contains("сценарий"), "{e}");
+    let mut a = seelow_game(Mode::Agents, 0);
+    a.issue_historical("stavka-11059").expect("директива");
+    assert!(a.issue_historical("stavka-11059").unwrap_err().contains("уже подана"));
+}
