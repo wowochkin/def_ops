@@ -219,7 +219,7 @@ pub fn theatre_objects(t: &Theatre) -> Vec<Object> {
 fn new_division(id: String, name: String, side: Side, hq: u32, params: Params, personnel: f64, tanks: f64, guns: f64, ammo: f64, fuel: f64, pos: XY, rules: &Rules) -> Division {
     let mut d = Division {
         id, name, side, hq, params,
-        vars: Vars { personnel, tanks, guns, ammo, fuel, fatigue: 0.0, cohesion: 1.0, prepared_h: 0.0, march_h_today: 0.0, march_h_log: [0.0; 24], pos, strength0: 0.0, personnel0: personnel, positions: None },
+        vars: Vars { personnel, tanks, guns, ammo, fuel, fatigue: 0.0, cohesion: 1.0, coord: 1.0, prepared_h: 0.0, march_h_today: 0.0, march_h_log: [0.0; 24], pos, strength0: 0.0, personnel0: personnel, positions: None },
         state: State::Reserve, state_since: 0, order: None, route: None, note: String::new(), enter: 0, cut_since: None, relink_since: None,
     };
     let (wp, wt, wg) = rules.side(side).weights;

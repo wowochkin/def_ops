@@ -181,8 +181,21 @@ pub struct DoctrineSu {
     pub tank_commit_fallback_hours: f64,
 }
 
+/// Прохождение приказа и слаженность (command): часы на ступень получателя [фронт, армия, корпус, дивизия], цикл
+/// решения штаба-агента [фронт, армия, корпус].
+#[derive(Clone, Debug)]
+pub struct Command {
+    pub prepared_h: [f64; 4],
+    pub instruction_h: [f64; 4],
+    pub hasty_coord: f64,
+    pub coord_recover_h: f64,
+    pub coord_effect: f64,
+    pub cycle_h: [f64; 3],
+}
+
 #[derive(Clone, Debug)]
 pub struct Rules {
+    pub command: Command,
     pub doctrine: Doctrine,
     pub doctrine_su: DoctrineSu,
     pub remnants: Remnants,
@@ -384,7 +397,17 @@ impl Rules {
             tank_commit_depth_km: num(&ag, "doctrine.su.tankCommitDepthKm")?,
             tank_commit_fallback_hours: num(&ag, "doctrine.su.tankCommitFallbackHours")?,
         };
+        let ech4 = |k: &str| -> Result<[f64; 4], String> { Ok([num(&ag, &format!("command.{k}.front"))?, num(&ag, &format!("command.{k}.army"))?, num(&ag, &format!("command.{k}.corps"))?, num(&ag, &format!("command.{k}.division"))?]) };
+        let command = Command {
+            prepared_h: ech4("preparedHours")?,
+            instruction_h: ech4("instructionHours")?,
+            hasty_coord: num(&ag, "command.hastyCoordination")?,
+            coord_recover_h: num(&ag, "command.coordinationRecoverPerHour")?,
+            coord_effect: num(&ag, "command.coordinationEffect")?,
+            cycle_h: [num(&ag, "command.cycleHours.front")?, num(&ag, "command.cycleHours.army")?, num(&ag, "command.cycleHours.corps")?],
+        };
         Ok(Rules {
+            command,
             doctrine,
             doctrine_su,
             remnants,

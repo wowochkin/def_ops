@@ -629,7 +629,10 @@
       },
       "unit": "%",
       "rules": [],
-      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     },
     {
       "id": "assume-outcome-weight",
@@ -645,7 +648,10 @@
       },
       "unit": "%",
       "rules": [],
-      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     },
     {
       "id": "assume-outcome-min",
@@ -661,7 +667,10 @@
       },
       "unit": "шт.",
       "rules": [],
-      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     },
     {
       "id": "assume-corridor-edge",
@@ -677,7 +686,10 @@
       },
       "unit": "%",
       "rules": [],
-      "operations": ["berlin-1945-tasks", "vistula-oder-1945"]
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     },
     {
       "id": "assume-plausible-strength",
@@ -1620,6 +1632,46 @@
       "unit": "доля/сут",
       "rules": [
         "agents.pocket.breakoutLossDay"
+      ]
+    },
+    {
+      "id": "agents-command-prepared-corps",
+      "title": "Подготовленный приказ корпуса — время до приказа дивизии (агентная модель)",
+      "kb": "org:model-agents-params",
+      "source": "SBD25, док. 29, 31",
+      "reliability": "A",
+      "historical": "приказ 97 ск 11.01.1944 23:15 — приказ 43 гв. сд 12.01 22:10: около 23 ч",
+      "measure": {
+        "kind": "param",
+        "expr": "agents.command.preparedHours.corps"
+      },
+      "expect": [
+        20,
+        26
+      ],
+      "unit": "ч",
+      "rules": [
+        "agents.command.preparedHours.corps"
+      ]
+    },
+    {
+      "id": "agents-command-prepared-division",
+      "title": "Подготовленный приказ дивизии — время до исходного положения полков (агентная модель)",
+      "kb": "org:model-agents-params",
+      "source": "SBD25, док. 31",
+      "reliability": "A",
+      "historical": "приказ 43 гв. сд 12.01.1944 22:10 — полки в исходном положении 13.01 20:00: около 22 ч",
+      "measure": {
+        "kind": "param",
+        "expr": "agents.command.preparedHours.division"
+      },
+      "expect": [
+        20,
+        26
+      ],
+      "unit": "ч",
+      "rules": [
+        "agents.command.preparedHours.division"
       ]
     }
   ],

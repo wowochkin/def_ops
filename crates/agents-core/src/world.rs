@@ -244,7 +244,7 @@ impl Sim {
         let base = v.personnel / 1000.0 * wp + v.tanks * wt + v.guns * wg;
         let ammo = if v.ammo >= 0.5 { 1.0 } else { r.ammo_short + (1.0 - r.ammo_short) * (v.ammo / 0.5).max(0.0) };
         let fuel = if v.fuel <= 0.0 && d.params.mobility != Mobility::Foot { r.fuel_out } else { 1.0 };
-        base * d.params.quality * ammo * fuel * (1.0 - v.fatigue * r.fatigue_effect)
+        base * d.params.quality * ammo * fuel * (1.0 - v.fatigue * r.fatigue_effect) * (1.0 - (1.0 - v.coord) * r.command.coord_effect)
     }
 
     /// Боевая сила по составу (люди, танки, орудия и качество) — без запасов и усталости; как strength0.
@@ -922,7 +922,10 @@ impl Sim {
                 d.vars.ammo = (d.vars.ammo + k * sr.ammo_per_day / 24.0).min(sr.max_ammo);
                 if d.params.mobility != Mobility::Foot { d.vars.fuel = (d.vars.fuel + k * sr.fuel_per_day / 24.0).min(sr.max_fuel); }
             }
-            if !in_battle[i] { d.vars.cohesion = (d.vars.cohesion + r.cohesion_recover).min(1.0); }
+            if !in_battle[i] {
+                d.vars.cohesion = (d.vars.cohesion + r.cohesion_recover).min(1.0);
+                d.vars.coord = (d.vars.coord + r.command.coord_recover_h).min(1.0);
+            }
             if day_start { d.vars.march_h_today = 0.0; }
             if d.vars.personnel < r.destroyed_personnel {
                 journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: численность меньше {} человек — дивизия рассеяна", d.state.label(), State::Destroyed.label(), r.destroyed_personnel) });
