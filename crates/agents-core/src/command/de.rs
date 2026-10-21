@@ -29,19 +29,27 @@ fn to_div(h: u32, i: u32, task: Task, at: crate::geo::XY, form: Form, rule: &str
 pub fn corps(sim: &mut Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directive> {
     let subs = subs_of(sim, h);
     let divs: Vec<usize> = subs.iter().filter_map(|t| match t { Target::Division(i) => Some(*i as usize), _ => None }).collect();
-    let mut out = generic(sim, h, intent, replan, &subs, None);
     let tick = sim.world.tick;
+    // общий приказ по полосе — только дивизиям без действующего решения доктрины (иначе приказы чередуются)
+    let free: Vec<Target> = subs.iter().copied().filter(|t| match t { Target::Division(i) => tick >= sim.command.doc_until[*i as usize], _ => true }).collect();
+    let mut out = generic(sim, h, intent, replan, &free, None);
     let dec = sim.doctrine_hq(&sim.world, tick, h as usize, &divs);
+    let hold_h = sim.rules.command.de.permission_hours as u32;
     for o in dec.orders {
         let Some(&i) = o.to.first() else { continue };
         out.retain(|d| d.to != Target::Division(i));
+        sim.command.doc_until[i as usize] = tick + 24;
         let at = o.target.unwrap_or(sim.world.divisions[i as usize].vars.pos);
+        let here = sim.world.divisions[i as usize].vars.pos;
         if o.kind == OrderKind::Withdraw {
             match sim.command.requests.iter().find(|r| r.hq == h && r.division == i).map(|r| r.answer) {
                 Some(Some(true)) => out.push(to_div(h, i, Task::Withdraw, at, Form::Instruction, "разрешение верхней инстанции на отход", &o.note, &format!("отход:{i}"))),
-                Some(_) => {}
+                // ждёт ответа или отказано — держаться на месте
+                Some(_) => out.push(to_div(h, i, Task::Defend, here, Form::Instruction, "приказ от 21.01.1945: до разрешения — держать", &o.note, &format!("держать:{i}"))),
                 None => {
-                    sim.command.requests.push(Request { hq: h, tick, division: i, answer: None });
+                    out.push(to_div(h, i, Task::Defend, here, Form::Instruction, "приказ от 21.01.1945: до разрешения — держать", &o.note, &format!("держать:{i}")));
+                    sim.command.doc_until[i as usize] = tick + hold_h;
+                    sim.command.requests.push(Request { hq: h, tick, division: i, answer: None, answered_at: 0 });
                     let name = sim.world.divisions[i as usize].name.clone();
                     sim.documents.push(Document { tick, hq: h, kind: DocKind::Report, to: Vec::new(), text: format!("запрос на отход: {name} — {}; до ответа — держаться", o.note), rule: Some("приказ от 21.01.1945: о каждом отходе — доклад заранее".into()) });
                 }
@@ -63,7 +71,9 @@ pub fn watch(sim: &mut Sim, h: u32) -> Vec<Directive> {
     let under = |mut k: u32| { for _ in 0..8 { if k == h { return true; } match w.hqs[k as usize].parent { Some(p) => k = p, None => return false } } false };
     let own: Vec<usize> = (0..w.divisions.len()).filter(|&i| { let d = &w.divisions[i]; under(d.hq) && !d.state.out() && d.state != State::Remnant }).collect();
     let deploying: Vec<usize> = (0..w.divisions.len()).filter(|&j| { let e = &w.divisions[j]; e.side != w.hqs[h as usize].side && matches!(e.state, State::Deploy { .. }) && own.iter().any(|&i| w.divisions[i].vars.pos.dist(e.vars.pos) <= near) }).collect();
-    if let Some(t) = sim.command.pulled[h as usize] { if deploying.is_empty() && tick >= t + 24 { sim.command.pulled[h as usize] = None; } return Vec::new(); }
+    if !deploying.is_empty() { sim.command.pull_seen[h as usize] = tick; }
+    // снова — только после затишья 48 ч подряд (иначе в ходе наступления отход каждые сутки)
+    if let Some(t) = sim.command.pulled[h as usize] { if tick >= t + 48 && tick >= sim.command.pull_seen[h as usize] + 48 { sim.command.pulled[h as usize] = None; } return Vec::new(); }
     if (deploying.len() as f64) < r.attack_sign_divisions { return Vec::new(); }
     sim.command.pulled[h as usize] = Some(tick);
     let first: Vec<usize> = own.iter().copied().filter(|&i| deploying.iter().any(|&j| w.divisions[i].vars.pos.dist(w.divisions[j].vars.pos) <= near)).collect();

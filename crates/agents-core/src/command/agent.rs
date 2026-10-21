@@ -161,6 +161,15 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
                         continue;
                     }
                 }
+                // новая ось (сдвиг конца больше 10 км) — построение подчинённых заново
+                let turned = match (sim.command.intent[hu].as_ref().and_then(|o| o.axis.last().copied()), d.axis.last().copied()) { (Some(a), Some(b)) => a.dist(b) > 10.0, _ => false };
+                // роли эшелонов и время ожидания остаются (введённый второй эшелон не ждёт снова); продвижение — от нынешнего
+                // положения, сменённые снова в строю
+                if turned {
+                    let (hs, ds) = crate::command::control::active_subs(sim, h);
+                    for k in hs { let p = place(sim, Target::Hq(k)); sim.command.start_hq[k as usize] = Some(p); sim.command.replaced_hq[k as usize] = false; }
+                    for i in ds { let p = place(sim, Target::Division(i)); sim.command.start_div[i as usize] = Some(p); sim.command.replaced[i as usize] = false; }
+                }
                 sim.command.intent[hu] = Some(d);
                 sim.command.fresh[hu] = true;
             }
@@ -204,9 +213,12 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
         if sim.world.hqs[h].echelon == Echelon::Army { for d in crate::command::de::watch(sim, h as u32) { issue(sim, d, tick); } }
     }
     let wait = sim.rules.command.de.permission_hours as u32;
+    // ответ действует permissionHours — затем корпус может спросить снова
+    sim.command.requests.retain(|r| r.answer.is_none() || tick < r.answered_at + wait);
     for k in 0..sim.command.requests.len() {
         let r = sim.command.requests[k].clone();
         if r.answer.is_some() || tick < r.tick + wait { continue; }
+        sim.command.requests[k].answered_at = tick;
         let side = sim.world.hqs[r.hq as usize].side;
         let top = sim.world.hqs.iter().position(|x| x.side == side && x.echelon == Echelon::HighCommand);
         if top.is_some_and(|t| sim.command.control[t] == Control::Player) { continue; }

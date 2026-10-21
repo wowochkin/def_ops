@@ -183,6 +183,8 @@ fn main() {
             let side = if arg(&args, "side").as_deref() == Some("de") { Side::De } else { Side::Su };
             let hybrid = match c.as_str() { "agents" => false, "hybrid" => true, x => panic!("--command: agents | hybrid, а не {x}") };
             agents_core::command::control::agents_side(&mut sim, side);
+            // в прогоне верхняя инстанция — агент: отвечает на запросы отхода по правилу («держать» через сутки)
+            for (k, h) in sim.world.hqs.iter().enumerate() { if h.side == side && h.echelon == agents_core::model::Echelon::HighCommand { sim.command.control[k] = agents_core::command::control::Control::Agent; } }
             pending = agents_core::command::control::historical_for(&mut sim, side, None, hybrid);
         }
         let start = parse_hours(&meta.start).expect("start");

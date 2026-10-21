@@ -49,18 +49,23 @@ pub struct CommandState {
     pub requests: Vec<Request>,
     /// Час оттяжки армии перед артподготовкой (по штабам; один раз на угрозу).
     pub pulled: Vec<Option<u32>>,
+    /// Последний час, когда у полосы армии развёртывался противник (оттяжка снова — после затишья 48 ч).
+    pub pull_seen: Vec<u32>,
+    /// До какого часа действует решение доктрины по дивизии (общий приказ по полосе её не перебивает).
+    pub doc_until: Vec<u32>,
 }
 
 /// Запрос корпуса на отход дивизии: ответ — да, нет или ещё нет.
 #[derive(Clone, Debug)]
-pub struct Request { pub hq: u32, pub tick: u32, pub division: u32, pub answer: Option<bool> }
+pub struct Request { pub hq: u32, pub tick: u32, pub division: u32, pub answer: Option<bool>, /// Час ответа: ответ действует permissionHours.
+    pub answered_at: u32 }
 
 impl CommandState {
     /// Все штабы — по приказам сценария (как без командования по ступеням).
     pub fn new(hqs: usize, divisions: usize) -> CommandState {
         CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default(),
             role_hq: vec![Role::Unset; hqs], role_div: vec![Role::Unset; divisions], start_hq: vec![None; hqs], start_div: vec![None; divisions],
-            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs] }
+            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions] }
     }
 }
 

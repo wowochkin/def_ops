@@ -72,6 +72,7 @@ fn main() {
             }
             "game_historical" => game.as_mut().ok_or("игра не начата")?.issue_historical(a["id"].as_str().unwrap_or("")).map(|_| Value::Null),
             "game_take" => game.as_mut().ok_or("игра не начата")?.take(a["hq"].as_str().unwrap_or("")).map(|_| Value::Null),
+            "game_permit" => game.as_mut().ok_or("игра не начата")?.permit(a["hq"].as_str().unwrap_or(""), a["yes"].as_bool().unwrap_or(false)).map(|_| Value::Null),
             "game_release" => game.as_mut().ok_or("игра не начата")?.release(a["id"].as_str().unwrap_or("")).map(|_| Value::Null),
             c => Err(format!("нет команды {c}")),
         })();

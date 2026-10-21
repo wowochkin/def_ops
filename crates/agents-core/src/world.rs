@@ -1048,6 +1048,8 @@ impl Sim {
                     if let Some(i) = div {
                         if w.divisions[i].side != side { skip(format!("переподчинение {} — штаб {pid} другой стороны", c.formation)); continue; }
                         w.divisions[i].hq = p as u32;
+                        // новый старший — место в построении заново
+                        if let Some(r) = self.command.role_div.get_mut(i) { *r = crate::command::control::Role::Unset; }
                         journal.push(Event { tick, agent, text: format!("переподчинение → {name}") });
                     } else if let Some(h) = hq {
                         if w.hqs[h].side != side { skip(format!("переподчинение {} — штаб {pid} другой стороны", c.formation)); continue; }
@@ -1059,6 +1061,7 @@ impl Sim {
                         }
                         if cycle { skip(format!("{pid} — в подчинении самого {}: переподчинение образовало бы цикл", c.formation)); continue; }
                         w.hqs[h].parent = Some(p as u32);
+                        if let Some(r) = self.command.role_hq.get_mut(h) { *r = crate::command::control::Role::Unset; }
                         journal.push(Event { tick, agent: u32::MAX, text: format!("{}: переподчинение → {name}", w.hqs[h].name) });
                     } else {
                         skip(format!("переподчинение {} — нет такой дивизии или штаба", c.formation));

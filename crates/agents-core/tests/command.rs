@@ -402,3 +402,24 @@ fn boundary_on_axis_is_deterministic() {
     let b = band_of(&axis, &[(None, on.clone())], &[XY::new(0.0, -3.0)], 4.0);
     assert_eq!(b.left, on);
 }
+
+/// I5: новый замысел с другой осью — продвижение считается заново, от нынешнего положения.
+#[test]
+fn roles_reset_on_new_axis() {
+    let (mut sim, k) = corps_sim(2.0, |_| {});
+    sim.step();
+    let divs: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].hq == k).collect();
+    let s0: Vec<_> = divs.iter().map(|&i| sim.command.start_div[i]).collect();
+    for _ in 0..5 { sim.step(); }
+    let mut d = to_corps(&sim, "su_4gsk", 2.0);
+    // ось — на север
+    let c = d.axis[0];
+    d.axis = vec![c, XY::new(c.x, c.y + 50.0)];
+    d.immediate = Some(Line { pts: vec![XY::new(c.x - 10.0, c.y + 15.0), XY::new(c.x + 10.0, c.y + 15.0)], by: None });
+    d.ready = false; d.form = Form::Instruction;
+    let now = sim.world.tick;
+    agents_core::command::passing::issue(&mut sim, d, now);
+    for _ in 0..4 { sim.step(); }
+    // продвижение считается от нынешнего положения (не от исходного прежнего замысла)
+    assert!(divs.iter().zip(&s0).all(|(&i, s)| sim.command.start_div[i] != *s), "исходные положения обновлены");
+}

@@ -232,6 +232,10 @@ pub mod commands {
         GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.take(&hq)
     }
     #[tauri::command]
+    pub fn game_permit(hq: String, yes: bool) -> Result<(), String> {
+        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.permit(&hq, yes)
+    }
+    #[tauri::command]
     pub fn game_release(id: String) -> Result<(), String> {
         GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.release(&id)
     }

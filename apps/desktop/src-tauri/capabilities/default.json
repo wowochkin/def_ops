@@ -25,6 +25,7 @@
     "allow-game-historical",
     "allow-game-take",
     "allow-game-release",
+    "allow-game-permit",
     "allow-game-stop"
   ]
 }

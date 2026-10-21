@@ -378,3 +378,56 @@ fn private_directive_only_to_named() {
     assert_eq!(g.sim.command.intent[f].as_ref().unwrap().axis, axis, "замысел фронта не изменился");
     assert!(g.sim.command.intent[a as usize].as_ref().unwrap().id.starts_with("частная"), "армия получила частную директиву");
 }
+
+// ---------- исправления по рецензии 2б ----------
+
+/// C1: немецкий корпус не перебрасывает дивизию между приказами — за сутки не больше 3 распоряжений одной дивизии.
+#[test]
+fn de_no_order_flapping() {
+    let mut g = de_game();
+    g.advance(72);
+    let ids: Vec<String> = g.sim.world.divisions.iter().filter(|d| d.side == Side::De).map(|d| d.id.clone()).collect();
+    let worst = ids.iter().map(|id| g.sim.documents.iter().filter(|d| d.tick >= 48 && d.tick < 72 && d.to.iter().any(|t| t == id)).count()).max().unwrap();
+    assert!(worst <= 3, "распоряжений одной дивизии за сутки: {worst}");
+}
+
+/// I2–I3: ставка не игрок — через сутки «держать»; ответ действует сутки, затем корпус может спросить снова;
+/// до ответа дивизия получает «держать».
+#[test]
+fn de_request_answered_and_expires() {
+    let mut g = de_game();
+    let top = hix(&g, "de_hc");
+    g.sim.command.control[top] = Control::Agent;
+    let i = g.sim.world.divisions.iter().position(|d| d.side == Side::De && !d.state.out()).unwrap();
+    g.sim.world.divisions[i].vars.personnel *= 0.3;
+    g.sim.world.divisions[i].vars.cohesion = 0.25;
+    g.advance(8);
+    assert!(g.sim.world.divisions[i].order.as_ref().is_some_and(|o| o.kind == OrderKind::Defend), "до ответа — держать");
+    g.advance(24);
+    let r: Vec<_> = g.sim.command.requests.iter().filter(|r| r.division as usize == i).collect();
+    assert_eq!(r.first().and_then(|r| r.answer), Some(false), "ставка ответила");
+    g.sim.world.divisions[i].vars.cohesion = 0.25;
+    g.advance(30);
+    assert!(g.sim.command.requests.iter().filter(|r| r.division as usize == i).count() <= 1, "старые ответы сняты");
+    assert!(g.sim.documents.iter().filter(|d| d.kind == DocKind::Report && d.text.contains(&g.sim.world.divisions[i].name)).count() >= 2, "спросил снова");
+}
+
+/// I4: оттяжка снова — только после затишья 48 ч подряд.
+#[test]
+fn de_pullback_needs_long_quiet() {
+    let mut g = de_game();
+    g.advance(1);
+    let de0 = g.sim.world.divisions.iter().position(|d| d.side == Side::De && !d.state.out()).unwrap();
+    let p = g.sim.world.divisions[de0].vars.pos;
+    let su: Vec<usize> = { let w = &g.sim.world; let mut v: Vec<usize> = (0..w.divisions.len()).filter(|&i| w.divisions[i].side == Side::Su && !w.divisions[i].state.out()).collect(); v.sort_by(|&a, &b| w.divisions[a].vars.pos.dist(p).total_cmp(&w.divisions[b].vars.pos.dist(p))); v.truncate(3); v };
+    for x in g.sim.command.pulled.iter_mut() { *x = None; }
+    for h in 0..60 {
+        let deploy = h != 30; // один тихий час
+        for &i in &su { g.sim.world.divisions[i].vars.pos = agents_core::geo::XY::new(p.x + 4.0, p.y); g.sim.world.divisions[i].state = if deploy { agents_core::model::State::Deploy { left_h: 6.0 } } else { agents_core::model::State::Reserve }; }
+        g.advance(1);
+    }
+    // после сброса отметки (оттяжка часа 0 у Зеелова — не в счёт)
+    let after: Vec<u32> = g.sim.documents.iter().filter(|d| d.tick >= 1 && d.rule.as_deref().is_some_and(|r| r.contains("оттяжка"))).map(|d| d.tick).collect();
+    assert!(!after.is_empty());
+    assert!(after.iter().all(|&t| t == after[0]), "одна оттяжка: {after:?}");
+}

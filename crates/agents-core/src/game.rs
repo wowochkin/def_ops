@@ -386,6 +386,7 @@ impl Game {
         if open.is_empty() { return Err(format!("у {hq} нет запросов на отход")); }
         for k in open {
             self.sim.command.requests[k].answer = Some(yes);
+            self.sim.command.requests[k].answered_at = tick;
             if !yes { continue; }
             let i = self.sim.command.requests[k].division;
             let at = self.sim.line_behind(&self.sim.world, i as usize);
