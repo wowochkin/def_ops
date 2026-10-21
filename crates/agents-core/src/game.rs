@@ -38,6 +38,17 @@ pub struct PlayerDirective {
     pub note: String,
 }
 
+/// Команда управления игрока на ход (до распоряжений и приказов): взять штаб, вернуть, ответ на запросы отхода,
+/// подать историческую директиву.
+#[derive(Clone, Debug, serde::Deserialize)]
+#[serde(tag = "op", rename_all = "lowercase")]
+pub enum CommandOp {
+    Take { hq: String },
+    Release { id: String },
+    Permit { hq: String, yes: bool },
+    Historical { id: String },
+}
+
 pub struct Game {
     pub mode: Mode,
     /// Поданные исторические директивы (id).
@@ -139,6 +150,9 @@ pub struct PlayerOrder {
     pub target: Option<LngLat>,
     #[serde(default)]
     pub note: String,
+    /// Форма (режимы штабов-агентов): приказ — сутки на ступень, полная слаженность; нет — боевое распоряжение.
+    #[serde(default)]
+    pub form: Option<crate::command::directive::Form>,
 }
 
 impl Game {
@@ -253,7 +267,7 @@ impl Game {
                     (vec![pr.to_lnglat(c), t], if to.len() > 1 { Some(vec![a, b]) } else { Some(vec![t]) })
                 }
             };
-            self.directive(&PlayerDirective { to: o.hq.clone(), task, form: Form::Instruction, axis, immediate, subsequent: None, note: o.note.clone() })?;
+            self.directive(&PlayerDirective { to: o.hq.clone(), task, form: o.form.unwrap_or(Form::Instruction), axis, immediate, subsequent: None, note: o.note.clone() })?;
             return Ok(n);
         }
         if to.is_empty() { return Err(format!("у штаба {} нет действующих дивизий", o.hq)); }
@@ -371,7 +385,10 @@ impl Game {
         if self.mode == Mode::Hybrid && self.hour() > self.takeover { return Err("в «гибриде» исторические директивы подаются до первого хода".into()); }
         if !self.issued.insert(id.to_string()) { return Err(format!("директива {id} уже подана")); }
         let now = self.hour();
-        for (at, d) in crate::command::control::historical_for(&mut self.sim, self.player, Some(id), self.mode == Mode::Hybrid) {
+        let at_takeover = now == self.takeover;
+        for (at, mut d) in crate::command::control::historical_for(&mut self.sim, self.player, Some(id), self.mode == Mode::Hybrid) {
+            // поданная при передаче командования, уже действовавшая к этому часу — доведена (как приказы на начало сценария)
+            if at_takeover && at <= now { d.ready = true; }
             if at <= now { crate::command::passing::issue(&mut self.sim, d, now); } else { self.pending.push((at, d)); }
         }
         Ok(())
@@ -396,6 +413,16 @@ impl Game {
             crate::command::passing::issue(&mut self.sim, d, tick);
         }
         Ok(())
+    }
+
+    /// Команда управления на ход.
+    pub fn command(&mut self, c: &CommandOp) -> Result<(), String> {
+        match c {
+            CommandOp::Take { hq } => self.take(hq),
+            CommandOp::Release { id } => self.release(id),
+            CommandOp::Permit { hq, yes } => self.permit(hq, *yes),
+            CommandOp::Historical { id } => self.issue_historical(id),
+        }
     }
 
     /// Взять штаб под своё управление: его замысел старшего остаётся, сам он больше не решает.
@@ -443,7 +470,28 @@ impl Game {
             "reserves": self.reserves.iter().map(|(&i, &h)| serde_json::json!({ "id": self.sim.world.divisions[i as usize].id, "from": h })).collect::<Vec<_>>(),
             "takeover": self.takeover, "hour": self.hour(), "over": self.over(),
         });
+        v["command"] = self.command_state();
         v
+    }
+
+    /// Состояние управления стороны игрока: режим, кто решает за штабы, изъятые через голову дивизии, запросы на
+    /// отход, исторические директивы верхней инстанции (поданные — `issued`).
+    fn command_state(&self) -> Value {
+        use crate::command::directive::Target;
+        let w = &self.sim.world;
+        let c = &self.sim.command;
+        let mode = match self.mode { Mode::Legacy => "legacy", Mode::Agents => "agents", Mode::Hybrid => "hybrid" };
+        let mine = |h: usize| w.hqs[h].side == self.player;
+        let hqs: Vec<Value> = (0..w.hqs.len()).filter(|&h| mine(h) && c.control.len() > h)
+            .map(|h| serde_json::json!({ "id": w.hqs[h].id, "control": c.control[h], "led": c.led_hq[h] })).collect();
+        let led: Vec<&str> = (0..w.divisions.len()).filter(|&i| c.led_div.get(i).copied().unwrap_or(false) && w.divisions[i].side == self.player).map(|i| w.divisions[i].id.as_str()).collect();
+        let requests: Vec<Value> = c.requests.iter().filter(|r| mine(r.hq as usize))
+            .map(|r| serde_json::json!({ "hq": w.hqs[r.hq as usize].id, "division": w.divisions[r.division as usize].id, "tick": r.tick, "answer": r.answer })).collect();
+        let top = w.hqs.iter().position(|h| h.side == self.player && h.echelon == crate::model::Echelon::HighCommand);
+        let target = |t: Target| match t { Target::Hq(h) => w.hqs[h as usize].id.clone(), Target::Division(i) => w.divisions[i as usize].id.clone() };
+        let historical: Vec<Value> = self.sim.historical.iter().filter(|(_, d)| Some(d.from as usize) == top)
+            .map(|(at, d)| serde_json::json!({ "id": d.id, "at": at, "to": target(d.to), "task": d.task, "form": d.form, "note": d.note, "issued": self.issued.contains(&d.id) })).collect();
+        serde_json::json!({ "mode": mode, "hqs": hqs, "led": led, "requests": requests, "historical": historical })
     }
 }
 

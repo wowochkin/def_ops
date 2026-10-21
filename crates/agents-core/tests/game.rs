@@ -18,9 +18,9 @@ fn takeover_order_and_turn() {
     assert!(g.sim.fires.iter().all(|f| g.sim.world.hqs[f.hq as usize].side == Side::De));
 
     // приказ 8 гв. А: обороняться на месте; штаб противника — отказ
-    let n = g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Defend, target: None, note: "закрепиться".into() }).expect("приказ");
+    let n = g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Defend, target: None, note: "закрепиться".into(), form: None }).expect("приказ");
     assert!(n > 3, "дивизий 8 гв. А: {n}");
-    assert!(g.order(&PlayerOrder { hq: "de_9a".into(), kind: OrderKind::Attack, target: None, note: String::new() }).is_err());
+    assert!(g.order(&PlayerOrder { hq: "de_9a".into(), kind: OrderKind::Attack, target: None, note: String::new(), form: None }).is_err());
 
     g.advance(12);
     assert_eq!(g.hour(), 36);
@@ -45,9 +45,9 @@ fn division_orders_and_external_enemy() {
     let mut g = Game::start_free(sim, meta, 12, Side::Su, &[Side::Su, Side::De], None);
     assert!(g.sim.script.is_empty());
     let div = g.sim.world.divisions.iter().find(|d| d.side == Side::Su && d.state != agents_core::model::State::Pending).unwrap().id.clone();
-    assert_eq!(g.order(&PlayerOrder { hq: div.clone(), kind: OrderKind::Hold, target: None, note: "держать рубеж".into() }).unwrap(), 1);
-    assert!(g.order(&PlayerOrder { hq: "de_9a".into(), kind: OrderKind::Defend, target: None, note: String::new() }).unwrap() > 0);
-    assert!(g.order(&PlayerOrder { hq: "нет_такого".into(), kind: OrderKind::Hold, target: None, note: String::new() }).is_err());
+    assert_eq!(g.order(&PlayerOrder { hq: div.clone(), kind: OrderKind::Hold, target: None, note: "держать рубеж".into(), form: None }).unwrap(), 1);
+    assert!(g.order(&PlayerOrder { hq: "de_9a".into(), kind: OrderKind::Defend, target: None, note: String::new(), form: None }).unwrap() > 0);
+    assert!(g.order(&PlayerOrder { hq: "нет_такого".into(), kind: OrderKind::Hold, target: None, note: String::new(), form: None }).is_err());
     g.advance(6);
     let t = g.trace();
     let i = t["divisions"].as_array().unwrap().iter().position(|d| d["id"] == div.as_str()).unwrap();
@@ -177,13 +177,13 @@ fn hybrid_historical_keeps_script() {
     for _ in 0..24 { plain.step(); }
     h.advance(24);
     assert_eq!(h.sim.digest(), plain.digest());
-    let _ = s.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Defend, target: None, note: String::new() });
+    let _ = s.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Defend, target: None, note: String::new(), form: None });
 }
 
 #[test]
 fn high_command_not_orderable() {
     let mut g = seelow_game(Mode::Agents, 0);
-    let e = g.order(&PlayerOrder { hq: "su_stavka".into(), kind: OrderKind::Attack, target: None, note: String::new() }).unwrap_err();
+    let e = g.order(&PlayerOrder { hq: "su_stavka".into(), kind: OrderKind::Attack, target: None, note: String::new(), form: None }).unwrap_err();
     assert!(e.contains("верхней инстанции"), "{e}");
 }
 
@@ -273,7 +273,7 @@ fn release_returns_to_superior_plan() {
 #[test]
 fn point_order_spreads_targets() {
     let mut g = seelow_game(Mode::Agents, 0);
-    g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Attack, target: Some([14.25, 52.55]), note: String::new() }).expect("приказ");
+    g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Attack, target: Some([14.25, 52.55]), note: String::new(), form: None }).expect("приказ");
     g.advance(10);
     let a = hix(&g, "su_8gva");
     let under = |g: &Game, i: usize| { let mut k = g.sim.world.divisions[i].hq as usize; for _ in 0..8 { if k == a { return true; } match g.sim.world.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
@@ -281,7 +281,7 @@ fn point_order_spreads_targets() {
     assert!(ts.len() >= 3);
     let far = ts.iter().map(|t| ts.iter().map(|u| t.dist(*u)).fold(0.0, f64::max)).fold(0.0, f64::max);
     assert!(far > 1.0, "цели разнесены: {far}");
-    assert!(g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Attack, target: None, note: String::new() }).is_err(), "наступать без цели — ошибка");
+    assert!(g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Attack, target: None, note: String::new(), form: None }).is_err(), "наступать без цели — ошибка");
 }
 
 /// I5: в «гибриде» историческая директива — только до первого хода.
@@ -430,4 +430,52 @@ fn de_pullback_needs_long_quiet() {
     let after: Vec<u32> = g.sim.documents.iter().filter(|d| d.tick >= 1 && d.rule.as_deref().is_some_and(|r| r.contains("оттяжка"))).map(|d| d.tick).collect();
     assert!(!after.is_empty());
     assert!(after.iter().all(|&t| t == after[0]), "одна оттяжка: {after:?}");
+}
+
+#[test]
+fn command_ops_apply() {
+    use agents_core::game::CommandOp;
+    let mut g = seelow_game(Mode::Agents, 0);
+    let op = |j: serde_json::Value| -> CommandOp { serde_json::from_value(j).expect("команда") };
+    g.command(&op(serde_json::json!({ "op": "historical", "id": "stavka-11059" }))).expect("подать");
+    assert!(g.command(&op(serde_json::json!({ "op": "historical", "id": "нет-такой" }))).is_err());
+    g.command(&op(serde_json::json!({ "op": "take", "hq": "su_8gva" }))).expect("взять");
+    let t = g.trace();
+    let hq = |t: &serde_json::Value, id: &str| t["command"]["hqs"].as_array().unwrap().iter().find(|h| h["id"] == id).cloned().expect(id);
+    assert_eq!(hq(&t, "su_8gva")["control"], "player");
+    assert_eq!(hq(&t, "su_1bf")["control"], "agent");
+    assert_eq!(t["command"]["mode"], "agents");
+    let hist = t["command"]["historical"].as_array().unwrap();
+    assert!(hist.iter().any(|h| h["id"] == "stavka-11059" && h["issued"] == true && h["to"] == "su_1bf"), "{hist:?}");
+    g.command(&op(serde_json::json!({ "op": "release", "id": "su_8gva" }))).expect("вернуть");
+    assert_eq!(hq(&g.trace(), "su_8gva")["control"], "agent");
+    // разрешение без запросов — ошибка, не паника
+    assert!(g.command(&op(serde_json::json!({ "op": "permit", "hq": "su_8gva", "yes": true }))).is_err());
+}
+
+#[test]
+fn trace_command_legacy() {
+    let g = seelow_game(Mode::Legacy, 0);
+    assert_eq!(g.trace()["command"]["mode"], "legacy");
+}
+
+#[test]
+fn historical_at_takeover_already_delivered() {
+    // передача командования на вторые сутки: директива Ставки с начала операции уже действует — доведена сразу
+    let mut g = seelow_game(Mode::Agents, 30);
+    g.issue_historical("stavka-11059").expect("директива");
+    let f = hix(&g, "su_1bf") as u32;
+    assert!(g.sim.command.in_transit.iter().any(|(at, d)| d.id == "stavka-11059" && d.to == agents_core::command::directive::Target::Hq(f) && *at == 30), "{:?}", g.sim.command.in_transit.iter().map(|(a, d)| (a, d.id.clone())).collect::<Vec<_>>());
+}
+
+#[test]
+fn order_form_prepared_slower() {
+    use agents_core::game::PlayerOrder;
+    let order = |form: &str| -> PlayerOrder { serde_json::from_value(serde_json::json!({ "hq": "su_8gva", "kind": "defend", "form": form })).expect("приказ") };
+    let mut a = seelow_game(Mode::Agents, 0);
+    a.order(&order("instruction")).expect("распоряжение");
+    let mut b = seelow_game(Mode::Agents, 0);
+    b.order(&order("order")).expect("приказ");
+    let at = |g: &Game| g.sim.command.in_transit.iter().filter(|(_, d)| d.id.starts_with("игрок:")).map(|(at, _)| *at).max().expect("в пути");
+    assert!(at(&b) > at(&a) + 6, "приказ {} — распоряжение {}", at(&b), at(&a));
 }
