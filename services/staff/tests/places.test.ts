@@ -20,6 +20,14 @@ describe('пункты в приказах штаба на модели', () => 
     expect(findArea('Зелов', sit(near('Seelow')))?.id).toBe('Seelow');
   });
 
+  it('допроверка: опечатка и другое написание названия — однозначно ближайший пункт', () => {
+    expect(findArea('Мюнхенберг', sit(near('Muencheberg')))?.id).toBe('Muencheberg');
+    expect(findArea('город Кюстрн', sit([]))?.title).toMatch(/Кюстрин|Kuestrin|Küstrin/);
+    expect(findArea('Хельсинки', sit([]))).toBeNull();
+    const o = decisionToOrders({ orders: [{ formation: '9-я армия', task: 'defend', area: 'Зелоов', toArea: null, details: '', deadline: '' } as never] }, sit(near('Seelow')));
+    expect(o.applied[0].order?.target).toBe('Seelow');
+  });
+
   it('место словами из доклада — точка в стольких км по румбу от пункта', () => {
     const k = all.find((a) => a.id === 'Krajnik')!;
     const r = findOffset('8,2 км к ЮЗ от Крайник (Krajnik)', sit([]))!;

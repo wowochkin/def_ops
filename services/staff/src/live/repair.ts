@@ -9,11 +9,12 @@
  */
 import { LlmClient, type ChatMessage } from '../llm/client';
 import { findName, TASK_RU, type Order as StaffOrder } from '../decision';
-import type { AppliedOrder } from './apply';
+import { orderWant, type AppliedOrder } from './apply';
+import { nearestTitles } from './fuzzy-area';
 import type { Situation } from './situation';
 
 /** Отброшенный приказ: номер в решении (с 1) и почему не исполнен. */
-export interface FailedOrder { n: number; formation: string; task: StaffOrder['task']; issue: string }
+export interface FailedOrder { n: number; formation: string; task: StaffOrder['task']; issue: string; /** Место из приказа словами модели (для подсказки ближайших пунктов). */ want?: string }
 
 /** Почему исправление приказа n отклонено. */
 export interface RepairNote { n: number; text: string }
@@ -37,7 +38,7 @@ export function failedOrders(given: readonly object[], applied: AppliedOrder[]):
   for (const a of applied) {
     if (a.order) continue;
     const n = given.indexOf(a.given) + 1;
-    if (n > 0 && !out.some((f) => f.n === n)) out.push({ n, formation: a.given.formation ?? '', task: a.given.task, issue: a.issue ?? 'не исполнен' });
+    if (n > 0 && !out.some((f) => f.n === n)) out.push({ n, formation: a.given.formation ?? '', task: a.given.task, issue: a.issue ?? 'не исполнен', ...(orderWant(a.given)?.trim() ? { want: orderWant(a.given)!.trim() } : {}) });
   }
   return out.sort((a, b) => a.n - b.n);
 }
@@ -61,8 +62,12 @@ export function takenFormations(applied: AppliedOrder[], sit: Pick<Situation, 'f
 
 const LIMIT = { formations: 80, areas: 60, enemies: 30 };
 const list = (xs: string[], max: number) => xs.slice(0, max).map((x) => `- ${x}`).join('\n') + (xs.length > max ? `\n- … и ещё ${xs.length - max}` : '');
-const failures = (g: Pick<RepairGroup<unknown>, 'failed' | 'taken'>, pad = '') => [
-  ...g.failed.map((f) => `${pad}- приказ ${f.n} («${f.formation}», ${TASK_RU[f.task] ?? f.task}): ${f.issue}`),
+const failures = (g: Pick<RepairGroup<unknown>, 'failed' | 'taken'>, pad = '', titles: string[] = []) => [
+  // не опознанное место — с ближайшими по написанию пунктами из всего театра (в общем списке ниже — только ближние, и он короче)
+  ...g.failed.map((f) => {
+    const near = f.want ? nearestTitles(f.want, titles) : [];
+    return `${pad}- приказ ${f.n} («${f.formation}», ${TASK_RU[f.task] ?? f.task}): ${f.issue}${near.length ? ` — возможно, имелся в виду пункт: ${near.join('; ')}` : ''}`;
+  }),
   ...(g.taken.size ? [`${pad}уже есть приказы: ${[...g.taken.values()].join('; ')} — их не повторяйте`] : []),
 ];
 
@@ -70,13 +75,14 @@ const failures = (g: Pick<RepairGroup<unknown>, 'failed' | 'taken'>, pad = '') =
  * Текст подсказки: ошибки по приказам и у кого уже есть приказы, свои силы и пункты поблизости, формат ответа.
  * variants — по вариантам советника (каждый — со своим номером v).
  */
-export function repairHint(groups: Pick<RepairGroup<unknown>, 'failed' | 'taken' | 'title'>[], sit: Pick<Situation, 'formations' | 'areas' | 'enemies'>, fields: string, variants = false): string {
+export function repairHint(groups: Pick<RepairGroup<unknown>, 'failed' | 'taken' | 'title'>[], sit: Pick<Situation, 'formations' | 'areas' | 'enemies'> & Partial<Pick<Situation, 'allAreas'>>, fields: string, variants = false): string {
+  const titles = [...new Set([...sit.areas, ...(sit.allAreas ?? [])].map((a) => a.title))];
   const total = groups.reduce((a, g) => a + g.failed.length, 0);
   return [
     variants ? 'В вариантах решения есть приказы, которые нельзя исполнить:' : 'В решении есть приказы, которые нельзя исполнить:',
     ...(variants
-      ? groups.flatMap((g, i) => g.failed.length ? [`Вариант ${i + 1} «${g.title ?? ''}»:`, ...failures(g, '  ')] : [])
-      : failures(groups[0])),
+      ? groups.flatMap((g, i) => g.failed.length ? [`Вариант ${i + 1} «${g.title ?? ''}»:`, ...failures(g, '  ', titles)] : [])
+      : failures(groups[0], '', titles)),
     '',
     'Свои силы — приказ можно отдать только им; в поле formation — название точно как здесь, одно формирование на приказ:',
     list(sit.formations.map((f) => f.name), LIMIT.formations),

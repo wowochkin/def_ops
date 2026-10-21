@@ -9,6 +9,10 @@ import { checkAction, type GameState, type Order, type SimContext, type StaffAct
 type LngLat = [number, number];
 import { findName, norm, TASK_RU, type Decision, type Issue, type Order as StaffOrder, type StaffActionGiven } from '../decision';
 import type { Situation } from './situation';
+import { fuzzyIndex } from './fuzzy-area';
+
+/** Место, куда приказ направлен словами модели: у движения — toArea, иначе area. */
+export const orderWant = (o: Pick<StaffOrder, 'task' | 'area' | 'toArea'>): string | null | undefined => (MOVE.includes(o.task) ? o.toArea ?? o.area : o.area);
 
 const MOVE: StaffOrder['task'][] = ['withdraw', 'breakout', 'regroup', 'relieve'];
 const STAY: StaffOrder['task'][] = ['defend', 'hold', 'delay', 'reserve'];
@@ -40,6 +44,8 @@ export function findArea(name: string, sit: Pick<Situation, 'areas' | 'allAreas'
   if (i < 0) i = list.findIndex((a) => bare(a.title) === q);
   if (i < 0) i = findName(name, list.map((a) => a.title), true);
   if (i < 0) i = findName(name, list.map((a) => a.id));
+  // последняя проверка: опечатка, другое написание звука, латиница с ошибкой — однозначно ближайший пункт
+  if (i < 0) i = fuzzyIndex(name, list.map((a) => a.title));
   return i >= 0 ? list[i] : null;
 }
 

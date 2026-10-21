@@ -738,7 +738,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         {doc && time ? <>
           <div className="rp-bar">
           <div className="rp-tools" data-tour="cmd-tools">
-            <LevelSwitch level={level} setLevel={setLevel} />
+            <LevelSwitch level={level} setLevel={setLevel} engine={eng} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))}
               setAll={(on) => setVis((h) => ({ ...h, ...Object.fromEntries(TOGGLES.map((t) => [t.key, on])) }))} />
             {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}

@@ -1261,6 +1261,11 @@ await check('без рук: переигровка → «рассчитай оп
   await page.locator('.lvl-sw button.on', { hasText: 'Оперативный' }).waitFor({ timeout: 30000 });
   if (!(await hlWait('[data-hl="level-op"]', hl0)).ok) throw new Error('рамка не вокруг переключателя уровня');
   const lvlMs = await hlGone('[data-hl="level-op"]', hl0);
+  // масштаб карты — в рекомендованном интервале оперативного уровня (1:100 000 – 1:200 000), «масштаб вне» не показан
+  const sbT = await page.locator('.sb-num:visible').first().innerText({ timeout: 5000 }).catch(() => '');
+  const sbN = Number(sbT.replace(/\D/g, '').replace(/^1/, ''));
+  if (!(sbN >= 97000 && sbN < 196000)) throw new Error(`масштаб на оперативном уровне «${sbT}»`);
+  if (await page.locator('.lvl-off').count()) throw new Error('показано «масштаб вне интервала» внутри интервала');
   // Зелов — в карте и не под панелью и легендой (центр смещён к свободной части карты)
   const z = await zelowSeen();
   if (z.under || !z.onMap || z.zoom < 10) throw new Error(`Зелов в ${z.p}, масштаб ${z.zoom}: под панелью или легендой — ${z.under}`);
