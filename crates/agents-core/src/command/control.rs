@@ -25,12 +25,18 @@ pub struct CommandState {
     pub last_cycle: Vec<u32>,
     /// Директивы в пути: (час прибытия, директива).
     pub in_transit: Vec<(u32, Directive)>,
+    /// Замысел пришёл и ещё не разобран штабом.
+    pub fresh: Vec<bool>,
+    /// Задача дивизии по директиве: после выхода на ближайшую задачу — последующая.
+    pub div_task: Vec<Option<Directive>>,
+    /// Последняя задача, отданная подчинённому: (штаб, получатель) → (цель, задача).
+    pub sent: std::collections::HashMap<(u32, crate::command::directive::Target), (crate::geo::XY, crate::command::directive::Task)>,
 }
 
 impl CommandState {
     /// Все штабы — по приказам сценария (как без командования по ступеням).
     pub fn new(hqs: usize, divisions: usize) -> CommandState {
-        CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new() }
+        CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default() }
     }
 }
 

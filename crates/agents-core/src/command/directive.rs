@@ -19,7 +19,7 @@ pub enum Form { Order, Instruction }
 pub enum Task { Attack, Defend, Delay, Withdraw, Move, Reserve }
 
 /// Получатель: штаб или дивизия (индексы мира).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Target { Hq(u32), Division(u32) }
 
 /// Рубеж задачи и срок (час операции).

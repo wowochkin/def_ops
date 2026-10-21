@@ -304,6 +304,8 @@ impl Sim {
         while let Some(o) = self.script.first() {
             if o.at > tick { break; }
             let o = self.script.remove(0);
+            // штаб ведут агент или игрок — его приказы сценария не действуют
+            if self.command.control[o.hq as usize] != crate::command::control::Control::Script { continue; }
             let side = next.hqs[o.hq as usize].side;
             match self.sources[crate::staff::side_idx(side)] {
                 crate::staff::Source::Script => due.push(o),
@@ -331,6 +333,8 @@ impl Sim {
                 next.in_transit.push((d, order));
             }
         }
+        // командование по ступеням: директивы штабов-агентов и игрока (command/agent.rs)
+        crate::command::agent::phase(self, &mut next, tick, &mut journal);
         let mut arrived = Vec::new();
         next.in_transit.retain(|(d, o)| if o.arrives <= tick { arrived.push((*d, o.clone())); false } else { true });
         for (d, o) in arrived {

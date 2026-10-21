@@ -106,6 +106,12 @@ pub fn clip_line(line: &[XY], band: &Band) -> Vec<XY> {
     if !kept.is_empty() { return kept; }
     let axis = center(band);
     for a in axis.windows(2) { for s in line.windows(2) { if let Some(p) = intersect(a[0], a[1], s[0], s[1]) { return vec![p]; } } }
+    // рубеж короче полосы: пересечение продолжений оси полосы и рубежа (у соседних полос — разные точки)
+    let (a, b) = (axis[0], *axis.last().unwrap());
+    let (c, d) = (line[0], *line.last().unwrap());
+    let (r, q) = (sub(b, a), sub(d, c));
+    let den = cross(r, q);
+    if den.abs() > 1e-9 { return vec![add(a, mul(r, cross(sub(c, a), q) / den))]; }
     vec![mean(line)]
 }
 
@@ -151,5 +157,10 @@ mod tests {
         // рубеж вне полосы — центр рубежа
         let off = clip_line(&[XY::new(30.0, 20.0), XY::new(40.0, 20.0)], &ten());
         assert_eq!(off.len(), 1);
+        // рубеж короче полосы и не доходит до её оси — пересечение продолжений: у соседних полос разные точки
+        let short = [XY::new(10.0, 6.0), XY::new(10.0, 20.0)];
+        let p = split(&ten(), &[1.0, 1.0]);
+        let (a, b) = (clip_line(&short, &p[0]), clip_line(&short, &p[1]));
+        assert!(a[0].dist(b[0]) > 4.0, "{a:?} {b:?}");
     }
 }
