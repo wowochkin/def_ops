@@ -78,7 +78,7 @@ describe('сценарии агентной модели: цепочка шта�
 
 describe('Висло-Одерская операция: корпуса по «Боевому составу» на 1.01.1945', () => {
   const file = 'packages/sim/data/scenarios/agents/vistula-oder-1945.json';
-  const s = rd<Scen & { divisions: { personnel: number }[] }>(file);
+  const s = rd<{ hqs: ScenHq[]; divisions: (Scen['divisions'][number] & { personnel: number })[] }>(file);
   it('цепочка штабов', () => { checkChain(file); });
   const comp = rd<{ armies: { army: string; corps: { id: string; kind: string }[]; directDivisions?: number }[] }>('docs/sources/vistula-oder-1945-su-corps.json');
   const ts = rd<{ formations: { id: string; echelon: string; side: string; type?: string; personnel?: number }[] }>('packages/sim/data/scenarios/vistula-oder-1945.json');

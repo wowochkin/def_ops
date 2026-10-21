@@ -35,4 +35,4 @@ const { ctx, history } = await contextFrom(get, BASE[scen]);
 const trace = rd<AgentTrace>(tracePath);
 const hist = rd<AgentHistory>(`packages/sim/data/scenarios/agents/${scen}-1945.history.json`);
 const s = agentsScore(ctx, trace, hist, history);
-console.log(JSON.stringify({ positions: s.within, events: s.eventsTotal ? s.eventsHit / s.eventsTotal : 0, total: s.score, detail: { within: s.within, n: s.n, eventsHit: s.eventsHit, eventsTotal: s.eventsTotal } }));
+console.log(JSON.stringify({ positions: s.within, events: s.eventsTotal ? s.eventsHit / s.eventsTotal : 0, total: s.score, detail: { within: s.within, n: s.n, medianExcessKm: s.medianExcessKm, eventsHit: s.eventsHit, eventsTotal: s.eventsTotal } }));
