@@ -41,6 +41,12 @@ export interface GatewayConfig {
   downloadsDir?: string;
   /** Разработка: сохранять может и окно vite (:5173), которое проводит /api на шлюз. */
   downloadsDev?: boolean;
+  /**
+   * Настольное приложение: шлюз открыт (auth 'open') на постоянном порту 127.0.0.1, и закрывать его нечем, кроме
+   * проверки, что запрос пришёл от своего окна. Все запросы: Host — этот компьютер и порт шлюза (защита от DNS rebinding);
+   * Origin, если есть, — адрес окна; изменяющим методам Origin обязателен. Окно разработки (:5173) — с downloadsDev.
+   */
+  localOnly?: boolean;
 }
 
 /** Что можно сохранить в «Загрузки»: файлы игры. */
@@ -68,17 +74,44 @@ export function saveName(raw: string): string | null {
   return stem + ext;
 }
 
-/**
- * Запрос со своего окна: Host — этот компьютер и порт шлюза, Origin есть и совпадает с адресом окна приложения
- * (шлюз этого компьютера; при разработке — ещё vite :5173). Без Origin и с чужим — нет.
- */
-function ownWindow(req: http.IncomingMessage, dev: boolean): boolean {
+const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** Host запроса — этот компьютер и порт, на котором принят запрос. */
+function localHost(req: http.IncomingMessage): boolean {
   const port = req.socket.localPort;
   const host = req.headers.host ?? '';
-  if (!LOCAL_HOSTS.some((h) => host === `${h}:${port}`)) return false;
-  const origin = req.headers.origin;
-  if (!origin) return false;
+  return LOCAL_HOSTS.some((h) => host === `${h}:${port}`);
+}
+
+/** Origin — адрес окна приложения (шлюз этого компьютера; при разработке — ещё vite :5173). */
+function windowOrigin(req: http.IncomingMessage, origin: string, dev: boolean): boolean {
+  const port = req.socket.localPort;
   return LOCAL_HOSTS.some((h) => origin === `http://${h}:${port}`) || (dev && DEV_ORIGINS.includes(origin));
+}
+
+/**
+ * Запрос со своего окна: Host — этот компьютер и порт шлюза, Origin есть и совпадает с адресом окна приложения.
+ * Без Origin и с чужим — нет.
+ */
+function ownWindow(req: http.IncomingMessage, dev: boolean): boolean {
+  const origin = req.headers.origin;
+  return localHost(req) && !!origin && windowOrigin(req, origin, dev);
+}
+
+/**
+ * Защита настольного режима для любого запроса шлюза: причина отказа или null.
+ *  - Host не из списка → отказ (страница после DNS rebinding приходит со своим именем);
+ *  - Origin есть и не окно приложения → отказ, в том числе для чтения: чужая страница может ходить на 127.0.0.1:порт
+ *    напрямую, и без этого «Access-Control-Allow-Origin: *» отдал бы ей ответ;
+ *  - POST/PUT/PATCH/DELETE без Origin → отказ (окно браузера Origin на таких запросах шлёт всегда).
+ * GET своего окна Origin не шлёт — это не отказ.
+ */
+export function localGuard(req: http.IncomingMessage, dev: boolean): string | null {
+  if (!localHost(req)) return 'Host запроса — не этот компьютер';
+  const origin = req.headers.origin;
+  if (origin !== undefined) return windowOrigin(req, origin, dev) ? null : 'Origin запроса — не окно приложения';
+  if (MUTATING.has(req.method ?? '')) return 'изменяющему запросу нужен Origin окна приложения';
+  return null;
 }
 
 /** Файл — в «Загрузки»: своё окно, имя без пути, расширение файла игры; занято — «имя (2).md». */
@@ -134,9 +167,14 @@ export function createGateway(cfg: GatewayConfig) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }).end(JSON.stringify({ error: { code, message } }));
   };
 
+  const guarded = cfg.auth === 'open' && !!cfg.localOnly;
   const server = http.createServer(async (req, res) => {
     const started = Date.now();
     const url = new URL(req.url || '/', 'http://gw');
+    if (guarded) {
+      const why = localGuard(req, !!cfg.downloadsDev);
+      if (why) return sendErr(res, 403, 'forbidden', `Запрос не из окна приложения: ${why}`);
+    }
     const requestId = (req.headers['x-request-id'] as string) || crypto.randomUUID();
     res.setHeader('X-Request-Id', requestId);
     res.setHeader('Access-Control-Allow-Origin', cfg.corsOrigin);
