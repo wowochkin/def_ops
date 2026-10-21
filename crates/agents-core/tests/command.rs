@@ -130,7 +130,7 @@ fn to_front(sim: &agents_core::world::Sim, form: Form) -> Directive {
     Directive {
         id: "проба".into(), from: hq(sim, "su_stavka"), to: Target::Hq(hq(sim, "su_1bf")), form, task: Task::Attack,
         axis: vec![c, berlin], immediate: Some(Line { pts: vec![XY::new(at.x - uy * 25.0, at.y + ux * 25.0), XY::new(at.x + uy * 25.0, at.y - ux * 25.0)], by: None }),
-        subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: false, note: "проба".into(),
+        subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: false, rule: None, note: "проба".into(),
     }
 }
 
@@ -209,3 +209,12 @@ fn no_subs_notice() {
     assert!(!new.iter().any(|x| x.hq == k && x.kind != DocKind::Notice));
 }
 
+
+/// Продвижение вдоль оси наступления, км.
+#[test]
+fn advance_along_axis() {
+    use agents_core::command::agent::advance;
+    let a = advance(Some(XY::new(0.0, 0.0)), XY::new(5.0, 3.0), &[XY::new(0.0, 0.0), XY::new(10.0, 0.0)]);
+    assert!((a - 5.0).abs() < 1e-9, "{a}");
+    assert_eq!(advance(None, XY::new(5.0, 3.0), &[XY::new(0.0, 0.0), XY::new(10.0, 0.0)]), 0.0);
+}

@@ -31,11 +31,34 @@ fn place(sim: &Sim, t: Target) -> XY {
     }
 }
 
-/// Решение штаба по замыслу старшего: директивы подчинённым. `replan` — по циклу (распоряжением).
-pub fn plan(sim: &Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directive> {
+/// Продвижение от исходного положения вдоль оси наступления, км (нет исходного — 0).
+pub fn advance(start: Option<XY>, pos: XY, axis: &[XY]) -> f64 {
+    let (Some(s), [a, .., b]) = (start, axis) else { return 0.0 };
+    let l = a.dist(*b);
+    if l < 1e-6 { return 0.0; }
+    ((pos.x - s.x) * (b.x - a.x) + (pos.y - s.y) * (b.y - a.y)) / l
+}
+
+/// Действующие подчинённые штаба целями директив: штабы, затем дивизии.
+pub fn subs_of(sim: &Sim, h: u32) -> Vec<Target> {
     let (hqs, divs) = active_subs(sim, h);
-    let mut subs: Vec<Target> = hqs.into_iter().map(Target::Hq).chain(divs.into_iter().map(Target::Division)).collect();
+    hqs.into_iter().map(Target::Hq).chain(divs.into_iter().map(Target::Division)).collect()
+}
+
+/// Решение штаба по замыслу старшего: по стороне и ступени — логика ступени (command/su.rs, command/de.rs).
+pub fn plan(sim: &Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directive> {
+    match sim.world.hqs[h as usize].side {
+        crate::model::Side::Su => crate::command::su::plan(sim, h, intent, replan),
+        crate::model::Side::De => crate::command::de::plan(sim, h, intent, replan),
+    }
+}
+
+/// Общий раздел полосы: подчинённым `subs` — полосы по весам (`weights` по порядку `subs`; нет — главный удар уже),
+/// ближайшая и последующая задачи — части рубежей старшего. `replan` — по циклу (распоряжением).
+pub fn generic(sim: &Sim, h: u32, intent: &Directive, replan: bool, subs: &[Target], weights: Option<&[f64]>) -> Vec<Directive> {
+    let mut subs: Vec<Target> = subs.to_vec();
     if subs.is_empty() { return Vec::new(); }
+    let given: Option<Vec<f64>> = weights.map(|w| w.to_vec());
     let pos: Vec<XY> = subs.iter().map(|&t| place(sim, t)).collect();
     // ось: из замысла, иначе от центра подчинённых к середине ближайшей задачи
     let axis = if intent.axis.len() >= 2 { intent.axis.clone() } else {
@@ -55,10 +78,13 @@ pub fn plan(sim: &Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directiv
     let pos: Vec<XY> = order.iter().map(|&k| pos[k]).collect();
     // главный удар — названные в замысле или ближайший к оси; там полоса уже
     let nearest = (0..pos.len()).min_by(|&a, &b| side(pos[a]).abs().total_cmp(&side(pos[b]).abs()));
-    let weights: Vec<f64> = subs.iter().enumerate().map(|(k, t)| {
-        let main = matches!(t, Target::Hq(x) if intent.main_blow.contains(x)) || (intent.main_blow.is_empty() && Some(k) == nearest);
-        if main { 1.0 } else { 1.5 }
-    }).collect();
+    let weights: Vec<f64> = match &given {
+        Some(w) => order.iter().map(|&k| w[k]).collect(),
+        None => subs.iter().enumerate().map(|(k, t)| {
+            let main = matches!(t, Target::Hq(x) if intent.main_blow.contains(x)) || (intent.main_blow.is_empty() && Some(k) == nearest);
+            if main { 1.0 } else { 1.5 }
+        }).collect(),
+    };
     let form = if replan || intent.form == Form::Instruction { Form::Instruction } else { Form::Order };
     split(&band, &weights).into_iter().zip(subs).map(|(b, to)| {
         let ax = center(&b);
@@ -68,7 +94,7 @@ pub fn plan(sim: &Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directiv
             immediate: intent.immediate.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             subsequent: intent.subsequent.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             boundaries: vec![(None, b.left.clone()), (None, b.right.clone())],
-            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready && !replan, note: intent.note.clone(),
+            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready && !replan, rule: None, note: intent.note.clone(),
         }
     }).collect()
 }

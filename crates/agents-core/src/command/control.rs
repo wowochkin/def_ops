@@ -6,6 +6,11 @@ use crate::model::State;
 use crate::world::Sim;
 use serde::Serialize;
 
+/// Место в построении: первый, второй эшелон, подвижная группа, введён.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Role { #[default] Unset, First, Second, Mobile, Committed }
+
 /// Кто решает за штаб.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -31,12 +36,23 @@ pub struct CommandState {
     pub div_task: Vec<Option<Directive>>,
     /// Последняя задача, отданная подчинённому: (штаб, получатель) → (цель, задача).
     pub sent: std::collections::HashMap<(u32, crate::command::directive::Target), (crate::geo::XY, crate::command::directive::Task)>,
+    /// Эшелоны: место штабов и дивизий в построении старшего, исходное положение, с какого часа в роли, сменена ли.
+    pub role_hq: Vec<Role>,
+    pub role_div: Vec<Role>,
+    pub start_hq: Vec<Option<crate::geo::XY>>,
+    pub start_div: Vec<Option<crate::geo::XY>>,
+    pub since_hq: Vec<u32>,
+    pub since_div: Vec<u32>,
+    pub replaced_hq: Vec<bool>,
+    pub replaced: Vec<bool>,
 }
 
 impl CommandState {
     /// Все штабы — по приказам сценария (как без командования по ступеням).
     pub fn new(hqs: usize, divisions: usize) -> CommandState {
-        CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default() }
+        CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default(),
+            role_hq: vec![Role::Unset; hqs], role_div: vec![Role::Unset; divisions], start_hq: vec![None; hqs], start_div: vec![None; divisions],
+            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions] }
     }
 }
 

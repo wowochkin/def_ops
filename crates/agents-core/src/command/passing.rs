@@ -30,7 +30,7 @@ pub fn issue(sim: &mut Sim, mut d: Directive, tick: u32) {
         _ => DocKind::Order,
     };
     let text = describe(sim, &d);
-    sim.documents.push(Document { tick, hq: d.from, kind, to: vec![target_id(sim, d.to)], text, rule: None });
+    sim.documents.push(Document { tick, hq: d.from, kind, to: vec![target_id(sim, d.to)], text, rule: d.rule.clone() });
     sim.command.in_transit.push((arrives, d));
 }
 
