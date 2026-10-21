@@ -173,7 +173,10 @@ export function createGateway(cfg: GatewayConfig) {
     const url = new URL(req.url || '/', 'http://gw');
     if (guarded) {
       const why = localGuard(req, !!cfg.downloadsDev);
-      if (why) return sendErr(res, 403, 'forbidden', `Запрос не из окна приложения: ${why}`);
+      if (why) {
+        log('gateway', { level: 'warn', msg: 'запрос отклонён защитой окна', why, method: req.method, path: url.pathname, host: req.headers.host, origin: req.headers.origin });
+        return sendErr(res, 403, 'forbidden', `Запрос не из окна приложения: ${why}`);
+      }
     }
     const requestId = (req.headers['x-request-id'] as string) || crypto.randomUUID();
     res.setHeader('X-Request-Id', requestId);
