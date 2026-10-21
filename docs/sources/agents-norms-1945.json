@@ -586,7 +586,7 @@
     },
     {
       "path": "agents.doctrine.su.firstEchelonShare",
-      "value": 0.667,
+      "value": 0.55,
       "unit": "доля",
       "norm": [
         0.55,

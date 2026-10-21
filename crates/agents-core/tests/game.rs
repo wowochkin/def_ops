@@ -360,3 +360,21 @@ fn directive_errors_hybrid_and_twice() {
     a.issue_historical("stavka-11059").expect("директива");
     assert!(a.issue_historical("stavka-11059").unwrap_err().contains("уже подана"));
 }
+
+/// Директива фронту, называющая армии главного удара, при замысле фронта с осью доводится только до них.
+#[test]
+fn private_directive_only_to_named() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.issue_historical("stavka-11059").expect("директива");
+    g.advance(1);
+    let f = hix(&g, "su_1bf");
+    let axis = g.sim.command.intent[f].as_ref().unwrap().axis.clone();
+    let a = hix(&g, "su_8gva") as u32;
+    let mut d = g.sim.command.intent[f].clone().unwrap();
+    d.id = "частная".into(); d.main_blow = vec![a]; d.axis = vec![]; d.ready = false; d.form = Form::Instruction;
+    d.from = hix(&g, "su_stavka") as u32;
+    agents_core::command::passing::issue(&mut g.sim, d, 1);
+    g.advance(8);
+    assert_eq!(g.sim.command.intent[f].as_ref().unwrap().axis, axis, "замысел фронта не изменился");
+    assert!(g.sim.command.intent[a as usize].as_ref().unwrap().id.starts_with("частная"), "армия получила частную директиву");
+}

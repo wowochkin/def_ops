@@ -38,7 +38,7 @@
 | `agents.doctrine.de.counterattackRatio` | 0,333 | 0,333 | доля | PAM233, гл. 2, с. 9 | B | 0,2664–0,3996 | да |
 | `agents.doctrine.de.withdrawStepKm` | 10 | 8–10 | км | PAM233, с. 29–30, 64–70 | B | 6,4–12 | да |
 | `agents.doctrine.de.penetrationDepthKm` | 5,5 | 5–6 | км | BUP42, гл. 15, §619 | C | 3,25–8,1 | да |
-| `agents.doctrine.su.firstEchelonShare` | 0,667 | 0,55–0,75 | доля | RA15, док. № 33, с. 74–76; SBD25, док. № 46 | B | 0,44–0,9 | да |
+| `agents.doctrine.su.firstEchelonShare` | 0,55 | 0,55–0,75 | доля | RA15, док. № 33, с. 74–76; SBD25, док. № 46 | B | 0,44–0,9 | да |
 | `agents.doctrine.su.commitDepthKm` | 7 | 6–8 | км | RADZ79, с. 112 | B | 4,8–9,6 | да |
 | `agents.doctrine.su.tankCommitDepthKm` | 13 | 13–17 | км | RADZ79, с. 112, 119 | B | 10,4–20,4 | да |
 | `agents.pocket.breakoutKeep` | 0,3 | 0–0,1 | доля | LT_HALBE | B | 0–0,12 | **нет** |

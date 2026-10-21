@@ -137,6 +137,21 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
                 if sim.command.intent[hu].as_ref().is_some_and(|o| o.from == d.from && o.issued > d.issued) { continue; }
                 // изъятый через голову штаб директива старшего больше не задаёт (кроме директивы игрока)
                 if sim.command.led_hq[hu] && sim.command.control[d.from as usize] != Control::Player { continue; }
+                // частное распоряжение (не директива: устное указание): при замысле штаба называет подчинённых на главном
+                // ударе — доводится только до них
+                if d.form == Form::Instruction && sim.command.intent[hu].is_some() && !d.main_blow.is_empty() && d.main_blow.iter().all(|&m| sim.world.hqs[m as usize].parent == Some(h)) {
+                    for &m in &d.main_blow {
+                        let mut x = d.clone();
+                        x.id = format!("{}>{}", d.id, sim.world.hqs[m as usize].id);
+                        x.from = h;
+                        x.to = Target::Hq(m);
+                        x.main_blow = Vec::new();
+                        if x.axis.is_empty() { x.axis = sim.command.intent[hu].as_ref().map(|i| i.axis.clone()).unwrap_or_default(); }
+                        x.rule = Some("частная директива: доводится до названных армий".into());
+                        issue(sim, x, tick);
+                    }
+                    continue;
+                }
                 // директива без оси не заменяет замысел с осью: без геометрии — только документ, с границами — новые границы
                 let geo = !d.axis.is_empty() || d.immediate.is_some() || d.subsequent.is_some() || !d.boundaries.is_empty();
                 if let Some(old) = sim.command.intent[hu].as_mut() {

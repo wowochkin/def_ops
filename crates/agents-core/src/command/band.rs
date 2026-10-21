@@ -112,8 +112,18 @@ pub fn clip_line(line: &[XY], band: &Band) -> Vec<XY> {
     let (c, d) = (line[0], *line.last().unwrap());
     let (r, q) = (sub(b, a), sub(d, c));
     let den = cross(r, q);
-    if den.abs() > 1e-9 { return vec![add(a, mul(r, cross(sub(c, a), q) / den))]; }
-    vec![mean(line)]
+    // ближайшая точка рубежа к точке p
+    let nearest = |p: XY| line.windows(2).map(|w| {
+        let (d, l2) = (sub(w[1], w[0]), dot(sub(w[1], w[0]), sub(w[1], w[0])));
+        let t = if l2 > 1e-12 { (dot(sub(p, w[0]), d) / l2).clamp(0.0, 1.0) } else { 0.0 };
+        add(w[0], mul(d, t))
+    }).min_by(|x, y| x.dist(p).total_cmp(&y.dist(p))).unwrap();
+    if den.abs() > 1e-9 {
+        let p = add(a, mul(r, cross(sub(c, a), q) / den));
+        // продолжения пересекаются дальше 60 км за краем рубежа — ближайшая к середине полосы точка рубежа
+        if nearest(p).dist(p) <= 60.0 { return vec![p]; }
+    }
+    vec![nearest(lerp(a, b, 0.5))]
 }
 
 #[cfg(test)]
@@ -158,6 +168,9 @@ mod tests {
         // рубеж вне полосы — центр рубежа
         let off = clip_line(&[XY::new(30.0, 20.0), XY::new(40.0, 20.0)], &ten());
         assert_eq!(off.len(), 1);
+        // почти параллельный оси короткий рубеж далеко сбоку: продолжения пересекаются за сотни км — берётся точка рубежа
+        let far = clip_line(&[XY::new(5.0, 60.0), XY::new(15.0, 60.5)], &ten());
+        assert!(far[0].y >= 59.0 && far[0].y <= 61.0, "{far:?}");
         // рубеж короче полосы и не доходит до её оси — пересечение продолжений: у соседних полос разные точки
         let short = [XY::new(10.0, 6.0), XY::new(10.0, 20.0)];
         let p = split(&ten(), &[1.0, 1.0]);
