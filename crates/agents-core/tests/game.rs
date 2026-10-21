@@ -92,3 +92,97 @@ fn staff_supply_demolish_and_reserves() {
     assert!((at[0] - 14.3).abs() < 0.3 && (at[1] - 52.6).abs() < 0.3, "{at:?}");
     assert!(a.trace()["game"]["reserves"].as_array().unwrap().iter().all(|x| x["id"] != rid.as_str()));
 }
+
+// ---------- режимы «агенты» и «гибрид», приказ через голову, взять и вернуть ----------
+
+use agents_core::command::control::{Control, DocKind};
+use agents_core::command::directive::{Form, Task};
+use agents_core::game::{Mode, PlayerDirective};
+
+fn seelow_game(mode: Mode, takeover: u32) -> Game {
+    let root = repo_root();
+    let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json"), &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    Game::start_mode(sim, meta, takeover, Side::Su, &[Side::Su], None, mode)
+}
+fn hix(g: &Game, id: &str) -> usize { g.sim.world.hqs.iter().position(|h| h.id == id).expect(id) }
+fn dix(g: &Game, id: &str) -> usize { g.sim.world.divisions.iter().position(|d| d.id == id).expect(id) }
+
+#[test]
+fn agents_mode_player_is_high_command() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    assert_eq!(g.sim.command.control[hix(&g, "su_stavka")], Control::Player);
+    assert_eq!(g.sim.command.control[hix(&g, "su_1bf")], Control::Agent);
+    assert_eq!(g.sim.command.control[hix(&g, "su_8gva")], Control::Agent);
+    assert_eq!(g.sim.command.control[hix(&g, "de_9a")], Control::Script);
+    g.issue_historical("stavka-11059").expect("директива");
+    g.advance(93);
+    let w = &g.sim.world;
+    let su: Vec<_> = w.divisions.iter().filter(|d| d.side == Side::Su && !d.state.out()).collect();
+    let ok = su.iter().filter(|d| d.order.as_ref().is_some_and(|o| o.from == d.hq)).count();
+    assert!(ok * 10 >= su.len() * 9, "{ok} из {}", su.len());
+}
+
+#[test]
+fn over_head_marks_and_notifies() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.issue_historical("stavka-11059").expect("директива");
+    // дивизия под корпусом 8 гв. А
+    let k = hix(&g, "su_4gsk");
+    let div = g.sim.world.divisions.iter().position(|d| d.hq as usize == k).unwrap();
+    let id = g.sim.world.divisions[div].id.clone();
+    g.directive(&PlayerDirective { to: id.clone(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into() }).expect("через голову");
+    assert!(g.sim.command.led_div[div]);
+    for h in ["su_4gsk", "su_8gva", "su_1bf"] {
+        let x = hix(&g, h) as u32;
+        assert!(g.sim.documents.iter().any(|d| d.hq == x && d.kind == DocKind::Notice && d.text.contains("через голову")), "{h}");
+    }
+    g.advance(100);
+    // приказ дивизии — от игрока (верхней инстанции), а не от корпуса
+    let o = g.sim.world.divisions[div].order.as_ref().expect("приказ");
+    assert_eq!(o.from as usize, hix(&g, "su_stavka"));
+    assert_eq!(o.kind, OrderKind::Defend);
+    let _ = dix(&g, &id);
+}
+
+#[test]
+fn take_and_release() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.issue_historical("stavka-11059").expect("директива");
+    g.advance(30);
+    let a = hix(&g, "su_8gva");
+    g.take("su_8gva").expect("взять");
+    assert_eq!(g.sim.command.control[a], Control::Player);
+    let before = g.sim.documents.iter().filter(|d| d.hq as usize == a && d.kind != DocKind::Notice).count();
+    g.advance(24);
+    assert_eq!(g.sim.documents.iter().filter(|d| d.hq as usize == a && d.kind != DocKind::Notice).count(), before, "взятая армия не решает сама");
+    g.release("su_8gva").expect("вернуть");
+    assert_eq!(g.sim.command.control[a], Control::Agent);
+    let n = g.sim.documents.len();
+    g.advance(1);
+    let now: Vec<_> = g.sim.documents[n..].iter().filter(|d| d.hq as usize == a && d.kind != DocKind::Notice).collect();
+    let mut to: Vec<_> = now.iter().flat_map(|d| d.to.clone()).collect();
+    let m = to.len();
+    to.sort(); to.dedup();
+    assert_eq!(m, to.len(), "в час возврата — не больше одной директивы каждому");
+}
+
+#[test]
+fn hybrid_historical_keeps_script() {
+    let mut s = seelow_game(Mode::Legacy, 0);
+    let mut h = seelow_game(Mode::Hybrid, 0);
+    h.issue_historical("stavka-11059").expect("директива");
+    // как прогон по сценарию: штабы 1 БФ ведут приказы сценария
+    assert_eq!(h.sim.command.control[hix(&h, "su_8gva")], Control::Script);
+    let mut plain = { let root = repo_root(); agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json"), &format!("{root}/{DATA_DIR}"), &root).unwrap().0 };
+    for _ in 0..24 { plain.step(); }
+    h.advance(24);
+    assert_eq!(h.sim.digest(), plain.digest());
+    let _ = s.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Defend, target: None, note: String::new() });
+}
+
+#[test]
+fn high_command_not_orderable() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    let e = g.order(&PlayerOrder { hq: "su_stavka".into(), kind: OrderKind::Attack, target: None, note: String::new() }).unwrap_err();
+    assert!(e.contains("верхней инстанции"), "{e}");
+}

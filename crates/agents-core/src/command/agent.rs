@@ -68,7 +68,7 @@ pub fn plan(sim: &Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directiv
             immediate: intent.immediate.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             subsequent: intent.subsequent.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             boundaries: vec![(None, b.left.clone()), (None, b.right.clone())],
-            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, note: intent.note.clone(),
+            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready, note: intent.note.clone(),
         }
     }).collect()
 }
@@ -84,6 +84,14 @@ fn div_target(d: &Directive, pos: XY) -> XY {
 
 /// Фаза командования шага: доставка директив, переход дивизий к последующей задаче, решения штабов-агентов.
 pub fn phase(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Event>) {
+    // готовые к началу директивы доходят до дивизий в тот же час — по ступеням, не больше пяти проходов
+    for _ in 0..5 {
+        phase_once(sim, next, tick, journal);
+        if !sim.command.in_transit.iter().any(|(at, _)| *at <= tick) { break; }
+    }
+}
+
+fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Event>) {
     // директивы, дошедшие к этому часу
     let mut arrived = Vec::new();
     sim.command.in_transit.retain(|(at, d)| if *at <= tick { arrived.push(d.clone()); false } else { true });

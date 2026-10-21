@@ -130,7 +130,7 @@ fn to_front(sim: &agents_core::world::Sim, form: Form) -> Directive {
     Directive {
         id: "проба".into(), from: hq(sim, "su_stavka"), to: Target::Hq(hq(sim, "su_1bf")), form, task: Task::Attack,
         axis: vec![c, berlin], immediate: Some(Line { pts: vec![XY::new(at.x - uy * 25.0, at.y + ux * 25.0), XY::new(at.x + uy * 25.0, at.y - ux * 25.0)], by: None }),
-        subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, note: "проба".into(),
+        subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: false, note: "проба".into(),
     }
 }
 

@@ -46,7 +46,8 @@ fn main() {
                 let enemy = if player == Side::Su { Side::De } else { Side::Su };
                 sim.sources[agents_core::staff::side_idx(enemy)] = if a["enemy"] == "doctrine" { Source::Doctrine } else { Source::Script };
                 let free = if a["enemy"] == "llm" { vec![player, enemy] } else { vec![player] };
-                let mut g = Game::start_free(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free, state.as_ref());
+                let mode: agents_core::game::Mode = opt("mode").map(serde_json::from_value).transpose().map_err(|e| format!("mode: {e}"))?.unwrap_or(agents_core::game::Mode::Legacy);
+                let mut g = Game::start_mode(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free, state.as_ref(), mode);
                 if let Some(u) = a["until"].as_u64() { g.limit = g.limit.max(u as u32); }
                 let t = g.trace();
                 game = Some(g);
@@ -65,6 +66,13 @@ fn main() {
                 Ok(t)
             }
             "game_stop" => { game = None; Ok(Value::Null) }
+            "game_directive" => {
+                let d: agents_core::game::PlayerDirective = serde_json::from_value(a["directive"].clone()).map_err(|e| e.to_string())?;
+                game.as_mut().ok_or("игра не начата")?.directive(&d).map(|_| Value::Null)
+            }
+            "game_historical" => game.as_mut().ok_or("игра не начата")?.issue_historical(a["id"].as_str().unwrap_or("")).map(|_| Value::Null),
+            "game_take" => game.as_mut().ok_or("игра не начата")?.take(a["hq"].as_str().unwrap_or("")).map(|_| Value::Null),
+            "game_release" => game.as_mut().ok_or("игра не начата")?.release(a["id"].as_str().unwrap_or("")).map(|_| Value::Null),
             c => Err(format!("нет команды {c}")),
         })();
         let _ = writeln!(out, "{}", match r { Ok(v) => json!({ "ok": v }), Err(e) => json!({ "error": e }) });

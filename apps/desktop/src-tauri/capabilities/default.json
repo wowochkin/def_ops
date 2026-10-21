@@ -21,6 +21,10 @@
     "allow-probe-parallel",
     "allow-game-start",
     "allow-game-turn",
+    "allow-game-directive",
+    "allow-game-historical",
+    "allow-game-take",
+    "allow-game-release",
     "allow-game-stop"
   ]
 }

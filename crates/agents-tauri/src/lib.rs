@@ -166,7 +166,7 @@ pub mod commands {
     /// Начать игру: прогон по сценарию до часа `takeover`, дальше стороной `player` командует игрок; противник —
     /// по сценарию (script), по доктрине (doctrine) или штабом на модели вне ядра (llm — его приказы приходят в game_turn). Возвращает ход до передачи командования.
     #[tauri::command]
-    pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>, until: Option<u32>, edits: Option<serde_json::Value>, takeover_state: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
+    pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>, until: Option<u32>, edits: Option<serde_json::Value>, takeover_state: Option<serde_json::Value>, mode: Option<agents_core::game::Mode>) -> Result<serde_json::Value, String> {
         tauri::async_runtime::spawn_blocking(move || {
             let r = root();
             let path = inside(&scenario)?;
@@ -183,7 +183,8 @@ pub mod commands {
             sim.sources[other] = if enemy.as_deref() == Some("doctrine") { Source::Doctrine } else { Source::Script };
             // llm — противником командует штаб на языковой модели вне ядра (игра редактора): его приказы — через game_turn
             let free: Vec<Side> = if enemy.as_deref() == Some("llm") { vec![player, enemy_side] } else { vec![player] };
-            let mut g = agents_core::game::Game::start_free(sim, meta, takeover, player, &free, state.as_ref());
+            // режим: «как сейчас» (по умолчанию), «агенты» или «гибрид» (командование по ступеням)
+            let mut g = agents_core::game::Game::start_mode(sim, meta, takeover, player, &free, state.as_ref(), mode.unwrap_or(agents_core::game::Mode::Legacy));
             // срок игры (до победы или поражения) может быть дальше конца сценария
             if let Some(u) = until { g.limit = g.limit.max(u); }
             let t = g.trace();
@@ -216,4 +217,22 @@ pub mod commands {
 
     #[tauri::command]
     pub fn game_stop() { if let Ok(mut g) = GAME.lock() { *g = None; } }
+
+    /// Командование по ступеням: директива игрока, историческая директива, взять штаб, вернуть.
+    #[tauri::command]
+    pub fn game_directive(directive: agents_core::game::PlayerDirective) -> Result<(), String> {
+        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.directive(&directive)
+    }
+    #[tauri::command]
+    pub fn game_historical(id: String) -> Result<(), String> {
+        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.issue_historical(&id)
+    }
+    #[tauri::command]
+    pub fn game_take(hq: String) -> Result<(), String> {
+        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.take(&hq)
+    }
+    #[tauri::command]
+    pub fn game_release(id: String) -> Result<(), String> {
+        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.release(&id)
+    }
 }

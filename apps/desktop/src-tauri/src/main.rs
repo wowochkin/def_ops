@@ -77,7 +77,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models,
-            agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop
+            agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop, agents_tauri::commands::game_directive, agents_tauri::commands::game_historical, agents_tauri::commands::game_take, agents_tauri::commands::game_release
         ])
         .setup(|app| {
             let handle = app.handle().clone();

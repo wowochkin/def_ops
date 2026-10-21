@@ -14,7 +14,34 @@ use crate::world::{ScriptOrder, Sectors, Sim};
 use std::collections::BTreeMap;
 use serde_json::Value;
 
+/// Режим игры: «как сейчас» (приказы игрока размножаются по дивизиям штаба), «агенты» (игрок — верхняя инстанция,
+/// ниже — штабы-агенты), «гибрид» (как «агенты», но исторические директивы, поданные без изменений, ведут приказы
+/// сценария).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Mode { Legacy, Agents, Hybrid }
+
+/// Директива игрока штабу или дивизии (режимы «агенты» и «гибрид»).
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct PlayerDirective {
+    /// Штаб или дивизия.
+    pub to: String,
+    pub task: crate::command::directive::Task,
+    pub form: crate::command::directive::Form,
+    #[serde(default)]
+    pub axis: Vec<LngLat>,
+    #[serde(default)]
+    pub immediate: Option<Vec<LngLat>>,
+    #[serde(default)]
+    pub subsequent: Option<Vec<LngLat>>,
+    #[serde(default)]
+    pub note: String,
+}
+
 pub struct Game {
+    pub mode: Mode,
+    /// Исторические директивы игрока, поданные на будущий час: (час, директива).
+    pub pending: Vec<(u32, crate::command::directive::Directive)>,
     pub sim: Sim,
     pub meta: Meta,
     pub frames: Vec<Vec<Value>>,
@@ -118,7 +145,13 @@ impl Game {
 
     /// То же, со сторонами под внешним управлением `free` (игрок и штаб противника на модели вне ядра) и состоянием
     /// дивизий на час передачи `takeover_state` (заменяет рассчитанное; в последнем кадре до передачи — уже оно).
-    pub fn start_free(mut sim: Sim, meta: Meta, takeover: u32, player: Side, free: &[Side], takeover_state: Option<&TakeoverIn>) -> Game {
+    pub fn start_free(sim: Sim, meta: Meta, takeover: u32, player: Side, free: &[Side], takeover_state: Option<&TakeoverIn>) -> Game {
+        Game::start_mode(sim, meta, takeover, player, free, takeover_state, Mode::Legacy)
+    }
+
+    /// То же, в режиме игры `mode`. В режимах «агенты» и «гибрид» приказы сценария и артподготовки стороны игрока
+    /// остаются (приказы штабов-агентов и игрока при доставке пропускаются), резервы вводятся по сценарию.
+    pub fn start_mode(mut sim: Sim, meta: Meta, takeover: u32, player: Side, free: &[Side], takeover_state: Option<&TakeoverIn>, mode: Mode) -> Game {
         let takeover = takeover.min(meta.hours);
         let mut frames = vec![trace::frame(&sim)];
         for _ in 0..takeover { sim.step(); frames.push(trace::frame(&sim)); }
@@ -136,6 +169,17 @@ impl Game {
                 if let Some(h) = s.hq.as_deref().and_then(|h| w.hqs.iter().position(|x| x.id == h && x.side == d.side)) { d.hq = h as u32; }
             }
             if let Some(f) = frames.last_mut() { *f = trace::frame(&sim); }
+        }
+        // штабы-агенты: игрок — верхняя инстанция своей стороны, ниже — агенты; приказы сценария стороны остаются
+        if mode != Mode::Legacy {
+            use crate::command::control::Control;
+            for (k, h) in sim.world.hqs.iter().enumerate() {
+                if h.side != player { continue; }
+                sim.command.control[k] = if h.echelon == crate::model::Echelon::HighCommand { Control::Player } else { Control::Agent };
+            }
+            for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
+            let limit = meta.hours;
+            return Game { mode, pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new() };
         }
         let mine = |hq: u32, sim: &Sim| free.contains(&sim.world.hqs[hq as usize].side);
         let keep: Vec<bool> = sim.script.iter().map(|o| !mine(o.hq, &sim)).collect();
@@ -155,7 +199,7 @@ impl Game {
             }
         }
         let limit = meta.hours;
-        Game { sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves }
+        Game { mode: Mode::Legacy, pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves }
     }
 
     /// Час прогона (сколько шагов сделано).
@@ -188,6 +232,15 @@ impl Game {
             return Err(format!("нет штаба или дивизии {}", o.hq));
         };
         if !self.free.contains(&self.sim.world.hqs[hq as usize].side) { return Err(format!("{} — не под нашим управлением", o.hq)); }
+        if w.hqs.iter().any(|h| h.id == o.hq && h.echelon == crate::model::Echelon::HighCommand) { return Err("верхней инстанции приказов не отдают".into()); }
+        // в режимах штабов-агентов приказ — директива игрока
+        if self.mode != Mode::Legacy {
+            use crate::command::directive::{Form, Task};
+            let task = match o.kind { OrderKind::Attack => Task::Attack, OrderKind::Defend | OrderKind::Hold => Task::Defend, OrderKind::Withdraw => Task::Withdraw, OrderKind::Move => Task::Move };
+            let n = to.len();
+            self.directive(&PlayerDirective { to: o.hq.clone(), task, form: Form::Instruction, axis: vec![], immediate: o.target.map(|p| vec![p]), subsequent: None, note: o.note.clone() })?;
+            return Ok(n);
+        }
         if to.is_empty() { return Err(format!("у штаба {} нет действующих дивизий", o.hq)); }
         let n = to.len();
         let target = o.target.map(|p| self.sim.theatre.proj.to_xy(p));
@@ -233,10 +286,122 @@ impl Game {
     /// Ход: `hours` шагов (не дальше `limit`).
     pub fn advance(&mut self, hours: u32) {
         let left = self.limit.saturating_sub(self.hour());
-        for _ in 0..hours.min(left) { self.sim.step(); self.frames.push(trace::frame(&self.sim)); }
+        for _ in 0..hours.min(left) {
+            let now = self.hour();
+            let due: Vec<_> = { let (d, rest): (Vec<_>, Vec<_>) = std::mem::take(&mut self.pending).into_iter().partition(|(at, _)| *at <= now); self.pending = rest; d };
+            for (_, d) in due { crate::command::passing::issue(&mut self.sim, d, now); }
+            self.sim.step();
+            self.frames.push(trace::frame(&self.sim));
+        }
     }
 
     pub fn over(&self) -> bool { self.hour() >= self.limit }
+
+    /// Верхняя инстанция стороны игрока.
+    fn top(&self) -> Result<u32, String> {
+        self.sim.world.hqs.iter().position(|h| h.side == self.player && h.echelon == crate::model::Echelon::HighCommand).map(|k| k as u32).ok_or_else(|| "у стороны нет верхней инстанции".into())
+    }
+
+    /// Директива игрока штабу или дивизии. Получатель ниже прямых подчинённых верхней инстанции — приказ через голову
+    /// (ПУ-39 ст. 93): он изъят из замысла старшего, каждый пропущенный штаб получает извещение.
+    pub fn directive(&mut self, p: &PlayerDirective) -> Result<(), String> {
+        use crate::command::control::{DocKind, Document};
+        use crate::command::directive::{Directive, Line, Target};
+        if self.mode == Mode::Legacy { return Err("директивы — в режимах «агенты» и «гибрид»".into()); }
+        let top = self.top()?;
+        let w = &self.sim.world;
+        let (to, parent) = if let Some(h) = w.hqs.iter().position(|h| h.id == p.to) {
+            if w.hqs[h].side != self.player { return Err(format!("{} — не под нашим управлением", p.to)); }
+            if h as u32 == top { return Err("верхней инстанции приказов не отдают".into()); }
+            (Target::Hq(h as u32), w.hqs[h].parent)
+        } else if let Some(i) = w.divisions.iter().position(|d| d.id == p.to) {
+            if w.divisions[i].side != self.player { return Err(format!("{} — не под нашим управлением", p.to)); }
+            if w.divisions[i].state.out() && w.divisions[i].state != crate::model::State::Pending { return Err(format!("{} выбыла", w.divisions[i].name)); }
+            (Target::Division(i as u32), Some(w.divisions[i].hq))
+        } else { return Err(format!("нет штаба или дивизии {}", p.to)); };
+        let tick = self.hour();
+        // через голову: пропущенные штабы — от непосредственного начальника до штаба под верхней инстанцией
+        if parent != Some(top) {
+            match to { Target::Hq(h) => self.sim.command.led_hq[h as usize] = true, Target::Division(i) => self.sim.command.led_div[i as usize] = true }
+            let mut k = parent;
+            let name = |sim: &Sim| match to { Target::Hq(h) => sim.world.hqs[h as usize].name.clone(), Target::Division(i) => sim.world.divisions[i as usize].name.clone() };
+            let who = name(&self.sim);
+            while let Some(h) = k {
+                if h == top { break; }
+                self.sim.documents.push(Document { tick, hq: h, kind: DocKind::Notice, to: vec![p.to.clone()], text: format!("приказ через голову: {who} — ведёт Ставка (ПУ-39 ст. 93)"), rule: Some("ПУ-39 ст. 93".into()) });
+                k = self.sim.world.hqs[h as usize].parent;
+            }
+            if let Some(b) = parent { self.sim.journal.push(crate::world::Event { tick, agent: u32::MAX, text: format!("{who} получил приказ через голову, доносит «{}»", self.sim.world.hqs[b as usize].name) }); }
+        }
+        let xy = |q: &LngLat| self.sim.theatre.proj.to_xy(*q);
+        let d = Directive {
+            id: format!("игрок:{}:{}", p.to, tick), from: top, to, form: p.form, task: p.task,
+            axis: p.axis.iter().map(xy).collect(),
+            immediate: p.immediate.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: None }),
+            subsequent: p.subsequent.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: None }),
+            boundaries: Vec::new(), main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: false, ready: false,
+            note: if p.note.is_empty() { "директива игрока".into() } else { p.note.clone() },
+        };
+        crate::command::passing::issue(&mut self.sim, d, tick);
+        Ok(())
+    }
+
+    /// Историческая директива сценария от имени игрока: в свой час (не раньше текущего). До начала операции — уже
+    /// доведена до дивизий. В «гибриде» поддерево получателя ведут приказы сценария.
+    pub fn issue_historical(&mut self, id: &str) -> Result<(), String> {
+        use crate::command::control::Control;
+        use crate::command::directive::Target;
+        let top = self.top()?;
+        let ds: Vec<_> = self.sim.historical.iter().filter(|(_, d)| d.id == id && d.from == top).cloned().collect();
+        if ds.is_empty() { return Err(format!("нет исторической директивы {id} стороны игрока")); }
+        let now = self.hour();
+        for (at, mut d) in ds {
+            if self.mode == Mode::Hybrid {
+                if let Target::Hq(h) = d.to {
+                    let w = &self.sim.world;
+                    let under = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+                    let sub: Vec<usize> = (0..w.hqs.len()).filter(|&k| under(k)).collect();
+                    for k in sub { self.sim.command.control[k] = Control::Script; }
+                }
+                continue;
+            }
+            d.ready = at == 0;
+            if at <= now { crate::command::passing::issue(&mut self.sim, d, now); } else { self.pending.push((at, d)); }
+        }
+        Ok(())
+    }
+
+    /// Взять штаб под своё управление: его замысел старшего остаётся, сам он больше не решает.
+    pub fn take(&mut self, hq: &str) -> Result<(), String> {
+        use crate::command::control::{Control, DocKind, Document};
+        let h = self.sim.world.hqs.iter().position(|x| x.id == hq && x.side == self.player).ok_or_else(|| format!("нет штаба {hq} стороны игрока"))?;
+        if self.sim.world.hqs[h].echelon == crate::model::Echelon::HighCommand { return Err("верхняя инстанция и так у игрока".into()); }
+        self.sim.command.control[h] = Control::Player;
+        let tick = self.hour();
+        self.sim.documents.push(Document { tick, hq: h as u32, kind: DocKind::Notice, to: Vec::new(), text: "штаб взят под управление игрока".into(), rule: None });
+        Ok(())
+    }
+
+    /// Вернуть: изъятого через голову — в замысел старшего, взятый штаб — агенту (решает в свой следующий цикл).
+    pub fn release(&mut self, id: &str) -> Result<(), String> {
+        use crate::command::control::{Control, DocKind, Document};
+        let tick = self.hour();
+        if let Some(h) = self.sim.world.hqs.iter().position(|x| x.id == id && x.side == self.player) {
+            self.sim.command.led_hq[h] = false;
+            if self.sim.command.control[h] == Control::Player && self.sim.world.hqs[h].echelon != crate::model::Echelon::HighCommand {
+                self.sim.command.control[h] = Control::Agent;
+                self.sim.command.fresh[h] = false;
+                self.sim.command.last_cycle[h] = tick;
+            }
+            self.sim.documents.push(Document { tick, hq: h as u32, kind: DocKind::Notice, to: Vec::new(), text: "штаб возвращён: решает агент по замыслу старшего".into(), rule: None });
+            return Ok(());
+        }
+        if let Some(i) = self.sim.world.divisions.iter().position(|d| d.id == id && d.side == self.player) {
+            self.sim.command.led_div[i] = false;
+            return Ok(());
+        }
+        Err(format!("нет штаба или дивизии {id} стороны игрока"))
+    }
 
     /// Ход игры в формате trace.json (кадры с начала сценария) и сведения об игре.
     pub fn trace(&self) -> Value {
