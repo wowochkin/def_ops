@@ -31,7 +31,8 @@
     "DUP-BRK": "Dupuy Institute, C-WAM 4 (Breakpoints), Clark 1954 — division-combat-norms.json",
     "PAM233": "DA Pam 20-233 German Defense Tactics against Russian Break-throughs — german-defence-doctrine-1945.json",
     "LT_CONQ": "Le Tissier, Soviet Conquest: Berlin 1945 — berlin-1945-conquest.json",
-    "LT_HALBE": "Le Tissier, Slaughter at Halbe — berlin-1945-halbe.json"
+    "LT_HALBE": "Le Tissier, Slaughter at Halbe — berlin-1945-halbe.json",
+    "MATS": "Мацуленко, «Эволюция оперативного искусства» (rkka.ru/analys/nast), вторичный; ВЭС-1986"
   },
   "params": [
     {
@@ -735,6 +736,26 @@
       "inside_source": true,
       "inside_corridor": true,
       "note": "подготовленный приказ — на ступень получателя"
+    },
+    {
+      "path": "agents.command.su.divisionBandKm",
+      "value": 1.5,
+      "unit": "км",
+      "norm": [
+        1.5,
+        2
+      ],
+      "source": "MATS",
+      "place": "«Эволюция оперативного искусства», раздел о прорыве 1944–45 гг.; ВЭС-1986, «Полоса наступления»",
+      "reliability": "B",
+      "paraphrase": "участок прорыва стрелковой дивизии в 1944–45 гг. — 1,5–2 км",
+      "corridor": [
+        1.2,
+        2.4
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "полоса наступления дивизии — 2–4 км"
     }
   ],
   "gaps": [

@@ -191,6 +191,18 @@ pub struct Command {
     pub coord_recover_h: f64,
     pub coord_effect: f64,
     pub cycle_h: [f64; 3],
+    pub su: CommandSu,
+}
+
+/// Советские штабы-агенты (command.su).
+#[derive(Clone, Debug)]
+pub struct CommandSu {
+    /// Участок прорыва стрелковой дивизии, км: шире полосы на дивизию первый эшелон не ставится.
+    pub division_band_km: f64,
+    /// Второй эшелон — позади центра первого, км.
+    pub second_echelon_behind_km: f64,
+    /// Доля подчинённых на главном ударе, если в замысле не названы.
+    pub main_blow_share: f64,
 }
 
 #[derive(Clone, Debug)]
@@ -405,6 +417,11 @@ impl Rules {
             coord_recover_h: num(&ag, "command.coordinationRecoverPerHour")?,
             coord_effect: num(&ag, "command.coordinationEffect")?,
             cycle_h: [num(&ag, "command.cycleHours.front")?, num(&ag, "command.cycleHours.army")?, num(&ag, "command.cycleHours.corps")?],
+            su: CommandSu {
+                division_band_km: num(&ag, "command.su.divisionBandKm")?,
+                second_echelon_behind_km: num(&ag, "command.su.secondEchelonBehindKm")?,
+                main_blow_share: num(&ag, "command.su.mainBlowShare")?,
+            },
         };
         Ok(Rules {
             command,

@@ -13,14 +13,14 @@ use crate::world::{Event, Sim, World};
 /// Ближе — цель достигнута, км.
 const REACHED_KM: f64 = 2.0;
 
-fn mid(ps: &[XY]) -> Option<XY> {
+pub fn mid(ps: &[XY]) -> Option<XY> {
     if ps.is_empty() { return None; }
     let n = ps.len() as f64;
     Some(XY::new(ps.iter().map(|p| p.x).sum::<f64>() / n, ps.iter().map(|p| p.y).sum::<f64>() / n))
 }
 
 /// Положение подчинённого: дивизия — её место, штаб — центр его действующих дивизий (с подчинёнными штабами).
-fn place(sim: &Sim, t: Target) -> XY {
+pub fn place(sim: &Sim, t: Target) -> XY {
     let w = &sim.world;
     match t {
         Target::Division(i) => w.divisions[i as usize].vars.pos,
@@ -46,11 +46,28 @@ pub fn subs_of(sim: &Sim, h: u32) -> Vec<Target> {
 }
 
 /// Решение штаба по замыслу старшего: по стороне и ступени — логика ступени (command/su.rs, command/de.rs).
-pub fn plan(sim: &Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directive> {
+pub fn plan(sim: &mut Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directive> {
     match sim.world.hqs[h as usize].side {
         crate::model::Side::Su => crate::command::su::plan(sim, h, intent, replan),
         crate::model::Side::De => crate::command::de::plan(sim, h, intent, replan),
     }
+}
+
+/// Полоса штаба по замыслу: граница, ось и направление (единичный вектор).
+pub struct Frame { pub band: crate::command::band::Band, pub axis: Vec<XY>, pub dir: XY }
+
+/// Полоса штаба `h` по замыслу для подчинённых `subs`: ось — из замысла, иначе от центра подчинённых к середине
+/// ближайшей задачи; ширина без разграничительных линий — по крайним дивизиям всего поддерева.
+pub fn frame(sim: &Sim, h: u32, intent: &Directive, subs: &[Target]) -> Frame {
+    let pos: Vec<XY> = subs.iter().map(|&t| place(sim, t)).collect();
+    let axis = if intent.axis.len() >= 2 { intent.axis.clone() } else {
+        match (mid(&pos), intent.immediate.as_ref().and_then(|l| mid(&l.pts))) { (Some(a), Some(b)) => vec![a, b], _ => Vec::new() }
+    };
+    let extent: Vec<XY> = { let w = &sim.world; let under = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+        w.divisions.iter().filter(|d| !d.state.out() && under(d.hq as usize)).map(|d| d.vars.pos).collect() };
+    let band = band_of(&axis, &intent.boundaries, if extent.is_empty() { &pos } else { &extent }, 2.0 * subs.len() as f64);
+    let dir = match axis.as_slice() { [a, .., b] if a.dist(*b) > 1e-6 => XY::new((b.x - a.x) / a.dist(*b), (b.y - a.y) / a.dist(*b)), _ => XY::new(-1.0, 0.0) };
+    Frame { band, axis, dir }
 }
 
 /// Общий раздел полосы: подчинённым `subs` — полосы по весам (`weights` по порядку `subs`; нет — главный удар уже),
@@ -60,16 +77,7 @@ pub fn generic(sim: &Sim, h: u32, intent: &Directive, replan: bool, subs: &[Targ
     if subs.is_empty() { return Vec::new(); }
     let given: Option<Vec<f64>> = weights.map(|w| w.to_vec());
     let pos: Vec<XY> = subs.iter().map(|&t| place(sim, t)).collect();
-    // ось: из замысла, иначе от центра подчинённых к середине ближайшей задачи
-    let axis = if intent.axis.len() >= 2 { intent.axis.clone() } else {
-        match (mid(&pos), intent.immediate.as_ref().and_then(|l| mid(&l.pts))) { (Some(a), Some(b)) => vec![a, b], _ => Vec::new() }
-    };
-    // ширина полосы без разграничительных линий — по крайним дивизиям всего поддерева, а не по центрам подчинённых
-    let extent: Vec<XY> = { let w = &sim.world; let under = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
-        w.divisions.iter().filter(|d| !d.state.out() && under(d.hq as usize)).map(|d| d.vars.pos).collect() };
-    let band = band_of(&axis, &intent.boundaries, if extent.is_empty() { &pos } else { &extent }, 2.0 * subs.len() as f64);
-    // слева направо по оси
-    let dir = match axis.as_slice() { [a, .., b] if a.dist(*b) > 1e-6 => XY::new((b.x - a.x) / a.dist(*b), (b.y - a.y) / a.dist(*b)), _ => XY::new(-1.0, 0.0) };
+    let Frame { band, axis, dir } = frame(sim, h, intent, &subs);
     let base = axis.first().copied().or_else(|| mid(&pos)).unwrap_or_default();
     let side = |p: XY| -dir.y * (p.x - base.x) + dir.x * (p.y - base.y);
     let mut order: Vec<usize> = (0..subs.len()).collect();

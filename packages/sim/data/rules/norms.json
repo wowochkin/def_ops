@@ -1673,6 +1673,26 @@
       "rules": [
         "agents.command.preparedHours.division"
       ]
+    },
+    {
+      "id": "agents-command-su-division-band",
+      "title": "Участок прорыва стрелковой дивизии (агентная модель)",
+      "kb": "org:model-agents-params",
+      "source": "MATS, «Эволюция оперативного искусства»; ВЭС-1986, «Полоса наступления»",
+      "reliability": "B",
+      "historical": "в третьем периоде войны стрелковая дивизия прорывала оборону на участке 1,5–2 км (полоса 2–4 км)",
+      "measure": {
+        "kind": "param",
+        "expr": "agents.command.su.divisionBandKm"
+      },
+      "expect": [
+        1.5,
+        2
+      ],
+      "unit": "км",
+      "rules": [
+        "agents.command.su.divisionBandKm"
+      ]
     }
   ],
   "findings": [

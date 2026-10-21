@@ -171,6 +171,7 @@ export const RULE_INPUTS: RuleInput[] = [
   agent('doctrine.su.tankCommitDepthKm', 'Глубина ввода танков', 'км'),
   agent('command.preparedHours.corps', 'Подготовленный приказ корпуса', 'ч'),
   agent('command.preparedHours.division', 'Подготовленный приказ дивизии', 'ч'),
+  agent('command.su.divisionBandKm', 'Участок прорыва дивизии', 'км'),
   agent('pocket.breakoutKeep', 'Прорвавшиеся выносят техники', 'доля'),
   agent('pocket.breakoutKmDay', 'Темп прорыва из котла', 'км/сут'),
   agent('pocket.breakoutLossDay', 'Потери при прорыве из котла', 'доля/сут'),

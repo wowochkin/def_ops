@@ -152,12 +152,12 @@ fn directive_reaches_divisions_through_agents() {
     assert_eq!(from_corps(&sim), 0);
     for _ in 0..2 { sim.step(); }
     let act = active_su(&sim);
-    let ok = act.iter().filter(|&&i| { let dv = &sim.world.divisions[i]; dv.order.as_ref().is_some_and(|o| o.from == dv.hq && o.kind == OrderKind::Attack) }).count();
+    let ok = act.iter().filter(|&&i| { let dv = &sim.world.divisions[i]; dv.order.as_ref().is_some_and(|o| o.from == dv.hq && matches!(o.kind, OrderKind::Attack | OrderKind::Move)) }).count();
     assert!(ok * 10 >= act.len() * 9, "{ok} из {}", act.len());
     for k in [DocKind::Directive, DocKind::Order] { assert!(sim.documents.iter().any(|x| x.kind == k), "{k:?}"); }
     // цели соседей по корпусу разнесены
     for (h, _) in sim.world.hqs.iter().enumerate().filter(|(_, h)| h.side == Side::Su && h.echelon == Echelon::Corps) {
-        let ts: Vec<XY> = act.iter().filter(|&&i| sim.world.divisions[i].hq as usize == h).filter_map(|&i| sim.world.divisions[i].order.as_ref().map(|o| o.target)).collect();
+        let ts: Vec<XY> = act.iter().filter(|&&i| sim.world.divisions[i].hq as usize == h).filter_map(|&i| sim.world.divisions[i].order.as_ref().filter(|o| o.kind == OrderKind::Attack).map(|o| o.target)).collect();
         for a in 0..ts.len() { for b in a + 1..ts.len() { assert!(ts[a].dist(ts[b]) >= 0.05, "корпус {h}: {:?} {:?}", ts[a], ts[b]); } }
     }
 }
@@ -217,4 +217,76 @@ fn advance_along_axis() {
     let a = advance(Some(XY::new(0.0, 0.0)), XY::new(5.0, 3.0), &[XY::new(0.0, 0.0), XY::new(10.0, 0.0)]);
     assert!((a - 5.0).abs() < 1e-9, "{a}");
     assert_eq!(advance(None, XY::new(5.0, 3.0), &[XY::new(0.0, 0.0), XY::new(10.0, 0.0)]), 0.0);
+}
+
+// ---------- этап 2б: советский корпус ----------
+
+use agents_core::command::control::Role;
+
+/// Директива армии корпусу `corps` (готова к началу): наступать на Берлин, полоса ±`half` км вокруг центра корпуса.
+fn to_corps(sim: &agents_core::world::Sim, corps: &str, half: f64) -> Directive {
+    let k = hq(sim, corps);
+    let ds: Vec<XY> = sim.world.divisions.iter().filter(|d| d.hq == k && !d.state.out()).map(|d| d.vars.pos).collect();
+    let c = XY::new(ds.iter().map(|p| p.x).sum::<f64>() / ds.len() as f64, ds.iter().map(|p| p.y).sum::<f64>() / ds.len() as f64);
+    let berlin = sim.theatre.proj.to_xy([13.40, 52.52]);
+    let d = c.dist(berlin);
+    let (ux, uy) = ((berlin.x - c.x) / d, (berlin.y - c.y) / d);
+    let side = |s: f64| vec![XY::new(c.x - uy * s - ux * 2.0, c.y + ux * s - uy * 2.0), XY::new(c.x - uy * s + ux * 40.0, c.y + ux * s + uy * 40.0)];
+    let at = XY::new(c.x + ux * 15.0, c.y + uy * 15.0);
+    Directive {
+        id: "корпусу".into(), from: sim.world.hqs[k as usize].parent.unwrap(), to: Target::Hq(k), form: Form::Order, task: Task::Attack,
+        axis: vec![c, berlin], immediate: Some(Line { pts: vec![XY::new(at.x - uy * 10.0, at.y + ux * 10.0), XY::new(at.x + uy * 10.0, at.y - ux * 10.0)], by: None }),
+        subsequent: Some(Line { pts: vec![berlin], by: None }), boundaries: vec![(None, side(half)), (None, side(-half))], main_blow: vec![], reserve: vec![], junction: None,
+        hasty: false, ready: true, rule: None, note: "проба".into(),
+    }
+}
+
+fn corps_sim(half: f64, edit: impl Fn(&mut agents_core::world::Sim)) -> (agents_core::world::Sim, u32) {
+    let mut sim = load("seelow-1945");
+    agents_su(&mut sim);
+    edit(&mut sim);
+    let d = to_corps(&sim, "su_4gsk", half);
+    let k = hq(&sim, "su_4gsk");
+    agents_core::command::passing::issue(&mut sim, d, 0);
+    (sim, k)
+}
+
+/// Корпус из 3 дивизий в полосе 4 км: 2 в первом эшелоне (по 1,5–2 км), 1 во втором — за первым на 5–7 км.
+#[test]
+fn corps_echelons_by_norm() {
+    let (mut sim, k) = corps_sim(2.0, |_| {});
+    sim.step();
+    let divs: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].hq == k).collect();
+    assert_eq!(divs.len(), 3);
+    let first: Vec<usize> = divs.iter().copied().filter(|&i| sim.command.role_div[i] == Role::First).collect();
+    let second: Vec<usize> = divs.iter().copied().filter(|&i| sim.command.role_div[i] == Role::Second).collect();
+    assert_eq!((first.len(), second.len()), (2, 1), "{:?}", divs.iter().map(|&i| sim.command.role_div[i]).collect::<Vec<_>>());
+    let t: Vec<XY> = first.iter().map(|&i| sim.world.divisions[i].order.as_ref().unwrap().target).collect();
+    assert!(t[0].dist(t[1]) >= 1.0, "{:?}", t);
+    let o = sim.world.divisions[second[0]].order.as_ref().unwrap();
+    assert_eq!(o.kind, OrderKind::Move);
+    let c = XY::new(first.iter().map(|&i| sim.world.divisions[i].vars.pos.x).sum::<f64>() / 2.0, first.iter().map(|&i| sim.world.divisions[i].vars.pos.y).sum::<f64>() / 2.0);
+    let behind = o.target.dist(c);
+    assert!((5.0..=7.0).contains(&behind), "второй эшелон за первым на {behind:.1} км");
+    assert!(sim.documents.iter().any(|d| d.rule.as_deref().is_some_and(|r| r.contains("ст. 103"))));
+}
+
+/// Полоса корпуса 1 км — в первом эшелоне одна дивизия.
+#[test]
+fn narrow_band_keeps_one_first() {
+    let (mut sim, k) = corps_sim(0.5, |_| {});
+    sim.step();
+    let n = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].hq == k && sim.command.role_div[i] == Role::First).count();
+    assert_eq!(n, 1);
+}
+
+/// Без продвижения второй эшелон вводится через 48 ч.
+#[test]
+fn second_echelon_commits_by_fallback() {
+    let (mut sim, k) = corps_sim(2.0, |s| s.rules.doctrine_su.commit_depth_km = 1000.0);
+    for _ in 0..50 { sim.step(); }
+    let second: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].hq == k && sim.command.role_div[i] == Role::Committed).collect();
+    assert!(!second.is_empty(), "введён");
+    for _ in 0..4 { sim.step(); }
+    assert!(second.iter().all(|&i| sim.world.divisions[i].order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack)));
 }
