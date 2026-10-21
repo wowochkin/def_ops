@@ -34,6 +34,7 @@ import { ReviewView } from './ReviewView';
 import { mdToHtml } from './markdown';
 import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, openModal, register, speak, useAction, voiceRecent } from './voice/registry';
+import { useSpeakAnswers } from './voice/advisor-voice';
 import { hl, setFlashMapView } from './voice/highlight';
 import { setTourMap } from './voice/tour';
 import { createTourMap } from './voice/tour-map';
@@ -157,6 +158,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     frame: (cb) => requestAnimationFrame(cb), cancel: (id) => cancelAnimationFrame(id), clock: () => performance.now(),
   })) : undefined), [eng]); // eslint-disable-line react-hooks/exhaustive-deps
   const [adv, setAdv] = useState<AdvMsg[]>([]);
+  const [advQ, setAdvQ] = useState('');  // поле вопроса советнику (общее с голосом: «запиши в вопрос …»)
   const [plan, setPlanState] = useState<PlanState | null>(null);
   /** Варианты — и в ref: сообщения потока идут чаще отрисовки, итог («готово») говорится по самому свежему. */
   const planLive = useRef<PlanState | null>(null);
@@ -613,6 +615,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     view, busy: view ? progress : null, setTab, setSub, goTo: (at) => goTo(at), select: setSel,
     plan, planN, askPlan, stopAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); },
     openVariant: (i) => { setPlanOpen(i); setAdvOpen(true); setAdvMin(false); }, applyPlan,
+    advisorText: advQ, setAdvisorText: setAdvQ,
     advisorBusy: adv.some((m) => !m.result), askAdvisor: (q) => askAdvisor('situation', 'свободный вопрос', q),
     suggestions: lastAdvice?.result?.suggestions.filter((x) => x.ok) ?? [], takeSuggestion,
     decision, setDecision: (p) => setDecision((d) => ({ ...d, ...p })),
@@ -770,7 +773,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       </main>
       {advOpen && view && advMin && <ActButton className="adv-tab" action="command.advisor.show" params={{ mode: 'open' }} title="Развернуть советника" data-hl="adv-tab">
         <span>Советник</span>{adv.some((m) => !m.result) ? <i className="spinner" /> : adv.length > advSeen ? <b className="adv-new">ответ</b> : null}</ActButton>}
-      {advOpen && view && !advMin && <Advisor llm={llm} msgs={adv}
+      {advOpen && view && !advMin && <Advisor llm={llm} msgs={adv} text={advQ} setText={setAdvQ}
         dyn={advDyn} focus={focus}
         drafted={(f) => !!drafts[f]}
         plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} acceptPlan={(v, i) => void acceptByButton(v, i)}
@@ -1001,18 +1004,18 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ llm, msgs, drafted, dyn, focus, plan, planStale, planN, acceptPlan, planOpen, hasAct }: {
-  llm: Llm; msgs: AdvMsg[]; drafted: (f: string) => boolean; dyn: Dyn; focus: Sector | null;
+function Advisor({ llm, msgs, text, setText, drafted, dyn, focus, plan, planStale, planN, acceptPlan, planOpen, hasAct }: {
+  llm: Llm; msgs: AdvMsg[]; text: string; setText: (s: string) => void; drafted: (f: string) => boolean; dyn: Dyn; focus: Sector | null;
   plan: PlanState | null; planStale: boolean; planN: number; acceptPlan: (v: PlanVariantView, i: number) => void;
   planOpen: number | null; hasAct: (key: string) => boolean;
 }) {
   /** Путь по дереву: индексы узлов (пусто — категории). */
   const [path, setPath] = useState<AdviceNode[]>([]);
   const [find, setFind] = useState('');
-  const [text, setText] = useState('');
   const [navOpen, setNavOpen] = useState(true);
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [msgs, plan?.variants.length, plan?.id]);
+  const [speakAns] = useSpeakAnswers();
   const busy = msgs.some((m) => !m.result);
   const planBusy = !!plan && !plan.done;
   // запрошены варианты — свернуть темы, чтобы карточки были видны
@@ -1109,6 +1112,10 @@ function Advisor({ llm, msgs, drafted, dyn, focus, plan, planStale, planN, accep
         {busy ? <StaffButton action="command.advisor.stop" title="Прервать ответ (модель освобождается)">Остановить</StaffButton>
           : <button className="primary" disabled={!text.trim()} onClick={() => go(text)}>Спросить</button>}
       </div>
+      <label className="adv-voice" title="Ответ зачитывается коротко, остальное — по «подробнее». Голосом: «Штаб, читай ответы советника вслух» / «не читай ответы».">
+        <input type="checkbox" checked={speakAns} onChange={(e) => { void act('command.advisor.voice', { on: e.target.checked }); }} /> Читать ответы вслух
+        <small>Голосом: «запиши в вопрос …», «отправь вопрос»</small>
+      </label>
       <div className="adv-note">Вопросы читает только советник. Арбитр исполняет лишь утверждённые вами приказы в строгой форме — объединение, задача, цель.</div>
     </div>
   );

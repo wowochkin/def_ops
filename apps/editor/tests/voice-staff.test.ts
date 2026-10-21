@@ -1,5 +1,6 @@
 // «Командование» голосом — советник, решение, приказы, распоряжения: действия с поддельным состоянием (как в
 // CommandView), разбор фраз без модели, ложные перехваты, озвучка ответов советника.
+import { setSpeakAnswers, speakAnswersOn } from '../src/voice/advisor-voice';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { places as simPlaces, Theatre, type ActionCheck, type IntelReport, type Scenario, type TheatreData, type UnitReport } from '@def-ops/sim';
 import type { AdviceView, HumanDecision, PlanVariantView, TurnView } from '../src/sim/game-protocol';
@@ -84,7 +85,7 @@ type S = StaffDeps & { checks: StaffAct[] };
 function staff(over: Partial<StaffDeps> = {}, check: (a: StaffAct['action']) => ActionCheck = () => ({ ok: true, text: 'будет готово ≈ 18.04 17:00' })): S {
   const d = {
     view: view(), busy: null, setTab: vi.fn(), setSub: vi.fn(), goTo: vi.fn(), select: vi.fn(),
-    plan: null, planN: 3, askPlan: vi.fn(() => 7), stopAdvisor: vi.fn(), openVariant: vi.fn(), advisorBusy: false,
+    plan: null, planN: 3, askPlan: vi.fn(() => 7), stopAdvisor: vi.fn(), openVariant: vi.fn(), advisorBusy: false, advisorText: '', setAdvisorText: vi.fn(),
     applyPlan: vi.fn(async (i: number, only: boolean) => `${only ? 'Только решение' : 'Принят'} ${i}`),
     askAdvisor: vi.fn(() => 41), suggestions: [], takeSuggestion: vi.fn(),
     decision: { ...EMPTY }, drafts: {}, acts: [], checks: [],
@@ -253,8 +254,11 @@ describe('советник голосом', () => {
     expect(text).toMatch(/^Советник: Главный удар лучше наносить на Зелов\. Там противник слабее\. Подвоз доходит\./);
     expect(text).not.toMatch(/Риск/);
     expect(text).toMatch(/Предлагает приказы: первый — восьмая гвардейская армия — наступать, Зелов; второй — пятая ударная армия — наступать, Зелов\. Взять — скажите «возьми первый приказ»\. Остальное — скажите «подробнее»\./);
+    setSpeakAnswers(false);
     expect(adviceArrived(41, r)).toBeNull();
-    expect(adviceArrived(55, r)).toBeNull(); // спрашивали кнопкой
+    expect(adviceArrived(55, r)).toBeNull(); // спрашивали кнопкой, озвучка ответов выключена
+    setSpeakAnswers(true);
+    expect(adviceArrived(56, r)).toMatch(/^Советник: Главный удар/); // озвучка включена — читается и ответ на вопрос кнопкой или из поля
     await disp.utterance('Штаб, подробнее', 2);
     expect(said.at(-1)).toMatch(/Резерв стоит ввести к вечеру/);
     d.suggestions = r.suggestions;
@@ -271,6 +275,34 @@ describe('советник голосом', () => {
     d.advisorBusy = false;
     await mk().utterance('Штаб, останови советника', 2);
     expect(said.at(-1)).toMatch(/советник сейчас ничего не готовит/);
+  });
+});
+
+// ---------------------------------------------------------------- беседа с советником: диктовка и озвучка
+
+describe('поле вопроса советнику голосом', () => {
+  it('«запиши в вопрос …» пишет в поле, «отправь вопрос» отправляет и очищает, пустое поле — не отправляется', async () => {
+    const d = staff();
+    const disp = mk();
+    await disp.utterance('Штаб, отправь вопрос', 1);
+    expect(d.askAdvisor).not.toHaveBeenCalled();
+    d.setAdvisorText = vi.fn((x: string) => { d.advisorText = x; });
+    await disp.utterance('Штаб, запиши в вопрос: где лучше наступать завтра', 2);
+    expect(d.advisorText).toBe('Где лучше наступать завтра');
+    await disp.utterance('Штаб, допиши в вопрос советнику: и чем прикрыть фланг', 3);
+    expect(d.advisorText).toBe('Где лучше наступать завтра и чем прикрыть фланг');
+    await disp.utterance('Штаб, отправь вопрос', 4);
+    expect(d.askAdvisor).toHaveBeenCalledWith('Где лучше наступать завтра и чем прикрыть фланг');
+    expect(d.advisorText).toBe('');
+    expect(said.at(-1)).toMatch(/^Передал вопрос советнику/);
+  });
+  it('«не читай ответы советника» / «читай ответы советника вслух» переключают озвучку', async () => {
+    staff();
+    const disp = mk();
+    await disp.utterance('Штаб, не читай ответы советника', 1);
+    expect(speakAnswersOn()).toBe(false);
+    await disp.utterance('Штаб, читай ответы советника вслух', 2);
+    expect(speakAnswersOn()).toBe(true);
   });
 });
 

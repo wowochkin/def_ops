@@ -20,6 +20,7 @@ import type { LngLat } from '@def-ops/core';
 import { TASK_RU, type ActionCheck, type IntelReport, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import type { AdviceView, HumanDecision, Place, PlanVariantView, TurnView } from '../../sim/game-protocol';
 import { ordinalIndex, pickByName } from '../answers';
+import { speakAnswersOn, setSpeakAnswers } from '../advisor-voice';
 import { fieldActions, rawTail, readAloud } from '../dictation';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
 import { act, getAction, onTurnDone, registerParser, retract, speak, voiceRecent, voiceTurn, type Action, type PhraseHit } from '../registry';
@@ -69,6 +70,9 @@ export interface StaffDeps {
   advisorBusy: boolean;
   /** Задать вопрос советнику (советник открывается; cat, topic — тема из дерева тем); возвращает номер вопроса. */
   askAdvisor(question: string, cat?: string, topic?: string): number;
+  /** Текст в поле вопроса советника (и запись в него: советник открывается). */
+  advisorText: string;
+  setAdvisorText(s: string): void;
   /** Исполнимые приказы, предложенные в последнем ответе советника. */
   suggestions: Suggestion[];
   takeSuggestion(s: Suggestion): void;
@@ -246,7 +250,8 @@ export function planArrived(p: PlanState): string | null {
 
 /** Ответ советника пришёл: что сказать (коротко, 2–4 фразы; остальное — «подробнее»), если спрашивали голосом; иначе null. */
 export function adviceArrived(id: number, r: AdviceView): string | null {
-  if (!voiceAsk.delete(id)) return null;
+  const asked = voiceAsk.delete(id);
+  if (!asked && !speakAnswersOn()) return null;
   if (!r.ok) return r.error === 'остановлено' ? null : speakable(`Советник не ответил: ${failReason(r.error)}.`, { full: true });
   const plain = r.answer.replace(/[*_#>`]+/g, ' ').replace(/^\s*[-•]\s*/gm, '').replace(/\s+/g, ' ').trim();
   // «Переигровка» в фоне: ответ целиком — на «подробнее» там; здесь — только где он
@@ -528,6 +533,24 @@ export function staffActions(get: () => StaffDeps): Action[] {
         voiceAsk.add(get().askAdvisor(q));
         return 'Передал вопрос советнику. Доложу ответ, когда он будет готов.';
       } },
+    ...fieldActions('command.advisor.q', 'Вопрос советнику', () => get().advisorText, (s) => { get().setAdvisorText(s); void act('command.advisor.show', { mode: 'open' }).catch(() => {}); },
+      { section: 'replay', aliases: ['вопрос', 'вопрос для советника', 'вопрос советника'], gender: 'm' })
+      .map((a) => ({ ...a, available: ready, say: a.say?.map((x) => x.replace('вопрос советнику', 'вопрос')), highlight: () => hl('advisor') })),
+    { ...base, id: 'command.advisor.send', title: 'Отправить вопрос советнику', describe: 'Отправляет советнику вопрос, записанный в поле; ответ штаб зачитает.',
+      say: ['штаб, отправь вопрос'], highlight: () => hl('advisor'),
+      available: () => { const r = ready(); return r !== true ? r : get().advisorBusy ? 'советник ещё отвечает на прошлый вопрос — подождите или скажите «стоп»' : get().advisorText.trim() ? true : 'в поле вопроса пусто — сначала продиктуйте: «запиши в вопрос …»'; },
+      run: async () => {
+        const q = get().advisorText.trim();
+        if (!q) return 'Вопрос пуст. Продиктуйте: «запиши в вопрос …».';
+        retractAnnounce();
+        voiceAsk.add(get().askAdvisor(q));
+        get().setAdvisorText('');
+        return 'Передал вопрос советнику. Доложу ответ, когда он будет готов.';
+      } },
+    { ...base, id: 'command.advisor.voice', title: 'Читать ответы советника вслух', describe: 'Включает или выключает озвучку ответов советника на любые вопросы (набранные, продиктованные, из дерева тем).',
+      params: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] }, say: ['штаб, читай ответы советника вслух', 'штаб, не читай ответы советника'],
+      highlight: () => hl('advisor'), available: () => true,
+      run: async (p: { on: boolean }) => { setSpeakAnswers(!!p?.on); return p?.on ? 'Ответы советника буду зачитывать.' : 'Ответы советника — только на экране.'; } },
     { ...base, id: 'command.advisor.more', title: 'Подробнее (ответ советника)', describe: 'Читает остаток последнего ответа советника.', say: ['подробнее'],
       available: () => { const r = ready(); return r !== true ? r : adviceMore ? true : 'продолжения ответа нет'; },
       run: async () => { const t = adviceMore!; adviceMore = null; return readAloud(t); } },
@@ -839,6 +862,9 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
   // советник: вопрос, остановка, «подробнее», предложенный приказ
   if ((m = /^(?:спроси|спросите|задай вопрос|вопрос)(?: у)? советник\p{L}*(?: о| об| про)? (.+)$/u.exec(t))) return hit('command.advisor.ask', { text: m[1] });
   if (/^(?:останови|остановить|прерви|прервать|отмени|стоп)(?: советника| советник| ответ советника| варианты| ответ)$/.test(t)) return hit('command.advisor.stop');
+  if (/^(?:отправь|отправить|задай|задать)(?: этот| мой)? (?:вопрос|вопрос советнику)$|^отправь советнику$/.test(t)) return hit('command.advisor.send');
+  if (/^(?:читай|читать|зачитывай|озвучивай)(?: мне)? ответы советника(?: вслух)?$|^читай ответы вслух$/.test(t)) return hit('command.advisor.voice', { on: true });
+  if (/^(?:не читай|не зачитывай|не озвучивай|хватит читать|выключи озвучку)(?: мне)? ответ\p{L}*(?: советника)?$/u.test(t)) return hit('command.advisor.voice', { on: false });
   if (/^(?:подробнее|подробней)(?: ответ| ответ советника)?$/.test(t)) return adviceMore && getAction('command.advisor.more') ? { id: 'command.advisor.more' } : null;
   if ((m = /^(?:возьми|взять|бери|прими)(?: в проект| в распоряжение)? (?:(\S+) )?(?:предложенн\p{L}* )?приказ(?: советника)?(?: (\S+))?$/u.exec(t))) {
     const w = m[1] ?? m[2];
