@@ -59,6 +59,8 @@ const services = [
     DOWNLOADS_DIR: process.env.DEFOPS_DOWNLOADS_DIR || join(homedir(), 'Downloads'),
     // разработка: окно — vite (:5173), /api оно проводит на шлюз — ему тоже можно сохранять
     ...(dev ? { DEFOPS_DEV: '1' } : {}),
+    // шлюз открыт на постоянном порту: принимает только запросы своего окна (Host и Origin)
+    DEFOPS_DESKTOP: '1',
     AUTH: 'open', LLM_URL: opt('llm', process.env.DEFOPS_LLM_URL || 'http://localhost:1234/v1'),
     ...(opt('static') ? { STATIC_DIR: resolve(opt('static')) } : {}),
   } },

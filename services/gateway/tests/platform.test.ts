@@ -373,6 +373,79 @@ describe('шлюз: состояние голоса', () => {
   });
 });
 
+describe('шлюз: защита настольного режима (Host и Origin на все запросы)', () => {
+  const start = async (opts: { localOnly?: boolean; dev?: boolean; auth?: 'open' | 'keys' } = {}) => {
+    const g = createGateway({ port: 0, services: {}, routes: [], auth: opts.auth ?? 'open', apiKeys: parseKeys('keyA:orgA'), corsOrigin: '*', localOnly: opts.localOnly, downloadsDev: opts.dev,
+      llmUrl: 'http://127.0.0.1:1/v1' });
+    await new Promise<void>((r) => g.listen(0, '127.0.0.1', () => r()));
+    return { g, port: (g.address() as AddressInfo).port };
+  };
+  /** Сырой запрос: Host и Origin — какие угодно (страница после DNS rebinding приходит со своим именем). */
+  const raw = (port: number, method: string, path: string, headers: Record<string, string>) => new Promise<number>((res, rej) => {
+    const r = httpRequest({ host: '127.0.0.1', port, method, path, headers }, (x) => { x.resume(); x.on('end', () => res(x.statusCode ?? 0)); });
+    r.on('error', rej); r.end();
+  });
+  const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
+  it('чужой Host — 403 на любой адрес: API, /llm, голос, окно, служебный; в списке — проходит', async () => {
+    const a = await start({ localOnly: true });
+    try {
+      for (const p of ['/api/health', '/api/documents', '/api/voice', '/llm/v1/models', '/']) {
+        expect(await raw(a.port, 'GET', p, { Host: `evil.test:${a.port}` }), p).toBe(403);
+        expect(await raw(a.port, 'GET', p, { Host: `127.0.0.1:${a.port + 1}` }), p + ' чужой порт').toBe(403);
+        expect(await raw(a.port, 'GET', p, {}), p + ' без Host').not.toBe(403); // HTTP/1.1 без Host шлюзом Node не принимается — но и не 403 от нас
+      }
+      expect(await raw(a.port, 'OPTIONS', '/api/documents', { Host: `evil.test:${a.port}` })).toBe(403);
+      for (const h of ['127.0.0.1', 'localhost', '[::1]']) expect(await raw(a.port, 'GET', '/api/health', { Host: `${h}:${a.port}` }), h).toBe(200);
+    } finally { a.g.close(); }
+  });
+  it('изменяющие методы — только с Origin окна приложения', async () => {
+    const a = await start({ localOnly: true });
+    const host = `127.0.0.1:${a.port}`;
+    try {
+      for (const m of MUTATING) {
+        expect(await raw(a.port, m, '/api/documents', { Host: host }), `${m} без Origin`).toBe(403);
+        expect(await raw(a.port, m, '/api/documents', { Host: host, Origin: 'https://evil.example' }), `${m} чужой`).toBe(403);
+        expect(await raw(a.port, m, '/api/documents', { Host: host, Origin: 'null' }), `${m} null`).toBe(403);
+        expect(await raw(a.port, m, '/api/documents', { Host: host, Origin: `http://127.0.0.1:${a.port + 1}` }), `${m} чужой порт`).toBe(403);
+        expect(await raw(a.port, m, '/api/documents', { Host: host, Origin: 'http://localhost:5173' }), `${m} vite без флага`).toBe(403);
+        // со своим Origin защита пропускает — дальше шлюз отвечает по существу (маршрутов нет — 404)
+        expect(await raw(a.port, m, '/api/documents', { Host: host, Origin: `http://127.0.0.1:${a.port}` }), `${m} своё окно`).toBe(404);
+        expect(await raw(a.port, m, '/api/documents', { Host: `localhost:${a.port}`, Origin: `http://localhost:${a.port}` }), `${m} localhost`).toBe(404);
+      }
+    } finally { a.g.close(); }
+  });
+  it('чтение: без Origin (своё окно) можно; Origin чужой страницы — нельзя (CORS * не отдаёт ей данные)', async () => {
+    const a = await start({ localOnly: true });
+    const host = `127.0.0.1:${a.port}`;
+    try {
+      expect(await raw(a.port, 'GET', '/api/health', { Host: host })).toBe(200);
+      expect(await raw(a.port, 'GET', '/api/health', { Host: host, Origin: `http://127.0.0.1:${a.port}` })).toBe(200);
+      expect(await raw(a.port, 'GET', '/api/health', { Host: host, Origin: 'https://evil.example' })).toBe(403);
+    } finally { a.g.close(); }
+  });
+  it('окно разработки vite :5173 — только с флагом', async () => {
+    const off = await start({ localOnly: true });
+    const on = await start({ localOnly: true, dev: true });
+    try {
+      expect(await raw(off.port, 'POST', '/api/documents', { Host: `localhost:${off.port}`, Origin: 'http://localhost:5173' })).toBe(403);
+      expect(await raw(on.port, 'POST', '/api/documents', { Host: `localhost:${on.port}`, Origin: 'http://localhost:5173' })).toBe(404);
+      expect(await raw(on.port, 'POST', '/api/documents', { Host: `localhost:${on.port}`, Origin: 'http://localhost:5174' })).toBe(403);
+      expect(await raw(on.port, 'GET', '/api/health', { Host: `evil.test:${on.port}`, Origin: 'http://localhost:5173' })).toBe(403);
+    } finally { off.g.close(); on.g.close(); }
+  });
+  it('не настольный режим (без флага, режим ключей) — как прежде', async () => {
+    const plain = await start({});
+    const keys = await start({ localOnly: true, auth: 'keys' });
+    try {
+      for (const a of [plain, keys]) {
+        expect(await raw(a.port, 'GET', '/api/health', { Host: 'gateway.example.com' })).toBe(200);
+        expect(await raw(a.port, 'POST', '/api/documents', { Host: 'gateway.example.com', Origin: 'https://app.example.com', 'X-Api-Key': 'keyA' })).toBe(404);
+      }
+    } finally { plain.g.close(); keys.g.close(); }
+  });
+});
+
 describe('шлюз: сохранение файла в «Загрузки» (настольное приложение)', () => {
   const start = async (downloadsDir?: string, dev = false) => {
     const g = createGateway({ port: 0, services: {}, routes: [], auth: 'open', apiKeys: new Map(), corsOrigin: '*', downloadsDir, downloadsDev: dev });

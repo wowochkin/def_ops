@@ -27,8 +27,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 import aec
 from audio import FRAME, SR_IN, Listener, calibrate, is_stop_phrase, should_merge
-from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, pause_after
 from engines import EngineStore, describe as engines_list
+from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, pause_after, whole_pieces
 from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, trim_silence, write_wav
 
 HERE = Path(__file__).resolve().parent
@@ -45,6 +45,7 @@ WORD_STEP_S = 0.25  # …и снова — по мере роста куска �
 WORD_WINDOW_S = 1.75  # распознаётся хвост куска не длиннее этого (стоп-слово — в новой речи, цена не растёт)
 BARGE_MODES = ("voice", "word")
 MIC_REF = 0x02  # первый байт кадра «микрофон + опора»; кадр только микрофона — чётной длины, без заголовка
+PREPARED_MAX = 32  # заготовок в памяти подключения (разбор хода — 5–8 шагов); лишние — старейшие готовые
 
 
 def aec_enabled(arg: str | None, available: bool) -> bool:
@@ -170,11 +171,51 @@ class Service:
         return self.calib_cache[key]
 
 
+class Render:
+    """Заготовка (`prepare`): звук фразы синтезируется заранее, кусками по whole_pieces — каждый уже с паузой перед
+    ним и затуханием конца. `say` того же текста тем же голосом играет его без синтеза (кусок за куском, если
+    заготовка ещё идёт): озвучка не делит машину с языковой моделью, которая к тому времени уже работает."""
+
+    def __init__(self):
+        self.pieces: list[tuple[str, np.ndarray]] = []
+        self.done = False
+        self.error: str | None = None
+        self.task: asyncio.Task | None = None
+        self._grew = asyncio.Event()
+
+    def add(self, text: str, a: np.ndarray):
+        self.pieces.append((text, a))
+        self._notify()
+
+    def finish(self, error: str | None = None):
+        self.done, self.error = True, error
+        self._notify()
+
+    def _notify(self):
+        self._grew.set()
+        self._grew = asyncio.Event()
+
+    async def wait(self, n: int):
+        """Ждать, пока кусков станет больше n или заготовка кончится."""
+        while len(self.pieces) <= n and not self.done:
+            await self._grew.wait()
+
+    def audio_s(self, sr: int) -> float:
+        return sum(len(a) for _, a in self.pieces) / sr
+
+
+def render_key(ref, text: str):
+    """Заготовка — для образца (новая запись того же голоса — другой mtime) и текста."""
+    path = Path(ref[0])
+    return str(path), path.stat().st_mtime_ns if path.is_file() else 0, text.strip()
+
+
 class Job:
     """Фраза `say` (или проба голоса): текст приходит целиком или кусками, звук — кусками синтеза."""
 
     def __init__(self, jid: int, ref, preview: bool = False):
         self.id, self.ref, self.preview = jid, ref, preview
+        self.whole: str | None = None  # текст пришёл одним `say` — такую фразу можно сыграть из заготовки
         self.sentences = Sentences()
         self.planner = PiecePlanner()
         self.closed = False  # весь текст получен
@@ -224,6 +265,9 @@ class Session:
         # фразы: пока фраза в jobs (до played), модель «говорит»
         self.jobs: dict[int, Job] = {}
         self.last_task: asyncio.Task | None = None
+        # заготовки (prepare): синтезируются по очереди, в порядке запросов
+        self.renders: dict[tuple, Render] = {}
+        self.render_task: asyncio.Task | None = None
         self.play_until = 0.0  # когда (perf_counter) окно доиграет всё отправленное
         self.last_said = ""  # последняя фраза модели — чтобы не принять её эхо за реплику
         self.last_said_id: int | None = None
@@ -423,6 +467,8 @@ class Session:
             if role not in ROLES:
                 raise ValueError(f"нет такой роли: {role}")
             job = Job(jid, self.svc.ref_for(role))
+            if not more:
+                job.whole = str(d.get("text", ""))
             self._start_job(job)
         elif job.closed:
             raise ValueError(f"фраза {jid} уже получена целиком")
@@ -437,6 +483,13 @@ class Session:
         fade_n = int(self.svc.args.tail_fade_ms / 1000 * sr)
         gap = 0.0  # пауза после прежнего куска — уходит перед звуком следующего
         try:
+            r = self._render_for(job)
+            # заготовлена — звук готов (или готовится заранее), синтеза здесь нет; заготовка не дала звука вовсе —
+            # фраза синтезируется как обычно, оборвалась на середине — сказанное не повторяется
+            if r is not None and (await self._play_render(job, r) or r.error is None):
+                if r.error is not None:
+                    await self.send(type="error", text=f"синтез: {r.error}")
+                job.planner.pending.clear()
             while True:
                 piece = job.planner.next_piece(time.perf_counter(), self.play_until)
                 if piece is None:
@@ -448,10 +501,7 @@ class Session:
                     except asyncio.TimeoutError:
                         pass
                     continue
-                if not job.preview:  # эхо сравнивается только с последней фразой
-                    if self.last_said_id != job.id:
-                        self.last_said_id, self.last_said = job.id, ""
-                    self.last_said = (self.last_said + " " + piece)[-400:]
+                self._note_said(job, piece)
                 hold = await self._synth(job, piece, fade_n, np.zeros(int(gap * sr), np.float32))
                 if hold is None:  # ошибка синтеза — сообщена, фраза кончается
                     break
@@ -464,6 +514,82 @@ class Session:
                     self.jobs.pop(job.id, None)
         except asyncio.CancelledError:
             job.cancel.set()
+
+    def _note_said(self, job: Job, piece: str):
+        if not job.preview:  # эхо сравнивается только с последней фразой
+            if self.last_said_id != job.id:
+                self.last_said_id, self.last_said = job.id, ""
+            self.last_said = (self.last_said + " " + piece)[-400:]
+
+    def _render_for(self, job: Job) -> Render | None:
+        if job.whole is None or job.preview or job.ref is None:
+            return None
+        return self.renders.get(render_key(job.ref, job.whole))
+
+    async def _play_render(self, job: Job, r: Render) -> bool:
+        """Сыграть заготовку: куски уходят в окно сразу, как готовы. Возвращает, ушёл ли звук."""
+        i = 0
+        while True:
+            await r.wait(i)
+            if i >= len(r.pieces):
+                return i > 0
+            piece, a = r.pieces[i]
+            i += 1
+            self._note_said(job, piece)
+            if not job.preview:
+                job.said = (job.said + " " + piece).strip()
+            await self.send_audio(job, a)
+
+    async def on_prepare(self, d: dict):
+        """Заготовить фразу заранее (`prepare {id, role, text}`) → `prepared {id, audio_s}` или `{id, error}`, когда
+        весь её звук готов. Тот же текст тем же голосом уже заготовлен или готовится — второй раз не синтезируется."""
+        pid, role, text = int(d["id"]), d.get("role", "chief"), str(d.get("text", ""))
+        if role not in ROLES:
+            raise ValueError(f"нет такой роли: {role}")
+        ref = self.svc.ref_for(role)
+        if ref is None:
+            await self.send(type="prepared", id=pid, error=NO_REF)
+            return
+        key = render_key(ref, text)
+        r = self.renders.pop(key, None)
+        if r is None or (r.done and r.error):
+            r = Render()
+            r.task = asyncio.create_task(self._render(r, ref, text, self.render_task))
+            self.render_task = r.task
+        self.renders[key] = r  # в конец: недавно нужная заготовка вытесняется последней
+        for k in [k for k, x in self.renders.items() if x.done][:max(0, len(self.renders) - PREPARED_MAX)]:
+            del self.renders[k]
+        asyncio.create_task(self._report_prepared(pid, r))
+
+    async def _render(self, r: Render, ref, text: str, prev: asyncio.Task | None):
+        """Синтез заготовки в нити MLX — по куску на работу; заготовки идут по очереди."""
+        if prev is not None and not prev.done():
+            await asyncio.wait([prev])
+        sr = self.m.sample_rate
+        gap = 0.0
+        try:
+            for piece in whole_pieces(text):
+                a = await self.loop.run_in_executor(
+                    self.m.mlx, lambda p=piece: np.concatenate([np.zeros(0, np.float32), *self.m.tts_stream(p, ref)]))
+                a = fade_tail(a.astype(np.float32), sr, self.svc.args.tail_fade_ms)
+                r.add(piece, np.concatenate([np.zeros(int(gap * sr), np.float32), a]))
+                gap = pause_after(piece)
+            r.finish()
+        except asyncio.CancelledError:
+            r.finish("отменено")
+            raise
+        except Exception as e:  # noqa: BLE001 — сбой синтеза — в ответ prepared, фраза потом синтезируется как обычно
+            r.finish(f"{type(e).__name__}: {e}")
+
+    async def _report_prepared(self, pid: int, r: Render):
+        await r.wait(1 << 30)
+        try:
+            if r.error:
+                await self.send(type="prepared", id=pid, error=r.error)
+            else:
+                await self.send(type="prepared", id=pid, audio_s=round(r.audio_s(self.m.sample_rate), 2))
+        except Exception:  # noqa: BLE001 — окно уже закрыто
+            pass
 
     async def _synth(self, job: Job, text: str, fade_n: int, lead: np.ndarray) -> np.ndarray | None:
         q: asyncio.Queue = asyncio.Queue()
@@ -705,6 +831,8 @@ class Session:
             await self.on_tts(d)
         elif t == "say":
             await self.on_say(d)
+        elif t == "prepare":
+            await self.on_prepare(d)
         elif t == "stop":
             await self.stop(int(d["id"]) if d.get("id") is not None else None)
         elif t == "played":
@@ -729,6 +857,10 @@ class Session:
             self.word_task.cancel()
         for job in list(self.jobs.values()):
             self._drop(job)
+        for r in self.renders.values():
+            if r.task and not r.task.done():
+                r.task.cancel()
+        self.renders.clear()
         self.recording = None
         self.pending = None
         self.pending_path.unlink(missing_ok=True)

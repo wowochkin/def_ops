@@ -25,6 +25,8 @@ export type CalibStep = 'noise' | 'speech' | 'echo' | 'over' | 'finish' | 'cance
 export type ClientMsg =
   | { type: 'hello'; settings: Partial<VoiceSettings> }
   | { type: 'say'; id: number; role: VoiceRole; text: string; more?: boolean }
+  /** Заготовить звук фразы заранее: `say` того же текста тем же голосом сыграет его без синтеза. */
+  | { type: 'prepare'; id: number; role: VoiceRole; text: string }
   | { type: 'stop'; id?: number }
   | { type: 'played'; id: number }
   | ({ type: 'settings' } & Partial<VoiceSettings>)
@@ -66,6 +68,8 @@ export type ServerMsg =
   /** Перебивание «словом»: речь поверх штаба (он не оборван); chief — что он уже сказал. Окно принимает только ответ на вопрос. */
   | { type: 'over'; id: number; text: string; chief: string }
   | { type: 'say-done'; id: number; stopped?: boolean }
+  /** Заготовка `prepare` готова (audio_s — длина звука) или не вышла (error: фраза потом синтезируется как обычно). */
+  | { type: 'prepared'; id: number; audio_s?: number; error?: string }
   | { type: 'barge'; id: number }
   | ({ type: 'settings' } & VoiceSettings)
   | { type: 'calib_rec'; step: CalibStep; sec: number }

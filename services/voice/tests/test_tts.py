@@ -94,3 +94,13 @@ def test_extend_eos_one_frame():
     assert int(tts._sample_token(None, suppress_tokens=[1])[0, 0]) == 3
     extend_eos(tts, 0)
     assert int(tts._sample_token(None, suppress_tokens=[1])[0, 0]) == 9
+
+
+def test_whole_pieces_first_like_planner_rest_grouped():
+    from tts import PIECE_MAX_CHARS, whole_pieces
+    assert whole_pieces("Есть. Двигаемся к фронту. Противник отошёл.") == ["Есть. Двигаемся к фронту.", "Противник отошёл."]
+    long = " ".join(f"Фраза номер {i} о том, что противник отошёл за реку." for i in range(12))
+    ps = whole_pieces(long)
+    assert " ".join(ps) == long
+    assert len(ps) > 2 and all(len(p) <= PIECE_MAX_CHARS for p in ps[1:])
+    assert whole_pieces("  ") == []

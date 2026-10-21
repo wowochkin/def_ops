@@ -14,7 +14,8 @@
 import type { GameRecord } from '@def-ops/sim';
 import type { AiStatus, TurnView } from '../sim/game-protocol';
 import { inReplay } from './actions/command';
-import { propose, retract, setVoiceNote, speak, voiceLive, voiceRecent } from './registry';
+import { setModelBusy } from './model-queue';
+import { prepareSpeech, propose, retract, setVoiceNote, speak, voiceLive, voiceRecent } from './registry';
 import { sentence } from './report';
 import { speakable } from './speech';
 import { REVIEW_SYSTEM, reviewFromModel, reviewInput, reviewTour, turnReview, type ReviewStep } from './tours/turn';
@@ -93,13 +94,18 @@ export const UMPIRE_UNFIT = 'Ответ модели не годится для 
 export const UMPIRE_AWAY = 'Разбор хода готов — в разделе «Переигровка»: скажите «покажи ход».';
 export const NEXT_TURN_SAY = 'Решение на следующий ход: скажите «дай варианты» или «доложи обстановку».';
 export const REVIEW_OFFER = 'Составить разбор операции?';
+/** Штаб противника ждёт заготовки звука разбора не дольше этого (сервис завис — ход не стоит). */
+export const PREPARE_WAIT_MS = 90_000;
 
 const say = (text: string) => speak(text, { role: 'umpire', keep: true });
+
+/** Что прозвучит в разборе: по фразе на шаг тура (слой тура подключён) или текст шагов одной фразой. */
+const spoken = (tour: Tour): string[] => (runner ? tour.steps.map((x) => x.speech ?? x.text) : [tour.steps.map((x) => x.text).join(' ')]);
 
 /** Показать разбор: тур на карте (слой тура подключён) или текст шагов подряд; then — когда кончился. */
 function show(tour: Tour, then?: () => void): void {
   if (runner) { runner(tour, () => then?.()); return; }
-  say(tour.steps.map((x) => x.text).join(' '));
+  say(spoken(tour)[0]);
   then?.();
 }
 
@@ -111,8 +117,10 @@ function show(tour: Tour, then?: () => void): void {
  * «Сведения ещё готовятся» (не копятся: новое снимает прежнее, если оно ещё не прозвучало); ответила — её тексты
  * шагов. По данным расчёта — только если модель недоступна, не ответила или ответила не по шагам, и тогда — честно,
  * почему. Затем разбор на карте; после него — штаб: что дальше (если голосом пользовались недавно); в конце игры —
- * предложение разбора операции. onDone — тексты разбора этого хода готовы (снятый новым ходом — нет: у нового свой):
- * штаб противника ждёт его, чтобы не занимать модель раньше посредника.
+ * предложение разбора операции. Звук разбора заготавливается заранее (prepareSpeech) сразу, как готовы тексты: тур
+ * начинается тут же и звучит из заготовки. onDone — тексты разбора этого хода готовы и его звук заготовлен (не дольше
+ * PREPARE_WAIT_MS; снятый новым ходом — нет: у нового свой): штаб противника ждёт его, чтобы не занимать модель раньше
+ * посредника и чтобы синтез речи не делил с ней машину — иначе озвучка разбора запинается.
  */
 export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; record: GameRecord | null; ai: AiStatus | null; model?: UmpireModel | null; onDone?(): void }): Promise<void> {
   const my = ++seq;
@@ -134,10 +142,13 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
         if (typeof reminder === 'number') retract(reminder); // не звучало — заменить, а не копить
         reminder = say(UMPIRE_STILL_SAY);
       }, UMPIRE_REMIND_MS);
+      // модель занята разбором хода: реплика голосу, которую поймёт только модель, подождёт её (voice/model-queue.ts)
+      setModelBusy('umpire', 'разбор хода');
       try {
         texts = reviewFromModel(await a.model(REVIEW_SYSTEM, reviewInput(a.view, steps), { signal: ac.signal }), steps.length);
         why = texts ? null : UMPIRE_UNFIT;
       } catch { why = UMPIRE_FAILED; } finally {
+        setModelBusy('umpire', null);
         clearInterval(remind);
         // ответ пришёл (или не пришёл) — «Сведения ещё готовятся», стоявшее в очереди, уже не нужно
         if (typeof reminder === 'number') retract(reminder);
@@ -153,11 +164,16 @@ export async function announceTurn(a: { view: TurnView; prev?: TurnView | null; 
     if (inReplay() !== true) { say(UMPIRE_AWAY); return; }
     if (why) say(why);
     const over = a.view.over;
-    show(reviewTour(steps, texts), () => {
+    const tour = reviewTour(steps, texts);
+    const ready = Promise.all([prepareSpeech(spoken(tour), 'umpire'), over ? null : prepareSpeech([NEXT_TURN_SAY])]);
+    show(tour, () => {
       if (!voiceRecent()) return;
       if (over) propose(REVIEW_OFFER, 'command.review.compose', {});
       else speak(NEXT_TURN_SAY, { keep: true });
     });
+    let t: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([ready, new Promise((r) => { t = setTimeout(r, PREPARE_WAIT_MS); })]);
+    clearTimeout(t);
   } finally { if (my === seq) a.onDone?.(); }
 }
 

@@ -38,7 +38,7 @@ import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
 import { tourEl } from './highlight';
-import { ActButton, act, actions, listed, onModal, onVoiceNote, setProposer, setRetractor, setSpeaker, setVoiceLive, useAction, voiceNote } from './registry';
+import { ActButton, act, actions, listed, onModal, onVoiceNote, setPreparer, setProposer, setRetractor, setSpeaker, setVoiceLive, useAction, voiceNote } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import { ttsStore } from './tts-store';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
@@ -223,6 +223,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       return id;
     });
     setRetractor((id) => dispatcher.retract(id));
+    setPreparer((texts, role) => Promise.all(texts.map((t) => client.prepare(role ?? 'chief', t))).then(() => {}));
     // предложения модулей («Составить разбор операции?»): в дежурном и при выключенном голосе — нет
     setProposer((text, id, params) => { if (enabledRef.current && !dispatcher.standby) dispatcher.propose(text, id, params); });
     // слышит ли голос: выключен, дежурит или сервис не на связи — модулям незачем готовить фразы моделью
@@ -236,7 +237,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       modalIds.clear();
       syncSpeaking();
     });
-    return () => { setSpeaker(null); setRetractor(null); setProposer(null); setVoiceLive(null); off(); };
+    return () => { setSpeaker(null); setRetractor(null); setPreparer(null); setProposer(null); setVoiceLive(null); off(); };
   }, [dispatcher, gate]);
   // тур говорит голосом начальника штаба (разбор хода — посредника): та же очередь фраз, та же лента
   useTourVoice({
