@@ -6,6 +6,9 @@ import type { SpeakRole } from './registry';
 export const SETTINGS_KEY = 'def_ops.voice.settings';
 /** Голос выключен человеком (кнопка или «Штаб, отбой»): 'false'; включён — 'true' или ключа нет. */
 export const ENABLED_KEY = 'def_ops.voice.enabled';
+/** Звук (озвучка штаба, посредника, экскурсий) выключен человеком: 'off'; иначе включён. Не зависит от управления голосом. */
+export const SOUND_KEY = 'def_ops.voice.sound';
+export const parseSound = (raw: string | null): boolean => raw !== 'off';
 
 /** Сохранённое «голос включён»: выключен только явным 'false' — мусор и пусто считаются «включён». */
 export function parseEnabled(raw: string | null): boolean {
@@ -220,6 +223,8 @@ export interface PanelInput {
   status: VoiceStatus;
   /** false — человек выключил голос (микрофон закрыт); по умолчанию включён */
   enabled?: boolean;
+  /** true — человек выключил звук (озвучка молчит); по умолчанию звук включён */
+  muted?: boolean;
   micError?: string | null;
   /** калибровка или запись голоса — разговор стоит */
   busy?: string | null;
@@ -235,13 +240,16 @@ export const NOT_INSTALLED = 'Голос не установлен: services/voi
 /** Установленная программа, браузер, не Mac на Apple Silicon: голоса в этой версии нет — значок не показывается. */
 export const UNSUPPORTED = 'Голос в этой версии недоступен';
 export const VOICE_DISABLED = 'Голос выключен';
+/** Выключено только управление (микрофон): звук посредника и экскурсий остаётся. */
+export const CONTROL_DISABLED = 'Управление голосом выключено';
+export const SOUND_OFF_TAIL = ' · звук выключен';
 export const STANDBY_TEXT = 'Дежурю. Скажите: «Штаб, на связь»';
 
 /** Состояние панели простыми словами (цвет значка — по `key`). */
 export function panelState(s: PanelInput): { key: PanelKey; text: string } {
   if (s.status === 'unsupported') return { key: 'unsupported', text: UNSUPPORTED };
   // выключил сам человек — важнее любых сбоев: микрофон и не нужен
-  if (s.enabled === false) return { key: 'disabled', text: VOICE_DISABLED };
+  if (s.enabled === false) return { key: 'disabled', text: s.muted ? VOICE_DISABLED : CONTROL_DISABLED };
   if (s.status === 'off') return { key: 'off', text: NOT_INSTALLED };
   if (s.status === 'error') return { key: 'error', text: 'Голос не запустился — перезапустите программу' };
   if (s.micError) return { key: 'mic', text: 'Микрофон не подключился' };
@@ -253,7 +261,7 @@ export function panelState(s: PanelInput): { key: PanelKey; text: string } {
   if (s.listening) return { key: 'listening', text: 'Слушаю' };
   if (s.thinking) return { key: 'thinking', text: 'Думаю' };
   if (s.conversation) return { key: 'conversation', text: 'Разговор — можно без «штаб»' };
-  return { key: 'idle', text: 'Жду обращения' };
+  return { key: 'idle', text: s.muted ? `Жду обращения${SOUND_OFF_TAIL}` : 'Жду обращения' };
 }
 
 // ---------------------------------------------------------------- лента

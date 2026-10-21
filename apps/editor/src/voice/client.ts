@@ -102,6 +102,8 @@ export class VoiceClient {
   private cancelled = new CancelledIds();
   /** Голос включён человеком; выключен — микрофон закрыт и сам не открывается. */
   private enabled = true;
+  /** Звук выключен человеком: фразы в сервис не уходят. */
+  private muted = false;
   /** Микрофон был открыт к выключению — включение открывает его снова. */
   private micBeforeOff = false;
   /** Звук калибровки (id 0) ждём: шаг «голос штаба» или «перебивание» начат и не отменён. */
@@ -188,25 +190,32 @@ export class VoiceClient {
   }
 
   /**
-   * Выключить или включить голос. Выключение: микрофон закрыт (дорожки остановлены) и сам не переподключается,
-   * звук штаба и все фразы остановлены (`finishSpeech` — фразы договариваются: ответ на «Штаб, отбой»);
-   * связь с сервисом остаётся — он не выгружается, включение мгновенное. Включение: снова микрофон, если он был
-   * открыт к выключению (иначе его откроет `start()`, когда сервис ответит).
+   * Выключить или включить голосовое управление (микрофон). Выключение: микрофон закрыт (дорожки остановлены) и сам
+   * не переподключается; звук штаба и фразы не трогаются — посредник и экскурсии продолжают говорить (их глушит
+   * `setMuted`); связь с сервисом остаётся — включение мгновенное. Включение: снова микрофон, если он был открыт к
+   * выключению (иначе его откроет `start()`, когда сервис ответит).
    */
-  setEnabled(on: boolean, opts: { finishSpeech?: boolean } = {}): Promise<void> {
+  setEnabled(on: boolean): Promise<void> {
     if (on === this.enabled) return Promise.resolve();
     this.enabled = on;
     if (!on) {
       this.micBeforeOff = this.stream !== null || this.starting !== null;
-      this.calibSound = false;
-      this.stopPlayback(0);
-      if (!opts.finishSpeech) this.stop();
       this.closeMic();
       return Promise.resolve();
     }
     const again = this.micBeforeOff;
     this.micBeforeOff = false;
     return again ? this.start(this.hello) : Promise.resolve();
+  }
+
+  /**
+   * Выключить или включить звук: любая озвучка (штаб, посредник, экскурсии, пробы). Выключение — звук и все фразы
+   * остановлены, новые не уходят в сервис; микрофон и распознавание не затронуты.
+   */
+  setMuted(muted: boolean) {
+    if (muted === this.muted) return;
+    this.muted = muted;
+    if (muted) { this.calibSound = false; this.stopPlayback(0); this.stop(); }
   }
 
   /** Микрофон и подключение к сервису. Ошибка микрофона — с разбором причины. Голос выключен — без микрофона. */
@@ -412,6 +421,7 @@ export class VoiceClient {
   }
 
   say(id: number, role: VoiceRole, text: string, more?: boolean) {
+    if (this.muted) return;
     this.cancelled.revive(id);
     this.send(more === undefined ? { type: 'say', id, role, text } : { type: 'say', id, role, text, more });
   }
@@ -421,7 +431,7 @@ export class VoiceClient {
    * Промис — когда звук готов (true) или заготовка не вышла: сервис не готов, нет связи, ошибка синтеза (false).
    */
   prepare(role: VoiceRole, text: string): Promise<boolean> {
-    if (!this.ready || this.ws?.readyState !== WebSocket.OPEN || !text.trim()) return Promise.resolve(false);
+    if (this.muted || !this.ready || this.ws?.readyState !== WebSocket.OPEN || !text.trim()) return Promise.resolve(false);
     const id = ++this.prepId;
     return new Promise((res) => {
       this.prepWait.set(id, res);

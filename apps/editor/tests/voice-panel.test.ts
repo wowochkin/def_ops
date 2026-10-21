@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
+  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, CONTROL_DISABLED, SOUND_KEY, parseSound, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
   COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, topPlace, anchorBottom, fullHeight, RAIL_W, stripCut, stripLines, STRIP_LINE_CHARS, STRIP_OVER_CHARS,
 } from '../src/voice/panel-state';
 import { freeOffset } from '../src/engine/free-center';
@@ -34,9 +34,21 @@ describe('panelState', () => {
     expect(panelState({ ...base, status: 'off', micError: 'нет' }).key).toBe('off');
   });
 
-  it('голос выключен человеком — «Голос выключен», что бы ни было с сервисом и микрофоном', () => {
+  it('звук выключен отдельно: управление работает, в состоянии — пометка; выбор не зависит от управления', () => {
+    expect(panelState({ ...base, muted: true })).toEqual({ key: 'idle', text: 'Жду обращения · звук выключен' });
+    expect(panelState({ ...base, muted: false }).text).toBe('Жду обращения');
+    expect(parseSound(null)).toBe(true);
+    expect(parseSound('off')).toBe(false);
+    expect(parseSound('true')).toBe(true);
+    expect(SOUND_KEY).not.toBe(ENABLED_KEY);
+  });
+
+  it('управление голосом выключено человеком — «Управление голосом выключено», что бы ни было с сервисом и микрофоном', () => {
     expect(VOICE_DISABLED).toBe('Голос выключен');
-    expect(panelState({ ...base, enabled: false })).toEqual({ key: 'disabled', text: 'Голос выключен' });
+    expect(CONTROL_DISABLED).toBe('Управление голосом выключено');
+    expect(panelState({ ...base, enabled: false })).toEqual({ key: 'disabled', text: 'Управление голосом выключено' });
+    // и управление, и звук выключены — «Голос выключен»
+    expect(panelState({ ...base, enabled: false, muted: true })).toEqual({ key: 'disabled', text: 'Голос выключен' });
     for (const k of [{ status: 'off' }, { status: 'error' }, { status: 'loading' }, { status: 'reconnecting' }, { micError: 'нет' },
       { busy: 'Калибровка' }, { speaking: true }, { listening: true }, { thinking: true }, { conversation: true }] as Partial<PanelInput>[])
       expect(panelState({ ...base, ...k, enabled: false }).key).toBe('disabled');

@@ -628,13 +628,13 @@ const micOff = async (what) => {
 const micOn = () => page.waitForFunction(() => window.__e2e.trackStates().includes('live'), null, { timeout: 15000 });
 const LIVE = /Жду обращения|Слушаю|Думаю|Говорит|Разговор/;
 
-await check('кнопка «Выключить голос»: пояснение в одну строку, вопрос с полным текстом; «Выключить» — микрофон освобождён', async () => {
-  await panel.getByText('Включить снова — только этой кнопкой.').waitFor({ timeout: 2000 });
-  await panel.getByRole('button', { name: 'Выключить голос' }).click();
+await check('кнопка «Выключить управление»: пояснение в одну строку, вопрос с полным текстом; «Выключить» — микрофон освобождён', async () => {
+  await panel.getByText('Включить управление снова — только этой кнопкой.').waitFor({ timeout: 2000 });
+  await panel.getByRole('button', { name: 'Выключить управление' }).click();
   const q = page.locator('.confirm-box');
-  await q.getByText('Включить голос голосом будет нельзя — только этой кнопкой').waitFor({ timeout: 3000 });
+  await q.getByText('включить управление голосом можно будет только кнопкой').waitFor({ timeout: 3000 });
   await q.getByRole('button', { name: 'Выключить' }).click();
-  await panel.locator('.vp-state', { hasText: 'Голос выключен' }).waitFor({ timeout: 3000 });
+  await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: 3000 });
   await micOff('после выключения');
   const saved = await page.evaluate(() => localStorage.getItem('def_ops.voice.enabled'));
   if (saved !== 'false') throw new Error(`def_ops.voice.enabled = ${saved}`);
@@ -649,23 +649,23 @@ await check('кнопка «Выключить голос»: пояснение 
 
 await check('перезагрузка: голос остаётся выключенным, микрофон не спрашивается', async () => {
   await page.reload();
-  await panel.locator('.vp-state', { hasText: 'Голос выключен' }).waitFor({ timeout: T });
+  await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: T });
   await page.waitForTimeout(3000);
   const gum = await page.evaluate(() => window.__e2e.gum);
   if (gum) throw new Error(`микрофон спрошен ${gum} раз`);
-  // полоса при выключенном голосе — с кнопкой «Включить голос»; «Свернуть» на полосе — в значок
+  // полоса при выключенном управлении — с кнопкой «Включить управление»; «Свернуть» на полосе — в значок
   await panel.locator('.vp-card:not(.strip)').getByRole('button', { name: 'Свернуть' }).click();
-  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Включить голос' }).waitFor({ timeout: 2000 });
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Включить управление' }).waitFor({ timeout: 2000 });
   await panel.locator('.vp-card.strip').getByRole('button', { name: 'Свернуть' }).click();
   const icon = page.locator('.vp-icon');
-  await icon.getByText('Голос выключен').waitFor({ state: 'visible', timeout: 2000 });
+  await icon.getByText('Управление голосом выключено').waitFor({ state: 'visible', timeout: 2000 });
   if (!(await icon.locator('.vp-cross').count())) throw new Error('значок не перечёркнут');
   await shot('voice-icon-off.jpg');
   await icon.click();
 });
 
-await check('«Включить голос» (с полосы) → «Жду обращения», микрофон снова открыт', async () => {
-  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Включить голос' }).click();
+await check('«Включить управление» (с полосы) → «Жду обращения», микрофон снова открыт', async () => {
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Включить управление' }).click();
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
   await micOn();
   const saved = await page.evaluate(() => localStorage.getItem('def_ops.voice.enabled'));
@@ -674,7 +674,7 @@ await check('«Включить голос» (с полосы) → «Жду об
 
 await check('событие voice:power: false — выключает, true — включает', async () => {
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: false })));
-  await panel.locator('.vp-state', { hasText: 'Голос выключен' }).waitFor({ timeout: 3000 });
+  await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: 3000 });
   await micOff('после voice:power false');
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: true })));
   await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
@@ -688,6 +688,35 @@ async function expandPanel() {
   await panel.locator('.vp-card:not(.strip)').waitFor({ state: 'visible', timeout: 5000 });
 }
 await expandPanel();
+
+await check('кнопка «Выключить звук»: озвучка молчит, микрофон открыт; «Включить звук» — снова говорит; выбор запоминается', async () => {
+  await panel.getByRole('button', { name: 'Выключить звук' }).click();
+  await panel.locator('.vp-state', { hasText: 'звук выключен' }).waitFor({ timeout: 3000 });
+  const off = await page.evaluate(() => localStorage.getItem('def_ops.voice.sound'));
+  if (off !== 'off') throw new Error(`def_ops.voice.sound = ${off}`);
+  await micOn(); // микрофон не затронут
+  if (await panel.getByRole('button', { name: 'Калибровка' }).isEnabled()) throw new Error('калибровка доступна без звука');
+  await page.reload();
+  await panel.locator('.vp-state', { hasText: 'звук выключен' }).waitFor({ timeout: T });  // после перезапуска звук остаётся выключенным
+  await expandPanel();
+  await panel.getByRole('button', { name: 'Включить звук' }).click();
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
+  if ((await panel.locator('.vp-state').first().innerText()).includes('звук выключен')) throw new Error('пометка «звук выключен» осталась');
+  const on = await page.evaluate(() => localStorage.getItem('def_ops.voice.sound'));
+  if (on !== null) throw new Error(`выключение звука осталось записанным: ${on}`);
+});
+
+await check('управление выключено, звук включён: микрофон закрыт, звук остаётся включённым (кнопка «Выключить звук» на месте)', async () => {
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: false })));
+  await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: 3000 });
+  await micOff('при выключенном управлении');
+  const sound = await page.evaluate(() => localStorage.getItem('def_ops.voice.sound'));
+  if (sound === 'off') throw new Error('звук выключился вместе с управлением');
+  await panel.getByRole('button', { name: 'Выключить звук' }).waitFor({ timeout: 2000 });
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: true })));
+  await panel.locator('.vp-state', { hasText: LIVE }).waitFor({ timeout: T });
+  await micOn();
+});
 
 
 // ---------------------------------------------------------------- модель за правилами (поддельная LM Studio)

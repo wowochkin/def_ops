@@ -42,6 +42,26 @@ describe('VoiceClient', () => {
     expect(played).toEqual([]);
   });
 
+  it('звук выключен: фразы и заготовки в сервис не уходят, остановка идёт один раз; включён — снова уходят; микрофон не затронут', async () => {
+    const { c, sent, msg } = mk();
+    vi.stubGlobal('WebSocket', { OPEN: 1 });
+    msg({ type: 'ready', voices: [], roles: { chief: 'a', umpire: 'a' }, loaded: true });
+    c.setMuted(true);
+    sent.length = 0;
+    c.say(5, 'chief', 'Слушаю вас.');
+    expect(await c.prepare('umpire', 'Итоги хода.')).toBe(false);
+    expect(sent).toEqual([]);
+    c.setMuted(true); // повторно — без новой остановки
+    expect(sent).toEqual([]);
+    c.setMuted(false);
+    c.say(6, 'chief', 'Слушаю вас.');
+    expect(sent).toEqual([{ type: 'say', id: 6, role: 'chief', text: 'Слушаю вас.' }]);
+    // выключение управления (микрофона) звук не трогает
+    sent.length = 0;
+    await c.setEnabled(false);
+    c.say(7, 'umpire', 'Итоги хода.');
+    expect(sent).toEqual([{ type: 'say', id: 7, role: 'umpire', text: 'Итоги хода.' }]);
+  });
   it('prepare: до ready — сразу false; после — сообщение сервису, ответ prepared решает промис; обрыв — false', async () => {
     const { c, x, sent, msg } = mk();
     vi.stubGlobal('WebSocket', { OPEN: 1 });
