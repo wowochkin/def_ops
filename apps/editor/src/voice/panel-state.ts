@@ -405,3 +405,31 @@ export function anchorBottom(bars: { top: number; bottom: number; width: number 
 export function fullHeight(vh: number, top: number): number {
   return Math.min(520, Math.max(260, vh - top - 400));
 }
+
+
+// ---------------------------------------------------------------- значок: перетаскивание мышью
+
+/** Куда человек перетащил значок микрофона (JSON {left, top}); нет — значок на своём месте (сверху по центру). */
+export const ICON_POS_KEY = 'def_ops.voice.iconPos';
+export interface IconPos { left: number; top: number }
+/** Сдвиг, меньше которого нажатие — щелчок, а не перетаскивание. */
+export const DRAG_PX = 5;
+
+export function parseIconPos(raw: string | null): IconPos | null {
+  try {
+    const v = JSON.parse(raw ?? 'null') as Partial<IconPos> | null;
+    return v && Number.isFinite(v.left) && Number.isFinite(v.top) ? { left: v.left as number, top: v.top as number } : null;
+  } catch { return null; }
+}
+
+/** Значок размером size целиком в окне vw × vh (с полем 4 px): за край не уйдёт и не потеряется после уменьшения окна. */
+export function clampIcon(p: IconPos, vw: number, vh: number, size: number): IconPos {
+  const m = 4;
+  return {
+    left: Math.round(Math.min(Math.max(p.left, m), Math.max(m, vw - size - m))),
+    top: Math.round(Math.min(Math.max(p.top, m), Math.max(m, vh - size - m))),
+  };
+}
+
+/** Подпись значка («Голос выключен», «Дежурю») — слева от него, если он в правой половине окна, иначе справа. */
+export const iconCapLeft = (p: IconPos | null, vw: number): boolean => !!p && p.left + 28 > vw / 2;

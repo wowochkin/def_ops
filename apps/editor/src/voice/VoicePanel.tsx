@@ -44,9 +44,10 @@ import { hl, tourEl } from './highlight';
 import { ActButton, act, actions, listed, onModal, onVoiceNote, setPreparer, setProposer, setRetractor, setSpeaker, setVoiceLive, useAction, voiceNote } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
 import { ttsStore } from './tts-store';
+import { AudioDevices } from './AudioDevices';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
-  DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, SOUND_KEY, parseSound, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
+  DEFAULT_SETTINGS, DRAG_PX, ENABLED_KEY, ICON_POS_KEY, SETTINGS_KEY, SOUND_KEY, clampIcon, iconCapLeft, parseIconPos, parseSound, type IconPos, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
   fullHeight, parseEnabled, parsePanelMode, parseSettings, resetStored, stripCut, stripLines, settleAec, storeSettings, wasCalibrated, type FeedItem, type PanelMode,
 } from './panel-state';
 import { confirmAsync } from '../dialogs';
@@ -104,6 +105,18 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   // вид: значок, полоса, развёрнута (выбор человека — в OPEN_KEY; сама разворачивается и сворачивается — PanelSize)
   const size = useMemo(() => new PanelSize(parsePanelMode(lsGet(OPEN_KEY)), () => Date.now()), []);
   if (import.meta.env.DEV) (window as unknown as { __voiceSize: PanelSize }).__voiceSize = size;
+  // значок микрофона можно перетащить мышью; место запоминается, окно уменьшили — значок остаётся в окне
+  const [iconPos, setIconPos] = useState<IconPos | null>(() => parseIconPos(lsGet(ICON_POS_KEY)));
+  const drag = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
+  const justDragged = useRef(false);
+  const iconPosRef = useRef(iconPos);
+  iconPosRef.current = iconPos;
+  const iconSize = () => (lsGet(SIZE_KEY) === 'big' ? 56 : 44);
+  useEffect(() => {
+    const fit = () => setIconPos((p) => (p ? clampIcon(p, window.innerWidth, window.innerHeight, iconSize()) : p));
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
   const [big, setBigState] = useState(() => lsGet(SIZE_KEY) === 'big');
   const setBig = (v: boolean) => { setBigState(v); lsSet(SIZE_KEY, v ? 'big' : null); };
   const [, redraw] = useReducer((x: number) => x + 1, 0);
@@ -211,6 +224,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     say: ['штаб, сверни панель голоса'], available: () => true, highlight: () => tourEl('voice'), run: async () => { setMode('compact'); } });
   useAction({ id: 'voice.panel.icon', section: 'global', title: 'Убрать панель голоса в значок', describe: 'Сворачивает панель голоса в значок.',
     available: () => true, run: async () => { setMode('icon'); } });
+  useAction({ id: 'voice.icon.home', section: 'global', title: 'Вернуть значок на место', describe: 'Возвращает значок микрофона на место — сверху по центру (его можно перетащить мышью).',
+    say: ['штаб, верни значок на место'], highlight: () => tourEl('voice'),
+    available: () => (iconPosRef.current ? true : 'значок и так на своём месте'), run: async () => { setIconPos(null); lsSet(ICON_POS_KEY, null); return 'Значок на месте.'; } });
   useAction({ id: 'voice.panel.strip', section: 'global', title: 'Показать полосу голоса', describe: 'Из значка — полоса голоса: состояние и последняя фраза штаба.',
     available: () => true, run: async () => { setMode('compact'); } });
   // «Повторить» обрезанную фразу полосы — как «повтори»: вопрос окна или последняя фраза
@@ -502,6 +518,28 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     status, enabled, muted: !sound, micError, busy, speaking, listening, thinking, standby,
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
+  const iconDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    drag.current = { x: e.clientX, y: e.clientY, left: r.left, top: r.top, moved: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const iconMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < DRAG_PX) return;
+    d.moved = true;
+    setIconPos(clampIcon({ left: d.left + e.clientX - d.x, top: d.top + e.clientY - d.y }, window.innerWidth, window.innerHeight, iconSize()));
+  };
+  const iconUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    drag.current = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* */ }
+    if (!d?.moved) return;
+    justDragged.current = true;  // следом придёт щелчок — это не «развернуть»
+    setTimeout(() => { justDragged.current = false; }, 0);
+    setIconPos((p) => { lsSet(ICON_POS_KEY, p ? JSON.stringify(p) : null); return p; });
+  };
   // раздел «ИИ» показывает, почему нельзя выбрать модель озвучки
   useEffect(() => { ttsStore.setReason(status === 'ready' ? null : st.text); }, [status, st.text]);
   const live = enabled && status === 'ready' && !micError;
@@ -541,7 +579,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   return (
     <div className={`vp ${st.key}${big ? ' big' : ''}`}>
       {view === 'icon' && (
-        <button ref={card as RefObject<HTMLButtonElement>} className="vp-icon" style={place} data-tour="voice" data-action="voice.panel.strip" onClick={() => { void act('voice.panel.strip'); }} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
+        <button ref={card as RefObject<HTMLButtonElement>} className={`vp-icon${iconCapLeft(iconPos, window.innerWidth) ? ' cap-left' : ''}`} style={iconPos ?? place} data-tour="voice" data-action="voice.panel.strip" onPointerDown={iconDown} onPointerMove={iconMove} onPointerUp={iconUp} onPointerCancel={iconUp} onClick={() => { if (justDragged.current) return; void act('voice.panel.strip'); }} title={`Голос: ${st.text}. Значок можно перетащить мышью; вернуть на место — «Штаб, верни значок на место».`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
           <MicGlyph off={!enabled} sleep={enabled && standby} />
           {(!enabled || standby || !sound) && <span className="vp-icon-cap">{st.text}</span>}
         </button>
@@ -651,6 +689,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
           <details className="vp-tune" name="vp-more" data-tour="voice-tune">
             <summary>Тонкая настройка</summary>
             {enabled && <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} />}
+            <AudioDevices client={client} />
             <p className="vp-note">Обычно хватает калибровки. Правее — чутче.</p>
             {/* режим выбирает калибровка; «словом» — когда динамики слышно громко */}
             <div className="vp-mode" role="group" aria-label="Перебивать">

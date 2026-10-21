@@ -707,6 +707,45 @@ await check('кнопка «Выключить звук»: озвучка мол
   if (on !== null) throw new Error(`выключение звука осталось записанным: ${on}`);
 });
 
+await check('значок микрофона перетаскивается мышью, место запоминается; щелчок без сдвига разворачивает; «верни значок на место»', async () => {
+  await panel.locator('.vp-card:not(.strip)').getByRole('button', { name: 'Свернуть' }).click();
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Свернуть' }).click();
+  const icon = page.locator('.vp-icon');
+  await icon.waitFor({ state: 'visible', timeout: 3000 });
+  const b0 = await icon.boundingBox();
+  await page.mouse.move(b0.x + b0.width / 2, b0.y + b0.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(b0.x + b0.width / 2 + 120, b0.y + b0.height / 2 + 220, { steps: 8 });
+  await page.mouse.up();
+  const b1 = await icon.boundingBox();
+  if (Math.abs(b1.x - (b0.x + 120)) > 3 || Math.abs(b1.y - (b0.y + 220)) > 3) throw new Error(`значок в ${Math.round(b1.x)},${Math.round(b1.y)}, ждали ${Math.round(b0.x + 120)},${Math.round(b0.y + 220)}`);
+  if (await panel.locator('.vp-card').count()) throw new Error('после перетаскивания панель развернулась');
+  const saved = await page.evaluate(() => localStorage.getItem('def_ops.voice.iconPos'));
+  if (!saved) throw new Error('место значка не запомнено');
+  await page.reload();
+  await icon.waitFor({ state: 'visible', timeout: T });
+  const b2 = await icon.boundingBox();
+  if (Math.abs(b2.x - b1.x) > 3 || Math.abs(b2.y - b1.y) > 3) throw new Error('после перезагрузки значок не на запомненном месте');
+  // за край окна значок не уходит
+  await page.mouse.move(b2.x + b2.width / 2, b2.y + b2.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(-500, -500, { steps: 6 });
+  await page.mouse.up();
+  const b3 = await icon.boundingBox();
+  if (b3.x < 0 || b3.y < 0) throw new Error('значок ушёл за край окна');
+  // щелчок без сдвига — полоса
+  await icon.click();
+  await panel.locator('.vp-card.strip').waitFor({ state: 'visible', timeout: 3000 });
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Свернуть' }).click();
+  await icon.waitFor({ state: 'visible', timeout: 3000 });
+  await page.evaluate(() => localStorage.removeItem('def_ops.voice.iconPos'));
+  await page.reload();
+  await icon.waitFor({ state: 'visible', timeout: T });
+  await icon.click();  // полоса → развернуть, как ниже по сценарию
+  await panel.locator('.vp-card.strip').getByRole('button', { name: 'Развернуть' }).click();
+  await panel.locator('.vp-card:not(.strip)').waitFor({ state: 'visible', timeout: 5000 });
+});
+
 await check('управление выключено, звук включён: микрофон закрыт, звук остаётся включённым (кнопка «Выключить звук» на месте)', async () => {
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('voice:power', { detail: false })));
   await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: 3000 });

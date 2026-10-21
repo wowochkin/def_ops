@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, CONTROL_DISABLED, SOUND_KEY, parseSound, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
+  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, CONTROL_DISABLED, SOUND_KEY, parseSound, ICON_POS_KEY, DRAG_PX, clampIcon, iconCapLeft, parseIconPos, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
   COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, topPlace, anchorBottom, fullHeight, RAIL_W, stripCut, stripLines, STRIP_LINE_CHARS, STRIP_OVER_CHARS,
 } from '../src/voice/panel-state';
 import { freeOffset } from '../src/engine/free-center';
@@ -32,6 +32,21 @@ describe('panelState', () => {
     expect(panelState({ ...base, busy: 'Калибровка' }).text).toBe('Калибровка');
     // не установлен — важнее ошибки микрофона: микрофон и не нужен
     expect(panelState({ ...base, status: 'off', micError: 'нет' }).key).toBe('off');
+  });
+
+  it('значок микрофона: положение читается, не выходит за окно, подпись — в сторону середины', () => {
+    expect(ICON_POS_KEY).toBe('def_ops.voice.iconPos');
+    expect(DRAG_PX).toBeGreaterThan(0);
+    expect(parseIconPos(null)).toBeNull();
+    expect(parseIconPos('мусор')).toBeNull();
+    expect(parseIconPos('{"left":10}')).toBeNull();
+    expect(parseIconPos('{"left":10,"top":20}')).toEqual({ left: 10, top: 20 });
+    expect(clampIcon({ left: -50, top: 9999 }, 1440, 900, 44)).toEqual({ left: 4, top: 852 });
+    expect(clampIcon({ left: 700, top: 300 }, 1440, 900, 44)).toEqual({ left: 700, top: 300 });
+    expect(clampIcon({ left: 500, top: 500 }, 300, 200, 44)).toEqual({ left: 252, top: 152 });  // окно стало меньше
+    expect(iconCapLeft(null, 1440)).toBe(false);
+    expect(iconCapLeft({ left: 100, top: 10 }, 1440)).toBe(false);
+    expect(iconCapLeft({ left: 1300, top: 10 }, 1440)).toBe(true);
   });
 
   it('звук выключен отдельно: управление работает, в состоянии — пометка; выбор не зависит от управления', () => {

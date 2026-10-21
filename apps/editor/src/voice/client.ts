@@ -6,6 +6,7 @@ import {
 } from './protocol';
 
 export { VOICE_SAY_IDS } from './protocol';
+import { MIC_CHANGED_NOTE, MIC_KEY, OUT_KEY, onDevicesChanged, parseDevices, pickDevice, type AudioDevices } from './audio-devices';
 
 const DEFAULT_URL = 'ws://127.0.0.1:47645/ws';
 const URL_KEY = 'def_ops.voice.url';
@@ -104,6 +105,12 @@ export class VoiceClient {
   private enabled = true;
   /** Звук выключен человеком: фразы в сервис не уходят. */
   private muted = false;
+  /** Выбранные устройства: id; пусто — как в системе. */
+  private micId = lsGetStr(MIC_KEY);
+  private outId = lsGetStr(OUT_KEY);
+  private lastInputs: { id: string; label: string }[] = [];
+  private deviceCbs = new Set<(d: AudioDevices & { mic: string; out: string; outSupported: boolean; note?: string }) => void>();
+  private devicesBound = false;
   /** Микрофон был открыт к выключению — включение открывает его снова. */
   private micBeforeOff = false;
   /** Звук калибровки (id 0) ждём: шаг «голос штаба» или «перебивание» начат и не отменён. */
@@ -233,7 +240,7 @@ export class VoiceClient {
     const aec = this.aec;
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints(aec) });
+      stream = await this.getMic(aec);
     } catch (e) { throw await micDenied(e); }
     const drop = () => stream.getTracks().forEach((t) => t.stop());
     if (!this.enabled) { drop(); return; }  // выключили, пока браузер давал микрофон: не держим его
@@ -253,10 +260,91 @@ export class VoiceClient {
     void this.syncCapture();  // сервис ответил, пока открывался микрофон, — и режим другой
   }
 
+  /** Микрофон: выбранное устройство; его нет (отключено) — системное, выбор сбрасывается. */
+  private async getMic(aec: boolean): Promise<MediaStream> {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ audio: micConstraints(aec, this.micId) });
+    } catch (e) {
+      const name = (e as { name?: string }).name;
+      if (this.micId && (name === 'OverconstrainedError' || name === 'NotFoundError')) {
+        this.micId = '';
+        lsSetStr(MIC_KEY, '');
+        this.emitDevices(MIC_CHANGED_NOTE);
+        return navigator.mediaDevices.getUserMedia({ audio: micConstraints(aec) });
+      }
+      throw e;
+    }
+  }
+
+  /** Устройства звука: списки, выбранные, поддерживается ли выбор вывода (в окне macOS его может не быть). */
+  async devices(): Promise<AudioDevices & { mic: string; out: string; outSupported: boolean }> {
+    let list: AudioDevices = { inputs: [], outputs: [] };
+    try { list = parseDevices(await navigator.mediaDevices.enumerateDevices()); } catch { /* список недоступен — только «как в системе» */ }
+    this.lastInputs = list.inputs;
+    return { ...list, mic: pickDevice(this.micId, list.inputs), out: pickDevice(this.outId, list.outputs), outSupported: this.outSupported() };
+  }
+
+  private outSupported(): boolean { return typeof AudioContext !== 'undefined' && typeof (AudioContext.prototype as { setSinkId?: unknown }).setSinkId === 'function'; }
+
+  /** Подписка на изменения устройств (подключили или отключили); возвращает отписку. Первая подписка включает слежение. */
+  onDevices(cb: (d: AudioDevices & { mic: string; out: string; outSupported: boolean; note?: string }) => void): () => void {
+    this.deviceCbs.add(cb);
+    if (!this.devicesBound && navigator.mediaDevices?.addEventListener) {
+      this.devicesBound = true;
+      navigator.mediaDevices.addEventListener('devicechange', () => { void this.deviceChanged(); });
+    }
+    return () => { this.deviceCbs.delete(cb); };
+  }
+
+  private async emitDevices(note?: string) {
+    const d = await this.devices();
+    this.deviceCbs.forEach((f) => f({ ...d, ...(note ? { note } : {}) }));
+  }
+
+  private async deviceChanged() {
+    const before = this.lastInputs;
+    const d = await this.devices();
+    const act = onDevicesChanged({ chosen: this.micId, before, after: d.inputs });
+    let note: string | undefined;
+    if (act === 'fallback') { this.micId = ''; lsSetStr(MIC_KEY, ''); }
+    if ((act === 'fallback' || act === 'reopen') && this.stream && this.enabled) { await this.reopenMic(); note = MIC_CHANGED_NOTE; }
+    this.deviceCbs.forEach((f) => f({ ...d, mic: this.micId, ...(note ? { note } : {}) }));
+  }
+
+  /** Выбрать микрофон (id; '' — как в системе): запоминается; микрофон открыт — переоткрывается с новым устройством. */
+  async setMic(id: string): Promise<void> {
+    if (id === this.micId) return;
+    this.micId = id;
+    lsSetStr(MIC_KEY, id);
+    if (this.stream && this.enabled) await this.reopenMic();
+    await this.emitDevices(MIC_CHANGED_NOTE);
+  }
+
+  /** Выбрать устройство вывода (если окно это умеет); false — выбор не поддерживается. */
+  async setOut(id: string): Promise<boolean> {
+    if (!this.outSupported()) return false;
+    this.outId = id;
+    lsSetStr(OUT_KEY, id);
+    try { await (this.ctx as unknown as { setSinkId(v: string): Promise<void> } | null)?.setSinkId(id); } catch { return false; }
+    await this.emitDevices();
+    return true;
+  }
+
+  /** Открыть микрофон заново (устройство сменилось); не вышло — остаётся прежний. */
+  private async reopenMic() {
+    const aec = this.aec;
+    try {
+      const s = await this.getMic(aec);
+      if (!this.stream || !this.enabled || !this.node) { s.getTracks().forEach((t) => t.stop()); return; }
+      this.attachMic(s, aec);
+    } catch (e) { console.warn('микрофон не переоткрылся', e); }
+  }
+
   /** Звуковой граф: создаётся с первым микрофоном, звук штаба — через `bus`. */
   private audio(): { ctx: AudioContext; bus: GainNode } {
     if (!this.ctx || !this.bus) {
       const ctx = new AudioContext();
+      if (this.outId && this.outSupported()) void (ctx as unknown as { setSinkId(v: string): Promise<void> }).setSinkId(this.outId).catch(() => {});
       const bus = ctx.createGain();
       bus.connect(ctx.destination);
       this.ctx = ctx;
@@ -301,7 +389,7 @@ export class VoiceClient {
     this.swapping = true;
     const aec = this.aec;
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ audio: micConstraints(aec) });
+      const s = await this.getMic(aec);
       if (!this.stream || !this.enabled || !this.node) { s.getTracks().forEach((t) => t.stop()); return; }
       this.attachMic(s, aec);
     } catch (e) {
@@ -536,3 +624,6 @@ export class VoiceClient {
     }
   }
 }
+
+const lsGetStr = (k: string): string => { try { return localStorage.getItem(k) ?? ''; } catch { return ''; } };
+const lsSetStr = (k: string, v: string): void => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* */ } };

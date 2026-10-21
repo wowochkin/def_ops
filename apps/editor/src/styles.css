@@ -1609,6 +1609,9 @@ button.kb-rub:hover { border-color: #2f5f8f; }
   display: flex; align-items: center; justify-content: center; background: var(--vp-st) !important; color: #fff !important; border: 3px solid #fff !important; box-shadow: 0 3px 12px rgba(0,0,0,.35); }
 .vp.listening .vp-icon, .vp.speaking .vp-icon { box-shadow: 0 0 0 6px color-mix(in srgb, var(--vp-st) 35%, transparent), 0 3px 12px rgba(0,0,0,.35); }
 /* голос выключен: перечёркнутый микрофон и подпись рядом со значком */
+.vp-icon { cursor: grab; touch-action: none; }
+.vp-icon:active { cursor: grabbing; }
+.vp-icon.cap-left .vp-icon-cap { left: auto !important; right: calc(100% + 8px); }
 .vp-icon-cap { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 18px; font-weight: 700;
   background: #fffefb; color: var(--vp-ink); border: 1.5px solid #8d887c; border-radius: 8px; padding: 4px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
 .vp .vp-power { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; font-size: 20px; font-weight: 700; padding: 10px 14px; }
@@ -1776,7 +1779,13 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 
 /* начальная страница */
 .page-in.start { max-width: 880px; padding-top: 84px; }  /* сверху по центру — панель голоса */
-.start h2 { margin: 0 0 8px; font-size: 26px; }
+.start-kicker { margin: 0 0 6px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.start h2 { margin: 0 0 10px; font-size: 30px; line-height: 1.2; }
+.start-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.start-pillars .card { display: flex; flex-direction: column; gap: 5px; }
+.start-pillars b { font-size: 15px; }
+.start-pillars span { font-size: 13px; line-height: 1.45; color: #3f3c36; }
+.start-cta { margin: 6px 0 10px; font-size: 16px; font-weight: 700; }
 .start .lead { font-size: 16px; line-height: 1.5; margin-bottom: 18px; }
 .start-tour { display: flex; gap: 18px; align-items: center; padding: 16px 18px; margin-bottom: 20px; }
 .start-tour p { margin: 4px 0 8px; font-size: 14px; line-height: 1.45; }
@@ -1792,3 +1801,8 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .start-llm small { flex-basis: 100%; color: #5a5852; }
 .start .note { margin-top: 16px; font-size: 13px; color: #5a5852; }
 @media (max-width: 640px) { .start-tour { flex-direction: column; align-items: stretch; } }
+
+/* устройства звука */
+.vp-devices { display: flex; flex-direction: column; gap: 6px; margin: 4px 0; }
+.vp-devices label { display: flex; flex-direction: column; gap: 2px; font-weight: 700; }
+.vp-devices select { font: inherit; font-weight: 400; padding: 4px 6px; border: 1.5px solid #8d887c; border-radius: 6px; background: #fff; max-width: 100%; }

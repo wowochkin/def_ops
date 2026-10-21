@@ -12,6 +12,7 @@ import type { VoiceClient } from './client';
 import type { CalibStep, ServerMsg, VoiceSettings } from './protocol';
 import { act, openModal, useAction } from './registry';
 import { hl } from './highlight';
+import { AudioDevices } from './AudioDevices';
 
 /** Ответы окна калибровки голосом (реплика без обращения) → действие окна. */
 export function calibParse(rest: string): { id: string } | null {
@@ -265,6 +266,7 @@ export function Calibration({ client, onClose, onResult, setBusy, auto = false, 
             <div className="vp-stepn">Калибровка · шаг {i + 1} из {STEPS.length}</div>
             <h3>{s.title}</h3>
             <p>{s.txt}</p>
+            {i === 0 && !running && <AudioDevices client={client} />}
             {meter}
             {s.say && <p className="vp-say">{s.say}</p>}
             {restart && <p className="vp-error" role="alert">{restart}</p>}

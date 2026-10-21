@@ -127,9 +127,9 @@ export function micFrame(mic: Int16Array, ref?: Int16Array): ArrayBuffer {
  * Захват микрофона. Сервис подавляет эхо сам (`aec`) — обработка браузера выключена: его эхоподавление, шумоподавление
  * и АРУ меняют эхо нелинейно, и подавление по опоре не сходится. Иначе — с обработкой браузера, как раньше.
  */
-export function micConstraints(aec: boolean): MediaTrackConstraints {
+export function micConstraints(aec: boolean, deviceId = ''): MediaTrackConstraints {
   const on = !aec;
-  return { echoCancellation: on, noiseSuppression: on, autoGainControl: on, channelCount: 1 };
+  return { echoCancellation: on, noiseSuppression: on, autoGainControl: on, channelCount: 1, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) };
 }
 
 export type WsState = 'open' | 'closed' | 'connecting';
