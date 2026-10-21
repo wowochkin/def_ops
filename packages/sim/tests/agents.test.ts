@@ -4,7 +4,7 @@ import { contextFrom } from '../src/source';
 import { agentKindOf, agentsHistory, agentsStateAt, agentsToRun, postureOf, type AgentTrace } from '../src/agents';
 import { unitReports } from '../src/reports';
 import { checkEvents, compareWithHistory } from '../src/history';
-import { runToDocument } from '../src/publish';
+import { medianXY, runToDocument } from '../src/publish';
 
 const get = (kind: string, file: string) => {
   const id = file.replace(/\.json$/, '');
@@ -96,5 +96,33 @@ describe('агентная модель в «Переигровке»', () => {
     expect(['attack', 'counterattack', 'breakout'].map((x) => agentKindOf(x as never))).toEqual(['attack', 'attack', 'attack']);
     expect(agentKindOf('delay')).toBe('defend');
     expect(agentKindOf('regroup')).toBe('move');
+  });
+
+  it('ось танковой армии: медиана не тянется за отставшим, после перестановки армии — заново', async () => {
+    // два корпуса вместе, третий меньше и отстал на 30 км: медиана — у двух, среднее отстаёт
+    const m = medianXY([[0, 0], [0.5, 0], [30, 0]], [15000, 15000, 8000]);
+    expect(Math.hypot(m[0], m[1])).toBeLessThan(1);
+
+    // три корпуса идут на запад ~27 км/сут; в 60-м часу (передача командования) армию ставят на 40 км восточнее
+    const { ctx: base } = await contextFrom(get, 'berlin-1945-tasks');
+    const lng = (h: number) => (h < 60 ? 14.6 - (h * 0.4) / 24 : 14.6 - (60 * 0.4) / 24 + 0.6 - ((h - 60) * 0.4) / 24);
+    const frames = Array.from({ length: 121 }, (_, h) => [51.8, 51.85, 51.9].map((lat) => [lng(h), lat, 'марш: по дороге', 15000, 150, 200, 2, 1, 0.1, 0.9, 0]));
+    const t: AgentTrace = {
+      ...trace(), hours: 120, frames,
+      divisions: ['su_a1', 'su_a2', 'su_a3'].map((id, k) => ({ id, name: `${k + 6}-й танковый корпус`, side: 'su', hq: 'su_3gta', kind: 'tk', mobility: 'tracked', size: 'tank', quality: 1 })),
+      hqs: [
+        { id: 'su_1uf', name: '1-й Украинский фронт', side: 'su', echelon: 'front', parent: null },
+        { id: 'su_3gta', name: '3-я гвардейская танковая армия', side: 'su', echelon: 'army', parent: 'su_1uf' },
+      ],
+    };
+    const { ctx, run } = agentsToRun(base, t, 6);
+    // снимок 60-го часа — перестановка всех трёх, остальные — ход
+    expect(run.snapshots.filter((sn) => sn.jumped).map((sn) => [sn.time, sn.jumped!.length])).toEqual([['1945-04-18T17:00', 3]]);
+    const axes = runToDocument(ctx, run, null, { name: 'проба' }).features.filter((f) => f.kind === 'arrow' && (f as { preset?: string }).preset === 'atlas.tankAxis');
+    const last = axes[axes.length - 1] as unknown as { points: [number, number][]; name: string };
+    // последняя ось — от места после перестановки на запад, без разворота назад через прежний путь
+    expect(last.points[0][0]).toBeCloseTo(14.2, 1);
+    for (let k = 1; k < last.points.length; k++) expect(last.points[k][0]).toBeLessThan(last.points[k - 1][0]);
+    expect(last.name).toContain('с 18.4');
   });
 });

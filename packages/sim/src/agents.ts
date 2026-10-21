@@ -66,6 +66,9 @@ function typeOf(side: string, mobility: string): string {
 
 const ECH: Echelon[] = ['front', 'army', 'corps', 'division', 'brigade', 'regiment'];
 
+/** Перестановка, а не ход: больше стольких км за час (быстрее всех на марше — автоколонны, 25 км/ч днём). */
+export const JUMP_KM_H = 30;
+
 /**
  * Прогон агентной модели как RunResult для контекста сценария того же театра (berlin-1945-tasks): контекст получает
  * формирования хода (дивизии и штабы), шаг снимков stepHours и конец по последнему кадру.
@@ -89,8 +92,21 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
   ticks.push(hours);
   const first = new Map<string, number>();
   const gone = new Set<string>();
+  const P = (row: unknown[]) => base.theatre.proj.toXY(at(row));
   const snapshots: Snapshot[] = ticks.map((h, turn) => {
     const units: Snapshot['units'] = [];
+    // переставленные с прошлого снимка (состояние при передаче командования): часовой шаг больше JUMP_KM_H
+    const jumped: string[] = [];
+    if (turn > 0) {
+      t.frames[h].forEach((_, k) => {
+        for (let x = ticks[turn - 1] + 1; x <= h; x++) {
+          const a = t.frames[x - 1][k], b = t.frames[x][k];
+          if (postureOf(String(a[iState])) === null || postureOf(String(b[iState])) === null) continue;
+          const p = P(a), q = P(b);
+          if (Math.hypot(q[0] - p[0], q[1] - p[1]) > JUMP_KM_H) { jumped.push(t.divisions[k].id); break; }
+        }
+      });
+    }
     t.frames[h].forEach((row, k) => {
       const d = t.divisions[k];
       const p = postureOf(String(row[iState]));
@@ -104,7 +120,7 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
         ...((row[iEnc] as number) > 0 ? { cutOff: true } : {}),
       });
     });
-    return { time: time(h), turn, units };
+    return { time: time(h), turn, units, ...(jumped.length ? { jumped } : {}) };
   });
 
   const last = t.frames[hours];

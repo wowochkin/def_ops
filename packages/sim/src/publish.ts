@@ -80,6 +80,29 @@ const POSTURE_RU: Record<string, string> = { attack: 'наступает', defen
 const tankish = (f: Formation, ctx: SimContext) => profileOf(ctx, f.side).unitTypes[f.type]?.mobility !== 'foot';
 
 /**
+ * Взвешенная геометрическая медиана точек (Вейсфельд): точка, сумма взвешенных расстояний от которой наименьшая.
+ * В отличие от среднего, отставший или ушедший в сторону корпус меньшинства её не оттягивает — она остаётся у
+ * основной массы. Точки в км (плоские координаты театра).
+ */
+export function medianXY(pts: [number, number][], w: number[]): [number, number] {
+  const W = w.reduce((a, b) => a + b, 0) || 1;
+  let m: [number, number] = pts.reduce<[number, number]>((a, p, i) => [a[0] + (p[0] * w[i]) / W, a[1] + (p[1] * w[i]) / W], [0, 0]);
+  for (let it = 0; it < 100; it++) {
+    let sx = 0, sy = 0, sk = 0;
+    for (let i = 0; i < pts.length; i++) {
+      // в самой точке — вес без деления на ноль (точка большинства притягивает к себе)
+      const d = Math.max(Math.hypot(pts[i][0] - m[0], pts[i][1] - m[1]), 1e-3), k = w[i] / d;
+      sx += pts[i][0] * k; sy += pts[i][1] * k; sk += k;
+    }
+    const next: [number, number] = [sx / sk, sy / sk];
+    const moved = Math.hypot(next[0] - m[0], next[1] - m[1]);
+    m = next;
+    if (moved < 0.01) break;
+  }
+  return m;
+}
+
+/**
  * Линия рубежа, развёрнутая так, чтобы зубцы знака смотрели на противника: знак ставит их слева по ходу линии,
  * поэтому линия разворачивается, если ближайший к отрезкам противник (`foes`) в основном справа.
  */
@@ -822,14 +845,16 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
   const win = level === 'army' ? turnsPerDay : 2 * turnsPerDay;
   const minKm = Math.max(T.cellKm * (level === 'army' ? 3 : 5), level === 'army' ? 0.6 : 1.2);
   // центр группы в снимке (видимые члены, по численности)
-  type C = { xy: [number, number]; pers: number; tanks: number; n: number; attack: number; defend: number; withdraw: number; cut: number; units: { xy: [number, number]; w: number }[] };
+  // ax — точка оси танковой армии: взвешенная медиана, а не среднее (отставший корпус не тянет ось назад зигзагом)
+  type C = { xy: [number, number]; ax: [number, number]; pers: number; tanks: number; n: number; attack: number; defend: number; withdraw: number; cut: number; units: { xy: [number, number]; w: number }[] };
   const centre = (sn: Snapshot, members: string[], side: Side): C | null => {
     const us = sn.units.filter((u) => members.includes(u.id) && !u.destroyed && (side === 'own' || !visible || visible(u.id, sn)) && onMap({ ...byId.get(u.id)!, position: u.at }, sn.time));
     if (!us.length) return null;
     const w = us.reduce((a, u) => a + Math.max(1, u.personnel), 0);
     const xy = us.reduce<[number, number]>((a, u) => { const p = P(u.at), k = Math.max(1, u.personnel) / w; return [a[0] + p[0] * k, a[1] + p[1] * k]; }, [0, 0]);
     const by = (k: string) => us.filter((u) => u.posture === k).reduce((a, u) => a + u.personnel, 0) / w;
-    return { xy, pers: us.reduce((a, u) => a + u.personnel, 0), tanks: us.reduce((a, u) => a + u.tanks, 0), n: us.length, attack: by('attack'), defend: by('defend'), withdraw: by('withdraw'), cut: us.filter((u) => u.cutOff).reduce((a, u) => a + u.personnel, 0) / w, units: us.map((u) => ({ xy: P(u.at), w: Math.max(1, u.personnel) })) };
+    const ax = medianXY(us.map((u) => P(u.at)), us.map((u) => Math.max(1, u.personnel)));
+    return { xy, ax, pers: us.reduce((a, u) => a + u.personnel, 0), tanks: us.reduce((a, u) => a + u.tanks, 0), n: us.length, attack: by('attack'), defend: by('defend'), withdraw: by('withdraw'), cut: us.filter((u) => u.cutOff).reduce((a, u) => a + u.personnel, 0) / w, units: us.map((u) => ({ xy: P(u.at), w: Math.max(1, u.personnel) })) };
   };
   const cents = new Map<string, (C | null)[]>();
   for (const [id, x] of groups) cents.set(id, run.snapshots.map((sn) => centre(sn, x.members, sideOf(x.g.side))));
@@ -857,6 +882,12 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
     const frames = run.snapshots.map((sn, i) => ({ sn, i, c: cs[i] })).filter((q) => q.c);
     if (!frames.length) continue;
     const tank = x.members.filter((m) => tankish(byId.get(m)!, ctx)).length * 2 > x.members.length;
+    // снимки, где соединения армии с большей частью её людей переставлены на место (не пришли): ось с них — заново
+    const jumps = run.snapshots.map((sn, i) => {
+      if (!sn.jumped?.length || !cs[i]) return -1;
+      const moved = sn.units.filter((u) => sn.jumped!.includes(u.id) && x.members.includes(u.id)).reduce((a, u) => a + u.personnel, 0);
+      return moved * 2 > cs[i]!.pers ? i : -1;
+    }).filter((i) => i >= 0);
     const posture = (c: C) => (c.withdraw > 0.4 ? 'отходит' : c.attack > 0.4 ? 'наступает' : c.defend > 0.4 ? 'обороняется' : 'на марше / в резерве');
     const note = (c: C) => `${c.n} соед., ${Math.round(c.pers).toLocaleString('ru')} чел., танков ${c.tanks}; ${posture(c)}`;
     const last = frames[frames.length - 1];
@@ -1031,28 +1062,34 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       }
       if (axis && i % turnsPerDay === 0 && i > 0) {
         // даты вдоль оси, как в атласах: где была армия к началу каждых суток — когда она оттуда ушла, до конца операции
+        // (или до перестановки армии: ось дальше начинается заново, и прежний её отрезок не показан)
         const q = cs[i], p0 = cs[i - turnsPerDay], gone = run.snapshots[i + turnsPerDay]?.time;
-        if (q && p0 && gone && Math.hypot(q.xy[0] - p0.xy[0], q.xy[1] - p0.xy[1]) >= minKm) {
-          const lb = createFeature('label', 'atlas.date', { at: LL(q.xy), text: dm(from), layerId: `${lay}-moves` }, labelK * 1.2, side) as LabelFeature;
+        const reset = jumps.find((r) => r > i);
+        if (q && p0 && gone && !jumps.some((r) => r > i - turnsPerDay && r <= i) && Math.hypot(q.ax[0] - p0.ax[0], q.ax[1] - p0.ax[1]) >= minKm) {
+          const lb = createFeature('label', 'atlas.date', { at: LL(q.ax), text: dm(from), layerId: `${lay}-moves` }, labelK * 1.2, side) as LabelFeature;
           lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 2 * labelK } };
           lb.name = `${shortName(x.g.name)}: ${dm(from)}`;
           lb.labelRank = 1;
-          lb.time = { from: gone, to: null };
+          lb.time = { from: gone, to: reset != null ? run.snapshots[reset].time : null };
           out.push(lb);
         }
       }
       if (axis && (i % turnsPerDay === 0 || i === run.snapshots.length - 1)) {
-        // ось танковой армии: центры по суткам от начала до этого хода; видна до следующей оси
+        // ось танковой армии: центры по суткам от начала (или от последней перестановки армии — состояние при передаче
+        // командования: пути от прежнего места нет, и ось через него ломалась бы зигзагом) до этого хода; видна до
+        // следующей оси
         const pts: [number, number][] = [];
-        for (let j = 0; j <= i; j += turnsPerDay) { const q = cs[j]; if (q && (!pts.length || Math.hypot(q.xy[0] - pts[pts.length - 1][0], q.xy[1] - pts[pts.length - 1][1]) >= minKm)) pts.push(q.xy); }
-        if (pts.length && Math.hypot(c.xy[0] - pts[pts.length - 1][0], c.xy[1] - pts[pts.length - 1][1]) >= minKm * 0.5) pts.push(c.xy);
+        const from0 = jumps.filter((r) => r <= i).pop() ?? 0;
+        if (from0 > 0 && cs[from0]) pts.push(cs[from0]!.ax);
+        for (let j = Math.ceil(from0 / turnsPerDay) * turnsPerDay; j <= i; j += turnsPerDay) { if (j === from0 && pts.length) continue; const q = cs[j]; if (q && (!pts.length || Math.hypot(q.ax[0] - pts[pts.length - 1][0], q.ax[1] - pts[pts.length - 1][1]) >= minKm)) pts.push(q.ax); }
+        if (pts.length && Math.hypot(c.ax[0] - pts[pts.length - 1][0], c.ax[1] - pts[pts.length - 1][1]) >= minKm * 0.5) pts.push(c.ax);
         const L = pts.slice(1).reduce((acc, p, j) => acc + Math.hypot(p[0] - pts[j][0], p[1] - pts[j][1]), 0);
         if (pts.length >= 2 && L >= minKm * 2) {
           const a = createFeature('arrow', 'atlas.tankAxis', { points: pts.map(LL), layerId: `${lay}-moves` }, 1, side) as ArrowFeature;
           if (side !== 'own') a.style = { ...recolorAxis(a.style, '#1f4e8c') };
           // остриё оси — у знака армии: черта без даты (даты — вдоль оси)
           if (halted) a.style = { ...a.style, tip: 'bar' };
-          a.name = `${shortName(x.g.name)}: ось наступления, ${Math.round(L)} км с начала операции${halted ? '; далее остановка' : ''}`;
+          a.name = `${shortName(x.g.name)}: ось наступления, ${Math.round(L)} км ${from0 > 0 ? `с ${dm(run.snapshots[from0].time)}` : 'с начала операции'}${halted ? '; далее остановка' : ''}`;
           const nx = run.snapshots[Math.min(run.snapshots.length - 1, i + turnsPerDay)];
           a.time = { from, to: i + 1 < run.snapshots.length && nx.time !== from ? nx.time : null };
           out.push(a);

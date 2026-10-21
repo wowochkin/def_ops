@@ -151,6 +151,9 @@ export interface Snapshot {
   units: { id: string; at: LngLat; personnel: number; tanks: number; posture: string; destroyed: boolean; cutOff?: boolean; ammo?: number; path?: LngLat[] }[];
   /** Территория после хода (если правила её ведут). */
   territory?: number[];
+  /** Соединения, поставленные на место, а не пришедшие с прежнего снимка (состояние при передаче командования):
+   *  пути между их прежним и новым местом нет — ось танковой армии после такого снимка начинается заново. */
+  jumped?: string[];
 }
 
 export interface RunResult {
