@@ -79,6 +79,7 @@ export function dmy(iso: string): string {
 
 /** Значки разделов (линейные, 20×20). */
 export const Icon = {
+  start: <svg viewBox="0 0 24 24"><path d="M4 11.5L12 4l8 7.5" /><path d="M6.5 10v9.5h11V10" /><path d="M10 19.5v-5h4v5" /></svg>,
   editor: <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>,
   replay: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M10 8.5v7l5.5-3.5z" /></svg>,
   maps: <svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" /><path d="M9 4v13.5M15 6.5V20" /></svg>,

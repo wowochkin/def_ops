@@ -224,7 +224,7 @@ await ctx.addInitScript((url) => {
   sessionStorage.setItem('e2e.init', '1');
   localStorage.clear();
   localStorage.setItem('def_ops.voice.url', url);
-  localStorage.setItem('def_ops.section', 'editor');
+  sessionStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.intro', 'off');  // вступление — в своей проверке в конце
   // туры разделов — в своих проверках: предложение тура при входе в «Переигровку» открыло бы окно разговора,
   // и «передайте в штаб армии» стало бы обращением
@@ -1003,7 +1003,7 @@ async function handsFree(lines, { reload = true, mode = 'voice' } = {}) {
     await page.evaluate((m) => {
       // регуляторы — «голосом» (или как велено); при каком подавлении эха — допишет ответ сервиса
       localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: m, aec_unknown: true }));
-      localStorage.setItem('def_ops.section', 'replay');
+      sessionStorage.setItem('def_ops.section', 'replay');
       localStorage.setItem('def_ops.voice.panel', 'full');  // лента видна (при открытом окне — полоса)
     }, mode);
   }
@@ -1654,7 +1654,7 @@ await ctx2.addInitScript((url) => {
   sessionStorage.setItem('e2e.init', '1');
   localStorage.clear();
   localStorage.setItem('def_ops.voice.url', url);
-  localStorage.setItem('def_ops.section', 'editor');
+  sessionStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.panel', 'full');  // лента реплик видна
 }, `ws://127.0.0.1:${vport}/ws`);
 // события панели голоса: отменено ли voice:ready-first и пришло ли voice:propose
@@ -1777,7 +1777,7 @@ await ctx3.addInitScript((url) => {
   sessionStorage.setItem('e2e.init', '1');
   localStorage.clear();
   localStorage.setItem('def_ops.voice.url', url);
-  localStorage.setItem('def_ops.section', 'editor');
+  sessionStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.intro', 'off');
   localStorage.setItem('def_ops.voice.panel', 'full');  // лента видна (при открытом окне — полоса)
 }, `ws://127.0.0.1:${vport}/ws`);
@@ -1889,7 +1889,7 @@ await ctx4.addInitScript((url) => {
   sessionStorage.setItem('e2e.init', '1');
   localStorage.clear();
   localStorage.setItem('def_ops.voice.url', url);
-  localStorage.setItem('def_ops.section', 'editor');
+  sessionStorage.setItem('def_ops.section', 'editor');
   localStorage.setItem('def_ops.voice.panel', 'full');  // лента видна (при открытом окне — полоса)
   localStorage.setItem('def_ops.voice.settings', JSON.stringify({ vad: 0.5, barge_vad: 0.8, barge_ms: 300, end_ms: 400, barge_mode: 'voice', aec_unknown: true }));
 }, `ws://127.0.0.1:${vport}/ws`);

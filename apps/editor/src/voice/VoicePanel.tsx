@@ -502,6 +502,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     status, enabled, muted: !sound, micError, busy, speaking, listening, thinking, standby,
     conversation: now - spokeAt <= CONVERSATION_S * 1000,
   });
+  // раздел «ИИ» показывает, почему нельзя выбрать модель озвучки
+  useEffect(() => { ttsStore.setReason(status === 'ready' ? null : st.text); }, [status, st.text]);
   const live = enabled && status === 'ready' && !micError;
   const dialogsOk = live && sound;  // калибровка и голоса — со звуком
   const hint = live ? bargeHint(speaking, cfg.barge_mode) : null;

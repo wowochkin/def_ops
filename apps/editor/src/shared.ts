@@ -126,16 +126,24 @@ async function nativeModels(url: string): Promise<Record<string, ModelInfo>> {
 export async function checkLlm(url: string): Promise<LlmCheck> {
   try {
     const r = await fetch(`${url.replace(/\/+$/, '')}/models`, { signal: AbortSignal.timeout(5000) });
-    if (!r.ok) return { state: 'fail', error: `сервер ответил ${r.status}` };
+    if (!r.ok) return { state: 'fail', error: r.status === 502 || r.status === 504 ? `сервер ответил ${r.status}: ${LLM_DOWN}` : `сервер ответил ${r.status}` };
     const j = (await r.json()) as { data?: { id: string }[] };
     const info = await nativeModels(url);
     const all = (j.data ?? []).map((m) => m.id);
     const models = all.filter((m) => !/embed/i.test(m));
     return models.length ? { state: 'ok', models, embedModels: all.filter((m) => /embed/i.test(m)), info } : { state: 'fail', error: 'на сервере не загружена ни одна модель' };
   } catch (e) {
-    return { state: 'fail', error: (e as Error).name === 'TimeoutError' ? 'сервер не отвечает' : (e as Error).message };
+    if ((e as Error).name === 'TimeoutError') return { state: 'fail', error: 'сервер не отвечает' };
+    // полный адрес из окна приложения: браузерное окно не пускает к другому адресу без разрешения сервера (CORS)
+    if (e instanceof TypeError && /^https?:\/\//i.test(url)) return { state: 'fail', error: directFail(url) };
+    return { state: 'fail', error: (e as Error).message };
   }
 }
+
+const LLM_DOWN = 'LM Studio не отвечает на своём порту — запущен ли он (Developer → Start Server)? Другой порт — запуск приложения с DEFOPS_LLM_URL=http://localhost:ПОРТ/v1, адрес здесь — /llm/v1.';
+/** Подсказка, когда окно не достучалось до полного адреса: не ошибка сервера, а запрет окна. */
+export const directFail = (url: string): string =>
+  `окно не может обратиться напрямую к ${url.replace(/\/+$/, '')} — оставьте здесь /llm/v1 и запустите приложение с DEFOPS_LLM_URL=${url.replace(/\/+$/, '')} (или включите «Enable CORS» в LM Studio: Developer → настройки сервера)`;
 
 export interface Llm { settings: LlmSettings; set: (p: Partial<LlmSettings>) => void; check: LlmCheck; recheck: () => Promise<LlmCheck> }
 

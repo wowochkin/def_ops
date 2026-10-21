@@ -20,8 +20,10 @@
 
 ```
 brew install uv ffmpeg
-services/voice/setup.sh      # окружение services/voice/.venv (Python 3.12), ~1–3 мин
+services/voice/setup.sh      # окружение services/voice/.venv (Python 3.12), ~1–3 мин; то же — npm run voice:setup
 ```
+
+`npm run desktop:app` делает это сам перед запуском (если окружения нет или оно неполное; отключить — `DEFOPS_NO_VOICE=1`).
 
 Модели (Silero VAD, Smart Turn, GigaAM, Qwen3-TTS) скачиваются с Hugging Face при первом запуске сервиса, не при
 установке: первый запуск — с интернетом и дольше обычного.

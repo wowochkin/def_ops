@@ -53,3 +53,21 @@ describe('startVoice', () => {
     } finally { rmSync(d, { recursive: true, force: true }); }
   });
 });
+
+import { needsVoiceSetup } from '../server/voice-env.mjs';
+
+describe('needsVoiceSetup', () => {
+  const mac = { platform: 'darwin', arch: 'arm64', disabled: false };
+  it('Mac на Apple Silicon: нет окружения или в нём не хватает пакетов — ставить', () => {
+    expect(needsVoiceSetup({ ...mac, hasPython: false, importsOk: false })).toBe(true);
+    expect(needsVoiceSetup({ ...mac, hasPython: true, importsOk: false })).toBe(true);
+  });
+  it('окружение целое — не трогать', () => {
+    expect(needsVoiceSetup({ ...mac, hasPython: true, importsOk: true })).toBe(false);
+  });
+  it('другая система или отключено — не ставить', () => {
+    expect(needsVoiceSetup({ platform: 'linux', arch: 'x64', disabled: false, hasPython: false, importsOk: false })).toBe(false);
+    expect(needsVoiceSetup({ platform: 'darwin', arch: 'x64', disabled: false, hasPython: false, importsOk: false })).toBe(false);
+    expect(needsVoiceSetup({ ...mac, disabled: true, hasPython: false, importsOk: false })).toBe(false);
+  });
+});

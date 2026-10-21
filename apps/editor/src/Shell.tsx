@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
+import { StartView } from './StartView';
 import { KnowledgeView } from './KnowledgeView';
 import { ModelingView } from './modeling/ModelingView';
 import { TheatreView } from './TheatreView';
@@ -27,7 +28,7 @@ import { ActButton } from './voice/registry';
 import { VoicePanel } from './voice/VoicePanel';
 import { TourLayer } from './voice/TourLayer';
 import { FlashLayer } from './voice/FlashLayer';
-import { ttsStatus, ttsStore, useTts } from './voice/tts-store';
+import { ttsStatus, ttsStore, useTts, useTtsReason } from './voice/tts-store';
 import { ModelPicker } from './ModelPicker';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -35,12 +36,16 @@ import { useBasemaps, useLlm, useServer, type Basemaps, type Llm, type ServerSta
 
 export { SECTIONS };
 const ICONS: Record<Section, ReactNode> = {
-  editor: Icon.editor, replay: Icon.replay, modeling: Icon.modeling, maps: Icon.maps,
+  start: Icon.start, editor: Icon.editor, replay: Icon.replay, modeling: Icon.modeling, maps: Icon.maps,
   library: Icon.library, knowledge: Icon.knowledge, staff: Icon.staff,
 };
+/** Раздел при запуске: адрес (#раздел), иначе — раздел этого сеанса (после перезагрузки окна), иначе — «Начало». */
 const fromHash = (): Section => {
   const h = location.hash.replace('#', '') as Section;
-  return SECTIONS.some((s) => s.id === h) ? h : ((localStorage.getItem('def_ops.section') as Section) || 'editor');
+  if (SECTIONS.some((s) => s.id === h)) return h;
+  let saved: string | null = null;
+  try { saved = sessionStorage.getItem('def_ops.section'); } catch { /* */ }
+  return SECTIONS.some((s) => s.id === saved) ? (saved as Section) : 'start';
 };
 
 export function Shell() {
@@ -56,7 +61,7 @@ export function Shell() {
 
   useEffect(() => {
     setMounted((m) => (m.has(section) ? m : new Set(m).add(section)));
-    try { localStorage.setItem('def_ops.section', section); } catch { /* */ }
+    try { sessionStorage.setItem('def_ops.section', section); } catch { /* */ }
     if (location.hash !== `#${section}`) history.replaceState(null, '', `#${section}`);
   }, [section]);
   // голосовые действия оболочки (переход — через адрес, его слушает hashchange)
@@ -81,6 +86,7 @@ export function Shell() {
         <span className={`rail-srv ${server.status}`} data-tour="rail-srv" title={server.status === 'online' ? 'Сервер доступен' : server.status === 'offline' ? 'Сервер недоступен — работа в браузере' : 'Проверка сервера…'} />
       </nav>
       <div className="stage">
+        {section === 'start' && <StartView llm={llm} />}
         {mounted.has('editor') && <div className="pane" data-tour="section-editor" hidden={section !== 'editor'}><EditorView bm={bm} server={server} incoming={incoming} /></div>}
         {mounted.has('replay') && <div className="pane" data-tour="section-replay" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
         {mounted.has('modeling') && <div className="pane" data-tour="section-modeling" hidden={section !== 'modeling'}><ModelingView llm={llm} /></div>}
@@ -149,7 +155,7 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
 function StaffView({ llm }: { llm: Llm }) {
   const { settings, set, check, recheck } = llm;
   const tts = useTts();
-  const ttsSt = ttsStatus(tts);
+  const ttsSt = ttsStatus(tts, useTtsReason());
   return (
     <div className="page" data-tour="section-staff">
       <div className="page-in narrow">

@@ -40,6 +40,15 @@ describe('модель озвучки в окне', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('голоса нет — причина из панели, а не общая фраза', () => {
+    expect(ttsStatus(null).text).toBe('Голос не запущен. Выбрать модель озвучки можно, когда голос на связи.');
+    expect(ttsStatus(null, 'Голос не установлен: services/voice/setup.sh').text)
+      .toBe('Голос не установлен: services/voice/setup.sh. Выбрать модель озвучки можно, когда голос на связи.');
+    ttsStore.setReason('Голос загружается');
+    expect(ttsStore.getReason()).toBe('Голос загружается');
+    ttsStore.setReason(null);
+  });
+
   it('состояния читаются простыми словами', () => {
     expect(ttsStatus(info()).text).toBe('Говорит: Первая.');
     expect(ttsStatus(info({ state: 'loading' })).kind).toBe('wait');

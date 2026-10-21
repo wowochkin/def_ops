@@ -2,8 +2,9 @@
  * Разделы приложения без значков: список нужен и оболочке (Shell.tsx добавляет значки),
  * и голосовому управлению (проверяется в node, поэтому без React).
  */
-export type Section = 'editor' | 'replay' | 'modeling' | 'maps' | 'library' | 'knowledge' | 'staff';
+export type Section = 'start' | 'editor' | 'replay' | 'modeling' | 'maps' | 'library' | 'knowledge' | 'staff';
 export const SECTIONS: { id: Section; title: string; soon?: boolean }[] = [
+  { id: 'start', title: 'Начало' },
   { id: 'editor', title: 'Редактор' },
   { id: 'replay', title: 'Переигровка' },
   { id: 'modeling', title: 'Моделирование' },
