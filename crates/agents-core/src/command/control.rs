@@ -71,3 +71,28 @@ pub fn active_subs(sim: &Sim, h: u32) -> (Vec<u32>, Vec<u32>) {
     }).collect();
     (hqs, divs)
 }
+
+/// Сторона `side` под командованием по ступеням: верхняя инстанция — игрок, ниже — штабы-агенты.
+pub fn agents_side(sim: &mut Sim, side: crate::model::Side) {
+    for (k, h) in sim.world.hqs.iter().enumerate() {
+        if h.side != side { continue; }
+        sim.command.control[k] = if h.echelon == crate::model::Echelon::HighCommand { Control::Player } else { Control::Agent };
+    }
+}
+
+/// Исторические директивы верхней инстанции стороны (все или с id `only`): (час, директива) к подаче; до начала
+/// операции — `ready`. В «гибриде» (`hybrid`) поддерево получателя переходит на приказы сценария, подавать нечего.
+pub fn historical_for(sim: &mut Sim, side: crate::model::Side, only: Option<&str>, hybrid: bool) -> Vec<(u32, Directive)> {
+    use crate::command::directive::Target;
+    let Some(top) = sim.world.hqs.iter().position(|h| h.side == side && h.echelon == crate::model::Echelon::HighCommand) else { return Vec::new() };
+    let ds: Vec<(u32, Directive)> = sim.historical.iter().filter(|(_, d)| d.from == top as u32 && only.is_none_or(|id| d.id == id)).cloned().collect();
+    if !hybrid { return ds.into_iter().map(|(at, mut d)| { d.ready = at == 0; (at, d) }).collect(); }
+    for (_, d) in ds {
+        let Target::Hq(h) = d.to else { continue };
+        let w = &sim.world;
+        let under = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+        let sub: Vec<usize> = (0..w.hqs.len()).filter(|&k| under(k)).collect();
+        for k in sub { sim.command.control[k] = Control::Script; }
+    }
+    Vec::new()
+}

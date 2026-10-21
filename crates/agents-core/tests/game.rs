@@ -186,3 +186,23 @@ fn high_command_not_orderable() {
     let e = g.order(&PlayerOrder { hq: "su_stavka".into(), kind: OrderKind::Attack, target: None, note: String::new() }).unwrap_err();
     assert!(e.contains("верхней инстанции"), "{e}");
 }
+
+/// Ставка подаёт все исторические директивы, ниже — штабы-агенты: 96 ч без сбоев, советские дивизии идут на запад;
+/// в «гибриде» — как прогон по сценарию.
+#[test]
+fn historical_directives_run() {
+    let ids = |g: &Game| { let top = hix(g, "su_stavka") as u32; let mut v: Vec<String> = g.sim.historical.iter().filter(|(_, d)| d.from == top).map(|(_, d)| d.id.clone()).collect(); v.dedup(); v };
+    let mut a = seelow_game(Mode::Agents, 0);
+    let x0: Vec<f64> = a.sim.world.divisions.iter().map(|d| d.vars.pos.x).collect();
+    for id in ids(&a) { a.issue_historical(&id).expect("директива"); }
+    a.advance(96);
+    let su: Vec<usize> = (0..a.sim.world.divisions.len()).filter(|&i| a.sim.world.divisions[i].side == Side::Su).collect();
+    let west = su.iter().filter(|&&i| a.sim.world.divisions[i].vars.pos.x < x0[i] - 1.0).count();
+    assert!(west * 2 > su.len(), "на запад {west} из {}", su.len());
+    let mut h = seelow_game(Mode::Hybrid, 0);
+    for id in ids(&h) { h.issue_historical(&id).expect("директива"); }
+    h.advance(96);
+    let mut plain = { let root = repo_root(); agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json"), &format!("{root}/{DATA_DIR}"), &root).unwrap().0 };
+    for _ in 0..96 { plain.step(); }
+    assert_eq!(h.sim.digest(), plain.digest());
+}

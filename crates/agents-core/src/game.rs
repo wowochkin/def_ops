@@ -172,11 +172,7 @@ impl Game {
         }
         // штабы-агенты: игрок — верхняя инстанция своей стороны, ниже — агенты; приказы сценария стороны остаются
         if mode != Mode::Legacy {
-            use crate::command::control::Control;
-            for (k, h) in sim.world.hqs.iter().enumerate() {
-                if h.side != player { continue; }
-                sim.command.control[k] = if h.echelon == crate::model::Echelon::HighCommand { Control::Player } else { Control::Agent };
-            }
+            crate::command::control::agents_side(&mut sim, player);
             for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
             let limit = meta.hours;
             return Game { mode, pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new() };
@@ -349,23 +345,10 @@ impl Game {
     /// Историческая директива сценария от имени игрока: в свой час (не раньше текущего). До начала операции — уже
     /// доведена до дивизий. В «гибриде» поддерево получателя ведут приказы сценария.
     pub fn issue_historical(&mut self, id: &str) -> Result<(), String> {
-        use crate::command::control::Control;
-        use crate::command::directive::Target;
-        let top = self.top()?;
-        let ds: Vec<_> = self.sim.historical.iter().filter(|(_, d)| d.id == id && d.from == top).cloned().collect();
-        if ds.is_empty() { return Err(format!("нет исторической директивы {id} стороны игрока")); }
+        self.top()?;
+        if !self.sim.historical.iter().any(|(_, d)| d.id == id) { return Err(format!("нет исторической директивы {id} стороны игрока")); }
         let now = self.hour();
-        for (at, mut d) in ds {
-            if self.mode == Mode::Hybrid {
-                if let Target::Hq(h) = d.to {
-                    let w = &self.sim.world;
-                    let under = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
-                    let sub: Vec<usize> = (0..w.hqs.len()).filter(|&k| under(k)).collect();
-                    for k in sub { self.sim.command.control[k] = Control::Script; }
-                }
-                continue;
-            }
-            d.ready = at == 0;
+        for (at, d) in crate::command::control::historical_for(&mut self.sim, self.player, Some(id), self.mode == Mode::Hybrid) {
             if at <= now { crate::command::passing::issue(&mut self.sim, d, now); } else { self.pending.push((at, d)); }
         }
         Ok(())

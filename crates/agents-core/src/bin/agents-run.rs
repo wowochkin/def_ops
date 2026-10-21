@@ -176,6 +176,15 @@ fn main() {
             sim.llm = Some(c);
             sim.on_progress = Some(Box::new(|m| eprintln!("{m}")));
         }
+        // --command agents|hybrid --side su|de: верхняя инстанция стороны подаёт исторические директивы, ниже — штабы-агенты
+        // (в «гибриде» поддеревья получателей ведут приказы сценария)
+        let mut pending: Vec<(u32, agents_core::command::directive::Directive)> = Vec::new();
+        if let Some(c) = arg(&args, "command") {
+            let side = if arg(&args, "side").as_deref() == Some("de") { Side::De } else { Side::Su };
+            let hybrid = match c.as_str() { "agents" => false, "hybrid" => true, x => panic!("--command: agents | hybrid, а не {x}") };
+            agents_core::command::control::agents_side(&mut sim, side);
+            pending = agents_core::command::control::historical_for(&mut sim, side, None, hybrid);
+        }
         let start = parse_hours(&meta.start).expect("start");
         let n = sim.world.divisions.len();
         // кадры: по часу на дивизию
@@ -195,6 +204,10 @@ fn main() {
         pers.push(sim.world.divisions.iter().map(|d| d.vars.personnel).collect());
         if seed == seed0 { frames.push(frame(&sim)); }
         for _ in 0..meta.hours {
+            let now = sim.world.tick;
+            let (due, rest): (Vec<_>, Vec<_>) = std::mem::take(&mut pending).into_iter().partition(|(at, _)| *at <= now);
+            pending = rest;
+            for (_, d) in due { agents_core::command::passing::issue(&mut sim, d, now); }
             sim.step();
             snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
             alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());
