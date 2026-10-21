@@ -71,3 +71,37 @@ fn coordination_weakens_strength() {
     for _ in 0..10 { sim.step(); }
     assert!((sim.world.divisions[0].vars.coord - 1.0).abs() < 1e-9, "{}", sim.world.divisions[0].vars.coord);
 }
+
+/// Действующие подчинённые штаба — без изъятых через голову.
+#[test]
+fn active_subs_skip_led() {
+    use agents_core::command::control::active_subs;
+    let mut sim = load("seelow-1945");
+    let a = hq(&sim, "su_8gva");
+    let (corps, _) = active_subs(&sim, a);
+    assert!(corps.len() >= 2, "{corps:?}");
+    sim.command.led_hq[corps[0] as usize] = true;
+    let (after, _) = active_subs(&sim, a);
+    assert_eq!(after.len(), corps.len() - 1);
+    assert!(!after.contains(&corps[0]));
+    let k = corps[1];
+    let (_, divs) = active_subs(&sim, k);
+    assert!(!divs.is_empty());
+    sim.command.led_div[divs[0] as usize] = true;
+    let (_, divs2) = active_subs(&sim, k);
+    assert_eq!(divs2.len(), divs.len() - 1);
+}
+
+/// Документ журнала выходит в ход прогона с id штаба.
+#[test]
+fn trace_has_documents() {
+    use agents_core::command::control::{DocKind, Document};
+    let mut sim = load("seelow-1945");
+    let a = hq(&sim, "su_8gva");
+    sim.documents.push(Document { tick: 0, hq: a, kind: DocKind::Notice, to: vec!["su_8gva".into()], text: "проба".into(), rule: None });
+    let root = repo_root();
+    let (_, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json"), &format!("{root}/{DATA_DIR}"), &root).unwrap();
+    let t = agents_core::trace::describe(&sim, &meta, vec![]);
+    assert_eq!(t["documents"][0]["hq"], "su_8gva");
+    assert_eq!(t["documents"][0]["kind"], "notice");
+}

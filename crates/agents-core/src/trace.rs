@@ -54,6 +54,11 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
             v
         }),
         "staff": sim.llm_log.lock().map(|l| l.clone()).unwrap_or_default(),
+        // документы штабов (командование по ступеням): директивы, приказы, распоряжения, извещения
+        "documents": sim.documents.iter().map(|d| json!({
+            "tick": d.tick, "time": format_hours(sim.start_hour + d.tick as i64), "hq": w.hqs[d.hq as usize].id,
+            "kind": d.kind, "to": d.to, "text": d.text, "rule": d.rule,
+        })).collect::<Vec<_>>(),
         // действующий приказ каждой дивизии на последний шаг (для докладов в игре): что, куда, от кого, когда
         "orders": w.divisions.iter().map(|d| d.order.as_ref().map(|o| json!({
             "kind": o.kind, "target": sim.theatre.proj.to_lnglat(o.target), "from": w.hqs[o.from as usize].id,
