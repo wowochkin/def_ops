@@ -73,4 +73,5 @@ function checkRegistryCorps(s: Scen) {
 
 describe('сценарии агентной модели: цепочка штабов', () => {
   it('Берлинская операция', () => { checkRegistryCorps(checkChain('packages/sim/data/scenarios/agents/berlin-1945.json')); });
+  it('Зееловская операция', () => { checkRegistryCorps(checkChain('packages/sim/data/scenarios/agents/seelow-1945.json')); });
 });

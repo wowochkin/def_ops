@@ -485,11 +485,12 @@ fn seelow_with(name: &str, edit: impl Fn(&mut serde_json::Value)) -> agents_core
 /// Ступень верховного командования: штаб загружается, сам не решает и ничего не меняет в ходе операции.
 #[test]
 fn high_command_hq_loads_and_does_not_decide() {
-    let mut plain = seelow_with("hc-plain", |_| {});
-    let mut hc = seelow_with("hc-top", |s| {
+    // сценарий с верхними инстанциями (как в файле) и он же без них — фронт и группа армий без старшего
+    let mut hc = seelow_with("hc-top", |_| {});
+    let mut plain = seelow_with("hc-plain", |s| {
         let hqs = s["hqs"].as_array_mut().unwrap();
-        for h in hqs.iter_mut() { if h["id"] == "su_1bf" { h["parent"] = "su_stavka".into(); } }
-        hqs.push(serde_json::json!({ "id": "su_stavka", "name": "Ставка ВГК", "side": "su", "echelon": "high_command", "parent": null, "pos": [14.6, 52.6] }));
+        hqs.retain(|h| h["echelon"] != "high_command");
+        for h in hqs.iter_mut() { if h["parent"] == "su_stavka" || h["parent"] == "de_hc" { h["parent"] = serde_json::Value::Null; } }
     });
     assert!(hc.world.hqs.iter().any(|h| h.echelon == agents_core::model::Echelon::HighCommand));
     for sim in [&mut plain, &mut hc] {
@@ -502,22 +503,18 @@ fn high_command_hq_loads_and_does_not_decide() {
 /// Советский штаб по доктрине решает за все дивизии армии и тогда, когда между армией и дивизиями — корпуса.
 #[test]
 fn su_doctrine_same_with_corps() {
-    let mut plain = seelow_with("su-plain", |_| {});
-    let mut corps = seelow_with("su-corps", |s| {
-        let armies: Vec<String> = s["hqs"].as_array().unwrap().iter().filter(|h| h["side"] == "su" && h["echelon"] == "army").map(|h| h["id"].as_str().unwrap().to_string()).collect();
-        let mut n = std::collections::HashMap::<String, usize>::new();
+    // сценарий как в файле (дивизии под корпусами) и он же без советских корпусов — дивизии прямо под армиями
+    let mut corps = seelow_with("su-corps", |_| {});
+    let mut plain = seelow_with("su-plain", |s| {
+        let parent: std::collections::HashMap<String, String> = s["hqs"].as_array().unwrap().iter()
+            .filter(|h| h["side"] == "su" && h["echelon"] == "corps")
+            .map(|h| (h["id"].as_str().unwrap().to_string(), h["parent"].as_str().unwrap().to_string())).collect();
         for d in s["divisions"].as_array_mut().unwrap() {
-            let Some(a) = d["hq"].as_str().map(str::to_string) else { continue };
-            if !armies.contains(&a) { continue; }
-            let k = n.entry(a.clone()).or_default();
-            d["hq"] = format!("{a}_k{}", *k % 2).into();
-            *k += 1;
+            if let Some(a) = d["hq"].as_str().and_then(|h| parent.get(h)) { d["hq"] = a.clone().into(); }
         }
-        let hqs = s["hqs"].as_array_mut().unwrap();
-        for a in &armies { for k in 0..2 {
-            hqs.push(serde_json::json!({ "id": format!("{a}_k{k}"), "name": format!("корпус {k}"), "side": "su", "echelon": "corps", "parent": a, "pos": [14.6, 52.6] }));
-        } }
+        s["hqs"].as_array_mut().unwrap().retain(|h| !(h["side"] == "su" && h["echelon"] == "corps"));
     });
+    assert!(corps.world.hqs.iter().filter(|h| h.side == Side::Su && h.echelon == agents_core::model::Echelon::Corps).count() >= 3);
     for sim in [&mut plain, &mut corps] {
         sim.sources[0] = agents_core::staff::Source::Doctrine;
         for _ in 0..72 { sim.step(); }

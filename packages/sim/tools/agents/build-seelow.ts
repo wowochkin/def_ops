@@ -19,6 +19,7 @@
  *
  * Выход: packages/sim/data/scenarios/agents/seelow-1945.json (сценарий ядра) и seelow-1945.history.json.
  */
+import { HIGH_COMMAND } from './hierarchy';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,7 +32,7 @@ const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 
 type LngLat = [number, number];
-interface Sub { date: string; front?: string; army?: string; corps?: string; corps_name?: string }
+interface Sub { date: string; front?: string; army?: string; corps?: string; corps_name?: string; source?: string }
 interface Div { id: string; side: 'su' | 'de'; type: string; kind?: string; guards?: boolean; name_ru: string; abbr: string[]; subordination: Sub[] }
 interface CensusPos { date: string; time: string | null; lng: number; lat: number; approxKm: number | null; set: string; reliability: string | null; own: boolean }
 interface CensusVal { value: number; reliability: string; source: string; date: string | null; note?: string }
@@ -64,6 +65,7 @@ const areaC = new Map(theatre.areas.map((a) => [a.id, a.ring.reduce<LngLat>((s, 
 const KX = 111.32 * Math.cos((52.5 * Math.PI) / 180), KY = 110.57;
 const km = (a: LngLat, b: LngLat) => Math.hypot((a[0] - b[0]) * KX, (a[1] - b[1]) * KY);
 const r4 = (p: LngLat): LngLat => [+p[0].toFixed(4), +p[1].toFixed(4)];
+const center = (ps: LngLat[]): LngLat => ps.reduce<LngLat>((a, p) => [a[0] + p[0] / ps.length, a[1] + p[1] / ps.length], [0, 0]);
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : NaN; };
 const subAt = (d: Div, day: string) => [...d.subordination].filter((s) => s.date <= day).pop() ?? d.subordination[0];
 
@@ -234,6 +236,30 @@ const withdrawals = [{
 // развёрнуты к началу в исходном районе (soviet-fires.ts, markDeployed)
 const deployedN = markDeployed(out, orders as { at: unknown; to: string[]; kind: string }[]);
 console.log(`развёрнуты к началу: ${deployedN}`);
+// ---------- советские стрелковые корпуса и верхние инстанции ----------
+// Как в build-berlin.ts: расстановка и приказы посчитаны по армии; дивизия встаёт под свой корпус из реестра на начало
+// операции, корпус — под армию; 1 БФ — под Ставкой, 9-я армия — под группой армий «Висла», та — под верховным командованием.
+type ScenHqOut = { id: string; name: string; side: string; echelon: string; parent: string | null; pos: LngLat; note?: string };
+const hqOut = hqs as ScenHqOut[];
+for (const o of out) {
+  if (o.side !== 'su') continue;
+  const d = suDivs.find((x) => x.id === o.id);
+  const s = d && subAt(d, '1945-04-16');
+  if (!s?.corps || o.hq !== s.army) continue;
+  if (!hqOut.some((h) => h.id === s.corps)) hqOut.push({ id: s.corps, name: s.corps_name ?? s.corps.replace(/^su_/, ''), side: 'su', echelon: 'corps', parent: s.army, pos: [0, 0], note: `состав корпуса — ${s.source ?? 'реестр дивизий'}` });
+  o.hq = s.corps;
+}
+for (const h of hqOut) if (h.echelon === 'corps' && h.side === 'su') h.pos = r4(center(out.filter((o) => o.hq === h.id).map((o) => o.pos)));
+const sideCenter = (side: string) => r4(center(out.filter((o) => o.side === side).map((o) => o.pos)));
+hqOut.find((h) => h.id === 'su_1bf')!.parent = HIGH_COMMAND.su.id;
+hqOut.find((h) => h.id === 'de_9a')!.parent = 'de_hgr_weichsel';
+hqOut.push(
+  // положения верхних штабов — центр войск стороны (на театре; место ставки на карте не показывается)
+  { id: 'de_hgr_weichsel', name: 'Группа армий «Висла»', side: 'de', echelon: 'front', parent: HIGH_COMMAND.de.id, pos: sideCenter('de') },
+  { id: HIGH_COMMAND.su.id, name: HIGH_COMMAND.su.name, side: 'su', echelon: 'high_command', parent: null, pos: sideCenter('su') },
+  { id: HIGH_COMMAND.de.id, name: HIGH_COMMAND.de.name, side: 'de', echelon: 'high_command', parent: null, pos: sideCenter('de') },
+);
+
 const scenario = {
   id: 'agents-seelow-1945',
   name: 'Зееловские высоты, 16–20.04.1945 (агенты-дивизии)',

@@ -12,7 +12,7 @@
    "name": "1-й Белорусский фронт",
    "side": "su",
    "echelon": "front",
-   "parent": null,
+   "parent": "su_stavka",
    "pos": [
     14.6,
     52.6
@@ -100,7 +100,7 @@
    "name": "9-я армия",
    "side": "de",
    "echelon": "army",
-   "parent": null,
+   "parent": "de_hgr_weichsel",
    "pos": [
     14.1,
     52.45
@@ -138,6 +138,219 @@
     14.4332,
     52.4728
    ]
+  },
+  {
+   "id": "su_77sk",
+   "name": "77 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_47a",
+   "pos": [
+    14.292,
+    52.744
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_125sk",
+   "name": "125 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_47a",
+   "pos": [
+    14.297,
+    52.719
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_129sk",
+   "name": "129 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_47a",
+   "pos": [
+    14.372,
+    52.688
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_12gsk",
+   "name": "12 гв. ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "pos": [
+    14.418,
+    52.644
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_7sk",
+   "name": "7 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "pos": [
+    14.409,
+    52.674
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_79sk",
+   "name": "79 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_3ua",
+   "pos": [
+    14.352,
+    52.688
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_26gsk",
+   "name": "26 гв. ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "pos": [
+    14.456,
+    52.613
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_9sk",
+   "name": "9 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "pos": [
+    14.493,
+    52.574
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_32sk",
+   "name": "32 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_5ua",
+   "pos": [
+    14.475,
+    52.593
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_4gsk",
+   "name": "4 гв. ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "pos": [
+    14.523,
+    52.566
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_28gsk",
+   "name": "28 гв. ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "pos": [
+    14.506,
+    52.506
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_29gsk",
+   "name": "29 гв. ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_8gva",
+   "pos": [
+    14.512,
+    52.537
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_25sk",
+   "name": "25 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a",
+   "pos": [
+    14.539,
+    52.47
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "su_91sk",
+   "name": "91 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a",
+   "pos": [
+    14.545,
+    52.444
+   ],
+   "note": "состав корпуса — LT_HALBE; LT_RACE app.1"
+  },
+  {
+   "id": "su_61sk",
+   "name": "61 ск",
+   "side": "su",
+   "echelon": "corps",
+   "parent": "su_69a",
+   "pos": [
+    14.558,
+    52.466
+   ],
+   "note": "состав корпуса — OOB 1.3 («Боевой состав СА», ч. V, на 1.04.45)"
+  },
+  {
+   "id": "de_hgr_weichsel",
+   "name": "Группа армий «Висла»",
+   "side": "de",
+   "echelon": "front",
+   "parent": "de_hc",
+   "pos": [
+    14.2632,
+    52.5733
+   ]
+  },
+  {
+   "id": "su_stavka",
+   "name": "Ставка ВГК",
+   "side": "su",
+   "echelon": "high_command",
+   "parent": null,
+   "pos": [
+    14.4819,
+    52.5971
+   ]
+  },
+  {
+   "id": "de_hc",
+   "name": "Верховное командование вермахта (ОКХ; с 25.04.1945 — ОКВ)",
+   "side": "de",
+   "echelon": "high_command",
+   "parent": null,
+   "pos": [
+    14.2632,
+    52.5733
+   ]
   }
  ],
  "divisions": [
@@ -145,7 +358,7 @@
    "id": "su_185sd",
    "name": "185-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_77sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -166,7 +379,7 @@
    "id": "su_260sd",
    "name": "260-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_77sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -187,7 +400,7 @@
    "id": "su_328sd",
    "name": "328-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_77sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -208,7 +421,7 @@
    "id": "su_60sd",
    "name": "60-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_125sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -229,7 +442,7 @@
    "id": "su_76sd",
    "name": "76-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_125sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -250,7 +463,7 @@
    "id": "su_175sd",
    "name": "175-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_125sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -271,7 +484,7 @@
    "id": "su_82sd",
    "name": "82-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_129sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -292,7 +505,7 @@
    "id": "su_132sd",
    "name": "132-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_129sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -313,7 +526,7 @@
    "id": "su_143sd",
    "name": "143-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_47a",
+   "hq": "su_129sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -334,7 +547,7 @@
    "id": "su_23gsd",
    "name": "23-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_12gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -355,7 +568,7 @@
    "id": "su_52gsd",
    "name": "52-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_12gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -376,7 +589,7 @@
    "id": "su_33sd",
    "name": "33-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_12gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -397,7 +610,7 @@
    "id": "su_146sd",
    "name": "146-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_7sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -418,7 +631,7 @@
    "id": "su_265sd",
    "name": "265-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_7sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -439,7 +652,7 @@
    "id": "su_364sd",
    "name": "364-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_7sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -460,7 +673,7 @@
    "id": "su_150sd",
    "name": "150-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_79sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -481,7 +694,7 @@
    "id": "su_171sd",
    "name": "171-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_79sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -502,7 +715,7 @@
    "id": "su_207sd",
    "name": "207-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_3ua",
+   "hq": "su_79sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -543,7 +756,7 @@
    "id": "su_89gsd",
    "name": "89-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_26gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -564,7 +777,7 @@
    "id": "su_94gsd",
    "name": "94-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_26gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -585,7 +798,7 @@
    "id": "su_266sd",
    "name": "266-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_26gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -606,7 +819,7 @@
    "id": "su_230sd",
    "name": "230-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_9sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -627,7 +840,7 @@
    "id": "su_248sd",
    "name": "248-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_9sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -648,7 +861,7 @@
    "id": "su_301sd",
    "name": "301-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_9sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -669,7 +882,7 @@
    "id": "su_60gsd",
    "name": "60-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_32sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -690,7 +903,7 @@
    "id": "su_295sd",
    "name": "295-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_32sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -711,7 +924,7 @@
    "id": "su_416sd",
    "name": "416-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_5ua",
+   "hq": "su_32sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -792,7 +1005,7 @@
    "id": "su_35gsd",
    "name": "35-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_4gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -813,7 +1026,7 @@
    "id": "su_47gsd",
    "name": "47-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_4gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -834,7 +1047,7 @@
    "id": "su_57gsd",
    "name": "57-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_4gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -855,7 +1068,7 @@
    "id": "su_39gsd",
    "name": "39-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_28gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -876,7 +1089,7 @@
    "id": "su_79gsd",
    "name": "79-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_28gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -897,7 +1110,7 @@
    "id": "su_88gsd",
    "name": "88-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_28gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -918,7 +1131,7 @@
    "id": "su_27gsd",
    "name": "27-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_29gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -939,7 +1152,7 @@
    "id": "su_74gsd",
    "name": "74-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_29gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -960,7 +1173,7 @@
    "id": "su_82gsd",
    "name": "82-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_8gva",
+   "hq": "su_29gsk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1001,7 +1214,7 @@
    "id": "su_77gsd",
    "name": "77-я гвардейская стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_25sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1022,7 +1235,7 @@
    "id": "su_4sd",
    "name": "4-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_25sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1043,7 +1256,7 @@
    "id": "su_41sd",
    "name": "41-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_91sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1064,7 +1277,7 @@
    "id": "su_312sd",
    "name": "312-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_91sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1085,7 +1298,7 @@
    "id": "su_370sd",
    "name": "370-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_91sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1106,7 +1319,7 @@
    "id": "su_134sd",
    "name": "134-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_61sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1127,7 +1340,7 @@
    "id": "su_247sd",
    "name": "247-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_61sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1148,7 +1361,7 @@
    "id": "su_274sd",
    "name": "274-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_61sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
@@ -1169,7 +1382,7 @@
    "id": "su_246sd",
    "name": "246-я стрелковая дивизия",
    "side": "su",
-   "hq": "su_69a",
+   "hq": "su_61sk",
    "kind": "sd",
    "mobility": "foot",
    "size": "rifle",
