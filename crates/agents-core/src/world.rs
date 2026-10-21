@@ -158,6 +158,8 @@ pub struct Sim {
     /// Ход ответа модели-штаба по мере прихода (размышления и ответ) — для окна приложения.
     pub on_stream: Option<Box<dyn Fn(serde_json::Value) + Send + Sync>>,
     pub journal: Vec<Event>,
+    /// Исторические директивы сценария по получателям: (час, директива) — по возрастанию часа.
+    pub historical: Vec<(u32, crate::command::directive::Directive)>,
     /// Снимки по шагам для перемотки (если включено).
     pub history: Option<Vec<World>>,
     /// Распоряжения штаба игрока (игра): подвоз, переправы, подрыв мостов, полосы армий.
@@ -227,7 +229,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), doctrine_text: [None, None], llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), history: None, staff: StaffFx::default() };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), doctrine_text: [None, None], llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), historical: Vec::new(), history: None, staff: StaffFx::default() };
         s.script.sort_by_key(|o| o.at);
         s
     }

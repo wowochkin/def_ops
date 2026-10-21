@@ -16716,6 +16716,765 @@
    "note": "на франкфуртском направлении к Одеру (RW_ARM) [su_69a_vo@1945-02-01T18:00:attack]"
   }
  ],
+ "directives": [
+  {
+   "id": "stavka-220271",
+   "at": "1945-01-12T05:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1uf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [
+    [
+     21.7495,
+     50.6793
+    ],
+    [
+     20.751,
+     50.6146
+    ],
+    [
+     20.2648,
+     50.8123
+    ],
+    [
+     19.4446,
+     51.0675
+    ]
+   ],
+   "immediate": {
+    "line": [
+     [
+      19.6962,
+      51.4083
+     ],
+     [
+      19.4446,
+      51.0675
+     ],
+     [
+      19.1132,
+      50.812
+     ],
+     [
+      19.4334,
+      50.4844
+     ],
+     [
+      20.0277,
+      50.3566
+     ],
+     [
+      20.4305,
+      49.9694
+     ]
+    ],
+    "by": null
+   },
+   "subsequent": {
+    "line": [
+     [
+      17.032,
+      51.11
+     ]
+    ],
+    "by": null
+   },
+   "boundaries": [
+    {
+     "with": "su_1bf_vo",
+     "line": [
+      [
+       21.83,
+       51.05
+      ],
+      [
+       21.24,
+       51.16
+      ],
+      [
+       20.28,
+       51.38
+      ],
+      [
+       19.35,
+       51.66
+      ],
+      [
+       17.5,
+       51.97
+      ]
+     ]
+    }
+   ],
+   "mainBlow": [
+    "su_13a_vo",
+    "su_52a_vo",
+    "su_5gva_vo",
+    "su_3gta_vo",
+    "su_4ta_vo"
+   ],
+   "reserves": [
+    "su_3gva_vo",
+    "su_21a_vo",
+    "su_60a_vo",
+    "su_59a_vo",
+    "su_6a_vo",
+    "su_3gta_vo",
+    "su_4ta_vo"
+   ],
+   "note": "Во взаимодействии с 1 БФ разгромить кельце-радомскую группировку"
+  },
+  {
+   "id": "stavka-220275",
+   "at": "1945-01-12T05:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1bf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [
+    [
+     21.3828,
+     51.7624
+    ],
+    [
+     20.9497,
+     51.6482
+    ],
+    [
+     20.143,
+     51.9569
+    ],
+    [
+     19.357,
+     52.2318
+    ]
+   ],
+   "immediate": {
+    "line": [
+     [
+      19.55,
+      52.52
+     ],
+     [
+      19.6261,
+      52.244
+     ],
+     [
+      19.457,
+      51.7687
+     ]
+    ],
+    "by": null
+   },
+   "subsequent": {
+    "line": [
+     [
+      16.9335,
+      52.4083
+     ]
+    ],
+    "by": null
+   },
+   "boundaries": [
+    {
+     "with": "su_1uf_vo",
+     "line": [
+      [
+       21.83,
+       51.05
+      ],
+      [
+       21.24,
+       51.16
+      ],
+      [
+       20.28,
+       51.38
+      ],
+      [
+       19.35,
+       51.66
+      ],
+      [
+       17.5,
+       51.97
+      ]
+     ]
+    }
+   ],
+   "mainBlow": [
+    "su_61a_vo",
+    "su_5ua_vo",
+    "su_8gva_vo",
+    "su_3ua_vo",
+    "su_1gta_vo",
+    "su_2gta_vo"
+   ],
+   "reserves": [
+    "su_69a_vo",
+    "su_33a_vo",
+    "su_47a_vo",
+    "su_1pa_vo",
+    "su_3ua_vo"
+   ],
+   "note": "Разгромить варшавско-радомскую группировку"
+  },
+  {
+   "id": "stavka-220290",
+   "at": "1945-01-12T05:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1uf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [
+    [
+     21.7495,
+     50.6793
+    ],
+    [
+     20.751,
+     50.6146
+    ],
+    [
+     19.4446,
+     51.0675
+    ],
+    [
+     17.032,
+     51.11
+    ]
+   ],
+   "immediate": null,
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [
+    "su_13a_vo",
+    "su_52a_vo",
+    "su_5gva_vo",
+    "su_4ta_vo",
+    "su_3gta_vo"
+   ],
+   "reserves": [
+    "su_4ta_vo"
+   ],
+   "note": "Утвердить план Конева (директива фронта № 001472/оп от 23.12)"
+  },
+  {
+   "id": "stavka-11001",
+   "at": "1945-01-12T05:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1bf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [
+    [
+     21.3828,
+     51.7624
+    ],
+    [
+     20.6307,
+     52.6563
+    ],
+    [
+     19.357,
+     52.2318
+    ],
+    [
+     16.9335,
+     52.4083
+    ]
+   ],
+   "immediate": {
+    "line": [
+     [
+      19.55,
+      52.52
+     ],
+     [
+      19.6261,
+      52.244
+     ],
+     [
+      19.457,
+      51.7687
+     ]
+    ],
+    "by": null
+   },
+   "subsequent": {
+    "line": [
+     [
+      16.9335,
+      52.4083
+     ]
+    ],
+    "by": null
+   },
+   "boundaries": [],
+   "mainBlow": [
+    "su_61a_vo",
+    "su_5ua_vo",
+    "su_8gva_vo",
+    "su_1gta_vo",
+    "su_2gta_vo"
+   ],
+   "reserves": [
+    "su_3ua_vo"
+   ],
+   "note": "Утвердить план Жукова № 01223/оп от 25.12.1944"
+  },
+  {
+   "id": "stavka-11003",
+   "at": "1945-01-12T05:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1bf_vo",
+    "su_1uf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [],
+   "immediate": null,
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Отменить авиаудар по аэродромам 8.01; бить авиацией по войскам одновременно с артнаступлением"
+  },
+  {
+   "id": "stavka-start-1201",
+   "at": "1945-01-12T05:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1uf_vo",
+    "su_1bf_vo"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "axis": [],
+   "immediate": null,
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Перенести начало наступления с 20.01 на 12.01 (1 УФ) и 14.01 (1 БФ)"
+  },
+  {
+   "id": "stavka-11006",
+   "at": "1945-01-17T21:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1uf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [
+    [
+     18.5701,
+     51.2205
+    ],
+    [
+     17.032,
+     51.11
+    ]
+   ],
+   "immediate": {
+    "line": [
+     [
+      16.5744,
+      51.8436
+     ]
+    ],
+    "by": "1945-01-30T23:00"
+   },
+   "subsequent": null,
+   "boundaries": [
+    {
+     "with": null,
+     "line": [
+      [
+       20.2172,
+       50.0331
+      ],
+      [
+       18.77,
+       49.92
+      ],
+      [
+       18.36,
+       49.9
+      ]
+     ]
+    }
+   ],
+   "mainBlow": [
+    "su_13a_vo",
+    "su_52a_vo",
+    "su_5gva_vo",
+    "su_3gta_vo",
+    "su_4ta_vo"
+   ],
+   "reserves": [
+    "su_59a_vo",
+    "su_60a_vo",
+    "su_21a_vo"
+   ],
+   "note": "Главными силами на Бреслау, к 30.01 выйти на Одер южнее Лешно и захватить плацдармы; левым крылом взять Краков"
+  },
+  {
+   "id": "stavka-11008",
+   "at": "1945-01-17T23:00",
+   "from": "su_stavka",
+   "to": [
+    "su_1bf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [
+    [
+     19.457,
+     51.7687
+    ],
+    [
+     16.9335,
+     52.4083
+    ]
+   ],
+   "immediate": {
+    "line": [
+     [
+      18.0003,
+      53.122
+     ],
+     [
+      16.9335,
+      52.4083
+     ]
+    ],
+    "by": "1945-02-04T23:00"
+   },
+   "subsequent": null,
+   "boundaries": [
+    {
+     "with": null,
+     "line": [
+      [
+       18.6048,
+       53.0103
+      ],
+      [
+       18.18,
+       53.15
+      ]
+     ]
+    },
+    {
+     "with": "su_1uf_vo",
+     "line": [
+      [
+       17.5,
+       51.97
+      ],
+      [
+       16.53,
+       52.01
+      ]
+     ]
+    }
+   ],
+   "mainBlow": [
+    "su_1gta_vo",
+    "su_2gta_vo",
+    "su_5ua_vo",
+    "su_8gva_vo"
+   ],
+   "reserves": [],
+   "note": "Наступать на Познань; не позднее 2–4.02 овладеть рубежом Быдгощ — Познань"
+  },
+  {
+   "id": "stavka-11016",
+   "at": "1945-01-27T17:40",
+   "from": "su_stavka",
+   "to": [
+    "su_1bf_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [
+    [
+     14.643,
+     52.578
+    ],
+    [
+     13.3951,
+     52.5174
+    ]
+   ],
+   "immediate": {
+    "line": [],
+    "by": null
+   },
+   "subsequent": {
+    "line": [
+     [
+      13.3951,
+      52.5174
+     ]
+    ],
+    "by": null
+   },
+   "boundaries": [
+    {
+     "with": null,
+     "line": [
+      [
+       18.18,
+       53.15
+      ],
+      [
+       17.94,
+       53.31
+      ],
+      [
+       17.53,
+       53.45
+      ],
+      [
+       16.66,
+       53.47
+      ],
+      [
+       16.1,
+       53.47
+      ],
+      [
+       15.43,
+       53.36
+      ],
+      [
+       15.035,
+       53.338
+      ],
+      [
+       14.49,
+       53.25
+      ]
+     ]
+    },
+    {
+     "with": "su_1uf_vo",
+     "line": [
+      [
+       16.53,
+       52.01
+      ],
+      [
+       15.8648,
+       52.0719
+      ],
+      [
+       14.76,
+       52.07
+      ],
+      [
+       14.26,
+       52.1
+      ],
+      [
+       13.85,
+       52.15
+      ],
+      [
+       13.03,
+       52.31
+      ]
+     ]
+    }
+   ],
+   "mainBlow": [
+    "su_2gta_vo",
+    "su_1gta_vo",
+    "su_5ua_vo",
+    "su_8gva_vo"
+   ],
+   "reserves": [
+    "su_3ua_vo"
+   ],
+   "note": "Утвердить план Жукова № 163/оп от 26.01: с ходу форсировать Одер и наступать на Берлин"
+  },
+  {
+   "id": "hitler-1601",
+   "at": "1945-01-16T00:00",
+   "from": "de_hc",
+   "to": [
+    "de_hgr_a_vo",
+    "de_9a_vo",
+    "de_4pza_vo",
+    "de_17a_vo"
+   ],
+   "form": "order",
+   "task": "defend",
+   "axis": [],
+   "immediate": {
+    "line": [
+     [
+      19.9972,
+      50.0469
+     ],
+     [
+      19.4446,
+      51.0675
+     ],
+     [
+      21.0067,
+      52.232
+     ],
+     [
+      20.705,
+      52.4439
+     ]
+    ],
+    "by": null
+   },
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Отменить директиву ОКХ о свободе действий; держать как минимум рубеж восточнее Кракова — Радомско — Пилица — Варшава"
+  },
+  {
+   "id": "hitler-1901",
+   "at": "1945-01-19T00:00",
+   "from": "de_hc",
+   "to": [
+    "de_hgr_a_vo",
+    "de_9a_vo",
+    "de_4pza_vo",
+    "de_17a_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [],
+   "immediate": null,
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Любое оперативное решение (атака или отход) докладывать заранее, чтобы его можно было отменить"
+  },
+  {
+   "id": "hitler-2101",
+   "at": "1945-01-21T00:00",
+   "from": "de_hc",
+   "to": [
+    "de_hgr_weichsel_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [],
+   "immediate": null,
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Создать группу армий «Висла» (Гиммлер): закрыть разрыв между группами «Центр» и «А»"
+  },
+  {
+   "id": "hitler-2601",
+   "at": "1945-01-26T00:00",
+   "from": "de_hc",
+   "to": [
+    "de_hgr_a_vo",
+    "de_hgr_weichsel_vo",
+    "de_9a_vo"
+   ],
+   "form": "order",
+   "task": "attack",
+   "axis": [],
+   "immediate": {
+    "line": [
+     [
+      18.425,
+      53.348
+     ],
+     [
+      15.8732,
+      52.3652
+     ],
+     [
+      16.09,
+      51.664
+     ]
+    ],
+    "by": null
+   },
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Переименования: группа «А» стала «Центром»; с 27.01 9-я армия подчинена группе «Висла»"
+  },
+  {
+   "id": "hitler-posen",
+   "at": "1945-01-20T00:00",
+   "from": "de_hc",
+   "to": [
+    "de_hgr_a_vo"
+   ],
+   "form": "order",
+   "task": "defend",
+   "axis": [],
+   "immediate": {
+    "line": [
+     [
+      16.9335,
+      52.4083
+     ]
+    ],
+    "by": null
+   },
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Познань держать как крепость"
+  },
+  {
+   "id": "hitler-breslau",
+   "at": "1945-01-25T00:00",
+   "from": "de_hc",
+   "to": [
+    "de_hgr_a_vo",
+    "de_4pza_vo"
+   ],
+   "form": "order",
+   "task": "defend",
+   "axis": [],
+   "immediate": {
+    "line": [
+     [
+      17.032,
+      51.11
+     ]
+    ],
+    "by": null
+   },
+   "subsequent": null,
+   "boundaries": [],
+   "mainBlow": [],
+   "reserves": [],
+   "note": "Бреслау держать как крепость"
+  }
+ ],
  "fires": [
   {
    "at": "1945-01-12T05:00",

@@ -20,6 +20,7 @@
  * Выход: packages/sim/data/scenarios/agents/seelow-1945.json (сценарий ядра) и seelow-1945.history.json.
  */
 import { HIGH_COMMAND } from './hierarchy';
+import { scenarioDirectives } from './directives';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -266,7 +267,7 @@ const scenario = {
   theatre: 'packages/sim/data/theatres/oder-berlin-1945.json',
   start: START, hours: HOURS, seed: 1,
   timeNote: 'время московское, как в сценарии нынешней модели; собрано npm run agents:seelow-data',
-  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, fires, withdrawals, defenseZones: DEFENSE_ZONES,
+  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, directives: scenarioDirectives('docs/sources/berlin-1945-directives.json', new Set(hqOut.map((h) => h.id)), START), fires, withdrawals, defenseZones: DEFENSE_ZONES,
 };
 const dir = resolve(ROOT, 'packages/sim/data/scenarios/agents');
 mkdirSync(dir, { recursive: true });

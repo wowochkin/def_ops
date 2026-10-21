@@ -100,6 +100,9 @@ pub struct ScenarioIn {
     pub city_rings: Vec<CityRingIn>,
     #[serde(default)]
     pub withdrawals: Vec<WithdrawIn>,
+    /// Исторические директивы верхних инстанций (command::directive).
+    #[serde(default)]
+    pub directives: Vec<crate::command::directive::DirectiveIn>,
 }
 
 /// Обвод обороны города: многоугольник и уровень (1 — внешний, 2 — внутренний, 3 — центральный сектор).
@@ -328,7 +331,15 @@ pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serd
     world.init_control(&theatre);
     let name = serde_json::from_str::<NameOnly>(&text).map(|n| n.name).unwrap_or_default();
     let meta = Meta { id: s.id.clone(), name, hours: s.hours, start: s.start.clone() };
+    let mut historical = Vec::new();
+    {
+        let hour = |t: &str| parse_hours(t).map(|h| (h - start).max(0) as u32);
+        let xy = |p: crate::geo::LngLat| theatre.proj.to_xy(p);
+        for d in &s.directives { historical.extend(d.resolve(&hq_idx, &hour, &xy)?); }
+        historical.sort_by_key(|x: &(u32, crate::command::directive::Directive)| x.0);
+    }
     let mut sim = Sim::new(theatre, rules, s.seed, start, world, script);
+    sim.historical = historical;
     sim.fires = fires;
     sim.withdrawals = withdrawals;
     if let Some(e) = edits {

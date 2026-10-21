@@ -50,3 +50,20 @@ describe.each(CASES)('исторические директивы: $name', ({ fi
     expect(new Set(f.directives.map((d) => d.id)).size).toBe(f.directives.length);
   });
 });
+
+describe('исторические директивы в сценариях агентной модели', () => {
+  const scen = (n: string) => rd<{ hqs: { id: string }[]; directives?: { id: string; from: string; to: string[]; axis: number[][]; immediate: { line: number[][] } | null; boundaries: { line: number[][] }[] }[] }>(`packages/sim/data/scenarios/agents/${n}.json`);
+  const finite = (ps: number[][]) => ps.every((p) => p.length === 2 && p.every(Number.isFinite));
+  it.each([['berlin-1945', 23], ['vistula-oder-1945', 15], ['seelow-1945', -1]] as const)('%s', (n, count) => {
+    const s = scen(n);
+    const ids = new Set(s.hqs.map((h) => h.id));
+    expect(s.directives, n).toBeDefined();
+    if (count >= 0) expect(s.directives!.length).toBe(count);
+    else expect(s.directives!.length).toBeGreaterThan(0);
+    for (const d of s.directives!) {
+      expect(ids.has(d.from), `${d.id}: ${d.from}`).toBe(true);
+      for (const t of d.to) expect(ids.has(t), `${d.id}: ${t}`).toBe(true);
+      expect(finite(d.axis) && finite(d.immediate?.line ?? []) && d.boundaries.every((b) => finite(b.line)), d.id).toBe(true);
+    }
+  });
+});
