@@ -25,8 +25,8 @@ export interface ReplayUnits {
   snapshots: { time: string; units: UnitRow[] }[];
 }
 
-export const ECHELON_RU: Record<string, string> = { front: 'фронт', army: 'армия', corps: 'корпус', division: 'дивизия', brigade: 'бригада', regiment: 'полк' };
-const RANK: Record<string, number> = { regiment: 0, brigade: 1, division: 2, corps: 3, army: 4, front: 5 };
+export const ECHELON_RU: Record<string, string> = { high_command: 'верховное командование', front: 'фронт', army: 'армия', corps: 'корпус', division: 'дивизия', brigade: 'бригада', regiment: 'полк' };
+const RANK: Record<string, number> = { regiment: 0, brigade: 1, division: 2, corps: 3, army: 4, front: 5, high_command: 6 };
 
 /** Данные карточек из прогона (в фоновом потоке, вместе с картой). */
 export function replayUnits(ctx: SimContext, run: RunResult): ReplayUnits {

@@ -36,3 +36,41 @@ describe('иерархия штабов агентной модели', () => {
     expect(hierarchyProblems(hqs, divs).some((x) => x.includes('de_a') && x.includes('сторон'))).toBe(true);
   });
 });
+
+// ---------- сценарии агентной модели ----------
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(__dirname, '../../..', p), 'utf8')) as T;
+interface Scen { hqs: ScenHq[]; divisions: { id: string; side: string; hq: string; kind: string }[] }
+interface Sub { date: string; army?: string | null; corps?: string | null }
+const registry = rd<{ divisions: { id: string; type: string; subordination: Sub[] }[] }>('docs/sources/berlin-1945-divisions.json');
+const subAt = (subs: Sub[], day: string) => [...subs].filter((s) => s.date <= day).pop() ?? subs[0];
+
+/** Полная цепочка и ровно одна верхняя инстанция на сторону. */
+function checkChain(file: string) {
+  const s = rd<Scen>(file);
+  expect(hierarchyProblems(s.hqs, s.divisions)).toEqual([]);
+  for (const side of ['su', 'de'] as const) expect(s.hqs.filter((h) => h.side === side && h.echelon === 'high_command').map((h) => h.id)).toEqual([HIGH_COMMAND[side].id]);
+  return s;
+}
+
+/** Советские стрелковые дивизии с корпусом в реестре на начало операции — под этим корпусом, корпус — под армией из реестра. */
+function checkRegistryCorps(s: Scen) {
+  const by = new Map(s.hqs.map((h) => [h.id, h]));
+  let n = 0;
+  for (const d of s.divisions.filter((x) => x.side === 'su' && x.kind === 'sd')) {
+    const r = registry.divisions.find((x) => x.id === d.id);
+    const sub = r && subAt(r.subordination, '1945-04-16');
+    if (!sub?.corps) continue;
+    n++;
+    expect(d.hq, d.id).toBe(sub.corps);
+    expect(by.get(sub.corps)?.echelon, sub.corps).toBe('corps');
+    expect(by.get(sub.corps)?.parent, sub.corps).toBe(sub.army);
+  }
+  expect(n).toBeGreaterThan(0);
+}
+
+describe('сценарии агентной модели: цепочка штабов', () => {
+  it('Берлинская операция', () => { checkRegistryCorps(checkChain('packages/sim/data/scenarios/agents/berlin-1945.json')); });
+});

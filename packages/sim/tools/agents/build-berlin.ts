@@ -28,6 +28,7 @@
  *
  * Выход: packages/sim/data/scenarios/agents/berlin-1945.json и berlin-1945.history.json.
  */
+import { HIGH_COMMAND, type HqEchelon } from './hierarchy';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,7 +41,7 @@ const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 
 type LngLat = [number, number];
-interface Sub { date: string; front?: string | null; army?: string | null; corps?: string | null; corps_name?: string | null }
+interface Sub { date: string; front?: string | null; army?: string | null; corps?: string | null; corps_name?: string | null; source?: string }
 interface Div { id: string; side: 'su' | 'de'; type: string; guards?: boolean; name_ru: string; abbr: string[]; subordination: Sub[] }
 interface CensusPos { date: string; time: string | null; lng: number; lat: number; approxKm: number | null; set: string; reliability: string | null; own: boolean }
 interface CensusVal { value: number; reliability: string; source: string; date: string | null }
@@ -97,7 +98,7 @@ const hqOf = (d: Div, day: string): string | null => {
 const units = reg.divisions.filter((d) => d.type !== 'art' && hqOf(d, '1945-04-16'));
 
 // ---------- штабы: фронты, армии, корпуса (сценарий нынешней модели и реестр) ----------
-interface Hq { id: string; name: string; side: 'su' | 'de'; echelon: 'front' | 'army' | 'corps'; parent: string | null; pos: LngLat | null }
+interface Hq { id: string; name: string; side: 'su' | 'de'; echelon: HqEchelon; parent: string | null; pos: LngLat | null; note?: string }
 const hqs = new Map<string, Hq>();
 for (const f of ts.formations) {
   if (f.echelon === 'division') continue;
@@ -482,13 +483,40 @@ for (const [f, perDay] of KRIVOSHEEV_DAILY) {
   lossRefs.push({ formation: f, until: '1945-05-01T20:00', value: Math.round(perDay * 15.6), source: `Кривошеев: ${perDay} в сутки за 16.04–8.05 × 15,6 сут (оценка)`, reliability: 'C' });
 }
 
+// ---------- советские стрелковые корпуса и верхние инстанции ----------
+// Численность, расстановка и приказы посчитаны по армии (как раньше); здесь дивизия, стоящая под армией, встаёт под
+// свой корпус из реестра на начало операции, корпус — под армию той же записи. Приказы на отдельную дивизию сохраняют
+// штаб армии — задержка их прохождения не меняется.
+let corpsN = 0;
+for (const o of out) {
+  if (o.side !== 'su') continue;
+  const d = units.find((u) => u.id === o.id);
+  const s = d && subAt(d, '1945-04-16');
+  if (!s?.corps || !s.army || o.hq !== s.army) continue;
+  if (!hqs.has(s.corps)) {
+    hqs.set(s.corps, { id: s.corps, name: s.corps_name ?? s.corps.replace(/^su_/, ''), side: 'su', echelon: 'corps', parent: s.army, pos: null, note: `состав корпуса — ${s.source ?? 'реестр дивизий'}` });
+    corpsN++;
+  }
+  o.hq = s.corps;
+}
+for (const side of ['su', 'de'] as const) hqs.set(HIGH_COMMAND[side].id, { id: HIGH_COMMAND[side].id, name: HIGH_COMMAND[side].name, side, echelon: 'high_command', parent: null, pos: null });
+console.log(`советских корпусов из реестра: ${corpsN}`);
+
 // ---------- запись ----------
 const usedHq = new Set<string>();
 const mark = (h: string | null) => { for (let x = h, n = 0; x && n < 6 && !usedHq.has(x); x = hqs.get(x)?.parent ?? null, n++) usedHq.add(x); };
 out.forEach((o) => mark(o.hq));
+// штаб без старшего (фронт, группа армий, ОКВ) — под верхней инстанцией своей стороны
+for (const side of ['su', 'de'] as const) usedHq.add(HIGH_COMMAND[side].id);
+const top = (h: Hq) => (h.echelon === 'high_command' ? null : HIGH_COMMAND[h.side].id);
+const under = (h: string, x: string | null) => { for (let n = 0; x && n < 8; x = hqs.get(x)?.parent ?? null, n++) if (x === h) return true; return false; };
 const hqList = [...hqs.values()].filter((h) => usedHq.has(h.id)).map((h) => ({
-  id: h.id, name: h.name, side: h.side, echelon: h.echelon, parent: h.parent && usedHq.has(h.parent) ? h.parent : null,
-  pos: r4(hqPos(h.id) ?? center(out.filter((o) => o.hq === h.id).map((o) => o.pos))),
+  id: h.id, name: h.name, side: h.side, echelon: h.echelon, parent: h.parent && usedHq.has(h.parent) ? h.parent : top(h),
+  // корпус и верхняя инстанция — центр своих дивизий
+  pos: r4((h.echelon === 'corps' && !tsF.has(h.id)) || h.echelon === 'high_command'
+    ? center(out.filter((o) => under(h.id, o.hq)).map((o) => o.pos))
+    : hqPos(h.id) ?? center(out.filter((o) => o.hq === h.id).map((o) => o.pos))),
+  ...(h.note ? { note: h.note } : {}),
 }));
 // развёрнуты к началу в исходном районе (soviet-fires.ts, markDeployed)
 const deployedN = markDeployed(out, orders as { at: unknown; to: string[]; kind: string }[]);
