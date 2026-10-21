@@ -1,8 +1,9 @@
 import type { CommandTerms } from '@def-ops/sim';
 import type { LngLat, MapDocument } from '@def-ops/core';
-import type { ActionCheck, AgentGameSpec, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, TurnBattle, UnitReport, ZoneGrid } from '@def-ops/sim';
+import type { ActionCheck, AgentGameSpec, CommandOp, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, TurnBattle, UnitReport, ZoneGrid } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { KbRefAnswer, KbRefRequest } from './kb-ref';
+import type { CommandView } from './agents-game';
 
 export type Thinking = 'off' | 'low' | 'medium' | 'high';
 
@@ -61,7 +62,7 @@ export interface GameStart {
 export type GameRequest =
   | { kind: 'start'; start: GameStart; record?: GameRecord; llm: LlmSettings; enemy: EnemyMode }
   /** Конец хода человека: решение, приказы и распоряжения (issuedAt — начало хода). */
-  | { kind: 'turn'; orders: Order[]; actions: StaffAction[]; decision: HumanDecision }
+  | { kind: 'turn'; orders: Order[]; actions: StaffAction[]; decision: HumanDecision; command?: CommandOp[] }
   /** Проверить распоряжение до конца хода (pendingBridges — переправы, уже включённые в распоряжение). */
   | { kind: 'check'; id: number; action: StaffAction; pendingBridges: number }
   | { kind: 'settings'; llm: LlmSettings; enemy: EnemyMode }
@@ -180,6 +181,8 @@ export interface TurnView {
   armies: { id: string; name: string; group: string; at: LngLat }[];
   /** Резервы (ждут ввода) и прибывающие войска — по армиям: объединение, его фронт, соединения. */
   reserveGroups: { id: string; name: string; status: 'reserve' | 'arriving'; front: string | null; members: string[] }[];
+  /** Командование по ступеням (агентная модель): режим, кто решает за штабы, запросы, исторические директивы, документы. */
+  command?: CommandView;
 }
 
 export type AiStatus =

@@ -5,17 +5,69 @@
  */
 import {
   activeBoundaries, addHours, hqReports, agentKindOf, agentsStateAt, agentsToRun, groupOf, NOT_COMMITTED, onMap, sectorMap, supplyHoursOf, targetPoint, withBoundaries,
-  type AgentOrderKind, type AgentTrace, type GameState, type Order, type SimContext, type SimState,
+  type AgentOrderKind, type AgentTrace, type CommandOp, type GameMode, type GameState, type Order, type SimContext, type SimState,
 } from '@def-ops/sim';
 import type { LngLat } from '@def-ops/core';
 
 export { hqReports };
 
+/** Состояние управления стороны игрока в ходе ядра (Game::trace, раздел command). */
+export interface TraceCommand {
+  mode: GameMode;
+  hqs: { id: string; control: Control; led: boolean }[];
+  led: string[];
+  requests: { hq: string; division: string; tick: number; answer: boolean | null }[];
+  historical: { id: string; at: number; to: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean }[];
+}
 /** Ход ядра с началом игры и итогом приказов (game_start / game_turn). */
-export type AgentGameTrace = AgentTrace & { control?: string; game: { takeover: number; hour: number; over: boolean; applied?: { hq: string; divisions?: number; error?: string }[]; reserves?: { id: string; from: number }[]; staffErrors?: string[] } };
+export type AgentGameTrace = AgentTrace & { control?: string; command?: TraceCommand; game: { takeover: number; hour: number; over: boolean; applied?: { hq: string; divisions?: number; error?: string }[]; reserves?: { id: string; from: number }[]; staffErrors?: string[]; commandErrors?: string[] } };
 
-/** Приказ ядру: штабу (всем его дивизиям) или дивизии. */
-export interface AgentOrder { hq: string; kind: AgentOrderKind; target: LngLat | null; note: string }
+/** Кто решает за штаб: сценарий (гибрид), штаб-агент, игрок. */
+export type Control = 'script' | 'agent' | 'player';
+/** Состояние управления для интерфейса: с именами и временем. */
+export interface CommandView {
+  mode: GameMode;
+  hqs: Record<string, { control: Control; led: boolean }>;
+  /** Дивизии, которые ведёт Ставка (приказ через голову). */
+  led: string[];
+  requests: { hq: string; hqName: string; division: string; divisionName: string; time: string; answer: boolean | null }[];
+  /** due — час директивы уже наступил (подаётся сразу, при передаче командования — уже доведённой). */
+  historical: { id: string; time: string; to: string; toName: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean; due: boolean }[];
+  documents: { time: string; hq: string; hqName: string; kind: string; to: string[]; text: string; rule: string | null }[];
+}
+const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
+/** Документов в журнале — последних. */
+const DOCS = 200;
+/** Состояние управления из хода ядра (null — ядро его не отдаёт, игра «как сейчас» до этапа командования). */
+export function commandView(t: AgentGameTrace, side: string): CommandView | null {
+  const c = t.command;
+  if (!c) return null;
+  const hq = new Map(t.hqs.map((h) => [h.id, h]));
+  const name = new Map([...t.hqs.map((h) => [h.id, h.name] as const), ...t.divisions.map((d) => [d.id, d.name] as const)]);
+  const at = (tick: number) => dm(addHours(t.start, tick));
+  return {
+    mode: c.mode,
+    hqs: Object.fromEntries(c.hqs.map((h) => [h.id, { control: h.control, led: h.led }])),
+    led: c.led,
+    requests: c.requests.map((r) => ({ hq: r.hq, hqName: name.get(r.hq) ?? r.hq, division: r.division, divisionName: name.get(r.division) ?? r.division, time: at(r.tick), answer: r.answer })),
+    historical: c.historical.map((h) => ({ id: h.id, time: at(h.at), to: h.to, toName: name.get(h.to) ?? h.to, task: h.task, form: h.form, note: h.note, issued: h.issued, due: h.at <= t.game.hour })),
+    documents: (t.documents ?? []).filter((d) => hq.get(d.hq)?.side === side).slice(-DOCS)
+      .map((d) => ({ time: dm(d.time), hq: d.hq, hqName: name.get(d.hq) ?? d.hq, kind: d.kind, to: d.to, text: d.text, rule: d.rule })),
+  };
+}
+
+/** Команда управления словами (для журнала хода). */
+export function commandText(c: CommandOp, name: (id: string) => string): string {
+  switch (c.op) {
+    case 'take': return `взят под управление — ${name(c.hq)}`;
+    case 'release': return `возвращён агенту, в замысел старшего — ${name(c.id)}`;
+    case 'permit': return `${c.yes ? 'отход разрешён' : 'в отходе отказано'} — ${name(c.hq)}`;
+    case 'historical': return `подана историческая директива ${c.id}`;
+  }
+}
+
+/** Приказ ядру: штабу (всем его дивизиям) или дивизии; форма — в режимах штабов-агентов. */
+export interface AgentOrder { hq: string; kind: AgentOrderKind; target: LngLat | null; note: string; form?: 'order' | 'instruction' }
 
 /** Шаг снимков на карте, часов (расчёт — по часам). */
 const STEP = 6;
@@ -45,7 +97,7 @@ export function toAgentOrders(ctx: SimContext, g: GameState, orders: Order[]): A
   return orders.map((o) => {
     let target: LngLat | null = null;
     try { target = o.target != null ? targetPoint(ctx, o.target, byId) : null; } catch { target = null; }
-    return { hq: o.formation, kind: agentKindOf(o.task), target, note: [o.source === 'human' ? 'приказ игрока' : o.source === 'llm' ? 'приказ штаба на модели' : '', o.note ?? ''].filter(Boolean).join(': ') };
+    return { hq: o.formation, kind: agentKindOf(o.task), target, note: [o.source === 'human' ? 'приказ игрока' : o.source === 'llm' ? 'приказ штаба на модели' : '', o.note ?? ''].filter(Boolean).join(': '), ...(o.form ? { form: o.form } : {}) };
   });
 }
 

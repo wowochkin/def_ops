@@ -24,6 +24,8 @@ export interface AgentTrace {
   sources?: string[];
   /** Действующий приказ каждой дивизии на последний кадр (порядок divisions); null — без приказа. */
   orders?: ({ kind: AgentOrderKind; target: LngLat; from: string; issued: number; arrives: number; note: string } | null)[];
+  /** Документы штабов-агентов: директивы, приказы, распоряжения, извещения, донесения — с обоснованием. */
+  documents?: { tick: number; time: string; hq: string; kind: 'directive' | 'order' | 'instruction' | 'notice' | 'report'; to: string[]; text: string; rule: string | null }[];
 }
 
 export type AgentOrderKind = 'move' | 'attack' | 'defend' | 'hold' | 'withdraw';

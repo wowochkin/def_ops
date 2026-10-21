@@ -424,6 +424,8 @@ export interface Order {
    * условный срок модели: приказ, дошедший в любой момент хода, действует на весь ход (rules.orderPartialTurn — иначе).
    */
   basis?: { reliability: 'A' | 'B' | 'C'; source: string; quote?: string; documented?: string };
+  /** Форма (игра на агентной модели, командование по ступеням): приказ — сутки на ступень; нет — боевое распоряжение. */
+  form?: 'order' | 'instruction';
 }
 
 export interface Formation {

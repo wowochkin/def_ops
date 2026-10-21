@@ -30,6 +30,8 @@ export interface GameTurn {
   umpireNote?: unknown;
   /** Обращения к модели-Ставке (поводы, ответ, директивы) — для журнала и разбора; директивы на расчёт — в actions. */
   stavka?: unknown;
+  /** Команды управления на агентной модели (до приказов хода). */
+  command?: CommandOp[];
 }
 
 export interface GameRecord {
@@ -79,7 +81,11 @@ export function applyTakeoverState(s: SimState, ts: TakeoverState): SimState {
 }
 
 /** Агентная модель в игре: сценарий и история ядра (пути от корня данных), длина хода, часов. */
-export interface AgentGameSpec { path: string; history: string; turnHours: number }
+/** Режим игры на агентной модели: как сейчас (приказ — каждой дивизии штаба), штабы-агенты, гибрид. */
+export type GameMode = 'legacy' | 'agents' | 'hybrid';
+export interface AgentGameSpec { path: string; history: string; turnHours: number; mode?: GameMode }
+/** Команда управления на ход (командование по ступеням): взять штаб, вернуть, ответ на запрос отхода, подать историческую директиву. */
+export type CommandOp = { op: 'take'; hq: string } | { op: 'release'; id: string } | { op: 'permit'; hq: string; yes: boolean } | { op: 'historical'; id: string };
 
 export interface GameState {
   state: SimState;

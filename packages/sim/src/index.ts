@@ -11,7 +11,7 @@ export { runToDocument, summaryToDocument, shortName, teethToward, type PublishO
 export { analyze, reportMarkdown, sectorBreaches, type Analysis, type AnalysisOptions, type SectorBreach } from './report';
 export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } from './source';
 export { snapshotOf } from './history';
-export { startGame, applyTakeoverState, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type TakeoverState, type AgentGameSpec, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
+export { startGame, applyTakeoverState, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type TakeoverState, type AgentGameSpec, type GameMode, type CommandOp, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
 export { unitReports, hqReports, intelReport, nearbyPlaces, dayEvents, turnBattles, type TurnBattle, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, areaOriginal, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
 export { prepareTakeover, checkAction, applyActions, lineOf, NOT_COMMITTED, type ActionCheck } from './staff';
 export { commandTerms, type CommandTerms } from './command';
