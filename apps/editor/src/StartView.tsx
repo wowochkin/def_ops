@@ -20,20 +20,56 @@ const WHAT: { id: Exclude<Section, 'start'>; text: string }[] = [
 ];
 const TITLE: Record<string, string> = { replay: 'Переигровка', editor: 'Редактор', modeling: 'Моделирование', maps: 'Карты', library: 'Знаки', knowledge: 'Знания', staff: 'ИИ' };
 
+/** Анимированная карта в шапке: рубеж, реки, стрелки наступления к Берлину, пульсирующая отметка. Только рисунок. */
+function StartMap() {
+  return (
+    <svg className="start-map" viewBox="0 0 1200 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="sm-grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="#fff" strokeOpacity=".05" /></pattern>
+        <marker id="sm-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e0574a" /></marker>
+      </defs>
+      <rect width="1200" height="380" fill="url(#sm-grid)" />
+      <path className="sm-river" d="M-20 110C180 150 260 80 430 130S690 210 860 160 1100 120 1230 170" />
+      <path className="sm-river" d="M-20 300C150 270 330 330 520 290S820 250 1000 300 1160 320 1230 290" />
+      <path className="sm-front" d="M520 20C500 90 560 130 540 200S500 290 530 370" />
+      <g className="sm-arrows">
+        <path pathLength="100" style={{ ['--d' as string]: '0s' }} d="M40 250C220 240 340 200 500 170" markerEnd="url(#sm-head)" />
+        <path pathLength="100" style={{ ['--d' as string]: '.5s' }} d="M60 150C230 150 360 140 500 120" markerEnd="url(#sm-head)" />
+        <path pathLength="100" style={{ ['--d' as string]: '1s' }} d="M80 330C260 320 400 270 510 240" markerEnd="url(#sm-head)" />
+        <path pathLength="100" className="sm-main" style={{ ['--d' as string]: '1.6s' }} d="M520 170C640 150 760 170 900 190S1010 200 1040 190" markerEnd="url(#sm-head)" />
+      </g>
+      <g className="sm-enemy">
+        <path d="M1180 90C1100 110 1040 140 990 160" /><path d="M1190 260C1110 240 1050 220 1000 205" />
+      </g>
+      <g className="sm-city" transform="translate(1040 190)">
+        <circle className="sm-pulse" r="8" /><circle className="sm-pulse sm-p2" r="8" /><circle r="5" fill="#f2c14e" />
+      </g>
+    </svg>
+  );
+}
+
 export function StartView({ llm }: { llm: Llm }) {
   const [intro] = useIntroSetting();
   const st = llm.check.state;
   return (
     <div className="page" data-tour="section-start">
+      <header className="start-hero">
+        <StartMap />
+        <div className="start-hero-in">
+          <p className="start-kicker rv" style={{ ['--i' as string]: 0 }}>Штабные игры с участием искусственного интеллекта</p>
+          <h2 className="rv" style={{ ['--i' as string]: 1 }}>Что было бы, если бы приказ ушёл на сутки раньше?</h2>
+          <p className="lead rv" style={{ ['--i' as string]: 2 }}>Вы командуете советской стороной в операциях 1945 года. Противником командует искусственный интеллект — языковая модель, работающая на вашем компьютере: она видит только то, что видел бы настоящий немецкий штаб. Исход каждых суток считает арбитр по нормативам, у каждого из которых — источник. И всё это можно сразу сверить с тем, как было на самом деле.</p>
+          <div className="start-ops rv" style={{ ['--i' as string]: 3 }} aria-label="Операции">
+            <span>Берлинская операция</span><span>Бой в Берлине</span><span>Висло-Одерская операция</span>
+          </div>
+        </div>
+      </header>
       <div className="page-in start">
-        <p className="start-kicker">Штабные игры с участием искусственного интеллекта</p>
-        <h2>Что было бы, если бы приказ ушёл на сутки раньше?</h2>
-        <p className="lead">Вы командуете советской стороной в операциях 1945 года. Противником командует искусственный интеллект — языковая модель, работающая на вашем компьютере: она видит только то, что видел бы настоящий немецкий штаб. Исход каждых суток считает арбитр по нормативам, у каждого из которых — источник. И всё это можно сразу сверить с тем, как было на самом деле.</p>
         <div className="start-pillars" data-tour="start-pillars">
-          <div className="card"><b>Противником командует искусственный интеллект</b><span>Не сценарий и не набор триггеров: немецкий штаб — языковая модель. Она оценивает обстановку, строит замысел и отдаёт приказы. О ваших войсках знает лишь то, что дала ей разведка.</span></div>
-          <div className="card"><b>Исход считает арбитр</b><span>Бои, движение, подвоз, окружения — по правилам, а не по вдохновению. У норматива есть источник; нет опоры — так и написано: «допущение». Спорную цифру можно открыть, проверить и поправить.</span></div>
-          <div className="card"><b>История рядом</b><span>Расчётный фронт идёт вровень с историческим: видно, где игра разошлась с реальностью и в какие сутки. Приказы доходят до войск с той же задержкой, что и тогда.</span></div>
-          <div className="card"><b>Всё у вас на компьютере</b><span>Без интернета и без облака: карты, база знаний, модель. Ничего не уходит наружу, а база знаний — ваша: свои документы, свои проверки, свои выводы.</span></div>
+          <div className="card rv" style={{ ['--i' as string]: 4 }}><b>Противником командует искусственный интеллект</b><span>Не сценарий и не набор триггеров: немецкий штаб — языковая модель. Она оценивает обстановку, строит замысел и отдаёт приказы. О ваших войсках знает лишь то, что дала ей разведка.</span></div>
+          <div className="card rv" style={{ ['--i' as string]: 5 }}><b>Исход считает арбитр</b><span>Бои, движение, подвоз, окружения — по правилам, а не по вдохновению. У норматива есть источник; нет опоры — так и написано: «допущение». Спорную цифру можно открыть, проверить и поправить.</span></div>
+          <div className="card rv" style={{ ['--i' as string]: 6 }}><b>История рядом</b><span>Расчётный фронт идёт вровень с историческим: видно, где игра разошлась с реальностью и в какие сутки. Приказы доходят до войск с той же задержкой, что и тогда.</span></div>
+          <div className="card rv" style={{ ['--i' as string]: 7 }}><b>Всё у вас на компьютере</b><span>Без интернета и без облака: карты, база знаний, модель. Ничего не уходит наружу, а база знаний — ваша: свои документы, свои проверки, свои выводы.</span></div>
         </div>
         <p className="start-cta">Две минуты — и вы увидите, как это устроено.</p>
         <section className="card start-tour" data-tour="start-tour">

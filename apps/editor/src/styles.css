@@ -1778,7 +1778,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-check-intro input { width: 22px; height: 22px; }
 
 /* начальная страница */
-.page-in.start { max-width: 880px; padding-top: 84px; }  /* сверху по центру — панель голоса */
+.page-in.start { max-width: 880px; padding-top: 26px; }
 .start-kicker { margin: 0 0 6px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
 .start h2 { margin: 0 0 10px; font-size: 30px; line-height: 1.2; }
 .start-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
@@ -1806,3 +1806,40 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .vp-devices { display: flex; flex-direction: column; gap: 6px; margin: 4px 0; }
 .vp-devices label { display: flex; flex-direction: column; gap: 2px; font-weight: 700; }
 .vp-devices select { font: inherit; font-weight: 400; padding: 4px 6px; border: 1.5px solid #8d887c; border-radius: 6px; background: #fff; max-width: 100%; }
+
+/* начальная страница: шапка с анимированной картой */
+.start-hero { display: block; white-space: normal; height: auto; position: relative; overflow: hidden; color: #f3efe6; padding: 92px 28px 34px;
+  background: radial-gradient(900px 380px at 88% 55%, rgba(140,42,34,.5), transparent 62%), linear-gradient(180deg, #151618, #202124); }
+.start-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(21,22,24,.92) 0%, rgba(21,22,24,.6) 52%, rgba(21,22,24,0) 100%); pointer-events: none; }
+.start-hero-in { position: relative; z-index: 1; max-width: 824px; margin: 0 auto; }
+.start-hero .start-kicker { color: #f2c14e; margin-bottom: 10px; }
+.start-hero h2 { margin: 0 0 12px; color: #fff; font-size: 38px; line-height: 1.15; max-width: 760px; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
+.start-hero .lead { color: #ddd8cb; font-size: 16.5px; line-height: 1.55; max-width: 700px; margin: 0 0 16px; }
+.start-ops span { display: inline-block; margin: 0 8px 6px 0; padding: 3px 13px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; font-size: 12.5px; color: #efe9da; background: rgba(255,255,255,.05); }
+.start-map { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sm-river { fill: none; stroke: #5b8bd6; stroke-opacity: .42; stroke-width: 3; }
+.sm-front { fill: none; stroke: #c4382c; stroke-width: 3; stroke-dasharray: 10 8; animation: sm-march 1.6s linear infinite; }
+.sm-arrows path { fill: none; stroke: #e0574a; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; opacity: 0; animation: sm-draw 1.9s ease-out forwards; animation-delay: var(--d, 0s); }
+.sm-arrows .sm-main { stroke-width: 5.5; }
+.sm-enemy path { fill: none; stroke: #5b8bd6; stroke-width: 3; stroke-dasharray: 4 8; stroke-linecap: round; animation: sm-march 2.2s linear infinite; }
+.sm-pulse { fill: none; stroke: #f2c14e; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: sm-ring 2.6s ease-out infinite; }
+.sm-p2 { animation-delay: 1.3s; }
+@keyframes sm-march { to { stroke-dashoffset: -36; } }
+@keyframes sm-draw { 0% { stroke-dashoffset: 100; opacity: 0; } 6% { opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 1; } }
+@keyframes sm-ring { from { transform: scale(1); opacity: .9; } to { transform: scale(5); opacity: 0; } }
+.rv { opacity: 0; animation: rv-in .75s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(var(--i, 0) * 110ms + 80ms); }
+@keyframes rv-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.start-pillars .card { border-top: 3px solid var(--accent); transition: transform .2s ease, box-shadow .2s ease; }
+.start-pillars .card:hover, .start-card:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(0,0,0,.12); }
+.start-card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.start-go { position: relative; transition: transform .15s ease, background .15s ease; }
+.start-go:hover { transform: scale(1.03); }
+.start-go::after { content: ''; position: absolute; inset: -5px; border-radius: 14px; border: 2px solid var(--accent); opacity: 0; animation: go-ring 2.8s ease-out 2.4s infinite; pointer-events: none; }
+@keyframes go-ring { from { opacity: .55; transform: scale(1); } to { opacity: 0; transform: scale(1.14); } }
+@media (max-width: 640px) { .start-hero { padding: 84px 18px 26px; } .start-hero h2 { font-size: 28px; } }
+@media (prefers-reduced-motion: reduce) {
+  .rv { animation: none; opacity: 1; }
+  .sm-arrows path { animation: none; stroke-dashoffset: 0; opacity: 1; }
+  .sm-front, .sm-enemy path, .sm-pulse, .start-go::after { animation: none; }
+  .start-pillars .card:hover, .start-card:hover, .start-go:hover { transform: none; }
+}
