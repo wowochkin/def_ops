@@ -83,9 +83,10 @@ export interface RunResult {
 
 /** Снимок состояния после хода. */
 export const snapshotOf = (s: SimState): Snapshot => {
-  // пути за ход — из записей журнала о движении (бой, затем марш — склеиваются)
+  // пути за ход — из записей журнала о движении (бой, затем марш — склеиваются); журнал копится за всю операцию,
+  // берутся только записи последнего хода
   const paths = new Map<string, LngLat[]>();
-  for (const j of s.journal) if (j.kind === 'move') {
+  for (const j of s.journal.slice(s.journalFrom ?? 0)) if (j.kind === 'move') {
     const seg = j.path ?? [j.from, j.to];
     const cur = paths.get(j.formation);
     paths.set(j.formation, cur ? [...cur, ...seg.slice(1)] : seg);
