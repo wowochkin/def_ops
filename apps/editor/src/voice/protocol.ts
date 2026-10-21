@@ -1,5 +1,6 @@
 // Протокол голосового сервиса (спецификация голосового управления, раздел 2).
 // Модуль чистый: без браузерных API, проверяется в vitest/node.
+import type { TtsInfo } from './tts-store';
 
 /**
  * Как перебить штаб: `voice` — речью громче порога дольше заданного; `word` — стоп-словом («Стоп», «Штаб…»):
@@ -24,11 +25,14 @@ export type CalibStep = 'noise' | 'speech' | 'echo' | 'over' | 'finish' | 'cance
 export type ClientMsg =
   | { type: 'hello'; settings: Partial<VoiceSettings> }
   | { type: 'say'; id: number; role: VoiceRole; text: string; more?: boolean }
+  /** Заготовить звук фразы заранее: `say` того же текста тем же голосом сыграет его без синтеза. */
+  | { type: 'prepare'; id: number; role: VoiceRole; text: string }
   | { type: 'stop'; id?: number }
   | { type: 'played'; id: number }
   | ({ type: 'settings' } & Partial<VoiceSettings>)
   | { type: 'calib'; step: CalibStep; sec?: number }
-  | { type: 'voice'; op: string; [k: string]: unknown };
+  | { type: 'voice'; op: string; [k: string]: unknown }
+  | { type: 'tts'; op: 'list' | 'set'; id?: string };
 
 /** Образец голоса в хранилище сервиса. */
 export interface VoiceInfo {
@@ -55,7 +59,8 @@ export interface VoiceCheck {
 
 /** Сервис → окно (JSON). */
 export type ServerMsg =
-  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number; aec?: boolean }
+  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number; aec?: boolean; tts?: TtsInfo }
+  | ({ type: 'tts_list' } & TtsInfo)
   | { type: 'level'; p: number; busy: boolean }
   | { type: 'speech'; state: 'start' | 'end' }
   | { type: 'utterance'; id: number; text: string; audio_s: number; stt_ms: number; continues?: number }
@@ -63,6 +68,8 @@ export type ServerMsg =
   /** Перебивание «словом»: речь поверх штаба (он не оборван); chief — что он уже сказал. Окно принимает только ответ на вопрос. */
   | { type: 'over'; id: number; text: string; chief: string }
   | { type: 'say-done'; id: number; stopped?: boolean }
+  /** Заготовка `prepare` готова (audio_s — длина звука) или не вышла (error: фраза потом синтезируется как обычно). */
+  | { type: 'prepared'; id: number; audio_s?: number; error?: string }
   | { type: 'barge'; id: number }
   | ({ type: 'settings' } & VoiceSettings)
   | { type: 'calib_rec'; step: CalibStep; sec: number }

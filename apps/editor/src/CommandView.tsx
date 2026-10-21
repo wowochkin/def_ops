@@ -41,6 +41,7 @@ import { zoneOverlays, zoneUrl } from './zones-overlay';
 import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl, type TurnDeps } from './voice/actions/turn';
 import { releaseScreen, screenActions, type ScreenDeps } from './voice/actions/screen';
 import { announceTurn, resetUmpire, type UmpireModel } from './voice/umpire';
+import { bindModelHold, setModelBusy } from './voice/model-queue';
 import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import { commandActions, releaseCommand, TAKEOVER_REMIND, takeoverIsAnswer, takeoverParse, takeoverRead, type CommandDeps } from './voice/actions/command';
 import {
@@ -227,6 +228,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       } else if (m.kind === 'ai') setAi(m.status);
       else if (m.kind === 'ai-stream') { setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000))); }
       else if (m.kind === 'ai-phase') setAiPhase(m.text);
+      else if (m.kind === 'llm-busy') setModelBusy('game', m.who); // голос знает, чем занята модель, и ждёт её
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); blockedArrived(m.error); }
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
       else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x)));
@@ -281,7 +283,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     let live = true;
     if (!saved && kbBuilding()) setProgress(KB_WAIT);
     void (saved ? Promise.resolve() : kbSettled()).then(() => { if (live) w.postMessage({ kind: 'start', start: st, record: saved?.record, llm: llm.settings, enemy } satisfies GameRequest); });
-    return () => { live = false; w.terminate(); resetUmpire(); };
+    // голос — первым в очереди к модели: пока он ждёт её или спрашивает, новые запросы игры не начинаются
+    const unhold = bindModelHold((on) => w.postMessage({ kind: 'llm-hold', on } satisfies GameRequest));
+    return () => { live = false; unhold(); w.terminate(); setModelBusy('game', null); resetUmpire(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   /** Модель посредника для доклада: обычный срок и повторы (связь с моделью не прошла проверку — без неё, честно). */
   const umpireModel = (): UmpireModel | null => (llmRef.current.check.state === 'fail' ? null

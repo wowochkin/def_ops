@@ -747,3 +747,75 @@ def test_answer_word_right_after_question_is_not_echo(make_client, monkeypatch, 
     m = until(ws, "echo" if echo else "utterance", seen)
     assert m["text"] == heard
     ws.close()
+
+
+def count_tts(c) -> list[str]:
+    """Тексты, отданные синтезу поддельной модели (заготовки и живые фразы)."""
+    m = c.app.state.service.models
+    calls: list[str] = []
+    orig = m.tts_stream
+
+    def wrapped(text, ref):
+        calls.append(text)
+        return orig(text, ref)
+    m.tts_stream = wrapped
+    return calls
+
+
+def test_prepare_then_say_plays_without_synth(make_client):
+    # заготовка: звук синтезирован заранее; say того же текста тем же голосом играет его, синтез не зовётся
+    c = make_client()
+    calls = count_tts(c)
+    ws, _ = connect(c)
+    text = "Докладываю итоги хода. Противник отошёл за реку, наши части заняли переправу."
+    ws.send_text(json.dumps({"type": "prepare", "id": 1, "role": "umpire", "text": text}))
+    p = until(ws, "prepared")
+    assert p["id"] == 1 and p["audio_s"] > len(text) / 15 * 0.9
+    n = len(calls)
+    assert n >= 1
+    ws.send_text(json.dumps({"type": "say", "id": 5, "role": "umpire", "text": text}))
+    seen = []
+    assert until(ws, "say-done", seen) == {"type": "say-done", "id": 5}
+    chunks = [m for m in seen if isinstance(m, bytes)]
+    assert chunks and all(audio_header(b)[0] == 5 for b in chunks)
+    assert abs(sum(len(b) - 9 for b in chunks) / 2 / 24000 - p["audio_s"]) < 0.05
+    assert len(calls) == n
+    # та же фраза заготовлена ещё раз — берётся готовая
+    ws.send_text(json.dumps({"type": "prepare", "id": 2, "role": "umpire", "text": text}))
+    assert until(ws, "prepared")["id"] == 2
+    assert len(calls) == n  # второй раз не синтезируется
+    ws.close()
+
+
+def test_say_while_prepare_runs_waits_for_it(make_client):
+    # say пришёл, пока заготовка ещё синтезируется, — звучит из неё, не синтезируется второй раз
+    c = make_client()
+    calls = count_tts(c)
+    ws, _ = connect(c)
+    text = " ".join(f"Шаг {i}: противник отошёл за реку, части заняли переправу." for i in range(10))
+    ws.send_text(json.dumps({"type": "prepare", "id": 1, "role": "chief", "text": text}))
+    ws.send_text(json.dumps({"type": "say", "id": 9, "role": "chief", "text": text}))
+    seen = []
+    until(ws, "say-done", seen)
+    assert sum(len(b) - 9 for b in seen if isinstance(b, bytes)) / 2 / 24000 > len(text) / 15 * 0.9
+    from tts import whole_pieces
+    assert calls == whole_pieces(text)
+    ws.close()
+
+
+def test_prepare_without_sample_reports_error_and_say_still_works(make_client, tmp_path):
+    c = make_client()
+    ws, _ = connect(c)
+    svc = c.app.state.service
+    ref = svc.ref_for("chief")
+    orig = svc.ref_for
+    svc.ref_for = lambda role: None
+    ws.send_text(json.dumps({"type": "prepare", "id": 3, "role": "chief", "text": "Есть."}))
+    assert until(ws, "prepared") == {"type": "prepared", "id": 3, "error": "нет образца голоса — запишите голос в окне «Голоса»"}
+    svc.ref_for = orig
+    assert ref is not None
+    ws.send_text(json.dumps({"type": "say", "id": 4, "role": "chief", "text": "Есть."}))
+    seen = []
+    until(ws, "say-done", seen)
+    assert any(isinstance(m, bytes) for m in seen)
+    ws.close()

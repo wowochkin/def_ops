@@ -15,18 +15,19 @@ from typing import Iterator
 import numpy as np
 
 from audio import SR_IN
+from engines import DEFAULT_ENGINE, Engine, engine as engine_by_id
 from voices import write_wav
 
-TTS_MODEL = "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16"
 TURN_MODEL = "mlx-community/smart-turn-v3"
 ASR_MODEL = "v3_e2e_rnnt"  # с пунктуацией и заглавными
-STREAMING_INTERVAL = 0.32  # с: синтез отдаёт звук такими кусками
 WARM_TEXT = "Слушаю вас."
 
 
 class Models:
-    def __init__(self, tts: str = TTS_MODEL, asr: str = ASR_MODEL, eos_extra: int = 1):
-        self.tts_name, self.asr_name, self.eos_extra = tts, asr, eos_extra
+    def __init__(self, tts: str = DEFAULT_ENGINE, asr: str = ASR_MODEL, eos_extra: int = 1, repo: str | None = None):
+        self.engine: Engine = engine_by_id(tts)
+        self.repo_override = repo  # --tts: свои веса вместо первого доступного варианта модели
+        self.asr_name, self.eos_extra = asr, eos_extra
         self.mlx = ThreadPoolExecutor(1, thread_name_prefix="mlx")  # всё MLX — в одной нити
         self.torch = ThreadPoolExecutor(1, thread_name_prefix="torch")
         self.sample_rate = 24000  # уточняется по загруженному синтезу
@@ -62,15 +63,54 @@ class Models:
         return f
 
     def _load_mlx(self):
-        from mlx_audio.tts.utils import load_model
         from mlx_audio.vad import load as load_vad
+
+        self.turn = load_vad(TURN_MODEL)
+        self._load_tts()
+
+    def _load_tts(self):  # в нити mlx
+        from mlx_audio.tts.utils import load_model
 
         from tts_tail import extend_eos
 
-        self.turn = load_vad(TURN_MODEL)
-        self.tts = load_model(self.tts_name)
-        self.sample_rate = int(self.tts.sample_rate)
-        self.eos_reset = extend_eos(self.tts, self.eos_extra)
+        errors = []
+        for repo in ((self.repo_override,) if self.repo_override else self.engine.repos):
+            try:
+                tts = load_model(repo)
+                break
+            except Exception as e:  # noqa: BLE001 — следующий вариант весов
+                errors.append(f"{repo}: {e}")
+        else:
+            raise RuntimeError("модель озвучки не загрузилась: " + " | ".join(errors))
+        self.tts = tts
+        self.sample_rate = int(getattr(tts, "sample_rate", 24000))
+        self._refs = {}  # образцы разбираются под частоту модели
+        self.eos_reset = extend_eos(tts, self.eos_extra) if self.engine.eos_patch else (lambda: None)
+
+    def switch_tts(self, eid: str):
+        """Другая модель озвучки (в нити mlx): прежняя выгружается. Не загрузилась — прежняя возвращается, ошибка выходит."""
+        old = self.engine
+        self.engine = engine_by_id(eid)
+        self.tts = None
+        self._free()
+        try:
+            self._load_tts()
+        except Exception:
+            self.engine = old
+            self._load_tts()
+            raise
+
+    @staticmethod
+    def _free():
+        import gc
+
+        gc.collect()
+        try:
+            import mlx.core as mx
+
+            mx.clear_cache()
+        except Exception:  # noqa: BLE001 — очистка кэша не обязательна
+            pass
 
     # ------------------------------------------------------------ вызовы
 
@@ -117,6 +157,13 @@ class Models:
         path, ref_text = ref
         ref_audio = self._ref_audio(path)
         self.eos_reset()
-        for r in self.tts.generate(text=text, ref_audio=ref_audio, ref_text=ref_text, lang_code="russian",
-                                   stream=True, streaming_interval=STREAMING_INTERVAL, verbose=False):
+        e = self.engine
+        kw = dict(e.kwargs)
+        if e.ref_text:
+            kw["ref_text"] = ref_text
+        if e.stream:
+            kw["stream"] = True
+        else:
+            kw.pop("streaming_interval", None)
+        for r in self.tts.generate(text=text, ref_audio=ref_audio, verbose=False, **kw):
             yield np.asarray(r.audio, dtype=np.float32).reshape(-1)

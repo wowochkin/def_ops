@@ -27,6 +27,7 @@ import { ActButton } from './voice/registry';
 import { VoicePanel } from './voice/VoicePanel';
 import { TourLayer } from './voice/TourLayer';
 import { FlashLayer } from './voice/FlashLayer';
+import { ttsStatus, ttsStore, useTts } from './voice/tts-store';
 import { ModelPicker } from './ModelPicker';
 import { BasemapControls, Icon, ModelSelect } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -147,6 +148,8 @@ function MapsView({ bm, server, onOpenInEditor }: { bm: Basemaps; server: Server
 
 function StaffView({ llm }: { llm: Llm }) {
   const { settings, set, check, recheck } = llm;
+  const tts = useTts();
+  const ttsSt = ttsStatus(tts);
   return (
     <div className="page" data-tour="section-staff">
       <div className="page-in narrow">
@@ -182,6 +185,14 @@ function StaffView({ llm }: { llm: Llm }) {
             <ModelPicker llm={llm} who="voice" purpose="голоса" />
             <small>Что начальник штаба не понял по готовым правилам, разбирает эта модель: выбирает подходящее действие или честно отвечает, что такого нет. Ответ нужен быстро — подойдёт небольшая модель без размышления.</small>
           </div>
+          <label className="staff-voice-row" data-tour="staff-tts">Модель озвучки
+            <select value={tts?.current ?? ''} disabled={!tts || tts.state === 'loading'} onChange={(e) => ttsStore.choose(e.target.value)}>
+              {!tts && <option value="">—</option>}
+              {tts?.engines.map((e) => <option key={e.id} value={e.id}>{e.title}{e.default ? ' (по умолчанию)' : ''}{e.commercial ? '' : ' — только некоммерческая'}</option>)}
+            </select>
+            <small>{tts?.engines.find((e) => e.id === tts.current)?.note ?? 'Какой моделью говорят начальник штаба и посредник. Образцы голосов те же — они клонируются любой моделью.'}</small>
+            <span className={`llm-st ${ttsSt.kind === 'ok' ? 'ok' : ttsSt.kind === 'fail' ? 'fail' : ''}`} role="status">{ttsSt.text}</span>
+          </label>
         </section>
         <section className="card staff-help" data-tour="staff-help">
           <h3>Как подготовить</h3>

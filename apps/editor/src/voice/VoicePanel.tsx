@@ -39,8 +39,9 @@ import { VoiceClient } from './client';
 import { CONVERSATION_S, Dispatcher, type Pending } from './dispatch';
 import { createVoiceModel } from './llm';
 import { tourEl } from './highlight';
-import { ActButton, act, actions, listed, onModal, onVoiceNote, setProposer, setRetractor, setSpeaker, setVoiceLive, useAction, voiceNote } from './registry';
+import { ActButton, act, actions, listed, onModal, onVoiceNote, setPreparer, setProposer, setRetractor, setSpeaker, setVoiceLive, useAction, voiceNote } from './registry';
 import type { LlmSettings } from '../sim/game-protocol';
+import { ttsStore } from './tts-store';
 import type { VoiceInfo, VoiceRoles, VoiceSettings, VoiceStatus } from './protocol';
 import {
   DEFAULT_SETTINGS, ENABLED_KEY, SETTINGS_KEY, PanelSize, SayGate, aecChange, aecHint, bargeHint, chiefTalking, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState,
@@ -223,6 +224,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       return id;
     });
     setRetractor((id) => dispatcher.retract(id));
+    setPreparer((texts, role) => Promise.all(texts.map((t) => client.prepare(role ?? 'chief', t))).then(() => {}));
     // предложения модулей («Составить разбор операции?»): в дежурном и при выключенном голосе — нет
     setProposer((text, id, params) => { if (enabledRef.current && !dispatcher.standby) dispatcher.propose(text, id, params); });
     // слышит ли голос: выключен, дежурит или сервис не на связи — модулям незачем готовить фразы моделью
@@ -236,7 +238,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       modalIds.clear();
       syncSpeaking();
     });
-    return () => { setSpeaker(null); setRetractor(null); setProposer(null); setVoiceLive(null); off(); };
+    return () => { setSpeaker(null); setRetractor(null); setPreparer(null); setProposer(null); setVoiceLive(null); off(); };
   }, [dispatcher, gate]);
   // тур говорит голосом начальника штаба (разбор хода — посредника): та же очередь фраз, та же лента
   useTourVoice({
@@ -267,11 +269,12 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   // связь с сервисом: подключение сразу (шлюз может молчать — сервис запущен вручную), состояние шлюза —
   // раз в 5 с; микрофон — когда сервис ответил (без сервиса микрофон не спрашиваем)
   useEffect(() => {
-    const offStatus = client.onStatus(setStatus);
+    const offStatus = client.onStatus((st) => { setStatus(st); if (st !== 'ready') ttsStore.set(null); });
+    ttsStore.attach((id) => client.tts('set', id));
     client.connect(parseSettings(lsGet(SETTINGS_KEY)));
     void client.refreshApi();
     const t = setInterval(() => { void client.refreshApi(); }, API_POLL_MS);
-    return () => { offStatus(); clearInterval(t); client.close(); started.current = false; };
+    return () => { offStatus(); ttsStore.attach(null); clearInterval(t); client.close(); started.current = false; };
   }, [client]);
   const startMic = () => {
     started.current = true;
@@ -314,7 +317,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     const offs = [
       client.on('ready', (m) => {
         setReady({ voices: m.voices ?? [], roles: m.roles, recordText: m.record_text ?? '', aec: m.aec === true });
+        if (m.tts) ttsStore.set(m.tts);
       }),
+      client.on('tts_list', (m) => ttsStore.set({ engines: m.engines, current: m.current, state: m.state, ...(m.error ? { error: m.error } : {}) })),
       client.on('level', (m) => setLevel({ p: m.p, busy: m.busy })),
       client.on('speech', (m) => { setListening(m.state === 'start'); gate.speech(m.state === 'start'); }),
       client.on('settings', (m) => setCfg({

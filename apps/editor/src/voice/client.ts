@@ -126,6 +126,9 @@ export class VoiceClient {
   private swapping = false;
   private nextT = 0;
   private sources: { src: AudioBufferSourceNode; id: number }[] = [];
+  /** Заготовки `prepare`, ждущие ответа: номер → чем ответить (true — звук готов). */
+  private prepWait = new Map<number, (ok: boolean) => void>();
+  private prepId = 0;
   /** По фразам: `done` — сервис сказал, что кусков больше нет; сыграно — когда доиграли все. */
   private phrases = new Map<number, { done: boolean }>();
 
@@ -312,6 +315,7 @@ export class VoiceClient {
     this.ws = null;
     if (old) { old.onopen = old.onmessage = old.onclose = old.onerror = null; old.close(); }
     this.stopPlayback();
+    this.settlePrepared();
     this.closeMic();
     this.node?.disconnect();
     void this.ctx?.close();
@@ -366,6 +370,7 @@ export class VoiceClient {
       this.ws = null;
       if (!opened) { this.failed = true; this.fails++; }
       this.stopPlayback();  // обрыв: договаривать некому
+      this.settlePrepared();  // и заготовки пропали вместе с подключением
       this.setWs('closed');
       this.scheduleReconnect();
     };
@@ -396,6 +401,7 @@ export class VoiceClient {
     // остановил сервис (калибровка, запись голоса, отказ от записи): уже пришедший звук не доигрывается
     else if (m.type === 'say-done' && m.stopped) { this.cancelled.add(m.id); this.stopPlayback(m.id); }
     else if (m.type === 'say-done') this.phraseDone(m.id);
+    else if (m.type === 'prepared') { const f = this.prepWait.get(m.id); this.prepWait.delete(m.id); f?.(!m.error); }
     this.handlers.get(m.type)?.forEach((cb) => cb(m as never));
   }
 
@@ -408,6 +414,26 @@ export class VoiceClient {
   say(id: number, role: VoiceRole, text: string, more?: boolean) {
     this.cancelled.revive(id);
     this.send(more === undefined ? { type: 'say', id, role, text } : { type: 'say', id, role, text, more });
+  }
+
+  /**
+   * Заготовить звук фразы заранее (сервис синтезирует её целиком и держит до `say` того же текста тем же голосом).
+   * Промис — когда звук готов (true) или заготовка не вышла: сервис не готов, нет связи, ошибка синтеза (false).
+   */
+  prepare(role: VoiceRole, text: string): Promise<boolean> {
+    if (!this.ready || this.ws?.readyState !== WebSocket.OPEN || !text.trim()) return Promise.resolve(false);
+    const id = ++this.prepId;
+    return new Promise((res) => {
+      this.prepWait.set(id, res);
+      this.send({ type: 'prepare', id, role, text });
+    });
+  }
+
+  /** Связь пропала: ждущие заготовки не придут. */
+  private settlePrepared() {
+    const ws = [...this.prepWait.values()];
+    this.prepWait.clear();
+    ws.forEach((f) => f(false));
   }
 
   /** Замолчать: фраза `id` или всё; локальный звук гасится сразу. */
@@ -428,6 +454,11 @@ export class VoiceClient {
     this.calibSound = step === 'echo' || step === 'over';
     if (step === 'cancel') this.stopPlayback(0);
     this.send(sec === undefined ? { type: 'calib', step } : { type: 'calib', step, sec });
+  }
+
+  /** Модель озвучки: список или смена (сервис отвечает `tts_list`). */
+  tts(op: 'list' | 'set', id?: string) {
+    this.send(id === undefined ? { type: 'tts', op } : { type: 'tts', op, id });
   }
 
   voice(op: string, args: Record<string, unknown> = {}) {

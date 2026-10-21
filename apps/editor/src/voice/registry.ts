@@ -174,6 +174,18 @@ export function setSpeaker(fn: ((text: string, o?: SpeakOpts) => number | void) 
 export function setRetractor(fn: ((id: number) => void) | null): void { retractor = fn; }
 /** Штаб говорит фразу как есть (к озвучке её готовит вызывающий: speakable). Голоса нет или он дежурит — молчит. Номер фразы. */
 export function speak(text: string, o?: SpeakOpts): number | void { if (text) return speaker?.(text, o); }
+let preparer: ((texts: string[], role?: SpeakRole) => Promise<void>) | null = null;
+/** Панель голоса подключает заготовку звука фраз (null — голоса нет: prepareSpeech сразу кончается). */
+export function setPreparer(fn: ((texts: string[], role?: SpeakRole) => Promise<void>) | null): void { preparer = fn; }
+/**
+ * Заготовить звук фраз заранее, по порядку: сервис синтезирует их сейчас, а когда они прозвучат (тем же текстом, тем
+ * же голосом), звук уже готов — озвучка не делит машину с моделью, которая заработает следом. Промис — когда всё
+ * заготовлено или заготовить нельзя (голоса нет, сервис не на связи, сбой — фразы тогда синтезируются как обычно).
+ */
+export function prepareSpeech(texts: string[], role?: SpeakRole): Promise<void> {
+  const t = texts.filter((x) => x.trim());
+  return preparer && t.length ? preparer(t, role) : Promise.resolve();
+}
 /** Речь штаба подключена (панель голоса есть). */
 export function hasSpeaker(): boolean { return speaker !== null; }
 /** Фраза больше не нужна (новая просьба о том же). */
