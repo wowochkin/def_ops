@@ -87,6 +87,24 @@ class PiecePlanner:
         return None
 
 
+def whole_pieces(text: str) -> list[str]:
+    """Куски заготовки (`prepare`): фраза известна целиком, синтез идёт заранее. Первый кусок — как у PiecePlanner
+    (короткая первая фраза — вместе со следующей), дальше фразы набираются в куски не длиннее PIECE_MAX_CHARS:
+    каждый кусок — отдельная работа нити синтеза, между ними успевают живые фразы и конец реплики (Smart Turn)."""
+    s = Sentences()
+    sents = s.push(text) + s.rest()
+    if not sents:
+        return []
+    k = 2 if len(sents[0]) < SHORT_CHARS and len(sents) > 1 else 1
+    out = [" ".join(sents[:k])]
+    for x in sents[k:]:
+        if len(out) > 1 and len(out[-1]) + 1 + len(x) <= PIECE_MAX_CHARS:
+            out[-1] += " " + x
+        else:
+            out.append(x)
+    return out
+
+
 def pause_after(text: str) -> float:
     """Пауза после куска по знаку в конце (закрывающие кавычки и скобки не считаются)."""
     return PAUSE_AFTER.get(text.rstrip("»\")) ")[-1:], PAUSE_AFTER["."])
