@@ -23,6 +23,7 @@
  *
  * Выход: packages/sim/data/scenarios/agents/vistula-oder-1945.json и vistula-oder-1945.history.json.
  */
+import { HIGH_COMMAND } from './hierarchy';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -51,8 +52,12 @@ const targetOf = (t: TsOrder['target']): LngLat | null => (!t ? null : Array.isA
 const KIND: Record<string, string> = { attack: 'attack', counterattack: 'attack', breakout: 'attack', relieve: 'attack', defend: 'defend', delay: 'defend', hold: 'hold', withdraw: 'withdraw', regroup: 'move', reserve: 'move' };
 /** Типовые числа там, где в сценарии их нет (допущения). */
 const DEF = { sd: { personnel: 5500, tanks: 0, guns: 120 }, tk: { personnel: 8000, tanks: 150, guns: 60 } };
+/** Корпуса советских армий на 1.01.1945 (docs/sources/vistula-oder-1945-su-corps.json). */
+interface SuCorps { id: string; name: string; kind: 'rifle' | 'tank' | 'mech'; divisions: number | null; source: string; reliability: string }
+const suCorps = new Map(rd<{ armies: { army: string; corps: SuCorps[] }[] }>('docs/sources/vistula-oder-1945-su-corps.json').armies.map((a) => [a.army, a.corps]));
+const newCorps: { id: string; name: string; army: string; src: string | null }[] = [];
 
-interface Agent { id: string; name: string; side: 'su' | 'de'; hq: string; kind: string; mobility: 'foot' | 'motor' | 'tracked'; size: 'rifle' | 'tank' | 'other'; quality: number; personnel: number; tanks: number; guns: number; ammo: number; fuel: number; pos: LngLat; enterAt?: string; deployed?: boolean; notes: string[] }
+interface Agent { id: string; name: string; side: 'su' | 'de'; hq: string; corps?: string; kind: string; mobility: 'foot' | 'motor' | 'tracked'; size: 'rifle' | 'tank' | 'other'; quality: number; personnel: number; tanks: number; guns: number; ammo: number; fuel: number; pos: LngLat; enterAt?: string; deployed?: boolean; notes: string[] }
 const out: Agent[] = [];
 
 // ---------- первая задача армии: направление удара ----------
@@ -78,22 +83,33 @@ const suArmies = ts.formations.filter((f) => f.side === 'su' && f.echelon === 'a
 for (const a of suArmies) {
   const p = a.position!, dir = firstAttack(a.id), q = rkka.unitTypes[a.type ?? '']?.quality ?? 1;
   const opens = !!ts.orders.find((o) => o.formation === a.id && o.task === 'attack' && o.issuedAt <= '1945-01-14T23:59');
+  const known = suCorps.get(a.id);
   if (a.type === 'tank_army') {
-    const ps = slots(p, dir, 3, 3, 4);
-    ['танковый корпус', 'танковый корпус', 'механизированный корпус'].forEach((kind, i) => out.push({
-      id: `${a.id}_k${i + 1}`, name: `${a.name}: ${kind} (${i + 1})`, side: 'su', hq: a.id, kind: i < 2 ? 'tk' : 'mk', mobility: 'tracked', size: 'tank', quality: q,
-      personnel: Math.round((a.personnel ?? 40000) / 3), tanks: Math.round((a.tanks ?? 600) / 3), guns: Math.round((a.guns ?? 600) / 3), ammo: a.ammo ?? 3, fuel: a.fuel ?? 2, pos: r4(ps[i]),
-      notes: ['танковая армия — 2 танковых и 1 механизированный корпус, силы армии поровну (C)', 'положение: у армии поперёк направления удара (C)'],
+    // корпуса танковой армии — по «Боевому составу» (есть в файле корпусов), иначе 2 танковых и 1 механизированный (C)
+    const ks = known?.length ? known.map((c) => ({ name: c.name, kind: c.kind === 'mech' ? 'mk' : 'tk', src: c.source }))
+      : [{ name: 'танковый корпус (1)', kind: 'tk' }, { name: 'танковый корпус (2)', kind: 'tk' }, { name: 'механизированный корпус (3)', kind: 'mk' }].map((x) => ({ ...x, src: null as string | null }));
+    const ps = slots(p, dir, ks.length, ks.length, 4);
+    ks.forEach((k, i) => out.push({
+      id: `${a.id}_k${i + 1}`, name: `${a.name}: ${k.name}`, side: 'su', hq: a.id, kind: k.kind, mobility: 'tracked', size: 'tank', quality: q,
+      personnel: Math.round((a.personnel ?? 40000) / ks.length), tanks: Math.round((a.tanks ?? 600) / ks.length), guns: Math.round((a.guns ?? 600) / ks.length), ammo: a.ammo ?? 3, fuel: a.fuel ?? 2, pos: r4(ps[i]),
+      notes: [k.src ? `корпус танковой армии — ${k.src}; силы армии поровну (C)` : 'танковая армия — 2 танковых и 1 механизированный корпус, силы армии поровну (C)', 'положение: у армии поперёк направления удара (C)'],
     }));
     continue;
   }
-  const N = 9, ps = slots(p, dir, N, 6);
-  for (let i = 0; i < N; i++) out.push({
-    id: `${a.id}_d${i + 1}`, name: `${a.name}: стрелковая дивизия ${i + 1}`, side: 'su', hq: a.id, kind: 'sd', mobility: 'foot', size: 'rifle', quality: q,
+  // стрелковые корпуса армии — по «Боевому составу» на 1.01.1945 (файл корпусов), иначе 3 условных по 3 дивизии (C);
+  // корпуса, которые есть в сценарии нынешней модели (вводятся позже), — своими дивизиями ниже
+  const corpsList = known?.length
+    ? known.filter((c) => c.kind === 'rifle' && !tsF.has(c.id)).map((c) => ({ id: c.id, name: c.name, n: c.divisions ?? 3, src: c.source }))
+    : [1, 2, 3].map((k) => ({ id: `${a.id}_sk${k}`, name: `${a.name.replace(/ армия.*$/, ' А')}: стрелковый корпус ${k} (условный)`, n: 3, src: null as string | null }));
+  const N = corpsList.reduce((x, c) => x + c.n, 0), first = Math.round((N * 2) / 3), ps = slots(p, dir, N, first);
+  let i = 0;
+  for (const c of corpsList) for (let j = 0; j < c.n; j++, i++) out.push({
+    id: `${a.id}_d${i + 1}`, name: `${c.name}: стрелковая дивизия ${j + 1}`, side: 'su', hq: a.id, corps: c.id, kind: 'sd', mobility: 'foot', size: 'rifle', quality: q,
     personnel: Math.round((a.personnel ?? 9 * DEF.sd.personnel) / N), tanks: Math.round((a.tanks ?? 0) / N), guns: Math.round((a.guns ?? 9 * DEF.sd.guns) / N), ammo: a.ammo ?? 3, fuel: a.fuel ?? 2, pos: r4(ps[i]),
-    ...(i < 6 && opens ? { deployed: true } : {}),
-    notes: ['армия — 9 стрелковых дивизий (3 корпуса по 3), силы армии поровну (C)', `положение: ${i < 6 ? 'первый' : 'второй'} эшелон поперёк направления удара армии (C)`],
+    ...(i < first && opens ? { deployed: true } : {}),
+    notes: [c.src ? `армия — ${N} стрелковых дивизий по корпусам (${c.src}), силы армии поровну (C)` : 'армия — 9 стрелковых дивизий (3 корпуса по 3), силы армии поровну (C)', `положение: ${i < first ? 'первый' : 'второй'} эшелон поперёк направления удара армии (C)`],
   });
+  for (const c of corpsList) newCorps.push({ id: c.id, name: c.name, army: a.id, src: c.src });
 }
 for (const c of ts.formations.filter((f) => f.side === 'su' && f.echelon === 'corps')) {
   const parent = c.parent ?? '';
@@ -185,6 +201,17 @@ const hqIds = new Set(hqs.map((h) => h.id));
 const histArmy = tsHist.positions.filter((p) => hqIds.has(p.formation) && p.time >= START.slice(0, 10) && p.time < endDay)
   .map((p) => ({ formation: p.formation, time: p.time, at: p.at, approxKm: p.approxKm, reliability: p.reliability, source: p.source }));
 const events = tsHist.events.filter((e) => e.date < endDay).map((e) => ({ ...e, at: e.place ? areaC.get(e.place) ?? null : null }));
+
+// ---------- советские стрелковые корпуса и верхние инстанции ----------
+// Как в build-berlin.ts: расстановка и приказы посчитаны по армии; дивизия встаёт под свой корпус, корпус — под армию,
+// фронты и группы армий — под верхние инстанции.
+type HqOut = { id: string; name: string; side: string; echelon: string; parent: string | null; pos: LngLat; note?: string };
+const hqOut = hqs as HqOut[];
+for (const c of newCorps) hqOut.push({ id: c.id, name: c.name, side: 'su', echelon: 'corps', parent: c.army, pos: r4(center(out.filter((o) => o.corps === c.id).map((o) => o.pos))), note: c.src ? `состав корпуса — ${c.src}` : 'условный корпус: состав армии на 1.01.1945 не найден (C)' });
+for (const o of out) if (o.corps) { o.hq = o.corps; delete o.corps; }
+const sideCenter = (side: string) => r4(center(out.filter((o) => o.side === side).map((o) => o.pos)));
+for (const h of hqOut) if (h.parent == null) h.parent = HIGH_COMMAND[h.side as 'su' | 'de'].id;
+for (const side of ['su', 'de'] as const) hqOut.push({ id: HIGH_COMMAND[side].id, name: HIGH_COMMAND[side].name, side, echelon: 'high_command', parent: null, pos: sideCenter(side) });
 
 // ---------- запись ----------
 const scenario = {
