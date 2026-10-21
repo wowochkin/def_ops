@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-game-historical"
+description = "Enables the game_historical command without any pre-configured scope."
+commands.allow = ["game_historical"]
+
+[[permission]]
+identifier = "deny-game-historical"
+description = "Denies the game_historical command without any pre-configured scope."
+commands.deny = ["game_historical"]
