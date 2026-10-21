@@ -206,3 +206,88 @@ fn historical_directives_run() {
     for _ in 0..96 { plain.step(); }
     assert_eq!(h.sim.digest(), plain.digest());
 }
+
+// ---------- исправления по рецензии ----------
+
+/// C1: директива без оси, рубежей и границ не затирает оперативный замысел.
+#[test]
+fn geometryless_directive_keeps_intent() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.issue_historical("stavka-11059").expect("директива");
+    g.advance(1);
+    let f = hix(&g, "su_1bf");
+    let axis = g.sim.command.intent[f].as_ref().unwrap().axis.clone();
+    assert!(!axis.is_empty());
+    g.directive(&PlayerDirective { to: "su_1bf".into(), task: Task::Attack, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "знаки опознавания".into() }).unwrap();
+    g.advance(4);
+    assert_eq!(g.sim.command.intent[f].as_ref().unwrap().axis, axis, "замысел с осью сохранился");
+}
+
+/// I1: «доведена до начала» — только в час подачи: перепланирование по циклу идёт со временем прохождения.
+#[test]
+fn ready_only_at_issue_hour() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.issue_historical("stavka-11059").expect("директива");
+    g.advance(1);
+    assert!(g.sim.command.intent.iter().flatten().all(|d| !d.ready), "ready снят после доведения");
+    g.advance(20);
+    let now = g.hour();
+    assert!(g.sim.command.in_transit.iter().all(|(at, d)| !d.ready && *at + 0 >= now), "в пути — с временем прохождения");
+}
+
+/// I2: штаб, изъятый через голову, не перехватывается директивой старшего, которая была в пути.
+#[test]
+fn led_hq_not_overridden_by_superior_in_transit() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    let a = hix(&g, "su_8gva") as u32;
+    let k = hix(&g, "su_4gsk");
+    // старший отдал корпусу подготовленный приказ (22 ч в пути)
+    let mut d = g.sim.historical.iter().find(|(_, d)| d.id == "stavka-11059").unwrap().1.clone();
+    d.from = a; d.to = agents_core::command::directive::Target::Hq(k as u32); d.ready = false; d.form = Form::Order;
+    agents_core::command::passing::issue(&mut g.sim, d, 0);
+    // игрок — распоряжением через голову
+    g.directive(&PlayerDirective { to: "su_4gsk".into(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into() }).unwrap();
+    g.advance(30);
+    let top = hix(&g, "su_stavka") as u32;
+    assert_eq!(g.sim.command.intent[k].as_ref().unwrap().from, top);
+}
+
+/// I3: «вернуть» снова включает изъятую дивизию в замысел старшего — в его следующий цикл она получает от него задачу.
+#[test]
+fn release_returns_to_superior_plan() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.issue_historical("stavka-11059").expect("директива");
+    g.advance(2);
+    let k = hix(&g, "su_4gsk");
+    let div = g.sim.world.divisions.iter().position(|d| d.hq as usize == k && !d.state.out()).unwrap();
+    let id = g.sim.world.divisions[div].id.clone();
+    g.directive(&PlayerDirective { to: id.clone(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into() }).unwrap();
+    g.advance(4);
+    g.release(&id).unwrap();
+    g.advance(8);
+    let o = g.sim.world.divisions[div].order.as_ref().unwrap();
+    assert_eq!(o.from as usize, k, "задача снова от корпуса");
+}
+
+/// I4: приказ штабу на точку в режимах агентов — дивизиям разные цели, а не одна точка.
+#[test]
+fn point_order_spreads_targets() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Attack, target: Some([14.25, 52.55]), note: String::new() }).expect("приказ");
+    g.advance(10);
+    let a = hix(&g, "su_8gva");
+    let under = |g: &Game, i: usize| { let mut k = g.sim.world.divisions[i].hq as usize; for _ in 0..8 { if k == a { return true; } match g.sim.world.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+    let ts: Vec<_> = (0..g.sim.world.divisions.len()).filter(|&i| under(&g, i)).filter_map(|i| g.sim.world.divisions[i].order.as_ref().map(|o| o.target)).collect();
+    assert!(ts.len() >= 3);
+    let far = ts.iter().map(|t| ts.iter().map(|u| t.dist(*u)).fold(0.0, f64::max)).fold(0.0, f64::max);
+    assert!(far > 1.0, "цели разнесены: {far}");
+    assert!(g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Attack, target: None, note: String::new() }).is_err(), "наступать без цели — ошибка");
+}
+
+/// I5: в «гибриде» историческая директива — только до первого хода.
+#[test]
+fn hybrid_historical_only_before_first_turn() {
+    let mut h = seelow_game(Mode::Hybrid, 0);
+    h.advance(1);
+    assert!(h.issue_historical("stavka-11059").is_err());
+}

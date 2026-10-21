@@ -86,7 +86,8 @@ pub fn historical_for(sim: &mut Sim, side: crate::model::Side, only: Option<&str
     use crate::command::directive::Target;
     let Some(top) = sim.world.hqs.iter().position(|h| h.side == side && h.echelon == crate::model::Echelon::HighCommand) else { return Vec::new() };
     let ds: Vec<(u32, Directive)> = sim.historical.iter().filter(|(_, d)| d.from == top as u32 && only.is_none_or(|id| d.id == id)).cloned().collect();
-    if !hybrid { return ds.into_iter().map(|(at, mut d)| { d.ready = at == 0; (at, d) }).collect(); }
+    let start = sim.world.tick == 0;
+    if !hybrid { return ds.into_iter().map(|(at, mut d)| { d.ready = at == 0 && start; (at, d) }).collect(); }
     for (_, d) in ds {
         let Target::Hq(h) = d.to else { continue };
         let w = &sim.world;

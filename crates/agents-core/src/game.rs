@@ -234,7 +234,24 @@ impl Game {
             use crate::command::directive::{Form, Task};
             let task = match o.kind { OrderKind::Attack => Task::Attack, OrderKind::Defend | OrderKind::Hold => Task::Defend, OrderKind::Withdraw => Task::Withdraw, OrderKind::Move => Task::Move };
             let n = to.len();
-            self.directive(&PlayerDirective { to: o.hq.clone(), task, form: Form::Instruction, axis: vec![], immediate: o.target.map(|p| vec![p]), subsequent: None, note: o.note.clone() })?;
+            let (axis, immediate) = match o.target {
+                None if matches!(task, Task::Attack | Task::Move | Task::Withdraw) => return Err("наступать, выдвигаться и отходить — с целью".into()),
+                None => (vec![], None),
+                Some(t) => {
+                    // рубеж через цель поперёк направления от центра войск — шириной их фронта, не меньше 6 км
+                    let pr = &self.sim.theatre.proj;
+                    let ps: Vec<crate::geo::XY> = to.iter().map(|&i| self.sim.world.divisions[i as usize].vars.pos).collect();
+                    let c = crate::geo::XY::new(ps.iter().map(|p| p.x).sum::<f64>() / ps.len() as f64, ps.iter().map(|p| p.y).sum::<f64>() / ps.len() as f64);
+                    let tx = pr.to_xy(t);
+                    let l = c.dist(tx).max(1e-6);
+                    let (ux, uy) = ((tx.x - c.x) / l, (tx.y - c.y) / l);
+                    let hw = ps.iter().map(|p| ((p.x - c.x) * -uy + (p.y - c.y) * ux).abs()).fold(3.0, f64::max);
+                    let a = pr.to_lnglat(crate::geo::XY::new(tx.x - uy * hw, tx.y + ux * hw));
+                    let b = pr.to_lnglat(crate::geo::XY::new(tx.x + uy * hw, tx.y - ux * hw));
+                    (vec![pr.to_lnglat(c), t], if to.len() > 1 { Some(vec![a, b]) } else { Some(vec![t]) })
+                }
+            };
+            self.directive(&PlayerDirective { to: o.hq.clone(), task, form: Form::Instruction, axis, immediate, subsequent: None, note: o.note.clone() })?;
             return Ok(n);
         }
         if to.is_empty() { return Err(format!("у штаба {} нет действующих дивизий", o.hq)); }
@@ -347,6 +364,8 @@ impl Game {
     pub fn issue_historical(&mut self, id: &str) -> Result<(), String> {
         self.top()?;
         if !self.sim.historical.iter().any(|(_, d)| d.id == id) { return Err(format!("нет исторической директивы {id} стороны игрока")); }
+        // приказы сценария, прошедшие до перевода поддерева на сценарий, не вернуть — в «гибриде» только до первого хода
+        if self.mode == Mode::Hybrid && self.hour() > self.takeover { return Err("в «гибриде» исторические директивы подаются до первого хода".into()); }
         let now = self.hour();
         for (at, d) in crate::command::control::historical_for(&mut self.sim, self.player, Some(id), self.mode == Mode::Hybrid) {
             if at <= now { crate::command::passing::issue(&mut self.sim, d, now); } else { self.pending.push((at, d)); }
@@ -371,9 +390,11 @@ impl Game {
         let tick = self.hour();
         if let Some(h) = self.sim.world.hqs.iter().position(|x| x.id == id && x.side == self.player) {
             self.sim.command.led_hq[h] = false;
+            // старший снова отдаст ему задачу в свой следующий цикл
+            self.sim.command.sent.retain(|k, _| k.1 != crate::command::directive::Target::Hq(h as u32));
             if self.sim.command.control[h] == Control::Player && self.sim.world.hqs[h].echelon != crate::model::Echelon::HighCommand {
                 self.sim.command.control[h] = Control::Agent;
-                self.sim.command.fresh[h] = false;
+                // замысел, пришедший, пока штаб был у игрока, остаётся новым (fresh)
                 self.sim.command.last_cycle[h] = tick;
             }
             self.sim.documents.push(Document { tick, hq: h as u32, kind: DocKind::Notice, to: Vec::new(), text: "штаб возвращён: решает агент по замыслу старшего".into(), rule: None });
@@ -381,6 +402,7 @@ impl Game {
         }
         if let Some(i) = self.sim.world.divisions.iter().position(|d| d.id == id && d.side == self.player) {
             self.sim.command.led_div[i] = false;
+            self.sim.command.sent.retain(|k, _| k.1 != crate::command::directive::Target::Division(i as u32));
             return Ok(());
         }
         Err(format!("нет штаба или дивизии {id} стороны игрока"))

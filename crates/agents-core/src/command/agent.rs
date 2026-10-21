@@ -68,7 +68,7 @@ pub fn plan(sim: &Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directiv
             immediate: intent.immediate.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             subsequent: intent.subsequent.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
             boundaries: vec![(None, b.left.clone()), (None, b.right.clone())],
-            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready, note: intent.note.clone(),
+            main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready && !replan, note: intent.note.clone(),
         }
     }).collect()
 }
@@ -97,7 +97,22 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
     sim.command.in_transit.retain(|(at, d)| if *at <= tick { arrived.push(d.clone()); false } else { true });
     for d in arrived {
         match d.to {
-            Target::Hq(h) => { sim.command.intent[h as usize] = Some(d); sim.command.fresh[h as usize] = true; }
+            Target::Hq(h) => {
+                let hu = h as usize;
+                // изъятый через голову штаб директива старшего больше не задаёт (кроме директивы игрока)
+                if sim.command.led_hq[hu] && sim.command.control[d.from as usize] != Control::Player { continue; }
+                // директива без оси не заменяет замысел с осью: без геометрии — только документ, с границами — новые границы
+                let geo = !d.axis.is_empty() || d.immediate.is_some() || d.subsequent.is_some() || !d.boundaries.is_empty();
+                if let Some(old) = sim.command.intent[hu].as_mut() {
+                    if !geo { continue; }
+                    if d.axis.is_empty() && !old.axis.is_empty() {
+                        if !d.boundaries.is_empty() { old.boundaries = d.boundaries; }
+                        continue;
+                    }
+                }
+                sim.command.intent[hu] = Some(d);
+                sim.command.fresh[hu] = true;
+            }
             Target::Division(i) => {
                 let iu = i as usize;
                 // изъятую через голову дивизию директива старшего больше не задаёт (кроме директивы игрока ей самой)
@@ -131,6 +146,8 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
         sim.command.fresh[h] = false;
         sim.command.last_cycle[h] = tick;
         let ds = plan(sim, h as u32, &intent, !fresh);
+        // «доведена до начала» — только в час подачи
+        if let Some(i) = sim.command.intent[h].as_mut() { i.ready = false; }
         if ds.is_empty() {
             if fresh { sim.documents.push(Document { tick, hq: h as u32, kind: DocKind::Notice, to: Vec::new(), text: "нет подчинённых для задачи".into(), rule: None }); }
             continue;
