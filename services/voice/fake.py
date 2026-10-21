@@ -24,7 +24,12 @@ CHUNK_S = 0.32  # как streaming_interval настоящего синтеза
 class FakeModels:
     sample_rate = 24000
 
-    def __init__(self, script: Path | None = None):
+    def __init__(self, script: Path | None = None, tts: str = "qwen3-1.7b"):
+        from engines import engine
+
+        self.engine = engine(tts)
+        self.fail_engines: set[str] = set()  # модели, которые «не загружаются» (проверка отката)
+        self.switched: list[str] = []
         self.mlx = ThreadPoolExecutor(1, thread_name_prefix="mlx")
         self.torch = ThreadPoolExecutor(1, thread_name_prefix="torch")
         self.script: list[str] = []
@@ -38,6 +43,15 @@ class FakeModels:
 
     def load(self, warm_ref=None):
         pass
+
+    def switch_tts(self, eid: str):
+        from engines import engine
+
+        e = engine(eid)
+        if eid in self.fail_engines:
+            raise RuntimeError(f"модель озвучки не загрузилась: {eid}")
+        self.engine = e
+        self.switched.append(eid)
 
     def vad_prob(self, frame: np.ndarray) -> float:
         rms = float(np.sqrt(np.mean(np.square(frame)))) if len(frame) else 0.0

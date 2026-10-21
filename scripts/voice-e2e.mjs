@@ -846,6 +846,18 @@ if (SHOTS) {
   await expandPanel();
 }
 
+await check('раздел «ИИ»: модель озвучки — по умолчанию Qwen3-TTS 1.7B, выбор другой загружается и запоминается', async () => {
+  await page.evaluate(() => { location.hash = '#staff'; });
+  const sel = page.locator('[data-tour="staff-tts"] select');
+  await sel.waitFor({ state: 'visible', timeout: 10000 });
+  await page.waitForFunction(() => document.querySelector('[data-tour="staff-tts"] select')?.value === 'qwen3-1.7b', null, { timeout: 10000 });
+  await sel.selectOption('qwen3-0.6b');
+  await page.getByText('Говорит: Qwen3-TTS 0.6B.').waitFor({ timeout: 10000 });
+  await sel.selectOption('qwen3-1.7b');  // обратно: остальные проверки идут на модели по умолчанию
+  await page.getByText('Говорит: Qwen3-TTS 1.7B.').waitFor({ timeout: 10000 });
+  await page.evaluate(() => { location.hash = '#replay'; });
+});
+
 await check('тонкая настройка: «Перебивать: голосом / словом» переключается и запоминается', async () => {
   await panel.getByText('Тонкая настройка').click();
   const mode = panel.getByRole('group', { name: 'Перебивать' });

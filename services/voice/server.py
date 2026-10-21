@@ -28,6 +28,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import aec
 from audio import FRAME, SR_IN, Listener, calibrate, is_stop_phrase, should_merge
 from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, pause_after
+from engines import EngineStore, describe as engines_list
 from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, trim_silence, write_wav
 
 HERE = Path(__file__).resolve().parent
@@ -81,7 +82,8 @@ def parse_args(argv=None):
     ap.add_argument("--max-silence-ms", dest="max_silence_ms", type=int, default=1500)
     ap.add_argument("--turn", type=float, default=0.5, help="порог Smart Turn")
     ap.add_argument("--min-speech-ms", dest="min_speech_ms", type=int, default=200)
-    ap.add_argument("--tts", default="mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16")
+    ap.add_argument("--tts", default=None,
+                    help="свои веса синтеза вместо первого доступного варианта выбранной модели озвучки")
     ap.add_argument("--asr", default="v3_e2e_rnnt")
     ap.add_argument("--eos-extra", dest="eos_extra", type=int, default=1,
                     help="кадров (по 80 мс) договаривания после «конца» синтеза")
@@ -98,15 +100,17 @@ class Service:
         self.args = args
         self.aec = aec_enabled(args.aec, aec.available())
         self.store = VoiceStore(Path(args.data), Path(args.seed_refs) if args.seed_refs else None)
+        self.engines = EngineStore(Path(args.data))
         if args.fake:
             from fake import FakeModels
 
-            self.models = FakeModels(Path(args.fake_script) if args.fake_script else None)
+            self.models = FakeModels(Path(args.fake_script) if args.fake_script else None, self.engines.get())
         else:
             from models import Models
 
-            self.models = Models(args.tts, args.asr, args.eos_extra)
+            self.models = Models(self.engines.get(), args.asr, args.eos_extra, args.tts)
         self.state, self.error = "loading", None
+        self.tts_state, self.tts_error = "ready", None  # смена модели озвучки: loading — идёт загрузка
         self.loaded = threading.Event()
         self.calib_cache: dict[str, np.ndarray] = {}
         for f in Path(args.data).glob("pending-*.wav"):  # непрошедшие в образцы записи прошлого запуска
@@ -128,6 +132,21 @@ class Service:
             print("ошибка загрузки:", self.error, flush=True)
         finally:
             self.loaded.set()
+
+    def tts_info(self) -> dict:
+        return {"engines": engines_list(), "current": self.models.engine.id, "state": self.tts_state,
+                **({"error": self.tts_error} if self.tts_error else {})}
+
+    def switch_tts(self, eid: str):  # в нити mlx, после синтеза, который уже идёт
+        try:
+            self.models.switch_tts(eid)
+        except ValueError:
+            raise
+        except Exception as e:  # noqa: BLE001 — прежняя модель вернулась, причина — в окно
+            self.tts_error = f"{type(e).__name__}: {e}"
+            return
+        self.calib_cache.clear()
+        self.engines.set(eid)
 
     def health(self) -> dict:
         return {"state": self.state, **({"error": self.error} if self.error else {})}
@@ -641,6 +660,34 @@ class Session:
         else:
             raise ValueError(f"нет такой операции с голосами: {op}")
 
+    async def on_tts(self, d: dict):
+        """Модель озвучки: `list` — список и выбранная; `set {id}` — загрузить другую (20–40 с, первый раз дольше);
+        не загрузилась — остаётся прежняя, в `tts_list.error` причина."""
+        svc = self.svc
+        if d.get("op") == "list":
+            await self.send(type="tts_list", **svc.tts_info())
+            return
+        if d.get("op") != "set":
+            raise ValueError(f"нет такой операции с моделью озвучки: {d.get('op')}")
+        eid = str(d.get("id"))
+        from engines import engine
+
+        engine(eid)  # неизвестная — ошибка сразу
+        if svc.tts_state == "loading":
+            raise ValueError("модель озвучки уже загружается — дождитесь")
+        if eid == svc.models.engine.id:
+            svc.tts_error = None
+            await self.send(type="tts_list", **svc.tts_info())
+            return
+        await self.stop()  # звучащая фраза останавливается: пока грузится новая модель, штаб молчит
+        svc.tts_state, svc.tts_error = "loading", None
+        await self.send(type="tts_list", **svc.tts_info())
+        try:
+            await self.loop.run_in_executor(self.m.mlx, svc.switch_tts, eid)
+        finally:
+            svc.tts_state = "ready"
+        await self.send(type="tts_list", **svc.tts_info())
+
     # ------------------------------------------------------------ сообщения окна
 
     async def on_text(self, d: dict):
@@ -654,6 +701,8 @@ class Session:
                 elif isinstance((src or {}).get(k), (int, float)) and not isinstance(src[k], bool):
                     self.cfg[k] = src[k]
             await self.send(type="settings", **self.cfg)
+        elif t == "tts":
+            await self.on_tts(d)
         elif t == "say":
             await self.on_say(d)
         elif t == "stop":
@@ -708,7 +757,8 @@ def build_app(argv=None):
                 await s.send(type="error", text=f"модели не загрузились: {svc.error}")
             else:
                 await s.send(type="ready", voices=svc.store.list(), roles=svc.store.roles(), loaded=True,
-                             record_text=RECORD_TEXT, rate=svc.models.sample_rate, aec=svc.aec)
+                             record_text=RECORD_TEXT, rate=svc.models.sample_rate, aec=svc.aec,
+                             tts=svc.tts_info())
                 await s.send(type="settings", **s.cfg)
             while True:
                 msg = await sock.receive()

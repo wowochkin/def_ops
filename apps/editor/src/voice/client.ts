@@ -430,6 +430,11 @@ export class VoiceClient {
     this.send(sec === undefined ? { type: 'calib', step } : { type: 'calib', step, sec });
   }
 
+  /** Модель озвучки: список или смена (сервис отвечает `tts_list`). */
+  tts(op: 'list' | 'set', id?: string) {
+    this.send(id === undefined ? { type: 'tts', op } : { type: 'tts', op, id });
+  }
+
   voice(op: string, args: Record<string, unknown> = {}) {
     this.send({ ...args, type: 'voice', op });
   }

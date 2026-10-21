@@ -1,5 +1,6 @@
 // Протокол голосового сервиса (спецификация голосового управления, раздел 2).
 // Модуль чистый: без браузерных API, проверяется в vitest/node.
+import type { TtsInfo } from './tts-store';
 
 /**
  * Как перебить штаб: `voice` — речью громче порога дольше заданного; `word` — стоп-словом («Стоп», «Штаб…»):
@@ -28,7 +29,8 @@ export type ClientMsg =
   | { type: 'played'; id: number }
   | ({ type: 'settings' } & Partial<VoiceSettings>)
   | { type: 'calib'; step: CalibStep; sec?: number }
-  | { type: 'voice'; op: string; [k: string]: unknown };
+  | { type: 'voice'; op: string; [k: string]: unknown }
+  | { type: 'tts'; op: 'list' | 'set'; id?: string };
 
 /** Образец голоса в хранилище сервиса. */
 export interface VoiceInfo {
@@ -55,7 +57,8 @@ export interface VoiceCheck {
 
 /** Сервис → окно (JSON). */
 export type ServerMsg =
-  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number; aec?: boolean }
+  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number; aec?: boolean; tts?: TtsInfo }
+  | ({ type: 'tts_list' } & TtsInfo)
   | { type: 'level'; p: number; busy: boolean }
   | { type: 'speech'; state: 'start' | 'end' }
   | { type: 'utterance'; id: number; text: string; audio_s: number; stt_ms: number; continues?: number }
