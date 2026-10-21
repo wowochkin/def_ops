@@ -31,6 +31,7 @@ import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?r
 import { agentEvents, agentGame, bridgesOf, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff } from './agents-game';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
+import { topForces } from './review-forces';
 
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
 const liveCfg = import.meta.glob('../../../../services/staff/live/*.json', { import: 'default' });
@@ -554,10 +555,11 @@ function reviewInput(): ReviewInput {
   const sideName = (id: string) => ctx.scenario.sides.find((x) => x.id === id)!.name;
   const at0 = g.snapshots.find((x) => x.time >= rec.takeover) ?? g.snapshots[0];
   const now = g.snapshots[g.snapshots.length - 1];
-  const forces = s.formations.filter((f) => (f.echelon === 'army' || f.echelon === 'corps') && at0.units.some((u) => u.id === f.id))
+  const forceRows = s.formations.filter((f) => (f.echelon === 'army' || f.echelon === 'corps') && at0.units.some((u) => u.id === f.id))
     .map((f) => { const a = at0.units.find((u) => u.id === f.id)!, b = now.units.find((u) => u.id === f.id);
-      return { side: f.side === human ? 'own' : 'enemy', name: f.name, start: a.personnel, now: b?.personnel ?? 0, tanksStart: a.tanks, tanksNow: b?.tanks ?? 0, cutOff: !!b?.cutOff, destroyed: !!b?.destroyed || f.destroyed }; })
-    .sort((a, b) => (a.side === b.side ? b.start - a.start : a.side === 'own' ? -1 : 1)).slice(0, 48);
+      return { side: f.side === human ? 'own' as const : 'enemy' as const, echelon: f.echelon, name: f.name, start: a.personnel, now: b?.personnel ?? 0, tanksStart: a.tanks, tanksNow: b?.tanks ?? 0, cutOff: !!b?.cutOff, destroyed: !!b?.destroyed || f.destroyed }; });
+  // у агентной модели десятки корпусов — армии идут первыми, чтобы корпуса их не вытеснили
+  const forces = topForces(forceRows, 48).map(({ echelon: _e, ...x }) => x);
   const goals = checkEvents(ctx, { final: s, snapshots: g.snapshots }, history).map((r) => ({ title: r.title, historical: r.historical, simulated: r.simulated, days: r.days }));
   return {
     scenario: ctx.scenario.name, side: sideName(human), enemy: sideName(rec.ai), takeover: rec.takeover, now: s.time,

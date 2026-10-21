@@ -72,3 +72,24 @@ describe('оценка агентной модели: контрольные т�
     expect(b.score).toBe(a.score);
   });
 });
+
+describe('агентная модель на карте: верхние инстанции', () => {
+  it('Ставка и верховное командование не становятся «армией»; фронт — без старшего, как прежде', async () => {
+    const { ctx: base } = await contextFrom(get, 'berlin-1945-tasks');
+    const t = trace();
+    t.hqs = [
+      { id: 'su_stavka', name: 'Ставка ВГК', side: 'su', echelon: 'high_command', parent: null },
+      { id: 'su_1bf', name: '1-й Белорусский фронт', side: 'su', echelon: 'front', parent: 'su_stavka' },
+      { id: 'su_8gva', name: '8-я гвардейская армия', side: 'su', echelon: 'army', parent: 'su_1bf' },
+      { id: 'de_hc', name: 'ОКХ', side: 'de', echelon: 'high_command', parent: null },
+      { id: 'de_9a', name: '9-я армия', side: 'de', echelon: 'army', parent: 'de_hc' },
+    ];
+    const { ctx } = agentsToRun(base, t, 6);
+    const f = new Map(ctx.scenario.formations.map((x) => [x.id, x]));
+    expect(f.has('su_stavka')).toBe(false);
+    expect(f.has('de_hc')).toBe(false);
+    expect(f.get('su_1bf')?.parent ?? null).toBe(null);
+    expect(f.get('de_9a')?.parent ?? null).toBe(null);
+    expect(f.get('su_8gva')?.parent).toBe('su_1bf');
+  });
+});

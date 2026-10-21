@@ -79,8 +79,10 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
   const time = (h: number) => addHours(t.start, h);
   const hours = t.frames.length - 1;
   const end = time(hours);
+  const top = new Set(t.hqs.filter((h) => h.echelon === 'high_command').map((h) => h.id));
   const defs: FormationDef[] = [
-    ...t.hqs.map((h) => ({ id: h.id, name: h.name, side: h.side, echelon: (ECH.includes(h.echelon as Echelon) ? h.echelon : 'army') as Echelon, parent: h.parent })),
+    // верхние инстанции (Ставка, ОКХ/ОКВ) — не формирования карты: фронты и группы армий над картой без старшего
+    ...t.hqs.filter((h) => !top.has(h.id)).map((h) => ({ id: h.id, name: h.name, side: h.side, echelon: (ECH.includes(h.echelon as Echelon) ? h.echelon : 'army') as Echelon, parent: h.parent && !top.has(h.parent) ? h.parent : null })),
     ...t.divisions.map((d) => ({ id: d.id, name: d.name, side: d.side, echelon: 'division' as Echelon, parent: d.hq, type: typeOf(d.side, d.mobility), note: d.note })),
   ];
   const ctx: SimContext = { ...base, agentModel: true, scenario: { ...base.scenario, formations: defs, orders: [], end, turnHours: stepHours } };
