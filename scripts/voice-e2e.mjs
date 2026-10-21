@@ -321,20 +321,24 @@ await check('голос готов: «Жду обращения»', async () => 
   await panel.locator('.vp-state', { hasText: /Жду обращения|Слушаю|Думаю|Говорит/ }).waitFor({ timeout: T });
 });
 
-await check('шрифт панели не меньше 18 px', async () => {
-  const min = await panel.locator('.vp-card').evaluate((root) => {
-    let m = Infinity;
-    const walk = (el) => {
-      const cs = getComputedStyle(el);
-      if (cs.display === 'none' || cs.visibility === 'hidden') return;
-      if ([...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) m = Math.min(m, parseFloat(cs.fontSize));
-      for (const c of el.children) walk(c);
-    };
-    walk(root);
-    return m;
-  });
-  if (!(min >= 18)) throw new Error(`самый мелкий текст — ${min} px`);
-  return `${min} px`;
+const minFont = () => panel.locator('.vp-card').evaluate((root) => {
+  let m = Infinity;
+  const walk = (el) => {
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return;
+    if ([...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) m = Math.min(m, parseFloat(cs.fontSize));
+    for (const c of el.children) walk(c);
+  };
+  walk(root);
+  return m;
+});
+
+await check('шрифт панели обычного размера не меньше 14 px, ширина карточки 360 px', async () => {
+  const min = await minFont();
+  if (!(min >= 14)) throw new Error(`самый мелкий текст — ${min} px`);
+  const w = await panel.locator('.vp-card:not(.strip)').evaluate((c) => Math.round(c.getBoundingClientRect().width));
+  if (w > 380) throw new Error(`карточка шириной ${w} px`);
+  return `${min} px, ${w} px`;
 });
 
 await check('подсказка «Не знаете, что сказать? Скажите: Штаб, что я могу?» видна', async () => {
@@ -874,6 +878,20 @@ await check('раздел «ИИ»: модель озвучки — по умо�
   await page.evaluate(() => { location.hash = '#replay'; });
 });
 
+await check('размер панели «крупный»: шрифт не меньше 18 px, выбор запоминается', async () => {
+  const det = panel.locator('details.vp-tune');
+  const wasOpen = await det.evaluate((d) => d.open);
+  if (!wasOpen) await panel.getByText('Тонкая настройка').click();
+  await panel.getByRole('button', { name: 'крупный' }).click();
+  const min = await minFont();
+  const kept = await page.evaluate(() => localStorage.getItem('def_ops.voice.size'));
+  await panel.getByRole('button', { name: 'обычный' }).click();
+  if (!wasOpen) await panel.getByText('Тонкая настройка').click();  // как было
+  if (!(min >= 18)) throw new Error(`самый мелкий текст — ${min} px`);
+  if (kept !== 'big') throw new Error(`в хранилище: ${kept}`);
+  if (await page.evaluate(() => localStorage.getItem('def_ops.voice.size')) !== null) throw new Error('«обычный» не сброшен в хранилище');
+});
+
 await check('тонкая настройка: «Перебивать: голосом / словом» переключается и запоминается', async () => {
   await panel.getByText('Тонкая настройка').click();
   const mode = panel.getByRole('group', { name: 'Перебивать' });
@@ -1081,7 +1099,7 @@ await check('без рук: «удали голос гость» — вопро�
   const q = panel.locator('.vp-confirm');
   await q.getByText('Удалить голос «Гость»?').waitFor({ timeout: 30000 });
   const size = await q.locator('.vp-q').evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
-  if (size < 22) throw new Error(`вопрос шрифтом ${size} px`);
+  if (size < 20) throw new Error(`вопрос шрифтом ${size} px`);
   for (const b of ['Да', 'Нет']) if (!(await q.getByRole('button', { name: b }).isVisible())) throw new Error(`нет кнопки «${b}»`);
   // окно «Голоса» (640 px): полоса с вопросом — сбоку, не на нём
   await page.waitForTimeout(400);

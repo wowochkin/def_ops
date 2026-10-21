@@ -53,6 +53,8 @@ import { Voices } from './Voices';
 import { settleSpeech, stopTourSpeech, tourStandby, useIntroSetting, useTourVoice } from './tour';
 
 const OPEN_KEY = 'def_ops.voice.panel';
+/** Размер панели: «big» — крупный (для плохого зрения), иначе обычный. */
+const SIZE_KEY = 'def_ops.voice.size';
 const API_POLL_MS = 5000;
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 /** Отказ микрофона простыми словами: разобранные причины — как есть, прочие — с пояснением, что случилось. */
@@ -95,6 +97,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   // вид: значок, полоса, развёрнута (выбор человека — в OPEN_KEY; сама разворачивается и сворачивается — PanelSize)
   const size = useMemo(() => new PanelSize(parsePanelMode(lsGet(OPEN_KEY)), () => Date.now()), []);
   if (import.meta.env.DEV) (window as unknown as { __voiceSize: PanelSize }).__voiceSize = size;
+  const [big, setBigState] = useState(() => lsGet(SIZE_KEY) === 'big');
+  const setBig = (v: boolean) => { setBigState(v); lsSet(SIZE_KEY, v ? 'big' : null); };
   const [, redraw] = useReducer((x: number) => x + 1, 0);
   const setMode = (m: PanelMode) => { size.set(m); lsSet(OPEN_KEY, m === 'compact' ? null : m); redraw(); };
   /** Открыто окно реестра (вопрос читается) / окно на экране (DOM). */
@@ -504,7 +508,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   const cardCls = `vp-card${modal ? ' over' : ''}`;
 
   return (
-    <div className={`vp ${st.key}`}>
+    <div className={`vp ${st.key}${big ? ' big' : ''}`}>
       {view === 'icon' && (
         <button ref={card as RefObject<HTMLButtonElement>} className="vp-icon" style={place} data-tour="voice" data-action="voice.panel.strip" onClick={() => { void act('voice.panel.strip'); }} title={`Голос: ${st.text}`} aria-label={`Голос: ${st.text}. Открыть панель голоса`}>
           <MicGlyph off={!enabled} sleep={enabled && standby} />
@@ -630,6 +634,11 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
               onChange={(v) => applySettings({ barge_ms: v })} />}
             <Slider label="Пауза до ответа" value={cfg.end_ms} min={20} max={1500} step={10} show={`${cfg.end_ms} мс`}
               onChange={(v) => applySettings({ end_ms: v })} />
+            <div className="vp-mode" role="group" aria-label="Размер панели">
+              <span>Размер панели:</span>
+              <button className={big ? '' : 'on'} aria-pressed={!big} onClick={() => setBig(false)}>обычный</button>
+              <button className={big ? 'on' : ''} aria-pressed={big} onClick={() => setBig(true)}>крупный</button>
+            </div>
             <button onClick={resetSettings}>По умолчанию</button>
             <label className="vp-check-intro">
               <input type="checkbox" checked={intro} onChange={(e) => { void act(e.target.checked ? 'tour.introOn' : 'tour.introOff'); }} /> Вступление при запуске

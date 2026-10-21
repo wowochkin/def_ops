@@ -1709,6 +1709,25 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 
 /* тур с подсветкой (voice/TourLayer.tsx): притемнение — четыре полосы вокруг проёма; рамка — внутри проёма; рамка и полосы
    плавно переезжают к следующему элементу */
+/* обычный размер панели; «крупный» (.vp.big) — прежние крупные шрифты. Окна калибровки и голосов и тур не меняются */
+.vp:not(.big) .vp-card { width: 360px; font-size: 15px; padding: 8px 12px; gap: 6px; }
+.vp:not(.big) .vp-card.strip { width: 400px; padding: 6px 10px; }
+.vp:not(.big) .vp-card button { font-size: 15px; padding: 4px 10px; }
+.vp:not(.big) .vp-card .vp-state, .vp:not(.big) .vp-card.strip .vp-state { font-size: 17px; }
+.vp:not(.big) .vp-card .vp-dot { width: 14px; height: 14px; }
+.vp:not(.big) .vp-card .vp-x { font-size: 20px; padding: 2px 8px; }
+.vp:not(.big) .vp-card .vp-mic-st { width: 28px; height: 28px; } .vp:not(.big) .vp-card .vp-mic-st svg { width: 18px; height: 18px; }
+.vp:not(.big) .vp-card .vp-power, .vp:not(.big) .vp-card .vp-tools .vp-power { font-size: 15px; padding: 6px 10px; }
+.vp:not(.big) .vp-tools .vp-power svg { width: 18px; height: 18px; }
+.vp:not(.big) .vp-card .vp-legend, .vp:not(.big) .vp-card .vp-empty, .vp:not(.big) .vp-card .vp-note,
+.vp:not(.big) .vp-card .vp-notme, .vp:not(.big) .vp-card .vp-tag { font-size: 14px; }
+.vp:not(.big) .vp-card .vp-feed { max-height: 120px; }
+.vp:not(.big) .vp-card .vp-hint.big { font-size: 20px; }
+.vp:not(.big) .vp-card .vp-hint.stop { font-size: 16px; }
+.vp:not(.big) .vp-card .vp-confirm .vp-q { font-size: 20px; }
+.vp:not(.big) .vp-card .vp-confirm button { font-size: 19px; padding: 6px 18px; }
+.vp:not(.big) .vp-icon { width: 44px; height: 44px; }
+.vp:not(.big) .vp-icon-cap { left: 52px; font-size: 15px; }
 .tour { position: fixed; inset: 0; z-index: 980; pointer-events: none; font: 21px/1.35 'PT Sans', system-ui, sans-serif; color: #141414; }
 .tour-frame { position: fixed; border-radius: 10px; border: 3px solid #f2c14e; pointer-events: none; box-shadow: 0 0 14px 2px rgba(242,193,78,.55);
   transition: top .5s cubic-bezier(.4,0,.2,1), left .5s cubic-bezier(.4,0,.2,1), width .5s cubic-bezier(.4,0,.2,1), height .5s cubic-bezier(.4,0,.2,1), border-color .3s; }
