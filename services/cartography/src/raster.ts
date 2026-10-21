@@ -18,7 +18,7 @@
  */
 import { promises as fs, createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import sharp from 'sharp';
+import sharp, { type Metadata } from 'sharp';
 import type { BBox, ControlPoint, Georef, GeorefSummary, MapSource, RasterTileRequest } from '@def-ops/core';
 import { fitGeoref, georefBBox, georefFromCorners, nativeZoom, tileRange } from '@def-ops/core';
 import type { JobContext } from './jobs';
@@ -43,7 +43,7 @@ export interface RasterPlan {
 
 /** Размер изображения с учётом поворота по EXIF (опорные точки — в повёрнутом виде). */
 export async function imageSize(file: string): Promise<{ width: number; height: number; format: string }> {
-  let m: sharp.Metadata;
+  let m: Metadata;
   try { m = await sharp(file, { limitInputPixels: false }).metadata(); } catch {
     throw new Error('Не удалось прочитать изображение (ожидается PNG, JPEG, WebP или TIFF)');
   }

@@ -14,7 +14,7 @@
     "@def-ops/service-kit": "*",
     "@maplibre/geojson-vt": "6.1.1",
     "@maplibre/vt-pbf": "4.3.2",
-    "sharp": "^0.34.0",
+    "sharp": "^0.35.5",
     "tar-stream": "^3.1.7",
     "undici": "7.29.1"
   },
