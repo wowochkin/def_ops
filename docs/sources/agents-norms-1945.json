@@ -695,6 +695,46 @@
       ],
       "inside_source": true,
       "inside_corridor": true
+    },
+    {
+      "path": "agents.command.preparedHours.corps",
+      "value": 22,
+      "unit": "ч",
+      "norm": [
+        20,
+        26
+      ],
+      "source": "SBD25",
+      "place": "док. 29, 31",
+      "reliability": "A",
+      "paraphrase": "приказ 97 ск 11.01.1944 23:15 — приказ 43 гв. сд 12.01 22:10: около 23 ч",
+      "corridor": [
+        18,
+        28.6
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "подготовленный приказ — на ступень получателя"
+    },
+    {
+      "path": "agents.command.preparedHours.division",
+      "value": 22,
+      "unit": "ч",
+      "norm": [
+        20,
+        26
+      ],
+      "source": "SBD25",
+      "place": "док. 31",
+      "reliability": "A",
+      "paraphrase": "приказ 43 гв. сд 12.01.1944 22:10 — полки в исходном положении 13.01 20:00: около 22 ч",
+      "corridor": [
+        18,
+        28.6
+      ],
+      "inside_source": true,
+      "inside_corridor": true,
+      "note": "подготовленный приказ — на ступень получателя"
     }
   ],
   "gaps": [
