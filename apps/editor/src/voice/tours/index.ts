@@ -48,6 +48,11 @@ export interface TourStep {
 export interface TourMap {
   at?: LngLat;
   zoom?: number;
+  /**
+   * Уровень карты шага: tac / op / st — желательный (масштаб — из рекомендуемого интервала уровня; точки шага не
+   * помещаются — берётся следующий уровень), auto — подходящий по тому, сколько карты занимают точки. Нет — как есть.
+   */
+  level?: 'tac' | 'op' | 'st' | 'auto';
   fit?: LngLat[];
   play?: [string, string];
   spot?: LngLat;

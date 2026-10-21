@@ -6,6 +6,9 @@ import type { SpeakRole } from './registry';
 export const SETTINGS_KEY = 'def_ops.voice.settings';
 /** Голос выключен человеком (кнопка или «Штаб, отбой»): 'false'; включён — 'true' или ключа нет. */
 export const ENABLED_KEY = 'def_ops.voice.enabled';
+/** Звук (озвучка штаба, посредника, экскурсий) выключен человеком: 'off'; иначе включён. Не зависит от управления голосом. */
+export const SOUND_KEY = 'def_ops.voice.sound';
+export const parseSound = (raw: string | null): boolean => raw !== 'off';
 
 /** Сохранённое «голос включён»: выключен только явным 'false' — мусор и пусто считаются «включён». */
 export function parseEnabled(raw: string | null): boolean {
@@ -220,6 +223,8 @@ export interface PanelInput {
   status: VoiceStatus;
   /** false — человек выключил голос (микрофон закрыт); по умолчанию включён */
   enabled?: boolean;
+  /** true — человек выключил звук (озвучка молчит); по умолчанию звук включён */
+  muted?: boolean;
   micError?: string | null;
   /** калибровка или запись голоса — разговор стоит */
   busy?: string | null;
@@ -235,13 +240,16 @@ export const NOT_INSTALLED = 'Голос не установлен: services/voi
 /** Установленная программа, браузер, не Mac на Apple Silicon: голоса в этой версии нет — значок не показывается. */
 export const UNSUPPORTED = 'Голос в этой версии недоступен';
 export const VOICE_DISABLED = 'Голос выключен';
+/** Выключено только управление (микрофон): звук посредника и экскурсий остаётся. */
+export const CONTROL_DISABLED = 'Управление голосом выключено';
+export const SOUND_OFF_TAIL = ' · звук выключен';
 export const STANDBY_TEXT = 'Дежурю. Скажите: «Штаб, на связь»';
 
 /** Состояние панели простыми словами (цвет значка — по `key`). */
 export function panelState(s: PanelInput): { key: PanelKey; text: string } {
   if (s.status === 'unsupported') return { key: 'unsupported', text: UNSUPPORTED };
   // выключил сам человек — важнее любых сбоев: микрофон и не нужен
-  if (s.enabled === false) return { key: 'disabled', text: VOICE_DISABLED };
+  if (s.enabled === false) return { key: 'disabled', text: s.muted ? VOICE_DISABLED : CONTROL_DISABLED };
   if (s.status === 'off') return { key: 'off', text: NOT_INSTALLED };
   if (s.status === 'error') return { key: 'error', text: 'Голос не запустился — перезапустите программу' };
   if (s.micError) return { key: 'mic', text: 'Микрофон не подключился' };
@@ -253,7 +261,7 @@ export function panelState(s: PanelInput): { key: PanelKey; text: string } {
   if (s.listening) return { key: 'listening', text: 'Слушаю' };
   if (s.thinking) return { key: 'thinking', text: 'Думаю' };
   if (s.conversation) return { key: 'conversation', text: 'Разговор — можно без «штаб»' };
-  return { key: 'idle', text: 'Жду обращения' };
+  return { key: 'idle', text: s.muted ? `Жду обращения${SOUND_OFF_TAIL}` : 'Жду обращения' };
 }
 
 // ---------------------------------------------------------------- лента
@@ -315,7 +323,7 @@ export type PanelMode = 'icon' | 'compact' | 'full';
 export function parsePanelMode(raw: string | null): PanelMode {
   return raw === 'icon' || raw === 'full' ? raw : 'compact';
 }
-/** Развёрнутая сама сворачивается в полосу через столько тишины (штаб договорил, вопроса нет). */
+/** Полоса, раскрытая сама, снова обрезает фразу через столько тишины (штаб договорил, вопроса нет). */
 export const COLLAPSE_MS = 10_000;
 /** Знаков в строке полосы (18 px, ширина полосы) и строк под фразу штаба. */
 export const STRIP_LINE_CHARS = 44;
@@ -334,12 +342,13 @@ export function stripCut(text: string, modal: boolean): boolean {
 }
 
 /**
- * Вид панели. Выбранный человеком (set) — как выбран; полоса сама разворачивается, когда штаб говорит длинное (chief)
- * или ждёт «да / нет» (update с pending — и из значка: нужны кнопки), и сворачивается обратно через COLLAPSE_MS тишины.
+ * Вид панели. Выбранный человеком (set) — как выбран. Сама панель не разворачивается: когда штаб говорит длинное
+ * (chief) или ждёт «да / нет» (update с pending), полоса показывает фразу целиком (whole), из значка на вопрос —
+ * полоса (нужны кнопки); через COLLAPSE_MS тишины фраза снова обрезана, значок — снова значок.
  * Открыто окно (view(true)) — панель не больше полосы: окно не закрывается.
  */
 export class PanelSize {
-  /** Развёрнута сама (не человеком). */
+  /** Полоса раскрыта сама (фраза целиком), не человеком. */
   private auto = false;
   /** Открыто окно: его вопрос читает штаб — панель от этого не разворачивается. */
   private modal = false;
@@ -347,13 +356,13 @@ export class PanelSize {
   private quietAt: number | null = null;
   constructor(public mode: PanelMode, private now: () => number) {}
 
-  /** Человек выбрал вид кнопкой: развёрнутая вручную сама не сворачивается, свёрнутая — сворачивается сразу. */
+  /** Человек выбрал вид кнопкой: развёрнутая вручную сама не сворачивается, раскрытая сама полоса — обрезана сразу. */
   set(mode: PanelMode): void { this.mode = mode; this.auto = false; }
-  /** Штаб сказал фразу: не помещается в полосу — развернуться (из значка — нет: значок выбрал человек). */
+  /** Штаб сказал фразу: не помещается в полосу — показать её целиком (из значка — нет: значок выбрал человек). */
   chief(text: string): void {
     if (!fitsStrip(text) && this.mode === 'compact' && !this.modal) { this.auto = true; this.quietAt = null; }
   }
-  /** Окно открылось или закрылось; закрылось — развёрнутая сама сворачивается сразу (говорить уже не о чем). */
+  /** Окно открылось или закрылось; закрылось — раскрытая сама полоса обрезана сразу (говорить уже не о чем). */
   setModal(on: boolean): void {
     if (this.modal && !on) this.auto = false;
     this.modal = on;
@@ -367,9 +376,11 @@ export class PanelSize {
   }
   /** Что показать; modal — открыто окно. */
   view(modal: boolean): PanelMode {
-    const v: PanelMode = this.auto ? 'full' : this.mode;
+    const v: PanelMode = this.auto && this.mode === 'icon' ? 'compact' : this.mode;
     return modal && v === 'full' ? 'compact' : v;
   }
+  /** Полоса показывает фразу штаба целиком, без обрезки (раскрыта сама); при открытом окне — нет. */
+  whole(modal: boolean): boolean { return this.auto && !modal && this.view(modal) === 'compact'; }
 }
 
 /** Колонка разделов слева: панель — по центру свободной области правее неё. */
@@ -390,7 +401,7 @@ export function anchorBottom(bars: { top: number; bottom: number; width: number 
   return bars.filter((b) => b.width > 0 && b.top < 24 && b.bottom < 160).reduce((m, b) => Math.max(m, Math.round(b.bottom)), 0);
 }
 
-/** Высота развёрнутой панели (не больше 640 px): низ экрана (~400 px) остаётся подписи тура и окнам. */
+/** Высота развёрнутой панели (не больше 520 px): низ экрана (~400 px) остаётся подписи тура и окнам. */
 export function fullHeight(vh: number, top: number): number {
-  return Math.min(640, Math.max(260, vh - top - 400));
+  return Math.min(520, Math.max(260, vh - top - 400));
 }

@@ -41,6 +41,7 @@ import { zoneOverlays, zoneUrl } from './zones-overlay';
 import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl, type TurnDeps } from './voice/actions/turn';
 import { releaseScreen, screenActions, type ScreenDeps } from './voice/actions/screen';
 import { announceTurn, resetUmpire, type UmpireModel } from './voice/umpire';
+import { bindModelHold, setModelBusy } from './voice/model-queue';
 import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import { commandActions, releaseCommand, TAKEOVER_REMIND, takeoverIsAnswer, takeoverParse, takeoverRead, type CommandDeps } from './voice/actions/command';
 import {
@@ -152,7 +153,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   useEffect(() => (eng ? setFlashMapView(eng) : undefined), [eng]);
   // карта шагов разбора хода (voice/tour-map): переезд к месту, метка и рамка, проигрывание хода
   useEffect(() => (eng ? setTourMap(createTourMap({
-    engine: () => engine.current, setTime, now: () => liveView.current?.time ?? null,
+    engine: () => engine.current, setTime, now: () => liveView.current?.time ?? null, level: () => levelRef.current, setLevel,
     frame: (cb) => requestAnimationFrame(cb), cancel: (id) => cancelAnimationFrame(id), clock: () => performance.now(),
   })) : undefined), [eng]); // eslint-disable-line react-hooks/exhaustive-deps
   const [adv, setAdv] = useState<AdvMsg[]>([]);
@@ -168,6 +169,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [planOpen, setPlanOpen] = useState<number | null>(0);
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  const levelRef = useRef(level);
+  levelRef.current = level;
   const [labels, toggleLabels] = useMapLabels();
   const [vis, setVis] = useState<Record<string, boolean>>({ ghosts: false, hfront: false, front: true, combat: true, plan: true, rear: true, rivers: true, hbounds: true, bounds: true });
   const [reveal, setReveal] = useState(false);
@@ -227,6 +230,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       } else if (m.kind === 'ai') setAi(m.status);
       else if (m.kind === 'ai-stream') { setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000))); }
       else if (m.kind === 'ai-phase') setAiPhase(m.text);
+      else if (m.kind === 'llm-busy') setModelBusy('game', m.who); // голос знает, чем занята модель, и ждёт её
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); blockedArrived(m.error); }
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
       else if (m.kind === 'advice-stream') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x)));
@@ -281,7 +285,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     let live = true;
     if (!saved && kbBuilding()) setProgress(KB_WAIT);
     void (saved ? Promise.resolve() : kbSettled()).then(() => { if (live) w.postMessage({ kind: 'start', start: st, record: saved?.record, llm: llm.settings, enemy } satisfies GameRequest); });
-    return () => { live = false; w.terminate(); resetUmpire(); };
+    // голос — первым в очереди к модели: пока он ждёт её или спрашивает, новые запросы игры не начинаются
+    const unhold = bindModelHold((on) => w.postMessage({ kind: 'llm-hold', on } satisfies GameRequest));
+    return () => { live = false; unhold(); w.terminate(); setModelBusy('game', null); resetUmpire(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   /** Модель посредника для доклада: обычный срок и повторы (связь с моделью не прошла проверку — без неё, честно). */
   const umpireModel = (): UmpireModel | null => (llmRef.current.check.state === 'fail' ? null
@@ -734,7 +740,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         {doc && time ? <>
           <div className="rp-bar">
           <div className="rp-tools" data-tour="cmd-tools">
-            <LevelSwitch level={level} setLevel={setLevel} />
+            <LevelSwitch level={level} setLevel={setLevel} engine={eng} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))}
               setAll={(on) => setVis((h) => ({ ...h, ...Object.fromEntries(TOGGLES.map((t) => [t.key, on])) }))} />
             {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}

@@ -5,12 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameRecord, IntelReport, UnitReport } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { HumanDecision, PlanVariantView, TurnView } from '../src/sim/game-protocol';
-import { getAction, markVoice, parsePhrase, register, setProposer, setRetractor, setSpeaker, setVoiceLive, voiceNote, type Action, type SpeakOpts } from '../src/voice/registry';
+import { getAction, markVoice, parsePhrase, register, setPreparer, setProposer, setRetractor, setSpeaker, setVoiceLive, voiceNote, type Action, type SpeakOpts } from '../src/voice/registry';
 import { CONFIRM_MS, Dispatcher } from '../src/voice/dispatch';
 import { setSectionSource } from '../src/voice/actions/command';
 import { releaseStaff, staffActions, type OrderDraft, type PlanState, type StaffAct, type StaffDeps } from '../src/voice/actions/staff';
 import { blockedArrived, releaseTurn, turnActions, turnMissing, type ReviewCtl, type TurnDeps } from '../src/voice/actions/turn';
-import { announceTurn, lastUmpire, NEXT_TURN_SAY, resetUmpire, reviewSteps, setReviewRunner, UMPIRE_REMIND_MS, UMPIRE_STILL_SAY, UMPIRE_WAIT_SAY } from '../src/voice/umpire';
+import { announceTurn, lastUmpire, NEXT_TURN_SAY, PREPARE_WAIT_MS, resetUmpire, reviewSteps, setReviewRunner, UMPIRE_REMIND_MS, UMPIRE_STILL_SAY, UMPIRE_WAIT_SAY } from '../src/voice/umpire';
 import { REVIEW_SYSTEM, REVIEW_TOUR } from '../src/voice/tours/turn';
 import type { Tour } from '../src/voice/tours';
 import { askText, systemText, toTools } from '../src/voice/llm';
@@ -108,7 +108,7 @@ beforeEach(() => {
   offs.push(register({ id: 'shell.open', section: 'global', title: '', describe: '', available: () => true, run: async () => undefined }));
   resetUmpire();
 });
-afterEach(() => { offs.forEach((o) => o()); stopReading(); setSpeaker(null); setProposer(null); setRetractor(null); setVoiceLive(null); setSaver(null); vi.useRealTimers(); });
+afterEach(() => { offs.forEach((o) => o()); stopReading(); setSpeaker(null); setPreparer(null); setProposer(null); setRetractor(null); setVoiceLive(null); setSaver(null); vi.useRealTimers(); });
 
 // ---------------------------------------------------------------- ход
 
@@ -332,6 +332,39 @@ describe('разбор хода после хода — голосом поср�
     tours[0].end(); // разбор кончился — штаб подсказывает, что дальше
     expect(said.at(-1)).toMatchObject({ text: NEXT_TURN_SAY });
     expect(said.at(-1)!.role).toBeUndefined();
+  });
+
+  it('звук разбора заготавливается заранее: тур начинается сразу, штаб противника ждёт, пока весь звук готов', async () => {
+    markVoice();
+    runTours();
+    const asked: { texts: string[]; role?: string }[] = [];
+    const finish: (() => void)[] = [];
+    setPreparer((texts, role) => { asked.push({ texts, role }); return new Promise<void>((r) => finish.push(r)); });
+    const done = vi.fn();
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => MODEL_SAYS(), onDone: done });
+    for (let k = 0; k < 10 && !tours.length; k++) await Promise.resolve();
+    expect(tours).toHaveLength(1); // тур не ждёт заготовки: первый шаг звучит, как только готов его звук
+    // заготовлено ровно то, что прозвучит: шаги — голосом посредника, подсказка после разбора — начальника штаба
+    expect(asked).toEqual([{ texts: tours[0].tour.steps.map((x) => x.text), role: 'umpire' }, { texts: [NEXT_TURN_SAY], role: undefined }]);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(done).not.toHaveBeenCalled(); // модель штаба противника не делит машину с синтезом
+    finish.forEach((f) => f());
+    await p;
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+
+  it('заготовка зависла — штаб противника ждёт не дольше PREPARE_WAIT_MS', async () => {
+    vi.useFakeTimers();
+    markVoice();
+    runTours();
+    setPreparer(() => new Promise<void>(() => {}));
+    const done = vi.fn();
+    const p = announceTurn({ view: view(), prev, record: RECORD, ai: { state: 'off' }, model: async () => MODEL_SAYS(), onDone: done });
+    await vi.advanceTimersByTimeAsync(PREPARE_WAIT_MS - 1000);
+    expect(done).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1000);
+    await p;
+    expect(done).toHaveBeenCalledTimes(1);
   });
   it('голос выключили, пока ждали ответ модели, — тур не стартует; разбор сохранён для «покажи ход»', async () => {
     markVoice();

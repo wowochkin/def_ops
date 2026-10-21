@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
+  BARGE_WORD_HINT, DEFAULT_SETTINGS, ENABLED_KEY, HOLD_MAX_MS, STANDBY_TEXT, SayGate, UTT_WAIT_MS, chiefTalking, settleAec, aecChange, aecHint, resetStored, storeSettings, FEED_MAX, NOT_INSTALLED, UNSUPPORTED, VOICE_DISABLED, CONTROL_DISABLED, SOUND_KEY, parseSound, bargeHint, feedAdd, feedCorrection, feedEcho, feedResolve, feedUtterance, panelState, parseEnabled, parseSettings, type FeedItem, type PanelInput,
   COLLAPSE_MS, PanelSize, fitsStrip, parsePanelMode, topPlace, anchorBottom, fullHeight, RAIL_W, stripCut, stripLines, STRIP_LINE_CHARS, STRIP_OVER_CHARS,
 } from '../src/voice/panel-state';
 import { freeOffset } from '../src/engine/free-center';
@@ -34,9 +34,21 @@ describe('panelState', () => {
     expect(panelState({ ...base, status: 'off', micError: 'нет' }).key).toBe('off');
   });
 
-  it('голос выключен человеком — «Голос выключен», что бы ни было с сервисом и микрофоном', () => {
+  it('звук выключен отдельно: управление работает, в состоянии — пометка; выбор не зависит от управления', () => {
+    expect(panelState({ ...base, muted: true })).toEqual({ key: 'idle', text: 'Жду обращения · звук выключен' });
+    expect(panelState({ ...base, muted: false }).text).toBe('Жду обращения');
+    expect(parseSound(null)).toBe(true);
+    expect(parseSound('off')).toBe(false);
+    expect(parseSound('true')).toBe(true);
+    expect(SOUND_KEY).not.toBe(ENABLED_KEY);
+  });
+
+  it('управление голосом выключено человеком — «Управление голосом выключено», что бы ни было с сервисом и микрофоном', () => {
     expect(VOICE_DISABLED).toBe('Голос выключен');
-    expect(panelState({ ...base, enabled: false })).toEqual({ key: 'disabled', text: 'Голос выключен' });
+    expect(CONTROL_DISABLED).toBe('Управление голосом выключено');
+    expect(panelState({ ...base, enabled: false })).toEqual({ key: 'disabled', text: 'Управление голосом выключено' });
+    // и управление, и звук выключены — «Голос выключен»
+    expect(panelState({ ...base, enabled: false, muted: true })).toEqual({ key: 'disabled', text: 'Голос выключен' });
     for (const k of [{ status: 'off' }, { status: 'error' }, { status: 'loading' }, { status: 'reconnecting' }, { micError: 'нет' },
       { busy: 'Калибровка' }, { speaking: true }, { listening: true }, { thinking: true }, { conversation: true }] as Partial<PanelInput>[])
       expect(panelState({ ...base, ...k, enabled: false }).key).toBe('disabled');
@@ -371,7 +383,7 @@ describe('компактная панель: вид по умолчанию, с�
     expect(parsePanelMode(null)).toBe('compact');
     expect(parsePanelMode('мусор')).toBe('compact');
   });
-  it('фраза штаба в две строки полосы — полоса; длиннее — разворачивается сама', () => {
+  it('фраза штаба в две строки полосы — полоса; длиннее — та же полоса, но фраза целиком (панель не разворачивается)', () => {
     expect(fitsStrip('Слушаю.')).toBe(true);
     expect(fitsStrip('Открываю переигровку. Скажите, что считать.')).toBe(true);
     expect(fitsStrip('Можно сказать: «штаб, открой переигровку», «штаб, что я могу?», «штаб, калибровка», «штаб, голоса».')).toBe(false);
@@ -379,34 +391,37 @@ describe('компактная панель: вид по умолчанию, с�
     expect(s.view(false)).toBe('compact');
     s.chief('Слушаю.');
     expect(s.view(false)).toBe('compact');
+    expect(s.whole(false)).toBe(false);
     s.chief('Можно сказать: «штаб, открой переигровку», «штаб, что я могу?», «штаб, калибровка», «штаб, голоса».');
-    expect(s.view(false)).toBe('full');
+    expect(s.view(false)).toBe('compact');
+    expect(s.whole(false)).toBe(true);
   });
-  it('развёрнутая сама — сворачивается через 10 с тишины после конца речи (не раньше)', () => {
+  it('фраза целиком — пока штаб говорит и ещё 10 с тишины (не меньше), потом снова обрезана', () => {
     now = 1000;
     const s = new PanelSize('compact', () => now);
     s.chief('x'.repeat(200));
     s.update({ speaking: true, pending: false });
-    now += 30_000; // штаб говорит долго — не сворачивается
+    now += 30_000; // штаб говорит долго — фраза целиком
     s.update({ speaking: true, pending: false });
-    expect(s.view(false)).toBe('full');
+    expect(s.whole(false)).toBe(true);
     s.update(quiet); // договорил
     now += COLLAPSE_MS - 1;
     s.update(quiet);
-    expect(s.view(false)).toBe('full');
+    expect(s.whole(false)).toBe(true);
     now += 1;
     s.update(quiet);
+    expect(s.whole(false)).toBe(false);
     expect(s.view(false)).toBe('compact');
     expect(COLLAPSE_MS).toBe(10_000);
   });
-  it('вопрос «да / нет» разворачивает (и из значка); пока ждёт ответа — не сворачивается; ответили — через 10 с назад', () => {
+  it('вопрос «да / нет» из значка — полоса с кнопками, не развёрнутая панель; пока ждёт ответа — держится; ответили — через 10 с значок', () => {
     now = 0;
     const s = new PanelSize('icon', () => now);
     s.update({ speaking: false, pending: true });
-    expect(s.view(false)).toBe('full');
+    expect(s.view(false)).toBe('compact');
     now += 60_000;
     s.update({ speaking: false, pending: true });
-    expect(s.view(false)).toBe('full');
+    expect(s.view(false)).toBe('compact');
     s.update(quiet);
     now += COLLAPSE_MS;
     s.update(quiet);
@@ -425,14 +440,16 @@ describe('компактная панель: вид по умолчанию, с�
     now += 10 * COLLAPSE_MS;
     s.update(quiet);
     expect(s.view(false)).toBe('full');
-    s.chief('x'.repeat(200)); // сама развернулась поверх ручной — неважно
-    s.set('compact');
-    expect(s.view(false)).toBe('compact');
-    // развернулась сама и её свернули кнопкой — полоса сразу
-    s.chief('x'.repeat(200));
+    s.chief('x'.repeat(200)); // развёрнутая вручную — так и остаётся
     expect(s.view(false)).toBe('full');
+    expect(s.whole(false)).toBe(false);
     s.set('compact');
     expect(s.view(false)).toBe('compact');
+    // фраза целиком, а человек выбрал полосу кнопкой — обрезана сразу
+    s.chief('x'.repeat(200));
+    expect(s.whole(false)).toBe(true);
+    s.set('compact');
+    expect(s.whole(false)).toBe(false);
   });
   it('открыто окно — панель компактна (и развёрнутая вручную, и с вопросом); значок остаётся значком', () => {
     const s = new PanelSize('full', () => now);
@@ -461,7 +478,7 @@ describe('панель — сверху по центру, под верхней
   it('развёрнутая панель раскрывается вниз и оставляет низ экрана подписи тура', () => {
     expect(fullHeight(900, 46)).toBeLessThanOrEqual(900 - 46 - 400);
     expect(fullHeight(900, 46)).toBeGreaterThanOrEqual(260);
-    expect(fullHeight(2000, 46)).toBe(640);
+    expect(fullHeight(2000, 46)).toBe(520);
   });
 });
 
@@ -491,23 +508,25 @@ describe('карта: центр — в свободной части (freeOffse
 });
 
 describe('раунд 1 (Task 1b): окно и полоса', () => {
-  it('M-2: фраза штаба при открытом окне (чтение вопроса) не разворачивает панель; закрыли окно — полоса сразу', () => {
+  it('M-2: фраза штаба при открытом окне (чтение вопроса) не раскрывает полосу; закрыли окно — обрезана сразу', () => {
     let now = 0;
     const s = new PanelSize('compact', () => now);
     s.setModal(true);
     s.chief('x'.repeat(300)); // окно читает длинный вопрос
     expect(s.view(true)).toBe('compact');
+    expect(s.whole(true)).toBe(false);
     s.setModal(false);
-    expect(s.view(false)).toBe('compact');
-    // развернулась сама до окна — после окна тоже не выскакивает
+    expect(s.whole(false)).toBe(false);
+    // раскрылась сама до окна — после окна фраза снова обрезана
     s.chief('x'.repeat(300));
-    expect(s.view(false)).toBe('full');
+    expect(s.whole(false)).toBe(true);
     s.setModal(true);
+    expect(s.whole(true)).toBe(false);
     s.setModal(false);
-    expect(s.view(false)).toBe('compact');
-    // вопрос «да / нет» после окна — разворачивает, как прежде
+    expect(s.whole(false)).toBe(false);
+    // вопрос «да / нет» после окна — полоса, как и без окна
     s.update({ speaking: false, pending: true });
-    expect(s.view(false)).toBe('full');
+    expect(s.view(false)).toBe('compact');
   });
   it('M-4: при открытом окне фраза — до трёх строк; длиннее — обрезана, и это видно (повторить)', () => {
     expect(stripLines(false)).toBe(2);

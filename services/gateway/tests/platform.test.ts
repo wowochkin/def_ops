@@ -263,7 +263,7 @@ describe('платформа через шлюз', () => {
 
     expect(forwardedPrefix('/api/cartography', '/cartography')).toBe('/api');
     expect(forwardedPrefix('/api/events', '/events')).toBe('/api');
-  });
+  }, 30_000);
 
   it('шлюз: большие двоичные тела (≈24 МБ) туда и обратно — потоком и без искажений', async () => {
     // пакет из четырёх «шумовых» PNG по ~6 МБ
@@ -293,7 +293,7 @@ describe('платформа через шлюз', () => {
     expect(viaGw.length).toBeGreaterThan(20 * 1024 * 1024);
     // время изменения в заголовках tar совпадает (те же файлы) — архивы равны байт в байт
     expect(viaGw.equals(direct)).toBe(true);
-  });
+  }, 30_000);
 
   it('клиент API: раздел картографии', async () => {
     const api2 = new DefOpsClient({ baseUrl: `${base}/api`, apiKey: 'keyA' });

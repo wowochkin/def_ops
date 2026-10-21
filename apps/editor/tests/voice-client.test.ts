@@ -42,6 +42,44 @@ describe('VoiceClient', () => {
     expect(played).toEqual([]);
   });
 
+  it('звук выключен: фразы и заготовки в сервис не уходят, остановка идёт один раз; включён — снова уходят; микрофон не затронут', async () => {
+    const { c, sent, msg } = mk();
+    vi.stubGlobal('WebSocket', { OPEN: 1 });
+    msg({ type: 'ready', voices: [], roles: { chief: 'a', umpire: 'a' }, loaded: true });
+    c.setMuted(true);
+    sent.length = 0;
+    c.say(5, 'chief', 'Слушаю вас.');
+    expect(await c.prepare('umpire', 'Итоги хода.')).toBe(false);
+    expect(sent).toEqual([]);
+    c.setMuted(true); // повторно — без новой остановки
+    expect(sent).toEqual([]);
+    c.setMuted(false);
+    c.say(6, 'chief', 'Слушаю вас.');
+    expect(sent).toEqual([{ type: 'say', id: 6, role: 'chief', text: 'Слушаю вас.' }]);
+    // выключение управления (микрофона) звук не трогает
+    sent.length = 0;
+    await c.setEnabled(false);
+    c.say(7, 'umpire', 'Итоги хода.');
+    expect(sent).toEqual([{ type: 'say', id: 7, role: 'umpire', text: 'Итоги хода.' }]);
+  });
+  it('prepare: до ready — сразу false; после — сообщение сервису, ответ prepared решает промис; обрыв — false', async () => {
+    const { c, x, sent, msg } = mk();
+    vi.stubGlobal('WebSocket', { OPEN: 1 });
+    expect(await c.prepare('umpire', 'Итоги хода.')).toBe(false);
+    expect(sent).toEqual([]);
+    msg({ type: 'ready', voices: [], roles: { chief: 'a', umpire: 'a' }, loaded: true });
+    const a = c.prepare('umpire', 'Итоги хода.'), b = c.prepare('chief', 'Что дальше?');
+    expect(sent).toEqual([{ type: 'prepare', id: 1, role: 'umpire', text: 'Итоги хода.' }, { type: 'prepare', id: 2, role: 'chief', text: 'Что дальше?' }]);
+    msg({ type: 'prepared', id: 1, audio_s: 1.2 });
+    expect(await a).toBe(true);
+    const d = c.prepare('chief', 'Ещё.');
+    msg({ type: 'prepared', id: 2, error: 'нет образца голоса' });
+    expect(await b).toBe(false);
+    x.settlePrepared(); // связь пропала
+    expect(await d).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
   describe('подавление эха в сервисе (ready aec)', () => {
     afterEach(() => { vi.unstubAllGlobals(); });
 

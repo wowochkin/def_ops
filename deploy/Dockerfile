@@ -23,7 +23,7 @@ RUN npm ci --no-audit --no-fund
 # sharp (сервис картографии) — готовые сборки libvips под musl (Alpine) из package-lock;
 # если их нет (lock собран без необязательных пакетов) — доустанавливаем и проверяем загрузку
 RUN node -e "require('sharp')" 2>/dev/null \
-  || npm install --no-save --no-audit --no-fund --os=linux --libc=musl --cpu=x64 sharp@0.34 \
+  || npm install --no-save --no-audit --no-fund --os=linux --libc=musl --cpu=x64 sharp@^0.35.5 \
   && node -e "const s=require('sharp'); console.log('sharp', s.versions.sharp, 'libvips', s.versions.vips)"
 
 FROM deps AS editor-build

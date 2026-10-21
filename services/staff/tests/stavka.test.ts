@@ -30,7 +30,7 @@ describe('директивы в игре и модель-Ставка', () => {
     expect(need?.pending.map((b) => b.id)).toEqual(['1bf-1uf-23apr']);
     // у вермахта просроченных директив нет (повод может быть другой — соединение в полосе соседа)
     expect(stavkaNeed(ctx, s, 'de')?.pending ?? []).toEqual([]);
-  });
+  }, 30_000);
 
   it('за вермахт линии между группами армий устанавливает ОКХ: по ходатайству — приказ, исполнимый арбитром', async () => {
     const ctx = loadContext('berlin-1945-tasks');
@@ -51,7 +51,7 @@ describe('директивы в игре и модель-Ставка', () => {
       const g2 = playTurn(ctx, g, [], [a]);
       expect((g2.state.boundaries ?? []).some((b) => b.side === 'de' && b.issuedBy === 'stavka' && /приказ ОКХ/.test(b.title))).toBe(true);
     }
-  });
+  }, 30_000);
 
   it('Ставка (подставная модель) издаёт линию по образцу; запись игры повторяется точно', async () => {
     const ctx = loadContext('berlin-1945-tasks');

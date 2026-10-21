@@ -3,13 +3,14 @@
 // моделью одним запросом на весь разбор или по правилам.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { IntelReport, TurnBattle, UnitReport } from '@def-ops/sim';
-import type { LngLat } from '@def-ops/core';
+import { scaleDenominator, zoomForScale, type LngLat } from '@def-ops/core';
+import { scaleInLevel, type LevelId } from '../src/map-level-scale';
 import type { TurnView } from '../src/sim/game-protocol';
 import { TourEngine, tourEngine, type SpeechEnd, type TourDeps } from '../src/voice/tour';
 import { act, parsePhrase, register } from '../src/voice/registry';
 import { findLayer } from '../src/voice/actions/command';
 import { flash, flashState } from '../src/voice/highlight';
-import { createTourMap, MOVE_MS, PLAY_MS } from '../src/voice/tour-map';
+import { createTourMap, levelForStep, MOVE_MS, PLAY_MS } from '../src/voice/tour-map';
 import type { TourMap } from '../src/voice/tours';
 import { REVIEW_SYSTEM, REVIEW_TOUR, reviewFromModel, reviewInput, reviewTour, turnReview } from '../src/voice/tours/turn';
 
@@ -80,7 +81,7 @@ describe('разбор хода: шаги из данных хода', () => {
     const b = steps.filter((s) => s.kind === 'battle');
     expect(b.length).toBe(3);
     expect(b[0].map.spot).toEqual(SEELOW);
-    expect(b[0].map.zoom).toBeGreaterThanOrEqual(9);
+    expect(b[0].map.level).toBe('tac'); // бой — тактический уровень
     expect(b[0].map.fit).toEqual(b[0].map.box);
     expect(b[0].map.box).toEqual(expect.arrayContaining([SEELOW, [14.4, 52.55], [14.3, 52.5]]));
     expect(b[0].text).toBe('У Зелова — наступление восьмой гвардейской армии против пятьдесят шестого танкового корпуса: прорыв на семь километров; потери — около четырёх процентов участвовавших.');
@@ -287,12 +288,14 @@ describe('разбор хода: карта шага', () => {
       unproject: (p: [number, number]): LngLat => [view.center[0] + (p[0] - 500) / (100 * 2 ** (view.zoom - 9)), view.center[1] - (p[1] - 400) / (160 * 2 ** (view.zoom - 9))],
       size: () => ({ width: 1000, height: 800 }),
     };
+    const levels: string[] = [];
+    let lv: LevelId = 'st'; // до разбора человек оставил стратегический уровень
     const ctl = createTourMap({
-      engine: () => en, setTime: (t) => times.push(t), now: () => '1945-04-17T05:00',
+      engine: () => en, setTime: (t) => times.push(t), now: () => '1945-04-17T05:00', level: () => lv, setLevel: (l) => { lv = l; levels.push(l); },
       frame: (cb) => { cbs.push(cb); return cbs.length; }, cancel: () => { cbs = []; }, clock: () => clock,
     });
     const tick = (ms: number) => { for (let t = 0; t < ms; t += 16) { clock += 16; const l = cbs; cbs = []; l.forEach((f) => f()); } };
-    return { ctl, en, times, tick, view: () => view };
+    return { ctl, en, times, tick, view: () => view, levels, level: () => lv };
   }
   afterEach(() => flash(null));
   it('бой: карта плавно переезжает к месту, затем метка и рамка вокруг участников; время — конец хода', () => {
@@ -307,7 +310,10 @@ describe('разбор хода: карта шага', () => {
     expect(flashState()).toBeNull(); // метка — когда карта приехала
     f.tick(MOVE_MS);
     expect(f.view().center[0]).toBeCloseTo(cx, 5);
-    expect(f.view().zoom).toBeLessThanOrEqual(b.map.zoom!);
+    // уровень боя — тактический, масштаб — в его интервале (1:25 000 – 1:50 000), не мельче и не крупнее
+    expect(f.level()).toBe('tac');
+    const den = scaleDenominator(f.view().center[1], f.view().zoom);
+    expect(den).toBeGreaterThanOrEqual(24_000); expect(den).toBeLessThanOrEqual(51_500);
     expect(flashState()).toMatchObject({ spots: [b.map.spot], boxes: [b.map.box] });
     expect(flashState()!.ms).toBeGreaterThan(30_000);
     expect(f.times.at(-1)).toBe('1945-04-17T05:00');
@@ -323,6 +329,35 @@ describe('разбор хода: карта шага', () => {
     expect(f.times.at(-1)).toBe('1945-04-17T05:00');
     expect(f.view().zoom).toBeGreaterThanOrEqual(7);
     expect(f.view().zoom).toBeLessThanOrEqual(12);
+    // общий шаг — оперативный или стратегический уровень, масштаб в интервале выбранного
+    expect(['op', 'st']).toContain(f.level());
+    expect(scaleInLevel(f.level(), scaleDenominator(f.view().center[1], f.view().zoom))).toBe(true);
+  });
+  it('конец разбора возвращает уровень карты, который был до него', () => {
+    const f = fake();
+    f.ctl.show(steps.find((s) => s.kind === 'battle')!.map);
+    expect(f.level()).toBe('tac');
+    f.ctl.reset();
+    expect(f.level()).toBe('st');
+  });
+  it('уровень шага: одно место — край интервала; точки не помещаются — следующий уровень', () => {
+    expect(levelForStep('tac', 52, null).level).toBe('tac');
+    expect(scaleDenominator(52, levelForStep('tac', 52, null).zoom)).toBeCloseTo(50_000, -2);
+    expect(scaleDenominator(52, levelForStep('op', 52, null).zoom)).toBeCloseTo(150_000, -3);
+    expect(scaleDenominator(52, levelForStep('st', 52, null).zoom)).toBeCloseTo(300_000, -3);
+    // точки помещаются только на 1:300 000 — тактический не подходит, оперативный тоже, нужен стратегический
+    const wide = zoomForScale(52, 300_000);
+    expect(levelForStep('tac', 52, wide).level).toBe('st');
+    expect(levelForStep('op', 52, wide).level).toBe('st');
+    // помещаются на 1:150 000: от тактического — оперативный, оперативный остаётся
+    const mid = zoomForScale(52, 150_000);
+    expect(levelForStep('tac', 52, mid).level).toBe('op');
+    expect(levelForStep('op', 52, mid).level).toBe('op');
+    // обзор хода (auto) — не мельче оперативного: тесная группа — оперативный, масштаб не крупнее 1:100 000
+    const tight = zoomForScale(52, 10_000);
+    const r = levelForStep('auto', 52, tight);
+    expect(r.level).toBe('op');
+    expect(scaleDenominator(52, r.zoom)).toBeCloseTo(100_000, -2);
   });
   it('пауза — проигрывание встаёт; конец разбора — время и подсветка как были', () => {
     const f = fake();

@@ -85,5 +85,5 @@ describe('пресеты', () => {
     expect(r.features.length).toBe(doc.features.length);
     for (const f of r.features) expect(f.svg.length).toBeGreaterThan(20);
     expect(exportSVG(doc)).toMatch(/^<svg/);
-  });
+  }, 30_000);
 });

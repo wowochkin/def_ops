@@ -5,9 +5,11 @@
  */
 import { confirmAsync } from './dialogs';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { documentAt, migrateDocument, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
+import { documentAt, formatScale, migrateDocument, zoomForScale, type LngLat, type MapDocument, type SymbolFeature, type TimeInstant } from '@def-ops/core';
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
+import { useViewScale } from './ScaleRange';
+import { levelDefaultScale, levelScaleLabel, scaleInLevel } from './map-level-scale';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -141,7 +143,17 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
   );
 }
 
-export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l: MapLevel) => void }) {
+/** Поставить масштаб карты, стандартный для уровня (тактический 1:50 000, оперативный 1:150 000, стратегический 1:300 000); возвращает его. */
+function fitLevelScale(engine: MapEngine | null, level: MapLevel): number | null {
+  if (!engine) return null;
+  const lat = engine.getView().center[1], t = levelDefaultScale(level);
+  engine.setView({ zoom: zoomForScale(lat, t) });
+  return t;
+}
+
+export function LevelSwitch({ level, setLevel, engine = null }: { level: MapLevel; setLevel: (l: MapLevel) => void; engine?: MapEngine | null }) {
+  const denom = useViewScale(engine);
+  const off = denom != null && !scaleInLevel(level, denom);
   useAction({
     id: 'map.level', section: 'replay', title: 'Уровень карты', describe: 'Уровень карты: тактический (соединения и бои), оперативный (армии), стратегический (фронты).',
     params: { type: 'object', properties: { level: { enum: MAP_LEVELS.map((x) => x.id) } }, required: ['level'] }, say: ['штаб, оперативный уровень'],
@@ -150,10 +162,19 @@ export function LevelSwitch({ level, setLevel }: { level: MapLevel; setLevel: (l
       const x = MAP_LEVELS.find((l) => l.id === p?.level);
       if (!x) return 'Скажите: тактический, оперативный или стратегический уровень.';
       setLevel(x.id);
-      return `${x.title} уровень: ${x.hint}.`;
+      const to = fitLevelScale(engine, x.id);
+      return `${x.title} уровень: ${x.hint}.${to ? ` Масштаб карты — ${formatScale(to)}.` : ''}`;
     },
   });
-  return <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <ActButton key={x.id} action="map.level" params={{ level: x.id }} className={level === x.id ? 'on' : ''} title={x.hint} data-hl={`level-${x.id}`}>{x.title}</ActButton>)}</div>;
+  useAction({
+    id: 'map.level.fit', section: 'replay', title: 'Масштаб по уровню', describe: 'Ставит масштаб карты, стандартный для выбранного уровня: тактический 1:50 000, оперативный 1:150 000, стратегический 1:300 000.',
+    say: ['штаб, подгони масштаб'], highlight: () => hl('level-fit'), available: () => (inReplay() === true ? (off ? true : 'масштаб уже в рекомендуемом интервале') : inReplay()),
+    run: async () => { const to = fitLevelScale(engine, level); return to ? `Масштаб карты — ${formatScale(to)}, как для этого уровня.` : 'Не вышло: карта ещё не открыта.'; },
+  });
+  return <>
+    <div className="lvl-sw" role="group" aria-label="Уровень карты">{MAP_LEVELS.map((x) => <ActButton key={x.id} action="map.level" params={{ level: x.id }} className={level === x.id ? 'on' : ''} title={`${x.hint}. Рекомендуемый масштаб ${levelScaleLabel(x.id)}`} data-hl={`level-${x.id}`}>{x.title}</ActButton>)}</div>
+    {off && <ActButton className="lvl-off" action="map.level.fit" data-hl="level-fit" title="Привести масштаб карты к рекомендуемому для уровня">масштаб вне {levelScaleLabel(level)}</ActButton>}
+  </>;
 }
 export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string; mark?: string }[]> = {
   tac: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
@@ -541,7 +562,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></ActButton>}
           {/* voice-entry: конец */}
           <div className="rp-tools" data-tour="replay-tools">
-            <LevelSwitch level={level} setLevel={setLevel} />
+            <LevelSwitch level={level} setLevel={setLevel} engine={eng} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'tac' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={result ? `начала операции, ${dmy(result.start)}` : null} /></Popover>

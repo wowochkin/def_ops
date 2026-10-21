@@ -186,3 +186,12 @@ describe('советник: исправление приказов вариан
     expect(r.variants[0].orders[0].formation).toBe('Несуществующая армия');
   });
 });
+
+describe('подсказка: ближайшие по написанию пункты', () => {
+  it('для приказа с не опознанным местом — пункты из всего театра, даже если их нет в списке ближних', async () => {
+    const { repairHint } = await import('../src/live/repair');
+    const hint = repairHint([{ failed: [{ n: 1, formation: '9-я армия', task: 'withdraw', issue: 'цель не опознана', want: 'Нойдорм' }], taken: new Map() }],
+      { formations: [{ id: 'a', name: '9-я армия' }], areas: [{ id: 'x', title: 'Зелов (Seelow)' }], allAreas: [{ id: 'nd', title: 'Нойдорф (Neudorf)' }, { id: 'x', title: 'Зелов (Seelow)' }], enemies: [] }, 'formation, task, area, toArea, why');
+    expect(hint).toContain('возможно, имелся в виду пункт: Нойдорф (Neudorf)');
+  });
+});

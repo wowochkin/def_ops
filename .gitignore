@@ -27,3 +27,11 @@ apps/desktop/src-tauri/binaries/
 apps/desktop/server/dist/
 apps/desktop/server/node_modules/
 apps/desktop/src-tauri/gen/
+
+# выгрузка «Памяти народа»
+pn-out/
+.pn-profile/
+
+# сканы ЦАМО (Память народа) — большие файлы, не в git
+docs/sources/vistula-oder-1945-tsamo-scans/
+tsamo-scans/

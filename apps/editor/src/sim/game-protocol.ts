@@ -70,6 +70,8 @@ export type GameRequest =
   | { kind: 'skip-ai' }
   /** Доклад посредника голосом закончен (или снят): штаб противника может занимать модель. */
   | { kind: 'umpire-done' }
+  /** Голос ждёт модель или спрашивает её (on): новые запросы к модели ждут, пока он не отпустит; начатый доходит. */
+  | { kind: 'llm-hold'; on: boolean }
   /** Вопрос советнику: категория, вопрос, проект решения словами, предыдущие вопросы и ответы. */
   | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string }
   /** Советник: варианты решения на ход (count — сколько), проект решения словами, справка из базы знаний; остановить. */
@@ -194,6 +196,8 @@ export type GameResponse =
   | { kind: 'ai-stream'; text: string; reset?: boolean }
   /** Этап запроса штаба противника: ждёт очереди, модель читает обстановку, размышляет, пишет ответ. */
   | { kind: 'ai-phase'; text: string }
+  /** Очередь к модели: чем она сейчас занята (метка запроса; null — свободна). */
+  | { kind: 'llm-busy'; who: string | null }
   /** Ход ждёт решения посредника: модель не ответила. */
   | { kind: 'blocked'; error: string }
   | { kind: 'record'; record: GameRecord }

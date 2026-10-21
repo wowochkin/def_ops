@@ -19,8 +19,6 @@ import type { Tour, TourMap } from './index';
 export const REVIEW_TOUR = 'turn-review';
 /** Главных боёв в разборе. */
 export const REVIEW_BATTLES = 3;
-/** Масштаб карты у места боя и у отдельного места (не крупнее: виден участок вокруг). */
-const BATTLE_ZOOM = 9.75;
 
 export type ReviewKind = 'outcome' | 'overview' | 'battle' | 'goal' | 'rear' | 'enemy';
 export interface ReviewStep {
@@ -96,7 +94,7 @@ function battleStep(v: TurnView, b: TurnBattle): ReviewStep {
   const box: LngLat[] = [b.at, ...b.own.flatMap((x) => { const u = v.own.find((o) => o.id === x.id); return u ? [u.at] : []; }),
     ...b.enemy.flatMap((x) => { const e = v.intel.find((o) => o.id === x.id); return e ? [e.at] : []; })];
   return {
-    kind: 'battle', title: `Бой ${placeText(b.place)}`, text: say(raw), map: { at: b.at, zoom: BATTLE_ZOOM, fit: box, spot: b.at, box },
+    kind: 'battle', title: `Бой ${placeText(b.place)}`, text: say(raw), map: { at: b.at, level: 'tac', fit: box, spot: b.at, box },
     facts: `${b.role === 'attack' ? 'Наше наступление' : 'Атака противника'} ${placeText(b.place)} в ${hour(b.time)}: свои — ${b.own.map((x) => x.name).join(', ')}; противник — ${b.enemy.map((x) => x.name).join(', ')}; исход — ${res}${km ? `, ${km} км` : ''}; потери — ${b.ownLossPct} % от участвовавших в бою.`,
   };
 }
@@ -114,7 +112,7 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
   if (v.over && v.outcome) {
     const t = `Игра окончена: ${v.outcome.result === 'victory' ? 'победа' : 'поражение'}. ${v.outcome.text}`;
     const g = v.goals.find((x) => x.at && x.at === v.outcome!.at && x.place);
-    out.push({ kind: 'outcome', title: 'Итог игры', text: say(t), facts: t, map: g?.place ? { at: g.place, zoom: BATTLE_ZOOM, spot: g.place } : { fit: all } });
+    out.push({ kind: 'outcome', title: 'Итог игры', text: say(t), facts: t, map: g?.place ? { at: g.place, level: 'op', spot: g.place } : { fit: all, level: 'auto' } });
   }
 
   // общее: что изменилось за ход — карта проигрывает ход
@@ -131,7 +129,7 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
       : v.events.length ? `Главное из донесений: ${sentence(v.events[0])}` : 'За ход боёв не было.',
     `В строю ${pct(v.strength)} исходной численности${lost}.`,
   ].join(' ');
-  out.push({ kind: 'overview', title: 'Ход в целом', text: say(overview), facts: overview, map: { fit: all, play: [from, v.time] } });
+  out.push({ kind: 'overview', title: 'Ход в целом', text: say(overview), facts: overview, map: { fit: all, level: 'auto', play: [from, v.time] } });
 
   // главные бои
   for (const b of mainBattles(v.battles)) out.push(battleStep(v, b));
@@ -142,10 +140,10 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
   if (reached.length) {
     const t = `Достигнуто за ход: ${list(reached.map((g) => goalName(g.title)))}.${reached[0].days != null && reached[0].days < 0 ? ` Это на ${-reached[0].days} дн. раньше, чем в истории.` : ''}`;
     const at = reached.find((g) => g.place)?.place;
-    out.push({ kind: 'goal', title: 'Цели операции', text: say(t), facts: t, map: at ? { at, zoom: BATTLE_ZOOM, spot: at } : { fit: all } });
+    out.push({ kind: 'goal', title: 'Цели операции', text: say(t), facts: t, map: at ? { at, level: 'op', spot: at } : { fit: all, level: 'auto' } });
   } else if (next && !v.over) {
     const t = `Следующая цель — ${goalName(next.title)}; в истории — ${dayMonth(next.historical)}.`;
-    out.push({ kind: 'goal', title: 'Цели операции', text: say(t), facts: t, map: next.place ? { fit: [next.place, ...own.map((u) => u.at)], zoom: BATTLE_ZOOM, spot: next.place } : { fit: all } });
+    out.push({ kind: 'goal', title: 'Цели операции', text: say(t), facts: t, map: next.place ? { fit: [next.place, ...own.map((u) => u.at)], level: 'op', spot: next.place } : { fit: all, level: 'auto' } });
   }
 
   // тыл: отрезанные, новые переправы, ввод резервов
@@ -160,7 +158,7 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
   if (rear.length) {
     const t = rear.map((x) => x.text).join(' ');
     const at = rear.flatMap((x) => x.at);
-    out.push({ kind: 'rear', title: 'Тыл', text: say(t), facts: t, map: at.length === 1 ? { at: at[0], zoom: BATTLE_ZOOM, spot: at[0] } : { fit: at, zoom: BATTLE_ZOOM, spot: at[0] } });
+    out.push({ kind: 'rear', title: 'Тыл', text: say(t), facts: t, map: at.length === 1 ? { at: at[0], level: 'tac', spot: at[0] } : { fit: at, level: 'tac', spot: at[0] } });
   }
 
   // противник — только по разведке: новые обнаруженные и его атаки
@@ -171,7 +169,7 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
       def.length ? `Противник атаковал ${times(def.length)}${def.some((b) => b.outcome === 'breakthrough' || b.outcome === 'advance') ? ' и местами потеснил наши части' : def.length === 1 ? ', атака отбита' : ', атаки отбиты'}.` : 'Противник не атаковал.',
     ].join(' ');
     const at = [...fresh.map((e) => e.at), ...def.map((b) => b.at)];
-    out.push({ kind: 'enemy', title: 'Противник', text: say(t), facts: t, map: at.length === 1 ? { at: at[0], zoom: BATTLE_ZOOM, spot: at[0] } : { fit: at, zoom: BATTLE_ZOOM, spot: at[0] } });
+    out.push({ kind: 'enemy', title: 'Противник', text: say(t), facts: t, map: at.length === 1 ? { at: at[0], level: 'op', spot: at[0] } : { fit: at, level: 'op', spot: at[0] } });
   }
   return out;
 }

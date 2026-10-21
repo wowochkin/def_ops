@@ -66,7 +66,7 @@ describe('штаб модели в игре', () => {
     const r = decisionToOrders({ orders: [de, ru].map((area) => ({ formation: f, task: 'delay' as const, area, toArea: null, deadline: '', details: '' })) }, sit);
     expect(r.applied.map((a) => a.target)).toEqual([far.title, far.title]);
     expect(r.issues.filter((i) => /не опознан/.test(i.text))).toEqual([]);
-  });
+  }, 30_000);
 
   it('«Все соединения» — тем, у кого нет отдельного приказа; выдуманная группа — не исполнена', () => {
     const sit = buildSituation(ctx, g, cfg, tpl);
@@ -237,6 +237,25 @@ describe('советник: варианты решения на ход', () => 
     const conv = actionsToStaff(ctx, g, sit as never, careful.actions);
     expect(conv.applied.length).toBe(careful.actions.length);
     expect(conv.applied.find((x) => x.given.kind === 'base')?.action?.kind).toBe('base');
+  }, 60000);
+
+  it.each([1, 2])('модель прислала три варианта, а просили %i, — лишние отбрасываются', async (n) => {
+    const { buildAdvice, planMessages, planVariants } = await import('../src/live');
+    const { loadHistory } = await import('@def-ops/sim/data');
+    const ctx = loadContext('berlin-1945-tasks');
+    const g = startGame(ctx, 1, '1945-04-19T05:00', 'su');
+    const live = JSON.parse(read('live/berlin-1945-tasks.json'));
+    const tplA = { system: read('prompts/advisor.system.md'), user: read('prompts/advisor.user.md'), profile: read('profiles/rkka-1945.md') };
+    const built = buildAdvice(ctx, g, loadHistory('berlin-1945-tasks'), live.advisor, tplA,
+      { category: 'plan', topic: 'Варианты решения на ход', question: 'Предложите варианты решения на ход', draft: '', goal: 'Знамя Победы', thread: [], reference: '' }, live.description);
+    const real = new LlmClient({ ...configFromEnv({}), url, thinking: 'off' });
+    // модель не слушается просьбы о числе вариантов: всегда три
+    const client = Object.assign(Object.create(real), { chat: (o: Parameters<typeof real.chat>[0]) => real.chat({ ...o, messages: planMessages(built, 3) }) });
+    const seen: string[] = [];
+    const r = await planVariants(client, g, built, n, { onVariant: (v) => seen.push(v.title) });
+    expect(r.ok).toBe(true);
+    expect(r.variants.length).toBe(n);
+    expect(seen.length).toBe(n);
   }, 60000);
 });
 

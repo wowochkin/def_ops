@@ -111,6 +111,9 @@ export function planVariant(x: unknown): PlanVariantRaw | null {
   return r.intent || r.orders.length ? { ...r, title: r.title || 'Вариант' } : null;
 }
 
+/** Схема ответа с числом вариантов не больше n (где сервер модели соблюдает схему — модель и не напишет лишнего). */
+export const planSchema = (n: number) => ({ ...PLAN_SCHEMA, properties: { variants: { ...PLAN_SCHEMA.properties.variants, minItems: 1, maxItems: n } } });
+
 export interface PlanResult {
   ok: boolean;
   error?: string;
@@ -131,12 +134,13 @@ export async function planVariants(client: LlmClient, _g: GameState, built: Retu
   opts: { thinking?: Thinking; signal?: AbortSignal; onVariant?: (v: PlanVariantRaw, i: number) => void; onProgress?: (p: { content: number; reasoning: number; tail: string }) => void;
     sit?: Situation; onRepair?: (variants: number[]) => void } = {}): Promise<PlanResult> {
   const got: PlanVariantRaw[] = [];
-  const stream = new ArrayItemStream<unknown>('variants', (item) => { const v = planVariant(item); if (v) { got.push(v); opts.onVariant?.(v, got.length - 1); } });
+  // просили n вариантов — лишние (модель бывает не слушается просьбы о числе) не берутся ни из потока, ни из итога
+  const stream = new ArrayItemStream<unknown>('variants', (item) => { const v = planVariant(item); if (v && got.length < n) { got.push(v); opts.onVariant?.(v, got.length - 1); } });
   let content = 0, reasoning = 0, tail = '';
   let res: ChatResult;
   try {
     res = await client.chat({
-      messages: planMessages(built, n), schema: { name: 'staff_plan', schema: PLAN_SCHEMA }, thinking: opts.thinking, signal: opts.signal,
+      messages: planMessages(built, n), schema: { name: 'staff_plan', schema: planSchema(n) }, thinking: opts.thinking, signal: opts.signal,
       onDelta: (k, t) => {
         if (k === 'content') { content += t.length; stream.push(t); } else { reasoning += t.length; tail = (tail + t).slice(-400); }
         opts.onProgress?.({ content, reasoning, tail });
@@ -146,7 +150,7 @@ export async function planVariants(client: LlmClient, _g: GameState, built: Retu
     return { ok: got.length > 0, error: (e as Error).message, variants: got };
   }
   const all = Array.isArray((res.json as { variants?: unknown[] } | undefined)?.variants)
-    ? ((res.json as { variants: unknown[] }).variants.map(planVariant).filter(Boolean) as PlanVariantRaw[]) : got;
+    ? ((res.json as { variants: unknown[] }).variants.map(planVariant).filter(Boolean) as PlanVariantRaw[]).slice(0, n) : got;
   // дописать варианты, которых не было в потоке (поток мог не распознать элемент)
   for (let i = got.length; i < all.length; i++) opts.onVariant?.(all[i], i);
   // приказы, которых не исполнить, — одна общая просьба исправить на все варианты
