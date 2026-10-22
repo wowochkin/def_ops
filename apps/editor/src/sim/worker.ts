@@ -65,7 +65,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbSta
   const events = checkEvents(ctx, run, history);
   post({ kind: 'progress', text: 'карта…' });
   const name = `${A.title} — агентная модель (seed ${q.seed})`;
-  const doc = runToDocument(ctx, run, history, { name: `Переигровка: ${name}` });
+  const doc = runToDocument(ctx, run, history, { name: `Переигровка: ${name}`, frontCombine: 'max' });
   const summary = summaryToDocument(ctx, run, history, { base: doc, name: `Сводная карта: ${name}` });
   const ev = history.events ?? [];
   const pct = (x: number) => `${Math.round(x * 100)} %`;

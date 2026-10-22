@@ -22,6 +22,11 @@ export interface FrontOptions {
    * поэтому по умолчанию 0,3: линия между сторонами, смещена к слабой.
    */
   strengthExponent?: number;
+  /**
+   * Как складывается влияние соединений стороны: sum — суммой (армии и корпуса нынешней модели), max — наибольшим
+   * (дивизии агентной модели: суммой сотни дивизий одной стороны «вдавливали» линию за позиции другой, на десятки км).
+   */
+  combine?: 'sum' | 'max';
 }
 
 export function frontLine(theatre: Theatre, formations: Formation[], sides: [string, string], weight: (f: Formation) => number, o: FrontOptions = {}): LngLat[][] {
@@ -31,7 +36,7 @@ export function frontLine(theatre: Theatre, formations: Formation[], sides: [str
   const cols = Math.ceil((p1[0] - p0[0]) / step) + 1, rows = Math.ceil((p1[1] - p0[1]) / step) + 1;
   const units = formations.filter((f) => !f.destroyed).map((f) => ({ side: f.side, p: theatre.proj.toXY(f.position), w: Math.pow(Math.max(0, weight(f)), ex) }));
   const A = new Float64Array(cols * rows), B = new Float64Array(cols * rows);
-  const reach = sigma * 3;
+  const reach = sigma * 3, max = o.combine === 'max';
   for (const u of units) {
     const arr = u.side === sides[0] ? A : u.side === sides[1] ? B : null;
     if (!arr) continue;
@@ -39,7 +44,8 @@ export function frontLine(theatre: Theatre, formations: Formation[], sides: [str
     const r0 = Math.max(0, Math.floor((u.p[1] - reach - p0[1]) / step)), r1 = Math.min(rows - 1, Math.ceil((u.p[1] + reach - p0[1]) / step));
     for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
       const d = dist([p0[0] + c * step, p0[1] + r * step], u.p);
-      arr[r * cols + c] += u.w * Math.exp(-(d * d) / (2 * sigma * sigma));
+      const v = u.w * Math.exp(-(d * d) / (2 * sigma * sigma));
+      arr[r * cols + c] = max ? Math.max(arr[r * cols + c], v) : arr[r * cols + c] + v;
     }
   }
   let maxI = 0;

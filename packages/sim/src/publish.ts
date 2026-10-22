@@ -25,6 +25,8 @@ export interface PublishOptions {
   combats?: boolean;
   /** Линия фронта рисуется, только где формирования обеих сторон ближе этого, км. */
   frontReachKm?: number;
+  /** Как складывается влияние соединений в линии фронта без территории (FrontOptions.combine): у агентной модели — max. */
+  frontCombine?: 'sum' | 'max';
   /** Наименьшая длина стрелки боя на карте, км. */
   /** Устарело: длина стрелок боёв теперь — по масштабу карты (клетка × 10). */
   minArrowKm?: number;
@@ -302,7 +304,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     const loopKm = (l: LngLat[]) => l.slice(1).reduce((sum, p, k) => sum + dist(T.proj.toXY(l[k]), T.proj.toXY(p)), 0);
     const closed = (l: LngLat[]) => dist(T.proj.toXY(l[0]), T.proj.toXY(l[l.length - 1])) < T.cellKm * 1.5;
     const raw = terr ? territoryLine(T, terr, 4).filter((l) => !(closed(l) && loopKm(l) < T.cellKm * 25))
-      : frontLine(T, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, { sigmaKm: 25 });
+      : frontLine(T, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, { sigmaKm: 25, combine: o.frontCombine });
     const reachKm = terr ? Math.min(o.frontReachKm!, T.cellKm * 10) : o.frontReachKm!;
     // линия только там, где обе стороны рядом: в глубоком тылу изолиния есть, а фронта нет
     const near = (p: LngLat, side: string) => units.some((u) => u.side === side && dist(T.proj.toXY(u.position), T.proj.toXY(p)) <= reachKm);

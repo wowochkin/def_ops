@@ -212,6 +212,22 @@ describe('линия фронта и арбитр', () => {
     expect(Math.max(...mid)).toBeLessThan(10);
   });
 
+  it('много мелких соединений одной стороны против немногих: по сумме влияния линия уходит за слабого, по наибольшему — между ними', () => {
+    // агентная модель: дивизии; советских втрое больше — сумма гауссиан «вдавливает» линию за немецкие позиции
+    const many = Array.from({ length: 12 }, (_, k) => su(`a${k}`, -10 - (k % 3) * 4, -12 + Math.floor(k / 3) * 8));
+    const ctx = ctxWith([...many, de('k1', 10, -6), de('k2', 10, 6)]);
+    const s = createState(ctx);
+    // соединения равной силы (дивизии): дело только в числе
+    const w = () => 1;
+    const midX = (lines: LngLat[][]) => lines.flat().filter((q) => Math.abs((q[1] - C[1]) * kmY) <= 4).map(xOf);
+    // по сумме между группировками линии нет: она ушла за немецкие позиции
+    expect(midX(frontLine(ctx.theatre, s.formations, ['su', 'de'], w, { sigmaKm: 25 })).filter((x) => x > -10 && x < 10)).toEqual([]);
+    const max = midX(frontLine(ctx.theatre, s.formations, ['su', 'de'], w, { sigmaKm: 25, combine: 'max' }));
+    expect(max.length).toBeGreaterThan(1);
+    expect(Math.min(...max)).toBeGreaterThan(-10);
+    expect(Math.max(...max)).toBeLessThan(10);
+  });
+
   it('таблицы: интерполяция по соотношению сил, генератор — равномерный', () => {
     const t: [number, number][] = [[1, 0], [4, 10]];
     expect(interp(t, 2)).toBeCloseTo(5, 5); // логарифмическая шкала: 2 — середина между 1 и 4

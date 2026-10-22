@@ -639,7 +639,7 @@ function postView() {
   const human = rec.human;
   const sideName = (id: string) => ctx.scenario.sides.find((x) => x.id === id)!.name;
   const run = { final: s, snapshots: g.snapshots };
-  const doc = runToDocument({ ...ctx, scenario: withBoundaries(ctx.scenario, g.state) }, run, history, { name: `Игра: ${ctx.scenario.name} (с ${ddmm(rec.takeover)})`, ownSide: human, visible: reveal ? undefined : fog() });
+  const doc = runToDocument({ ...ctx, scenario: withBoundaries(ctx.scenario, g.state) }, run, history, { name: `Игра: ${ctx.scenario.name} (с ${ddmm(rec.takeover)})`, ownSide: human, visible: reveal ? undefined : fog(), ...(agents ? { frontCombine: 'max' as const } : {}) });
   for (const l of doc.layers) if (l.id.startsWith('hist-')) l.visible = false;
   // реки театра — для выбора мест переправ (большие — толще)
   doc.layers.unshift({ id: 'rivers', name: 'Театр: реки', role: 'base', visible: true, locked: true, opacity: 0.85 });
