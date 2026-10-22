@@ -64,7 +64,7 @@ try {
   // уровни карты: третьи сутки операции, Зееловские высоты
   const track = await page.locator('.pl-track').boundingBox();
   await page.mouse.click(track.x + track.width * 0.17, track.y + track.height / 2);
-  for (const [t, f, at] of [['Ставка', 'levels-stavka.jpg', [14.3, 52.6]], ['Фронт', 'levels-front.jpg', [14.3, 52.55]], ['Армия', 'levels-army.jpg', [14.35, 52.55]], ['Дивизия', 'levels-division.jpg', [14.45, 52.55]]]) {
+  for (const [t, f, at] of [['Армия', 'levels-army.jpg', [14.35, 52.55]]]) {
     await page.locator('.lvl-sw button', { hasText: t }).click();
     await page.evaluate((c) => window.__replayEngine?.setView({ center: c }), at);
     await shot(f);
