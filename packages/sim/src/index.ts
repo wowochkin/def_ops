@@ -4,7 +4,7 @@ export * from './geo';
 export * from './rules';
 export { Theatre, decodeGrid, encodeGrid, decodeHeights } from './theatre';
 export { step, onMap, createState, issueOrder, targetPoint, profileOf, addHours, supplyHoursOf, supplySources, type SimContext } from './step';
-export { frontLine, territoryLine, type FrontOptions } from './front';
+export { frontLine, mergeIslands, territoryLine, type FrontOptions } from './front';
 export { influenceZones, sideZones, zoneAt, ZONE_MAX, type ZoneGrid, type ZoneInput } from './zones';
 export { runScenario, runScenarioWith, compareWithHistory, compareStrength, summarize, checkEvents, type History, type StrengthCheckpoint, type StrengthComparison, type HistoryEvent, type EventResult, type Snapshot, type RunResult, type Deviation } from './history';
 export { runToDocument, summaryToDocument, shortName, teethToward, type PublishOptions, type SummaryOptions } from './publish';

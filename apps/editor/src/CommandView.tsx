@@ -128,6 +128,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   onExit: (opts: { discard: boolean }) => void; onOpenInEditor: (d: MapDocument) => void;
 }) {
   const [view, setView] = useState<TurnView | null>(null);
+  // проверки в браузере (сквозные скрипты): обстановка хода — только при разработке
+  useEffect(() => { if (import.meta.env.DEV) (window as unknown as { __cmdView: TurnView | null }).__cmdView = view; }, [view]);
   const [progress, setProgress] = useState<string | null>('запуск…');
   const [error, setError] = useState<string | null>(null);
   const [ai, setAi] = useState<AiStatus>({ state: 'off' });

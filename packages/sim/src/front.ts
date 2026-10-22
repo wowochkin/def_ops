@@ -107,6 +107,39 @@ export function territoryLine(theatre: Theatre, owner: ArrayLike<number>, smooth
   });
 }
 
+/**
+ * Территория для рисунка линии фронта: острова стороны (связные по четырём соседям куски, оторванные от её основной —
+ * самой большой — территории и не касающиеся края карты) отдаются окружающей стороне, если keep их не оставляет. Без
+ * этого линия обводит кольцом каждый клочок разметки, оставшийся между коридорами наступающих; котлы keep оставляет.
+ */
+export function mergeIslands(cols: number, rows: number, terr: ArrayLike<number>, keep: (side: number, cells: number[]) => boolean): number[] {
+  const out = Array.from(terr);
+  for (const si of [0, 1]) {
+    const comp = new Int32Array(cols * rows).fill(-1);
+    const parts: { cells: number[]; edge: boolean }[] = [];
+    for (let k = 0; k < out.length; k++) {
+      if (out[k] !== si || comp[k] >= 0) continue;
+      const part = { cells: [k], edge: false };
+      comp[k] = parts.length;
+      for (let j = 0; j < part.cells.length; j++) {
+        const q = part.cells[j], c = q % cols, r = (q - c) / cols;
+        if (c === 0 || r === 0 || c === cols - 1 || r === rows - 1) part.edge = true;
+        for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const cc = c + dc, rr = r + dr;
+          if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+          const n = rr * cols + cc;
+          if (out[n] === si && comp[n] < 0) { comp[n] = parts.length; part.cells.push(n); }
+        }
+      }
+      parts.push(part);
+    }
+    if (parts.length < 2) continue;
+    const main = parts.reduce((b, x, j) => (x.cells.length > parts[b].cells.length ? j : b), 0);
+    parts.forEach((p, j) => { if (j !== main && !p.edge && !keep(si, p.cells)) for (const q of p.cells) out[q] = 1 - si; });
+  }
+  return out;
+}
+
 /** Собрать отрезки в ломаные по совпадающим концам. */
 function joinSegments(segs: [XY, XY][], eps: number): XY[][] {
   const key = (p: XY) => `${Math.round(p[0] / eps)}:${Math.round(p[1] / eps)}`;
