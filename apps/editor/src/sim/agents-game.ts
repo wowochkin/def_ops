@@ -236,11 +236,14 @@ export function staffEffects(ctx: SimContext, start: string, before: SimState, a
   const lg = after.logistics?.[human];
   if (lg) {
     const { hours, rangeHours } = supplyHoursOf(ctx, after, human);
-    const pr = lg.priority ?? [];
+    const pr = new Set(lg.priority ?? []);
     const full = ctx.rules.supplyFlow?.fullHours ?? 12;
+    // приоритет штаба (фронта, армии, корпуса) — и всем его дивизиям: пункт управления даёт его подчинённым, а подвоз — по дивизиям
+    const parent = new Map(ctx.scenario.formations.map((f) => [f.id, f.parent ?? null]));
+    const prior = (id: string) => { for (let x: string | null = id, n = 0; x && n < 8; x = parent.get(x) ?? null, n++) if (pr.has(x)) return true; return false; };
     for (const [id, h] of hours) {
       if (!Number.isFinite(h)) continue; // пути нет — окружение ведёт ядро
-      const k = h > rangeHours ? 0 : (pr.length ? (pr.includes(id) ? 1.5 : 0.75) : 1) * (ctx.rules.supplyFlow && h > full ? full / h : 1);
+      const k = h > rangeHours ? 0 : (pr.size ? (prior(id) ? 1.5 : 0.75) : 1) * (ctx.rules.supplyFlow && h > full ? full / h : 1);
       supply.push([id, +k.toFixed(3)]);
     }
   }

@@ -87,6 +87,8 @@ export interface StaffDeps {
   advisorReady: boolean;
   /** Советник уже пишет решение (общий заказ). */
   composing: boolean;
+  /** Пункт управления: приоритет подвоза — его часть списка стороны (названные подчинённые вместо прежних его); нет — весь список. */
+  mergePriority?(ids: string[]): string[];
   // приказы
   drafts: Record<string, OrderDraft>;
   /** Приказ объединению id (null — отменить). */
@@ -709,12 +711,14 @@ export function staffActions(get: () => StaffDeps): Action[] {
         return actReply(`База «${short(b.found.name)}»`, r);
       } },
     { ...base, id: 'command.rear.priority', title: 'Приоритет подвоза', describe: 'Даёт приоритет подвоза армиям (пустой список — подвоз поровну).',
-      params: { type: 'object', properties: { armies: { type: 'array', items: TEXT } }, required: ['armies'] }, say: ['штаб, приоритет подвоза восьмой гвардейской'], highlight: noted,
-      run: async (p: { armies: string[] | string }) => {
+      params: { type: 'object', properties: { armies: { type: 'array', items: TEXT }, ids: { type: 'array', items: TEXT } } }, say: ['штаб, приоритет подвоза восьмой гвардейской'], highlight: noted,
+      run: async (p: { armies?: string[] | string; ids?: string[] }) => {
         const v = view(), d = get();
-        const names = Array.isArray(p?.armies) ? p.armies : String(p?.armies ?? '').split(/,| и /).map((x) => x.trim()).filter(Boolean);
-        const ids: string[] = [];
+        // ids — уже готовый список стороны (пункт управления правит в нём свою часть); armies — названия
+        const names = p?.ids ? [] : Array.isArray(p?.armies) ? p.armies : String(p?.armies ?? '').split(/,| и /).map((x) => x.trim()).filter(Boolean);
+        const ids: string[] = p?.ids ? [...p.ids] : [];
         for (const n of names) { const u = ownOf(n, v); if (!u) return `Не нашёл своего соединения «${n}».`; if ('say' in u) return u.say; if (!ids.includes(u.found.id)) ids.push(u.found.id); }
+        if (!p?.ids && d.mergePriority) { const m = d.mergePriority(ids); ids.length = 0; ids.push(...m); }
         toOrders('rear');
         if (ids.length === v.priority.length && ids.every((x) => v.priority.includes(x))) { d.dropAct('priority'); lit(hl('prio')); return 'Приоритет подвоза — как был.'; }
         const r = await d.addAct('priority', { kind: 'priority', side: v.human.id, formations: ids, issuedAt: v.time }, 'Приоритет подвоза');

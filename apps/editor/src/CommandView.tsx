@@ -29,6 +29,7 @@ import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
 import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
 import { divisionsUnder, postDocs, postIntel, postReports, postReserves } from './post-views';
+import { mergePriority, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { DIR_TASK_RU, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type DraftScope } from './decision-drafts';
@@ -406,6 +407,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const liveActs = useRef(acts); liveActs.current = acts;
   /** Включить распоряжение в проект (после проверки); неисполнимое — сообщение. Итог проверки — для голоса. */
   const addActCheck = async (key: string, action: StaffAction, label: string, extra: Partial<Act> = {}): Promise<ActionCheck> => {
+    // пункт управления: распоряжение — в ведении его штаба (тыл фронта и армии, понтонные парки, линии армий фронта)
+    if (view && staffsOn(view) && post.issuer) {
+      const deny = staffDeny(view, staffScope(view, post.level, post.issuer), action, postReserves(view, post.issuer).flatMap((g) => [g.id, ...g.members]));
+      if (deny) { setNotice(`${label}: ${deny}`); return { ok: false, text: deny }; }
+    }
     const r = await check(action, action.kind === 'bridge' ? liveActs.current.filter((a) => a.action.kind === 'bridge').length : 0);
     if (!r.ok) { setNotice(`${label}: ${r.text}`); return r; }
     const next = [...liveActs.current.filter((a) => a.key !== key), { key, action: action.kind === 'bridge' && r.at ? { ...action, at: r.at } : action, label, text: r.text, at: r.at ?? (action.kind === 'base' ? action.to : action.kind === 'commit' ? action.at : undefined), ...extra }];
@@ -649,6 +655,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     void kb.roleRef([`${topic} ${q}`], advisorScope(view, cat === 'history')).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference: r.text, post: postCtx() }));
     return id;
   };
+  /** Что штаб пункта ведёт во вкладке «Приказы» (тыл, переправы, полосы); нынешняя модель — null, всё как прежде. */
+  const scopeNow = (): StaffScope | null => (view && staffsOn(view) && post.issuer ? staffScope(view, post.level, post.issuer) : null);
   /** Решение на экране: штаба пункта (ниже Ставки) или верхней инстанции. */
   const curDecision = (): HumanDecision => (lowPost() ? postDecisions[post.issuer!] ?? EMPTY : decision);
   const setCur = (p: Partial<HumanDecision>) => {
@@ -810,6 +818,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     suggestions: lastAdvice?.result?.suggestions.filter((x) => x.ok) ?? [], takeSuggestion,
     decision: view ? curDecision() : decision, setDecision: setCur,
     composeField, composeAll, advisorReady: llm.check.state === 'ok', composing: !!batchView,
+    mergePriority: (() => { const sc = scopeNow(); if (!sc || !view) return undefined; const pool = priorityPool(view, sc); const pa = acts.find((a) => a.action.kind === 'priority')?.action; const cur = pa?.kind === 'priority' ? pa.formations : view.priority; return (ids: string[]) => mergePriority(cur, pool, ids); })(),
     drafts, setDraft: (id, d) => setDrafts((all) => { const n = { ...all }; if (d) n[id] = d; else delete n[id]; return n; }),
     acts, addAct: addActCheck, dropAct,
     commit: (g, at, title) => pickAction(g.members ? { kind: 'commit', formation: g.id, name: g.name, members: g.members } : { kind: 'commit', formation: g.id, name: g.name }, at, title),
@@ -904,17 +913,18 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
                   <ActButton key={k} className={sub === k ? 'on' : ''} action="command.orders.sub" params={{ sub: k }} data-hl={`sub-${k}`}>{t}{n ? ` · ${n}` : ''}</ActButton>))}
               </div>
               {sub === 'units' && (staffsOn(view) ? <CommandPost v={view} post={post} cmds={cmds} /> : <Orders v={fv!} drafts={drafts} sel={sel} pick={pick} setPick={setPick} blank={blankDraft} />)}
-              {sub === 'rear' && <Rear v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode}
-                setPriority={(ids) => tap('command.rear.priority', { armies: ids })} />}
-              {sub === 'bridges' && <Bridges v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode} />}
+              {sub === 'rear' && <Rear v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode} scope={scopeNow()}
+                setPriority={(ids) => tap('command.rear.priority', { ids })} />}
+              {sub === 'bridges' && <Bridges v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode} scope={scopeNow()} />}
               {sub === 'bounds' && <Bounds v={view} acts={acts} picking={pickMode?.kind === 'line'} setPicking={(b) => setPickMode(b ? { kind: 'line' } : null)} pts={linePts} setPts={setLinePts}
-                sel={bnd} />}
+                sel={bnd} scope={scopeNow()} />}
               {sub === 'reserves' && <Reserves v={staffsOn(view) && post.issuer ? { ...view, reserveGroups: postReserves(view, post.issuer) } : view} acts={acts} pickMode={pickMode} setPickMode={setPickMode}
-                onOrder={(id) => tap('command.order.open', { name: id })} />}
+                scope={scopeNow()} onOrder={(id) => tap('command.order.open', { name: id })} />}
             </>}
             {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} />}
+            {tab === 'journal' && staffsOn(view) && post.issuer && view.command?.hqs[post.issuer]?.echelon !== 'high_command' && <PostJournal v={view} issuer={post.issuer} record={record} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}
-            {tab === 'journal' && <Journal v={view} />}
+            {tab === 'journal' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command') && <Journal v={view} />}
             {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => tap('command.reveal', { on })}
               enemy={enemy} setEnemy={(mode) => tap('command.enemyMode', { mode })} llm={llm} part={umpPart} />}
           </>}
@@ -1557,13 +1567,14 @@ function ActLine({ a }: { a: Act }) {
   return <div className="draft" data-hl={`act-${a.key}`}><b>{a.label}</b> — {a.text}<StaffButton className="x" title="Отменить распоряжение" action="command.act.drop" params={{ key: a.key }}>×</StaffButton></div>;
 }
 
-function Rear({ v, acts, pickMode, setPickMode, setPriority }: {
+function Rear({ v, acts, pickMode, setPickMode, setPriority, scope }: {
   v: TurnView; acts: Act[]; pickMode: Pick | null; setPickMode: (p: Pick | null) => void;
-  setPriority: (ids: string[]) => void;
+  setPriority: (ids: string[]) => void; scope: StaffScope | null;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const pa = acts.find((a) => a.action.kind === 'priority');
   const prio = pa && pa.action.kind === 'priority' ? pa.action.formations : v.priority;
+  if (scope) return <PostRear v={v} acts={acts} pickMode={pickMode} setPickMode={setPickMode} setPriority={setPriority} scope={scope} prio={prio} pa={pa} />;
   const active = v.own.filter((u) => u.status === 'active');
   const toggle = (id: string) => setPriority(prio.includes(id) ? prio.filter((x) => x !== id) : prio.length >= v.priorityMax ? prio : [...prio, id]);
   return (
@@ -1605,27 +1616,88 @@ function Rear({ v, acts, pickMode, setPickMode, setPriority }: {
   );
 }
 
-function Bridges({ v, acts, pickMode, setPickMode }: { v: TurnView; acts: Act[]; pickMode: Pick | null; setPickMode: (p: Pick | null) => void }) {
+/** Тыл пункта управления: базы, которыми штаб распоряжается или которые видит; приоритет подвоза — между его подчинёнными; подвоз его войск. */
+function PostRear({ v, acts, pickMode, setPickMode, setPriority, scope, prio, pa }: {
+  v: TurnView; acts: Act[]; pickMode: Pick | null; setPickMode: (p: Pick | null) => void; setPriority: (ids: string[]) => void;
+  scope: StaffScope; prio: string[]; pa: Act | undefined;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const bases = postBases(v, scope);
+  const rows = postSupply(v, scope);
+  const pool = priorityPool(v, scope);
+  const mineP = prio.filter((x) => pool.includes(x));
+  const lim = priorityLimit(pool.length);
+  const toggle = (id: string) => {
+    const next = mineP.includes(id) ? mineP.filter((x) => x !== id) : mineP.length >= lim ? mineP : [...mineP, id];
+    setPriority(mergePriority(prio, pool, next));
+  };
+  const who = scope.level === 'stavka' ? 'фронтами' : scope.level === 'front' ? 'армиями фронта' : 'корпусами армии';
+  return (
+    <div className="cmd-sec">
+      <h3>Тыл и подвоз — {scope.whose}</h3>
+      <p className="note">Подвоз идёт от баз снабжения по своей территории; дальше {v.rangeHours} ч пути — не доходит.{' '}
+        {scope.bases === 'move' ? 'Базы, питающие ваши войска, можно перенести вперёд: на время переноса база не действует, на чужой территории — не работает.'
+          : scope.bases === 'view' ? 'Базы переносят штабы фронтов и армий (уровни «Фронт», «Армия»); Ставка распределяет подвоз между фронтами.'
+            : 'Баз у корпуса нет — тыл ведут армия и фронт; здесь — подвоз ваших войск. Перенести базу или дать приоритет — на уровне «Армия».'}</p>
+      {scope.bases !== 'none' && <><h4 className="cmd-h4">Базы снабжения{scope.level !== 'stavka' ? ', питающие ваши войска' : ''}</h4>
+        {!bases.length && <p className="muted">Ни одна действующая база не питает войска штаба.</p>}
+        {bases.map((b) => {
+          const a = acts.find((x) => x.key === `base:${b.id}`);
+          const pm = pickMode?.kind === 'base' && pickMode.base === b.id;
+          return (
+            <div key={b.id} className="brow">
+              <div className="brow-h" data-action="map.center" onClick={() => tap('map.center', { at: b.at })}>
+                <b>{b.name}</b>
+                <span className={`st ${b.state}`}>{b.state === 'active' ? 'действует' : b.state === 'moving' ? `переносится, заработает ${ddmm(b.activeFrom!)} ${hhmm(b.activeFrom!)}` : 'не действует — чужая территория'}</span>
+                {scope.bases === 'move' && !a && <button className="link" onClick={(e) => { e.stopPropagation(); setOpen(open === b.id ? null : b.id); }}>{open === b.id ? 'отмена' : 'перенести…'}</button>}
+              </div>
+              {a && <ActLine a={a} />}
+              {open === b.id && !a && <PlacePicker v={v} from={b.at} mapOn={pm} onMap={() => setPickMode(pm ? null : { kind: 'base', base: b.id, name: b.name, from: b.at })}
+                onPick={(p) => { setOpen(null); tap('command.rear.base', { army: b.id, place: p.id }); }} />}
+            </div>
+          );
+        })}</>}
+      <h4 className="cmd-h4">{scope.priority ? <>Приоритет подвоза между {who} <small>не более {lim}; приоритетным ×1,5, остальным ×0,75 — и всем их дивизиям</small></> : 'Подвоз ваших войск'}</h4>
+      {scope.priority && pa && <ActLine a={pa} />}
+      <div className="prio" data-hl="prio">{rows.map(({ unit: u, hours: h }) => {
+        const bad = h == null || h > v.rangeHours;
+        const info = <><span className="prio-n">{short(u.name)}{u.cutOff ? <em className="iss"> отрезан</em> : null}</span>
+          <span className={`prio-h${bad ? ' bad' : ''}`} title="Время подвоза от ближайшей действующей базы (худшее по дивизиям)">{h == null ? 'подвоз не доходит' : `${h} ч${bad ? ' — дальше предела' : ''}`}</span>
+          <Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></>;
+        return scope.priority
+          ? <label key={u.id} className={mineP.includes(u.id) ? 'on' : ''}><input type="checkbox" data-action="command.rear.priority" checked={mineP.includes(u.id)} disabled={!mineP.includes(u.id) && mineP.length >= lim} onChange={() => toggle(u.id)} />{info}</label>
+          : <div key={u.id} className="prio-row">{info}</div>;
+      })}</div>
+    </div>
+  );
+}
+
+function Bridges({ v, acts, pickMode, setPickMode, scope }: { v: TurnView; acts: Act[]; pickMode: Pick | null; setPickMode: (p: Pick | null) => void; scope: StaffScope | null }) {
   const mine = acts.filter((a) => a.action.kind === 'bridge');
   const building = v.bridges.filter((b) => b.building);
+  const can = !scope || scope.bridges === 'build';
+  const shown = scope ? postBridges(v, scope) : v.bridges;
   const busy = building.length + mine.length;
   return (
     <div className="cmd-sec">
-      <h3>Инженерные войска: переправы</h3>
-      <p className="note">Через большую реку без моста техника не пройдёт (пехота — медленно), подвоз — тоже. Наводка: большая река — сутки, малая — 12 ч; нужны наши войска рядом. Понтонных парков — {v.parks}, занято {busy}.</p>
-      <button className={pickMode?.kind === 'bridge' ? 'on' : ''} disabled={busy >= v.parks && pickMode?.kind !== 'bridge'} onClick={() => setPickMode(pickMode?.kind === 'bridge' ? null : { kind: 'bridge' })}>
-        {pickMode?.kind === 'bridge' ? 'Щёлкните по реке на карте… (отмена)' : busy >= v.parks ? 'Все понтонные парки заняты' : 'Навести переправу — указать место на карте'}</button>
+      <h3>Инженерные войска: переправы{scope ? ` — ${scope.whose}` : ''}</h3>
+      <p className="note">Через большую реку без моста техника не пройдёт (пехота — медленно), подвоз — тоже. Наводка: большая река — сутки, малая — 12 ч; нужны наши войска рядом. Понтонных парков у стороны — {v.parks}, занято {busy}.
+        {scope && scope.bridges === 'build' && ' Переправу наводят в полосе штаба — рядом с его войсками.'}
+        {scope && scope.bridges === 'view' && (scope.level === 'stavka' ? ' Ставка видит все переправы; наводят их фронты и армии (уровни «Фронт», «Армия»).' : ' Понтонных парков у корпуса нет — переправу наводит штаб армии (уровень «Армия»); здесь — переправы рядом с вашими войсками.')}</p>
+      {can && <button className={pickMode?.kind === 'bridge' ? 'on' : ''} disabled={busy >= v.parks && pickMode?.kind !== 'bridge'} onClick={() => setPickMode(pickMode?.kind === 'bridge' ? null : { kind: 'bridge' })}>
+        {pickMode?.kind === 'bridge' ? 'Щёлкните по реке на карте… (отмена)' : busy >= v.parks ? 'Все понтонные парки заняты' : 'Навести переправу — указать место на карте'}</button>}
       {mine.map((a) => <ActLine key={a.key} a={a} />)}
-      {building.length > 0 && <><h4 className="cmd-h4">Наводятся</h4>{building.map((b) => <div key={b.id} className="brow-h" data-action="map.center" onClick={() => tap('map.center', { at: b.at })}><b>{b.name}</b><span className="st moving">готова {ddmm(b.openFrom!)} {hhmm(b.openFrom!)}</span></div>)}</>}
-      <h4 className="cmd-h4">Действующие переправы</h4>
-      {v.bridges.filter((b) => !b.building).map((b) => <div key={b.id} className="brow-h" data-action="map.center" onClick={() => tap('map.center', { at: b.at })}><b>{b.name}</b><span className="st active">действует</span></div>)}
+      {building.filter((b) => shown.includes(b)).length > 0 && <><h4 className="cmd-h4">Наводятся</h4>{building.filter((b) => shown.includes(b)).map((b) => <div key={b.id} className="brow-h" data-action="map.center" onClick={() => tap('map.center', { at: b.at })}><b>{b.name}</b><span className="st moving">готова {ddmm(b.openFrom!)} {hhmm(b.openFrom!)}</span></div>)}</>}
+      <h4 className="cmd-h4">Действующие переправы{scope && scope.level !== 'stavka' ? ' в полосе' : ''}</h4>
+      {!shown.some((b) => !b.building) && <p className="muted">Переправ рядом с вашими войсками нет.</p>}
+      {shown.filter((b) => !b.building).map((b) => <div key={b.id} className="brow-h" data-action="map.center" onClick={() => tap('map.center', { at: b.at })}><b>{b.name}</b><span className="st active">действует</span></div>)}
     </div>
   );
 }
 
 /** Резервы: ждущие ввода (по армиям — вводятся целиком или по соединению), прибывающие по плану и резервы на театре. */
-function Reserves({ v, acts, pickMode, setPickMode, onOrder }: {
-  v: TurnView; acts: Act[]; pickMode: Pick | null; setPickMode: (p: Pick | null) => void; onOrder: (id: string) => void;
+function Reserves({ v, acts, pickMode, setPickMode, onOrder, scope }: {
+  v: TurnView; acts: Act[]; pickMode: Pick | null; setPickMode: (p: Pick | null) => void; onOrder: (id: string) => void; scope?: StaffScope | null;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -1636,7 +1708,9 @@ function Reserves({ v, acts, pickMode, setPickMode, onOrder }: {
   const center = active.reduce<[number, number]>((c, u, _i, arr) => [c[0] + u.at[0] / arr.length, c[1] + u.at[1] / arr.length], [0, 0]);
   // резервы на театре: соединения в резерве или на марше без боя за ход (без штабов-сводок)
   const hqs = new Set(v.own.filter((u) => v.own.some((x) => x.parent === u.id)).map((u) => u.id));
-  const onTheatre = active.filter((u) => !hqs.has(u.id) && (u.posture === 'в резерве' || (u.posture === 'на марше' && !u.combats.length)));
+  // пункт ниже Ставки — только его войска
+  const pool = scope && scope.level !== 'stavka' ? divisionsUnder(v, scope.issuer) : active;
+  const onTheatre = pool.filter((u) => !hqs.has(u.id) && (u.posture === 'в резерве' || (u.posture === 'на марше' && !u.combats.length)));
   const sum = (us: UnitReport[]) => ({ p: us.reduce((s, u) => s + u.personnel, 0), t: us.reduce((s, u) => s + u.tanks, 0), g: us.reduce((s, u) => s + u.guns, 0) });
   const mid = (us: UnitReport[]): LngLat => [us.reduce((s, u) => s + u.at[0], 0) / us.length, us.reduce((s, u) => s + u.at[1], 0) / us.length];
   const span = (ts: string[]) => { const l = [...ts].sort(); const a = `${ddmm(l[0])} ${hhmm(l[0])}`, b = `${ddmm(l[l.length - 1])} ${hhmm(l[l.length - 1])}`; return a === b ? a : `${a} – ${b}`; };
@@ -1644,7 +1718,7 @@ function Reserves({ v, acts, pickMode, setPickMode, onOrder }: {
   const all = sum(waiting.flatMap((g) => g.units));
   return (
     <div className="cmd-sec">
-      <h3>Резервы {v.terms?.topGen ?? 'Ставки'}</h3>
+      <h3>{!scope || scope.level === 'stavka' ? `Резервы ${v.terms?.topGen ?? 'Ставки'}` : `Резервы — ${scope.whose}`}</h3>
       <p className="note">Резерв вводится по вашему решению: укажите район сосредоточения на своей территории — для всего объединения сразу или для отдельного соединения. Войска будут там не раньше, чем готовы к вводу, и не раньше чем через сутки после распоряжения. Задачу можно поставить сразу (вкладка «Войска») — приказ дождётся.</p>
       {waiting.length > 0 ? <p className="res-sum">Ждут ввода: <b>{waiting.length}</b> {waiting.length === 1 ? 'объединение' : 'объединения'}, {all.p.toLocaleString('ru')} чел., танков и САУ {all.t}, орудий {all.g}.</p>
         : <p className="muted">Резервов, ждущих вашего решения, нет{coming.length ? ' — прибывающие войска вводятся по плану (ниже)' : ''}.</p>}
@@ -1696,8 +1770,8 @@ function Reserves({ v, acts, pickMode, setPickMode, onOrder }: {
             <div className="muted small">Район: {g.units[0].place} <StaffButton className="link" action="map.center" params={{ at: mid(g.units) }}>на карте</StaffButton></div>
           </div>
         ))}</>}
-      <h4 className="cmd-h4">Резервы на театре</h4>
-      <p className="muted small">Свои соединения в резерве или на марше без боя — их можно бросить на угрожаемое направление приказом.</p>
+      <h4 className="cmd-h4">{scope && scope.level !== 'stavka' ? 'Резервы в ваших войсках' : 'Резервы на театре'}</h4>
+      <p className="muted small">{scope && scope.level !== 'stavka' ? 'Ваши соединения в резерве или на марше без боя — их можно бросить на угрожаемое направление документом подчинённому штабу.' : 'Свои соединения в резерве или на марше без боя — их можно бросить на угрожаемое направление приказом.'}</p>
       {onTheatre.length ? onTheatre.slice(0, more ? undefined : 8).map((u) => (
         <div key={u.id} className="brow">
           <div className="brow-h"><b title={u.name}>{short(u.name)}</b><span className="st">{u.posture}, {u.place}</span><button className="link" onClick={() => onOrder(u.id)}>приказ…</button></div>
@@ -1710,12 +1784,14 @@ function Reserves({ v, acts, pickMode, setPickMode, onOrder }: {
 }
 
 /** Полосы: линии Ставки словами, линии армий — распоряжением игрока (две армии одного фронта, линия точками на карте). */
-function Bounds({ v, acts, picking, setPicking, pts, setPts, sel }: {
+function Bounds({ v, acts, picking, setPicking, pts, setPts, sel, scope }: {
   v: TurnView; acts: Act[]; picking: boolean; setPicking: (b: boolean) => void;
-  pts: LngLat[]; setPts: (f: (l: LngLat[]) => LngLat[]) => void; sel: Omit<BoundsDraft, 'pts'>;
+  pts: LngLat[]; setPts: (f: (l: LngLat[]) => LngLat[]) => void; sel: Omit<BoundsDraft, 'pts'>; scope?: StaffScope | null;
 }) {
+  if (scope && scope.bounds !== 'armies') return <PostBounds v={v} scope={scope} />;
   const armies = v.armies ?? [];
-  const fronts = v.groups.filter((g) => armies.filter((u) => u.group === g.id).length >= 2);
+  // пункт фронта — только его армии
+  const fronts = v.groups.filter((g) => armies.filter((u) => u.group === g.id).length >= 2 && (!scope || g.id === scope.issuer));
   // фронт, армия и соседняя армия — в CommandView: их выбирает и голос («предложи линию между …»)
   const front = sel.front || (fronts[0]?.id ?? '');
   const { a, b } = sel;
@@ -1733,7 +1809,7 @@ function Bounds({ v, acts, picking, setPicking, pts, setPts, sel }: {
   // «Предложить линию» и «В распоряжение» — действия реестра (command.bounds.propose / put), как и голосом
   return (
     <div className="cmd-sec">
-      <h3>Полосы и разграничительные линии</h3>
+      <h3>Полосы и разграничительные линии{scope ? ` — ${scope.whose}` : ''}</h3>
       {v.sectors.length > 0 && <ul className="sect-list">{v.sectors.map((t) => <li key={t}>{t}</li>)}</ul>}
       <p className="note">Линии между {v.terms?.groupsGen ?? 'фронтами'} устанавливает {v.terms?.top ?? 'Ставка'} — исторические {v.terms?.directive === 'приказ' ? 'приказы' : 'директивы'} вступают, когда обстановка совпала с той, что их вызвала, иначе по поводу или по вашему ходатайству (вкладка «Решение») решает модель высшего командования. Линии между армиями одного объединения — ваше распоряжение: вступает в силу с задержкой доведения армиям; армии идут к целям своей полосой, выход в полосу соседа отмечается в разборе.</p>
       {mine.map((x) => <ActLine key={x.key} a={x} />)}
@@ -1757,6 +1833,51 @@ function Bounds({ v, acts, picking, setPicking, pts, setPts, sel }: {
         </div>
         <p className="muted small">Линия — от тыла к переднему краю, хотя бы две точки: «Предложить линию» проводит её между войсками двух армий, «Указать линию на карте» — своими точками. Кто справа по ходу линии, стенд определит по положению армий.</p>
       </div> : <p className="muted">Ни в одном фронте нет двух действующих армий — линии армий не нужны.</p>}
+    </div>
+  );
+}
+
+/** Полосы пункта, который сам линий армий не проводит: Ставка — линии фронтов (директивой), армия и ниже — своя полоса. */
+function PostBounds({ v, scope }: { v: TurnView; scope: StaffScope }) {
+  const hqs = v.command?.hqs ?? {};
+  // своя армия: пункт армии — он сам, корпус — его армия
+  const army = scope.level === 'army' ? scope.issuer : hqs[scope.issuer]?.parent ?? null;
+  const lines = (v.boundaries ?? []).filter((l) => army && (l.right === army || l.left === army));
+  return (
+    <div className="cmd-sec">
+      <h3>Полосы и разграничительные линии — {scope.whose}</h3>
+      {scope.bounds === 'fronts' ? <>
+        {v.sectors.length > 0 && <ul className="sect-list">{v.sectors.map((t) => <li key={t}>{t}</li>)}</ul>}
+        <p className="note">Линии между {v.terms?.groupsGen ?? 'фронтами'} {v.terms?.top ?? 'Ставка'} задаёт директивой: правая и левая разграничительные линии фронта — в «Пункте управления» (директива фронту), на карте. Линии между армиями проводят штабы фронтов (уровень «Фронт»).</p>
+      </> : <>
+        <p className="note">{scope.level === 'army'
+          ? 'Полосы корпусов армия задаёт боевым приказом: «Пункт управления» → приказ корпусу → полоса корпуса (разграничительные линии на карте). Линии между армиями проводит штаб фронта.'
+          : 'Полоса корпуса задана приказом армии; полосы дивизий корпус задаёт своим приказом: «Пункт управления» → приказ дивизии → полоса.'}</p>
+        <h4 className="cmd-h4">Линии {scope.level === 'army' ? 'вашей армии' : 'армии корпуса'} с соседями</h4>
+        {lines.length ? <ul className="sect-list">{lines.map((l, i) => <li key={i}>{l.right === army ? `слева — ${short(l.leftName)}` : `справа — ${short(l.rightName)}`}</li>)}</ul>
+          : <p className="muted">Линий между армиями нет — полосу задают линии между {v.terms?.groupsGen ?? 'фронтами'}.</p>}
+      </>}
+    </div>
+  );
+}
+
+/** Журнал пункта ниже Ставки: решения его штаба по ходам (из записи игры). */
+function PostJournal({ v, issuer, record }: { v: TurnView; issuer: string; record: GameRecord | null }) {
+  const name = v.command?.hqs[issuer]?.name ?? issuer;
+  const days = (record?.turns ?? []).map((t) => ({ time: t.time, d: (t.human as (HumanDecision & { posts?: Record<string, HumanDecision> }) | undefined)?.posts?.[issuer] })).filter((x) => x.d);
+  return (
+    <div className="cmd-sec">
+      <h3>Журнал — {name}</h3>
+      <p className="note">Решения этого штаба по ходам и его документы. Журнал боевых действий стороны — на уровне «{v.terms?.top ?? 'Ставка'}».</p>
+      {!days.length && <p className="muted">Решений этого штаба пока нет: они записываются, когда ход проведён с решением штаба во вкладке «Решение».</p>}
+      {[...days].reverse().map(({ time, d }) => (
+        <div key={time} className="jday">
+          <h4>{dayLong(time)}, {hhmm(time)}</h4>
+          <div className="jsub">Решение</div><p>{d!.intent || '—'}</p>
+          <details><summary className="muted">оценка обстановки и донесение</summary>
+            <p><b>Оценка.</b> {d!.assessment || '—'}</p>{d!.enemyIntent && <p><b>Противник.</b> {d!.enemyIntent}</p>}{d!.risks && <p><b>Риски.</b> {d!.risks}</p>}<p><b>Донесение.</b> {d!.report || '—'}</p></details>
+        </div>
+      ))}
     </div>
   );
 }

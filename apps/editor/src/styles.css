@@ -681,6 +681,7 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .prio { display: flex; flex-direction: column; }
 .prio label { display: grid; grid-template-columns: 18px 100px 1fr auto auto; gap: 6px; align-items: center; font-size: 12px; padding: 3px 0; border-bottom: 1px solid #f4f2ed; }
 .prio label.on { background: var(--accent-bg); }
+.prio .prio-row { display: grid; grid-template-columns: 118px 1fr auto auto; gap: 6px; align-items: center; font-size: 12px; padding: 3px 0; border-bottom: 1px solid #f4f2ed; }
 .prio-n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .prio-h { color: #6b675d; font-size: 11px; } .prio-h.bad { color: var(--danger); }
 .cmd-h4 small { text-transform: none; letter-spacing: 0; font-weight: 400; }
