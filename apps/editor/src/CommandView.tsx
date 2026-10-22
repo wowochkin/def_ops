@@ -25,6 +25,7 @@ import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
 import { CommandPost, usePost, type PostState } from './CommandPost';
+import { resolveFrom } from './command-post';
 import { formTitle, initialCmds, markFor, MODE_TITLE, overHead, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
@@ -183,6 +184,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const post = usePost(view, level, levelTo, cmds, setCmds, !!progress, staffsOn(view), () => { setTab('orders'); setSub('units'); });
   const postRef = useRef<PostState | null>(null);
   postRef.current = post;
+  // указание пункта управления и прежние указания на карте (полосы, тыл) друг друга снимают; смена вкладки — тоже
+  useEffect(() => { post.cancelPick(); }, [tab, sub]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (pickMode) post.cancelPick(); }, [pickMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (post.pick) setPickMode(null); }, [post.pick]);
   const levelRef = useRef(level);
   levelRef.current = level;
   const [labels, toggleLabels] = useMapLabels();
@@ -324,7 +329,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     return en.on('click', (e) => {
       const pm = live.current.pickMode;
       // пункт управления: точки оси, рубежей, разграничительных линий
-      if (postRef.current?.pick) { postRef.current.addPoint(e.lngLat); return; }
+      if (postRef.current?.pick && postRef.current.pick !== 'mainBlow') { postRef.current.addPoint(e.lngLat); return; }
       if (pm?.kind === 'line') { setLinePts((l) => [...l, e.lngLat]); return; }
       if (pm && pm.kind !== 'order') { void pickAction(pm, e.lngLat, null); return; }
       if (!pm || !live.current.sel) {
@@ -507,12 +512,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   /** Ход — на расчёт (проверки готовности — в действии command.turn). */
   const sendTurn = () => {
     if (!view) return;
-    const orders: Order[] = draftList.map((d) => ({ id: `human@${view.time}:${d.formation}`, formation: d.formation, task: d.task, target: d.target, issuedAt: view.time, source: 'human', note: d.note || undefined, ...(d.form && staffsOn(view) ? { form: d.form } : {}) }));
+    // командование по ступеням: приказы — документами пункта управления (проекты старого вида не уходят)
+    const orders: Order[] = (staffsOn(view) ? [] : draftList).map((d) => ({ id: `human@${view.time}:${d.formation}`, formation: d.formation, task: d.task, target: d.target, issuedAt: view.time, source: 'human', note: d.note || undefined, ...(d.form && staffsOn(view) ? { form: d.form } : {}) }));
     setProgress('отправка приказов…');
-    send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision, ...(cmds.length ? { command: cmds } : {}) });
+    send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision, ...(cmds.length ? { command: staffsOn(view) ? resolveFrom(view, cmds) : cmds } : {}) });
   };
   /** Противник — цель удара выбранного объединения (никто не выбран — вкладка «Приказы»: выбрать объединение). */
   const targetEnemy = (id: string) => {
+    // пункт управления: противник — пункт ближайшей задачи открытого документа
+    if (staffsOn(view)) { const e = view!.intel.find((x) => x.id === id); if (post.draft && e) tap('command.dir.set', { point: e.at }); else tap('command.orders.sub', { sub: 'units' }); return; }
     if (!sel) { tap('command.orders.sub', { sub: 'units' }); return; }
     tap('command.order.set', { unit: sel, task: 'attack', enemy: id });
     tap('command.orders.sub', { sub: 'units' });
@@ -791,7 +799,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           <MapView doc={shownDoc ?? doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, view?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
-          {post.pick && <div className="pick-hint">Щёлкайте по карте — {({ axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия' } as const)[post.pick]}; закончить — «Готово» в пункте управления</div>}
+          {post.pick && <div className="pick-hint"><ActButton className="link" action="command.dir.pick" params={{ field: '' }}>Готово</ActButton> Щёлкайте по карте — {({ axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия', mainBlow: 'знаки армий главного удара' } as const)[post.pick]}; закончить — «Готово» в пункте управления</div>}
           {!pickMode && !post.pick && <MapHover engine={eng} doc={doc ? withLevel(doc, level) : null} time={time} />}
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
             : pickMode.kind === 'line' ? `Щёлкайте по карте — точки разграничительной линии (${linePts.length}); закончить — «Готово» во вкладке «Полосы»`

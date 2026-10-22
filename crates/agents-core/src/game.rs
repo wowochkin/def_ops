@@ -439,7 +439,8 @@ impl Game {
         // место получателя в построении отдающего: эшелон (с исходным положением) или ввод подвижной группы
         use crate::command::control::Role;
         let role = if p.commit { Some(Role::Committed) } else { match p.echelon.as_deref() { Some("first") => Some(Role::First), Some("second") => Some(Role::Second), _ => None } };
-        if let Some(r) = role {
+        // та же роль повторно — без нового отсчёта (ввод второго эшелона по сроку не откладывается)
+        if let Some(r) = role.filter(|&r| self.sim.command.role(to) != r) {
             self.sim.command.set_role(to, r);
             let at = crate::command::agent::place(&self.sim, to);
             match to { Target::Hq(h) => { self.sim.command.start_hq[h as usize] = Some(at); self.sim.command.since_hq[h as usize] = tick; } Target::Division(i) => { self.sim.command.start_div[i as usize] = Some(at); self.sim.command.since_div[i as usize] = tick; } }

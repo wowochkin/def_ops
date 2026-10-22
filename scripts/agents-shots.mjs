@@ -93,7 +93,7 @@ try {
   await page.locator('.post-pts', { hasText: 'Ближайшая' }).locator('button', { hasText: 'на карте' }).click();
   for (const p of [[14.05, 52.75], [14.0, 52.55], [14.05, 52.35]]) await at(p);
   await page.locator('.post-pts', { hasText: 'Ближайшая' }).locator('button', { hasText: 'Готово' }).click();
-  await page.locator('.post-chk label', { hasText: '8' }).first().locator('input').check();
+  for (const a of ['su_8gva', 'su_5ua', 'su_3ua']) await page.locator('.post-pick select').first().selectOption(a).catch(() => undefined);
   await page.locator('.post-form textarea').fill('Овладеть рубежом Врицен — Мюнхеберг, далее на Берлин');
   await shot('command-post-stavka.jpg');
   await page.locator('[data-action="command.dir.give"]').click();

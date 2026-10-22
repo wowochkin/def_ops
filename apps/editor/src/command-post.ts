@@ -28,8 +28,8 @@ export const FIELDS: Record<LevelId, Field[]> = {
     { key: 'immediate', label: 'Ближайшая задача (рубеж)', hint: 'и срок' },
     { key: 'subsequent', label: 'Последующая задача (рубеж)', hint: 'и срок' },
     { key: 'boundaries', label: 'Разграничительные линии', hint: 'правая и левая' },
-    { key: 'junction', label: 'Ответственный за стык' },
-    { key: 'reserve', label: 'Резервы Ставки в состав фронта' },
+    { key: 'junction', label: 'Ответственный за стык', hint: 'в документ; штабы-агенты по нему пока не решают' },
+    { key: 'reserve', label: 'Резервы Ставки в состав фронта', hint: 'в документ; ввод резерва — «Приказы → Резервы»' },
     { key: 'note', label: 'Указания' },
   ],
   front: [
@@ -151,8 +151,39 @@ export function toDirective(d: DirDraft, v: TurnView, from?: string): Record<str
   return out;
 }
 
-/** Чего не хватает, чтобы отдать: наступать, выдвигаться, отходить — с рубежом или осью. */
-export function missing(d: DirDraft): string[] {
+/** Чего не хватает, чтобы отдать: наступать, выдвигаться, отходить — с рубежом или осью; срок — не раньше хода (now). */
+export function missing(d: DirDraft, now?: string): string[] {
   const moving = d.task === 'attack' || d.task === 'move' || d.task === 'withdraw';
-  return moving && !d.immediate.length && d.axis.length < 2 ? ['рубеж ближайшей задачи или ось'] : [];
+  const out = moving && !d.immediate.length && d.axis.length < 2 ? ['рубеж ближайшей задачи или ось'] : [];
+  const early = (t?: string) => !!(t && now && t.slice(0, 16) < now.slice(0, 16));
+  if (early(d.immediateBy) || early(d.subsequentBy)) out.push('срок не раньше начала хода');
+  return out;
+}
+
+/** Слова советской стороны — словами стороны игрока (ОКХ, группа армий). */
+export function local(s: string, v: TurnView): string {
+  const t = v.terms;
+  return t ? s.replace(/Ставки/g, t.topGen).replace(/Ставка/g, t.top) : s;
+}
+
+/**
+ * Перед отправкой хода: от чьего имени уходит каждая директива пункта управления — ближайший начальник получателя,
+ * взятый игроком к концу очереди (с учётом «взять» и «вернуть» этого хода); никого — верхняя инстанция (через голову).
+ * Взять и вернуть ставятся раньше директив: ядро исполняет команды по порядку.
+ */
+export function resolveFrom(v: TurnView, cmds: CommandOp[]): CommandOp[] {
+  const hqs = v.command?.hqs ?? {};
+  const parentOf = (id: string) => hqs[id]?.parent ?? v.own.find((u) => u.id === id)?.parent ?? null;
+  const control = cmds.filter((c) => c.op === 'take' || c.op === 'release');
+  const rest = cmds.filter((c) => c.op !== 'take' && c.op !== 'release');
+  return [...control, ...rest.map((c) => {
+    if (c.op !== 'directive') return c;
+    const { issuer: _issuer, from: _from, ...d } = c.directive as typeof c.directive & { issuer?: string };
+    let from: string | undefined;
+    for (let x = parentOf(d.to), n = 0; x && n < 8; x = parentOf(x), n++) {
+      if (hqs[x]?.echelon === 'high_command') break;
+      if (taken(v, x, cmds)) { from = x; break; }
+    }
+    return { op: 'directive' as const, directive: from ? { ...d, from } : d };
+  })];
 }

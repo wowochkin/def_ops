@@ -15,7 +15,7 @@ import type { LngLat } from '@def-ops/core';
 import { TASK_RU, type Task } from '@def-ops/sim';
 import type { Goal, PlanVariantView, TurnView } from '../../sim/game-protocol';
 import { ordinalIndex, pickByName } from '../answers';
-import { getAction, registerParser, type Action, type PhraseHit } from '../registry';
+import { act, getAction, registerParser, type Action, type PhraseHit } from '../registry';
 import { btn, hl, note, noted } from '../highlight';
 import { short } from '../report';
 import { nameCase, numberWords } from '../speech';
@@ -94,6 +94,9 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         const r = findOwn(String(p?.name ?? ''), d.view!);
         if (!r) return `Не нашёл своего объединения «${p?.name}».`;
         if ('say' in r) return r.say;
+        // командование по ступеням: приказ — документом в пункте управления его начальника
+        const cm = d.view?.command;
+        if (cm && cm.mode !== 'legacy') return (await act('command.dir.for', { name: r.found.id })) ?? undefined;
         d.select(r.found.id); d.setTab('orders'); d.setSub('units'); d.goTo(r.found.at, false);
         note(hl('oedit'), { at: r.found.at });
         const name = short(r.found.name);

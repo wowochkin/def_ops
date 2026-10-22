@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIELDS, issuers, missing, postTitle, recipients, sender, toDirective, type DirDraft } from '../src/command-post';
+import { FIELDS, issuers, missing, postTitle, recipients, resolveFrom, sender, toDirective, type DirDraft } from '../src/command-post';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const v = (taken: string[] = []) => ({
@@ -55,6 +55,7 @@ describe('пункт управления по уровням', () => {
     expect(missing(d)).toEqual([]);
     expect(missing({ ...d, axis: [], immediate: [] })).toEqual(['рубеж ближайшей задачи или ось']);
     expect(missing({ ...d, task: 'defend', axis: [], immediate: [] })).toEqual([]);
+    expect(missing({ ...d, immediateBy: '1945-04-16T10:00' }, '1945-04-17T05:00')).toEqual(['срок не раньше начала хода']);
   });
 });
 
@@ -62,5 +63,20 @@ describe('взятие в очереди хода', () => {
   it('«взять» в очереди — штаб отдаёт сам; «вернуть» после — снова через голову', () => {
     expect(sender(v(), 'su_8gva', [{ op: 'take', hq: 'su_8gva' }])).toEqual({ from: 'su_8gva', overHead: false });
     expect(sender(v(), 'su_8gva', [{ op: 'take', hq: 'su_8gva' }, { op: 'release', id: 'su_8gva' }]).overHead).toBe(true);
+  });
+});
+
+describe('от чьего имени — при отправке хода', () => {
+  const dir = (to: string, issuer: string) => ({ op: 'directive' as const, directive: { to, task: 'attack', form: 'order', issuer } });
+  it('ближайший взятый начальник получателя (с очередью взятий); никого — Ставка; «вернуть» после — снова Ставка', () => {
+    expect(resolveFrom(v(), [dir('su_4gsk', 'su_8gva')])).toEqual([{ op: 'directive', directive: { to: 'su_4gsk', task: 'attack', form: 'order' } }]);
+    expect(resolveFrom(v(['su_1bf']), [dir('su_4gsk', 'su_8gva')])[0]).toMatchObject({ directive: { from: 'su_1bf' } });
+    const d0 = (q: ReturnType<typeof resolveFrom>) => q.find((c) => c.op === 'directive') as { directive: { from?: string } };
+    expect(d0(resolveFrom(v(), [dir('su_4gsk', 'su_8gva'), { op: 'take', hq: 'su_8gva' }])).directive.from).toBe('su_8gva');
+    expect(d0(resolveFrom(v(['su_8gva']), [dir('su_4gsk', 'su_8gva'), { op: 'release', id: 'su_8gva' }])).directive.from).toBeUndefined();
+  });
+  it('взятие ставится в очередь раньше директив: ядро исполняет команды по порядку', () => {
+    const q = resolveFrom(v(), [dir('su_4gsk', 'su_8gva'), { op: 'take', hq: 'su_8gva' }]);
+    expect(q.map((c) => c.op)).toEqual(['take', 'directive']);
   });
 });

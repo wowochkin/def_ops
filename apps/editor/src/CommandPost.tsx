@@ -4,17 +4,17 @@
  * взятый или нет), его подчинённые и форма документа по ступени получателя; рубежи, ось главного удара и
  * разграничительные линии указываются щелчками по карте. «Отдать» ставит директиву в очередь хода.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LngLat } from '@def-ops/core';
 import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
 import { controlMark, findHq, queueOp, type CommandOp } from './command-forms';
-import { blankDir, DIR_TASK_RU, DOC_TITLE, FIELDS, issuers, missing, POST_TITLE, postTitle, recipients, sender, taken, toDirective, type DirDraft, type DirTask } from './command-post';
+import { blankDir, DIR_TASK_RU, local, DOC_TITLE, FIELDS, issuers, missing, POST_TITLE, postTitle, recipients, sender, taken, toDirective, type DirDraft, type DirTask } from './command-post';
 import { LEVELS, type LevelId } from './map-level-scale';
 
-export type DirPick = 'axis' | 'immediate' | 'subsequent' | 'boundaryR' | 'boundaryL';
-const PICK_RU: Record<DirPick, string> = { axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия' };
+export type DirPick = 'axis' | 'immediate' | 'subsequent' | 'boundaryR' | 'boundaryL' | 'mainBlow';
+const PICK_RU: Record<DirPick, string> = { axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия', mainBlow: 'знаки армий главного удара' };
 const LEVEL_RU: Record<LevelId, string> = { stavka: 'Ставка', front: 'Фронт', army: 'Армия', corps: 'Корпус', division: 'Дивизия' };
 
 export interface PostState {
@@ -24,6 +24,7 @@ export interface PostState {
   dirs: Record<string, DirDraft>;
   draft: DirDraft | null;
   pick: DirPick | null;
+  cancelPick(): void;
   /** Щелчок по карте при указании: точка — в поле проекта. */
   addPoint(p: LngLat): void;
   /** Щелчок по знаку: штаб ступени — пункт, подчинённый — его проект; true — обработан. */
@@ -42,10 +43,13 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   // пункт ступени: выбранный, иначе — взятый игроком, иначе — первый
   const issuer = (chosen[level] && list.some((x) => x.id === chosen[level]) ? chosen[level] : list.find((x) => view && taken(view, x.id, cmds))?.id ?? list[0]?.id) ?? null;
   const subs = useMemo(() => (view && issuer ? recipients(view, issuer) : []), [view, issuer]);
-  const draft = sel && subs.some((x) => x.id === sel) ? dirs[sel] ?? blankDir(sel, level) : null;
+  // проекты — по уровню и получателю: у «Корпуса» и «Дивизии» одни дивизии, но разные документы
+  const draft = sel && subs.some((x) => x.id === sel) ? dirs[`${level}:${sel}`] ?? blankDir(sel, level) : null;
+  // указание на карте — только при открытом документе; смена уровня или штаба его снимает
+  useEffect(() => { setPick(null); }, [level, issuer]); // eslint-disable-line react-hooks/exhaustive-deps
   const live = useRef({ draft, pick }); live.current = { draft, pick };
   const ready = (): true | string => (!on ? 'пункт управления — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view?.over ? 'игра окончена' : busy ? 'идёт расчёт хода' : true);
-  const put = (d: DirDraft) => setDirs((x) => ({ ...x, [d.to]: d }));
+  const put = (d: DirDraft) => setDirs((x) => ({ ...x, [`${d.level}:${d.to}`]: d }));
   const name = (id: string) => view?.command?.hqs[id]?.name ?? view?.own.find((u) => u.id === id)?.name ?? id;
 
   useAction({
@@ -64,7 +68,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
         lv = byEch;
         setChosen((c) => ({ ...c, [lv]: id! }));
       }
-      setLevel(lv); setSel(null); setPick(null);
+      setLevel(lv); setSel(null); setPick(null); openTab();
       return `Пункт управления: ${POST_TITLE[lv]}${id ? ` — ${name(id)}` : ''}. Уровень карты — «${LEVEL_RU[lv]}».`;
     },
   });
@@ -95,15 +99,16 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   });
   useAction({
     id: 'command.dir.set', section: 'replay', model: false, title: 'Правка документа', describe: 'Правит открытый документ пункта управления.',
-    params: { type: 'object', properties: { task: { type: 'string' }, form: { type: 'string' }, note: { type: 'string' }, toggle: { type: 'object' }, junction: { type: 'string' }, echelon: { type: 'string' }, commit: { type: 'boolean' }, by: { type: 'object' }, clear: { type: 'string' } } },
+    params: { type: 'object', properties: { task: { type: 'string' }, form: { type: 'string' }, note: { type: 'string' }, toggle: { type: 'object' }, junction: { type: 'string' }, echelon: { type: 'string' }, commit: { type: 'boolean' }, by: { type: 'object' }, clear: { type: 'string' }, point: { type: 'array' } } },
     available: ready,
-    run: async (p: { task?: DirTask; form?: 'order' | 'instruction'; note?: string; toggle?: { field: 'mainBlow' | 'reserve'; id: string }; junction?: string; echelon?: 'first' | 'second' | ''; commit?: boolean; by?: { field: 'immediate' | 'subsequent'; at: string }; clear?: DirPick }) => {
+    run: async (p: { task?: DirTask; form?: 'order' | 'instruction'; note?: string; toggle?: { field: 'mainBlow' | 'reserve'; id: string }; junction?: string; echelon?: 'first' | 'second' | ''; commit?: boolean; by?: { field: 'immediate' | 'subsequent'; at: string }; clear?: DirPick; point?: LngLat }) => {
       const d = live.current.draft;
       if (!d) return 'Документ не открыт.';
       const n: DirDraft = { ...d };
       if (p.task && DIR_TASK_RU[p.task]) n.task = p.task;
       if (p.form === 'order' || p.form === 'instruction') n.form = level === 'division' ? 'instruction' : p.form;
       if (p.note !== undefined) n.note = String(p.note);
+      if (p.point) n.immediate = [p.point];
       if (p.toggle) { const l = n[p.toggle.field]; n[p.toggle.field] = l.includes(p.toggle.id) ? l.filter((x) => x !== p.toggle!.id) : [...l, p.toggle.id]; }
       if (p.junction !== undefined) n.junction = p.junction || undefined;
       if (p.echelon !== undefined) n.echelon = p.echelon || undefined;
@@ -119,6 +124,18 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
     },
   });
   useAction({
+    id: 'command.dir.edit', section: 'replay', title: 'Задача в документе', describe: 'Открытый документ пункта управления: задача (task: attack, defend, delay, withdraw, move, reserve), форма (form: order — приказ, instruction — распоряжение), эшелон (echelon: first, second), ввод подвижной группы (commit), указания (note).',
+    params: { type: 'object', properties: { task: { enum: Object.keys(DIR_TASK_RU) }, form: { enum: ['order', 'instruction'] }, echelon: { enum: ['first', 'second'] }, commit: { type: 'boolean' }, note: { type: 'string' } } },
+    say: ['штаб, задача — оборонять', 'штаб, распоряжением'], available: ready, highlight: () => hl('post-form'),
+    run: async (p: { task?: DirTask; form?: 'order' | 'instruction'; echelon?: 'first' | 'second'; commit?: boolean; note?: string }) => {
+      const d = live.current.draft;
+      if (!d) return 'Документ не открыт: скажите, например, «директива первому Белорусскому фронту».';
+      await act('command.dir.set', p ?? {});
+      const n = { ...d, ...(p?.task ? { task: p.task } : {}) };
+      return `${name(d.to)}: ${DIR_TASK_RU[n.task]}${p?.form ? `, ${p.form === 'order' ? 'приказом' : 'распоряжением'}` : ''}${p?.echelon ? `, ${p.echelon === 'first' ? 'первый' : 'второй'} эшелон` : ''}.`;
+    },
+  });
+  useAction({
     id: 'command.dir.pick', section: 'replay', model: false, title: 'Указать на карте', describe: 'Указание на карте: ось, рубежи задач, разграничительные линии (field; пусто — закончить).',
     params: { type: 'object', properties: { field: { type: 'string' } } }, available: ready,
     run: async (p: { field?: DirPick | '' }) => {
@@ -128,7 +145,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
       // указание заново — с чистого листа
       if (p.field === 'boundaryR') put({ ...d, boundaries: [[], d.boundaries[1]] });
       else if (p.field === 'boundaryL') put({ ...d, boundaries: [d.boundaries[0], []] });
-      else put({ ...d, [p.field]: [] });
+      else if (p.field !== 'mainBlow') put({ ...d, [p.field]: [] });
       setPick(p.field);
       return `Щёлкайте по карте: ${PICK_RU[p.field]}; закончить — «Готово».`;
     },
@@ -139,10 +156,11 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
     run: async () => {
       const d = live.current.draft;
       if (!d || !issuer) return 'Документ не открыт.';
-      const miss = missing(d);
+      const miss = missing(d, view!.time);
       if (miss.length) return `Не хватает: ${miss.join(', ')}.`;
       const s = sender(view!, issuer, cmds);
-      setCmds((q) => queueOp(q, { op: 'directive', directive: toDirective(d, view!, s.from) as { to: string; task: string; form: string } }));
+      // от чьего имени — при отправке хода (resolveFrom): взять и вернуть могут прийти позже
+      setCmds((q) => queueOp(q, { op: 'directive', directive: { ...toDirective(d, view!), issuer } as unknown as { to: string; task: string; form: string } }));
       setPick(null);
       return `${d.form === 'order' ? DOC_TITLE[level] : 'Боевое распоряжение'} — ${name(d.to)}: ${DIR_TASK_RU[d.task]}${s.overHead ? ', через голову' : ''}. Уйдёт с ходом.`;
     },
@@ -150,25 +168,54 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   useAction({
     id: 'command.dir.cancel', section: 'replay', model: false, title: 'Отменить проект', describe: 'Убирает проект документа подчинённому.',
     params: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] }, available: ready,
-    run: async (p: { name: string }) => { setDirs((x) => { const y = { ...x }; delete y[p?.name]; return y; }); setPick(null); return 'Проект убран.'; },
+    run: async (p: { name: string }) => { setDirs((x) => { const y = { ...x }; delete y[`${level}:${p?.name}`]; return y; }); setPick(null); return 'Проект убран.'; },
   });
 
   return {
-    level, issuer, sel, dirs, draft, pick,
+    level, issuer, sel, dirs, draft, pick: draft ? pick : null,
+    cancelPick: () => setPick(null),
     addPoint: (pt) => {
       const { draft: d, pick: f } = live.current;
-      if (!d || !f) return;
+      if (!d || !f || f === 'mainBlow') return;
       if (f === 'boundaryR') put({ ...d, boundaries: [[...d.boundaries[0], pt], d.boundaries[1]] });
       else if (f === 'boundaryL') put({ ...d, boundaries: [d.boundaries[0], [...d.boundaries[1], pt]] });
       else put({ ...d, [f]: [...d[f], pt] });
     },
     click: (id) => {
       if (!on) return false;
+      // армии главного удара — щелчком по знаку
+      const dd = live.current.draft;
+      if (live.current.pick === 'mainBlow' && dd && view && recipients(view, dd.to).some((x) => x.id === id)) {
+        put({ ...dd, mainBlow: dd.mainBlow.includes(id) ? dd.mainBlow.filter((x) => x !== id) : [...dd.mainBlow, id] });
+        return true;
+      }
       if (list.some((x) => x.id === id)) { setChosen((c) => ({ ...c, [level]: id })); setSel(null); return true; }
       if (subs.some((x) => x.id === id)) { setSel(id); return true; }
       return false;
     },
   };
+}
+
+/** Сокращение названия для плашки: «8-я гвардейская армия» → «8 гв. А». */
+const shortName = (n: string) => n.replace(/(\d+)-[яйе]\s/, '$1 ').replace(/гвардейск\p{L}*/u, 'гв.').replace(/ударн\p{L}*\s+армия/u, 'уд. А').replace(/танков\p{L}*\s+армия/u, 'ТА').replace(/армия Войска Польского/u, 'А ВП').replace(/\sармия$/u, ' А');
+
+/**
+ * Выбор нескольких из списка: выбранные — плашками с «×», добавить — из списка остальных или (map) щелчком по знаку
+ * на карте.
+ */
+function Pick({ label, field, items, chosen, map }: { label: string; field: 'mainBlow' | 'reserve'; items: { id: string; name: string }[]; chosen: string[]; map?: DirPick | null }) {
+  const rest = items.filter((x) => !chosen.includes(x.id));
+  const on = map === field;
+  return <div className="post-pick">
+    <div className="post-pick-h"><span>{label}</span>
+      {map !== undefined && <ActButton className={`link${on ? ' on' : ''}`} action="command.dir.pick" params={{ field: on ? '' : field }} title="Щёлкать по знакам армий на карте">{on ? 'Готово' : 'на карте'}</ActButton>}</div>
+    <div className="post-chips">
+      {chosen.map((id) => { const x = items.find((y) => y.id === id); return x && <span key={id} className="chip" title={x.name}>{shortName(x.name)}
+        <ActButton className="chip-x" action="command.dir.set" params={{ toggle: { field, id } }} title="Убрать">×</ActButton></span>; })}
+      {rest.length > 0 && <select value="" data-action="command.dir.set" onChange={(e) => { if (e.target.value) void act('command.dir.set', { toggle: { field, id: e.target.value } }); }}>
+        <option value="">{chosen.length ? '+ добавить' : 'выбрать…'}</option>{rest.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>}
+    </div>
+  </div>;
 }
 
 /** Точки поля: сколько указано и кнопки «Указать на карте» / «Готово» / «Очистить». */
@@ -192,54 +239,53 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
   const queued = (id: string) => cmds.some((c) => c.op === 'directive' && c.directive.to === id);
   const fields = FIELDS[level];
   const has = (k: string) => fields.some((f) => f.key === k);
-  const label = (k: string) => fields.find((f) => f.key === k)?.label ?? '';
+  const label = (k: string) => local(fields.find((f) => f.key === k)?.label ?? '', v);
   const hint = (k: string) => fields.find((f) => f.key === k)?.hint;
   // армии и корпуса получателя — для главного удара и стыка; резервы — ждущие ввода
   const below = d ? recipients(v, d.to).filter((x) => x.echelon !== 'division') : [];
-  const reserves = v.reserveGroups.filter((g) => g.status === 'reserve');
-  const miss = d ? missing(d) : [];
+  // резервы — только штабы (ядро знает их по id штаба)
+  const reserves = v.reserveGroups.filter((g) => g.status === 'reserve' && v.command?.hqs[g.id]);
+  const miss = d ? missing(d, v.time) : [];
   const toTime = (t?: string) => (t ? t.slice(0, 16) : '');
   return (
     <div className="cmd-sec post" data-hl="post">
-      <h3>Пункт управления: {POST_TITLE[level]}</h3>
+      <h3>Пункт управления: {local(POST_TITLE[level], v)}</h3>
       <div className="post-who">
         {list.length > 1 ? <label>Штаб <select value={issuer} data-action="command.post" onChange={(e) => void act('command.post', { name: e.target.value })}>
           {list.map((x) => <option key={x.id} value={x.id}>{x.name}{taken(v, x.id, cmds) ? ' — взят' : ''}</option>)}</select></label> : null}
         <div className={s.overHead ? 'post-over' : 'post-own'}>{postTitle(v, issuer, cmds)}</div>
         {s.overHead && <small className="muted">Чтобы отдавать от имени этого штаба — вкладка «Штабы» → «взять».</small>}
       </div>
-      <h4>Подчинённые — {DOC_TITLE[level].toLowerCase()}</h4>
+      <h4>Подчинённые — {local(DOC_TITLE[level], v).toLowerCase()}</h4>
       <div className="post-subs">
         {subs.length ? subs.map((x) => {
           const m = controlMark(v.command?.hqs[x.id] ?? (v.command?.led.includes(x.id) ? { control: 'agent', led: true } : undefined));
           return <ActButton key={x.id} className={`orow${x.id === post.sel ? ' on' : ''}`} action="command.dir.open" params={{ name: x.id }}>
             <span className="orow-n">{x.name}</span>
-            <span className="orow-t">{queued(x.id) ? <b className="plan">отдан на этот ход</b> : post.dirs[x.id] ? <b className="plan">проект</b> : ''}{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>
+            <span className="orow-t">{queued(x.id) ? <b className="plan">отдан на этот ход</b> : post.dirs[`${level}:${x.id}`] ? <b className="plan">проект</b> : ''}{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>
           </ActButton>;
         }) : <span className="muted">подчинённых нет</span>}
       </div>
       {d && <div className="oedit post-form" data-hl="post-form">
-        <div className="oedit-h"><b>{d.form === 'order' ? DOC_TITLE[level] : 'Боевое распоряжение'} — {subs.find((x) => x.id === d.to)?.name}</b></div>
-        {level !== 'division' && <div className="seg">{([['order', DOC_TITLE[level]], ['instruction', 'Распоряжение']] as const).map(([k, t]) =>
+        <div className="oedit-h"><b>{d.form === 'order' ? local(DOC_TITLE[level], v) : 'Боевое распоряжение'} — {subs.find((x) => x.id === d.to)?.name}</b></div>
+        {level !== 'division' && <div className="seg">{([['order', local(DOC_TITLE[level], v)], ['instruction', 'Распоряжение']] as const).map(([k, t]) =>
           <ActButton key={k} className={d.form === k ? 'on' : ''} action="command.dir.set" params={{ form: k }} title={k === 'order' ? 'Подготовленный документ: около суток на ступень, полная слаженность' : 'Боевое распоряжение: 1–3 ч на ступень, слаженность ниже'}>{t}</ActButton>)}</div>}
         <label>{label('task')} <select value={d.task} data-action="command.dir.set" onChange={(e) => void act('command.dir.set', { task: e.target.value })}>
           {(Object.keys(DIR_TASK_RU) as DirTask[]).map((t) => <option key={t} value={t}>{DIR_TASK_RU[t]}</option>)}</select></label>
         {has('axis') && <Points label={label('axis')} hint={hint('axis')} field="axis" pts={d.axis} pick={pick} />}
-        {has('mainBlow') && below.length > 0 && <div className="post-chk"><span>{label('mainBlow')}:</span>
-          {below.map((x) => <label key={x.id}><input type="checkbox" data-action="command.dir.set" checked={d.mainBlow.includes(x.id)} onChange={() => void act('command.dir.set', { toggle: { field: 'mainBlow', id: x.id } })} /> {x.name}</label>)}</div>}
+        {has('mainBlow') && below.length > 0 && <Pick label={label('mainBlow')} field="mainBlow" items={below} chosen={d.mainBlow} map={pick} />}
         {has('immediate') && <><Points label={label('immediate')} field="immediate" pts={d.immediate} pick={pick} />
           {level !== 'division' && <label className="small">срок <input type="datetime-local" data-action="command.dir.set" value={toTime(d.immediateBy)} min={toTime(v.time)} onChange={(e) => void act('command.dir.set', { by: { field: 'immediate', at: e.target.value } })} /></label>}</>}
         {has('subsequent') && <><Points label={label('subsequent')} field="subsequent" pts={d.subsequent} pick={pick} />
           <label className="small">срок <input type="datetime-local" data-action="command.dir.set" value={toTime(d.subsequentBy)} min={toTime(v.time)} onChange={(e) => void act('command.dir.set', { by: { field: 'subsequent', at: e.target.value } })} /></label></>}
         {has('boundaries') && <div className="post-bnd"><span>{label('boundaries')}{hint('boundaries') && <small className="muted"> — {hint('boundaries')}</small>}</span>
           <Points label="правая" field="boundaryR" pts={d.boundaries[0]} pick={pick} /><Points label="левая" field="boundaryL" pts={d.boundaries[1]} pick={pick} /></div>}
-        {has('junction') && below.length > 0 && <label>{label('junction')} <select value={d.junction ?? ''} data-action="command.dir.set" onChange={(e) => void act('command.dir.set', { junction: e.target.value })}>
+        {has('junction') && below.length > 0 && <label>{label('junction')}{hint('junction') && <small className="muted"> — {hint('junction')}</small>} <select value={d.junction ?? ''} data-action="command.dir.set" onChange={(e) => void act('command.dir.set', { junction: e.target.value })}>
           <option value="">не назначен</option>{below.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}
-        {has('reserve') && reserves.length > 0 && <div className="post-chk"><span>{label('reserve')}:</span>
-          {reserves.map((g) => <label key={g.id}><input type="checkbox" data-action="command.dir.set" checked={d.reserve.includes(g.id)} onChange={() => void act('command.dir.set', { toggle: { field: 'reserve', id: g.id } })} /> {g.name}</label>)}</div>}
+        {has('reserve') && reserves.length > 0 && <Pick label={`${label('reserve')} — ${hint('reserve')}`} field="reserve" items={reserves} chosen={d.reserve} />}
         {has('echelon') && <div className="seg">{([['first', 'Первый эшелон'], ['second', 'Второй эшелон'], ['', 'Как решит штаб']] as const).map(([k, t]) =>
           <ActButton key={k} className={(d.echelon ?? '') === k ? 'on' : ''} action="command.dir.set" params={{ echelon: k }}>{t}</ActButton>)}</div>}
-        {has('commit') && <label className="post-chk1"><input type="checkbox" data-action="command.dir.set" checked={!!d.commit} onChange={() => void act('command.dir.set', { commit: !d.commit })} /> {label('commit')} <small className="muted">— {hint('commit')}</small></label>}
+        {has('commit') && /танк/i.test(subs.find((x) => x.id === d.to)?.name ?? '') && <label className="post-chk1"><input type="checkbox" data-action="command.dir.set" checked={!!d.commit} onChange={() => void act('command.dir.set', { commit: !d.commit })} /> {label('commit')} <small className="muted">— {hint('commit')}</small></label>}
         <label>{label('note')} <textarea rows={2} value={d.note} placeholder="Цель, силы, взаимодействие…" onChange={(e) => void act('command.dir.set', { note: e.target.value })} /></label>
         <div className="muted small">{d.immediateBy && `Ближайшая — к ${dm(d.immediateBy)}. `}{d.subsequentBy && `Последующая — к ${dm(d.subsequentBy)}. `}{s.overHead ? 'Через голову: пропущенные штабы получат извещение. ' : ''}До получателя — {d.form === 'order' ? 'около суток' : '1–3 ч'}.</div>
         {miss.length > 0 && <div className="adv-warn">Не хватает: {miss.join(', ')}.</div>}
