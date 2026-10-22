@@ -27,7 +27,7 @@ export type Control = 'script' | 'agent' | 'player';
 /** Состояние управления для интерфейса: с именами и временем. */
 export interface CommandView {
   mode: GameMode;
-  hqs: Record<string, { control: Control; led: boolean; name: string; echelon: string }>;
+  hqs: Record<string, { control: Control; led: boolean; name: string; echelon: string; parent: string | null }>;
   /** Дивизии, которые ведёт Ставка (приказ через голову). */
   led: string[];
   requests: { hq: string; hqName: string; division: string; divisionName: string; time: string; answer: boolean | null }[];
@@ -47,7 +47,7 @@ export function commandView(t: AgentGameTrace, side: string): CommandView | null
   const at = (tick: number) => dm(addHours(t.start, tick));
   return {
     mode: c.mode,
-    hqs: Object.fromEntries(c.hqs.map((h) => [h.id, { control: h.control, led: h.led, name: name.get(h.id) ?? h.id, echelon: hq.get(h.id)?.echelon ?? '' }])),
+    hqs: Object.fromEntries(c.hqs.map((h) => [h.id, { control: h.control, led: h.led, name: name.get(h.id) ?? h.id, echelon: hq.get(h.id)?.echelon ?? '', parent: hq.get(h.id)?.parent ?? null }])),
     led: c.led,
     requests: c.requests.map((r) => ({ hq: r.hq, hqName: name.get(r.hq) ?? r.hq, division: r.division, divisionName: name.get(r.division) ?? r.division, time: at(r.tick), answer: r.answer })),
     // одна директива нескольким получателям (фронтам) — одной строкой
