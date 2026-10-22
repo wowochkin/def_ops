@@ -223,6 +223,14 @@ impl Game {
         // штабы-агенты: игрок — верхняя инстанция своей стороны, ниже — агенты; приказы сценария стороны остаются
         if mode != Mode::Legacy {
             crate::command::control::agents_side(&mut sim, player);
+            // противник под внешним управлением (штаб на модели): его приказы сценария и артподготовки сняты, как раньше
+            let other = |hq: u32, sim: &Sim| { let s = sim.world.hqs[hq as usize].side; s != player && free.contains(&s) };
+            let keep: Vec<bool> = sim.script.iter().map(|o| !other(o.hq, &sim)).collect();
+            let mut k = keep.iter();
+            sim.script.retain(|_| *k.next().unwrap());
+            let keep: Vec<bool> = sim.fires.iter().map(|f| !other(f.hq, &sim)).collect();
+            let mut k = keep.iter();
+            sim.fires.retain(|_| *k.next().unwrap());
             for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
             let limit = meta.hours;
             return Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new() };
@@ -279,8 +287,8 @@ impl Game {
         };
         if !self.free.contains(&self.sim.world.hqs[hq as usize].side) { return Err(format!("{} — не под нашим управлением", o.hq)); }
         if w.hqs.iter().any(|h| h.id == o.hq && h.echelon == crate::model::Echelon::HighCommand) { return Err("верхней инстанции приказов не отдают".into()); }
-        // в режимах штабов-агентов приказ — директива игрока
-        if self.mode != Mode::Legacy {
+        // в режимах штабов-агентов приказ игрока — директива; штаб противника на модели (вне ядра) — как раньше
+        if self.mode != Mode::Legacy && self.sim.world.hqs[hq as usize].side == self.player {
             use crate::command::directive::{Form, Task};
             let task = match o.kind { OrderKind::Attack => Task::Attack, OrderKind::Defend | OrderKind::Hold => Task::Defend, OrderKind::Withdraw => Task::Withdraw, OrderKind::Move => Task::Move };
             let n = to.len();

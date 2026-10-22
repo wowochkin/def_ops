@@ -578,3 +578,13 @@ fn command_op_directive() {
     g.command_json(&serde_json::json!({ "op": "directive", "directive": { "to": "su_1bf", "task": "defend", "form": "instruction" } })).expect("команда");
     assert!(g.sim.command.in_transit.iter().any(|(_, d)| d.to == agents_core::command::directive::Target::Hq(hix(&g, "su_1bf") as u32)));
 }
+
+/// Противник — штаб на языковой модели вне ядра: в режимах штабов-агентов его приказы доходят до его дивизий (как раньше).
+#[test]
+fn enemy_llm_orders_work_in_agents_mode() {
+    let root = repo_root();
+    let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json"), &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    let mut g = Game::start_mode(sim, meta, 0, Side::Su, &[Side::Su, Side::De], None, Mode::Agents);
+    let n = g.order(&PlayerOrder { hq: "de_9a".into(), kind: OrderKind::Defend, target: None, note: "держать".into(), form: None }).expect("приказ штаба противника");
+    assert!(n > 0);
+}
