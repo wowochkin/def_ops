@@ -32,7 +32,7 @@ describe('состояние управления в игре на агентн�
         { id: 'stavka-11074', at: 30, to: 'su_8gva', task: 'attack', form: 'order', note: 'на Берлин', issued: false }],
     }), 'su')!;
     expect(v.mode).toBe('agents');
-    expect(v.hqs.su_8gva).toEqual({ control: 'player', led: false });
+    expect(v.hqs.su_8gva).toEqual({ control: 'player', led: false, name: '8 гв. А', echelon: 'army' });
     expect(v.led).toEqual(['su_d1']);
     expect(v.requests).toEqual([{ hq: 'su_4gsk', hqName: '4 гв. ск', division: 'su_d1', divisionName: '35 гв. сд', time: '17.04 07:00', answer: null }]);
     expect(v.historical.map((h) => [h.id, h.time, h.toName, h.issued, h.due])).toEqual([['stavka-11059', '16.04 05:00', '8 гв. А', true, true], ['stavka-11074', '17.04 11:00', '8 гв. А', false, false]]);

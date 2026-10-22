@@ -1893,3 +1893,22 @@ body.vp-dragging, body.vp-dragging * { user-select: none !important; -webkit-use
 
 .vp-vname select { font: inherit; font-size: .8em; padding: 2px 4px; border: 1.5px solid #8d887c; border-radius: 6px; background: #fff; max-width: 100%; }
 .vp-seg button.other { background: #f6ebe6; color: #7a1b16; }
+
+/* командование по ступеням: вкладка «Штабы», форма приказа, пометки управления, режим игры */
+.staffs { display: flex; flex-direction: column; gap: 10px; }
+.staffs section { display: flex; flex-direction: column; gap: 4px; }
+.staffs h4 { margin: 4px 0 2px; font: 700 13px/1.3 'PT Sans', sans-serif; }
+.staffs-mode { font-size: 12.5px; color: #4d473c; background: #f4efe4; border-radius: 8px; padding: 6px 9px; }
+.staffs-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; padding: 3px 0; border-bottom: 1px dotted #ddd5c4; }
+.staffs-row.done { color: #8c8577; }
+.staffs-row small.muted { margin-left: 4px; }
+.staffs-docs { max-height: 320px; overflow: auto; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.staffs-docs .doc-notice { color: #8a5a00; }
+.staffs-docs .doc-report { color: #2c5f2d; }
+.ctl-mark { margin-left: 6px; border-radius: 6px; padding: 0 5px; font-size: 11px; }
+.ctl-player, .ucard-chips i.ctl-player { background: #fde3d6; color: #8c2a00; }
+.ctl-led, .ucard-chips i.ctl-led { background: #fff0c2; color: #6b4b00; }
+.ctl-script, .ucard-chips i.ctl-script { background: #e4ecf7; color: #234a7a; }
+.oform { display: flex; flex-direction: column; gap: 4px; }
+.oform small { color: #6b6457; }
+.take-mode { margin-top: 6px; }

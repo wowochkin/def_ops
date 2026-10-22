@@ -11,6 +11,7 @@ const SRC = join(__dirname, '../src');
 /** Файлы и, для «Переигровки», только вход в командование (между пометками voice-entry). */
 const FILES: { file: string; part?: [string, string] }[] = [
   { file: 'CommandView.tsx' },
+  { file: 'CommandStaffs.tsx' },
   { file: 'ReviewView.tsx' },
   { file: 'ReplayView.tsx', part: ['{/* voice-entry: начало */}', '{/* voice-entry: конец */}'] },
   { file: 'voice/VoicePanel.tsx' },

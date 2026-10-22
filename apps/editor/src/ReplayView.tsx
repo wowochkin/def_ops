@@ -14,7 +14,7 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
-import { CommandView, loadSaved, SAVE_KEY, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
+import { CommandView, loadSaved, SAVE_KEY, savedGameMode, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
 import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors';
 import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, listReplays, onDataChange, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
@@ -475,7 +475,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     if (!result || !take) return;
     setTake(null);
     // агентная модель: ход игры — AGENT_GAME_HOURS, считает ядро приложения
-    const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS } : undefined;
+    const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS, mode: savedGameMode() } : undefined;
     setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take, ...(agents ? { agents } : {}) }, saved: null, enemy });
   };
   /** Кнопка окна: поверх незавершённой игры — сначала вопрос. */
@@ -597,7 +597,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
         </> : <Empty busy={!!busy} saved={tab === 'saved'} />}
       </main>
-      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} scenario={result.scenario} kbSummary={takeKb} llm={llm} hasSaved={!!saved} onStart={(e) => void startGame(e)} onCancel={() => setTake(null)} />}
+      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} scenario={result.scenario} kbSummary={takeKb} llm={llm} hasSaved={!!saved} agents={result.engine === 'agents'} onStart={(e) => void startGame(e)} onCancel={() => setTake(null)} />}
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
         onDownload={() => download(`${result.scenario}-seed${result.seed}-report.md`, result.report, 'text/markdown')} />}
     </div>

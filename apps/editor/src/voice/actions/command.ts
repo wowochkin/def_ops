@@ -66,9 +66,9 @@ export function parseDay(text: string): { day: number; month?: number } | null {
 
 // ---------------------------------------------------------------- вкладки, слои, участки, операции
 
-export type CmdTab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire';
-export const TAB_TITLE: Record<CmdTab, string> = { reports: 'Доклады', intel: 'Разведка', decision: 'Решение', orders: 'Приказы', journal: 'Журнал', umpire: 'Посредник' };
-const TAB_STEMS: [string, CmdTab][] = [['докла', 'reports'], ['разве', 'intel'], ['решен', 'decision'], ['прика', 'orders'], ['журна', 'journal'], ['посре', 'umpire']];
+export type CmdTab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire' | 'staffs';
+export const TAB_TITLE: Record<CmdTab, string> = { reports: 'Доклады', intel: 'Разведка', decision: 'Решение', orders: 'Приказы', journal: 'Журнал', umpire: 'Посредник', staffs: 'Штабы' };
+const TAB_STEMS: [string, CmdTab][] = [['докла', 'reports'], ['разве', 'intel'], ['решен', 'decision'], ['прика', 'orders'], ['журна', 'journal'], ['посре', 'umpire'], ['штабы', 'staffs']];
 /** Вкладка по слову («приказы», «журнал», «посредника»); нет — null. */
 export function tabByWord(w: string): CmdTab | null { const n = norm(w); return TAB_STEMS.find(([s]) => n.startsWith(s))?.[1] ?? null; }
 

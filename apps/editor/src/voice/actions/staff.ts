@@ -36,7 +36,7 @@ export const TASKS: Task[] = ['attack', 'counterattack', 'defend', 'hold', 'dela
 export const NEEDS_TARGET: Task[] = ['attack', 'counterattack', 'regroup', 'withdraw', 'breakout', 'relieve'];
 
 /** Приказ в проекте: объединение, задача, цель (пункт, противник, точка), подпись цели, точка для карты, указания. */
-export interface OrderDraft { formation: string; task: Task; target: Target; targetText: string; at: LngLat | null; note: string }
+export interface OrderDraft { formation: string; task: Task; target: Target; targetText: string; at: LngLat | null; note: string; /** Форма на агентной модели: приказ или боевое распоряжение (нет — распоряжение). */ form?: 'order' | 'instruction' }
 /** Распоряжение в проекте (тыл, переправа, резерв, полоса): ключ, действие, подпись и что сказала проверка. */
 export interface StaffAct { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
 /** Варианты решения на ход от советника (на ход time): по мере генерации, затем итог. */

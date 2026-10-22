@@ -1,0 +1,64 @@
+import { describe, expect, it } from 'vitest';
+import { controlMark, findHq, formTitle, initialCmds, MODE_TITLE, overHead, queueOp } from '../src/command-forms';
+
+describe('формы приказа по ступеням', () => {
+  it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
+    expect(formTitle('su', 'front', 'order')).toBe('директива Ставки');
+    expect(formTitle('su', 'army', 'order')).toBe('директива Ставки — через голову (ПУ-39 ст. 93)');
+    expect(formTitle('su', 'division', 'order')).toBe('директива Ставки — через голову (ПУ-39 ст. 93)');
+    expect(formTitle('su', 'front', 'instruction')).toBe('боевое распоряжение Ставки');
+    expect(formTitle('su', 'corps', 'instruction')).toBe('боевое распоряжение Ставки — через голову (ПУ-39 ст. 93)');
+  });
+  it('немецкая сторона: Weisung и Einzelbefehl с переводом', () => {
+    expect(formTitle('de', 'front', 'order')).toBe('Weisung (директива ОКХ)');
+    expect(formTitle('de', 'army', 'instruction')).toBe('Einzelbefehl (частный приказ ОКХ) — через голову');
+  });
+  it('через голову — получатель ниже фронта', () => {
+    expect(overHead('front')).toBe(false);
+    expect(['army', 'corps', 'division'].every(overHead)).toBe(true);
+  });
+  it('пометки управления', () => {
+    expect(controlMark({ control: 'player', led: false })).toEqual({ text: 'взят под управление', cls: 'ctl-player' });
+    expect(controlMark({ control: 'agent', led: true })).toEqual({ text: 'ведёт Ставка', cls: 'ctl-led' });
+    expect(controlMark({ control: 'script', led: false })).toEqual({ text: 'по сценарию (гибрид)', cls: 'ctl-script' });
+    expect(controlMark({ control: 'agent', led: false })).toBeNull();
+    expect(controlMark(undefined)).toBeNull();
+  });
+  it('режимы игры названы', () => {
+    expect(Object.keys(MODE_TITLE)).toEqual(['legacy', 'agents', 'hybrid']);
+    expect(MODE_TITLE.hybrid.title).toBe('Гибрид');
+  });
+});
+
+describe('очередь команд управления на ход', () => {
+  it('без повторов; взять и вернуть в одном ходе гасят друг друга; ответ на запрос — последний', () => {
+    let q = queueOp([], { op: 'historical', id: 'a' });
+    q = queueOp(q, { op: 'historical', id: 'a' });
+    expect(q).toEqual([{ op: 'historical', id: 'a' }]);
+    q = queueOp(q, { op: 'take', hq: 'su_8gva' });
+    q = queueOp(q, { op: 'release', id: 'su_8gva' });
+    expect(q).toEqual([{ op: 'historical', id: 'a' }]);
+    q = queueOp(q, { op: 'permit', hq: 'de_101ak', yes: true });
+    q = queueOp(q, { op: 'permit', hq: 'de_101ak', yes: false });
+    expect(q).toEqual([{ op: 'historical', id: 'a' }, { op: 'permit', hq: 'de_101ak', yes: false }]);
+  });
+  it('штаб по названию или id', () => {
+    const hqs = { su_8gva: { control: 'agent', led: false, name: '8-я гвардейская армия', echelon: 'army' }, su_4gsk: { control: 'agent', led: false, name: '4-й гвардейский стрелковый корпус', echelon: 'corps' } };
+    expect(findHq(hqs, 'su_4gsk')).toBe('su_4gsk');
+    expect(findHq(hqs, '8 гвардейскую армию')).toBe('su_8gva');
+    expect(findHq(hqs, 'нет такого')).toBeNull();
+  });
+});
+
+describe('очередь первого хода', () => {
+  const view = (mode: string, turn: number) => ({ turn, command: { mode, hqs: {}, led: [], requests: [], documents: [], historical: [
+    { id: 'a', time: '', to: '', toName: '', task: 'attack', form: 'order', note: '', issued: false, due: true },
+    { id: 'b', time: '', to: '', toName: '', task: 'attack', form: 'order', note: '', issued: false, due: false },
+    { id: 'c', time: '', to: '', toName: '', task: 'attack', form: 'order', note: '', issued: true, due: true }] } }) as never;
+  it('агенты — наступившие, гибрид — все, после первого хода и «как сейчас» — ничего', () => {
+    expect(initialCmds(view('agents', 1))).toEqual([{ op: 'historical', id: 'a' }]);
+    expect(initialCmds(view('hybrid', 1))).toEqual([{ op: 'historical', id: 'a' }, { op: 'historical', id: 'b' }]);
+    expect(initialCmds(view('agents', 2))).toEqual([]);
+    expect(initialCmds(view('legacy', 1))).toEqual([]);
+  });
+});

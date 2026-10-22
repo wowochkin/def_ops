@@ -101,10 +101,10 @@ export function screenActions(get: () => ScreenDeps): Action[] {
       } },
     { ...base, id: 'command.order.close', title: 'Закрыть приказ', describe: 'Закрывает редактор приказа (приказ остаётся в проекте).', say: ['штаб, закрой приказ'],
       run: async () => { get().select(null); } },
-    { ...base, id: 'command.order.set', model: false, title: 'Правка приказа', describe: 'Правит приказ объединения в редакторе: задача (task), цель — пункт (place, id) или противник (enemy, id), указания (note); clear — убрать цель.',
-      params: { type: 'object', properties: { unit: { type: 'string' }, task: { enum: TASKS }, place: { type: 'string' }, enemy: { type: 'string' }, clear: { type: 'boolean' }, note: { type: 'string' } }, required: ['unit'] },
+    { ...base, id: 'command.order.set', model: false, title: 'Правка приказа', describe: 'Правит приказ объединения в редакторе: задача (task), цель — пункт (place, id) или противник (enemy, id), указания (note); clear — убрать цель; form — приказ (order) или боевое распоряжение (instruction) на агентной модели.',
+      params: { type: 'object', properties: { unit: { type: 'string' }, task: { enum: TASKS }, place: { type: 'string' }, enemy: { type: 'string' }, clear: { type: 'boolean' }, note: { type: 'string' }, form: { enum: ['order', 'instruction'] } }, required: ['unit'] },
       available: play,
-      run: async (p: { unit: string; task?: Task; place?: string; enemy?: string; clear?: boolean; note?: string }) => {
+      run: async (p: { unit: string; task?: Task; place?: string; enemy?: string; clear?: boolean; note?: string; form?: 'order' | 'instruction' }) => {
         const d = get(), v = d.view!;
         const u = v.own.find((x) => x.id === p?.unit && x.status !== 'destroyed');
         if (!u) return 'Такого объединения нет.';
@@ -115,6 +115,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
         if (p.place) { const pl = v.places.find((x) => x.id === p.place); if (!pl) return 'Такого пункта нет.'; next = { ...next, target: pl.id, at: pl.at, targetText: pl.title }; }
         if (p.enemy) { const e = v.intel.find((x) => x.id === p.enemy); if (!e) return 'Такого соединения противника нет.'; next = { ...next, target: { formation: e.id }, at: e.at, targetText: `против: ${short(e.name)}` }; }
         if (p.note !== undefined) next.note = String(p.note);
+        if (p.form === 'order' || p.form === 'instruction') next.form = p.form;
         d.setDraft(u.id, next);
         return `${short(u.name)} — ${TASK_RU[next.task]}${next.targetText ? `, ${short(next.targetText)}` : ''}.`;
       } },
