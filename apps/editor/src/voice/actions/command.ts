@@ -211,7 +211,7 @@ let live: (() => CommandDeps) | null = null;
 export function releaseCommand(get: () => CommandDeps): void { if (live === get) { live = null; more = null; } }
 
 const NAME = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
-const ENEMY_SAY: Record<EnemyMode, string> = { llm: 'штаб на модели', passive: 'без штаба — держится прежних приказов' };
+const ENEMY_SAY: Record<EnemyMode, string> = { llm: 'штаб на модели', passive: 'без штаба — держится прежних приказов', agents: 'штабы-агенты по уставам' };
 
 export function commandActions(get: () => CommandDeps): Action[] {
   more = null; // новая игра
@@ -310,7 +310,7 @@ export function commandActions(get: () => CommandDeps): Action[] {
     { ...base, id: 'command.enemyMode', title: 'Противник', describe: 'Кто командует противником: штаб на модели или без штаба (держится прежних приказов).',
       params: { type: 'object', properties: { mode: { enum: ['llm', 'passive'] } }, required: ['mode'] }, say: ['штаб, противник без штаба'],
       available: inReplay, highlight: () => [hl('enemy-mode'), hl('tab-umpire')],
-      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode]) return 'Скажите: «штаб на модели» или «без штаба».'; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
+      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode] || p.mode === 'agents') return 'Скажите: «штаб на модели» или «без штаба».'; if (get().enemy === 'agents') return 'Противник — штабы-агенты: это выбирается при передаче командования, в ходе игры не меняется.'; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
     { ...base, id: 'command.exit', title: 'Выйти из игры', describe: 'Выходит из игры к переигровке; игра сохранена, её можно продолжить.', say: ['штаб, выйди из игры'],
       available: inReplay,
       run: async () => { more = null; get().exit(false); return 'Вышел из игры, она сохранена. Продолжить — скажите: «Штаб, продолжи игру».'; } },
@@ -383,8 +383,8 @@ export function replayActions(get: () => ReplayDeps): Action[] {
     return d.busy ? 'идёт расчёт — подождите, я скажу, когда будет готово' : true;
   };
   const takeOpen = (): true | string => { const r = inReplay(); return r !== true ? r : get().take ? true : 'окно «Принять командование» не открыто. Скажите: «Штаб, прими командование»'; };
-  const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive'] }, mode: { enum: ['legacy', 'agents', 'hybrid'] } } };
-  const start = (p?: { enemy?: EnemyMode; mode?: 'legacy' | 'agents' | 'hybrid' }) => { get().begin(p?.enemy === 'passive' ? 'passive' : 'llm', p?.mode); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
+  const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive', 'agents'] }, mode: { enum: ['legacy', 'agents', 'hybrid'] } } };
+  const start = (p?: { enemy?: EnemyMode; mode?: 'legacy' | 'agents' | 'hybrid' }) => { get().begin(p?.enemy === 'passive' || p?.enemy === 'agents' ? p.enemy : 'llm', p?.mode); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
   return [
     { section: 'replay', id: 'replay.calc', title: 'Рассчитать операцию', describe: 'Рассчитывает операцию (по названию; без названия — выбранную).',
       params: { type: 'object', properties: { operation: { type: 'string' } } }, say: ['штаб, рассчитай операцию', 'штаб, рассчитай берлинскую операцию'],

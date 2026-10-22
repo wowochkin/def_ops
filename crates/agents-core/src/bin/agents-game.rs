@@ -49,6 +49,7 @@ fn main() {
                 let mode: agents_core::game::Mode = opt("mode").map(serde_json::from_value).transpose().map_err(|e| format!("mode: {e}"))?.unwrap_or(agents_core::game::Mode::Legacy);
                 let mut g = Game::start_mode(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free, state.as_ref(), mode);
                 if let Some(u) = a["until"].as_u64() { g.limit = g.limit.max(u as u32); }
+                if a["enemy"] == "agents" { g.enemy_agents(); }
                 let t = g.trace();
                 game = Some(g);
                 Ok(t)

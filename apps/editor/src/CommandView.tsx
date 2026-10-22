@@ -834,10 +834,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
 function AiChip({ ai, enemy, now, model, onClick }: { ai: AiStatus; enemy: EnemyMode; now: number; model: string; onClick: () => void }) {
   const sec = ai.state === 'thinking' ? Math.max(0, Math.round((now - ai.since) / 1000)) : 0;
   const text = enemy === 'passive' ? 'противник без штаба: держится прежних приказов'
+    : enemy === 'agents' ? 'противник: штабы-агенты по уставам'
     : ai.state === 'thinking' ? `штаб противника принимает решение… ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
     : ai.state === 'done' ? `штаб противника принял решение${ai.turn.timings ? ` (${Math.round(ai.turn.timings.totalMs / 1000)} с)` : ''}`
     : ai.state === 'error' ? 'штаб противника: нет решения — см. «Посредник»' : 'штаб противника: ожидание';
-  return <button className={`ai-chip ${enemy === 'passive' ? 'off' : ai.state}`} onClick={onClick} title={model ? `модель: ${model}` : 'модель: первая загруженная в LM Studio'}><i />{text}</button>;
+  return <button className={`ai-chip ${enemy !== 'llm' ? 'off' : ai.state}`} onClick={onClick} title={model ? `модель: ${model}` : 'модель: первая загруженная в LM Studio'}><i />{text}</button>;
 }
 
 /* ───────────── доклады ───────────── */
@@ -1524,10 +1525,11 @@ function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, 
       <label className="switch"><input type="checkbox" data-action="command.reveal" checked={reveal} onChange={(e) => setReveal(e.target.checked)} /><span /> Показать на карте всех (снять туман войны)</label>
       <div className="umpire-cfg">
         <label>Противник
-          <select value={enemy} data-action="command.enemyMode" data-hl="enemy-mode" onChange={(e) => setEnemy(e.target.value as EnemyMode)}>
+          {enemy === 'agents' ? <b> — штабы-агенты по уставам (выбрано при передаче командования)</b>
+            : <select value={enemy} data-action="command.enemyMode" data-hl="enemy-mode" onChange={(e) => setEnemy(e.target.value as EnemyMode)}>
             <option value="llm">штаб на модели (LM Studio)</option>
             <option value="passive">без штаба — держится прежних приказов</option>
-          </select>
+          </select>}
         </label>
       </div>
       {enemy === 'llm' && <label className="umpire-model">Модель штаба противника и размышление <ModelPicker llm={llm} who="enemy" purpose="штаба противника" />
@@ -1671,11 +1673,12 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
   useAction({
     id: 'command.enemyMode', section: 'replay', title: 'Противник', describe: 'Кто командует противником: штаб на модели или без штаба.',
-    params: { type: 'object', properties: { mode: { enum: ['llm', 'passive'] } }, required: ['mode'] }, say: ['без штаба'], available: () => true,
+    params: { type: 'object', properties: { mode: { enum: ['llm', 'passive', 'agents'] } }, required: ['mode'] }, say: ['без штаба'], available: () => true,
     highlight: (p: { mode: EnemyMode }) => hl(`enemy-${p?.mode}`),
     run: async (p: { mode: EnemyMode }) => {
-      if (p?.mode !== 'llm' && p?.mode !== 'passive') return 'Скажите: «штаб на модели» или «без штаба».';
+      if (p?.mode !== 'llm' && p?.mode !== 'passive' && !(p?.mode === 'agents' && agents)) return agents ? 'Скажите: «штаб на модели», «без штаба» или «штабы-агенты».' : 'Скажите: «штаб на модели» или «без штаба».';
       setEnemy(p.mode);
+      if (p.mode === 'agents') return 'Противник — штабы-агенты по уставам. Скажите «принимаю».';
       return p.mode === 'llm' ? `Противник — штаб на модели.${llm.check.state === 'fail' ? ' Но модель сейчас не на связи.' : ''} Скажите «принимаю».` : 'Противник — без штаба. Скажите «принимаю».';
     },
   });
@@ -1699,6 +1702,8 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
             <span><b>Штаб на модели</b> — LM Studio на этом компьютере<small className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `✓ на связи: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `✗ ${llm.check.error} — запустите сервер в LM Studio (настройки — раздел «ИИ»)` : 'проверка связи…'}</small></span></label>
           <label className={enemy === 'passive' ? 'on' : ''} data-hl="enemy-passive"><input type="radio" data-action="command.enemyMode" checked={enemy === 'passive'} onChange={() => void act('command.enemyMode', { mode: 'passive' })} />
             <span><b>Без штаба</b> — противник держится прежних приказов<small>для пробы без модели; переключить можно в ходе игры (вкладка «Посредник»)</small></span></label>
+          {agents && <label className={enemy === 'agents' ? 'on' : ''} data-hl="enemy-agents"><input type="radio" data-action="command.enemyMode" checked={enemy === 'agents'} onChange={() => void act('command.enemyMode', { mode: 'agents' })} />
+            <span><b>Штабы-агенты</b> — противник в той же логике ступеней: его верхняя инстанция подаёт исторические решения, ниже решают штабы по уставам<small>без модели; в ходе игры не меняется</small></span></label>}
         </div>
         {agents && <div className="take-enemy take-mode">
           <div className="take-mode-h">Командование своей стороной</div>

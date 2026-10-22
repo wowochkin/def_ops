@@ -187,6 +187,8 @@ pub mod commands {
             let mut g = agents_core::game::Game::start_mode(sim, meta, takeover, player, &free, state.as_ref(), mode.unwrap_or(agents_core::game::Mode::Legacy));
             // срок игры (до победы или поражения) может быть дальше конца сценария
             if let Some(u) = until { g.limit = g.limit.max(u); }
+            // agents — противник: штабы-агенты, верхняя инстанция подаёт исторические решения
+            if enemy.as_deref() == Some("agents") { g.enemy_agents(); }
             let t = g.trace();
             *GAME.lock().map_err(|e| e.to_string())? = Some(g);
             Ok(t)

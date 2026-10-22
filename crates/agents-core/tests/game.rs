@@ -588,3 +588,17 @@ fn enemy_llm_orders_work_in_agents_mode() {
     let n = g.order(&PlayerOrder { hq: "de_9a".into(), kind: OrderKind::Defend, target: None, note: "держать".into(), form: None }).expect("приказ штаба противника");
     assert!(n > 0);
 }
+
+/// Противник — штабы-агенты: его верхняя инстанция (агент) подаёт исторические решения в их часы, ниже решают штабы.
+#[test]
+fn enemy_agents_take_historical_and_decide() {
+    let mut g = seelow_game(Mode::Agents, 24);
+    g.enemy_agents();
+    let top = g.sim.world.hqs.iter().position(|h| h.side == Side::De && h.echelon == agents_core::model::Echelon::HighCommand).unwrap();
+    assert_eq!(g.sim.command.control[top], Control::Agent);
+    assert_eq!(g.sim.command.control[hix(&g, "de_9a")], Control::Agent);
+    let before = g.sim.documents.iter().filter(|d| g.sim.world.hqs[d.hq as usize].side == Side::De).count();
+    g.advance(24);
+    assert!(g.sim.documents.iter().filter(|d| g.sim.world.hqs[d.hq as usize].side == Side::De).count() > before, "немецкие штабы отдают документы");
+    assert_eq!(g.trace()["game"]["enemyAgents"], true);
+}

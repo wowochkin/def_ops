@@ -187,7 +187,7 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     const takeover = (record?.takeover ?? s.takeover);
     setAgent(await agentsCall<AgentGameTrace>('game_start', {
       scenario: agents.path, seed: s.seed, takeover: hourAt(ctx.scenario.start, takeover), player: human, mode: agents.mode ?? 'legacy',
-      enemy: en === 'llm' ? 'llm' : 'script', until: hourAt(ctx.scenario.start, end.defeat.deadline),
+      enemy: en === 'llm' ? 'llm' : en === 'agents' ? 'agents' : 'script', until: hourAt(ctx.scenario.start, end.defeat.deadline),
       // поправки сценария из базы знаний (дивизии) — те, с которыми игра началась
       edits: kb.core ?? undefined,
       // состояние дивизий при передаче по фактам базы (game::TakeoverIn)
@@ -266,7 +266,7 @@ function startAi() {
   ai = null;
   skipAi = false;
   if (!g || isOver()) return;
-  if (enemy === 'passive') { status({ state: 'off' }); return; }
+  if (enemy !== 'llm') { status({ state: 'off' }); return; }
   const time = g.state.time;
   const prevAi = [...rec.turns].reverse().find((t) => (t.ai as AiTurn | undefined)?.decision);
   const previous = prevAi ? { time: prevAi.time, intent: (prevAi.ai as AiTurn).decision!.intent } : null;

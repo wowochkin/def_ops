@@ -102,6 +102,8 @@ pub struct Game {
     pub limit: u32,
     /// Резервы стороны игрока, ждущие ввода: индекс дивизии → с какого часа готов (ввод по сценарию).
     pub reserves: BTreeMap<u32, u32>,
+    /// Противник — штабы-агенты (верхняя инстанция — агент).
+    pub enemy_agents: bool,
 }
 
 /// Место и час (шаг) для распоряжения.
@@ -233,7 +235,7 @@ impl Game {
             sim.fires.retain(|_| *k.next().unwrap());
             for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
             let limit = meta.hours;
-            return Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new() };
+            return Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: false };
         }
         let mine = |hq: u32, sim: &Sim| free.contains(&sim.world.hqs[hq as usize].side);
         let keep: Vec<bool> = sim.script.iter().map(|o| !mine(o.hq, &sim)).collect();
@@ -253,7 +255,7 @@ impl Game {
             }
         }
         let limit = meta.hours;
-        Game { mode: Mode::Legacy, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves }
+        Game { mode: Mode::Legacy, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves, enemy_agents: false }
     }
 
     /// Час прогона (сколько шагов сделано).
@@ -497,6 +499,22 @@ impl Game {
         Ok(())
     }
 
+    /// Противник — штабы-агенты: его штабы решают по своей логике ступеней, верхняя инстанция — агент: подаёт
+    /// исторические решения в их часы (уже наступившие — доведены, как приказы на начало) и отвечает на запросы отхода
+    /// по правилу; его приказы сценария при доставке пропускаются (штабы не на сценарии).
+    pub fn enemy_agents(&mut self) {
+        use crate::command::control::Control;
+        let enemy = if self.player == Side::Su { Side::De } else { Side::Su };
+        crate::command::control::agents_side(&mut self.sim, enemy);
+        for (k, h) in self.sim.world.hqs.iter().enumerate() { if h.side == enemy && h.echelon == crate::model::Echelon::HighCommand { self.sim.command.control[k] = Control::Agent; } }
+        self.sim.sources[crate::staff::side_idx(enemy)] = crate::staff::Source::Script;
+        let now = self.hour();
+        for (at, mut d) in crate::command::control::historical_for(&mut self.sim, enemy, None, false) {
+            if at <= now { d.ready = true; crate::command::passing::issue(&mut self.sim, d, now); } else { self.pending.push((at, d)); }
+        }
+        self.enemy_agents = true;
+    }
+
     /// Команда управления на ход.
     pub fn command(&mut self, c: &CommandOp) -> Result<(), String> {
         if self.mode == Mode::Legacy { return Err("команды управления — в режимах «агенты» и «гибрид»".into()); }
@@ -558,7 +576,7 @@ impl Game {
         v["game"] = serde_json::json!({
             "player": self.player, "free": self.free,
             "reserves": self.reserves.iter().map(|(&i, &h)| serde_json::json!({ "id": self.sim.world.divisions[i as usize].id, "from": h })).collect::<Vec<_>>(),
-            "takeover": self.takeover, "hour": self.hour(), "over": self.over(),
+            "takeover": self.takeover, "hour": self.hour(), "over": self.over(), "enemyAgents": self.enemy_agents,
         });
         v["command"] = self.command_state();
         v
