@@ -27,8 +27,8 @@ import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
 import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
 import { divisionsUnder, postDocs, postIntel, postReports, postReserves } from './post-views';
-import { resolveFrom } from './command-post';
-import { formTitle, initialCmds, markFor, placeText, MODE_TITLE, overHead, type CommandOp } from './command-forms';
+import { postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
+import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -191,6 +191,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const post = usePost(view, level, levelTo, cmds, setCmds, !!progress, staffsOn(view), () => { setTab('orders'); setSub('units'); });
   const postRef = useRef<PostState | null>(null);
   postRef.current = post;
+  /** Пункт управления для советника (агентная модель, режимы командования по ступеням). */
+  const postCtx = () => (view && staffsOn(view) && post.issuer ? postContext(view, post.level, post.issuer, cmds) : undefined);
+  /** Пункт ниже Ставки: решение — его штаба, не Ставки. */
+  const lowPost = () => !!(view && staffsOn(view) && post.issuer && view.command?.hqs[post.issuer]?.echelon !== 'high_command');
+  /** Предложенный приказ → документ пункта в очереди хода. */
+  const toPostDir = (o: { formation: string; task: string; at: LngLat | null; why: string }) => {
+    const d = suggestionToDir(o, post.level);
+    setCmds((q) => queueOp(q, { op: 'directive', directive: { ...toDirective(d, view!), issuer: post.issuer } as unknown as { to: string; task: string; form: string } }));
+  };
   // указание пункта управления и прежние указания на карте (полосы, тыл) друг друга снимают; смена вкладки — тоже
   useEffect(() => { post.cancelPick(); }, [tab, sub]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (pickMode) post.cancelPick(); }, [pickMode]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -571,7 +580,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setPlanOpen(0);
     setAdvOpen(true); setAdvMin(false);
     const draft = draftText();
-    void kb.roleRef([`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`], advisorScope(view, false)).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'plan', id, count, draft, reference: r.text }));
+    void kb.roleRef([`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`], advisorScope(view, false)).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'plan', id, count, draft, reference: r.text, post: postCtx() }));
     return id;
   };
   const planDraft = (o: PlanVariantView['orders'][number]): Draft => ({ formation: o.formation, task: o.task, target: o.target, targetText: o.targetText, at: o.at, note: o.why });
@@ -585,15 +594,19 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const applyPlan = async (idx: number, only: boolean): Promise<string> => {
     const v = planLive.current?.variants[idx];
     if (!v) return 'Такого варианта нет.';
+    // пункт ниже Ставки: решение — его штаба
+    const putDecision = (x: HumanDecision) => { if (lowPost()) setPostDecisions((m) => ({ ...m, [post.issuer!]: x })); else setDecision(x); };
     if (only) {
-      setDecision({ ...v.decision }); setTab('decision');
+      putDecision({ ...v.decision }); setTab('decision');
       const t = `Решение из варианта «${v.title}» — во вкладке «Решение»; приказы не менялись.`;
       setNotice(t);
       return t;
     }
-    setDecision({ ...v.decision });
+    putDecision({ ...v.decision });
     const orders = v.orders.filter((o) => o.ok);
-    setDrafts(Object.fromEntries(orders.map((o) => [o.formation, planDraft(o)])));
+    // командование по ступеням: приказы — документами пункта в очереди хода
+    if (view && staffsOn(view)) { const subs = new Set(post.issuer ? recipients(view, post.issuer).map((x) => x.id) : []); setCmds((q) => q.filter((c) => !(c.op === 'directive' && subs.has(c.directive.to)))); orders.forEach(toPostDir); }
+    else setDrafts(Object.fromEntries(orders.map((o) => [o.formation, planDraft(o)])));
     setActs([]); liveActs.current = [];
     let added = 0;
     const failed: string[] = [];
@@ -613,11 +626,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setAdv((l) => [...l, { id, cat: topic, catId: cat, q, answer: '' }]);
     setAdvOpen(true); setAdvMin(false);
     const draft = draftText();
-    void kb.roleRef([`${topic} ${q}`], advisorScope(view, cat === 'history')).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference: r.text }));
+    void kb.roleRef([`${topic} ${q}`], advisorScope(view, cat === 'history')).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'advise', id, category: cat, topic, question: q, thread, draft, reference: r.text, post: postCtx() }));
     return id;
   };
   /** Предложенный советником приказ — в проект. */
   const takeSuggestion = (sg: AdviceView['suggestions'][number]) => {
+    if (view && staffsOn(view)) { toPostDir(sg); setNotice(`Документ пункта в очереди хода: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`); return; }
     setDrafts((d) => ({ ...d, [sg.formation]: { formation: sg.formation, task: sg.task, target: sg.target, targetText: sg.targetText, at: sg.at, note: sg.why } }));
     setNotice(`В распоряжение: ${short(sg.name)} — ${TASK_RU[sg.task]}, ${sg.targetText}`);
   };
@@ -841,7 +855,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         <span>Советник</span>{adv.some((m) => !m.result) ? <i className="spinner" /> : adv.length > advSeen ? <b className="adv-new">ответ</b> : null}</ActButton>}
       {advOpen && view && !advMin && <Advisor resize={{ width: advW, setWidth: setAdvW, reset: resetAdvW }} llm={llm} msgs={adv} text={advQ} setText={setAdvQ}
         dyn={advDyn} focus={focus}
-        drafted={(f) => !!drafts[f]}
+        drafted={(f) => (staffsOn(view) ? cmds.some((c) => c.op === 'directive' && c.directive.to === f) : !!drafts[f])} postName={staffsOn(view) && post.issuer ? view.command?.hqs[post.issuer]?.name : undefined}
         plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} acceptPlan={(v, i) => void acceptByButton(v, i)}
         planOpen={planOpen}
         hasAct={(k) => acts.some((a) => a.key === k)} />}
@@ -1142,8 +1156,10 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ resize, llm, msgs, text, setText, drafted, dyn, focus, plan, planStale, planN, acceptPlan, planOpen, hasAct }: {
+function Advisor({ resize, postName, llm, msgs, text, setText, drafted, dyn, focus, plan, planStale, planN, acceptPlan, planOpen, hasAct }: {
   resize: { width: number; setWidth: (w: number) => void; reset: () => void };
+  /** Пункт управления: советник думает за этот штаб. */
+  postName?: string;
   llm: Llm; msgs: AdvMsg[]; text: string; setText: (s: string) => void; drafted: (f: string) => boolean; dyn: Dyn; focus: Sector | null;
   plan: PlanState | null; planStale: boolean; planN: number; acceptPlan: (v: PlanVariantView, i: number) => void;
   planOpen: number | null; hasAct: (key: string) => boolean;
@@ -1185,7 +1201,7 @@ function Advisor({ resize, llm, msgs, text, setText, drafted, dyn, focus, plan, 
   return (
     <div className="advisor" data-tour="cmd-advisor-panel" data-hl="advisor">
       <Resizer {...resize} edge="left" />
-      <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
+      <div className="adv-h"><b>Советник</b><span className="muted">{postName ? `штаб: ${postName}` : 'видит то же, что и вы'}</span><span style={{ flex: 1 }} />
         {msgs.length > 0 && <ActButton className="link" action="command.advisor.clear">очистить</ActButton>}<ActButton className="x adv-min" action="command.advisor.show" params={{ mode: 'min' }} title="Свернуть к краю карты (беседа сохранится)">–</ActButton><ActButton className="x" action="command.advisor.show" params={{ mode: 'close' }} title="Скрыть советника (беседа сохранится)">×</ActButton></div>
       <ModelPicker llm={llm} who="adv" purpose="ответов советника" />
       <div className="adv-plan-bar">

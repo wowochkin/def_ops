@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIELDS, issuers, missing, postTitle, recipients, resolveFrom, sender, toDirective, type DirDraft } from '../src/command-post';
+import { dirTaskOf, FIELDS, issuers, missing, postContext, postPrompt, postTitle, recipients, resolveFrom, sender, suggestionToDir, toDirective, type DirDraft } from '../src/command-post';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const v = (taken: string[] = []) => ({
@@ -78,5 +78,20 @@ describe('от чьего имени — при отправке хода', () =
   it('взятие ставится в очередь раньше директив: ядро исполняет команды по порядку', () => {
     const q = resolveFrom(v(), [dir('su_4gsk', 'su_8gva'), { op: 'take', hq: 'su_8gva' }]);
     expect(q.map((c) => c.op)).toEqual(['take', 'directive']);
+  });
+});
+
+describe('советник по пункту управления', () => {
+  it('задача модели → задача документа; предложенный приказ → проект документа пункта (пункт цели — ближайшая задача)', () => {
+    expect(['attack', 'counterattack', 'defend', 'hold', 'delay', 'withdraw', 'regroup', 'reserve'].map((t) => dirTaskOf(t as never))).toEqual(['attack', 'attack', 'defend', 'defend', 'delay', 'withdraw', 'move', 'reserve']);
+    const d = suggestionToDir({ formation: 'su_4gsk', task: 'attack', at: [14.3, 52.6], why: 'ударить на Зелов' }, 'army');
+    expect(d).toMatchObject({ to: 'su_4gsk', level: 'army', task: 'attack', form: 'order', immediate: [[14.3, 52.6]], note: 'ударить на Зелов' });
+    expect(suggestionToDir({ formation: 'su_d1', task: 'hold', at: null, why: '' }, 'division')).toMatchObject({ task: 'defend', form: 'instruction', immediate: [] });
+  });
+  it('контекст пункта для советника: кто, кому, каким документом', () => {
+    const c = postContext(v(['su_8gva']), 'army', 'su_8gva');
+    expect(c).toMatchObject({ level: 'army', issuer: 'su_8gva', issuerName: '8-я гв. армия', doc: 'Боевой приказ армии', overHead: false });
+    expect(c.recipients.map((x) => x.id)).toEqual(['su_4gsk', 'su_29gsk', 'su_d9']);
+    expect(postPrompt(c)).toContain('приказы — только подчинённым этого штаба: 4-й гв. ск, 29-й гв. ск, 1 тбр');
   });
 });

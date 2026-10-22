@@ -4,6 +4,7 @@ import type { ActionCheck, AgentGameSpec, CommandOp, GameOutcome, GameRecord, In
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { KbRefAnswer, KbRefRequest } from './kb-ref';
 import type { CommandView } from './agents-game';
+import type { PostContext } from '../command-post';
 
 export type Thinking = 'off' | 'low' | 'medium' | 'high';
 
@@ -76,9 +77,10 @@ export type GameRequest =
   /** Голос ждёт модель или спрашивает её (on): новые запросы к модели ждут, пока он не отпустит; начатый доходит. */
   | { kind: 'llm-hold'; on: boolean }
   /** Вопрос советнику: категория, вопрос, проект решения словами, предыдущие вопросы и ответы. */
-  | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string }
+  /** post — пункт управления (агентная модель): советник думает за его штаб, приказы — его подчинённым. */
+  | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string; post?: PostContext }
   /** Советник: варианты решения на ход (count — сколько), проект решения словами, справка из базы знаний; остановить. */
-  | { kind: 'plan'; id: number; count: number; draft: string; reference: string }
+  | { kind: 'plan'; id: number; count: number; draft: string; reference: string; post?: PostContext }
   | { kind: 'plan-stop' }
   /** Остановить ответ советника. */
   | { kind: 'advise-stop' }

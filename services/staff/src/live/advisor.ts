@@ -182,10 +182,12 @@ export interface AdviceRequest {
   thread: { q: string; a: string }[];
   /** Справка из базы знаний (доктрина, техника, местность; в вопросах истории — и ход боёв). */
   reference?: string;
+  /** Пункт управления: свои войска — только подчинённые его штаба (id) и их соединения. */
+  focus?: string[];
 }
 
 export function buildAdvice(ctx: SimContext, g: GameState, history: History, cfg: AdvisorConfig, tpl: { system: string; user: string; profile: string }, req: AdviceRequest, scenarioDescription: string) {
-  const p = situationParts(ctx, g, cfg);
+  const p = situationParts(ctx, g, req.focus ? { ...cfg, focus: req.focus } : cfg);
   const cat = ADVICE_CATEGORIES.find((c) => c.id === req.category) ?? ADVICE_CATEGORIES[0];
   let historyText = '';
   if (cat.id === 'history') {

@@ -187,3 +187,37 @@ export function resolveFrom(v: TurnView, cmds: CommandOp[]): CommandOp[] {
     return { op: 'directive' as const, directive: from ? { ...d, from } : d };
   })];
 }
+
+/** Задача нынешней модели (советник, проекты приказов) → задача документа пункта управления. */
+export function dirTaskOf(t: string): DirTask {
+  switch (t) {
+    case 'attack': case 'counterattack': case 'breakout': case 'relieve': return 'attack';
+    case 'defend': case 'hold': return 'defend';
+    case 'delay': return 'delay';
+    case 'withdraw': return 'withdraw';
+    case 'reserve': return 'reserve';
+    default: return 'move';
+  }
+}
+
+/** Приказ, предложенный советником, → проект документа пункта: цель — пункт ближайшей задачи, обоснование — указания. */
+export function suggestionToDir(s: { formation: string; task: string; at: LngLat | null; why: string }, level: LevelId): DirDraft {
+  return { ...blankDir(s.formation, level), task: dirTaskOf(s.task), immediate: s.at ? [s.at] : [], note: s.why ?? '' };
+}
+
+/** Пункт управления для советника: кто решает, его подчинённые, каким документом, через голову ли. */
+export interface PostContext { level: LevelId; issuer: string; issuerName: string; recipients: { id: string; name: string }[]; doc: string; overHead: boolean; topGen: string }
+export function postContext(v: TurnView, level: LevelId, issuer: string, cmds: CommandOp[] = []): PostContext {
+  return {
+    level, issuer, issuerName: v.command?.hqs[issuer]?.name ?? issuer,
+    recipients: recipients(v, issuer).map((x) => ({ id: x.id, name: x.name })),
+    doc: DOC_TITLE[level], overHead: sender(v, issuer, cmds).overHead, topGen: v.terms?.topGen ?? 'Ставки',
+  };
+}
+
+/** Указание советнику: за чей штаб он думает и кому отдавать приказы. */
+export function postPrompt(c: PostContext): string {
+  return `Пункт управления: ${c.issuerName}. Вы — офицер этого штаба: оценка, замысел и решение — решение ${c.issuerName}; `
+    + `приказы — только подчинённым этого штаба: ${c.recipients.map((x) => x.name).join(', ') || 'нет'} (документ — «${c.doc}»${c.overHead ? `, от ${c.topGen} через голову` : ''}). `
+    + 'Обстановку соседей и старших учитывайте, но приказов им не отдавайте.';
+}

@@ -28,6 +28,7 @@ import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
+import { postPrompt } from '../command-post';
 import { agentEvents, agentGame, bridgesOf, commandText, commandView, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff } from './agents-game';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
@@ -378,7 +379,7 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
   if (!cfg.advisor) return done({ ok: false, error: 'для этого сценария советник не настроен', answer: '', basis: [], unknowns: [], followUps: [], suggestions: [] });
   const t0 = Date.now();
   const built = buildAdvice(ctx, g, history, cfg.advisor, { system: advisorSystemTpl, user: advisorUserTpl, profile: advisorProfile },
-    { category: m.category, topic: m.topic, question: m.question, draft: m.draft, thread: m.thread, reference: m.reference,
+    { category: m.category, topic: m.topic, question: m.post ? `${postPrompt(m.post)}\n\n${m.question}` : m.question, draft: m.draft, thread: m.thread, reference: m.reference, ...(m.post ? { focus: m.post.recipients.map((x) => x.id) } : {}),
       goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
   let buf = '', last = 0;
   if (busyWho()) post({ kind: 'advice-wait', id: m.id, text: `ждёт очереди: модель занята (${busyWho()})…` });
@@ -393,13 +394,16 @@ async function adviseReq(m: Extract<GameRequest, { kind: 'advise' }>) {
   if (buf) post({ kind: 'advice-stream', id: m.id, text: buf });
   const byId = new Map(g.state.formations.map((f) => [f.id, f]));
   const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...g.state.formations.map((f) => [f.id, f.name] as const)]);
+  // пункт управления: приказы — только подчинённым его штаба
+  const mine = m.post ? new Set(m.post.recipients.map((x) => x.id)) : null;
   done({
     ok: r.ok, error: r.error, answer: r.answer, followUps: r.followUps, seconds: Math.round((Date.now() - t0) / 1000),
     basis: r.basis, unknowns: r.unknowns, warning: r.warning, rewritten: r.rewritten,
     suggestions: r.suggestions.map((x) => ({
       formation: x.order?.formation ?? '', name: x.order ? names.get(x.order.formation)! : x.given.formation, task: x.given.task,
       target: x.order?.target ?? null, targetText: x.target ?? describeTarget(ctx, x.order?.target, names),
-      at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: x.given.why, issue: x.issue, ok: !!x.order,
+      at: x.order ? targetPoint(ctx, x.order.target, byId) : null, why: x.given.why,
+      ...(mine && x.order && !mine.has(x.order.formation) ? { issue: `не в подчинении: ${m.post!.issuerName}`, ok: false } : { issue: x.issue, ok: !!x.order }),
     })),
   });
 }
@@ -413,13 +417,15 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
   if (!cfg.advisor) return fail('для этого сценария советник не настроен');
   const t0 = Date.now(), gAt = g, side = rec.human;
   const built = buildAdvice(ctx, g, history, cfg.advisor, { system: advisorSystemTpl, user: advisorUserTpl, profile: advisorProfile },
-    { category: 'plan', topic: 'Решение › Варианты решения на ход', question: `Предложите ${m.count === 1 ? 'вариант' : `${m.count} варианта`} решения на этот ход: оценка, замысел противника, решение, риски, донесение, приказы войскам, распоряжения по тылу, переправам, резервам и полосам (разграничительные линии между армиями).`,
-      draft: m.draft, thread: [], reference: m.reference,
+    { category: 'plan', topic: 'Решение › Варианты решения на ход', question: `${m.post ? `${postPrompt(m.post)}\n\n` : ''}Предложите ${m.count === 1 ? 'вариант' : `${m.count} варианта`} решения на этот ход: оценка, замысел противника, решение, риски, донесение, приказы войскам, распоряжения по тылу, переправам, резервам и полосам (разграничительные линии между армиями).`,
+      draft: m.draft, thread: [], reference: m.reference, ...(m.post ? { focus: m.post.recipients.map((x) => x.id) } : {}),
       goal: `${end.victory.title}; поражение — численность ниже ${Math.round(end.defeat.strengthBelow * 100)} % исходной или ${end.defeat.deadlineText}` }, cfg.description);
   const st = gAt.state, lg = st.logistics?.[side];
   const sit: Situation = {
     messages: [], time: st.time, areas: built.parts.areas, allAreas: built.parts.allAreas, enemies: built.parts.enemies,
-    formations: built.parts.formations.filter((f) => built.parts.own.find((u) => u.id === f.id)!.status !== 'destroyed'),
+    // пункт управления: приказы — только подчинённым его штаба (фронтов в докладах нет — по именам)
+    formations: m.post ? m.post.recipients.map((x) => built.parts.formations.find((f) => f.id === x.id) ?? { id: x.id, name: x.name, parent: m.post!.issuer })
+      : built.parts.formations.filter((f) => built.parts.own.find((u) => u.id === f.id)!.status !== 'destroyed'),
     staff: { side, bases: (lg?.bases ?? []).map((b) => ({ id: b.id, name: b.name })), reserves: st.formations.filter((f) => f.side === side && f.reserveFrom && !f.destroyed).map((f) => ({ id: f.id, name: f.name })) },
   };
   const byId = new Map(st.formations.map((f) => [f.id, f]));

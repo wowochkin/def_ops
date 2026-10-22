@@ -64,7 +64,8 @@ const pct = (x: number) => `${Math.round(x * 100)} %`;
 const num = (x: number) => x.toFixed(1).replace('.', ',');
 
 /** Общая часть обстановки стороны на утро хода: свои силы, противник (туман войны), пункты, снабжение, итоги суток. */
-export function situationParts(ctx: SimContext, g: GameState, view: { side: string; anchor: string; anchorName: string }) {
+/** focus — пункт управления: свои войска — только эти формирования и их подчинённые. */
+export function situationParts(ctx: SimContext, g: GameState, view: { side: string; anchor: string; anchorName: string; focus?: string[] }) {
   const T = ctx.theatre, s = g.state, side = view.side;
   const names = new Map([...ctx.scenario.formations.map((f) => [f.id, f.name] as const), ...s.formations.map((f) => [f.id, f.name] as const)]);
   const units = unitReports(ctx, s, side, g.prev).filter((u) => u.status !== 'destroyed' && s.formations.find((f) => f.id === u.id)!.type);
@@ -72,7 +73,9 @@ export function situationParts(ctx: SimContext, g: GameState, view: { side: stri
   // чтобы им можно было отдавать приказы (ядро доведёт до всех дивизий) и называть армии в разграничительных линиях
   const inState = new Set(s.formations.map((f) => f.id));
   const hq = ctx.agentModel ? hqReports(ctx, units, side).filter((u) => !inState.has(u.id)) : [];
-  const own = [...hq, ...units];
+  const defs0 = new Map(ctx.scenario.formations.map((f) => [f.id, f]));
+  const inFocus = (id: string) => { if (!view.focus) return true; for (let x: string | null | undefined = id, n = 0; x && n < 8; x = defs0.get(x)?.parent, n++) if (view.focus.includes(x)) return true; return false; };
+  const own = [...hq, ...units].filter((u) => inFocus(u.id));
   const hqIds = new Set(hq.map((u) => u.id));
   const defs = new Map(ctx.scenario.formations.map((f) => [f.id, f]));
   /** Подчинение до армии: «26-й гв. ск, 5-я ударная армия» (фронт не называется — он в полосах). */
