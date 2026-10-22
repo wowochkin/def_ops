@@ -530,8 +530,8 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .ai-chip.thinking i { background: #d4a52c; animation: pulse 1.2s ease-in-out infinite; }
 .ai-chip.done i { background: #4c9a5a; } .ai-chip.error i { background: var(--danger); } .ai-chip.error { color: var(--danger); }
 @keyframes pulse { 50% { opacity: .3; } }
-.cmd-tabs { display: flex; padding: 0 10px; border-bottom: 1px solid var(--line); gap: 2px; }
-.cmd-tabs button { border: 0; background: none; border-radius: 0; padding: 9px 7px 8px; font-size: 12.5px; color: #6f6b62; border-bottom: 2px solid transparent; white-space: nowrap; }
+.cmd-tabs { display: flex; padding: 0 10px; border-bottom: 1px solid var(--line); gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.cmd-tabs button { border: 0; background: none; border-radius: 0; padding: 9px 6px 8px; font-size: 12.5px; color: #6f6b62; border-bottom: 2px solid transparent; white-space: nowrap; }
 .cmd-tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
 .cmd-tabs button:last-child { margin-left: auto; color: #8c8577; }
 .cmd-tabs button:last-child.on { color: var(--ink); }
@@ -1895,7 +1895,8 @@ body.vp-dragging, body.vp-dragging * { user-select: none !important; -webkit-use
 .vp-seg button.other { background: #f6ebe6; color: #7a1b16; }
 
 /* командование по ступеням: вкладка «Штабы», форма приказа, пометки управления, режим игры */
-.staffs { display: flex; flex-direction: column; gap: 10px; }
+.staffs { gap: 10px; }
+.staffs-queue summary { cursor: pointer; font-size: 12.5px; }
 .staffs section { display: flex; flex-direction: column; gap: 4px; }
 .staffs h4 { margin: 4px 0 2px; font: 700 13px/1.3 'PT Sans', sans-serif; }
 .staffs-mode { font-size: 12.5px; color: #4d473c; background: #f4efe4; border-radius: 8px; padding: 6px 9px; }
@@ -1912,3 +1913,4 @@ body.vp-dragging, body.vp-dragging * { user-select: none !important; -webkit-use
 .oform { display: flex; flex-direction: column; gap: 4px; }
 .oform small { color: #6b6457; }
 .take-mode { margin-top: 6px; }
+.take-mode-h { font-weight: 700; font-size: 12.5px; margin: 2px 0 -2px; }

@@ -1665,6 +1665,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
             <span><b>Без штаба</b> — противник держится прежних приказов<small>для пробы без модели; переключить можно в ходе игры (вкладка «Посредник»)</small></span></label>
         </div>
         {agents && <div className="take-enemy take-mode">
+          <div className="take-mode-h">Командование своей стороной</div>
           {(['hybrid', 'agents', 'legacy'] as GameMode[]).map((k) => <label key={k} className={mode === k ? 'on' : ''} data-hl={`mode-${k}`}>
             <input type="radio" data-action="command.gameMode" checked={mode === k} onChange={() => void act('command.gameMode', { mode: k })} />
             <span><b>{MODE_TITLE[k].title}</b> — {MODE_TITLE[k].hint}</span></label>)}

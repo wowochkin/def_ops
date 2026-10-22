@@ -29,13 +29,15 @@ describe('состояние управления в игре на агентн�
       led: ['su_d1'],
       requests: [{ hq: 'su_4gsk', division: 'su_d1', tick: 26, answer: null }],
       historical: [{ id: 'stavka-11059', at: 0, to: 'su_8gva', task: 'attack', form: 'order', note: 'прорвать оборону', issued: true },
-        { id: 'stavka-11074', at: 30, to: 'su_8gva', task: 'attack', form: 'order', note: 'на Берлин', issued: false }],
+        { id: 'stavka-11074', at: 30, to: 'su_8gva', task: 'attack', form: 'order', note: 'на Берлин', issued: false },
+        // одна директива нескольким получателям — одна строка
+        { id: 'stavka-11074', at: 30, to: 'su_4gsk', task: 'attack', form: 'order', note: 'на Берлин', issued: false }],
     }), 'su')!;
     expect(v.mode).toBe('agents');
     expect(v.hqs.su_8gva).toEqual({ control: 'player', led: false, name: '8 гв. А', echelon: 'army' });
     expect(v.led).toEqual(['su_d1']);
     expect(v.requests).toEqual([{ hq: 'su_4gsk', hqName: '4 гв. ск', division: 'su_d1', divisionName: '35 гв. сд', time: '17.04 07:00', answer: null }]);
-    expect(v.historical.map((h) => [h.id, h.time, h.toName, h.issued, h.due])).toEqual([['stavka-11059', '16.04 05:00', '8 гв. А', true, true], ['stavka-11074', '17.04 11:00', '8 гв. А', false, false]]);
+    expect(v.historical.map((h) => [h.id, h.time, h.toName, h.issued, h.due])).toEqual([['stavka-11059', '16.04 05:00', '8 гв. А', true, true], ['stavka-11074', '17.04 11:00', '8 гв. А, 4 гв. ск', false, false]]);
     expect(v.documents.map((d) => [d.time, d.hqName, d.kind])).toEqual([['16.04 07:00', '8 гв. А', 'order'], ['17.04 08:00', '4 гв. ск', 'notice']]);
   });
   it('форма приказа уходит в ядро', () => {

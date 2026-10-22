@@ -1116,6 +1116,8 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       // средний вынос вперёд соединений, стоящих впереди центра (по численности), но не дальше порога и середины
       // пути до линии фронта: у растянутой армии самое выдвинутое соединение увело бы рубеж от неё
       const defense = (a: C, toward: [number, number], name: string) => {
+        // у корпусов рубежи обороны сливаются в частокол — на уровне «Армия» только удары и отходы
+        if (level === 'corps') return;
         const d = Math.hypot(toward[0] - a.xy[0], toward[1] - a.xy[1]) || 1;
         const u: [number, number] = [(toward[0] - a.xy[0]) / d, (toward[1] - a.xy[1]) / d], nrm: [number, number] = [-u[1], u[0]];
         const proj = a.units.map((m) => ({ p: (m.xy[0] - a.xy[0]) * nrm[0] + (m.xy[1] - a.xy[1]) * nrm[1], w: m.w })).sort((p, q) => p.p - q.p);

@@ -50,7 +50,11 @@ export function commandView(t: AgentGameTrace, side: string): CommandView | null
     hqs: Object.fromEntries(c.hqs.map((h) => [h.id, { control: h.control, led: h.led, name: name.get(h.id) ?? h.id, echelon: hq.get(h.id)?.echelon ?? '' }])),
     led: c.led,
     requests: c.requests.map((r) => ({ hq: r.hq, hqName: name.get(r.hq) ?? r.hq, division: r.division, divisionName: name.get(r.division) ?? r.division, time: at(r.tick), answer: r.answer })),
-    historical: c.historical.map((h) => ({ id: h.id, time: at(h.at), to: h.to, toName: name.get(h.to) ?? h.to, task: h.task, form: h.form, note: h.note, issued: h.issued, due: h.at <= t.game.hour })),
+    // одна директива нескольким получателям (фронтам) — одной строкой
+    historical: [...c.historical.reduce((m, h) => m.set(h.id, [...(m.get(h.id) ?? []), h]), new Map<string, TraceCommand['historical']>()).values()].map((hs) => {
+      const h = hs[0];
+      return { id: h.id, time: at(h.at), to: h.to, toName: hs.map((x) => name.get(x.to) ?? x.to).join(', '), task: h.task, form: h.form, note: h.note, issued: h.issued, due: h.at <= t.game.hour };
+    }),
     documents: (t.documents ?? []).filter((d) => hq.get(d.hq)?.side === side).slice(-DOCS)
       .map((d) => ({ time: dm(d.time), hq: d.hq, hqName: name.get(d.hq) ?? d.hq, kind: d.kind, to: d.to, text: d.text, rule: d.rule })),
   };

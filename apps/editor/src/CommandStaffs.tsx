@@ -97,13 +97,13 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
   const list = Object.entries(c.hqs).filter(([, h]) => h.echelon !== 'high_command');
   const docs = (hq ? c.documents.filter((d) => d.hq === hq) : c.documents).slice().reverse();
   return (
-    <div className="staffs" data-hl="staffs">
+    <div className="cmd-sec staffs" data-hl="staffs">
       <div className="staffs-mode"><b>{MODE_TITLE[c.mode].title}</b> — {MODE_TITLE[c.mode].hint}</div>
-      {cmds.length > 0 && <section>
-        <h4>Команды на этот ход · {cmds.length}</h4>
+      {cmds.length > 0 && <details className="staffs-queue" open={cmds.length <= 4}>
+        <summary><b>Команды на этот ход · {cmds.length}</b> <small className="muted">уйдут в ядро с ходом</small></summary>
         {cmds.map((x, k) => <div key={k} className="staffs-row">{commandText(x, (id) => c.hqs[id]?.name ?? id)}
           <ActButton className="link" action="command.cmd.cancel" params={{ index: k }} title="Снять из очереди">снять</ActButton></div>)}
-      </section>}
+      </details>}
       <section>
         <h4>Исторические директивы {v.terms.topGen}</h4>
         {c.historical.length ? <>
