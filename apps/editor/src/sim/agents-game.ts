@@ -34,6 +34,8 @@ export interface CommandView {
   /** due — час директивы уже наступил (подаётся сразу, при передаче командования — уже доведённой). */
   historical: { id: string; time: string; to: string; toName: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean; due: boolean }[];
   documents: { time: string; hq: string; hqName: string; kind: string; to: string[]; text: string; rule: string | null }[];
+  /** Противник: штабы (подчинённость) и штаб каждой дивизии — для разведки по ступеням (что видно — решает разведсводка). */
+  enemy: { hqs: Record<string, { name: string; echelon: string; parent: string | null }>; divisions: Record<string, string> };
 }
 const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
 /** Документов в журнале — последних. */
@@ -55,6 +57,10 @@ export function commandView(t: AgentGameTrace, side: string): CommandView | null
       const h = hs[0];
       return { id: h.id, time: at(h.at), to: h.to, toName: hs.map((x) => name.get(x.to) ?? x.to).join(', '), task: h.task, form: h.form, note: h.note, issued: h.issued, due: h.at <= t.game.hour };
     }),
+    enemy: {
+      hqs: Object.fromEntries(t.hqs.filter((h) => h.side !== side).map((h) => [h.id, { name: h.name, echelon: h.echelon, parent: h.parent }])),
+      divisions: Object.fromEntries(t.divisions.filter((d) => d.side !== side).map((d) => [d.id, d.hq])),
+    },
     documents: (t.documents ?? []).filter((d) => hq.get(d.hq)?.side === side).slice(-DOCS)
       .map((d) => ({ time: dm(d.time), hq: d.hq, hqName: name.get(d.hq) ?? d.hq, kind: d.kind, to: d.to, text: d.text, rule: d.rule })),
   };
