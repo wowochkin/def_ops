@@ -790,9 +790,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             : <>
               <div className="cmd-check">
                 <span className={decisionMissing(decision).length ? 'no' : 'yes'}>{decisionMissing(decision).length ? '○' : '✓'} решение{staffsOn(view) ? ` ${view?.terms?.topGen ?? 'Ставки'}` : ''}</span>
-                <span>приказов войскам: {draftList.length}</span>
+                {staffsOn(view) ? <span>документов: {cmds.filter((c) => c.op === 'directive').length}</span> : <span>приказов войскам: {draftList.length}</span>}
                 <span>распоряжений: {acts.length}</span>
-                {staffsOn(view) && <span>команд управления: {cmds.length}</span>}
+                {staffsOn(view) && <span>команд: {cmds.filter((c) => c.op !== 'directive').length}</span>}
               </div>
               <StaffButton className="rp-go primary" action="command.turn" title="Утвердить решение, отдать приказы и распоряжения и посчитать ход">
                 Провести {view.turnHours === 24 ? 'сутки' : `${view.turnHours} ч`} ▸
@@ -942,7 +942,9 @@ function PostIntel({ v, level, issuer, onGo, onAttack }: { v: TurnView; level: M
         <div key={x.id} className="intel" data-action="map.show" onClick={() => onGo(x.members[0].id)}>
           <div className="intel-h"><b>{short(x.name)}</b>{x.fresh && <i className="fresh">новое</i>}<span className="muted">{x.members.length > 1 ? `${x.members.length} соед.` : x.members[0].posture}</span></div>
           {x.nearestKm !== null && <div>{Math.round(x.nearestKm)} км до наших войск</div>}
-          <div className="muted">{x.members.map((m) => `${short(m.name)}: ${m.estimate}`).join('; ')}</div>
+          {x.members.length === 1 ? <div className="muted">{x.members[0].estimate}</div>
+            : <details onClick={(ev) => ev.stopPropagation()}><summary className="muted">состав: {x.members.slice(0, 3).map((m) => short(m.name)).join(', ')}{x.members.length > 3 ? ` и ещё ${x.members.length - 3}` : ''}</summary>
+              <ul className="intel-list">{x.members.map((m) => <li key={m.id}>{short(m.name)}: {m.estimate}</li>)}</ul></details>}
           <button className="link" onClick={(ev) => { ev.stopPropagation(); onAttack(x.members[0].id); }} title="Пункт ближайшей задачи открытого документа">назначить целью →</button>
         </div>
       ))}
