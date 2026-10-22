@@ -69,6 +69,8 @@ export const LEGEND_ITEMS: LegendItem[] = [
   { id: 'crossings', key: 'theatre', cls: 'lg-crossing', mark: '⊓', text: 'наведённая переправа', levels: ['division'], match: (f) => f.layerId === 'theatre-crossings' },
   { id: 'towns', cls: 'lg-town', text: 'населённый пункт', levels: ['stavka', 'front', 'army'], match: (f) => UNITS.has(f.layerId) && TOWN.has(f.preset ?? '') },
   { id: 'flag', cls: 'lg-flag', mark: '⚑', text: 'Знамя Победы', levels: ALL, match: (f) => f.layerId === 'sim-marks' },
+  // где и когда событие было по истории (знак бледный), — со слоем исторических положений
+  { id: 'flag-hist', key: 'ghosts', cls: 'lg-flag lg-hist', mark: '⚑', text: 'Знамя Победы по истории', levels: ALL, match: (f) => f.layerId === 'hist-marks' },
   // экран командования
   { id: 'plan', key: 'plan', cls: 'lg-plan', text: 'замысел: проекты приказов и документов', levels: ALL, command: true, match: (f) => f.layerId === 'plan' },
   { id: 'rear', key: 'rear', cls: 'lg-rear', mark: '▲', text: 'тыл: базы и подвоз', levels: ALL, command: true, match: (f) => f.layerId === 'logistics' },
@@ -135,4 +137,23 @@ const at = (f: Feature, time: string | null) => {
 export function presentItems(items: LegendItem[], level: LevelId, doc: MapDocument, time: string | null, always: ReadonlySet<string> = new Set()): LegendItem[] {
   const live = doc.features.filter((f) => onLevel(f.layerId, level) && at(f, time));
   return items.filter((it) => always.has(it.id) || live.some((f) => it.match(f)));
+}
+
+/**
+ * Сверка легенды с картой уровня в час time. drawnDoc — карта, как она нарисована на уровне (withLevel со всеми слоями),
+ * allDoc — до уровня. uncovered — знаки на карте без строки легенды (слой · знак), empty — строки без знаков на карте,
+ * missing — строки, чьи знаки на карте есть, а строки нет.
+ */
+export function legendGaps(drawnDoc: MapDocument, allDoc: MapDocument, level: LevelId, time: string): { uncovered: string[]; empty: string[]; missing: string[] } {
+  const items = legendFor(level);
+  const vis = new Set(drawnDoc.layers.filter((l) => l.visible).map((l) => l.id));
+  const drawn = drawnDoc.features.filter((f) => vis.has(f.layerId) && !f.hidden && at(f, time));
+  const present = new Set(presentItems(items, level, allDoc, time).map((x) => x.id));
+  const uncovered = [...new Set(drawn.filter((f) => !items.some((it) => it.match(f))).map((f) => `${f.layerId} · ${f.preset ?? f.kind}`))];
+  const has = (id: string) => drawn.some((f) => items.find((x) => x.id === id)!.match(f));
+  return {
+    uncovered,
+    empty: items.filter((it) => present.has(it.id) && !has(it.id)).map((it) => it.id),
+    missing: items.filter((it) => !present.has(it.id) && has(it.id)).map((it) => it.id),
+  };
 }
