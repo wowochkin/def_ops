@@ -416,7 +416,8 @@ impl Game {
             self.sim.command.requests[k].answered_at = tick;
             if !yes { continue; }
             let i = self.sim.command.requests[k].division;
-            let at = self.sim.line_behind(&self.sim.world, i as usize);
+            // рубеж, названный при запросе (доктрина), а не от нынешнего места
+            let at = self.sim.command.requests[k].at;
             let d = Directive { id: format!("отход:{i}"), from: h, to: Target::Division(i), form: Form::Instruction, task: Task::Withdraw, axis: Vec::new(),
                 immediate: Some(Line { pts: vec![at], by: None }), subsequent: None, boundaries: Vec::new(), main_blow: Vec::new(), reserve: Vec::new(), junction: None,
                 hasty: true, ready: false, rule: Some("разрешение верхней инстанции на отход".into()), issued: 0, note: "отход разрешён".into() };

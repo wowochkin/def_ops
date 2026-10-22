@@ -43,13 +43,13 @@ pub fn corps(sim: &mut Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Dir
         let here = sim.world.divisions[i as usize].vars.pos;
         if o.kind == OrderKind::Withdraw {
             match sim.command.requests.iter().find(|r| r.hq == h && r.division == i).map(|r| r.answer) {
-                Some(Some(true)) => out.push(to_div(h, i, Task::Withdraw, at, Form::Instruction, "разрешение верхней инстанции на отход", &o.note, &format!("отход:{i}"))),
+                Some(Some(true)) => out.push(to_div(h, i, Task::Withdraw, sim.command.requests.iter().find(|r| r.hq == h && r.division == i).map_or(at, |r| r.at), Form::Instruction, "разрешение верхней инстанции на отход", &o.note, &format!("отход:{i}"))),
                 // ждёт ответа или отказано — держаться на месте
                 Some(_) => out.push(to_div(h, i, Task::Defend, here, Form::Instruction, "приказ от 21.01.1945: до разрешения — держать", &o.note, &format!("держать:{i}"))),
                 None => {
                     out.push(to_div(h, i, Task::Defend, here, Form::Instruction, "приказ от 21.01.1945: до разрешения — держать", &o.note, &format!("держать:{i}")));
                     sim.command.doc_until[i as usize] = tick + hold_h;
-                    sim.command.requests.push(Request { hq: h, tick, division: i, answer: None, answered_at: 0 });
+                    sim.command.requests.push(Request { hq: h, tick, division: i, at, answer: None, answered_at: 0 });
                     let name = sim.world.divisions[i as usize].name.clone();
                     sim.documents.push(Document { tick, hq: h, kind: DocKind::Report, to: Vec::new(), text: format!("запрос на отход: {name} — {}; до ответа — держаться", o.note), rule: Some("приказ от 21.01.1945: о каждом отходе — доклад заранее".into()) });
                 }

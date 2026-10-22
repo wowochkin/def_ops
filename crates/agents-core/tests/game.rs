@@ -489,3 +489,21 @@ fn hybrid_own_order_switches_subtree_to_agents() {
     assert_eq!(h.sim.command.control[hix(&h, "su_1bf")], Control::Script, "фронт остаётся на сценарии");
     assert!(h.sim.documents.iter().any(|d| d.hq as usize == a && d.text.contains("сценари")));
 }
+
+/// Разрешённый отход — на рубеж, который назвала доктрина при запросе, а не на рубеж от нынешнего места.
+#[test]
+fn permitted_withdraw_goes_to_requested_line() {
+    let mut g = de_game();
+    let i = g.sim.world.divisions.iter().position(|d| d.side == Side::De && !d.state.out()).unwrap();
+    g.sim.world.divisions[i].vars.personnel *= 0.3;
+    g.sim.world.divisions[i].vars.cohesion = 0.25;
+    let k = g.sim.world.divisions[i].hq;
+    g.advance(8);
+    let r = g.sim.command.requests.iter().find(|r| r.division == i as u32).expect("запрос").clone();
+    // дивизию сдвинули (бой, сдача позиции): рубеж от нового места был бы другим
+    g.sim.world.divisions[i].vars.pos = agents_core::geo::XY::new(g.sim.world.divisions[i].vars.pos.x - 5.0, g.sim.world.divisions[i].vars.pos.y);
+    let corps = g.sim.world.hqs[k as usize].id.clone();
+    g.permit(&corps, true).expect("разрешение");
+    let d = g.sim.command.in_transit.iter().find(|(_, d)| d.id == format!("отход:{i}")).map(|(_, d)| d.clone()).expect("в пути");
+    assert!(d.immediate.as_ref().unwrap().pts[0].dist(r.at) < 1e-9);
+}

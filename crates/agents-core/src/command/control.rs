@@ -57,7 +57,8 @@ pub struct CommandState {
 
 /// Запрос корпуса на отход дивизии: ответ — да, нет или ещё нет.
 #[derive(Clone, Debug)]
-pub struct Request { pub hq: u32, pub tick: u32, pub division: u32, pub answer: Option<bool>, /// Час ответа: ответ действует permissionHours.
+pub struct Request { pub hq: u32, pub tick: u32, pub division: u32, /// Рубеж отхода, который назвала доктрина при запросе.
+    pub at: crate::geo::XY, pub answer: Option<bool>, /// Час ответа: ответ действует permissionHours.
     pub answered_at: u32 }
 
 impl CommandState {
