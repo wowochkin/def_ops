@@ -536,7 +536,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         {doc ? <>
           <div className="rp-bar">
           {/* voice-entry: начало */}
-          {takeAt && <ActButton className="take-btn" action="replay.takeCommand" data-tour="replay-take" title="С этого хода советской стороной командуете вы, немецкой — штаб на модели">
+          {takeAt && <ActButton className="take-btn" action="replay.takeCommand" data-tour="replay-take" title="С этого хода советской стороной командуете вы; кто командует немецкой — выберете в окне">
             <span>⚑</span> Принять командование <small>с {ddmm(takeAt)}{result!.turnHours !== 24 ? ` ${takeAt.slice(11, 16)}` : ''}</small></ActButton>}
           {/* voice-entry: конец */}
           <div className="rp-tools" data-tour="replay-tools">
