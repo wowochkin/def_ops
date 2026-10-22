@@ -788,7 +788,7 @@ function LegendPanel({ level, doc, time, on, hidden, setHidden, command = false,
   });
   const off = items.filter((x) => !shown(x)).length;
   return (
-    <div className={`legend${open ? '' : ' closed'}`}>
+    <div className={`legend${open ? '' : ' closed'}`} data-tour="map-legend">
       <ActButton className="lg-h" action="map.legend" params={{ open: !open }}>Условные обозначения{off ? <small> · скрыто {off}</small> : null} {open ? '▾' : '▸'}</ActButton>
       {open && <div className={`lg-b${items.length > 10 ? ' two' : ''}`}>
         {items.map((r) => { const v = shown(r); return (

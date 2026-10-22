@@ -799,6 +799,12 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
   .rail-btn { flex: 1; padding: 5px 2px; }
   .rail-btn.on::before { display: none; }
 }
+/* узкий экран: подписи нижней панели не помещаются (рвались посреди слова) — только значки, название в подсказке */
+@media (max-width: 560px) {
+  .shell > .rail { padding: 4px 2px; }
+  .rail-btn { padding: 8px 0; min-width: 0; }
+  .rail-btn > span { display: none; }
+}
 .adv-basis { font-size: 10.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
 .adv-basis i { font-style: normal; background: #eef3ee; color: #2f6b3b; border-radius: 8px; padding: 0 6px; }
 .adv-basis i.ext { background: #f4ecd8; color: #7a5d00; }
@@ -1831,6 +1837,11 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 @keyframes rv-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes go-ring { from { opacity: .55; transform: scale(1); } to { opacity: 0; transform: scale(1.14); } }
 @media (max-width: 640px) { .start-hero { padding: 84px 18px 26px; } .start-hero h2 { font-size: 28px; } }
+/* широкий экран: начальная страница увеличивается целиком, а не остаётся мелкой колонкой посередине */
+@media (min-width: 1760px) { .page[data-tour="section-start"] { zoom: 1.15; } }
+@media (min-width: 2100px) { .page[data-tour="section-start"] { zoom: 1.3; } }
+@media (min-width: 2500px) { .page[data-tour="section-start"] { zoom: 1.45; } }
+@media (min-width: 3200px) { .page[data-tour="section-start"] { zoom: 1.8; } }
 @media (prefers-reduced-motion: reduce) {
   .rv { animation: none; opacity: 1; }
   .sm-arrows path { animation: none; stroke-dashoffset: 0; opacity: 1; }

@@ -307,7 +307,7 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
  */
 export function PostBar({ v, post, cmds }: { v: TurnView; post: PostState; cmds: CommandOp[] }) {
   const { level, issuer, issuers: list } = post;
-  return <div className="post-bar" data-hl="post-bar">
+  return <div className="post-bar" data-hl="post-bar" data-tour="cmd-post">
     <div className="seg post-levels">{LEVELS.map((l) => <ActButton key={l} className={l === level ? 'on' : ''} action="map.level" params={{ level: l }} title={local(POST_TITLE[l], v)}>{local(LEVEL_RU[l], v)}</ActButton>)}</div>
     {issuer && <div className="post-bar-who">
       {list.length > 1 ? <select value={issuer} data-action="command.post" onChange={(e) => void act('command.post', { name: e.target.value })}>
