@@ -19,7 +19,8 @@ import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
-import { LAYER_TITLE, LayersMenu, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLabels, useMapLevel, withLevel, type MapLevel } from './ReplayView';
+import { hiddenOn, LAYER_TITLE, LayersMenu, Legend, LevelSwitch, Player, useLegendHidden, useMapLabels, useMapLevel, withLevel, type MapLevel } from './ReplayView';
+import { withHidden } from './map-legend';
 import { MapHover, withoutLabels } from './MapHover';
 import { shownFeatures, unitAt } from './map-pick';
 import { IntelPanel, useEsc } from './FormationCard';
@@ -113,8 +114,6 @@ const TOGGLES = [
   // зоны влияния сторон — не слой знаков, а картинка под ними (zones-overlay.ts)
   { key: 'zones', title: 'Зоны влияния', match: () => false },
 ];
-/** Зоны влияния в легенде: щелчок — показать или скрыть, как слой. */
-const ZONES_LEGEND = [{ key: 'zones', cls: 'lg-zone-own', text: 'зона влияния своих войск' }, { key: 'zones', cls: 'lg-zone-enemy', text: 'зона влияния противника (по разведке)' }];
 
 export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOpenInEditor }: {
   bm: Basemaps; llm: Llm; start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode;
@@ -182,6 +181,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [planOpen, setPlanOpen] = useState<number | null>(0);
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  const [legendHidden, setLegendHidden, clearLegend] = useLegendHidden();
+  const lvHidden = useMemo(() => hiddenOn(legendHidden, level), [legendHidden, level]);
   // ширина панели командования и окна советника — перетаскиванием края
   const [sideW, setSideW, resetSideW] = usePanelWidth('def_ops.command.sideW', 410, 320, 900);
   const [advW, setAdvW, resetAdvW] = usePanelWidth('def_ops.command.advW', 390, 300, 900);
@@ -499,20 +500,25 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     return withFocus(d, focus);
   }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.level]); // eslint-disable-line react-hooks/exhaustive-deps
   // зоны влияния сторон — картинкой под знаками; за ход — переход от зон на начало к зонам на конец (по времени карты)
-  const zoneUrls = useMemo(() => ({ cur: view?.zones ? zoneUrl(view.zones) : null, prev: view?.zonesPrev ? zoneUrl(view.zonesPrev) : null }), [view?.zones, view?.zonesPrev]);
-  const zonesOn = vis.zones ?? true;
+  // стороны зон — по легенде уровня
+  const zSides = { own: !lvHidden.has('zones-own'), enemy: !lvHidden.has('zones-enemy') };
+  const zoneUrls = useMemo(() => ({ cur: view?.zones ? zoneUrl(view.zones, zSides) : null, prev: view?.zonesPrev ? zoneUrl(view.zonesPrev, zSides) : null }),
+    [view?.zones, view?.zonesPrev, zSides.own, zSides.enemy]); // eslint-disable-line react-hooks/exhaustive-deps
+  const zonesOn = (vis.zones ?? true) && (zSides.own || zSides.enemy);
   const zoneTime = time && view ? (time >= view.time ? 'end' : time) : null;
   const zoneOv = useMemo(() => (view && zoneTime ? zoneOverlays({ cur: view.zones, prev: view.zonesPrev, urls: zoneUrls, from: turnStart.current?.time ?? addH(view.time, -view.turnHours), to: view.time, time: zoneTime === 'end' ? view.time : zoneTime, on: zonesOn }) : []),
     [view, zoneUrls, zoneTime, zonesOn]); // eslint-disable-line react-hooks/exhaustive-deps
   const zoneKey = zoneOv.map((o) => `${o.id}:${o.opacity}`).join(',');
+  /** Зоны влияния — не знаки карты: в легенде, когда они посчитаны на этот час. */
+  const zoneAlways = useMemo(() => new Set(view?.zones && zoneTime ? ['zones-own', 'zones-enemy'] : []), [view?.zones, !!zoneTime]); // eslint-disable-line react-hooks/exhaustive-deps
   const shownDoc = useMemo(() => {
     if (!doc) return null;
-    const d = withoutLabels(withLevel(doc, level), labels);
+    const d = withoutLabels(withHidden(withLevel(doc, level), level, lvHidden), labels);
     return zoneOv.length ? { ...d, overlays: [...d.overlays, ...zoneOv] } : d;
-  }, [doc, level, labels, zoneKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [doc, level, labels, zoneKey, lvHidden]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Обстановка для списков: при фокусе — только объединения и противник на участке. */
   /** Карта, как она нарисована (уровень обобщения) — для щелчка по знаку. */
-  const pickDoc = useMemo(() => (doc ? withLevel(doc, level) : null), [doc, level]);
+  const pickDoc = useMemo(() => (doc ? withHidden(withLevel(doc, level), level, lvHidden) : null), [doc, level, lvHidden]);
   live.current.mapDoc = pickDoc; live.current.time = time;
   const intelE = view?.intel.find((x) => x.id === intelSel) ?? null;
   const closeIntel = useCallback(() => setIntelSel(null), []);
@@ -824,7 +830,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           <div className="rp-tools" data-tour="cmd-tools">
             <LevelSwitch level={level} setLevel={setLevel} engine={eng} />
             <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'division' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t.key), toggle: () => toggle(t.key) }))}
-              setAll={(on) => setVis((h) => ({ ...h, ...Object.fromEntries(TOGGLES.map((t) => [t.key, on])) }))} />
+              setAll={(on) => { if (on) clearLegend(); setVis((h) => ({ ...h, ...Object.fromEntries(TOGGLES.map((t) => [t.key, on])) })); }} />
             {view && <SectorPicker scenario={view.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+view.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={view ? `начала операции, ${dmy(view.start)}` : null} /></Popover>
           </div>
@@ -834,7 +840,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, view?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
           {post.pick && <div className="pick-hint"><ActButton className="link" action="command.dir.pick" params={{ field: '' }}>Готово</ActButton> Щёлкайте по карте — {({ axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия', mainBlow: 'знаки армий главного удара' } as const)[post.pick]}; закончить — «Готово» в пункте управления</div>}
-          {!pickMode && !post.pick && <MapHover engine={eng} doc={doc ? withLevel(doc, level) : null} time={time} />}
+          {!pickMode && !post.pick && <MapHover engine={eng} doc={pickDoc} time={time} />}
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
             : pickMode.kind === 'line' ? `Щёлкайте по карте — точки разграничительной линии (${linePts.length}); закончить — «Готово» во вкладке «Полосы»`
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
@@ -845,7 +851,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             actions={<><button data-action="command.tab" onClick={() => { tap('command.tab', { tab: 'intel' }); setMob('staff'); }}>Разведсводка →</button>
               {unit(sel) && unit(sel)!.status !== 'destroyed' && <button data-action="command.order.set" onClick={() => targetEnemy(intelE.id)}
                 title="Цель удара для выбранного объединения — во вкладке «Приказы»">Целью удара для «{short(unit(sel)!.name)}»</button>}</>} />}
-          <Legend on={layerOn} extra={[...LEVEL_LEGEND[level], ...ZONES_LEGEND]} combat={level === 'division'} remember="def_ops.command.legend" />
+          <Legend level={level} doc={doc} time={time} on={layerOn} hidden={lvHidden} setHidden={(id, h) => setLegendHidden(level, id, h)} command
+            always={zoneAlways} remember="def_ops.command.legend" />
           {view && <Player start={view.start} end={view.time > view.start ? view.time : addH(view.start, view.turnHours)} time={time} setTime={setTime} events={playerEvents}
             onEvent={(e) => { if (e.at) tap('map.event', { name: e.title.split(':')[0] }); else goTo(e.place ?? null); }} mark={{ at: view.takeover, title: `Командование принято: ${ddmm(view.takeover)} ${hhmm(view.takeover)}` }} />}
           </div>

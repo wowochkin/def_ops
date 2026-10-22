@@ -10,6 +10,7 @@ import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/pro
 import { MapView } from './MapView';
 import { useViewScale } from './ScaleRange';
 import { levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
+import { findLegendItem, legendFor, legendText, presentItems, shownLegend, withHidden, type LegendItem } from './map-legend';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
@@ -101,7 +102,13 @@ export function withLevel(doc: MapDocument, level: MapLevel): MapDocument {
     : ALL_LEVEL_LAYERS.has(l.id) ? { ...l, visible: LEVEL_LAYERS[level].includes(l.id) && on(l) }
     : l.id === 'lvl-st-front' ? { ...l, visible: level === 'stavka' && frontOn }
     : l.id === 'sim-front' && level === 'stavka' ? { ...l, visible: false }
-    : l.id === 'theatre-crossings' ? { ...l, visible: level === 'division' && theatreOn } : l)) };
+    : l.id === 'theatre-crossings' ? { ...l, visible: level === 'division' && theatreOn }
+    // линия фронта сутки назад — у корпуса и дивизии (выше — удары за сутки и двое), передний край на начало — у Ставки и фронта
+    : l.id === 'sim-front-prev' ? { ...l, visible: (level === 'corps' || level === 'division') && l.visible }
+    : l.id === 'sim-front-start' ? { ...l, visible: (level === 'stavka' || level === 'front') && l.visible }
+    // обвод крепости на 1:1 000 000 — пятнышко под её знаком; реки для переправ — от армии и ниже
+    : l.id === 'sim-fortress' && level === 'stavka' ? { ...l, visible: false }
+    : l.id === 'rivers' && (level === 'stavka' || level === 'front') ? { ...l, visible: false } : l)) };
 }
 /** Подписи знаков: на карте или только при наведении (запоминается). */
 export function useMapLabels(): [boolean, () => void] {
@@ -128,7 +135,7 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
       const it = key === 'labels' ? { title: 'Подписи знаков', on: labels, toggle: toggleLabels } : items.find((x) => x.key === key)!;
       const on = p.on ?? !it.on;
       if (on !== it.on) it.toggle();
-      note(hl(`layer-${key}`), '.lyr-menu > .pop-btn');
+      note(hl(`layer-${key}`), '.lyr-menu > .pop-btn', `.legend [data-layer="${key}"]`);
       return `${on ? 'Показываю' : 'Скрыл'}: ${it.title.toLowerCase()}.`;
     },
   });
@@ -184,13 +191,6 @@ export function LevelSwitch({ level, setLevel, engine = null }: { level: MapLeve
     {off && <ActButton className="lvl-off" action="map.level.fit" data-hl="level-fit" title="Привести масштаб карты к рекомендуемому для уровня">масштаб вне {levelScaleLabel(level)}</ActButton>}
   </>;
 }
-export const LEVEL_LEGEND: Record<MapLevel, { cls: string; text: string; mark?: string }[]> = {
-  stavka: [{ cls: 'lg-atlas', text: 'главный удар фронта (за двое суток)' }, { cls: 'lg-atlas-de', text: 'удар противника' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-town', text: 'пункт — место события' }, { cls: 'lg-fork', text: 'расходящиеся удары', mark: 'Y' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'оборона' }],
-  front: [{ cls: 'lg-arrow', text: 'удар объединения (за сутки)' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-axis', text: 'ось танковой армии, даты по суткам', mark: '◆' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-reserve', text: 'на марше или в резерве' }, { cls: 'lg-routed', text: 'разгромлено' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
-  army: [{ cls: 'lg-arrow', text: 'удар корпуса (за сутки)' }, { cls: 'lg-fort', text: 'крепость (перечёркнута — пала)', mark: '✲' }, { cls: 'lg-bar', text: 'удар остановлен: рубеж и дата' }, { cls: 'lg-axis', text: 'ось танкового корпуса, даты по суткам', mark: '◆' }, { cls: 'lg-retreat', text: 'отход' }, { cls: 'lg-defense', text: 'рубеж обороны' }, { cls: 'lg-reserve', text: 'на марше или в резерве' }, { cls: 'lg-routed', text: 'разгромлено' }, { cls: 'lg-barmy', text: 'разграничительная линия армий' }],
-  corps: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
-  division: [{ cls: 'lg-destroyed', text: 'соединение уничтожено', mark: '✕' }],
-};
 
 export function download(name: string, text: string, type: string) {
   const a = document.createElement('a');
@@ -233,6 +233,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [eng, setEng] = useState<MapEngine | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  const [legendHidden, setLegendHidden, clearLegend] = useLegendHidden();
+  const lvHidden = useMemo(() => hiddenOn(legendHidden, level), [legendHidden, level]);
   const [labels, toggleLabels] = useMapLabels();
   const [model, setModel] = useState<'army' | 'agents'>('army');
   // параметры агентной модели: базовые (agents-v0.json) или сохранённый вариант (калибровка в «Моделировании»)
@@ -447,7 +449,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     return { ...d, layers: d.layers.map((l) => (t.match(l.id) ? { ...l, visible: !on } : l)) };
   });
   /** Все слои-переключатели сразу (войска и подложка остаются). */
-  const setAll = (on: boolean) => setDoc((d) => d && { ...d, layers: d.layers.map((l) => (TOGGLES.some((t) => t.match(l.id)) ? { ...l, visible: on } : l)) });
+  const setAll = (on: boolean) => { if (on) clearLegend(); setDoc((d) => d && { ...d, layers: d.layers.map((l) => (TOGGLES.some((t) => t.match(l.id)) ? { ...l, visible: on } : l)) }); };
   /** К событию: время — момент события в расчёте, карта — к месту. */
   const goEvent = (e: SimResult['events'][number]) => {
     if (e.at) setTime(e.at);
@@ -468,7 +470,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
 
   // документ для карты — тот же объект, пока не изменились документ, уровень, участок и подписи
   // (иначе каждый кадр проигрывания давал бы новые знаки и перерисовку всей карты)
-  const mapDoc = useMemo(() => (doc ? withoutLabels(withFocus(withLevel(doc, level), focus), labels) : null), [doc, level, focus, labels]);
+  const mapDoc = useMemo(() => (doc ? withoutLabels(withFocus(withHidden(withLevel(doc, level), level, lvHidden), focus), labels) : null), [doc, level, focus, labels, lvHidden]);
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
   /** Начать игру с момента окна «Принять командование» (подтверждение замены незавершённой — до этого). */
   const beginGame = (enemy: EnemyMode, mode: GameMode = savedGameMode()) => {
@@ -582,7 +584,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           <MapView key={mapKey} doc={mapDoc!} setDoc={() => {}} selected={null} setSelected={() => {}} selectedOverlay={null}
             tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, result?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __replayEngine: MapEngine }).__replayEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
-          <MapHover engine={eng} doc={doc ? withFocus(withLevel(doc, level), focus) : null} time={time} skip={['focus']} />
+          <MapHover engine={eng} doc={doc ? withFocus(withHidden(withLevel(doc, level), level, lvHidden), focus) : null} time={time} skip={['focus']} />
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
@@ -590,7 +592,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             onPick={(id) => { if (agentRun?.trace.divisions.some((x) => x.id === id)) { setAgentSel(id); setCardSel(null); } else setCardSel(id); }}
             actions={agentRun ? <button onClick={showDivisions} title="Уровень корпуса с приближением к штабу">Показать дивизии</button> : undefined} />}
           {!agentSel && !card && <div className="ag-hint">{agentRun ? 'Щёлкните по дивизии — карточка агента и разговор с ним; по штабу — его карточка' : 'Щёлкните по знаку соединения — его карточка'}</div>}
-          <Legend on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }} extra={LEVEL_LEGEND[level]} combat={level === 'division'}
+          <Legend level={level} doc={doc} time={time} hidden={lvHidden} setHidden={(id, h) => setLegendHidden(level, id, h)}
+            on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }}
             sig={doc.layers.map((l) => (l.visible ? 1 : 0)).join('')} />
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
@@ -751,51 +754,81 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
   );
 }
 
-type LegendProps = { on: (key: string) => boolean; extra?: { key?: string; cls: string; text: string; mark?: string }[]; combat?: boolean;
-  /** Подпись состояния слоёв: с ней легенда не перерисовывается, пока состояние то же (кадры проигрывания). */
+type LegendProps = {
+  level: MapLevel;
+  /** Карта уровня до скрытия элементов: по ней — что на ней есть в этот час (скрытое остаётся в легенде). */
+  doc: MapDocument | null;
+  time: string | null;
+  /** Слой-переключатель включён (меню «Слои»). */
+  on: (key: string) => boolean;
+  hidden: ReadonlySet<string>;
+  setHidden: (id: string, hide: boolean) => void;
+  /** Экран командования: и замысел, тыл, реки, зоны влияния. */
+  command?: boolean;
+  /** Элементы не из знаков карты, которые сейчас есть (зоны влияния). */
+  always?: ReadonlySet<string>;
+  /** Подпись состояния слоёв: с ней легенда не перерисовывается, пока состояние и час те же (кадры проигрывания). */
   sig?: string;
   /** Ключ localStorage: легенда открывается свёрнутой и помнит, что её развернули (командование — карта для работы). */
   remember?: string };
-export const Legend = memo(LegendPanel, (a, b) => a.sig != null && a.sig === b.sig && a.extra === b.extra && a.combat === b.combat);
-/** Легенда: строка слоя — показать / скрыть его (map.layer, как голосом). */
-function LegendPanel({ on, extra = [], combat = true, remember }: LegendProps) {
+export const Legend = memo(LegendPanel, (a, b) => a.sig != null && a.sig === b.sig && a.level === b.level && a.doc === b.doc && a.hidden === b.hidden && a.always === b.always
+  && (a.time ?? '').slice(0, 13) === (b.time ?? '').slice(0, 13));
+
+/** Скрытые элементы легенды по уровням («stavka:blow-enemy»), запоминаются. */
+export function useLegendHidden(): [ReadonlySet<string>, (level: MapLevel, id: string, hide: boolean) => void, () => void] {
+  const KEY = 'def_ops.legend.hidden';
+  const [h, set] = useState<ReadonlySet<string>>(() => { try { return new Set(JSON.parse(localStorage.getItem(KEY) ?? '[]') as string[]); } catch { return new Set(); } });
+  const save = (x: Set<string>) => { set(x); try { localStorage.setItem(KEY, JSON.stringify([...x])); } catch { /* */ } };
+  return [h, (level, id, hide) => { const x = new Set(h); if (hide) x.add(`${level}:${id}`); else x.delete(`${level}:${id}`); save(x); }, () => save(new Set())];
+}
+/** Скрытые элементы уровня — их id. */
+export const hiddenOn = (h: ReadonlySet<string>, level: MapLevel): Set<string> => new Set([...h].filter((k) => k.startsWith(`${level}:`)).map((k) => k.slice(level.length + 1)));
+
+/** Легенда: условные обозначения уровня, только то, что сейчас на карте; строка — скрыть или показать элемент. */
+function LegendPanel({ level, doc, time, on, hidden, setHidden, command = false, always, remember }: LegendProps) {
   const [open, setOpenState] = useState(() => { if (!remember) return true; try { return localStorage.getItem(remember) === 'open'; } catch { return false; } });
   const setOpen = (v: boolean) => { setOpenState(v); if (remember) try { localStorage.setItem(remember, v ? 'open' : 'closed'); } catch { /* */ } };
+  const items = doc ? presentItems(legendFor(level, { command }), level, doc, time, always) : [];
+  shownLegend.items = items; shownLegend.level = level;
+  const shown = (it: LegendItem) => (!it.key || on(it.key)) && !hidden.has(it.id);
+  const flip = (it: LegendItem, want: boolean) => {
+    setHidden(it.id, !want);
+    // показать элемент выключенного слоя — включить слой
+    if (want && it.key && !on(it.key)) void act('map.layer', { layer: it.key, on: true });
+  };
   useAction({
     id: 'map.legend', section: 'replay', title: 'Легенда карты', describe: 'Открывает условные обозначения карты и читает их вслух (open — только открыть или свернуть, без чтения).', say: ['штаб, легенда'],
     params: { type: 'object', properties: { open: { type: 'boolean' } } }, available: inReplay, highlight: () => btn('map.legend'),
     run: async (p?: { open?: boolean }) => {
       if (typeof p?.open === 'boolean') { setOpen(p.open); return; }
       setOpen(true);
-      const t = rows.map((r) => r.text);
+      const t = items.map((r) => legendText(r, level) + (shown(r) ? '' : ' (скрыто)'));
       const parts = Array.from({ length: Math.ceil(t.length / 4) }, (_, i) => t.slice(i * 4, i * 4 + 4).join(', '));
       return readAloud(`Условные обозначения. ${parts.map((x) => `${x.charAt(0).toUpperCase()}${x.slice(1)}.`).join(' ')}`);
     },
   });
-  const rows: { key?: string; cls: string; text: string; mark?: string }[] = [
-    { cls: 'lg-own', text: 'советские войска' },
-    { cls: 'lg-enemy', text: 'немецкие войска' },
-    { key: 'ghosts', cls: 'lg-ghost', text: 'историческое положение' },
-    { key: 'front', cls: 'lg-front', text: 'линия фронта (расчёт)' },
-    { key: 'front', cls: 'lg-front-prev', text: 'она же сутки назад' },
-    { key: 'front', cls: 'lg-front-start', text: 'передний край на начало' },
-    { key: 'hfront', cls: 'lg-hfront', text: 'линия фронта (история)' },
-    { key: 'bounds', cls: 'lg-bound', text: 'разграничительная линия фронтов' },
-    { key: 'hbounds', cls: 'lg-hbound', text: 'разграничительная линия по директиве' },
-    ...(combat ? [{ key: 'combat', cls: 'lg-arrow', text: 'бой за ход' }] : []),
-    { key: 'pockets', cls: 'lg-pocket', text: 'котёл (окружённые)' },
-    { key: 'fortress', cls: 'lg-fortline', text: 'крепость: обвод по застройке' },
-    { key: 'theatre', cls: 'lg-belt', text: 'укреплённая полоса (зубцы к противнику)' },
-    { cls: 'lg-flag', text: 'Знамя Победы', mark: '⚑' },
-    ...extra,
-  ];
+  useAction({
+    id: 'map.legend.item', section: 'replay', title: 'Элемент легенды', describe: 'Скрывает или показывает на карте элемент условных обозначений этого уровня (удары противника, отходы, населённые пункты, свои войска…).',
+    params: { type: 'object', properties: { item: { type: 'string' }, on: { type: 'boolean' } }, required: ['item'] }, say: ['штаб, скрой отходы', 'штаб, покажи удары противника'],
+    available: inReplay, highlight: noted,
+    run: async (p: { item: string; on?: boolean }) => {
+      const it = findLegendItem(String(p?.item ?? ''), items, level);
+      if (!it) return `На карте этого уровня такого нет. Есть: ${items.map((x) => `«${legendText(x, level)}»`).join(', ')}.`;
+      const want = p.on ?? !shown(it);
+      if (want !== shown(it)) flip(it, want);
+      note(hl(`legend-${it.id}`), '.legend .lg-h');
+      return `${want ? 'Показываю' : 'Скрыл'}: ${legendText(it, level)}.`;
+    },
+  });
+  const off = items.filter((x) => !shown(x)).length;
   return (
     <div className={`legend${open ? '' : ' closed'}`}>
-      <ActButton className="lg-h" action="map.legend" params={{ open: !open }}>Условные обозначения {open ? '▾' : '▸'}</ActButton>
-      {open && <div className={`lg-b${rows.length > 12 ? ' two' : ''}`}>
-        {rows.map((r) => r.key
-          ? <button key={r.text} className={`lg-row${on(r.key) ? '' : ' off'}`} title={on(r.key) ? 'Скрыть на карте' : 'Показать на карте'} data-action="map.layer" data-hl={`layer-${r.key}`} onClick={() => { void act('map.layer', { layer: r.key!, on: !on(r.key!) }); }}><i className={r.cls}>{r.mark}</i>{r.text}{!on(r.key) && <span className="lg-eye">скрыто</span>}</button>
-          : <div key={r.text} className="lg-row"><i className={r.cls}>{r.mark}</i>{r.text}</div>)}
+      <ActButton className="lg-h" action="map.legend" params={{ open: !open }}>Условные обозначения{off ? <small> · скрыто {off}</small> : null} {open ? '▾' : '▸'}</ActButton>
+      {open && <div className={`lg-b${items.length > 10 ? ' two' : ''}`}>
+        {items.map((r) => { const v = shown(r); return (
+          <button key={r.id} className={`lg-row${v ? '' : ' off'}`} title={v ? 'Скрыть на карте' : 'Показать на карте'} data-action="map.legend.item" data-hl={`legend-${r.id}`} data-layer={r.key}
+            onClick={() => { void act('map.legend.item', { item: r.id, on: !v }); }}><i className={r.cls}>{r.mark}</i>{legendText(r, level)}{!v && <span className="lg-eye">скрыто</span>}</button>); })}
+        {!items.length && <div className="lg-row">на карте этого уровня пока ничего нет</div>}
       </div>}
     </div>
   );

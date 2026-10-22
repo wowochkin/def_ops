@@ -29,14 +29,14 @@ export function zoneRgba(z: ZoneGrid, alpha = ZONE_ALPHA, enemy = ZONE_ALPHA_ENE
   return px;
 }
 
-/** Картинка зон (data: URL) — в окне браузера; без canvas (проверки в node) — null. */
-export function zoneUrl(z: ZoneGrid): string | null {
+/** Картинка зон (data: URL) — в окне браузера, стороны по выбору; без canvas (проверки в node) — null. */
+export function zoneUrl(z: ZoneGrid, sides: { own: boolean; enemy: boolean } = { own: true, enemy: true }): string | null {
   if (typeof document === 'undefined') return null;
   const c = document.createElement('canvas');
   c.width = z.cols; c.height = z.rows;
   const g = c.getContext('2d');
   if (!g) return null;
-  g.putImageData(new ImageData(zoneRgba(z) as unknown as Uint8ClampedArray<ArrayBuffer>, z.cols, z.rows), 0, 0);
+  g.putImageData(new ImageData(zoneRgba(z, sides.own ? ZONE_ALPHA : 0, sides.enemy ? ZONE_ALPHA_ENEMY : 0) as unknown as Uint8ClampedArray<ArrayBuffer>, z.cols, z.rows), 0, 0);
   return c.toDataURL('image/png');
 }
 

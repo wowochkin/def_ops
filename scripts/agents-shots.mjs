@@ -80,6 +80,14 @@ try {
   await page.locator('.lvl-sw button', { hasText: 'Ставка' }).click();
   await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
   await shot('command-staffs.jpg');
+  // легенда уровня «Ставка»: отход и зона влияния противника скрыты щелчком по строке, затем возвращены
+  await page.evaluate(() => window.__cmdEngine?.setView({ center: [14.0, 52.5] }));
+  await page.locator('.legend .lg-h').click();
+  const rows = ['отход', 'зона влияния противника'];
+  for (const t of rows) await page.locator('.legend .lg-row', { hasText: t }).click();
+  await shot('legend-hidden.jpg');
+  for (const t of rows) await page.locator('.legend .lg-row', { hasText: t }).click();
+  await page.locator('.legend .lg-h').click();
   // пункт управления Ставки: директива 1-му Белорусскому фронту — ось главного удара и рубеж ближайшей задачи на карте
   const at = async (ll) => { const [x, y] = await page.evaluate((p) => window.__cmdEngine.project(p), ll); const b = await page.locator('.rp-map').boundingBox(); await page.mouse.click(b.x + x, b.y + y); await page.waitForTimeout(150); };
   await page.locator('.lvl-sw button', { hasText: 'Ставка' }).click();

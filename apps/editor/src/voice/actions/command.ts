@@ -13,6 +13,7 @@
  * [за семнадцатое]», «оперативный уровень», «покажи / скрой реки», «участок Зееловские высоты», «весь театр»,
  * «приблизь», «отдали», «легенда», «покажи всех» / «верни туман войны», «выйди из игры», «заверши и удали игру».
  */
+import { findLegendItem, shownLegend } from '../../map-legend';
 import type { LngLat } from '@def-ops/core';
 import type { MapEngine } from '../../engine/types';
 import { showAt } from '../../engine/free-center';
@@ -561,6 +562,9 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
   if ((m = /^(покажи|показать|включи|скрой|скрыть|убери|выключи|спрячь|отключи)(?: слой)? (.+)$/.exec(t))) {
     const layer = findLayer(m[2]);
     if (layer) return hit('map.layer', { layer, on: /^(?:покажи|показать|включи)$/.test(m[1]) }, NO_MAP);
+    // элемент легенды этого уровня, который есть на карте: «скрой отходы», «покажи удары противника»
+    const it = getAction('map.legend.item') ? findLegendItem(m[2], shownLegend.items, shownLegend.level) : null;
+    if (it) return hit('map.legend.item', { item: it.id, on: /^(?:покажи|показать|включи)$/.test(m[1]) }, NO_MAP);
   }
   // соединения и места по названию (что не нашлось — разберёт модель)
   if ((m = /^(?:доложи|доложите|доклад|что|как там)(?: мне)? (?:о|об|про|по|с|у) (.+)$/.exec(t))) return soft('command.unit.report', m[1], (v, n) => findWho(n, v));

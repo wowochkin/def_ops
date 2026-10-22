@@ -1326,6 +1326,10 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lg-fort { color: #1f4e8c; font-size: 14px; line-height: 12px; text-align: center; font-style: normal; }
 .lg-town { position: relative; }
 .lg-town::before { content: ''; position: absolute; left: 7px; top: 2px; width: 6px; height: 6px; border: 1.5px solid #222; border-radius: 50%; background: #fff; }
+.lg-crossing { color: #1f4e8c; font-size: 13px; line-height: 12px; font-weight: 700; }
+.lg-plan { height: 0 !important; border-top: 2px dashed #c0392b; }
+.lg-rear { color: #8a5a1c; font-size: 11px; line-height: 12px; }
+.lg-river { height: 0 !important; border-top: 3px solid #5b8fd6; }
 .lg-pocket { border: 1.5px solid #1f4e8c; background: #d6e8f2; border-radius: 6px; }
 /* зоны влияния: цвета знаков сторон, прозрачно (zones-overlay.ts) — мягкое пятно */
 .lg-zone-own { background: radial-gradient(circle, rgba(212,56,52,.42), rgba(212,56,52,.12)); border-radius: 6px; }

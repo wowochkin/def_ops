@@ -1496,6 +1496,18 @@ await check('зоны влияния сторон: карта подкрашен
   return 'слой включается и выключается голосом';
 });
 
+await check('элемент легенды уровня: «скрой немецкие войска» — строка «скрыто», знаки ушли; «покажи немецкие войска»', async () => {
+  await handsFree(['штаб, скрой немецкие войска', ...QUIET], { reload: false });
+  await feedHas('Скрыл: немецкие войска').waitFor({ timeout: 30000 });
+  await page.evaluate(() => import('/src/voice/registry.ts').then((m) => m.act('map.legend', { open: true })));
+  await page.locator('.legend .lg-row.off', { hasText: 'немецкие войска' }).waitFor({ timeout: 5000 }).catch(() => { throw new Error('строка легенды не помечена «скрыто»'); });
+  await handsFree(['штаб, покажи немецкие войска', ...QUIET], { reload: false });
+  await feedHas('Показываю: немецкие войска').waitFor({ timeout: 30000 });
+  if (await page.locator('.legend .lg-row.off', { hasText: 'немецкие войска' }).count()) throw new Error('строка осталась «скрыто»');
+  await page.evaluate(() => import('/src/voice/registry.ts').then((m) => m.act('map.legend', { open: false })));
+  return 'элемент скрывается и показывается голосом';
+});
+
 await check('полоса — сверху по центру под полосой кнопок карты: кнопки карты, вкладки и колонка разделов открыты; значок — там же', async () => {
   const strip = panel.locator('.vp-card.strip');
   await strip.waitFor({ timeout: 3000 });

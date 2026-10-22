@@ -10,6 +10,7 @@ import {
   type CommandDeps, type ReplayDeps,
 } from '../src/voice/actions/command';
 import { stopReading } from '../src/voice/dictation';
+import { legendFor, shownLegend } from '../src/map-legend';
 import { enemyReport, intelReport, journalDayText, situationReport, unitReport, whereText } from '../src/voice/report';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
 import scenarioFile from '../../../packages/sim/data/scenarios/berlin-1945-tasks.json';
@@ -256,6 +257,16 @@ describe('командование голосом', () => {
     expect(parseCommand('участок зееловские высоты', 'replay')).toEqual({ id: 'map.sector', params: { name: 'зееловские высоты' } });
     expect(parseCommand('весь театр', 'replay')).toEqual({ id: 'map.sector', params: { name: '' } });
     expect(parseCommand('легенда', 'replay')).toEqual({ id: 'map.legend' });
+  });
+  it('элемент легенды, который есть на карте уровня, — фразой «скрой / покажи …»', () => {
+    for (const id of ['map.layer', 'map.legend.item']) offs.push(register({ id, section: 'replay', title: id, describe: '', available: () => true, run: async () => undefined }));
+    shownLegend.items = legendFor('stavka'); shownLegend.level = 'stavka';
+    expect(parseCommand('скрой отходы', 'replay')).toEqual({ id: 'map.legend.item', params: { item: 'retreat', on: false } });
+    expect(parseCommand('покажи удары противника', 'replay')).toEqual({ id: 'map.legend.item', params: { item: 'blow-enemy', on: true } });
+    // слой — по-прежнему слоем; чего нет в легенде — не элемент легенды
+    expect(parseCommand('скрой реки', 'replay')).toEqual({ id: 'map.layer', params: { layer: 'rivers', on: false } });
+    shownLegend.items = [];
+    expect(parseCommand('скрой отходы', 'replay')).not.toEqual(expect.objectContaining({ id: 'map.legend.item' }));
   });
   it('«заверши и удали игру» — только после «да»; «выйди из игры» — сразу', async () => {
     const d = cmd();
