@@ -40,6 +40,38 @@ export function prepareTakeover(ctx: SimContext, state: SimState, side: string):
   return { ...state, formations, logistics };
 }
 
+/** Верхняя инстанция стороны в дереве парков (Ставка, ОКХ): у неё — все парки стороны. */
+export const PARKS_TOP = 'top';
+
+/**
+ * Понтонные парки по штабам стороны: у верхней инстанции — все парки стороны; придание — запись старшего подчинённому
+ * (logistics.parks); не придано — фронтам поровну, армиям и корпусам — ничего. Свои парки штаба — приданные минус
+ * приданные его подчинённым; заняты — переправы, которые он сейчас наводит.
+ */
+export function parksOf(ctx: SimContext, state: SimState, side: string) {
+  const total = (profileOf(ctx, side).engineering ?? ENGINEERING).parks;
+  const fs = ctx.scenario.formations.filter((f) => f.side === side && f.echelon !== 'division');
+  const byId = new Map(fs.map((f) => [f.id, f]));
+  const parent = (id: string): string => (id === PARKS_TOP ? PARKS_TOP : byId.get(id)?.parent && byId.has(byId.get(id)!.parent!) ? byId.get(id)!.parent! : PARKS_TOP);
+  const children = (id: string) => (id === PARKS_TOP ? fs.filter((f) => !f.parent || !byId.has(f.parent)).map((f) => f.id) : fs.filter((f) => f.parent === id).map((f) => f.id));
+  const set = state.logistics?.[side]?.parks ?? {};
+  const fronts = children(PARKS_TOP).filter((id) => byId.get(id)?.echelon === 'front');
+  const allot = (id: string): number => {
+    if (id === PARKS_TOP) return total;
+    if (id in set) return set[id];
+    // фронтам по умолчанию — поровну (остаток — первым), прочим — ничего
+    const k = fronts.indexOf(id);
+    if (k < 0) return 0;
+    const given = fronts.filter((x) => x in set).reduce((m, x) => m + set[x], 0);
+    const rest = fronts.filter((x) => !(x in set));
+    const share = Math.max(0, total - given), j = rest.indexOf(id);
+    return Math.floor(share / rest.length) + (j < share % rest.length ? 1 : 0);
+  };
+  const own = (id: string) => allot(id) - children(id).reduce((m, x) => m + allot(x), 0);
+  const busy = (id: string, t: string) => ctx.theatre.data.bridges.filter((b) => b.side === side && b.by === id && b.openFrom && b.openFrom > t).length;
+  return { total, allot, own, busy, parent, children, known: (id: string) => id === PARKS_TOP || byId.has(id) };
+}
+
 const own = (ctx: SimContext, state: SimState, side: string, at: LngLat) => {
   const i = ctx.theatre.indexOf(at);
   return i >= 0 && !!state.territory && state.territory[i] === ctx.scenario.sides.findIndex((x) => x.id === side);
@@ -64,13 +96,32 @@ export function checkAction(ctx: SimContext, state: SimState, a: StaffAction, pe
     if (a.formations.length > lim) return { ok: false, text: `приоритет — не более чем трети объединений (${lim})` };
     return { ok: true, text: a.formations.length ? `приоритетным — подвоз ×1,5, остальным — ×0,75` : 'подвоз поровну' };
   }
+  if (a.kind === 'parks') {
+    const pk = parksOf(ctx, state, a.side);
+    const giver = pk.parent(a.hq);
+    if (!pk.known(a.hq)) return { ok: false, text: 'такого штаба нет' };
+    if (!Number.isInteger(a.n) || a.n < 0) return { ok: false, text: 'число парков — целое, не меньше нуля' };
+    // старшему остаётся: его парки минус приданные другим подчинённым и тем, что он сейчас наводит сам
+    const room = pk.allot(giver) - pk.children(giver).filter((x) => x !== a.hq).reduce((m, x) => m + pk.allot(x), 0) - pk.busy(giver, t);
+    if (a.n > room) return { ok: false, text: `у старшего свободно лишь ${Math.max(0, room)} — больше не придать` };
+    const below = pk.children(a.hq).reduce((m, x) => m + pk.allot(x), 0) + pk.busy(a.hq, t);
+    if (a.n < below) return { ok: false, text: `штаб уже придал или занял ${below} — меньше не оставить` };
+    return { ok: true, text: `${a.n} ${a.n === 1 ? 'парк' : a.n < 5 && a.n > 0 ? 'парка' : 'парков'}; вступает сразу` };
+  }
   if (a.kind === 'bridge') {
     const eng = profileOf(ctx, a.side).engineering ?? ENGINEERING;
     const r = T.nearestRiver(a.at, Math.max(2, T.cellKm * 1.5));
     if (!r) return { ok: false, text: 'здесь нет реки — переправа не нужна' };
     if (T.bridgeOpen(r.i, t)) return { ok: false, text: 'здесь уже есть действующая переправа' };
+    if (a.by) {
+      // наводит штаб своими парками: приданные ему минус приданные его подчинённым
+      const pk = parksOf(ctx, state, a.side);
+      const free = pk.own(a.by) - pk.busy(a.by, t) - pendingBridges;
+      if (pk.own(a.by) <= 0) return { ok: false, text: 'у штаба нет понтонных парков — их придаёт старший (Ставка — фронтам, фронт — армиям, армия — корпусам)' };
+      if (free <= 0) return { ok: false, text: `все понтонные парки штаба заняты (у него — ${pk.own(a.by)})` };
+    }
     const building = T.data.bridges.filter((b) => b.side === a.side && b.openFrom && b.openFrom > t).length + pendingBridges;
-    if (building >= eng.parks) return { ok: false, text: `все понтонные парки заняты (одновременно — ${eng.parks})` };
+    if (!a.by && building >= eng.parks) return { ok: false, text: `все понтонные парки заняты (одновременно — ${eng.parks})` };
     const reachKm = Math.max(10, ctx.rules.contactKm * 2);
     const near = state.formations.some((f) => f.side === a.side && onMap(f, t) && dist(T.proj.toXY(f.position), T.proj.toXY(r.at)) <= reachKm);
     if (!near) return { ok: false, text: `рядом (до ${reachKm} км) нет наших войск — некому прикрыть наводку` };
@@ -154,7 +205,10 @@ export function applyActions(ctx: SimContext, state: SimState, actions: StaffAct
       s.logistics = { ...(s.logistics ?? {}), [a.side]: { ...lg, priority: [...a.formations] } };
     } else if (a.kind === 'bridge') {
       bridges++;
-      ctx.theatre.addBridge({ id: `u_${s.time}_${bridges}`, at: c.at!, name: `переправа ${describePlace(ctx.theatre, c.at!)}`, openFrom: c.eta!, side: a.side, kind: 'crossing' });
+      ctx.theatre.addBridge({ id: `u_${s.time}_${bridges}`, at: c.at!, name: `переправа ${describePlace(ctx.theatre, c.at!)}`, openFrom: c.eta!, side: a.side, kind: 'crossing', ...(a.by ? { by: a.by } : {}) });
+    } else if (a.kind === 'parks') {
+      const lg = s.logistics?.[a.side] ?? { bases: [], priority: [] };
+      s.logistics = { ...(s.logistics ?? {}), [a.side]: { ...lg, parks: { ...(lg.parks ?? {}), [a.hq]: a.n } } };
     } else if (a.kind === 'demolish') {
       ctx.theatre.destroyBridge(c.bridge!, c.eta!);
     } else if (a.kind === 'boundary' || a.kind === 'directive') {

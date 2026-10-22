@@ -725,6 +725,19 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (r.ok) lit(hl('act-priority'), hl('prio'));
         return actReply('Приоритет подвоза', r);
       } },
+    { ...base, id: 'command.parks', title: 'Придать понтонные парки', describe: 'Придаёт подчинённому штабу понтонные парки (n — сколько всего будет у него): Ставка — фронтам, фронт — армиям, армия — корпусам.',
+      params: { type: 'object', properties: { hq: TEXT, n: { type: 'number' } }, required: ['hq', 'n'] }, say: ['штаб, придай восьмой гвардейской два понтонных парка'], highlight: noted,
+      run: async (p: { hq: string; n: number }) => {
+        const v = view();
+        const hqs = v.command?.hqs ?? {};
+        const id = hqs[p?.hq] ? p.hq : Object.keys(hqs).find((k) => norm(hqs[k].name).includes(norm(String(p?.hq ?? '')))) ?? '';
+        if (!id) return `Не нашёл штаба «${p?.hq}».`;
+        const n = Math.max(0, Math.round(Number(p?.n ?? 0)));
+        toOrders('bridges');
+        const r = await get().addAct(`parks:${id}`, { kind: 'parks', side: v.human.id, hq: id, n, issuedAt: v.time }, `Понтонные парки — ${short(hqs[id].name)}`);
+        if (r.ok) lit(hl('parks'));
+        return actReply(`Понтонные парки — ${short(hqs[id].name)}`, r);
+      } },
     { ...base, id: 'command.bridge', title: 'Навести переправу', describe: 'Наводит понтонную переправу у пункта (у реки).',
       params: { type: 'object', properties: { place: TEXT }, required: ['place'] }, say: ['штаб, наведи переправу у Кюстрина'], highlight: noted,
       run: async (p: { place: string }) => {

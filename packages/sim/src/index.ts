@@ -13,7 +13,7 @@ export { contextFrom, rulesFrom, mergeRules, type DataGetter, type DataKind } fr
 export { snapshotOf } from './history';
 export { startGame, applyTakeoverState, playTurn, replayGame, gameOver, gameOutcome, sideStrength, type GameRecord, type TakeoverState, type AgentGameSpec, type GameMode, type CommandOp, type GameTurn, type GameState, type GameEnd, type GameOutcome } from './game';
 export { unitReports, hqReports, intelReport, nearbyPlaces, dayEvents, turnBattles, type TurnBattle, describePlace, describeTarget, detected, detectKm, estimate, areaTitle, areaOriginal, places, orderDelay, rumb, TASK_RU, POSTURE_RU, type UnitReport, type IntelReport, type CombatNote } from './reports';
-export { prepareTakeover, checkAction, applyActions, lineOf, NOT_COMMITTED, type ActionCheck } from './staff';
+export { prepareTakeover, checkAction, applyActions, lineOf, NOT_COMMITTED, parksOf, PARKS_TOP, type ActionCheck } from './staff';
 export { commandTerms, type CommandTerms } from './command';
 export { CORRIDOR_TOL, OUTCOME_WEIGHT, OUTCOME_MIN, CORRIDOR_EDGE, evaluateNorms, normScenarios, measurePace, measureLoss, NORM_MARK, fmtNorm, edgeOf, outcomesScore, outcomeNorm, type Norm, type NormTable, type NormResult, type NormVerdict, type OutcomeClaim } from './norms';
 export { CALIB_SPACE, CALIB_KEYS, CALIB_INFO, baseParams, rulesWith, scoreRules, evaluateRules, mergeEvaluations, type RulesEvaluation, defaultTrainUntil, Calibrator, calibratedRules, withOutcomes, spaceOf, calibCorridors, corridorReport, type CalibKey, type CalibParams, type CalibScore, type CalibCorridor, type CorridorRow, type OutcomeItem } from './calibrate';

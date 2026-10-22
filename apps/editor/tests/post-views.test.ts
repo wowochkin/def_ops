@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { postDocs, postIntel, postReports, postReserves } from '../src/post-views';
+import { postDocs, postIntel, postJournal, postReports, postReserves } from '../src/post-views';
 
 const u = (id: string, parent: string, at: [number, number], personnel = 8000, extra = {}) => ({ id, name: id, parent, echelon: 'division', status: 'active', at, place: '', posture: 'обороняется', task: 'оборонять', target: null, orderSource: null, personnel, tanks: 10, guns: 100, strength: 0.8, ammo: 1, fuel: 1, fatigue: 0.2, cutOff: false, movedKm: 0, combats: [], pending: [], ...extra });
 const hq = (name: string, echelon: string, parent: string | null) => ({ control: 'agent', led: false, name, echelon, parent });
@@ -57,5 +57,24 @@ describe('резервы пункта', () => {
     expect(postReserves(w, 'f1').map((g) => g.id)).toEqual(['r1']);
     expect(postReserves(w, 'a1').map((g) => g.id)).toEqual(['r1']);
     expect(postReserves(w, 'a2').map((g) => g.id)).toEqual([]);
+  });
+});
+
+describe('журнал боевых действий пункта', () => {
+  const w = { ...(v as object), journal: [
+    { time: '1945-04-16T05:00', events: ['4 гв. ск взял высоту', '33 А ведёт бой'], orders: [], actions: [], decision: null },
+    { time: '1945-04-17T01:00', events: ['d3 отошла'], orders: [], actions: [], decision: null },
+  ] } as never;
+  const d = { intent: 'прорвать оборону', assessment: '', report: '' } as never;
+  it('корпус: события его войск, его решение, документы отданные и полученные по ходам', () => {
+    const j = postJournal(w, 'k1', [{ time: '1945-04-17T01:00', d }]);
+    expect(j.map((x) => x.events)).toEqual([['4 гв. ск взял высоту'], []]);
+    expect(j[1].decision).toBe(d);
+    expect(j[1].issued.map((x) => x.time)).toEqual(['17.04 02:00']);
+    expect(j[1].received.map((x) => x.hq)).toEqual(['a1']);
+    expect(j[0].issued).toEqual([]);
+  });
+  it('Ставка — все события стороны', () => {
+    expect(postJournal(w, 's', [])[0].events).toHaveLength(2);
   });
 });

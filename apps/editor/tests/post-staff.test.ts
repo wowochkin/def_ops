@@ -20,11 +20,19 @@ const v = {
 
 describe('распоряжения штаба по уровню пункта', () => {
   it('что штаб ведёт: тыл — фронт и армия, Ставка видит; переправы — фронт и армия; линии армий — фронт', () => {
-    expect(staffScope(v, 'stavka', 'top')).toMatchObject({ bases: 'view', priority: true, bridges: 'view', bounds: 'fronts' });
+    expect(staffScope(v, 'stavka', 'top')).toMatchObject({ bases: 'view', priority: true, bridges: 'view', allotParks: true, bounds: 'fronts' });
     expect(staffScope(v, 'front', 'f1')).toMatchObject({ bases: 'move', priority: true, bridges: 'build', bounds: 'armies' });
     expect(staffScope(v, 'army', 'a1')).toMatchObject({ bases: 'move', priority: true, bridges: 'build', bounds: 'own' });
-    expect(staffScope(v, 'corps', 'k1')).toMatchObject({ bases: 'none', priority: false, bridges: 'view', bounds: 'own' });
-    expect(staffScope(v, 'division', 'k1')).toMatchObject({ bases: 'none', priority: false, bridges: 'view' });
+    expect(staffScope(v, 'corps', 'k1')).toMatchObject({ bases: 'none', priority: false, bridges: 'build', allotParks: false, bounds: 'own' });
+    expect(staffScope(v, 'division', 'k1')).toMatchObject({ bases: 'none', priority: false, bridges: 'build' });
+  });
+  it('танковый и механизированный корпус — свой тыл (подвоз между частями), стрелковый — нет; немецкий — нет', () => {
+    const w = { ...v, command: { hqs: { ...v.command!.hqs, t9: { name: '9 тк', echelon: 'corps', parent: 'a1', side: 'su' }, m1: { name: '1-й механизированный корпус', echelon: 'corps', parent: 'a1', side: 'su' } } } } as unknown as TurnView;
+    expect(staffScope(w, 'corps', 't9').priority).toBe(true);
+    expect(staffScope(w, 'corps', 'm1').priority).toBe(true);
+    expect(staffScope(w, 'corps', 'k1').priority).toBe(false);
+    const de = { ...w, terms: { top: 'ОКХ' } } as unknown as TurnView;
+    expect(staffScope(de, 'corps', 't9').priority).toBe(false);
   });
   it('базы и переправы пункта — питающие его войска и в его полосе', () => {
     expect(postBases(v, staffScope(v, 'army', 'a1')).map((b) => b.id)).toEqual(['b1']);
@@ -48,7 +56,11 @@ describe('распоряжения штаба по уровню пункта', (
     expect(staffDeny(v, staffScope(v, 'army', 'a1'), base('b2'))).toContain('другого штаба');
     expect(staffDeny(v, staffScope(v, 'army', 'a1'), base('b1'))).toBeNull();
     const bridge = (at: [number, number]): StaffAction => ({ kind: 'bridge', side: 'su', at, issuedAt: '' });
-    expect(staffDeny(v, staffScope(v, 'stavka', 'top'), bridge([14, 52.5]))).toContain('«Армия» и «Фронт»');
+    expect(staffDeny(v, staffScope(v, 'stavka', 'top'), bridge([14, 52.5]))).toContain('придаёт понтонные парки');
+    expect(staffDeny(v, staffScope(v, 'corps', 'k1'), bridge([14.05, 52.5]))).toBeNull();
+    expect(staffDeny(v, staffScope(v, 'corps', 'k1'), { kind: 'parks', side: 'su', hq: 'd1', n: 1, issuedAt: '' })).toContain('придают');
+    expect(staffDeny(v, staffScope(v, 'front', 'f1'), { kind: 'parks', side: 'su', hq: 'a1', n: 1, issuedAt: '' })).toBeNull();
+    expect(staffDeny(v, staffScope(v, 'front', 'f1'), { kind: 'parks', side: 'su', hq: 'k1', n: 1, issuedAt: '' })).toContain('своему подчинённому');
     expect(staffDeny(v, staffScope(v, 'army', 'a1'), bridge([18, 52]))).toContain('вне полосы');
     const line: StaffAction = { kind: 'boundary', side: 'su', a: 'a1', b: 'a2', line: [], issuedAt: '' };
     expect(staffDeny(v, staffScope(v, 'army', 'a1'), line)).toContain('штаб фронта');

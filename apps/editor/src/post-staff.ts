@@ -19,11 +19,16 @@ export interface StaffScope {
   bases: 'move' | 'view' | 'none';
   /** Приоритет подвоза между подчинёнными (Ставка — фронты, фронт — армии, армия — корпуса). */
   priority: boolean;
-  /** Переправы: наводить (фронт, армия — понтонные парки), только видеть. */
+  /** Переправы: наводить своими (приданными) понтонными парками — фронт, армия, корпус; только видеть — Ставка. */
   bridges: 'build' | 'view';
+  /** Придавать понтонные парки подчинённым: Ставка — фронтам, фронт — армиям, армия — корпусам. */
+  allotParks: boolean;
   /** Полосы: линии фронтов (Ставка — директивой), линии армий фронта (фронт), своя полоса (армия и ниже). */
   bounds: 'fronts' | 'armies' | 'own';
 }
+
+/** Советский танковый или механизированный корпус (свой тыл); немецкий корпус звеном снабжения не был. */
+export const mobileCorps = (v: TurnView, id: string) => (v.terms?.top ?? 'Ставка') === 'Ставка' && /танков|механиз|(^|\s)[тм]к(\s|$)/i.test(v.command?.hqs[id]?.name ?? '');
 
 const KM_REACH: Record<LevelId, number> = { stavka: Infinity, front: 60, army: 30, corps: 20, division: 20 };
 const km = (a: LngLat, b: LngLat) => Math.hypot((a[0] - b[0]) * 111.32 * Math.cos(((a[1] + b[1]) / 2) * Math.PI / 180), (a[1] - b[1]) * 110.57);
@@ -35,8 +40,10 @@ export function staffScope(v: TurnView, level: LevelId, issuer: string): StaffSc
   return {
     level, issuer, whose,
     bases: level === 'front' || level === 'army' ? 'move' : level === 'stavka' ? 'view' : 'none',
-    priority: level === 'stavka' || level === 'front' || level === 'army',
-    bridges: level === 'front' || level === 'army' ? 'build' : 'view',
+    // у советского танкового и механизированного корпуса — свой тыл: подвоз между его бригадами и дивизиями; у стрелкового — нет
+    priority: level === 'stavka' || level === 'front' || level === 'army' || ((level === 'corps' || level === 'division') && mobileCorps(v, issuer)),
+    bridges: level === 'stavka' ? 'view' : 'build',
+    allotParks: level === 'stavka' || level === 'front' || level === 'army',
     bounds: level === 'stavka' ? 'fronts' : level === 'front' ? 'armies' : 'own',
   };
 }
@@ -109,8 +116,12 @@ export function staffDeny(v: TurnView, s: StaffScope, a: StaffAction, reserveIds
   }
   if (a.kind === 'priority' && !s.priority) return `приоритет подвоза распределяют Ставка, фронт и армия между подчинёнными; ${at}`;
   if (a.kind === 'bridge' || a.kind === 'demolish') {
-    if (s.bridges !== 'build') return `понтонные парки и сапёры — у армий и фронтов: переправами распоряжаются уровни «Армия» и «Фронт»; ${at}`;
+    if (s.bridges !== 'build') return `Ставка переправ не наводит — она придаёт понтонные парки фронтам; наводят фронт, армия и корпус своими парками; ${at}`;
     if (!inPostReach(v, s, a.at)) return 'место вне полосы штаба — далеко от его войск';
+  }
+  if (a.kind === 'parks') {
+    if (!s.allotParks) return `понтонные парки придают Ставка, фронт и армия своим подчинённым; ${at}`;
+    if (!priorityPool(v, s).includes(a.hq)) return 'придать парки можно только своему подчинённому штабу';
   }
   if (a.kind === 'boundary') {
     if (s.bounds !== 'armies') return `линии между армиями проводит штаб фронта (уровень «Фронт»); ${at}`;
@@ -120,3 +131,6 @@ export function staffDeny(v: TurnView, s: StaffScope, a: StaffAction, reserveIds
   if (a.kind === 'commit' && reserveIds.length && !reserveIds.includes(a.formation)) return 'этот резерв — не в распоряжении штаба пункта';
   return null;
 }
+
+/** Понтонные парки штаба пункта: ключ в parksBy (верхняя инстанция — «top»). */
+export const parksKey = (v: TurnView, issuer: string) => (v.command?.hqs[issuer]?.echelon === 'high_command' ? 'top' : issuer);

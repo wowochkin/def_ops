@@ -271,7 +271,7 @@ export interface TheatreData {
   rivers: { name: string; line: LngLat[]; major: boolean }[];
   /** Мосты и переправы: openFrom — с какого момента действует (наведённая переправа), destroyedAt — с какого разрушен. */
   /** side — чья переправа (наведённая стороной): при передаче командования её будущие наводки снимаются. */
-  bridges: { id: string; at: LngLat; name?: string; openFrom?: string | null; destroyedAt?: string | null; side?: string; kind?: string }[];
+  bridges: { id: string; at: LngLat; name?: string; openFrom?: string | null; destroyedAt?: string | null; side?: string; kind?: string; /** штаб, который навёл (его понтонные парки) */ by?: string }[];
   /** Именованные районы (для приказов и учёта контроля). */
   areas: { id: string; name: string; ring: LngLat[] }[];
   /** Рубежи и позиции: линия и уровень укреплённости (1–3). */
@@ -555,13 +555,15 @@ export const UMPIRE_LIMITS: [number, number] = [0.8, 1.25];
 
 /** База снабжения: activeFrom — с какого момента действует на новом месте (после переноса); null — действует. */
 export interface SupplyBase { id: string; name: string; at: LngLat; activeFrom: string | null; moved?: boolean }
-export interface Logistics { bases: SupplyBase[]; /** Объединения с приоритетом подвоза. */ priority: string[] }
+export interface Logistics { bases: SupplyBase[]; /** Объединения с приоритетом подвоза. */ priority: string[]; /** Понтонные парки, приданные штабам старшими (штаб → число); нет записи — по умолчанию. */ parks?: Record<string, number> }
 
 /** Распоряжения штаба помимо приказов войскам: тыл, инженерные, резервы. */
 export type StaffAction =
   | { kind: 'base'; side: string; base: string; to: LngLat; toName?: string; issuedAt: string }
   | { kind: 'priority'; side: string; formations: string[]; issuedAt: string }
-  | { kind: 'bridge'; side: string; at: LngLat; issuedAt: string }
+  | { kind: 'bridge'; side: string; at: LngLat; issuedAt: string; /** штаб, который наводит, — его свободными парками; нет — общим запасом стороны */ by?: string }
+  /** Придать штабу понтонные парки (старший — подчинённому: Ставка фронту, фронт армии, армия корпусу). */
+  | { kind: 'parks'; side: string; hq: string; n: number; issuedAt: string }
   /** Подорвать мост или переправу у точки (на своей территории): через 2 ч не действует. */
   | { kind: 'demolish'; side: string; at: LngLat; issuedAt: string }
   | { kind: 'commit'; side: string; formation: string; at: LngLat; atName?: string; issuedAt: string }

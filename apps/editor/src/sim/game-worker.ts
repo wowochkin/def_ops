@@ -12,7 +12,7 @@ import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
   agentsHistory, type AgentGameSpec, type AgentHistory, type CommandOp,
   addHours, applyActions, prepareTakeover,
-  activeBoundaries, commandTerms, groupOf, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  activeBoundaries, commandTerms, groupOf, parksOf, PARKS_TOP, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, planOrdersApplied, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
@@ -241,6 +241,7 @@ function day(time: string, orders: Order[], before: GameState['state'], results:
     : a.kind === 'demolish' ? `Инженерные: подорвать мост ${describePlace(ctx.theatre, a.at)}`
     : a.kind === 'boundary' ? `Разграничительная линия армий${a.places?.length ? ` (${a.places.join(' — ')})` : ''}`
     : a.kind === 'directive' ? `${T.directive === 'приказ' ? 'Приказ' : 'Директива'} ${T.topGen} о разграничительной линии${a.places?.length ? ` (${a.places.join(' — ')})` : ''}`
+    : a.kind === 'parks' ? `Инженерные: придать понтонные парки — ${names.get(a.hq) ?? a.hq}: ${a.n}`
     : `Резерв ${T.topGen}: ввести ${names.get(a.formation)} — район ${describePlace(ctx.theatre, a.at)}`;
   return {
     time,
@@ -444,6 +445,7 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
       if (a.kind === 'bridge') return { key: `bridge:plan${i}`, action: a, label: 'Переправа', text: x.text, at: a.at, given, ok: true };
       if (a.kind === 'demolish') return { key: `demolish:plan${i}`, action: a, label: 'Подрыв моста', text: x.text, at: a.at, given, ok: true };
       if (a.kind === 'boundary' || a.kind === 'directive') return { key: `boundary:${a.a}|${a.b}`, action: a, label: 'Разграничительная линия', text: x.text, at: a.line[0], given, ok: true };
+      if (a.kind === 'parks') return { key: `parks:${a.hq}`, action: a, label: `Понтонные парки — ${short(names.get(a.hq) ?? a.hq)}`, text: x.text, given, ok: true };
       const nm = short(names.get(a.formation) ?? a.formation), grp = gv.subject && short(gv.subject) !== nm ? `${short(gv.subject)}: ` : '';
       return { key: `commit:${a.formation}`, action: a, label: `${grp}${nm}`, text: x.text, at: a.at, given, ok: true };
     });
@@ -769,5 +771,9 @@ function logisticsView() {
   const bridges = T.data.bridges.filter((b) => b.side === human).map((b) => ({
     id: b.id, name: b.name ?? describePlace(T, b.at), at: b.at, openFrom: b.openFrom ?? null, building: !!b.openFrom && b.openFrom > s.time,
   }));
-  return { bases, priority: lg?.priority ?? [], priorityMax: Math.max(1, Math.ceil(n / 3)), supplyHours, rangeHours: sh.rangeHours, bridges, parks: prof.engineering?.parks ?? 3 };
+  // понтонные парки по штабам (агентная модель — пункт управления): приданные, свои, занятые наводкой; «top» — верхняя инстанция
+  const pk = parksOf(ctx, s, human);
+  const parksBy: Record<string, { allot: number; own: number; busy: number }> = {};
+  for (const id of [PARKS_TOP, ...ctx.scenario.formations.filter((f) => f.side === human && f.echelon !== 'division').map((f) => f.id)]) parksBy[id] = { allot: pk.allot(id), own: pk.own(id), busy: pk.busy(id, s.time) };
+  return { bases, priority: lg?.priority ?? [], priorityMax: Math.max(1, Math.ceil(n / 3)), supplyHours, rangeHours: sh.rangeHours, bridges, parks: prof.engineering?.parks ?? 3, parksBy };
 }

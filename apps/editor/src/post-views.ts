@@ -5,7 +5,7 @@
  */
 import type { IntelReport, UnitReport } from '@def-ops/sim';
 import type { LngLat } from '@def-ops/core';
-import type { TurnView } from './sim/game-protocol';
+import type { HumanDecision, TurnView } from './sim/game-protocol';
 import type { LevelId } from './map-level-scale';
 import { recipients } from './command-post';
 
@@ -94,4 +94,44 @@ export function postReserves(v: TurnView, issuer: string): TurnView['reserveGrou
   if (!h || h.echelon === 'high_command') return v.reserveGroups;
   if (h.echelon === 'front') return v.reserveGroups.filter((g) => g.front === issuer);
   return v.reserveGroups.filter((g) => g.id === issuer || g.members.some((m) => ancestry(v, m).includes(issuer)));
+}
+
+/** День журнала боевых действий штаба: события с его войсками, его решение, документы отданные и полученные. */
+/** Ключ времени для сравнения: документы — «ДД.ММ ЧЧ:ММ», журнал — ISO. */
+const docKey = (t: string) => `${t.slice(3, 5)}${t.slice(0, 2)} ${t.slice(6, 11)}`;
+const isoKey = (t: string) => `${t.slice(5, 7)}${t.slice(8, 10)} ${t.slice(11, 16)}`;
+
+export interface PostJournalDay {
+  time: string;
+  events: string[];
+  decision: HumanDecision | null;
+  issued: NonNullable<TurnView['command']>['documents'];
+  received: NonNullable<TurnView['command']>['documents'];
+}
+
+/**
+ * Журнал боевых действий штаба пункта (его вели штабы фронта, армии, корпуса, дивизии): по ходам — события, где названы
+ * его войска (он сам, подчинённые, их дивизии), его решение (запись игры), документы, отданные им и полученные им.
+ */
+export function postJournal(v: TurnView, issuer: string, decisions: { time: string; d: HumanDecision | null }[]): PostJournalDay[] {
+  const hq = v.command?.hqs[issuer];
+  const ids = new Set([issuer, ...recipients(v, issuer).map((x) => x.id), ...divisionsUnder(v, issuer).map((d) => d.id)]);
+  const names = [...new Set([...ids].flatMap((id) => {
+    const n = v.command?.hqs[id]?.name ?? v.own.find((u) => u.id === id)?.name ?? '';
+    return n ? [n, n.replace(/\s*\(.*?\)\s*/g, ' ').trim()] : [];
+  }))].filter((n) => n.length > 2);
+  const top = hq?.echelon === 'high_command';
+  const days = [...v.journal].sort((a, b) => a.time.localeCompare(b.time));
+  const docs = (v.command?.documents ?? []).map((x) => ({ x, k: docKey(x.time) }));
+  return days.map((d, i) => {
+    const from = isoKey(d.time), until = days[i + 1] ? isoKey(days[i + 1].time) : '~';
+    const inDay = docs.filter(({ k }) => k >= from && k < until).map(({ x }) => x);
+    return {
+      time: d.time,
+      events: top ? d.events : d.events.filter((e) => names.some((n) => e.includes(n))),
+      decision: decisions.find((x) => x.time === d.time)?.d ?? null,
+      issued: inDay.filter((x) => x.hq === issuer),
+      received: inDay.filter((x) => x.hq !== issuer && x.to.includes(issuer)),
+    };
+  });
 }

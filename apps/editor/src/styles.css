@@ -2023,3 +2023,10 @@ body.resizing { cursor: col-resize; user-select: none; }
 @media (prefers-reduced-motion: reduce) {
   .ai-btn::before, .ai-spark svg, .ai-writing svg, .ai-writing .dots b, .dfield textarea.ai-wait, .dfield textarea.ai-done, .ai-prog i, .ic-btn.ai svg { animation: none !important; }
 }
+/* понтонные парки пункта: свои и придание подчинённым */
+.parks { margin: 6px 0 10px; }
+.parks-sum { font-size: 12.5px; margin: 0 0 6px; }
+.parks-t { border-collapse: collapse; font-size: 12.5px; }
+.parks-t td { padding: 2px 10px 2px 0; border-bottom: 1px solid #f4f2ed; }
+.parks-n { display: flex; align-items: center; gap: 4px; }
+.parks-n b { min-width: 16px; text-align: center; }
