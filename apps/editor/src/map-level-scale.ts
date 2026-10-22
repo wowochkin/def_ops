@@ -40,6 +40,11 @@ export const levelDefaultScale = (l: LevelId): number => LEVEL_SCALE[l].def;
  * Уровень из сохранённого значения. Прежние три уровня — по содержанию карты: тактический (дивизии и бои) →
  * «Дивизия», оперативный (армии) → «Фронт», стратегический (фронты) → «Ставка»; неизвестное — «Дивизия».
  */
+/** Ключ уровня карты в окне; прежний ключ (def_ops.mapLevel) читают версии с тремя масштабами — туда пишется их значение. */
+export const LEVEL_KEY = 'def_ops.mapLevel5';
+export const LEGACY_LEVEL_KEY = 'def_ops.mapLevel';
+/** Уровень в значение прежних версий (тактический, оперативный, стратегический): переключившись на них, окно не падает. */
+export const legacyLevel = (l: LevelId): 'tac' | 'op' | 'st' => (l === 'stavka' ? 'st' : l === 'front' || l === 'army' ? 'op' : 'tac');
 export function migrateLevel(v: string | null | undefined): LevelId {
   const old: Record<string, LevelId> = { tac: 'division', op: 'front', st: 'stavka' };
   return v && (LEVELS as string[]).includes(v) ? v as LevelId : (v && old[v]) || 'division';

@@ -363,7 +363,15 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   useEffect(() => { dispatcher.modelBack(); }, [llm.url, llm.model, llm.voiceModel, dispatcher]);
 
   /** Окно калибровки или голосов (auto — открыто голосом): ожидание модели отменено, речь штаба по разговору заглушена. */
+  /** Микрофон открыт только на время окна калибровки или голосов (управление голосом выключено). */
+  const [dialogMic, setDialogMic] = useState(false);
+  const dialogMicRef = useRef(false);
   const openDialog = (d: 'calibrate' | 'voices', auto = false) => {
+    // управление выключено — окну нужен микрофон (замер, запись голоса): открыть на время окна
+    if (!enabledRef.current && !dialogMicRef.current) {
+      dialogMicRef.current = true; setDialogMic(true);
+      void client.setEnabled(true).then(() => client.start(parseSettings(lsGet(SETTINGS_KEY)))).catch((e: Error) => setMicError(micText(e)));
+    }
     dialogRef.current = d;
     setAutoCalib(auto && d === 'calibrate');
     setDialog(d);
@@ -372,7 +380,10 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     if (speakingIds.current.size) { client.stop(); speakingIds.current.clear(); syncSpeaking(); }
   };
   // сервис сбрасывает слушателя на шагах калибровки и записи — «речь кончилась» могло не прийти
-  const closeDialog = () => { setDialog(null); setBusy(null); setListening(false); gate.clear({ keep: true }); };
+  const closeDialog = () => {
+    setDialog(null); setBusy(null); setListening(false); gate.clear({ keep: true });
+    if (dialogMicRef.current) { dialogMicRef.current = false; setDialogMic(false); if (!enabledRef.current) { void client.setEnabled(false); setMicError(null); } }
+  };
 
 
   // связь с сервисом: подключение сразу (шлюз может молчать — сервис запущен вручную), состояние шлюза —
@@ -534,7 +545,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       // кнопкой (manual) — как прежде: шаги калибровки по кнопке «Записать»; голосом — шаги идут сами
       const d = typeof raw === 'string' ? raw : raw?.what;
       const manual = typeof raw === 'object' && !!raw?.manual;
-      if ((d === 'calibrate' || d === 'voices') && enabledRef.current) { if (!soundRef.current) setSound(true); openDialog(d, !manual); }  // калибровке и голосам нужен звук
+      // калибровке и голосам нужен звук; управление голосом — нет (микрофон окно откроет само на своё время)
+      if ((d === 'calibrate' || d === 'voices') && client.status === 'ready') { if (!soundRef.current) setSound(true); openDialog(d, !manual); }
       if (d === 'panel') setMode('full');
     };
     const onPower = (e: Event) => {
@@ -637,7 +649,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   // раздел «ИИ» показывает, почему нельзя выбрать модель озвучки
   useEffect(() => { ttsStore.setReason(status === 'ready' ? null : st.text); }, [status, st.text]);
   const live = enabled && status === 'ready' && !micError;
-  const dialogsOk = live && sound;  // калибровка и голоса — со звуком
+  const dialogsOk = status === 'ready' && sound;  // калибровка и голоса — со звуком; управление голосом не нужно
   const hint = live ? bargeHint(speaking, cfg.barge_mode) : null;
   const word = cfg.barge_mode === 'word';
   const errorText = status === 'error' ? client.errorText : null;
@@ -820,7 +832,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
 
       {dialog === 'calibrate' && (
         <Calibration client={client} setBusy={setBusy} onClose={closeDialog} auto={autoCalib} say={sayAndWait}
-          onResult={(c) => applySettings(c, true)} meter={enabled ? <Level p={live ? level.p : 0} busy={level.busy} cfg={cfg} /> : null} />
+          onResult={(c) => applySettings(c, true)} meter={enabled || dialogMic ? <Level p={live || dialogMic ? level.p : 0} busy={level.busy} cfg={cfg} /> : null} />
       )}
       {dialog === 'voices' && (
         <Voices client={client} ready={ready} setBusy={setBusy} onClose={closeDialog} say={sayAndWait}

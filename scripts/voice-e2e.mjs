@@ -563,9 +563,20 @@ const serviceStopped = (id) => page.waitForFunction(
 await check('голоса: проба одного голоса, затем другого — звучит только вторая', async () => {
   const dlg = page.locator('.vp-dialog.voices');
   const rows = dlg.locator('.vp-voice');
-  if ((await rows.count()) < 2) throw new Error(`образцов меньше двух: ${await rows.count()}`);
-  const a = await playPreview(rows.nth(0).getByRole('button', { name: 'Прослушать' }));
-  const b = await playPreview(rows.nth(1).getByRole('button', { name: 'Прослушать' }));
+  // записи одного голоса — одной строкой с выбором записи («Жуков: 10 с / 14 с»): вторая проба — другой записью
+  await rows.first().waitFor({ timeout: 8000 });
+  const play = (row) => playPreview(row.getByRole('button', { name: 'Прослушать' }));
+  const a = await play(rows.nth(0));
+  let b;
+  if ((await rows.count()) >= 2) b = await play(rows.nth(1));
+  else {
+    const sel = rows.nth(0).locator('select');
+    const opts = await sel.locator('option').evaluateAll((os) => os.map((o) => o.value));
+    if (opts.length < 2) throw new Error('образцов меньше двух: одна строка без выбора записи');
+    const cur = await sel.inputValue();
+    await sel.selectOption(opts.find((v) => v !== cur));
+    b = await play(rows.nth(0));
+  }
   try {
     await page.waitForFunction((x) => !window.__e2e.previews().includes(x), a, { timeout: 1000, polling: 20 });
   } catch { throw new Error(`проба ${a} звучит вместе с новой ${b}`); }
@@ -648,7 +659,9 @@ await check('кнопка «Выключить управление»: пояс�
   await page.waitForTimeout(2500);
   const gum = await page.evaluate(() => window.__e2e.gum);
   await micOff('через 2,5 с');
-  if (await panel.getByRole('button', { name: 'Калибровка' }).isEnabled()) throw new Error('калибровка доступна при выключенном голосе');
+  // калибровке и голосам управление не нужно — микрофон открывается на время окна
+  if (!(await panel.getByRole('button', { name: 'Калибровка' }).isEnabled())) throw new Error('калибровка недоступна при выключенном управлении');
+  if (!(await panel.getByRole('button', { name: 'Голоса' }).isEnabled())) throw new Error('«Голоса» недоступны при выключенном управлении');
   await plainWords(panel.locator('.vp-card'), 'панель при выключенном голосе');
   await shot('voice-panel-off.jpg');
   return `микрофон просили ${gum} раз`;
@@ -660,6 +673,19 @@ await check('перезагрузка: голос остаётся выключ�
   await page.waitForTimeout(3000);
   const gum = await page.evaluate(() => window.__e2e.gum);
   if (gum) throw new Error(`микрофон спрошен ${gum} раз`);
+  // управление выключено с запуска (микрофона не было) — штаб всё равно говорит: звук фразы играет
+  const n0 = await page.evaluate(() => window.__e2e.sources.length);
+  await page.evaluate(() => import('/src/voice/registry.ts').then((m) => m.speak('Проверка звука без управления.')));
+  try { await page.waitForFunction((k) => window.__e2e.sources.length > k, n0, { timeout: 10000 }); }
+  catch { throw new Error('управление выключено с запуска — фраза штаба не зазвучала'); }
+  if (await page.evaluate(() => window.__e2e.gum)) throw new Error('ради звука спрошен микрофон');
+  // «Голоса» при выключенном управлении: окно открывается, микрофон — на время окна, закрыли — снова закрыт
+  await panel.getByRole('button', { name: 'Голоса' }).click();
+  await page.locator('.vp-dialog.voices').waitFor({ timeout: 5000 });
+  await micOn();
+  await page.locator('.vp-dialog.voices').getByRole('button', { name: 'Закрыть' }).first().click();
+  await micOff('после закрытия «Голосов» при выключенном управлении');
+  await panel.locator('.vp-state', { hasText: 'Управление голосом выключено' }).waitFor({ timeout: 3000 });
   // полоса при выключенном управлении — с кнопкой «Включить управление»; «Свернуть» на полосе — в значок
   await panel.locator('.vp-card:not(.strip)').getByRole('button', { name: 'Свернуть' }).click();
   await panel.locator('.vp-card.strip').getByRole('button', { name: 'Включить управление' }).waitFor({ timeout: 2000 });
@@ -1290,7 +1316,7 @@ const zelowSeen = () => page.evaluate((at) => {
   return { p: [Math.round(p.x), Math.round(p.y)], under, onMap: inside(box), zoom: en.getView().zoom };
 }, ZELOW);
 await check('без рук: переигровка → «рассчитай операцию» → «прими командование» → «принимаю» → «доложи обстановку» → «покажи Зелов» → «оперативный уровень»', async () => {
-  await page.evaluate(() => { localStorage.removeItem('def_ops.mapLevel'); location.hash = '#editor'; });
+  await page.evaluate(() => { localStorage.removeItem('def_ops.mapLevel'); localStorage.removeItem('def_ops.mapLevel5'); location.hash = '#editor'; });
   await handsFree(['штаб, открой переигровку', 'штаб, рассчитай операцию', ...QUIET], { reload: false });
   await page.waitForFunction(() => location.hash === '#replay', null, { timeout: 30000 });
   await feedHas('Считаю: Берлинская операция').waitFor({ timeout: 30000 });

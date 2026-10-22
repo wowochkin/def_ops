@@ -27,6 +27,29 @@ describe('VoiceClient', () => {
     expect(c.status).toBe('ready');
   });
 
+  it('звук штаба играет и без микрофона (управление голосом выключено с запуска): граф звука создаётся сам', () => {
+    const started: number[] = [];
+    class FakeCtx {
+      currentTime = 0; destination = {};
+      createGain() { return { connect: () => {} }; }
+      createBuffer(_c: number, n: number) { const d = new Float32Array(n); return { duration: n / 24000, getChannelData: () => d }; }
+      createBufferSource() { return { buffer: null, connect: () => {}, start: (t: number) => started.push(t), onended: null }; }
+      resume() { return Promise.resolve(); }
+    }
+    vi.stubGlobal('AudioContext', FakeCtx);
+    try {
+      const { x } = mk();
+      expect(x.ctx).toBeNull(); // микрофон не открывали
+      // кадр звука: [0x01][id u32][rate u32][pcm int16]
+      const buf = new ArrayBuffer(9 + 4);
+      const v = new DataView(buf);
+      v.setUint8(0, 1); v.setUint32(1, 7, true); v.setUint32(5, 24000, true); v.setInt16(9, 1000, true); v.setInt16(11, -1000, true);
+      x.onAudio(buf);
+      expect(started.length).toBe(1);
+      expect(x.ctx).not.toBeNull();
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it('say-done stopped (остановил сервис) — звук фразы гасится, played не шлётся', () => {
     const { x, sent, msg } = mk();
     let stopped = 0;

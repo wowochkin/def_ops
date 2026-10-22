@@ -9,7 +9,7 @@ import { documentAt, formatScale, migrateDocument, zoomForScale, type LngLat, ty
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
 import { useViewScale } from './ScaleRange';
-import { levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
+import { LEGACY_LEVEL_KEY, legacyLevel, LEVEL_KEY, levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
 import { withLevel } from './map-levels';
 import { findLegendItem, legendFor, legendText, presentItems, shownLegend, withHidden, type LegendItem } from './map-legend';
 import type { MapEngine } from './engine/types';
@@ -82,8 +82,9 @@ export function useMapLabels(): [boolean, () => void] {
   return [on, () => set((x) => { try { localStorage.setItem('def_ops.mapLabels', x ? 'hover' : 'on'); } catch { /* */ } return !x; })];
 }
 export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
-  const [l, set] = useState<MapLevel>(() => { try { return migrateLevel(localStorage.getItem('def_ops.mapLevel')); } catch { return 'division'; } });
-  return [l, (x) => { set(x); try { localStorage.setItem('def_ops.mapLevel', x); } catch { /* */ } }];
+  const [l, set] = useState<MapLevel>(() => { try { return migrateLevel(localStorage.getItem(LEVEL_KEY) ?? localStorage.getItem(LEGACY_LEVEL_KEY)); } catch { return 'division'; } });
+  // прежний ключ — значением, понятным прежним версиям (main): уровень «stavka» там ронял окно после расчёта
+  return [l, (x) => { set(x); try { localStorage.setItem(LEVEL_KEY, x); localStorage.setItem(LEGACY_LEVEL_KEY, legacyLevel(x)); } catch { /* */ } }];
 }
 /**
  * Слои карты одним меню: подписи и слои-переключатели (исторические положения, фронт, бои…) — флажками.

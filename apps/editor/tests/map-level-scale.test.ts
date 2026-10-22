@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LEVELS, levelDefaultScale, levelOfScale, levelScaleLabel, migrateLevel, scaleInLevel } from '../src/map-level-scale';
+import { legacyLevel, LEVELS, levelDefaultScale, levelOfScale, levelScaleLabel, migrateLevel, scaleInLevel } from '../src/map-level-scale';
 
 describe('масштабы пяти уровней карты', () => {
   it('интервалы: Ставка, фронт, армия, корпус, дивизия', () => {
@@ -31,5 +31,9 @@ describe('масштабы пяти уровней карты', () => {
     expect(migrateLevel('army')).toBe('army');
     expect(migrateLevel('мусор')).toBe('division');
     expect(migrateLevel(null)).toBe('division');
+  });
+  it('в прежний ключ — значение прежних версий (три масштаба): main не падает на «stavka»', () => {
+    expect(LEVELS.map(legacyLevel)).toEqual(['st', 'op', 'op', 'tac', 'tac']);
+    for (const l of LEVELS) expect(['tac', 'op', 'st']).toContain(legacyLevel(l));
   });
 });

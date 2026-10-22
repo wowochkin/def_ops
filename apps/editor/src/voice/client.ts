@@ -173,7 +173,9 @@ export class VoiceClient {
 
   /** Возобновить звук после действия человека (браузер может держать AudioContext приостановленным). */
   resume() {
-    void this.ctx?.resume().catch(() => {});
+    // первое действие человека — граф звука создаётся сразу (браузер разрешает звук только после него)
+    if (typeof AudioContext === 'undefined') return;
+    void this.audio().ctx.resume().catch(() => {});
   }
 
   on<K extends ServerMsg['type']>(type: K, cb: Handler<K>): () => void {
@@ -340,7 +342,7 @@ export class VoiceClient {
     } catch (e) { console.warn('микрофон не переоткрылся', e); }
   }
 
-  /** Звуковой граф: создаётся с первым микрофоном, звук штаба — через `bus`. */
+  /** Звуковой граф: создаётся с первым микрофоном, первым звуком или первым действием человека; звук штаба — через `bus`. */
   private audio(): { ctx: AudioContext; bus: GainNode } {
     if (!this.ctx || !this.bus) {
       const ctx = new AudioContext();
@@ -566,8 +568,9 @@ export class VoiceClient {
   // --- воспроизведение ---
 
   private onAudio(buf: ArrayBuffer) {
-    const ctx = this.ctx, bus = this.bus;
-    if (!ctx || !bus) return;
+    // граф звука — и без микрофона: управление голосом выключено с запуска, а штаб, посредник и экскурсии говорят
+    if (typeof AudioContext === 'undefined') return;
+    const { ctx, bus } = this.audio();
     let a;
     try { a = parseAudio(buf); } catch { return; }
     // id 0 — тестовая фраза калибровки: не фраза `say`, отмены и `played` её не касаются

@@ -26,7 +26,7 @@ await ctx.addInitScript(() => {
   localStorage.setItem('def_ops.voice.intro', 'off');
   localStorage.setItem('def_ops.tour.seen', JSON.stringify(['replay', 'command', 'editor', 'maps', 'knowledge', 'modeling']));
   localStorage.setItem('def_ops.command.mode', 'agents');
-  localStorage.setItem('def_ops.mapLevel', 'stavka');
+  localStorage.setItem('def_ops.mapLevel5', 'stavka');
 });
 const page = await ctx.newPage();
 const core = await attachAgentsBridge(page);
