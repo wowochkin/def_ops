@@ -61,12 +61,13 @@ export function commandView(t: AgentGameTrace, side: string): CommandView | null
 }
 
 /** Команда управления словами (для журнала хода). */
-export function commandText(c: CommandOp, name: (id: string) => string): string {
+/** hist — как назвать историческую директиву (срок и получатели); нет — по id. */
+export function commandText(c: CommandOp, name: (id: string) => string, hist?: (id: string) => string | undefined): string {
   switch (c.op) {
     case 'take': return `взят под управление — ${name(c.hq)}`;
     case 'release': return `возвращён агенту, в замысел старшего — ${name(c.id)}`;
     case 'permit': return `${c.yes ? 'отход разрешён' : 'в отходе отказано'} — ${name(c.hq)}`;
-    case 'historical': return `подана историческая директива ${c.id}`;
+    case 'historical': { const h = hist?.(c.id); return `подана историческая директива ${c.id}${h ? ` (${h})` : ''}`; }
   }
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, findHq, formTitle, initialCmds, markFor, MODE_TITLE, overHead, queueOp } from '../src/command-forms';
+import { controlMark, findHq, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -70,5 +70,15 @@ describe('пометка управления в докладах', () => {
     expect(markFor(v('hybrid'), 'su_8gva')?.text).toBe('по сценарию (гибрид)');
     expect(markFor(v('agents'), 'su_d1')?.text).toBe('ведёт Ставка');
     expect(markFor({} as never, 'su_8gva')).toBeNull();
+  });
+});
+
+describe('координаты в документах — пунктами', () => {
+  const places = [{ id: 'p1', title: 'Зелов (Seelow)', at: [14.38, 52.6] as [number, number] }, { id: 'p2', title: 'Берлин', at: [13.4, 52.52] as [number, number] }];
+  it('«широта, долгота» — ближайший пункт и расстояние до него', () => {
+    expect(placeText('выдвигаться; ближайшая задача — рубеж у 52.60, 14.38', places)).toBe('выдвигаться; ближайшая задача — рубеж у Зелов (Seelow)');
+    expect(placeText('рубеж у 52.60, 14.53', places)).toBe('рубеж у Зелов (Seelow), 10 км');
+    expect(placeText('без координат', places)).toBe('без координат');
+    expect(placeText('рубеж у 52.60, 14.38', [])).toBe('рубеж у 52.60, 14.38');
   });
 });

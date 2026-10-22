@@ -195,7 +195,7 @@ pub mod commands {
 
     /// Ход игры: распоряжения штаба, приказы штабам и дивизиям, затем `hours` часов расчёта. Возвращает ход с начала сценария и итог по приказам.
     #[tauri::command]
-    pub async fn game_turn(orders: Vec<agents_core::game::PlayerOrder>, hours: u32, staff: Option<agents_core::game::StaffIn>, doctrine_text: Option<DoctrineIn>, command: Option<Vec<agents_core::game::CommandOp>>) -> Result<serde_json::Value, String> {
+    pub async fn game_turn(orders: Vec<agents_core::game::PlayerOrder>, hours: u32, staff: Option<agents_core::game::StaffIn>, doctrine_text: Option<DoctrineIn>, command: Option<Vec<serde_json::Value>>) -> Result<serde_json::Value, String> {
         tauri::async_runtime::spawn_blocking(move || {
             let mut lock = GAME.lock().map_err(|e| e.to_string())?;
             let g = lock.as_mut().ok_or("игра не начата")?;
@@ -203,7 +203,7 @@ pub mod commands {
             if let Some(d) = doctrine_text { g.sim.doctrine_text = d.texts(); }
             // команды управления (взять, вернуть, разрешить отход, исторические директивы) — до распоряжений и приказов
             // по команде: null — исполнена, строка — почему нет
-            let command_res: Vec<Option<String>> = command.unwrap_or_default().iter().map(|c| g.command(c).err()).collect();
+            let command_res: Vec<Option<String>> = command.unwrap_or_default().iter().map(|c| g.command_json(c).err()).collect();
             let command_bad: Vec<String> = command_res.iter().flatten().cloned().collect();
             // распоряжения штаба (подвоз, переправы, подрыв, резервы, полосы) — до приказов хода
             let staff_bad = staff.map(|s| g.staff(&s)).unwrap_or_default();

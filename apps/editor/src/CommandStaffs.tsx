@@ -7,9 +7,12 @@ import { useMemo, useState } from 'react';
 import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
-import { controlMark, findHq, MODE_TITLE, queueOp, type CommandOp } from './command-forms';
+import { controlMark, findHq, MODE_TITLE, placeText, queueOp, type CommandOp } from './command-forms';
 import { commandText } from './sim/agents-game';
+import type { LevelId } from './map-level-scale';
 
+/** Уровень карты взятого штаба: его подчинённые — крупно. */
+const LEVEL_OF: Record<string, LevelId> = { front: 'front', army: 'army', corps: 'corps' };
 const ECH_RU: Record<string, string> = { high_command: 'верхняя инстанция', front: 'фронт', army: 'армия', corps: 'корпус' };
 const KIND_RU: Record<string, string> = { directive: 'директива', order: 'боевой приказ', instruction: 'распоряжение', notice: 'извещение', report: 'донесение' };
 const TASK_RU: Record<string, string> = { attack: 'наступать', defend: 'оборонять', delay: 'сдерживать', withdraw: 'отходить', move: 'выдвинуться', reserve: 'резерв' };
@@ -21,7 +24,7 @@ export const staffsOn = (v: TurnView | null): boolean => !!v?.command && v.comma
  * Голосовые действия и кнопки командования по ступеням: ставят команду в очередь хода. Регистрируются на всё время
  * игры (голосом — из любой вкладки).
  */
-export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmds: (f: (q: CommandOp[]) => CommandOp[]) => void, busy: boolean): void {
+export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmds: (f: (q: CommandOp[]) => CommandOp[]) => void, busy: boolean, setLevel?: (l: LevelId) => void): void {
   const c = view?.command;
   const ready = (): true | string => (!staffsOn(view) ? 'командование по ступеням — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view!.over ? 'игра окончена' : busy ? 'идёт расчёт хода' : true);
   const hqOf = (name: string): string | null => (c ? findHq(c.hqs, String(name ?? '')) : null);
@@ -35,6 +38,9 @@ export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmd
       if (!id || c!.hqs[id].echelon === 'high_command') return 'Такого штаба стороны нет.';
       // «гибрид»: взятый штаб сходит со сценария
       if (c!.hqs[id].control === 'player' && !cmds.some((x) => x.op === 'release' && x.id === id)) return `${nameOf(id)} уже под вашим управлением.`;
+      // взятый штаб — карта на его уровне (смотреть другие можно свободно)
+      const lv = LEVEL_OF[c!.hqs[id].echelon];
+      if (lv) setLevel?.(lv);
       return put({ op: 'take', hq: id }, `${nameOf(id)}: взять под управление`);
     },
   });
@@ -102,7 +108,7 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
       <div className="staffs-mode"><b>{MODE_TITLE[c.mode].title}</b> — {MODE_TITLE[c.mode].hint}</div>
       {cmds.length > 0 && <details className="staffs-queue" open={cmds.length <= 4}>
         <summary><b>Команды на этот ход · {cmds.length}</b> <small className="muted">уйдут в ядро с ходом</small></summary>
-        {cmds.map((x, k) => <div key={k} className="staffs-row">{commandText(x, (id) => c.hqs[id]?.name ?? id)}
+        {cmds.map((x, k) => <div key={k} className="staffs-row">{commandText(x, (id) => c.hqs[id]?.name ?? id, (id) => { const h = c.historical.find((y) => y.id === id); return h && `${h.time} → ${h.toName}`; })}
           <ActButton className="link" action="command.cmd.cancel" params={{ index: k }} title="Снять из очереди">снять</ActButton></div>)}
       </details>}
       <section>
@@ -145,7 +151,7 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
         <label className="small">Штаб <select value={hq} data-action="command.docs.hq" onChange={(e) => void act('command.docs.hq', { hq: e.target.value })}>
           <option value="">все</option>{list.map(([id, h]) => <option key={id} value={id}>{h.name}</option>)}</select></label>
         <div className="staffs-docs">{docs.length ? docs.map((d, k) => <div key={k} className={`doc doc-${d.kind}`}>
-          <b>{d.time}</b> {d.hqName} · <i>{KIND_RU[d.kind] ?? d.kind}</i>: {d.text}{d.rule && <small className="muted"> ({d.rule})</small>}
+          <b>{d.time}</b> {d.hqName} · <i>{KIND_RU[d.kind] ?? d.kind}</i>: {placeText(d.text, v.places)}{d.rule && <small className="muted"> ({d.rule})</small>}
         </div>) : <span className="muted">документов нет</span>}</div>
       </section>
     </div>

@@ -19,9 +19,13 @@ export function agentsProcess(bin = BIN) {
   const p = spawn(bin, [], { cwd: ROOT, stdio: ['pipe', 'pipe', 'inherit'], env: { ...process.env, DEFOPS_ROOT: ROOT } });
   const waiting = [];
   createInterface({ input: p.stdout }).on('line', (l) => waiting.shift()?.(l));
+  // ядро упало — ждущие вызовы получают ошибку, новые — сразу
+  let dead = null;
+  p.on('exit', (code) => { dead = `ядро завершилось (код ${code})`; for (const w of waiting.splice(0)) w(JSON.stringify({ error: dead })); });
   let chain = Promise.resolve();
   const call = (cmd, args = {}) => {
     const r = chain.then(() => new Promise((res, rej) => {
+      if (dead) { rej(new Error(dead)); return; }
       waiting.push((l) => { const v = JSON.parse(l); if ('error' in v) rej(new Error(v.error)); else res(v.ok); });
       p.stdin.write(`${JSON.stringify({ cmd, args })}\n`);
     }));

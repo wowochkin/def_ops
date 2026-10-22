@@ -507,3 +507,10 @@ fn permitted_withdraw_goes_to_requested_line() {
     let d = g.sim.command.in_transit.iter().find(|(_, d)| d.id == format!("отход:{i}")).map(|(_, d)| d.clone()).expect("в пути");
     assert!(d.immediate.as_ref().unwrap().pts[0].dist(r.at) < 1e-9);
 }
+
+#[test]
+fn malformed_command_is_an_error_not_a_failed_turn() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    assert!(g.command_json(&serde_json::json!({ "op": "взорвать", "hq": "su_8gva" })).unwrap_err().contains("команда"));
+    assert!(g.command_json(&serde_json::json!({ "op": "take", "hq": "su_8gva" })).is_ok());
+}

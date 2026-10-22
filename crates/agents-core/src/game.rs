@@ -437,6 +437,12 @@ impl Game {
         }
     }
 
+    /// Команда управления из JSON: неразборчивая — ошибка этой команды, а не всего хода.
+    pub fn command_json(&mut self, v: &Value) -> Result<(), String> {
+        let c: CommandOp = serde_json::from_value(v.clone()).map_err(|e| format!("команда {v}: {e}"))?;
+        self.command(&c)
+    }
+
     /// Взять штаб под своё управление: его замысел старшего остаётся, сам он больше не решает.
     pub fn take(&mut self, hq: &str) -> Result<(), String> {
         use crate::command::control::{Control, DocKind, Document};

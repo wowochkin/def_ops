@@ -662,7 +662,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setBounds: (b) => setBnd((x) => ({ ...x, ...b })),
   };
   useEffect(() => { const get = () => screen.current; const offs = screenActions(get).map(register); return () => { offs.forEach((o) => o()); releaseScreen(get); }; }, []);
-  useStaffActions(view, cmds, setCmds, !!progress);
+  useStaffActions(view, cmds, setCmds, !!progress, setLevel);
 
   if (error && !view) return <div className="rp-empty"><div><b>Игра не запустилась</b><p className="err">{error}</p><ActButton action="command.exit">Назад к переигровке</ActButton></div></div>;
 

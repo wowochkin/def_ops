@@ -79,3 +79,15 @@ export function markFor(v: TurnView, id: string): { text: string; cls: string } 
   if (!c || c.mode === 'legacy') return null;
   return controlMark(c.hqs[id] ?? (c.led.includes(id) ? { control: 'agent', led: true } : undefined));
 }
+
+/** «широта, долгота» в тексте документа ядра — ближайшим пунктом театра (дальше 1 км — с расстоянием до него). */
+export function placeText(text: string, places: { title: string; at: [number, number] }[]): string {
+  if (!places.length) return text;
+  return text.replace(/(\d{2}\.\d{2}), (\d{1,3}\.\d{2})/g, (_m, la: string, lo: string) => {
+    const lat = +la, lng = +lo;
+    const km = (p: [number, number]) => Math.hypot((p[0] - lng) * 111.32 * Math.cos((lat * Math.PI) / 180), (p[1] - lat) * 110.57);
+    const best = places.reduce((a, p) => (km(p.at) < km(a.at) ? p : a));
+    const d = Math.round(km(best.at));
+    return d >= 1 ? `${best.title}, ${d} км` : best.title;
+  });
+}
