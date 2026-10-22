@@ -352,10 +352,6 @@ fn de_army_pulls_back_once() {
 /// В «гибриде» директива игрока штабу под сценарием — ошибка; историческую директиву дважды не подать.
 #[test]
 fn directive_errors_hybrid_and_twice() {
-    let mut h = seelow_game(Mode::Hybrid, 0);
-    h.issue_historical("stavka-11059").expect("директива");
-    let e = h.directive(&PlayerDirective { to: "su_8gva".into(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: String::new() }).unwrap_err();
-    assert!(e.contains("сценарий"), "{e}");
     let mut a = seelow_game(Mode::Agents, 0);
     a.issue_historical("stavka-11059").expect("директива");
     assert!(a.issue_historical("stavka-11059").unwrap_err().contains("уже подана"));
@@ -478,4 +474,18 @@ fn order_form_prepared_slower() {
     b.order(&order("order")).expect("приказ");
     let at = |g: &Game| g.sim.command.in_transit.iter().filter(|(_, d)| d.id.starts_with("игрок:")).map(|(at, _)| *at).max().expect("в пути");
     assert!(at(&b) > at(&a) + 6, "приказ {} — распоряжение {}", at(&b), at(&a));
+}
+
+#[test]
+fn hybrid_own_order_switches_subtree_to_agents() {
+    // «гибрид»: директива игрока, отличная от исторической, снимает поддерево получателя со сценария — дальше решают агенты
+    let mut h = seelow_game(Mode::Hybrid, 0);
+    h.issue_historical("stavka-11059").expect("директива");
+    let a = hix(&h, "su_8gva");
+    assert_eq!(h.sim.command.control[a], Control::Script);
+    h.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Defend, target: None, note: String::new(), form: None }).expect("приказ армии в гибриде");
+    assert_eq!(h.sim.command.control[a], Control::Agent);
+    assert_eq!(h.sim.command.control[hix(&h, "su_4gsk")], Control::Agent, "корпус армии — тоже агент");
+    assert_eq!(h.sim.command.control[hix(&h, "su_1bf")], Control::Script, "фронт остаётся на сценарии");
+    assert!(h.sim.documents.iter().any(|d| d.hq as usize == a && d.text.contains("сценари")));
 }

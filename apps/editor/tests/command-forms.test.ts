@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, findHq, formTitle, initialCmds, MODE_TITLE, overHead, queueOp } from '../src/command-forms';
+import { controlMark, findHq, formTitle, initialCmds, markFor, MODE_TITLE, overHead, queueOp } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -60,5 +60,15 @@ describe('очередь первого хода', () => {
     expect(initialCmds(view('hybrid', 1))).toEqual([{ op: 'historical', id: 'a' }, { op: 'historical', id: 'b' }]);
     expect(initialCmds(view('agents', 2))).toEqual([]);
     expect(initialCmds(view('legacy', 1))).toEqual([]);
+  });
+});
+
+describe('пометка управления в докладах', () => {
+  const v = (mode: string) => ({ command: { mode, hqs: { su_8gva: { control: 'script', led: false, name: '', echelon: 'army' } }, led: ['su_d1'], requests: [], historical: [], documents: [] } }) as never;
+  it('«как сейчас» (и старые записи) — без пометок; гибрид — по сценарию; дивизия через голову — ведёт Ставка', () => {
+    expect(markFor(v('legacy'), 'su_8gva')).toBeNull();
+    expect(markFor(v('hybrid'), 'su_8gva')?.text).toBe('по сценарию (гибрид)');
+    expect(markFor(v('agents'), 'su_d1')?.text).toBe('ведёт Ставка');
+    expect(markFor({} as never, 'su_8gva')).toBeNull();
   });
 });

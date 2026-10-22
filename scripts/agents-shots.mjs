@@ -2,7 +2,8 @@
 // (scripts/agents-bridge.mjs): переигровка Берлинской на агентной модели — уровни карты, окно передачи командования
 // с режимом (штабы-агенты), вкладка «Штабы», форма приказа, журнал документов после хода.
 //
-//   node scripts/agents-shots.mjs [--url http://localhost:5173] [--out docs/img]
+//   node scripts/agents-shots.mjs [--url http://localhost:5173] [--out docs/img] [--doc]
+// --doc — и снимки уровней карты на нынешней модели и на агентной для описания (replay-*.jpg).
 // Нужны: сервер разработки редактора (cd apps/editor && npx vite) и target/release/agents-game.
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -30,13 +31,37 @@ await ctx.addInitScript(() => {
 const page = await ctx.newPage();
 const core = await attachAgentsBridge(page);
 const shot = async (name) => { await page.waitForTimeout(1500); await page.screenshot({ path: join(OUT, name), type: 'jpeg', quality: 82 }); console.log(name); };
+/** Вперёд на n суток от начала операции (кнопка «Вперёд на сутки»). */
+const day = async (n) => {
+  await page.locator('.player .ic[title="Назад на сутки"]').click({ clickCount: 20 });
+  for (let k = 0; k < n; k++) await page.locator('.player .ic[title="Вперёд на сутки"]').click();
+};
+const level = async (t, at) => { await page.locator('.lvl-sw button', { hasText: t }).click(); await page.evaluate((c) => window.__replayEngine?.setView({ center: c }), at); };
 try {
   await page.goto(`${URL_}/#replay`);
+  if (process.argv.includes('--doc')) {
+    // уровни карты на нынешней модели (Берлинская, итог пяти прогонов): дивизия и фронт — 23.04, Ставка — 20 и 25.04
+    await page.locator('[data-action="replay.calc"]').click();
+    await page.locator('.rp-go.primary[data-action="replay.calc"]').waitFor({ timeout: 900000 });
+    await page.locator('.take-btn').waitFor({ timeout: 600000 });
+    await page.getByText('Условные обозначения').first().click();
+    await day(7);
+    // дивизии — обзорно, мельче интервала уровня: рядом с переключателем — «масштаб вне …»
+    await level('Дивизия', [13.85, 52.5]); await page.evaluate(() => window.__replayEngine?.setView({ zoom: 9.4 })); await shot('replay-tactical.jpg');
+    await level('Фронт', [13.7, 52.5]); await shot('replay-operational.jpg');
+    await level('Армия', [13.7, 52.5]); await shot('replay-army.jpg');
+    await day(4); await level('Ставка', [13.9, 52.55]); await shot('replay-strategic.jpg');
+    await day(9); await level('Ставка', [13.7, 52.55]); await shot('replay-strategic-late.jpg');
+  }
   await page.locator('.rp-form select').first().selectOption('agents', { timeout: 60000 });
   await page.locator('[data-action="replay.calc"]').click();
+  // расчёт закончен — кнопка «Рассчитать» снова на месте
+  await page.locator('.rp-go.primary[data-action="replay.calc"]').waitFor({ timeout: 900000 });
   await page.locator('.take-btn').waitFor({ timeout: 600000 });
-  // уровни карты: третьи сутки операции, Зееловские высоты; легенда свёрнута
-  await page.getByText('Условные обозначения').first().click();
+  // легенда свёрнута (на нынешней модели — уже)
+  if (!process.argv.includes('--doc')) await page.getByText('Условные обозначения').first().click();
+  if (process.argv.includes('--doc')) { await day(4); await level('Фронт', [14.0, 52.45]); await shot('replay-agents.jpg'); }
+  // уровни карты: третьи сутки операции, Зееловские высоты
   const track = await page.locator('.pl-track').boundingBox();
   await page.mouse.click(track.x + track.width * 0.17, track.y + track.height / 2);
   for (const [t, f, at] of [['Ставка', 'levels-stavka.jpg', [14.3, 52.6]], ['Фронт', 'levels-front.jpg', [14.3, 52.55]], ['Армия', 'levels-army.jpg', [14.35, 52.55]], ['Дивизия', 'levels-division.jpg', [14.45, 52.55]]]) {

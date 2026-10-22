@@ -283,7 +283,9 @@ export function commandActions(get: () => CommandDeps): Action[] {
     { ...base, id: 'command.tab', title: 'Вкладка командования', describe: 'Открывает вкладку: доклады, разведка, решение, приказы, журнал, посредник.',
       params: { type: 'object', properties: { tab: { enum: Object.keys(TAB_TITLE) } }, required: ['tab'] }, say: ['штаб, открой приказы'],
       highlight: (p: { tab: CmdTab }) => hl(`tab-${p?.tab}`),
-      run: async (p: { tab: CmdTab }) => { if (!TAB_TITLE[p?.tab]) return 'Такой вкладки нет.'; get().setTab(p.tab); return `Вкладка «${TAB_TITLE[p.tab]}».`; } },
+      run: async (p: { tab: CmdTab }) => { if (!TAB_TITLE[p?.tab]) return 'Такой вкладки нет.'; const cm = get().view?.command;
+        if (p.tab === 'staffs' && (!cm || cm.mode === 'legacy')) return 'Вкладка «Штабы» — в игре на агентной модели в режиме «штабы-агенты» или «гибрид».';
+        get().setTab(p.tab); return `Вкладка «${TAB_TITLE[p.tab]}».`; } },
     { ...base, id: 'map.zoomIn', title: 'Приблизить карту', describe: 'Приближает карту на один шаг.', say: ['штаб, приблизь'], run: async () => zoomBy(1) },
     { ...base, id: 'map.zoomOut', title: 'Отдалить карту', describe: 'Отдаляет карту на один шаг.', say: ['штаб, отдали'], run: async () => zoomBy(-1) },
     { ...base, id: 'command.journal.read', title: 'Прочитать журнал', describe: 'Читает вслух журнал боевых действий за день (по умолчанию — последний).',
@@ -341,7 +343,8 @@ export interface ReplayDeps {
   take: string | null;
   saved: { title: string } | null;
   /** Начать игру (без вопросов) и продолжить сохранённую. */
-  begin(enemy: EnemyMode): void;
+  /** mode — режим командования на агентной модели (нет — выбранный в окне и запомненный). */
+  begin(enemy: EnemyMode, mode?: 'legacy' | 'agents' | 'hybrid'): void;
   continueGame(): void;
   /** Остановить расчёт; удалить запись незавершённой игры. */
   stop(): void;
@@ -380,8 +383,8 @@ export function replayActions(get: () => ReplayDeps): Action[] {
     return d.busy ? 'идёт расчёт — подождите, я скажу, когда будет готово' : true;
   };
   const takeOpen = (): true | string => { const r = inReplay(); return r !== true ? r : get().take ? true : 'окно «Принять командование» не открыто. Скажите: «Штаб, прими командование»'; };
-  const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive'] } } };
-  const start = (p?: { enemy?: EnemyMode }) => { get().begin(p?.enemy === 'passive' ? 'passive' : 'llm'); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
+  const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive'] }, mode: { enum: ['legacy', 'agents', 'hybrid'] } } };
+  const start = (p?: { enemy?: EnemyMode; mode?: 'legacy' | 'agents' | 'hybrid' }) => { get().begin(p?.enemy === 'passive' ? 'passive' : 'llm', p?.mode); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
   return [
     { section: 'replay', id: 'replay.calc', title: 'Рассчитать операцию', describe: 'Рассчитывает операцию (по названию; без названия — выбранную).',
       params: { type: 'object', properties: { operation: { type: 'string' } } }, say: ['штаб, рассчитай операцию', 'штаб, рассчитай берлинскую операцию'],
@@ -432,10 +435,10 @@ export function replayActions(get: () => ReplayDeps): Action[] {
     { section: 'replay', id: 'replay.start', title: 'Начать игру', describe: 'Окно «Принять командование»: принять командование и начать игру.', params: ENEMY,
       say: ['принимаю'],
       available: () => { const r = takeOpen(); return r !== true ? r : get().saved ? 'есть незавершённая игра — новая её заменит, нужно подтверждение' : true; },
-      run: async (p?: { enemy?: EnemyMode }) => start(p) },
+      run: async (p?: { enemy?: EnemyMode; mode?: 'legacy' | 'agents' | 'hybrid' }) => start(p) },
     { section: 'replay', id: 'replay.startOver', title: 'Начать новую игру вместо незавершённой', describe: 'Начинает новую игру; запись незавершённой заменяется (необратимо).',
       params: ENEMY, irreversible: true, confirm: () => 'Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', available: takeOpen,
-      run: async (p?: { enemy?: EnemyMode }) => start(p) },
+      run: async (p?: { enemy?: EnemyMode; mode?: 'legacy' | 'agents' | 'hybrid' }) => start(p) },
     { section: 'replay', id: 'replay.takeCommand.cancel', title: 'Отмена', describe: 'Закрывает окно «Принять командование».', say: ['отмена'], available: takeOpen,
       run: async () => { get().closeTake(); return 'Отменено.'; } },
   ];

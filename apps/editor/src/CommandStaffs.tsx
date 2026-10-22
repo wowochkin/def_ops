@@ -33,6 +33,7 @@ export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmd
     run: async (p: { name: string }) => {
       const id = hqOf(p?.name);
       if (!id || c!.hqs[id].echelon === 'high_command') return 'Такого штаба стороны нет.';
+      // «гибрид»: взятый штаб сходит со сценария
       if (c!.hqs[id].control === 'player' && !cmds.some((x) => x.op === 'release' && x.id === id)) return `${nameOf(id)} уже под вашим управлением.`;
       return put({ op: 'take', hq: id }, `${nameOf(id)}: взять под управление`);
     },
@@ -131,7 +132,7 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
           return <div key={id} className="staffs-row">
             <span><b>{h.name}</b> <small className="muted">{ECH_RU[h.echelon] ?? h.echelon}</small>{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>
             <span>
-              {h.control === 'agent' && !queued('take', id) && <ActButton className="link" action="command.take" params={{ name: id }} title="Встать на место командующего: штаб больше не решает сам">взять</ActButton>}
+              {h.control !== 'player' && !queued('take', id) && <ActButton className="link" action="command.take" params={{ name: id }} title="Встать на место командующего: штаб больше не решает сам">взять</ActButton>}
               {h.control === 'player' && !queued('release', id) && <ActButton className="link" action="command.release" params={{ name: id }} title="Агент продолжит с текущего состояния">вернуть агенту</ActButton>}
               {h.led && h.control !== 'player' && !queued('release', id) && <ActButton className="link" action="command.release" params={{ name: id }} title="Старший снова включит его в свой замысел">вернуть в замысел старшего</ActButton>}
             </span>

@@ -348,8 +348,18 @@ impl Game {
             if w.divisions[i].state.out() && w.divisions[i].state != crate::model::State::Pending { return Err(format!("{} выбыла", w.divisions[i].name)); }
             (Target::Division(i as u32), Some(w.divisions[i].hq))
         } else { return Err(format!("нет штаба или дивизии {}", p.to)); };
-        if let Target::Hq(h) = to { if self.sim.command.control[h as usize] == crate::command::control::Control::Script { return Err(format!("{} ведёт сценарий («гибрид»)", p.to)); } }
         let tick = self.hour();
+        // «гибрид»: своя директива штабу, которого ведёт сценарий, — история кончилась: его поддерево решают агенты
+        if let Target::Hq(h) = to {
+            use crate::command::control::Control;
+            if self.sim.command.control[h as usize] == Control::Script {
+                let w = &self.sim.world;
+                let under = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match w.hqs[k].parent { Some(q) => k = q as usize, None => return false } } false };
+                let sub: Vec<usize> = (0..w.hqs.len()).filter(|&k| under(k)).collect();
+                for k in sub { if self.sim.command.control[k] == Control::Script { self.sim.command.control[k] = Control::Agent; self.sim.command.last_cycle[k] = tick; } }
+                self.sim.documents.push(Document { tick, hq: h, kind: DocKind::Notice, to: Vec::new(), text: "директива игрока вместо исторической: штаб и его подчинённые сходят со сценария, решают агенты".into(), rule: None });
+            }
+        }
         // через голову: пропущенные штабы — от непосредственного начальника до штаба под верхней инстанцией
         if parent != Some(top) {
             match to { Target::Hq(h) => self.sim.command.led_hq[h as usize] = true, Target::Division(i) => self.sim.command.led_div[i as usize] = true }
@@ -417,6 +427,7 @@ impl Game {
 
     /// Команда управления на ход.
     pub fn command(&mut self, c: &CommandOp) -> Result<(), String> {
+        if self.mode == Mode::Legacy { return Err("команды управления — в режимах «агенты» и «гибрид»".into()); }
         match c {
             CommandOp::Take { hq } => self.take(hq),
             CommandOp::Release { id } => self.release(id),

@@ -24,7 +24,7 @@ import { shownFeatures, unitAt } from './map-pick';
 import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
-import { controlMark, formTitle, initialCmds, MODE_TITLE, overHead, type CommandOp } from './command-forms';
+import { formTitle, initialCmds, markFor, MODE_TITLE, overHead, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -873,10 +873,10 @@ function Reports({ v, drafts, onUnit, onOrder, sel }: { v: TurnView; drafts: Rec
         <h4>Донесения за ход <ActButton className="turn-show" action="command.turn.show" data-hl="turn-show" title="Посредник покажет прошедший ход на карте: общее, главные бои, цели, тыл, противник">Разбор хода на карте ▸</ActButton></h4>
         {v.events.length ? <ul>{v.events.map((e, i) => <li key={i}>{e}</li>)}</ul> : <p className="muted">Существенных событий нет.</p>}
       </div>}
-      {v.turn === 1 && <p className="note">Командование принято. Войска выполняют задачи, полученные до этого момента; исторические приказы дальше не поступают. Новые приказы — во вкладке «Приказы».</p>}
+      {v.turn === 1 && <p className="note">{staffsOn(v) ? 'Командование принято. Вы — верхняя инстанция: исторические директивы, директивы штабам и взятие штабов под управление — во вкладке «Штабы», приказы — во вкладке «Приказы».' : 'Командование принято. Войска выполняют задачи, полученные до этого момента; исторические приказы дальше не поступают. Новые приказы — во вкладке «Приказы».'}</p>}
       {reached.length > 0 && <div className="dispatch"><h4>Достигнуто</h4><ul>{reached.map((g) => <li key={g.title}>{g.title.split(':')[0]} — {ddmm(g.simulated!)} <small className="muted">(в истории {ddmm(g.historical)})</small></li>)}</ul></div>}
       <h4 className="cmd-h4">Доклады объединений</h4>
-      <Grouped v={v}>{(u) => <UnitCard topGen={v.terms?.topGen} mark={v.command ? controlMark(v.command.hqs[u.id] ?? (v.command.led.includes(u.id) ? { control: 'agent', led: true } : undefined)) : null} key={u.id} u={u} open={sel === u.id} draft={drafts[u.id]} onToggle={() => onUnit(sel === u.id ? '' : u.id)} onOrder={() => onOrder(u.id)} />}</Grouped>
+      <Grouped v={v}>{(u) => <UnitCard topGen={v.terms?.topGen} mark={markFor(v, u.id)} key={u.id} u={u} open={sel === u.id} draft={drafts[u.id]} onToggle={() => onUnit(sel === u.id ? '' : u.id)} onOrder={() => onOrder(u.id)} />}</Grouped>
     </div>
   );
 }
@@ -1602,7 +1602,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
   hasSaved?: boolean;
   /** Игра на агентной модели: выбор режима командования. */
   agents?: boolean;
-  onStart: (enemy: EnemyMode) => void; onCancel: () => void;
+  onStart: (enemy: EnemyMode, mode: GameMode) => void; onCancel: () => void;
 }) {
   const [enemy, setEnemy] = useState<EnemyMode>(llm.check.state === 'fail' ? 'passive' : 'llm');
   const [mode, setMode] = useState<GameMode>(savedGameMode);
@@ -1653,7 +1653,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
         <ul className="take-list">
           <li>Советской стороной с этого момента командуете вы. Конечной даты нет: игра идёт до победы (Знамя Победы над рейхстагом) или поражения — войска потеряли боеспособность или предельный срок вышел. Вернуть командование историческому плану нельзя.</li>
           <li>Немецкой стороной с того же момента командует штаб на языковой модели. На каждом ходу он получает свою обстановку — то, что знал бы немецкий штаб, — и отдаёт приказы. Обе стороны решают одновременно.</li>
-          <li>{agents && mode !== 'legacy' ? 'Вы — верхняя инстанция: директивы фронтам, ниже решают штабы-агенты. Уже действующие исторические директивы встанут в очередь первого хода (вкладка «Штабы»).' : 'Исторические приказы после этого момента отменяются. Приказы, отданные раньше и ещё не дошедшие до войск, остаются в силе.'}</li>
+          <li>{agents && mode !== 'legacy' ? mode === 'hybrid' ? 'Вы — верхняя инстанция. Исторические директивы встанут в очередь первого хода (вкладка «Штабы»): пока они действуют, войска идут по приказам сценария; своя директива штабу снимает его со сценария — дальше решают штабы-агенты.' : 'Вы — верхняя инстанция: директивы фронтам, ниже решают штабы-агенты. Уже действующие исторические директивы встанут в очередь первого хода (вкладка «Штабы»).' : 'Исторические приказы после этого момента отменяются. Приказы, отданные раньше и ещё не дошедшие до войск, остаются в силе.'}</li>
           <li>Противник виден только в пределах разведки (туман войны). Игра сохраняется автоматически после каждого хода.</li>
           <li className="take-kb">Состояние соединений на этот момент: {kbSummary ? <>{takeoverText(kbSummary)}. </> : <span className="muted">сверка с базой знаний… </span>}
             <button className="link" onClick={() => { onCancel(); openModelBasis(scenario); }} title="Моделирование → Операции: факты базы, из которых собраны входы модели">Основа модели</button></li>
@@ -1674,7 +1674,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
           {llm.check.state === 'fail' && <button className="link" onClick={llm.recheck}>Проверить связь ещё раз</button>}
           <span style={{ flex: 1 }} />
           <ActButton action="replay.takeCommand.cancel">Отмена</ActButton>
-          <button className="primary" data-action={hasSaved ? 'replay.startOver' : 'replay.start'} onClick={() => onStart(enemy)} title={scenarioName}>Принять командование с {ddmm(at)}</button>
+          <button className="primary" data-action={hasSaved ? 'replay.startOver' : 'replay.start'} onClick={() => onStart(enemy, mode)} title={scenarioName}>Принять командование с {ddmm(at)}</button>
         </div>
       </div>
     </div>

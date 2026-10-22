@@ -346,7 +346,7 @@ describe('вход в командование голосом', () => {
   it('окно открыто: «принимаю» — игра; поверх незавершённой — только после «да»', async () => {
     const d = rep({ take: '1945-04-16T05:00' });
     expect(await act('replay.start', { enemy: 'passive' })).toMatch(/^Командование принято/);
-    expect(d.begin).toHaveBeenCalledWith('passive');
+    expect(d.begin).toHaveBeenCalledWith('passive', undefined);
     offs.forEach((o) => o()); offs = [];
     const d2 = rep({ take: '1945-04-16T05:00', saved: { title: 'Берлинская операция' } });
     expect(await act('replay.start')).toMatch(/незавершённая игра/);
@@ -356,7 +356,7 @@ describe('вход в командование голосом', () => {
     expect(said.at(-1)).toBe(`Есть незавершённая игра. Начать новую? Запись прежней будет заменена. ${YES_NO_SAY}`);
     expect(d2.begin).not.toHaveBeenCalled();
     await disp.utterance('да', 2);
-    expect(d2.begin).toHaveBeenCalledWith('llm');
+    expect(d2.begin).toHaveBeenCalledWith('llm', undefined);
   });
   it('«продолжи игру» — только если есть незавершённая', async () => {
     rep();

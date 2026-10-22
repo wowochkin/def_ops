@@ -24,7 +24,7 @@ import { useCoverage } from './modeling/Coverage';
 import { COVERAGE_LEVEL } from '@def-ops/knowledge';
 import { MapHover, withoutLabels } from './MapHover';
 import { invoke } from '@tauri-apps/api/core';
-import { addHours, type AgentHistory } from '@def-ops/sim';
+import { addHours, type AgentHistory, type GameMode } from '@def-ops/sim';
 import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
 import { nearestFeature, OVER_MAP, shownFeatures, unitAt, unitPlace } from './map-pick';
 import { agentHqCard, formationCard } from './formation-card';
@@ -471,17 +471,17 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const mapDoc = useMemo(() => (doc ? withoutLabels(withFocus(withLevel(doc, level), focus), labels) : null), [doc, level, focus, labels]);
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
   /** Начать игру с момента окна «Принять командование» (подтверждение замены незавершённой — до этого). */
-  const beginGame = (enemy: EnemyMode) => {
+  const beginGame = (enemy: EnemyMode, mode: GameMode = savedGameMode()) => {
     if (!result || !take) return;
     setTake(null);
     // агентная модель: ход игры — AGENT_GAME_HOURS, считает ядро приложения
-    const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS, mode: savedGameMode() } : undefined;
+    const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS, mode } : undefined;
     setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take, ...(agents ? { agents } : {}) }, saved: null, enemy });
   };
   /** Кнопка окна: поверх незавершённой игры — сначала вопрос. */
-  const startGame = async (enemy: EnemyMode) => {
-    if (!saved) { void act('replay.start', { enemy }); return; }
-    if (await confirmAsync('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', { ok: 'Начать новую' })) void act('replay.startOver', { enemy });
+  const startGame = async (enemy: EnemyMode, mode: GameMode) => {
+    if (!saved) { void act('replay.start', { enemy, mode }); return; }
+    if (await confirmAsync('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', { ok: 'Начать новую' })) void act('replay.startOver', { enemy, mode });
   };
   // голос и кнопки: расчёт, вход в командование, продолжение игры
   const voice = useRef<ReplayDeps>(null!);
@@ -597,7 +597,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           </div>
         </> : <Empty busy={!!busy} saved={tab === 'saved'} />}
       </main>
-      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} scenario={result.scenario} kbSummary={takeKb} llm={llm} hasSaved={!!saved} agents={result.engine === 'agents'} onStart={(e) => void startGame(e)} onCancel={() => setTake(null)} />}
+      {take && result && <TakeoverDialog at={take} start={result.start} end={result.end} turnHours={result.engine === 'agents' ? AGENT_GAME_HOURS : result.turnHours} scenarioName={result.scenarioName} scenario={result.scenario} kbSummary={takeKb} llm={llm} hasSaved={!!saved} agents={result.engine === 'agents'} onStart={(e, m) => void startGame(e, m)} onCancel={() => setTake(null)} />}
       {report && result && <ReportModal md={result.report} onClose={() => setReport(false)}
         onDownload={() => download(`${result.scenario}-seed${result.seed}-report.md`, result.report, 'text/markdown')} />}
     </div>

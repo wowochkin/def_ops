@@ -56,7 +56,8 @@ fn main() {
             "game_turn" => {
                 let g = game.as_mut().ok_or("игра не начата")?;
                 let command: Vec<agents_core::game::CommandOp> = if a["command"].is_null() { Vec::new() } else { serde_json::from_value(a["command"].clone()).map_err(|e| e.to_string())? };
-                let command_bad: Vec<String> = command.iter().filter_map(|c| g.command(c).err()).collect();
+                let command_res: Vec<Option<String>> = command.iter().map(|c| g.command(c).err()).collect();
+                let command_bad: Vec<String> = command_res.iter().flatten().cloned().collect();
                 let staff: Option<StaffIn> = serde_json::from_value(a["staff"].clone()).map_err(|e| e.to_string())?;
                 let bad = staff.map(|s| g.staff(&s)).unwrap_or_default();
                 let orders: Vec<PlayerOrder> = serde_json::from_value(a["orders"].clone()).map_err(|e| e.to_string())?;
@@ -66,6 +67,7 @@ fn main() {
                 t["game"]["applied"] = json!(applied);
                 t["game"]["staffErrors"] = json!(bad);
                 t["game"]["commandErrors"] = json!(command_bad);
+                t["game"]["commandResults"] = json!(command_res);
                 Ok(t)
             }
             "game_stop" => { game = None; Ok(Value::Null) }

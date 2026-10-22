@@ -72,3 +72,10 @@ export function initialCmds(v: TurnView): CommandOp[] {
   if (!c || c.mode === 'legacy' || v.turn !== 1) return [];
   return c.historical.filter((h) => !h.issued && (c.mode === 'hybrid' || h.due)).map((h) => ({ op: 'historical', id: h.id }));
 }
+
+/** Пометка своего штаба или дивизии в докладах; «как сейчас» (и старые записи игры) — без пометок. */
+export function markFor(v: TurnView, id: string): { text: string; cls: string } | null {
+  const c = v.command;
+  if (!c || c.mode === 'legacy') return null;
+  return controlMark(c.hqs[id] ?? (c.led.includes(id) ? { control: 'agent', led: true } : undefined));
+}

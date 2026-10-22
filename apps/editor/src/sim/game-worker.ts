@@ -116,7 +116,8 @@ async function agentTurn(orders: Order[], actions: StaffAction[], command: Comma
     ...(t.game.staffErrors ?? []).map((x) => `Распоряжение не исполнено: ${x}`),
     ...(t.game.commandErrors ?? []).map((x) => `Команда не исполнена: ${x}`),
   ];
-  const ops = command.map((c) => `Управление: ${commandText(c, (id) => names.get(id) ?? id)}`);
+  // исполненные команды (неисполненные — в «Команда не исполнена»)
+  const ops = command.filter((_, k) => !t.game.commandResults?.[k]).map((c) => `Управление: ${commandText(c, (id) => names.get(id) ?? id)}`);
   return { events: [...ops, ...bad, ...agentEvents(t, from, t.frames.length - 1, rec.human)], results: a.results };
 }
 

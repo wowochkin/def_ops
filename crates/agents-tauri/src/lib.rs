@@ -202,7 +202,9 @@ pub mod commands {
             // доктрина из базы знаний на этот ход (нет — прежняя)
             if let Some(d) = doctrine_text { g.sim.doctrine_text = d.texts(); }
             // команды управления (взять, вернуть, разрешить отход, исторические директивы) — до распоряжений и приказов
-            let command_bad: Vec<String> = command.unwrap_or_default().iter().filter_map(|c| g.command(c).err()).collect();
+            // по команде: null — исполнена, строка — почему нет
+            let command_res: Vec<Option<String>> = command.unwrap_or_default().iter().map(|c| g.command(c).err()).collect();
+            let command_bad: Vec<String> = command_res.iter().flatten().cloned().collect();
             // распоряжения штаба (подвоз, переправы, подрыв, резервы, полосы) — до приказов хода
             let staff_bad = staff.map(|s| g.staff(&s)).unwrap_or_default();
             let applied: Vec<serde_json::Value> = orders.iter().map(|o| match g.order(o) {
@@ -214,6 +216,7 @@ pub mod commands {
             t["game"]["applied"] = serde_json::json!(applied);
             t["game"]["staffErrors"] = serde_json::json!(staff_bad);
             t["game"]["commandErrors"] = serde_json::json!(command_bad);
+            t["game"]["commandResults"] = serde_json::json!(command_res);
             Ok(t)
         }).await.map_err(|e| e.to_string())?
     }
