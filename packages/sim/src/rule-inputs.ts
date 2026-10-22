@@ -95,6 +95,7 @@ export const RULE_INPUTS: RuleInput[] = [
   army('riverCrossHours', 'Река без моста для пехоты', 'движение', (r) => num(r.riverCrossHours), { unit: 'ч' }),
   army('bridgeHoursMajor', 'Наводка переправы через большую реку', 'движение', (_r, p) => (su(p)?.engineering ?? ENGINEERING).bridgeHoursMajor, { unit: 'ч' }),
   army('bridgeHoursMinor', 'Наводка переправы через малую реку', 'движение', (_r, p) => (su(p)?.engineering ?? ENGINEERING).bridgeHoursMinor, { unit: 'ч' }),
+  army('engineering.parks', 'Понтонные парки стороны (одновременных наводок)', 'движение', (_r, p) => (su(p)?.engineering ?? ENGINEERING).parks, { unit: 'парков' }),
   army('engineers.hours', 'Сапёры без штаба: переправа открыта через', 'движение', (r) => (r.engineers === false ? null : r.engineers?.hours ?? 24), { unit: 'ч' }),
   army('territory.enemyKmPerDay.foot', 'Пешие по территории противника', 'движение', (r) => num(r.territory?.enemyKmPerDay.foot), { unit: 'км/сут', calib: 'terrFoot' }),
   army('territory.enemyKmPerDay.tracked', 'Подвижные по территории противника', 'движение', (r) => num(r.territory?.enemyKmPerDay.tracked), { unit: 'км/сут', calib: 'terrMobile' }),

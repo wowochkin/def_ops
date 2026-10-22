@@ -107,6 +107,7 @@ export function measureParam(ctx: SimContext, expr: string, agents?: unknown): n
     case 'riverCrossHours/3': return R.riverCrossHours / 3;
     case 'bridgeHoursMajor': return eng.bridgeHoursMajor;
     case 'bridgeHoursMinor': return eng.bridgeHoursMinor;
+    case 'engineering.parks': return eng.parks;
     default: {
       const d = /^orderDelay\.(\w+)$/.exec(expr);
       if (d) return (su.orderDelayHours as Record<string, number>)[d[1]] ?? NaN;

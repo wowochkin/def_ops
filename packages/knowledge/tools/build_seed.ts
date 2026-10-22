@@ -908,6 +908,23 @@ for (const l of losses) { const e = entries.get(l.target); if (e) e.facts = dedu
     put({ id, category: 'organization', group, title, rubrics: id === 'org:research-mobility' ? ['5.1', '5.2'] : ['3.2.2', '6.4'], status: 'checked', summary: 'Отчёты по источникам с оценкой достоверности (A/B/C): что прочитано, таблицы фактов, расхождения, чего не найдено и что взято в модель.',
       sections: files.map((f) => ({ title: f.replace(/\.md$/, ''), text: readFileSync(join(SRC, dir, f), 'utf8').trim() })) });
   }
+
+  // кто решает по ступеням управления (тыл, подвоз, понтонные парки, резервы, полосы, журнал) — опора таблицы уровней пункта
+  const cl = opt<{ sources?: Record<string, { ref: string }>; rules: { id: string; group: string; side: 'su' | 'de'; level: string; who: string; action: string; source?: string; page?: string; reliability?: string }[]; gaps?: string[] }>('command-levels-1945.json');
+  if (cl) {
+    regSources('command-levels-1945.json', cl.sources);
+    const CG: Record<string, [string, string[]]> = { bases: ['тыл: базы и станции снабжения', ['5.1', '7.3']], priority: ['распределение подвоза', ['5.1', '7.3']], parks: ['понтонные парки и переправы', ['5.3', '3.3.4', '7.3']],
+      reserves: ['ввод резервов', ['3.1', '7.3']], bounds: ['разграничительные линии', ['7.3']], journal: ['журнал боевых действий', ['7.3', '9.1']], command: ['порядок отдачи приказов (ПУ-39)', ['7.3', '3.4.4']] };
+    const LV: Record<string, string> = { stavka: 'Ставка / верховное командование', front: 'фронт / группа армий', army: 'армия', corps: 'корпус', division: 'дивизия' };
+    for (const g of [...new Set(cl.rules.map((r) => r.group))]) {
+      const rs = cl.rules.filter((r) => r.group === g);
+      put({ id: `org:command-levels-${g}`, category: 'organization', group: 'su', rubrics: CG[g]?.[1] ?? ['7.3'], title: `Кто решает по ступеням: ${CG[g]?.[0] ?? g}`, status: 'checked',
+        summary: 'Какая ступень управления по уставам и практике 1944–1945 гг. принимала это решение (советская и немецкая сторона); опора таблицы уровней пункта управления.',
+        facts: [{ key: 'topic', value: CG[g]?.[0] ?? g }, ...rs.map((r) => ({ key: 'principles', value: cutx(`[${r.side === 'su' ? 'СССР' : 'Германия'}, ${LV[r.level] ?? r.level}] ${r.who}: ${r.action}`), source: sref('command-levels-1945.json', r.source), pages: r.page, reliability: rel(r.reliability) }))],
+        relations: [...new Set(rs.map((r) => sref('command-levels-1945.json', r.source)).filter(Boolean) as string[])].map((t) => ({ type: 'source' as const, target: t })) });
+    }
+    addSection(`org:command-levels-${cl.rules[0].group}`, 'Расхождения модели с источниками', (cl.gaps ?? []).map((x) => `- ${x}`));
+  }
 }
 
 // формальные части фактов, у которых нет «своего» факта в сиде: численность на старт, положения, события
