@@ -228,6 +228,21 @@ describe('линия фронта и арбитр', () => {
     expect(Math.max(...max)).toBeLessThan(10);
   });
 
+  it('острова перевеса: без котла кольцо снимается, котёл остаётся', () => {
+    // немецкая дивизия в глубине советского расположения — остров немецкого перевеса, вокруг него кольцо
+    const ring = [su('r1', -24, -8), su('r2', -24, 8), su('r3', -16, -8), su('r4', -16, 8), su('r5', -27, 0), su('r6', -13, 0)];
+    const ctx = ctxWith([...ring, de('isl', -20, 0), de('k1', 12, -6), de('k2', 12, 6)]);
+    const s = createState(ctx);
+    const w = () => 1;
+    const closed = (lines: LngLat[][]) => lines.filter((l) => Math.hypot((l[0][0] - l[l.length - 1][0]) * kmX, (l[0][1] - l[l.length - 1][1]) * kmY) < 1 && xOf(l[0]) < 0);
+    const o = { sigmaKm: 4, combine: 'max' as const };
+    expect(closed(frontLine(ctx.theatre, s.formations, ['su', 'de'], w, o)).length).toBeGreaterThan(0);
+    let seen: string[] = [];
+    expect(closed(frontLine(ctx.theatre, s.formations, ['su', 'de'], w, { ...o, keepIsland: (si, inside) => { if (si === 1) seen = inside.map((f) => f.id); return false; } }))).toEqual([]);
+    expect(seen).toEqual(['isl']);
+    expect(closed(frontLine(ctx.theatre, s.formations, ['su', 'de'], w, { ...o, keepIsland: (si) => si === 1 })).length).toBeGreaterThan(0);
+  });
+
   it('таблицы: интерполяция по соотношению сил, генератор — равномерный', () => {
     const t: [number, number][] = [[1, 0], [4, 10]];
     expect(interp(t, 2)).toBeCloseTo(5, 5); // логарифмическая шкала: 2 — середина между 1 и 4

@@ -27,6 +27,11 @@ export interface FrontOptions {
    * (дивизии агентной модели: суммой сотни дивизий одной стороны «вдавливали» линию за позиции другой, на десятки км).
    */
   combine?: 'sum' | 'max';
+  /**
+   * Острова поля (связные куски перевеса стороны, оторванные от её основного и не у края карты): оставить или
+   * отдать окружающей стороне (mergeIslands); inside — формирования в клетках острова. Нет — острова не трогаются.
+   */
+  keepIsland?: (side: number, inside: Formation[]) => boolean;
 }
 
 export function frontLine(theatre: Theatre, formations: Formation[], sides: [string, string], weight: (f: Formation) => number, o: FrontOptions = {}): LngLat[][] {
@@ -54,6 +59,13 @@ export function frontLine(theatre: Theatre, formations: Formation[], sides: [str
   // поле: >0 — сторона 0, <0 — сторона 1; NaN — нет ни тех, ни других
   const F = new Float64Array(cols * rows);
   for (let i = 0; i < F.length; i++) F[i] = A[i] < thr && B[i] < thr ? NaN : Math.log((A[i] + thr * 0.01) / (B[i] + thr * 0.01));
+  if (o.keepIsland) {
+    const terr = Array.from(F, (v) => (Number.isNaN(v) ? -1 : v > 0 ? 0 : 1));
+    const cellOf = (q: XY) => { const c = Math.round((q[0] - p0[0]) / step), r = Math.round((q[1] - p0[1]) / step); return c >= 0 && r >= 0 && c < cols && r < rows ? r * cols + c : -1; };
+    const placed = formations.filter((f) => !f.destroyed).map((f) => ({ f, k: cellOf(theatre.proj.toXY(f.position)) }));
+    const merged = mergeIslands(cols, rows, terr, (si, cells) => { const set = new Set(cells); return o.keepIsland!(si, placed.filter((x) => set.has(x.k)).map((x) => x.f)); });
+    for (let i = 0; i < F.length; i++) if (merged[i] !== terr[i]) F[i] = (merged[i] === 0 ? 1 : -1) * Math.max(Math.abs(F[i]), 1e-6);
+  }
   const at = (c: number, r: number): XY => [p0[0] + c * step, p0[1] + r * step];
   const segs: [XY, XY][] = [];
   const edge = (pa: XY, va: number, pb: XY, vb: number): XY => { const t = va / (va - vb); return [pa[0] + (pb[0] - pa[0]) * t, pa[1] + (pb[1] - pa[1]) * t]; };

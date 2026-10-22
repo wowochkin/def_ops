@@ -5,7 +5,7 @@
  * документа, поэтому прогон смотрится ползунком времени, как обычная карта.
  */
 import { createFeature, emptyDocument, type AreaFeature, type ArrowFeature, type Feature, type LabelFeature, type Layer, type LineFeature, type LngLat, type MapDocument, type Side, type SymbolFeature, type TextStyle } from '@def-ops/core';
-import { frontLine, territoryLine } from './front';
+import { frontLine, mergeIslands, territoryLine } from './front';
 import { TERRAIN_CLASSES } from './types';
 import { dist, type XY } from './geo';
 import { checkEvents, type History, type RunResult, type Snapshot } from './history';
@@ -299,12 +299,21 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     const units = sn.units.filter((u) => !u.destroyed).map((u) => ({ ...byId.get(u.id)!, position: u.at, personnel: u.personnel, tanks: u.tanks, destroyed: false }))
       .filter((f) => onMap(f, sn.time));
     // территория ведётся — фронт по её границе (сплошная полоса); иначе — изолиния влияния войск
-    const terr = sn.territory ?? run.snapshots[i + 1]?.territory;
+    const terr0 = sn.territory ?? run.snapshots[i + 1]?.territory;
+    // острова (клочки территории или перевеса стороны, оторванные от основных) без её войск — окружающей стороне: это
+    // разметка, оставшаяся за колоннами и между коридорами, и линия обводила бы кольцом каждый; остров с войсками его
+    // стороны остаётся — её держат (котёл, гарнизон, вклинившаяся группа), даже если от основных сил он отрезан
+    const snap = new Map(sn.units.map((u) => [u.id, u]));
+    const pocket = (si: number, ids: string[]) => ids.some((id) => { const u = snap.get(id); return !!u && !u.destroyed && byId.get(u.id)?.side === sides[si]; });
+    const terr = terr0 && mergeIslands(T.cols, T.rows, terr0, (si, cells) => {
+      const set = new Set(cells);
+      return pocket(si, sn.units.filter((u) => set.has(T.indexOf(u.at))).map((u) => u.id));
+    });
     // по территории — без мелких замкнутых островков (клочки, через которые войска не прошли) и с сильным сглаживанием
     const loopKm = (l: LngLat[]) => l.slice(1).reduce((sum, p, k) => sum + dist(T.proj.toXY(l[k]), T.proj.toXY(p)), 0);
     const closed = (l: LngLat[]) => dist(T.proj.toXY(l[0]), T.proj.toXY(l[l.length - 1])) < T.cellKm * 1.5;
     const raw = terr ? territoryLine(T, terr, 4).filter((l) => !(closed(l) && loopKm(l) < T.cellKm * 25))
-      : frontLine(T, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, { sigmaKm: 25, combine: o.frontCombine });
+      : frontLine(T, units, sides, (f) => power(f, profileOf(ctx, f.side), ctx.rules).total, { sigmaKm: 25, combine: o.frontCombine, keepIsland: (si, inside) => pocket(si, inside.map((f) => f.id)) });
     const reachKm = terr ? Math.min(o.frontReachKm!, T.cellKm * 10) : o.frontReachKm!;
     // линия только там, где обе стороны рядом: в глубоком тылу изолиния есть, а фронта нет
     const near = (p: LngLat, side: string) => units.some((u) => u.side === side && dist(T.proj.toXY(u.position), T.proj.toXY(p)) <= reachKm);
