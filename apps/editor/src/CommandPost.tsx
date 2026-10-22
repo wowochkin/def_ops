@@ -20,6 +20,8 @@ const LEVEL_RU: Record<LevelId, string> = { stavka: 'Ставка', front: 'Фр
 export interface PostState {
   level: LevelId;
   issuer: string | null;
+  /** Штабы ступени (пункты на этом уровне). */
+  issuers: { id: string; name: string; control?: string }[];
   sel: string | null;
   dirs: Record<string, DirDraft>;
   draft: DirDraft | null;
@@ -172,7 +174,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   });
 
   return {
-    level, issuer, sel, dirs, draft, pick: draft ? pick : null,
+    level, issuer, issuers: list, sel, dirs, draft, pick: draft ? pick : null,
     cancelPick: () => setPick(null),
     addPoint: (pt) => {
       const { draft: d, pick: f } = live.current;
@@ -297,4 +299,21 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
       {!d && <p className="muted">Выберите подчинённого — в списке или щелчком по его знаку на карте. Щелчок по знаку штаба этой ступени делает его пунктом управления.</p>}
     </div>
   );
+}
+
+/**
+ * Полоса пункта управления над вкладками (агенты, гибрид): уровень (как переключатель карты) и штаб ступени — все
+ * вкладки показывают обстановку этого штаба.
+ */
+export function PostBar({ v, post, cmds }: { v: TurnView; post: PostState; cmds: CommandOp[] }) {
+  const { level, issuer, issuers: list } = post;
+  return <div className="post-bar" data-hl="post-bar">
+    <div className="seg post-levels">{LEVELS.map((l) => <ActButton key={l} className={l === level ? 'on' : ''} action="map.level" params={{ level: l }} title={local(POST_TITLE[l], v)}>{local(LEVEL_RU[l], v)}</ActButton>)}</div>
+    {issuer && <div className="post-bar-who">
+      {list.length > 1 ? <select value={issuer} data-action="command.post" onChange={(e) => void act('command.post', { name: e.target.value })}>
+        {list.map((x) => <option key={x.id} value={x.id}>{x.name}{taken(v, x.id, cmds) ? ' — взят' : ''}</option>)}</select>
+        : <b>{list[0]?.name}</b>}
+      {v.command?.hqs[issuer]?.echelon !== 'high_command' && <small className={sender(v, issuer, cmds).overHead ? 'post-over' : 'post-own'}>{sender(v, issuer, cmds).overHead ? 'ведёт агент' : 'под вашим управлением'}</small>}
+    </div>}
+  </div>;
 }

@@ -87,3 +87,11 @@ export function postDocs(v: TurnView, issuer: string): NonNullable<TurnView['com
   const subs = new Set([issuer, ...recipients(v, issuer).map((x) => x.id)]);
   return (v.command?.documents ?? []).filter((d) => subs.has(d.hq));
 }
+
+/** Резервы пункта: у Ставки — все, у фронта — его, ниже — где соединения резерва в подчинении штаба. */
+export function postReserves(v: TurnView, issuer: string): TurnView['reserveGroups'] {
+  const h = v.command?.hqs[issuer];
+  if (!h || h.echelon === 'high_command') return v.reserveGroups;
+  if (h.echelon === 'front') return v.reserveGroups.filter((g) => g.front === issuer);
+  return v.reserveGroups.filter((g) => g.id === issuer || g.members.some((m) => ancestry(v, m).includes(issuer)));
+}

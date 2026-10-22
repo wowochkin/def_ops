@@ -25,9 +25,10 @@ import { shownFeatures, unitAt } from './map-pick';
 import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
-import { CommandPost, usePost, type PostState } from './CommandPost';
+import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
+import { divisionsUnder, postDocs, postIntel, postReports, postReserves } from './post-views';
 import { resolveFrom } from './command-post';
-import { formTitle, initialCmds, markFor, MODE_TITLE, overHead, type CommandOp } from './command-forms';
+import { formTitle, initialCmds, markFor, placeText, MODE_TITLE, overHead, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -141,6 +142,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   /** Линия армий, указываемая на карте: точки по щелчкам. */
   const [linePts, setLinePts] = useState<LngLat[]>([]);
   const [decision, setDecision] = useState<HumanDecision>(EMPTY);
+  /** Решения штабов ступеней ниже Ставки (пункт управления): по штабу. */
+  const [postDecisions, setPostDecisions] = useState<Record<string, HumanDecision>>({});
   // разбор операции: окно открывается после игры (или из меню); пока пишется, остаётся смонтированным
   const [review, setReview] = useState<'closed' | 'open' | 'hidden'>('closed');
   const reviewListener = useRef<((m: Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-think' | 'review-done' }>) => void) | null>(null);
@@ -357,6 +360,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         if (!id) return;
         // вкладка «Приказы» с пунктом управления: штаб ступени — пункт, подчинённый — его документ
         if (liveTab.current.tab === 'orders' && liveTab.current.sub === 'units' && postRef.current?.click(id)) return;
+        // штаб ступени уровня — пункт управления на любой вкладке: доклады, разведка, решение — его
+        if (postRef.current?.issuers.some((x) => x.id === id) && postRef.current.issuer !== id) { tap('command.post', { name: id }); return; }
         if (v.own.some((u) => u.id === id)) { showUnit(id); return; }
         if (v.intel.some((x) => x.id === id)) { setIntelSel(id); return; }
         const g = v.groups.find((x) => x.id === id);
@@ -519,7 +524,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     // командование по ступеням: приказы — документами пункта управления (проекты старого вида не уходят)
     const orders: Order[] = (staffsOn(view) ? [] : draftList).map((d) => ({ id: `human@${view.time}:${d.formation}`, formation: d.formation, task: d.task, target: d.target, issuedAt: view.time, source: 'human', note: d.note || undefined, ...(d.form && staffsOn(view) ? { form: d.form } : {}) }));
     setProgress('отправка приказов…');
-    send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision, ...(cmds.length ? { command: staffsOn(view) ? resolveFrom(view, cmds) : cmds } : {}) });
+    send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision, ...(Object.keys(postDecisions).length ? { posts: postDecisions } : {}), ...(cmds.length ? { command: staffsOn(view) ? resolveFrom(view, cmds) : cmds } : {}) });
   };
   /** Противник — цель удара выбранного объединения (никто не выбран — вкладка «Приказы»: выбрать объединение). */
   const targetEnemy = (id: string) => {
@@ -734,6 +739,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           <div className="cmd-chips"><AiChip ai={ai} enemy={enemy} now={now} model={llm.settings.enemyModel || llm.settings.model} onClick={() => tap('command.tab', { tab: 'umpire' })} />
             <ActButton className={`adv-btn${advOpen ? ' on' : ''}`} data-tour="cmd-advisor" action="command.advisor.show" params={{ mode: 'toggle' }} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</ActButton></div>
         </div>
+        {view && staffsOn(view) && <PostBar v={view} post={post} cmds={cmds} />}
         <nav className="cmd-tabs" data-tour="cmd-tabs">
           {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ...(staffsOn(view) ? [['staffs', `Штабы${cmds.length ? ` · ${cmds.length}` : ''}`]] : []), ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
             <ActButton key={k} data-tour={`cmd-tab-${k}`} data-hl={`tab-${k}`} action="command.tab" params={{ tab: k }} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`}>{t}</ActButton>
@@ -742,9 +748,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         <div className="cmd-body" data-tour="cmd-body">
           {!view ? <div className="cmd-wait"><span className="spinner" /> {progress}</div> : <>
             {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" data-action="map.focusOnly" checked={focusOnly} onChange={(e) => tap('map.focusOnly', { on: e.target.checked })} /> только он в списках</label><ActButton className="x" title="Снять фокус" action="map.sector" params={{ name: '' }}>×</ActButton></div>}
-            {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { if (id) tap('command.unit.show', { name: id }); else tap('command.unit.close'); }} onOrder={(id) => tap(staffsOn(view) ? 'command.dir.for' : 'command.order.open', { name: id })} sel={sel} />}
-            {tab === 'intel' && <Intel v={fv!} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
-            {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} planN={planN} planBusy={!!plan && !plan.done} />}
+            {tab === 'reports' && staffsOn(view) && post.issuer && <PostReports v={view} issuer={post.issuer} drafts={drafts} sel={sel} onUnit={(id) => { if (id) tap('command.unit.show', { name: id }); else tap('command.unit.close'); }} onOrder={(id) => tap('command.dir.for', { name: id })} />}
+            {tab === 'reports' && !staffsOn(view) && <Reports v={fv!} drafts={drafts} onUnit={(id) => { if (id) tap('command.unit.show', { name: id }); else tap('command.unit.close'); }} onOrder={(id) => tap(staffsOn(view) ? 'command.dir.for' : 'command.order.open', { name: id })} sel={sel} />}
+            {tab === 'intel' && staffsOn(view) && post.issuer && <PostIntel v={view} level={post.level} issuer={post.issuer} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
+            {tab === 'intel' && !staffsOn(view) && <Intel v={fv!} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
+            {tab === 'decision' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command'
+              ? <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} planN={planN} planBusy={!!plan && !plan.done} />
+              : <Decision v={view} who={view.command!.hqs[post.issuer].name} d={postDecisions[post.issuer] ?? EMPTY} set={(p) => setPostDecisions((m) => ({ ...m, [post.issuer!]: { ...(m[post.issuer!] ?? EMPTY), ...p } }))} planN={planN} planBusy={!!plan && !plan.done} />)}
             {tab === 'orders' && <>
               <div className="seg subtabs">
                 {([['units', staffsOn(view) ? 'Пункт управления' : 'Войска', staffsOn(view) ? cmds.filter((c) => c.op === 'directive').length : draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
@@ -757,10 +767,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
               {sub === 'bridges' && <Bridges v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode} />}
               {sub === 'bounds' && <Bounds v={view} acts={acts} picking={pickMode?.kind === 'line'} setPicking={(b) => setPickMode(b ? { kind: 'line' } : null)} pts={linePts} setPts={setLinePts}
                 sel={bnd} />}
-              {sub === 'reserves' && <Reserves v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode}
+              {sub === 'reserves' && <Reserves v={staffsOn(view) && post.issuer ? { ...view, reserveGroups: postReserves(view, post.issuer) } : view} acts={acts} pickMode={pickMode} setPickMode={setPickMode}
                 onOrder={(id) => tap('command.order.open', { name: id })} />}
             </>}
             {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} />}
+            {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}
             {tab === 'journal' && <Journal v={view} />}
             {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => tap('command.reveal', { on })}
               enemy={enemy} setEnemy={(mode) => tap('command.enemyMode', { mode })} llm={llm} part={umpPart} />}
@@ -883,6 +894,67 @@ function UnitCard({ u, open, onToggle, onOrder, draft, topGen = 'Ставки', 
         </dl>
         {u.status !== 'destroyed' && <button className="link" onClick={onOrder}>{draft ? 'Изменить приказ →' : 'Отдать приказ →'}</button>}
       </div>}
+    </div>
+  );
+}
+
+/** Доклады подчинённых штаба пункта управления: сводка по его дивизиям, донесения о них за ход, доклады подчинённых. */
+function PostReports({ v, issuer, drafts, sel, onUnit, onOrder }: { v: TurnView; issuer: string; drafts: Record<string, Draft>; sel: string | null; onUnit: (id: string) => void; onOrder: (id: string) => void }) {
+  const h = v.command!.hqs[issuer];
+  const top = h.echelon === 'high_command';
+  const divs = top ? v.own.filter((u) => u.echelon === 'division' && u.status === 'active') : divisionsUnder(v, issuer);
+  const names = new Set(divs.map((u) => u.name));
+  const events = top ? v.events : v.events.filter((e) => [...names].some((n) => e.includes(n)) || e.includes(h.name));
+  const subs = postReports(v, issuer);
+  const P = divs.reduce((s, u) => s + u.personnel, 0) || 1;
+  const strength = divs.reduce((s, u) => s + u.strength * u.personnel, 0) / P;
+  return (
+    <div className="cmd-sec">
+      <h3>{top ? 'Оперативная сводка' : `Донесения — ${h.name}`} к {hhmm(v.time)} {ddmm(v.time)}</h3>
+      <div className="kpis small">
+        <div><b>{divs.length}</b><span>дивизий в строю</span></div>
+        <div><b>{pct(strength)}</b><span>средняя укомплектованность</span></div>
+        <div className={divs.some((u) => u.cutOff) ? 'alarm' : ''}><b>{divs.filter((u) => u.cutOff).length}</b><span>отрезано от подвоза</span></div>
+      </div>
+      {v.turn > 1 && <div className="dispatch"><h4>Донесения за ход</h4>
+        {events.length ? <ul>{events.map((e, i) => <li key={i}>{e}</li>)}</ul> : <p className="muted">Существенных событий нет.</p>}</div>}
+      <h4 className="cmd-h4">{top ? 'Фронты' : 'Подчинённые'}</h4>
+      {subs.length ? subs.map((u) => <UnitCard topGen={v.terms?.topGen} mark={markFor(v, u.id)} key={u.id} u={u} open={sel === u.id} draft={drafts[u.id]} onToggle={() => onUnit(sel === u.id ? '' : u.id)} onOrder={() => onOrder(u.id)} />)
+        : <p className="muted">Подчинённых в строю нет.</p>}
+    </div>
+  );
+}
+
+/** Разведсводка пункта: противник по его штабам ступени пункта, в полосе пункта. */
+function PostIntel({ v, level, issuer, onGo, onAttack }: { v: TurnView; level: MapLevel; issuer: string; onGo: (id: string) => void; onAttack: (id: string) => void }) {
+  const g = postIntel(v, level, issuer);
+  const h = v.command!.hqs[issuer];
+  return (
+    <div className="cmd-sec">
+      <h3>Разведсводка{h.echelon === 'high_command' ? '' : ` — перед ${h.name}`} к {hhmm(v.time)} {ddmm(v.time)}</h3>
+      <p className="note">Противник в пределах разведки ({v.detectKm} км от наших войск){h.echelon === 'high_command' ? '' : ' и в полосе штаба'}, по его объединениям ступени этого пункта. Силы — оценка, округлённо.</p>
+      {!g.length && <p className="muted">Противник в полосе не обнаружен.</p>}
+      {g.map((x) => (
+        <div key={x.id} className="intel" data-action="map.show" onClick={() => onGo(x.members[0].id)}>
+          <div className="intel-h"><b>{short(x.name)}</b>{x.fresh && <i className="fresh">новое</i>}<span className="muted">{x.members.length > 1 ? `${x.members.length} соед.` : x.members[0].posture}</span></div>
+          {x.nearestKm !== null && <div>{Math.round(x.nearestKm)} км до наших войск</div>}
+          <div className="muted">{x.members.map((m) => `${short(m.name)}: ${m.estimate}`).join('; ')}</div>
+          <button className="link" onClick={(ev) => { ev.stopPropagation(); onAttack(x.members[0].id); }} title="Пункт ближайшей задачи открытого документа">назначить целью →</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Документы штаба пункта и его подчинённых (над журналом боевых действий). */
+function PostDocs({ v, issuer }: { v: TurnView; issuer: string }) {
+  const d = postDocs(v, issuer).slice().reverse();
+  const h = v.command!.hqs[issuer];
+  return (
+    <div className="cmd-sec">
+      <h3>Документы — {h.name} и подчинённые</h3>
+      {d.length ? <div className="staffs-docs">{d.map((x, k) => <div key={k} className={`doc doc-${x.kind}`}><b>{x.time}</b> {x.hqName}: {placeText(x.text, v.places)}{x.rule && <small className="muted"> ({x.rule})</small>}</div>)}</div>
+        : <p className="muted">Документов нет.</p>}
     </div>
   );
 }
@@ -1229,7 +1301,7 @@ function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
 /* ───────────── решение на ход ───────────── */
 
 
-function Decision({ v, d, set, planN, planBusy }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean }) {
+function Decision({ v, d, set, planN, planBusy, who }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean; who?: string }) {
   const last = v.lastDecision;
   const F = ({ k, label, hint, rows, req }: { k: Exclude<keyof HumanDecision, 'request'>; label: string; hint: string; rows: number; req?: boolean }) => (
     <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`} data-hl={`field-${k}`}>
@@ -1239,7 +1311,8 @@ function Decision({ v, d, set, planN, planBusy }: { v: TurnView; d: HumanDecisio
   );
   return (
     <div className="cmd-sec">
-      <h3>Решение на {ddmm(v.time)} {hhmm(v.time)}</h3>
+      <h3>Решение{who ? ` — ${who}` : ''} на {ddmm(v.time)} {hhmm(v.time)}</h3>
+      {who && <p className="note">Решение этого штаба — для журнала и разбора; ход проводится по решению {v.terms?.topGen ?? 'Ставки'} (уровень «{v.terms?.top ?? 'Ставка'}»).</p>}
       <div className="plan-cta" data-hl="plan-cta"><span>Не знаете, с чего начать? Советник предложит полные варианты — решение, приказы, тыл, переправы, резервы; выберите, примите и поправьте. Сколько вариантов — выберите рядом (один готовится быстрее).</span>
         <div className="plan-cta-act">
           <select value={planN} disabled={planBusy} data-action="command.variants.count" onChange={(e) => tap('command.variants.count', { n: +e.target.value })} title="Сколько вариантов просить (запоминается)">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>

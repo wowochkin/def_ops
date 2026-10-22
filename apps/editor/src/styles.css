@@ -1942,3 +1942,10 @@ body.vp-dragging, body.vp-dragging * { user-select: none !important; -webkit-use
 .panel-resizer:hover, body.resizing .panel-resizer { background: rgba(140, 42, 0, .18); }
 body.resizing { cursor: col-resize; user-select: none; }
 @media (max-width: 700px) { .panel-resizer { display: none; } }
+
+/* полоса пункта управления над вкладками */
+.post-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 12px; border-bottom: 1px solid var(--line); background: #faf6ee; }
+.post-bar .post-levels button { padding: 3px 8px; font-size: 12px; }
+.post-bar-who { display: flex; align-items: center; gap: 6px; font-size: 12.5px; min-width: 0; }
+.post-bar-who select { max-width: 220px; font-size: 12.5px; }
+.post-bar small { font-size: 11px; }

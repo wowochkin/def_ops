@@ -63,7 +63,8 @@ export interface GameStart {
 export type GameRequest =
   | { kind: 'start'; start: GameStart; record?: GameRecord; llm: LlmSettings; enemy: EnemyMode }
   /** Конец хода человека: решение, приказы и распоряжения (issuedAt — начало хода). */
-  | { kind: 'turn'; orders: Order[]; actions: StaffAction[]; decision: HumanDecision; command?: CommandOp[] }
+  /** posts — решения штабов ступеней ниже верхней инстанции (пункт управления): в запись хода, для журнала и разбора. */
+  | { kind: 'turn'; orders: Order[]; actions: StaffAction[]; decision: HumanDecision; command?: CommandOp[]; posts?: Record<string, HumanDecision> }
   /** Проверить распоряжение до конца хода (pendingBridges — переправы, уже включённые в распоряжение). */
   | { kind: 'check'; id: number; action: StaffAction; pendingBridges: number }
   | { kind: 'settings'; llm: LlmSettings; enemy: EnemyMode }

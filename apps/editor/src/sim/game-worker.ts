@@ -55,7 +55,7 @@ interface AiRun { time: string; promise: Promise<AiTurn | null>; abort: AbortCon
 let ai: AiRun | null = null;
 let skipAi = false;
 /** Приказы, распоряжения и решение человека, ждущие решения модели. */
-let queued: { orders: Order[]; actions: StaffAction[]; decision: HumanDecision; command: CommandOp[] } | null = null;
+let queued: { orders: Order[]; actions: StaffAction[]; decision: HumanDecision; command: CommandOp[]; posts?: Record<string, HumanDecision> } | null = null;
 let busy = false;
 /** После хода штаб противника ждёт доклада посредника голосом (umpire-done) — sim/ai-hold.ts. */
 const aiWait = aiHold(() => startAi());
@@ -129,7 +129,7 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
     if (m.kind === 'kbRefResult') kbc.receive(m);
     else if (m.kind === 'agents-reply') { const c = calls.get(m.id); calls.delete(m.id); if (c) { if (m.ok) c.res(m.result); else c.rej(new Error(m.error ?? 'ошибка ядра агентной модели')); } }
     else if (m.kind === 'start') await start(m.start, m.record, m.llm, m.enemy);
-    else if (m.kind === 'turn') { queued = { orders: m.orders, actions: m.actions, decision: m.decision, command: m.command ?? [] }; await advance(); }
+    else if (m.kind === 'turn') { queued = { orders: m.orders, actions: m.actions, decision: m.decision, command: m.command ?? [], posts: m.posts }; await advance(); }
     else if (m.kind === 'check') post({ kind: 'check', id: m.id, result: checkAction(ctx, g.state, { ...m.action, issuedAt: g.state.time }, m.pendingBridges) });
     else if (m.kind === 'settings') {
       const was = enemy;
@@ -524,7 +524,7 @@ async function advance() {
         actions.push(...r.actions);
       }
     }
-    rec.turns.push({ time: g.state.time, orders, actions, human: queued.decision, ...(queued.command.length ? { command: queued.command } : {}), ...(stavka.length ? { stavka } : {}), ...(t ? { ai: slim(t) } : {}),
+    rec.turns.push({ time: g.state.time, orders, actions, human: queued.posts ? { ...queued.decision, posts: queued.posts } : queued.decision, ...(queued.command.length ? { command: queued.command } : {}), ...(stavka.length ? { stavka } : {}), ...(t ? { ai: slim(t) } : {}),
       ...(ump?.mods.length ? { umpire: ump.mods } : {}),
       ...(ump ? { umpireNote: { ok: ump.ok, error: ump.error, assessment: ump.assessment, issues: ump.issues, proposed: ump.proposed, engagements: ump.engagements, refs: ump.refs.map((r) => ({ id: r.id, title: r.title })), seconds: ump.seconds,
         names: Object.fromEntries(ump.mods.flatMap((m) => m.formations).map((id) => [id, g.state.formations.find((f) => f.id === id)?.name ?? id])) } } : {}) });

@@ -97,6 +97,11 @@ try {
   await page.locator('.post-form textarea').fill('Овладеть рубежом Врицен — Мюнхеберг, далее на Берлин');
   await shot('command-post-stavka.jpg');
   await page.locator('[data-action="command.dir.give"]').click();
+  // доклады и разведка Ставки: фронты и группы армий противника
+  await page.locator('.cmd-tabs button', { hasText: 'Доклады' }).click();
+  await shot('post-stavka-reports.jpg');
+  await page.locator('.cmd-tabs button', { hasText: 'Разведка' }).click();
+  await shot('post-stavka-intel.jpg');
   // пункт управления армии: 8-я гв. армия взята — боевой приказ корпусу
   await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
   await page.locator('.staffs-row', { hasText: '8-я гвардейская' }).first().locator('button', { hasText: 'взять' }).click();
@@ -110,6 +115,11 @@ try {
   await page.locator('.post-pts', { hasText: 'Ближайшая' }).locator('button', { hasText: 'Готово' }).click();
   await shot('command-post-army.jpg');
   await page.locator('[data-action="command.dir.give"]').click();
+  // доклады и разведка армии: её корпуса, корпуса противника в полосе
+  await page.locator('.cmd-tabs button', { hasText: 'Доклады' }).click();
+  await shot('post-army-reports.jpg');
+  await page.locator('.cmd-tabs button', { hasText: 'Разведка' }).click();
+  await shot('post-army-intel.jpg');
   // решение на ход (все поля) и ход; затем журнал документов
   await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
   for (const t of await page.locator('.cmd-body textarea').all()) await t.fill('Директивы Ставки на операцию поданы; 8 гв. армия закрепляется.');

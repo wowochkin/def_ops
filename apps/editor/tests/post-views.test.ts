@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { postDocs, postIntel, postReports } from '../src/post-views';
+import { postDocs, postIntel, postReports, postReserves } from '../src/post-views';
 
 const u = (id: string, parent: string, at: [number, number], personnel = 8000, extra = {}) => ({ id, name: id, parent, echelon: 'division', status: 'active', at, place: '', posture: 'обороняется', task: 'оборонять', target: null, orderSource: null, personnel, tanks: 10, guns: 100, strength: 0.8, ammo: 1, fuel: 1, fatigue: 0.2, cutOff: false, movedKm: 0, combats: [], pending: [], ...extra });
 const hq = (name: string, echelon: string, parent: string | null) => ({ control: 'agent', led: false, name, echelon, parent });
@@ -44,5 +44,18 @@ describe('вкладки по уровню пункта управления', (
   });
   it('документы — штаба и его подчинённых', () => {
     expect(postDocs(v, 'a1').map((d) => d.hq)).toEqual(['k1', 'a1']);
+  });
+});
+
+describe('резервы пункта', () => {
+  it('Ставка — все; фронт — его; армия — где её соединения', () => {
+    const w = { ...(v as object), reserveGroups: [
+      { id: 'r1', name: '3 гв. А', status: 'reserve', front: 'f1', members: ['d1'] },
+      { id: 'r2', name: '28 А', status: 'arriving', front: 'f2', members: ['dz'] },
+    ] } as never;
+    expect(postReserves(w, 's').map((g) => g.id)).toEqual(['r1', 'r2']);
+    expect(postReserves(w, 'f1').map((g) => g.id)).toEqual(['r1']);
+    expect(postReserves(w, 'a1').map((g) => g.id)).toEqual(['r1']);
+    expect(postReserves(w, 'a2').map((g) => g.id)).toEqual([]);
   });
 });
