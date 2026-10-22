@@ -21,9 +21,21 @@ use serde_json::Value;
 #[serde(rename_all = "lowercase")]
 pub enum Mode { Legacy, Agents, Hybrid }
 
-/// Директива игрока штабу или дивизии (режимы «агенты» и «гибрид»).
+/// Разграничительная линия директивы игрока: сосед (штаб, если назван) и ломаная.
 #[derive(Clone, Debug, serde::Deserialize)]
+pub struct BoundaryIn {
+    #[serde(default)]
+    pub neighbour: Option<String>,
+    pub line: Vec<LngLat>,
+}
+
+/// Директива игрока штабу или дивизии (режимы «агенты» и «гибрид»).
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PlayerDirective {
+    /// Отдающий штаб (пункт управления): верхняя инстанция (нет — она) или штаб под управлением игрока.
+    #[serde(default)]
+    pub from: Option<String>,
     /// Штаб или дивизия.
     pub to: String,
     pub task: crate::command::directive::Task,
@@ -36,6 +48,26 @@ pub struct PlayerDirective {
     pub subsequent: Option<Vec<LngLat>>,
     #[serde(default)]
     pub note: String,
+    /// Сроки ближайшей и последующей задач (час операции).
+    #[serde(default)]
+    pub immediate_by: Option<u32>,
+    #[serde(default)]
+    pub subsequent_by: Option<u32>,
+    #[serde(default)]
+    pub boundaries: Vec<BoundaryIn>,
+    /// Подчинённые получателя на главном ударе, резервы в его состав, ответственный за стык (id штабов).
+    #[serde(default)]
+    pub main_blow: Vec<String>,
+    #[serde(default)]
+    pub reserve: Vec<String>,
+    #[serde(default)]
+    pub junction: Option<String>,
+    /// Место получателя в построении отдающего: first / second (эшелон).
+    #[serde(default)]
+    pub echelon: Option<String>,
+    /// Ввод подвижной группы (получатель — введён).
+    #[serde(default)]
+    pub commit: bool,
 }
 
 /// Команда управления игрока на ход (до распоряжений и приказов): взять штаб, вернуть, ответ на запросы отхода,
@@ -47,6 +79,8 @@ pub enum CommandOp {
     Release { id: String },
     Permit { hq: String, yes: bool },
     Historical { id: String },
+    /// Директива игрока с полной структурой (пункт управления).
+    Directive { directive: PlayerDirective },
 }
 
 pub struct Game {
@@ -267,7 +301,7 @@ impl Game {
                     (vec![pr.to_lnglat(c), t], if to.len() > 1 { Some(vec![a, b]) } else { Some(vec![t]) })
                 }
             };
-            self.directive(&PlayerDirective { to: o.hq.clone(), task, form: o.form.unwrap_or(Form::Instruction), axis, immediate, subsequent: None, note: o.note.clone() })?;
+            self.directive(&PlayerDirective { to: o.hq.clone(), task, form: o.form.unwrap_or(Form::Instruction), axis, immediate, subsequent: None, note: o.note.clone(), ..Default::default() })?;
             return Ok(n);
         }
         if to.is_empty() { return Err(format!("у штаба {} нет действующих дивизий", o.hq)); }
@@ -348,6 +382,19 @@ impl Game {
             if w.divisions[i].state.out() && w.divisions[i].state != crate::model::State::Pending { return Err(format!("{} выбыла", w.divisions[i].name)); }
             (Target::Division(i as u32), Some(w.divisions[i].hq))
         } else { return Err(format!("нет штаба или дивизии {}", p.to)); };
+        // отдающий (пункт управления): верхняя инстанция или штаб, взятый игроком; получатель — в его подчинении
+        let issuer = match p.from.as_deref() {
+            None => top,
+            Some(f) => {
+                let k = w.hqs.iter().position(|h| h.id == f && h.side == self.player).ok_or_else(|| format!("нет штаба {f} стороны игрока"))? as u32;
+                if k != top && self.sim.command.control[k as usize] != crate::command::control::Control::Player { return Err(format!("{} не под управлением игрока — сначала взять", w.hqs[k as usize].name)); }
+                let mut x = match to { Target::Hq(h) => w.hqs[h as usize].parent, Target::Division(i) => Some(w.divisions[i as usize].hq) };
+                let mut ok = false;
+                for _ in 0..8 { match x { Some(q) if q == k => { ok = true; break; } Some(q) => x = w.hqs[q as usize].parent, None => break } }
+                if !ok { return Err(format!("{} не в подчинении {}", p.to, w.hqs[k as usize].name)); }
+                k
+            }
+        };
         let tick = self.hour();
         // «гибрид»: своя директива штабу, которого ведёт сценарий, — история кончилась: его поддерево решают агенты
         if let Target::Hq(h) = to {
@@ -360,7 +407,8 @@ impl Game {
                 self.sim.documents.push(Document { tick, hq: h, kind: DocKind::Notice, to: Vec::new(), text: "директива игрока вместо исторической: штаб и его подчинённые сходят со сценария, решают агенты".into(), rule: None });
             }
         }
-        // через голову: пропущенные штабы — от непосредственного начальника до штаба под верхней инстанцией
+        // через голову: пропущенные штабы — от непосредственного начальника до штаба под отдающим
+        let top = issuer;
         if parent != Some(top) {
             match to { Target::Hq(h) => self.sim.command.led_hq[h as usize] = true, Target::Division(i) => self.sim.command.led_div[i as usize] = true }
             let mut k = parent;
@@ -368,20 +416,34 @@ impl Game {
             let who = name(&self.sim);
             while let Some(h) = k {
                 if h == top { break; }
-                self.sim.documents.push(Document { tick, hq: h, kind: DocKind::Notice, to: vec![p.to.clone()], text: format!("приказ через голову: {who} — ведёт Ставка (ПУ-39 ст. 93)"), rule: Some("ПУ-39 ст. 93".into()) });
+                let boss = self.sim.world.hqs[top as usize].name.clone();
+                self.sim.documents.push(Document { tick, hq: h, kind: DocKind::Notice, to: vec![p.to.clone()], text: format!("приказ через голову: {who} — ведёт {boss} (ПУ-39 ст. 93)"), rule: Some("ПУ-39 ст. 93".into()) });
                 k = self.sim.world.hqs[h as usize].parent;
             }
             if let Some(b) = parent { self.sim.journal.push(crate::world::Event { tick, agent: u32::MAX, text: format!("{who} получил приказ через голову, доносит «{}»", self.sim.world.hqs[b as usize].name) }); }
         }
         let xy = |q: &LngLat| self.sim.theatre.proj.to_xy(*q);
+        let hq_ix = |id: &str| self.sim.world.hqs.iter().position(|h| h.id == id && h.side == self.player).map(|k| k as u32).ok_or_else(|| format!("нет штаба {id} стороны игрока"));
+        let main_blow = p.main_blow.iter().map(|x| hq_ix(x)).collect::<Result<Vec<_>, _>>()?;
+        let reserve = p.reserve.iter().map(|x| hq_ix(x)).collect::<Result<Vec<_>, _>>()?;
+        let junction = p.junction.as_deref().map(hq_ix).transpose()?;
+        let boundaries = p.boundaries.iter().filter(|b| b.line.len() >= 2).map(|b| Ok((b.neighbour.as_deref().map(hq_ix).transpose()?, b.line.iter().map(xy).collect()))).collect::<Result<Vec<_>, String>>()?;
         let d = Directive {
             id: format!("игрок:{}:{}", p.to, tick), from: top, to, form: p.form, task: p.task,
             axis: p.axis.iter().map(xy).collect(),
-            immediate: p.immediate.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: None }),
-            subsequent: p.subsequent.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: None }),
-            boundaries: Vec::new(), main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: false, ready: false, rule: None, issued: 0,
+            immediate: p.immediate.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: p.immediate_by }),
+            subsequent: p.subsequent.as_ref().map(|l| Line { pts: l.iter().map(xy).collect(), by: p.subsequent_by }),
+            boundaries, main_blow, reserve, junction, hasty: false, ready: false, rule: None, issued: 0,
             note: if p.note.is_empty() { "директива игрока".into() } else { p.note.clone() },
         };
+        // место получателя в построении отдающего: эшелон (с исходным положением) или ввод подвижной группы
+        use crate::command::control::Role;
+        let role = if p.commit { Some(Role::Committed) } else { match p.echelon.as_deref() { Some("first") => Some(Role::First), Some("second") => Some(Role::Second), _ => None } };
+        if let Some(r) = role {
+            self.sim.command.set_role(to, r);
+            let at = crate::command::agent::place(&self.sim, to);
+            match to { Target::Hq(h) => { self.sim.command.start_hq[h as usize] = Some(at); self.sim.command.since_hq[h as usize] = tick; } Target::Division(i) => { self.sim.command.start_div[i as usize] = Some(at); self.sim.command.since_div[i as usize] = tick; } }
+        }
         crate::command::passing::issue(&mut self.sim, d, tick);
         Ok(())
     }
@@ -434,6 +496,7 @@ impl Game {
             CommandOp::Release { id } => self.release(id),
             CommandOp::Permit { hq, yes } => self.permit(hq, *yes),
             CommandOp::Historical { id } => self.issue_historical(id),
+            CommandOp::Directive { directive } => self.directive(directive),
         }
     }
 

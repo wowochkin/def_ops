@@ -130,7 +130,7 @@ fn over_head_marks_and_notifies() {
     let k = hix(&g, "su_4gsk");
     let div = g.sim.world.divisions.iter().position(|d| d.hq as usize == k).unwrap();
     let id = g.sim.world.divisions[div].id.clone();
-    g.directive(&PlayerDirective { to: id.clone(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into() }).expect("через голову");
+    g.directive(&PlayerDirective { to: id.clone(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into(), ..Default::default() }).expect("через голову");
     assert!(g.sim.command.led_div[div]);
     for h in ["su_4gsk", "su_8gva", "su_1bf"] {
         let x = hix(&g, h) as u32;
@@ -218,7 +218,7 @@ fn geometryless_directive_keeps_intent() {
     let f = hix(&g, "su_1bf");
     let axis = g.sim.command.intent[f].as_ref().unwrap().axis.clone();
     assert!(!axis.is_empty());
-    g.directive(&PlayerDirective { to: "su_1bf".into(), task: Task::Attack, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "знаки опознавания".into() }).unwrap();
+    g.directive(&PlayerDirective { to: "su_1bf".into(), task: Task::Attack, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "знаки опознавания".into(), ..Default::default() }).unwrap();
     g.advance(4);
     assert_eq!(g.sim.command.intent[f].as_ref().unwrap().axis, axis, "замысел с осью сохранился");
 }
@@ -246,7 +246,7 @@ fn led_hq_not_overridden_by_superior_in_transit() {
     d.from = a; d.to = agents_core::command::directive::Target::Hq(k as u32); d.ready = false; d.form = Form::Order;
     agents_core::command::passing::issue(&mut g.sim, d, 0);
     // игрок — распоряжением через голову
-    g.directive(&PlayerDirective { to: "su_4gsk".into(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into() }).unwrap();
+    g.directive(&PlayerDirective { to: "su_4gsk".into(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into(), ..Default::default() }).unwrap();
     g.advance(30);
     let top = hix(&g, "su_stavka") as u32;
     assert_eq!(g.sim.command.intent[k].as_ref().unwrap().from, top);
@@ -261,7 +261,7 @@ fn release_returns_to_superior_plan() {
     let k = hix(&g, "su_4gsk");
     let div = g.sim.world.divisions.iter().position(|d| d.hq as usize == k && !d.state.out()).unwrap();
     let id = g.sim.world.divisions[div].id.clone();
-    g.directive(&PlayerDirective { to: id.clone(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into() }).unwrap();
+    g.directive(&PlayerDirective { to: id.clone(), task: Task::Defend, form: Form::Instruction, axis: vec![], immediate: None, subsequent: None, note: "держать".into(), ..Default::default() }).unwrap();
     g.advance(4);
     g.release(&id).unwrap();
     g.advance(8);
@@ -513,4 +513,68 @@ fn malformed_command_is_an_error_not_a_failed_turn() {
     let mut g = seelow_game(Mode::Agents, 0);
     assert!(g.command_json(&serde_json::json!({ "op": "взорвать", "hq": "su_8gva" })).unwrap_err().contains("команда"));
     assert!(g.command_json(&serde_json::json!({ "op": "take", "hq": "su_8gva" })).is_ok());
+}
+
+fn pd(j: serde_json::Value) -> PlayerDirective { serde_json::from_value(j).expect("директива") }
+
+/// Армия взята игроком — приказ её корпусу отдаёт армия: не через голову, без извещений.
+#[test]
+fn directive_from_taken_army_to_corps() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.issue_historical("stavka-11059").expect("директива");
+    g.take("su_8gva").expect("взять");
+    let n = g.sim.documents.len();
+    g.directive(&pd(serde_json::json!({ "from": "su_8gva", "to": "su_4gsk", "task": "attack", "form": "order",
+        "immediate": [[14.30, 52.62], [14.36, 52.58]] }))).expect("приказ корпусу");
+    let k = hix(&g, "su_4gsk");
+    assert!(!g.sim.command.led_hq[k], "не через голову");
+    assert!(!g.sim.documents[n..].iter().any(|d| d.kind == DocKind::Notice));
+    let d = g.sim.command.in_transit.iter().find(|(_, d)| d.to == agents_core::command::directive::Target::Hq(k as u32)).map(|(_, d)| d.clone()).expect("в пути");
+    assert_eq!(d.from as usize, hix(&g, "su_8gva"));
+}
+
+/// Отдавать может только верхняя инстанция или взятый игроком штаб.
+#[test]
+fn directive_from_agent_hq_rejected() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    let e = g.directive(&pd(serde_json::json!({ "from": "su_8gva", "to": "su_4gsk", "task": "defend", "form": "order" }))).unwrap_err();
+    assert!(e.contains("под управлением"), "{e}");
+}
+
+/// Полная директива фронту: главный удар, границы, сроки, стык — в замысле получателя.
+#[test]
+fn directive_full_fields() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.directive(&pd(serde_json::json!({ "to": "su_1bf", "task": "attack", "form": "order",
+        "axis": [[14.6, 52.6], [13.4, 52.52]], "immediate": [[14.2, 52.7], [14.2, 52.45]], "immediateBy": 48,
+        "subsequent": [[13.6, 52.7], [13.6, 52.4]], "subsequentBy": 144,
+        "boundaries": [{ "line": [[14.6, 52.8], [13.4, 52.8]] }], "mainBlow": ["su_8gva"], "junction": "su_8gva" }))).expect("директива");
+    let f = hix(&g, "su_1bf");
+    let d = g.sim.command.in_transit.iter().find(|(_, d)| d.to == agents_core::command::directive::Target::Hq(f as u32)).map(|(_, d)| d.clone()).expect("в пути");
+    assert_eq!(d.immediate.as_ref().unwrap().by, Some(48));
+    assert_eq!(d.subsequent.as_ref().unwrap().by, Some(144));
+    assert_eq!(d.boundaries.len(), 1);
+    assert_eq!(d.main_blow, vec![hix(&g, "su_8gva") as u32]);
+    assert_eq!(d.junction, Some(hix(&g, "su_8gva") as u32));
+}
+
+/// Эшелон получателя и ввод подвижной группы — роли в построении старшего.
+#[test]
+fn directive_echelon_and_commit() {
+    use agents_core::command::control::Role;
+    use agents_core::command::directive::Target;
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.take("su_8gva").expect("взять");
+    g.directive(&pd(serde_json::json!({ "from": "su_8gva", "to": "su_4gsk", "task": "attack", "form": "order", "echelon": "second" }))).expect("второй эшелон");
+    assert_eq!(g.sim.command.role(Target::Hq(hix(&g, "su_4gsk") as u32)), Role::Second);
+    g.take("su_1bf").expect("взять фронт");
+    g.directive(&pd(serde_json::json!({ "from": "su_1bf", "to": "su_1gta", "task": "attack", "form": "instruction", "commit": true }))).expect("ввод");
+    assert_eq!(g.sim.command.role(Target::Hq(hix(&g, "su_1gta") as u32)), Role::Committed);
+}
+
+#[test]
+fn command_op_directive() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    g.command_json(&serde_json::json!({ "op": "directive", "directive": { "to": "su_1bf", "task": "defend", "form": "instruction" } })).expect("команда");
+    assert!(g.sim.command.in_transit.iter().any(|(_, d)| d.to == agents_core::command::directive::Target::Hq(hix(&g, "su_1bf") as u32)));
 }

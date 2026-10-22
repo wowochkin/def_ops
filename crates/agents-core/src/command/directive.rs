@@ -9,14 +9,14 @@ use std::collections::HashMap;
 
 /// Форма документа: подготовленный приказ (директива, боевой приказ) или боевое распоряжение — быстрее, но со
 /// штрафом слаженности.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Form { Order, Instruction }
+pub enum Form { Order, #[default] Instruction }
 
 /// Задача: наступать, оборонять, сдерживать (hinhaltender Widerstand), отходить, выдвигаться, резерв.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Task { Attack, Defend, Delay, Withdraw, Move, Reserve }
+pub enum Task { Attack, #[default] Defend, Delay, Withdraw, Move, Reserve }
 
 /// Получатель: штаб или дивизия (индексы мира).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
