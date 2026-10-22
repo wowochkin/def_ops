@@ -30,6 +30,9 @@ describe('иерархия штабов агентной модели', () => {
     const hqs = [...chain, { id: 'su_a2', name: 'армия 2', side: 'su' as const, echelon: 'army' as const, parent: 'su_k' }];
     expect(hierarchyProblems(hqs, [{ id: 'su_d2', side: 'su', hq: 'su_a2' }]).some((x) => x.includes('su_a2') && x.includes('ступен'))).toBe(true);
   });
+  it('дивизия под штабом другой стороны', () => {
+    expect(hierarchyProblems(chain, [{ id: 'de_x', side: 'de', hq: 'su_k' }]).some((x) => x.includes('de_x') && x.includes('другой стороны'))).toBe(true);
+  });
   it('неизвестный штаб дивизии и старший другой стороны', () => {
     expect(hierarchyProblems(chain, [{ id: 'su_x', side: 'su', hq: 'nope' }]).some((x) => x.includes('su_x'))).toBe(true);
     const hqs = [...chain, { id: 'de_hc', name: 'ОКХ', side: 'de' as const, echelon: 'high_command' as const, parent: null }, { id: 'de_a', name: 'армия', side: 'de' as const, echelon: 'army' as const, parent: 'su_f' }];
@@ -45,7 +48,16 @@ const rd = <T>(p: string): T => JSON.parse(readFileSync(resolve(__dirname, '../.
 interface Scen { hqs: ScenHq[]; divisions: { id: string; side: string; hq: string; kind: string }[] }
 interface Sub { date: string; army?: string | null; corps?: string | null }
 const registry = rd<{ divisions: { id: string; type: string; subordination: Sub[] }[] }>('docs/sources/berlin-1945-divisions.json');
-const subAt = (subs: Sub[], day: string) => [...subs].filter((s) => s.date <= day).pop() ?? subs[0];
+const subAt = (subs: Sub[], day: string) => { const by = [...subs].sort((a, b) => a.date.localeCompare(b.date)); return by.filter((s) => s.date <= day).pop() ?? by[0]; };
+
+describe('подчинение на дату', () => {
+  it('две записи: действует последняя не позже дня, в любом порядке записей; до первой — первая', () => {
+    const subs: Sub[] = [{ date: '1945-04-20', corps: 'su_b' }, { date: '1945-04-01', corps: 'su_a' }];
+    expect(subAt(subs, '1945-04-16')?.corps).toBe('su_a');
+    expect(subAt(subs, '1945-04-21')?.corps).toBe('su_b');
+    expect(subAt(subs, '1945-03-01')?.corps).toBe('su_a');
+  });
+});
 
 /** Полная цепочка и ровно одна верхняя инстанция на сторону. */
 function checkChain(file: string) {

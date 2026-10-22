@@ -18,7 +18,11 @@ const RANK: Record<HqEchelon, number> = { high_command: 4, front: 3, army: 2, co
 export function hierarchyProblems(hqs: ScenHq[], divisions: { id: string; side: string; hq: string }[]): string[] {
   const by = new Map(hqs.map((h) => [h.id, h]));
   const out: string[] = [];
-  for (const d of divisions) if (!by.has(d.hq)) out.push(`дивизия ${d.id}: нет штаба ${d.hq}`);
+  for (const d of divisions) {
+    const h = by.get(d.hq);
+    if (!h) out.push(`дивизия ${d.id}: нет штаба ${d.hq}`);
+    else if (h.side !== d.side) out.push(`дивизия ${d.id}: штаб ${d.hq} другой стороны`);
+  }
   for (const h of hqs) {
     if (h.parent == null) {
       if (h.echelon !== 'high_command' || h.id !== HIGH_COMMAND[h.side].id) out.push(`штаб ${h.id}: нет старшего, а он не верхняя инстанция стороны`);
