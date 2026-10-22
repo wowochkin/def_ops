@@ -15,6 +15,7 @@ const trace = {
     { id: 'f', name: 'фронт', side: 'su', echelon: 'front', parent: null },
     { id: 'a', name: 'армия А', side: 'su', echelon: 'army', parent: 'f' },
     { id: 'b', name: 'армия Б', side: 'su', echelon: 'army', parent: 'f' },
+    { id: 'k', name: 'корпус армии А', side: 'su', echelon: 'corps', parent: 'a' },
   ],
   frames: Array.from({ length: 49 }, () => [row(14), row(15)]),
   journal: [],
@@ -22,6 +23,7 @@ const trace = {
     { tick: 20, time: time(20), hq: 'a', kind: 'order', to: ['d1'], text: 'наступать', rule: null },
     { tick: 30, time: time(30), hq: 'f', kind: 'directive', to: ['a'], text: 'наступать', rule: 'ПУ-39' },
     { tick: 47, time: time(47), hq: 'a', kind: 'order', to: ['d1'], text: 'поздно', rule: null },
+    { tick: 25, time: time(25), hq: 'k', kind: 'order', to: ['d1'], text: 'корпус', rule: null },
   ],
 };
 const history = { divisions: [
@@ -32,11 +34,13 @@ const history = { divisions: [
 
 describe('отчёт о расхождениях', () => {
   it('армия вне допуска — первый час и документы её штабов за ±12 ч; армия в допуске — без строки', () => {
-    const rows = divergence(trace, history, 10, [{ id: 'stavka-1', date: time(24).slice(0, 10), goal: 'наступать на Берлин' }]);
+    const rows = divergence(trace, history, 10, [{ id: 'stavka-1', date: time(24).slice(0, 10), goal: 'наступать на Берлин', from: 'su_stavka' },
+      { id: 'okh-1', date: time(24).slice(0, 10), goal: 'держать Одер', from: 'de_hc' }]);
     expect(rows.map((r) => r.army)).toEqual(['a']);
     expect(rows[0].firstOutAt).toBe(time(24));
     expect(rows[0].deviationKm).toBeGreaterThan(10);
-    expect(rows[0].documents.map((d) => d.tick)).toEqual([20, 30]);
+    // документы штаба армии, её старших и её корпусов; директивы — только своей стороны
+    expect(rows[0].documents.map((d) => d.tick)).toEqual([20, 30, 25]);
     expect(rows[0].historical).toEqual(['stavka-1: наступать на Берлин']);
   });
 });

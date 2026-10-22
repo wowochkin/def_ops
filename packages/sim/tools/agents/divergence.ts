@@ -13,7 +13,7 @@ type LngLat = [number, number];
 interface Doc { tick: number; time: string; hq: string; kind: string; to: string[]; text: string; rule: string | null }
 interface Trace {
   start: string; fields: string[]; frames: unknown[][][];
-  divisions: { id: string; hq: string }[]; hqs: { id: string; name: string; echelon: string; parent: string | null }[];
+  divisions: { id: string; hq: string }[]; hqs: { id: string; name: string; side?: string; echelon: string; parent: string | null }[];
   documents?: Doc[];
 }
 interface History { divisions: { formation: string; time: string; at: LngLat; approxKm: number }[] }
@@ -23,7 +23,7 @@ const km = (a: LngLat, b: LngLat) => Math.hypot((a[0] - b[0]) * 111.32 * Math.co
 const hourOf = (start: string, t: string) => Math.round((Date.parse(`${t}:00Z`) - Date.parse(`${start}:00Z`)) / 3600e3);
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
 
-export function divergence(trace: Trace, history: History, toleranceKm = 10, directives: { id: string; date: string; goal: string }[] = []): Row[] {
+export function divergence(trace: Trace, history: History, toleranceKm = 10, directives: { id: string; date: string; goal: string; from?: string }[] = []): Row[] {
   const hq = new Map(trace.hqs.map((h) => [h.id, h]));
   const armyOf = (id: string) => { for (let x = hq.get(id), n = 0; x && n < 8; x = x.parent ? hq.get(x.parent) : undefined, n++) if (x.echelon === 'army') return x.id; return id; };
   const chain = (id: string) => { const out = new Set<string>(); for (let x = hq.get(id), n = 0; x && n < 8; x = x.parent ? hq.get(x.parent) : undefined, n++) out.add(x.id); return out; };
@@ -48,11 +48,14 @@ export function divergence(trace: Trace, history: History, toleranceKm = 10, dir
     if (!out) continue;
     const [h, xs] = out;
     const at = new Date(Date.parse(`${trace.start}:00Z`) + h * 3600e3).toISOString().slice(0, 16);
-    const mine = chain(army);
+    // штаб армии и его старшие, а также штабы под армией (корпуса)
+    const mine = new Set([...chain(army), ...trace.hqs.filter((x) => x.id !== army && armyOf(x.id) === army).map((x) => x.id)]);
+    const side = hq.get(army)?.side ?? army.slice(0, 2);
     rows.push({
       army, name: hq.get(army)?.name ?? army, firstOutAt: at, deviationKm: +median(xs).toFixed(1),
       documents: (trace.documents ?? []).filter((d) => mine.has(d.hq) && Math.abs(d.tick - h) <= 12),
-      historical: directives.filter((d) => d.date.slice(0, 10) === at.slice(0, 10)).map((d) => `${d.id}: ${d.goal}`),
+      // директивы своей стороны (у отдавшего — тот же префикс id стороны: su_, de_)
+      historical: directives.filter((d) => d.date.slice(0, 10) === at.slice(0, 10) && (!d.from || d.from.startsWith(`${side}_`))).map((d) => `${d.id}: ${d.goal}`),
     });
   }
   return rows.sort((a, b) => a.firstOutAt.localeCompare(b.firstOutAt));
@@ -68,7 +71,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const trace = rd<Trace>(opt('trace') ?? `evals-out/agents/${scen}/trace.json`);
   const history = rd<History>(`packages/sim/data/scenarios/agents/${scen}-1945.history.json`);
   const src = scen === 'vistula-oder' ? 'vistula-oder' : 'berlin';
-  const dirs = rd<{ directives: { id: string; date: string; goal: string }[] }>(`docs/sources/${src}-1945-directives.json`).directives;
+  const dirs = rd<{ directives: { id: string; date: string; goal: string; from?: string }[] }>(`docs/sources/${src}-1945-directives.json`).directives;
   const rows = divergence(trace, history, Number(opt('tolerance') ?? 10), dirs);
   const md = ['# Расхождения агентной модели по армиям', '', `Сценарий: ${scen}; допуск ${opt('tolerance') ?? 10} км сверх неопределённости источника.`, '',
     ...rows.flatMap((r) => [`## ${r.name} — с ${r.firstOutAt.replace('T', ' ')}, медиана превышения ${r.deviationKm} км`, '',
