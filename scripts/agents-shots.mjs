@@ -121,6 +121,8 @@ try {
   await page.locator('.cmd-tabs button', { hasText: 'Разведка' }).click();
   await shot('post-army-intel.jpg');
   // решение на ход (все поля) и ход; затем журнал документов
+  // ход — по решению Ставки: её уровень
+  await page.locator('.post-levels button', { hasText: 'Ставка' }).click();
   await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
   for (const t of await page.locator('.cmd-body textarea').all()) await t.fill('Директивы Ставки на операцию поданы; 8 гв. армия закрепляется.');
   await page.locator('[data-action="command.turn"]').click();

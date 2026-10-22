@@ -539,7 +539,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     if (m.targets.length) {
       setTab('orders'); setSub('units'); setSel(m.targets[0]);
       setNotice(`Не указана цель: ${m.targets.map((id) => `${short(unit(id)?.name ?? id)} — ${TASK_RU[drafts[id]?.task ?? 'attack']}`).join('; ')}`);
-    } else { setTab('decision'); setNotice(`Решение на ход не готово: ${m.decision.join(', ')}`); }
+    } else {
+      // ход проводится по решению верхней инстанции: пункт управления — на её уровень
+      if (staffsOn(view) && post.level !== 'stavka') levelTo('stavka');
+      setTab('decision'); setNotice(`Решение ${staffsOn(view) ? `${view?.terms?.topGen ?? 'Ставки'} ` : ''}на ход не готово: ${m.decision.join(', ')}`);
+    }
   };
   /** Ветви дерева тем советника из обстановки: фронты, армии, обнаруженный противник, резервы. */
   const advDyn = useMemo(() => ({
@@ -785,7 +789,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           </div> : progress ? <button className="rp-go" disabled><span className="spinner" /> {progress}</button>
             : <>
               <div className="cmd-check">
-                <span className={decisionMissing(decision).length ? 'no' : 'yes'}>{decisionMissing(decision).length ? '○' : '✓'} решение</span>
+                <span className={decisionMissing(decision).length ? 'no' : 'yes'}>{decisionMissing(decision).length ? '○' : '✓'} решение{staffsOn(view) ? ` ${view?.terms?.topGen ?? 'Ставки'}` : ''}</span>
                 <span>приказов войскам: {draftList.length}</span>
                 <span>распоряжений: {acts.length}</span>
                 {staffsOn(view) && <span>команд управления: {cmds.length}</span>}
