@@ -7,7 +7,8 @@
  * может снять туман войны. Игра сохраняется в браузере после каждого хода.
  */
 import { confirmAsync } from './dialogs';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Resizer, usePanelWidth } from './panel-resize';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
 import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
@@ -178,6 +179,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [planOpen, setPlanOpen] = useState<number | null>(0);
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  // ширина панели командования и окна советника — перетаскиванием края
+  const [sideW, setSideW, resetSideW] = usePanelWidth('def_ops.command.sideW', 410, 320, 900);
+  const [advW, setAdvW, resetAdvW] = usePanelWidth('def_ops.command.advW', 390, 300, 900);
   /** Пункт управления по уровню карты (агентная модель); ссылка — для обработчика щелчка по карте. */
   // смена уровня из пункта управления — как переключателем: с масштабом уровня
   const levelTo = (l: MapLevel) => { void act('map.level', { level: l }); };
@@ -703,9 +707,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
 
   return (
     <ZonesContext.Provider value={zones}>
-    <div className={`replay cmd mob-${mob}`}>
+    <div className={`replay cmd mob-${mob}`} style={{ '--cmd-w': `${sideW}px`, '--adv-w': `${advW}px` } as CSSProperties}>
       <div className="mob-switch"><button className={mob === 'staff' ? 'on' : ''} onClick={() => setMob('staff')}>Штаб</button><button className={mob === 'map' ? 'on' : ''} onClick={() => setMob('map')}>Карта</button><ActButton className={advOpen ? 'on' : ''} action="command.advisor.show" params={{ mode: advOpen ? 'close' : 'open' }}>Советник</ActButton></div>
       <aside className="rp-side cmd-side">
+        <Resizer width={sideW} setWidth={setSideW} reset={resetSideW} edge="right" />
         <div className="cmd-head" data-tour="cmd-head">
           <div className="cmd-top">
             <span className="cmd-kicker" title={view?.scenarioName}>Командование · {(view?.scenarioName ?? saved?.title ?? '').split(':')[0]}</span>
@@ -819,7 +824,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
       </main>
       {advOpen && view && advMin && <ActButton className="adv-tab" action="command.advisor.show" params={{ mode: 'open' }} title="Развернуть советника" data-hl="adv-tab">
         <span>Советник</span>{adv.some((m) => !m.result) ? <i className="spinner" /> : adv.length > advSeen ? <b className="adv-new">ответ</b> : null}</ActButton>}
-      {advOpen && view && !advMin && <Advisor llm={llm} msgs={adv} text={advQ} setText={setAdvQ}
+      {advOpen && view && !advMin && <Advisor resize={{ width: advW, setWidth: setAdvW, reset: resetAdvW }} llm={llm} msgs={adv} text={advQ} setText={setAdvQ}
         dyn={advDyn} focus={focus}
         drafted={(f) => !!drafts[f]}
         plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} acceptPlan={(v, i) => void acceptByButton(v, i)}
@@ -1059,7 +1064,8 @@ function allLeaves(dyn: Dyn, tree: AdviceNode[] = ADVICE_TREE): Leaf[] {
   return out;
 }
 
-function Advisor({ llm, msgs, text, setText, drafted, dyn, focus, plan, planStale, planN, acceptPlan, planOpen, hasAct }: {
+function Advisor({ resize, llm, msgs, text, setText, drafted, dyn, focus, plan, planStale, planN, acceptPlan, planOpen, hasAct }: {
+  resize: { width: number; setWidth: (w: number) => void; reset: () => void };
   llm: Llm; msgs: AdvMsg[]; text: string; setText: (s: string) => void; drafted: (f: string) => boolean; dyn: Dyn; focus: Sector | null;
   plan: PlanState | null; planStale: boolean; planN: number; acceptPlan: (v: PlanVariantView, i: number) => void;
   planOpen: number | null; hasAct: (key: string) => boolean;
@@ -1100,6 +1106,7 @@ function Advisor({ llm, msgs, text, setText, drafted, dyn, focus, plan, planStal
   const dynEmpty = node?.dyn && !dyn[node.dyn].length;
   return (
     <div className="advisor" data-tour="cmd-advisor-panel" data-hl="advisor">
+      <Resizer {...resize} edge="left" />
       <div className="adv-h"><b>Советник</b><span className="muted">видит то же, что и вы</span><span style={{ flex: 1 }} />
         {msgs.length > 0 && <ActButton className="link" action="command.advisor.clear">очистить</ActButton>}<ActButton className="x adv-min" action="command.advisor.show" params={{ mode: 'min' }} title="Свернуть к краю карты (беседа сохранится)">–</ActButton><ActButton className="x" action="command.advisor.show" params={{ mode: 'close' }} title="Скрыть советника (беседа сохранится)">×</ActButton></div>
       <ModelPicker llm={llm} who="adv" purpose="ответов советника" />
