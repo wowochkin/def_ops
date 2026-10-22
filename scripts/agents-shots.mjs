@@ -1,6 +1,6 @@
 // Снимки командования по ступеням (docs/img, окно 1440×900, JPEG) в браузере с мостом к ядру агентной модели
 // (scripts/agents-bridge.mjs): переигровка Берлинской на агентной модели — уровни карты, окно передачи командования
-// с режимом (штабы-агенты), вкладка «Штабы», форма приказа, журнал документов после хода.
+// с режимом (штабы-агенты), вкладка «Штабы», пункт управления Ставки и армии, журнал документов после хода.
 //
 //   node scripts/agents-shots.mjs [--url http://localhost:5173] [--out docs/img] [--doc]
 // --doc — и снимки уровней карты на нынешней модели и на агентной для описания (replay-*.jpg).
@@ -80,20 +80,44 @@ try {
   await page.locator('.lvl-sw button', { hasText: 'Ставка' }).click();
   await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
   await shot('command-staffs.jpg');
-  // форма приказа: армии — приказ (подготовленный)
-  await page.locator('.cmd-tabs button', { hasText: 'Доклады' }).click();
-  const card = page.locator('.ucard').filter({ has: page.locator('.ucard-n', { hasText: /^8(-я)? гв/ }) }).first();
-  await card.locator('.ucard-h').click();
-  await card.locator('button.link', { hasText: 'приказ' }).click();
-  await page.locator('.oform').waitFor({ timeout: 30000 });
-  await page.locator('.oedit select').first().selectOption('defend');
-  await page.locator('.oform button', { hasText: 'Приказ' }).click();
-  await shot('command-order-form.jpg');
+  // пункт управления Ставки: директива 1-му Белорусскому фронту — ось главного удара и рубеж ближайшей задачи на карте
+  const at = async (ll) => { const [x, y] = await page.evaluate((p) => window.__cmdEngine.project(p), ll); const b = await page.locator('.rp-map').boundingBox(); await page.mouse.click(b.x + x, b.y + y); await page.waitForTimeout(150); };
+  await page.locator('.lvl-sw button', { hasText: 'Ставка' }).click();
+  await page.evaluate(() => window.__cmdEngine?.setView({ center: [14.0, 52.55] }));
+  await page.locator('.cmd-tabs button', { hasText: 'Приказы' }).click();
+  await page.locator('.subtabs button', { hasText: 'Пункт управления' }).click();
+  await page.locator('.post-subs button', { hasText: '1-й Белорусский' }).click();
+  await page.locator('.post-pts', { hasText: 'Главный удар' }).locator('button', { hasText: 'на карте' }).click();
+  for (const p of [[14.55, 52.6], [14.1, 52.55], [13.45, 52.52]]) await at(p);
+  await page.locator('.post-pts', { hasText: 'Главный удар' }).locator('button', { hasText: 'Готово' }).click();
+  await page.locator('.post-pts', { hasText: 'Ближайшая' }).locator('button', { hasText: 'на карте' }).click();
+  for (const p of [[14.05, 52.75], [14.0, 52.55], [14.05, 52.35]]) await at(p);
+  await page.locator('.post-pts', { hasText: 'Ближайшая' }).locator('button', { hasText: 'Готово' }).click();
+  await page.locator('.post-chk label', { hasText: '8' }).first().locator('input').check();
+  await page.locator('.post-form textarea').fill('Овладеть рубежом Врицен — Мюнхеберг, далее на Берлин');
+  await shot('command-post-stavka.jpg');
+  await page.locator('[data-action="command.dir.give"]').click();
+  // пункт управления армии: 8-я гв. армия взята — боевой приказ корпусу
+  await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
+  await page.locator('.staffs-row', { hasText: '8-я гвардейская' }).first().locator('button', { hasText: 'взять' }).click();
+  await page.locator('.cmd-tabs button', { hasText: 'Приказы' }).click();
+  await page.evaluate(() => window.__cmdEngine?.setView({ center: [14.4, 52.55] }));
+  const corps = page.locator('.post-subs button').first();
+  await corps.click();
+  await page.locator('.post-form .seg button', { hasText: 'Второй эшелон' }).click();
+  await page.locator('.post-pts', { hasText: 'Ближайшая' }).locator('button', { hasText: 'на карте' }).click();
+  for (const p of [[14.42, 52.62], [14.38, 52.55]]) await at(p);
+  await page.locator('.post-pts', { hasText: 'Ближайшая' }).locator('button', { hasText: 'Готово' }).click();
+  await shot('command-post-army.jpg');
+  await page.locator('[data-action="command.dir.give"]').click();
   // решение на ход (все поля) и ход; затем журнал документов
   await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
   for (const t of await page.locator('.cmd-body textarea').all()) await t.fill('Директивы Ставки на операцию поданы; 8 гв. армия закрепляется.');
   await page.locator('[data-action="command.turn"]').click();
   await page.locator('.cmd-date span', { hasText: 'ход 2' }).waitFor({ timeout: 900000 });
+  // донесения за ход: исполненные команды управления и отказы
+  await page.locator('.cmd-tabs button', { hasText: 'Доклады' }).click();
+  for (const t of await page.locator('.dispatch li').allInnerTexts()) if (/Управление|не исполнена|не принят/.test(t)) console.log('  донесение:', t);
   await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
   await page.locator('.staffs-docs').scrollIntoViewIfNeeded();
   await shot('command-docs.jpg');

@@ -1914,3 +1914,17 @@ body.vp-dragging, body.vp-dragging * { user-select: none !important; -webkit-use
 .oform small { color: #6b6457; }
 .take-mode { margin-top: 6px; }
 .take-mode-h { font-weight: 700; font-size: 12.5px; margin: 2px 0 -2px; }
+
+/* пункт управления по уровням */
+.post-who { display: flex; flex-direction: column; gap: 4px; }
+.post-own { font-weight: 600; color: #8c2a00; }
+.post-over { color: #6b4b00; }
+.post-subs { display: flex; flex-direction: column; }
+.post-subs .ctl-mark { margin-left: 6px; }
+.post-pts { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 12.5px; }
+.post-pts .link.on { font-weight: 700; color: var(--accent); }
+.post-bnd { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
+.post-bnd .post-pts { padding-left: 12px; }
+.post-chk { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; }
+.post-chk > span { width: 100%; }
+.post-chk1 { font-size: 12.5px; }

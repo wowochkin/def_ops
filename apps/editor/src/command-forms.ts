@@ -40,7 +40,7 @@ export const MODE_TITLE: Record<GameMode, { title: string; hint: string }> = {
 };
 
 
-const subject = (c: CommandOp) => (c.op === 'take' ? c.hq : c.op === 'release' ? c.id : c.op === 'permit' ? c.hq : c.id);
+const subject = (c: CommandOp) => (c.op === 'take' ? c.hq : c.op === 'release' ? c.id : c.op === 'permit' ? c.hq : c.op === 'directive' ? `dir:${c.directive.to}` : c.id);
 /**
  * Команда в очередь хода: повтор не добавляется; «взять» и «вернуть» одного штаба в одном ходе гасят друг друга;
  * ответ на запросы штаба — последний.
@@ -49,7 +49,8 @@ export function queueOp(q: CommandOp[], op: CommandOp): CommandOp[] {
   const same = (c: CommandOp) => c.op === op.op && subject(c) === subject(op);
   const opposite = (c: CommandOp) => subject(c) === subject(op) && ((c.op === 'take' && op.op === 'release') || (c.op === 'release' && op.op === 'take'));
   if (q.some(opposite)) return q.filter((c) => !opposite(c));
-  if (op.op === 'permit') return [...q.filter((c) => !same(c)), op];
+  // ответ на запрос и директива получателю — последние
+  if (op.op === 'permit' || op.op === 'directive') return [...q.filter((c) => !same(c)), op];
   return q.some(same) ? q : [...q, op];
 }
 

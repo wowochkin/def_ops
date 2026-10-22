@@ -85,7 +85,9 @@ export function applyTakeoverState(s: SimState, ts: TakeoverState): SimState {
 export type GameMode = 'legacy' | 'agents' | 'hybrid';
 export interface AgentGameSpec { path: string; history: string; turnHours: number; mode?: GameMode }
 /** Команда управления на ход (командование по ступеням): взять штаб, вернуть, ответ на запрос отхода, подать историческую директиву. */
-export type CommandOp = { op: 'take'; hq: string } | { op: 'release'; id: string } | { op: 'permit'; hq: string; yes: boolean } | { op: 'historical'; id: string };
+export type CommandOp = { op: 'take'; hq: string } | { op: 'release'; id: string } | { op: 'permit'; hq: string; yes: boolean } | { op: 'historical'; id: string }
+  /** Директива пункта управления (game::PlayerDirective): to, task, form, from, ось, рубежи, границы… */
+  | { op: 'directive'; directive: { to: string; task: string; form: string; from?: string } & Record<string, unknown> };
 
 export interface GameState {
   state: SimState;

@@ -12,6 +12,7 @@ const SRC = join(__dirname, '../src');
 const FILES: { file: string; part?: [string, string] }[] = [
   { file: 'CommandView.tsx' },
   { file: 'CommandStaffs.tsx' },
+  { file: 'CommandPost.tsx' },
   { file: 'ReviewView.tsx' },
   { file: 'ReplayView.tsx', part: ['{/* voice-entry: начало */}', '{/* voice-entry: конец */}'] },
   { file: 'voice/VoicePanel.tsx' },

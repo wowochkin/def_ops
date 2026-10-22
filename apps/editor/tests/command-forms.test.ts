@@ -82,3 +82,10 @@ describe('координаты в документах — пунктами', ()
     expect(placeText('рубеж у 52.60, 14.38', [])).toBe('рубеж у 52.60, 14.38');
   });
 });
+
+describe('директива пункта управления в очереди', () => {
+  it('новая директива тому же получателю заменяет прежнюю', () => {
+    const d = (task: string) => ({ op: 'directive' as const, directive: { to: 'su_8gva', task, form: 'order' } });
+    expect(queueOp(queueOp([], d('attack')), d('defend'))).toEqual([d('defend')]);
+  });
+});

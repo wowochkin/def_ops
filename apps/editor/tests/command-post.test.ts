@@ -57,3 +57,10 @@ describe('пункт управления по уровням', () => {
     expect(missing({ ...d, task: 'defend', axis: [], immediate: [] })).toEqual([]);
   });
 });
+
+describe('взятие в очереди хода', () => {
+  it('«взять» в очереди — штаб отдаёт сам; «вернуть» после — снова через голову', () => {
+    expect(sender(v(), 'su_8gva', [{ op: 'take', hq: 'su_8gva' }])).toEqual({ from: 'su_8gva', overHead: false });
+    expect(sender(v(), 'su_8gva', [{ op: 'take', hq: 'su_8gva' }, { op: 'release', id: 'su_8gva' }]).overHead).toBe(true);
+  });
+});

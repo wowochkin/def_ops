@@ -18,12 +18,13 @@ import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
 import { ZonesContext } from './time';
-import { LAYER_TITLE, LayersMenu, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLabels, useMapLevel, withLevel } from './ReplayView';
+import { LAYER_TITLE, LayersMenu, Legend, LEVEL_LEGEND, LevelSwitch, Player, useMapLabels, useMapLevel, withLevel, type MapLevel } from './ReplayView';
 import { MapHover, withoutLabels } from './MapHover';
 import { shownFeatures, unitAt } from './map-pick';
 import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
+import { CommandPost, usePost, type PostState } from './CommandPost';
 import { formTitle, initialCmds, markFor, MODE_TITLE, overHead, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
@@ -176,6 +177,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [planOpen, setPlanOpen] = useState<number | null>(0);
   const [time, setTime] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
+  /** Пункт управления по уровню карты (агентная модель); ссылка — для обработчика щелчка по карте. */
+  // смена уровня из пункта управления — как переключателем: с масштабом уровня
+  const levelTo = (l: MapLevel) => { void act('map.level', { level: l }); };
+  const post = usePost(view, level, levelTo, cmds, setCmds, !!progress, staffsOn(view), () => { setTab('orders'); setSub('units'); });
+  const postRef = useRef<PostState | null>(null);
+  postRef.current = post;
   const levelRef = useRef(level);
   levelRef.current = level;
   const [labels, toggleLabels] = useMapLabels();
@@ -316,6 +323,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     if (!en) return;
     return en.on('click', (e) => {
       const pm = live.current.pickMode;
+      // пункт управления: точки оси, рубежей, разграничительных линий
+      if (postRef.current?.pick) { postRef.current.addPoint(e.lngLat); return; }
       if (pm?.kind === 'line') { setLinePts((l) => [...l, e.lngLat]); return; }
       if (pm && pm.kind !== 'order') { void pickAction(pm, e.lngLat, null); return; }
       if (!pm || !live.current.sel) {
@@ -337,6 +346,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           }
         }
         if (!id) return;
+        // вкладка «Приказы» с пунктом управления: штаб ступени — пункт, подчинённый — его документ
+        if (liveTab.current.tab === 'orders' && liveTab.current.sub === 'units' && postRef.current?.click(id)) return;
         if (v.own.some((u) => u.id === id)) { showUnit(id); return; }
         if (v.intel.some((x) => x.id === id)) { setIntelSel(id); return; }
         const g = v.groups.find((x) => x.id === id);
@@ -441,13 +452,29 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         f.name = `${a.label} (проект): ${a.text}`; f.time = { from: view.time, to: null }; plan.push(f as never);
       }
     }
+    // проекты пункта управления: ось — стрелкой, рубежи задач и разграничительные линии — линиями
+    // только документы ступени на карте: директива Ставки на уровне армии заслоняла бы корпуса
+    for (const dd of Object.values(post.dirs).filter((x) => x.level === post.level)) {
+      const nm = view.command?.hqs[dd.to]?.name ?? unit(dd.to)?.name ?? dd.to;
+      const add = (pts: LngLat[], what: string, preset: string, k = 1) => {
+        if (pts.length < 2) return;
+        const f = pts.length >= 2 && preset.startsWith('inf.') ? createFeature('arrow', preset, { points: pts, layerId: 'plan' }, 0.55, 'own') : createFeature('line', preset, { points: pts, layerId: 'plan' }, k, 'own');
+        f.name = `${nm}: ${what} (проект)`; f.time = { from: view.time, to: null }; plan.push(f as never);
+      };
+      add(dd.axis, 'главный удар', 'inf.attack');
+      add(dd.immediate, 'ближайшая задача', 'atlas.defense', 1.6);
+      add(dd.subsequent, 'последующая задача', 'atlas.defense', 1.2);
+      add(dd.boundaries[0], 'правая разграничительная линия', 'rkka.boundaryArmy');
+      add(dd.boundaries[1], 'левая разграничительная линия', 'rkka.boundaryArmy');
+      if (dd.immediate.length === 1) { const f = createFeature('symbol', 'std.unitOval', { at: dd.immediate[0], layerId: 'plan' }, 0.6, 'own'); f.name = `${nm}: пункт (проект)`; f.time = { from: view.time, to: null }; plan.push(f as never); }
+    }
     if (linePts.length > 1) {
       const f = createFeature('line', 'rkka.boundaryArmy', { points: linePts, layerId: 'plan' }, 1, 'own');
       f.name = 'Разграничительная линия (указывается)'; f.time = { from: view.time, to: null }; plan.push(f as never);
     }
     d.features = [...view.doc.features, ...plan];
     return withFocus(d, focus);
-  }, [view, drafts, vis, acts, focus, linePts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.level]); // eslint-disable-line react-hooks/exhaustive-deps
   // зоны влияния сторон — картинкой под знаками; за ход — переход от зон на начало к зонам на конец (по времени карты)
   const zoneUrls = useMemo(() => ({ cur: view?.zones ? zoneUrl(view.zones) : null, prev: view?.zonesPrev ? zoneUrl(view.zonesPrev) : null }), [view?.zones, view?.zonesPrev]);
   const zonesOn = vis.zones ?? true;
@@ -662,7 +689,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
     setBounds: (b) => setBnd((x) => ({ ...x, ...b })),
   };
   useEffect(() => { const get = () => screen.current; const offs = screenActions(get).map(register); return () => { offs.forEach((o) => o()); releaseScreen(get); }; }, []);
-  useStaffActions(view, cmds, setCmds, !!progress, setLevel);
+  useStaffActions(view, cmds, setCmds, !!progress, levelTo);
 
   if (error && !view) return <div className="rp-empty"><div><b>Игра не запустилась</b><p className="err">{error}</p><ActButton action="command.exit">Назад к переигровке</ActButton></div></div>;
 
@@ -702,16 +729,16 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
         <div className="cmd-body" data-tour="cmd-body">
           {!view ? <div className="cmd-wait"><span className="spinner" /> {progress}</div> : <>
             {focus && <div className="focus-bar"><span>Участок: <b>{focus.title}</b></span><label><input type="checkbox" data-action="map.focusOnly" checked={focusOnly} onChange={(e) => tap('map.focusOnly', { on: e.target.checked })} /> только он в списках</label><ActButton className="x" title="Снять фокус" action="map.sector" params={{ name: '' }}>×</ActButton></div>}
-            {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { if (id) tap('command.unit.show', { name: id }); else tap('command.unit.close'); }} onOrder={(id) => tap('command.order.open', { name: id })} sel={sel} />}
+            {tab === 'reports' && <Reports v={fv!} drafts={drafts} onUnit={(id) => { if (id) tap('command.unit.show', { name: id }); else tap('command.unit.close'); }} onOrder={(id) => tap(staffsOn(view) ? 'command.dir.for' : 'command.order.open', { name: id })} sel={sel} />}
             {tab === 'intel' && <Intel v={fv!} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
             {tab === 'decision' && <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} planN={planN} planBusy={!!plan && !plan.done} />}
             {tab === 'orders' && <>
               <div className="seg subtabs">
-                {([['units', 'Войска', draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
+                {([['units', staffsOn(view) ? 'Пункт управления' : 'Войска', staffsOn(view) ? cmds.filter((c) => c.op === 'directive').length : draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
 .map(([k, t, n]) => (
                   <ActButton key={k} className={sub === k ? 'on' : ''} action="command.orders.sub" params={{ sub: k }} data-hl={`sub-${k}`}>{t}{n ? ` · ${n}` : ''}</ActButton>))}
               </div>
-              {sub === 'units' && <Orders v={fv!} drafts={drafts} sel={sel} pick={pick} setPick={setPick} blank={blankDraft} />}
+              {sub === 'units' && (staffsOn(view) ? <CommandPost v={view} post={post} cmds={cmds} /> : <Orders v={fv!} drafts={drafts} sel={sel} pick={pick} setPick={setPick} blank={blankDraft} />)}
               {sub === 'rear' && <Rear v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode}
                 setPriority={(ids) => tap('command.rear.priority', { armies: ids })} />}
               {sub === 'bridges' && <Bridges v={view} acts={acts} pickMode={pickMode} setPickMode={setPickMode} />}
@@ -749,7 +776,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           <span className="muted">{goals.filter((g) => g.simulated).length} из {goals.length} контрольных событий случились. Журнал и запись игры — в меню «⋯».</span>
           <div className="row-btns"><StaffButton className="primary" action="command.review.open">Разбор операции</StaffButton><StaffButton action="command.journal.save">Сохранить журнал</StaffButton></div></div>}
       </aside>
-      <main className={`rp-main${pickMode ? ' picking' : ''}`}>
+      <main className={`rp-main${pickMode || post.pick ? ' picking' : ''}`}>
         {doc && time ? <>
           <div className="rp-bar">
           <div className="rp-tools" data-tour="cmd-tools">
@@ -764,7 +791,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
           <MapView doc={shownDoc ?? doc} setDoc={() => {}} selected={null} setSelected={() => {}}
             selectedOverlay={null} tool={{ mode: 'select' }} setTool={() => {}} activeLayer={null} basemap={bm.current} basemapOpacity={bm.opacity} basemapDate={basemapDate(bm.current, view?.start, bm.year)}
             onEngineReady={(e) => { engine.current = e; setEng(e); if (import.meta.env.DEV) (window as unknown as { __cmdEngine: MapEngine }).__cmdEngine = e; }} onStatus={() => {}} time={time} newFromNow={false} />
-          {!pickMode && <MapHover engine={eng} doc={doc ? withLevel(doc, level) : null} time={time} />}
+          {post.pick && <div className="pick-hint">Щёлкайте по карте — {({ axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия' } as const)[post.pick]}; закончить — «Готово» в пункте управления</div>}
+          {!pickMode && !post.pick && <MapHover engine={eng} doc={doc ? withLevel(doc, level) : null} time={time} />}
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
             : pickMode.kind === 'line' ? `Щёлкайте по карте — точки разграничительной линии (${linePts.length}); закончить — «Готово» во вкладке «Полосы»`
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}

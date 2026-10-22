@@ -68,6 +68,8 @@ export function commandText(c: CommandOp, name: (id: string) => string, hist?: (
     case 'release': return `возвращён агенту, в замысел старшего — ${name(c.id)}`;
     case 'permit': return `${c.yes ? 'отход разрешён' : 'в отходе отказано'} — ${name(c.hq)}`;
     case 'historical': { const h = hist?.(c.id); return `подана историческая директива ${c.id}${h ? ` (${h})` : ''}`; }
+    case 'directive': { const t = ({ attack: 'наступать', defend: 'оборонять', delay: 'сдерживать', withdraw: 'отходить', move: 'выдвинуться', reserve: 'в резерв' } as Record<string, string>)[c.directive.task] ?? c.directive.task;
+      return `${c.directive.form === 'order' ? 'приказ' : 'распоряжение'} ${c.directive.from ? `от «${name(c.directive.from)}» ` : ''}— ${name(c.directive.to)}: ${t}`; }
   }
 }
 

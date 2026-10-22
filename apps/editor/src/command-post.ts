@@ -7,7 +7,7 @@
 import type { LngLat } from '@def-ops/core';
 import type { TurnView } from './sim/game-protocol';
 import type { LevelId } from './map-level-scale';
-import type { Form } from './command-forms';
+import type { CommandOp, Form } from './command-forms';
 
 /** Ступень штаба пункта на уровне карты. */
 export const ISSUER: Record<LevelId, string> = { stavka: 'high_command', front: 'front', army: 'army', corps: 'corps', division: 'corps' };
@@ -104,19 +104,29 @@ export function recipients(v: TurnView, issuer: string): Node[] {
   return [...hqs, ...divs];
 }
 
+/**
+ * Штаб под управлением игрока: взят или взятие в очереди этого хода (команды ядро исполняет по порядку — «взять» раньше
+ * директивы); «вернуть» в очереди — уже не под управлением.
+ */
+export function taken(v: TurnView, id: string, cmds: CommandOp[] = []): boolean {
+  let on = v.command?.hqs[id]?.control === 'player';
+  for (const c of cmds) { if (c.op === 'take' && c.hq === id) on = true; if (c.op === 'release' && c.id === id) on = false; }
+  return on;
+}
+
 /** Кто отдаёт: верхняя инстанция (from нет) или взятый игроком штаб; не взятый — Ставка через голову. */
-export function sender(v: TurnView, issuer: string): { from: string | undefined; overHead: boolean } {
+export function sender(v: TurnView, issuer: string, cmds: CommandOp[] = []): { from: string | undefined; overHead: boolean } {
   const h = v.command?.hqs[issuer];
   if (!h || h.echelon === 'high_command') return { from: undefined, overHead: false };
-  return h.control === 'player' ? { from: issuer, overHead: false } : { from: undefined, overHead: true };
+  return taken(v, issuer, cmds) ? { from: issuer, overHead: false } : { from: undefined, overHead: true };
 }
 
 /** Заголовок пункта: кто отдаёт приказы. */
-export function postTitle(v: TurnView, issuer: string): string {
+export function postTitle(v: TurnView, issuer: string, cmds: CommandOp[] = []): string {
   const h = v.command?.hqs[issuer];
   if (!h) return '';
   if (h.echelon === 'high_command') return h.name;
-  return sender(v, issuer).overHead
+  return sender(v, issuer, cmds).overHead
     ? `Штаб: ${h.name} — ведёт агент; приказ его подчинённым — от ${v.terms?.topGen ?? 'Ставки'} через голову (ПУ-39 ст. 93)`
     : `Штаб: ${h.name} — взят под управление`;
 }
