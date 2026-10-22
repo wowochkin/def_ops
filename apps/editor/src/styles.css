@@ -745,9 +745,21 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .adv-fu { display: flex; flex-wrap: wrap; gap: 4px; }
 .adv-fu button, .adv-presets button { border-radius: 12px; padding: 2px 9px; font-size: 11.5px; text-align: left; }
 .adv-presets { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 12px 4px; border-top: 1px solid var(--line); }
-.adv-in { display: flex; gap: 6px; padding: 6px 12px; }
-.adv-in textarea { flex: 1; font: 12.5px/1.4 inherit; font-family: inherit; padding: 5px 7px; border-radius: 6px; resize: none; }
-.adv-in .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* поле вопроса советника: значки внутри поля — отправить (↵) и микрофон, как в чатах */
+.adv-in { position: relative; margin: 6px 12px; border: 1px solid var(--line, #dcd8cc); border-radius: 14px; background: #fff; transition: border-color .15s ease, box-shadow .15s ease; }
+.adv-in:focus-within { border-color: #b9b2a2; box-shadow: 0 0 0 3px rgba(185,178,162,.18); }
+.adv-in textarea { display: block; width: 100%; box-sizing: border-box; border: 0; outline: 0; background: transparent; font: 12.5px/1.45 inherit; font-family: inherit; padding: 9px 76px 9px 12px; resize: none; }
+.adv-in-ic { position: absolute; right: 8px; bottom: 6px; display: flex; gap: 2px; }
+.ic-btn { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: none; color: #4a4740; cursor: pointer; }
+.ic-btn:hover:not(:disabled) { background: #f1eee6; }
+.ic-btn:disabled { color: #c2bdb0; cursor: default; }
+.ic-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ic-btn.stop svg { fill: currentColor; stroke: none; }
+.ic-btn.mic.on { color: #fff; background: #c4382c; animation: mic-pulse 1.4s ease-out infinite; }
+@keyframes mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(196,56,44,.45); } 100% { box-shadow: 0 0 0 9px rgba(196,56,44,0); } }
+.adv-in.rec { border-color: #c4382c; }
+.adv-mic-err { margin: -2px 14px 4px; font-size: 11.5px; color: var(--danger, #a3261c); }
+@media (prefers-reduced-motion: reduce) { .ic-btn.mic.on { animation: none; } }
 .adv-note { padding: 0 12px 8px; font-size: 10.5px; color: var(--muted); }
 .oedit label small.muted { font-size: 10.5px; }
 .adv-nav { border-top: 1px solid var(--line); display: flex; flex-direction: column; max-height: 46%; min-height: 0; background: #fbfaf6; }
@@ -1966,3 +1978,47 @@ body.resizing { cursor: col-resize; user-select: none; }
 .post-bar-who select { max-width: 220px; font-size: 12.5px; }
 .post-bar small { font-size: 11px; }
 .intel-list { margin: 4px 0 0 16px; padding: 0; font-size: 12px; color: #6b6457; }
+/* поле решения: пиктограммы «по обстановке» и «советник (ИИ)»; советник пишет — поле мерцает, текст печатается, готово — вспышка */
+.dfield .dgen { font-style: normal; display: inline-flex; align-items: center; gap: 2px; margin-left: auto; }
+.dfield .dgen .ic-btn { width: 26px; height: 26px; }
+.dfield .dgen .ic-btn svg { width: 16px; height: 16px; }
+.ic-btn.ai { color: #b8860b; }
+.ic-btn.ai:hover:not(:disabled) { background: #fbf3dc; color: #8f6a08; }
+.ic-btn.ai:hover:not(:disabled) svg { animation: ai-twinkle .9s ease-in-out infinite; }
+.ai-writing { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; color: #a97b0a; }
+.ai-writing svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; animation: ai-twinkle 1.1s ease-in-out infinite; }
+.ai-writing .dots b { animation: ai-dot 1.2s infinite; font-weight: 700; }
+.ai-writing .dots b:nth-child(2) { animation-delay: .2s; } .ai-writing .dots b:nth-child(3) { animation-delay: .4s; }
+.dfield textarea.ai-wait { background: linear-gradient(100deg, #fff 30%, #fbf1d6 50%, #fff 70%) 0 0 / 220% 100%; animation: ai-shimmer 1.3s linear infinite; border-color: #e3c56d; }
+.dfield textarea.ai-typing { border-color: #e3b33a; box-shadow: 0 0 0 3px rgba(242,193,78,.22); background: #fffdf6; }
+.dfield textarea.ai-done { animation: ai-flash 1.6s ease-out; }
+@keyframes ai-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes ai-flash { 0% { box-shadow: 0 0 0 0 rgba(242,193,78,.75); border-color: #f2c14e; background: #fff8e4; } 100% { box-shadow: 0 0 0 10px rgba(242,193,78,0); } }
+@keyframes ai-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.18) rotate(12deg); } }
+@keyframes ai-dot { 0%, 100% { opacity: .2; } 40% { opacity: 1; } }
+/* «Составить советником (ИИ)» над полями: тёмная кнопка с золотой искрой; пишет — по рамке бежит перелив, полоса хода */
+@property --ai-a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+.ai-compose { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 10px; }
+.ai-btn { position: relative; display: flex; align-items: center; gap: 12px; flex: 1 1 260px; text-align: left; padding: 11px 16px; border: 0; border-radius: 12px; cursor: pointer; color: #fff;
+  background: linear-gradient(135deg, #2a2420 0%, #3b2a24 55%, #5a2a22 100%); box-shadow: 0 6px 18px rgba(60,30,20,.22); transition: transform .15s ease, box-shadow .15s ease; isolation: isolate; }
+.ai-btn::before { content: ''; position: absolute; inset: -2px; z-index: -1; border-radius: 14px; padding: 2px; opacity: 0; transition: opacity .2s ease;
+  background: conic-gradient(from var(--ai-a), #f2c14e, #d9583f, #7a5cff, #3c82e1, #f2c14e);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.ai-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(60,30,20,.3); }
+.ai-btn:hover:not(:disabled)::before, .ai-compose.run .ai-btn::before { opacity: 1; animation: ai-spin 2.4s linear infinite; }
+.ai-btn:disabled { cursor: default; }
+.ai-compose.run .ai-btn:disabled { opacity: 1; }
+.ai-compose:not(.run) .ai-btn:disabled { opacity: .55; }
+.ai-spark { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; background: rgba(242,193,78,.16); color: #f2c14e; }
+.ai-spark svg { width: 20px; height: 20px; fill: rgba(242,193,78,.25); stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.ai-btn:hover:not(:disabled) .ai-spark svg, .ai-compose.run .ai-spark svg { animation: ai-twinkle 1.1s ease-in-out infinite; }
+.ai-btn-t { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ai-btn-t b { font-size: 14.5px; letter-spacing: .01em; }
+.ai-btn-t small { font-size: 11.5px; color: #d9cfbd; }
+.ai-compose.run .ai-btn-t small { color: #f2c14e; }
+.ai-prog { flex: 1 0 100%; height: 3px; border-radius: 3px; background: #ece6d8; overflow: hidden; }
+.ai-prog i { display: block; height: 100%; min-width: 8%; border-radius: 3px; background: linear-gradient(90deg, #f2c14e, #d9583f, #f2c14e) 0 0 / 200% 100%; animation: ai-shimmer 1.4s linear infinite; transition: width .5s ease; }
+@keyframes ai-spin { to { --ai-a: 360deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .ai-btn::before, .ai-spark svg, .ai-writing svg, .ai-writing .dots b, .dfield textarea.ai-wait, .dfield textarea.ai-done, .ai-prog i, .ic-btn.ai svg { animation: none !important; }
+}

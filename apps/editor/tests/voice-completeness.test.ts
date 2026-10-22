@@ -36,6 +36,7 @@ const SHARED: { file: string; names: string[] }[] = [
  * Обработчик, которого нет в списке дословно, должен идти через реестр.
  */
 const EXCEPTIONS: { file: string; exact: string[]; why: string }[] = [
+  { file: 'CommandView.tsx', exact: ['toggleMic'], why: 'микрофон в поле вопроса советника — диктовка своим микрофоном без голосового управления; голосом то же — «запиши в вопрос …»' },
   { file: 'CommandView.tsx', exact: ["() => setMob('staff')", "() => setMob('map')"], why: 'переключатель «Штаб / Карта» на телефоне — служебный элемент узкого экрана' },
   { file: 'CommandView.tsx', exact: ['() => setPickMode(null)', "() => setPickMode(pickMode?.kind === 'bridge' ? null : { kind: 'bridge' })", 'onMap', '() => setPick(!pick)'],
     why: 'выбор точки на карте мышью (цель, переправа, база, район, отмена выбора) — у голоса свой путь через названное место' },

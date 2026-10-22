@@ -79,6 +79,14 @@ export interface StaffDeps {
   // решение
   decision: HumanDecision;
   setDecision(p: Partial<HumanDecision>): void;
+  /** Составить поле решения: по обстановке (сразу) или советником (ответ встанет в поле); что сделано — словами. */
+  composeField(f: FieldKey, advisor: boolean): string;
+  /** Все поля решения советником — по очереди, каждое с уже написанными; что сделано — словами. */
+  composeAll(): string;
+  /** Советник на связи (языковая модель отвечает). */
+  advisorReady: boolean;
+  /** Советник уже пишет решение (общий заказ). */
+  composing: boolean;
   // приказы
   drafts: Record<string, OrderDraft>;
   /** Приказ объединению id (null — отменить). */
@@ -198,6 +206,8 @@ const FIELD_KEYS = ['assessment', 'enemyIntent', 'intent', 'risks', 'report'] as
 type FieldKey = (typeof FIELD_KEYS)[number];
 /** Поле решения в винительном падеже — «взял оценку обстановки». */
 const FIELD_ACC: Record<FieldKey, string> = { assessment: 'оценку обстановки', enemyIntent: 'замысел противника', intent: 'замысел', risks: 'риски', report: 'донесение' };
+/** Поле уже заполнено — словами. */
+const FIELD_DONE: Record<FieldKey, string> = { assessment: 'Оценка обстановки уже написана', enemyIntent: 'Замысел противника уже написан', intent: 'Замысел уже написан', risks: 'Риски уже написаны', report: 'Донесение уже написано' };
 /** Поле решения по словам «оценку», «замысел противника», «решение», «донесение»; всё / ничего — undefined; не поле — null. */
 function fieldOf(text: string): FieldKey | undefined | null {
   const t = norm(text);
@@ -411,6 +421,12 @@ export function staffActions(get: () => StaffDeps): Action[] {
     lit(hl('field-report'));
     return 'Черновик донесения составлен по докладам. Прочитать — скажите «прочитай донесение».';
   };
+  const compose = (p: { field: string; advisor?: boolean }) => {
+    const f = (FIELD_KEYS.includes(p.field as FieldKey) ? p.field : fieldOf(p.field)) as FieldKey;
+    const r = get().composeField(f, !!p.advisor);
+    lit(hl(`field-${f}`));
+    return r;
+  };
   const planBusy = () => !!get().plan && !get().plan!.done;
   const planHas = (): true | string => {
     const r = ready(); if (r !== true) return r;
@@ -595,6 +611,42 @@ export function staffActions(get: () => StaffDeps): Action[] {
         lit(...keys.map((k) => hl(`field-${k}`)));
         return `Взял с прошлого хода: ${keys.map((k) => FIELD_ACC[k]).join(', ')}.`;
       } },
+    { ...base, id: 'decision.compose', title: 'Составить поле решения', describe: 'Составляет поле решения по обстановке хода — оценку обстановки, замысел противника, решение, риски или донесение (field); advisor — текст пишет советник за штаб пункта управления. Поле пусто.',
+      params: { type: 'object', properties: { field: { type: 'string' }, advisor: { type: 'boolean' } }, required: ['field'] },
+      say: ['штаб, составь оценку обстановки', 'штаб, пусть советник напишет риски'], highlight: noted,
+      check: (p: { field: string; advisor?: boolean }) => {
+        const f = FIELD_KEYS.includes(p?.field as FieldKey) ? p.field as FieldKey : fieldOf(String(p?.field ?? ''));
+        if (!f) return 'Скажите, какое поле: оценку обстановки, замысел противника, решение, риски или донесение.';
+        if (p.advisor && !get().advisorReady) return 'Советник не на связи — языковая модель не отвечает. Скажите без советника: «составь …» — черновик по обстановке.';
+        if (get().decision[f].trim()) return `${FIELD_DONE[f]}. Заменить — скажите «составь ${FIELD_ACC[f]} заново».`;
+        return true;
+      },
+      run: async (p: { field: string; advisor?: boolean }) => compose(p) },
+    { ...base, id: 'decision.compose.replace', title: 'Составить поле решения заново', describe: 'Заменяет написанное в поле решения черновиком по обстановке или текстом советника (advisor).',
+      params: { type: 'object', properties: { field: { type: 'string' }, advisor: { type: 'boolean' } }, required: ['field'] },
+      say: ['штаб, составь оценку обстановки заново'], irreversible: true, highlight: noted,
+      confirm: (p: { field: string }) => { const f = FIELD_KEYS.includes(p?.field as FieldKey) ? p.field as FieldKey : fieldOf(String(p?.field ?? '')); return `Заменить ${f ? FIELD_ACC[f] : 'поле'}?`; },
+      check: (p: { field: string; advisor?: boolean }) => {
+        const f = FIELD_KEYS.includes(p?.field as FieldKey) ? p.field as FieldKey : fieldOf(String(p?.field ?? ''));
+        if (!f) return 'Скажите, какое поле: оценку обстановки, замысел противника, решение, риски или донесение.';
+        return p.advisor && !get().advisorReady ? 'Советник не на связи — языковая модель не отвечает.' : true;
+      },
+      run: async (p: { field: string; advisor?: boolean }) => compose(p) },
+    { ...base, id: 'decision.compose.all', title: 'Составить решение советником', describe: 'Советник (языковая модель) пишет все поля решения за штаб пункта управления — оценку обстановки, замысел противника, решение, риски и донесение — одно за другим. Поля пусты.',
+      say: ['штаб, составь решение советником'], highlight: () => hl('ai-compose'),
+      check: () => {
+        const d = get();
+        if (!d.advisorReady) return 'Советник не на связи — языковая модель не отвечает. Поля можно составить по обстановке: «составь оценку обстановки».';
+        if (d.composing) return 'Советник уже пишет решение.';
+        if (FIELD_KEYS.some((k) => d.decision[k].trim())) return 'Часть полей уже написана. Заменить всё — скажите «составь решение советником заново».';
+        return true;
+      },
+      run: async () => get().composeAll() },
+    { ...base, id: 'decision.compose.all.replace', title: 'Составить решение советником заново', describe: 'Советник переписывает все поля решения (написанное заменяется).',
+      say: ['штаб, составь решение советником заново'], irreversible: true, highlight: () => hl('ai-compose'),
+      confirm: () => 'Заменить всё решение текстом советника?',
+      check: () => (!get().advisorReady ? 'Советник не на связи — языковая модель не отвечает.' : get().composing ? 'Советник уже пишет решение.' : true),
+      run: async () => get().composeAll() },
     { ...base, id: 'decision.draftReport', title: 'Черновик донесения', describe: 'Составляет черновик боевого донесения по докладам за ход (поле донесения пусто).', say: ['штаб, составь черновик донесения'], highlight: noted,
       check: () => (get().decision.report.trim() ? 'Донесение уже продиктовано. Скажите «составь черновик донесения» ещё раз — я переспрошу, заменить ли его.' : true),
       run: draftReport },

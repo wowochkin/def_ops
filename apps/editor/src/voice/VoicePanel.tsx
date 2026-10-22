@@ -35,6 +35,7 @@
  * Тур (voice/tour.tsx) говорит тем же путём, что ответы штаба (useTourVoice); `voice:open` с detail 'panel'
  * разворачивает панель (подготовка тура по ней). Элементы панели помечены `data-tour` для подсветки.
  */
+import { setServiceVoice, type DictateOpts } from './standalone';
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type RefObject } from 'react';
 import { usePanelPlace } from './avoid-modals';
 import { VoiceClient } from './client';
@@ -317,6 +318,37 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     });
     return () => { setSpeaker(null); setRetractor(null); setPreparer(null); setProposer(null); setVoiceLive(null); off(); };
   }, [dispatcher, gate]);
+  // голос без управления (поле советника): диктовка одной реплики мимо разбора команд и чтение вслух — пока сервис на
+  // связи, даже при выключенном управлении и в дежурном (микрофон на время диктовки открывается и снова закрывается)
+  const dictRef = useRef<{ o: DictateOpts; finish: (err?: string) => void } | null>(null);
+  useEffect(() => {
+    if (status !== 'ready') { setServiceVoice(null); return; }
+    setServiceVoice({
+      dictate: (o) => {
+        dictRef.current?.finish('прервано новой диктовкой');
+        const wasOff = !enabledRef.current;
+        let timer = 0;
+        const finish = (err?: string) => {
+          if (dictRef.current?.o !== o) return;
+          dictRef.current = null;
+          window.clearTimeout(timer);
+          if (wasOff && !enabledRef.current) void client.setEnabled(false);
+          o.onEnd(err);
+        };
+        dictRef.current = { o, finish };
+        timer = window.setTimeout(() => finish('речь не услышана'), 20_000);
+        if (wasOff) void client.setEnabled(true).then(() => client.start(parseSettings(lsGet(SETTINGS_KEY)))).catch((e: Error) => finish(micText(e)));
+        return () => finish();
+      },
+      say: (text) => {
+        if (!soundRef.current) return () => {};
+        const id = client.newSayId();
+        gate.say(id, text, true, 'chief');
+        return () => { if (!gate.drop(id) && speakingIds.current.delete(id)) { client.stop(id); syncSpeaking(); } };
+      },
+    });
+    return () => setServiceVoice(null);
+  }, [status, client, gate]); // eslint-disable-line react-hooks/exhaustive-deps
   // тур говорит голосом начальника штаба (разбор хода — посредника): та же очередь фраз, та же лента
   useTourVoice({
     client,
@@ -418,6 +450,8 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
       })),
       client.on('utterance', (m) => {
         setListening(false);
+        // идёт диктовка в поле (советник): реплика — текст поля, не команда
+        if (dictRef.current) { const d = dictRef.current; d.o.onText(m.text, true); d.finish(); gate.utterance(); return; }
         if (!enabledRef.current) { gate.utterance(); return; }  // договорено до выключения — уже не исполняется
         setFeed((f) => feedUtterance(f, m));
         // реплику поправили при разборе (огрехи распознавания) — в ленте видно, как она понята
