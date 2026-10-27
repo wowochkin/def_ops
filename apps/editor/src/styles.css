@@ -1351,6 +1351,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .lg-rear { color: #8a5a1c; font-size: 11px; line-height: 12px; }
 .lg-river { height: 0 !important; border-top: 3px solid #5b8fd6; }
 .lg-pocket { border: 1.5px solid #1f4e8c; background: #d6e8f2; border-radius: 6px; }
+.lg-corps { border: 1.6px dashed #c0392b; border-radius: 8px; background: none; }
 /* зоны влияния: цвета знаков сторон, прозрачно (zones-overlay.ts) — мягкое пятно */
 .lg-zone-own { background: radial-gradient(circle, rgba(212,56,52,.42), rgba(212,56,52,.12)); border-radius: 6px; }
 .lg-zone-enemy { background: radial-gradient(circle, rgba(60,130,225,.5), rgba(60,130,225,.2)); border-radius: 6px; }

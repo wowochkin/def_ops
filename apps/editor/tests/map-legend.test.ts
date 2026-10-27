@@ -19,7 +19,9 @@ describe('легенда по уровням', () => {
     expect(ids('division')).toEqual(expect.arrayContaining(['combat', 'crossings', 'front-prev', 'destroyed']));
     expect(ids('division')).not.toContain('blow');
     expect(ids('corps')).not.toContain('combat');
-    expect(legendFor('corps').length).toBeLessThanOrEqual(14);
+    expect(ids('corps')).toContain('corps');
+    expect(ids('division')).not.toContain('corps');
+    expect(legendFor('corps').length).toBeLessThanOrEqual(15);
     expect(legendFor('front', { command: true }).some((x) => x.id === 'rivers')).toBe(false);
   });
   it('в легенде — только то, что есть на карте в этот час', () => {

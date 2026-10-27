@@ -62,6 +62,7 @@ export const LEGEND_ITEMS: LegendItem[] = [
   { id: 'defense', cls: 'lg-defense', text: { stavka: 'оборона', front: 'рубеж обороны' }, levels: ['stavka', 'front'], match: (f) => MOVES.has(f.layerId) && f.preset === 'atlas.defense' },
   { id: 'combat', key: 'combat', cls: 'lg-arrow', text: 'бой за ход', levels: ['division'], match: (f) => f.layerId === 'sim-combat' },
   { id: 'pockets', key: 'pockets', cls: 'lg-pocket', text: 'котёл (окружённые)', levels: ALL, match: (f) => f.layerId === 'sim-pockets' },
+  { id: 'corps', cls: 'lg-corps', text: 'корпус — контур его дивизий', levels: ['corps'], match: (f) => f.layerId === 'sim-corps' },
   { id: 'fort', cls: 'lg-fort', mark: '✲', text: 'крепость (перечёркнута — пала)', levels: ['stavka', 'front', 'army'], match: (f) => UNITS.has(f.layerId) && f.preset === 'atlas.fortCity' },
   // обвод по застройке на 1:1 000 000 — пятнышко под знаком крепости: у Ставки его нет
   { id: 'fortress', key: 'fortress', cls: 'lg-fortline', text: 'крепость: обвод по застройке', levels: ['front', 'army', 'corps', 'division'], match: (f) => f.layerId === 'sim-fortress' },

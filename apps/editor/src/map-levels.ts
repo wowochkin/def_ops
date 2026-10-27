@@ -13,7 +13,7 @@ const LEVEL_LAYERS: Record<MapLevel, string[]> = {
   stavka: ['lvl-st-units', 'lvl-st-moves', 'lvl-st-bounds'],
   front: ['lvl-op-units', 'lvl-op-moves', 'lvl-op-bounds'],
   army: ['lvl-co-units', 'lvl-co-moves', 'lvl-op-bounds'],
-  corps: ['sim-own', 'sim-enemy', 'sim-bounds'],
+  corps: ['sim-own', 'sim-enemy', 'sim-corps', 'sim-bounds'],
   division: ['sim-own', 'sim-enemy', 'sim-combat', 'sim-bounds'],
 };
 const ALL_LEVEL_LAYERS = new Set(Object.values(LEVEL_LAYERS).flat());

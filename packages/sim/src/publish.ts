@@ -186,6 +186,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     mk('sim-combat', 'Переигровка: бои за ход', 'custom', 0.8, o.combats !== false),
     mk('sim-marks', 'Переигровка: особые отметки', 'custom'),
     mk('sim-pockets', 'Переигровка: котлы (окружённые группировки)', 'custom', 0.9),
+    mk('sim-corps', 'Переигровка: корпуса — контур их дивизий (уровень «Корпус»)', 'custom', 0.9),
     mk('sim-fortress', 'Крепости: обводы по застройке', 'custom', 0.95),
     // разграничительные линии: по директивам (история) и расчётные полосы по уровням карты
     mk('hist-bounds', 'Разграничительные линии: директивы и распоряжения', 'custom', 0.75),
@@ -395,6 +396,7 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
   const labelK = Math.pow(2, doc.refZoom - zoom);
   features.push(...levelFeatures(ctx, run, sideOf, 'corps', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'army', o.visible, labelK, frontsByTurn), ...levelFeatures(ctx, run, sideOf, 'front', o.visible, labelK, frontsByTurn));
   features.push(...pocketFeatures(ctx, run, sideOf, o.visible), ...fortressFeatures(ctx, run, sideOf, o.visible, labelK));
+  features.push(...corpsOutlines(ctx, run, sideOf, o.visible, labelK));
 
   // ключевые пункты на обзорных масштабах — как в атласе: кружок и название (места событий истории)
   const placeIds = new Set((history?.events ?? []).map((ev) => (ev as { place?: string }).place).filter((x): x is string => !!x));
@@ -1197,6 +1199,61 @@ const STAGE_PRESETS = ['atlas.p1', 'atlas.p2', 'atlas.p3'];
 const ORD = ['1-й', '2-й', '3-й', '4-й', '5-й', '6-й'];
 
 /** Выпуклая оболочка (монотонная цепь). */
+/**
+ * Уровень «Корпус»: дивизии корпуса — в общем контуре (пунктир цвета стороны, 0,9 км от знаков) с подписью корпуса над
+ * ним, чтобы видно было, какие дивизии чьи; у корпуса из одного соединения — только подпись, дивизии вне корпуса — без контура. Дивизия дальше 20 км от средней точки корпуса (отставшая,
+ * отправленная в другой район) в контур не входит — иначе он растягивался бы на полфронта.
+ */
+function corpsOutlines(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, visible: PublishOptions['visible'] | undefined, labelK: number): Feature[] {
+  const T = ctx.theatre, out: Feature[] = [];
+  const byId = new Map(run.final.formations.map((f) => [f.id, f]));
+  const tree = new Map<string, Node>(ctx.scenario.formations.map((f) => [f.id, f]));
+  for (const f of run.final.formations) if (!tree.has(f.id)) tree.set(f.id, f);
+  const corpsOf = new Map<string, Node>();
+  for (const f of run.final.formations.filter((x) => x.type)) {
+    const g = groupOf(f, tree, 'corps');
+    if (g.id !== f.id && g.echelon === 'corps') corpsOf.set(f.id, g);
+  }
+  if (!corpsOf.size) return out;
+  const r = 0.9, farKm = 20;
+  for (let i = 0; i < run.snapshots.length; i++) {
+    const sn = run.snapshots[i];
+    const to = run.snapshots[i + 1]?.time ?? addHours(sn.time, ctx.scenario.turnHours);
+    const groups = new Map<string, { g: Node; xy: [number, number][] }>();
+    for (const u of sn.units) {
+      const g = corpsOf.get(u.id), f = byId.get(u.id);
+      if (!g || !f || u.destroyed || !onMap({ ...f, position: u.at }, sn.time)) continue;
+      if (sideOf(f.side) !== 'own' && visible && !visible(u.id, sn)) continue;
+      const x = groups.get(g.id) ?? { g, xy: [] };
+      x.xy.push(T.proj.toXY(u.at) as [number, number]);
+      groups.set(g.id, x);
+    }
+    for (const { g, xy } of groups.values()) {
+      const c = medianXY(xy, xy.map(() => 1));
+      const near = xy.filter((q) => Math.hypot(q[0] - c[0], q[1] - c[1]) <= farKm);
+      if (!near.length) continue;
+      const side = sideOf(g.side), color = side === 'own' ? '#c0392b' : '#2c5f9e';
+      const ring = hull(near.flatMap((q) => [...Array(12)].map((_, k) => [q[0] + r * Math.cos((k * Math.PI) / 6), q[1] + r * Math.sin((k * Math.PI) / 6)] as [number, number])));
+      // контур — у корпуса из двух соединений и больше; у одного — только подпись
+      if (near.length > 1) {
+        const area = createFeature('area', 'atlas.encircled', { points: ring.map((q) => T.proj.toLL(q)), layerId: 'sim-corps' }, 1, side) as AreaFeature;
+        area.style = { ...area.style, smooth: true, fill: null, fillOpacity: 0, hatch: null, cross: null, edge: [{ offset: 0, width: 1.6, color, opacity: 0.75, dash: [6, 4] }] };
+        area.name = `${g.name}: ${near.length} ${near.length < 5 ? 'соединения' : 'соединений'}`;
+        area.time = { from: sn.time, to };
+        out.push(area);
+      }
+      // подпись — над верхней точкой контура
+      const top = ring.reduce((b, q) => (q[1] > b[1] ? q : b), ring[0]);
+      const cx = near.reduce((x, q) => x + q[0], 0) / near.length;
+      const lb = createFeature('label', side === 'own' ? 'atlas.unit' : 'atlas.enemyUnit', { at: T.proj.toLL([cx, top[1] + 0.8]), text: shortName(g.name), layerId: 'sim-corps' }, 0.8 * labelK, side) as LabelFeature;
+      lb.name = g.name;
+      lb.time = { from: sn.time, to };
+      out.push(lb);
+    }
+  }
+  return out;
+}
+
 function hull(pts: [number, number][]): [number, number][] {
   const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   if (p.length < 3) return p;
