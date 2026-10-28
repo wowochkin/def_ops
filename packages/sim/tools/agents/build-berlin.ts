@@ -116,9 +116,13 @@ for (const d of units) for (const s of d.subordination) {
 const seelowCorpsStart = new Map<string, LngLat>();
 for (const p of seelow.positions) if (p.date === '1945-04-16' && p.time === 'start') seelowCorpsStart.set(p.formation, [p.lng, p.lat]);
 const ownStart = (id: string, near: LngLat | null): LngLat | null => {
-  // до начала операции: 10–15.04 или утро 16.04 («start»); положение за 16.04 без отметки — вечернее, уже после начала
-  const ps = (census.get(id)?.positions ?? []).filter((p) => p.own && p.date >= '1945-04-10' && (p.date < '1945-04-16' || (p.date === '1945-04-16' && p.time === 'start')))
-    .filter((p) => !near || km(near, [p.lng, p.lat]) <= 30)
+  // до начала операции: 10–15.04 или утро 16.04 («start»); положение за 16.04 без отметки — вечернее, уже после начала;
+  // у обороняющихся немецких дивизий оно — их позиции первого дня (в первый день они держали полосу на месте), берётся
+  const de = id.startsWith('de_');
+  const ps = (census.get(id)?.positions ?? []).filter((p) => p.own && p.date >= '1945-04-10' && (p.date < '1945-04-16' || (p.date === '1945-04-16' && (p.time === 'start' || de))))
+    // у советских — не дальше 30 км от штаба (иначе ошибка сопоставления); у немецких положение штаба само оценочное
+    // (центр подчинённых), и документированное (A/B) место дивизии берётся до 150 км от него
+    .filter((p) => !near || km(near, [p.lng, p.lat]) <= 30 || (de && (p.reliability === 'A' || p.reliability === 'B') && km(near, [p.lng, p.lat]) <= 150))
     .sort((a, b) => a.date.localeCompare(b.date));
   return ps.length ? [ps[ps.length - 1].lng, ps[ps.length - 1].lat] : null;
 };

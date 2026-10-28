@@ -13885,6 +13885,17 @@
    "reliability": "B"
   },
   {
+   "formation": "de_ledebur",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4,
+    53.6
+   ],
+   "approxKm": 10,
+   "set": "research-de",
+   "reliability": "A"
+  },
+  {
    "formation": "de_610id",
    "time": "1945-04-16T20:00",
    "at": [
@@ -13905,6 +13916,28 @@
    "approxKm": 5,
    "set": "research-de",
    "reliability": "B"
+  },
+  {
+   "formation": "de_wellmann",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.42,
+    53.23
+   ],
+   "approxKm": 5,
+   "set": "research-de",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_wellmann",
+   "time": "1945-04-24T20:00",
+   "at": [
+    14.3,
+    53.22
+   ],
+   "approxKm": 5,
+   "set": "research-de",
+   "reliability": "A"
   },
   {
    "formation": "de_547vgd",
@@ -15678,6 +15711,28 @@
    "reliability": "B"
   },
   {
+   "formation": "de_545vgd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.68,
+    51.55
+   ],
+   "approxKm": 10,
+   "set": "research-de",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_545vgd",
+   "time": "1945-04-22T20:00",
+   "at": [
+    14.3,
+    51.5
+   ],
+   "approxKm": 20,
+   "set": "research-de",
+   "reliability": "B"
+  },
+  {
    "formation": "de_koerner",
    "time": "1945-04-26T20:00",
    "at": [
@@ -16171,6 +16226,39 @@
    "approxKm": 0.3,
    "set": "city",
    "reliability": "A"
+  },
+  {
+   "formation": "de_fbd",
+   "time": "1945-04-20T20:00",
+   "at": [
+    14.38,
+    51.57
+   ],
+   "approxKm": 6,
+   "set": "research-de",
+   "reliability": "A"
+  },
+  {
+   "formation": "de_fbd",
+   "time": "1945-04-22T20:00",
+   "at": [
+    14.1,
+    51.55
+   ],
+   "approxKm": 15,
+   "set": "research-de",
+   "reliability": "B"
+  },
+  {
+   "formation": "de_pzjagd_weichsel",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2,
+    53.4
+   ],
+   "approxKm": 15,
+   "set": "research-de",
+   "reliability": "B"
   }
  ],
  "armies": [
@@ -21285,12 +21373,12 @@
   {
    "id": "torgau",
    "title": "Выход к Эльбе у Торгау",
-   "date": "1945-04-25",
+   "date": "1945-04-23",
    "kind": "reach",
    "side": "su",
    "place": "Torgau",
    "radiusKm": 10,
-   "source": "OOB",
+   "source": "ЖБД 1 УФ (ЦАМО, ф. 236, оп. 2673, д. 2583, л. 179–180, A): 23.04 5 гв. А вышла на восточный берег Эльбы на участке Преттин — Риза; 25.04 — Торгау взят, встреча с американцами (OOB)",
    "at": [
     12.993400000000001,
     51.53830000000001

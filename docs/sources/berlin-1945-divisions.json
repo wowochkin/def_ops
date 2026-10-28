@@ -7769,6 +7769,128 @@
     }
    ],
    "aliases": []
+  },
+  {
+   "id": "de_545vgd",
+   "side": "de",
+   "type": "div",
+   "kind": "pd",
+   "name_ru": "545-я народно-гренадерская дивизия",
+   "abbr": [
+    "545 нгд"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": "de_pzk_gd",
+     "corps_name": null,
+     "source": "LEX 545 VGD (апрель: тк GD, 4 ТА, Лаузиц) — berlin-1945-research-de.json",
+     "reliability": "B",
+     "note": "DRZW S.645 относит 16.04 к LVII тк (Нейсе, Мускау — Форст); LVII тк в сценарии — один агент, дивизия — в тк GD того же участка"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_fbd",
+   "side": "de",
+   "type": "div",
+   "kind": "td",
+   "name_ru": "дивизия сопровождения фюрера",
+   "abbr": [],
+   "keywords": [
+    "«Охрана фюрера»",
+    "Führer-Begleit"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_mitte",
+     "army": "de_4pza",
+     "corps": null,
+     "corps_name": null,
+     "source": "DRZW S.645 (резерв армии у Шпремберга); ЦАМО 17.04 — berlin-1945-research-de.json",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_ledebur",
+   "side": "de",
+   "type": "kg",
+   "name_ru": "дивизионная группа «фон Ледебур»",
+   "abbr": [],
+   "keywords": [
+    "«Ледебур»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_xxxii",
+     "corps_name": null,
+     "source": "DRZW S.650; DW Stettin-Rostocker Op. — berlin-1945-research-de.json",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_wellmann",
+   "side": "de",
+   "type": "kg",
+   "name_ru": "боевая группа «Вельман»",
+   "abbr": [],
+   "keywords": [
+    "«Вельман»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_oder",
+     "corps_name": null,
+     "source": "DW Korps Oder (от сев. Паргова до юж. Гарца) — berlin-1945-research-de.json",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
+  },
+  {
+   "id": "de_pzjagd_weichsel",
+   "side": "de",
+   "type": "kg",
+   "name_ru": "истребительно-противотанковая дивизия «Вайхзель»",
+   "abbr": [],
+   "keywords": [
+    "«Вайхзель»"
+   ],
+   "subordination": [
+    {
+     "date": "1945-04-16",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": null,
+     "corps_name": null,
+     "source": "LEX 3. PzA 11.04 (за позицией «Вотан») — berlin-1945-research-de.json",
+     "reliability": "B"
+    },
+    {
+     "date": "1945-04-21",
+     "front": "de_hgr_weichsel",
+     "army": "de_3pza",
+     "corps": "de_iii_ss",
+     "corps_name": null,
+     "source": "LEX PzJgdDiv Weichsel (21.04) — berlin-1945-research-de.json",
+     "reliability": "B"
+    }
+   ],
+   "aliases": []
   }
  ],
  "gaps": [
