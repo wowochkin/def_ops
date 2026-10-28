@@ -387,6 +387,39 @@ orders.push(...rear.orders);
   }
 }
 
+// ---------- задачи по журналам для соединений без исторических задач ----------
+// Фронтовые резервы и немецкие резервы, которым в сценарии нынешней модели задач нет, но чей путь известен по
+// журналам и исследованиям (положения переписи A/B на даты после начала): с каждой такой даты — задача выйти к
+// следующему документированному месту (восстановлена по журналу, как задачи армий — по их рубежам на даты); первый
+// ввод — заранее, из расчёта суточного перехода ≈40 км. До ввода советский резерв следует за фронтом (ниже).
+const JOURNAL_KM_DAY = 40;
+const commitAt = new Map<string, string>();
+let journalOrders = 0;
+{
+  const given = new Set((orders as { to: string[] }[]).flatMap((o) => o.to));
+  for (const o of out) {
+    if (given.has(o.id)) continue;
+    const ps = (census.get(o.id)?.positions ?? []).filter((p) => p.own && p.date >= '1945-04-16' && p.date < END.slice(0, 10) && (p.reliability === 'A' || p.reliability === 'B'))
+      .map((p) => ({ t: p.date === '1945-04-16' && p.time === 'start' ? `${p.date}T05:00` : `${p.date}T20:00`, at: [p.lng, p.lat] as LngLat }))
+      .sort((a, b) => a.t.localeCompare(b.t));
+    if (!ps.length) continue;
+    let from = o.pos, t0 = START;
+    for (const p of ps) {
+      const dkm = km(from, p.at);
+      if (dkm > 3) {
+        // выйти к сроку: выступить не позже чем за переход, но не раньше прежней точки
+        const lead = Math.ceil(dkm / JOURNAL_KM_DAY) * 24;
+        const at = new Date(Math.max(Date.parse(`${t0}:00Z`), Date.parse(`${p.t}:00Z`) - lead * 3600e3)).toISOString().slice(0, 16);
+        const kind = o.side === 'su' ? 'attack' : 'move';
+        orders.push({ at: at <= START ? 0 : at, hq: o.hq, to: [o.id], kind, target: r4(p.at), note: `задача по журналу: к ${p.t.slice(8, 10)}.${p.t.slice(5, 7)} — в район документированного положения (восстановлена; перепись A/B)` });
+        if (!commitAt.has(o.id)) commitAt.set(o.id, at);
+        journalOrders++;
+      }
+      from = p.at; t0 = p.t;
+    }
+  }
+}
+
 // ---------- резервы фронтов без задач ----------
 // Фронтовые корпуса и дивизии, которым в сценарии нынешней модели задач нет, раз в сутки выдвигаются за своим
 // фронтом — к центру его соединений со сдвигом на своё исходное удаление от него (не больше 15 км). Допущение до
@@ -394,13 +427,15 @@ orders.push(...rear.orders);
 const ordered = new Set((orders as { to: string[] }[]).flatMap((o) => o.to));
 let reserveOrders = 0;
 for (const front of [...hqs.values()].filter((h) => h.side === 'su' && h.echelon === 'front' && !args.includes('--no-reserve'))) {
-  const idle = out.filter((o) => o.hq === front.id && !ordered.has(o.id));
+  // без задач — или с задачами по журналу: до ввода следует за фронтом
+  const idle = out.filter((o) => o.hq === front.id && (!ordered.has(o.id) || commitAt.has(o.id)));
   if (!idle.length) continue;
   const all = out.filter((o) => { for (let x: string | null = o.hq, n = 0; x && n < 6; x = hqs.get(x)?.parent ?? null, n++) if (x === front.id) return true; return false; });
   const c = center(all.map((o) => o.pos));
   for (let day = 1; day < HOURS / 24; day++) {
     const at = new Date(Date.parse(`${START}:00Z`) + day * 86400000).toISOString().slice(0, 16);
     for (const o of idle) {
+      if (commitAt.has(o.id) && at >= commitAt.get(o.id)!) continue;
       const off: LngLat = [+clampKm((o.pos[0] - c[0]) * KX, 15).toFixed(2), +clampKm((o.pos[1] - c[1]) * KY, 15).toFixed(2)];
       orders.push({ at, hq: front.id, to: [o.id], kind: 'move', target: null, targetFormation: front.id, offsetKm: off, note: 'резерв фронта следует за фронтом (допущение)' });
       reserveOrders++;
@@ -543,5 +578,6 @@ console.log(`соединений: советских ${su.length}, немецк
 console.log(`положения: ${[...new Set(out.map((o) => o.notes.find((n) => n.startsWith('положение')) ?? '?'))].map((n) => `${n} — ${out.filter((o) => o.notes.includes(n)).length}`).join('; ')}`);
 console.log(`обводы города: ${cityRings.map((r) => r.level).join(', ')}; городских вех: ${cityEvents.length}`);
 console.log(`приказов резервам фронтов (допущение): ${reserveOrders}`);
+console.log(`задач по журналам соединениям без исторических задач: ${journalOrders} (соединений ${commitAt.size})`);
 console.log(`ввод позже начала: ${out.filter((o) => o.enterAt && o.enterAt > START).length}`);
 console.log(`история: положений дивизий ${histDiv.length} (отбраковано ${rejected.length}), армий и корпусов ${histArmy.length}`);

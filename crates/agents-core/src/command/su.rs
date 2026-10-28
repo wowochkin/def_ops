@@ -36,7 +36,7 @@ fn divs_under(sim: &Sim, h: u32) -> Vec<usize> {
     }).collect()
 }
 
-fn enemy_km_at(sim: &Sim, p: XY, side: crate::model::Side) -> f64 {
+pub fn enemy_km_at(sim: &Sim, p: XY, side: crate::model::Side) -> f64 {
     sim.world.divisions.iter().filter(|e| e.side != side && !e.state.out()).map(|e| e.vars.pos.dist(p)).fold(f64::INFINITY, f64::min)
 }
 

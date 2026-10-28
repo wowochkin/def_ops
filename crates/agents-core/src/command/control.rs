@@ -24,6 +24,9 @@ pub struct CommandState {
     pub led_hq: Vec<bool>,
     /// Дивизия изъята из замысла старшего приказом через голову.
     pub led_div: Vec<bool>,
+    /// Штаб на задаче частной директивы старшей инстанции через голову своего (ПУ-39: устное указание Ставки армиям
+    /// фронта) — свой штаб его в раздел полосы не берёт, пока не получит новый замысел.
+    pub named_hq: Vec<bool>,
     /// Замысел старшего: последняя полученная директива штаба.
     pub intent: Vec<Option<Directive>>,
     /// Час последнего решения штаба-агента.
@@ -64,7 +67,7 @@ pub struct Request { pub hq: u32, pub tick: u32, pub division: u32, /// Рубе
 impl CommandState {
     /// Все штабы — по приказам сценария (как без командования по ступеням).
     pub fn new(hqs: usize, divisions: usize) -> CommandState {
-        CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default(),
+        CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], named_hq: vec![false; hqs], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default(),
             role_hq: vec![Role::Unset; hqs], role_div: vec![Role::Unset; divisions], start_hq: vec![None; hqs], start_div: vec![None; divisions],
             since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions] }
     }
@@ -107,7 +110,7 @@ pub fn active_subs(sim: &Sim, h: u32) -> (Vec<u32>, Vec<u32>) {
     let c = &sim.command;
     // штаб без действующих дивизий в поддереве — не подчинённый для задачи
     let alive = |k: u32| w.divisions.iter().any(|d| !d.state.out() && d.state != State::Remnant && { let mut x = d.hq; let mut ok = false; for _ in 0..8 { if x == k { ok = true; break; } match w.hqs[x as usize].parent { Some(p) => x = p, None => break } } ok });
-    let hqs = (0..w.hqs.len() as u32).filter(|&k| w.hqs[k as usize].parent == Some(h) && !c.led_hq.get(k as usize).copied().unwrap_or(false) && alive(k)).collect();
+    let hqs = (0..w.hqs.len() as u32).filter(|&k| w.hqs[k as usize].parent == Some(h) && !c.led_hq.get(k as usize).copied().unwrap_or(false) && !c.named_hq.get(k as usize).copied().unwrap_or(false) && alive(k)).collect();
     let divs = (0..w.divisions.len() as u32).filter(|&i| {
         let d = &w.divisions[i as usize];
         d.hq == h && !c.led_div.get(i as usize).copied().unwrap_or(false) && !d.state.out() && d.state != State::Remnant

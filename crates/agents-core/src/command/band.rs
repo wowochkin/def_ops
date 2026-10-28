@@ -92,6 +92,20 @@ fn intersect(a: XY, b: XY, c: XY, d: XY) -> Option<XY> {
     ((0.0..=1.0).contains(&t) && (0.0..=1.0).contains(&u)).then(|| add(a, mul(r, t)))
 }
 
+/// Цель-точка в полосе подчинённого вне главного удара: лежит в полосе — она, иначе точка оси полосы на её глубине
+/// (ближайшая к ней) — вспомогательные направления наступают в своих полосах, а не сходятся к точке главного удара.
+pub fn point_in_band(p: XY, band: &Band) -> XY {
+    let mut poly = band.left.clone();
+    poly.extend(band.right.iter().rev());
+    if inside(p, &poly) { return p; }
+    let axis = center(band);
+    axis.windows(2).map(|w| {
+        let (d, l2) = (sub(w[1], w[0]), dot(sub(w[1], w[0]), sub(w[1], w[0])));
+        let t = if l2 > 1e-12 { (dot(sub(p, w[0]), d) / l2).clamp(0.0, 1.0) } else { 0.0 };
+        add(w[0], mul(d, t))
+    }).min_by(|x, y| x.dist(p).total_cmp(&y.dist(p))).unwrap_or(p)
+}
+
 /// Часть рубежа внутри полосы. Рубеж из одной точки — она; рубеж не заходит в полосу — точка пересечения оси полосы
 /// с рубежом, иначе центр рубежа.
 pub fn clip_line(line: &[XY], band: &Band) -> Vec<XY> {

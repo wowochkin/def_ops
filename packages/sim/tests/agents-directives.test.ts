@@ -10,7 +10,7 @@ interface Directive {
   boundaries: { with: string; line: string[]; from: string | null; responsible: string | null }[];
   reserves: { formation: string; task: string }[]; source: string; reliability: string; note: string;
 }
-interface File { meta: { note: string; neighbours?: Record<string, string> }; directives: Directive[]; places: Record<string, { at: [number, number]; source: string }> }
+interface File { meta: { note: string; neighbours?: Record<string, string> }; directives: Directive[]; places: Record<string, { at?: [number, number]; line?: [number, number][]; source: string }> }
 
 /** Реки и озёра — названиями, без координат. */
 const WATER = new Set(['Одер', 'Нейсе', 'Эльба', 'Шпрее', 'Висла', 'Пилица']);
@@ -37,7 +37,8 @@ describe.each(CASES)('исторические директивы: $name', ({ fi
       for (const p of pts) expect(water(p) || p in f.places, `${d.id}: ${p}`).toBe(true);
     }
     for (const [n, p] of Object.entries(f.places)) {
-      expect(p.at[0] >= 10 && p.at[0] <= 23 && p.at[1] >= 49 && p.at[1] <= 55, n).toBe(true);
+      // река — линией (рубеж «выйти на Эльбу»), остальные пункты — точкой
+      for (const q of p.line ?? [p.at!]) expect(q[0] >= 10 && q[0] <= 23 && q[1] >= 49 && q[1] <= 55, n).toBe(true);
       expect(p.source.length, n).toBeGreaterThan(0);
     }
   });

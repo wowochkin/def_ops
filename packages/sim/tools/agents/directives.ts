@@ -26,8 +26,10 @@ function norm(t: string): string {
 }
 
 export function scenarioDirectives(file: string, hqIds: Set<string>, start: string): unknown[] {
-  const src = JSON.parse(readFileSync(resolve(ROOT, file), 'utf8')) as { directives: SrcDirective[]; places: Record<string, { at: LngLat }> };
-  const pts = (names: string[]) => names.map((n) => src.places[n]?.at).filter((p): p is LngLat => !!p);
+  const src = JSON.parse(readFileSync(resolve(ROOT, file), 'utf8')) as { directives: SrcDirective[]; places: Record<string, { at?: LngLat; line?: LngLat[] }> };
+  // река — линией, только когда рубеж назван ею одной («выйти на Эльбу»); в перечне пунктов она пропускается
+  const pts = (names: string[]): LngLat[] => names.length === 1 && src.places[names[0]]?.line ? src.places[names[0]].line!
+    : names.map((n) => src.places[n]?.at).filter((p): p is LngLat => !!p);
   const line = (l: Line | null) => (l ? { line: pts(l.line), by: l.by ? `${l.by.slice(0, 10)}T23:00` : null } : null);
   const out: unknown[] = [];
   for (const d of src.directives) {

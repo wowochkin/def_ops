@@ -2,7 +2,7 @@
 //! ударе — уже) и отдаёт каждому директиву своей ступени — ближайшая и последующая задачи в пределах задачи старшего
 //! (ПУ-39 ст. 89); дивизии директива становится приказом. Логика ступеней по уставам — этап 2б.
 
-use crate::command::band::{band_of, center, clip_line, split};
+use crate::command::band::{band_of, center, clip_line, point_in_band, split};
 use crate::command::control::{active_subs, Control, DocKind, Document};
 use crate::command::directive::{Directive, Form, Line, Target, Task};
 use crate::command::passing::{issue, target_id};
@@ -94,13 +94,17 @@ pub fn generic(sim: &Sim, h: u32, intent: &Directive, replan: bool, subs: &[Targ
         }).collect(),
     };
     let form = if replan || intent.form == Form::Instruction { Form::Instruction } else { Form::Order };
-    split(&band, &weights).into_iter().zip(subs).map(|(b, to)| {
+    // главный удар назван в замысле — задача-точка подчинённому вне него на её глубине в своей полосе (вспомогательный
+    // удар — в своей полосе; директива № 11059: 61 А и 69 А — в обход Берлина); не назван — к точке все
+    let on_main: Vec<bool> = subs.iter().map(|t| intent.main_blow.is_empty() || matches!(t, Target::Hq(x) if intent.main_blow.contains(x))).collect();
+    let part = |l: &Line, b: &crate::command::band::Band, main: bool| Line { pts: if l.pts.len() == 1 && !main && intent.task == Task::Attack { vec![point_in_band(l.pts[0], b)] } else { clip_line(&l.pts, b) }, by: l.by };
+    split(&band, &weights).into_iter().zip(subs).zip(on_main).map(|((b, to), main)| {
         let ax = center(&b);
         Directive {
             id: format!("{}>{}", intent.id, target_id(sim, to)), from: h, to, form, task: intent.task,
             axis: vec![ax[0], *ax.last().unwrap()],
-            immediate: intent.immediate.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
-            subsequent: intent.subsequent.as_ref().map(|l| Line { pts: clip_line(&l.pts, &b), by: l.by }),
+            immediate: intent.immediate.as_ref().map(|l| part(l, &b, main)),
+            subsequent: intent.subsequent.as_ref().map(|l| part(l, &b, main)),
             boundaries: vec![(None, b.left.clone()), (None, b.right.clone())],
             main_blow: Vec::new(), reserve: Vec::new(), junction: None, hasty: intent.hasty, ready: intent.ready && !replan, rule: None, issued: 0, note: intent.note.clone(),
         }
@@ -148,6 +152,7 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
                         x.main_blow = Vec::new();
                         if x.axis.is_empty() { x.axis = sim.command.intent[hu].as_ref().map(|i| i.axis.clone()).unwrap_or_default(); }
                         x.rule = Some("частная директива: доводится до названных армий".into());
+                        sim.command.named_hq[m as usize] = true;
                         issue(sim, x, tick);
                     }
                     continue;
@@ -170,6 +175,8 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
                     for k in hs { let p = place(sim, Target::Hq(k)); sim.command.start_hq[k as usize] = Some(p); sim.command.replaced_hq[k as usize] = false; }
                     for i in ds { let p = place(sim, Target::Division(i)); sim.command.start_div[i as usize] = Some(p); sim.command.replaced[i as usize] = false; }
                 }
+                // новый замысел — названные через голову снова в разделе полосы
+                for k in 0..sim.world.hqs.len() { if sim.world.hqs[k].parent == Some(h) { sim.command.named_hq[k] = false; } }
                 sim.command.intent[hu] = Some(d);
                 sim.command.fresh[hu] = true;
             }
@@ -190,11 +197,14 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
             }
         }
     }
-    // дивизия вышла на ближайшую задачу — к последующей
+    // дивизия вышла на ближайшую задачу — к последующей; задача выполнена, когда рубеж занят: у него нет противника
+    // (ПУ-39 ст. 89: ближайшая задача — овладеть рубежом; в городе, пока гарнизон держится, — не выполнена)
+    let clear = sim.rules.contact_km + 4.0;
     for i in 0..sim.command.div_task.len() {
         let Some(d) = sim.command.div_task[i].as_ref() else { continue };
         let (Some(im), Some(sub)) = (d.immediate.as_ref().and_then(|l| mid(&l.pts)), d.subsequent.as_ref().and_then(|l| mid(&l.pts))) else { continue };
         if next.divisions[i].vars.pos.dist(im) > REACHED_KM { continue; }
+        if crate::command::su::enemy_km_at(sim, im, next.divisions[i].side) <= clear { continue; }
         let mut d = d.clone();
         d.immediate = None;
         next.in_transit.push((i as u32, Order { kind: kind_of(d.task), target: sub, forced: false, issued: tick, arrives: tick, from: d.from, note: format!("{} — последующая задача", d.note) }));

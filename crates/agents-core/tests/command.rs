@@ -379,7 +379,9 @@ fn fresh_keeps_subsequent() {
     let mut sim = load("seelow-1945");
     let i = sim.world.divisions.iter().position(|d| d.side == Side::Su && !d.state.out()).unwrap();
     let k = sim.world.divisions[i].hq;
-    let p = sim.world.divisions[i].vars.pos;
+    // дивизия в тылу (в 60 км восточнее): рубеж ближайшей задачи свободен от противника
+    let p = XY::new(sim.world.divisions[i].vars.pos.x + 60.0, sim.world.divisions[i].vars.pos.y);
+    sim.world.divisions[i].vars.pos = p;
     let sub = XY::new(p.x - 30.0, p.y);
     let mk = |near: XY| Directive { id: "д".into(), from: k, to: Target::Division(i as u32), form: Form::Instruction, task: Task::Attack, axis: vec![], immediate: Some(Line { pts: vec![near], by: None }),
         subsequent: Some(Line { pts: vec![sub], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: true, rule: None, issued: 0, note: "проба".into() };
@@ -424,4 +426,62 @@ fn roles_reset_on_new_axis() {
     for _ in 0..4 { sim.step(); }
     // продвижение считается от нынешнего положения (не от исходного прежнего замысла)
     assert!(divs.iter().zip(&s0).all(|(&i, s)| sim.command.start_div[i] != *s), "исходные положения обновлены");
+}
+
+/// Частная директива старшей инстанции армиям через голову фронта: армия на этой задаче, свой фронт по циклу её
+/// не перебивает, пока не получит новый замысел.
+#[test]
+fn named_army_keeps_higher_instruction() {
+    let mut sim = load("seelow-1945");
+    agents_su(&mut sim);
+    let mut d = to_front(&sim, Form::Order);
+    d.ready = true;
+    agents_core::command::passing::issue(&mut sim, d.clone(), 0);
+    for _ in 0..3 { sim.step(); }
+    let a = hq(&sim, "su_8gva");
+    let mut x = to_front(&sim, Form::Instruction);
+    x.id = "через голову".into();
+    x.main_blow = vec![a];
+    x.ready = true;
+    let now = sim.world.tick;
+    agents_core::command::passing::issue(&mut sim, x, now);
+    for _ in 0..60 { sim.step(); }
+    assert!(sim.command.intent[a as usize].as_ref().is_some_and(|i| i.id.starts_with("через голову")), "{:?}", sim.command.intent[a as usize].as_ref().map(|i| i.id.clone()));
+    assert!(sim.command.named_hq[a as usize]);
+    // новый замысел фронту — армия снова в разделе его полосы
+    let mut d2 = to_front(&sim, Form::Order);
+    d2.id = "новый".into();
+    d2.axis[1] = XY::new(d2.axis[1].x, d2.axis[1].y + 40.0);
+    let now = sim.world.tick;
+    agents_core::command::passing::issue(&mut sim, d2, now);
+    for _ in 0..30 { sim.step(); }
+    assert!(!sim.command.named_hq[a as usize]);
+}
+
+/// Цель-точка вне главного удара — на её глубине в своей полосе; в полосе — она сама.
+#[test]
+fn point_objective_stays_in_band() {
+    use agents_core::command::band::{point_in_band, Band};
+    let b = Band { left: vec![XY::new(0.0, 5.0), XY::new(50.0, 5.0)], right: vec![XY::new(0.0, -5.0), XY::new(50.0, -5.0)] };
+    assert!(point_in_band(XY::new(30.0, 20.0), &b).dist(XY::new(30.0, 0.0)) < 1e-6);
+    assert_eq!(point_in_band(XY::new(30.0, 1.0), &b), XY::new(30.0, 1.0));
+}
+
+/// Ближайшая задача выполнена, когда рубеж занят: пока у него противник — к последующей не переходить.
+#[test]
+fn immediate_not_done_while_enemy_holds() {
+    let mut sim = load("seelow-1945");
+    let i = sim.world.divisions.iter().position(|d| d.side == Side::Su && !d.state.out()).unwrap();
+    let e = sim.world.divisions.iter().position(|d| d.side == Side::De && !d.state.out()).unwrap();
+    let k = sim.world.divisions[i].hq;
+    let p = sim.world.divisions[i].vars.pos;
+    // противник — у самого рубежа ближайшей задачи
+    sim.world.divisions[e].vars.pos = XY::new(p.x + 1.0, p.y);
+    let sub = XY::new(p.x - 30.0, p.y);
+    let d = Directive { id: "д".into(), from: k, to: Target::Division(i as u32), form: Form::Instruction, task: Task::Attack, axis: vec![], immediate: Some(Line { pts: vec![p], by: None }),
+        subsequent: Some(Line { pts: vec![sub], by: None }), boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: true, rule: None, issued: 0, note: "проба".into() };
+    agents_core::command::passing::issue(&mut sim, d, 0);
+    sim.step();
+    sim.step();
+    assert_ne!(sim.world.divisions[i].order.as_ref().unwrap().target, sub, "рубеж не занят");
 }
