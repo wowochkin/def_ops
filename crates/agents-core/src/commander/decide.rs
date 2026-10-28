@@ -9,7 +9,8 @@
 //! Перемены обстановки, по которым командующий решает вне цикла: армия впервые прорвала оборону; открылся новый
 //! фланг; появился котёл противника; отрезаны свои дивизии (их стало больше); пришла новая директива старшего;
 //! у верхней инстанции — запрос на отход дождался срока ответа (`permissionHours`, как прежний ответ «держать»);
-//! на все дождавшиеся запросы она отвечает в том же часе, каждый ответ — отдельным решением.
+//! на все дождавшиеся запросы она отвечает в том же часе, каждый ответ — отдельным решением, и лишь потом решает
+//! прочее (резерв, деблокирование). Повторное решение с той же целью директив заново не отдаёт.
 
 use super::motives::{current, effective, mood_step, Mood};
 use super::options::{Choice, Kind};
@@ -31,6 +32,13 @@ const TIE: f64 = 1e-9;
 const LINE_REACHED_KM: f64 = 10.0;
 /// Наименьший срок задачи старшего для отсчёта отставания, ч (короткий срок не делает отставание резким).
 const BEHIND_MIN_H: f64 = 24.0;
+/// Котёл (или цель резерва, деблокирования, контратаки) тот же, что в прежнем решении, если его центр сместился не
+/// больше чем на столько, км (допущение: двойное удаление соприкосновения, по которому связываются котлы).
+const SAME_TARGET_KM: f64 = 20.0;
+/// Армия, потерявшая прорыв не меньше чем на столько часов, снова даёт повод «прорвала оборону».
+const BROKE_LOST_H: u32 = 12;
+/// Повод «запросы дождались срока ответа».
+const REQUESTS_DUE: &str = "запросы на отход дождались ответа";
 /// Начало текста документа решения командующего: по нему документы командующего отличаются от документов штаба.
 pub const DOC_PREFIX: &str = "Решение командующего";
 
@@ -41,6 +49,8 @@ pub struct Seen {
     pub cut: usize,
     /// Запросы, дождавшиеся срока ответа: (штаб, дивизия, час).
     pub requests: Vec<(u32, u32, u32)>,
+    /// Армии, прорвавшие оборону: (штаб, последний час с прорывом) — повод «прорвала оборону» один раз на армию.
+    pub broke: Vec<(u32, u32)>,
 }
 
 /// Запрос на отход (или прорыв), поднятый командующим за дивизию: исполняется только по разрешению верхней инстанции.
@@ -100,6 +110,8 @@ pub struct Commander {
     pub seen: Seen,
     /// Рубеж отхода армии, пока действующее решение — её отход (не пересчитывается на каждом решении).
     pub withdraw_at: Vec<(u32, crate::geo::XY)>,
+    /// Центр котла, который замыкает действующее решение «замкнуть кольцо» (котёл опознаётся по месту, не по номеру).
+    pub encircle_at: Option<crate::geo::XY>,
 }
 
 /// Командующие прогона: по сторонам включены ли, список, ведомость расстояний до объектов.
@@ -126,7 +138,7 @@ pub fn enable(sim: &mut Sim, side: Side) {
         let Some(profile) = sim.rules.commanders.profiles.iter().position(|p| p.hqs.contains(&x.id)) else { continue };
         sim.commanders.list.push(Commander {
             hq: h as u32, profile, motives: sim.rules.commanders.profiles[profile].motives, mood: start, intent: None, intent_label: None,
-            last: tick, snapshots: Vec::new(), decisions: Vec::new(), picture: None, seen: Seen::default(), withdraw_at: Vec::new(),
+            last: tick, snapshots: Vec::new(), decisions: Vec::new(), picture: None, seen: Seen::default(), withdraw_at: Vec::new(), encircle_at: None,
         });
     }
 }
@@ -162,6 +174,40 @@ pub fn same_line(a: &Kind, intent: Option<&Kind>) -> bool {
         (Kind::Continue, Some(_)) => true,
         (Kind::Permit { .. }, Some(Kind::Permit { .. })) | (Kind::Forbid { .. }, Some(Kind::Forbid { .. })) => true,
         (a, Some(b)) => a == b,
+    }
+}
+
+/// Вариант продолжает действующее решение командующего `c` по картине `pic`: как `same_line`, но котёл «замкнуть
+/// кольцо» опознаётся по месту (ближайший к прежнему центру в пределах `SAME_TARGET_KM`), а не по номеру в картине.
+pub fn continues(c: &Commander, pic: &Picture, k: &Kind) -> bool {
+    same_line(k, c.intent.as_ref()) || same_target(c, pic, k)
+}
+
+/// Тот же вид решения, что действующее, и та же цель: котёл — по месту; контратака, резерв, деблокирование — тот же
+/// исполнитель и точка в пределах `SAME_TARGET_KM` (центр выручаемой армии и вклинение смещаются от часа к часу).
+fn same_target(c: &Commander, pic: &Picture, k: &Kind) -> bool {
+    let near = |a: crate::geo::XY, b: crate::geo::XY| a.dist(b) <= SAME_TARGET_KM;
+    match (k, c.intent.as_ref()) {
+        (Kind::Encircle { pocket }, Some(Kind::Encircle { .. })) => same_pocket(c, pic, *pocket),
+        (Kind::Counterattack { from, at }, Some(Kind::Counterattack { from: f0, at: a0 })) => from == f0 && near(*at, *a0),
+        (Kind::MoveReserve { hq, to }, Some(Kind::MoveReserve { hq: h0, to: t0 })) => hq == h0 && near(*to, *t0),
+        (Kind::Relief { army, by, toward }, Some(Kind::Relief { army: a0, by: b0, toward: t0 })) => army == a0 && by == b0 && near(*toward, *t0),
+        _ => false,
+    }
+}
+
+fn same_pocket(c: &Commander, pic: &Picture, pocket: usize) -> bool {
+    match (c.encircle_at, pic.pockets.get(pocket)) { (Some(at), Some(p)) => at.dist(p.center) <= SAME_TARGET_KM, _ => false }
+}
+
+/// Решение повторяет действующее с той же целью: директивы заново не отдаются. Запросы (отход, прорыв из кольца)
+/// поднимаются заново — за дивизии, за которые их ещё нет; ответы на запросы — каждый свой.
+fn repeats(c: &Commander, pic: &Picture, k: &Kind) -> bool {
+    match (k, c.intent.as_ref()) {
+        (_, None) => false,
+        (Kind::Withdraw { .. } | Kind::Breakout { .. } | Kind::Permit { .. } | Kind::Forbid { .. }, _) => false,
+        (Kind::Encircle { .. } | Kind::Counterattack { .. } | Kind::MoveReserve { .. } | Kind::Relief { .. }, _) => same_target(c, pic, k),
+        (k, Some(i)) => k == i,
     }
 }
 
@@ -216,13 +262,18 @@ fn task_behind(sim: &Sim, hq: u32, tick: u32) -> f64 {
     ((tick - by) as f64 / span).min(1.0)
 }
 
-/// Перемены обстановки с прошлого часа (повод решить вне цикла); заодно обновляет увиденное.
-fn trigger(sim: &Sim, c: &mut Commander, pic: &Picture, tick: u32) -> Option<String> {
+/// Перемены обстановки с прошлого часа (повод решить вне цикла); заодно обновляет увиденное. Прорыв армии — повод
+/// один раз, снова — только после потери прорыва не меньше чем на `BROKE_LOST_H` ч.
+pub fn trigger(sim: &Sim, c: &mut Commander, pic: &Picture, tick: u32) -> Option<String> {
     let name = |h: u32| sim.world.hqs[h as usize].name.clone();
     let mut why: Vec<String> = Vec::new();
     if let Some(prev) = &c.picture {
         for a in pic.armies.iter().filter(|a| a.broke_through) {
-            if !prev.armies.iter().any(|b| b.hq == a.hq && b.broke_through) { why.push(format!("{} прорвала оборону", name(a.hq))); }
+            let fresh = match c.seen.broke.iter_mut().find(|x| x.0 == a.hq) {
+                Some(x) => { let lost = tick.saturating_sub(x.1) > BROKE_LOST_H; x.1 = tick; lost }
+                None => { c.seen.broke.push((a.hq, tick)); true }
+            };
+            if fresh && !prev.armies.iter().any(|b| b.hq == a.hq && b.broke_through) { why.push(format!("{} прорвала оборону", name(a.hq))); }
         }
         for &f in &pic.open_flanks { if !prev.open_flanks.contains(&f) { why.push(format!("открыт фланг: {}", name(f))); } }
         if pic.pockets.len() > prev.pockets.len() { why.push("новый котёл противника".into()); }
@@ -247,13 +298,14 @@ fn trigger(sim: &Sim, c: &mut Commander, pic: &Picture, tick: u32) -> Option<Str
             if !c.seen.requests.contains(&key) { fresh += 1; c.seen.requests.push(key); }
         }
         c.seen.requests.retain(|k| sim.command.requests.iter().any(|r| (r.hq, r.division, r.tick) == *k));
-        if fresh > 0 { why.push(format!("запросы на отход дождались ответа: {fresh}")); }
+        if fresh > 0 { why.push(format!("{REQUESTS_DUE}: {fresh}")); }
     }
     if why.is_empty() { None } else { Some(why.join("; ")) }
 }
 
 /// Решение командующего: варианты, оценка, выбор, разбор, исполнение.
-fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String, hourly: &mut super::mind::Hourly) {
+/// Решение командующего; `answers` — только ответы на запросы (`Some(true)`), только прочее (`Some(false)`), всё (`None`).
+fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String, hourly: &mut super::mind::Hourly, answers: Option<bool>) {
     c.last = tick;
     let p = sim.rules.commanders.profiles[c.profile].clone();
     let Some(pic) = c.picture.as_ref() else { return };
@@ -262,26 +314,51 @@ fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String, hourly: 
         (Side::De, Echelon::HighCommand) => options_high(sim, c.hq, &p),
         (Side::De, _) => options_de(sim, c.hq, &p, pic),
     };
+    let answer = |k: &Kind| matches!(k, Kind::Permit { .. } | Kind::Forbid { .. });
+    let opts: Vec<Choice> = opts.into_iter().filter(|ch| answers.is_none_or(|a| answer(&ch.kind) == a)).collect();
     if opts.is_empty() { return; }
     let t = effective(&p.traits, &c.mood, &sim.rules.commanders.mood);
     let w = &sim.rules.commanders.weights;
-    let mut options: Vec<Scored> = opts.iter().map(|ch| score(ch, &c.motives, &t, w, same_line(&ch.kind, c.intent.as_ref()))).collect();
+    let mut options: Vec<Scored> = opts.iter().map(|ch| score(ch, &c.motives, &t, w, continues(c, pic, &ch.kind))).collect();
     // «в уме»: лучшие варианты проигрываются на копии мира, польза пересчитывается
     let ahead = sim.rules.commanders.lookahead_hours;
-    if ahead > 0 { super::mind::look(sim, c, pic, &mut options, &t, w, ahead, hourly, |k| same_line(k, c.intent.as_ref())); }
-    let chosen = pick(&options, c.intent.as_ref());
+    if ahead > 0 { super::mind::look(sim, c, pic, &mut options, &t, w, ahead, hourly, |k| continues(c, pic, k)); }
+    let chosen = pick_for(&options, |k| continues(c, pic, k));
+    adopt(sim, c, options, chosen, tick, trigger);
+}
+
+/// `pick` с проверкой продолжения по картине (`continues`).
+fn pick_for(v: &[Scored], cont: impl Fn(&Kind) -> bool) -> usize {
+    let top = v.iter().map(|s| s.total).fold(f64::NEG_INFINITY, f64::max);
+    let tied: Vec<usize> = (0..v.len()).filter(|&i| v[i].total >= top - TIE).collect();
+    tied.iter().copied().find(|&i| cont(&v[i].choice.kind))
+        .or_else(|| tied.iter().copied().find(|&i| matches!(v[i].choice.kind, Kind::Continue | Kind::Hold)))
+        .unwrap_or(tied[0])
+}
+
+/// Принять выбранный вариант: замысел, разбор, исполнение. «Продолжать по плану» действующий замысел не сбрасывает;
+/// повтор действующего решения с той же целью директив заново не отдаёт — пишется только документ решения.
+pub fn adopt(sim: &mut Sim, c: &mut Commander, options: Vec<Scored>, chosen: usize, tick: u32, trigger: String) {
+    c.last = tick;
     let why = why(&options, chosen);
     let kind = options[chosen].choice.kind.clone();
+    let repeat = c.picture.as_ref().is_some_and(|pic| repeats(c, pic, &kind));
     // рубеж отхода держится, пока решение — отход той же армии
     match &kind {
         Kind::Withdraw { hq } if c.intent.as_ref() == Some(&kind) && c.withdraw_at.iter().any(|x| x.0 == *hq) => {}
         Kind::Withdraw { hq } => { c.withdraw_at.clear(); if let Some(at) = super::apply::rear_of(sim, *hq) { c.withdraw_at.push((*hq, at)); } }
+        Kind::Continue => {}
         _ => c.withdraw_at.clear(),
     }
-    c.intent = Some(kind.clone());
-    c.intent_label = Some(options[chosen].choice.label.clone());
+    if let Kind::Encircle { pocket } = &kind { c.encircle_at = c.picture.as_ref().and_then(|p| p.pockets.get(*pocket)).map(|p| p.center); }
+    let keep = matches!(kind, Kind::Continue) && c.intent.is_some();
+    if !keep {
+        if !matches!(kind, Kind::Encircle { .. }) { c.encircle_at = None; }
+        c.intent = Some(kind.clone());
+        c.intent_label = Some(options[chosen].choice.label.clone());
+    }
     c.decisions.push(Decision { tick, trigger, options, chosen, why });
-    super::apply::apply(sim, c, &kind, tick);
+    if repeat { super::apply::record(sim, c, tick, Vec::new()); } else { super::apply::apply(sim, c, &kind, tick); }
 }
 
 /// Час командующего: состояние и мотивы по картине, решение по циклу или по перемене обстановки, снимок.
@@ -300,17 +377,27 @@ fn hour(sim: &mut Sim, c: &mut Commander, tick: u32, hourly: &mut super::mind::H
     let cycle = cycle_hours(sim, c.hq);
     let before = c.decisions.len();
     if agent && (trig.is_some() || tick >= c.last + cycle) {
-        decide(sim, c, tick, trig.unwrap_or_else(|| format!("цикл решения {cycle} ч")), hourly);
-        // верхняя инстанция отвечает на все ждущие запросы в этот же час — каждый ответ отдельным решением
-        let side = sim.world.hqs[c.hq as usize].side;
-        let wait = sim.rules.command.de.permission_hours as u32;
-        let waiting = |sim: &Sim| sim.command.requests.iter().filter(|r| r.answer.is_none() && tick >= r.tick + wait && sim.world.hqs[r.hq as usize].side == side).count();
-        let mut left = waiting(sim);
-        while left > 0 && c.decisions.len() > before && matches!(c.intent, Some(Kind::Permit { .. } | Kind::Forbid { .. })) {
-            decide(sim, c, tick, format!("ещё запросы на отход: {left}"), hourly);
-            let now = waiting(sim);
-            if now >= left { break; }
-            left = now;
+        let reason = trig.clone().unwrap_or_else(|| format!("цикл решения {cycle} ч"));
+        if sim.world.hqs[c.hq as usize].echelon == Echelon::HighCommand {
+            // верхняя инстанция сначала отвечает на все ждущие запросы — каждый ответ отдельным решением, потом прочее
+            let due = tick >= c.last + cycle;
+            let side = sim.world.hqs[c.hq as usize].side;
+            let wait = sim.rules.command.de.permission_hours as u32;
+            let waiting = |sim: &Sim| sim.command.requests.iter().filter(|r| r.answer.is_none() && tick >= r.tick + wait && sim.world.hqs[r.hq as usize].side == side).count();
+            let mut left = waiting(sim);
+            let mut answered = 0;
+            while left > 0 {
+                decide(sim, c, tick, if answered == 0 { reason.clone() } else { format!("ещё запросы на отход: {left}") }, hourly, Some(true));
+                answered += 1;
+                let now = waiting(sim);
+                if now >= left { break; }
+                left = now;
+            }
+            // прочее — по циклу, по иной перемене обстановки, чем запросы, или когда отвечать было не на что
+            let other = trig.as_deref().is_some_and(|t| t.split("; ").any(|p| !p.starts_with(REQUESTS_DUE)));
+            if answered == 0 || due || other { decide(sim, c, tick, reason, hourly, Some(false)); }
+        } else {
+            decide(sim, c, tick, reason, hourly, None);
         }
     }
     if c.decisions.len() > before || tick.is_multiple_of(SNAPSHOT_HOURS) {

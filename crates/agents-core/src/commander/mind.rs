@@ -76,7 +76,7 @@ pub fn imagine(sim: &Sim, c: &Commander, pic: &Picture, choice: &Choice, hours: 
     let temp = Commander {
         hq: c.hq, profile: c.profile, motives: c.motives, mood: c.mood, intent: Some(choice.kind.clone()), intent_label: Some(choice.label.clone()),
         last: tick, snapshots: Vec::new(), decisions: vec![Decision { tick, trigger: String::new(), options: vec![scored], chosen: 0, why: String::new() }],
-        picture: None, seen: c.seen.clone(), withdraw_at,
+        picture: c.picture.clone(), seen: c.seen.clone(), withdraw_at, encircle_at: None,
     };
     let n0 = fork.command.requests.len();
     super::apply::apply(&mut fork, &temp, &choice.kind, tick);

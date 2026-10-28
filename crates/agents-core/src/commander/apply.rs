@@ -52,7 +52,7 @@ fn to_reserve(sim: &mut Sim, c: &Commander, h: u32, task: Task, goal: XY, tick: 
 }
 
 /// Рубеж в глубине: от центра войск армии прочь от ближайшего противника.
-pub(super) fn rear_of(sim: &Sim, army: u32) -> Option<XY> {
+pub fn rear_of(sim: &Sim, army: u32) -> Option<XY> {
     let c = place(sim, Target::Hq(army));
     let side = sim.world.hqs[army as usize].side;
     let e = sim.world.divisions.iter().filter(|d| d.side != side && !d.state.out()).map(|d| d.vars.pos).min_by(|a, b| a.dist(c).total_cmp(&b.dist(c)))?;
@@ -176,8 +176,8 @@ pub fn apply(sim: &mut Sim, c: &Commander, k: &Kind, tick: u32) {
         }
         Kind::Counterattack { from, at } => to_reserve(sim, c, *from, Task::Attack, *at, tick, &mut to),
         Kind::MoveReserve { hq, to: at } => to_reserve(sim, c, *hq, Task::Move, *at, tick, &mut to),
-        Kind::Relief { army, toward } => {
-            if let Some((a, _)) = super::options_de::outside_hq(sim, c.hq, *toward).filter(|x| x.0 != *army) { to_army(sim, c, a, Task::Attack, *toward, tick, &mut to); }
+        Kind::Relief { army, by, toward } => {
+            if by != army { to_army(sim, c, *by, Task::Attack, *toward, tick, &mut to); }
         }
         Kind::Permit { request } | Kind::Forbid { request } => {
             if let Some(r) = sim.command.requests.get_mut(*request) {
@@ -188,6 +188,11 @@ pub fn apply(sim: &mut Sim, c: &Commander, k: &Kind, tick: u32) {
             }
         }
     }
+    record(sim, c, tick, to);
+}
+
+/// Документ последнего решения командующего `c` (извещение получателям `to`) с обоснованием и правилом.
+pub fn record(sim: &mut Sim, c: &Commander, tick: u32, to: Vec<String>) {
     let d = c.decisions.last().expect("решение");
     let ch = &d.options[d.chosen].choice;
     let text = format!("{DOC_PREFIX}: {}. Повод: {}. {}", ch.label, d.trigger, d.why);

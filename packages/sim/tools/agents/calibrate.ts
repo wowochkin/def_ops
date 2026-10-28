@@ -10,6 +10,7 @@
  *   npx tsx packages/sim/tools/agents/calibrate.ts --refine evals-out/calib/r2 --top 8
  *   npx tsx packages/sim/tools/agents/calibrate.ts --mode commanders --keys '^commanders\.(mood|gains)\.' …   (только ключи по выражению; прочие — как в файлах)
  *   npx tsx packages/sim/tools/agents/calibrate.ts --measure --mode agents --seeds 1-20 [--scenario berlin] [--params '{…}'] [--keep evals-out/calib/m-agents] --out evals-out/calib/m
+ *   npx tsx packages/sim/tools/agents/calibrate.ts --measure --mode agents --side both …   (штабы-агенты обеих сторон, без командующих)
  *
  * Пишет построчно <out>/samples.jsonl ({ params, total, positions, events, meanKm, eventDays, runs }), <out>/refine.jsonl
  * и <out>/measure.jsonl (замер: итог, положения, события и непрерывные меры — средняя ошибка положений, км; средняя
@@ -80,8 +81,8 @@ let tmpN = 0;
 /** Прогон ядра: сценарий, seed, поправки; ход — во временную папку, после сверки удаляется. */
 function run(sc: string, seed: number, params: Record<string, number>, keepDir?: string): Promise<string> {
   const out = keepDir ? `${keepDir}/${sc}-${seed}` : `evals-out/calib/tmp/${process.pid}-${tmpN++}`;
-  // commanders — обе стороны (с --side su|de — только она), прочие режимы — советская сторона
-  const extra = mode === 'script' ? [] : mode === 'commanders' ? ['--command', mode, ...(opt('side') ? ['--side', opt('side')!] : [])] : ['--command', mode, '--side', 'su'];
+  // commanders — обе стороны (с --side su|de — только она), прочие режимы — советская сторона (--side both — обе)
+  const extra = mode === 'script' ? [] : mode === 'commanders' ? ['--command', mode, ...(opt('side') ? ['--side', opt('side')!] : [])] : ['--command', mode, '--side', opt('side', 'su')!];
   return new Promise((ok, fail) => {
     const p = spawn(BIN, ['--scenario', SCEN[sc].path, '--seed', String(seed), '--runs', '1', '--out', out, ...extra, ...(Object.keys(params).length ? ['--params', JSON.stringify(params)] : [])], { cwd: ROOT, stdio: 'ignore' });
     p.on('exit', (c) => (c === 0 ? ok(out) : fail(new Error(`agents-run: код ${c}`))));

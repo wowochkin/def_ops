@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentCommander, AgentCommanderOption, AgentTrace } from '@def-ops/sim';
-import { answer, commanderOf, decisionRibbon, hqCentroid, MOTIVE_RU, rivalrySeries, SUGGESTIONS, viewAt, moodWords } from '../src/commander-view';
+import { answer, commanderOf, decisionRibbon, hqCentroid, MOTIVE_RU, rivalrySeries, SUGGESTIONS, TRAIT_RU, viewAt, moodWords } from '../src/commander-view';
 
 const parts = (o: Partial<Record<string, number>>) => ({ task: 0, rival: 0, preserve: 0, noEncircle: 0, destroy: 0, hold: 0, save: 0, ...o });
 const opt = (kind: string, label: string, total: number, p: Partial<Record<string, number>> = {}, mind: AgentCommanderOption['mind'] = null): AgentCommanderOption =>
@@ -31,6 +31,13 @@ const trace = (commanders?: AgentCommander[]): AgentTrace => ({
   scenario: 's', name: 'S', start: '1945-04-16T05:00', hours: 20, seed: 1, fields: [], divisions: [], hqs: [], frames: [], journal: [], ...(commanders ? { commanders } : {}),
 });
 const names = { su_8gva: '8 гв. А', su_1uf: '1-й Украинский фронт' };
+
+describe('подписи', () => {
+  it('мотивы и черты — как в ядре: «спасти армию», «послушание старшему» (у немцев старший — не Ставка)', () => {
+    expect(MOTIVE_RU.save).toBe('спасти армию');
+    expect(TRAIT_RU.find(([k]) => k === 'obedience')?.[1]).toBe('послушание старшему');
+  });
+});
 
 describe('commanderOf', () => {
   it('находит командующего штаба; штаба без командующего нет', () => {
@@ -65,14 +72,17 @@ describe('viewAt', () => {
 
 describe('rivalrySeries', () => {
   it('расстояние по снимкам и метки решений; у немцев — держать/отходить 9 А и деблокирование 12 А', () => {
-    const t = trace([zhukov, konev, gerBase('de_9a', 'Буссе', [[1, 'hold'], [7, 'hold'], [13, 'withdraw']]), gerBase('de_12a', 'Венк', [[1, 'hold'], [20, 'relief']]), gerBase('de_3pza', 'Мантейфель', [[1, 'withdraw']])]);
+    // деблокирование — решение верхней инстанции (de_hc, вид relief), у которого армия-деблокатор — 12 А
+    const relief = (tick: number, by: string) => ({ tick, trigger: 'цикл', chosen: 0, why: 'выручить', options: [{ ...opt('relief', 'Выручить 9-я армия ударом снаружи', 0.3), army: 'de_9a', by }] });
+    const hitler: AgentCommander = { ...gerBase('de_hc', 'Гитлер', [[1, 'forbid']]), decisions: [...gerBase('de_hc', 'Гитлер', [[1, 'forbid']]).decisions, relief(20, 'de_12a'), relief(30, 'de_3pza')] };
+    const t = trace([zhukov, konev, gerBase('de_9a', 'Буссе', [[1, 'hold'], [7, 'hold'], [13, 'withdraw']]), gerBase('de_12a', 'Венк', [[1, 'hold']]), gerBase('de_3pza', 'Мантейфель', [[1, 'withdraw']]), hitler]);
     const s = rivalrySeries(t);
     expect(s.map((x) => x.hq)).toEqual(['su_1bf', 'su_1uf', 'de_9a', 'de_12a']);
     expect(s[0].points).toEqual([[0, 90], [6, 84], [12, 78]]);
     expect(s[0].marks).toEqual([{ tick: 12, label: 'Ввести 1 гв. ТА в прорыв' }]);
     expect(s[2].points).toEqual([]);
     expect(s[2].marks.map((m) => [m.tick, m.label])).toEqual([[1, 'Держаться'], [13, 'Отходить']]);
-    expect(s[3].marks.map((m) => m.tick)).toEqual([20]);
+    expect(s[3].marks).toEqual([{ tick: 20, label: 'Выручить 9-я армия ударом снаружи' }]);
   });
 });
 

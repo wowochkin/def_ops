@@ -12,11 +12,11 @@ export type Decision = AgentCommander['decisions'][number];
 
 export const MOTIVE_RU: Record<string, string> = {
   task: 'выполнить задачу старшего', rival: 'опередить соперника', preserve: 'сохранить войска', noEncircle: 'не допустить окружения',
-  destroy: 'разгромить противника', hold: 'удержать рубеж', save: 'выручить окружённых',
+  destroy: 'разгромить противника', hold: 'удержать рубеж', save: 'спасти армию',
 };
 /** Порядок и подписи полос характера. */
 export const TRAIT_RU: [keyof AgentCommander['traits'], string][] = [
-  ['risk', 'риск'], ['persistence', 'настойчивость'], ['ambition', 'честолюбие'], ['lossTolerance', 'терпимость к потерям'], ['obedience', 'послушание Ставке'],
+  ['risk', 'риск'], ['persistence', 'настойчивость'], ['ambition', 'честолюбие'], ['lossTolerance', 'терпимость к потерям'], ['obedience', 'послушание старшему'],
 ];
 /** Цвета мотивов (переменные редактора; порядок — как в MOTIVE_RU). */
 export const MOTIVE_COLOR: Record<string, string> = {
@@ -49,11 +49,13 @@ const km0 = (x: number) => Math.round(x).toLocaleString('ru-RU');
 
 /** Ряд состязания: расстояние фронта до объекта по снимкам и метки его решений. Немцы — только метки. */
 export interface RivalrySeries { hq: string; name: string; points: [number, number][]; marks: { tick: number; label: string }[] }
-/** Немецкие командующие, чьи решения отмечены на графике: «держать / отходить» 9-й армии и деблокирование 12-й. */
+/** Немецкие командующие, чьи решения отмечены на графике: «держать / отходить» 9-й армии. */
 const GERMAN_MARKS: Record<string, (kind: string, prev: string | null) => boolean> = {
   de_9a: (k, prev) => (k === 'hold' || k === 'withdraw') && k !== prev,
-  de_12a: (k) => k === 'relief',
 };
+/** Армия-деблокатор на графике: метки — приказы верхней инстанции (de_hc) «выручить», где она выручает или выручаемая. */
+const RELIEF_ARMY = 'de_12a';
+const HIGH_HQ = 'de_hc';
 export function rivalrySeries(trace: AgentTrace): RivalrySeries[] {
   const out: RivalrySeries[] = [];
   for (const c of trace.commanders ?? []) {
@@ -67,6 +69,13 @@ export function rivalrySeries(trace: AgentTrace): RivalrySeries[] {
         marks.push({ tick: d.tick, label: o.label });
       }
       out.push({ hq: c.hq, name: c.name, points, marks });
+    } else if (c.hq === RELIEF_ARMY) {
+      const marks: RivalrySeries['marks'] = [];
+      for (const d of trace.commanders?.find((x) => x.hq === HIGH_HQ)?.decisions ?? []) {
+        const o = chosenOf(d);
+        if (o?.kind === 'relief' && (o.by === RELIEF_ARMY || o.army === RELIEF_ARMY)) marks.push({ tick: d.tick, label: o.label });
+      }
+      out.push({ hq: c.hq, name: c.name, points: [], marks });
     } else if (GERMAN_MARKS[c.hq]) {
       const marks: RivalrySeries['marks'] = [];
       let prev: string | null = null;

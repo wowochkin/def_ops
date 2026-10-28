@@ -213,7 +213,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   // параметры агентной модели: базовые (agents-v0.json) или сохранённый вариант (калибровка в «Моделировании»)
   const [variants, setVariants] = useState<AgentVariant[]>(agentVariants);
   const [variantId, setVariantId] = useState('');
-  // кто решает за советские штабы в агентной модели; по умолчанию — командующие, ниже штабы-агенты
+  // кто решает за советские штабы в агентной модели; по умолчанию — фронты по истории (DEFAULT_AGENT_COMMAND)
   const [command, setCommandState] = useState<AgentCommand>(() => { try { const v = localStorage.getItem(COMMAND_KEY); return AGENT_COMMANDS.some((c) => c.id === v) ? v as AgentCommand : DEFAULT_AGENT_COMMAND; } catch { return DEFAULT_AGENT_COMMAND; } });
   const setCommand = (c: AgentCommand) => { setCommandState(c); try { localStorage.setItem(COMMAND_KEY, c); } catch { /* */ } };
   useEffect(() => { const f = () => setVariants(agentVariants()); window.addEventListener('def_ops.agents.variants', f); return () => window.removeEventListener('def_ops.agents.variants', f); }, []);

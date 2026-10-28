@@ -34,6 +34,8 @@ export interface AgentTrace {
 export interface AgentTrait { value: number; range: [number, number]; source: string; confidence: string }
 export interface AgentCommanderOption {
   kind: string; label: string; rule: string; target: LngLat | null; parts: Record<string, number>; penalty: number; bonus: number; total: number;
+  /** Деблокирование: выручаемая армия и армия, которой приказано выручать (получатель директивы). */
+  army?: string | null; by?: string | null;
   mind: { hours: number; advanceKm: number; losses: number; encircled: number } | null;
 }
 export interface AgentCommander {

@@ -17,7 +17,7 @@ pub enum Kind {
     ShiftMainBlow { to: Vec<u32> },
     /// Повернуть армию `hq` к точке `at` (объект соперника).
     TurnToRival { hq: u32, at: XY },
-    /// Замкнуть котёл с номером `pocket` (по картине обстановки).
+    /// Замкнуть котёл с номером `pocket` в картине обстановки решения (тот же котёл в следующих картинах — по месту).
     Encircle { pocket: usize },
     /// Ввести армию второго эшелона.
     CommitSecond { hq: u32 },
@@ -35,8 +35,8 @@ pub enum Kind {
     Permit { request: usize },
     /// Отклонить запрос подчинённого с номером `request`.
     Forbid { request: usize },
-    /// Выручить армию `army`, выдвинувшись к точке `toward`.
-    Relief { army: u32, toward: XY },
+    /// Выручить армию `army` ударом армии `by` к точке `toward`.
+    Relief { army: u32, by: u32, toward: XY },
     /// Переместить резерв `hq` в точку `to`.
     MoveReserve { hq: u32, to: XY },
 }

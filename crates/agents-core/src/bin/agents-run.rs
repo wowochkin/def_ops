@@ -2,7 +2,7 @@
 //!
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
 //!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10]
-//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts|journals|commanders --side su|de] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
+//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts|journals|commanders --side su|de|both] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
 //!       [--llm-reasoning default|off|low|medium|high] [--llm-max-tokens N (0 — без потолка)] [--llm-parallel auto|N]
 //!       [--llm-sync] [--llm-by-army] [--llm-probe — только замер параллельных запросов]
 //!       [--params '{"pocket.breakoutKeep": 0.05}' | --params файл.json — поправки параметров agents-v0.json (путь → значение)]
@@ -181,10 +181,12 @@ fn main() {
         // --command agents | hybrid | fronts (фронты по истории, армии и ниже — агенты; прежнее --below front — то же)
         let mut mode = arg(&args, "command").unwrap_or_else(|| "script".into());
         if arg(&args, "below").as_deref() == Some("front") { mode = "fronts".into(); }
-        // commanders без --side — обе стороны; с --side su|de — только она
+        // commanders без --side — обе стороны; с --side su|de — только она; --side both — обе стороны в любом режиме
+        // (agents --side both: немецкая сторона тоже штабы-агенты, без командующих — базовая линия «на равных»)
         let side_arg = arg(&args, "side");
         let side = if side_arg.as_deref() == Some("de") { Side::De } else { Side::Su };
-        let sides: Vec<Side> = if mode == "commanders" && side_arg.is_none() { vec![Side::Su, Side::De] } else { vec![side] };
+        let both = side_arg.as_deref() == Some("both") || (mode == "commanders" && side_arg.is_none());
+        let sides: Vec<Side> = if both { vec![Side::Su, Side::De] } else { vec![side] };
         let mut pending = Vec::new();
         for sd in sides { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd).unwrap_or_else(|e| panic!("--command: {e}"))); }
         let below_front = mode == "fronts" || mode == "journals";

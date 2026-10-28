@@ -85,6 +85,8 @@ pub struct CommanderRules {
     pub mind_margin: f64,
     /// Объекты, к которым тянутся командующие: id и место (долгота, широта); в километры театра — в картине обстановки.
     pub objectives: Vec<(String, LngLat)>,
+    /// Штабы, чьи резервы — резерв верхней инстанции (ОКВ): их дивизии она перебрасывает к угрожаемой армии.
+    pub okw_reserve_hqs: Vec<String>,
     /// Узел `commanders` после поправок как есть: пределы и источники чисел для хода.
     pub raw: Value,
 }
@@ -153,6 +155,7 @@ impl CommanderRules {
             lookahead_hours: hours("lookaheadHours")?,
             mind_margin: n("mindMargin")?,
             objectives,
+            okw_reserve_hqs: c.get("okwReserve").and_then(|o| o.get("hqs")).and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default(),
             raw: c.clone(),
         })
     }

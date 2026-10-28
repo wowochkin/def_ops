@@ -2,6 +2,7 @@
 //! изменения: оценка сил противника — с ошибкой разведки (постоянной в пределах шестичасовой сводки), сведения о
 //! сопернике — с задержкой сводок, противник виден только в пределах разведки от своих войск.
 
+use crate::command::control::Role;
 use crate::geo::XY;
 use crate::model::{Echelon, State};
 use crate::rng::{Rng, Stream};
@@ -18,7 +19,7 @@ const AXIS_MIN_KM: f64 = 2.0;
 #[derive(Clone, Debug, PartialEq)]
 pub struct ArmyView {
     pub hq: u32,
-    /// Смещение центра войск армии от места её штаба на начало, км.
+    /// Продвижение центра войск армии от места на начало вдоль оси замысла штаба командующего (оси нет — смещение), км.
     pub advance_km: f64,
     /// Боевая сила по составу, доля от начальной.
     pub strength: f64,
@@ -28,7 +29,7 @@ pub struct ArmyView {
     pub enemy_true: f64,
     /// Расстояние ближайшей дивизии армии до цели командующего.
     pub to_objective_km: Option<f64>,
-    /// У армии нет обороняющегося противника на оси и пройдена глубина ввода подвижных групп.
+    /// У армии нет обороняющегося противника на оси и пройдена глубина ввода подвижных групп; у подвижной группы — никогда.
     pub broke_through: bool,
 }
 
@@ -152,6 +153,7 @@ pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture {
     let army_hqs: Vec<u32> = (0..w.hqs.len() as u32).filter(|&h| w.hqs[h as usize].echelon == Echelon::Army && w.hqs[h as usize].side == me.side && under(sim, h, hq)).collect();
     let all_own: Vec<usize> = army_hqs.iter().flat_map(|&a| divisions_of(sim, a)).collect();
     let seen = |p: XY, own: &[usize]| own.iter().any(|&i| w.divisions[i].vars.pos.dist(p) <= recon);
+    let front_axis: Option<&[XY]> = sim.command.intent.get(hq as usize).and_then(Option::as_ref).map(|d| d.axis.as_slice()).filter(|ax| ax.len() >= 2);
 
     let mut armies = Vec::new();
     let mut open_flanks = Vec::new();
@@ -160,7 +162,8 @@ pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture {
         let pos: Vec<XY> = mine.iter().map(|&i| w.divisions[i].vars.pos).collect();
         let Some(c) = centroid(&pos) else { continue };
         let start = log.start.get(a as usize).copied().flatten();
-        let advance_km = start.map_or(0.0, |s| c.dist(s));
+        // продвижение — вдоль оси замысла штаба командующего; оси нет — смещение от исходного места
+        let advance_km = match front_axis { Some(ax) => crate::command::agent::advance(start, c, ax), None => start.map_or(0.0, |s| c.dist(s)) };
         let (mut s, mut s0) = (0.0, 0.0);
         for d in &w.divisions {
             if d.state == State::Pending || d.state == State::Merged || !under(sim, d.hq, a) { continue; }
@@ -178,7 +181,9 @@ pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture {
             let ed = &w.divisions[e];
             matches!(ed.state, State::Defense(_)) && pos.iter().any(|&p| ahead(p) && p.dist(ed.vars.pos) <= contact)
         });
-        let broke_through = advance_km >= sim.rules.doctrine_su.tank_commit_depth_km && !defended;
+        // подвижная группа (до ввода и введённая) не прорывает оборону: её марш за главным ударом — не прорыв
+        let mobile = matches!(sim.command.role_hq.get(a as usize), Some(Role::Mobile | Role::Committed));
+        let broke_through = !mobile && advance_km >= sim.rules.doctrine_su.tank_commit_depth_km && !defended;
         let to_objective_km = objective.and_then(|o| pos.iter().map(|p| p.dist(o)).min_by(f64::total_cmp));
         // открытый фланг: противник сбоку или сзади, и ни одна дивизия соседних армий его не прикрывает
         if let Some(u) = axis {

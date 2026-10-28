@@ -16,7 +16,7 @@
 //! - Permit / Forbid (Ставка): на каждый неотвеченный запрос, дождавшийся срока ответа `permissionHours`; запрет — удержание +, сохранение − (больше при угрозе
 //!   армии), разрешение — наоборот.
 //! - Relief (Ставка): сохранение +, удержание −; армия в кольце и есть армия снаружи.
-//! - MoveReserve (Ставка): сохранение +, удержание +; резерв ОКВ и угрожаемая армия.
+//! - MoveReserve (Ставка): сохранение +, удержание +; резерв ОКВ (штабы `okwReserve.hqs`) и угрожаемая армия.
 
 use super::options::{Choice, Kind};
 use super::picture::{divisions_of, under, ArmyView, Picture};
@@ -235,20 +235,20 @@ pub fn options_high(sim: &Sim, hq: u32, _p: &Profile) -> Vec<Choice> {
     let pocketed: Vec<u32> = armies.iter().copied().filter(|&a| in_pocket(sim, a)).collect();
     for &a in &pocketed {
         let Some(c) = centroid(sim, &divisions_of(sim, a)) else { continue };
-        if outside_hq(sim, hq, c).is_some() {
+        if let Some((by, _)) = outside_hq(sim, hq, c) {
             out.push(Choice {
-                kind: Kind::Relief { army: a, toward: c }, label: format!("Выручить {} ударом снаружи", name(sim, a)),
+                kind: Kind::Relief { army: a, by, toward: c }, label: format!("Выручить {} ударом снаружи", name(sim, a)),
                 contrib: contrib(&[(Motive::Save, RL_SAVE), (Motive::Hold, RL_HOLD), (Motive::Preserve, RL_PRESERVE)]),
                 uncertainty: RL_UNC, losses: RL_LOSS, rule: "Truppenführung: окружённым помогают встречным ударом извне",
             });
         }
     }
 
-    // резерв ОКВ — к самой угрожаемой армии
-    let okw = sim.world.hqs.iter().position(|h| h.id == "de_okw").map(|i| i as u32);
+    // резерв ОКВ (штабы `okwReserve.hqs` правил командующих) — к самой угрожаемой армии
+    let okw: Vec<u32> = (0..sim.world.hqs.len() as u32).filter(|&h| sim.rules.commanders.okw_reserve_hqs.contains(&sim.world.hqs[h as usize].id)).collect();
     let reserves: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| {
         let d = &sim.world.divisions[i];
-        d.state == State::Reserve && (d.hq == hq || okw.is_some_and(|o| under(sim, d.hq, o)))
+        d.state == State::Reserve && (d.hq == hq || okw.iter().any(|&o| under(sim, d.hq, o)))
     }).collect();
     let target = armies.iter().copied().map(|a| (a, threat(sim, None, a))).filter(|x| x.1 > 0.0)
         .max_by(|x, y| x.1.total_cmp(&y.1).then(y.0.cmp(&x.0))).and_then(|(a, _)| centroid(sim, &divisions_of(sim, a)).map(|c| (a, c)));

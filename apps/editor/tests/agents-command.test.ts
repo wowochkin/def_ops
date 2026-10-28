@@ -47,10 +47,10 @@ describe('состояние управления в игре на агентн�
 });
 
 describe('режим «Командующие» в переигровке', () => {
-  it('commanders — вариант «Советские штабы» и по умолчанию', async () => {
+  it('commanders — вариант «Советские штабы»; по умолчанию — «фронты по истории»', async () => {
     const { AGENT_COMMANDS, DEFAULT_AGENT_COMMAND } = await import('../src/sim/agent-scenarios');
     expect(AGENT_COMMANDS.map((c) => c.id)).toContain('commanders');
     expect(AGENT_COMMANDS.find((c) => c.id === 'commanders')?.title).toBe('Командующие');
-    expect(DEFAULT_AGENT_COMMAND).toBe('commanders');
+    expect(DEFAULT_AGENT_COMMAND).toBe('fronts');
   });
 });

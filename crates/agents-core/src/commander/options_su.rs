@@ -3,10 +3,11 @@
 //!
 //! Таблица правил (вклад в мотивы; U — неопределённость, L — потери):
 //! - Continue: задача +, остальное 0; U, L малы.
-//! - CommitMobile: с продвижения главного удара на глубину `commitDepthKm`; задача + (больше при прорыве), соперник +
-//!   (если он есть), сохранение −; U выше без прорыва.
+//! - CommitMobile: с продвижения главного удара (без подвижных групп) на глубину `commitDepthKm`; задача + (больше при прорыве), соперник +
+//!   (если он есть), сохранение −; U выше без прорыва. По сроку ввода `tankCommitFallbackHours` (приказ НКО 1942 г. о танковых войсках,
+//!   как у штаба фронта) — и без продвижения, с малой U.
 //! - WaitMobile: сохранение +, задача −, соперник − (если он ближе к объекту); U мала.
-//! - ShiftMainBlow: задача +, сохранение −.
+//! - ShiftMainBlow: задача +, сохранение −; на подвижные группы удар не переносится.
 //! - TurnToRival: соперник +, задача − (уход от направления задачи старшего к объекту соперника; без замысла не появляется).
 //! - Encircle: уничтожение +, задача +.
 //! - CommitSecond: задача +, сохранение −.
@@ -15,6 +16,7 @@ use super::options::{Choice, Kind};
 use super::picture::{divisions_of, profile_objective_xy, ArmyView, Picture};
 use super::profile::{Motive, Motives, Profile};
 use crate::command::control::Role;
+use crate::command::directive::Target;
 use crate::geo::XY;
 use crate::world::Sim;
 
@@ -42,6 +44,10 @@ const COMMIT_UNC_OPEN: f64 = 0.7;
 const COMMIT_UNC_BROKE: f64 = 0.2;
 const COMMIT_LOSS_OPEN: f64 = 0.5;
 const COMMIT_LOSS_BROKE: f64 = 0.25;
+/// Неопределённость ввода по сроку: срок ввода — правило, а не догадка о прорыве.
+const COMMIT_UNC_LATE: f64 = 0.2;
+const RULE_COMMIT: &str = "ПУ-43: подвижные группы вводятся в прорыв на глубину тактической обороны; глубокая операция";
+const RULE_COMMIT_LATE: &str = "приказ НКО 1942 г. о боевом применении танковых войск: тактическая зона за срок не прорвана — подвижная группа вводится для завершения прорыва";
 // WaitMobile
 /// Вклад ожидания в сохранение сил и в задачу (замедление), в соперничество при отставании от соперника.
 const WAIT_PRESERVE: f64 = 0.4;
@@ -101,22 +107,28 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
 
     // армии главного удара: по замыслу старшего, иначе первый эшелон
     let named: Vec<u32> = sim.command.intent.get(hq as usize).and_then(Option::as_ref).map(|d| d.main_blow.clone()).unwrap_or_default();
-    let main: Vec<&ArmyView> = pic.armies.iter().filter(|a| if named.is_empty() { role(sim, a.hq) == Role::First } else { named.contains(&a.hq) }).collect();
+    // подвижные группы (до ввода и введённые) в главный удар не входят: их марш — не продвижение главного удара
+    let tank = |a: &ArmyView| matches!(role(sim, a.hq), Role::Mobile | Role::Committed);
+    let main: Vec<&ArmyView> = pic.armies.iter().filter(|a| !tank(a) && if named.is_empty() { role(sim, a.hq) == Role::First } else { named.contains(&a.hq) }).collect();
     let main_adv = main.iter().map(|a| a.advance_km).fold(0.0, f64::max);
     let broke = main.iter().any(|a| a.broke_through);
     let mobile: Vec<&ArmyView> = pic.armies.iter().filter(|a| role(sim, a.hq) == Role::Mobile).collect();
 
-    // подвижная группа: ввод после пройденной глубины; ожидание — пока нет прорыва
-    // появляется с глубины ввода вторых эшелонов (главная полоса прорвана); без прорыва тактической зоны — неопределённее
-    if !mobile.is_empty() && main_adv >= sim.rules.doctrine_su.commit_depth_km {
-        let (unc, loss) = if broke { (COMMIT_UNC_BROKE, COMMIT_LOSS_BROKE) } else { (COMMIT_UNC_OPEN, COMMIT_LOSS_OPEN) };
-        let task = COMMIT_TASK + if broke { COMMIT_TASK_BROKE } else { 0.0 };
+    // подвижная группа: ввод с глубины ввода вторых эшелонов (главная полоса прорвана) или по сроку ввода
+    // (`tankCommitFallbackHours`, как у штаба фронта); без прорыва тактической зоны — неопределённее; ожидание — пока нет прорыва
+    let deep = main_adv >= sim.rules.doctrine_su.commit_depth_km;
+    let late = |m: &ArmyView| sim.world.tick.saturating_sub(sim.command.since(Target::Hq(m.hq))) as f64 >= sim.rules.doctrine_su.tank_commit_fallback_hours;
+    let ready: Vec<&&ArmyView> = mobile.iter().filter(|m| deep || late(m)).collect();
+    if !ready.is_empty() {
         let rival = if pic.rival.is_some() { COMMIT_RIVAL } else { 0.0 };
-        for m in &mobile {
+        for m in &ready {
+            let (unc, loss, task, rule) = if broke { (COMMIT_UNC_BROKE, COMMIT_LOSS_BROKE, COMMIT_TASK + COMMIT_TASK_BROKE, RULE_COMMIT) }
+                else if late(m) { (COMMIT_UNC_LATE, COMMIT_LOSS_OPEN, COMMIT_TASK, RULE_COMMIT_LATE) }
+                else { (COMMIT_UNC_OPEN, COMMIT_LOSS_OPEN, COMMIT_TASK, RULE_COMMIT) };
             out.push(Choice {
                 kind: Kind::CommitMobile { hq: m.hq }, label: format!("Ввести {} в прорыв", name(sim, m.hq)),
                 contrib: contrib(&[(Motive::Task, task), (Motive::Rival, rival), (Motive::Preserve, COMMIT_PRESERVE)]),
-                uncertainty: unc, losses: loss, rule: "ПУ-43: подвижные группы вводятся в прорыв на глубину тактической обороны; глубокая операция",
+                uncertainty: unc, losses: loss, rule,
             });
         }
         if !broke {
@@ -131,7 +143,7 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
 
     // главный удар переносится на армии, вырвавшиеся вперёд
     if !main.is_empty() {
-        let to: Vec<u32> = pic.armies.iter().filter(|a| !main.iter().any(|m| m.hq == a.hq) && a.advance_km > main_adv * SHIFT_RATIO && a.advance_km - main_adv >= SHIFT_MIN_LEAD_KM).map(|a| a.hq).collect();
+        let to: Vec<u32> = pic.armies.iter().filter(|a| !tank(a) && !main.iter().any(|m| m.hq == a.hq) && a.advance_km > main_adv * SHIFT_RATIO && a.advance_km - main_adv >= SHIFT_MIN_LEAD_KM).map(|a| a.hq).collect();
         if !to.is_empty() {
             out.push(Choice {
                 kind: Kind::ShiftMainBlow { to }, label: "Перенести главный удар на добившиеся успеха армии".into(),

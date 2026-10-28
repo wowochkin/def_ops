@@ -88,6 +88,28 @@ fn no_operation_hints() {
     }
 }
 
+/// Каждый штаб из `hqs` профилей есть хотя бы в одном сценарии agents/*.json (профили общие для операций, поэтому
+/// при загрузке одной операции отсутствие штаба — не ошибка; опечатку ловит эта проверка).
+#[test]
+fn profile_hqs_exist_in_scenarios() {
+    let root = repo_root();
+    let dir = format!("{root}/packages/sim/data/scenarios/agents");
+    let mut ids = std::collections::BTreeSet::new();
+    let mut rules = None;
+    for e in std::fs::read_dir(&dir).unwrap() {
+        let p = e.unwrap().path().to_string_lossy().into_owned();
+        if !p.ends_with(".json") || p.ends_with(".history.json") { continue; }
+        let (sim, _) = agents_core::scenario::load_with(&p, &data(), &root, None, None).expect(&p);
+        ids.extend(sim.world.hqs.iter().map(|h| h.id.clone()));
+        rules = Some(sim.rules.commanders.clone());
+    }
+    let rules = rules.expect("сценарии");
+    let missing: Vec<String> = rules.profiles.iter().flat_map(|p| p.hqs.iter().filter(|h| !ids.contains(*h)).map(move |h| format!("{}: {h}", p.id))).collect();
+    assert!(missing.is_empty(), "штабов нет ни в одном сценарии: {missing:?}");
+    let reserve: Vec<&String> = rules.okw_reserve_hqs.iter().filter(|h| !ids.contains(*h)).collect();
+    assert!(reserve.is_empty(), "okwReserve.hqs: {reserve:?}");
+}
+
 /// Достоверность — из набора high | medium | low | assumption.
 #[test]
 fn confidence_in_allowed_set() {
@@ -261,6 +283,49 @@ mod picture {
         sim.world.divisions[e].vars.pos = XY::new(-FAR, FAR);
         set_army(&mut sim, a, XY::new(depth - 5.0, 0.0));
         assert!(!army_view(&sim, &log, a).broke_through);
+    }
+
+    /// Продвижение — вдоль оси замысла фронта: смещение поперёк оси продвижением не считается.
+    #[test]
+    fn advance_along_front_axis() {
+        use agents_core::command::directive::{Directive, Form, Target, Task};
+        use agents_core::geo::XY;
+        let mut sim = load(None);
+        let (f, a) = (hq(&sim, "su_1bf"), hq(&sim, "su_8gva"));
+        let e = lone_enemy(&mut sim);
+        clear(&mut sim, &[a]);
+        set_army(&mut sim, a, XY::new(0.0, 0.0));
+        sim.world.divisions[e].vars.pos = XY::new(-FAR, FAR);
+        sim.command.intent[f as usize] = Some(Directive { id: "т".into(), from: 0, to: Target::Hq(f), form: Form::Order, task: Task::Attack, axis: vec![XY::new(0.0, 0.0), XY::new(100.0, 0.0)],
+            immediate: None, subsequent: None, boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: true, rule: None, issued: 0, note: String::new() });
+        let mut log = DistLog::default();
+        log.record(&sim);
+        set_army(&mut sim, a, XY::new(0.0, 30.0));
+        assert!(army_view(&sim, &log, a).advance_km.abs() < 1e-6, "{}", army_view(&sim, &log, a).advance_km);
+        set_army(&mut sim, a, XY::new(30.0, 30.0));
+        assert!((army_view(&sim, &log, a).advance_km - 30.0).abs() < 1e-6);
+    }
+
+    /// Подвижная группа (до ввода и введённая) обороны не прорывает: её марш — не прорыв.
+    #[test]
+    fn mobile_army_not_broke_through() {
+        use agents_core::command::control::Role;
+        use agents_core::geo::XY;
+        let mut sim = load(None);
+        let a = hq(&sim, "su_1gta");
+        let depth = sim.rules.doctrine_su.tank_commit_depth_km;
+        let e = lone_enemy(&mut sim);
+        clear(&mut sim, &[a]);
+        set_army(&mut sim, a, XY::new(0.0, 0.0));
+        sim.world.divisions[e].vars.pos = XY::new(-FAR, FAR);
+        let mut log = DistLog::default();
+        log.record(&sim);
+        set_army(&mut sim, a, XY::new(depth + 10.0, 0.0));
+        assert!(army_view(&sim, &log, a).broke_through);
+        for r in [Role::Mobile, Role::Committed] {
+            sim.command.role_hq[a as usize] = r;
+            assert!(!army_view(&sim, &log, a).broke_through, "{r:?}");
+        }
     }
 
     #[test]
@@ -527,6 +592,48 @@ mod options_su {
             boundaries: vec![], main_blow: vec![b], reserve: vec![], junction: None, hasty: false, ready: true, rule: None, issued: 0, note: String::new() };
         sim.command.intent[top] = Some(d);
         assert!(has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::CommitMobile { .. })));
+    }
+
+    /// Танковые армии в главном ударе Ставки: их собственный марш не открывает ввод подвижной группы, и главный
+    /// удар на подвижную группу не переносится.
+    #[test]
+    fn mobile_march_not_main_blow() {
+        let mut sim = load();
+        let (rifle, tank, tank2) = (hq(&sim, "su_8gva"), hq(&sim, "su_1gta"), hq(&sim, "su_2gta"));
+        sim.command.role_hq[rifle as usize] = Role::First;
+        sim.command.role_hq[tank as usize] = Role::Mobile;
+        sim.command.role_hq[tank2 as usize] = Role::Committed;
+        set_intent(&mut sim, "su_1bf", vec![]);
+        let top = hq(&sim, "su_1bf") as usize;
+        sim.command.intent[top].as_mut().unwrap().main_blow = vec![rifle, tank, tank2];
+        let p = pic(vec![view(rifle, 1.0, false), view(tank, 8.4, false), view(tank2, 30.0, false)]);
+        let o = opts(&sim, "su_1bf", &p);
+        assert!(!has(&o, |k| matches!(k, Kind::CommitMobile { .. } | Kind::WaitMobile)), "{:?}", o.iter().map(|c| &c.label).collect::<Vec<_>>());
+        assert!(!has(&o, |k| matches!(k, Kind::ShiftMainBlow { to } if to.contains(&tank) || to.contains(&tank2))));
+        // стрелковая армия прошла глубину — ввод есть
+        let p = pic(vec![view(rifle, sim.rules.doctrine_su.commit_depth_km + 1.0, false), view(tank, 8.4, false)]);
+        assert!(has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::CommitMobile { hq } if *hq == tank)));
+    }
+
+    /// Фронт без продвижения: после срока ввода (`tankCommitFallbackHours`, как у штаба) ввод в меню есть, с малой
+    /// неопределённостью; до срока — нет.
+    #[test]
+    fn commit_mobile_after_fallback_hours() {
+        use agents_core::command::directive::Target;
+        let mut sim = load();
+        let (rifle, tank) = (hq(&sim, "su_8gva"), hq(&sim, "su_1gta"));
+        sim.command.role_hq[rifle as usize] = Role::First;
+        sim.command.role_hq[tank as usize] = Role::Mobile;
+        sim.command.mark(Target::Hq(tank), XY::new(0.0, 0.0), 0);
+        let p = pic(vec![view(rifle, 0.0, false), view(tank, 0.0, false)]);
+        let late = sim.rules.doctrine_su.tank_commit_fallback_hours.ceil() as u32;
+        sim.world.tick = late - 1;
+        assert!(!has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::CommitMobile { .. })));
+        sim.world.tick = late;
+        let o = opts(&sim, "su_1bf", &p);
+        let c = o.iter().find(|c| matches!(c.kind, Kind::CommitMobile { hq } if hq == tank)).expect("ввод по сроку");
+        assert!(c.uncertainty <= 0.2 + 1e-9, "{}", c.uncertainty);
+        assert!(c.rule.contains("НКО"), "{}", c.rule);
     }
 
     #[test]
@@ -882,6 +989,23 @@ mod options_de {
         assert!(m.contrib.get(Motive::Save) > 0.0);
     }
 
+    /// Чей резерв — резерв верхней инстанции, задаёт `okwReserve.hqs` в правилах командующих, а не код.
+    #[test]
+    fn okw_reserve_from_rules() {
+        let root = repo_root();
+        let o = json!({"commanders.okwReserve.hqs": []});
+        let (mut sim, _) = agents_core::scenario::load_with(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root, Some(&o), None).expect("сценарий");
+        cut(&mut sim, "de_9a", 1.0);
+        let i = divs(&sim, "de_okw")[0];
+        sim.world.divisions[i].state = State::Reserve;
+        assert!(!has(&high(&sim), |k| matches!(k, Kind::MoveReserve { .. })));
+        let mut sim2 = load();
+        assert_eq!(sim2.rules.commanders.okw_reserve_hqs, vec!["de_okw".to_string()]);
+        cut(&mut sim2, "de_9a", 1.0);
+        sim2.world.divisions[i].state = State::Reserve;
+        assert!(has(&high(&sim2), |k| matches!(k, Kind::MoveReserve { .. })));
+    }
+
     /// Резерв уже в угрожаемой армии не «перемещается» к ней; чужой армии (не ОКВ) резервом ОКВ не считается.
     #[test]
     fn move_reserve_excludes_target_own() {
@@ -1110,6 +1234,18 @@ mod decide {
         }
     }
 
+    /// В начале операции марширует только танковая армия: ни ввода подвижной группы, ни ожидания у фронтов нет.
+    #[test]
+    fn no_mobile_options_on_first_hours() {
+        let sim = run(None, 3, |_| {});
+        for f in ["su_1bf", "su_1uf"] {
+            let c = commander(&sim, f).unwrap();
+            for d in &c.decisions {
+                assert!(!d.options.iter().any(|o| matches!(o.choice.kind, Kind::CommitMobile { .. } | Kind::WaitMobile)), "{f} {}: {:?}", d.tick, d.options.iter().map(|o| &o.choice.label).collect::<Vec<_>>());
+            }
+        }
+    }
+
     // ---- исполнение решений: по одному на семейство ----
 
     /// Командующий штаба `id` с единственным решением `ch` (как после `decide`).
@@ -1130,21 +1266,164 @@ mod decide {
         for _ in 0..hours { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
         sim
     }
-    /// То же, но командующие включаются после `hours` часов: их собственные решения не опережают проверяемое
-    /// (при подобранном характере Жуков может ввести танковую армию уже в первые часы).
-    fn quiet(side: Side, hours: u32) -> Sim {
-        let mut sim = load(None);
-        let mut pending = agents_core::command::control::command_mode(&mut sim, "agents", side).expect("режим");
-        for _ in 0..hours { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
-        agents_core::commander::enable(&mut sim, side);
-        sim
-    }
     use agents_core::command::directive::{Target, Task};
     use agents_core::commander::apply::{apply, execute_permitted};
 
+    /// Два решения подряд «замкнуть тот же котёл» (номер котла в картине сменился, центр сдвинулся на 3 км) — одна
+    /// директива; другой котёл — новая директива. Документ решения — на каждое.
+    #[test]
+    fn repeated_encircle_one_directive() {
+        use agents_core::commander::decide::adopt;
+        use agents_core::commander::picture::{ArmyView, PocketView};
+        use agents_core::geo::XY;
+        let mut sim = started(Side::Su, 3);
+        let (f, a, b) = (hq(&sim, "su_1bf"), hq(&sim, "su_8gva"), hq(&sim, "su_69a"));
+        let view = |h: u32| ArmyView { hq: h, advance_km: 10.0, strength: 1.0, enemy_est: 1.0, enemy_true: 1.0, to_objective_km: Some(50.0), broke_through: false };
+        let pocket = |x: f64| PocketView { center: XY::new(x, 0.0), enemy_est: 2.0, gap_km: 1.0, by: vec![a, b] };
+        let pic = |pockets: Vec<PocketView>| Picture { tick: sim.world.tick, armies: vec![view(a), view(b)], enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets, to_objective_km: Some(50.0) };
+        let (p0, p1, p2) = (pic(vec![pocket(100.0)]), pic(vec![pocket(400.0), pocket(103.0)]), pic(vec![pocket(400.0), pocket(106.0)]));
+        let mut c = sim.commanders.list.iter().find(|c| c.hq == f).unwrap().clone();
+        let prof = sim.rules.commanders.profiles[c.profile].clone();
+        let sc = |k: Kind| vec![score(&choice(k), &prof.motives, &prof.traits, &sim.rules.commanders.weights, false)];
+        let (s0, s1, s2) = (sc(Kind::Encircle { pocket: 0 }), sc(Kind::Encircle { pocket: 1 }), sc(Kind::Encircle { pocket: 0 }));
+        let issued = |sim: &Sim| sim.command.in_transit.iter().filter(|(_, d)| d.from == f && d.note == "проверка").count();
+        let docs = |sim: &Sim| sim.documents.iter().filter(|d| d.hq == f && d.text.starts_with(DOC_PREFIX)).count();
+        let tick = sim.world.tick;
+        let d0 = docs(&sim);
+        c.picture = Some(p0);
+        adopt(&mut sim, &mut c, s0, 0, tick, "проверка".into());
+        let n = issued(&sim);
+        assert_eq!(n, 2, "по директиве каждой охватывающей армии");
+        c.picture = Some(p1);
+        adopt(&mut sim, &mut c, s1, 0, tick + 1, "проверка".into());
+        assert_eq!(issued(&sim), n, "тот же котёл — директивы заново не отдаются");
+        assert_eq!(docs(&sim), d0 + 2);
+        // другой котёл
+        c.picture = Some(p2);
+        adopt(&mut sim, &mut c, s2, 0, tick + 2, "проверка".into());
+        assert_eq!(issued(&sim), n + 2);
+    }
+
+    /// Тот же поворот к объекту соперника подряд — одна директива.
+    #[test]
+    fn repeated_turn_one_directive() {
+        use agents_core::commander::decide::adopt;
+        let mut sim = started(Side::Su, 3);
+        let (f, tank) = (hq(&sim, "su_1bf"), hq(&sim, "su_2gta"));
+        let mut c = sim.commanders.list.iter().find(|c| c.hq == f).unwrap().clone();
+        c.picture = Some(Picture { tick: sim.world.tick, armies: vec![], enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets: vec![], to_objective_km: Some(50.0) });
+        let prof = sim.rules.commanders.profiles[c.profile].clone();
+        let k = Kind::TurnToRival { hq: tank, at: agents_core::geo::XY::new(5.0, 5.0) };
+        let tick = sim.world.tick;
+        for t in 0..3 {
+            let s = vec![score(&choice(k.clone()), &prof.motives, &prof.traits, &sim.rules.commanders.weights, false)];
+            adopt(&mut sim, &mut c, s, 0, tick + t, "проверка".into());
+            // «продолжать по плану» между повторами не сбрасывает замысел
+            let s = vec![score(&choice(Kind::Continue), &prof.motives, &prof.traits, &sim.rules.commanders.weights, true)];
+            adopt(&mut sim, &mut c, s, 0, tick + t, "проверка".into());
+            assert_eq!(c.intent, Some(k.clone()));
+        }
+        assert_eq!(sim.command.in_transit.iter().filter(|(_, d)| d.from == f && d.to == Target::Hq(tank)).count(), 1);
+    }
+
+    /// Повод «армия прорвала оборону» — один раз на армию; снова — только если армия теряла прорыв не меньше 12 ч.
+    #[test]
+    fn breakthrough_trigger_once() {
+        use agents_core::commander::decide::trigger;
+        use agents_core::commander::picture::ArmyView;
+        let sim = started(Side::Su, 1);
+        let (f, a) = (hq(&sim, "su_1bf"), hq(&sim, "su_8gva"));
+        let mut c = sim.commanders.list.iter().find(|c| c.hq == f).unwrap().clone();
+        let pic = |tick: u32, broke: bool| Picture { tick, armies: vec![ArmyView { hq: a, advance_km: 20.0, strength: 1.0, enemy_est: 1.0, enemy_true: 1.0, to_objective_km: Some(50.0), broke_through: broke }],
+            enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets: vec![], to_objective_km: Some(50.0) };
+        let mut fired = Vec::new();
+        // прорыв на 10-м часу, потеря на 3 ч, снова прорыв; потеря на 12 ч, снова прорыв
+        let broke = |t: u32| (10..=20).contains(&t) || (24..=30).contains(&t) || t >= 43;
+        c.picture = Some(pic(0, false));
+        for t in 1..50 {
+            let p = pic(t, broke(t));
+            if trigger(&sim, &mut c, &p, t).is_some_and(|w| w.contains("прорвала оборону")) { fired.push(t); }
+            c.picture = Some(p);
+        }
+        assert_eq!(fired, vec![10, 43]);
+    }
+
+    /// Полный путь разрешения: армия поднимает запросы на отход → они ждут срока ответа → верхняя инстанция (Гитлер
+    /// с сильной поправкой «спасти армию») разрешает → разрешённый отход отдаётся дивизиям распоряжением их штаба.
+    #[test]
+    fn permission_path_end_to_end() {
+        use agents_core::commander::profile::Motive;
+        let mut sim = load(None);
+        let mut pending = agents_core::command::control::command_mode(&mut sim, "agents", Side::De).expect("режим");
+        for _ in 0..2 { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
+        agents_core::commander::enable(&mut sim, Side::De);
+        let hitler = sim.rules.commanders.profiles.iter().position(|p| p.hqs.iter().any(|h| h == "de_hc")).unwrap();
+        sim.rules.commanders.profiles[hitler].motives.0[Motive::Save as usize] = 1.0;
+        sim.rules.commanders.profiles[hitler].motives.0[Motive::Hold as usize] = 0.0;
+        let a = hq(&sim, "de_9a");
+        let k = Kind::Withdraw { hq: a };
+        let mut c = decided(&mut sim, "de_9a", choice(k.clone()));
+        let at = agents_core::commander::apply::rear_of(&sim, a).expect("рубеж в глубине");
+        c.withdraw_at = vec![(a, at)];
+        let (n0, t0) = (sim.command.requests.len(), sim.world.tick);
+        apply(&mut sim, &c, &k, t0);
+        let n1 = sim.command.requests.len();
+        assert!(n1 > n0);
+        let wait = sim.rules.command.de.permission_hours as u32;
+        for _ in 0..wait + 2 {
+            // до срока ответа запросы ждут
+            if sim.world.tick < t0 + wait { assert!(sim.command.requests[n0..n1].iter().all(|r| r.answer.is_none()), "ответ раньше срока: час {}", sim.world.tick); }
+            agents_core::command::control::feed(&mut sim, &mut pending, false);
+            sim.step();
+        }
+        let mine = &sim.command.requests[n0..n1];
+        assert!(mine.iter().all(|r| r.answer == Some(true) && r.answered_at == t0 + wait), "{:?}", mine.iter().map(|r| (r.answer, r.answered_at)).collect::<Vec<_>>());
+        let top = commander(&sim, "de_hc").unwrap();
+        assert!(top.decisions.iter().any(|d| d.tick == t0 + wait && matches!(d.options[d.chosen].choice.kind, Kind::Permit { .. })));
+        for r in mine {
+            let div = agents_core::command::passing::target_id(&sim, Target::Division(r.division));
+            assert!(sim.documents.iter().any(|d| d.hq == r.hq && d.to.contains(&div) && d.rule.as_deref() == Some("разрешение верхней инстанции на отход") && d.text.contains("отходить")), "{div}");
+        }
+    }
+
+    /// В часе, когда у верхней инстанции ждут несколько запросов, она сначала отвечает на все запросы, потом решает
+    /// прочее (резерв, деблокирование) — даже когда прочее (продолжение деблокирования) выгоднее ответа.
+    #[test]
+    fn high_answers_requests_first() {
+        // ответ дорог (потери), перемещение резерва выгодно
+        let o = json!({"commanders.profiles.hitler.traits.persistence": 1.0, "commanders.weights.persistence": 3.0});
+        let mut sim = load(Some(&o));
+        let mut pending = agents_core::command::control::command_mode(&mut sim, "agents", Side::De).expect("режим");
+        for _ in 0..2 { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
+        agents_core::commander::enable(&mut sim, Side::De);
+        let a = hq(&sim, "de_9a");
+        let ds: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| { let d = &sim.world.divisions[i]; !d.state.out() && { let mut x = d.hq; loop { if x == a { break true; } match sim.world.hqs[x as usize].parent { Some(p) => x = p, None => break false } } } }).collect();
+        for &i in ds.iter().take(ds.len() * 6 / 10) { sim.world.divisions[i].cut_since = Some(0); }
+        let wait = sim.rules.command.de.permission_hours as u32;
+        let tick = sim.world.tick + wait;
+        for (k, corps) in ["de_ci", "de_v"].iter().enumerate() {
+            let div = ds[ds.len() - 1 - k] as u32;
+            sim.command.requests.push(agents_core::command::control::Request { hq: hq(&sim, corps), tick: tick - wait, division: div, at: agents_core::geo::XY::new(0.0, 0.0), answer: None, answered_at: 0 });
+        }
+        let mine = sim.command.requests.len();
+        sim.world.tick = tick;
+        // действующее решение верхней инстанции — деблокирование 9 А: его продолжение выгоднее ответа (настойчивость)
+        let top = hq(&sim, "de_hc");
+        let prof = sim.rules.commanders.for_hq("de_hc").unwrap().clone();
+        let relief = agents_core::commander::options_de::options_high(&sim, top, &prof).into_iter().find(|c| matches!(c.kind, Kind::Relief { .. })).expect("деблокирование").kind;
+        sim.commanders.list.iter_mut().find(|c| c.hq == top).unwrap().intent = Some(relief);
+        agents_core::commander::decide::cycle(&mut sim, tick);
+        let top = commander(&sim, "de_hc").unwrap();
+        let kinds: Vec<&Kind> = top.decisions.iter().filter(|d| d.tick == tick).map(|d| &d.options[d.chosen].choice.kind).collect();
+        assert!(sim.command.requests[mine - 2..mine].iter().all(|r| r.answer.is_some()), "{kinds:?}");
+        let first_other = kinds.iter().position(|k| !matches!(k, Kind::Permit { .. } | Kind::Forbid { .. })).unwrap_or(kinds.len());
+        assert!(first_other >= 2, "{kinds:?}");
+        assert!(kinds[first_other..].iter().all(|k| !matches!(k, Kind::Permit { .. } | Kind::Forbid { .. })), "{kinds:?}");
+    }
+
     #[test]
     fn apply_commit_mobile_sets_role_and_deep_task() {
-        let mut sim = quiet(Side::Su, 3);
+        let mut sim = started(Side::Su, 3);
         let (f, tank) = (hq(&sim, "su_1bf"), hq(&sim, "su_1gta"));
         assert_eq!(sim.command.role_hq[tank as usize], Role::Mobile);
         let k = Kind::CommitMobile { hq: tank };
@@ -1180,7 +1459,7 @@ mod decide {
 
     #[test]
     fn apply_shift_and_turn_issue_directives() {
-        let mut sim = quiet(Side::Su, 3);
+        let mut sim = started(Side::Su, 3);
         let (f, a, b) = (hq(&sim, "su_1bf"), hq(&sim, "su_69a"), hq(&sim, "su_1gta"));
         let tick = sim.world.tick;
         let k = Kind::ShiftMainBlow { to: vec![a] };
