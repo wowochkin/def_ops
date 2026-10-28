@@ -2031,3 +2031,51 @@ body.resizing { cursor: col-resize; user-select: none; }
 .parks-t td { padding: 2px 10px 2px 0; border-bottom: 1px solid #f4f2ed; }
 .parks-n { display: flex; align-items: center; gap: 4px; }
 .parks-n b { min-width: 16px; text-align: center; }
+
+/* вкладка «Командующий»: характер, мотивы, обстановка, решения, разговор; слой на карте и график состязания */
+.ag-panel.fc-panel.wide { width: 440px; bottom: 100px; max-height: none; }
+.cm-tab h4 { margin-bottom: 4px; }
+.cm-head { display: flex; flex-direction: column; gap: 1px; } .cm-head b { font: 700 14px/1.2 'PT Serif', Georgia, serif; }
+.cm-rows { display: flex; flex-direction: column; gap: 3px; }
+.cm-row { display: grid; grid-template-columns: 118px 1fr 74px; align-items: center; gap: 8px; } .cm-row em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+.cm-bar { position: relative; display: block; height: 8px; background: var(--acc-bg); border-radius: 4px; }
+.cm-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.cm-bar b { position: absolute; top: -3px; bottom: -3px; border: 1px dashed var(--muted); border-radius: 3px; }
+.cm-bar u { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--text); text-decoration: none; }
+.cm-mood { background: #fff; border: 1px solid var(--line); border-radius: 4px; display: block; }
+.cm-mood polyline { fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke; } .cm-mood .conf { stroke: #0f766e; } .cm-mood .stress { stroke: #b3261e; }
+.cm-mood line { stroke: var(--muted); stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.cm-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: 11px; color: var(--muted); } .cm-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; }
+.cm-now { background: var(--acc-bg); border-radius: 6px; padding: 5px 8px; }
+.cm-pic th { text-align: left; font-weight: 400; color: var(--muted); font-size: 11px; padding: 0 4px 2px 0; } .cm-pic th.num { text-align: right; }
+.cm-pic td { padding: 3px 4px 3px 0; vertical-align: top; border-top: 1px solid var(--line); }
+.cm-pic small.muted, .cm-tab .muted { color: var(--muted); }
+.cm-ribbon { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.cm-ribbon button { border-radius: 12px; padding: 2px 9px; background: var(--acc-bg); border-color: transparent; font-size: 11px; text-align: left; }
+.cm-ribbon button.on { border-color: #0f766e; background: #fff; box-shadow: 0 0 0 1px #0f766e inset; } .cm-ribbon button.future { opacity: .55; }
+.cm-opts th { text-align: left; font-weight: 400; color: var(--muted); font-size: 11px; } .cm-opts th.num { text-align: right; }
+.cm-opts td { padding: 4px 6px 4px 0; vertical-align: middle; border-top: 1px solid var(--line); }
+.cm-opts tr.chosen td { font-weight: 600; } .cm-opts .ok { color: #0f766e; }
+.cm-stack { display: flex; height: 10px; width: 100%; min-width: 80px; background: var(--acc-bg); border-radius: 3px; overflow: hidden; } .cm-stack i { display: block; height: 100%; } .cm-stack i.neg { opacity: .35; }
+.cm-why { background: var(--acc-bg); border-radius: 8px; padding: 8px 10px; line-height: 1.4; }
+.cm-chat { border-top: 1px solid var(--line); padding-top: 8px; }
+.cm-sugg { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; } .cm-sugg button { border-radius: 12px; padding: 2px 9px; font-size: 11px; background: var(--acc-bg); border-color: transparent; }
+.cm-qa { display: flex; flex-direction: column; gap: 4px; }
+.cm-chat .ag-msgs { max-height: 220px; } .cm-chat .ag-ask input { flex: 1; }
+.cm-overlay { position: fixed; z-index: 5; pointer-events: none; overflow: visible; }
+.cm-overlay path { fill: none; } .cm-overlay .intent path { stroke: #b3261e; stroke-width: 4; } .cm-overlay .mind path { stroke: #b3261e; stroke-width: 2; stroke-dasharray: 8 5; }
+.cm-overlay .rival path { stroke: #d97706; stroke-width: 2.5; stroke-dasharray: 2 5; stroke-linecap: round; }
+.cm-overlay text { font: 600 11px 'Roboto Condensed', system-ui, sans-serif; paint-order: stroke; stroke: rgba(253,252,249,.9); stroke-width: 3px; }
+.cm-overlay .intent text { fill: #8e2420; } .cm-overlay .mind text { fill: #8e2420; font-weight: 500; } .cm-overlay .rival text { fill: #9a5200; }
+.cm-overlay .grp circle { fill: rgba(80,100,150,.22); stroke: #4b5f96; stroke-width: 1.5; } .cm-overlay .grp.res circle { stroke-dasharray: 3 3; fill: rgba(80,100,150,.1); } .cm-overlay .grp text { fill: #2f3e6b; text-anchor: middle; }
+.cm-overlay .origin { fill: #b3261e; stroke: #fff; stroke-width: 2; } .cm-overlay .obj circle { fill: rgba(253,252,249,.5); stroke: #6b5a4a; stroke-width: 2.5; } .cm-overlay .obj text { fill: #4a3f35; font-size: 12px; }
+.cm-maplegend { position: absolute; left: 14px; top: 104px; z-index: 6; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: calc(100% - 540px); background: rgba(253,252,249,.94); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 11px; }
+.cm-maplegend span { display: inline-flex; align-items: center; gap: 5px; } .cm-maplegend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid #b3261e; }
+.cm-maplegend .l-dash { border-top: 2px dashed #b3261e; } .cm-maplegend .l-dot { border-top: 3px dotted #d97706; } .cm-maplegend .l-circ { width: 12px; height: 12px; border: 1.5px solid #4b5f96; background: rgba(80,100,150,.22); border-radius: 50%; }
+.cm-chart { position: absolute; left: 14px; bottom: 128px; z-index: 6; width: min(640px, calc(100% - 480px)); background: rgba(253,252,249,.96); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 6px; box-shadow: 0 4px 18px rgba(40,30,10,.12); }
+.cm-chart-h { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; } .cm-chart-h span { color: var(--muted); font-size: 11px; }
+.cm-chart svg { display: block; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 4px; margin-top: 4px; }
+.cm-chart polyline { stroke-width: 2.2; vector-effect: non-scaling-stroke; } .cm-chart polyline.cur { stroke-width: 3; }
+.cm-chart line.base { stroke: var(--line); } .cm-chart line.mark { stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; } .cm-chart line.now { stroke: var(--text); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.cm-chart text { font: 600 10px 'Roboto Condensed', system-ui, sans-serif; }
+.cm-chart-f { color: var(--muted); font-size: 11px; margin-top: 3px; }

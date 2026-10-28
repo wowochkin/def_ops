@@ -45,3 +45,12 @@ describe('состояние управления в игре на агентн�
     expect(o[0]).toMatchObject({ hq: 'su_8gva', kind: 'defend', form: 'order' });
   });
 });
+
+describe('режим «Командующие» в переигровке', () => {
+  it('commanders — вариант «Советские штабы» и по умолчанию', async () => {
+    const { AGENT_COMMANDS, DEFAULT_AGENT_COMMAND } = await import('../src/sim/agent-scenarios');
+    expect(AGENT_COMMANDS.map((c) => c.id)).toContain('commanders');
+    expect(AGENT_COMMANDS.find((c) => c.id === 'commanders')?.title).toBe('Командующие');
+    expect(DEFAULT_AGENT_COMMAND).toBe('commanders');
+  });
+});

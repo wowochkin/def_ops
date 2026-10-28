@@ -10,7 +10,7 @@ import { nameCase } from '../src/voice/speech';
 import { Dispatcher, YES_NO_SAY } from '../src/voice/dispatch';
 import { commandActions, setSectionSource, type CommandDeps } from '../src/voice/actions/command';
 import {
-  adviceArrived, adviceReady, decisionMissing, draftReportText, parseStaff, planArrived, press, projectHas, releaseStaff, staffActions, taskOf, variantText,
+  adviceArrived, adviceReady, commanderAction, decisionMissing, draftReportText, parseStaff, planArrived, press, projectHas, releaseCommander, releaseStaff, staffActions, taskOf, variantText,
   type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from '../src/voice/actions/staff';
 import { parseDictation, stopReading } from '../src/voice/dictation';
@@ -822,5 +822,22 @@ describe('подсветка исполненного голосом', () => {
     staff({ plan: plan() });
     await press('command.variant.pick', { n: 1 }, () => {});
     expect(flashState()).toBeNull();
+  });
+});
+
+describe('разговор с командующим голосом', () => {
+  it('«спроси командующего …» и вопросы подсказок — пока вкладка открыта; закрыта — причина', async () => {
+    expect(parseStaff('спроси командующего почему так решил', 'replay')).toEqual({ say: expect.stringMatching(/вкладк[ауи] «Командующий»/) });
+    expect(parseStaff('почему так решил', 'replay')).toBeNull();
+    const asked: string[] = [];
+    const get = () => ({ name: 'Жуков', ask: (q: string) => { asked.push(q); return 'Потому что.'; } });
+    offs.push(register(commanderAction(get)), () => releaseCommander(get));
+    expect(parseStaff('спроси командующего почему так решил', 'replay')).toEqual({ id: 'commander.ask', params: { question: 'почему так решил' } });
+    expect(parseStaff('почему так решил', 'replay')).toEqual({ id: 'commander.ask', params: { question: 'почему так решил' } });
+    expect(parseStaff('как оцениваешь положение', 'replay')).toMatchObject({ id: 'commander.ask' });
+    expect(await act('commander.ask', { question: 'почему так решил' })).toBe('Потому что.');
+    expect(asked).toEqual(['почему так решил']);
+    section = 'maps';
+    expect(await act('commander.ask', { question: 'x' })).toMatch(/другой раздел|переигровк/);
   });
 });

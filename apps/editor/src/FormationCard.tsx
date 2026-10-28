@@ -3,7 +3,7 @@
  * агентная — штаб по ходу дивизий) и обнаруженный противник в игре (разведсводка). Справа, как карточка агента;
  * «×» и Esc закрывают.
  */
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { IntelReport } from '@def-ops/sim';
 import { ECHELON_RU, type FormationCardData } from './formation-card';
 
@@ -21,16 +21,33 @@ export function useEsc(on: boolean, close: () => void) {
   }, [on, close]);
 }
 
-export function FormationPanel({ c, onClose, onPick, actions, note }: { c: FormationCardData; onClose: () => void; onPick: (id: string, hq: boolean) => void; actions?: ReactNode; note?: string }) {
+/** Вкладка карточки (рядом со «Сводкой»): тело строится заново при каждой перерисовке — следует за часом. */
+export interface PanelTab { id: string; label: string; body: ReactNode }
+
+export function FormationPanel({ c, onClose, onPick, actions, note, tabs, onTab }: { c: FormationCardData; onClose: () => void; onPick: (id: string, hq: boolean) => void; actions?: ReactNode; note?: string;
+  /** Дополнительные вкладки; без них карточка — одна «Сводка». */
+  tabs?: PanelTab[];
+  /** Открытая вкладка изменилась (null — «Сводка»). */
+  onTab?: (id: string | null) => void }) {
+  const [tab, setTabState] = useState<string | null>(null);
+  const setTab = (id: string | null) => { setTabState(id); onTab?.(id); };
+  // другая карточка или у штаба пропала вкладка — снова «Сводка»
+  const extra = tabs?.find((x) => x.id === tab);
+  useEffect(() => { setTabState(null); onTab?.(null); }, [c.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (tab && !extra) { setTabState(null); onTab?.(null); } }, [tab, extra]); // eslint-disable-line react-hooks/exhaustive-deps
   const cut = c.hq ? (c.cutOff.n ? `${c.cutOff.n} из ${c.cutOff.of} соединений` : 'нет') : c.cutOff.n ? 'да — подвоза нет' : 'нет';
   return (
-    <div className="ag-panel fc-panel">
+    <div className={`ag-panel fc-panel${extra ? ' wide' : ''}`}>
       <div className="ag-head">
         <div><b>{c.name}</b><span>{c.sideName} · {c.echelon}{c.parent ? <> · в подчинении: <a className="fc-link" onClick={() => onPick(c.parent!.id, true)}>{c.parent.name}</a></> : ''}</span>
           <span>на {when(c.time)} МСК{note ? ` · ${note}` : ''}</span></div>
         <button className="x" onClick={onClose} title="Закрыть (Esc)">×</button>
       </div>
-      <div className="ag-body">
+      {tabs && tabs.length > 0 && <div className="ag-tabs">
+        <button className={!extra ? 'on' : ''} onClick={() => setTab(null)}>Сводка</button>
+        {tabs.map((x) => <button key={x.id} className={x.id === tab ? 'on' : ''} onClick={() => setTab(x.id)}>{x.label}</button>)}
+      </div>}
+      {extra ? extra.body : <div className="ag-body">
         <section>
           <div className={`ag-state ${c.status === 'destroyed' ? 'destroyed' : c.status === 'pending' ? '' : c.posture === 'наступает' ? 'attack' : c.posture === 'обороняется' ? 'defense' : c.posture === 'отходит' ? 'withdraw' : 'march'}`}>
             {c.status === 'pending' ? 'ещё не введено в сражение' : c.status === 'destroyed' ? (c.hq ? 'все соединения уничтожены' : 'уничтожено') : c.posture}
@@ -58,7 +75,7 @@ export function FormationPanel({ c, onClose, onPick, actions, note }: { c: Forma
             ))}
           </ul>
         </section>}
-      </div>
+      </div>}
     </div>
   );
 }

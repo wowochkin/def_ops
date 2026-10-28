@@ -2080,7 +2080,7 @@ export function openModelBasis(op: string) {
 const MODE_KEY = 'def_ops.command.mode';
 /** Режим игры на агентной модели, выбранный в окне передачи командования (по умолчанию — «гибрид», ближе к истории). */
 export function savedGameMode(): GameMode {
-  try { const v = localStorage.getItem(MODE_KEY); return v === 'legacy' || v === 'agents' || v === 'hybrid' ? v : 'hybrid'; } catch { return 'hybrid'; }
+  try { const v = localStorage.getItem(MODE_KEY); return v === 'legacy' || v === 'agents' || v === 'hybrid' || v === 'commanders' ? v : 'hybrid'; } catch { return 'hybrid'; }
 }
 
 export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, kbSummary, llm, hasSaved = false, agents = false, onStart, onCancel }: {
@@ -2094,11 +2094,11 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
   const [enemy, setEnemy] = useState<EnemyMode>(llm.check.state === 'fail' ? 'passive' : 'llm');
   const [mode, setMode] = useState<GameMode>(savedGameMode);
   useAction({
-    id: 'command.gameMode', section: 'replay', title: 'Режим командования', describe: 'Режим игры на агентной модели: как сейчас (legacy), штабы-агенты (agents), гибрид (hybrid).',
-    params: { type: 'object', properties: { mode: { enum: ['legacy', 'agents', 'hybrid'] } }, required: ['mode'] }, say: ['режим штабы-агенты', 'режим гибрид'],
+    id: 'command.gameMode', section: 'replay', title: 'Режим командования', describe: 'Режим игры на агентной модели: как сейчас (legacy), штабы-агенты (agents), гибрид (hybrid), командующие (commanders).',
+    params: { type: 'object', properties: { mode: { enum: ['legacy', 'agents', 'hybrid', 'commanders'] } }, required: ['mode'] }, say: ['режим штабы-агенты', 'режим гибрид', 'режим командующие'],
     available: () => (agents ? true : 'режим — только в игре на агентной модели'), highlight: (p: { mode: GameMode }) => hl(`mode-${p?.mode}`),
     run: async (p: { mode: GameMode }) => {
-      if (!MODE_TITLE[p?.mode]) return 'Скажите: «как сейчас», «штабы-агенты» или «гибрид».';
+      if (!MODE_TITLE[p?.mode]) return 'Скажите: «как сейчас», «штабы-агенты», «гибрид» или «командующие».';
       setMode(p.mode);
       try { localStorage.setItem(MODE_KEY, p.mode); } catch { /* */ }
       return `Режим — «${MODE_TITLE[p.mode].title}»: ${MODE_TITLE[p.mode].hint}.`;
@@ -2143,7 +2143,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
           <li>{enemy === 'agents' ? <>Немецкой стороной с того же момента командуют штабы-агенты по уставам: верхняя инстанция подаёт исторические решения в их часы, ниже штабы решают сами.</>
             : enemy === 'passive' ? <>Немецкая сторона с того же момента держится прежних приказов — без штаба (для пробы без модели).</>
             : <>Немецкой стороной с того же момента командует штаб на языковой модели. На каждом ходу он получает свою обстановку — то, что знал бы немецкий штаб, — и отдаёт приказы.</>} Обе стороны решают одновременно.</li>
-          <li>{agents && mode !== 'legacy' ? mode === 'hybrid' ? 'Вы — верхняя инстанция. Исторические директивы встанут в очередь первого хода (вкладка «Штабы»): пока они действуют, войска идут по приказам сценария; своя директива штабу снимает его со сценария — дальше решают штабы-агенты.' : 'Вы — верхняя инстанция: директивы фронтам, ниже решают штабы-агенты. Уже действующие исторические директивы встанут в очередь первого хода (вкладка «Штабы»).' : 'Исторические приказы после этого момента отменяются. Приказы, отданные раньше и ещё не дошедшие до войск, остаются в силе.'}</li>
+          <li>{agents && mode !== 'legacy' ? mode === 'commanders' ? 'Вы — командующий: возьмите штаб (вкладка «Штабы») — его решения становятся вашими. Остальные командующие, свои и немецкие, решают сами: у каждого свой характер, мотивы и устав. Уже действующие исторические директивы встанут в очередь первого хода.' : mode === 'hybrid' ? 'Вы — верхняя инстанция. Исторические директивы встанут в очередь первого хода (вкладка «Штабы»): пока они действуют, войска идут по приказам сценария; своя директива штабу снимает его со сценария — дальше решают штабы-агенты.' : 'Вы — верхняя инстанция: директивы фронтам, ниже решают штабы-агенты. Уже действующие исторические директивы встанут в очередь первого хода (вкладка «Штабы»).' : 'Исторические приказы после этого момента отменяются. Приказы, отданные раньше и ещё не дошедшие до войск, остаются в силе.'}</li>
           <li>Противник виден только в пределах разведки (туман войны). Игра сохраняется автоматически после каждого хода.</li>
           <li className="take-kb">Состояние соединений на этот момент: {kbSummary ? <>{takeoverText(kbSummary)}. </> : <span className="muted">сверка с базой знаний… </span>}
             <button className="link" onClick={() => { onCancel(); openModelBasis(scenario); }} title="Моделирование → Операции: факты базы, из которых собраны входы модели">Основа модели</button></li>
@@ -2158,7 +2158,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
         </div>
         {agents && <div className="take-enemy take-mode">
           <div className="take-mode-h">Командование своей стороной</div>
-          {(['hybrid', 'agents', 'legacy'] as GameMode[]).map((k) => <label key={k} className={mode === k ? 'on' : ''} data-hl={`mode-${k}`}>
+          {(['hybrid', 'commanders', 'agents', 'legacy'] as GameMode[]).map((k) => <label key={k} className={mode === k ? 'on' : ''} data-hl={`mode-${k}`}>
             <input type="radio" data-action="command.gameMode" checked={mode === k} onChange={() => void act('command.gameMode', { mode: k })} />
             <span><b>{MODE_TITLE[k].title}</b> — {MODE_TITLE[k].hint}</span></label>)}
         </div>}

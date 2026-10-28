@@ -28,6 +28,7 @@ import { short } from '../report';
 import { hl, note as lit, noted, type HlTarget } from '../highlight';
 import { nameCase, numberWords, plural, speakable } from '../speech';
 import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
+import { SUGGESTIONS } from '../../commander-view';
 
 // ---------------------------------------------------------------- типы состояния (общие с CommandView)
 
@@ -388,6 +389,40 @@ export function releaseStaff(get: () => StaffDeps): void {
 }
 
 const TEXT = { type: 'string' };
+
+// ---------------------------------------------------------------- разговор с командующим («Переигровка», вкладка «Командующий»)
+
+/** Открытая вкладка «Командующий»: спросить (ответ — на выбранный час, в разговоре на экране) и чей это командующий. */
+export interface CommanderDeps { name: string; ask(question: string): string }
+let commanderLive: (() => CommanderDeps | null) | null = null;
+/** Действие «спроси командующего»: get — вкладка (null — закрыта); снимается releaseCommander. */
+export function commanderAction(get: () => CommanderDeps | null): Action {
+  commanderLive = get;
+  return {
+    id: 'commander.ask', section: 'replay', title: 'Спросить командующего',
+    describe: 'Задаёт командующему, чья вкладка открыта в карточке штаба, вопрос (почему так решил, что знал о противнике, что думал о соседе, почему не выбрал другой вариант, чего хочет сейчас, как оценивает положение); ответ — из записанного разбора на выбранный час, без языковой модели.',
+    params: { type: 'object', properties: { question: TEXT }, required: ['question'] },
+    say: ['спроси командующего: почему так решил?', 'почему так решил'],
+    available: () => { const r = inReplay(); return r !== true ? r : get() ? true : 'вкладка «Командующий» не открыта. Откройте карточку штаба фронта и вкладку «Командующий»'; },
+    highlight: () => hl('commander-chat'),
+    run: async (p: { question: string }) => {
+      const q = String(p?.question ?? '').trim();
+      const d = get();
+      if (!d) return 'Вкладка «Командующий» не открыта.';
+      return q ? d.ask(q) : 'О чём спросить командующего?';
+    },
+  };
+}
+export function releaseCommander(get: () => CommanderDeps | null): void { if (commanderLive === get) commanderLive = null; }
+const COMMANDER_PHRASES = SUGGESTIONS.map((s) => norm(s));
+/** Разговор с командующим голосом: «спроси командующего …» — всегда; вопрос из подсказок — пока вкладка открыта. */
+function parseCommander(t: string): PhraseHit | null {
+  const m = /^(?:спроси|спросите|спросить) командующ\p{L}*(?: (.+))?$/u.exec(t);
+  if (m) return m[1] ? hit('commander.ask', { question: m[1] }, 'откройте карточку штаба фронта и вкладку «Командующий»') : null;
+  if (commanderLive?.() && COMMANDER_PHRASES.includes(t)) return hit('commander.ask', { question: t });
+  return null;
+}
+
 /** Причина «нельзя» во время расчёта хода (кнопки и голос). */
 export const BUSY = 'считаю ход — подождите, посредник доложит итоги';
 
@@ -894,6 +929,8 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
   let t = norm(rest);
   let m: RegExpExecArray | null;
   const v = live?.().view ?? null;
+  const cm = parseCommander(t);
+  if (cm) return cm;
   // к советнику по имени: «советник, дай два варианта», «советник, где лучше наступать»
   if ((m = /^советник\p{L}* (.+)$/u.exec(t))) {
     if (/^(?:стоп|хватит|остановись|замолчи)$/.test(m[1])) return hit('command.advisor.stop');

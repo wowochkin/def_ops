@@ -31,8 +31,12 @@ import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } fro
 import { nearestFeature, OVER_MAP, shownFeatures, unitAt, unitPlace } from './map-pick';
 import { agentHqCard, formationCard } from './formation-card';
 import { FormationPanel, useEsc } from './FormationCard';
+import { CommanderPanel } from './CommanderPanel';
+import { CommanderOverlay } from './CommanderOverlay';
+import { RivalryChart } from './RivalryChart';
+import { commanderOf } from './commander-view';
 
-import { AGENT_COMMANDS, AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentCommand, type AgentVariant } from './sim/agent-scenarios';
+import { AGENT_COMMANDS, AGENT_SCENARIOS, agentVariants, DEFAULT_AGENT_COMMAND, DESKTOP, runAgents, type AgentCommand, type AgentVariant } from './sim/agent-scenarios';
 import { coreEditsFor, KB_WAIT, kbSettled, takeoverNow } from './sim/kb-recompile';
 import { kbStamp, type KbStamp } from './sim/kb-stamp';
 import { KbStampNote } from './KbStampNote';
@@ -209,8 +213,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   // параметры агентной модели: базовые (agents-v0.json) или сохранённый вариант (калибровка в «Моделировании»)
   const [variants, setVariants] = useState<AgentVariant[]>(agentVariants);
   const [variantId, setVariantId] = useState('');
-  // кто решает за советские штабы в агентной модели; по умолчанию — фронты по истории, ниже штабы-агенты
-  const [command, setCommandState] = useState<AgentCommand>(() => { try { const v = localStorage.getItem(COMMAND_KEY); return AGENT_COMMANDS.some((c) => c.id === v) ? v as AgentCommand : 'fronts'; } catch { return 'fronts'; } });
+  // кто решает за советские штабы в агентной модели; по умолчанию — командующие, ниже штабы-агенты
+  const [command, setCommandState] = useState<AgentCommand>(() => { try { const v = localStorage.getItem(COMMAND_KEY); return AGENT_COMMANDS.some((c) => c.id === v) ? v as AgentCommand : DEFAULT_AGENT_COMMAND; } catch { return DEFAULT_AGENT_COMMAND; } });
   const setCommand = (c: AgentCommand) => { setCommandState(c); try { localStorage.setItem(COMMAND_KEY, c); } catch { /* */ } };
   useEffect(() => { const f = () => setVariants(agentVariants()); window.addEventListener('def_ops.agents.variants', f); return () => window.removeEventListener('def_ops.agents.variants', f); }, []);
   const agentOp = DESKTOP ? AGENT_SCENARIOS[scenario] : undefined;
@@ -342,6 +346,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const agentHour = agentRun && time ? hourOf(agentRun.trace.start, time) : 0;
   const units = result?.units ?? null;
   const [cardSel, setCardSel] = useState<string | null>(null);
+  /** Открытая вкладка карточки штаба (null — «Сводка»); «commander» — командующий: слой на карте и график состязания. */
+  const [cardTab, setCardTab] = useState<string | null>(null);
   const live = useRef({ doc, level, time, focus, units });
   live.current = { doc, level, time, focus, units };
   useEffect(() => {
@@ -388,6 +394,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     if (agentRun) return agentHqCard(agentRun.trace, cardSel, agentHour);
     return units ? formationCard(units, cardSel, time) : null;
   }, [cardSel, time, units, agentRun, agentHour]);
+  /** Командующий выбранного штаба (режим «Командующие» агентной модели) и названия штабов для его вкладки. */
+  const commander = useMemo(() => (agentRun && cardSel ? commanderOf(agentRun.trace, cardSel) : null), [agentRun, cardSel]);
+  const hqNames = useMemo(() => Object.fromEntries((agentRun?.trace.hqs ?? []).map((h) => [h.id, h.name])), [agentRun]);
+  const commanderOpen = !!(commander && agentRun && cardTab === 'commander' && !agentSel);
   /** Где знак выбранного нарисован сейчас: на текущем масштабе, иначе — на любом (агентная дивизия — расчётное положение на час). */
   const agentSelAt = useMemo((): LngLat | null => {
     const sel = agentSel ?? cardSel;
@@ -565,7 +575,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
-          {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)}
+          {commanderOpen && eng && <CommanderOverlay engine={eng} trace={agentRun!.trace} c={commander!} tick={agentHour} names={hqNames} />}
+          {commanderOpen && <RivalryChart trace={agentRun!.trace} tick={agentHour} current={commander!.hq} />}
+          {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)} onTab={setCardTab}
+            tabs={commander && agentRun ? [{ id: 'commander', label: 'Командующий', body: <CommanderPanel trace={agentRun.trace} c={commander} tick={agentHour} onTick={agentToHour} names={hqNames} /> }] : undefined}
             onPick={(id) => { if (agentRun?.trace.divisions.some((x) => x.id === id)) { setAgentSel(id); setCardSel(null); } else setCardSel(id); }}
             actions={agentRun ? <button onClick={showDivisions} title="Уровень корпуса с приближением к штабу">Показать дивизии</button> : undefined} />}
           {!agentSel && !card && <div className="ag-hint">{agentRun ? 'Щёлкните по дивизии — карточка агента и разговор с ним; по штабу — его карточка' : 'Щёлкните по знаку соединения — его карточка'}</div>}

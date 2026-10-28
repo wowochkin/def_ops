@@ -28,6 +28,7 @@ const SHARED: { file: string; names: string[] }[] = [
   { file: 'Sectors.tsx', names: ['SectorPicker'] },
   { file: 'ui.tsx', names: ['Popover', 'BasemapControls'] },
   { file: 'FormationCard.tsx', names: ['IntelPanel'] },
+  { file: 'CommanderPanel.tsx', names: ['CommanderPanel', 'Chat'] },
   { file: 'ModelPicker.tsx', names: ['ModelPicker'] },
 ];
 
@@ -65,6 +66,8 @@ const EXCEPTIONS: { file: string; exact: string[]; why: string }[] = [
   { file: 'ReplayView.tsx', exact: ['() => step(-24)', '() => { if (!playing && cur >= t1) setTime(start); setPlaying(!playing); }', '() => step(24)', '(e) => setSpeed(+e.target.value)',
     '(e) => { setPlaying(false); setTime(fromMs(t0 + +e.target.value * H)); }', 'k'],
     why: 'проигрывание шкалы времени (назад, пуск, скорость, ползунок, пробел) — просмотр мышью; голосом — «покажи событие …»' },
+  { file: 'CommanderPanel.tsx', exact: ['(e) => setText(e.target.value)', '() => onTick(r.tick)'],
+    why: 'набор вопроса с клавиатуры — голосом «спроси командующего: …»; отметка в ленте решений переводит час — просмотр мышью, голосом — «покажи событие …»' },
   { file: 'Sectors.tsx', exact: ["() => { close(); setDrawing('wait'); }", '() => setDrawing(null)',
     '() => { const next = custom.filter((x) => x.id !== s.id); setCustom(next); try { localStorage.setItem(KEY(scenario), JSON.stringify(next)); } catch { /* */ } if (focus?.id === s.id) go(null); }'],
     why: 'свой участок рисуется и удаляется мышью — голосом участки не рисуются (выбор готового — «участок …»)' },

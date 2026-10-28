@@ -36,8 +36,11 @@ export function deleteAgentVariant(id: string) {
 export interface AgentRunOptions { seed: number; params?: Record<string, unknown>; edits?: Record<string, unknown>; de?: 'script' | 'doctrine'; su?: 'script' | 'doctrine'; withoutFires?: boolean; withoutWithdrawals?: boolean;
   /** Советские штабы: приказы сценария (нет), фронты по истории и ниже штабы-агенты, штабы-агенты под директивами Ставки. */
   command?: AgentCommand }
-export type AgentCommand = 'script' | 'fronts' | 'journals' | 'agents';
+export type AgentCommand = 'script' | 'fronts' | 'journals' | 'agents' | 'commanders';
+/** Кто решает за советские штабы по умолчанию. */
+export const DEFAULT_AGENT_COMMAND: AgentCommand = 'commanders';
 export const AGENT_COMMANDS: { id: AgentCommand; title: string; hint: string }[] = [
+  { id: 'commanders', title: 'Командующие', hint: 'фронты и немецкие верхние ступени — командующие со своим характером, мотивами и вариантами решения (вкладка «Командующий» в карточке штаба); ниже — штабы-агенты' },
   { id: 'script', title: 'приказы сценария', hint: 'все штабы — по историческим приказам; дивизии ведёт ядро' },
   { id: 'fronts', title: 'фронты по истории, ниже — штабы-агенты', hint: 'Ставка и фронты отдают армиям исторические распоряжения; армии, корпуса и дивизии решают сами по уставу' },
   { id: 'journals', title: 'армии по журналам (проверка)', hint: 'как «фронты по истории», и между распоряжениями фронта армия получает задачу выйти туда, где её главные силы были по журналу; это подсказка, а не решение штаба — проверка армейских агентов и ядра' },
