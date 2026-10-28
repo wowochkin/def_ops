@@ -10,7 +10,7 @@ use crate::world::Sim;
 /// Сколько часов держится одна сводка (одна и та же ошибка оценки).
 const REPORT_HOURS: u32 = 6;
 /// Дальность разведки в долях `contactKm`.
-const RECON_X: f64 = 3.0;
+pub(super) const RECON_X: f64 = 3.0;
 /// Расстояние продвижения, ближе которого направление наступления берётся не по смещению, а по цели, км.
 const AXIS_MIN_KM: f64 = 2.0;
 
@@ -117,7 +117,7 @@ fn objective_xy(sim: &Sim, hq: u32) -> Option<XY> {
 }
 
 /// Расстояние ближайшей дивизии штаба до его цели.
-fn dist_to_objective(sim: &Sim, hq: u32) -> Option<f64> {
+pub(super) fn dist_to_objective(sim: &Sim, hq: u32) -> Option<f64> {
     let o = objective_xy(sim, hq)?;
     divisions_of(sim, hq).into_iter().map(|i| sim.world.divisions[i].vars.pos.dist(o)).min_by(f64::total_cmp)
 }

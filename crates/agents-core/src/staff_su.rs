@@ -38,7 +38,7 @@ pub enum Ech {
     Committed,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct SuStaff {
     pub plan: Vec<Option<Plan>>,
     pub ech: Vec<Ech>,

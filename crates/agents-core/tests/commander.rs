@@ -1215,3 +1215,75 @@ mod decide {
         assert_eq!(d.immediate.as_ref().unwrap().pts, vec![at]);
     }
 }
+
+/// Проигрывание «в уме»: копия мира, польза по результату проигрыша.
+mod mind {
+    use super::*;
+    use agents_core::model::Side;
+    use agents_core::world::Sim;
+
+    fn load(over: Option<&serde_json::Value>) -> Sim {
+        let root = repo_root();
+        let (sim, _) = agents_core::scenario::load_with(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root, over, None).expect("сценарий");
+        sim
+    }
+    fn run(over: Option<&serde_json::Value>, hours: u32) -> Sim {
+        let mut sim = load(over);
+        let mut pending = Vec::new();
+        for side in [Side::Su, Side::De] {
+            pending.extend(agents_core::command::control::command_mode(&mut sim, "agents", side).expect("режим"));
+            agents_core::commander::enable(&mut sim, side);
+        }
+        pending.sort_by_key(|x| x.0);
+        for _ in 0..hours { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
+        sim
+    }
+
+    /// Копия идёт своим ходом: оригинал не меняется.
+    #[test]
+    fn fork_does_not_touch_original() {
+        let mut sim = run(None, 6);
+        let before = (sim.digest(), sim.world.tick, sim.documents.len(), sim.journal.len());
+        let mut f = sim.fork();
+        assert_eq!(f.commanders.enabled, [false, false]);
+        assert!(f.llm.is_none() && f.history.is_none() && f.documents.is_empty() && f.journal.is_empty());
+        for _ in 0..24 { f.step(); }
+        assert_ne!(f.digest(), before.0);
+        assert_eq!((sim.digest(), sim.world.tick, sim.documents.len(), sim.journal.len()), before);
+        // оригинал после копии идёт дальше как шёл
+        sim.step();
+    }
+
+    #[test]
+    fn mind_off_by_default() {
+        let sim = run(None, 30);
+        let n: usize = sim.commanders.list.iter().map(|c| c.decisions.len()).sum();
+        assert!(n > 0);
+        assert!(sim.commanders.list.iter().flat_map(|c| &c.decisions).flat_map(|d| &d.options).all(|s| s.mind.is_none()));
+    }
+
+    #[test]
+    fn mind_on_fills_top() {
+        let sim = run(Some(&json!({"commanders.lookaheadHours": 24})), 30);
+        let mut seen = 0;
+        for d in sim.commanders.list.iter().flat_map(|c| &c.decisions) {
+            let k = d.options.iter().filter(|s| s.mind.is_some()).count();
+            assert!(k <= 3, "{k}");
+            if k > 0 { seen += 1; }
+            for m in d.options.iter().filter_map(|s| s.mind.as_ref()) { assert_eq!(m.hours, 24); }
+        }
+        assert!(seen > 0, "ни у одного решения нет проигрыша");
+    }
+
+    /// Замер скорости: берлинский сценарий 96 ч, обе стороны под командующими, без «в уме» и с ним.
+    #[test]
+    #[ignore]
+    fn mind_speed() {
+        for hours in [0, 24] {
+            let t = std::time::Instant::now();
+            let sim = run(Some(&json!({"commanders.lookaheadHours": hours})), 96);
+            let n: usize = sim.commanders.list.iter().map(|c| c.decisions.len()).sum();
+            println!("lookahead {hours}: {:.1} с, решений {n}", t.elapsed().as_secs_f64());
+        }
+    }
+}

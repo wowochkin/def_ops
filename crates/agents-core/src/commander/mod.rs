@@ -3,6 +3,7 @@
 
 pub mod apply;
 pub mod decide;
+pub mod mind;
 pub mod motives;
 pub mod options;
 pub mod options_de;

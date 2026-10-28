@@ -243,6 +243,28 @@ impl Sim {
 
     pub fn hour(&self) -> i64 { self.start_hour + self.world.tick as i64 }
 
+    /// Копия для расчёта «в уме»: тот же мир, правила и командование, но без модели, журналов, истории и
+    /// обработчиков; штабы на модели решают по доктрине; командующие выключены (без рекурсии).
+    pub fn fork(&self) -> Sim {
+        use crate::staff::Source;
+        let rear_dir = std::sync::OnceLock::new();
+        if let Some(r) = self.rear_dir.get() { let _ = rear_dir.set(r.clone()); }
+        let su = {
+            let s = self.su_staff.lock().unwrap_or_else(|e| e.into_inner());
+            crate::staff_su::SuStaff { plan: s.plan.clone(), ech: s.ech.clone(), start: s.start.clone(), since: s.since.clone(), replaced: s.replaced.clone() }
+        };
+        Sim {
+            theatre: self.theatre.clone(), rules: self.rules.clone(), seed: self.seed, start_hour: self.start_hour, world: self.world.clone(),
+            script: self.script.clone(), fires: self.fires.clone(), withdrawals: self.withdrawals.clone(), changes: self.changes.clone(),
+            sources: self.sources.map(|s| if s == Source::Llm { Source::Doctrine } else { s }),
+            rear_dir, doctrine_text: self.doctrine_text.clone(), llm: None, llm_log: std::sync::Mutex::new(Vec::new()),
+            llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(su),
+            on_progress: None, on_stream: None, journal: Vec::new(), historical: self.historical.clone(), command: self.command.clone(),
+            documents: Vec::new(), history: None, staff: self.staff.clone(),
+            commanders: crate::commander::State { enabled: [false; 2], list: Vec::new(), log: Default::default(), raised: self.commanders.raised.clone() },
+        }
+    }
+
     /// Боевая сила дивизии (часть II описания, раздел 19.1).
     pub fn strength(&self, d: &Division) -> f64 {
         let r = &self.rules;

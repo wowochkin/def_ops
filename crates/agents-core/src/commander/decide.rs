@@ -263,7 +263,10 @@ fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String) {
     if opts.is_empty() { return; }
     let t = effective(&p.traits, &c.mood, &sim.rules.commanders.mood);
     let w = &sim.rules.commanders.weights;
-    let options: Vec<Scored> = opts.iter().map(|ch| score(ch, &c.motives, &t, w, same_line(&ch.kind, c.intent.as_ref()))).collect();
+    let mut options: Vec<Scored> = opts.iter().map(|ch| score(ch, &c.motives, &t, w, same_line(&ch.kind, c.intent.as_ref()))).collect();
+    // «в уме»: лучшие варианты проигрываются на копии мира, польза пересчитывается
+    let ahead = sim.rules.commanders.lookahead_hours;
+    if ahead > 0 { super::mind::look(sim, c, pic, &mut options, &t, w, ahead, |k| same_line(k, c.intent.as_ref())); }
     let chosen = pick(&options, c.intent.as_ref());
     let why = why(&options, chosen);
     let kind = options[chosen].choice.kind.clone();
