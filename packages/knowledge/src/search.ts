@@ -25,7 +25,10 @@ export class Index {
   constructor(entries: Entry[], documents: KbDocument[] = []) {
     for (const e of entries) {
       const text = [e.summary, ...(e.sections ?? []).map((s) => `${s.title}. ${s.text}`), ...(e.facts ?? []).map((f) => `${f.key}: ${f.value}`)].join('\n');
-      this.add({ id: `e:${e.id}`, kind: 'entry', ref: e.id, title: e.title, text, boost: [e.title, ...(e.aliases ?? [])].join(' ') });
+      // у источника название — название работы («Википедия: Зееловские высоты»), а не тема записи: без усиления, иначе
+      // короткая запись источника обгоняет само сражение
+      const src = e.category === 'sources';
+      this.add({ id: `e:${e.id}`, kind: 'entry', ref: e.id, title: e.title, text: src ? `${e.title}\n${text}` : text, boost: src ? (e.aliases ?? []).join(' ') : [e.title, ...(e.aliases ?? [])].join(' ') });
     }
     for (const d of documents) for (const c of d.chunks) this.add({ id: `c:${d.id}:${c.i}`, kind: 'chunk', ref: d.id, title: `${d.name}, часть ${c.i + 1}`, text: c.text, boost: '' });
     this.avg = this.len.reduce((a, b) => a + b, 0) / Math.max(1, this.len.length);
