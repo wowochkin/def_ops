@@ -28,24 +28,34 @@ pub fn current(base: &Motives, pic: &Picture, g: &Gains) -> Motives {
     m
 }
 
-/// Шаг состояния за час. `task_behind` — отставание от срока задачи старшего, доля (0…1).
-/// Без прежней картины действует только возврат к состоянию на начало.
-pub fn mood_step(prev: &Mood, pic: &Picture, prev_pic: Option<&Picture>, task_behind: f64, m: &MoodRules) -> Mood {
-    let behind = clamp01(task_behind);
+/// Сколько земли в час (смещение центра войск армии, км/ч) обороняющийся может отдать и считать, что держит рубеж
+/// (допущение: 0,25 км/ч — около 6 км в сутки).
+pub const HOLD_KM_H: f64 = 0.25;
+
+/// Шаг состояния за час. `task_behind` — отставание от срока задачи старшего, доля (0…1): оно давит долей в сутки,
+/// то есть в час — его двадцать четвёртая часть. `attacking` — наступающий: успех и застревание меряются темпом
+/// продвижения против ожидаемого; обороняющийся: успех — удержанная земля (смещение войск за час не больше
+/// `HOLD_KM_H`), неудача — отданная сверх того. Без прежней картины действует только возврат к состоянию на начало.
+pub fn mood_step(prev: &Mood, pic: &Picture, prev_pic: Option<&Picture>, task_behind: f64, attacking: bool, m: &MoodRules) -> Mood {
+    let behind = clamp01(task_behind) / 24.0;
     let n = pic.armies.len() as f64;
     let (mut confidence, mut stress) = (prev.confidence, prev.stress);
     if let Some(pp) = prev_pic {
         if n > 0.0 {
-            // продвижение за час, средняя по армиям, имеющимся в обеих картинах
+            // смещение за час, среднее по армиям, имеющимся в обеих картинах
             let steps: Vec<(f64, f64)> = pic.armies.iter().filter_map(|a| pp.armies.iter().find(|b| b.hq == a.hq).map(|b| (a.advance_km - b.advance_km, b.strength - a.strength))).collect();
             if !steps.is_empty() {
                 let k = steps.len() as f64;
                 let rate = steps.iter().map(|s| s.0).sum::<f64>() / k;
                 let loss = steps.iter().map(|s| s.1).sum::<f64>() / k;
-                let pace = m.expected_km_day / 24.0;
-                let ratio = if pace > 0.0 { rate / pace } else { 1.0 };
-                let success = (ratio - 1.0).clamp(0.0, 1.0);
-                let stall = (1.0 - ratio).clamp(0.0, 1.0);
+                let (success, stall) = if attacking {
+                    let pace = m.expected_km_day / 24.0;
+                    let ratio = if pace > 0.0 { rate / pace } else { 1.0 };
+                    ((ratio - 1.0).clamp(0.0, 1.0), (1.0 - ratio).clamp(0.0, 1.0))
+                } else {
+                    let lost = rate.max(0.0);
+                    ((1.0 - lost / HOLD_KM_H).clamp(0.0, 1.0), ((lost - HOLD_KM_H) / HOLD_KM_H).clamp(0.0, 1.0))
+                };
                 let norm_loss = m.normal_loss_day / 24.0;
                 let excess = if norm_loss > 0.0 { ((loss - norm_loss) / norm_loss).clamp(0.0, 1.0) } else { 0.0 };
                 let encircling = (pic.pockets.len() as f64 / n).min(1.0);

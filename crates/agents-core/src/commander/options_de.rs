@@ -13,7 +13,7 @@
 //! - ShiftForces: удержание + на угрожаемом участке; берётся с тихого участка: ни одна дивизия не в бою (`World.engaged` — итог предыдущего шага — или наступление, кроме закрепления); не берётся с армии с открытым
 //!   флангом и не направляется в армию, уже окружённую (тогда — прорыв).
 //! - Breakout: сохранение ++, сбережение сил +, удержание −; штаб в кольце и есть свой штаб снаружи.
-//! - Permit / Forbid (Ставка): на каждый неотвеченный запрос; запрет — удержание +, сохранение − (больше при угрозе
+//! - Permit / Forbid (Ставка): на каждый неотвеченный запрос, дождавшийся срока ответа `permissionHours`; запрет — удержание +, сохранение − (больше при угрозе
 //!   армии), разрешение — наоборот.
 //! - Relief (Ставка): сохранение +, удержание −; армия в кольце и есть армия снаружи.
 //! - MoveReserve (Ставка): сохранение +, удержание +; резерв ОКВ и угрожаемая армия.
@@ -213,7 +213,9 @@ pub fn options_high(sim: &Sim, hq: u32, _p: &Profile) -> Vec<Choice> {
     let mut out = Vec::new();
 
     // неотвеченные запросы корпусов: по паре «разрешить / запретить»
-    for (i, r) in sim.command.requests.iter().enumerate().filter(|(_, r)| r.answer.is_none()) {
+    // запросы, дождавшиеся срока ответа (`permissionHours` — тот же час, когда отвечал прежний «держать»)
+    let wait = sim.rules.command.de.permission_hours as u32;
+    for (i, r) in sim.command.requests.iter().enumerate().filter(|(_, r)| r.answer.is_none() && sim.world.tick >= r.tick + wait) {
         let army = sim.world.hqs[r.hq as usize].parent;
         let t = army.map_or(0.0, |a| threat(sim, None, a));
         out.push(Choice {

@@ -11,7 +11,7 @@ pub mod picture;
 pub mod profile;
 
 pub use profile::{CommanderRules, Cycle, Fog, Gains, MoodRules, Motive, Motives, Opts, Profile, Trait, Traits, Weights};
-pub use decide::{answers_requests, cycle, enable, Commander, Decision, Scored, Snapshot, State};
+pub use decide::{active, cycle, enable, Commander, Decision, Scored, Snapshot, State};
 
 /// Итог проигрыша варианта «в уме»: за сколько часов, продвижение, потери (доля силы), охват противника (доля).
 #[derive(Clone, Debug, PartialEq)]

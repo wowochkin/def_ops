@@ -8,7 +8,8 @@
 //!
 //! Перемены обстановки, по которым командующий решает вне цикла: армия впервые прорвала оборону; открылся новый
 //! фланг; появился котёл противника; отрезаны свои дивизии (их стало больше); пришла новая директива старшего;
-//! у верхней инстанции — новый запрос на отход или запрос, ждущий ответа дольше срока разрешения.
+//! у верхней инстанции — запрос на отход дождался срока ответа (`permissionHours`, как прежний ответ «держать»);
+//! на все дождавшиеся запросы она отвечает в том же часе, каждый ответ — отдельным решением.
 
 use super::motives::{current, effective, mood_step, Mood};
 use super::options::{Choice, Kind};
@@ -38,9 +39,13 @@ pub const DOC_PREFIX: &str = "Решение командующего";
 pub struct Seen {
     pub intent: Option<(String, u32)>,
     pub cut: usize,
-    /// Запросы: (штаб, дивизия, час).
+    /// Запросы, дождавшиеся срока ответа: (штаб, дивизия, час).
     pub requests: Vec<(u32, u32, u32)>,
 }
+
+/// Запрос на отход (или прорыв), поднятый командующим за дивизию: исполняется только по разрешению верхней инстанции.
+#[derive(Clone, Debug)]
+pub struct Raised { pub hq: u32, pub division: u32, pub tick: u32, pub task: crate::command::directive::Task, pub at: crate::geo::XY }
 
 #[derive(Clone, Debug)]
 pub struct Snapshot {
@@ -93,6 +98,8 @@ pub struct Commander {
     /// Картина последнего часа: в этом часе — текущая; в следующем — прежняя для шага состояния (ровно на час старше).
     pub picture: Option<Picture>,
     pub seen: Seen,
+    /// Рубеж отхода армии, пока действующее решение — её отход (не пересчитывается на каждом решении).
+    pub withdraw_at: Vec<(u32, crate::geo::XY)>,
 }
 
 /// Командующие прогона: по сторонам включены ли, список, ведомость расстояний до объектов.
@@ -101,6 +108,8 @@ pub struct State {
     pub enabled: [bool; 2],
     pub list: Vec<Commander>,
     pub log: DistLog,
+    /// Запросы, поднятые командующими, ждущие ответа или исполнения.
+    pub raised: Vec<Raised>,
 }
 
 /// Включить командующих стороны: на каждый её штаб, у которого есть профиль; штаб без профиля решает по правилам штаба.
@@ -115,16 +124,17 @@ pub fn enable(sim: &mut Sim, side: Side) {
         let Some(profile) = sim.rules.commanders.profiles.iter().position(|p| p.hqs.contains(&x.id)) else { continue };
         sim.commanders.list.push(Commander {
             hq: h as u32, profile, motives: sim.rules.commanders.profiles[profile].motives, mood: start, intent: None, intent_label: None,
-            last: tick, snapshots: Vec::new(), decisions: Vec::new(), picture: None, seen: Seen::default(),
+            last: tick, snapshots: Vec::new(), decisions: Vec::new(), picture: None, seen: Seen::default(), withdraw_at: Vec::new(),
         });
     }
 }
 
-/// Верхняя инстанция `top` отвечает на запросы отхода сама (командующий-агент), а не прежним ответом «держать».
-pub fn answers_requests(sim: &Sim, top: usize) -> bool {
-    sim.command.control.get(top) == Some(&Control::Agent)
-        && sim.commanders.enabled[side_idx(sim.world.hqs[top].side)]
-        && sim.commanders.list.iter().any(|c| c.hq as usize == top)
+/// У штаба действующий командующий: сторона включена, профиль есть, штаб ведёт агент (не игрок). Тогда штаб не
+/// вводит подвижные группы сам, а верхняя инстанция отвечает на запросы своим решением, а не прежним «держать».
+pub fn active(sim: &Sim, hq: u32) -> bool {
+    sim.command.control.get(hq as usize) == Some(&Control::Agent)
+        && sim.commanders.enabled[side_idx(sim.world.hqs[hq as usize].side)]
+        && sim.commanders.list.iter().any(|c| c.hq == hq)
 }
 
 /// Польза варианта (см. начало модуля). `t` — черты с поправкой на состояние; `continuing` — вариант повторяет
@@ -143,10 +153,11 @@ pub fn score(c: &Choice, m: &Motives, t: &Traits, w: &Weights, continuing: bool)
 }
 
 /// Вариант продолжает действующее решение: тот же вариант; ответ на запрос — тот же ответ (номер запроса не важен:
-/// запросы разные, линия та же).
+/// запросы разные, линия та же); «продолжать по плану» — продолжение любого действующего решения.
 pub fn same_line(a: &Kind, intent: Option<&Kind>) -> bool {
     match (a, intent) {
         (_, None) => false,
+        (Kind::Continue, Some(_)) => true,
         (Kind::Permit { .. }, Some(Kind::Permit { .. })) | (Kind::Forbid { .. }, Some(Kind::Forbid { .. })) => true,
         (a, Some(b)) => a == b,
     }
@@ -225,16 +236,16 @@ fn trigger(sim: &Sim, c: &mut Commander, pic: &Picture, tick: u32) -> Option<Str
         }
     }
     if sim.world.hqs[c.hq as usize].echelon == Echelon::HighCommand {
+        // повод — только запрос, впервые дождавшийся срока ответа (а не каждый час, пока он ждёт)
         let wait = sim.rules.command.de.permission_hours as u32;
         let side = sim.world.hqs[c.hq as usize].side;
         let mut fresh = 0;
-        let mut ripe = 0;
-        for r in sim.command.requests.iter().filter(|r| r.answer.is_none() && sim.world.hqs[r.hq as usize].side == side) {
+        for r in sim.command.requests.iter().filter(|r| r.answer.is_none() && tick >= r.tick + wait && sim.world.hqs[r.hq as usize].side == side) {
             let key = (r.hq, r.division, r.tick);
-            if !c.seen.requests.contains(&key) { fresh += 1; c.seen.requests.push(key); } else if tick >= r.tick + wait { ripe += 1; }
+            if !c.seen.requests.contains(&key) { fresh += 1; c.seen.requests.push(key); }
         }
-        if fresh > 0 { why.push(format!("новые запросы на отход: {fresh}")); }
-        if ripe > 0 { why.push(format!("запросы на отход ждут ответа: {ripe}")); }
+        c.seen.requests.retain(|k| sim.command.requests.iter().any(|r| (r.hq, r.division, r.tick) == *k));
+        if fresh > 0 { why.push(format!("запросы на отход дождались ответа: {fresh}")); }
     }
     if why.is_empty() { None } else { Some(why.join("; ")) }
 }
@@ -256,6 +267,12 @@ fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String) {
     let chosen = pick(&options, c.intent.as_ref());
     let why = why(&options, chosen);
     let kind = options[chosen].choice.kind.clone();
+    // рубеж отхода держится, пока решение — отход той же армии
+    match &kind {
+        Kind::Withdraw { hq } if c.intent.as_ref() == Some(&kind) && c.withdraw_at.iter().any(|x| x.0 == *hq) => {}
+        Kind::Withdraw { hq } => { c.withdraw_at.clear(); if let Some(at) = super::apply::rear_of(sim, *hq) { c.withdraw_at.push((*hq, at)); } }
+        _ => c.withdraw_at.clear(),
+    }
     c.intent = Some(kind.clone());
     c.intent_label = Some(options[chosen].choice.label.clone());
     c.decisions.push(Decision { tick, trigger, options, chosen, why });
@@ -267,7 +284,9 @@ fn hour(sim: &mut Sim, c: &mut Commander, tick: u32) {
     if !sim.commanders.enabled[side_idx(sim.world.hqs[c.hq as usize].side)] { return; }
     let pic = picture(sim, c.hq, &sim.commanders.log);
     let behind = task_behind(sim, c.hq, tick);
-    c.mood = mood_step(&c.mood, &pic, c.picture.as_ref(), behind, &sim.rules.commanders.mood);
+    // наступающий меряет успех продвижением, обороняющийся — удержанной землёй
+    let attacking = sim.world.hqs[c.hq as usize].side == Side::Su || matches!(c.intent, Some(Kind::Counterattack { .. }));
+    c.mood = mood_step(&c.mood, &pic, c.picture.as_ref(), behind, attacking, &sim.rules.commanders.mood);
     c.motives = current(&sim.rules.commanders.profiles[c.profile].motives, &pic, &sim.rules.commanders.gains);
     let trig = trigger(sim, c, &pic, tick);
     c.picture = Some(pic);
@@ -279,7 +298,8 @@ fn hour(sim: &mut Sim, c: &mut Commander, tick: u32) {
         decide(sim, c, tick, trig.unwrap_or_else(|| format!("цикл решения {cycle} ч")));
         // верхняя инстанция отвечает на все ждущие запросы в этот же час — каждый ответ отдельным решением
         let side = sim.world.hqs[c.hq as usize].side;
-        let waiting = |sim: &Sim| sim.command.requests.iter().filter(|r| r.answer.is_none() && sim.world.hqs[r.hq as usize].side == side).count();
+        let wait = sim.rules.command.de.permission_hours as u32;
+        let waiting = |sim: &Sim| sim.command.requests.iter().filter(|r| r.answer.is_none() && tick >= r.tick + wait && sim.world.hqs[r.hq as usize].side == side).count();
         let mut left = waiting(sim);
         while left > 0 && c.decisions.len() > before && matches!(c.intent, Some(Kind::Permit { .. } | Kind::Forbid { .. })) {
             decide(sim, c, tick, format!("ещё запросы на отход: {left}"));
@@ -303,4 +323,5 @@ pub fn cycle(sim: &mut Sim, tick: u32) {
     let mut list = std::mem::take(&mut sim.commanders.list);
     for c in list.iter_mut() { hour(sim, c, tick); }
     sim.commanders.list = list;
+    super::apply::execute_permitted(sim, tick);
 }

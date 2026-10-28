@@ -157,6 +157,14 @@ pub fn army(sim: &mut Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Dire
 }
 
 /// Фронт: стрелковые армии — главный удар уже, вспомогательные шире; танковые армии — подвижная группа до прорыва.
+/// Ввод подвижной группы `t`: роль «введена»; в ближайшем распределении полосы фронта ей — задача на глубину
+/// (ближайшая задача — последующая задача фронта) с правилом `rule`. Общий путь штаба фронта и командующего.
+pub fn commit_mobile(sim: &mut Sim, t: Target, rule: String) {
+    sim.command.set_role(t, Role::Committed);
+    sim.command.commits.retain(|c| c.0 != t);
+    sim.command.commits.push((t, rule));
+}
+
 pub fn front(sim: &mut Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Directive> {
     let subs = subs_of(sim, h);
     let tick = sim.world.tick;
@@ -182,22 +190,29 @@ pub fn front(sim: &mut Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Dir
     // ввод подвижной группы: армии главного удара продвинулись на глубину тактической зоны или срок
     let mean = if main.is_empty() { tank_depth } else { main.iter().map(|&t| advance(sim.command.start(t), place(sim, t), &fr.axis)).sum::<f64>() / main.len() as f64 };
     let mobiles: Vec<Target> = subs.iter().copied().filter(|&t| sim.command.role(t) == Role::Mobile).collect();
-    let mut committed_now = Vec::new();
-    for &t in &mobiles {
-        let waited = tick.saturating_sub(sim.command.since(t)) as f64;
-        if mean >= tank_depth || waited >= tank_fallback { sim.command.set_role(t, Role::Committed); committed_now.push((t, mean >= tank_depth, waited)); }
+    // у фронта с командующим ввод — его решение (по глубине и сроку штаб не вводит)
+    if !crate::commander::active(sim, h) {
+        for &t in &mobiles {
+            let waited = tick.saturating_sub(sim.command.since(t)) as f64;
+            if mean >= tank_depth || waited >= tank_fallback {
+                let rule = if mean >= tank_depth { format!("армии главного удара продвинулись на {mean:.1} км — тактическая зона прорвана, ввод подвижной группы (приказ НКО №325)") }
+                    else { format!("за {waited:.0} ч тактическая зона не прорвана — ввод подвижной группы для завершения прорыва (приказ НКО №325)") };
+                commit_mobile(sim, t, rule);
+            }
+        }
     }
     let line: Vec<Target> = subs.iter().copied().filter(|&t| sim.command.role(t) != Role::Mobile).collect();
     let weights: Vec<f64> = line.iter().map(|t| if main.contains(t) || sim.command.role(*t) == Role::Committed { 1.0 } else { 2.0 }).collect();
     let mut out = generic(sim, h, intent, replan, &line, Some(&weights));
     for d in out.iter_mut() {
-        if let Some((_, broke, waited)) = committed_now.iter().find(|x| x.0 == d.to) {
+        if let Some(k) = sim.command.commits.iter().position(|c| c.0 == d.to) {
             // введённой подвижной группе — на глубину: ближайшая задача — последующая задача фронта
+            let (_, rule) = sim.command.commits.remove(k);
             if let Some(s) = d.subsequent.clone() { d.immediate = Some(s); }
-            d.rule = Some(if *broke { format!("армии главного удара продвинулись на {mean:.1} км — тактическая зона прорвана, ввод подвижной группы (приказ НКО №325)") }
-                else { format!("за {waited:.0} ч тактическая зона не прорвана — ввод подвижной группы для завершения прорыва (приказ НКО №325)") });
+            d.rule = Some(rule);
         }
     }
+    sim.command.commits.retain(|c| !subs.contains(&c.0));
     // подвижные группы до ввода — за главным ударом в 10 км
     if let Some(c) = mid(&main.iter().map(|&t| place(sim, t)).collect::<Vec<_>>()) {
         let at = XY::new(c.x - fr.dir.x * 10.0, c.y - fr.dir.y * 10.0);

@@ -234,7 +234,7 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
         let side = sim.world.hqs[r.hq as usize].side;
         let top = sim.world.hqs.iter().position(|x| x.side == side && x.echelon == Echelon::HighCommand);
         // игрок отвечает сам; командующий-агент верхней инстанции — своим решением (разрешить или запретить)
-        if top.is_some_and(|t| sim.command.control[t] == Control::Player || crate::commander::answers_requests(sim, t)) { continue; }
+        if top.is_some_and(|t| sim.command.control[t] == Control::Player || crate::commander::active(sim, t as u32)) { continue; }
         sim.command.requests[k].answer = Some(false);
         let name = sim.world.divisions[r.division as usize].name.clone();
         sim.documents.push(Document { tick, hq: top.unwrap_or(r.hq as usize) as u32, kind: DocKind::Notice, to: vec![sim.world.hqs[r.hq as usize].id.clone()], text: format!("на запрос об отходе ({name}): держать"), rule: Some("приказ Гитлера от 15.04.1945: держать".into()) });

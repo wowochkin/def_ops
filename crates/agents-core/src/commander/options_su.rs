@@ -3,7 +3,8 @@
 //!
 //! Таблица правил (вклад в мотивы; U — неопределённость, L — потери):
 //! - Continue: задача +, остальное 0; U, L малы.
-//! - CommitMobile: задача + (больше при прорыве), соперник + (если он есть), сохранение −; U выше без прорыва.
+//! - CommitMobile: с продвижения главного удара на глубину `commitDepthKm`; задача + (больше при прорыве), соперник +
+//!   (если он есть), сохранение −; U выше без прорыва.
 //! - WaitMobile: сохранение +, задача −, соперник − (если он ближе к объекту); U мала.
 //! - ShiftMainBlow: задача +, сохранение −.
 //! - TurnToRival: соперник +, задача − (уход от направления задачи старшего к объекту соперника; без замысла не появляется).
@@ -106,7 +107,8 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
     let mobile: Vec<&ArmyView> = pic.armies.iter().filter(|a| role(sim, a.hq) == Role::Mobile).collect();
 
     // подвижная группа: ввод после пройденной глубины; ожидание — пока нет прорыва
-    if !mobile.is_empty() && main_adv >= sim.rules.doctrine_su.tank_commit_depth_km {
+    // появляется с глубины ввода вторых эшелонов (главная полоса прорвана); без прорыва тактической зоны — неопределённее
+    if !mobile.is_empty() && main_adv >= sim.rules.doctrine_su.commit_depth_km {
         let (unc, loss) = if broke { (COMMIT_UNC_BROKE, COMMIT_LOSS_BROKE) } else { (COMMIT_UNC_OPEN, COMMIT_LOSS_OPEN) };
         let task = COMMIT_TASK + if broke { COMMIT_TASK_BROKE } else { 0.0 };
         let rival = if pic.rival.is_some() { COMMIT_RIVAL } else { 0.0 };
