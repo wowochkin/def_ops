@@ -1239,19 +1239,109 @@ mod mind {
         sim
     }
 
+    /// Всё, что копия могла бы задеть в оригинале и чего не видит отпечаток.
+    fn state_key(sim: &Sim) -> String {
+        let su = sim.su_staff.lock().unwrap();
+        format!("{}|{}|{:?}|{:?}|{}|{}|{}|{:?}|{:?}", sim.digest(), sim.world.tick, sim.command.requests, sim.command.role_hq,
+            sim.command.intent.iter().flatten().count(), sim.documents.len(), sim.journal.len(), su.plan, su.ech)
+    }
+
     /// Копия идёт своим ходом: оригинал не меняется.
     #[test]
     fn fork_does_not_touch_original() {
         let mut sim = run(None, 6);
-        let before = (sim.digest(), sim.world.tick, sim.documents.len(), sim.journal.len());
+        let before = state_key(&sim);
         let mut f = sim.fork();
         assert_eq!(f.commanders.enabled, [false, false]);
         assert!(f.llm.is_none() && f.history.is_none() && f.documents.is_empty() && f.journal.is_empty());
         for _ in 0..24 { f.step(); }
-        assert_ne!(f.digest(), before.0);
-        assert_eq!((sim.digest(), sim.world.tick, sim.documents.len(), sim.journal.len()), before);
+        assert_ne!(f.digest(), sim.digest());
+        assert_eq!(state_key(&sim), before);
         // оригинал после копии идёт дальше как шёл
         sim.step();
+    }
+
+    /// Одинаковые миры с одним зерном — одинаковые результаты проигрыша.
+    #[test]
+    fn mind_repeats_with_seed() {
+        let over = json!({"commanders.lookaheadHours": 12, "commanders.mindMargin": 1.0});
+        let key = |sim: &Sim| -> Vec<String> {
+            sim.commanders.list.iter().flat_map(|c| c.decisions.iter().flat_map(move |d| d.options.iter().filter_map(move |s| s.mind.as_ref().map(|m| format!("{} {} {:?}", c.hq, d.tick, m))))).collect()
+        };
+        let (a, b) = (run(Some(&over), 24), run(Some(&over), 24));
+        assert!(!key(&a).is_empty());
+        assert_eq!(key(&a), key(&b));
+    }
+
+    /// Противник в зоне разведки армии — к оценке; вне зоны и в оригинале — как был.
+    #[test]
+    fn scale_enemy_applies_ratio() {
+        let sim = run(None, 12);
+        let army = sim.world.hqs.iter().position(|h| h.side == Side::Su && h.echelon == agents_core::model::Echelon::Army).unwrap() as u32;
+        let under = |mut h: u32| loop { if h == army { return true; } match sim.world.hqs[h as usize].parent { Some(p) => h = p, None => return false } };
+        let mine: Vec<_> = sim.world.divisions.iter().filter(|d| !d.state.out() && under(d.hq)).map(|d| d.vars.pos).collect();
+        let recon = sim.rules.contact_km * 3.0;
+        let near = |d: &agents_core::model::Division| mine.iter().any(|p| p.dist(d.vars.pos) <= recon);
+        let view = agents_core::commander::picture::ArmyView { hq: army, advance_km: 0.0, strength: 1.0, enemy_est: 0.5, enemy_true: 1.0, to_objective_km: None, broke_through: false };
+        let pic = agents_core::commander::picture::Picture { tick: 0, armies: vec![view], enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets: vec![], to_objective_km: None };
+        let mut f = sim.fork();
+        agents_core::commander::mind::scale_enemy(&mut f, &pic);
+        let (mut scaled, mut kept) = (0, 0);
+        for (o, d) in sim.world.divisions.iter().zip(&f.world.divisions) {
+            let hit = o.side == Side::De && !o.state.out() && near(o);
+            let k = if hit { 0.5 } else { 1.0 };
+            assert!((d.vars.personnel - o.vars.personnel * k).abs() < 1e-9 && (d.vars.tanks - o.vars.tanks * k).abs() < 1e-9 && (d.vars.guns - o.vars.guns * k).abs() < 1e-9, "{}", o.id);
+            if hit { scaled += 1 } else { kept += 1 }
+        }
+        assert!(scaled > 0 && kept > 0, "{scaled} {kept}");
+    }
+
+    /// Уточнение вклада: смесь 50/50, зажим −1…1, меняются только четыре мотива, знаки против базового.
+    #[test]
+    fn refine_blends_and_clamps() {
+        use agents_core::commander::mind::refine;
+        use agents_core::commander::MindResult;
+        let c = Motives([0.2, 0.4, -0.2, 0.1, 0.0, 0.3, -0.5]);
+        let base = MindResult { hours: 10, advance_km: 2.0, losses: 0.05, encircled: 0.0 };
+        // продвижение на 5 км лучше базового (шкала 1 км/ч × 10 ч), потери вдвое меньше (шкала 0,1), охват +0,05 (шкала 0,1)
+        let m = MindResult { hours: 10, advance_km: 7.0, losses: 0.0, encircled: 0.05 };
+        let r = refine(&c, &m, &base);
+        assert!((r.0[0] - (0.5 * 0.2 + 0.5 * 0.5)).abs() < 1e-12 && (r.0[1] - (0.5 * 0.4 + 0.5 * 0.5)).abs() < 1e-12);
+        assert!((r.0[2] - (0.5 * -0.2 + 0.5 * 0.5)).abs() < 1e-12 && (r.0[4] - 0.5 * 0.5).abs() < 1e-12);
+        for i in [3, 5, 6] { assert_eq!(r.0[i], c.0[i]); }
+        // хуже базового — минус; за пределом шкалы — зажим
+        let bad = MindResult { hours: 10, advance_km: -100.0, losses: 0.9, encircled: -0.9 };
+        let r = refine(&c, &bad, &base);
+        assert!((r.0[0] - (0.5 * 0.2 - 0.5)).abs() < 1e-12 && (r.0[2] - (0.5 * -0.2 - 0.5)).abs() < 1e-12 && (r.0[4] + 0.5).abs() < 1e-12);
+        // равен базовому — половина прежнего вклада
+        let r = refine(&c, &base, &base);
+        assert!((r.0[1] - 0.2).abs() < 1e-12 && r.0[4].abs() < 1e-12);
+    }
+
+    /// Проигранный вариант с действием получает вклад, отличный от прежнего, если исход отличается от базового.
+    #[test]
+    fn mind_changes_contrib() {
+        use agents_core::commander::mind::{imagine, refine};
+        use agents_core::commander::options::Kind;
+        let sim = run(None, 30);
+        let mut checked = 0;
+        for c in sim.commanders.list.iter().filter(|c| sim.world.hqs[c.hq as usize].echelon == agents_core::model::Echelon::Front && c.picture.is_some()) {
+            let pic = c.picture.as_ref().unwrap();
+            let p = sim.rules.commanders.profiles[c.profile].clone();
+            let opts = match sim.world.hqs[c.hq as usize].side {
+                Side::Su => agents_core::commander::options_su::options_su(&sim, c.hq, &p, pic),
+                Side::De => agents_core::commander::options_de::options_de(&sim, c.hq, &p, pic),
+            };
+            let cont = opts.iter().find(|o| matches!(o.kind, Kind::Continue | Kind::Hold)).expect("без действия");
+            let base = imagine(&sim, c, pic, cont, 12);
+            for o in opts.iter().filter(|o| !matches!(o.kind, Kind::Continue | Kind::WaitMobile | Kind::Hold | Kind::ShiftForces { .. })) {
+                let m = imagine(&sim, c, pic, o, 12);
+                if m == base { continue; }
+                assert_ne!(refine(&o.contrib, &m, &base).0, o.contrib.0, "{}", o.label);
+                checked += 1;
+            }
+        }
+        assert!(checked > 0, "нет ни одного варианта с исходом, отличным от базового");
     }
 
     #[test]
@@ -1302,6 +1392,24 @@ mod mind {
         }
         assert!(ticks.values().any(|h| h.len() >= 2), "в одном часе решал один командующий");
         assert_eq!(sim.commanders.baselines as usize, ticks.values().map(|h| h.len()).sum::<usize>());
+    }
+
+    /// Замер: доля копирования (и правил) в проигрыше на 24 ч.
+    #[test]
+    #[ignore]
+    fn fork_cost() {
+        let sim = run(None, 12);
+        let t = std::time::Instant::now();
+        for _ in 0..100 { std::hint::black_box(sim.fork()); }
+        let fork = t.elapsed().as_secs_f64() / 100.0;
+        let t = std::time::Instant::now();
+        for _ in 0..100 { std::hint::black_box(sim.rules.clone()); }
+        let rules = t.elapsed().as_secs_f64() / 100.0;
+        let mut f = sim.fork();
+        let t = std::time::Instant::now();
+        for _ in 0..24 { f.step(); }
+        let steps = t.elapsed().as_secs_f64();
+        println!("fork {:.2} мс, из них правила {:.2} мс; 24 шага {:.1} мс; доля fork в проигрыше {:.1} %, правил {:.1} %", fork * 1e3, rules * 1e3, steps * 1e3, 100.0 * fork / (fork + steps), 100.0 * rules / (fork + steps));
     }
 
     /// Замер скорости: берлинский сценарий 96 ч, обе стороны под командующими, без «в уме» и с ним.

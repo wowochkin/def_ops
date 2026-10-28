@@ -15,7 +15,7 @@ use crate::world::Sim;
 const TOP: usize = 2;
 /// Доля проигрыша в уточнённом вкладе: вклад = (1 − доля)·прежний + доля·измеренный.
 const BLEND: f64 = 0.5;
-/// Разница продвижения с «продолжать», дающая вклад ±1, км на час проигрыша (допущение: суточный темп армии).
+/// Разница продвижения с «продолжать», дающая вклад ±1, км на час проигрыша: 1 км/ч, то есть 24 км за сутки (допущение: предел темпа наступления).
 const ADVANCE_KM_PER_H: f64 = 1.0;
 /// Разница потерь с «продолжать», дающая вклад ±1, доля силы своих дивизий (допущение).
 const LOSSES_SCALE: f64 = 0.1;
@@ -39,7 +39,7 @@ fn gauge(sim: &Sim, c: &Commander, own: &[usize]) -> Gauge {
 }
 
 /// Сила противника в зоне разведки каждой армии — к оценке командующего (люди, танки, орудия).
-fn scale_enemy(fork: &mut Sim, pic: &Picture) {
+pub fn scale_enemy(fork: &mut Sim, pic: &Picture) {
     let recon = fork.rules.contact_km * RECON_X;
     let mut done: Vec<usize> = Vec::new();
     for a in pic.armies.iter().filter(|a| a.enemy_true > 0.0) {
@@ -129,6 +129,7 @@ pub fn wanted(sim: &Sim, c: &Commander, options: &[Scored]) -> bool {
 /// `shared` — базовые проигрыши часа по командующим.
 pub fn look(sim: &Sim, c: &Commander, pic: &Picture, options: &mut [Scored], t: &Traits, w: &Weights, hours: u32, shared: &mut Hourly, continuing: impl Fn(&Kind) -> bool) {
     if !wanted(sim, c, options) { return; }
+    // суженный обзор (напряжение выше порога) оставляет один вариант: заглядывание вперёд ему достаётся реже
     let n = if narrowed(&c.mood, &sim.rules.commanders.mood) { 1 } else { TOP };
     let mut order: Vec<usize> = (0..options.len()).collect();
     order.sort_by(|&a, &b| options[b].total.total_cmp(&options[a].total));
@@ -136,6 +137,7 @@ pub fn look(sim: &Sim, c: &Commander, pic: &Picture, options: &mut [Scored], t: 
     let base = baseline(sim, c, pic, shared, hours);
     for i in order {
         let ch = options[i].choice.clone();
+        // варианты без действия измеренного вклада не получают: их исход равен базовому, поправка была бы нулевой
         // «продолжать» — сам базовый проигрыш; варианты без действия — его же, вклад прежний
         let (refined, m) = if idle(&ch.kind) { (ch, base.clone()) } else {
             let m = imagine(sim, c, pic, &ch, hours);
