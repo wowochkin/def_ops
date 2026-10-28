@@ -115,16 +115,33 @@ for (const d of units) for (const s of d.subordination) {
 // ---------- исходные положения ----------
 const seelowCorpsStart = new Map<string, LngLat>();
 for (const p of seelow.positions) if (p.date === '1945-04-16' && p.time === 'start') seelowCorpsStart.set(p.formation, [p.lng, p.lat]);
-const ownStart = (id: string, near: LngLat | null): LngLat | null => {
+/** Дивизии, у которых начальное место — их документированное положение за 16.04: оно вход, из сверки за 16.04 исключается. */
+const startFromDay1 = new Set<string>();
+const ownStartAt = (id: string, near: LngLat | null): { at: LngLat; day1: boolean } | null => {
   // до начала операции: 10–15.04 или утро 16.04 («start»); положение за 16.04 без отметки — вечернее, уже после начала;
-  // у обороняющихся немецких дивизий оно — их позиции первого дня (в первый день они держали полосу на месте), берётся
+  // у обороняющихся немецких дивизий оно — их позиции первого дня (в первый день они держали полосу на месте), берётся.
+  // У советских положения «к исходу дня» из исследований местами на 10–15 км западнее журналов (на рубеже 17–18.04) —
+  // с них операция начиналась бы «из завтра»
   const de = id.startsWith('de_');
-  const ps = (census.get(id)?.positions ?? []).filter((p) => p.own && p.date >= '1945-04-10' && (p.date < '1945-04-16' || (p.date === '1945-04-16' && (p.time === 'start' || de))))
+  const ab = (p: CensusPos) => p.reliability === 'A' || p.reliability === 'B';
+  // у советских за 16.04 — только журналы (ЦАМО, «к исходу дня»): ошибка — не больше продвижения первого дня (2–6 км)
+  // против 15–40 км у оценки вдоль фронта
+  const day1 = (p: CensusPos) => ab(p) && (de || p.set === 'tsamo-div');
+  const ps = (census.get(id)?.positions ?? []).filter((p) => p.own && p.date >= '1945-04-10' && (p.date < '1945-04-16' || (p.date === '1945-04-16' && (p.time === 'start' || day1(p)))))
     // у советских — не дальше 30 км от штаба (иначе ошибка сопоставления); у немецких положение штаба само оценочное
     // (центр подчинённых), и документированное (A/B) место дивизии берётся до 150 км от него
     .filter((p) => !near || km(near, [p.lng, p.lat]) <= 30 || (de && (p.reliability === 'A' || p.reliability === 'B') && km(near, [p.lng, p.lat]) <= 150))
-    .sort((a, b) => a.date.localeCompare(b.date));
-  return ps.length ? [ps[ps.length - 1].lng, ps[ps.length - 1].lat] : null;
+    // утро 16.04 раньше вечера: при обоих — утро
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time === 'start' ? -1 : 0) - (b.time === 'start' ? -1 : 0));
+  const p = ps.find((x) => x.date === '1945-04-16' && x.time === 'start') ?? ps[ps.length - 1];
+  return p ? { at: [p.lng, p.lat], day1: p.date === '1945-04-16' && p.time !== 'start' } : null;
+};
+const ownStart = (id: string, near: LngLat | null): LngLat | null => ownStartAt(id, near)?.at ?? null;
+/** Начальное место по переписи — с отметкой, если это положение за 16.04 (оно уходит из сверки). */
+const takeStart = (id: string, near: LngLat | null): LngLat | null => {
+  const r = ownStartAt(id, near);
+  if (r?.day1) startFromDay1.add(id);
+  return r?.at ?? null;
 };
 /** Положение штаба: своё, иначе центр подчинённых с положениями, иначе положение старшего. */
 const hqPos = (id: string, seen = new Set<string>()): LngLat | null => {
@@ -212,6 +229,10 @@ const byHq = new Map<string, Div[]>();
 for (const d of units) { const h = hqOf(d, '1945-04-16')!; byHq.set(h, [...(byHq.get(h) ?? []), d]); }
 const knownSd = units.filter((d) => d.side === 'su' && d.type === 'sd' && census.get(d.id)?.personnel).map((d) => census.get(d.id)!.personnel!.value);
 const TANKISH = new Set(['tk', 'mk', 'brigade', 'stug']);
+/** Стрелковые армии, переброшенные на автотранспорте фронта (источник). */
+const MOTOR_LIFT: Record<string, string> = {
+  su_28a: 'остаток 28 А вводился на всём автотранспорте фронта (Le Tissier, Race for the Reichstag, гл. 4, A); по журналу 1 УФ 20.04 у Котбуса, 22.04 — у Берлина, 110 км за двое суток (ЦАМО, A)',
+};
 
 for (const [hqId, divs] of byHq) {
   const hq = hqs.get(hqId)!;
@@ -241,7 +262,10 @@ for (const [hqId, divs] of byHq) {
     // положение
     let pos: LngLat | null = null;
     const sCorps = subAt(d, '1945-04-16').corps;
-    const cpos = d.side === 'su' && sCorps ? seelowCorpsStart.get(`${hqId}_${sCorps.replace(/^su_/, '')}`) : undefined;
+    // своё место по журналу — раньше оценки по штабу корпуса
+    const doc = d.side === 'su' ? takeStart(d.id, hp) : null;
+    if (doc) { pos = doc; notes.push('положение: перепись, 10–16.04'); }
+    const cpos = !pos && d.side === 'su' && sCorps ? seelowCorpsStart.get(`${hqId}_${sCorps.replace(/^su_/, '')}`) : undefined;
     if (cpos) {
       const same = divs.filter((x) => subAt(x, '1945-04-16').corps === sCorps);
       const j = same.indexOf(d);
@@ -249,7 +273,7 @@ for (const [hqId, divs] of byHq) {
       notes.push('положение: корпус утром 16.04 (seelow), разнос 2 км (C)');
     }
     if (!pos && tsDiv(d)?.position) { pos = tsDiv(d)!.position!; notes.push('положение: сценарий нынешней модели'); }
-    if (!pos) { const p = ownStart(d.id, hp); if (p) { pos = p; notes.push('положение: перепись, 10–16.04'); } }
+    if (!pos) { const p = takeStart(d.id, hp); if (p) { pos = p; notes.push('положение: перепись, 10–16.04'); } }
     if (!pos && slots.has(d.id)) { const sl = slots.get(d.id)!; pos = sl.pos; notes.push(sl.note); }
     if (!pos) { console.warn(`нет положения: ${d.id}`); continue; }
     // численность, танки, орудия
@@ -276,7 +300,9 @@ for (const [hqId, divs] of byHq) {
     // вид и подвижность
     const name = d.name_ru;
     const deMob = /танков|панцер|гренадер|моторизов/i.test(name) || d.type === 'stug' ? 'tracked' : 'foot';
-    const mobility = d.side === 'su' ? (TANKISH.has(d.type) ? 'tracked' : d.type === 'kd' ? 'motor' : 'foot') : deMob;
+    const lifted = d.side === 'su' && !TANKISH.has(d.type) ? MOTOR_LIFT[subAt(d, '1945-04-16').army ?? ''] : undefined;
+    if (lifted) notes.push(`подвижность: на автотранспорте — ${lifted}`);
+    const mobility = d.side === 'su' ? (TANKISH.has(d.type) ? 'tracked' : d.type === 'kd' || lifted ? 'motor' : 'foot') : deMob;
     const size = mobility === 'tracked' ? (d.type === 'brigade' || d.type === 'stug' ? 'other' : 'tank') : ['sd', 'vdd', 'pd', 'div'].includes(d.type) ? 'rifle' : 'other';
     const deType = /СС/.test(name) && mobility === 'tracked' ? 'ss_pzgr_div' : /парашют/i.test(name) ? 'fj_div' : /танковая/i.test(name) ? 'pz_div' : mobility === 'tracked' ? 'pzgr_div' : d.type === 'garrison' ? 'fortress' : 'inf_div';
     const quality = d.side === 'su' ? (d.guards ? Math.max(rkka.unitTypes[f?.type ?? '']?.quality ?? 1, 1.1) : rkka.unitTypes[f?.type ?? '']?.quality ?? 1) : wehrmacht.unitTypes[tsDiv(d)?.type ?? deType]?.quality ?? 1;
@@ -474,6 +500,8 @@ for (const o of out) {
   const d = units.find((u) => u.id === o.id);
   for (const p of census.get(o.id)?.positions ?? []) {
     if (!p.own || p.date < '1945-04-16' || p.date >= endDay) continue;
+    // положение 16.04, взятое за начальное, — вход, не проверка
+    if (p.date === '1945-04-16' && p.time !== 'start' && startFromDay1.has(o.id)) continue;
     const time = p.date === '1945-04-16' && p.time === 'start' ? `${p.date}T05:00` : `${p.date}T20:00`;
     const rec = { formation: o.id, time, at: [p.lng, p.lat] as LngLat, approxKm: p.approxKm ?? 5, set: p.set, reliability: p.reliability };
     const army = o.side === 'su' && d ? subAt(d, p.date).army : null;
