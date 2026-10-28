@@ -2715,6 +2715,20 @@
     "source": "src:TSAMO-8GVA-ART-SVOD",
     "reliability": "A",
     "pages": "ЦАМО ф. 345, оп. 5487, д. 330, л. 712; ф. 345, оп. 5510, д. 382, л. 345"
+   },
+   {
+    "key": "tanks",
+    "value": "на 15–16.04.1945: танков и САУ 175 (15.04), орудий и миномётов 2 347 с частями усиления (16.04, 18.00) — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_8gva",
+     "at": "1945-04-16",
+     "tanks": 175,
+     "guns": 2347
+    },
+    "pages": "стр. 19 эл. копии (loveread.ec)"
    }
   ]
  },
@@ -2740,6 +2754,19 @@
     "source": "src:IS7_LR",
     "reliability": "B",
     "pages": "стр. 19 эл. копии (loveread.ec); ЦАМО ф. 333, оп. 4885, д. 394, л. 62 (по Исаеву)"
+   },
+   {
+    "key": "tanks",
+    "value": "на 15.04.1945: танков и САУ 353 — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_5ua",
+     "at": "1945-04-16",
+     "tanks": 353
+    },
+    "pages": "стр. 19 эл. копии (loveread.ec); ЦАМО ф. 333, оп. 4885, д. 394, л. 62 (по Исаеву)"
    }
   ]
  },
@@ -2764,6 +2791,19 @@
     "value": "к началу операции: 101 танк и САУ",
     "source": "src:IS7_LR",
     "reliability": "B",
+    "pages": "стр. 19 эл. копии (loveread.ec)"
+   },
+   {
+    "key": "tanks",
+    "value": "к началу операции: танков и САУ 101 — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_47a",
+     "at": "1945-04-16",
+     "tanks": 101
+    },
     "pages": "стр. 19 эл. копии (loveread.ec)"
    }
   ]
@@ -2856,6 +2896,20 @@
     "source": "src:BS_SA5",
     "reliability": "A",
     "pages": "с. 121; Исаев, стр. 18 эл. копии (loveread.ec)"
+   },
+   {
+    "key": "personnel",
+    "value": "на 16.04.1945 (с 11-м тк): людей 45 794, танков и САУ 707 (497 танков, 210 САУ) — для расчёта модели",
+    "source": "src:TSAMO-1GTA-DOKLAD",
+    "reliability": "A",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_1gta",
+     "at": "1945-04-16",
+     "personnel": 45794,
+     "tanks": 707
+    },
+    "pages": "ЦАМО ф. 299, оп. 3070, д. 776, с. 8 доклада"
    }
   ]
  },
@@ -2913,6 +2967,19 @@
     "source": "src:IS7_LR",
     "reliability": "B",
     "pages": "стр. 21 эл. копии (loveread.ec)–стр. 22 эл. копии (loveread.ec)"
+   },
+   {
+    "key": "tanks",
+    "value": "на 15.04.1945 (20.00): исправных танков и САУ 412 — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_4gta",
+     "at": "1945-04-16",
+     "tanks": 412
+    },
+    "pages": "стр. 21 эл. копии (loveread.ec); ЖБД 4 гв. ТА, ЦАМО ф. 323, оп. 4756, д. 87, л. 5 (по Исаеву)"
    }
   ]
  },
@@ -3152,6 +3219,19 @@
     "source": "src:IS7_LR",
     "reliability": "B",
     "pages": "стр. 19 эл. копии (loveread.ec)"
+   },
+   {
+    "key": "tanks",
+    "value": "к началу операции (с подчинённым 9-м тк): танков и САУ 333 — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_3ua",
+     "at": "1945-04-16",
+     "tanks": 333
+    },
+    "pages": "стр. 19 эл. копии (loveread.ec)"
    }
   ]
  },
@@ -3176,6 +3256,19 @@
     "value": "к началу операции: 244 танка и САУ",
     "source": "src:IS7_LR",
     "reliability": "B",
+    "pages": "стр. 19 эл. копии (loveread.ec)"
+   },
+   {
+    "key": "tanks",
+    "value": "к началу операции: танков и САУ 244 — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_69a",
+     "at": "1945-04-16",
+     "tanks": 244
+    },
     "pages": "стр. 19 эл. копии (loveread.ec)"
    }
   ]
@@ -3495,6 +3588,19 @@
     "source": "src:IS7_LR",
     "reliability": "B",
     "pages": "стр. 19 эл. копии (loveread.ec)"
+   },
+   {
+    "key": "tanks",
+    "value": "на 15.04.1945: самоходных орудий 52 (три полка СУ-76 в строю), танков нет — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "pages": "стр. 19 эл. копии (loveread.ec)",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_61a",
+     "at": "1945-04-16",
+     "tanks": 52
+    }
    }
   ]
  },
@@ -3537,6 +3643,19 @@
     "value": "к началу операции: 158 танков и САУ",
     "source": "src:IS7_LR",
     "reliability": "B",
+    "pages": "стр. 19 эл. копии (loveread.ec)"
+   },
+   {
+    "key": "tanks",
+    "value": "к началу операции: танков и САУ 158 — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_33a",
+     "at": "1945-04-16",
+     "tanks": 158
+    },
     "pages": "стр. 19 эл. копии (loveread.ec)"
    }
   ]
@@ -3601,6 +3720,19 @@
     "value": "к началу операции 2 202 орудия и миномёта без РС (82-мм 520, 120-мм 577, 160-мм 64; 45-мм 137, 57-мм 5, 76-мм полк. 57, 76-мм див. 475, 100-мм 28, 105-мм 4, 122-мм гауб. 295, 122-мм пушек 11, 152-мм гауб. 63, 152-мм пуш.-гауб. 59, 203-мм 23) и 120 установок РС (48 М-13, 72 М-31); 1 909 стволов на 8-км участке прорыва",
     "source": "src:IS7_LR",
     "reliability": "B",
+    "pages": "стр. 22 эл. копии (loveread.ec); по документам ЦАМО у Исаева"
+   },
+   {
+    "key": "guns",
+    "value": "к началу операции: орудий и миномётов 2 202 (без реактивных установок) — для расчёта модели",
+    "source": "src:IS7_LR",
+    "reliability": "B",
+    "claim": {
+     "kind": "strength",
+     "subject": "su_3gva",
+     "at": "1945-04-16",
+     "guns": 2202
+    },
     "pages": "стр. 22 эл. копии (loveread.ec); по документам ЦАМО у Исаева"
    }
   ]

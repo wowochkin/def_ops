@@ -54,7 +54,7 @@
     52.967
    ],
    "personnel": 56888,
-   "tanks": 204,
+   "tanks": 52,
    "guns": 1494,
    "ammo": 3,
    "fuel": 2,
@@ -91,7 +91,7 @@
     52.714
    ],
    "personnel": 56888,
-   "tanks": 204,
+   "tanks": 101,
    "guns": 1792,
    "ammo": 3,
    "fuel": 2,
@@ -109,7 +109,7 @@
     52.643
    ],
    "personnel": 56888,
-   "tanks": 204,
+   "tanks": 333,
    "guns": 2091,
    "ammo": 3,
    "fuel": 2,
@@ -127,7 +127,7 @@
     52.571
    ],
    "personnel": 56888,
-   "tanks": 204,
+   "tanks": 353,
    "guns": 2689,
    "ammo": 3,
    "fuel": 2,
@@ -145,8 +145,8 @@
     52.504
    ],
    "personnel": 56888,
-   "tanks": 204,
-   "guns": 2987,
+   "tanks": 175,
+   "guns": 2347,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -163,7 +163,7 @@
     52.427
    ],
    "personnel": 56888,
-   "tanks": 204,
+   "tanks": 244,
    "guns": 1494,
    "ammo": 3,
    "fuel": 2,
@@ -181,7 +181,7 @@
     52.216
    ],
    "personnel": 56888,
-   "tanks": 204,
+   "tanks": 158,
    "guns": 1494,
    "ammo": 3,
    "fuel": 2,
@@ -217,8 +217,8 @@
     14.654,
     52.59
    ],
-   "personnel": 45000,
-   "tanks": 854,
+   "personnel": 45794,
+   "tanks": 707,
    "guns": 700,
    "ammo": 3,
    "fuel": 2,
@@ -257,7 +257,7 @@
    ],
    "personnel": 64996,
    "tanks": 222,
-   "guns": 3130,
+   "guns": 2202,
    "ammo": 3,
    "fuel": 2,
    "posture": "attack"
@@ -365,7 +365,7 @@
     51.635
    ],
    "personnel": 40000,
-   "tanks": 550,
+   "tanks": 412,
    "guns": 600,
    "ammo": 3,
    "fuel": 2,

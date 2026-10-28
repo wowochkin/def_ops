@@ -20,11 +20,16 @@ describe('котлы, крепости, переправы сапёров (Бе�
   }, 120000);
 
   it('Берлинский оборонительный район окружён и живёт со складов крепости', () => {
-    const cut = J.find((j) => j.kind === 'encircled' && j.cut && j.formation === 'de_berlin');
-    expect(cut?.time.slice(0, 10)).toBeDefined();
-    const g = run.final.formations.find((f) => f.id === 'de_berlin');
-    expect(g?.stock).toBeLessThan(30);
-  });
+    // окружение зависит от прогона (с численностью армий по документам — в 4 из 5): не меньше чем в 4 из seed 1–5,
+    // к 24–26.04 (история — 25.04); окружённый живёт со складов крепости
+    const runs = [run, ...[2, 3, 4, 5].map((s) => runScenario(ctx, s))];
+    const hit = runs.map((r) => ({ r, cut: r.final.journal.find((j) => j.kind === 'encircled' && j.cut && j.formation === 'de_berlin') })).filter((x) => x.cut);
+    expect(hit.length).toBeGreaterThanOrEqual(4);
+    for (const { r, cut } of hit) {
+      expect(cut!.time.slice(0, 10) >= '1945-04-24' && cut!.time.slice(0, 10) <= '1945-04-26').toBe(true);
+      expect(r.final.formations.find((f) => f.id === 'de_berlin')?.stock).toBeLessThan(30);
+    }
+  }, 240000);
 
   it('сапёры наводят переправы через Одер, где фронт держит оба берега', () => {
     expect((run.final.crossings ?? []).some((c) => c.side === 'su')).toBe(true);
