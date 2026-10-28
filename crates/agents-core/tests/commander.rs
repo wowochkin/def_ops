@@ -784,6 +784,9 @@ mod options_de {
         let at = sim.world.divisions[divs(&sim, "de_3pza")[0]].vars.pos;
         sim.world.divisions[e].vars.pos = XY::new(at.x + 1.0, at.y);
         sim.world.divisions[e].state = State::Attack(agents_core::model::AttackSub::Assault);
+        let busy = divs(&sim, "de_3pza")[0];
+        sim.world.engaged = vec![false; sim.world.divisions.len()];
+        sim.world.engaged[busy] = true;
         let o = opts(&sim, "de_hgr_weichsel", &pic(vec![view(a), view(b)], vec![a]));
         assert!(!has(&o, |k| matches!(k, Kind::ShiftForces { from, .. } if *from == b)));
     }
@@ -844,5 +847,34 @@ mod options_de {
         let o = high(&sim);
         let m = o.iter().find(|c| matches!(c.kind, Kind::MoveReserve { .. })).expect("перемещение резерва");
         assert!(m.contrib.get(Motive::Save) > 0.0);
+    }
+
+    /// Резерв уже в угрожаемой армии не «перемещается» к ней; чужой армии (не ОКВ) резервом ОКВ не считается.
+    #[test]
+    fn move_reserve_excludes_target_own() {
+        let mut sim = load();
+        cut(&mut sim, "de_9a", 1.0);
+        let calm = agents_core::model::DefenseSub::Prepared;
+        for id in ["de_okw", "de_9a", "de_3pza", "de_4pza"] { for i in divs(&sim, id) { sim.world.divisions[i].state = State::Defense(calm); } }
+        for i in divs(&sim, "de_okw") { sim.world.divisions[i].cut_since = None; }
+        // резерв внутри цели и в постороннем соединении — вариантов нет
+        let own = divs(&sim, "de_9a")[0];
+        sim.world.divisions[own].state = State::Reserve;
+        let other = divs(&sim, "de_4pza")[0];
+        sim.world.divisions[other].state = State::Reserve;
+        assert!(!has(&high(&sim), |k| matches!(k, Kind::MoveReserve { .. })));
+        // резерв ОКВ — есть, и точка — центр цели
+        let r = divs(&sim, "de_okw")[0];
+        sim.world.divisions[r].state = State::Reserve;
+        let o = high(&sim);
+        let m = o.iter().find(|c| matches!(c.kind, Kind::MoveReserve { .. })).expect("резерв ОКВ");
+        let Kind::MoveReserve { hq: h, to } = m.kind else { unreachable!() };
+        assert_eq!(h, sim.world.divisions[r].hq);
+        let ds = divs(&sim, "de_9a");
+        let c = XY::new(ds.iter().map(|&i| sim.world.divisions[i].vars.pos.x).sum::<f64>() / ds.len() as f64, ds.iter().map(|&i| sim.world.divisions[i].vars.pos.y).sum::<f64>() / ds.len() as f64);
+        assert!(to.dist(c) < 1e-6);
+        // окружённый резерв не двигается
+        sim.world.divisions[r].cut_since = Some(0);
+        assert!(!has(&high(&sim), |k| matches!(k, Kind::MoveReserve { .. })));
     }
 }

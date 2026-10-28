@@ -2,12 +2,16 @@
 //! неопределённость и потери выводятся из картины простыми правилами; коэффициенты — именованные константы
 //! (допущения, подбираются калибровкой). Своё положение штаб берёт из мира: окружённость — по `cut_since` дивизий.
 //!
+//! Противник, соприкасающийся со своими войсками (в пределах `contact_km`), наблюдается непосредственно и туманом
+//! разведки не искажается; поэтому вклинение определяется по его истинному положению.
+//!
 //! Таблица правил (вклад в мотивы; U — неопределённость, L — потери):
 //! - Hold: удержание +, задача +, сохранение − (тем больше, чем сильнее угроза); всегда есть.
 //! - Withdraw: сохранение +, против окружения + (растут с угрозой), удержание −, задача −; при открытом фланге
 //!   или охвате своих (часть дивизий отрезана), пока меньшинство армии в кольце.
 //! - Counterattack: уничтожение +, удержание +, сохранение −; свой резерв в пределах `COUNTER_KM` от вклинения.
-//! - ShiftForces: удержание + на угрожаемом участке; берётся с тихого участка (без боя в последние часы).
+//! - ShiftForces: удержание + на угрожаемом участке; берётся с тихого участка: ни одна дивизия не в бою (`World.engaged` текущего шага); не берётся с армии с открытым
+//!   флангом и не направляется в армию, уже окружённую (тогда — прорыв).
 //! - Breakout: сохранение ++, сбережение сил +, удержание −; штаб в кольце и есть свой штаб снаружи.
 //! - Permit / Forbid (Ставка): на каждый неотвеченный запрос; запрет — удержание +, сохранение − (больше при угрозе
 //!   армии), разрешение — наоборот.
@@ -51,8 +55,6 @@ const CA_UNC: f64 = 0.6;
 const CA_LOSS: f64 = 0.5;
 // ShiftForces
 const SF_HOLD: f64 = 0.4;
-const SF_SAVE: f64 = 0.2;
-const SF_TASK: f64 = -0.1;
 const SF_UNC: f64 = 0.4;
 const SF_LOSS: f64 = 0.15;
 // Breakout
@@ -129,13 +131,11 @@ fn threat(sim: &Sim, pic: Option<&Picture>, army: u32) -> f64 {
     cut_share(sim, army).unwrap_or(0.0).max(if flank { 0.5 } else { 0.0 })
 }
 
-/// Дивизия в бою в текущий час: наступает (не закрепляется) или рядом с ней противник в пределах соприкосновения.
-fn in_combat(sim: &Sim, i: usize) -> bool {
-    let w = &sim.world;
-    let d = &w.divisions[i];
-    if matches!(d.state, State::Attack(s) if s != AttackSub::Consolidate) { return true; }
-    w.divisions.iter().any(|e| e.side != d.side && !e.state.out() && e.vars.pos.dist(d.vars.pos) <= sim.rules.contact_km)
-}
+/// Дивизия в бою на текущем шаге (`World.engaged`).
+fn in_combat(sim: &Sim, i: usize) -> bool { sim.world.engaged.get(i).copied().unwrap_or(false) }
+
+/// Дивизия окружена или отрезана от своих.
+fn is_cut(sim: &Sim, i: usize) -> bool { sim.world.divisions[i].cut_since.is_some() }
 
 pub fn options_de(sim: &Sim, hq: u32, _p: &Profile, pic: &Picture) -> Vec<Choice> {
     let w = &sim.world;
@@ -167,7 +167,7 @@ pub fn options_de(sim: &Sim, hq: u32, _p: &Profile, pic: &Picture) -> Vec<Choice
         d.side != w.hqs[hq as usize].side && matches!(d.state, State::Attack(_)) && own.iter().any(|&i| w.divisions[i].vars.pos.dist(d.vars.pos) <= sim.rules.contact_km)
     }).map(|e| w.divisions[e].vars.pos).collect();
     for a in &mine {
-        let reserve: Vec<XY> = divisions_of(sim, a.hq).into_iter().filter(|&i| w.divisions[i].state == State::Reserve).map(|i| w.divisions[i].vars.pos).collect();
+        let reserve: Vec<XY> = divisions_of(sim, a.hq).into_iter().filter(|&i| w.divisions[i].state == State::Reserve && !is_cut(sim, i)).map(|i| w.divisions[i].vars.pos).collect();
         let best = wedges.iter().filter_map(|&at| reserve.iter().map(|r| r.dist(at)).min_by(f64::total_cmp).filter(|&d| d <= COUNTER_KM).map(|d| (at, d)))
             .min_by(|x, y| x.1.total_cmp(&y.1));
         if let Some((at, _)) = best {
@@ -181,12 +181,12 @@ pub fn options_de(sim: &Sim, hq: u32, _p: &Profile, pic: &Picture) -> Vec<Choice
 
     // перегруппировка: с тихой армии (в текущий час нет боя) на угрожаемую
     let quiet = |a: &ArmyView| divisions_of(sim, a.hq).into_iter().all(|i| !in_combat(sim, i));
-    for to in mine.iter().filter(|a| threat(sim, Some(pic), a.hq) > 0.0) {
-        let from = mine.iter().filter(|a| a.hq != to.hq && quiet(a)).max_by(|x, y| x.strength.total_cmp(&y.strength));
+    for to in mine.iter().filter(|a| threat(sim, Some(pic), a.hq) > 0.0 && !in_pocket(sim, a.hq)) {
+        let from = mine.iter().filter(|a| a.hq != to.hq && quiet(a) && !pic.open_flanks.contains(&a.hq)).max_by(|x, y| x.strength.total_cmp(&y.strength));
         if let Some(from) = from {
             out.push(Choice {
                 kind: Kind::ShiftForces { from: from.hq, to: to.hq }, label: format!("Передать силы от {} к {}", name(sim, from.hq), name(sim, to.hq)),
-                contrib: contrib(&[(Motive::Hold, SF_HOLD), (Motive::Save, SF_SAVE), (Motive::Task, SF_TASK)]),
+                contrib: contrib(&[(Motive::Hold, SF_HOLD)]),
                 uncertainty: SF_UNC, losses: SF_LOSS, rule: "Truppenführung: силы собираются на решающем участке за счёт спокойных",
             });
         }
@@ -247,10 +247,10 @@ pub fn options_high(sim: &Sim, hq: u32, _p: &Profile) -> Vec<Choice> {
         d.state == State::Reserve && (d.hq == hq || okw.is_some_and(|o| under(sim, d.hq, o)))
     }).collect();
     let target = armies.iter().copied().map(|a| (a, threat(sim, None, a))).filter(|x| x.1 > 0.0)
-        .max_by(|x, y| x.1.total_cmp(&y.1).then(y.0.cmp(&x.0))).and_then(|(a, _)| centroid(sim, &divisions_of(sim, a)));
-    if let Some(to) = target {
+        .max_by(|x, y| x.1.total_cmp(&y.1).then(y.0.cmp(&x.0))).and_then(|(a, _)| centroid(sim, &divisions_of(sim, a)).map(|c| (a, c)));
+    if let Some((army, to)) = target {
         let mut seen = Vec::new();
-        for i in reserves {
+        for i in reserves.into_iter().filter(|&i| !is_cut(sim, i) && !under(sim, sim.world.divisions[i].hq, army)) {
             let h = sim.world.divisions[i].hq;
             if seen.contains(&h) { continue; }
             seen.push(h);
