@@ -127,8 +127,17 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
       }
     } else if (e.kind === 'meet') {
       const c = T.area(e.place)?.center;
+      // формирования нет в снимке (агентная модель: на карте дивизии, армии — штабы) — хотя бы одна его дивизия (передовые
+      // части замыкают кольцо, а не центр армии)
+      const parent = new Map(run.final.formations.map((f) => [f.id, f.parent ?? null]));
+      const isUnder = (id: string, hq: string) => { for (let p = parent.get(id), n = 0; p && n < 8; p = parent.get(p) ?? null, n++) if (p === hq) return true; return false; };
+      const near = (p: LngLat) => !!c && dist(T.proj.toXY(p), T.proj.toXY(c)) <= e.radiusKm;
+      const there = (s: Snapshot, id: string) => {
+        const u = s.units.find((x) => x.id === id);
+        return u ? !u.destroyed && near(u.at) : s.units.some((x) => !x.destroyed && isUnder(x.id, id) && near(x.at));
+      };
       for (const s of run.snapshots) {
-        if (c && e.formations.every((id) => s.units.some((u) => u.id === id && !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c)) <= e.radiusKm))) { when = s.time; break; }
+        if (c && e.formations.every((id) => there(s, id))) { when = s.time; break; }
       }
     } else {
       // окружено (или уничтожено) хотя бы одно из перечисленных

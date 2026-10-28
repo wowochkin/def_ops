@@ -143,7 +143,32 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
       destroyed: gone.has(f.id), enterAt: first.get(f.id) ? time(first.get(f.id)!) : null,
     };
   });
-  const final: SimState = { scenario: ctx.scenario.id, time: end, turn: snapshots.length - 1, formations, pending: [], rngState: 0, seed: t.seed, journal: [] };
+  // журнал окружений и гибели (сверка событий «окружены», «уничтожены»): дивизия окружена — отрезана (поле encircled
+  // ядра — часов в окружении) не меньше суток, с начала этих суток (короткая изоляция на час-другой — не котёл); штаб —
+  // когда так окружена не меньше половины его живых дивизий; уничтожен — все его дивизии
+  const journal: SimState['journal'] = [];
+  const CUT_H = 24;
+  const parentOf = new Map(defs.map((f) => [f.id, f.parent ?? null]));
+  const under = new Map<string, number[]>();
+  t.divisions.forEach((d, k) => { for (let p = parentOf.get(d.id), n = 0; p && n < 8; p = parentOf.get(p) ?? null, n++) under.set(p, [...(under.get(p) ?? []), k]); });
+  const cutFrom = new Array<number>(t.divisions.length).fill(-1), deadFrom = new Array<number>(t.divisions.length).fill(-1);
+  const hqCut = new Set<string>(), hqDead = new Set<string>();
+  for (let h = 0; h <= hours; h++) {
+    t.frames[h].forEach((r, k) => {
+      const enc = (r[iEnc] as number) ?? 0;
+      if (cutFrom[k] < 0 && enc >= CUT_H) { cutFrom[k] = h - enc + 1; journal.push({ kind: 'encircled', time: time(Math.max(0, cutFrom[k])), formation: t.divisions[k].id, cut: true }); }
+      if (deadFrom[k] < 0 && postureOf(String(r[iState])) === 'destroyed') { deadFrom[k] = h; journal.push({ kind: 'destroyed', time: time(h), formation: t.divisions[k].id }); }
+    });
+    for (const [hq, ks] of under) {
+      const live = ks.filter((k) => deadFrom[k] < 0 && postureOf(String(t.frames[h][k][iState])) !== null);
+      if (!hqCut.has(hq) && live.length && live.filter((k) => cutFrom[k] >= 0 && ((t.frames[h][k][iEnc] as number) ?? 0) > 0).length * 2 >= live.length) {
+        hqCut.add(hq); journal.push({ kind: 'encircled', time: time(Math.max(0, Math.min(...live.filter((k) => cutFrom[k] >= 0).map((k) => cutFrom[k])))), formation: hq, cut: true });
+      }
+      if (!hqDead.has(hq) && ks.every((k) => deadFrom[k] >= 0)) { hqDead.add(hq); journal.push({ kind: 'destroyed', time: time(h), formation: hq }); }
+    }
+  }
+  journal.sort((a, b) => a.time.localeCompare(b.time));
+  const final: SimState = { scenario: ctx.scenario.id, time: end, turn: snapshots.length - 1, formations, pending: [], rngState: 0, seed: t.seed, journal };
   return { ctx, run: { final, snapshots } };
 }
 

@@ -203,7 +203,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [legendHidden, setLegendHidden, clearLegend] = useLegendHidden();
   const lvHidden = useMemo(() => hiddenOn(legendHidden, level), [legendHidden, level]);
   const [labels, toggleLabels] = useMapLabels();
-  const [model, setModel] = useState<'army' | 'agents'>('army');
+  const [model, setModel] = useState<'army' | 'agents'>('agents');
   // параметры агентной модели: базовые (agents-v0.json) или сохранённый вариант (калибровка в «Моделировании»)
   const [variants, setVariants] = useState<AgentVariant[]>(agentVariants);
   const [variantId, setVariantId] = useState('');

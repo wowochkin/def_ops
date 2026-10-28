@@ -126,3 +126,30 @@ describe('агентная модель в «Переигровке»', () => {
     expect(last.name).toContain('с 18.4');
   });
 });
+
+describe('агентная модель: события окружения и сближения', () => {
+  /** 30 ч: немецкая дивизия отрезана с 4-го часа (счётчик часов в окружении растёт), вторая — на 2 ч (не котёл). */
+  function cutTrace(): AgentTrace {
+    const t = trace();
+    const row = (lng: number, state: string, enc: number) => [lng, 52.5, state, 6000, 10, 50, 2, 1, 0.1, 0.9, enc];
+    t.hours = 30;
+    t.frames = Array.from({ length: 31 }, (_, h) => [
+      [14.6 - h * 0.008, 52.5, 'наступление: атака', 9000, 10, 50, 2, 1, 0.1, 0.9, 0],
+      row(14.3, 'оборона: подготовленная', h >= 4 ? h - 3 : 0),
+      row(14.0, 'оборона: поспешная', h >= 10 && h < 12 ? h - 9 : 0),
+    ]);
+    return t;
+  }
+  it('окружена — отрезана не меньше суток, с начала; штаб — когда отрезана половина его дивизий; короткая изоляция — не котёл', async () => {
+    const { ctx: base } = await contextFrom(get, 'berlin-1945-tasks');
+    const { run } = agentsToRun(base, cutTrace(), 6);
+    const cut = run.final.journal.filter((j) => j.kind === 'encircled');
+    expect(cut.map((j) => [j.formation, j.time])).toEqual([['de_y', '1945-04-16T09:00'], ['de_9a', '1945-04-16T09:00']]);
+  });
+  it('сближение: штаба нет на карте — засчитывается его дивизия у места', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    const { ctx, run } = agentsToRun(base, cutTrace(), 6);
+    const ev = checkEvents(ctx, run, { ...history, events: [{ id: 'm', title: 'у Зелова', date: '1945-04-16', kind: 'meet', place: 'Seelow', radiusKm: 10, formations: ['su_8gva'] }] } as typeof history);
+    expect(ev[0].simulated).toBe('1945-04-16');
+  });
+});
