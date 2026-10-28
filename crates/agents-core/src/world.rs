@@ -168,6 +168,8 @@ pub struct Sim {
     pub history: Option<Vec<World>>,
     /// Распоряжения штаба игрока (игра): подвоз, переправы, подрыв мостов, полосы армий.
     pub staff: StaffFx,
+    /// Командующие над верхними штабами (по умолчанию выключены).
+    pub commanders: crate::commander::State,
 }
 
 /// Распоряжения штаба, которые ядро исполняет в расчёте (игра; их проверяет и ведёт штаб вне ядра).
@@ -233,7 +235,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), doctrine_text: [None, None], llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), historical: Vec::new(), command: Default::default(), documents: Vec::new(), history: None, staff: StaffFx::default() };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), doctrine_text: [None, None], llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), historical: Vec::new(), command: Default::default(), documents: Vec::new(), history: None, staff: StaffFx::default(), commanders: Default::default() };
         s.command = crate::command::control::CommandState::new(s.world.hqs.len(), s.world.divisions.len());
         s.script.sort_by_key(|o| o.at);
         s

@@ -119,7 +119,7 @@ fn side_armies(sim: &Sim, hq: u32) -> Vec<u32> {
 }
 
 /// Свой штаб снаружи: армия с дивизиями, из которых ни одна не отрезана, ближайшая к `from`; цель — центр её дивизий.
-fn outside_hq(sim: &Sim, hq: u32, from: XY) -> Option<(u32, XY)> {
+pub(super) fn outside_hq(sim: &Sim, hq: u32, from: XY) -> Option<(u32, XY)> {
     side_armies(sim, hq).into_iter().filter(|&a| cut_share(sim, a) == Some(0.0))
         .filter_map(|a| centroid(sim, &divisions_of(sim, a)).map(|c| (a, c)))
         .min_by(|x, y| x.1.dist(from).total_cmp(&y.1.dist(from)))

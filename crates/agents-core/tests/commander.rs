@@ -904,3 +904,172 @@ mod options_de {
         assert!(!has(&high(&sim), |k| matches!(k, Kind::MoveReserve { .. })));
     }
 }
+
+/// Цикл решений: польза по мотивам и характеру, выбор, разбор и встраивание в фазу командования.
+mod decide {
+    use super::*;
+    use agents_core::command::control::{Control, Role};
+    use agents_core::commander::decide::{score, Scored, DOC_PREFIX};
+    use agents_core::commander::options::{Choice, Kind};
+    use agents_core::commander::options_su::options_su;
+    use agents_core::commander::picture::{ArmyView, Picture};
+    use agents_core::model::Side;
+    use agents_core::world::Sim;
+
+    fn load(over: Option<&serde_json::Value>) -> Sim {
+        let root = repo_root();
+        let (sim, _) = agents_core::scenario::load_with(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root, over, None).expect("сценарий");
+        sim
+    }
+    fn hq(sim: &Sim, id: &str) -> u32 { sim.world.hqs.iter().position(|h| h.id == id).expect(id) as u32 }
+    /// Обе стороны — штабы-агенты под командующими; `before` — правка управления до прогона.
+    fn run(over: Option<&serde_json::Value>, hours: u32, before: impl Fn(&mut Sim)) -> Sim {
+        let mut sim = load(over);
+        let mut pending = Vec::new();
+        for side in [Side::Su, Side::De] {
+            pending.extend(agents_core::command::control::command_mode(&mut sim, "agents", side).expect("режим"));
+            agents_core::commander::enable(&mut sim, side);
+        }
+        pending.sort_by_key(|x| x.0);
+        before(&mut sim);
+        for _ in 0..hours { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
+        sim
+    }
+    fn commander<'a>(sim: &'a Sim, id: &str) -> Option<&'a agents_core::commander::decide::Commander> {
+        let h = hq(sim, id);
+        sim.commanders.list.iter().find(|c| c.hq == h)
+    }
+
+    /// Обстановка: стрелковая армия прошла глубину ввода подвижных групп, но прорыва нет; танковая армия ждёт.
+    fn mobile_case(sim: &mut Sim) -> (Picture, Vec<Choice>) {
+        let (rifle, tank) = (hq(sim, "su_8gva"), hq(sim, "su_1gta"));
+        sim.command.role_hq[rifle as usize] = Role::First;
+        sim.command.role_hq[tank as usize] = Role::Mobile;
+        let depth = sim.rules.doctrine_su.tank_commit_depth_km;
+        let view = |h: u32, adv: f64| ArmyView { hq: h, advance_km: adv, strength: 1.0, enemy_est: 1.0, enemy_true: 1.0, to_objective_km: Some(80.0), broke_through: false };
+        let pic = Picture { tick: 10, armies: vec![view(rifle, depth + 1.0), view(tank, 0.0)], enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets: vec![], to_objective_km: Some(80.0) };
+        let p = sim.rules.commanders.for_hq("su_1bf").unwrap().clone();
+        let o = options_su(sim, hq(sim, "su_1bf"), &p, &pic);
+        (pic, o)
+    }
+    fn scored(sim: &Sim, o: &[Choice], t: &Traits) -> Vec<Scored> {
+        let p = sim.rules.commanders.for_hq("su_1bf").unwrap();
+        o.iter().map(|c| score(c, &p.motives, t, &sim.rules.commanders.weights, false)).collect()
+    }
+    fn best(v: &[Scored]) -> &Kind { &v.iter().max_by(|a, b| a.total.total_cmp(&b.total)).unwrap().choice.kind }
+    /// Решение о подвижной группе: ввести или ждать — лучший из этих двух вариантов.
+    fn mobile_choice(v: &[Scored]) -> &Kind {
+        &v.iter().filter(|s| matches!(s.choice.kind, Kind::CommitMobile { .. } | Kind::WaitMobile)).max_by(|a, b| a.total.total_cmp(&b.total)).unwrap().choice.kind
+    }
+
+    /// Слагаемые пользы — как в формуле; честолюбие усиливает соперничество и разгром.
+    #[test]
+    fn score_formula() {
+        let w = agents_core::commander::Weights { uncertainty: 2.0, losses: 3.0, persistence: 0.5, obedience: 1.5 };
+        let c = Choice { kind: Kind::Hold, label: "т".into(), contrib: Motives([0.5, 0.4, -0.2, 0.0, 0.3, 0.0, 0.0]), uncertainty: 0.4, losses: 0.2, rule: "т" };
+        let m = Motives([0.8, 0.5, 0.3, 0.0, 0.6, 0.0, 0.0]);
+        let t = Traits([0.7, 0.6, 0.9, 0.25, 0.4]);
+        let s = score(&c, &m, &t, &w, true);
+        let amb = 0.5 + 0.9;
+        let parts = 0.8 * 0.5 + 0.5 * amb * 0.4 + 0.3 * -0.2 + 0.6 * amb * 0.3;
+        let penalty = 0.3 * 2.0 * 0.4 + 0.75 * 3.0 * 0.2;
+        let bonus = 0.6 * 0.5 + 0.4 * 1.5 * 0.5;
+        assert!((s.parts.get(Motive::Rival) - 0.5 * amb * 0.4).abs() < 1e-12);
+        assert!((s.penalty - penalty).abs() < 1e-12 && (s.bonus - bonus).abs() < 1e-12);
+        assert!((s.total - (parts - penalty + bonus)).abs() < 1e-12, "{}", s.total);
+        assert!(s.mind.is_none());
+        let s2 = score(&c, &m, &t, &w, false);
+        assert!((s.total - s2.total - 0.6 * 0.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn risky_and_cautious_differ() {
+        let mut sim = load(None);
+        let (_, o) = mobile_case(&mut sim);
+        let mut t = sim.rules.commanders.for_hq("su_1bf").unwrap().traits;
+        t.0[Trait::Risk as usize] = 0.9;
+        let risky = scored(&sim, &o, &t);
+        assert!(matches!(best(&risky), Kind::CommitMobile { .. }), "{:?}", best(&risky));
+        t.0[Trait::Risk as usize] = 0.1;
+        let cautious = scored(&sim, &o, &t);
+        assert_eq!(mobile_choice(&cautious), &Kind::WaitMobile);
+        assert!(!matches!(best(&cautious), Kind::CommitMobile { .. }));
+    }
+
+    #[test]
+    fn confident_and_shaken_differ() {
+        let mut sim = load(None);
+        let (_, o) = mobile_case(&mut sim);
+        let p = sim.rules.commanders.for_hq("su_1bf").unwrap().clone();
+        let m = &sim.rules.commanders.mood;
+        let sure = effective(&p.traits, &Mood { confidence: 0.9, stress: 0.1 }, m);
+        let shaken = effective(&p.traits, &Mood { confidence: 0.1, stress: 0.9 }, m);
+        let (a, b) = (scored(&sim, &o, &sure), scored(&sim, &o, &shaken));
+        assert!(matches!(best(&a), Kind::CommitMobile { .. }), "{:?}", best(&a));
+        assert_ne!(best(&a), best(&b));
+        assert_eq!(mobile_choice(&b), &Kind::WaitMobile);
+    }
+
+    #[test]
+    fn decision_repeats_with_seed() {
+        let key = |sim: &Sim| -> Vec<(u32, u32, String)> {
+            sim.commanders.list.iter().flat_map(|c| c.decisions.iter().map(move |d| (c.hq, d.tick, format!("{:?}", d.options[d.chosen].choice.kind)))).collect()
+        };
+        let a = run(None, 48, |_| {});
+        let b = run(None, 48, |_| {});
+        let ka = key(&a);
+        assert!(!ka.is_empty());
+        assert_eq!(ka, key(&b));
+        // каждое решение — с разбором, и документ командующего с правилом
+        for c in &a.commanders.list {
+            for d in &c.decisions {
+                assert!(d.chosen < d.options.len() && !d.why.is_empty() && !d.trigger.is_empty());
+            }
+            assert!(c.snapshots.iter().filter(|s| s.tick % 6 == 0).count() >= 8, "{}", a.world.hqs[c.hq as usize].id);
+        }
+        let docs: Vec<_> = a.documents.iter().filter(|d| d.text.starts_with(DOC_PREFIX)).collect();
+        assert_eq!(docs.len(), ka.len());
+        assert!(docs.iter().all(|d| d.rule.as_deref().is_some_and(|r| !r.is_empty())));
+        // у командующего Ставки ответы на запросы — его, прежний ответ «держать» не даётся
+        assert!(!a.documents.iter().any(|d| d.text.contains(": держать") && !d.text.starts_with(DOC_PREFIX) && d.hq == hq(&a, "de_hc")));
+    }
+
+    /// Штаб без профиля — без командующего, решает по прежним правилам штаба.
+    #[test]
+    fn hq_without_profile_keeps_staff_rules() {
+        let o = json!({"commanders.profiles.busse.hqs": []});
+        let sim = run(Some(&o), 48, |_| {});
+        assert!(commander(&sim, "de_9a").is_none());
+        assert!(commander(&sim, "de_hgr_weichsel").is_some());
+        let h = hq(&sim, "de_9a");
+        let own: Vec<_> = sim.documents.iter().filter(|d| d.hq == h).collect();
+        assert!(!own.is_empty());
+        assert!(own.iter().all(|d| !d.text.contains(DOC_PREFIX)), "{:?}", own.iter().find(|d| d.text.contains(DOC_PREFIX)));
+    }
+
+    /// Место игрока: командующий молчит.
+    #[test]
+    fn player_seat_silences_commander() {
+        let sim = run(None, 48, |sim| {
+            let (f, top) = (hq(sim, "su_1bf"), hq(sim, "de_hc"));
+            sim.command.control[f as usize] = Control::Player;
+            sim.command.control[top as usize] = Control::Player;
+        });
+        assert!(commander(&sim, "su_1bf").unwrap().decisions.is_empty());
+        assert!(commander(&sim, "de_hc").unwrap().decisions.is_empty());
+        assert!(sim.command.requests.iter().all(|r| r.answer.is_none()));
+        // а Конев решает
+        assert!(!commander(&sim, "su_1uf").unwrap().decisions.is_empty());
+    }
+
+    /// По умолчанию командующие выключены: прежние прогоны (и их отпечатки в tests/command.rs) не меняются.
+    #[test]
+    fn digests_unchanged() {
+        let mut sim = load(None);
+        assert_eq!(sim.commanders.enabled, [false, false]);
+        assert!(sim.commanders.list.is_empty());
+        for _ in 0..6 { sim.step(); }
+        assert!(sim.commanders.list.is_empty() && sim.commanders.log.dist.is_empty());
+        assert!(!sim.documents.iter().any(|d| d.text.starts_with(DOC_PREFIX)));
+    }
+}
