@@ -8,8 +8,12 @@
  *   npx tsx packages/sim/tools/agents/calibrate.ts --around evals-out/calib/r1 --scale 0.15 --samples 100 --out evals-out/calib/r2
  *   npx tsx packages/sim/tools/agents/calibrate.ts --mode commanders --samples 200 --out evals-out/calib/cmd1   (пространство — числа commanders.json с range)
  *   npx tsx packages/sim/tools/agents/calibrate.ts --refine evals-out/calib/r2 --top 8
+ *   npx tsx packages/sim/tools/agents/calibrate.ts --mode commanders --keys '^commanders\.(mood|gains)\.' …   (только ключи по выражению; прочие — как в файлах)
+ *   npx tsx packages/sim/tools/agents/calibrate.ts --measure --mode agents --seeds 1-20 [--scenario berlin] [--params '{…}'] [--keep evals-out/calib/m-agents] --out evals-out/calib/m
  *
- * Пишет построчно <out>/samples.jsonl ({ params, total, positions, events, runs }) и <out>/refine.jsonl.
+ * Пишет построчно <out>/samples.jsonl ({ params, total, positions, events, meanKm, eventDays, runs }), <out>/refine.jsonl
+ * и <out>/measure.jsonl (замер: итог, положения, события и непрерывные меры — средняя ошибка положений, км; средняя
+ * ошибка сроков наступивших событий, сутки; по каждому прогону).
  */
 import { spawn } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
@@ -19,7 +23,7 @@ import { loadHistory, loadProfile, loadRules, loadScenario, loadTheatre } from '
 import { contextFrom } from '../../src/source';
 import { agentsScore } from '../../src/agents-score';
 import type { AgentHistory, AgentTrace } from '../../src/agents';
-import { commandersSpace } from './commanders-space';
+import { commandersSpace, commandersValues } from './commanders-space';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const args = process.argv.slice(2);
@@ -47,7 +51,9 @@ const SCEN: Record<string, { path: string; base: string }> = {
   'vistula-oder': { path: 'packages/sim/data/scenarios/agents/vistula-oder-1945.json', base: 'vistula-oder-1945' },
 };
 const mode = opt('mode', 'fronts')!;
-const space = mode === 'commanders' ? commandersSpace() : SPACE;
+const keysRe = opt('keys') ? new RegExp(opt('keys')!) : null;
+const space = Object.fromEntries(Object.entries(mode === 'commanders' ? commandersSpace() : SPACE).filter(([k]) => !keysRe || keysRe.test(k)));
+const current: Record<string, number> = mode === 'commanders' ? commandersValues() : {};
 const jobs = +opt('jobs', '4')!;
 const BIN = resolve(ROOT, 'target/release/agents-run');
 
@@ -67,14 +73,15 @@ async function score(sc: string, trace: AgentTrace) {
   if (!hists.has(sc)) hists.set(sc, rd<AgentHistory>(`packages/sim/data/scenarios/agents/${sc}-1945.history.json`));
   const { ctx, history } = ctxs.get(SCEN[sc].base)!;
   const s = agentsScore(ctx, trace, hists.get(sc)!, history);
-  return { total: s.score, positions: s.within, events: s.eventsTotal ? s.eventsHit / s.eventsTotal : 0 };
+  return { total: s.score, positions: s.within, events: s.eventsTotal ? s.eventsHit / s.eventsTotal : 0, meanKm: s.meanKm, eventDays: s.meanEventDays, occurred: s.eventsOccurred, eventDetail: s.events };
 }
 
 let tmpN = 0;
 /** Прогон ядра: сценарий, seed, поправки; ход — во временную папку, после сверки удаляется. */
-function run(sc: string, seed: number, params: Record<string, number>): Promise<string> {
-  const out = `evals-out/calib/tmp/${process.pid}-${tmpN++}`;
-  const extra = mode === 'script' ? [] : mode === 'commanders' ? ['--command', mode] : ['--command', mode, '--side', 'su'];
+function run(sc: string, seed: number, params: Record<string, number>, keepDir?: string): Promise<string> {
+  const out = keepDir ? `${keepDir}/${sc}-${seed}` : `evals-out/calib/tmp/${process.pid}-${tmpN++}`;
+  // commanders — обе стороны (с --side su|de — только она), прочие режимы — советская сторона
+  const extra = mode === 'script' ? [] : mode === 'commanders' ? ['--command', mode, ...(opt('side') ? ['--side', opt('side')!] : [])] : ['--command', mode, '--side', 'su'];
   return new Promise((ok, fail) => {
     const p = spawn(BIN, ['--scenario', SCEN[sc].path, '--seed', String(seed), '--runs', '1', '--out', out, ...extra, ...(Object.keys(params).length ? ['--params', JSON.stringify(params)] : [])], { cwd: ROOT, stdio: 'ignore' });
     p.on('exit', (c) => (c === 0 ? ok(out) : fail(new Error(`agents-run: код ${c}`))));
@@ -82,17 +89,22 @@ function run(sc: string, seed: number, params: Record<string, number>): Promise<
 }
 
 /** Средние итоги сочетания по сценарию и seed; прогоны — параллельно по `jobs`. */
-async function evaluate(sc: string, seeds: number[], params: Record<string, number>) {
-  const res: { total: number; positions: number; events: number }[] = [];
+async function evaluate(sc: string, seeds: number[], params: Record<string, number>, keepDir?: string) {
+  const res: Awaited<ReturnType<typeof score>>[] = [];
   for (let k = 0; k < seeds.length; k += jobs) {
-    const outs = await Promise.all(seeds.slice(k, k + jobs).map((s) => run(sc, s, params)));
+    const outs = await Promise.all(seeds.slice(k, k + jobs).map((s) => run(sc, s, params, keepDir)));
     for (const o of outs) {
       res.push(await score(sc, rd<AgentTrace>(`${o}/trace.json`)));
-      rmSync(resolve(ROOT, o), { recursive: true, force: true });
+      if (!keepDir) rmSync(resolve(ROOT, o), { recursive: true, force: true });
     }
   }
   const m = (f: (x: (typeof res)[number]) => number) => +(res.reduce((s, x) => s + f(x), 0) / res.length).toFixed(4);
-  return { total: m((x) => x.total), positions: m((x) => x.positions), events: m((x) => x.events), runs: res.map((x) => +x.total.toFixed(3)) };
+  const withDays = res.filter((x) => x.eventDays != null);
+  return {
+    total: m((x) => x.total), positions: m((x) => x.positions), events: m((x) => x.events), meanKm: +m((x) => x.meanKm).toFixed(1),
+    eventDays: withDays.length ? +(withDays.reduce((s, x) => s + x.eventDays!, 0) / withDays.length).toFixed(2) : null, occurred: +m((x) => x.occurred).toFixed(1),
+    runs: res.map((x) => +x.total.toFixed(3)), eventDetail: res.map((x) => Object.fromEntries(x.eventDetail.map((e) => [e.id, e.days]))),
+  };
 }
 
 /** Детерминированный генератор (mulberry32): тот же --rng — те же сочетания. */
@@ -102,8 +114,23 @@ const sample = (r: () => number) => Object.fromEntries(Object.entries(space).map
   return [k, int ? Math.round(v) : +v.toFixed(3)];
 }));
 
-const seedsOf = (s: string) => s.split(',').map(Number);
-if (opt('refine')) {
+/** Список seed: «1,2,3» или «1-20». */
+const seedsOf = (s: string) => s.split(',').flatMap((x) => { const [a, b] = x.split('-').map(Number); return b ? Array.from({ length: b - a + 1 }, (_, i) => a + i) : [a]; });
+if (args.includes('--measure')) {
+  const dir = resolve(ROOT, opt('out', 'evals-out/calib/measure')!);
+  mkdirSync(dir, { recursive: true });
+  const sc = opt('scenario', 'berlin')!;
+  const params = opt('params') ? JSON.parse(opt('params')!) as Record<string, number> : {};
+  const keep = opt('keep');
+  if (keep) mkdirSync(resolve(ROOT, keep), { recursive: true });
+  const seeds = seedsOf(opt('seeds', '1-20')!);
+  const t0 = Date.now();
+  const e = await evaluate(sc, seeds, params, keep);
+  const { eventDetail, ...brief } = e;
+  appendFileSync(`${dir}/measure.jsonl`, JSON.stringify({ mode, side: opt('side') ?? null, scenario: sc, seeds, params, ...e }) + '\n');
+  console.log(JSON.stringify({ mode, side: opt('side') ?? null, scenario: sc, n: seeds.length, ...brief, sec: Math.round((Date.now() - t0) / 1000) }));
+  void eventDetail;
+} else if (opt('refine')) {
   const dir = resolve(ROOT, opt('refine')!);
   const rows = readFileSync(`${dir}/samples.jsonl`, 'utf8').trim().split('\n').map((l) => JSON.parse(l) as { params: Record<string, number>; total: number });
   const top = [{ params: {}, total: NaN }, ...rows.filter((r) => Object.keys(r.params).length).sort((a, b) => b.total - a.total).slice(0, +opt('top', '8')!)];
@@ -111,7 +138,8 @@ if (opt('refine')) {
     const berlin = await evaluate('berlin', seedsOf(opt('seeds', '1,2,3,4,5,6,7,8,9,10')!), r.params);
     const seelow = await evaluate('seelow', [1, 2, 3, 4, 5], r.params);
     const vistula = await evaluate('vistula-oder', [1, 2, 3, 4, 5], r.params);
-    const line = { k, params: r.params, berlin, seelow, vistula };
+    const strip = <T extends { eventDetail: unknown }>(x: T) => { const { eventDetail, ...rest } = x; void eventDetail; return rest; };
+    const line = { k, params: r.params, berlin: strip(berlin), seelow: strip(seelow), vistula: strip(vistula) };
     appendFileSync(`${dir}/refine.jsonl`, JSON.stringify(line) + '\n');
     console.log(`${k === 0 ? 'база' : `#${k}`}: Берлинская ${berlin.total} (положения ${berlin.positions}, события ${berlin.events}); Зееловские ${seelow.total}; Висло-Одерская ${vistula.total}`);
   }
@@ -125,7 +153,7 @@ if (opt('refine')) {
   const around = opt('around') ? readFileSync(resolve(ROOT, opt('around')!, 'samples.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l) as { params: Record<string, number>; total: number }).sort((a, b) => b.total - a.total)[0]?.params : undefined;
   const scale = +opt('scale', '0.15')!;
   const near = (c: Record<string, number>) => Object.fromEntries(Object.entries(space).map(([k, [lo, hi, int]]) => {
-    const base = c[k] ?? lo + (hi - lo) / 2;
+    const base = c[k] ?? current[k] ?? lo + (hi - lo) / 2;
     const v = Math.min(hi, Math.max(lo, base + (r() * 2 - 1) * scale * (hi - lo)));
     return [k, int ? Math.round(v) : +v.toFixed(3)];
   }));
@@ -136,7 +164,8 @@ if (opt('refine')) {
     if (k < done) continue;
     const t0 = Date.now();
     const e = await evaluate('berlin', seeds, params);
-    appendFileSync(`${dir}/samples.jsonl`, JSON.stringify({ k, params, ...e }) + '\n');
+    const { eventDetail, ...row } = e; void eventDetail;
+    appendFileSync(`${dir}/samples.jsonl`, JSON.stringify({ k, params, ...row }) + '\n');
     console.log(`${k}/${n} итог ${e.total} (положения ${e.positions}, события ${e.events}) за ${((Date.now() - t0) / 1000).toFixed(0)} с`);
   }
 }

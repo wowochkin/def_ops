@@ -10,6 +10,10 @@ import type { SimContext } from './step';
 
 export interface AgentsScore {
   within: number; n: number; medianExcessKm: number;
+  /** Средняя ошибка положений дивизий, км (непрерывная мера, без допуска). */
+  meanKm: number;
+  /** Средняя ошибка срока событий, сутки (по наступившим в прогоне событиям); сколько из них наступило. */
+  meanEventDays: number | null; eventsOccurred: number;
   eventsHit: number; eventsTotal: number;
   events: { id: string; title: string; days: number | null }[];
   /** По объединениям (армиям и корпусам по подчинению дивизий): доля в допуске и число положений. */
@@ -32,6 +36,7 @@ export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentH
   const s = summarize(devs, toleranceKm);
   const ev = checkEvents(ctx, run, h);
   const hit = ev.filter((e) => e.days != null && Math.abs(e.days) <= 2).length;
+  const occurred = ev.filter((e) => e.days != null);
   // объединение дивизии — армия над её штабом (корпус → армия), без армии — сам штаб
   const hqs = new Map(trace.hqs.map((x) => [x.id, x]));
   const armyOf = (id: string) => { for (let x = hqs.get(id), n = 0; x && n < 6; x = x.parent ? hqs.get(x.parent) : undefined, n++) if (x.echelon === 'army') return x.id; return id; };
@@ -54,7 +59,10 @@ export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentH
   const share = outcomesScore(res);
   const items = res.filter((r) => r.verdict === 'ok' || r.verdict === 'low' || r.verdict === 'high').map((r) => ({ id: r.norm.id, mean: r.mean == null ? null : +r.mean.toFixed(2), ok: r.verdict === 'ok' }));
   return {
-    within: s.within, n: s.n, medianExcessKm: s.medianExcessKm, eventsHit: hit, eventsTotal: ev.length,
+    within: s.within, n: s.n, medianExcessKm: s.medianExcessKm,
+    meanKm: devs.length ? +(devs.reduce((a, d) => a + d.km, 0) / devs.length).toFixed(1) : 0,
+    meanEventDays: occurred.length ? +(occurred.reduce((a, e) => a + Math.abs(e.days!), 0) / occurred.length).toFixed(2) : null, eventsOccurred: occurred.length,
+    eventsHit: hit, eventsTotal: ev.length,
     events: ev.map((e) => ({ id: e.id, title: e.title, days: e.days })),
     byGroup: [...groups].map(([id, x]) => ({ id: name.get(id) ?? id, within: +(x.ok / x.n).toFixed(2), n: x.n })).sort((a, b) => b.n - a.n),
     ...(st.n > 0 ? { strength: { n: st.n, within: st.within } } : {}),
