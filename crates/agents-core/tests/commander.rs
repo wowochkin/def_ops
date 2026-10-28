@@ -470,7 +470,21 @@ mod options_su {
     fn opts(sim: &Sim, front: &str, pic: &Picture) -> Vec<Choice> {
         let h = hq(sim, front);
         let p = sim.rules.commanders.for_hq(front).unwrap().clone();
-        options_su(sim, h, &p, pic)
+        check_ranges(&options_su(sim, h, &p, pic))
+    }
+    /// Вклады в мотивы −1…1, неопределённость и потери 0…1 у каждого варианта.
+    fn check_ranges(v: &[Choice]) -> Vec<Choice> {
+        for ch in v {
+            assert!((0.0..=1.0).contains(&ch.uncertainty) && (0.0..=1.0).contains(&ch.losses), "{}", ch.label);
+            assert!(ch.contrib.0.iter().all(|x| (-1.0..=1.0).contains(x)), "{}", ch.label);
+        }
+        v.to_vec()
+    }
+    fn set_intent(sim: &mut Sim, front: &str, axis: Vec<XY>) {
+        use agents_core::command::directive::{Directive, Form, Target, Task};
+        let top = hq(sim, front) as usize;
+        sim.command.intent[top] = Some(Directive { id: "т".into(), from: 0, to: Target::Hq(top as u32), form: Form::Order, task: Task::Attack, axis, immediate: None, subsequent: None,
+            boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: true, rule: None, issued: 0, note: String::new() });
     }
 
     /// Подвижная группа вводится только после пройденной глубины ввода.
@@ -491,10 +505,6 @@ mod options_su {
         assert!(!has(&brk, |k| matches!(k, Kind::WaitMobile)));
         let cb = brk.iter().find(|c| matches!(c.kind, Kind::CommitMobile { .. })).unwrap();
         assert!(c.uncertainty > cb.uncertainty);
-        for ch in deep.iter().chain(&brk) {
-            assert!((0.0..=1.0).contains(&ch.uncertainty) && (0.0..=1.0).contains(&ch.losses), "{}", ch.label);
-            assert!(ch.contrib.0.iter().all(|x| (-1.0..=1.0).contains(x)), "{}", ch.label);
-        }
     }
 
     /// Главный удар — по замыслу старшего, если он есть, иначе армии первого эшелона.
@@ -525,6 +535,11 @@ mod options_su {
         assert!(opts(&sim, "su_1bf", &p).iter().any(|c| matches!(&c.kind, Kind::ShiftMainBlow { to } if to == &vec![b])));
         let p = pic(vec![view(a, 20.0, false), view(b, 29.0, false)]);
         assert!(!has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::ShiftMainBlow { .. })));
+        // главный удар на месте: малый отрыв — не повод, большой — повод
+        let p = pic(vec![view(a, 0.0, false), view(b, 1.0, false)]);
+        assert!(!has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::ShiftMainBlow { .. })));
+        let p = pic(vec![view(a, 0.0, false), view(b, 8.0, false)]);
+        assert!(has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::ShiftMainBlow { .. })));
     }
 
     /// Поворот к объекту соперника — только когда есть соперник, его объект и своя армия ближе порога.
@@ -538,9 +553,38 @@ mod options_su {
         sim.rules.commanders.options.turn_km = 0.0;
         assert!(!has(&opts(&sim, "su_1uf", &p), |k| matches!(k, Kind::TurnToRival { .. })));
         sim.rules.commanders.options.turn_km = 1.0e6;
+        // без замысла старшего поворота нет
+        assert!(!has(&opts(&sim, "su_1uf", &p), |k| matches!(k, Kind::TurnToRival { .. })));
+        let berlin = sim.theatre.proj.to_xy(sim.rules.commanders.objective_at("berlin").unwrap());
+        // задача нацелена на сам объект — поворачивать некуда
+        sim.rules.commanders.options.turn_km = 1.0e6;
+        set_intent(&mut sim, "su_1uf", vec![berlin]);
+        assert!(!has(&opts(&sim, "su_1uf", &p), |k| matches!(k, Kind::TurnToRival { .. })));
+        // задача далеко от объекта соперника
+        // порог один на оба условия: берём такой, что армия от объекта ближе его, а задача дальше
+        sim.rules.commanders.options.turn_km = 300.0;
+        set_intent(&mut sim, "su_1uf", vec![XY::new(berlin.x - 2000.0, berlin.y)]);
         let o = opts(&sim, "su_1uf", &p);
         let t = o.iter().find(|c| matches!(c.kind, Kind::TurnToRival { .. })).expect("поворот");
         assert!(t.contrib.get(Motive::Rival) > 0.0 && t.contrib.get(Motive::Task) < 0.0);
+    }
+
+    /// Подвижная армия предпочтительнее обычной независимо от удаления.
+    #[test]
+    fn turn_prefers_mobile() {
+        let mut sim = load();
+        let (tank, rifle) = (hq(&sim, "su_1gta"), hq(&sim, "su_8gva"));
+        let berlin = sim.theatre.proj.to_xy(sim.rules.commanders.objective_at("berlin").unwrap());
+        set_intent(&mut sim, "su_1uf", vec![XY::new(berlin.x - 2000.0, berlin.y)]);
+        sim.rules.commanders.options.turn_km = 300.0;
+        let p = pic(vec![view(tank, 10.0, true), view(rifle, 10.0, true)]);
+        for (mobile, role) in [(tank, Role::Mobile), (rifle, Role::Committed)] {
+            sim.command.role_hq[tank as usize] = Role::Unset;
+            sim.command.role_hq[rifle as usize] = Role::Unset;
+            sim.command.role_hq[mobile as usize] = role;
+            let o = opts(&sim, "su_1uf", &p);
+            assert!(o.iter().any(|c| matches!(c.kind, Kind::TurnToRival { hq, .. } if hq == mobile)));
+        }
     }
 
     #[test]

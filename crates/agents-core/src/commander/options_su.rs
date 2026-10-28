@@ -6,7 +6,7 @@
 //! - CommitMobile: задача + (больше при прорыве), соперник + (если он есть), сохранение −; U выше без прорыва.
 //! - WaitMobile: сохранение +, задача −, соперник − (если он ближе к объекту); U мала.
 //! - ShiftMainBlow: задача +, сохранение −.
-//! - TurnToRival: соперник +, задача − (отступление от задачи старшего).
+//! - TurnToRival: соперник +, задача − (уход от направления задачи старшего к объекту соперника; без замысла не появляется).
 //! - Encircle: уничтожение +, задача +.
 //! - CommitSecond: задача +, сохранение −.
 
@@ -14,10 +14,13 @@ use super::options::{Choice, Kind};
 use super::picture::{divisions_of, profile_objective_xy, ArmyView, Picture};
 use super::profile::{Motive, Motives, Profile};
 use crate::command::control::Role;
+use crate::geo::XY;
 use crate::world::Sim;
 
 /// Во сколько раз продвижение армии вне главного удара должно превышать продвижение главного удара для переноса удара.
 const SHIFT_RATIO: f64 = 1.5;
+/// Наименьший отрыв вырвавшейся армии от главного удара для переноса удара, км (при нулевом продвижении кратность не работает).
+const SHIFT_MIN_LEAD_KM: f64 = 5.0;
 
 // Continue
 /// Вклад «идти по плану» в задачу.
@@ -80,6 +83,15 @@ fn role(sim: &Sim, hq: u32) -> Role { sim.command.role_hq.get(hq as usize).copie
 
 fn name(sim: &Sim, hq: u32) -> &str { &sim.world.hqs[hq as usize].name }
 
+/// Конечная точка задачи, полученной фронтом: конец оси, иначе середина последующего рубежа, иначе ближайшего.
+fn task_goal(sim: &Sim, hq: u32) -> Option<XY> {
+    let d = sim.command.intent.get(hq as usize)?.as_ref()?;
+    if let Some(&p) = d.axis.last() { return Some(p); }
+    let line = d.subsequent.as_ref().filter(|l| !l.pts.is_empty()).or(d.immediate.as_ref().filter(|l| !l.pts.is_empty()))?;
+    let n = line.pts.len() as f64;
+    Some(XY::new(line.pts.iter().map(|p| p.x).sum::<f64>() / n, line.pts.iter().map(|p| p.y).sum::<f64>() / n))
+}
+
 pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice> {
     let mut out = vec![Choice {
         kind: Kind::Continue, label: "Продолжать по плану".into(), contrib: contrib(&[(Motive::Task, CONT_TASK)]),
@@ -117,7 +129,7 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
 
     // главный удар переносится на армии, вырвавшиеся вперёд
     if !main.is_empty() {
-        let to: Vec<u32> = pic.armies.iter().filter(|a| !main.iter().any(|m| m.hq == a.hq) && a.advance_km > main_adv * SHIFT_RATIO).map(|a| a.hq).collect();
+        let to: Vec<u32> = pic.armies.iter().filter(|a| !main.iter().any(|m| m.hq == a.hq) && a.advance_km > main_adv * SHIFT_RATIO && a.advance_km - main_adv >= SHIFT_MIN_LEAD_KM).map(|a| a.hq).collect();
         if !to.is_empty() {
             out.push(Choice {
                 kind: Kind::ShiftMainBlow { to }, label: "Перенести главный удар на добившиеся успеха армии".into(),
@@ -130,13 +142,13 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
     // поворот к объекту соперника
     if let Some(rp) = p.rival.as_deref().and_then(|r| sim.rules.commanders.profiles.iter().find(|q| q.id == r)) {
         if p.objective.is_some() {
-            if let Some(at) = profile_objective_xy(sim, rp) {
+            if let Some(at) = profile_objective_xy(sim, rp).filter(|&at| task_goal(sim, hq).is_some_and(|g| g.dist(at) > sim.rules.commanders.options.turn_km)) {
                 let near = |a: &ArmyView| divisions_of(sim, a.hq).into_iter().map(|i| sim.world.divisions[i].vars.pos.dist(at)).min_by(f64::total_cmp);
                 let limit = sim.rules.commanders.options.turn_km;
                 let best = pic.armies.iter().filter_map(|a| near(a).filter(|&d| d < limit).map(|d| (a, d)))
                     .min_by(|x, y| {
-                        let pref = |a: &ArmyView| !matches!(role(sim, a.hq), Role::Mobile | Role::Committed);
-                        pref(x.0).cmp(&pref(y.0)).then(x.1.total_cmp(&y.1))
+                        let not_tank = |a: &ArmyView| !matches!(role(sim, a.hq), Role::Mobile | Role::Committed);
+                        not_tank(x.0).cmp(&not_tank(y.0)).then(x.1.total_cmp(&y.1))
                     });
                 if let Some((a, _)) = best {
                     out.push(Choice {
@@ -153,7 +165,7 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
     for (i, k) in pic.pockets.iter().enumerate() {
         if k.gap_km < sim.rules.commanders.options.encircle_gap_km {
             out.push(Choice {
-                kind: Kind::Encircle { pocket: i }, label: "Замкнуть кольцо окружения".into(),
+                kind: Kind::Encircle { pocket: i }, label: format!("Замкнуть кольцо окружения: котёл № {}", i + 1),
                 contrib: contrib(&[(Motive::Destroy, ENC_DESTROY), (Motive::Task, ENC_TASK)]),
                 uncertainty: ENC_UNC, losses: ENC_LOSS, rule: "ПУ-43: окружение и уничтожение группировки охватом с флангов; глубокая операция",
             });
