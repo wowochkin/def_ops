@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Командующие фронтов, групп армий, немецких армий и ставка Гитлера — агенты на правилах в ядре: характер,
-мотивы, картина обстановки с туманом, варианты из обстановки, оценка, проигрывание «в уме»; режим прогона
+мотивы, состояние (уверенность, напряжение), картина обстановки с туманом, варианты из обстановки, оценка, проигрывание «в уме»; режим прогона
 `commanders`; в интерфейсе — вкладка «Командующий», слой замысла на карте, график состязания, разговор.
 
 **Architecture:** Новый модуль `crates/agents-core/src/commander/` стоит над нынешними штабами: в фазе командования
@@ -101,7 +101,7 @@
   - `pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture`
   - `pub struct DistLog(pub Vec<Vec<(u32, f64)>>)` — по штабу: (час, до объекта, км); `pub fn record(&mut self, sim: &Sim)` раз в час.
 
-Ошибка оценки противника — множитель `1 + e·u`, `u ∈ [-1, 1]` из `crate::rng` по `(sim.seed, hq, tick / 6)` (постоянна в пределах сводки); соперник — значение `DistLog` на час `tick − report_delay_hours`; резервы противника — только дивизии в пределах разведки (`contactKm` × 3 от своих). Прорыв (`broke_through`) — у армии нет обороняющегося противника ближе `contactKm` на оси и пройдена `doctrine.su.tankCommitDepthKm`.
+Объекты — раздел `objectives` в `commanders.json` (`{ "berlin": { "name", "at": [lng, lat] } }` и объекты Висло-Одерской по политическим целям на начало), `Profile.objective` ссылается на него; `CommanderRules.objectives: Vec<(String, XY)>` (в проекции театра). Ошибка оценки противника — множитель `1 + e·u`, `u ∈ [-1, 1]` из `crate::rng` по `(sim.seed, hq, tick / 6)` (постоянна в пределах сводки); соперник — значение `DistLog` на час `tick − report_delay_hours`; резервы противника — только дивизии в пределах разведки (`contactKm` × 3 от своих). Прорыв (`broke_through`) — у армии нет обороняющегося противника ближе `contactKm` на оси и пройдена `doctrine.su.tankCommitDepthKm`.
 
 - [ ] **Step 1: Падающие тесты:** `picture_error_bounded` — на берлинском сценарии через 24 ч для каждой армии 1 БФ `|enemy_est/enemy_true − 1| ≤ fog.strength_error + 1e-9`, и при `strength_error = 0` — равенство; `picture_same_seed_same` — два `picture` на одинаковых `Sim` (тот же seed) равны; `rival_delayed` — `rival.as_of == tick − report_delay_hours`.
 - [ ] **Step 2:** `cargo test -p agents-core --test commander picture` — Expected: не компилируется.
@@ -109,7 +109,7 @@
 - [ ] **Step 4:** Тесты зелёные.
 - [ ] **Step 5: Коммит** `feat(командующие): картина обстановки с ошибкой разведки и задержкой сводок`.
 
-### Task 3: Мотивы по обстановке
+### Task 3: Мотивы и состояние по обстановке
 
 **Files:**
 - Create: `crates/agents-core/src/commander/motives.rs`
@@ -117,14 +117,21 @@
 
 **Interfaces:**
 - Consumes: `Profile.motives`, `Picture`, `Gains`.
-- Produces: `pub fn current(base: &Motives, pic: &Picture, g: &Gains) -> Motives`.
+- Produces:
+  - `pub fn current(base: &Motives, pic: &Picture, g: &Gains) -> Motives`.
+  - `pub struct Mood { pub confidence: f64, pub stress: f64 }` (0…1; на начало — `mood.start` из `commanders.json`).
+  - `pub fn mood_step(prev: &Mood, pic: &Picture, prev_pic: Option<&Picture>, task_behind: f64, m: &MoodRules) -> Mood` — раз в час.
+  - `pub fn effective(t: &Traits, mood: &Mood, m: &MoodRules) -> Traits` — черты с поправкой на состояние.
+  - `MoodRules { start: Mood, success_gain, setback_gain, threat_gain, pressure_gain, decay /* в час, к start */, risk_shift, ambition_shift, rigid_shift, narrow_at /* напряжение, выше которого обзор сужен */ }` — раздел `mood` в `commanders.json`, у каждого `value`/`range`/`note` (допущения), строки в `norms.json`.
 
 Правила (и только они): `Rival += g.rival · max(0, (own − rival)/own)` при наличии соперника, иначе `Rival = 0`;
 `Preserve += g.losses · (1 − средняя strength)`; `NoEncircle += g.flank · open_flanks.len()/armies.len()`. Остальные — как на начало.
 
-- [ ] **Step 1: Тесты:** `rival_grows_when_rival_closer` (соперник на 20 км ближе — вес выше базы; дальше — равен базе); `preserve_grows_with_losses`; `no_rival_zero` (Review Focus 3).
+Состояние: уверенность `+= success_gain · (продвижение за час сверх ожидаемого темпа, доля)` и охват противника; `−= setback_gain · (застой удара, потери сверх нормы)` и `task_behind` (отставание от срока задачи старшего, доля); напряжение `+= threat_gain · (открытые фланги + охват своих) + pressure_gain · task_behind`; оба `→ start` со скоростью `decay`; обрезка в `[0, 1]`. `effective`: `risk += risk_shift·(confidence − 0.5)`, `ambition += ambition_shift·(confidence − 0.5)`; при `stress > 0.5`: если `obedience + persistence > 1` — `persistence += rigid_shift·(stress − 0.5)`, `risk −= …` (окостенение), иначе `lossTolerance −= rigid_shift·(stress − 0.5)` (тяга спасать армию); обрезка в `[0, 1]`.
+
+- [ ] **Step 1: Тесты:** `confidence_grows_on_success` (армии прошли больше ожидаемого — уверенность выше прежней), `stress_grows_on_threat` (охват своих — напряжение выше), `mood_decays_to_start` (24 ч без перемен — ближе к `start`), `effective_rigid_vs_cautious` (при `stress 0.9` послушный и настойчивый — `persistence` выше базы, осторожный — `lossTolerance` ниже базы), `rival_grows_when_rival_closer` (соперник на 20 км ближе — вес выше базы; дальше — равен базе); `preserve_grows_with_losses`; `no_rival_zero` (Review Focus 3).
 - [ ] **Step 2–4:** Не компилируется → реализовать → зелёные.
-- [ ] **Step 5: Коммит** `feat(командующие): мотивы меняются по обстановке`.
+- [ ] **Step 5: Коммит** `feat(командующие): мотивы и состояние командующего меняются по обстановке`.
 
 ### Task 4: Варианты советских фронтов
 
@@ -171,20 +178,22 @@
 **Interfaces:**
 - Consumes: задачи 1–5.
 - Produces:
-  - `pub struct Commander { pub hq: u32, pub profile: usize, pub motives: Motives, pub intent: Option<Kind>, pub last: u32, pub snapshots: Vec<Snapshot>, pub decisions: Vec<Decision> }`
-  - `pub struct Snapshot { pub tick: u32, pub motives: Motives, pub picture: Picture, pub intent: Option<String> }`
+  - `pub struct Commander { pub hq: u32, pub profile: usize, pub motives: Motives, pub mood: Mood, pub intent: Option<Kind>, pub last: u32, pub snapshots: Vec<Snapshot>, pub decisions: Vec<Decision> }`
+  - `pub struct Snapshot { pub tick: u32, pub motives: Motives, pub mood: Mood, pub picture: Picture, pub intent: Option<String> }`
   - `pub struct Scored { pub choice: Choice, pub parts: Motives /* мотив × вклад */, pub penalty: f64, pub bonus: f64, pub total: f64, pub mind: Option<MindResult> }`
   - `pub struct Decision { pub tick: u32, pub trigger: String, pub options: Vec<Scored>, pub chosen: usize, pub why: String }`
   - `pub struct State { pub enabled: [bool; 2], pub list: Vec<Commander>, pub log: DistLog }`
   - `pub fn enable(sim: &mut Sim, side: Side)` — командующий на каждый штаб стороны с профилем (`for_hq`); без профиля — нет.
   - `pub fn score(c: &Choice, m: &Motives, t: &Traits, w: &Weights, continuing: bool) -> Scored`:
+    черты — `effective(traits, mood)`, у `Rival` и `Destroy` вес × `(0.5 + ambition)`;
     `total = Σ m_i·contrib_i − (1−risk)·w.uncertainty·uncertainty − (1−lossTolerance)·w.losses·losses + persistence·w.persistence·[continuing] + obedience·w.obedience·contrib_Task`.
-  - `pub fn cycle(sim: &mut Sim, tick: u32)` — запись `log`, снимок раз в 6 ч, решение по циклу ступени или триггеру; ничья (±1e-9) — продолжение; `Control::Player` у штаба — пропуск.
+  - `pub fn cycle(sim: &mut Sim, tick: u32)` — запись `log`, `mood_step` каждый час, снимок раз в 6 ч, решение по циклу ступени или триггеру; ничья (±1e-9) — продолжение; `Control::Player` у штаба — пропуск.
   - `pub fn apply(sim: &mut Sim, c: &Commander, k: &Kind, tick: u32)`: `CommitMobile` — `role_hq[hq] = Role::Committed`; `ShiftMainBlow` / `TurnToRival` / `Encircle` / `CommitSecond` — `Directive` от штаба фронта (`main_blow`, ось к цели, `named_hq` у армии частной директивы) через `passing::issue`; `Withdraw`/`Breakout` — директива армии `Task::Withdraw`/атака к цели; `Permit`/`Forbid` — `requests[i].answer`, `answered_at`, документ-извещение с `rule`; `Relief` — директива армии-деблокатору. Каждое решение — `Document` (`DocKind::Directive`/`Notice`) с текстом обоснования и правилом.
   - `why` — собирается из двух крупнейших слагаемых выбранного и разницы с вторым вариантом (шаблон, без языковой модели).
 
 - [ ] **Step 1: Тесты:**
   - `risky_and_cautious_differ`: одна обстановка (`Picture` с армией на глубине 8 км без прорыва), Жуков с `risk 0.9` выбирает `CommitMobile`, с `risk 0.1` — `WaitMobile` (через `score` на вариантах `options_su`).
+  - `confident_and_shaken_differ`: та же обстановка и тот же профиль, `confidence 0.9 / stress 0.1` против `confidence 0.1 / stress 0.9` — разный выбор (`CommitMobile` против `WaitMobile` или `Hold`).
   - `decision_repeats_with_seed`: два прогона берлинского сценария в режиме `commanders` по 48 ч с одним seed → одинаковые `decisions` (тики, выбранные `kind`).
   - `hq_without_profile_keeps_staff_rules` (Review Focus 1): из профилей убран `busse` поправкой `{"commanders.profiles.busse.hqs": []}` — 48 ч без паники, у `de_9a` нет командующего, его документы — прежнего вида.
   - `player_seat_silences_commander` (Review Focus 2): `control[su_1bf] = Player` — у Жукова нет решений; `control[de_hc] = Player` — запросы отхода остаются без ответа.
@@ -205,7 +214,7 @@
   - `Sim::fork` — копия для расчёта: `theatre` (Arc), `rules`, `world`, `command`, `historical`, `script`/`fires`/`withdrawals`/`changes`, `su_staff` (клон содержимого); `llm: None`, журналы и `history` пустые, обработчики `None`, `commanders.enabled = [false; 2]` (без рекурсии).
   - `pub struct MindResult { pub hours: u32, pub advance_km: f64, pub losses: f64, pub encircled: f64 }`
   - `pub fn imagine(sim: &Sim, c: &Commander, pic: &Picture, choice: &Choice, hours: u32) -> MindResult` — в копии сила противника перед армиями приводится к `enemy_est` (масштаб людей и техники дивизий противника), вариант применяется, `hours` шагов; итог уточняет `contrib` (`Task`/`Rival` по продвижению, `Preserve` по потерям, `Destroy` по охвату).
-  - В `cycle`: при `lookahead_hours > 0` — `imagine` для двух-трёх лучших по `score`, пересчёт, выбор.
+  - В `cycle`: при `lookahead_hours > 0` — `imagine` для трёх лучших (при `stress > narrow_at` — для одного) по `score`, пересчёт, выбор.
 
 - [ ] **Step 1: Тесты:** `fork_does_not_touch_original` (24 шага копии — `world` оригинала байт в байт тот же по отпечатку); `mind_off_by_default` (`lookahead_hours == 0` → у всех `Scored.mind == None`); `mind_on_fills_top` (`{"commanders.lookaheadHours": 24}` → у не более чем трёх вариантов решения `mind.is_some()`).
 - [ ] **Step 2–4:** → зелёные.
@@ -226,7 +235,7 @@ export interface AgentCommander {
   traits: Record<'risk'|'persistence'|'ambition'|'lossTolerance'|'obedience', { value: number; range: [number, number]; source: string; confidence: string }>;
   baseMotives: Record<string, number>;
   rival: string | null; objective: string | null;
-  snapshots: { tick: number; motives: Record<string, number>; intent: string | null;
+  snapshots: { tick: number; motives: Record<string, number>; mood: { confidence: number; stress: number }; intent: string | null;
     picture: { armies: { hq: string; advanceKm: number; strength: number; enemyEst: number; enemyTrue: number; toObjectiveKm: number | null; brokeThrough: boolean }[];
       rival: { hq: string; toObjectiveKm: number; asOf: number } | null; openFlanks: string[]; pockets: { center: LngLat; enemyEst: number; gapKm: number }[];
       enemyReserves: { at: LngLat; strength: number }[]; toObjectiveKm: number | null } }[];
@@ -256,10 +265,10 @@ export interface AgentCommander {
   - `commanderOf(trace: AgentTrace, hq: string): AgentCommander | null`
   - `viewAt(c: AgentCommander, tick: number): { snapshot: Snapshot | null; decision: Decision | null; decisions: Decision[] }` — последние на час `≤ tick`.
   - `rivalrySeries(trace: AgentTrace): { hq: string; name: string; points: [number, number][]; marks: { tick: number; label: string }[] }[]` — расстояние фронтов до объекта по снимкам, метки — решения; у немцев — «держать / отходить» 9-й армии и `Relief` 12-й.
-  - `answer(c: AgentCommander, tick: number, question: string): string` — ключевые слова: «почему» → `why` + правило; «противник/знал» → `picture.armies` (оценка против истины не раскрывается — командующий говорит только оценку); «сосед/соперник» → `picture.rival` с задержкой; «другой/не выбрал» → второй вариант и разница итогов; «хочешь/сейчас» → мотивы сейчас против начала; нет разбора — «Я ещё не принимал решений к этому часу.»; не понял — «Об этом мне нечего сказать: спросите о решении, противнике, соседе или моих целях.»
-  - `SUGGESTIONS = ['почему так решил?', 'что знал о противнике?', 'что думал о соседе?', 'почему не выбрал другой вариант?', 'чего хочешь сейчас?']`
+  - `answer(c: AgentCommander, tick: number, question: string): string` — ключевые слова: «почему» → `why` + правило; «противник/знал» → `picture.armies` (оценка против истины не раскрывается — командующий говорит только оценку); «сосед/соперник» → `picture.rival` с задержкой; «другой/не выбрал» → второй вариант и разница итогов; «хочешь/сейчас» → мотивы сейчас против начала; «положение/оцениваешь/настроение» → состояние словами (уверенность и напряжение, что их подняло); нет разбора — «Я ещё не принимал решений к этому часу.»; не понял — «Об этом мне нечего сказать: спросите о решении, противнике, соседе или моих целях.»
+  - `SUGGESTIONS = ['почему так решил?', 'что знал о противнике?', 'что думал о соседе?', 'почему не выбрал другой вариант?', 'чего хочешь сейчас?', 'как оцениваешь положение?']`
 
-Вид вкладки — по макету `2026-10-28-commanders-ui.jpg`: характер — пять полос с пунктиром пределов и источником во всплывающей подсказке; мотивы — начало и сейчас; картина обстановки — по армиям, серым — истина; лента решений; таблица вариантов выбранного решения с цветной разбивкой по мотивам; обоснование и правило; поле разговора с подсказками. Слой на карте (по образцу `AgentMark`, `engine.project`, перерисовка на `engine.on('view')`): замысел — сплошная стрелка, варианты «в уме» — пунктир, соперник как его видит командующий, группировки противника по его разведке.
+Вид вкладки — по макету `2026-10-28-commanders-ui.jpg`: характер — пять полос с пунктиром пределов и источником во всплывающей подсказке; мотивы — начало и сейчас; состояние — уверенность и напряжение по времени; картина обстановки — по армиям, серым — истина; лента решений; таблица вариантов выбранного решения с цветной разбивкой по мотивам; обоснование и правило; поле разговора с подсказками. Слой на карте (по образцу `AgentMark`, `engine.project`, перерисовка на `engine.on('view')`): замысел — сплошная стрелка, варианты «в уме» — пунктир, соперник как его видит командующий, группировки противника по его разведке.
 
 - [ ] **Step 1: Тесты vitest** `commander-view.test.ts`: `viewAt` берёт последнее решение не позже часа; `answer` на каждую подсказку содержит соответствующее (`why`, имя армии, имя соперника, `label` второго варианта, название мотива); `empty-commander` (Review Focus 4): трасса без `commanders` — `commanderOf → null`, `rivalrySeries → []`; час до первого решения — ответ «ещё не принимал»; `agents-command.test.ts` — `commanders` в `AGENT_COMMANDS` и по умолчанию; `voice-completeness` — новое действие учтено.
 - [ ] **Step 2:** `npx vitest run apps/editor/tests/commander-view.test.ts` — Expected: FAIL (нет модуля).
@@ -271,7 +280,7 @@ export interface AgentCommander {
 ### Task 10: Калибровка характера, замеры, контроль, описание
 
 **Files:**
-- Modify: `packages/sim/data/rules/commanders.json` (подобранные значения с `note` «калибровка перебором … было → стало»), `docs/system.md` (часть I — раздел режимов агентной модели и интерфейса «Переигровки»; часть II — модель командующих: характер, мотивы, картина, варианты, польза, «в уме», перечень вложенного исторического знания, результаты), `docs/img/*.jpg` (новые снимки: вкладка «Командующий», график состязания), `docs/norms-check.md`, `packages/knowledge/data/seed.json`, `packages/knowledge/data/model-index.json`, `docs/system.pdf`, `docs/system.docx`
+- Modify: `packages/sim/data/rules/commanders.json` (подобранные значения с `note` «калибровка перебором … было → стало»), `docs/system.md` (часть I — раздел режимов агентной модели и интерфейса «Переигровки»; часть II — модель командующих: характер, мотивы, состояние, картина, варианты, польза, «в уме», перечень вложенного исторического знания, результаты), `docs/img/*.jpg` (новые снимки: вкладка «Командующий», график состязания), `docs/norms-check.md`, `packages/knowledge/data/seed.json`, `packages/knowledge/data/model-index.json`, `docs/system.pdf`, `docs/system.docx`
 - Test: прежние тесты сверки (`kb:seed`, `model:index`)
 
 - [ ] **Step 1: Исходный замер** — 20 seed (1–20), режимы `commanders`, `agents`, `fronts` на Берлинской: `calibrate.ts --refine` с пустым сочетанием или прямые прогоны → итог, положения, события; плюс непрерывные меры (средняя ошибка положений, км; ошибка сроков событий, сутки) — дописать их в вывод `evaluate` (`agentsScore` уже даёт ошибки по точкам).
